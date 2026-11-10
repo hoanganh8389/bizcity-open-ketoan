@@ -5,6 +5,7 @@
 > **Mức Kernel:** K0 cho W0; W1 K1 (lineage chỉ đọc trên dữ liệu có sẵn); W2–W3 **K2** (bảng lớp / phân bổ, engine tính giá chung); W4 K2 (Gate C, khoá kỳ)
 > **Mục tiêu:** Mọi con số trên sổ đi ngược được về nghiệp vụ kinh tế đã sinh ra nó, qua mọi lần đổi mã, đổi phần mềm, đổi kỳ, đổi chế độ; Core tự kiểm chuỗi đó và cho người dùng **thấy** nó.
 > **Việc lộ trình:** — (đề xuất thêm vào PHASES khi chủ duyệt D025-1)
+> **Phân hệ:** tong-hop · kho <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Quyết định:** [ADR-0021](../../adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md) (đề xuất) · **Luật:** [R-CONT](../../rules/RULE-CONTINUITY.md) · **Tôn chỉ:** [ADR-0020](../../adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md)
 > **Phụ thuộc:** PHASE-024 B2 (`items`, mã có phiên bản) cho khoá `item_id`; W1 chạy được trước, khoá tạm theo mã hàng · **Liên quan:** 005 (chính sách có phiên bản), 021 / 024 (Gate A / B), 022 (Bàn đánh giá)

@@ -3,6 +3,7 @@
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng PHASE-034 HT10; dùng lại `bang-viec.json` của R-FLOW-8 và `ScoreBar` của HT10)
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Trạng thái:** 🟡 **W0 chốt 2026-11-11** <!-- [2026-11-11 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — chủ dự án duyệt D035-1..8, Q035-1..3 theo đề xuất (2026-11-11: "đồng ý theo đề xuất"); giữ chỗ B1 --> — chủ dự án duyệt D035-1..8, Q035-1..3 theo đề xuất. Đang làm B1 (sổ modules.json + gắn phân hệ vào bảng việc).
 > **Phụ trách:** **Thuy2k** (Nguyễn Văn Thủy) — người rà và đánh giá tiến độ theo HT11 mỗi tuần; làm B1..B6 cùng nhóm Lõi. Chủ dự án giao 2026-11-11.

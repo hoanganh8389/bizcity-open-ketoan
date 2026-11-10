@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 5 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Cell hỏi công nợ, lập phiếu nháp qua Zalo có xác nhận; plugin WordPress chạy qua hợp đồng; CI "no-cell" vẫn xanh.
 > **Việc lộ trình:** 5.3, 5.3b, 5.4
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G1-12, G3-04
 > **Tuân thủ / nguyên tắc:** AP-2
 > **Phụ thuộc phase:** 009

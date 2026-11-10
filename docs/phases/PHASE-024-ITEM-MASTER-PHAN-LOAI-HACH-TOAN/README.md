@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) (trụ cột Data / Kernel) · **Mức Kernel:** K0 cho W0; W1 K1 (hợp đồng, bảng mới, validator chỉ cảnh báo); W2 **K3** (đổi khoá sổ phụ kho / dòng sổ sang `item_id`, bất biến Tier 0 mới — ADR-0017, hai người Lõi + kế toán trưởng ký)
 > **Mục tiêu:** Mỗi hàng hoá có **một định danh bất biến**; mã hàng có **phiên bản và ngày hiệu lực**; tài khoản đi từ **chính sách hạch toán có phiên bản**, không từ tiền tố mã; mọi mã hàng từ POS / ERP / kho / plugin **qua validation** trước khi chạm sổ; người dùng nhìn là thấy **thiếu cấu hình ở đâu và sửa từ gốc**.
 > **Việc lộ trình:** 2.22, 2.23
+> **Phân hệ:** danh-muc · kho <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** [ADR-0018](../../adr/ADR-0018-danh-muc-co-phien-ban-toan-framework.md) (đề xuất) · [ADR-0017](../../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md) · [R-ITEM](../../rules/RULE-ITEM.md) · R-MD · R-LEDGER · R-INTAKE (ADR-0014) · R-POST · R-DIAG · R-FIX (PHASE-022) · bốn câu không thương lượng
 > **Phụ thuộc phase:** 021 (trạm tiền kiểm, mã `IN-*`), 005 (chính sách có phiên bản), 012 (gói định khoản), 022 (`remedy`) · **Liên quan:** 018 / 019 (số đo, trace, Bàn điều tra), 023 (thẻ tài khoản — cùng ngôn ngữ "chú giải tại chỗ")

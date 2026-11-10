@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Mức Kernel:** K0 cho W0 (chỉ tài liệu); W1–W4 tối đa K1 (thêm trường `remedy` cho kiểm, thêm kiểm chỉ đọc, thêm một màn) — không đổi luật định khoản, không đổi sổ
 > **Mục tiêu:** Liệt kê **toàn bộ** tình huống sai mà một bản cài kế toán có thể gặp, chạy được từng tình huống để chứng minh hệ thống phát hiện đúng, và cho ba vai đọc kết quả dưới dạng checklist. **Mọi cảnh báo phải kèm phương án khắc phục cụ thể**: bước làm, màn nào, ai có quyền, kiểm lại bằng gì.
 > **Việc lộ trình:** —
+> **Phân hệ:** tong-hop <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** R-VNC-10 (phân tích để người dùng quyết định, không chặn ngoài bất biến Tier 0) · R-DIAG-1..9 · ADR-0012 T3–T5 · bốn câu không thương lượng
 > **Phụ thuộc phase:** 020 (Conformance Engine, kiểm L3 / L5, cảnh báo, duyệt tại đơn vị) · 021 (Trạm tiền kiểm, mã `IN-*`) · **Liên quan:** 019 (Bàn điều tra)

@@ -9,6 +9,7 @@
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 13%
 > **Mục tiêu:** Kế toán sở hữu cấu hình dưới dạng gói cài / gỡ được; báo cáo đọc sổ qua API; luồng duyệt chứng từ khai báo thay vì viết tay.
 > **Việc lộ trình:** 3.5, 3.7, 3.11, 3.12
+> **Phân hệ:** chung-tu <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** AP-1
 > **Phụ thuộc phase:** 005, 011

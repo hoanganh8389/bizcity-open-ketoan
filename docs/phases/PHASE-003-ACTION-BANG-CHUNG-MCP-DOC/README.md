@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 100%
 > **Mục tiêu:** Mặt tiền Platform cho mọi thao tác ghi: `defineAction` (quyền, idempotency, dry-run, bằng chứng), tự chẩn đoán L1 / L3, MCP đọc cho AI, mã lỗi và quan sát chuẩn.
 > **Việc lộ trình:** 2.2, 2.5, 2.6, 2.9, 2.10, 2.11, 2.12, 2.13
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G1-04, G1-07, G1-09, G2-01, G2-02, G2-07, G2-08
 > **Tuân thủ / nguyên tắc:** C-2, C-3, C-4 đạt · C-8 một phần · AP-1, AP-4, AP-7
 > **Phụ thuộc phase:** 001

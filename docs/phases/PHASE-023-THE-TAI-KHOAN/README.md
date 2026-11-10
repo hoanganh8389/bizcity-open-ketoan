@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 4 của [PHASES](../../standard/PHASES.md) (tài liệu, template, công cụ cho người dùng) · **Mức Kernel:** K0 — không đổi định khoản, không đổi sổ; chỉ thêm danh mục giải nghĩa, một API đọc, màn, check tài liệu
 > **Mục tiêu:** Khai báo danh mục có **validator mềm** nhắc – hướng dẫn – cảnh báo trước khi sai (20); người dùng hiểu **bản chất** của tài khoản (tăng bên nào, dư bên nào, vì sao lưỡng tính, vì sao bắt buộc đối tượng) **ngay chỗ đang thao tác**, bằng **số thật của đơn vị mình**; mọi lần bị chặn hay cảnh báo đều có nút "Vì sao?" dẫn về bản chất; có chế độ học và bài theo vai.
 > **Việc lộ trình:** 4.8
+> **Phân hệ:** danh-muc <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** R-FIX (PHASE-022: cảnh báo nào cũng có phương án) · R-DIAG-6 (cảnh báo không lộ số liệu ngoài phạm vi quyền) · R-VNC-10 (giải thích để người dùng quyết, không chặn ngoài Tier 0) · nội dung giải nghĩa do **kế toán trưởng duyệt** như rulepack (ADR-0016)
 > **Phụ thuộc phase:** 022 (`remedy`, Bàn đánh giá), 020 (kho căn cứ pháp lý `docs/can-cu`) · **Liên quan:** 024 (thẻ mặt hàng cùng khuôn), 021 (bảng điểm đầu vào → gợi ý bài học)

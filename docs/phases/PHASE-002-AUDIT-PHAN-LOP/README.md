@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 1 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 60%
 > **Mục tiêu:** Biết rõ tệp nào thuộc lớp nào (K / P / M / D / A / U), cạnh phụ thuộc nào ngược chiều, chỗ nào module ghi bảng lõi; có bản nháp API SDK.
 > **Việc lộ trình:** 1.1, 1.2, 1.3, 1.4, 1.5
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** C-7 (đo nợ A-17)
 > **Phụ thuộc phase:** 001

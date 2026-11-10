@@ -1,0 +1,1079 @@
+{
+  "$comment": "[2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1 (S035-3): bizcity_modules@1 — sổ phân hệ nghiệp vụ × tám mặt, NGUỒN cho HT11 Modules & mức đạt. Mức từng ô KHÔNG ghi ở đây: API /system/modules suy từ bảng việc (docs/phases/bang-viec.json: việc có modules[] + facet theo R-FLOW-10, cộng việc liệt kê tay ở cells[].tasks) và bằng chứng (screens, checks, tests, docs). Không ai tích đạt (R-CONT-7). SC-MODS-1 giữ phủ 100 % apps/web/src/phan-he/*; SC-MODS-3 giữ bằng chứng tồn tại.",
+  "contract": "bizcity_modules@1",
+  "version": "0.1.0-draft",
+  "updated": "2026-11-11",
+  "doc": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/00-MASTER-PLAN.md",
+  "reviewer": "Thuy2k",
+  "facets": {
+    "F1": "Chứng từ & nghiệp vụ",
+    "F2": "Danh mục & cấu hình",
+    "F3": "Lõi tính (engine)",
+    "F4": "Báo cáo & sổ",
+    "F5": "Bộ kiểm (cổng, chẩn đoán, điều kiện khoá sổ)",
+    "F6": "Bàn làm việc & dashboard",
+    "F7": "Tài liệu & hướng dẫn",
+    "F8": "API / SDK / module hoá"
+  },
+  "levels": {
+    "dat": "Đạt — mọi việc của ô xong và ô có test / phép kiểm / màn chạy được",
+    "mot-phan": "Một phần — có việc xong hoặc chờ đủ tín hiệu",
+    "tai-lieu": "Mới tài liệu — chỉ việc tài liệu / chữ chốt xong",
+    "chua": "Chưa — không việc nào bắt đầu, không bằng chứng"
+  },
+  "modules": [
+    {
+      "id": "M01",
+      "key": "danh-muc",
+      "title": "Danh mục & cấu hình",
+      "owner": "Thuy2k",
+      "dirs": [
+        "apps/web/src/phan-he/danh-muc"
+      ],
+      "screens": [
+        "ACC20",
+        "ACC21",
+        "ACC24",
+        "ACC25",
+        "ACC26",
+        "ACC90",
+        "DM02",
+        "DM03",
+        "DM04",
+        "DM05",
+        "DM06",
+        "DM07",
+        "DM08",
+        "DM09",
+        "DM10",
+        "DM11",
+        "DM12",
+        "DM13",
+        "DM14",
+        "DM15",
+        "DM16"
+      ],
+      "phases": [
+        "PHASE-023",
+        "PHASE-024",
+        "PHASE-026"
+      ],
+      "cells": {
+        "F1": {
+          "screens": [
+            "DM02"
+          ],
+          "gap": ""
+        },
+        "F2": {
+          "tasks": [
+            "S026-4",
+            "S026-5"
+          ],
+          "gap": "mã đối tượng / chi nhánh / kho có phiên bản (ADR-0018)"
+        },
+        "F3": {
+          "checks": [
+            "ITEM_CODE_CASE_DUP",
+            "UNIT_BASE_INVALID"
+          ]
+        },
+        "F4": {
+          "tasks": [
+            "S026-8"
+          ],
+          "gap": "báo cáo theo biến thể / sản phẩm cha"
+        },
+        "F5": {
+          "checks": [
+            "ITEM_CODE_CASE_DUP",
+            "UNIT_BASE_INVALID"
+          ],
+          "pcs": [
+            "PC-001"
+          ]
+        },
+        "F6": {
+          "tasks": [
+            "S035-8"
+          ],
+          "gap": "thẻ Việc danh mục hôm nay (mã trùng, mã chưa phân nhóm)"
+        },
+        "F7": {
+          "docs": [
+            "docs/nghiep-vu/12-phuong-an-bo-chu-khoi-ma-hang.md"
+          ]
+        },
+        "F8": {
+          "tasks": [
+            "S026-12"
+          ],
+          "gap": "module khai danh mục riêng (extensions.catalog)"
+        }
+      }
+    },
+    {
+      "id": "M02",
+      "key": "mua-hang",
+      "title": "Mua hàng",
+      "owner": "Thuy2k",
+      "dirs": [
+        "apps/web/src/phan-he/mua-hang",
+        "apps/api/src/phan-he/mua-hang",
+        "modules/mua-hang/domain"
+      ],
+      "screens": [
+        "ACC77",
+        "MH00",
+        "MH01",
+        "MH02",
+        "MH04",
+        "MH05",
+        "MH06",
+        "MH07",
+        "MH08",
+        "MH09",
+        "MH10",
+        "MH11",
+        "MH12",
+        "MH13",
+        "MH14",
+        "MH16",
+        "MH17",
+        "MH18",
+        "MH19",
+        "MH20",
+        "MH21",
+        "MH22",
+        "MH23",
+        "MH24",
+        "MH25",
+        "MH26",
+        "MH27",
+        "MH28"
+      ],
+      "phases": [
+        "PHASE-030",
+        "PHASE-031"
+      ],
+      "cells": {
+        "F1": {
+          "screens": [
+            "MH00"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "MH00"
+          ]
+        },
+        "F3": {
+          "tasks": [
+            "S032-13"
+          ],
+          "gap": "chi phí mua (TH21 / TH22) phân bổ theo lớp giá"
+        },
+        "F4": {
+          "docs": [
+            "docs/huong-dan/mua-hang-bao-cao.md"
+          ]
+        },
+        "F5": {
+          "checks": [
+            "TAX_INPUT_NO_INVOICE",
+            "VAT_INPUT_INVOICE_MATCH"
+          ],
+          "pcs": [
+            "PC-011"
+          ]
+        },
+        "F6": {
+          "tasks": [
+            "S035-8"
+          ],
+          "gap": "thẻ Việc mua hàng hôm nay (NCC chưa hoá đơn, đơn quá hạn)"
+        },
+        "F7": {
+          "docs": [
+            "docs/nghiep-vu/08-mua-hang.md"
+          ]
+        },
+        "F8": {
+          "docs": [
+            "modules/mua-hang/domain/package.json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "M03",
+      "key": "kho",
+      "title": "Kho · Inventory Engine · giá vốn",
+      "owner": "Thuy2k",
+      "dirs": [
+        "apps/web/src/phan-he/kho",
+        "apps/api/src/phan-he/kho",
+        "packages/kernel/src/modules/inventory"
+      ],
+      "screens": [
+        "ACC49",
+        "ACC95",
+        "HH01",
+        "KHO01",
+        "KHO05"
+      ],
+      "phases": [
+        "PHASE-032"
+      ],
+      "cells": {
+        "F1": {
+          "tasks": [
+            "S032-8",
+            "S032-19"
+          ],
+          "screens": [
+            "KHO01"
+          ],
+          "gap": "kiểm kê stock_count; trạng thái lô; bắt buộc ghi lô"
+        },
+        "F2": {
+          "tasks": [
+            "S032-8"
+          ],
+          "gap": "lot_tracking theo mặt hàng; nhóm tính giá (Q032-1)"
+        },
+        "F3": {
+          "tasks": [
+            "S032-11",
+            "S032-12",
+            "S032-13",
+            "S032-14",
+            "S032-15",
+            "S032-16",
+            "S032-17",
+            "S032-18",
+            "S032-20"
+          ],
+          "tests": [
+            "apps/api/test/tra-hang-gia-von-goc.test.ts",
+            "apps/api/test/golden-tra-hang-doi-ma.test.ts"
+          ],
+          "gap": "lớp giá + phân bổ (W2), FIFO / đích danh (W3), chốt giá vốn trước khoá kỳ (W4)"
+        },
+        "F4": {
+          "tasks": [
+            "S032-22"
+          ],
+          "gap": "màn mặt hàng ba khối: Thẻ kho · Đã ghi sổ · Khớp sổ cái (D032-14)"
+        },
+        "F5": {
+          "tasks": [
+            "S032-20",
+            "S032-30"
+          ],
+          "checks": [
+            "INVENTORY_NEGATIVE",
+            "INVENTORY_LEDGER_MISMATCH",
+            "COGS_STALE",
+            "TRANSIT_NONZERO",
+            "STOCK_ADJUST_NO_REASON"
+          ],
+          "pcs": [
+            "PC-004",
+            "PC-005",
+            "PC-008",
+            "PC-009"
+          ],
+          "gap": "CT-INV-001..004, CT-COST-*, DG-CLOSE-1/2; khớp sổ cái so theo item_id (T-6)"
+        },
+        "F6": {
+          "tasks": [
+            "S032-23",
+            "S035-8"
+          ],
+          "gap": "thẻ Việc kho hôm nay cho thủ kho; cảnh báo lô cận hạn"
+        },
+        "F7": {
+          "docs": [
+            "docs/nghiep-vu/16-lo-hang.md",
+            "docs/huong-dan/tinh-gia-von.md",
+            "docs/huong-dan/kho-ton-theo-lo.md"
+          ]
+        },
+        "F8": {
+          "tasks": [
+            "S032-24",
+            "S032-25"
+          ],
+          "docs": [
+            "docs/contracts/BIZCITY-INVENTORY-v1.md"
+          ],
+          "gap": "API đọc lớp / phân bổ / lần tính; chính sách chọn lô; module Kho tách"
+        }
+      }
+    },
+    {
+      "id": "M04",
+      "key": "ban-hang",
+      "title": "Bán hàng · POS",
+      "owner": "Thuy2k",
+      "dirs": [
+        "apps/web/src/phan-he/ban-hang",
+        "apps/api/src/phan-he/ban-hang"
+      ],
+      "screens": [
+        "BH01",
+        "BH02",
+        "BH03",
+        "BH04",
+        "BH05",
+        "BH06",
+        "BH10",
+        "BH11",
+        "BH12"
+      ],
+      "phases": [
+        "PHASE-030",
+        "PHASE-031"
+      ],
+      "cells": {
+        "F1": {
+          "screens": [
+            "BH01"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "BH01"
+          ]
+        },
+        "F3": {
+          "tasks": [
+            "S032-9"
+          ],
+          "gap": "originalLineRef mức dòng; chọn lô khi bán (xả cận date)"
+        },
+        "F4": {
+          "docs": [
+            "docs/huong-dan/lai-gop.md"
+          ]
+        },
+        "F5": {
+          "checks": [
+            "INVOICE_FIELDS",
+            "INVOICE_ISSUE_DATE",
+            "VAT_REDUCED_RATE"
+          ],
+          "pcs": [
+            "PC-011"
+          ]
+        },
+        "F6": {
+          "tasks": [
+            "S035-8"
+          ],
+          "gap": "thẻ Việc bán hàng hôm nay (đơn chưa hoá đơn, trả hàng chờ)"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/lai-gop.md"
+          ]
+        },
+        "F8": {
+          "gap": "module pos (giữ chỗ W1, TrongKien125); wp-sso nhận quyền module khai"
+        }
+      }
+    },
+    {
+      "id": "M05",
+      "key": "quy",
+      "title": "Quỹ · thu · chi · ngân hàng",
+      "owner": "H-Joyy",
+      "dirs": [
+        "apps/web/src/phan-he/quy",
+        "apps/api/src/phan-he/quy"
+      ],
+      "screens": [
+        "ACC51",
+        "ACC52",
+        "ACC53",
+        "ACC54",
+        "ACC55",
+        "ACC56",
+        "ACC72",
+        "ACC73",
+        "ACC75",
+        "ACC76",
+        "Q2"
+      ],
+      "phases": [],
+      "cells": {
+        "F1": {
+          "screens": [
+            "ACC51",
+            "ACC52",
+            "ACC53",
+            "ACC54"
+          ]
+        },
+        "F2": {
+          "docs": [
+            "docs/huong-dan/hinh-thuc-thanh-toan.md"
+          ]
+        },
+        "F3": {
+          "docs": [
+            "docs/huong-dan/khoan-cong-no.md"
+          ]
+        },
+        "F4": {
+          "screens": [
+            "Q2"
+          ]
+        },
+        "F5": {
+          "checks": [
+            "CASH_NEGATIVE",
+            "DEBT_MATCH_LEDGER"
+          ],
+          "pcs": [
+            "PC-012",
+            "PC-013"
+          ],
+          "gap": "đối soát sao kê ngân hàng ↔ sổ"
+        },
+        "F6": {
+          "tasks": [
+            "S035-8"
+          ],
+          "gap": "thẻ Việc quỹ hôm nay (quỹ âm, chưa đối soát)"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/hinh-thuc-thanh-toan.md",
+            "docs/huong-dan/khoan-cong-no.md"
+          ]
+        },
+        "F8": {
+          "screens": [
+            "ACC51"
+          ]
+        }
+      }
+    },
+    {
+      "id": "M06",
+      "key": "chung-tu",
+      "title": "Chứng từ & định khoản",
+      "owner": "nhóm Lõi",
+      "dirs": [
+        "apps/web/src/phan-he/ke-toan"
+      ],
+      "screens": [
+        "ACC1",
+        "ACC10",
+        "ACC12",
+        "ACC13",
+        "ACC14",
+        "ACC15",
+        "ACC16",
+        "ACC17",
+        "ACC18",
+        "ACC19",
+        "ACC3",
+        "ACC92",
+        "ACC93",
+        "ACC94",
+        "BT01",
+        "BT02",
+        "BT03",
+        "SC01",
+        "SC02",
+        "YC01"
+      ],
+      "phases": [
+        "PHASE-004",
+        "PHASE-005",
+        "PHASE-012",
+        "PHASE-021",
+        "PHASE-029"
+      ],
+      "cells": {
+        "F1": {
+          "screens": [
+            "SC01",
+            "SC02",
+            "BT01"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "ACC1"
+          ]
+        },
+        "F3": {
+          "checks": [
+            "POLICY_VERSION",
+            "ENTRY_NO_VERSION"
+          ]
+        },
+        "F4": {
+          "screens": [
+            "ACC1"
+          ]
+        },
+        "F5": {
+          "checks": [
+            "LEDGER_BALANCED",
+            "LEDGER_BALANCES_DAILY",
+            "LEDGER_REVERSED_ONCE",
+            "LEDGER_ORPHAN",
+            "EVENT_POSTED_VERSION",
+            "EVENT_HAS_ENTRY",
+            "LEDGER_HEADER_EDIT_UNATTRIBUTED",
+            "LEDGER_SELF_APPROVED"
+          ],
+          "pcs": [
+            "PC-002",
+            "PC-016",
+            "PC-022"
+          ]
+        },
+        "F6": {
+          "tasks": [
+            "S029-25"
+          ],
+          "gap": "tách nhiệm sod: block tuỳ chọn"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/chung-tu.md",
+            "docs/huong-dan/nhat-ky-chung.md"
+          ]
+        },
+        "F8": {
+          "docs": [
+            "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md"
+          ]
+        }
+      }
+    },
+    {
+      "id": "M07",
+      "key": "cong-no",
+      "title": "Công nợ",
+      "owner": "H-Joyy",
+      "dirs": [
+        "apps/web/src/phan-he/ke-toan"
+      ],
+      "screens": [
+        "ACC38",
+        "ACC39",
+        "CN01",
+        "CN02",
+        "CN03",
+        "CN04",
+        "CN05",
+        "CN06",
+        "CN07",
+        "HD01"
+      ],
+      "phases": [],
+      "cells": {
+        "F1": {
+          "screens": [
+            "CN01"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "CN01"
+          ]
+        },
+        "F3": {
+          "checks": [
+            "DEBT_MATCH_LEDGER"
+          ]
+        },
+        "F4": {
+          "docs": [
+            "docs/huong-dan/cong-no-theo-mat-hang.md"
+          ]
+        },
+        "F5": {
+          "checks": [
+            "DEBT_MATCH_LEDGER"
+          ],
+          "pcs": [
+            "PC-013"
+          ]
+        },
+        "F6": {
+          "tasks": [
+            "S035-8"
+          ],
+          "gap": "thẻ Việc công nợ hôm nay (quá hạn, chưa đối chiếu)"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/cong-no-theo-mat-hang.md",
+            "docs/huong-dan/khoan-cong-no.md"
+          ]
+        },
+        "F8": {
+          "screens": [
+            "CN01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "M08",
+      "key": "tong-hop",
+      "title": "Tổng hợp · kết chuyển · khoá sổ · Bàn làm việc kế toán",
+      "owner": "nhóm Lõi",
+      "dirs": [
+        "apps/web/src/phan-he/ke-toan",
+        "apps/web/src/features/system"
+      ],
+      "screens": [
+        "ACC2",
+        "ACC40",
+        "ACC41",
+        "ACC43",
+        "ACC44",
+        "ACC47",
+        "ACC48",
+        "ACC6",
+        "KH01",
+        "KH02"
+      ],
+      "phases": [
+        "PHASE-020",
+        "PHASE-022",
+        "PHASE-025"
+      ],
+      "cells": {
+        "F1": {
+          "screens": [
+            "ACC40"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "ACC40"
+          ]
+        },
+        "F3": {
+          "tasks": [
+            "S032-20",
+            "S032-29"
+          ],
+          "gap": "chốt giá vốn trước khoá kỳ (R-INV-7); dấu số liệu lúc khoá (PC-021)"
+        },
+        "F4": {
+          "screens": [
+            "ACC40"
+          ]
+        },
+        "F5": {
+          "tasks": [
+            "S032-30"
+          ],
+          "checks": [
+            "PERIOD_CLOSE_OPEN"
+          ],
+          "pcs": [
+            "PC-017",
+            "PC-018",
+            "PC-019",
+            "PC-021",
+            "PC-023"
+          ],
+          "gap": "mức chặn khoá sổ D032-11; DG-CLOSE-2 tách mã"
+        },
+        "F6": {
+          "tasks": [
+            "S032-27",
+            "S032-31",
+            "S032-32",
+            "S032-33",
+            "S032-35",
+            "S032-36",
+            "S032-39"
+          ],
+          "screens": [],
+          "gap": "bản lưu tuần + Đã xem tuần (B4b); Sổ theo dõi các tháng"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/ban-danh-gia.md",
+            "docs/huong-dan/ky-ke-toan.md"
+          ]
+        },
+        "F8": {
+          "screens": []
+        }
+      }
+    },
+    {
+      "id": "M09",
+      "key": "thue",
+      "title": "Thuế",
+      "owner": "H-Joyy",
+      "dirs": [
+        "apps/web/src/phan-he/thue",
+        "apps/api/src/phan-he/thue"
+      ],
+      "screens": [
+        "ACC64",
+        "ACC65",
+        "ACC66",
+        "ACC78",
+        "ACC91",
+        "THUE01",
+        "THUE02",
+        "TNDN03",
+        "TT01"
+      ],
+      "phases": [
+        "PHASE-020"
+      ],
+      "cells": {
+        "F1": {
+          "screens": [
+            "THUE01"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "THUE01"
+          ]
+        },
+        "F3": {
+          "gap": "TNDN tạm tính theo quý; thuế TTĐB"
+        },
+        "F4": {
+          "screens": [
+            "TNDN03",
+            "TT01"
+          ]
+        },
+        "F5": {
+          "checks": [
+            "VAT_REDUCED_RATE",
+            "VAT_INPUT_NONCASH",
+            "INVOICE_FIELDS",
+            "INVOICE_ISSUE_DATE",
+            "TAX_INPUT_NO_INVOICE"
+          ],
+          "pcs": [
+            "PC-011"
+          ]
+        },
+        "F6": {
+          "tasks": [
+            "S035-8"
+          ],
+          "gap": "thẻ Việc thuế hôm nay (hoá đơn chưa kê, kỳ sắp hạn)"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/kiem-chuan.md"
+          ]
+        },
+        "F8": {
+          "docs": [
+            "packages/vn-rulepacks/package.json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "M10",
+      "key": "tai-san",
+      "title": "Tài sản · khấu hao",
+      "owner": "H-Joyy",
+      "dirs": [
+        "apps/web/src/phan-he/tai-san",
+        "apps/api/src/phan-he/tai-san",
+        "apps/api/src/modules/assets"
+      ],
+      "screens": [
+        "ACC22",
+        "ACC23",
+        "ACC27",
+        "ACC28",
+        "ACC29",
+        "ACC30",
+        "ACC31",
+        "ACC32",
+        "ACC33",
+        "ACC35",
+        "ACC37",
+        "ACC42",
+        "ACC60",
+        "ACC61",
+        "ACC62",
+        "ACC63",
+        "ACC67",
+        "ACC68",
+        "ACC69",
+        "TS01"
+      ],
+      "phases": [],
+      "cells": {
+        "F1": {
+          "screens": [
+            "TS01"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "TS01"
+          ]
+        },
+        "F3": {
+          "checks": [
+            "DEPRECIATION_OPEN"
+          ]
+        },
+        "F4": {
+          "screens": [
+            "ACC60"
+          ]
+        },
+        "F5": {
+          "checks": [
+            "DEPRECIATION_OPEN"
+          ],
+          "pcs": [
+            "PC-014"
+          ]
+        },
+        "F6": {
+          "tasks": [
+            "S035-8"
+          ],
+          "gap": "thẻ Việc tài sản hôm nay (tháng chưa khấu hao)"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/can-doi-ke-toan.md"
+          ]
+        },
+        "F8": {
+          "screens": [
+            "TS01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "M11",
+      "key": "bao-cao",
+      "title": "Báo cáo tài chính · sổ · dashboard",
+      "owner": "nhóm Lõi",
+      "dirs": [
+        "apps/web/src/phan-he/ke-toan"
+      ],
+      "screens": [
+        "ACC70",
+        "ACC71",
+        "ACC8",
+        "ACC80",
+        "ACC81",
+        "ACC82",
+        "ACC83",
+        "ACC84",
+        "ACC85",
+        "ACC86",
+        "ACC87",
+        "ACC88",
+        "ACC89",
+        "ACC9",
+        "B09",
+        "KQ01"
+      ],
+      "phases": [],
+      "cells": {
+        "F1": {
+          "screens": [
+            "ACC80"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "ACC80"
+          ]
+        },
+        "F3": {
+          "screens": [
+            "ACC80"
+          ]
+        },
+        "F4": {
+          "tasks": [
+            "S032-20"
+          ],
+          "screens": [
+            "ACC80",
+            "KQ01",
+            "B09"
+          ],
+          "gap": "đối chiếu P&L ↔ 911 ↔ 421 (PC-020); thuyết minh tự điền"
+        },
+        "F5": {
+          "checks": [
+            "ACCOUNT_WRONG_SIDE"
+          ],
+          "pcs": [
+            "PC-020"
+          ],
+          "gap": "kiểm chéo giữa các báo cáo"
+        },
+        "F6": {
+          "tasks": [
+            "S032-33",
+            "S032-34"
+          ],
+          "gap": "dashboard theo cửa hàng / tuần; Sổ theo dõi các tháng"
+        },
+        "F7": {
+          "docs": [
+            "docs/huong-dan/can-doi-ke-toan.md",
+            "docs/huong-dan/nhat-ky-chung.md"
+          ]
+        },
+        "F8": {
+          "screens": [
+            "ACC80"
+          ]
+        }
+      }
+    },
+    {
+      "id": "M12",
+      "key": "he-thong",
+      "title": "Hệ thống · bộ kiểm · công cụ dev (xem HT10)",
+      "owner": "nhóm Lõi",
+      "dirs": [
+        "apps/web/src/phan-he/he-thong",
+        "apps/web/src/phan-he/dev",
+        "apps/web/src/phan-he/api"
+      ],
+      "screens": [
+        "API01",
+        "API02",
+        "API03",
+        "DEV01",
+        "DEV02",
+        "DEV03",
+        "DEV04",
+        "DEV05",
+        "DEV06",
+        "DEV07",
+        "DEV08",
+        "DEV09",
+        "HT01",
+        "HT02",
+        "HT03",
+        "HT04",
+        "HT05",
+        "HT06",
+        "HT07",
+        "HT08",
+        "HT09",
+        "HT10",
+        "HT11",
+        "HT13",
+        "HT15",
+        "TI00",
+        "TI08",
+        "TI09",
+        "TI10",
+        "TI11"
+      ],
+      "phases": [
+        "PHASE-001",
+        "PHASE-002",
+        "PHASE-003",
+        "PHASE-006",
+        "PHASE-007",
+        "PHASE-008",
+        "PHASE-010",
+        "PHASE-011",
+        "PHASE-013",
+        "PHASE-014",
+        "PHASE-015",
+        "PHASE-016",
+        "PHASE-017",
+        "PHASE-018",
+        "PHASE-019",
+        "PHASE-027",
+        "PHASE-028",
+        "PHASE-034",
+        "PHASE-035"
+      ],
+      "cells": {
+        "F1": {
+          "screens": [
+            "HT01"
+          ]
+        },
+        "F2": {
+          "screens": [
+            "HT01"
+          ]
+        },
+        "F3": {
+          "docs": [
+            "docs/standard/bo-may.json"
+          ]
+        },
+        "F4": {
+          "screens": [
+            "HT10"
+          ]
+        },
+        "F5": {
+          "tasks": [
+            "S035-6"
+          ],
+          "docs": [
+            "docs/standard/cong-kiem.json"
+          ],
+          "gap": "SC-MODS-1..3"
+        },
+        "F6": {
+          "tasks": [
+            "S035-4",
+            "S035-5"
+          ],
+          "screens": [
+            "HT10"
+          ],
+          "gap": "HT11 Modules & mức đạt"
+        },
+        "F7": {
+          "tasks": [
+            "S035-7"
+          ],
+          "docs": [
+            "docs/huong-dan/tru-cot-muc-dat.md"
+          ],
+          "gap": "huong-dan/modules-muc-dat.md"
+        },
+        "F8": {
+          "tasks": [
+            "S032-37"
+          ],
+          "docs": [
+            "docs/contracts/BIZCITY-MODULE-v1.md"
+          ],
+          "gap": "defineCheck (R-DIAG-15)"
+        }
+      }
+    }
+  ]
+}

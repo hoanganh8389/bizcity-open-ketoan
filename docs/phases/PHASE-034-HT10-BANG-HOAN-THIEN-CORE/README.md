@@ -3,6 +3,7 @@
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng PHASE-026 S026-15 SC-PILLAR-1 và PHASE-029 S029-18 engine bảng điểm, S029-30 thẻ Nền móng)
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Trạng thái:** ✅ **Xong 2026-11-11** — B1 · B2 · B3a · B3b (D034-11) · B4 · B5a · B5b (D034-12) · B6 · In cả năm thẻ · S034-11 kết quả bộ kiểm của bản dựng (D034-13) đã merge. Tuỳ chọn khi S018-21 nhả `apps/web/src/phan-he/dev/**`: tách `*Body` để bỏ tiêu đề lồng ở "Chạy ở đây". Xem [40](40-MASTER-CHECKLIST.md).
 > **Tệp:** [00 — Kế hoạch & thiết kế](00-MASTER-PLAN.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)

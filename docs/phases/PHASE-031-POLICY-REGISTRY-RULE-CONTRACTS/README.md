@@ -7,6 +7,7 @@
 > **Mức Kernel:** W1 K1 (Platform: phong bì Registry, phiên bản chính sách mua hàng); W2 K2 (cửa nạp nhận `policyRefs`, tầng L4b, Commit Guard); W3–W4 K1
 > **Mục tiêu:** Lấp nửa *Policy* còn thiếu của trụ cột 05 *Configuration & Policy Registry* (ADR-0028). Chính sách nghiệp vụ (giá, chiết khấu, khuyến mại, hạn mức, ngưỡng duyệt) do **module sở hữu**, **phát hành có phiên bản** qua một Registry chung; plugin ngoài (POS WordPress, Woo, sàn) **dùng bản đã phát hành** và gửi tham chiếu về cùng sự việc; cửa nạp **tính lại để kiểm** rồi để Kernel dựng **bút toán dự kiến**. Truy vết được *bút toán → sự việc → chứng từ → chính sách căn cứ (phiên bản, băm)*.
 > **Việc lộ trình:** —
+> **Phân hệ:** mua-hang · ban-hang <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Quyết định (ADR):** [ADR-0031](../../adr/ADR-0031-policy-registry-rule-contracts.md) (chấp nhận 2026-11-07); D031-* ở [00-MASTER-PLAN](00-MASTER-PLAN.md)
 > **Phụ thuộc:** ADR-0029 (tầng ① Chính sách nghiệp vụ), PHASE-021 (tiền kiểm L1–L5, bể chờ), PHASE-020 (Conformance Engine, tư vấn), PHASE-029 E2 (`setting_values`), PHASE-030 · 16 §5 (chính sách duyệt), · 21 (`GateResult`), · 50 / 52 (blueprint mua / bán)

@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 7
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 171
+      "count": 172
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 65
+      "count": 67
     },
     {
       "key": "paused",
@@ -47,6 +47,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -58,6 +62,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -69,6 +77,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -80,6 +92,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -91,6 +107,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -102,6 +122,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -113,6 +137,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -124,6 +152,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -135,6 +167,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -146,6 +182,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -157,6 +197,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -168,6 +212,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -179,6 +227,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -190,6 +242,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -201,6 +257,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -212,6 +272,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -223,6 +287,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -234,6 +302,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -245,6 +317,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -256,6 +332,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -267,6 +347,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -278,6 +362,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -289,6 +377,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -300,6 +392,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -311,6 +407,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -322,6 +422,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -333,6 +437,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -344,6 +452,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -355,6 +467,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -366,6 +482,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -377,6 +497,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -388,6 +512,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -399,6 +527,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -410,6 +542,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -421,6 +557,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -432,6 +572,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -443,6 +587,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -454,6 +602,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -465,6 +617,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -476,6 +632,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -487,6 +647,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -498,6 +662,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -509,6 +677,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -520,6 +692,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -531,6 +707,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -542,6 +722,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -553,6 +737,10 @@
       "status": "paused",
       "column": "paused",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -564,6 +752,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -575,6 +767,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -586,6 +782,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -597,6 +797,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -608,6 +812,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -619,6 +827,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -630,6 +842,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -641,6 +857,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -652,6 +872,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -663,6 +887,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -674,6 +902,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -685,6 +917,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -696,6 +932,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -707,6 +947,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -718,6 +962,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -729,6 +977,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -740,6 +992,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -751,6 +1007,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -762,6 +1022,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -773,6 +1037,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-006-OUTBOX-SU-KIEN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -784,6 +1052,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -795,6 +1067,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -806,6 +1082,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -817,6 +1097,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -828,6 +1112,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -839,6 +1127,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -850,6 +1142,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -861,6 +1157,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-008-SAO-LUU-PITR/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -872,6 +1172,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-008-SAO-LUU-PITR/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -883,6 +1187,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-008-SAO-LUU-PITR/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -894,6 +1202,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-008-SAO-LUU-PITR/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -905,6 +1217,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu",
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-009-MCP-GHI/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -916,6 +1233,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu",
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-009-MCP-GHI/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -927,6 +1249,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu",
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-009-MCP-GHI/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -938,6 +1265,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu",
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-009-MCP-GHI/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -949,6 +1281,11 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "chung-tu",
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-009-MCP-GHI/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -960,6 +1297,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-010-TACH-GOI-KERNEL/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -971,6 +1312,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-010-TACH-GOI-KERNEL/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -982,6 +1327,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-010-TACH-GOI-KERNEL/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -993,6 +1342,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-010-TACH-GOI-KERNEL/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -1004,6 +1357,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-010-TACH-GOI-KERNEL/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -1015,6 +1372,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -1026,6 +1387,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -1037,6 +1402,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -1048,6 +1417,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -1059,6 +1432,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -1070,6 +1447,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -1081,6 +1462,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -1092,6 +1477,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -1103,6 +1492,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -1114,6 +1507,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -1125,6 +1522,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -1136,6 +1537,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -1147,6 +1552,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -1158,6 +1567,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -1169,6 +1582,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-012-GOI-DINH-KHOAN-WORKFLOW/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -1180,6 +1597,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-012-GOI-DINH-KHOAN-WORKFLOW/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -1191,6 +1612,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-012-GOI-DINH-KHOAN-WORKFLOW/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -1202,6 +1627,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-012-GOI-DINH-KHOAN-WORKFLOW/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -1213,6 +1642,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-012-GOI-DINH-KHOAN-WORKFLOW/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -1224,6 +1657,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -1235,6 +1672,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -1246,6 +1687,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -1257,6 +1702,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -1268,6 +1717,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -1279,6 +1732,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -1290,6 +1747,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -1301,6 +1762,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -1312,6 +1777,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -1323,6 +1792,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -1334,6 +1807,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -1345,6 +1822,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -1356,6 +1837,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -1367,6 +1852,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -1378,6 +1867,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -1389,6 +1882,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -1400,6 +1897,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -1411,6 +1912,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -1422,6 +1927,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -1433,6 +1942,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -1444,6 +1957,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -1455,6 +1972,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -1466,6 +1987,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -1477,6 +2002,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -1488,6 +2017,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -1499,6 +2032,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -1510,6 +2047,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -1519,14 +2060,12 @@
       "title": "FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-viec.json, SC-FLOW-1 mở rộng, SC-FLOW-3, SC-FLOW-4, …",
       "priority": null,
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
-        "branch": "feat/flow-2-bang-viec",
-        "state": "đang làm",
-        "since": "2026-11-03",
-        "dot": "PHASE-014 · FLOW-2 — bảng việc sinh từ main (phương án D): cột \"Việc\" ở CLAIMS.md, scripts/bang-vie…"
-      },
+      "column": "partial",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -1538,6 +2077,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -1549,6 +2092,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -1560,6 +2107,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-015-CELL-WORDPRESS/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -1571,6 +2122,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-015-CELL-WORDPRESS/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -1582,6 +2137,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-015-CELL-WORDPRESS/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -1593,6 +2152,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-015-CELL-WORDPRESS/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -1604,6 +2167,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-015-CELL-WORDPRESS/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -1615,6 +2182,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-016-TAI-LON-ADAPTER/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -1626,6 +2197,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-016-TAI-LON-ADAPTER/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -1637,6 +2212,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-016-TAI-LON-ADAPTER/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -1648,6 +2227,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-016-TAI-LON-ADAPTER/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -1659,6 +2242,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-016-TAI-LON-ADAPTER/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -1670,6 +2257,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-016-TAI-LON-ADAPTER/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -1681,6 +2272,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-017-BETA-HE-SINH-THAI/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -1692,6 +2287,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-017-BETA-HE-SINH-THAI/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -1703,6 +2302,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-017-BETA-HE-SINH-THAI/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -1714,6 +2317,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-017-BETA-HE-SINH-THAI/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -1725,6 +2332,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-017-BETA-HE-SINH-THAI/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -1736,6 +2347,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -1747,6 +2362,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -1758,6 +2377,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -1769,6 +2392,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -1780,6 +2407,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -1791,6 +2422,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -1802,6 +2437,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -1813,6 +2452,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -1824,6 +2467,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -1835,6 +2482,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -1846,6 +2497,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -1857,6 +2512,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -1868,6 +2527,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -1879,6 +2542,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -1890,6 +2557,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -1901,6 +2572,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -1912,6 +2587,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -1923,6 +2602,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -1934,6 +2617,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -1945,6 +2632,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -1956,6 +2647,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -1967,6 +2662,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -1978,6 +2677,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -1989,6 +2692,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -2000,6 +2707,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 37
     },
@@ -2017,6 +2728,10 @@
         "since": "2026-11-04",
         "dot": "PHASE-018 · W6 — giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH khi cài Docker; Bàn điều …"
       },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -2028,6 +2743,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -2039,6 +2758,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -2050,6 +2773,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -2061,6 +2788,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -2072,6 +2803,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -2083,6 +2818,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -2094,6 +2833,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -2105,6 +2848,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -2116,6 +2863,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -2127,6 +2878,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -2138,6 +2893,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -2149,6 +2908,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -2160,6 +2923,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -2171,6 +2938,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -2182,6 +2953,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -2193,6 +2968,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -2204,6 +2983,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -2215,6 +2998,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -2226,6 +3013,10 @@
       "status": "paused",
       "column": "paused",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -2237,6 +3028,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -2248,6 +3044,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -2259,6 +3060,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -2270,6 +3076,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -2281,6 +3092,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -2292,6 +3108,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -2303,6 +3124,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -2314,6 +3140,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -2325,6 +3156,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -2336,6 +3172,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -2347,6 +3188,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -2358,6 +3204,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -2369,6 +3220,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -2380,6 +3236,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -2391,6 +3252,11 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -2402,6 +3268,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -2413,6 +3284,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -2424,6 +3300,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -2435,6 +3316,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -2446,6 +3332,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -2457,6 +3348,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -2468,6 +3364,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -2479,6 +3380,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -2490,6 +3396,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -2507,6 +3418,11 @@
         "since": "2026-11-10",
         "dot": "PHASE-020 · S020-25 — HT06 \"Kiểm sổ\" gọn (D020-11)"
       },
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -2518,6 +3434,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -2529,6 +3450,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "thue",
+        "tong-hop"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -2540,6 +3466,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -2551,6 +3481,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -2562,6 +3496,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -2573,6 +3511,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -2584,6 +3526,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -2595,6 +3541,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -2606,6 +3556,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -2617,6 +3571,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -2628,6 +3586,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -2639,6 +3601,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -2650,6 +3616,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -2661,6 +3631,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -2672,6 +3646,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -2683,6 +3661,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -2694,6 +3676,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -2705,6 +3691,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -2716,6 +3706,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -2727,6 +3721,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -2738,6 +3736,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -2749,6 +3751,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -2760,6 +3766,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -2771,6 +3781,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -2782,6 +3796,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -2793,6 +3811,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -2804,6 +3826,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -2815,6 +3841,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md",
       "line": 37
     },
@@ -2826,6 +3856,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -2837,6 +3871,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -2848,6 +3886,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -2859,6 +3901,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -2870,6 +3916,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -2881,6 +3931,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -2892,6 +3946,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -2903,6 +3961,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -2914,6 +3976,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -2925,6 +3991,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -2936,6 +4006,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -2947,6 +4021,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -2958,6 +4036,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -2969,6 +4051,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -2980,6 +4066,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -2991,6 +4081,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -3002,6 +4096,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -3013,6 +4111,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -3024,6 +4126,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -3035,6 +4141,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -3046,6 +4156,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -3057,6 +4171,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -3068,6 +4186,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -3079,6 +4201,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -3090,6 +4216,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -3101,6 +4231,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -3112,6 +4246,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -3123,6 +4261,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -3134,6 +4276,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -3145,6 +4291,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -3156,6 +4306,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -3167,6 +4321,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -3178,6 +4336,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -3189,6 +4351,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -3200,6 +4366,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -3211,6 +4381,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -3222,6 +4396,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -3233,6 +4411,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -3244,6 +4426,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -3255,6 +4441,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -3266,6 +4456,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -3277,6 +4472,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -3288,6 +4488,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -3299,6 +4504,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -3310,6 +4520,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -3321,6 +4536,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -3332,6 +4552,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -3343,6 +4568,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -3354,6 +4584,11 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -3365,6 +4600,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -3376,6 +4616,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -3387,6 +4632,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -3398,6 +4648,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -3409,6 +4664,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -3420,6 +4680,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -3437,6 +4702,11 @@
         "since": "2026-11-03",
         "dot": "PHASE-024 · S024-16 — SC-ITEM-1..3 (sổ khoá theo itemid, không theo mã; luật định khoản không đọc s…"
       },
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -3448,6 +4718,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -3459,6 +4734,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -3470,6 +4750,11 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -3481,6 +4766,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -3492,6 +4782,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -3503,6 +4798,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -3514,6 +4814,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -3525,6 +4830,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -3536,6 +4846,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -3547,6 +4862,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 37
     },
@@ -3558,6 +4878,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -3569,6 +4894,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 39
     },
@@ -3580,6 +4910,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 40
     },
@@ -3591,6 +4926,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 41
     },
@@ -3602,6 +4942,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 42
     },
@@ -3613,6 +4958,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 43
     },
@@ -3630,6 +4980,11 @@
         "since": "2026-11-05",
         "dot": "PHASE-024 · S024-33 — bỏ suy tài khoản kho từ tiền tố trong luật chuyển kho (SC-KERNEL-5); chữ chốt…"
       },
+      "modules": [
+        "danh-muc",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 44
     },
@@ -3641,6 +4996,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 6
     },
@@ -3652,6 +5012,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 7
     },
@@ -3663,6 +5028,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 8
     },
@@ -3674,6 +5044,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 9
     },
@@ -3685,6 +5060,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -3696,6 +5076,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -3707,6 +5092,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -3718,6 +5108,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -3729,6 +5124,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -3740,6 +5140,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -3751,6 +5156,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -3762,6 +5172,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -3773,6 +5188,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -3784,6 +5204,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -3795,6 +5220,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -3806,6 +5236,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -3817,6 +5252,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -3828,6 +5268,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "tong-hop",
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -3839,6 +5284,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 6
     },
@@ -3850,6 +5299,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 8
     },
@@ -3861,6 +5314,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 9
     },
@@ -3872,6 +5329,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -3883,6 +5344,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -3894,6 +5359,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -3905,6 +5374,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -3916,6 +5389,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -3927,6 +5404,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -3938,6 +5419,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -3949,6 +5434,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -3960,6 +5449,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -3971,6 +5464,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -3982,6 +5479,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -3993,6 +5494,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -4004,6 +5509,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 7
     },
@@ -4015,6 +5524,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -4026,6 +5539,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -4037,6 +5554,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -4048,6 +5569,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -4059,6 +5584,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -4070,6 +5599,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -4081,6 +5614,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -4092,6 +5629,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 6
     },
@@ -4103,6 +5644,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 7
     },
@@ -4114,6 +5659,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 8
     },
@@ -4125,6 +5674,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 9
     },
@@ -4136,6 +5689,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -4147,6 +5704,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -4158,6 +5719,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -4169,6 +5734,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -4180,6 +5749,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -4191,6 +5764,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -4202,6 +5779,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -4213,6 +5794,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -4224,6 +5809,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -4235,6 +5824,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -4246,6 +5839,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -4257,6 +5854,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -4268,6 +5869,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -4279,6 +5884,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -4296,6 +5905,10 @@
         "since": "2026-11-07",
         "dot": "PHASE-028 · W5 đợt 2 — thư viện phân quyền mẫu từ bảng TGS: docs/standard/phan-quyen/ (349 mã, 28 n…"
       },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -4307,6 +5920,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -4318,6 +5935,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -4329,6 +5950,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -4340,6 +5965,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -4351,6 +5980,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -4362,6 +5995,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -4373,6 +6010,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -4384,6 +6025,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -4395,6 +6040,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -4406,6 +6055,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -4417,6 +6070,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -4428,6 +6085,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -4439,6 +6100,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -4450,6 +6115,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -4461,6 +6130,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -4472,6 +6145,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -4483,6 +6160,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -4494,6 +6175,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -4505,6 +6190,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -4516,6 +6205,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -4527,6 +6220,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -4538,6 +6235,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -4549,6 +6250,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -4560,6 +6265,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -4571,6 +6280,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -4582,6 +6295,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -4593,6 +6310,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -4604,6 +6325,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F4",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 37
     },
@@ -4615,6 +6340,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 41
     },
@@ -4626,6 +6355,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -4637,6 +6370,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 39
     },
@@ -4648,6 +6385,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 40
     },
@@ -4659,6 +6400,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -4670,6 +6415,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 42
     },
@@ -4681,6 +6430,10 @@
       "status": "paused",
       "column": "paused",
       "claim": null,
+      "modules": [
+        "chung-tu"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 43
     },
@@ -4692,6 +6445,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 8
     },
@@ -4703,6 +6462,12 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 9
     },
@@ -4714,6 +6479,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -4725,6 +6496,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -4736,6 +6513,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -4747,6 +6530,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -4758,6 +6547,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -4769,6 +6564,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -4780,6 +6581,12 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -4791,6 +6598,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -4802,6 +6615,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -4813,6 +6632,12 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -4824,6 +6649,12 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -4835,6 +6666,12 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -4846,6 +6683,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -4857,6 +6700,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -4868,6 +6717,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -4879,6 +6734,12 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -4890,6 +6751,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -4901,6 +6768,12 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -4912,6 +6785,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -4923,6 +6802,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -4934,6 +6819,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -4945,6 +6836,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -4956,6 +6853,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -4967,6 +6870,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -4978,6 +6887,12 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -4989,6 +6904,12 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -5000,6 +6921,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -5011,6 +6938,12 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 37
     },
@@ -5022,6 +6955,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -5033,6 +6972,12 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 39
     },
@@ -5044,6 +6989,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 40
     },
@@ -5055,6 +7006,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 41
     },
@@ -5066,6 +7023,12 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 42
     },
@@ -5077,6 +7040,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 43
     },
@@ -5088,6 +7057,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 44
     },
@@ -5099,6 +7074,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 45
     },
@@ -5110,6 +7091,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 46
     },
@@ -5121,6 +7108,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 47
     },
@@ -5132,6 +7125,12 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 49
     },
@@ -5143,6 +7142,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 50
     },
@@ -5154,6 +7159,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 51
     },
@@ -5165,6 +7176,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 48
     },
@@ -5176,6 +7193,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 52
     },
@@ -5187,6 +7210,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 53
     },
@@ -5198,6 +7227,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 54
     },
@@ -5209,6 +7244,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 55
     },
@@ -5220,6 +7261,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 56
     },
@@ -5231,6 +7278,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 57
     },
@@ -5242,6 +7295,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 58
     },
@@ -5253,6 +7312,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 59
     },
@@ -5264,6 +7329,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 60
     },
@@ -5275,6 +7346,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 61
     },
@@ -5286,6 +7363,12 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "kho",
+        "ban-hang"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 62
     },
@@ -5297,6 +7380,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -5308,6 +7396,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -5319,6 +7412,11 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -5330,6 +7428,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -5341,6 +7444,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -5352,6 +7460,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -5363,6 +7476,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -5374,6 +7492,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -5385,6 +7508,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -5396,6 +7524,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -5407,6 +7540,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -5418,6 +7556,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -5429,6 +7572,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -5440,6 +7588,11 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -5451,6 +7604,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -5462,6 +7620,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -5473,6 +7636,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -5484,6 +7652,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -5495,6 +7668,11 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -5506,6 +7684,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -5517,6 +7700,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -5528,6 +7716,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -5539,6 +7732,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -5550,6 +7748,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -5561,6 +7764,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -5572,6 +7780,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -5583,6 +7796,11 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -5594,6 +7812,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 37
     },
@@ -5605,6 +7828,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -5622,6 +7850,11 @@
         "since": "2026-11-09",
         "dot": "PHASE-031 · W4c — ô Thực hiện chương trình: program[] ở core.policy.tracking (chứng từ áp, quà đã t…"
       },
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 39
     },
@@ -5633,6 +7866,11 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 40
     },
@@ -5644,6 +7882,11 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "mua-hang",
+        "ban-hang"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 41
     },
@@ -5655,6 +7898,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -5666,6 +7913,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -5677,6 +7928,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -5688,6 +7943,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -5699,6 +7958,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -5710,6 +7973,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -5721,6 +7988,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -5732,6 +8003,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F2",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -5743,6 +8018,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -5754,6 +8033,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -5765,6 +8048,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -5776,6 +8063,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -5787,6 +8078,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -5798,6 +8093,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -5809,6 +8108,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -5820,6 +8123,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 25
     },
@@ -5831,6 +8138,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -5842,6 +8153,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -5853,6 +8168,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 28
     },
@@ -5864,6 +8183,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -5875,6 +8198,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -5886,6 +8213,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F3",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -5897,6 +8228,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 32
     },
@@ -5908,6 +8243,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -5919,6 +8258,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 34
     },
@@ -5930,6 +8273,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -5941,6 +8288,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -5952,6 +8303,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 37
     },
@@ -5963,6 +8318,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -5974,6 +8333,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 39
     },
@@ -5991,6 +8354,10 @@
         "since": "2026-11-11",
         "dot": "PHASE-032 · B4a — thẻ Kết quả từng tuần (Bàn làm việc kế toán): GET /api/v1/system/diagnostics/week…"
       },
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 40
     },
@@ -6002,6 +8369,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 41
     },
@@ -6013,6 +8384,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 42
     },
@@ -6024,6 +8399,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 43
     },
@@ -6035,6 +8414,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 44
     },
@@ -6046,6 +8429,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 45
     },
@@ -6057,6 +8444,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F8",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 46
     },
@@ -6068,6 +8459,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 47
     },
@@ -6079,6 +8474,10 @@
       "status": "partial",
       "column": "partial",
       "claim": null,
+      "modules": [
+        "kho"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 48
     },
@@ -6090,6 +8489,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -6101,6 +8504,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -6112,6 +8519,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -6123,6 +8534,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -6134,6 +8549,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -6145,6 +8564,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -6156,6 +8579,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -6167,6 +8594,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -6178,6 +8609,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -6189,6 +8624,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -6200,6 +8639,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -6211,6 +8654,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 20
     },
@@ -6222,6 +8669,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -6233,6 +8684,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -6244,6 +8699,10 @@
       "status": "done",
       "column": "done",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -6255,6 +8714,10 @@
       "status": "blocked",
       "column": "blocked",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -6263,15 +8726,13 @@
       "phase": "PHASE-035",
       "title": "B1 — docs/standard/modules.json (bizcitymodules@1, 12 × 8, ô liệt kê việc hiện có); R-FLOW-10 vào RULE-FLOW; dòng Phân hệ: cho 34 README phase; bang-viec.mjs +…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-035; người rà: Thuy2k)",
-        "branch": "feat/phase-035-b1-so-phan-he",
-        "state": "đang làm",
-        "since": "2026-11-11",
-        "dot": "PHASE-035 · B1 — sổ docs/standard/modules.json (bizcitymodules@1, 12 phân hệ × 8 mặt); R-FLOW-10 gắ…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -6281,14 +8742,12 @@
       "title": "B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan",
       "priority": "P0",
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-035; người rà: Thuy2k)",
-        "branch": "feat/phase-035-b1-so-phan-he",
-        "state": "đang làm",
-        "since": "2026-11-11",
-        "dot": "PHASE-035 · B1 — sổ docs/standard/modules.json (bizcitymodules@1, 12 phân hệ × 8 mặt); R-FLOW-10 gắ…"
-      },
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -6300,6 +8759,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -6311,6 +8774,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -6322,6 +8789,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -6333,6 +8804,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -6344,6 +8819,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -6355,6 +8834,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -6366,6 +8849,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F6",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -6377,6 +8864,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -6388,6 +8879,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -6399,6 +8894,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -6410,6 +8909,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -6421,6 +8924,10 @@
       "status": "todo",
       "column": "todo",
       "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
       "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 19
     }

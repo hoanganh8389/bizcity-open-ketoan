@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkRegistry, findOverlaps, inScope, isDocsOnly, normPath, overlaps, parseClaims, sharedTouched } from './flow.lib.mjs';
-import { buildBoard, parseAllChecklists, parseChecklist, renderJson, renderMd, viecProblems } from './board.lib.mjs';
+import { buildBoard, facetOf, parseAllChecklists, parseChecklist, parsePhaseModules, renderJson, renderMd, splitRowModules, viecProblems } from './board.lib.mjs';
 
 // [2026-11-03 11:52 PM Johnny Chu - Chu Hoàng Anh] FLOW — FLOW-2: khuôn CLAIMS.md có cột Việc (mặc định — trong các ca cũ)
 const HEAD = '| Đợt | Việc | Phạm vi | Người nhận | Nhánh | Trạng thái | Từ ngày |\n|---|---|---|---|---|---|---|\n';
@@ -87,6 +87,24 @@ test('bảng việc: cột theo giữ chỗ / ký hiệu; mã lạ và mã giữ
   assert.equal(renderJson(buildBoard(items, claims.rows)), renderJson(board));
   assert.equal(renderMd(board), renderMd(buildBoard([...items].reverse(), claims.rows)));
   assert.doesNotMatch(renderJson(board), /20\d\d-\d\d-\d\dT/);
+});
+
+// [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1 (S035-3, R-FLOW-10): mỗi việc mang phân hệ (README phase `**Phân hệ:**`, dòng việc ghi đè `{key}`) và mặt F1..F8 theo từ khoá — nguồn cho HT11 Modules & mức đạt
+test('phân hệ (R-FLOW-10): README phase là mặc định, dòng việc ghi đè {key}, khoá lạ bị bỏ, không có thì rỗng; mặt theo từ khoá', () => {
+  assert.deepEqual(parsePhaseModules('> **Phân hệ:** kho · mua-hang · la-la · kho <!-- dấu -->'), ['kho', 'mua-hang']);
+  assert.deepEqual(parsePhaseModules('# x'), []);
+  assert.deepEqual(splitRowModules('Màn tồn theo lô {ban-hang, kho}'), { modules: ['ban-hang', 'kho'], title: 'Màn tồn theo lô' });
+  assert.deepEqual(splitRowModules('Không ghi đè'), { modules: null, title: 'Không ghi đè' });
+  assert.deepEqual(splitRowModules('số đo warn_ack_total{code}'), { modules: null, title: 'số đo warn_ack_total{code}' });
+  const files = [
+    { path: 'docs/phases/PHASE-003-Z/README.md', text: '# z\n\n> **Phân hệ:** kho\n' },
+    { path: 'docs/phases/PHASE-003-Z/40-MASTER-CHECKLIST.md', text: CK(['| S003-1 | Hướng dẫn tính giá vốn | P0 | ☐ |', '| S003-2 | Màn tồn theo lô {ban-hang} | P0 | ☐ |']) },
+    { path: 'docs/phases/PHASE-004-W/40-MASTER-CHECKLIST.md', text: CK(['| S004-1 | Phiếu chi | P0 | ☐ |']) },
+  ];
+  const board = buildBoard(parseAllChecklists(files).items, []);
+  assert.deepEqual(board.items.map((i) => [i.id, i.modules, i.facet]), [['S003-1', ['kho'], 'F7'], ['S003-2', ['ban-hang'], 'F1'], ['S004-1', [], 'F1']]);
+  assert.equal(board.items[1].title, 'Màn tồn theo lô');
+  assert.deepEqual(['SC-X kiểm', 'thẻ Việc hôm nay', 'API đọc lớp', 'engine giá vốn', 'báo cáo NXT', 'danh mục kho', 'phiếu nhập'].map(facetOf), ['F5', 'F6', 'F8', 'F3', 'F4', 'F2', 'F1']);
 });
 
 test('chuẩn hoá phạm vi', () => {

@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 5 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Người ngoài nhóm Lõi viết module chỉ bằng SDK; bản Beta có phát hành ký, SBOM; registry gói định khoản có chữ ký.
 > **Việc lộ trình:** 5.1, 5.2, 5.6, 5.7, 5.8
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G3-01
 > **Tuân thủ / nguyên tắc:** AP-1
 > **Phụ thuộc phase:** 014

@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BOARD_JSON, BOARD_MD, CHECKLIST_RE, buildBoard, parseAllChecklists, renderJson, renderMd, viecProblems } from '../tests/conformance/checks/flow/board.lib.mjs';
+import { BOARD_JSON, BOARD_MD, CHECKLIST_RE, README_RE, buildBoard, parseAllChecklists, renderJson, renderMd, viecProblems } from '../tests/conformance/checks/flow/board.lib.mjs';
 import { CLAIMS_FILE, parseClaims } from '../tests/conformance/checks/flow/flow.lib.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,8 +22,9 @@ const read = (rel) => { try { return fs.readFileSync(path.join(ROOT, rel), 'utf8
 const phasesDir = path.join(ROOT, 'docs/phases');
 const files = fs.readdirSync(phasesDir, { withFileTypes: true })
   .filter((d) => d.isDirectory())
-  .map((d) => `docs/phases/${d.name}/40-MASTER-CHECKLIST.md`)
-  .filter((f) => CHECKLIST_RE.test(f) && read(f) != null)
+  .flatMap((d) => [`docs/phases/${d.name}/40-MASTER-CHECKLIST.md`, `docs/phases/${d.name}/README.md`])
+  // [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1 (S035-3, R-FLOW-10): mỗi việc mang phân hệ (README phase `**Phân hệ:**`, dòng việc ghi đè `{key}`) và mặt F1..F8 theo từ khoá — nguồn cho HT11 Modules & mức đạt
+  .filter((f) => (CHECKLIST_RE.test(f) || README_RE.test(f)) && read(f) != null)
   .sort()
   .map((f) => ({ path: f, text: read(f) }));
 
@@ -33,7 +34,7 @@ const board = buildBoard(items, claims.rows);
 const out = { [BOARD_MD]: renderMd(board), [BOARD_JSON]: renderJson(board) };
 const issues = [...problems.map((p) => `${p.file}:${p.line}  ${p.message}`), ...claims.problems.map((p) => `${CLAIMS_FILE}:${p.line ?? ''}  ${p.message}`), ...viecProblems(claims.rows, items).map((p) => `${CLAIMS_FILE}:${p.line}  ${p.message}`)];
 
-console.log(`Bảng việc: ${items.length} việc trong ${files.length} checklist · ${claims.rows.length} dòng giữ chỗ`);
+console.log(`Bảng việc: ${items.length} việc trong ${files.filter((f) => CHECKLIST_RE.test(f.path)).length} checklist · ${items.filter((i) => i.modules?.length).length} việc có phân hệ · ${claims.rows.length} dòng giữ chỗ`);
 for (const c of board.columns) console.log(`  ${c.label.padEnd(16)} ${String(c.count).padStart(4)}`);
 if (issues.length) {
   console.log(`\n${issues.length} lỗi khuôn (SC-FLOW-1 / SC-FLOW-4) — sửa ở nguồn:`);

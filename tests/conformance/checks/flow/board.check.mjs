@@ -2,12 +2,13 @@
 /**
  * Kiểm tĩnh, chỉ đọc qua ctx. Nguồn: docs/phases/*\/40-MASTER-CHECKLIST.md + docs/phases/CLAIMS.md. Khuôn: docs/rules/RULE-FLOW.md §4.
  */
-import { BOARD_JSON, BOARD_MD, CHECKLIST_RE, buildBoard, parseAllChecklists, renderJson, renderMd } from './board.lib.mjs';
+import { BOARD_JSON, BOARD_MD, CHECKLIST_RE, README_RE, buildBoard, parseAllChecklists, renderJson, renderMd } from './board.lib.mjs';
 import { CLAIMS_FILE, parseClaims } from './flow.lib.mjs';
 
 /** Đọc mọi checklist của kho đang kiểm. */
 export function readChecklists(ctx) {
-  return ctx.repo.files({ under: ['docs/phases'], ext: ['.md'] }).filter((f) => CHECKLIST_RE.test(f)).map((f) => ({ path: f, text: ctx.repo.read(f) ?? '' }));
+  // [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1 (S035-3, R-FLOW-10): mỗi việc mang phân hệ (README phase `**Phân hệ:**`, dòng việc ghi đè `{key}`) và mặt F1..F8 theo từ khoá — nguồn cho HT11 Modules & mức đạt
+  return ctx.repo.files({ under: ['docs/phases'], ext: ['.md'] }).filter((f) => CHECKLIST_RE.test(f) || README_RE.test(f)).map((f) => ({ path: f, text: ctx.repo.read(f) ?? '' }));
 }
 
 export const checks = [

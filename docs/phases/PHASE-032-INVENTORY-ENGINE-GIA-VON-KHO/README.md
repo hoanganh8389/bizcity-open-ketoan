@@ -3,6 +3,7 @@
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng PHASE-025 W2–W4 và K-030-1 / K-030-4 của PHASE-030)
+> **Phân hệ:** kho <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Trạng thái:** 🟡 **W0 tài liệu + bản mẫu 2026-11-09; ADR-0033 Chấp nhận 2026-11-09** (chủ dự án duyệt D032-1..13, làm theo **bước thắng nhỏ** B1..B9, [00 §6a](00-MASTER-PLAN.md)). Q032-1 / Q032-5 (kế toán trưởng) và Q032-2 / Q032-3 (nhóm Lõi) dùng phương án đề nghị làm mặc định tạm. **Chưa giữ chỗ code** (W0 là tài liệu thuần, ngoại lệ R-FLOW-1); W1 trở đi giữ chỗ từng đợt trong [CLAIMS.md](../CLAIMS.md) sau khi duyệt.
 > **Phụ trách** <!-- [2026-11-10 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chủ dự án duyệt ba khối màn mặt hàng và trả Q032-9 = cha chỉ là tổng khi xem (D032-14); bản mẫu the-mat-hang-hai-so.html; Thuy2k phụ trách -->: **Thuy2k** (Nguyễn Văn Thủy) — danh mục (Master Data), mua hàng, kho, giá vốn; chủ dự án giao 2026-11-10.

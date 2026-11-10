@@ -7,6 +7,7 @@
 > **Giai đoạn:** mở rộng của PHASE-018 (giám sát vận hành) · **Code:** có (W1–W5) · **Mức Kernel:** K0 (không đụng Kernel, không đụng đường ghi sổ)
 > **Mục tiêu:** dev của phân hệ / add-in (người đóng góp, dev của đơn vị) **tự tìm ra lỗi của mình ngay trong app**, từ một mã lỗi đến đúng module, đúng bước, đúng câu CSDL — mà **không** vào Grafana, **không** thấy dữ liệu của đơn vị khác, **không** có đường nào sửa sổ.
 > **Việc lộ trình:** —
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** AP-1, AP-2, AP-7 · R-OBS-1..8 · R-SEC-*, R-TEN-* · R-ERR-5
 > **Phụ thuộc phase:** 018 (bộ giám sát, OpenTelemetry W5), 007 (RLS) · **Liên quan:** 013 (ui-kit), 015 (Cell — dev Cell dùng chung màn Tra mã)

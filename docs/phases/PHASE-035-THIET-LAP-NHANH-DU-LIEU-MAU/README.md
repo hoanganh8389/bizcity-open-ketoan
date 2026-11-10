@@ -3,6 +3,7 @@
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng `bizcity_preset@1`, PHASE-030 S030-53 bộ giả lập `db/seeds`)
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Trạng thái:** 🟡 **W0 đề xuất 2026-11-10** — chờ chủ dự án duyệt D035-1..12, trả Q035-1..6; chưa giữ chỗ code.
 > **Tệp:** [00 — Kế hoạch & thiết kế](00-MASTER-PLAN.md) · [40 — Checklist](40-MASTER-CHECKLIST.md) · [Bản mẫu hộp thoại](mockups/thiet-lap-nhanh.html)
