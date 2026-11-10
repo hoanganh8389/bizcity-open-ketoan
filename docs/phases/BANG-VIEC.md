@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 9 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 165 |
+| Chưa ai nhận | 164 |
 | Chờ đủ tín hiệu | 61 |
 | Hoãn | 3 |
 | Xong | 287 |
 | **Tổng** | **552** |
 
-## Đang làm (8)
+## Đang làm (9)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -26,6 +26,7 @@
 | [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-029-s029-25-acc14` |
 | [S030-53](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L62) | PHASE-030 | Gỡ dữ liệu thật khỏi bản phát hành (Q030-L5): db/seeds/ đối tượng, nhân viên, tài khoản ngân hàng, chi nhánh … | P0 | hoanganh8389 (phiên Claude, seeds-gia-lap) · `feat/s030-53-seeds-gia-lap` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
+| [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
 
 ## Chờ merge (0)
 
@@ -64,7 +65,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (165)
+## Chưa ai nhận (164)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -223,7 +224,6 @@
 | [S032-26](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L35) | PHASE-032 | Sổ đăng ký phép kiểm một chỗ: mã PC-001..023, nhịp (ngày · tuần · kỳ), mức theo nhịp, remedy, chủ việc; ánh x… | P0 | — |
 | [S032-28](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L37) | PHASE-032 | Khoá kỳ kéo theo mọi chi nhánh cùng nhóm tính giá (PC-015); không khoá lẻ một chi nhánh khi giá vốn là của nh… | P0 | — |
 | [S032-29](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L38) | PHASE-032 | sourceDigest lúc kiểm, kiểm lại trong cùng giao dịch khoá (PC-021); đầu kỳ = snapshot cuối kỳ trước, mở lại k… | P0 | — |
-| [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | — |
 | [S032-32](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L41) | PHASE-032 | Chốt tuần (mềm): kế toán đánh dấu Đã xem tuần — mọi việc của tuần có người nhận hoặc lý do; không khoá dữ liệ… | P1 | — |
 | [S032-33](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L42) | PHASE-032 | Bảng điểm tháng: tổng các tuần + phép kiểm chỉ chạy ở kỳ + kết quả khoá; lưu cùng nhật ký khoá làm hồ sơ bằng… | P1 | — |
 | [S032-34](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L43) | PHASE-032 | Ma trận thời gian tiêu chí × tuần / tháng (60 §10): đọc bản chụp S032-31 / 33, mốc M0..M4 từ checklist; GET /… | P1 | — |
