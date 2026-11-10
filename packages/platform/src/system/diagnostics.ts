@@ -208,6 +208,103 @@ export const diagnosticsNightlySubscriber = defineSubscriber({
   },
 });
 
+// [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B4a (S032-31 phần xem): kết quả từng tuần gom từ lượt tự kiểm L3 đã lưu, tuần ISO tách theo tháng, chỉ đọc
+/** Một việc còn mở ở cuối một lát tuần: kiểm nào, mức gì, bao nhiêu chỗ, có từ ngày nào (liên tục qua các lượt). */
+export interface WeekIssue { code: string; title: string; level: DiagOutcome; count: number; since: string; owner?: string; closeTitle?: string }
+/** Kết quả một lát tuần = (tuần ISO × tháng): tuần vắt hai tháng tách hai lát, mỗi tháng có đủ tuần của chính nó (PHASE-032 · 60 §9.1). */
+export interface WeekResult {
+  week: string;          // 2026-W45
+  period: string;        // 2026-11
+  from: string;          // ngày đầu của lát (thứ Hai hoặc mùng 1)
+  to: string;            // ngày cuối của lát (Chủ nhật hoặc cuối tháng)
+  runs: number;          // số lượt tự kiểm cả sổ trong lát
+  days: number;          // số ngày có lượt
+  lastAt: string;        // giờ của lượt cuối lát — kết quả lát = kết quả lượt này
+  applicable: number;    // phép kiểm có dữ liệu để xét (bỏ "rỗng", R-DIAG-7)
+  passed: number;
+  errors: number;        // lỗi toàn vẹn còn mở cuối lát
+  open: WeekIssue[];
+  opened: string[];      // mã mới so với lượt cuối của lát trước
+  closed: string[];      // mã đã hết so với lượt cuối của lát trước
+  oldestDays: number | null;
+}
+
+const VN_DAY = (d: Date) => new Date(d.getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+const dayNum = (s: string) => Math.round(Date.parse(`${s}T00:00:00Z`) / 86400_000);
+const dayStr = (n: number) => new Date(n * 86400_000).toISOString().slice(0, 10);
+/** Tuần ISO 8601 của một ngày (YYYY-MM-DD): thứ Hai đầu tuần, tuần 1 chứa thứ Năm đầu tiên của năm. */
+function isoWeek(s: string): { week: string; monday: number } {
+  const n = dayNum(s);
+  const dow = (new Date(n * 86400_000).getUTCDay() + 6) % 7; // 0 = thứ Hai
+  const monday = n - dow;
+  const thursday = new Date((monday + 3) * 86400_000);
+  const y = thursday.getUTCFullYear();
+  const w = Math.floor((dayNum(thursday.toISOString().slice(0, 10)) - dayNum(`${y}-01-01`)) / 7) + 1;
+  return { week: `${y}-W${String(w).padStart(2, '0')}`, monday };
+}
+
+/**
+ * Kết quả từng tuần (PHASE-032 B4a). Chỉ đọc diagnostic_runs: lượt L3 cả sổ (không khoảng ngày, không chi nhánh — lượt đêm
+ * core.diagnostics-nightly và Kiểm lại tất cả). Kết quả lát = lượt cuối của lát; việc mới / đã đóng so với lượt cuối lát trước;
+ * "có từ" = lượt đầu tiên của chuỗi lượt liên tục còn báo mã đó. Lượt giữ 90 ngày (R-DIAG-5): xem được khoảng 12 tuần gần nhất;
+ * bản lưu tuần lâu dài là bước B4b.
+ */
+export async function weeklyDiagnostics(tenantId: string, opts: { weeks?: number; db?: Kysely<Database> } = {}): Promise<WeekResult[]> {
+  const conn = opts.db ?? db;
+  const rows = await conn.selectFrom('diagnostic_runs').select(['id', 'checks', 'created_at'])
+    .where('tenant_id', '=', tenantId).where('layer', '=', 'L3')
+    .where(sql<boolean>`coalesce(scope->>'from', '') = '' AND coalesce(scope->>'to', '') = '' AND coalesce(scope->>'branchCode', '') = ''`)
+    .orderBy('created_at').orderBy('id').execute();
+  type Bad = Map<string, DiagResult>;
+  const since = new Map<string, string>();
+  const slices = new Map<string, { week: string; period: string; from: string; to: string; runs: number; days: Set<string>; last: DiagResult[]; lastAt: string; lastBad: Bad; prevBad: Bad | null; since: Map<string, string> }>();
+  let prevKey = '';
+  for (const r of rows) {
+    const at = new Date(r.created_at as unknown as string);
+    const day = VN_DAY(at);
+    const { week, monday } = isoWeek(day);
+    const period = day.slice(0, 7);
+    const k = `${week}|${period}`;
+    const checks = (r.checks as unknown as DiagResult[]) ?? [];
+    const bad: Bad = new Map(checks.filter((c) => c.level === 'warn' || c.level === 'error' || c.level === 'info').map((c) => [c.code, c]));
+    for (const code of [...since.keys()]) if (!bad.has(code)) since.delete(code);
+    for (const code of bad.keys()) if (!since.has(code)) since.set(code, day);
+    let s = slices.get(k);
+    if (!s) {
+      // Lát = tuần ∩ tháng: từ max(thứ Hai, mùng 1) đến min(Chủ nhật, cuối tháng).
+      const first = dayNum(`${period}-01`);
+      const [py, pm] = period.split('-').map(Number) as [number, number];
+      const last = dayNum(pm === 12 ? `${py + 1}-01-01` : `${py}-${String(pm + 1).padStart(2, '0')}-01`) - 1;
+      s = { week, period, from: dayStr(Math.max(monday, first)), to: dayStr(Math.min(monday + 6, last)), runs: 0, days: new Set(), last: [], lastAt: '', lastBad: new Map(), prevBad: prevKey ? slices.get(prevKey)!.lastBad : null, since: new Map() };
+      slices.set(k, s);
+    }
+    s.runs++;
+    s.days.add(day);
+    s.last = checks;
+    s.lastAt = at.toISOString();
+    s.lastBad = bad;
+    s.since = new Map(since);
+    prevKey = k;
+  }
+  const out: WeekResult[] = [];
+  for (const s of slices.values()) {
+    const end = dayNum(VN_DAY(new Date(s.lastAt)));
+    const open: WeekIssue[] = [...s.lastBad.values()].map((c) => ({ code: c.code, title: c.title, level: c.level, count: c.count, since: s.since.get(c.code) ?? VN_DAY(new Date(s.lastAt)), ...(c.remedy?.owner ? { owner: c.remedy.owner } : {}), ...(c.closeTitle ? { closeTitle: c.closeTitle } : {}) }));
+    const prev = s.prevBad;
+    out.push({
+      week: s.week, period: s.period, from: s.from, to: s.to, runs: s.runs, days: s.days.size, lastAt: s.lastAt,
+      applicable: s.last.filter((c) => c.level !== 'empty').length,
+      passed: s.last.filter((c) => c.level === 'pass').length,
+      errors: s.last.filter((c) => c.level === 'error').length,
+      open,
+      opened: open.filter((c) => !prev?.has(c.code)).map((c) => c.code),
+      closed: prev ? [...prev.keys()].filter((code) => !s.lastBad.has(code)) : [],
+      oldestDays: open.length ? Math.max(...open.map((c) => end - dayNum(c.since))) : null,
+    });
+  }
+  return out.reverse().slice(0, opts.weeks ?? 12);
+}
+
 /** Lưu một lượt vào diagnostic_runs (chỉ thêm, R-DIAG-5). */
 export async function saveDiagnosticRun(report: DiagReport, meta: { tenantId: string; actor: string; trigger: 'manual' | 'period-lock' | 'schedule' | 'release' }): Promise<string> {
   // L5 lưu ở conformance_runs (ảnh chụp báo cáo Kiểm chuẩn), không ở diagnostic_runs (CHECK layer IN ('L1','L3'), migration 0034).

@@ -2,7 +2,7 @@
 // [2026-11-09 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B1 / D032-13: HT08 đổi tên Bàn làm việc kế toán; thẻ Khoá thử hôm nay (mặc định) + thẻ Rà theo vai (bàn đánh giá cũ, giữ nguyên)
 /**
  * BÀN LÀM VIỆC KẾ TOÁN (HT08; trước là Bàn đánh giá, PHASE-022 30-UI-UX; đổi tên theo PHASE-032 D032-13).
- * Thẻ Việc hôm nay: ViecHomNay.tsx (B2a). Thẻ Khoá thử hôm nay: KhoaThuHomNay.tsx (B1). Thẻ Rà theo vai: phần dưới. Dữ liệu: GET /api/v1/system/review-board?persona= (core.review.board, chỉ đọc).
+ * Thẻ Việc hôm nay: ViecHomNay.tsx (B2a). Thẻ Khoá thử hôm nay: KhoaThuHomNay.tsx (B1). Thẻ Kết quả từng tuần: KetQuaTuan.tsx (B4a). Thẻ Rà theo vai: phần dưới. Dữ liệu: GET /api/v1/system/review-board?persona= (core.review.board, chỉ đọc).
  * Trạng thái luôn có chữ; không điểm %; "Chưa kiểm được" không tính là đạt; không nút sửa sổ / tắt kiểm / bỏ qua.
  * "Kiểm lại" chạy đúng một mã (core.review.recheck). "In biên bản" in khung biên bản (CSS @media print).
  */
@@ -14,6 +14,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { RemedyView } from '@/components/RemedyView';
 import { KhoaThuHomNay } from './KhoaThuHomNay';
+// [2026-11-11 01:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B4a: thẻ Kết quả từng tuần
+import { KetQuaTuan } from './KetQuaTuan';
 import { ViecHomNay } from './ViecHomNay';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -43,7 +45,7 @@ const ORDER: Status[] = ['error', 'warn', 'ok', 'block_ok', 'untested', 'elsewhe
 const actionable = (s: Status) => s === 'warn' || s === 'error';
 
 // [2026-11-09 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2a: thẻ Việc hôm nay đứng đầu (thứ tự năm thẻ ở 70 §5)
-const TABS = [['viec', 'Việc hôm nay'], ['khoa-thu', 'Khoá thử hôm nay'], ['ra-theo-vai', 'Rà theo vai']] as const;
+const TABS = [['viec', 'Việc hôm nay'], ['khoa-thu', 'Khoá thử hôm nay'], ['ket-qua-tuan', 'Kết quả từng tuần'], ['ra-theo-vai', 'Rà theo vai']] as const;
 type Tab = (typeof TABS)[number][0];
 
 export function ReviewBoardPage() {
@@ -57,7 +59,7 @@ export function ReviewBoardPage() {
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'tab active' : 'tab'} onClick={() => setParams(k === 'viec' ? {} : { the: k }, { replace: true })}>{l}</button>
         ))}
       </div>
-      {tab === 'viec' ? <ViecHomNay /> : tab === 'khoa-thu' ? <KhoaThuHomNay /> : <RaTheoVai />}
+      {tab === 'viec' ? <ViecHomNay /> : tab === 'khoa-thu' ? <KhoaThuHomNay /> : tab === 'ket-qua-tuan' ? <KetQuaTuan /> : <RaTheoVai />}
     </div>
   );
 }
