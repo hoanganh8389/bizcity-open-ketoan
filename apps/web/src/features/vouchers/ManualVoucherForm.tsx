@@ -27,6 +27,7 @@ import { SignaturePanel, useSignatures } from './Signatures';
 import { parseAmount, showAmount } from './CashVoucherForm';
 import { C, L, VoucherModal, readOnlyReason, useVoucherSave } from '@/components/voucher/VoucherModal';
 import { useDimension } from '@/components/voucher/lookups';
+import { useUseReasons } from '@/lib/useReasons';
 
 interface Account { code: string; name: string; trackPartner: boolean; isDebt?: boolean; normalSide: string; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean }
 interface Dimension { code: string; name: string; isActive: boolean }
@@ -87,6 +88,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
   onClose: () => void;
   onSaved: (docNo: string, docDate: string, addNew: boolean) => void;
 }) {
+  const useReasons = useUseReasons();
   const qc = useQueryClient();
   const meta = VOUCHER_META.manual;
   const p = existing?.payload ?? initial;
@@ -262,8 +264,9 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
             <L c={1} r={3}>Diễn giải</L>
             <div className="vf-cell" style={{ gridColumn: '2 / 5', gridRow: 3 }}><input className="input" value={h.description} disabled={dis} onChange={(e) => set({ description: e.target.value })} /></div>
 
-            <L c={2} r={1}>Lý do</L>
-            <C c={2} r={1}><ListPicker items={reasonList.map((r) => ({ code: r.code, name: r.name }))} value={h.reasonCode} disabled={dis} onChange={(v) => set({ reasonCode: v })} /></C>
+            {/* [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Lý do chỉ hiện khi bật lý do hạch toán (đóng góp) */}
+            {useReasons && <><L c={2} r={1}>Lý do</L>
+            <C c={2} r={1}><ListPicker items={reasonList.map((r) => ({ code: r.code, name: r.name }))} value={h.reasonCode} disabled={dis} onChange={(v) => set({ reasonCode: v })} /></C></>}
             <L c={2} r={2}>Nhân viên</L>
             <C c={2} r={2}><ListPicker items={employees.filter((e) => e.isActive || e.code === h.employeeCode)} value={h.employeeCode} disabled={dis} hideName onChange={(v) => set({ employeeCode: v })} /></C>
 

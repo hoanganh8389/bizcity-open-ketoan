@@ -73,8 +73,9 @@ export function buildCashTransferParts(doc: CashTransferDocument, ctx: RuleConte
   const transit = () => resolver.defaultAccount('cash_in_transit', 'tài khoản tiền đang chuyển giữa các chi nhánh');
   const irCode = resolver.peekDefault('internal_receivable');
   const ipCode = resolver.peekDefault('internal_payable');
-  const sendCounter = sendReason.counter_account;
-  const recvCounter = recvReason?.counter_account;
+  // Công tắc lý do tắt: không đọc đối ứng trên lý do — tiền đang chuyển (cùng đơn vị) / phải thu – phải trả nội bộ.
+  const sendCounter = resolver.reasonCounter(sendReason);
+  const recvCounter = resolver.reasonCounter(recvReason);
 
   // Cặp tài khoản trung gian: [Nợ ở nơi chuyển, Có ở nơi nhận].
   let pair: [string, string];

@@ -457,7 +457,7 @@ function BusinessEditor({ biz, onClose }: { biz: Business | null; onClose: () =>
     <Modal title={biz ? `Nghiệp vụ: ${biz.name}` : 'Thêm nghiệp vụ'} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={!f.name.trim() || (!system && !f.reasonCode.trim()) || save.isPending} onClick={() => save.mutate()}>{save.isPending ? 'Đang lưu…' : 'Lưu'}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={save.error ? errorText(save.error) : null} />
-      {!system && <div className="alert alert-info full">Nghiệp vụ tự tạo dựa trên một nghiệp vụ có sẵn: nhận mọi quy tắc của nghiệp vụ đó, quy tắc riêng của nó thắng. Khi lập phiếu, chọn lý do có mã này thì phiếu đi theo nghiệp vụ này.</div>}
+      {!system && <div className="alert alert-info full">Nghiệp vụ tự tạo dựa trên một nghiệp vụ có sẵn: nhận mọi quy tắc của nghiệp vụ đó, quy tắc riêng của nó thắng. Chứng từ mang mã này (vd phiếu website gửi kèm mã) thì đi theo quy tắc của nghiệp vụ này.</div>}
       <Field label="Tên nghiệp vụ" full><input className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="vd: Xuất quà tặng của nhà cung cấp" autoFocus /></Field>
       {!system && <>
         <Field label="Dựa trên" tip="Nghiệp vụ có sẵn mà phiếu thuộc về (bán hàng, xuất điều chỉnh kho…)">
@@ -465,7 +465,7 @@ function BusinessEditor({ biz, onClose }: { biz: Business | null; onClose: () =>
             {(options?.businesses ?? []).map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
           </select>
         </Field>
-        <Field label="Mã (lý do chứng từ)" tip="Mã lý do hiện ở màn lập phiếu; chưa có thì phần mềm tự thêm lý do mới"><input className="input mono" value={f.reasonCode} disabled={Boolean(biz)} onChange={(e) => setF({ ...f, reasonCode: e.target.value.toUpperCase() })} placeholder="vd: XQNCC" /></Field>
+        <Field label="Mã nghiệp vụ" tip="Mã chứng từ gửi kèm (reasonCode) để đi vào nghiệp vụ này — vd phiếu website gửi XHH01 cho hàng hỏng. Chưa có mã thì phần mềm tự thêm"><input className="input mono" value={f.reasonCode} disabled={Boolean(biz)} onChange={(e) => setF({ ...f, reasonCode: e.target.value.toUpperCase() })} placeholder="vd: XQNCC" /></Field>
         <label className="checkbox full"><input type="checkbox" checked={f.isActive} onChange={(e) => setF({ ...f, isActive: e.target.checked })} /> Đang dùng</label>
       </>}
       <Field label="Ghi chú" full><input className="input" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></Field>

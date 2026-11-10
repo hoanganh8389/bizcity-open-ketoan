@@ -31,6 +31,7 @@ import { PrintButton } from '@/components/print';
 import { SignaturePanel, useSignatures } from './Signatures';
 import { C, L, VoucherModal, readOnlyReason, useVoucherSave } from '@/components/voucher/VoucherModal';
 import { useDimension } from '@/components/voucher/lookups';
+import { useUseReasons } from '@/lib/useReasons';
 
 interface Account { code: string; name: string; isPosting: boolean; trackPartner: boolean; isDebt?: boolean; normalSide: string; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean; trackEmployee: boolean }
 interface Dimension { code: string; name: string; isActive: boolean }
@@ -65,6 +66,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   /** addNew = bấm "Ghi và thêm mới": mở tiếp phiếu trống. */
   onSaved: (docNo: string, docDate: string, addNew: boolean) => void;
 }) {
+  const useReasons = useUseReasons();
   const qc = useQueryClient();
   const meta = VOUCHER_META[type];
   const moneySide = VOUCHER_MONEY[type]!.side;
@@ -156,7 +158,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   /** Thêm chi tiết phiếu: tài khoản theo lý do, số tiền bằng số tiền đầu phiếu, đối tượng / nhân viên / diễn giải theo đầu phiếu. */
   const addRow = () => {
     const r = blankRow({
-      account: reasons.find((x) => x.code === h.reasonCode)?.counterAccount ?? '',
+      account: (useReasons ? reasons.find((x) => x.code === h.reasonCode)?.counterAccount : undefined) ?? '',
       amount: h.amount, partner: h.partnerCode, employee: h.employeeCode, description: h.description,
     });
     setRows((xs) => [...xs, r]);
@@ -310,8 +312,9 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
               <button className="btn btn-sm" disabled={dis} onClick={() => (h.partnerCode ? setFinding(true) : setProblem('Bạn phải chọn đối tượng (KH/NCC) trước khi chọn phiếu thanh toán kèm theo'))}><FileSearch size={14} /> Tìm chứng từ</button>
             </C>
 
-            <L c={2} r={1}>Lý do</L>
-            <C c={2} r={1}><ListPicker items={reasonList.map((r) => ({ code: r.code, name: r.name }))} value={h.reasonCode} disabled={dis} onChange={(v) => set({ reasonCode: v })} /></C>
+            {/* [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Lý do chỉ hiện khi bật lý do hạch toán (đóng góp) */}
+            {useReasons && <><L c={2} r={1}>Lý do</L>
+            <C c={2} r={1}><ListPicker items={reasonList.map((r) => ({ code: r.code, name: r.name }))} value={h.reasonCode} disabled={dis} onChange={(v) => set({ reasonCode: v })} /></C></>}
             <L c={2} r={2} req={employees.length > 0}>Nhân viên</L>
             <C c={2} r={2}><ListPicker items={employees.filter((e) => e.isActive || e.code === h.employeeCode)} value={h.employeeCode} disabled={dis} hideName onChange={(v) => set({ employeeCode: v })} /></C>
             <L c={2} r={3}>Khách hàng</L>

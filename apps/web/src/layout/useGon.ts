@@ -5,6 +5,11 @@ import type { MenuItem } from '@ketoan/contracts';
 import { MODULES, moduleMenu } from './menu';
 import { useEnabledModules } from './useAppMenu';
 import { buildGon, groupOfPath, type GonGroup } from './menu-gon';
+import { useUseReasons } from '@/lib/useReasons';
+
+// [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — tắt lý do hạch toán thì ẩn màn Lý do – Tài khoản khỏi menu (đóng góp)
+const REASON_PATHS = new Set(['/cau-hinh/ly-do']);
+const dropPaths = (items: MenuItem[], drop: Set<string>): MenuItem[] => items.filter((m) => !m.path || !drop.has(m.path)).map((m) => (m.children ? { ...m, children: dropPaths(m.children, drop) } : m));
 
 const KEY = 'ketoan.gon';
 const read = () => { try { return localStorage.getItem(KEY) ?? undefined; } catch { return undefined; } };
@@ -12,12 +17,13 @@ const read = () => { try { return localStorage.getItem(KEY) ?? undefined; } catc
 /** Nhóm menu người dùng được thấy: chỉ màn thuộc phân hệ đang bật. */
 export function useGonGroups(menu: MenuItem[]): GonGroup[] {
   const enabled = useEnabledModules();
+  const useReasons = useUseReasons();
   return useMemo(() => {
     const on = MODULES.filter((m) => !enabled || enabled.has(m.key));
     const seen = new Set<string>();
     const visible = on.flatMap((m) => moduleMenu(menu, m.key)).filter((g) => !seen.has(g.key) && seen.add(g.key));
-    return buildGon(visible);
-  }, [menu, enabled]);
+    return buildGon(useReasons ? visible : dropPaths(visible, REASON_PATHS));
+  }, [menu, enabled, useReasons]);
 }
 
 /** Nhóm đang làm việc: tự theo màn đang mở, nhớ theo máy để màn nằm ở nhiều nhóm không nhảy nhóm. */

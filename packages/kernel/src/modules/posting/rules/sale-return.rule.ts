@@ -35,7 +35,7 @@ export function buildSaleReturnParts(doc: SaleReturnDocument, ctx: RuleContext):
     const b = new EntryBuilder();
     b.add({
       part: 'payment',
-      debitAccount: payReason?.counter_account ?? counter,
+      debitAccount: (resolver.useReasons ? payReason?.counter_account : undefined) ?? counter,
       creditAccount: account,
       amount: Math.abs(pay.amount),
       debitPartnerId: partnerId,
