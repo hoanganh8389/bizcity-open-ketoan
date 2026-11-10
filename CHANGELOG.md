@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### HT10 có năm thẻ: Tiêu chí · Nền móng · Cổng & bộ kiểm · Bộ máy · Nhà phát triển (PHASE-034 B2, S034-4) <!-- [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 -->
+
+- **Thêm:** Hệ thống → Trụ cột & mức đạt có thêm ba thẻ *Cổng & bộ kiểm*, *Bộ máy*, *Nhà phát triển* (hiện "sắp có", nói rõ nguồn dữ liệu và bước làm). Năm thẻ dùng chung một thanh mức đạt.
+- **Đổi:** bản cài thiếu tệp nguồn của bảng (`tru-cot.json`, `nen-mong.json`) thì màn nói cách sửa (cập nhật bản cài) thay cho câu lỗi "Không tìm thấy".
+
 ### Thẻ Nền móng ở HT10 chạy trên bản cài Docker (PHASE-034 B1, S034-3) <!-- [2026-11-10 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B1 -->
 
 - **Sửa:** ảnh api chép `docs/standard/nen-mong.json`. Trước đây thẻ *Nền móng* ở Hệ thống → Trụ cột & mức đạt (HT10) báo "Không tìm thấy bản đồ nền móng" trên bản cài Docker (chạy dev thì đúng).

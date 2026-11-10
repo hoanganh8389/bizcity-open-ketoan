@@ -5,9 +5,11 @@
  */
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ErrorBox, Loading } from '@/components/ui';
-import { api, errorText } from '@/lib/api';
+import { Loading } from '@/components/ui';
+import { api } from '@/lib/api';
 import { STATUS_UI, type PillarStatus } from './PillarsPage';
+// [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 (S034-4): bản cài thiếu nen-mong.json thì nói cách sửa (R-REL-11), không đổ câu NOT_FOUND
+import { SourceError } from './readiness';
 
 type SignalState = 'co' | 'nhanh' | 'chua';
 interface Signal { kind: 'check' | 'diag' | 'test'; ref: string; state: SignalState }
@@ -45,7 +47,7 @@ export function FoundationsBoard() {
   const b = q.data;
   const allSig = useMemo(() => (b ? b.pillars.flatMap((p) => p.signals.map((s) => ({ ...s, pillar: p }))) : []), [b]);
   if (q.isLoading) return <Loading />;
-  if (q.error) return <ErrorBox error={errorText(q.error)} />;
+  if (q.error) return <SourceError error={q.error} file="docs/standard/nen-mong.json" />;
   if (!b) return null;
   const coreName = (id: string) => (id === 'SDK' ? 'Bề mặt SDK' : b.cores.find((c) => c.id === id)?.title ?? id);
   const cols = [...b.cores.map((c) => c.id), 'SDK'];

@@ -11,9 +11,11 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Loading } from '@/components/ui';
-import { api, errorText } from '@/lib/api';
+import { Loading } from '@/components/ui';
+import { api } from '@/lib/api';
 import { FoundationsBoard } from './FoundationsBoard';
+// [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 (S034-4): thanh mức đạt, báo thiếu tệp nguồn, thẻ "sắp có" dùng chung cho năm thẻ HT10
+import { ComingSoon, ScoreBar, SourceError } from './readiness';
 
 export type PillarStatus = 'dat' | 'mot-phan' | 'tai-lieu' | 'chua';
 export interface PillarCriterion {
@@ -51,7 +53,7 @@ export function PillarMatrix({ module, compact }: { module?: string; compact?: b
     return scoped.length ? scoped : board.pillars;
   }, [board, module]);
   if (q.isLoading) return <Loading />;
-  if (q.error) return <ErrorBox error={errorText(q.error)} />;
+  if (q.error) return <SourceError error={q.error} file="docs/standard/tru-cot.json" />;
   if (!board) return null;
   const shown = pillars.filter((p) => !pick || p.key === pick);
   return (
@@ -65,10 +67,7 @@ export function PillarMatrix({ module, compact }: { module?: string; compact?: b
               style={{ textAlign: 'left', padding: '8px 10px', cursor: 'pointer', outline: on ? '2px solid var(--brand-600, #1e5bb8)' : undefined, borderLeft: p.role === 'nền móng' ? '4px solid var(--brand-600, #1e5bb8)' : undefined }}>
               <div className="muted" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.04em' }}>{p.role === 'nền móng' ? 'Nền móng' : `Trụ cột ${p.id}`}</div>
               <div style={{ fontWeight: 600, fontSize: compact ? 12.5 : 13, minHeight: compact ? 0 : 34 }}>{p.title}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--line, #e6ebf2)', overflow: 'hidden' }}><div style={{ width: `${s.pct}%`, height: '100%', background: s.pct >= 80 ? 'var(--ok, #1a7f4b)' : s.pct >= 40 ? 'var(--warn, #b26a00)' : 'var(--bad, #c62828)' }} /></div>
-                <b style={{ fontSize: 12 }}>{s.pct}%</b>
-              </div>
+              <div style={{ marginTop: 4 }}><ScoreBar pct={s.pct} title={`${p.title}: ${s.pct}%`} /></div>
               <div className="muted" style={{ fontSize: 11 }}>{s.dat} đạt · {s.motPhan} một phần · {s.taiLieu + s.chua} chưa</div>
             </button>
           );
@@ -110,18 +109,62 @@ export function PillarMatrix({ module, compact }: { module?: string; compact?: b
 }
 
 // [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E1 (S029-30): HT10 thêm thẻ Nền móng (sáu năng lực lõi × 17 trụ cột, ADR-0028); thẻ Tiêu chí giữ nguyên bảng tru-cot.json
+// [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 (S034-4): năm thẻ theo thứ tự D034-10 (luật → nền → cổng → bộ máy → công cụ dev); ba thẻ mới hiện "sắp có" tới B3 / B4 / B5
+const TABS = [
+  { key: 'tieu-chi', label: 'Tiêu chí theo trụ cột', hint: 'Core bảo đảm điều gì — trụ cột × tiêu chí × mức đạt (tru-cot.json)' },
+  { key: 'nen-mong', label: 'Nền móng', hint: 'Sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP — mức đạt theo tín hiệu kiểm chạy được' },
+  { key: 'cong-kiem', label: 'Cổng & bộ kiểm', hint: 'Cổng A · B · Commit Guard · C · khoá kỳ · trigger CSDL · chẩn đoán · bộ kiểm CI — mỗi mã kiểm có cách sửa, test, trụ cột chưa' },
+  { key: 'bo-may', label: 'Bộ máy', hint: 'Các engine của Core (Ghi sổ, Inventory, Document SDK, Workflow, Phân quyền, …) — hợp đồng, mã, mốc còn lại' },
+  { key: 'nha-phat-trien', label: 'Nhà phát triển', hint: 'Công cụ DEV01..09 — mức hoàn thiện từng công cụ, chạy ngay tại đây' },
+] as const;
+type TabKey = (typeof TABS)[number]['key'];
+
+function TabBody({ tab }: { tab: TabKey }) {
+  switch (tab) {
+    case 'nen-mong': return <FoundationsBoard />;
+    case 'cong-kiem':
+      return (
+        <ComingSoon question="Dữ liệu đi qua những cổng nào, mỗi cổng bắt được gì, mã kiểm nào chưa có cách sửa hoặc test?"
+          source="Sổ đăng ký trong mã: chẩn đoán L1 / L3 / L5, thư viện mã cổng A / B / Commit Guard / POL-*, cùng bộ kiểm CI (SC-*, DG-*) sinh ra cong-kiem.json"
+          step="B3 (S034-5, S034-6)">
+          Mỗi mã kiểm đủ bốn ý thì đạt: chạy được · có Cách sửa · có test · gắn trụ cột. Cổng C (giá vốn sau ghi sổ, CT-*) hiện dòng giữ chỗ tới khi PHASE-032 làm.
+        </ComingSoon>
+      );
+    case 'bo-may':
+      return (
+        <ComingSoon question="Mỗi bộ máy (engine) của Core làm gì, theo hợp đồng nào, còn bao nhiêu mốc?"
+          source="bo-may.json (bizcity_engines@1, 13 bộ máy); trạng thái mốc đọc từ bảng việc docs/phases/bang-viec.json"
+          step="B4 (S034-7)">
+          Không bộ máy nào có trường trạng thái gõ tay: % hoàn thiện = số mốc xong / số mốc.
+        </ComingSoon>
+      );
+    case 'nha-phat-trien':
+      return (
+        <ComingSoon question="Công cụ nhà phát triển nào dùng được, còn thiếu gì — và chạy ngay tại đây"
+          source="cong-cu-dev.json (bizcity_devtools@1), khớp menu Nhà phát triển (SC-DEV-2)"
+          step="B5 (S034-8, S034-9)">
+          Trong lúc chờ, mở các công cụ ở menu <b>Nhà phát triển</b> (Tổng quan, Tra mã, Nhật ký, Lỗi theo module, Ghi sổ, Sự kiện, Toàn vẹn, Kịch bản, Vận hành).
+        </ComingSoon>
+      );
+    default: return <PillarMatrix />;
+  }
+}
+
 export function PillarsPage() {
   const [sp, setSp] = useSearchParams();
-  const tab = sp.get('xem') === 'nen-mong' ? 'nen-mong' : 'tieu-chi';
+  const xem = sp.get('xem');
+  const tab: TabKey = TABS.some((t) => t.key === xem) ? (xem as TabKey) : 'tieu-chi';
   return (
     <div>
       <PageHeader title="Trụ cột & mức đạt" code="HT10" helpKey="tru-cot-muc-dat"
         subtitle="Core bảo đảm điều gì và hôm nay đạt tới đâu — một bảng cho kế toán hiểu luật chạy, cho dev biết việc kế tiếp. Mức đạt đi theo bằng chứng (test / check), không ai tích tay." />
       <div className="tabs" role="tablist" style={{ marginBottom: 10 }}>
-        <button type="button" role="tab" className={`tab ${tab === 'tieu-chi' ? 'active' : ''}`} onClick={() => setSp({}, { replace: true })}>Tiêu chí theo trụ cột</button>
-        <button type="button" role="tab" className={`tab ${tab === 'nen-mong' ? 'active' : ''}`} onClick={() => setSp({ xem: 'nen-mong' }, { replace: true })} title="Sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP — mức đạt theo tín hiệu kiểm chạy được">Nền móng</button>
+        {TABS.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={`tab ${tab === t.key ? 'active' : ''}`} title={t.hint}
+            onClick={() => setSp(t.key === 'tieu-chi' ? {} : { xem: t.key }, { replace: true })}>{t.label}</button>
+        ))}
       </div>
-      {tab === 'nen-mong' ? <FoundationsBoard /> : <PillarMatrix />}
+      <TabBody tab={tab} />
     </div>
   );
 }
