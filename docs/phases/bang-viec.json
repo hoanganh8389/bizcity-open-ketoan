@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 169
+      "count": 168
     },
     {
       "key": "partial",
@@ -6104,8 +6104,14 @@
       "title": "B4 — bo-may.json (bizcityengines@1, 13 dòng), GET /api/v1/system/engines (mốc đọc bang-viec.json), SC-ENG-1, thẻ Bộ máy",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b4-bo-may",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-034 · B4 — thẻ Bộ máy ở HT10: docs/standard/bo-may.json (bizcityengines@1, 13 bộ máy, không c…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 16
     },
