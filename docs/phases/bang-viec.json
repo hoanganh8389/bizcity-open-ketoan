@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 10
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 164
+      "count": 163
     },
     {
       "key": "partial",
@@ -6149,8 +6149,14 @@
       "title": "B6 — dòng tổng đầu màn, In cả năm thẻ, cập nhật docs/huong-dan/tru-cot-muc-dat.md",
       "priority": "P2",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b6-dong-tong",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-034 · B6 — dòng tổng đầu HT10: năm con số (Tiêu chí · Nền móng · Cổng · Bộ máy · Công cụ dev)…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 19
     },
