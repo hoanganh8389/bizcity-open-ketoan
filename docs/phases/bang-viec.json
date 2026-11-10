@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 10
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 168
+      "count": 166
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 61
+      "count": 60
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 284
+      "count": 285
     }
   ],
   "items": [
@@ -4530,8 +4530,14 @@
       "title": "Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
+        "branch": "feat/phase-029-s029-25-acc14",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-029 · S029-25 đợt 1b — ghi dấu tự duyệt ở trạm ACC14 (postManyIn), chữ chốt DOCUMENT 1.4.0 §5…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -5785,8 +5791,14 @@
       "title": "Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLineRef; CT-COST-010..012; lô quarantine cho hàng tr…",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-032; phụ trách phần giá vốn: Thuy2k)",
+        "branch": "feat/phase-032-b3-tra-hang",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-032 · B3 — khách trả hàng lấy đúng giá vốn lúc bán: phiếu trả của lần bán tháng trước nhập lạ…"
+      },
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -6081,15 +6093,9 @@
       "phase": "PHASE-034",
       "title": "B3a — GET /api/v1/system/gates: chẩn đoán L1/L3/L5 + FINDINGSLIBRARY + INTAKECATALOG + lượt gần nhất; thẻ Cổng (A, B, Guard, Chẩn đoán)",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
-        "branch": "feat/phase-034-b3a-cong-kiem",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-034 · B3a — thẻ Cổng & bộ kiểm ở HT10: GET /api/v1/system/gates (chỉ đọc; gom chẩn đoán L1 / …"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -6110,8 +6116,14 @@
       "title": "B4 — bo-may.json (bizcityengines@1, 13 dòng), GET /api/v1/system/engines (mốc đọc bang-viec.json), SC-ENG-1, thẻ Bộ máy",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b4-bo-may",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-034 · B4 — thẻ Bộ máy ở HT10: docs/standard/bo-may.json (bizcityengines@1, 13 bộ máy, không c…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 16
     },

@@ -1,0 +1,194 @@
+<!doctype html>
+<!-- [2026-11-10 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — bản mẫu màn mặt hàng ba khối (10 §2a, chủ dự án duyệt 2026-11-10): Thẻ kho theo biến thể · Đã ghi sổ · Khớp sổ cái chưa; lean, chỉ tô màu chỗ lệch -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mặt hàng hai sổ</title>
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--k:#6d3fc0;--accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fdf3e1;--bad-bg:#fdecec;--info-bg:#e9f0fb;--k-bg:#f1ebfb}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--k:#b08cf0;--accent:#5b9cf0;--ok-bg:#15291f;--warn-bg:#2e2412;--bad-bg:#2f1717;--info-bg:#16233a;--k-bg:#241c36}}
+:root[data-theme="dark"]{--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--k:#b08cf0;--accent:#5b9cf0;--ok-bg:#15291f;--warn-bg:#2e2412;--bad-bg:#2f1717;--info-bg:#16233a;--k-bg:#241c36}
+*{box-sizing:border-box}html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:10px 14px;padding:10px 16px;flex-wrap:wrap}
+.brand{font-weight:650;font-size:15px;min-width:0}.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+select{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+main{padding:16px;max-width:1240px;margin:0 auto}
+/* dải trạng thái: ba ô, chỉ có màu khi có việc */
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+@media (max-width:760px){.strip{grid-template-columns:minmax(0,1fr)}}
+.chip{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:inherit;min-width:0}
+.chip .dot{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--soft);color:var(--muted)}
+.chip b{display:block;font-size:14px}.chip span{color:var(--muted);font-size:12.5px}
+.chip.ok .dot{background:var(--ok-bg);color:var(--ok)}
+.chip.warn{border-color:var(--warn)}.chip.warn .dot{background:var(--warn-bg);color:var(--warn)}
+.chip.bad{border-color:var(--bad)}.chip.bad .dot{background:var(--bad-bg);color:var(--bad)}
+.block{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden;scroll-margin-top:80px}
+.bh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--line)}
+.bh h2{margin:0;font-size:16px}.bh .muted{font-size:12.5px}
+.muted{color:var(--muted)}
+a{color:var(--accent)}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;background:var(--soft)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.parent td{background:var(--soft);font-weight:600}
+.sum{font-weight:400;color:var(--muted);font-size:12px}
+.issues div,.why,.brand small{overflow-wrap:anywhere}
+tr.var td:first-child{padding-left:26px}
+tr.flag-warn td:first-child{box-shadow:inset 4px 0 0 var(--warn)}
+tr.flag-bad td:first-child{box-shadow:inset 4px 0 0 var(--bad)}
+tr.hit td{background:var(--info-bg)}
+.why{display:block;font-weight:400;font-size:12.5px;margin-top:2px}
+.why.warn{color:var(--warn)}.why.bad{color:var(--bad)}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.t-ok{background:var(--ok-bg);color:var(--ok)}.t-warn{background:var(--warn-bg);color:var(--warn)}.t-bad{background:var(--bad-bg);color:var(--bad)}
+.acc{font-variant-numeric:tabular-nums;color:var(--k);font-weight:600;white-space:nowrap}
+.eq{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:12px 14px}
+@media (max-width:640px){.eq{grid-template-columns:minmax(0,1fr)}}
+.eq .side b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.eq .side span{color:var(--muted);font-size:12.5px}
+.eq .op{font-size:20px;color:var(--muted);text-align:center}
+.issues{list-style:none;margin:0;padding:0}
+.issues li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;padding:10px 14px;border-top:1px solid var(--line);align-items:start}
+@media (max-width:640px){.issues li{grid-template-columns:minmax(0,1fr)}}
+.issues .what{font-weight:600}.issues .fix{font-size:12.5px;color:var(--muted)}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:4px 0 14px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.dev{font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding:10px 14px}
+.dev code{font:11.5px ui-monospace,Consolas,monospace}
+.empty{padding:12px 14px;color:var(--ok)}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">ÁO-THUN · Áo thun cổ tròn<small>Sản phẩm cha, 3 biến thể · nhóm tính giá: Đơn vị Hà Nội · bình quân tháng</small></div>
+    <div class="spacer"></div>
+    <label class="muted" style="font-size:13px">Kỳ <select aria-label="Kỳ"><option>Tháng 10/2026</option></select></label>
+    <div class="seg" role="group" aria-label="Tình huống bản mẫu">
+      <button type="button" data-s="dung" aria-pressed="true">Khớp hết</button>
+      <button type="button" data-s="lech" aria-pressed="false">Có lệch</button>
+    </div>
+  </div>
+</header>
+<main>
+  <nav class="strip" id="strip" aria-label="Tóm tắt ba khối"></nav>
+  <div class="legend"><span><i style="background:var(--bad)"></i>Lệch, phải sửa chứng từ</span><span><i style="background:var(--warn)"></i>Cần xem trước khi khoá kỳ</span><span>Không màu: đạt, không cần làm gì</span></div>
+
+  <section class="block" id="the-kho" aria-labelledby="h1">
+    <div class="bh"><h2 id="h1">Thẻ kho</h2><span class="muted">Tính theo từng biến thể. Dòng cha chỉ cộng lại, không có đơn giá riêng.</span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Mặt hàng</th><th class="n">Tồn đầu</th><th class="n">Nhập</th><th class="n">Xuất</th><th class="n">Tồn cuối</th><th class="n">Đơn giá xuất</th><th class="n">Giá trị tồn cuối</th></tr></thead>
+      <tbody id="kho"></tbody>
+    </table></div>
+  </section>
+
+  <section class="block" id="ghi-so" aria-labelledby="h2">
+    <div class="bh"><h2 id="h2">Đã ghi sổ</h2><span class="muted">Mỗi lần tính giá vốn, phần của mặt hàng này trong bút toán giá vốn.</span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Lần tính</th><th>Phiếu</th><th>Định khoản</th><th class="n">Số tiền</th><th>Khớp phân bổ</th></tr></thead>
+      <tbody id="so"></tbody>
+    </table></div>
+  </section>
+
+  <section class="block" id="khop" aria-labelledby="h3">
+    <div class="bh"><h2 id="h3">Khớp sổ cái chưa</h2><span class="muted">Giá trị tồn theo thẻ kho so với số dư tài khoản kho trên sổ cái.</span></div>
+    <div id="eq"></div>
+    <ul class="issues" id="issues"></ul>
+  </section>
+
+  <p class="dev">Cho người làm phần mềm (<a href="../10-KIEN-TRUC.md">10 §2a</a>): Thẻ kho đọc sổ kho (<code>inventory_movements</code>, lớp giá, phân bổ), khoá <code>(nhóm tính giá × item_id)</code>. Cha = Σ biến thể lúc xem (T-3, D032-14). Đã ghi sổ đọc cầu nối <code>cost_allocations.journal_entry_id</code> (T-5). Khớp sổ cái = CT-COST-004 / <code>INVENTORY_LEDGER_MISMATCH</code> theo <code>item_id</code> (T-6); lệch thì sửa chứng từ, không cho điều chỉnh cho khớp. Mỗi vấn đề hiện <b>một lần</b>, ở khối gây ra nó; dải trên cùng chỉ đếm và dẫn tới chỗ đó.</p>
+</main>
+<script>
+const f = (n) => n == null ? '—' : n.toLocaleString('vi-VN');
+// Số liệu bình quân tháng 10: đơn giá xuất = (giá trị đầu + giá trị nhập) ÷ (lượng đầu + lượng nhập)
+const S = {
+  dung: {
+    kho: [
+      { sku: 'ÁO-THUN-ĐỎ-M', dau: [20, 2000000], nhap: [30, 3300000], xuat: [25, 2650000], cuoi: [25, 2650000], gia: 106000 },
+      { sku: 'ÁO-THUN-XANH-L', dau: [10, 1000000], nhap: [20, 2300000], xuat: [12, 1320000], cuoi: [18, 1980000], gia: 110000 },
+      { sku: 'ÁO-THUN-TRẮNG-S', dau: [5, 490000], nhap: [0, 0], xuat: [5, 490000], cuoi: [0, 0], gia: 98000 },
+    ],
+    so: [
+      { lan: 'Tháng 10 · lần 1 (chốt 01/11)', phieu: 'GV-2026-10', dk: 'Nợ 632 / Có 156', tien: 4460000, khop: { ok: true, text: 'Σ phân bổ 3 biến thể = 4.460.000' } },
+      { lan: 'Tháng 9 · lần 1 (chốt 02/10)', phieu: 'GV-2026-09', dk: 'Nợ 632 / Có 156', tien: 3100000, khop: { ok: true, text: 'Σ phân bổ = 3.100.000' } },
+    ],
+    kho_tong: 4630000, so_cai: 4630000, don_vi: [48230000, 48230000],
+    issues: [],
+  },
+  lech: {
+    cha: { qty: 2, why: 'Phiếu xuất XK-0507 ghi mã cha ÁO-THUN (2 cái), chưa thuộc biến thể nào: chọn biến thể trên phiếu' },
+    kho: [
+      { sku: 'ÁO-THUN-ĐỎ-M', dau: [20, 2000000], nhap: [30, 3300000], xuat: [25, 2650000], cuoi: [25, 2650000], gia: 106000 },
+      { sku: 'ÁO-THUN-XANH-L', dau: [10, 1000000], nhap: [20, 2600000], xuat: [12, 1440000], cuoi: [18, 2160000], gia: 120000, flag: 'warn', why: 'Đơn giá tính tạm: phiếu nhập PN-0412 sửa giá 115.000 → 130.000 ngày 03/11, sau khi đã chốt giá vốn tháng 10' },
+      { sku: 'ÁO-THUN-TRẮNG-S', dau: [5, 490000], nhap: [0, 0], xuat: [5, 490000], cuoi: [0, 0], gia: 98000, flag: 'bad', why: 'Tồn 0 nhưng sổ cái TK 156 còn 50.000 cho mặt hàng này' },
+    ],
+    so: [
+      { lan: 'Tháng 10 · lần 1 (chốt 01/11)', phieu: 'GV-2026-10', dk: 'Nợ 632 / Có 156', tien: 4460000, khop: { ok: false, lvl: 'warn', text: 'Giá vốn cũ: tính lại sẽ là 4.580.000 (thêm 120.000)' } },
+      { lan: 'Tháng 9 · lần 1 (chốt 02/10)', phieu: 'GV-2026-09', dk: 'Nợ 632 / Có 156', tien: 3100000, khop: { ok: true, text: 'Σ phân bổ = 3.100.000' } },
+    ],
+    kho_tong: 4810000, so_cai: 4980000, don_vi: [48410000, 48580000],
+    issues: [
+      { lvl: 'bad', what: 'Lệch 50.000 · ÁO-THUN-TRẮNG-S', why: 'Bút toán tay BT-0099 (20/10) ghi Nợ 156 / Có 331 cho mặt hàng này, không qua phiếu kho.', fix: 'Sửa: đảo BT-0099, lập phiếu nhập hoặc phiếu điều chỉnh giá kho. Không điều chỉnh sổ cái cho khớp.', go: 'ÁO-THUN-TRẮNG-S' },
+      { lvl: 'warn', what: 'Lệch 120.000 · ÁO-THUN-XANH-L', why: 'PN-0412 sửa giá sau khi chốt giá vốn tháng 10: sổ cái đã nhận 300.000 tiền hàng tăng thêm, giá vốn chưa tính lại.', fix: 'Sửa: tính lại giá vốn tháng 10. Phần mềm lập bút toán bổ sung Nợ 632 / Có 156: 120.000.', go: 'ÁO-THUN-XANH-L' },
+      { lvl: 'warn', what: '2 cái ghi trên mã cha · ÁO-THUN', why: 'Phiếu xuất XK-0507 chọn mã cha. Giá vốn chỉ tính theo biến thể, nên 2 cái này chưa có giá vốn.', fix: 'Sửa: mở XK-0507, chọn biến thể. Không ảnh hưởng số dư cho tới khi sửa.', go: 'ÁO-THUN' },
+    ],
+  },
+};
+const LV = { bad: 'Lệch, phải sửa chứng từ', warn: 'Cần xem trước khi khoá kỳ' };
+
+function render(key) {
+  const d = S[key];
+  const sum = (i, k) => d.kho.reduce((a, r) => a + r[k][i], 0);
+  const cell = (q, v) => `<td class="n">${f(q)}<span class="why muted">${f(v)}</span></td>`;
+  const parent = `<tr class="parent ${d.cha ? 'flag-warn' : ''}" data-sku="ÁO-THUN"><td>ÁO-THUN <span class="sum">· tổng các biến thể</span>${d.cha ? `<span class="why warn">⚠ ${d.cha.why}</span>` : ''}</td>${cell(sum(0, 'dau'), sum(1, 'dau'))}${cell(sum(0, 'nhap'), sum(1, 'nhap'))}${cell(sum(0, 'xuat') + (d.cha?.qty ?? 0), sum(1, 'xuat'))}${cell(sum(0, 'cuoi') - (d.cha?.qty ?? 0), sum(1, 'cuoi'))}<td class="n muted">—</td><td class="n">${f(sum(1, 'cuoi'))}</td></tr>`;
+  document.getElementById('kho').innerHTML = parent + d.kho.map((r) => `<tr class="var ${r.flag ? 'flag-' + r.flag : ''}" data-sku="${r.sku}"><td>${r.sku}${r.why ? `<span class="why ${r.flag}">${r.flag === 'bad' ? '✕' : '⚠'} ${r.why}</span>` : ''}</td>${cell(...r.dau)}${cell(...r.nhap)}${cell(...r.xuat)}${cell(...r.cuoi)}<td class="n">${f(r.gia)}</td><td class="n">${f(r.cuoi[1])}</td></tr>`).join('');
+
+  document.getElementById('so').innerHTML = d.so.map((r) => `<tr class="${r.khop.ok ? '' : 'flag-' + r.khop.lvl}"><td>${r.lan}</td><td>${r.phieu}</td><td class="acc">${r.dk}</td><td class="n">${f(r.tien)}</td><td>${r.khop.ok ? `<span class="tag t-ok">✔ khớp</span> <span class="muted">${r.khop.text}</span>` : `<span class="tag t-${r.khop.lvl}">⚠ cần xem</span> <span class="why ${r.khop.lvl}" style="display:inline">${r.khop.text}</span>`}</td></tr>`).join('');
+
+  const lech = d.so_cai - d.kho_tong;
+  document.getElementById('eq').innerHTML = `<div class="eq">
+    <div class="side"><b>${f(d.kho_tong)}</b><span>Giá trị tồn theo thẻ kho (mặt hàng này)</span></div>
+    <div class="op">${lech ? '≠' : '='}</div>
+    <div class="side"><b>${f(d.so_cai)}</b><span>Dòng sổ cái TK 156 ghi cho mặt hàng này</span></div>
+    <div>${lech ? `<span class="tag t-bad">Lệch ${f(Math.abs(lech))}</span>` : '<span class="tag t-ok">✔ Đạt</span>'}</div>
+  </div>
+  <div class="dev" style="border-top:1px solid var(--line)">Toàn đơn vị: thẻ kho ${f(d.don_vi[0])} ${d.don_vi[0] === d.don_vi[1] ? '=' : '≠'} số dư TK 156 ${f(d.don_vi[1])}${d.don_vi[0] === d.don_vi[1] ? ' ✔' : ` · lệch ${f(d.don_vi[1] - d.don_vi[0])}, đều nằm ở mặt hàng này`}</div>`;
+  document.getElementById('issues').innerHTML = d.issues.length
+    ? d.issues.map((x) => `<li><span class="tag t-${x.lvl}">${x.lvl === 'bad' ? '✕' : '⚠'} ${LV[x.lvl]}</span><div><div class="what">${x.what}</div><div>${x.why}</div><div class="fix">${x.fix}</div></div><button type="button" class="btn" data-go="${x.go}">Xem trên thẻ kho</button></li>`).join('')
+    : '<li style="display:block" class="empty">✔ Thẻ kho và sổ cái khớp. Không có việc gì.</li>';
+
+  // dải trên cùng: đếm, không lặp nội dung
+  const nBad = d.issues.filter((x) => x.lvl === 'bad').length, nWarn = d.issues.filter((x) => x.lvl === 'warn').length;
+  const khoFlags = d.kho.filter((r) => r.flag).length + (d.cha ? 1 : 0);
+  const soFlags = d.so.filter((r) => !r.khop.ok).length;
+  const chip = (id, cls, icon, title, sub) => `<a class="chip ${cls}" href="#${id}"><span class="dot">${icon}</span><span><b>${title}</b><span>${sub}</span></span></a>`;
+  document.getElementById('strip').innerHTML =
+    chip('the-kho', khoFlags ? 'warn' : 'ok', khoFlags || '✔', 'Thẻ kho', khoFlags ? `${khoFlags} dòng cần xem` : `${d.kho.length} biến thể, không có gì lạ`) +
+    chip('ghi-so', soFlags ? 'warn' : 'ok', soFlags || '✔', 'Đã ghi sổ', soFlags ? `${soFlags} lần tính có giá vốn cũ` : `${d.so.length} lần tính, đều khớp phân bổ`) +
+    chip('khop', nBad ? 'bad' : nWarn ? 'warn' : 'ok', nBad + nWarn || '✔', 'Khớp sổ cái chưa', lech ? `Lệch ${f(Math.abs(lech))}: ${nBad} phải sửa, ${nWarn} cần xem` : 'Đạt');
+}
+document.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-s]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  render(b.dataset.s);
+}));
+document.addEventListener('click', (e) => {
+  const sku = e.target.closest('[data-go]')?.dataset.go; if (!sku) return;
+  document.querySelectorAll('#kho tr').forEach((tr) => tr.classList.toggle('hit', tr.dataset.sku === sku));
+  document.getElementById('the-kho').scrollIntoView({ behavior: 'smooth' });
+});
+const start = location.hash === '#lech' ? 'lech' : 'dung'; // mở thẳng tình huống lệch: the-mat-hang-hai-so.html#lech
+document.querySelectorAll('[data-s]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.s === start)));
+render(start);
+</script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!doctype html>
+<!-- [2026-11-10 10:24 PM Johnny Chu - Chu Hoàng Anh] REVIEW — bản mẫu thẻ "Đánh giá" ở HT10 (Trụ cột & mức đạt): kết quả review theo nhịp xem theo phase · theo trục (gắn trụ cột, nền móng) · theo phiên bản; đọc docs/reviews/review-board.json (bizcity_review_board@1). Chờ chủ dự án duyệt (UI-first) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thẻ Đánh giá HT10</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--accent:#0b5cad;
+  --ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--info-bg:#e8f0fc;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;
+  --ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;
+  --ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+.note{background:var(--info-bg);color:var(--info);padding:8px 16px;font-size:12.5px}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px}
+header h1{margin:0;font-size:18px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+header h1 .code{font:12px ui-monospace,Consolas,monospace;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.tabs .new{background:var(--warn-bg);color:var(--warn);border-radius:99px;padding:0 6px;font-size:11px;margin-left:4px;font-weight:700}
+main{padding:16px;max-width:1300px;margin:0 auto}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.card .k{color:var(--muted);font-size:12px}
+.card .v{font-size:20px;font-weight:650;margin-top:2px}
+.card .s{color:var(--muted);font-size:12px;margin-top:2px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--panel);border:0;padding:6px 12px;font:inherit;color:var(--muted);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+select,input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--panel);color:var(--ink)}
+.spacer{flex:1}
+.mute{color:var(--muted)}
+.table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--soft);white-space:nowrap}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--soft)}
+tr.detail td{background:var(--soft);padding:10px 14px}
+.chip{display:inline-block;border-radius:99px;padding:0 8px;font-size:12px;font-weight:600;margin:1px 2px 1px 0;white-space:nowrap}
+.c-chan{background:var(--bad-bg);color:var(--bad)}.c-nang{background:var(--warn-bg);color:var(--warn)}.c-vua{background:var(--info-bg);color:var(--info)}.c-nhe{background:var(--soft);color:var(--muted)}
+.s-xong{background:var(--ok-bg);color:var(--ok)}.s-mot-phan{background:var(--warn-bg);color:var(--warn)}.s-chua{background:var(--bad-bg);color:var(--bad)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:12px;margin:1px 2px 1px 0}
+.bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--soft);min-width:90px}
+.bar i{display:block}
+.lv{display:flex;gap:3px}
+.lv span{width:18px;height:10px;border-radius:3px;background:var(--soft);border:1px solid var(--line)}
+.lv span.on{background:var(--accent);border-color:var(--accent)}
+.lv span.goal{outline:2px dashed var(--ok);outline-offset:1px}
+.find{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:start;padding:6px 0;border-bottom:1px dashed var(--line)}
+.find:last-child{border-bottom:0}
+.state{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;text-align:center}
+.state h3{margin:0 0 6px}
+.err{border-color:var(--bad);background:var(--bad-bg);text-align:left}
+.err code{color:var(--bad)}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.skel{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--soft),var(--line),var(--soft));margin:8px 0}
+.demo{position:fixed;right:12px;bottom:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:9}
+.cards{display:none}
+@media (max-width:640px){
+  .table-wrap.resp{display:none}
+  .cards{display:grid;gap:8px}
+  .strip{grid-template-columns:1fr 1fr}
+  .demo{left:12px;right:12px}
+}
+</style>
+</head>
+<body>
+<div class="note">Bản mẫu (UI-first) — <b>chưa có mã</b>. Số liệu là dữ liệu thật của lượt review R1 (2026-11-08) chép từ <code>docs/reviews/review-board.json</code>, trạng thái xử lý cập nhật tới 2026-11-10. Đề xuất thêm thẻ thứ sáu ở HT10, sau thẻ Nhà phát triển (đổi D034-10 — chủ dự án duyệt).</div>
+<header>
+  <h1>Trụ cột &amp; mức đạt <span class="code">HT10</span></h1>
+  <p>Core bảo đảm điều gì và hôm nay đạt tới đâu — mức đạt đi theo bằng chứng (test / check), không ai tích tay.</p>
+</header>
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="false" title="tru-cot.json">Tiêu chí theo trụ cột</button>
+  <button role="tab" aria-selected="false" title="nen-mong.json">Nền móng</button>
+  <button role="tab" aria-selected="false">Cổng &amp; bộ kiểm</button>
+  <button role="tab" aria-selected="false">Bộ máy</button>
+  <button role="tab" aria-selected="false">Nhà phát triển</button>
+  <button role="tab" aria-selected="true" title="review-board.json — ?xem=danh-gia">Đánh giá <span class="new">mới</span></button>
+</nav>
+<main id="app"></main>
+
+<div class="demo" aria-label="Chọn trạng thái của bản mẫu">
+  Trạng thái (chỉ ở bản mẫu):
+  <select id="demo">
+    <option value="ok">Có dữ liệu</option><option value="loading">Đang tải</option><option value="empty">Chưa có lượt review</option>
+    <option value="error">Lỗi</option><option value="forbidden">Không có quyền</option>
+  </select>
+</div>
+
+<script>
+// Dữ liệu R1 (chép từ docs/reviews/review-board.json; trạng thái xử lý theo followUps.R1 tới 2026-11-10)
+const REVIEW = { id: 'R1', date: '2026-11-08', commit: '886f4f95', total: 27, max: 48, goal: 41, verdict: 'đạt có điều kiện', next: { review: 'R2', afterPhase: 'PHASE-034', versions: ['v0.1.0', 'v0.2.0'] } };
+const AXES = [
+  ['A1','Nền tảng lõi & hợp đồng','I IV VIII','08 09 16',3,4],['A2','Bảo toàn số & một cửa ghi sổ','I V','09 13',2,4],
+  ['A3','Liên tục & truy vết chứng từ gốc','III VI','10 11',2,3],['A4','Cross-module & sự kiện','VIII II I','08 11',3,4],
+  ['A5','Minh bạch & nhật ký vận hành','VI','17',2,3],['A6','Cổng kiểm & thư viện lỗi','IV','12',3,4],
+  ['A7','Kernel báo lỗi cho module','IV VI','09 12',2,4],['A8','Chứng từ: phiên bản · workflow · transition · quyền','III VII','06 07',2,3],
+  ['A9','Policy Registry: chặt trong, mềm ngoài','V 0','02 05',2,3],['A10','Cấu hình UI/UX & tài liệu dev','0 V VII','02 04',2,3],
+  ['A11','Module thi hành','VIII','15 16',2,3],['A12','Lean & vận hành cộng đồng','VIII','12 16',2,3],
+].map(([id, title, pillars, foundations, score, goal]) => ({ id, title, pillars: pillars.split(' '), foundations: foundations.split(' '), score, goal }));
+const FINDINGS = [
+  ['RV-R1-01','chan','A2','PHASE-004','xong','Cờ thoát sổ chỉ thêm tự bật được'],
+  ['RV-R1-02','chan','A7','PHASE-029','xong','SQLSTATE 23514 / 42501 bị gộp thành POSTING_FAILED'],
+  ['RV-R1-03','chan','A12','PHASE-029','xong','main đỏ: hai migration cùng số 0080'],
+  ['RV-R1-04','nang','A9','PHASE-031','mot-phan','Chính sách đã ngừng vẫn qua kiểm (effective_to)'],
+  ['RV-R1-05','nang','A9','PHASE-030','xong','Regex thiếu dấu \\ ở settingImpact'],
+  ['RV-R1-06','nang','A7','PHASE-022','mot-phan','Lỗi Kernel không mang docKey / eventId / kỳ / remedy'],
+  ['RV-R1-07','nang','A2','PHASE-004','mot-phan','Hai cửa ghi sổ; mua hàng gửi thẳng'],
+  ['RV-R1-08','nang','A8','PHASE-029','chua','Cùng phiên bản khác nội dung bị ghi đè im lặng'],
+  ['RV-R1-09','nang','A5','PHASE-019','chua','Không xem được từng sự kiện vào; dead bị xoá'],
+  ['RV-R1-10','nang','A9','PHASE-031','chua','Commit Guard chỉ chặn khi lệch dấu'],
+  ['RV-R1-11','vua','A8','PHASE-029','mot-phan','Tách nhiệm: mới ghi dấu, chưa chặn; transition chưa ghi quyền / vai'],
+  ['RV-R1-12','vua','A9','PHASE-031','chua','Ba cơ chế phiên bản chính sách song song'],
+  ['RV-R1-13','vua','A3','PHASE-029','chua','correlation_id / trace_id thiếu ở posting_log, intake_inbox'],
+  ['RV-R1-14','vua','A2','PHASE-004','mot-phan','Sửa đầu bút toán đã ghi (E2): đã có dấu vết, chưa đủ'],
+  ['RV-R1-15','vua','A12','PHASE-027','mot-phan','Tài liệu chậm hơn mã'],
+  ['RV-R1-16','nhe','A10','PHASE-013','chua','ui-kit mỏng; GateResult chưa có'],
+  ['RV-R1-17','nhe','A3','PHASE-025','chua','Liên tục kế toán mới có thiết kế'],
+  ['RV-R1-18','nhe','A11','PHASE-013','chua','Ngoài mua hàng, phân hệ thiếu workflow / chính sách / mã lỗi'],
+].map(([id, level, axis, phase, status, title]) => ({ id, level, axis, phase, status, title }));
+const VERSIONS = [
+  ['v0.1.0','Nền móng','PHASE-001..010',4],['v0.2.0','Module SDK','PHASE-011..014',7],['v0.3.0','Kiểm chuẩn & bằng chứng','PHASE-018..022',7],
+  ['v0.4.0','Dữ liệu gốc & liên tục','PHASE-023..026',3],['v0.5.0','Enterprise continuity & chính sách','PHASE-027..031',5],['v1.0.0','Hệ sinh thái','PHASE-015..017',2],
+];
+const VERSION_OF = (p) => { const n = +p.slice(6); return n <= 10 ? 'v0.1.0' : n <= 14 ? 'v0.2.0' : n <= 17 ? 'v1.0.0' : n <= 22 ? 'v0.3.0' : n <= 26 ? 'v0.4.0' : n <= 31 ? 'v0.5.0' : '—'; };
+const LV = { chan: 'chặn', nang: 'nặng', vua: 'vừa', nhe: 'nhẹ' };
+const ST = { xong: 'xong', 'mot-phan': 'một phần', chua: 'chưa' };
+const PILLAR_NAME = { '0': 'Cấu hình', I: 'Sổ chính xác', II: 'Sự kiện', III: 'Chứng từ', IV: 'Cổng kiểm', V: 'Chính sách', VI: 'Truy vết', VII: 'Phân quyền', VIII: 'Mở rộng' };
+
+const params = new URLSearchParams(location.search);
+let view = params.get('theo') || 'phase';
+let open = '';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const statusBar = (fs) => {
+  const n = fs.length || 1; const c = (s) => fs.filter((f) => f.status === s).length;
+  return `<div class="bar" title="${c('xong')} xong · ${c('mot-phan')} một phần · ${c('chua')} chưa"><i style="width:${c('xong') / n * 100}%;background:var(--ok)"></i><i style="width:${c('mot-phan') / n * 100}%;background:var(--warn)"></i><i style="width:${c('chua') / n * 100}%;background:var(--bad)"></i></div>`;
+};
+const levelChips = (fs) => Object.keys(LV).map((l) => { const k = fs.filter((f) => f.level === l).length; return k ? `<span class="chip c-${l}">${k} ${LV[l]}</span>` : ''; }).join('');
+const findList = (fs) => fs.map((f) => `<div class="find"><span class="chip c-${f.level}">${LV[f.level]}</span><span><b class="mono">${f.id}</b> · ${esc(f.title)} <span class="mute">· trục ${f.axis}</span></span><span class="chip s-${f.status}">${ST[f.status]}</span></div>`).join('');
+const levels = (score, goal) => `<div class="lv" title="mức ${score} / 4, mục tiêu v1: ${goal}">${[1, 2, 3, 4].map((i) => `<span class="${i <= score ? 'on' : ''} ${i === goal ? 'goal' : ''}"></span>`).join('')}</div>`;
+
+function strip() {
+  const done = FINDINGS.filter((f) => f.status === 'xong').length;
+  const blockOpen = FINDINGS.filter((f) => f.level === 'chan' && f.status !== 'xong').length;
+  return `<div class="strip">
+    <div class="card"><div class="k">Lượt review gần nhất</div><div class="v">${REVIEW.id}</div><div class="s">${REVIEW.date} · commit <span class="mono">${REVIEW.commit}</span></div></div>
+    <div class="card"><div class="k">Điểm 12 trục</div><div class="v">${REVIEW.total} / ${REVIEW.max}</div><div class="s">mục tiêu Standard v1: ${REVIEW.goal} · ${REVIEW.verdict}</div></div>
+    <div class="card"><div class="k">Phát hiện đã xử lý</div><div class="v">${done} / ${FINDINGS.length}</div><div class="s">${statusBar(FINDINGS)}</div></div>
+    <div class="card"><div class="k">Phát hiện chặn còn mở</div><div class="v" style="color:${blockOpen ? 'var(--bad)' : 'var(--ok)'}">${blockOpen}</div><div class="s">chặn = phải xong trước khi đóng phiên bản</div></div>
+    <div class="card"><div class="k">Lượt kế tiếp</div><div class="v">${REVIEW.next.review}</div><div class="s">sau ${REVIEW.next.afterPhase} · chấm ${REVIEW.next.versions.join(', ')}</div></div>
+  </div>`;
+}
+function toolbar() {
+  const b = (k, l) => `<button aria-pressed="${view === k}" data-v="${k}">${l}</button>`;
+  return `<div class="toolbar"><span class="seg">${b('phase', 'Theo phase')}${b('truc', 'Theo trục · trụ cột')}${b('phien-ban', 'Theo phiên bản')}</span>
+    <span class="spacer"></span>
+    <select aria-label="Lượt review"><option>R1 · 2026-11-08</option></select>
+    <select aria-label="Lọc trạng thái" id="fst"><option value="">Mọi trạng thái</option><option value="mo">Còn mở (chưa + một phần)</option><option value="xong">Đã xong</option></select>
+    <a class="btn" href="#" title="Mở REVIEW-R1-FOUNDATION-2026-11-08.md">Biên bản R1</a></div>`;
+}
+const fst = () => window.__fst || '';
+const keep = (f) => !fst() || (fst() === 'xong' ? f.status === 'xong' : f.status !== 'xong');
+
+function byPhase() {
+  const phases = [...new Set(FINDINGS.map((f) => f.phase))].sort();
+  const rows = phases.map((p) => {
+    const fs = FINDINGS.filter((f) => f.phase === p && keep(f)); if (!fs.length) return '';
+    const axes = [...new Set(fs.map((f) => f.axis))];
+    const left = fs.filter((f) => f.status !== 'xong').length;
+    return `<tr class="row" data-o="${p}"><td><b class="mono">${p}</b></td><td><span class="pill">${VERSION_OF(p)}</span></td><td>${levelChips(fs)}</td><td>${statusBar(fs)}<div class="mute" style="font-size:12px">${left ? left + ' còn mở' : 'hết việc'}</div></td><td>${axes.map((a) => `<span class="pill" title="${esc(AXES.find((x) => x.id === a).title)}">${a}</span>`).join('')}</td><td><a href="#" onclick="event.stopPropagation()">Checklist ↗</a></td></tr>`
+      + (open === p ? `<tr class="detail"><td colspan="6">${findList(fs)}</td></tr>` : '');
+  }).join('');
+  const cards = phases.map((p) => { const fs = FINDINGS.filter((f) => f.phase === p && keep(f)); return fs.length ? `<div class="card"><b class="mono">${p}</b> <span class="pill">${VERSION_OF(p)}</span><div style="margin:4px 0">${levelChips(fs)}</div>${statusBar(fs)}<details style="margin-top:6px"><summary>${fs.length} phát hiện</summary>${findList(fs)}</details></div>` : ''; }).join('');
+  return `<div class="table-wrap resp"><table><thead><tr><th>Phase</th><th>Phiên bản</th><th>Phát hiện theo mức</th><th>Đã xử lý</th><th>Trục</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><div class="cards">${cards}</div>
+  <p class="mute" style="font-size:12px">Bấm một dòng để xem từng phát hiện. Phase không có phát hiện trong lượt này không hiện. Cột "Đã xử lý" đọc <code>followUps</code> (xong / một phần / chưa), không ai tích tay.</p>`;
+}
+function byAxis() {
+  const rows = AXES.map((a) => {
+    const fs = FINDINGS.filter((f) => f.axis === a.id && keep(f));
+    return `<tr class="row" data-o="${a.id}"><td><b class="mono">${a.id}</b> ${esc(a.title)}</td><td>${levels(a.score, a.goal)}<div class="mute" style="font-size:12px">${a.score} → mục tiêu ${a.goal}</div></td>
+      <td>${a.pillars.map((p) => `<a class="pill" href="#" title="Mở thẻ Tiêu chí, trụ cột ${p}">${p} ${PILLAR_NAME[p] ?? ''}</a>`).join('')}</td>
+      <td>${a.foundations.map((n) => `<a class="pill" href="#" title="Mở thẻ Nền móng ${n}">${n}</a>`).join('')}</td><td>${levelChips(fs) || '<span class="mute">—</span>'}</td></tr>`
+      + (open === a.id && fs.length ? `<tr class="detail"><td colspan="5">${findList(fs)}</td></tr>` : '');
+  }).join('');
+  const cards = AXES.map((a) => `<div class="card"><b class="mono">${a.id}</b> ${esc(a.title)}<div style="margin:6px 0">${levels(a.score, a.goal)}</div><div>${a.pillars.map((p) => `<span class="pill">${p}</span>`).join('')} · nền móng ${a.foundations.join(', ')}</div></div>`).join('');
+  return `<div class="table-wrap resp"><table><thead><tr><th>Trục</th><th>Mức (0–4)</th><th>Trụ cột</th><th>Nền móng</th><th>Phát hiện</th></tr></thead><tbody>${rows}</tbody></table></div><div class="cards">${cards}</div>
+  <p class="mute" style="font-size:12px">Ô viền xanh nét đứt = mức mục tiêu Standard v1. Bấm chip trụ cột / nền móng để sang đúng chỗ ở thẻ Tiêu chí / Nền móng (cùng màn HT10).</p>`;
+}
+function byVersion() {
+  const rows = VERSIONS.map(([id, name, phases, blockers]) => {
+    const fs = FINDINGS.filter((f) => VERSION_OF(f.phase) === id && keep(f));
+    return `<tr class="row" data-o="${id}"><td><b class="mono">${id}</b> ${esc(name)}</td><td class="mono">${phases}</td><td><span class="chip s-chua">chưa đóng</span></td><td>${blockers}</td><td>${fs.length ? statusBar(fs) : '<span class="mute">—</span>'}</td></tr>`
+      + (open === id && fs.length ? `<tr class="detail"><td colspan="5">${findList(fs)}</td></tr>` : '');
+  }).join('');
+  return `<div class="table-wrap resp"><table><thead><tr><th>Phiên bản</th><th>Gồm phase</th><th>Trạng thái</th><th>Việc chặn đóng</th><th>Phát hiện R1</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="cards">${VERSIONS.map(([id, name, phases, b]) => `<div class="card"><b class="mono">${id}</b> ${esc(name)}<div class="mute">${phases} · ${b} việc chặn</div></div>`).join('')}</div>`;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const s = document.getElementById('demo').value;
+  if (s === 'loading') { app.innerHTML = `<div class="strip">${'<div class="card"><div class="skel"></div><div class="skel" style="width:60%"></div></div>'.repeat(5)}</div><div class="card"><div class="skel"></div><div class="skel"></div><div class="skel" style="width:70%"></div></div>`; return; }
+  if (s === 'empty') { app.innerHTML = `<div class="state"><h3>Chưa có lượt review nào</h3><p class="mute">Review chạy theo nhịp, cứ 3 phase một lượt (RV-7). Lượt đầu ghi vào <code>docs/reviews/review-board.json</code> là bảng này có dữ liệu.</p><a class="btn" href="#">Xem tiêu chí review</a></div>`; return; }
+  if (s === 'error') { app.innerHTML = `<div class="state err"><h3>Không đọc được bảng đánh giá</h3><p>Tệp review-board.json sai khuôn bizcity_review_board@1.</p><p class="mute">Mã: <code>VALIDATION_ERROR</code> · Cách sửa: mở tệp, sửa theo khuôn ở <code>docs/reviews/README.md</code> rồi tải lại · Tra cứu: <code>review_board_invalid</code></p><button class="btn pri" onclick="render()">Thử lại</button></div>`; return; }
+  if (s === 'forbidden') { app.innerHTML = `<div class="state"><h3>Bạn chưa có quyền xem thẻ này</h3><p class="mute">Cần quyền <code>system:read</code> (như các thẻ khác của HT10). Nhờ chủ đơn vị cấp quyền ở màn Người dùng & vai trò.</p></div>`; return; }
+  app.innerHTML = strip() + toolbar() + (view === 'truc' ? byAxis() : view === 'phien-ban' ? byVersion() : byPhase());
+  app.querySelectorAll('.seg button').forEach((b) => b.onclick = () => { view = b.dataset.v; open = ''; const u = new URL(location); u.searchParams.set('xem', 'danh-gia'); u.searchParams.set('theo', view); history.replaceState(null, '', u); render(); });
+  app.querySelectorAll('tr.row').forEach((r) => r.onclick = () => { open = open === r.dataset.o ? '' : r.dataset.o; render(); });
+  const sel = document.getElementById('fst'); sel.value = window.__fst || ''; sel.onchange = () => { window.__fst = sel.value; render(); };
+}
+window.__fst = '';
+document.getElementById('demo').onchange = render;
+render();
+</script>
+</body>
+</html>
