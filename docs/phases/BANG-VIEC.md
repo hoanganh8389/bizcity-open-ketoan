@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 7 |
+| Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 169 |
+| Chưa ai nhận | 168 |
 | Chờ đủ tín hiệu | 60 |
 | Hoãn | 3 |
 | Xong | 285 |
 | **Tổng** | **552** |
 
-## Đang làm (7)
+## Đang làm (8)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -25,6 +25,7 @@
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-029-s029-25-acc14` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
+| [S032-17](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L26) | PHASE-032 | Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLi… | P0 | hoanganh8389 (phiên Claude, PHASE-032; phụ trách phần giá vốn: Thuy2k) · `feat/phase-032-b3-tra-hang` |
 
 ## Chờ merge (0)
 
@@ -63,7 +64,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (169)
+## Chưa ai nhận (168)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -212,7 +213,6 @@
 | [S032-14](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L23) | PHASE-032 | T032-P1 parity trên fixture + bản sao dữ liệu thật (ẩn danh): đơn giá 4 lẻ, giá trị xuất từng dòng, tồn cuối,… | P0 | — |
 | [S032-15](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L24) | PHASE-032 | Rule Contract core.costing.method@1 (weightedaverageperiod · fifo · specificidentification; spec, vectors), đ… | P0 | — |
 | [S032-16](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L25) | PHASE-032 | FIFO + đích danh trên lớp (receipt, lotid); hàm thuần fifo.ts, specific.ts; opening cho kỳ chuyển đổi | P0 | — |
-| [S032-17](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L26) | PHASE-032 | Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLi… | P0 | — |
 | [S032-18](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L27) | PHASE-032 | Chuyển kho giữ giá trị (chuyển lớp), cặp chứng từ liên đơn vị + core.intercompany.pricing@1 — T032-G6, G7 | P1 | — |
 | [S032-19](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L28) | PHASE-032 | stockcount docType (K-030-4) + core.inventory.count.snapshot; chênh → stockadjustment theo lý do; T032-G5 | P1 | — |
 | [S032-20](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L29) | PHASE-032 | Cổng: CT-INV-001..004, DG-CLOSE-1 / 2; Sẵn sàng khoá kỳ đọc costingruns (R-INV-7), chấp nhận có lý do; đối so… | P0 | — |
