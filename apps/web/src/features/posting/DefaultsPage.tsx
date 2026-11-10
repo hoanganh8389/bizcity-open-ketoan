@@ -66,6 +66,12 @@ const BASES = SYSTEM.filter((s) => s.base);
 const baseOf = (e: Entry) => BASES.find((s) => s.base!.business === e.business && s.base!.part === e.part
   && (s.base!.cond?.leg ?? undefined) === (e.cond.leg ?? undefined) && (s.base!.cond?.sameUnit ?? undefined) === (e.cond.sameUnit ?? undefined));
 
+/** "Loại hàng: Quà · Biến thể: Khuyến mại". */
+const condText = (c: Cond, o?: Options) => [
+  c.itemType && `Loại hàng: ${o?.itemTypes.find((t) => t.code === c.itemType)?.name ?? c.itemType}`,
+  c.variant && `Biến thể: ${o?.variants?.find((t) => t.code === c.variant)?.name ?? c.variant}`,
+].filter(Boolean).join(' · ');
+
 export function DefaultsPage() {
   const { can } = useAuth();
   const canWrite = can('settings:write');
@@ -79,10 +85,7 @@ export function DefaultsPage() {
 
   const acc = useMemo(() => new Map((q.data ?? []).map((r) => [r.key, r])), [q.data]);
   const cellAcc = (c: Cell) => (!c || 'text' in c ? '' : acc.get(c.key)?.accountCode ?? '');
-  const condLabel = (c: Cond) => [
-    c.itemType && `Loại hàng: ${options?.itemTypes.find((t) => t.code === c.itemType)?.name ?? c.itemType}`,
-    c.variant && `Biến thể: ${options?.variants?.find((t) => t.code === c.variant)?.name ?? c.variant}`,
-  ].filter(Boolean).join(' · ');
+  const condLabel = (c: Cond) => condText(c, options);
   const s = search.trim().toLowerCase();
   const added = (row: SysRow) => (entries.data ?? []).filter((e) => baseOf(e) === row);
   const hit = (txt: string) => !s || txt.toLowerCase().includes(s);
@@ -147,10 +150,9 @@ export function DefaultsPage() {
 }
 
 /**
- * Một hộp, cùng các ô, cho Thêm và Sửa: Dòng · Áp cho loại hàng · Áp cho biến thể · TK Nợ · TK Có — luôn điền sẵn.
- *   Dòng đã có mở ở chế độ xem (Sửa → Ghi), như các form khác.
- *   Sửa dòng có sẵn: chỉ đổi được tài khoản (áp cho mọi loại hàng / biến thể; tài khoản dùng chung thì ghi số dòng cùng đổi).
- *   Thêm / sửa dòng thêm: chọn dòng gốc (sửa thì khoá), loại hàng / biến thể; TK Nợ / TK Có điền theo dòng gốc.
+ * Một hộp cho Thêm và Sửa, chỉ hiện ô sửa được; luôn điền sẵn. Dòng đã có mở ở chế độ xem (Sửa → Ghi); tên dòng ở tiêu đề.
+ *   Sửa dòng có sẵn: chỉ TK Nợ / TK Có (tài khoản dùng chung thì ghi số dòng cùng đổi).
+ *   Sửa dòng thêm: loại hàng, biến thể, TK Nợ / TK Có. Thêm: thêm ô Dựa trên dòng; TK Nợ / Có điền theo dòng gốc.
  */
 function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow; entry?: Entry; defaults: DefaultRow[]; options?: Options; onClose: () => void }) {
   const qc = useQueryClient();
@@ -197,30 +199,34 @@ function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow
     return <Field label={`TK ${side}`} hint={note} tip={others.length ? `Cùng đổi: ${others.join('; ')}` : undefined}><AccountPicker postingOnly value={v} onChange={set} /></Field>;
   };
   return (
-    <Modal title={row ? 'Tài khoản ngầm định' : 'Thêm tài khoản ngầm định'} viewFirst={Boolean(row)} onClose={onClose}
+    <Modal title={row ? `${base.name}${entry ? ` — ${condText(entry.cond, options)}` : ''}` : 'Thêm tài khoản ngầm định'} viewFirst={Boolean(row)} onClose={onClose}
       footer={<>
         {entry && <button className="btn" style={{ marginRight: 'auto' }} disabled={del.isPending} onClick={() => { if (window.confirm('Xoá dòng này? Hàng đó sẽ ghi như dòng gốc.')) del.mutate(); }}>Xoá</button>}
         <button className="btn btn-primary" disabled={save.isPending || Boolean(problem)} title={problem} onClick={() => save.mutate()}>Ghi</button>
         <button className="btn" onClick={onClose}>Huỷ</button>
       </>}>
       <ErrorBox error={save.error ? errorText(save.error) : del.error ? errorText(del.error) : null} />
-      <Field label="Dòng" full>
-        <select className="select input" value={baseId} disabled={Boolean(row)} onChange={(e) => pickBase(e.target.value)}>
-          {GROUPS.map((g) => (
-            <optgroup key={g} label={g}>{(isSystem ? SYSTEM : BASES).filter((x) => x.group === g).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
-          ))}
-        </select>
-      </Field>
+      {!row && (
+        <Field label="Dựa trên dòng" full>
+          <select className="select input" value={baseId} onChange={(e) => pickBase(e.target.value)}>
+            {GROUPS.map((g) => BASES.some((x) => x.group === g) && (
+              <optgroup key={g} label={g}>{BASES.filter((x) => x.group === g).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
+            ))}
+          </select>
+        </Field>
+      )}
+      {!isSystem && <>
       <Field label="Áp cho loại hàng">
-        <select className="select input" value={cond.itemType ?? ''} disabled={isSystem} onChange={(e) => setCond((c) => ({ ...c, itemType: e.target.value || undefined }))}>
+        <select className="select input" value={cond.itemType ?? ''} onChange={(e) => setCond((c) => ({ ...c, itemType: e.target.value || undefined }))}>
           <option value="">— mọi loại hàng —</option>{(options?.itemTypes ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
         </select>
       </Field>
       <Field label="Áp cho biến thể">
-        <select className="select input" value={cond.variant ?? ''} disabled={isSystem} onChange={(e) => setCond((c) => ({ ...c, variant: e.target.value || undefined }))}>
+        <select className="select input" value={cond.variant ?? ''} onChange={(e) => setCond((c) => ({ ...c, variant: e.target.value || undefined }))}>
           <option value="">— mọi biến thể —</option>{(options?.variants ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
         </select>
       </Field>
+      </>}
       {accField('Nợ', base.debit, debit, setDebit)}
       {accField('Có', base.credit, credit, setCredit)}
       {base.note && <div className="muted full" style={{ fontSize: 12 }}>{base.note}</div>}
