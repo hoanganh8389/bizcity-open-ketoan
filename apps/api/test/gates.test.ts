@@ -83,6 +83,8 @@ describe('GET /api/v1/system/gates', () => {
     const diag = b.groups.find((g: any) => g.key === 'diag').codes;
     expect(diag.find((c: any) => c.code === 'LEDGER_BALANCED').pillars).toEqual(['I']);
     expect(diag.every((c: any) => c.pillars.length > 0)).toBe(true);
+    // [2026-11-11 03:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b-3: mọi mã cổng A / B / Guard / L (kể cả mã luật thư viện) có trụ cột
+    for (const k of ['A', 'B', 'guard', 'L']) expect(b.groups.find((g: any) => g.key === k).codes.filter((c: any) => !c.pillars.length).map((c: any) => c.code), k).toEqual([]);
     expect(b.groups.find((g: any) => g.key === 'ci').codes.some((c: any) => c.code === 'SC-GATE-1')).toBe(true);
     expect(b.groups.find((g: any) => g.key === 'trigger').codes.some((c: any) => c.code === 'ledger_lines_no_update')).toBe(true);
   });
