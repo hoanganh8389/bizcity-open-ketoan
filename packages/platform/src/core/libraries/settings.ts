@@ -12,6 +12,7 @@
 import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
 import { Errors } from '../errors.js';
+import { LIBRARY_BINDINGS } from '@ketoan/contracts';
 import { lockedPeriodAt } from '../settings.js';
 import { checkSchema, overrideAt, valueSchemaOf } from './engine.js';
 import type { FindingLevel, Library } from './types.js';
@@ -22,6 +23,8 @@ export interface LibraryConfig {
   atPolicy?: 'docDate' | 'today';
   ruleLevels?: Record<string, 'warn' | 'info'>;
   overrides?: Record<string, OverrideEntry[]>;
+  // [2026-11-09 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b (26 §4.2): đơn vị hạ (info) hoặc tắt (off) từng gắn trường ↔ thư viện của cửa nạp; chỉ hạ, không nâng
+  bindings?: Record<string, 'off' | 'info'>;
 }
 export interface LibraryConfigVersion { version: number; config: LibraryConfig; reason: string; createdBy: string; createdAt: string }
 
@@ -31,12 +34,18 @@ const RANK: Record<FindingLevel, number> = { block: 3, warn: 2, info: 1 };
 /** Lỗi khuôn của cấu hình (rỗng = hợp lệ). basisKeys: mã + bí danh của vn.can-cu-phap-ly. */
 export function checkLibraryConfig(lib: Library, cfg: LibraryConfig, basisKeys?: Set<string>): string[] {
   const errs: string[] = [];
-  const known = new Set(['enabled', 'atPolicy', 'ruleLevels', 'overrides']);
+  const known = new Set(['enabled', 'atPolicy', 'ruleLevels', 'overrides', 'bindings']);
   for (const k of Object.keys(cfg)) if (!known.has(k)) errs.push(`khoá cấu hình lạ: ${k}`);
   if (cfg.enabled === false && !lib.optional) errs.push(`thư viện ${lib.id} không phải tuỳ chọn — không tắt được`);
   if (cfg.atPolicy !== undefined) {
     if (!['docDate', 'today'].includes(cfg.atPolicy)) errs.push('atPolicy phải là docDate hoặc today');
     else if (lib.kind !== 'param') errs.push('atPolicy chỉ dùng cho thư viện tham số (param)');
+  }
+  for (const [id, mode] of Object.entries(cfg.bindings ?? {})) {
+    const b = LIBRARY_BINDINGS.find((x) => x.id === id);
+    if (!b) errs.push(`bindings: ${id} không phải gắn của cửa nạp (xem LIBRARY_BINDINGS)`);
+    else if (b.library !== lib.id) errs.push(`bindings.${id}: gắn này thuộc thư viện ${b.library}, không phải ${lib.id}`);
+    else if (!['off', 'info'].includes(mode)) errs.push(`bindings.${id}: chỉ off hoặc info (chỉ hạ)`);
   }
   for (const [code, level] of Object.entries(cfg.ruleLevels ?? {})) {
     const rule = (lib.rules ?? []).find((r) => r.code === code);

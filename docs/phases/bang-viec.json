@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 172
+      "count": 171
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 282
+      "count": 283
     }
   ],
   "items": [
@@ -5211,15 +5211,9 @@
       "phase": "PHASE-030",
       "title": "B5b — cửa nạp: bảng gắn trường ↔ thư viện, chỉ cảnh báo, kênh riêng libraryFindings[], K1 (26 §4.2)",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thu-vien-b5b)",
-        "branch": "feat/s030-51b-cua-nap-thu-vien",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-030 · S030-51b — Kho thư viện B5b: cửa nạp kiểm theo thư viện, chỉ cảnh báo, kênh riêng libra…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 60
     },
@@ -6071,8 +6065,14 @@
       "title": "B2 — ScoreBar, ReadinessItem; HT10 đọc ?xem= cho 5 thẻ, thẻ mới hiện \"sắp có\"; thiếu tệp nguồn thì báo có Cách sửa (dựng lại ảnh)",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b2-nam-the",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-034 · B2 — HT10 năm thẻ (?xem= tieu-chi · nen-mong · cong-kiem · bo-may · nha-phat-trien; ba …"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 13
     },

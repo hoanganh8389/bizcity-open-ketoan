@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { ErrorBox, Field, Loading, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { LEVEL_LABEL, showValue, type LibraryEnvelope, type LibraryConfig, type LibraryConfigVersion } from '../lib/thu-vien';
 
-interface ConfigResult { library: { id: string; version: string; optional: boolean }; current: LibraryConfigVersion | null; history: LibraryConfigVersion[] }
+interface ConfigResult { library: { id: string; version: string; optional: boolean }; current: LibraryConfigVersion | null; history: LibraryConfigVersion[]; bindings: { id: string; path: string; label: string }[] }
 interface Row { code: string; from: string; value: string; reason: string }
 
 export function CauHinhPanel({ lib }: { lib: LibraryEnvelope & { optional?: boolean } }) {
@@ -19,12 +19,14 @@ export function CauHinhPanel({ lib }: { lib: LibraryEnvelope & { optional?: bool
   const [atPolicy, setAtPolicy] = useState<'docDate' | 'today'>('docDate');
   const [levels, setLevels] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<Row[]>([]);
+  const [bind, setBind] = useState<Record<string, string>>({});
   const [reason, setReason] = useState('');
   useEffect(() => {
     const c: LibraryConfig = q.data?.current?.config ?? {};
     setEnabled(c.enabled !== false);
     setAtPolicy(c.atPolicy ?? 'docDate');
     setLevels(c.ruleLevels ?? {});
+    setBind(c.bindings ?? {});
     setRows(Object.entries(c.overrides ?? {}).flatMap(([code, l]) => l.map((o) => ({ code, from: o.from, value: String(o.value), reason: o.reason }))));
   }, [q.data]);
   const save = useMutation({
@@ -41,6 +43,8 @@ export function CauHinhPanel({ lib }: { lib: LibraryEnvelope & { optional?: bool
         (ov[r.code.trim()] ??= []).push({ from: r.from, value: r.value.trim() !== '' && !Number.isNaN(n) ? n : r.value, reason: r.reason });
       }
       if (Object.keys(ov).length) config.overrides = ov;
+      const bd = Object.fromEntries(Object.entries(bind).filter(([, v]) => v === 'off' || v === 'info')) as Record<string, 'off' | 'info'>;
+      if (Object.keys(bd).length) config.bindings = bd;
       return api.post(`/api/v1/libraries/${encodeURIComponent(lib.id)}/config`, { config, reason });
     },
     onSuccess: () => { setReason(''); void qc.invalidateQueries({ queryKey: ['thu-vien'] }); },
@@ -85,6 +89,18 @@ export function CauHinhPanel({ lib }: { lib: LibraryEnvelope & { optional?: bool
               )}</td></tr>
           ))}</tbody></table>
         <p className="muted">Bảy kiểm chuẩn <code>LIB-*</code> không hạ được (toàn vẹn dữ liệu).</p>
+      </>) : null}
+
+      {q.data!.bindings.length ? (<>
+        <h4>Gắn với chứng từ (cửa nạp)</h4>
+        <table className="grid"><thead><tr><th>Trường chứng từ</th><th>Mức mặc định</th><th>Mức ở đơn vị</th></tr></thead>
+          <tbody>{q.data!.bindings.map((b) => (
+            <tr key={b.id}><td><code>{b.path}</code> <span className="muted">{b.label}</span></td><td><span className="badge badge-warn">cảnh báo</span></td>
+              <td><select className="input" value={bind[b.id] ?? ''} disabled={!canWrite} onChange={(e) => setBind({ ...bind, [b.id]: e.target.value })}>
+                <option value="">như mặc định</option><option value="info">nhắc</option><option value="off">tắt</option>
+              </select></td></tr>
+          ))}</tbody></table>
+        <p className="muted">Cửa nạp kiểm mã ở các trường này theo thư viện, chỉ cảnh báo — chứng từ vẫn được nhận và không đổi bút toán. Kết quả hiện ở Kiểm thử chứng từ (mục thư viện) và số đếm ở Tổng quan.</p>
       </>) : null}
 
       {lib.kind === 'param' ? (<>

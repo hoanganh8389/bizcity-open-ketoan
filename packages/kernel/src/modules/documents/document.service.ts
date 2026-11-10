@@ -59,6 +59,8 @@ import { documentRepository, type DocumentListFilter } from './document.reposito
 import { applyTaxFlags, applyTaxPatch, loadTaxPatch } from '../tax-info/tax-patch.js';
 import { applyReceiptConfirmation, confirmationMatches, isoTime, loadReceiptConfirmation } from './receipt-confirmation.js';
 import { policyFindings, policyHold } from '../intake/policy-check.js';
+// [2026-11-09 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b (26 §4.2, K1): cửa nạp đếm lượt dùng thư viện theo kênh (không từ chối, không hold)
+import { countLibraryUsage } from '../intake/library-check.js';
 import { sql } from 'kysely';
 
 // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cửa nạp không import adapter kết nối: adapter đăng ký bộ chuẩn hoá chứng từ đẩy vào (registerIncomingPreparer ở app.ts)
@@ -403,6 +405,8 @@ async function postDocumentInner(trx: Db, auth: AuthContext, doc: IngestDocument
   // Cùng hàm với tiền kiểm (R-INTAKE-4). strict + có IN-POL-* → chờ duyệt bằng hold sẵn có, không trạng thái mới.
   const { check: policyCheck } = await policyFindings(trx, auth.tenantId, doc);
   const policyOnHold = policyHold(policyCheck);
+  // [2026-11-09 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b: chỉ lần nộp thật (xem trước / định khoản thử là post + force thì không đếm); cùng hàm với tiền kiểm (R-INTAKE-4)
+  if (!(opts.force === true && opts.post === true)) await countLibraryUsage(trx, auth.tenantId, doc);
   const oldPolicyCheck = existing ? (await sql<{ pc: unknown }>`SELECT policy_check AS pc FROM accounting_events WHERE id = ${existing.id}`.execute(trx)).rows[0]?.pc ?? null : null;
 
   if (existing) {
