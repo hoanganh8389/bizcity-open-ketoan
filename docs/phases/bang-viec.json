@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 166
+      "count": 165
     },
     {
       "key": "partial",
@@ -6121,8 +6121,14 @@
       "title": "B5a — cong-cu-dev.json (bizcitydevtools@1), SC-DEV-2 khớp menu.ts, bảng tiến độ T1..T6",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b5a-cong-cu-dev",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-034 · B5a — bảng tiến độ công cụ nhà phát triển ở HT10: docs/standard/cong-cu-dev.json (bizci…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 17
     },
