@@ -2,15 +2,16 @@
 <!-- [2026-11-03 08:22 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — hướng dẫn màn HT08 (trước đây nút Hướng dẫn hiện "Chưa có hướng dẫn"); viết theo apps/web/src/features/system/ReviewBoardPage.tsx -->
 
 <!-- [2026-11-09 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B1: Khoá thử hôm nay, HT08 đổi tên Bàn làm việc kế toán -->
-Bàn làm việc kế toán (trước đây là *Bàn đánh giá*) có ba thẻ:
+Bàn làm việc kế toán (trước đây là *Bàn đánh giá*) có bốn thẻ:
 
 | Thẻ | Dùng khi |
 |---|---|
 | **Việc hôm nay** (mở sẵn) <!-- [2026-11-09 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2a: thẻ Việc hôm nay --> | Đầu ngày: xem sổ có chỗ nào sai, việc của ai, sửa thế nào |
 | **Khoá thử hôm nay** | Muốn biết **hôm nay khoá sổ được chưa**, còn vướng gì, mà không phải khoá thật |
+| **Kết quả từng tuần** <!-- [2026-11-11 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B4a: thẻ Kết quả từng tuần --> | Cuối tuần, kế toán trưởng xem tuần này so với tuần trước: phép kiểm đạt bao nhiêu, việc nào còn mở, mở từ bao giờ |
 | **Rà theo vai** | Rà định kỳ theo vai kế toán trưởng, kiểm soát, thanh tra thuế |
 
-Cả ba thẻ **chỉ đọc**: không ghi gì vào sổ, không khoá kỳ.
+Cả bốn thẻ **chỉ đọc**: không ghi gì vào sổ, không khoá kỳ.
 
 ## Việc hôm nay
 
@@ -58,6 +59,23 @@ Mỗi mục có một trong bốn nhãn:
 | ○ **Phần mềm chưa tự kiểm được** | Bản hiện tại chưa kiểm được mục này. **Không tính là đạt** |
 
 Chưa có trong bản này: giá vốn **tính tạm** và **chốt giá vốn** theo lần tính, danh sách trường hợp **chặn khoá sổ** hẳn. Các phần đó đến ở các bước nâng cấp sau của phần Kho · giá vốn.
+
+## Kết quả từng tuần
+<!-- [2026-11-11 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B4a: thẻ Kết quả từng tuần -->
+
+Mỗi dòng là **một tuần**, mới nhất trước, xếp theo tháng. Tuần vắt hai tháng (ví dụ 27/10–02/11) tách hai dòng, mỗi tháng một dòng, nên tháng nào cũng có đủ tuần của chính nó. Kết quả của tuần là **lượt tự kiểm cuối tuần** đó (lượt 01:00 mỗi đêm hoặc lần bấm *Kiểm lại tất cả*).
+
+| Cột | Nghĩa | Khi nào có màu |
+|---|---|---|
+| Phép kiểm đạt | đạt / số phép kiểm có dữ liệu để xét | cam khi dưới 100 %, đỏ khi dưới 90 % |
+| Lỗi toàn vẹn còn mở | số lỗi toàn vẹn sổ cuối tuần (khoá kỳ phải ghi lý do) | đỏ khi khác 0 |
+| Việc mới / đã đóng | so với cuối tuần trước | cam khi việc mới nhiều hơn việc đã đóng hai tuần liền |
+| Việc cũ nhất | việc còn mở lâu nhất, tính từ lượt đầu tiên báo việc đó | cam khi quá 7 ngày, đỏ khi quá 14 ngày |
+| Ngày có tự kiểm | số ngày trong tuần có lượt tự kiểm | chữ mờ khi thiếu ngày (máy tắt qua đêm) |
+
+**Không màu là đạt.** Bấm một tuần để xem từng việc còn mở cuối tuần: mức, số chỗ, có từ ngày nào, của ai, thuộc điều kiện khoá sổ nào. Sửa việc ở thẻ *Việc hôm nay*.
+
+Lượt tự kiểm được giữ 90 ngày, nên thẻ xem được khoảng 12 tuần gần nhất. Chưa có trong bản này: bản lưu tuần lâu dài, nút **Đã xem tuần**, nhãn *đổi sau khi đã xem* khi chứng từ ghi lùi.
 
 ## Rà theo vai
 

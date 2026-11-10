@@ -293,7 +293,8 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   },
   // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, R-WF-17): người lập tự duyệt ghi sổ (sod: warn) — cảnh báo, chưa chặn
   {
-    code: 'LEDGER_SELF_APPROVED', layer: 'L3', level: 'warn', scoped: true,
+    // [2026-11-11 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — R-DIAG-10: LEDGER_SELF_APPROVED (S029-25) thiếu closeRef → PC-022, nhắc hằng ngày
+    code: 'LEDGER_SELF_APPROVED', closeRef: 'PC-022', cadence: ['day'], stage: 'pre', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở chứng từ trong mẫu, xem người lập và người duyệt; không đúng quy chế thì bỏ duyệt và giao người khác duyệt lại', screen: SCREENS.ACC14 }, { text: 'Khi đơn vị đủ người, đề nghị bật chặn tách nhiệm (người duyệt khác người lập)', role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'LEDGER_SELF_APPROVED' } },
     title: 'Chứng từ ghi sổ được duyệt bởi người khác người lập (tách nhiệm)',
     fix: 'Người lập tự duyệt và ghi sổ chứng từ của mình (mua hàng, phiếu kế toán). Hệ thống chưa chặn (quyết định 2026-11-10), chỉ ghi dấu: kế toán trưởng rà các lần này.',

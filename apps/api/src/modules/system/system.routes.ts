@@ -12,6 +12,7 @@
  *   GET /api/v1/system/health/ready — công khai, L1 sẵn sàng: migration đã áp, trigger bảo vệ sổ còn, CSDL ghi được; lỗi → 503 NOT_READY
  *   GET /api/v1/system/diagnostics — L3 toàn vẹn sổ của đơn vị (tuỳ chọn from, to, branchCode, layer); lưu vào diagnostic_runs
  *   GET /api/v1/system/diagnostics/runs, /runs/:id — lịch sử các lượt chẩn đoán (R-DIAG-5)
+ *   GET /api/v1/system/diagnostics/weeks — kết quả từng tuần từ các lượt đã lưu (PHASE-032 B4a)
  *   GET /api/v1/system/capabilities — bảng năng lực Bizcity Standard của bản đang chạy + phân hệ, add-in, mã chẩn đoán đã đăng ký
  *   GET /api/v1/system/addins  — danh sách add-in đang bật (giao diện dùng để dựng menu)
  *   GET /api/v1/system/modules — mã các phân hệ máy chủ đang bật (ENABLED_MODULES; trang Tổng quan chỉ hiện các phân hệ này)
@@ -39,7 +40,7 @@ import { postingModesSchema } from '@ketoan/contracts';
 import { readPostingModes } from '@ketoan/contracts';
 import { env } from '../../config/env.js';
 import { BUILD_VERSION, FOUNDATIONS, PILLARS, STANDARD } from '../../core/version.js';
-import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
+import { listDiagnostics, runDiagnostics, saveDiagnosticRun, weeklyDiagnostics } from './diagnostics.js';
 import { listActions, mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { disabledModules } from '@bizcity/platform/core/module-registry';
 import { listModulePermissions, PERMISSIONS } from '@bizcity/platform/core/auth';
@@ -177,6 +178,18 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
       if (!x) throw Errors.notFound('lượt chẩn đoán');
       return ok({ id: x.id, layer: x.layer, trigger: x.trigger, scope: x.scope, summary: x.summary, checks: x.checks, errorCount: x.error_count, actor: x.actor, at: x.created_at });
     },
+  });
+
+  // [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B4a (S032-31 phần xem): kết quả từng tuần gom từ lượt tự kiểm L3 đã lưu, tuần ISO tách theo tháng, chỉ đọc
+  r.get('/api/v1/system/diagnostics/weeks', {
+    preHandler: requirePermission('reports:read'),
+    schema: {
+      tags: ['Hệ thống'],
+      summary: 'Kết quả từng tuần: gom lượt tự kiểm L3 cả sổ đã lưu theo tuần ISO, tách theo tháng (mới nhất trước); chỉ đọc',
+      description: 'Mỗi lát (tuần × tháng): số lượt, số ngày có lượt, phép kiểm đạt / áp dụng, lỗi còn mở, việc còn mở kèm ngày bắt đầu, việc mới / đã đóng so với lát trước, tuổi việc cũ nhất. Lượt giữ 90 ngày (R-DIAG-5). PHASE-032 B4a.',
+      querystring: z.object({ weeks: z.coerce.number().int().min(1).max(26).default(12) }),
+    },
+    handler: async (req) => ok(await weeklyDiagnostics(authOf(req).tenantId, { weeks: req.query.weeks })),
   });
 
   // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bảng trụ cột × mức đạt (bizcity_pillars@1): nguồn là tệp của bản dựng, không theo đơn vị; không có API ghi "đạt" (R-CONT-7)
