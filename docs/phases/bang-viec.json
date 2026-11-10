@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 168
+      "count": 167
     },
     {
       "key": "partial",
@@ -5785,8 +5785,14 @@
       "title": "Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLineRef; CT-COST-010..012; lô quarantine cho hàng tr…",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-032; phụ trách phần giá vốn: Thuy2k)",
+        "branch": "feat/phase-032-b3-tra-hang",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-032 · B3 — khách trả hàng lấy đúng giá vốn lúc bán: phiếu trả của lần bán tháng trước nhập lạ…"
+      },
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 26
     },
