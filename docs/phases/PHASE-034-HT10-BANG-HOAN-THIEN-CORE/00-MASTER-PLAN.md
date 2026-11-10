@@ -121,6 +121,18 @@ Cổng *Khoá kỳ* và *Cổng C* vẫn giữ chỗ (PHASE-032 / 033).
 
 Đánh đổi: trụ cột gắn theo họ, không theo từng mã. Mã nào lệch khỏi họ của nó thì thêm một dòng mã cụ thể vào `map[]`.
 
+### 3.2c Kết quả bộ kiểm của chính bản dựng (S034-11, D034-13)
+<!-- [2026-11-11 04:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — D034-13: chạy lane selfcheck lúc dựng ảnh api, đóng gói kết quả vào ảnh; thay cho "kết quả CI" khi CI GitHub khoá -->
+Q034-1 chốt đóng gói kết quả bộ kiểm của commit vào ảnh. CI GitHub đang khoá, nên làm bằng **chính lúc dựng ảnh**:
+
+- `docker/api.Dockerfile` có thêm giai đoạn `conformance`, đi từ giai đoạn `build` vì đã có sẵn `node_modules`.
+- Giai đoạn này chép toàn bộ mã của commit, rồi chạy `node tests/conformance/selfcheck.mjs --lane selfcheck --json` (không cần CSDL, vài giây).
+- Kết quả được **thu gọn** thành `build/scoreboard.json` (`runId`, `at`, `verdict`, `counts`, và mỗi check gồm id · status · findings · new · enforce), chép vào ảnh chạy.
+- Check đỏ **không** làm hỏng việc dựng ảnh: kết quả là để hiện ra, không phải cổng phát hành. Cổng phát hành vẫn là R-REL-4.
+- `GET /system/gates` đọc tệp đó. Mã CI có thêm `last` (pass · debt · fail · warn · planned); phản hồi có thêm `ciRun` (lúc chạy, kết luận, số đếm).
+- Chạy dev hoặc thiếu tệp thì `ciRun = null`, màn ghi *"bản dựng này chưa có kết quả bộ kiểm"*.
+- Đường dẫn `build/` nằm ngoài `docs/`. Đây là tệp sinh lúc dựng ảnh, không có trong repo, nên SC-REL-3 không áp.
+
 ### 3.3 Màn
 
 ```
@@ -320,6 +332,7 @@ B1 làm ngay được, không phụ thuộc bước nào. Các bước B3, B4, B
 | D034-9 | Mỗi sổ JSON có một phép kiểm SC chặn "đạt" sai (R-CONT-7, R-ECP-SCORE) |
 | D034-10 | Thứ tự thẻ: Tiêu chí → Nền móng → Cổng & bộ kiểm → Bộ máy → Nhà phát triển |
 | D034-12 | (đính chính D034-6 cho B5b, 2026-11-11) Thẻ con nhúng nguyên màn DEV (có PageHeader, DevGuard), không tách `*Body`, không sửa `apps/web/src/phan-he/dev/**` |
+| D034-13 | (S034-11, theo Q034-1) Kết quả lane selfcheck chạy lúc dựng ảnh api, thu gọn vào `build/scoreboard.json` trong ảnh; check đỏ không chặn dựng ảnh; `GET /system/gates` trả `ciRun` + `last` cho mã CI (§3.2c) |
 | D034-11 | (đính chính D034-3 cho B3b, 2026-11-11) Trụ cột gắn theo họ mã trong `cong-kiem.json`; test / CI / trigger sinh từ repo bằng `scripts/cong-kiem.mjs`; không sửa `DiagCheck` (§3.2b) |
 
 ## 9. Câu hỏi mở
