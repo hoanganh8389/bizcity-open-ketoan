@@ -1,0 +1,158 @@
+{
+  "$comment": "[2026-11-10 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 (S034-7): bizcity_engines@1 — 13 bộ máy (engine) của Core cho thẻ Bộ máy ở HT10. KHÔNG có trường trạng thái gõ tay (D034-5): % hoàn thiện = số mốc xong / số mốc, trạng thái mốc đọc từ docs/phases/bang-viec.json (sinh từ checklist trên main). SC-ENG-1 kiểm: mã có thật, hợp đồng có thật, mốc có trong bảng việc, mã kiểm `emits` có trong mã nguồn, core / pillars là id có thật, không có trường status.",
+  "contract": "bizcity_engines@1",
+  "version": "0.1.0-draft",
+  "updated": "2026-11-10",
+  "doc": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/00-MASTER-PLAN.md",
+  "layers": {
+    "kernel": "Kernel — năng lực kế toán lõi, chỉ Kernel ghi sổ",
+    "platform": "Platform — năng lực dùng chung cho mọi module",
+    "package": "Gói riêng — chạy được ngoài app (CI, công cụ)"
+  },
+  "engines": [
+    {
+      "id": "E01", "key": "posting", "title": "Ghi sổ (định khoản)", "layer": "kernel",
+      "duty": "Chọn quy tắc theo loại chứng từ và chính sách kế toán đúng ngày hạch toán, dựng bút toán, ghi qua một cửa (eventStore → ledgerService).",
+      "code": ["packages/kernel/src/modules/posting", "packages/kernel/src/modules/posting-config"],
+      "contracts": ["bizcity_posting_rule@1", "bizcity_posting_template@1", "bizcity_ledger_intake@1"], "adr": ["ADR-0009"],
+      "core": "C5", "pillars": ["I", "IV"],
+      "emits": ["POLICY_VERSION", "ENTRY_NO_VERSION", "PROFILE_PACK_REGIME"],
+      "tests": ["apps/api/test/posting-modes.test.ts", "apps/api/test/posting-pack.test.ts"],
+      "sdk": "ctx.ledger.submit (module kể sự việc qua cửa nạp, không gọi thẳng ledgerService)",
+      "milestones": ["S005-2", "S005-3", "S005-4", "S005-5", "S012-4", "S024-33"]
+    },
+    {
+      "id": "E02", "key": "inventory", "title": "Inventory Engine — kho · lô · giá vốn liên tục", "layer": "kernel",
+      "duty": "Giữ số lượng, lô, giá trị tồn; tính giá vốn (hôm nay bình quân tháng theo item_id); đưa kết quả đã qua cổng C vào eventStore. Không ghi sổ cái trực tiếp.",
+      "code": ["packages/kernel/src/modules/inventory"],
+      "contracts": ["bizcity_inventory@1"], "adr": ["ADR-0021", "ADR-0033"],
+      "core": "C5", "pillars": ["III", "II"],
+      "emits": ["INVENTORY_NEGATIVE", "COGS_STALE", "INVENTORY_LEDGER_MISMATCH"],
+      "plannedEmits": ["CT-INV-*", "CT-COST-*"],
+      "tests": ["apps/api/test/costing.test.ts"],
+      "sdk": "đọc qua API / khung nhìn; module Kho kể sự việc qua cửa nạp",
+      "milestones": ["S004-7", "S004-17", "S032-8", "S032-12", "S032-13", "S032-16", "S032-17", "S032-18", "S032-20"]
+    },
+    {
+      "id": "E03", "key": "document", "title": "Document SDK (chứng từ)", "layer": "platform",
+      "duty": "Khuôn chứng từ dùng chung: trạng thái, phiên bản, liên kết chứng từ gốc, sự việc kế toán có phiên bản.",
+      "code": ["packages/platform/src/core/documents.ts", "packages/kernel/src/modules/documents"],
+      "contracts": ["bizcity_document@1"], "adr": ["ADR-0028"],
+      "core": "C4", "pillars": ["IV", "VI"],
+      "emits": ["EVENT_POSTED_VERSION", "EVENT_HAS_ENTRY", "IN-GUARD-001"],
+      "tests": ["apps/api/test/truy-vet.test.ts"],
+      "sdk": "ctx.documents.*",
+      "milestones": ["S030-20", "S030-23", "S030-24", "S030-41", "S030-42"]
+    },
+    {
+      "id": "E04", "key": "numbering", "title": "Đánh số chứng từ", "layer": "kernel",
+      "duty": "Cấp số chứng từ theo bộ đếm (document_sequences), không trùng, không hổng ngoài ý muốn.",
+      "code": ["packages/kernel/src/modules/documents/numbering.ts"],
+      "contracts": ["bizcity_document@1"], "adr": [],
+      "core": "C4", "pillars": ["IV"],
+      "emits": [],
+      "tests": [],
+      "sdk": "ctx.documents (số cấp khi lưu)",
+      "milestones": []
+    },
+    {
+      "id": "E05", "key": "workflow", "title": "Workflow (duyệt nhiều cấp, tách nhiệm)", "layer": "platform",
+      "duty": "Máy trạng thái khai báo (*.workflow.yaml): duyệt nhiều cấp, tách nhiệm người lập / người duyệt, lý do bắt buộc.",
+      "code": ["packages/platform/src/core/workflow.ts"],
+      "contracts": ["bizcity_workflow@1", "bizcity_document@1"], "adr": [],
+      "core": "C4", "pillars": ["VII"],
+      "emits": [],
+      "tests": ["apps/api/test/workflow.test.ts"],
+      "sdk": "khai báo workflow trong module manifest",
+      "milestones": ["S012-1", "S030-27", "S030-28"]
+    },
+    {
+      "id": "E06", "key": "authz", "title": "Phân quyền (authorize)", "layer": "platform",
+      "duty": "Hàm thuần authorize(): từ chối thắng, phạm vi đơn vị / chi nhánh, điều kiện; vai trò của đơn vị, Role Editor.",
+      "code": ["packages/platform/src/core/authz"],
+      "contracts": ["bizcity_authorization@1"], "adr": ["ADR-0027"],
+      "core": "C2", "pillars": ["VII"],
+      "emits": ["TENANT_ISOLATION"],
+      "tests": ["apps/api/test/authz-engine.test.ts"],
+      "sdk": "permission của defineAction; ctx.auth",
+      "milestones": ["S028-6", "S028-7", "S028-8", "S028-9", "S028-10", "S028-11"]
+    },
+    {
+      "id": "E07", "key": "policy", "title": "Policy Registry & Rule Contracts", "layer": "platform",
+      "duty": "Chính sách nghiệp vụ có phiên bản, phát hành / ngừng, tra theo ngày; cửa nạp kiểm L4b; chứng từ ghi bản đã áp (policyRefs).",
+      "code": ["packages/platform/src/core/policies.ts"],
+      "contracts": ["bizcity_policy@1"], "adr": ["ADR-0031"],
+      "core": "C3", "pillars": ["V"],
+      "emits": ["IN-POL-*"],
+      "tests": ["apps/api/test/policy.test.ts"],
+      "sdk": "ctx.policies.resolve / evaluate",
+      "milestones": ["S031-4", "S031-5", "S031-6", "S031-9", "S031-10", "S031-11", "S031-13", "S031-15", "S031-17", "S031-23"]
+    },
+    {
+      "id": "E08", "key": "library", "title": "Thư viện tham chiếu có phiên bản", "layer": "platform",
+      "duty": "Thư viện dùng chung (tiền, ngày lễ, căn cứ pháp lý…) có phiên bản, nạp lúc chạy, cửa nạp kiểm theo thư viện.",
+      "code": ["packages/platform/src/core/libraries", "libraries"],
+      "contracts": ["bizcity_library@1"], "adr": ["ADR-0032"],
+      "core": "C3", "pillars": ["IX"],
+      "emits": ["LIB-*"],
+      "tests": [],
+      "sdk": "ctx.libraries.*",
+      "milestones": ["S030-44", "S030-45", "S030-46", "S030-47", "S030-48", "S030-51b"]
+    },
+    {
+      "id": "E09", "key": "conformance", "title": "Kiểm chuẩn pháp lý VN (Conformance Engine)", "layer": "package",
+      "duty": "Chọn rulepack theo ngày và hồ sơ đơn vị, chạy ca kiểm, trả báo cáo fail-closed; cùng một engine cho CI và bản cài.",
+      "code": ["packages/vn-rulepacks/engine.mjs", "packages/kernel/src/modules/conformance"],
+      "contracts": ["bizcity_compliance@1"], "adr": ["ADR-0012", "ADR-0016"],
+      "core": "C6", "pillars": ["VI", "VIII"],
+      "emits": ["CONFORMANCE_STALE"],
+      "tests": ["apps/api/test/conformance-engine.test.ts", "apps/api/test/conformance-gate.test.ts"],
+      "sdk": "core.conformance.run (action)",
+      "milestones": ["S020-2", "S020-4", "S020-5", "S020-7", "S020-11", "S020-12", "S020-16", "S020-18", "S020-20", "S020-24"]
+    },
+    {
+      "id": "E10", "key": "lineage", "title": "Truy vết (lineage)", "layer": "kernel",
+      "duty": "Đường đi của một mặt hàng / chứng từ từ nguồn tới sổ: nút, cạnh, tác động; giải thích giá vốn.",
+      "code": ["packages/kernel/src/modules/lineage"],
+      "contracts": ["bizcity_lineage@1"], "adr": ["ADR-0021"],
+      "core": "C6", "pillars": ["III", "VI"],
+      "emits": [],
+      "tests": ["apps/api/test/lineage.test.ts"],
+      "sdk": "GET /api/v1/lineage/*",
+      "milestones": ["S025-3", "S025-4", "S031-23", "S032-22"]
+    },
+    {
+      "id": "E11", "key": "closing", "title": "Kết chuyển & khoá kỳ", "layer": "kernel",
+      "duty": "Kết chuyển cuối kỳ (632 → 911 → 421), khoá kỳ đa chiều; khoá kỳ chạy chẩn đoán trước (R-DIAG-4).",
+      "code": ["packages/kernel/src/modules/closing", "packages/kernel/src/modules/periods"],
+      "contracts": ["bizcity_ledger_intake@1"], "adr": ["ADR-0021", "ADR-0025"],
+      "core": "C5", "pillars": ["I", "III"],
+      "emits": ["PERIOD_CLOSE_OPEN", "DEPRECIATION_OPEN"],
+      "tests": [],
+      "sdk": "POST /api/v1/periods/locks",
+      "milestones": ["S004-6", "S025-11", "S025-14", "S032-20", "S032-28", "S032-29"]
+    },
+    {
+      "id": "E12", "key": "tax", "title": "Thuế (tính, đối chiếu hoá đơn)", "layer": "kernel",
+      "duty": "Hôm nay chưa thành bộ máy riêng: thuế suất, hoá đơn, chẩn đoán thuế nằm rải ở tax-codes / tax-info / tax-invoices (Q034-3).",
+      "code": ["packages/kernel/src/modules/tax-info", "packages/kernel/src/modules/tax-codes", "packages/kernel/src/modules/tax-invoices"],
+      "contracts": [], "adr": [],
+      "core": "C5", "pillars": ["IV"],
+      "emits": ["VAT_INPUT_INVOICE_MATCH", "TAX_INPUT_NO_INVOICE", "INVOICE_ISSUE_DATE"],
+      "tests": [],
+      "sdk": "—",
+      "milestones": ["S020-11"]
+    },
+    {
+      "id": "E13", "key": "scoreboard", "title": "Bảng điểm (scoreboard)", "layer": "package",
+      "duty": "Gộp kết quả bộ kiểm thành điểm tuân chuẩn / sẵn sàng; hôm nay chỉ chạy ở CI, bảng điểm theo bằng chứng trong app chưa có (S029-18).",
+      "code": ["tests/conformance/lib/scoreboard.mjs"],
+      "contracts": [], "adr": ["ADR-0028"],
+      "core": "C6", "pillars": ["VI"],
+      "emits": [],
+      "tests": [],
+      "sdk": "—",
+      "milestones": ["S029-18", "S032-26", "S032-31", "S032-33"]
+    }
+  ]
+}

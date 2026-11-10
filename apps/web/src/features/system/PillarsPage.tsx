@@ -18,6 +18,8 @@ import { FoundationsBoard } from './FoundationsBoard';
 import { ComingSoon, ScoreBar, SourceError } from './readiness';
 // [2026-11-10 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): thẻ Cổng & bộ kiểm có dữ liệu thật (GET /system/gates)
 import { GatesBoard } from './GatesBoard';
+// [2026-11-10 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 (S034-7): thẻ Bộ máy có dữ liệu thật (GET /system/engines)
+import { EnginesBoard } from './EnginesBoard';
 
 export type PillarStatus = 'dat' | 'mot-phan' | 'tai-lieu' | 'chua';
 export interface PillarCriterion {
@@ -125,14 +127,7 @@ function TabBody({ tab }: { tab: TabKey }) {
   switch (tab) {
     case 'nen-mong': return <FoundationsBoard />;
     case 'cong-kiem': return <GatesBoard />;
-    case 'bo-may':
-      return (
-        <ComingSoon question="Mỗi bộ máy (engine) của Core làm gì, theo hợp đồng nào, còn bao nhiêu mốc?"
-          source="bo-may.json (bizcity_engines@1, 13 bộ máy); trạng thái mốc đọc từ bảng việc docs/phases/bang-viec.json"
-          step="B4 (S034-7)">
-          Không bộ máy nào có trường trạng thái gõ tay: % hoàn thiện = số mốc xong / số mốc.
-        </ComingSoon>
-      );
+    case 'bo-may': return <EnginesBoard />;
     case 'nha-phat-trien':
       return (
         <ComingSoon question="Công cụ nhà phát triển nào dùng được, còn thiếu gì — và chạy ngay tại đây"

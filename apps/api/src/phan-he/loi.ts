@@ -27,6 +27,8 @@ import { eventRoutes } from '../modules/system/events.routes.js';
 import { findingsRoutes } from '../modules/system/findings.routes.js';
 // [2026-11-10 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): GET /api/v1/system/gates cho thẻ Cổng & bộ kiểm ở HT10
 import { gatesRoutes } from '../modules/system/gates.routes.js';
+// [2026-11-10 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 (S034-7): GET /api/v1/system/engines cho thẻ Bộ máy ở HT10
+import { enginesRoutes } from '../modules/system/engines.routes.js';
 // [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: CORE_ROUTES thêm librariesRoutes (thư viện dùng chung bizcity_library@1, ADR-0032)
 import { librariesRoutes } from '../modules/system/libraries.routes.js';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — CORE_ROUTES thêm catalogRulesRoutes (HT09 Quy định dữ liệu danh mục)
@@ -75,7 +77,7 @@ import { transferDocRoutes } from './kho/phieu-chuyen-kho.js';
 import { inventoryReportRoutes } from '../modules/inventory/inventory-report.routes.js';
 
 export const CORE_ROUTES: Routes[] = [
-  authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, gatesRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
+  authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, gatesRoutes, enginesRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
   accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, itemRoutes, postingFlowRoutes, postingRuleRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
