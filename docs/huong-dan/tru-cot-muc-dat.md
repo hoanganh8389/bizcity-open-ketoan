@@ -33,3 +33,21 @@ Bấm **Nền móng** ở đầu màn (hoặc mở `/he-thong/tru-cot?xem=nen-mo
 - **Tinh gọn & SDK**: bảy nguyên tắc Small Core, Strong Contracts.
 
 Mức **Đạt** chỉ có khi không còn tín hiệu *chưa có*; bộ kiểm SC-CORE-1 chặn ghi "đạt" sai và báo khi một tín hiệu đã có mà bảng chưa nâng. Nguồn: `docs/standard/nen-mong.json`.
+
+<!-- [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 (S034-4): năm thẻ của HT10 -->
+## Năm thẻ của màn
+
+Đầu màn có năm thẻ, đi từ trong ra ngoài: luật → nền → cổng giữ luật → bộ máy chạy luật → công cụ để dev xem bộ máy chạy.
+
+| Thẻ | Trả lời câu gì | Mở thẳng |
+|---|---|---|
+| **Tiêu chí theo trụ cột** | Core bảo đảm điều gì, mỗi tiêu chí đạt tới đâu | `/he-thong/tru-cot` |
+| **Nền móng** | Sáu năng lực lõi × 17 trụ cột đạt tới đâu theo tín hiệu kiểm | `?xem=nen-mong` |
+| **Cổng & bộ kiểm** | Dữ liệu đi qua những cổng nào, mỗi mã kiểm có cách sửa, có test, gắn trụ cột chưa | `?xem=cong-kiem` |
+| **Bộ máy** | Mỗi engine (Ghi sổ, Inventory, Document SDK, Workflow, Phân quyền, …) theo hợp đồng nào, còn bao nhiêu mốc | `?xem=bo-may` |
+| **Nhà phát triển** | Công cụ DEV01..09 dùng được tới đâu, chạy ngay tại màn này | `?xem=nha-phat-trien` |
+
+Ba thẻ sau đang hiện **sắp có**: thẻ nói rõ sẽ lấy dữ liệu từ đâu và bước nào làm. Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
+
+**Thẻ báo "Bản cài chưa có tệp …"**: bản cài Docker dựng từ mã cũ chưa chép tệp nguồn của bảng vào ảnh. Cập nhật bản cài (`./scripts/cap-nhat.sh`) là hết. Phép kiểm SC-REL-3 giữ cho lỗi này không lặp lại.
+
