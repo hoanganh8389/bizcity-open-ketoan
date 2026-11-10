@@ -39,6 +39,8 @@ import { db, toNumber, type Db } from '@bizcity/platform/db/client';
 import { AppError, Errors, withErrorContext } from '@bizcity/platform/core/errors';
 import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { writeAudit } from '@bizcity/platform/core/audit';
+// [2026-11-10 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1b (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): dấu tự duyệt dùng chung với engine workflow
+import { noteSelfApproval } from '@bizcity/platform/core/workflow';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
 import { inSavepoint, itemMessage, ownDocument, type ActionTx } from '@bizcity/platform/core/actions';
 import { channelOf, closeBySource, isDoorRejection, recordRejection, type IntakeChannel } from '../intake/inbox.js';
@@ -673,6 +675,8 @@ export const documentService = {
         const res = r.value;
         if ('kept' in res && res.kept && !res.entryIds?.length && !res.reversed && !res.updated) unchanged++;
         else posted++;
+        // [2026-11-10 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1b (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): duyệt ở trạm = định khoản chứng từ đang chờ duyệt; người gửi tự định khoản → ghi dấu, chưa chặn (khoá API không bao giờ trùng người bấm)
+        if (row.status === 'pending' && row.created_by && row.created_by === auth.actor) noteSelfApproval({ objectType: `document.${row.doc_type}`, objectId: row.doc_key, verb: 'post', from: 'pending', to: 'posted', createdBy: row.created_by });
       } else {
         const e = r.error;
         const msg = e instanceof AppError ? describe(e) : itemMessage(e);

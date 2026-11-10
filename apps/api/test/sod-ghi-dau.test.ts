@@ -5,6 +5,7 @@
  *   T029-SOD-2  sod: true vẫn chặn; người khác người lập thì không có dấu
  *   T029-SOD-3  duyệt phiếu mua hàng bởi chính người lập (REST thật): duyệt được, bằng chứng có dấu
  *   T029-SOD-4  duyệt phiếu kế toán: nháp người dùng tự lập → có dấu; nháp trợ lý AI đề xuất → không có dấu (STD-MCP-6)
+ *   T029-SOD-6  trạm ACC14 (chờ duyệt): người gửi tự định khoản có dấu; chứng từ khoá API gửi thì không
  *   T029-SOD-5  chẩn đoán LEDGER_SELF_APPROVED (cảnh báo) đếm đúng các lần trên, mẫu theo <loại>:<mã>
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -14,7 +15,7 @@ import { LEDGER_DIAGNOSTICS } from '@bizcity/kernel/modules/ledger/ledger.diagno
 import { voucherService } from '../src/kernel/public.js';
 import type { AuthContext } from '../src/core/auth.js';
 import { db } from '../src/db/client.js';
-import { call, setupTenant, type TestCtx } from './helpers.js';
+import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 const WF = (sod: string) => parseWorkflow(`type: thu.phieu
 states:
@@ -99,10 +100,26 @@ describe('T029-SOD — luồng thật', () => {
     expect(await notesOf('accounting.journal.approve', ev.doc_key)).toEqual([]);
   });
 
-  it('T029-SOD-5 chẩn đoán LEDGER_SELF_APPROVED đếm đúng hai lần tự duyệt', async () => {
+  // [2026-11-10 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1b: trạm ACC14
+  it('T029-SOD-6 trạm ACC14 (chế độ chờ duyệt): người gửi tự định khoản có dấu; chứng từ khoá API gửi thì không', async () => {
+    expect((await call(ctx, 'PUT', '/api/v1/settings/posting-modes', { sale: 'approve' })).status).toBe(200);
+    const mine = await call(ctx, 'POST', '/api/v1/documents', saleDoc({ docKey: 'pos:CN01:SOD-U', docNo: 'SOD-U', docDate: '2026-10-09' }));
+    const viaKey = await call(ctx, 'POST', '/api/v1/documents', saleDoc({ docKey: 'pos:CN01:SOD-K', docNo: 'SOD-K', docDate: '2026-10-09' }), { authorization: '', 'x-api-key': ctx.apiKey });
+    expect([mine.status, viaKey.status], JSON.stringify([mine.body, viaKey.body])).toEqual([200, 200]);
+    const evs = await db.selectFrom('accounting_events').select(['id', 'doc_key', 'status', 'created_by']).where('tenant_id', '=', tenantId).where('doc_key', 'in', ['pos:CN01:SOD-U', 'pos:CN01:SOD-K']).execute();
+    expect(evs.map((e) => e.status)).toEqual(['pending', 'pending']);
+    const st = await call(ctx, 'POST', '/api/v1/documents/post', { ids: evs.map((e) => e.id) });
+    expect(st.status, JSON.stringify(st.body)).toBe(200);
+    expect(st.body.data.posted).toBe(2);
+    const rows = await db.selectFrom('audit_logs').select('after_data').where('tenant_id', '=', tenantId).where('action', '=', 'core.document.post-many').where('result_ok', '=', true).execute();
+    const notes = rows.flatMap((r) => ((r.after_data as { notes?: { audit?: { action: string; objectId?: string }[] } } | null)?.notes?.audit ?? [])).filter((n) => n.action === SELF_APPROVE_NOTE);
+    expect(notes.map((n) => n.objectId)).toEqual(['pos:CN01:SOD-U']);
+  });
+
+  it('T029-SOD-5 chẩn đoán LEDGER_SELF_APPROVED đếm đúng ba lần tự duyệt', async () => {
     const r = await diag();
-    expect(r.count).toBe(2);
-    expect([...(r.sample ?? [])].sort()).toEqual([`accounting.journal:${ownDraft}`, `mua-hang.purchase-document:${purchaseId}`].sort());
+    expect(r.count).toBe(3);
+    expect([...(r.sample ?? [])].sort()).toEqual([`accounting.journal:${ownDraft}`, `mua-hang.purchase-document:${purchaseId}`, 'document.sale:pos:CN01:SOD-U'].sort());
     const check = LEDGER_DIAGNOSTICS.find((c) => c.code === 'LEDGER_SELF_APPROVED')!;
     expect([check.level, check.layer]).toEqual(['warn', 'L3']);
   });
