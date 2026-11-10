@@ -1,0 +1,106 @@
+{
+  "contract": "bizcity_engines@1",
+  "engines": [
+    {
+      "id": "E01",
+      "key": "a",
+      "title": "Đúng",
+      "code": [
+        "packages/goi/src"
+      ],
+      "tests": [],
+      "contracts": [
+        "bizcity_x@1"
+      ],
+      "core": "C1",
+      "pillars": [
+        "I"
+      ],
+      "milestones": [
+        "S1-1"
+      ],
+      "emits": [
+        "OK_CODE",
+        "PRE-*"
+      ],
+      "plannedEmits": [
+        "CHUA_CO"
+      ]
+    },
+    {
+      "id": "E1",
+      "key": "b",
+      "title": "Đúng",
+      "code": [
+        "packages/goi/src"
+      ],
+      "tests": [],
+      "contracts": [
+        "bizcity_x@1"
+      ],
+      "core": "C1",
+      "pillars": [
+        "I"
+      ],
+      "milestones": [
+        "S1-1"
+      ],
+      "emits": [
+        "OK_CODE",
+        "PRE-*"
+      ],
+      "plannedEmits": [
+        "CHUA_CO"
+      ]
+    },
+    {
+      "id": "E01",
+      "key": "a",
+      "title": "Đúng",
+      "code": [
+        "packages/goi/src"
+      ],
+      "tests": [],
+      "contracts": [
+        "bizcity_x@1"
+      ],
+      "core": "C1",
+      "pillars": [
+        "I"
+      ],
+      "milestones": [
+        "S1-1"
+      ],
+      "emits": [
+        "OK_CODE",
+        "PRE-*"
+      ],
+      "plannedEmits": [
+        "CHUA_CO"
+      ]
+    },
+    {
+      "id": "E02",
+      "key": "c",
+      "title": "Sai đủ kiểu",
+      "status": "dat",
+      "code": [
+        "packages/khong-co"
+      ],
+      "tests": [],
+      "contracts": [
+        "bizcity_khong@1"
+      ],
+      "core": "C9",
+      "pillars": [
+        "XX"
+      ],
+      "milestones": [
+        "S9-9"
+      ],
+      "emits": [
+        "CHI_TRONG_TEST"
+      ]
+    }
+  ]
+}

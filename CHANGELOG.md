@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thẻ Bộ máy ở HT10: 13 engine của Core, mức đo từ mốc việc (PHASE-034 B4, S034-7) <!-- [2026-11-10 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 -->
+
+- **Thêm:** `docs/standard/bo-may.json` (`bizcity_engines@1`) và `GET /api/v1/system/engines` (chỉ đọc): mỗi bộ máy có lớp, hợp đồng, mã, test, mã kiểm phát ra, và mốc việc — trạng thái mốc đọc từ bảng việc, không gõ tay.
+- **Thêm:** thẻ *Bộ máy* ở Hệ thống → Trụ cột & mức đạt; phép kiểm SC-ENG-1 giữ sổ bộ máy khớp repo.
+- **Nâng cấp cần làm:** kéo ảnh api mới (ảnh chép thêm `docs/standard/bo-may.json`, `docs/phases/bang-viec.json`).
+
 ### Thẻ Cổng & bộ kiểm ở HT10 có dữ liệu thật (PHASE-034 B3a, S034-5) <!-- [2026-11-10 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a -->
 
 - **Thêm:** `GET /api/v1/system/gates` (chỉ đọc, `bizcity_gates@1`): mã kiểm của Core theo cổng (A · B · Commit Guard · L · tự chẩn đoán L1/L3/L5), mỗi mã có cách sửa / phương án chưa, điều kiện khoá sổ, kết quả lượt chẩn đoán gần nhất của đơn vị; Cổng C, khoá kỳ, trigger CSDL, bộ kiểm CI hiện dòng giữ chỗ.
