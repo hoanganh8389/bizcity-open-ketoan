@@ -876,6 +876,22 @@
           ]
         }
       }
+    },
+    {
+      "root": "devtools-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-DEV-2": {
+          "findings": 5,
+          "keys": [
+            "missing:DEV02",
+            "stale:DEV01",
+            "extra:DEV03",
+            "path:DEV04",
+            "page:DEV04"
+          ]
+        }
+      }
     }
   ]
 }

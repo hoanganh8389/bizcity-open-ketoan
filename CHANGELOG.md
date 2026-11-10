@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thẻ Nhà phát triển ở HT10: tiến độ chín công cụ dev theo sáu tiêu chí sinh từ mã (PHASE-034 B5a, S034-8) <!-- [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5a -->
+
+- **Thêm:** `docs/standard/cong-cu-dev.json` (`bizcity_devtools@1`), `scripts/cong-cu-dev.mjs` sinh tiêu chí T1..T6 từ repo, phép kiểm SC-DEV-2, `GET /api/v1/system/dev-tools` (chỉ đọc).
+- **Thêm:** thẻ *Nhà phát triển* ở Hệ thống → Trụ cột & mức đạt: bảng công cụ × tiêu chí, nút Mở công cụ.
+- **Nâng cấp cần làm:** kéo ảnh api mới (ảnh chép thêm `docs/standard/cong-cu-dev.json`).
+
 ### Khách trả hàng lấy đúng giá vốn lúc bán (PHASE-032 B3, S032-17) <!-- [2026-11-11 12:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3: khách trả hàng lấy đúng giá vốn lúc bán -->
 
 - **Đổi:** phiếu khách trả hàng của lần bán **tháng trước** hoàn giá vốn theo đơn giá bình quân **tháng bán gốc** (chứng từ gốc qua `originalDocKey`), và vào công thức đơn giá tháng trả như một dòng nhập. Phiếu trả **không có gốc** hoàn theo đơn giá bình quân tồn đầu kỳ trả (mặc định tạm Q032-5). Trả trong cùng tháng bán: như cũ.

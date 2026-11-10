@@ -47,7 +47,7 @@ Mức **Đạt** chỉ có khi không còn tín hiệu *chưa có*; bộ kiểm 
 | **Bộ máy** | Mỗi engine (Ghi sổ, Inventory, Document SDK, Workflow, Phân quyền, …) theo hợp đồng nào, còn bao nhiêu mốc | `?xem=bo-may` |
 | **Nhà phát triển** | Công cụ DEV01..09 dùng được tới đâu, chạy ngay tại màn này | `?xem=nha-phat-trien` |
 
-Thẻ *Nhà phát triển* đang hiện **sắp có**: thẻ nói rõ sẽ lấy dữ liệu từ đâu và bước nào làm. Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
+Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
 
 **Thẻ báo "Bản cài chưa có tệp …"**: bản cài Docker dựng từ mã cũ chưa chép tệp nguồn của bảng vào ảnh. Cập nhật bản cài (`./scripts/cap-nhat.sh`) là hết. Phép kiểm SC-REL-3 giữ cho lỗi này không lặp lại.
 
@@ -73,4 +73,22 @@ Mã lấy thẳng từ sổ đăng ký trong mã, không ai gõ tay; thêm mã m
 - Bấm một bộ máy để xem: làm gì, gọi bằng gì, hợp đồng, mã nguồn, test, mã kiểm nó phát ra (mở thẻ Cổng & bộ kiểm), và từng mốc với trạng thái.
 
 Nguồn: `docs/standard/bo-may.json` cùng bảng việc `docs/phases/bang-viec.json`; phép kiểm SC-ENG-1 giữ sổ khớp repo.
+
+<!-- [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5a (S034-8): thẻ Nhà phát triển -->
+## Thẻ "Nhà phát triển"
+
+Bảng chín công cụ của menu *Nhà phát triển* (Tổng quan, Tra mã, Nhật ký, Lỗi theo module, Ghi sổ, Sự kiện, Toàn vẹn, Kịch bản, Vận hành), mỗi công cụ chấm theo sáu tiêu chí:
+
+| | Tiêu chí | Đạt khi |
+|---|---|---|
+| T1 | Có API riêng, chỉ đọc | mọi đường API của công cụ có trong mã |
+| T2 | Có test API | có test gọi API của công cụ |
+| T3 | Nguồn chưa bật thì nói cách bật | công cụ đọc Loki / Tempo / Prometheus thì màn nói cách bật khi nguồn tắt |
+| T4 | Có hướng dẫn riêng | màn có trang hướng dẫn của riêng nó |
+| T5 | Liên kết chéo | màn mở thẳng được công cụ khác |
+| T6 | Chạy ở bản cài nhiều đơn vị | không chỉ chạy ở bản cài một đơn vị |
+
+Rê chuột lên ✓ / ✗ để xem bằng chứng. Bấm **Mở** để vào công cụ (cần quyền Nhà phát triển). Ai đăng nhập cũng xem được bảng.
+
+Tiêu chí sinh từ mã bằng `node scripts/cong-cu-dev.mjs --write` vào `docs/standard/cong-cu-dev.json`; phép kiểm SC-DEV-2 báo khi bảng lệch mã hoặc lệch menu.
 
