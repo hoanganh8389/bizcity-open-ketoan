@@ -5,21 +5,22 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 10 |
+| Đang làm | 11 |
 | Chờ merge | 0 |
 | Bị chặn | 29 |
-| Chưa ai nhận | 169 |
+| Chưa ai nhận | 171 |
 | Chờ đủ tín hiệu | 64 |
 | Hoãn | 3 |
 | Xong | 297 |
-| **Tổng** | **572** |
+| **Tổng** | **575** |
 
-## Đang làm (10)
+## Đang làm (11)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
+| [S020-25](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L34) | PHASE-020 | D020-11 (a)(b)(c): HT06 "Kiểm sổ" gọn — lượt kiểm lưu kết quả tự chẩn đoán cả sổ vào báo cáo (report.health, … | — | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-020-s020-25-kiem-so-gon` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
@@ -67,7 +68,7 @@
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 | [S035-2](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L11) | PHASE-035 | Chủ dự án duyệt D035-1..12, trả Q035-1..6 | P0 | — |
 
-## Chưa ai nhận (169)
+## Chưa ai nhận (171)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -111,6 +112,8 @@
 | [S020-12](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L30) | PHASE-020 | CI gate: bước VN trong conformance.yml; FAIL / ERROR P0 chặn; evidence/; docs/compliance/RELEASE-CHECKLIST.md… | P0 | — |
 | [S020-13](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L31) | PHASE-020 | Adapter POS mẫu + tài liệu dev cộng đồng (xét packages/vn-conformance — D020-1) | P1 | — |
 | [S020-14](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L32) | PHASE-020 | report.html + trang chứng nhận plugin (nhãn D020-6) | P1 | — |
+| [S020-26](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L35) | PHASE-020 | D020-11 (d): "Thử với sổ mẫu" — tạo một đơn vị mẫu riêng có sẵn chứng từ (dùng bộ dữ liệu mẫu đang có), chuyể… | — | — |
+| [S020-27](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L36) | PHASE-020 | D020-11 (a): quy trình phát hành — Bizcity (người duyệt kế toán / thuế, S020-15) rà căn cứ từng rulepack rồi … | — | — |
 | [S021-17](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md#L28) | PHASE-021 | Thực tập sinh thử thật trên dữ liệu demo (ba chứng từ hỏng mẫu), biên bản evidence/W3-<ngày>.md | P1 | — |
 | [S021-21](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md#L32) | PHASE-021 | Trang bài học đủ ví dụ sai / đúng / vì sao cho mọi mã; kế toán trưởng đọc lại câu chữ | P1 | — |
 | [S022-10](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md#L22) | PHASE-022 | Kiểm mới W2 đợt sau: TAXBOOKMATCH, MANUALSENSITIVE, COSTUNITSPIKE, YEARENDOPEN, DEBT, DEPOSITAGED, TRANSFERUN… | P1 | — |

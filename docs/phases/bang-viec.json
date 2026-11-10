@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 11
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 169
+      "count": 171
     },
     {
       "key": "partial",
@@ -2492,6 +2492,45 @@
       "claim": null,
       "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
       "line": 23
+    },
+    {
+      "id": "S020-25",
+      "phase": "PHASE-020",
+      "title": "D020-11 (a)(b)(c): HT06 \"Kiểm sổ\" gọn — lượt kiểm lưu kết quả tự chẩn đoán cả sổ vào báo cáo (report.health, không migration); màn mặc định: việc cần làm (Cần …",
+      "priority": "—",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
+        "branch": "feat/phase-020-s020-25-kiem-so-gon",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-020 · S020-25 — HT06 \"Kiểm sổ\" gọn (D020-11)"
+      },
+      "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
+      "line": 34
+    },
+    {
+      "id": "S020-26",
+      "phase": "PHASE-020",
+      "title": "D020-11 (d): \"Thử với sổ mẫu\" — tạo một đơn vị mẫu riêng có sẵn chứng từ (dùng bộ dữ liệu mẫu đang có), chuyển qua lại, xoá được; nút chỉ hiện khi đã có",
+      "priority": "—",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
+      "line": 35
+    },
+    {
+      "id": "S020-27",
+      "phase": "PHASE-020",
+      "title": "D020-11 (a): quy trình phát hành — Bizcity (người duyệt kế toán / thuế, S020-15) rà căn cứ từng rulepack rồi đặt trạng thái đã rà trong gói; việc của người, kh…",
+      "priority": "—",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md",
+      "line": 36
     },
     {
       "id": "S021-1",

@@ -31,6 +31,9 @@
 | S020-13 | Adapter POS mẫu + tài liệu dev cộng đồng (xét `packages/vn-conformance` — D020-1) | W5 / VNCONF-009 | P1 | chưa | ☐ |
 | S020-14 | `report.html` + trang chứng nhận plugin (nhãn D020-6) | W5 / VNCONF-010 | P1 | chưa | ☐ |
 | S020-15 | Người duyệt kế toán / thuế rà registry đợt đầu (LEGAL-SOURCE-REGISTRY §3); ký ADR-0009 cùng lúc | W1–W3 | P0 | — | ⛔ chủ chỉ định (Q020-4) |
+| S020-25 | D020-11 (a)(b)(c): HT06 "Kiểm sổ" gọn — lượt kiểm lưu kết quả tự chẩn đoán cả sổ vào báo cáo (`report.health`, không migration); màn mặc định: việc cần làm (Cần sửa / Nên xem), cần thêm dữ liệu, mục đã ổn; khối "Cho kiểm toán / chuyên gia" giữ rulepack, căn cứ, duyệt tuỳ chọn, lớp Module | W5 | — | — | ☐ <!-- [2026-11-10 11:37 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — D020-11: chủ dự án đồng ý 2026-11-10 (HT06 quá phức tạp cho đơn vị một kế toán trưởng) --> |
+| S020-26 | D020-11 (d): "Thử với sổ mẫu" — tạo một đơn vị mẫu riêng có sẵn chứng từ (dùng bộ dữ liệu mẫu đang có), chuyển qua lại, xoá được; nút chỉ hiện khi đã có | W5 | — | — | ☐ <!-- [2026-11-10 11:37 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — D020-11: chủ dự án đồng ý 2026-11-10 (HT06 quá phức tạp cho đơn vị một kế toán trưởng) --> |
+| S020-27 | D020-11 (a): quy trình phát hành — Bizcity (người duyệt kế toán / thuế, S020-15) rà căn cứ từng rulepack rồi đặt trạng thái đã rà trong gói; việc của người, không tự động | W4 | — | — | ☐ <!-- [2026-11-10 11:37 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — D020-11: chủ dự án đồng ý 2026-11-10 (HT06 quá phức tạp cho đơn vị một kế toán trưởng) --> |
 
 ## Ca bằng chứng
 
