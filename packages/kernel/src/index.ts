@@ -121,12 +121,10 @@ export { conformanceRoutes } from './modules/conformance/conformance.routes.js';
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (route, danh mục giả định lỗi)
 export { reviewRoutes } from './modules/review/review.routes.js';
 export { FAULT_CATALOG, type FaultCase } from './modules/review/fault-catalog.js';
-// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — bảng quy tắc định khoản: hàm chọn / kiểm đụng quy tắc, định khoản thử (đóng góp)
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — bảng quy tắc định khoản: hàm chọn / kiểm đụng quy tắc (đóng góp)
 export {
-  COND_KEYS, PART_LABEL, condKeys, contextOf, findTies, matches, overlaps, pickRule, systemBusinessOf,
+  COND_KEYS, PART_LABEL, condKeys, findTies, pickRule,
   type CondKey, type PostingBusiness, type PostingRule, type RuleBook, type RuleCond, type RuleHit, type RulePart, type RuleTable, type RuleTags,
 } from './modules/posting/rule-table.js';
-export { loadRuleTable } from './modules/posting-config/posting-config.repository.js';
-export { simulatePosting } from './modules/posting/posting.service.js';
 // [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — lô hàng: phân lô lại theo thứ tự ngày (đóng góp)
 export { rebuildLots, allocateLots } from './modules/inventory/lot.service.js';

@@ -100,8 +100,8 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
       <Field label="Hiệu lực từ"><input className="input" type="date" value={p.validFrom ?? ''} onChange={(e) => setP({ ...p, validFrom: e.target.value || undefined })} /></Field>
       <Field label="Đến (trống = không thời hạn)"><input className="input" type="date" value={p.validTo ?? ''} onChange={(e) => setP({ ...p, validTo: e.target.value || undefined })} /></Field>
       <Field label="Ưu tiên (2 chính sách cùng phạm vi, hoặc 2 chương trình áp riêng: số lớn thắng)"><input className="input num" value={p.priority ?? 0} onChange={(e) => setP({ ...p, priority: Number(e.target.value) || 0 })} /></Field>
-      {/* [2026-11-10 05:00 PM Nguyễn Văn Thủy] PHASE-026 — loại chương trình: quy tắc định khoản (ACC92) phân biệt hàng tặng / giảm giá theo loại (đóng góp) */}
-      <Field label="Loại chương trình (để định khoản quà, giảm giá)"><select className="select input" value={(p as Policy & { programKind?: string | null }).programKind ?? ''} onChange={(e) => setP({ ...p, programKind: e.target.value || null } as Policy)}>
+      {/* [2026-11-10 05:00 PM Nguyễn Văn Thủy] PHASE-026 — loại chương trình (đóng góp) */}
+      <Field label="Loại chương trình"><select className="select input" value={(p as Policy & { programKind?: string | null }).programKind ?? ''} onChange={(e) => setP({ ...p, programKind: e.target.value || null } as Policy)}>
         <option value="">— không —</option>
         {(programKinds.data ?? []).filter((k) => k.side !== 'sale' && k.isActive).map((k) => <option key={k.code} value={k.code}>{k.code} — {k.name}</option>)}
       </select></Field>

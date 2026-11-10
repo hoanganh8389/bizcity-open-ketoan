@@ -20,7 +20,7 @@ import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { postDocumentIn, voucherService, allocateDebt, ensurePostingReason } from '../../kernel/public.js';
 import type { Accounts } from '@bizcity/mua-hang-domain';
 import type { StoredDoc } from './store.js';
-import { approveRule, listRules, proposeRule, saveBusiness } from '../../modules/posting-flow/posting-rules.service.js';
+import { syncModuleRule } from '../../modules/posting-flow/posting-rules.service.js';
 
 export interface Link { docKey: string; docNo: string; eventId: string; role: string }
 
@@ -42,24 +42,14 @@ async function ensureReason(trx: Db, tenantId: string, code: string, name: strin
   await ensurePostingReason(trx, tenantId, 'mua-hang', 'module:mua-hang', { code, name, kind, counterAccount: counter });
 }
 
-// [2026-11-10 11:45 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán tắt: nhận / xuất quà là nghiệp vụ tự tạo + quy tắc ở ACC92, không nhờ tài khoản trên lý do (đóng góp)
-/**
- * Nghiệp vụ của màn Mua hàng ở Thiết kế hạch toán (ACC92): "Nhận quà NCC" (dựa trên Nhập điều chỉnh kho, Có tài khoản thu nhập quà)
- * và "Xuất quà tặng khách" (dựa trên Xuất điều chỉnh kho, Nợ tài khoản chi phí quà). Chưa có thì phân hệ tự khai nghiệp vụ và một
- * quy tắc đã duyệt theo tài khoản ở cài đặt Mua hàng. Đã có quy tắc thì để nguyên (kế toán sửa ở ACC92).
- */
+// [2026-11-10 11:45 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán tắt: nhận / xuất quà là nghiệp vụ phân hệ tự khai, không nhờ tài khoản trên lý do (đóng góp)
+// [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — tài khoản quà khai một nơi (cài đặt Mua hàng): đổi cài đặt thì dòng định khoản đổi theo (đóng góp)
+/** "Nhận quà NCC" (dựa trên Nhập điều chỉnh kho, Có thu nhập quà) / "Xuất quà tặng khách" (Xuất điều chỉnh kho, Nợ chi phí quà) theo tài khoản ở cài đặt Mua hàng. */
 async function ensureGiftBusiness(trx: Db, tenantId: string, code: string, name: string, isIn: boolean, account: string) {
-  const actor = 'module:mua-hang';
-  const has = (await sql<{ code: string }>`SELECT code FROM posting_businesses WHERE tenant_id = ${tenantId} AND reason_code = ${code}`.execute(trx)).rows[0]?.code;
-  const biz = has ?? (await saveBusiness(trx, tenantId, actor, null, { name, baseCode: isIn ? 'stock_increase' : 'stock_decrease', reasonCode: code, note: 'Phân hệ Mua hàng tự khai' }), code);
-  const rules = await listRules(trx, tenantId, { business: biz });
-  if (rules.some((r) => r.part === 'goods' && (r.state === 'active' || r.state === 'scheduled' || r.state === 'draft'))) return;
-  const r = await proposeRule(trx, tenantId, actor, {
-    business: biz, part: 'goods', from: '2000-01-01', ...(isIn ? { credit: account } : { debit: account }),
+  await syncModuleRule(trx, tenantId, 'module:mua-hang', {
+    reasonCode: code, name, baseCode: isIn ? 'stock_increase' : 'stock_decrease', side: isIn ? 'credit' : 'debit', account,
     note: isIn ? 'Nhận quà / hàng tặng NCC không hoá đơn: Có thu nhập khác' : 'Xuất quà tặng khách: Nợ chi phí bán hàng',
-    changeReason: 'Phân hệ Mua hàng tự khai theo tài khoản ở cài đặt Mua hàng',
   });
-  if (r) await approveRule(trx, tenantId, actor, r.id);
 }
 
 /**

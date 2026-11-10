@@ -4,7 +4,7 @@
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/posting.service.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 // [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: luật manual_journal; lý do của bút toán = lý do dòng đầu khi chứng từ không ghi; tra đối tượng theo dòng
-// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — áp bảng quy tắc định khoản (rule-table.ts) lên bút toán luật dựng; simulatePosting cho màn chạy thử (đóng góp)
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — áp bảng quy tắc định khoản (rule-table.ts) lên bút toán luật dựng (đóng góp)
 /**
  * Điều phối định khoản một chứng từ gốc:
  *   1. Quyết định bộ sổ (nội bộ luôn có; thuế nếu có hoá đơn hợp lệ và không phải phiếu nội bộ;
@@ -30,7 +30,7 @@ import { buildPurchaseParts, buildPurchaseReturnParts } from './rules/purchase.r
 import { buildStockAdjustmentLines, buildTransferParts, type PostingPart } from './rules/stock.rule.js';
 import { buildCashTransferParts, buildPaymentParts } from './rules/cash.rule.js';
 import { buildManualJournalParts } from './rules/journal.rule.js';
-import { applyRuleTable, type RuleHit, type RuleTable } from './rule-table.js';
+import { applyRuleTable, type RuleHit } from './rule-table.js';
 import type { PostingConfig } from '../posting-config/posting-config.repository.js';
 
 // [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 (D004-10): danh sách đóng bảy cột E2 — khớp trigger guard_ledger_entry_mutation (0049); test db-rules / e2-header-audit so với CSDL
@@ -140,23 +140,6 @@ export function applyRulesToParts(parts: PostingPart[], cfg: PostingConfig, date
   });
   if (errors.length) throw Errors.posting('Bảng quy tắc định khoản có quy tắc ngang hàng', [...new Set(errors)]);
   return { parts: out, hits };
-}
-
-/**
- * Định khoản THỬ một chứng từ (không ghi gì): đúng đường của post() — nạp cấu hình theo ngày chứng từ, luật dựng bút toán, áp bảng
- * quy tắc. Màn khai báo quy tắc / sơ đồ dây chuyền dùng để thấy bút toán thật trước khi duyệt.
- */
-export async function simulatePosting(trx: Db, tenantId: string, doc: IngestDocument, ctx: { partnerId?: string | null; stock?: StockContext; actor?: string; table?: (t: RuleTable) => RuleTable } = {}) {
-  const rule = RULES[doc.docType];
-  if (!rule) throw Errors.posting(`Chưa có luật định khoản cho loại chứng từ ${doc.docType}`);
-  const date = doc.docDate.slice(0, 10);
-  const cfg = await postingConfigRepository.loadPostingConfig(trx, tenantId, skusOf(doc), { asOf: date, actor: ctx.actor ?? 'simulate', programKeys: programKeysOf(doc) });
-  if (ctx.table) cfg.ruleTable = ctx.table(cfg.ruleTable);
-  const resolver = new AccountResolver(cfg);
-  const built = rule(doc, { resolver, partnerId: ctx.partnerId ?? null, stock: ctx.stock }).filter((p) => p.lines.length);
-  const before = built.map((p) => ({ ...p, lines: p.lines.map(({ ruleTags: _t, ...l }) => l) }));
-  const { parts, hits } = applyRulesToParts(built, cfg, date);
-  return { parts, before, tagged: built, hits, table: cfg.ruleTable, accounts: cfg.accounts, policyVersion: cfg.policyVersion };
 }
 
 /** Lấy một id khỏi map theo khoá và bỏ id đó khỏi các map còn lại (một bút toán chỉ được giữ một lần). */

@@ -4,11 +4,9 @@
  *   chương trình = mặt hàng chính + kiểu (tặng hàng / giảm giá) + thời gian + hạn mức từng cửa hàng.
  *   Cửa hàng bán theo chương trình thì trừ hạn mức (POS gọi /api/v1/sale-programs/consume); hết hạn hoặc hết hạn mức thì bán giá thường.
  * Thẻ "Báo cáo": hạn mức, đã dùng, còn lại, giá trị, tốc độ dùng so với thời gian — tính từ các dòng đã bán.
- * Định khoản quà / giảm giá theo LOẠI chương trình: khai ở Thiết kế hạch toán (ACC92).
  */
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { Gift, Percent, Plus } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
@@ -86,7 +84,7 @@ function ProgramEditor({ program, onClose }: { program: Program | null; onClose:
       <div className="alert alert-info full">Hàng tặng / giảm giá vẫn là mặt hàng chính, <b>không sinh mã mới</b>. Cửa hàng chỉ bán theo chương trình khi còn hạn và còn hạn mức.</div>
       <Field label="Mã chương trình" tip="Dòng bán gắn mã này; không đổi được sau khi lưu"><input className="input mono" disabled={ro || Boolean(program)} value={f.code} onChange={(e) => set('code', e.target.value.toUpperCase())} placeholder="vd: KM-T11-LY" autoFocus={!program} /></Field>
       <Field label="Tên chương trình"><input className="input" disabled={ro} value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="vd: Mua sữa tặng ly tháng 11" /></Field>
-      <Field label="Loại chương trình" tip={kindNote || 'Định khoản quà / giảm giá theo loại — khai ở Thiết kế hạch toán'}>
+      <Field label="Loại chương trình" tip={kindNote || 'Nhóm chương trình để báo cáo'}>
         <select className="select input" disabled={ro} value={f.programKind} onChange={(e) => set('programKind', e.target.value)}>
           {kinds.map((k) => <option key={k.code} value={k.code}>{k.code} — {k.name}</option>)}
         </select>
@@ -161,7 +159,7 @@ function DanhSach() {
       {q.isLoading ? <Loading /> : (
         <div className="table-wrap"><table className="grid">
           <thead><tr>
-            <th title="Mã chương trình (dòng bán gắn mã này)">Mã</th><th title="Tên chương trình">Tên</th><th title="Loại chương trình — định khoản theo loại">Loại</th><th title="Mặt hàng chính">Mặt hàng</th>
+            <th title="Mã chương trình (dòng bán gắn mã này)">Mã</th><th title="Tên chương trình">Tên</th><th title="Loại chương trình">Loại</th><th title="Mặt hàng chính">Mặt hàng</th>
             <th title="Nội dung ưu đãi">Ưu đãi</th><th title="Thời gian áp dụng">Thời gian</th><th className="num" title="Tổng hạn mức các cửa hàng">Hạn mức</th>
             <th className="num" title="Đã dùng (đã bán theo chương trình)">Đã dùng</th><th className="num" title="Còn lại">Còn lại</th><th title="Trạng thái">Trạng thái</th>
           </tr></thead>
@@ -255,8 +253,6 @@ export function ChuongTrinhBanPage() {
       <div className="tabs" role="tablist" style={{ marginBottom: 8 }}>
         <button role="tab" className={`tab ${tab === 'ds' ? 'active' : ''}`} onClick={() => setTab('ds')}>Chương trình</button>
         <button role="tab" className={`tab ${tab === 'bc' ? 'active' : ''}`} onClick={() => setTab('bc')} title="Hạn mức, đã dùng, còn lại theo cửa hàng — tính từ các dòng đã bán">Báo cáo quản lý</button>
-        <span style={{ flex: 1 }} />
-        <Link to="/cau-hinh/thiet-ke-hach-toan" className="muted" style={{ alignSelf: 'center', fontSize: 12 }} title="Định khoản quà / giảm giá theo loại chương trình">Định khoản theo loại chương trình →</Link>
       </div>
       {tab === 'ds' ? <DanhSach /> : <BaoCao />}
     </div>

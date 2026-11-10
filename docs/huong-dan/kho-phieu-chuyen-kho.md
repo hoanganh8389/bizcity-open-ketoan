@@ -20,7 +20,7 @@ Chuyển hàng giữa hai chi nhánh, hoặc giữa hai kho trong cùng một ch
 | Dán từ Excel | Chép các cột *Mã hàng · Số lượng · Ghi chú* rồi dán |
 | Tồn | Tồn ở chi nhánh + kho xuất tại ngày phiếu, không tính chính phiếu này. Số chuyển vượt tồn thì tô đỏ, khi ghi sẽ hỏi lại |
 
-Phiếu **không có ô lý do**: tài khoản (Nợ 1579 / Có 1561, khác đơn vị hạch toán dùng 13681) lấy theo **Tài khoản ngầm định (ACC41)** và quy tắc ở **Thiết kế hạch toán (ACC92)**.
+Phiếu **không có ô lý do**: tài khoản (Nợ 1579 / Có 1561, khác đơn vị hạch toán dùng 13681) lấy theo **Tài khoản ngầm định (ACC41)**.
 
 ## Lô hàng
 

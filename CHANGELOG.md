@@ -22,6 +22,13 @@ Mỗi bản ghi đủ sáu mục:
 
 - **Thêm:** thẻ *Nhà phát triển* có nút **Chạy ở đây**: mở đúng màn của công cụ (Toàn vẹn, Sự kiện, Ghi sổ…) ngay dưới bảng; cần quyền Nhà phát triển.
 - **Thêm:** nút **In cả năm thẻ** ở Hệ thống → Trụ cột & mức đạt: in năm thẻ nối nhau, mỗi thẻ một trang.
+### Bỏ màn Thiết kế hạch toán (ACC92): tài khoản khai một nơi ở Tài khoản ngầm định (ACC41) (PHASE-026) <!-- [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — bỏ ACC92 (đóng góp) -->
+
+- **Đổi:** ACC41 là nơi duy nhất khai tài khoản: dòng có sẵn theo loại chứng từ; dòng thêm theo **Loại hàng** / **Biến thể**, một hộp Thêm / Sửa (dựa trên dòng gốc, TK Nợ / Có điền sẵn). Dòng khớp nhiều điều kiện hơn thắng.
+- **Đổi:** nhận / xuất quà ở Mua hàng: dòng định khoản luôn theo tài khoản ở Cài đặt Mua hàng (đổi cài đặt thì đổi theo).
+- **Gỡ:** màn ACC92 (đề xuất / duyệt / ngừng quy tắc, chạy thử, sơ đồ dây chuyền, đổi nhóm hạch toán hàng loạt, lịch sử); API `/api/v1/posting-rules` (trừ `options`, `defaults`), `/api/v1/posting-flow/*` (trừ `screens/:key/reasons`); `simulatePosting` của lõi; thư viện `@xyflow/react`.
+- **Thay đổi định khoản:** không đổi bút toán: quy tắc đang áp trong CSDL vẫn được lõi đọc.
+- **Nâng cấp cần làm:** kéo ảnh api, web mới.
 
 ### Thẻ Cổng & bộ kiểm đủ: trụ cột, test của từng mã; trigger CSDL và bộ kiểm CI có sổ (PHASE-034 B3b, S034-6) <!-- [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b -->
 

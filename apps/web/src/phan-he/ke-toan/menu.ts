@@ -130,12 +130,11 @@ export const keToanMenu: MenuItem[] = [
     children: [
       sec('dm-tai-khoan', 'Tài khoản, hạch toán'),
       { key: 'tai-khoan', label: 'DM Tài khoản', path: '/danh-muc/tai-khoan', code: 'ACC1' },
-      { key: 'thiet-ke-hach-toan', label: 'Thiết kế hạch toán', path: '/cau-hinh/thiet-ke-hach-toan', code: 'ACC92' },
       { key: 'tk-ngam-dinh', label: 'Tài khoản ngầm định', path: '/cau-hinh/tai-khoan-ngam-dinh', code: 'ACC41' },
       { key: 'loai-thue', label: 'Loại thuế', path: '/danh-muc/loai-thue', code: 'ACC43' },
       { key: 'hinh-thuc-tt', label: 'Hình thức thanh toán', path: '/cau-hinh/hinh-thuc-thanh-toan', code: 'DM05' },
       { key: 'ngan-hang', label: 'Tài khoản ngân hàng', path: '/danh-muc/ngan-hang', code: 'DM09' },
-      // [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — Lý do (ACC18), Mặt hàng - Tài khoản (ACC17) xuống mục "cũ": định khoản theo bảng quy tắc ở ACC92; hai bảng này chỉ còn là nguồn tài khoản tự tra (đóng góp)
+      // [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — Lý do (ACC18), Mặt hàng - Tài khoản (ACC17) xuống mục "cũ": chỉ dùng khi bật lý do hạch toán; định khoản khai ở Tài khoản ngầm định ACC41 (đóng góp)
       sec('dm-tu-tra-cu', 'Nguồn tài khoản tự tra (cũ)'),
       { key: 'ly-do', label: 'Lý do - Tài khoản (cũ)', path: '/cau-hinh/ly-do', code: 'ACC18' },
       { key: 'nhom-hach-toan', label: 'Mặt hàng - Tài khoản (cũ)', path: '/cau-hinh/nhom-hach-toan', code: 'ACC17' },

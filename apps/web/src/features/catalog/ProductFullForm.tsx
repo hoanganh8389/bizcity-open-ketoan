@@ -374,9 +374,9 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               {!vatRate && v.taxOutCode && <option value="other">Mã riêng: {v.taxOutCode}</option>}
             </select>
           </Field>
-          {/* [2026-11-10 05:40 PM Nguyễn Văn Thủy] PHASE-026 — bỏ ô Nhóm hạch toán: tài khoản theo quy tắc định khoản (ACC92) theo Loại hàng, chương trình; giá trị cũ giữ nguyên (đóng góp) */}
-          <Field label="Tài khoản kế toán" hint="Không khai theo từng mặt hàng: định khoản theo quy tắc ở Thiết kế hạch toán (ACC92), dựa vào Loại hàng, chương trình, nghiệp vụ">
-            <input className="input" readOnly value="Theo quy tắc định khoản (ACC92)" title="Đổi tài khoản: vào Thiết kế hạch toán, thêm quy tắc có điều kiện Loại hàng" />
+          {/* [2026-11-10 05:40 PM Nguyễn Văn Thủy] PHASE-026 — bỏ ô Nhóm hạch toán: tài khoản theo Tài khoản ngầm định (ACC41) theo Loại hàng / Biến thể; giá trị cũ giữ nguyên (đóng góp) */}
+          <Field label="Tài khoản kế toán" hint="Không khai theo từng mặt hàng: theo Tài khoản ngầm định (ACC41), riêng theo Loại hàng / Biến thể">
+            <input className="input" readOnly value="Theo Tài khoản ngầm định (ACC41)" title="Đổi tài khoản: vào Tài khoản ngầm định, Thêm dòng theo Loại hàng / Biến thể" />
           </Field>
           <div className="full">
             <button type="button" className="btn btn-xs" onClick={() => setTaxDetail((x) => !x)}>{taxDetail ? '▾' : '▸'} Mã thuế chi tiết (kế toán){v.exciseRate ? ` · TTĐB ${v.exciseRate}%` : ''}</button>

@@ -17,8 +17,8 @@
  *   điều chỉnh kho     : ngầm định "stock_surplus" (tăng) / "stock_shortage" (giảm)
  *
  * [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán (docs/nghiep-vu/18), khoá bizcity.posting.use_reasons:
- *   TẮT (mặc định): tài khoản trên lý do KHÔNG dùng — như bảng trên. Trường hợp riêng (hàng hỏng, tặng, xuất dùng…) khai quy tắc ở
- *   Thiết kế hạch toán (ACC92). Mã lý do trên chứng từ chỉ còn để chọn nghiệp vụ tự tạo / báo cáo, và vài cờ cách tính.
+ *   TẮT (mặc định): tài khoản trên lý do KHÔNG dùng — như bảng trên. Trường hợp riêng theo loại hàng / biến thể: dòng thêm ở
+ *   Tài khoản ngầm định (ACC41). Mã lý do trên chứng từ chỉ còn để chọn nghiệp vụ phân hệ tự khai / báo cáo, và vài cờ cách tính.
  *   BẬT: tài khoản trên lý do (đối ứng, doanh thu / trả lại, giá vốn) đè lên tài khoản ngầm định / nhóm hàng như phần mềm cũ.
  *   tài khoản tiền     : hình thức thanh toán.account_code (đối tượng: hình thức.partner_code → khách);
  *                        chuyển tiền có mã ngân hàng → tài khoản ngân hàng.account_code

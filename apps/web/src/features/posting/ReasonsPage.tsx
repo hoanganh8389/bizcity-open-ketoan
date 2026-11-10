@@ -179,7 +179,7 @@ export function ReasonsPage() {
     <>
       <PageHeader title="Lý do – tài khoản" code="ACC18" subtitle="Chỉ dùng khi bật lý do hạch toán: tài khoản ở đây đè lên tài khoản ngầm định" helpKey="ly-do" />
       {/* [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán (đóng góp) */}
-      {!useReasons && <div className="alert alert-warn" style={{ marginBottom: 8 }}>Lý do hạch toán đang <b>tắt</b>: tài khoản trên màn này không dùng khi định khoản (tài khoản lấy theo Tài khoản ngầm định ACC41 và quy tắc ACC92). Bật ở <b>Trung tâm cấu hình</b>, khoá <code>bizcity.posting.use_reasons</code>.</div>}
+      {!useReasons && <div className="alert alert-warn" style={{ marginBottom: 8 }}>Lý do hạch toán đang <b>tắt</b>: tài khoản trên màn này không dùng khi định khoản (tài khoản lấy theo Tài khoản ngầm định ACC41). Bật ở <b>Trung tâm cấu hình</b>, khoá <code>bizcity.posting.use_reasons</code>.</div>}
       <div className="card">
         <datalist id="acc18-accounts">{accounts.filter((a) => a.isPosting && a.isActive !== false).map((a) => <option key={a.code} value={a.code}>{a.name}</option>)}</datalist>
         <div className="catalog-toolbar">

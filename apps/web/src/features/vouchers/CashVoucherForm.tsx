@@ -91,7 +91,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.code, a])), [accounts]);
   const moneyAccounts = useMemo(() => accounts.filter((a) => isMoneyAccountFor(type, a.code)), [accounts, type]);
   const reasonKind = moneySide === 'debit' ? 'receipt' : 'payment';
-  // [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — lý do theo màn (ACC92): màn đã gán lý do thì chỉ hiện các lý do đó (đóng góp)
+  // [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — lý do theo màn: màn đã gán lý do thì chỉ hiện các lý do đó (đóng góp)
   const screenKey = moneySide === 'debit' ? 'cash_receipt' : 'cash_payment';
   const screen = useQuery({ queryKey: ['posting-flow', 'screen-reasons', screenKey], staleTime: 60_000,
     queryFn: () => api.get<{ assigned: boolean; reasons: { code: string; isDefault: boolean }[] }>(`/api/v1/posting-flow/screens/${screenKey}/reasons`) }).data;
@@ -115,7 +115,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
     description: p?.description ?? '',
   });
   const set = (patch: Partial<typeof h>) => setH((x) => ({ ...x, ...patch }));
-  // Phiếu mới: chọn sẵn lý do mặc định của màn (ACC92).
+  // Phiếu mới: chọn sẵn lý do mặc định của màn.
   useEffect(() => { if (!existing && screenDefault) setH((x) => (x.reasonCode ? x : { ...x, reasonCode: screenDefault })); }, [existing, screenDefault]);
   const branchCode = h.branchCode || branches?.find((b) => b.isActive)?.code || '';
   const [rows, setRows] = useState<Row[]>(() =>

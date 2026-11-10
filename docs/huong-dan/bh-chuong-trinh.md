@@ -9,7 +9,7 @@ Quà tặng, giảm giá, xả hàng cận date **trên chính mặt hàng** —
 | Ô | Ý nghĩa |
 |---|---|
 | Mã chương trình | Dòng bán gắn mã này. Không đổi được sau khi lưu. |
-| Loại chương trình | KM của NCC, KM của công ty, Xả hàng cận date… Định khoản quà / giảm giá theo loại (khai ở **Thiết kế hạch toán**). |
+| Loại chương trình | KM của NCC, KM của công ty, Xả hàng cận date… |
 | Mặt hàng chính | Hàng được áp chương trình. |
 | Tặng hàng | Mua *x* tặng *y*. Hàng tặng để trống = tặng chính mặt hàng chính. |
 | Giảm giá | Chọn **một** cách: giảm %, giảm số tiền / đơn vị, hoặc giá bán chương trình. |

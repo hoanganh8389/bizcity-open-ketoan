@@ -618,7 +618,7 @@
           "ref": "Ô lý do ở phiếu thu chi, phiếu kế toán, màn Lý do – Tài khoản (ACC18) chỉ hiện khi bật"
         }
       ],
-      "note": "Tắt (mặc định): định khoản không đọc tài khoản trên lý do — tài khoản theo tài khoản ngầm định (ACC41) + nghiệp vụ của loại chứng từ + nhóm hàng + quy tắc (ACC92); giao diện ẩn ô / màn lý do. Bật: tài khoản trên lý do đè lên cấu hình như phần mềm cũ. Đọc theo ngày chứng từ: bật / tắt từ một ngày, chứng từ trước ngày đó giữ cách cũ khi định khoản lại."
+      "note": "Tắt (mặc định): định khoản không đọc tài khoản trên lý do — tài khoản theo Tài khoản ngầm định (ACC41), kể cả dòng thêm theo loại hàng / biến thể; giao diện ẩn ô / màn lý do. Bật: tài khoản trên lý do đè lên cấu hình như phần mềm cũ. Đọc theo ngày chứng từ: bật / tắt từ một ngày, chứng từ trước ngày đó giữ cách cũ khi định khoản lại."
     }
   ],
   "$comment": "[2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1: valueType (khuôn máy đọc), phạm vi user, khoá mới lưu setting_values; khoá có valueType ghi qua core.settings.set (bizcity_settings@1 1.1.0-draft §2)"

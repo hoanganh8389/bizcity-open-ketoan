@@ -36,7 +36,7 @@ export const khoMenu: MenuItem[] = [
       { key: 'kho-mat-hang', label: 'Danh mục mặt hàng', path: '/danh-muc/mat-hang', code: 'DM10' },
       { key: 'kho-don-vi-tinh', label: 'Danh mục đơn vị tính', path: '/danh-muc/don-vi-tinh', code: 'DM15' },
       { key: 'kho-phan-loai', label: 'Nhóm hàng', path: '/danh-muc/phan-loai-hang', code: 'DM11' },
-      // [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — ẩn Mặt hàng - Tài khoản (ACC17): định khoản theo bảng quy tắc ở ACC92 (đóng góp)
+      // [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — ẩn Mặt hàng - Tài khoản (ACC17): định khoản theo Tài khoản ngầm định ACC41 (đóng góp)
       { key: 'kho-so-do-to-chuc', label: 'Sơ đồ tổ chức', path: '/danh-muc/so-do-to-chuc', code: 'DM16' },
       { key: 'kho-chi-nhanh', label: 'Chi nhánh (kho, cửa hàng)', path: '/danh-muc/chi-nhanh', code: 'DM02' },
       { key: 'kho-kho', label: 'Danh mục kho', path: '/danh-muc/kho', code: 'DM12' },

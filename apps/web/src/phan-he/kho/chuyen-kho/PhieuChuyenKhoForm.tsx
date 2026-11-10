@@ -2,7 +2,7 @@
 /**
  * Form một phiếu chuyển kho (KHO01).
  *   Đầu phiếu: chi nhánh xuất (điền sẵn chi nhánh đang làm việc) → kho xuất chỉ các kho của chi nhánh đó (mặc định kho mặc định);
- *   chi nhánh nhập → kho nhập của chi nhánh nhập (cùng chi nhánh thì tự chọn kho khác). Không có ô lý do: phiếu đi theo nghiệp vụ chuyển kho (tài khoản ở ACC41 / quy tắc ACC92).
+ *   chi nhánh nhập → kho nhập của chi nhánh nhập (cùng chi nhánh thì tự chọn kho khác). Không có ô lý do: phiếu đi theo nghiệp vụ chuyển kho (tài khoản ở Tài khoản ngầm định ACC41).
  *   Dòng hàng: gõ mã / tên / mã vạch rồi Enter để thêm (trùng mã thì cộng số lượng); dán nhiều dòng từ Excel (Mã hàng, Số lượng,
  *   Ghi chú). Cột Tồn = tồn ở chi nhánh + kho xuất tại ngày phiếu (không tính chính phiếu này) — vượt tồn tô đỏ.
  *   Lô: thêm mã là phần mềm gợi ý lô hạn dùng sớm trước ở kho xuất (một dòng nhiều lô thì tách dòng); người lập sửa / xoá lô

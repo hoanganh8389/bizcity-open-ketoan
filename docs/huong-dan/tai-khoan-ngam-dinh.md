@@ -24,9 +24,7 @@ Dòng thêm hiện ngay dưới dòng gốc, bắt đầu bằng ↳. Không đ�
 
 ## Thứ tự ưu tiên
 
-1. Quy tắc ở **Thiết kế hạch toán (ACC92)**: có ngày hiệu lực, đề xuất / duyệt. Quy tắc nhiều điều kiện hơn thì thắng; cùng mức điều kiện thì quy tắc ACC92 thắng dòng thêm ở đây.
-2. Dòng **thêm** ở màn này. Khớp nhiều điều kiện hơn thì thắng.
-3. Dòng **có sẵn**.
+Dòng thêm khớp loại hàng / biến thể của mặt hàng thì dùng dòng đó; khớp nhiều điều kiện hơn thì thắng. Không khớp thì theo dòng có sẵn.
 
 ## Công tắc lý do hạch toán
 

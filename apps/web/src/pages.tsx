@@ -48,7 +48,6 @@ import { ReasonsPage } from './features/posting/ReasonsPage';
 import { ProductAccountsPage } from './features/posting/ProductAccountsPage';
 import { PaymentMethodsPage } from './features/posting/PaymentMethodsPage';
 import { DefaultsPage } from './features/posting/DefaultsPage';
-import { ThietKeHachToanPage } from './features/posting/ThietKeHachToanPage';
 import { VouchersPage } from './features/vouchers/VouchersPage';
 import { DimensionsPage } from './features/catalog/DimensionsPage';
 import { UsersPage } from './features/access/UsersPage';
@@ -139,7 +138,6 @@ export const pageRoutes = (
     <Route path="cau-hinh/nhom-hach-toan" element={<ProductAccountsPage />} />
     <Route path="cau-hinh/hinh-thuc-thanh-toan" element={<PaymentMethodsPage />} />
     <Route path="cau-hinh/tai-khoan-ngam-dinh" element={<DefaultsPage />} />
-    <Route path="cau-hinh/thiet-ke-hach-toan" element={<ThietKeHachToanPage />} />
     <Route path="cau-hinh/nguoi-dung" element={<UsersPage />} />
     <Route path="cau-hinh/khoa-api" element={<ApiKeysPage />} />
     <Route path="tien-ich/add-in" element={<AddInsPage />} />

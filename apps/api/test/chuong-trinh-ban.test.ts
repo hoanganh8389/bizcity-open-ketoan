@@ -3,13 +3,13 @@
  * Hàng tặng / giảm giá vẫn là mặt hàng chính: chương trình có thời gian + hạn mức theo cửa hàng.
  *   - trừ hạn mức theo dòng bán; hết hạn mức thì từ chối; gửi lại cùng phiếu không trừ thêm; huỷ phiếu trả lại;
  *   - ngoài thời gian chương trình hoặc cửa hàng không có hạn mức thì từ chối;
- *   - mỗi bản nội dung đăng ký ở sổ chính sách → dòng bán gửi policyRef, quy tắc định khoản theo loại chương trình áp lên sổ thật;
+ *   - mỗi bản nội dung đăng ký ở sổ chính sách (dòng bán gửi policyRef);
  *   - báo cáo: hạn mức, đã dùng, còn lại theo cửa hàng.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
-import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -97,32 +97,6 @@ describe('Chương trình bán có hạn mức', () => {
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect(r.body.data.version).toBe(before + 1);
     program = r.body.data;
-  });
-
-  it('dòng quà gửi policyRef → quy tắc theo loại chương trình áp lên bút toán thật', async () => {
-    const acc = (await sql<{ code: string }>`SELECT code FROM accounts WHERE tenant_id = ${tenantId} AND is_posting AND is_active AND code LIKE '64%' ORDER BY code LIMIT 1`.execute(db)).rows[0]!.code;
-    const p = await call<{ data: { id: string } }>(ctx, 'POST', '/api/v1/posting-rules', { business: 'sale', part: 'cogs', cond: { programKind: 'KM-CTY', gift: true }, debit: acc, from: today, note: 'Quà công ty tặng → chi phí' });
-    expect(p.status, JSON.stringify(p.body)).toBe(200);
-    expect((await call(ctx, 'POST', `/api/v1/posting-rules/${p.body.data.id}/approve`, {})).status).toBe(200);
-    const ref = program.policyRef!;
-    const doc = saleDoc({
-      docKey: 'pos:CN01:CT1', docNo: 'CT1', docDate: today, invoice: undefined, policyRefs: [ref],
-      lines: [
-        { lineKey: 'l1', sku: 'SUA01', name: 'Sữa', unit: 'Hộp', qty: 2, amountBeforeTax: 185185, taxCode: 'R08', taxAmount: 14815 },
-        { lineKey: 'l2', sku: 'QUA01', name: 'Ly', unit: 'Cái', qty: 1, amountBeforeTax: 0, taxCode: 'R08', taxAmount: 0, isGift: true, cost: 30000, policyRef: { key: ref.key, version: ref.version } },
-      ],
-    });
-    const posted = await call(ctx, 'POST', '/api/v1/documents', doc);
-    expect([200, 201], JSON.stringify(posted.body)).toContain(posted.status);
-    const line = (await sql<{ account_code: string; dims: Record<string, unknown> | null }>`
-      SELECT l.account_code, l.dims FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
-       WHERE e.tenant_id = ${tenantId} AND e.doc_no = 'CT1' AND e.status = 'posted' AND l.part = 'cogs' AND l.debit > 0 AND l.product_sku = 'QUA01'`.execute(db)).rows[0];
-    expect(line?.account_code).toBe(acc);
-    expect(line?.dims?.postingRule).toBe(p.body.data.id);
-    // Chạy thử với chương trình: thấy loại chương trình và quy tắc thắng.
-    const sim = (await call<{ data: { context: { programKind: string | null }; entries: { part: string; ruleId: string | null }[] } }>(ctx, 'POST', '/api/v1/posting-rules/simulate', { business: 'sale', gift: true, program: ref.key })).body.data;
-    expect(sim.context.programKind).toBe('KM-CTY');
-    expect(sim.entries.find((e) => e.part === 'cogs')!.ruleId).toBe(p.body.data.id);
   });
 
   it('kiểm khai báo: giảm giá phải chọn đúng một cách giảm; mã trùng; loại chương trình lạ', async () => {
