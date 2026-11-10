@@ -1,0 +1,1 @@
+CREATE TRIGGER ledger_x_no_update BEFORE UPDATE ON ledger_x FOR EACH ROW EXECUTE FUNCTION f();

@@ -1,7 +1,9 @@
+// [2026-11-11 02:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b (S034-6): thứ tự mới (trigger, CI có sổ), mỗi mã có trụ cột / test / mức
 // [2026-11-10 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): hợp đồng GET /api/v1/system/gates — cổng theo thứ tự, mã lấy từ sổ đăng ký trong mã, kết quả lượt chẩn đoán của đúng đơn vị, không có đường ghi
 /**
  * Thẻ Cổng & bộ kiểm (HT10) đọc GET /api/v1/system/gates. Test giữ:
- *   - chín nhóm cổng đúng thứ tự (PHASE-034 · 00 §3.1); năm nhóm chạy được có mã, bốn nhóm giữ chỗ không có mã và nói bước làm;
+ *   - chín nhóm cổng đúng thứ tự (PHASE-034 · 00 §3.1); bảy nhóm có sổ (A, B, Guard, L, chẩn đoán, trigger, CI), hai nhóm giữ chỗ (C, khoá kỳ) nói bước làm;
+ *   - mỗi mã có trụ cột (họ mã, D034-11), test, mức đúng công thức;
  *   - mã lấy từ sổ đăng ký: cổng B có IN-*, Commit Guard chỉ IN-GUARD-001, chẩn đoán có đủ mã của listDiagnostics();
  *   - sau một lượt chẩn đoán L3, mã L3 có `last`; lượt của đơn vị khác không lộ sang (cô lập đơn vị);
  *   - không có POST / PUT / PATCH (R-CONT-7).
@@ -34,7 +36,8 @@ describe('GET /api/v1/system/gates', () => {
   it('chín nhóm cổng đúng thứ tự; nhóm chạy được có mã, nhóm giữ chỗ nói bước làm', async () => {
     const b = await get(ctx);
     expect(b.contract).toBe('bizcity_gates@1');
-    expect(b.groups.map((g: any) => g.key)).toEqual(['A', 'B', 'guard', 'L', 'diag', 'C', 'lock', 'trigger', 'ci']);
+    expect(b.groups.map((g: any) => g.key)).toEqual(['A', 'B', 'guard', 'L', 'diag', 'trigger', 'ci', 'C', 'lock']);
+    expect(b.groups.filter((g: any) => !g.live).map((g: any) => g.key)).toEqual(['C', 'lock']);
     for (const g of b.groups) {
       if (g.live) expect(g.codes.length, g.key).toBeGreaterThan(0);
       else { expect(g.codes, g.key).toEqual([]); expect(g.next, g.key).toBeTruthy(); }
@@ -64,6 +67,24 @@ describe('GET /api/v1/system/gates', () => {
     const l3 = b.groups.find((g: any) => g.key === 'diag').codes.filter((c: any) => c.step === 'L3');
     expect(l3.some((c: any) => c.last && typeof c.last.count === 'number')).toBe(true);
     expect((await get(other)).lastRun).toBeNull();
+  });
+
+  it('mỗi mã có trụ cột, test, mức đúng công thức (D034-11)', async () => {
+    const b = await get(ctx);
+    for (const g of b.groups.filter((x: any) => x.live)) {
+      for (const c of g.codes) {
+        expect(Array.isArray(c.pillars)).toBe(true);
+        expect(c.hasTest).toBe(c.tests.length > 0);
+        const want = g.scoring === 'meta' ? (c.hasTest ? 50 : 0) + (c.pillars.length ? 50 : 0)
+          : (c.hasFix ? 25 : 0) + (c.hasRemedy ? 25 : 0) + (c.hasTest ? 25 : 0) + (c.pillars.length ? 25 : 0);
+        expect(c.score, `${g.key} ${c.code}`).toBe(want);
+      }
+    }
+    const diag = b.groups.find((g: any) => g.key === 'diag').codes;
+    expect(diag.find((c: any) => c.code === 'LEDGER_BALANCED').pillars).toEqual(['I']);
+    expect(diag.every((c: any) => c.pillars.length > 0)).toBe(true);
+    expect(b.groups.find((g: any) => g.key === 'ci').codes.some((c: any) => c.code === 'SC-GATE-1')).toBe(true);
+    expect(b.groups.find((g: any) => g.key === 'trigger').codes.some((c: any) => c.code === 'ledger_lines_no_update')).toBe(true);
   });
 
   it('không có đường ghi (R-CONT-7)', async () => {

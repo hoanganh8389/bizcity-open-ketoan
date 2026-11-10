@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 9
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 289
+      "count": 290
     }
   ],
   "items": [
@@ -6115,15 +6115,9 @@
       "phase": "PHASE-034",
       "title": "B3b — docs/standard/cong-kiem.json (map họ mã → trụ cột, sửa tay) + scripts/cong-kiem.mjs sinh test / CI / trigger; SC-GATE-1; cổng Trigger và CI có sổ; mức mã…",
       "priority": "P1",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
-        "branch": "feat/phase-034-b3b-cong-kiem",
-        "state": "đang làm",
-        "since": "2026-11-11",
-        "dot": "PHASE-034 · B3b — thẻ Cổng & bộ kiểm đủ tám cổng: docs/standard/cong-kiem.json (họ mã → trụ cột; te…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 15
     },

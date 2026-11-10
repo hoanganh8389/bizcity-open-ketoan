@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 10 |
+| Đang làm | 9 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 163 |
 | Chờ đủ tín hiệu | 61 |
 | Hoãn | 3 |
-| Xong | 289 |
+| Xong | 290 |
 | **Tổng** | **554** |
 
-## Đang làm (10)
+## Đang làm (9)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -27,7 +27,6 @@
 | [S030-53](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L62) | PHASE-030 | Gỡ dữ liệu thật khỏi bản phát hành (Q030-L5): db/seeds/ đối tượng, nhân viên, tài khoản ngân hàng, chi nhánh … | P0 | hoanganh8389 (phiên Claude, seeds-gia-lap) · `feat/s030-53-seeds-gia-lap` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
-| [S034-6](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L15) | PHASE-034 | B3b — docs/standard/cong-kiem.json (map họ mã → trụ cột, sửa tay) + scripts/cong-kiem.mjs sinh test / CI / tr… | P1 | hoanganh8389 (phiên Claude, ht10-bang-hoan-thien) · `feat/phase-034-b3b-cong-kiem` |
 
 ## Chờ merge (0)
 
@@ -308,6 +307,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (289)
+## Xong (290)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

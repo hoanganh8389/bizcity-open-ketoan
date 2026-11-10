@@ -59,10 +59,12 @@ Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
 
 Dữ liệu đi qua các **cổng** từ ngoài vào trong: *Cổng A* (danh mục → nháp), *Cổng B* (cửa nạp, bậc L1..L5), *Commit Guard* (ngay trước ghi sổ), *Cổng L* (thư viện dùng chung), *Tự chẩn đoán* (L1 · L3 · L5, chạy đêm và trước khoá kỳ). Mỗi cổng là một ô: bấm để chỉ xem mã của cổng đó.
 
-- **Thanh mức** của cổng: trung bình các mã, mỗi mã có câu *Cách sửa* được ½, có *phương án có cấu trúc* (bước, màn, vai, kiểm lại) được ½.
+<!-- [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b (S034-6): bốn ý, trigger và CI có sổ -->
+- **Thanh mức** của cổng: trung bình các mã. Mỗi mã đủ bốn ý, mỗi ý ¼: có câu *Cách sửa*, có *phương án có cấu trúc* (bước, màn, vai, kiểm lại), có *test*, gắn *trụ cột*. Với *Trigger CSDL* và *Bộ kiểm CI*: gắn trụ cột ½ + có kiểm ½ (ca tự kiểm của check; trigger do phép kiểm LEDGER_TRIGGERS giữ).
+- **Trụ cột** của mã gắn theo họ mã (ví dụ mọi `LEDGER_*` → Sổ cái bất biến) ở `docs/standard/cong-kiem.json`; mã mới chưa gắn thì phép kiểm SC-GATE-1 báo.
 - **Khoá sổ**: mã chẩn đoán nuôi điều kiện khoá sổ nào (PC-…).
 - **Lượt gần nhất**: kết quả của mã ở lượt tự chẩn đoán gần nhất của đơn vị bạn. Bấm mã để mở *Nhà phát triển → Toàn vẹn*.
-- *Cổng C* (giá vốn sau ghi sổ), *Khoá kỳ*, *Trigger CSDL*, *Bộ kiểm CI* hiện **chưa có sổ**: ô nói bước nào sẽ làm.
+- *Trigger CSDL* (mọi trigger khai trong migration) và *Bộ kiểm CI* (mọi check SC-* / DG-*) có sổ sinh từ mã. *Cổng C* (giá vốn sau ghi sổ) và *Khoá kỳ* hiện **chưa có sổ**: ô nói bước nào sẽ làm.
 
 Mã lấy thẳng từ sổ đăng ký trong mã, không ai gõ tay; thêm mã mới trong mã nguồn là thẻ tự có.
 

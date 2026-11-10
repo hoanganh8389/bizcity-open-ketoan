@@ -1,0 +1,2493 @@
+{
+  "$comment": "[2026-11-11 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b (S034-6, D034-11): bizcity_gates@1 — `map[]` họ mã → trụ cột (tru-cot.json) sửa tay, dòng đầu khớp thì dùng, `*` khớp mọi chuỗi; `generated` (mã, test của mã, bộ kiểm CI, trigger CSDL) CHỈ do `node scripts/cong-kiem.mjs --write` sinh từ repo. SC-GATE-1 kiểm: trụ cột có thật, mọi mã có trụ cột, `generated` khớp lần sinh lại.",
+  "contract": "bizcity_gates@1",
+  "version": "0.1.0-draft",
+  "updated": "2026-11-11",
+  "doc": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/00-MASTER-PLAN.md",
+  "map": [
+    {
+      "match": "LEDGER_SELF_APPROVED",
+      "pillars": [
+        "VII"
+      ],
+      "note": "tách nhiệm người lập / người duyệt"
+    },
+    {
+      "match": "LEDGER_TRIGGERS",
+      "pillars": [
+        "I"
+      ]
+    },
+    {
+      "match": [
+        "LEDGER_*",
+        "EVENT_*",
+        "ENTRY_*",
+        "INTERNAL_EVENT_VERSION",
+        "CASH_NEGATIVE",
+        "ACCOUNT_WRONG_SIDE",
+        "DEBT_MATCH_LEDGER"
+      ],
+      "pillars": [
+        "I"
+      ],
+      "note": "sổ cái bất biến, một cửa ghi sổ"
+    },
+    {
+      "match": [
+        "POLICY_VERSION",
+        "PROFILE_*"
+      ],
+      "pillars": [
+        "V"
+      ],
+      "note": "chính sách / chế độ kế toán có phiên bản"
+    },
+    {
+      "match": [
+        "INVENTORY_*",
+        "COGS_STALE",
+        "STOCK_ADJUST_NO_REASON",
+        "TRANSIT_NONZERO",
+        "PERIOD_CLOSE_OPEN",
+        "DEPRECIATION_OPEN"
+      ],
+      "pillars": [
+        "III"
+      ],
+      "note": "liên tục kế toán: kho, giá vốn, kết chuyển"
+    },
+    {
+      "match": [
+        "VAT_*",
+        "INVOICE_*",
+        "TAX_*",
+        "INTAKE_OPEN_AGE"
+      ],
+      "pillars": [
+        "IV"
+      ],
+      "note": "cửa nạp, thuế, hoá đơn"
+    },
+    {
+      "match": [
+        "ITEM_CODE_CASE_DUP",
+        "UNIT_BASE_INVALID"
+      ],
+      "pillars": [
+        "II",
+        "0"
+      ],
+      "note": "định danh / dữ liệu gốc mặt hàng"
+    },
+    {
+      "match": [
+        "EVIDENCE_*",
+        "MIGRATIONS_PENDING",
+        "DB_WRITABLE"
+      ],
+      "pillars": [
+        "VI"
+      ],
+      "note": "bằng chứng, bản cài quan sát được"
+    },
+    {
+      "match": "TENANT_ISOLATION",
+      "pillars": [
+        "VII"
+      ]
+    },
+    {
+      "match": "CONFORMANCE_STALE",
+      "pillars": [
+        "VIII"
+      ]
+    },
+    {
+      "match": [
+        "ACC-*",
+        "PART-*",
+        "IN-MD-*"
+      ],
+      "pillars": [
+        "0"
+      ],
+      "note": "dữ liệu gốc: tài khoản, đối tượng"
+    },
+    {
+      "match": [
+        "ITEM-*",
+        "IN-ITEM-*"
+      ],
+      "pillars": [
+        "II"
+      ],
+      "note": "định danh mặt hàng"
+    },
+    {
+      "match": "IN-POL-*",
+      "pillars": [
+        "V"
+      ]
+    },
+    {
+      "match": "IN-INV-*",
+      "pillars": [
+        "III"
+      ]
+    },
+    {
+      "match": [
+        "IN-SHAPE-*",
+        "IN-SUM-*",
+        "IN-BIZ-*",
+        "IN-POST-*",
+        "IN-VAT-*",
+        "IN-CFG-*",
+        "IN-GUARD-*"
+      ],
+      "pillars": [
+        "IV"
+      ],
+      "note": "cửa nạp L1..L5, Commit Guard"
+    },
+    {
+      "match": "LIB-*",
+      "pillars": [
+        "IX"
+      ]
+    },
+    {
+      "match": [
+        "SC-KERNEL-*",
+        "SC-EVT-*",
+        "DG-LEDGER-*",
+        "DG-EVENT-*",
+        "DG-EVT-*",
+        "DG-ACC-*",
+        "DG-CASH-*",
+        "DG-REC-*",
+        "DG-DOC-*"
+      ],
+      "pillars": [
+        "I"
+      ]
+    },
+    {
+      "match": [
+        "SC-ITEM-*"
+      ],
+      "pillars": [
+        "II"
+      ]
+    },
+    {
+      "match": [
+        "DG-MD-*"
+      ],
+      "pillars": [
+        "0"
+      ]
+    },
+    {
+      "match": [
+        "DG-INV-*",
+        "DG-STK-*",
+        "DG-CLOSE-*",
+        "DG-FA-*"
+      ],
+      "pillars": [
+        "III"
+      ]
+    },
+    {
+      "match": [
+        "SC-INTAKE-*",
+        "SC-FIND-*",
+        "SC-FIX-*",
+        "SC-ERR-*",
+        "SC-VNC-*",
+        "DG-INTAKE-*",
+        "DG-TAX-*",
+        "DG-VAT-*",
+        "DG-EINV-*"
+      ],
+      "pillars": [
+        "IV"
+      ]
+    },
+    {
+      "match": [
+        "SC-TPL-*",
+        "DG-POL-*",
+        "DG-PROFILE-*",
+        "DG-SET-*"
+      ],
+      "pillars": [
+        "V"
+      ]
+    },
+    {
+      "match": [
+        "SC-AUDIT-*",
+        "SC-EVD-*",
+        "SC-DIAG-*",
+        "SC-OBS-*",
+        "SC-DEV-*",
+        "SC-SIG-*",
+        "DG-EVD-*",
+        "DG-DB-*"
+      ],
+      "pillars": [
+        "VI"
+      ]
+    },
+    {
+      "match": [
+        "SC-AUTH-*",
+        "SC-SEC-*",
+        "DG-SEC-*"
+      ],
+      "pillars": [
+        "VII"
+      ]
+    },
+    {
+      "match": [
+        "SC-ACT-*",
+        "SC-API-*",
+        "SC-CMP-*",
+        "SC-CON-*",
+        "SC-CORE-*",
+        "SC-DATA-*",
+        "SC-DOC-*",
+        "SC-ENG-*",
+        "SC-FLOW-*",
+        "SC-GATE-*",
+        "SC-LAYER-*",
+        "SC-MOD-*",
+        "SC-PHASE-*",
+        "SC-PILLAR-*",
+        "SC-PRESET-*",
+        "SC-QG-*",
+        "SC-REL-*",
+        "SC-RMP-*",
+        "SC-STD-*",
+        "SC-UI-*",
+        "SC-X-*",
+        "DG-CONF-*",
+        "DG-MOD-*",
+        "DG-PLAN-*",
+        "DG-X-*"
+      ],
+      "pillars": [
+        "VIII"
+      ],
+      "note": "mở rộng bằng module, kiểm chuẩn tự động"
+    },
+    {
+      "match": [
+        "SC-LIB-*"
+      ],
+      "pillars": [
+        "IX"
+      ]
+    },
+    {
+      "match": [
+        "*_item_id",
+        "*_item_id_*",
+        "*_item_name",
+        "*_items_sync*",
+        "items_*",
+        "item_*",
+        "products_*",
+        "product_*",
+        "entity_*",
+        "branches_*",
+        "partners_*",
+        "warehouses_*",
+        "*_unit_name",
+        "tenants_seed_unit_names",
+        "supplier_*"
+      ],
+      "pillars": [
+        "II"
+      ],
+      "note": "định danh: item_id xuyên suốt, mã có phiên bản"
+    },
+    {
+      "match": [
+        "ledger_*",
+        "accounting_event*",
+        "document_versions_*",
+        "event_outbox_*",
+        "posting_log_*"
+      ],
+      "pillars": [
+        "I"
+      ]
+    },
+    {
+      "match": [
+        "audit_logs_*",
+        "diagnostic_runs_*",
+        "conformance_runs_*",
+        "purchase_attachments_frozen"
+      ],
+      "pillars": [
+        "VI"
+      ]
+    },
+    {
+      "match": [
+        "policy_*",
+        "purchase_policy_*",
+        "posting_policy_*",
+        "accounting_profiles_*",
+        "setting_values_*",
+        "rulepack_*",
+        "sale_program*"
+      ],
+      "pillars": [
+        "V"
+      ]
+    },
+    {
+      "match": [
+        "library_*"
+      ],
+      "pillars": [
+        "IX"
+      ]
+    },
+    {
+      "match": [
+        "tenant_role*",
+        "user_role*"
+      ],
+      "pillars": [
+        "VII"
+      ]
+    },
+    {
+      "match": [
+        "stock_*",
+        "transfer_requests_*",
+        "inventory_*"
+      ],
+      "pillars": [
+        "III"
+      ]
+    },
+    {
+      "match": "bizcity_read_only",
+      "pillars": [
+        "VIII"
+      ],
+      "note": "khung nhìn chỉ đọc cho module"
+    }
+  ],
+  "generated": {
+    "codes": {
+      "diag": [
+        "ACCOUNT_WRONG_SIDE",
+        "CASH_NEGATIVE",
+        "COGS_STALE",
+        "CONFORMANCE_STALE",
+        "DB_WRITABLE",
+        "DEBT_MATCH_LEDGER",
+        "DEPRECIATION_OPEN",
+        "ENTRY_NO_VERSION",
+        "ENTRY_VERSION_UNKNOWN",
+        "EVENT_DEAD",
+        "EVENT_ENTRIES_STALE",
+        "EVENT_HAS_ENTRY",
+        "EVENT_PENDING_AGE",
+        "EVENT_POSTED_VERSION",
+        "EVIDENCE_CHAIN",
+        "INTAKE_OPEN_AGE",
+        "INTERNAL_EVENT_VERSION",
+        "INVENTORY_LEDGER_MISMATCH",
+        "INVENTORY_NEGATIVE",
+        "INVOICE_FIELDS",
+        "INVOICE_ISSUE_DATE",
+        "ITEM_CODE_CASE_DUP",
+        "LEDGER_BALANCED",
+        "LEDGER_BALANCES_DAILY",
+        "LEDGER_HEADER_EDIT_UNATTRIBUTED",
+        "LEDGER_ORPHAN",
+        "LEDGER_REVERSED_ONCE",
+        "LEDGER_ROUNDING",
+        "LEDGER_SELF_APPROVED",
+        "LEDGER_TRIGGERS",
+        "MIGRATIONS_PENDING",
+        "PERIOD_CLOSE_OPEN",
+        "POLICY_VERSION",
+        "PROFILE_DECLARED",
+        "PROFILE_PACK_REGIME",
+        "STOCK_ADJUST_NO_REASON",
+        "TAX_INPUT_NO_INVOICE",
+        "TENANT_ISOLATION",
+        "TRANSIT_NONZERO",
+        "UNIT_BASE_INVALID",
+        "VAT_INPUT_INVOICE_MATCH",
+        "VAT_INPUT_NONCASH",
+        "VAT_REDUCED_RATE"
+      ],
+      "finding": [
+        "ACC-BLOCK-001",
+        "ACC-HINT-001",
+        "ACC-HINT-002",
+        "ACC-HINT-003",
+        "ACC-HINT-004",
+        "ACC-HINT-005",
+        "ACC-HINT-006",
+        "ACC-HINT-007",
+        "IN-BIZ-001",
+        "IN-BIZ-003",
+        "IN-BIZ-004",
+        "IN-BIZ-005",
+        "IN-BIZ-006",
+        "IN-BIZ-007",
+        "IN-CFG-001",
+        "IN-GUARD-001",
+        "IN-INV-001",
+        "IN-INV-002",
+        "IN-ITEM-001",
+        "IN-ITEM-009",
+        "IN-MD-001",
+        "IN-MD-004",
+        "IN-MD-005",
+        "IN-POL-001",
+        "IN-POL-002",
+        "IN-POL-003",
+        "IN-POL-004",
+        "IN-POST-001",
+        "IN-POST-002",
+        "IN-POST-003",
+        "IN-POST-004",
+        "IN-POST-005",
+        "IN-SHAPE-001",
+        "IN-SHAPE-002",
+        "IN-SHAPE-003",
+        "IN-SHAPE-004",
+        "IN-SHAPE-005",
+        "IN-SHAPE-006",
+        "IN-SUM-001",
+        "IN-SUM-002",
+        "IN-SUM-003",
+        "IN-SUM-004",
+        "IN-SUM-005",
+        "IN-SUM-006",
+        "IN-VAT-001",
+        "ITEM-BLOCK-001",
+        "ITEM-BLOCK-002",
+        "ITEM-HINT-001",
+        "ITEM-HINT-002",
+        "ITEM-HINT-003",
+        "LIB-DEPRECATED-001",
+        "LIB-EFFECTIVE-001",
+        "LIB-REMOVED-001",
+        "LIB-SCHEMA-001",
+        "LIB-UNKNOWN-001",
+        "LIB-UNVERIFIED-001",
+        "LIB-VALUE-001",
+        "PART-HINT-001",
+        "PART-HINT-002",
+        "PART-HINT-003",
+        "PART-HINT-004"
+      ]
+    },
+    "tests": {
+      "ACCOUNT_WRONG_SIDE": [
+        "apps/api/test/phase022-checks.test.ts"
+      ],
+      "CASH_NEGATIVE": [
+        "apps/api/test/phase022-checks.test.ts",
+        "apps/api/test/review-board.test.ts"
+      ],
+      "COGS_STALE": [
+        "apps/api/test/phase022-checks.test.ts"
+      ],
+      "CONFORMANCE_STALE": [
+        "apps/api/test/phase022-checks.test.ts"
+      ],
+      "DB_WRITABLE": [
+        "apps/api/test/diagnostics.test.ts"
+      ],
+      "DEBT_MATCH_LEDGER": [
+        "apps/api/test/phase022-checks.test.ts"
+      ],
+      "DEPRECIATION_OPEN": [
+        "apps/api/test/phase022-checks.test.ts"
+      ],
+      "ENTRY_NO_VERSION": [
+        "apps/api/test/lich-su-chung-tu.test.ts"
+      ],
+      "ENTRY_VERSION_UNKNOWN": [
+        "apps/api/test/lich-su-chung-tu.test.ts"
+      ],
+      "EVENT_DEAD": [
+        "apps/api/test/events.test.ts"
+      ],
+      "EVENT_ENTRIES_STALE": [
+        "apps/api/test/lich-su-chung-tu.test.ts"
+      ],
+      "EVENT_PENDING_AGE": [
+        "apps/api/test/kich-ban.test.ts"
+      ],
+      "EVENT_POSTED_VERSION": [
+        "apps/api/test/diagnostics.test.ts"
+      ],
+      "EVIDENCE_CHAIN": [
+        "apps/api/test/evidence.test.ts"
+      ],
+      "INTAKE_OPEN_AGE": [
+        "apps/api/test/intake-score.test.ts"
+      ],
+      "INVENTORY_LEDGER_MISMATCH": [
+        "apps/api/test/inventory-reconcile.test.ts"
+      ],
+      "INVENTORY_NEGATIVE": [
+        "apps/api/test/conformance-gate.test.ts",
+        "apps/api/test/enterprise-layer.test.ts"
+      ],
+      "INVOICE_FIELDS": [
+        "apps/api/test/vat-einvoice.test.ts"
+      ],
+      "INVOICE_ISSUE_DATE": [
+        "apps/api/test/vat-einvoice.test.ts"
+      ],
+      "ITEM_CODE_CASE_DUP": [
+        "apps/api/test/doi-chieu-tu-dong.test.ts"
+      ],
+      "LEDGER_BALANCED": [
+        "apps/api/test/conformance-engine.test.ts",
+        "apps/api/test/conformance-gate.test.ts",
+        "apps/api/test/diagnostics.test.ts",
+        "apps/api/test/gates.test.ts"
+      ],
+      "LEDGER_BALANCES_DAILY": [
+        "apps/api/test/diagnostics.test.ts"
+      ],
+      "LEDGER_HEADER_EDIT_UNATTRIBUTED": [
+        "apps/api/test/e2-unattributed-warning.test.ts",
+        "apps/api/test/entry-edits.test.ts",
+        "apps/api/test/lich-su-chung-tu.test.ts"
+      ],
+      "LEDGER_ORPHAN": [
+        "apps/api/test/diagnostics.test.ts"
+      ],
+      "LEDGER_REVERSED_ONCE": [
+        "apps/api/test/diagnostics.test.ts"
+      ],
+      "LEDGER_ROUNDING": [
+        "apps/api/test/doi-chieu-tu-dong.test.ts"
+      ],
+      "LEDGER_SELF_APPROVED": [
+        "apps/api/test/sod-ghi-dau.test.ts"
+      ],
+      "LEDGER_TRIGGERS": [
+        "apps/api/test/db-rules.test.ts",
+        "apps/api/test/diagnostics.test.ts",
+        "apps/api/test/e2-db-audit.test.ts"
+      ],
+      "MIGRATIONS_PENDING": [
+        "apps/api/test/diagnostics.test.ts"
+      ],
+      "PERIOD_CLOSE_OPEN": [
+        "apps/api/test/conformance-gate.test.ts",
+        "apps/api/test/enterprise-layer.test.ts"
+      ],
+      "POLICY_VERSION": [
+        "apps/api/test/policy.test.ts"
+      ],
+      "PROFILE_DECLARED": [
+        "apps/api/test/conformance-gate.test.ts"
+      ],
+      "PROFILE_PACK_REGIME": [
+        "apps/api/test/conformance-engine.test.ts"
+      ],
+      "STOCK_ADJUST_NO_REASON": [
+        "apps/api/test/phase022-checks.test.ts"
+      ],
+      "TRANSIT_NONZERO": [
+        "apps/api/test/close-conditions.test.ts",
+        "apps/api/test/diagnostics-nightly.test.ts",
+        "apps/api/test/phase022-checks.test.ts"
+      ],
+      "UNIT_BASE_INVALID": [
+        "apps/api/test/doi-chieu-tu-dong.test.ts"
+      ],
+      "VAT_INPUT_INVOICE_MATCH": [
+        "apps/api/test/doi-chieu-tu-dong.test.ts"
+      ],
+      "VAT_INPUT_NONCASH": [
+        "apps/api/test/vat-einvoice.test.ts"
+      ],
+      "VAT_REDUCED_RATE": [
+        "apps/api/test/vat-einvoice.test.ts"
+      ],
+      "ACC-BLOCK-001": [
+        "apps/api/test/catalog-why.test.ts"
+      ],
+      "ACC-HINT-001": [
+        "apps/api/test/catalog-why.test.ts"
+      ],
+      "ACC-HINT-002": [
+        "apps/api/test/catalog-why.test.ts"
+      ],
+      "ACC-HINT-003": [
+        "apps/api/test/catalog-why.test.ts",
+        "apps/api/test/findings.test.ts",
+        "apps/api/test/quy-dinh-danh-muc.test.ts"
+      ],
+      "ACC-HINT-004": [
+        "apps/api/test/catalog-why.test.ts"
+      ],
+      "ACC-HINT-005": [
+        "apps/api/test/quy-dinh-danh-muc.test.ts"
+      ],
+      "ACC-HINT-006": [
+        "apps/api/test/catalog-why.test.ts"
+      ],
+      "ACC-HINT-007": [
+        "apps/api/test/catalog-why.test.ts"
+      ],
+      "IN-BIZ-001": [
+        "apps/api/test/intake-trial.test.ts"
+      ],
+      "IN-BIZ-003": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-BIZ-004": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-BIZ-005": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-BIZ-006": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-CFG-001": [
+        "apps/api/test/intake-tax.test.ts"
+      ],
+      "IN-GUARD-001": [
+        "apps/api/test/commit-guard.test.ts",
+        "apps/api/test/gates.test.ts",
+        "apps/api/test/intake-policy-check.test.ts",
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-INV-001": [
+        "apps/api/test/intake-tax.test.ts"
+      ],
+      "IN-INV-002": [
+        "apps/api/test/intake-tax.test.ts"
+      ],
+      "IN-ITEM-001": [
+        "apps/api/test/intake-preflight.test.ts",
+        "apps/api/test/item-master.test.ts",
+        "apps/api/test/quy-dinh-danh-muc.test.ts"
+      ],
+      "IN-ITEM-009": [
+        "apps/api/test/commit-guard.test.ts",
+        "apps/api/test/intake-preflight.test.ts",
+        "apps/api/test/item-draft.test.ts",
+        "apps/api/test/quy-dinh-danh-muc.test.ts"
+      ],
+      "IN-MD-001": [
+        "apps/api/test/findings.test.ts",
+        "apps/api/test/intake-ai.test.ts",
+        "apps/api/test/intake-preflight.test.ts",
+        "apps/api/test/intake-repair.test.ts",
+        "apps/api/test/intake-score.test.ts"
+      ],
+      "IN-MD-005": [
+        "apps/api/test/intake-ai.test.ts",
+        "apps/api/test/intake-preflight.test.ts",
+        "apps/api/test/intake-repair.test.ts"
+      ],
+      "IN-POL-001": [
+        "apps/api/test/intake-policy-check.test.ts",
+        "apps/api/test/intake-policy-recompute.test.ts",
+        "apps/api/test/policy-api.test.ts",
+        "apps/api/test/policy-insight.test.ts",
+        "apps/api/test/policy-review.test.ts"
+      ],
+      "IN-POL-002": [
+        "apps/api/test/intake-policy-check.test.ts",
+        "apps/api/test/policy-api.test.ts",
+        "apps/api/test/policy-retire.test.ts"
+      ],
+      "IN-POL-003": [
+        "apps/api/test/intake-policy-check.test.ts",
+        "apps/api/test/policy-insight.test.ts"
+      ],
+      "IN-POL-004": [
+        "apps/api/test/intake-policy-recompute.test.ts",
+        "apps/api/test/policy-insight.test.ts"
+      ],
+      "IN-POST-001": [
+        "apps/api/test/intake-trial.test.ts"
+      ],
+      "IN-POST-002": [
+        "apps/api/test/intake-trial.test.ts"
+      ],
+      "IN-POST-003": [
+        "apps/api/test/intake-trial.test.ts"
+      ],
+      "IN-POST-004": [
+        "apps/api/test/intake-trial.test.ts"
+      ],
+      "IN-POST-005": [
+        "apps/api/test/intake-trial.test.ts"
+      ],
+      "IN-SHAPE-001": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SHAPE-002": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SHAPE-003": [
+        "apps/api/test/apps.test.ts",
+        "apps/api/test/intake-ai.test.ts",
+        "apps/api/test/intake-inbox.test.ts",
+        "apps/api/test/intake-preflight.test.ts",
+        "apps/api/test/intake-repair.test.ts",
+        "apps/api/test/intake-score.test.ts",
+        "apps/api/test/intake-trial.test.ts"
+      ],
+      "IN-SHAPE-004": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SHAPE-005": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SHAPE-006": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SUM-001": [
+        "apps/api/test/intake-inbox.test.ts",
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SUM-002": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SUM-003": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SUM-005": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-SUM-006": [
+        "apps/api/test/intake-preflight.test.ts"
+      ],
+      "IN-VAT-001": [
+        "apps/api/test/intake-tax.test.ts"
+      ],
+      "ITEM-BLOCK-001": [
+        "apps/api/test/commit-guard.test.ts",
+        "apps/api/test/intake-preflight.test.ts",
+        "apps/api/test/item-draft.test.ts",
+        "apps/api/test/item-master.test.ts",
+        "apps/api/test/quy-dinh-danh-muc.test.ts"
+      ],
+      "ITEM-HINT-001": [
+        "apps/api/test/bien-the-dinh-danh.test.ts",
+        "apps/api/test/dinh-khoan-phan-loai-theo-ngay.test.ts",
+        "apps/api/test/item-draft.test.ts",
+        "apps/api/test/item-id-so-kho.test.ts",
+        "apps/api/test/item-master.test.ts",
+        "apps/api/test/mua-hang-duong-thue.test.ts",
+        "apps/api/test/posting-flow.test.ts",
+        "apps/api/test/quy-dinh-danh-muc.test.ts",
+        "apps/api/test/san-pham-con.test.ts",
+        "apps/api/test/xuong-ca-dinh-danh.test.ts"
+      ],
+      "ITEM-HINT-002": [
+        "apps/api/test/quy-dinh-danh-muc.test.ts"
+      ],
+      "ITEM-HINT-003": [
+        "apps/api/test/bien-the-dinh-danh.test.ts",
+        "apps/api/test/mua-hang-duong-thue.test.ts",
+        "apps/api/test/posting-flow.test.ts",
+        "apps/api/test/san-pham-con.test.ts"
+      ],
+      "LIB-DEPRECATED-001": [
+        "apps/api/test/thu-vien-can-cu.test.ts",
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "LIB-EFFECTIVE-001": [
+        "apps/api/test/thu-vien-su-dung.test.ts",
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "LIB-REMOVED-001": [
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "LIB-SCHEMA-001": [
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "LIB-UNKNOWN-001": [
+        "apps/api/test/library-bindings.test.ts",
+        "apps/api/test/thu-vien-danh-muc.test.ts",
+        "apps/api/test/thu-vien-module.test.ts",
+        "apps/api/test/thu-vien-su-dung.test.ts",
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "LIB-UNVERIFIED-001": [
+        "apps/api/test/library-bindings.test.ts",
+        "apps/api/test/thu-vien-su-dung.test.ts",
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "LIB-VALUE-001": [
+        "apps/api/test/thu-vien-cau-hinh.test.ts",
+        "apps/api/test/thu-vien-module.test.ts",
+        "apps/api/test/thu-vien-su-dung.test.ts",
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "PART-HINT-001": [
+        "apps/api/test/catalog-why.test.ts",
+        "apps/api/test/findings.test.ts"
+      ],
+      "PART-HINT-002": [
+        "apps/api/test/catalog-why.test.ts",
+        "apps/api/test/findings.test.ts"
+      ],
+      "PART-HINT-003": [
+        "apps/api/test/catalog-why.test.ts",
+        "apps/api/test/findings.test.ts"
+      ],
+      "PART-HINT-004": [
+        "apps/api/test/catalog-why.test.ts",
+        "apps/api/test/findings.test.ts"
+      ]
+    },
+    "ci": [
+      {
+        "id": "DG-ACC-1",
+        "title": "Tài khoản chỉ dư một bên không dư bên ngược lại",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/balance.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-CASH-1",
+        "title": "Quỹ tiền mặt không âm cuối ngày",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/balance.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-CLOSE-1",
+        "title": "Tháng đã qua quá 30 ngày có đủ việc cuối kỳ theo thứ tự: tính giá vốn, kết chuyển, khoá sổ",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/period.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-CONF-1",
+        "title": "Lượt Kiểm chuẩn gần nhất không quá 2 ngày",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/balance.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-DB-1",
+        "title": "Mọi tệp db/migrations đã áp vào CSDL",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-DB-2",
+        "title": "Trigger bảo vệ sổ cái (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ, đang bật và không còn cờ thoát",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/install.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-DB-3",
+        "title": "CSDL đúng cấu hình nền: PostgreSQL ≥ 16, múi giờ Asia/Ho_Chi_Minh, mã hoá UTF8",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/install.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-DB-4",
+        "title": "CSDL là bản chính, ghi được (không phải bản sao chỉ đọc / đang khôi phục)",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/install.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-DOC-1",
+        "title": "Bút toán gắn sự việc có ghi event_version (phiên bản chứng từ đã tạo ra nó)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-DOC-2",
+        "title": "Phiên bản chứng từ của bút toán còn nội dung lưu (hiện hành hoặc accounting_event_versions)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-DOC-3",
+        "title": "Bút toán đang hiệu lực của sự việc đã ghi sổ thuộc đúng phiên bản posted_version",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EINV-1",
+        "title": "Hoá đơn trong sổ có đủ ký hiệu, tên và mã số thuế người bán (mua vào), mã số thuế đúng dạng",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/tax.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EINV-2",
+        "title": "Hoá đơn bán hàng hoá lập không sau ngày chứng từ bán (thời điểm chuyển giao)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/tax.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EVD-1",
+        "title": "Chuỗi băm bằng chứng liền mạch: mỗi dòng băm đúng, nối đúng dòng trước, không hở số thứ tự",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/evidence.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EVENT-1",
+        "title": "Sự việc posted có posted_version = version (sự việc vào qua cửa nạp sổ / phiếu tay)",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EVENT-2",
+        "title": "Sự việc posted có ít nhất một bút toán hiệu lực của đúng phiên bản",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EVENT-3",
+        "title": "Sự việc pending / error không quá 3 ngày",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EVENT-4",
+        "title": "Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version = version (đi eventStore, PHASES 2.1)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-EVT-1",
+        "title": "Không có sự kiện hết lượt giao (dead) chưa xử lý",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/events.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-FA-1",
+        "title": "Tháng đã qua có tài sản cần trích thì đã có phiếu khấu hao tháng",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/balance.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-INTAKE-1",
+        "title": "Không có chứng từ nằm ở bể chờ đầu vào quá ngưỡng ngày",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/intake.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-INV-1",
+        "title": "Không có tồn kho âm theo mặt hàng × kho × ngày",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/period.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-LEDGER-1",
+        "title": "Mỗi bút toán: tổng Nợ = tổng Có",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-LEDGER-2",
+        "title": "ledger_balances_daily = Σ ledger_lines theo (đơn vị, chi nhánh, tài khoản, ngày)",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-LEDGER-3",
+        "title": "Bút toán reversed có đúng một bút toán đảo; bút toán đảo trỏ về bút toán reversed",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-LEDGER-4",
+        "title": "Mọi bút toán trỏ về một sự việc (accounting_events) có thật",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-LEDGER-5",
+        "title": "Mọi lần sửa đầu bút toán đi qua ứng dụng (dòng của ứng dụng cùng _txid) hoặc đã được kế toán trưởng xác nhận",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-LEDGER-6",
+        "title": "Chứng từ ghi sổ được duyệt bởi người khác người lập (tách nhiệm, đang ghi dấu)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-MD-1",
+        "title": "Mã hàng không trùng nhau khi bỏ khoảng trắng và không phân biệt hoa / thường",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/masterdata.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-MD-2",
+        "title": "Mặt hàng có khai ĐVT thì có đúng một ĐVT gốc tỉ lệ 1 và không quá một ĐVT mua mặc định",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/masterdata.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-MOD-1",
+        "title": "Module active trong registry được API nạp ở lần khởi động gần nhất (hash khớp, mã có)",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/install.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-PLAN-1",
+        "title": "Khoản công nợ còn lại theo đối tượng = số dư tài khoản công nợ trên sổ cái",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-PLAN-4",
+        "title": "Hàng / tiền đang chuyển giữa chi nhánh không treo quá 30 ngày, nơi nhận không ghi nhiều hơn nơi xuất",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-PLAN-5",
+        "title": "Đơn vị A không đọc / ghi được dữ liệu đơn vị B: mọi bảng có tenant_id bật RLS + FORCE + có chính sách",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-POL-1",
+        "title": "Bút toán định khoản theo luật ghi đúng phiên bản chính sách kế toán của ngày hạch toán (ADR-0009, C-9)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-PROFILE-1",
+        "title": "Đơn vị đã khai hồ sơ kế toán (năm tài chính, chế độ kế toán, loại pháp nhân) áp cho hôm nay (ADR-0013)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/profile.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-PROFILE-2",
+        "title": "Gói định khoản đang cài cùng chế độ kế toán với hồ sơ của đơn vị (ADR-0013, bizcity_posting_template@1)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/profile.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-REC-1",
+        "title": "Thuế GTGT đầu vào trên sổ khớp thuế trên sổ hoá đơn của cùng chứng từ (lệch không quá 0,5 đồng)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/tax.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-REC-2",
+        "title": "Dòng sổ cái ghi số tiền tròn đồng (sổ ghi đồng Việt Nam)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-SEC-1",
+        "title": "Có vai trò ketoan_app đúng chuẩn: không superuser, không BYPASSRLS, không sở hữu bảng, ghi được bảng nghiệp vụ",
+        "enforce": "block",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/install.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-SEC-2",
+        "title": "Kết nối đang dùng không phải superuser (chạy diagnostics bằng đúng tài khoản CSDL của API để kiểm API)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/install.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-SET-1",
+        "title": "Khoá trong tenants.settings đều có trong settings registry",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-STK-1",
+        "title": "Phiếu giá vốn tháng không lỗi thời",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/balance.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-STK-2",
+        "title": "Phiếu điều chỉnh kho có lý do",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/balance.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-STK-3",
+        "title": "Sổ chi tiết kho khớp số dư tài khoản hàng tồn kho",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/balance.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-TAX-1",
+        "title": "Thuế GTGT đầu vào đã ghi sổ có hoá đơn trong sổ hoá đơn (chờ không quá 30 ngày)",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/ledger.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-VAT-1",
+        "title": "Thuế suất GTGT giảm (8%) chỉ dùng cho hàng bán ra trong thời gian giảm theo nghị quyết",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/tax.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-VAT-2",
+        "title": "Hoá đơn mua vào từ 5 triệu đồng (gồm thuế) được khấu trừ có chứng từ thanh toán không dùng tiền mặt",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/tax.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-ACT-1",
+        "title": "Thao tác ghi đi qua defineAction (quyền, zod, Idempotency-Key, dry-run, bằng chứng)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-ACT-2",
+        "title": "Action ghi sổ khai sideEffects ledger và errors có PERIOD_LOCKED (STD-ACT-9)",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/ledger-side-effects.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-API-1",
+        "title": "Lỗi ném Errors.*, không tự reply.status(4xx/5xx)",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-API-2",
+        "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-API-3",
+        "title": "Mọi route khai quyền (requirePermission) hoặc config.public",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-AUDIT-1",
+        "title": "Chỗ đọc audit_logs theo tên hành động (= / IN / LIKE) phải khớp một mục của AUDIT_KEEP (id action ba phần được miễn)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/audit/audit.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-AUTH-03",
+        "title": "Route ghi cố ý không là defineAction nằm trong danh sách đóng (route-giu.json), đúng lớp: công khai có public, quản trị có preHandler quyền",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/authz/authz.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-AUTH-04",
+        "title": "Thư viện phân quyền mẫu TGS (docs/standard/phan-quyen): khớp bản sinh lại từ CSV nguồn, quyền Core có thật, báo cáo không ra quyền ghi, quyền suy ra không thừa",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/authz/authz.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-CMP-1",
+        "title": "Ma trận tuân thủ máy đọc: đúng khuôn, khớp STD-CMP của bizcity_compliance@1, tín hiệu trỏ check / năng lực có thật",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/compliance.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-CMP-2",
+        "title": "Bảy nguyên tắc kiến trúc AP-1..AP-7 đều có cách thực thi (check có thật) — AP-7",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/compliance.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-CON-1",
+        "title": "Schema hợp đồng hợp lệ: 2020-12, có $id, title = mã@N, chỉ từ khoá được hỗ trợ, $ref không gãy",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/contract.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-CON-2",
+        "title": "Manifest module: đúng schema, năng lực có thật, quyền / action / sự kiện / cấu hình đúng tiền tố, slot / hook có trong chuẩn",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/contract.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-CON-3",
+        "title": "JSON mẫu docs/api/vi-du hợp lệ theo bizcity_ledger_intake@1",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/contract.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-CON-4",
+        "title": "Bảng năng lực và danh mục hợp đồng nhất quán (bizcity-standard.json ↔ tệp ↔ README ↔ CANON)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/contract.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-CON-5",
+        "title": "Mã luật (R-*, STD-*, CONF-*) khai đúng một lần, liên tục; mọi mã được nhắc tới đều có định nghĩa",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/contract.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-CON-6",
+        "title": "Mã lỗi: tài liệu ↔ ERROR_CODES ↔ bảng năng lực khớp nhau",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/contract.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-CON-7",
+        "title": "Biến môi trường đọc trong code có trong .env.example hoặc settings registry",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/contract.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-CORE-1",
+        "title": "Sáu năng lực lõi (nen-mong.json) khớp repo: capability, mã, hợp đồng, 17 trụ cột, ECP; tín hiệu \"chạy được\" có thật; \"đạt\" không còn tín hiệu \"chưa có\" (R-ECP-SCORE)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/foundations/foundations.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DATA-1",
+        "title": "Migration: tên NNNN_ten.sql, số không trùng, không hở",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/data/data.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DATA-2",
+        "title": "Migration đã phát hành không bị sửa (so băm với locks/migrations.lock.json)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/data/data.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-DATA-3",
+        "title": "Mọi bảng và cột có COMMENT ON",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/data/data.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DATA-4",
+        "title": "Tiền là numeric(18,2): không float / real / double precision / money",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/data/data.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DATA-5",
+        "title": "Bảng nghiệp vụ có cột tenant_id",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/data/data.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DATA-6",
+        "title": "Cô lập đơn vị bằng RLS (Row Level Security) trên bảng có tenant_id",
+        "enforce": "planned",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/data/data.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-DATA-7",
+        "title": "db/types.ts khớp migration: mọi bảng / cột kiểu Kysely khai đều có migration tạo",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/data/types-sync.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DEV-1",
+        "title": "Bàn điều tra: LogQL / TraceQL chỉ từ mẫu đóng gắn đơn vị, giá trị qua quote(); PromQL cố định; trình duyệt không gọi nguồn quan sát",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/release/ban-dieu-tra.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DEV-2",
+        "title": "Bảng công cụ nhà phát triển (cong-cu-dev.json) khớp menu Nhà phát triển và khớp tiêu chí T1..T6 tính lại từ repo",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/devtools/devtools.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DIAG-1",
+        "title": "Mã tự chẩn đoán trong app có bản cùng mã ở lane diagnostics của bộ kiểm",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/diag-parity.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DOC-1",
+        "title": "Liên kết tương đối và neo (#…) trong tệp .md đều tới được",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/docs.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DOC-2",
+        "title": "Cột \"Kiểm bằng\" của luật R-* trỏ tới test / tệp có thật",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/docs.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-DOC-3",
+        "title": "ADR: số không trùng; mỗi tệp ADR có đúng một dòng ở docs/adr/README.md, số ở dòng chỉ mục khớp số tệp",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/docs.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DOC-4",
+        "title": "Đường dẫn `trong dấu huyền` ở tài liệu còn hiệu lực đều tồn tại (trừ nhật ký, kế hoạch, dòng ghi rõ \"chưa tách / đề xuất\")",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/doc-drift.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DOC-5",
+        "title": "Route \"GET|POST|… /api/v1/…\" nhắc trong tài liệu có trong mã (route thường hoặc expose.http của action)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/doc-drift.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DOC-6",
+        "title": "Mỗi mục menu web có docs/huong-dan/<key>.md (nút Hướng dẫn của màn)",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/doc-drift.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-DOC-7",
+        "title": "Lịch sử chứng từ: bảng phiên bản / liên kết chỉ ghi ở một chỗ; bút toán dựng với sourceDocumentId phải kèm sourceVersion",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/document/document.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-ENG-1",
+        "title": "Sổ bộ máy (bo-may.json) khớp repo: mã, test, hợp đồng, năng lực lõi, trụ cột, mốc việc, mã kiểm có thật; không có trạng thái gõ tay",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/engines/engines.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-ERR-1",
+        "title": "Danh mục mã lỗi khớp bảng BIZCITY-ERRORS §3 và ERROR_CODES; reason có tiền tố chủ",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/errors.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-ERR-2",
+        "title": "details.reason viết trong mã có trong ERROR_REASONS; mỗi reason có dòng ở BIZCITY-ERRORS §4 / §4c",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/errors-reason.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-EVD-1",
+        "title": "Không ghi nhật ký nghiệp vụ ra tệp (appendFile / createWriteStream / .jsonl)",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-EVD-2",
+        "title": "Bằng chứng có chuỗi băm, actor_kind, via, result (audit_logs mở rộng)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-EVD-9",
+        "title": "Chỉ evidence-export.ts ghi dưới bang-chung, và ghi một lần (cờ wx + link, không đè), manifest đúng hợp đồng",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-EVT-1",
+        "title": "Không hẹn giờ tự chế (setInterval / setTimeout / cron) — dùng events.clock",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-EVT-2",
+        "title": "Subscriber chịu được giao lại: id cố định, gọi HTTP ra ngoài phải kèm Idempotency-Key — AP-6",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/action/action.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-FIND-1",
+        "title": "Thư viện phát hiện hai cổng: mã không trùng, đủ vì sao / cách sửa, trang tra mã đủ mã",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/findings.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-FIND-2",
+        "title": "Thông báo của Core dựng từ thư viện mã (notifyFinding), không câu chữ tự do",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/findings-notify.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-FIX-1",
+        "title": "Mọi kiểm warn / error và mục bảng kiểm khoá kỳ có phương án khắc phục có cấu trúc; màn dẫn tới có thật (R-FIX-1)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/remedy/remedy.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-FLOW-1",
+        "title": "Bảng giữ chỗ CLAIMS.md đúng khuôn, các dòng đang làm không chồng phạm vi và mỗi nhánh một dòng (R-FLOW-1 / 3 / 6)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/flow/flow.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-FLOW-3",
+        "title": "Bảng việc docs/phases/BANG-VIEC.md + bang-viec.json khớp nguồn (checklist phase + CLAIMS.md) — R-FLOW-8",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/flow/board.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-FLOW-4",
+        "title": "Dòng việc S###-n trong checklist phase đúng khuôn: đủ ô theo tiêu đề, ô trạng thái bắt đầu bằng ☐ 🟡 ✅ ⛔ ⏸, mã không trùng — R-FLOW-8",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/flow/board.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-GATE-1",
+        "title": "Sổ cổng kiểm (cong-kiem.json) khớp repo: trụ cột có thật, mọi mã kiểm có trụ cột, phần sinh khớp lần sinh lại",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/gates/gates.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-INTAKE-1",
+        "title": "Danh mục mã IN-* khớp bảng BIZCITY-INTAKE-FINDINGS §3 và có trang bài học",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/intake.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-ITEM-1",
+        "title": "Preset / module / fixture gửi hàng hoá đúng bizcity_item_master@1 (schema)",
+        "enforce": "planned",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/item/item.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-ITEM-2",
+        "title": "Sổ không khoá theo mã hàng: không khoá ngoại theo cột mã (sku); sau khi có item_id, migration mới không thêm cột mã vào bảng sổ / kho",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/item/item.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-ITEM-3",
+        "title": "Luật định khoản của Kernel không import danh mục mua hàng (@bizcity/mua-hang-domain, skuInfo): loại dòng đi qua phân loại mặt hàng",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/item/item.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-KERNEL-1",
+        "title": "Chỉ modules/ledger ghi bảng ledger_* (trừ ngoại lệ E2)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-KERNEL-2",
+        "title": "Chỉ modules/documents thêm accounting_events / accounting_event_versions / posting_log",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-KERNEL-3",
+        "title": "Chỉ posting / documents / ledger gọi ledgerService; nơi khác ghi sổ qua postDocumentIn hoặc eventStore",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-KERNEL-4",
+        "title": "Cờ thoát trigger sổ cái (E1–E3) chỉ ở chỗ được phép; cờ allow_ledger_purge đã gỡ (chỉ còn ca phá thử và chẩn đoán nhắc tên)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-KERNEL-5",
+        "title": "Luật định khoản không viết cứng số tài khoản (tra qua AccountResolver)",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-KERNEL-6",
+        "title": "Ngoài Kernel chỉ import Kernel qua cổng công khai apps/api/src/kernel/public.ts",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-KERNEL-7",
+        "title": "Ngoài Kernel không đọc thẳng bảng ledger_*: đọc khung nhìn bizcity_read.* hoặc ledgerQuery (ledger.query)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-LAYER-1",
+        "title": "Mọi tệp apps/api/src có nhãn @bizcity-layer khớp bảng lớp (REUSE-MAP)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/module/layer.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-LAYER-2",
+        "title": "Import giữa các lớp đúng chiều: Platform không biết Kernel, danh mục không import Kernel, module không import module khác",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/module/depgraph.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-LIB-1",
+        "title": "Thư viện dùng chung (libraries/*/library.json) đúng khuôn bizcity_library@1: phong bì, mã không mất, payload theo itemSchema, giá trị theo ngày, băm + phiên bản, luật khai báo, sinh lại khớp",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/library/library.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-LIB-2",
+        "title": "Module khai libraries[] trong bizcity.module.json dùng thư viện đúng khai báo: thư viện có thật, mọi lời gọi ctx.libraries đã khai, mọi thư viện đã khai có được dùng, không viết cứng mã / giá trị trùng thư viện (chỉ xét module có khai hoặc có gọi)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/library/library.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-LIB-3",
+        "title": "Bảng gắn trường chứng từ ↔ thư viện (packages/contracts/src/library-bindings.ts): id duy nhất, đường trường đúng khuôn, thư viện có thật, gắn theo ngày chứng từ",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/library/library.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-MOD-1",
+        "title": "Phân hệ / module không import phân hệ khác, không với ra ngoài thư mục của mình",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/module/module.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-MOD-2",
+        "title": "Phân hệ không ghi bảng nhân, bảng danh mục / cấu hình của lõi",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/module/module.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-MOD-3",
+        "title": "Mỗi phân hệ / add-in có bizcity.module.json hợp lệ",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/module/module.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-OBS-1",
+        "title": "Số đo bizcity_* dùng trong dashboard và luật cảnh báo đều được khai trong mã; dashboard JSON hợp lệ, uid không trùng",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/release/giam-sat.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-OBS-2",
+        "title": "Truy vết: chỉ core/tracing.ts import @opentelemetry/*; thuộc tính bizcity.* của span có trong danh sách cho phép",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/release/truy-vet.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-PHASE-1",
+        "title": "Thư mục phase: mỗi việc lộ trình và mã checklist G thuộc đúng một phase, phase có README + 40-MASTER-CHECKLIST",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/phases.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-PILLAR-1",
+        "title": "Bảng trụ cột: tiêu chí \"đạt\" phải dẫn tới bằng chứng có thật (migration, test, check, tuyến, tệp) và không dẫn tới thứ đã mất",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/pillar/pillar.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-PRESET-1",
+        "title": "Preset cài nhanh: đúng schema, tệp có thật, dữ liệu mẫu hư cấu, chứng từ mẫu đúng khuôn nạp sổ",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/preset.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-QG-1",
+        "title": "Không còn test .only / .skip",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/kernel/kernel.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-REL-1",
+        "title": "CHANGELOG.md có mục \"Chưa phát hành\" và mục cho phiên bản trong package.json",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/release/release.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-REL-2",
+        "title": "Hợp đồng: phiên bản ở đầu tệp = dòng mới nhất trong nhật ký thay đổi của tệp",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/release/release.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-REL-3",
+        "title": "Tệp docs/ mà mã đọc lúc chạy có trong repo và có COPY trong giai đoạn chạy của docker/api.Dockerfile",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/release/runtime-docs.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-RMP-1",
+        "title": "Lộ trình máy đọc: đúng khuôn, tín hiệu trỏ check / năng lực có thật, thứ tự không vòng, khớp PHASES.md",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/roadmap.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-SEC-1",
+        "title": "Không có bí mật thật trong mã nguồn (khoá 1API, khoá MCP, khoá riêng, token, mật khẩu gán cứng)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/security/security.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-SEC-2",
+        "title": "Không ghép chuỗi vào SQL: hạn chế sql.raw / sql.lit, mọi giá trị đi qua tham số",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/security/security.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-SEC-3",
+        "title": "Vệ sinh repo: .gitignore chặn .env / dữ liệu / kết quả kiểm; có SECURITY.md; CI không in bí mật",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/security/security.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-SEC-4",
+        "title": "Chuỗi cung ứng: GitHub Action ghim theo mã commit (SHA), không theo nhãn có thể bị dời",
+        "enforce": "info",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/security/security.check.mjs",
+        "selftest": false
+      },
+      {
+        "id": "SC-SEC-5",
+        "title": "Bí mật không có giá trị mặc định viết trong mã (process.env.X || \"…\" / ?? \"…\")",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/security/security.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-SIG-1",
+        "title": "Mọi tệp framework (Kernel, Platform, hợp đồng, hạ tầng, kiến trúc, luật, phase) có chữ ký Johnny Chu - Chu Hoàng Anh (R-SIG-1)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/signature.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-SIG-2",
+        "title": "Dấu thay đổi đúng khuôn, người là người chỉ đạo — không phải agent / model (R-SIG-4, R-SIG-5)",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/docs/signature.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-STD-5",
+        "title": "Tiền trong modules/**: làm tròn bằng roundMoney, chia bằng allocate / schedule (STD-030-5, R-MONEY)",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/module/money.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-TPL-1",
+        "title": "Gói định khoản: đúng schema, tài khoản có thật, một lý do mặc định mỗi loại, tình huống mẫu dùng lý do của gói",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/contract/template.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-UI-1",
+        "title": "Nút / ô bị chặn theo điều kiện nói vì sao và cách gỡ (title, blocked, BlockedHint) — R-BLOCK",
+        "enforce": "ratchet",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/ui/blocked.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-VNC-2",
+        "title": "Cổng phê duyệt rulepack fail-closed: approved chỉ khi căn cứ đã rà, đủ người duyệt, golden hash khớp; id duy nhất; căn cứ và bằng chứng trỏ nơi có thật; fixture tiền không dùng số thực",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/vietnam/vn-conformance.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-X-1",
+        "title": "Bộ kiểm chuẩn Việt Nam: schema hợp lệ; kho nguồn pháp lý, catalog, rulepack, ca và báo cáo mẫu đúng schema",
+        "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/vietnam/vn-conformance.check.mjs",
+        "selftest": false
+      }
+    ],
+    "triggers": [
+      {
+        "name": "accounting_event_versions_no_truncate",
+        "table": "accounting_event_versions",
+        "migration": "0049_khoa_dau_but_toan.sql"
+      },
+      {
+        "name": "accounting_event_versions_no_update",
+        "table": "accounting_event_versions",
+        "migration": "0049_khoa_dau_but_toan.sql"
+      },
+      {
+        "name": "accounting_events_no_delete",
+        "table": "accounting_events",
+        "migration": "0049_khoa_dau_but_toan.sql"
+      },
+      {
+        "name": "accounting_events_no_truncate",
+        "table": "accounting_events",
+        "migration": "0049_khoa_dau_but_toan.sql"
+      },
+      {
+        "name": "accounting_profiles_guard",
+        "table": "accounting_profiles",
+        "migration": "0054_ho_so_ke_toan.sql"
+      },
+      {
+        "name": "audit_logs_chain",
+        "table": "audit_logs",
+        "migration": "0036_bang_chung.sql"
+      },
+      {
+        "name": "audit_logs_no_truncate",
+        "table": "audit_logs",
+        "migration": "0036_bang_chung.sql"
+      },
+      {
+        "name": "audit_logs_no_update",
+        "table": "audit_logs",
+        "migration": "0036_bang_chung.sql"
+      },
+      {
+        "name": "bizcity_read_only",
+        "table": "bizcity_read.ledger_entries",
+        "migration": "0043_doc_so_cai.sql"
+      },
+      {
+        "name": "branches_entity_attrs_sync",
+        "table": "branches",
+        "migration": "0087_thuoc_tinh_thuc_the.sql"
+      },
+      {
+        "name": "branches_entity_codes_sync",
+        "table": "branches",
+        "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "branches_identity_guard",
+        "table": "branches",
+        "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "conformance_runs_guard",
+        "table": "conformance_runs",
+        "migration": "0055_kiem_chuan.sql"
+      },
+      {
+        "name": "diagnostic_runs_no_update",
+        "table": "diagnostic_runs",
+        "migration": "0034_chan_doan.sql"
+      },
+      {
+        "name": "document_versions_no_truncate",
+        "table": "document_versions",
+        "migration": "0045_chung_tu_chung.sql"
+      },
+      {
+        "name": "document_versions_no_update",
+        "table": "document_versions",
+        "migration": "0045_chung_tu_chung.sql"
+      },
+      {
+        "name": "entity_attributes_guard",
+        "table": "entity_attributes",
+        "migration": "0087_thuoc_tinh_thuc_the.sql"
+      },
+      {
+        "name": "entity_attributes_no_truncate",
+        "table": "entity_attributes",
+        "migration": "0087_thuoc_tinh_thuc_the.sql"
+      },
+      {
+        "name": "entity_codes_guard",
+        "table": "entity_codes",
+        "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "entity_codes_no_truncate",
+        "table": "entity_codes",
+        "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "event_outbox_no_update",
+        "table": "event_outbox",
+        "migration": "0039_su_kien_mien.sql"
+      },
+      {
+        "name": "inventory_costs_item_id",
+        "table": "inventory_costs",
+        "migration": "0066_item_id_so_kho.sql"
+      },
+      {
+        "name": "inventory_movements_item_id",
+        "table": "inventory_movements",
+        "migration": "0066_item_id_so_kho.sql"
+      },
+      {
+        "name": "item_classification_guard",
+        "table": "item_classification",
+        "migration": "0065_mat_hang_dinh_danh.sql"
+      },
+      {
+        "name": "item_classification_no_truncate",
+        "table": "item_classification",
+        "migration": "0065_mat_hang_dinh_danh.sql"
+      },
+      {
+        "name": "item_codes_guard",
+        "table": "item_codes",
+        "migration": "0065_mat_hang_dinh_danh.sql"
+      },
+      {
+        "name": "item_codes_no_truncate",
+        "table": "item_codes",
+        "migration": "0065_mat_hang_dinh_danh.sql"
+      },
+      {
+        "name": "item_lots_item_id",
+        "table": "item_lots",
+        "migration": "0098_lo_hang.sql"
+      },
+      {
+        "name": "items_guard",
+        "table": "items",
+        "migration": "0065_mat_hang_dinh_danh.sql"
+      },
+      {
+        "name": "items_merge_guard",
+        "table": "items",
+        "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "items_no_truncate",
+        "table": "items",
+        "migration": "0065_mat_hang_dinh_danh.sql"
+      },
+      {
+        "name": "items_parent_guard",
+        "table": "items",
+        "migration": "0067_bien_the_dinh_danh.sql"
+      },
+      {
+        "name": "items_root_default",
+        "table": "items",
+        "migration": "0069_ma_hien_hanh_bao_cao.sql"
+      },
+      {
+        "name": "items_root_follow",
+        "table": "items",
+        "migration": "0069_ma_hien_hanh_bao_cao.sql"
+      },
+      {
+        "name": "ledger_entries_header_audit",
+        "table": "ledger_entries",
+        "migration": "0089_vet_dau_but_toan.sql"
+      },
+      {
+        "name": "ledger_entries_no_truncate",
+        "table": "ledger_entries",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "ledger_entries_no_update",
+        "table": "ledger_entries",
+        "migration": "0049_khoa_dau_but_toan.sql"
+      },
+      {
+        "name": "ledger_entries_partner_name",
+        "table": "ledger_entries",
+        "migration": "0087_thuoc_tinh_thuc_the.sql"
+      },
+      {
+        "name": "ledger_entries_period_lock",
+        "table": "ledger_entries",
+        "migration": "0082_khoa_ky_o_csdl.sql"
+      },
+      {
+        "name": "ledger_lines_balanced",
+        "table": "ledger_lines",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "ledger_lines_balanced_update",
+        "table": "ledger_lines",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "ledger_lines_item_id",
+        "table": "ledger_lines",
+        "migration": "0066_item_id_so_kho.sql"
+      },
+      {
+        "name": "ledger_lines_item_name",
+        "table": "ledger_lines",
+        "migration": "0072_ten_luc_ghi_so_cai.sql"
+      },
+      {
+        "name": "ledger_lines_negative_guard",
+        "table": "ledger_lines",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "ledger_lines_no_truncate",
+        "table": "ledger_lines",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "ledger_lines_no_update",
+        "table": "ledger_lines",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "ledger_lines_partner_name",
+        "table": "ledger_lines",
+        "migration": "0087_thuoc_tinh_thuc_the.sql"
+      },
+      {
+        "name": "ledger_links_no_update",
+        "table": "ledger_links",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "library_change_requests_guard",
+        "table": "library_change_requests",
+        "migration": "0088_cau_hinh_thu_vien.sql"
+      },
+      {
+        "name": "library_settings_guard",
+        "table": "library_settings",
+        "migration": "0088_cau_hinh_thu_vien.sql"
+      },
+      {
+        "name": "library_settings_no_truncate",
+        "table": "library_settings",
+        "migration": "0088_cau_hinh_thu_vien.sql"
+      },
+      {
+        "name": "partners_entity_attrs_sync",
+        "table": "partners",
+        "migration": "0087_thuoc_tinh_thuc_the.sql"
+      },
+      {
+        "name": "partners_entity_codes_sync",
+        "table": "partners",
+        "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "partners_identity_guard",
+        "table": "partners",
+        "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "policy_registry_guard",
+        "table": "policy_registry",
+        "migration": "0079_so_dang_ky_chinh_sach.sql"
+      },
+      {
+        "name": "policy_registry_no_truncate",
+        "table": "policy_registry",
+        "migration": "0079_so_dang_ky_chinh_sach.sql"
+      },
+      {
+        "name": "policy_review_acks_guard",
+        "table": "policy_review_acks",
+        "migration": "0084_xem_lai_chinh_sach.sql"
+      },
+      {
+        "name": "policy_review_acks_no_truncate",
+        "table": "policy_review_acks",
+        "migration": "0084_xem_lai_chinh_sach.sql"
+      },
+      {
+        "name": "posting_log_no_update",
+        "table": "posting_log",
+        "migration": "0006_goc_so_cai.sql"
+      },
+      {
+        "name": "posting_policy_versions_guard",
+        "table": "posting_policy_versions",
+        "migration": "0040_chinh_sach_phien_ban.sql"
+      },
+      {
+        "name": "product_prices_item_id",
+        "table": "product_prices",
+        "migration": "0066_item_id_so_kho.sql"
+      },
+      {
+        "name": "product_units_autoadd_unit_name",
+        "table": "product_units",
+        "migration": "0014_danh_muc_dvt.sql"
+      },
+      {
+        "name": "product_units_item_id",
+        "table": "product_units",
+        "migration": "0066_item_id_so_kho.sql"
+      },
+      {
+        "name": "products_autoadd_unit_name",
+        "table": "products",
+        "migration": "0014_danh_muc_dvt.sql"
+      },
+      {
+        "name": "products_item_id",
+        "table": "products",
+        "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "products_item_id_fill",
+        "table": "products",
+        "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "products_item_id_guard",
+        "table": "products",
+        "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "products_items_sync",
+        "table": "products",
+        "migration": "0065_mat_hang_dinh_danh.sql"
+      },
+      {
+        "name": "products_items_sync_parent",
+        "table": "products",
+        "migration": "0067_bien_the_dinh_danh.sql"
+      },
+      {
+        "name": "products_items_sync_parent_ins",
+        "table": "products",
+        "migration": "0067_bien_the_dinh_danh.sql"
+      },
+      {
+        "name": "products_variant_fill",
+        "table": "products",
+        "migration": "0092_bien_the_mat_hang.sql"
+      },
+      {
+        "name": "products_zz_send_to_tax",
+        "table": "products",
+        "migration": "0093_gui_len_thue.sql"
+      },
+      {
+        "name": "purchase_attachments_frozen",
+        "table": "purchase_attachments",
+        "migration": "0046_dinh_kem_mua_hang.sql"
+      },
+      {
+        "name": "purchase_documents_item_id",
+        "table": "purchase_documents",
+        "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "purchase_policy_versions_guard",
+        "table": "purchase_policy_versions",
+        "migration": "0079_so_dang_ky_chinh_sach.sql"
+      },
+      {
+        "name": "purchase_policy_versions_no_truncate",
+        "table": "purchase_policy_versions",
+        "migration": "0079_so_dang_ky_chinh_sach.sql"
+      },
+      {
+        "name": "rulepack_approvals_guard",
+        "table": "rulepack_approvals",
+        "migration": "0056_duyet_rulepack.sql"
+      },
+      {
+        "name": "sale_program_usage_item_id",
+        "table": "sale_program_usage",
+        "migration": "0097_chuong_trinh_ban_item_id.sql"
+      },
+      {
+        "name": "sale_programs_item_id",
+        "table": "sale_programs",
+        "migration": "0097_chuong_trinh_ban_item_id.sql"
+      },
+      {
+        "name": "setting_values_guard",
+        "table": "setting_values",
+        "migration": "0074_gia_tri_cau_hinh.sql"
+      },
+      {
+        "name": "setting_values_no_truncate",
+        "table": "setting_values",
+        "migration": "0074_gia_tri_cau_hinh.sql"
+      },
+      {
+        "name": "stock_levels_item_id",
+        "table": "stock_levels",
+        "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "stock_max_requests_item_id",
+        "table": "stock_max_requests",
+        "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "stock_sku_settings_item_id",
+        "table": "stock_sku_settings",
+        "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "supplier_invoice_lines_item_id",
+        "table": "supplier_invoice_lines",
+        "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "supplier_item_aliases_item_id",
+        "table": "supplier_item_aliases",
+        "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "supplier_products_item_id",
+        "table": "supplier_products",
+        "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "tax_invoice_lines_item_id",
+        "table": "tax_invoice_lines",
+        "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "tenant_role_rules_authz_version",
+        "table": "tenant_role_rules",
+        "migration": "0075_vai_tro_don_vi.sql"
+      },
+      {
+        "name": "tenant_role_rules_guard",
+        "table": "tenant_role_rules",
+        "migration": "0075_vai_tro_don_vi.sql"
+      },
+      {
+        "name": "tenant_role_rules_no_truncate",
+        "table": "tenant_role_rules",
+        "migration": "0075_vai_tro_don_vi.sql"
+      },
+      {
+        "name": "tenant_roles_authz_version",
+        "table": "tenant_roles",
+        "migration": "0075_vai_tro_don_vi.sql"
+      },
+      {
+        "name": "tenant_roles_guard",
+        "table": "tenant_roles",
+        "migration": "0075_vai_tro_don_vi.sql"
+      },
+      {
+        "name": "tenant_roles_no_truncate",
+        "table": "tenant_roles",
+        "migration": "0075_vai_tro_don_vi.sql"
+      },
+      {
+        "name": "tenants_seed_unit_names",
+        "table": "tenants",
+        "migration": "0014_danh_muc_dvt.sql"
+      },
+      {
+        "name": "transfer_requests_item_id",
+        "table": "transfer_requests",
+        "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "user_role_assignments_authz_version",
+        "table": "user_role_assignments",
+        "migration": "0075_vai_tro_don_vi.sql"
+      },
+      {
+        "name": "user_role_assignments_guard",
+        "table": "user_role_assignments",
+        "migration": "0073_vai_tro_bo_sung.sql"
+      },
+      {
+        "name": "user_role_assignments_no_truncate",
+        "table": "user_role_assignments",
+        "migration": "0073_vai_tro_bo_sung.sql"
+      },
+      {
+        "name": "warehouses_entity_attrs_sync",
+        "table": "warehouses",
+        "migration": "0087_thuoc_tinh_thuc_the.sql"
+      },
+      {
+        "name": "warehouses_entity_codes_sync",
+        "table": "warehouses",
+        "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "warehouses_identity_guard",
+        "table": "warehouses",
+        "migration": "0085_ma_thuc_the.sql"
+      }
+    ]
+  }
+}

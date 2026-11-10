@@ -3,7 +3,7 @@
  * Một dòng nhìn cả Core (PHASE-034 · 00 §1). Không có API mới, không có số gõ tay:
  *   Tiêu chí   = mức gộp mọi tiêu chí của tru-cot.json (đạt 1 · một phần ½ · tài liệu ¼ · chưa 0)
  *   Nền móng   = mức gộp tín hiệu của 17 trụ cột (chạy được 1 · ở nhánh ½ · chưa có 0); kèm số trụ cột đạt
- *   Cổng       = trung bình mã kiểm: có cách sửa ½ + có phương án có cấu trúc ½
+ *   Cổng       = trung bình `score` của mã kiểm (API tính: bốn ý ¼; CI / trigger: trụ cột + có kiểm) — PHASE-034 B3b
  *   Bộ máy     = trung bình mức các bộ máy có mốc (mốc xong / số mốc)
  *   Công cụ dev = trung bình tiêu chí T1..T6 đạt của chín công cụ
  * Thẻ nào lỗi thì ô đó hiện "—", các ô khác vẫn chạy.
@@ -19,7 +19,7 @@ const avg = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.le
 export function Ht10Summary({ onOpen, active }: { onOpen: (t: Tab) => void; active: Tab }) {
   const pillars = useQuery({ queryKey: ['system', 'pillars'], queryFn: () => api.get<PillarsBoard>('/api/v1/system/pillars'), staleTime: 5 * 60_000 });
   const found = useQuery({ queryKey: ['system', 'foundations'], queryFn: () => api.get<{ pillars: { status: string; signals: { state: 'co' | 'nhanh' | 'chua' }[] }[] }>('/api/v1/system/foundations'), staleTime: 5 * 60_000 });
-  const gates = useQuery({ queryKey: ['system', 'gates'], queryFn: () => api.get<{ groups: { live: boolean; codes: { hasFix: boolean; hasRemedy: boolean }[] }[] }>('/api/v1/system/gates'), staleTime: 60_000 });
+  const gates = useQuery({ queryKey: ['system', 'gates'], queryFn: () => api.get<{ groups: { live: boolean; codes: { score: number }[] }[] }>('/api/v1/system/gates'), staleTime: 60_000 });
   const engines = useQuery({ queryKey: ['system', 'engines'], queryFn: () => api.get<{ engines: { pct: number | null }[] }>('/api/v1/system/engines'), staleTime: 5 * 60_000 });
   const tools = useQuery({ queryKey: ['system', 'dev-tools'], queryFn: () => api.get<{ criteria: Record<string, string>; tools: { met: number; pct: number }[] }>('/api/v1/system/dev-tools'), staleTime: 5 * 60_000 });
 
@@ -35,7 +35,7 @@ export function Ht10Summary({ onOpen, active }: { onOpen: (t: Tab) => void; acti
   }
   {
     const cs = gates.data?.groups.flatMap((g) => g.codes) ?? [];
-    tiles.push({ key: 'cong-kiem', label: 'Cổng & bộ kiểm', pct: gates.data ? avg(cs.map((c) => (c.hasFix ? 50 : 0) + (c.hasRemedy ? 50 : 0))) : null, sub: gates.data ? `${gates.data.groups.filter((g) => g.live).length}/${gates.data.groups.length} cổng có sổ · ${cs.length} mã` : '—' });
+    tiles.push({ key: 'cong-kiem', label: 'Cổng & bộ kiểm', pct: gates.data ? avg(cs.map((c) => c.score)) : null, sub: gates.data ? `${gates.data.groups.filter((g) => g.live).length}/${gates.data.groups.length} cổng có sổ · ${cs.length} mã` : '—' });
   }
   {
     const es = engines.data?.engines ?? [];
