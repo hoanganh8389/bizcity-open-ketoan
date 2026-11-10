@@ -5,6 +5,7 @@
 > **Mức Kernel:** K0 cho W0; CK-1 có một API đọc mới (đối chiếu kho ↔ sổ cái) và một mã tự chẩn đoán; CK-2 / CK-3 là phép kiểm chuẩn
 > **Mục tiêu:** Dev và AI xây POS, bán hàng, kho, CRM, ERP nội bộ ghi sổ đúng chuẩn **mà không phải học kế toán**: app chỉ kể sự việc, Core định khoản; mỗi bước có một lệnh trả PASS / FAIL / SKIP và mã lỗi có bước sửa.
 > **Việc lộ trình:** —
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Quyết định:** [ADR-0023](../../adr/ADR-0023-cong-chung-tu-san-xuat-giu-cho.md) (cổng chứng từ sản xuất) · giá vốn mặc định D025-2 / D025-2b ([PHASE-025](../PHASE-025-ACCOUNTING-CONTINUITY/00-MASTER-PLAN.md)) · một khung trụ cột 0–VIII ([ADR-0022](../../adr/ADR-0022-quan-tri-du-lieu-goc-nen-mong.md), [tru-cot.json](../../standard/tru-cot.json))
 > **Phụ thuộc:** PHASE-024 (`item_id` trên sổ / kho — 0065 / 0066), PHASE-021 (tiền kiểm L1–L5), PHASE-022 (ca F22 theo vai), PHASE-025 (CT-REC-001 đối chiếu tồn ↔ tài khoản kho)

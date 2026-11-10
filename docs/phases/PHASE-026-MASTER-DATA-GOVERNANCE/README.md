@@ -5,6 +5,7 @@
 > **Mức Kernel:** K0 cho W0 (nguyên tắc, bảng trụ cột); P0 K2–K3 (bảng định danh / mã, migration); P1 K2 (nhóm đơn vị, liên đơn vị); P2 K1
 > **Mục tiêu:** Thiết lập **một lần** hệ thống định danh và nguyên tắc đúng, để hàng triệu mã hàng, hàng trăm cửa hàng, nhiều pháp nhân và mọi module dùng chung **một dòng dữ liệu kế toán** liên tục, chính xác, truy vết và kiểm toán được — và giao diện **cho thấy** Core đã đạt tới đâu.
 > **Việc lộ trình:** — (đề xuất thêm vào PHASES khi chủ duyệt D026-1)
+> **Phân hệ:** danh-muc <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Quyết định:** [ADR-0022](../../adr/ADR-0022-quan-tri-du-lieu-goc-nen-mong.md) (đề xuất) · **Nền:** [ADR-0017](../../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md), [ADR-0018](../../adr/ADR-0018-danh-muc-co-phien-ban-toan-framework.md), [ADR-0021](../../adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md) · **Tôn chỉ:** [ADR-0020](../../adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md)
 > **Phụ thuộc:** PHASE-024 B2 (`items`, `item_id` trên bảng sổ — ✅ 0065 / 0066), S024-11 (`products` → khung nhìn) trước khi làm nhóm đơn vị · **Liên quan:** 025 (Gate C, lớp giá vốn), 023 (khung Vì sao), 019 (Bàn điều tra)

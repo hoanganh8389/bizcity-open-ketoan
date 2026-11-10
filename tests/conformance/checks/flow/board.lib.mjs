@@ -10,6 +10,41 @@
 export const BOARD_MD = 'docs/phases/BANG-VIEC.md';
 export const BOARD_JSON = 'docs/phases/bang-viec.json';
 export const CHECKLIST_RE = /^docs\/phases\/(PHASE-\d{3})[^/]*\/40-MASTER-CHECKLIST\.md$/;
+// [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1 (S035-3, R-FLOW-10): mỗi việc mang phân hệ (README phase `**Phân hệ:**`, dòng việc ghi đè `{key}`) và mặt F1..F8 theo từ khoá — nguồn cho HT11 Modules & mức đạt
+export const README_RE = /^docs\/phases\/(PHASE-\d{3})[^/]*\/README\.md$/;
+/** Khoá phân hệ (docs/standard/modules.json, PHASE-035 · 00 §2). */
+export const MODULE_KEYS = ['danh-muc', 'mua-hang', 'kho', 'ban-hang', 'quy', 'chung-tu', 'cong-no', 'tong-hop', 'thue', 'tai-san', 'bao-cao', 'he-thong'];
+/** Tám mặt của một phân hệ (PHASE-035 · 00 §3). */
+export const FACETS = { F1: 'Chứng từ & nghiệp vụ', F2: 'Danh mục & cấu hình', F3: 'Lõi tính (engine)', F4: 'Báo cáo & sổ', F5: 'Bộ kiểm', F6: 'Bàn làm việc & dashboard', F7: 'Tài liệu & hướng dẫn', F8: 'API / SDK / module hoá' };
+const MODULES_LINE_RE = /^>\s*\*\*Phân hệ:\*\*\s*(.+?)\s*$/m;
+/** Dòng `> **Phân hệ:** kho · mua-hang` ở README hay checklist của phase → danh sách khoá (giữ thứ tự, bỏ trùng, chỉ nhận khoá có thật). */
+export function parsePhaseModules(md) {
+  const m = MODULES_LINE_RE.exec(String(md ?? ''));
+  if (!m) return [];
+  return [...new Set(m[1].split(/[·,;]/).map((x) => x.replace(/<!--.*?-->/g, '').replace(/[`*]/g, '').trim()).filter((x) => MODULE_KEYS.includes(x)))];
+}
+/** Ghi đè phân hệ ở cuối ô Việc: `… {kho, mua-hang}` → { modules, title } (title đã bỏ phần ghi đè). */
+export function splitRowModules(title) {
+  const m = /\s*\{([a-z-]+(?:\s*,\s*[a-z-]+)*)\}\s*$/.exec(title);
+  if (!m) return { modules: null, title };
+  const keys = [...new Set(m[1].split(',').map((x) => x.trim()).filter((x) => MODULE_KEYS.includes(x)))];
+  // `{code}` trong tên số đo, `{reason}`… không phải ghi đè: giữ nguyên tiêu đề, theo phân hệ của phase.
+  if (!keys.length) return { modules: null, title };
+  return { modules: keys, title: title.slice(0, m.index).trim() };
+}
+/** Mặt theo từ khoá của tiêu đề việc (ô liệt kê tay trong modules.json thắng luật này). Thứ tự kiểm: F5 F6 F7 F8 F3 F4 F2, còn lại F1. */
+export function facetOf(title) {
+  const t = String(title ?? '').toLowerCase();
+  if (/\bsc-|\bdg-|\bct-|\bin-|\bpc-\d|kiểm|chẩn đoán|cổng|validator|diagnos|selfcheck|golden|parity|bất biến/.test(t)) return 'F5';
+  if (/\bthẻ\b|bàn làm việc|dashboard|việc hôm nay|bàn điều hành|bảng điểm|scoreboard|ht08|ht10|ht11|bàn đánh giá/.test(t)) return 'F6';
+  if (/hướng dẫn|tài liệu|\badr\b|\bluật\b|readme|chữ chốt|bản mẫu|mockup|docs\/|changelog|canon/.test(t)) return 'F7';
+  if (/\bapi\b|\bsdk\b|hợp đồng|\bmodule\b|plugin|\bcli\b|\bmcp\b|bizcity_\w+@|manifest|add-in|phân hệ|tách gói|cổng công khai/.test(t)) return 'F8';
+  if (/engine|tính giá|giá vốn|kết chuyển|khấu hao|phân bổ|\blớp\b|fifo|fefo|costing|phân lô|chính sách|policy|quy tắc định khoản|định khoản tự động|posting/.test(t)) return 'F3';
+  if (/báo cáo|\bsổ\b|bảng kê|\bin\b|xuất excel|tờ khai|bảng cân đối|lưu chuyển|thuyết minh/.test(t)) return 'F4';
+  if (/danh mục|cấu hình|phân loại|định danh|mã hàng|\bitem\b|catalog|chế độ|đơn vị tính|tài khoản|đối tượng|nhóm hàng|biến thể/.test(t)) return 'F2';
+  return 'F1';
+}
+
 /** Mã việc: S###-n, có thể thêm một chữ cái (S010-1a) khi tách việc. */
 export const TASK_ID_RE = /^S\d{3}-\d+[a-z]?$/;
 
@@ -87,20 +122,27 @@ export function parseChecklist(md, file) {
     if (seen.has(id)) problems.push({ file, line, message: `${id}: trùng mã với dòng ${seen.get(id)}`, key: `trung:${id}` });
     seen.set(id, line);
     const col = (name) => { const k = head.findIndex((h) => plain(h).toLowerCase() === name); return k >= 0 ? c[k] : ''; };
-    items.push({ id, title: plain(col('việc') || c[1]), priority: plain(col('ưu tiên')) || null, status: sym ? STATUS_SYMBOLS[sym] : 'unknown', statusText: plain(statusCell, 120), file, line });
+    const row = splitRowModules(plain(col('việc') || c[1]));
+    items.push({ id, title: row.title, priority: plain(col('ưu tiên')) || null, status: sym ? STATUS_SYMBOLS[sym] : 'unknown', statusText: plain(statusCell, 120), file, line, modules: row.modules, facet: facetOf(row.title) });
   }
   return { items, problems };
 }
 
-/** Đọc mọi checklist. `files`: [{ path, text }]. */
+/**
+ * Đọc mọi checklist. `files`: [{ path, text }] — có thể kèm README.md của phase: dòng `**Phân hệ:**` ở README (hoặc ở chính checklist)
+ * là phân hệ mặc định của mọi việc trong phase; dòng việc ghi đè bằng `{key}` (R-FLOW-10). Việc không có cả hai → `modules: []`.
+ */
 export function parseAllChecklists(files) {
   const items = [];
   const problems = [];
+  const byPhase = new Map();
+  for (const f of files) { const m = README_RE.exec(f.path); if (m) byPhase.set(m[1], parsePhaseModules(f.text)); }
   for (const f of files) {
     const m = CHECKLIST_RE.exec(f.path);
     if (!m) continue;
     const r = parseChecklist(f.text, f.path);
-    for (const it of r.items) items.push({ ...it, phase: m[1] });
+    const phaseModules = byPhase.get(m[1])?.length ? byPhase.get(m[1]) : parsePhaseModules(f.text);
+    for (const it of r.items) items.push({ ...it, phase: m[1], modules: it.modules ?? phaseModules });
     problems.push(...r.problems);
   }
   return { items, problems };
@@ -131,7 +173,7 @@ export function buildBoard(items, rows) {
   const out = [...items].sort(byId).map((it) => {
     const c = claim.get(it.id) ?? null;
     const column = c ? (c.state === 'chờ merge' ? 'merging' : 'doing') : it.status === 'unknown' ? 'todo' : it.status;
-    return { id: it.id, phase: it.phase, title: it.title, priority: it.priority, status: it.status, column, claim: c, file: it.file, line: it.line };
+    return { id: it.id, phase: it.phase, title: it.title, priority: it.priority, status: it.status, column, claim: c, modules: it.modules ?? [], facet: it.facet ?? facetOf(it.title), file: it.file, line: it.line };
   });
   return {
     contract: 'bizcity_task_board@1',
@@ -157,6 +199,19 @@ export function renderMd(board) {
   L.push('|---|---|');
   for (const c of board.columns) L.push(`| ${c.label} | ${c.count} |`);
   L.push(`| **Tổng** | **${board.items.length}** |`);
+  // [2026-11-11 04:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: bảng việc theo phân hệ (R-FLOW-10) — HT11 đọc bang-viec.json; bảng này để người đọc main nhìn nhanh
+  L.push('');
+  L.push('## Theo phân hệ (R-FLOW-10)');
+  L.push('');
+  L.push('| Phân hệ | Xong | Chờ đủ tín hiệu | Đang làm | Còn lại | Tổng |');
+  L.push('|---|---|---|---|---|---|');
+  const keys = [...MODULE_KEYS, ''];
+  for (const k of keys) {
+    const its = board.items.filter((i) => (k ? i.modules.includes(k) : !i.modules.length));
+    if (!its.length) continue;
+    const n = (col) => its.filter((i) => i.column === col).length;
+    L.push(`| ${k || '*(chưa gắn phân hệ)*'} | ${n('done')} | ${n('partial')} | ${n('doing') + n('merging')} | ${its.length - n('done') - n('partial') - n('doing') - n('merging')} | ${its.length} |`);
+  }
   for (const c of board.columns) {
     const its = board.items.filter((i) => i.column === c.key);
     L.push('');
@@ -164,12 +219,12 @@ export function renderMd(board) {
     if (c.key === 'done') { L.push(''); L.push('Chỉ đếm; xem từng việc ở checklist của phase.'); continue; }
     if (!its.length) { L.push(''); L.push('—'); continue; }
     L.push('');
-    L.push('| Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |');
-    L.push('|---|---|---|---|---|');
+    L.push('| Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |');
+    L.push('|---|---|---|---|---|---|');
     for (const i of its) {
       const who = i.claim ? `${esc(i.claim.who)} · \`${i.claim.branch}\`` : '—';
       const link = `[${i.id}](${i.file.replace(/^docs\/phases\//, '')}#L${i.line})`;
-      L.push(`| ${link} | ${i.phase} | ${esc(plain(i.title, 110))} | ${esc(i.priority ?? '—')} | ${who} |`);
+      L.push(`| ${link} | ${i.phase} | ${i.modules.length ? i.modules.join(' · ') : '—'} | ${esc(plain(i.title, 110))} | ${esc(i.priority ?? '—')} | ${who} |`);
     }
   }
   return `${L.join('\n')}\n`;

@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 4 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 17%
 > **Mục tiêu:** Claude (hoặc người mới) tạo được module Hợp đồng đạt bộ kiểm 3/3 lần chỉ bằng CLI + template + tài liệu.
 > **Việc lộ trình:** 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G3-02
 > **Tuân thủ / nguyên tắc:** AP-3, AP-7
 > **Phụ thuộc phase:** 006 (3.4 trước 4.2), 011

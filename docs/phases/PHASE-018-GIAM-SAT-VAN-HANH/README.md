@@ -8,6 +8,7 @@
 > **Giai đoạn:** mở rộng của việc lộ trình 2.13 (đã xong ở bộ giám sát nền) · **Code:** có (W1–W4 đã gộp `main`; W5 nhánh `feat/phase-018-w5-otel`) · **Mức Kernel:** K0 cho W1–W4; **K1 một lần** cho W5 (bọc cổng `kernel/public.ts` để quan sát — không đổi hành vi ghi sổ) · **Tiến độ tín hiệu (2026-11-01):** —
 > **Mục tiêu:** Dev/Ops và người quản trị trả lời được bốn câu: (1) dịch vụ có khoẻ không, (2) luồng sự việc → định khoản → sổ có trễ / lỗi không, (3) sổ có toàn vẹn, đối soát được không, (4) sự cố nằm ở đơn vị, dịch vụ, việc nền nào — **mà không** biến giám sát thành nguồn sự thật kế toán.
 > **Việc lộ trình:** —
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** AP-1, AP-2, AP-7 · R-OBS-1..6 · R-CACHE-1 · R-KER-7, R-KER-9 · R-SEC-*, R-TEN-*
 > **Phụ thuộc phase:** 003 (quan sát nền, 2.13), 006 (outbox), 007 (RLS) · **Liên quan:** 015 (Cell — widget CEO W7)

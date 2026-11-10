@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 0 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 73%
 > **Mục tiêu:** Bộ chuẩn (CANON, hợp đồng, Standard v1), CI, bộ kiểm chuẩn một chỗ, migration sạch: nền để mọi phase sau đo được bằng máy.
 > **Việc lộ trình:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G1-01, G1-02, G1-03, G1-11, G1-13, G2-10
 > **Tuân thủ / nguyên tắc:** C-2, C-3, C-4 (nền bất biến) · AP-3, AP-7
 > **Phụ thuộc phase:** —

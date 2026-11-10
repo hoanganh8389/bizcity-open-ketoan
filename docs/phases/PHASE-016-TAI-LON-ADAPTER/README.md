@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 5 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** 30.000 chứng từ / ngày, p95 ghi sổ < 1 giây; chạy nhiều máy API đúng; mỗi adapter có mặc định không cần dịch vụ ngoài.
 > **Việc lộ trình:** 5.5, 5.9
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G2-06, G3-03, G3-05, G3-08, G3-09
 > **Tuân thủ / nguyên tắc:** C-5 (NATS sau outbox)
 > **Phụ thuộc phase:** 006

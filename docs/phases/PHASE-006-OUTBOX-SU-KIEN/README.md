@@ -6,6 +6,7 @@
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 100% (trước khi code: 0%)
 > **Mục tiêu:** Sự kiện miền ghi cùng giao dịch với dữ liệu, giao sau commit, ít nhất một lần, consumer chống trùng; Kernel phát `bizcity.ledger.*`; bỏ `setTimeout` báo danh mục.
 > **Việc lộ trình:** 3.4
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G2-05
 > **Tuân thủ / nguyên tắc:** C-5 (0% → 100%), C-8 (67% → 100%) · AP-2, AP-6
 > **Phụ thuộc phase:** 004 (Kernel phát sự kiện từ một cửa ghi)

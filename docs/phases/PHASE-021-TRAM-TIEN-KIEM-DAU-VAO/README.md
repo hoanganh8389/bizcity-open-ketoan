@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) (Document) · **Code:** chưa · **Mức Kernel:** K1 (bọc cửa nạp; không đổi luật định khoản, không đổi sổ)
 > **Mục tiêu:** Không chứng từ nào bị từ chối mà mất dấu. Người lập, kể cả thực tập sinh, thấy **hết** lỗi trong một lần, hiểu **vì sao** kế toán cần, sửa ở nguồn hoặc tại bể, thử lại và thấy tác động. Kế toán trưởng chấm điểm, kiểm soát được chất lượng đầu vào. Kernel vẫn chặn nguyên vẹn.
 > **Việc lộ trình:** 2.17, 2.18, 2.19, 2.20, 2.21
+> **Phân hệ:** chung-tu <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** C-1 (chứng từ hợp lệ), C-8 (kiểm toán) · AP-1 · R-INTAKE-1..13, R-EVENT-1, -2, -7, -11 · bốn câu không thương lượng
 > **Phụ thuộc phase:** 004 (một cửa ghi sổ), 006 (outbox), 007 (RLS), 011 (`core.document.submit`, app ngoài tiến trình — PR-2, PR-2b) · **Liên quan:** 019 (mã tra cứu, Bàn điều tra), 020 (kiểm chuẩn pháp lý VN góp mã `IN-*`)

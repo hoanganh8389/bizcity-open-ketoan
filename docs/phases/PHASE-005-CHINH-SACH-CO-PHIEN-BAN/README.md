@@ -7,6 +7,7 @@
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 100%
 > **Mục tiêu:** Đổi chế độ / cấu hình định khoản không áp ngược vào chứng từ cũ: mỗi bản chính sách có `policy_version` + `effective_from`, ghi sổ chọn bản theo ngày chứng từ, `posting_log` ghi bản đã dùng.
 > **Việc lộ trình:** 2.14
+> **Phân hệ:** chung-tu <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G2-09
 > **Tuân thủ / nguyên tắc:** C-9 (0% hôm nay) · AP-5
 > **Phụ thuộc phase:** 004 (khuyến nghị: mọi đường ghi đi một cửa thì ghi `policy_version` một chỗ)

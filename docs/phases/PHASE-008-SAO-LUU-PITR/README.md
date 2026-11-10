@@ -6,6 +6,7 @@
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Khôi phục được tới một thời điểm bất kỳ, đo được RTO / RPO thật, có biên bản diễn tập; thời hạn lưu trữ được kế toán trưởng / luật sư xác nhận.
 > **Việc lộ trình:** 2.15
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** G1-08, G3-07
 > **Tuân thủ / nguyên tắc:** C-6 (60%)
 > **Phụ thuộc phase:** —

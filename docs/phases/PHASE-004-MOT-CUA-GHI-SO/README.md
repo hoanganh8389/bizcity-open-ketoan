@@ -6,6 +6,7 @@
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Mọi bút toán đi một cửa trong Kernel: bốn dịch vụ nội bộ đang gọi thẳng `ledgerService` chuyển sang `eventStore.commit()`; sự việc nội bộ có phiên bản như chứng từ nhận qua API.
 > **Việc lộ trình:** 2.1
+> **Phân hệ:** chung-tu <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** C-1, C-7 · AP-1, AP-5
 > **Phụ thuộc phase:** 003 (xong)

@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 10%
 > **Mục tiêu:** Module viết chỉ bằng `@bizcity/module-sdk`; mỗi phân hệ có `bizcity.module.json`; quyền đăng ký theo module; module không ghi được bảng Kernel ở tầng CSDL.
 > **Việc lộ trình:** 3.1, 3.2, 3.3, 3.6, 3.10, 3.13, 3.14, 3.15, 3.16, 3.17, 3.18
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 <!-- [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — giai đoạn 2 (ADR-0015): 3.15–3.18 -->
 > **Checklist công bố:** G1-06, G1-10, G2-03
 > **Tuân thủ / nguyên tắc:** C-7 (33%) · AP-1, AP-3

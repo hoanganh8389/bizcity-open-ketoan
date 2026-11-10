@@ -7,6 +7,7 @@
 > **Mức Kernel:** W1 K2 (route Kernel chỉ đọc + chẩn đoán + phép kiểm tĩnh, không migration); W2 K2–K3 (ghi vết lúc module nộp sổ, cột người sửa / lý do)
 > **Mục tiêu:** Mọi dòng bút toán truy vết ngược được về chứng từ gốc **đúng phiên bản đã tạo ra nó**; từ một chứng từ gốc truy vấn được cả quá trình lập, sửa, duyệt, ghi sổ, điều chỉnh, đảo. **Tuân thủ bằng cấu trúc, không bằng lời nhắc:** mọi đường nộp (API, MCP, module, app ngoài, POS, trợ lý) đều đi qua `eventStore` / `postDocumentIn`, nên cổng lịch sử dựng từ nguồn thẩm quyền phủ **100 %** `docKey`; phép kiểm chặn đường ghi lệch.
 > **Việc lộ trình:** —
+> **Phân hệ:** chung-tu <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Nền:** [DANH-GIA-TRACE-CHUNG-TU-GOC-2026-11-05](../../audits/DANH-GIA-TRACE-CHUNG-TU-GOC-2026-11-05.md) · [BIZCITY-DOCUMENT-v1 §7.2](../../contracts/BIZCITY-DOCUMENT-v1.md) · [ADR-0021](../../adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md) (R-CONT)
 > **Phụ thuộc:** PHASE-004 (một cửa ghi sổ), PHASE-010 (`documents.*`)

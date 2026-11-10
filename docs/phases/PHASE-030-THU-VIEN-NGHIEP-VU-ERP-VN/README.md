@@ -6,6 +6,7 @@
 > **Mức Kernel:** K0 (không đụng Kernel); những năng lực Kernel còn thiếu được ghi thành **đề xuất** theo [VERSIONING §5](../../standard/VERSIONING.md), không vá
 > **Mục tiêu:** Lấy 173 nghiệp vụ đã mã hoá trong ERP LiFeOOD làm **thư viện tham khảo** (quy trình, trạng thái, điều kiện duyệt, công thức, ngoại lệ) để (1) đối chiếu open-ketoan còn thiếu gì ở từng phân hệ, (2) viết **blueprint nghiệp vụ** theo một khuôn chung cho anh em dev / AI dựng module ở `modules/<key>/`, (3) vẽ **mockup luồng** trước khi code, (4) biến luật nghiệp vụ thành **golden test** độc lập mà mọi module (người hay AI viết) phải qua. Mọi phát sinh kế toán vẫn đi `accounting_events` → luật định khoản → Kernel (bốn câu không thương lượng).
 > **Việc lộ trình:** —
+> **Phân hệ:** mua-hang · kho · ban-hang <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Quyết định (ADR):** chưa cần ADR; quyết định D030-* ở [00-MASTER-PLAN](00-MASTER-PLAN.md)
 > **Phụ thuộc:** PHASE-011 (Module SDK), PHASE-014 (CLI, template), PHASE-024 (Item Master), PHASE-029 (ECP, cấu hình có phiên bản)

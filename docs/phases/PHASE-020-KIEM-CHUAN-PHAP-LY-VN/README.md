@@ -5,6 +5,7 @@
 > **Giai đoạn:** mở rộng lộ trình 4.3 (lane `runtime` của bộ kiểm, [PHASE-014](../PHASE-014-CLI-TEMPLATE-CA-CHUAN/README.md)) · **Code:** nền có (lớp dữ liệu + check tĩnh) · **Mức Kernel:** K0 — không đụng Kernel, không đụng đường ghi sổ; runner chỉ đi cổng công khai
 > **Mục tiêu:** bộ kiểm thử **độc lập, có truy vết căn cứ pháp lý**, áp cho Accounting Kernel và plugin cộng đồng (POS, ERP, HRM, WMS, MRP); kết quả chỉ có giá trị trong phạm vi / ngày / phiên bản / rulepack / bộ test đã chạy; **không** tự nhận chứng nhận nhà nước.
 > **Việc lộ trình:** —
+> **Phân hệ:** thue · tong-hop <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** AP-5, AP-7 · R-VNC-1..9 · R-LEDGER-*, R-TEN-*, R-KER-*, R-SIG · C-1..C-9 (`bizcity_compliance@1`)
 > **Phụ thuộc phase:** 003 (action, bằng chứng), 005 (chính sách có phiên bản), 006 (outbox), 007 (RLS), 010 (cổng `@bizcity/kernel`), 012 (gói định khoản), 014 (lane runtime) · **Liên quan:** 017 (SDK cộng đồng), ADR-0011 (plugin ba mức tin cậy)

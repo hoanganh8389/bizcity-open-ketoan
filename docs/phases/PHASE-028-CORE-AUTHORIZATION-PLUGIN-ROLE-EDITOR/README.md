@@ -5,6 +5,7 @@
 > **Mức Kernel:** K0 cho W0 (chỉ tài liệu). W1 (identity/role) và W2 (registry default-deny) đụng `packages/platform/src/core/auth.ts`, `packages/module-sdk`, migration mới → K2/K3, cần chữ chốt riêng từng wave trước PR code (RULE-FLOW §3).
 > **Mục tiêu:** Cộng đồng tạo module mới, khai `permissions[]`/menu/action theo manifest là có ngay cây quyền trong Role Editor — nhưng **mặc định không ai có thêm đặc quyền**, kể cả `owner`. Quyền hiệu lực và sự thật kế toán vẫn do Core (Accounting Kernel) giữ; Role Editor chỉ cấu hình **ai làm được gì ở phạm vi nào**, không bao giờ tự sinh bút toán hay đổi ranh giới Kernel.
 > **Việc lộ trình:** — (đề xuất thêm mã khi W0 được duyệt — xem 00 §6, giữ cùng đợt với PHASE-018/019/020 đã chờ mã)
+> **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** — (phase mới, ngoài G1–G3 hiện có; mã RBAC công bố hiện vẫn thuộc PHASE-011, xem mục "Trả lời ngắn")
 > **Quyết định:** [ADR-0027](../../adr/ADR-0027-core-authorization-plugin-role-editor.md) chấp nhận 2026-11-05
 > **Phụ thuộc phase:** PHASE-011 (Module SDK, manifest `permissions[]` đã có), PHASE-010 (`packages/platform/src/core/auth.ts`), ADR-0011 mức 2 (app_installations — mẫu "module grant" đã có cho app ngoài tiến trình), ADR-0024 (modules/ vs phan-he/)
