@@ -148,6 +148,7 @@ export function DefaultsPage() {
 
 /**
  * Một hộp, cùng các ô, cho Thêm và Sửa: Dòng · Áp cho loại hàng · Áp cho biến thể · TK Nợ · TK Có — luôn điền sẵn.
+ *   Dòng đã có mở ở chế độ xem (Sửa → Ghi), như các form khác.
  *   Sửa dòng có sẵn: chỉ đổi được tài khoản (áp cho mọi loại hàng / biến thể; tài khoản dùng chung thì ghi số dòng cùng đổi).
  *   Thêm / sửa dòng thêm: chọn dòng gốc (sửa thì khoá), loại hàng / biến thể; TK Nợ / TK Có điền theo dòng gốc.
  */
@@ -196,10 +197,10 @@ function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow
     return <Field label={`TK ${side}`} hint={note} tip={others.length ? `Cùng đổi: ${others.join('; ')}` : undefined}><AccountPicker postingOnly value={v} onChange={set} /></Field>;
   };
   return (
-    <Modal title={row ? 'Sửa tài khoản ngầm định' : 'Thêm tài khoản ngầm định'} onClose={onClose}
+    <Modal title={row ? 'Tài khoản ngầm định' : 'Thêm tài khoản ngầm định'} viewFirst={Boolean(row)} onClose={onClose}
       footer={<>
         {entry && <button className="btn" style={{ marginRight: 'auto' }} disabled={del.isPending} onClick={() => { if (window.confirm('Xoá dòng này? Hàng đó sẽ ghi như dòng gốc.')) del.mutate(); }}>Xoá</button>}
-        <button className="btn btn-primary" disabled={save.isPending || Boolean(problem)} title={problem} onClick={() => save.mutate()}>Cất</button>
+        <button className="btn btn-primary" disabled={save.isPending || Boolean(problem)} title={problem} onClick={() => save.mutate()}>Ghi</button>
         <button className="btn" onClick={onClose}>Huỷ</button>
       </>}>
       <ErrorBox error={save.error ? errorText(save.error) : del.error ? errorText(del.error) : null} />
