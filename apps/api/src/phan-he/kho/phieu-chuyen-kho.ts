@@ -145,13 +145,15 @@ export async function stockAt(trx: Db, tenantId: string, q: { branchCode: string
   if (!q.skus.length) return {};
   const b = (await sql<{ id: string }>`SELECT id::text FROM branches WHERE tenant_id = ${tenantId} AND code = ${q.branchCode}`.execute(trx)).rows[0];
   if (!b) throw Errors.validation(`Chi nhánh ${q.branchCode} không có`);
-  const wh = q.warehouse?.trim() || ((await sql<{ code: string }>`SELECT code FROM warehouses WHERE tenant_id = ${tenantId} AND branch_id = ${b.id} AND is_default ORDER BY id LIMIT 1`.execute(trx)).rows[0]?.code ?? '');
+  // Dòng thẻ kho cũ ghi mã kho trống = kho mặc định của chi nhánh (cùng luật báo cáo kho, phân lô).
+  const def = await warehouseOf(trx, tenantId, b.id, '', 'Kho');
+  const wh = q.warehouse?.trim() || def;
   const except = q.exceptId ? (await sql<{ k: string }>`SELECT out_doc_key AS k FROM stock_transfer_docs WHERE tenant_id = ${tenantId} AND id = ${q.exceptId}::bigint
                                                        UNION ALL SELECT in_doc_key FROM stock_transfer_docs WHERE tenant_id = ${tenantId} AND id = ${q.exceptId}::bigint`.execute(trx)).rows.map((x) => x.k) : [];
   const rows = (await sql<{ sku: string; qty: string }>`
     SELECT im.sku, sum(im.qty)::text AS qty
       FROM inventory_movements im JOIN accounting_events e ON e.id = im.event_id
-     WHERE im.tenant_id = ${tenantId} AND im.branch_id = ${b.id} AND im.warehouse_code = ${wh}
+     WHERE im.tenant_id = ${tenantId} AND im.branch_id = ${b.id} AND ${wh === def ? sql`im.warehouse_code IN (${wh}, '')` : sql`im.warehouse_code = ${wh}`}
        AND im.sku = ANY(${q.skus}::text[]) ${q.date ? sql`AND im.doc_date <= ${q.date}::date` : sql``}
        ${except.length ? sql`AND NOT (e.doc_key = ANY(${except}::text[]))` : sql``}
      GROUP BY im.sku`.execute(trx)).rows;

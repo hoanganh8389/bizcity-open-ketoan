@@ -25,8 +25,9 @@ import { NhanHangModal } from './NhanHangModal';
 import './chuyen-kho.css';
 
 const monthStart = () => `${today().slice(0, 8)}01`;
-const emptyDoc = (): CkDoc => ({
-  id: '', docNo: '', docDate: today(), fromBranchCode: workBranch.get() || '', fromWarehouse: '', toBranchCode: '', toWarehouse: '', note: '',
+/** Phiếu mới: chi nhánh xuất = chi nhánh đang làm việc; chưa chọn thì chi nhánh đầu tiên đang lọc. */
+const emptyDoc = (filterBranches = ''): CkDoc => ({
+  id: '', docNo: '', docDate: today(), fromBranchCode: workBranch.get() || (filterBranches !== '-' ? filterBranches.split(',')[0] ?? '' : ''), fromWarehouse: '', toBranchCode: '', toWarehouse: '', note: '',
   status: 'shipped', lines: [], totalQty: 0, totalReceived: 0, short: false,
 });
 
@@ -89,7 +90,7 @@ export function ChuyenKhoPage() {
       >
         <div className="card">
           <div className="row ck-toolbar">
-            <button className="btn btn-sm btn-primary" onClick={() => { save.reset(); setEditing(emptyDoc()); setFormKey((k) => k + 1); }} title="Lập phiếu mới — chi nhánh xuất điền sẵn chi nhánh đang làm việc">+ Thêm</button>
+            <button className="btn btn-sm btn-primary" onClick={() => { save.reset(); setEditing(emptyDoc(f.branchCodes)); setFormKey((k) => k + 1); }} title="Lập phiếu mới — chi nhánh xuất điền sẵn chi nhánh đang làm việc">+ Thêm</button>
             <button className="btn btn-sm" disabled={!sel} onClick={() => sel && void open(sel, Boolean(live))}>{live ? 'Sửa' : 'Xem'}</button>
             <button className="btn btn-sm" disabled={!sel || sel.status !== 'shipped'} title="Thủ kho nhập xác nhận đã nhận hàng (nhận đủ hoặc ghi số thực nhận)" onClick={() => sel && void openReceive(sel)}>Nhận hàng</button>
             <button className="btn btn-sm" disabled={!sel || sel.status !== 'received' || act.isPending} title="Huỷ phần nhập (tồn bên nhận trả lại), phiếu về chờ nhận"

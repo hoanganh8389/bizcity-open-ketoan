@@ -38,7 +38,7 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
   const [help, setHelp] = useState(false);
   const [msg, setMsg] = useState('');
   const [paste, setPaste] = useState<string | null>(null);
-  const [pick, setPick] = useState('');
+  const [pickKey, setPickKey] = useState(0);
   const gate = useDocumentGate(readOnly ? undefined : v.docDate);
   const khoAll = useKho();
   const branches = useBranches().data ?? [];
@@ -112,7 +112,7 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
     return lines;
   };
   const onPick = async (sku: string) => {
-    setPick('');
+    setPickKey((k) => k + 1);
     if (!sku) return;
     const lines = await addSku(sku);
     set({ lines: await suggest(lines, new Set(lines.filter((l) => l.sku === sku).map((l) => l.lineKey))) });
@@ -216,7 +216,7 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
         <b>Chi tiết phiếu</b>
         {!readOnly && <>
           <div style={{ width: 300 }} title="Gõ mã / tên / mã vạch rồi Enter để thêm dòng; trùng mã thì cộng số lượng">
-            <ItemPicker value={pick} onChange={(c) => void onPick(c)} placeholder="Mã hàng: gõ mã / tên / mã vạch — Enter" />
+            <ItemPicker key={pickKey} value="" onChange={(c) => void onPick(c)} placeholder="Mã hàng: gõ mã / tên / mã vạch — Enter" />
           </div>
           <button type="button" className="btn btn-sm" onClick={() => setPaste('')} title="Dán nhiều dòng từ Excel: Mã hàng, Số lượng, Ghi chú">Dán từ Excel</button>
           <button type="button" className="btn btn-sm" disabled={!v.lines.length || !v.fromBranchCode} title="Điền lô hạn dùng sớm trước ở kho xuất cho các dòng chưa ghi lô tay" onClick={async () => set({ lines: await suggest(v.lines.map((l) => (l.lotNo && !l.lotAuto ? l : { ...l, lotAuto: true }))) })}>Gợi ý lô</button>
