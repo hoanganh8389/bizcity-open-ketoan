@@ -4,8 +4,8 @@
  * LÔ HÀNG (0098, docs/nghiep-vu/16-lo-hang.md) — đọc phân lô do Kernel ghi (lot.service.ts).
  *   - Tồn theo lô: mỗi lô còn bao nhiêu ở từng chi nhánh / kho, hạn dùng, còn bao nhiêu ngày, tên hàng lúc mua.
  *   - Thẻ lô: lô vào / ra ở chứng từ nào.
- *   - Phân lô của một phiếu: từng dòng lấy từ lô nào; TÊN KÊ KHAI theo tên lúc mua của lô — một dòng lấy từ nhiều lô khác tên
- *     thì gợi ý tách dòng hoá đơn.
+ *   - Phân lô của một phiếu: từng dòng lấy từ lô nào, tên lúc mua của lô (tra cứu). Hoá đơn bán ra đi đúng như bill ở cửa hàng
+ *     (bill một dòng thì hoá đơn một dòng, tên theo dòng bán) — lô không tách dòng hoá đơn (chốt 10/11/2026).
  *   - Phân lô lại theo thứ tự ngày (Kernel rebuildLots).
  */
 import { sql } from 'kysely';
@@ -58,8 +58,8 @@ export async function lotMoves(trx: Db, tenantId: string, lotId: string) {
 }
 
 /**
- * Phân lô của một phiếu theo dòng, và TÊN KÊ KHAI: tên hàng lúc mua của lô. Một dòng lấy từ nhiều lô khác tên → gợi ý tách thành
- * nhiều dòng hoá đơn (mỗi tên một dòng, số lượng theo lô).
+ * Phân lô của một phiếu theo dòng: lô nào, bao nhiêu, tên lúc mua của lô. Chỉ để tra cứu — hoá đơn vẫn theo dòng bán như bill
+ * ở cửa hàng. `lotNames`: các tên lúc mua của những lô dòng này lấy; `nameDiffers`: có tên lúc mua khác tên trên dòng bán.
  */
 export async function documentLots(trx: Db, tenantId: string, docKey: string) {
   const ev = (await sql<{ id: string; doc_no: string; doc_type: string; doc_date: string }>`SELECT id::text, doc_no, doc_type, doc_date::text FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ${docKey}`.execute(trx)).rows[0];
@@ -75,9 +75,8 @@ export async function documentLots(trx: Db, tenantId: string, docKey: string) {
     lines.set(r.line_no, cur);
   }
   const out = [...lines.values()].map((l) => {
-    const byName = new Map<string, number>();
-    for (const x of l.lots) { const n = x.purchaseName || l.name; byName.set(n, (byName.get(n) ?? 0) + x.qty); }
-    return { ...l, invoiceLines: [...byName.entries()].map(([name, qty]) => ({ name, qty })), split: byName.size > 1, nameDiffers: [...byName.keys()].some((n) => n !== l.name) };
+    const lotNames = [...new Set(l.lots.map((x) => x.purchaseName || l.name))];
+    return { ...l, lotNames, nameDiffers: lotNames.some((n) => n !== l.name) };
   });
   return { docKey, docNo: ev.doc_no, docType: ev.doc_type, docDate: ev.doc_date, lines: out };
 }

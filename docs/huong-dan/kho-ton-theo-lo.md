@@ -24,6 +24,6 @@ Sửa phiếu → phân lô ghi lại. Phiếu về muộn / sửa ngày làm th
 ## Màn
 
 - **Tồn theo lô**: lọc mã / tên / số lô, chi nhánh, sắp hết hạn (đỏ = hết hạn, cam ≤ 30 ngày, vàng ≤ 90 ngày). Bấm một lô xem **thẻ lô**: vào / ra ở phiếu nào, cách chọn lô, tồn cộng dồn.
-- **Tên kê khai theo phiếu**: nhập khoá phiếu → từng dòng lấy từ lô nào và **tên kê khai** (tên lúc mua của lô). Một dòng lấy từ nhiều lô khác tên → gợi ý **tách dòng hoá đơn**.
+- **Lô theo phiếu**: nhập khoá phiếu → từng dòng lấy từ lô nào và tên lúc mua của lô (tra cứu). **Hoá đơn vẫn theo đúng bill ở cửa hàng** — bill một dòng thì hoá đơn một dòng, lô không tách dòng.
 
 Lô còn tồn và hạn dùng là căn cứ để lên chương trình xả hàng cận date (Chương trình bán BH12) và so sánh giá giữa các lô.

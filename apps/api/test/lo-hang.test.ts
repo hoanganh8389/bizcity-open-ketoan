@@ -5,7 +5,7 @@
  *   - bán không ghi lô → tự lấy lô hạn sớm trước, thiếu thì lấn sang lô kế; quá tồn thì phần thiếu vào lô không số;
  *   - khách trả hàng (có phiếu gốc) → về đúng lô đã bán;
  *   - chuyển kho → bên nhận nhận đúng lô bên xuất;
- *   - đổi tên danh mục → tên kê khai của phiếu vẫn theo tên lúc mua; một dòng lấy từ 2 lô khác tên → gợi ý tách dòng;
+ *   - đổi tên danh mục → lô vẫn giữ tên lúc mua; một dòng lấy từ 2 lô vẫn là MỘT dòng (hoá đơn theo bill), tra được 2 tên lô;
  *   - sửa phiếu (phiên bản mới) → phân lô ghi lại; phân lô lại theo thứ tự ngày.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -58,10 +58,11 @@ describe('Lô hàng xuyên suốt', () => {
     const ls = await lots();
     expect(byNo(ls, 'B02').stock).toBe(0);
     expect(byNo(ls, 'A01').stock).toBe(13);
-    // Tên kê khai: dòng lấy từ 2 lô khác tên → gợi ý tách 2 dòng hoá đơn theo tên lúc mua.
-    const d = (await call<{ data: { lines: { invoiceLines: { name: string; qty: number }[]; split: boolean }[] } }>(ctx, 'GET', '/api/v1/lots/document?docKey=BL-LO1')).body.data;
-    expect(d.lines[0]!.split).toBe(true);
-    expect(d.lines[0]!.invoiceLines).toEqual(expect.arrayContaining([{ name: 'Sua Lo 900g', qty: 10 }, { name: 'Sữa Lô 900g (tên NCC A)', qty: 2 }]));
+    // Một dòng bán lấy từ 2 lô: vẫn một dòng (hoá đơn theo bill), tra được lô và tên lúc mua của từng lô.
+    const d = (await call<{ data: { lines: { lots: { lotNo: string; qty: number }[]; lotNames: string[] }[] } }>(ctx, 'GET', '/api/v1/lots/document?docKey=BL-LO1')).body.data;
+    expect(d.lines).toHaveLength(1);
+    expect(d.lines[0]!.lots.map((x) => [x.lotNo, x.qty])).toEqual([['B02', 10], ['A01', 2]]);
+    expect(d.lines[0]!.lotNames).toEqual(['Sua Lo 900g', 'Sữa Lô 900g (tên NCC A)']);
   });
 
   it('khách trả hàng có phiếu gốc → về đúng lô đã bán', async () => {
@@ -112,11 +113,11 @@ describe('Lô hàng xuyên suốt', () => {
     expect(ls.map((l) => [l.lotNo, l.stock])).toEqual(before);
   });
 
-  it('đổi tên danh mục: tên kê khai vẫn là tên lúc mua của lô', async () => {
+  it('đổi tên danh mục: lô vẫn giữ tên lúc mua', async () => {
     await sql`UPDATE products SET name = 'Sữa Lô 900g — tên mới' WHERE tenant_id = ${tenantId} AND sku = 'LO-SUA'`.execute(db);
     ok(await sale('BL-LO3', D(9), [{ sku: 'LO-SUA', qty: 1 }]));
-    const d = (await call<{ data: { lines: { invoiceLines: { name: string }[] }[] } }>(ctx, 'GET', '/api/v1/lots/document?docKey=BL-LO3')).body.data;
-    expect(d.lines[0]!.invoiceLines.map((x) => x.name)).toEqual(['Sữa Lô 900g (tên NCC A)']);
+    const d = (await call<{ data: { lines: { lotNames: string[] }[] } }>(ctx, 'GET', '/api/v1/lots/document?docKey=BL-LO3')).body.data;
+    expect(d.lines[0]!.lotNames).toEqual(['Sữa Lô 900g (tên NCC A)']);
     const l = byNo(await lots(), 'A01') as Lot & { name: string; nameChanged: boolean };
     expect(l.nameChanged).toBe(true);
   });

@@ -3,7 +3,7 @@
  * TỒN THEO LÔ (KHO05) — lô theo số lô + hạn dùng của nhà cung cấp, giữ TÊN HÀNG LÚC MUA.
  *   Hàng ra tự động lấy lô hạn sớm trước; khách trả về đúng lô đã bán; chuyển kho mang theo lô. Giá vốn vẫn bình quân.
  *   Thẻ "Tồn theo lô": lọc mã / tên / số lô, chi nhánh, sắp hết hạn; bấm lô xem thẻ lô.
- *   Thẻ "Tên kê khai theo phiếu": nhập mã phiếu → từng dòng lấy từ lô nào, tên kê khai (tên lúc mua), gợi ý tách dòng hoá đơn.
+ *   Thẻ "Lô theo phiếu": nhập mã phiếu → từng dòng lấy từ lô nào, tên lúc mua của lô (tra cứu). Hoá đơn vẫn theo dòng bán như bill.
  */
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,7 +19,7 @@ interface Lot {
   branches: { code: string; warehouse: string; qty: number }[];
 }
 interface Move { doc_date: string; doc_no: string; doc_key: string; doc_type: string; branch: string; warehouse_code: string; kind: string; qty: number; how: string }
-interface DocLots { docKey: string; docNo: string; docType: string; docDate: string; lines: { lineNo: number; sku: string; name: string; unit: string; qty: number; lots: { lotId: string; lotNo: string; expDate: string | null; purchaseName: string; qty: number; how: string }[]; invoiceLines: { name: string; qty: number }[]; split: boolean; nameDiffers: boolean }[] }
+interface DocLots { docKey: string; docNo: string; docType: string; docDate: string; lines: { lineNo: number; sku: string; name: string; unit: string; qty: number; lots: { lotId: string; lotNo: string; expDate: string | null; purchaseName: string; qty: number; how: string }[]; lotNames: string[]; nameDiffers: boolean }[] }
 interface Branch { code: string; name: string }
 
 const num = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 4 });
@@ -131,18 +131,18 @@ function TenKeKhai() {
       <div className="ttl-toolbar">
         <input className="input mono" style={{ width: 320 }} placeholder="Khoá phiếu (docKey), vd pos:CN01:HD0001" value={docKey} onChange={(e) => setDocKey(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') setKey(docKey.trim()); }} />
         <button className="btn btn-primary btn-sm" onClick={() => setKey(docKey.trim())} disabled={!docKey.trim()}>Xem</button>
-        <span className="muted" style={{ fontSize: 12 }}>Mỗi dòng lấy từ lô nào và kê khai theo tên lúc mua của lô; nhiều lô khác tên thì tách dòng hoá đơn.</span>
+        <span className="muted" style={{ fontSize: 12 }}>Mỗi dòng lấy từ lô nào và tên lúc mua của lô. Hoá đơn vẫn theo dòng bán như bill ở cửa hàng.</span>
       </div>
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {q.isLoading && key && <Loading />}
       {d && (
         <div className="table-wrap"><table className="grid">
-          <thead><tr><th title="Dòng phiếu">#</th><th title="Mã hàng">Mã</th><th title="Tên trên phiếu">Tên trên phiếu</th><th className="num" title="Số lượng">SL</th><th title="Lô đã lấy">Lô</th><th title="Dòng hoá đơn đề xuất theo tên lúc mua">Kê khai hoá đơn</th></tr></thead>
+          <thead><tr><th title="Dòng phiếu">#</th><th title="Mã hàng">Mã</th><th title="Tên trên phiếu">Tên trên phiếu</th><th className="num" title="Số lượng">SL</th><th title="Lô đã lấy">Lô</th><th title="Tên hàng lúc mua của các lô dòng này lấy (tra cứu)">Tên lúc mua của lô</th></tr></thead>
           <tbody>{d.lines.map((l) => (
-            <tr key={l.lineNo} className={l.split ? 'is-warn' : ''}>
+            <tr key={l.lineNo} className={l.nameDiffers ? 'is-warn' : ''}>
               <td>{l.lineNo}</td><td className="mono">{l.sku}</td><td>{l.name}</td><td className="num">{num(l.qty)}</td>
               <td>{l.lots.map((x) => <div key={x.lotId}>{x.lotNo || 'không số'} {x.expDate ? `(HSD ${viDate(x.expDate)})` : ''}: <b>{num(x.qty)}</b> <span className="muted">· {HOW[x.how] ?? x.how}</span></div>)}</td>
-              <td>{l.invoiceLines.map((x) => <div key={x.name}><b>{x.name}</b> × {num(x.qty)}</div>)}{l.split && <span className="ttl-flag">tách {l.invoiceLines.length} dòng</span>}</td>
+              <td>{l.lotNames.map((n) => <div key={n}>{n}</div>)}{l.nameDiffers && <span className="ttl-flag" title="Tên lúc mua khác tên trên dòng bán">khác tên</span>}</td>
             </tr>
           ))}</tbody>
         </table></div>
@@ -159,7 +159,7 @@ export function TonTheoLoPage() {
         subtitle="Lô theo số lô + hạn dùng của nhà cung cấp, giữ tên hàng lúc mua; hàng ra tự lấy lô hạn sớm trước; khách trả về đúng lô; giá vốn vẫn bình quân" />
       <div className="tabs" role="tablist" style={{ marginBottom: 8 }}>
         <button role="tab" className={`tab ${tab === 'ton' ? 'active' : ''}`} onClick={() => setTab('ton')}>Tồn theo lô</button>
-        <button role="tab" className={`tab ${tab === 'ke-khai' ? 'active' : ''}`} onClick={() => setTab('ke-khai')} title="Phiếu lấy hàng từ lô nào, kê khai theo tên lúc mua">Tên kê khai theo phiếu</button>
+        <button role="tab" className={`tab ${tab === 'ke-khai' ? 'active' : ''}`} onClick={() => setTab('ke-khai')} title="Phiếu lấy hàng từ lô nào, tên lúc mua của lô">Lô theo phiếu</button>
       </div>
       {tab === 'ton' ? <TonLo /> : <TenKeKhai />}
     </div>

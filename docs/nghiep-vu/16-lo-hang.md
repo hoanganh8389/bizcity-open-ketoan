@@ -19,7 +19,7 @@
 | Chuyển kho | Phiếu ghi lô (WordPress gợi ý hạn sớm trước, người lập sửa được) → cả hai đầu cùng lô. Trống → đầu xuất tự chọn hạn sớm trước; phiếu một chứng từ hai đầu thì bên nhận theo lô bên xuất |
 | Nguyên tắc chung | **Có điền thì ưu tiên, để trống thì theo quy tắc** |
 | Giá vốn | Vẫn bình quân tháng; lô không đổi giá vốn |
-| Kê khai bán ra | Theo tên lúc mua của lô xuất; một dòng lấy nhiều lô khác tên → tách dòng hoá đơn |
+| Hoá đơn bán ra | **Theo đúng bill ở cửa hàng**: bill một dòng thì hoá đơn một dòng, tên theo dòng bán — lô không tách dòng hoá đơn (chốt 10/11/2026). Lô, tên lúc mua là dữ liệu tra cứu đi kèm dòng |
 
 ## 3. Cách làm
 
@@ -32,7 +32,6 @@
 
 ## 4. Còn lại
 
-- **Hoá đơn điện tử bán ra** (Viettel, ở tgs_wordpress) chưa dùng tên lô: cần lấy `/api/v1/lots/document?docKey=` (hoặc POS tự phân lô) để ghi tên và tách dòng.
 - POS / kho WordPress chưa gửi số lô; ERP tự phân lô khi nhận phiếu — chưa có màn chọn lô ở POS khi cần bán đúng lô (xả cận date).
 - Phiếu trả không có phiếu gốc → lô không số (chưa đoán lô).
 - Chuyển kho hai phiếu một đầu (`leg`) **không ghi lô** → bên nhận vào lô không số. Đã xử lý ở nguồn: form chuyển kho WordPress gợi ý lô (`GET /api/v1/lots/suggest`) và ghi `lot_no` lên dòng, cầu nối gửi `lotNo` cho cả hai đầu → bên nhận đúng lô (10/11/2026).

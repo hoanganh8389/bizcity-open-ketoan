@@ -3,7 +3,7 @@
 /**
  *   GET  /api/v1/lots?search=&branchCode=&stock=&expWithin=   tồn theo lô (hạn dùng, tên lúc mua, tồn từng chi nhánh / kho)
  *   GET  /api/v1/lots/:id/moves                               thẻ lô: vào / ra ở chứng từ nào
- *   GET  /api/v1/lots/document?docKey=                        phân lô của một phiếu, tên kê khai theo lô
+ *   GET  /api/v1/lots/document?docKey=                        phân lô của một phiếu (lô nào, tên lúc mua — tra cứu)
  *   GET  /api/v1/lots/suggest?branchCode=&warehouse=&date=&items=SKU*SL,SKU*SL   gợi ý lô khi lập phiếu xuất (hạn sớm trước)
  *   POST /api/v1/lots/rebuild                                 phân lô lại theo thứ tự ngày (cả đơn vị hoặc một mã)
  */
@@ -28,7 +28,7 @@ export async function lotRoutes(app: FastifyInstance): Promise<void> {
   });
   r.get('/api/v1/lots/document', {
     preHandler: read,
-    schema: { tags, summary: 'Phân lô của một phiếu, tên kê khai theo lô', querystring: z.object({ docKey: z.string().min(3).max(160) }) },
+    schema: { tags, summary: 'Phân lô của một phiếu: lô nào, tên lúc mua của lô (tra cứu)', querystring: z.object({ docKey: z.string().min(3).max(160) }) },
     handler: async (req) => ok(await documentLots(db, authOf(req).tenantId, req.query.docKey)),
   });
   r.get('/api/v1/lots/suggest', {
