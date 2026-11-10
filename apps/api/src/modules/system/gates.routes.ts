@@ -1,5 +1,6 @@
 // @bizcity-layer P module-sdk
 // [2026-11-10 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): thẻ Cổng & bộ kiểm ở HT10 — một API chỉ đọc gom mã kiểm từ sổ đăng ký trong mã, không gõ tay (D034-3)
+// [2026-11-11 04:35 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11 (D034-13): kết quả lane selfcheck chạy lúc dựng ảnh (build/scoreboard.json) → `ciRun` + `last` của từng mã CI
 // [2026-11-11 02:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b (S034-6, D034-11): trụ cột theo họ mã + test của mã + bộ kiểm CI + trigger CSDL từ docs/standard/cong-kiem.json; mức mỗi mã đủ bốn ý
 /**
  * GET /api/v1/system/gates — mọi mã kiểm của Core xếp theo CỔNG mà dữ liệu đi qua (PHASE-034 · 00 §3):
@@ -14,7 +15,9 @@
  * Trụ cột của mã: `map[]` họ mã → trụ cột trong cong-kiem.json (D034-11). Mức một mã (`score`, 0..100):
  *   mã cổng / chẩn đoán: có Cách sửa · có phương án có cấu trúc · có test · gắn trụ cột — mỗi ý 25
  *   CI: gắn trụ cột 50 + có ca tự kiểm 50 · trigger: gắn trụ cột 50 + được LEDGER_TRIGGERS kiểm 50
- * Nguồn là bản dựng (không theo đơn vị), trừ `last` đọc diagnostic_runs của đơn vị đang đăng nhập. Không có đường ghi (R-CONT-7).
+ * Kết quả bộ kiểm của bản dựng (S034-11): ảnh api chạy lane selfcheck lúc dựng (giai đoạn `conformance` ở docker/api.Dockerfile) và chép
+ * build/scoreboard.json; mã CI có `last` (pass · debt · fail · warn · planned · error · skip), phản hồi có `ciRun`. Chạy dev / thiếu tệp → ciRun = null.
+ * Nguồn là bản dựng (không theo đơn vị), trừ `last` của mã chẩn đoán đọc diagnostic_runs của đơn vị đang đăng nhập. Không có đường ghi (R-CONT-7).
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -50,7 +53,7 @@ export interface GateCode {
   /** Điều kiện khoá sổ mà mã nuôi (R-DIAG-10), chỉ có ở chẩn đoán. */
   closeRef?: string;
   /** Kết quả ở lượt chẩn đoán gần nhất của đơn vị (chỉ cổng diag). */
-  last?: { level: DiagResult['level']; count: number; examined: number } | null;
+  last?: { level: string; count: number; examined: number } | null;
 }
 
 export interface GateGroup {
@@ -83,6 +86,8 @@ const GROUPS: Omit<GateGroup, 'codes'>[] = [
 // Chạy từ src (tsx) hay dist (node): apps/api/{src,dist}/modules/system → gốc repo cách 5 cấp.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..');
 const GATES_FILE = 'docs/standard/cong-kiem.json';
+/** Sinh lúc dựng ảnh, không có trong repo (D034-13). */
+const BUILD_SCOREBOARD = 'build/scoreboard.json';
 
 interface MapRow { match: string | string[]; pillars: string[] }
 interface GatesFile {
@@ -99,6 +104,24 @@ function loadGatesFile(): GatesFile | null {
     try { gatesFile = JSON.parse(readFileSync(path.join(root, GATES_FILE), 'utf8')) as GatesFile; } catch { gatesFile = null; }
   }
   return gatesFile;
+}
+
+export interface CiRun { runId: string | null; at: string | null; verdict: string | null; counts: Record<string, number> }
+interface ScoreboardLike { runId?: string; at?: string; verdict?: string; counts?: Record<string, number>; checks?: { id: string; status: string; findings?: number; examined?: number }[] }
+
+/** Thu gọn bảng điểm của selfcheck (bizcity_scoreboard@1) thành lượt CI + kết quả theo mã. Không có check nào thì null. */
+export function ciResults(sb: ScoreboardLike | null): { run: CiRun; byId: Map<string, { level: string; count: number; examined: number }> } | null {
+  if (!sb || !Array.isArray(sb.checks) || !sb.checks.length) return null;
+  const byId = new Map(sb.checks.filter((c) => c?.id).map((c) => [c.id, { level: c.status, count: c.findings ?? 0, examined: c.examined ?? 0 }]));
+  return { run: { runId: sb.runId ?? null, at: sb.at ?? null, verdict: sb.verdict ?? null, counts: sb.counts ?? {} }, byId };
+}
+
+let buildSb: ReturnType<typeof ciResults> | undefined;
+function loadBuildScoreboard() {
+  if (buildSb === undefined) {
+    try { buildSb = ciResults(JSON.parse(readFileSync(path.join(root, BUILD_SCOREBOARD), 'utf8')) as ScoreboardLike); } catch { buildSb = null; }
+  }
+  return buildSb;
 }
 
 const escapeRe = (s: string) => s.replace(/[.+?^${}()|[\]\\-]/g, (ch) => `\\${ch}`);
@@ -167,16 +190,18 @@ export async function gatesRoutes(app: FastifyInstance): Promise<void> {
         .where('tenant_id', '=', authOf(req).tenantId).orderBy('id', 'desc').limit(1).executeTakeFirst();
       const results = new Map<string, DiagResult>();
       for (const c of (Array.isArray(run?.checks) ? run.checks : []) as DiagResult[]) if (c?.code) results.set(c.code, c);
-      const groups = gateGroups().map((g) => g.key !== 'diag' ? g : {
-        ...g,
-        codes: g.codes.map((c) => {
-          const x = results.get(c.code);
-          return { ...c, last: x ? { level: x.level, count: x.count, examined: x.examined } : null };
-        }),
+      const ci = loadBuildScoreboard();
+      const groups = gateGroups().map((g) => {
+        if (g.key === 'diag') {
+          return { ...g, codes: g.codes.map((c) => { const x = results.get(c.code); return { ...c, last: x ? { level: x.level, count: x.count, examined: x.examined } : null }; }) };
+        }
+        if (g.key === 'ci') return { ...g, codes: g.codes.map((c) => ({ ...c, last: ci?.byId.get(c.code) ?? null })) };
+        return g;
       });
       return ok({
         contract: 'bizcity_gates@1',
         lastRun: run ? { id: run.id, layer: run.layer, trigger: run.trigger, at: run.created_at } : null,
+        ciRun: ci?.run ?? null,
         groups,
       });
     },
