@@ -82,7 +82,7 @@ export function buildSaleParts(doc: SaleDocument, ctx: RuleContext): PostingPart
     b.add({
       part: 'payment',
       debitAccount: account,
-      creditAccount: payReason?.counter_account ?? counter,
+      creditAccount: (resolver.useReasons ? payReason?.counter_account : undefined) ?? counter,
       amount: pay.amount,
       // Phía tài khoản tiền: đối tượng nhận hộ của hình thức (QR, thẻ vào tài khoản công ty → 13681 chi tiết công ty),
       // không có thì gắn khách (ví dụ voucher ghi vào 1388). Tài khoản không theo dõi đối tượng thì sổ số dư bỏ qua.

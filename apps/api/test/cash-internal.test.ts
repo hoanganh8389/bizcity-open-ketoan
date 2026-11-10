@@ -16,6 +16,9 @@ let tenantId: string;
 beforeAll(async () => {
   ctx = await setupTenant();
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
+  // [2026-11-10 11:45 PM Nguyễn Văn Thủy] PHASE-026 — tệp này kiểm cách định khoản THEO LÝ DO (chuyển tiền theo đối ứng của lý do, bán nội bộ XCN): bật công tắc lý do hạch toán (đóng góp)
+  const on = await call(ctx, 'PUT', '/api/v1/settings/values/bizcity.posting.use_reasons', { value: 'on', validFrom: '2000-01-01', reason: 'Kiểm định khoản theo lý do' }, { 'idempotency-key': 'use-reasons-on' });
+  expect(on.status, JSON.stringify(on.body)).toBe(200);
   await call(ctx, 'POST', '/api/v1/branches', { code: 'CN02', name: 'Cửa hàng 02' });
   await call(ctx, 'POST', '/api/v1/branches', { code: 'KHO-MB', name: 'Kho miền Bắc', accountingUnitCode: 'DV-MB' });
   // Lý do chuyển tiền chép từ HTsoft (CPCT / TPCT không ghi sổ) và tài khoản ngân hàng cho phiếu chuyển tiền.

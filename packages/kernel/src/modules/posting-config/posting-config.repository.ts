@@ -18,6 +18,7 @@ import { toNumber } from '@bizcity/platform/db/client';
 import { seedProduct } from '../default-data/default-data.service.js';
 import type { Account, PaymentMethod, PostingReason, ProductPostingGroup } from '@bizcity/platform/db/types';
 import { selectPolicy, type PolicyRaw } from './policy.js';
+import { getSetting } from '@bizcity/platform/core/settings';
 import type { PostingRule, RuleCond, RuleTable } from '../posting/rule-table.js';
 
 export interface TaxCodeConfig {
@@ -53,6 +54,15 @@ export interface PostingConfig {
   policyVersion: number | null;
   /** Bảng quy tắc định khoản đã duyệt (mọi ngày hiệu lực — chọn theo ngày chứng từ lúc áp), loại hàng, loại chương trình. */
   ruleTable: RuleTable;
+  // [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán (bizcity.posting.use_reasons, mặc định tắt) (đóng góp)
+  /** Bật: tài khoản trên lý do đè cấu hình (như phần mềm cũ). Tắt: định khoản không đọc tài khoản trên lý do. Đọc theo ngày chứng từ. */
+  useReasons: boolean;
+}
+
+/** Công tắc lý do hạch toán tại một ngày (khoá cấu hình chung, có phiên bản theo ngày hiệu lực). */
+export const USE_REASONS_KEY = 'bizcity.posting.use_reasons';
+export async function useReasonsAt(db: Db, tenantId: string, date?: string): Promise<boolean> {
+  return (await getSetting(db, tenantId, USE_REASONS_KEY, date ? { date } : {})).value === 'on';
 }
 
 /**
@@ -136,11 +146,12 @@ export async function loadPolicyRaw(db: Db, tenantId: string): Promise<PolicyRaw
 
 export const postingConfigRepository = {
   async loadPostingConfig(db: Db, tenantId: string, skus: string[] = [], opts: { asOf?: string; actor?: string; programKeys?: string[] } = {}): Promise<PostingConfig> {
-    const [accounts, live, products, ruleTable] = await Promise.all([
+    const [accounts, live, products, ruleTable, useReasons] = await Promise.all([
       db.selectFrom('accounts').selectAll().where('tenant_id', '=', tenantId).execute(),
       loadPolicyRaw(db, tenantId),
       loadProducts(db, tenantId, skus, opts.asOf),
       loadRuleTable(db, tenantId, skus, opts.programKeys),
+      useReasonsAt(db, tenantId, opts.asOf),
     ]);
     const picked = opts.asOf ? await selectPolicy(db, tenantId, live, opts.asOf, opts.actor ?? 'system') : { raw: live, version: null };
     const { reasons, groups, paymentMethods: methods, taxCodes: taxes, defaults, bankAccounts: banks } = picked.raw;
@@ -163,6 +174,7 @@ export const postingConfigRepository = {
       bankAccounts: new Map(banks.map((b) => [b.code, b.account_code])),
       policyVersion: picked.version,
       ruleTable,
+      useReasons,
     };
   },
 };
