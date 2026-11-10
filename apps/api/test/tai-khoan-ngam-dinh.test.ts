@@ -60,6 +60,19 @@ describe('Tài khoản ngầm định khi tắt lý do / nhóm hạch toán', ()
     expect((await call<{ data: unknown[] }>(ctx, 'GET', '/api/v1/posting-rules/defaults')).body.data).toEqual([]);
   });
 
+  it('định khoản theo Biến thể: hàng Khuyến mại → doanh thu 51113, hàng thường giữ 51111', async () => {
+    await sql`INSERT INTO products (tenant_id, sku, name, unit, variant_code) VALUES (${tenantId}, 'TK-BT', 'Hàng khuyến mại (biến thể)', 'Hộp', 'promo') ON CONFLICT DO NOTHING`.execute(db);
+    const r = await call<{ data: { id: string } }>(ctx, 'POST', '/api/v1/posting-rules/defaults', { business: 'sale', part: 'goods', name: 'Hàng khuyến mại — doanh thu', cond: { variant: 'promo' }, credit: '51113' });
+    ok(r);
+    ok(await sale('TK-6', 'TK-BT'));
+    ok(await sale('TK-7', 'TK-THUONG'));
+    expect(await revenueOf('TK-6')).toEqual(['51113']);
+    expect(await revenueOf('TK-7')).toEqual(['51111']);
+    const opt = (await call<{ data: { variants: { code: string }[] } }>(ctx, 'GET', '/api/v1/posting-rules/options')).body.data;
+    expect(opt.variants.map((v) => v.code)).toContain('promo');
+    ok(await call(ctx, 'DELETE', `/api/v1/posting-rules/defaults/${r.body.data.id}`));
+  });
+
   it('bật công tắc: theo nhóm hạch toán của mặt hàng như cũ', async () => {
     ok(await call(ctx, 'PUT', '/api/v1/settings/values/bizcity.posting.use_reasons', { value: 'on', validFrom: '2000-01-01', reason: 'Kiểm chế độ bật' }, { 'idempotency-key': 'tai-khoan-bat-ly-do' }));
     ok(await sale('TK-5', 'TK-KM'));

@@ -19,7 +19,7 @@ const tags = ['Thiết kế hạch toán'];
 const anyOut = z.any();
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày theo dạng YYYY-MM-DD');
 const condSchema = z.object({
-  method: z.string().max(32).optional(), taxCode: z.string().max(16).optional(), itemType: z.string().max(64).optional(), programKind: z.string().max(32).optional(),
+  method: z.string().max(32).optional(), taxCode: z.string().max(16).optional(), itemType: z.string().max(64).optional(), variant: z.string().max(32).optional(), programKind: z.string().max(32).optional(),
   program: z.string().max(128).optional(), gift: z.boolean().optional(), leg: z.enum(['in', 'out']).optional(), sameUnit: z.boolean().optional(),
 });
 const ruleSchema = z.object({

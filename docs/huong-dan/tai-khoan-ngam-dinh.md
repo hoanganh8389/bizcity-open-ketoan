@@ -14,14 +14,13 @@ Là định khoản phần mềm dùng khi không có gì chỉ định khác. B
 
 ## Thêm tài khoản ngầm định
 
-Dùng cho trường hợp riêng của một loại chứng từ. Ví dụ hàng khuyến mại ghi doanh thu 51113, giá vốn 6323.
+Dùng cho trường hợp riêng. Ví dụ hàng khuyến mại ghi doanh thu 51113, giá vốn 6323.
 
-1. Chọn **Loại chứng từ** và **Khoản**: tiền hàng, thuế, giá vốn hoặc thanh toán.
-2. Đặt **Tên định khoản**.
-3. Chọn điều kiện: loại hàng, loại thuế, hàng tặng, chương trình, hình thức thanh toán, chiều chuyển kho… Ô để *mọi trường hợp* thì không xét.
-4. Chọn **TK Nợ** và / hoặc **TK Có**. Ô trống thì giữ tài khoản của dòng có sẵn.
+1. **Dựa trên dòng**: chọn dòng có sẵn cần đổi, ví dụ *Bán hàng — tiền hàng*.
+2. **Áp cho loại hàng** và / hoặc **Áp cho biến thể** (Chia giá, Khuyến mại, Kẹp quà, Tem, Nội bộ…).
+3. **TK Nợ / TK Có** điền sẵn theo dòng gốc. Đổi bên cần đổi; bên giữ nguyên đi theo dòng gốc.
 
-Không được trùng điều kiện với một dòng đã thêm. Sửa và xoá áp ngay.
+Dòng thêm hiện ngay dưới dòng gốc, bắt đầu bằng ↳. Không được trùng điều kiện với dòng đã thêm. Bấm **Sửa** để đổi hoặc **Xoá**; áp ngay.
 
 ## Thứ tự ưu tiên
 

@@ -33,6 +33,9 @@ export interface RuleCond {
   taxCode?: string;
   /** Loại hàng của mặt hàng (products.type_code: HANG-BAN, QUA, VAT-TU, DICH-VU…). */
   itemType?: string;
+  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — điều kiện Biến thể của mặt hàng (khuyến mại, chia giá, kẹp quà, nội bộ…) (đóng góp)
+  /** Biến thể của mặt hàng (products.variant_code: normal, promo, share, clip, program, expiry, internal…). */
+  variant?: string;
   /** Loại chương trình của dòng (program_kinds.code). */
   programKind?: string;
   /** Đúng một chương trình (mã chính sách trên dòng: policyRef.key). */
@@ -44,7 +47,7 @@ export interface RuleCond {
   /** Chuyển kho: hai chi nhánh cùng đơn vị hạch toán (true) / khác (false). */
   sameUnit?: boolean;
 }
-export const COND_KEYS = ['method', 'taxCode', 'itemType', 'programKind', 'program', 'gift', 'leg', 'sameUnit'] as const;
+export const COND_KEYS = ['method', 'taxCode', 'itemType', 'variant', 'programKind', 'program', 'gift', 'leg', 'sameUnit'] as const;
 export type CondKey = (typeof COND_KEYS)[number];
 
 export interface PostingRule {
@@ -91,6 +94,8 @@ export interface RuleTable {
   businesses: PostingBusiness[];
   /** Mã hàng → loại hàng (products.type_code). */
   itemTypes: Map<string, string>;
+  /** Mã hàng → biến thể (products.variant_code). */
+  variants?: Map<string, string>;
   /** Mã chương trình / chính sách → loại chương trình. */
   programKinds: Map<string, string>;
 }
@@ -180,6 +185,7 @@ export function contextOf(tags: RuleTags, line: Pick<DraftLine, 'productSku' | '
     method: tags.method ?? null,
     taxCode: line.taxCode ?? null,
     itemType: sku ? table.itemTypes.get(sku) ?? null : null,
+    variant: sku ? table.variants?.get(sku) ?? null : null,
     program: tags.program ?? null,
     programKind: tags.program ? table.programKinds.get(tags.program) ?? null : null,
     gift: Boolean(tags.gift),

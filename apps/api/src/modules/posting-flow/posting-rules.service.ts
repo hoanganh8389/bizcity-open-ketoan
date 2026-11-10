@@ -17,6 +17,7 @@ import { ingestDocumentSchema, type IngestDocument } from '@ketoan/contracts';
 import type { Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
+import { listVariantKinds } from '../catalog/san-pham-con.js';
 import {
   COND_KEYS, PART_LABEL, condKeys, contextOf, findTies, pickRule, simulatePosting,
   type CondKey, type PostingRule, type RuleCond, type RulePart, type RuleTable,
@@ -37,22 +38,22 @@ export interface BusinessSpec {
   note: string;
 }
 
-const LINE_CONDS: CondKey[] = ['taxCode', 'itemType', 'gift', 'programKind', 'program'];
+const LINE_CONDS: CondKey[] = ['taxCode', 'itemType', 'variant', 'gift', 'programKind', 'program'];
 export const BUSINESSES: BusinessSpec[] = [
   { code: 'sale', name: 'Bán hàng', area: 'Bán hàng', parts: { goods: LINE_CONDS, tax: LINE_CONDS, cogs: LINE_CONDS, payment: ['method'] }, reasonKind: 'out', screen: 'sale', note: 'Hoá đơn bán, phiếu bán ở quầy; giá vốn ghi ở phiếu giá vốn cuối tháng' },
   { code: 'sale_return', name: 'Khách trả hàng', area: 'Bán hàng', parts: { goods: LINE_CONDS, tax: LINE_CONDS, cogs: LINE_CONDS, payment: ['method'] }, reasonKind: 'in', screen: 'sale_return', note: 'Hàng bán bị trả lại' },
   { code: 'purchase', name: 'Nhập mua hàng', area: 'Mua hàng', parts: { goods: LINE_CONDS, tax: LINE_CONDS, payment: ['method'] }, reasonKind: 'in', screen: 'purchase', note: 'Phiếu nhập mua từ nhà cung cấp' },
   { code: 'purchase_return', name: 'Trả hàng nhà cung cấp', area: 'Mua hàng', parts: { goods: LINE_CONDS, tax: LINE_CONDS, payment: ['method'] }, reasonKind: 'out', screen: 'purchase_return', note: 'Xuất trả hàng mua, thưởng / chiết khấu giảm giá vốn' },
-  { code: 'transfer', name: 'Chuyển kho', area: 'Kho', parts: { goods: ['leg', 'sameUnit', 'itemType'] }, reasonKind: 'out', screen: 'transfer', note: 'Chuyển hàng giữa chi nhánh; giá trị theo phiếu giá vốn tháng' },
-  { code: 'stock_increase', name: 'Nhập điều chỉnh kho', area: 'Kho', parts: { goods: ['itemType'] }, reasonKind: 'in', screen: 'stock_increase', note: 'Kiểm kê thừa, nhận quà, nhập khác' },
-  { code: 'stock_decrease', name: 'Xuất điều chỉnh kho', area: 'Kho', parts: { goods: ['itemType'] }, reasonKind: 'out', screen: 'stock_decrease', note: 'Kiểm kê thiếu, xuất huỷ, xuất dùng, xuất quà' },
+  { code: 'transfer', name: 'Chuyển kho', area: 'Kho', parts: { goods: ['leg', 'sameUnit', 'itemType', 'variant'] }, reasonKind: 'out', screen: 'transfer', note: 'Chuyển hàng giữa chi nhánh; giá trị theo phiếu giá vốn tháng' },
+  { code: 'stock_increase', name: 'Nhập điều chỉnh kho', area: 'Kho', parts: { goods: ['itemType', 'variant'] }, reasonKind: 'in', screen: 'stock_increase', note: 'Kiểm kê thừa, nhận quà, nhập khác' },
+  { code: 'stock_decrease', name: 'Xuất điều chỉnh kho', area: 'Kho', parts: { goods: ['itemType', 'variant'] }, reasonKind: 'out', screen: 'stock_decrease', note: 'Kiểm kê thiếu, xuất huỷ, xuất dùng, xuất quà' },
   { code: 'customer_payment', name: 'Thu tiền', area: 'Tiền', parts: { payment: ['method'] }, reasonKind: 'receipt', screen: 'cash_receipt', note: 'Phiếu thu tiền khách, thu khác' },
   { code: 'supplier_payment', name: 'Chi tiền', area: 'Tiền', parts: { payment: ['method'] }, reasonKind: 'payment', screen: 'cash_payment', note: 'Phiếu chi trả nhà cung cấp, chi khác' },
 ];
 const specOf = (code: string) => BUSINESSES.find((b) => b.code === code);
 
 export const COND_LABEL: Record<CondKey, string> = {
-  method: 'Hình thức thanh toán', taxCode: 'Loại thuế', itemType: 'Loại hàng', programKind: 'Loại chương trình', program: 'Chương trình',
+  method: 'Hình thức thanh toán', taxCode: 'Loại thuế', itemType: 'Loại hàng', variant: 'Biến thể', programKind: 'Loại chương trình', program: 'Chương trình',
   gift: 'Hàng tặng', leg: 'Chiều chuyển kho', sameUnit: 'Cùng đơn vị hạch toán',
 };
 
@@ -363,6 +364,7 @@ export async function ruleOptions(trx: Db, tenantId: string) {
     methods: methods.rows.map((m) => ({ code: m.code, name: m.name, account: m.account_code, isReceivable: m.is_receivable })),
     taxes: taxes.rows.map((t) => ({ code: t.code, name: t.name, rate: Number(t.rate), direction: t.direction })),
     itemTypes: types.rows,
+    variants: (await listVariantKinds(trx, tenantId)).filter((v) => v.isActive).map((v) => ({ code: v.code, name: v.name })),
     programKinds: kinds.rows,
     programs: programs.rows,
   };

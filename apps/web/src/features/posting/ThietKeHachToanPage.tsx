@@ -30,8 +30,8 @@ import './thiet-ke-hach-toan.css';
 
 // ------------------------------------------------------------------------------------------------ kiểu dữ liệu
 type Part = 'goods' | 'tax' | 'cogs' | 'payment';
-type CondKey = 'method' | 'taxCode' | 'itemType' | 'programKind' | 'program' | 'gift' | 'leg' | 'sameUnit';
-type Cond = Partial<{ method: string; taxCode: string; itemType: string; programKind: string; program: string; gift: boolean; leg: 'in' | 'out'; sameUnit: boolean }>;
+type CondKey = 'method' | 'taxCode' | 'itemType' | 'variant' | 'programKind' | 'program' | 'gift' | 'leg' | 'sameUnit';
+type Cond = Partial<{ method: string; taxCode: string; itemType: string; variant: string; programKind: string; program: string; gift: boolean; leg: 'in' | 'out'; sameUnit: boolean }>;
 interface BizPart { part: Part; label: string; conds: CondKey[] }
 interface Business { code: string; name: string; area: string; baseCode: string | null; reasonCode: string | null; reasonName: string | null; isSystem: boolean; isActive: boolean; note: string; parts: BizPart[]; activeRules: number; draftRules: number }
 type RuleState = 'draft' | 'active' | 'scheduled' | 'closed' | 'rejected';
@@ -46,6 +46,7 @@ interface Options {
   methods: { code: string; name: string; account: string; isReceivable: boolean }[];
   taxes: { code: string; name: string; rate: number; direction: string }[];
   itemTypes: { code: string; name: string }[];
+  variants?: { code: string; name: string }[];
   programKinds: { code: string; name: string; side: string; note: string }[];
   programs: { code: string; name: string; kind: string | null; side: string }[];
 }
@@ -93,7 +94,7 @@ function condValueText(k: CondKey, v: unknown, o?: Options): string {
   if (k === 'sameUnit') return v ? 'Cùng đơn vị hạch toán' : 'Khác đơn vị hạch toán';
   if (k === 'leg') return v === 'out' ? 'Bên xuất' : 'Bên nhận';
   const s = String(v);
-  const name = k === 'method' ? o?.methods.find((m) => m.code === s)?.name : k === 'itemType' ? o?.itemTypes.find((t) => t.code === s)?.name
+  const name = k === 'method' ? o?.methods.find((m) => m.code === s)?.name : k === 'itemType' ? o?.itemTypes.find((t) => t.code === s)?.name : k === 'variant' ? o?.variants?.find((t) => t.code === s)?.name
     : k === 'programKind' ? o?.programKinds.find((t) => t.code === s)?.name : k === 'program' ? o?.programs.find((p) => p.code === s)?.name
     : k === 'taxCode' ? o?.taxes.find((t) => t.code === s)?.name : undefined;
   return name ? `${s} — ${name}` : s;
@@ -439,6 +440,7 @@ function CondInput({ k, value, onChange, options, disabled, side }: { k: CondKey
   if (k === 'method') return sel((options?.methods ?? []).map((m) => ({ code: m.code, name: m.name })));
   if (k === 'taxCode') return sel((options?.taxes ?? []).map((t) => ({ code: t.code, name: `${t.name} (${t.rate}%)` })));
   if (k === 'itemType') return sel(options?.itemTypes ?? []);
+  if (k === 'variant') return sel(options?.variants ?? []);
   if (k === 'programKind') return sel(forSide(options?.programKinds, side));
   return sel(forSide(options?.programs, side).map((p) => ({ code: p.code, name: `${p.name}${p.kind ? ` · ${p.kind}` : ''}` })));
 }

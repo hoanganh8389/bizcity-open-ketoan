@@ -77,7 +77,7 @@ export async function loadRuleTable(db: Db, tenantId: string, skus: string[], pr
        WHERE r.tenant_id = ${tenantId} AND r.status = 'active' AND b.is_active`.execute(db),
     sql<{ code: string; name: string; base_code: string | null; reason_code: string | null }>`
       SELECT code, name, base_code, reason_code FROM posting_businesses WHERE tenant_id = ${tenantId} AND is_active`.execute(db),
-    skus.length ? sql<{ sku: string; type_code: string }>`SELECT sku, type_code FROM products WHERE tenant_id = ${tenantId} AND sku = ANY(${skus}) AND type_code IS NOT NULL`.execute(db) : Promise.resolve({ rows: [] }),
+    skus.length ? sql<{ sku: string; type_code: string | null; variant_code: string | null }>`SELECT sku, type_code, variant_code FROM products WHERE tenant_id = ${tenantId} AND sku = ANY(${skus})`.execute(db) : Promise.resolve({ rows: [] }),
     programKeys.length ? sql<{ code: string; kind: string }>`
       SELECT code, program_kind AS kind FROM purchase_policies WHERE tenant_id = ${tenantId} AND code = ANY(${programKeys}) AND program_kind IS NOT NULL
       UNION ALL SELECT code, program_kind FROM sale_programs WHERE tenant_id = ${tenantId} AND code = ANY(${programKeys})`.execute(db) : Promise.resolve({ rows: [] }),
@@ -88,7 +88,8 @@ export async function loadRuleTable(db: Db, tenantId: string, skus: string[], pr
       debit: r.debit_account, credit: r.credit_account, priority: r.priority, from: r.effective_from, to: r.effective_to,
     })),
     businesses: businesses.rows.map((b) => ({ code: b.code, name: b.name, baseCode: b.base_code, reasonCode: b.reason_code })),
-    itemTypes: new Map(types.rows.map((t) => [t.sku, t.type_code])),
+    itemTypes: new Map(types.rows.filter((t) => t.type_code).map((t) => [t.sku, t.type_code!])),
+    variants: new Map(types.rows.filter((t) => t.variant_code).map((t) => [t.sku, t.variant_code!])),
     programKinds: new Map(kinds.rows.map((k) => [k.code, k.kind])),
   };
 }
