@@ -1,0 +1,145 @@
+<!doctype html>
+<!-- [2026-11-10 11:16 PM Johnny Chu - Chu Hoàng Anh] REVIEW — bản mẫu "Bảng kiểm đánh giá": (1) độ chắc 12 khối lõi theo bằng chứng, (2) nợ R-BLOCK theo màn với câu "Vì sao / Cách gỡ" đề xuất; đi kèm DANH-GIA-NEN-TANG-THEO-PHAN-HANH-2026-11-10.md. Chờ chủ dự án duyệt (UI-first) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bảng kiểm đánh giá</title>
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--info-bg:#e8f0fc}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d}}
+:root[data-theme="dark"]{--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d}
+*{box-sizing:border-box}html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+.note{background:var(--info-bg);color:var(--info);padding:8px 16px;font-size:12.5px}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px}
+header h1{margin:0;font-size:18px}header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+main{padding:16px;max-width:1360px;margin:0 auto}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.card .k{color:var(--muted);font-size:12px}.card .v{font-size:20px;font-weight:650;margin-top:2px}.card .s{color:var(--muted);font-size:12px;margin-top:2px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+select,input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--panel);color:var(--ink)}
+.spacer{flex:1}.mute{color:var(--muted)}
+.table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--soft);white-space:nowrap;position:sticky;top:0}
+tr.row{cursor:pointer}tr.row:hover td{background:var(--soft)}tr.detail td{background:var(--soft);padding:10px 14px}
+.chip{display:inline-block;border-radius:99px;padding:0 8px;font-size:12px;font-weight:600;margin:1px 2px 1px 0;white-space:nowrap}
+.c-ok{background:var(--ok-bg);color:var(--ok)}.c-warn{background:var(--warn-bg);color:var(--warn)}.c-bad{background:var(--bad-bg);color:var(--bad)}.c-info{background:var(--info-bg);color:var(--info)}.c-mute{background:var(--soft);color:var(--muted)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:12px;margin:1px 2px 1px 0}
+.lv{display:flex;gap:3px}.lv span{width:18px;height:10px;border-radius:3px;background:var(--soft);border:1px solid var(--line)}.lv span.on{background:var(--accent);border-color:var(--accent)}.lv span.half{background:linear-gradient(90deg,var(--accent) 50%,var(--soft) 50%)}
+.hint{position:relative;display:inline-block}
+.hint .tip{display:none;position:absolute;z-index:5;top:calc(100% + 6px);left:0;min-width:240px;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:8px 10px;font-size:12.5px;white-space:normal}
+.hint:hover .tip,.hint:focus-within .tip{display:block}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font:inherit;cursor:pointer}
+.btn:disabled{opacity:.45}.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.state{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;text-align:center}.state h3{margin:0 0 6px}
+.err{border-color:var(--bad);background:var(--bad-bg);text-align:left}.err code{color:var(--bad)}
+.skel{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--soft),var(--line),var(--soft));margin:8px 0}
+.demo{position:fixed;right:12px;bottom:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:9}
+.cards{display:none}
+@media (max-width:640px){.table-wrap.resp{display:none}.cards{display:grid;gap:8px}.strip{grid-template-columns:1fr 1fr}.demo{left:12px;right:12px}}
+</style>
+</head>
+<body>
+<div class="note">Bản mẫu (UI-first) — <b>chưa có mã</b>. Số liệu là kết quả đo thật ngày 2026-11-10 (xem tài liệu đi kèm). Đề xuất đặt ở HT10, cùng thẻ "Đánh giá" với bảng review theo phase.</div>
+<header><h1>Bảng kiểm đánh giá nền tảng <span class="mono mute">HT10 · Đánh giá · 2026-11-10</span></h1>
+<p>Độ chắc từng khối lõi theo bằng chứng (không chấm từ tài liệu) và nợ "nút bị chặn chưa nói lý do" (R-BLOCK) theo màn.</p></header>
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-t="khoi">Độ chắc theo khối</button>
+  <button role="tab" aria-selected="false" data-t="man">Nợ R-BLOCK theo màn</button>
+  <button role="tab" aria-selected="false" data-t="viec">Checklist A / B</button>
+</nav>
+<main id="app"></main>
+<div class="demo">Trạng thái (chỉ ở bản mẫu): <select id="demo"><option value="ok">Có dữ liệu</option><option value="loading">Đang tải</option><option value="empty">Chưa đo</option><option value="error">Lỗi</option><option value="forbidden">Không có quyền</option></select></div>
+<script>
+const KHOI = [
+ ['1','Accounting Kernel — sổ chỉ thêm, Nợ = Có, một cửa ghi',3,3,'trigger 0006/0049/0066/0082/0086/0089 · db-rules (19) · SC-KERNEL-1..7 · DG-LEDGER-1..5 đạt (CSDL test)','E2 sửa 7 cột (RV-R1-14) · ghi đè cùng phiên bản (RV-R1-08) · lock băm tới 0033','S004-15b ⏸ · S029-5/34','I'],
+ ['2','Định khoản (posting engine)',2,3,'rule-table / account-resolver · posting_policy_versions · xem trước + L5 · posting-flow (10), quy-tac (12)','TK viết cứng 157 / 112 / 911-421 mà SC-KERNEL-5 không quét · 8 TK cứng mua hàng (RV-R1-07)','S024-33 · S004-18','I IV'],
+ ['3','Khoá kỳ · kết chuyển · số dư đầu kỳ',3,2,'khoá kỳ app + trigger 0082 · R-DIAG-4 · period-locks, closing (15), year-end · C-4 đạt','khoá kỳ đòi chuỗi lành còn todo (S025-11/14, S032-20/28/29) · E11 0 test','PHASE-025/032','I III'],
+ ['4','Master data — định danh, mã có phiên bản, gộp mã',3,2,'0065–0068 items · item-resolver · item-master (18) · 0085 entity_codes (9) · DG ITEM_CODE_CASE_DUP đạt','chưa phiên bản ĐVT / lý do / hệ thống TK · xoá an toàn (S029-12) · gộp đối tượng (S029-20)','PHASE-026/029','0 II'],
+ ['5','Inventory engine — lô, giá vốn liên tục, Gate C',2,1,'costing.service bình quân tháng · 0091 E1 · 0098 lô · 0099 chuyển kho · costing (19), lo-hang (10) · DG-STK đạt','không valuation_layers / FIFO / Gate C / CT-* (RV-R1-17) · 6 action chuyển kho thiếu sideEffects ledger','S025-5..10 · S032-8..20','III'],
+ ['6','Cửa nạp & cổng kiểm — L1–L5, bể chờ, ACC14, Commit Guard',3,3,'preflight L1–L5 · intake_inbox 0059 · guard.ts · intake-* (6 tệp), commit-guard (5) · SC-INTAKE-1 đạt','Commit Guard chỉ báo khi còn lỗi chặn (RV-R1-10, preflight.ts:218) · covers() không xét status (RV-R1-04)','PHASE-031','IV'],
+ ['7','Bộ kiểm chuẩn — SC tĩnh · DG · E09 VN',3,2,'90 check (62 block) · --self-test đạt · 54 DG khớp app · lane DG chạy hôm nay 42/54 đạt','main KHÔNG ĐẠT (5 check đỏ) · CI 0/1 817 lượt xanh · độ phủ luật 43 % · rulepack VN draft','PHASE-020 · R-REV','VIII'],
+ ['8','Document SDK · Workflow · tách nhiệm',2,2,'workflow.ts sod true/warn · 2 YAML · workflow (8), sod-ghi-dau (7) · SC-DOC-7','người lập vẫn tự duyệt (ghi dấu) · transition không ghi quyền / vai (S029-11) · E04 0 test','PHASE-028 W3 · S029-11','III VII'],
+ ['9','Phân quyền — RLS · vai trò · phạm vi',3,2,'RLS 27 migration, 118/124 bảng · tenant-isolation, authz-engine (21), authz-scope (9) · DG TENANT_ISOLATION đạt','authorize chạy bóng, mặc định tắt · requireScope 2 chỗ · 12 route chưa khai quyền (SC-API-3)','S028-6..11','VII'],
+ ['10','Policy Registry · Rule Contracts · thư viện',3,1,'0079 registry chỉ thêm · policy-* (6 tệp) · SC-LIB-1..3 · thu-vien* (5)','RV-R1-04 / RV-R1-12 · Rule Contract mua / bán chưa có (S031-11/15)','PHASE-031 W3','V IX'],
+ ['11','Bằng chứng · audit · lineage · observability',3,2,'audit.ts chuỗi băm · SC-EVD-2/9 · evidence-seal (12), lineage (8) · DG-EVD-1..5 đạt (CSDL test)','thiếu correlation_id (RV-R1-13) · sự kiện dead bị xoá, không API (RV-R1-09) · bút toán → báo cáo (S029-27)','PHASE-019/029','VI'],
+ ['12','Module SDK · ranh giới phân hệ',3,2,'module-sdk (16) · phan-he-ranh-gioi · SC-MOD-1/3, SC-CON-2 đạt','ĐANG ĐỎ: SC-MOD-2 (demo.ts:70 ghi products) · SC-LAYER-1/2 (cli/doi-chieu-dinh-khoan.ts, mua-hang/posting.ts:23) · RV-R1-16/18','PHASE-013/026','VIII'],
+].map(([id,title,hi,lo,ev,gap,work,pil])=>({id,title,hi,lo,ev,gap,work,pil}));
+const MAN = [
+ ['Phiếu thu / chi','CashVoucherForm.tsx',31,'b','dis = readOnly ← canModify (API)','có, trừ phiếu huỷ','API; "người khác lập" UI tự ghép','Phiếu do Nguyễn A lập. Bạn chỉ xem được.','Nhờ kế toán trưởng sửa, hoặc mở khoá dữ liệu ở màn Khoá dữ liệu.'],
+ ['Phiếu kế toán','VoucherForm.tsx',26,'b','readOnly','có (tự làm riêng)','như trên','Kỳ 10/2026 của CN01 đã khoá.','Nhờ kế toán trưởng mở khoá kỳ ở ACC2.'],
+ ['Phiếu kế toán tay','ManualVoucherForm.tsx',25,'b','dis','có (VoucherModal)','như trên','Phiếu đã xóa.','Lập phiếu mới nếu cần ghi lại.'],
+ ['Thiết kế hạch toán','ThietKeHachToanPage.tsx',16,'e + b','readOnly = !editing · rule.state','một phần','UI theo state (API)','Quy tắc đang áp, không sửa thẳng.','Bấm "Đề xuất sửa" để lập bản có ngày hiệu lực mới.'],
+ ['Chương trình bán','ChuongTrinhBanPage.tsx',16,'e','ro = !editing','không','UI','Đang xem.','Bấm Sửa ở chân hộp (cần quyền catalog:write).'],
+ ['Tài sản','AssetPages.tsx',13,'a + b + c','!can(catalog:write) · !value.isNew · canPost','không (nút Ghi bị giấu)','UI','Bạn chưa có quyền sửa danh mục (catalog:write).','Nhờ quản trị cấp quyền ở màn Người dùng.'],
+ ['Tờ khai thuế','StatementPages.tsx',13,'a + b + c','!editable(k) · !d · !can','một phần','final từ API; quyền UI','Tờ khai đã lưu chính thức.','Bấm "Mở lại để sửa" nếu chưa nộp, hoặc lập tờ khai bổ sung.'],
+ ['Kết nối','Connections.tsx',12,'a','!canEdit ← settings:write','một phần (chưa có động từ gỡ)','UI','Bạn chưa có quyền cấu hình (settings:write).','Nhờ kế toán trưởng sửa kết nối, hoặc xin cấp quyền.'],
+ ['Đăng ký max','DangKyMaxPage.tsx',12,'b','locked (huỷ / đã duyệt)','không','UI theo req.status','Phiếu đã duyệt, max đã ghi.','Lập phiếu đăng ký mới (MH17) để đổi max.'],
+ ['Phiếu mua','PhieuMuaForm.tsx',11,'b + e','readOnly = frozen || viewing','không (badge tiêu đề)','UI theo v.status','Phiếu đã duyệt.','Bấm Bỏ duyệt (cần quyền duyệt) rồi sửa.'],
+ ['Phiếu hàng','PhieuHangForm.tsx',10,'b','readOnly ← status approved','không','UI','Phiếu đã duyệt.','Đóng hộp, bấm Bỏ duyệt trên danh sách rồi sửa.'],
+ ['Yêu cầu thanh toán','PaymentRequestsPage.tsx',10,'b + c','!editable (trạng thái)','không','UI','Yêu cầu đang chờ duyệt.','Nhờ người duyệt Từ chối để trả về sửa.'],
+].map(([man,file,no,loai,bien,dai,nguon,why,fix])=>({man,file,no,loai,bien,dai,nguon,why,fix}));
+const LOAI = { a:['thiếu quyền',50], b:['trạng thái / mã cố định',152], c:['chưa đủ dữ liệu',167], d:['thiếu cấu hình',10], e:['chỉ là UI',69], f:['đang xử lý bắt nhầm',19] };
+const A = [['A-1','VoucherModal (thu, chi, kế toán tay)','dải hiện cả khi huỷ (P2); câu từ modifyBlockedReason; nút gỡ',1],['A-2','3 form phiếu Kernel','8 ô hiển thị → readOnly (P3); In / Xoá dòng bọc BlockedHint',1],['A-3','PhieuMua · PhieuHang · PaymentRequests · DangKyMax','một dải theo trạng thái + nút gỡ',1],['A-4','ThietKeHachToan · ChuongTrinhBan','câu chế độ xem; quy tắc đang áp → Đề xuất sửa',1],['A-5','màn có !can(...)','bảng quyền dùng chung; hiện mờ kèm lý do, không giấu nút',1],['A-6','32 trang báo cáo !d','một thành phần "Chưa có số liệu / đang tính"',1],['A-7','HT10 thẻ Đánh giá','bảng độ chắc theo khối + bảng kiểm R-BLOCK',2],['A-8','bốn trạng thái mỗi dải / hint','có lý do · đang xử lý · lỗi máy chủ · không quyền',1]];
+const B = [['B-1','document.service.ts catch → modifyBlockedReason = err.message (P1); xác minh P5','K0'],['B-2','API trả blocked[] cùng allowed[] cho chuyển trạng thái (R-BLOCK-3)','K1'],['B-3','Commit Guard báo khi dấu lệch dù hết lỗi chặn (RV-R1-10); sửa tru-cot G-3','K1'],['B-4','covers() xét status retired (RV-R1-04)','K1'],['B-5','SC-KERNEL-5 quét closing.service / analysis; gỡ 157 / 112 / 911-421','K1'],['B-6','migrations.lock.json khoá băm tới 0100','—'],['B-7','làm xanh main: SC-MOD-2, SC-LAYER-1/2, SC-SIG-1, SC-FLOW-1','—'],['B-8','CI: gỡ khoá thanh toán; chạy test + diagnostics trên CI','—'],['B-9','lane chẩn đoán trên bản cài thật (điều kiện mức 4)','—'],['B-10','SC-UI-1: mẫu BUSY; bỏ qua disabled trần trên ô readOnly','—'],['B-11','bật authorize thật; requireScope mọi route ghi chứng từ','K1'],['B-12','Gate C / valuation_layers / CT-*','K2']];
+
+let tab='khoi', open='';
+const esc=(s)=>String(s).replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lv=(hi,lo)=>`<div class="lv" title="mức ${lo===hi?hi:lo+'–'+hi} / 4">${[1,2,3,4].map(i=>`<span class="${i<=lo?'on':i<=hi?'half':''}"></span>`).join('')}</div>`;
+const chipLv=(hi,lo)=>{const t=lo===hi?String(hi):`${lo}–${hi}`;return `<span class="chip ${hi>=3&&lo>=3?'c-ok':hi>=3?'c-warn':'c-bad'}">mức ${t}</span>`};
+function strip(){
+  const chac=KHOI.filter(k=>k.lo>=3).length, nua=KHOI.filter(k=>k.lo<3&&k.hi>=3).length, chua=KHOI.filter(k=>k.hi<3).length;
+  return `<div class="strip">
+   <div class="card"><div class="k">Khối chắc (mức ≥ 3 toàn phần)</div><div class="v" style="color:var(--ok)">${chac} / 12</div><div class="s">${nua} khối một phần · ${chua} khối chưa chắc</div></div>
+   <div class="card"><div class="k">Đạt mức 4</div><div class="v" style="color:var(--bad)">0</div><div class="s">CI 0 / 1 817 lượt xanh · DG mới chạy ở máy dev</div></div>
+   <div class="card"><div class="k">Bộ kiểm tĩnh (main)</div><div class="v" style="color:var(--bad)">KHÔNG ĐẠT</div><div class="s">98,6 A · 5 check đỏ · phủ luật 43 %</div></div>
+   <div class="card"><div class="k">Chẩn đoán (CSDL test)</div><div class="v">42 / 54</div><div class="s">9 cảnh báo · 1 không đạt (0100) · 2 planned</div></div>
+   <div class="card"><div class="k">Nợ R-BLOCK</div><div class="v">467</div><div class="s">131 tệp · 12 tệp đầu = 195</div></div>
+  </div>`;
+}
+function khoi(){
+  const rows=KHOI.map(k=>`<tr class="row" data-o="${k.id}"><td><b>${k.id}</b></td><td>${esc(k.title)}<div class="mute" style="font-size:12px">trụ cột ${k.pil}</div></td><td>${lv(k.hi,k.lo)}${chipLv(k.hi,k.lo)}</td><td style="font-size:12.5px">${esc(k.ev)}</td><td style="font-size:12.5px">${esc(k.gap)}</td><td><span class="pill">${esc(k.work)}</span></td></tr>`+(open===k.id?`<tr class="detail"><td colspan="6"><b>Để lên mức 4:</b> chạy lane chẩn đoán trên bản cài thật + một lượt CI xanh có test. <b>Để lên mức 3 toàn phần:</b> đóng các lỗ ở cột "Còn mở". Xem §1 tài liệu đi kèm.</td></tr>`:'')).join('');
+  const cards=KHOI.map(k=>`<div class="card"><b>${k.id}. ${esc(k.title)}</b><div style="margin:4px 0">${lv(k.hi,k.lo)} ${chipLv(k.hi,k.lo)}</div><div class="mute" style="font-size:12px">${esc(k.gap)}</div></div>`).join('');
+  return strip()+`<div class="table-wrap resp"><table><thead><tr><th>#</th><th>Khối</th><th>Mức 0–4</th><th>Bằng chứng (tệp · test · check · DG)</th><th>Còn mở</th><th>Việc</th></tr></thead><tbody>${rows}</tbody></table></div><div class="cards">${cards}</div>
+  <p class="mute" style="font-size:12px">Ô nửa màu = khối có phần con lệch nhau (vd mặt hàng 3, đối tượng 2). Không chấm từ tài liệu: mỗi mức đều dẫn tệp / test / check có thật. Bấm dòng để xem điều kiện lên mức.</p>`;
+}
+function man(){
+  const f=window.__loai||'';
+  const rows=MAN.filter(m=>!f||m.loai.includes(f)).map(m=>`<tr class="row" data-o="${m.file}"><td><b>${esc(m.man)}</b><div class="mono mute" style="font-size:11.5px">${m.file}</div></td><td style="text-align:right">${m.no}</td><td>${m.loai.split(' + ').map(l=>`<span class="chip c-info" title="${LOAI[l]?.[0]??''}">${l}</span>`).join('')}</td><td class="mono" style="font-size:12px">${esc(m.bien)}</td><td>${m.dai.startsWith('có')?'<span class="chip c-ok">'+esc(m.dai)+'</span>':m.dai.startsWith('một')?'<span class="chip c-warn">'+esc(m.dai)+'</span>':'<span class="chip c-bad">'+esc(m.dai)+'</span>'}</td><td style="font-size:12px">${esc(m.nguon)}</td>
+   <td><span class="hint" tabindex="0"><button class="btn" disabled aria-describedby="t-${m.no}">Ghi</button><span class="tip" role="tooltip" id="t-${m.no}"><b>Vì sao:</b> ${esc(m.why)}<br><b>Cách gỡ:</b> ${esc(m.fix)}<br><a href="#">Mở màn để gỡ →</a></span></span></td></tr>`
+   +(open===m.file?`<tr class="detail"><td colspan="7"><b>Dải đầu khối đề xuất (R-BLOCK-4):</b> <span class="chip c-warn">⚠</span> ${esc(m.why)} ${esc(m.fix)} &nbsp;<button class="btn">Nút gỡ</button><div class="mute" style="font-size:12px;margin-top:6px">Chi tiết từng biểu thức: baseline.json → SC-UI-1 → ${m.file}</div></td></tr>`:'')).join('');
+  const cards=MAN.map(m=>`<div class="card"><b>${esc(m.man)}</b> <span class="pill">${m.no}</span><div class="mono mute" style="font-size:11.5px">${m.file}</div><div style="margin-top:4px"><b>Vì sao:</b> ${esc(m.why)}<br><b>Cách gỡ:</b> ${esc(m.fix)}</div></div>`).join('');
+  const tong=Object.entries(LOAI).map(([k,[t,n]])=>`<button class="btn ${f===k?'pri':''}" data-l="${k}">${k} · ${t} <b>${n}</b></button>`).join(' ');
+  return `<div class="toolbar">${tong}<span class="spacer"></span><button class="btn" data-l="">Tất cả</button></div>
+  <div class="table-wrap resp"><table><thead><tr><th>Màn</th><th>Nợ</th><th>Loại</th><th>Biến gốc</th><th>Dải đầu khối</th><th>Nguồn lý do</th><th>Mẫu BlockedHint (rê / chạm)</th></tr></thead><tbody>${rows}</tbody></table></div><div class="cards">${cards}</div>
+  <p class="mute" style="font-size:12px">Cột cuối là nút mờ thật dùng BlockedHint: rê chuột, Tab hoặc chạm để thấy "Vì sao / Cách gỡ". Loại: a quyền · b trạng thái · c chưa đủ dữ liệu · d cấu hình · e chỉ UI · f đang xử lý. Số theo loại là ước lượng toàn 131 tệp (12 tệp đầu đọc mã).</p>`;
+}
+function viec(){
+  return `<h3 style="margin:0 0 6px">Checklist A — UI (lớp cài đặt 1 = ngay trên màn)</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>Màn</th><th>Việc</th><th>Lớp</th><th>Trạng thái</th></tr></thead><tbody>${A.map(r=>`<tr><td class="mono">${r[0]}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${r[3]}</td><td><span class="chip c-mute">☐ chưa</span></td></tr>`).join('')}</tbody></table></div>
+  <h3 style="margin:14px 0 6px">Checklist B — mã</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>Việc</th><th>Mức Kernel</th><th>Trạng thái</th></tr></thead><tbody>${B.map(r=>`<tr><td class="mono">${r[0]}</td><td>${esc(r[1])}</td><td>${r[2]}</td><td><span class="chip c-mute">☐ chưa</span></td></tr>`).join('')}</tbody></table></div>
+  <p class="mute" style="font-size:12px">Thứ tự ≤ 4 bước: (1) B-1 + A-1 + A-2 → ~110 chỗ · (2) A-3 + A-4 → ~70 · (3) bảng quyền + A-5 + B-11 → ~50 · (4) B-3..B-8 để main và CI xanh trước R2.</p>`;
+}
+function render(){
+  const app=document.getElementById('app'); const s=document.getElementById('demo').value;
+  if(s==='loading'){app.innerHTML=`<div class="strip">${'<div class="card"><div class="skel"></div><div class="skel" style="width:60%"></div></div>'.repeat(5)}</div><div class="card"><div class="skel"></div><div class="skel"></div></div>`;return}
+  if(s==='empty'){app.innerHTML=`<div class="state"><h3>Chưa có lượt đo nào</h3><p class="mute">Chạy <code>node tests/conformance/selfcheck.mjs --strict</code> và lane chẩn đoán có CSDL, rồi ghi tài liệu đánh giá vào <code>docs/reviews/</code>.</p></div>`;return}
+  if(s==='error'){app.innerHTML=`<div class="state err"><h3>Không đọc được bảng đánh giá</h3><p>Tệp đánh giá sai khuôn.</p><p class="mute">Mã: <code>VALIDATION_ERROR</code> · Cách sửa: mở tệp, sửa theo khuôn ở docs/reviews/README.md rồi tải lại · Tra cứu: <code>review_board_invalid</code></p><button class="btn pri" onclick="render()">Thử lại</button></div>`;return}
+  if(s==='forbidden'){app.innerHTML=`<div class="state"><h3>Bạn chưa có quyền xem</h3><p class="mute">Cần quyền <code>system:read</code>. Nhờ chủ đơn vị cấp ở màn Người dùng & vai trò.</p></div>`;return}
+  app.innerHTML = tab==='man'?man():tab==='viec'?viec():khoi();
+  app.querySelectorAll('tr.row').forEach(r=>r.onclick=()=>{open=open===r.dataset.o?'':r.dataset.o;render()});
+  app.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{window.__loai=b.dataset.l;render()});
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));tab=b.dataset.t;open='';render()});
+document.getElementById('demo').onchange=render;
+render();
+</script>
+</body>
+</html>
