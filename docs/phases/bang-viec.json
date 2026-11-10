@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 10
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 164
+      "count": 163
     },
     {
       "key": "partial",
@@ -6113,11 +6113,17 @@
     {
       "id": "S034-6",
       "phase": "PHASE-034",
-      "title": "B3b — trường pillars (và pc) cạnh DiagCheck, dòng findings, .check.mjs; scripts/cong-kiem-json.mjs (--kiem) sinh cong-kiem.json cho SC/DG/trigger/Cổng C giữ ch…",
+      "title": "B3b — docs/standard/cong-kiem.json (map họ mã → trụ cột, sửa tay) + scripts/cong-kiem.mjs sinh test / CI / trigger; SC-GATE-1; cổng Trigger và CI có sổ; mức mã…",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b3b-cong-kiem",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-034 · B3b — thẻ Cổng & bộ kiểm đủ tám cổng: docs/standard/cong-kiem.json (họ mã → trụ cột; te…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 15
     },
