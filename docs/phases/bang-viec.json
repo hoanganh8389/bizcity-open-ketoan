@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 11
+      "count": 10
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 287
+      "count": 288
     }
   ],
   "items": [
@@ -3015,15 +3015,9 @@
       "phase": "PHASE-022",
       "title": "R-BLOCK (RULE-BLOCKED, chủ dự án 2026-11-10): thành phần BlockedHint (lý do + cách gỡ, thấy được khi rê / Tab / chạm) + phép kiểm SC-UI-1 bánh cóc (nút / ô dis…",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
-        "branch": "feat/phase-022-s022-22-blocked-hint",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-022 · S022-22 — R-BLOCK: thành phần BlockedHint + phép kiểm SC-UI-1 (bánh cóc)"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 34
     },

@@ -29,14 +29,14 @@ hành vi đúng.
 
 ## 3. Thành phần dùng chung
 
-- **BlockedHint** (tạo ở bước mã, thư mục components của web) — `blocked?: { why: string; fix?: string; screen?: string; help?: string } | null`:
+- `apps/web/src/components/BlockedHint.tsx` <!-- [2026-11-10 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-22: đã có --> — `blocked?: { why: string; fix?: string; screen?: string; help?: string } | null`:
   có giá trị thì điều khiển mờ, hiện ô giải thích khi rê / focus / chạm, đọc được bằng trình đọc màn hình.
 - Lỗi máy chủ: `RemedyView`, khay Mã tra cứu (PHASE-019, PHASE-022).
 
 ## 4. Đo và chuyển dần
 
 Đo 2026-11-10 (`apps/web/src`, 648 chỗ `disabled`): 82 đang xử lý, 74 có lý do, **492 chặn theo điều kiện chưa có lý do** ở 134 tệp.
-SC-UI-1 là bánh cóc: chỗ cũ vào baseline, chỗ mới phải có lý do. Chủ mỗi màn trả nợ khi chạm tệp; RULE-REVIEW bắt cả chỗ phép kiểm
+SC-UI-1 (`tests/conformance/checks/ui/blocked.check.mjs`) là bánh cóc, nợ 467 chỗ ở `tests/conformance/baseline.json`: chỗ cũ vào baseline, chỗ mới phải có lý do. Chủ mỗi màn trả nợ khi chạm tệp; RULE-REVIEW bắt cả chỗ phép kiểm
 tĩnh không thấy (ô khoá bằng `readOnly`, nút bị giấu).
 
 ## 5. Nhật ký
