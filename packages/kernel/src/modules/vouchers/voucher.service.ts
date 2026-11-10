@@ -42,6 +42,8 @@ import { db, type Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
 import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { writeAudit } from '@bizcity/platform/core/audit';
+// [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1: dấu tự duyệt dùng chung với engine workflow
+import { noteSelfApproval } from '@bizcity/platform/core/workflow';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
 import { settleFromEvent } from '../debts/debt.service.js';
 import type { Account } from '@bizcity/platform/db/types';
@@ -323,6 +325,13 @@ async function approveDraftIn(trx: Db, auth: AuthContext, id: string) {
     await assertDateRules(trx, auth, 'lập', [doc.docDate]);
     await assertActivePartners(trx, auth.tenantId, doc.partnerCodes);
     const entryIds = await postManual(trx, auth, { ...base, branchId: row.branch_id }, doc);
+    // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): người lập tự duyệt phiếu → ghi dấu, chưa chặn
+    // Nháp do trợ lý AI đề xuất thay người dùng (bằng chứng accounting.journal.post có actor_kind = ai) rồi chính người đó duyệt là luồng chuẩn (STD-MCP-6), không phải tự duyệt.
+    if (row.created_by && row.created_by === auth.actor) {
+      const byAi = await trx.selectFrom('audit_logs').select('id').where('tenant_id', '=', auth.tenantId).where('action', '=', 'accounting.journal.post')
+        .where('object_id', '=', row.doc_key).where('actor_kind', '=', 'ai').where('result_ok', '=', true).limit(1).executeTakeFirst();
+      if (!byAi) noteSelfApproval({ objectType: 'accounting.journal', objectId: row.doc_key, verb: 'approve', from: 'pending', to: 'posted', createdBy: row.created_by });
+    }
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.approve`, objectType: 'source_document', objectId: row.doc_key, after: { total: doc.total, proposedBy: row.created_by } });
     return { ...base, approved: true, entryIds };
   }

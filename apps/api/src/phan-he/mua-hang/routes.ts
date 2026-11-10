@@ -186,7 +186,8 @@ export const routesTsWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.purchase.documents-approve', title: 'Duyệt = ghi sổ (409 nếu còn cảnh báo chặn)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): duyệt = ghi sổ → sideEffects có 'ledger' (SC-ACT-2, STD-ACT-9)
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/approve' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
@@ -194,7 +195,8 @@ export const routesTsWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.purchase.documents-override', title: 'Duyệt ngoại lệ vượt hạn mức (bắt buộc lý do)', tags,
-    permission: 'payments:approve', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): duyệt = ghi sổ → sideEffects có 'ledger' (SC-ACT-2, STD-ACT-9)
+    permission: 'payments:approve', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
     input: (z.object({ reason: z.string().trim().min(3, 'Ghi lý do duyệt ngoại lệ') })).merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/override' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },

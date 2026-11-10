@@ -96,6 +96,19 @@ export const checks = [
                              AND k.object_id = a.object_id AND k.after_data->'input'->>'txid' = a.after_data->>'_txid')
           LIMIT 200`,
   }),
+  // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (R-DIAG-9): cùng mã với LEDGER_DIAGNOSTICS — người lập tự duyệt ghi sổ (sod: warn)
+  sqlCheck({
+    id: 'DG-LEDGER-6', code: 'LEDGER_SELF_APPROVED',
+    title: 'Chứng từ ghi sổ được duyệt bởi người khác người lập (tách nhiệm, đang ghi dấu)',
+    rules: ['R-WF-17'], conf: [], tier: 1, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM audit_logs WHERE result_ok AND jsonb_typeof(after_data->'notes'->'audit') = 'array'`,
+    sql: `SELECT t.code AS tenant, (n->>'objectType') || ':' || coalesce(n->>'objectId', '?') AS key,
+                 json_build_object('actor', a.actor, 'action', a.action, 'at', a.created_at) AS detail
+          FROM audit_logs a JOIN tenants t ON t.id = a.tenant_id
+          CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(a.after_data->'notes'->'audit') = 'array' THEN a.after_data->'notes'->'audit' ELSE '[]'::jsonb END) n
+          WHERE a.result_ok AND n->>'action' = 'workflow.sod.self_approve'
+          LIMIT 200`,
+  }),
   sqlCheck({
     id: 'DG-EVENT-1', code: 'EVENT_POSTED_VERSION',
     title: 'Sự việc posted có posted_version = version (sự việc vào qua cửa nạp sổ / phiếu tay)',

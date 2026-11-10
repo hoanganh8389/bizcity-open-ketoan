@@ -4529,7 +4529,7 @@
       "phase": "PHASE-029",
       "title": "Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1",
       "priority": "P1",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",

@@ -19,6 +19,7 @@ import { parse } from 'yaml';
 import { z } from 'zod';
 import { PERMISSIONS, type AuthContext, type Permission } from './auth.js';
 import { Errors } from './errors.js';
+import { currentActionScope } from './audit.js';
 
 export const STATUS_GROUPS = ['draft', 'pending', 'approved', 'done', 'cancelled'] as const;
 export type StatusGroup = (typeof STATUS_GROUPS)[number];
@@ -38,7 +39,8 @@ const transitionSchema = z.object({
   to: stateName.optional(),
   permission: z.union([permission, z.record(stateName, permission)]).optional(),
   levels: z.array(levelSchema).min(2).optional(),
-  sod: z.boolean().default(false),
+  // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): sod: warn — ghi dấu người lập tự chuyển, không chặn
+  sod: z.union([z.boolean(), z.literal('warn')]).default(false),
   owner: permission.optional().describe('Chỉ người lập được chuyển, trừ khi có quyền này'),
   requires: z.array(z.enum(['reason'])).default([]),
   ledger: z.boolean().default(false).describe('Chuyển này nộp / huỷ sự việc kế toán (R-WF-3)'),
@@ -68,7 +70,8 @@ const normalize = (r: RawSpec): WorkflowSpec => ({
 });
 
 /** Chứng từ đang xét: trạng thái, người lập, số cấp duyệt cần (khi có `levels`). */
-export interface WorkflowDoc { status: string; createdBy?: string | null; levelsRequired?: number | null }
+// [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): id để ghi dấu tự duyệt
+export interface WorkflowDoc { id?: string | null; status: string; createdBy?: string | null; levelsRequired?: number | null }
 export interface WorkflowActor { id: string; can(p: Permission): boolean }
 /** Người chuyển lấy từ AuthContext (phân hệ chưa chuyển sang defineAction; trong action dùng ctx.actor.id + ctx.can). */
 export const workflowActor = (auth: AuthContext): WorkflowActor => ({ id: auth.actor, can: (p) => auth.permissions.has(p) });
@@ -77,6 +80,22 @@ export interface WorkflowStep {
   /** Cấp vừa duyệt (1, 2…) khi chuyển có `levels`. */
   level?: number;
   ledger: boolean;
+  // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): người lập tự chuyển ở chuyển sod: warn (đã ghi dấu nếu đang trong action)
+  selfApproved?: boolean;
+}
+
+// [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): dấu tự duyệt dùng chung
+/** Tên dòng nhật ký ghi dấu người lập tự duyệt (sod: warn) — chẩn đoán LEDGER_SELF_APPROVED đọc tên này. */
+export const SELF_APPROVE_NOTE = 'workflow.sod.self_approve';
+/**
+ * Ghi dấu người lập tự duyệt vào ghi chú bằng chứng của action đang chạy (`notes.audit[]`, ACTION §4.4). Không chặn, không ghi
+ * CSDL. Trả false khi không ở trong action (không có bằng chứng để ghi vào) — luồng bật sod: warn phải chạy trong action.
+ */
+export function noteSelfApproval(n: { objectType: string; objectId?: string | null; verb: string; from?: string; to?: string; createdBy: string }): boolean {
+  const scope = currentActionScope();
+  if (!scope) return false;
+  scope.audit.push({ action: SELF_APPROVE_NOTE, objectType: n.objectType, objectId: n.objectId ?? undefined, after: { verb: n.verb, from: n.from, to: n.to, createdBy: n.createdBy } });
+  return true;
 }
 
 /** Kiểm nghĩa (ngoài khuôn): trạng thái tham chiếu có thật, cấp duyệt nối nhau, chuyển chạm sổ đúng chỗ. */
@@ -145,6 +164,13 @@ export class Workflow {
    * VALIDATION_ERROR (thiếu lý do). Trả trạng thái đích; chưa ghi gì.
    */
   plan(verb: string, doc: WorkflowDoc, actor: WorkflowActor, input: { reason?: string } = {}): WorkflowStep {
+    // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): plan ghi dấu tự duyệt; allowed() chỉ hỏi, không ghi
+    const step = this.decide(verb, doc, actor, input);
+    if (step.selfApproved) noteSelfApproval({ objectType: this.spec.type, objectId: doc.id, verb, from: step.from, to: step.to, createdBy: doc.createdBy! });
+    return step;
+  }
+
+  private decide(verb: string, doc: WorkflowDoc, actor: WorkflowActor, input: { reason?: string }): WorkflowStep {
     const t = this.transition(verb);
     const from = doc.status;
     const blocked = () => Errors.conflict(t.blocked[from] ?? t.blocked['*'] ?? `${this.spec.label} đang "${this.label(from)}": không ${t.title.toLowerCase()} được`);
@@ -164,18 +190,19 @@ export class Workflow {
       need = typeof t.permission === 'string' ? t.permission : t.permission![from]!;
     }
     if (!actor.can(need)) throw Errors.forbidden(denied ?? `Bạn không có quyền ${t.title.toLowerCase()} ${this.spec.label.toLowerCase()}`);
-    if (t.sod && doc.createdBy && doc.createdBy === actor.id) throw Errors.forbidden(`Người ${t.title.toLowerCase()} phải khác người lập ${this.spec.label.toLowerCase()} (tách nhiệm)`);
+    const self = !!doc.createdBy && doc.createdBy === actor.id;
+    if (t.sod === true && self) throw Errors.forbidden(`Người ${t.title.toLowerCase()} phải khác người lập ${this.spec.label.toLowerCase()} (tách nhiệm)`);
     if (t.owner && doc.createdBy && doc.createdBy !== actor.id && !actor.can(t.owner)) {
       throw Errors.forbidden(`Bạn chỉ ${t.title.toLowerCase()} được ${this.spec.label.toLowerCase()} do chính mình lập`);
     }
     if (t.requires.includes('reason') && !input.reason?.trim()) throw Errors.validation(`Cần ghi lý do khi ${t.title.toLowerCase()}`);
-    return { verb, from, to, group: this.group(to)!, level, ledger: t.ledger };
+    return { verb, from, to, group: this.group(to)!, level, ledger: t.ledger, ...(t.sod === 'warn' && self ? { selfApproved: true } : {}) };
   }
 
   /** Các chuyển người này làm được với chứng từ này (giao diện hiện nút, AI biết bước kế). */
   allowed(doc: WorkflowDoc, actor: WorkflowActor): string[] {
     return Object.keys(this.spec.transitions).filter((verb) => {
-      try { this.plan(verb, doc, actor, { reason: 'x' }); return true; } catch { return false; }
+      try { this.decide(verb, doc, actor, { reason: 'x' }); return true; } catch { return false; }
     });
   }
 }

@@ -47,7 +47,7 @@ Mức trụ cột lấy từ `docs/standard/tru-cot.json` (`updated` 2026-11-07,
 | IV Một cửa nạp, cổng kiểm, một ngôn ngữ mã | 4 / 1 / 0 / 0 | A6, A7 | 3 / **2** | **G-2…G-5 "đạt" nhưng lỗi Kernel trả sai mã (RV-R1-02) — "một ngôn ngữ mã" đứt ở tầng CSDL → HTTP** |
 | V Chính sách có phiên bản | 2 / 1 / 3 / 1 | A9, A2 | 2 | P-7 lỗi thời (cửa nạp đã nhận tham chiếu) |
 | VI Bằng chứng, quan sát được | 2 / 3 / 0 / 0 | A5, A3 | 2 | khớp |
-| VII Cô lập đơn vị, phân quyền | 2 / 0 / 0 / 2 | A8, A10 | 2 | S-3 / S-4 chưa: khớp RV-R1-11 (SoD) |
+| VII Cô lập đơn vị, phân quyền | 2 / 0 / 0 / 2 | A8, A10 | 2 | S-3 / S-4 một phần: RV-R1-11 tách nhiệm ghi dấu (`sod: warn`, `LEDGER_SELF_APPROVED`, 2026-11-10), chưa chặn |
 | VIII Mở rộng bằng module, kiểm chuẩn | 2 / 1 / 0 / 2 | A1, A4, A11, A12 | 2–3 | khớp (RV-R1-18) |
 
 Nền móng 01–17 (`nen-mong.json`): 1 đạt (08 Command & Event Contracts) · 15 một phần · 1 chưa (14 Semantic Metrics & KPI). Review R1 đồng ý với 08 = đạt (A4 = 3) và với 14 = chưa.
