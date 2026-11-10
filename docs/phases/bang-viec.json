@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 61
+      "count": 62
     },
     {
       "key": "paused",
@@ -5944,15 +5944,9 @@
       "phase": "PHASE-032",
       "title": "Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60), sourceDigest; tuần vắt hai tháng tách hai dòng …",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
-        "branch": "feat/phase-032-b4a-ket-qua-tuan",
-        "state": "đang làm",
-        "since": "2026-11-11",
-        "dot": "PHASE-032 · B4a — thẻ Kết quả từng tuần (Bàn làm việc kế toán): GET /api/v1/system/diagnostics/week…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 40
     },
