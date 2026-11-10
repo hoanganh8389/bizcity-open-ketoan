@@ -86,14 +86,14 @@ export interface DiagResult {
 }
 ```
 
-- Kernel khai `CLOSE_CONDITIONS` (23 dòng) ở `packages/kernel/src/modules/periods/close-conditions.ts`; `apps/api/src/app.ts` đăng ký cạnh `registerDiagnostics`.
+- Kernel khai `CLOSE_CONDITIONS` (23 dòng) ở `packages/kernel/src/modules/periods/close-conditions.ts`; `apps/api/src/app.ts` đăng ký cạnh `registerDiagnostics`. (đề xuất: tệp thêm ở PR mã B2c-2)
 - `runDiagnostics` gộp trường vào từng kết quả. Lượt lưu nguyên trong `diagnostic_runs.checks` (jsonb): **không migration**. Lượt cũ thiếu trường thì màn ghi *chưa gắn điều kiện khoá sổ*.
 - Bảng gắn 46 mã đang có vào PC: [70 §3a](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/70-CHUAN-HOA-BANG-KIEM-KE-TOAN.md).
 - Màn *Việc hôm nay* ghi dưới mỗi việc, bằng lời kế toán: *Điều kiện khoá sổ: Chuyển kho, hàng đang chuyển · kiểm hằng ngày · khi khoá kỳ: để biết*. Việc `none` ghi *Việc vận hành, không thuộc khoá sổ*.
 
 **Ảnh hưởng.** Chỉ thêm trường tuỳ chọn: module chưa khai vẫn chạy, kết quả cũ vẫn đọc được. Khoá kỳ thật (R-DIAG-4), `periods/check`, Khoá thử hôm nay không đổi hành vi. Module tự khai phép kiểm (R-DIAG-15) dùng cùng trường này khi tới S032-38.
 
-**Kiểm bằng.** `apps/api/test/close-conditions.test.ts` (bản test của SC-DIAG-2, phép kiểm tĩnh trong selfcheck làm sau):
+**Kiểm bằng.** `apps/api/test/close-conditions.test.ts` (đề xuất: tệp thêm ở PR mã B2c-2; bản test của SC-DIAG-2, phép kiểm tĩnh trong selfcheck làm sau):
 - mọi phép kiểm đã đăng ký (L1, L3, L5) có `closeRef` là `none` hoặc một PC đã đăng ký;
 - mọi PC có ít nhất một phép kiểm nuôi hoặc có `checkedElsewhere`;
 - mức khi khoá mặc định: `error` → `explain`, `warn` → `note`; đạt và rỗng không có `atClose`;
