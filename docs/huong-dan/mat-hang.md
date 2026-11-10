@@ -4,40 +4,59 @@
 
 > Muốn đổi gì về mặt hàng (tên, ảnh, ĐVT, giá, cấm bán…) thì sửa ở đây, đợi vài phút là cửa hàng thấy.
 
-## Thêm / sửa mặt hàng
+## Thêm / sửa mặt hàng <!-- [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — rà form mặt hàng, tên không trùng, Cận date (đóng góp) -->
 
-Bấm **Thêm**, hoặc bấm đúp một dòng. Form có 4 thẻ, bấm **Ghi** một lần là lưu cả 4.
+Bấm **Thêm**, hoặc bấm đúp một dòng. Bấm **Ghi** một lần là lưu cả các thẻ.
+
+- **Thêm** là thêm **mặt hàng mới (mã cha)**. Màu, size, kẹp quà, hàng tặng, cận date, nội bộ… của mặt hàng đã có thì **không** thêm ở đây: mở mặt hàng đó, bấm **Thêm sản phẩm con**.
+- **Mã mới chỉ gồm chữ số.** Mã cũ còn chữ vẫn dùng bình thường.
+- **Tên không được trùng** với mặt hàng khác (không phân biệt hoa thường, dấu cách thừa), kể cả mặt hàng đã ngừng. Gõ tới đâu báo tới đó, nút Ghi khoá cho tới khi đổi tên.
 
 ### 1. Thông tin
 
 | Ô | Ghi chú |
 |---|---|
-| Nhóm hàng | Chọn tới **nhóm cấp 3** (vd Sữa bột / ABBOTT / Sữa công thức trẻ em). Nhóm quyết định mã hàng. |
-| Mã hàng | Chọn nhóm hàng là **tự sinh** mã kế tiếp (xem *Sinh mã hàng* bên dưới); nút **Sinh mã** để sinh lại. Mã đã lưu không đổi được. |
+| Nhóm hàng | Chọn tới **nhóm cấp 3** (vd Sữa bột / ABBOTT / Sữa công thức trẻ em). Nhóm quyết định mã hàng; ngành, nhãn tự điền. |
+| Mã hàng | Chọn nhóm là **tự sinh** mã kế tiếp; nút **Sinh mã** để sinh lại. Mã đã lưu không sửa ở ô này (dùng nút **Đổi mã**). |
+| Tên hàng | Tên in trên hoá đơn, hiện ở màn bán hàng. Không trùng mặt hàng khác. |
+| Mã hàng cha | Chỉ có ở mặt hàng đã lưu. Mã cha thì liệt kê các mã con. Mã chưa có cha: chỉ chọn khi là **mã cũ của cùng sản phẩm** cần gom vào mã cha. |
+| Biến thể | Chỉ ở mã con. Phần mềm xử lý theo ô này (xem bảng dưới). |
+| Gửi lên thuế | Mọi mặt hàng. Xem *Gửi lên thuế* bên dưới. |
+| Loại hàng | Hàng bán, quà, vật tư… để lọc, báo cáo. |
 | Barcode | Nhiều mã cách nhau dấu `/`. |
-| Tên hàng | Tên in trên hoá đơn, hiện ở màn bán hàng. |
-| Ảnh | Dán đường dẫn ảnh (https://…), ô bên cạnh hiện ảnh xem trước. |
-| Mô tả, xuất xứ, khối lượng, ghi chú | Thông tin thêm. |
+| Ảnh, mô tả, xuất xứ, khối lượng, ghi chú | Thông tin thêm. |
 
 ### Sản phẩm con và Biến thể
 
-Mọi biến thể đều là sản phẩm con: màu, size, hàng nội bộ, kẹp quà… Mở mã cha, bấm **Thêm sản phẩm con**, gõ tên, chọn **Biến thể**, bấm tạo.
+Mở **mã cha**, bấm **Thêm sản phẩm con**, gõ tên, chọn **Biến thể**, bấm **Tạo và thêm tiếp**.
 
-- **Tên đặt tuỳ ý**, ví dụ *Bình sữa xanh L*, *Sữa A hàng tặng*. Phần mềm không đọc tên.
-- **Biến thể** quyết định cách xử lý: *Nội bộ* tự tách khỏi thuế ở quầy bán và hoá đơn; *Thường* là hàng bình thường.
-- **Mã tự cấp** = mã cha + 2 số. Hai số này không mang nghĩa.
-- Đơn vị tính, nhóm hàng, thuế, dấu dưới 24 tháng lấy theo mã cha. Giá bán khai sau.
-- **Mã cha vẫn bán bình thường.** Chỉ tích *chỉ để gom* khi sản phẩm không có bản chung.
+- **Mã tự cấp** = mã cha + 2 số, không mang nghĩa. Mã cha còn chữ thì phải **Đổi mã** sang mã số trước.
+- **Tên** ghi phần phân biệt: *Bình sữa xanh L*, *Grow 900g kẹp bình nước*, *Grow 900g cận date*. Không trùng mặt hàng khác.
+- Đơn vị tính, nhóm hàng, thuế suất, dấu dưới 24 tháng lấy theo mã cha. Giá bán khai sau, ở thẻ Giá bán.
+- Mã con là **mặt hàng riêng**: tồn riêng, giá riêng. Mã cha vẫn bán bình thường (chỉ tích *chỉ để gom* khi sản phẩm không có bản chung).
 
-Ô **Biến thể** sửa được ở thẻ Thông tin. Mã cũ còn đuôi thì ô đã điền sẵn theo đuôi, ví dụ đuôi `Z` là *Nội bộ*. Mọi nơi (quầy bán, hoá đơn, chính sách) xử lý theo ô này, không theo chữ cuối mã.
+| Biến thể | Mã cũ | Dùng khi | Gửi lên thuế |
+|---|---|---|---|
+| Thường | | Màu, size, kiểu đóng gói | Có |
+| Chia giá | K | Hàng tặng chia vào giá hàng bán | Có, sổ thuế theo mã cha |
+| Khuyến mại | M | Hàng tặng người tiêu dùng, 0 đồng | Có hoá đơn thì có; quà không hoá đơn thì bỏ tích |
+| Theo chương trình | T | Hàng có tem, giá khác, bao bì riêng | Có, sổ thuế theo mã cha |
+| Kẹp quà | Q | **1 hàng bán + quà dính kèm, không được tách** | Có, theo hoá đơn NCC |
+| Cận date | B | Hàng sắp hết hạn: giá bán riêng, áp chương trình. Quầy có cả mã thường và mã cận date, nhân viên chọn khi bán | Có, sổ thuế theo mã cha |
+| Nội bộ | Z | Tách hẳn khỏi thuế | Luôn không |
 
-**Loại hàng** (hàng bán, quà, vật tư…) dùng để lọc và báo cáo, không làm đổi định khoản. Mã nào chưa nhận ra thì để trống, người rà tự chọn.
+**Combo** (2 hàng bán trở lên ghép thành bộ) **không** phải sản phẩm con: thêm mặt hàng mới ở nhóm 8 (Hàng Combo) của ngành.
 
-**Gửi lên thuế** (mọi mặt hàng, cả mã cha): mặc định tích. Bỏ tích thì mặt hàng không lên hoá đơn thuế; quầy bán tự tách dòng 0đ sang bill Z, dòng có tiền thì giữ ở bill chính nhưng không đưa lên hoá đơn. Hàng *Nội bộ* luôn bỏ tích, không bật lại được. Mã cha không có ô Biến thể.
+**Quà rời** (gấu bông, bình nước phát riêng) là mặt hàng riêng ở ngành Quà khuyến mại, không gắn vào hàng bán.
 
-**Mặt hàng đã có nhập xuất thì ô Gửi lên thuế bị khoá** (đổi biến thể sang hoặc khỏi *Nội bộ* cũng bị chặn), vì mỗi mã phải đi trọn một đường thuế. Cần đường thuế khác thì tạo sản phẩm con mới. Quà phải dùng mã không gửi thuế.
+### Gửi lên thuế
 
-Đổi mã: biến thể đi theo mặt hàng, ví dụ `110051001Z` đổi thành `11005100103` vẫn là *Nội bộ*. Gộp mã: không gộp hàng Nội bộ với hàng có sang thuế.
+- Mặc định tích. Bỏ tích thì mặt hàng không lên hoá đơn thuế: quầy tự tách dòng 0đ sang bill Z, dòng có tiền giữ ở bill chính nhưng không đưa lên hoá đơn.
+- *Nội bộ* luôn bỏ tích.
+- **Đã có nhập xuất thì khoá**, không đổi biến thể sang *Nội bộ* được: mỗi mã đi trọn một đường thuế. Cần đường thuế khác thì tạo sản phẩm con mới, chuyển hàng bằng phiếu chuyển đổi.
+- Hàng mua có hoá đơn chỉ nhập vào mã gửi thuế; hàng / quà không hoá đơn chỉ nhập vào mã không gửi thuế.
+
+Đổi mã: biến thể đi theo mặt hàng, ví dụ `110051001Z` đổi thành `11005100103` vẫn là *Nội bộ*. Gộp mã: không gộp hàng Nội bộ với hàng có gửi thuế.
 
 ### 2. Đơn vị tính
 
@@ -80,81 +99,54 @@ Thẻ này **chỉ** khai đơn vị tính và quy đổi. Giá bán ở thẻ *
 
 ## Sinh mã hàng
 
-### Quy tắc 
+### Quy tắc
 
 Cây **Nhóm hàng** có 3 cấp: **Ngành → Nhãn (hãng) → Nhóm sản phẩm**. Mã hàng ghép từ mã của 3 cấp + số tự sinh:
 
 | Loại | Cấu trúc | Ví dụ | Đọc là |
 |---|---|---|---|
-| Hàng thường (9 ký tự) | ngành 2 + nhãn 3 + nhóm 1 + số 3 | **11 005 4 057** | Sữa bột · Vinamilk · Sữa người lớn · số 057 |
+| Hàng thường (9 số) | ngành 2 + nhãn 3 + nhóm 1 + số 3 | **11 005 4 057** | Sữa bột · Vinamilk · Sữa người lớn · số 057 |
 | Hàng combo | như trên, nhóm = **8** | 11 005 **8** 001 | combo Vinamilk |
 | Quà khuyến mại | **Q** + nhãn 3 + nhóm 1 + số **4** | **Q 006 1 0017** | quà · Abbott · đồ chơi · số 0017 |
-| Mã biến thể (10 ký tự) | mã thường + **1 chữ đuôi** | 110054057**K** | xem bảng đuôi bên dưới |
+| Sản phẩm con | mã cha + 2 số | 110054057**01** | biến thể ở ô Biến thể, không ở mã |
 
-Chữ đuôi (ký tự thứ 10):
+Số tự sinh = số lớn nhất đang có của mã 9 số cùng tiền tố + 1 (mã con, mã cũ có chữ cuối không làm nhảy số).
 
-| Đuôi | Nghĩa | Tên hàng đặt thế nào |
-|---|---|---|
-| K | Hàng chia giá | Tên hàng thường + " K" |
-| M | Hàng khuyến mại (ghi nhận 0 đồng) | "KM " + tên hàng thường |
-| Q | Hàng kẹp quà KM (bán kèm, không tách) | Tên hàng thường + " Kẹp quà KM" |
-| T | Hàng có tem | Tên hàng thường + " T" |
-| Z | Đuôi riêng đang dùng (≈ 580 mã, nhiều ở đồ chơi / quà) | "(Z) " + tên hàng |
-| B | Đuôi riêng đang dùng (≈ 160 mã) | Tên hàng + " B" |
-| D, C | Đuôi riêng đang dùng (vài chục mã, bỉm / tã) | Tên hàng + " D" / " (C)" |
-| khác (1–3 chữ, vd CB) | Đuôi riêng khác | Tên hàng + " " + đuôi |
-
-Số liệu đuôi theo danh mục mã hàng hiện có (26/10/2026): M ≈ 1.650 mã, Z ≈ 580, T ≈ 490, Q ≈ 470, B ≈ 160, K ≈ 95, D, C vài chục, CB 1. K / M / Q / T là đuôi chuẩn; Z, B, D, C… là quy ước riêng — phần mềm cho dùng, đọc là "mã phụ", sổ thuế nhập theo mã hàng thường (9 ký tự đầu).
-
-Số tự sinh = số lớn nhất đang có của **mã 9 ký tự** cùng tiền tố + 1 (mã có đuôi không làm nhảy số).
+Mã cũ còn chữ cuối (K, M, Q, T, B, Z…) vẫn dùng; ô Biến thể đã điền sẵn theo chữ đó. Phần mềm không đọc chữ cuối mã.
 
 ### Thao tác
 
-1. **Chọn Nhóm hàng**: gõ vài chữ không dấu theo thứ tự tuỳ ý (vd `etsuko sua tam`, `vinamilk sua cong thuc`), Enter. Danh sách chỉ hiện nhóm sản phẩm (cấp 3) nên không chọn nhầm ngành / nhãn.
-2. Phần mềm tự:
-   - sinh **Mã hàng** kế tiếp — dưới ô mã hiện từng đoạn: `Ngành 17 · Nhãn 167 · Nhóm 6 · Số 005`;
-   - điền **Ngành hàng**, **Nhãn hàng** theo cây nhóm và khoá lại (khai một chỗ là nhóm hàng).
-3. Chọn lại nhóm khác: mã và ngành / nhãn đổi theo nhóm mới.
-4. Cần mã biến thể: ô bên cạnh mã chọn **K / M / Q / T** hoặc **Đuôi riêng (Z, B…)** — mã thêm chữ đuôi, tên hàng đặt theo mẫu.
-5. **Muốn mã riêng, không theo quy tắc**: gõ thẳng vào ô Mã hàng.
-   - Mã gõ tay được **giữ nguyên** khi đổi nhóm.
-   - Dưới ô báo "không theo quy tắc mã hàng — vẫn lưu được" hoặc "khác tiền tố của nhóm đã chọn" để kiểm lại.
-   - Bấm **Sinh mã** để quay về mã chuẩn của nhóm.
-6. Mặt hàng đã có → nút **Tạo mã biến thể…** ở chân form: bấm thẻ đuôi (đuôi chuẩn K / M / Q / T, đuôi riêng Z / B / D / C, hoặc **…** gõ đuôi khác 1–3 chữ). Hộp hiện trước mã mới + tên theo mẫu; mã đã có thì thẻ ghi "đã có" và không cho tạo trùng. **Enter** hoặc nút **Tạo mã …** mở form mặt hàng mới đã chép nhóm, nhãn, ĐVT, thuế.
-7. Mã đã lưu **không đổi được** (đã dùng trên chứng từ, tồn kho, giá). Sai mã thì tạo mã mới đúng, ngừng dùng mã cũ (Trạng thái → Ngừng).
+1. **Chọn Nhóm hàng**: gõ vài chữ không dấu theo thứ tự tuỳ ý (vd `etsuko sua tam`, `vinamilk sua cong thuc`), Enter. Danh sách chỉ có nhóm cấp 3.
+2. Phần mềm sinh **Mã hàng** kế tiếp, dưới ô mã hiện từng đoạn `Ngành 17 · Nhãn 167 · Nhóm 6 · Số 005`.
+3. Chọn lại nhóm khác: mã đổi theo nhóm mới.
+4. Gõ tay mã riêng được (chỉ chữ số); mã gõ tay giữ nguyên khi đổi nhóm. Bấm **Sinh mã** để quay về mã chuẩn.
+5. Màu, size, kẹp quà, cận date, nội bộ…: không gõ chữ vào mã, dùng **Thêm sản phẩm con** ở mã cha.
 
-**Đoạn mã của nhóm** (cột *Đoạn mã trong mã hàng* ở **Nhóm hàng (DM11)**, có trong menu Mua hàng → Danh mục mua hàng) chưa khai thì phần mềm tự lo:
-- nhóm đã có mặt hàng: lấy đoạn mã từ các mã hàng đang có trong nhóm;
-- nhóm mới tinh: cấp số kế tiếp sau các nhóm cùng cha (Sữa người lớn là 4 thì Sữa bầu mới là 5).
-- Mã tìm được ghi lại vào nhóm, sửa được ở **Nhóm hàng (DM11)** → ô **Mã ngắn**.
+**Đoạn mã của nhóm** (cột *Đoạn mã trong mã hàng* ở **Nhóm hàng (DM11)**) chưa khai thì phần mềm tự lấy từ các mã đang có trong nhóm; nhóm mới tinh thì cấp số kế tiếp sau các nhóm cùng cha. Sửa được ở DM11 → ô **Mã ngắn**.
 
-### Câu hỏi hay gặp (để trả lời khi họp)
+### Câu hỏi hay gặp
 
-- **"Quy tắc sinh mã của các em là gì?"** — Theo quy tắc mã hàng của công ty: mã = ngành (2) + nhãn (3) + nhóm (1) + số tự sinh (3); quà khuyến mại Q + nhãn + nhóm + 4 số; biến thể thêm chữ đuôi K / M / Q / T (và các đuôi riêng đang dùng Z, B, D, C…). Phần mềm **chỉ đề xuất** mã kế tiếp, người nhập vẫn sửa / gõ tay được.
-- **"Đoạn mã của nhóm lấy ở đâu?"** — Từ chính các mã hàng đang có trong nhóm (vd nhóm Vinamilk – Sữa công thức có 110053024 → 11 · 005 · 3). Nhóm mới chưa có mã nào thì lấy số kế tiếp sau các nhóm cùng cha. Kế toán sửa được ở DM11.
-- **"Số tự sinh tính thế nào?"** — Số lớn nhất của các mã 9 ký tự cùng tiền tố + 1. Mã có đuôi (K, M, Z…) không làm nhảy số.
-- **"Gõ mã khác quy tắc có được không?"** — Được (mã đặc biệt). Phần mềm cảnh báo "không theo quy tắc" nhưng vẫn lưu; trùng mã thì chặn.
-- **"Đổi mã đã lưu?"** — Không (mã đã nằm trên chứng từ, tồn kho, giá). Sai thì tạo mã đúng, ngừng mã cũ.
-- **"Ngành, nhãn có phải chọn lại không?"** — Không. Chọn nhóm sản phẩm (cấp 3) là ngành = cấp 1, nhãn = cấp 2 tự điền. Khuyến mại, hạn mức, thưởng theo nhãn đều dùng nhãn này.
+- **Quy tắc sinh mã?** Mã = ngành (2) + nhãn (3) + nhóm (1) + số (3); quà Q + nhãn + nhóm + 4 số; combo ở nhóm 8. Biến thể là sản phẩm con: mã cha + 2 số.
+- **Sao không thêm chữ cuối như trước?** Chữ cuối không kiểm được, nhập sai một chữ là sai sổ thuế. Ô Biến thể và Gửi lên thuế thì phần mềm kiểm, khoá được.
+- **Kẹp quà khác combo thế nào?** Kẹp quà = 1 hàng bán + quà, không tách, là sản phẩm con. Combo = 2 hàng bán trở lên, tách được (có chứng từ), là mặt hàng riêng nhóm 8.
+- **Đặt tên trùng được không?** Không. Trùng thì quầy, kho dễ chọn nhầm.
 
-### Kiểm thử sinh mã (cho người kiểm thử)
+### Kiểm thử (cho người kiểm thử)
 
 | # | Làm | Kết quả đúng |
 |---|---|---|
-| 1 | Thêm mặt hàng, chọn nhóm `etsuko sua tam` | Mã 17 167 6 + số kế tiếp; Ngành = Đồ dùng cho mẹ & bé, Nhãn = ETSUKO, hai ô bị khoá |
-| 2 | Chọn lại nhóm `vinamilk sua cong thuc` | Mã đổi sang 11 005 3 + số kế tiếp; nhãn đổi thành Vinamilk |
-| 3 | Chọn đuôi **K** | Mã thêm K (10 ký tự); dưới ô hiện "Đuôi K · Chia giá" |
-| 4 | Gõ tay `MA-RIENG-01`, rồi đổi nhóm | Mã giữ `MA-RIENG-01`; báo "không theo quy tắc — vẫn lưu được" |
-| 5 | Bấm **Sinh mã** | Mã quay về mã chuẩn của nhóm đang chọn (giữ đuôi đang chọn) |
-| 6 | Ghi, rồi thêm mặt hàng khác cùng nhóm | Số tự sinh tăng 1 |
-| 7 | Gõ một mã đã có, Ghi | Báo trùng mã, không lưu |
-| 8 | Lưu mã có đuôi (…058K), sinh mã cùng nhóm | Số tự sinh không bị nhảy vì mã có đuôi |
-| 9 | Nhóm quà khuyến mại (ngành Q) | Mã dạng Q + 3 + 1 + 4 số |
-| 10 | Mở mặt hàng đã có → **Tạo mã biến thể…** → bấm thẻ **M** → Enter (thử thêm thẻ của đuôi đã có: báo "đã có", nút Tạo bị khoá) | Form mới: mã = mã cũ + M, tên "KM " + tên cũ, cùng nhóm / ĐVT / thuế |
-| 11 | Nhóm mới tạo chưa có mặt hàng | Mã nhóm tự cấp (số kế tiếp của nhóm cùng cha), số tự sinh 001 |
-| 12 | Chọn đuôi **Z**, rồi **Đuôi khác (gõ 1–3 chữ)** gõ `CB` vào ô hiện ngay bên cạnh | Mã thêm Z (tên "(Z) …"); mã thêm CB, dưới ô hiện "Mã phụ (CB)" |
+| 1 | Thêm mặt hàng, chọn nhóm `etsuko sua tam` | Mã 17 167 6 + số kế tiếp; ngành, nhãn tự điền |
+| 2 | Chọn lại nhóm `vinamilk sua cong thuc` | Mã đổi sang 11 005 3 + số kế tiếp |
+| 3 | Gõ mã `110054057K` | Báo "Mã mới chỉ gồm chữ số", nút Ghi khoá |
+| 4 | Gõ tên trùng một mặt hàng đang có (khác hoa thường) | Báo "Tên này đã dùng cho mã …", nút Ghi khoá |
+| 5 | Ghi, rồi thêm mặt hàng khác cùng nhóm | Số tự sinh tăng 1 |
+| 6 | Gõ một mã đã có, Ghi | Báo trùng mã, không lưu |
+| 7 | Mở mặt hàng → **Thêm sản phẩm con** → tên "… cận date", Biến thể *Cận date* | Mã = mã cha + 01; Gửi lên thuế tích |
+| 8 | Thêm sản phẩm con Biến thể *Nội bộ* | Gửi lên thuế "Không (Nội bộ)", khoá |
+| 9 | Mở mã con đã có nhập xuất, đổi Biến thể | Không chọn được *Nội bộ*; ô Gửi lên thuế khoá |
+| 10 | Mở mã cũ còn chữ (vd …Z) | Nút Thêm sản phẩm con mờ, rê chuột báo phải Đổi mã trước |
 
-Các trường hợp 1–3, 6–9, 11 đã có phép thử tự động (`apps/api/test/sinh-ma-hang.test.ts`).
+Phép thử tự động: `apps/api/test/sinh-ma-hang.test.ts`, `apps/api/test/san-pham-con.test.ts`.
 
 ## Danh sách (DM10)
 
@@ -208,9 +200,9 @@ Thẻ **Lịch sử** hiện từng lần đổi: lúc nào, ai, hiệu lực t�
 
 ## Họ mã (mã cha – mã con)
 
-- Mỗi mặt hàng có ô **Mã hàng cha (họ mã)** ở thẻ *Thông tin* (chỉ 1 cấp). Mã con: mã kẹp quà / khuyến mại / chia giá / Z, B… của cùng sản phẩm, hoặc **mã đặt tên khác nhưng bản chất là sản phẩm ấy** (chọn tay). Mã đang là mã cha thì ô này liệt kê các mã con.
-- **Tự điền theo mã:** tạo mã mới dạng 9 số + đuôi (trừ T) mà mã gốc đã có → tự nhận mã gốc làm mã cha. Nút **Quét cha – con theo mã** (thanh công cụ DM10, cần **mật khẩu công cụ**) quét lại toàn danh mục, **giữ mã cha đã chọn tay**. Nút **Theo mã: …** / **Bỏ** trên form để gán / bỏ nhanh.
-- Đuôi **T (có tem)** đặt riêng với NCC → không tự gộp (muốn gộp thì chọn tay); vẫn đứng cạnh mã gốc vì danh sách sắp theo mã.
+- Chỉ 1 cấp: mã con không có con.
+- Mã con tạo bằng **Thêm sản phẩm con**. Mã cũ cùng sản phẩm (chữ cuối, hoặc đặt tên khác) thì gom bằng ô **Mã hàng cha** ở thẻ Thông tin; mã cũ có chữ cuối có nút gợi ý **Theo mã: …**.
+- Nút **Quét cha – con theo mã** (thanh công cụ DM10, cần **mật khẩu công cụ**) gom lại các mã cũ có chữ cuối, giữ mã cha đã chọn tay.
 - Danh sách xếp **mã con ngay dưới mã cha**, thụt vào (└); mã cha có nhãn **+N**. Phân tích đặt hàng (MH02) cộng dồn cả họ vào mã cha.
 
 ## Hàng không chịu thuế GTGT (KCT)

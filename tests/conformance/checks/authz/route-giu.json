@@ -8,6 +8,7 @@
   },
   "routes": [
     { "route": "POST /api/v1/auth/login", "class": "cong-khai" },
+    { "route": "POST /api/v1/posting-rules/simulate", "class": "quyen", "$comment": "[2026-11-10 05:00 PM Nguyễn Văn Thủy] PHASE-026 — chỉ đọc: định khoản thử phiếu mẫu, không ghi gì; POST vì thân có quy tắc đề xuất (đóng góp)" },
     { "route": "POST /api/v1/auth/wp-sso", "class": "cong-khai" },
     { "route": "POST /api/v1/apps/ticket/exchange", "class": "giao-thuc" },
     { "route": "POST /api/v1/apps/:key/ticket", "class": "tu-phuc-vu" },

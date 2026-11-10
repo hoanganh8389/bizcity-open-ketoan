@@ -40,6 +40,8 @@ Quyền `reports:read`. Tuỳ chọn:
 
 Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm một dòng kết quả, rồi lưu lượt chạy vào `diagnostic_runs` (chỉ thêm, migration 0034).
 
+**Lịch mỗi đêm** <!-- [2026-11-09 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-1: lịch tự chẩn đoán đêm -->: subscriber `core.diagnostics-nightly` (Platform, `system/diagnostics.ts`) nghe `bizcity.clock.daily` (01:00 giờ VN), mỗi đơn vị một lượt L3 cả sổ, lưu `trigger = schedule`, `actor = system:nightly`. Thẻ *Việc hôm nay* ở Bàn làm việc kế toán (HT08) đọc lượt đêm nay nếu có, không thì chạy ngay (PHASE-032 B2c-1).
+
 **Ai khai kiểm nào.** Platform (`modules/system/diagnostics.ts`) giữ sổ đăng ký, bộ chạy và các kiểm L1 chung. Kernel (`modules/ledger/ledger.diagnostics.ts`) khai các kiểm sổ, được đăng ký lúc lắp ráp (`app.ts`). Platform không import Kernel (LAYOUT-1).
 
 | Mã kiểm | Tầng | Kiểm | Mức khi sai | Trong app | Lane bộ kiểm |
@@ -89,7 +91,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `DEBT_MATCH_LEDGER` <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2 --> | L3 | Khoản công nợ còn lại theo (đối tượng, tài khoản) = số dư sổ cái của đối tượng trên tài khoản có khoản công nợ; mẫu `<mã đối tượng>:<tài khoản>` | warn | có | DG-PLAN-1 |
 | `TAX_BOOK_MATCH` | L3 | Sổ hoá đơn = phát sinh 33311 / 1331 theo kỳ | warn | chưa | DG-PLAN-2 |
 | `COST_FILL_OPEN` | L3 | Dòng `cost_fill` còn 0 ở tháng đã qua | warn | không viết: từ khi có phiếu giá vốn tháng, dòng chờ về 0 là bình thường; việc giá vốn tháng đã qua xem `PERIOD_CLOSE_OPEN` | DG-PLAN-3 (giữ chỗ) |
-| `TRANSIT_NONZERO` | L3 | Tài khoản hàng / tiền đang chuyển (tài khoản ngầm định `goods_in_transit`, `cash_in_transit` và tài khoản con) còn số tại ngày cách hôm nay 30 ngày (quy chế nội bộ), toàn đơn vị; mẫu `<tài khoản>@<ngày>` | warn | có | DG-PLAN-4 |
+| `TRANSIT_NONZERO` <!-- [2026-11-09 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2b: định nghĩa còn treo --> | L3 | Tài khoản hàng / tiền đang chuyển (tài khoản ngầm định `goods_in_transit`, `cash_in_transit` và tài khoản con), toàn đơn vị, tại ngày xét: **còn treo** = số dư − Σ phát sinh Nợ trong 30 ngày gần nhất (quy chế nội bộ) ≥ 1 đồng, hoặc số dư ≤ −1 đồng (nơi nhận ghi nhiều hơn nơi xuất). Hàng / tiền đi đường trong 30 ngày là hợp lệ, không báo (PHASE-032 B2b). Mẫu `<tài khoản>:còn treo quá 30 ngày` · `<tài khoản>:nhận nhiều hơn xuất` | warn | có | DG-PLAN-4 |
 
 **Một mã, hai nơi.**
 - Mỗi mã có trong app phải có check DG-* cùng mã ở lane diagnostics (R-DIAG-9). Check **SC-DIAG-1** chặn nếu thiếu.

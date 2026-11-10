@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/rules/purchase.rule.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — gắn nhãn cặp (nghiệp vụ, hàng tặng, chương trình, hình thức) để áp bảng quy tắc định khoản (đóng góp)
 /**
  * Luật định khoản NHẬP MUA HÀNG và TRẢ HÀNG NHÀ CUNG CẤP.
  *
@@ -23,17 +24,20 @@ import type { PurchaseDocument, PurchaseReturnDocument } from '@ketoan/contracts
 import type { DraftLine } from '../../ledger/ledger.types.js';
 import type { PostingPart } from './stock.rule.js';
 import { EntryBuilder } from '../entry-builder.js';
-import type { RuleContext } from './sale.rule.js';
+import { lineTags, type RuleContext } from './sale.rule.js';
 
 export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): PostingPart[] {
   const { resolver, partnerId } = ctx;
   const reason = resolver.reason(doc.reasonCode, 'purchase');
+  const BIZ = 'purchase';
   const payable = resolver.counterOr(reason, 'payable', 'tài khoản phải trả nhà cung cấp');
   const b = new EntryBuilder();
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
+    const tags = lineTags(BIZ, doc.reasonCode, line);
     b.add({
+      tags,
       part: 'goods',
       productSku: line.sku,
       debitAccount: reason.expense_account ?? group.inventory_account,
@@ -44,6 +48,7 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
       description: reason.expense_account ? 'Mua hàng, dịch vụ vào chi phí' : 'Nhập mua hàng',
     });
     b.add({
+      tags,
       part: 'tax',
       productSku: line.sku,
       debitAccount: resolver.inputTaxAccount(line.taxCode, line.taxAmount),
@@ -68,6 +73,7 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
       debitPartnerId: partnerId,
       creditPartnerId: holder ?? partnerId,
       description: `Trả tiền nhà cung cấp (${pay.methodCode})`,
+      tags: { biz: BIZ, reason: doc.reasonCode ?? null, method: pay.methodCode },
     });
     parts.push({ lines: p.toLines(), docNo: pay.reference || doc.docNo, description: `Trả tiền nhập mua ${doc.docNo}`, noInvoice: true, docType: 'supplier_payment' });
   }
@@ -79,12 +85,15 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
 export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleContext): PostingPart[] {
   const { resolver, partnerId } = ctx;
   const reason = resolver.reason(doc.reasonCode, 'purchase_return');
+  const BIZ = 'purchase_return';
   const payable = resolver.counterOr(reason, 'payable', 'tài khoản phải trả nhà cung cấp');
   const b = new EntryBuilder();
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
+    const tags = lineTags(BIZ, doc.reasonCode, line);
     b.add({
+      tags,
       part: 'goods',
       productSku: line.sku,
       debitAccount: payable,
@@ -95,6 +104,7 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
       description: 'Trả hàng nhà cung cấp',
     });
     b.add({
+      tags,
       part: 'tax',
       productSku: line.sku,
       debitAccount: payable,
@@ -119,6 +129,7 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
       debitPartnerId: holder ?? partnerId,
       creditPartnerId: partnerId,
       description: `Nhà cung cấp trả lại tiền (${pay.methodCode})`,
+      tags: { biz: BIZ, reason: doc.reasonCode ?? null, method: pay.methodCode },
     });
     parts.push({ lines: p.toLines(), docNo: pay.reference || doc.docNo, description: `Nhà cung cấp trả lại tiền ${doc.docNo}`, noInvoice: true, docType: 'supplier_payment' });
   }

@@ -123,6 +123,13 @@ export const LAYER_MAP = [
   ['modules/branches/', 'M', 'data/masterdata'],
   // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — modules/org-units/ (sơ đồ tổ chức) cùng lớp M danh mục với chi nhánh (đóng góp)
   ['modules/org-units/', 'M', 'data/masterdata'],
+  // [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — modules/posting-flow/ (thiết kế hạch toán: lý do theo màn, sơ đồ dây chuyền) cùng lớp M danh mục (đóng góp)
+  ['modules/posting-flow/', 'M', 'data/masterdata'],
+  // [2026-11-10 05:00 PM Nguyễn Văn Thủy] PHASE-026 — bảng quy tắc định khoản (chạy thử gọi Kernel) và chương trình bán có hạn mức: lớp module (đóng góp)
+  ['modules/posting-flow/posting-rules.service.ts', 'D', 'modules/ke-toan'],
+  ['modules/posting-flow/posting-rules.routes.ts', 'D', 'modules/ke-toan'],
+  ['modules/sale-programs/', 'D', 'modules/ban-hang'],
+  ['modules/lots/', 'D', 'modules/kho'],
   ['modules/warehouses/', 'M', 'data/masterdata'],
   ['modules/unit-names/', 'M', 'data/masterdata'],
   ['modules/bank-accounts/', 'M', 'data/masterdata'],

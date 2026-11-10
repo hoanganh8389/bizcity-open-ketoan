@@ -358,6 +358,9 @@ export const policyInputSchema = z.object({
   priority: z.number().int().default(0),
   isActive: z.boolean().default(true),
   rule: z.record(z.unknown()),
+  // [2026-11-10 03:30 PM Nguyễn Văn Thủy] PHASE-026 — loại chương trình (program_kinds, 0096) để quy tắc định khoản phân biệt hàng tặng / giảm giá theo chương trình (đóng góp)
+  /** Loại chương trình (KM-NCC…): quy tắc định khoản đặt điều kiện theo loại. Không thuộc nội dung chính sách (không sinh bản mới). */
+  programKind: z.string().trim().max(32).nullish(),
 }).superRefine((p, ctx) => {
   const r = RULE_SCHEMAS[p.kind].safeParse(p.rule);
   if (!r.success) ctx.addIssue({ code: 'custom', path: ['rule'], message: `Nội dung chính sách chưa đúng: ${r.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}` });
@@ -380,7 +383,7 @@ export async function listPolicies(trx: Db, tenantId: string, opts: { exclude?: 
     return {
       id: String(r.id), code: r.code, kind: r.kind as PolicyKind, name: r.name, scope: (r.scope ?? {}) as Policy['scope'],
       validFrom: r.valid_from ? String(r.valid_from).slice(0, 10) : undefined, validTo: r.valid_to ? String(r.valid_to).slice(0, 10) : undefined,
-      priority: r.priority, isActive: r.is_active, rule: (r.rule ?? {}) as Record<string, unknown>,
+      priority: r.priority, isActive: r.is_active, rule: (r.rule ?? {}) as Record<string, unknown>, programKind: (r as { program_kind?: string | null }).program_kind ?? null,
       createdBy: r.created_by, createdAt: new Date(r.created_at as unknown as string).toISOString(), updatedBy: r.updated_by, updatedAt: new Date(r.updated_at as unknown as string).toISOString(),
       ...(vs.length ? { version: vs.at(-1)!.version, contentHash: vs.at(-1)!.hash, versions: vs } : {}),
     };
@@ -494,6 +497,11 @@ async function withGiftRatios(trx: Db, tenantId: string, p: PolicyInput): Promis
 
 export async function savePolicy(trx: Db, tenantId: string, actor: string, input: PolicyInput, id?: string, isDemo = false, opts: PolicyVersionOpts = {}): Promise<string> {
   const saved = await savePolicyRow(trx, tenantId, actor, input, id, isDemo);
+  if (input.programKind !== undefined) {
+    const kind = input.programKind?.trim() || null;
+    if (kind && !(await sql<{ code: string }>`SELECT code FROM program_kinds WHERE tenant_id = ${tenantId} AND code = ${kind}`.execute(trx)).rows.length) throw Errors.validation(`Loại chương trình ${kind} chưa có`);
+    await sql`UPDATE purchase_policies SET program_kind = ${kind} WHERE tenant_id = ${tenantId} AND id = ${saved.id}`.execute(trx);
+  }
   await recordPolicyVersion(trx, tenantId, actor, saved.id, saved.p, opts);
   return saved.id;
 }

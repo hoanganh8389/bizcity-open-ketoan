@@ -63,6 +63,22 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không. Bản đã `retired` trước đây vẫn có `effective_to = NULL` (không có ngày ngừng đáng tin) — việc gỡ nợ là S031-32.
 - **Bảo mật:** không đổi.
 
+### Thiết kế hạch toán: lý do theo màn, sơ đồ dây chuyền định khoản (PHASE-026) <!-- [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — thiết kế hạch toán (đóng góp) -->
+
+- **Thêm:** màn **ACC92 Thiết kế hạch toán**: (1) mỗi màn nghiệp vụ gán vài lý do (bảng `screen_reasons`, migration 0095), lý do chọn sẵn; Phiếu thu / chi chỉ hiện lý do đã gán; (2) sơ đồ dây chuyền Chứng từ → Nguồn tài khoản (lý do, nhóm hạch toán, thuế, hình thức, ngầm định) → Bút toán → Sổ cái, đường liền = nguồn đang dùng, nét đứt = nguồn trống / dự phòng, kiểm Nợ = Có, bấm ô để sửa tài khoản qua API cấu hình có sẵn, hiện ảnh hưởng (số mặt hàng, màn, bút toán); (3) đổi nhóm hạch toán hàng loạt theo nhóm hàng có xem trước. (4) thẻ **Lịch sử thay đổi**: mỗi lần lưu lý do, nhóm hạch toán, ngầm định, loại thuế, hình thức, lý do theo màn, đổi nhóm hàng loạt — ai, lúc nào, từng ô trước → sau (`GET /api/v1/posting-flow/history`, đọc nhật ký thao tác, không thêm bảng). API `/api/v1/posting-flow/*`; thư viện sơ đồ `@xyflow/react` 12.10.1.
+- **Đổi:** không đổi bộ định khoản: sơ đồ đọc đúng thứ tự tra tài khoản của lõi; test đối chiếu với bút toán thật.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0095 (gán sẵn lý do mặc định cho từng màn).
+
+### Form mặt hàng gọn hơn, tên không trùng, biến thể Cận date (PHASE-026) <!-- [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — rà form mặt hàng (đóng góp) -->
+
+- **Thêm:** tên mặt hàng không được trùng (gộp khoảng trắng, không phân biệt hoa thường, kể cả mặt hàng đã ngừng): `sameNameProduct`, kiểm ở form, Excel, thêm sản phẩm con khi thêm mới / đổi tên; `GET /api/v1/catalog/name-check` để form báo khi gõ. Dữ liệu cũ đã trùng vẫn sửa được ô khác. Biến thể **Cận date** (`expiry`, mã B cũ): hàng sắp hết hạn, giá bán riêng, gửi thuế theo mã cha; migration 0094 chuyển mã B đang có từ `legacy` sang.
+- **Đổi:** form DM10: Nhóm → Mã → Tên lên đầu; thêm mới là mã cha (không còn ô Mã hàng cha), mã mới chỉ chữ số; Biến thể có câu giải thích, không chọn được Nội bộ khi đã có nhập xuất và đang gửi thuế; nút Thêm sản phẩm con hiện mờ kèm lý do ở mã còn chữ. Hướng dẫn `mat-hang.md` viết lại phần sinh mã, sản phẩm con.
+- **Sửa:** sản phẩm con trước chỉ chặn trùng tên trong cùng họ.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0094.
+
 ### Mua hàng đi đúng đường thuế theo mã (PHASE-026) <!-- [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — đường thuế mua hàng (đóng góp) -->
 
 - **Thêm:** `taxPathChecks` (mua-hang-domain): hàng mua có hoá đơn vào mã không gửi thuế → chặn `tax_path_invoice`; hàng / quà không hoá đơn vào mã gửi thuế → chặn `tax_path_gift` (chỉ mã quà cùng họ, chưa có thì báo khai báo danh mục); quà có hoá đơn / xuất quà bằng mã gửi thuế → nhắc `tax_path_invoiced_gift`. `noTaxFamily` gợi ý mã. Kịch bản NT-MH-003, test `mua-hang-duong-thue`.

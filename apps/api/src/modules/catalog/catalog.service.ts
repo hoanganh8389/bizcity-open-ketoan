@@ -187,13 +187,35 @@ export async function getProduct(trx: Db, tenantId: string, sku: string) {
   };
 }
 
+/** Tên để so trùng: gộp khoảng trắng, không phân biệt hoa thường. */
+export const normName = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+/** Mặt hàng khác đang mang tên này (so như normName), kể cả mặt hàng đã ngừng. null = tên chưa ai dùng. */
+export async function sameNameProduct(trx: Db, tenantId: string, name: string, exceptSku = ''): Promise<{ sku: string; name: string; isActive: boolean } | null> {
+  const n = normName(name);
+  if (!n) return null;
+  const r = await sql<{ sku: string; name: string; is_active: boolean }>`
+    SELECT sku, name, is_active FROM products
+     WHERE tenant_id = ${tenantId} AND sku <> ${exceptSku}
+       AND lower(regexp_replace(trim(name), '\\s+', ' ', 'g')) = ${n}
+     ORDER BY is_active DESC, sku LIMIT 1`.execute(trx);
+  const x = r.rows[0];
+  return x ? { sku: x.sku, name: x.name, isActive: x.is_active } : null;
+}
+
 /**
  * Lưu trọn một mặt hàng. units gửi kèm = THAY cả bộ đơn vị tính; prices gửi kèm = ghi các ô giá gửi lên (price null =
  * xoá ô giá đó). Dòng giá của đơn vị không còn trong bộ đơn vị tính bị xoá theo.
  */
-export async function saveProduct(trx: Db, tenantId: string, actor: string, sku: string, b: ProductInput, opts: { isNew?: boolean; source?: string; quiet?: boolean } = {}) {
-  const exists = await trx.selectFrom('products').select('id').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
+export async function saveProduct(trx: Db, tenantId: string, actor: string, sku: string, b: ProductInput, opts: { isNew?: boolean; source?: string; quiet?: boolean; checkName?: boolean } = {}) {
+  const exists = await trx.selectFrom('products').select(['id', 'name']).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (opts.isNew && exists) throw Errors.conflict(`Mã hàng ${sku} đã có`);
+  // [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng (đóng góp): kiểm khi thêm mới hoặc đổi tên, qua màn / Excel / thêm sản phẩm con.
+  // Dữ liệu cũ đã trùng tên vẫn sửa được các ô khác (không đổi tên thì không kiểm). Nạp từ hệ thống bán hàng không kiểm.
+  if (opts.checkName && b.name !== undefined && (!exists || normName(exists.name) !== normName(b.name))) {
+    const same = await sameNameProduct(trx, tenantId, b.name, sku);
+    if (same) throw Errors.conflict(`Tên "${same.name}" đã dùng cho mã ${same.sku}${same.isActive ? '' : ' (đã ngừng theo dõi)'}. Đặt tên khác để quầy, kho không chọn nhầm`);
+  }
   if (b.units) {
     // Tên ĐVT theo đúng cách viết trong danh mục ĐVT ("hộp" → "Hộp"); tên mới giữ nguyên, CSDL tự thêm vào danh mục.
     const known = new Map((await trx.selectFrom('unit_names').select('name').where('tenant_id', '=', tenantId).execute()).map((r) => [r.name.toLowerCase(), r.name]));

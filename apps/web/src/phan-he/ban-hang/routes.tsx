@@ -8,6 +8,8 @@ import { SalesDetailPage } from './sales/SalesDetailPage';
 import { SalesPaymentsPage } from './sales/SalesPaymentsPage';
 import { SalesReceiptsPage } from './sales/SalesReceiptsPage';
 import { SalesSummaryPage } from './sales/SalesSummaryPage';
+// [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — chương trình bán có hạn mức (đóng góp)
+import { ChuongTrinhBanPage } from '@/features/sale-programs/ChuongTrinhBanPage';
 
 export const banHangRoutes = (
   <>
@@ -17,5 +19,6 @@ export const banHangRoutes = (
     <Route path="ban-hang/tong-hop" element={<SalesSummaryPage />} />
     <Route path="ban-hang/thu-tien" element={<SalesPaymentsPage />} />
     <Route path="ban-hang/thu-tien-ban-hang" element={<SalesReceiptsPage />} />
+    <Route path="ban-hang/chuong-trinh" element={<ChuongTrinhBanPage />} />
   </>
 );

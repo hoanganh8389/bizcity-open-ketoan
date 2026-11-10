@@ -52,6 +52,13 @@ import { productRoutes } from '../modules/products/product.routes.js';
 import { catalogRoutes } from '../modules/catalog/catalog.routes.js';
 // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S024-11: action và đọc mặt hàng theo định danh (đóng góp)
 import { itemRoutes } from '../modules/catalog/item.routes.js';
+// [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — thiết kế hạch toán: lý do theo màn, sơ đồ dây chuyền (đóng góp)
+import { postingFlowRoutes } from '../modules/posting-flow/posting-flow.routes.js';
+// [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — chương trình bán có hạn mức thay mã phụ (đóng góp)
+import { saleProgramRoutes } from '../modules/sale-programs/sale-programs.routes.js';
+import { postingRuleRoutes } from '../modules/posting-flow/posting-rules.routes.js';
+// [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — lô hàng (đóng góp)
+import { lotRoutes } from '../modules/lots/lots.routes.js';
 import { voucherTemplateRoutes } from '../modules/voucher-templates/voucher-template.routes.js';
 import { signatureRoutes } from '../modules/signatures/signature.routes.js';
 import { printTemplateRoutes } from '../modules/print-templates/print-template.routes.js';
@@ -61,13 +68,15 @@ import { reportRoutes } from './ke-toan/reports/report.routes.js';
 import { departmentReportRoutes } from './ke-toan/reports/department-reports.js';
 import { grossProfitRoutes } from './ban-hang/gross-profit.js';
 import { stockTransferRoutes } from './kho/stock-transfers.js';
+// [2026-11-10 08:30 PM Nguyễn Văn Thủy] PHASE-026 — phiếu chuyển kho lập trên phần mềm kế toán (KHO01) (đóng góp)
+import { transferDocRoutes } from './kho/phieu-chuyen-kho.js';
 import { inventoryReportRoutes } from '../modules/inventory/inventory-report.routes.js';
 
 export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
   accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
-  productRoutes, catalogRoutes, itemRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
+  productRoutes, catalogRoutes, itemRoutes, postingFlowRoutes, postingRuleRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,
   intakeRoutes,
   // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: CORE_ROUTES thêm lineageRoutes (truy vết vòng đời mặt hàng, ADR-0021)
@@ -77,4 +86,4 @@ export const CORE_ROUTES: Routes[] = [
 ];
 
 export const LEDGER: Routes[] = [ledgerRoutes, reportRoutes, debtRoutes];
-export const GOODS: Routes[] = [inventoryRoutes, inventoryReportRoutes, grossProfitRoutes, stockTransferRoutes, departmentReportRoutes];
+export const GOODS: Routes[] = [inventoryRoutes, inventoryReportRoutes, grossProfitRoutes, stockTransferRoutes, transferDocRoutes, departmentReportRoutes];

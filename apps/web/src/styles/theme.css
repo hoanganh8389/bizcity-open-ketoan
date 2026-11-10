@@ -580,6 +580,10 @@ td .picker > .input, .modal-body .picker > .input { width: 100%; }
 .defaults-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 8px 28px; max-width: 1100px; }
 .defaults-row { display: grid; grid-template-columns: 280px 1fr; align-items: center; gap: 10px; }
 .defaults-row > label { font-size: 13px; color: var(--ink-700); }
+/* Ô tài khoản lấp đầy cột: tên tài khoản nằm gọn trong ô, không tràn ra ngoài viền. */
+.defaults-row > .picker { display: block; min-width: 0; }
+.defaults-row > .picker > .input { width: 100%; padding-right: 8px; }
+.defaults-row > .picker > .picker-name { max-width: calc(100% - 70px); }
 
 /* ACC17 Mặt hàng – tài khoản: cây nhóm hàng + lưới sửa trên ô */
 .acc17 { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 10px; align-items: start; }

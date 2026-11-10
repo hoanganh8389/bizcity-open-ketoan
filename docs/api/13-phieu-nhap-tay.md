@@ -1,6 +1,8 @@
 # 13. Phiếu nhập tay trong phần mềm — hợp đồng đề xuất (`/api/v1/trade-documents`)
 <!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
+> **Phiếu chuyển kho (KHO01) đã có API thật riêng** `/api/v1/kho/transfers` — xem [nghiệp vụ 17](../nghiep-vu/17-chuyen-kho.md).
+>
 > **Mua hàng, trả hàng NCC không dùng hợp đồng này**: làm ở phân hệ Mua hàng, API thật `/api/v1/purchase/*` — xem [14-mua-hang](14-mua-hang.md).
 
 Các màn **Phiếu bán hàng (BH10), Hàng bán trả lại (BH11), Phiếu chuyển kho (KHO01)** đang chạy bằng **dữ liệu giả** (JSON mẫu ở trình duyệt). Tài liệu này là **hợp đồng** để viết API thật. Viết đúng hợp đồng thì giao diện **không phải sửa gì**: vào **API → Nguồn dữ liệu màn hình (API03)**, bật "API thật" cho loại phiếu là chạy.

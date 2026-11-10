@@ -16,7 +16,7 @@
  * "Tìm chứng từ": chọn chứng từ còn nợ của khách hàng / nhà cung cấp, mỗi chứng từ thành một dòng trả đúng số còn nợ;
  *   dòng mang chứng từ nào thì phiếu thanh toán cho khoản công nợ đó.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileSearch, Plus, Trash2, X } from 'lucide-react';
 import { VOUCHER_MONEY, isMoneyAccountFor, type VoucherInput, type VoucherTemplateInput, type VoucherType } from '@ketoan/contracts';
@@ -89,7 +89,13 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.code, a])), [accounts]);
   const moneyAccounts = useMemo(() => accounts.filter((a) => isMoneyAccountFor(type, a.code)), [accounts, type]);
   const reasonKind = moneySide === 'debit' ? 'receipt' : 'payment';
-  const reasonList = reasons.filter((r) => r.kind === reasonKind && (r.isActive || r.code === pv?.reasonCode));
+  // [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — lý do theo màn (ACC92): màn đã gán lý do thì chỉ hiện các lý do đó (đóng góp)
+  const screenKey = moneySide === 'debit' ? 'cash_receipt' : 'cash_payment';
+  const screen = useQuery({ queryKey: ['posting-flow', 'screen-reasons', screenKey], staleTime: 60_000,
+    queryFn: () => api.get<{ assigned: boolean; reasons: { code: string; isDefault: boolean }[] }>(`/api/v1/posting-flow/screens/${screenKey}/reasons`) }).data;
+  const allowed = screen?.assigned ? new Set(screen.reasons.map((r) => r.code)) : null;
+  const reasonList = reasons.filter((r) => r.kind === reasonKind && (r.isActive || r.code === pv?.reasonCode) && (!allowed || allowed.has(r.code) || r.code === pv?.reasonCode));
+  const screenDefault = screen?.assigned ? screen.reasons.find((r) => r.isDefault)?.code : undefined;
 
   const [h, setH] = useState({
     docNo: existing?.docNo ?? '',
@@ -107,6 +113,8 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
     description: p?.description ?? '',
   });
   const set = (patch: Partial<typeof h>) => setH((x) => ({ ...x, ...patch }));
+  // Phiếu mới: chọn sẵn lý do mặc định của màn (ACC92).
+  useEffect(() => { if (!existing && screenDefault) setH((x) => (x.reasonCode ? x : { ...x, reasonCode: screenDefault })); }, [existing, screenDefault]);
   const branchCode = h.branchCode || branches?.find((b) => b.isActive)?.code || '';
   const [rows, setRows] = useState<Row[]>(() =>
     (p?.lines ?? []).map((l) =>

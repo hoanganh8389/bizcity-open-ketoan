@@ -60,11 +60,7 @@ export async function addChildProduct(trx: Db, tenantId: string, actor: string, 
   const kind = kinds.find((k) => k.code === i.variantCode);
   if (!kind || !kind.isActive) throw Errors.validation(`Biến thể ${i.variantCode} không có hoặc đã ngừng dùng`);
 
-  const dup = await sql<{ sku: string }>`
-    SELECT sku FROM products WHERE tenant_id = ${tenantId} AND parent_sku = ${parentSku}
-       AND lower(regexp_replace(trim(name), '\\s+', ' ', 'g')) = lower(${name}) AND is_active LIMIT 1`.execute(trx);
-  if (dup.rows[0]) throw Errors.conflict(`Sản phẩm con cùng tên đã có: ${dup.rows[0].sku}`);
-
+  // Tên không trùng với mọi mặt hàng (không chỉ trong họ): saveProduct kiểm (checkName).
   const sku = await nextChildSku(trx, tenantId, parentSku);
   // Lấy theo cha mọi thứ ảnh hưởng thuế và phân loại. Giá bán để trống như mã biến thể cũ.
   await saveProduct(trx, tenantId, actor, sku, {
@@ -76,7 +72,7 @@ export async function addChildProduct(trx: Db, tenantId: string, actor: string, 
     origin: parent.origin, weightKg: parent.weight_kg === null ? null : Number(parent.weight_kg),
     isMain: parent.is_main, isUnder24m: parent.is_under_24m, exportAdjust: parent.export_adjust,
     units: undefined, variantCode: kind.code, sendToTax: i.sendToTax ?? true,
-  }, { isNew: true, source: 'manual' });
+  }, { isNew: true, source: 'manual', checkName: true });
   if (i.noSaleParent && !parent.no_sale) {
     await trx.updateTable('products').set({ no_sale: true, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', parentSku).execute();
   }

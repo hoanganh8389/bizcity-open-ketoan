@@ -33,7 +33,7 @@ afterAll(async () => {
 describe('NT-MH-002 — ô Biến thể theo mã cũ', () => {
   it.each([
     ['110051001', 'normal'], ['110051001K', 'share'], ['110051001M', 'promo'], ['110051001T', 'program'], ['110051001Q', 'clip'],
-    ['110051001Z', 'internal'], ['110051001B', 'legacy'], ['Q05940063', 'normal'], ['Q05940063Z', 'internal'], ['VQMM0006Z', 'internal'], ['ComboBimboDK', 'normal'], ['TS302B', 'normal'],
+    ['110051001Z', 'internal'], ['110051001B', 'expiry'], ['110051001C', 'legacy'], ['Q05940063', 'normal'], ['Q05940063Z', 'internal'], ['VQMM0006Z', 'internal'], ['ComboBimboDK', 'normal'], ['TS302B', 'normal'],
   ])('%s → %s', async (sku, variant) => {
     expect((await put(sku)).status).toBe(200);
     expect(await variantOf(sku)).toBe(variant);
@@ -49,7 +49,7 @@ describe('NT-MH-002 — ô Biến thể theo mã cũ', () => {
   it('danh mục biến thể có đủ, Nội bộ không bao giờ sang thuế', async () => {
     const r = await call(ctx, 'GET', '/api/v1/items/variant-kinds');
     const kinds = r.body.data as { code: string; taxFlow: string; legacySuffix: string }[];
-    expect(kinds.map((k) => k.code)).toEqual(['normal', 'share', 'promo', 'program', 'clip', 'internal', 'legacy']);
+    expect(kinds.map((k) => k.code)).toEqual(['normal', 'share', 'promo', 'program', 'clip', 'expiry', 'internal', 'legacy']);
     expect(kinds.find((k) => k.code === 'internal')).toMatchObject({ taxFlow: 'never', legacySuffix: 'Z' });
   });
 });
@@ -163,9 +163,10 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     expect((await addChild({ parentSku: 'KHONG-CO', name: 'Thử' })).status).toBe(404);
   });
 
-  it('cùng tên ở hai cha khác nhau vẫn được', async () => {
+  // [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — luật mới: tên không trùng với mọi mặt hàng, kể cả ở cha khác (đóng góp)
+  it('cùng tên ở hai cha khác nhau cũng bị chặn', async () => {
     const r = await addChild({ parentSku: '170521002', name: 'Bình sữa xanh L' });
-    expect(r.status).toBe(200);
+    expect(r.status).toBe(409);
   });
 
   it('quá 99 con thì dùng 3 số', async () => {
@@ -280,5 +281,35 @@ describe('NT-MH-002 — NCC đổi tên, dùng lại mã', () => {
     expect(r).toMatchObject({ sku: null, matchSource: 'none' });
     expect(r.candidates?.[0]).toMatchObject({ sku: 'M1' });
     expect(r.candidates?.[0]?.why).toContain('tên khác xa');
+  });
+});
+
+// [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng (đóng góp)
+describe('Tên mặt hàng không trùng', () => {
+  const full = (sku: string, body: Record<string, unknown>, isNew = false) => call(ctx, 'PUT', `/api/v1/catalog/products/${sku}${isNew ? '?new=1' : ''}`, { unit: 'Hộp', ...ack, ...body });
+  it('thêm mới trùng tên (khác hoa thường, thừa dấu cách) bị chặn, nêu mã đang dùng', async () => {
+    expect((await full('180011001', { name: 'Sữa Tên Riêng 900g' }, true)).status).toBe(200);
+    const r = await full('180011002', { name: '  sữa tên   riêng 900G ' }, true);
+    expect(r.status).toBe(409);
+    expect(JSON.stringify(r.body)).toContain('180011001');
+  });
+  it('đổi tên sang tên đã có bị chặn; sửa ô khác giữ tên cũ thì không kiểm', async () => {
+    expect((await full('180011003', { name: 'Sữa Tên Khác' }, true)).status).toBe(200);
+    expect((await full('180011003', { name: 'Sữa Tên Riêng 900g' })).status).toBe(409);
+    // Dữ liệu cũ đã trùng (nạp thẳng): không đổi tên thì vẫn lưu được.
+    await sql`UPDATE products SET name = 'Sữa Tên Riêng 900g' WHERE tenant_id = ${tenantId} AND sku = '180011003'`.execute(db);
+    expect((await full('180011003', { name: 'Sữa Tên Riêng 900g', origin: 'Việt Nam' })).status).toBe(200);
+  });
+  it('kiểm tên khi gõ: trả mã đang dùng, trừ chính mã đang sửa', async () => {
+    const r = await call(ctx, 'GET', `/api/v1/catalog/name-check?name=${encodeURIComponent('SỮA TÊN RIÊNG 900G')}&except=180011001`);
+    expect(r.body.data.same.sku).toBe('180011003');
+    const r2 = await call(ctx, 'GET', `/api/v1/catalog/name-check?name=${encodeURIComponent('Tên chưa ai dùng')}`);
+    expect(r2.body.data.same).toBeNull();
+  });
+  it('sản phẩm con trùng tên mặt hàng ngoài họ cũng bị chặn', async () => {
+    expect((await full('180021001', { name: 'Bỉm Tên Ngoài Họ' }, true)).status).toBe(200);
+    const r = await addChild({ parentSku: '180011001', name: 'bỉm tên ngoài họ', variantCode: 'clip' });
+    expect(r.status).toBe(409);
+    expect((await addChild({ parentSku: '180011001', name: 'Sữa Tên Riêng 900g kẹp bình', variantCode: 'clip' })).status).toBe(200);
   });
 });

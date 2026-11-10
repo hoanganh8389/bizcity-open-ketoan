@@ -33,10 +33,11 @@ Cột *Sang thuế* là giá trị ban đầu của ô **Gửi lên thuế** (`p
 | `normal` | Thường | | Theo hoá đơn |
 | `internal` | Nội bộ | Z | **Không bao giờ**: tách bill Z, 0 đồng |
 | `clip` | Kẹp quà | Q | Theo hoá đơn |
+| `expiry` | Cận date | B | Mã cha (thường). Hàng sắp hết hạn: giá bán riêng, áp chương trình; quầy có cả mã thường và mã cận date, nhân viên chọn khi bán; chuyển từ mã thường bằng phiếu chuyển đổi (0094) |
 | `program` | Theo chương trình | T | Theo hoá đơn, mã cha |
 | `share` | Chia giá | K | Theo hoá đơn, mã cha |
 | `promo` | Khuyến mại | M | Theo hoá đơn, mã cha |
-| `legacy` | Đuôi khác | B, C, D… | Chưa xếp loại |
+| `legacy` | Đuôi khác | C, D… | Chưa xếp loại |
 
 Nguồn: bảng `item_variant_kinds` (migration 0092). Mã cũ còn đuôi được điền ô theo đuôi khi thêm mới và lúc chạy migration.
 

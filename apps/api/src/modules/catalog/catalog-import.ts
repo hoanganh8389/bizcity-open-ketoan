@@ -102,7 +102,7 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
   for (const c of checked) {
     const show = { values: c.values, ...(c.before ? { before: c.before } : {}) };
     if (c.errors.length || dryRun) { results.push({ row: c.row, sku: c.sku, action: c.errors.length ? 'error' : c.isNew ? 'create' : 'update', errors: c.errors, ...show }); continue; }
-    const x = await inSavepoint(trx, (t) => saveProduct(t, tenantId, actor, c.sku, c.input, { isNew: c.isNew, source: 'excel', quiet: true }));
+    const x = await inSavepoint(trx, (t) => saveProduct(t, tenantId, actor, c.sku, c.input, { isNew: c.isNew, source: 'excel', quiet: true, checkName: true }));
     results.push(x.ok ? { row: c.row, sku: c.sku, action: c.isNew ? 'create' : 'update', errors: [], ...show } : { row: c.row, sku: c.sku, action: 'error', errors: [errorText(x.error)], ...show });
   }
   const count = (a: RowResult['action']) => results.filter((x) => x.action === a).length;

@@ -103,6 +103,6 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Khoá sổ', icon: 'Lock', path: '/cau-hinh/ky-ke-toan' },
       { label: 'Báo cáo tài chính', icon: 'ChartColumn', path: '/bao-cao/can-doi-ke-toan' },
     ]],
-    links: [{ label: 'Tài khoản', icon: 'BookOpen', path: '/danh-muc/tai-khoan' }, { label: 'Tài khoản ngầm định', icon: 'Link', path: '/cau-hinh/tai-khoan-ngam-dinh' }, { label: 'Lý do', icon: 'Tags', path: '/cau-hinh/ly-do' }, { label: 'Khoản mục', icon: 'Coins', path: '/danh-muc/khoan-muc' }, { label: 'Bảng điều khiển', icon: 'LayoutDashboard', path: '/bang-dieu-khien' }],
+    links: [{ label: 'Tài khoản', icon: 'BookOpen', path: '/danh-muc/tai-khoan' }, { label: 'Tài khoản ngầm định', icon: 'Link', path: '/cau-hinh/tai-khoan-ngam-dinh' }, { label: 'Thiết kế hạch toán', icon: 'Tags', path: '/cau-hinh/thiet-ke-hach-toan' }, { label: 'Khoản mục', icon: 'Coins', path: '/danh-muc/khoan-muc' }, { label: 'Bảng điều khiển', icon: 'LayoutDashboard', path: '/bang-dieu-khien' }],
   },
 };

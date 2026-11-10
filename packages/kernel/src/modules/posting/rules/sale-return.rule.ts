@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/rules/sale-return.rule.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — gắn nhãn cặp (nghiệp vụ, hàng tặng, chương trình, hình thức) để áp bảng quy tắc định khoản (đóng góp)
 /**
  * Luật định khoản HÀNG BÁN TRẢ LẠI (kể cả hoá đơn điều chỉnh giảm).
  *
@@ -18,7 +19,7 @@
 import type { SaleReturnDocument } from '@ketoan/contracts';
 import type { DraftLine } from '../../ledger/ledger.types.js';
 import { EntryBuilder } from '../entry-builder.js';
-import type { RuleContext } from './sale.rule.js';
+import { lineTags, type RuleContext } from './sale.rule.js';
 import type { PostingPart } from './stock.rule.js';
 
 export function buildSaleReturnParts(doc: SaleReturnDocument, ctx: RuleContext): PostingPart[] {
@@ -41,6 +42,7 @@ export function buildSaleReturnParts(doc: SaleReturnDocument, ctx: RuleContext):
       // Tài khoản của hình thức thanh toán: đối tượng nhận hộ nếu có, không thì khách (ví dụ voucher 1388).
       creditPartnerId: holder ?? partnerId,
       description: `Trả tiền khách (${pay.methodCode})`,
+      tags: { biz: 'sale_return', reason: doc.reasonCode ?? null, method: pay.methodCode },
     });
     parts.push({
       lines: b.toLines(),
@@ -63,7 +65,9 @@ function buildReturnGoods(doc: SaleReturnDocument, ctx: RuleContext, reason: Ret
     const group = resolver.groupForSku(line.sku);
     const amount = Math.abs(line.amountBeforeTax);
     const tax = Math.abs(line.taxAmount);
+    const tags = lineTags('sale_return', doc.reasonCode, line);
     b.add({
+      tags,
       part: 'goods',
       productSku: line.sku,
       debitAccount: resolver.salesReturnAccount(reason, group),
@@ -74,6 +78,7 @@ function buildReturnGoods(doc: SaleReturnDocument, ctx: RuleContext, reason: Ret
       description: 'Hàng bán bị trả lại',
     });
     b.add({
+      tags,
       part: 'tax',
       productSku: line.sku,
       debitAccount: resolver.outputTaxAccount(line.taxCode),
@@ -86,6 +91,7 @@ function buildReturnGoods(doc: SaleReturnDocument, ctx: RuleContext, reason: Ret
     // Giá vốn hàng trả KHÔNG ghi trên phiếu hoàn (22/10/2026) — vào phiếu giá vốn tháng; chỉ ghi khi nguồn gửi sẵn.
     if (line.cost !== undefined && line.cost !== 0) {
       b.add({
+        tags,
         part: 'cogs',
         productSku: line.sku,
         debitAccount: group.inventory_account,

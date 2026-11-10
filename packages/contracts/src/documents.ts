@@ -214,6 +214,11 @@ export const stockLineSchema = z.object({
   /** Chuyển kho (một chứng từ cho cả cặp): kho NHẬN của chi nhánh nhận. Trống = kho mặc định của chi nhánh nhận.
    *  Chuyển giữa hai kho trong CÙNG chi nhánh (toBranchCode = branchCode): bắt buộc warehouseCode và toWarehouseCode khác nhau. */
   toWarehouseCode: z.string().trim().max(64).optional(),
+  // [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — lô của dòng phiếu kho (0098): trống thì phần mềm tự chọn lô hạn sớm trước (đóng góp)
+  /** Số lô NCC của hàng chuyển / điều chỉnh. Trống: hàng ra tự chọn lô hạn dùng sớm trước; hàng vào vào lô không số. */
+  lotNo: z.string().trim().max(64).optional(),
+  /** Hạn dùng của lô (cùng số lô xác định lô). */
+  expDate: isoDate.optional(),
 });
 export type StockLine = z.infer<typeof stockLineSchema>;
 

@@ -3,6 +3,7 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting-config/posting-config.repository.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — nạp bảng quy tắc định khoản đã duyệt (0096) + loại hàng, loại chương trình của chứng từ (đóng góp)
 /**
  * Cấu hình hạch toán: lý do, nhóm hạch toán mặt hàng, hình thức thanh toán,
  * tài khoản ngầm định, loại thuế, mặt hàng.
@@ -17,6 +18,7 @@ import { toNumber } from '@bizcity/platform/db/client';
 import { seedProduct } from '../default-data/default-data.service.js';
 import type { Account, PaymentMethod, PostingReason, ProductPostingGroup } from '@bizcity/platform/db/types';
 import { selectPolicy, type PolicyRaw } from './policy.js';
+import type { PostingRule, RuleCond, RuleTable } from '../posting/rule-table.js';
 
 export interface TaxCodeConfig {
   code: string;
@@ -49,6 +51,36 @@ export interface PostingConfig {
   bankAccounts: Map<string, string>;
   /** Phiên bản chính sách kế toán đã dùng (chỉ khi nạp có asOf); null = cấu hình đang dùng, không chọn theo ngày. */
   policyVersion: number | null;
+  /** Bảng quy tắc định khoản đã duyệt (mọi ngày hiệu lực — chọn theo ngày chứng từ lúc áp), loại hàng, loại chương trình. */
+  ruleTable: RuleTable;
+}
+
+/**
+ * Bảng quy tắc định khoản (0096): quy tắc ĐÃ DUYỆT của mọi nghiệp vụ đang dùng, loại hàng (products.type_code) của các mã cần dùng,
+ * loại chương trình của các mã chương trình trên chứng từ (chính sách mua: purchase_policies.program_kind; chương trình bán: sale_programs).
+ */
+export async function loadRuleTable(db: Db, tenantId: string, skus: string[], programKeys: string[] = []): Promise<RuleTable> {
+  const [rules, businesses, types, kinds] = await Promise.all([
+    sql<{ id: string; business_code: string; part: string; book: string; cond: RuleCond; debit_account: string | null; credit_account: string | null; priority: number; effective_from: string; effective_to: string | null }>`
+      SELECT r.id::text, r.business_code, r.part, r.book, r.cond, r.debit_account, r.credit_account, r.priority, r.effective_from::text, r.effective_to::text
+        FROM posting_rules r JOIN posting_businesses b ON b.tenant_id = r.tenant_id AND b.code = r.business_code
+       WHERE r.tenant_id = ${tenantId} AND r.status = 'active' AND b.is_active`.execute(db),
+    sql<{ code: string; name: string; base_code: string | null; reason_code: string | null }>`
+      SELECT code, name, base_code, reason_code FROM posting_businesses WHERE tenant_id = ${tenantId} AND is_active`.execute(db),
+    skus.length ? sql<{ sku: string; type_code: string }>`SELECT sku, type_code FROM products WHERE tenant_id = ${tenantId} AND sku = ANY(${skus}) AND type_code IS NOT NULL`.execute(db) : Promise.resolve({ rows: [] }),
+    programKeys.length ? sql<{ code: string; kind: string }>`
+      SELECT code, program_kind AS kind FROM purchase_policies WHERE tenant_id = ${tenantId} AND code = ANY(${programKeys}) AND program_kind IS NOT NULL
+      UNION ALL SELECT code, program_kind FROM sale_programs WHERE tenant_id = ${tenantId} AND code = ANY(${programKeys})`.execute(db) : Promise.resolve({ rows: [] }),
+  ]);
+  return {
+    rules: rules.rows.map((r): PostingRule => ({
+      id: r.id, business: r.business_code, part: r.part as PostingRule['part'], book: r.book as PostingRule['book'], cond: r.cond ?? {},
+      debit: r.debit_account, credit: r.credit_account, priority: r.priority, from: r.effective_from, to: r.effective_to,
+    })),
+    businesses: businesses.rows.map((b) => ({ code: b.code, name: b.name, baseCode: b.base_code, reasonCode: b.reason_code })),
+    itemTypes: new Map(types.rows.map((t) => [t.sku, t.type_code])),
+    programKinds: new Map(kinds.rows.map((k) => [k.code, k.kind])),
+  };
 }
 
 /** Mặt hàng chưa có trong phần mềm (hoặc chưa gán nhóm / thuế): lấy theo tệp dữ liệu gốc. */
@@ -103,11 +135,12 @@ export async function loadPolicyRaw(db: Db, tenantId: string): Promise<PolicyRaw
 }
 
 export const postingConfigRepository = {
-  async loadPostingConfig(db: Db, tenantId: string, skus: string[] = [], opts: { asOf?: string; actor?: string } = {}): Promise<PostingConfig> {
-    const [accounts, live, products] = await Promise.all([
+  async loadPostingConfig(db: Db, tenantId: string, skus: string[] = [], opts: { asOf?: string; actor?: string; programKeys?: string[] } = {}): Promise<PostingConfig> {
+    const [accounts, live, products, ruleTable] = await Promise.all([
       db.selectFrom('accounts').selectAll().where('tenant_id', '=', tenantId).execute(),
       loadPolicyRaw(db, tenantId),
       loadProducts(db, tenantId, skus, opts.asOf),
+      loadRuleTable(db, tenantId, skus, opts.programKeys),
     ]);
     const picked = opts.asOf ? await selectPolicy(db, tenantId, live, opts.asOf, opts.actor ?? 'system') : { raw: live, version: null };
     const { reasons, groups, paymentMethods: methods, taxCodes: taxes, defaults, bankAccounts: banks } = picked.raw;
@@ -129,6 +162,7 @@ export const postingConfigRepository = {
       products: withSeedProducts(skus, products.map((p) => ({ sku: p.sku, postingGroupCode: p.posting_group_code, taxOutCode: p.tax_out_code }))),
       bankAccounts: new Map(banks.map((b) => [b.code, b.account_code])),
       policyVersion: picked.version,
+      ruleTable,
     };
   },
 };

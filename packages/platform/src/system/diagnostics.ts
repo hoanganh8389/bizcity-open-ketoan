@@ -27,6 +27,8 @@ import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { pendingMigrations } from '../db/migrate.js';
 import { SCREENS, STOP_THE_LINE_STEP } from '@ketoan/contracts';
+// [2026-11-09 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-1 (S032-27): tự chẩn đoán L3 lúc 01:00 mỗi đêm, khuôn subscriber như core.conformance-nightly
+import { defineSubscriber } from '../core/events.js';
 
 /** L1 sẵn sàng · L3 toàn vẹn sổ · L5 tuân thủ cấu hình (Conformance Engine, ADR-0012) — RULE-SELF-DIAGNOSTICS §1. */
 export type DiagLayer = 'L1' | 'L3' | 'L5';
@@ -116,6 +118,22 @@ export async function runDiagnostics(scope: DiagScope, opts: { layer: DiagLayer;
     checks: results,
   };
 }
+
+/**
+ * Tự chẩn đoán L3 mỗi đêm (PHASE-032 B2c-1, S032-27): đồng hồ ngày phát lúc 01:00 giờ VN, mỗi đơn vị một lượt, cả sổ.
+ * Lưu lượt với trigger 'schedule', người chạy 'system:nightly'. Sáng ra thẻ Việc hôm nay (HT08) đọc lượt này, không phải chạy lại.
+ * runDiagnostics tự mở giao dịch READ ONLY riêng (R-DIAG-2); RLS theo đơn vị nhờ ngữ cảnh yêu cầu của dispatcher.
+ */
+export const diagnosticsNightlySubscriber = defineSubscriber({
+  id: 'core.diagnostics-nightly',
+  module: 'bizcity.platform',
+  on: ['bizcity.clock.daily'],
+  retry: { maxAttempts: 3 },
+  async handle(ctx) {
+    const report = await runDiagnostics({ tenantId: ctx.tenantId }, { layer: 'L3' });
+    await saveDiagnosticRun(report, { tenantId: ctx.tenantId, actor: 'system:nightly', trigger: 'schedule' });
+  },
+});
 
 /** Lưu một lượt vào diagnostic_runs (chỉ thêm, R-DIAG-5). */
 export async function saveDiagnosticRun(report: DiagReport, meta: { tenantId: string; actor: string; trigger: 'manual' | 'period-lock' | 'schedule' | 'release' }): Promise<string> {

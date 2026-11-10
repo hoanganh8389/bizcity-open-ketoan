@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/inventory/inventory-movement.repository.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — ghi xong dòng hàng thì phân lô (lot.service.ts, 0098) (đóng góp)
 /**
  * Hàng vào / ra kho (inventory_movements): trải phẳng dòng hàng của chứng từ đang hiệu lực,
  * mỗi dòng một lần hàng vào hoặc ra một chi nhánh. Nguồn của nhập xuất tồn và giá vốn bình quân.
@@ -19,6 +20,7 @@
 import type { IngestDocument } from '@ketoan/contracts';
 import type { Db } from '@bizcity/platform/db/client';
 import { defaultWarehouseCache } from '@bizcity/platform/masterdata/default-warehouse';
+import { allocateLots, type LotDoc } from './lot.service.js';
 
 type MovementRow = {
   tenant_id: string;
@@ -117,5 +119,7 @@ export const inventoryMovementRepository = {
     for (let i = 0; i < rows.length; i += 1000) {
       await db.insertInto('inventory_movements').values(rows.slice(i, i + 1000)).execute();
     }
+    // Lô: hàng vào theo số lô / hạn dùng của dòng; hàng ra tự động hạn sớm trước; trả hàng về đúng lô đã bán.
+    if (rows.length) await allocateLots(db, args.tenantId, args.eventId, doc as unknown as LotDoc);
   },
 };

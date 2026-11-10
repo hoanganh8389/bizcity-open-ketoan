@@ -120,10 +120,12 @@ export function buildPaymentParts(doc: CustomerPaymentDocument | SupplierPayment
     if (!builders.has(branchId)) builders.set(branchId, new EntryBuilder());
     return builders.get(branchId)!;
   };
+  // [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — nhãn chọn quy tắc định khoản của phiếu thu / chi (đóng góp)
+  const tags = { biz: doc.docType, reason: doc.reasonCode ?? null, method: doc.methodCode };
   const sameBranch = (amount: number, description: string) =>
     receipt
-      ? at(b.branchId).add({ part: 'payment', debitAccount: cash, creditAccount: counter, amount, debitPartnerId: partnerId, creditPartnerId: partnerId, description })
-      : at(b.branchId).add({ part: 'payment', debitAccount: counter, creditAccount: cash, amount, debitPartnerId: partnerId, creditPartnerId: partnerId, description });
+      ? at(b.branchId).add({ tags, part: 'payment', debitAccount: cash, creditAccount: counter, amount, debitPartnerId: partnerId, creditPartnerId: partnerId, description })
+      : at(b.branchId).add({ tags, part: 'payment', debitAccount: counter, creditAccount: cash, amount, debitPartnerId: partnerId, creditPartnerId: partnerId, description });
 
   let allocated = 0;
   for (const line of doc.lines) {

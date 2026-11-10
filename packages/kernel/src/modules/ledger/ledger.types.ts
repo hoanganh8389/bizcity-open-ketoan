@@ -7,6 +7,7 @@
  * Kiểu dữ liệu của bút toán nháp — đầu ra của bộ định khoản, đầu vào của ledgerService.post().
  */
 import type { DocType, LinePart } from '@ketoan/contracts';
+import type { RuleTags } from '../posting/rule-table.js';
 
 export interface DraftLine {
   accountCode: string;
@@ -28,6 +29,9 @@ export interface DraftLine {
    * GHI ĐÈ số tiền lên dòng này, không đảo bút toán (ngoại lệ có chủ đích — migration 0059, costing.service).
    */
   costFill?: 'debit' | 'credit' | null;
+  // [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — nhãn chọn quy tắc định khoản (rule-table.ts); bỏ trước khi ghi, không vào dấu vân tay (đóng góp)
+  /** Nhãn của cặp để chọn quy tắc định khoản (nghiệp vụ, hàng tặng, chương trình…). Chỉ trong lúc dựng, không ghi sổ. */
+  ruleTags?: RuleTags;
 }
 
 export interface DraftEntry {

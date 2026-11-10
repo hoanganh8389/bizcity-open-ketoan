@@ -28,6 +28,10 @@ export interface TradeLine {
   taxCode?: string;
   taxAmount?: number;
   isGift?: boolean;
+  /** Chuyển kho: số lô, hạn dùng, số thực nhận (in phiếu). */
+  lotNo?: string;
+  expDate?: string;
+  receivedQty?: number;
 }
 export interface TradePayment { methodCode: string; amount: number; reference?: string }
 export interface TradeDoc {

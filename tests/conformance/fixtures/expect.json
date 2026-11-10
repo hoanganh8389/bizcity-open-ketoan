@@ -381,6 +381,13 @@
             "reason:BADREASON"
           ]
         },
+        "SC-ERR-2": {
+          "findings": 2,
+          "keys": [
+            "use:GHOST_REASON",
+            "doc-missing:BADREASON"
+          ]
+        },
         "SC-EVD-2": {
           "findings": 13,
           "keys": [

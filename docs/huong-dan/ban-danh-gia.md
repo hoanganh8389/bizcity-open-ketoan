@@ -2,14 +2,29 @@
 <!-- [2026-11-03 08:22 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — hướng dẫn màn HT08 (trước đây nút Hướng dẫn hiện "Chưa có hướng dẫn"); viết theo apps/web/src/features/system/ReviewBoardPage.tsx -->
 
 <!-- [2026-11-09 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B1: Khoá thử hôm nay, HT08 đổi tên Bàn làm việc kế toán -->
-Bàn làm việc kế toán (trước đây là *Bàn đánh giá*) có hai thẻ:
+Bàn làm việc kế toán (trước đây là *Bàn đánh giá*) có ba thẻ:
 
 | Thẻ | Dùng khi |
 |---|---|
-| **Khoá thử hôm nay** (mở sẵn) | Muốn biết **hôm nay khoá sổ được chưa**, còn vướng gì, mà không phải khoá thật |
+| **Việc hôm nay** (mở sẵn) <!-- [2026-11-09 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2a: thẻ Việc hôm nay --> | Đầu ngày: xem sổ có chỗ nào sai, việc của ai, sửa thế nào |
+| **Khoá thử hôm nay** | Muốn biết **hôm nay khoá sổ được chưa**, còn vướng gì, mà không phải khoá thật |
 | **Rà theo vai** | Rà định kỳ theo vai kế toán trưởng, kiểm soát, thanh tra thuế |
 
-Cả hai thẻ **chỉ đọc**: không ghi gì vào sổ, không khoá kỳ.
+Cả ba thẻ **chỉ đọc**: không ghi gì vào sổ, không khoá kỳ.
+
+## Việc hôm nay
+
+Phần mềm **tự kiểm toàn bộ sổ lúc 01:00 mỗi đêm** (tự chẩn đoán toàn vẹn sổ). Sáng mở thẻ là thấy ngay kết quả đêm qua, dòng đầu ghi *Phần mềm tự kiểm đêm qua lúc …*. Chưa có lượt đêm nay (máy tắt qua đêm, bản cài mới) thì phần mềm kiểm ngay khi mở thẻ. Bấm **Kiểm lại tất cả** để kiểm lại theo số liệu lúc này.
+
+- Dòng đầu đếm **số việc cần xem hôm nay**. Việc là *lỗi toàn vẹn sổ* thì ghi rõ: chưa sửa thì khi khoá kỳ phải ghi lý do chấp nhận.
+- Việc xếp theo **người làm**: kế toán viên, kế toán trưởng, vận hành…
+- Mỗi việc có nhãn ✎ **Phải ghi lý do khi khoá**, ⚠ **Nên xử lý** hoặc ℹ **Để biết**, kèm số chỗ bị.
+- Bấm **Cách khắc phục** để xem *Chỗ bị*, *Vì sao* và các bước sửa. Sửa xong bấm **Kiểm lại** ở đúng dòng đó: phần mềm kiểm lại riêng việc ấy và báo ngay.
+- Mục **Đã kiểm, đạt** liệt kê các phép kiểm không thấy vấn đề.
+
+Phép kiểm *hàng, tiền đang chuyển giữa chi nhánh* không báo hàng đi đường trong 30 ngày: đó là bình thường. Nó chỉ báo khi còn treo quá 30 ngày mà nơi nhận chưa ghi, hoặc khi nơi nhận ghi nhiều hơn nơi xuất.
+
+Chưa có trong bản này: nhắc việc theo ngày / tuần, mã điều kiện khoá sổ trên từng việc.
 
 ## Khoá thử hôm nay
 

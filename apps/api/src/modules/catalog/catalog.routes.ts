@@ -7,6 +7,7 @@
  *   PUT    /api/v1/catalog/products/:sku              lưu trọn (?new=1: thêm mới, báo trùng mã)
  *   DELETE /api/v1/catalog/products/:sku              xoá mặt hàng chưa có nhập xuất
  *   GET    /api/v1/catalog/next-sku?groupCode=        mã hàng kế tiếp theo nhóm hàng (quy tắc 3 cấp nhóm + số thứ tự)
+ *   GET    /api/v1/catalog/name-check?name=&except=   tên mặt hàng đã có mã nào dùng chưa (tên không được trùng)
  *   POST   /api/v1/catalog/sku-codes/infer            suy mã SKU cho nhóm hàng chưa khai (apply=false: xem trước)
  *   GET    /api/v1/catalog/price-lists                bảng giá + chi nhánh áp dụng
  *   PUT    /api/v1/catalog/price-lists/:code          thêm / sửa bảng giá
@@ -31,7 +32,7 @@ import { mountActions, defineAction, type AnyActionDef, sameTx } from '../../cor
 import { masterdataActions } from './masterdata.actions.js';
 import { checkToolPassword } from '@bizcity/platform/core/security/tool-password';
 import {
-  deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, saveProduct, savePriceList, savePriceRows, scanParents, setPriceListBranches,
+  deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, sameNameProduct, saveProduct, savePriceList, savePriceRows, scanParents, setPriceListBranches,
 } from './catalog.service.js';
 import { inferSkuCodes, nextSku, SKU_RULE } from './sku-rule.js';
 import { importProducts } from './catalog-import.js';
@@ -93,6 +94,13 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Mã hàng kế tiếp theo nhóm hàng', querystring: z.object({ groupCode: code.min(1) }) },
     handler: async (req) => ok({ ...(await db.transaction().execute((trx) => nextSku(trx, authOf(req).tenantId, req.query.groupCode))), rule: SKU_RULE }),
+  });
+
+  // [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng: form báo ngay khi gõ (đóng góp)
+  r.get('/api/v1/catalog/name-check', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Tên mặt hàng đã có ai dùng chưa (trừ mã except)', querystring: z.object({ name: z.string().max(255), except: z.string().max(64).optional() }) },
+    handler: async (req) => ok({ same: await sameNameProduct(db, authOf(req).tenantId, req.query.name, req.query.except ?? '') }),
   });
 
   r.get('/api/v1/catalog/price-lists', {
@@ -234,7 +242,7 @@ export const catalogMoreWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: saveProduct áp cổng danh mục (nháp / kích hoạt); trả khung Vì sao + ghi nhận cảnh báo mềm.
       // [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — gộp main: gate / findings / held trả qua ctx.meta (action không còn tự dựng phản hồi)
-      const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new }))!;
+      const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new, checkName: true }))!;
       const findings = await itemHints(trx, auth.tenantId, { sku: input.sku, unit: product.unit, postingGroupCode: product.postingGroupCode });
       await recordWarnAck(trx, auth, 'product', input.sku, findings, warnAck);
       Object.assign(ctx.meta, { gate: 'A', findings, ...(product.isDraft ? { held: { kind: 'draft', id: input.sku } } : {}) });
