@@ -50,7 +50,7 @@
 ## Xong khi
 
 - **W0:** chủ dự án duyệt D032-1..10 hoặc sửa; Q032-1..5 có người trả; ADR-0033 → Chấp nhận; R-INV vào CANON §3; tài liệu hướng dẫn tính giá vốn có mục *Kiến trúc tổng thể*.
-- **W1 (lô ở Kernel, K-030-1):** `inventory_lots`, `lot_id` trên dòng kho, số dư theo lô, `lotRef` ở cửa nạp, hook `inventory.pickLots` gợi ý, `IN-INV-010..013`; bán hàng / kho chọn lô theo gợi ý.
+- **W1 (lô ở Kernel, K-030-1)** <!-- [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — D032-15: lô của Engine = item_lots + inventory_lot_moves (0098, Thuy2k, PHASE-026); bỏ kế hoạch inventory_lots (chủ dự án 2026-11-11) -->: lô **đã có** — `item_lots` + `inventory_lot_moves` (0098, Thuy2k), tự xuất hạn sớm trước, trả về đúng lô, KHO05 (D032-15). Còn: trạng thái lô, bắt buộc ghi lô (`IN-INV-010..013`), `originalLineRef`, chính sách chọn lô.
 - **W2 (mô hình lớp):** `valuation_layers`, `cost_allocations`, `costing_runs`; bình quân tháng chạy trên lớp với **parity** T032-P1 đạt; `inventory_costs` thành khung nhìn; `CostingResult` → `eventStore`.
 - **W3 (phương pháp & đảo chiều):** `core.costing.method@1` (bình quân · FIFO · đích danh), `original_line_ref`, hoàn đúng phân bổ gốc; T032-G1..G5 xanh.
 - **W4 (cổng & kết chuyển):** `CT-INV-*`, `CT-COST-*`, `DG-CLOSE-*`; Sẵn sàng khoá kỳ đọc `costing_runs`; T032-G6..G9; tiêu chí trụ cột III cập nhật theo bằng chứng.

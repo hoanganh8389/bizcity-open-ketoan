@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 163
+      "count": 160
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 61
+      "count": 64
     },
     {
       "key": "paused",
@@ -5685,8 +5685,8 @@
       "phase": "PHASE-032",
       "title": "Chữ chốt W1 (R-FLOW-2): migration lô (số bằng so-tiep-theo), minor bizcityledgerintake@1 (lotRef, originalLineRef), hook inventory.pickLots, quyền inventory:; …",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 16
@@ -5694,10 +5694,10 @@
     {
       "id": "S032-8",
       "phase": "PHASE-032",
-      "title": "Migration inventorylots + inventorymovements.lotid / linekey / originallineref; lottracking ở phân loại mặt hàng (có phiên bản); khung nhìn bizcityread.invento…",
+      "title": "Lô = itemlots + inventorylotmoves (có, 0098, D032-15). Còn: cột status + trigger chỉ đổi qua action có lý do; lottracking ở phân loại mặt hàng (có phiên bản); …",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 17
@@ -5705,7 +5705,7 @@
     {
       "id": "S032-9",
       "phase": "PHASE-032",
-      "title": "Cửa nạp: lotRef (tra / tạo lô), originalLineRef; IN-INV-010..013 + bài học loi-dau-vao/IN-INV-01x.md; khoá bizcity.intake.lotcheck; mua hàng ánh xạ data.lotNo …",
+      "title": "Cửa nạp: lô trên dòng lotNo / expDate (có, 0098); còn originalLineRef; IN-INV-010..013 + bài học loi-dau-vao/IN-INV-01x.md; khoá bizcity.intake.lotcheck",
       "priority": "P0",
       "status": "todo",
       "column": "todo",
@@ -5716,10 +5716,10 @@
     {
       "id": "S032-10",
       "phase": "PHASE-032",
-      "title": "Hook inventory.pickLots (FEFO / FIFO mặc định, exclude / prefer / minShelfDays) + POST /inventory/pick-lots + GET /inventory/balances, /lots; action core.inven…",
+      "title": "Chọn lô: mặc định hạn sớm trước + GET /api/v1/lots/suggest (có, 0098). Còn: chính sách core.inventory.lotpicking@1 (exclude cách ly / hết hạn, prefer, minShelf…",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 19
@@ -5782,7 +5782,7 @@
     {
       "id": "S032-16",
       "phase": "PHASE-032",
-      "title": "FIFO + đích danh trên lớp (receipt, lotid); hàm thuần fifo.ts, specific.ts; opening cho kỳ chuyển đổi",
+      "title": "FIFO + đích danh trên lớp (receipt, lotid → itemlots.id); hàm thuần fifo.ts, specific.ts; opening cho kỳ chuyển đổi",
       "priority": "P0",
       "status": "todo",
       "column": "todo",

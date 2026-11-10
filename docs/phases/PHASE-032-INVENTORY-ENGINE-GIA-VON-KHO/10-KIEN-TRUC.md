@@ -22,7 +22,7 @@
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  DOCUMENT SDK → CỬA NẠP → CỔNG KIỂM CHUẨN (Gate A / B)                      │
-│  định danh (resolveItem) · lô (lotRef) · dòng gốc (originalLineRef)          │
+│  định danh (resolveItem) · lô (lotNo, expDate) · dòng gốc (originalLineRef)  │
 │  chính sách (policyRefs) · kiểm chuẩn L1–L5 · bể chờ                          │
 └──────────────────────────────┬──────────────────────────────────────────────┘
                                ▼
@@ -53,14 +53,14 @@
 |---|---|
 | **CEO / chủ doanh nghiệp** | Mọi con số lãi gộp đi ngược được về phiếu nhập; đổi mã hàng, đổi thông tư không làm mất lịch sử; kết chuyển không chạy trên giá vốn chưa chốt |
 | **Kế toán** | Kho và kế toán là hai sổ nhưng **một** dữ liệu: sổ chi tiết (lô, lớp) phải bằng số dư tài khoản hàng tồn kho trước khi khoá; tài khoản là kết quả của lý do và nhóm hạch toán tại ngày, không gắn chết vào hàng |
-| **Dev** | Module chỉ kể sự việc kèm `lotRef` / `originalLineRef`; Engine tính, Kernel ghi; không import `ledgerService`, không viết số tài khoản, không tự FIFO |
+| **Dev** | Module chỉ kể sự việc kèm lô trên dòng (`lotNo`, `expDate`) / `originalLineRef`; Engine tính, Kernel ghi; không import `ledgerService`, không viết số tài khoản, không tự FIFO |
 
 ## 2. Ranh giới Inventory Engine ↔ Accounting Kernel
 
 | | Inventory Engine | Accounting Kernel |
 |---|---|---|
 | Thư mục | `packages/kernel/src/modules/inventory/**` | `packages/kernel/src/modules/{ledger,posting,documents,periods,closing}` |
-| Giữ | `inventory_movements`, `inventory_lots`, `valuation_layers`, `valuation_layer_sources`, `cost_allocations`, `costing_runs` | `accounting_events`, `ledger_entries`, `ledger_lines`, `ledger_links`, `period_locks` |
+| Giữ | `inventory_movements`, `item_lots` + `inventory_lot_moves` (lô, D032-15), `valuation_layers`, `valuation_layer_sources`, `cost_allocations`, `costing_runs` | `accounting_events`, `ledger_entries`, `ledger_lines`, `ledger_links`, `period_locks` |
 | Biết | `item_id`, kho, lô, số lượng, giá trị, phương pháp, `policy_version`, dòng gốc | tài khoản (tra tại ngày), bút toán, kỳ |
 | Không biết | **số tài khoản** (R-INV-2) | lô, lớp (chỉ đọc qua `cost_allocations.journal_entry_id` để nối) |
 | Ghi | bảng của mình, cùng giao dịch với chứng từ | sổ cái, một cửa |
@@ -137,9 +137,9 @@ Ví dụ: áo `ÁO-THUN` (cha) có hai biến thể `ÁO-THUN-ĐỎ-M`, `ÁO-THU
 Khuôn đầy đủ ở [`bizcity_inventory@1` §2](../../contracts/BIZCITY-INVENTORY-v1.md). Quan hệ:
 
 ```text
-items (item_id) ──< inventory_lots (lot_id, lot_no, expiry, status)
+items (item_id) ──< item_lots (id, lot_no, exp_date, tên lúc mua; + status ở W1)   ← D032-15, migration 0098
      │                    │
-     │                    └──< inventory_movements (event_id, line_key, lot_id, qty, original_line_ref)
+     │                    └──< inventory_lot_moves (movement_id → inventory_movements, lot_id, qty, how)
      │                                   │ dòng nhập                      │ dòng xuất
      │                                   ▼                                ▼
      └──< valuation_layers (layer_id, kind, source_line, lot_id?, qty_in, value_in, unit_cost, policy_version, run_id)
@@ -169,7 +169,7 @@ Ba câu bất biến của mô hình:
 
 ```text
 1. Chứng từ nguồn ghi sổ (bán, trả, chuyển, điều chỉnh)  → Kernel: bút toán KHÔNG có dòng giá vốn (R-POST-7, như hôm nay)
-                                                          → Engine: inventory_movements (+ lot_id, original_line_ref) cùng giao dịch
+                                                          → Engine: inventory_movements (+ original_line_ref) + phân lô inventory_lot_moves, cùng giao dịch
 2. core.inventory.costing.run (nhóm tính giá, kỳ)         → Engine: đọc policy core.costing.method@1 tại kỳ
                                                             dựng lớp (receipt / period_pool / opening), phân bổ từng dòng xuất,
                                                             đảo chiều → reverses_allocation_id; chạy CT-COST-*; costing_runs.draft
