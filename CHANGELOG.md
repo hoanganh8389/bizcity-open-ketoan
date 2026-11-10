@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thẻ Cổng & bộ kiểm ở HT10 có dữ liệu thật (PHASE-034 B3a, S034-5) <!-- [2026-11-10 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a -->
+
+- **Thêm:** `GET /api/v1/system/gates` (chỉ đọc, `bizcity_gates@1`): mã kiểm của Core theo cổng (A · B · Commit Guard · L · tự chẩn đoán L1/L3/L5), mỗi mã có cách sửa / phương án chưa, điều kiện khoá sổ, kết quả lượt chẩn đoán gần nhất của đơn vị; Cổng C, khoá kỳ, trigger CSDL, bộ kiểm CI hiện dòng giữ chỗ.
+- **Thêm:** thẻ *Cổng & bộ kiểm* ở Hệ thống → Trụ cột & mức đạt đọc API này.
+
 ### HT10 có năm thẻ: Tiêu chí · Nền móng · Cổng & bộ kiểm · Bộ máy · Nhà phát triển (PHASE-034 B2, S034-4) <!-- [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 -->
 
 - **Thêm:** Hệ thống → Trụ cột & mức đạt có thêm ba thẻ *Cổng & bộ kiểm*, *Bộ máy*, *Nhà phát triển* (hiện "sắp có", nói rõ nguồn dữ liệu và bước làm). Năm thẻ dùng chung một thanh mức đạt.
