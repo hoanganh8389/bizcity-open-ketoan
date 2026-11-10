@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 9 |
+| Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 172 |
 | Chờ đủ tín hiệu | 59 |
 | Hoãn | 3 |
-| Xong | 281 |
+| Xong | 282 |
 | **Tổng** | **552** |
 
-## Đang làm (9)
+## Đang làm (8)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -26,7 +26,6 @@
 | [S030-51b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L60) | PHASE-030 | B5b — cửa nạp: bảng gắn trường ↔ thư viện, chỉ cảnh báo, kênh riêng libraryFindings[], K1 (26 §4.2) | P1 | hoanganh8389 (phiên Claude, thu-vien-b5b) · `feat/s030-51b-cua-nap-thu-vien` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-35](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L44) | PHASE-032 | Trường mới của DiagCheck (closeRef, cadence, stage, severityAtClose, owner, scopeBy); gắn closeRef cho mọi ch… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b2c2-dieu-kien-khoa` |
-| [S034-3](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L12) | PHASE-034 | B1 — COPY docs/standard/nen-mong.json vào docker/api.Dockerfile; SC-REL-3 + luật R-REL-11 + bản xấu runtime-d… | P0 | hoanganh8389 (phiên Claude, ht10-bang-hoan-thien) · `feat/phase-034-b1-nen-mong-ban-cai` |
 
 ## Chờ merge (0)
 
@@ -314,6 +313,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (281)
+## Xong (282)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

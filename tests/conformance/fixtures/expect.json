@@ -832,6 +832,19 @@
           ]
         }
       }
+    },
+    {
+      "root": "runtime-docs-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-REL-3": {
+          "findings": 2,
+          "keys": [
+            "missing-copy:docs/standard/thieu-copy.json",
+            "missing-file:docs/standard/khong-co.json"
+          ]
+        }
+      }
     }
   ]
 }
