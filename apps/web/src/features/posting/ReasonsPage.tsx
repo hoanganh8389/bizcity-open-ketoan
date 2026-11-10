@@ -19,6 +19,7 @@ import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ExcelImport, type ImportResult } from '@/components/ExcelImport';
 import { AccountPicker, ListPicker, useAccountList } from '@/components/pickers';
 import { Save, Undo2 } from 'lucide-react';
+import { useUseReasons } from '@/lib/useReasons';
 
 interface Reason { code: string; name: string; kind: string; counterAccount: string | null; revenueAccount: string | null; expenseAccount: string | null; cashflowCode: string | null; debitAccount?: string | null; creditAccount?: string | null; flags: Record<string, unknown>; isActive: boolean }
 interface TaxCode { code: string; name: string; direction: string }
@@ -84,6 +85,7 @@ function bodyOf(r: Reason) {
 }
 
 export function ReasonsPage() {
+  const useReasons = useUseReasons();
   const { can } = useAuth();
   const qc = useQueryClient();
   const canWrite = can('settings:write');
@@ -175,7 +177,9 @@ export function ReasonsPage() {
 
   return (
     <>
-      <PageHeader title="Lý do – tài khoản" code="ACC18" subtitle="Ưu tiên cao nhất khi chọn tài khoản cho bút toán" helpKey="ly-do" />
+      <PageHeader title="Lý do – tài khoản" code="ACC18" subtitle="Chỉ dùng khi bật lý do hạch toán: tài khoản ở đây đè lên tài khoản ngầm định" helpKey="ly-do" />
+      {/* [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán (đóng góp) */}
+      {!useReasons && <div className="alert alert-warn" style={{ marginBottom: 8 }}>Lý do hạch toán đang <b>tắt</b>: tài khoản trên màn này không dùng khi định khoản (tài khoản lấy theo Tài khoản ngầm định ACC41 và quy tắc ACC92). Bật ở <b>Trung tâm cấu hình</b>, khoá <code>bizcity.posting.use_reasons</code>.</div>}
       <div className="card">
         <datalist id="acc18-accounts">{accounts.filter((a) => a.isPosting && a.isActive !== false).map((a) => <option key={a.code} value={a.code}>{a.name}</option>)}</datalist>
         <div className="catalog-toolbar">

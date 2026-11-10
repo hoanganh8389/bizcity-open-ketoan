@@ -58,6 +58,40 @@ interface DiagCheck {
 }
 ```
 
+### 3a. Gắn 46 phép kiểm đang có vào điều kiện khoá sổ (B2c-2, S032-35)
+<!-- [2026-11-10 09:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2: chữ chốt trường DiagCheck (closeRef, kỳ kiểm, bước khoá, mức khi khoá) theo R-FLOW-2 -->
+
+Hình dạng chốt ở [RULE-SELF-DIAGNOSTICS §2b](../../rules/RULE-SELF-DIAGNOSTICS.md): kỳ kiểm và bước khoá thuộc PC, phép kiểm chỉ trỏ `closeRef`; người làm là `remedy.owner` đã có, không thêm `owner`; `scopeBy` hoãn tới S032-28. Bảng dưới thay khối `DiagCheck` phác ở §3. Cột *Nhịp* lấy từ [60 §2](60-SCOREBOARD-KE-TOAN.md). Bước: *trước* = trước kết chuyển, *sau* = sau kết chuyển.
+
+| PC | Tên | Nhịp | Bước | Phép kiểm nuôi (`closeRef`) |
+|---|---|---|---|---|
+| PC-001 | Danh mục hợp lệ tại ngày | ngày | trước | `ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID` |
+| PC-002 | Chứng từ và sổ đúng trạng thái, không ghi trùng | ngày | trước | `EVENT_POSTED_VERSION`, `LEDGER_REVERSED_ONCE`, `EVENT_HAS_ENTRY`, `INTERNAL_EVENT_VERSION`, `POLICY_VERSION`, `ENTRY_NO_VERSION`, `ENTRY_VERSION_UNKNOWN`, `EVENT_ENTRIES_STALE` |
+| PC-003 | Không còn chứng từ chờ của kỳ | ngày | trước | `EVENT_PENDING_AGE`, `INTAKE_OPEN_AGE`, `EVENT_DEAD` |
+| PC-004 | Tồn kho không âm, kiểm kê đã xử lý | ngày | trước | `INVENTORY_NEGATIVE`, `STOCK_ADJUST_NO_REASON` |
+| PC-005 | Giá vốn đã chốt, không cũ | tuần · cuối tháng | trước | `COGS_STALE` |
+| PC-006 | Phân bổ giá vốn theo lớp nhập khớp lượng xuất | tuần · cuối tháng | trước | — *chưa có phép kiểm; thêm ở S032-12..16* |
+| PC-007 | Lô và hạn dùng | ngày | trước | — *chưa có phép kiểm; thêm ở S032-8..10* |
+| PC-008 | Chuyển kho, hàng đang chuyển | ngày | trước | `TRANSIT_NONZERO` |
+| PC-009 | Giá trị kho khớp sổ cái | tuần · cuối tháng | trước | `INVENTORY_LEDGER_MISMATCH` |
+| PC-010 | Trả hàng hoàn đúng giá vốn gốc | ngày | trước | — *kiểm chứng từ `orphanReturns` (không phải tự chẩn đoán); thêm ở S032-17* |
+| PC-011 | Thuế và hoá đơn | ngày · tuần | trước | `TAX_INPUT_NO_INVOICE`, `VAT_INPUT_INVOICE_MATCH`, `VAT_REDUCED_RATE`, `VAT_INPUT_NONCASH`, `INVOICE_FIELDS`, `INVOICE_ISSUE_DATE` |
+| PC-012 | Tiền và ngân hàng | tuần | trước | `CASH_NEGATIVE` |
+| PC-013 | Công nợ khớp sổ cái | tuần | trước | `DEBT_MATCH_LEDGER` |
+| PC-014 | Chi phí cuối kỳ (khấu hao, phân bổ) | cuối tháng | trước | `DEPRECIATION_OPEN` |
+| PC-015 | Kỳ và phạm vi khoá | cuối tháng | lúc khoá | — *khoá theo kỳ × chi nhánh × loại chứng từ, trigger CSDL 0082; thêm ở S032-28* |
+| PC-016 | Sổ cái toàn vẹn, không sửa ngoài ứng dụng | ngày | trước | `LEDGER_BALANCED`, `LEDGER_BALANCES_DAILY`, `LEDGER_ORPHAN`, `LEDGER_ROUNDING`, `LEDGER_HEADER_EDIT_UNATTRIBUTED`, `EVIDENCE_CHAIN`, `EVIDENCE_SEAL_MISSING`, `EVIDENCE_SEAL_FILE`, `EVIDENCE_SEAL_DB`, `EVIDENCE_SEAL_CHAIN`, `TENANT_ISOLATION` (L1), `LEDGER_TRIGGERS` (L1) |
+| PC-017 | Đủ nguồn để kết chuyển | cuối tháng | trước | `PERIOD_CLOSE_OPEN` |
+| PC-018 | Kết chuyển không lỗi thời | ngày · cuối tháng | sau | — *hôm nay nằm trong `PERIOD_CLOSE_OPEN`; tách mã ở S032-20 (DG-CLOSE-2)* |
+| PC-019 | Tài khoản 911 hết số dư | cuối tháng | sau | — *`closing.service` huỷ cả lần kết chuyển khi 911 còn dư* |
+| PC-020 | Lợi nhuận và báo cáo khớp sổ | cuối tháng | sau | `ACCOUNT_WRONG_SIDE` (tài khoản dư sai bên làm sai báo cáo) |
+| PC-021 | Số liệu không đổi tới lúc khoá | cuối tháng | lúc khoá | — *khoá chạy trong giao dịch có chẩn đoán R-DIAG-4; dấu số liệu ở S032-29* |
+| PC-022 | Quyền khoá sổ | cuối tháng | lúc khoá | — *quyền `periods:lock`, vai có phạm vi (PHASE-028)* |
+| PC-023 | Số dư liền mạch giữa các kỳ | cuối tháng | lúc khoá | — *`period_lock_events` ghi mở khoá kèm lý do; thêm ở S032-29* |
+| `none` | Việc vận hành, không thuộc khoá sổ | — | — | `MIGRATIONS_PENDING`, `DB_WRITABLE` (L1), `CONFORMANCE_STALE`, `PROFILE_DECLARED`, `PROFILE_PACK_REGIME` (L5) |
+
+Tổng: 41 mã gắn PC, 5 mã `none`. Chín PC chưa có phép kiểm tự chẩn đoán nuôi; mỗi PC ghi `checkedElsewhere` như cột cuối. Mức khi khoá kỳ ở B2c-2 theo mặc định (`error` → cần giải trình, `warn` → để biết); chưa mã nào trả *chặn khoá sổ* cho tới S032-30.
+
 ## 4. Gắn với nghiệp vụ của module và sự việc nạp về Kernel
 
 **Hai chiều:** chứng từ nào làm điều kiện nào phải kiểm lại (chiều *ảnh hưởng*), và chứng từ đó phải mang trường gì để kiểm được (chiều *kiểm được*).

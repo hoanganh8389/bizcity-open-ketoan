@@ -273,7 +273,8 @@ const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 export const assetPlanWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'core.asset.posting-create', title: 'Lập phiếu kế toán hạch toán ghi tăng / ghi giảm, thanh lý tài sản', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'required',
+    // [2026-11-10 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — S014-16 (SC-ACT-2, STD-ACT-9): lập phiếu qua voucherService.createIn = ghi sổ → khai 'ledger'
+    permission: 'documents:write', effect: 'write', sideEffects: ['masterdata', 'documents', 'ledger'], idempotency: 'required',
     input: (postingBody).merge(z.object({ code: z.string() })), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/assets/:code/postings', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'asset', objectId: (i) => String(i.code) },
@@ -307,7 +308,8 @@ export const assetPlanWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'core.asset-event.transfer-posting', title: 'Lập hai phiếu kế toán hạch toán điều chuyển tài sản (bên giao, bên nhận)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    // [2026-11-10 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — S014-16 (SC-ACT-2, STD-ACT-9): hai phiếu qua voucherService.createIn = ghi sổ → khai 'ledger'
+    permission: 'documents:write', effect: 'write', sideEffects: ['masterdata', 'documents', 'ledger'], idempotency: 'natural',
     input: (z.object({ docDate: day.optional() })).merge(z.object({ id: z.string().regex(/^[1-9][0-9]*$/) })), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/asset-events/:id/transfer-posting', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'asset_event', objectId: (i) => String(i.id) },

@@ -3,19 +3,23 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/account-resolver.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 /**
- * Tra tài khoản cho bộ định khoản theo thứ tự ưu tiên:
+ * Tra tài khoản cho bộ định khoản — tài khoản ngầm định (ACC41) theo nghiệp vụ của loại chứng từ:
  *
- *   tài khoản đối ứng  : lý do.counter_account  → ngầm định "receivable"
- *   tài khoản doanh thu: lý do.revenue_account  → nhóm hạch toán của mặt hàng.revenue_account
- *   tài khoản trả lại  : lý do.revenue_account  → nhóm hạch toán.sales_return_account
- *   tài khoản giá vốn  : lý do.expense_account  → nhóm hạch toán.cogs_account
- *                        (hàng tặng + cờ giftCostToPromotion → ngầm định "promotion_expense")
+ *   tài khoản đối ứng  : ngầm định "receivable" (bán, khách trả, thu tiền khách)
+ *   tài khoản doanh thu: nhóm hạch toán của mặt hàng.revenue_account
+ *   tài khoản trả lại  : nhóm hạch toán.sales_return_account
+ *   tài khoản giá vốn  : nhóm hạch toán.cogs_account (hàng tặng + cờ giftCostToPromotion → ngầm định "promotion_expense")
  *   tài khoản kho      : nhóm hạch toán.inventory_account
  *   tài khoản thuế ra  : loại thuế.account_code → ngầm định "tax_output"
  *   tài khoản thuế vào : loại thuế.account_code → ngầm định "tax_input"
- *   phải trả NCC       : lý do.counter_account  → ngầm định "payable"
- *   hàng đang chuyển   : lý do.counter_account  → ngầm định "goods_in_transit"
- *   điều chỉnh kho     : lý do.counter_account  → ngầm định "stock_surplus" (tăng) / "stock_shortage" (giảm)
+ *   phải trả NCC       : ngầm định "payable"
+ *   hàng đang chuyển   : ngầm định "goods_in_transit" (khác đơn vị hạch toán: phải thu / phải trả nội bộ)
+ *   điều chỉnh kho     : ngầm định "stock_surplus" (tăng) / "stock_shortage" (giảm)
+ *
+ * [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán (docs/nghiep-vu/18), khoá bizcity.posting.use_reasons:
+ *   TẮT (mặc định): tài khoản trên lý do KHÔNG dùng — như bảng trên. Trường hợp riêng (hàng hỏng, tặng, xuất dùng…) khai quy tắc ở
+ *   Thiết kế hạch toán (ACC92). Mã lý do trên chứng từ chỉ còn để chọn nghiệp vụ tự tạo / báo cáo, và vài cờ cách tính.
+ *   BẬT: tài khoản trên lý do (đối ứng, doanh thu / trả lại, giá vốn) đè lên tài khoản ngầm định / nhóm hàng như phần mềm cũ.
  *   tài khoản tiền     : hình thức thanh toán.account_code (đối tượng: hình thức.partner_code → khách);
  *                        chuyển tiền có mã ngân hàng → tài khoản ngân hàng.account_code
  *
@@ -59,22 +63,42 @@ export class AccountResolver {
     return group;
   }
 
+  /** Công tắc lý do hạch toán đang bật tại ngày chứng từ. */
+  get useReasons(): boolean {
+    return this.cfg.useReasons;
+  }
+
+  /** Tài khoản trên lý do — chỉ khi công tắc bật; tắt thì undefined (quên lý do). */
+  private onReason(v: string | null | undefined): string | undefined {
+    return this.cfg.useReasons && v ? v : undefined;
+  }
+
   counterAccount(reason: PostingReason): string {
-    return reason.counter_account ?? this.fromDefault('receivable', `tài khoản đối ứng của lý do ${reason.code}`);
+    return this.onReason(reason.counter_account) ?? this.fromDefault('receivable', 'tài khoản phải thu khách hàng');
   }
 
   revenueAccount(reason: PostingReason, group: ProductPostingGroup): string {
-    return reason.revenue_account ?? group.revenue_account;
+    return this.onReason(reason.revenue_account) ?? group.revenue_account;
   }
 
   salesReturnAccount(reason: PostingReason, group: ProductPostingGroup): string {
-    return reason.revenue_account ?? group.sales_return_account;
+    return this.onReason(reason.revenue_account) ?? group.sales_return_account;
+  }
+
+  /** Tài khoản chi phí trên lý do (mua hàng / dịch vụ vào thẳng chi phí) — chỉ khi công tắc bật. */
+  reasonExpense(reason: PostingReason): string | undefined {
+    return this.onReason(reason.expense_account);
+  }
+
+  /** Tài khoản đối ứng trên lý do (chuyển tiền giữa chi nhánh) — chỉ khi công tắc bật. */
+  reasonCounter(reason: PostingReason | undefined): string | null {
+    return this.onReason(reason?.counter_account) ?? null;
   }
 
   cogsAccount(reason: PostingReason, group: ProductPostingGroup, isGift: boolean): string {
     const flags = (reason.flags ?? {}) as Record<string, unknown>;
     if (isGift && flags.giftCostToPromotion) return this.fromDefault('promotion_expense', 'tài khoản chi phí hàng khuyến mãi');
-    return reason.expense_account ?? group.cogs_account;
+    return this.onReason(reason.expense_account) ?? group.cogs_account;
   }
 
   taxCode(code: string): TaxCodeConfig {
@@ -109,9 +133,10 @@ export class AccountResolver {
     return this.fromDefault(key, label);
   }
 
-  /** Tài khoản đối ứng có tài khoản ngầm định riêng cho loại chứng từ (phải trả NCC, hàng đang chuyển…). */
+  /** Tài khoản đối ứng theo tài khoản ngầm định của loại chứng từ (phải trả NCC, hàng đang chuyển, hàng thừa / thiếu…). */
   counterOr(reason: PostingReason, defaultKey: string, label: string, fallbackKey?: string): string {
-    if (reason.counter_account) return reason.counter_account;
+    const own = this.onReason(reason.counter_account);
+    if (own) return own;
     if (fallbackKey && !this.cfg.defaults.get(defaultKey) && this.cfg.defaults.get(fallbackKey)) return this.fromDefault(fallbackKey, label);
     return this.fromDefault(defaultKey, label);
   }

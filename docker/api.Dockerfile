@@ -61,6 +61,8 @@ COPY db/packs db/packs
 COPY docs/standard/bizcity-standard.json docs/standard/bizcity-standard.json
 # [2026-11-05 08:43 AM Nguyễn Văn Thủy] PHASE-026 — bảng trụ cột cho HT10 (packages/platform/src/core/version.ts đọc lúc chạy); thiếu tệp thì màn báo NOT_FOUND (đóng góp)
 COPY docs/standard/tru-cot.json docs/standard/tru-cot.json
+# [2026-11-10 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B1: bản đồ nền móng cho thẻ Nền móng ở HT10 (version.ts đọc lúc chạy); thiếu tệp thì thẻ báo NOT_FOUND — SC-REL-3 giữ (R-REL-11)
+COPY docs/standard/nen-mong.json docs/standard/nen-mong.json
 # Registry khoá cấu hình cho ctx.settings.get (packages/platform/src/core/settings.ts).
 COPY docs/contracts/bizcity-settings.registry.json docs/contracts/bizcity-settings.registry.json
 # [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: thư viện dùng chung (packages/platform/src/core/libraries đọc libraries/*/library.json lúc chạy; thiếu thư mục thì API trả danh sách rỗng)
