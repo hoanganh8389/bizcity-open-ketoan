@@ -16,6 +16,8 @@ import { api } from '@/lib/api';
 import { FoundationsBoard } from './FoundationsBoard';
 // [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 (S034-4): thanh mức đạt, báo thiếu tệp nguồn, thẻ "sắp có" dùng chung cho năm thẻ HT10
 import { ComingSoon, ScoreBar, SourceError } from './readiness';
+// [2026-11-10 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): thẻ Cổng & bộ kiểm có dữ liệu thật (GET /system/gates)
+import { GatesBoard } from './GatesBoard';
 
 export type PillarStatus = 'dat' | 'mot-phan' | 'tai-lieu' | 'chua';
 export interface PillarCriterion {
@@ -122,14 +124,7 @@ type TabKey = (typeof TABS)[number]['key'];
 function TabBody({ tab }: { tab: TabKey }) {
   switch (tab) {
     case 'nen-mong': return <FoundationsBoard />;
-    case 'cong-kiem':
-      return (
-        <ComingSoon question="Dữ liệu đi qua những cổng nào, mỗi cổng bắt được gì, mã kiểm nào chưa có cách sửa hoặc test?"
-          source="Sổ đăng ký trong mã: chẩn đoán L1 / L3 / L5, thư viện mã cổng A / B / Commit Guard / POL-*, cùng bộ kiểm CI (SC-*, DG-*) sinh ra cong-kiem.json"
-          step="B3 (S034-5, S034-6)">
-          Mỗi mã kiểm đủ bốn ý thì đạt: chạy được · có Cách sửa · có test · gắn trụ cột. Cổng C (giá vốn sau ghi sổ, CT-*) hiện dòng giữ chỗ tới khi PHASE-032 làm.
-        </ComingSoon>
-      );
+    case 'cong-kiem': return <GatesBoard />;
     case 'bo-may':
       return (
         <ComingSoon question="Mỗi bộ máy (engine) của Core làm gì, theo hợp đồng nào, còn bao nhiêu mốc?"

@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 284
+      "count": 285
     }
   ],
   "items": [
@@ -4529,7 +4529,7 @@
       "phase": "PHASE-029",
       "title": "Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1",
       "priority": "P1",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
@@ -6081,15 +6081,9 @@
       "phase": "PHASE-034",
       "title": "B3a — GET /api/v1/system/gates: chẩn đoán L1/L3/L5 + FINDINGSLIBRARY + INTAKECATALOG + lượt gần nhất; thẻ Cổng (A, B, Guard, Chẩn đoán)",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
-        "branch": "feat/phase-034-b3a-cong-kiem",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-034 · B3a — thẻ Cổng & bộ kiểm ở HT10: GET /api/v1/system/gates (chỉ đọc; gom chẩn đoán L1 / …"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 14
     },

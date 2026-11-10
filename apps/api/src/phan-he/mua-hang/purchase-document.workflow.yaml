@@ -8,6 +8,7 @@ states:
   pending_approval: { group: pending,   label: Chờ duyệt }
   approved:         { group: approved,  label: Đã duyệt }
   cancelled:        { group: cancelled, label: Đã huỷ }
+# [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1: sod: warn — người lập tự duyệt được ghi dấu (LEDGER_SELF_APPROVED), chưa chặn (R-WF-17)
 transitions:
   submit:
     title: Gửi duyệt
@@ -21,6 +22,7 @@ transitions:
     to: approved
     permission: documents:write
     ledger: true
+    sod: warn
     blocked: { approved: Phiếu đã duyệt, cancelled: Phiếu đã huỷ }
   # Duyệt ngoại lệ: chỉ khi mọi cảnh báo chặn là loại được bỏ qua (vượt hạn mức, đổi mã, nhập ngoài đơn) — service.ts kiểm phần đó.
   override:
@@ -30,6 +32,7 @@ transitions:
     permission: payments:approve
     requires: [reason]
     ledger: true
+    sod: warn
     denied: Duyệt ngoại lệ vượt hạn mức cần quyền duyệt (kế toán trưởng / chủ đơn vị)
     blocked: { approved: Phiếu đã duyệt, cancelled: Phiếu đã huỷ }
   unapprove:
