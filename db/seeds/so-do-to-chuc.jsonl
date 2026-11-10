@@ -1,52 +1,17 @@
-{"_bang": "so-do-to-chuc", "_mo_ta": "Sơ đồ tổ chức (DM16): gốc Công ty → Miền (cấp 1) → Chi nhánh (cấp 2) → Tỉnh (cấp 3). Chi nhánh gắn nút ở so-do-to-chuc-gan.jsonl. Kho nhận hàng mỗi chi nhánh cấp 2 tự lấy chi nhánh mã xx000 trong nhánh. Quay về gốc: thêm / ghi đè theo tệp, nút tự thêm không còn chi nhánh thì xoá.", "_cot": ["code", "name", "parent_code", "short_code", "alias", "note"]}
-{"code": "Công ty", "name": "Công ty", "parent_code": null, "short_code": "", "alias": "", "note": ""}
-{"code": "BAC", "name": "Miền Bắc", "parent_code": "Công ty", "short_code": "12", "alias": "", "note": ""}
-{"code": "BG", "name": "Chi nhánh Bắc Giang", "parent_code": "BAC", "short_code": "", "alias": "", "note": ""}
-{"code": "BGGC", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Bắc Giang", "parent_code": "BG", "short_code": "", "alias": "", "note": ""}
-{"code": "BNHC", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Bắc Ninh", "parent_code": "BG", "short_code": "", "alias": "", "note": ""}
-{"code": "TNNC", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Thái Nguyên", "parent_code": "BG", "short_code": "", "alias": "", "note": ""}
-{"code": "HN", "name": "Chi nhánh Hà Nội", "parent_code": "BAC", "short_code": "", "alias": "", "note": ""}
-{"code": "BGG", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Bắc Giang", "parent_code": "HN", "short_code": "", "alias": "", "note": ""}
-{"code": "BNH", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Bắc Ninh", "parent_code": "HN", "short_code": "", "alias": "", "note": ""}
-{"code": "CTY", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Công ty", "parent_code": "HN", "short_code": "", "alias": "", "note": ""}
-{"code": "HBH", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Hòa Bình", "parent_code": "HN", "short_code": "", "alias": "", "note": ""}
-{"code": "HNI", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Hà Nội", "parent_code": "HN", "short_code": "", "alias": "", "note": ""}
-{"code": "HYN", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Hưng Yên", "parent_code": "HN", "short_code": "", "alias": "", "note": ""}
-{"code": "TNN", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Thái Nguyên", "parent_code": "HN", "short_code": "", "alias": "", "note": ""}
-{"code": "HOTGS", "name": "BAC HOTGS", "parent_code": "BAC", "short_code": "", "alias": "", "note": ""}
-{"code": "HP", "name": "Chi nhánh Hải Phòng", "parent_code": "BAC", "short_code": "", "alias": "", "note": ""}
-{"code": "HDG", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Hải Dương", "parent_code": "HP", "short_code": "", "alias": "", "note": ""}
-{"code": "HPG", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Hải Phòng", "parent_code": "HP", "short_code": "", "alias": "", "note": ""}
-{"code": "QNH", "name": "BAC HP QNH", "parent_code": "HP", "short_code": "25000", "alias": "", "note": ""}
-{"code": "ND", "name": "Chi nhánh Nam Định", "parent_code": "BAC", "short_code": "", "alias": "", "note": ""}
-{"code": "HNM", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Hà Nam", "parent_code": "ND", "short_code": "", "alias": "", "note": ""}
-{"code": "NBH", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Ninh Bình", "parent_code": "ND", "short_code": "", "alias": "", "note": ""}
-{"code": "NDH", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Nam Định", "parent_code": "ND", "short_code": "", "alias": "", "note": ""}
-{"code": "TBH", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Thái Bình", "parent_code": "ND", "short_code": "", "alias": "", "note": ""}
-{"code": "PT", "name": "Chi nhánh Phú Thọ", "parent_code": "BAC", "short_code": "", "alias": "", "note": ""}
-{"code": "HGG", "name": "BAC PT HGG", "parent_code": "PT", "short_code": "29000", "alias": "", "note": ""}
-{"code": "LCI", "name": "BAC PT LCI", "parent_code": "PT", "short_code": "26000", "alias": "", "note": ""}
-{"code": "PTO", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Phú Thọ", "parent_code": "PT", "short_code": "", "alias": "", "note": ""}
-{"code": "TQG", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Tuyên Quang", "parent_code": "PT", "short_code": "", "alias": "", "note": ""}
-{"code": "VPC", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Vĩnh Phúc", "parent_code": "PT", "short_code": "", "alias": "", "note": ""}
-{"code": "YBI", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Yên Bái", "parent_code": "PT", "short_code": "", "alias": "", "note": ""}
-{"code": "TH", "name": "Chi nhánh Thanh Hóa", "parent_code": "BAC", "short_code": "", "alias": "", "note": ""}
-{"code": "THA", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Thanh Hóa", "parent_code": "TH", "short_code": "", "alias": "", "note": ""}
-{"code": "NAM", "name": "Miền Nam", "parent_code": "Công ty", "short_code": "21", "alias": "", "note": ""}
-{"code": "CT", "name": "Chi nhánh Cần Thơ", "parent_code": "NAM", "short_code": "", "alias": "", "note": ""}
-{"code": "AGG", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại An Giang", "parent_code": "CT", "short_code": "27", "alias": "", "note": ""}
-{"code": "CTO", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Cần Thơ", "parent_code": "CT", "short_code": "", "alias": "", "note": ""}
-{"code": "VLG", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Vĩnh Long", "parent_code": "CT", "short_code": "28", "alias": "", "note": ""}
-{"code": "SG", "name": "Chi nhánh Hồ Chí Minh", "parent_code": "NAM", "short_code": "", "alias": "", "note": ""}
-{"code": "BDG", "name": "NAM SG BDG", "parent_code": "SG", "short_code": "", "alias": "", "note": ""}
-{"code": "HCM", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại TP Hồ Chí Minh", "parent_code": "SG", "short_code": "", "alias": "", "note": ""}
-{"code": "ĐN", "name": "NAM ĐN", "parent_code": "NAM", "short_code": "", "alias": "", "note": ""}
-{"code": "BDGC", "name": "NAM ĐN BDG", "parent_code": "ĐN", "short_code": "", "alias": "", "note": ""}
-{"code": "DNI", "name": "NAM ĐN DNI", "parent_code": "ĐN", "short_code": "DNI", "alias": "", "note": ""}
-{"code": "TRUNG", "name": "Miền Trung", "parent_code": "Công ty", "short_code": "38", "alias": "", "note": ""}
-{"code": "DN", "name": "Chi nhánh Đà Nẵng", "parent_code": "TRUNG", "short_code": "DN", "alias": "", "note": ""}
-{"code": "DNG", "name": "Chi Nhánh ĐT TGS tại Đà Nẵng", "parent_code": "DN", "short_code": "DNG", "alias": "", "note": ""}
-{"code": "QNM", "name": "CN Công ty CP Đầu tư Thế giới Sữa tại Quàng Nam", "parent_code": "DN", "short_code": "30", "alias": "", "note": ""}
-{"code": "NA", "name": "Chi nhánh Nghệ An", "parent_code": "TRUNG", "short_code": "", "alias": "", "note": ""}
-{"code": "HTH", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Hà Tĩnh", "parent_code": "NA", "short_code": "", "alias": "", "note": ""}
-{"code": "NAN", "name": "CN Công ty CP Đầu Tư Thế Giới Sữa tại Nghệ An", "parent_code": "NA", "short_code": "", "alias": "", "note": ""}
+{"_bang":"so-do-to-chuc","_mo_ta":"Sơ đồ tổ chức (DM16): gốc Công ty → Miền (cấp 1) → Chi nhánh (cấp 2) → Tỉnh (cấp 3). Chi nhánh gắn nút ở so-do-to-chuc-gan.jsonl. Kho nhận hàng mỗi chi nhánh cấp 2 tự lấy chi nhánh mã xx000 trong nhánh. Quay về gốc: thêm / ghi đè theo tệp, nút tự thêm không còn chi nhánh thì xoá.","_cot":["code","name","parent_code","short_code","alias","note"],"_nguon":"gia-lap"}
+{"code":"Công ty","name":"Công ty","parent_code":null,"short_code":"","alias":"","note":""}
+{"code":"BAC","name":"Miền Bắc","parent_code":"Công ty","short_code":"12","alias":"","note":""}
+{"code":"NAM","name":"Miền Nam","parent_code":"Công ty","short_code":"34","alias":"","note":""}
+{"code":"HOCTY","name":"Văn phòng công ty","parent_code":"BAC","short_code":"","alias":"","note":""}
+{"code":"ND","name":"Chi nhánh Nam Định","parent_code":"BAC","short_code":"","alias":"","note":""}
+{"code":"NDH","name":"Cửa hàng tại Nam Định","parent_code":"ND","short_code":"","alias":"","note":""}
+{"code":"TBH","name":"Cửa hàng tại Thái Bình","parent_code":"ND","short_code":"","alias":"","note":""}
+{"code":"PT","name":"Chi nhánh Phú Thọ","parent_code":"BAC","short_code":"","alias":"","note":""}
+{"code":"PTO","name":"Cửa hàng tại Phú Thọ","parent_code":"PT","short_code":"","alias":"","note":""}
+{"code":"LCI","name":"Cửa hàng tại Lào Cai","parent_code":"PT","short_code":"26000","alias":"","note":""}
+{"code":"YBI","name":"Cửa hàng tại Yên Bái","parent_code":"PT","short_code":"","alias":"","note":""}
+{"code":"HN","name":"Chi nhánh Hà Nội","parent_code":"BAC","short_code":"","alias":"","note":""}
+{"code":"HNI","name":"Cửa hàng tại Hà Nội","parent_code":"HN","short_code":"","alias":"","note":""}
+{"code":"HCM","name":"Chi nhánh Hồ Chí Minh","parent_code":"NAM","short_code":"","alias":"","note":""}
+{"code":"HCM1","name":"Cửa hàng tại TP Hồ Chí Minh","parent_code":"HCM","short_code":"","alias":"","note":""}
+{"code":"BDG","name":"Cửa hàng tại Bình Dương","parent_code":"HCM","short_code":"","alias":"","note":""}

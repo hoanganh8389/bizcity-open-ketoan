@@ -2,6 +2,8 @@
 
 Bộ danh mục và cấu hình định khoản chuẩn của công ty, lưu bằng tệp ngay trong phần mềm (thư mục `db/seeds`). Người dùng thêm, sửa, xoá danh mục thoải mái; khi danh mục bị sửa lộn xộn thì **quay về dữ liệu gốc** để làm sạch.
 
+> <!-- [2026-11-10 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-53 --> Bản phát hành mang **dữ liệu giả lập** cho các danh mục có tên người / công ty / số tài khoản (cột "giả lập"). Công ty dùng danh mục thật của mình: chép bộ thật ra thư mục riêng và đặt `SEEDS_DIR` — cách làm ở `db/seeds/README.md`.
+
 ## Các bộ dữ liệu
 
 Mọi màn danh mục đều có nút **Quay về dữ liệu gốc** ở đầu màn. Thứ tự dưới đây cũng là thứ tự khi bấm **Quay về toàn bộ** (bộ sau dùng mã của bộ trước):
@@ -12,18 +14,18 @@ Mọi màn danh mục đều có nút **Quay về dữ liệu gốc** ở đầu
 | Tài khoản ngầm định | ACC41 | `tai-khoan-ngam-dinh.jsonl` | 12 |
 | Loại thuế | ACC43 | `loai-thue.jsonl` | 51 |
 | Danh mục khoản mục | ACC24 | `khoan-muc.jsonl` | 295 |
-| Danh mục bộ phận (gồm từng cửa hàng) | ACC26 | `bo-phan.jsonl` | 763 |
-| Chi nhánh / cửa hàng | DM02 | `chi-nhanh.jsonl` | 746 |
+| Danh mục bộ phận (gồm từng cửa hàng) | ACC26 | `bo-phan.jsonl` | 42 (giả lập) |
+| Chi nhánh / cửa hàng | DM02 | `chi-nhanh.jsonl` | 32 (giả lập) |
 | Lý do – tài khoản | ACC18 | `ly-do.jsonl` | 97 |
 | Mặt hàng – tài khoản (nhóm hạch toán) | ACC17 | `nhom-hach-toan.jsonl` | 21 |
-| Phân loại hàng hoá (nhóm, ngành, nhãn hàng) | DM11 | `phan-loai-hang.jsonl` | 2.189 |
-| Danh mục mặt hàng | DM10 | `mat-hang-tai-khoan.jsonl` | 20.985 |
+| Phân loại hàng hoá (nhóm, ngành, nhãn hàng) | DM11 | `phan-loai-hang.jsonl` | 72 (giả lập) |
+| Danh mục mặt hàng | DM10 | `mat-hang-tai-khoan.jsonl` | 401 (giả lập) |
 | Nhóm đối tượng | DM08 | `nhom-doi-tuong.jsonl` | 12 |
-| Đối tượng | DM03 | `doi-tuong.jsonl` | 16.459 |
-| Tài khoản ngân hàng | DM09 | `ngan-hang.jsonl` | 190 |
+| Đối tượng | DM03 | `doi-tuong.jsonl` | 125 (giả lập) |
+| Tài khoản ngân hàng | DM09 | `ngan-hang.jsonl` | 12 (giả lập) |
 | Hình thức thanh toán | DM05 | `hinh-thuc-thanh-toan.jsonl` | 17 |
-| Danh mục nhân viên | DM04 | `nhan-vien.jsonl` | 45 |
-| Danh mục hợp đồng | ACC25 | `hop-dong.jsonl` | 4 |
+| Danh mục nhân viên | DM04 | `nhan-vien.jsonl` | 45 (giả lập) |
+| Danh mục hợp đồng | ACC25 | `hop-dong.jsonl` | 4 (giả lập) |
 | Loại tài sản | ACC37 | `loai-tai-san.jsonl` | 9 |
 | Nhóm công cụ dụng cụ | ACC19 | `nhom-ccdc.jsonl` | 2 |
 | Nguồn vốn, mục đích sử dụng, vụ việc, dự án | ACC20, ACC21, DM06, DM07 | `nguon-von.jsonl`, `muc-dich-su-dung.jsonl`, `vu-viec.jsonl`, `du-an.jsonl` | trống (công ty chưa khai mã chuẩn) |

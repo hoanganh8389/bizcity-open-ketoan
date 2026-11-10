@@ -158,7 +158,7 @@ Khoản mục bắt buộc cho chi phí quản trị: tài khoản chi phí bán
 
 ## 5. Dữ liệu gốc
 
-Toàn bộ danh mục chuẩn của công ty lưu bằng **tệp** trong `db/seeds/` (22 bộ, xem README ở đó): hệ thống tài khoản, tài khoản ngầm định, loại thuế, khoản mục, bộ phận, chi nhánh, lý do, nhóm hạch toán, phân loại hàng hoá, mặt hàng (20.985), nhóm đối tượng, đối tượng (16.459, không gồm khách lẻ), ngân hàng, hình thức thanh toán, nhân viên, hợp đồng, loại tài sản, nhóm công cụ dụng cụ, nguồn vốn, mục đích sử dụng, vụ việc, dự án.
+Toàn bộ danh mục chuẩn của công ty lưu bằng **tệp** trong `db/seeds/` (22 bộ, xem README ở đó): hệ thống tài khoản, tài khoản ngầm định, loại thuế, khoản mục, bộ phận, chi nhánh, lý do, nhóm hạch toán, phân loại hàng hoá, mặt hàng, nhóm đối tượng, đối tượng (không gồm khách lẻ) <!-- [2026-11-10 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-53: bản phát hành là bộ giả lập; bộ thật của công ty ở thư mục riêng (SEEDS_DIR, db/seeds/README.md) -->, ngân hàng, hình thức thanh toán, nhân viên, hợp đồng, loại tài sản, nhóm công cụ dụng cụ, nguồn vốn, mục đích sử dụng, vụ việc, dự án.
 
 Người dùng thêm, sửa, xoá danh mục thoải mái. Khi cần làm sạch: nút **Quay về dữ liệu gốc** ở đầu **mọi** màn danh mục, hoặc **Quay về toàn bộ** ở màn **Dữ liệu gốc (TI08)** (chạy đúng thứ tự phụ thuộc). Quay về: thêm lại cái thiếu, ghi đè theo tệp; mã tự thêm chưa dùng thì xoá, đã dùng trên sổ thì khoá (riêng chi nhánh, đối tượng, mặt hàng chỉ thêm / cập nhật). Không sửa chứng từ, sổ cái đã ghi.
 
