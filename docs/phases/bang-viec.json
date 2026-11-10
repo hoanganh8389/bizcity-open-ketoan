@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 10
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 62
+      "count": 61
     },
     {
       "key": "paused",
@@ -6000,8 +6000,14 @@
       "title": "Trường mới của DiagCheck (closeRef, cadence, stage, severityAtClose, owner, scopeBy); gắn closeRef cho mọi chẩn đoán L3 đang có (70 §3)",
       "priority": "P0",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
+        "branch": "fix/closeref-ledger-self-approved",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-032 · B2c-2 sửa — LEDGERSELFAPPROVED (S029-25) khai closeRef PC-022; PC-022 bỏ checkedElsewhe…"
+      },
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 44
     },
