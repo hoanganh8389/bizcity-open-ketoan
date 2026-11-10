@@ -252,7 +252,8 @@ export const assetWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'core.asset.depreciation', title: 'Tính khấu hao, phân bổ một tháng và ghi sổ (tính lại thì bút toán cũ ghi số âm)', tags,
-    permission: 'periods:lock', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    // [2026-11-10 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — S014-16 (SC-ACT-2, STD-ACT-9): khấu hao ghi sổ (assetService.runIn) → khai 'ledger'
+    permission: 'periods:lock', effect: 'write', sideEffects: ['masterdata', 'documents', 'ledger'], idempotency: 'natural',
     input: z.object({ period: z.string().regex(/^\d{4}-\d{2}$/, 'Kỳ dạng YYYY-MM'), catchUp: z.boolean().optional() }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/assets/depreciation' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'asset' },

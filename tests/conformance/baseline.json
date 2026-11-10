@@ -1991,6 +1991,52 @@
           "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
         }
       ]
+    },
+    "SC-ACT-2": {
+      "title": "Action ghi sổ khai sideEffects ledger và errors có PERIOD_LOCKED (STD-ACT-9)",
+      "ref": "STD-ACT-9 · S014-16 — chuyển kho (kho01, Nguyễn Văn Thủy đang sửa) và duyệt mua hàng (RV-R1-11, PHASE-026): chủ tệp thêm 'ledger' vào sideEffects khi chạm tệp",
+      "debts": [
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.create",
+          "file": "apps/api/src/phan-he/kho/phieu-chuyen-kho.ts",
+          "message": "action kho.transfer.create gọi createTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        },
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.update",
+          "file": "apps/api/src/phan-he/kho/phieu-chuyen-kho.ts",
+          "message": "action kho.transfer.update gọi updateTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        },
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.receive",
+          "file": "apps/api/src/phan-he/kho/phieu-chuyen-kho.ts",
+          "message": "action kho.transfer.receive gọi receiveTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        },
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.unreceive",
+          "file": "apps/api/src/phan-he/kho/phieu-chuyen-kho.ts",
+          "message": "action kho.transfer.unreceive gọi unreceiveTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        },
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.reject",
+          "file": "apps/api/src/phan-he/kho/phieu-chuyen-kho.ts",
+          "message": "action kho.transfer.reject gọi rejectTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        },
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.cancel",
+          "file": "apps/api/src/phan-he/kho/phieu-chuyen-kho.ts",
+          "message": "action kho.transfer.cancel gọi cancelTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        },
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/mua-hang/routes.ts|side:mua-hang.purchase.documents-approve",
+          "file": "apps/api/src/phan-he/mua-hang/routes.ts",
+          "message": "action mua-hang.purchase.documents-approve gọi purchaseService.approveIn (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        },
+        {
+          "fp": "SC-ACT-2|apps/api/src/phan-he/mua-hang/routes.ts|side:mua-hang.purchase.documents-override",
+          "file": "apps/api/src/phan-he/mua-hang/routes.ts",
+          "message": "action mua-hang.purchase.documents-override gọi purchaseService.approveIn (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
+        }
+      ]
     }
   }
 }

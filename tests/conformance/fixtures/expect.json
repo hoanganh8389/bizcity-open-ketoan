@@ -388,6 +388,13 @@
             "doc-missing:BADREASON"
           ]
         },
+        "SC-ACT-2": {
+          "findings": 2,
+          "keys": [
+            "side:alpha.doc.post",
+            "errors:alpha.doc.repost"
+          ]
+        },
         "SC-EVD-2": {
           "findings": 13,
           "keys": [

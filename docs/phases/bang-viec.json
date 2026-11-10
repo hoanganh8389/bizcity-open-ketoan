@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 278
+      "count": 279
     }
   ],
   "items": [
@@ -1546,15 +1546,9 @@
       "phase": "PHASE-014",
       "title": "SC-ACT-2 (STD-ACT-9): action ghi mà handler gọi tới cửa ghi sổ (eventStore.post / reverseActive, postDocumentIn, submitDocumentIn, requestCancelIn, voucherServ…",
       "priority": null,
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
-        "branch": "feat/phase-014-s014-16-sc-act-2",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-014 · S014-16 — SC-ACT-2: action ghi sổ phải khai sideEffects: ledger + errors: PERIODLOCKED …"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
