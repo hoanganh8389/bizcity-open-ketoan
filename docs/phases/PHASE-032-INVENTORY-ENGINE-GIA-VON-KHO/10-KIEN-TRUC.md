@@ -72,7 +72,9 @@
 ## 2a. Hai sổ, một cầu nối: cha, biến thể ở sổ kho; tài khoản ở sổ cái
 <!-- [2026-11-10 10:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — hai sổ, một cầu nối: tách Inventory Engine (theo item_id, cha, biến thể) khỏi ghi sổ cái; đề xuất T-1..T-6, Q032-9 -->
 
-> **Trạng thái: đề xuất** (chủ dự án hỏi 2026-11-10: *"thể hiện rõ sự tách bạch giữa inventory engine (theo item id, parent id hoặc các biến thể id) so với việc ghi sổ"*). T-1, T-2, T-4 khớp quyết định đã có (D026-2, R-INV-1/2, migration 0091). T-3 cần chủ trả **Q032-9**. T-5, T-6 là việc dọn mã và màn, làm theo bước B6.
+> <!-- [2026-11-10 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chủ dự án duyệt ba khối màn mặt hàng và trả Q032-9 = cha chỉ là tổng khi xem (D032-14); bản mẫu the-mat-hang-hai-so.html; Thuy2k phụ trách -->**Đã duyệt một phần (2026-11-10):** chủ dự án đồng ý **ba khối màn mặt hàng** (*Thẻ kho · Đã ghi sổ · Khớp sổ cái chưa*) và trả **Q032-9 = cha chỉ là tổng khi xem, giá vốn luôn tính theo biến thể** → D032-14, T-3 có hiệu lực khi có mã. Bản mẫu: [mockups/the-mat-hang-hai-so.html](mockups/the-mat-hang-hai-so.html) (`#lech` mở thẳng tình huống lệch). Phụ trách làm: **Thuy2k** (Nguyễn Văn Thủy — danh mục, mua hàng, kho, giá vốn).
+>
+> **Trạng thái ban đầu: đề xuất** (chủ dự án hỏi 2026-11-10: *"thể hiện rõ sự tách bạch giữa inventory engine (theo item id, parent id hoặc các biến thể id) so với việc ghi sổ"*). T-1, T-2, T-4 khớp quyết định đã có (D026-2, R-INV-1/2, migration 0091). T-3 cần chủ trả **Q032-9**. T-5, T-6 là việc dọn mã và màn, làm theo bước B6.
 
 Một mặt hàng có **hai sổ**: sổ kho đếm **cái gì, bao nhiêu, giá bao nhiêu**; sổ cái đếm **tiền nằm ở tài khoản nào**. Hai sổ chỉ gặp nhau ở **một cầu nối** và **một phép đối chiếu**.
 
@@ -107,12 +109,20 @@ Một mặt hàng có **hai sổ**: sổ kho đếm **cái gì, bao nhiêu, giá
 |---|---|---|---|
 | **T-1** | Engine **không đọc, không ghi** `ledger_*`. Cần biết giá vốn đã ghi sổ chưa thì đọc `cost_allocations.journal_entry_id` | ⚠ `costing.service` còn đọc `ledger_lines` hai chỗ (dọn dòng `cost_fill` cũ, liệt kê chi nhánh có dòng giá vốn) — chuyển sang đọc `inventory_movements` ở B6 | phép kiểm tĩnh mới SC-INV-3: `modules/inventory/**` không nhắc `ledger_lines` / `ledger_entries` |
 | **T-2** | Sổ cái **không tính theo mặt hàng**: số dư, báo cáo tài khoản không `GROUP BY item_id`; `item_id` trên dòng sổ chỉ để truy ngược. Chi tiết theo mặt hàng lấy từ sổ kho | ✅ đúng | SC-INV-3 chiều ngược: `modules/{ledger,closing,reports}` không gom theo `item_id` |
-| **T-3** | **Cha đã có biến thể thì không có dòng kho**: không nhập, xuất, lô, lớp, phân bổ trên `item_id` của cha. Mặt hàng không có biến thể là cha của chính nó (một tầng) | ☐ chưa chặn — **Q032-9** | cửa nạp `IN-INV-0xx` (cảnh báo, mặc định cho phép theo R-GATE-9) + chẩn đoán `ITEM_PARENT_HAS_STOCK` (PC-001) |
+| **T-3** | **Cha đã có biến thể thì không có dòng kho**: không nhập, xuất, lô, lớp, phân bổ trên `item_id` của cha. Mặt hàng không có biến thể là cha của chính nó (một tầng) | ☐ chưa có mã — **Q032-9 đã trả: không** (D032-14) | cửa nạp `IN-INV-0xx` (cảnh báo, mặc định cho phép theo R-GATE-9) + chẩn đoán `ITEM_PARENT_HAS_STOCK` (PC-001) |
 | **T-4** | **Đổi cha không sửa sổ nào**: chuyển biến thể sang cha khác, gộp, tách cha chỉ đổi `items.parent_item_id`; tồn, lớp, bút toán giữ nguyên | ✅ đúng (D026-2, 0067) | test hiện có của PHASE-026 |
 | **T-5** | **Một cầu nối mỗi chiều**: xuôi = `CostingResult` → `eventStore`; ngược = `journal_entry_id` trên phân bổ. Không đường thứ hai (không `UPDATE` số tiền sổ cái từ Engine) | 🟡 đã đúng hình (phiếu "Giá vốn hàng xuất"); phân bổ và `journal_entry_id` đến ở B6 | test B6: mỗi bút toán giá vốn có Σ phân bổ trỏ về = số tiền bút toán |
 | **T-6** | **Một phép đối chiếu**: CT-COST-004 so Σ lớp (theo đơn vị kế toán × TK kho tra tại ngày từ nhóm hạch toán của từng `item_id`) với số dư TK kho. Lệch thì sửa chứng từ, không điều chỉnh cho khớp (`forbid`) | 🟡 `INVENTORY_LEDGER_MISMATCH` đang so theo **mã** trên dòng sổ | đổi sang theo `item_id` + lớp ở B6 (PC-009) |
 
-**Kế toán thấy gì** (màn mặt hàng, bước B6 *Hành trình giá vốn*): ba khối cạnh nhau, bằng lời kế toán.
+**Kế toán thấy gì** (màn mặt hàng, bước B6 *Hành trình giá vốn*; **chủ dự án duyệt 2026-11-10**): ba khối cạnh nhau, bằng lời kế toán. Bản mẫu: [mockups/the-mat-hang-hai-so.html](mockups/the-mat-hang-hai-so.html).
+
+**Gọn, dễ thấy chỗ lệch** (khuôn của bản mẫu, áp cho màn thật):
+1. **Không màu là đạt.** Chỉ tô màu chỗ có việc: đỏ = *lệch, phải sửa chứng từ*; cam = *cần xem trước khi khoá kỳ*. Không thêm mức thứ ba trên màn này.
+2. **Một vạch trái + một dòng lý do** ngay dưới dòng gây ra vấn đề (biến thể, lần tính). Không hộp thoại, không bảng cảnh báo riêng.
+3. **Mỗi vấn đề hiện một lần**, ở khối gây ra nó. Dải ba ô trên cùng chỉ **đếm** và dẫn tới chỗ đó.
+4. **Khớp sổ cái** là một phép so: *thẻ kho = sổ cái* hoặc *≠ … Lệch X*; dưới đó là danh sách lệch, mỗi mục ghi **chỗ · vì sao · sửa ở đâu**, nút *Xem trên thẻ kho* tô sáng dòng.
+5. **Cách sửa luôn là sửa chứng từ hoặc tính lại**, không có nút "điều chỉnh cho khớp" (T-6, `forbid`).
+6. **Dòng cha** in đậm nền nhạt, ghi *tổng các biến thể*, không có đơn giá; chứng từ ghi nhầm mã cha hiện ở chính dòng cha (T-3).
 
 | Khối | Nội dung | Đọc từ |
 |---|---|---|
