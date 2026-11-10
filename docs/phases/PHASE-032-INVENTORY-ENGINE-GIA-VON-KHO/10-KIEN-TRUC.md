@@ -69,6 +69,59 @@
 
 Đường ghi hôm nay đã đúng hình (costing.service → `eventStore.post` phiếu "Giá vốn hàng xuất"); phase này **tách** phần tính (lớp, phân bổ, run) khỏi phần đưa sang Kernel, và thêm cổng `settle`.
 
+## 2a. Hai sổ, một cầu nối: cha, biến thể ở sổ kho; tài khoản ở sổ cái
+<!-- [2026-11-10 10:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — hai sổ, một cầu nối: tách Inventory Engine (theo item_id, cha, biến thể) khỏi ghi sổ cái; đề xuất T-1..T-6, Q032-9 -->
+
+> **Trạng thái: đề xuất** (chủ dự án hỏi 2026-11-10: *"thể hiện rõ sự tách bạch giữa inventory engine (theo item id, parent id hoặc các biến thể id) so với việc ghi sổ"*). T-1, T-2, T-4 khớp quyết định đã có (D026-2, R-INV-1/2, migration 0091). T-3 cần chủ trả **Q032-9**. T-5, T-6 là việc dọn mã và màn, làm theo bước B6.
+
+Một mặt hàng có **hai sổ**: sổ kho đếm **cái gì, bao nhiêu, giá bao nhiêu**; sổ cái đếm **tiền nằm ở tài khoản nào**. Hai sổ chỉ gặp nhau ở **một cầu nối** và **một phép đối chiếu**.
+
+```text
+ Danh mục (MDG)                 SỔ KHO — Inventory Engine                       SỔ CÁI — Accounting Kernel
+ ─────────────                  ─────────────────────────                       ──────────────────────────
+ sản phẩm cha                   (không có dòng — chỉ cộng các biến thể khi xem)
+ parent_item_id ─┐
+                 ├─ biến thể ──► inventory_movements · lô · lớp giá · phân bổ   ledger_entries / ledger_lines
+ item_id ────────┘   (khoá tính:  (nhóm tính giá × item_id × kỳ)               (khoá tính: tài khoản tại ngày × chi nhánh × kỳ)
+ mã (item_codes)      hiển thị)   lượng + giá trị, KHÔNG tài khoản              tiền, KHÔNG lô / lớp
+                                          │                                               ▲
+                                          │ ① CostingResult (bút toán "Giá vốn hàng xuất") │
+                                          └──────────── eventStore ─────────────────────────┘
+                                          ◄──── ② cost_allocations.journal_entry_id (điền một lần) ────
+                                   ③ Đối chiếu CT-COST-004: Σ giá trị lớp theo (đơn vị kế toán × TK kho tra tại ngày)
+                                      = số dư tài khoản kho trên sổ cái — nơi DUY NHẤT hai sổ so số với nhau
+```
+
+| | Sổ kho (Inventory Engine) | Sổ cái (Accounting Kernel) |
+|---|---|---|
+| Đếm cái gì | lượng, lô, hạn, lớp giá, phân bổ, đơn giá | tiền theo tài khoản |
+| Khoá tính | (nhóm tính giá × **`item_id` = biến thể** × kỳ) — đã đúng ở `costing.service` (PHASE-024 G2) | (tài khoản tại ngày × chi nhánh × kỳ) |
+| Sản phẩm cha | **chỉ cộng khi xem**: tồn cha = Σ tồn các biến thể lúc xem; không dòng, không lớp, không đơn giá riêng | không biết |
+| `item_id` | khoá | **chỉ tham chiếu** trên dòng 156 / 632 / 511 để truy ngược; không cộng số dư theo nó; điền một lần (0091: `UPDATE (item_id)` NULL → giá trị) |
+| Tài khoản | không có cột (R-INV-2) | tra tại ngày: lý do → nhóm hạch toán → chế độ kế toán |
+| Ai ghi | chỉ `modules/inventory/**` | chỉ một cửa ghi sổ (`eventStore`) |
+
+**Sáu luật tách (đề xuất, kiểm được):**
+
+| Mã | Luật | Hôm nay | Kiểm bằng |
+|---|---|---|---|
+| **T-1** | Engine **không đọc, không ghi** `ledger_*`. Cần biết giá vốn đã ghi sổ chưa thì đọc `cost_allocations.journal_entry_id` | ⚠ `costing.service` còn đọc `ledger_lines` hai chỗ (dọn dòng `cost_fill` cũ, liệt kê chi nhánh có dòng giá vốn) — chuyển sang đọc `inventory_movements` ở B6 | phép kiểm tĩnh mới SC-INV-3: `modules/inventory/**` không nhắc `ledger_lines` / `ledger_entries` |
+| **T-2** | Sổ cái **không tính theo mặt hàng**: số dư, báo cáo tài khoản không `GROUP BY item_id`; `item_id` trên dòng sổ chỉ để truy ngược. Chi tiết theo mặt hàng lấy từ sổ kho | ✅ đúng | SC-INV-3 chiều ngược: `modules/{ledger,closing,reports}` không gom theo `item_id` |
+| **T-3** | **Cha đã có biến thể thì không có dòng kho**: không nhập, xuất, lô, lớp, phân bổ trên `item_id` của cha. Mặt hàng không có biến thể là cha của chính nó (một tầng) | ☐ chưa chặn — **Q032-9** | cửa nạp `IN-INV-0xx` (cảnh báo, mặc định cho phép theo R-GATE-9) + chẩn đoán `ITEM_PARENT_HAS_STOCK` (PC-001) |
+| **T-4** | **Đổi cha không sửa sổ nào**: chuyển biến thể sang cha khác, gộp, tách cha chỉ đổi `items.parent_item_id`; tồn, lớp, bút toán giữ nguyên | ✅ đúng (D026-2, 0067) | test hiện có của PHASE-026 |
+| **T-5** | **Một cầu nối mỗi chiều**: xuôi = `CostingResult` → `eventStore`; ngược = `journal_entry_id` trên phân bổ. Không đường thứ hai (không `UPDATE` số tiền sổ cái từ Engine) | 🟡 đã đúng hình (phiếu "Giá vốn hàng xuất"); phân bổ và `journal_entry_id` đến ở B6 | test B6: mỗi bút toán giá vốn có Σ phân bổ trỏ về = số tiền bút toán |
+| **T-6** | **Một phép đối chiếu**: CT-COST-004 so Σ lớp (theo đơn vị kế toán × TK kho tra tại ngày từ nhóm hạch toán của từng `item_id`) với số dư TK kho. Lệch thì sửa chứng từ, không điều chỉnh cho khớp (`forbid`) | 🟡 `INVENTORY_LEDGER_MISMATCH` đang so theo **mã** trên dòng sổ | đổi sang theo `item_id` + lớp ở B6 (PC-009) |
+
+**Kế toán thấy gì** (màn mặt hàng, bước B6 *Hành trình giá vốn*): ba khối cạnh nhau, bằng lời kế toán.
+
+| Khối | Nội dung | Đọc từ |
+|---|---|---|
+| **Thẻ kho** | tồn, nhập, xuất, đơn giá theo **từng biến thể**; dòng cha là tổng, ghi *"tổng các biến thể"* | sổ kho |
+| **Đã ghi sổ** | mỗi lần tính giá vốn: phiếu nào, Nợ / Có tài khoản nào, bao nhiêu | cầu nối ① ② |
+| **Khớp sổ cái chưa** | *Giá trị kho theo thẻ kho = số dư TK 156 của đơn vị* ✔ / lệch bao nhiêu, ở mặt hàng nào | đối chiếu ③ |
+
+Ví dụ: áo `ÁO-THUN` (cha) có hai biến thể `ÁO-THUN-ĐỎ-M`, `ÁO-THUN-XANH-L`. Thẻ kho tính đơn giá riêng từng biến thể. Dòng cha chỉ cộng lượng và giá trị. Sổ cái chỉ có *Nợ 632 / Có 156: 1.250.000* của phiếu giá vốn tháng 10. Muốn biết 1.250.000 gồm những gì thì bấm sang thẻ kho qua phân bổ, không tìm trong sổ cái.
+
 ## 3. Mô hình dữ liệu (đích)
 
 Khuôn đầy đủ ở [`bizcity_inventory@1` §2](../../contracts/BIZCITY-INVENTORY-v1.md). Quan hệ:
