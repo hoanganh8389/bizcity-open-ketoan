@@ -1,0 +1,17 @@
+# [2026-11-11 12:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3 (S032-17): bằng chứng chạy thật — khách trả hàng lấy đúng giá vốn lúc bán
+# apps/api/test/tra-hang-gia-von-goc.test.ts trên CSDL riêng ketoan_test_p032 (2026-11-11).
+#
+# Tình huống G1 trên bình quân tháng:
+#   tháng 10: nhập 100 × 100.000, bán 30 (BH-108)          → đơn giá tháng 10 = 100.000
+#   tháng 11: nhập 25 × 120.000, khách trả 5 của BH-108 (NTH-012)
+#   nhánh không gốc: B3-B tồn đầu 6 × 100.000, nhập 4 × 175.000, khách trả 2 không ghi chứng từ gốc (NTH-013)
+#
+#                                         TRƯỚC B3 (đã chạy để đối chứng)   SAU B3
+# Giá vốn hoàn NTH-012 (Có 632)           526.316 (đơn giá tháng trả)       500.000 (đơn giá tháng bán gốc)
+# Đơn giá bình quân tháng 11 của B3-A     105.263,1579                       105.000 = (7.000.000 + 3.000.000 + 500.000) ÷ 100
+# Giá trị tồn cuối B3-A = số dư TK 156    —                                  10.500.000 = 10.500.000
+# Giá vốn hoàn NTH-013 (không gốc)        260.000                            200.000 = 2 × (600.000 ÷ 6), bình quân tồn đầu kỳ trả
+# Đơn giá tháng 11 của B3-B               —                                  125.000; giá trị tồn = số dư TK 156
+#
+# Kết quả: 3/3 test đạt sau B3; 3/3 trượt khi bỏ phần sửa ở costing.service.ts (đúng ba con số cột TRƯỚC).
+# Hồi quy: 13 tệp test có tính giá vốn (115 test) + 11 tệp test có phiếu khách trả (100 test) đều đạt.
