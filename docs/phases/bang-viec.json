@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 10
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 160
+      "count": 158
     },
     {
       "key": "partial",
@@ -6140,11 +6140,17 @@
     {
       "id": "S034-9",
       "phase": "PHASE-034",
-      "title": "B5b — tách Body cho DEV01..09; thẻ con \"Chạy ở đây\" (?cong-cu=DEVxx), quyền devtools:read, nạp lười",
+      "title": "B5b — thẻ con \"Chạy ở đây\" (?cong-cu=DEVxx) nhúng nguyên màn DEV (D034-12, không sửa apps/web/src/phan-he/dev/), quyền devtools:read",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b5b-chay-o-day",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-034 · B5b + S034-12 — chạy công cụ dev ngay trong HT10 (thẻ con ?cong-cu=DEVxx nhúng nguyên m…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -6176,8 +6182,14 @@
       "title": "In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10",
       "priority": "P2",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b5b-chay-o-day",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-034 · B5b + S034-12 — chạy công cụ dev ngay trong HT10 (thẻ con ?cong-cu=DEVxx nhúng nguyên m…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 20
     }
