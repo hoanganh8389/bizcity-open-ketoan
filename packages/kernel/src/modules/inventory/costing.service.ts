@@ -37,6 +37,12 @@
  *     giá 0 của mã (inventory_costs.gift_qty, mang sang tháng sau). Dòng bán hàng tặng khách lấy từ phần quà trước (giá vốn 0),
  *     hết mới lấy hàng thường theo đơn giá. Quà KM người bán (chia giá) vẫn tính (SL tăng, tiền 0 → đơn giá giảm).
  *   - So sánh đơn giá trả với đơn giá tồn đầu: dùng đơn giá tồn đầu chung của nhóm (cùng một đơn giá cho mọi kho).
+ *   - KHÁCH TRẢ HÀNG (PHASE-032 B3, R-INV-4): phiếu trả nối chứng từ bán gốc qua originalDocKey.
+ *       bán gốc cùng tháng            → như cũ: trừ vào lượng xuất, hoàn theo đơn giá tháng (= đơn giá lúc bán);
+ *       bán gốc tháng trước            → nhập lại theo ĐƠN GIÁ THÁNG BÁN GỐC (inventory_costs của tháng đó), và vào công thức
+ *                                         đơn giá tháng trả như một dòng nhập (giá trị tồn theo đơn giá tháng khớp số dư TK kho);
+ *       không có gốc / gốc chưa tính giá → đơn giá bình quân TỒN ĐẦU kỳ trả (Q032-5 mặc định tạm), cũng như một dòng nhập.
+ *     Tháng bán gốc tính lại sau đó thì phiếu trả không tự đổi: tính lại tháng trả (giá vốn cũ, COGS_STALE).
  *   - Mẫu số ≤ 0 → đơn giá dương gần nhất của các tháng trước (không có thì 0).
  *   - Chuyển kho giữa hai chi nhánh cùng nhóm không làm đổi đơn giá. Hàng nhận từ nhóm khác chưa có giá
  *     được định giá theo đơn giá của nhóm gửi (tính nhóm gửi trước, rồi tính lại nhóm nhận).
@@ -180,7 +186,13 @@ async function importedUnits(trx: Db, tenantId: string, p: Period): Promise<Map<
  * `imports`: đơn giá nhập từ Excel theo KHOÁ mặt hàng (đã tra từ mã; thay toàn bộ giá đã nhập của tháng); bỏ trống thì giữ giá đã nhập trước đó.
  */
 /** Kết quả tính một tháng: đơn giá theo (nhóm, mã) + SL hàng tặng khách lấy từ phần quà giá 0 theo (chứng từ, mã). */
-interface MonthResult { rows: Map<string, CostRow>; giftCovered: Map<string, number> }
+interface MonthResult {
+  rows: Map<string, CostRow>;
+  giftCovered: Map<string, number>;
+  // [2026-11-10 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3 (S032-17, R-INV-4): khách trả hàng của lần bán tháng trước nhập lại theo đơn giá tháng bán gốc; không có gốc theo bình quân tồn đầu kỳ trả (Q032-5 tạm)
+  /** Đơn giá hoàn của phiếu khách trả không cùng tháng bán gốc, theo (chứng từ trả, khoá mặt hàng). Cùng tháng thì không có — dùng đơn giá tháng. */
+  returnUnits: Map<string, number>;
+}
 
 async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<string, number>): Promise<MonthResult> {
   const imported = imports ?? (await importedUnits(trx, tenantId, p));
@@ -273,6 +285,43 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
     r.inValue -= returnValue(ret.qty, ret.amount, r.openingQty, r.openingValue);
   }
 
+  // [2026-11-10 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3 (S032-17, R-INV-4): khách trả hàng của lần bán tháng trước nhập lại theo đơn giá tháng bán gốc; không có gốc theo bình quân tồn đầu kỳ trả (Q032-5 tạm)
+  const returnUnits = new Map<string, number>();
+  const cur = p.year * 12 + p.month;
+  const saleReturns = await sql<{ event_id: string; grp: string; ikey: string; qty: string; origin_ym: number | null }>`
+    SELECT m.event_id::text, COALESCE(b.accounting_unit_id, 0)::text AS grp, COALESCE(m.item_id, m.sku) AS ikey, SUM(m.qty) AS qty,
+           (EXTRACT(YEAR FROM o.doc_date) * 12 + EXTRACT(MONTH FROM o.doc_date))::int AS origin_ym
+      FROM inventory_movements m
+      JOIN branches b ON b.id = m.branch_id
+      JOIN accounting_events e ON e.id = m.event_id
+      LEFT JOIN accounting_events o ON o.tenant_id = e.tenant_id AND o.doc_key = e.payload->>'originalDocKey' AND o.status = 'posted'
+     WHERE m.tenant_id = ${tenantId} AND m.kind = 'sale_return' AND m.amount IS NULL
+       AND m.doc_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date
+     GROUP BY m.event_id, 2, 3, 5 HAVING SUM(m.qty) > 0`.execute(trx);
+  const others = saleReturns.rows.filter((x) => x.origin_ym === null || Number(x.origin_ym) < cur);
+  const originYms = [...new Set(others.map((x) => x.origin_ym).filter((v): v is number => v !== null).map(Number))];
+  const originUnits = new Map<string, number>();
+  if (originYms.length) {
+    const ou = await sql<{ cost_group: string; k: string; ym: number; unit_cost: string }>`
+      SELECT cost_group::text, COALESCE(item_id, sku) AS k, (year * 12 + month) AS ym, unit_cost FROM inventory_costs
+       WHERE tenant_id = ${tenantId} AND (year * 12 + month) = ANY(${originYms}::int[])`.execute(trx);
+    for (const x of ou.rows) originUnits.set(`${key(x.cost_group, x.k)}|${Number(x.ym)}`, Number(x.unit_cost));
+  }
+  for (const x of others) {
+    const r = rows.get(key(x.grp, x.ikey));
+    if (!r) continue;
+    const q = Number(x.qty);
+    const atOrigin = x.origin_ym === null ? undefined : originUnits.get(`${key(x.grp, x.ikey)}|${Number(x.origin_ym)}`);
+    // Không có gốc (hoặc gốc chưa có đơn giá): bình quân tồn đầu kỳ trả; không có tồn đầu thì đơn giá gần nhất trước đó.
+    const atOpening = r.openingQty > 0 ? r.openingValue / r.openingQty : fallback.get(key(x.grp, x.ikey));
+    const unit = atOrigin ?? atOpening;
+    if (unit === undefined) continue; // không có giá nào để hoàn: như cũ (đơn giá tháng trả)
+    r.outQty += q; // bỏ phần đã trừ vào lượng xuất ở trên: hàng trả khác tháng là một dòng nhập
+    r.inQty += q;
+    r.inValue += Math.round(q * unit);
+    returnUnits.set(`${x.event_id}|${x.ikey}`, round4(unit));
+  }
+
   // Mã hàng có trong bảng giá nhập mà tháng này không phát sinh: vẫn giữ một dòng (nhóm 0) để không mất giá đã nhập.
   const seen = new Set([...rows.values()].map((r) => r.ikey));
   for (const k of imported.keys()) if (!seen.has(k)) row('0', k);
@@ -342,7 +391,7 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
       closing_value: r.closingQty - (r.giftOpening + r.giftIn - r.giftOut) > 0 ? Math.round((r.closingQty - (r.giftOpening + r.giftIn - r.giftOut)) * r.unitCost) : 0,
     }));
   for (let i = 0; i < values.length; i += 1000) await trx.insertInto('inventory_costs').values(values.slice(i, i + 1000)).execute();
-  return { rows, giftCovered };
+  return { rows, giftCovered, returnUnits };
 }
 
 /** Các tháng còn thiếu (chưa tính) trước tháng p, kể từ tháng có phát sinh sớm nhất. */
@@ -457,11 +506,12 @@ export const costingService = {
       imports = new Map([...imports].map(([sku, unit]) => [ks.get(sku) ?? sku, unit]));
     }
     // Bước 1: đơn giá (một giao dịch, gồm các tháng trước còn thiếu).
-    const { units, giftCovered, months, items, imported } = await sameTx(trx, async (trx) => {
+    const { units, giftCovered, returnUnits, months, items, imported } = await sameTx(trx, async (trx) => {
       const months = [...(await missingMonthsBefore(trx, auth.tenantId, p)), p];
       let rows = new Map<string, CostRow>();
       let giftCovered = new Map<string, number>();
-      for (const m of months) ({ rows, giftCovered } = await computeMonth(trx, auth.tenantId, m, m === p ? imports : undefined));
+      let returnUnits = new Map<string, number>();
+      for (const m of months) ({ rows, giftCovered, returnUnits } = await computeMonth(trx, auth.tenantId, m, m === p ? imports : undefined));
       const fixed = imports ?? (await importedUnits(trx, auth.tenantId, p));
       let imported: CostingResult['imported'] = null;
       if (fixed.size) {
@@ -469,7 +519,7 @@ export const costingService = {
         imported = { count: fixed.size, missing: missing.slice(0, 50), missingCount: missing.length };
       }
       if (imports) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: input.clearImport ? 'costing.import.clear' : 'costing.import', objectType: 'period', objectId: label(p), after: { skus: imports.size } });
-      return { units: new Map([...rows].map(([k, r]) => [k, r.unitCost])), giftCovered, months: months.map(label), items: rows.size, imported };
+      return { units: new Map([...rows].map(([k, r]) => [k, r.unitCost])), giftCovered, returnUnits, months: months.map(label), items: rows.size, imported };
     });
 
     // Bước 2: ghi sổ giá vốn từng chi nhánh, mỗi chi nhánh một giao dịch.
@@ -494,7 +544,7 @@ export const costingService = {
     const branches: CostingResult['branches'] = [];
     for (const [branchId, list] of byBranch) {
       const info = branchInfo.get(branchId)!;
-      branches.push(await sameTx(trx, (trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, movements: list })));
+      branches.push(await sameTx(trx, (trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, returnUnits, movements: list })));
     }
     branches.sort((a, b) => a.branchCode.localeCompare(b.branchCode));
     return { period: label(p), monthsComputed: months, items, branches, total: fromCents(branches.reduce((s, b) => s + toCents(b.total) + toCents(b.filledTotal), 0)), imported };
@@ -537,7 +587,7 @@ export const costingService = {
 async function postBranch(
   trx: Db,
   auth: AuthContext,
-  a: { period: Period; from: string; to: string; branchId: string; branchCode: string; units: Map<string, number>; giftCovered: Map<string, number>; movements: CogsMovement[] },
+  a: { period: Period; from: string; to: string; branchId: string; branchCode: string; units: Map<string, number>; giftCovered: Map<string, number>; returnUnits: Map<string, number>; movements: CogsMovement[] },
 ): Promise<CostingResult['branches'][number]> {
   // Khoá cũ là cogs:<internal|tax>:<chi nhánh>:<kỳ>; nay một sổ kế toán: cogs:<chi nhánh>:<kỳ>.
   const docKey = `cogs:${a.branchCode}:${label(a.period)}`;
@@ -574,7 +624,8 @@ async function postBranch(
   for (const m of a.movements) {
     // Chuyển đến: định giá theo nhóm GỬI để tài khoản hàng đang chuyển của hai bên triệt tiêu nhau.
     const unitGroup = m.kind === 'transfer_in' && m.counterGroup !== null ? m.counterGroup : m.group;
-    const unit = a.units.get(key(unitGroup, m.ikey)) ?? 0;
+    // Khách trả hàng khác tháng bán gốc: đơn giá hoàn đã tính ở computeMonth (PHASE-032 B3).
+    const unit = (m.kind === 'sale_return' ? a.returnUnits.get(`${m.eventId}|${m.ikey}`) : undefined) ?? a.units.get(key(unitGroup, m.ikey)) ?? 0;
     // Hàng tặng khách lấy từ phần quà KM người tiêu dùng: giá vốn 0 cho phần đó.
     const fromGift = m.kind === 'sale' && m.isGift && m.qty < 0 ? Math.min(Math.abs(m.qty), a.giftCovered.get(`${m.eventId}|${m.ikey}`) ?? 0) : 0;
     const amount = Math.round((Math.abs(m.qty) - fromGift) * unit);

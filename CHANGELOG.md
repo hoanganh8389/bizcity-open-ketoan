@@ -18,6 +18,13 @@ Mỗi bản ghi đủ sáu mục:
 - **Thêm:** thẻ *Nhà phát triển* ở Hệ thống → Trụ cột & mức đạt: bảng công cụ × tiêu chí, nút Mở công cụ.
 - **Nâng cấp cần làm:** kéo ảnh api mới (ảnh chép thêm `docs/standard/cong-cu-dev.json`).
 
+### Khách trả hàng lấy đúng giá vốn lúc bán (PHASE-032 B3, S032-17) <!-- [2026-11-11 12:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3: khách trả hàng lấy đúng giá vốn lúc bán -->
+
+- **Đổi:** phiếu khách trả hàng của lần bán **tháng trước** hoàn giá vốn theo đơn giá bình quân **tháng bán gốc** (chứng từ gốc qua `originalDocKey`), và vào công thức đơn giá tháng trả như một dòng nhập. Phiếu trả **không có gốc** hoàn theo đơn giá bình quân tồn đầu kỳ trả (mặc định tạm Q032-5). Trả trong cùng tháng bán: như cũ.
+- **Thay đổi định khoản:** K2 — số tiền dòng *Nợ TK kho / Có TK giá vốn* của phiếu khách trả khác tháng bán (và đơn giá bình quân tháng trả) đổi khi **tính lại giá vốn** từ bản này. Tháng đã tính trước không tự đổi; tháng chưa khoá muốn áp thì bấm tính lại giá vốn.
+- **Thêm:** test `apps/api/test/tra-hang-gia-von-goc.test.ts` (G1: hoàn 500.000; giá trị tồn = số dư TK 156).
+- **Sửa:** không. **Nâng cấp cần làm:** không (không migration). **Bảo mật:** không.
+
 ### Thẻ Bộ máy ở HT10: 13 engine của Core, mức đo từ mốc việc (PHASE-034 B4, S034-7) <!-- [2026-11-10 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 -->
 
 - **Thêm:** `docs/standard/bo-may.json` (`bizcity_engines@1`) và `GET /api/v1/system/engines` (chỉ đọc): mỗi bộ máy có lớp, hợp đồng, mã, test, mã kiểm phát ra, và mốc việc — trạng thái mốc đọc từ bảng việc, không gõ tay.
