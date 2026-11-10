@@ -2,7 +2,7 @@
 /**
  * Hàm thuần trên bộ đọc repo `r` = { read(rel), exists(rel), files({ under, ext }) }.
  *   discoverCodes(r)  mã chẩn đoán (`code: 'X'` trong *.diagnostics.ts + platform/system/diagnostics.ts) và mã cổng A / B / L
- *                     (khoá 'ACC-…-001' / 'PART-…' / 'ITEM-…' / 'IN-…' / 'LIB-…' trong packages/contracts/src)
+ *                     (khoá 'ACC-…-001' / 'PART-…' / 'ITEM-…' / 'IN-…' / 'LIB-…' trong packages/contracts/src; mã luật thư viện rules[].code ở libraries/<id>/library.json)
  *   testsIndex(r, codes) mã → tệp apps/api/test/*.test.ts có chuỗi mã
  *   discoverCi(r)     SC-* / DG-* (id, tiêu đề, mức chặn, lane) + có ca tự kiểm trong fixtures/expect.json
  *   discoverTriggers(r) CREATE TRIGGER trong db/migrations (tên, bảng, migration đầu tiên) — LEDGER_TRIGGERS kiểm mọi trigger khai ở đây
@@ -20,6 +20,10 @@ export function discoverCodes(r) {
   for (const f of files) for (const m of (r.read(f) ?? '').matchAll(DIAG_RE)) diag.add(m[1]);
   const finding = new Set();
   for (const f of r.files({ under: ['packages/contracts/src'], ext: ['.ts'] })) for (const m of (r.read(f) ?? '').matchAll(FIND_RE)) finding.add(m[1]);
+  // [2026-11-11 03:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b-3: mã luật riêng của thư viện (libraries/<id>/library.json → rules[].code), cổng L nạp lúc chạy
+  for (const f of r.files({ under: ['libraries'], ext: ['library.json'] })) {
+    try { for (const rule of JSON.parse(r.read(f) ?? '{}').rules ?? []) if (rule?.code) finding.add(rule.code); } catch { /* tệp hỏng: SC-LIB-1 báo */ }
+  }
   return { diag: [...diag].sort(), finding: [...finding].sort() };
 }
 

@@ -158,6 +158,20 @@
       ]
     },
     {
+      "match": "TGS-*",
+      "pillars": [
+        "VII"
+      ],
+      "note": "luật của thư viện phân quyền authz.tgs-chuc-nang"
+    },
+    {
+      "match": "TSPL-*",
+      "pillars": [
+        "IX"
+      ],
+      "note": "luật của thư viện tham số pháp lý vn.tham-so-phap-ly"
+    },
+    {
       "match": [
         "SC-KERNEL-*",
         "SC-EVT-*",
@@ -496,7 +510,10 @@
         "PART-HINT-001",
         "PART-HINT-002",
         "PART-HINT-003",
-        "PART-HINT-004"
+        "PART-HINT-004",
+        "TGS-FLAG-001",
+        "TGS-REPORT-001",
+        "TSPL-LAW-001"
       ]
     },
     "tests": {
@@ -861,6 +878,16 @@
       "PART-HINT-004": [
         "apps/api/test/catalog-why.test.ts",
         "apps/api/test/findings.test.ts"
+      ],
+      "TGS-FLAG-001": [
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "TGS-REPORT-001": [
+        "apps/api/test/thu-vien.test.ts"
+      ],
+      "TSPL-LAW-001": [
+        "apps/api/test/thu-vien-cau-hinh.test.ts",
+        "apps/api/test/thu-vien.test.ts"
       ]
     },
     "ci": [
