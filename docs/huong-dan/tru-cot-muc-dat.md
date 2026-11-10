@@ -47,7 +47,19 @@ Mức **Đạt** chỉ có khi không còn tín hiệu *chưa có*; bộ kiểm 
 | **Bộ máy** | Mỗi engine (Ghi sổ, Inventory, Document SDK, Workflow, Phân quyền, …) theo hợp đồng nào, còn bao nhiêu mốc | `?xem=bo-may` |
 | **Nhà phát triển** | Công cụ DEV01..09 dùng được tới đâu, chạy ngay tại màn này | `?xem=nha-phat-trien` |
 
-Ba thẻ sau đang hiện **sắp có**: thẻ nói rõ sẽ lấy dữ liệu từ đâu và bước nào làm. Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
+Thẻ *Bộ máy* và *Nhà phát triển* đang hiện **sắp có**: thẻ nói rõ sẽ lấy dữ liệu từ đâu và bước nào làm. Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
 
 **Thẻ báo "Bản cài chưa có tệp …"**: bản cài Docker dựng từ mã cũ chưa chép tệp nguồn của bảng vào ảnh. Cập nhật bản cài (`./scripts/cap-nhat.sh`) là hết. Phép kiểm SC-REL-3 giữ cho lỗi này không lặp lại.
+
+<!-- [2026-11-10 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): thẻ Cổng & bộ kiểm -->
+## Thẻ "Cổng & bộ kiểm"
+
+Dữ liệu đi qua các **cổng** từ ngoài vào trong: *Cổng A* (danh mục → nháp), *Cổng B* (cửa nạp, bậc L1..L5), *Commit Guard* (ngay trước ghi sổ), *Cổng L* (thư viện dùng chung), *Tự chẩn đoán* (L1 · L3 · L5, chạy đêm và trước khoá kỳ). Mỗi cổng là một ô: bấm để chỉ xem mã của cổng đó.
+
+- **Thanh mức** của cổng: trung bình các mã, mỗi mã có câu *Cách sửa* được ½, có *phương án có cấu trúc* (bước, màn, vai, kiểm lại) được ½.
+- **Khoá sổ**: mã chẩn đoán nuôi điều kiện khoá sổ nào (PC-…).
+- **Lượt gần nhất**: kết quả của mã ở lượt tự chẩn đoán gần nhất của đơn vị bạn. Bấm mã để mở *Nhà phát triển → Toàn vẹn*.
+- *Cổng C* (giá vốn sau ghi sổ), *Khoá kỳ*, *Trigger CSDL*, *Bộ kiểm CI* hiện **chưa có sổ**: ô nói bước nào sẽ làm.
+
+Mã lấy thẳng từ sổ đăng ký trong mã, không ai gõ tay; thêm mã mới trong mã nguồn là thẻ tự có.
 
