@@ -139,7 +139,6 @@ export function DefaultsPage() {
         )}
         <div className="muted" style={{ fontSize: 12, padding: '8px 0' }}>
           ↳ là dòng thêm cho một loại hàng / biến thể; ô mờ = như dòng gốc. TK tiền theo <Link to="/cau-hinh/hinh-thuc-thanh-toan">Hình thức thanh toán</Link>.
-          {useReasons ? null : ' Doanh thu, giá vốn, kho không theo nhóm hạch toán của mặt hàng (đang tắt lý do hạch toán).'}
         </div>
       </div>
       {open && <HopDinhKhoan row={open.row} entry={open.entry} defaults={q.data ?? []} options={options} onClose={() => setOpen(null)} />}
@@ -148,9 +147,9 @@ export function DefaultsPage() {
 }
 
 /**
- * Một hộp cho cả Thêm và Sửa.
- *   Sửa dòng có sẵn: đổi tài khoản của dòng (khoá dùng chung — ghi rõ các dòng cùng đổi).
- *   Thêm / sửa dòng thêm: dòng gốc · áp cho Loại hàng / Biến thể · TK Nợ / TK Có điền sẵn theo dòng gốc.
+ * Một hộp, cùng các ô, cho Thêm và Sửa: Dòng · Áp cho loại hàng · Áp cho biến thể · TK Nợ · TK Có — luôn điền sẵn.
+ *   Sửa dòng có sẵn: chỉ đổi được tài khoản (áp cho mọi loại hàng / biến thể; tài khoản dùng chung thì ghi số dòng cùng đổi).
+ *   Thêm / sửa dòng thêm: chọn dòng gốc (sửa thì khoá), loại hàng / biến thể; TK Nợ / TK Có điền theo dòng gốc.
  */
 function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow; entry?: Entry; defaults: DefaultRow[]; options?: Options; onClose: () => void }) {
   const qc = useQueryClient();
@@ -193,38 +192,34 @@ function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow
     if (!c) return <Field label={`TK ${side}`}><span className="muted">—</span></Field>;
     if ('text' in c) return <Field label={`TK ${side}`}><span className="muted">{c.text}</span></Field>;
     const others = isSystem ? usedBy(c.key) : [];
-    const note = isSystem ? (others.length ? `Đổi cả ở: ${others.join('; ')}` : undefined) : v && v !== accOf(c) ? `Dòng gốc: ${accOf(c)}` : 'Như dòng gốc';
-    return <Field label={`TK ${side}`} hint={note}><AccountPicker postingOnly value={v} onChange={set} /></Field>;
+    const note = isSystem ? (others.length ? `Dùng chung ở ${others.length} dòng khác — đổi ở đây là đổi cả các dòng đó` : undefined) : v && v !== accOf(c) ? `Dòng gốc: ${accOf(c)}` : 'Như dòng gốc';
+    return <Field label={`TK ${side}`} hint={note} tip={others.length ? `Cùng đổi: ${others.join('; ')}` : undefined}><AccountPicker postingOnly value={v} onChange={set} /></Field>;
   };
   return (
-    <Modal title={isSystem ? `Sửa — ${base.name}` : entry ? 'Sửa tài khoản ngầm định' : 'Thêm tài khoản ngầm định'} onClose={onClose}
+    <Modal title={row ? 'Sửa tài khoản ngầm định' : 'Thêm tài khoản ngầm định'} onClose={onClose}
       footer={<>
         {entry && <button className="btn" style={{ marginRight: 'auto' }} disabled={del.isPending} onClick={() => { if (window.confirm('Xoá dòng này? Hàng đó sẽ ghi như dòng gốc.')) del.mutate(); }}>Xoá</button>}
         <button className="btn btn-primary" disabled={save.isPending || Boolean(problem)} title={problem} onClick={() => save.mutate()}>Cất</button>
         <button className="btn" onClick={onClose}>Huỷ</button>
       </>}>
       <ErrorBox error={save.error ? errorText(save.error) : del.error ? errorText(del.error) : null} />
-      {!isSystem && (
-        <>
-          <Field label="Dựa trên dòng" full>
-            <select className="select input" value={baseId} disabled={Boolean(entry)} onChange={(e) => pickBase(e.target.value)}>
-              {GROUPS.map((g) => BASES.some((x) => x.group === g) && (
-                <optgroup key={g} label={g}>{BASES.filter((x) => x.group === g).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
-              ))}
-            </select>
-          </Field>
-          <Field label="Áp cho loại hàng">
-            <select className="select input" value={cond.itemType ?? ''} onChange={(e) => setCond((c) => ({ ...c, itemType: e.target.value || undefined }))}>
-              <option value="">— mọi loại hàng —</option>{(options?.itemTypes ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
-            </select>
-          </Field>
-          <Field label="Áp cho biến thể">
-            <select className="select input" value={cond.variant ?? ''} onChange={(e) => setCond((c) => ({ ...c, variant: e.target.value || undefined }))}>
-              <option value="">— mọi biến thể —</option>{(options?.variants ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
-            </select>
-          </Field>
-        </>
-      )}
+      <Field label="Dòng" full>
+        <select className="select input" value={baseId} disabled={Boolean(row)} onChange={(e) => pickBase(e.target.value)}>
+          {GROUPS.map((g) => (
+            <optgroup key={g} label={g}>{(isSystem ? SYSTEM : BASES).filter((x) => x.group === g).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
+          ))}
+        </select>
+      </Field>
+      <Field label="Áp cho loại hàng">
+        <select className="select input" value={cond.itemType ?? ''} disabled={isSystem} onChange={(e) => setCond((c) => ({ ...c, itemType: e.target.value || undefined }))}>
+          <option value="">— mọi loại hàng —</option>{(options?.itemTypes ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
+        </select>
+      </Field>
+      <Field label="Áp cho biến thể">
+        <select className="select input" value={cond.variant ?? ''} disabled={isSystem} onChange={(e) => setCond((c) => ({ ...c, variant: e.target.value || undefined }))}>
+          <option value="">— mọi biến thể —</option>{(options?.variants ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
+        </select>
+      </Field>
       {accField('Nợ', base.debit, debit, setDebit)}
       {accField('Có', base.credit, credit, setCredit)}
       {base.note && <div className="muted full" style={{ fontSize: 12 }}>{base.note}</div>}
