@@ -4,7 +4,7 @@
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng PHASE-026 S026-15 SC-PILLAR-1 và PHASE-029 S029-18 engine bảng điểm, S029-30 thẻ Nền móng)
 > **Checklist công bố:** —
-> **Trạng thái:** 🟡 **W0 chốt 2026-11-10** — chủ dự án duyệt D034-1..10, Q034-1..5 dùng phương án đề nghị. B1 (S034-3) giữ chỗ trong [CLAIMS.md](../CLAIMS.md); các bước sau giữ chỗ từng đợt.
+> **Trạng thái:** 🟡 **W0 chốt 2026-11-10; B1 · B2 · B3a · B4 · B5a · B6 đã merge (2026-11-10 → 11).** Còn: B3b (gắn trụ cột / test cho từng mã kiểm — sửa `DiagCheck` ở Platform, cần PR chốt thiết kế R-FLOW-2), B5b (chạy công cụ dev ngay trong HT10 — chờ S018-21 nhả `apps/web/src/phan-he/dev/**`), S034-11 (kết quả CI vào ảnh, sau Q034-1), S034-12 (In cả năm thẻ). Xem [40](40-MASTER-CHECKLIST.md).
 > **Tệp:** [00 — Kế hoạch & thiết kế](00-MASTER-PLAN.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)
 
 ## Đề bài (chủ dự án, 2026-11-09)

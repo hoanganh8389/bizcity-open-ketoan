@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### HT10 có dòng tổng: năm con số nhìn cả Core (PHASE-034 B6, S034-10) <!-- [2026-11-11 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B6 -->
+
+- **Thêm:** đầu màn Hệ thống → Trụ cột & mức đạt có dòng tổng: Tiêu chí · Nền móng · Cổng & bộ kiểm · Bộ máy · Công cụ dev; bấm số để mở thẻ. Không đổi API.
+
 ### Thẻ Nhà phát triển ở HT10: tiến độ chín công cụ dev theo sáu tiêu chí sinh từ mã (PHASE-034 B5a, S034-8) <!-- [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5a -->
 
 - **Thêm:** `docs/standard/cong-cu-dev.json` (`bizcity_devtools@1`), `scripts/cong-cu-dev.mjs` sinh tiêu chí T1..T6 từ repo, phép kiểm SC-DEV-2, `GET /api/v1/system/dev-tools` (chỉ đọc).

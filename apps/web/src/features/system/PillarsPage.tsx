@@ -22,6 +22,8 @@ import { GatesBoard } from './GatesBoard';
 import { EnginesBoard } from './EnginesBoard';
 // [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5a (S034-8): thẻ Nhà phát triển có bảng tiến độ thật (GET /system/dev-tools)
 import { DevToolsBoard } from './DevToolsBoard';
+// [2026-11-11 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B6 (S034-10): dòng tổng năm con số ở đầu màn
+import { Ht10Summary } from './Ht10Summary';
 
 export type PillarStatus = 'dat' | 'mot-phan' | 'tai-lieu' | 'chua';
 export interface PillarCriterion {
@@ -143,6 +145,7 @@ export function PillarsPage() {
     <div>
       <PageHeader title="Trụ cột & mức đạt" code="HT10" helpKey="tru-cot-muc-dat"
         subtitle="Core bảo đảm điều gì và hôm nay đạt tới đâu — một bảng cho kế toán hiểu luật chạy, cho dev biết việc kế tiếp. Mức đạt đi theo bằng chứng (test / check), không ai tích tay." />
+      <Ht10Summary active={tab} onOpen={(k) => setSp(k === 'tieu-chi' ? {} : { xem: k }, { replace: true })} />
       <div className="tabs" role="tablist" style={{ marginBottom: 10 }}>
         {TABS.map((t) => (
           <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={`tab ${tab === t.key ? 'active' : ''}`} title={t.hint}

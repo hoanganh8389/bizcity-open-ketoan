@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 287
+      "count": 288
     }
   ],
   "items": [
@@ -3009,6 +3009,23 @@
       "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 33
+    },
+    {
+      "id": "S022-22",
+      "phase": "PHASE-022",
+      "title": "R-BLOCK (RULE-BLOCKED, chủ dự án 2026-11-10): thành phần BlockedHint (lý do + cách gỡ, thấy được khi rê / Tab / chạm) + phép kiểm SC-UI-1 bánh cóc (nút / ô dis…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
+        "branch": "feat/phase-022-s022-22-blocked-hint",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-022 · S022-22 — R-BLOCK: thành phần BlockedHint + phép kiểm SC-UI-1 (bánh cóc)"
+      },
+      "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
+      "line": 34
     },
     {
       "id": "S023-1",
@@ -6140,10 +6157,10 @@
     {
       "id": "S034-10",
       "phase": "PHASE-034",
-      "title": "B6 — dòng tổng đầu màn, In cả năm thẻ, cập nhật docs/huong-dan/tru-cot-muc-dat.md",
+      "title": "B6 — dòng tổng đầu màn (năm con số, bấm mở thẻ), cập nhật docs/huong-dan/tru-cot-muc-dat.md",
       "priority": "P2",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 19
@@ -6152,6 +6169,17 @@
       "id": "S034-11",
       "phase": "PHASE-034",
       "title": "Q034-1 — đóng gói scoreboard.json của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC-",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S034-12",
+      "phase": "PHASE-034",
+      "title": "In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10",
       "priority": "P2",
       "status": "todo",
       "column": "todo",

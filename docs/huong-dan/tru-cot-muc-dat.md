@@ -39,6 +39,9 @@ Mức **Đạt** chỉ có khi không còn tín hiệu *chưa có*; bộ kiểm 
 
 Đầu màn có năm thẻ, đi từ trong ra ngoài: luật → nền → cổng giữ luật → bộ máy chạy luật → công cụ để dev xem bộ máy chạy.
 
+<!-- [2026-11-11 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B6 (S034-10): dòng tổng -->
+**Dòng tổng** ở trên cùng gom năm con số — Tiêu chí, Nền móng, Cổng & bộ kiểm, Bộ máy, Công cụ dev — mỗi số là mức của thẻ đó, tính đúng như trong thẻ. Bấm một số để mở thẻ. Thẻ nào chưa tải được thì ô đó hiện "—".
+
 | Thẻ | Trả lời câu gì | Mở thẳng |
 |---|---|---|
 | **Tiêu chí theo trụ cột** | Core bảo đảm điều gì, mỗi tiêu chí đạt tới đâu | `/he-thong/tru-cot` |
