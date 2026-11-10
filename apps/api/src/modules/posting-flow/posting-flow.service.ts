@@ -302,6 +302,15 @@ const HISTORY_ACTIONS: Record<string, { kind: string; label: string; fields?: Re
   'core.payment-method.delete': { kind: 'payment', label: 'Hình thức thanh toán' },
   'core.posting-flow.screen-reasons': { kind: 'screen', label: 'Lý do theo màn' },
   'core.posting-flow.bulk-posting-group': { kind: 'bulk', label: 'Đổi nhóm hạch toán hàng loạt' },
+  // [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — lịch sử quy tắc định khoản: đề xuất, sửa, duyệt, từ chối, ngừng; nghiệp vụ tự tạo (đóng góp)
+  'core.posting-rule.propose': { kind: 'rule', label: 'Đề xuất quy tắc', fields: { business: 'Nghiệp vụ', part: 'Khoản', cond: 'Điều kiện', debit: 'Nợ', credit: 'Có', priority: 'Ưu tiên', from: 'Áp từ', note: 'Diễn giải', changeReason: 'Lý do đề xuất' } },
+  'core.posting-rule.update': { kind: 'rule', label: 'Sửa đề xuất quy tắc', fields: { business: 'Nghiệp vụ', part: 'Khoản', cond: 'Điều kiện', debit: 'Nợ', credit: 'Có', priority: 'Ưu tiên', from: 'Áp từ', note: 'Diễn giải', changeReason: 'Lý do đề xuất' } },
+  'core.posting-rule.delete': { kind: 'rule', label: 'Xoá đề xuất quy tắc' },
+  'core.posting-rule.approve': { kind: 'rule', label: 'Duyệt quy tắc', fields: { id: 'Quy tắc' } },
+  'core.posting-rule.reject': { kind: 'rule', label: 'Từ chối quy tắc', fields: { id: 'Quy tắc', note: 'Lý do' } },
+  'core.posting-rule.stop': { kind: 'rule', label: 'Ngừng áp quy tắc', fields: { id: 'Quy tắc', from: 'Từ ngày', reason: 'Lý do' } },
+  'core.posting-rule.business-create': { kind: 'business', label: 'Thêm nghiệp vụ', fields: { name: 'Tên', baseCode: 'Dựa trên', reasonCode: 'Mã', note: 'Ghi chú' } },
+  'core.posting-rule.business-update': { kind: 'business', label: 'Sửa nghiệp vụ', fields: { name: 'Tên', note: 'Ghi chú', isActive: 'Đang dùng' } },
 };
 
 export interface HistoryChange { field: string; label: string; before: string | null; after: string | null }
@@ -339,6 +348,10 @@ export async function configHistory(trx: Db, tenantId: string, opts: { kind?: st
       const note = [snap.classCode ? `nhóm hàng ${snap.classCode}` : '', snap.fromGroup !== undefined ? `từ nhóm ${snap.fromGroup || 'chưa gán'}` : '',
         snap.search ? `mã / tên chứa "${snap.search}"` : '', res.changed !== undefined ? `${res.changed} mặt hàng` : ''].filter(Boolean).join(' · ');
       out.push({ ...base, action: 'bulk', changes: [{ field: 'targetGroup', label: 'Đổi sang nhóm', before: null, after: show(snap.targetGroup) }], note });
+      continue;
+    }
+    if (/\.(approve|reject|stop)$/.test(r.action)) {
+      out.push({ ...base, action: 'save', changes: Object.entries(def.fields ?? {}).filter(([f]) => f in snap).map(([f, label]) => ({ field: f, label, before: null, after: show(snap[f]) })) });
       continue;
     }
     const prev = last.get(key);

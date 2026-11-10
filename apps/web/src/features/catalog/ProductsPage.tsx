@@ -179,9 +179,9 @@ export function ProductsPage() {
     { key: 'taxOutCode', header: 'Mã VAT ra', type: 'code', width: 90 },
     { key: 'taxInCode', header: 'Mã VAT vào', type: 'code', width: 95 },
     { key: 'exciseRate', header: 'Thuế TTĐB', type: 'number', width: 85 },
-    { key: 'postingGroupCode', header: 'Nhóm hạch toán', type: 'code', width: 120, value: (p) => p.postingGroupCode ?? '(mặc định)' },
+    { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
     { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
-    { key: 'typeCode', header: 'Loại hàng', width: 130, title: 'Hàng bán, quà, vật tư, công cụ, tài sản… Để lọc và báo cáo, không làm đổi định khoản', value: (p) => nameOf('type', p.typeCode) },
+    { key: 'typeCode', header: 'Loại hàng', width: 130, title: 'Hàng bán, quà, vật tư, công cụ, tài sản… Để lọc, báo cáo và làm điều kiện của quy tắc định khoản (ACC92)', value: (p) => nameOf('type', p.typeCode) },
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
 

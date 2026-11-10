@@ -40,6 +40,8 @@ export const banHangMenu: MenuItem[] = [
       { key: 'bh-mat-hang', label: 'Danh mục mặt hàng', path: '/danh-muc/mat-hang', code: 'DM10' },
       { key: 'bh-don-vi-tinh', label: 'Danh mục đơn vị tính', path: '/danh-muc/don-vi-tinh', code: 'DM15' },
       { key: 'bh-bang-gia', label: 'Bảng giá bán', path: '/danh-muc/bang-gia', code: 'DM14' },
+      // [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — chương trình bán có hạn mức thay mã phụ (đóng góp)
+      { key: 'bh-chuong-trinh', label: 'Chương trình bán', path: '/ban-hang/chuong-trinh', code: 'BH12' },
     ],
   },
 ];

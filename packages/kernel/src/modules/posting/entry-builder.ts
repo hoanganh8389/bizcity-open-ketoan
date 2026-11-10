@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/entry-builder.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — cặp mang nhãn chọn quy tắc định khoản (tags), ghi lại việc đổi bên khi số âm (đóng góp)
 /**
  * Công cụ dựng bút toán: thêm từng cặp Nợ/Có. Mỗi cặp ghi theo TỪNG MẶT HÀNG (mang mã hàng),
  * nên hoá đơn 5 dòng hàng ra 5 cặp tiền hàng + 5 cặp thuế + 5 cặp giá vốn, đúng thói quen
@@ -10,6 +11,7 @@
  */
 import { fromCents, toCents, type LinePart } from '@ketoan/contracts';
 import type { DraftLine } from '../ledger/ledger.types.js';
+import type { RuleTags } from './rule-table.js';
 
 interface PairInput {
   part: LinePart;
@@ -28,6 +30,8 @@ interface PairInput {
    * cuối tháng ghi đè số tiền. costKey: 'cost:out' | 'cost:in' (chiều hàng), thêm ':gift' với hàng khuyến mãi.
    */
   costKey?: string;
+  /** Nhãn chọn quy tắc định khoản (rule-table.ts). Cặp khác nhãn không gộp. */
+  tags?: RuleTags;
 }
 
 interface PairAcc extends PairInput {
@@ -54,9 +58,10 @@ export class EntryBuilder {
         creditAccount: p.debitAccount,
         debitPartnerId: p.creditPartnerId,
         creditPartnerId: p.debitPartnerId,
+        tags: p.tags ? { ...p.tags, swapped: true } : undefined,
       };
     }
-    const key = [pair.part, pair.debitAccount, pair.creditAccount, pair.debitPartnerId ?? '', pair.creditPartnerId ?? '', pair.taxCode ?? '', pair.productSku ?? '', pair.costKey ?? ''].join('|');
+    const key = [pair.part, pair.debitAccount, pair.creditAccount, pair.debitPartnerId ?? '', pair.creditPartnerId ?? '', pair.taxCode ?? '', pair.productSku ?? '', pair.costKey ?? '', pair.tags ? JSON.stringify(pair.tags) : ''].join('|');
     const cur = this.pairs.get(key);
     if (cur) cur.cents += cents;
     else this.pairs.set(key, { ...pair, cents });
@@ -81,6 +86,7 @@ export class EntryBuilder {
         productSku: p.productSku ?? null,
         description: p.description ?? '',
         ...(p.costKey ? { costFill: 'debit' as const, sourceLineKey: p.costKey } : {}),
+        ...(p.tags ? { ruleTags: p.tags } : {}),
       });
       lines.push({
         accountCode: p.creditAccount,
@@ -93,6 +99,7 @@ export class EntryBuilder {
         productSku: p.productSku ?? null,
         description: p.description ?? '',
         ...(p.costKey ? { costFill: 'credit' as const, sourceLineKey: p.costKey } : {}),
+        ...(p.tags ? { ruleTags: p.tags } : {}),
       });
     }
     return lines;

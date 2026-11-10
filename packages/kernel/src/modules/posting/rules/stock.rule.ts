@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/rules/stock.rule.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — gắn nhãn cặp (nghiệp vụ, hàng tặng, chương trình, hình thức) để áp bảng quy tắc định khoản (đóng góp)
 /**
  * Luật định khoản PHIẾU KHO: chuyển kho và điều chỉnh kho. Giá trị ghi sổ là giá trị hàng theo
  * giá vốn (`amount` của dòng); dòng giá trị 0 vẫn ghi sẵn cặp số 0 theo mặt hàng (dòng chờ giá vốn), tính giá vốn
@@ -74,8 +75,9 @@ export function buildTransferParts(doc: TransferDocument, ctx: RuleContext): Pos
     for (const line of doc.lines) {
       const inventory = resolver.groupForSku(line.sku).inventory_account;
       const amount = Math.abs(line.amount);
-      if (doc.leg === 'out') valued(b, { part: 'goods', productSku: line.sku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: other, description: 'Xuất chuyển kho' });
-      else valued(b, { part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: other, description: 'Nhập chuyển kho' });
+      const tags = { biz: 'transfer', reason: doc.reasonCode ?? null, leg: doc.leg, sameUnit: Boolean(stock.sameAccountingUnit) };
+      if (doc.leg === 'out') valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: other, description: 'Xuất chuyển kho' });
+      else valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: other, description: 'Nhập chuyển kho' });
     }
     resolver.assertComplete();
     return [{ branchId: stock.branchId, lines: b.toLines() }].filter((p) => p.lines.length);
@@ -86,9 +88,10 @@ export function buildTransferParts(doc: TransferDocument, ctx: RuleContext): Pos
   for (const line of doc.lines) {
     const inventory = resolver.groupForSku(line.sku).inventory_account;
     const amount = Math.abs(line.amount);
-    valued(out, { part: 'goods', productSku: line.sku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: stock.toBranchPartnerId, description: 'Xuất chuyển kho' });
+    const same = Boolean(stock.sameAccountingUnit);
+    valued(out, { tags: { biz: 'transfer', reason: doc.reasonCode ?? null, leg: 'out', sameUnit: same }, part: 'goods', productSku: line.sku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: stock.toBranchPartnerId, description: 'Xuất chuyển kho' });
     if (doc.status === 'received') {
-      valued(into, { part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: stock.branchPartnerId, description: 'Nhập chuyển kho' });
+      valued(into, { tags: { biz: 'transfer', reason: doc.reasonCode ?? null, leg: 'in', sameUnit: same }, part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: stock.branchPartnerId, description: 'Nhập chuyển kho' });
     }
   }
   resolver.assertComplete();
@@ -119,8 +122,9 @@ export function buildStockAdjustmentLines(doc: StockAdjustmentDocument, ctx: Rul
     const amount = Math.abs(line.amount);
     const increase = incOf(line.qty);
     const counter = counterOf(increase);
-    if (increase) valued(b, { part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: counter, amount, creditPartnerId: partner, description: 'Điều chỉnh tăng kho' });
-    else valued(b, { part: 'goods', productSku: line.sku, debitAccount: counter, creditAccount: inventory, amount, debitPartnerId: partner, description: 'Điều chỉnh giảm kho' });
+    const tags = { biz: increase ? 'stock_increase' : 'stock_decrease', reason: doc.reasonCode ?? null };
+    if (increase) valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: counter, amount, creditPartnerId: partner, description: 'Điều chỉnh tăng kho' });
+    else valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: counter, creditAccount: inventory, amount, debitPartnerId: partner, description: 'Điều chỉnh giảm kho' });
   }
   resolver.assertComplete();
   return b.toLines();

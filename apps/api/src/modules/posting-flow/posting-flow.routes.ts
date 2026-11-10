@@ -7,6 +7,16 @@
  *   GET  /api/v1/posting-flow/flow?screen=&reason=&group=&taxCode=&method=&amount=&cost=&gift=   sơ đồ dây chuyền định khoản
  *   POST /api/v1/posting-flow/products/posting-group  đổi nhóm hạch toán hàng loạt (dryRun = xem trước)
  *   GET  /api/v1/posting-flow/history?kind=&limit=   lịch sử sửa cấu hình hạch toán, từng ô trước → sau
+ *
+ * Quy tắc định khoản (0096): ở posting-rules.routes.ts (lớp module, vì chạy thử gọi bộ định khoản của Kernel):
+ *   GET    /api/v1/posting-rules/options              nghiệp vụ, khoản tiền, điều kiện dùng được; hình thức, thuế, loại hàng, chương trình
+ *   GET    /api/v1/posting-rules/businesses           nghiệp vụ (hệ thống + tự tạo), số quy tắc đang áp / chờ duyệt
+ *   POST   /api/v1/posting-rules/businesses           thêm nghiệp vụ tự tạo;  PUT /api/v1/posting-rules/businesses/:code  sửa
+ *   GET    /api/v1/posting-rules?business=&state=     danh sách quy tắc
+ *   POST   /api/v1/posting-rules                      đề xuất quy tắc / bản sửa (chờ duyệt)
+ *   PUT    /api/v1/posting-rules/:id                  sửa đề xuất;  DELETE /api/v1/posting-rules/:id  xoá đề xuất
+ *   POST   /api/v1/posting-rules/:id/approve          duyệt (quyền settings:write; tương tự /reject, /stop)
+ *   POST   /api/v1/posting-rules/simulate             định khoản thử phiếu mẫu (có thể kèm quy tắc đề xuất)
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -19,7 +29,6 @@ import { buildFlow, bulkPostingGroup, configHistory, listScreens, screenReasons,
 
 const tags = ['Thiết kế hạch toán'];
 const anyOut = z.any();
-
 export async function postingFlowRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
   const read = requirePermission('catalog:read');
@@ -52,7 +61,7 @@ export async function postingFlowRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/posting-flow/history', {
     preHandler: read,
     schema: { tags, summary: 'Lịch sử sửa cấu hình hạch toán (mới nhất trước)',
-      querystring: z.object({ kind: z.enum(['reason', 'group', 'defaults', 'tax', 'payment', 'screen', 'bulk']).optional(), limit: z.coerce.number().int().min(1).max(1000).optional() }) },
+      querystring: z.object({ kind: z.enum(['reason', 'group', 'defaults', 'tax', 'payment', 'screen', 'bulk', 'rule', 'business']).optional(), limit: z.coerce.number().int().min(1).max(1000).optional() }) },
     handler: async (req) => ok(await configHistory(db, authOf(req).tenantId, req.query)),
   });
 

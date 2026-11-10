@@ -9,10 +9,13 @@ import { CongThucGiaVonPage } from './inventory/CongThucGiaVonPage';
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: Hành trình mặt hàng (ACC95)
 import { HanhTrinhMatHangPage } from './hanh-trinh/HanhTrinhMatHangPage';
 import { GrossProfitPage, ProfitByDepartmentPage, StockTransfersPage } from './reports/GoodsReportPages';
+// [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — tồn theo lô (đóng góp)
+import { TonTheoLoPage } from '@/features/lots/TonTheoLoPage';
 
 export const khoRoutes = (
   <>
     <Route path="kho/chuyen-kho" element={<ChuyenKhoPage />} />
+    <Route path="kho/ton-theo-lo" element={<TonTheoLoPage />} />
     <Route path="nghiep-vu/tinh-gia-von" element={<CostingPage />} />
     <Route path="nghiep-vu/cong-thuc-gia-von" element={<CongThucGiaVonPage />} />
     <Route path="bao-cao/nhap-xuat-ton" element={<StockMovementPage />} />

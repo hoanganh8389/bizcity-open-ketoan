@@ -109,3 +109,67 @@
 .tkht-diff { line-height: 1.6; }
 .tkht-before { font-family: ui-monospace, Menlo, Consolas, monospace; color: #b91c1c; text-decoration: line-through; }
 .tkht-after { font-family: ui-monospace, Menlo, Consolas, monospace; color: #15803d; font-weight: 600; }
+
+/* [2026-11-10 04:00 PM Nguyễn Văn Thủy] PHASE-026 — bảng quy tắc định khoản: nút điều kiện, quy tắc, câu khai báo, nhãn trạng thái (đóng góp) */
+.tkht-screen.is-custom { margin-left: 12px; border-style: dashed; }
+.tkht-screen.is-off { opacity: .55; }
+.tkht-count { font-size: 11px; color: var(--ink-500); background: var(--bg); border: 1px solid var(--line-soft); border-radius: 999px; padding: 0 7px; }
+.tkht-count.is-draft { color: #9a3412; background: #fff7ed; border-color: #fed7aa; font-weight: 600; }
+.tkht-edit { all: unset; cursor: pointer; margin-left: auto; color: var(--ink-400); padding: 2px; }
+.tkht-edit:hover { color: var(--brand-600); }
+
+.tkht-cond { width: 250px; }
+.tkht-cond .tkht-head { background: #f0f9ff; color: #075985; }
+.tkht-cond-row { display: flex; justify-content: space-between; gap: 8px; align-items: center; height: 26px; padding: 0 10px; border-top: 1px solid #f1f5f9; }
+.tkht-cond-val { font-weight: 600; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+
+.tkht-rule { all: unset; box-sizing: border-box; cursor: pointer; display: block; width: 280px; background: #fff; border: 1px solid #dbe3ee; border-radius: 12px; box-shadow: 0 6px 18px rgba(30, 57, 91, .08); font-size: 12px; }
+.tkht-rule .tkht-head { background: #f0fdf4; color: #166534; }
+.tkht-rule.is-lost { opacity: .6; }
+.tkht-rule.is-won { border-color: #86efac; box-shadow: 0 0 0 2px #dcfce7, 0 6px 18px rgba(30, 57, 91, .08); }
+.tkht-rule.is-draft .tkht-head { background: #fff7ed; color: #9a3412; }
+.tkht-rule:hover { border-color: var(--brand-500); }
+.tkht-rule-auto { cursor: default; border-style: dashed; }
+.tkht-rule-auto .tkht-head { background: #f1f5f9; color: #334155; }
+.tkht-rule-body { padding: 6px 10px 8px; display: flex; flex-direction: column; gap: 4px; }
+.tkht-rule-cond { color: var(--ink-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tkht-rule-acc { display: flex; align-items: center; gap: 6px; }
+.tkht-rule-acc .tkht-side-tag:first-child { color: #2563eb; }
+.tkht-rule-acc .tkht-side-tag:nth-child(3) { color: #ea580c; }
+.tkht-note-inline { color: var(--ink-500); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.tkht-entry { all: unset; box-sizing: border-box; cursor: pointer; display: block; background: #fff; border: 1px solid #dbe3ee; border-radius: 12px; box-shadow: 0 6px 18px rgba(30, 57, 91, .08); font-size: 12px; width: 300px; }
+.tkht-entry:hover { border-color: var(--brand-500); }
+.tkht-entry-group { font-weight: 400; font-size: 11px; }
+.tkht-acc.is-ruled { background: #dcfce7; color: #166534; font-weight: 600; }
+.tkht-side .tkht-before { font-size: 11px; }
+
+.tkht-badge { margin-left: auto; font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: #f1f5f9; color: #334155; white-space: nowrap; }
+.tkht-badge.is-active { background: #dcfce7; color: #166534; }
+.tkht-badge.is-scheduled { background: #e0f2fe; color: #075985; }
+.tkht-badge.is-draft { background: #ffedd5; color: #9a3412; }
+.tkht-badge.is-closed { background: #f1f5f9; color: #64748b; }
+.tkht-badge.is-rejected { background: #fee2e2; color: #b91c1c; }
+td > .tkht-badge { margin-left: 0; }
+.grid tr.is-warn td { background: #fffbeb; }
+.grid tr.is-muted td { color: var(--ink-400); }
+.grid tr.is-focus td { background: #f0fdf4; }
+
+/* hộp khai quy tắc: một câu đọc từ trái sang phải */
+.tkht-sentence { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: #f8fafc; margin-bottom: 4px; }
+.tkht-sentence > span:not(.tkht-cond-chip) { color: var(--ink-500); }
+.tkht-sentence .select { width: auto; min-width: 140px; }
+.tkht-cond-chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #bae6fd; background: #f0f9ff; border-radius: 999px; padding: 2px 4px 2px 10px; font-size: 12px; }
+.tkht-cond-chip.is-all { padding: 3px 10px; color: var(--ink-500); border-style: dashed; background: #fff; }
+.tkht-cond-chip .select { min-width: 120px; height: 26px; padding: 0 6px; font-size: 12px; }
+.tkht-cond-chip .tkht-mini { all: unset; cursor: pointer; color: var(--ink-400); padding: 2px 4px; }
+.tkht-add-cond { min-width: 120px !important; border-style: dashed !important; color: var(--brand-600); }
+.tkht-rule-meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 12px; color: var(--ink-500); margin-bottom: 6px; }
+.tkht-rule-meta .tkht-badge { margin-left: 0; }
+.tkht-preview { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; margin-top: 6px; background: #fcfdff; }
+.tkht-preview-title { font-weight: 600; color: var(--ink-700); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+
+/* [2026-11-10 05:30 PM Nguyễn Văn Thủy] PHASE-026 — bấm cả thẻ nghiệp vụ để chọn (đóng góp) */
+.tkht-pick { cursor: pointer; }
+.tkht-pick:hover { border-color: var(--brand-500); }
+.tkht-pick:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 1px; }

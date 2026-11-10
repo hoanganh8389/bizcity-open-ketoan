@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/rules/sale.rule.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — gắn nhãn cặp (nghiệp vụ, hàng tặng, chương trình, hình thức) để áp bảng quy tắc định khoản (đóng góp)
 /**
  * Luật định khoản HOÁ ĐƠN BÁN HÀNG.
  *
@@ -25,6 +26,12 @@ import type { DraftLine } from '../../ledger/ledger.types.js';
 import type { AccountResolver } from '../account-resolver.js';
 import { EntryBuilder } from '../entry-builder.js';
 import type { PostingPart } from './stock.rule.js';
+import type { RuleTags } from '../rule-table.js';
+
+/** Nhãn của các cặp sinh từ một dòng hàng: nghiệp vụ, lý do chứng từ, hàng tặng, chương trình của dòng (policyRef). */
+export function lineTags(biz: string, reasonCode: string | undefined, line: { isGift?: boolean; policyRef?: { key: string } }): RuleTags {
+  return { biz, reason: reasonCode ?? null, gift: Boolean(line.isGift), program: line.policyRef?.key ?? null };
+}
 
 export interface RuleContext {
   resolver: AccountResolver;
@@ -82,6 +89,7 @@ export function buildSaleParts(doc: SaleDocument, ctx: RuleContext): PostingPart
       debitPartnerId: holder ?? partnerId,
       creditPartnerId: partnerId,
       description: `Thu tiền (${pay.methodCode})`,
+      tags: { biz: 'sale', reason: doc.reasonCode ?? null, method: pay.methodCode },
     });
     parts.push({
       lines: b.toLines(),
@@ -103,7 +111,9 @@ function buildSaleGoods(doc: SaleDocument, ctx: RuleContext, reason: ReturnType<
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
+    const tags = lineTags('sale', doc.reasonCode, line);
     b.add({
+      tags,
       part: 'goods',
       productSku: line.sku,
       debitAccount: counter,
@@ -114,6 +124,7 @@ function buildSaleGoods(doc: SaleDocument, ctx: RuleContext, reason: ReturnType<
       description: 'Doanh thu bán hàng',
     });
     b.add({
+      tags,
       part: 'tax',
       productSku: line.sku,
       debitAccount: counter,
@@ -128,6 +139,7 @@ function buildSaleGoods(doc: SaleDocument, ctx: RuleContext, reason: ReturnType<
     // hàng (costing.service). Chỉ ghi ở đây khi hệ thống nguồn đã gửi sẵn giá vốn (vd. giá vốn nội bộ theo giá bán).
     if (cost !== undefined && cost !== 0) {
       b.add({
+        tags,
         part: 'cogs',
         productSku: line.sku,
         debitAccount: resolver.cogsAccount(reason, group, line.isGift),

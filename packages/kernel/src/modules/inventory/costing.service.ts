@@ -6,6 +6,7 @@
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/inventory/costing.service.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 // [2026-11-04 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — G2: tính giá theo ĐỊNH DANH mặt hàng (item_id, 0066) — đổi mã giữa tháng không tách đơn giá; mã trên dòng giá vốn = mã hiện hành
+// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — phiếu giá vốn tháng áp bảng quy tắc định khoản (nghiệp vụ, hàng tặng, chiều chuyển kho) (đóng góp)
 /**
  * Tính giá vốn bình quân gia quyền theo tháng và ghi sổ giá vốn hàng xuất.
  *
@@ -71,6 +72,7 @@ import { eventStore } from '../documents/event-store.js';
 import { partnerRepository } from '@bizcity/platform/masterdata/partner.repository';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { AccountResolver } from '../posting/account-resolver.js';
+import { applyRuleTable } from '../posting/rule-table.js';
 import { EntryBuilder } from '../posting/entry-builder.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
@@ -588,8 +590,9 @@ async function postBranch(
       case 'sale_return': {
         const reason = reasonFor(m.reasonCode, m.kind);
         const cogs = resolver.cogsAccount(reason, group, m.isGift);
-        if (out) b.add({ part: 'cogs', productSku, debitAccount: cogs, creditAccount: inventory, amount, description: m.isGift ? 'Giá vốn hàng khuyến mãi' : 'Giá vốn hàng bán' });
-        else b.add({ part: 'cogs', productSku, debitAccount: inventory, creditAccount: cogs, amount, description: 'Nhập lại kho hàng khách trả' });
+        const tags = { biz: m.kind, reason: m.reasonCode, gift: m.isGift };
+        if (out) b.add({ tags, part: 'cogs', productSku, debitAccount: cogs, creditAccount: inventory, amount, description: m.isGift ? 'Giá vốn hàng khuyến mãi' : 'Giá vốn hàng bán' });
+        else b.add({ tags, part: 'cogs', productSku, debitAccount: inventory, creditAccount: cogs, amount, description: 'Nhập lại kho hàng khách trả' });
         break;
       }
       case 'transfer_out':
@@ -600,8 +603,9 @@ async function postBranch(
           ? resolver.counterOr(reason, 'goods_in_transit', 'tài khoản hàng đang chuyển giữa các chi nhánh')
           : resolver.counterOr(reason, 'internal_receivable_goods', 'tài khoản phải thu nội bộ hàng', 'internal_receivable');
         const other = m.counterCode ? await branchPartner(m.counterCode, m.counterName ?? '') : own;
-        if (m.kind === 'transfer_out') b.add({ part: 'goods', productSku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: other, description: 'Xuất chuyển kho (theo giá vốn)' });
-        else b.add({ part: 'goods', productSku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: other, description: 'Nhập chuyển kho (theo giá vốn)' });
+        const tags = { biz: 'transfer', reason: m.reasonCode, leg: m.kind === 'transfer_out' ? 'out' as const : 'in' as const, sameUnit: same };
+        if (m.kind === 'transfer_out') b.add({ tags, part: 'goods', productSku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: other, description: 'Xuất chuyển kho (theo giá vốn)' });
+        else b.add({ tags, part: 'goods', productSku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: other, description: 'Nhập chuyển kho (theo giá vốn)' });
         break;
       }
       case 'adjust_out':
@@ -609,8 +613,9 @@ async function postBranch(
         const increase = m.kind === 'adjust_in';
         const reason = reasonFor(m.reasonCode, `stock_adjustment:${increase ? 'increase' : 'decrease'}`);
         const counter = increase ? resolver.counterOr(reason, 'stock_surplus', 'tài khoản hàng thừa chờ xử lý') : resolver.counterOr(reason, 'stock_shortage', 'tài khoản hàng thiếu chờ xử lý');
-        if (increase) b.add({ part: 'goods', productSku, debitAccount: inventory, creditAccount: counter, amount, creditPartnerId: own, description: 'Điều chỉnh tăng kho (theo giá vốn)' });
-        else b.add({ part: 'goods', productSku, debitAccount: counter, creditAccount: inventory, amount, debitPartnerId: own, description: 'Điều chỉnh giảm kho (theo giá vốn)' });
+        const tags = { biz: increase ? 'stock_increase' : 'stock_decrease', reason: m.reasonCode };
+        if (increase) b.add({ tags, part: 'goods', productSku, debitAccount: inventory, creditAccount: counter, amount, creditPartnerId: own, description: 'Điều chỉnh tăng kho (theo giá vốn)' });
+        else b.add({ tags, part: 'goods', productSku, debitAccount: counter, creditAccount: inventory, amount, debitPartnerId: own, description: 'Điều chỉnh giảm kho (theo giá vốn)' });
         break;
       }
     }
@@ -623,7 +628,10 @@ async function postBranch(
   const filledTotal = 0;
   if (filled) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'costing.clear_slots', objectType: 'branch', objectId: `${a.branchCode}:${label(a.period)}`, after: { pairs: filled } });
 
-  const lines = b.toLines();
+  // Bảng quy tắc định khoản (0096): giá vốn hàng bán / hàng tặng, chuyển kho, điều chỉnh kho theo quy tắc đã duyệt tại cuối kỳ.
+  const ruled = applyRuleTable(b.toLines(), cfg.ruleTable, { date: lastDay(a.period), book: 'internal' });
+  if (ruled.errors.length) throw Errors.posting('Bảng quy tắc định khoản có quy tắc ngang hàng', [...new Set(ruled.errors)]);
+  const lines = ruled.lines;
   // Đối tượng chỉ giữ ở phía tài khoản theo dõi đối tượng.
   for (const l of lines) {
     const acc = cfg.accounts.get(l.accountCode);

@@ -6,7 +6,8 @@
 import { useEffect, useState } from 'react';
 import { POLICY_LABEL, STACK_KINDS, canRepeat, giftItemsOf, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { Field, Modal, useViewAgain } from '@/components/ui';
-import { errorText } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { api, errorText } from '@/lib/api';
 import { BranchPicker } from '@/components/filters';
 import { ItemPicker, PartnerPicker } from '@/components/pickers';
 import { CODE_PREFIX, KIND_HINT, RuleEditor, TEMPLATES, defaultRule, ruleText } from './quyTac';
@@ -55,6 +56,7 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
   useEffect(() => { if (!touched.name) setP((x) => ({ ...x, name: autoName(x) })); }, [names.partnerName(p.scope.partnerCode ?? '')]); // eslint-disable-line react-hooks/exhaustive-deps
   const upd = (next: Policy) => setP({ ...next, code: touched.code ? next.code : autoCode(next), name: touched.name ? next.name : autoName(next) });
   const viewAgain = useViewAgain();
+  const programKinds = useQuery({ queryKey: ['program-kinds'], queryFn: () => api.get<{ code: string; name: string; side: string; isActive: boolean }[]>('/api/v1/program-kinds'), staleTime: 60_000 });
   // Sửa chính sách đã có rồi Ghi: ở lại hộp thoại, quay về chế độ xem (stay = bên gọi chỉ nạp lại, không đóng).
   const save = async () => {
     const x = { ...p, code: p.code || autoCode(p), name: p.name || autoName(p) };
@@ -98,6 +100,11 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
       <Field label="Hiệu lực từ"><input className="input" type="date" value={p.validFrom ?? ''} onChange={(e) => setP({ ...p, validFrom: e.target.value || undefined })} /></Field>
       <Field label="Đến (trống = không thời hạn)"><input className="input" type="date" value={p.validTo ?? ''} onChange={(e) => setP({ ...p, validTo: e.target.value || undefined })} /></Field>
       <Field label="Ưu tiên (2 chính sách cùng phạm vi, hoặc 2 chương trình áp riêng: số lớn thắng)"><input className="input num" value={p.priority ?? 0} onChange={(e) => setP({ ...p, priority: Number(e.target.value) || 0 })} /></Field>
+      {/* [2026-11-10 05:00 PM Nguyễn Văn Thủy] PHASE-026 — loại chương trình: quy tắc định khoản (ACC92) phân biệt hàng tặng / giảm giá theo loại (đóng góp) */}
+      <Field label="Loại chương trình (để định khoản quà, giảm giá)"><select className="select input" value={(p as Policy & { programKind?: string | null }).programKind ?? ''} onChange={(e) => setP({ ...p, programKind: e.target.value || null } as Policy)}>
+        <option value="">— không —</option>
+        {(programKinds.data ?? []).filter((k) => k.side !== 'sale' && k.isActive).map((k) => <option key={k.code} value={k.code}>{k.code} — {k.name}</option>)}
+      </select></Field>
       <Field label="Trạng thái"><select className="select input" value={p.isActive ? '1' : '0'} onChange={(e) => setP({ ...p, isActive: e.target.value === '1' })}><option value="1">Đang áp</option><option value="0">Tắt</option></select></Field>
       {!isNew && <Field label="Nội dung đổi thì áp cho chứng từ từ ngày (phiếu trước ngày này giữ bản cũ)"><input className="input" type="date" value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} /></Field>}
       {!isNew && <Field label={`Lý do đổi${effectiveFrom && effectiveFrom < today() ? ' (bắt buộc khi áp lùi về trước hôm nay)' : ''}`}><input className="input" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>}

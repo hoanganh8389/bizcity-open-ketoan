@@ -124,7 +124,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Vật tư hàng hoá', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/don-vi-tinh', '/danh-muc/kho', '/danh-muc/bang-gia'] },
       { label: 'Đối tượng', paths: ['/danh-muc/khach-hang', '/danh-muc/nha-cung-cap', '/danh-muc/nhan-vien', '/danh-muc/doi-tuong', '/danh-muc/nhom-doi-tuong'] },
       { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc', '/danh-muc/chi-nhanh', '/danh-muc/bo-phan'] },
-      { label: 'Tài khoản', paths: ['/danh-muc/tai-khoan', '/cau-hinh/thiet-ke-hach-toan', '/cau-hinh/tai-khoan-ngam-dinh', '/cau-hinh/ly-do', '/cau-hinh/nhom-hach-toan', '/danh-muc/loai-thue', '/cau-hinh/hinh-thuc-thanh-toan', '/danh-muc/ngan-hang'] },
+      { label: 'Tài khoản', paths: ['/danh-muc/tai-khoan', '/cau-hinh/thiet-ke-hach-toan', '/cau-hinh/tai-khoan-ngam-dinh', '/danh-muc/loai-thue', '/cau-hinh/hinh-thuc-thanh-toan', '/danh-muc/ngan-hang'] },
       { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
       { label: 'Tài sản', paths: ['/danh-muc/loai-tai-san', '/danh-muc/nhom-ccdc', '/danh-muc/nguon-von', '/danh-muc/muc-dich-su-dung'] },
     ],

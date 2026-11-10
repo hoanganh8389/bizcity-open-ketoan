@@ -374,10 +374,9 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               {!vatRate && v.taxOutCode && <option value="other">Mã riêng: {v.taxOutCode}</option>}
             </select>
           </Field>
-          <Field label="Nhóm hạch toán" hint="Quyết định tài khoản kho, giá vốn, doanh thu; trống = nhóm mặc định">
-            <select className="select input" value={v.postingGroupCode ?? ''} onChange={(e) => set({ postingGroupCode: e.target.value || null })}>
-              <option value="">(Nhóm mặc định)</option>{pgroups.map((g) => <option key={g.code} value={g.code}>{g.code} — {g.name}</option>)}
-            </select>
+          {/* [2026-11-10 05:40 PM Nguyễn Văn Thủy] PHASE-026 — bỏ ô Nhóm hạch toán: tài khoản theo quy tắc định khoản (ACC92) theo Loại hàng, chương trình; giá trị cũ giữ nguyên (đóng góp) */}
+          <Field label="Tài khoản kế toán" hint="Không khai theo từng mặt hàng: định khoản theo quy tắc ở Thiết kế hạch toán (ACC92), dựa vào Loại hàng, chương trình, nghiệp vụ">
+            <input className="input" readOnly value="Theo quy tắc định khoản (ACC92)" title="Đổi tài khoản: vào Thiết kế hạch toán, thêm quy tắc có điều kiện Loại hàng" />
           </Field>
           <div className="full">
             <button type="button" className="btn btn-xs" onClick={() => setTaxDetail((x) => !x)}>{taxDetail ? '▾' : '▸'} Mã thuế chi tiết (kế toán){v.exciseRate ? ` · TTĐB ${v.exciseRate}%` : ''}</button>
