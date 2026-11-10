@@ -73,6 +73,11 @@ export const DEFAULT_KEYS = {
   cash_in_transit: 'Tiền đang chuyển giữa các chi nhánh (chuyển tiền)',
   stock_surplus: 'Hàng thừa chờ xử lý (điều chỉnh tăng)',
   stock_shortage: 'Hàng thiếu chờ xử lý (điều chỉnh giảm)',
+  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — công tắc lý do / nhóm hạch toán tắt: tài khoản theo mặt hàng lấy ở đây (đóng góp)
+  revenue: 'Doanh thu bán hàng',
+  sales_return: 'Hàng bán bị trả lại',
+  cogs: 'Giá vốn hàng bán',
+  inventory: 'Kho hàng hoá',
 } as const;
 /** Khoá thuộc form ACC41 (phần trên); các khoá còn lại hiện ở phần "Bộ định khoản". */
 export const FORM_KEYS = ['cash', 'tax_output', 'tax_input', 'goods_in_transit', 'internal_receivable_goods', 'internal_payable_goods', 'internal_receivable', 'internal_payable', 'internal_cogs', 'commission_debit', 'commission_credit'] as const;

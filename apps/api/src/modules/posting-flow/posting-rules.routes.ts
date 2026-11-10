@@ -12,7 +12,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
 import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
 import {
-  approveRule, deleteDraft, listBusinesses, listRules, proposeRule, rejectRule, ruleOptions, saveBusiness, simulateRules, stopRule, updateDraft,
+  approveRule, deleteDefaultEntry, deleteDraft, listDefaultEntries, saveDefaultEntry, listBusinesses, listRules, proposeRule, rejectRule, ruleOptions, saveBusiness, simulateRules, stopRule, updateDraft,
 } from './posting-rules.service.js';
 
 const tags = ['Thiết kế hạch toán'];
@@ -27,6 +27,7 @@ const ruleSchema = z.object({
   debit: z.string().max(32).nullish(), credit: z.string().max(32).nullish(), priority: z.number().int().min(-100).max(100).optional(),
   from: isoDay, note: z.string().max(500).optional(), changeReason: z.string().max(500).optional(),
 });
+const defaultEntrySchema = z.object({ business: z.string().min(1).max(32), part: z.enum(['goods', 'tax', 'cogs', 'payment']), cond: condSchema.optional(), debit: z.string().max(32).nullish(), credit: z.string().max(32).nullish(), name: z.string().min(1).max(200) });
 const sampleSchema = z.object({
   business: z.string().min(1).max(32), sku: z.string().max(64).optional(), itemType: z.string().max(64).optional(), taxCode: z.string().max(16).optional(),
   method: z.string().max(32).optional(), gift: z.boolean().optional(), program: z.string().max(128).optional(), amount: z.number().positive().max(1e13).optional(),
@@ -49,6 +50,12 @@ export async function postingRuleRoutes(app: FastifyInstance): Promise<void> {
     preHandler: read,
     schema: { tags, summary: 'Nghiệp vụ định khoản và số quy tắc' },
     handler: async (req) => ok(await listBusinesses(db, authOf(req).tenantId)),
+  });
+  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — định khoản ngầm định thêm ở ACC41 (đóng góp)
+  r.get('/api/v1/posting-rules/defaults', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Định khoản ngầm định thêm ở Tài khoản ngầm định (ACC41)' },
+    handler: async (req) => ok(await listDefaultEntries(db, authOf(req).tenantId)),
   });
   r.get('/api/v1/posting-rules', {
     preHandler: read,
@@ -129,5 +136,21 @@ export const postingRuleActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/posting-rules/:id/stop' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'posting_rule', objectId: (i) => i.id },
     handler: async (ctx, i) => stopRule(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actor, i.id, i.from, i.reason),
+  }),
+  defineAction({
+    id: 'core.posting-default-entry.save', title: 'Thêm / sửa định khoản ngầm định (ACC41)', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: defaultEntrySchema.extend({ id: z.string().max(20).optional() }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/posting-rules/defaults' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'posting_rule', objectId: (i) => i.id ?? `${i.business}:${i.part}` },
+    handler: async (ctx, i) => { const { id, ...b } = i; return saveDefaultEntry(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actor, id ?? null, b); },
+  }),
+  defineAction({
+    id: 'core.posting-default-entry.delete', title: 'Xoá định khoản ngầm định (ACC41)', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ id: z.string().max(20) }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/posting-rules/defaults/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'posting_rule', objectId: (i) => i.id },
+    handler: async (ctx, i) => deleteDefaultEntry(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actor, i.id),
   }),
 ];

@@ -1,25 +1,37 @@
 # Tài khoản ngầm định (ACC41)
 
-Form gồm mười một tài khoản, sửa xong bấm **Ghi**:
+<!-- [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — danh sách định khoản theo loại chứng từ, thêm / sửa (đóng góp) -->
 
-| Ô | Thường đặt |
-|---|---|
-| TK tiền mặt mặc định | 1111 |
-| TK thuế đầu ra ngầm định | 33311 |
-| TK thuế đầu vào ngầm định | 1331 |
-| TK hàng gửi đi bán | 1579 |
-| TK phải thu nội bộ hàng | 13681 |
-| TK phải trả nội bộ hàng | 33681 |
-| TK phải thu nội bộ tiền | 13681 |
-| TK phải trả nội bộ tiền | 33681 |
-| TK ghi nhận giá vốn nội bộ khi chuyển kho | 6326 |
-| TK Nợ mặc định ghi nhận hoa hồng | 6418 |
-| TK Có mặc định ghi nhận hoa hồng | 33881 |
+Mỗi dòng là một **định khoản mặc định** của một loại chứng từ: **TK Nợ** và **TK Có**. Lọc theo **Loại chứng từ**: Bán hàng, Mua hàng, Nhập xuất kho, Thu chi tiền, Khác.
 
-Chuyển kho sang đơn vị hạch toán khác dùng **phải thu nội bộ hàng**. Nếu ô này để trống thì dùng phải thu nội bộ tiền.
+## Dòng có sẵn
 
-## Bộ định khoản
+Là định khoản phần mềm dùng khi không có gì chỉ định khác. Bấm **Sửa** để đổi tài khoản.
 
-Phần dưới form gồm các tài khoản dùng khi lý do, hình thức thanh toán hoặc loại thuế không chỉ định: phải thu khách hàng (1311), phải trả nhà cung cấp (3312), chi phí hàng khuyến mãi (64184), tiền đang chuyển (11319), hàng thừa (3381), hàng thiếu chờ xử lý (1381).
+- Một tài khoản có thể dùng ở nhiều dòng. Ví dụ *Phải thu khách hàng 1311* dùng ở bán hàng, khách trả hàng, thu tiền. Sửa ở một dòng là đổi ở mọi dòng dùng chung; hộp sửa ghi rõ các dòng đó.
+- Ô ghi *theo HTTT*: tài khoản tiền lấy theo **Hình thức thanh toán** (tiền mặt 1111, chuyển khoản 112…).
+- Thuế: loại thuế có tài khoản riêng thì theo loại thuế.
 
-Nếu bộ định khoản cần một tài khoản ngầm định còn trống, chứng từ báo lỗi "Chưa đặt …". Đặt xong thì chạy **Định khoản tự động (ACC14)** cho khoảng ngày của chứng từ đó.
+## Thêm tài khoản ngầm định
+
+Dùng cho trường hợp riêng của một loại chứng từ. Ví dụ hàng khuyến mại ghi doanh thu 51113, giá vốn 6323.
+
+1. Chọn **Loại chứng từ** và **Khoản**: tiền hàng, thuế, giá vốn hoặc thanh toán.
+2. Đặt **Tên định khoản**.
+3. Chọn điều kiện: loại hàng, loại thuế, hàng tặng, chương trình, hình thức thanh toán, chiều chuyển kho… Ô để *mọi trường hợp* thì không xét.
+4. Chọn **TK Nợ** và / hoặc **TK Có**. Ô trống thì giữ tài khoản của dòng có sẵn.
+
+Không được trùng điều kiện với một dòng đã thêm. Sửa và xoá áp ngay.
+
+## Thứ tự ưu tiên
+
+1. Quy tắc ở **Thiết kế hạch toán (ACC92)**: có ngày hiệu lực, đề xuất / duyệt. Quy tắc nhiều điều kiện hơn thì thắng; cùng mức điều kiện thì quy tắc ACC92 thắng dòng thêm ở đây.
+2. Dòng **thêm** ở màn này. Khớp nhiều điều kiện hơn thì thắng.
+3. Dòng **có sẵn**.
+
+## Công tắc lý do hạch toán
+
+Khoá `bizcity.posting.use_reasons`, đổi ở Trung tâm cấu hình. Mặc định **tắt**.
+
+- **Tắt**: phần mềm không đọc lý do, nhóm hạch toán, tài khoản theo mặt hàng. Doanh thu, trả lại, giá vốn, kho lấy ở màn này.
+- **Bật**: như phần mềm cũ. Doanh thu, giá vốn, kho theo nhóm hạch toán của mặt hàng; tài khoản trên lý do đè lên các dòng ở đây.
