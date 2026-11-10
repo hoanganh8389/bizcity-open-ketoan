@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 60
+      "count": 61
     },
     {
       "key": "paused",
@@ -4529,15 +4529,9 @@
       "phase": "PHASE-029",
       "title": "Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
-        "branch": "feat/phase-029-s029-25-sod-warn",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-029 · S029-25 đợt 1 — tách nhiệm ghi dấu (sod: warn), RV-R1-11; chữ chốt ở DOCUMENT 1.4.0 §5.…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 35
     },

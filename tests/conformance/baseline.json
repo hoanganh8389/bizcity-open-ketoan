@@ -1994,7 +1994,7 @@
     },
     "SC-ACT-2": {
       "title": "Action ghi sổ khai sideEffects ledger và errors có PERIOD_LOCKED (STD-ACT-9)",
-      "ref": "STD-ACT-9 · S014-16 — chuyển kho (kho01, Nguyễn Văn Thủy đang sửa) và duyệt mua hàng (RV-R1-11, PHASE-026): chủ tệp thêm 'ledger' vào sideEffects khi chạm tệp",
+      "ref": "STD-ACT-9 · S014-16 — chuyển kho (kho01, Nguyễn Văn Thủy đang sửa): chủ tệp thêm 'ledger' vào sideEffects khi chạm tệp",
       "debts": [
         {
           "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.create",
@@ -2025,16 +2025,6 @@
           "fp": "SC-ACT-2|apps/api/src/phan-he/kho/phieu-chuyen-kho.ts|side:kho.transfer.cancel",
           "file": "apps/api/src/phan-he/kho/phieu-chuyen-kho.ts",
           "message": "action kho.transfer.cancel gọi cancelTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
-        },
-        {
-          "fp": "SC-ACT-2|apps/api/src/phan-he/mua-hang/routes.ts|side:mua-hang.purchase.documents-approve",
-          "file": "apps/api/src/phan-he/mua-hang/routes.ts",
-          "message": "action mua-hang.purchase.documents-approve gọi purchaseService.approveIn (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
-        },
-        {
-          "fp": "SC-ACT-2|apps/api/src/phan-he/mua-hang/routes.ts|side:mua-hang.purchase.documents-override",
-          "file": "apps/api/src/phan-he/mua-hang/routes.ts",
-          "message": "action mua-hang.purchase.documents-override gọi purchaseService.approveIn (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
         }
       ]
     }

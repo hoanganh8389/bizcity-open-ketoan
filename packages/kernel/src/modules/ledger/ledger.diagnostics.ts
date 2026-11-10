@@ -27,6 +27,16 @@ const INTERNAL = ['closing', 'cogs', 'depreciation'];
 const STOCK_ZERO = ['transfer', 'stock_adjustment'];
 
 /** Điều kiện đơn vị + phạm vi trên bảng alias `t` có cột ngày `date` và (tuỳ) cột chi nhánh. */
+// [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1: các lần người lập tự duyệt (dấu workflow.sod.self_approve trong notes.audit[] của bằng chứng)
+/** Một dòng mỗi lần tự duyệt trong kỳ: key = <loại>:<mã chứng từ>. notes.audit lớn bị lược thành đối tượng {omitted} → bỏ qua. */
+function selfApproved(s: DiagScope): RawBuilder<unknown> {
+  const notes = sql`a.after_data->'notes'->'audit'`;
+  return sql`(SELECT (n->>'objectType') || ':' || coalesce(n->>'objectId', '?') AS key, a.created_at
+      FROM audit_logs a CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(${notes}) = 'array' THEN ${notes} ELSE '[]'::jsonb END) n
+     WHERE a.tenant_id = ${s.tenantId} AND a.result_ok AND n->>'action' = 'workflow.sod.self_approve'
+       ${s.from ? sql`AND a.created_at::date >= ${s.from}::date` : sql``} ${s.to ? sql`AND a.created_at::date <= ${s.to}::date` : sql``})`;
+}
+
 function scoped(s: DiagScope, t: string, date: string, branch: string | null = 'branch_id'): RawBuilder<boolean> {
   const parts: RawBuilder<unknown>[] = [sql`${sql.ref(`${t}.tenant_id`)} = ${s.tenantId}`];
   if (s.from) parts.push(sql`${sql.ref(`${t}.${date}`)} >= ${s.from}`);
@@ -280,6 +290,17 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
                AND NOT EXISTS (SELECT 1 FROM audit_logs k WHERE k.tenant_id = a.tenant_id AND k.action = 'core.ledger.header-edit-ack' AND k.result_ok
                                 AND k.object_id = a.object_id AND k.after_data->'input'->>'txid' = a.after_data->>'_txid')
           ) x ORDER BY x.posting_date, x.key LIMIT ${SAMPLE}`),
+  },
+  // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, R-WF-17): người lập tự duyệt ghi sổ (sod: warn) — cảnh báo, chưa chặn
+  {
+    code: 'LEDGER_SELF_APPROVED', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'Mở chứng từ trong mẫu, xem người lập và người duyệt; không đúng quy chế thì bỏ duyệt và giao người khác duyệt lại', screen: SCREENS.ACC14 }, { text: 'Khi đơn vị đủ người, đề nghị bật chặn tách nhiệm (người duyệt khác người lập)', role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'LEDGER_SELF_APPROVED' } },
+    title: 'Chứng từ ghi sổ được duyệt bởi người khác người lập (tách nhiệm)',
+    fix: 'Người lập tự duyệt và ghi sổ chứng từ của mình (mua hàng, phiếu kế toán). Hệ thống chưa chặn (quyết định 2026-11-10), chỉ ghi dấu: kế toán trưởng rà các lần này.',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM ${selfApproved(s)} x`,
+      sql`SELECT x.key, count(*) OVER ()::int AS total FROM (SELECT DISTINCT ON (y.key) y.key, y.created_at FROM ${selfApproved(s)} y ORDER BY y.key, y.created_at DESC) x
+           ORDER BY x.created_at DESC LIMIT ${SAMPLE}`),
   },
   {
     code: 'LEDGER_TRIGGERS', closeRef: 'PC-016', layer: 'L1', level: 'error', scoped: false,
