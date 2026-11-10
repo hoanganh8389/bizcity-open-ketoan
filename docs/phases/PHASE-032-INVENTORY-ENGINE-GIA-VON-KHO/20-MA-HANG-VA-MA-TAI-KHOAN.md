@@ -11,7 +11,7 @@
 | `item_id` | ULID bất biến, cấp một lần | Không đổi trong toàn bộ vòng đời; mọi liên kết kế toán trỏ vào đây | `items.item_id` (0065), R-ITEM-0 |
 | `sku` (`010-025-001-XD`) | Mã hàng hiển thị, **có phiên bản + ngày hiệu lực** | Đổi mã = thêm phiên bản; mã cũ vẫn tra được cho chứng từ cũ; không dùng lại cho hàng khác | `item_codes` (kind `sku`), R-ITEM-0 |
 | `parent_item_id` | Sản phẩm cha | Nhóm các biến thể để xem tổng; không là khoá kế toán | `items.parent_item_id` (0067), D026-2 |
-| `lot_id` / `lot_no` | Lô hàng thực tế, hạn dùng, trạng thái | Phân biệt các lần nhập; FEFO / cách ly / huỷ theo lô | `inventory_lots` (W1), R-INV-3 |
+| `lot_id` / `lot_no` | Lô hàng thực tế, hạn dùng, trạng thái | Phân biệt các lần nhập; FEFO / cách ly / huỷ theo lô | `item_lots` + `inventory_lot_moves` (0098, D032-15), R-INV-3 |
 | `warehouse` | Kho lưu hàng | Thay đổi khi chuyển kho; không đổi giá trị trong cùng đơn vị kế toán | `inventory_movements.warehouse_code`, R-INV-8 |
 | `posting_group` (nhóm hạch toán) | Thuộc tính phân loại **có phiên bản theo ngày** | Cho biết hàng này dùng TK kho / giá vốn / doanh thu nào **tại ngày**; đổi nhóm không sửa sổ | `item_classification`, R-ITEM-4 / R-ITEM-7 |
 | `account_code` (156, 632, 511…) | **Kết quả** tra tại ngày: lý do → nhóm hạch toán → chế độ kế toán (phiên bản) | Xác định theo **nghiệp vụ và chính sách**, không gắn vào hàng; chỉ xuất hiện trên dòng sổ cái | `ledger_lines.account_code`, R-POST-2, R-ITEM-10 |

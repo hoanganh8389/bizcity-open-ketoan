@@ -23,8 +23,8 @@ Hệ quả: bán lẻ hàng có date **cần FEFO**, **không cần** đổi ph�
 đầu vào: item_id, qty cần xuất, kho, ngày, danh sách lô còn số dư ở kho
 bước 1  loại lô: status ∈ {quarantine, hold, expired, disposed}; expiry_date < ngày (trừ nghiệp vụ huỷ / trả NCC)
 bước 2  thứ tự:
-          item có expiry_date  → FEFO: expiry_date ↑, rồi ngày nhập ↑, rồi lot_id ↑
-          item không có hạn    → FIFO: ngày nhập (receipt_line) ↑, rồi lot_id ↑
+          item có expiry_date  → FEFO: exp_date ↑, rồi ngày nhập (first_date) ↑, rồi id ↑   — đã chạy ở lot.service (0098, D032-15)
+          item không có hạn    → FIFO: ngày nhập (first_date) ↑, rồi id ↑
 bước 3  lấy đủ qty theo thứ tự; thiếu → shortage > 0 (không chặn ở đây — cửa nạp / module quyết)
 bước 4  module nối hook: exclude(lot) OR nhau; prefer(a,b) theo thứ tự đăng ký; minShelfDays → loại lô có hạn − ngày < minShelfDays
 đầu ra: picks[{ lot, qty }], rule 'fefo' | 'fifo', shortage, warnings[]  — CHỈ GỢI Ý, KHÔNG GHI
@@ -35,7 +35,7 @@ Ví dụ (ảnh đề bài): lô A 01/11, lô B 05/11, lô C 08/11 (ngày nhập
 Mở rộng của module (PHASE-030 · 51):
 - **Bán hàng:** `minShelfDays` theo khách / kênh (siêu thị đòi hạn còn ≥ 2/3; online đòi ≥ 30 ngày).
 - **Kho:** `exclude` lô đang kiểm kê (`count_locked`), lô chờ QC.
-- **Mua hàng:** không chọn lô khi xuất, nhưng tạo lô khi nhập (`lotRef`).
+- **Mua hàng:** không chọn lô khi xuất, nhưng tạo lô khi nhập (`lotNo`, `expDate` trên dòng; trống → lô không số).
 
 ## 3. Chính sách `core.inventory.lot_picking@1` (Policy Registry)
 
@@ -59,7 +59,7 @@ Phạm vi: đơn vị → chi nhánh → kho → nhóm hàng (hẹp thắng). Ph
 | Khác gợi ý | ô **Lý do** bắt buộc (danh sách `overrideReasons`) | `suggest`: ghi kèm; `enforce`: giải thích sẽ chờ duyệt |
 | Cảnh báo | *"Lô B hết hạn 30/11 — còn 21 ngày; khách X đòi ≥ 30 ngày"* | `IN-INV-013` khi hết hạn; hint khi cận hạn |
 | Thiếu | *"Thiếu 5 — kho còn 25 / cần 30"* | không chặn tại đây (tồn âm tạm → `CT-INV-001` ở settle) |
-| POS / plugin | gọi `POST /inventory/pick-lots` để lấy gợi ý; offline: viết lại thuật toán theo `spec` + `vectors` của Rule Contract (như PHASE-031 W3a) | gửi `lotRef` + `policyRefs` |
+| POS / plugin | gọi `GET /api/v1/lots/suggest` để lấy gợi ý (có sẵn, D032-15); offline: viết lại thuật toán theo `spec` + `vectors` của Rule Contract (như PHASE-031 W3a) | gửi `lotNo` / `expDate` + `policyRefs` |
 
 Màn **Kho › Lô & hạn dùng** (module Kho, W5): lưới lô theo item / kho, bộ lọc cận hạn, nút *Cách ly* / *Huỷ* (mở chứng từ), lịch sử trạng thái lô, liên kết hành trình `item_id`.
 

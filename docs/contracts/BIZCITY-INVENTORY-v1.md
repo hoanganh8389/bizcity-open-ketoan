@@ -2,7 +2,7 @@
 <!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — W0: hợp đồng nháp của Inventory Engine (ADR-0033): đọc số dư / lô / lớp / phân bổ, hook chọn lô, CostingResult đưa sang Kernel; chưa có mã -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
-> **Phiên bản:** 0.1.0-draft · 2026-11-09 · **Trạng thái:** Đề xuất ([ADR-0033](../adr/ADR-0033-inventory-engine-gia-von-kho.md) chờ chủ duyệt; **không có mã**)
+> **Phiên bản:** 0.2.0-draft · 2026-11-11 · **Trạng thái:** Đề xuất ([ADR-0033](../adr/ADR-0033-inventory-engine-gia-von-kho.md) chờ chủ duyệt; **không có mã**)
 > **Nguồn sự thật (đề xuất, chưa có mã):** kiểu ở gói contracts, tệp `inventory.ts` (đề xuất) · engine và route ở `packages/kernel/src/modules/inventory/**` (đã có thư mục) · hook `inventory.pickLots` đăng ký ở `packages/platform/src/core/hooks.ts`
 > **Luật:** [R-INV](../rules/RULE-INVENTORY.md), [R-CONT](../rules/RULE-CONTINUITY.md) · **Kế hoạch:** [PHASE-032](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/README.md) · **Hợp đồng kề:** [`bizcity_lineage@1`](BIZCITY-LINEAGE-v1.md) (đọc hành trình), [`bizcity_ledger_intake@1`](BIZCITY-LEDGER-INTAKE-v1.md) (nguồn gửi `lotRef`, `originalLineRef`), [`bizcity_policy@1`](BIZCITY-POLICY-v1.md) (`core.costing.method@1`, `core.inventory.lot_picking@1`)
 
@@ -14,31 +14,37 @@ Bất biến: **`item_id` là khoá** (R-ITEM-0); bảng Engine **không có c�
 
 ## 2. Khuôn dữ liệu (đích; bảng mới ở W1–W2)
 
+<!-- [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — D032-15: lô của Engine = item_lots + inventory_lot_moves (0098, Thuy2k, PHASE-026); bỏ kế hoạch inventory_lots (chủ dự án 2026-11-11) -->
 ```text
-inventory_lots                       (W1, K-030-1)
-  lot_id          ULID PK
-  tenant_id, item_id                 — lô thuộc một định danh
-  lot_no          text               — số lô nhà sản xuất / nội bộ; UNIQUE (tenant_id, item_id, lot_no)
-  expiry_date     date null
+item_lots                            (CÓ, migration 0098 — D032-15)
+  id              bigint PK          — lot_id ở mọi bảng khác
+  tenant_id, item_id, item_key       — lô thuộc một định danh (item_key = item_id, chưa định danh thì "sku:<mã>")
+  lot_no          text ''            — số lô NCC; '' = lô không số của mặt hàng
+  exp_date        date null          — hạn dùng
   mfg_date        date null
-  receipt_line    (event_id, line_key) null   — dòng nhập tạo lô (mua, điều chỉnh tăng, chuyển đến khác pháp nhân)
-  status          available | quarantine | hold | expired | disposed
-  status_reason   text null, status_at, status_by
-  created_at
+  purchase_name, purchase_unit, names_seen   — tên hàng lúc mua (kê khai bán ra), các tên đã gặp
+  partner_id, first_event_id, first_doc_no, first_date   — lần nhập đầu tạo lô
+  UNIQUE (tenant_id, item_key, lot_no, exp_date)
+  + status        (CHƯA CÓ, W1)      available | quarantine | hold | expired | disposed; status_reason, status_at, status_by;
+                                     chỉ đổi qua action core.inventory.lot.status có lý do
 
-inventory_movements                  (+ cột, W1)
-  lot_id          ULID null → inventory_lots
+inventory_lot_moves                  (CÓ, migration 0098) — phân lô của từng dòng inventory_movements
+  movement_id → inventory_movements (xoá theo dòng kho: ghi lại chứng từ thì phân lô ghi lại)
+  event_id, lot_id → item_lots, branch_id, warehouse_code, item_id, sku, kind, doc_date
+  qty             numeric            — dương vào lô, âm ra lô
+  how             line | fifo | return | transfer | shortage | nolot
+
+Tồn theo lô = Σ inventory_lot_moves.qty theo (lot_id, branch_id, warehouse_code) — GET /api/v1/lots?split=1 (KHO05).
+
+inventory_movements                  (+ cột, W1 — CHƯA CÓ)
   line_key        text               — khoá dòng ổn định giữa phiên bản (thay line_no khi khuôn nạp có lineKey)
-  original_line_ref (event_id, line_key) null — dòng gốc của nghiệp vụ đảo chiều (R-INV-4)
-
-bizcity_read.inventory_balances      (khung nhìn, W1)
-  tenant_id, branch_id, warehouse_code, item_id, lot_id, qty, as_of
+  original_line_ref (event_id, line_key) null — dòng gốc của nghiệp vụ đảo chiều (R-INV-4); hôm nay nối mức chứng từ qua originalDocKey
 
 valuation_layers                     (W2, CHỈ THÊM — PHASE-025 · 10 §2)
   layer_id, tenant_id, pool_id, item_id
   kind            receipt | period_pool | opening | adjustment
   source_line     (event_id, line_key) null
-  lot_id          ULID null          — đích danh: lớp buộc theo lô
+  lot_id          bigint null → item_lots.id   — đích danh: lớp buộc theo lô
   period          YYYY-MM null
   qty_in, value_in, unit_cost
   policy_version  int                — bản core.costing.method@1 lúc tạo
@@ -67,15 +73,15 @@ costing_runs                         (W2)
   settled_at, settled_by, reason
 ```
 
-Ràng buộc (trigger): `valuation_layers`, `cost_allocations` không `UPDATE` ngoài đặt `superseded_by` / `journal_entry_id` một lần (NULL → giá trị), không `DELETE`; `inventory_lots.status` chỉ đổi qua action có lý do; mọi bảng RLS theo đơn vị; **không bảng nào có cột `account*`** (SC-INV-2).
+Ràng buộc (trigger): `valuation_layers`, `cost_allocations` không `UPDATE` ngoài đặt `superseded_by` / `journal_entry_id` một lần (NULL → giá trị), không `DELETE`; `item_lots.status` (khi có) chỉ đổi qua action có lý do; mọi bảng RLS theo đơn vị; **không bảng nào có cột `account*`** (SC-INV-2).
 
 ## 3. API đọc (quyền `catalog:read` cho số dư / lô; `ledger:read` cho lớp / phân bổ)
 
 | Đường dẫn | Trả |
 |---|---|
 | `GET /api/v1/inventory/balances?item=&warehouse=&branch=&at=&lots=1` | số dư theo (kho, item[, lô]) tại ngày; cờ `expired`, `quarantine` |
-| `GET /api/v1/inventory/lots?item=&status=&expiringBefore=` | lô, hạn, trạng thái, phiếu nhập tạo lô, số dư từng kho |
-| `POST /api/v1/inventory/pick-lots` | `{ branch, warehouse, lines[{ lineKey, itemId | sku, qty, constraints? }], at? }` → `{ lines[{ lineKey, picks[{ lotId, lotNo, expiryDate, qty }], rule: fefo | fifo, shortage, warnings[] }] }` — chạy hook `inventory.pickLots`, **không ghi** |
+| `GET /api/v1/lots?split=1&branchCodes=&warehouses=` (**có**, 0098) | lô, hạn, tên lúc mua, phiếu nhập đầu, tồn từng chi nhánh · kho (màn KHO05); thêm `status=`, `expiringBefore=` khi có trạng thái lô |
+| `GET /api/v1/lots/suggest` (**có**, 0098: đúng thứ tự Kernel tự chọn — hạn sớm trước, cùng hạn nhập trước) · `POST /api/v1/inventory/pick-lots` (đích, khi có chính sách chọn lô) | `{ branch, warehouse, lines[{ lineKey, itemId | sku, qty, constraints? }], at? }` → `{ lines[{ lineKey, picks[{ lotId, lotNo, expiryDate, qty }], rule: fefo | fifo, shortage, warnings[] }] }` — chạy hook `inventory.pickLots`, **không ghi** |
 | `GET /api/v1/inventory/layers?item=&pool=&period=&run=` | lớp giá vốn (kể cả `superseded`) + nguồn |
 | `GET /api/v1/inventory/allocations?issueLine=&layer=&run=` | phân bổ của một dòng xuất hoặc một lớp |
 | `GET /api/v1/inventory/costing-runs?pool=&period=` | các lần tính: trạng thái, phương pháp, bản chính sách, mã kiểm |
@@ -112,7 +118,7 @@ Mặc định Core: bỏ `quarantine · hold · expired · disposed`; **FEFO** k
 
 ## 6. Cửa nạp (minor `bizcity_ledger_intake@1`, W1)
 
-- dòng hàng: `lotRef?: { lotNo: string; expiryDate?: string; mfgDate?: string }` (nhập: tra / tạo lô của `item_id`; xuất: phải tồn tại và không `disposed`, `IN-INV-012`);
+- dòng hàng: `lotNo?: string`, `expDate?: string` (**có**, 0098; thay `lotRef` dự kiến — D032-15). Có điền thì ưu tiên, để trống thì theo quy tắc: nhập → lô của (số lô, hạn) hoặc lô không số; xuất → lô ghi trên dòng, không ghi thì tự chọn hạn sớm trước. Khi có trạng thái lô: xuất lô `disposed` → `IN-INV-012`;
 - dòng hàng: `originalLineRef?: { docKey: string; lineKey: string }` cho `sale_return`, `purchase_return`, điều chỉnh của dòng cũ (R-INV-4); phiếu có `originalDocKey` mà dòng không có `originalLineRef` → Core khớp theo (`item_id`, thứ tự) và ghi `CT-COST-010` mức hint;
 - không thêm cột tham chiếu trên `accounting_events`; nguyên văn ở `payload`.
 
@@ -128,4 +134,5 @@ Mặc định Core: bỏ `quarantine · hold · expired · disposed`; **FEFO** k
 
 ## 9. Changelog
 
+- **0.2.0-draft (2026-11-11):** <!-- [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — D032-15: lô của Engine = item_lots + inventory_lot_moves (0098, Thuy2k, PHASE-026); bỏ kế hoạch inventory_lots (chủ dự án 2026-11-11) --> lô = `item_lots` + `inventory_lot_moves` có sẵn (0098, D032-15) thay `inventory_lots` / `inventory_movements.lot_id`; cửa nạp dùng `lotNo`, `expDate` có sẵn thay `lotRef`; API lô có sẵn `/api/v1/lots`, `/lots/suggest`. Còn thiếu: trạng thái lô, bắt buộc ghi lô, `originalLineRef`.
 - **0.1.0-draft (2026-11-09):** khuôn đầu theo ADR-0033: lô, số dư, lớp, phân bổ, lần tính, hook chọn lô, `CostingResult`, minor cửa nạp (`lotRef`, `originalLineRef`).
