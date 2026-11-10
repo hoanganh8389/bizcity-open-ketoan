@@ -37,8 +37,8 @@ export const CLOSE_CONDITIONS: CloseCondition[] = [
   { code: 'PC-020', title: 'Lợi nhuận và báo cáo khớp sổ', cadence: ['period'], stage: 'post' },
   { code: 'PC-021', title: 'Số liệu không đổi tới lúc khoá', cadence: ['period'], stage: 'lock',
     checkedElsewhere: 'Khoá kỳ chạy trong một giao dịch có tự chẩn đoán (R-DIAG-4). Dấu số liệu thêm ở PHASE-032 S032-29.' },
-  { code: 'PC-022', title: 'Quyền khoá sổ', cadence: ['period'], stage: 'lock',
-    checkedElsewhere: 'Quyền khoá kỳ (periods:lock), vai có phạm vi (PHASE-028).' },
+  // [2026-11-11 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — R-DIAG-10: LEDGER_SELF_APPROVED (S029-25) PC-022 có phép kiểm nuôi (LEDGER_SELF_APPROVED), bỏ checkedElsewhere
+  { code: 'PC-022', title: 'Quyền khoá sổ, tách người lập và người duyệt', cadence: ['period'], stage: 'lock' },
   { code: 'PC-023', title: 'Số dư liền mạch giữa các kỳ', cadence: ['period'], stage: 'lock',
     checkedElsewhere: 'Nhật ký khoá kỳ ghi mỗi lần mở khoá kèm lý do. Kiểm đầu kỳ = cuối kỳ trước thêm ở PHASE-032 S032-29.' },
 ];

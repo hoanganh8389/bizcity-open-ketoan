@@ -86,11 +86,11 @@ Hình dạng chốt ở [RULE-SELF-DIAGNOSTICS §2b](../../rules/RULE-SELF-DIAGN
 | PC-019 | Tài khoản 911 hết số dư | cuối tháng | sau | — *`closing.service` huỷ cả lần kết chuyển khi 911 còn dư* |
 | PC-020 | Lợi nhuận và báo cáo khớp sổ | cuối tháng | sau | `ACCOUNT_WRONG_SIDE` (tài khoản dư sai bên làm sai báo cáo) |
 | PC-021 | Số liệu không đổi tới lúc khoá | cuối tháng | lúc khoá | — *khoá chạy trong giao dịch có chẩn đoán R-DIAG-4; dấu số liệu ở S032-29* |
-| PC-022 | Quyền khoá sổ | cuối tháng | lúc khoá | — *quyền `periods:lock`, vai có phạm vi (PHASE-028)* |
+| PC-022 | Quyền khoá sổ, tách người lập và người duyệt | cuối tháng (phép kiểm nhắc hằng ngày) | lúc khoá | `LEDGER_SELF_APPROVED` (S029-25, thêm 2026-11-11 <!-- [2026-11-11 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — PC-022 có phép kiểm nuôi -->); quyền `periods:lock`, vai có phạm vi (PHASE-028) |
 | PC-023 | Số dư liền mạch giữa các kỳ | cuối tháng | lúc khoá | — *`period_lock_events` ghi mở khoá kèm lý do; thêm ở S032-29* |
 | `none` | Việc vận hành, không thuộc khoá sổ | — | — | `MIGRATIONS_PENDING`, `DB_WRITABLE` (L1), `CONFORMANCE_STALE`, `PROFILE_DECLARED`, `PROFILE_PACK_REGIME` (L5) |
 
-Tổng: 41 mã gắn PC, 5 mã `none`. Chín PC chưa có phép kiểm tự chẩn đoán nuôi; mỗi PC ghi `checkedElsewhere` như cột cuối. Mức khi khoá kỳ ở B2c-2 theo mặc định (`error` → cần giải trình, `warn` → để biết); chưa mã nào trả *chặn khoá sổ* cho tới S032-30.
+Tổng: 42 mã gắn PC, 5 mã `none` (từ 2026-11-11, thêm `LEDGER_SELF_APPROVED`). Tám PC chưa có phép kiểm tự chẩn đoán nuôi; mỗi PC ghi `checkedElsewhere` như cột cuối. Mức khi khoá kỳ ở B2c-2 theo mặc định (`error` → cần giải trình, `warn` → để biết); chưa mã nào trả *chặn khoá sổ* cho tới S032-30.
 
 ## 4. Gắn với nghiệp vụ của module và sự việc nạp về Kernel
 
