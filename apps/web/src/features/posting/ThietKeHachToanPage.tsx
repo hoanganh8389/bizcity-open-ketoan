@@ -514,7 +514,7 @@ function SoDo({ businesses, onEditRule, onNewRule }: { businesses: Business[]; o
   const s = sim.data;
   const condsShown = [...conds, ...(s?.context.programKind ? ['programKind' as CondKey] : [])];
   const graph = useMemo(() => (s ? buildGraph(s, options, condsShown, onEditRule, (e) => onNewRule({
-    business: sel, part: e.part, cond: {}, debit: '', credit: '', priority: 0, from: today(), book: 'all', note: '', changeReason: '',
+    business: sel, part: e.part, cond: sample.gift && biz?.parts.find((p) => p.part === e.part)?.conds.includes('gift') ? { gift: true } : {}, debit: '', credit: '', priority: 0, from: today(), book: 'all', note: '', changeReason: '',
   })) : null), [s, options, condsShown.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
   const isInput = biz && ['purchase', 'purchase_return'].includes(biz.baseCode ?? biz.code);
 
@@ -595,13 +595,15 @@ function SoDo({ businesses, onEditRule, onNewRule }: { businesses: Business[]; o
         )}
         {s && view === 'bang' && (
           <div className="table-wrap"><table className="grid">
-            <thead><tr><th title="Bút toán của phiếu mẫu">Phần</th><th title="Khoản tiền">Khoản</th><th title="Tài khoản Nợ (gạch = tài khoản tự tra bị quy tắc đè)">Nợ</th><th title="Tài khoản Có">Có</th><th className="num" title="Số tiền mẫu">Số tiền</th><th title="Quy tắc thắng; trống = tự tra">Theo quy tắc</th></tr></thead>
+            <thead><tr><th title="Bút toán của phiếu mẫu">Phần</th><th title="Khoản tiền">Khoản</th><th title="Tài khoản Nợ (gạch = tài khoản tự tra bị quy tắc đè)">Nợ</th><th title="Tài khoản Có">Có</th><th className="num" title="Số tiền mẫu">Số tiền</th><th title="Quy tắc thắng; trống = tự tra">Theo quy tắc</th><th /></tr></thead>
             <tbody>{s.entries.map((e) => (
               <tr key={e.key}><td>{e.group}</td><td>{e.partLabel}</td>
                 <td className="mono">{e.debit.account !== e.debit.auto && <span className="tkht-before">{e.debit.auto}</span>} {e.debit.account} <span className="muted">{e.debit.name}</span></td>
                 <td className="mono">{e.credit.account !== e.credit.auto && <span className="tkht-before">{e.credit.auto}</span>} {e.credit.account} <span className="muted">{e.credit.name}</span></td>
                 <td className="num">{money(e.amount)}</td>
-                <td>{e.ruleId ? <button className="link" onClick={() => { const r = s.rules.find((x) => x.id === e.ruleId); if (r) onEditRule(r); }}>#{e.ruleId}</button> : <span className="muted">tự tra</span>}</td></tr>
+                <td>{e.ruleId ? <button className="link" onClick={() => { const r = s.rules.find((x) => x.id === e.ruleId); if (r) onEditRule(r); }}>#{e.ruleId}</button> : <span className="muted">tự tra</span>}</td>
+                <td><button className="btn btn-xs" title={`Thêm quy tắc cho khoản ${e.partLabel} của ${biz?.name ?? ''}${sample.gift ? ' (hàng tặng)' : ''}`}
+                  onClick={() => onNewRule({ business: sel, part: e.part, cond: sample.gift && biz?.parts.find((p) => p.part === e.part)?.conds.includes('gift') ? { gift: true } : {}, debit: '', credit: '', priority: 0, from: today(), book: 'all', note: '', changeReason: '' })}><Plus size={12} /> Quy tắc</button></td></tr>
             ))}</tbody>
           </table></div>
         )}
