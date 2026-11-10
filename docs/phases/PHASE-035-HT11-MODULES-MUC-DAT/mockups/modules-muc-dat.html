@@ -1,0 +1,257 @@
+<!doctype html>
+<!-- [2026-11-11 03:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — bản mẫu HT11 Modules & mức đạt: mỗi phân hệ nghiệp vụ (mua, kho, cấu hình, bán, thu chi, tổng hợp, …) × tám mặt × mức đạt; mức tự suy từ bảng việc, màn, bộ kiểm — không ai tích tay; Thuy2k rà hằng tuần -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modules & mức đạt</title>
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fdf3e1;--bad-bg:#fdecec;--info-bg:#e9f0fb}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--ok-bg:#15291f;--warn-bg:#2e2412;--bad-bg:#2f1717;--info-bg:#16233a}}
+:root[data-theme="dark"]{--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--ok-bg:#15291f;--warn-bg:#2e2412;--bad-bg:#2f1717;--info-bg:#16233a}
+*{box-sizing:border-box}html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:10px;padding:9px 16px;flex-wrap:wrap}
+.brand{font-weight:650;font-size:15px}.code{font:11px ui-monospace,Consolas,monospace;background:var(--soft);border-radius:5px;padding:1px 6px;margin-left:6px;color:var(--muted)}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+main{padding:14px 16px;max-width:1480px;margin:0 auto}
+.muted{color:var(--muted)}
+/* dải tổng */
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.tile{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;color:inherit;font:inherit}
+.tile.on{outline:2px solid var(--accent)}
+.tile .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.tile .s{font-size:11px;color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px;margin:4px 0}
+.bar i{flex:1;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;display:block}
+.bar i b{display:block;height:100%;border-radius:99px}
+.bar span{font-size:12px;font-weight:700;min-width:34px;text-align:right}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:10px;overflow-x:auto}
+.tabs button{border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);padding:8px 12px;font:inherit;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:650}
+/* thẻ phân hệ */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:8px;margin-bottom:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;text-align:left;color:inherit;font:inherit}
+.card.on{outline:2px solid var(--accent)}
+.card .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.card .t{font-weight:650;margin:1px 0 2px}
+.card .s{font-size:11.5px;color:var(--muted)}
+.card .who{font-size:11px;margin-top:4px}
+.chip{display:inline-block;padding:0 7px;border-radius:99px;font-size:11px;font-weight:600;background:var(--soft);color:var(--muted)}
+.ctl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:6px 0 8px;font-size:12.5px}
+.ctl label{display:flex;gap:5px;align-items:center}
+.src{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1040px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:11.5px;background:var(--soft);position:sticky;top:0}
+tr.mod td{background:var(--soft);font-weight:600;padding:7px 8px}
+tr.mod td small{font-weight:400;color:var(--muted)}
+.lv{display:inline-block;padding:1px 8px;border-radius:5px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.lv-dat{background:var(--ok-bg);color:var(--ok)}.lv-mot-phan{background:var(--warn-bg);color:var(--warn)}.lv-tai-lieu{background:var(--info-bg);color:var(--info)}.lv-chua{background:var(--soft);color:var(--muted)}
+.ev{color:var(--muted)}.ev code,.nx code{font:11px ui-monospace,Consolas,monospace;background:var(--soft);border-radius:4px;padding:0 4px}
+.nx{white-space:nowrap}
+.pr{font:11px ui-monospace,Consolas,monospace;background:var(--warn-bg);color:var(--warn);border-radius:4px;padding:0 5px}
+.pr.P1{background:var(--soft);color:var(--muted)}
+.owner{white-space:nowrap}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:9px 13px;margin:10px 0;font-size:12.5px}
+.foot{font-size:11.5px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">Modules & mức đạt <span class="code">HT11</span></div>
+    <span class="muted" style="font-size:12.5px">Mỗi phân hệ nghiệp vụ làm được tới đâu — mức đạt suy từ bảng việc, màn và bộ kiểm; không ai tích tay. Người rà: <b>Thuy2k</b>, mỗi thứ Hai.</span>
+    <div class="spacer"></div>
+    <button type="button" class="btn">In</button>
+    <button type="button" class="btn">Hướng dẫn</button>
+  </div>
+</header>
+<main>
+  <div class="strip" id="strip"></div>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div id="cards" class="cards"></div>
+  <div class="ctl">
+    <label><input type="checkbox" id="onlyGap"> chỉ mặt chưa đạt</label>
+    <label>Người làm <select id="who"><option value="">mọi người</option><option>Thuy2k</option><option>nhóm Lõi</option><option>H-Joyy</option></select></label>
+    <label>Ưu tiên <select id="pri"><option value="">mọi mức</option><option>P0</option><option>P1</option></select></label>
+    <span class="src"><code>bizcity_modules@1</code> · 0.1.0-draft · nguồn: <code>docs/standard/modules.json</code> + <code>bang-viec.json</code> (sinh từ checklist trên main) · cập nhật 2026-11-11 · mức tự suy, không tích tay</span>
+  </div>
+  <div class="panel tbl"><table>
+    <thead><tr><th>Mã</th><th>Mặt</th><th>Mức</th><th>Bằng chứng</th><th>Khoảng cách</th><th>Việc tiếp</th><th>Ưu tiên</th><th>Người làm</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <div class="note"><b>Mức suy ra thế nào.</b> Mỗi ô (phân hệ × mặt) liệt kê việc <code>S###-n</code> của nó trong <code>modules.json</code>; trạng thái việc đọc từ bảng việc sinh từ checklist trên <code>main</code>. <b>Đạt</b> = mọi việc xong và có test / phép kiểm; <b>Một phần</b> = có việc xong hoặc chờ đủ tín hiệu; <b>Tài liệu</b> = chỉ có chữ chốt; <b>Chưa</b> = chưa có việc nào bắt đầu. Ai sửa checklist của phase (Thuy2k hay bất kỳ ai) thì màn này tự đổi — không có ô nhập. Màn, phép kiểm, hướng dẫn được đếm từ sổ đăng ký trong mã (menu, <code>listDiagnostics()</code>, <code>docs/huong-dan</code>).</div>
+  <p class="foot">Cho người làm phần mềm: HT10 đo <i>Core</i> (trụ cột, nền móng, cổng, bộ máy, công cụ dev); HT11 đo <i>phân hệ nghiệp vụ</i> theo cùng cách. Hai màn dùng chung <code>ScoreBar</code>, <code>bang-viec.json</code>, luật R-CONT-7. Thiếu phân hệ nào trong sổ → phép kiểm <code>SC-MODS-1</code> trượt (phủ 100 % <code>apps/web/src/phan-he/*</code>).</p>
+</main>
+<script>
+// Tám mặt chung cho mọi phân hệ (PHASE-035 · 00 §3)
+const FACETS = [
+  ['F1','Chứng từ & nghiệp vụ'], ['F2','Danh mục & cấu hình'], ['F3','Lõi tính (engine)'], ['F4','Báo cáo & sổ'],
+  ['F5','Bộ kiểm (cổng, chẩn đoán, điều kiện khoá sổ)'], ['F6','Bàn làm việc & dashboard'], ['F7','Tài liệu & hướng dẫn'], ['F8','API / SDK / module hoá'],
+];
+const LV = { dat: 'Đạt', 'mot-phan': 'Một phần', 'tai-lieu': 'Mới tài liệu', chua: 'Chưa' };
+const W = { dat: 1, 'mot-phan': .5, 'tai-lieu': .25, chua: 0 };
+// Số liệu bản mẫu — đọc từ mã main 2026-11-11 (bang-viec.json: 554 việc; menu phân hệ; listDiagnostics 42 mã). Ô "—" ở Khoảng cách = không còn gì.
+const MODS = [
+  { id:'M01', key:'danh-muc', title:'Danh mục & cấu hình', who:'Thuy2k', screens:'DM01..DM16, HT01..04', f:[
+    ['dat','16 màn DM, định danh ba tầng (0065–0070), item_codes có phiên bản','—','S026-4','P0','Thuy2k'],
+    ['mot-phan','sơ đồ tổ chức (0062), đối tượng, tài khoản; nhóm đơn vị','mã đối tượng / chi nhánh / kho có phiên bản (ADR-0018)','S026-4, S026-5','P0','Thuy2k'],
+    ['dat','entity-resolver tra mã tại ngày','—','—','P0','nhóm Lõi'],
+    ['mot-phan','DM in danh mục; báo cáo theo mã hiện hành (0069)','báo cáo biến thể / cha','S026-8','P1','Thuy2k'],
+    ['dat','Cổng A ACC-* / PART-* / ITEM-*; ITEM_CODE_CASE_DUP, UNIT_BASE_INVALID (PC-001)','—','—','P0','nhóm Lõi'],
+    ['chua','—','việc danh mục hôm nay (mã trùng, mã chưa phân nhóm) chưa có thẻ','S035-8','P1','Thuy2k'],
+    ['dat','docs/huong-dan/danh-muc-*.md, nghiep-vu/12','—','—','P1','Thuy2k'],
+    ['mot-phan','phan-he/danh-muc manifest; catalog API','module khai danh mục riêng (extensions.catalog)','S026-12','P1','nhóm Lõi'] ] },
+  { id:'M02', key:'mua-hang', title:'Mua hàng', who:'Thuy2k', screens:'MH01..MH27', f:[
+    ['dat','27 màn MH; cửa nạp purchase / purchase_return; chương trình bán có hạn mức','—','—','P0','Thuy2k'],
+    ['dat','NCC, bảng giá mua, chính sách mua (policy_registry 0079)','—','—','P0','Thuy2k'],
+    ['mot-phan','chi phí mua (TH21 / TH22) vào giá vốn','phân bổ chi phí mua theo lớp (PHASE-032 W2)','S032-13','P1','Thuy2k'],
+    ['dat','bảng kê mua vào, phân tích đặt hàng, FEFO ở reports.ts','—','—','P1','Thuy2k'],
+    ['dat','IN-* 37 mã; TAX_INPUT_NO_INVOICE, VAT_INPUT_INVOICE_MATCH (PC-011)','—','—','P0','nhóm Lõi'],
+    ['mot-phan','hàng việc ACC14 chờ duyệt','thẻ Việc mua hàng hôm nay (NCC chưa hoá đơn, PO quá hạn)','S035-8','P1','Thuy2k'],
+    ['dat','docs/nghiep-vu/08-mua-hang.md, huong-dan/mua-hang-*.md','—','—','P1','Thuy2k'],
+    ['dat','@bizcity/mua-hang-domain tách gói; phan-he/mua-hang','—','—','P0','nhóm Lõi'] ] },
+  { id:'M03', key:'kho', title:'Kho · Inventory Engine · giá vốn', who:'Thuy2k', screens:'KHO01..05, HH01, ACC49, ACC50', f:[
+    ['mot-phan','phiếu chuyển kho (0099), lô theo phân kho (0098), tồn theo lô KHO05','kiểm kê stock_count; trạng thái lô; bắt buộc ghi lô','S032-8, S032-19','P0','Thuy2k'],
+    ['mot-phan','danh mục kho, mặt hàng, nhóm hàng, ĐVT','lot_tracking theo mặt hàng; nhóm tính giá (Q032-1)','S032-8','P0','Thuy2k'],
+    ['mot-phan','bình quân tháng (costing.service); B3 trả hàng đúng giá vốn gốc; lô FEFO tự chọn','lớp giá + phân bổ (W2), FIFO / đích danh (W3), chốt giá vốn trước khoá kỳ (W4)','S032-11..16, S032-20','P0','Thuy2k'],
+    ['mot-phan','NXT, sổ chi tiết hàng hoá, hành trình mặt hàng, tồn theo lô','màn mặt hàng ba khối (Thẻ kho · Đã ghi sổ · Khớp sổ cái) — D032-14','S032-22','P0','Thuy2k'],
+    ['mot-phan','INVENTORY_NEGATIVE, INVENTORY_LEDGER_MISMATCH, COGS_STALE, TRANSIT_NONZERO, STOCK_ADJUST_NO_REASON (PC-004/005/008/009)','CT-INV-001..004, CT-COST-*, DG-CLOSE-1/2; INVENTORY_LEDGER_MISMATCH so theo item_id (T-6)','S032-20','P0','Thuy2k'],
+    ['mot-phan','Việc hôm nay (HT08) có việc kho','thẻ Việc kho hôm nay cho thủ kho; cảnh báo lô cận hạn','S032-23, S035-8','P1','Thuy2k'],
+    ['dat','nghiep-vu/16-lo-hang.md, huong-dan/kho-*.md, tinh-gia-von.md, PHASE-032 00..70','—','—','P1','Thuy2k'],
+    ['tai-lieu','bizcity_inventory@1 0.2.0-draft; /api/v1/lots, /lots/suggest','API đọc lớp / phân bổ / lần tính; hook chọn lô; module Kho tách','S032-24, S032-25','P1','nhóm Lõi'] ] },
+  { id:'M04', key:'ban-hang', title:'Bán hàng · POS', who:'Thuy2k', screens:'BH01..BH09', f:[
+    ['dat','phiếu bán, trả lại, xuất điều chỉnh; cửa nạp sale / sale_return','—','—','P0','Thuy2k'],
+    ['dat','khách hàng, bảng giá, chương trình bán, hình thức TT','—','—','P0','Thuy2k'],
+    ['mot-phan','giá vốn bán ra lấy từ Engine; hàng tặng giá 0','originalLineRef mức dòng; chọn lô khi bán (xả cận date)','S032-9','P1','Thuy2k'],
+    ['dat','bảng kê bán ra, NK bán hàng, BC bán hàng, lãi gộp','—','—','P1','Thuy2k'],
+    ['dat','IN-SUM-*, IN-POL-004, INVOICE_* (PC-011)','—','—','P0','nhóm Lõi'],
+    ['chua','—','thẻ Việc bán hàng hôm nay (đơn chưa hoá đơn, trả hàng chờ)','S035-8','P1','Thuy2k'],
+    ['dat','huong-dan/ban-hang-*.md, lai-gop.md','—','—','P1','Thuy2k'],
+    ['mot-phan','module POS W1 (giữ chỗ): POS_* mã, đơn tại quầy → sale','module pos hoàn tất; wp-sso nhận quyền module khai','P-MP-7','P0','TrongKien125'] ] },
+  { id:'M05', key:'quy', title:'Quỹ · thu · chi · ngân hàng', who:'H-Joyy', screens:'ACC51..54, Q01', f:[
+    ['dat','phiếu thu, chi, báo nợ, báo có, chuyển tiền; settles cấn trừ','—','—','P0','H-Joyy'],
+    ['dat','tài khoản ngân hàng, hình thức thanh toán','—','—','P0','H-Joyy'],
+    ['dat','cấn trừ công nợ theo chứng từ (debt_allocations)','—','—','P0','nhóm Lõi'],
+    ['dat','sổ quỹ, tiền gửi, NK thu / chi, số dư tiền','—','—','P1','H-Joyy'],
+    ['mot-phan','CASH_NEGATIVE (PC-012), DEBT_MATCH_LEDGER (PC-013)','đối soát sao kê ngân hàng ↔ sổ (PHASE-030 ghi chưa có)','S030-3x','P1','H-Joyy'],
+    ['chua','—','thẻ Việc quỹ hôm nay (quỹ âm, chưa đối soát)','S035-8','P1','H-Joyy'],
+    ['dat','huong-dan/hinh-thuc-thanh-toan.md, khoan-cong-no.md','—','—','P1','H-Joyy'],
+    ['dat','phan-he/quy; cửa nạp cash_* ','—','—','P1','nhóm Lõi'] ] },
+  { id:'M06', key:'chung-tu', title:'Chứng từ & định khoản', who:'nhóm Lõi', screens:'ACC1x, SC01, SC02, BT01..03, YC01', f:[
+    ['dat','một cửa ghi sổ (eventStore), phiếu kế toán, bút toán mẫu / lặp, sửa đầu bút toán có vết','—','—','P0','nhóm Lõi'],
+    ['dat','bảng quy tắc định khoản (0096), hồ sơ kế toán, gói chế độ TT99 / TT200','—','—','P0','nhóm Lõi'],
+    ['dat','posting engine theo lý do → nhóm hạch toán → tài khoản tại ngày','—','—','P0','nhóm Lõi'],
+    ['dat','bảng điểm đầu vào, chứng từ kế toán','—','—','P1','nhóm Lõi'],
+    ['dat','LEDGER_* , EVENT_* , ENTRY_*, LEDGER_SELF_APPROVED (PC-002 / 016 / 022)','—','—','P0','nhóm Lõi'],
+    ['mot-phan','ACC14 chờ duyệt; Việc hôm nay','tách nhiệm sod: block tuỳ chọn (S029-25 đợt 2)','S029-25','P1','nhóm Lõi'],
+    ['dat','nghiep-vu/18, huong-dan/chung-tu.md, nhat-ky-chung.md','—','—','P1','nhóm Lõi'],
+    ['dat','bizcity_ledger_intake@1, ctx.ledger.submit (module-sdk)','—','—','P0','nhóm Lõi'] ] },
+  { id:'M07', key:'cong-no', title:'Công nợ', who:'H-Joyy', screens:'CN01..07', f:[
+    ['dat','cấn trừ, khoản công nợ, bù trừ','—','—','P0','H-Joyy'],
+    ['dat','đối tượng, nhóm đối tượng, hạn nợ','—','—','P0','H-Joyy'],
+    ['dat','debt_items / debt_allocations','—','—','P0','nhóm Lõi'],
+    ['dat','công nợ theo mặt hàng, tuổi nợ, biên bản đối chiếu','—','—','P1','H-Joyy'],
+    ['dat','DEBT_MATCH_LEDGER (PC-013)','—','—','P0','nhóm Lõi'],
+    ['chua','—','thẻ Việc công nợ hôm nay (quá hạn, chưa đối chiếu)','S035-8','P1','H-Joyy'],
+    ['dat','huong-dan/cong-no-theo-mat-hang.md, khoan-cong-no.md','—','—','P1','H-Joyy'],
+    ['dat','cửa nạp settles; API công nợ','—','—','P1','nhóm Lõi'] ] },
+  { id:'M08', key:'tong-hop', title:'Tổng hợp · kết chuyển · khoá sổ', who:'nhóm Lõi', screens:'ACC4x, ACC2 (kỳ), HT08', f:[
+    ['dat','kết chuyển lãi / lỗ có phiên bản luật; khoá kỳ đa chiều (0082); mở khoá có lý do','—','—','P0','nhóm Lõi'],
+    ['dat','closing_rules, kỳ kế toán, data-lock','—','—','P0','nhóm Lõi'],
+    ['mot-phan','closing.service; chốt giá vốn trước khoá (R-INV-7) chưa','Cost Settlement trước Period Closing; dấu số liệu lúc khoá (PC-021)','S032-20, S032-29','P0','Thuy2k'],
+    ['dat','số dư tài khoản, cân đối phát sinh','—','—','P1','nhóm Lõi'],
+    ['mot-phan','PERIOD_CLOSE_OPEN (PC-017), R-DIAG-4, sổ PC-001..023 (closeRef)','mức "chặn khoá sổ" D032-11; DG-CLOSE-2 tách mã','S032-30','P0','nhóm Lõi'],
+    ['dat','Bàn làm việc kế toán HT08: Việc hôm nay · Khoá thử hôm nay · Kết quả từng tuần · Rà theo vai','bản lưu tuần + Đã xem tuần (B4b); Sổ theo dõi các tháng','S032-32, S032-33','P1','nhóm Lõi'],
+    ['dat','huong-dan/ban-danh-gia.md, ky-ke-toan.md, ket-chuyen.md','—','—','P1','nhóm Lõi'],
+    ['dat','action core.closing.preview, periods/check, closing/preview','—','—','P1','nhóm Lõi'] ] },
+  { id:'M09', key:'thue', title:'Thuế', who:'H-Joyy', screens:'THUE01..02, TNDN01, TT01', f:[
+    ['dat','bảng kê mua vào / bán ra, bổ sung thuế, gửi lên thuế (0093)','—','—','P0','H-Joyy'],
+    ['dat','loại thuế, hoá đơn, mẫu số','—','—','P0','H-Joyy'],
+    ['mot-phan','tính thuế GTGT theo kỳ; TNDN','TNDN tạm tính theo quý; thuế TTĐB','S020-1x','P1','H-Joyy'],
+    ['dat','tờ khai GTGT, TNDN, bảng kê','—','—','P1','H-Joyy'],
+    ['dat','VAT_*, INVOICE_*, TAX_INPUT_NO_INVOICE (PC-011)','—','—','P0','nhóm Lõi'],
+    ['chua','—','thẻ Việc thuế hôm nay (hoá đơn chưa kê, kỳ sắp hạn)','S035-8','P1','H-Joyy'],
+    ['dat','huong-dan/thue-*.md','—','—','P1','H-Joyy'],
+    ['dat','phan-he/thue; vn-rulepacks','—','—','P1','nhóm Lõi'] ] },
+  { id:'M10', key:'tai-san', title:'Tài sản · khấu hao', who:'H-Joyy', screens:'TS01, ACC6x', f:[
+    ['dat','ghi tăng / giảm, khấu hao, phân bổ trả trước','—','—','P0','H-Joyy'],
+    ['dat','danh mục tài sản, khung khấu hao','—','—','P0','H-Joyy'],
+    ['dat','asset.service khấu hao theo kỳ qua eventStore','—','—','P0','nhóm Lõi'],
+    ['dat','sổ tài sản, BC phân bổ, BC TS','—','—','P1','H-Joyy'],
+    ['dat','DEPRECIATION_OPEN (PC-014)','—','—','P0','nhóm Lõi'],
+    ['chua','—','thẻ Việc tài sản hôm nay (tháng chưa khấu hao)','S035-8','P1','H-Joyy'],
+    ['dat','huong-dan/tai-san-*.md','—','—','P1','H-Joyy'],
+    ['dat','phan-he/tai-san; cổng provideKeToanPorts','—','—','P1','nhóm Lõi'] ] },
+  { id:'M11', key:'bao-cao', title:'Báo cáo tài chính · sổ · dashboard', who:'nhóm Lõi', screens:'ACC8x, KQ01, B01, tổng quan', f:[
+    ['dat','in, xuất, ký số báo cáo (evidence)','—','—','P1','nhóm Lõi'],
+    ['dat','mẫu báo cáo theo chế độ (gói TT99 / TT200)','—','—','P0','nhóm Lõi'],
+    ['dat','báo cáo chỉ đọc sổ (R-LEDGER-7)','—','—','P0','nhóm Lõi'],
+    ['mot-phan','CĐKT, KQKD, LCTT, thuyết minh, NKC, sổ cái, sổ chi tiết, KQKD theo cửa hàng','đối chiếu P&L ↔ 911 ↔ 421 (PC-020); thuyết minh tự điền','S032-20','P1','nhóm Lõi'],
+    ['mot-phan','ACCOUNT_WRONG_SIDE (PC-020)','kiểm chéo giữa các báo cáo','—','P1','nhóm Lõi'],
+    ['mot-phan','Bảng điều khiển, HT12 Bàn điều hành','dashboard theo cửa hàng / tuần; Sổ theo dõi các tháng','S032-33, S032-34','P1','nhóm Lõi'],
+    ['dat','huong-dan/can-doi-ke-toan.md, nhat-ky-chung.md, …','—','—','P1','nhóm Lõi'],
+    ['dat','API báo cáo chỉ đọc; xuất CSV / XLSX','—','—','P1','nhóm Lõi'] ] },
+  { id:'M12', key:'he-thong', title:'Hệ thống · bộ kiểm · công cụ (xem HT10)', who:'nhóm Lõi', screens:'HT01..HT12, DEV01..09', f:[
+    ['dat','người dùng, vai trò (PHASE-028), đơn vị, chi nhánh','—','—','P0','nhóm Lõi'],
+    ['dat','cấu hình hệ thống, data-lock, posting-modes','—','—','P0','nhóm Lõi'],
+    ['dat','13 bộ máy Core (HT10 Bộ máy)','xem HT10','—','P0','nhóm Lõi'],
+    ['dat','HT10 năm thẻ, kiểm chuẩn, chẩn đoán, nhật ký','—','—','P1','nhóm Lõi'],
+    ['dat','L1 / L3 / L5; 85 SC-*, 47 DG-*; trigger CSDL','SC-DIAG-2 tĩnh (closeRef); SC-MODS-1 (phủ phân hệ)','S035-3','P0','nhóm Lõi'],
+    ['dat','HT08, HT10; HT11 (màn này)','HT11 B1..B6','S035-2..7','P0','Thuy2k'],
+    ['dat','docs/ops, docs/huong-dan/tru-cot-muc-dat.md','huong-dan/modules-muc-dat.md','S035-7','P1','Thuy2k'],
+    ['dat','module-sdk, bizcity_module@1, add-in','defineCheck (R-DIAG-15)','S032-37','P1','nhóm Lõi'] ] },
+];
+const pctOf = (m) => Math.round(m.f.reduce((s, r) => s + W[r[0]], 0) / m.f.length * 100);
+const color = (p) => p >= 80 ? 'var(--ok)' : p >= 50 ? 'var(--warn)' : 'var(--bad)';
+const bar = (p) => `<div class="bar"><i><b style="width:${p}%;background:${color(p)}"></b></i><span>${p}%</span></div>`;
+const cnt = (m) => { const c = { dat: 0, 'mot-phan': 0, 'tai-lieu': 0, chua: 0 }; for (const r of m.f) c[r[0]]++; return `${c.dat} đạt · ${c['mot-phan']} một phần · ${c['tai-lieu']} tài liệu · ${c.chua} chưa`; };
+let tab = 'tong';
+const all = () => Math.round(MODS.reduce((s, m) => s + pctOf(m), 0) / MODS.length);
+function renderStrip() {
+  const own = (w) => MODS.filter((m) => m.who === w);
+  const tiles = [
+    ['tong', 'Mọi phân hệ', all(), `${MODS.filter((m) => pctOf(m) >= 80).length}/${MODS.length} phân hệ ≥ 80 %`],
+    ['nv', 'Nghiệp vụ (M01–M05)', Math.round(MODS.slice(0, 5).reduce((s, m) => s + pctOf(m), 0) / 5), 'mua · kho · bán · quỹ · danh mục'],
+    ['kt', 'Kế toán (M06–M11)', Math.round(MODS.slice(5, 11).reduce((s, m) => s + pctOf(m), 0) / 6), 'chứng từ · công nợ · tổng hợp · thuế · tài sản · báo cáo'],
+    ['thuy2k', 'Phần Thuy2k', Math.round(own('Thuy2k').reduce((s, m) => s + pctOf(m), 0) / own('Thuy2k').length), `${own('Thuy2k').length} phân hệ · ${MODS.flatMap((m) => m.f).filter((r) => r[5] === 'Thuy2k' && r[0] !== 'dat').length} mặt chưa đạt`],
+    ['gap', 'Mặt chưa đạt', null, `${MODS.flatMap((m) => m.f).filter((r) => r[0] !== 'dat').length} / ${MODS.length * 8} ô · ${MODS.flatMap((m) => m.f).filter((r) => r[0] === 'chua').length} chưa có gì`],
+  ];
+  document.getElementById('strip').innerHTML = tiles.map(([k, l, p, s]) => `<button type="button" class="tile ${tab === k ? 'on' : ''}" data-t="${k}"><div class="k">${l}</div>${p == null ? `<div style="font-size:18px;font-weight:700">${MODS.flatMap((m) => m.f).filter((r) => r[0] !== 'dat').length}</div>` : bar(p)}<div class="s">${s}</div></button>`).join('');
+}
+function renderTabs() {
+  const items = [['tong', 'Tổng quan'], ...MODS.map((m) => [m.key, m.title.split(' · ')[0]])];
+  document.getElementById('tabs').innerHTML = items.map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" data-t="${k}">${l}</button>`).join('');
+}
+function renderCards() {
+  const list = tab === 'tong' ? MODS : tab === 'nv' ? MODS.slice(0, 5) : tab === 'kt' ? MODS.slice(5, 11) : tab === 'thuy2k' ? MODS.filter((m) => m.who === 'Thuy2k') : tab === 'gap' ? MODS : MODS.filter((m) => m.key === tab);
+  document.getElementById('cards').innerHTML = list.map((m) => `<button type="button" class="card ${tab === m.key ? 'on' : ''}" data-t="${m.key}"><div class="k">${m.id} · ${m.screens}</div><div class="t">${m.title}</div>${bar(pctOf(m))}<div class="s">${cnt(m)}</div><div class="who">Người làm: <span class="chip">${m.who}</span></div></button>`).join('');
+  return list;
+}
+function renderRows(list) {
+  const onlyGap = document.getElementById('onlyGap').checked || tab === 'gap';
+  const who = document.getElementById('who').value, pri = document.getElementById('pri').value;
+  const out = [];
+  for (const m of list) {
+    const rows = m.f.map((r, i) => ({ r, i })).filter(({ r }) => (!onlyGap || r[0] !== 'dat') && (!who || r[5] === who || (tab === 'thuy2k' && m.who === 'Thuy2k')) && (!pri || r[4] === pri));
+    if (!rows.length) continue;
+    out.push(`<tr class="mod"><td colspan="8">${m.id} · ${m.title} <small>— ${cnt(m)} · người rà: ${m.who} · màn: ${m.screens}</small></td></tr>`);
+    for (const { r, i } of rows) out.push(`<tr><td>${m.id}.${FACETS[i][0]}</td><td>${FACETS[i][1]}</td><td><span class="lv lv-${r[0]}">${LV[r[0]]}</span></td><td class="ev">${r[1]}</td><td>${r[2]}</td><td class="nx">${r[3] === '—' ? '—' : r[3].split(', ').map((x) => `<code>${x}</code>`).join(' ')}</td><td><span class="pr ${r[4]}">${r[4]}</span></td><td class="owner">${r[5]}</td></tr>`);
+  }
+  document.getElementById('rows').innerHTML = out.join('') || '<tr><td colspan="8" class="muted">Không có mặt nào khớp bộ lọc.</td></tr>';
+}
+function render() { renderStrip(); renderTabs(); renderRows(renderCards()); }
+document.addEventListener('click', (e) => { const t = e.target.closest('[data-t]'); if (!t) return; tab = t.dataset.t; render(); });
+for (const id of ['onlyGap', 'who', 'pri']) document.getElementById(id).addEventListener('change', render);
+if (location.hash === '#thuy2k') tab = 'thuy2k'; else if (location.hash === '#kho') tab = 'kho';
+render();
+</script>
+</body>
+</html>

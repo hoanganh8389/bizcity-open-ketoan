@@ -18,7 +18,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S034-9 | B5b — thẻ con "Chạy ở đây" (`?cong-cu=DEVxx`) nhúng nguyên màn DEV (D034-12, không sửa `apps/web/src/phan-he/dev/**`), quyền `devtools:read` | W4 | P1 | có | ✅ 2026-11-11 |
 | S034-10 | B6 — dòng tổng đầu màn (năm con số, bấm mở thẻ), cập nhật `docs/huong-dan/tru-cot-muc-dat.md` | W5 | P2 | có | ✅ 2026-11-11 |
 | S034-12 | In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10 | W5 | P2 | có | ✅ 2026-11-11 |
-| S034-11 | Q034-1 — kết quả bộ kiểm của bản dựng vào ảnh (giai đoạn `conformance` chạy lane selfcheck lúc dựng ảnh, D034-13); thẻ Cổng hiện xanh / đỏ của SC-* | W5 | P2 | có | 🟡 chốt D034-13 2026-11-11 |
+| S034-11 | Q034-1 — kết quả bộ kiểm của bản dựng vào ảnh (giai đoạn `conformance` chạy lane selfcheck lúc dựng ảnh, D034-13); thẻ Cổng hiện xanh / đỏ của SC-* | W5 | P2 | có | ✅ 2026-11-11 |
 
 ## Ca kiểm
 
@@ -46,3 +46,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-11 — B3b-2: phép kiểm phần sinh không chặn PR của người khác — SC-GATE-1 (chặn) chỉ kiểm trụ cột trong `map[]`; SC-GATE-2 (info) mã chưa gắn trụ cột / phần sinh cũ; SC-DEV-2 (chặn) khớp menu, màn có thật; SC-DEV-3 (info) T1..T6 cũ. Bản xấu tách theo hai mức. Nhả dòng giữ chỗ B3b-2.
 - 2026-11-11 — B3b-3: mã luật riêng của thư viện (`rules[].code` ở `libraries/*/library.json`: TGS-REPORT-001, TGS-FLAG-001, TSPL-LAW-001) vào sổ cổng kiểm; `map[]` thêm TGS-* → VII, TSPL-* → IX; test gates khẳng định mọi mã cổng A / B / Guard / L có trụ cột. Nhả dòng giữ chỗ B3b-3.
 - 2026-11-11 — B5b (S034-9, D034-12): nút **Chạy ở đây** ở thẻ Nhà phát triển mở thẻ con `?cong-cu=DEVxx` nhúng nguyên màn DEV (import từ `apps/web/src/phan-he/dev/**`, không sửa tệp nào ở đó), chỉ hiện với `devtools:read`. S034-12: nút **In cả năm thẻ** dựng năm thẻ nối nhau (mỗi thẻ một trang), chờ `useIsFetching() = 0` rồi mở hộp in, `afterprint` trở lại thẻ đang xem. Nhả dòng giữ chỗ B5b + S034-12.
+- 2026-11-11 — S034-11 (D034-13): giai đoạn `conformance` ở `docker/api.Dockerfile` chạy `selfcheck --lane selfcheck --json` trên mã của commit (không cần `.git`, không cần CSDL), ảnh chạy có `build/scoreboard.json`; `GET /system/gates` trả `ciRun` + `last` cho mã CI (`ciResults()`); `GatesBoard` hiện cột Lượt gần nhất cho CI. Dựng thử ảnh: 93 check, 72 đạt · 10 nợ cũ · 8 không đạt · 1 cảnh báo · 2 chưa có năng lực — khớp lần chạy ở máy. Test gates 7/7. Nhả dòng giữ chỗ S034-11. **PHASE-034 xong.**

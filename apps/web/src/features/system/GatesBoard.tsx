@@ -1,3 +1,4 @@
+// [2026-11-11 04:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11 (D034-13): cột Lượt gần nhất cho bộ kiểm CI — kết quả lane selfcheck chạy lúc dựng ảnh
 // [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b (S034-6): cột Test và Trụ cột, mức từ API (bốn ý; CI / trigger: trụ cột + có kiểm), cổng Trigger và CI có sổ
 // [2026-11-10 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): thẻ Cổng & bộ kiểm ở HT10 — mã kiểm theo cổng, mỗi mã có cách sửa / phương án chưa, kết quả lượt chẩn đoán gần nhất
 /**
@@ -15,17 +16,22 @@ import { ScoreBar, SourceError } from './readiness';
 
 interface GateCode {
   code: string; step: string; level: string; title: string; hasFix: boolean; hasRemedy: boolean; hasTest: boolean; tests: string[]; pillars: string[]; score: number; closeRef?: string;
-  last?: { level: 'pass' | 'empty' | 'error' | 'warn' | 'info'; count: number; examined: number } | null;
+  last?: { level: string; count: number; examined: number } | null;
 }
 interface GateGroup { key: string; title: string; runsAt: string; source: string; live: boolean; next?: string; scoring: 'code' | 'meta'; codes: GateCode[] }
-interface GatesBoardData { contract: string; lastRun: { id: string; layer: string; trigger: string; at: string } | null; groups: GateGroup[] }
+interface GatesBoardData {
+  contract: string; lastRun: { id: string; layer: string; trigger: string; at: string } | null;
+  ciRun: { runId: string | null; at: string | null; verdict: string | null; counts: Record<string, number> } | null;
+  groups: GateGroup[];
+}
 
 const LEVEL_UI: Record<string, { text: string; cls: string }> = {
   block: { text: 'chặn', cls: 'badge-bad' }, error: { text: 'lỗi', cls: 'badge-bad' },
   warn: { text: 'cảnh báo', cls: 'badge-warn' }, info: { text: 'nhắc', cls: 'badge-info' },
 };
 const LAST_UI: Record<string, { text: string; cls: string }> = {
-  pass: { text: 'đạt', cls: 'badge-ok' }, guard: { text: 'trigger', cls: '' }, empty: { text: 'không có dữ liệu', cls: '' },
+  pass: { text: 'đạt', cls: 'badge-ok' }, guard: { text: 'trigger', cls: '' },
+  fail: { text: 'không đạt', cls: 'badge-bad' }, debt: { text: 'nợ cũ', cls: 'badge-warn' }, planned: { text: 'chưa có năng lực', cls: 'badge-info' }, skip: { text: 'bỏ qua', cls: '' }, empty: { text: 'không có dữ liệu', cls: '' },
   error: { text: 'sai', cls: 'badge-bad' }, warn: { text: 'cảnh báo', cls: 'badge-warn' }, info: { text: 'nhắc', cls: 'badge-info' },
 };
 
@@ -84,6 +90,7 @@ export function GatesBoard() {
         <span className="spacer" />
         <span className="muted" style={{ fontSize: 12 }}>
           {b.contract} · lượt chẩn đoán gần nhất: {b.lastRun ? `${b.lastRun.layer} · ${b.lastRun.trigger} · ${new Date(b.lastRun.at).toLocaleString('vi-VN')}` : 'chưa có'}
+          {' '}· bộ kiểm của bản dựng: {b.ciRun ? `${b.ciRun.counts.pass ?? 0} đạt · ${b.ciRun.counts.fail ?? 0} không đạt · ${b.ciRun.counts.debt ?? 0} nợ cũ${b.ciRun.at ? ` · ${new Date(b.ciRun.at).toLocaleString('vi-VN')}` : ''}` : 'bản dựng này chưa có kết quả (chạy từ mã nguồn)'}
         </span>
       </div>
 
@@ -107,7 +114,7 @@ export function GatesBoard() {
                     <td style={{ textAlign: 'center' }} title={c.tests.join(' · ') || 'chưa có'}><Yes on={c.hasTest} /></td>
                     <td className="mono" style={{ fontSize: 11 }}>{c.pillars.length ? c.pillars.join(', ') : <span style={{ color: 'var(--bad, #c62828)' }}>chưa</span>}</td>
                     <td className="mono" style={{ fontSize: 11 }}>{c.closeRef && c.closeRef !== 'none' ? c.closeRef : '—'}</td>
-                    <td>{g.key !== 'diag' ? <span className="muted">—</span> : c.last ? <span className={`badge ${LAST_UI[c.last.level]?.cls ?? ''}`}>{LAST_UI[c.last.level]?.text ?? c.last.level}{c.last.count ? ` · ${c.last.count}` : ''}</span> : <span className="muted">chưa chạy</span>}</td>
+                    <td>{g.key !== 'diag' && g.key !== 'ci' ? <span className="muted">—</span> : c.last ? <span className={`badge ${LAST_UI[c.last.level]?.cls ?? ''}`}>{LAST_UI[c.last.level]?.text ?? c.last.level}{c.last.count ? ` · ${c.last.count}` : ''}</span> : <span className="muted">chưa chạy</span>}</td>
                   </tr>
                 )) : [
                   <tr key={`${g.key}-next`}><td colSpan={10} className="muted"><span className="badge badge-info">chưa có sổ</span> {g.next}</td></tr>,

@@ -68,6 +68,9 @@ Dữ liệu đi qua các **cổng** từ ngoài vào trong: *Cổng A* (danh m�
 
 Mã lấy thẳng từ sổ đăng ký trong mã, không ai gõ tay; thêm mã mới trong mã nguồn là thẻ tự có.
 
+<!-- [2026-11-11 04:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11: kết quả bộ kiểm của bản dựng -->
+**Bộ kiểm CI** có cột *Lượt gần nhất*: kết quả của từng check khi bản cài này được dựng (đạt · không đạt · nợ cũ · chưa có năng lực). Bản dựng tự chạy bộ kiểm tĩnh trên đúng mã của nó, nên con số khớp phiên bản đang chạy. Chạy từ mã nguồn (`npm run dev`) thì cột này trống — dòng trên bảng ghi *"bản dựng này chưa có kết quả"*.
+
 <!-- [2026-11-10 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 (S034-7): thẻ Bộ máy -->
 ## Thẻ "Bộ máy"
 

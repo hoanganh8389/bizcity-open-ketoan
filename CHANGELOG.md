@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bản cài biết kết quả bộ kiểm của chính nó (PHASE-034 S034-11) <!-- [2026-11-11 04:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11 -->
+
+- **Thêm:** dựng ảnh api tự chạy bộ kiểm tĩnh (lane selfcheck) trên mã của commit và đóng gói kết quả vào ảnh (`build/scoreboard.json`); check đỏ không chặn dựng ảnh.
+- **Thêm:** thẻ *Cổng & bộ kiểm* hiện kết quả từng check CI của bản dựng; `GET /api/v1/system/gates` trả `ciRun`.
+- **Nâng cấp cần làm:** kéo ảnh api mới. Dựng ảnh lâu hơn vài giây (chép cả repo vào giai đoạn `conformance`).
+
 ### HT10: chạy công cụ nhà phát triển ngay trong thẻ, In cả năm thẻ (PHASE-034 B5b · S034-12) <!-- [2026-11-11 03:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5b, S034-12 -->
 
 - **Thêm:** thẻ *Nhà phát triển* có nút **Chạy ở đây**: mở đúng màn của công cụ (Toàn vẹn, Sự kiện, Ghi sổ…) ngay dưới bảng; cần quyền Nhà phát triển.

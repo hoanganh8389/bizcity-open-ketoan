@@ -31,6 +31,12 @@ COPY apps/api apps/api
 RUN npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain && npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && npm run build -w @bizcity/module-sdk && npm run build -w @ketoan/api \
  && for d in modules/*/; do if [ -f "$d/bizcity.module.json" ]; then npm run build -w "./$d" || exit 1; fi; done
 
+# [2026-11-11 04:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11 (D034-13): kết quả bộ kiểm của chính bản dựng — chạy lane selfcheck (tĩnh, không CSDL) trên mã của commit,
+# đóng gói vào ảnh (build/scoreboard.json) cho thẻ Cổng & bộ kiểm ở HT10. Check đỏ KHÔNG chặn dựng ảnh: đây là kết quả để hiện, cổng phát hành vẫn là R-REL-4.
+FROM build AS conformance
+COPY . .
+RUN node tests/conformance/selfcheck.mjs --lane selfcheck --json > /tmp/scoreboard.json 2>/dev/null || true; [ -s /tmp/scoreboard.json ] || echo '{}' > /tmp/scoreboard.json
+
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
@@ -70,6 +76,8 @@ COPY docs/phases/bang-viec.json docs/phases/bang-viec.json
 COPY docs/standard/cong-cu-dev.json docs/standard/cong-cu-dev.json
 # [2026-11-11 02:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b: sổ cổng kiểm (trụ cột theo họ mã, test, CI, trigger) cho thẻ Cổng & bộ kiểm (gates.routes.ts đọc lúc chạy) — SC-REL-3 giữ
 COPY docs/standard/cong-kiem.json docs/standard/cong-kiem.json
+# [2026-11-11 04:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11: kết quả lane selfcheck lúc dựng ảnh (giai đoạn conformance) — gates.routes.ts đọc
+COPY --from=conformance /tmp/scoreboard.json build/scoreboard.json
 # Registry khoá cấu hình cho ctx.settings.get (packages/platform/src/core/settings.ts).
 COPY docs/contracts/bizcity-settings.registry.json docs/contracts/bizcity-settings.registry.json
 # [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: thư viện dùng chung (packages/platform/src/core/libraries đọc libraries/*/library.json lúc chạy; thiếu thư mục thì API trả danh sách rỗng)

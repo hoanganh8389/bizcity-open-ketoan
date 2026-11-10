@@ -1,0 +1,130 @@
+<!doctype html>
+<!-- [2026-11-10 11:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đề xuất HT06 bản gọn (chủ dự án 2026-11-10: "phức tạp, không setup được dữ liệu mẫu, không chạy được, một kế toán trưởng phải điền tay nhiều thứ"): một câu hỏi "sổ của tôi có việc gì cần làm", không thuật ngữ duyệt / rulepack ở lớp mặc định. Chờ duyệt (UI-first) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiểm sổ gọn</title>
+<style>
+:root{--bg:#f4f6f9;--panel:#fff;--ink:#16181d;--muted:#5b6270;--line:#dfe5ec;--soft:#edf1f5;--ok:#1e8a52;--warn:#a86a00;--bad:#c0392b;--info:#1f5fbf;--accent:#2a6cc4;--ok-bg:#e5f5ec;--warn-bg:#fdf3dc;--bad-bg:#fbe9e7;--info-bg:#e8f1fb}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d}}
+:root[data-theme="dark"]{--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d}
+*{box-sizing:border-box}html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}code{font:12.5px ui-monospace,Consolas,monospace}
+.note{background:var(--info-bg);color:var(--info);padding:8px 16px;font-size:12.5px}
+main{padding:16px;max-width:980px;margin:0 auto}
+.head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.head h1{margin:0;font-size:19px}.code{font:12px ui-monospace,Consolas,monospace;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.spacer{flex:1}
+.btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}.btn.sm{padding:4px 10px;font-size:13px}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-bottom:14px}
+.big{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:800}
+.hero h2{margin:0;font-size:18px}.hero p{margin:4px 0 0;color:var(--muted)}
+.counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cnt{border-radius:99px;padding:2px 10px;font-size:13px;font-weight:600;border:0;cursor:pointer;font:inherit}
+.bad{background:var(--bad-bg);color:var(--bad)}.warn{background:var(--warn-bg);color:var(--warn)}.ok{background:var(--ok-bg);color:var(--ok)}.gray{background:var(--soft);color:var(--muted)}
+.cnt[aria-pressed="true"]{outline:2px solid currentColor}
+h3{font-size:15px;margin:18px 0 8px}
+.item{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.item.k-bad{border-left-color:var(--bad)}.item.k-warn{border-left-color:var(--warn)}.item.k-ok{border-left-color:var(--ok)}.item.k-gray{border-left-color:var(--muted)}
+.row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.item .t{font-weight:600;flex:1;min-width:220px}
+.item .why{color:var(--muted);font-size:13px;margin-top:4px}
+.item .basis{color:var(--muted);font-size:12px;margin-top:2px}
+.sample{margin-top:8px;font-size:13px;background:var(--soft);border-radius:8px;padding:8px 10px}
+.sample table{border-collapse:collapse;width:100%}.sample td{padding:3px 6px;border-bottom:1px solid var(--line)}
+details.exp{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:16px}
+details.exp summary{cursor:pointer;font-weight:600}
+.okgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px;margin-top:6px}
+.okgrid div{font-size:13px}
+.state{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px;text-align:center}
+.state h3{margin:0 0 6px}.state .acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.err{border-color:var(--bad);background:var(--bad-bg);text-align:left}
+.skel{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--soft),var(--line),var(--soft));margin:8px 0}
+.demo{position:fixed;right:12px;bottom:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:9}
+.sandbox{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+@media (max-width:640px){.hero{grid-template-columns:1fr}.big{width:48px;height:48px;font-size:20px}.demo{left:12px;right:12px}}
+</style>
+</head>
+<body>
+<div class="note">Bản mẫu đề xuất (UI-first, <b>chưa có mã</b>). Thay màn HT06 hiện tại cho người dùng kế toán. Số liệu lấy từ lượt chẩn đoán thật ngày 2026-11-10 trên CSDL test (dữ liệu test cố ý có lỗi). Bản cũ (rulepack, duyệt, căn cứ) chuyển vào khối "Cho kiểm toán / chuyên gia" ở cuối.</div>
+<main id="app"></main>
+<div class="demo">Trạng thái (chỉ ở bản mẫu):
+  <select id="demo"><option value="ok">Có việc cần làm</option><option value="clean">Sổ ổn hết</option><option value="never">Chưa kiểm lần nào</option><option value="empty">Đơn vị mới, sổ trống</option><option value="sandbox">Đang xem sổ mẫu</option><option value="loading">Đang kiểm</option><option value="error">Lỗi</option><option value="forbidden">Không có quyền</option></select>
+</div>
+<script>
+// Việc cần làm: lấy từ mã chẩn đoán thật (DG-*), viết lại bằng lời của kế toán. "level": bad = Cần sửa · warn = Nên xem.
+const TODO = [
+  { code: 'CASH_NEGATIVE', level: 'bad', n: 2, title: 'Quỹ tiền mặt bị âm ở 2 ngày', why: 'Tiền mặt không thể âm: thường do thiếu phiếu thu hoặc ghi chi trước thu.', basis: 'Luật Kế toán 88/2015', fix: 'Mở Sổ quỹ tiền mặt', screen: 'ACC55',
+    sample: [['CN01', '03/10/2026', '−1.250.000'], ['CN01', '04/10/2026', '−300.000']] },
+  { code: 'INVENTORY_NEGATIVE', level: 'bad', n: 21, title: 'Tồn kho âm ở 21 mặt hàng × kho × ngày', why: 'Xuất nhiều hơn số đang có: giá vốn tháng sẽ sai.', basis: 'Chuẩn mực kế toán hàng tồn kho', fix: 'Mở Nhập xuất tồn', screen: 'ACC83',
+    sample: [['SUA01 · Kho CN01', '12/10/2026', '−4 lon'], ['SUA02 · Kho CN01', '12/10/2026', '−2 lon']] },
+  { code: 'PERIOD_CLOSE_OPEN', level: 'warn', n: 6, title: '6 tháng đã qua chưa làm đủ việc cuối kỳ', why: 'Còn thiếu tính giá vốn, kết chuyển hoặc khoá sổ theo thứ tự.', basis: 'Luật Kế toán 88/2015 · Điều 26', fix: 'Làm việc cuối kỳ', screen: 'ACC6',
+    steps: ['Tính giá vốn', 'Kết chuyển', 'Khoá kỳ'] },
+  { code: 'VAT_INPUT_NONCASH', level: 'warn', n: 24, title: '24 hoá đơn mua vào từ 5 triệu chưa có chứng từ thanh toán không dùng tiền mặt', why: 'Không đủ điều kiện khấu trừ thuế GTGT đầu vào nếu thiếu chứng từ thanh toán qua ngân hàng.', basis: 'Luật Thuế GTGT 48/2024/QH15', fix: 'Mở Hoá đơn đầu vào', screen: 'MH22' },
+  { code: 'INVOICE_FIELDS', level: 'warn', n: 3, title: '3 hoá đơn trong sổ thiếu ký hiệu, tên hoặc mã số thuế người bán', why: 'Hoá đơn thiếu thông tin bắt buộc có thể bị loại khi quyết toán thuế.', basis: 'Nghị định 123/2020/NĐ-CP', fix: 'Bổ sung thông tin thuế', screen: 'ACC78' },
+  { code: 'ACCOUNT_WRONG_SIDE', level: 'warn', n: 8, title: '8 tài khoản dư sai bên', why: 'Tài khoản chỉ dư một bên lại đang dư bên ngược lại — thường do định khoản ngược.', basis: '', fix: 'Mở Sổ chi tiết tài khoản', screen: 'ACC12' },
+  { code: 'LEDGER_SELF_APPROVED', level: 'warn', n: 8, title: '8 chứng từ do chính người lập tự duyệt và ghi sổ', why: 'Chưa bị chặn — chỉ để kế toán trưởng biết. Đơn vị một người làm thì bình thường.', basis: '', fix: 'Xem danh sách', screen: 'ACC14' },
+];
+const NEED_DATA = [
+  { code: 'PROFILE_DECLARED', title: 'Chưa khai hồ sơ kế toán (năm tài chính, chế độ kế toán, loại doanh nghiệp)', why: 'Cần để biết quy định nào áp cho đơn vị. Mất 1 phút.', fix: 'Khai hồ sơ kế toán', screen: 'HT07' },
+];
+const OK = ['Sổ cân Nợ = Có', 'Không ai sửa / xoá lén bút toán', 'Bút toán đảo đúng một lần', 'Mỗi bút toán có chứng từ gốc', 'Không chứng từ treo quá 3 ngày', 'Số dư khớp sổ chi tiết công nợ', 'Sổ kho khớp tài khoản hàng tồn', 'Dữ liệu từng đơn vị tách riêng', 'Chuỗi bằng chứng liền mạch', 'Hoá đơn không lập trước ngày giao hàng', 'Thuế suất giảm đúng thời hạn', 'Phân bổ khấu hao đã chạy đủ'];
+const SCREEN = { ACC55: '/quy/so-quy-tien-mat', ACC83: '/bao-cao/nhap-xuat-ton', ACC6: '/nghiep-vu/ket-chuyen', MH22: '/mua-hang/hoa-don', ACC78: '/thue/bo-sung-thong-tin', ACC12: '/bao-cao/so-chi-tiet', ACC14: '/chung-tu', HT07: '/he-thong/ho-so-ke-toan' };
+let filter = '', open = '';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LABEL = { bad: 'Cần sửa', warn: 'Nên xem', ok: 'Ổn', gray: 'Chưa đủ dữ liệu' };
+
+function header(extra = '') {
+  return `<div class="head"><h1>Kiểm sổ</h1><span class="code">HT06</span><span class="spacer"></span>
+    <button class="btn sm" title="Tạo một đơn vị mẫu riêng có sẵn chứng từ, không đụng sổ thật">Thử với sổ mẫu</button>
+    <button class="btn pri sm">Kiểm lại ngay</button></div>${extra}`;
+}
+function itemHtml(t, kind) {
+  const isOpen = open === t.code;
+  return `<div class="item k-${kind}"><div class="row"><span class="cnt ${kind}">${LABEL[kind]}</span><div class="t">${esc(t.title)}
+    <div class="why">${esc(t.why)}</div>${t.basis ? `<div class="basis">Căn cứ: ${esc(t.basis)}</div>` : ''}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn pri sm" href="${SCREEN[t.screen] ?? '#'}">${esc(t.fix)} →</a>${t.sample || t.steps ? `<button class="btn sm" data-o="${t.code}">${isOpen ? 'Ẩn' : 'Xem chi tiết'}</button>` : ''}</div></div>
+    ${isOpen && t.sample ? `<div class="sample"><table>${t.sample.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table><div style="margin-top:4px;color:var(--muted)">Mẫu ${t.sample.length} / ${t.n} dòng</div></div>` : ''}
+    ${isOpen && t.steps ? `<div class="sample">Làm theo thứ tự: ${t.steps.map((s, i) => `<b>${i + 1}.</b> ${esc(s)}`).join(' → ')}</div>` : ''}</div>`;
+}
+function expert() {
+  return `<details class="exp"><summary>Cho kiểm toán / chuyên gia — căn cứ pháp lý, rulepack, bằng chứng</summary>
+    <p style="font-size:13px;color:var(--muted)">Phần này không cần để dùng hằng ngày. Bộ quy tắc (rulepack) do <b>Bizcity rà căn cứ trước khi phát hành</b> và đi kèm bản cài; đơn vị không phải duyệt. Đơn vị có kiểm toán riêng có thể ghi ý kiến rà soát ở đây (tuỳ chọn).</p>
+    <ul style="font-size:13px"><li>Kế toán: <b>accounting-integrity@0.1.0</b>, <b>accounting-regimes-vn@0.3.0</b> — Bizcity đã rà (đề xuất)</li><li>Hoá đơn, thuế: <b>einvoice-vn@0.1.0</b>, <b>vat-vn</b> — căn cứ liệt kê theo điều khoản</li><li>Kiểm mã phần mềm (bất biến sổ, ranh giới module): chạy ở quy trình phát hành của Bizcity, <b>không chạy trên bản cài</b> → xem ở HT10 (dev)</li></ul>
+    <button class="btn sm">Tải biên bản kiểm (PDF)</button> <button class="btn sm">Ghi ý kiến kiểm toán (tuỳ chọn)</button></details>`;
+}
+function render() {
+  const app = document.getElementById('app'); const s = document.getElementById('demo').value;
+  if (s === 'loading') { app.innerHTML = header() + `<div class="hero"><div class="big gray">…</div><div><h2>Đang kiểm sổ…</h2><p>Khoảng 10–30 giây. Có thể rời màn, kết quả giữ lại.</p><div class="skel"></div></div></div>`; return; }
+  if (s === 'never') { app.innerHTML = header() + `<div class="state"><h3>Chưa kiểm sổ lần nào</h3><p style="color:var(--muted)">Hệ thống tự kiểm mỗi đêm. Muốn xem ngay thì bấm Kiểm ngay; muốn xem thử trước khi có dữ liệu thật thì dùng sổ mẫu.</p><div class="acts"><button class="btn pri">Kiểm ngay</button><button class="btn">Thử với sổ mẫu</button></div></div>`; return; }
+  if (s === 'empty') { app.innerHTML = header() + `<div class="state"><h3>Sổ chưa có chứng từ nào</h3><p style="color:var(--muted)">Chưa có gì để kiểm. Nhập chứng từ đầu tiên, hoặc mở sổ mẫu để xem màn này hoạt động ra sao.</p><div class="acts"><button class="btn pri">Thử với sổ mẫu</button><a class="btn" href="/chung-tu">Nhập chứng từ</a></div></div>`; return; }
+  if (s === 'error') { app.innerHTML = header() + `<div class="state err"><h3>Chưa kiểm được sổ</h3><p>Không kết nối được cơ sở dữ liệu lúc kiểm.</p><p style="color:var(--muted)">Mã: <code>INTERNAL_ERROR</code> · Cách sửa: bấm Thử lại sau ít phút; còn lỗi thì gửi Mã tra cứu cho người hỗ trợ · Tra cứu: <code>REQ-7F3A2C</code></p><button class="btn pri">Thử lại</button></div>`; return; }
+  if (s === 'forbidden') { app.innerHTML = header() + `<div class="state"><h3>Bạn chưa có quyền xem kết quả kiểm sổ</h3><p style="color:var(--muted)">Cần quyền <code>system:read</code>. Nhờ chủ đơn vị cấp ở màn Người dùng & vai trò.</p></div>`; return; }
+  const clean = s === 'clean';
+  const todo = clean ? [] : TODO;
+  const need = clean ? [] : NEED_DATA;
+  const bad = todo.filter((t) => t.level === 'bad').length, warn = todo.filter((t) => t.level === 'warn').length;
+  const sandbox = s === 'sandbox' ? `<div class="sandbox">Đang xem <b>sổ mẫu</b> (đơn vị "Cửa hàng mẫu"), không phải sổ thật. <a href="#">Về sổ thật</a> · <a href="#">Xoá sổ mẫu</a></div>` : '';
+  const big = bad ? ['bad', bad] : warn ? ['warn', warn] : ['ok', '✓'];
+  const head = bad ? `${bad} việc cần sửa, ${warn} việc nên xem` : warn ? `Không có việc phải sửa · ${warn} việc nên xem` : 'Sổ ổn — không có việc cần làm';
+  const list = [...todo.filter((t) => t.level === 'bad'), ...todo.filter((t) => t.level === 'warn')].filter((t) => !filter || t.level === filter);
+  app.innerHTML = header(sandbox) + `
+    <div class="hero"><div class="big ${big[0]}">${big[1]}</div><div><h2>${head}</h2>
+      <p>Kiểm lúc 23:26 tối 10/11/2026 (tự động mỗi đêm) · ${OK.length} mục đã ổn · Chế độ: Thông tư 99/2025 — doanh nghiệp nhỏ và vừa</p>
+      <div class="counts">${bad ? `<button class="cnt bad" data-f="bad" aria-pressed="${filter === 'bad'}">${bad} cần sửa</button>` : ''}${warn ? `<button class="cnt warn" data-f="warn" aria-pressed="${filter === 'warn'}">${warn} nên xem</button>` : ''}${need.length ? `<span class="cnt gray">${need.length} chưa đủ dữ liệu</span>` : ''}<span class="cnt ok">${OK.length} ổn</span>${filter ? `<button class="cnt gray" data-f="">Bỏ lọc</button>` : ''}</div></div></div>
+    ${need.length ? `<h3>Cần thêm một chút dữ liệu</h3>${need.map((t) => itemHtml(t, 'gray')).join('')}` : ''}
+    ${list.length ? `<h3>Việc cần làm</h3>${list.map((t) => itemHtml(t, t.level)).join('')}` : ''}
+    <details class="exp" ${clean ? 'open' : ''}><summary>${OK.length} mục đã ổn</summary><div class="okgrid">${OK.map((o) => `<div><span style="color:var(--ok)">✓</span> ${esc(o)}</div>`).join('')}</div></details>
+    ${expert()}`;
+  app.querySelectorAll('[data-o]').forEach((b) => b.onclick = () => { open = open === b.dataset.o ? '' : b.dataset.o; render(); });
+  app.querySelectorAll('[data-f]').forEach((b) => b.onclick = () => { filter = b.dataset.f; render(); });
+}
+document.getElementById('demo').onchange = render;
+render();
+</script>
+</body>
+</html>
