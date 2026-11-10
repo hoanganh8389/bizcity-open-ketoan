@@ -36,6 +36,69 @@ L0–L3 chạy **trên bản cài** (cả bản offline, không cần Cell, khô
 <!-- [2026-11-10 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — đề xuất R-DIAG-10..16, chưa duyệt -->
 > <!-- [2026-11-09 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — Q032-7 = mở rộng, Q032-8 = đổi HT08 --> **Bổ sung đã duyệt (Q032-7 → D032-12, 2026-11-09):** R-DIAG-10..16 — một sổ điều kiện khoá sổ (PC); ba kỳ kiểm ngày · tuần · cuối tháng, ngày và tuần chỉ nhắc việc; ba mức khi khoá sổ *chặn khoá sổ · cần giải trình · để biết* theo kết quả; bản lưu tuần / tháng; khoá thử không ghi sổ; module tự khai phép kiểm; "kiểm được" là điều kiện của khuôn nạp. Chữ đầy đủ: [PHASE-032 · 70 §3](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/70-CHUAN-HOA-BANG-KIEM-KE-TOAN.md). Từng luật có hiệu lực khi việc tương ứng S032-35..38 có mã; trước đó các mục R-DIAG-1..9 ở trên vẫn là luật đang chạy.
 
+### 2b. Chữ chốt trường `DiagCheck` cho R-DIAG-10..12 (PHASE-032 B2c-2, S032-35)
+<!-- [2026-11-10 09:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2: chữ chốt trường DiagCheck (closeRef, kỳ kiểm, bước khoá, mức khi khoá) theo R-FLOW-2 -->
+
+**Vấn đề.** Kế toán thấy việc ở *Việc hôm nay* nhưng không biết việc đó thuộc **điều kiện khoá sổ** nào, **khi nào** phải kiểm, và **đến lúc khoá kỳ** thì nặng hay nhẹ. 46 phép kiểm đang có chỉ mang mã, mức, cách sửa.
+
+**Lựa chọn.**
+
+1. **Kỳ kiểm, bước khoá, tên thuộc điều kiện khoá sổ (PC), không lặp trên từng phép kiểm.** Phép kiểm trỏ `closeRef`; chỉ ghi `cadence` / `stage` khi khác PC. Bỏ cách viết ở [70 §3](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/70-CHUAN-HOA-BANG-KIEM-KE-TOAN.md) đặt sáu trường lên mỗi phép kiểm: 46 phép kiểm × ba trường thì dễ lệch nhau.
+2. **Người làm dùng `remedy.owner` đã có** (R-FIX-1), không thêm trường `owner` thứ hai. Vai thủ kho, thủ quỹ, thuế thêm vào `RemedyRole` khi có phép kiểm cần (minor `bizcity_remedy@1`, chữ chốt riêng).
+3. **Sổ PC thuộc Kernel** (kiến thức kế toán); Platform chỉ giữ sổ đăng ký `registerCloseConditions()`, cùng khuôn `registerDiagnostics()`. Platform không import Kernel (LAYOUT-1).
+4. **`severityAtClose` là hàm theo kết quả** (R-DIAG-12: cùng PC, khác kết quả thì khác mức). Mặc định giữ đúng khoá thật hôm nay (R-DIAG-4): `error` → *cần giải trình*, `warn` / `info` → *để biết*. Ở B2c-2 chưa phép kiểm nào trả *chặn khoá sổ*; giá trị đó có hiệu lực cùng danh sách D032-11 ở S032-30. **B2c-2 chỉ hiện mức, không đổi khoá kỳ thật** (lõi không nới, cũng không tự siết khi chưa có việc S032-30).
+5. **`scopeBy` hoãn tới S032-28** (khoá kéo theo nhóm tính giá): không thêm trường chưa ai dùng (LEAN).
+
+**Hình dạng.**
+
+```ts
+// packages/platform/src/system/diagnostics.ts — chỉ thêm, mọi trường mới đều tuỳ chọn
+export type DiagCadence = 'day' | 'week' | 'period';       // hằng ngày · hằng tuần · cuối tháng (R-DIAG-11)
+export type DiagStage = 'pre' | 'post' | 'lock';            // trước kết chuyển · sau kết chuyển · lúc khoá
+export type CloseSeverity = 'block' | 'explain' | 'note';   // chặn khoá sổ · cần giải trình · để biết (R-DIAG-12)
+
+export interface CloseCondition {
+  code: `PC-${string}`;          // PC-001..PC-023 (PHASE-032 · 60 §2)
+  title: string;                  // lời kế toán
+  cadence: DiagCadence[];
+  stage: DiagStage;
+  /** Không phép kiểm nào nuôi PC này: ghi hôm nay kiểm bằng gì (kế toán kiểm tay, trigger, closing.service, việc S032-n sẽ thêm). */
+  checkedElsewhere?: string;
+}
+export function registerCloseConditions(list: CloseCondition[]): void;
+export function listCloseConditions(): CloseCondition[];
+
+export interface DiagCheck {
+  // … như hiện nay (code, layer, level, title, fix, remedy, scoped, run)
+  closeRef?: `PC-${string}` | 'none';   // R-DIAG-10; 'none' = việc vận hành, không thuộc khoá sổ
+  cadence?: DiagCadence[];               // chỉ khi khác PC
+  stage?: DiagStage;                     // chỉ khi khác PC
+  severityAtClose?: (r: { count: number; sample: string[] }) => CloseSeverity;  // chỉ gọi khi có chỗ sai
+}
+
+export interface DiagResult {
+  // … như hiện nay
+  closeRef?: string;          // mã PC hoặc 'none'
+  closeTitle?: string;        // tên PC, để màn không phải tra
+  cadence?: DiagCadence[];    // đã gộp: của phép kiểm, không có thì của PC
+  stage?: DiagStage;
+  atClose?: CloseSeverity;    // chỉ khi có chỗ sai (warn / error / info)
+}
+```
+
+- Kernel khai `CLOSE_CONDITIONS` (23 dòng) ở `packages/kernel/src/modules/periods/close-conditions.ts`; `apps/api/src/app.ts` đăng ký cạnh `registerDiagnostics`.
+- `runDiagnostics` gộp trường vào từng kết quả. Lượt lưu nguyên trong `diagnostic_runs.checks` (jsonb): **không migration**. Lượt cũ thiếu trường thì màn ghi *chưa gắn điều kiện khoá sổ*.
+- Bảng gắn 46 mã đang có vào PC: [70 §3a](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/70-CHUAN-HOA-BANG-KIEM-KE-TOAN.md).
+- Màn *Việc hôm nay* ghi dưới mỗi việc, bằng lời kế toán: *Điều kiện khoá sổ: Chuyển kho, hàng đang chuyển · kiểm hằng ngày · khi khoá kỳ: để biết*. Việc `none` ghi *Việc vận hành, không thuộc khoá sổ*.
+
+**Ảnh hưởng.** Chỉ thêm trường tuỳ chọn: module chưa khai vẫn chạy, kết quả cũ vẫn đọc được. Khoá kỳ thật (R-DIAG-4), `periods/check`, Khoá thử hôm nay không đổi hành vi. Module tự khai phép kiểm (R-DIAG-15) dùng cùng trường này khi tới S032-38.
+
+**Kiểm bằng.** `apps/api/test/close-conditions.test.ts` (bản test của SC-DIAG-2, phép kiểm tĩnh trong selfcheck làm sau):
+- mọi phép kiểm đã đăng ký (L1, L3, L5) có `closeRef` là `none` hoặc một PC đã đăng ký;
+- mọi PC có ít nhất một phép kiểm nuôi hoặc có `checkedElsewhere`;
+- mức khi khoá mặc định: `error` → `explain`, `warn` → `note`; đạt và rỗng không có `atClose`;
+- một lượt L3 trả `closeRef`, `closeTitle`, `cadence`, `stage` cho từng kết quả.
+
 ## 3. Đối chiếu nhanh
 
 ```bash
