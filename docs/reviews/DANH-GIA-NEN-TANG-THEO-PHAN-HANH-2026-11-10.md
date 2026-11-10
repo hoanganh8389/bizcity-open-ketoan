@@ -118,7 +118,7 @@ Chi tiết từng biểu thức: `tests/conformance/baseline.json` → `checks["
 | B-11 | Bật `authorize` thật thay chế độ bóng; `requireScope` cho mọi route ghi chứng từ (S028-6..11) | 9 | K1 | ☐ |
 | B-12 | Gate C / `valuation_layers` / CT-* (RV-R1-17) | 5 | K2 | ☐ PHASE-025/032 |
 
-### Thứ tự đề xuất (≤ 4 bước mỗi đợt, R-LEAN-4)
+### Thứ tự đề xuất (≤ 4 bước mỗi đợt)
 
 1. **Gốc trước:** B-1 (một dòng, K0) + A-1 + A-2 → trả ~110 chỗ ở ba form phiếu Kernel, không còn câu bịa.
 2. **Dải đầu khối cho phiếu nghiệp vụ:** A-3 + A-4 → ~70 chỗ.
