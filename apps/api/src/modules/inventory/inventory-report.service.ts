@@ -225,18 +225,37 @@ export const inventoryReportService = {
     return { sku: q.sku, name: head?.name ?? '', unit: head?.unit ?? '', opening, rows, closing: { qty, value } };
   },
 
-  /** Mặt hàng để chọn ở ô "Mã hàng": tìm theo mã hoặc tên, tối đa `limit` dòng. */
-  async items(auth: AuthContext, q: { search?: string; limit?: number }) {
+  /** Đếm theo tồn hiện tại của các mã đã có phát sinh kho: còn hàng (> 0), hết hàng (= 0), âm kho (< 0). */
+  async stockCounts(auth: AuthContext, q: { branchCode?: string }) {
+    const branch = q.branchCode?.trim() || undefined;
+    const res = await sql<{ inStock: string; out: string; negative: string }>`
+      SELECT count(*) FILTER (WHERE s > 0) AS "inStock", count(*) FILTER (WHERE s = 0) AS out, count(*) FILTER (WHERE s < 0) AS negative
+        FROM (SELECT m.sku, SUM(m.qty) AS s FROM inventory_movements m
+                ${branch ? sql`JOIN branches b ON b.id = m.branch_id AND b.code = ${branch}` : sql``}
+               WHERE m.tenant_id = ${auth.tenantId} AND m.sku <> '' GROUP BY m.sku) t`.execute(db);
+    const r = res.rows[0];
+    return { inStock: Number(r?.inStock ?? 0), out: Number(r?.out ?? 0), negative: Number(r?.negative ?? 0), branchCode: branch ?? null, at: new Date().toISOString() };
+  },
+
+  // [2026-11-11 Nguyễn Văn Thủy] ô chọn hàng có cột Tồn (theo chi nhánh đang làm việc nếu gửi lên) (đóng góp)
+  /** Mặt hàng để chọn ở ô "Mã hàng" (tìm theo mã hoặc tên, tối đa `limit` dòng): mã, tên, ĐVT, thuế; `stock` = tồn hiện tại (ĐVT nhỏ nhất) cộng mọi kho, hoặc của chi nhánh `branchCode`. */
+  async items(auth: AuthContext, q: { search?: string; limit?: number; branchCode?: string }) {
     const like = `%${(q.search ?? '').trim().toLowerCase()}%`;
-    const res = await sql<{ sku: string; name: string; unit: string; taxOutCode: string | null; taxInCode: string | null }>`
-      SELECT sku, max(name) AS name, max(unit) AS unit, max(tax_out_code) AS "taxOutCode", max(tax_in_code) AS "taxInCode" FROM (
-        SELECT sku, name, unit, tax_out_code, tax_in_code FROM products WHERE tenant_id = ${auth.tenantId}
-        UNION ALL
-        SELECT DISTINCT sku, name, unit, NULL::text, NULL::text FROM inventory_movements WHERE tenant_id = ${auth.tenantId}
-      ) x
-       WHERE sku <> '' AND (lower(sku) LIKE ${like} OR lower(name) LIKE ${like})
-       GROUP BY sku ORDER BY sku LIMIT ${q.limit ?? 50}`.execute(db);
-    return res.rows;
+    const branch = q.branchCode?.trim() || undefined;
+    const res = await sql<{ sku: string; name: string; unit: string; taxOutCode: string | null; taxInCode: string | null; stock: string | null }>`
+      WITH pick AS (
+        SELECT sku, max(name) AS name, max(unit) AS unit, max(tax_out_code) AS "taxOutCode", max(tax_in_code) AS "taxInCode" FROM (
+          SELECT sku, name, unit, tax_out_code, tax_in_code FROM products WHERE tenant_id = ${auth.tenantId}
+          UNION ALL
+          SELECT DISTINCT sku, name, unit, NULL::text, NULL::text FROM inventory_movements WHERE tenant_id = ${auth.tenantId}
+        ) x
+         WHERE sku <> '' AND (lower(sku) LIKE ${like} OR lower(name) LIKE ${like})
+         GROUP BY sku ORDER BY sku LIMIT ${q.limit ?? 50})
+      SELECT p.*, (SELECT SUM(m.qty) FROM inventory_movements m
+                    ${branch ? sql`JOIN branches b ON b.id = m.branch_id AND b.code = ${branch}` : sql``}
+                   WHERE m.tenant_id = ${auth.tenantId} AND m.sku = p.sku) AS stock
+        FROM pick p ORDER BY p.sku`.execute(db);
+    return res.rows.map((r) => ({ ...r, stock: r.stock === null ? null : Number(r.stock) }));
   },
 
   // [2026-11-03 06:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — đối chiếu sổ chi tiết kho với số dư tài khoản hàng tồn kho (chủ dự án yêu cầu 2026-11-03)

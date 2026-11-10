@@ -49,7 +49,7 @@ export function CatalogToolbar({ onAdd, onEdit, onDelete, onRefresh, onExport, c
 
   return (
     <div className="catalog-toolbar" ref={ref}>
-      {onAdd && <button className="btn btn-sm" disabled={!canWrite} onClick={onAdd} title="Thêm (Ctrl+N)"><Plus size={14} /> Thêm</button>}
+      {onAdd && <button className="btn btn-sm btn-primary" disabled={!canWrite} onClick={onAdd} title="Thêm (Ctrl+N)"><Plus size={14} /> Thêm</button>}
       {onEdit && <button className="btn btn-sm" disabled={!canWrite || !hasSelection} onClick={() => { openNextInEdit(); onEdit(); }} title="Sửa dòng đang chọn (Ctrl+E) — mở thẳng chế độ sửa; bấm đúp dòng để xem"><Pencil size={14} /> Sửa</button>}
       {onDelete && <button className="btn btn-sm" disabled={!canWrite || !hasSelection || busy} onClick={onDelete} title="Xoá dòng đang chọn (Ctrl+Delete)"><Trash2 size={14} /> Xoá</button>}
       {onRefresh && <button className="btn btn-sm" disabled={loading} onClick={() => void refresh()} title="Nạp lại dữ liệu mới nhất từ máy chủ (F5)"><RefreshCw size={14} className={loading ? 'spin' : undefined} /> {loading ? 'Đang nạp…' : 'Nạp'}</button>}

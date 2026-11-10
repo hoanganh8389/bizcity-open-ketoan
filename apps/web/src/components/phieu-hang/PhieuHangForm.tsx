@@ -8,7 +8,7 @@
  *   Thu tiền (bán / trả lại): các khoản theo hình thức thanh toán; để trống = ghi công nợ.
  * Danh mục (mặt hàng, đối tượng, chi nhánh, hình thức thanh toán) đọc từ API thật; chỉ phần LƯU phiếu theo nguồn dữ liệu.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { KIND_INFO, TAX_OPTIONS, TAX_RATES, recompute, type TradeDoc, type TradeLine } from '@/lib/tradeDocs';
@@ -42,6 +42,19 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
   const [help, setHelp] = useState(false);
   const set = (p: Partial<TradeDoc>) => setV((x) => recompute({ ...x, ...p }));
   const setLine = (i: number, p: Partial<TradeLine>) => set({ lines: v.lines.map((l, j) => (j === i ? { ...l, ...p } : l)) });
+  // [2026-11-11 Nguyễn Văn Thủy] Chưa thu / Thu tiền ngay ở đầu phiếu (đóng góp): chọn Thu ngay = một khoản thu đủ tổng phiếu,
+  // số tiền tự theo tổng khi sửa dòng hàng cho tới khi người dùng tự gõ số tiền khác.
+  const autoPay = useRef(false);
+  useEffect(() => {
+    const ps = v.payments ?? [];
+    if (!autoPay.current || ps.length !== 1 || ps[0]!.amount === v.totals.total) return;
+    setV((x) => ({ ...x, payments: [{ ...ps[0]!, amount: x.totals.total }] }));
+  }, [v.totals.total]); // eslint-disable-line react-hooks/exhaustive-deps
+  const thuNgay = (v.payments ?? []).length > 0;
+  const setThuNgay = (on: boolean, method = 'TM') => {
+    autoPay.current = on;
+    set({ payments: on ? [{ methodCode: method, amount: v.totals.total }] : [] });
+  };
   const methods = useQuery({ queryKey: ['payment-methods'], queryFn: () => api.get<PaymentMethod[]>('/api/v1/posting/payment-methods'), staleTime: 300_000, enabled: info.hasPayments }).data ?? [];
   const taxOptions = info.taxDir ? TAX_OPTIONS[info.taxDir] : [];
   const khoAll = useKho();
@@ -77,7 +90,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
   ].filter(Boolean) as string[];
 
   return (
-    <Modal viewFirst={Boolean(value.docNo) && !readOnly} wide title={`${info.label}${v.docNo ? ` ${v.docNo}` : ' (mới)'}${v.status === 'approved' ? ' — đã duyệt' : ''}`} onClose={onClose}
+    <Modal voucher={{ total: v.totals.total }} viewFirst={Boolean(value.docNo) && !readOnly} wide title={`${info.label}${v.docNo ? ` ${v.docNo}` : ' (mới)'}${v.status === 'approved' ? ' — đã duyệt' : ''}`} onClose={onClose}
       footer={<>
         {printScreen && TRADE_TEMPLATES[v.docType] && value.id && <span data-view-ok style={{ marginRight: 'auto' }}><PrintButton screen={printScreen} templates={TRADE_TEMPLATES[v.docType]!} title="In phiếu theo nội dung đã ghi (sửa xong bấm Ghi rồi mới in)" getDocs={() => [value]} /></span>}
         {!readOnly && <button className="btn btn-primary" disabled={saving || problems.length > 0} title={problems.join('; ')} onClick={() => onSave(v)}>Ghi</button>}
@@ -88,6 +101,15 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
       </div>
       {help && <HelpDrawer guideKey="phieu-hang" onClose={() => setHelp(false)} />}
       <DocumentGateBanner advisories={gate.advisories} />
+      {info.hasPayments && (
+        <div className="full ct-pay" role="radiogroup" aria-label="Thanh toán">
+          <label className="checkbox"><input type="radio" disabled={readOnly} checked={!thuNgay} onChange={() => setThuNgay(false)} /> {v.docType === 'sale_return' ? 'Chưa trả tiền (trừ công nợ)' : 'Chưa thu tiền (ghi công nợ)'}</label>
+          <label className="checkbox"><input type="radio" disabled={readOnly} checked={thuNgay} onChange={() => setThuNgay(true)} /> {v.docType === 'sale_return' ? 'Trả tiền ngay' : 'Thu tiền ngay'}</label>
+          {thuNgay && (v.payments ?? []).length === 1 && (
+            <span style={{ width: 220 }}><ListPicker disabled={readOnly} items={methods.filter((m) => m.isActive !== false).map((m) => ({ code: m.code, name: m.name }))} value={v.payments![0]!.methodCode} onChange={(c) => set({ payments: [{ ...v.payments![0]!, methodCode: c }] })} placeholder="Hình thức" /></span>
+          )}
+        </div>
+      )}
       <fieldset className="fgroup" disabled={readOnly}>
         <legend>Thông tin phiếu</legend>
         <Field label="Số phiếu" hint="Để trống: tự cấp khi ghi"><input className="input mono" value={v.docNo} onChange={(e) => set({ docNo: e.target.value.trim() })} /></Field>
@@ -102,7 +124,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
         </Field>}
         {info.partner && (
           <Field label={`${info.partnerLabel}${info.partner === 'supplier' ? ' (*)' : ''}`} hint={info.partner === 'customer' ? 'Để trống = Khách lẻ' : undefined}>
-            <PartnerPicker value={v.partner?.code ?? ''} activeOnly onChange={async (c) => {
+            <PartnerPicker value={v.partner?.code ?? ''} activeOnly addKind="customer" onChange={async (c) => {
               if (!c) return set({ partner: undefined });
               const row = (await api.get<{ code: string; name: string; taxCode?: string | null }[]>('/api/v1/partners', { search: c, pageSize: 5 }).catch(() => [])).find((x) => x.code === c);
               set({ partner: { code: c, name: row?.name ?? c, taxCode: row?.taxCode ?? undefined } });
@@ -137,7 +159,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
               {v.lines.map((l, i) => (
                 <tr key={l.lineKey}>
                   <td style={{ textAlign: 'center' }}>{i + 1}</td>
-                  <td>{readOnly ? <span className="mono">{l.sku}</span> : <ItemPicker value={l.sku} onChange={(c) => void pickItem(i, c)} hideName />}</td>
+                  <td>{readOnly ? <span className="mono">{l.sku}</span> : <ItemPicker value={l.sku} onChange={(c) => void pickItem(i, c)} hideName canAdd />}</td>
                   <td><input className="input" value={l.name} disabled={readOnly} onChange={(e) => setLine(i, { name: e.target.value })} /></td>
                   <td><input className="input" value={l.unit} disabled={readOnly} onChange={(e) => setLine(i, { unit: e.target.value })} /></td>
                   <td className="muted" style={{ fontSize: 12 }}>{khoName}</td>
@@ -172,7 +194,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
             {(v.payments ?? []).map((p, i) => (
               <div key={i} className="row" style={{ gap: 6, marginBottom: 4 }}>
                 <div style={{ width: 240 }}><ListPicker items={methods.filter((m) => m.isActive !== false).map((m) => ({ code: m.code, name: m.name }))} value={p.methodCode} onChange={(c) => set({ payments: (v.payments ?? []).map((x, j) => (j === i ? { ...x, methodCode: c } : x)) })} placeholder="Hình thức" /></div>
-                <input className="input num" style={{ width: 160 }} value={money(p.amount)} onChange={(e) => set({ payments: (v.payments ?? []).map((x, j) => (j === i ? { ...x, amount: num(e.target.value) } : x)) })} />
+                <input className="input num" style={{ width: 160 }} value={money(p.amount)} onChange={(e) => { autoPay.current = false; set({ payments: (v.payments ?? []).map((x, j) => (j === i ? { ...x, amount: num(e.target.value) } : x)) }); }} />
                 <input className="input" style={{ flex: 1 }} placeholder="Mã giao dịch (nếu có)" value={p.reference ?? ''} onChange={(e) => set({ payments: (v.payments ?? []).map((x, j) => (j === i ? { ...x, reference: e.target.value || undefined } : x)) })} />
                 {!readOnly && <button type="button" className="btn btn-xs" onClick={() => set({ payments: (v.payments ?? []).filter((_, j) => j !== i) })}>×</button>}
               </div>

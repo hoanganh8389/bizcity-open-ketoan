@@ -7,6 +7,7 @@
  *   SideActions       nút Tìm kiếm / Xuất / In ở cuối bảng lọc
  * Dùng chung cho Sổ nhật ký chung, Sổ cái, Sổ chi tiết tài khoản… để các màn cùng một kiểu.
  */
+import { PERIOD_PRESETS, presetOf } from '@/lib/format';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -99,6 +100,22 @@ export function ReportSideLayout({ panel, children }: { panel: ReactNode; childr
       </div>
       <div className="rp-main">{children}</div>
     </div>
+  );
+}
+
+/** Bảng lọc bên trái: ô Kỳ (chọn nhanh Hôm nay, Tháng này, Quý này…) + Từ ngày + Đến ngày. */
+export function SideKy({ from, to, onChange }: { from: string; to: string; onChange: (from: string, to: string) => void }) {
+  return (
+    <>
+      <SideField label="Kỳ">
+        <select className="select input" value={presetOf(from, to)} onChange={(e) => { const p = PERIOD_PRESETS.find((x) => x.key === e.target.value); if (p) onChange(...p.range()); }}>
+          <option value="">Tuỳ chọn</option>
+          {PERIOD_PRESETS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+        </select>
+      </SideField>
+      <SideField label="Từ ngày"><input type="date" className="input" value={from} onChange={(e) => onChange(e.target.value, to)} /></SideField>
+      <SideField label="Đến ngày"><input type="date" className="input" value={to} min={from} onChange={(e) => onChange(from, e.target.value)} /></SideField>
+    </>
   );
 }
 

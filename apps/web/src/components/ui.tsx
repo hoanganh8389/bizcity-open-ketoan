@@ -68,8 +68,26 @@ export function ErrorBox({ error }: { error: string | null | undefined }) {
   return <div className="alert alert-bad" style={{ margin: 12 }}>{error}</div>;
 }
 
-export function Empty({ text = 'Không tìm thấy bản ghi nào thỏa mãn điều kiện' }: { text?: string }) {
-  return <div className="empty">{text}</div>;
+/**
+ * Trạng thái trống: hình nhỏ + một câu + nút hành động (vd "+ Thêm", "Nhập từ Excel") để người dùng biết bước tiếp theo.
+ * [2026-11-11 Nguyễn Văn Thủy] thêm hình và `actions` (đóng góp).
+ */
+export function Empty({ text = 'Không tìm thấy bản ghi nào thỏa mãn điều kiện', actions }: { text?: string; actions?: ReactNode }) {
+  return (
+    <div className="empty empty-state">
+      <svg className="empty-art" width="72" height="60" viewBox="0 0 72 60" aria-hidden="true">
+        <rect x="10" y="14" width="52" height="40" rx="5" fill="var(--brand-50)" stroke="var(--brand-500)" strokeWidth="1.5" />
+        <path d="M10 22h52" stroke="var(--brand-500)" strokeWidth="1.5" />
+        <rect x="18" y="29" width="22" height="3" rx="1.5" fill="var(--brand-100)" />
+        <rect x="18" y="36" width="34" height="3" rx="1.5" fill="var(--brand-100)" />
+        <rect x="18" y="43" width="16" height="3" rx="1.5" fill="var(--brand-100)" />
+        <circle cx="56" cy="14" r="9" fill="#fff" stroke="var(--brand-500)" strokeWidth="1.5" />
+        <path d="M56 10v8M52 14h8" stroke="var(--brand-600)" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+      <div>{text}</div>
+      {actions && <div className="empty-actions">{actions}</div>}
+    </div>
+  );
 }
 
 /** Ngăn trượt bên phải (xem chi tiết, hướng dẫn). Esc để đóng. */
@@ -105,8 +123,11 @@ export function Drawer({ title, onClose, children, narrow, actions }: { title: R
  * Mở bằng nút Sửa của thanh công cụ (openNextInEdit): vào thẳng chế độ sửa; bấm đúp dòng thì mở ở chế độ xem.
  * Phím tắt khi đang xem: Enter / F2 = Sửa (bấm đúp KHÔNG mở sửa — tránh sửa nhầm khi bấm đúp để chọn chữ).
  * `viewAgain` (từ useViewAgain): Ghi xong bản ghi đã có thì gọi viewAgain[1]() — ở lại hộp thoại, quay về chế độ xem.
+ * Ctrl + S: bấm nút chính (Ghi) ở chân hộp thoại khi đang sửa.
+ * [2026-11-11 Nguyễn Văn Thủy] `voucher`: hộp thoại CHỨNG TỪ — gần toàn màn, tổng tiền chữ lớn góc trên phải, dòng phím tắt ở chân (đóng góp).
  */
-export function Modal({ title, onClose, children, footer, wide, viewFirst, viewActions, onEdit, viewAgain }: { title: ReactNode; onClose: () => void; children: ReactNode; footer: ReactNode; wide?: boolean; viewFirst?: boolean; viewActions?: ReactNode; onEdit?: () => void; viewAgain?: ViewAgain }) {
+export interface VoucherFrame { total?: number | null; totalLabel?: string; keys?: string }
+export function Modal({ title, onClose, children, footer, wide, viewFirst, viewActions, onEdit, viewAgain, voucher }: { title: ReactNode; onClose: () => void; children: ReactNode; footer: ReactNode; wide?: boolean; viewFirst?: boolean; viewActions?: ReactNode; onEdit?: () => void; viewAgain?: ViewAgain; voucher?: VoucherFrame }) {
   const [locked, setLocked] = useState(() => Boolean(viewFirst) && !takeEditIntent());
   const viewSignal = viewAgain?.[0] ?? 0;
   useEffect(() => { if (viewSignal) setLocked(true); }, [viewSignal]);
@@ -119,7 +140,10 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
       // Hộp thoại lồng nhau: chỉ hộp trên cùng (đang hiện) nhận phím.
       if (mask.current !== [...document.querySelectorAll('.modal-mask:not(.is-min)')].pop()) return;
       if (e.key === 'Escape') onClose();
-      else if (locked && (e.key === 'F2' || (e.key === 'Enter' && !(e.target as HTMLElement).closest?.('button, a, textarea')))) { e.preventDefault(); edit(); }
+      else if (!locked && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        const btn = mask.current?.querySelector<HTMLButtonElement>('.modal-foot .btn-primary:not(:disabled)');
+        if (btn) { e.preventDefault(); btn.click(); }
+      } else if (locked && (e.key === 'F2' || (e.key === 'Enter' && !(e.target as HTMLElement).closest?.('button, a, textarea')))) { e.preventDefault(); edit(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -138,11 +162,14 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
   return (
     <DockScope>
     <div className={`modal-mask${dock.minimized ? ' is-min' : ''}`} ref={mask} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal ${wide ? 'wide' : ''} ${locked ? 'is-locked' : ''}`} role="dialog" aria-modal="true">
-        <div className="modal-head" ref={(el) => { dock.headRef.current = el; }}>{title}{locked && <span className="badge badge-info modal-viewing">Đang xem</span>}{dock.top && <MinimizeButton onClick={dock.minimize} />}<button type="button" className="modal-x" data-view-ok onClick={onClose} aria-label="Đóng" title="Đóng (Esc)">✕</button></div>
+      <div className={`modal ${wide || voucher ? 'wide' : ''} ${voucher ? 'chung-tu' : ''} ${locked ? 'is-locked' : ''}`} role="dialog" aria-modal="true">
+        <div className="modal-head" ref={(el) => { dock.headRef.current = el; }}>{title}{locked && <span className="badge badge-info modal-viewing">Đang xem</span>}
+          {voucher && voucher.total !== undefined && <span className="ct-total" title={voucher.totalLabel ?? 'Tổng tiền thanh toán'}><small>{voucher.totalLabel ?? 'Tổng tiền thanh toán'}</small><b>{(voucher.total ?? 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}</b></span>}
+          {dock.top && <MinimizeButton onClick={dock.minimize} />}<button type="button" className="modal-x" data-view-ok onClick={onClose} aria-label="Đóng" title="Đóng (Esc)">✕</button></div>
         <div className="modal-body" onClickCapture={guard} onMouseDownCapture={guard} onKeyDownCapture={guard} onPasteCapture={guard} onDropCapture={guard} onCutCapture={guard}>
           {children}
         </div>
+        {voucher && <div className="ct-keys">{voucher.keys ?? 'F9 - Thêm nhanh khách hàng, nhà cung cấp, mặt hàng (khi đang ở ô chọn) · Ctrl + S - Ghi · Esc - Thoát'}</div>}
         <div className="modal-foot">
           {locked ? <>
             {viewActions}{keepInView(footer)}

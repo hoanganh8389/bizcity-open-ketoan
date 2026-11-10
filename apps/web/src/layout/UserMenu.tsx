@@ -1,6 +1,7 @@
 // [2026-11-06 03:40 AM Nguyễn Văn Thủy] MENU — gom tên, đổi mật khẩu, đăng xuất vào một avatar trên thanh trên cùng (đóng góp)
 import { useEffect, useRef, useState } from 'react';
-import { KeyRound, LogOut } from 'lucide-react';
+import { KeyRound, LogOut, Palette } from 'lucide-react';
+import { giaoDien } from '@/lib/giaoDien';
 import { ROLE_LABELS, type Role } from '@ketoan/contracts';
 import { useAuth } from '@/lib/auth';
 
@@ -31,6 +32,7 @@ export function UserMenu({ onChangePassword }: { onChangePassword: () => void })
             <div><b>{name}</b><small>{user?.email}</small><small>{role}</small></div>
           </div>
           <button type="button" role="menuitem" onClick={() => { setOpen(false); onChangePassword(); }}><KeyRound size={16} /> Đổi mật khẩu</button>
+          <button type="button" role="menuitem" title="Đổi giữa giao diện Xanh (mặc định) và giao diện cổ điển; nhớ trên máy này" onClick={() => { giaoDien.set(giaoDien.get() === 'xanh' ? 'co-dien' : 'xanh'); setOpen(false); }}><Palette size={16} /> {giaoDien.get() === 'xanh' ? 'Dùng giao diện cổ điển' : 'Dùng giao diện Xanh'}</button>
           <button type="button" role="menuitem" onClick={logout}><LogOut size={16} /> Đăng xuất</button>
         </div>
       )}

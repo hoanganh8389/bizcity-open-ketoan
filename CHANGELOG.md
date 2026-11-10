@@ -12,6 +12,18 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Giao diện Xanh, thêm nhanh danh mục ngay trên chứng từ (cập nhật trải nghiệm đợt 1) <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/01 (đóng góp) -->
+
+- **Thêm:** giao diện Xanh (mặc định; avatar → Dùng giao diện cổ điển để quay lại): thanh trên trắng, menu trái nền tối, tiêu đề bảng xanh xám.
+- **Thêm:** nút **Thêm nhanh** và mục **Hay dùng** đầu menu trái; màn danh sách nhận `?them=1` để mở sẵn form thêm mới.
+- **Thêm:** ô chọn khách hàng / NCC / mặt hàng trên chứng từ có nút **+** và **F9** thêm ngay, ghi xong tự điền mã; danh sách xổ dạng bảng (MST, địa chỉ, điện thoại / ĐVT, **Tồn**); ô kho có nút + thêm kho cho chi nhánh.
+- **Thêm:** thẻ chỉ số trên danh mục Đối tượng (nợ quá hạn, tổng nợ) và Mặt hàng (còn hàng, hết hàng, âm kho); cột **Chức năng** (Lập phiếu bán / Lập phiếu nhập) ở danh mục Đối tượng.
+- **Thêm:** phiếu bán / trả lại: **Chưa thu tiền / Thu tiền ngay** ở đầu phiếu.
+- **Thêm:** API `GET /api/v1/inventory/stock-counts`; `GET /api/v1/inventory/items` nhận `branchCode`, trả `stock`.
+- **Đổi:** form chứng từ gần toàn màn, tổng tiền chữ lớn góc phải, chân Thoát · Ghi và thêm mới · Ghi, **Ctrl + S = Ghi**; phiếu chưa duyệt chữ **cam** (trước: mờ); nút Thêm của danh sách là nút chính; ô **Kỳ** có thêm Hôm qua, Tuần này, Cả tháng / quý / năm; danh sách trống có nút Thêm; trang Quy trình của nhóm có cột Báo cáo.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** kéo ảnh api và web mới.
+
 ### Bản cài biết kết quả bộ kiểm của chính nó (PHASE-034 S034-11) <!-- [2026-11-11 04:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11 -->
 
 - **Thêm:** dựng ảnh api tự chạy bộ kiểm tĩnh (lane selfcheck) trên mã của commit và đóng gói kết quả vào ảnh (`build/scoreboard.json`); check đỏ không chặn dựng ảnh.

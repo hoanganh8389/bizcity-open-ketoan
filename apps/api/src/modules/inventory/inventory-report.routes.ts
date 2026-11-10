@@ -50,9 +50,16 @@ export async function inventoryReportRoutes(app: FastifyInstance): Promise<void>
     handler: async (req) => ok(await inventoryReportService.itemLedger(authOf(req), req.query)),
   });
 
+  // [2026-11-11 Nguyễn Văn Thủy] thẻ chỉ số danh mục mặt hàng: hết hàng / âm kho (đóng góp)
+  r.get('/api/v1/inventory/stock-counts', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Đếm mặt hàng còn hàng / hết hàng / âm kho (tồn hiện tại, ĐVT nhỏ nhất)', querystring: z.object({ branchCode: z.string().optional() }) },
+    handler: async (req) => ok(await inventoryReportService.stockCounts(authOf(req), req.query)),
+  });
+
   r.get('/api/v1/inventory/items', {
     preHandler: requirePermission('reports:read'),
-    schema: { tags, summary: 'Danh sách mặt hàng để chọn', querystring: z.object({ search: z.string().optional(), limit: z.coerce.number().int().min(1).max(200).default(50) }) },
+    schema: { tags, summary: 'Danh sách mặt hàng để chọn', querystring: z.object({ search: z.string().optional(), limit: z.coerce.number().int().min(1).max(200).default(50), branchCode: z.string().optional() }) },
     handler: async (req) => ok(await inventoryReportService.items(authOf(req), req.query)),
   });
 

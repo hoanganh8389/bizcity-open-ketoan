@@ -2,9 +2,13 @@
  * Chọn KHO của chi nhánh cho phiếu hàng (đầu phiếu, mọi dòng đi theo). Chỉ kho đang dùng của chi nhánh đang chọn; tự chọn kho
  * mặc định khi đổi chi nhánh / chưa chọn. Chi nhánh chưa khai kho (DM12) → để trống = kho mặc định (sổ kho tự gán).
  */
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+
+// [2026-11-11 Nguyễn Văn Thủy] nút + cạnh ô kho: thêm kho cho chi nhánh ngay trên phiếu (đóng góp)
+const WarehouseForm = lazy(() => import('@/features/catalog/WarehousesPage').then((m) => ({ default: m.WarehouseForm })));
 
 export interface KhoOption { code: string; branchCode: string; name: string; isActive: boolean; isDefault: boolean; isPromo?: boolean }
 
@@ -27,7 +31,25 @@ export const khoFullLabel = (all: KhoOption[], branchCode?: string, code?: strin
   return c ? `${c}${w ? ` · ${w.name}` : ''}` : 'mặc định (chưa khai kho)';
 };
 
-export function ChonKho({ branchCode, value, onChange, disabled, avoid }: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string }) {
+export function ChonKho(props: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string }) {
+  const [adding, setAdding] = useState(false);
+  const { can } = useAuth();
+  const canAdd = !props.disabled && Boolean(props.branchCode) && can('catalog:write');
+  if (!canAdd) return <ChonKhoO {...props} />;
+  return (
+    <span className="kho-add">
+      <ChonKhoO {...props} />
+      <button type="button" className="picker-add" title={`Thêm kho cho chi nhánh ${props.branchCode}`} onClick={() => setAdding(true)}>+</button>
+      {adding && (
+        <Suspense fallback={null}>
+          <WarehouseForm value={{ isNew: true, isActive: true, branchCode: props.branchCode }} onSaved={(code) => code && props.onChange(code)} onClose={() => setAdding(false)} />
+        </Suspense>
+      )}
+    </span>
+  );
+}
+
+function ChonKhoO({ branchCode, value, onChange, disabled, avoid }: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string }) {
   const all = useKho();
   const list = all.filter((w) => w.branchCode === branchCode && w.isActive);
   const def = list.find((w) => w.isDefault) ?? (list.length === 1 ? list[0] : undefined);

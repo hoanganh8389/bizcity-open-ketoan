@@ -6,6 +6,7 @@
  *         đơn giá bình quân nhập (chưa thuế, sau CK), số phiếu.
  * Chiều: nhập mua / nhận quà / đổi (nhận về) = vào; trả NCC / xuất quà / đổi (trả đi) = ra; đơn đặt chỉ cộng cột "SL đặt".
  */
+import { dongChungTu } from '@/lib/trangThai';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TAX_RATE, computeDoc, ratioOf, type LineCalc, type ProductUnit } from '@bizcity/mua-hang-domain';
@@ -103,7 +104,7 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen, 
       { key: 'exp', header: 'Hạn dùng', width: 90, value: (r) => dmy(r.l.expDate) },
     ];
     return <DataGrid storageKey="mh-chung-tu-dong" exportName="chung-tu-mua-hang-theo-dong" rows={rows} rowKey={(r) => r.key} columns={columns} footerLabel="Cộng" onRowDoubleClick={(r) => onOpen(r.doc)}
-      rowClassName={(r) => (r.doc.status === 'approved' ? '' : 'muted')} emptyText="Không có dòng hàng nào trong các phiếu đang lọc" />;
+      rowClassName={(r) => dongChungTu(r.doc.status)} emptyText="Không có dòng hàng nào trong các phiếu đang lọc" />;
   }
 
   const by = new Map<string, SkuRow>();

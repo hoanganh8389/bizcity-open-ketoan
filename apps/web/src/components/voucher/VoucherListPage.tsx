@@ -7,12 +7,13 @@
  * useListFilter : điều kiện lọc (bản nháp đang sửa / bản đã bấm Tìm kiếm) và widen() nới khoảng ngày cho phiếu vừa ghi.
  */
 import { useRef, useState, type ReactNode } from 'react';
+import { useThemTuDiaChi } from '@/lib/themNhanh';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Copy, Download, Pencil, RefreshCw, Search, X } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { defaultFrom, today } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
-import { BranchCheckList, ReportSideLayout, SideField, branchesPicked } from '@/components/ReportPanel';
+import { BranchCheckList, ReportSideLayout, SideField, SideKy, branchesPicked } from '@/components/ReportPanel';
 import { Empty, ErrorBox, Loading, openNextInEdit } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import type { ToolButton } from './VoucherModal';
@@ -62,6 +63,8 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
   const exportRef = useRef<(() => void) | null>(null);
   const rows = query.data ?? [];
   const picked = rows.filter((r) => selected.has(r.id));
+  // ?them=1 (nút Thêm nhanh): mở phiếu mới như bấm nút Thêm đầu tiên.
+  useThemTuDiaChi(() => addButtons[0]?.onClick(), canWrite && addButtons.length > 0);
 
   const run = (fn: () => Promise<void>) => {
     setBusy(true);
@@ -102,8 +105,7 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
 
   const panel = (
     <>
-      <SideField label="Từ ngày"><input type="date" className="input" value={draft.from} onChange={(e) => setDraft((x) => ({ ...x, from: e.target.value }))} /></SideField>
-      <SideField label="Đến ngày"><input type="date" className="input" value={draft.to} min={draft.from} onChange={(e) => setDraft((x) => ({ ...x, to: e.target.value }))} /></SideField>
+      <SideKy from={draft.from} to={draft.to} onChange={(from, to) => setDraft((x) => ({ ...x, from, to }))} />
       <span className="muted" style={{ fontSize: 12, marginTop: 2 }}>Chi nhánh</span>
       <BranchCheckList value={draft.branchCodes} onChange={(branchCodes) => setDraft((x) => ({ ...x, branchCodes }))} onRestore={(branchCodes) => { setDraft((x) => ({ ...x, branchCodes })); setF((x) => ({ ...x, branchCodes })); }} />
       <div className="rp-actions">
@@ -119,7 +121,7 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
       <ReportSideLayout panel={panel}>
         <div className="card" style={{ padding: 0 }}>
           <div className="vf-toolbar">
-            {addButtons.map((b) => <button key={b.key} disabled={!canWrite || b.disabled} title={b.title} onClick={() => { setNotice(null); b.onClick(); }}>{b.icon}{b.label}</button>)}
+            {addButtons.map((b, i) => <button key={b.key} className={i === 0 ? 'vf-add' : undefined} disabled={!canWrite || b.disabled} title={b.title} onClick={() => { setNotice(null); b.onClick(); }}>{b.icon}{b.label}</button>)}
             <button disabled={busy} onClick={() => { const r = one(); if (r) run(async () => { openNextInEdit(); await onOpen(r); }); }}><Pencil size={15} /> Sửa</button>
             {onCopy && <button disabled={!canWrite || busy} onClick={() => { const r = one(); if (r) run(async () => { setNotice(null); await onCopy(r); }); }}><Copy size={15} /> Copy</button>}
             <button disabled={!canWrite || busy} onClick={remove}><X size={15} className="text-bad" /> Xóa</button>
@@ -129,7 +131,7 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
           </div>
           {notice && <div className="alert alert-ok" style={{ margin: 8 }}>{notice}</div>}
           <ErrorBox error={query.error ? errorText(query.error) : problem} />
-          {query.isLoading ? <Loading /> : rows.length === 0 ? <Empty text={emptyText ?? `Chưa có ${title.toLowerCase()} nào trong khoảng này`} /> : (
+          {query.isLoading ? <Loading /> : rows.length === 0 ? <Empty text={emptyText ?? `Chưa có ${title.toLowerCase()} nào trong khoảng này`} actions={canWrite && addButtons[0] ? <button type="button" className="btn btn-primary" onClick={() => { setNotice(null); addButtons[0]!.onClick(); }}>+ {addButtons[0].label} {title.toLowerCase()}</button> : undefined} /> : (
             <DataGrid
               storageKey={storageKey}
               rows={rows}

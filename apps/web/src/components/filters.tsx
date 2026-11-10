@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ListPicker } from './pickers';
 import { ChevronDown } from 'lucide-react';
 import { api } from '@/lib/api';
-import { PERIOD_PRESETS, rememberPeriod } from '@/lib/format';
+import { PERIOD_PRESETS, presetOf, rememberPeriod } from '@/lib/format';
 import { useFilterPanel } from './filterPanel';
 import { PanelBranchList } from './ReportPanel';
 
@@ -15,14 +15,14 @@ import { PanelBranchList } from './ReportPanel';
  * Kỳ vừa chọn được nhớ lại để các báo cáo mở sau dùng cùng kỳ.
  */
 export function DateRange({ from, to, onChange, remember = true }: { from: string; to: string; onChange: (from: string, to: string) => void; remember?: boolean }) {
-  const preset = PERIOD_PRESETS.find((p) => { const [a, b] = p.range(); return a === from && b === to; })?.key ?? '';
+  const preset = presetOf(from, to);
   // remember={false}: màn nhập phiếu có khoảng ngày riêng, không lấy và không ghi đè kỳ của báo cáo.
   const change = (a: string, b: string) => { if (remember) rememberPeriod(a, b); onChange(a, b); };
   return (
     <>
       <div className="field">
         <label>Kỳ</label>
-        <select className="select input" style={{ width: 130 }} value={preset} onChange={(e) => { const p = PERIOD_PRESETS.find((x) => x.key === e.target.value); if (p) change(...p.range()); }}>
+        <select className="select input" style={{ width: 150 }} value={preset} onChange={(e) => { const p = PERIOD_PRESETS.find((x) => x.key === e.target.value); if (p) change(...p.range()); }}>
           <option value="">Tuỳ chọn</option>
           {PERIOD_PRESETS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
         </select>

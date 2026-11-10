@@ -12,6 +12,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { errorText } from '@/lib/api';
 import { today } from '@/lib/format';
 import { workBranch } from '@/lib/workBranch';
+import { dongChungTu } from '@/lib/trangThai';
+import { useThemTuDiaChi } from '@/lib/themNhanh';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
@@ -62,6 +64,7 @@ export function ChuyenKhoPage() {
       p.kind === 'unreceive' ? ckApi.unreceive(p.id) : p.kind === 'reject' ? ckApi.reject(p.id, p.reason ?? '') : ckApi.cancel(p.id, p.reason ?? ''),
     onSuccess: after,
   });
+  useThemTuDiaChi(() => { setEditing(emptyDoc(f.branchCodes)); setFormKey((k) => k + 1); });
   const open = async (row: CkDoc, edit = false) => { if (edit) openNextInEdit(); setEditing(await ckApi.get(row.id)); setFormKey((k) => k + 1); };
   const openReceive = async (row: CkDoc) => { receive.reset(); setReceiving(await ckApi.get(row.id)); };
   const ask = (text: string, need = false) => { const r = window.prompt(text, ''); if (r === null) return null; if (need && !r.trim()) { window.alert('Cần ghi lý do'); return null; } return r.trim(); };
@@ -109,7 +112,7 @@ export function ChuyenKhoPage() {
             <DataGrid
               storageKey="kho01-phieu-chuyen-v1" exportName={`phieu-chuyen-kho-${f.from}-${f.to}`} exportRef={exportRef}
               rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => void open(r)}
-              rowClassName={(r) => (r.status === 'cancelled' || r.status === 'rejected' ? 'muted' : '')} footerLabel="Cộng"
+              rowClassName={(r) => dongChungTu(r.status)} footerLabel="Cộng"
               emptyText='Chưa có phiếu chuyển kho trong khoảng này — bấm "+ Thêm"'
               columns={[
                 { key: 'docDate', header: 'Ngày', title: 'Ngày xuất', type: 'date', width: 95 },

@@ -17,7 +17,7 @@ import { api, errorText } from '@/lib/api';
 import { date, today } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { BranchCheckList, ReportSideLayout, SideField, branchesPicked } from '@/components/ReportPanel';
+import { BranchCheckList, ReportSideLayout, SideField, SideKy, branchesPicked } from '@/components/ReportPanel';
 import { AccountPicker } from '@/components/pickers';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { Empty, ErrorBox, Loading } from '@/components/ui';
@@ -145,8 +145,7 @@ export function AccountingVouchersPage({ mode = 'all' }: { mode?: VoucherMode })
 
   const panel = (
     <>
-      <SideField label="Từ ngày"><input type="date" className="input" value={df.from} onChange={(e) => setD({ from: e.target.value })} /></SideField>
-      <SideField label="Đến ngày"><input type="date" className="input" value={df.to} min={df.from} onChange={(e) => setD({ to: e.target.value })} /></SideField>
+      <SideKy from={df.from} to={df.to} onChange={(from, to) => setD({ from, to })} />
       <SideField label="Tìm số chứng từ"><input className="input" value={df.docNo} onChange={(e) => setD({ docNo: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && search()} placeholder="Số CT, số bút toán, số HĐ" /></SideField>
       <SideField label="Số tài khoản"><AccountPicker className="input" placeholder="" value={df.account} onChange={(account) => setD({ account })} /></SideField>
       <SideField label="Loại chứng từ">

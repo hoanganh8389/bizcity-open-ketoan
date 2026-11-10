@@ -105,7 +105,7 @@ export function BangDongHoaDon({ lines, onChange, readOnly, editNcc, partnerCode
                 <td>
                   {readOnly ? (l.sku ? <span><b className="mono">{l.sku}</b> {names[l.sku] ?? ''}</span> : <span className="mh-bad">chưa chọn mã</span>) : (
                     <>
-                      <ItemPicker value={l.sku ?? ''} onChange={(v) => choose(i, v)} placeholder="Chọn mã bên mình…" />
+                      <ItemPicker canAdd value={l.sku ?? ''} onChange={(v) => choose(i, v)} placeholder="Chọn mã bên mình…" />
                       {!l.sku && !!l.candidates?.length && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                           {l.candidates.map((c) => (

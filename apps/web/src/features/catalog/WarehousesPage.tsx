@@ -8,6 +8,8 @@ import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useThemTuDiaChi } from '@/lib/themNhanh';
+import { workBranch } from '@/lib/workBranch';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -30,6 +32,7 @@ export function WarehousesPage() {
   const [branch, setBranch] = useState('');
   const [editing, setEditing] = useState<(Partial<Warehouse> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<Warehouse | null>(null);
+  useThemTuDiaChi(() => setEditing({ isNew: true, isActive: true, branchCode: workBranch.get() || '' }), canWrite);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useWarehouses();
   const rows = (q.data ?? []).filter((w) => !branch || w.branchCode === branch);
@@ -87,7 +90,8 @@ export function WarehousesPage() {
   );
 }
 
-function WarehouseForm({ value, onClose }: { value: Partial<Warehouse> & { isNew?: boolean }; onClose: () => void }) {
+/** Form kho; mở được từ ô chọn kho trên chứng từ (nút +), ghi xong báo mã kho mới qua onSaved. */
+export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Warehouse> & { isNew?: boolean }; onClose: () => void; onSaved?: (code: string) => void }) {
   const qc = useQueryClient();
   const [v, setV] = useState(value);
   const set = (p: Partial<Warehouse>) => setV((x) => ({ ...x, ...p }));
@@ -100,7 +104,7 @@ function WarehouseForm({ value, onClose }: { value: Partial<Warehouse> & { isNew
       };
       return value.isNew ? api.post('/api/v1/warehouses', { ...body, code: v.code?.trim() }) : api.patch(`/api/v1/warehouses/${encodeURIComponent(value.code!)}`, body);
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['warehouses'] }); if (value.isNew) onClose(); else viewAgain[1](); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['warehouses'] }); if (value.isNew) { onSaved?.(v.code?.trim() ?? ''); onClose(); } else viewAgain[1](); },
   });
   const txt = (k: keyof Warehouse, label: string, full = false) => <Field label={label} full={full}><input className="input" value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Warehouse>)} /></Field>;
   const check = (k: 'isActive' | 'isDefault' | 'isPromo', label: string) => <label className="checkbox"><input type="checkbox" checked={k === 'isActive' ? v.isActive !== false : Boolean(v[k])} onChange={(e) => set({ [k]: e.target.checked })} /> {label}</label>;

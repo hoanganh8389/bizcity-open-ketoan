@@ -8,10 +8,12 @@ import { useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useThemTuDiaChi } from '@/lib/themNhanh';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, Pager } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { KpiMatHang } from '@/components/KpiDanhMuc';
 import { ExcelImport, type ImportColumn } from '@/components/ExcelImport';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { ProductFullForm } from './ProductFullForm';
@@ -80,10 +82,10 @@ const SOURCE: Record<string, string> = { document: 'Tự thêm từ chứng từ
 
 /** Đường dẫn cây (cha / con / …) của một mã phân loại. */
 /** Form mặt hàng mở được từ bất kỳ màn nào (phiếu, bảng giá…): tự tải phân loại hàng. sku null = thêm mới. */
-export function ProductEditor({ sku, onClose, startTab, startEditing }: { sku: string | null; onClose: () => void; startTab?: string; startEditing?: boolean }) {
+export function ProductEditor({ sku, onClose, startTab, startEditing, initial, onSaved }: { sku: string | null; onClose: () => void; startTab?: string; startEditing?: boolean; initial?: { name?: string }; onSaved?: (sku: string) => void }) {
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
   const groupPath = useMemo(() => pathOf(classes.group.data ?? []), [classes.group.data]);
-  return <ProductFullForm sku={sku} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={onClose} startTab={startTab} startEditing={startEditing} />;
+  return <ProductFullForm sku={sku} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={onClose} startTab={startTab} startEditing={startEditing} initial={initial} onSaved={onSaved} />;
 }
 
 /** Đường dẫn trong cây: cấp 1 / cấp 2 / … — ghép theo tên (mặc định) hoặc theo mã. */
@@ -120,6 +122,7 @@ export function ProductsPage() {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<(Partial<Product> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<Product | null>(null);
+  useThemTuDiaChi(() => setEditing({ isNew: true, groupCode: group }), canWrite);
   const exportRef = useRef<(() => void) | null>(null);
   const viewRef = useRef<Product[]>([]);
   // In tem: mặt hàng đang chọn hoặc mọi dòng đang hiện trên lưới (sau tìm, lọc); số tem mỗi mã.
@@ -188,6 +191,7 @@ export function ProductsPage() {
   return (
     <>
       <PageHeader title="Mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
+      <KpiMatHang />
       <div className="acc17">
         <div className="card acc17-tree">
           <div className="acc17-tree-head">Nhóm hàng</div>

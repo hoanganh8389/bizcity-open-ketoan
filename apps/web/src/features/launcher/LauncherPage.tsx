@@ -94,7 +94,19 @@ export function GroupHomePage() {
     <>
       {xem === 'tru-cot' && g.module ? <>{veSoDo}<PillarMatrix module={g.module} compact /></>
         : xem === 'chi-tiet' && Flow ? <>{veSoDo}<Flow /></>
-        : soDo ? <SoDoNhom soDo={soDo} canOpen={(p) => seen.has(p.split('?')[0]!)} extra={nutPhu} />
+        : soDo ? (
+          // Sơ đồ bên trái, báo cáo hay dùng của nhóm bên phải (bố cục trang Quy trình phổ biến).
+          <div className={`sd-layout${g.reports.length ? '' : ' no-bc'}`}>
+            <div className="sd-main"><SoDoNhom soDo={soDo} canOpen={(p) => seen.has(p.split('?')[0]!)} extra={nutPhu} /></div>
+            {g.reports.length > 0 && (
+              <aside className="card sd-bc">
+                <b>Báo cáo</b>
+                {g.reports.flatMap((s) => s.items).slice(0, 7).map((m) => <Link key={m.key} to={m.path!} title={m.code ? `${m.label} (${m.code})` : m.label}>{m.label}</Link>)}
+                <Link className="sd-bc-all" to={`/bao-cao?nhom=${g.key}`}>Tất cả báo cáo ›</Link>
+              </aside>
+            )}
+          </div>
+        )
         : (
           <>
             <div className="module-home-grid">

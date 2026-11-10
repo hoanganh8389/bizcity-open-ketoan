@@ -77,15 +77,23 @@ export function firstDayOfMonth(): string {
 const iso = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const monthRange = (y: number, m: number, months = 1): [string, string] => [iso(new Date(y, m, 1)), iso(new Date(y, m + months, 0))];
 
+// [2026-11-11 Nguyễn Văn Thủy] thêm kỳ hôm qua, tuần này, cả tháng / quý / năm (đóng góp)
 export const PERIOD_PRESETS: { key: string; label: string; range: () => [string, string] }[] = [
   { key: 'today', label: 'Hôm nay', range: () => [today(), today()] },
-  { key: 'this-month', label: 'Tháng này', range: () => { const n = new Date(); return [iso(new Date(n.getFullYear(), n.getMonth(), 1)), today()]; } },
+  { key: 'yesterday', label: 'Hôm qua', range: () => { const d = new Date(); d.setDate(d.getDate() - 1); return [iso(d), iso(d)]; } },
+  { key: 'this-week', label: 'Tuần này', range: () => { const n = new Date(); const d = new Date(n); d.setDate(n.getDate() - ((n.getDay() + 6) % 7)); return [iso(d), today()]; } },
+  { key: 'this-month', label: 'Đầu tháng đến nay', range: () => { const n = new Date(); return [iso(new Date(n.getFullYear(), n.getMonth(), 1)), today()]; } },
+  { key: 'full-month', label: 'Cả tháng này', range: () => { const n = new Date(); return monthRange(n.getFullYear(), n.getMonth()); } },
   { key: 'last-month', label: 'Tháng trước', range: () => { const n = new Date(); return monthRange(n.getFullYear(), n.getMonth() - 1); } },
-  { key: 'this-quarter', label: 'Quý này', range: () => { const n = new Date(); return [iso(new Date(n.getFullYear(), Math.floor(n.getMonth() / 3) * 3, 1)), today()]; } },
+  { key: 'this-quarter', label: 'Đầu quý đến nay', range: () => { const n = new Date(); return [iso(new Date(n.getFullYear(), Math.floor(n.getMonth() / 3) * 3, 1)), today()]; } },
+  { key: 'full-quarter', label: 'Cả quý này', range: () => { const n = new Date(); return monthRange(n.getFullYear(), Math.floor(n.getMonth() / 3) * 3, 3); } },
   { key: 'last-quarter', label: 'Quý trước', range: () => { const n = new Date(); return monthRange(n.getFullYear(), Math.floor(n.getMonth() / 3) * 3 - 3, 3); } },
-  { key: 'this-year', label: 'Năm nay', range: () => [`${new Date().getFullYear()}-01-01`, today()] },
+  { key: 'this-year', label: 'Đầu năm đến nay', range: () => [`${new Date().getFullYear()}-01-01`, today()] },
+  { key: 'full-year', label: 'Cả năm nay', range: () => { const y = new Date().getFullYear(); return [`${y}-01-01`, `${y}-12-31`]; } },
   { key: 'last-year', label: 'Năm trước', range: () => { const y = new Date().getFullYear() - 1; return [`${y}-01-01`, `${y}-12-31`]; } },
 ];
+/** Kỳ có sẵn khớp đúng khoảng ngày (để ô Kỳ hiện tên); không khớp → '' (Tuỳ chọn). */
+export const presetOf = (from: string, to: string) => PERIOD_PRESETS.find((p) => { const [a, b] = p.range(); return a === from && b === to; })?.key ?? '';
 
 const PERIOD_KEY = 'ketoan.period';
 function storedPeriod(): { from: string; to: string } | null {

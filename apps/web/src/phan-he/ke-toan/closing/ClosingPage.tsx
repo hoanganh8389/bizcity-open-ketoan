@@ -16,7 +16,7 @@ import { BookOpen, Eye, FileSpreadsheet, Plus, RefreshCw, Search, Trash2 } from 
 import type { ClosingRule } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { date, dateTime, today } from '@/lib/format';
-import { BranchCheckList, ReportSideLayout, SideField, branchesPicked } from '@/components/ReportPanel';
+import { BranchCheckList, ReportSideLayout, SideField, SideKy, branchesPicked } from '@/components/ReportPanel';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { useAuth } from '@/lib/auth';
@@ -162,8 +162,7 @@ function ClosingList() {
 
   const panel = (
     <>
-      <SideField label="Từ ngày"><input type="date" className="input" value={df.from} onChange={(e) => setDf((x) => ({ ...x, from: e.target.value }))} /></SideField>
-      <SideField label="Đến ngày"><input type="date" className="input" value={df.to} min={df.from} onChange={(e) => setDf((x) => ({ ...x, to: e.target.value }))} /></SideField>
+      <SideKy from={df.from} to={df.to} onChange={(from, to) => setDf((x) => ({ ...x, from, to }))} />
       <div className="rp-actions">
         <button type="button" className="btn btn-primary" onClick={search} disabled={runs.isFetching}><Search size={14} /> Tìm kiếm</button>
       </div>

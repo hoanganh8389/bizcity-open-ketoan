@@ -6,6 +6,7 @@
  * ?nhan-tu=<id đơn đặt> lập phiếu nhập từ đơn (chép phần còn lại) · ?tu-hoa-don=<id hoá đơn NCC> lập phiếu nhập từ hoá đơn NCC (MH22) · ?nhap-excel=1 mở hộp nhập Excel.
  * Nút In (mẫu theo loại phiếu, mauIn.tsx): bảng chưa chọn được nhiều dòng nên in phiếu đang chọn.
  */
+import { dongChungTu } from '@/lib/trangThai';
 import { workBranch } from '@/lib/workBranch';
 import { restoreDock } from '@/layout/WindowDock';
 import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
@@ -311,7 +312,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
           <span className="row" style={{ gap: 0, marginLeft: 8 }} title="Xem cùng các phiếu đang lọc theo phiếu, theo từng dòng hàng (như BH01 Báo cáo bán hàng) hoặc cộng dồn theo mã hàng (như BH02 Tổng hợp bán hàng)">
             {VIEWS[report ?? ''].map(([k, l]) => <button key={k} type="button" className={`btn btn-sm ${view === k ? 'btn-primary' : ''}`} onClick={() => setView(k)}>{l}</button>)}
           </span>
-          {view !== 'nhom' && <span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>{rows.length} chứng từ · dòng mờ = chưa duyệt</span>}
+          {view !== 'nhom' && <span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>{rows.length} chứng từ · <span className="ct-cho-chu">chữ cam = chưa duyệt</span></span>}
         </div>
         {notice && <div className="alert alert-ok" style={{ margin: '0 12px 6px' }}>{notice}</div>}
         <ErrorBox error={error ? errorText(error) : null} />
@@ -321,7 +322,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
             khoText={(d) => { const k = d.kind === 'order' ? khoOf(d.branchCode, d.deliveryWarehouse) : khoOf(d.branchCode, d.warehouseCode); return k; }} />
         ) : isLoading || !data ? <Loading /> : (
           <DataGrid storageKey={embedded ? "mh-chung-tu-ncc" : report === 'bao-cao' ? 'mh-bao-cao-phieu' : "mh-chung-tu-v2"} exportName="chung-tu-mua-hang" rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => setEditing(r)}
-            rowClassName={(r) => (r.status === 'approved' ? '' : 'muted')} columns={embedded ? columns.filter((c) => !NCC_COLS.includes(c.key)) : columns} footerLabel="Cộng" emptyText="Chưa có chứng từ — chọn “+ Thêm chứng từ…”" />
+            rowClassName={(r) => dongChungTu(r.status)} columns={embedded ? columns.filter((c) => !NCC_COLS.includes(c.key)) : columns} footerLabel="Cộng" emptyText="Chưa có chứng từ — chọn “+ Thêm chứng từ…”" />
         )}
           </div>
         );

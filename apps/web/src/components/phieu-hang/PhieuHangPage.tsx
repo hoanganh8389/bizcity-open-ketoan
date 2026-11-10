@@ -5,11 +5,13 @@
  *   - Thêm / Sửa (bấm đúp) / Xoá (chỉ phiếu nháp) / Duyệt / Bỏ duyệt / Nạp / Xuất Excel.
  *   - Nhãn "DỮ LIỆU GIẢ" khi loại phiếu đang chạy dữ liệu mẫu (đổi ở API → Nguồn dữ liệu màn hình).
  */
+import { dongChungTu } from '@/lib/trangThai';
 import { workBranch } from '@/lib/workBranch';
+import { useThemTuDiaChi } from '@/lib/themNhanh';
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { errorText } from '@/lib/api';
+import { api, errorText } from '@/lib/api';
 import { defaultTo } from '@/lib/format';
 import { KIND_INFO, emptyDoc, tradeApi, type TradeDoc, type TradeKind } from '@/lib/tradeDocs';
 import { PageHeader } from '@/components/PageHeader';
@@ -33,6 +35,14 @@ export function PhieuHangPage({ kind, code, seed, helpKey = 'phieu-hang', subtit
   const [search, setSearch] = useState('');
   const [sel, setSel] = useState<TradeDoc | null>(null);
   const [editing, setEditing] = useState<TradeDoc | null>(null);
+  useThemTuDiaChi((p) => {
+    const d = emptyDoc(kind, workBranch.get() || '');
+    const kh = p.get('kh');
+    if (!kh) return setEditing(d);
+    // Mở từ cột Chức năng của danh sách khách hàng: điền sẵn khách (tên, MST lấy từ danh mục).
+    void api.get<{ code: string; name: string; taxCode?: string | null }[]>('/api/v1/partners', { search: kh, pageSize: 5 }).catch(() => [])
+      .then((rows) => { const r = rows.find((x) => x.code === kh); setEditing({ ...d, partner: { code: kh, name: r?.name ?? kh, taxCode: r?.taxCode ?? undefined } }); });
+  });
   const exportRef = useRef<(() => void) | null>(null);
   const key = ['trade', kind, svc.source, f];
   const q = useQuery({ queryKey: key, queryFn: () => svc.list({ ...f, status: f.status || undefined, search: f.search || undefined }) });
@@ -104,7 +114,7 @@ export function PhieuHangPage({ kind, code, seed, helpKey = 'phieu-hang', subtit
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : status.error ? errorText(status.error) : null} />
         {q.isLoading ? <Loading /> : (
           <DataGrid storageKey={`phieu-${kind}-v1`} exportName={`phieu-${kind}`} exportRef={exportRef} rows={q.data?.data ?? []} rowKey={(r) => r.id}
-            onSelect={setSel} onRowDoubleClick={(r) => void open(r)} rowClassName={(r) => (r.status === 'approved' ? '' : 'muted')} footerLabel="Cộng"
+            onSelect={setSel} onRowDoubleClick={(r) => void open(r)} rowClassName={(r) => dongChungTu(r.status)} footerLabel="Cộng"
             emptyText={`Chưa có ${info.label.toLowerCase()} trong khoảng này — bấm "+ Thêm"`} columns={columns} />
         )}
       </div>

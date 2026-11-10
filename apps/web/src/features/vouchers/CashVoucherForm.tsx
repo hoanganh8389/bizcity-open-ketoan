@@ -274,7 +274,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   return (
     <>
     <VoucherModal
-      title={meta.title} existing={existing} readOnly={dis} saving={saving}
+      title={meta.title} existing={existing} readOnly={dis} saving={saving} total={total}
       onSave={() => doSave(false)} onSaveNew={() => doSave(true)} printSlot={<PrintButton bare screen={VOUCHER_SCREEN[type]} templates={VOUCHER_TEMPLATES[type]} disabled={!existing} getDocs={(): PrintSheet[] => (existing ? [{ type: type, docNo: existing.docNo, voucher: existing.payload, signatures, banks, branchName: branches?.find((b) => b.code === existing.payload.branchCode)?.name ?? existing.payload.branchCode }] : [])} />} onExport={exportRows} onDelete={doDelete} onClose={onClose}
       error={error} readOnlyText={readOnlyReason(existing, { external: false })} advisories={advisories}
     >
@@ -318,7 +318,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
             <L c={2} r={2} req={employees.length > 0}>Nhân viên</L>
             <C c={2} r={2}><ListPicker items={employees.filter((e) => e.isActive || e.code === h.employeeCode)} value={h.employeeCode} disabled={dis} hideName onChange={(v) => set({ employeeCode: v })} /></C>
             <L c={2} r={3}>Khách hàng</L>
-            <C c={2} r={3}><PartnerPicker activeOnly={!existing} value={h.partnerCode} disabled={dis} hideName onChange={(v) => void pickPartner(v)} /></C>
+            <C c={2} r={3}><PartnerPicker activeOnly={!existing} addKind={type === 'receipt' || type === 'bank_receipt' ? 'customer' : 'supplier'} value={h.partnerCode} disabled={dis} hideName onChange={(v) => void pickPartner(v)} /></C>
             <L c={2} r={4}>Điện thoại</L>
             <C c={2} r={4}><input className="input" value={h.phone} disabled={dis} onChange={(e) => set({ phone: e.target.value })} /></C>
             <L c={2} r={5}>Địa chỉ</L>
@@ -361,7 +361,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
                     <td><AccountPicker postingOnly hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td>
                     <td>{amountCell(r, 'debit')}</td>
                     <td>{amountCell(r, 'credit')}</td>
-                    <td><PartnerPicker activeOnly={!existing} hideName value={r.partner} disabled={dis} onChange={(v) => setRow(r.key, { partner: v })} /></td>
+                    <td><PartnerPicker activeOnly={!existing} addKind={type === 'receipt' || type === 'bank_receipt' ? 'customer' : 'supplier'} hideName value={r.partner} disabled={dis} onChange={(v) => setRow(r.key, { partner: v })} /></td>
                     <td>
                       <select className="select input" value={r.cashflowCode} disabled={dis} onChange={(e) => setRow(r.key, { cashflowCode: e.target.value })}>
                         <option value="" />

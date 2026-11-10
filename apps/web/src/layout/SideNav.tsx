@@ -11,6 +11,8 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BarChart3, Building2, ChevronRight, Landmark, LayoutGrid, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Pin, PinOff, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
 import { usePins } from './pins';
 import { matchLen, REPORT_PAGE, type GonGroup } from './menu-gon';
+import type { MenuItem } from '@ketoan/contracts';
+import { HayDungNav, NutThemNhanh } from './ThemNhanh';
 
 const COLLAPSED_KEY = 'ketoan.sidenav.collapsed';
 const read = <T,>(key: string, fallback: T): T => {
@@ -32,7 +34,7 @@ const columnsOf = (g: GonGroup) => {
   return rows > 26 ? 3 : rows > 14 ? 2 : 1;
 };
 
-export function SideNav({ groups, active, onChoose, collapsed, onCollapse, onResizeStart }: { groups: GonGroup[]; active?: GonGroup; onChoose: (key: string) => void; collapsed: boolean; onCollapse: (v: boolean) => void; onResizeStart?: (e: React.MouseEvent) => void }) {
+export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse, onResizeStart }: { menu: MenuItem[]; groups: GonGroup[]; active?: GonGroup; onChoose: (key: string) => void; collapsed: boolean; onCollapse: (v: boolean) => void; onResizeStart?: (e: React.MouseEvent) => void }) {
   const { pathname, search } = useLocation();
   const { isPinned, toggle: togglePin } = usePins();
   const [open, setOpen] = useState<{ key: string; top: number; left: number } | null>(null);
@@ -65,6 +67,8 @@ export function SideNav({ groups, active, onChoose, collapsed, onCollapse, onRes
   return (
     <aside className={`sidenav gon${collapsed ? ' collapsed' : ''}`} aria-label="Menu chức năng" ref={root}>
       <nav className="sidenav-body">
+        <NutThemNhanh menu={menu} collapsed={collapsed} />
+        <HayDungNav menu={menu} collapsed={collapsed} />
         {groups.map((g) => {
           const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
           return (

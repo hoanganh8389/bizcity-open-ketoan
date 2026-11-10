@@ -148,7 +148,7 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
   const title = <>Phiếu chuyển kho {v.docNo || '(mới)'} {!isNew && <span className={`badge ${statusClass(value)}`} style={{ marginLeft: 8 }}>{statusText(value)}</span>}</>;
 
   return (
-    <Modal wide viewFirst={!isNew && !readOnly} title={title} onClose={onClose}
+    <Modal wide voucher={{ total: totalQty, totalLabel: 'Tổng số lượng' }} viewFirst={!isNew && !readOnly} title={title} onClose={onClose}
       viewActions={!isNew && value.status === 'shipped' && onReceive ? <button className="btn btn-primary" data-view-ok onClick={onReceive} title="Thủ kho nhập xác nhận đã nhận hàng (cộng tồn bên nhận)">Nhận hàng</button> : undefined}
       footer={<>
         {!isNew && <span data-view-ok style={{ marginRight: 'auto' }}><PrintButton screen="KHO01" templates={TRADE_TEMPLATES.transfer!} title="In phiếu theo nội dung đã ghi (sửa xong bấm Ghi rồi mới in)" getDocs={() => [toPrintDoc(value)]} /></span>}

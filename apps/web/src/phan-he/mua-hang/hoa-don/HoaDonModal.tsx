@@ -77,7 +77,7 @@ export function HoaDonModal({ id, partnerCode = '', lockPartner, onClose, onSave
       {cancelled && <div className="alert alert-bad">Đã huỷ bởi {inv?.cancelledBy} lúc {inv?.cancelledAt ? new Date(inv.cancelledAt).toLocaleString('vi-VN', { hour12: false }) : ''} — lý do: {inv?.cancelReason}</div>}
       {err && <div className="alert alert-bad">{err}</div>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px 14px' }}>
-        <Field label="Nhà cung cấp"><PartnerPicker value={v.partnerCode} onChange={(c) => set({ partnerCode: c, lines: v.lines.map((l) => (l.sku ? l : { ...l, candidates: undefined })), sellerTaxCode: v.sellerTaxCode || (names.partner(c)?.taxCode ?? ''), sellerName: v.sellerName || names.partnerName(c) })} disabled={lockPartner || Boolean(id)} /></Field>
+        <Field label="Nhà cung cấp"><PartnerPicker addKind="supplier" value={v.partnerCode} onChange={(c) => set({ partnerCode: c, lines: v.lines.map((l) => (l.sku ? l : { ...l, candidates: undefined })), sellerTaxCode: v.sellerTaxCode || (names.partner(c)?.taxCode ?? ''), sellerName: v.sellerName || names.partnerName(c) })} disabled={lockPartner || Boolean(id)} /></Field>
         <Field label="Ký hiệu mẫu số"><input className="input" value={v.form} onChange={(e) => set({ form: e.target.value })} placeholder="1" /></Field>
         <Field label="Ký hiệu hoá đơn"><input className="input" value={v.series} onChange={(e) => set({ series: e.target.value.toUpperCase() })} placeholder="C26MHZ" /></Field>
         <Field label="Số hoá đơn"><input className="input" value={v.no} onChange={(e) => set({ no: e.target.value.trim() })} placeholder="134608" /></Field>

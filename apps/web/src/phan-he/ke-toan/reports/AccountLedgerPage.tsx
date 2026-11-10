@@ -7,7 +7,7 @@
  * Kiểu báo cáo: 1 = từng dòng, 2 = theo chứng từ + tài khoản đối ứng, 3 = theo chứng từ.
  */
 import { useRef, useState } from 'react';
-import { BranchCheckList, ReportSideLayout, SideActions, SideField, branchesPicked, FilterLayout } from '@/components/ReportPanel';
+import { BranchCheckList, ReportSideLayout, SideActions, SideField, SideKy, branchesPicked, FilterLayout } from '@/components/ReportPanel';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DOC_TYPE_LABELS, DOC_TYPE_LIST, type DocType } from '@ketoan/contracts';
@@ -83,8 +83,7 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
 
   const panel = (
     <>
-      <SideField label="Từ ngày"><input type="date" className="input" value={df.from} onChange={(e) => setD({ from: e.target.value })} /></SideField>
-      <SideField label="Đến ngày"><input type="date" className="input" value={df.to} min={df.from} onChange={(e) => setD({ to: e.target.value })} /></SideField>
+      <SideKy from={df.from} to={df.to} onChange={(from, to) => setD({ from, to })} />
       <SideField label="Số tài khoản"><AccountPicker className="input" placeholder="" value={df.account} onChange={(account) => setD({ account })} /></SideField>
       <SideField label="TK Đối ứng"><AccountPicker className="input" placeholder="" value={df.counterAccount} onChange={(counterAccount) => setD({ counterAccount })} /></SideField>
       {cash && (

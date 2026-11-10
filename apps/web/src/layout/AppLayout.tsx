@@ -147,7 +147,7 @@ export function AppLayout() {
       </header>
       {/* Menu trái: nhóm theo việc, bấm mới bung danh sách màn. */}
       <div className={`shell ${collapsed ? 'nav-collapsed' : ''}`} style={!collapsed ? { gridTemplateColumns: `${navWidth}px minmax(0, 1fr)` } : undefined}>
-      <SideNav groups={gon.groups} active={gon.active} onChoose={gon.choose} collapsed={collapsed} onCollapse={collapse} onResizeStart={startResize} />
+      <SideNav menu={menu} groups={gon.groups} active={gon.active} onChoose={gon.choose} collapsed={collapsed} onCollapse={collapse} onResizeStart={startResize} />
       <main className="page">
         <TabWorkspace menu={menu} strip={<TheNhom group={gon.active} />} />
         {/* Thanh dưới đáy: hộp thoại đang mở / đã thu nhỏ, ô "Màn chính". */}

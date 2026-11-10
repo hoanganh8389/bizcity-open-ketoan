@@ -5,11 +5,22 @@
  *  - Ô đã có mã thì hiện tên mờ bên cạnh để người mới biết mình đang chọn gì.
  *  - `multiple`: danh sách mã cách nhau dấu phẩy (ví dụ nhiều tài khoản tiền); chọn thêm là nối vào cuối.
  * `onChange` chỉ gọi khi người dùng chốt (chọn dòng, Enter, rời ô) — hợp với các bộ lọc báo cáo chạy lại khi đổi.
+ * [2026-11-11 Nguyễn Văn Thủy] Thêm ngay tại chỗ (đóng góp): `onAdd` hiện nút + trong ô và dòng "+ Thêm mới (F9)" ở chân danh sách —
+ * lập chứng từ thiếu khách / NCC / mặt hàng thì thêm luôn, ghi xong mã mới tự điền vào ô. `columns`: danh sách xổ dạng bảng có tiêu đề
+ * (Mã · Tên · MST · Địa chỉ… / Mã · Tên · ĐVT · Tồn), mỗi dòng lấy ô thêm từ `PickOption.cells`.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { workBranch } from '@/lib/workBranch';
+
+// Form thêm nhanh mở từ nút + của ô chọn (tải khi cần, tránh vòng import với màn danh mục).
+const PartnerEditor = lazy(() => import('@/features/catalog/PartnersPage').then((m) => ({ default: m.PartnerEditor })));
+const ProductEditor = lazy(() => import('@/features/catalog/ProductsPage').then((m) => ({ default: m.ProductEditor })));
+/** Chữ gõ trong ô chọn là mã số thuế (10 hoặc 13 số, có thể có gạch) → điền vào ô MST; còn lại điền vào tên. */
+const looksTaxCode = (t: string) => /^\d{10}(-?\d{3})?$/.test(t.trim());
 
 export interface PickOption {
   code: string;
@@ -20,7 +31,12 @@ export interface PickOption {
   level?: number;
   /** In đậm (tài khoản tổng hợp). */
   strong?: boolean;
+  /** Ô thêm sau Mã, Tên khi ô chọn có `columns` (MST, địa chỉ, tồn…). */
+  cells?: (string | number | null | undefined)[];
 }
+
+/** Cột thêm của danh sách xổ dạng bảng: tiêu đề, bề rộng (px), căn phải cho số. */
+export interface PickColumn { label: string; width: number; num?: boolean }
 
 /** Bỏ dấu tiếng Việt để gõ "tien mat" vẫn ra "Tiền mặt". */
 export const plain = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
@@ -40,6 +56,10 @@ interface BaseProps {
   nameFirst?: boolean;
   /** Chỉ nhận mã có trong danh sách: gõ chữ không khớp rồi rời ô / Enter thì giữ giá trị cũ (không nhận chữ lạ làm mã). */
   strict?: boolean;
+  /** Thêm mới ngay tại chỗ (nút + trong ô, F9, dòng cuối danh sách); nhận chữ đang gõ để điền sẵn. */
+  onAdd?: (typed: string) => void;
+  /** Chữ của dòng thêm mới, mặc định "Thêm mới". */
+  addLabel?: string;
 }
 
 interface CodePickerProps extends BaseProps {
@@ -52,11 +72,16 @@ interface CodePickerProps extends BaseProps {
   loading?: boolean;
   emptyText?: string;
   title?: string;
+  /** Danh sách xổ dạng bảng: tiêu đề Mã, Tên + các cột này (ô lấy từ PickOption.cells). */
+  columns?: PickColumn[];
+  /** Bề rộng cột Tên khi có `columns` (mặc định 240). */
+  nameWidth?: number;
 }
 
 const MAX_SHOWN = 300;
+const fmtCell = (v: string | number | null | undefined) => (typeof v === 'number' ? v.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) : v ?? '');
 
-export function CodePicker({ value, onChange, options, nameOf, onSearch, loading, emptyText, placeholder, className = 'input', style, disabled, multiple, autoFocus, title, hideName, nameFirst, strict }: CodePickerProps) {
+export function CodePicker({ value, onChange, options, nameOf, onSearch, loading, emptyText, placeholder, className = 'input', style, disabled, multiple, autoFocus, title, hideName, nameFirst, strict, onAdd, addLabel = 'Thêm mới', columns, nameWidth = 240 }: CodePickerProps) {
   const [text, setTextState] = useState(value);
   // Giữ chữ mới nhất ngoài state: rời ô ngay sau khi chọn dòng vẫn đọc đúng mã vừa chọn.
   const textRef = useRef(value);
@@ -82,7 +107,9 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
     const r = input.current?.getBoundingClientRect();
     if (!r) return;
     const below = window.innerHeight - r.bottom;
-    setPos({ left: r.left, top: below < 260 && r.top > below ? r.top : r.bottom, width: Math.max(r.width, 380), up: below < 260 && r.top > below });
+    const tableW = columns ? 110 + nameWidth + columns.reduce((n, c) => n + c.width, 0) + 24 + columns.length * 8 : 380;
+    const width = Math.min(Math.max(r.width, tableW), window.innerWidth - 16);
+    setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - width - 8)), top: below < 260 && r.top > below ? r.top : r.bottom, width, up: below < 260 && r.top > below });
   };
   useLayoutEffect(() => {
     if (!open) return;
@@ -115,12 +142,16 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
     input.current?.blur();
   };
 
+  // Thêm mới: đóng danh sách, trả ô về giá trị cũ, mở form thêm (điền sẵn chữ đang gõ).
+  const add = () => { if (!onAdd) return; const q = query; setOpen(false); setText(committed.current); input.current?.blur(); onAdd(q); };
+  const grid = columns ? ({ display: 'grid', gridTemplateColumns: `110px ${nameWidth}px ${columns.map((c) => `${c.width}px`).join(' ')}`, columnGap: 8 } as CSSProperties) : undefined;
+
   const name = value && !multiple ? nameOf(value) : undefined;
   const showName = name && !hideName && !hasFocus && !open;
   const asName = Boolean(nameFirst && showName);
 
   return (
-    <span className="picker" style={style} title={title ?? (name ? `${value} — ${name}` : undefined)}>
+    <span className={`picker${onAdd && !disabled ? ' has-add' : ''}`} style={style} title={title ?? (name ? `${value} — ${name}` : undefined)}>
       <input
         ref={input}
         className={className}
@@ -142,7 +173,8 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
         onChange={(e) => { setText(e.target.value); setOpen(true); }}
         onBlur={() => { focused.current = false; setHasFocus(false); setOpen(false); commit(textRef.current); }}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setActive((a) => Math.min(a + 1, shown.length - 1)); }
+          if (e.key === 'F9' && onAdd) { e.preventDefault(); add(); }
+          else if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setActive((a) => Math.min(a + 1, shown.length - 1)); }
           else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
           else if (e.key === 'Enter') {
             e.preventDefault();
@@ -155,6 +187,7 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
         }}
       />
       {showName && <span className="picker-name">{asName ? value : name}</span>}
+      {onAdd && !disabled && <button type="button" tabIndex={-1} className="picker-add" title={`${addLabel} (F9)`} onMouseDown={(e) => e.preventDefault()} onClick={add}>+</button>}
       {open && pos && !disabled && createPortal(
         <div
           ref={list}
@@ -163,6 +196,12 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
           style={{ left: pos.left, width: pos.width, ...(pos.up ? { bottom: window.innerHeight - pos.top + 2 } : { top: pos.top + 2 }) }}
           onMouseDown={(e) => e.preventDefault()}
         >
+          {columns && (
+            <div className="picker-opt picker-head" style={grid}>
+              <span>Mã</span><span>Tên</span>
+              {columns.map((c) => <span key={c.label} className={c.num ? 'num' : undefined}>{c.label}</span>)}
+            </div>
+          )}
           {shown.map((o, i) => (
             <div
               key={o.code}
@@ -170,18 +209,23 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
               role="option"
               aria-selected={i === active}
               className={`picker-opt ${i === active ? 'active' : ''} ${o.strong ? 'strong' : ''}`}
-              style={o.level ? { paddingLeft: 8 + (o.level - 1) * 12 } : undefined}
+              style={{ ...grid, ...(o.level ? { paddingLeft: 8 + (o.level - 1) * 12 } : {}) }}
               onMouseEnter={() => setActive(i)}
               onClick={() => pick(o)}
             >
               <span className="mono picker-code">{o.code}</span>
               <span className="picker-label">{o.name}</span>
-              {o.hint && <span className="picker-hint">{o.hint}</span>}
+              {columns
+                ? columns.map((c, k) => <span key={c.label} className={`picker-cell${c.num ? ' num' : ''}`} title={String(o.cells?.[k] ?? '')}>{fmtCell(o.cells?.[k])}</span>)
+                : o.hint && <span className="picker-hint">{o.hint}</span>}
             </div>
           ))}
           {shown.length === 0 && <div className="picker-empty">{loading ? 'Đang tải…' : emptyText ?? 'Không tìm thấy'}</div>}
           {options.length > MAX_SHOWN && <div className="picker-empty">Còn {options.length - MAX_SHOWN} dòng nữa — gõ thêm để thu hẹp</div>}
-          <div className="picker-foot">Gõ mã hoặc tên để lọc · ↑ ↓ chọn · Enter lấy · Esc đóng</div>
+          <div className="picker-foot">
+            {onAdd && <button type="button" className="picker-foot-add" onClick={add}>+ {addLabel}{query && !shown.some((o) => o.code === query) ? ` "${query}"` : ''} (F9)</button>}
+            <span>Gõ mã hoặc tên để lọc · ↑ ↓ chọn · Enter lấy · Esc đóng</span>
+          </div>
         </div>,
         document.body,
       )}
@@ -218,12 +262,18 @@ export function AccountPicker({ postingOnly, ...p }: BaseProps & { postingOnly?:
 
 /* ------------------------------------------------------------------ Đối tượng */
 
-interface PartnerRow { code: string; name: string; taxCode?: string | null }
+interface PartnerRow { code: string; name: string; taxCode?: string | null; address?: string | null; phone?: string | null; mobile?: string | null }
 
-/** Chọn khách hàng / nhà cung cấp — tìm theo mã, tên hoặc mã số thuế (tìm phía máy chủ). */
-export function PartnerPicker({ activeOnly, ...p }: BaseProps & { activeOnly?: boolean }) {
+/**
+ * Chọn khách hàng / nhà cung cấp — tìm theo mã, tên hoặc mã số thuế (tìm phía máy chủ).
+ * `addKind`: cho thêm nhanh ngay tại chỗ (nút +, F9) — dùng trên form chứng từ; danh sách xổ dạng bảng Mã · Tên · MST · Địa chỉ · Điện thoại.
+ */
+export function PartnerPicker({ activeOnly, addKind, ...p }: BaseProps & { activeOnly?: boolean; addKind?: 'customer' | 'supplier' }) {
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
+  const [adding, setAdding] = useState<string | null>(null);
+  const { can } = useAuth();
+  const qc = useQueryClient();
   useEffect(() => { const t = setTimeout(() => setDebounced(q), 250); return () => clearTimeout(t); }, [q]);
   // activeOnly: chỉ đối tượng đang theo dõi (dùng khi lập phiếu); báo cáo thì tra cả đối tượng đã khoá.
   const list = useQuery({ queryKey: ['partners', 'picker', debounced, activeOnly], queryFn: () => api.get<PartnerRow[]>('/api/v1/partners', { search: debounced, pageSize: 30, status: activeOnly ? 'active' : 'all' }), staleTime: 60_000 });
@@ -233,40 +283,75 @@ export function PartnerPicker({ activeOnly, ...p }: BaseProps & { activeOnly?: b
     queryFn: () => api.get<PartnerRow[]>('/api/v1/partners', { search: p.value, pageSize: 5 }),
     staleTime: 5 * 60_000,
   });
-  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.code, name: x.name, hint: x.taxCode ?? undefined })), [list.data]);
+  const wide = Boolean(addKind);
+  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.code, name: x.name, hint: x.taxCode ?? undefined, cells: [x.taxCode, x.address, x.mobile || x.phone] })), [list.data]);
+  const canAdd = Boolean(addKind) && can('catalog:write');
   return (
-    <CodePicker
-      {...p}
-      options={options}
-      nameOf={(c) => current.data?.find((x) => x.code === c)?.name ?? list.data?.find((x) => x.code === c)?.name}
-      onSearch={setQ}
-      loading={list.isFetching}
-      emptyText="Không có đối tượng khớp"
-    />
+    <>
+      <CodePicker
+        {...p}
+        options={options}
+        nameOf={(c) => current.data?.find((x) => x.code === c)?.name ?? list.data?.find((x) => x.code === c)?.name}
+        onSearch={setQ}
+        loading={list.isFetching}
+        emptyText="Không có đối tượng khớp"
+        columns={wide ? [{ label: 'Mã số thuế', width: 110 }, { label: 'Địa chỉ', width: 260 }, { label: 'Điện thoại', width: 100 }] : undefined}
+        onAdd={canAdd ? (t) => setAdding(t) : undefined}
+        addLabel={addKind === 'supplier' ? 'Thêm nhà cung cấp' : 'Thêm khách hàng'}
+      />
+      {adding !== null && addKind && (
+        <Suspense fallback={null}>
+          <PartnerEditor
+            kind={addKind}
+            initial={adding ? (looksTaxCode(adding) ? { taxCode: adding.trim() } : { name: adding.trim() }) : undefined}
+            onSaved={(code) => { void qc.invalidateQueries({ queryKey: ['partners'] }); if (code) p.onChange(code); }}
+            onClose={() => setAdding(null)}
+          />
+        </Suspense>
+      )}
+    </>
   );
 }
 
 /* ------------------------------------------------------------------ Mặt hàng */
 
-interface ItemRow { sku: string; name: string; unit: string }
+interface ItemRow { sku: string; name: string; unit: string; stock?: number | null }
 
-/** Chọn mã hàng — tìm theo mã hoặc tên trong danh mục hàng và các mã đã có phát sinh kho. */
-export function ItemPicker(p: BaseProps) {
+/**
+ * Chọn mã hàng — tìm theo mã hoặc tên trong danh mục hàng và các mã đã có phát sinh kho.
+ * Danh sách xổ dạng bảng Mã · Tên · ĐVT · Tồn (tồn của chi nhánh đang làm việc, chưa chọn thì cộng mọi chi nhánh).
+ * `canAdd`: thêm mặt hàng ngay tại chỗ (nút +, F9) — dùng trên dòng chứng từ.
+ */
+export function ItemPicker({ canAdd, ...p }: BaseProps & { canAdd?: boolean }) {
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
+  const [adding, setAdding] = useState<string | null>(null);
+  const { can } = useAuth();
   useEffect(() => { const t = setTimeout(() => setDebounced(q), 250); return () => clearTimeout(t); }, [q]);
-  const list = useQuery({ queryKey: ['inventory-items', debounced], queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: debounced, limit: 50 }), staleTime: 60_000 });
+  const branchCode = workBranch.get() || undefined;
+  const list = useQuery({ queryKey: ['inventory-items', debounced, branchCode], queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: debounced, limit: 50, branchCode }), staleTime: 60_000 });
   const current = useQuery({ queryKey: ['inventory-items', 'name', p.value], enabled: Boolean(p.value), queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: p.value, limit: 5 }), staleTime: 5 * 60_000 });
-  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.sku, name: x.name, hint: x.unit || undefined })), [list.data]);
+  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.sku, name: x.name, hint: x.unit || undefined, cells: [x.unit, x.stock ?? null] })), [list.data]);
   return (
-    <CodePicker
-      {...p}
-      options={options}
-      nameOf={(c) => current.data?.find((x) => x.sku === c)?.name ?? list.data?.find((x) => x.sku === c)?.name}
-      onSearch={setQ}
-      loading={list.isFetching}
-      emptyText="Không có mặt hàng khớp"
-    />
+    <>
+      <CodePicker
+        {...p}
+        options={options}
+        nameOf={(c) => current.data?.find((x) => x.sku === c)?.name ?? list.data?.find((x) => x.sku === c)?.name}
+        onSearch={setQ}
+        loading={list.isFetching}
+        emptyText="Không có mặt hàng khớp"
+        columns={[{ label: 'ĐVT', width: 70 }, { label: branchCode ? `Tồn (${branchCode})` : 'Tồn', width: 90, num: true }]}
+        nameWidth={300}
+        onAdd={canAdd && can('catalog:write') ? (t) => setAdding(t) : undefined}
+        addLabel="Thêm mặt hàng"
+      />
+      {adding !== null && (
+        <Suspense fallback={null}>
+          <ProductEditor sku={null} initial={adding ? { name: adding.trim() } : undefined} onSaved={(sku) => { if (sku) p.onChange(sku); }} onClose={() => setAdding(null)} />
+        </Suspense>
+      )}
+    </>
   );
 }
 

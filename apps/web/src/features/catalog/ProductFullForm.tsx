@@ -82,7 +82,7 @@ const parseNum = (s: string): number | null => {
 };
 
 /** startTab / startEditing: mở thẳng một thẻ ở chế độ sửa (ví dụ "+ĐVT" trên phiếu mua mở thẻ ĐVT). */
-export function ProductFullForm({ sku, initial, classes, groupPath, onClose, startTab, startEditing }: {
+export function ProductFullForm({ sku, initial, classes, groupPath, onClose, startTab, startEditing, onSaved }: {
   sku: string | null; // null = thêm mới
   initial?: Partial<FullProduct>;
   classes: Record<ClassKind, ItemClassLite[]>;
@@ -90,6 +90,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   onClose: () => void;
   startTab?: string;
   startEditing?: boolean;
+  /** Thêm mới xong: báo mã vừa ghi (ô chọn mặt hàng trên chứng từ tự điền). */
+  onSaved?: (sku: string) => void;
 }) {
   const qc = useQueryClient();
   const isNew = sku === null;
@@ -237,6 +239,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       void qc.invalidateQueries({ queryKey: ['price-lists'] });
       void qc.invalidateQueries({ queryKey: ['item-classes'] });
       void qc.invalidateQueries({ queryKey: ['unit-names'] });
+      void qc.invalidateQueries({ queryKey: ['inventory-items'] });
+      if (isNew) onSaved?.(v.sku.trim());
       if (isNew) onClose(); else viewAgain[1]();
     },
   });

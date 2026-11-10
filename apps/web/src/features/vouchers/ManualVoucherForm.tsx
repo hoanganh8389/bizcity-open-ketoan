@@ -305,7 +305,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
                     <td className="vf-act"><button disabled={dis} title="Thêm" onClick={addRow}><Plus size={14} className="text-ok" /></button></td>
                     <td>{money2(r, 'credit')}</td>
                     <td>{money2(r, 'debit')}</td>
-                    <td><PartnerPicker activeOnly={!existing} hideName value={r.partner} disabled={dis} onChange={(v) => setRow(r.key, { partner: v })} /></td>
+                    <td><PartnerPicker activeOnly={!existing} addKind="customer" hideName value={r.partner} disabled={dis} onChange={(v) => setRow(r.key, { partner: v })} /></td>
                     <td>
                       <select className="select input" value={r.taxCode} disabled={dis} onChange={(e) => setRow(r.key, { taxCode: e.target.value })}>
                         <option value="" />
@@ -363,7 +363,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
                     <td><AccountPicker postingOnly hideName className="input mono" value={c.account} disabled={dis} onChange={(v) => setCounter(active.key, c.key, { account: v })} /></td>
                     <td className="vf-act"><button disabled={dis} title="Thêm" onClick={addCounter}><Plus size={14} className="text-ok" /></button></td>
                     <td><input className="input num" inputMode="numeric" value={c.amount} disabled={dis} onChange={(e) => setCounter(active.key, c.key, { amount: e.target.value })} onBlur={() => setCounter(active.key, c.key, { amount: showAmount(c.amount) })} /></td>
-                    <td><PartnerPicker activeOnly={!existing} hideName value={c.partner} disabled={dis} onChange={(v) => setCounter(active.key, c.key, { partner: v })} /></td>
+                    <td><PartnerPicker activeOnly={!existing} addKind="customer" hideName value={c.partner} disabled={dis} onChange={(v) => setCounter(active.key, c.key, { partner: v })} /></td>
                     <td>{dim(c.employee, employees, (v) => setCounter(active.key, c.key, { employee: v }))}</td>
                     <td><input className="input" value={c.description} disabled={dis} onChange={(e) => setCounter(active.key, c.key, { description: e.target.value })} /></td>
                     <td>{dim(c.department, departments, (v) => setCounter(active.key, c.key, { department: v }))}</td>

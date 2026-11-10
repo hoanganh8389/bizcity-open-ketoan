@@ -14,7 +14,7 @@ import { defaultFrom, defaultTo } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { Empty, ErrorBox, Loading } from '@/components/ui';
 import { AccountPicker, ItemPicker } from '@/components/pickers';
-import { BranchCheckList, ReportSideLayout, SideActions, SideField, branchesPicked } from '@/components/ReportPanel';
+import { BranchCheckList, ReportSideLayout, SideActions, SideField, SideKy, branchesPicked } from '@/components/ReportPanel';
 import { EntryOpen } from '../../../features/ledger/EntriesPage';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { PrintButton } from '@/components/print';
@@ -45,8 +45,7 @@ export function JournalPage() {
 
   const panel = (
     <>
-      <SideField label="Từ ngày"><input type="date" className="input" value={draft.from} onChange={(e) => set({ from: e.target.value })} /></SideField>
-      <SideField label="Đến ngày"><input type="date" className="input" value={draft.to} min={draft.from} onChange={(e) => set({ to: e.target.value })} /></SideField>
+      <SideKy from={draft.from} to={draft.to} onChange={(from, to) => set({ from, to })} />
       <SideField label="Số tài khoản"><AccountPicker className="input" placeholder="" value={draft.account} onChange={(account) => set({ account })} /></SideField>
       <SideField label="TK Đối ứng"><AccountPicker className="input" placeholder="" value={draft.counterAccount} onChange={(counterAccount) => set({ counterAccount })} /></SideField>
       <SideField label="Loại chứng từ">

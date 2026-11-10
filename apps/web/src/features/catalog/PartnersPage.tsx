@@ -15,11 +15,14 @@ import { money } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
+import { useThemTuDiaChi } from '@/lib/themNhanh';
+import { Link } from 'react-router-dom';
 import { DataGrid, type Column } from '@/components/DataGrid';
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): thẻ do module SDK cắm vào hồ sơ khách hàng (partner.detail.tab)
 import { sdkSlots } from '../../phan-he/sdk-modules';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { KpiDoiTuong } from '@/components/KpiDanhMuc';
 import { ListPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
 import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
@@ -65,12 +68,8 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
   const exportRef = useRef<(() => void) | null>(null);
   const groups = useGroups();
   const employees = useEmployees();
-  // ?them=1: mở thẳng form thêm mới (nút "+" chọn đối tượng ở trang quản trị).
-  useEffect(() => {
-    if (canWrite && new URLSearchParams(window.location.search).get('them') === '1') {
-      setEditing({ isNew: true, kind: fixedKind ?? 'customer', isActive: true, groupCode: null });
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ?them=1 (&loai=supplier): mở thẳng form thêm mới — nút Thêm nhanh, nút "+" chọn đối tượng ở trang quản trị.
+  useThemTuDiaChi((p) => setEditing({ isNew: true, kind: fixedKind ?? (p.get('loai') === 'supplier' ? 'supplier' : 'customer'), isActive: true, groupCode: null }), canWrite);
   const params = { search: applied, page, pageSize: ALL_ROWS, groupCode: f.groupCode || undefined, kind: f.kind || undefined, status: f.status };
   const q = useQuery({ queryKey: ['partners', params], queryFn: () => api.getPage<Partner[]>('/api/v1/partners', params), placeholderData: keepPreviousData });
   const groupChoices = (groups.data ?? []).filter((g) => !fixedKind || g.kind === 'any' || g.kind === fixedKind);
@@ -82,6 +81,11 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
   const columns: Column<Partner>[] = [
     { key: 'code', header: `Mã ${abbr}`, type: 'code', width: 120 },
     { key: 'name', header: `Tên ${abbr}`, width: 240 },
+    // [2026-11-11 Nguyễn Văn Thủy] cột Chức năng: lập chứng từ cho đối tượng ngay từ danh sách (đóng góp)
+    { key: 'chuc-nang', header: 'Chức năng', width: 120, noFilter: true, noSort: true, value: () => '', render: (p) => {
+      const to = p.kind === 'supplier' ? `/mua-hang/tong-hop?moi=receipt&ncc=${encodeURIComponent(p.code)}` : p.kind === 'customer' ? `/ban-hang/phieu-ban?them=1&kh=${encodeURIComponent(p.code)}` : null;
+      return to ? <Link className="row-act" to={to} onClick={(e) => e.stopPropagation()} title={p.kind === 'supplier' ? 'Lập phiếu nhập mua của nhà cung cấp này' : 'Lập phiếu bán hàng cho khách này'}>{p.kind === 'supplier' ? 'Lập phiếu nhập' : 'Lập phiếu bán'}</Link> : null;
+    } },
     { key: 'address', header: 'Địa chỉ NR', width: 220 },
     { key: 'phone', header: 'Điện thoại', type: 'code', width: 110 },
     { key: 'mobile', header: 'Di động', type: 'code', width: 110 },
@@ -114,6 +118,7 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
   return (
     <>
       <PageHeader title={screen?.title ?? 'Đối tượng'} code={screen?.code ?? 'DM03'} subtitle={screen?.subtitle ?? 'Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ'} helpKey="doi-tuong" />
+      <KpiDoiTuong kind={fixedKind ?? (f.kind || undefined)} />
       <div className="card">
         <CatalogToolbar
           canWrite={canWrite}
@@ -173,14 +178,14 @@ const NOUN: Record<string, string> = { customer: 'khách hàng', supplier: 'nhà
  * Form đối tượng DÙNG CHUNG — nơi duy nhất khai / sửa thông tin gốc của NCC (tên, MST, địa chỉ, nhóm, tài khoản, liên hệ).
  * Hồ sơ NCC (phân hệ Mua hàng) mở đúng form này. code trống = thêm mới.
  */
-export function PartnerEditor({ code, kind = 'supplier', onClose }: { code?: string; kind?: 'customer' | 'supplier'; onClose: () => void }) {
+export function PartnerEditor({ code, kind = 'supplier', onClose, initial, onSaved }: { code?: string; kind?: 'customer' | 'supplier'; onClose: () => void; initial?: Partial<Partner>; onSaved?: (code: string) => void }) {
   const groups = useGroups();
   const employees = useEmployees();
   const q = useQuery({ queryKey: ['partner-one', code], queryFn: () => api.get<Partner[]>('/api/v1/partners', { search: code, status: 'all', pageSize: 50 }), enabled: Boolean(code) });
   if (code && !q.data) return null;
   const value = code ? q.data?.find((p) => p.code === code) : undefined;
   if (code && !value) return null;
-  return <PartnerForm value={value ?? { isNew: true, kind, isActive: true, groupCode: null }} groups={groups.data ?? []} employees={employees.data ?? []} onClose={onClose} />;
+  return <PartnerForm value={value ?? { isNew: true, kind, isActive: true, groupCode: null, ...initial }} groups={groups.data ?? []} employees={employees.data ?? []} onClose={onClose} onSaved={onSaved} />;
 }
 
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
@@ -193,7 +198,7 @@ const todayText = () => new Date().toLocaleDateString('vi-VN', { day: '2-digit',
  *   - tạo mới gõ Mobile / Telephone / Mã số thuế đã có ở đối tượng khác: hỏi có mở đối tượng đó để sửa không;
  *   - tạo mới gửi POST (mã trùng → báo lỗi, không ghi đè), sửa gửi PUT.
  */
-function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Partner> & { isNew?: boolean }; groups: Group[]; employees: Dim[]; onClose: () => void }) {
+function PartnerForm({ value, groups, employees, onClose, onSaved }: { value: Partial<Partner> & { isNew?: boolean }; groups: Group[]; employees: Dim[]; onClose: () => void; onSaved?: (code: string) => void }) {
   const qc = useQueryClient();
   const branches = useBranches().data ?? [];
   // Nhà cung cấp là doanh nghiệp: MỘT bộ tên / địa chỉ chính thức (đúng trên hoá đơn) — mở form lấy khối công ty trước.
@@ -295,6 +300,8 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
       // Đang nằm trong khung của trang quản trị → báo mã đối tượng vừa lưu để bên đó chọn luôn.
       // Mở từ nút "+" NCC của phiếu nhập (cửa sổ riêng) → báo cửa sổ phiếu để tải lại NCC và chọn luôn.
       if (window.opener) window.opener.postMessage({ type: 'ketoan:partner-saved', code: (v.code ?? '').trim(), kind }, '*');
+      // Mở từ nút + của ô chọn trên chứng từ: báo mã vừa thêm để ô tự điền.
+      if (isNew) onSaved?.((v.code ?? '').trim());
       if (isNew) onClose(); else viewAgain[1]();
     },
   });

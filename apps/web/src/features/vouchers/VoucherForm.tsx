@@ -230,7 +230,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
 
   return (
     <Modal viewAgain={viewAgain} viewFirst={Boolean((existing && !readOnly) || (template && !template.isNew))}
-      wide
+      wide voucher={template ? undefined : { total }}
       title={template ? (template.isNew ? `Thêm bút toán mẫu — ${meta.title.toLowerCase()}` : `Bút toán mẫu ${template.code}`) : existing ? `${meta.title} ${existing.docNo}${cancelled ? ' (đã huỷ)' : ''}` : `Lập ${meta.title.toLowerCase()}${initial ? ' từ mẫu' : ''}`}
       onClose={onClose}
       footer={
@@ -266,7 +266,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
         <input className="input" value={h.description} disabled={readOnly} onChange={(e) => set({ description: e.target.value })} placeholder="Nội dung thu / chi / hạch toán" />
       </div>
       <Field label={`Đối tượng công nợ${needsPartner ? ' (bắt buộc)' : ''}`} hint={partnerName ?? (h.partnerCode ? 'Gõ mã hoặc tên rồi chọn trong danh sách' : undefined)}>
-        <PartnerPicker activeOnly={!existing} value={h.partnerCode} disabled={readOnly} onChange={(partnerCode) => set({ partnerCode })} placeholder="Gõ mã, tên hoặc mã số thuế" />
+        <PartnerPicker activeOnly={!existing} addKind="customer" value={h.partnerCode} disabled={readOnly} onChange={(partnerCode) => set({ partnerCode })} placeholder="Gõ mã, tên hoặc mã số thuế" />
       </Field>
       {!template && (needsPartner || dueDate) && <Field label="Hạn thanh toán" hint="Trống = ngày phiếu + hạn của đối tượng"><input type="date" className="input" value={dueDate} disabled={readOnly} onChange={(e) => setDueDate(e.target.value)} /></Field>}
 

@@ -11,7 +11,7 @@
  *   readOnlyReason  lý do phiếu chỉ xem (null = sửa được).
  * Sửa giao diện, lời báo, thứ tự nút ở đây là mọi phiếu đổi theo.
  */
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Download, LogOut, Printer, Save, X } from 'lucide-react';
@@ -36,8 +36,10 @@ export function readOnlyReason(existing: SavedVoucher | undefined, opts: { exter
 
 export interface ToolButton { key: string; label: ReactNode; icon?: ReactNode; onClick: () => void; disabled?: boolean; title?: string }
 
-export function VoucherModal({ title, existing, readOnly, saving, onSave, onSaveNew, onPrint, printSlot, onExport, onDelete, onClose, extraButtons, error, readOnlyText, advisories, children }: {
+export function VoucherModal({ title, existing, readOnly, saving, onSave, onSaveNew, onPrint, printSlot, onExport, onDelete, onClose, extraButtons, error, readOnlyText, advisories, total, children }: {
   title: string;
+  /** Tổng tiền của phiếu: hiện chữ lớn góc trên phải. */
+  total?: number;
   existing?: SavedVoucher;
   readOnly: boolean;
   saving?: boolean;
@@ -59,29 +61,44 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
 }) {
   const cancelled = existing?.status === 'cancelled';
   const dock = useDockWindow(onClose);
+  // Ctrl + S = Ghi (chỉ hộp thoại trên cùng).
+  const mask = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 's' || readOnly || saving) return;
+      if (mask.current !== [...document.querySelectorAll('.modal-mask:not(.is-min)')].pop()) return;
+      e.preventDefault(); onSave();
+    };
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [readOnly, saving, onSave]);
   return (
     <DockScope>
-    <div className={`modal-mask${dock.minimized ? ' is-min' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal wide vf" role="dialog" aria-modal="true">
+    <div ref={mask} className={`modal-mask${dock.minimized ? ' is-min' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal wide vf chung-tu" role="dialog" aria-modal="true">
         <div className="modal-head vf-head" ref={(el) => { dock.headRef.current = el; }}>
           <span>{title}{existing ? ` ${existing.docNo}` : ''}{cancelled ? ' (đã huỷ)' : ''}</span>
+          {total !== undefined && <span className="ct-total"><small>Tổng tiền</small><b>{total.toLocaleString('vi-VN', { maximumFractionDigits: 0 })}</b></span>}
           {dock.top && <MinimizeButton onClick={dock.minimize} />}
           <button className="btn btn-sm btn-ghost" title="Đóng" onClick={onClose}><X size={16} /></button>
         </div>
         <div className="vf-toolbar">
-          <button disabled={readOnly || saving} onClick={onSave}><Save size={15} /> Ghi</button>
-          {onSaveNew && <button disabled={readOnly || saving} onClick={onSaveNew}><Save size={15} /> Ghi và thêm mới</button>}
           {printSlot ?? (onPrint && <button disabled={!existing} onClick={onPrint}><Printer size={15} /> In</button>)}
           {onExport && <button onClick={onExport}><Download size={15} /> Xuất</button>}
           <button disabled={readOnly || saving} onClick={onDelete}><X size={15} className="text-bad" /> Xóa</button>
           {extraButtons?.map((b) => <button key={b.key} disabled={b.disabled} title={b.title} onClick={b.onClick}>{b.icon}{b.label}</button>)}
-          <button onClick={onClose}><LogOut size={15} /> Đóng</button>
         </div>
         <div className="vf-body">
           {!readOnly && advisories && <DocumentGateBanner advisories={advisories} />}
           {children}
           {error && <div className="alert alert-bad" style={{ margin: '6px 0 0' }}>{error}</div>}
           {readOnlyText && !cancelled && <div className="alert alert-warn" style={{ margin: '6px 0 0' }}>{readOnlyText}</div>}
+        </div>
+        <div className="ct-keys">F9 - Thêm nhanh khách hàng, nhà cung cấp (khi đang ở ô chọn) · Ctrl + S - Ghi · Esc - Thoát</div>
+        <div className="modal-foot">
+          <button className="btn" onClick={onClose}><LogOut size={15} /> Thoát</button>
+          {onSaveNew && <button className="btn" disabled={readOnly || saving} onClick={onSaveNew}><Save size={15} /> Ghi và thêm mới</button>}
+          <button className="btn btn-primary" disabled={readOnly || saving} onClick={onSave} title="Ctrl + S"><Save size={15} /> Ghi</button>
         </div>
       </div>
     </div>

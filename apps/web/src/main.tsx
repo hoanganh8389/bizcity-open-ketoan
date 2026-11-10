@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './styles/theme.css';
+import './styles/giao-dien-xanh.css';
+import { giaoDien } from './lib/giaoDien';
 import { setAdminUrl } from './lib/sourceDoc';
 import { installColumnResize } from './lib/colResize';
 import { installTableNav } from './lib/tableNav';
@@ -10,6 +12,7 @@ import { installPrintCatalog } from './printCatalog';
 import { installUiKit } from './lib/uiKitHost';
 
 function render() {
+  giaoDien.apply();
   installUiKit();
   installColumnResize();
   installTableNav();

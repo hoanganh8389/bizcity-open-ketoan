@@ -157,6 +157,19 @@ describe('Báo cáo kho', () => {
     expect(one.body.data.every((x: any) => x.sku.includes('SUA01') || x.name.toLowerCase().includes('sua01'))).toBe(true);
   });
 
+  // [2026-11-11 Nguyễn Văn Thủy] ô chọn hàng có cột Tồn; thẻ chỉ số danh mục mặt hàng (đóng góp)
+  it('ô chọn hàng trả tồn hiện tại (theo chi nhánh nếu gửi); đếm mã còn / hết / âm kho', async () => {
+    const sua = (await call(ctx, 'GET', '/api/v1/inventory/items?search=SUA01&limit=5')).body.data.find((x: any) => x.sku === 'SUA01');
+    expect(typeof sua.stock).toBe('number');
+    const khac = (await call(ctx, 'GET', '/api/v1/inventory/items?search=SUA01&limit=5&branchCode=KHONG-CO')).body.data.find((x: any) => x.sku === 'SUA01');
+    expect(khac.stock).toBeNull();
+    const c = await call(ctx, 'GET', '/api/v1/inventory/stock-counts');
+    expect(c.status).toBe(200);
+    expect(c.body.data.inStock + c.body.data.out + c.body.data.negative).toBeGreaterThan(0);
+    expect(c.body.data.inStock + c.body.data.out + c.body.data.negative).toBeGreaterThanOrEqual(sua.stock > 0 ? 1 : 0);
+    expect((await call(ctx, 'GET', '/api/v1/inventory/stock-counts?branchCode=KHONG-CO')).body.data).toMatchObject({ inStock: 0, out: 0, negative: 0 });
+  });
+
   it('nhật ký mua hàng: tiền hàng vào cột hàng hoá', async () => {
     const res = await call(ctx, 'GET', '/api/v1/reports/purchase-journal?from=2026-10-01&to=2026-10-31');
     expect(res.status).toBe(200);
