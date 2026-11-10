@@ -139,13 +139,16 @@ describe('NT-HT-001 — chi nhánh đổi đuôi mã (Plus / Premium / _OFF)', (
 
 describe('NT-HT-001 — quay về dữ liệu gốc (db/seeds/so-do-to-chuc*.jsonl)', () => {
   it('nghịch lung tung rồi quay về gốc: cây và gắn chi nhánh đúng như tệp; nút tự thêm trống thì xoá', async () => {
-    expect(await ok('GET', '/api/v1/org-units/defaults')).toMatchObject({ nodes: 51, assignments: 743 });
+    // [2026-11-10 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-53: số nút / số gắn theo bộ giả lập trong db/seeds (26 §11.2); HOTGS không có trong tệp gốc → trống sau khi quay về, bị xoá
+    const def = await ok('GET', '/api/v1/org-units/defaults');
+    expect(def).toMatchObject({ nodes: 16, assignments: 28 });
     await ok('POST', '/api/v1/org-units', { code: 'NGHICH', name: 'Nút thử', parentCode: 'PT' });
     await ok('PATCH', '/api/v1/branches/26001Premium', { orgUnitCode: 'NDH' });
     const r = await ok('POST', '/api/v1/org-units/restore-defaults', { confirm: true });
     expect(r.removed).toBeGreaterThanOrEqual(1);
     const tree = await ok('GET', '/api/v1/org-units/tree');
-    expect(tree.nodes).toHaveLength(51);
+    expect(tree.nodes).toHaveLength(def.nodes);
+    expect(tree.nodes.some((n: { code: string }) => n.code === 'HOTGS')).toBe(false);
     expect(tree.nodes.some((n: { code: string }) => n.code === 'NGHICH')).toBe(false);
     expect(tree.nodes.find((n: { code: string }) => n.code === 'PT')).toMatchObject({ purchaseBranchCode: '08000', path: pathOf('Công ty', 'BAC', 'PT') });
     const h = await hierarchy();

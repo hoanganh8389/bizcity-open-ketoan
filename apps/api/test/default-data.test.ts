@@ -10,6 +10,8 @@ import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId: string;
+// [2026-11-10 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-53: db/seeds là bộ giả lập (26 §11.2) — ngưỡng đếm lấy theo số dòng của tệp gốc (seedCount), không ghi cứng số của dữ liệu thật
+const seedCount: Record<string, number> = {};
 const restore = (key: string) => call(ctx, 'POST', `/api/v1/default-data/${key}/restore`, { confirm: true });
 const sale = (key: string, sku: string) => ({
   docType: 'sale', docKey: key, branchCode: '26001', docNo: key, docDate: '2026-10-04',
@@ -38,7 +40,9 @@ describe('Dữ liệu gốc', () => {
     expect(list.datasets).toHaveLength(23);
     expect(list.datasets.map((d: { key: string }) => d.key)).toEqual(expect.arrayContaining(['cost_item', 'department', 'branches', 'reasons', 'posting_groups', 'item_classes', 'products', 'posting_defaults', 'account_tracking', 'tax_codes', 'bank_accounts', 'payment_methods', 'partner_groups', 'partners', 'employee', 'contract', 'asset_categories', 'tool_group', 'capital_source', 'usage_purpose', 'case', 'project', 'warehouses']));
     expect(list.datasets.find((d: { key: string }) => d.key === 'cost_item').seedCount).toBeGreaterThan(200);
-    expect(list.seedItems).toBeGreaterThan(10000);
+    for (const d of list.datasets as { key: string; seedCount: number }[]) seedCount[d.key] = d.seedCount;
+    expect(list.seedItems).toBe(seedCount.products);
+    expect(seedCount.products).toBeGreaterThan(100);
     const rows = (await call(ctx, 'GET', '/api/v1/default-data/department/rows?search=BH26001')).body.data;
     expect(rows.rows[0]).toMatchObject({ code: 'BH26001' });
     expect((await call(ctx, 'POST', '/api/v1/default-data/cost_item/restore', {})).status).toBe(400);
@@ -100,15 +104,16 @@ describe('Dữ liệu gốc', () => {
 
   it('mọi danh mục còn lại: phân loại, mặt hàng, nhóm đối tượng, đối tượng, ngân hàng, hình thức thanh toán, loại thuế, chi nhánh, loại tài sản, hợp đồng, nhân viên', async () => {
     const ok = async (key: string) => { const r = await restore(key); expect(r.status, `${key}: ${JSON.stringify(r.body)}`).toBe(200); return r.body.data; };
-    expect((await ok('item_classes')).added).toBeGreaterThan(1000);
+    expect((await ok('item_classes')).added).toBe(seedCount.item_classes);
     const prod = await ok('products');
-    expect(prod.added).toBeGreaterThan(20000);
+    // 110051001M đã vào danh mục khi ghi chứng từ bán ở ca trên → không tính là thêm
+    expect(prod.added).toBe(seedCount.products! - 1);
     const item = (await call(ctx, 'GET', '/api/v1/products?search=110051001M')).body.data[0];
     expect(item).toMatchObject({ sku: '110051001M', postingGroupCode: 'NHT02' });
     expect(item.brandCode).toBeTruthy();
     expect((await ok('partner_groups')).added).toBeGreaterThan(0);
     const partners = await ok('partners');
-    expect(partners.added).toBeGreaterThan(10000);
+    expect(partners.added).toBe(seedCount.partners);
     expect((await call(ctx, 'GET', '/api/v1/partners?search=00000AA00002')).body.data[0]).toMatchObject({ code: '00000AA00002', groupCode: 'NCC-TSDV' });
     const banks = await ok('bank_accounts');
     expect(banks.warnings.join(' ')).toContain('Đã tạo tài khoản');
@@ -119,7 +124,8 @@ describe('Dữ liệu gốc', () => {
     // Shop đổi đuôi: chi nhánh cũ (mã gốc trước đây) đổi mã sang mã mới; chi nhánh lẻ trùng cửa hàng thì ngừng theo dõi.
     expect((await call(ctx, 'POST', '/api/v1/branches', { code: '01014Plus', name: 'Thịnh Long (mã cũ)' })).status).toBe(201);
     const br = await ok('branches');
-    expect(br.added).toBeGreaterThan(700);
+    // 01014Plus, 26001 đổi mã (không tính là thêm)
+    expect(br.added).toBe(seedCount.branches! - 2);
     expect(br.warnings.join(' ')).toContain('01014Plus → 01014Premium');
     expect(br.warnings.join(' ')).toContain('26001 → 26001Premium');
     const b = (await call(ctx, 'GET', '/api/v1/branches')).body.data;
@@ -134,8 +140,9 @@ describe('Dữ liệu gốc', () => {
     expect((await call(ctx, 'GET', '/api/v1/branches')).body.data.find((x: { code: string }) => x.code === '00001')).toMatchObject({ isActive: false });
     expect((await ok('asset_categories')).added).toBeGreaterThan(0);
     expect((await call(ctx, 'GET', '/api/v1/asset-categories')).body.data.find((x: { code: string }) => x.code === '12')).toMatchObject({ assetAccount: '2112' });
-    expect((await ok('contract')).added).toBe(4);
-    expect((await ok('employee')).added).toBeGreaterThan(40);
+    expect((await ok('contract')).added).toBe(seedCount.contract);
+    expect(seedCount.contract).toBe(4);
+    expect((await ok('employee')).added).toBe(seedCount.employee);
     // Danh mục gốc trống (vụ việc): mã tự thêm chưa dùng thì xoá.
     await call(ctx, 'PUT', '/api/v1/dimensions/case/VV-TU-THEM', { name: 'Vụ việc tự thêm' });
     expect(await ok('case')).toMatchObject({ added: 0, removed: 1 });

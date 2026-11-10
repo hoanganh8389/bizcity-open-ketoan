@@ -1,46 +1,46 @@
-{"_bang": "nhan-vien", "_mo_ta": "Nhân viên phụ trách gắn trên dòng phiếu kế toán (công nợ, tạm ứng theo nhân viên). extra: chức vụ, địa chỉ, điện thoại, di động, email, chi nhánh làm việc, mã phòng ban, nhóm nhân viên.", "_cot": ["code", "name", "parent_code", "note", "is_active", "extra"]}
-{"code": "CTKT-018", "name": "Phạm Thị Phượng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
-{"code": "CTKT-036", "name": "Nguyễn Hải Phú", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
-{"code": "CTKT-039", "name": "Phạm Thị Khánh Huyền", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "KT thuế"}}
-{"code": "CTKT-043", "name": "Nguyễn Vũ Hiệp", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
-{"code": "CTKT-044", "name": "Bùi Thị Phương Linh", "parent_code": null, "note": "", "is_active": true, "extra": {}}
-{"code": "CTKT-045", "name": "Trần Ngọc Vỹ", "parent_code": null, "note": "", "is_active": true, "extra": {}}
-{"code": "CTKT-047", "name": "Nguyễn Thị Ngọc Hà", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế", "branchCode": "HOTGS"}}
-{"code": "CTO-KT010", "name": "Phan Ngọc Ngân", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "KTV", "branchCode": "22000"}}
-{"code": "CTO-KT011", "name": "Đặng Thanh Hằng", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "22000"}}
-{"code": "CTO-KT013", "name": "Võ Hoàng Vy", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "22000"}}
-{"code": "CTO-KT016", "name": "Lê Trương Ngọc Hân", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "22000"}}
-{"code": "DNG_KT001", "name": "Lê Thị Hằng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế", "branchCode": "21024Plus"}}
-{"code": "DNG-KT001", "name": "Lê Thị Hằng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế", "branchCode": "21024Plus"}}
-{"code": "DNG-KT013", "name": "Nguyễn Hiền Vi", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "21024Plus"}}
-{"code": "HNKT-17", "name": "Đỗ Thị Kim Dung", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
-{"code": "HNKT-21", "name": "Hoàng Thị Nay", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "NVKT", "branchCode": "HOTGS"}}
-{"code": "HNKT-23", "name": "Lê Thị Tươi", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán nội bộ"}}
-{"code": "HPKT-003", "name": "Hoàng Thị Thảo", "parent_code": null, "note": "", "is_active": true, "extra": {"mobile": "0967 312 269", "position": "Ke toan kho"}}
-{"code": "HPKT-004", "name": "Nguyễn Thị Hồng Vân", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
-{"code": "NA-Duongbtt", "name": "Bùi Thị Thùy Dương", "parent_code": null, "note": "", "is_active": true, "extra": {"phone": "01666 546 08", "email": "thuyduong6089@gmail.com", "position": "Kế toán nhập kho", "branchCode": "14003Premium"}}
-{"code": "NAKT-012", "name": "Phạm Thị Phương", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
-{"code": "NAKT-013", "name": "Nguyễn Thị Thanh", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
-{"code": "NAKT-014", "name": "Hoàng Thị Thanh Tâm", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
-{"code": "NAKT-015", "name": "Nguyễn Thị Hoa", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
-{"code": "NAKT-017", "name": "Trần Thị Ngọc Ngà", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14000"}}
-{"code": "NDKT-002", "name": "Nguyễn Thị Hồng Hạnh", "parent_code": null, "note": "", "is_active": true, "extra": {"phone": "0868072444", "position": "KT công nợ", "branchCode": "01000"}}
-{"code": "NDKT-010", "name": "Ngô Thị Bích Ngọc", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kê toán nhập"}}
-{"code": "NDKT-011", "name": "Vũ Thị Hường", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "NH kế toán"}}
-{"code": "NDKT-tuyetta", "name": "Trần Thị Ánh Tuyết", "parent_code": null, "note": "", "is_active": true, "extra": {}}
-{"code": "ND-maint", "name": "Nguyễn Thị Mai", "parent_code": null, "note": "", "is_active": true, "extra": {"address": "Xóm C - xã Thành lợi - H. Vụ Bản NĐ", "mobile": "0917606690", "position": "Kế toán KHO", "branchCode": "01000"}}
-{"code": "ND-PhuongNB", "name": "Nguyễn Bích Phượng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "ktoan", "branchCode": "01000"}}
-{"code": "PT-HungDL", "name": "Dương Lâm Hùng", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
-{"code": "PTKT-003", "name": "Nguyễn Thị Lan Anh", "parent_code": null, "note": "", "is_active": true, "extra": {"mobile": "01669269298", "position": "KT HH", "branchCode": "08000"}}
-{"code": "PTKT-013", "name": "Phùng Thị Thanh Hòa", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
-{"code": "PTKT-022", "name": "Trần Lệ Quyên", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
-{"code": "PTKT-025", "name": "Nguyễn Thị Hồng Thu", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
-{"code": "quypt", "name": "Phạm Thị Quy", "parent_code": null, "note": "", "is_active": false, "extra": {"address": "Nam Định", "mobile": "0944246735", "position": "Kế toán CN NĐ", "branchCode": "01000"}}
-{"code": "SG-Anhnt", "name": "Ngô Thị Ánh", "parent_code": null, "note": "", "is_active": true, "extra": {"address": "62/6F Ấp Đông, đường Thới Tam Thôn, Xã TTT, H.", "phone": "0869800563", "position": "NVBH"}}
-{"code": "SGKT-010", "name": "Trần Thị Hương Giang", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán", "branchCode": "05007PLus"}}
-{"code": "SGKT-014", "name": "Nguyễn Hồng Thắm", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "KT", "branchCode": "05007PLus"}}
-{"code": "SGKT-ChinTT", "name": "Trần Thị Chín", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán", "branchCode": "05007PLus"}}
-{"code": "SG-tranglth", "name": "Lâm Thị Huyền Trang", "parent_code": null, "note": "", "is_active": true, "extra": {"phone": "01682709395", "mobile": "01223686359", "position": "Thủ Kho Q12"}}
-{"code": "THA-KT005", "name": "Nguyễn Thị Yến", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
-{"code": "THA-KT007", "name": "Mai Thị Sâm", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "10025"}}
-{"code": "THA-KT009", "name": "Nguyễn Thị Tình", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "10000", "position": "Kế toán thuế"}}
+{"_bang":"nhan-vien","_mo_ta":"Nhân viên phụ trách gắn trên dòng phiếu kế toán (công nợ, tạm ứng theo nhân viên). extra: chức vụ, địa chỉ, điện thoại, di động, email, chi nhánh làm việc, mã phòng ban, nhóm nhân viên.","_cot":["code","name","parent_code","note","is_active","extra"],"_nguon":"gia-lap"}
+{"code":"NV-001","name":"Nhân viên Mẫu 01","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán trưởng","branchCode":"00000","phone":"0900100001","email":"nv001@mau.invalid"}}
+{"code":"NV-002","name":"Nhân viên Mẫu 02","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán tổng hợp","branchCode":"00000","phone":"0900100002","email":"nv002@mau.invalid"}}
+{"code":"NV-003","name":"Nhân viên Mẫu 03","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán thuế","branchCode":"00000","phone":"0900100003","email":"nv003@mau.invalid"}}
+{"code":"NV-004","name":"Nhân viên Mẫu 04","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán kho","branchCode":"00000","phone":"0900100004","email":"nv004@mau.invalid"}}
+{"code":"NV-005","name":"Nhân viên Mẫu 05","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán công nợ","branchCode":"00000","phone":"0900100005","email":"nv005@mau.invalid"}}
+{"code":"NV-006","name":"Nhân viên Mẫu 06","parent_code":null,"note":"","is_active":true,"extra":{"position":"Thủ quỹ","branchCode":"00000","phone":"0900100006","email":"nv006@mau.invalid"}}
+{"code":"NV-007","name":"Nhân viên Mẫu 07","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên mua hàng","branchCode":"00000","phone":"0900100007","email":"nv007@mau.invalid"}}
+{"code":"NV-008","name":"Nhân viên Mẫu 08","parent_code":null,"note":"","is_active":true,"extra":{"position":"Quản lý cửa hàng","branchCode":"00000","phone":"0900100008","email":"nv008@mau.invalid"}}
+{"code":"NV-009","name":"Nhân viên Mẫu 09","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên bán hàng","branchCode":"00000","phone":"0900100009","email":"nv009@mau.invalid"}}
+{"code":"NV-010","name":"Nhân viên Mẫu 10","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán trưởng","branchCode":"01002Plus","phone":"0900100010","email":"nv010@mau.invalid"}}
+{"code":"NV-011","name":"Nhân viên Mẫu 11","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán tổng hợp","branchCode":"01014Premium","phone":"0900100011","email":"nv011@mau.invalid"}}
+{"code":"NV-012","name":"Nhân viên Mẫu 12","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán thuế","branchCode":"02001","phone":"0900100012","email":"nv012@mau.invalid"}}
+{"code":"NV-013","name":"Nhân viên Mẫu 13","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán kho","branchCode":"02002Plus","phone":"0900100013","email":"nv013@mau.invalid"}}
+{"code":"NV-014","name":"Nhân viên Mẫu 14","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán công nợ","branchCode":"08000","phone":"0900100014","email":"nv014@mau.invalid"}}
+{"code":"NV-015","name":"Nhân viên Mẫu 15","parent_code":null,"note":"","is_active":true,"extra":{"position":"Thủ quỹ","branchCode":"08001","phone":"0900100015","email":"nv015@mau.invalid"}}
+{"code":"NV-016","name":"Nhân viên Mẫu 16","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên mua hàng","branchCode":"08002Plus","phone":"0900100016","email":"nv016@mau.invalid"}}
+{"code":"NV-017","name":"Nhân viên Mẫu 17","parent_code":null,"note":"","is_active":true,"extra":{"position":"Quản lý cửa hàng","branchCode":"08014Premium","phone":"0900100017","email":"nv017@mau.invalid"}}
+{"code":"NV-018","name":"Nhân viên Mẫu 18","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên bán hàng","branchCode":"08015Plus","phone":"0900100018","email":"nv018@mau.invalid"}}
+{"code":"NV-019","name":"Nhân viên Mẫu 19","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán trưởng","branchCode":"26000","phone":"0900100019","email":"nv019@mau.invalid"}}
+{"code":"NV-020","name":"Nhân viên Mẫu 20","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán tổng hợp","branchCode":"26001Premium","phone":"0900100020","email":"nv020@mau.invalid"}}
+{"code":"NV-021","name":"Nhân viên Mẫu 21","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán thuế","branchCode":"26002","phone":"0900100021","email":"nv021@mau.invalid"}}
+{"code":"NV-022","name":"Nhân viên Mẫu 22","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán kho","branchCode":"18001","phone":"0900100022","email":"nv022@mau.invalid"}}
+{"code":"NV-023","name":"Nhân viên Mẫu 23","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán công nợ","branchCode":"18002Plus","phone":"0900100023","email":"nv023@mau.invalid"}}
+{"code":"NV-024","name":"Nhân viên Mẫu 24","parent_code":null,"note":"","is_active":true,"extra":{"position":"Thủ quỹ","branchCode":"30000","phone":"0900100024","email":"nv024@mau.invalid"}}
+{"code":"NV-025","name":"Nhân viên Mẫu 25","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên mua hàng","branchCode":"30001","phone":"0900100025","email":"nv025@mau.invalid"}}
+{"code":"NV-026","name":"Nhân viên Mẫu 26","parent_code":null,"note":"","is_active":true,"extra":{"position":"Quản lý cửa hàng","branchCode":"30002Plus","phone":"0900100026","email":"nv026@mau.invalid"}}
+{"code":"NV-027","name":"Nhân viên Mẫu 27","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên bán hàng","branchCode":"31001","phone":"0900100027","email":"nv027@mau.invalid"}}
+{"code":"NV-028","name":"Nhân viên Mẫu 28","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán trưởng","branchCode":"31002Premium","phone":"0900100028","email":"nv028@mau.invalid"}}
+{"code":"NV-029","name":"Nhân viên Mẫu 29","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán tổng hợp","branchCode":"00000","phone":"0900100029","email":"nv029@mau.invalid"}}
+{"code":"NV-030","name":"Nhân viên Mẫu 30","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán thuế","branchCode":"00001Premium","phone":"0900100030","email":"nv030@mau.invalid"}}
+{"code":"NV-031","name":"Nhân viên Mẫu 31","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán kho","branchCode":"00002Plus","phone":"0900100031","email":"nv031@mau.invalid"}}
+{"code":"NV-032","name":"Nhân viên Mẫu 32","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán công nợ","branchCode":"14000","phone":"0900100032","email":"nv032@mau.invalid"}}
+{"code":"NV-033","name":"Nhân viên Mẫu 33","parent_code":null,"note":"","is_active":true,"extra":{"position":"Thủ quỹ","branchCode":"14051","phone":"0900100033","email":"nv033@mau.invalid"}}
+{"code":"NV-034","name":"Nhân viên Mẫu 34","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên mua hàng","branchCode":"14052Premium","phone":"0900100034","email":"nv034@mau.invalid"}}
+{"code":"NV-035","name":"Nhân viên Mẫu 35","parent_code":null,"note":"","is_active":true,"extra":{"position":"Quản lý cửa hàng","branchCode":"14053","phone":"0900100035","email":"nv035@mau.invalid"}}
+{"code":"NV-036","name":"Nhân viên Mẫu 36","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên bán hàng","branchCode":"01000","phone":"0900100036","email":"nv036@mau.invalid"}}
+{"code":"NV-037","name":"Nhân viên Mẫu 37","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán trưởng","branchCode":"01001","phone":"0900100037","email":"nv037@mau.invalid"}}
+{"code":"NV-038","name":"Nhân viên Mẫu 38","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán tổng hợp","branchCode":"01002Plus","phone":"0900100038","email":"nv038@mau.invalid"}}
+{"code":"NV-039","name":"Nhân viên Mẫu 39","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán thuế","branchCode":"01014Premium","phone":"0900100039","email":"nv039@mau.invalid"}}
+{"code":"NV-040","name":"Nhân viên Mẫu 40","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán kho","branchCode":"02001","phone":"0900100040","email":"nv040@mau.invalid"}}
+{"code":"NV-041","name":"Nhân viên Mẫu 41","parent_code":null,"note":"","is_active":true,"extra":{"position":"Kế toán công nợ","branchCode":"02002Plus","phone":"0900100041","email":"nv041@mau.invalid"}}
+{"code":"NV-042","name":"Nhân viên Mẫu 42","parent_code":null,"note":"","is_active":true,"extra":{"position":"Thủ quỹ","branchCode":"08000","phone":"0900100042","email":"nv042@mau.invalid"}}
+{"code":"NV-043","name":"Nhân viên Mẫu 43","parent_code":null,"note":"","is_active":true,"extra":{"position":"Nhân viên mua hàng","branchCode":"08001","phone":"0900100043","email":"nv043@mau.invalid"}}
+{"code":"NV-044","name":"Nhân viên Mẫu 44","parent_code":null,"note":"","is_active":true,"extra":{"position":"Quản lý cửa hàng","branchCode":"08002Plus","phone":"0900100044","email":"nv044@mau.invalid"}}
+{"code":"NV-045","name":"Nhân viên Mẫu 45","parent_code":null,"note":"","is_active":false,"extra":{"position":"Nhân viên bán hàng","branchCode":"08014Premium","phone":"0900100045","email":"nv045@mau.invalid"}}

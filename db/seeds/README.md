@@ -30,8 +30,21 @@ Danh mục và cấu hình định khoản chuẩn của công ty. Phần mềm 
 | `nhom-ccdc.jsonl` | Nhóm công cụ dụng cụ (ACC19) | |
 | `nguon-von.jsonl`, `muc-dich-su-dung.jsonl`, `vu-viec.jsonl`, `du-an.jsonl` | ACC20, ACC21, DM06, DM07 | trống |
 
+## Dữ liệu thật của công ty: thư mục riêng + `SEEDS_DIR` <!-- [2026-11-10 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-53: bộ giả lập trên repo, bộ thật ngoài repo (26 §11.2) -->
+
+Repo công khai. Từ S030-53 (2026-11-10), 11 tệp định danh / tổ chức / mặt hàng (`doi-tuong`, `nhan-vien`, `ngan-hang`, `hop-dong`, `chi-nhanh`, `kho`, `bo-phan`, `so-do-to-chuc`, `so-do-to-chuc-gan`, `mat-hang-tai-khoan`, `phan-loai-hang`) là **dữ liệu giả lập** (dòng đầu có `"_nguon": "gia-lap"`), sinh bằng `node scripts/du-lieu-mau/sinh-seeds.mjs` (`--kiem` báo tệp lệch bản sinh). Không thêm tên người, công ty, MST, số tài khoản, địa chỉ thật vào các tệp này.
+
+Bản cài của một công ty dùng danh mục thật của mình:
+
+1. Chép **cả** thư mục `db/seeds/` (cả các danh mục chuẩn) ra ngoài repo, vd `/srv/bizcity/seeds`, rồi thay 11 tệp trên bằng dữ liệu của công ty (giữ đúng khuôn: dòng đầu `_bang`, `_mo_ta`, `_cot`).
+   - Bản cài đang chạy trước S030-53: lấy lại bộ cũ từ commit ngay trước đợt này — `git archive <commit> db/seeds | tar -x -C /srv/bizcity`.
+2. Đặt biến môi trường `SEEDS_DIR=/srv/bizcity/seeds` cho máy chủ API (`packages/platform/src/db/paths.ts`).
+3. *Quay về dữ liệu gốc* (TI08) và bộ định khoản mặt hàng chưa có trong danh mục khi đó đọc bộ của công ty.
+
+Khi `main` đổi danh mục chuẩn (thêm loại thuế, lý do…), chép các tệp chuẩn đó sang thư mục riêng.
+
 Thứ tự quay về toàn bộ khai ở `DATASETS` (`src/modules/default-data/default-data.service.ts`).
 
 Định dạng JSONL: mỗi dòng một đối tượng JSON. Dòng đầu của mỗi tệp là mô tả (`_bang`, `_mo_ta`, `_cot`), không phải bản ghi.
 
-Lập từ danh mục đang dùng của công ty ngày 14/10/2026. Sửa bản gốc thì sửa thẳng tệp (giữ đúng tên trường), chạy test `test/default-data.test.ts`, rồi cập nhật phần mềm.
+Danh mục chuẩn (tài khoản, loại thuế, khoản mục, lý do, nhóm hạch toán…) lập ngày 14/10/2026; 11 tệp định danh / tổ chức / mặt hàng là bộ giả lập (mục trên). Sửa danh mục chuẩn thì sửa thẳng tệp; sửa bộ giả lập thì sửa script sinh rồi chạy lại (giữ đúng tên trường), chạy test `test/default-data.test.ts`, rồi cập nhật phần mềm.
