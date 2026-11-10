@@ -16,7 +16,7 @@
  * R-INTAKE-4: mã `block` + `door` ⇔ cửa nạp từ chối cùng dữ liệu — kiểm bằng test cặp (apps/api/test/intake-preflight.test.ts).
  */
 import { sql } from 'kysely';
-import { ingestDocumentSchema, intakeFinding, intakeScore, sortFindings, type IngestDocument, type IntakeFinding } from '@ketoan/contracts';
+import { ingestDocumentSchema, intakeFinding, intakeScore, sortFindings, type IngestDocument, type IntakeFinding, type LibraryFindingEntry } from '@ketoan/contracts';
 import { ownDocument } from '@bizcity/platform/core/actions';
 import { AppError } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
@@ -27,6 +27,8 @@ import { commitGuard } from './guard.js';
 import { takeTrial, trialPosting } from './trial-posting.js';
 import { taxFindings } from './tax-findings.js';
 import { policyFindings } from './policy-check.js';
+// [2026-11-09 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b (26 §4.2, K1): kiểm trường theo thư viện dùng chung — chỉ cảnh báo, kênh riêng
+import { libraryFindings } from './library-check.js';
 
 export interface PreflightResult {
   findings: IntakeFinding[];
@@ -39,6 +41,8 @@ export interface PreflightResult {
   guardChanged?: boolean;
   // [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 (S021-22): L5 có chạy không — 'ran' đã định khoản thử; 'blocked' còn lỗi chặn ở L1–L4 nên không thử; 'rate' hết lượt thử trong phút; 'off' không yêu cầu
   l5: 'ran' | 'blocked' | 'rate' | 'off';
+  /** [2026-11-09 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b: cảnh báo / nhắc theo thư viện dùng chung (không vào findings[] / score, không bao giờ chặn). */
+  libraryFindings: LibraryFindingEntry[];
 }
 
 type ZodIssueLike = { code: string; path: (string | number)[]; received?: unknown; expected?: unknown; options?: unknown[]; validation?: unknown; type?: string };
@@ -197,6 +201,9 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: 
   // ── L4 tham chiếu chính sách ([2026-11-08 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9), IN-POL-001..003): cảnh báo, cùng hàm với cửa nạp (R-INTAKE-4); không policyRefs → không gì ──
   findings.push(...(await policyFindings(trx, auth.tenantId, parsed.success ? parsed.data : (r as Record<string, unknown>))).findings);
 
+  // ── Thư viện dùng chung (S030-51b): kênh riêng, không vào findings / score; lỗi bộ kiểm không làm hỏng tiền kiểm ──
+  const libFindings = await libraryFindings(trx, auth.tenantId, parsed.success ? parsed.data : r).catch(() => [] as LibraryFindingEntry[]);
+
   // ── L5 định khoản thử (R-INTAKE-3, R-EVENT-11): chỉ khi L1–L4 không còn lỗi chặn; hoàn tác hết, giới hạn 3 giây + lượt mỗi phút ──
   let l5: PreflightResult['l5'] = 'off';
   if (opts.post) {
@@ -211,7 +218,7 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: 
   if (guardChanged && findings.some((f) => f.severity === 'block')) findings.push(intakeFinding('IN-GUARD-001', null, { got: opts.guard, expected: guard }));
 
   const sorted = sortFindings(findings);
-  return { findings: sorted, score: intakeScore(sorted), ...(parsed.success ? { parsed: parsed.data } : {}), guard, l5, ...(guardChanged !== undefined ? { guardChanged } : {}) };
+  return { findings: sorted, score: intakeScore(sorted), ...(parsed.success ? { parsed: parsed.data } : {}), guard, l5, libraryFindings: libFindings, ...(guardChanged !== undefined ? { guardChanged } : {}) };
 }
 
 /** JSON có khoá sắp xếp — so nội dung không phụ thuộc thứ tự khoá. */

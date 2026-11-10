@@ -109,13 +109,15 @@ export const intakeActions: AnyActionDef[] = [
     // [2026-11-03 10:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: Commit Guard — trả guard (dấu cấu hình), nhận guard cũ → guardChanged
     // [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5: post (mặc định bật) = định khoản thử L5, hoàn tác hết; tắt khi chỉ cần kiểm nhanh L1–L4
     input: z.object({ document: z.unknown(), save: z.boolean().default(false), post: z.boolean().default(true).describe('Định khoản thử L5 (hoàn tác, giới hạn 3 giây và 20 lần mỗi phút mỗi người)'), guard: z.string().trim().max(64).optional().describe('Dấu cũ (lần Kiểm thử trước) — có thì trả guardChanged') }),
-    output: z.object({ findings: z.array(z.unknown()), score: z.number(), guard: z.string(), l5: z.enum(['ran', 'blocked', 'rate', 'off']), guardChanged: z.boolean().optional(), trialId: z.string().optional(), attempt: z.number().optional() }),
+    output: z.object({ findings: z.array(z.unknown()), score: z.number(), guard: z.string(), l5: z.enum(['ran', 'blocked', 'rate', 'off']), guardChanged: z.boolean().optional(), trialId: z.string().optional(), attempt: z.number().optional(),
+      // [2026-11-09 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b: cảnh báo / nhắc theo thư viện dùng chung (kênh riêng, không vào findings / score)
+      libraryFindings: z.array(z.unknown()) }),
     expose: { http: { method: 'POST', path: '/api/v1/intake/preflight' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'intake_inbox', objectId: (_i, o) => o.trialId },
     handler: async (ctx, b) => {
       const pf = await preflight(ctx.data.tx, ctx.legacyAuth, b.document, { post: b.post, ...(b.guard ? { guard: b.guard } : {}) });
       const trial = b.save ? await saveTrial(ctx.data.tx, ctx.legacyAuth, b.document, pf.findings, pf.score) : null;
-      return { findings: pf.findings, score: pf.score, guard: pf.guard, l5: pf.l5, ...(pf.guardChanged !== undefined ? { guardChanged: pf.guardChanged } : {}), ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
+      return { findings: pf.findings, score: pf.score, guard: pf.guard, l5: pf.l5, libraryFindings: pf.libraryFindings, ...(pf.guardChanged !== undefined ? { guardChanged: pf.guardChanged } : {}), ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
     },
   }),
   // [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3 (S021-15, S021-16): sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục — bằng chứng giữ lý do (input)

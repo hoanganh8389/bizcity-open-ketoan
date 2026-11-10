@@ -1,5 +1,6 @@
 # `bizcity_intake_findings@1` — Danh mục phát hiện tiền kiểm
 <!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b: §3 thêm IN-POL-004 (số phiên bản đầu tệp + bizcity-standard.json nâng sau khi dòng S030-51a nhả) (tính lại quà theo bản nguồn nêu, so với dòng quà nguồn gửi) -->
+<!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b: 0.10.0-draft — §9 libraryFindings[] (kiểm trường theo thư viện dùng chung, chỉ cảnh báo, kênh riêng; K1) -->
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
@@ -8,7 +9,7 @@
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4: 0.6.0-draft — §7 bảng điểm, INTAKE_OPEN_AGE, sự kiện bizcity.intake.* -->
 <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: 0.5.0-draft — §6 sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục; lọc closed / mine; chi tiết kèm current -->
 
-> **Phiên bản:** 0.8.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.10.0-draft · 2026-11-09 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -83,6 +84,9 @@ L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh 
 Ba mã `IN-POL-001..003` đã vào bảng §3. `IN-POL-004` (W2b): tính lại quà theo **đúng bản nguồn nêu** trên các dòng không phải quà, so với dòng quà nguồn gửi mang `policyRef.key` của chính sách đó; thiếu / thừa / lệch số lượng → `IN-POL-004` kèm `got` (nguồn) ↔ `expected` (tính lại); chỉ khi bản có thật và băm khớp; im lặng khi không tính được (nội dung ở module chủ, khuôn không có quà, ngoài phạm vi). Để sau: `IN-POL-000` nghiệp vụ có chính sách hiệu lực mà nguồn không gửi tham chiếu (`hint`), `IN-POL-005` kết quả thiếu dữ liệu gốc (quà thiếu kho / lô). Thiếu lý do định khoản cho kết quả chính sách dùng `IN-POST-001` sẵn có.
 
 ## 4. Nhật ký
+
+- **0.10.0-draft (2026-11-09):** §9 `libraryFindings[]` trong phản hồi tiền kiểm — kiểm trường chứng từ theo thư viện dùng chung (bảng gắn `LIBRARY_BINDINGS`), chỉ cảnh báo / nhắc, kênh riêng: không vào `findings[]`, `score`, mã `IN-*` hay bút toán (PHASE-030 S030-51b, K1). Thêm trường, tương thích.
+- **0.9.0-draft (2026-11-08):** `IN-POL-001..004` (PHASE-031 W2a / W2b, §3.1).
 
 <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: IN-GUARD-001, guard trong Kiểm thử / cửa nạp -->
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3: IN-ITEM-001 -->
@@ -162,3 +166,19 @@ Trạng thái mục: `open` · `trial` · `resubmitted` · `fixed_at_source` · 
 **Gợi ý cấu hình.** `GET /api/v1/intake/suggestions?days=30&min=3` (`documents:edit-all`): gom phát hiện của mục bể theo (mã, giá trị đã gửi) với các mã mà gốc sửa là cấu hình — `IN-MD-001`, `IN-ITEM-009`, `IN-POST-001`, `IN-POST-002`, `IN-POST-003` — từ `min` chứng từ trở lên. Trả `{ code, title, value, items, lastSeenAt, suggestion, screen, role }`; câu gợi ý lấy từ phương án khắc phục của mã. **Chỉ gợi ý**: không đổi dữ liệu nào (R-INTAKE-8).
 
 **Action đọc cho AI** (`expose.ai: 'read'`, chỉ MCP, `documents:read`): `core.intake.list`, `core.intake.get`, `core.intake.explain`. Không trả nguyên văn, nội dung và lý do bản vá, **giá trị đã gửi (`got`) và giá trị mong đợi (`expected`)** — nhiều mã dựng `expected` từ số liệu / ngày của chính chứng từ. Không có action ghi nào của bể chờ mở cho AI (`ai: 'deny'`, `mcp: false`).
+
+## 9. Thư viện dùng chung — `libraryFindings[]` (0.10.0-draft, PHASE-030 S030-51b) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b: chữ chốt PHASE-030 · 26 §4.2, K1 -->
+
+Phản hồi tiền kiểm (`POST /api/v1/intake/preflight`) có thêm `libraryFindings[]`, **kênh riêng** cạnh `findings[]`: kiểm các trường chứng từ theo thư viện dùng chung (`bizcity_library@1`) theo bảng gắn `LIBRARY_BINDINGS` (`packages/contracts/src/library-bindings.ts`; hôm nay: `lines[].taxCode` ↔ `vn.loai-thue`, `reasonCode` / `toReasonCode` ↔ `core.ly-do-dinh-khoan`).
+
+| Trường | Nghĩa |
+|---|---|
+| `binding`, `library` | gắn nào, thư viện nào |
+| `path`, `occurrences`, `value` | đường của lần xuất hiện đầu tiên (`lines[1].taxCode`), số lần, mã đã gửi |
+| `code`, `message`, `suggestions[]` | mã `LIB-*` (`LIB-UNKNOWN-001`, `LIB-DEPRECATED-001`, `LIB-VALUE-001`…) và gợi ý sửa từ thư viện |
+| `level` | `warn` hoặc `info` — **không bao giờ `block`**; thư viện đặt mức chặn thì hạ xuống `warn` kèm `blockedBy: true` |
+
+- **Không** vào `findings[]`, `score`, mã `IN-*`, hold, bút toán; **không** thêm `IntakeCode` / trọng số. `LIB-UNVERIFIED-001` (thư viện chưa duyệt mục) không đưa vào kênh này — đó là trạng thái của thư viện, hiện ở bảng đánh giá HT14.
+- **Một hàm, hai đường (R-INTAKE-4):** `libraryFindings()` (`kernel/intake/library-check.ts`) dùng cho tiền kiểm; cửa nạp gọi cùng hàm để **đếm lượt dùng** (`library_usage_daily`, nguồn `intake/<sourceSystem>`) — không từ chối, không hold; xem trước / định khoản thử (post + force) không đếm.
+- **Đơn vị** hạ (`info`) hoặc tắt (`off`) từng gắn bằng khoá `bindings` trong cấu hình thư viện có phiên bản (`POST /api/v1/libraries/:id/config`); thư viện tuỳ chọn đã tắt thì bỏ qua.
+- Chặn `LIB-UNKNOWN-001` ở trường bắt buộc (Q030-L4) **chưa có**: chưa gắn nào bắt buộc; làm khi có (chạm `IntakeCode` — chữ chốt riêng).
