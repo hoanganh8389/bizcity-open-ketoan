@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/ledger
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm L3 số dư — CASH_NEGATIVE, ACCOUNT_WRONG_SIDE, TRANSIT_NONZERO, DEBT_MATCH_LEDGER; cùng mã với lane DG-CASH-1, DG-ACC-1, DG-PLAN-4, DG-PLAN-1; remedy theo 10-DANH-MUC-GIA-DINH.
 /**
  * Số dư của đơn vị — CHỈ ĐỌC, mức warn (phân tích để người dùng quyết định, R-VNC-10). Không viết số tài khoản:
@@ -26,7 +27,7 @@ const defaultAccounts = (tenantId: string, keys: string[]) => sql`
 
 export const BALANCE_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'CASH_NEGATIVE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'CASH_NEGATIVE', closeRef: 'PC-012', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Mở Sổ quỹ tiền mặt tại ngày âm đầu tiên trong mẫu', screen: SCREENS.ACC55 },
@@ -52,7 +53,7 @@ export const BALANCE_DIAGNOSTICS: DiagCheck[] = [
            GROUP BY b.code, r.account_code ORDER BY min(r.day), 1 LIMIT ${SAMPLE}`),
   },
   {
-    code: 'ACCOUNT_WRONG_SIDE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'ACCOUNT_WRONG_SIDE', closeRef: 'PC-020', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Mở Sổ chi tiết tài khoản trong mẫu, xem từ ngày số dư đổi bên', screen: SCREENS.ACC12 },
@@ -75,7 +76,7 @@ export const BALANCE_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY x.code LIMIT ${SAMPLE}`),
   },
   {
-    code: 'TRANSIT_NONZERO', layer: 'L3', level: 'warn', scoped: true,
+    code: 'TRANSIT_NONZERO', closeRef: 'PC-008', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Mở Sổ chi tiết tài khoản trung gian trong mẫu, theo chi nhánh', screen: SCREENS.ACC12 },
@@ -104,7 +105,7 @@ export const BALANCE_DIAGNOSTICS: DiagCheck[] = [
     },
   },
   {
-    code: 'DEBT_MATCH_LEDGER', layer: 'L3', level: 'warn', scoped: true,
+    code: 'DEBT_MATCH_LEDGER', closeRef: 'PC-013', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Mở Sổ chi tiết công nợ của đối tượng / tài khoản trong mẫu', screen: SCREENS.ACC40 },

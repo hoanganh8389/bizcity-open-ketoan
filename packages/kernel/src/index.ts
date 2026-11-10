@@ -93,6 +93,8 @@ export { reducedRateWindow, outsideReducedWindow, invoiceFieldIssues, invoiceIss
 export { BALANCE_DIAGNOSTICS } from './modules/ledger/balance.diagnostics.js';
 export { INVENTORY_DIAGNOSTICS } from './modules/inventory/inventory.diagnostics.js';
 export { CONFORMANCE_DIAGNOSTICS } from './modules/conformance/conformance.diagnostics.js';
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
+export { CLOSE_CONDITIONS } from './modules/periods/close-conditions.js';
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — lịch đêm Kiểm chuẩn (subscriber bizcity.clock.daily, R-DIAG-3)
 export { conformanceNightlySubscriber } from './modules/conformance/conformance.service.js';
 export { collectLedgerMetrics } from './modules/ledger/ledger.metrics.js';

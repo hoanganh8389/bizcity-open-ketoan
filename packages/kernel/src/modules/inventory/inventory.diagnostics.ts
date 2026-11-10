@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/subledgers/inventory
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm L3 kho — COGS_STALE (chứng từ kho đổi sau phiếu giá vốn tháng), STOCK_ADJUST_NO_REASON (điều chỉnh kho thiếu lý do); cùng mã với lane DG-STK-1, DG-STK-2.
 /**
  * Kho — CHỈ ĐỌC, mức warn (R-VNC-10). Phiếu giá vốn tháng: khoá cogs:<chi nhánh>:<YYYY-MM> (costing.service).
@@ -47,7 +48,7 @@ const ledgerVsStock = (s: DiagScope) => {
 
 export const INVENTORY_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'INVENTORY_LEDGER_MISMATCH', layer: 'L3', level: 'warn', scoped: true,
+    code: 'INVENTORY_LEDGER_MISMATCH', closeRef: 'PC-009', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Mở đối chiếu kho ↔ sổ cái của kỳ (GET /api/v1/inventory/reconcile?period=YYYY-MM), xem trạng thái từng dòng trong mẫu', role: 'chief_accountant' },
@@ -66,7 +67,7 @@ export const INVENTORY_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY b.code, x.sku LIMIT ${SAMPLE}`),
   },
   {
-    code: 'COGS_STALE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'COGS_STALE', closeRef: 'PC-005', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Tính lại giá vốn tháng / chi nhánh trong mẫu', screen: SCREENS.ACC49, role: 'chief_accountant' },
@@ -86,7 +87,7 @@ export const INVENTORY_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY c.ym, b.code LIMIT ${SAMPLE}`),
   },
   {
-    code: 'STOCK_ADJUST_NO_REASON', layer: 'L3', level: 'warn', scoped: true,
+    code: 'STOCK_ADJUST_NO_REASON', closeRef: 'PC-004', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Mở phiếu điều chỉnh kho theo khoá trong mẫu', screen: SCREENS.ACC14 },
@@ -109,7 +110,7 @@ export const INVENTORY_DIAGNOSTICS: DiagCheck[] = [
   },
   // [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1 (S029-13, 30 §6): ITEM_CODE_CASE_DUP, UNIT_BASE_INVALID thay mục 6b / 7 chạy tay của doi-chieu-ke-toan.sql (danh mục, không theo ngày)
   {
-    code: 'ITEM_CODE_CASE_DUP', layer: 'L3', level: 'warn', scoped: false,
+    code: 'ITEM_CODE_CASE_DUP', closeRef: 'PC-001', layer: 'L3', level: 'warn', scoped: false,
     remedy: { steps: [{ text: 'Mở danh mục mặt hàng, tìm các mã trong mẫu (khác nhau chỉ ở hoa / thường hoặc khoảng trắng)', screen: SCREENS.DM10 }, { text: 'Cùng một hàng: gộp mã (giữ lịch sử, mã cũ thành bí danh) — không xoá, không đổi tay', screen: SCREENS.DM10, role: 'accountant' }, { text: 'Thật sự khác hàng: đổi mã một bên cho khác hẳn', screen: SCREENS.DM10, role: 'accountant' }], owner: 'accountant', verify: { code: 'ITEM_CODE_CASE_DUP' } },
     title: 'Mã hàng không trùng nhau khi bỏ khoảng trắng và không phân biệt hoa / thường',
     fix: 'Hai mã chỉ khác hoa / thường hoặc khoảng trắng (vd "sua01" và "SUA01 ") dễ bị nguồn ngoài, người nhập hiểu là một: tồn kho, giá vốn chia ra hai dòng. Cùng một hàng thì gộp mã; khác hàng thì đặt mã khác hẳn.',
@@ -120,7 +121,7 @@ export const INVENTORY_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY x.k LIMIT ${SAMPLE}`),
   },
   {
-    code: 'UNIT_BASE_INVALID', layer: 'L3', level: 'warn', scoped: false,
+    code: 'UNIT_BASE_INVALID', closeRef: 'PC-001', layer: 'L3', level: 'warn', scoped: false,
     remedy: { steps: [{ text: 'Mở mặt hàng trong mẫu, thẻ Đơn vị tính', screen: SCREENS.DM10 }, { text: 'Đặt đúng một ĐVT gốc tỉ lệ 1 (ĐVT tồn kho nhỏ nhất) và nhiều nhất một ĐVT mua mặc định', screen: SCREENS.DM10, role: 'accountant' }], owner: 'accountant', verify: { code: 'UNIT_BASE_INVALID' } },
     title: 'Mặt hàng có khai ĐVT thì có đúng một ĐVT gốc tỉ lệ 1 và không quá một ĐVT mua mặc định',
     fix: 'Thiếu ĐVT gốc tỉ lệ 1 (hoặc có hai) thì số lượng quy đổi về tồn kho không xác định; hai ĐVT mua mặc định thì phiếu nhập tự chọn ĐVT khác nhau mỗi lần. Sửa khai báo ĐVT của mặt hàng.',

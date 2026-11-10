@@ -20,11 +20,12 @@ Phần mềm **tự kiểm toàn bộ sổ lúc 01:00 mỗi đêm** (tự chẩn
 - Việc xếp theo **người làm**: kế toán viên, kế toán trưởng, vận hành…
 - Mỗi việc có nhãn ✎ **Phải ghi lý do khi khoá**, ⚠ **Nên xử lý** hoặc ℹ **Để biết**, kèm số chỗ bị.
 - Bấm **Cách khắc phục** để xem *Chỗ bị*, *Vì sao* và các bước sửa. Sửa xong bấm **Kiểm lại** ở đúng dòng đó: phần mềm kiểm lại riêng việc ấy và báo ngay.
+- Dưới mỗi việc có dòng **Điều kiện khoá sổ** <!-- [2026-11-10 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2: phép kiểm trỏ điều kiện khoá sổ -->: việc đó thuộc điều kiện nào (vd *Chuyển kho, hàng đang chuyển*), phải kiểm **hằng ngày, hằng tuần hay cuối tháng**, ở bước nào (trước kết chuyển, sau kết chuyển, lúc khoá), và **khi khoá kỳ** thì *cần giải trình (ghi lý do khi khoá)* hay chỉ *để biết, không chặn*. Việc của phần mềm (cập nhật cơ sở dữ liệu, lịch kiểm chuẩn…) ghi *Việc vận hành phần mềm, không thuộc điều kiện khoá sổ*.
 - Mục **Đã kiểm, đạt** liệt kê các phép kiểm không thấy vấn đề.
 
 Phép kiểm *hàng, tiền đang chuyển giữa chi nhánh* không báo hàng đi đường trong 30 ngày: đó là bình thường. Nó chỉ báo khi còn treo quá 30 ngày mà nơi nhận chưa ghi, hoặc khi nơi nhận ghi nhiều hơn nơi xuất.
 
-Chưa có trong bản này: nhắc việc theo ngày / tuần, mã điều kiện khoá sổ trên từng việc.
+Chưa có trong bản này: lọc việc theo kỳ kiểm (thẻ *Kết quả từng tuần*), mức *chặn khoá sổ, phải sửa* (đến cùng danh sách trường hợp sai về số học).
 
 ## Khoá thử hôm nay
 

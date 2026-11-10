@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/tai-san
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm L3 DEPRECIATION_OPEN — tháng đã qua 30 ngày có tài sản cần khấu hao / phân bổ mà chưa có phiếu khấu hao tháng; cùng mã với lane DG-FA-1.
 /**
  * Khấu hao, phân bổ — CHỈ ĐỌC, mức warn (R-VNC-10). Tháng đã trích của một tài sản: có dòng asset_depreciations của tháng đó, hoặc
@@ -32,7 +33,7 @@ const due = (s: DiagScope) => sql`
 
 export const ASSET_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'DEPRECIATION_OPEN', layer: 'L3', level: 'warn', scoped: true,
+    code: 'DEPRECIATION_OPEN', closeRef: 'PC-014', layer: 'L3', level: 'warn', scoped: true,
     remedy: {
       steps: [
         { text: 'Tính khấu hao, phân bổ cho tháng / chi nhánh trong mẫu (tháng cũ trước)', screen: SCREENS.ACC31, role: 'chief_accountant' },

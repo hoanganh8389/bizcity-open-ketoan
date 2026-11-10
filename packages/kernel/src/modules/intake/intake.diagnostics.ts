@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/intake
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-19, 20-KIEN-TRUC §8): INTAKE_OPEN_AGE — mục bể chờ mở quá ngưỡng (bizcity.intake.open_alert_days, mặc định 3 ngày); cùng chữ với lane DG-INTAKE-1
 /**
  * Tự chẩn đoán bể chờ đầu vào. Chứng từ nằm ở bể = chưa vào sổ — báo cáo thiếu số tới khi nguồn sửa hoặc kế toán xử lý ở Trạm kiểm tra.
@@ -14,7 +15,7 @@ const threshold = (tenantId: string) => sql`make_interval(days => coalesce((SELE
 
 export const INTAKE_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'INTAKE_OPEN_AGE', layer: 'L3', level: 'warn', scoped: false,
+    code: 'INTAKE_OPEN_AGE', closeRef: 'PC-003', layer: 'L3', level: 'warn', scoped: false,
     remedy: {
       steps: [
         { text: 'Mở Định khoản tự động, thẻ Cần sửa — mục cũ nhất ở trên khi sắp theo lần gần nhất', screen: SCREENS.ACC14 },

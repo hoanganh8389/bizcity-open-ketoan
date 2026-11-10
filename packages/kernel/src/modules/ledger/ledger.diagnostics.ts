@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/ledger
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: remedy có cấu trúc cho từng kiểm (bizcity_remedy@1, R-FIX-1).
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
@@ -69,7 +70,7 @@ const vatInputPairs = (s: DiagScope) => sql`
 
 export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'LEDGER_BALANCED', layer: 'L3', level: 'error', scoped: true,
+    code: 'LEDGER_BALANCED', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Trigger cân Nợ = Có đã bị vượt: kiểm LEDGER_TRIGGERS', role: 'operator' }], owner: 'core_team', verify: { code: 'LEDGER_BALANCED' }, stopTheLine: true },
     title: 'Mỗi bút toán: tổng Nợ = tổng Có',
     fix: 'Bút toán lệch làm sai bảng cân đối. Trigger cân Nợ = Có đã bị vượt qua — báo nhóm Lõi, không tự sửa sổ.',
@@ -82,7 +83,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY e.id LIMIT ${SAMPLE}`),
   },
   {
-    code: 'LEDGER_BALANCES_DAILY', layer: 'L3', level: 'error', scoped: true,
+    code: 'LEDGER_BALANCES_DAILY', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Không khoá kỳ khi còn lỗi này', role: 'chief_accountant' }, { text: 'Nhóm Lõi dựng lại số dư ngày từ dòng sổ', role: 'core_team' }], owner: 'core_team', verify: { code: 'LEDGER_BALANCES_DAILY' }, stopTheLine: true, forbid: ['Không sửa tay bảng số dư'] },
     title: 'Số dư ngày (ledger_balances_daily) = tổng dòng sổ theo chi nhánh, tài khoản, ngày',
     fix: 'Báo cáo đọc số dư ngày sẽ lệch sổ chi tiết. Dựng lại số dư ngày bằng lệnh của nhóm Lõi (ngoại lệ RULE-LEDGER), có bằng chứng.',
@@ -98,7 +99,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            LIMIT ${SAMPLE}`),
   },
   {
-    code: 'LEDGER_REVERSED_ONCE', layer: 'L3', level: 'error', scoped: true,
+    code: 'LEDGER_REVERSED_ONCE', closeRef: 'PC-002', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Mở chứng từ theo số bút toán trong mẫu, xem nhật ký định khoản', screen: SCREENS.ACC14 }], owner: 'core_team', verify: { code: 'LEDGER_REVERSED_ONCE' }, stopTheLine: true },
     title: 'Bút toán đã đảo có đúng một bút toán đảo; bút toán đảo trỏ về bút toán đã đảo',
     fix: 'Đảo hai lần hoặc đảo trỏ sai làm số phát sinh bị trừ thừa / thiếu. Báo nhóm Lõi kèm số bút toán.',
@@ -114,7 +115,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
           ) x LIMIT ${SAMPLE}`),
   },
   {
-    code: 'LEDGER_ORPHAN', layer: 'L3', level: 'error', scoped: true,
+    code: 'LEDGER_ORPHAN', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Lập biên bản với ban kiểm soát kèm số bút toán trong mẫu', role: 'owner' }], owner: 'core_team', verify: { code: 'LEDGER_ORPHAN' }, stopTheLine: true, forbid: ['Không xoá bút toán'] },
     title: 'Mọi bút toán trỏ về một sự việc (accounting_events) có thật',
     fix: 'Bút toán không có sự việc thì không truy được chứng từ gốc, không đảo đúng được khi sửa. Báo nhóm Lõi (câu 1: không sự việc, không bút toán).',
@@ -126,7 +127,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            LIMIT ${SAMPLE}`),
   },
   {
-    code: 'EVENT_POSTED_VERSION', layer: 'L3', level: 'error', scoped: true,
+    code: 'EVENT_POSTED_VERSION', closeRef: 'PC-002', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Định khoản lại chứng từ trong mẫu ở Định khoản tự động (bút toán cũ ghi số âm, ghi bút toán mới)', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Còn lỗi sau khi định khoản lại: gửi nhóm Lõi mã tra cứu' }], owner: 'accountant', verify: { code: 'EVENT_POSTED_VERSION' }, stopTheLine: true },
     title: 'Sự việc đã ghi sổ có posted_version = version',
     fix: 'Sổ đang phản ánh phiên bản cũ của chứng từ. Định khoản lại chứng từ ở ACC14 (Chờ định khoản) hoặc gửi lại bản mới nhất.',
@@ -138,7 +139,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            LIMIT ${SAMPLE}`),
   },
   {
-    code: 'EVENT_HAS_ENTRY', layer: 'L3', level: 'warn', scoped: true,
+    code: 'EVENT_HAS_ENTRY', closeRef: 'PC-002', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở chứng từ trong mẫu ở Định khoản tự động, xem nhật ký định khoản', screen: SCREENS.ACC14 }, { text: 'Định khoản lại', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Lặp lại: báo nhóm Lõi kèm mã tra cứu' }], owner: 'accountant', verify: { code: 'EVENT_HAS_ENTRY' } },
     title: 'Sự việc đã ghi sổ có ít nhất một bút toán hiệu lực',
     fix: 'Chứng từ báo "đã ghi sổ" nhưng không còn bút toán hiệu lực (vd mọi dòng tiền bằng 0, hoặc đã đảo hết). Mở chứng từ ở ACC14 để xem. Không tính phiếu chuyển kho / điều chỉnh kho tổng tiền 0: giá trị của chúng ghi ở phiếu giá vốn tháng.',
@@ -150,7 +151,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            LIMIT ${SAMPLE}`),
   },
   {
-    code: 'EVENT_PENDING_AGE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'EVENT_PENDING_AGE', closeRef: 'PC-003', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở Định khoản tự động, thẻ Chờ / Lỗi', screen: SCREENS.ACC14 }, { text: 'Xem trước bút toán; thiếu cấu hình thì bổ sung lý do / tài khoản', screen: SCREENS.ACC18, role: 'chief_accountant' }, { text: 'Định khoản, hoặc huỷ có lý do (nguồn báo xoá thì huỷ)', screen: SCREENS.ACC14, role: 'accountant' }], owner: 'accountant', verify: { code: 'EVENT_PENDING_AGE' } },
     title: 'Không có sự việc chờ định khoản / lỗi quá 3 ngày',
     fix: 'Chứng từ chưa vào sổ thì báo cáo thiếu số. Xử lý ở ACC14 (Chờ định khoản): sửa thiếu sót rồi định khoản, hoặc huỷ.',
@@ -163,7 +164,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
     // [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — TAX_INPUT_NO_INVOICE (K0, chỉ đọc): thuế đầu vào đã vào sổ mà chưa có hoá đơn quá 30 ngày (REVIEW-2026-10-31-THUY việc h, bước 1).
     // Tài khoản thuế đầu vào lấy từ cấu hình của đơn vị (loại thuế đầu vào + ngầm định tax_input), không viết số tài khoản.
-    code: 'TAX_INPUT_NO_INVOICE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'TAX_INPUT_NO_INVOICE', closeRef: 'PC-011', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở Bổ sung thông tin thuế, lọc "Chưa có hoá đơn"', screen: SCREENS.ACC78 }, { text: 'Có hoá đơn: nhập số / ký hiệu / ngày, rồi định khoản lại', screen: SCREENS.ACC78, role: 'accountant' }, { text: 'Không có hoá đơn: báo kế toán trưởng, bỏ đánh dấu được khấu trừ', screen: SCREENS.ACC78, role: 'chief_accountant' }], owner: 'accountant', verify: { code: 'TAX_INPUT_NO_INVOICE' } },
     title: 'Thuế GTGT đầu vào đã ghi sổ có hoá đơn trong sổ hoá đơn (chờ hoá đơn không quá 30 ngày)',
     fix: 'Phiếu mua chưa có số hoá đơn mà thuế đã vào tài khoản thuế đầu vào: bảng kê mua vào sẽ thiếu so với sổ. Nhận hoá đơn thì nhập số / ký hiệu / ngày hoá đơn vào phiếu (sổ hoá đơn tự ghi). Quá hạn mà không có hoá đơn: báo kế toán trưởng — thuế chưa đủ điều kiện khấu trừ.',
@@ -177,7 +178,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   // [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1 (S029-13, 30 §6): sổ đăng ký đối chiếu — VAT_INPUT_INVOICE_MATCH, LEDGER_ROUNDING thay mục 3 / 5 chạy tay của doi-chieu-ke-toan.sql
   {
     // Cộng ròng mọi bút toán của sự việc (gốc bị đảo + bút toán đảo triệt tiêu nhau) → số thuế hiện hành trên sổ; hoá đơn thay thế / huỷ không tính.
-    code: 'VAT_INPUT_INVOICE_MATCH', layer: 'L3', level: 'warn', scoped: true,
+    code: 'VAT_INPUT_INVOICE_MATCH', closeRef: 'PC-011', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở Bổ sung thông tin thuế, tìm chứng từ trong mẫu', screen: SCREENS.ACC78 }, { text: 'Thuế trên hoá đơn đúng: sửa chứng từ (dòng thuế / loại thuế) rồi định khoản lại', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Thuế trên sổ đúng: sửa số thuế của hoá đơn trong sổ hoá đơn', screen: SCREENS.ACC78, role: 'accountant' }], owner: 'accountant', verify: { code: 'VAT_INPUT_INVOICE_MATCH' }, forbid: ['Không lập phiếu kế toán tay vào tài khoản thuế để làm khớp số'] },
     title: 'Thuế GTGT đầu vào trên sổ khớp thuế trên sổ hoá đơn của cùng chứng từ (lệch không quá 0,5 đồng)',
     fix: 'Chứng từ đã có hoá đơn nhưng số thuế đầu vào ghi sổ khác số thuế trên hoá đơn: bảng kê mua vào và tài khoản thuế đầu vào không cùng một số. Thường do sửa số thuế ở một bên mà không sửa bên kia, hoặc chọn sai loại thuế trên dòng.',
@@ -187,7 +188,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            WHERE abs(x.so - x.hd) > 0.5 ORDER BY x.doc_date, x.doc_key LIMIT ${SAMPLE}`),
   },
   {
-    code: 'LEDGER_ROUNDING', layer: 'L3', level: 'warn', scoped: true,
+    code: 'LEDGER_ROUNDING', closeRef: 'PC-016', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở chứng từ của bút toán trong mẫu, làm tròn đơn giá / thành tiền về đồng ở nguồn', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Nguồn ngoài (POS, kết nối) gửi số lẻ xu: báo người tích hợp làm tròn trước khi gửi' }], owner: 'accountant', verify: { code: 'LEDGER_ROUNDING' } },
     title: 'Dòng sổ cái ghi số tiền tròn đồng (sổ ghi đồng Việt Nam)',
     fix: 'Dòng sổ có số lẻ dưới một đồng: tổng trên báo cáo, tờ khai và bảng kê lệch nhau vài đồng sau khi cộng. Làm tròn ở chứng từ nguồn rồi định khoản lại; không làm tròn bằng phiếu tay.',
@@ -200,7 +201,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   },
   {
     // ADR-0009, C-9: bút toán dựng theo luật định khoản ghi đúng phiên bản chính sách áp cho ngày hạch toán.
-    code: 'POLICY_VERSION', layer: 'L3', level: 'warn', scoped: true,
+    code: 'POLICY_VERSION', closeRef: 'PC-002', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Định khoản lại chứng từ trong mẫu', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Báo nhóm Lõi: có đường định khoản không đọc chính sách theo ngày hạch toán' }], owner: 'accountant', verify: { code: 'POLICY_VERSION' } },
     title: 'Bút toán định khoản theo luật ghi đúng phiên bản chính sách kế toán của ngày hạch toán',
     fix: 'Bút toán thiếu policy_version hoặc theo bản không áp cho ngày hạch toán của nó: có đường định khoản không đi loadPostingConfig({ asOf }). Định khoản lại chứng từ ở ACC14 và báo nhóm Lõi (ADR-0009).',
@@ -212,7 +213,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY e.id LIMIT ${SAMPLE}`),
   },
   {
-    code: 'INTERNAL_EVENT_VERSION', layer: 'L3', level: 'warn', scoped: true,
+    code: 'INTERNAL_EVENT_VERSION', closeRef: 'PC-002', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Chạy lại kết chuyển / tính giá vốn / khấu hao của kỳ trong mẫu', screen: SCREENS.ACC6, role: 'chief_accountant' }, { text: 'Còn lỗi: báo nhóm Lõi kèm mã tra cứu' }], owner: 'chief_accountant', verify: { code: 'INTERNAL_EVENT_VERSION' } },
     title: 'Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version = version',
     fix: 'Sự việc nội bộ đã vào sổ mà posted_version lệch phiên bản: có đường ghi không đi eventStore.markPosted() (R-LEDGER-4). Chạy lại kết chuyển / tính giá vốn / khấu hao của kỳ đó và báo nhóm Lõi.',
@@ -225,7 +226,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   },
   // [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: ba mã chẩn đoán truy vết chứng từ gốc (DOC-01 / DOC-03 / DOC-04), mức warn — dữ liệu cũ có thể thiếu event_version; lane SQL DG-DOC-1..3
   {
-    code: 'ENTRY_NO_VERSION', layer: 'L3', level: 'warn', scoped: true,
+    code: 'ENTRY_NO_VERSION', closeRef: 'PC-002', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở chứng từ trong mẫu ở Định khoản tự động, định khoản lại để bút toán mới mang phiên bản chứng từ', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Lặp lại: báo nhóm Lõi kèm mã tra cứu' }], owner: 'accountant', verify: { code: 'ENTRY_NO_VERSION' } },
     title: 'Bút toán gắn sự việc có ghi phiên bản chứng từ đã tạo ra nó (event_version)',
     fix: 'Bút toán không biết nó sinh từ phiên bản nào của chứng từ nên không truy vết đúng phiên bản được (DOC-01 / DOC-03). Thường là bút toán ghi trước khi có cột phiên bản: định khoản lại chứng từ để bút toán mới mang phiên bản. Mọi đường ghi mới phải truyền sourceVersion (SC-DOC-7).',
@@ -236,7 +237,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            LIMIT ${SAMPLE}`),
   },
   {
-    code: 'ENTRY_VERSION_UNKNOWN', layer: 'L3', level: 'warn', scoped: true,
+    code: 'ENTRY_VERSION_UNKNOWN', closeRef: 'PC-002', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở chứng từ của bút toán trong mẫu ở Định khoản tự động: phiên bản không còn nội dung lưu', screen: SCREENS.ACC14 }, { text: 'Báo nhóm Lõi kèm mã tra cứu — nội dung phiên bản cũ không được mất (DOC-06)', role: 'owner' }], owner: 'core_team', verify: { code: 'ENTRY_VERSION_UNKNOWN' } },
     title: 'Phiên bản chứng từ của bút toán còn nội dung lưu (hiện hành hoặc ở accounting_event_versions)',
     fix: 'Bút toán trỏ phiên bản chứng từ mà không còn nội dung để xem (không phải bản hiện hành, không có ở accounting_event_versions): lịch sử chứng từ bị mất, không giải thích được vì sao có bút toán này (DOC-03 / DOC-06). Báo nhóm Lõi, không tự sửa.',
@@ -248,7 +249,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            LIMIT ${SAMPLE}`),
   },
   {
-    code: 'EVENT_ENTRIES_STALE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'EVENT_ENTRIES_STALE', closeRef: 'PC-002', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở chứng từ trong mẫu ở Định khoản tự động, xem nhật ký định khoản và định khoản lại', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Lặp lại: báo nhóm Lõi kèm mã tra cứu' }], owner: 'accountant', verify: { code: 'EVENT_ENTRIES_STALE' } },
     title: 'Bút toán đang hiệu lực của sự việc đã ghi sổ thuộc đúng phiên bản đã ghi nhận (posted_version)',
     fix: 'Sự việc báo ghi sổ phiên bản N nhưng còn bút toán hiệu lực của phiên bản khác: sổ lẫn hai phiên bản (DOC-04). Định khoản lại chứng từ ở ACC14 để bút toán cũ được đảo.',
@@ -262,7 +263,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   },
   // [2026-11-09 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a (D004-13): sửa đầu bút toán NGOÀI ứng dụng = dòng nhật ký của trigger 0089 (_source = db) không có dòng của ứng dụng (_source = app) cùng _txid; level error nên vào bảng kiểm khoá kỳ như mọi lỗi L3
   {
-    code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED', layer: 'L3', level: 'error', scoped: true,
+    code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [{ text: 'Mở lịch sử chứng từ của bút toán trong mẫu: xem cột đổi, giá trị trước / sau, vai trò và giờ sửa', screen: SCREENS.ACC14 }, { text: 'Hỏi người sửa lý do; sửa sai thì định khoản lại chứng từ để bút toán về đúng nội dung', screen: SCREENS.ACC14, role: 'chief_accountant' }, { text: 'Không khoá kỳ khi còn lỗi này, trừ khi kế toán trưởng ghi lý do', role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED' } },
     title: 'Mọi lần sửa đầu bút toán đi qua ứng dụng, hoặc đã được kế toán trưởng xác nhận',
     fix: 'Đầu bút toán (số chứng từ, số hoá đơn, lý do, đối tượng, diễn giải, dấu vân tay, phiên bản sự việc, tên đối tượng) bị UPDATE thẳng bằng SQL, không qua đường E2 của ứng dụng. Mở bút toán trong mẫu, hỏi người sửa (vai trò trong nhật ký), sửa lại nếu sai; kế toán trưởng ghi lý do nếu cần khoá kỳ.',
@@ -281,7 +282,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
           ) x ORDER BY x.posting_date, x.key LIMIT ${SAMPLE}`),
   },
   {
-    code: 'LEDGER_TRIGGERS', layer: 'L1', level: 'error', scoped: false,
+    code: 'LEDGER_TRIGGERS', closeRef: 'PC-016', layer: 'L1', level: 'error', scoped: false,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Vận hành chạy lại migration để dựng lại trigger', role: 'operator' }, { text: 'Tra nhật ký CSDL ai / lúc nào tắt trigger, lập biên bản (R-KER-3)', role: 'owner' }, { text: 'Chạy lại toàn bộ tự chẩn đoán L3' }], owner: 'operator', verify: { code: 'LEDGER_TRIGGERS' }, stopTheLine: true },
     title: 'Trigger bảo vệ sổ (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ, đang bật và không còn cờ thoát',
     fix: 'Sổ đang mất lớp bảo vệ: có thể sửa / xoá bút toán. Không ghi sổ tiếp; chạy lại migration (db-migrate) và tìm ai đã tắt trigger hoặc đưa lại cờ thoát vào trigger (R-KER-3).',

@@ -35,6 +35,28 @@ export type DiagLayer = 'L1' | 'L3' | 'L5';
 export type DiagLevel = 'error' | 'warn' | 'info';
 export type DiagOutcome = 'pass' | 'empty' | DiagLevel;
 
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
+/** Kỳ kiểm: hằng ngày · hằng tuần · cuối tháng (R-DIAG-11). Ngày và tuần chỉ nhắc việc, không chặn. */
+export type DiagCadence = 'day' | 'week' | 'period';
+/** Bước của khoá sổ: trước kết chuyển · sau kết chuyển · lúc khoá. */
+export type DiagStage = 'pre' | 'post' | 'lock';
+/** Mức khi khoá kỳ, lời kế toán (R-DIAG-12): chặn khoá sổ · cần giải trình · để biết. */
+export type CloseSeverity = 'block' | 'explain' | 'note';
+
+/**
+ * Điều kiện khoá sổ (PC, R-DIAG-10). Sổ PC là kiến thức kế toán nên Kernel khai (periods/close-conditions.ts); Platform chỉ giữ sổ
+ * đăng ký, cùng khuôn registerDiagnostics (LAYOUT-1). Kỳ kiểm và bước khoá đặt ở PC, phép kiểm chỉ trỏ closeRef.
+ */
+export interface CloseCondition {
+  code: `PC-${string}`;
+  /** Tên bằng lời kế toán. */
+  title: string;
+  cadence: DiagCadence[];
+  stage: DiagStage;
+  /** Không phép kiểm nào nuôi PC này: hôm nay kiểm bằng gì (kế toán kiểm tay, trigger, closing.service, việc S032-n sẽ thêm). */
+  checkedElsewhere?: string;
+}
+
 /** Phạm vi một lần chạy: cả sổ của đơn vị, hoặc một khoảng ngày hạch toán (khoá kỳ), một chi nhánh. */
 export interface DiagScope {
   tenantId: string;
@@ -56,6 +78,14 @@ export interface DiagCheck {
   remedy?: Remedy;
   /** Có xét được theo khoảng ngày không (kiểm cả bản cài như migration thì không). */
   scoped: boolean;
+  /** Điều kiện khoá sổ mà phép kiểm nuôi (R-DIAG-10); 'none' = việc vận hành, không thuộc khoá sổ. */
+  closeRef?: `PC-${string}` | 'none';
+  /** Chỉ khi khác kỳ kiểm của PC. */
+  cadence?: DiagCadence[];
+  /** Chỉ khi khác bước của PC. */
+  stage?: DiagStage;
+  /** Mức khi khoá kỳ theo kết quả (R-DIAG-12); chỉ gọi khi có chỗ sai. Không khai thì theo defaultSeverityAtClose. */
+  severityAtClose?: (r: { count: number; sample: string[] }) => CloseSeverity;
   run(trx: Transaction<Database>, scope: DiagScope): Promise<{ examined: number; count: number; sample: string[] }>;
 }
 
@@ -68,6 +98,15 @@ export interface DiagResult {
   examined: number;
   count: number;
   sample: string[];
+  /** Mã PC hoặc 'none' (R-DIAG-10). Lượt lưu trước B2c-2 không có. */
+  closeRef?: string;
+  /** Tên PC, để màn không phải tra. */
+  closeTitle?: string;
+  /** Đã gộp: của phép kiểm, không có thì của PC. */
+  cadence?: DiagCadence[];
+  stage?: DiagStage;
+  /** Chỉ khi có chỗ sai (error / warn / info). */
+  atClose?: CloseSeverity;
 }
 
 export interface DiagReport {
@@ -90,6 +129,40 @@ export function listDiagnostics(layer?: DiagLayer): DiagCheck[] {
   return [...registry.values()].filter((c) => !layer || c.layer === layer);
 }
 
+const closeConditions = new Map<string, CloseCondition>();
+
+/** Đăng ký điều kiện khoá sổ (Kernel lúc lắp ráp). Cùng mã đăng ký lại thì thay — buildApp chạy nhiều lần trong test. */
+export function registerCloseConditions(list: CloseCondition[]): void {
+  for (const p of list) closeConditions.set(p.code, p);
+}
+
+export function listCloseConditions(): CloseCondition[] {
+  return [...closeConditions.values()];
+}
+
+/**
+ * Mức khi khoá kỳ mặc định — đúng khoá thật hôm nay (R-DIAG-4): lỗi thì phải ghi lý do khi khoá, còn lại để biết.
+ * 'block' chỉ có hiệu lực cùng danh sách D032-11 ở S032-30; B2c-2 chỉ hiện mức, không đổi khoá kỳ.
+ */
+export function defaultSeverityAtClose(level: DiagLevel): CloseSeverity {
+  return level === 'error' ? 'explain' : 'note';
+}
+
+/** Gộp trường khoá sổ vào một kết quả: PC (tên, kỳ kiểm, bước) và mức khi khoá nếu có chỗ sai. */
+function closeFields(c: DiagCheck, level: DiagOutcome, r: { count: number; sample: string[] }): Partial<DiagResult> {
+  const pc = c.closeRef && c.closeRef !== 'none' ? closeConditions.get(c.closeRef) : undefined;
+  const cadence = c.cadence ?? pc?.cadence;
+  const stage = c.stage ?? pc?.stage;
+  const bad = level === 'error' || level === 'warn' || level === 'info';
+  return {
+    ...(c.closeRef ? { closeRef: c.closeRef } : {}),
+    ...(pc ? { closeTitle: pc.title } : {}),
+    ...(cadence ? { cadence } : {}),
+    ...(stage ? { stage } : {}),
+    ...(bad ? { atClose: c.severityAtClose ? c.severityAtClose(r) : defaultSeverityAtClose(level) } : {}),
+  };
+}
+
 /** Chạy các kiểm của một tầng trong giao dịch READ ONLY (R-DIAG-2). Kiểm lỗi SQL thì ghi là error kèm thông báo, không dừng cả lượt. */
 export async function runDiagnostics(scope: DiagScope, opts: { layer: DiagLayer; codes?: string[]; branchCode?: string; db?: Kysely<Database> }): Promise<DiagReport> {
   const conn = opts.db ?? db; // test truyền kết nối riêng: chạy được sau khi tệp test đã đóng pool chung
@@ -103,9 +176,9 @@ export async function runDiagnostics(scope: DiagScope, opts: { layer: DiagLayer;
         return c.run(trx, scope);
       });
       const level: DiagOutcome = r.count > 0 ? c.level : r.examined === 0 ? 'empty' : 'pass';
-      results.push({ code: c.code, level, title: c.title, fix: c.fix, remedy: c.remedy, examined: r.examined, count: r.count, sample: r.sample.slice(0, SAMPLE) });
+      results.push({ code: c.code, level, title: c.title, fix: c.fix, remedy: c.remedy, examined: r.examined, count: r.count, sample: r.sample.slice(0, SAMPLE), ...closeFields(c, level, r) });
     } catch (err) {
-      results.push({ code: c.code, level: 'error', title: c.title, fix: `Kiểm không chạy được: ${(err as Error).message}`, examined: 0, count: 1, sample: [] });
+      results.push({ code: c.code, level: 'error', title: c.title, fix: `Kiểm không chạy được: ${(err as Error).message}`, examined: 0, count: 1, sample: [], ...closeFields(c, 'error', { count: 1, sample: [] }) });
     }
   }
   const summary: Record<DiagOutcome, number> = { pass: 0, empty: 0, info: 0, warn: 0, error: 0 };
@@ -169,7 +242,7 @@ export async function sqlCounts(trx: Transaction<Database>, examined: RawBuilder
 /** Kiểm L1 chung của Platform. */
 export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'MIGRATIONS_PENDING', layer: 'L1', level: 'error', scoped: false,
+    code: 'MIGRATIONS_PENDING', closeRef: 'none', layer: 'L1', level: 'error', scoped: false,
     remedy: { steps: [{ text: 'Vận hành chạy job db-migrate (docker compose up db-migrate) hoặc npm run db:migrate', role: 'operator' }, { text: 'Khởi động lại API', role: 'operator' }, { text: 'Không nhập chứng từ tới khi xong' }], owner: 'operator', verify: { code: 'MIGRATIONS_PENDING' } },
     title: 'Mọi tệp db/migrations đã áp vào CSDL',
     fix: 'Code mới cần bảng / cột chưa có, màn hình sẽ lỗi. Chạy job db-migrate (docker compose up db-migrate) hoặc npm run db:migrate.',
@@ -179,7 +252,7 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
     },
   },
   {
-    code: 'DB_WRITABLE', layer: 'L1', level: 'error', scoped: false,
+    code: 'DB_WRITABLE', closeRef: 'none', layer: 'L1', level: 'error', scoped: false,
     remedy: { steps: [{ text: 'Vận hành trỏ DATABASE_URL về bản chính (không phải bản sao chỉ đọc)', role: 'operator' }, { text: 'Khởi động lại API', role: 'operator' }], owner: 'operator', verify: { code: 'DB_WRITABLE' } },
     title: 'CSDL là bản chính, ghi được (không phải bản sao chỉ đọc)',
     fix: 'API đang nối vào bản sao chỉ đọc hoặc CSDL đang khôi phục: không nhận chứng từ được. Kiểm DATABASE_URL trỏ đúng máy chủ chính.',
@@ -191,7 +264,7 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
   {
     // bizcity_evidence@1 STD-EVD-2: chuỗi băm theo đơn vị (migration 0036). Có khoảng ngày thì chỉ băm lại dòng trong khoảng
     // (phần tốn nhất), nhưng nối chuỗi vẫn xét trên cả chuỗi.
-    code: 'EVIDENCE_CHAIN', layer: 'L3', level: 'error', scoped: true,
+    code: 'EVIDENCE_CHAIN', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Xuất đoạn chuỗi đứt (số thứ tự, băm) gửi nhóm Lõi và ban kiểm soát', role: 'owner' }, { text: 'Lập biên bản sự cố; không xoá / sửa thêm bằng chứng', role: 'owner' }], owner: 'core_team', verify: { code: 'EVIDENCE_CHAIN' }, stopTheLine: true },
     title: 'Chuỗi băm bằng chứng liền mạch: mỗi dòng băm đúng, nối đúng dòng trước, không hở số thứ tự',
     fix: 'Có dòng nhật ký thao tác bị sửa / xoá ngoài ứng dụng (vượt trigger chỉ thêm). Không sửa lại; khoanh vùng theo mã dòng, đối chiếu bản sao lưu, báo nhóm Lõi (RULE-SECURITY).',
@@ -213,7 +286,7 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
   },
   {
     // PHASE-007 (migration 0041), STD-DATA-1: bảng có tenant_id thiếu RLS / FORCE / chính sách là lỗ hổng cô lập đơn vị.
-    code: 'TENANT_ISOLATION', layer: 'L1', level: 'error', scoped: false,
+    code: 'TENANT_ISOLATION', closeRef: 'PC-016', layer: 'L1', level: 'error', scoped: false,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Nhóm phát triển thêm migration bật RLS + FORCE + chính sách cho bảng trong mẫu (khuôn ở migration 0041)', role: 'core_team' }, { text: 'Phát hành bản vá, chạy migration', role: 'operator' }], owner: 'core_team', verify: { code: 'TENANT_ISOLATION' }, stopTheLine: true },
     title: 'Mọi bảng có tenant_id bật RLS + FORCE + có chính sách (đơn vị A không đọc / ghi được dữ liệu đơn vị B)',
     fix: 'Bảng mới có tenant_id mà chưa có chính sách RLS: thêm migration ENABLE / FORCE ROW LEVEL SECURITY + CREATE POLICY tenant_isolation theo khuôn 0041. Không tắt RLS để "chữa cháy".',
@@ -230,7 +303,7 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
   },
   {
     // bizcity_event@1 §5, R-OUTBOX-3: việc giao hết lượt thử thì nằm im — phải có người xem.
-    code: 'EVENT_DEAD', layer: 'L3', level: 'warn', scoped: true,
+    code: 'EVENT_DEAD', closeRef: 'PC-003', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Xem lỗi giao của subscriber ở Hệ thống → sự kiện (GET /api/v1/system/events)' }, { text: 'Sửa nguyên nhân (địa chỉ nhận, khoá, hệ thống ngoài)', role: 'operator' }, { text: 'Phát lại sự kiện (core.events.replay)', role: 'chief_accountant' }], owner: 'accountant', verify: { code: 'EVENT_DEAD' } },
     title: 'Không có sự kiện hết lượt giao (dead) chưa xử lý',
     fix: 'Một nơi nhận (subscriber) lỗi liên tục nên sự kiện dừng giao. Xem lỗi ở GET /api/v1/system/events, sửa nguyên nhân (kết nối, cấu hình) rồi phát lại: POST /api/v1/system/events/replay.',
