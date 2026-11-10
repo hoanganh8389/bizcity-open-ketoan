@@ -18,7 +18,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S034-9 | B5b — thẻ con "Chạy ở đây" (`?cong-cu=DEVxx`) nhúng nguyên màn DEV (D034-12, không sửa `apps/web/src/phan-he/dev/**`), quyền `devtools:read` | W4 | P1 | có | ✅ 2026-11-11 |
 | S034-10 | B6 — dòng tổng đầu màn (năm con số, bấm mở thẻ), cập nhật `docs/huong-dan/tru-cot-muc-dat.md` | W5 | P2 | có | ✅ 2026-11-11 |
 | S034-12 | In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10 | W5 | P2 | có | ✅ 2026-11-11 |
-| S034-11 | Q034-1 — đóng gói `scoreboard.json` của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC-* | W5 | P2 | có | ☐ sau Q034-1 |
+| S034-11 | Q034-1 — kết quả bộ kiểm của bản dựng vào ảnh (giai đoạn `conformance` chạy lane selfcheck lúc dựng ảnh, D034-13); thẻ Cổng hiện xanh / đỏ của SC-* | W5 | P2 | có | 🟡 chốt D034-13 2026-11-11 |
 
 ## Ca kiểm
 

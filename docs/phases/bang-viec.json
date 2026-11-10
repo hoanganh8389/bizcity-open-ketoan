@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 164
+      "count": 163
     },
     {
       "key": "partial",
@@ -6162,11 +6162,17 @@
     {
       "id": "S034-11",
       "phase": "PHASE-034",
-      "title": "Q034-1 — đóng gói scoreboard.json của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC-",
+      "title": "Q034-1 — kết quả bộ kiểm của bản dựng vào ảnh (giai đoạn conformance chạy lane selfcheck lúc dựng ảnh, D034-13); thẻ Cổng hiện xanh / đỏ của SC-",
       "priority": "P2",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-s034-11-ket-qua-kiem",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-034 · S034-11 — kết quả bộ kiểm của bản dựng trong ảnh api: giai đoạn conformance ở Dockerfil…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 21
     },
