@@ -32,7 +32,7 @@
 | S029-22 | Khoá checksum migration 0034 → hiện tại; `migrate.ts` ghi checksum | E9 | P1 | ☐ |
 | S029-23 | Người / nhân viên tách người dùng | E9 | P2 | ⛔ phối hợp PHASE-028 |
 | S029-24 | Mã hoá bí mật kết nối khi lưu; phân loại dữ liệu nhạy cảm | E7 | P1 | ☐ |
-| S029-25 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa `bizcity_document@1` §5.1 | E4 | P1 | ☐ |
+| S029-25 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa `bizcity_document@1` §5.1 | E4 | P1 | ☐ đợt 1 đã chốt (chủ dự án 2026-11-10: **chỉ ghi dấu, chưa chặn**): `sod: warn` ở engine, bật cho duyệt mua hàng và `accounting.journal.approve`, chẩn đoán `LEDGER_SELF_APPROVED` (DOCUMENT 1.4.0 §5.1, R-WF-15a). Đợt 2 (chặn) chờ PHASE-028 W3 <!-- [2026-11-10 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, quyết 2026-11-10 "chỉ ghi dấu, chưa chặn"): sod: warn --> |
 | S029-26 | Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI | E8 | P2 | ⛔ sau S029-23 |
 | S029-27 | Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán | E6 | P2 | ☐ |
 | S029-29 | <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-29..31: sáu năng lực lõi, SC-CORE-1, ma trận kiểm chuẩn --> Phép kiểm SC-CORE-1 trên `docs/standard/nen-mong.json`: sáu lõi có capability `available`, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu `co` có thật, "đạt" chỉ khi không còn `chua`; ca tự kiểm | E1 | P0 | ✅ 2026-11-06 (#95) |
