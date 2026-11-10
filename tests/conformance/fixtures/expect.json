@@ -889,13 +889,18 @@
       "mode": "repo",
       "checks": {
         "SC-DEV-2": {
-          "findings": 5,
+          "findings": 4,
           "keys": [
             "missing:DEV02",
-            "stale:DEV01",
             "extra:DEV03",
             "path:DEV04",
             "page:DEV04"
+          ]
+        },
+        "SC-DEV-3": {
+          "findings": 1,
+          "keys": [
+            "stale:DEV01"
           ]
         }
       }
@@ -905,9 +910,14 @@
       "mode": "repo",
       "checks": {
         "SC-GATE-1": {
-          "findings": 5,
+          "findings": 1,
           "keys": [
-            "pillar:1:ZZ",
+            "pillar:1:ZZ"
+          ]
+        },
+        "SC-GATE-2": {
+          "findings": 4,
+          "keys": [
             "unmapped:LA_HOAC",
             "stale:codes",
             "stale:tests",

@@ -1465,6 +1465,14 @@
         "selftest": true
       },
       {
+        "id": "SC-DEV-3",
+        "title": "Bảng công cụ nhà phát triển theo kịp repo: tiêu chí T1..T6 khớp lần tính lại (node scripts/cong-cu-dev.mjs --write)",
+        "enforce": "info",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/devtools/devtools.check.mjs",
+        "selftest": true
+      },
+      {
         "id": "SC-DIAG-1",
         "title": "Mã tự chẩn đoán trong app có bản cùng mã ở lane diagnostics của bộ kiểm",
         "enforce": "block",
@@ -1642,8 +1650,16 @@
       },
       {
         "id": "SC-GATE-1",
-        "title": "Sổ cổng kiểm (cong-kiem.json) khớp repo: trụ cột có thật, mọi mã kiểm có trụ cột, phần sinh khớp lần sinh lại",
+        "title": "Sổ cổng kiểm (cong-kiem.json): trụ cột trong map[] là id có thật ở tru-cot.json",
         "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/gates/gates.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-GATE-2",
+        "title": "Sổ cổng kiểm (cong-kiem.json) theo kịp repo: mọi mã kiểm có trụ cột, phần sinh khớp lần sinh lại (node scripts/cong-kiem.mjs --write)",
+        "enforce": "info",
         "lane": "selfcheck",
         "file": "tests/conformance/checks/gates/gates.check.mjs",
         "selftest": true

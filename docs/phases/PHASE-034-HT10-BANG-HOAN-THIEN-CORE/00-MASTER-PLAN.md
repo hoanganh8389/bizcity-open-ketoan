@@ -115,10 +115,7 @@ Nguồn theo từng cổng:
 - **Mức một mã** ở cổng A / B / Guard / L / chẩn đoán: đủ bốn ý, mỗi ý ¼ — có Cách sửa · có phương án có cấu trúc · có test · gắn trụ cột (đúng §3.3).
 - **Mức một mã** ở CI / trigger: gắn trụ cột ½ + có ca tự kiểm (CI) hoặc được `LEDGER_TRIGGERS` kiểm (trigger) ½.
 
-**SC-GATE-1** kiểm ba điều:
-1. Mỗi `map[].pillars` là id có thật.
-2. Phần sinh khớp lần chạy lại của script.
-3. Mã nào script tìm thấy mà không khớp mẫu nào thì báo *"chưa gắn trụ cột"*.
+**SC-GATE-1** (chặn) kiểm mỗi `map[].pillars` là id có thật. **SC-GATE-2** (info, B3b-2) báo phần sinh lệch lần chạy lại của script và mã không khớp mẫu nào (*"chưa gắn trụ cột"*) — nhắc chạy script, không chặn PR của người khác. Tương tự SC-DEV-2 (chặn: khớp menu) / SC-DEV-3 (info: T1..T6 cũ).
 
 Cổng *Khoá kỳ* và *Cổng C* vẫn giữ chỗ (PHASE-032 / 033).
 
