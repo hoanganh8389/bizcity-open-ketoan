@@ -4,7 +4,7 @@
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > Đọc trước: [README](README.md) · [PHASE-034 · 00](../PHASE-034-HT10-BANG-HOAN-THIEN-CORE/00-MASTER-PLAN.md) (khuôn HT10) · [RULE-FLOW §4](../../rules/RULE-FLOW.md) (bảng việc).
 
-## 1. Quyết định đề xuất (chờ chủ dự án)
+## 1. Quyết định (chủ dự án duyệt 2026-11-11 theo đề xuất) <!-- [2026-11-11 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — chủ dự án duyệt D035-1..8, Q035-1..3 theo đề xuất (2026-11-11: "đồng ý theo đề xuất"); giữ chỗ B1 -->
 
 | Mã | Quyết định | Ở đâu |
 |---|---|---|
@@ -94,7 +94,7 @@ modules.json (ô liệt kê tasks / luật từ khoá) ◄───────�
 | **B5** | Thẻ *Việc <phân hệ> hôm nay* trong từng phân hệ (đọc lượt L3, lọc theo PC + owner) | S035-8 | K1 | sổ PC (B2c-2 đã có) |
 | **B6** | `docs/huong-dan/modules-muc-dat.md`; nếp rà §5 ghi vào AGENTS / RULE-FLOW; in HT11 | S035-7 | — | — |
 
-## 7. Câu hỏi
+## 7. Câu hỏi (đã trả 2026-11-11: theo đề nghị — Q035-1 tách ba, Q035-2 cảnh báo phase cũ / chặn phase mới, Q035-3 thẻ riêng trong phân hệ)
 
 | Mã | Câu hỏi | Đề nghị | Ai trả |
 |---|---|---|---|
