@@ -93,7 +93,14 @@ Bảng chín công cụ của menu *Nhà phát triển* (Tổng quan, Tra mã, N
 | T5 | Liên kết chéo | màn mở thẳng được công cụ khác |
 | T6 | Chạy ở bản cài nhiều đơn vị | không chỉ chạy ở bản cài một đơn vị |
 
-Rê chuột lên ✓ / ✗ để xem bằng chứng. Bấm **Mở** để vào công cụ (cần quyền Nhà phát triển). Ai đăng nhập cũng xem được bảng.
+<!-- [2026-11-11 03:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5b (S034-9): Chạy ở đây -->
+Rê chuột lên ✓ / ✗ để xem bằng chứng. **Chạy ở đây** mở công cụ ngay dưới bảng — đúng màn của menu Nhà phát triển, không phải bản rút gọn (mở thẳng: `/he-thong/tru-cot?xem=nha-phat-trien&cong-cu=DEV07`). **Mở ↗** sang màn riêng của công cụ. Cả hai cần quyền Nhà phát triển; ai đăng nhập cũng xem được bảng.
 
 Tiêu chí sinh từ mã bằng `node scripts/cong-cu-dev.mjs --write` vào `docs/standard/cong-cu-dev.json`; phép kiểm SC-DEV-2 báo khi bảng lệch mã hoặc lệch menu.
+
+<!-- [2026-11-11 03:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-12: In cả năm thẻ -->
+## In
+
+- Nút **In** ở đầu màn in thẻ đang xem.
+- Nút **In cả năm thẻ** dựng cả năm thẻ nối nhau, mỗi thẻ sang trang mới, có dòng tổng ở đầu. Hộp in tự mở khi dữ liệu tải xong; in xong màn trở lại thẻ đang xem. Dùng làm phụ lục khi báo cáo mức tuân chuẩn của phần mềm.
 

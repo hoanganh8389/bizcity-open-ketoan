@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### HT10: chạy công cụ nhà phát triển ngay trong thẻ, In cả năm thẻ (PHASE-034 B5b · S034-12) <!-- [2026-11-11 03:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5b, S034-12 -->
+
+- **Thêm:** thẻ *Nhà phát triển* có nút **Chạy ở đây**: mở đúng màn của công cụ (Toàn vẹn, Sự kiện, Ghi sổ…) ngay dưới bảng; cần quyền Nhà phát triển.
+- **Thêm:** nút **In cả năm thẻ** ở Hệ thống → Trụ cột & mức đạt: in năm thẻ nối nhau, mỗi thẻ một trang.
+
 ### Thẻ Cổng & bộ kiểm đủ: trụ cột, test của từng mã; trigger CSDL và bộ kiểm CI có sổ (PHASE-034 B3b, S034-6) <!-- [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b -->
 
 - **Thêm:** `docs/standard/cong-kiem.json` (`bizcity_gates@1`): họ mã → trụ cột (sửa tay) và phần sinh từ repo bằng `scripts/cong-kiem.mjs` (test của mã, mọi check SC-* / DG-*, mọi trigger CSDL); phép kiểm SC-GATE-1.

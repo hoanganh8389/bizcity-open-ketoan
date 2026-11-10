@@ -7,8 +7,8 @@
  * Không có nút "đánh dấu đạt" (R-CONT-7): mức đạt đi theo bằng chứng (test / check), đổi bằng cách sửa code và tệp nguồn.
  * `PillarMatrix` dùng lại ở trang chủ phân hệ (thẻ "Trụ cột", lọc theo phân hệ) — cạnh thẻ "Quy trình".
  */
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useIsFetching, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { Loading } from '@/components/ui';
@@ -141,10 +141,34 @@ export function PillarsPage() {
   const [sp, setSp] = useSearchParams();
   const xem = sp.get('xem');
   const tab: TabKey = TABS.some((t) => t.key === xem) ? (xem as TabKey) : 'tieu-chi';
+  // [2026-11-11 03:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-12: In cả năm thẻ — dựng cả năm thẻ nối nhau (mỗi thẻ sang trang mới), chờ dữ liệu tải xong rồi mở hộp in; in xong trở lại thẻ đang xem
+  const [printAll, setPrintAll] = useState(false);
+  const fetching = useIsFetching();
+  useEffect(() => {
+    if (!printAll || fetching > 0) return;
+    const done = () => setPrintAll(false);
+    window.addEventListener('afterprint', done, { once: true });
+    const t = window.setTimeout(() => window.print(), 400);
+    return () => { window.clearTimeout(t); window.removeEventListener('afterprint', done); };
+  }, [printAll, fetching]);
   return (
     <div>
       <PageHeader title="Trụ cột & mức đạt" code="HT10" helpKey="tru-cot-muc-dat"
+        actions={<button type="button" className="btn" onClick={() => setPrintAll(true)} disabled={printAll} title={printAll ? 'Đang dựng năm thẻ để in' : 'In cả năm thẻ nối nhau — phụ lục báo cáo kiểm chuẩn'}>In cả năm thẻ</button>}
         subtitle="Core bảo đảm điều gì và hôm nay đạt tới đâu — một bảng cho kế toán hiểu luật chạy, cho dev biết việc kế tiếp. Mức đạt đi theo bằng chứng (test / check), không ai tích tay." />
+      {printAll ? (
+        <>
+          <div className="alert alert-info">Đang dựng năm thẻ để in… Hộp in tự mở khi dữ liệu tải xong. <button type="button" className="btn btn-sm" onClick={() => setPrintAll(false)}>Thôi</button></div>
+          <Ht10Summary active={tab} onOpen={() => undefined} />
+          {TABS.map((t, i) => (
+            <section key={t.key} style={{ breakBefore: i ? 'page' : undefined, marginTop: i ? 16 : 0 }}>
+              <h2 style={{ fontSize: 16, margin: '8px 0' }}>{i + 1}. {t.label}</h2>
+              <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{t.hint}</div>
+              <TabBody tab={t.key} />
+            </section>
+          ))}
+        </>
+      ) : <>
       <Ht10Summary active={tab} onOpen={(k) => setSp(k === 'tieu-chi' ? {} : { xem: k }, { replace: true })} />
       <div className="tabs" role="tablist" style={{ marginBottom: 10 }}>
         {TABS.map((t) => (
@@ -153,6 +177,7 @@ export function PillarsPage() {
         ))}
       </div>
       <TabBody tab={tab} />
+      </>}
     </div>
   );
 }

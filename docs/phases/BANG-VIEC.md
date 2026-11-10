@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 10 |
+| Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 158 |
 | Chờ đủ tín hiệu | 64 |
 | Hoãn | 3 |
-| Xong | 291 |
+| Xong | 293 |
 | **Tổng** | **554** |
 
-## Đang làm (10)
+## Đang làm (8)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -26,8 +26,6 @@
 | [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-029-s029-25-acc14` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
-| [S034-9](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L18) | PHASE-034 | B5b — thẻ con "Chạy ở đây" (?cong-cu=DEVxx) nhúng nguyên màn DEV (D034-12, không sửa apps/web/src/phan-he/dev… | P1 | hoanganh8389 (phiên Claude, ht10-bang-hoan-thien) · `feat/phase-034-b5b-chay-o-day` |
-| [S034-12](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L20) | PHASE-034 | In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10 | P2 | hoanganh8389 (phiên Claude, ht10-bang-hoan-thien) · `feat/phase-034-b5b-chay-o-day` |
 
 ## Chờ merge (0)
 
@@ -306,6 +304,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (291)
+## Xong (293)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
