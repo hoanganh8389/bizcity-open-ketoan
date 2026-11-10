@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 62
+      "count": 61
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 290
+      "count": 291
     }
   ],
   "items": [
@@ -5950,8 +5950,14 @@
       "title": "Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60), sourceDigest; tuần vắt hai tháng tách hai dòng …",
       "priority": "P0",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
+        "branch": "feat/phase-032-b4a-ket-qua-tuan",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-032 · B4a — thẻ Kết quả từng tuần (Bàn làm việc kế toán): GET /api/v1/system/diagnostics/week…"
+      },
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 40
     },
@@ -6103,15 +6109,9 @@
       "phase": "PHASE-034",
       "title": "B3b — docs/standard/cong-kiem.json (map họ mã → trụ cột, sửa tay) + scripts/cong-kiem.mjs sinh test / CI / trigger; SC-GATE-1; cổng Trigger và CI có sổ; mức mã…",
       "priority": "P1",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
-        "branch": "feat/phase-034-b3b-cong-kiem",
-        "state": "đang làm",
-        "since": "2026-11-11",
-        "dot": "PHASE-034 · B3b — thẻ Cổng & bộ kiểm đủ tám cổng: docs/standard/cong-kiem.json (họ mã → trụ cột; te…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 15
     },
