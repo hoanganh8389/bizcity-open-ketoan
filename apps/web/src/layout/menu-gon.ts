@@ -71,14 +71,15 @@ export const GON_DEFS: GonDef[] = [
   {
     key: 'ban-hang', label: 'Bán hàng', icon: 'ShoppingCart', description: 'Phiếu bán hàng, hàng bán trả lại, xuất điều chỉnh', color: '#d93025', module: 'ban-hang',
     the: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/ban-hang/xuat-dieu-chinh'],
-    sections: [{ paths: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/ban-hang/xuat-dieu-chinh'] }],
+    // [2026-11-10 07:30 PM Nguyễn Văn Thủy] PHASE-026 — Chương trình bán (BH12), Tồn theo lô (KHO05), hai bảng cũ của tài khoản tự tra: xếp đúng nhóm, không rơi vào "Khác" (đóng góp)
+    sections: [{ paths: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/ban-hang/xuat-dieu-chinh'] }, { label: 'Chương trình', paths: ['/ban-hang/chuong-trinh'] }],
     reports: [{ label: 'Bán hàng', paths: ['/ban-hang/bao-cao', '/ban-hang/tong-hop', '/ban-hang/lai-gop', '/ban-hang/thu-tien', '/ban-hang/thu-tien-ban-hang', '/cong-no/nhat-ky-ban-hang'] }],
   },
   {
     key: 'kho', label: 'Kho', icon: 'Warehouse', description: 'Chuyển kho, tính giá vốn, công thức giá vốn', color: '#7b1fa2', module: 'kho',
     the: ['/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von', '/nghiep-vu/cong-thuc-gia-von'],
     sections: [{ paths: ['/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von', '/nghiep-vu/cong-thuc-gia-von'] }],
-    reports: [{ label: 'Kho', paths: ['/bao-cao/nhap-xuat-ton', '/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/hanh-trinh-mat-hang', '/bao-cao/chuyen-kho'] }],
+    reports: [{ label: 'Kho', paths: ['/bao-cao/nhap-xuat-ton', '/kho/ton-theo-lo', '/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/hanh-trinh-mat-hang', '/bao-cao/chuyen-kho'] }],
   },
   {
     key: 'cong-no', label: 'Công nợ', icon: 'Scale', description: 'Phải thu, phải trả, đối trừ, đặt cọc, đối chiếu', color: '#c2185b',
@@ -124,7 +125,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Vật tư hàng hoá', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/don-vi-tinh', '/danh-muc/kho', '/danh-muc/bang-gia'] },
       { label: 'Đối tượng', paths: ['/danh-muc/khach-hang', '/danh-muc/nha-cung-cap', '/danh-muc/nhan-vien', '/danh-muc/doi-tuong', '/danh-muc/nhom-doi-tuong'] },
       { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc', '/danh-muc/chi-nhanh', '/danh-muc/bo-phan'] },
-      { label: 'Tài khoản', paths: ['/danh-muc/tai-khoan', '/cau-hinh/thiet-ke-hach-toan', '/cau-hinh/tai-khoan-ngam-dinh', '/danh-muc/loai-thue', '/cau-hinh/hinh-thuc-thanh-toan', '/danh-muc/ngan-hang'] },
+      { label: 'Tài khoản', paths: ['/danh-muc/tai-khoan', '/cau-hinh/thiet-ke-hach-toan', '/cau-hinh/tai-khoan-ngam-dinh', '/danh-muc/loai-thue', '/cau-hinh/hinh-thuc-thanh-toan', '/danh-muc/ngan-hang', '/cau-hinh/ly-do', '/cau-hinh/nhom-hach-toan'] },
       { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
       { label: 'Tài sản', paths: ['/danh-muc/loai-tai-san', '/danh-muc/nhom-ccdc', '/danh-muc/nguon-von', '/danh-muc/muc-dich-su-dung'] },
     ],
