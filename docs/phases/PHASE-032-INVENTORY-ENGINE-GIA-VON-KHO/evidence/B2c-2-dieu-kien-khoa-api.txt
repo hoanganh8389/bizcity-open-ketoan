@@ -1,0 +1,45 @@
+# [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): bằng chứng chạy thật — GET /api/v1/system/diagnostics?layer=L3 trên bộ Docker dev (http://localhost:8088) dựng lại theo main d2ac69b5 (gồm #261), 2026-11-10 22:10.
+# Mỗi kết quả mang closeRef (PC hoặc none), kỳ kiểm (day / week / period), bước (pre / post / lock); atClose chỉ có khi có chỗ sai.
+# CSDL demo: 1 đơn vị, 0 chứng từ, nên không có việc nào cần xử lý (atClose trống ở mọi dòng); nhiều kiểm là "rỗng" (R-DIAG-7).
+# Cột: mã kiểm · kết quả · closeRef · tên điều kiện khoá sổ · kỳ kiểm · bước · mức khi khoá
+summary {"pass":9,"empty":31,"info":0,"warn":0,"error":0}
+EVIDENCE_CHAIN · pass · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+EVENT_DEAD · pass · PC-003 · Không còn chứng từ chờ của kỳ · day · pre · —
+LEDGER_BALANCED · empty · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+LEDGER_BALANCES_DAILY · empty · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+LEDGER_REVERSED_ONCE · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+LEDGER_ORPHAN · empty · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+EVENT_POSTED_VERSION · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+EVENT_HAS_ENTRY · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+EVENT_PENDING_AGE · empty · PC-003 · Không còn chứng từ chờ của kỳ · day · pre · —
+TAX_INPUT_NO_INVOICE · empty · PC-011 · Thuế và hoá đơn · day+week · pre · —
+VAT_INPUT_INVOICE_MATCH · empty · PC-011 · Thuế và hoá đơn · day+week · pre · —
+LEDGER_ROUNDING · empty · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+POLICY_VERSION · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+INTERNAL_EVENT_VERSION · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+ENTRY_NO_VERSION · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+ENTRY_VERSION_UNKNOWN · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+EVENT_ENTRIES_STALE · empty · PC-002 · Chứng từ và sổ đúng trạng thái, không ghi trùng · day · pre · —
+LEDGER_HEADER_EDIT_UNATTRIBUTED · empty · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+EVIDENCE_SEAL_MISSING · pass · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+EVIDENCE_SEAL_FILE · pass · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+EVIDENCE_SEAL_DB · pass · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+EVIDENCE_SEAL_CHAIN · pass · PC-016 · Sổ cái toàn vẹn, không sửa ngoài ứng dụng · day · pre · —
+INVENTORY_NEGATIVE · empty · PC-004 · Tồn kho không âm, kiểm kê đã xử lý · day · pre · —
+PERIOD_CLOSE_OPEN · empty · PC-017 · Đủ nguồn để kết chuyển · period · pre · —
+VAT_REDUCED_RATE · empty · PC-011 · Thuế và hoá đơn · day+week · pre · —
+VAT_INPUT_NONCASH · empty · PC-011 · Thuế và hoá đơn · day+week · pre · —
+INVOICE_FIELDS · empty · PC-011 · Thuế và hoá đơn · day+week · pre · —
+INVOICE_ISSUE_DATE · empty · PC-011 · Thuế và hoá đơn · day+week · pre · —
+CASH_NEGATIVE · empty · PC-012 · Tiền và ngân hàng · week · pre · —
+ACCOUNT_WRONG_SIDE · empty · PC-020 · Lợi nhuận và báo cáo khớp sổ · period · post · —
+TRANSIT_NONZERO · pass · PC-008 · Chuyển kho, hàng đang chuyển · day · pre · —
+DEBT_MATCH_LEDGER · empty · PC-013 · Công nợ khớp sổ cái · week · pre · —
+INVENTORY_LEDGER_MISMATCH · empty · PC-009 · Giá trị kho khớp sổ cái · week+period · pre · —
+COGS_STALE · empty · PC-005 · Giá vốn đã chốt, không cũ · week+period · pre · —
+STOCK_ADJUST_NO_REASON · empty · PC-004 · Tồn kho không âm, kiểm kê đã xử lý · day · pre · —
+ITEM_CODE_CASE_DUP · pass · PC-001 · Danh mục hợp lệ tại ngày · day · pre · —
+UNIT_BASE_INVALID · empty · PC-001 · Danh mục hợp lệ tại ngày · day · pre · —
+DEPRECIATION_OPEN · empty · PC-014 · Chi phí cuối kỳ (khấu hao, phân bổ) · period · pre · —
+CONFORMANCE_STALE · pass · none · — · — · — · —
+INTAKE_OPEN_AGE · empty · PC-003 · Không còn chứng từ chờ của kỳ · day · pre · —
