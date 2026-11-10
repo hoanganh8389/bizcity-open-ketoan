@@ -2,7 +2,7 @@
 /**
  * Form một phiếu chuyển kho (KHO01).
  *   Đầu phiếu: chi nhánh xuất (điền sẵn chi nhánh đang làm việc) → kho xuất chỉ các kho của chi nhánh đó (mặc định kho mặc định);
- *   chi nhánh nhập → kho nhập của chi nhánh nhập (cùng chi nhánh thì tự chọn kho khác). Lý do xuất theo lý do gán cho màn chuyển kho.
+ *   chi nhánh nhập → kho nhập của chi nhánh nhập (cùng chi nhánh thì tự chọn kho khác). Không có ô lý do: phiếu đi theo nghiệp vụ chuyển kho (tài khoản ở ACC41 / quy tắc ACC92).
  *   Dòng hàng: gõ mã / tên / mã vạch rồi Enter để thêm (trùng mã thì cộng số lượng); dán nhiều dòng từ Excel (Mã hàng, Số lượng,
  *   Ghi chú). Cột Tồn = tồn ở chi nhánh + kho xuất tại ngày phiếu (không tính chính phiếu này) — vượt tồn tô đỏ.
  *   Lô: thêm mã là phần mềm gợi ý lô hạn dùng sớm trước ở kho xuất (một dòng nhiều lô thì tách dòng); người lập sửa / xoá lô
@@ -23,7 +23,6 @@ import { DocumentGateBanner, useDocumentGate } from '@/components/PostingGate';
 import { ckApi, newLineKey, qtyText, statusClass, statusText, toPrintDoc, viDate, type CkDoc, type CkInput, type CkLine } from './api';
 
 interface ItemRow { sku: string; name: string; unit: string }
-type Reason = { code: string; name: string; isDefault: boolean };
 
 const round4 = (n: number) => Math.round(n * 10000) / 10000;
 
@@ -49,12 +48,6 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
   const fromWh = khoCodeOf(khoAll, v.fromBranchCode, v.fromWarehouse);
   const toWh = khoCodeOf(khoAll, v.toBranchCode, v.toWarehouse);
 
-  // Lý do xuất: các lý do kế toán gán cho màn chuyển kho (ACC92); chưa gán thì mọi lý do chuyển kho.
-  const reasons = useQuery({ queryKey: ['posting-flow', 'screen-reasons', 'transfer'], staleTime: 60_000,
-    queryFn: () => api.get<{ assigned: boolean; reasons: Reason[] }>('/api/v1/posting-flow/screens/transfer/reasons') }).data?.reasons ?? [];
-  useEffect(() => {
-    if (isNew && !v.reasonCode && reasons.length) set({ reasonCode: (reasons.find((r) => r.isDefault) ?? reasons[0])!.code });
-  }, [reasons.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Tồn ở chi nhánh + kho xuất tại ngày phiếu (không tính chính phiếu này).
   const skus = useMemo(() => [...new Set(v.lines.map((l) => l.sku).filter(Boolean))].sort(), [v.lines]);
@@ -189,11 +182,6 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
             <ChonKho branchCode={v.toBranchCode} value={v.toWarehouse} disabled={readOnly} avoid={sameBranch ? fromWh : undefined} onChange={(c) => set({ toWarehouse: c })} />
             <label>Diễn giải</label>
             <textarea className="input ck-note" rows={2} value={v.note} placeholder={v.toBranchCode ? `Chuyển hàng sang ${v.toBranchCode}${bname(v.toBranchCode) ? ` — ${bname(v.toBranchCode)}` : ''}` : ''} onChange={(e) => set({ note: e.target.value })} />
-            <label title="Lý do xuất quyết định tài khoản hạch toán (Nợ hàng đang chuyển / Có kho). Danh sách theo lý do kế toán gán cho màn chuyển kho ở ACC92">Lý do xuất</label>
-            <select className="select input" value={v.reasonCode ?? ''} onChange={(e) => set({ reasonCode: e.target.value || undefined })}>
-              {!reasons.length && <option value="">mặc định của chuyển kho</option>}
-              {reasons.map((r) => <option key={r.code} value={r.code}>{r.code} — {r.name}</option>)}
-            </select>
           </div>
         </fieldset>
         <fieldset className="fgroup ck-box ck-side" disabled={readOnly}>

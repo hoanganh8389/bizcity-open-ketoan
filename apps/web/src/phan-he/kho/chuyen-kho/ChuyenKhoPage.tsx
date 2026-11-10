@@ -123,7 +123,6 @@ export function ChuyenKhoPage() {
                 { key: 'totalReceived', header: 'SL nhận', title: 'Tổng số thủ kho nhập xác nhận; trống = chưa nhận', type: 'number', width: 85, sum: true, value: (r) => (r.status === 'received' ? r.totalReceived : null) },
                 { key: 'status', header: 'Trạng thái', title: 'Đã xuất, chờ nhận · Đã nhận · Nhận thiếu · Bên nhận từ chối · Đã huỷ', width: 135, value: (r) => statusText(r), render: (r) => <span className={`badge ${statusClass(r)}`}>{statusText(r)}</span> },
                 { key: 'receivedDate', header: 'Ngày nhận', title: 'Ngày thủ kho nhập xác nhận', type: 'date', width: 95 },
-                { key: 'reasonCode', header: 'Lý do', title: 'Lý do xuất (quyết định tài khoản hạch toán)', type: 'code', width: 80 },
                 { key: 'note', header: 'Diễn giải', title: 'Diễn giải của phiếu; khi nhận thiếu / từ chối thì kèm ghi chú bên nhận', width: 220, value: (r) => [r.note, r.receivedNote].filter(Boolean).join(' · ') },
                 { key: 'createdBy', header: 'Người lập', title: 'Người lập phiếu', width: 120, hidden: true },
                 { key: 'receivedBy', header: 'Người nhận', title: 'Người xác nhận nhận hàng', width: 120, hidden: true },
