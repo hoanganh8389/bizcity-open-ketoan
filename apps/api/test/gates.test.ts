@@ -11,6 +11,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeDb } from '../src/db/client.js';
 import { listDiagnostics } from '../src/modules/system/diagnostics.js';
+import { ciResults } from '../src/modules/system/gates.routes.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
@@ -87,6 +88,22 @@ describe('GET /api/v1/system/gates', () => {
     for (const k of ['A', 'B', 'guard', 'L']) expect(b.groups.find((g: any) => g.key === k).codes.filter((c: any) => !c.pillars.length).map((c: any) => c.code), k).toEqual([]);
     expect(b.groups.find((g: any) => g.key === 'ci').codes.some((c: any) => c.code === 'SC-GATE-1')).toBe(true);
     expect(b.groups.find((g: any) => g.key === 'trigger').codes.some((c: any) => c.code === 'ledger_lines_no_update')).toBe(true);
+  });
+
+  // [2026-11-11 04:35 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — S034-11: kết quả bộ kiểm của bản dựng
+  it('ciRun: chạy từ mã nguồn (không có build/scoreboard.json) thì null, mã CI không có last', async () => {
+    const b = await get(ctx);
+    expect(b).toHaveProperty('ciRun');
+    if (b.ciRun === null) for (const c of b.groups.find((g: any) => g.key === 'ci').codes) expect(c.last).toBeNull();
+  });
+
+  it('ciResults thu gọn bảng điểm selfcheck: lượt + kết quả theo mã; bảng rỗng thì null', () => {
+    expect(ciResults(null)).toBeNull();
+    expect(ciResults({})).toBeNull();
+    const r = ciResults({ runId: 'r1', at: '2026-11-11T00:00:00Z', verdict: 'fail', counts: { pass: 1, fail: 1 }, checks: [{ id: 'SC-A-1', status: 'pass', findings: 0, examined: 3 }, { id: 'SC-B-1', status: 'fail', findings: 2 }] })!;
+    expect(r.run).toEqual({ runId: 'r1', at: '2026-11-11T00:00:00Z', verdict: 'fail', counts: { pass: 1, fail: 1 } });
+    expect(r.byId.get('SC-B-1')).toEqual({ level: 'fail', count: 2, examined: 0 });
+    expect(r.byId.get('SC-A-1')?.level).toBe('pass');
   });
 
   it('không có đường ghi (R-CONT-7)', async () => {
