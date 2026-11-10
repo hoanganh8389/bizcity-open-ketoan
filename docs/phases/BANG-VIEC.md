@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 9 |
+| Đang làm | 10 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 166 |
+| Chưa ai nhận | 165 |
 | Chờ đủ tín hiệu | 60 |
 | Hoãn | 3 |
 | Xong | 286 |
 | **Tổng** | **552** |
 
-## Đang làm (9)
+## Đang làm (10)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -27,6 +27,7 @@
 | [S030-53](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L62) | PHASE-030 | Gỡ dữ liệu thật khỏi bản phát hành (Q030-L5): db/seeds/ đối tượng, nhân viên, tài khoản ngân hàng, chi nhánh … | P0 | hoanganh8389 (phiên Claude, seeds-gia-lap) · `feat/s030-53-seeds-gia-lap` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-17](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L26) | PHASE-032 | Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLi… | P0 | hoanganh8389 (phiên Claude, PHASE-032; phụ trách phần giá vốn: Thuy2k) · `feat/phase-032-b3-tra-hang` |
+| [S034-8](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L17) | PHASE-034 | B5a — cong-cu-dev.json (bizcitydevtools@1), SC-DEV-2 khớp menu.ts, bảng tiến độ T1..T6 | P1 | hoanganh8389 (phiên Claude, ht10-bang-hoan-thien) · `feat/phase-034-b5a-cong-cu-dev` |
 
 ## Chờ merge (0)
 
@@ -65,7 +66,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (166)
+## Chưa ai nhận (165)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -231,7 +232,6 @@
 | [S032-37](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L46) | PHASE-032 | SDK defineCheck + extensions.checks của bizcitymodule@1 (R-DIAG-15) | P1 | — |
 | [S032-38](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L47) | PHASE-032 | Bảng "trường cần để kiểm" theo loại chứng từ ở bizcityledgerintake@1; trạng thái "không kiểm được" trên bàn (… | P1 | — |
 | [S034-6](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L15) | PHASE-034 | B3b — trường pillars (và pc) cạnh DiagCheck, dòng findings, .check.mjs; scripts/cong-kiem-json.mjs (--kiem) s… | P1 | — |
-| [S034-8](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L17) | PHASE-034 | B5a — cong-cu-dev.json (bizcitydevtools@1), SC-DEV-2 khớp menu.ts, bảng tiến độ T1..T6 | P1 | — |
 | [S034-9](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L18) | PHASE-034 | B5b — tách Body cho DEV01..09; thẻ con "Chạy ở đây" (?cong-cu=DEVxx), quyền devtools:read, nạp lười | P1 | — |
 | [S034-10](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L19) | PHASE-034 | B6 — dòng tổng đầu màn, In cả năm thẻ, cập nhật docs/huong-dan/tru-cot-muc-dat.md | P2 | — |
 | [S034-11](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L20) | PHASE-034 | Q034-1 — đóng gói scoreboard.json của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC- | P2 | — |
