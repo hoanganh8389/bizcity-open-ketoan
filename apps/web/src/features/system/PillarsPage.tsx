@@ -15,11 +15,13 @@ import { Loading } from '@/components/ui';
 import { api } from '@/lib/api';
 import { FoundationsBoard } from './FoundationsBoard';
 // [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B2 (S034-4): thanh mức đạt, báo thiếu tệp nguồn, thẻ "sắp có" dùng chung cho năm thẻ HT10
-import { ComingSoon, ScoreBar, SourceError } from './readiness';
+import { ScoreBar, SourceError } from './readiness';
 // [2026-11-10 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3a (S034-5): thẻ Cổng & bộ kiểm có dữ liệu thật (GET /system/gates)
 import { GatesBoard } from './GatesBoard';
 // [2026-11-10 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 (S034-7): thẻ Bộ máy có dữ liệu thật (GET /system/engines)
 import { EnginesBoard } from './EnginesBoard';
+// [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5a (S034-8): thẻ Nhà phát triển có bảng tiến độ thật (GET /system/dev-tools)
+import { DevToolsBoard } from './DevToolsBoard';
 
 export type PillarStatus = 'dat' | 'mot-phan' | 'tai-lieu' | 'chua';
 export interface PillarCriterion {
@@ -128,14 +130,7 @@ function TabBody({ tab }: { tab: TabKey }) {
     case 'nen-mong': return <FoundationsBoard />;
     case 'cong-kiem': return <GatesBoard />;
     case 'bo-may': return <EnginesBoard />;
-    case 'nha-phat-trien':
-      return (
-        <ComingSoon question="Công cụ nhà phát triển nào dùng được, còn thiếu gì — và chạy ngay tại đây"
-          source="cong-cu-dev.json (bizcity_devtools@1), khớp menu Nhà phát triển (SC-DEV-2)"
-          step="B5 (S034-8, S034-9)">
-          Trong lúc chờ, mở các công cụ ở menu <b>Nhà phát triển</b> (Tổng quan, Tra mã, Nhật ký, Lỗi theo module, Ghi sổ, Sự kiện, Toàn vẹn, Kịch bản, Vận hành).
-        </ComingSoon>
-      );
+    case 'nha-phat-trien': return <DevToolsBoard />;
     default: return <PillarMatrix />;
   }
 }

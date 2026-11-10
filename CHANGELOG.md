@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thẻ Nhà phát triển ở HT10: tiến độ chín công cụ dev theo sáu tiêu chí sinh từ mã (PHASE-034 B5a, S034-8) <!-- [2026-11-11 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5a -->
+
+- **Thêm:** `docs/standard/cong-cu-dev.json` (`bizcity_devtools@1`), `scripts/cong-cu-dev.mjs` sinh tiêu chí T1..T6 từ repo, phép kiểm SC-DEV-2, `GET /api/v1/system/dev-tools` (chỉ đọc).
+- **Thêm:** thẻ *Nhà phát triển* ở Hệ thống → Trụ cột & mức đạt: bảng công cụ × tiêu chí, nút Mở công cụ.
+- **Nâng cấp cần làm:** kéo ảnh api mới (ảnh chép thêm `docs/standard/cong-cu-dev.json`).
+
 ### Thẻ Bộ máy ở HT10: 13 engine của Core, mức đo từ mốc việc (PHASE-034 B4, S034-7) <!-- [2026-11-10 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 -->
 
 - **Thêm:** `docs/standard/bo-may.json` (`bizcity_engines@1`) và `GET /api/v1/system/engines` (chỉ đọc): mỗi bộ máy có lớp, hợp đồng, mã, test, mã kiểm phát ra, và mốc việc — trạng thái mốc đọc từ bảng việc, không gõ tay.

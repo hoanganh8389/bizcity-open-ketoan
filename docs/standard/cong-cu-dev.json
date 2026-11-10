@@ -1,0 +1,369 @@
+{
+  "$comment": "[2026-11-11 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B5a (S034-8): bizcity_devtools@1 — công cụ nhà phát triển DEV01..09 × tiêu chí hoàn thiện T1..T6. Phần khai báo (code, label, path, page, api, sources, singleInstall) sửa tay; trường `criteria` CHỈ do `node scripts/cong-cu-dev.mjs --write` sinh từ repo. SC-DEV-2 kiểm: mỗi mục menu Nhà phát triển có đúng một dòng, màn có thật, `criteria` khớp lần sinh lại.",
+  "contract": "bizcity_devtools@1",
+  "version": "0.1.0-draft",
+  "updated": "2026-11-11",
+  "doc": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/00-MASTER-PLAN.md",
+  "criteria": {
+    "T1": "Có API riêng, chỉ đọc",
+    "T2": "Có test API",
+    "T3": "Nguồn chưa bật thì nói cách bật",
+    "T4": "Có hướng dẫn riêng",
+    "T5": "Liên kết chéo sang công cụ khác",
+    "T6": "Chạy ở bản cài nhiều đơn vị"
+  },
+  "tools": [
+    {
+      "code": "DEV01",
+      "label": "Tổng quan",
+      "path": "/dev/tong-quan",
+      "page": "apps/web/src/phan-he/dev/tong-quan/TongQuanPage.tsx",
+      "api": [
+        "GET /api/v1/system/devtools/summary"
+      ],
+      "sources": [
+        "Loki",
+        "Tempo",
+        "CSDL"
+      ],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "1 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/ban-dieu-tra.test.ts"
+        },
+        "T3": {
+          "state": "co",
+          "ev": "Loki, Tempo: màn dùng SourceOff"
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "co",
+          "ev": "sang /dev/nhat-ky, /dev/tra-ma"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV02",
+      "label": "Tra mã",
+      "path": "/dev/tra-ma",
+      "page": "apps/web/src/phan-he/dev/tra-ma/TraMaPage.tsx",
+      "api": [
+        "GET /api/v1/system/devtools/traces/:traceId",
+        "GET /api/v1/system/devtools/requests/:requestId",
+        "GET /api/v1/system/devtools/evidence",
+        "GET /api/v1/system/devtools/logs"
+      ],
+      "sources": [
+        "Tempo",
+        "Loki",
+        "CSDL"
+      ],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "4 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/ban-dieu-tra.test.ts"
+        },
+        "T3": {
+          "state": "chua",
+          "ev": "Tempo, Loki: màn chưa nói \"chưa bật\""
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "co",
+          "ev": "sang /dev/kich-ban, /dev/nhat-ky, /dev/tong-quan"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV03",
+      "label": "Nhật ký",
+      "path": "/dev/nhat-ky",
+      "page": "apps/web/src/phan-he/dev/nhat-ky/NhatKyPage.tsx",
+      "api": [
+        "GET /api/v1/system/devtools/logs"
+      ],
+      "sources": [
+        "Loki"
+      ],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "1 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/ban-dieu-tra.test.ts"
+        },
+        "T3": {
+          "state": "chua",
+          "ev": "Loki: màn chưa nói \"chưa bật\""
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "co",
+          "ev": "sang /dev/tra-ma"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV04",
+      "label": "Lỗi theo module",
+      "path": "/dev/loi-theo-module",
+      "page": "apps/web/src/phan-he/dev/loi-theo-module/LoiTheoModulePage.tsx",
+      "api": [
+        "GET /api/v1/system/devtools/module-errors"
+      ],
+      "sources": [
+        "Tempo"
+      ],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "1 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/ban-dieu-tra.test.ts"
+        },
+        "T3": {
+          "state": "co",
+          "ev": "Tempo: màn dùng SourceOff"
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "co",
+          "ev": "sang /dev/tra-ma"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV05",
+      "label": "Ghi sổ",
+      "path": "/dev/ghi-so",
+      "page": "apps/web/src/phan-he/dev/ghi-so/GhiSoPage.tsx",
+      "api": [
+        "GET /api/v1/posting-log",
+        "GET /api/v1/documents"
+      ],
+      "sources": [
+        "CSDL"
+      ],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "2 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/access.test.ts"
+        },
+        "T3": {
+          "state": "co",
+          "ev": "chỉ đọc CSDL, không phụ thuộc nguồn ngoài"
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "chua",
+          "ev": "không liên kết sang công cụ khác"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV06",
+      "label": "Sự kiện",
+      "path": "/dev/su-kien",
+      "page": "apps/web/src/phan-he/dev/su-kien/SuKienPage.tsx",
+      "api": [
+        "GET /api/v1/system/events"
+      ],
+      "sources": [
+        "CSDL"
+      ],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "1 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/ban-dieu-tra.test.ts"
+        },
+        "T3": {
+          "state": "co",
+          "ev": "chỉ đọc CSDL, không phụ thuộc nguồn ngoài"
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "chua",
+          "ev": "không liên kết sang công cụ khác"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV07",
+      "label": "Toàn vẹn",
+      "path": "/dev/toan-ven",
+      "page": "apps/web/src/phan-he/dev/toan-ven/ToanVenPage.tsx",
+      "api": [
+        "GET /api/v1/system/diagnostics/runs",
+        "GET /api/v1/system/diagnostics/runs/:id",
+        "GET /api/v1/system/diagnostics"
+      ],
+      "sources": [
+        "CSDL"
+      ],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "3 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/ban-dieu-tra.test.ts"
+        },
+        "T3": {
+          "state": "co",
+          "ev": "chỉ đọc CSDL, không phụ thuộc nguồn ngoài"
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "chua",
+          "ev": "không liên kết sang công cụ khác"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV08",
+      "label": "Kịch bản",
+      "path": "/dev/kich-ban",
+      "page": "apps/web/src/phan-he/dev/kich-ban/KichBanPage.tsx",
+      "api": [],
+      "sources": [],
+      "criteria": {
+        "T1": {
+          "state": "chua",
+          "ev": "không có API riêng"
+        },
+        "T2": {
+          "state": "chua",
+          "ev": "không có API để test"
+        },
+        "T3": {
+          "state": "co",
+          "ev": "chỉ đọc CSDL, không phụ thuộc nguồn ngoài"
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "chua",
+          "ev": "không liên kết sang công cụ khác"
+        },
+        "T6": {
+          "state": "co",
+          "ev": "không giới hạn bản cài"
+        }
+      }
+    },
+    {
+      "code": "DEV09",
+      "label": "Vận hành",
+      "path": "/dev/van-hanh",
+      "page": "apps/web/src/phan-he/dev/van-hanh/VanHanhPage.tsx",
+      "api": [
+        "GET /api/v1/system/devtools/status",
+        "GET /api/v1/system/devtools/ops/health",
+        "GET /api/v1/system/devtools/ops/alerts"
+      ],
+      "sources": [
+        "Prometheus",
+        "Alertmanager"
+      ],
+      "singleInstall": true,
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "3 đường API"
+        },
+        "T2": {
+          "state": "co",
+          "ev": "apps/api/test/ban-dieu-tra.test.ts"
+        },
+        "T3": {
+          "state": "chua",
+          "ev": "Prometheus, Alertmanager: màn chưa nói \"chưa bật\""
+        },
+        "T4": {
+          "state": "chua",
+          "ev": "dùng chung hướng dẫn ban-dieu-tra"
+        },
+        "T5": {
+          "state": "chua",
+          "ev": "không liên kết sang công cụ khác"
+        },
+        "T6": {
+          "state": "chua",
+          "ev": "chỉ chạy ở bản cài một đơn vị"
+        }
+      }
+    }
+  ]
+}
