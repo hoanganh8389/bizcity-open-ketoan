@@ -181,6 +181,24 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POLICY_RETIRED` | `CONFLICT` | Chính sách đã ngừng, dùng mã mới | `policies.ts` |
 | `POLICY_BACKDATED` | `VALIDATION_ERROR` | Ngày áp sớm hơn bản trước (không viết lại quá khứ) | `policies.ts` |
 | `POLICY_REVIEW_NOT_OPEN` | `CONFLICT` | Sự việc không có phát hiện chính sách cần xem (**đã dùng trong mã, chưa khai**) | `queue.routes.ts` |
+| **Máy bán POS** (`modules/pos`, 1.7.0-draft) <!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — module pos: họ mã POS_* (đề xuất P-MP-5, đóng góp) --> | | | |
+| `POS_NOT_SUPPORTED_YET` | `VALIDATION_ERROR` | Máy chủ POS chưa nhận loại đơn / dòng / thanh toán này ở đợt hiện tại (khuyến mại, quà, QR, ghi nợ, bill Z); kèm `field`, `billZ` | module `pos` (đề xuất, chưa gộp) |
+| `POS_UNKNOWN_SKU` | `VALIDATION_ERROR` | Mã hàng không có (hoặc ngừng bán) trong danh mục kế toán; `items: [{ sku }]` | module `pos` (đề xuất, chưa gộp) |
+| `POS_TAX_NOT_DECLARED` | `VALIDATION_ERROR` | Mặt hàng chưa khai mã thuế đầu ra; `items: [{ sku }]` | module `pos` (đề xuất, chưa gộp) |
+| `POS_PRICE_CHANGED` | `CONFLICT` | Giá / tổng máy bán tính khác máy chủ (hàng Nội bộ phải 0đ); kèm `clientTotal`, `total` hoặc `items` | module `pos` (đề xuất, chưa gộp) |
+| `POS_DISCOUNT_TOO_LARGE` | `VALIDATION_ERROR` | Tiền giảm tay lớn hơn thành tiền dòng | module `pos` (đề xuất, chưa gộp) |
+| `POS_CASH_INSUFFICIENT` | `VALIDATION_ERROR` | Tiền khách đưa ít hơn số phải thu | module `pos` (đề xuất, chưa gộp) |
+| `POS_NO_CASH_METHOD` | `VALIDATION_ERROR` | Danh mục hình thức thanh toán chưa có tiền mặt | module `pos` (đề xuất, chưa gộp) |
+| `POS_UNKNOWN_METHOD` | `VALIDATION_ERROR` | Hình thức thanh toán không có trong danh mục | module `pos` (đề xuất, chưa gộp) |
+| `POS_DUPLICATE_METHOD` | `VALIDATION_ERROR` | Một hình thức thanh toán lặp lại trong chia tiền | module `pos` (đề xuất, chưa gộp) |
+| `POS_SPLIT_MISMATCH` | `VALIDATION_ERROR` | Các phần chia tiền cộng không bằng tổng đơn | module `pos` (đề xuất, chưa gộp) |
+| `POS_UNKNOWN_CUSTOMER` | `VALIDATION_ERROR` | Mã khách không có trong danh mục | module `pos` (đề xuất, chưa gộp) |
+| `POS_BAD_PHONE` | `VALIDATION_ERROR` | SĐT khách mới sai khuôn | module `pos` (đề xuất, chưa gộp) |
+| `POS_MISSING_NAME` | `VALIDATION_ERROR` | Khách mới thiếu tên | module `pos` (đề xuất, chưa gộp) |
+| `POS_UNKNOWN_BRANCH` | `VALIDATION_ERROR` | Chi nhánh máy gửi không có trong danh mục / đơn vị chưa khai chi nhánh | module `pos` (đề xuất, chưa gộp) |
+| `POS_BRANCH_REQUIRED` | `VALIDATION_ERROR` | Đơn vị nhiều chi nhánh mà máy không gửi `branchCode` / mã phiếu có ở nhiều chi nhánh | module `pos` (đề xuất, chưa gộp) |
+| `POS_ORDER_ID_REUSED` | `CONFLICT` | Cùng id đơn đã nhận với nội dung khác (máy phải tạo đơn mới) | module `pos` (đề xuất, chưa gộp) |
+| `POS_CODE_TAKEN` | `CONFLICT` | Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại) | module `pos` (đề xuất, chưa gộp) |
 
 **Thứ tự làm:** (1) duyệt (2026-11-09); (2) S022-21: thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
 
@@ -217,6 +235,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 
 ## 7. Changelog
 
+<!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — module pos: 1.7.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.7.0-draft (2026-11-10, đề xuất P-MP-5 của module pos):** §4c thêm họ mã `POS_*` của module `pos` (17 mã, R-ERR-6 tiền tố key module). Dữ liệu kèm lỗi đặt cạnh `reason` (danh sách ở `items`), không dùng `details.context` (§4b chỉ dành cho ngữ cảnh chứng từ). Không thêm `code`, không đổi HTTP.
 - **1.6.0-draft (2026-11-09):** §4c — mã chi tiết theo vùng (chứng từ / phiên bản, sổ cái, định khoản, phân quyền, thư viện, chính sách), R-ERR-11 / SC-ERR-2; chủ dự án duyệt 2026-11-09. Hằng số + SC-ERR-2 ở S022-21; nối từng chỗ ném ở PR của chủ tệp. Không thêm `code`.
 - **1.5.0-draft (2026-11-09, PHASE-029 S029-34):** thêm `details.reason` `VERSION_CONTENT_MISMATCH` (`CONFLICT` 409) cho cùng phiên bản khác nội dung ([DOCUMENT §7.3](BIZCITY-DOCUMENT-v1.md)). Không thêm mã `code`. **Ảnh hưởng:** bên gửi nào gửi lại cùng `version` với nội dung đổi sẽ nhận 409 thay vì bị ghi đè im lặng; xử lý theo cột "CONFLICT" ở §6 (tăng `version`).
 <!-- [2026-11-10 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — RV-R1-06 -->
