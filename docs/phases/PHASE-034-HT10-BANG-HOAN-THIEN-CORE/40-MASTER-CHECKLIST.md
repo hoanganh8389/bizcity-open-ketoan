@@ -15,9 +15,9 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S034-6 | B3b — `docs/standard/cong-kiem.json` (map họ mã → trụ cột, sửa tay) + `scripts/cong-kiem.mjs` sinh test / CI / trigger; SC-GATE-1; cổng Trigger và CI có sổ; mức mã đủ bốn ý (D034-11, [00 §3.2b](00-MASTER-PLAN.md)) | W2 | P1 | có | ✅ 2026-11-11 |
 | S034-7 | B4 — `bo-may.json` (`bizcity_engines@1`, 13 dòng), `GET /api/v1/system/engines` (mốc đọc `bang-viec.json`), SC-ENG-1, thẻ Bộ máy | W3 | P1 | có | ✅ 2026-11-10 |
 | S034-8 | B5a — `cong-cu-dev.json` (`bizcity_devtools@1`), SC-DEV-2 khớp `menu.ts`, bảng tiến độ T1..T6 | W4 | P1 | có | ✅ 2026-11-11 |
-| S034-9 | B5b — thẻ con "Chạy ở đây" (`?cong-cu=DEVxx`) nhúng nguyên màn DEV (D034-12, không sửa `apps/web/src/phan-he/dev/**`), quyền `devtools:read` | W4 | P1 | có | 🟡 chốt D034-12 2026-11-11 |
+| S034-9 | B5b — thẻ con "Chạy ở đây" (`?cong-cu=DEVxx`) nhúng nguyên màn DEV (D034-12, không sửa `apps/web/src/phan-he/dev/**`), quyền `devtools:read` | W4 | P1 | có | ✅ 2026-11-11 |
 | S034-10 | B6 — dòng tổng đầu màn (năm con số, bấm mở thẻ), cập nhật `docs/huong-dan/tru-cot-muc-dat.md` | W5 | P2 | có | ✅ 2026-11-11 |
-| S034-12 | In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10 | W5 | P2 | có | ☐ |
+| S034-12 | In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10 | W5 | P2 | có | ✅ 2026-11-11 |
 | S034-11 | Q034-1 — đóng gói `scoreboard.json` của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC-* | W5 | P2 | có | ☐ sau Q034-1 |
 
 ## Ca kiểm
@@ -45,3 +45,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-11 — B3b (S034-6, D034-11): `docs/standard/cong-kiem.json` (`map[]` 36 dòng họ mã → trụ cột; `generated` do `scripts/cong-kiem.mjs` sinh: 43 mã chẩn đoán, 61 mã cổng A/B/L, test của mã, 139 check CI (71 có ca tự kiểm), 102 trigger); SC-GATE-1 + bản xấu `gates-bad/` (5 phát hiện); `GET /system/gates` có `pillars`, `tests`, `score`, cổng Trigger và CI có sổ; `GatesBoard` thêm cột Test / Trụ cột; dòng tổng đọc `score`. Test gates 5/5. Nhả dòng giữ chỗ B3b.
 - 2026-11-11 — B3b-2: phép kiểm phần sinh không chặn PR của người khác — SC-GATE-1 (chặn) chỉ kiểm trụ cột trong `map[]`; SC-GATE-2 (info) mã chưa gắn trụ cột / phần sinh cũ; SC-DEV-2 (chặn) khớp menu, màn có thật; SC-DEV-3 (info) T1..T6 cũ. Bản xấu tách theo hai mức. Nhả dòng giữ chỗ B3b-2.
 - 2026-11-11 — B3b-3: mã luật riêng của thư viện (`rules[].code` ở `libraries/*/library.json`: TGS-REPORT-001, TGS-FLAG-001, TSPL-LAW-001) vào sổ cổng kiểm; `map[]` thêm TGS-* → VII, TSPL-* → IX; test gates khẳng định mọi mã cổng A / B / Guard / L có trụ cột. Nhả dòng giữ chỗ B3b-3.
+- 2026-11-11 — B5b (S034-9, D034-12): nút **Chạy ở đây** ở thẻ Nhà phát triển mở thẻ con `?cong-cu=DEVxx` nhúng nguyên màn DEV (import từ `apps/web/src/phan-he/dev/**`, không sửa tệp nào ở đó), chỉ hiện với `devtools:read`. S034-12: nút **In cả năm thẻ** dựng năm thẻ nối nhau (mỗi thẻ một trang), chờ `useIsFetching() = 0` rồi mở hộp in, `afterprint` trở lại thẻ đang xem. Nhả dòng giữ chỗ B5b + S034-12.
