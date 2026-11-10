@@ -1,0 +1,277 @@
+<!doctype html>
+<!-- [2026-11-10 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-035 — bản mẫu hộp thoại Thiết lập nhanh (TI09): 4 bước Bắt đầu → Công ty → Nạp gì → Đang nạp / Xong; biểu ngữ đơn vị trắng và Công ty mẫu; số liệu hư cấu -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thiết lập nhanh</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Bố cục: khung ứng dụng (thanh trên + Tổng quan) phía sau, hộp thoại 4 bước nổi giữa; cùng bộ màu bản mẫu PHASE-030 */
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--accent:#0b5cad;--on-accent:#ffffff;
+  --ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--info-bg:#e8f0fc;--scrim:rgba(18,24,38,.45);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--on-accent:#0f1115;
+  --ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;--scrim:rgba(0,0,0,.6);color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;--on-accent:#0f1115;
+  --ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;--scrim:rgba(0,0,0,.6);color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font:12.5px var(--mono)}
+header{background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand{display:flex;gap:10px;align-items:center;font-weight:650}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.switch{display:flex;gap:4px;background:var(--soft);border-radius:8px;padding:3px}
+.switch button{border:0;background:transparent;border-radius:6px;padding:4px 10px;cursor:pointer;color:var(--muted);font-size:12.5px}
+.switch button[aria-pressed="true"]{background:var(--panel);color:var(--ink);font-weight:600}
+.band{border-bottom:1px solid var(--line);padding-block:9px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.band.info{background:var(--info-bg);color:var(--info)}
+.band.warn{background:var(--warn-bg);color:var(--warn)}
+.band b{color:var(--ink)}
+main{max-width:1180px;margin:0 auto;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:19px;margin:0 0 2px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.tile .lbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.tile .val{font-size:20px;font-weight:650;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .sub{color:var(--muted);font-size:12px}
+.empty .val{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+
+/* Hộp thoại */
+.scrim{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:20}
+.dlg{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(860px,100%);max-height:calc(100% - 8px);display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.dlg-h{padding:14px 18px 0}
+.dlg-h h2{margin:0;font-size:17px}
+.dlg-h p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.steps{display:flex;gap:6px;padding:12px 18px;border-bottom:1px solid var(--line);overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;white-space:nowrap;color:var(--muted);font-size:13px;padding-right:8px}
+.step i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line);font-size:12px;font-weight:700}
+.step.on{color:var(--ink);font-weight:600}.step.on i{border-color:var(--accent);color:var(--accent)}
+.step.done i{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.step+.step::before{content:"";width:18px;height:1.5px;background:var(--line);margin-right:2px}
+.dlg-b{padding:16px 18px;overflow:auto;min-height:0}
+.dlg-f{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dlg-f .note{color:var(--muted);font-size:12.5px;flex:1;min-width:180px}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.choice{text-align:left;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.choice[aria-pressed="true"]{border-color:var(--accent);background:var(--info-bg)}
+.choice b{font-size:15px}
+.choice ul{margin:2px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;font-weight:600;background:var(--ok-bg);color:var(--ok);align-self:flex-start}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.muted{background:var(--soft);color:var(--muted)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12.5px;color:var(--muted)}
+.field input,.field select{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--panel);color:var(--ink);font:inherit;min-width:0}
+.field input:disabled{background:var(--soft);color:var(--muted)}
+.inds{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.ind{border:1.5px solid var(--line);border-radius:99px;padding:5px 12px;background:var(--panel);cursor:pointer;font-size:13px}
+.ind[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:600}
+.ind:disabled{cursor:not-allowed;color:var(--muted);opacity:.7}
+.cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px}
+@media (max-width:700px){.cols{grid-template-columns:minmax(0,1fr)}}
+.blocks{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.blk{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 12px;border-top:1px solid var(--line)}
+.blk:first-child{border-top:0}
+.blk input{margin-top:3px;accent-color:var(--accent)}
+.blk .t{font-weight:600}.blk .d{color:var(--muted);font-size:12.5px}
+.blk .n{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12.5px;white-space:nowrap}
+.reps h4{margin:0 0 6px;font-size:13px}
+.rep{display:flex;gap:8px;align-items:baseline;padding:3px 0;font-size:13px;color:var(--muted)}
+.rep code{font:11.5px var(--mono);min-width:44px}
+.rep.lit{color:var(--ink)}.rep.lit::before{content:"●";color:var(--ok);font-size:10px}
+.rep:not(.lit)::before{content:"○";color:var(--line);font-size:10px}
+.prog{display:flex;flex-direction:column;gap:6px}
+.pr{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:8px}
+.pr .s{font-size:14px;text-align:center}
+.pr.run{border-color:var(--accent)}.pr.ok .s{color:var(--ok)}.pr.wait{color:var(--muted)}
+.bar{height:6px;background:var(--soft);border-radius:99px;overflow:hidden;margin:10px 0 4px}
+.bar span{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+@media (prefers-reduced-motion:reduce){.bar span{transition:none}}
+.checks{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.repgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px}
+.rg{border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;background:var(--panel);text-align:left}
+.rg:hover{border-color:var(--accent)}
+.rg code{font:11.5px var(--mono);color:var(--muted)}
+.rg b{display:block;font-size:13px}
+.rg span{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--ok)}
+</style>
+</head>
+<body>
+<header><div class="top">
+  <div class="brand"><div class="logo">BC</div><div>Bizcity Kế toán<small id="tenant-name">Đơn vị: Công ty của tôi · chưa có dữ liệu</small></div></div>
+  <div class="spacer"></div>
+  <div class="switch" role="group" aria-label="Xem trạng thái">
+    <button id="v-empty" aria-pressed="true">Đơn vị trắng</button>
+    <button id="v-sample" aria-pressed="false">Sau khi nạp mẫu</button>
+  </div>
+  <button class="btn" id="open">Thiết lập nhanh</button>
+</div></header>
+
+<div class="band info" id="band-empty"><span><b>Đơn vị chưa có dữ liệu.</b> Thiết lập nhanh trong vài bước: xem một công ty mẫu đầy đủ báo cáo, hoặc nạp cấu hình chuẩn để bắt đầu nhập thật.</span><div class="spacer"></div><button class="btn pri" id="open2">Thiết lập nhanh</button></div>
+<div class="band warn" id="band-sample" hidden><span><b>Bạn đang xem Công ty mẫu</b> — số liệu hư cấu, 3 tháng nghiệp vụ. Không gửi được tờ khai hay hoá đơn ra ngoài.</span><div class="spacer"></div><button class="btn">Bắt đầu với công ty của bạn</button></div>
+
+<main>
+  <h1>Tổng quan</h1>
+  <p class="lead" id="lead">Tháng 11/2026 · chưa có bút toán nào trên sổ.</p>
+  <div class="tiles" id="tiles"></div>
+  <div class="panel"><b>Việc cần làm</b><p class="lead" id="todo" style="margin:4px 0 0">Chưa có việc — đơn vị chưa có chứng từ.</p></div>
+</main>
+
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+  <div class="dlg">
+    <div class="dlg-h"><h2 id="dlg-title">Thiết lập nhanh</h2><p>Mất khoảng 1 phút. Có thể đóng và mở lại ở Tiện ích → Thiết lập nhanh (TI09).</p></div>
+    <div class="steps" id="steps"></div>
+    <div class="dlg-b" id="body"></div>
+    <div class="dlg-f" id="foot"></div>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const STEPS = ['Bắt đầu', 'Công ty', 'Nạp gì', 'Đang nạp'];
+const REPORTS = [
+  ['ACC8', 'Bảng cân đối kế toán (B01)', ['open']], ['ACC9', 'Kết quả kinh doanh (B02)', ['sale', 'close']], ['ACC13', 'Lưu chuyển tiền tệ (B03)', ['cash']],
+  ['ACC10', 'Cân đối phát sinh', ['open']], ['ACC88', 'Sổ cái', ['open']], ['ACC89', 'Nhật ký chung', ['buy', 'sale']],
+  ['ACC38', 'Công nợ', ['buy', 'sale']], ['ACC67', 'Tuổi nợ', ['sale', 'cash']], ['ACC83', 'Nhập xuất tồn', ['buy', 'stock']],
+  ['ACC82', 'Thẻ kho', ['stock']], ['ACC80', 'Sổ quỹ', ['cash']], ['BH02', 'Bán hàng tổng hợp', ['sale']],
+  ['BH05', 'Lãi gộp', ['sale', 'close']], ['ACC66', 'Tờ khai thuế GTGT', ['close']], ['ACC64', 'Bảng kê mua vào', ['buy']],
+  ['ACC65', 'Bảng kê bán ra', ['sale']], ['ACC28', 'Sổ tài sản cố định', ['asset']], ['—', 'Tổng quan', ['sale']],
+];
+const BLOCKS = {
+  sample: [
+    ['cfg', 'Cấu hình', 'Người nộp thuế (giả), tài khoản ngầm định, chế độ ghi sổ, gói định khoản thương mại', '6 mục', true],
+    ['cat', 'Danh mục', '3 chi nhánh, 4 kho, 40 mặt hàng (thuế 0 / 5 / 8 / 10 %), 30 đối tượng, 3 tài khoản ngân hàng', '80 dòng', true],
+    ['open', 'Số dư đầu kỳ', 'Tiền, hàng tồn, phải thu, phải trả, vốn góp — ngày 01/09/2026', '1 phiếu', false],
+    ['buy', 'Mua hàng', '12 phiếu mua có hoá đơn, 1 trả hàng nhà cung cấp', '13 chứng từ', false],
+    ['sale', 'Bán hàng', '30 đơn bán lẻ và buôn, 2 trả hàng', '32 chứng từ', false],
+    ['cash', 'Thu chi – công nợ', 'Thu tiền khách, trả tiền nhà cung cấp, nộp tiền ngân hàng, 6 phiếu chi lẻ', '24 chứng từ', false],
+    ['stock', 'Kho', '2 phiếu chuyển kho, 1 kiểm kê điều chỉnh', '3 chứng từ', false],
+    ['asset', 'Tài sản', '2 tài sản cố định, 1 công cụ dụng cụ, khấu hao 3 tháng', '3 tài sản', false],
+    ['close', 'Cuối kỳ', 'Giá vốn, kết chuyển tháng 10, tờ khai GTGT tháng 10 (nháp)', '3 bước', false],
+  ],
+  mine: [
+    ['cfg', 'Cấu hình', 'Tài khoản ngầm định, chế độ ghi sổ, gói định khoản thương mại', '6 mục', true],
+    ['std', 'Danh mục chuẩn', 'Loại thuế, khoản mục chi phí, lý do nghiệp vụ, nhóm hạch toán, hình thức thanh toán', '480 dòng', true],
+    ['cat', 'Danh mục mẫu (tuỳ chọn)', 'Mặt hàng và đối tượng giả lập để tập nhập — xoá được trước khi có chứng từ', '70 dòng', false],
+  ],
+};
+const st = { step: 0, mode: 'sample', picked: new Set(BLOCKS.sample.map((b) => b[0])), ind: 'tm', ran: 0, timer: null };
+
+function renderSteps() {
+  $('#steps').innerHTML = STEPS.map((s, i) => `<div class="step ${i === st.step ? 'on' : ''} ${i < st.step ? 'done' : ''}"><i>${i < st.step ? '✓' : i + 1}</i>${i === 3 && st.ran === -1 ? 'Xong' : s}</div>`).join('');
+}
+function foot(note, btns) {
+  $('#foot').innerHTML = `<div class="note">${note}</div>` + btns.map(([id, label, cls, dis]) => `<button class="btn ${cls || ''}" id="${id}" ${dis ? 'disabled' : ''}>${label}</button>`).join('');
+}
+const blocks = () => BLOCKS[st.mode];
+
+function step0() {
+  $('#body').innerHTML = `<div class="choices">
+    <button class="choice" id="c-sample" aria-pressed="${st.mode === 'sample'}"><span class="pill">Khuyên dùng lần đầu</span><b>Xem công ty mẫu</b>
+      <span>Một công ty thương mại hư cấu với 3 tháng nghiệp vụ. Mở là thấy đủ báo cáo.</span>
+      <ul><li>18 báo cáo có số: B01, B02, B03, công nợ, tồn kho, tờ khai GTGT…</li><li>Nằm ở đơn vị riêng, không đụng dữ liệu của bạn</li><li>Xoá được bất cứ lúc nào</li></ul></button>
+    <button class="choice" id="c-mine" aria-pressed="${st.mode === 'mine'}"><span class="pill muted">Sổ trống</span><b>Thiết lập công ty của tôi</b>
+      <span>Nạp cấu hình và danh mục chuẩn vào đơn vị này để bắt đầu nhập chứng từ thật.</span>
+      <ul><li>Hệ thống tài khoản TT99, tài khoản ngầm định</li><li>Loại thuế, khoản mục, lý do nghiệp vụ</li><li>Không có chứng từ mẫu</li></ul></button>
+  </div>`;
+  const pick = (m) => { st.mode = m; st.picked = new Set(blocks().map((b) => b[0]).filter((k) => m === 'sample' || k !== 'cat')); step0(); };
+  $('#c-sample').onclick = () => pick('sample'); $('#c-mine').onclick = () => pick('mine');
+  foot('Có thể làm cả hai: xem mẫu trước, thiết lập công ty sau.', [['later', 'Để sau', 'ghost'], ['next', 'Tiếp', 'pri']]);
+}
+function step1() {
+  const s = st.mode === 'sample';
+  $('#body').innerHTML = `<div class="form">
+    <div class="field"><label for="f-name">Tên công ty</label><input id="f-name" value="${s ? 'Công ty CP Mẫu Bizcity' : ''}" placeholder="Công ty TNHH …" ${s ? 'disabled' : ''}></div>
+    <div class="field"><label for="f-mst">Mã số thuế</label><input id="f-mst" class="mono" value="${s ? '0000000001' : ''}" placeholder="10 hoặc 13 số" ${s ? 'disabled' : ''}></div>
+    <div class="field"><label for="f-year">Năm tài chính bắt đầu</label><select id="f-year"><option>01/01/2026</option><option>01/04/2026</option><option>01/07/2026</option></select></div>
+    <div class="field"><label for="f-reg">Chế độ kế toán</label><select id="f-reg"><option>Thông tư 99/2025/TT-BTC</option></select></div>
+    <div class="field"><label for="f-vat">Phương pháp thuế GTGT</label><select id="f-vat"><option>Khấu trừ</option><option>Trực tiếp trên doanh thu</option></select></div>
+  </div>
+  <div class="field" style="margin-top:14px"><label>Ngành nghề — quyết định gói định khoản và dữ liệu mẫu</label>
+    <div class="inds"><button class="ind" aria-pressed="true">Thương mại bán lẻ</button><button class="ind" disabled>Dịch vụ · sắp có</button><button class="ind" disabled>Sản xuất · sắp có</button><button class="ind" disabled>Xây dựng · sắp có</button></div></div>`;
+  foot(s ? 'Công ty mẫu dùng tên và MST hư cấu, không sửa được.' : 'Sửa được sau ở TT01 Thông tin người nộp thuế.', [['back', 'Quay lại'], ['next', 'Tiếp', 'pri']]);
+}
+function step2() {
+  const lit = (r) => r[2].some((k) => st.picked.has(k)) && st.mode === 'sample';
+  $('#body').innerHTML = `<div class="cols"><div><div class="blocks">${blocks().map(([k, t, d, n, req]) => `
+      <label class="blk"><input type="checkbox" data-k="${k}" ${st.picked.has(k) ? 'checked' : ''} ${req ? 'disabled' : ''}><span><span class="t">${t}</span>${req ? ' <span class="pill muted">luôn nạp</span>' : ''}<br><span class="d">${d}</span></span><span class="n">${n}</span></label>`).join('')}</div>
+      <p class="lead" style="margin:8px 0 0;font-size:12.5px">Chứng từ mẫu đi qua cửa nạp như chứng từ thật — chính phần mềm định khoản, nên báo cáo khớp sổ.</p></div>
+    <div class="reps panel"><h4>${st.mode === 'sample' ? `Báo cáo sẽ có số · ${REPORTS.filter(lit).length}/18` : 'Báo cáo'}</h4>
+      ${st.mode === 'sample' ? REPORTS.map((r) => `<div class="rep ${lit(r) ? 'lit' : ''}"><code>${r[0]}</code>${r[1]}</div>`).join('') : '<p class="lead" style="font-size:13px">Sổ trống: báo cáo có số khi bạn nhập chứng từ đầu tiên. Muốn xem báo cáo trông thế nào, chọn <b>Xem công ty mẫu</b> ở bước 1.</p>'}
+    </div></div>`;
+  document.querySelectorAll('.blk input').forEach((el) => el.onchange = () => { el.checked ? st.picked.add(el.dataset.k) : st.picked.delete(el.dataset.k); step2(); });
+  foot('Xem trước — chưa ghi gì. Đơn vị đã có chứng từ thì không nạp được.', [['back', 'Quay lại'], ['next', 'Nạp dữ liệu', 'pri']]);
+}
+function step3() {
+  const list = blocks().filter((b) => st.picked.has(b[0]));
+  const done = st.ran === -1 ? list.length : st.ran;
+  $('#body').innerHTML = `<div class="bar"><span style="width:${Math.round(done / list.length * 100)}%"></span></div>
+    <p class="lead" style="font-size:12.5px">${done < list.length ? `Đang nạp ${list[done][1].toLowerCase()}… (${done}/${list.length})` : 'Đã nạp xong.'}</p>
+    <div class="prog">${list.map(([k, t, , n], i) => `<div class="pr ${i < done ? 'ok' : i === done ? 'run' : 'wait'}"><span class="s">${i < done ? '✓' : i === done ? '…' : '○'}</span><span>${t}</span><span class="n mono">${i < done ? n : ''}</span></div>`).join('')}</div>
+    ${done === list.length ? doneView() : ''}`;
+  if (done < list.length) { foot('Lỗi giữa chừng: phần đã nạp giữ nguyên, bấm Thử lại sẽ nạp tiếp mà không nhân đôi.', [['run', 'Đang nạp…', 'pri', true]]); }
+  else foot('Mở lại hộp thoại này ở Tiện ích → Thiết lập nhanh (TI09).', [['close', 'Đóng'], ['goto', 'Mở Tổng quan', 'pri']]);
+}
+function doneView() {
+  if (st.mode === 'mine') return `<div class="checks"><span class="pill">Cấu hình xong</span><span class="pill">Danh mục chuẩn xong</span></div><p>Bước tiếp: nhập số dư đầu kỳ (ACC5) hoặc chứng từ mua hàng đầu tiên.</p>`;
+  const nums = { ACC8: '4.218.400.000', ACC9: '312.650.000', ACC13: '187.300.000', ACC10: 'Nợ = Có', ACC38: '41 đối tượng', ACC83: '40 mặt hàng', ACC66: 'Kỳ 10/2026', BH02: '1.985.200.000', ACC28: '3 tài sản' };
+  return `<div class="checks"><span class="pill">Nợ = Có ✓</span><span class="pill">Công nợ khớp 131 / 331 ✓</span><span class="pill">Tồn kho khớp 156 ✓</span><span class="pill">Hoá đơn khớp 133 ✓</span></div>
+    <div class="repgrid">${REPORTS.filter((r) => r[2].some((k) => st.picked.has(k))).map((r) => `<button class="rg"><code>${r[0]}</code><b>${r[1]}</b><span>${nums[r[0]] ?? 'có số'}</span></button>`).join('')}</div>`;
+}
+function go(n) {
+  st.step = n; renderSteps();
+  [step0, step1, step2, step3][n]();
+  const b = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  b('next', () => go(st.step + 1)); b('back', () => go(st.step - 1));
+  b('later', () => { $('#scrim').hidden = true; }); b('close', () => { $('#scrim').hidden = true; });
+  b('goto', () => { $('#scrim').hidden = true; setView(st.mode === 'sample' ? 'sample' : 'mine'); });
+  if (n === 3 && st.ran !== -1) run();
+}
+function run() {
+  clearTimeout(st.timer);
+  const total = blocks().filter((b) => st.picked.has(b[0])).length;
+  st.timer = setTimeout(() => { st.ran += 1; if (st.ran >= total) st.ran = -1; go(3); }, 450);
+}
+function setView(v) {
+  const sample = v === 'sample';
+  $('#v-empty').setAttribute('aria-pressed', String(!sample)); $('#v-sample').setAttribute('aria-pressed', String(sample));
+  $('#band-empty').hidden = v !== 'empty'; $('#band-sample').hidden = !sample;
+  $('#tenant-name').textContent = sample ? 'Đơn vị: Công ty mẫu · dữ liệu hư cấu' : v === 'mine' ? 'Đơn vị: Công ty của tôi · đã nạp cấu hình' : 'Đơn vị: Công ty của tôi · chưa có dữ liệu';
+  $('#lead').textContent = sample ? 'Tháng 11/2026 · 79 chứng từ mẫu trên sổ, 3 tháng từ 01/09/2026.' : 'Tháng 11/2026 · chưa có bút toán nào trên sổ.';
+  const T = sample
+    ? [['Doanh thu tháng', '684.300.000', '+12% so tháng 10'], ['Lãi gộp', '128.900.000', 'biên 18,8%'], ['Tiền và tương đương', '612.450.000', 'quỹ + 3 tài khoản'], ['Phải thu', '214.600.000', '6 khách quá hạn'], ['Phải trả', '387.200.000', '2 nhà cung cấp đến hạn'], ['Thuế GTGT phải nộp', '23.840.000', 'kỳ 10/2026']]
+    : [['Doanh thu tháng', '—', 'chưa có chứng từ'], ['Lãi gộp', '—', ''], ['Tiền và tương đương', '—', ''], ['Phải thu', '—', ''], ['Phải trả', '—', ''], ['Thuế GTGT phải nộp', '—', '']];
+  $('#tiles').innerHTML = T.map(([l, v, s]) => `<div class="tile ${sample ? '' : 'empty'}"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join('');
+  $('#todo').textContent = sample ? '3 phiếu mua chờ duyệt · tờ khai GTGT 10/2026 nháp chờ xem · 6 khoản phải thu quá hạn.' : 'Chưa có việc — đơn vị chưa có chứng từ.';
+}
+$('#v-empty').onclick = () => { setView('empty'); st.ran = 0; $('#scrim').hidden = false; go(0); };
+$('#v-sample').onclick = () => { setView('sample'); $('#scrim').hidden = true; };
+$('#open').onclick = $('#open2').onclick = () => { st.ran = 0; $('#scrim').hidden = false; go(0); };
+setView('empty'); go(0);
+</script>
+</body>
+</html>
