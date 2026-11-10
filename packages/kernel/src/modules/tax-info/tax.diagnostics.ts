@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/tax
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: remedy có cấu trúc cho từng kiểm (bizcity_remedy@1, R-FIX-1).
 // [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11: kiểm L3 thuế GTGT và hoá đơn cho rulepack C03 vat-vn, C04 einvoice-vn — VAT_REDUCED_RATE, VAT_INPUT_NONCASH, INVOICE_FIELDS, INVOICE_ISSUE_DATE; cùng mã với lane DG-VAT-1/2, DG-EINV-1/2.
 /**
@@ -53,7 +54,7 @@ async function invoiceIssues(trx: Parameters<DiagCheck['run']>[0], s: DiagScope)
 
 export const TAX_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'VAT_REDUCED_RATE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'VAT_REDUCED_RATE', closeRef: 'PC-011', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở chứng từ theo khoá trong mẫu', screen: SCREENS.ACC14 }, { text: 'Sửa loại thuế của mặt hàng / phiếu về thuế suất đúng thời điểm', role: 'accountant' }, { text: 'Hoá đơn đã phát hành: lập hoá đơn điều chỉnh theo quy định, định khoản lại', screen: SCREENS.ACC14, role: 'chief_accountant' }], owner: 'accountant', verify: { code: 'VAT_REDUCED_RATE' } },
     title: 'Thuế suất GTGT giảm (8%) chỉ dùng cho hàng bán ra trong thời gian giảm theo nghị quyết',
     fix: 'Chứng từ bán ra ngoài thời gian giảm thuế mà vẫn dùng loại thuế 8%: thuế đầu ra kê khai thiếu. Mẫu: khoá chứng từ. Kiểm lại loại thuế của mặt hàng / phiếu (10% sau khi hết giảm), lập hoá đơn điều chỉnh theo quy định. Thời gian giảm lấy từ rulepack vat-vn (đã duyệt hay chưa xem ở Kiểm chuẩn).',
@@ -71,7 +72,7 @@ export const TAX_DIAGNOSTICS: DiagCheck[] = [
     },
   },
   {
-    code: 'VAT_INPUT_NONCASH', layer: 'L3', level: 'warn', scoped: true,
+    code: 'VAT_INPUT_NONCASH', closeRef: 'PC-011', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở Bổ sung thông tin thuế, cột Chứng từ thanh toán', screen: SCREENS.ACC78 }, { text: 'Nhập số chứng từ ngân hàng', screen: SCREENS.ACC78, role: 'accountant' }, { text: 'Chưa trả (trả chậm): theo dõi tới hạn; không trả bằng chuyển khoản thì bỏ đánh dấu được khấu trừ', screen: SCREENS.ACC78, role: 'chief_accountant' }], owner: 'accountant', verify: { code: 'VAT_INPUT_NONCASH' } },
     title: 'Hoá đơn mua vào từ 5 triệu đồng (gồm thuế) được khấu trừ có chứng từ thanh toán không dùng tiền mặt',
     fix: 'Thiếu chứng từ thanh toán không dùng tiền mặt thì thuế đầu vào của hoá đơn đó chưa đủ điều kiện khấu trừ. Mẫu: số chứng từ. Ghi chứng từ thanh toán ở Bổ sung thông tin thuế (ACC78); chưa thanh toán thì theo dõi, hoặc bỏ đánh dấu được khấu trừ.',
@@ -82,7 +83,7 @@ export const TAX_DIAGNOSTICS: DiagCheck[] = [
     },
   },
   {
-    code: 'INVOICE_FIELDS', layer: 'L3', level: 'warn', scoped: true,
+    code: 'INVOICE_FIELDS', closeRef: 'PC-011', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Mở Bổ sung thông tin thuế theo số chứng từ trong mẫu', screen: SCREENS.ACC78 }, { text: 'Bổ sung ký hiệu / tên / mã số thuế từ hoá đơn gốc', screen: SCREENS.ACC78, role: 'accountant' }], owner: 'accountant', verify: { code: 'INVOICE_FIELDS' } },
     title: 'Hoá đơn trong sổ có đủ ký hiệu, tên và mã số thuế người bán (mua vào), mã số thuế đúng dạng',
     fix: 'Hoá đơn thiếu ký hiệu / mã số thuế thì bảng kê và tờ khai không khớp dữ liệu cơ quan thuế. Mẫu: số chứng từ: điểm thiếu. Bổ sung ở Bổ sung thông tin thuế (ACC78).',
@@ -93,7 +94,7 @@ export const TAX_DIAGNOSTICS: DiagCheck[] = [
     },
   },
   {
-    code: 'INVOICE_ISSUE_DATE', layer: 'L3', level: 'warn', scoped: true,
+    code: 'INVOICE_ISSUE_DATE', closeRef: 'PC-011', layer: 'L3', level: 'warn', scoped: true,
     remedy: { steps: [{ text: 'Kiểm quy trình xuất hoá đơn ở hệ thống bán hàng: xuất ngay khi giao hàng', role: 'chief_accountant' }, { text: 'Dịch vụ / bán theo đợt: ghi căn cứ thời điểm riêng khi xác nhận cảnh báo' }], owner: 'chief_accountant', verify: { code: 'INVOICE_ISSUE_DATE' } },
     title: 'Hoá đơn bán hàng hoá lập không sau ngày chứng từ bán (thời điểm chuyển giao)',
     fix: 'Ngày hoá đơn sau ngày giao hàng: lập hoá đơn chậm so với thời điểm chuyển giao quyền sở hữu, có thể bị xử phạt. Mẫu: khoá chứng từ. Dịch vụ / trường hợp đặc thù có thời điểm khác — người dùng tự đánh giá.',

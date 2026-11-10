@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/conformance
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm L3 CONFORMANCE_STALE (theo đơn vị; không ở L1 vì health/ready chạy L1 không gắn đơn vị) — lượt Kiểm chuẩn gần nhất quá 2 ngày (lịch đêm không chạy); cùng mã với lane DG-CONF-1.
 /**
  * Lịch Kiểm chuẩn còn chạy không (F22-ENV-12) — CHỈ ĐỌC, mức warn. Ngưỡng 2 ngày là quy chế nội bộ.
@@ -10,7 +11,7 @@ import { type DiagCheck } from '@bizcity/platform/system/diagnostics';
 
 export const CONFORMANCE_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'CONFORMANCE_STALE', layer: 'L3', level: 'warn', scoped: false,
+    code: 'CONFORMANCE_STALE', closeRef: 'none', layer: 'L3', level: 'warn', scoped: false,
     remedy: {
       steps: [
         { text: 'Vận hành kiểm tiến trình API còn chạy (đồng hồ sự kiện chạy trong API)', role: 'operator' },

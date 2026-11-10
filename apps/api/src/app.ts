@@ -51,11 +51,11 @@ import { mountActions } from '@bizcity/platform/core/actions';
 import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
-import { diagnosticsNightlySubscriber, registerDiagnostics } from './modules/system/diagnostics.js';
+import { diagnosticsNightlySubscriber, registerCloseConditions, registerDiagnostics } from './modules/system/diagnostics.js';
 // [2026-11-06 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b: bản niêm phong bằng chứng (ADR-0030) — tác vụ evidence.seal + chẩn đoán EVIDENCE_SEAL_*
 import { evidenceSealSubscriber, SEAL_DIAGNOSTICS } from '@bizcity/platform/core/evidence-export';
 import { ASSET_DIAGNOSTICS } from './modules/assets/asset.diagnostics.js';
-import { BALANCE_DIAGNOSTICS, CONFORMANCE_DIAGNOSTICS, INTAKE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber, recheckInboxForSkus } from './kernel/public.js';
+import { BALANCE_DIAGNOSTICS, CLOSE_CONDITIONS, CONFORMANCE_DIAGNOSTICS, INTAKE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber, recheckInboxForSkus } from './kernel/public.js';
 // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: mặt hàng kích hoạt → bể chờ kiểm lại (danh mục không import Kernel)
 import { registerItemsActivatedHook } from './modules/products/item.hints.js';
 import { connectionService } from './modules/connections/connection.service.js';
@@ -147,6 +147,8 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   registerDiagnostics([...BALANCE_DIAGNOSTICS, ...INVENTORY_DIAGNOSTICS, ...ASSET_DIAGNOSTICS, ...CONFORMANCE_DIAGNOSTICS]);
   // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-19): bể chờ đầu vào — mục mở quá ngưỡng
   registerDiagnostics(INTAKE_DIAGNOSTICS);
+  // [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
+  registerCloseConditions(CLOSE_CONDITIONS);
   registerCollector('ledger', collectLedgerMetrics);
   registerCollector('postings', () => collectPostingMetrics());
   registerCollector('outbox', collectOutboxMetrics);
