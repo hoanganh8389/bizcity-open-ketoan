@@ -247,6 +247,13 @@ Hôm nay mọi màn DEV dùng chung `helpKey="ban-dieu-tra"` (T4 đều chưa đ
 └───────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Đính chính B5b — nhúng nguyên màn, không tách `*Body` (D034-12, 2026-11-11).**
+<!-- [2026-11-11 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — D034-12: B5b nhúng nguyên màn DEV, không sửa apps/web/src/phan-he/dev/** -->
+- Dòng S018-21 vẫn giữ `apps/web/src/phan-he/dev/**`. Nhánh `feat/phase-018-giam-sat-mac-dinh` chưa vào `main` và sửa `ui.tsx`, nên tách `*Body` sẽ va vào việc của họ.
+- Thay vào đó, thẻ con nhúng **nguyên component màn** (`ToanVenPage`, `SuKienPage`…), kèm cả `PageHeader` và `DevGuard` của màn. HT10 chỉ import, **không sửa tệp nào** trong thư mục dev.
+- Màn DEV chỉ đọc tham số `ma`, `q`, `tab`, không trùng `xem` / `cong-cu` của HT10.
+- Khi S018-21 nhả, có thể tách `*Body` để bỏ tiêu đề lồng. Đó là việc tuỳ chọn, không chặn.
+
 **Quyền (D034-7).**
 - Bảng tiến độ ai vào HT10 cũng thấy, vì nó không có dữ liệu của đơn vị.
 - Thẻ con chạy công cụ thì cần `devtools:read`, giữ đúng quyền của menu `dev`.
@@ -312,6 +319,7 @@ B1 làm ngay được, không phụ thuộc bước nào. Các bước B3, B4, B
 | D034-8 | Một khuôn hiển thị `ReadinessItem`, một `ScoreBar`, một cách tính cho năm thẻ |
 | D034-9 | Mỗi sổ JSON có một phép kiểm SC chặn "đạt" sai (R-CONT-7, R-ECP-SCORE) |
 | D034-10 | Thứ tự thẻ: Tiêu chí → Nền móng → Cổng & bộ kiểm → Bộ máy → Nhà phát triển |
+| D034-12 | (đính chính D034-6 cho B5b, 2026-11-11) Thẻ con nhúng nguyên màn DEV (có PageHeader, DevGuard), không tách `*Body`, không sửa `apps/web/src/phan-he/dev/**` |
 | D034-11 | (đính chính D034-3 cho B3b, 2026-11-11) Trụ cột gắn theo họ mã trong `cong-kiem.json`; test / CI / trigger sinh từ repo bằng `scripts/cong-kiem.mjs`; không sửa `DiagCheck` (§3.2b) |
 
 ## 9. Câu hỏi mở

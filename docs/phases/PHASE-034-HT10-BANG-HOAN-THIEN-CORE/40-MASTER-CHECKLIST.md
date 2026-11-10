@@ -15,7 +15,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S034-6 | B3b — `docs/standard/cong-kiem.json` (map họ mã → trụ cột, sửa tay) + `scripts/cong-kiem.mjs` sinh test / CI / trigger; SC-GATE-1; cổng Trigger và CI có sổ; mức mã đủ bốn ý (D034-11, [00 §3.2b](00-MASTER-PLAN.md)) | W2 | P1 | có | ✅ 2026-11-11 |
 | S034-7 | B4 — `bo-may.json` (`bizcity_engines@1`, 13 dòng), `GET /api/v1/system/engines` (mốc đọc `bang-viec.json`), SC-ENG-1, thẻ Bộ máy | W3 | P1 | có | ✅ 2026-11-10 |
 | S034-8 | B5a — `cong-cu-dev.json` (`bizcity_devtools@1`), SC-DEV-2 khớp `menu.ts`, bảng tiến độ T1..T6 | W4 | P1 | có | ✅ 2026-11-11 |
-| S034-9 | B5b — tách `*Body` cho DEV01..09; thẻ con "Chạy ở đây" (`?cong-cu=DEVxx`), quyền `devtools:read`, nạp lười | W4 | P1 | có | ☐ sau khi S018-21 nhả `apps/web/src/phan-he/dev/**` |
+| S034-9 | B5b — thẻ con "Chạy ở đây" (`?cong-cu=DEVxx`) nhúng nguyên màn DEV (D034-12, không sửa `apps/web/src/phan-he/dev/**`), quyền `devtools:read` | W4 | P1 | có | 🟡 chốt D034-12 2026-11-11 |
 | S034-10 | B6 — dòng tổng đầu màn (năm con số, bấm mở thẻ), cập nhật `docs/huong-dan/tru-cot-muc-dat.md` | W5 | P2 | có | ✅ 2026-11-11 |
 | S034-12 | In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10 | W5 | P2 | có | ☐ |
 | S034-11 | Q034-1 — đóng gói `scoreboard.json` của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC-* | W5 | P2 | có | ☐ sau Q034-1 |
