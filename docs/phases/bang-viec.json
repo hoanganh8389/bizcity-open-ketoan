@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 9
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 280
+      "count": 281
     }
   ],
   "items": [
@@ -6071,15 +6071,9 @@
       "phase": "PHASE-034",
       "title": "B1 — COPY docs/standard/nen-mong.json vào docker/api.Dockerfile; SC-REL-3 + luật R-REL-11 + bản xấu runtime-docs-bad/",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
-        "branch": "feat/phase-034-b1-nen-mong-ban-cai",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-034 · B1 — thẻ Nền móng chạy ở bản cài Docker: COPY docs/standard/nen-mong.json; SC-REL-3 (tệ…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 12
     },

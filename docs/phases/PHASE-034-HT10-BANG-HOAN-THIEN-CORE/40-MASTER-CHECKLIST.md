@@ -9,7 +9,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 |---|---|---|---|---|---|
 | S034-1 | README (hiện trạng đọc mã), [00](00-MASTER-PLAN.md), checklist | W0 | P0 | không | ✅ 2026-11-09 |
 | S034-2 | Chủ dự án duyệt D034-1..10, trả Q034-1..5 | W0 | P0 | không | ✅ 2026-11-10 (chủ dự án: "tiếp", Q034-1..5 dùng phương án đề nghị) |
-| S034-3 | B1 — `COPY docs/standard/nen-mong.json` vào `docker/api.Dockerfile`; SC-REL-3 + luật R-REL-11 + bản xấu `runtime-docs-bad/` | W1 | P0 | có | ☐ |
+| S034-3 | B1 — `COPY docs/standard/nen-mong.json` vào `docker/api.Dockerfile`; SC-REL-3 + luật R-REL-11 + bản xấu `runtime-docs-bad/` | W1 | P0 | có | ✅ 2026-11-10 |
 | S034-4 | B2 — `ScoreBar`, `ReadinessItem`; HT10 đọc `?xem=` cho 5 thẻ, thẻ mới hiện "sắp có"; thiếu tệp nguồn thì báo có Cách sửa (dựng lại ảnh) | W1 | P0 | có | ☐ |
 | S034-5 | B3a — `GET /api/v1/system/gates`: chẩn đoán L1/L3/L5 + `FINDINGS_LIBRARY` + `INTAKE_CATALOG` + lượt gần nhất; thẻ Cổng (A, B, Guard, Chẩn đoán) | W2 | P0 | có | ☐ |
 | S034-6 | B3b — trường `pillars` (và `pc`) cạnh `DiagCheck`, dòng findings, `.check.mjs`; `scripts/cong-kiem-json.mjs` (`--kiem`) sinh `cong-kiem.json` cho SC/DG/trigger/Cổng C giữ chỗ; SC-GATE-1 | W2 | P1 | có | ☐ sau khi hỏi phiên PHASE-033 về trường `pc` |
@@ -35,3 +35,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 
 - 2026-11-09 — W0: tài liệu, đề xuất D034-1..10, câu hỏi Q034-1..5. Đọc mã `origin/main` `c0ccd842`.
 - 2026-11-10 — chủ dự án "tiếp": duyệt D034-1..10, Q034-1..5 theo phương án đề nghị; giữ chỗ B1 (S034-3). D034-2 đổi: bỏ `RUNTIME_DOCS`, SC-REL-3 tự dò từ mã.
+- 2026-11-10 — B1 (S034-3): `COPY docs/standard/nen-mong.json` vào ảnh api; SC-REL-3 (`tests/conformance/checks/release/runtime-docs.check.mjs`) + bản xấu `runtime-docs-bad/` (2 phát hiện mong đợi). Trên repo trước khi sửa, SC-REL-3 bắt đúng 1 lỗi: `version.ts:38` đọc `nen-mong.json` mà ảnh không có. Nhả dòng giữ chỗ B1.
