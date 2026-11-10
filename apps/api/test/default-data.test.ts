@@ -20,6 +20,11 @@ const sale = (key: string, sku: string) => ({
 
 beforeAll(async () => {
   ctx = await setupTenant();
+  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — tệp này kiểm nhóm hạch toán / lý do: bật công tắc lý do hạch toán (mặc định tắt) (đóng góp)
+  {
+    const on = await call(ctx, 'PUT', '/api/v1/settings/values/bizcity.posting.use_reasons', { value: 'on', validFrom: '2000-01-01', reason: 'Kiểm nhóm hạch toán / lý do' }, { 'idempotency-key': 'bat-ly-do-hach-toan' });
+    if (on.status !== 200) throw new Error(JSON.stringify(on.body));
+  }
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
   expect((await call(ctx, 'POST', '/api/v1/branches', { code: '26001', name: 'Cửa hàng Bảo Hà' })).status).toBe(201);
 });
@@ -82,10 +87,9 @@ describe('Dữ liệu gốc', () => {
     const lines = await sql<{ account_code: string; dep: string | null }>`
       SELECT l.account_code, l.dims->>'department' AS dep FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
        WHERE l.tenant_id = ${tenantId} AND e.doc_no = 'BAN-BH-01'`.execute(db);
-    // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán mặc định tắt: doanh thu theo nhóm mặt hàng (hàng khuyến mại 51113),
-    // không theo tài khoản 51111 trên lý do XBA (bật công tắc thì lý do đè như cũ — kiểm ở cash-internal.test.ts) (đóng góp)
+    // Lý do XBA (bán tại cửa hàng) chỉ định doanh thu 51111, thay tài khoản doanh thu của nhóm mặt hàng (công tắc lý do bật).
     const rev = lines.rows.find((l) => l.account_code.startsWith('511'));
-    expect(rev).toMatchObject({ account_code: '51113', dep: 'BH26001' });
+    expect(rev).toMatchObject({ account_code: '51111', dep: 'BH26001' });
     // Mặt hàng chưa có trong danh mục: nhóm hạch toán lấy theo tệp gốc (hàng khuyến mại → giá vốn 6323), giá vốn mang bộ phận.
     expect(lines.rows.find((l) => l.account_code.startsWith('632'))).toMatchObject({ account_code: '6323', dep: 'BH26001' });
     // Bộ phận gắn mọi dòng của bút toán (cả dòng tiền, công nợ).

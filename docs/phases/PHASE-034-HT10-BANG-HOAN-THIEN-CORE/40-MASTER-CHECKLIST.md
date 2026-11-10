@@ -12,7 +12,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S034-3 | B1 — `COPY docs/standard/nen-mong.json` vào `docker/api.Dockerfile`; SC-REL-3 + luật R-REL-11 + bản xấu `runtime-docs-bad/` | W1 | P0 | có | ✅ 2026-11-10 |
 | S034-4 | B2 — `ScoreBar`, `ReadinessItem`; HT10 đọc `?xem=` cho 5 thẻ, thẻ mới hiện "sắp có"; thiếu tệp nguồn thì báo có Cách sửa (dựng lại ảnh) | W1 | P0 | có | ✅ 2026-11-10 |
 | S034-5 | B3a — `GET /api/v1/system/gates`: chẩn đoán L1/L3/L5 + `FINDINGS_LIBRARY` + `INTAKE_CATALOG` + lượt gần nhất; thẻ Cổng (A, B, Guard, Chẩn đoán) | W2 | P0 | có | ✅ 2026-11-10 |
-| S034-6 | B3b — trường `pillars` (và `pc`) cạnh `DiagCheck`, dòng findings, `.check.mjs`; `scripts/cong-kiem-json.mjs` (`--kiem`) sinh `cong-kiem.json` cho SC/DG/trigger/Cổng C giữ chỗ; SC-GATE-1 | W2 | P1 | có | ☐ sau khi hỏi phiên PHASE-033 về trường `pc` |
+| S034-6 | B3b — `docs/standard/cong-kiem.json` (map họ mã → trụ cột, sửa tay) + `scripts/cong-kiem.mjs` sinh test / CI / trigger; SC-GATE-1; cổng Trigger và CI có sổ; mức mã đủ bốn ý (D034-11, [00 §3.2b](00-MASTER-PLAN.md)) | W2 | P1 | có | 🟡 chốt thiết kế 2026-11-11 |
 | S034-7 | B4 — `bo-may.json` (`bizcity_engines@1`, 13 dòng), `GET /api/v1/system/engines` (mốc đọc `bang-viec.json`), SC-ENG-1, thẻ Bộ máy | W3 | P1 | có | ✅ 2026-11-10 |
 | S034-8 | B5a — `cong-cu-dev.json` (`bizcity_devtools@1`), SC-DEV-2 khớp `menu.ts`, bảng tiến độ T1..T6 | W4 | P1 | có | ✅ 2026-11-11 |
 | S034-9 | B5b — tách `*Body` cho DEV01..09; thẻ con "Chạy ở đây" (`?cong-cu=DEVxx`), quyền `devtools:read`, nạp lười | W4 | P1 | có | ☐ sau khi S018-21 nhả `apps/web/src/phan-he/dev/**` |

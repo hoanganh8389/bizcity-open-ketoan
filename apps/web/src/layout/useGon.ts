@@ -7,8 +7,8 @@ import { useEnabledModules } from './useAppMenu';
 import { buildGon, groupOfPath, type GonGroup } from './menu-gon';
 import { useUseReasons } from '@/lib/useReasons';
 
-// [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — tắt lý do hạch toán thì ẩn màn Lý do – Tài khoản khỏi menu (đóng góp)
-const REASON_PATHS = new Set(['/cau-hinh/ly-do']);
+// [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — tắt lý do hạch toán thì ẩn màn Lý do – Tài khoản, Mặt hàng – Tài khoản khỏi menu (đóng góp)
+const REASON_PATHS = new Set(['/cau-hinh/ly-do', '/cau-hinh/nhom-hach-toan']);
 const dropPaths = (items: MenuItem[], drop: Set<string>): MenuItem[] => items.filter((m) => !m.path || !drop.has(m.path)).map((m) => (m.children ? { ...m, children: dropPaths(m.children, drop) } : m));
 
 const KEY = 'ketoan.gon';

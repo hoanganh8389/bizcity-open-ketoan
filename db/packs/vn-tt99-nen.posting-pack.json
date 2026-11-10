@@ -47,7 +47,11 @@
     "goods_in_transit": "1579",
     "stock_surplus": "3381",
     "stock_shortage": "1381",
-    "cash_in_transit": "11319"
+    "cash_in_transit": "11319",
+    "revenue": "51111",
+    "sales_return": "52131",
+    "cogs": "6321",
+    "inventory": "1561"
   },
   "reasons": [
     {

@@ -388,6 +388,13 @@
             "doc-missing:BADREASON"
           ]
         },
+        "SC-UI-1": {
+          "findings": 2,
+          "keys": [
+            "locked#1",
+            "rows === 0#1"
+          ]
+        },
         "SC-ACT-2": {
           "findings": 2,
           "keys": [

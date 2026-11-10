@@ -98,6 +98,32 @@ Nguồn theo từng cổng:
 - trường `pc` nối mã với dòng PC;
 - PHASE-033 đọc lại đúng các dòng này để làm Bảng B.
 
+### 3.2b Đính chính B3b — gắn trụ cột theo họ mã, không sửa `DiagCheck` (D034-11)
+<!-- [2026-11-11 01:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — D034-11: B3b gắn trụ cột theo họ mã trong một tệp; test / CI / trigger sinh từ repo; không đụng Platform -->
+
+Đếm trên `origin/main` (2026-11-11): 46 mã chẩn đoán trong hơn 40 tệp `*.diagnostics.ts`; 23 họ mã ở cổng A / B / L; 140 check CI (`SC-*` + `DG-*`); 108 trigger CSDL. Thêm trường `pillars` cạnh từng mã (D034-3 cũ) phải sửa `DiagCheck` ở Platform (thứ dùng chung, R-FLOW-2) và chạm hàng chục tệp đang thuộc dòng giữ chỗ khác (PHASE-032…). Đổi thành:
+
+| | Cách làm | Ai ghi |
+|---|---|---|
+| **Trụ cột** | `docs/standard/cong-kiem.json` → `map[]`: mẫu mã (`LEDGER_*`, `IN-POL-*`, `SC-ITEM-*`, `items_*`…) → trụ cột ở `tru-cot.json`. Mã cụ thể đặt trước mẫu rộng; dòng đầu khớp thì dùng | sửa tay, SC-GATE-1 kiểm |
+| **Test của mã** | `scripts/cong-kiem.mjs` quét `apps/api/test/*.test.ts`: tệp nào có chuỗi mã → mã có test | sinh, không gõ |
+| **Bộ kiểm CI** | cùng script: mọi `SC-*` / `DG-*` (id, tiêu đề, cổng, mức chặn) + có ca tự kiểm trong `expect.json` hay không | sinh |
+| **Trigger CSDL** | cùng script: `CREATE TRIGGER` trong `db/migrations` (tên, migration) + có được `LEDGER_TRIGGERS` kiểm hay không | sinh |
+
+- API `GET /system/gates` đọc tệp này: cổng **Trigger** và **CI** thành "có sổ".
+- Mỗi mã có thêm `pillars[]` và `tests[]`.
+- **Mức một mã** ở cổng A / B / Guard / L / chẩn đoán: đủ bốn ý, mỗi ý ¼ — có Cách sửa · có phương án có cấu trúc · có test · gắn trụ cột (đúng §3.3).
+- **Mức một mã** ở CI / trigger: gắn trụ cột ½ + có ca tự kiểm (CI) hoặc được `LEDGER_TRIGGERS` kiểm (trigger) ½.
+
+**SC-GATE-1** kiểm ba điều:
+1. Mỗi `map[].pillars` là id có thật.
+2. Phần sinh khớp lần chạy lại của script.
+3. Mã nào script tìm thấy mà không khớp mẫu nào thì báo *"chưa gắn trụ cột"*.
+
+Cổng *Khoá kỳ* và *Cổng C* vẫn giữ chỗ (PHASE-032 / 033).
+
+Đánh đổi: trụ cột gắn theo họ, không theo từng mã. Mã nào lệch khỏi họ của nó thì thêm một dòng mã cụ thể vào `map[]`.
+
 ### 3.3 Màn
 
 ```
@@ -289,6 +315,7 @@ B1 làm ngay được, không phụ thuộc bước nào. Các bước B3, B4, B
 | D034-8 | Một khuôn hiển thị `ReadinessItem`, một `ScoreBar`, một cách tính cho năm thẻ |
 | D034-9 | Mỗi sổ JSON có một phép kiểm SC chặn "đạt" sai (R-CONT-7, R-ECP-SCORE) |
 | D034-10 | Thứ tự thẻ: Tiêu chí → Nền móng → Cổng & bộ kiểm → Bộ máy → Nhà phát triển |
+| D034-11 | (đính chính D034-3 cho B3b, 2026-11-11) Trụ cột gắn theo họ mã trong `cong-kiem.json`; test / CI / trigger sinh từ repo bằng `scripts/cong-kiem.mjs`; không sửa `DiagCheck` (§3.2b) |
 
 ## 9. Câu hỏi mở
 

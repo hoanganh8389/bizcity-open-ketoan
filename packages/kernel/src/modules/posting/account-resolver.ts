@@ -31,6 +31,7 @@ import type { PostingConfig, TaxCodeConfig } from '../posting-config/posting-con
 
 export class AccountResolver {
   private readonly missing = new Set<string>();
+  private defaultGroupCache: ProductPostingGroup | undefined;
 
   constructor(private readonly cfg: PostingConfig) {}
 
@@ -55,7 +56,22 @@ export class AccountResolver {
     return undefined;
   }
 
+  /**
+   * Bộ tài khoản theo mặt hàng (doanh thu, trả lại, giá vốn, kho). Công tắc lý do hạch toán TẮT: không đọc nhóm hạch toán / tài khoản
+   * theo mặt hàng — lấy tài khoản ngầm định (ACC41: revenue, sales_return, cogs, inventory); trường hợp riêng là quy tắc theo loại hàng.
+   */
   groupForSku(sku: string): ProductPostingGroup {
+    if (!this.cfg.useReasons) {
+      this.defaultGroupCache ??= {
+        ...(this.cfg.defaultGroup ?? {}),
+        code: 'ACC41', name: 'Tài khoản ngầm định',
+        revenue_account: this.fromDefault('revenue', 'tài khoản doanh thu bán hàng'),
+        sales_return_account: this.fromDefault('sales_return', 'tài khoản hàng bán bị trả lại'),
+        cogs_account: this.fromDefault('cogs', 'tài khoản giá vốn hàng bán'),
+        inventory_account: this.fromDefault('inventory', 'tài khoản kho hàng hoá'),
+      } as ProductPostingGroup;
+      return this.defaultGroupCache;
+    }
     const product = sku ? this.cfg.products.get(sku) : undefined;
     const code = product?.postingGroupCode;
     const group = (code && this.cfg.groups.get(code)) || this.cfg.defaultGroup;

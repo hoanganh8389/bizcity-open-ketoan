@@ -520,3 +520,48 @@ interface SimEntry {
   debit: { auto: string; account: string }; credit: { auto: string; account: string };
   ruleId: string | null; candidates: string[]; ties: string[]; note?: string;
 }
+
+// ------------------------------------------------------------------------------------------------ định khoản ngầm định thêm ở ACC41
+// [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — Tài khoản ngầm định kiểu danh sách theo loại chứng từ: dòng thêm = quy tắc ưu tiên thấp, sửa tại chỗ (đóng góp)
+/**
+ * Dòng "Thêm tài khoản ngầm định" ở ACC41: một quy tắc ĐÃ DUYỆT, ưu tiên -10 (quy tắc ACC92 cùng mức điều kiện thắng), áp mọi ngày.
+ * Khác quy tắc ACC92: không qua đề xuất / duyệt, sửa / xoá tại chỗ như danh mục (ghi nhật ký). Nhận ra bằng change_reason = DEFAULT_MARK.
+ */
+export const DEFAULT_MARK = 'Tài khoản ngầm định (ACC41)';
+export const DEFAULT_PRIORITY = -10;
+export interface DefaultEntryInput { business: string; part: RulePart; cond?: RuleCond; debit?: string | null; credit?: string | null; name: string }
+
+export async function listDefaultEntries(trx: Db, tenantId: string) {
+  return (await listRules(trx, tenantId)).filter((r) => r.changeReason === DEFAULT_MARK && r.status === 'active' && !r.to);
+}
+
+export async function saveDefaultEntry(trx: Db, tenantId: string, actor: string, id: string | null, i: DefaultEntryInput) {
+  if (!i.name?.trim()) throw Errors.validation('Nhập tên định khoản');
+  const input: RuleInput = { business: i.business, part: i.part, cond: i.cond, debit: i.debit, credit: i.credit, priority: DEFAULT_PRIORITY, from: '2000-01-01', note: i.name.trim(), changeReason: DEFAULT_MARK };
+  const v = await validateRule(trx, tenantId, input);
+  const draft: PostingRule = { id: id ?? '0', business: i.business, part: i.part, book: 'all', cond: v.cond, debit: v.debit, credit: v.credit, priority: DEFAULT_PRIORITY, from: '2000-01-01', to: null };
+  const ties = findTies(draft, await rulesOf(trx, tenantId, i.business, ['active']), id ? [id] : []);
+  if (ties.length) throw Errors.validation(`Trùng định khoản đã có: ${ties.map((t) => condText(t.cond)).join(', ')} — thêm điều kiện cho khác đi`);
+  if (id) {
+    const cur = (await sql<RuleRow>`SELECT ${RULE_COLS} FROM posting_rules WHERE tenant_id = ${tenantId} AND id = ${id} FOR UPDATE`.execute(trx)).rows[0];
+    if (!cur || cur.change_reason !== DEFAULT_MARK) throw Errors.notFound('định khoản ngầm định');
+    await sql`UPDATE posting_rules SET business_code = ${i.business}, part = ${i.part}, cond = ${JSON.stringify(v.cond)}::jsonb, debit_account = ${v.debit}, credit_account = ${v.credit},
+                     note = ${input.note!}, updated_at = now() WHERE tenant_id = ${tenantId} AND id = ${id}`.execute(trx);
+    await writeAudit(trx, { tenantId, actor, action: 'posting.default-entry.update', objectType: 'posting_rule', objectId: id, before: { cond: cur.cond, debit: cur.debit_account, credit: cur.credit_account, note: cur.note }, after: { ...i, ...v } });
+    return (await listDefaultEntries(trx, tenantId)).find((r) => r.id === id);
+  }
+  const row = (await sql<{ id: string }>`
+    INSERT INTO posting_rules (tenant_id, business_code, part, book, cond, debit_account, credit_account, priority, effective_from, status, note, change_reason, created_by, approved_by, approved_at)
+    VALUES (${tenantId}, ${i.business}, ${i.part}, 'all', ${JSON.stringify(v.cond)}::jsonb, ${v.debit}, ${v.credit}, ${DEFAULT_PRIORITY}, DATE '2000-01-01', 'active', ${input.note!}, ${DEFAULT_MARK}, ${actor}, ${actor}, now())
+    RETURNING id::text`.execute(trx)).rows[0]!;
+  await writeAudit(trx, { tenantId, actor, action: 'posting.default-entry.create', objectType: 'posting_rule', objectId: row.id, after: { ...i, ...v } });
+  return (await listDefaultEntries(trx, tenantId)).find((r) => r.id === row.id);
+}
+
+export async function deleteDefaultEntry(trx: Db, tenantId: string, actor: string, id: string) {
+  const cur = (await sql<RuleRow>`SELECT ${RULE_COLS} FROM posting_rules WHERE tenant_id = ${tenantId} AND id = ${id} FOR UPDATE`.execute(trx)).rows[0];
+  if (!cur || cur.change_reason !== DEFAULT_MARK) throw Errors.notFound('định khoản ngầm định');
+  await sql`DELETE FROM posting_rules WHERE tenant_id = ${tenantId} AND id = ${id}`.execute(trx);
+  await writeAudit(trx, { tenantId, actor, action: 'posting.default-entry.delete', objectType: 'posting_rule', objectId: id, before: { business: cur.business_code, part: cur.part, cond: cur.cond, debit: cur.debit_account, credit: cur.credit_account, note: cur.note } });
+  return { id, deleted: true };
+}
