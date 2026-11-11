@@ -5,16 +5,18 @@
 import { useState } from 'react';
 import { Empty, ErrorBox, Loading, Modal, errorText, useApi, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import {
-  CELL_TEXT, cellOf, columnSummary, explainCell, groupPermissions, groupRulePlan, roleDbId,
+  CELL_TEXT, cellOf, columnSummary, explainCell, groupPermissions, groupRulePlan, KIND_TEXT, roleDbId, roleLabel,
   type Cell, type CellReason, type MatrixData, type MatrixPermission, type MatrixRole, type RoleDetail, type RoleRule,
 } from '../lib/matrix';
 import { WriteDialog } from './WriteDialog';
 
 const CELL_STYLE: Record<Cell, { background: string; color: string }> = {
-  allow: { background: '#dcfce7', color: '#166534' },
-  deny: { background: '#fee2e2', color: '#991b1b' },
-  none: { background: 'transparent', color: '#94a3b8' },
+  allow: { background: 'transparent', color: '#2e7d32' },
+  deny: { background: '#fee2e2', color: '#b91c1c' },
+  none: { background: 'transparent', color: '#cbd5e1' },
 };
+/** Ký hiệu trong ô ma trận (gọn hơn chữ): ✓ có, ✕ Cấm, · chưa có. */
+const CELL_MARK: Record<Cell, string> = { allow: '✓', deny: '✕', none: '·' };
 
 function reasonText(r: CellReason): string {
   switch (r.kind) {
@@ -45,7 +47,7 @@ function CellPanel({ matrix, role, permission, onClose }: { matrix: MatrixData; 
   const plan = group && !role.system ? groupRulePlan(group.items, detail.data) : null;
 
   return (
-    <Modal title={`${permission.label} × ${role.label}`} onClose={onClose}>
+    <Modal title={`${permission.label} × ${roleLabel(role)}`} onClose={onClose}>
       <p><code>{permission.key}</code>{high ? <> · <span className="badge badge-warn">Rủi ro cao</span></> : null}</p>
       <p>Hiện tại: <strong>{CELL_TEXT[ex.cell]}</strong></p>
       <ul>{ex.reasons.map((r, i) => <li key={i}>{reasonText(r)}</li>)}</ul>
@@ -73,7 +75,7 @@ function CellPanel({ matrix, role, permission, onClose }: { matrix: MatrixData; 
       {!role.isActive && !role.system ? <p className="muted">Vai trò đang vô hiệu: bật lại ở thẻ Vai trò trước khi sửa luật.</p> : null}
       {pending?.kind === 'add' ? (
         <WriteDialog
-          title={`${pending.effect === 'allow' ? 'Cho' : 'Cấm'} ${permission.key} cho ${role.label}`}
+          title={`${pending.effect === 'allow' ? 'Cho' : 'Cấm'} ${permission.key} cho ${roleLabel(role)}`}
           confirmLabel={pending.effect === 'allow' ? 'Cho quyền' : 'Cấm quyền'}
           needPassword={pending.effect === 'allow' && high}
           onClose={() => setPending(null)}
@@ -88,7 +90,7 @@ function CellPanel({ matrix, role, permission, onClose }: { matrix: MatrixData; 
       ) : null}
       {pending?.kind === 'group' ? (
         <WriteDialog
-          title={`${pending.effect === 'allow' ? 'Cho' : 'Cấm'} cả nhóm ${group?.label ?? ''} cho ${role.label}`}
+          title={`${pending.effect === 'allow' ? 'Cho' : 'Cấm'} cả nhóm ${group?.label ?? ''} cho ${roleLabel(role)}`}
           confirmLabel={pending.effect === 'allow' ? `Cho ${pending.keys.length} quyền` : `Cấm ${pending.keys.length} mẫu`}
           onClose={() => setPending(null)}
           onSubmit={async (v) => {
@@ -136,7 +138,7 @@ export function MatrixTab() {
       <div className="card card-body row" style={{ gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <input className="input" style={{ maxWidth: 320 }} placeholder="Tìm quyền theo tên hoặc mã" value={q} onChange={(e) => setQ(e.target.value)} />
         <label><input type="checkbox" checked={onlyTenant} onChange={(e) => setOnlyTenant(e.target.checked)} /> Chỉ vai trò của đơn vị</label>
-        <span className="muted">Ô <strong>Có</strong> / <strong>Cấm</strong> do máy chủ tính. Bấm ô của vai trò đơn vị để thêm hoặc gỡ luật.</span>
+        <span className="muted"><strong style={{ color: '#2e7d32' }}>✓</strong> có quyền · <strong style={{ color: '#b91c1c' }}>✕</strong> bị Cấm · <strong style={{ color: '#94a3b8' }}>·</strong> chưa có. Bấm ô của vai trò đơn vị để thêm / gỡ luật; muốn sửa nhiều quyền một lúc dùng <em>Sửa quyền</em> ở thẻ Vai trò.</span>
       </div>
       {!groups.length ? <Empty text="Không có quyền khớp." /> : (
         <div className="table-wrap">
@@ -147,8 +149,8 @@ export function MatrixTab() {
                 {roles.map((r) => {
                   const s = columnSummary(m, r.id);
                   return (
-                    <th key={r.id} title={r.system ? 'Vai trò hệ thống — chỉ đọc' : r.code} style={{ textAlign: 'center', opacity: r.isActive ? 1 : 0.5 }}>
-                      {r.label}<br /><small>{r.system ? 'hệ thống' : r.isActive ? r.kind : 'vô hiệu'} · {s.allow} Có{s.deny ? ` · ${s.deny} Cấm` : ''}</small>
+                    <th key={r.id} title={`${r.code}${r.system ? ' — vai trò mặc định, chỉ xem' : ''}`} style={{ textAlign: 'center', opacity: r.isActive ? 1 : 0.5, minWidth: 96 }}>
+                      {roleLabel(r)}<br /><small className="muted" style={{ fontWeight: 400 }}>{r.system ? 'mặc định' : r.isActive ? KIND_TEXT[r.kind] ?? r.kind : 'vô hiệu'} · {s.allow} quyền{s.deny ? ` · ${s.deny} Cấm` : ''}</small>
                     </th>
                   );
                 })}
@@ -175,15 +177,15 @@ function GroupRows({ label, items, roles, matrix, onPick }: {
       <tr><th colSpan={roles.length + 1} style={{ textAlign: 'left', background: 'rgba(100,116,139,.12)' }}>{label}</th></tr>
       {items.map((p) => (
         <tr key={p.key}>
-          <td>{p.label}{p.risk === 'high' ? <> <span className="badge badge-warn">Cao</span></> : null}<br /><small className="muted">{p.key}</small></td>
+          <td title={p.key}>{p.label}{p.risk === 'high' ? <> <span className="badge badge-warn" style={{ fontSize: 11 }}>Cao</span></> : null}</td>
           {roles.map((r) => {
             const c = cellOf(matrix, r.id, p.key);
-            const style = { ...CELL_STYLE[c], width: '100%', border: 0, padding: '4px 8px', borderRadius: 4, cursor: r.system ? 'default' : 'pointer' };
+            const style = { ...CELL_STYLE[c], width: '100%', border: 0, padding: '2px 8px', borderRadius: 4, cursor: r.system ? 'default' : 'pointer', fontSize: 16, fontWeight: 700 };
             return (
               <td key={r.id} style={{ textAlign: 'center' }}>
                 {r.system
-                  ? <span style={{ ...style, display: 'inline-block' }}>{CELL_TEXT[c]}</span>
-                  : <button type="button" style={style} title={`Sửa luật của ${r.label}`} onClick={() => onPick(r, p)}>{CELL_TEXT[c]}</button>}
+                  ? <span style={{ ...style, display: 'inline-block' }} title={CELL_TEXT[c]}>{CELL_MARK[c]}</span>
+                  : <button type="button" style={style} title={`${CELL_TEXT[c]} — bấm để sửa luật của ${r.label}`} onClick={() => onPick(r, p)}>{CELL_MARK[c]}</button>}
               </td>
             );
           })}

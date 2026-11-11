@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { Empty, ErrorBox, Field, Loading, errorText, useApi, useQuery, useQueryClient } from '@bizcity/ui-kit';
-import { groupPermissions } from '../lib/matrix';
+import { FS, groupPermissions, ROLE_TEXT, type MatrixData } from '../lib/matrix';
 import { WriteDialog } from './WriteDialog';
 
 interface UserRow { id: string; email: string; fullName: string; role: string; isActive: boolean }
@@ -40,6 +40,9 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
 
   const users = useQuery({ queryKey: ['phan-quyen', 'users'], queryFn: () => api.get<UserRow[]>('/api/v1/users') });
   const roles = useQuery({ queryKey: ['phan-quyen', 'roles'], queryFn: () => api.get<TenantRole[]>('/api/v1/roles') });
+  // Nhãn tiếng Việt của quyền cho phần "Xem như" (cùng khoá đệm với thẻ Ma trận / Vai trò).
+  const matrix = useQuery({ queryKey: ['phan-quyen', 'matrix'], queryFn: () => api.get<MatrixData>('/api/v1/roles/matrix') });
+  const labels = new Map((matrix.data?.permissions ?? []).map((p) => [p.key, p] as const));
   const branches = useQuery({ queryKey: ['phan-quyen', 'branches'], queryFn: () => api.get<Branch[]>('/api/v1/branches') });
   const warehouses = useQuery({ queryKey: ['phan-quyen', 'warehouses'], queryFn: () => api.get<Warehouse[]>('/api/v1/warehouses') });
   const warehouseName = (id: string | null): string => { const w = warehouses.data?.find((x) => String(x.id) === String(id)); return w ? `kho ${w.code} · ${w.name}` : `kho ${id}`; };
@@ -59,35 +62,41 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 340px) 1fr', gap: 16, alignItems: 'start' }}>
       <div className="card card-body">
-        <input className="input" placeholder="Tìm người dùng" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="input" style={{ width: '100%', fontSize: FS.body }} placeholder="Tìm người dùng" value={q} onChange={(e) => setQ(e.target.value)} />
         {users.isLoading ? <Loading /> : users.error ? <ErrorBox error={errorText(users.error)} /> : !list.length ? <Empty /> : (
-          <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>
-            {list.map((u) => (
-              <li key={u.id}>
-                <button type="button" className={`btn btn-sm ${u.id === userId ? 'btn-primary' : 'btn-ghost'}`} style={{ width: '100%', textAlign: 'left', opacity: u.isActive ? 1 : 0.6 }} onClick={() => setUserId(u.id)}>
-                  {u.fullName}<br /><small>{u.email} · {u.role}{u.isActive ? '' : ' · đã khoá'}</small>
-                </button>
-              </li>
-            ))}
+          <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {list.map((u) => {
+              const active = u.id === userId;
+              return (
+                <li key={u.id}>
+                  <button type="button" onClick={() => setUserId(u.id)}
+                    style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
+                      background: active ? 'rgba(100,116,139,.22)' : 'transparent', opacity: u.isActive ? 1 : 0.6 }}>
+                    <div style={{ fontSize: FS.body, fontWeight: 600 }}>{u.fullName}</div>
+                    <div className="muted" style={{ fontSize: FS.small, marginTop: 2 }}>{u.email} · {ROLE_TEXT[u.role] ?? u.role}{u.isActive ? '' : ' · đã khoá'}</div>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
       <div>
-        {!userId ? <div className="card card-body"><Empty text="Chọn một người dùng để xem quyền hiệu lực và gán vai trò." /></div> : (
+        {!userId ? <div className="card card-body" style={{ fontSize: FS.body }}><Empty text="Chọn một người dùng ở bên trái để xem quyền hiệu lực và gán vai trò." /></div> : (
           <>
             <div className="card card-body">
-              <h3 style={{ marginTop: 0 }}>Xem như: {picked?.fullName ?? userId}</h3>
-              {effective.isLoading ? <Loading /> : effective.error ? <ErrorBox error={errorText(effective.error)} /> : effective.data ? <EffectiveView e={effective.data} /> : null}
+              <h3 style={{ marginTop: 0, fontSize: FS.group, fontWeight: 600 }}>Xem như: {picked?.fullName ?? userId}</h3>
+              {effective.isLoading ? <Loading /> : effective.error ? <ErrorBox error={errorText(effective.error)} /> : effective.data ? <EffectiveView e={effective.data} labels={labels} /> : null}
             </div>
             <div className="card card-body">
               <div className="row" style={{ gap: 12, alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>Lịch sử gán vai trò</h3>
+                <h3 style={{ margin: 0, fontSize: FS.group, fontWeight: 600 }}>Lịch sử gán vai trò</h3>
                 <button type="button" className="btn btn-primary btn-sm" onClick={() => setAssigning(true)}>Gán vai trò</button>
               </div>
               {history.isLoading ? <Loading /> : history.error ? <ErrorBox error={errorText(history.error)} /> : !history.data?.assignments.length ? <Empty text="Chưa gán vai trò bổ sung." /> : (
                 <div className="table-wrap">
-                  <table className="grid">
+                  <table className="grid" style={{ fontSize: FS.body }}>
                     <thead><tr><th>Vai trò</th><th>Phạm vi</th><th>Từ</th><th>Đến</th><th>Lý do</th><th>Trạng thái</th><th /></tr></thead>
                     <tbody>
                       {history.data.assignments.map((a) => (
@@ -176,17 +185,25 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
   );
 }
 
-function EffectiveView({ e }: { e: Effective }) {
-  const groups = groupPermissions(e.permissions.map((key) => ({ key, label: key, module: key.split(':')[0] === 'core' ? 'core' : key.split(':')[0] ?? 'core', risk: 'low' as const, resource: null, operation: null })));
+function EffectiveView({ e, labels }: { e: Effective; labels: ReadonlyMap<string, { label: string; module: string; risk: 'low' | 'high' }> }) {
+  const groups = groupPermissions(e.permissions.map((key) => {
+    const p = labels.get(key);
+    return { key, label: p?.label ?? key, module: p?.module ?? 'core', risk: p?.risk ?? ('low' as const), resource: null, operation: null };
+  }));
   return (
-    <div>
-      <p>Vai trò chính: <strong>{e.primaryRole}</strong>{e.roles.length > 1 ? <> · bổ sung: {e.roles.filter((r) => r !== e.primaryRole).join(', ')}</> : null}{e.baseRoles.length ? <> · nền của vai trò đơn vị: {e.baseRoles.join(', ')}</> : null}</p>
+    <div style={{ fontSize: FS.body }}>
+      <p>Vai trò chính: <strong>{ROLE_TEXT[e.primaryRole] ?? e.primaryRole}</strong>{e.roles.length > 1 ? <> · bổ sung: {e.roles.filter((r) => r !== e.primaryRole).map((r) => ROLE_TEXT[r] ?? r).join(', ')}</> : null}{e.baseRoles.length ? <> · nền của vai trò đơn vị: {e.baseRoles.map((r) => ROLE_TEXT[r] ?? r).join(', ')}</> : null}</p>
       {e.allow.length ? <p>Luật Cho riêng: {e.allow.map((p) => <code key={p} style={{ marginRight: 6 }}>{p}</code>)}</p> : null}
       {e.deny.length ? <p>Luật Cấm: {e.deny.map((p) => <code key={p} style={{ marginRight: 6, color: '#991b1b' }}>{p}</code>)}{e.roles.includes('owner') ? ' (không áp cho chủ đơn vị)' : ''}</p> : null}
       <p><strong>{e.permissions.length}</strong> quyền hiệu lực{e.isActive ? '' : ' (tài khoản đã khoá)'}:</p>
       <details>
         <summary>Xem danh sách quyền</summary>
-        {groups.map((g) => <p key={g.module}><strong>{g.module}</strong>: {g.items.map((p) => p.key).join(', ')}</p>)}
+        {groups.map((g) => (
+          <div key={g.module} style={{ marginTop: 8 }}>
+            <div style={{ fontWeight: 600 }}>{g.label}</div>
+            <div className="muted" style={{ fontSize: FS.small, lineHeight: 1.6 }}>{g.items.map((p) => <span key={p.key} title={p.key} style={{ marginRight: 12 }}>{p.label}</span>)}</div>
+          </div>
+        ))}
       </details>
     </div>
   );

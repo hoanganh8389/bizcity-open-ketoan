@@ -19,7 +19,20 @@ export const SYSTEM_PREFIX = 'system:';
 export const TENANT_PREFIX = 'tenant:';
 export const roleDbId = (roleId: string): string => roleId.slice(TENANT_PREFIX.length);
 
-const MODULE_LABELS: Record<string, string> = { core: 'Lõi (kế toán, danh mục, hệ thống)' };
+const MODULE_LABELS: Record<string, string> = {
+  core: 'Lõi (kế toán, danh mục, hệ thống)', 'ban-hang': 'Bán hàng', 'mua-hang': 'Mua hàng', kho: 'Kho', quy: 'Quỹ', 'ke-toan': 'Kế toán',
+};
+
+/** Một thang chữ cho mọi thẻ của HT12 (theo ứng dụng): tiêu đề 18, khung / nhóm 15, nội dung 14, chữ phụ 12. */
+export const FS = { title: 18, group: 15, body: 14, small: 12 } as const;
+
+/** Tên tiếng Việt của 6 vai trò hệ thống (API trả mã). */
+export const ROLE_TEXT: Record<string, string> = {
+  owner: 'Chủ đơn vị', chief_accountant: 'Kế toán trưởng', accountant: 'Kế toán', viewer: 'Người xem', developer: 'Nhà phát triển', auditor: 'Kiểm soát',
+};
+/** Tên hiển thị của một vai trò: vai trò hệ thống theo ROLE_TEXT, vai trò đơn vị theo tên đặt. */
+export const roleLabel = (r: Pick<MatrixRole, 'code' | 'label' | 'system'>): string => (r.system ? ROLE_TEXT[r.code] ?? r.label : r.label);
+export const KIND_TEXT: Record<string, string> = { job: 'Công việc', privilege: 'Đặc quyền', restriction: 'Hạn chế', system: 'Mặc định' };
 export const moduleLabel = (module: string): string => MODULE_LABELS[module] ?? module;
 
 /** Mẫu quyền của luật Cấm: `*` khớp một vế `[a-z0-9-]*`, không vượt dấu `:` (bizcity_authorization@1 §4). */
