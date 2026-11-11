@@ -96,7 +96,7 @@ function MethodForm({ value, onClose }: { value: Partial<Method> & { isNew?: boo
           onChange={(code) => { const b = banks.find((x) => x.code === code); set({ bankAccountCode: code || null, ...(b && !v.partnerCode && !transit ? { accountCode: b.accountCode } : {}) }); }} placeholder="Không gắn (tiền mặt…)" />
       </Field>
       {v.bankAccountCode && !v.partnerCode && (
-        <Field label="Tiền về ngân hàng" full hint="QR, quẹt thẻ vào tài khoản chi nhánh: ghi Nợ 11319 lúc bán; khi ngân hàng báo có, lập phiếu báo có Nợ 112 / Có 11319. 11319 còn số dư = tiền chưa về">
+        <Field label="Tiền về ngân hàng" full hint="QR, quẹt thẻ vào tài khoản chi nhánh: ghi Nợ 11319 lúc bán; khi ngân hàng báo có, lập phiếu thu tiền gửi Nợ 112 / Có 11319. 11319 còn số dư = tiền chưa về">
           <label className="checkbox"><input type="checkbox" checked={transit} onChange={(e) => { const b = banks.find((x) => x.code === v.bankAccountCode); set({ accountCode: e.target.checked ? '11319' : b?.accountCode ?? v.accountCode }); }} /> Ghi qua tiền đang chuyển (11319), chưa ghi thẳng tài khoản ngân hàng</label>
         </Field>
       )}

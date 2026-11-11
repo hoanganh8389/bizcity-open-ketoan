@@ -6,7 +6,7 @@ Mẫu B03-DN theo **phương pháp trực tiếp**: tiền thu vào, chi ra tron
 
 Mỗi dòng tiền (dòng ghi Nợ hoặc Có tài khoản 111, 112, 113) được xếp vào một chỉ tiêu, theo thứ tự:
 
-1. **Mã chỉ tiêu ghi trên dòng phiếu** (ô "Lưu chuyển tiền tệ" khi lập phiếu thu, chi, báo có, báo nợ — bấm "Khoản mục, bộ phận" để hiện ô này).
+1. **Mã chỉ tiêu ghi trên dòng phiếu** (ô "Lưu chuyển tiền tệ" khi lập phiếu thu, chi, thu tiền gửi, chi tiền gửi — bấm "Khoản mục, bộ phận" để hiện ô này).
 2. **Mã lưu chuyển tiền tệ của lý do** của chứng từ (khai ở Lý do - Tài khoản ACC18).
 3. Không có mã thì phần mềm **tự xếp theo tài khoản đối ứng**: thu từ 511, 3331, 131 → chỉ tiêu 01; chi cho 331, 15x, 1331 → 02; chi lương 334 → 03; chi phí đi vay 635 → 04; thuế TNDN 3334 → 05; mua tài sản 211, 213, 241 → 21; vay 341 → 33 (thu) / 34 (trả); còn lại → 06 (thu khác) hoặc 07 (chi khác).
 

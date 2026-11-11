@@ -4,7 +4,7 @@ Dùng cho các phiếu lặp đi lặp lại: tiền thuê nhà, phân bổ chi 
 
 ## Bút toán mẫu (BT01)
 
-1. Bấm **Thêm mẫu**, chọn loại phiếu (phiếu kế toán, thu, chi, báo có, báo nợ) → **Tiếp tục**.
+1. Bấm **Thêm mẫu**, chọn loại phiếu (phiếu kế toán, thu, chi, thu tiền gửi, chi tiền gửi) → **Tiếp tục**.
 2. Hộp soạn giống hộp lập phiếu, thêm ô **Mã mẫu**, **Tên mẫu**; không có ngày phiếu.
 3. Nhập diễn giải, đối tượng, tài khoản tiền, các dòng TK Nợ / Có, chiều phân tích, thuế như phiếu thường.
    - **Số tiền** để trống được: khi lập phiếu từ mẫu thì nhập.
@@ -16,7 +16,7 @@ Không đổi được loại phiếu của mẫu đã lưu. Mẫu không dùng 
 
 ### Lập phiếu từ mẫu
 
-Ở màn phiếu (thu, chi, báo có, báo nợ, phiếu kế toán), ô **Lập từ mẫu…** cạnh nút lập phiếu liệt kê các mẫu đang dùng của loại phiếu đó. Chọn mẫu → hộp lập phiếu điền sẵn; sửa ngày, số tiền rồi **Ghi sổ** như thường.
+Ở màn phiếu (thu, chi, thu tiền gửi, chi tiền gửi, phiếu kế toán), ô **Lập từ mẫu…** cạnh nút lập phiếu liệt kê các mẫu đang dùng của loại phiếu đó. Chọn mẫu → hộp lập phiếu điền sẵn; sửa ngày, số tiền rồi **Ghi sổ** như thường.
 
 ## Bút toán lặp (BT02)
 

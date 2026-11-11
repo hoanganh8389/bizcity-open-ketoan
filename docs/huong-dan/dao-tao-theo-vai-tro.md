@@ -9,7 +9,7 @@ Học trước (buổi 1):
 | Việc | Màn hình |
 |---|---|
 | Xem chứng từ bán hàng gửi sang, xử lý chứng từ lỗi | Định khoản tự động ACC14, BC kiểm tra chứng từ ACC93 |
-| Lập phiếu thu, phiếu chi, báo nợ, báo có; in, in liên tục nhiều phiếu; ký xác nhận người lập | ACC51, ACC52, ACC53, ACC54 |
+| Lập phiếu thu, phiếu chi, thu tiền gửi, chi tiền gửi; in, in liên tục nhiều phiếu; ký xác nhận người lập | ACC51, ACC52, ACC53, ACC54 |
 | Lập phiếu kế toán, lập từ bút toán mẫu | ACC16, BT01 |
 | Thu tiền khách, trả tiền nhà cung cấp gạch đúng khoản nợ | Phiếu thu / chi (mục "Thanh toán cho khoản công nợ"), Khoản công nợ CN01 |
 

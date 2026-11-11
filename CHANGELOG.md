@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Mua hàng: trả lại Nhà cung cấp mua hàng (MH01), lồng phần đặc thù vào khung chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Thẻ **Nhà cung cấp mua hàng** (`/mua-hang/nha-cung-cap`, MH01) mở lại danh sách NCC đang giao dịch → hồ sơ NCC (chính sách, hợp đồng, giá mua, hạn mức), thay cho danh mục DM13; hồ sơ NCC "quay lại" về MH01.
+- Thẻ Mua hàng thêm **Phân tích đặt hàng**, **Tồn max**, **Chính sách mua hàng**, **Hạn mức & công nợ đến hạn**. Lưu đồ Quy trình: Phân tích đặt hàng → Đơn mua hàng → Nhận hàng → Xử lý hóa đơn đầu vào → Trả tiền theo hóa đơn; hàng dưới thêm Công nợ đến hạn; Tiện ích thêm Chính sách mua, Tồn max, Cài đặt mua hàng.
+
+### Tên chứng từ tiền gửi thống nhất: Thu tiền gửi / Chi tiền gửi <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Menu, nút Yêu cầu thanh toán, thông báo kiểm tài khoản, tài liệu hướng dẫn đổi "Phiếu báo có / báo nợ" thành **Thu tiền gửi / Chi tiền gửi** (giấy báo có / báo nợ là giấy của ngân hàng). Viết lại hướng dẫn Thu, chi tiền và Thu, chi tiền gửi theo màn mới (lọc Loại phiếu, Thu tiền ▾ / Chi tiền ▾, Hủy · Ghi · Ghi và thêm).
+
 ### Ô Loại phiếu thu / chi luôn có sẵn như mẫu chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Phiếu mới mặc định "Thu khác" / "Chi khác" (không còn dòng "— Chọn loại —"); phiếu đã lập không khớp loại nào cũng hiện "… khác". Phiếu thu / trả tiền theo hóa đơn không có ô Loại (tài khoản theo từng hóa đơn chọn).
 

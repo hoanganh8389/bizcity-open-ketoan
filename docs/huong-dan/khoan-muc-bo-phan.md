@@ -22,7 +22,7 @@ Ba danh mục dùng để **phân tích** doanh thu, chi phí: cùng một tài 
 
 ## Dùng ở đâu
 
-Trên hộp phiếu thu, chi, báo nợ, báo có, phiếu kế toán, đánh dấu **Khoản mục, bộ phận, hợp đồng** để nhập mã cho từng dòng (kể cả ô **Nhân viên**). Xem kết quả ở **Chi phí theo khoản mục và bộ phận (ACC44)** (có các thẻ gom theo nhân viên, vụ việc, dự án, nguồn vốn), **Báo cáo công nợ theo nhân viên (ACC48)**; ở **Sổ chi tiết tài khoản (ACC12)** bật thêm các cột chiều ở nút "Cột".
+Trên hộp phiếu thu, chi, thu tiền gửi, chi tiền gửi, phiếu kế toán, đánh dấu **Khoản mục, bộ phận, hợp đồng** để nhập mã cho từng dòng (kể cả ô **Nhân viên**). Xem kết quả ở **Chi phí theo khoản mục và bộ phận (ACC44)** (có các thẻ gom theo nhân viên, vụ việc, dự án, nguồn vốn), **Báo cáo công nợ theo nhân viên (ACC48)**; ở **Sổ chi tiết tài khoản (ACC12)** bật thêm các cột chiều ở nút "Cột".
 
 Ô **Vụ việc, Dự án, Nguồn vốn** chỉ hiện trên dòng phiếu khi danh mục tương ứng đã có mã.
 

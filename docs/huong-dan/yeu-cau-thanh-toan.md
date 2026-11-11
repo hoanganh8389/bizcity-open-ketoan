@@ -27,7 +27,7 @@ Nháp → **Chờ duyệt** → (Đã duyệt cấp 1 →) **Đã duyệt** → 
 
 ## Chi
 
-Mở yêu cầu **Đã duyệt**, chọn **ngày chi** và **tài khoản tiền** rồi bấm **Lập phiếu chi** (tài khoản 111) hoặc **Lập phiếu báo nợ** (tài khoản 112). Phần mềm:
+Mở yêu cầu **Đã duyệt**, chọn **ngày chi** và **tài khoản tiền** rồi bấm **Lập phiếu chi** (tài khoản 111) hoặc **Lập phiếu chi tiền gửi** (tài khoản 112). Phần mềm:
 
 - lập phiếu: Nợ tài khoản công nợ của từng khoản (hoặc TK ghi Nợ đã khai) / Có tài khoản tiền;
 - trừ đúng vào các khoản phải trả đã chọn;
@@ -35,4 +35,4 @@ Mở yêu cầu **Đã duyệt**, chọn **ngày chi** và **tài khoản tiền
 
 Khoản phải trả đã được trả bằng cách khác trong lúc chờ duyệt (số đề nghị lớn hơn phần còn lại) thì phần mềm báo lỗi, không lập phiếu.
 
-Yêu cầu đã chi muốn huỷ thì huỷ phiếu chi ở màn phiếu chi / báo nợ.
+Yêu cầu đã chi muốn huỷ thì huỷ phiếu chi ở màn phiếu chi / chi tiền gửi.

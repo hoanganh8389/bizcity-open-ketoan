@@ -50,6 +50,7 @@ export const SO_DO: Record<string, SoDo> = {
     title: 'Nghiệp vụ mua hàng',
     rows: [
       [
+        { label: 'Phân tích đặt hàng', icon: 'ChartColumn', path: '/mua-hang/dat-hang' },
         { label: 'Đơn mua hàng', icon: 'ClipboardList', path: mua('order') },
         { label: 'Nhận hàng hóa, dịch vụ', icon: 'PackageCheck', path: mua('receipt'), sub: [{ label: 'Mua hàng', path: mua('receipt') }, { label: 'Quà tặng', path: mua('gift_in') }, { label: 'Chi phí mua hàng', path: mua('cost') }] },
         { label: 'Xử lý hóa đơn đầu vào', icon: 'FileText', path: '/mua-hang/hoa-don-ncc' },
@@ -59,6 +60,7 @@ export const SO_DO: Record<string, SoDo> = {
         { label: 'Hợp đồng mua hàng', icon: 'FileSignature' },
         { label: 'Trả lại hàng mua', icon: 'RotateCcw', path: mua('return') },
         { label: 'Giảm giá hàng mua', icon: 'BadgePercent', path: mua('rebate') },
+        { label: 'Công nợ đến hạn', icon: 'CalendarClock', path: '/mua-hang/han-muc' },
       ],
     ],
     reports: [
@@ -66,7 +68,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp mua hàng theo mặt hàng', path: '/mua-hang/tong-hop-mat-hang' }, { label: 'Tổng hợp công nợ phải trả nhà cung cấp', path: '/bao-cao/cong-no-phai-tra' },
       { label: 'Biên bản đối chiếu và xác nhận công nợ phải trả', path: '/cong-no/doi-chieu' },
     ],
-    links: [L.ncc, L.vthh],
+    links: [{ label: 'Nhà cung cấp', icon: 'Truck', path: '/mua-hang/nha-cung-cap' }, L.vthh, { label: 'Chính sách mua', icon: 'Tags', path: '/mua-hang/chinh-sach' }, { label: 'Tồn max', icon: 'Gauge', path: '/mua-hang/ton-max' }, { label: 'Cài đặt mua hàng', icon: 'Settings', path: '/mua-hang/cai-dat' }],
   },
   'ban-hang': {
     title: 'Nghiệp vụ bán hàng',

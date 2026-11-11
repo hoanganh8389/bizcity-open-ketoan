@@ -36,8 +36,8 @@ export const VOUCHER_PREFIX: Record<VoucherType | 'opening', string> = {
 export const VOUCHER_MONEY: Record<VoucherType, { side: 'debit' | 'credit'; prefixes: readonly string[]; label: string } | null> = {
   receipt: { side: 'debit', prefixes: ['111'], label: 'Phiếu thu: tài khoản Nợ phải là tiền mặt (111)' },
   payment: { side: 'credit', prefixes: ['111'], label: 'Phiếu chi: tài khoản Có phải là tiền mặt (111)' },
-  bank_receipt: { side: 'debit', prefixes: ['112', '113'], label: 'Phiếu báo có: tài khoản Nợ phải là tiền gửi ngân hàng (112, 113)' },
-  bank_payment: { side: 'credit', prefixes: ['112', '113'], label: 'Phiếu báo nợ: tài khoản Có phải là tiền gửi ngân hàng (112, 113)' },
+  bank_receipt: { side: 'debit', prefixes: ['112', '113'], label: 'Thu tiền gửi: tài khoản Nợ phải là tiền gửi ngân hàng (112, 113)' },
+  bank_payment: { side: 'credit', prefixes: ['112', '113'], label: 'Chi tiền gửi: tài khoản Có phải là tiền gửi ngân hàng (112, 113)' },
   manual: null,
 };
 

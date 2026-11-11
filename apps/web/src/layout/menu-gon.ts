@@ -61,11 +61,13 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'mua-hang', label: 'Mua hàng', icon: 'ShoppingBag', description: 'Đơn mua hàng, mua hàng, trả lại, giảm giá, hóa đơn đầu vào', color: '#e8710a', module: 'mua-hang', homeLabel: 'Quy trình',
-    the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), '/mua-hang/hoa-don-ncc', '/danh-muc/nha-cung-cap'],
+    // [2026-11-11 Nguyễn Văn Thủy] lồng phần đặc thù: NCC mua hàng (MH01), phân tích đặt hàng, tồn max, chính sách, hạn mức (đóng góp)
+    the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), '/mua-hang/hoa-don-ncc', '/mua-hang/nha-cung-cap', '/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/chinh-sach', '/mua-hang/han-muc'],
     sections: [
       { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), '/mua-hang/tong-hop'], soon: ['Hợp đồng mua hàng'] },
       { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/thue/hoa-don-co-quan-thue'] },
-      { label: 'Danh mục', paths: ['/danh-muc/nha-cung-cap', '/danh-muc/mat-hang'] },
+      { label: 'Đặt hàng, chính sách', paths: ['/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/chinh-sach', '/mua-hang/han-muc'] },
+      { label: 'Danh mục', paths: ['/mua-hang/nha-cung-cap', '/danh-muc/mat-hang'] },
     ],
     reports: [
       { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/doi-chieu'] },

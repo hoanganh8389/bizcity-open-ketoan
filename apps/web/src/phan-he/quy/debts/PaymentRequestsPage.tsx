@@ -53,7 +53,7 @@ export function PaymentRequestsPage() {
   const picked = rows.filter((r) => selected.has(r.id));
   return (
     <>
-      <PageHeader title="Yêu cầu thanh toán" code="CN05" subtitle="Đề nghị chi tiền cho nhà cung cấp, chủ nhà…: lập, duyệt, rồi lập phiếu chi / báo nợ từ yêu cầu đã duyệt" helpKey="yeu-cau-thanh-toan"
+      <PageHeader title="Yêu cầu thanh toán" code="CN05" subtitle="Đề nghị chi tiền cho nhà cung cấp, chủ nhà…: lập, duyệt, rồi lập phiếu chi / chi tiền gửi từ yêu cầu đã duyệt" helpKey="yeu-cau-thanh-toan"
         actions={can('documents:write') ? <button className="btn btn-primary" onClick={() => setEditing({ requestDate: today(), method: 'bank', items: [] })}><Plus size={16} /> Lập yêu cầu</button> : undefined} />
       <div className="card">
         <div className="filters">
@@ -149,7 +149,7 @@ function RequestForm({ value, onClose, onOpenDoc }: { value: Partial<Req>; onClo
         {editable && can('documents:write') && <button className="btn btn-primary" disabled={save.isPending || !v.partnerCode || !(total > 0)} onClick={() => save.mutate(true)}>Gửi duyệt</button>}
         {canApprove && <button className="btn" disabled={act.isPending} onClick={() => { const reason = window.prompt('Lý do từ chối:'); if (reason) act.mutate({ action: 'reject', body: { reason } }); }}>Từ chối</button>}
         {canApprove && <button className="btn btn-primary" disabled={act.isPending} onClick={() => act.mutate({ action: 'approve' })}>Duyệt{value.status === 'approved1' ? ' cấp 2' : value.levelsRequired === 2 ? ' cấp 1' : ''}</button>}
-        {value.status === 'approved' && can('documents:write') && <button className="btn btn-primary" disabled={act.isPending || !pay.moneyAccount} onClick={() => act.mutate({ action: 'pay', body: pay })}>Lập phiếu {pay.moneyAccount.startsWith('112') ? 'báo nợ' : 'chi'}</button>}
+        {value.status === 'approved' && can('documents:write') && <button className="btn btn-primary" disabled={act.isPending || !pay.moneyAccount} onClick={() => act.mutate({ action: 'pay', body: pay })}>{pay.moneyAccount.startsWith('112') ? 'Lập phiếu chi tiền gửi' : 'Lập phiếu chi'}</button>}
       </>}>
       <Field label="Ngày yêu cầu"><input type="date" className="input" value={v.requestDate} disabled={!editable} onChange={(e) => set({ requestDate: e.target.value })} /></Field>
       <Field label="Chi nhánh">
@@ -209,7 +209,7 @@ function RequestForm({ value, onClose, onOpenDoc }: { value: Partial<Req>; onClo
       {value.status === 'approved' && can('documents:write') && (
         <>
           <Field label="Ngày chi"><input type="date" className="input" value={pay.docDate} onChange={(e) => setPay((p) => ({ ...p, docDate: e.target.value }))} /></Field>
-          <Field label="Chi từ tài khoản tiền" hint="111… lập phiếu chi; 112… lập phiếu báo nợ">
+          <Field label="Chi từ tài khoản tiền" hint="111… lập phiếu chi; 112… lập phiếu chi tiền gửi">
             <select className="select input" value={pay.moneyAccount} onChange={(e) => setPay((p) => ({ ...p, moneyAccount: e.target.value }))}>
               <option value="">— Chọn tài khoản tiền —</option>
               {(moneyAccounts.data ?? []).filter((a) => a.code.startsWith(value.method === 'cash' ? '111' : '112')).map((a) => <option key={a.code} value={a.code}>{a.code} — {a.name}</option>)}

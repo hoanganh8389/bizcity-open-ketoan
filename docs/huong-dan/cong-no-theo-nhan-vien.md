@@ -5,7 +5,7 @@ Xem số dư và phát sinh công nợ (mặc định tài khoản **131**) gom 
 ## Nhân viên lấy từ đâu
 
 - **Chứng từ từ hệ thống bán hàng** (phiếu bán, phiếu hoàn): nhân viên là **người lập phiếu** trên hệ thống bán hàng. Mã nhân viên là tên đăng nhập. Nhân viên chưa có trong **Danh mục nhân viên (DM04)** thì được tự thêm.
-- **Phiếu thu, chi, báo nợ, báo có, phiếu kế toán nhập tay**: chọn nhân viên ở từng dòng, phần **Chiều phân tích** dưới dòng phiếu.
+- **Phiếu thu, chi, thu tiền gửi, chi tiền gửi, phiếu kế toán nhập tay**: chọn nhân viên ở từng dòng, phần **Chiều phân tích** dưới dòng phiếu.
   - Tài khoản bật **Theo dõi nhân viên** (ở Danh mục tài khoản) thì bắt buộc chọn, nếu danh mục nhân viên đã có mã.
 - Dòng sổ không có nhân viên (số dư đầu kỳ, chứng từ gửi sang trước khi có thông tin nhân viên…) gom vào dòng **(chưa gắn nhân viên)**.
 

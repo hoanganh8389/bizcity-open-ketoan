@@ -98,6 +98,6 @@ Mỗi màn mở ra thành một **thẻ** ở phía trên vùng làm việc, m�
 - **Chọn nhiều chi nhánh**: danh sách **Chi nhánh** trong bảng lọc bên trái cho tích nhiều cửa hàng cùng lúc, có ô tìm theo mã hoặc tên; ô **Chọn** ở đầu danh sách tích / bỏ tích tất cả. Bấm **Tìm kiếm** để xem theo các chi nhánh đã tích.
   - **Nhớ theo màn**: mỗi màn nhớ các chi nhánh đã tích lần trước (trên máy đang dùng); mở lại màn đó là tự tích lại. Màn nào nhớ màn nấy.
   - **Chọn nhanh** (nút ở dòng cuối danh sách): tích các chi nhánh cần dùng chung, bấm **Chọn nhanh → Lưu bộ chọn mới**, đặt tên (ví dụ "Chi nhánh Phú Thọ"). Ở bất kỳ màn nào, bấm **Chọn nhanh** rồi bấm tên bộ là tích đúng các chi nhánh đó; danh sách vẫn hiện đủ mọi chi nhánh để tích thêm, bỏ bớt. Lưu trùng tên thì thay bằng các chi nhánh đang tích; nút × để xoá bộ. Bộ đang khớp với các ô tích được tô màu.
-- **In**: nút **In** ở góc phải mỗi màn in đúng bảng đang xem (khổ A4 ngang, có tên đơn vị và ô chữ ký). Phiếu thu, chi, báo nợ, báo có in bằng nút **In phiếu** trong hộp phiếu.
+- **In**: nút **In** ở góc phải mỗi màn in đúng bảng đang xem (khổ A4 ngang, có tên đơn vị và ô chữ ký). Phiếu thu, chi, thu tiền gửi, chi tiền gửi in bằng nút **In phiếu** trong hộp phiếu.
 - **Xem nguồn gốc con số**: bấm vào dòng trên sổ để mở bút toán, từ bút toán mở tiếp chứng từ gốc.
 

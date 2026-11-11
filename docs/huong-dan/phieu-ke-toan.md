@@ -2,7 +2,7 @@
 
 Bút toán do kế toán tự định khoản, dùng cho các nghiệp vụ **không qua tiền** và không có chứng từ tự động: trích trước, phân bổ chi phí, điều chỉnh, bù trừ công nợ, kết chuyển thủ công…
 
-Khoản có thu, chi tiền thì dùng **Phiếu thu / Phiếu chi** (tiền mặt) hoặc **Phiếu báo có / Phiếu báo nợ** (ngân hàng) để lên sổ quỹ đúng loại phiếu.
+Khoản có thu, chi tiền thì dùng **Phiếu thu / Phiếu chi** (tiền mặt) hoặc **Thu tiền gửi / Chi tiền gửi** (ngân hàng) để lên sổ quỹ đúng loại phiếu.
 
 ## Danh sách phiếu
 

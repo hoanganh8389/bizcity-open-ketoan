@@ -11,7 +11,7 @@ Sửa ô lọc rồi bấm **Tìm kiếm**. Nút **Xuất** ra Excel, **In** in 
 | Từ ngày, Đến ngày | |
 | Số tài khoản | Mặc định `111` (tiền gửi: `112`), gồm mọi tài khoản con; nhập tài khoản chi tiết để xem riêng một quỹ |
 | TK Đối ứng | Chỉ xem khoản thu / chi với một tài khoản (ví dụ `131` để xem tiền thu nợ khách) |
-| Loại CT | Tất cả, Phiếu trả tiền NCC, Phiếu thu tiền khách hàng, Phiếu thu, Phiếu chi, Phiếu báo nợ, Phiếu báo có |
+| Loại CT | Tất cả, Phiếu trả tiền NCC, Phiếu thu tiền khách hàng, Phiếu thu, Phiếu chi, Chi tiền gửi, Thu tiền gửi |
 | Ngân hàng | Chỉ ở Tiền gửi ngân hàng: chọn một tài khoản ngân hàng (danh mục DM09) |
 | Hiển thị chi tiết từng loại thu chi | Chia số tiền vào các cột Thu ngân hàng … Chi khác (xem dưới) |
 | Chi nhánh | Tích các cửa hàng cần xem; ô "Chọn" tích / bỏ tất cả |
@@ -48,7 +48,7 @@ Tiền bán hàng thu ở cửa hàng ghi Nợ tiền / Có 1311 (theo lý do TT
 ## Nguồn số liệu
 
 - Tiền bán hàng thu ở cửa hàng: ghi tự động theo chứng từ bán hàng.
-- Các khoản khác: **Phiếu thu**, **Phiếu chi**, **Phiếu báo có**, **Phiếu báo nợ** kế toán lập.
+- Các khoản khác: **Phiếu thu**, **Phiếu chi**, **Thu tiền gửi**, **Chi tiền gửi** kế toán lập.
 
 ## Đối chiếu
 

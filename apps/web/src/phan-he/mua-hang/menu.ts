@@ -11,6 +11,8 @@ export const muaHangMenu: MenuItem[] = [
     key: 'mua-hang-nghiep-vu',
     label: 'Nghiệp vụ mua hàng',
     children: [
+      // [2026-11-11 Nguyễn Văn Thủy] trả lại MH01: nơi cấu hình chính sách, giá, hạn mức theo từng NCC (đóng góp)
+      { key: 'mh-ncc', label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap', code: 'MH01' },
       { key: 'mh-tong-hop', label: 'Tổng hợp mua hàng', path: '/mua-hang/tong-hop', code: 'MH11' },
       // [2026-11-11 Nguyễn Văn Thủy] lối vào theo loại chứng từ (cùng màn MH11, lọc sẵn loại) (đóng góp)
       { key: 'mh-don-mua', label: 'Đơn mua hàng', path: '/mua-hang/tong-hop?loai=order', code: 'MH11' },

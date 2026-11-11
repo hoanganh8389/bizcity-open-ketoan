@@ -14,6 +14,6 @@ Số **âm** ở cột cuối nghĩa là chi nhánh còn được khấu trừ, 
 ## Lưu ý
 
 - Thuế đầu vào chỉ tính các phiếu có hoá đơn (ghi vào sổ hoá đơn).
-- Thuế đầu vào hiện chỉ có từ các phiếu chi, báo nợ, phiếu kế toán ghi Nợ tài khoản 133. Chưa có chứng từ mua hàng tự động.
+- Thuế đầu vào hiện chỉ có từ các phiếu chi, chi tiền gửi, phiếu kế toán ghi Nợ tài khoản 133. Chưa có chứng từ mua hàng tự động.
 - Tổng thuế ra ở đây phải bằng tổng thuế trên **Báo cáo thuế ra (ACC65)** cùng kỳ.
 - Xem nhiều tháng thì dòng tổng cộng cột "Khấu trừ" là tổng khấu trừ đầu mỗi tháng (giống cách bảng này vẫn được dùng); số phải nộp của cả kỳ đọc ở dòng của tháng cuối.

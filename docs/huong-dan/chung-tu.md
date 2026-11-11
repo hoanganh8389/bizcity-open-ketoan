@@ -69,7 +69,7 @@ Nút **Chế độ định khoản** (góc trên): áp dụng cho chứng từ h
 - **Chờ định khoản** (mặc định): chứng từ tới chỉ lưu, chờ kế toán định khoản ở màn này.
 - **Định khoản ngay**: chứng từ tới là vào sổ ngay. Chỉ bật khi đã kiểm cấu hình hạch toán ổn định.
 
-Phiếu thu, phiếu chi, báo nợ, báo có, phiếu kế toán do kế toán tự lập ghi sổ khi bấm Ghi ở phiếu.
+Phiếu thu, phiếu chi, thu tiền gửi, chi tiền gửi, phiếu kế toán do kế toán tự lập ghi sổ khi bấm Ghi ở phiếu.
 
 ## Xem trước rồi mới định khoản
 

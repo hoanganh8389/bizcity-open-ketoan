@@ -1,30 +1,36 @@
-# Phiếu báo nợ (ACC53) và Phiếu báo có (ACC54)
+# Thu, chi tiền gửi (ACC54, ACC53)
 
-Ghi các khoản tiền **qua tài khoản ngân hàng** theo giấy báo của ngân hàng.
+Ghi các khoản tiền **qua tài khoản ngân hàng**. Ngân hàng gửi **giấy báo có** khi tiền về tài khoản, **giấy báo nợ** khi tiền ra; phần mềm gọi theo việc làm:
 
-| Phiếu | Khi nào | Tài khoản ngân hàng | Tài khoản đối ứng ở từng dòng |
-|---|---|---|---|
-| **Báo có** | Tiền **về** tài khoản | ghi **Nợ** 112… | ghi **Có** (131 khách trả nợ, 515 lãi tiền gửi…) |
-| **Báo nợ** | Tiền **ra** khỏi tài khoản | ghi **Có** 112… | ghi **Nợ** (331 trả nhà cung cấp, 635 phí ngân hàng, 333 nộp thuế…) |
+| Chứng từ | Giấy của ngân hàng | Khi nào | Tài khoản ngân hàng | Tài khoản ở từng dòng |
+|---|---|---|---|---|
+| **Thu tiền gửi** | Giấy báo có | Tiền **về** tài khoản | ghi **Nợ** 112… | ghi **Có** (131 khách trả nợ, 515 lãi tiền gửi…) |
+| **Chi tiền gửi** (ủy nhiệm chi) | Giấy báo nợ | Tiền **ra** khỏi tài khoản | ghi **Có** 112… | ghi **Nợ** (331 trả nhà cung cấp, 635 phí ngân hàng, 333 nộp thuế…) |
 
-## Danh sách và lập phiếu
+## Danh sách
 
-Danh sách và form giống hệt **Phiếu thu / Phiếu chi** (xem hướng dẫn Phiếu thu, phiếu chi): bảng lọc bên trái, thanh nút Thêm, Sửa, Copy, Xóa, Nạp, In, Xuất; form có thanh nút Ghi, Ghi và thêm mới, In, Xuất, Xóa, Đóng. Khác ở đầu phiếu:
+Màn **Thu, chi tiền gửi** hiện chung cả hai loại trong kỳ:
 
-- Tài khoản tiền là tài khoản ngân hàng (112…, 113…): phiếu báo có ở ô **Tài khoản nợ**, phiếu báo nợ ở ô **Tài khoản có**.
-- Có thêm ô **Ngân hàng**: chọn tài khoản ngân hàng (danh mục Tài khoản ngân hàng) thì tự điền tài khoản tiền.
-- Phiếu báo có nhập số tiền dòng ở cột **Có**, phiếu báo nợ ở cột **Nợ**.
+- Bảng lọc bên trái: kỳ, chi nhánh. Ô **Loại phiếu** trên thanh nút: Tất cả / Thu tiền gửi / Chi tiền gửi.
+- Ô trên cùng: **Tổng thu**, **Tổng chi** của các dòng đang hiện.
+- Nút **Thu tiền gửi ▾**: Thu tiền gửi · Thu tiền theo hóa đơn. Nút **Chi tiền gửi ▾**: Ủy nhiệm chi · Trả tiền theo hóa đơn.
+- Bấm một dòng xem dòng hạch toán ở dưới, bấm đúp mở phiếu. Nút **Cột** ẩn / hiện cột.
+
+## Lập phiếu
+
+Giống **Thu, chi tiền** (xem hướng dẫn Phiếu thu, phiếu chi), khác ở:
+
+- Chọn **Tài khoản ngân hàng** (danh mục Tài khoản ngân hàng): tự điền tài khoản tiền 112….
+- Tiền khách chuyển khoản, quét mã, quẹt thẻ **khi mua hàng ở cửa hàng** đã ghi tự động theo chứng từ bán hàng. Không lập thu tiền gửi cho các khoản đó.
 
 ## Ví dụ thường gặp
 
-| Việc | Phiếu | Tài khoản đối ứng |
+| Việc | Chứng từ | Tài khoản đối ứng |
 |---|---|---|
-| Khách chuyển khoản trả nợ | Báo có | 131… + chọn đối tượng |
-| Lãi tiền gửi | Báo có | 515… |
-| Chuyển khoản trả nhà cung cấp | Báo nợ | 331… + chọn đối tượng |
-| Phí chuyển tiền, phí quản lý tài khoản | Báo nợ | 635… hoặc 642… |
-| Chuyển tiền giữa hai tài khoản ngân hàng | Báo nợ ở tài khoản chuyển đi | tài khoản ngân hàng nhận |
+| Khách chuyển khoản trả nợ | Thu tiền theo hóa đơn | 131… (chọn khách, chọn hóa đơn) |
+| Lãi tiền gửi | Thu tiền gửi | 515… |
+| Chuyển khoản trả nhà cung cấp | Trả tiền theo hóa đơn | 331… (chọn nhà cung cấp, chọn hóa đơn) |
+| Phí chuyển tiền, phí quản lý tài khoản | Chi tiền gửi | 635… hoặc 642… |
+| Chuyển tiền giữa hai tài khoản, hai chi nhánh | Chuyển tiền nội bộ | |
 
-> Tiền khách chuyển khoản, quét mã, quẹt thẻ **khi mua hàng ở cửa hàng** đã ghi tự động theo chứng từ bán hàng. Không lập báo có cho các khoản đó.
-
-Sửa, huỷ, đối tượng công nợ: giống phiếu thu, phiếu chi. Xem số dư từng tài khoản ngân hàng ở **Tiền gửi ngân hàng (ACC56)**.
+Xem số dư từng tài khoản ngân hàng ở **Sổ tiền gửi ngân hàng (ACC56)**.
