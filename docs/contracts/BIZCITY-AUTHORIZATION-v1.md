@@ -1,8 +1,9 @@
 # `bizcity_authorization@1` — Hợp đồng phân quyền (nháp)
 <!-- [2026-11-06 00:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chữ chốt hình dạng bộ tính quyền (W3 đợt 1): mô hình Cho / Nới / Cấm, phạm vi, mục đích, điều kiện, mã lý do; bám ADR-0027 đã chấp nhận -->
 <!-- [2026-11-09 03:05 PM kiennt] PHASE-028 — 1.1.0-draft (D-AUTH-22, thi hành PHASE-030 / 22 §3 #1–#4 đã duyệt 06/11): bỏ hiệu lực Nới; điều kiện 8 → 5 (bỏ doc_date_back_days, doc_date_forward_days, respect_lock_date, status_in); amount_max = hạn mức duyệt cá nhân -->
+<!-- [2026-11-11 09:30 AM kiennt] PHASE-028 — 1.2.0-draft (chữ chốt đề xuất D-AUTH-19, D-AUTH-24 — 80 §3.4): §3a quyền theo loại chứng từ và quyền kéo theo -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-11-09 (1.0.0-draft · 2026-11-06) · **Trạng thái:** Nháp · **Căn cứ:** [ADR-0027](../adr/ADR-0027-core-authorization-plugin-role-editor.md) (đã chấp nhận) · **Phase:** [PHASE-028](../phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/README.md)
+> **Phiên bản:** 1.2.0-draft · 2026-11-11 (1.1.0-draft · 2026-11-09; 1.0.0-draft · 2026-11-06) · **Trạng thái:** Nháp · **Căn cứ:** [ADR-0027](../adr/ADR-0027-core-authorization-plugin-role-editor.md) (đã chấp nhận) · **Phase:** [PHASE-028](../phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/README.md)
 > **Mở rộng (không thay):** [`bizcity_module@1`](BIZCITY-MODULE-v1.md) §3 `permissions[]`. Hợp đồng này chốt **cách tính một quyết định**; nơi lưu vai trò và lần gán theo ADR-0027 D-AUTH-01 (`user_role_assignments`).
 
 ## 1. Mục đích
@@ -38,6 +39,17 @@ Quy tắc tính (D-AUTH-04):
 4. **Mục đích tách bạch.** Phạm vi báo cáo của kho K1 không cho lập hay duyệt phiếu ở K1.
 5. **Điều kiện** (§5) là phần của luật; không đạt điều kiện → từ chối với mã `AUTHZ-CONDITION` và nêu điều kiện nào không đạt.
 6. **Thu hồi có hiệu lực ở yêu cầu kế tiếp**: bộ tính nhận `authzVersion` và danh sách lần gán do bên gọi nạp; hàm không giữ trạng thái.
+
+### 3a. Quyền theo loại chứng từ và quyền kéo theo
+<!-- [2026-11-11 09:30 AM kiennt] PHASE-028 — §3a (D-AUTH-19, D-AUTH-24; mã làm thử 2026-11-09, đưa vào main sau khi chốt) -->
+
+- **Đăng ký.** Phân hệ đăng ký quyền theo thao tác cho loại chứng từ của mình: `registerDocumentType(loại, { read?, create?, cancel?, export? })` (`packages/platform/src/core/auth.ts`, gọi ở `apps/api/src/phan-he/<key>/index.ts`). Quyền phải khai ở `permissions[]` của manifest, đặt tên `<module>:<chức-năng>-<xem|lap|huy|xuat>`; không trùng quyền Core. Đăng ký trùng khác giá trị → lỗi khởi động.
+- **Tra.** `documentPermissionOf(loại, thao tác)` trả quyền chi tiết nếu đã đăng ký **và** có trong sổ quyền (phân hệ đang bật); không thì quyền Core của thao tác: `read` → `documents:read`, `create` / `cancel` → `documents:write`, `export` → `reports:read`.
+- **Kéo theo.** Quyền Core của thao tác kéo theo quyền chi tiết đã đăng ký (vd `documents:write` → `ban-hang:hoa-don-lap`). Ai đang có quyền Core (vai trò, khoá API, phiên hệ thống quản trị) vẫn làm được mọi loại phiếu như trước. Kéo theo tính **sau** Cho và **trước** Cấm.
+- **Cấm quyền gốc phủ quyền kéo theo.** Luật Cấm khớp quyền gốc (vd `documents:*`) cũng chặn mọi quyền chi tiết nó kéo theo; Cấm `ban-hang:*` chỉ chặn quyền của bán hàng. Bộ tính nhận quyền gốc qua `impliedBy` của mục sổ quyền.
+- **Mở hẹp.** Cho đúng quyền chi tiết (vd `kho:chuyen-kho-lap`) mà không Cho quyền Core.
+- **Nơi thi hành (1.2.0).** Cửa nạp `POST /documents`, `/batch` (`create`, mọi chứng từ của lô phải qua); danh sách chứng từ lọc bỏ loại không được xem, chi tiết / xem trước trả 404 (`read`); `POST /documents/cancel` (`cancel`); bảng kê bán hàng của add-in xuất Excel (`export`); action `kho.transfer.*` (lập / sửa / nhận / bỏ nhận → `kho:chuyen-kho-lap`, từ chối / huỷ → `kho:chuyen-kho-huy`).
+- **Giới hạn (1.2.0).** Huỷ và xem là **hạn chế thêm**: route vẫn gác bằng quyền Core, quyền chi tiết chặn thêm theo loại. Action riêng khác của phân hệ (mua hàng, quỹ, thuế…) vẫn gác `documents:write` — Cấm quyền chi tiết **chưa** chặn được ở đó, chỉ Cấm quyền Core chặn được; chuyển dần theo từng phân hệ. Sổ cái, sổ nhật ký, báo cáo chưa lọc theo loại. "In" không có quyền riêng.
 
 ## 4. Giới hạn của ký tự đại diện
 
@@ -122,3 +134,5 @@ Các tệp dưới đây đã vào `main` ở PR code W3 đợt 1 (#99):
 - 1.0.0-draft (2026-11-06): bản đầu, chốt hình dạng bộ tính (PHASE-028 W3 đợt 1).
 - 1.0.0-draft (2026-11-06, W3 đợt 2): shadow (`shadow.ts`), `requireScope` (`scope.ts`) và SC-AUTH-03 vào mã; bộ tính không đổi hình dạng. Bất đẳng thức "không cho thừa so với đường cũ" có test (`authz-shadow.test.ts`). <!-- [2026-11-06 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W3 đợt 2: shadow, requireScope, SC-AUTH-03 -->
 - 1.0.0-draft (2026-11-06, bổ sung): nơi lưu vai trò tuỳ biến chốt ở ADR-0027 Phụ lục A; bỏ `module_grants` (PHASE-028 W2). Hình dạng bộ tính không đổi. <!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2: nhật ký hợp đồng -->
+- 1.1.0-draft (2026-11-09): bỏ hiệu lực Nới; điều kiện 8 → 5 (D-AUTH-22, PHASE-030 / 22). <!-- [2026-11-09 03:05 PM kiennt] PHASE-028 — nhật ký 1.1.0 -->
+- 1.2.0-draft (2026-11-11): §3a quyền theo loại chứng từ, quyền kéo theo, Cấm quyền gốc phủ quyền kéo theo (D-AUTH-19, D-AUTH-24). <!-- [2026-11-11 09:30 AM kiennt] PHASE-028 — nhật ký 1.2.0 -->
