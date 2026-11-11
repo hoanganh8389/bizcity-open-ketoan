@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ nhật ký thu tiền / chi tiền theo mẫu S03a1-DN, S03a2-DN; kỳ in theo tháng / quý / năm <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- ACC72, ACC73: mỗi chứng từ một dòng; cột Chứng từ (Số hiệu, Ngày tháng); cột "Ghi có (nợ) các TK" tự lấy tối đa 4 tài khoản đối ứng lớn nhất trong kỳ, còn lại vào Tài khoản khác (Số tiền, Số hiệu); bỏ ô gõ danh sách cột. Bản in có dòng ký hiệu cột A…E.
+- Khung in sổ (LedgerForm): kỳ ghi "Tháng 10 năm 2026" / "Quý 4 năm 2026" / "Năm 2026" khi trọn kỳ; ký hiệu cột theo mẫu; "Sổ này có … trang" và "Ngày mở sổ" hai dòng. Hàm kyText dùng chung (lib/format).
+- API cash-journal: không truyền columns thì tự chọn cột; trả thêm docDate; gộp theo chứng từ.
+
+
 ### Bảng kê số dư tiền theo ngày (ACC80) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Tham số Đến ngày, So sánh với N ngày trước (mỗi ngày một cột). Dòng: Chi nhánh hạch toán → Tiền mặt / Tiền gửi ngân hàng / Tiền đang chuyển → từng tài khoản; Cộng nhóm; Tổng cộng khi nhiều chi nhánh. Bản in A4 cùng bố cục.
 

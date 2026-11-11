@@ -27,23 +27,20 @@ const branchOf = (a: Scope, alias = 'l') => (a.branchIds ? sql`AND ${sql.ref(`${
  * Sổ nhật ký thu tiền / chi tiền (S03a1)
  * ------------------------------------------------------------------------- */
 
-/** Năm cột tài khoản đối ứng mặc định khi người dùng không chọn. */
-export const CASH_JOURNAL_DEFAULTS = {
-  in: ['511', '3331', '131', '112', '1388'],
-  out: ['331', '1331', '642', '641', '112'],
-};
-
 /**
  * Sổ thu lấy các dòng tiền có số Nợ, sổ chi lấy các dòng có số Có. Mỗi dòng: tổng tiền, rồi số tiền nằm ở
  * cột có tài khoản đối ứng khớp đầu số (cột 1 → 5, cột đầu tiên khớp được chọn); không khớp cột nào thì vào
  * cột "tài khoản khác" kèm số tài khoản. Không có số dư đầu kỳ, cuối kỳ.
  */
+/**
+ * Sổ nhật ký thu tiền (S03a1-DN) / chi tiền (S03a2-DN): mỗi chứng từ một dòng; số tiền chia vào cột theo tài khoản đối ứng.
+ * Không truyền `columns`: tự lấy tối đa 4 tài khoản đối ứng có số tiền lớn nhất trong kỳ (mã đầy đủ), còn lại vào "Tài khoản khác".
+ */
 export async function cashJournal(a: Scope & { accountPrefix: string; direction: 'in' | 'out'; columns: string[] }) {
-  const columns = (a.columns.length ? a.columns : CASH_JOURNAL_DEFAULTS[a.direction]).slice(0, 5);
   const side = a.direction === 'in' ? sql`l.debit <> 0` : sql`l.credit <> 0`;
-  const res = await sql<{ entry_id: string; posting_date: string; doc_no: string; doc_type: string; description: string; partner_code: string | null; partner_name: string | null; branch_code: string; amount: string; counter: string | null }>`
-    SELECT l.entry_id, l.posting_date::text AS posting_date, e.doc_no, e.doc_type,
-           COALESCE(NULLIF(l.description, ''), e.description) AS description,
+  const res = await sql<{ entry_id: string; posting_date: string; doc_date: string; doc_no: string; doc_type: string; description: string; partner_code: string | null; partner_name: string | null; branch_code: string; amount: string; counter: string | null }>`
+    SELECT l.entry_id, l.posting_date::text AS posting_date, e.doc_date::text AS doc_date, e.doc_no, e.doc_type,
+           e.description,
            p.code AS partner_code, COALESCE(CASE WHEN l.partner_id IS NOT NULL THEN l.partner_name ELSE e.partner_name END, p.name) AS partner_name, br.code AS branch_code,
            CASE WHEN l.debit <> 0 THEN l.debit ELSE l.credit END AS amount,
            (SELECT o.account_code FROM bizcity_read.ledger_lines o
@@ -59,22 +56,36 @@ export async function cashJournal(a: Scope & { accountPrefix: string; direction:
        AND ${side} AND ${ACTIVE} ${branchOf(a)}
      ORDER BY l.posting_date, e.entry_no, l.line_no`.execute(db);
 
+  // Cột: theo yêu cầu (đầu số) hoặc tự chọn 4 tài khoản đối ứng lớn nhất.
+  let columns = a.columns.slice(0, 5);
+  if (!columns.length) {
+    const by = new Map<string, number>();
+    for (const r of res.rows) if (r.counter) by.set(r.counter, (by.get(r.counter) ?? 0) + toCents(toNumber(r.amount)));
+    columns = [...by.entries()].sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k]) => k).sort();
+  }
+  const colOf = (counter: string) => columns.findIndex((c) => counter.startsWith(c));
+
+  type Acc = { entryId: string; postingDate: string; docDate: string; docNo: string; docType: string; description: string; partnerCode: string | null; partnerName: string | null; branchCode: string; amount: number; cells: number[]; other: number; others: Set<string> };
+  const byEntry = new Map<string, Acc>();
   const totals = { amount: 0, cells: columns.map(() => 0), other: 0 };
-  const rows = res.rows.map((r) => {
+  for (const r of res.rows) {
     const amount = toCents(toNumber(r.amount));
     const counter = r.counter ?? '';
-    const col = columns.findIndex((c) => counter.startsWith(c));
-    const cells = columns.map((_, i) => (i === col ? amount : 0));
-    const other = col < 0 ? amount : 0;
-    totals.amount += amount;
-    cells.forEach((v, i) => (totals.cells[i]! += v));
-    totals.other += other;
-    return {
-      entryId: r.entry_id, postingDate: r.posting_date, docNo: r.doc_no, docType: r.doc_type, description: r.description,
-      partnerCode: r.partner_code, partnerName: r.partner_name, branchCode: r.branch_code, counterAccount: counter,
-      amount: fromCents(amount), cells: cells.map(fromCents), other: fromCents(other), otherAccount: col < 0 ? counter : '',
-    };
-  });
+    let acc = byEntry.get(r.entry_id);
+    if (!acc) {
+      acc = { entryId: r.entry_id, postingDate: r.posting_date, docDate: r.doc_date, docNo: r.doc_no, docType: r.doc_type, description: r.description, partnerCode: r.partner_code, partnerName: r.partner_name, branchCode: r.branch_code, amount: 0, cells: columns.map(() => 0), other: 0, others: new Set() };
+      byEntry.set(r.entry_id, acc);
+    }
+    const col = colOf(counter);
+    acc.amount += amount; totals.amount += amount;
+    if (col >= 0) { acc.cells[col]! += amount; totals.cells[col]! += amount; }
+    else { acc.other += amount; totals.other += amount; if (counter) acc.others.add(counter); }
+  }
+  const rows = [...byEntry.values()].map((x) => ({
+    entryId: x.entryId, postingDate: x.postingDate, docDate: x.docDate, docNo: x.docNo, docType: x.docType, description: x.description,
+    partnerCode: x.partnerCode, partnerName: x.partnerName, branchCode: x.branchCode,
+    amount: fromCents(x.amount), cells: x.cells.map(fromCents), other: fromCents(x.other), otherAccount: [...x.others].join(', '),
+  }));
   return {
     direction: a.direction,
     columns,

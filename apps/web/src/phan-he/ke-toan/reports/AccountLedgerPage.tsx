@@ -12,7 +12,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DOC_TYPE_LABELS, DOC_TYPE_LIST, type DocType } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
-import { date, defaultFrom, defaultTo, periodFrom } from '@/lib/format';
+import { date, defaultFrom, defaultTo, kyText, periodFrom } from '@/lib/format';
 import { useBranches } from '@/components/filters';
 import { PageHeader } from '@/components/PageHeader';
 import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
@@ -245,16 +245,6 @@ function PartnerLedgerGrid({ d, storageKey, onOpen, exportRef }: { d: Data; stor
  * Sổ quỹ / tiền gửi: dòng Dư đầu kỳ, từng dòng thu chi (Số tiền thu, Số tiền chi, Dư cuối), Phát sinh trong kỳ, Dư cuối kỳ.
  * Các cột Thu ngân hàng … Chi khác chia số tiền theo tài khoản đối ứng; chỉ có số khi tích "Hiển thị chi tiết từng loại thu chi".
  */
-/** Kỳ của sổ: "Tháng 11 năm 2026", "Năm 2026" hoặc "Từ ngày … đến ngày …". */
-export function kyText(from: string, to: string): string {
-  const [fy, fm, fd] = from.split('-').map(Number);
-  const [ty, tm, td] = to.split('-').map(Number);
-  const last = new Date(ty!, tm!, 0).getDate();
-  if (fd === 1 && fy === ty && fm === tm && td === last) return `Tháng ${fm} năm ${fy}`;
-  if (fd === 1 && fm === 1 && fy === ty && tm === 12 && td === 31) return `Năm ${fy}`;
-  return `Từ ngày ${date(from)} đến ngày ${date(to)}`;
-}
-
 /**
  * Sổ quỹ tiền mặt (S07a-DN) / Sổ tiền gửi ngân hàng: Ngày ghi sổ · Ngày chứng từ · Số hiệu chứng từ (Thu, Chi) · Diễn giải ·
  * Số tiền (Thu, Chi, Tồn) · Người nhận/Người nộp · Loại chứng từ · Ghi chú. Dòng Số tồn đầu kỳ, Cộng phát sinh, Số tồn cuối kỳ.

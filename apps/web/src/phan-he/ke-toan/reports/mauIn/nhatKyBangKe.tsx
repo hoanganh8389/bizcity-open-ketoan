@@ -15,28 +15,29 @@ const SIGNS_LAP_BIEU: Sign[] = [{ title: 'Người lập biểu' }, ...BOOK_SIGN
 const SIGNS_DAI_DIEN: Sign[] = [{ title: 'Người lập biểu' }, { title: 'Kế toán trưởng' }, { title: 'Người đại diện theo pháp luật', note: '(Ký, họ tên, đóng dấu)' }];
 
 /* ------------------------------------------------------------- ACC72 / ACC73 */
-export interface CashJournalRow { postingDate: string; docNo: string; description: string; partnerCode: string | null; partnerName: string | null; amount: number; cells: number[]; other: number; otherAccount: string }
+export interface CashJournalRow { postingDate: string; docDate?: string; docNo: string; description: string; partnerCode: string | null; partnerName: string | null; amount: number; cells: number[]; other: number; otherAccount: string }
 export interface CashJournalSheet { direction: 'in' | 'out'; from: string; to: string; branchCodes: string; account: string; columns: string[]; rows: CashJournalRow[] }
 
-/** Sổ nhật ký thu tiền S03a1-DN / chi tiền S03a2-DN: ghi Nợ (Có) TK tiền, chia cột theo tài khoản đối ứng đã chọn trên màn. */
+/** Sổ nhật ký thu tiền S03a1-DN / chi tiền S03a2-DN: mỗi chứng từ một dòng, ghi Nợ (Có) TK tiền, chia cột theo tài khoản đối ứng; dòng ký hiệu cột A…E. */
 const cashJournal: PrintTemplate<CashJournalSheet> = {
-  id: 's03a12', name: 'Sổ nhật ký thu / chi tiền S03a1-DN, S03a2-DN', paper: 'A4L', source: 'rdlcSoNhatKyThuTien.rdlc, rdlcSoNhatKyChiTien.rdlc',
+  id: 's03a12', name: 'Sổ nhật ký thu / chi tiền S03a1-DN, S03a2-DN', paper: 'A4L',
   render: (s, ctx) => {
     const thu = s.direction === 'in';
-    const band = thu ? 'Ghi Có các TK' : 'Ghi Nợ các TK';
+    const band = thu ? 'Ghi có các TK' : 'Ghi nợ các TK';
+    const n = s.columns.length;
     return (
       <LedgerForm ctx={ctx} d={{
-        title: thu ? 'SỔ NHẬT KÝ THU TIỀN' : 'SỔ NHẬT KÝ CHI TIỀN', form: thu ? 'Mẫu số S03a1-DN' : 'Mẫu số S03a2-DN', branchCode: branchOf(s.branchCodes), from: s.from, to: s.to,
-        bookNote: true, signs: SIGNS_DAI_DIEN, total: 'Cộng', rows: s.rows,
+        title: thu ? 'SỔ NHẬT KÝ THU TIỀN' : 'SỔ NHẬT KÝ CHI TIỀN', form: thu ? 'Mẫu số: S03a1-DN' : 'Mẫu số: S03a2-DN', branchCode: branchOf(s.branchCodes), from: s.from, to: s.to,
+        bookNote: true, signs: SIGNS_LAP_BIEU, total: 'Tổng cộng', rows: s.rows,
         cols: [
-          { key: 'ngs', h: 'Ngày, tháng ghi sổ', w: 60, center: true, v: (r) => date(r.postingDate) },
-          { key: 'so', h: 'Số hiệu', group: 'Chứng từ', w: 86, v: (r) => r.docNo },
-          { key: 'nct', h: 'Ngày, tháng', group: 'Chứng từ', w: 60, center: true, v: (r) => date(r.postingDate) },
-          { key: 'dg', h: 'Diễn giải', v: (r) => <>{r.description}{r.partnerName ? <i> — {r.partnerName}</i> : null}</> },
-          { key: 'tien', h: `${thu ? 'Ghi Nợ TK' : 'Ghi Có TK'} ${s.account}`, w: 90, num: true, v: (r) => mb(r.amount), sum: (r) => r.amount },
-          ...s.columns.map((c, k): LedgerCol<CashJournalRow> => ({ key: `c${k}`, h: c, group: band, w: 80, num: true, v: (r) => mb(r.cells[k]), sum: (r) => r.cells[k] ?? 0 })),
-          { key: 'kt', h: 'Số tiền TK khác', group: band, w: 84, num: true, v: (r) => mb(r.other), sum: (r) => r.other },
-          { key: 'kh', h: 'Số hiệu TK khác', group: band, w: 60, center: true, v: (r) => r.otherAccount },
+          { key: 'ngs', h: 'Ngày, tháng ghi sổ', letter: 'A', w: 64, center: true, v: (r) => date(r.postingDate) },
+          { key: 'so', h: 'Số hiệu', group: 'Chứng từ', letter: 'B', w: 80, v: (r) => r.docNo },
+          { key: 'nct', h: 'Ngày tháng', group: 'Chứng từ', letter: 'C', w: 64, center: true, v: (r) => date(r.docDate || r.postingDate) },
+          { key: 'dg', h: 'Diễn giải', letter: 'D', v: (r) => r.description },
+          { key: 'tien', h: `${thu ? 'Ghi nợ TK' : 'Ghi có TK'} ${s.account}`, letter: '1', w: 90, num: true, v: (r) => mb(r.amount), sum: (r) => r.amount },
+          ...s.columns.map((c, k): LedgerCol<CashJournalRow> => ({ key: `c${k}`, h: c, group: band, letter: String(k + 2), w: 84, num: true, v: (r) => mb(r.cells[k]), sum: (r) => r.cells[k] ?? 0 })),
+          { key: 'kt', h: 'Số tiền', group: 'Tài khoản khác', letter: String(n + 2), w: 84, num: true, v: (r) => mb(r.other), sum: (r) => r.other },
+          { key: 'kh', h: 'Số hiệu', group: 'Tài khoản khác', letter: 'E', w: 60, center: true, v: (r) => r.otherAccount },
         ],
       }} />
     );

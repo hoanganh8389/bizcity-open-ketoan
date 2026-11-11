@@ -9,7 +9,7 @@
  *   LedgerForm  Sổ / báo cáo dạng bảng nhiều trang      (sổ kế toán, công nợ, quỹ, kho, thuế…)
  */
 import type { ReactNode } from 'react';
-import { date } from '@/lib/format';
+import { date, kyText } from '@/lib/format';
 import { Dots, Fields, Foot, OrgHead, Signs, Table, Title, m, mb, qty, sumQty, words, type Col, type Row, type Sign } from './blocks';
 import type { PrintCtx } from './PrintHost';
 import { usePrintOverrides } from './overrides';
@@ -221,7 +221,7 @@ export function BillForm({ b, ctx }: { b: BillData; ctx: PrintCtx }) {
 /* ------------------------------------------------------------------ Sổ / báo cáo dạng bảng */
 
 /** Một cột của sổ. group: tiêu đề tầng trên (vd "Số phát sinh" trên hai cột Nợ / Có); sum: cột có dòng cộng tự tính. */
-export interface LedgerCol<R> { key: string; h: ReactNode; group?: string; w?: number | string; num?: boolean; center?: boolean; v: (r: R, i: number) => ReactNode; sum?: (r: R) => number }
+export interface LedgerCol<R> { key: string; h: ReactNode; group?: string; /** Ký hiệu cột (A, B, 1, 2…) in ở dòng dưới tiêu đề, theo mẫu sổ. */ letter?: string; w?: number | string; num?: boolean; center?: boolean; v: (r: R, i: number) => ReactNode; sum?: (r: R) => number }
 /** Dòng thêm trước / sau bảng (số dư đầu kỳ, cộng phát sinh, số dư cuối kỳ…): nhãn + giá trị theo key cột. */
 export interface LedgerExtra { label: ReactNode; cells?: Record<string, ReactNode>; strong?: boolean }
 export interface LedgerData<R> {
@@ -297,7 +297,7 @@ export function LedgerForm<R>({ d, ctx }: { d: LedgerData<R>; ctx: PrintCtx }) {
     let j = i; while (j + 1 < cols.length && cols[j + 1]!.group === c.group) j++;
     top.push(<th key={c.key} colSpan={j - i + 1}>{c.group}</th>); i = j;
   }
-  const period = d.period ?? (d.from || d.to ? `Từ ngày ${date(d.from)} đến ngày ${date(d.to)}` : '');
+  const period = d.period ?? (d.from && d.to ? kyText(d.from, d.to) : d.from || d.to ? `Từ ngày ${date(d.from)} đến ngày ${date(d.to)}` : '');
   return (
     <div className="pd-ledger">
       <OrgHead ctx={ctx} branchCode={d.branchCode} form={d.form} formNote={d.formNote} />
@@ -307,11 +307,12 @@ export function LedgerForm<R>({ d, ctx }: { d: LedgerData<R>; ctx: PrintCtx }) {
         <thead>
           <tr>{top}</tr>
           {twoRows && <tr>{cols.filter((c) => c.group).map((c) => <th key={c.key} style={{ width: c.w }}>{c.h}</th>)}</tr>}
+          {cols.some((c) => c.letter) && <tr className="pd-letters">{cols.map((c) => <th key={c.key}>{c.letter ?? ''}</th>)}</tr>}
         </thead>
         <tbody>{rowsOut}</tbody>
       </table>
       {d.note && <div className="pd-note">{d.note}</div>}
-      {d.bookNote && <div className="pd-note">- Sổ này có .... trang, đánh số từ trang 01 đến trang .... &nbsp; - Ngày mở sổ: ....................</div>}
+      {d.bookNote && <div className="pd-note"><div>- Sổ này có .... trang, đánh số từ trang số 01 đến trang ....</div><div>- Ngày mở sổ: ..................................</div></div>}
       {d.signs !== false && <Signs date={true} periodEnd={d.to} items={d.signs ?? BOOK_SIGNS} />}
       <Foot ctx={ctx} />
     </div>

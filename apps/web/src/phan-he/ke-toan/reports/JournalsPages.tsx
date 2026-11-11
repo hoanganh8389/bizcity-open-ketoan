@@ -10,10 +10,10 @@ import { Fragment, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DOC_TYPE_LABELS, DOC_TYPE_LIST, type DocType } from '@ketoan/contracts';
 import { api, errorText, ALL_ROWS } from '@/lib/api';
-import { date, defaultFrom, defaultTo, firstDayOfMonth, periodFrom, today } from '@/lib/format';
+import { date, defaultFrom, defaultTo, firstDayOfMonth, kyText, periodFrom, today } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
-import { BranchSelect, DateRange } from '@/components/filters';
+import { BranchSelect, DateRange, useBranches } from '@/components/filters';
 import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
 import { EntryOpen } from '../../../features/ledger/EntriesPage';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -25,59 +25,60 @@ const TYPES: DocType[] = DOC_TYPE_LIST;
 const typeLabel = (t: string) => DOC_TYPE_LABELS[t as DocType] ?? t;
 
 /* ------------------------------------------------------------- ACC72 / ACC73 */
-interface CashJournalRow { entryId: string; postingDate: string; docNo: string; description: string; partnerCode: string | null; partnerName: string | null; branchCode: string; amount: number; cells: number[]; other: number; otherAccount: string }
+interface CashJournalRow { entryId: string; postingDate: string; docDate: string; docNo: string; description: string; partnerCode: string | null; partnerName: string | null; branchCode: string; amount: number; cells: number[]; other: number; otherAccount: string }
 interface CashJournalData { direction: 'in' | 'out'; columns: string[]; rows: CashJournalRow[]; totals: { amount: number; cells: number[]; other: number }; truncated: boolean }
-const DEFAULT_COLUMNS = { in: '511,3331,131,112,1388', out: '331,1331,642,641,112' };
 
+/**
+ * Sổ nhật ký thu tiền (S03a1-DN, ACC72) / chi tiền (S03a2-DN, ACC73): kỳ, tài khoản tiền; mỗi chứng từ một dòng.
+ * Cột "Ghi có (nợ) các TK" tự lấy theo tài khoản đối ứng phát sinh nhiều nhất trong kỳ, còn lại vào "Tài khoản khác".
+ * Nhiều chi nhánh (lớp gắn thêm): chọn chi nhánh, cột Chi nhánh.
+ */
 export function CashJournalPage({ direction }: { direction: 'in' | 'out' }) {
   const thu = direction === 'in';
-  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', account: '111', direction, columns: DEFAULT_COLUMNS[direction] });
-  const [draft, setDraft] = useState({ account: f.account, columns: f.columns });
+  const multi = (useBranches().data?.length ?? 0) > 1;
+  const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', account: '111', direction });
   const [entryId, setEntryId] = useState<string | null>(null);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const q = useQuery({ queryKey: ['cash-journal', f], queryFn: () => api.get<CashJournalData>('/api/v1/reports/cash-journal', f) });
   const d = q.data;
-  const apply = () => set({ account: draft.account.trim() || '111', columns: draft.columns.replace(/\s/g, '') });
+  const title = thu ? 'SỔ NHẬT KÝ THU TIỀN' : 'SỔ NHẬT KÝ CHI TIỀN';
+  const band = thu ? 'Ghi có các TK' : 'Ghi nợ các TK';
   return (
     <>
-      <PageHeader
-        title={thu ? 'Sổ nhật ký thu tiền' : 'Sổ nhật ký chi tiền'}
-        code={thu ? 'ACC72' : 'ACC73'}
-        subtitle={thu ? 'Các khoản thu tiền trong kỳ, chia cột theo tài khoản ghi Có (mẫu S03a1)' : 'Các khoản chi tiền trong kỳ, chia cột theo tài khoản ghi Nợ (mẫu S03a2)'}
-        helpKey="nhat-ky-thu-chi"
-      />
-      <FilterLayout boThamSo={{ value: f, onApply: (v: typeof f) => { setF(v); setDraft({ account: v.account, columns: v.columns }); } }}
+      <PageHeader title={thu ? 'Sổ nhật ký thu tiền' : 'Sổ nhật ký chi tiền'} code={thu ? 'ACC72' : 'ACC73'}
+        subtitle={thu ? 'Mẫu S03a1-DN: mỗi chứng từ thu một dòng, chia cột theo tài khoản ghi Có' : 'Mẫu S03a2-DN: mỗi chứng từ chi một dòng, chia cột theo tài khoản ghi Nợ'} helpKey="nhat-ky-thu-chi" />
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen={thu ? 'ACC72' : 'ACC73'} templates={CASH_JOURNAL_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, direction: d.direction, columns: d.columns, rows: d.rows }] : [])} />}
         filters={
           <>
-            <form className="rp-form" onSubmit={(e) => { e.preventDefault(); apply(); }}>
-              <div className="field"><label>Tài khoản tiền</label><AccountPicker className="input w-md" value={draft.account} onChange={(v) => { setDraft({ ...draft, account: v }); set({ account: v || '111' }); }} /></div>
-              <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
-              <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />
-              <div className="field"><label>Cột tài khoản đối ứng (tối đa 5, cách nhau dấu phẩy)</label><AccountPicker multiple className="input w-lg mono" value={draft.columns} onChange={(v) => { setDraft({ ...draft, columns: v }); set({ columns: v }); }} /></div>
-            </form>
+            <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
+            <div className="field"><label>Tài khoản</label><AccountPicker className="input w-md" value={f.account} onChange={(v) => set({ account: v || '111' })} /></div>
+            {multi && <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />}
           </>
         }
       >
         <div className="card">
+          <div className="rp-tieu-de"><h2>{title}</h2><i>{kyText(f.from, f.to)}</i></div>
           <ErrorBox error={q.error ? errorText(q.error) : null} />
-          {q.isLoading ? <Loading /> : !d || d.rows.length === 0 ? <Empty text={thu ? 'Không có khoản thu nào trong khoảng này' : 'Không có khoản chi nào trong khoảng này'} /> : (
+          {q.isLoading ? <Loading /> : !d || d.rows.length === 0 ? <Empty text={thu ? 'Không có khoản thu nào trong kỳ này' : 'Không có khoản chi nào trong kỳ này'} /> : (
             <DataGrid
-              storageKey={thu ? 'acc72' : 'acc73'}
+              storageKey={thu ? 'acc72-v2' : 'acc73-v2'}
               rows={d.rows}
-              rowKey={(r, i) => `${r.entryId}-${i}`}
+              rowKey={(r) => r.entryId}
               onRowClick={(r) => setEntryId(r.entryId)}
-              note={d.truncated ? 'chỉ hiện 20.000 dòng đầu' : undefined}
+              footerLabel="Tổng cộng"
+              exportTitle={`${thu ? 'Sổ nhật ký thu tiền' : 'Sổ nhật ký chi tiền'} — ${kyText(f.from, f.to)}`}
               columns={[
-                { key: 'postingDate', header: 'Ngày', type: 'date' },
-                { key: 'docNo', header: 'Số chứng từ', type: 'code' },
-                { key: 'description', header: 'Diễn giải' },
-                { key: 'partner', header: 'Đối tượng', value: (r) => [r.partnerCode, r.partnerName].filter(Boolean).join(' ') },
-                { key: 'branchCode', header: 'Chi nhánh', type: 'code', hidden: true },
-                { key: 'amount', header: `${thu ? 'Ghi Nợ TK' : 'Ghi Có TK'} ${f.account}`, type: 'money', sum: true },
-                ...d.columns.map((c, k): Column<CashJournalRow> => ({ key: `c${k}`, header: c, band: thu ? 'Ghi Có các tài khoản' : 'Ghi Nợ các tài khoản', type: 'money', sum: true, value: (r) => r.cells[k] })),
-                { key: 'other', header: 'Số tiền TK khác', band: thu ? 'Ghi Có các tài khoản' : 'Ghi Nợ các tài khoản', type: 'money', sum: true },
-                { key: 'otherAccount', header: 'Số hiệu TK khác', band: thu ? 'Ghi Có các tài khoản' : 'Ghi Nợ các tài khoản', type: 'code' },
+                { key: 'postingDate', header: 'Ngày, tháng ghi sổ', type: 'date', width: 110 },
+                { key: 'docNo', header: 'Số hiệu', band: 'Chứng từ', type: 'code', width: 120 },
+                { key: 'docDate', header: 'Ngày tháng', band: 'Chứng từ', type: 'date', width: 100 },
+                { key: 'description', header: 'Diễn giải', width: 300 },
+                { key: 'amount', header: `${thu ? 'Ghi nợ TK' : 'Ghi có TK'} ${f.account}`, type: 'money', sum: true, width: 130 },
+                ...d.columns.map((c, k): Column<CashJournalRow> => ({ key: `c${k}`, header: c, band, type: 'money', sum: true, width: 120, value: (r) => r.cells[k] })),
+                { key: 'other', header: 'Số tiền', title: 'Tài khoản khác — số tiền', band: 'Tài khoản khác', type: 'money', sum: true, width: 120 },
+                { key: 'otherAccount', header: 'Số hiệu', title: 'Tài khoản khác — số hiệu', band: 'Tài khoản khác', type: 'code', width: 90 },
+                { key: 'partner', header: 'Đối tượng', width: 180, hidden: true, value: (r) => [r.partnerCode, r.partnerName].filter(Boolean).join(' ') },
+                { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi },
               ]}
             />
           )}
