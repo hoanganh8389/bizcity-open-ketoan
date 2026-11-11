@@ -279,6 +279,97 @@ const SO_DU: NhapLoai = {
 };
 
 
+/* ------------------------------------------------------------------ Tồn kho đầu kỳ / Tồn max (theo kho × mã hàng) */
+const homNay = () => { const d = new Date(); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
+const soLuong = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 4 });
+const khoKey = (kho: string | undefined, sku: string | undefined) => `${(kho ?? '').trim().toUpperCase()}|${(sku ?? '').trim()}`;
+const KHO_TRUONG: NhapTruong = { key: 'kho', header: 'Kho', required: true, aliases: ['ma kho', 'kho hang', 'ma chi nhanh', 'chi nhanh', 'cua hang'], example: '00000', note: 'Mã kho trong danh mục kho (DM12); ghi mã chi nhánh thì vào kho mặc định của chi nhánh.' };
+const SKU_TRUONG: NhapTruong = { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku'], example: 'SP0001', note: 'Mã phải có trong danh mục mặt hàng.' };
+const TEN_TRUONG: NhapTruong = { key: 'name', header: 'Tên hàng', aliases: ['ten', 'ten vthh', 'ten hang hoa'], note: 'Chỉ để đối chiếu, không ghi.' };
+
+const TON_KHO: NhapLoai = {
+  id: 'ton-kho', nhom: 'Số dư ban đầu', title: 'Tồn kho đầu kỳ (số lượng)',
+  desc: 'Số lượng tồn từng mã hàng theo kho — so với tồn trên sổ, mỗi kho một phiếu điều chỉnh (+/−) ghi sổ ngay. Mã không có trong tệp giữ nguyên; nhập lại cả tệp không sinh thêm chênh lệch.', keyField: 'sku',
+  listPath: '/bao-cao/nhap-xuat-ton', invalidate: ['documents', 'inventory'], modes: false,
+  fields: [
+    { key: 'docDate', header: 'Ngày cân tồn', required: true, aliases: ['ngay', 'ngay chung tu', 'ngay ton', 'ngay kiem ke'], defaultValue: homNay(), note: 'dd/mm/yyyy — ngày ghi phiếu điều chỉnh. Cả tệp một ngày.' },
+    KHO_TRUONG, SKU_TRUONG, TEN_TRUONG,
+    { key: 'qty', header: 'Số lượng tồn', required: true, aliases: ['so luong', 'sl', 'ton', 'ton cuoi', 'sl ton', 'so luong ton', 'ton cuoi ky', 'so luong ton cuoi'], example: '120', note: 'Theo ĐVT nhỏ nhất của mặt hàng. Dòng trùng kho × mã được cộng dồn. Kết quả hiện: tồn trên sổ → tồn theo tệp.' },
+  ],
+  run: async (rows, { dryRun }) => {
+    const dates = new Set(rows.map((r) => ngay(r.docDate)));
+    const docDate = [...dates][0] ?? '';
+    const loiChung = !docDate ? `Ngày cân tồn "${rows[0]?.docDate ?? ''}" không đọc được (dd/mm/yyyy)` : dates.size > 1 ? 'Tệp có nhiều ngày cân tồn — cả tệp một ngày' : '';
+    const loiDong = new Map<number, string[]>();
+    const gui: { row: number; kho: string; sku: string; name: string; qty: number }[] = [];
+    for (const r of rows) {
+      const row = Number(r._row); const e: string[] = [];
+      const q = soTien(r.qty);
+      if (!(r.kho ?? '').trim()) e.push('Thiếu kho');
+      if (!(r.sku ?? '').trim()) e.push('Thiếu mã hàng');
+      if (Number.isNaN(q)) e.push(`Số lượng "${r.qty ?? ''}" không đọc được`); else if (q < 0) e.push('Số lượng tồn âm');
+      if (loiChung) e.push(loiChung);
+      if (e.length) loiDong.set(row, e); else gui.push({ row, kho: (r.kho ?? '').trim(), sku: (r.sku ?? '').trim(), name: (r.name ?? '').trim(), qty: q });
+    }
+    type Recon = { kho: string; sku: string; name: string; fileQty: number | null; bookQty: number; status: 'up' | 'down' | 'same' | 'error'; error?: string; warehouseCode: string };
+    const body = { rows: gui, zeroMissing: false, docDate: docDate || '2000-01-01' };
+    const pv = gui.length ? await api.post<{ rows: Recon[] }>('/api/v1/stock/init/reconcile/preview', body) : { rows: [] as Recon[] };
+    const theo = new Map(pv.rows.map((x) => [khoKey(x.kho, x.sku), x]));
+    let ghiLoi = '';
+    let phieu: { docNo: string; warehouseCode: string }[] = [];
+    // Dòng lỗi bỏ qua (máy chủ chỉ ghi dòng có chênh lệch); nhập lại cả tệp không sinh thêm chênh lệch.
+    if (!dryRun && pv.rows.some((x) => x.status === 'up' || x.status === 'down')) {
+      try { phieu = (await api.post<{ created: { docNo: string; warehouseCode: string }[] }>('/api/v1/stock/init/reconcile/import', body)).created; } catch (e) { ghiLoi = e instanceof Error ? e.message : String(e); }
+    }
+    const out: NhapDong[] = rows.map((r) => {
+      const row = Number(r._row);
+      const x = theo.get(khoKey(r.kho, r.sku));
+      const errors = loiDong.get(row) ?? (x?.status === 'error' ? [x.error ?? 'Lỗi'] : !x ? ['Không kiểm được dòng này'] : []);
+      if (!errors.length && ghiLoi) errors.push(ghiLoi);
+      const doc = x && !errors.length && x.status !== 'same' ? phieu.find((p) => p.warehouseCode === x.warehouseCode)?.docNo : undefined;
+      return { row, key: (r.sku ?? '').trim(), action: errors.length ? 'error' : 'update', errors,
+        values: { ...r, name: x?.name || r.name, qty: x?.fileQty != null ? soLuong(x.fileQty) : r.qty, ...(doc ? { kho: `${r.kho} (${doc})` } : {}) },
+        before: x && x.status !== 'error' ? { qty: soLuong(x.bookQty) } : undefined };
+    });
+    const n = (a: NhapDong['action']) => out.filter((r) => r.action === a).length;
+    return { created: 0, updated: n('update'), failed: n('error'), rows: out };
+  },
+};
+
+const TON_MAX: NhapLoai = {
+  id: 'ton-max', nhom: 'Số dư ban đầu', title: 'Tồn max theo kho',
+  desc: 'Mức tồn tối đa từng mã hàng ở từng kho — dùng tính chuyển hàng về shop và đề xuất đặt mua', keyField: 'sku',
+  listPath: '/mua-hang/ton-max', invalidate: ['ton-max'], modes: false,
+  fields: [KHO_TRUONG, SKU_TRUONG, TEN_TRUONG,
+    { key: 'max', header: 'Tồn max', required: true, aliases: ['ton toi da', 'max', 'muc ton toi da', 'sl max'], example: '50', note: 'Theo ĐVT nhỏ nhất. Ghi 0 = không giữ hàng ở kho này.' }],
+  run: async (rows, { dryRun }) => {
+    const loiDong = new Map<number, string[]>();
+    const gui: { row: number; kho: string; sku: string; name: string; max: number }[] = [];
+    for (const r of rows) {
+      const row = Number(r._row); const e: string[] = [];
+      const m = soTien(r.max);
+      if (!(r.kho ?? '').trim()) e.push('Thiếu kho');
+      if (!(r.sku ?? '').trim()) e.push('Thiếu mã hàng');
+      if (Number.isNaN(m)) e.push(`Tồn max "${r.max ?? ''}" không đọc được`); else if (m < 0) e.push('Tồn max âm');
+      if (e.length) loiDong.set(row, e); else gui.push({ row, kho: (r.kho ?? '').trim(), sku: (r.sku ?? '').trim(), name: (r.name ?? '').trim(), max: m });
+    }
+    type Pv = { kho: string; sku: string; name: string; max: number; oldMax: number | null; status: 'new' | 'update' | 'same' | 'error'; error?: string };
+    const pv = gui.length ? await api.post<{ rows: Pv[] }>('/api/v1/stock/init/max/preview', { rows: gui }) : { rows: [] as Pv[] };
+    let ghiLoi = '';
+    if (!dryRun && gui.length) { try { await api.post('/api/v1/stock/init/max/import', { rows: gui }); } catch (e) { ghiLoi = e instanceof Error ? e.message : String(e); } }
+    const theo = new Map(pv.rows.map((x) => [khoKey(x.kho, x.sku), x]));
+    const out: NhapDong[] = rows.map((r) => {
+      const row = Number(r._row);
+      const x = theo.get(khoKey(r.kho, r.sku));
+      const errors = loiDong.get(row) ?? (x?.status === 'error' ? [x.error ?? 'Lỗi'] : !x ? ['Không kiểm được dòng này'] : ghiLoi ? [ghiLoi] : []);
+      return { row, key: (r.sku ?? '').trim(), action: errors.length ? 'error' : x?.status === 'new' ? 'create' : 'update', errors,
+        values: { ...r, name: x?.name || r.name, max: x ? soLuong(x.max) : r.max }, before: x?.oldMax != null ? { max: soLuong(x.oldMax) } : undefined };
+    });
+    const n = (a: NhapDong['action']) => out.filter((r) => r.action === a).length;
+    return { created: n('create'), updated: n('update'), failed: n('error'), rows: out };
+  },
+};
+
 /* ------------------------------------------------------------------ Phiếu thu / chi / báo có / báo nợ / phiếu kế toán */
 type LoaiPhieu = 'receipt' | 'payment' | 'bank_receipt' | 'bank_payment' | 'manual';
 const PHIEU: Record<LoaiPhieu, { id: string; title: string; path: string; nguoi: string; no?: string; co?: string; dg: string }> = {
@@ -353,7 +444,7 @@ const phieuTien = (docType: LoaiPhieu): NhapLoai => {
   };
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, KHO, SO_DU, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, KHO, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
 /** Loại nhập của một loại phiếu tiền / phiếu kế toán (nút Nhập Excel ở danh sách phiếu). */
 export const nhapPhieu = (docType: string) => NHAP_LOAI.find((l) => l.id === PHIEU[docType as LoaiPhieu]?.id);
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);

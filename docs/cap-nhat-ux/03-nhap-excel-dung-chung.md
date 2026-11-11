@@ -42,6 +42,11 @@ Thêm loại mới: viết một `NhapLoai` (trường + `run`) rồi thêm vào
 - API `POST /api/v1/vouchers/import` `{ dryRun, vouchers: [{ rows, voucher }] }` (kernel `voucher.routes.ts`): mỗi phiếu **ghi sổ thử rồi huỷ** (savepoint) — bắt cả lỗi chỉ lộ ra lúc ghi sổ (tài khoản theo dõi đối tượng thiếu đối tượng…); qua rồi mới lưu **nháp chờ duyệt** (`draftIn`, giữ số phiếu, chưa có bút toán). Test `apps/api/test/nhap-phieu-tien.test.ts`.
 - Danh sách phiếu tiền hiện cả phiếu chờ duyệt (chữ cam, cột Trạng thái); nút **Ghi sổ** ghi hàng loạt các phiếu chờ duyệt đã tích qua `POST /api/v1/vouchers/:id/approve`, phiếu lỗi báo riêng.
 
-## 5. Việc tiếp theo của mục này
+## 5. Bổ sung: tồn kho đầu kỳ, tồn max
 
-- Loại: nhóm hàng, tồn kho đầu kỳ theo mã hàng, phiếu chuyển kho, phiếu bán hàng.
+- **Tồn kho đầu kỳ (số lượng)**: Ngày cân tồn (ngầm định hôm nay), Kho, Mã hàng, Tên hàng, Số lượng tồn. Dùng API cân tồn có sẵn `POST /api/v1/stock/init/reconcile/{preview,import}` với `zeroMissing: false` (mã không có trong tệp giữ nguyên). Kết quả mỗi dòng: tồn trên sổ → tồn theo tệp; mỗi kho có chênh lệch một phiếu điều chỉnh kho (mixed) ghi sổ ngay, số phiếu hiện ở cột Kho. Dòng lỗi bỏ qua; nhập lại cả tệp không sinh chênh lệch.
+- **Tồn max**: Kho, Mã hàng, Tồn max → `POST /api/v1/stock/init/max/{preview,import}`; dòng mới / đổi max hiện cũ → mới.
+
+## 6. Việc tiếp theo của mục này
+
+- Loại: nhóm hàng, phiếu chuyển kho, phiếu bán hàng.

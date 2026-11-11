@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Nhập Excel: tồn kho đầu kỳ, tồn max <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §5 (đóng góp) -->
+
+- **Thêm:** TI14 thêm loại *Tồn kho đầu kỳ (số lượng)* (Kho × Mã hàng × SL, so với tồn sổ → phiếu điều chỉnh mỗi kho) và *Tồn max*, dùng API khởi đầu có sẵn.
+- **Thay đổi định khoản:** không (phiếu điều chỉnh kho như cân tồn MH20).
+
 ### Chuyển kho: chi tiết dòng hàng bên dưới, nhận đủ hàng loạt <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/05 (đóng góp) -->
 
 - **Thêm:** KHO01: nửa dưới hiện dòng hàng của phiếu đang chọn; cột Chọn và nút **Nhận đủ … phiếu đã tích** cho thủ kho nhập.
