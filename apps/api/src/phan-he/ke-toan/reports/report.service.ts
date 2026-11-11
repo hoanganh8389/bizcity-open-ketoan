@@ -269,6 +269,8 @@ export const reportService = {
         const counter = l.counter_accounts ?? '';
         return {
           postingDate: l.posting_date,
+          docDate: l.doc_date,
+          counterparty: l.counterparty ?? '',
           entryId: l.entry_id,
           entryNo: l.entry_no,
           docNo: l.doc_no,

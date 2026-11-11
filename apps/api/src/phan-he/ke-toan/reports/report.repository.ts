@@ -127,8 +127,12 @@ export const reportRepository = {
       dims: Record<string, string> | null;
       product_sku: string | null;
       product_name: string | null;
+      doc_date: string;
+      counterparty: string | null;
     }>`
-      SELECT l.id, l.entry_id, l.posting_date::text AS posting_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.event_id,
+      SELECT l.id, l.entry_id, l.posting_date::text AS posting_date, e.doc_date::text AS doc_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.event_id,
+             -- Người nộp / nhận tiền ghi trên phiếu (sổ quỹ, sổ tiền gửi).
+             (SELECT NULLIF(ev.payload->>'counterparty', '') FROM accounting_events ev WHERE ev.id = e.event_id) AS counterparty,
              COALESCE(NULLIF(l.description, ''), e.description) AS description, e.description AS entry_description,
              l.account_code, l.debit, l.credit,
              (SELECT string_agg(DISTINCT o.account_code, ', ')

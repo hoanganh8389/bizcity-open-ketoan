@@ -33,9 +33,9 @@ import { AccountPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 export const VOUCHER_META: Record<VoucherType, { title: string; code: string; path: string; helpKey: string; party: string; moneyLabel: string; counterLabel: string }> = {
   receipt: { title: 'Phiếu thu', code: 'ACC51', path: '/nghiep-vu/phieu-thu', helpKey: 'phieu-thu-chi', party: 'Người nộp tiền', moneyLabel: 'Thu vào quỹ tiền mặt (TK Nợ)', counterLabel: 'TK ghi Có' },
   payment: { title: 'Phiếu chi', code: 'ACC52', path: '/nghiep-vu/phieu-chi', helpKey: 'phieu-thu-chi', party: 'Người nhận tiền', moneyLabel: 'Chi từ quỹ tiền mặt (TK Có)', counterLabel: 'TK ghi Nợ' },
-  bank_payment: { title: 'Phiếu báo nợ', code: 'ACC53', path: '/nghiep-vu/phieu-bao-no', helpKey: 'phieu-bao-no-bao-co', party: 'Đơn vị nhận tiền', moneyLabel: 'Chi từ tài khoản ngân hàng (TK Có)', counterLabel: 'TK ghi Nợ' },
-  bank_receipt: { title: 'Phiếu báo có', code: 'ACC54', path: '/nghiep-vu/phieu-bao-co', helpKey: 'phieu-bao-no-bao-co', party: 'Đơn vị chuyển tiền', moneyLabel: 'Thu vào tài khoản ngân hàng (TK Nợ)', counterLabel: 'TK ghi Có' },
-  manual: { title: 'Phiếu kế toán', code: 'ACC16', path: '/nghiep-vu/phieu-ke-toan', helpKey: 'phieu-ke-toan', party: 'Người liên quan', moneyLabel: '', counterLabel: '' },
+  bank_payment: { title: 'Chi tiền gửi', code: 'ACC53', path: '/nghiep-vu/phieu-bao-no', helpKey: 'phieu-bao-no-bao-co', party: 'Đơn vị nhận tiền', moneyLabel: 'Chi từ tài khoản ngân hàng (TK Có)', counterLabel: 'TK ghi Nợ' },
+  bank_receipt: { title: 'Thu tiền gửi', code: 'ACC54', path: '/nghiep-vu/phieu-bao-co', helpKey: 'phieu-bao-no-bao-co', party: 'Đơn vị chuyển tiền', moneyLabel: 'Thu vào tài khoản ngân hàng (TK Nợ)', counterLabel: 'TK ghi Có' },
+  manual: { title: 'Chứng từ nghiệp vụ khác', code: 'ACC16', path: '/nghiep-vu/phieu-ke-toan', helpKey: 'phieu-ke-toan', party: 'Người liên quan', moneyLabel: '', counterLabel: '' },
 };
 
 interface Account { code: string; name: string; isPosting: boolean; trackPartner: boolean; isDebt?: boolean; normalSide: string; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean; trackEmployee: boolean; trackCase: boolean; trackProject: boolean; trackCapitalSource: boolean }

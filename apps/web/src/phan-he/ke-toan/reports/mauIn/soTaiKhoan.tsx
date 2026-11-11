@@ -11,7 +11,7 @@ import { BOOK_SIGNS, Dots, LedgerForm, m, mb, screenTemplate, type LedgerCol, ty
 
 export type LedgerKind = 'detail' | 'ledger' | 'partner' | 'cash';
 export interface LedgerLine {
-  postingDate: string; docNo: string; docType?: string; invoiceNo: string | null; description: string; accountCode: string; counterAccounts: string;
+  postingDate: string; docDate?: string; counterparty?: string; docNo: string; docType?: string; invoiceNo: string | null; description: string; accountCode: string; counterAccounts: string;
   partnerCode: string | null; partnerName: string | null; branchCode: string; debit: number; credit: number; balanceDebit: number; balanceCredit: number;
 }
 /** Một sổ đã xem trên màn: điều kiện lọc + số liệu máy chủ trả. */
@@ -49,27 +49,28 @@ const cDuCo: Col = { key: 'dc', h: 'Có', group: 'Số dư', w: 100, num: true, 
 /** Dòng số dư đầu / cuối kỳ đặt vào hai cột (Nợ, Có) cho trước. */
 const balRow = (label: string, b: { debit: number; credit: number }, kn: string, kc: string): LedgerExtra => ({ label, strong: true, cells: { [kn]: mb(b.debit), [kc]: mb(b.credit) } });
 
-/** Sổ quỹ tiền mặt S07-DN / sổ tiền gửi S08-DN: Thu / Chi / Tồn theo từng chứng từ. */
+/** Sổ quỹ tiền mặt S07a-DN / Sổ tiền gửi ngân hàng S08-DN — cùng bộ cột với màn (ACC55, ACC56). */
 const cashBook = (bank: boolean): PrintTemplate<LedgerSheet> => ({
-  id: bank ? 's08' : 's07', name: bank ? 'Sổ tiền gửi ngân hàng S08-DN' : 'Sổ quỹ tiền mặt S07-DN', paper: 'A4L', source: bank ? 'rdlcBCTienMatTienNganHang.rdlc' : 'rdlcSoQuyTienMat.rdlc',
+  id: bank ? 's08' : 's07', name: bank ? 'Sổ tiền gửi ngân hàng S08-DN' : 'Sổ quỹ tiền mặt S07a-DN', paper: 'A4L',
   render: (s, ctx) => (
     <LedgerForm ctx={ctx} d={{
-      title: bank ? 'SỔ TIỀN GỬI NGÂN HÀNG' : 'SỔ QUỸ TIỀN MẶT', form: bank ? 'Mẫu số S08-DN' : 'Mẫu số S07-DN', branchCode: branchOf(s), from: s.from, to: s.to,
-      info: [['Tài khoản', `${s.account.code} — ${s.account.name}`]], bookNote: true, rows: s.rows,
-      signs: bank ? BOOK_SIGNS : [{ title: 'Thủ quỹ' }, ...BOOK_SIGNS.slice(1)],
+      title: bank ? 'SỔ TIỀN GỬI NGÂN HÀNG' : 'SỔ QUỸ TIỀN MẶT', form: bank ? 'Mẫu số S08-DN' : 'Mẫu số S07a-DN', branchCode: branchOf(s), from: s.from, to: s.to,
+      info: bank ? [['Tài khoản', accText(s)]] : [], bookNote: true, rows: s.rows, signs: SIGNS_LAP_BIEU,
       before: [{ label: 'Số tồn đầu kỳ', strong: true, cells: { ton: m(bal(s.opening)) } }],
-      total: 'Cộng số phát sinh trong kỳ',
-      after: [{ label: 'Số tồn cuối kỳ', cells: { ton: m(bal(s.closing)) } }],
+      total: 'Tổng cộng',
+      after: [{ label: 'Số tồn cuối kỳ', strong: true, cells: { ton: m(bal(s.closing)) } }],
       cols: [
-        { key: 'ngay', h: 'Ngày, tháng chứng từ', w: 66, center: true, v: (r) => date(r.postingDate) },
-        { key: 'thu', h: 'Thu', group: 'Số hiệu chứng từ', w: 92, v: (r) => (r.debit ? r.docNo : '') },
-        { key: 'chi', h: 'Chi', group: 'Số hiệu chứng từ', w: 92, v: (r) => (r.credit ? r.docNo : '') },
-        { key: 'dg', h: 'Diễn giải', v: (r) => <>{r.description}{r.partnerName ? <i> — {r.partnerName}</i> : null}</> },
-        { key: 'du', h: 'TK đối ứng', w: 66, center: true, v: (r) => r.counterAccounts },
-        { key: 'tt', h: 'Thu', group: 'Số tiền', w: 96, num: true, v: (r) => mb(r.debit), sum: (r) => r.debit },
-        { key: 'tc', h: 'Chi', group: 'Số tiền', w: 96, num: true, v: (r) => mb(r.credit), sum: (r) => r.credit },
-        { key: 'ton', h: 'Tồn', group: 'Số tiền', w: 104, num: true, v: (r) => m(r.balanceDebit - r.balanceCredit) },
-        { key: 'gc', h: 'Ghi chú', w: 70, v: (r) => (r.invoiceNo ? `HĐ ${r.invoiceNo}` : '') },
+        { key: 'ngs', h: 'Ngày ghi sổ', w: 64, center: true, v: (r) => date(r.postingDate) },
+        { key: 'nct', h: 'Ngày chứng từ', w: 64, center: true, v: (r) => date(r.docDate ?? r.postingDate) },
+        { key: 'thu', h: 'Thu', group: 'Số hiệu chứng từ', w: 84, v: (r) => (r.debit ? r.docNo : '') },
+        { key: 'chi', h: 'Chi', group: 'Số hiệu chứng từ', w: 84, v: (r) => (r.credit ? r.docNo : '') },
+        { key: 'dg', h: 'Diễn giải', v: (r) => r.description },
+        { key: 'tt', h: 'Thu', group: 'Số tiền', w: 92, num: true, v: (r) => mb(r.debit), sum: (r) => r.debit },
+        { key: 'tc', h: 'Chi', group: 'Số tiền', w: 92, num: true, v: (r) => mb(r.credit), sum: (r) => r.credit },
+        { key: 'ton', h: 'Tồn', group: 'Số tiền', w: 100, num: true, v: (r) => m(r.balanceDebit - r.balanceCredit) },
+        { key: 'ng', h: 'Người nhận/Người nộp', w: 120, v: (r) => r.counterparty || r.partnerName || '' },
+        { key: 'loai', h: 'Loại chứng từ', w: 90, v: (r) => (r.docType ? DOC_TYPE_LABELS[r.docType as DocType] ?? r.docType : '') },
+        { key: 'gc', h: 'Ghi chú', w: 70, v: () => '' },
       ],
     }} />
   ),

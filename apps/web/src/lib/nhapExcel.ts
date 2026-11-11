@@ -550,9 +550,9 @@ type LoaiPhieu = 'receipt' | 'payment' | 'bank_receipt' | 'bank_payment' | 'manu
 const PHIEU: Record<LoaiPhieu, { id: string; title: string; path: string; nguoi: string; no?: string; co?: string; dg: string }> = {
   receipt: { id: 'phieu-thu', title: 'Phiếu thu', path: '/nghiep-vu/phieu-thu', nguoi: 'Người nộp', no: '1111', dg: 'Thu tiền' },
   payment: { id: 'phieu-chi', title: 'Phiếu chi', path: '/nghiep-vu/phieu-chi', nguoi: 'Người nhận', co: '1111', dg: 'Chi tiền' },
-  bank_receipt: { id: 'bao-co', title: 'Phiếu báo có', path: '/nghiep-vu/phieu-bao-co', nguoi: 'Người nộp', dg: 'Thu tiền gửi' },
-  bank_payment: { id: 'bao-no', title: 'Phiếu báo nợ', path: '/nghiep-vu/phieu-bao-no', nguoi: 'Người nhận', dg: 'Chi tiền gửi' },
-  manual: { id: 'phieu-ke-toan', title: 'Phiếu kế toán', path: '/nghiep-vu/phieu-ke-toan', nguoi: 'Người liên quan', dg: 'Hạch toán' },
+  bank_receipt: { id: 'bao-co', title: 'Thu tiền gửi', path: '/nghiep-vu/phieu-bao-co', nguoi: 'Người nộp', dg: 'Thu tiền gửi' },
+  bank_payment: { id: 'bao-no', title: 'Chi tiền gửi', path: '/nghiep-vu/phieu-bao-no', nguoi: 'Người nhận', dg: 'Chi tiền gửi' },
+  manual: { id: 'phieu-ke-toan', title: 'Chứng từ nghiệp vụ khác', path: '/nghiep-vu/phieu-ke-toan', nguoi: 'Người liên quan', dg: 'Hạch toán' },
 };
 const phieuTien = (docType: LoaiPhieu): NhapLoai => {
   const m = PHIEU[docType];

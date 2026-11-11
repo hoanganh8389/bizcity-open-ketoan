@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ quỹ tiền mặt, sổ tiền gửi theo mẫu S07a-DN / S08-DN; tên loại chứng từ thống nhất <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- ACC55, ACC56: cột Ngày ghi sổ · Ngày chứng từ · Số hiệu chứng từ (Thu, Chi) · Diễn giải · Số tiền (Thu, Chi, Tồn) · Người nhận/Người nộp · Loại chứng từ · Ghi chú; tiêu đề và kỳ căn giữa; mặc định tháng này; bỏ các cột thu chi tách loại. Bản in cùng bộ cột, ký Người lập biểu / Kế toán trưởng / Giám đốc.
+- API sổ tài khoản trả thêm `docDate`, `counterparty` (người nộp / nhận ghi trên phiếu).
+- Tên loại chứng từ: Thu tiền gửi, Chi tiền gửi, Chứng từ nghiệp vụ khác, Chuyển tiền nội bộ (form, bản in, nhập Excel). Dòng ghi chú mẫu số in theo Thông tư 99/2025.
+
+
 ### Khung menu theo phân hệ kế toán chuẩn, trang Quy trình, Phần riêng <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/13 (đóng góp) -->
 - Menu trái: Tiền mặt · Tiền gửi · Mua hàng · Bán hàng · Kho · Công cụ dụng cụ · Tài sản cố định · Thuế · Tổng hợp · Ngân sách · Phân tích tài chính · Danh mục · Số dư ban đầu · Phần riêng. Việc chưa có màn ghi "đang phát triển".
 - Trang Quy trình mỗi phân hệ: lưu đồ nghiệp vụ, 5 báo cáo chính, danh mục liên quan.

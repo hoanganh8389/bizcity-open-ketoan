@@ -10,7 +10,7 @@ import { usePrintOverrides } from './overrides';
 import { signFromProfile, usePrintProfileCtx } from './profile';
 
 /** Căn cứ ban hành in dưới mẫu số: chế độ kế toán doanh nghiệp hiện hành (TT99/2025 thay TT200 từ năm tài chính 2026, xem docs/can-cu). */
-export const FORM_NOTE = '(Ban hành theo Thông tư số 99/2025/TT-BTC ngày 27/10/2025 của Bộ Tài chính)';
+export const FORM_NOTE = '(Kèm theo Thông tư số 99/2025/TT-BTC ngày 27 tháng 10 năm 2025 của Bộ trưởng Bộ Tài chính)';
 
 /** Tiền in trên phiếu: luôn hiện số 0. */
 export const m = (v: number | undefined | null) => money(v ?? 0, { blankZero: false });
