@@ -95,7 +95,7 @@ export const SO_DO: Record<string, SoDo> = {
     reports: [
       { label: 'Sổ chi tiết vật tư hàng hóa', path: '/bao-cao/so-chi-tiet-hang-hoa' }, { label: 'Tổng hợp tồn kho', path: '/bao-cao/nhap-xuat-ton' },
       { label: 'Tổng hợp tồn kho theo lô', path: '/kho/ton-theo-lo' }, { label: 'Sổ chuyển kho nội bộ', path: '/bao-cao/chuyen-kho' },
-      { label: 'Đối chiếu kho và sổ cái' },
+      { label: 'Đối chiếu kho và sổ cái', path: '/kho/doi-chieu-so-cai' },
     ],
     links: [{ label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' }, L.vthh, { label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }],
   },

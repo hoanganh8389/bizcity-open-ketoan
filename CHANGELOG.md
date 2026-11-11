@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Báo cáo đối chiếu kho và sổ cái (KHO07) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Màn mới ở Kho → Báo cáo: theo từng ngày / tháng so Phát sinh Nợ, Có, Số dư tài khoản kho (mặc định 156) trên sổ cái với Nhập, Xuất, Tồn trên sổ kho; ba cột chênh lệch. Giảm giá / trả lại hàng mua (nhập âm trên sổ kho) tính sang cột xuất cho khớp cách ghi sổ cái.
+
 ### Thẻ kho (KHO06) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Màn mới ở Kho → Báo cáo, theo mẫu S12-DN: Ngày · Số hiệu chứng từ (Nhập, Xuất) · Diễn giải · Số lượng Nhập / Xuất / Tồn · Ký xác nhận của kế toán; chỉ dòng có số lượng; in mặc định mẫu S12-DN.
 

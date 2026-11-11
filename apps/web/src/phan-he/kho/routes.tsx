@@ -5,6 +5,7 @@
 import { Route } from 'react-router-dom';
 import { ChuyenKhoPage } from './chuyen-kho/ChuyenKhoPage';
 import { CostingPage, ItemLedgerPage, StockMovementPage } from './inventory/InventoryPages';
+import { DoiChieuKhoSoCaiPage } from './inventory/DoiChieuKhoSoCaiPage';
 import { CongThucGiaVonPage } from './inventory/CongThucGiaVonPage';
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: Hành trình mặt hàng (ACC95)
 import { HanhTrinhMatHangPage } from './hanh-trinh/HanhTrinhMatHangPage';
@@ -21,6 +22,7 @@ export const khoRoutes = (
     <Route path="bao-cao/nhap-xuat-ton" element={<StockMovementPage />} />
     <Route path="bao-cao/so-chi-tiet-hang-hoa" element={<ItemLedgerPage key="acc82" />} />
     <Route path="kho/the-kho" element={<ItemLedgerPage key="kho06" theKho />} />
+    <Route path="kho/doi-chieu-so-cai" element={<DoiChieuKhoSoCaiPage />} />
     <Route path="bao-cao/hanh-trinh-mat-hang" element={<HanhTrinhMatHangPage />} />
     <Route path="ban-hang/lai-gop" element={<GrossProfitPage />} />
     <Route path="bao-cao/chuyen-kho" element={<StockTransfersPage />} />
