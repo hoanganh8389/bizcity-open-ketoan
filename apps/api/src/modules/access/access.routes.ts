@@ -45,8 +45,10 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
 
   r.get('/api/v1/users', { preHandler: admin, schema: { tags, summary: 'Danh sách người dùng' }, handler: async (req) => ok(await accessService.listUsers(authOf(req))) });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   // @bizcity-route: tự phục vụ — mọi người dùng tự đổi mật khẩu, trả vé mới; không có quyền riêng để khai
   r.post('/api/v1/auth/change-password', {
+    preHandler: requireUser(),
     schema: { tags, summary: 'Tự đổi mật khẩu', body: changePasswordSchema },
     handler: async (req) => ok(await accessService.changeOwnPassword(authOf(req), req.body.currentPassword, req.body.newPassword, reissueFor(req))),
   });

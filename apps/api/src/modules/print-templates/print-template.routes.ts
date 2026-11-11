@@ -15,7 +15,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { PRINT_SCOPES, printScreenOf, printSettingInputSchema, printTemplateCode, type PrintSetting } from '@ketoan/contracts';
 import { db } from '../../db/client.js';
-import { authOf, type AuthContext } from '../../core/auth.js';
+import { authOf, requireAuthenticated, requireUser, type AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
@@ -45,7 +45,9 @@ const scopeKey = z.object({ templateCode: printTemplateCode, scope: z.enum(PRINT
 export async function printTemplateRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   r.get('/api/v1/print-templates/effective', {
+    preHandler: requireAuthenticated(),
     schema: { tags, summary: 'Cấu hình mẫu in áp cho người đang dùng tại một chi nhánh (đơn vị, chi nhánh cha, chi nhánh, người dùng)', querystring: z.object({ branchCode: z.string().trim().max(64).default('') }) },
     handler: async (req) => {
       const auth = authOf(req);
@@ -68,7 +70,9 @@ export async function printTemplateRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   r.get('/api/v1/print-templates/settings', {
+    preHandler: requireAuthenticated(),
     schema: {
       tags, summary: 'Danh sách cấu hình mẫu in (lọc theo phạm vi, mã màn)',
       querystring: z.object({ scope: z.enum(PRINT_SCOPES).optional(), scopeRef: z.string().trim().max(64).optional(), screen: z.string().trim().max(32).optional() }),
@@ -87,8 +91,10 @@ export async function printTemplateRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   // @bizcity-route: tự phục vụ — người dùng tự đặt mẫu in của mình; phạm vi đơn vị cần settings:write, kiểm trong handler
   r.put('/api/v1/print-templates/settings', {
+    preHandler: requireUser(),
     schema: { tags, summary: 'Thêm / sửa cấu hình một mẫu in theo phạm vi', body: printSettingInputSchema },
     handler: async (req) => {
       const auth = authOf(req);
@@ -124,8 +130,10 @@ export async function printTemplateRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   // @bizcity-route: tự phục vụ — người dùng tự đặt mẫu in của mình; phạm vi đơn vị cần settings:write, kiểm trong handler
   r.delete('/api/v1/print-templates/settings', {
+    preHandler: requireUser(),
     schema: { tags, summary: 'Bỏ cấu hình một mẫu in ở một phạm vi (về như mặc định)', querystring: scopeKey },
     handler: async (req) => {
       const auth = authOf(req);

@@ -17,6 +17,20 @@ import { accessRepository } from './access.repository.js';
 import { bumpSession, forgetSession } from '../../core/security/session-state.js';
 import type { ApiKeyCreate, UserCreate, UserUpdate } from './access.schemas.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
+// [2026-11-09 01:52 PM kiennt] PHASE-028 — S028-12 / S028-13 (80 F1, F2): chống leo thang ở tạo / sửa người dùng và tạo khoá API
+import type { Role } from '@ketoan/contracts';
+import { effectivePermissionsWithTenantRoles, rolePermissions, scopePermissions } from '@bizcity/platform/core/auth';
+import { extraAuthz, forgetRoles } from '@bizcity/platform/core/security/role-assignments';
+import { assertHolds } from './tenant-role.service.js';
+
+const selfId = (auth: AuthContext) => (auth.kind === 'user' ? auth.actor.slice('user:'.length) : null);
+
+/** Quyền hiệu lực hiện tại của một người (vai trò chính ∪ bổ sung ∪ nền + Cho − Cấm), không đọc đệm — cùng công thức với auth.ts. */
+async function currentPermissions(userId: string, role: string): Promise<string[]> {
+  forgetRoles(userId);
+  const extra = await extraAuthz(userId);
+  return [...effectivePermissionsWithTenantRoles([...new Set<Role>([role as Role, ...extra.roles])], extra)];
+}
 
 export const accessService = {
   async listUsers(auth: AuthContext) {
@@ -37,6 +51,8 @@ export const accessService = {
 
   // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
   async createUserIn(trx: ActionTx, auth: AuthContext, input: UserCreate) {
+    // [2026-11-09 01:52 PM kiennt] PHASE-028 — S028-12: không tạo người có vai trò vượt quyền của người thao tác (vd tạo owner khi không phải owner)
+    assertHolds(auth, [...rolePermissions(input.role)], `Vai trò ${input.role}`);
     const password_hash = await hashPassword(input.password);
     return sameTx(trx, async (trx) => {
       const row = await accessRepository.insertUser(trx, { tenant_id: auth.tenantId, email: input.email, full_name: input.fullName, password_hash, role: input.role });
@@ -59,6 +75,17 @@ export const accessService = {
       const losingOwner = user.role === 'owner' && user.is_active && ((input.role && input.role !== 'owner') || input.isActive === false);
       if (losingOwner && (await accessRepository.activeOwnerCount(trx, auth.tenantId)) <= 1) {
         throw Errors.conflict('Phải còn ít nhất một chủ sở hữu đang hoạt động');
+      }
+      // [2026-11-09 01:52 PM kiennt] PHASE-028 — S028-12: không tự đổi vai trò / khoá / đặt lại mật khẩu của chính mình; không sửa người có quyền vượt mình; không cấp vai trò vượt mình
+      const roleChange = input.role !== undefined && input.role !== user.role;
+      if (selfId(auth) === id) {
+        if (roleChange || (input.isActive !== undefined && input.isActive !== user.is_active) || input.password) {
+          throw Errors.forbidden('Không tự đổi vai trò, khoá hay đặt lại mật khẩu của chính mình — tự đổi mật khẩu ở "Đổi mật khẩu", việc khác nhờ người quản trị khác');
+        }
+      } else {
+        const missing = (await currentPermissions(id, user.role)).filter((p) => !auth.permissions.has(p as never));
+        if (missing.length) throw Errors.forbidden(`${user.email} có quyền bạn không có (${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '…' : ''}) — không sửa, khoá hay đặt lại mật khẩu được`);
+        if (roleChange) assertHolds(auth, [...rolePermissions(input.role!)], `Vai trò ${input.role}`);
       }
       const patch: Record<string, unknown> = {};
       if (input.fullName !== undefined) patch.full_name = input.fullName;
@@ -125,6 +152,8 @@ export const accessService = {
 
   // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
   async createKeyIn(trx: ActionTx, auth: AuthContext, input: ApiKeyCreate) {
+    // [2026-11-09 01:52 PM kiennt] PHASE-028 — S028-13: khoá API không mang quyền người tạo không có (phạm vi documents:write kéo theo documents:edit-all)
+    assertHolds(auth, [...scopePermissions(input.scopes)], 'Khoá API');
     const k = generateApiKey();
     return sameTx(trx, async (trx) => {
       const row = await accessRepository.insertKey(trx, { tenant_id: auth.tenantId, name: input.name, key_prefix: k.prefix, key_hash: k.hash, scopes: input.scopes });

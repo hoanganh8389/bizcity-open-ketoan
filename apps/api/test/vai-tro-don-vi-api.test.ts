@@ -8,6 +8,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeDb } from '../src/db/client.js';
 import { effectivePermissionsWithTenantRoles } from '@bizcity/platform/core/auth';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+// [2026-11-09 02:10 PM kiennt] PHASE-028 — S028-12..15 (80 F1–F4, F9): test vá an toàn — leo thang ở người dùng / khoá API, ký theo quyền, route tường minh, giới hạn đăng nhập sai
+import { signProblem } from '@bizcity/platform/documents/signature.routes';
+import { resetLoginThrottle, LOGIN_LIMITS } from '../src/modules/auth/auth.routes.js';
 
 const OWNER_PASSWORD = 'Test@123'; // setupTenant
 let ctx: TestCtx;
@@ -19,7 +22,7 @@ async function login(c: TestCtx, email: string, password: string): Promise<strin
   const res = await c.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { tenantCode: c.tenantCode, email, password } });
   return res.json().data.token as string;
 }
-const withToken = (token: string, method: 'GET' | 'POST' | 'PATCH', url: string, payload?: unknown) =>
+const withToken = (token: string, method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, payload?: unknown) =>
   ctx.app.inject({ method, url, payload: payload as never, headers: { authorization: `Bearer ${token}`, 'idempotency-key': `t-${Date.now()}-${Math.random()}` } });
 const permsOf = async (token: string): Promise<string[]> => (await withToken(token, 'GET', '/api/v1/auth/me')).json().data.permissions;
 
@@ -307,5 +310,94 @@ describe('Ma trận quyền × vai trò và "Xem như"', () => {
   it('Xem như: người không tồn tại 404; người không có users:write 403', async () => {
     expect((await call(ctx, 'GET', '/api/v1/users/999999999/effective-permissions')).status).toBe(404);
     expect((await withToken(viewerToken, 'GET', '/api/v1/users/' + targetId + '/effective-permissions')).statusCode).toBe(403);
+  });
+});
+
+describe('Vá an toàn sau W5 (80 F1–F4, F9)', () => {
+  let hrId = '';
+  let hrToken = '';
+  const ownerId = async () => String((await call(ctx, 'GET', '/api/v1/users')).body.data.find((u: any) => u.email === 'tester@ketoan.local').id);
+
+  beforeAll(async () => {
+    // Quản lý nhân sự: nền viewer + Cho users:write (vai trò của đơn vị) — có users:write nhưng không có quyền kế toán.
+    const hr = await call(ctx, 'POST', '/api/v1/users', { email: 'nhansu@ketoan.local', fullName: 'Quản lý nhân sự', role: 'viewer', password: 'Ns@123456' });
+    hrId = String(hr.body.data.id);
+    const r = (await newRole({ code: 'nhan_su', label: 'Nhân sự', kind: 'privilege', baseRole: 'viewer' })).body.data.id;
+    expect((await addRule(r, { permission: 'users:write', effect: 'allow', confirmPassword: OWNER_PASSWORD })).status).toBe(201);
+    expect((await assign(hrId, { tenantRoleId: r, confirmPassword: OWNER_PASSWORD })).status).toBe(201);
+    hrToken = await login(ctx, 'nhansu@ketoan.local', 'Ns@123456');
+    expect(await permsOf(hrToken)).toContain('users:write');
+  });
+
+  it('F1: có users:write nhưng không tạo được owner / kế toán trưởng; tạo được người xem', async () => {
+    expect((await withToken(hrToken, 'POST', '/api/v1/users', { email: 'chu-gia@ketoan.local', fullName: 'Chủ giả', role: 'owner', password: 'Gia@12345' })).statusCode).toBe(403);
+    expect((await withToken(hrToken, 'POST', '/api/v1/users', { email: 'ktt-gia@ketoan.local', fullName: 'KTT giả', role: 'chief_accountant', password: 'Gia@12345' })).statusCode).toBe(403);
+    expect((await withToken(hrToken, 'POST', '/api/v1/users', { email: 'xem2@ketoan.local', fullName: 'Người xem 2', role: 'viewer', password: 'Xem@12345' })).statusCode).toBe(201);
+  });
+
+  it('F1: không tự nâng mình, không tự khoá / đặt lại mật khẩu; vẫn tự đổi tên được', async () => {
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${hrId}`, { role: 'owner' })).statusCode).toBe(403);
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${hrId}`, { isActive: false })).statusCode).toBe(403);
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${hrId}`, { password: 'Moi@123456' })).statusCode).toBe(403);
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${hrId}`, { fullName: 'Quản lý nhân sự (đổi tên)' })).statusCode).toBe(200);
+  });
+
+  it('F1: không sửa / khoá / đặt lại mật khẩu người có quyền vượt mình (owner); sửa được người xem', async () => {
+    const owner = await ownerId();
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${owner}`, { password: 'Chiem@12345' })).statusCode).toBe(403);
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${owner}`, { isActive: false })).statusCode).toBe(403);
+    // Người xem nhưng đang giữ vai trò bổ sung mạnh hơn mình cũng không sửa được (tính theo quyền hiệu lực, không chỉ vai trò chính).
+    const strong = await call(ctx, 'POST', '/api/v1/users', { email: 'xem-manh@ketoan.local', fullName: 'Xem mạnh', role: 'viewer', password: 'Xem@12345' });
+    const strongId = String(strong.body.data.id);
+    expect((await assign(strongId, { role: 'accountant' })).status).toBe(201);
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${strongId}`, { password: 'Chiem@12345' })).statusCode).toBe(403);
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${viewerId}`, { fullName: 'Người xem (sửa)' })).statusCode).toBe(200);
+    // Nâng người xem lên kế toán (vượt quyền của mình) bị chặn.
+    expect((await withToken(hrToken, 'PATCH', `/api/v1/users/${viewerId}`, { role: 'accountant' })).statusCode).toBe(403);
+  });
+
+  it('F1: owner vẫn quản trị được người khác như cũ; vẫn còn luật "ít nhất một owner"', async () => {
+    expect((await call(ctx, 'PATCH', `/api/v1/users/${viewerId}`, { role: 'accountant' })).status).toBe(200);
+    expect((await call(ctx, 'PATCH', `/api/v1/users/${viewerId}`, { role: 'viewer' })).status).toBe(200);
+  });
+
+  it('F2: khoá API không mang quyền người tạo không có', async () => {
+    const res = await withToken(hrToken, 'POST', '/api/v1/api-keys', { name: 'Khoá lách', scopes: ['documents:write'] });
+    expect(res.statusCode).toBe(403);
+    expect((await withToken(hrToken, 'POST', '/api/v1/api-keys', { name: 'Khoá báo cáo', scopes: ['reports:read'] })).statusCode).toBe(201);
+    expect((await call(ctx, 'POST', '/api/v1/api-keys', { name: 'Khoá ghi của chủ', scopes: ['documents:write'] })).status).toBe(201);
+  });
+
+  it('F3 / F9: ký phiếu cần quyền ghi; cấu trúc CSDL không mở cho khoá API', async () => {
+    // Đổi vai trò ở ca trước đã thu hồi vé cũ của người xem — đăng nhập lại.
+    viewerToken = await login(ctx, 'xem@ketoan.local', 'Xem@12345');
+    expect((await withToken(viewerToken, 'POST', '/api/v1/signatures', { ids: ['1'], role: 'preparer' })).statusCode).toBe(403);
+    const key = (await call(ctx, 'POST', '/api/v1/api-keys', { name: 'Khoá đọc', scopes: ['reports:read'] })).body.data.key as string;
+    expect((await ctx.app.inject({ method: 'GET', url: '/api/v1/system/schema', headers: { 'x-api-key': key } })).statusCode).toBe(403);
+    expect((await call(ctx, 'GET', '/api/v1/system/schema')).status).toBe(200);
+    // /auth/me khai requireAuthenticated (tường minh), hành vi giữ nguyên: khoá API vẫn bị service từ chối như trước.
+    expect((await ctx.app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { 'x-api-key': key } })).statusCode).toBe(403);
+    expect((await call(ctx, 'GET', '/api/v1/auth/me')).status).toBe(200);
+  });
+
+  it('F4: ô kế toán trưởng / giám đốc ký theo quyền, không theo tên vai trò', () => {
+    const who = (role: string, perms: string[]) => ({ kind: 'user', role, actor: 'user:1', permissions: new Set(perms) }) as never;
+    const doc = { created_by: 'user:2' };
+    // Vai trò của đơn vị được Cho periods:lock ký được ô kế toán trưởng; kế toán trưởng bị Cấm periods:lock thì không.
+    expect(signProblem(who('accountant', ['periods:lock']), 'chief_accountant', doc)).toBeNull();
+    expect(signProblem(who('chief_accountant', ['documents:write']), 'chief_accountant', doc)).not.toBeNull();
+    expect(signProblem(who('owner', ['payments:approve-final']), 'director', doc)).toBeNull();
+    expect(signProblem(who('owner', ['documents:write']), 'director', doc)).not.toBeNull();
+  });
+
+  it('F9: đăng nhập sai quá số lần thì bị chặn, kể cả khi lần sau nhập đúng', async () => {
+    resetLoginThrottle();
+    const body = (password: string) => ({ tenantCode: ctx.tenantCode, email: 'xem2@ketoan.local', password });
+    for (let i = 0; i < LOGIN_LIMITS.perAccount; i++) {
+      expect((await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: body('sai-mat-khau') })).statusCode).not.toBe(429);
+    }
+    expect((await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: body('Xem@12345') })).statusCode).toBe(429);
+    resetLoginThrottle();
+    expect((await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: body('Xem@12345') })).statusCode).toBe(200);
   });
 });

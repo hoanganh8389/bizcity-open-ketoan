@@ -11,8 +11,10 @@
  * Ai ký được vai nào:
  *   - Người lập phiếu (preparer): người đã lập phiếu, hoặc người có quyền sửa phiếu của người khác.
  *   - Thủ quỹ (cashier): người có quyền ghi chứng từ.
- *   - Kế toán trưởng (chief_accountant): vai trò kế toán trưởng hoặc chủ đơn vị.
- *   - Giám đốc (director): chủ đơn vị.
+ *   - Kế toán trưởng (chief_accountant): người có quyền khoá kỳ (periods:lock — kế toán trưởng, chủ đơn vị).
+ *   - Giám đốc (director): người có quyền duyệt cấp 2 (payments:approve-final — chủ đơn vị).
+ * Kiểm theo QUYỀN, không theo tên vai trò: vai trò của đơn vị cấp / Cấm được (PHASE-028 S028-15). Hai quyền trên là ánh xạ tạm,
+ * giữ đúng người ký như trước, tới khi có quyền ký riêng (D-AUTH-13 bước 2).
  * Chữ ký gắn phiên bản phiếu; sửa phiếu thì chữ ký cũ hết hiệu lực (vẫn lưu để tra). Phiếu đã huỷ không ký được.
  */
 import type { FastifyInstance } from 'fastify';
@@ -36,8 +38,9 @@ export function signProblem(auth: Pick<AuthContext, 'kind' | 'role' | 'actor' | 
   switch (role) {
     case 'preparer': return doc.created_by === auth.actor || auth.permissions.has('documents:edit-all') ? null : 'Chỉ người lập phiếu (hoặc kế toán trưởng) ký ô người lập phiếu';
     case 'cashier': return auth.permissions.has('documents:write') ? null : 'Bạn không có quyền ký ô thủ quỹ';
-    case 'chief_accountant': return auth.role === 'chief_accountant' || auth.role === 'owner' ? null : 'Chỉ kế toán trưởng hoặc chủ đơn vị ký ô kế toán trưởng';
-    case 'director': return auth.role === 'owner' ? null : 'Chỉ chủ đơn vị (giám đốc) ký ô giám đốc';
+    // [2026-11-09 01:55 PM kiennt] PHASE-028 — S028-15 (80 F4): ô kế toán trưởng / giám đốc kiểm theo quyền thay vì tên vai trò
+    case 'chief_accountant': return auth.permissions.has('periods:lock') ? null : 'Chỉ kế toán trưởng hoặc chủ đơn vị ký ô kế toán trưởng';
+    case 'director': return auth.permissions.has('payments:approve-final') ? null : 'Chỉ chủ đơn vị (giám đốc) ký ô giám đốc';
   }
 }
 
@@ -70,7 +73,8 @@ const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 export const signatureWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'core.signature.create', title: 'Ký một hoặc nhiều phiếu với một vai', tags,
-    permission: 'documents:read', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    // [2026-11-09 01:55 PM kiennt] PHASE-028 — S028-14 (80 F3): action ghi gác bằng quyền ghi (trước là documents:read); vai nào ký được vẫn do signProblem
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), role: z.enum(SIGN_ROLES) }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/signatures' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'signature' },
@@ -101,7 +105,8 @@ export const signatureWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'core.document.signature-delete', title: 'Huỷ chữ ký của một vai', tags,
-    permission: 'documents:read', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    // [2026-11-09 01:55 PM kiennt] PHASE-028 — S028-14 (80 F3): action ghi gác bằng quyền ghi (trước là documents:read)
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema.extend({ role: z.enum(SIGN_ROLES) }), output: anyOut,
     expose: { http: { method: 'DELETE', path: '/api/v1/documents/:id/signatures/:role' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'document', objectId: (i) => String(i.id) },
@@ -113,7 +118,8 @@ export const signatureWriteActions: AnyActionDef[] = [
         if (!doc) throw Errors.notFound('phiếu');
         const sig = await trx.selectFrom('document_signatures').selectAll().where('event_id', '=', doc.id).where('role', '=', input.role).where('version', '=', doc.version).where('revoked_at', 'is', null).executeTakeFirst();
         if (!sig) throw Errors.notFound('chữ ký');
-        if (sig.signer !== auth.actor && auth.role !== 'owner') throw Errors.forbidden('Chỉ người đã ký hoặc chủ đơn vị huỷ được chữ ký');
+        // [2026-11-09 01:55 PM kiennt] PHASE-028 — S028-15 (80 F4): huỷ chữ ký người khác kiểm theo quyền (payments:approve-final — chủ đơn vị) thay vì tên vai trò
+        if (sig.signer !== auth.actor && !auth.permissions.has('payments:approve-final')) throw Errors.forbidden('Chỉ người đã ký hoặc chủ đơn vị huỷ được chữ ký');
         await trx.updateTable('document_signatures').set({ revoked_at: new Date(), revoked_by: auth.actor }).where('id', '=', sig.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.unsign', objectType: 'source_document', objectId: doc.id, before: { role: sig.role, signer: sig.signer_name, version: sig.version } });
       });
