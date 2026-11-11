@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 9
     },
     {
       "key": "merging",
@@ -6046,6 +6046,48 @@
       "facet": "F7",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 28
+    },
+    {
+      "id": "S028-20",
+      "phase": "PHASE-028",
+      "title": "HT12 giao diện theo khuôn đã có (chỉ gọi API sẵn có): nút \"Dùng mẫu\" dựng vai trò Công việc từ thư viện TGS (xem trước quyền sẽ Cho, quyền mẫu nêu mà sổ chưa c…",
+      "priority": "P2",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-gd45-mau-vai-tro",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W4 / W6 — HT12 \"Dùng mẫu\", Cho / Cấm cả nhóm, HT01 → HT12; SC-AUTH-11 quyền mồ côi mức …"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S028-21",
+      "phase": "PHASE-028",
+      "title": "SC-AUTH-11 phần \"quyền mồ côi\" (70, AUTHZ-16): quyền khai trong manifest phải có chỗ chặn ở máy chủ; chỉ ở web → web-only, không ai kiểm → orphan. Mức info (cả…",
+      "priority": "P2",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-gd45-mau-vai-tro",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W4 / W6 — HT12 \"Dùng mẫu\", Cho / Cấm cả nhóm, HT01 → HT12; SC-AUTH-11 quyền mồ côi mức …"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 30
     },
     {
       "id": "S029-1",
