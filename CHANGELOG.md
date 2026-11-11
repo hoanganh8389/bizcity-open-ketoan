@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bảng cân đối tài khoản (ACC10) theo mẫu quản trị <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Tham số: kỳ, Bậc tài khoản, Hiển thị số dư hai bên (tắt = bù trừ một bên), nhánh tài khoản, chi nhánh khi có nhiều chi nhánh.
+- Cột: Đầu kỳ (Nợ / Có) · Phát sinh (Nợ / Có / Nợ lũy kế / Có lũy kế từ đầu năm) · Cuối kỳ (Nợ / Có); tài khoản tổng hợp in đậm, Tổng cộng chỉ cộng tài khoản chi tiết. Bản in: mẫu quản trị (có lũy kế) và S06-DN.
+
 ### Sổ cái S03b-DN (ACC88) nhiều tài khoản <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Dùng chung khung với Sổ chi tiết các tài khoản: chọn nhiều tài khoản; mỗi tài khoản: Số dư đầu kỳ, phát sinh (Ngày ghi sổ, Chứng từ số hiệu / ngày, Diễn giải, TK đối ứng, Số tiền Nợ / Có), Cộng số phát sinh, Số dư cuối kỳ. Bản in S03b-DN.
 
