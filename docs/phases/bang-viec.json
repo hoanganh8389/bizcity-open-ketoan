@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 71
+      "count": 72
     },
     {
       "key": "paused",
@@ -5992,15 +5992,9 @@
       "phase": "PHASE-028",
       "title": "Thu hồi có hiệu lực ngay ở mọi bản API: kiểm phiên không đệm (checkSession, một truy vấn khoá chính users ⋈ tenants mỗi yêu cầu), đệm quyền bổ sung theo tenant…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "kiennt (phiên Claude, PHASE-028 vá)",
-        "branch": "feat/phase-028-gd2-dem-quyen",
-        "state": "đang làm",
-        "since": "2026-11-11",
-        "dot": "PHASE-028 · W3 đợt 3 — thu hồi quyền có hiệu lực ngay ở mọi bản API (kiểm phiên không đệm, đệm theo…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "modules": [
         "he-thong"
       ],

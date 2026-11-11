@@ -29,7 +29,7 @@ import { hashApiKey } from './security/password.js';
 import { getAppManifest } from './apps.js';
 import { verifySession } from './security/tokens.js';
 import { currentRequest } from './request-context.js';
-import { sessionStillValid } from './security/session-state.js';
+import { checkSession } from './security/session-state.js';
 import { extraAuthz, type ExtraAuthz } from './security/role-assignments.js';
 import { matchPattern } from './authz/engine.js';
 
@@ -216,14 +216,16 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
     if (!claims) return null;
     // Vé đã bị thu hồi: đổi / đặt lại mật khẩu, đổi vai trò, khoá tài khoản, đăng xuất các thiết bị khác (core/security/session-state.ts).
     // Vé cấp trước khi có cơ chế không ghi sv → 0 = mặc định users.session_version (0029): dùng được tới lần thu hồi đầu.
-    if (!(await sessionStillValid(claims.sub, claims.sv ?? 0))) return null;
+    // [2026-11-09 02:30 PM kiennt] PHASE-028 — S028-16: kiểm phiên không đệm + authz_version làm khoá đệm quyền (thu hồi có hiệu lực từ yêu cầu kế tiếp)
+    const session = await checkSession(claims.sub, claims.sv ?? 0);
+    if (!session.valid) return null;
     const role = claims.role as Role;
     // Đăng nhập qua hệ thống quản trị: quyền theo phân quyền bên đó (trong phiên); còn lại theo vai trò chính + vai trò bổ sung.
     if (claims.perms) {
       return { tenantId: claims.tid, actor: `user:${claims.sub}`, actorName: claims.name, kind: 'user', role, permissions: new Set(claims.perms.filter(isKnownPermission)) };
     }
     // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1: quyền hiệu lực = vai trò chính ∪ vai trò bổ sung còn hiệu lực (đệm 15 giây, xoá khi gán / thu hồi)
-    const extra = await extraAuthz(claims.sub);
+    const extra = await extraAuthz(claims.sub, db, session.authzVersion);
     const roles = [...new Set<Role>([role, ...extra.roles])];
     return {
       tenantId: claims.tid,

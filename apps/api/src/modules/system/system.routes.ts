@@ -291,6 +291,18 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:35 PM kiennt] PHASE-028 — S028-16: xem kết quả so song song (bật / tắt, số đếm, lệch gần nhất của đơn vị) — số liệu để quyết chuyển hẳn sang bộ tính mới (D-AUTH-21)
+  app.get('/api/v1/system/authz-shadow', {
+    preHandler: requirePermission('users:write'),
+    schema: { tags: ['Hệ thống'], summary: 'So song song phân quyền: bật / tắt cho đơn vị, số đếm của bản API này, lệch gần nhất của đơn vị' },
+    handler: async (req) => {
+      const { tenantId } = authOf(req);
+      const { shadowEnabled, shadowStats, SHADOW_KEY } = await import('@bizcity/platform/core/authz/shadow');
+      const stats = shadowStats(tenantId);
+      return ok({ key: SHADOW_KEY, enabled: await shadowEnabled(tenantId), counters: stats.counters, recent: stats.recent });
+    },
+  });
+
   // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: registry quyền — quyền Core + quyền module (nhóm theo module, vai trò mặc định, rủi ro)
   app.get('/api/v1/system/permissions', {
     preHandler: requirePermission('users:write'),

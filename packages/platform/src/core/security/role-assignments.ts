@@ -26,14 +26,21 @@ export interface ExtraAuthz {
   deny: string[];
 }
 
-const cache = new Map<string, { value: ExtraAuthz; at: number }>();
+// [2026-11-09 02:30 PM kiennt] PHASE-028 — S028-16: đệm theo tenants.authz_version — truyền version thì đệm còn đúng khi CÙNG version (không theo thời gian); đổi vai trò / luật / lần gán ở bản API nào cũng làm đệm mọi bản cũ ngay (trigger 0075)
+const cache = new Map<string, { value: ExtraAuthz; at: number; version?: number }>();
 
 const TODAY_VN = sql`(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`;
 
-/** Vai trò bổ sung và vai trò của đơn vị còn hiệu lực hôm nay (giờ Việt Nam), phạm vi cả đơn vị, mục đích operate. */
-export async function extraAuthz(userId: string, conn: Db = db): Promise<ExtraAuthz> {
+/**
+ * Vai trò bổ sung và vai trò của đơn vị còn hiệu lực hôm nay (giờ Việt Nam), phạm vi cả đơn vị, mục đích operate.
+ * `authzVersion` (tenants.authz_version, đường yêu cầu): đệm dùng lại khi cùng version và cùng ngày (hiệu lực theo ngày); không truyền: đệm CACHE_MS như cũ.
+ */
+export async function extraAuthz(userId: string, conn: Db = db, authzVersion?: number): Promise<ExtraAuthz> {
   const hit = cache.get(userId);
-  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
+  if (hit) {
+    const sameDay = new Date(hit.at).toDateString() === new Date().toDateString();
+    if (authzVersion !== undefined ? hit.version === authzVersion && sameDay : Date.now() - hit.at < CACHE_MS) return hit.value;
+  }
   const { rows } = await sql<{ role: Role | null; tenant_role_id: string | null; base_role: Role | null }>`
     SELECT a.role, a.tenant_role_id::text, r.base_role
       FROM user_role_assignments a LEFT JOIN tenant_roles r ON r.id = a.tenant_role_id AND r.tenant_id = a.tenant_id
@@ -51,7 +58,7 @@ export async function extraAuthz(userId: string, conn: Db = db): Promise<ExtraAu
     allow: [...new Set(rules.filter((r) => r.effect === 'allow').map((r) => r.permission))],
     deny: [...new Set(rules.filter((r) => r.effect === 'deny').map((r) => r.permission))],
   };
-  cache.set(userId, { value, at: Date.now() });
+  cache.set(userId, { value, at: Date.now(), ...(authzVersion !== undefined ? { version: authzVersion } : {}) });
   return value;
 }
 
