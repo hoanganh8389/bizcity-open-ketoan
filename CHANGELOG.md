@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Khung menu theo phân hệ kế toán chuẩn, trang Quy trình, Phần riêng <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/13 (đóng góp) -->
+- Menu trái: Tiền mặt · Tiền gửi · Mua hàng · Bán hàng · Kho · Công cụ dụng cụ · Tài sản cố định · Thuế · Tổng hợp · Ngân sách · Phân tích tài chính · Danh mục · Số dư ban đầu · Phần riêng. Việc chưa có màn ghi "đang phát triển".
+- Trang Quy trình mỗi phân hệ: lưu đồ nghiệp vụ, 5 báo cáo chính, danh mục liên quan.
+- Thiết lập ra khỏi menu trái, mở bằng nút bánh răng. Phần riêng (lớp chuỗi cửa hàng) bật / tắt bằng khoá mới `bizcity.ui.phan_rieng` (mặc định on).
+- Tên màn đặt một nơi (`layout/ten-man.ts`): Thu tiền, Chi tiền, Thu / Chi tiền gửi, Chứng từ nghiệp vụ khác, Tính giá xuất kho, Khóa sổ kỳ kế toán, Sổ chi tiết mua / bán hàng, Tổng hợp tồn kho, Sổ chi tiết vật tư hàng hóa, Cơ cấu tổ chức… Danh mục kho đổi mã DM12 → DM17 (trùng Khách hàng).
+- Bỏ màn trùng: danh sách NCC riêng MH01 (dùng DM13, hồ sơ NCC giữ), Đối tượng DM03, Chứng từ kế toán ACC3; liên kết cũ tự chuyển.
+
 ### Bảng kê hoá đơn, chứng từ HHDV bán ra / mua vào theo mẫu quản trị (ACC65, ACC64) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Mỗi dòng một mặt hàng; nhóm HHDV theo phụ lục 01-1/01-2 GTGT, Cộng nhóm, Tổng cộng; cột Mặt hàng, Tài khoản thuế (theo danh mục mã thuế).
 - Tham số: Cộng gộp theo từng hoá đơn (`merge=1`), Lấy ĐVT / số lượng / đơn giá; nhiều chi nhánh: chọn chi nhánh, Tách theo chi nhánh (chỉ hiện khi có từ 2 chi nhánh).

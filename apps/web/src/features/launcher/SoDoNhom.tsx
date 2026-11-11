@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import type { SoDo, SoDoNode } from '../../layout/so-do-nhom';
+import { DANG_PHAT_TRIEN } from '../../layout/menu-gon';
 
 function Icon({ name, size = 16 }: { name: string; size?: number }) {
   const C = (Icons as unknown as Record<string, Icons.LucideIcon>)[name] ?? Icons.FileText;
@@ -38,6 +39,13 @@ function Node({ n }: { n: SoDoNode }) {
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
   const hasSub = (n.sub?.length ?? 0) > 1;
+  // Bước chưa có màn: hiện mờ, ghi "đang phát triển".
+  if (!n.path) return (
+    <div className="sd-node soon" title="Đang phát triển, sẽ có ở bản sau">
+      <Art icon={n.icon} />
+      <div className="sd-btn-wrap"><span className="sd-btn"><Icon name={n.icon} size={15} /> {n.label}</span><small className="sd-soon">{DANG_PHAT_TRIEN}</small></div>
+    </div>
+  );
   return (
     <div className={`sd-node${open ? ' open' : ''}`} ref={box}>
       <Link to={n.path} title={`Mở ${n.label}`}><Art icon={n.icon} /></Link>
@@ -53,7 +61,9 @@ function Node({ n }: { n: SoDoNode }) {
 
 export function SoDoNhom({ soDo, canOpen, extra }: { soDo: SoDo; canOpen: (path: string) => boolean; extra?: ReactNode }) {
   const rows = soDo.rows
-    .map((r) => r.map((n) => ({ ...n, sub: n.sub?.filter((s) => canOpen(s.path)) })).filter((n) => (n.sub ? n.sub.length > 0 : canOpen(n.path))).map((n) => (n.sub && !canOpen(n.path) ? { ...n, path: n.sub[0]!.path } : n)))
+    .map((r) => r.map((n) => ({ ...n, sub: n.sub?.filter((s) => canOpen(s.path)) }))
+      .filter((n) => !n.path || (n.sub ? n.sub.length > 0 : canOpen(n.path)))
+      .map((n) => (n.path && n.sub && !canOpen(n.path) ? { ...n, path: n.sub[0]!.path } : n)))
     .filter((r) => r.length);
   const cols = Math.max(1, ...rows.map((r) => r.length));
   const links = soDo.links.filter((l) => canOpen(l.path));
@@ -61,6 +71,7 @@ export function SoDoNhom({ soDo, canOpen, extra }: { soDo: SoDo; canOpen: (path:
   return (
     <>
       <div className="card sd-card">
+        <div className="sd-title">{soDo.title}</div>
         <div className={`sd-rows${two ? ' two' : ''}`} style={{ ['--sd-n' as string]: cols }}>
           {rows.map((r, i) => (
             <div key={i} className={`sd-row${i === 0 ? ' top' : ' bot'}`}>
@@ -72,7 +83,6 @@ export function SoDoNhom({ soDo, canOpen, extra }: { soDo: SoDo; canOpen: (path:
       </div>
       {(links.length > 0 || extra) && (
         <div className="card sd-links">
-          <b>Tiện ích</b>
           <div>
             {links.map((l) => <Link key={l.path} to={l.path}><Icon name={l.icon} /> {l.label}</Link>)}
             {extra}

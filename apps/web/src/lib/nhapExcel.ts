@@ -78,7 +78,7 @@ const doiTuong = (kind: 'customer' | 'supplier'): NhapLoai => {
   return {
     id: kh ? 'khach-hang' : 'nha-cung-cap', nhom: 'Danh mục', title: kh ? 'Khách hàng' : 'Nhà cung cấp',
     desc: `Mã, tên, mã số thuế, địa chỉ, nhóm, điện thoại, ngân hàng, hạn nợ của ${ab}`, keyField: 'code',
-    listPath: kh ? '/danh-muc/doi-tuong' : '/mua-hang/nha-cung-cap', invalidate: ['partners'],
+    listPath: kh ? '/danh-muc/khach-hang' : '/danh-muc/nha-cung-cap', invalidate: ['partners'],
     fields: [
       { key: 'code', header: `Mã ${ab}`, aliases: ['ma', 'ma kh', 'ma ncc', 'ma doi tuong', 'ma khach hang', 'ma nha cung cap'], example: '', note: 'Để trống khi thêm mới: phần mềm tự cấp mã nối dãy của nhóm. Mã đã có → cập nhật.' },
       { key: 'name', header: `Tên ${ab}`, required: 'moi', aliases: ['ten', 'ten kh', 'ten ncc', 'ten doi tuong', 'ten khach hang', 'ten nha cung cap', 'ten cong ty'], example: kh ? 'Công ty TNHH Mẫu' : 'Công ty CP Sữa Mẫu' },

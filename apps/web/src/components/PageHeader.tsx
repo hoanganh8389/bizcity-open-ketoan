@@ -7,13 +7,18 @@
  */
 import { useState, type ReactNode } from 'react';
 import { HelpCircle, Info, Printer } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
+import { tenMan } from '@/layout/ten-man';
 import { HelpDrawer } from './HelpDrawer';
 import { DEFAULT_DATA_SCREENS, RestoreDefaultsButton } from '@/features/flow/DefaultDataPages';
 
 export function PageHeader({ title, code, subtitle, note, actions, helpKey }: { title: string; code?: string; subtitle?: string; /** Dòng luôn hiện dưới tiêu đề, dành cho thông tin theo dữ liệu đang xem. */ note?: string; actions?: ReactNode; helpKey?: string }) {
   const [help, setHelp] = useState(false);
   const { user } = useAuth();
+  // Tên, mã của màn đặt ở một nơi (layout/ten-man.ts): khớp đúng đường dẫn đang mở thì dùng.
+  const t = tenMan(useLocation().pathname);
+  if (t) { title = t.label; code = t.code ?? code; }
   return (
     <div className="page-header">
       {/* Chỉ hiện khi in: tên đơn vị ở đầu trang. */}

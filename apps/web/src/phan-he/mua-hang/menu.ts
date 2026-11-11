@@ -11,8 +11,12 @@ export const muaHangMenu: MenuItem[] = [
     key: 'mua-hang-nghiep-vu',
     label: 'Nghiệp vụ mua hàng',
     children: [
-      { key: 'mh-ncc', label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap', code: 'MH01' },
       { key: 'mh-tong-hop', label: 'Tổng hợp mua hàng', path: '/mua-hang/tong-hop', code: 'MH11' },
+      // [2026-11-11 Nguyễn Văn Thủy] lối vào theo loại chứng từ (cùng màn MH11, lọc sẵn loại) (đóng góp)
+      { key: 'mh-don-mua', label: 'Đơn mua hàng', path: '/mua-hang/tong-hop?loai=order', code: 'MH11' },
+      { key: 'mh-mua-hang', label: 'Mua hàng', path: '/mua-hang/tong-hop?loai=receipt', code: 'MH11' },
+      { key: 'mh-tra-lai', label: 'Trả lại hàng mua', path: '/mua-hang/tong-hop?loai=return', code: 'MH11' },
+      { key: 'mh-giam-gia', label: 'Giảm giá hàng mua', path: '/mua-hang/tong-hop?loai=rebate', code: 'MH11' },
       { key: 'mh-hoa-don-ncc', label: 'Hoá đơn đầu vào của NCC', path: '/mua-hang/hoa-don-ncc', code: 'MH22' },
       { key: 'mh-han-muc', label: 'Hạn mức & công nợ đến hạn', path: '/mua-hang/han-muc', code: 'MH05' },
       { key: 'mh-thuong', label: 'Tính thưởng cuối kỳ', path: '/mua-hang/thuong', code: 'MH06' },
@@ -60,7 +64,6 @@ export const muaHangMenu: MenuItem[] = [
       { key: 'mh-doi-chieu', label: 'Đối chiếu đơn đặt ↔ phiếu nhập', path: '/mua-hang/doi-chieu', code: 'MH21' },
       { key: 'mh-bc-chinh-sach', label: 'Chi tiết chính sách mua hàng', path: '/mua-hang/chi-tiet-chinh-sach', code: 'MH14' },
       { key: 'mh-nk-mua-hang', label: 'Sổ nhật ký mua hàng', path: '/bao-cao/nhat-ky-mua-hang', code: 'ACC77' },
-      { key: 'mh-sct-dinh-khoan', label: 'Sổ chi tiết định khoản theo mã hàng', path: '/bao-cao/nhat-ky-chung?docType=purchase&account=156', code: 'ACC89' },
       { key: 'mh-thue-vao', label: 'Báo cáo thuế vào', path: '/thue/bang-ke-mua-vao', code: 'ACC64' },
       { key: 'mh-cong-no', label: 'Sổ tổng hợp công nợ phát sinh', path: '/bao-cao/cong-no', code: 'ACC38' },
       { key: 'mh-nxt', label: 'BC nhập xuất tồn hàng hoá', path: '/bao-cao/nhap-xuat-ton', code: 'ACC83' },

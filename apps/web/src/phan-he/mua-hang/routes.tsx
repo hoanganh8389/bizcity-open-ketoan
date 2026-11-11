@@ -19,7 +19,6 @@ import { DoiChieuDonPage } from './doi-chieu/DoiChieuDonPage';
 import { CaiDatMuaPage } from './cai-dat/CaiDatMuaPage';
 import { BienTheMatHangPage } from './bien-the/BienTheMatHangPage';
 import { DvtThungPage } from './dvt-thung/DvtThungPage';
-import { NhaCungCapPage } from './nha-cung-cap/NhaCungCapPage';
 import { HoSoNccPage } from './nha-cung-cap/HoSoNccPage';
 import { DatHangPage } from './dat-hang/DatHangPage';
 import { CsdlPage } from './csdl/CsdlPage';
@@ -32,7 +31,7 @@ import { HoaDonNccPage } from './hoa-don/HoaDonNccPage';
 
 export const muaHangRoutes = (
   <>
-    <Route path="mua-hang/nha-cung-cap" element={<NhaCungCapPage />} />
+    <Route path="mua-hang/nha-cung-cap" element={<Navigate to="/danh-muc/nha-cung-cap" replace />} />
     <Route path="mua-hang/nha-cung-cap/:code" element={<HoSoNccPage />} />
     <Route path="mua-hang/dat-hang" element={<DatHangPage />} />
     <Route path="mua-hang/ton-max" element={<TonMaxPage />} />

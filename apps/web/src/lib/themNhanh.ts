@@ -34,10 +34,11 @@ const m = (label: string, base: string, link = themMoi(base)): ThemNhanhMuc => (
 
 /** Nút "Thêm nhanh" đầu menu trái: lập chứng từ / thêm danh mục hay dùng, chia theo nhóm việc. Mục người dùng không có quyền tự ẩn. */
 export const THEM_NHANH: ThemNhanhNhom[] = [
-  { label: 'Tiền', items: [m('Phiếu thu', '/nghiep-vu/phieu-thu'), m('Phiếu chi', '/nghiep-vu/phieu-chi'), m('Báo có (thu tiền gửi)', '/nghiep-vu/phieu-bao-co'), m('Báo nợ (chi tiền gửi)', '/nghiep-vu/phieu-bao-no')] },
-  { label: 'Mua hàng', items: [m('Đơn đặt hàng', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=order'), m('Nhập mua', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=receipt'), m('Trả hàng nhà cung cấp', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=return'), m('Chi phí mua hàng', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=cost')] },
-  { label: 'Bán hàng', items: [m('Phiếu bán hàng', '/ban-hang/phieu-ban'), m('Hàng bán trả lại', '/ban-hang/tra-lai')] },
+  { label: 'Tiền mặt', items: [m('Thu tiền', '/nghiep-vu/phieu-thu'), m('Chi tiền', '/nghiep-vu/phieu-chi')] },
+  { label: 'Tiền gửi', items: [m('Thu tiền gửi', '/nghiep-vu/phieu-bao-co'), m('Chi tiền gửi', '/nghiep-vu/phieu-bao-no')] },
+  { label: 'Mua hàng', items: [m('Đơn mua hàng', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=order'), m('Mua hàng', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=receipt'), m('Trả lại hàng mua', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=return'), m('Chi phí mua hàng', '/mua-hang/tong-hop', '/mua-hang/tong-hop?moi=cost')] },
+  { label: 'Bán hàng', items: [m('Bán hàng', '/ban-hang/phieu-ban'), m('Trả lại hàng bán', '/ban-hang/tra-lai')] },
   { label: 'Kho', items: [m('Chuyển kho', '/kho/chuyen-kho')] },
-  { label: 'Tổng hợp', items: [m('Phiếu kế toán', '/nghiep-vu/phieu-ke-toan')] },
-  { label: 'Danh mục', items: [m('Khách hàng', '/danh-muc/doi-tuong', '/danh-muc/doi-tuong?them=1&loai=customer'), m('Nhà cung cấp', '/danh-muc/doi-tuong', '/danh-muc/doi-tuong?them=1&loai=supplier'), m('Mặt hàng', '/danh-muc/mat-hang'), m('Kho', '/danh-muc/kho'), m('Nhập từ Excel', '/tien-ich/nhap-excel', '/tien-ich/nhap-excel')] },
+  { label: 'Tổng hợp', items: [m('Chứng từ nghiệp vụ khác', '/nghiep-vu/phieu-ke-toan')] },
+  { label: 'Danh mục', items: [m('Khách hàng', '/danh-muc/khach-hang'), m('Nhà cung cấp', '/danh-muc/nha-cung-cap'), m('Vật tư, hàng hóa', '/danh-muc/mat-hang'), m('Kho', '/danh-muc/kho'), m('Nhập từ Excel', '/tien-ich/nhap-excel', '/tien-ich/nhap-excel')] },
 ];

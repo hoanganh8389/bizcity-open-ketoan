@@ -15,7 +15,6 @@ export const keToanMenu: MenuItem[] = [
       sec('dinh-khoan', 'Định khoản'),
       { key: 'ds-chung-tu', label: 'Định khoản tự động', path: '/chung-tu', code: 'ACC14' },
       { key: 'bang-diem-dau-vao', label: 'Bảng điểm đầu vào', path: '/chung-tu/bang-diem', code: 'ACC94' },
-      { key: 'chung-tu-ke-toan', label: 'Chứng từ kế toán', path: '/tien-ich/chung-tu-ke-toan', code: 'ACC3' },
       { key: 'but-toan', label: 'Bút toán sổ cái', path: '/so-cai/but-toan', code: 'SC01' },
       // [2026-11-10 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 (D004-16): màn theo dõi sửa đầu bút toán
       { key: 'sua-dau-but-toan', label: 'Sửa đầu bút toán', path: '/so-cai/sua-dau-but-toan', code: 'SC02', permission: 'ledger:read' },
@@ -139,7 +138,6 @@ export const keToanMenu: MenuItem[] = [
       { key: 'ly-do', label: 'Lý do - Tài khoản (cũ)', path: '/cau-hinh/ly-do', code: 'ACC18' },
       { key: 'nhom-hach-toan', label: 'Mặt hàng - Tài khoản (cũ)', path: '/cau-hinh/nhom-hach-toan', code: 'ACC17' },
       sec('dm-doi-tuong', 'Đối tượng, tổ chức'),
-      { key: 'doi-tuong', label: 'Đối tượng', path: '/danh-muc/doi-tuong', code: 'DM03' },
       { key: 'khach-hang', label: 'Khách hàng', path: '/danh-muc/khach-hang', code: 'DM12' },
       { key: 'nha-cung-cap', label: 'Nhà cung cấp', path: '/danh-muc/nha-cung-cap', code: 'DM13' },
       { key: 'nhom-doi-tuong', label: 'Nhóm đối tượng', path: '/danh-muc/nhom-doi-tuong', code: 'DM08' },
@@ -180,7 +178,6 @@ export const keToanMenu: MenuItem[] = [
       { key: 'add-in', label: 'Add-in đang bật', path: '/tien-ich/add-in', code: 'TI00' },
       { key: 'du-lieu-goc', label: 'Dữ liệu gốc', path: '/tien-ich/du-lieu-goc', code: 'TI08' },
       sec('ti-chung-tu', 'Chứng từ kế toán'),
-      { key: 'ti-chung-tu-ke-toan', label: 'Chứng từ kế toán', path: '/tien-ich/chung-tu-ke-toan', code: 'ACC3' },
       { key: 'mat-lien-ket', label: 'CT kế toán bị mất liên kết phiếu gốc', path: '/tien-ich/ct-mat-lien-ket', code: 'ACC3A' },
       { key: 'lech-than', label: 'CT kế toán lệch giữa thân và chi tiết', path: '/tien-ich/ct-lech-than-chi-tiet', code: 'ACC3B' },
       { key: 'lech-goc', label: 'CT kế toán lệch so với phiếu gốc', path: '/tien-ich/ct-lech-phieu-goc', code: 'ACC3C' },

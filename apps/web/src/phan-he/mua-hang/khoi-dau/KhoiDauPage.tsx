@@ -101,7 +101,7 @@ export function KhoiDauPage() {
   const [tab, setTab] = useState<Tab>('gia');
   return (
     <>
-      <PageHeader title="Nhập dữ liệu khởi đầu" code="MH20" helpKey="mua-hang-khoi-dau" subtitle="Đưa số liệu từ tệp Excel của phần mềm cũ vào ERP: giá mua theo NCC, cân tồn kho các shop (phiếu điều chỉnh tự động), tồn max. Chạy lại được — có rồi thì đè" />
+      <PageHeader title="Nhập dữ liệu khởi đầu" code="MH20" helpKey="mua-hang-khoi-dau" subtitle="Đưa số liệu từ tệp Excel vào phần mềm: giá mua theo NCC, cân tồn kho các shop (phiếu điều chỉnh tự động), tồn max. Chạy lại được — có rồi thì đè" />
       <div className="card">
         <div className="tabs" style={{ padding: '8px 12px 0' }}>
           {([['gia', '① Giá mua theo NCC'], ['ton', '② Cân tồn kho (phiếu điều chỉnh)'], ['max', '③ Tồn max']] as [Tab, string][]).map(([k, l]) => <button key={k} className={`tab ${tab === k ? 'active' : ''}`} onClick={() => setTab(k)}>{l}</button>)}

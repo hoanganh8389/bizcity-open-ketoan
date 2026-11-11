@@ -87,7 +87,7 @@ export const pageRoutes = (
     <Route path="quy/phieu-chuyen-tien" element={<CashTransfersPage />} />
     <Route path="so-cai/but-toan" element={<EntriesPage />} />
     <Route path="so-cai/sua-dau-but-toan" element={<SuaDauButToanPage />} />
-    <Route path="tien-ich/chung-tu-ke-toan" element={<AccountingVouchersPage key="all" mode="all" />} />
+    <Route path="tien-ich/chung-tu-ke-toan" element={<Navigate to="/bao-cao/nhat-ky-chung" replace />} />
     <Route path="tien-ich/ct-mat-lien-ket" element={<AccountingVouchersPage key="unlinked" mode="unlinked" />} />
     <Route path="tien-ich/ct-lech-than-chi-tiet" element={<AccountingVouchersPage key="unbalanced" mode="unbalanced" />} />
     <Route path="tien-ich/ct-lech-phieu-goc" element={<AccountingVouchersPage key="source-diff" mode="source-diff" />} />
@@ -109,7 +109,7 @@ export const pageRoutes = (
     <Route path="danh-muc/kho" element={<WarehousesPage />} />
     <Route path="danh-muc/so-do-to-chuc" element={<OrgUnitsPage />} />
     <Route path="danh-muc/don-vi-tinh" element={<UnitNamesPage />} />
-    <Route path="danh-muc/doi-tuong" element={<PartnersPage />} />
+    <Route path="danh-muc/doi-tuong" element={<Navigate to="/danh-muc/khach-hang" replace />} />
     <Route path="danh-muc/khach-hang" element={<PartnersPage key="customer" fixedKind="customer" />} />
     <Route path="danh-muc/nha-cung-cap" element={<PartnersPage key="supplier" fixedKind="supplier" />} />
     <Route path="danh-muc/nhom-doi-tuong" element={<PartnerGroupsPage />} />

@@ -9,7 +9,8 @@ import { WindowDock } from './WindowDock';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { BarChart3, Menu } from 'lucide-react';
+import { BarChart3, Menu, Settings } from 'lucide-react';
+import { groupHome, THIET_LAP } from './menu-gon';
 import { ChangePasswordModal } from '@/features/access/ChangePasswordModal';
 import { api } from '@/lib/api';
 import { useAuth, inFrame } from '@/lib/auth';
@@ -140,6 +141,8 @@ export function AppLayout() {
           <DangOnline menu={menu} />
           <NutChiNhanh />
           <MenuSearch items={menu} />
+          {/* [2026-11-11 Nguyễn Văn Thủy] nút bánh răng mở Thiết lập (đơn vị, người dùng, mẫu in, cấu hình) — không nằm ở menu trái (đóng góp) */}
+          <Link to={groupHome(THIET_LAP)} className="nut-thiet-lap" title="Thiết lập: thông tin đơn vị, người dùng, mẫu in, cấu hình" aria-label="Thiết lập"><Settings size={18} /></Link>
           <UserMenu onChangePassword={() => setChangingPassword(true)} />
         </div>
       </header>

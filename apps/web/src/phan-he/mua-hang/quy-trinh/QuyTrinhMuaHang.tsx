@@ -68,7 +68,7 @@ const STAGES: Stage[] = [
     node: { label: 'Đơn đặt hàng', icon: 'ClipboardList', color: '#0ea5e9', path: L('order'), newPath: N('order'), kinds: ['order'], todo: ['orders'], print: ['order'],
       auto: ['Khuyến mại, chiết khấu đang chạy được áp sẵn vào đơn', 'Giá lấy theo bảng giá của NCC', 'Báo trước nếu đơn làm vượt hạn mức công nợ'] },
     config: [
-      { label: 'Nhà cung cấp & bảng giá', code: 'MH01', icon: 'Building2', color: '#64748b', path: '/mua-hang/nha-cung-cap', hint: 'Hợp đồng, hạn trả, hạn mức, giá mua' },
+      { label: 'Nhà cung cấp & bảng giá', code: 'DM13', icon: 'Building2', color: '#64748b', path: '/danh-muc/nha-cung-cap', hint: 'Hợp đồng, hạn trả, hạn mức, giá mua' },
       { label: 'Chính sách & khuyến mại', code: 'MH04', icon: 'BadgePercent', color: '#64748b', path: '/mua-hang/chinh-sach', hint: 'Chiết khấu, mua X tặng Y, bậc số lượng' },
     ],
     side: [

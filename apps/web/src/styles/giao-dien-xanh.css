@@ -414,3 +414,18 @@ html.gd-xanh .tq-cal button.sel { background: var(--brand-600); }
 .rp-tieu-de h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--ink-900); }
 .rp-tieu-de i { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink-700); }
 html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-weight: 600; color: var(--ink-900); }
+
+/* Nút bánh răng Thiết lập ở thanh trên */
+.nut-thiet-lap { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--ink-600, #475569); }
+.nut-thiet-lap:hover { background: color-mix(in srgb, var(--base) 10%, transparent); color: var(--base); }
+/* Việc đang phát triển trong menu bung */
+.gon-fly-item.disabled { opacity: .55; cursor: default; }
+.gon-fly-item.disabled small { margin-left: auto; font-size: 11px; font-style: italic; }
+/* Trang Quy trình của phân hệ: tiêu đề lưu đồ, bước / báo cáo đang phát triển */
+.sd-title { text-align: center; font-weight: 700; text-transform: uppercase; font-size: 13px; letter-spacing: .02em; color: var(--nav); margin-bottom: 8px; }
+.sd-node.soon { opacity: .5; cursor: default; }
+.sd-node.soon .sd-btn { cursor: default; }
+.sd-soon, .sd-bc-soon small, .module-home-item.disabled small { display: block; font-size: 11px; font-style: italic; color: var(--ink-400, #94a3b8); }
+.sd-bc-soon { color: var(--ink-400, #94a3b8); cursor: default; }
+.sd-bc-soon small { display: inline; }
+.module-home-item.disabled { opacity: .6; cursor: default; }

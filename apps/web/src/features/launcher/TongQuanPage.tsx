@@ -17,7 +17,7 @@ import { HelpDrawer } from '@/components/HelpDrawer';
 import { useAppMenu, useEnabledModules } from '../../layout/useAppMenu';
 import { useGonGroups } from '../../layout/useGon';
 import { GonIcon } from '../../layout/SideNav';
-import { groupCount, REPORT_PAGE } from '../../layout/menu-gon';
+import { groupCount, nhomHien, REPORT_PAGE } from '../../layout/menu-gon';
 import { useHayDung } from '../../layout/hay-dung';
 import { initialsOf } from '../../layout/UserMenu';
 import { useViec, viecOf } from '../../layout/rail/useViec';
@@ -31,7 +31,7 @@ const WEEK = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 function TruyCapNhanh() {
   const navigate = useNavigate();
   const menu = useAppMenu();
-  const groups = useGonGroups(menu);
+  const groups = nhomHien(useGonGroups(menu));
   const hay = useHayDung(menu);
   const [the, setThe] = useState<'nhom' | 'hay'>('nhom');
   return (

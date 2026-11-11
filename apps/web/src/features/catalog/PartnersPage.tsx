@@ -83,7 +83,9 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
   const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/partners/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['partners'] }); } });
 
   const columns: Column<Partner>[] = [
-    { key: 'code', header: `Mã ${abbr}`, type: 'code', width: 120 },
+    // Mã NCC mở hồ sơ nhà cung cấp (hợp đồng, mặt hàng & giá mua, nhận hàng).
+    { key: 'code', header: `Mã ${abbr}`, type: 'code', width: 120, render: (p) => (p.kind === 'supplier' || p.alsoKinds?.includes('supplier')
+      ? <Link to={`/mua-hang/nha-cung-cap/${encodeURIComponent(p.code)}`} onClick={(e) => e.stopPropagation()} title="Mở hồ sơ nhà cung cấp: hợp đồng, mặt hàng và giá mua">{p.code}</Link> : p.code) },
     { key: 'name', header: `Tên ${abbr}`, width: 240 },
     // [2026-11-11 Nguyễn Văn Thủy] cột Chức năng: lập chứng từ cho đối tượng ngay từ danh sách (đóng góp)
     { key: 'chuc-nang', header: 'Chức năng', width: 120, noFilter: true, noSort: true, value: () => '', render: (p) => {

@@ -69,7 +69,7 @@ export function HoSoNccPage() {
   const header = (
     <div className="mh-ncc-head">
       <div className="mh-ncc-id">
-        <Link to="/mua-hang/nha-cung-cap" className="btn btn-sm btn-ghost" title="Về danh sách NCC"><ArrowLeft size={14} /></Link>
+        <Link to="/danh-muc/nha-cung-cap" className="btn btn-sm btn-ghost" title="Về danh sách NCC"><ArrowLeft size={14} /></Link>
         <div>
           <div className="mh-ncc-name">{p?.name ?? names.partnerName(code)} <span className="mono muted" style={{ fontSize: 13 }}>{code}</span></div>
           <div className="muted" style={{ fontSize: 12 }}>{[p?.taxCode && `MST ${p.taxCode}`, p?.address, p?.phone && `ĐT ${p.phone}`, p?.contactName && `Liên hệ ${p.contactName}`, p?.bankAccount && `TK ${p.bankAccount} ${p.bankName}`].filter(Boolean).join(' · ') || 'Chưa có thông tin liên hệ'}</div>

@@ -29,3 +29,4 @@ Việc tiếp theo: [02-viec-tiep-theo.md](02-viec-tiep-theo.md).
 5. Form chứng từ: `Modal voucher={{ total }}` (hoặc `VoucherModal total`) để có khung toàn màn, tổng tiền góc phải, dòng phím tắt, Ctrl + S.
 6. Danh sách trống: `Empty` có `actions` (nút Thêm / Nhập Excel).
 7. Bảng lọc bên trái: khoảng ngày dùng `SideKy` (có ô Kỳ chọn nhanh).
+| 12 | [13-khung-menu.md](13-khung-menu.md) | Menu theo phân hệ kế toán chuẩn, việc chưa có ghi "đang phát triển", trang Quy trình (lưu đồ + 5 báo cáo chính), Phần riêng bật / tắt, Thiết lập ở nút bánh răng, tên màn một nơi |
