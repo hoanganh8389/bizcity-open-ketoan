@@ -471,3 +471,9 @@ html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-
 .bctc-body { display: block; grid-column: 1 / -1; width: 100%; }
 .bctc-body > .tabs { border-bottom: 1px solid var(--line, #e3e8ef); }
 .bctc-bang { width: 100%; }
+/* [2026-11-11 Nguyễn Văn Thủy] Tờ khai 01/GTGT: đầu tờ khai [01a]–[07], bảng kê theo nhóm (đóng góp) */
+.vat-title { text-align: center; font-weight: 700; font-size: 15px; margin: 4px 0; }
+.vat-info { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; max-width: 980px; margin: 12px auto 0; }
+.vat-info > b { font-weight: 600; }
+.vat-bk th { text-align: center; vertical-align: middle; }
+.vat-bk tr.bold td { background: var(--head-bg, #eef3fb); }

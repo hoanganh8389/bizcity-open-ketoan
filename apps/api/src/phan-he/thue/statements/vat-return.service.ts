@@ -201,6 +201,38 @@ export const vatReturnService = {
       return { name: r.name, amount, rateBefore: 10, rateAfter: 8, tax: Math.round(toNumber(r.tax)), reducedTax: Math.round(amount * 0.02) };
     });
 
+    // [2026-11-11 Nguyễn Văn Thủy] Phụ lục giảm thuế NQ 204/2025/QH15 phần I: hàng mua vào thuế suất 8% (thuế GTGT [06]) (đóng góp)
+    const reducedIn = await sql<{ name: string; amount: string; tax: string }>`
+      SELECT COALESCE(NULLIF(l.name, ''), NULLIF(l.sku, ''), '(không tên)') AS name, SUM(l.amount_before_tax * i.sign) AS amount, SUM(l.tax_amount * i.sign) AS tax
+        FROM tax_invoices i JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id
+       WHERE i.tenant_id = ${auth.tenantId} AND i.status <> 'cancelled' AND i.direction = 'input' AND l.tax_rate = 8
+         AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter}
+       GROUP BY 1 ORDER BY 1`.execute(db);
+    const reducedInRows = reducedIn.rows.map((r) => ({ name: r.name, amount: Math.round(toNumber(r.amount)), tax: Math.round(toNumber(r.tax)) }));
+
+    // [2026-11-11 Nguyễn Văn Thủy] Bảng kê 01-1/GTGT bán ra và 01-2/GTGT mua vào theo từng hoá đơn, chia nhóm như mẫu; kèm chi nhánh (quản trị nhiều kho) (đóng góp)
+    //   Bán ra: nhóm 1 không chịu thuế (KCT), 2 thuế suất 0%, 3 thuế suất 5%, 4 thuế suất 10% (gồm hàng giảm còn 8%); hàng không phải kê khai ([32a]) không lên bảng kê.
+    //   Mua vào: nhóm 1 dùng riêng cho SXKD chịu thuế đủ điều kiện khấu trừ; nhóm 4 không đủ điều kiện khấu trừ (đánh dấu ở ACC78).
+    const lists = await sql<{ direction: string; grp: string; invoice_no: string; invoice_serial: string; invoice_date: string; name: string; tax_code: string; amount: string; tax: string; branch_code: string; doc_no: string; deductible: boolean }>`
+      SELECT i.direction,
+             CASE WHEN i.direction = 'input' THEN (CASE WHEN i.deductible THEN '1' ELSE '4' END)
+                  WHEN l.report_group = 'KCT' THEN '1'
+                  WHEN l.tax_rate = 0 THEN '2'
+                  WHEN l.tax_rate = 5 THEN '3'
+                  WHEN l.tax_rate IN (8, 10) THEN '4' ELSE '' END AS grp,
+             i.invoice_no, i.invoice_serial, i.invoice_date::text, i.buyer_name AS name, i.buyer_tax_code AS tax_code,
+             SUM(l.amount_before_tax * i.sign) AS amount, SUM(l.tax_amount * i.sign) AS tax, b.code AS branch_code, i.doc_no, i.deductible
+        FROM tax_invoices i JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id JOIN branches b ON b.id = i.branch_id
+       WHERE i.tenant_id = ${auth.tenantId} AND i.status <> 'cancelled' AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter}
+       GROUP BY i.id, i.direction, 2, i.invoice_no, i.invoice_serial, i.invoice_date, i.buyer_name, i.buyer_tax_code, b.code, i.doc_no, i.deductible
+       ORDER BY i.direction, 2, i.invoice_date, i.invoice_no`.execute(db);
+    const listRow = (r: (typeof lists.rows)[number]) => ({
+      group: Number(r.grp), invoiceNo: r.invoice_no, serial: r.invoice_serial, date: r.invoice_date, name: r.name, taxCode: r.tax_code,
+      amount: Math.round(toNumber(r.amount)), tax: Math.round(toNumber(r.tax)), branchCode: r.branch_code, docNo: r.doc_no,
+    });
+    const salesList = lists.rows.filter((r) => r.direction === 'output' && r.grp).map(listRow);
+    const purchaseList = lists.rows.filter((r) => r.direction === 'input').map(listRow);
+
     // Hoá đơn mua vào từ 5 triệu đồng (đã có thuế): khấu trừ cần chứng từ thanh toán không dùng tiền mặt.
     const big = await sql<{ event_id: string; invoice_no: string; invoice_serial: string; invoice_date: string; buyer_name: string; buyer_tax_code: string; doc_no: string; total: string; tax: string; branch_code: string; deductible: boolean; payment_ref: string }>`
       SELECT i.event_id, i.invoice_no, i.invoice_serial, i.invoice_date::text, i.buyer_name, i.buyer_tax_code, i.doc_no, (i.total_before_tax + i.total_tax) AS total, i.total_tax AS tax, b.code AS branch_code,
@@ -239,7 +271,12 @@ export const vatReturnService = {
       deadline: filingDeadline(q.periodKind, q.year, q.period),
       previous: prevSaved ? { status: prevSaved.status, carried43: suggested22 } : null,
       breakdown,
-      reduced: { rows: reducedRows, totals: { amount: reducedRows.reduce((s, r) => s + r.amount, 0), tax: reducedRows.reduce((s, r) => s + r.tax, 0), reducedTax: reducedRows.reduce((s, r) => s + r.reducedTax, 0) } },
+      reduced: {
+        rows: reducedRows, totals: { amount: reducedRows.reduce((s, r) => s + r.amount, 0), tax: reducedRows.reduce((s, r) => s + r.tax, 0), reducedTax: reducedRows.reduce((s, r) => s + r.reducedTax, 0) },
+        /** Phần I: hàng mua vào thuế suất 8%; [06] = tổng thuế; [09] = [08] (thuế được giảm phần II) − [06]. */
+        inputRows: reducedInRows, inputTotals: { amount: reducedInRows.reduce((s, r) => s + r.amount, 0), tax: reducedInRows.reduce((s, r) => s + r.tax, 0) },
+      },
+      salesList, purchaseList,
       bigPurchases: big.rows.map((r) => ({ eventId: r.event_id, deductible: r.deductible, paymentRef: r.payment_ref, invoiceNo: r.invoice_no, serial: r.invoice_serial, date: r.invoice_date, seller: r.buyer_name, taxCode: r.buyer_tax_code, docNo: r.doc_no, branchCode: r.branch_code, total: toNumber(r.total), tax: toNumber(r.tax) })),
       ledger: { ...ledger, inputDiff: (values['24'] ?? 0) - ledger.input, outputDiff: (values['28'] ?? 0) - ledger.output },
     };

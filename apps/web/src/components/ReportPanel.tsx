@@ -71,6 +71,12 @@ export function ReportSideLayout({ panel, children, boThamSo }: { panel: ReactNo
   const doiGhim = () => { const g = !ghim; setGhim(g); setMo(false); try { localStorage.setItem(GHIM_KEY, g ? '1' : '0'); } catch { /* bỏ qua */ } };
   // Tóm tắt tham số: đọc lại sau khi vẽ và khi đóng ngăn kéo.
   useEffect(() => { if (ghim) return; const t = setTimeout(() => setTt(tomTat(panelRef.current)), 300); return () => clearTimeout(t); }, [ghim, mo]);
+  // [2026-11-11 Nguyễn Văn Thủy] màn đổi tham số bằng mã (bấm tờ khai đã lưu, mở từ danh sách…): đọc lại tóm tắt khi bảng tham số vẽ lại (đóng góp)
+  useEffect(() => {
+    if (ghim) return;
+    const t = setTimeout(() => { const next = tomTat(panelRef.current); setTt((cur) => (cur.join('|') === next.join('|') ? cur : next)); }, 150);
+    return () => clearTimeout(t);
+  }, [panel, ghim]);
   // Bấm nút chính (Tìm kiếm / Xem) trong ngăn kéo: đóng ngăn, báo cáo hiện trọn bề ngang.
   const onPanelClick = (e: React.MouseEvent) => {
     if (ghim) return;

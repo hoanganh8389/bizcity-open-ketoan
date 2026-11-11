@@ -53,16 +53,25 @@ Tờ khai lần đầu và các lần bổ sung trước vẫn được giữ. D
 
 Cách khác theo quy định: hoá đơn mua vào về muộn có thể kê khai vào kỳ phát hiện thay vì khai bổ sung. Chọn kỳ kê khai ở màn ACC78.
 
-## Các tab kiểm tra
+## Các thẻ
 
-- **Phụ lục giảm thuế 8%**: từng mặt hàng bán ra thuế suất 8%, gồm giá trị chưa thuế, thuế 8% và số thuế được giảm (2%). Dùng để lập phụ lục kèm tờ khai theo Nghị định 174/2025/NĐ-CP.
-- **Hoá đơn mua vào từ 5 triệu**: hoá đơn có tổng thanh toán từ 5 triệu đồng trở lên. Muốn được khấu trừ thì cần có chứng từ thanh toán không dùng tiền mặt. Hoá đơn nào thiếu chứng từ thì trừ phần thuế của nó khỏi [25].
-- **Chi tiết theo thuế suất**: số hoá đơn, giá trị và thuế theo từng nhóm, kèm chỉ tiêu mà nhóm đó được đưa lên.
-- **Đối chiếu sổ cái**: so [24] với phát sinh Nợ 133, [28] với phát sinh Có 33311, [22] với dư Nợ 133 đầu kỳ.
+Thẻ theo mẫu tờ khai và phụ lục:
+
+- **Tờ khai**: đầu tờ khai [01a] ngành nghề, [01b] kỳ tính thuế, [02] lần đầu / [03] bổ sung lần thứ, [04] tên người nộp thuế, [05] mã số thuế, [06] [07] đại lý thuế (khai ở Thông tin người nộp thuế), rồi các chỉ tiêu.
+- **BKBR_01-1/GTGT** — Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ bán ra: từng hoá đơn chia 4 nhóm (1 không chịu thuế, 2 thuế suất 0%, 3 thuế suất 5%, 4 thuế suất 10% gồm hàng giảm còn 8%), mỗi nhóm có dòng **Tổng nhóm**.
+- **BKMV_01-2/GTGT** — Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ mua vào: nhóm 1 dùng riêng cho SXKD đủ điều kiện khấu trừ; nhóm 2, 3 (dùng chung, dự án đầu tư); tích **Lấy lên HHDV mua vào thuộc nhóm 4** để hiện cả hoá đơn không đủ điều kiện khấu trừ (đánh dấu ở ACC78).
+- **PL 204/2025/QH15** — Giảm thuế GTGT theo Nghị quyết 204/2025/QH15: I hàng mua vào thuế suất 8% (thuế [06]); II hàng bán ra, thuế suất 10% giảm còn 8%, thuế được giảm [08]; III chênh lệch [09] = [08] − [06].
+
+Thẻ quản trị (không nộp cơ quan thuế):
+
+- Cột **Chi nhánh** ở hai bảng kê: hoá đơn của chi nhánh / kho nào. Chọn chi nhánh ở bảng tham số để xem số của riêng chi nhánh đó; tờ khai nộp cơ quan thuế lập cho cả đơn vị (để trống chi nhánh).
+- **Hoá đơn mua vào từ 5 triệu**: muốn được khấu trừ thì cần chứng từ thanh toán không dùng tiền mặt; hoá đơn thiếu chứng từ thì trừ phần thuế khỏi [25].
+- **Chi tiết theo thuế suất**: số hoá đơn, giá trị, thuế theo từng nhóm và chỉ tiêu nhóm đó lên.
+- **Đối chiếu sổ cái**: [24] với phát sinh Nợ 133, [28] với phát sinh Có 33311, [22] với dư Nợ 133 đầu kỳ.
 
 ## Nộp tờ khai
 
-Bấm **Xuất Excel** để lấy tờ khai và phụ lục, sau đó nhập số vào phần mềm khai thuế hoặc cổng thuế điện tử. Phần mềm chưa xuất tệp XML để nộp thẳng: cấu trúc tệp XML của mẫu tờ khai mới chưa được kiểm chứng, nộp tệp sai cấu trúc sẽ bị từ chối.
+Bấm **Xuất Excel**: một tệp gồm các sheet Tờ khai, Bảng kê bán ra 01-1, Bảng kê mua vào 01-2, Giảm thuế NQ 204 (kèm cột Chi nhánh để đối chiếu nội bộ), sau đó nhập số vào phần mềm khai thuế hoặc cổng thuế điện tử. Phần mềm chưa xuất tệp XML để nộp thẳng: cấu trúc tệp XML của mẫu tờ khai mới chưa được kiểm chứng, nộp tệp sai cấu trúc sẽ bị từ chối.
 
 ## Mẫu áp dụng
 

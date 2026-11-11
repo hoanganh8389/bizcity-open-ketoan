@@ -54,9 +54,54 @@ interface VatData {
   deadline: string;
   previous: { status: string; carried43: number | null } | null;
   breakdown: { direction: string; group: string; rate: number; amount: number; tax: number; invoices: number; line: string }[];
-  reduced: { rows: { name: string; amount: number; rateBefore: number; rateAfter: number; tax: number; reducedTax: number }[]; totals: { amount: number; tax: number; reducedTax: number } };
+  reduced: { rows: { name: string; amount: number; rateBefore: number; rateAfter: number; tax: number; reducedTax: number }[]; totals: { amount: number; tax: number; reducedTax: number };
+    inputRows: { name: string; amount: number; tax: number }[]; inputTotals: { amount: number; tax: number } };
+  salesList: BkRow[]; purchaseList: BkRow[];
   bigPurchases: { invoiceNo: string; serial: string; date: string; seller: string; taxCode: string; docNo: string; branchCode: string; total: number; tax: number }[];
   ledger: { input: number; output: number; carried: number; inputDiff: number; outputDiff: number };
+}
+
+/** Một dòng bảng kê 01-1 / 01-2: một hoá đơn trong một nhóm. */
+interface BkRow { group: number; invoiceNo: string; serial: string; date: string; name: string; taxCode: string; amount: number; tax: number; branchCode: string; docNo: string }
+
+// [2026-11-11 Nguyễn Văn Thủy] nhóm bảng kê theo mẫu 01-1/GTGT, 01-2/GTGT (đóng góp)
+const BKBR_GROUPS = ['Hàng hóa, dịch vụ không chịu thuế giá trị gia tăng (GTGT):', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 0%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 5%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 10%:'];
+const BKMV_GROUPS = [
+  'Hàng hóa, dịch vụ dùng riêng cho SXKD chịu thuế GTGT và sử dụng cho các hoạt động cung cấp hàng hóa, dịch vụ không kê khai, nộp thuế GTGT đủ điều kiện khấu trừ thuế:',
+  'Hàng hóa, dịch vụ dùng chung cho SXKD chịu thuế và không chịu thuế đủ điều kiện khấu trừ thuế:',
+  'Hàng hóa, dịch vụ dùng cho dự án đầu tư đủ điều kiện được khấu trừ thuế:',
+  'Hàng hóa, dịch vụ không đủ điều kiện được khấu trừ:',
+];
+
+/** Bảng kê hoá đơn theo nhóm: tiêu đề nhóm, từng hoá đơn, "Tổng nhóm n"; cột Chi nhánh để xem theo từng kho. */
+function BangKe({ rows, groups, kind }: { rows: BkRow[]; groups: string[]; kind: 'ban' | 'mua' }) {
+  return (
+    <div className="table-wrap" style={{ maxHeight: 'calc(100vh - 330px)', overflow: 'auto' }}>
+      <table className="grid vat-bk">
+        <thead>
+          <tr><th rowSpan={2} style={{ width: 50 }}>STT</th><th colSpan={2}>{kind === 'ban' ? 'Hóa đơn, chứng từ bán ra' : 'Hóa đơn, chứng từ, biên lai nộp thuế'}</th>
+            <th rowSpan={2}>{kind === 'ban' ? 'Tên người mua' : 'Tên người bán'}</th><th rowSpan={2} style={{ width: 130 }}>{kind === 'ban' ? 'Mã số thuế người mua' : 'MST người bán'}</th>
+            <th rowSpan={2} className="num" style={{ width: 150 }}>{kind === 'ban' ? 'Doanh thu chưa có thuế GTGT' : 'Giá trị HHDV mua vào chưa có thuế'}</th>
+            <th rowSpan={2} className="num" style={{ width: 130 }}>Thuế GTGT</th>
+            <th rowSpan={2} style={{ width: 90 }} title="Chi nhánh / kho lập hoá đơn: xem quản trị theo nhiều chi nhánh (không có trên bảng kê nộp cơ quan thuế)">Chi nhánh</th></tr>
+          <tr><th style={{ width: 100 }}>Số hóa đơn</th><th style={{ width: 110 }}>Ngày, tháng, năm lập hóa đơn</th></tr>
+        </thead>
+        <tbody>
+          {groups.map((g, gi) => {
+            const list = rows.filter((r) => r.group === gi + 1);
+            return [
+              <tr key={`h${gi}`} className="bold"><td colSpan={8}>{gi + 1}. {g}</td></tr>,
+              ...list.map((r, i) => (
+                <tr key={`${gi}-${i}`}><td className="num">{i + 1}</td><td className="mono">{r.invoiceNo}</td><td>{date(r.date)}</td><td>{r.name}</td><td className="mono">{r.taxCode}</td>
+                  <td className="num"><Money value={r.amount} blankZero={false} /></td><td className="num"><Money value={r.tax} blankZero={false} /></td><td className="mono">{r.branchCode}</td></tr>
+              )),
+              <tr key={`t${gi}`} className="bold"><td colSpan={5}>Tổng nhóm {gi + 1}</td><td className="num"><Money value={list.reduce((x, r) => x + r.amount, 0)} blankZero={false} /></td><td className="num"><Money value={list.reduce((x, r) => x + r.tax, 0)} blankZero={false} /></td><td /></tr>,
+            ];
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function VatReturnPage() {
@@ -64,7 +109,10 @@ export function VatReturnPage() {
   const { can } = useAuth();
   const now = new Date();
   const [f, setF] = useState({ periodKind: 'month' as 'month' | 'quarter', year: now.getFullYear(), period: now.getMonth() + 1, branchCodes: '' });
-  const [tab, setTab] = useState<'phu-luc' | 'mua-vao' | 'thue-suat' | 'so-cai'>('phu-luc');
+  // [2026-11-11 Nguyễn Văn Thủy] thẻ như mẫu: Tờ khai · bảng kê bán ra · bảng kê mua vào · phụ lục giảm thuế; thêm thẻ quản trị (đóng góp)
+  const [tab, setTab] = useState<'to-khai' | 'bkbr' | 'bkmv' | 'pl204' | 'mua-vao' | 'thue-suat' | 'so-cai'>('to-khai');
+  const [nhom4, setNhom4] = useState(false);
+  const taxpayer = useQuery({ queryKey: ['taxpayer'], queryFn: () => api.get<{ name?: string; taxCode?: string; agentName?: string; agentTaxCode?: string; agentContract?: string }>('/api/v1/taxpayer'), staleTime: 60_000 });
   const [supplementing, setSupplementing] = useState(false);
   const q = useQuery({ queryKey: ['vat-return', f], queryFn: () => api.get<VatData>('/api/v1/vat-returns/build', f) });
   const d = q.data;
@@ -94,15 +142,41 @@ export function VatReturnPage() {
     }
     return <Money value={values[k] ?? 0} blankZero={false} />;
   };
+  const purchases = (d?.purchaseList ?? []).filter((r) => nhom4 || r.group !== 4);
   const exportExcel = async () => {
     if (!d) return;
     const XLSX = await import('xlsx');
-    const rows = [['TỜ KHAI THUẾ GIÁ TRỊ GIA TĂNG (Mẫu số 01/GTGT)'], [`Kỳ tính thuế: ${d.label}`], [], ['STT', 'Chỉ tiêu', 'Mã chỉ tiêu (giá trị)', 'Giá trị HHDV (chưa thuế)', 'Mã chỉ tiêu (thuế)', 'Thuế GTGT'],
-      ...d.form.map((l) => [l.stt, l.name, l.value ? `[${l.value}]` : '', l.value ? values[l.value] ?? 0 : '', l.tax ? `[${l.tax}]` : '', l.tax ? values[l.tax] ?? 0 : ''])];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '01-GTGT');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Tên hàng hoá, dịch vụ', 'Giá trị chưa thuế', 'Thuế suất quy định', 'Thuế suất sau giảm', 'Thuế GTGT được giảm'], ...d.reduced.rows.map((r) => [r.name, r.amount, '10%', '8%', r.reducedTax])]), 'Phu luc giam thue');
-    XLSX.writeFile(wb, `to-khai-01-gtgt-${f.year}-${f.periodKind === 'month' ? 'T' : 'Q'}${f.period}.xlsx`);
+    const sheet = (name: string, rows: (string | number)[][]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), name);
+    sheet('TO KHAI THUE GTGT', [['TỜ KHAI THUẾ GIÁ TRỊ GIA TĂNG'], [`Kỳ tính thuế: ${d.label}`], [], ['STT', 'Chỉ tiêu', 'Mã', 'Giá trị hàng hóa, dịch vụ (chưa có thuế giá trị gia tăng)', 'Mã', 'Thuế giá trị gia tăng'],
+      ...d.form.map((l) => [l.stt, l.name, l.value ? `[${l.value}]` : '', l.value ? (l.value === '21' ? (values['21'] ? 'Có' : 'Không') : values[l.value] ?? 0) : '', l.tax ? `[${l.tax}]` : '', l.tax ? values[l.tax] ?? 0 : ''])]);
+    const bk = (title: string, groups: string[], rows: BkRow[], kind: 'ban' | 'mua') => {
+      const out: (string | number)[][] = [[title], [`Kỳ tính thuế: ${d.label}`], [],
+        ['STT', 'Số hóa đơn', 'Ngày, tháng, năm lập hóa đơn', kind === 'ban' ? 'Tên người mua' : 'Tên người bán', kind === 'ban' ? 'Mã số thuế người mua' : 'Mã số thuế người bán', kind === 'ban' ? 'Doanh thu chưa có thuế GTGT' : 'Giá trị HHDV mua vào chưa có thuế', 'Thuế GTGT', 'Chi nhánh']];
+      groups.forEach((g, gi) => {
+        const list = rows.filter((r) => r.group === gi + 1);
+        out.push([`${gi + 1}. ${g}`]);
+        list.forEach((r, i) => out.push([i + 1, r.invoiceNo, date(r.date), r.name, r.taxCode, r.amount, r.tax, r.branchCode]));
+        out.push([`Tổng nhóm ${gi + 1}`, '', '', '', '', list.reduce((x, r) => x + r.amount, 0), list.reduce((x, r) => x + r.tax, 0)]);
+      });
+      return out;
+    };
+    const ban = bk('BẢNG KÊ HOÁ ĐƠN, CHỨNG TỪ HÀNG HOÁ, DỊCH VỤ BÁN RA', BKBR_GROUPS, d.salesList, 'ban');
+    const taxable = d.salesList.filter((r) => r.group > 1);
+    ban.push(['Tổng doanh thu hàng hóa, dịch vụ bán ra chịu thuế GTGT:', '', '', '', '', taxable.reduce((x, r) => x + r.amount, 0)], ['Tổng số thuế GTGT của hàng hóa, dịch vụ bán ra:', '', '', '', '', '', d.salesList.reduce((x, r) => x + r.tax, 0)]);
+    sheet('BKBR 01-1 GTGT', ban);
+    const mua = bk('BẢNG KÊ HOÁ ĐƠN, CHỨNG TỪ CỦA HÀNG HOÁ, DỊCH VỤ MUA VÀO', nhom4 ? BKMV_GROUPS : BKMV_GROUPS.slice(0, 3), purchases, 'mua');
+    mua.push(['Tổng giá trị hàng hóa, dịch vụ mua vào:', '', '', '', '', purchases.reduce((x, r) => x + r.amount, 0)], ['Tổng thuế GTGT của hàng hóa, dịch vụ mua vào:', '', '', '', '', '', purchases.reduce((x, r) => x + r.tax, 0)],
+      ['Tổng thuế GTGT của HHDV mua vào đủ điều kiện được khấu trừ:', '', '', '', '', '', purchases.filter((r) => r.group !== 4).reduce((x, r) => x + r.tax, 0)]);
+    sheet('BKMV 01-2 GTGT', mua);
+    const r = d.reduced;
+    sheet('GIAM THUE NQ204', [['GIẢM THUẾ GIÁ TRỊ GIA TĂNG THEO NGHỊ QUYẾT SỐ 204/2025/QH15'], [`Kỳ tính thuế: ${d.label}`], [],
+      ['I. Hàng hóa, dịch vụ mua vào trong kỳ được áp dụng mức thuế suất thuế giá trị gia tăng 8%'], ['STT', 'Tên hàng hóa, dịch vụ', 'Giá trị hàng hóa, dịch vụ chưa có thuế GTGT', 'Thuế GTGT'],
+      ...r.inputRows.map((x, i) => [i + 1, x.name, x.amount, x.tax]), ['', 'Tổng cộng', r.inputTotals.amount, r.inputTotals.tax], [],
+      ['II. Hàng hóa, dịch vụ bán ra trong kỳ'], ['STT', 'Tên hàng hóa, dịch vụ', 'Doanh thu hàng hóa, dịch vụ chịu thuế', 'Thuế suất theo quy định', 'Thuế suất sau giảm', 'Thuế GTGT được giảm'],
+      ...r.rows.map((x, i) => [i + 1, x.name, x.amount, '10%', '8%', x.reducedTax]), ['', 'Tổng cộng', r.totals.amount, '', '', r.totals.reducedTax], [],
+      ['III. Chênh lệch thuế GTGT của hàng hoá, dịch vụ bán ra và mua vào trong kỳ được áp dụng mức thuế suất thuế giá trị gia tăng 8%: [09] = [08] - [06]', '', r.totals.reducedTax - r.inputTotals.tax]]);
+    XLSX.writeFile(wb, `to-khai-01-gtgt-${f.year}-${f.periodKind === 'month' ? 'T' : 'Q'}${f.period}${f.branchCodes ? `-${f.branchCodes.replace(/,/g, '_')}` : ''}.xlsx`);
   };
   const years = Array.from({ length: 6 }, (_, i) => now.getFullYear() - 3 + i);
 
@@ -190,29 +264,67 @@ export function VatReturnPage() {
                   {d.revisions.filter((r) => r.supplement).map((r) => <KhbsTable key={r.revision} revision={r.revision} khbs={r.supplement!} />)}
                 </details>
               )}
-              <div className="table-wrap">
-                <table className="grid vat-form">
-                  <thead><tr><th style={{ width: 50 }}>STT</th><th>Chỉ tiêu</th><th style={{ width: 70 }}>Mã</th><th className="num" style={{ width: 190 }}>Giá trị HHDV (chưa thuế)</th><th style={{ width: 70 }}>Mã</th><th className="num" style={{ width: 190 }}>Thuế GTGT</th></tr></thead>
-                  <tbody>
-                    {d.form.map((l, i) => (
-                      <tr key={i} className={l.bold ? 'bold' : ''}>
-                        <td>{l.stt}</td>
-                        <td>{l.name}</td>
-                        <td className="mono">{l.value ? `[${l.value}]` : ''}</td>
-                        <td className="num">{cell(l.value)}</td>
-                        <td className="mono">{l.tax ? `[${l.tax}]` : ''}</td>
-                        <td className="num">{cell(l.tax)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="tabs" style={{ marginTop: 12 }}>
-                {([['phu-luc', `Phụ lục giảm thuế 8% (${d.reduced.rows.length})`], ['mua-vao', `Hoá đơn mua vào từ 5 triệu (${d.bigPurchases.length})`], ['thue-suat', 'Chi tiết theo thuế suất'], ['so-cai', 'Đối chiếu sổ cái']] as const).map(([k, l]) => (
+              <div className="tabs" style={{ marginTop: 4 }}>
+                {([['to-khai', 'Tờ khai'], ['bkbr', `BKBR_01-1/GTGT (${d.salesList.length})`], ['bkmv', `BKMV_01-2/GTGT (${purchases.length})`], ['pl204', `PL 204/2025/QH15 (${d.reduced.rows.length + d.reduced.inputRows.length})`], ['mua-vao', `Hoá đơn mua vào từ 5 triệu (${d.bigPurchases.length})`], ['thue-suat', 'Chi tiết theo thuế suất'], ['so-cai', 'Đối chiếu sổ cái']] as const).map(([k, l]) => (
                   <button key={k} className={`tab ${tab === k ? 'active' : ''}`} onClick={() => setTab(k)}>{l}</button>
                 ))}
               </div>
-              {tab === 'phu-luc' && (d.reduced.rows.length ? (
+              {tab === 'to-khai' && (
+                <>
+                  <div className="card-body vat-head">
+                    <div className="vat-title">TỜ KHAI THUẾ GIÁ TRỊ GIA TĂNG (01/GTGT)</div>
+                    <div className="muted" style={{ textAlign: 'center' }}>(Áp dụng đối với người nộp thuế tính thuế theo phương pháp khấu trừ có hoạt động sản xuất kinh doanh)</div>
+                    <div className="vat-info">
+                      <span>[01a] Tên hoạt động sản xuất kinh doanh:</span><b>Hoạt động sản xuất kinh doanh thông thường</b>
+                      <span>[01b] Kỳ tính thuế:</span><b>{d.label}</b>
+                      <span>[02] Lần đầu: {d.saved?.revision ? '☐' : '☑'}</span><b>[03] Bổ sung lần thứ: {d.saved?.revision || ''}</b>
+                      <span>[04] Tên người nộp thuế:</span><b>{taxpayer.data?.name ?? ''}</b>
+                      <span>[05] Mã số thuế:</span><b className="mono">{taxpayer.data?.taxCode ?? ''}</b>
+                      <span>[06] Tên đại lý thuế:</span><b>{taxpayer.data?.agentName ?? ''}</b>
+                      <span>[07] Mã số thuế:</span><b className="mono">{taxpayer.data?.agentTaxCode ?? ''}</b>
+                      <span>Phạm vi số liệu:</span><b>{f.branchCodes ? `Chi nhánh ${f.branchCodes} (xem quản trị; tờ khai nộp cơ quan thuế lập cho cả đơn vị)` : 'Cả đơn vị'}</b>
+                    </div>
+                  </div>
+              <div className="table-wrap">
+                  <table className="grid vat-form">
+                    <thead><tr><th style={{ width: 50 }}>STT</th><th>Chỉ tiêu</th><th style={{ width: 70 }}>Mã</th><th className="num" style={{ width: 190 }}>Giá trị HHDV (chưa thuế)</th><th style={{ width: 70 }}>Mã</th><th className="num" style={{ width: 190 }}>Thuế GTGT</th></tr></thead>
+                    <tbody>
+                      {d.form.map((l, i) => (
+                        <tr key={i} className={l.bold ? 'bold' : ''}>
+                          <td>{l.stt}</td>
+                          <td>{l.name}</td>
+                          <td className="mono">{l.value ? `[${l.value}]` : ''}</td>
+                          <td className="num">{cell(l.value)}</td>
+                          <td className="mono">{l.tax ? `[${l.tax}]` : ''}</td>
+                          <td className="num">{cell(l.tax)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                </>
+              )}
+              {tab === 'bkbr' && <BangKe rows={d.salesList} groups={BKBR_GROUPS} kind="ban" />}
+              {tab === 'bkmv' && (
+                <>
+                  <label style={{ display: 'inline-flex', gap: 6, margin: '8px 12px' }}><input type="checkbox" checked={nhom4} onChange={(e) => setNhom4(e.target.checked)} /> Lấy lên HHDV mua vào thuộc nhóm 4 - Hàng hóa, dịch vụ không đủ điều kiện được khấu trừ</label>
+                  <BangKe rows={purchases} groups={nhom4 ? BKMV_GROUPS : BKMV_GROUPS.slice(0, 3)} kind="mua" />
+                </>
+              )}
+              {tab === 'pl204' && (
+                <div className="card-body">
+                  <div className="vat-title">GIẢM THUẾ GIÁ TRỊ GIA TĂNG THEO NGHỊ QUYẾT SỐ 204/2025/QH15</div>
+                  <div className="field-title">I. Hàng hóa, dịch vụ mua vào trong kỳ được áp dụng mức thuế suất thuế giá trị gia tăng 8%</div>
+                  {d.reduced.inputRows.length ? (
+                    <DataGrid storageKey="acc66-giam-thue-mua" rows={d.reduced.inputRows} rowKey={(r) => r.name} exportName="phu-luc-giam-thue-mua-vao"
+                      columns={[
+                        { key: 'name', header: 'Tên hàng hóa, dịch vụ' },
+                        { key: 'amount', header: 'Giá trị hàng hóa, dịch vụ chưa có thuế GTGT', type: 'money', sum: true },
+                        { key: 'tax', header: 'Thuế GTGT', type: 'money', sum: true, bold: true },
+                      ] satisfies Column<VatData['reduced']['inputRows'][number]>[]} />
+                  ) : <Empty text="Kỳ này không có hàng mua vào thuế suất 8%" />}
+                  <div className="field-title" style={{ marginTop: 12 }}>II. Hàng hóa, dịch vụ bán ra trong kỳ</div>
+                  {d.reduced.rows.length ? (
                 <DataGrid storageKey="acc66-giam-thue" rows={d.reduced.rows} rowKey={(r) => r.name} exportName="phu-luc-giam-thue-gtgt"
                   columns={[
                     { key: 'name', header: 'Tên hàng hoá, dịch vụ' },
@@ -222,7 +334,12 @@ export function VatReturnPage() {
                     { key: 'tax', header: 'Thuế GTGT 8%', type: 'money', sum: true },
                     { key: 'reducedTax', header: 'Thuế GTGT được giảm (2%)', type: 'money', sum: true, bold: true },
                   ] satisfies Column<VatData['reduced']['rows'][number]>[]} />
-              ) : <Empty text="Kỳ này không có hàng bán ra thuế suất 8%" />)}
+              ) : <Empty text="Kỳ này không có hàng bán ra thuế suất 8%" />}
+                  <div className="alert alert-info" style={{ marginTop: 12 }}>
+                    III. Chênh lệch thuế GTGT của hàng hoá, dịch vụ bán ra và mua vào trong kỳ được áp dụng mức thuế suất thuế giá trị gia tăng 8%: [09] = [08] − [06] = {money(d.reduced.totals.reducedTax, { blankZero: false })} − {money(d.reduced.inputTotals.tax, { blankZero: false })} = <b>{money(d.reduced.totals.reducedTax - d.reduced.inputTotals.tax, { blankZero: false })}</b> đồng
+                  </div>
+                </div>
+              )}
               {tab === 'mua-vao' && (d.bigPurchases.length ? (
                 <DataGrid storageKey="acc66-mua-vao" rows={d.bigPurchases} rowKey={(r, i) => `${r.serial}-${r.invoiceNo}-${i}`} exportName="hoa-don-mua-vao-tu-5-trieu"
                   note="cần chứng từ thanh toán không dùng tiền mặt mới được khấu trừ"

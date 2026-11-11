@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Tờ khai thuế GTGT (ACC66) theo mẫu chuẩn: bảng kê 01-1, 01-2, phụ lục giảm thuế NQ 204 đủ ba phần <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Thẻ như mẫu: **Tờ khai** (thêm đầu tờ khai [01a]–[07]) · **BKBR_01-1/GTGT** bảng kê bán ra theo từng hoá đơn, 4 nhóm (không chịu thuế, 0%, 5%, 10% gồm hàng giảm còn 8%), Tổng nhóm · **BKMV_01-2/GTGT** bảng kê mua vào, nhóm 1–3, ô "Lấy lên HHDV mua vào thuộc nhóm 4" · **PL 204/2025/QH15** đủ I mua vào 8% ([06]), II bán ra ([08]), III chênh lệch [09] = [08] − [06]. Thẻ quản trị giữ: hoá đơn mua vào từ 5 triệu, chi tiết theo thuế suất, đối chiếu sổ cái.
+- Quản trị nhiều chi nhánh: cột Chi nhánh ở hai bảng kê; Xuất Excel một tệp bốn sheet (Tờ khai, BKBR 01-1, BKMV 01-2, Giảm thuế NQ 204) kèm cột Chi nhánh.
+- Sửa: dòng tóm tắt tham số của các màn báo cáo không đổi khi tham số đổi bằng mã (vd bấm tờ khai đã lưu): nay đọc lại mỗi khi bảng tham số vẽ lại.
+
 ### Chặn tài khoản ngoài bảng (loại 0) trên bút toán Nợ / Có; sửa Lập BCTC sau khi thử đủ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - **Sửa**: B01 năm 2026 lệch 666 đồng (Tổng tài sản ≠ Tổng nguồn vốn) do phiếu thu PT26-000001 ghi Nợ 1111 / Có 0011 (tài khoản ngoài bảng). Sổ cái nay từ chối mọi bút toán có tài khoản loại 0 (trừ bút toán đảo để huỷ được chứng từ đã lỡ ghi); ô chọn tài khoản ghi sổ không còn hiện tài khoản loại 0. Phiếu PT26-000001 trên dữ liệu thử đã huỷ: B01 cân.
 - Lập BCTC: bấm Xem mở đúng chế độ xem (trước mở thẳng chế độ sửa); "Lấy lại dữ liệu" chỉ bấm được khi Sửa; bản in ghi ngày lập ở dòng "Ngày … tháng … năm …"; số âm ghi trong ngoặc đơn theo mẫu.
