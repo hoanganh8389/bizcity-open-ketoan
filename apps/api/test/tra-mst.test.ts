@@ -2,8 +2,9 @@
  * Tra cứu doanh nghiệp theo mã số thuế (form NCC / khách hàng) — phần không cần mạng: chuẩn hoá MST, báo sai định dạng trước khi
  * gọi ra ngoài. Phần gọi doanhnghiep.vn / VietQR thử tay (phụ thuộc mạng và giới hạn lượt của nguồn).
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { normalizeTaxCode } from '../src/modules/partners/tra-mst.js';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { normalizeTaxCode, resetTaxLookup } from '../src/modules/partners/tra-mst.js';
+import { env } from '../src/config/env.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;
@@ -25,4 +26,52 @@ describe('Tra cứu mã số thuế', () => {
     expect(r.status).toBe(400);
     expect(r.body.error.message).toMatch(/không đúng dạng/);
   });
+});
+
+// [2026-11-11 11:26 AM kiennt] HT03 — VietQR giới hạn ~2 lượt / giây: gộp request trùng, chờ theo Retry-After, hết lượt báo RATE_LIMITED (không phải VALIDATION_ERROR)
+describe('Tra cứu mã số thuế — giới hạn lượt của VietQR (fetch giả)', () => {
+  const savedKey = env.DOANHNGHIEP_API_KEY;
+  const ok = (mst: string) => new Response(JSON.stringify({ code: '00', data: { id: mst, name: 'CÔNG TY THỬ', shortName: 'THỬ', address: 'Hà Nội', status: 'NNT đang hoạt động' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+  const limited = () => new Response(JSON.stringify({ code: '429' }), { status: 429, headers: { 'retry-after': '1', 'content-type': 'application/json' } });
+  const stubVietQr = (reply: (n: number, mst: string) => Response) => {
+    let n = 0;
+    const real = globalThis.fetch;
+    const spy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (!url.includes('api.vietqr.io')) return real(input, init);
+      n++;
+      return reply(n, url.split('/').pop()!);
+    });
+    vi.stubGlobal('fetch', spy);
+    return () => n;
+  };
+  beforeAll(() => { env.DOANHNGHIEP_API_KEY = ''; });
+  afterEach(() => { vi.unstubAllGlobals(); resetTaxLookup(); });
+  afterAll(() => { env.DOANHNGHIEP_API_KEY = savedKey; });
+
+  it('hai yêu cầu cùng MST cùng lúc (rời ô tự tra + bấm nút): chỉ một lượt gọi VietQR', async () => {
+    const count = stubVietQr((_, mst) => ok(mst));
+    const [a, b] = await Promise.all([call(t, 'GET', '/api/v1/partners/tax-lookup/0109000001'), call(t, 'GET', '/api/v1/partners/tax-lookup/0109000001')]);
+    expect(a.status).toBe(200);
+    expect(b.status).toBe(200);
+    expect(a.body.data.company.name).toBe('CÔNG TY THỬ');
+    expect(count()).toBe(1);
+  });
+
+  it('VietQR trả 429 (Retry-After: 1) rồi 200: tự chờ, thử lại và tra được', async () => {
+    const count = stubVietQr((n, mst) => (n === 1 ? limited() : ok(mst)));
+    const r = await call(t, 'GET', '/api/v1/partners/tax-lookup/0109000002');
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data.found).toBe(true);
+    expect(count()).toBe(2);
+  });
+
+  it('VietQR hết lượt mãi: trả 429 RATE_LIMITED (thử lại được), không phải VALIDATION_ERROR', async () => {
+    const count = stubVietQr(() => limited());
+    const r = await call(t, 'GET', '/api/v1/partners/tax-lookup/0109000003');
+    expect(r.status).toBe(429);
+    expect(r.body.error.code).toBe('RATE_LIMITED');
+    expect(r.body.error.message).toMatch(/giới hạn lượt tra/);
+    expect(count()).toBe(4);
+  }, 20_000);
 });

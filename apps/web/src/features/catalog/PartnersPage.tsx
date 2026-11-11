@@ -28,6 +28,8 @@ import { nhapLoai } from '@/lib/nhapExcel';
 import { ListPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
 import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
+// [2026-11-11 10:48 AM kiennt] HT03 — ô mã số thuế có tra cứu tách ra components/TaxCodeField (dùng chung với Thông tin đơn vị)
+import { TaxCodeField } from '@/components/TaxCodeField';
 import type { CatalogWarnAck } from '@ketoan/contracts';
 
 interface Partner {
@@ -450,63 +452,6 @@ function PartnerForm({ value, groups, employees, onClose, onSaved }: { value: Pa
       {invalid.length > 0 && <div className="alert alert-bad full">Chưa nhập đủ: {invalid.join(', ')}</div>}
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
-  );
-}
-
-interface TaxCompany { taxCode: string; name: string; internationalName: string; shortName: string; address: string; representative: string; status: string; active: boolean | null; industry: string; registeredAt: string; source: string }
-interface TaxLookup { found: boolean; company: TaxCompany | null; existing: Partner[]; cached: boolean }
-type TaxFill = { taxCode: string; name: string; shortName: string; address: string; representative: string };
-
-/**
- * Ô MÃ SỐ THUẾ có tra cứu: gõ MST rồi bấm "Lấy thông tin" (hoặc Enter) → máy chủ tra doanh nghiệp (doanhnghiep.vn / VietQR,
- * dữ liệu Cục Thuế) → điền tên trên hoá đơn, địa chỉ đăng ký, tên viết tắt, người đại diện. Bấm nút = ghi đè các ô đó theo kết quả;
- * tự tra khi rời ô (thêm mới, chưa có tên) = chỉ điền ô đang trống. Báo trạng thái ngừng hoạt động và MST đã có ở đối tượng khác.
- */
-function TaxCodeField({ value, onChange, onFill, autoWhenEmpty, onBlurCheck, excludeCode }: {
-  value: string; onChange: (v: string) => void; onFill: (f: TaxFill, overwrite: boolean) => void; autoWhenEmpty: boolean; onBlurCheck?: (v: string) => void; excludeCode?: string;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState<TaxLookup | null>(null);
-  const [err, setErr] = useState('');
-  const last = useRef('');
-  const run = async (overwrite: boolean) => {
-    const mst = value.trim();
-    if (!mst) { setErr('Nhập mã số thuế trước'); return; }
-    setBusy(true); setErr(''); last.current = mst;
-    try {
-      const r = await api.get<TaxLookup>(`/api/v1/partners/tax-lookup/${encodeURIComponent(mst)}`);
-      setRes(r);
-      if (r.company) onFill({ taxCode: r.company.taxCode, name: r.company.name, shortName: r.company.shortName, address: r.company.address, representative: r.company.representative }, overwrite);
-    } catch (e) { setRes(null); setErr(errorText(e)); } finally { setBusy(false); }
-  };
-  const dup = (res?.existing ?? []).filter((p) => p.code !== excludeCode);
-  const c = res?.company;
-  return (
-    <Field label="Mã số thuế — nhập rồi bấm Lấy thông tin" full>
-      <div className="row" style={{ gap: 6 }}>
-        <input className="input mono" style={{ flex: 1 }} value={value} placeholder="vd 0104076740 — tự điền tên, địa chỉ theo Cục Thuế"
-          onChange={(e) => { onChange(e.target.value); setRes(null); setErr(''); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void run(true); } }}
-          onBlur={(e) => {
-            const val = e.target.value.trim();
-            onBlurCheck?.(val);
-            if (autoWhenEmpty && val && val !== last.current && /^[\d\s.-]{10,16}$/.test(val)) void run(false);
-          }} />
-        <button type="button" className="btn btn-sm btn-primary" disabled={busy || !value.trim()} onClick={() => void run(true)} title="Tra cứu doanh nghiệp theo mã số thuế và điền tên, địa chỉ, tên viết tắt, người đại diện">
-          {busy ? 'Đang tra…' : 'Lấy thông tin'}
-        </button>
-      </div>
-      {err && <span style={{ fontSize: 12, color: 'var(--bad, #dc2626)' }}>{err}</span>}
-      {res && !c && <span className="muted" style={{ fontSize: 12 }}>Không tìm thấy doanh nghiệp có mã số thuế này — kiểm tra lại MST hoặc nhập tay.</span>}
-      {c && (
-        <span style={{ fontSize: 12, color: c.active === false ? 'var(--bad, #dc2626)' : 'var(--ok, #15803d)' }}>
-          {c.active === false ? '⚠ ' : '✓ '}{c.name}{c.status ? ` — ${c.status}` : ''}{c.active === false ? ' (kiểm tra trước khi giao dịch)' : ''}
-          {c.industry ? ` · ngành: ${c.industry}` : ''}{c.registeredAt ? ` · thành lập ${c.registeredAt.split('-').reverse().join('/')}` : ''}
-          <span className="muted"> · nguồn {c.source === 'vietqr' ? 'Cục Thuế (qua VietQR)' : c.source}</span>
-        </span>
-      )}
-      {dup.length > 0 && <span style={{ fontSize: 12, color: 'var(--bad, #dc2626)' }}>Mã số thuế này đã có ở: {dup.map((p) => `${p.code} - ${p.name}`).join('; ')} — mỗi MST chỉ dùng cho một đối tượng.</span>}
-    </Field>
   );
 }
 
