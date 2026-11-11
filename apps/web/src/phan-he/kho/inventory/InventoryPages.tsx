@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, errorText } from '@/lib/api';
-import { defaultFrom, defaultTo, money, periodFrom } from '@/lib/format';
+import { defaultFrom, defaultTo, kyText, money, periodFrom } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
@@ -167,14 +167,14 @@ const STOCK_VIEWS: [string, string][] = [
 ];
 const figureCols = (stock: boolean, extra: boolean): Column<StockFigures>[] => [
   ...(stock ? ([
-    { key: 'openingQty', header: 'SL tồn đầu', type: 'qty', sum: true },
-    { key: 'openingValue', header: 'TT Tồn đầu', type: 'money', sum: true },
-    { key: 'inQty', header: 'SL nhập', type: 'qty', sum: true },
-    { key: 'inValue', header: 'TT nhập', type: 'money', sum: true },
-    { key: 'outQty', header: 'SL xuất', type: 'qty', sum: true },
-    { key: 'outValue', header: 'TT xuất', type: 'money', sum: true },
-    { key: 'closingQty', header: 'SL tồn cuối', type: 'qty', sum: true },
-    { key: 'closingValue', header: 'TT tồn cuối', type: 'money', sum: true },
+    { key: 'openingQty', header: 'Số lượng', band: 'Đầu kỳ', type: 'qty', sum: true },
+    { key: 'openingValue', header: 'Giá trị', band: 'Đầu kỳ', type: 'money', sum: true },
+    { key: 'inQty', header: 'Số lượng', band: 'Nhập kho', type: 'qty', sum: true },
+    { key: 'inValue', header: 'Giá trị', band: 'Nhập kho', type: 'money', sum: true },
+    { key: 'outQty', header: 'Số lượng', band: 'Xuất kho', type: 'qty', sum: true },
+    { key: 'outValue', header: 'Giá trị', band: 'Xuất kho', type: 'money', sum: true },
+    { key: 'closingQty', header: 'Số lượng', band: 'Cuối kỳ', type: 'qty', sum: true },
+    { key: 'closingValue', header: 'Giá trị', band: 'Cuối kỳ', type: 'money', sum: true },
   ] satisfies Column<StockFigures>[]) : []),
   { key: 'purchaseQty', header: 'Số lượng', band: 'Mua hàng (trừ trả lại)', type: 'qty', sum: true, hidden: !extra },
   { key: 'purchaseValue', header: 'Giá trị', band: 'Mua hàng (trừ trả lại)', type: 'money', sum: true, hidden: !extra },
@@ -184,9 +184,34 @@ const figureCols = (stock: boolean, extra: boolean): Column<StockFigures>[] => [
   ] satisfies Column<StockFigures>[]) : []),
 ];
 
+const FIG_KEYS = ['openingQty', 'openingValue', 'inQty', 'inValue', 'outQty', 'outValue', 'closingQty', 'closingValue', 'purchaseQty', 'purchaseValue', 'cogsQty', 'cogsValue', 'uncosted'] as const;
+type ItemRow = StockRow & { kind: 'group' | 'data' | 'subtotal'; label?: string };
+/** Tổng hợp tồn kho theo mặt hàng: nhiều kho (chi nhánh) thì nhóm "Kho: …" + Cộng nhóm; gộp thì cộng các kho theo mã. Dòng thiếu tên lấy tên ở kho khác. */
+function buildItemRows(rows: StockRow[], merge: boolean): ItemRow[] {
+  const names = new Map<string, string>();
+  for (const r of rows) if (r.name && r.name !== r.sku && !names.has(r.sku)) names.set(r.sku, r.name);
+  const named = rows.map((r) => ({ ...r, name: names.get(r.sku) ?? r.name }));
+  const add = (a: StockRow, b: StockRow) => { for (const k of FIG_KEYS) a[k] += b[k]; };
+  if (merge) {
+    const by = new Map<string, StockRow>();
+    for (const r of named) { const x = by.get(r.sku); if (x) add(x, r); else by.set(r.sku, { ...r, branchCode: '', branchName: '' }); }
+    return [...by.values()].sort((a, b) => a.sku.localeCompare(b.sku)).map((r) => ({ ...r, kind: 'data' }));
+  }
+  const branches = [...new Set(named.map((r) => r.branchCode))].sort();
+  if (branches.length < 2) return named.map((r) => ({ ...r, kind: 'data' }));
+  return branches.flatMap((b): ItemRow[] => {
+    const rs = named.filter((r) => r.branchCode === b).sort((x, y) => x.sku.localeCompare(y.sku));
+    const sub = { ...rs[0]!, sku: '', name: `Cộng nhóm: ${b}`, unit: '' };
+    for (const k of FIG_KEYS) sub[k] = 0;
+    rs.forEach((r) => add(sub, r));
+    return [{ ...sub, kind: 'group', label: `Kho: ${b}${rs[0]!.branchName ? ` - ${rs[0]!.branchName}` : ''}` }, ...rs.map((r): ItemRow => ({ ...r, kind: 'data' })), { ...sub, kind: 'subtotal' }];
+  });
+}
+
 export function StockMovementPage() {
   const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', warehouseCodes: '', search: '', groups: '' });
   const [view, setView] = useState('item');
+  const [merge, setMerge] = useState(false);
   const [search, setSearch] = useState('');
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const q = useQuery({ queryKey: ['stock-movement', f], enabled: view === 'item', queryFn: () => api.get<StockData>('/api/v1/inventory/stock-movement', f) });
@@ -202,7 +227,7 @@ export function StockMovementPage() {
   };
   return (
     <>
-      <PageHeader title="Báo cáo nhập xuất tồn hàng hoá" code="ACC83" subtitle="Tồn đầu, nhập, xuất, tồn cuối, mua hàng, giá vốn theo mặt hàng hoặc gom theo nhóm, loại, nhãn hiệu, ngành hàng, chi nhánh, nhà cung cấp" helpKey="nhap-xuat-ton" />
+      <PageHeader title="Tổng hợp tồn kho" code="ACC83" subtitle="Tồn đầu, nhập, xuất, tồn cuối, mua hàng, giá vốn theo mặt hàng hoặc gom theo nhóm, loại, nhãn hiệu, ngành hàng, chi nhánh, nhà cung cấp" helpKey="nhap-xuat-ton" />
       <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC83" templates={STOCK_TEMPLATES} disabled={!d} getDocs={sheet} />}
         filters={
@@ -212,29 +237,33 @@ export function StockMovementPage() {
               <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouseCodes, onChange: (warehouseCodes) => set({ warehouseCodes }) }} />
               <ChonNhomHang value={f.groups} onChange={(groups) => set({ groups })} />
               <div className="field"><label>Xem theo</label><select className="select input" value={view} onChange={(e) => setView(e.target.value)}>{STOCK_VIEWS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
+              {view === 'item' && <label className="checkbox"><input type="checkbox" checked={merge} onChange={(e) => setMerge(e.target.checked)} /> Cộng gộp các kho</label>}
               <div className="field"><label>Mã / tên hàng</label><input className="input w-md" value={search} onChange={(e) => setSearch(e.target.value)} onBlur={() => set({ search: search.trim() })} /></div>
             </form>
           </>
         }
       >
         <div className="card">
+          <div className="rp-tieu-de"><h2>TỔNG HỢP TỒN KHO</h2><i>{kyText(f.from, f.to)}</i></div>
           <ErrorBox error={q.error ? errorText(q.error) : g.error ? errorText(g.error) : null} />
           {g.data?.purchaseOnly && view !== 'item' && <div className="card-body muted" style={{ paddingTop: 0 }}>Gom theo nhà cung cấp chỉ có phần mua hàng trong kỳ (nhập mua trừ hàng trả nhà cung cấp), theo đối tượng của phiếu nhập.</div>}
           {d && d.uncosted > 0 && <div className="card-body muted">Có {d.uncosted} lần xuất / nhập chưa có giá trị (tháng chưa tính giá vốn): cột giá trị chưa đầy đủ. Vào <b>Tính giá vốn</b> để tính.</div>}
           {(view === 'item' ? q.isLoading : g.isLoading) ? <Loading /> : !d?.rows.length ? <Empty text="Không có hàng hoá phát sinh" /> : view === 'item' ? (
             <DataGrid
-              storageKey="acc83-v2"
-              rows={q.data?.rows ?? []}
-              rowKey={(r) => `${r.branchCode}-${r.sku}`}
-              exportName={`nhap-xuat-ton-${f.from}-${f.to}`}
+              storageKey="acc83-v3"
+              rows={buildItemRows(q.data?.rows ?? [], merge)}
+              rowKey={(r, i) => `${r.kind}-${r.branchCode}-${r.sku}-${i}`}
+              rowKind={(r) => r.kind}
+              groupLabel={(r) => <b>{r.label}</b>}
+              footerLabel="Tổng cộng"
+              exportName={`tong-hop-ton-kho-${f.from}-${f.to}`} exportTitle={`Tổng hợp tồn kho — ${kyText(f.from, f.to)}`}
               columns={[
-                { key: 'sku', header: 'Mã hàng', type: 'code' },
-                { key: 'name', header: 'Diễn giải' },
-                { key: 'unit', header: 'Đơn vị' },
-                ...(figureCols(true, false) as Column<StockRow>[]),
-                { key: 'branchCode', header: 'Chi nhánh', type: 'code' },
+                { key: 'sku', header: 'Mã hàng', type: 'code', width: 120 },
+                { key: 'name', header: 'Tên hàng', width: 280 },
+                { key: 'unit', header: 'ĐVT', width: 70 },
+                ...(figureCols(true, false) as Column<ItemRow>[]),
                 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: nút Truy vết → Hành trình mặt hàng đúng mã, đúng khoảng ngày của báo cáo
-                { key: 'trace', header: '', noFilter: true, noSort: true, width: 70, render: (r) => <Link to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(r.sku)}&from=${f.from}&to=${f.to}`}>Truy vết</Link> },
+                { key: 'trace', header: '', noFilter: true, noSort: true, width: 70, render: (r) => r.kind === 'data' && <Link to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(r.sku)}&from=${f.from}&to=${f.to}`}>Truy vết</Link> },
               ]}
             />
           ) : (

@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Tổng hợp tồn kho (ACC83) theo mẫu quản trị <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Đổi tên "Báo cáo nhập xuất tồn hàng hoá" → "Tổng hợp tồn kho"; cột Mã hàng · Tên hàng · ĐVT · Đầu kỳ / Nhập kho / Xuất kho / Cuối kỳ (Số lượng, Giá trị).
+- Nhiều kho (chi nhánh): nhóm "Kho: …" + Cộng nhóm; ô "Cộng gộp các kho" để xem một dòng mỗi mã. Dòng thiếu tên hàng lấy tên ở kho khác.
+
 ### Tổng hợp mua hàng theo mặt hàng (MH23A) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Mục mới ở Mua hàng → Báo cáo: mở sẵn kiểu cộng dồn theo mã hàng, mọi loại phiếu. Cột chuẩn: Mã hàng · Tên hàng · ĐVT · Số lượng mua · Giá trị mua · Chiết khấu · Số lượng trả lại · Giá trị trả lại · Tổng giá trị mua; cột thêm (nhóm hàng, SL đặt, hàng tặng, thuế, giá bình quân…) ẩn sẵn, bật ở nút Cột.
 
