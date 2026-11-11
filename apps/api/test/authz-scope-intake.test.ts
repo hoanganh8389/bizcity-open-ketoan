@@ -295,13 +295,21 @@ describe('Xem / huỷ / xuất theo loại chứng từ (giai đoạn 3.2b)', ()
     // Cấm lập: không lập được; vẫn qua cổng quyền của huỷ (lỗi khác 403 — phiếu không có).
     const lap = await postAs(tLap, '/api/v1/kho/transfers', body);
     expect(lap.statusCode, lap.body).toBe(403);
-    expect(lap.body).toContain('kho:chuyen-kho-lap');
     expect((await postAs(tLap, cancelUrl, { reason: 'Thử' })).statusCode).not.toBe(403);
     // Cấm huỷ: không huỷ được; vẫn qua cổng quyền của lập.
     const huy = await postAs(tHuy, cancelUrl, { reason: 'Thử' });
     expect(huy.statusCode, huy.body).toBe(403);
-    expect(huy.body).toContain('kho:chuyen-kho-huy');
     expect((await postAs(tHuy, '/api/v1/kho/transfers', body)).statusCode).not.toBe(403);
+    // Mở hẹp: vai trò nền Người xem + Cho đúng kho:chuyen-kho-lap (không documents:write) → qua cổng action lập (lỗi khác 403), không huỷ được.
+    // [2026-11-11 10:09 AM kiennt] PHASE-028 — S028-22 sửa: thủ kho chỉ được Cho quyền chi tiết lập được phiếu chuyển kho trên màn KHO01
+    const id = String((await call(ctx, 'POST', '/api/v1/users', { email: 'thukho-action@ketoan.local', fullName: 'Thủ kho', role: 'viewer', password: 'Xem@12345' })).body.data.id);
+    const r = (await call(ctx, 'POST', '/api/v1/roles', { code: 'thu_kho_action', label: 'Thủ kho action', kind: 'job', baseRole: 'viewer', reason: 'Thử thao tác' })).body.data.id;
+    expect((await call(ctx, 'POST', `/api/v1/roles/${r}/rules`, { permission: 'kho:chuyen-kho-lap', effect: 'allow', reason: 'Thử thao tác' })).status).toBe(201);
+    expect((await call(ctx, 'POST', `/api/v1/users/${id}/roles`, { tenantRoleId: r, reason: 'Thử thao tác' })).status).toBe(201);
+    const tKho = await login('thukho-action@ketoan.local', 'Xem@12345');
+    const lapKho = await postAs(tKho, '/api/v1/kho/transfers', { ...body, fromBranchCode: 'KHONG-CO' });
+    expect(lapKho.statusCode, lapKho.body).not.toBe(403);
+    expect((await postAs(tKho, cancelUrl, { reason: 'Thử' })).statusCode).toBe(403);
   });
 
   it('Cấm xuất hoá đơn bán: không tải được bảng kê bán hàng; người khác vẫn tải được', async () => {
