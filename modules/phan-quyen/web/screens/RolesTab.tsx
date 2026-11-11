@@ -5,7 +5,8 @@
 import { useState } from 'react';
 import { Empty, ErrorBox, Field, Loading, errorText, useApi, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { WriteDialog } from './WriteDialog';
-import type { MatrixData, RoleDetail } from '../lib/matrix';
+import { RoleEditor } from './RoleEditor';
+import { columnSummary, ROLE_TEXT, roleLabel, type MatrixData, type RoleDetail } from '../lib/matrix';
 import { planTemplate, templateOf, type TemplateItem } from '../lib/template';
 
 /** Thư viện vai trò mẫu (Kho thư viện, `kind: permission-template`). */
@@ -26,7 +27,11 @@ export function RolesTab() {
   const api = useApi();
   const qc = useQueryClient();
   const roles = useQuery({ queryKey: ['phan-quyen', 'roles'], queryFn: () => api.get<RoleRow[]>('/api/v1/roles') });
+  const matrix = useQuery({ queryKey: ['phan-quyen', 'matrix'], queryFn: () => api.get<MatrixData>('/api/v1/roles/matrix') });
+  const permCount = (id: string): number | null => (matrix.data ? columnSummary(matrix.data, id).allow : null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  /** Đang sửa quyền của vai trò (id dạng tenant:<id>) — màn "Sửa vai trò" thay cho danh sách. */
+  const [editing, setEditing] = useState<string | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: ['phan-quyen'] });
 
   const [code, setCode] = useState('');
@@ -37,6 +42,7 @@ export function RolesTab() {
 
   const close = () => { setDialog(null); setCode(''); setLabel(''); setKind('job'); setBaseRole('viewer'); setNewLabel(''); };
 
+  if (editing) return <RoleEditor roleId={editing} onClose={() => setEditing(null)} />;
   return (
     <div>
       <div className="card card-body row" style={{ gap: 12, alignItems: 'center' }}>
@@ -44,24 +50,40 @@ export function RolesTab() {
         <button type="button" className="btn" onClick={() => setDialog({ kind: 'template' })} title="Dựng vai trò từ thư viện vai trò mẫu (28 nhóm TGS): xem trước quyền rồi mới tạo">Dùng mẫu</button>
         <span className="muted">Vai trò của đơn vị = vai trò nền + luật Cho / Cấm riêng. Cấp quyền của module cho một nhóm người: Cho quyền đó ở đây rồi gán vai trò.</span>
       </div>
-      {roles.isLoading ? <Loading /> : roles.error ? <ErrorBox error={errorText(roles.error)} /> : !roles.data?.length ? <Empty text="Chưa có vai trò của đơn vị." /> : (
+      {roles.isLoading ? <Loading /> : roles.error ? <ErrorBox error={errorText(roles.error)} /> : (
         <div className="table-wrap">
           <table className="grid">
-            <thead><tr><th>Mã</th><th>Tên</th><th>Loại</th><th>Vai trò nền</th><th>Luật</th><th>Người giữ</th><th>Trạng thái</th><th /></tr></thead>
+            <thead><tr><th style={{ minWidth: 220 }}>Vai trò</th><th>Loại</th><th>Vai trò nền</th><th title="Số quyền vai trò đang có (sau Cho / Cấm)">Số quyền</th><th>Người giữ</th><th>Trạng thái</th><th /></tr></thead>
             <tbody>
-              {roles.data.map((r) => (
+              <tr><td colSpan={7} style={{ background: 'rgba(100,116,139,.09)', fontWeight: 600 }}>Vai trò của đơn vị</td></tr>
+              {!roles.data?.length ? <tr><td colSpan={7} className="muted">Chưa có — bấm Tạo vai trò hoặc Dùng mẫu.</td></tr> : roles.data.map((r) => (
                 <tr key={r.id} style={{ opacity: r.isActive ? 1 : 0.6 }}>
-                  <td><code>{r.code}</code></td>
-                  <td>{r.label}</td>
+                  <td>
+                    <a href="#" style={{ fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setEditing(`tenant:${r.id}`); }} title="Sửa quyền theo bảng chức năng × thao tác">{r.label}</a>
+                    <div className="muted" style={{ fontSize: 12 }}><code>{r.code}</code></div>
+                  </td>
                   <td>{KIND_TEXT[r.kind]}</td>
-                  <td>{r.baseRole ?? '—'}</td>
-                  <td>{r.rules}</td>
+                  <td>{r.baseRole ? ROLE_TEXT[r.baseRole] ?? r.baseRole : '—'}</td>
+                  <td>{permCount(`tenant:${r.id}`) ?? '…'}{r.rules ? <span className="muted"> · {r.rules} luật riêng</span> : null}</td>
                   <td>{r.holders}</td>
                   <td>{r.isActive ? <span className="badge badge-ok">Đang dùng</span> : <span className="badge">Vô hiệu</span>}</td>
-                  <td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <button type="button" className="btn btn-xs btn-primary" onClick={() => setEditing(`tenant:${r.id}`)}>Sửa quyền</button>{' '}
                     <button type="button" className="btn btn-xs" onClick={() => { setNewLabel(r.label); setDialog({ kind: 'rename', role: r }); }}>Đổi tên</button>{' '}
                     <button type="button" className="btn btn-xs" onClick={() => setDialog({ kind: 'toggle', role: r })}>{r.isActive ? 'Vô hiệu' : 'Bật lại'}</button>
                   </td>
+                </tr>
+              ))}
+              <tr><td colSpan={7} style={{ background: 'rgba(100,116,139,.09)', fontWeight: 600 }}>Vai trò mặc định <span className="muted" style={{ fontWeight: 400 }}>— có sẵn, chỉ xem; dùng làm vai trò nền</span></td></tr>
+              {(matrix.data?.roles ?? []).filter((r) => r.system).map((r) => (
+                <tr key={r.id}>
+                  <td>
+                    <a href="#" style={{ fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setEditing(r.id); }}>{roleLabel(r)}</a>
+                    <div className="muted" style={{ fontSize: 12 }}><code>{r.code}</code></div>
+                  </td>
+                  <td>Mặc định</td><td>—</td><td>{permCount(r.id) ?? '…'}</td><td className="muted">—</td>
+                  <td><span className="badge badge-ok">Đang dùng</span></td>
+                  <td><button type="button" className="btn btn-xs" onClick={() => setEditing(r.id)}>Xem quyền</button></td>
                 </tr>
               ))}
             </tbody>
