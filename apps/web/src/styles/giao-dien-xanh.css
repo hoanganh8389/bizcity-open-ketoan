@@ -323,3 +323,29 @@ tr.nx-loi td { background: #fff5f5; }
 .nx-the:disabled { opacity: 0.55; cursor: not-allowed; }
 .nx-table table.grid th { background: var(--gd-head, #eef2f0); color: var(--ink-900); }
 .nx-the-list > .card + .card { margin-top: 0; }
+
+/* Bảng tham số dạng ngăn kéo bên phải (components/ReportPanel.tsx ReportSideLayout, chế độ không ghim). */
+.rp-layout.rp-keo { display: block; }
+.rp-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.rp-tt { display: flex; flex-wrap: wrap; gap: 4px 6px; flex: 1; min-width: 0; font-size: 12.5px; }
+.rp-tt > span { padding: 2px 8px; border-radius: 10px; background: #eef2f0; color: var(--ink-700); white-space: nowrap; }
+.rp-tt > span.muted { background: none; color: var(--ink-500); padding: 0; }
+.rp-chon { flex: none; border-color: var(--brand-500) !important; color: var(--brand-700) !important; font-weight: 600; }
+.rp-keo-mask { position: fixed; inset: 0; z-index: 140; background: rgba(20, 28, 25, 0.25); }
+.rp-panel.rp-keo-panel { position: fixed; top: 0; right: 0; bottom: var(--dock-h, 0px); z-index: 141; width: min(420px, 100vw); height: auto; border-radius: 0; border: 0; border-left: 1px solid var(--line);
+  box-shadow: var(--shadow-pop); padding: 0 14px 12px; transform: translateX(105%); transition: transform .18s ease; visibility: hidden; font-size: 12.5px; overflow: auto; }
+.rp-panel.rp-keo-panel.mo { transform: none; visibility: visible; }
+.rp-keo-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 6px; margin: 0 -14px 6px; padding: 12px 14px 10px; background: var(--surface); border-bottom: 1px solid var(--line-soft); }
+.rp-keo-head b { flex: 1; font-size: 16px; }
+.rp-keo-panel .rp-filters .field .input, .rp-keo-panel .rp-filters .field .select, .rp-keo-panel .rp-field .input, .rp-keo-panel .rp-field select, .rp-keo-panel .rp-field .picker > .input { height: 28px; font-size: 12.5px; }
+.rp-keo-panel .rp-filters .field, .rp-keo-panel .rp-field { grid-template-columns: 96px minmax(0, 1fr); gap: 6px; }
+.rp-keo-panel > .rp-branches, .rp-keo-panel .rp-filters > .rp-branches { flex: 0 0 auto; min-height: 220px; max-height: 46vh; }
+.rp-keo-panel .rp-actions { position: sticky; bottom: -12px; padding: 8px 0 4px; background: var(--surface); }
+.rp-boghim { align-self: flex-end; display: inline-flex; align-items: center; gap: 4px; padding: 0 4px; border: 0; background: none; color: var(--ink-500); font-size: 11px; cursor: pointer; }
+.rp-boghim:hover { color: var(--brand-700); }
+@media print { .rp-bar, .rp-keo-panel, .rp-keo-mask { display: none !important; } }
+
+/* Bảng bấm dòng để mở chứng từ: ô số chứng từ hiện như liên kết (biết là bấm được). */
+tr.dgrid-row.clickable td:is([data-col="docNo"], [data-col="entryNo"], [data-col="soPhieu"]) { color: var(--brand-700); cursor: pointer; }
+tr.dgrid-row.clickable:hover td:is([data-col="docNo"], [data-col="entryNo"], [data-col="soPhieu"]) { text-decoration: underline; }
+tr.ct-cho.dgrid-row.clickable td:is([data-col="docNo"], [data-col="entryNo"], [data-col="soPhieu"]) { color: #d4670a; }

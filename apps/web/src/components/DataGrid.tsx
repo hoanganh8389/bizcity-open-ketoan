@@ -560,7 +560,7 @@ export function DataGrid<T>(p: DataGridProps<T>) {
                   onClick={() => { setSelected(k); p.onSelect?.(kind === 'data' ? r : null); if (kind === 'data') p.onRowClick?.(r); }}
                   onDoubleClick={() => { if (kind === 'data') p.onRowDoubleClick?.(r); }}
                 >
-                  {kind === 'group' && p.groupLabel ? <td colSpan={cols.length}>{p.groupLabel(r)}</td> : cols.map((c) => <td key={c.key} className={tdClass(c)} style={(typeof c.bold === 'function' ? c.bold(r) : c.bold) ? { fontWeight: 700 } : undefined}>{cell(c, r)}</td>)}
+                  {kind === 'group' && p.groupLabel ? <td colSpan={cols.length}>{p.groupLabel(r)}</td> : cols.map((c) => <td key={c.key} data-col={c.key} className={tdClass(c)} style={(typeof c.bold === 'function' ? c.bold(r) : c.bold) ? { fontWeight: 700 } : undefined}>{cell(c, r)}</td>)}
                 </tr>
               );
             })}

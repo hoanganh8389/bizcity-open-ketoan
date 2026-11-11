@@ -6,13 +6,19 @@
  *   BranchCheckList   danh sách chi nhánh (mã, tên) có ô "Chọn" (tích để xem; tích hết = tất cả)
  *   SideActions       nút Tìm kiếm / Xuất / In ở cuối bảng lọc
  * Dùng chung cho Sổ nhật ký chung, Sổ cái, Sổ chi tiết tài khoản… để các màn cùng một kiểu.
+ * [2026-11-11 Nguyễn Văn Thủy] Hai cách đặt bảng tham số (đóng góp):
+ *   - Ngăn kéo (mặc định ở giao diện Xanh): báo cáo chiếm trọn bề ngang; dòng trên cùng tóm tắt tham số đang xem + nút
+ *     "Chọn tham số" mở ngăn kéo bên phải; bấm Tìm kiếm / Xem trong ngăn kéo thì ngăn tự đóng.
+ *   - Ghim bên trái (như trước; mặc định ở giao diện cổ điển). Nút ghim trong ngăn kéo / trên bảng lọc để đổi, nhớ theo máy.
+ *   Bảng tham số luôn được dựng (chỉ ẩn), nên đóng / mở không mất các ô đang chọn.
  */
 import { PERIOD_PRESETS, presetOf } from '@/lib/format';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useLocation } from 'react-router-dom';
-import { FileSpreadsheet, Plus, Printer, Search, Sparkles, X } from 'lucide-react';
+import { FileSpreadsheet, Pin, PinOff, Plus, Printer, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { giaoDien } from '@/lib/giaoDien';
 import { useBranches } from './filters';
 import { FilterPanelCtx, useFilterPanel, type FilterPanelContext } from './filterPanel';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — bảng lọc chi nhánh / kho thêm thẻ Cây theo sơ đồ tổ chức (tích cha tích hết con, tới kho)
@@ -30,9 +36,53 @@ const readWidth = () => {
   try { const v = localStorage.getItem(WIDTH_KEY); const w = Number(v); return v !== null && (w === 0 || (w >= MIN_W && w <= 600)) ? w : DEFAULT_W; } catch { return DEFAULT_W; }
 };
 const saveWidth = (w: number) => { try { localStorage.setItem(WIDTH_KEY, String(w)); } catch { /* bỏ qua */ } };
+const GHIM_KEY = 'ketoan.rp.ghim';
+const readGhim = () => { try { const v = localStorage.getItem(GHIM_KEY); return v === null ? giaoDien.get() !== 'xanh' : v === '1'; } catch { return true; } };
+
+const dmy = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v.slice(8, 10)}/${v.slice(5, 7)}/${v.slice(0, 4)}` : v);
+/** Đọc tham số đang chọn từ bảng lọc (nhãn + giá trị ô) để hiện một dòng tóm tắt trên báo cáo. */
+function tomTat(panel: HTMLElement | null): string[] {
+  if (!panel) return [];
+  const out: string[] = [];
+  const fields = panel.querySelectorAll<HTMLElement>('.rp-field, .rp-filters .field');
+  fields.forEach((f) => {
+    const label = (f.querySelector(':scope > span, :scope > label')?.textContent ?? '').trim();
+    const ctl = f.querySelector<HTMLInputElement | HTMLSelectElement>('select, input:not([type=checkbox]):not([type=radio])');
+    if (!label || !ctl) return;
+    let v = ctl instanceof HTMLSelectElement ? ctl.selectedOptions[0]?.text ?? '' : ctl.value;
+    v = dmy(v.trim());
+    if (!v || v === 'Tuỳ chọn' || /^(—|-)/.test(v)) return;
+    out.push(`${label}: ${v}`);
+  });
+  const list = panel.querySelector('.rp-branches');
+  if (list) {
+    const boxes = [...list.querySelectorAll<HTMLInputElement>('.rp-branch input[type=checkbox]')];
+    const on = boxes.filter((b) => b.checked).length;
+    if (boxes.length) out.push(on === boxes.length ? 'Tất cả chi nhánh' : `Chi nhánh: ${on}/${boxes.length}`);
+  }
+  return out.slice(0, 8);
+}
 
 export function ReportSideLayout({ panel, children }: { panel: ReactNode; children: ReactNode }) {
   const [width, setWidth] = useState(readWidth);
+  const [ghim, setGhim] = useState(readGhim);
+  const [mo, setMo] = useState(false);
+  const [tt, setTt] = useState<string[]>([]);
+  const doiGhim = () => { const g = !ghim; setGhim(g); setMo(false); try { localStorage.setItem(GHIM_KEY, g ? '1' : '0'); } catch { /* bỏ qua */ } };
+  // Tóm tắt tham số: đọc lại sau khi vẽ và khi đóng ngăn kéo.
+  useEffect(() => { if (ghim) return; const t = setTimeout(() => setTt(tomTat(panelRef.current)), 300); return () => clearTimeout(t); }, [ghim, mo]);
+  // Bấm nút chính (Tìm kiếm / Xem) trong ngăn kéo: đóng ngăn, báo cáo hiện trọn bề ngang.
+  const onPanelClick = (e: React.MouseEvent) => {
+    if (ghim) return;
+    const b = (e.target as HTMLElement).closest('button');
+    if (b && b.classList.contains('btn-primary') && b.closest('.rp-actions')) setTimeout(() => { setMo(false); setTt(tomTat(panelRef.current)); }, 50);
+  };
+  useEffect(() => {
+    if (!mo) return;
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !document.querySelector('.modal-mask')) setMo(false); };
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [mo]);
   const lastOpen = useRef(width || DEFAULT_W);
   const [maxH, setMaxH] = useState<number | undefined>();
   // Màn hẹp: bảng lọc xếp trên nội dung, bấm "Bộ lọc" để thu gọn / mở.
@@ -91,10 +141,34 @@ export function ReportSideLayout({ panel, children }: { panel: ReactNode; childr
     document.addEventListener('mouseup', up);
   };
 
+  if (!ghim) {
+    return (
+      <div className="rp-layout rp-keo">
+        <div className="rp-bar">
+          <div className="rp-tt" title="Tham số đang xem">{tt.length ? tt.map((x) => <span key={x}>{x}</span>) : <span className="muted">Bấm Chọn tham số để lọc kỳ, chi nhánh…</span>}</div>
+          <button type="button" className="btn btn-sm rp-chon" onClick={() => setMo(true)} title="Mở bảng tham số (kỳ, chi nhánh, kho, tài khoản…)"><SlidersHorizontal size={14} /> Chọn tham số</button>
+        </div>
+        {mo && <div className="rp-keo-mask" onMouseDown={() => setMo(false)} />}
+        <aside className={`rp-panel rp-keo-panel${mo ? ' mo' : ''}`} ref={panelRef} onClickCapture={onPanelClick} aria-hidden={!mo}>
+          <div className="rp-keo-head">
+            <b>Chọn tham số</b>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={doiGhim} title="Ghim bảng tham số bên trái màn (như trước)"><Pin size={14} /> Ghim bên trái</button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setMo(false)} aria-label="Đóng" title="Đóng (Esc)"><X size={16} /></button>
+          </div>
+          {panel}
+        </aside>
+        <div className="rp-main">{children}</div>
+      </div>
+    );
+  }
+
   return (
     <div className={`rp-layout${collapsed ? ' collapsed' : ''}${mOpen ? '' : ' m-closed'}`} style={{ gridTemplateColumns: `${width}px 12px minmax(0, 1fr)` }}>
       <button type="button" className="rp-mtoggle" onClick={() => setMOpen((x) => !x)}>{mOpen ? '▾' : '▸'} Bộ lọc</button>
-      <aside className="rp-panel" ref={panelRef} style={{ height: maxH }}>{panel}</aside>
+      <aside className="rp-panel" ref={panelRef} style={{ height: maxH }}>
+        <button type="button" className="rp-boghim" onClick={doiGhim} title="Bỏ ghim: bảng tham số thành ngăn kéo bên phải, báo cáo rộng hết màn"><PinOff size={12} /> Bỏ ghim</button>
+        {panel}
+      </aside>
       <div className="rp-split" onMouseDown={startDrag} onDoubleClick={toggle} title="Kéo để đổi bề rộng bảng lọc; kéo hết sang trái hoặc bấm nút để thu gọn">
         <button type="button" className="rp-toggle" onClick={toggle} title={collapsed ? 'Mở bảng lọc' : 'Thu gọn bảng lọc'}>{collapsed ? '›' : '‹'}</button>
       </div>

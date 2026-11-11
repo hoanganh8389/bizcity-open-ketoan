@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bảng tham số báo cáo dạng ngăn kéo bên phải <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/04 (đóng góp) -->
+
+- **Đổi:** ở giao diện Xanh, bảng lọc của sổ / báo cáo / danh sách chứng từ thành ngăn kéo bên phải (nút **Chọn tham số**), báo cáo rộng trọn màn, có dòng tóm tắt tham số; bấm Tìm kiếm thì ngăn tự đóng. Nút **Ghim bên trái** / **Bỏ ghim** để đổi (nhớ theo máy).
+- **Đổi:** bảng bấm dòng để mở chứng từ hiện ô Số chứng từ như liên kết.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** kéo ảnh web mới.
+
 ### Nhập Excel dùng chung 4 bước (TI14) <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 (đóng góp) -->
 
 - **Thêm:** màn **TI14 Nhập dữ liệu từ Excel** và trình nhập 4 bước dùng chung (chọn tệp + tải mẫu, ghép cột tự động + ngầm định, kiểm tra từng dòng trước khi ghi + tải tệp lỗi, kết quả) cho Khách hàng, Nhà cung cấp, Mặt hàng, Kho; nút **Nhập Excel** ở các danh mục đó.
