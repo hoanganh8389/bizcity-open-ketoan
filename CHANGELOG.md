@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bảng kê số dư tiền theo ngày (ACC80) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Tham số Đến ngày, So sánh với N ngày trước (mỗi ngày một cột). Dòng: Chi nhánh hạch toán → Tiền mặt / Tiền gửi ngân hàng / Tiền đang chuyển → từng tài khoản; Cộng nhóm; Tổng cộng khi nhiều chi nhánh. Bản in A4 cùng bố cục.
+
+
 ### Sổ quỹ tiền mặt, sổ tiền gửi theo mẫu S07a-DN / S08-DN; tên loại chứng từ thống nhất <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - ACC55, ACC56: cột Ngày ghi sổ · Ngày chứng từ · Số hiệu chứng từ (Thu, Chi) · Diễn giải · Số tiền (Thu, Chi, Tồn) · Người nhận/Người nộp · Loại chứng từ · Ghi chú; tiêu đề và kỳ căn giữa; mặc định tháng này; bỏ các cột thu chi tách loại. Bản in cùng bộ cột, ký Người lập biểu / Kế toán trưởng / Giám đốc.
 - API sổ tài khoản trả thêm `docDate`, `counterparty` (người nộp / nhận ghi trên phiếu).

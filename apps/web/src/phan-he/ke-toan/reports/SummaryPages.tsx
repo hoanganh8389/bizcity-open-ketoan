@@ -1,23 +1,23 @@
 /**
  * Ba báo cáo tổng hợp dạng bảng đơn giản:
  *   TaxSummaryPage      Bảng tổng hợp thuế GTGT theo chi nhánh, tháng      (ACC91)
- *   CashBalancesPage    Bảng kê số dư tiền theo chi nhánh và tài khoản tiền (ACC80)
+ *   CashBalancesPage    Bảng kê số dư tiền theo ngày: chi nhánh → chỉ tiêu → tài khoản, mỗi ngày một cột (ACC80)
  *   PostingSummaryPage  Bảng tổng hợp chứng từ theo cặp tài khoản Nợ / Có   (ACC63)
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { DOC_TYPE_LABELS, DOC_TYPE_LIST, type DocType } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { defaultFrom, defaultTo, periodFrom } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
-import { BranchSelect, DateRange } from '@/components/filters';
+import { BranchSelect, DateRange, useBranches } from '@/components/filters';
 import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { AccountPicker } from '@/components/pickers';
 import { PrintButton } from '@/components/print';
-import { CASH_BALANCE_TEMPLATES, POSTING_TEMPLATES, TAX_SUMMARY_TEMPLATES } from './mauIn/baoCaoTongHop';
+import { CASH_BALANCE_TEMPLATES, POSTING_TEMPLATES, TAX_SUMMARY_TEMPLATES, type CashBalanceLine } from './mauIn/baoCaoTongHop';
 
 /* ------------------------------------------------------------------ ACC91 */
 interface TaxRow { branchCode: string; branchName: string; month: string; invoices: number; carried: number; inputTax: number; revenue: number; outputTax: number; payable: number }
@@ -74,57 +74,99 @@ export function TaxSummaryPage() {
 
 /* ------------------------------------------------------------------ ACC80 */
 interface CashRow { branchCode: string; branchName: string; accountCode: string; accountName: string; opening: number; debit: number; credit: number; closing: number }
+/** Chỉ tiêu cấp 1 của bảng kê theo đầu tài khoản tiền. */
+const CHI_TIEU: [string, string][] = [['111', 'Tiền mặt'], ['112', 'Tiền gửi ngân hàng'], ['113', 'Tiền đang chuyển']];
+const addDays = (d: string, n: number) => { const x = new Date(`${d}T00:00:00`); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+const dmy = (d: string) => d.split('-').reverse().join('/');
 
+/** Dựng dòng bảng kê: mỗi chi nhánh một nhóm → chỉ tiêu → tài khoản; cộng nhóm; tổng cộng khi nhiều chi nhánh. */
+function buildCashLines(perDay: CashRow[][], multi: boolean): CashBalanceLine[] {
+  const n = perDay.length;
+  const val = new Map<string, number[]>();
+  const meta = new Map<string, CashRow>();
+  perDay.forEach((rows, i) => rows.forEach((r) => {
+    const k = `${r.branchCode}|${r.accountCode}`;
+    meta.set(k, r);
+    if (!val.has(k)) val.set(k, Array<number>(n).fill(0));
+    val.get(k)![i] = r.closing;
+  }));
+  const sum = (ks: string[]) => Array.from({ length: n }, (_, i) => ks.reduce((a, k) => a + (val.get(k)?.[i] ?? 0), 0));
+  const branches = [...new Set([...meta.values()].map((r) => r.branchCode))].sort();
+  const out: CashBalanceLine[] = [];
+  const all: string[] = [];
+  for (const b of branches) {
+    const keys = [...meta.keys()].filter((k) => k.startsWith(`${b}|`)).sort();
+    const name = meta.get(keys[0]!)!.branchName;
+    out.push({ key: `g${b}`, label: `Chi nhánh hạch toán: ${multi ? `${b} - ` : ''}${name}`, level: 0, kind: 'group', values: [] });
+    for (const [pre, label] of CHI_TIEU) {
+      const ks = keys.filter((k) => meta.get(k)!.accountCode.startsWith(pre));
+      if (!ks.length) continue;
+      out.push({ key: `h${b}${pre}`, label, level: 0, kind: 'head', values: sum(ks) });
+      for (const k of ks) out.push({ key: `d${k}`, label: `${meta.get(k)!.accountCode} - ${meta.get(k)!.accountName}`, level: 1, kind: 'data', values: val.get(k)! });
+    }
+    out.push({ key: `s${b}`, label: `Cộng nhóm: ${name}`, level: 0, kind: 'subtotal', values: sum(keys) });
+    all.push(...keys);
+  }
+  if (branches.length > 1) out.push({ key: 'tong', label: 'Tổng cộng', level: 0, kind: 'total', values: sum(all) });
+  return out;
+}
+
+/**
+ * Bảng kê số dư tiền theo ngày (ACC80): tham số Đến ngày, So sánh với N ngày trước (mỗi ngày một cột).
+ * Dòng: chi nhánh hạch toán → Tiền mặt / Tiền gửi ngân hàng / Tiền đang chuyển → từng tài khoản; Cộng nhóm.
+ * Nhiều chi nhánh (lớp gắn thêm): chọn chi nhánh, thêm dòng Tổng cộng.
+ */
 export function CashBalancesPage() {
   const navigate = useNavigate();
-  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', accounts: '111,112,113' });
-  const [accounts, setAccounts] = useState(f.accounts);
+  const { data: branchList = [] } = useBranches();
+  const multi = branchList.length > 1;
+  const [f, setF] = useState({ to: defaultTo(), compare: false, days: 1, branchCodes: '' });
   const set = (patch: Partial<typeof f>) => setF((x) => ({ ...x, ...patch }));
-  const q = useQuery({ queryKey: ['cash-balances', f], queryFn: () => api.get<{ rows: CashRow[]; totals: { opening: number; debit: number; credit: number; closing: number } }>('/api/v1/reports/cash-balances', f) });
-  const d = q.data;
-  const open = (r: CashRow) => navigate(`/bao-cao/so-chi-tiet?${new URLSearchParams({ account: r.accountCode, from: f.from, to: f.to }).toString()}`);
+  const days = f.compare ? Array.from({ length: f.days + 1 }, (_, i) => addDays(f.to, i - f.days)) : [f.to];
+  const qs = useQueries({ queries: days.map((d) => ({
+    queryKey: ['cash-balances', d, f.branchCodes],
+    queryFn: () => api.get<{ rows: CashRow[] }>('/api/v1/reports/cash-balances', { from: d, to: d, branchCodes: f.branchCodes, accounts: '111,112,113' }),
+  })) });
+  const loading = qs.some((q) => q.isLoading);
+  const error = qs.find((q) => q.error)?.error;
+  const lines = loading || error ? [] : buildCashLines(qs.map((q) => q.data?.rows ?? []), multi);
+  const branchText = f.branchCodes ? f.branchCodes.split(',').map((c) => branchList.find((b) => b.code === c)?.name ?? c).join(', ') : '';
+  const columns: Column<CashBalanceLine>[] = [
+    { key: 'label', header: 'Chỉ tiêu', width: 420, noFilter: true, noSort: true,
+      render: (r) => <span style={{ paddingLeft: r.level * 18, fontWeight: r.kind === 'data' ? undefined : 700 }}>{r.label}</span> },
+    ...days.map((d, i): Column<CashBalanceLine> => ({ key: `d${i}`, header: `Ngày ${dmy(d)}`, type: 'money', width: 150, showZero: true, noFilter: true, noSort: true,
+      value: (r) => (r.kind === 'group' ? null : r.values[i] ?? 0), bold: (r) => r.kind !== 'data' })),
+  ];
   return (
     <>
-      <PageHeader title="Bảng kê số dư tiền" code="ACC80" subtitle="Tồn đầu, thu, chi, tồn cuối của từng quỹ, từng tài khoản ngân hàng theo chi nhánh" helpKey="so-du-tien" />
+      <PageHeader title="Bảng kê số dư tiền theo ngày" code="ACC80" subtitle="Số dư tiền mặt, tiền gửi từng tài khoản tại cuối ngày, so sánh được với các ngày trước" helpKey="so-du-tien" />
       <FilterLayout boThamSo={{ value: f, onApply: setF }}
-        print={<PrintButton screen="ACC80" templates={CASH_BALANCE_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
+        print={<PrintButton screen="ACC80" templates={CASH_BALANCE_TEMPLATES} disabled={!lines.length} getDocs={() => [{ to: f.to, days, branchText, lines }]} />}
         filters={
           <>
-            <form className="rp-form" onSubmit={(e) => { e.preventDefault(); set({ accounts: accounts.replace(/\s/g, '') }); }}>
-              <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
-              <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />
-              <div className="field"><label>Tài khoản tiền (cách nhau dấu phẩy)</label><AccountPicker multiple className="input w-lg mono" value={accounts} onChange={(v) => { setAccounts(v); set({ accounts: v }); }} /></div>
-            </form>
+            <div className="field"><label>Đến ngày</label><input type="date" className="input" value={f.to} onChange={(e) => set({ to: e.target.value })} /></div>
+            <label className="checkbox"><input type="checkbox" checked={f.compare} onChange={(e) => set({ compare: e.target.checked })} /> So sánh với ngày trước</label>
+            <div className="field"><label>Số ngày trước</label>
+              <select className="select input" value={f.days} disabled={!f.compare} onChange={(e) => set({ days: Number(e.target.value) })}>
+                {[1, 2, 3, 4, 5, 6, 7].map((k) => <option key={k} value={k}>{k} ngày trước</option>)}
+              </select>
+            </div>
+            {multi && <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />}
           </>
         }
       >
-        {d && (
-          <div className="kpis">
-            <div className="card kpi"><div className="label">Tồn đầu kỳ</div><div className="value"><Money value={d.totals.opening} blankZero={false} /></div></div>
-            <div className="card kpi"><div className="label">Thu trong kỳ</div><div className="value"><Money value={d.totals.debit} blankZero={false} /></div></div>
-            <div className="card kpi"><div className="label">Chi trong kỳ</div><div className="value"><Money value={d.totals.credit} blankZero={false} /></div></div>
-            <div className="card kpi"><div className="label">Tồn cuối kỳ</div><div className="value"><Money value={d.totals.closing} blankZero={false} /></div></div>
-          </div>
-        )}
         <div className="card">
-          <ErrorBox error={q.error ? errorText(q.error) : null} />
-          {q.isLoading ? <Loading /> : !d || d.rows.length === 0 ? <Empty text="Không có số dư tiền trong khoảng này" /> : (
-            <DataGrid
-              storageKey="acc80"
-              rows={d.rows}
-              rowKey={(r) => `${r.branchCode}-${r.accountCode}`}
-              onRowClick={open}
-              columns={[
-                { key: 'branchCode', header: 'Mã chi nhánh', type: 'code' },
-                { key: 'branchName', header: 'Tên chi nhánh' },
-                { key: 'accountCode', header: 'Tài khoản', type: 'code' },
-                { key: 'accountName', header: 'Tên tài khoản' },
-                { key: 'opening', header: 'Tồn đầu kỳ', type: 'money', sum: true },
-                { key: 'debit', header: 'Thu (Nợ)', type: 'money', sum: true },
-                { key: 'credit', header: 'Chi (Có)', type: 'money', sum: true },
-                { key: 'closing', header: 'Tồn cuối kỳ', type: 'money', sum: true, bold: true, showZero: true },
-              ] satisfies Column<CashRow>[]}
-            />
+          <div className="rp-tieu-de">
+            <h2>BẢNG KÊ SỐ DƯ TIỀN THEO NGÀY</h2>
+            <i>{branchText ? `Chi nhánh: ${branchText}; ` : ''}Loại tiền: VND; Đến ngày {dmy(f.to)}</i>
+          </div>
+          <ErrorBox error={error ? errorText(error) : null} />
+          {loading ? <Loading /> : !lines.length ? <Empty text="Không có số dư tiền đến ngày này" /> : (
+            <DataGrid storageKey="acc80-v2" rows={lines} rowKey={(r) => r.key} columns={columns}
+              rowKind={(r) => (r.kind === 'group' ? 'group' : r.kind === 'subtotal' || r.kind === 'total' ? 'subtotal' : 'data')}
+              groupLabel={(r) => <b>{r.label}</b>}
+              onRowClick={(r) => { if (r.kind === 'data') navigate(`/bao-cao/so-chi-tiet?${new URLSearchParams({ account: r.label.split(' - ')[0]!, from: `${f.to.slice(0, 8)}01`, to: f.to }).toString()}`); }}
+              exportName="bang-ke-so-du-tien-theo-ngay" exportTitle={`Bảng kê số dư tiền theo ngày — đến ngày ${dmy(f.to)}`} />
           )}
         </div>
       </FilterLayout>
