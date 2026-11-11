@@ -62,8 +62,8 @@ export const SO_DO: Record<string, SoDo> = {
       ],
     ],
     reports: [
-      { label: 'Sổ chi tiết mua hàng', path: '/mua-hang/bao-cao' }, { label: 'Chi tiết công nợ phải trả nhà cung cấp', path: '/bao-cao/so-chi-tiet-cong-no' },
-      { label: 'Tổng hợp mua hàng theo mặt hàng' }, { label: 'Tổng hợp công nợ phải trả nhà cung cấp', path: '/bao-cao/cong-no' },
+      { label: 'Sổ chi tiết mua hàng', path: '/mua-hang/bao-cao' }, { label: 'Chi tiết công nợ phải trả nhà cung cấp', path: '/bao-cao/chi-tiet-thanh-toan' },
+      { label: 'Tổng hợp mua hàng theo mặt hàng' }, { label: 'Tổng hợp công nợ phải trả nhà cung cấp', path: '/bao-cao/cong-no-phai-tra' },
       { label: 'Biên bản đối chiếu và xác nhận công nợ phải trả' },
     ],
     links: [L.ncc, L.vthh],
@@ -80,8 +80,8 @@ export const SO_DO: Record<string, SoDo> = {
       [{ label: 'Giảm giá hàng bán', icon: 'BadgePercent' }],
     ],
     reports: [
-      { label: 'Sổ chi tiết bán hàng', path: '/ban-hang/bao-cao' }, { label: 'Chi tiết công nợ phải thu khách hàng', path: '/bao-cao/so-chi-tiet-cong-no' },
-      { label: 'Tổng hợp bán hàng', path: '/ban-hang/tong-hop' }, { label: 'Tổng hợp công nợ phải thu khách hàng', path: '/bao-cao/cong-no' },
+      { label: 'Sổ chi tiết bán hàng', path: '/ban-hang/bao-cao' }, { label: 'Chi tiết công nợ phải thu khách hàng', path: '/bao-cao/chi-tiet-cong-no-phai-thu' },
+      { label: 'Tổng hợp bán hàng', path: '/ban-hang/tong-hop' }, { label: 'Tổng hợp công nợ phải thu khách hàng', path: '/bao-cao/cong-no-phai-thu' },
       { label: 'Lãi gộp theo mặt hàng', path: '/ban-hang/lai-gop' },
     ],
     links: [L.khach, L.vthh, { label: 'Bảng giá bán', icon: 'Tags', path: '/danh-muc/bang-gia' }],

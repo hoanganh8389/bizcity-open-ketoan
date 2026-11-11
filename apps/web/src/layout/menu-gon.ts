@@ -69,7 +69,7 @@ export const GON_DEFS: GonDef[] = [
     ],
     reports: [
       { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/doi-chieu'], soon: ['Tổng hợp mua hàng theo mặt hàng'] },
-      { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no', '/bao-cao/so-chi-tiet-cong-no', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no'], soon: ['Biên bản đối chiếu công nợ phải trả'] },
+      { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no'], soon: ['Biên bản đối chiếu công nợ phải trả'] },
     ],
   },
   {
@@ -81,7 +81,7 @@ export const GON_DEFS: GonDef[] = [
     ],
     reports: [
       { label: 'Bán hàng', paths: ['/ban-hang/bao-cao', '/ban-hang/tong-hop', '/cong-no/nhat-ky-ban-hang', '/ban-hang/lai-gop', '/ban-hang/thu-tien-ban-hang'] },
-      { label: 'Công nợ phải thu', paths: ['/bao-cao/so-chi-tiet-cong-no', '/bao-cao/cong-no', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/cong-no-theo-han', '/bao-cao/tuoi-no', '/bao-cao/tuoi-no-trong-han', '/bao-cao/tuoi-no-qua-han', '/bao-cao/cong-no-theo-mat-hang'], soon: ['Biên bản đối chiếu công nợ phải thu'] },
+      { label: 'Công nợ phải thu', paths: ['/bao-cao/cong-no-phai-thu', '/bao-cao/chi-tiet-cong-no-phai-thu', '/bao-cao/cong-no-theo-han', '/bao-cao/tuoi-no', '/bao-cao/tuoi-no-trong-han', '/bao-cao/tuoi-no-qua-han', '/bao-cao/cong-no-theo-mat-hang'], soon: ['Biên bản đối chiếu công nợ phải thu'] },
     ],
   },
   {

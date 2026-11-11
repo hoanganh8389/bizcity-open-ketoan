@@ -24,6 +24,7 @@ import { IncomeStatementPage } from './reports/IncomeStatementPage';
 import { JournalPage } from './reports/JournalPage';
 import { CashFlowPage, CashJournalPage, PurchaseJournalPage, SalesJournalPage, VoucherListingPage } from './reports/JournalsPages';
 import { PartnerBalancesPage } from './reports/PartnerBalancesPage';
+import { ChiTietCongNoPage } from './reports/ChiTietCongNoPage';
 import { CashBalancesPage, PostingSummaryPage, TaxSummaryPage } from './reports/SummaryPages';
 import { TrialBalancePage } from './reports/TrialBalancePage';
 import { RequirementsPage } from './requirements/RequirementsPage';
@@ -36,7 +37,9 @@ export const keToanRoutes = (
     <Route path="bao-cao/cong-no" element={<PartnerBalancesPage key="acc38" />} />
     <Route path="bao-cao/cong-no-theo-nhan-vien" element={<DebtByEmployeePage />} />
     <Route path="bao-cao/cong-no-theo-mat-hang" element={<DebtByItemPage />} />
-    <Route path="bao-cao/cong-no-noi-bo" element={<PartnerBalancesPage key="acc61" preset={{ account: '1368', title: 'Báo cáo công nợ nội bộ', code: 'ACC61', subtitle: 'Phải thu, phải trả nội bộ giữa các chi nhánh theo từng chi nhánh đối ứng (1368; đổi tài khoản sang 3368 để xem phải trả)' }} />} />
+    <Route path="bao-cao/cong-no-noi-bo" element={<PartnerBalancesPage key="acc61" preset={{ account: '1368', title: 'Tổng hợp công nợ nội bộ', code: 'ACC61', who: 'chi nhánh', detailPath: '/bao-cao/cong-no-noi-bo-chi-tiet', subtitle: 'Phải thu, phải trả nội bộ giữa các chi nhánh (1368; đổi tài khoản sang 3368 để xem phải trả)' }} />} />
+    <Route path="bao-cao/cong-no-phai-thu" element={<PartnerBalancesPage key="acc38a" preset={{ account: '131', title: 'Tổng hợp công nợ phải thu khách hàng', code: 'ACC38A', who: 'khách hàng', detailPath: '/bao-cao/chi-tiet-cong-no-phai-thu', subtitle: 'Số dư đầu kỳ, phát sinh, số dư cuối kỳ phải thu của từng khách hàng' }} />} />
+    <Route path="bao-cao/cong-no-phai-tra" element={<PartnerBalancesPage key="acc38b" preset={{ account: '331', title: 'Tổng hợp công nợ phải trả nhà cung cấp', code: 'ACC38B', who: 'nhà cung cấp', detailPath: '/bao-cao/chi-tiet-thanh-toan', subtitle: 'Số dư đầu kỳ, phát sinh, số dư cuối kỳ phải trả của từng nhà cung cấp' }} />} />
     <Route path="bao-cao/nhat-ky-chung" element={<JournalPage />} />
     <Route path="bao-cao/luu-chuyen-tien-te" element={<CashFlowPage />} />
     <Route path="bao-cao/bang-ke-chung-tu" element={<VoucherListingPage />} />
@@ -61,11 +64,12 @@ export const keToanRoutes = (
     <Route path="bao-cao/cong-no-theo-han" element={<DebtByTermPage />} />
     <Route path="bao-cao/kiem-tra-chung-tu" element={<ChecksPage />} />
     <Route path="bao-cao/so-cai" element={<SoChiTietTaiKhoanPage key="so-cai" soCai />} />
-    <Route path="bao-cao/cong-no-noi-bo-chi-tiet" element={<AccountLedgerPage key="acc62" preset={{ account: '1368', title: 'BCCN nội bộ chi tiết', code: 'ACC62', helpKey: 'so-chi-tiet-cong-no', kind: 'partner' }} />} />
-    <Route path="bao-cao/chi-tiet-thanh-toan" element={<AccountLedgerPage key="acc81" preset={{ account: '331', title: 'Sổ chi tiết thanh toán với người bán', code: 'ACC81', helpKey: 'so-chi-tiet-cong-no', kind: 'partner' }} />} />
+    <Route path="bao-cao/cong-no-noi-bo-chi-tiet" element={<ChiTietCongNoPage key="acc62" preset={{ account: '1368', title: 'Chi tiết công nợ nội bộ', code: 'ACC62', who: 'chi nhánh' }} />} />
+    <Route path="bao-cao/chi-tiet-thanh-toan" element={<ChiTietCongNoPage key="acc81" preset={{ account: '331', title: 'Chi tiết công nợ phải trả nhà cung cấp', code: 'ACC81', who: 'nhà cung cấp' }} />} />
     <Route path="bao-cao/tien-vay" element={<AccountLedgerPage key="acc87" preset={{ account: '341', title: 'Sổ chi tiết tiền vay', code: 'ACC87', helpKey: 'so-chi-tiet-cong-no', kind: 'partner' }} />} />
     <Route path="bao-cao/nguon-von" element={<AccountLedgerPage key="acc86" preset={{ account: '411', title: 'Sổ theo dõi chi tiết nguồn vốn chủ sở hữu', code: 'ACC86', helpKey: 'so-chi-tiet', kind: 'detail' }} />} />
-    <Route path="bao-cao/so-chi-tiet-cong-no" element={<AccountLedgerPage key="cong-no" preset={{ account: '131', title: 'Sổ chi tiết công nợ', code: 'ACC40', helpKey: 'so-chi-tiet-cong-no', kind: 'partner' }} />} />
+    <Route path="bao-cao/chi-tiet-cong-no-phai-thu" element={<ChiTietCongNoPage key="acc40a" preset={{ account: '131', title: 'Chi tiết công nợ phải thu khách hàng', code: 'ACC40A', who: 'khách hàng' }} />} />
+    <Route path="bao-cao/so-chi-tiet-cong-no" element={<ChiTietCongNoPage key="acc40" preset={{ account: '131', title: 'Chi tiết công nợ theo đối tượng', code: 'ACC40', who: 'đối tượng' }} />} />
     <Route path="quy/so-quy-tien-mat" element={<AccountLedgerPage key="111" preset={{ account: '111', title: 'Sổ quỹ tiền mặt', code: 'ACC55', helpKey: 'so-quy', kind: 'cash' }} />} />
     <Route path="quy/so-tien-gui" element={<AccountLedgerPage key="112" preset={{ account: '112', title: 'Tiền gửi ngân hàng', code: 'ACC56', helpKey: 'so-quy', kind: 'cash' }} />} />
     <Route path="cong-no/khoan-cong-no" element={<DebtItemsPage />} />

@@ -27,7 +27,8 @@ import { BALANCE_SHEET_TEMPLATES, INCOME_STATEMENT_TEMPLATES, TRIAL_BALANCE_TEMP
 import { CASH_BALANCE_TEMPLATES, POSTING_TEMPLATES, TAX_SUMMARY_TEMPLATES } from './phan-he/ke-toan/reports/mauIn/baoCaoTongHop';
 import { CHECKS_TEMPLATES, EXPENSE_TEMPLATES, contractProfitTemplates } from './phan-he/ke-toan/reports/mauIn/kiemSoat';
 import { CASH_ITEM_TEMPLATES, DIMENSION_SUM_TEMPLATES, EXPENSE_DETAIL_TEMPLATES, ITEM_BRANCH_TEMPLATES } from './phan-he/ke-toan/reports/mauIn/khoanMuc';
-import { partnerBalanceTemplates } from './phan-he/ke-toan/reports/mauIn/congNoTongHop';
+import { PARTNER_BALANCE_TEMPLATES } from './phan-he/ke-toan/reports/mauIn/congNoTongHop';
+import { CHI_TIET_CONG_NO_TEMPLATES } from './phan-he/ke-toan/reports/ChiTietCongNoPage';
 import { DEBT_TERM_TEMPLATES } from './phan-he/ke-toan/reports/mauIn/congNoTheoHan';
 import { AGING_TEMPLATES } from './phan-he/ke-toan/reports/mauIn/tuoiNo';
 import { DEBT_EMPLOYEE_TEMPLATES, DEBT_ITEM_TEMPLATES } from './phan-he/ke-toan/reports/mauIn/congNoNhanVienMatHang';
@@ -42,7 +43,7 @@ type L = PrintTemplate<never>[];
 const t = (...lists: PrintTemplate<any>[][]) => uniqTemplates(...(lists as L[])); // eslint-disable-line @typescript-eslint/no-explicit-any
 
 /** Sổ của một tài khoản: loại sổ theo mã màn (khớp preset ở phan-he/ke-toan/routes.tsx). */
-const LEDGER: [string, LedgerKind][] = [['ACC12', 'detail'], ['ACC88', 'ledger'], ['ACC76', 'detail'], ['ACC86', 'detail'], ['ACC55', 'cash'], ['ACC56', 'cash'], ['ACC40', 'partner'], ['ACC81', 'partner'], ['ACC62', 'partner'], ['ACC87', 'partner']];
+const LEDGER: [string, LedgerKind][] = [['ACC12', 'detail'], ['ACC88', 'ledger'], ['ACC76', 'detail'], ['ACC86', 'detail'], ['ACC55', 'cash'], ['ACC56', 'cash'], ['ACC87', 'partner']];
 const BH02_GROUPS = ['document', 'day', 'month', 'branch', 'product', 'customer', 'taxCode', 'brand', 'industry', 'itemGroup', 'itemType', 'customerGroup'];
 const MH11_GROUPS = ['sku', 'group', 'industry', 'brand', 'partner', 'branch'];
 
@@ -74,8 +75,8 @@ const SCREENS: [string, CatalogScreen['templates']][] = [
   ['ACC44', t(EXPENSE_TEMPLATES)], ['ACC70', t(contractProfitTemplates(false))], ['ACC71', t(contractProfitTemplates(true))], ['ACC93', t(CHECKS_TEMPLATES)],
   ['ACC47', t(EXPENSE_DETAIL_TEMPLATES)], ['ACC69', t(DIMENSION_SUM_TEMPLATES)], ['ACC75', t(CASH_ITEM_TEMPLATES)], ['ACC90', t(ITEM_BRANCH_TEMPLATES)],
   // Công nợ
-  ['ACC38', t(partnerBalanceTemplates('ACC38', true), partnerBalanceTemplates('ACC38', false))],
-  ['ACC61', t(partnerBalanceTemplates('ACC61', true), partnerBalanceTemplates('ACC61', false))],
+  ...['ACC38', 'ACC38A', 'ACC38B', 'ACC61'].map((c): [string, CatalogScreen['templates']] => [c, t(PARTNER_BALANCE_TEMPLATES)]),
+  ...['ACC40', 'ACC40A', 'ACC81', 'ACC62'].map((c): [string, CatalogScreen['templates']] => [c, t(CHI_TIET_CONG_NO_TEMPLATES)]),
   ['ACC39', t(DEBT_TERM_TEMPLATES)], ['ACC67', t(AGING_TEMPLATES)], ['ACC67A', t(AGING_TEMPLATES)], ['ACC67B', t(AGING_TEMPLATES)],
   ['ACC48', t(DEBT_EMPLOYEE_TEMPLATES)], ['ACC68', t(DEBT_ITEM_TEMPLATES)],
   // Thuế

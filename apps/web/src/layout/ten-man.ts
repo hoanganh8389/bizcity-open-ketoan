@@ -62,7 +62,6 @@ export const TEN_MAN: Record<string, TenMan> = {
   '/cau-hinh/ky-ke-toan': { label: 'Khóa sổ kỳ kế toán' },
   '/bao-cao/can-doi-phat-sinh': { label: 'Bảng cân đối tài khoản' },
   '/bao-cao/so-chi-tiet': { label: 'Sổ chi tiết các tài khoản' },
-  '/bao-cao/tong-hop-chung-tu': { label: 'Bảng tổng hợp chứng từ gốc cùng loại' },
   '/bao-cao/cong-no': { label: 'Tổng hợp công nợ theo đối tượng' },
   '/bao-cao/so-chi-tiet-cong-no': { label: 'Chi tiết công nợ theo đối tượng' },
   '/bao-cao/cong-no-theo-nhan-vien': { label: 'Tổng hợp công nợ nhân viên' },

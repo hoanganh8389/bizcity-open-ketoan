@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Báo cáo công nợ theo mẫu quản trị <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Tổng hợp công nợ (ACC38 theo đối tượng, ACC38A phải thu khách hàng, ACC38B phải trả nhà cung cấp, ACC61 nội bộ): Mã · Tên · TK công nợ · Số dư đầu kỳ / Phát sinh / Số dư cuối kỳ (Nợ, Có); bỏ Kiểu báo cáo 4 lựa chọn, thay bằng "Tách theo chi nhánh" khi có nhiều chi nhánh.
+- Chi tiết công nợ (ACC40, ACC40A, ACC81, ACC62) màn mới: nhóm từng đối tượng — Số dư đầu kỳ, phát sinh (số dư chạy theo đối tượng), Cộng nhóm; cuối Tổng cộng. Bấm dòng tổng hợp mở thẳng chi tiết của đối tượng.
+- Menu Mua hàng / Bán hàng trỏ tới bản phải trả / phải thu riêng.
+
 ### Bảng cân đối tài khoản (ACC10) theo mẫu quản trị <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Tham số: kỳ, Bậc tài khoản, Hiển thị số dư hai bên (tắt = bù trừ một bên), nhánh tài khoản, chi nhánh khi có nhiều chi nhánh.
 - Cột: Đầu kỳ (Nợ / Có) · Phát sinh (Nợ / Có / Nợ lũy kế / Có lũy kế từ đầu năm) · Cuối kỳ (Nợ / Có); tài khoản tổng hợp in đậm, Tổng cộng chỉ cộng tài khoản chi tiết. Bản in: mẫu quản trị (có lũy kế) và S06-DN.
