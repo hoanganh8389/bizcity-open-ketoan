@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ kế toán chi tiết quỹ tiền mặt (ACC76) theo mẫu <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Cột Ngày hạch toán · Ngày chứng từ · Số phiếu thu · Số phiếu chi · Diễn giải · Tài khoản · TK đối ứng · Số phát sinh (Nợ, Có) · Số tồn · Người nhận/Người nộp; tuỳ chọn Cộng gộp các bút toán giống nhau / Cộng gộp theo chứng từ. Bản in cùng cột.
+
+
 ### Sổ nhật ký thu tiền / chi tiền theo mẫu S03a1-DN, S03a2-DN; kỳ in theo tháng / quý / năm <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - ACC72, ACC73: mỗi chứng từ một dòng; cột Chứng từ (Số hiệu, Ngày tháng); cột "Ghi có (nợ) các TK" tự lấy tối đa 4 tài khoản đối ứng lớn nhất trong kỳ, còn lại vào Tài khoản khác (Số tiền, Số hiệu); bỏ ô gõ danh sách cột. Bản in có dòng ký hiệu cột A…E.
 - Khung in sổ (LedgerForm): kỳ ghi "Tháng 10 năm 2026" / "Quý 4 năm 2026" / "Năm 2026" khi trọn kỳ; ký hiệu cột theo mẫu; "Sổ này có … trang" và "Ngày mở sổ" hai dòng. Hàm kyText dùng chung (lib/format).

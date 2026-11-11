@@ -76,6 +76,8 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
   const d = q.data;
 
   const cash = kind === 'cash';
+  /** Sổ kế toán chi tiết quỹ tiền mặt (ACC76): cột Nợ / Có / Số tồn, tài khoản, TK đối ứng; tuỳ chọn cộng gộp. */
+  const quyCt = preset?.code === 'ACC76';
   const ledger = kind === 'ledger';
   const withBalance = !ledger;
   const label = (t: string) => DOC_TYPE_LABELS[t as DocType] ?? t;
@@ -97,6 +99,12 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
           <ListPicker className="input" items={banks.map((b) => ({ code: b.accountCode, name: `${b.bankName} ${b.accountNo}`, hint: b.code }))} value={banks.some((b) => b.accountCode === df.account) ? df.account : ''}
             onChange={(v) => setD({ account: v || preset.account })} placeholder="" />
         </SideField>
+      )}
+      {quyCt && (
+        <>
+          <label className="checkbox" style={{ fontSize: 12 }}><input type="checkbox" checked={df.groupMode === '2'} onChange={(e) => setD({ groupMode: e.target.checked ? '2' : '1' })} /> Cộng gộp các bút toán giống nhau</label>
+          <label className="checkbox" style={{ fontSize: 12 }}><input type="checkbox" checked={df.groupMode === '3'} onChange={(e) => setD({ groupMode: e.target.checked ? '3' : '1' })} /> Cộng gộp theo chứng từ</label>
+        </>
       )}
       {(kind === 'detail' || kind === 'ledger') && <SideField label="Mã hàng"><ItemPicker className="input" hideName placeholder="Tất cả" value={df.sku} onChange={(sku) => setD({ sku })} /></SideField>}
       {(kind === 'detail' || kind === 'partner') && <SideField label={kind === 'partner' ? 'KH/NCC' : 'Mã đối tượng'}><PartnerPicker className="input" placeholder="" value={df.partnerCode} onChange={(partnerCode) => setD({ partnerCode })} /></SideField>}
@@ -130,7 +138,7 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         <div className="card">
           {!f.account ? <Empty text="Chọn Số tài khoản ở bảng bên trái rồi bấm Tìm kiếm." /> : q.isLoading ? <Loading /> : !d ? <Empty /> : cash ? (
-            <CashTable d={d} title={preset?.title ?? ''} from={f.from} to={f.to} onOpen={setOpenEntry} storageKey={preset?.code ?? 'acc55'} exportRef={exportRef} />
+            <CashTable d={d} title={preset?.title ?? ''} from={f.from} to={f.to} detail={quyCt} onOpen={setOpenEntry} storageKey={preset?.code ?? 'acc55'} exportRef={exportRef} />
           ) : (
             <LedgerGrid d={d} kind={kind} storageKey={`${preset?.code ?? 'ACC12'}-${kind}-v2`} onOpen={setOpenEntry} exportRef={exportRef} />
           )}
@@ -250,7 +258,7 @@ function PartnerLedgerGrid({ d, storageKey, onOpen, exportRef }: { d: Data; stor
  * Số tiền (Thu, Chi, Tồn) · Người nhận/Người nộp · Loại chứng từ · Ghi chú. Dòng Số tồn đầu kỳ, Cộng phát sinh, Số tồn cuối kỳ.
  * Cột Chi nhánh chỉ hiện khi đơn vị có nhiều chi nhánh.
  */
-function CashTable({ d, title, from, to, onOpen, storageKey, exportRef }: { d: Data; title: string; from: string; to: string; onOpen: (id: string) => void; storageKey: string; exportRef?: { current: (() => void) | null } }) {
+function CashTable({ d, title, from, to, detail, onOpen, storageKey, exportRef }: { d: Data; title: string; from: string; to: string; detail?: boolean; onOpen: (id: string) => void; storageKey: string; exportRef?: { current: (() => void) | null } }) {
   const multi = (useBranches().data?.length ?? 0) > 1;
   const opening = d.opening.debit - d.opening.credit;
   const closing = d.closing.debit - d.closing.credit;
@@ -270,7 +278,20 @@ function CashTable({ d, title, from, to, onOpen, storageKey, exportRef }: { d: D
         note={d.truncated ? 'chỉ hiện 20.000 dòng đầu, hãy thu hẹp khoảng ngày' : undefined}
         topRows={[{ key: 'open', label: 'Số tồn đầu kỳ', cells: { ton: ton(opening) } }]}
         bottomRows={[{ key: 'close', label: 'Số tồn cuối kỳ', cells: { ton: ton(closing) } }]}
-        columns={[
+        columns={detail ? [
+          { key: 'postingDate', header: 'Ngày hạch toán', type: 'date', width: 96 },
+          { key: 'docDate', header: 'Ngày chứng từ', type: 'date', width: 96 },
+          { key: 'soThu', header: 'Số phiếu thu', type: 'code', width: 110, value: (r) => (r.debit > 0 ? r.docNo : '') },
+          { key: 'soChi', header: 'Số phiếu chi', type: 'code', width: 110, value: (r) => (r.credit > 0 ? r.docNo : '') },
+          { key: 'description', header: 'Diễn giải', width: 260 },
+          { key: 'accountCode', header: 'Tài khoản', type: 'code', width: 80 },
+          { key: 'counterAccounts', header: 'TK đối ứng', type: 'code', width: 90 },
+          { key: 'debit', header: 'Nợ', title: 'Số phát sinh Nợ', band: 'Số phát sinh', type: 'money', sum: true, width: 120 },
+          { key: 'credit', header: 'Có', title: 'Số phát sinh Có', band: 'Số phát sinh', type: 'money', sum: true, width: 120 },
+          { key: 'ton', header: 'Số tồn', type: 'money', showZero: true, width: 130, value: (r) => r.balanceDebit - r.balanceCredit },
+          { key: 'nguoi', header: 'Người nhận/Người nộp', width: 180, value: (r) => r.counterparty || r.partnerName || '' },
+          { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi },
+        ] : [
           { key: 'postingDate', header: 'Ngày ghi sổ', type: 'date', width: 96 },
           { key: 'docDate', header: 'Ngày chứng từ', type: 'date', width: 96 },
           { key: 'soThu', header: 'Thu', title: 'Số hiệu chứng từ thu', band: 'Số hiệu chứng từ', type: 'code', width: 110, value: (r) => (r.debit > 0 ? r.docNo : '') },

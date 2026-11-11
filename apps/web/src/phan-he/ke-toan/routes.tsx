@@ -39,7 +39,7 @@ export const keToanRoutes = (
     <Route path="bao-cao/nhat-ky-chung" element={<JournalPage />} />
     <Route path="bao-cao/luu-chuyen-tien-te" element={<CashFlowPage />} />
     <Route path="bao-cao/bang-ke-chung-tu" element={<VoucherListingPage />} />
-    <Route path="quy/so-chi-tiet-quy" element={<AccountLedgerPage key="ct-quy" preset={{ account: '111', title: 'Sổ kế toán chi tiết quỹ tiền mặt', code: 'ACC76', helpKey: 'so-quy', kind: 'detail' }} />} />
+    <Route path="quy/so-chi-tiet-quy" element={<AccountLedgerPage key="ct-quy" preset={{ account: '111', title: 'Sổ kế toán chi tiết quỹ tiền mặt', code: 'ACC76', helpKey: 'so-quy', kind: 'cash' }} />} />
     <Route path="quy/nhat-ky-thu-tien" element={<CashJournalPage key="in" direction="in" />} />
     <Route path="quy/nhat-ky-chi-tien" element={<CashJournalPage key="out" direction="out" />} />
     <Route path="cong-no/nhat-ky-ban-hang" element={<SalesJournalPage />} />

@@ -147,16 +147,17 @@ const soChiTietQuy: PrintTemplate<LedgerSheet> = {
       total: 'Cộng số phát sinh trong kỳ',
       after: [{ label: 'Số tồn cuối kỳ', cells: { ton: m(bal(s.closing)) } }],
       cols: [
-        cNgayGs,
-        { key: 'nct', h: 'Ngày, tháng chứng từ', w: 64, center: true, v: (r) => date(r.postingDate) },
-        { key: 'thu', h: 'Thu', group: 'Số hiệu chứng từ', w: 88, v: (r) => (r.debit ? r.docNo : '') },
-        { key: 'chi', h: 'Chi', group: 'Số hiệu chứng từ', w: 88, v: (r) => (r.credit ? r.docNo : '') },
-        { key: 'dg', h: 'Diễn giải', v: (r) => descOf(r, false) },
+        { key: 'ngs', h: 'Ngày hạch toán', w: 64, center: true, v: (r) => date(r.postingDate) },
+        { key: 'nct', h: 'Ngày chứng từ', w: 64, center: true, v: (r) => date(r.docDate ?? r.postingDate) },
+        { key: 'thu', h: 'Số phiếu thu', w: 84, v: (r) => (r.debit ? r.docNo : '') },
+        { key: 'chi', h: 'Số phiếu chi', w: 84, v: (r) => (r.credit ? r.docNo : '') },
+        { key: 'dg', h: 'Diễn giải', v: (r) => r.description },
+        { key: 'tk', h: 'Tài khoản', w: 56, center: true, v: (r) => r.accountCode },
         cDu,
-        { key: 'tt', h: 'Thu', group: 'Số phát sinh', w: 92, num: true, v: (r) => mb(r.debit), sum: (r) => r.debit },
-        { key: 'tc', h: 'Chi', group: 'Số phát sinh', w: 92, num: true, v: (r) => mb(r.credit), sum: (r) => r.credit },
+        { key: 'tt', h: 'Nợ', group: 'Số phát sinh', w: 92, num: true, v: (r) => mb(r.debit), sum: (r) => r.debit },
+        { key: 'tc', h: 'Có', group: 'Số phát sinh', w: 92, num: true, v: (r) => mb(r.credit), sum: (r) => r.credit },
         { key: 'ton', h: 'Số tồn', w: 100, num: true, v: (r) => m(r.balanceDebit - r.balanceCredit) },
-        { key: 'gc', h: 'Ghi chú (người nhận / người nộp)', w: 120, v: (r) => r.partnerName ?? '' },
+        { key: 'gc', h: 'Người nhận/Người nộp', w: 120, v: (r) => r.counterparty || r.partnerName || '' },
       ],
     }} />
   ),
@@ -314,7 +315,8 @@ const soTienVay: PrintTemplate<LedgerSheet> = {
 /** Mẫu theo loại sổ và mã màn; luôn kèm "In bảng đang xem" ở cuối. */
 export function ledgerTemplates(kind: LedgerKind, code: string): PrintTemplate<LedgerSheet>[] {
   const own: PrintTemplate<LedgerSheet>[] =
-    kind === 'cash' ? [cashBook(code === 'ACC56')]
+    code === 'ACC76' ? [soChiTietQuy, soChiTietQuyDoc]
+    : kind === 'cash' ? [cashBook(code === 'ACC56')]
     : kind === 'ledger' ? [soCai]
     : code === 'ACC76' ? [soChiTietQuy, soChiTietQuyDoc, soChiTiet]
     : code === 'ACC86' ? [soNguonVon, soChiTiet]
