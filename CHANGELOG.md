@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Báo cáo lưu chuyển tiền tệ (ACC13): cột Kỳ trước <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Thêm cột Kỳ trước (cùng khoảng ngày năm trước) như mẫu B03-DN; tiêu đề + kỳ trên màn.
+
 ### Sổ chi tiết vật tư hàng hóa (ACC82) theo mẫu sổ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Tiêu đề + kỳ; dòng Số tồn đầu kỳ, từng lần nhập / xuất (Ngày hạch toán · Số chứng từ · Diễn giải · Đơn giá · Nhập / Xuất / Tồn), Cộng, Số tồn cuối kỳ; cột Kho.
 

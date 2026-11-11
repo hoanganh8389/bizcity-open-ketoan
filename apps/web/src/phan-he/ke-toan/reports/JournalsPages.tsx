@@ -322,7 +322,13 @@ export function CashFlowPage() {
   const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '' });
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const q = useQuery({ queryKey: ['cash-flow', f], queryFn: () => api.get<CashFlowData>('/api/v1/reports/cash-flow', f) });
+  // Kỳ trước: cùng khoảng ngày của năm trước (như cột "Năm trước" trên mẫu B03-DN).
+  const lastYear = (d: string) => `${Number(d.slice(0, 4)) - 1}${d.slice(4)}`.replace(/-02-29$/, '-02-28');
+  const prev = { ...f, from: lastYear(f.from), to: lastYear(f.to) };
+  const p = useQuery({ queryKey: ['cash-flow', prev], queryFn: () => api.get<CashFlowData>('/api/v1/reports/cash-flow', prev) });
   const d = q.data;
+  // Hai kỳ cùng bộ chỉ tiêu, cùng thứ tự → ghép theo vị trí dòng.
+  const rows = (d?.rows ?? []).map((r, i) => ({ ...r, previous: p.data?.rows[i]?.code === r.code ? p.data.rows[i]!.value : null }));
   return (
     <>
       <PageHeader title="Báo cáo lưu chuyển tiền tệ" code="ACC13" subtitle="Mẫu B03-DN, phương pháp trực tiếp — tiền và tương đương tiền (TK 111, 112, 113)" helpKey="luu-chuyen-tien-te" />
@@ -337,13 +343,14 @@ export function CashFlowPage() {
       >
         <div className="card">
           <ErrorBox error={q.error ? errorText(q.error) : null} />
+          <div className="rp-tieu-de"><h2>BÁO CÁO LƯU CHUYỂN TIỀN TỆ</h2><i>(Theo phương pháp trực tiếp) — {kyText(f.from, f.to)}</i></div>
           {q.isLoading ? <Loading /> : !d ? <Empty /> : (
             <>
               {d.check.difference !== 0 && <div className="alert alert-bad" style={{ margin: 12 }}>Tiền cuối kỳ theo báo cáo lệch <Money value={d.check.difference} blankZero={false} /> so với số dư tài khoản tiền (<Money value={d.check.actualClosing} blankZero={false} />). Kiểm tra các dòng tiền chưa gán đúng chỉ tiêu.</div>}
               {d.guessedAmount !== 0 && <div className="alert alert-info" style={{ margin: 12 }}>Có <Money value={d.guessedAmount} blankZero={false} /> dòng tiền chưa gán mã chỉ tiêu (trên phiếu hoặc trên lý do); phần mềm tự xếp theo tài khoản đối ứng.</div>}
               <DataGrid
-                storageKey="acc13"
-                rows={d.rows}
+                storageKey="acc13-v2"
+                rows={rows}
                 rowKey={(r, i) => `${r.code}-${i}`}
                 footerLabel={false}
                 rowClassName={(r) => (r.bold ? 'bold' : '')}
@@ -351,6 +358,7 @@ export function CashFlowPage() {
                   { key: 'name', header: 'Chỉ tiêu', noSort: true, render: (r) => <span style={{ paddingLeft: r.bold ? 0 : 16 }}>{r.name}</span> },
                   { key: 'code', header: 'Mã số', type: 'code', noSort: true },
                   { key: 'value', header: 'Kỳ này', type: 'money', noSort: true, render: (r) => (r.value === null ? '' : <Money value={r.value} bold={r.bold} />) },
+                  { key: 'previous', header: 'Kỳ trước', type: 'money', noSort: true, title: 'Cùng khoảng ngày của năm trước', render: (r) => (r.previous === null ? '' : <Money value={r.previous} bold={r.bold} />) },
                 ]}
               />
             </>
