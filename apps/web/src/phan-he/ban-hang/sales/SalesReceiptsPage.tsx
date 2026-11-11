@@ -31,7 +31,7 @@ export function SalesReceiptsPage() {
   return (
     <>
       <PageHeader title="Báo cáo thu tiền bán hàng" code="BH05" subtitle="Từng phiếu thu tiền khách hàng và phiếu bán được thanh toán" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="BH05" templates={RECEIPTS_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>

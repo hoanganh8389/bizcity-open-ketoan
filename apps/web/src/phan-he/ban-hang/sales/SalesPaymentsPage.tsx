@@ -36,7 +36,7 @@ export function SalesPaymentsPage() {
         subtitle="Tiền thu của khách trừ tiền trả lại khách, tách theo từng hình thức"
         helpKey="thu-tien-ban-hang"
       />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="BH03" templates={PAYMENTS_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, methods: d.methods, rows: d.rows }] : [])} />}
         filters={
           <>

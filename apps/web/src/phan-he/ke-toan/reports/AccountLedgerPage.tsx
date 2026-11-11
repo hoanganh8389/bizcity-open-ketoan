@@ -128,7 +128,7 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
         note={d ? `${d.account.code} — ${d.account.name}` : 'Chọn tài khoản để xem'}
         helpKey={preset?.helpKey ?? 'so-chi-tiet'}
       />
-      <ReportSideLayout panel={panel}>
+      <ReportSideLayout panel={panel} boThamSo={{ value: f, onApply: (v: typeof f) => { setF(v); setDf(v); } }}>
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         <div className="card">
           {!f.account ? <Empty text="Chọn Số tài khoản ở bảng bên trái rồi bấm Tìm kiếm." /> : q.isLoading ? <Loading /> : !d ? <Empty /> : cash ? (

@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Lưu bộ tham số báo cáo <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/07 (đóng góp) -->
+
+- **Thêm:** đầu bảng tham số 34 báo cáo: chọn bộ đã lưu, lưu bộ có tên, đặt bộ mặc định khi mở báo cáo; kỳ chọn nhanh (Tháng này…) lưu theo kỳ, tự đổi theo ngày mở.
+- **Thay đổi định khoản:** không.
+
 ### Dán từ Excel (Ctrl + V) vào lưới chứng từ <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/06 (đóng góp) -->
 
 - **Thêm:** dán nhiều ô từ Excel vào lưới phiếu thu / chi / báo có / báo nợ, phiếu kế toán (TK Nợ – TK Có – Số tiền thành dòng + đối ứng), chứng từ mua (qua bộ kiểm Nhập Excel dòng hàng), mẫu phiếu.

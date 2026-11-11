@@ -77,7 +77,7 @@ export function JournalPage() {
   return (
     <>
       <PageHeader title="Sổ nhật ký chung" code="ACC89" subtitle="Toàn bộ định khoản trong kỳ theo ngày và số chứng từ" helpKey="nhat-ky-chung" />
-      <ReportSideLayout panel={panel}>
+      <ReportSideLayout panel={panel} boThamSo={{ value: f, onApply: (v: typeof f) => { setDraft(v); setF(v); } }}>
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : !d || d.rows.length === 0 ? <div className="card"><Empty text="Không có định khoản nào trong khoảng này" /></div> : (
           <div className="card">

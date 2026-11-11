@@ -47,7 +47,7 @@ export function SalesDetailPage() {
         subtitle="Chi tiết từng mặt hàng đã bán và trả lại trong kỳ"
         helpKey="bao-cao-ban-hang"
       />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="BH01" templates={SALES_DETAIL_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>

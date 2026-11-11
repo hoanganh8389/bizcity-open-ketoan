@@ -52,7 +52,7 @@ export function ExpensePage() {
   return (
     <>
       <PageHeader title="Chi phí theo khoản mục và bộ phận" code="ACC44" subtitle="Phát sinh chi phí gom theo khoản mục, bộ phận, hợp đồng, nhân viên, vụ việc, dự án, nguồn vốn ghi trên từng dòng phiếu" helpKey="chi-phi-khoan-muc" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC44" templates={EXPENSE_TEMPLATES} disabled={!d}
           getDocs={() => (d ? [{ ...f, groupLabel: g.label, dims: g.cols.map((c) => ({ key: c, head: HEAD[c] })), rows: d.rows, total: d.total }] : [])} />}
         filters={
@@ -101,7 +101,7 @@ export function ContractProfitPage({ detail }: { detail: boolean }) {
   return (
     <>
       <PageHeader title={detail ? 'Chi tiết lãi lỗ theo hợp đồng' : 'Tổng hợp lãi lỗ theo hợp đồng'} code={detail ? 'ACC71' : 'ACC70'} subtitle="Doanh thu, thu nhập trừ giá vốn, chi phí của các dòng phiếu có chọn hợp đồng; không tính bút toán kết chuyển" helpKey="hop-dong" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen={detail ? 'ACC71' : 'ACC70'} templates={contractProfitTemplates(detail)} disabled={!q.data} getDocs={() => (q.data ? [{ ...f, detail, typeName: CONTRACT_TYPE_NAME, rows }] : [])} />}
         filters={
           <>
@@ -184,7 +184,7 @@ export function ChecksPage() {
   return (
     <>
       <PageHeader title="Kiểm tra chứng từ, hoá đơn" code="ACC93" subtitle="Các trường hợp dễ làm số liệu lệch khi đối chiếu với bên phát hành hoá đơn và hệ thống bán hàng" helpKey="kiem-tra-chung-tu" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC93" templates={CHECKS_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, checks: d }] : [])} />}
         filters={
           <>

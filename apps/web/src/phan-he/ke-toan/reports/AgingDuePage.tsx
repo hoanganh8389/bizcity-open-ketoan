@@ -50,7 +50,7 @@ export function AgingDuePage({ preset }: { preset: AgingDuePreset }) {
   return (
     <>
       <PageHeader title={preset.title} code={preset.code} subtitle={preset.subtitle} helpKey="tuoi-no" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen={preset.code} templates={AGING_TEMPLATES} disabled={!d || !rows.length}
           getDocs={(): AgingSheet[] => (d ? [{ code: preset.code, title: preset.title, kind: k, asOf: f.asOf, step: d.step, account: f.account || '131', branchCodes: f.branchCodes, ranges: d.ranges, rows }] : [])} />}
         filters={

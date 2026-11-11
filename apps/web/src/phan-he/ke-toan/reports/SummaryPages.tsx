@@ -30,7 +30,7 @@ export function TaxSummaryPage() {
   return (
     <>
       <PageHeader title="Bảng tổng hợp thuế GTGT" code="ACC91" subtitle="Doanh thu, thuế ra, thuế vào, khấu trừ và thuế nộp cuối kỳ của từng chi nhánh, từng tháng" helpKey="tong-hop-thue" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC91" templates={TAX_SUMMARY_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>
@@ -86,7 +86,7 @@ export function CashBalancesPage() {
   return (
     <>
       <PageHeader title="Bảng kê số dư tiền" code="ACC80" subtitle="Tồn đầu, thu, chi, tồn cuối của từng quỹ, từng tài khoản ngân hàng theo chi nhánh" helpKey="so-du-tien" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC80" templates={CASH_BALANCE_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>
@@ -150,7 +150,7 @@ export function PostingSummaryPage() {
   return (
     <>
       <PageHeader title="Bảng tổng hợp chứng từ" code="ACC63" subtitle="Tổng số tiền theo từng cặp tài khoản Nợ / Có, theo chi nhánh, tháng, khoản mục, lý do" helpKey="tong-hop-chung-tu" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC63" templates={POSTING_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>

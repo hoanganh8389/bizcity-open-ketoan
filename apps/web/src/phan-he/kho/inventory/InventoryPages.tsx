@@ -203,7 +203,7 @@ export function StockMovementPage() {
   return (
     <>
       <PageHeader title="Báo cáo nhập xuất tồn hàng hoá" code="ACC83" subtitle="Tồn đầu, nhập, xuất, tồn cuối, mua hàng, giá vốn theo mặt hàng hoặc gom theo nhóm, loại, nhãn hiệu, ngành hàng, chi nhánh, nhà cung cấp" helpKey="nhap-xuat-ton" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC83" templates={STOCK_TEMPLATES} disabled={!d} getDocs={sheet} />}
         filters={
           <>
@@ -274,7 +274,7 @@ export function ItemLedgerPage() {
   return (
     <>
       <PageHeader title="Sổ chi tiết hàng hoá" code="ACC82" subtitle="Từng lần nhập, xuất của một mặt hàng và tồn luỹ kế" helpKey="so-chi-tiet-hang-hoa" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC82" templates={ITEM_LEDGER_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...d, from: f.from, to: f.to, branchCodes: f.branchCodes, warehouseCodes: f.warehouseCodes }] : [])} />}
         filters={
           <>

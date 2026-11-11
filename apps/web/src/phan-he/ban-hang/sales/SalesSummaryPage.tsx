@@ -64,7 +64,7 @@ export function SalesSummaryPage() {
         subtitle="Doanh số bán, hàng trả lại và doanh thu thuần theo nhiều góc nhìn"
         helpKey="tong-hop-ban-hang"
       />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="BH02" templates={summaryTemplates(f.groupBy)} disabled={!d}
           getDocs={() => (d ? [{ ...f, tab: g.tab, keyHead: g.keyHead, labelHead: g.labelHead, extraHead: g.extraHead, rows: d.rows }] : [])} />}
         filters={

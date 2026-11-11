@@ -52,7 +52,7 @@ export function ExpenseDetailPage() {
   return (
     <>
       <PageHeader title="Chi tiết chi phí theo khoản mục, bộ phận" code="ACC47" subtitle="Từng dòng phát sinh của tài khoản chi phí, lọc theo khoản mục, bộ phận, chi nhánh" helpKey="chi-phi-khoan-muc" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC47" templates={EXPENSE_DETAIL_TEMPLATES} disabled={!q.data} getDocs={() => (q.data ? [{ ...f, rows: q.data }] : [])} />}
         filters={
           <>
@@ -97,7 +97,7 @@ export function DimensionSummaryPage() {
   return (
     <>
       <PageHeader title="Tổng hợp theo nhân viên, hợp đồng, bộ phận" code="ACC69" subtitle="Phát sinh Nợ, Có của từng tài khoản theo nhân viên, hợp đồng, bộ phận hoặc khoản mục ghi trên dòng phiếu" helpKey="chi-phi-khoan-muc" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC69" templates={DIMENSION_SUM_TEMPLATES} disabled={!q.data} getDocs={() => (q.data ? [{ ...f, label, rows: q.data }] : [])} />}
         filters={
           <>
@@ -144,7 +144,7 @@ export function CashByItemPage() {
   return (
     <>
       <PageHeader title="Sổ nhật ký chi tiền theo khoản mục" code="ACC75" subtitle="Mỗi lần chi tiền (tiền mặt, ngân hàng) một dòng, chia số tiền theo khoản mục gốc của dòng chi phí; không tính chuyển tiền nội bộ" helpKey="chi-phi-khoan-muc" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC75" templates={CASH_ITEM_TEMPLATES} disabled={!q.data} getDocs={() => (q.data ? [{ ...f, items: q.data.columns, rows: q.data.rows }] : [])} />}
         filters={
           <>
@@ -185,7 +185,7 @@ export function ExpenseItemBranchPage() {
   return (
     <>
       <PageHeader title="Tài khoản chi phí và khoản mục" code="ACC90" subtitle="Chi phí theo tài khoản × khoản mục (tuỳ chọn thêm bộ phận), mỗi chi nhánh một cột" helpKey="chi-phi-khoan-muc" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC90" templates={ITEM_BRANCH_TEMPLATES} disabled={!q.data} getDocs={() => (q.data ? [{ ...f, branches: q.data.branches, rows: q.data.rows }] : [])} />}
         filters={
           <>

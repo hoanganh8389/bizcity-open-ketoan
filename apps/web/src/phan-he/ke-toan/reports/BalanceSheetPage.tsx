@@ -58,7 +58,7 @@ export function BalanceSheetPage() {
           Kỳ này còn {d.unclosedProfit > 0 ? 'lãi' : 'lỗ'} <b><Money value={Math.abs(d.unclosedProfit)} blankZero={false} /></b> chưa kết chuyển. Số này đã được cộng vào chỉ tiêu 420b để bảng cân; kết chuyển lãi lỗ (ACC6) thì số chuyển hẳn về tài khoản 4212.
         </div>
       )}
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC8" templates={BALANCE_SHEET_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, asOf: d.asOf, openingAsOf: d.openingAsOf, rows: shown }] : [])} />}
         filters={
           <>

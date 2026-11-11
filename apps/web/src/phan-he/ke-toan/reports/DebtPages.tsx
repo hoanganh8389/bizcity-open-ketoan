@@ -61,7 +61,7 @@ export function DebtByEmployeePage() {
   return (
     <>
       <PageHeader title="Báo cáo công nợ theo nhân viên" code="ACC48" subtitle="Số dư và phát sinh công nợ theo nhân viên phụ trách, chi tiết từng đối tượng" helpKey="cong-no-theo-nhan-vien" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC48" templates={DEBT_EMPLOYEE_TEMPLATES} disabled={!d || !d.rows.length}
           getDocs={(): EmpDebtSheet[] => (d ? [{ from: f.from, to: f.to, account: f.account, branchCodes: f.branchCodes, byPartner,
             employee: f.employee === '*' ? '' : pick.find((p) => p.code === f.employee)?.name ?? f.employee, rows: rows.filter((r) => r.kind === 'data') }] : [])} />}
@@ -163,7 +163,7 @@ export function DebtByItemPage() {
   return (
     <>
       <PageHeader title="Báo cáo công nợ theo mặt hàng" code="ACC68" subtitle="Phần còn nợ của từng đối tượng chia theo mặt hàng đã bán (mua) chịu" helpKey="cong-no-theo-mat-hang" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC68" templates={DEBT_ITEM_TEMPLATES} disabled={!d || !rows.length}
           getDocs={(): ItemDebtSheet[] => (d ? [{ from: f.from, to: f.to, account: f.account, branchCodes: f.branchCodes, view,
             partnerName: f.partnerCode ? d.rows.find((r) => r.partnerCode === f.partnerCode)?.partnerName ?? f.partnerCode : undefined, rows: rows.filter((r) => r.kind === 'data') }] : [])} />}

@@ -70,7 +70,7 @@ export function DebtByTermPage() {
   return (
     <>
       <PageHeader title="Sổ công nợ theo hạn thanh toán" code="ACC39" subtitle="Từng chứng từ nợ của đối tượng: hạn thanh toán, ngày phải thanh toán và các phiếu đã thanh toán cho chứng từ đó" helpKey="tuoi-no" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC39" templates={DEBT_TERM_TEMPLATES} disabled={!d || !d.rows.length}
           getDocs={(): DebtTermSheet[] => (d ? [{ from: f.from, to: f.to, account: f.account || '131', branchCodes: f.branchCodes,
             partnerName: f.partnerCode ? d.rows.find((r) => r.partnerCode === f.partnerCode)?.partnerName ?? f.partnerCode : undefined, rows: d.rows, totals: d.totals }] : [])} />}

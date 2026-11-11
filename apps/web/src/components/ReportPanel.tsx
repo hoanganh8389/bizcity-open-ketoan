@@ -24,6 +24,7 @@ import { FilterPanelCtx, useFilterPanel, type FilterPanelContext } from './filte
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — bảng lọc chi nhánh / kho thêm thẻ Cây theo sơ đồ tổ chức (tích cha tích hết con, tới kho)
 import { CayDonVi } from './CayDonVi';
 import { useOrgTree } from '@/lib/orgUnits';
+import { BoThamSo, type BoThamSoProps } from './BoThamSo';
 
 /**
  * Bề rộng bảng lọc (nhớ theo máy): mặc định 240px để nhường chỗ cho bảng số liệu; kéo rộng tới 600px,
@@ -63,7 +64,7 @@ function tomTat(panel: HTMLElement | null): string[] {
   return out.slice(0, 8);
 }
 
-export function ReportSideLayout({ panel, children }: { panel: ReactNode; children: ReactNode }) {
+export function ReportSideLayout({ panel, children, boThamSo }: { panel: ReactNode; children: ReactNode; /** Bộ tham số đã lưu (đầu bảng tham số). */ boThamSo?: BoThamSoProps }) {
   const [width, setWidth] = useState(readWidth);
   const [ghim, setGhim] = useState(readGhim);
   const [mo, setMo] = useState(false);
@@ -155,6 +156,7 @@ export function ReportSideLayout({ panel, children }: { panel: ReactNode; childr
             <button type="button" className="btn btn-sm btn-ghost" onClick={doiGhim} title="Ghim bảng tham số bên trái màn (như trước)"><Pin size={14} /> Ghim bên trái</button>
             <button type="button" className="btn btn-sm btn-ghost" onClick={() => setMo(false)} aria-label="Đóng" title="Đóng (Esc)"><X size={16} /></button>
           </div>
+          {boThamSo && <BoThamSo {...boThamSo} />}
           {panel}
         </aside>
         <div className="rp-main">{children}</div>
@@ -167,6 +169,7 @@ export function ReportSideLayout({ panel, children }: { panel: ReactNode; childr
       <button type="button" className="rp-mtoggle" onClick={() => setMOpen((x) => !x)}>{mOpen ? '▾' : '▸'} Bộ lọc</button>
       <aside className="rp-panel" ref={panelRef} style={{ height: maxH }}>
         <button type="button" className="rp-boghim" onClick={doiGhim} title="Bỏ ghim: bảng tham số thành ngăn kéo bên phải, báo cáo rộng hết màn"><PinOff size={12} /> Bỏ ghim</button>
+        {boThamSo && <BoThamSo {...boThamSo} />}
         {panel}
       </aside>
       <div className="rp-split" onMouseDown={startDrag} onDoubleClick={toggle} title="Kéo để đổi bề rộng bảng lọc; kéo hết sang trái hoặc bấm nút để thu gọn">
@@ -366,7 +369,7 @@ export function SideActions({ onSearch, onExport, busy, print }: { onSearch: () 
  *              BranchSelect nhiều chi nhánh thành danh sách tích chọn, áp dụng khi bấm Tìm kiếm.
  *   Tìm kiếm : áp dụng chi nhánh đã tích rồi tải lại số liệu; In: in trang.
  */
-export function FilterLayout({ filters, children, onSearch, print }: { filters: ReactNode; children: ReactNode; onSearch?: () => void; print?: ReactNode }) {
+export function FilterLayout({ filters, children, onSearch, print, boThamSo }: { filters: ReactNode; children: ReactNode; onSearch?: () => void; print?: ReactNode; boThamSo?: BoThamSoProps }) {
   const appliers = useRef(new Set<() => boolean | void>());
   const box = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
@@ -381,6 +384,7 @@ export function FilterLayout({ filters, children, onSearch, print }: { filters: 
   return (
     <FilterPanelCtx.Provider value={ctx}>
       <ReportSideLayout
+        boThamSo={boThamSo}
         panel={
           <>
             <div className="rp-filters" ref={box}>{filters}</div>

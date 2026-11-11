@@ -39,7 +39,7 @@ export function IncomeStatementPage() {
         helpKey="ket-qua-kinh-doanh"
         actions={<button className="btn" disabled={!d} onClick={() => api.download('/api/v1/addins/excel-export/income-statement.csv', f, `ket-qua-kinh-doanh-${f.from}-${f.to}.csv`)}><Download size={16} /> Xuất Excel</button>}
       />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC9" templates={INCOME_STATEMENT_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ branchCodes: f.branchCodes, period: d.period, previous: d.previous, rows: d.rows }] : [])} />}
         filters={
           <>

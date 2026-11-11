@@ -61,7 +61,7 @@ export function PartnerBalancesPage({ preset }: { preset?: PartnerBalancesPreset
         subtitle={preset?.subtitle ?? 'Số dư và phát sinh công nợ theo từng đối tượng'}
         helpKey="tong-hop-cong-no"
       />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen={preset?.code ?? 'ACC38'} templates={partnerBalanceTemplates(preset?.code ?? 'ACC38', f.byBranch)} disabled={!d || !d.rows.length}
           getDocs={(): PartnerBalanceSheet[] => (d ? [{
             code: preset?.code ?? 'ACC38', title: preset?.title ?? 'Sổ tổng hợp công nợ phát sinh', from: f.from, to: f.to, branchCodes: f.branchCodes, account: f.account,

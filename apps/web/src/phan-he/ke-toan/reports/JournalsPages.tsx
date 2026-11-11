@@ -46,7 +46,7 @@ export function CashJournalPage({ direction }: { direction: 'in' | 'out' }) {
         subtitle={thu ? 'Các khoản thu tiền trong kỳ, chia cột theo tài khoản ghi Có (mẫu S03a1)' : 'Các khoản chi tiền trong kỳ, chia cột theo tài khoản ghi Nợ (mẫu S03a2)'}
         helpKey="nhat-ky-thu-chi"
       />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: (v: typeof f) => { setF(v); setDraft({ account: v.account, columns: v.columns }); } }}
         print={<PrintButton screen={thu ? 'ACC72' : 'ACC73'} templates={CASH_JOURNAL_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, direction: d.direction, columns: d.columns, rows: d.rows }] : [])} />}
         filters={
           <>
@@ -110,7 +110,7 @@ export function SalesJournalPage() {
   return (
     <>
       <PageHeader title="Sổ nhật ký bán hàng" code="ACC84" subtitle="Doanh thu bán hàng theo từng hoá đơn, chia cột hàng hoá / thành phẩm / dịch vụ" helpKey="nhat-ky-ban-hang" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC84" templates={SALES_JOURNAL_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, branches: d.branches.length, rows: d.branches.flatMap((b) => b.rows.map((r) => ({ ...r, branchCode: b.branchCode }))) }] : [])} />}
         filters={
           <>
@@ -185,7 +185,7 @@ export function PurchaseJournalPage() {
   return (
     <>
       <PageHeader title="Sổ nhật ký mua hàng" code="ACC77" subtitle="Hàng hoá, nguyên liệu, công cụ mua theo từng phiếu nhập (mẫu S03a3)" helpKey="nhat-ky-mua-hang" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC77" templates={PURCHASE_JOURNAL_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, branches: d.branches.length, rows: d.branches.flatMap((b) => b.rows.map((r) => ({ ...r, branchCode: b.branchCode }))) }] : [])} />}
         filters={
           <>
@@ -259,7 +259,7 @@ export function VoucherListingPage() {
   return (
     <>
       <PageHeader title="Bảng kê chi tiết chứng từ" code="ACC60" subtitle="Mỗi cặp Nợ / Có một dòng: tài khoản, số tiền, đối tượng từng bên, khoản mục, bộ phận" helpKey="bang-ke-chung-tu" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC60" templates={LISTING_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>
@@ -325,7 +325,7 @@ export function CashFlowPage() {
   return (
     <>
       <PageHeader title="Báo cáo lưu chuyển tiền tệ" code="ACC13" subtitle="Mẫu B03-DN, phương pháp trực tiếp — tiền và tương đương tiền (TK 111, 112, 113)" helpKey="luu-chuyen-tien-te" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC13" templates={CASH_FLOW_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>

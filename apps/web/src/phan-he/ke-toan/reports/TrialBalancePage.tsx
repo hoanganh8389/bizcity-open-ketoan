@@ -34,7 +34,7 @@ export function TrialBalancePage() {
         subtitle="Số dư đầu kỳ, phát sinh, số dư cuối kỳ theo tài khoản; tài khoản tổng hợp in đậm"
         helpKey="can-doi-phat-sinh"
       />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC10" templates={TRIAL_BALANCE_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>

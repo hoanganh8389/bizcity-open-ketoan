@@ -57,7 +57,7 @@ export function GrossProfitPage() {
   return (
     <>
       <PageHeader title="Lãi gộp" code="BH04" subtitle="Doanh thu thuần (sau chiết khấu, trừ hàng trả lại) trừ giá vốn, theo mặt hàng, nhóm hàng, cửa hàng, khách hàng" helpKey="lai-gop" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="BH04" templates={PROFIT_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ from: f.from, to: f.to, branchCodes: f.branchCodes, groupBy: f.groupBy, tab: g.tab, keyHead: g.keyHead, labelHead: g.labelHead, extraHead: g.extraHead, rows: d.rows, totals: d.totals }] : [])} />}
         filters={
           <>
@@ -106,7 +106,7 @@ export function StockTransfersPage() {
   return (
     <>
       <PageHeader title="Bảng kê chuyển kho" code="HH01" subtitle="Hàng chuyển giữa các chi nhánh theo phiếu và mặt hàng: đã nhận, còn trên đường (số dư hàng đang chuyển)" helpKey="bang-ke-chuyen-kho" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="HH01" templates={TRANSFER_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows }] : [])} />}
         filters={
           <>
@@ -161,7 +161,7 @@ export function ProfitByDepartmentPage() {
   return (
     <>
       <PageHeader title="Kết quả kinh doanh theo cửa hàng" code="KQ01" subtitle="Doanh thu, giá vốn, lãi gộp, chi phí và lợi nhuận của từng cửa hàng (bộ phận) hoặc chi nhánh, lấy từ sổ cái" helpKey="ket-qua-theo-cua-hang" />
-      <FilterLayout
+      <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="KQ01" templates={PNL_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...f, rows: d.rows, totals: d.totals }] : [])} />}
         filters={
           <>
