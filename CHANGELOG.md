@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Xuất Excel định dạng chuẩn ở mọi nơi (kẻ ô, tiêu đề cột nền xám, số có phân cách) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Hàm chung `lib/excelChuan.ts` (exceljs): phông Times New Roman; tiêu đề đậm cỡ 14 gộp ngang; tiêu đề cột đậm nền xám, căn giữa, xuống dòng (hai tầng gộp ô); kẻ ô mảnh toàn bảng; dòng nhóm gộp ngang đậm, dòng Tổng / Cộng đậm; số #,##0 (âm trong ngoặc), số lượng / đơn giá giữ số lẻ; độ rộng cột theo nội dung; cố định dòng tiêu đề cột. Không dời dòng / cột nên tệp mẫu nhập liệu nạp lại vẫn đúng.
+- Áp cho: nút Xuất Excel của mọi bảng (DataGrid — các màn báo cáo, danh sách), tờ khai 01/GTGT + bảng kê + phụ lục, 01/KHBS, 03/TNDN, thuyết minh B09, tệp mẫu Nhập Excel (kèm sheet Hướng dẫn), mẫu nhập tài sản, sơ đồ tổ chức, yêu cầu tài chính kế toán, chiết khấu theo mã, quy cách thùng, đề nghị chuyển hàng, đăng ký tồn max, các tệp xuất của Mua hàng. Trước đây các tệp xuất không kẻ ô, số dài hiện dạng 2.48E+09.
+- Bỏ màn tờ khai GTGT cũ không còn dùng (VatReturnPage).
+
 ### Khai thuế (ACC66) làm lại theo mẫu chuẩn, gọn như phần mềm mẫu <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Màn **Khai thuế**: danh sách tờ khai tháng / quý (Kỳ kê khai, Loại tờ khai, Thông tư áp dụng, Trạng thái, Chức năng Xem ▾ Đánh dấu TCT chấp nhận / Xóa), khung "Tờ khai cần lập tháng này / năm nay", thanh Thiết lập thông tin cơ quan thuế · Tải lại · Khai bổ sung ▾ · Lập tờ khai ▾. Bỏ bảng tham số và các đoạn giải thích trên màn.
 - **Chọn kỳ tính thuế**: tháng / quý, năm, ngành nghề, chọn phụ lục (BKBR_01-1, BKMV_01-2, PL NQ 204), Lấy lên HHDV mua vào nhóm 4.

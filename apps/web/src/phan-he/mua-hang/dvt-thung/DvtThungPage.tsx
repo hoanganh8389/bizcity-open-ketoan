@@ -114,7 +114,7 @@ export function DvtThungPage() {
     if (fileRef.current) fileRef.current.value = '';
   };
   const template = async () => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const data = [['Mã hàng', 'Tên hàng', 'ĐVT nhỏ nhất', 'ĐVT đang có', 'Quy cách 1 thùng']];
     for (const r of rows) data.push([r.sku, r.name, r.baseUnit, r.units.map((u) => (u.ratio === 1 ? u.unit : `${u.unit}=${u.ratio} ${r.baseUnit}`)).join('; '), r.spec ?? '']);
     if (rows.length <= 1) data.push(['110154035', 'Ví dụ: Sữa 180ml', 'Hộp', 'Hộp; Lốc=4 Hộp', '12 Lốc'], ['171729007', 'Ví dụ: Nước giặt 1,2L', 'Can', 'Can', '12CAN/THÙNG']);

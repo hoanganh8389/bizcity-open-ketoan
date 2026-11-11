@@ -30,7 +30,7 @@ const readMem = (id: string): Partial<Saved> => { try { return JSON.parse(localS
 
 /** Tệp mẫu: dòng tiêu đề + dòng ví dụ; sheet "Hướng dẫn" liệt kê từng cột. */
 async function taiMau(loai: NhapLoai) {
-  const XLSX = await import('xlsx');
+  const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([loai.fields.map((f) => f.header + (f.required === true ? ' (*)' : '')), loai.fields.map((f) => f.example ?? f.defaultValue ?? '')]);
   ws['!cols'] = loai.fields.map((f) => ({ wch: Math.max(14, f.header.length + 4) }));
@@ -45,7 +45,7 @@ async function taiMau(loai: NhapLoai) {
 
 /** Tệp lỗi / kết quả: các cột của tệp gốc + Trạng thái + Lỗi. */
 async function taiKetQua(loai: NhapLoai, headers: string[], aoa: Aoa, headRow: number, kq: NhapKetQua, ten: string) {
-  const XLSX = await import('xlsx');
+  const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
   const byRow = new Map(kq.rows.map((r) => [r.row, r]));
   const out = [[...headers, 'Trạng thái', 'Lỗi']];
   aoa.slice(headRow + 1).forEach((line, i) => {

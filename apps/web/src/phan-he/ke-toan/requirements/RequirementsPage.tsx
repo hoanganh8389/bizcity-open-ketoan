@@ -54,7 +54,7 @@ export function RequirementsPage() {
   const toggle = (code: string) => setOpen((o) => { const n = new Set(o); if (n.has(code)) n.delete(code); else n.add(code); return n; });
 
   const exportExcel = async () => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const aoa: (string | number)[][] = [['Mục', 'Chức năng', 'Tính năng yêu cầu', 'Trạng thái', 'Ghi chú', 'Đã đáp ứng thế nào', 'Màn hình', 'Hướng dẫn', 'Phần còn lại', 'Cập nhật']];
     for (const g of REQ_GROUPS) {
       const items = all.filter((r) => r.group === g.key);

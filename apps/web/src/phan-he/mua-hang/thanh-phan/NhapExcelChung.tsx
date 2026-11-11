@@ -77,7 +77,7 @@ export function NhapExcelChung<K extends string, T>({ s, onClose, onAdd }: { s: 
 
 /** Xuất một danh sách ra tệp Excel (tiêu đề = khoá của object). */
 export async function xuatExcel(file: string, sheet: string, rows: Record<string, unknown>[]) {
-  const XLSX = await import('xlsx');
+  const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), sheet.slice(0, 31));
   XLSX.writeFile(wb, file);

@@ -445,7 +445,7 @@ function TienIchView({ kind, d, values, onClose }: { kind: 'mua-vao' | 'thue-sua
 
 /** Xuất Excel một tệp như phần mềm mẫu: Tờ khai, Bảng kê bán ra, Bảng kê mua vào, Giảm thuế NQ 204 (kèm cột Chi nhánh). */
 async function xuatExcel(d: VatData, values: Record<string, number>, purchases: Row[], group4: boolean) {
-  const XLSX = await import('xlsx');
+  const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
   const wb = XLSX.utils.book_new();
   const sheet = (name: string, rows: (string | number)[][]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), name);
   sheet('TO KHAI THUE GTGT', [['TỜ KHAI THUẾ GIÁ TRỊ GIA TĂNG'], [`Kỳ tính thuế: ${d.label}`], [], ['STT', 'Chỉ tiêu', 'Mã', 'Giá trị hàng hóa, dịch vụ (chưa có thuế giá trị gia tăng)', 'Mã', 'Thuế giá trị gia tăng'],
@@ -475,6 +475,6 @@ async function xuatExcel(d: VatData, values: Record<string, number>, purchases: 
     ['II. Hàng hóa, dịch vụ bán ra trong kỳ'], ['STT', 'Tên hàng hóa, dịch vụ', 'Doanh thu hàng hóa, dịch vụ chịu thuế', 'Thuế suất theo quy định', 'Thuế suất sau giảm', 'Thuế GTGT được giảm'],
     ...r.rows.map((x, i) => [i + 1, x.name, x.amount, '10%', '8%', x.reducedTax]), ['', 'Tổng cộng', r.totals.amount, '', '', r.totals.reducedTax], [],
     ['III. Chênh lệch thuế GTGT của hàng hoá, dịch vụ bán ra và mua vào trong kỳ được áp dụng mức thuế suất thuế giá trị gia tăng 8%: [09] = [08] - [06]', '', r.totals.reducedTax - r.inputTotals.tax]]);
-  XLSX.writeFile(wb, `to-khai-01-gtgt-${d.label.replace(/[^\dA-Za-z]+/g, '-')}.xlsx`);
+  XLSX.writeFile(wb, `to-khai-01-gtgt-${d.from.slice(0, 7)}${d.from.slice(5, 7) === d.to.slice(5, 7) ? '' : `-den-${d.to.slice(5, 7)}`}.xlsx`);
 }
 

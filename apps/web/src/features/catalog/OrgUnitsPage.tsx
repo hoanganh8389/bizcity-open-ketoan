@@ -66,7 +66,7 @@ export function OrgUnitsPage() {
   });
 
   const exportExcel = async () => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const nodes = [...(tree.data?.nodes ?? [])].sort((a, b) => a.path.localeCompare(b.path));
     const s1 = [['Mã', 'Tên', 'Mã cha', 'Mô tả', 'PATH']].concat(nodes.map((n) => [n.code, n.name, n.parentCode ?? '', n.note, n.path]));
     const s2 = [['Mã chi nhánh', 'Tên chi nhánh', 'Mã nút']].concat((tree.data?.branches ?? []).map((b) => [b.code, b.name, b.orgCode ?? '']));
