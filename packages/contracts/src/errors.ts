@@ -116,6 +116,18 @@ export const ERROR_REASONS = {
   POS_BRANCH_REQUIRED: 'Đơn vị nhiều chi nhánh mà máy không gửi branchCode / mã phiếu có ở nhiều chi nhánh',
   POS_ORDER_ID_REUSED: 'Cùng id đơn đã nhận với nội dung khác (máy phải tạo đơn mới)',
   POS_CODE_TAKEN: 'Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại)',
+  // [2026-11-11 03:30 PM Võ Hoàng] POS-W2: họ mã POS_* đợt W2 — hoàn / đổi / huỷ (BIZCITY-ERRORS 1.8.0-draft §4c, phiếu NT-BH-005, đóng góp)
+  POS_RETURN_QTY: 'Trả quá số còn trả được của dòng, hoặc dòng không có trong đơn gốc',
+  POS_RETURN_EXPIRED: 'Quá hạn trả (tham số, hiện 3 ngày theo ngày bán) mà thiếu người duyệt / lý do duyệt; kèm deadline',
+  POS_RETURN_OTHER_SHOP: 'Đơn gốc của chi nhánh khác: đợt này chỉ trả ở cửa hàng đã bán',
+  POS_ORDER_NOT_RETURNABLE: 'Đơn gốc chưa hoàn tất / đã huỷ: không trả hàng',
+  POS_RETURN_REASON: 'Thiếu lý do trả hàng',
+  POS_REFUND_METHOD: 'Hình thức trả tiền khách không phải tiền mặt / chuyển khoản (đối trừ chỉ trong đổi hàng)',
+  POS_GIFT_REQUIRED: 'Trả hàng chính mà không trả kèm phần quà vượt suất; kèm gifts',
+  POS_EXCHANGE_LOWER: 'Đổi hàng: đơn mới thấp hơn giá trị hàng trả; kèm credit, total',
+  POS_EXCHANGE_CUSTOMER: 'Đổi hàng: khách của đơn mới khác khách của đơn gốc',
+  POS_CANCEL_COMPLETED: 'Đơn đã thu tiền xong không huỷ được — lập phiếu trả hàng',
+  POS_RETURN_ID_REUSED: 'Cùng id phiếu trả đã nhận với nội dung khác (máy phải lập phiếu mới)',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 
