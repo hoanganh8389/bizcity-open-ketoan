@@ -31,6 +31,7 @@ export const quyMenu: MenuItem[] = [
       { key: 'q-ct-quy', label: 'Sổ kế toán chi tiết quỹ TM', path: '/quy/so-chi-tiet-quy', code: 'ACC76' },
       { key: 'q-so-du-ngan-hang', label: 'Bảng kê số dư ngân hàng', path: '/quy/so-du-ngan-hang', code: 'ACC96' },
       { key: 'q-chuyen-tien-noi-bo', label: 'Sổ chi tiết chuyển tiền nội bộ', path: '/quy/chuyen-tien-noi-bo', code: 'ACC97' },
+      { key: 'q-dong-tien', label: 'Dòng tiền', path: '/quy/dong-tien', code: 'ACC98' },
     ],
   },
 ];

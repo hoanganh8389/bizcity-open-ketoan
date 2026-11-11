@@ -20,7 +20,7 @@ import { incomeStatement } from './income-statement.js';
 import { balanceSheet } from './balance-sheet.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): chi phí trả trước của phân hệ Tài sản qua cổng
 import { keToanPorts } from '../ports.js';
-import { cashBalances, postingSummary, taxSummary, type PostingSummaryGroup } from './extra-reports.js';
+import { cashBalances, cashItems, postingSummary, taxSummary, type PostingSummaryGroup } from './extra-reports.js';
 import { cashFlow, cashJournal, purchaseJournal, salesJournal, voucherListing } from './journals.js';
 import { aging, expenseByDimension, profitByContract, type ExpenseGroup, agingByDue, debtByTerm } from './control-reports.js';
 import { debtByEmployee, debtByItem } from './debt-reports.js';
@@ -410,6 +410,12 @@ export const reportService = {
   async cashBalances(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; accounts?: string[] }) {
     const { branchIds } = await resolveScope(auth, q.branchCodes);
     return cashBalances({ tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, prefixes: q.accounts?.length ? q.accounts : ['111', '112', '113'] });
+  },
+
+  /** Dòng tiền: thu / chi trên tài khoản tiền gom theo mục thu / chi. */
+  async cashItems(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[] }) {
+    const { branchIds } = await resolveScope(auth, q.branchCodes);
+    return cashItems({ tenantId: auth.tenantId, from: q.from, to: q.to, branchIds });
   },
 
   /** Bảng tổng hợp chứng từ theo cặp tài khoản Nợ / Có. */

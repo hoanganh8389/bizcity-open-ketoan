@@ -28,7 +28,7 @@ export const SO_DO: Record<string, SoDo> = {
       [{ label: 'Đề nghị chi tiền', icon: 'Send' }, { label: 'Chi tiền', icon: 'ArrowUpRight', path: '/nghiep-vu/phieu-chi' }],
     ],
     reports: [
-      { label: 'Bảng kê số dư tiền theo ngày', path: '/quy/so-du-tien' }, { label: 'Dòng tiền' }, { label: 'Sổ nhật ký thu tiền', path: '/quy/nhat-ky-thu-tien' },
+      { label: 'Bảng kê số dư tiền theo ngày', path: '/quy/so-du-tien' }, { label: 'Dòng tiền', path: '/quy/dong-tien' }, { label: 'Sổ nhật ký thu tiền', path: '/quy/nhat-ky-thu-tien' },
       { label: 'Sổ kế toán chi tiết quỹ tiền mặt', path: '/quy/so-chi-tiet-quy' }, { label: 'Sổ nhật ký chi tiền', path: '/quy/nhat-ky-chi-tien' },
     ],
     links: [L.khach, L.ncc, L.nhanVien],

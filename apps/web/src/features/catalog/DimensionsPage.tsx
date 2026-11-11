@@ -41,6 +41,7 @@ interface Meta {
   tracked: boolean;
 }
 const META: Record<DimensionKind, Meta> = {
+  cash_item: { title: 'Mục thu/chi', code: 'DM17', subtitle: 'Mục thu, mục chi gắn trên dòng phiếu thu / chi để lập báo cáo Dòng tiền; cây hai gốc THU (mục thu) và CHI (mục chi)', helpKey: 'khoan-muc-bo-phan', form: 'Mục thu/chi', parentLabel: 'Thuộc (THU / CHI hoặc mục cha)', cols: { code: 'Mã mục', name: 'Tên mục thu/chi', note: 'Ghi chú', parent: 'Thuộc' }, tracked: true },
   cost_item: { title: 'Khoản mục', code: 'ACC24', subtitle: 'Khoản mục chi phí dùng để phân tích chi phí trên từng dòng phiếu', helpKey: 'khoan-muc-bo-phan', form: 'Khoản mục', parentLabel: 'Khoản mục cha', cols: { code: 'Mã khoản mục', name: 'Tên khoản mục', note: 'Ghi chú', parent: 'Khoản mục cha' }, tracked: true },
   department: { title: 'Bộ phận', code: 'ACC26', subtitle: 'Phòng ban, bộ phận chịu chi phí hoặc tạo doanh thu; mỗi cửa hàng một bộ phận BH + mã cửa hàng', helpKey: 'khoan-muc-bo-phan', form: 'Phòng ban/ Bộ phận', parentLabel: 'Thuộc PB', cols: { code: 'Mã PB', name: 'Tên PB', note: 'Ghi chú', parent: 'Bộ phận trực thuộc' }, tracked: true },
   employee: { title: 'Danh mục nhân viên', code: 'DM04', subtitle: 'Nhân viên phụ trách bán hàng, thu tiền: dùng cho báo cáo công nợ theo nhân viên. Nhân viên lập phiếu trên hệ thống bán hàng được tự thêm.', helpKey: 'cong-no-theo-nhan-vien', form: 'Thông tin nhân viên', cols: { code: 'Mã NV', name: 'Tên NV', note: 'Ghi chú' }, tracked: true },

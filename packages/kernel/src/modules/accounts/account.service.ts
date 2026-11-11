@@ -70,6 +70,7 @@ export const accountService = {
       track_case: input.trackCase,
       track_project: input.trackProject,
       track_capital_source: input.trackCapitalSource,
+      track_cash_item: input.trackCashItem,
       track_cashflow: input.trackCashflow,
       is_foreign_currency: input.isForeignCurrency,
       track_product: input.trackProduct,
@@ -132,6 +133,7 @@ export const accountService = {
     if (input.trackCase !== undefined) patch.track_case = input.trackCase;
     if (input.trackProject !== undefined) patch.track_project = input.trackProject;
     if (input.trackCapitalSource !== undefined) patch.track_capital_source = input.trackCapitalSource;
+    if (input.trackCashItem !== undefined) patch.track_cash_item = input.trackCashItem;
     if (input.trackCashflow !== undefined) patch.track_cashflow = input.trackCashflow;
     if (input.isForeignCurrency !== undefined) patch.is_foreign_currency = input.isForeignCurrency;
     if (input.trackProduct !== undefined) patch.track_product = input.trackProduct;

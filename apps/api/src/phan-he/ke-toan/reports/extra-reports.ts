@@ -146,3 +146,22 @@ export async function postingSummary(a: Scope & { docType?: string; groups: Post
   }));
   return { groups: a.groups, rows, total: fromCents(rows.reduce((s, r) => s + toCents(r.amount), 0)) };
 }
+
+// [2026-11-11 Nguyễn Văn Thủy] Dòng tiền theo mục thu / chi (đóng góp)
+/**
+ * Dòng tiền: tiền thu (phát sinh Nợ) và tiền chi (phát sinh Có) trên tài khoản tiền 111, 112, 113 trong kỳ, gom theo mục thu / chi
+ * ghi trên dòng (dims.cashItem; dòng chưa gán mục: mã rỗng). Chỉ bút toán đang hiệu lực (phiếu đã xoá và bút toán đảo không tính).
+ */
+export async function cashItems(a: Scope) {
+  const branchFilter = a.branchIds ? sql`AND l.branch_id = ANY(${a.branchIds}::bigint[])` : sql``;
+  const res = await sql<{ item: string; thu: string; chi: string }>`
+    SELECT COALESCE(l.dims->>'cashItem', '') AS item, SUM(l.debit) AS thu, SUM(l.credit) AS chi
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
+     WHERE l.tenant_id = ${a.tenantId}
+       AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
+       AND (l.account_code LIKE '111%' OR l.account_code LIKE '112%' OR l.account_code LIKE '113%')
+       AND e.status = 'posted' AND NOT e.is_reversal ${branchFilter}
+     GROUP BY 1`.execute(db);
+  return { rows: res.rows.map((r) => ({ item: r.item, thu: toNumber(r.thu), chi: toNumber(r.chi) })).filter((r) => r.thu || r.chi) };
+}

@@ -27,10 +27,10 @@ import type { CatalogWarnAck } from '@ketoan/contracts';
 export interface Account {
   code: string; name: string; nameEn: string | null; description?: string; parentCode: string | null; level: number; normalSide: string; isPosting: boolean;
   trackPartner: boolean; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean; trackEmployee: boolean; trackCase: boolean; trackProject: boolean;
-  trackCapitalSource: boolean; trackCashflow: boolean; trackProduct: boolean; isDebt: boolean;
+  trackCapitalSource: boolean; trackCashItem: boolean; trackCashflow: boolean; trackProduct: boolean; isDebt: boolean;
   isActive: boolean;
 }
-type Flag = 'trackPartner' | 'trackEmployee' | 'trackCostItem' | 'trackDepartment' | 'trackContract' | 'trackCase' | 'trackProject' | 'trackCapitalSource' | 'trackCashflow' | 'trackProduct';
+type Flag = 'trackPartner' | 'trackEmployee' | 'trackCostItem' | 'trackDepartment' | 'trackContract' | 'trackCase' | 'trackProject' | 'trackCapitalSource' | 'trackCashItem' | 'trackCashflow' | 'trackProduct';
 
 export const TINH_CHAT: Record<string, string> = { debit: 'Dư Nợ', credit: 'Dư Có', both: 'Lưỡng tính' };
 /** Đối tượng: "theo dõi đối tượng" và "ghi nhận công nợ" có cùng tác dụng (bắt buộc chọn đối tượng, sổ công nợ) — gộp một ô. */
@@ -46,6 +46,7 @@ const THEO_DOI: [Flag, string, string][] = [
   ['trackCase', 'Vụ việc', 'Bắt buộc chọn vụ việc / công trình'],
   ['trackProject', 'Dự án', 'Bắt buộc chọn dự án'],
   ['trackCapitalSource', 'Nguồn vốn', 'Bắt buộc chọn nguồn vốn'],
+  ['trackCashItem', 'Mục thu/chi', 'Bắt buộc chọn mục thu / chi trên dòng phiếu thu, chi'],
   ['trackCashflow', 'Mục thu / chi', 'Phân loại theo chỉ tiêu lưu chuyển tiền tệ (để trống thì tự xếp)'],
   ['trackProduct', 'Mặt hàng', 'Phân loại theo mặt hàng'],
 ];

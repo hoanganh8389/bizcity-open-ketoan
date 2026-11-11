@@ -51,7 +51,7 @@ export const GON_DEFS: GonDef[] = [
     key: 'tien-mat', label: 'Tiền mặt', icon: 'Banknote', description: 'Thu tiền, chi tiền, sổ quỹ tiền mặt', color: '#0f9d58', module: 'quy', homeLabel: 'Quy trình',
     the: ['/nghiep-vu/phieu-thu', '/nghiep-vu/phieu-chi'],
     sections: [{ paths: ['/nghiep-vu/phieu-thu', '/nghiep-vu/phieu-chi'], soon: ['Đề nghị chi tiền', 'Kiểm kê quỹ'] }],
-    reports: [{ label: 'Tiền mặt', paths: ['/quy/so-du-tien', '/quy/nhat-ky-thu-tien', '/quy/so-chi-tiet-quy', '/quy/nhat-ky-chi-tien', '/quy/so-quy-tien-mat'] }],
+    reports: [{ label: 'Tiền mặt', paths: ['/quy/so-du-tien', '/quy/nhat-ky-thu-tien', '/quy/so-chi-tiet-quy', '/quy/nhat-ky-chi-tien', '/quy/so-quy-tien-mat', '/quy/dong-tien'] }],
   },
   {
     key: 'tien-gui', label: 'Tiền gửi', icon: 'Landmark', description: 'Thu, chi tiền gửi, chuyển tiền nội bộ, sổ tiền gửi', color: '#0b8a7a', module: 'quy', homeLabel: 'Quy trình',
@@ -144,7 +144,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Vật tư hàng hóa', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
       { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc', '/danh-muc/chi-nhanh', '/danh-muc/bo-phan'] },
       { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/tai-khoan-ngam-dinh', '/danh-muc/loai-thue', '/danh-muc/ngan-hang', '/cau-hinh/ly-do', '/cau-hinh/nhom-hach-toan'], soon: ['Điều khoản thanh toán'] },
-      { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
+      { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/muc-thu-chi', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
       { label: 'Tài sản', paths: ['/danh-muc/loai-tai-san', '/danh-muc/nhom-ccdc', '/danh-muc/nguon-von', '/danh-muc/muc-dich-su-dung'] },
     ],
   },

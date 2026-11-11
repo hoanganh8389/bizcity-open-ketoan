@@ -159,6 +159,7 @@ export const keToanMenu: MenuItem[] = [
       { key: 'bang-gia', label: 'Bảng giá bán', path: '/danh-muc/bang-gia', code: 'DM14' },
       sec('dm-phan-tich', 'Phân tích chi phí'),
       { key: 'khoan-muc', label: 'Danh mục khoản mục', path: '/danh-muc/khoan-muc', code: 'ACC24' },
+      { key: 'muc-thu-chi', label: 'Mục thu/chi', path: '/danh-muc/muc-thu-chi', code: 'DM17' },
       { key: 'hop-dong', label: 'Danh mục hợp đồng', path: '/danh-muc/hop-dong', code: 'ACC25' },
       { key: 'vu-viec', label: 'Danh mục vụ việc', path: '/danh-muc/vu-viec', code: 'DM06' },
       { key: 'du-an', label: 'Danh mục dự án', path: '/danh-muc/du-an', code: 'DM07' },

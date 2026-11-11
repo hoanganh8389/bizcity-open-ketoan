@@ -5,11 +5,13 @@
 import { Route } from 'react-router-dom';
 import { PaymentRequestsPage } from './debts/PaymentRequestsPage';
 import { BankBalancesPage, InternalTransferPage } from './reports/TienGuiPages';
+import { DongTienPage } from './reports/DongTienPage';
 
 export const quyRoutes = (
   <>
     <Route path="cong-no/yeu-cau-thanh-toan" element={<PaymentRequestsPage />} />
     <Route path="quy/so-du-ngan-hang" element={<BankBalancesPage />} />
     <Route path="quy/chuyen-tien-noi-bo" element={<InternalTransferPage />} />
+    <Route path="quy/dong-tien" element={<DongTienPage />} />
   </>
 );

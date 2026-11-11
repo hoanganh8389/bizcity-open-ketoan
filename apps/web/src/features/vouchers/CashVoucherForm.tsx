@@ -46,21 +46,21 @@ interface Row {
   key: number;
   account: string; amount: string; partner: string; creditPartner: string; cashflowCode: string; description: string;
   taxCode: string; employee: string; taxAmount: string; invoiceDate: string; costItem: string; invoiceNo: string; invoiceSerial: string; invoiceForm: string;
-  invoicePartnerName: string; invoicePartnerTaxCode: string; department: string; contract: string; case: string; project: string; capitalSource: string;
+  invoicePartnerName: string; invoicePartnerTaxCode: string; department: string; contract: string; case: string; project: string; capitalSource: string; cashItem: string;
   settleItemId: string; settleDocNo: string; settleDocDate: string; settleTotal: number | null; settleRemaining: number | null;
 }
 
 let seq = 0;
 const blankRow = (patch: Partial<Row> = {}): Row => ({
   key: ++seq, account: '', amount: '', partner: '', creditPartner: '', cashflowCode: '', description: '', taxCode: '', employee: '', taxAmount: '', invoiceDate: '', costItem: '',
-  invoiceNo: '', invoiceSerial: '', invoiceForm: '', invoicePartnerName: '', invoicePartnerTaxCode: '', department: '', contract: '', case: '', project: '', capitalSource: '',
+  invoiceNo: '', invoiceSerial: '', invoiceForm: '', invoicePartnerName: '', invoicePartnerTaxCode: '', department: '', contract: '', case: '', project: '', capitalSource: '', cashItem: '',
   settleItemId: '', settleDocNo: '', settleDocDate: '', settleTotal: null, settleRemaining: null, ...patch,
 });
 
 /** Cột thêm của lưới Hạch toán (nút Cột); nhóm Thuế, Chứng từ thanh toán bật / tắt cả nhóm. */
-type ColKey = 'costItem' | 'department' | 'contract' | 'employee' | 'cashflowCode' | 'tax' | 'settle';
-const COLS: [ColKey, string][] = [['costItem', 'Khoản mục CP'], ['department', 'Đơn vị'], ['contract', 'Hợp đồng'], ['employee', 'Nhân viên'], ['cashflowCode', 'Mã lưu chuyển tiền tệ'], ['tax', 'Thuế, hoá đơn'], ['settle', 'Chứng từ thanh toán']];
-const COLS_DEFAULT: ColKey[] = ['costItem'];
+type ColKey = 'cashItem' | 'costItem' | 'department' | 'contract' | 'employee' | 'cashflowCode' | 'tax' | 'settle';
+const COLS: [ColKey, string][] = [['cashItem', 'Mục thu/chi'], ['costItem', 'Khoản mục CP'], ['department', 'Đơn vị'], ['contract', 'Hợp đồng'], ['employee', 'Nhân viên'], ['cashflowCode', 'Mã lưu chuyển tiền tệ'], ['tax', 'Thuế, hoá đơn'], ['settle', 'Chứng từ thanh toán']];
+const COLS_DEFAULT: ColKey[] = ['cashItem', 'costItem'];
 const hasData = (rows: Row[], k: ColKey) => rows.some((r) => (k === 'tax' ? r.taxCode || r.taxAmount || r.invoiceNo : k === 'settle' ? r.settleItemId : r[k]));
 
 /* DÁN TỪ EXCEL (Ctrl + V) vào lưới: theo thứ tự cột đang hiện (data-f trên ô), hoặc theo dòng tiêu đề. */
@@ -118,6 +118,14 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   const costItems = useDimension('cost_item');
   const departments = useDimension('department');
   const contracts = useDimension('contract');
+  // Mục thu / chi: phiếu thu chỉ mục thu (cây THU), phiếu chi chỉ mục chi (cây CHI); bỏ hai gốc.
+  const cashItemsAll = useDimension('cash_item') as (Dimension & { parentCode?: string | null })[];
+  const cashItems = useMemo(() => {
+    const root = isReceipt ? 'THU' : 'CHI';
+    const par = new Map(cashItemsAll.map((d) => [d.code, d.parentCode ?? '']));
+    const under = (c: string): boolean => { for (let x = par.get(c) ?? '', i = 0; x && i < 10; x = par.get(x) ?? '', i++) if (x === root) return true; return false; };
+    return cashItemsAll.filter((d) => d.code !== 'THU' && d.code !== 'CHI' && (under(d.code) || !par.get(d.code)));
+  }, [cashItemsAll, isReceipt]);
   const banks = useBankAccounts().data ?? [];
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.code, a])), [accounts]);
   const moneyAccounts = useMemo(() => accounts.filter((a) => isMoneyAccountFor(type, a.code)), [accounts, type]);
@@ -155,7 +163,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
         amount: l.amount ? money(l.amount) : '', partner: l.partnerCode ?? '', creditPartner: l.creditPartnerCode ?? '', cashflowCode: l.cashflowCode ?? '', description: l.description ?? '',
         taxCode: l.taxCode ?? '', employee: l.employee ?? '', taxAmount: l.taxAmount ? money(l.taxAmount) : '', invoiceDate: l.invoiceDate ?? '', costItem: l.costItem ?? '',
         invoiceNo: l.invoiceNo ?? '', invoiceSerial: l.invoiceSerial ?? '', invoiceForm: l.invoiceForm ?? '', invoicePartnerName: l.invoicePartnerName ?? '', invoicePartnerTaxCode: l.invoicePartnerTaxCode ?? '',
-        department: l.department ?? '', contract: l.contract ?? '', case: l.case ?? '', project: l.project ?? '', capitalSource: l.capitalSource ?? '',
+        department: l.department ?? '', contract: l.contract ?? '', case: l.case ?? '', project: l.project ?? '', capitalSource: l.capitalSource ?? '', cashItem: l.cashItem ?? '',
         settleItemId: l.settleItemId ?? '', settleDocNo: l.settleDocNo ?? '', settleDocDate: l.settleDocDate ?? '', settleTotal: l.settleTotal ?? null, settleRemaining: l.settleRemaining ?? null,
       }),
     ),
@@ -282,7 +290,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
         description: r.description || h.description,
         partnerCode: r.partner || undefined,
         creditPartnerCode: r.creditPartner || undefined,
-        costItem: r.costItem || undefined, department: r.department || undefined, contract: r.contract || undefined, employee: r.employee || undefined,
+        costItem: r.costItem || undefined, cashItem: r.cashItem || undefined, department: r.department || undefined, contract: r.contract || undefined, employee: r.employee || undefined,
         case: r.case || undefined, project: r.project || undefined, capitalSource: r.capitalSource || undefined, cashflowCode: r.cashflowCode || undefined,
         taxCode: r.taxCode || undefined, taxAmount: parseAmount(r.taxAmount), invoiceNo: r.invoiceNo || undefined, invoiceSerial: r.invoiceSerial || undefined,
         invoiceForm: r.invoiceForm || undefined, invoiceDate: r.invoiceDate || undefined, invoicePartnerName: r.invoicePartnerName || undefined, invoicePartnerTaxCode: r.invoicePartnerTaxCode || undefined,
@@ -306,7 +314,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   const text = (r: Row, field: 'description' | 'invoiceNo' | 'invoiceSerial' | 'invoiceForm' | 'invoicePartnerName' | 'invoicePartnerTaxCode', cls = 'input') => (
     <input className={cls} value={r[field]} disabled={dis} onChange={(e) => setRow(r.key, { [field]: e.target.value })} />
   );
-  const dimCell = (r: Row, field: 'costItem' | 'department' | 'contract' | 'employee', list: Dimension[]) => (
+  const dimCell = (r: Row, field: 'cashItem' | 'costItem' | 'department' | 'contract' | 'employee', list: Dimension[]) => (
     <ListPicker items={list.filter((d) => d.isActive || d.code === r[field])} value={r[field]} disabled={dis} onChange={(v) => setRow(r.key, { [field]: v })} hideName />
   );
 
@@ -414,6 +422,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
               <th style={{ minWidth: 90 }}>TK Nợ</th><th style={{ minWidth: 90 }}>TK Có</th>
               <th style={{ minWidth: 130 }}>Số tiền</th>
               <th style={{ minWidth: 120 }}>Đối tượng</th><th style={{ minWidth: 200 }}>Tên đối tượng</th>
+              {show('cashItem') && <th style={{ minWidth: 120 }} title="Mục thu / chi của dòng tiền — báo cáo Dòng tiền gom theo mục">Mục thu/chi</th>}
               {show('costItem') && <th style={{ minWidth: 110 }}>Khoản mục CP</th>}
               {show('department') && <th style={{ minWidth: 110 }}>Đơn vị</th>}
               {show('contract') && <th style={{ minWidth: 110 }}>Hợp đồng</th>}
@@ -435,6 +444,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
                 <td data-f="amount"><input className="input num" inputMode="numeric" value={r.amount} disabled={dis} onChange={(e) => setRow(r.key, { amount: e.target.value })} onBlur={() => setRow(r.key, { amount: showAmount(r.amount) })} /></td>
                 <td data-f="partner"><PartnerPicker activeOnly={!existing} addKind={partnerKind} hideName value={r.partner} disabled={dis} onChange={(v) => setRow(r.key, { partner: v })} /></td>
                 <td className="ro">{nameOfPartner(r.partner || h.partnerCode)}</td>
+                {show('cashItem') && <td>{dimCell(r, 'cashItem', cashItems)}</td>}
                 {show('costItem') && <td data-f="costItem">{dimCell(r, 'costItem', costItems)}</td>}
                 {show('department') && <td data-f="department">{dimCell(r, 'department', departments)}</td>}
                 {show('contract') && <td data-f="contract">{dimCell(r, 'contract', contracts)}</td>}
@@ -476,7 +486,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
               <td className="vf-act" /><td /><td /><td />
               <td className="num"><b>{money(total, { blankZero: false })}</b></td>
               <td colSpan={2} />
-              {show('costItem') && <td />}{show('department') && <td />}{show('contract') && <td />}{show('employee') && <td />}{show('cashflowCode') && <td />}
+              {show('cashItem') && <td />}{show('costItem') && <td />}{show('department') && <td />}{show('contract') && <td />}{show('employee') && <td />}{show('cashflowCode') && <td />}
               {show('tax') && <><td /><td className="num">{taxTotal ? money(taxTotal) : ''}</td><td colSpan={5} /></>}
               {show('settle') && <td colSpan={4} />}
               <td className="vf-act" />

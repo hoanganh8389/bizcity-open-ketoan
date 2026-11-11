@@ -28,6 +28,7 @@ export function toAccountDto(a: Account): AccountDto {
     trackCase: a.track_case,
     trackProject: a.track_project,
     trackCapitalSource: a.track_capital_source,
+    trackCashItem: a.track_cash_item,
     trackCashflow: a.track_cashflow,
     isForeignCurrency: a.is_foreign_currency,
     trackProduct: a.track_product,

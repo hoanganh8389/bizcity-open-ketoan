@@ -129,6 +129,7 @@ const DIM_USES: Record<DimensionKind, { dims?: string; assetCol?: string; normCo
   capital_source: { dims: 'capitalSource' },
   tool_group: { assetCol: 'tool_group_code' },
   usage_purpose: { assetCol: 'usage_purpose_code' },
+  cash_item: { dims: 'cashItem' },
 };
 
 /** Mã chiều phân tích đang được dùng: sổ cái, thẻ tài sản, định mức, chi nhánh, lý do, lịch hợp đồng, mã con. */
@@ -583,6 +584,7 @@ export const DATASETS: Dataset[] = [
   dim('usage_purpose', 'Mục đích sử dụng', 'usage_purpose', 'muc-dich-su-dung.jsonl', ['ACC21']),
   dim('case', 'Danh mục vụ việc', 'case', 'vu-viec.jsonl', ['DM06']),
   dim('project', 'Danh mục dự án', 'project', 'du-an.jsonl', ['DM07']),
+  dim('cash_item', 'Danh mục mục thu/chi', 'cash_item', 'muc-thu-chi.jsonl', ['DM17']),
 ];
 
 export function datasetOf(key: string): Dataset {

@@ -24,6 +24,7 @@ export const DEFAULT_DATA_SCREENS: Record<string, { key: string; title: string }
   ACC18: { key: 'reasons', title: 'Lý do – tài khoản' },
   ACC19: { key: 'tool_group', title: 'Nhóm công cụ dụng cụ' },
   ACC20: { key: 'capital_source', title: 'Danh mục nguồn vốn' },
+  DM17: { key: 'cash_item', title: 'Danh mục mục thu/chi' },
   ACC21: { key: 'usage_purpose', title: 'Mục đích sử dụng' },
   ACC24: { key: 'cost_item', title: 'Danh mục khoản mục' },
   ACC25: { key: 'contract', title: 'Danh mục hợp đồng' },

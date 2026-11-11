@@ -1,0 +1,24 @@
+{"_bang": "muc-thu-chi", "_mo_ta": "Mục thu / chi: cây hai gốc THU (mục thu) và CHI (mục chi); báo cáo Dòng tiền gom theo mục. Quay về gốc xoá các mã tự thêm chưa dùng, khoá mã đã dùng.", "_cot": ["code", "name", "parent_code", "note", "is_active"]}
+{"code": "THU", "name": "Mục thu", "parent_code": null, "note": "Gốc các mục thu", "is_active": true}
+{"code": "100", "name": "Thu từ bán hàng thu tiền ngay", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "101", "name": "Thu nợ khách hàng", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "102", "name": "Thu hoàn ứng nhân viên", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "103", "name": "Thu tiền vay", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "104", "name": "Thu lãi tiền gửi, đầu tư", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "105", "name": "Thu hồi các khoản cho vay", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "106", "name": "Thu ký quỹ, ký cược", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "180", "name": "Nhận tiền chuyển nội bộ", "parent_code": "THU", "note": "Rút tiền gửi về quỹ, nhận tiền từ chi nhánh khác", "is_active": true}
+{"code": "199", "name": "Thu khác", "parent_code": "THU", "note": "", "is_active": true}
+{"code": "CHI", "name": "Mục chi", "parent_code": null, "note": "Gốc các mục chi", "is_active": true}
+{"code": "200", "name": "Chi mua hàng thanh toán ngay", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "201", "name": "Chi trả nợ nhà cung cấp", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "202", "name": "Chi lương, thưởng", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "203", "name": "Chi thuê mặt bằng", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "204", "name": "Chi điện, nước, internet", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "205", "name": "Chi vận chuyển", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "206", "name": "Chi tạm ứng nhân viên", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "207", "name": "Chi nộp thuế, phí, lệ phí", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "208", "name": "Chi trả nợ vay, lãi vay", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "209", "name": "Chi cho vay", "parent_code": "CHI", "note": "", "is_active": true}
+{"code": "280", "name": "Chuyển tiền nội bộ", "parent_code": "CHI", "note": "Nộp tiền vào ngân hàng, chuyển tiền cho chi nhánh khác", "is_active": true}
+{"code": "299", "name": "Chi khác", "parent_code": "CHI", "note": "", "is_active": true}

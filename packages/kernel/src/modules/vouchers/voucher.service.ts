@@ -151,7 +151,7 @@ async function loadContext(trx: Db, tenantId: string, doc: ManualDoc): Promise<B
   const dimRows = await trx.selectFrom('dimensions').select(['kind', 'code']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
   const taxRows = await trx.selectFrom('tax_codes').selectAll().where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
   const reasonRows = doc.reasonCode ? await trx.selectFrom('posting_reasons').select('code').where('tenant_id', '=', tenantId).where('code', '=', doc.reasonCode).execute() : [];
-  const dims: BuildContext['dims'] = { cost_item: new Set(), department: new Set(), contract: new Set(), employee: new Set(), case: new Set(), project: new Set(), capital_source: new Set(), tool_group: new Set(), usage_purpose: new Set() };
+  const dims: BuildContext['dims'] = { cost_item: new Set(), department: new Set(), contract: new Set(), employee: new Set(), case: new Set(), project: new Set(), capital_source: new Set(), tool_group: new Set(), usage_purpose: new Set(), cash_item: new Set() };
   for (const d of dimRows) dims[d.kind as DimensionKind]?.add(d.code);
   return {
     accounts,
@@ -388,6 +388,7 @@ const DIM_RULES = [
   { field: 'case', kind: 'case', flag: 'track_case', label: 'vụ việc' },
   { field: 'project', kind: 'project', flag: 'track_project', label: 'dự án' },
   { field: 'capitalSource', kind: 'capital_source', flag: 'track_capital_source', label: 'nguồn vốn' },
+  { field: 'cashItem', kind: 'cash_item', flag: 'track_cash_item', label: 'mục thu/chi' },
 ] as const;
 
 /**

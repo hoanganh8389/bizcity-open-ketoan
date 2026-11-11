@@ -104,6 +104,7 @@ export const pageRoutes = (
     <Route path="danh-muc/vu-viec" element={<DimensionsPage key="case" kind="case" />} />
     <Route path="danh-muc/du-an" element={<DimensionsPage key="project" kind="project" />} />
     <Route path="danh-muc/nguon-von" element={<DimensionsPage key="capital_source" kind="capital_source" />} />
+    <Route path="danh-muc/muc-thu-chi" element={<DimensionsPage key="cash_item" kind="cash_item" />} />
     <Route path="danh-muc/tai-khoan" element={<AccountsPage />} />
     <Route path="danh-muc/chi-nhanh" element={<BranchesPage />} />
     <Route path="danh-muc/kho" element={<WarehousesPage />} />

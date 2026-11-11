@@ -337,6 +337,7 @@ export interface AccountsTable {
   track_case: Generated<boolean>;
   track_project: Generated<boolean>;
   track_capital_source: Generated<boolean>;
+  track_cash_item: Generated<boolean>;
   track_cashflow: Generated<boolean>;
   is_foreign_currency: Generated<boolean>;
   track_product: Generated<boolean>;

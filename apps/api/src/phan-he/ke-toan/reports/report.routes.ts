@@ -8,6 +8,7 @@
  *   GET /api/v1/reports/balance-sheet     Báo cáo tình hình tài chính (B01-DN)
  *   GET /api/v1/reports/tax-summary       Bảng tổng hợp thuế GTGT
  *   GET /api/v1/reports/cash-balances     Bảng kê số dư tiền
+ *   GET /api/v1/reports/cash-items        Dòng tiền theo mục thu / chi
  *   GET /api/v1/reports/posting-summary   Bảng tổng hợp chứng từ
  *   GET /api/v1/reports/expense-by-dimension  Chi phí theo khoản mục, bộ phận, hợp đồng
  *   GET /api/v1/reports/aging             Công nợ theo tuổi nợ
@@ -112,6 +113,12 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
     preHandler: pre,
     schema: { tags, summary: 'Bảng tổng hợp thuế GTGT theo chi nhánh', querystring: z.object({ from: date, to: date, branchCodes }) },
     handler: async (req) => ok(await reportService.taxSummary(authOf(req), req.query)),
+  });
+
+  r.get('/api/v1/reports/cash-items', {
+    preHandler: pre,
+    schema: { tags, summary: 'Dòng tiền: thu / chi trên tài khoản tiền theo mục thu / chi', querystring: ranged },
+    handler: async (req) => ok(await reportService.cashItems(authOf(req), req.query)),
   });
 
   r.get('/api/v1/reports/cash-balances', {
