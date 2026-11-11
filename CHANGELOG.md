@@ -14,7 +14,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Khung nhìn mặt hàng có ô Biến thể / Gửi lên thuế; họ mã lỗi `POS_*` (đề xuất P-MP-5, P-MP-6 của module pos) <!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — phần Core cho module pos (đóng góp) -->
 
-- **Thêm:** `ERROR_REASONS` thêm 17 mã `POS_*` của module `pos` (BIZCITY-ERRORS 1.7.0-draft §4c, R-ERR-6 / R-ERR-11): dữ liệu kèm lỗi đặt cạnh `reason`, danh sách ở `items`.
+- **Thêm:** `ERROR_REASONS` thêm 28 mã `POS_*` của module `pos` — 17 mã đợt W1 (BIZCITY-ERRORS 1.7.0-draft §4c) và 11 mã hoàn / đổi / huỷ đợt W2 (1.8.0-draft) (R-ERR-6 / R-ERR-11): dữ liệu kèm lỗi đặt cạnh `reason`, danh sách ở `items`.
 - **Đổi:** `POST /api/v1/auth/wp-sso` nhận cả quyền do module khai trong vé (manifest `permissions[]`, vd `pos:sell`), lọc bằng `isKnownPermission` như lúc đọc phiên; trước đây chỉ giữ quyền Core nên module không có quyền riêng qua đăng nhập WP (đề xuất P-MP-7). Test `wp-sso-quyen-module.test.ts`.
 - **Đổi:** khung nhìn `bizcity_read.products` thêm `variant_code`, `send_to_tax` (migration 0102, thêm cột cuối, cùng khuôn 0044 / 0070; ADR-0026) — module biết hàng Nội bộ / không gửi thuế mà không đọc chữ cuối mã. Kiểu ở `packages/platform/src/db/types.ts`; test `read-views.test.ts`.
 - **Sửa:** không.
