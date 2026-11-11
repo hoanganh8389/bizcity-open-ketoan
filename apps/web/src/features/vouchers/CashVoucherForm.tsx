@@ -118,14 +118,9 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   const costItems = useDimension('cost_item');
   const departments = useDimension('department');
   const contracts = useDimension('contract');
-  // Mục thu / chi: phiếu thu chỉ mục thu (cây THU), phiếu chi chỉ mục chi (cây CHI); bỏ hai gốc.
-  const cashItemsAll = useDimension('cash_item') as (Dimension & { parentCode?: string | null })[];
-  const cashItems = useMemo(() => {
-    const root = isReceipt ? 'THU' : 'CHI';
-    const par = new Map(cashItemsAll.map((d) => [d.code, d.parentCode ?? '']));
-    const under = (c: string): boolean => { for (let x = par.get(c) ?? '', i = 0; x && i < 10; x = par.get(x) ?? '', i++) if (x === root) return true; return false; };
-    return cashItemsAll.filter((d) => d.code !== 'THU' && d.code !== 'CHI' && (under(d.code) || !par.get(d.code)));
-  }, [cashItemsAll, isReceipt]);
+  // Mục thu / chi: phiếu thu chỉ mục thu, phiếu chi chỉ mục chi (theo Loại của mục).
+  const cashItemsAll = useDimension('cash_item') as (Dimension & { extra?: { loai?: string } })[];
+  const cashItems = useMemo(() => cashItemsAll.filter((d) => (d.extra?.loai ?? 'chi') === (isReceipt ? 'thu' : 'chi')), [cashItemsAll, isReceipt]);
   const banks = useBankAccounts().data ?? [];
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.code, a])), [accounts]);
   const moneyAccounts = useMemo(() => accounts.filter((a) => isMoneyAccountFor(type, a.code)), [accounts, type]);

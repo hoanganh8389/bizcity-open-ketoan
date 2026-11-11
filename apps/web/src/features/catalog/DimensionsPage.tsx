@@ -23,6 +23,8 @@ interface Extra {
   type?: string; signedDate?: string; endDate?: string; value?: number; partnerCode?: string; partnerName?: string; landlordTax?: boolean; employeeCode?: string; createdBy?: string;
   /** Bộ phận, nhân viên: địa chỉ, điện thoại; nhân viên thêm di động, email, chức vụ, chi nhánh làm việc, mã phòng ban, nhóm. */
   address?: string; phone?: string; mobile?: string; email?: string; position?: string; branchCode?: string; departmentCode?: string; group?: string;
+  /** Mục thu/chi: loại (thu | chi), phát sinh định kỳ hàng tháng. */
+  loai?: 'thu' | 'chi'; dinhKy?: boolean;
 }
 interface Row { code: string; name: string; parentCode: string | null; note: string; isActive: boolean; extra: Extra }
 type Draft = Partial<Row> & { isNew?: boolean };
@@ -41,7 +43,7 @@ interface Meta {
   tracked: boolean;
 }
 const META: Record<DimensionKind, Meta> = {
-  cash_item: { title: 'Mục thu/chi', code: 'DM17', subtitle: 'Mục thu, mục chi gắn trên dòng phiếu thu / chi để lập báo cáo Dòng tiền; cây hai gốc THU (mục thu) và CHI (mục chi)', helpKey: 'khoan-muc-bo-phan', form: 'Mục thu/chi', parentLabel: 'Thuộc (THU / CHI hoặc mục cha)', cols: { code: 'Mã mục', name: 'Tên mục thu/chi', note: 'Ghi chú', parent: 'Thuộc' }, tracked: true },
+  cash_item: { title: 'Mục thu/chi', code: 'DM17', subtitle: 'Mục thu, mục chi gắn trên dòng phiếu thu / chi; báo cáo Dòng tiền gom theo mục', helpKey: 'khoan-muc-bo-phan', form: 'Mục thu/chi', parentLabel: 'Thuộc', cols: { code: 'Mã mục thu/chi', name: 'Tên mục thu/chi', note: 'Diễn giải', parent: 'Thuộc' }, tracked: true },
   cost_item: { title: 'Khoản mục', code: 'ACC24', subtitle: 'Khoản mục chi phí dùng để phân tích chi phí trên từng dòng phiếu', helpKey: 'khoan-muc-bo-phan', form: 'Khoản mục', parentLabel: 'Khoản mục cha', cols: { code: 'Mã khoản mục', name: 'Tên khoản mục', note: 'Ghi chú', parent: 'Khoản mục cha' }, tracked: true },
   department: { title: 'Bộ phận', code: 'ACC26', subtitle: 'Phòng ban, bộ phận chịu chi phí hoặc tạo doanh thu; mỗi cửa hàng một bộ phận BH + mã cửa hàng', helpKey: 'khoan-muc-bo-phan', form: 'Phòng ban/ Bộ phận', parentLabel: 'Thuộc PB', cols: { code: 'Mã PB', name: 'Tên PB', note: 'Ghi chú', parent: 'Bộ phận trực thuộc' }, tracked: true },
   employee: { title: 'Danh mục nhân viên', code: 'DM04', subtitle: 'Nhân viên phụ trách bán hàng, thu tiền: dùng cho báo cáo công nợ theo nhân viên. Nhân viên lập phiếu trên hệ thống bán hàng được tự thêm.', helpKey: 'cong-no-theo-nhan-vien', form: 'Thông tin nhân viên', cols: { code: 'Mã NV', name: 'Tên NV', note: 'Ghi chú' }, tracked: true },
@@ -87,6 +89,8 @@ function columnsOf(kind: DimensionKind, employees: Map<string, string>): Column<
         x('group', 'Nhóm NV', 120), x('branchCode', 'Chi nhánh làm việc', 130, 'code'), note, x('departmentCode', 'Mã phòng ban', 110, 'code'),
       ];
     }
+    case 'cash_item': return [{ ...code, width: 140 }, { ...name, width: 360 }, { key: 'loai', header: 'Loại', width: 110, value: (r) => (r.extra.loai === 'thu' ? 'Mục thu' : r.extra.loai === 'chi' ? 'Mục chi' : '') },
+      { key: 'dinhKy', header: 'Phát sinh định kỳ', type: 'check', width: 130, value: (r) => Boolean(r.extra.dinhKy) }, { ...note, width: 220 }, hiddenCol];
     case 'capital_source': case 'tool_group': case 'usage_purpose': return [code, { ...name, width: 260 }, { ...note, width: 260 }];
     default: return [code, name, ...(m.parentLabel ? [parent] : []), note, hiddenCol];
   }
@@ -189,9 +193,16 @@ function DimensionForm({ kind, value, parents, onClose }: { kind: DimensionKind;
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide={isContract} title={meta.form} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={save.isPending || !code || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Đóng</button></>}>
       {isContract && <div className="field-title full">Thông tin chung hợp đồng</div>}
+      {kind === 'cash_item' && (
+        <Field label="Loại" full>
+          <div className="row" style={{ gap: 16 }}>
+            {(['thu', 'chi'] as const).map((l) => <label key={l} className="checkbox"><input type="radio" checked={(v.extra?.loai ?? 'chi') === l} onChange={() => setExtra({ loai: l })} /> {l === 'thu' ? 'Mục thu' : 'Mục chi'}</label>)}
+          </div>
+        </Field>
+      )}
       <Field label="Mã (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
       <Field label="Tên" full={!isContract}><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
-      <Field label={kind === 'cost_item' || kind === 'department' ? 'Chi chú' : 'Ghi chú'} full={!isContract}><input className="input" value={v.note ?? ''} onChange={(e) => set({ note: e.target.value })} /></Field>
+      <Field label={kind === 'cash_item' ? 'Diễn giải' : kind === 'cost_item' || kind === 'department' ? 'Chi chú' : 'Ghi chú'} full={!isContract}><input className="input" value={v.note ?? ''} onChange={(e) => set({ note: e.target.value })} /></Field>
       {isContract && (
         <>
           <Field label="Ngày ký HĐ"><input type="date" className="input" value={v.extra?.signedDate ?? ''} onChange={(e) => setExtra({ signedDate: e.target.value })} /></Field>
@@ -222,6 +233,7 @@ function DimensionForm({ kind, value, parents, onClose }: { kind: DimensionKind;
           <Field label="Mã phòng ban"><ListPicker items={departments.map((d) => ({ code: d.code, name: d.name }))} value={v.extra?.departmentCode ?? ''} onChange={(departmentCode) => setExtra({ departmentCode })} placeholder="Bấm để chọn" /></Field>
         </>
       )}
+      {kind === 'cash_item' && <Field label=" " full><label className="checkbox"><input type="checkbox" checked={Boolean(v.extra?.dinhKy)} onChange={(e) => setExtra({ dinhKy: e.target.checked })} /> Là khoản phát sinh định kỳ hàng tháng</label></Field>}
       {meta.tracked && <Field label=" "><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>}
       {isContract && (
         <>

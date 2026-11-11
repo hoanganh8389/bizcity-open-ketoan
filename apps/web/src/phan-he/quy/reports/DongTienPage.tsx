@@ -2,7 +2,7 @@
 /**
  * DÒNG TIỀN (ACC98): A Tiền tồn đầu kỳ (tiền mặt, tiền gửi) · B Thực thu theo mục thu · C Thực chi theo mục chi · D Tiền tồn cuối kỳ;
  *   hai cột Kỳ trước (khoảng ngày liền trước, cùng độ dài) và Kỳ này.
- * Mục thu / chi: danh mục DM17 (cây THU / CHI), mục cha cộng các mục con; dòng tiền chưa gán mục hiện ở dòng "Chưa gán mục".
+ * Mục thu / chi: danh mục DM17 theo Loại (mục thu / mục chi), mục cha (Thuộc) cộng các mục con; dòng tiền chưa gán mục hiện ở dòng "Chưa gán mục".
  *   Mục thu: thu − chi của mục; mục chi: chi − thu (phiếu sửa / đảo trong mục tự bù trừ) → D = A + B − C.
  * Số liệu: /reports/cash-balances (tồn đầu, cuối của 111, 112, 113) + /reports/cash-items (thu, chi theo mục).
  */
@@ -47,7 +47,7 @@ export function DongTienPage() {
     { queryKey: ['cash-balances', 'dong-tien', k, f.branchCodes], queryFn: () => api.get<Bal>('/api/v1/reports/cash-balances', { ...k, branchCodes: f.branchCodes }) },
     { queryKey: ['cash-items', k, f.branchCodes], queryFn: () => api.get<Items>('/api/v1/reports/cash-items', { ...k, branchCodes: f.branchCodes }) },
   ]) });
-  const dims = useDimension('cash_item') as { code: string; name: string; parentCode?: string | null }[];
+  const dims = useDimension('cash_item') as { code: string; name: string; parentCode?: string | null; extra?: { loai?: string } }[];
   const loading = qs.some((q) => q.isLoading);
   const error = qs.find((q) => q.error)?.error;
   const bal = [qs[0]?.data as Bal | undefined, qs[2]?.data as Bal | undefined];
@@ -56,29 +56,28 @@ export function DongTienPage() {
   const rows: Row[] = [];
   if (!loading && bal[1]) {
     const parent = new Map(dims.map((d) => [d.code, d.parentCode ?? '']));
-    const rootOf = (c: string) => { let x = c; for (let i = 0; i < 10 && parent.get(x); i++) x = parent.get(x)!; return x; };
+    const loaiOf = new Map(dims.map((d) => [d.code, d.extra?.loai === 'thu' ? 'THU' : 'CHI']));
     const sumBal = (k: 0 | 1, p: string, side: 'opening' | 'closing') => r2((bal[k]?.rows ?? []).filter((r) => r.accountCode.startsWith(p)).reduce((s, r) => s + r[side], 0));
     const cashLines = (side: 'opening' | 'closing') => CASH.filter(([p]) => sumBal(0, p, side) || sumBal(1, p, side))
       .map(([p, n], i): Row => ({ key: `${side}-${p}`, code: String(i + 1), name: n, level: 1, prev: sumBal(0, p, side), cur: sumBal(1, p, side) }));
+    const isUnder = (c: string, anc: string) => { for (let x = c, i = 0; x && i < 10; x = parent.get(x) ?? '', i++) if (x === anc) return true; return false; };
     /** Số của một mục (kể cả mục con) ở kỳ k: mục thu = thu − chi, mục chi = chi − thu. */
-    const amount = (k: 0 | 1, code: string, root: 'THU' | 'CHI') => r2((items[k]?.rows ?? [])
-      .filter((r) => r.item && (r.item === code || (() => { for (let x = parent.get(r.item) ?? '', i = 0; x && i < 10; x = parent.get(x) ?? '', i++) if (x === code) return true; return false; })()))
+    const amount = (k: 0 | 1, code: string, root: 'THU' | 'CHI') => r2((items[k]?.rows ?? []).filter((r) => r.item && isUnder(r.item, code))
       .reduce((s, r) => s + (root === 'THU' ? r.thu - r.chi : r.chi - r.thu), 0));
-    const unassigned = (k: 0 | 1, root: 'THU' | 'CHI') => r2((items[k]?.rows ?? []).filter((r) => !r.item || !parent.has(r.item) || (rootOf(r.item) !== 'THU' && rootOf(r.item) !== 'CHI'))
+    const unassigned = (k: 0 | 1, root: 'THU' | 'CHI') => r2((items[k]?.rows ?? []).filter((r) => !r.item || !parent.has(r.item))
       .reduce((s, r) => s + (root === 'THU' ? r.thu : r.chi), 0));
-    /** Cây mục dưới gốc, theo thứ tự mã; chỉ mục có số ở một trong hai kỳ. */
+    /** Mục của một loại theo thứ tự mã, mục con dưới mục cha (Thuộc); chỉ mục có số ở một trong hai kỳ. */
     const tree = (root: 'THU' | 'CHI'): Row[] => {
       const out: Row[] = [];
       const walk = (p: string, level: number) => {
-        for (const d of dims.filter((x) => (x.parentCode ?? '') === p).sort((a, b) => a.code.localeCompare(b.code))) {
+        for (const d of dims.filter((x) => (x.parentCode ?? '') === p && loaiOf.get(x.code) === root).sort((a, b) => a.code.localeCompare(b.code))) {
           const prev = amount(0, d.code, root); const cur = amount(1, d.code, root);
           if (!prev && !cur) continue;
-          const hasKids = dims.some((x) => x.parentCode === d.code);
-          out.push({ key: `${root}-${d.code}`, code: d.code, name: d.name, level, bold: hasKids, prev, cur });
+          out.push({ key: `${root}-${d.code}`, code: d.code, name: d.name, level, bold: dims.some((x) => x.parentCode === d.code), prev, cur });
           walk(d.code, level + 1);
         }
       };
-      walk(root, 1);
+      walk('', 1);
       const u0 = unassigned(0, root); const u1 = unassigned(1, root);
       if (u0 || u1) out.push({ key: `${root}-none`, code: '', name: root === 'THU' ? '(Chưa gán mục thu)' : '(Chưa gán mục chi)', level: 1, prev: u0, cur: u1 });
       return out;

@@ -1,24 +1,43 @@
-{"_bang": "muc-thu-chi", "_mo_ta": "Mục thu / chi: cây hai gốc THU (mục thu) và CHI (mục chi); báo cáo Dòng tiền gom theo mục. Quay về gốc xoá các mã tự thêm chưa dùng, khoá mã đã dùng.", "_cot": ["code", "name", "parent_code", "note", "is_active"]}
-{"code": "THU", "name": "Mục thu", "parent_code": null, "note": "Gốc các mục thu", "is_active": true}
-{"code": "100", "name": "Thu từ bán hàng thu tiền ngay", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "101", "name": "Thu nợ khách hàng", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "102", "name": "Thu hoàn ứng nhân viên", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "103", "name": "Thu tiền vay", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "104", "name": "Thu lãi tiền gửi, đầu tư", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "105", "name": "Thu hồi các khoản cho vay", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "106", "name": "Thu ký quỹ, ký cược", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "180", "name": "Nhận tiền chuyển nội bộ", "parent_code": "THU", "note": "Rút tiền gửi về quỹ, nhận tiền từ chi nhánh khác", "is_active": true}
-{"code": "199", "name": "Thu khác", "parent_code": "THU", "note": "", "is_active": true}
-{"code": "CHI", "name": "Mục chi", "parent_code": null, "note": "Gốc các mục chi", "is_active": true}
-{"code": "200", "name": "Chi mua hàng thanh toán ngay", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "201", "name": "Chi trả nợ nhà cung cấp", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "202", "name": "Chi lương, thưởng", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "203", "name": "Chi thuê mặt bằng", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "204", "name": "Chi điện, nước, internet", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "205", "name": "Chi vận chuyển", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "206", "name": "Chi tạm ứng nhân viên", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "207", "name": "Chi nộp thuế, phí, lệ phí", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "208", "name": "Chi trả nợ vay, lãi vay", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "209", "name": "Chi cho vay", "parent_code": "CHI", "note": "", "is_active": true}
-{"code": "280", "name": "Chuyển tiền nội bộ", "parent_code": "CHI", "note": "Nộp tiền vào ngân hàng, chuyển tiền cho chi nhánh khác", "is_active": true}
-{"code": "299", "name": "Chi khác", "parent_code": "CHI", "note": "", "is_active": true}
+{"_bang": "muc-thu-chi", "_mo_ta": "Mục thu / chi: mã, tên, loại (extra.loai thu | chi), phát sinh định kỳ hàng tháng (extra.dinhKy); \"Thuộc\" = parent_code. Báo cáo Dòng tiền gom theo mục.", "_cot": ["code", "name", "parent_code", "note", "is_active", "extra"]}
+{"code": "100", "name": "Thu từ bán hàng thu tiền ngay", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "101", "name": "Thu nợ từ bán hàng", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "102", "name": "Thu nợ từ hợp đồng bán", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "103", "name": "Thu tiền góp vốn", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "104", "name": "Thu tiền vay", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "105", "name": "Thu từ lãi tiền gửi ngân hàng, các khoản cho vay", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": true}}
+{"code": "106", "name": "Thu lãi từ các khoản đầu tư", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": true}}
+{"code": "107", "name": "Thu nhận ký quỹ, ký cược", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": true}}
+{"code": "108", "name": "Thu hồi các khoản đi ký cược, ký quỹ", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": true}}
+{"code": "109", "name": "Thu từ thanh lý, nhượng bán", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "110", "name": "Thu tiền từ lãi cổ tức", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "111", "name": "Thu khác", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "thu", "dinhKy": false}}
+{"code": "200", "name": "Chi tiền mua TSCĐ", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "201", "name": "Chi tiền mua CCDC", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "202", "name": "Chi mua hàng hóa thanh toán ngay", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "203", "name": "Chi trả nợ từ mua hàng", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "204", "name": "Chi trả nợ từ hợp đồng mua", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "205", "name": "Chi tiền lương", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "206", "name": "Chi tiền thưởng", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "207", "name": "Chi tiền phụ cấp", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "208", "name": "Chi thanh toán bảo hiểm", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "209", "name": "Chi tiền tạm ứng", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "210", "name": "Chi tiền công tác phí", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "211", "name": "Chi tiền điện", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "212", "name": "Chi tiền nước", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "213", "name": "Chi tiền điện thoại", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "214", "name": "Chi tiền thuê văn phòng, cửa hàng, thuê tài sản", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "215", "name": "Chi tiền bốc dỡ, vận chuyển", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "216", "name": "Chi tiền hoa hồng đại lý", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "217", "name": "Chi tiền bảo trì, bảo dưỡng tài sản", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "218", "name": "Chi tiền mua văn phòng phẩm", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "219", "name": "Chi tiền nộp thuế", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "220", "name": "Chi tiền trả tiền lãi vay, chi phí tài chính", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "221", "name": "Chi tiền đào tạo cán bộ", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "222", "name": "Chi tiền hội nghị", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "223", "name": "Chi tiền tiếp khách", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "224", "name": "Chi tiền tuyển dụng", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "225", "name": "Chi tiền quảng cáo, giới thiệu sản phẩm, hàng hóa", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "226", "name": "Chi tiền cầm cố, ký cược, ký quỹ", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": true}}
+{"code": "227", "name": "Chi tiền đầu tư xây dựng cơ bản", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "228", "name": "Chi khác", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}
+{"code": "229", "name": "Chi tiền trả nợ gốc vay", "parent_code": null, "note": "", "is_active": true, "extra": {"loai": "chi", "dinhKy": false}}

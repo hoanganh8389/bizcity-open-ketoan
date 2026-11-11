@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Mục thu/chi theo danh mục chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Danh mục Mục thu/chi (DM17): cột Mã · Tên · **Loại** (Mục thu / Mục chi) · **Phát sinh định kỳ** · Diễn giải; form Loại · Mã · Tên · Diễn giải · Thuộc · "Là khoản phát sinh định kỳ hàng tháng". Bỏ hai gốc THU / CHI tự đặt ở 0104.
+- Danh mục mặc định thay bằng 42 mục chuẩn: 100–111 mục thu, 200–229 mục chi (đúng mã, tên, cờ định kỳ).
+- Form phiếu thu / chi lọc mục theo Loại; báo cáo Dòng tiền gom theo Loại (mục cha "Thuộc" cộng mục con).
+- **Nâng cấp cần làm**: migration 0105_muc_thu_chi_chuan (mã cũ của 0104 không có trong danh mục chuẩn: chưa dùng thì xoá, đã dùng thì ngừng theo dõi).
+
 ### Mục thu / chi và báo cáo Dòng tiền <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Chiều phân tích mới **Mục thu/chi** (`cash_item`, trường dòng `cashItem`, ghi ở `ledger_lines.dims.cashItem`) theo đúng khuôn các chiều sẵn có; danh mục DM17 (Danh mục → Chi phí) dạng cây hai gốc THU / CHI, có sẵn 23 mục thường dùng; cờ "Mục thu/chi" trên tài khoản (bắt buộc chọn khi bật). Không bắt buộc với phiếu.
 - Form phiếu thu / chi: cột **Mục thu/chi** ẩn sẵn, bật ở nút Cột (phiếu thu chỉ mục thu, phiếu chi chỉ mục chi); ô Mục thu/chi, Khoản mục CP hiện cả tên cạnh mã.
