@@ -27,6 +27,7 @@ export * from './remedy.js';
 export * from './module.js';
 export * from './dvt.js';
 export * from './print-templates.js';
+export * from './print-profile.js'; // [2026-11-11 Nguyễn Văn Thủy] hồ sơ in: thông tin đơn vị trên bản in, người ký (đóng góp)
 // [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: mã tra cứu: đọc requestId / traceId, nội dung Chép / Báo lỗi chỉ gồm mã.
 export * from './ma-tra-cuu.js';
 export * from './costing-formula.js';

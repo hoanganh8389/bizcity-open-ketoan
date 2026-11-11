@@ -68,6 +68,8 @@ import { lotRoutes } from '../modules/lots/lots.routes.js';
 import { voucherTemplateRoutes } from '../modules/voucher-templates/voucher-template.routes.js';
 import { signatureRoutes } from '../modules/signatures/signature.routes.js';
 import { printTemplateRoutes } from '../modules/print-templates/print-template.routes.js';
+// [2026-11-11 Nguyễn Văn Thủy] hồ sơ in HT16 (đóng góp)
+import { printProfileRoutes } from '../modules/print-templates/print-profile.routes.js';
 import { referenceDocumentRoutes } from '../modules/reference-documents/reference-document.routes.js';
 import { docRefRoutes } from '../modules/doc-refs/doc-ref.routes.js';
 import { reportRoutes } from './ke-toan/reports/report.routes.js';
@@ -82,7 +84,7 @@ export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, gatesRoutes, enginesRoutes, devToolsBoardRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
   accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
-  productRoutes, catalogRoutes, itemRoutes, postingFlowRoutes, postingRuleRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
+  productRoutes, catalogRoutes, itemRoutes, postingFlowRoutes, postingRuleRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, printProfileRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,
   intakeRoutes,
   // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: CORE_ROUTES thêm lineageRoutes (truy vết vòng đời mặt hàng, ADR-0021)

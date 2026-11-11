@@ -7,6 +7,7 @@ import { date, money } from '@/lib/format';
 import { amountInWords } from '@/lib/docso';
 import type { PrintCtx } from './PrintHost';
 import { usePrintOverrides } from './overrides';
+import { signFromProfile, usePrintProfileCtx } from './profile';
 
 /** Căn cứ ban hành in dưới mẫu số: chế độ kế toán doanh nghiệp hiện hành (TT99/2025 thay TT200 từ năm tài chính 2026, xem docs/can-cu). */
 export const FORM_NOTE = '(Ban hành theo Thông tư số 99/2025/TT-BTC ngày 27/10/2025 của Bộ Tài chính)';
@@ -34,20 +35,32 @@ export function dayText(d?: string) {
   return `Ngày ${da} tháng ${mo} năm ${y}`;
 }
 
-/** Đầu trang: đơn vị (logo, tên, chi nhánh, địa chỉ, MST) bên trái; mẫu số bên phải. */
+/**
+ * Đầu trang: đơn vị (logo, tên, chi nhánh, địa chỉ, MST, liên hệ) bên trái; mẫu số bên phải.
+ * Phần nào hiện, căn lề, dòng chi nhánh: theo hồ sơ in (HT16, ctx.profile.show).
+ */
 export function OrgHead({ ctx, branchCode, form, formNote = FORM_NOTE, extra }: { ctx: PrintCtx; branchCode?: string; form?: string; formNote?: string; extra?: ReactNode }) {
   const ov = usePrintOverrides();
-  const branch = ctx.branchName(branchCode);
+  const sh = ctx.profile.show;
+  const o = ctx.org;
+  const branch = sh.branchLine ? ctx.branchName(branchCode) : '';
   if (ov.formNote !== undefined) formNote = ov.formNote;
+  const lines: [boolean, ReactNode][] = [
+    [sh.nameAddress && !!o.address, <>Địa chỉ: {o.address}</>],
+    [sh.taxCode && !!o.taxCode, <>MST: {o.taxCode}</>],
+    [sh.phone && !!o.phone, <>Điện thoại: {o.phone}</>],
+    [sh.email && !!o.email, <>Email: {o.email}</>],
+    [sh.website && !!o.website, <>Website: {o.website}</>],
+    [sh.bankAccount && !!o.bankAccount, <>Tài khoản: {o.bankAccount}</>],
+  ];
   return (
-    <div className="pd-head">
+    <div className={`pd-head${sh.align === 'center' ? ' pd-head-c' : ''}`}>
       <div className="pd-org">
-        {ctx.org.logo && ov.showLogo !== false && <img src={ctx.org.logo} alt="" />}
+        {o.logo && sh.logo && ov.showLogo !== false && <img src={o.logo} alt="" />}
         <div>
-          <b>{ctx.org.name}</b>
-          {branch && branch !== ctx.org.name && <div>{branch}</div>}
-          {ctx.org.address && <div>Địa chỉ: {ctx.org.address}</div>}
-          {ctx.org.taxCode && <div>MST: {ctx.org.taxCode}</div>}
+          {sh.nameAddress && <b>{o.name}</b>}
+          {branch && branch !== o.name && <div>{branch}</div>}
+          {lines.filter(([on]) => on).map(([, v], i) => <div key={i}>{v}</div>)}
         </div>
       </div>
       {(form || extra) && (
@@ -117,13 +130,19 @@ export function Words({ amount, label = 'Số tiền viết bằng chữ' }: { a
 
 export interface Sign { title: string; note?: string; name?: ReactNode; stamp?: ReactNode }
 /**
- * Hàng chữ ký; `date` in dòng "Ngày … tháng … năm …" phía trên ô cuối.
+ * Hàng chữ ký; `date` (chứng từ) hoặc `periodEnd` (báo cáo: ngày cuối kỳ) in dòng "Ngày … tháng … năm …" phía trên ô cuối.
  * Cấu hình HT05 có hàng chữ ký riêng thì thay (giữ dấu "Đã ký xác nhận" của ô cùng chức danh); keep = hàng chữ ký cố định của mẫu
  * (vd ô ngân hàng trên uỷ nhiệm chi) không thay.
  */
-export function Signs({ items, date, keep }: { items: Sign[]; date?: string | true; keep?: boolean }) {
+export function Signs({ items, date, keep, periodEnd }: { items: Sign[]; date?: string | true; keep?: boolean; periodEnd?: string }) {
   const ov = usePrintOverrides();
+  const profile = usePrintProfileCtx();
+  // Ngày ký (HT16): báo cáo lấy ngày cuối kỳ (tắt = ngày in); chứng từ lấy ngày chứng từ (tắt = để trống ghi tay).
+  if (periodEnd) date = profile.signDate.reportPeriodEnd ? periodEnd : new Date().toLocaleDateString('sv');
+  else if (typeof date === 'string' && !profile.signDate.voucherDate) date = true;
   if (ov.signs?.length && !keep) items = ov.signs.map((s) => ({ ...items.find((x) => x.title === s.title), ...s, name: s.name || items.find((x) => x.title === s.title)?.name }));
+  // Chức danh Giám đốc / Kế toán trưởng / Thủ kho / Thủ quỹ / Người lập biểu: tiêu đề + tên theo hồ sơ in (HT16).
+  items = items.map((s) => signFromProfile(s, profile));
   return (
     <div className="pd-signs-wrap">
       {date && <div className="pd-sign-date">{dayText(date === true ? undefined : date)}</div>}

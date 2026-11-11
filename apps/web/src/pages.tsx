@@ -17,6 +17,8 @@ import { ConfigCenterPage } from './features/system/ConfigCenterPage';
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (HT08)
 import { ReviewBoardPage } from './features/system/ReviewBoardPage';
 import { PrintTemplatesPage } from './features/system/PrintTemplatesPage';
+// [2026-11-11 Nguyễn Văn Thủy] HT16 Báo cáo, chứng từ (đóng góp)
+import { PrintProfilePage } from './features/system/PrintProfilePage';
 import { DefaultDataPage } from './features/flow/DefaultDataPages';
 import { NhapExcelPage } from './features/system/NhapExcelPage';
 import { Navigate, Route } from 'react-router-dom';
@@ -124,6 +126,7 @@ export const pageRoutes = (
     <Route path="cau-hinh/don-vi" element={<TenantPage />} />
     <Route path="cau-hinh/khoi-anh" element={<ImageBlocksPage />} />
     <Route path="cau-hinh/mau-in" element={<PrintTemplatesPage />} />
+    <Route path="cau-hinh/bao-cao-chung-tu" element={<PrintProfilePage />} />
     <Route path="he-thong/chi-nhanh-lam-viec" element={<ChiNhanhLamViecPage />} />
     <Route path="he-thong/kiem-chuan" element={<ConformancePage />} />
     <Route path="he-thong/ho-so-ke-toan" element={<AccountingProfilePage />} />

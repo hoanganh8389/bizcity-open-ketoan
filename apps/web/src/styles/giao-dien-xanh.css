@@ -1,6 +1,6 @@
 /* =====================================================================================================================
-   [2026-11-11 Nguyễn Văn Thủy] GIAO DIỆN XANH — bố cục và màu theo chuẩn phần mềm kế toán phổ biến (khảo sát
-   docs/tham-khao-misa): thanh trên trắng, menu trái nền tối có nút "Thêm nhanh" và mục "Hay dùng", một màu chính
+   [2026-11-11 Nguyễn Văn Thủy] GIAO DIỆN XANH — bố cục và màu theo chuẩn phần mềm kế toán phổ biến (xem
+   tài liệu cập nhật giao diện): thanh trên trắng, menu trái nền tối có nút "Thêm nhanh" và mục "Hay dùng", một màu chính
    xanh lá, tiêu đề bảng xanh xám, dòng đang chọn xanh nhạt, chứng từ chưa ghi sổ chữ cam.
    Chỉ áp khi <html class="gd-xanh"> (mặc định); người dùng chọn "Giao diện cổ điển" ở menu tài khoản thì bỏ lớp này.
    Đặt sau theme.css, mọi luật có tiền tố html.gd-xanh để đè các khối trên mà không phải sửa chúng.

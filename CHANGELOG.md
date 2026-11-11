@@ -39,6 +39,9 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không (chứng từ `sale` theo gói định khoản mặc định, không `reasonCode` riêng).
 - **Nâng cấp cần làm:** cần mục Core ở trên (0102); `module migrate pos` (0001, 0002) → `module sync` → `module activate pos`.
 - **Bảo mật:** module chỉ đọc `bizcity_read.*` (RLS theo đơn vị); mọi action dùng quyền riêng `pos:sell` (manifest) — phiên thu ngân không cần `documents:write`, gọi chứng từ của Core bị 403. Số điện thoại khách mới nằm trong `input` của bằng chứng: Core chưa che dữ liệu cá nhân trong bằng chứng (STD-DATA-10, đề xuất P-MP-9).
+### Hồ sơ in: thông tin đơn vị, người ký, ngày ký (HT16) <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/11 (đóng góp) -->
+- Màn **Hệ thống → Báo cáo, chứng từ (HT16)**: thông tin đơn vị in lên mọi báo cáo, chứng từ (tên, địa chỉ, MST, điện thoại, email, website, tài khoản ngân hàng, logo — từng dòng ẩn / hiện, căn lề), người ký theo chức danh (tiêu đề + tên), ngày ký theo cuối kỳ / ngày chứng từ; đơn vị nhiều chi nhánh đặt riêng được từng chi nhánh.
+- Bảng `print_profiles` (migration 0103), API `/api/v1/print-profile`, khai báo một nơi ở `packages/contracts/src/print-profile.ts`.
 
 ### Thêm nhanh chi nhánh, phân kho ngay trên phiếu <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/10 (đóng góp) -->
 

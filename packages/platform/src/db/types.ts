@@ -735,6 +735,16 @@ export interface PrintTemplateSettingsTable {
   updated_at: TimestampDefault;
 }
 
+// [2026-11-11 Nguyễn Văn Thủy] 0103 hồ sơ in (đóng góp)
+export interface PrintProfilesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  branch_code: Generated<string>;
+  profile: ColumnType<Record<string, unknown>, string | undefined, string>;
+  updated_by: Generated<string>;
+  updated_at: TimestampDefault;
+}
+
 export interface StockSkuSettingsTable {
   tenant_id: string;
   sku: string;
@@ -1946,6 +1956,7 @@ export interface Database {
   stock_levels: StockLevelsTable;
   stock_sku_settings: StockSkuSettingsTable;
   print_template_settings: PrintTemplateSettingsTable;
+  print_profiles: PrintProfilesTable;
   stock_max_requests: StockMaxRequestsTable;
   order_formulas: OrderFormulasTable;
   transfer_requests: TransferRequestsTable;

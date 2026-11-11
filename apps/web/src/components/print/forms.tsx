@@ -312,7 +312,7 @@ export function LedgerForm<R>({ d, ctx }: { d: LedgerData<R>; ctx: PrintCtx }) {
       </table>
       {d.note && <div className="pd-note">{d.note}</div>}
       {d.bookNote && <div className="pd-note">- Sổ này có .... trang, đánh số từ trang 01 đến trang .... &nbsp; - Ngày mở sổ: ....................</div>}
-      {d.signs !== false && <Signs date={true} items={d.signs ?? BOOK_SIGNS} />}
+      {d.signs !== false && <Signs date={true} periodEnd={d.to} items={d.signs ?? BOOK_SIGNS} />}
       <Foot ctx={ctx} />
     </div>
   );

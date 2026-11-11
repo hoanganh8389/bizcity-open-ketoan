@@ -15,6 +15,7 @@ Mỗi đợt cập nhật giao diện một tệp: **đổi gì, người dùng 
 | 7 | [08-dm-tai-khoan.md](08-dm-tai-khoan.md) | Hệ thống tài khoản (ACC1) làm lại theo chuẩn: 6 cột, Diễn giải, Nhân bản, Ngừng / Dùng lại, Xuất / Nhập Excel cùng mẫu |
 | 8 | [09-bao-loi-tai-o.md](09-bao-loi-tai-o.md) | Báo lỗi tại ô cho mọi hộp thoại: bấm Ghi mà thiếu → viền đỏ + chữ đỏ dưới ô |
 | 9 | [10-them-nhanh-chi-nhanh-kho.md](10-them-nhanh-chi-nhanh-kho.md) | Ô chi nhánh có + thêm nhanh; ô phân kho theo chi nhánh đang chọn, có + thêm phân kho (cả phiếu mua) |
+| 10 | [11-ho-so-in.md](11-ho-so-in.md) | Hồ sơ in HT16: thông tin đơn vị trên bản in (ẩn / hiện), người ký theo chức danh, ngày ký; đặt riêng từng chi nhánh |
 
 Việc tiếp theo: [02-viec-tiep-theo.md](02-viec-tiep-theo.md).
 
