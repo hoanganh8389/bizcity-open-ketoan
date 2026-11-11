@@ -39,5 +39,5 @@ export const THEM_NHANH: ThemNhanhNhom[] = [
   { label: 'Bán hàng', items: [m('Phiếu bán hàng', '/ban-hang/phieu-ban'), m('Hàng bán trả lại', '/ban-hang/tra-lai')] },
   { label: 'Kho', items: [m('Chuyển kho', '/kho/chuyen-kho')] },
   { label: 'Tổng hợp', items: [m('Phiếu kế toán', '/nghiep-vu/phieu-ke-toan')] },
-  { label: 'Danh mục', items: [m('Khách hàng', '/danh-muc/doi-tuong', '/danh-muc/doi-tuong?them=1&loai=customer'), m('Nhà cung cấp', '/danh-muc/doi-tuong', '/danh-muc/doi-tuong?them=1&loai=supplier'), m('Mặt hàng', '/danh-muc/mat-hang'), m('Kho', '/danh-muc/kho')] },
+  { label: 'Danh mục', items: [m('Khách hàng', '/danh-muc/doi-tuong', '/danh-muc/doi-tuong?them=1&loai=customer'), m('Nhà cung cấp', '/danh-muc/doi-tuong', '/danh-muc/doi-tuong?them=1&loai=supplier'), m('Mặt hàng', '/danh-muc/mat-hang'), m('Kho', '/danh-muc/kho'), m('Nhập từ Excel', '/tien-ich/nhap-excel', '/tien-ich/nhap-excel')] },
 ];

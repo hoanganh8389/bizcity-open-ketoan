@@ -14,7 +14,8 @@ import { ErrorBox, Field, Loading, Modal, Pager } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { KpiMatHang } from '@/components/KpiDanhMuc';
-import { ExcelImport, type ImportColumn } from '@/components/ExcelImport';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { ProductFullForm } from './ProductFullForm';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: cột Biến thể cạnh mã, lọc theo biến thể, Loại hàng (đóng góp)
@@ -40,42 +41,6 @@ interface Product {
   sendToTax?: boolean; // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
 }
 interface PostingGroup { code: string; name: string; isDefault: boolean }
-
-/** Nhập Excel mặt hàng (DM10): cột theo tiêu đề; nhóm / ngành / nhãn / loại ghi mã hoặc tên trong danh mục. */
-const IMPORT_COLS: ImportColumn[] = [
-  { key: 'sku', header: 'Mã hàng' }, { key: 'name', header: 'Tên hàng' }, { key: 'unit', header: 'ĐVT' },
-  { key: 'groupCode', header: 'Nhóm hàng' }, { key: 'industryCode', header: 'Ngành hàng' }, { key: 'brandCode', header: 'Nhãn hàng' }, { key: 'typeCode', header: 'Loại hàng' },
-  { key: 'postingGroupCode', header: 'Nhóm hạch toán' }, { key: 'taxOutCode', header: 'Mã VAT ra' }, { key: 'taxInCode', header: 'Mã VAT vào' },
-  { key: 'note', header: 'Ghi chú' }, { key: 'isActive', header: 'Theo dõi' },
-];
-interface ImportOut { created: number; updated: number; failed: number; rows: { row: number; sku: string; action: 'create' | 'update' | 'error'; errors: string[]; values: Record<string, string>; before?: Record<string, string> }[] }
-const importCall = (rows: Record<string, string>[], dryRun: boolean) => api.post<ImportOut>('/api/v1/catalog/products/import', {
-  dryRun, rows: rows.map(({ _row, ...r }) => ({ ...r, row: Number(_row), sku: r.sku ?? '' })),
-});
-const importErrors = (o: ImportOut) => o.rows.flatMap((r) => r.errors.map((text) => ({ row: r.row, key: r.sku, text })));
-
-/** File mẫu: dòng tiêu đề + 2 dòng ví dụ, sheet "Hướng dẫn" ghi cách điền. */
-async function downloadImportTemplate() {
-  const XLSX = await import('xlsx');
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([
-    IMPORT_COLS.map((c) => c.header),
-    ['MAU-001', 'Sữa bột mẫu 400g', 'Hộp', '', '', '', '', '', '', '', 'Dòng ví dụ — xoá trước khi nhập', 'Có'],
-    ['MAU-002', 'Khăn ướt mẫu 80 tờ', 'Gói', '', '', '', '', '', '', '', '', 'Có'],
-  ]);
-  ws['!cols'] = IMPORT_COLS.map((c) => ({ wch: c.key === 'name' || c.key === 'note' ? 32 : 14 }));
-  XLSX.utils.book_append_sheet(wb, ws, 'Mặt hàng');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
-    ['Cột', 'Cách điền'],
-    ['Mã hàng', 'Bắt buộc, không có khoảng trắng. Mã đã có → cập nhật; mã chưa có → thêm mới.'],
-    ['Tên hàng, ĐVT', 'Bắt buộc với mặt hàng mới. Mặt hàng đã có: để trống = giữ nguyên; ĐVT không đổi qua Excel (đổi ở form mặt hàng).'],
-    ['Nhóm / Ngành / Nhãn / Loại hàng', 'Ghi mã hoặc đúng tên đã có trong danh mục phân loại. Để trống = giữ nguyên.'],
-    ['Nhóm hạch toán, Mã VAT ra / vào', 'Mã đã có trong hệ thống. Để trống = giữ nguyên (mặt hàng mới: nhóm mặc định).'],
-    ['Theo dõi', 'Có / Không. Để trống = giữ nguyên (mặt hàng mới: Có).'],
-    ['', 'Bấm Nhập Excel: phần mềm kiểm tra từng dòng và liệt kê dòng lỗi TRƯỚC khi ghi; bấm Ghi thì chỉ ghi dòng đúng.'],
-  ]), 'Hướng dẫn');
-  XLSX.writeFile(wb, 'mau-nhap-mat-hang.xlsx');
-}
 
 export const useClasses = (kind: ClassKind) => useQuery({ queryKey: ['item-classes', kind], queryFn: () => api.get<ItemClass[]>(`/api/v1/item-classes/${kind}`), staleTime: 60_000 });
 const SOURCE: Record<string, string> = { document: 'Tự thêm từ chứng từ', manual: 'Kế toán thêm', default: 'Dữ liệu gốc' };
@@ -209,18 +174,7 @@ export function ProductsPage() {
             onExport={() => exportRef.current?.()}
             extra={
               <>
-                <ExcelImport
-                  columns={IMPORT_COLS} keyColumn="sku" disabled={!canWrite} buttonLabel="Nhập Excel"
-                  onTemplate={() => void downloadImportTemplate()}
-                  hint="Mã đã có → cập nhật (ô trống giữ nguyên); mã chưa có → thêm mới (bắt buộc Tên hàng, ĐVT)."
-                  onCheck={async (rows) => { const o = await importCall(rows, true); return { ok: o.created + o.updated, okText: `${o.created} thêm mới, ${o.updated} cập nhật`, errors: importErrors(o),
-                    preview: { columns: IMPORT_COLS, rows: o.rows.map((r) => ({ row: r.row, status: r.action, values: r.values, before: r.before, errors: r.errors })) } }; }}
-                  onImport={async (rows) => {
-                    const o = await importCall(rows, false);
-                    void qc.invalidateQueries({ queryKey: ['products'] });
-                    return { updated: o.created + o.updated, errors: importErrors(o).map((e) => `Dòng ${e.row} (${e.key || 'thiếu mã'}): ${e.text}`) };
-                  }}
-                />
+                <NutNhapExcel loai={nhapLoai('mat-hang')!} disabled={!canWrite} />
                 {sel && <Link className="btn btn-sm" to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(sel.sku)}`} title="Mua → nhập → bán → giá vốn → trả của mặt hàng đang chọn">Hành trình</Link>}
                 {canWrite && <button className="btn btn-sm" title="Mặt hàng nháp (thiếu đơn vị tính / nhóm hạch toán, hoặc mới từ chứng từ): điền một lần cho cả lô rồi kích hoạt" onClick={() => setBulk(true)}>Kích hoạt hàng loạt</button>}
                 {canWrite && <button className="btn btn-sm" title="Quét họ mã theo mã: mã 9 số + đuôi (Z, Q, K, M, B…; trừ T có tem) là mã con của mã gốc có trong danh mục. Giữ mã cha đã chọn tay." onClick={() => setScan({ pw: '' })}>Quét cha – con theo mã</button>}

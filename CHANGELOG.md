@@ -12,6 +12,14 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Nhập Excel dùng chung 4 bước (TI14) <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 (đóng góp) -->
+
+- **Thêm:** màn **TI14 Nhập dữ liệu từ Excel** và trình nhập 4 bước dùng chung (chọn tệp + tải mẫu, ghép cột tự động + ngầm định, kiểm tra từng dòng trước khi ghi + tải tệp lỗi, kết quả) cho Khách hàng, Nhà cung cấp, Mặt hàng, Kho; nút **Nhập Excel** ở các danh mục đó.
+- **Thêm:** API `POST /api/v1/partners/import` (`dryRun`, `mode` create / update / both): mã trống tự cấp theo dãy của nhóm, MST không trùng, mỗi dòng một savepoint.
+- **Đổi:** danh mục Mặt hàng dùng trình nhập mới thay hộp nhập cũ.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** kéo ảnh api và web mới.
+
 ### Giao diện Xanh, thêm nhanh danh mục ngay trên chứng từ (cập nhật trải nghiệm đợt 1) <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/01 (đóng góp) -->
 
 - **Thêm:** giao diện Xanh (mặc định; avatar → Dùng giao diện cổ điển để quay lại): thanh trên trắng, menu trái nền tối, tiêu đề bảng xanh xám.

@@ -284,3 +284,42 @@ html.gd-xanh .modal.chung-tu .fgroup > .field.full { grid-column: 1 / -1; }
 
 /* Cột Chức năng ở danh sách: liên kết hành động chính của dòng. */
 a.row-act { color: var(--brand-700); font-weight: 600; white-space: nowrap; }
+
+/* Trình nhập Excel 4 bước (components/NhapExcelWizard.tsx) và trang TI14. */
+.nx-steps { display: flex; gap: 0; margin-bottom: 4px; border-bottom: 1px solid var(--line-soft); }
+.nx-steps > span { display: flex; align-items: center; gap: 8px; flex: 1; padding: 8px 10px; color: var(--ink-500); font-size: 13px; border-bottom: 3px solid transparent; }
+.nx-steps > span b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--line-soft); color: var(--ink-700); font-size: 12px; }
+.nx-steps > span.on { color: var(--brand-700); font-weight: 600; border-bottom-color: var(--brand-600); }
+.nx-steps > span.on b, .nx-steps > span.xong b { background: var(--brand-600); color: #fff; }
+.nx-buoc { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.nx-drop { display: flex; align-items: center; gap: 16px; padding: 26px 22px; border: 2px dashed var(--line); border-radius: 10px; background: var(--brand-50); color: var(--brand-700); cursor: pointer; }
+.nx-drop.over, .nx-drop:hover { border-color: var(--brand-500); }
+.nx-drop b { display: block; font-size: 15px; color: var(--ink-900); }
+.nx-drop small { color: var(--ink-500); }
+.nx-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.nx-grid { display: grid; grid-template-columns: 150px minmax(0, 420px); gap: 8px 12px; align-items: center; }
+.nx-mode { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 24px; }
+.nx-mode > b { width: 100%; }
+.nx-mode .checkbox span { display: flex; flex-direction: column; }
+.nx-mode .checkbox small { color: var(--ink-500); font-size: 11.5px; }
+.nx-table { overflow: auto; max-height: calc(100vh - 330px); border: 1px solid var(--line); border-radius: 6px; }
+.nx-table table.grid th { position: sticky; top: 0; z-index: 1; }
+.nx-table td .select, .nx-table td .input { height: 26px; }
+tr.nx-loi td { background: #fff5f5; }
+.nx-loi-chu { color: var(--bad); }
+.nx-kq { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.nx-kq > div { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.nx-kq > div b { font-size: 20px; margin-right: 4px; }
+.nx-kq > div small { display: block; color: var(--ink-500); font-size: 12px; }
+.nx-kq > .ok svg { color: var(--brand-600); } .nx-kq > .bad svg { color: var(--bad); }
+.nx-nhom { margin-bottom: 16px; }
+.nx-nhom h3 { font-size: 14px; margin: 0 0 8px; }
+.nx-the-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.nx-the { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding: 14px 16px; text-align: left; font: inherit; color: var(--ink-900); cursor: pointer; }
+.nx-the svg { flex: none; color: var(--brand-600); }
+.nx-the b { display: block; font-size: 14px; }
+.nx-the small { color: var(--ink-500); font-size: 12px; }
+.nx-the:hover { border-color: var(--brand-500); text-decoration: none; }
+.nx-the:disabled { opacity: 0.55; cursor: not-allowed; }
+.nx-table table.grid th { background: var(--gd-head, #eef2f0); color: var(--ink-900); }
+.nx-the-list > .card + .card { margin-top: 0; }

@@ -18,6 +18,7 @@ import { ConfigCenterPage } from './features/system/ConfigCenterPage';
 import { ReviewBoardPage } from './features/system/ReviewBoardPage';
 import { PrintTemplatesPage } from './features/system/PrintTemplatesPage';
 import { DefaultDataPage } from './features/flow/DefaultDataPages';
+import { NhapExcelPage } from './features/system/NhapExcelPage';
 import { Navigate, Route } from 'react-router-dom';
 import { ModuleHomePage, GroupHomePage } from './features/launcher/LauncherPage';
 import { TongQuanPage } from './features/launcher/TongQuanPage';
@@ -119,6 +120,7 @@ export const pageRoutes = (
     <Route path="nghiep-vu/can-tru-cong-no" element={<OffsetPage />} />
     <Route path="ban-hang/xuat-dieu-chinh" element={<ExportAdjustPage />} />
     <Route path="tien-ich/du-lieu-goc" element={<DefaultDataPage />} />
+    <Route path="tien-ich/nhap-excel" element={<NhapExcelPage />} />
     <Route path="cau-hinh/don-vi" element={<TenantPage />} />
     <Route path="cau-hinh/khoi-anh" element={<ImageBlocksPage />} />
     <Route path="cau-hinh/mau-in" element={<PrintTemplatesPage />} />

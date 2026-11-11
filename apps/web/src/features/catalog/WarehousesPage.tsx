@@ -14,6 +14,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 import { BranchPicker } from '@/components/filters';
 
 export interface Warehouse {
@@ -56,6 +58,7 @@ export function WarehousesPage() {
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá kho ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          extra={<NutNhapExcel loai={nhapLoai('kho')!} disabled={!canWrite} />}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (

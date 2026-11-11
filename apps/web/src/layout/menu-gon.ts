@@ -139,6 +139,7 @@ export const GON_DEFS: GonDef[] = [
   {
     key: THE_KHAC, label: 'Tiện ích', icon: 'Wrench', description: 'Tài liệu, kiểm tra chứng từ, API, nghiệp vụ IT', color: '#3949ab',
     sections: [
+      { label: 'Dữ liệu', paths: ['/tien-ich/nhap-excel'] },
       { label: 'Tài liệu', paths: ['/tien-ich/huong-dan', '/yeu-cau/tai-chinh-ke-toan', '/tien-ich/kien-truc', '/tien-ich/can-cu'] },
       { label: 'Kiểm tra chứng từ', paths: ['/tien-ich/ct-mat-lien-ket', '/tien-ich/ct-lech-than-chi-tiet', '/tien-ich/ct-lech-phieu-goc'] },
       { label: 'Nghiệp vụ IT (riêng)', paths: ['/mua-hang/hieu-nghiep-vu', '/mua-hang/tong-quan', '/mua-hang/csdl', '/tien-ich/add-in', '/tien-ich/du-lieu-goc'] },

@@ -7,6 +7,7 @@ Mỗi đợt cập nhật giao diện một tệp: **đổi gì, người dùng 
 | Đợt | Tệp | Tóm tắt |
 |---|---|---|
 | 1 | [01-giao-dien-xanh.md](01-giao-dien-xanh.md) | Giao diện Xanh, Thêm nhanh, Hay dùng, thêm danh mục ngay trên chứng từ (+ / F9), ô chọn dạng bảng có Tồn, kỳ có sẵn, chữ cam chưa duyệt, thẻ chỉ số, form chứng từ toàn màn, Thu tiền ngay |
+| 2 | [03-nhap-excel-dung-chung.md](03-nhap-excel-dung-chung.md) | Trình nhập Excel 4 bước dùng chung (TI14): khách hàng, NCC, mặt hàng, kho; tự ghép cột, ngầm định, kiểm tra trước khi ghi, tệp lỗi |
 
 Việc tiếp theo: [02-viec-tiep-theo.md](02-viec-tiep-theo.md).
 

@@ -175,6 +175,8 @@ export const keToanMenu: MenuItem[] = [
       { key: 'kien-truc', label: 'Kiến trúc & Nghiệp vụ', path: '/tien-ich/kien-truc', code: 'TI10' },
       { key: 'can-cu', label: 'Căn cứ pháp lý', path: '/tien-ich/can-cu', code: 'TI11' },
       sec('ti-he-thong', 'Hệ thống'),
+      // [2026-11-11 Nguyễn Văn Thủy] trình nhập Excel dùng chung (đóng góp)
+      { key: 'nhap-excel', label: 'Nhập dữ liệu từ Excel', path: '/tien-ich/nhap-excel', code: 'TI14', permission: 'catalog:write' },
       { key: 'add-in', label: 'Add-in đang bật', path: '/tien-ich/add-in', code: 'TI00' },
       { key: 'du-lieu-goc', label: 'Dữ liệu gốc', path: '/tien-ich/du-lieu-goc', code: 'TI08' },
       sec('ti-chung-tu', 'Chứng từ kế toán'),

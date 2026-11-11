@@ -23,6 +23,8 @@ import { sdkSlots } from '../../phan-he/sdk-modules';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { KpiDoiTuong } from '@/components/KpiDanhMuc';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 import { ListPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
 import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
@@ -131,6 +133,7 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
           onExport={() => exportRef.current?.()}
           extra={
             <>
+              <NutNhapExcel loai={nhapLoai(fixedKind === 'supplier' || f.kind === 'supplier' ? 'nha-cung-cap' : 'khach-hang')!} disabled={!canWrite} />
               <span className="spacer" />
               <form className="row" style={{ gap: 4 }} onSubmit={(e) => { e.preventDefault(); setApplied(search.trim()); setPage(1); }}>
                 <input className="input" style={{ width: 230, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên, MST, điện thoại" />

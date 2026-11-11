@@ -6,7 +6,7 @@ Thứ tự đề xuất; mỗi việc làm xong ghi một tệp mới trong thư
 
 | # | Việc | Ghi chú |
 |---|---|---|
-| 1 | **Nhập Excel một màn cho mọi loại** (4 bước: chọn tệp + mẫu cơ bản / nâng cao, ghép cột tự động + Ẩn/hiện trường có Ngầm định và Diễn giải, kiểm lỗi từng dòng + tải tệp lỗi, kết quả) | Mỗi loại khai một bộ mô tả trường → sinh mẫu, màn ghép, bộ kiểm. Chứng từ vào ở trạng thái chưa duyệt + duyệt hàng loạt |
+| 1 | ~~Nhập Excel một màn cho mọi loại~~ (đã làm khung + 4 loại danh mục, xem 03; còn số dư, chứng từ) (4 bước: chọn tệp + mẫu cơ bản / nâng cao, ghép cột tự động + Ẩn/hiện trường có Ngầm định và Diễn giải, kiểm lỗi từng dòng + tải tệp lỗi, kết quả) | Mỗi loại khai một bộ mô tả trường → sinh mẫu, màn ghép, bộ kiểm. Chứng từ vào ở trạng thái chưa duyệt + duyệt hàng loạt |
 | 2 | **Hộp tham số báo cáo bên phải** + lưu bộ tham số + số chứng từ trong báo cáo là liên kết mở phiếu | Áp trước cho Sổ nhật ký chung, Sổ chi tiết TK, Cân đối phát sinh, Nhập xuất tồn, Sổ chi tiết hàng, Công nợ phải thu / trả, Sổ quỹ |
 | 3 | **Danh sách chứng từ: trên – dưới** (bấm phiếu, nửa dưới hiện dòng hàng) dùng chung cho mọi danh sách | Tách từ MH11 thành component |
 | 4 | **Duyệt / bỏ duyệt hàng loạt** trên danh sách chứng từ, báo lỗi từng phiếu | |

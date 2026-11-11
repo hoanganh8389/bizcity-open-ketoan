@@ -11,6 +11,7 @@
  *   PUT /api/v1/partners/:code        tạo hoặc cập nhật một đối tượng (kèm nhóm, khoá, hạn thanh toán, hạn mức nợ, thông tin công ty, quản lý)
  *   DELETE /api/v1/partners/:code     xoá đối tượng chưa có trên sổ, chứng từ
  *   PUT /api/v1/partners              đồng bộ danh mục từ hệ thống bán hàng / mua hàng (tối đa 1000 đối tượng một lần)
+ *   POST /api/v1/partners/import      nhập Excel (dryRun kiểm từng dòng; ghi chỉ dòng đúng; mode create / update / both) — partner-import.ts
  *   GET /api/v1/partners/:code/balances?asOf=&branchCode=  số dư công nợ của một đối tượng theo từng tài khoản
  *   GET /api/v1/partner-groups        nhóm đối tượng
  *   PUT /api/v1/partner-groups/:code  thêm hoặc sửa nhóm
@@ -33,6 +34,7 @@ import { Errors } from '../../core/errors.js';
 import type { PartnerInput } from '@ketoan/contracts';
 import { partnerRepository, toPartnerDto, type PartnerAccountingInfo } from './partner.repository.js';
 import { suggestPartnerCode } from './partner-code.js';
+import { importPartners, PARTNER_IMPORT_KEYS } from './partner-import.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): adapter tra MST qua cổng
 import { corePort } from '@bizcity/platform/core/ports';
 import { partnerHints } from './partner.hints.js';
@@ -307,6 +309,22 @@ export const partnerWriteActions: AnyActionDef[] = [
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.sync', objectType: 'partner', objectId: `${input.partners.length} đối tượng`, after: { codes: input.partners.map((p) => p.code).slice(0, 50) } });
       });
       return { count: input.partners.length };
+    },
+  }),
+  // [2026-11-11 Nguyễn Văn Thủy] nhập Excel đối tượng cho trình nhập dùng chung (đóng góp)
+  defineAction({
+    id: 'core.partner.import', title: 'Nhập Excel đối tượng: dryRun kiểm tra từng dòng (không ghi); không dryRun thì ghi các dòng đúng, bỏ qua dòng lỗi', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({
+      dryRun: z.boolean().default(true),
+      mode: z.enum(['create', 'update', 'both']).default('both'),
+      rows: z.array(z.object({ row: z.number().int(), ...Object.fromEntries(PARTNER_IMPORT_KEYS.map((k) => [k, z.string().max(1000).optional()])) })).min(1).max(5000),
+    }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/partners/import' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'partner' },
+    handler: async (ctx, input) => {
+      const auth = ctx.legacyAuth;
+      return await importPartners(ctx.data.tx, auth.tenantId, auth.actor, auth.actorName, input.rows as never, input.dryRun, input.mode);
     },
   }),
   defineAction({
