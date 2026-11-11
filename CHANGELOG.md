@@ -22,6 +22,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** chạy migration 0102 (số lấy lúc gộp).
 - **Bảo mật:** khung nhìn giữ `security_invoker` (RLS bảng gốc) và trigger chặn ghi. Vé WP vẫn bỏ quyền lạ (không có trong Core, không thuộc module đang bật).
 
+### Module `pos` W1 — đơn bán tại quầy từ máy bán POS vào sổ <!-- [2026-11-10 02:30 PM Võ Hoàng] module pos W1 (đóng góp) -->
+
+- **Thêm:** module `modules/pos` (ADR-0024): `GET /api/v1/m/pos/bootstrap`, `POST /api/v1/m/pos/sequences/reserve`, `POST /api/v1/m/pos/orders` (đơn → chứng từ `sale` qua `ctx.ledger.submit`, cùng giao dịch với đơn), `GET /api/v1/m/pos/orders/:id` (id đơn, hoặc mã phiếu kèm `branch`). Đợt W1 nhận tiền mặt, chia tiền, giảm tay; khuyến mại, quà, điểm, QR, ghi nợ, hàng 0đ không gửi thuế (bill Z) chặn rõ `POS_NOT_SUPPORTED_YET`. Dòng chứng từ mang `itemId`, đơn giá chưa thuế trước giảm và `discount` tách riêng; dòng đơn lưu ở `mod_pos.order_lines` theo `item_id`. Gửi lại cùng id đơn mà khác nội dung → `POS_ORDER_ID_REUSED`; hai máy gửi đồng thời không ra lỗi CSDL thô. Chứng từ mẫu `modules/pos/examples/` (AC-6). Phiếu nghiệm thu [NT-BH-004](docs/nghiem-thu/ban-hang/NT-BH-004-pos-don-ban-tai-quay.md).
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không (chứng từ `sale` theo gói định khoản mặc định, không `reasonCode` riêng).
+- **Nâng cấp cần làm:** cần mục Core ở trên (0102); `module migrate pos` (0001, 0002) → `module sync` → `module activate pos`.
+- **Bảo mật:** module chỉ đọc `bizcity_read.*` (RLS theo đơn vị); mọi action dùng quyền riêng `pos:sell` (manifest) — phiên thu ngân không cần `documents:write`, gọi chứng từ của Core bị 403. Số điện thoại khách mới nằm trong `input` của bằng chứng: Core chưa che dữ liệu cá nhân trong bằng chứng (STD-DATA-10, đề xuất P-MP-9).
+
 ### Thêm nhanh chi nhánh, phân kho ngay trên phiếu <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/10 (đóng góp) -->
 
 - **Thêm:** ô chọn chi nhánh trên form có + / F9 thêm nhanh chi nhánh (tự chọn sau khi ghi); phiếu mua (MH11) ô Phân kho và Kho nhận hàng chọn theo chi nhánh đang chọn, có + thêm phân kho.

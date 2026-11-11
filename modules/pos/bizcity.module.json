@@ -1,0 +1,48 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.pos",
+  "key": "pos",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Máy bán POS",
+  "description": "Phía máy chủ của máy bán POS (hợp đồng /pos/*): khởi động màn bán, cấp số phiếu, nhận đơn bán tại quầy và nộp chứng từ sale vào sổ qua cửa nạp (kế hoạch module POS).",
+  "owners": ["@hoanganh8389"],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "ledger.submit",
+      "data.tenant-tx",
+      "data.read-views",
+      "data.migrations.module",
+      "actions.runtime",
+      "actions.idempotency",
+      "evidence.receipt"
+    ]
+  },
+  "permissions": [
+    { "key": "pos:sell", "label": "Bán hàng trên máy POS: khởi động màn bán, xin số phiếu, gửi đơn, xem đơn của máy", "risk": "low" }
+  ],
+  "data": {
+    "schema": "mod_pos",
+    "tables": ["orders", "order_lines", "code_counters"],
+    "reads": [
+      "bizcity_read.branches",
+      "bizcity_read.products",
+      "bizcity_read.tax_codes",
+      "bizcity_read.payment_methods",
+      "bizcity_read.partners"
+    ]
+  },
+  "actions": [
+    "pos.bootstrap.get",
+    "pos.sequence.reserve",
+    "pos.order.create",
+    "pos.order.get"
+  ],
+  "ledger": {
+    "submits": [
+      { "docType": "sale", "contract": "bizcity_ledger_intake@1" }
+    ]
+  },
+  "ui": { "icon": "ShoppingCart", "color": "#0e7490", "order": 30 }
+}
