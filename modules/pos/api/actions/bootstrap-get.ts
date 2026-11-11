@@ -5,6 +5,7 @@
 import { defineAction, z } from '@bizcity/module-sdk';
 import { paymentKind } from '../domain/order.js';
 import { activePaymentMethods, resolveBranch, todayVn } from '../read.js';
+import { RETURN_DAYS } from '../return-service.js';
 
 const codeName = z.object({ code: z.string(), name: z.string() });
 
@@ -44,7 +45,8 @@ export default defineAction({
       exportReasons: [{ code: 'XBA', name: 'Xuất bán' }],
       saleSources: [{ code: 'tai_quay', name: 'Tại quầy' }],
       minTotal: 0,
-      returnPolicy: { days: 3, crossShop: 'same_shop' as const },
+      // Hạn trả là tham số (họp kế toán 04/11: 3 ngày); W2 trả ở cửa hàng đã bán (trả khác cửa hàng cùng MST chờ chốt R2).
+      returnPolicy: { days: RETURN_DAYS, crossShop: 'same_shop' as const },
       openShift: { id: `ngay-${day}`, openedAt: `${day}T00:00:00+07:00` },
       reservedCodes: { sale: [] },
       coreVersion: '',

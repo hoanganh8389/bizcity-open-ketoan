@@ -1,6 +1,6 @@
 # Module `pos` — phía máy chủ của máy bán POS
 
-Kế hoạch: `tgs_pos_react/docs/module-pos/` (repo của nhóm POS TGS — quyết định D-MP-*, đề xuất Core P-MP-*, các đợt W1–W4). Phiếu nghiệm thu: [NT-BH-004](../../docs/nghiem-thu/ban-hang/NT-BH-004-pos-don-ban-tai-quay.md). Hợp đồng phía máy: `tgs_pos_react/openapi/pos.yaml`. Máy bán đặt gốc API `/api/v1/m` là gọi đúng các đường dưới.
+Kế hoạch: `tgs_pos_react/docs/module-pos/` (repo của nhóm POS TGS — quyết định D-MP-*, đề xuất Core P-MP-*, các đợt W1–W4). Phiếu nghiệm thu: [NT-BH-005](../../docs/nghiem-thu/ban-hang/NT-BH-005-pos-hoan-doi-huy.md) (đợt W2: hoàn, đổi, huỷ), [NT-BH-004](../../docs/nghiem-thu/ban-hang/NT-BH-004-pos-don-ban-tai-quay.md). Hợp đồng phía máy: `tgs_pos_react/openapi/pos.yaml`. Máy bán đặt gốc API `/api/v1/m` là gọi đúng các đường dưới.
 
 | Đường | Action | Quyền | Việc |
 |---|---|---|---|
@@ -8,6 +8,17 @@ Kế hoạch: `tgs_pos_react/docs/module-pos/` (repo của nhóm POS TGS — quy
 | `POST /api/v1/m/pos/sequences/reserve` | `pos.sequence.reserve` | `pos:sell` | Cấp trước dải số phiếu `HD<yyMM><6 số>` |
 | `POST /api/v1/m/pos/orders` | `pos.order.create` | `pos:sell` | Đơn bán → chứng từ `sale` (`ctx.ledger.submit`), cùng giao dịch với đơn |
 | `GET /api/v1/m/pos/orders/:id` | `pos.order.get` | `pos:sell` | Bản chụp đơn (theo id đơn, hoặc mã phiếu kèm `branch`) |
+| `GET /api/v1/m/pos/orders/lookup?code=&branch=` | `pos.order.lookup` | `pos:sell` | W2 — tra đơn theo mã phiếu (không phân biệt hoa thường) |
+| `POST /api/v1/m/pos/orders/:id/cancel` | `pos.order.cancel` | `pos:cancel` | W2 — huỷ đơn chờ thanh toán (`ctx.ledger.cancel`); đơn hoàn tất → `POS_CANCEL_COMPLETED` |
+| `GET /api/v1/m/pos/orders/:id/returnable?branch=` | `pos.order.returnable` | `pos:return` | W2 — còn trả được từng dòng, hạn trả, lý do không trả được |
+| `POST /api/v1/m/pos/returns` | `pos.return.create` | `pos:return` | W2 — phiếu trả `TH<yyMM><6 số>` → chứng từ `sale_return` nối đơn gốc (`originalDocKey`), trả TM / CK |
+| `GET /api/v1/m/pos/returns?from&to&q&page&pageSize` | `pos.return.list` | `pos:return` | W2 — phiếu trả của chi nhánh; `meta.sums.refundTotal` |
+| `POST /api/v1/m/pos/exchanges` | `pos.exchange.create` | `pos:return` | W2 — đổi hàng: `sale_return` không trả tiền + `sale` mới có `offsets` đối trừ phiếu trả, cùng giao dịch |
+| `GET /api/v1/m/pos/customers?q=` | `pos.customer.search` | `pos:sell` | W2 — tìm khách theo SĐT / tên không dấu / mã (đọc `bizcity_read.partners`) |
+| `GET /api/v1/m/pos/customers/lookup?phone=` | `pos.customer.lookup` | `pos:sell` | W2 — khách theo đúng SĐT |
+| `GET /api/v1/m/pos/customers/:id/orders` | `pos.customer.orders` | `pos:sell` | W2 — đơn máy bán của khách; `meta.sums.total` |
+
+**Hoàn / đổi (W2, NT-BH-005).** Tiền hoàn theo tiền khách đã trả của dòng × SL trả ÷ SL bán; trả hết dòng → đúng phần còn lại, chưa thuế còn lại (tổng khớp đơn gốc). Hạn 3 ngày theo ngày bán (tham số; quá hạn cần `approval`), trả ở cửa hàng đã bán, quà vượt suất phải trả kèm, đổi hàng phải bằng hoặc cao hơn hàng trả (họp kế toán 04/11). Phiếu trả ở `mod_pos.returns` / `return_lines` (migration `0003`). Chưa có: trả khác cửa hàng cùng MST (chờ chốt R2), tạo khách riêng (`POST /customers` — module không ghi được danh mục đối tượng; khách mới đi kèm đơn), khuyến mại / quà (S-MP-12).
 
 **Quyền `pos:sell`** (khai ở `permissions` của manifest, rủi ro thấp): quyền riêng của máy bán — chỉ bốn action trên. Thu ngân đăng nhập bằng vé của hệ thống quản trị (`POST /api/v1/auth/wp-sso`, vé mang `perms: ["pos:sell"]`), không cần `documents:write`: phiên đó không lập / huỷ / ghi sổ được chứng từ khác qua Core. Chủ đơn vị (owner) có sẵn mọi quyền module.
 

@@ -76,6 +76,9 @@ export function paymentKind(code: string): PaymentKind {
   return KIND_BY_CODE[code.toUpperCase()] ?? 'transfer';
 }
 
+/** Phần đối trừ của đổi hàng: mã danh mục loại offset (DOI_TRU) hoặc mã máy bán `doi_tru`. Không phải tiền thật. */
+export const isOffsetMethod = (code: string) => paymentKind(code) === 'offset' || code.toLowerCase() === 'doi_tru';
+
 /** SĐT chuẩn hoá: chỉ chữ số, +84 / 84 đầu → 0. */
 export function normalizePhone(raw: string): string {
   const d = raw.replace(/\D/g, '');
@@ -100,6 +103,8 @@ export type ComputedOrder = {
   total: number;
   /** Phần thu ghi sổ (mã hình thức kế toán + số tiền). Tiền thối không ghi. */
   payments: { methodCode: string; amount: number }[];
+  /** Đổi hàng (W2): tiền hàng trả đối trừ vào đơn này — không phải tiền thu (offsets của chứng từ sale). */
+  offsets: { docKey: string; amount: number }[];
   change: number;
   customer: OrderCustomer;
 };
@@ -110,6 +115,8 @@ export type ComputeInput = {
   paymentMethods: readonly PaymentMethodRow[];
   /** Khách theo mã (partnerId) tra ở danh mục; không có → null. */
   partner?: { code: string; name: string; phone: string } | null;
+  /** Đơn mới của lần đổi hàng (NT-BH-005): phần `doi_tru` phải đúng bằng tiền hàng trả, đơn mới không rẻ hơn hàng trả. */
+  exchange?: { credit: number; returnDocKey: string };
 };
 
 const fail = (kind: OrderProblem['kind'], reason: string, message: string, details?: unknown): { problem: OrderProblem } => ({ problem: { kind, reason, message, details } });
@@ -164,9 +171,16 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
     return fail('conflict', 'POS_PRICE_CHANGED', `Tổng máy tính ${draft.clientTotal} khác tổng máy chủ tính ${total} — tải lại giỏ`, { clientTotal: draft.clientTotal, total });
   }
 
-  // Thanh toán (D-MP-7): tiền mặt, hoặc chia tiền không có QR / ghi nợ / đối trừ.
+  // Đổi hàng (G1, họp 04/11): đơn mới phải bằng hoặc cao hơn giá trị hàng trả.
+  const ex = input.exchange;
+  if (ex && total < ex.credit) {
+    return fail('validation', 'POS_EXCHANGE_LOWER', `Đổi hàng phải bằng hoặc cao hơn giá trị hàng trả (${ex.credit}); đơn mới ${total}`, { credit: ex.credit, total });
+  }
+
+  // Thanh toán (D-MP-7): tiền mặt, hoặc chia tiền không có QR / ghi nợ; đối trừ chỉ trong đổi hàng.
   const active = new Map(paymentMethods.map((m) => [m.code, m]));
   let payments: ComputedOrder['payments'];
+  let offsetPaid = 0;
   let change = 0;
   const p = draft.payment;
   if (p.mode === 'cash') {
@@ -178,6 +192,11 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   } else if (p.mode === 'split') {
     const seen = new Set<string>();
     for (const part of p.parts) {
+      if (isOffsetMethod(part.method)) {
+        if (!ex) return fail('validation', 'POS_NOT_SUPPORTED_YET', 'Đối trừ chỉ dùng trong đổi hàng', { method: part.method });
+        offsetPaid += part.amount;
+        continue;
+      }
       if (!active.has(part.method)) return fail('validation', 'POS_UNKNOWN_METHOD', `Hình thức thanh toán ${part.method} không có trong danh mục`, { method: part.method });
       if (seen.has(part.method)) return fail('validation', 'POS_DUPLICATE_METHOD', `Hình thức ${part.method} lặp lại`, { method: part.method });
       seen.add(part.method);
@@ -188,7 +207,10 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
     }
     const paid = p.parts.reduce((s, x) => s + x.amount, 0);
     if (paid !== total) return fail('validation', 'POS_SPLIT_MISMATCH', `Các phần cộng ${paid}, tổng đơn ${total} (chênh ${paid - total})`, { total, paid });
-    payments = p.parts.map((x) => ({ methodCode: x.method, amount: x.amount }));
+    if (ex && offsetPaid !== ex.credit) {
+      return fail('validation', 'POS_SPLIT_MISMATCH', `Phần đối trừ ${offsetPaid} phải đúng bằng tiền hàng trả ${ex.credit}`, { credit: ex.credit, offset: offsetPaid });
+    }
+    payments = p.parts.filter((x) => !isOffsetMethod(x.method)).map((x) => ({ methodCode: x.method, amount: x.amount }));
   } else {
     return fail('validation', 'POS_NOT_SUPPORTED_YET', 'Hình thức thanh toán chưa nhận ở đợt này');
   }
@@ -206,7 +228,9 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
     customer = { code: phone, name: c.name.trim(), phone };
   }
 
-  return { lines, subtotal, taxTotal, total, payments, change, customer };
+  if (ex && p.mode !== 'split') return fail('validation', 'POS_SPLIT_MISMATCH', 'Đổi hàng phải có phần đối trừ đúng bằng tiền hàng trả', { credit: ex.credit });
+  const offsets = ex && ex.credit > 0 ? [{ docKey: ex.returnDocKey, amount: ex.credit }] : [];
+  return { lines, subtotal, taxTotal, total, payments, offsets, change, customer };
 }
 
 // ── Đầu ra ────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -248,6 +272,7 @@ export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; bran
       ...(l.draft.note ? { note: l.draft.note } : {}),
     })),
     payments: o.payments,
+    ...(o.offsets.length ? { offsets: o.offsets } : {}),
     totals: { beforeTax: o.subtotal, tax: o.taxTotal, total: o.total },
   };
 }
