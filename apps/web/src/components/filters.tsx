@@ -1,7 +1,8 @@
 /**
  * Ô lọc dùng chung: kỳ xem (chọn nhanh + từ ngày, đến ngày), chi nhánh (chọn một hoặc nhiều).
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { ListPicker } from './pickers';
 import { ChevronDown } from 'lucide-react';
@@ -72,13 +73,33 @@ export function BranchSelect({ value, onChange, label = 'Chi nhánh', multiple =
  *  - activeOnly: chỉ chi nhánh đang dùng (vẫn giữ chi nhánh đang chọn dù đã ngừng).
  *  - placeholder: chữ khi để trống (ví dụ "Tất cả chi nhánh", "Dùng chung").
  */
-export function BranchPicker({ value, onChange, placeholder = 'Gõ mã hoặc tên chi nhánh', activeOnly = false, disabled, className, style }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; activeOnly?: boolean; disabled?: boolean; className?: string; style?: React.CSSProperties;
+/**
+ * Chọn chi nhánh. `addable` (mặc định bật khi activeOnly — ô trên form chứng từ / danh mục): nút + / F9 thêm nhanh chi nhánh,
+ * ghi xong ô tự chọn chi nhánh mới (người có quyền sửa danh mục).
+ */
+export function BranchPicker({ value, onChange, placeholder = 'Gõ mã hoặc tên chi nhánh', activeOnly = false, disabled, className, style, addable }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; activeOnly?: boolean; disabled?: boolean; className?: string; style?: React.CSSProperties; addable?: boolean;
 }) {
   const { data = [] } = useBranches();
+  const { can } = useAuth();
+  const [adding, setAdding] = useState<string | null>(null);
   const items = useMemo(() => data.filter((b) => !activeOnly || b.isActive || b.code === value).map((b) => ({ code: b.code, name: b.isActive ? b.name : `${b.name} (ngừng)` })), [data, activeOnly, value]);
-  return <ListPicker items={items} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} className={className} style={style} emptyText="Không thấy chi nhánh nào" />;
+  const canAdd = (addable ?? activeOnly) && !disabled && can('catalog:write');
+  return (
+    <>
+      <ListPicker items={items} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} className={className} style={style} emptyText="Không thấy chi nhánh nào"
+        onAdd={canAdd ? (t) => setAdding(t) : undefined} addLabel="Thêm chi nhánh" />
+      {adding !== null && (
+        <Suspense fallback={null}>
+          <BranchForm value={{ isNew: true, isActive: true, ...(/^[0-9A-Za-z_-]{2,20}$/.test(adding.trim()) ? { code: adding.trim() } : adding.trim() ? { name: adding.trim() } : {}) }}
+            onSaved={(code) => code && onChange(code)} onClose={() => setAdding(null)} />
+        </Suspense>
+      )}
+    </>
+  );
 }
+// [2026-11-11 Nguyễn Văn Thủy] thêm nhanh chi nhánh ngay ở ô chọn (đóng góp)
+const BranchForm = lazy(() => import('@/features/catalog/BranchesPage').then((m) => ({ default: m.BranchForm })));
 
 export function BranchMultiSelect({ value, onChange, label, branches }: { value: string; onChange: (v: string) => void; label: string; branches: BranchOption[] }) {
   const [open, setOpen] = useState(false);

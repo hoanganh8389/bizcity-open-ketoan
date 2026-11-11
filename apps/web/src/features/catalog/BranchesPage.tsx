@@ -139,7 +139,8 @@ export function BranchesPage() {
   );
 }
 
-function BranchForm({ value, onClose }: { value: Partial<Branch> & { isNew?: boolean }; onClose: () => void }) {
+// [2026-11-11 Nguyễn Văn Thủy] export + onSaved: thêm nhanh chi nhánh từ ô chọn chi nhánh trên phiếu (đóng góp)
+export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch> & { isNew?: boolean }; onClose: () => void; /** Ghi xong (thêm mới): mã chi nhánh vừa thêm. */ onSaved?: (code: string) => void }) {
   const qc = useQueryClient();
   const [v, setV] = useState(value);
   const set = (p: Partial<Branch>) => setV((x) => ({ ...x, ...p }));
@@ -163,7 +164,7 @@ function BranchForm({ value, onClose }: { value: Partial<Branch> & { isNew?: boo
       return value.isNew ? api.post('/api/v1/branches', { ...body, code: newCode })
         : api.patch(`/api/v1/branches/${encodeURIComponent(value.code!)}`, { ...body, isActive: v.isActive, ...(newCode && newCode !== value.code ? { newCode } : {}), ...((v.orgUnitCode ?? null) !== (value.orgUnitCode ?? null) ? { orgUnitCode: v.orgUnitCode || null } : {}) });
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); invalidateOrg(qc); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); invalidateOrg(qc); if (value.isNew) onSaved?.(v.code?.trim() ?? ''); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
   });
   const txt = (k: keyof Branch, label: string, full = false) => <Field label={label} full={full}><input className="input" value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Branch>)} /></Field>;
   return (

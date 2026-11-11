@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thêm nhanh chi nhánh, phân kho ngay trên phiếu <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/10 (đóng góp) -->
+
+- **Thêm:** ô chọn chi nhánh trên form có + / F9 thêm nhanh chi nhánh (tự chọn sau khi ghi); phiếu mua (MH11) ô Phân kho và Kho nhận hàng chọn theo chi nhánh đang chọn, có + thêm phân kho.
+- **Thay đổi định khoản:** không.
+
 ### Hệ thống tài khoản theo chuẩn; báo lỗi tại ô cho mọi hộp thoại <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/08, 09 (đóng góp) -->
 
 - **Thêm:** ACC1 làm lại: danh sách 6 cột (Số TK, Tên, Tính chất, Tên tiếng Anh, Diễn giải, Trạng thái), cây ⊞ / ⊟, Nhân bản, Ngừng / Dùng lại, Xuất Excel đúng mẫu "DANH SÁCH HỆ THỐNG TÀI KHOẢN", Nhập Excel cùng bộ cột. Tài khoản có Diễn giải (migration 0101).

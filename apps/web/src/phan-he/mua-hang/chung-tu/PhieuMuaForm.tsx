@@ -8,6 +8,7 @@
  * Duyệt = ghi sổ thật (bút toán, công nợ, kho). Còn cảnh báo chặn thì không duyệt được; vượt hạn mức thì người có quyền
  * "Duyệt ngoại lệ" (ghi lý do vào nhật ký).
  */
+import { ChonKho } from '@/components/phieu-hang/ChonKho';
 import { useKiemLoi } from '@/components/useKiemLoi';
 import { bangDan, soDan } from '@/lib/danExcel';
 import { readTable } from '@bizcity/mua-hang-domain';
@@ -697,10 +698,8 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   ...(v.receivedDate && v.receivedDate === v.docDate ? { receivedDate: e.target.value } : {}) })} /></div>
                 <div className="field"><label>Chi nhánh (*)</label><BranchPicker value={v.branchCode} onChange={(c) => { set({ branchCode: c }); if (c) lastUsed.set({ branchCode: c }); }} activeOnly disabled={readOnly} /></div>
                 {showKho && <div className="field"><label title="Mọi dòng hàng của phiếu vào / ra phân kho này (cột Phân kho ở bảng hàng đi theo). Mặc định là kho mặc định của chi nhánh. Hàng cần sang phân kho khác thì lập phiếu chuyển kho.">Phân kho (*)</label>
-                  <select className="select input" value={v.warehouseCode ?? ''} disabled={readOnly || !v.branchCode} onChange={(e) => set({ warehouseCode: e.target.value || undefined })}>
-                    {!v.branchCode ? <option value="">— chọn chi nhánh trước —</option> : !activeWhs.length ? <option value="">Kho mặc định (chi nhánh chưa khai kho ở DM12)</option> : null}
-                    {activeWhs.map((w) => <option key={w.code} value={w.code} title={`${w.name}${w.isDefault ? ' (mặc định)' : ''}${w.isPromo ? ' · kho khuyến mại' : ''}`}>{w.code}{!w.isActive ? ' · ngừng dùng' : ''}</option>)}
-                  </select></div>}
+                  {/* [2026-11-11 Nguyễn Văn Thủy] chọn phân kho của chi nhánh đang chọn, nút + thêm phân kho ngay trên phiếu (đóng góp) */}
+                  <ChonKho branchCode={v.branchCode} value={v.warehouseCode ?? ''} disabled={readOnly} onChange={(c) => set({ warehouseCode: c || undefined })} /></div>}
                 {isGoods && <div className="field"><label title="Nhãn là thuộc tính của mặt hàng (danh mục Ngành → Nhãn → Nhóm): phiếu tự lấy theo các dòng hàng, không chọn tay. Hạn mức / chỉ tiêu / thưởng theo nhãn tính theo phần của từng nhãn">Nhãn hàng (theo mặt hàng)</label>
                   <div className="mh-brand">{(() => { const mix = brandMix(v); return mix.length ? mix.slice(0, 3).map((m) => <span key={m.brandCode} className="mh-brand-chip">{brands.find((b) => b.code === m.brandCode)?.name ?? m.brandCode}{mix.length > 1 ? ` ${Math.round(m.share * 100)}%` : ''}</span>) : <span className="muted">tự lấy khi thêm hàng</span>; })()}</div>
                 </div>}
@@ -821,10 +820,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 {isOrder && <>
                   <div className="field"><label>Ngày giao hàng</label><input className="input" type="date" value={v.deliveryDate ?? ''} onChange={(e) => set({ deliveryDate: e.target.value || undefined })} /></div>
                   <div className="field"><label title="NCC giao hàng vào phân kho này — phiếu nhập lập từ đơn tự lấy làm Phân kho. Mặc định là kho mặc định của chi nhánh">Giao tại kho</label>
-                    <select className="select input" value={v.deliveryWarehouse ?? ''} disabled={readOnly || !v.branchCode} onChange={(e) => set({ deliveryWarehouse: e.target.value || undefined })}>
-                      {!v.branchCode ? <option value="">— chọn chi nhánh trước —</option> : !activeWhs.length ? <option value="">Kho mặc định (chi nhánh chưa khai kho ở DM12)</option> : null}
-                      {activeWhs.map((w) => <option key={w.code} value={w.code} title={`${w.name}${w.isDefault ? ' (mặc định)' : ''}${w.isPromo ? ' · kho khuyến mại' : ''}`}>{w.code}</option>)}
-                    </select></div>
+                    <ChonKho branchCode={v.branchCode} value={v.deliveryWarehouse ?? ''} disabled={readOnly} onChange={(c) => set({ deliveryWarehouse: c || undefined })} /></div>
                   <div className="field"><label title="Ngân sách mua được cấp — chỉ để ước lượng, không chặn">Ngân sách mua</label><input className="input num" value={fmt(v.budget)} placeholder="vd 80.000.000" onChange={(e) => set({ budget: num(e.target.value) || undefined })} />
                     {v.budget ? <span style={{ fontSize: 11.5, fontWeight: 700, color: v.budget - calc.beforeTax >= 0 ? 'var(--ok, #16a34a)' : '#dc2626' }}>{v.budget - calc.beforeTax >= 0 ? 'Còn' : 'Vượt'} {vnd(Math.abs(v.budget - calc.beforeTax))} <span className="muted" style={{ fontWeight: 400 }}>(so tổng sau CK chưa thuế)</span></span> : null}</div>
                 </>}
