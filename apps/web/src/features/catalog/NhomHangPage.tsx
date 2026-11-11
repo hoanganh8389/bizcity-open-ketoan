@@ -14,6 +14,8 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 import { CayNhomHang, indexNhom, MA_NGAN_DAI, useNhomHang, type NhomHang } from '@/components/CayNhomHang';
 
 type Form = { code: string; skuCode: string; name: string; parentCode: string | null; isActive: boolean };
@@ -111,6 +113,7 @@ export function NhomHangPage() {
           <button className="btn btn-sm" disabled={editable} onClick={() => void q.refetch()}><RefreshCw size={14} /> Nạp</button>
           {canWrite && <button className="btn btn-sm" disabled={!editable} onClick={() => setMode(null)}><Undo2 size={14} /> Hoãn</button>}
           <button className="btn btn-sm" onClick={() => exportRef.current?.()}><FileDown size={14} /> Xuất</button>
+          {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} disabled={editable} />}
           {canWrite && <><span className="spacer" style={{ flex: 1 }} /><button className="btn btn-sm btn-ghost" disabled={editable || infer.isPending} title="Nhóm chưa có mã ngắn: lấy theo mã hàng đang có trong nhóm" onClick={() => infer.mutate()}><Wand2 size={14} /> Điền mã ngắn còn thiếu</button></>}
         </div>
         {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 12px 8px' }}>{msg.text}</div>}

@@ -47,6 +47,11 @@ Thêm loại mới: viết một `NhapLoai` (trường + `run`) rồi thêm vào
 - **Tồn kho đầu kỳ (số lượng)**: Ngày cân tồn (ngầm định hôm nay), Kho, Mã hàng, Tên hàng, Số lượng tồn. Dùng API cân tồn có sẵn `POST /api/v1/stock/init/reconcile/{preview,import}` với `zeroMissing: false` (mã không có trong tệp giữ nguyên). Kết quả mỗi dòng: tồn trên sổ → tồn theo tệp; mỗi kho có chênh lệch một phiếu điều chỉnh kho (mixed) ghi sổ ngay, số phiếu hiện ở cột Kho. Dòng lỗi bỏ qua; nhập lại cả tệp không sinh chênh lệch.
 - **Tồn max**: Kho, Mã hàng, Tồn max → `POST /api/v1/stock/init/max/{preview,import}`; dòng mới / đổi max hiện cũ → mới.
 
-## 6. Việc tiếp theo của mục này
+## 6. Bổ sung: nhóm hàng
 
-- Loại: nhóm hàng, phiếu chuyển kho, phiếu bán hàng.
+- **Nhóm hàng** (nhóm Danh mục; nút *Nhập Excel* ở DM11): Mã nhóm, Tên nhóm, Nhóm cha (mã hoặc đúng tên), Mã ngắn, Theo dõi. Kiểm trên **cây sau nhập** (nhóm đang có + dòng trong tệp): tự làm cha chính mình, vòng lặp cha – con, độ dài mã ngắn theo cấp (2 / 3 / 1), trùng mã ngắn cùng cha; dòng cha lỗi lan lỗi xuống con.
+- Ghi theo cấp (cha trước con) qua `PUT /api/v1/item-classes/group/:code` (mới thêm `?new=1`); dòng cập nhật để trống Nhóm cha / Mã ngắn thì giữ nguyên.
+
+## 7. Việc tiếp theo của mục này
+
+- Loại: phiếu chuyển kho, phiếu bán hàng.

@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Nhập Excel: nhóm hàng (cây cha – con) <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §6 (đóng góp) -->
+
+- **Thêm:** TI14 / DM11 nhập nhóm hàng: nhóm cha theo mã hoặc tên, kiểm vòng lặp, mã ngắn theo cấp, ghi cha trước con.
+- **Thay đổi định khoản:** không.
+
 ### Nhập Excel: tồn kho đầu kỳ, tồn max <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §5 (đóng góp) -->
 
 - **Thêm:** TI14 thêm loại *Tồn kho đầu kỳ (số lượng)* (Kho × Mã hàng × SL, so với tồn sổ → phiếu điều chỉnh mỗi kho) và *Tồn max*, dùng API khởi đầu có sẵn.

@@ -163,6 +163,103 @@ const KHO: NhapLoai = {
 };
 
 
+/* ------------------------------------------------------------------ Nhóm hàng (cây cha – con) */
+interface NhomRow { code: string; name: string; parentCode: string | null; isActive: boolean; skuCode?: string }
+/** Độ dài mã ngắn theo cấp (giống DM11): cấp 1 = 2, cấp 2 = 3, cấp 3 = 1 ký tự; cấp sâu hơn không ghép vào mã hàng. */
+const MA_NGAN: Record<number, number> = { 1: 2, 2: 3, 3: 1 };
+const NHOM_HANG: NhapLoai = {
+  id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: mã nhóm, tên, nhóm cha, mã ngắn ghép vào mã hàng', keyField: 'code',
+  listPath: '/danh-muc/phan-loai-hang', invalidate: ['item-classes'],
+  fields: [
+    { key: 'code', header: 'Mã nhóm', required: true, aliases: ['ma', 'ma nhom hang', 'ma nhom vthh'], example: 'SUA-BOT', note: 'Mã đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên nhóm', required: 'moi', aliases: ['ten', 'ten nhom hang', 'ten nhom vthh'], example: 'Sữa bột' },
+    { key: 'parentCode', header: 'Nhóm cha', aliases: ['ma nhom cha', 'thuoc nhom', 'nhom tren', 'thuoc'], example: 'SUA', note: 'Mã (hoặc đúng tên) nhóm cha — có sẵn hoặc ở dòng khác trong tệp. Trống: nhóm cấp 1 (dòng cập nhật: giữ nguyên).' },
+    { key: 'skuCode', header: 'Mã ngắn', aliases: ['ma sku', 'ma ghep', 'ma viet tat'], example: '01', note: 'Ghép vào đầu mã hàng: cấp 1 đủ 2 ký tự, cấp 2 đủ 3, cấp 3 đủ 1; chữ và số; không trùng nhóm cùng cha.' },
+    { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai', 'dang dung'], note: 'Có / Không. Trống = giữ nguyên (mới: Có).' },
+  ],
+  run: async (rows, { dryRun, mode }) => {
+    const ds = await api.get<NhomRow[]>('/api/v1/item-classes/group');
+    const have = new Map(ds.map((c) => [c.code, c]));
+    // Cây sau khi nhập: nhóm đang có + dòng trong tệp (dòng tệp đè lên).
+    const tree = new Map<string, { name: string; parent: string | null; sku: string }>(ds.map((c) => [c.code, { name: c.name, parent: c.parentCode, sku: c.skuCode ?? '' }]));
+    const fileCodes = new Set(rows.map((r) => (r.code ?? '').trim()).filter(Boolean));
+    const byName = new Map<string, string[]>();
+    const addName = (name: string, code: string) => { const k = name.trim().toLowerCase(); if (k) byName.set(k, [...new Set([...(byName.get(k) ?? []), code])]); };
+    for (const c of ds) addName(c.name, c.code);
+    for (const r of rows) if ((r.code ?? '').trim()) addName(r.name ?? '', r.code!.trim());
+    const findParent = (v: string): string | { err: string } => {
+      if (have.has(v) || fileCodes.has(v)) return v;
+      const m = byName.get(v.toLowerCase()) ?? [];
+      if (m.length === 1) return m[0]!;
+      return { err: m.length ? `Có ${m.length} nhóm tên "${v}" — ghi mã nhóm cha` : `Nhóm cha "${v}" chưa có (không có trong danh mục, không có trong tệp)` };
+    };
+    const seen = new Map<string, number>();
+    const pre = rows.map((r) => {
+      const row = Number(r._row);
+      const code = (r.code ?? '').trim();
+      const before = have.get(code);
+      const errors: string[] = [];
+      if (!code) errors.push('Thiếu mã nhóm'); else if (code.length > 64) errors.push('Mã nhóm tối đa 64 ký tự');
+      if (code && seen.has(code)) errors.push(`Trùng mã với dòng ${seen.get(code)} trong tệp`); else if (code) seen.set(code, row);
+      if (mode === 'create' && before) errors.push(`Nhóm ${code} đã có — chọn "Cập nhật" nếu muốn sửa`);
+      if (mode === 'update' && !before) errors.push(`Nhóm ${code} chưa có`);
+      const name = (r.name ?? '').trim() || before?.name || '';
+      if (!name) errors.push('Nhóm mới phải có tên');
+      let parent: string | null = before?.parentCode ?? null;
+      const pv = (r.parentCode ?? '').trim();
+      if (pv) { const p = findParent(pv); if (typeof p === 'string') parent = p; else errors.push(p.err); }
+      else if (!before) parent = null;
+      if (parent === code) errors.push('Nhóm cha không được là chính nó');
+      const sku = (r.skuCode ?? '').trim();
+      if (sku && !/^[0-9A-Za-z]+$/.test(sku)) errors.push('Mã ngắn chỉ gồm chữ và số');
+      const isActive = yn(r.isActive);
+      if (isActive === null) errors.push('Cột Theo dõi ghi Có / Không');
+      if (code && !errors.length) tree.set(code, { name, parent, sku: sku || before?.skuCode || '' });
+      return { row, code, before, errors, name, parent, sku, isActive, values: { ...r, code, name, parentCode: parent ?? '' } };
+    });
+    // Kiểm trên cây sau nhập: vòng lặp cha – con, độ dài mã ngắn theo cấp, trùng mã ngắn cùng cha.
+    const chain = (code: string) => { const out: string[] = []; for (let c: string | null = code; c; c = tree.get(c)?.parent ?? null) { if (out.includes(c)) return null; out.push(c); } return out; };
+    for (const p of pre) {
+      if (p.errors.length || !p.code) continue;
+      const ch = chain(p.code);
+      if (!ch) { p.errors.push(`Nhóm cha ${p.parent} nằm dưới chính nhóm ${p.code} (vòng lặp cha – con)`); continue; }
+      const lv = ch.length;
+      const sku = tree.get(p.code)!.sku;
+      if (sku && MA_NGAN[lv] && sku.length !== MA_NGAN[lv]) p.errors.push(`Nhóm cấp ${lv}: mã ngắn phải đủ ${MA_NGAN[lv]} ký tự (đang "${sku}")`);
+      if (sku) {
+        const sib = [...tree.entries()].find(([c, v]) => c !== p.code && v.parent === p.parent && v.sku === sku);
+        if (sib) p.errors.push(`Mã ngắn ${sku} đã dùng cho nhóm "${sib[1].name}" (${sib[0]}) cùng cấp`);
+      }
+    }
+    // Nhóm cha ở dòng lỗi trong tệp (chưa có sẵn) → nhóm con cũng không ghi được; lan xuống các cấp.
+    for (let doi = true; doi;) {
+      doi = false;
+      const hong = new Set(pre.filter((p) => p.errors.length && p.code && !have.has(p.code)).map((p) => p.code));
+      for (const p of pre) if (!p.errors.length && p.parent && hong.has(p.parent)) { p.errors.push(`Nhóm cha ${p.parent} ở dòng lỗi — sửa dòng đó trước`); doi = true; }
+    }
+    const out: NhapDong[] = [];
+    const ghiDuoc = new Set<string>(ds.map((c) => c.code));
+    // Ghi cha trước con (theo cấp trên cây sau nhập).
+    const order = [...pre].sort((a, b) => (a.code ? chain(a.code)?.length ?? 0 : 0) - (b.code ? chain(b.code)?.length ?? 0 : 0));
+    for (const p of order) {
+      const beforeView = p.before ? { name: p.before.name, parentCode: p.before.parentCode ?? '', skuCode: p.before.skuCode ?? '', isActive: p.before.isActive ? 'Có' : 'Không' } : undefined;
+      if (p.errors.length || dryRun) { out.push({ row: p.row, key: p.code, action: p.errors.length ? 'error' : p.before ? 'update' : 'create', errors: p.errors, values: p.values, before: beforeView }); continue; }
+      if (p.parent && !ghiDuoc.has(p.parent)) { out.push({ row: p.row, key: p.code, action: 'error', errors: [`Nhóm cha ${p.parent} chưa ghi được (dòng của nó lỗi)`], values: p.values }); continue; }
+      try {
+        await api.put(`/api/v1/item-classes/group/${encodeURIComponent(p.code)}${p.before ? '' : '?new=1'}`, {
+          name: p.name, parentCode: p.parent || undefined, isActive: p.isActive ?? p.before?.isActive ?? true, ...(p.sku ? { skuCode: p.sku } : {}),
+        });
+        ghiDuoc.add(p.code);
+        out.push({ row: p.row, key: p.code, action: p.before ? 'update' : 'create', errors: [], values: p.values, before: beforeView });
+      } catch (e) { out.push({ row: p.row, key: p.code, action: 'error', errors: [e instanceof Error ? e.message : String(e)], values: p.values }); }
+    }
+    out.sort((a, b) => a.row - b.row);
+    const n = (a: NhapDong['action']) => out.filter((x) => x.action === a).length;
+    return { created: n('create'), updated: n('update'), failed: n('error'), rows: out };
+  },
+};
+
+
 /* ------------------------------------------------------------------ Số dư tài khoản đầu kỳ (cả công nợ theo đối tượng) */
 /** Số tiền trong ô Excel: "1.000.000", "1,000,000", "1000000,5", "1 000 000" đều đọc được; trống = 0; sai = NaN. */
 export function soTien(v: string | undefined): number {
@@ -444,7 +541,7 @@ const phieuTien = (docType: LoaiPhieu): NhapLoai => {
   };
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, KHO, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, KHO, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
 /** Loại nhập của một loại phiếu tiền / phiếu kế toán (nút Nhập Excel ở danh sách phiếu). */
 export const nhapPhieu = (docType: string) => NHAP_LOAI.find((l) => l.id === PHIEU[docType as LoaiPhieu]?.id);
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);
