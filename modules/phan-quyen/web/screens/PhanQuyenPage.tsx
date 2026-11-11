@@ -12,8 +12,11 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'nguoi-dung', label: 'Người dùng' },
 ];
 
+/** Mở thẳng một thẻ / một người từ màn khác (HT01 → `?tab=nguoi-dung&user=<id>`) — đọc địa chỉ trình duyệt, không cần thư viện định tuyến. */
+const urlParam = (k: string): string | null => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get(k));
+
 export function PhanQuyenPage() {
-  const [tab, setTab] = useState<Tab>('ma-tran');
+  const [tab, setTab] = useState<Tab>(() => (TABS.some((t) => t.key === urlParam('tab')) ? (urlParam('tab') as Tab) : 'ma-tran'));
   return (
     <div>
       <PageHeader title="Phân quyền" code="HT12" subtitle="Ai được làm gì: vai trò, luật Cho / Cấm, gán cho người dùng. Cấm luôn thắng; quyền rủi ro cao đòi nhập lại mật khẩu." />
@@ -22,7 +25,7 @@ export function PhanQuyenPage() {
           <button key={t.key} type="button" className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
         ))}
       </div>
-      {tab === 'ma-tran' ? <MatrixTab /> : tab === 'vai-tro' ? <RolesTab /> : <UsersTab />}
+      {tab === 'ma-tran' ? <MatrixTab /> : tab === 'vai-tro' ? <RolesTab /> : <UsersTab initialUserId={urlParam('user')} />}
     </div>
   );
 }

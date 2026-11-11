@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Empty, ErrorBox, Loading, Modal, errorText, useApi, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import {
-  CELL_TEXT, cellOf, columnSummary, explainCell, groupPermissions, roleDbId,
+  CELL_TEXT, cellOf, columnSummary, explainCell, groupPermissions, groupRulePlan, roleDbId,
   type Cell, type CellReason, type MatrixData, type MatrixPermission, type MatrixRole, type RoleDetail, type RoleRule,
 } from '../lib/matrix';
 import { WriteDialog } from './WriteDialog';
@@ -28,7 +28,8 @@ function reasonText(r: CellReason): string {
 
 type Pending =
   | { kind: 'add'; effect: 'allow' | 'deny' }
-  | { kind: 'remove'; rule: RoleRule };
+  | { kind: 'remove'; rule: RoleRule }
+  | { kind: 'group'; effect: 'allow' | 'deny'; keys: string[] };
 
 function CellPanel({ matrix, role, permission, onClose }: { matrix: MatrixData; role: MatrixRole; permission: MatrixPermission; onClose: () => void }) {
   const api = useApi();
@@ -40,6 +41,8 @@ function CellPanel({ matrix, role, permission, onClose }: { matrix: MatrixData; 
   const ex = explainCell(matrix, role, detail.data, permission.key);
   const refresh = () => qc.invalidateQueries({ queryKey: ['phan-quyen'] });
   const high = permission.risk === 'high';
+  const group = groupPermissions(matrix.permissions, '').find((g) => g.module === permission.module);
+  const plan = group && !role.system ? groupRulePlan(group.items, detail.data) : null;
 
   return (
     <Modal title={`${permission.label} × ${role.label}`} onClose={onClose}>
@@ -50,6 +53,16 @@ function CellPanel({ matrix, role, permission, onClose }: { matrix: MatrixData; 
         <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           {ex.canAllow ? <button type="button" className="btn btn-primary btn-sm" onClick={() => setPending({ kind: 'add', effect: 'allow' })}>Cho quyền này</button> : null}
           {ex.canDeny ? <button type="button" className="btn btn-danger btn-sm" onClick={() => setPending({ kind: 'add', effect: 'deny' })}>Cấm quyền này</button> : null}
+          {plan && plan.allow.length > 1 ? (
+            <button type="button" className="btn btn-sm" title={plan.allow.join(', ')} onClick={() => setPending({ kind: 'group', effect: 'allow', keys: plan.allow })}>
+              Cho {plan.allow.length} quyền rủi ro thấp của nhóm {group!.label}
+            </button>
+          ) : null}
+          {plan && plan.deny.length ? (
+            <button type="button" className="btn btn-danger btn-sm" title={plan.deny.join(', ')} onClick={() => setPending({ kind: 'group', effect: 'deny', keys: plan.deny })}>
+              Cấm cả nhóm {group!.label}
+            </button>
+          ) : null}
           {ex.removable.map((r) => (
             <button key={r.id} type="button" className="btn btn-sm" onClick={() => setPending({ kind: 'remove', rule: r })}>
               Gỡ luật {r.effect === 'deny' ? 'Cấm' : 'Cho'} {r.permission}
@@ -71,6 +84,20 @@ function CellPanel({ matrix, role, permission, onClose }: { matrix: MatrixData; 
         >
           {pending.effect === 'allow' && high ? <p>Quyền rủi ro cao: cần nhập lại mật khẩu của bạn.</p> : null}
           {pending.effect === 'deny' ? <p>Cấm thắng mọi luật Cho và cả quyền của vai trò chính của người giữ vai trò này.</p> : null}
+        </WriteDialog>
+      ) : null}
+      {pending?.kind === 'group' ? (
+        <WriteDialog
+          title={`${pending.effect === 'allow' ? 'Cho' : 'Cấm'} cả nhóm ${group?.label ?? ''} cho ${role.label}`}
+          confirmLabel={pending.effect === 'allow' ? `Cho ${pending.keys.length} quyền` : `Cấm ${pending.keys.length} mẫu`}
+          onClose={() => setPending(null)}
+          onSubmit={async (v) => {
+            for (const p of pending.keys) await api.post(`/api/v1/roles/${roleDbId(role.id)}/rules`, { permission: p, effect: pending.effect, ...v });
+            await refresh();
+          }}
+        >
+          <p>{pending.effect === 'allow' ? 'Thêm luật Cho cho từng quyền rủi ro thấp (quyền rủi ro cao vẫn phải Cho từng quyền):' : 'Thêm luật Cấm theo mẫu — Cấm thắng mọi luật Cho, phủ cả quyền rủi ro cao:'}</p>
+          <ul>{pending.keys.map((k) => <li key={k}><code>{k}</code></li>)}</ul>
         </WriteDialog>
       ) : null}
       {pending?.kind === 'remove' ? (

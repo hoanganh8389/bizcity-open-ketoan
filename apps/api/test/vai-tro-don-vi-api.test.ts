@@ -450,3 +450,21 @@ describe('Giai đoạn 2: đệm theo authz_version, so song song (S028-16)', ()
     expect((await withToken(viewerToken, 'GET', '/api/v1/system/authz-shadow')).statusCode).toBe(403);
   });
 });
+
+// [2026-11-09 03:50 PM kiennt] PHASE-028 — giai đoạn 4.1: "Dùng mẫu" ở HT12 dựng vai trò từ thư viện authz.tgs-nhom qua API sẵn có
+describe('Dùng mẫu vai trò (giai đoạn 4.1)', () => {
+  it('thư viện vai trò mẫu đọc được; dựng vai trò từ mẫu bằng API sẵn có cho đúng quyền suy ra', async () => {
+    const lib = await call(ctx, 'GET', '/api/v1/libraries/authz.tgs-nhom/items?limit=200');
+    expect(lib.status, JSON.stringify(lib.body).slice(0, 300)).toBe(200);
+    const rows = lib.body.data.rows as { item: { code: string; name: string; payload: { baseRole: string; derived: string[] } } }[];
+    expect(rows.length).toBe(28);
+    const t = rows.find((r) => r.item.payload.derived.length > 0 && !r.item.payload.derived.includes('users:write'))!.item;
+    const created = await call(ctx, 'POST', '/api/v1/roles', { code: t.code, label: t.name, kind: 'job', baseRole: t.payload.baseRole, reason: 'Dùng mẫu' });
+    expect(created.status).toBe(201);
+    for (const p of t.payload.derived) {
+      expect((await call(ctx, 'POST', `/api/v1/roles/${created.body.data.id}/rules`, { permission: p, effect: 'allow', reason: 'Dùng mẫu', confirmPassword: OWNER_PASSWORD })).status).toBe(201);
+    }
+    const detail = (await call(ctx, 'GET', `/api/v1/roles/${created.body.data.id}`)).body.data;
+    expect(detail.rules.filter((r: any) => r.active && r.effect === 'allow').map((r: any) => r.permission).sort()).toEqual([...t.payload.derived].sort());
+  });
+});

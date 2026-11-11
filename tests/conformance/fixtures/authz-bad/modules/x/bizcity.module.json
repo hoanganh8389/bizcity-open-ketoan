@@ -1,0 +1,8 @@
+{
+  "key": "x",
+  "permissions": [
+    { "key": "x:dung", "label": "Có chỗ chặn ở action" },
+    { "key": "x:mo-coi", "label": "Khai mà không ai kiểm" },
+    { "key": "x:chi-menu", "label": "Chỉ dùng để ẩn menu" }
+  ]
+}
