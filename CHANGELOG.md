@@ -12,6 +12,34 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Khung nhìn mặt hàng có ô Biến thể / Gửi lên thuế; họ mã lỗi `POS_*` (đề xuất P-MP-5, P-MP-6 của module pos) <!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — phần Core cho module pos (đóng góp) -->
+
+- **Thêm:** `ERROR_REASONS` thêm 28 mã `POS_*` của module `pos` — 17 mã đợt W1 (BIZCITY-ERRORS 1.7.0-draft §4c) và 11 mã hoàn / đổi / huỷ đợt W2 (1.8.0-draft) (R-ERR-6 / R-ERR-11): dữ liệu kèm lỗi đặt cạnh `reason`, danh sách ở `items`.
+- **Đổi:** `POST /api/v1/auth/wp-sso` nhận cả quyền do module khai trong vé (manifest `permissions[]`, vd `pos:sell`), lọc bằng `isKnownPermission` như lúc đọc phiên; trước đây chỉ giữ quyền Core nên module không có quyền riêng qua đăng nhập WP (đề xuất P-MP-7). Test `wp-sso-quyen-module.test.ts`.
+- **Đổi:** khung nhìn `bizcity_read.products` thêm `variant_code`, `send_to_tax` (migration 0102, thêm cột cuối, cùng khuôn 0044 / 0070; ADR-0026) — module biết hàng Nội bộ / không gửi thuế mà không đọc chữ cuối mã. Kiểu ở `packages/platform/src/db/types.ts`; test `read-views.test.ts`.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0102 (số lấy lúc gộp).
+- **Bảo mật:** khung nhìn giữ `security_invoker` (RLS bảng gốc) và trigger chặn ghi. Vé WP vẫn bỏ quyền lạ (không có trong Core, không thuộc module đang bật).
+
+### Module `pos` W2 — hoàn hàng, đổi hàng, huỷ đơn, tra đơn, khách hàng (NT-BH-005) <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — module pos đợt W2 (đóng góp) -->
+
+- **Thêm:** `POST /api/v1/m/pos/returns` (phiếu trả → chứng từ `sale_return` nối đơn gốc, trả tiền mặt / chuyển khoản), `POST /exchanges` (`sale_return` không trả tiền + `sale` mới có `offsets` đối trừ, cùng giao dịch), `GET /returns`, `GET /orders/:id/returnable`, `GET /orders/lookup`, `POST /orders/:id/cancel` (đơn chờ thanh toán; đơn hoàn tất → `POS_CANCEL_COMPLETED`), `GET /customers`, `/customers/lookup`, `/customers/:id/orders`. Quyền mới `pos:return`, `pos:cancel`. Migration module `0003` (`returns`, `return_lines`, cột huỷ của `orders`). Họ 11 mã `POS_*` (BIZCITY-ERRORS 1.8.0-draft). Chứng từ mẫu `examples/sale-return-tien-mat.json`.
+- **Đổi:** phần tính đơn nhận đổi hàng (phần `doi_tru` không phải tiền thu, thành `offsets`; đơn mới không rẻ hơn hàng trả); thân "nhận đơn" tách ra `api/order-service.ts` dùng chung cho đơn thường và đơn đổi hàng.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không (`sale_return` theo gói định khoản mặc định: hàng bán bị trả lại 52131, thuế 33311, trả tiền một bút toán riêng; giá vốn hoàn do Kernel tính theo đơn giá tháng bán gốc).
+- **Nâng cấp cần làm:** `module migrate pos` (0003) → `module sync`.
+- **Bảo mật:** quyền riêng `pos:return` / `pos:cancel`; tìm khách chỉ đọc `bizcity_read.partners` (RLS theo đơn vị).
+
+### Module `pos` W1 — đơn bán tại quầy từ máy bán POS vào sổ <!-- [2026-11-10 02:30 PM Võ Hoàng] module pos W1 (đóng góp) -->
+
+- **Thêm:** module `modules/pos` (ADR-0024): `GET /api/v1/m/pos/bootstrap`, `POST /api/v1/m/pos/sequences/reserve`, `POST /api/v1/m/pos/orders` (đơn → chứng từ `sale` qua `ctx.ledger.submit`, cùng giao dịch với đơn), `GET /api/v1/m/pos/orders/:id` (id đơn, hoặc mã phiếu kèm `branch`). Đợt W1 nhận tiền mặt, chia tiền, giảm tay; khuyến mại, quà, điểm, QR, ghi nợ, hàng 0đ không gửi thuế (bill Z) chặn rõ `POS_NOT_SUPPORTED_YET`. Dòng chứng từ mang `itemId`, đơn giá chưa thuế trước giảm và `discount` tách riêng; dòng đơn lưu ở `mod_pos.order_lines` theo `item_id`. Gửi lại cùng id đơn mà khác nội dung → `POS_ORDER_ID_REUSED`; hai máy gửi đồng thời không ra lỗi CSDL thô. Chứng từ mẫu `modules/pos/examples/` (AC-6). Phiếu nghiệm thu [NT-BH-004](docs/nghiem-thu/ban-hang/NT-BH-004-pos-don-ban-tai-quay.md).
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không (chứng từ `sale` theo gói định khoản mặc định, không `reasonCode` riêng).
+- **Nâng cấp cần làm:** cần mục Core ở trên (0102); `module migrate pos` (0001, 0002) → `module sync` → `module activate pos`.
+- **Bảo mật:** module chỉ đọc `bizcity_read.*` (RLS theo đơn vị); mọi action dùng quyền riêng `pos:sell` (manifest) — phiên thu ngân không cần `documents:write`, gọi chứng từ của Core bị 403. Số điện thoại khách mới nằm trong `input` của bằng chứng: Core chưa che dữ liệu cá nhân trong bằng chứng (STD-DATA-10, đề xuất P-MP-9).
+
 ### Thêm nhanh chi nhánh, phân kho ngay trên phiếu <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/10 (đóng góp) -->
 
 - **Thêm:** ô chọn chi nhánh trên form có + / F9 thêm nhanh chi nhánh (tự chọn sau khi ghi); phiếu mua (MH11) ô Phân kho và Kho nhận hàng chọn theo chi nhánh đang chọn, có + thêm phân kho.

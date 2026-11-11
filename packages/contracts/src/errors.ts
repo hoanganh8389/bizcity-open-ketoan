@@ -97,6 +97,37 @@ export const ERROR_REASONS = {
   POLICY_RETIRED: 'Chính sách đã ngừng, dùng mã mới',
   POLICY_BACKDATED: 'Ngày áp sớm hơn bản trước (không viết lại quá khứ)',
   POLICY_REVIEW_NOT_OPEN: 'Sự việc không có phát hiện chính sách cần xem',
+  // [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — module pos: họ mã POS_* của module pos (R-ERR-6, R-ERR-11; BIZCITY-ERRORS 1.7.0-draft §4c, đề xuất P-MP-5, đóng góp)
+  // Máy bán POS (modules/pos)
+  POS_NOT_SUPPORTED_YET: 'Máy chủ POS chưa nhận loại đơn / dòng / thanh toán này ở đợt hiện tại (khuyến mại, quà, QR, ghi nợ, bill Z); kèm field, billZ',
+  POS_UNKNOWN_SKU: 'Mã hàng không có (hoặc ngừng bán) trong danh mục kế toán; items: [{ sku }]',
+  POS_TAX_NOT_DECLARED: 'Mặt hàng chưa khai mã thuế đầu ra; items: [{ sku }]',
+  POS_PRICE_CHANGED: 'Giá / tổng máy bán tính khác máy chủ (hàng Nội bộ phải 0đ); kèm clientTotal, total hoặc items',
+  POS_DISCOUNT_TOO_LARGE: 'Tiền giảm tay lớn hơn thành tiền dòng',
+  POS_CASH_INSUFFICIENT: 'Tiền khách đưa ít hơn số phải thu',
+  POS_NO_CASH_METHOD: 'Danh mục hình thức thanh toán chưa có tiền mặt',
+  POS_UNKNOWN_METHOD: 'Hình thức thanh toán không có trong danh mục',
+  POS_DUPLICATE_METHOD: 'Một hình thức thanh toán lặp lại trong chia tiền',
+  POS_SPLIT_MISMATCH: 'Các phần chia tiền cộng không bằng tổng đơn',
+  POS_UNKNOWN_CUSTOMER: 'Mã khách không có trong danh mục',
+  POS_BAD_PHONE: 'SĐT khách mới sai khuôn',
+  POS_MISSING_NAME: 'Khách mới thiếu tên',
+  POS_UNKNOWN_BRANCH: 'Chi nhánh máy gửi không có trong danh mục / đơn vị chưa khai chi nhánh',
+  POS_BRANCH_REQUIRED: 'Đơn vị nhiều chi nhánh mà máy không gửi branchCode / mã phiếu có ở nhiều chi nhánh',
+  POS_ORDER_ID_REUSED: 'Cùng id đơn đã nhận với nội dung khác (máy phải tạo đơn mới)',
+  POS_CODE_TAKEN: 'Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại)',
+  // [2026-11-11 03:30 PM Võ Hoàng] POS-W2: họ mã POS_* đợt W2 — hoàn / đổi / huỷ (BIZCITY-ERRORS 1.8.0-draft §4c, phiếu NT-BH-005, đóng góp)
+  POS_RETURN_QTY: 'Trả quá số còn trả được của dòng, hoặc dòng không có trong đơn gốc',
+  POS_RETURN_EXPIRED: 'Quá hạn trả (tham số, hiện 3 ngày theo ngày bán) mà thiếu người duyệt / lý do duyệt; kèm deadline',
+  POS_RETURN_OTHER_SHOP: 'Đơn gốc của chi nhánh khác: đợt này chỉ trả ở cửa hàng đã bán',
+  POS_ORDER_NOT_RETURNABLE: 'Đơn gốc chưa hoàn tất / đã huỷ: không trả hàng',
+  POS_RETURN_REASON: 'Thiếu lý do trả hàng',
+  POS_REFUND_METHOD: 'Hình thức trả tiền khách không phải tiền mặt / chuyển khoản (đối trừ chỉ trong đổi hàng)',
+  POS_GIFT_REQUIRED: 'Trả hàng chính mà không trả kèm phần quà vượt suất; kèm gifts',
+  POS_EXCHANGE_LOWER: 'Đổi hàng: đơn mới thấp hơn giá trị hàng trả; kèm credit, total',
+  POS_EXCHANGE_CUSTOMER: 'Đổi hàng: khách của đơn mới khác khách của đơn gốc',
+  POS_CANCEL_COMPLETED: 'Đơn đã thu tiền xong không huỷ được — lập phiếu trả hàng',
+  POS_RETURN_ID_REUSED: 'Cùng id phiếu trả đã nhận với nội dung khác (máy phải lập phiếu mới)',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

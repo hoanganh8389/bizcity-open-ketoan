@@ -12,7 +12,8 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { db } from '../../db/client.js';
 import { env } from '../../config/env.js';
 import { Errors } from '../../core/errors.js';
-import { PERMISSIONS, type Permission } from '../../core/auth.js';
+// [2026-11-10 09:10 PM Võ Hoàng] POS-W1 — vé nhận cả quyền do module khai (manifest permissions[], vd pos:sell): isKnownPermission thay danh sách quyền Core (đề xuất P-MP-7, đóng góp)
+import { isKnownPermission } from '../../core/auth.js';
 import { hashPassword } from '../../core/security/password.js';
 import { signSession } from '../../core/security/tokens.js';
 import { authRepository } from './auth.repository.js';
@@ -79,7 +80,8 @@ export async function loginWithWpTicket(raw: string): Promise<{ token: string; u
     await db.updateTable('users').set({ full_name: fullName }).where('id', '=', user.id).execute();
   }
 
-  const perms = (t.perms ?? []).filter((p): p is Permission => (PERMISSIONS as readonly string[]).includes(p));
+  // Quyền Core + quyền module đang bật (registerModulePermissions). Quyền lạ vẫn bị bỏ; đọc phiên (resolveAuth) lọc cùng cách.
+  const perms = (t.perms ?? []).filter(isKnownPermission);
   await authRepository.touchLogin(db, user.id);
   const token = await signSession({ sub: user.id, tid: tenant.id, role: user.role, name: fullName, perms, sv: Number(user.session_version) });
   return {

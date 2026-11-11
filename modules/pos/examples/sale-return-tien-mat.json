@@ -1,0 +1,45 @@
+{
+  "docNo": "TH2611900001",
+  "lines": [
+    {
+      "qty": 1,
+      "sku": "171489001",
+      "name": "Thảm đàn Honper cho bé HP-820",
+      "unit": "Cái",
+      "isGift": false,
+      "lineKey": "l1",
+      "taxCode": "R05",
+      "unitQty": 1,
+      "discount": 0,
+      "taxAmount": 15714,
+      "unitPrice": 314286,
+      "unitRatio": 1,
+      "amountBeforeTax": 314286
+    }
+  ],
+  "docKey": "pos:CN01:sale_return:00000000-0000-7000-8000-00000000b001",
+  "totals": {
+    "tax": 15714,
+    "total": 330000,
+    "beforeTax": 314286
+  },
+  "docDate": "2026-11-11",
+  "docType": "sale_return",
+  "version": 1,
+  "payments": [
+    {
+      "amount": 330000,
+      "methodCode": "TM"
+    }
+  ],
+  "sourceRef": {
+    "id": "00000000-0000-7000-8000-00000000b001",
+    "type": "pos.return",
+    "label": "TH2611900001"
+  },
+  "branchCode": "CN01",
+  "description": "Khách trả hàng máy POS TH2611900001: Khách đổi ý",
+  "internalOnly": false,
+  "sourceSystem": "pos",
+  "originalDocKey": "pos:CN01:sale:00000000-0000-7000-8000-00000000a001"
+}
