@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ cái S03b-DN (ACC88) nhiều tài khoản <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Dùng chung khung với Sổ chi tiết các tài khoản: chọn nhiều tài khoản; mỗi tài khoản: Số dư đầu kỳ, phát sinh (Ngày ghi sổ, Chứng từ số hiệu / ngày, Diễn giải, TK đối ứng, Số tiền Nợ / Có), Cộng số phát sinh, Số dư cuối kỳ. Bản in S03b-DN.
+
+
 ### Sổ nhật ký chung (S03a-DN), Sổ chi tiết các tài khoản theo mẫu <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - ACC89: Ngày hạch toán · Ngày chứng từ · Số chứng từ · Diễn giải · Tài khoản · TK đối ứng · Phát sinh Nợ / Có; tham số kỳ + Cộng gộp các bút toán giống nhau; cột thêm (loại chứng từ, đối tượng, mã hàng…) ẩn sẵn; bỏ dải kéo nhóm.
 - ACC12: chọn nhiều tài khoản; mỗi tài khoản một nhóm "Tài khoản: …" (Số dư đầu kỳ, phát sinh, Dư Nợ / Dư Có chạy, Cộng), cuối bảng Tổng cộng. Bản in cùng bố cục.

@@ -32,7 +32,7 @@ export const keToanRoutes = (
   <>
     <Route path="/bang-dieu-khien" element={<DashboardPage />} />
     <Route path="bao-cao/can-doi-phat-sinh" element={<TrialBalancePage />} />
-    <Route path="bao-cao/so-chi-tiet" element={<SoChiTietTaiKhoanPage />} />
+    <Route path="bao-cao/so-chi-tiet" element={<SoChiTietTaiKhoanPage key="sctk" />} />
     <Route path="bao-cao/cong-no" element={<PartnerBalancesPage key="acc38" />} />
     <Route path="bao-cao/cong-no-theo-nhan-vien" element={<DebtByEmployeePage />} />
     <Route path="bao-cao/cong-no-theo-mat-hang" element={<DebtByItemPage />} />
@@ -60,7 +60,7 @@ export const keToanRoutes = (
     <Route path="bao-cao/tuoi-no-qua-han" element={<AgingDuePage key="acc67b" preset={{ code: 'ACC67B', title: 'Công nợ theo tuổi nợ quá hạn', subtitle: 'Số còn nợ đã quá hạn thanh toán, chia theo số ngày quá hạn', kind: 2 }} />} />
     <Route path="bao-cao/cong-no-theo-han" element={<DebtByTermPage />} />
     <Route path="bao-cao/kiem-tra-chung-tu" element={<ChecksPage />} />
-    <Route path="bao-cao/so-cai" element={<AccountLedgerPage key="so-cai" preset={{ account: '111', title: 'Sổ cái', code: 'ACC88', helpKey: 'so-cai', kind: 'ledger' }} />} />
+    <Route path="bao-cao/so-cai" element={<SoChiTietTaiKhoanPage key="so-cai" soCai />} />
     <Route path="bao-cao/cong-no-noi-bo-chi-tiet" element={<AccountLedgerPage key="acc62" preset={{ account: '1368', title: 'BCCN nội bộ chi tiết', code: 'ACC62', helpKey: 'so-chi-tiet-cong-no', kind: 'partner' }} />} />
     <Route path="bao-cao/chi-tiet-thanh-toan" element={<AccountLedgerPage key="acc81" preset={{ account: '331', title: 'Sổ chi tiết thanh toán với người bán', code: 'ACC81', helpKey: 'so-chi-tiet-cong-no', kind: 'partner' }} />} />
     <Route path="bao-cao/tien-vay" element={<AccountLedgerPage key="acc87" preset={{ account: '341', title: 'Sổ chi tiết tiền vay', code: 'ACC87', helpKey: 'so-chi-tiet-cong-no', kind: 'partner' }} />} />
