@@ -3,6 +3,8 @@
  * Mỗi lần nhập là một phiếu "Số dư đầu kỳ" theo chi nhánh; sửa được, huỷ được như phiếu kế toán.
  * Nhập nhanh: dán từ Excel 4 cột  Tài khoản | Mã đối tượng | Dư Nợ | Dư Có.
  */
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ClipboardPaste, Plus, Trash2 } from 'lucide-react';
@@ -51,7 +53,7 @@ export function OpeningBalancesPage() {
         code="ACC15"
         subtitle="Số dư đầu kỳ của từng tài khoản, từng đối tượng khi bắt đầu dùng phần mềm"
         helpKey="so-du-tai-khoan"
-        actions={can('documents:write') ? <button className="btn btn-primary" onClick={() => { setNotice(null); setForm({}); }}><Plus size={16} /> Nhập số dư đầu kỳ</button> : undefined}
+        actions={can('documents:write') ? <><NutNhapExcel loai={nhapLoai('so-du-tai-khoan')!} label="Nhập từ Excel" /><button className="btn btn-primary" onClick={() => { setNotice(null); setForm({}); }}><Plus size={16} /> Nhập số dư đầu kỳ</button></> : undefined}
       />
       {notice && <div className="alert alert-ok" style={{ marginBottom: 14 }}>{notice}</div>}
       <div className="card">

@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Nhập Excel số dư tài khoản đầu kỳ <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §3 (đóng góp) -->
+
+- **Thêm:** trình nhập Excel loại *Số dư tài khoản đầu kỳ* (TI14, nút Nhập từ Excel ở ACC15): mỗi chi nhánh một phiếu số dư; kiểm trước tài khoản, đối tượng, cân Nợ – Có, chi nhánh đã có phiếu.
+- **Thêm:** API `POST /api/v1/partners/exists` (mã đối tượng chưa có, chỉ đọc).
+- **Thay đổi định khoản:** không.
+
 ### Danh sách phiếu tiền dạng trên – dưới <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/05 (đóng góp) -->
 
 - **Thêm:** thẻ chỉ số trên danh sách phiếu tiền: tổng tiền trong kỳ, số phiếu, tồn quỹ tiền mặt / số dư tiền gửi đến hôm nay.

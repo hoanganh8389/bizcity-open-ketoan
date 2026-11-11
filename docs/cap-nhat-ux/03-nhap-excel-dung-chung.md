@@ -30,7 +30,13 @@ API nhập đối tượng: mỗi dòng một savepoint; mã trống khi thêm m
 
 Thêm loại mới: viết một `NhapLoai` (trường + `run`) rồi thêm vào `NHAP_LOAI`; nếu cần API thì theo khuôn `dryRun` + savepoint của hai API trên.
 
-## 3. Việc tiếp theo của mục này
+## 3. Bổ sung: số dư tài khoản đầu kỳ
 
-- Loại: nhóm hàng, số dư ban đầu (tài khoản, công nợ, tồn kho), phiếu thu / chi, phiếu chuyển kho.
+- Loại **Số dư tài khoản đầu kỳ** (nhóm Số dư ban đầu; nút *Nhập từ Excel* ở ACC15): Chi nhánh, Ngày chốt số dư (ngầm định cuối tháng trước), Tài khoản, Mã đối tượng, Dư Nợ, Dư Có, TK cân đối. Gom theo chi nhánh → mỗi chi nhánh một phiếu `POST /api/v1/opening-balances`.
+- Kiểm trước như máy chủ: tài khoản chi tiết có thật, không phải loại 5–8 / 911; tài khoản theo dõi đối tượng phải có mã đối tượng có thật (`POST /api/v1/partners/exists`); mỗi dòng một bên; cân Nợ – Có theo chi nhánh; chi nhánh đã có phiếu số dư; một chi nhánh một ngày. Phiếu còn dòng lỗi thì không ghi nửa vời.
+- Đọc số "1.000.000" / "1,000,000", ngày dd/mm/yyyy hoặc ô ngày Excel.
+
+## 4. Việc tiếp theo của mục này
+
+- Loại: nhóm hàng, tồn kho đầu kỳ theo mã hàng, phiếu thu / chi, phiếu chuyển kho.
 - Chứng từ nhập vào ở trạng thái chưa duyệt + duyệt hàng loạt.

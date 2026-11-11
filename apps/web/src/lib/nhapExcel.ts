@@ -162,5 +162,121 @@ const KHO: NhapLoai = {
   },
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, KHO];
+
+/* ------------------------------------------------------------------ Số dư tài khoản đầu kỳ (cả công nợ theo đối tượng) */
+/** Số tiền trong ô Excel: "1.000.000", "1,000,000", "1000000,5", "1 000 000" đều đọc được; trống = 0; sai = NaN. */
+export function soTien(v: string | undefined): number {
+  let s = (v ?? '').replace(/\s/g, '');
+  if (!s) return 0;
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, '');
+  else s = s.replace(',', '.');
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+}
+/** Ngày trong ô: yyyy-mm-dd hoặc dd/mm/yyyy (d/m/yy) → yyyy-mm-dd; sai = ''. */
+export function ngay(v: string | undefined): string {
+  const s = (v ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/);
+  if (!m) return '';
+  const y = m[3]!.length === 2 ? `20${m[3]}` : m[3]!;
+  const d = `${y}-${m[2]!.padStart(2, '0')}-${m[1]!.padStart(2, '0')}`;
+  return Number.isNaN(Date.parse(d)) ? '' : d;
+}
+const cuoiThangTruoc = () => { const n = new Date(); const d = new Date(n.getFullYear(), n.getMonth(), 0); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
+const laiLo = (a: string) => /^[5-8]/.test(a) || a.startsWith('911');
+const tien = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+
+const SO_DU: NhapLoai = {
+  id: 'so-du-tai-khoan', nhom: 'Số dư ban đầu', title: 'Số dư tài khoản đầu kỳ',
+  desc: 'Dư Nợ / Dư Có từng tài khoản, công nợ theo đối tượng (131, 331…), theo chi nhánh — mỗi chi nhánh một phiếu số dư', keyField: 'accountCode',
+  listPath: '/nghiep-vu/so-du-tai-khoan', invalidate: ['documents', 'document'], modes: false,
+  fields: [
+    { key: 'branchCode', header: 'Chi nhánh', required: true, aliases: ['ma chi nhanh', 'don vi'], example: '00000', note: 'Mã chi nhánh trong sơ đồ tổ chức. Mỗi chi nhánh thành một phiếu số dư.' },
+    { key: 'docDate', header: 'Ngày chốt số dư', required: true, aliases: ['ngay', 'ngay so du', 'ngay chung tu', 'ngay hach toan'], defaultValue: cuoiThangTruoc(), note: 'dd/mm/yyyy — thường là ngày cuối kỳ trước khi bắt đầu dùng phần mềm.' },
+    { key: 'accountCode', header: 'Tài khoản', required: true, aliases: ['so hieu tai khoan', 'tk', 'ma tai khoan', 'tai khoan chi tiet'], example: '1111', note: 'Tài khoản chi tiết (ghi sổ được). Doanh thu, chi phí (loại 5–8) và 911 không có số dư: lãi lỗ luỹ kế ghi vào 4212 / 4211.' },
+    { key: 'partnerCode', header: 'Mã đối tượng', aliases: ['doi tuong', 'ma khach hang', 'ma nha cung cap', 'ma kh', 'ma ncc', 'ma doi tuong'], note: 'Bắt buộc với tài khoản theo dõi đối tượng (131, 331, 141…).' },
+    { key: 'debit', header: 'Dư Nợ', aliases: ['du no', 'so du no', 'no'], example: '10.000.000', note: 'Mỗi dòng ghi Dư Nợ hoặc Dư Có.' },
+    { key: 'credit', header: 'Dư Có', aliases: ['du co', 'so du co', 'co'] },
+    { key: 'balancingAccount', header: 'TK cân đối', aliases: ['tai khoan can doi', 'tk chenh lech'], note: 'Để trống: tổng Dư Nợ phải bằng tổng Dư Có của chi nhánh. Ghi tài khoản (vd 4211) để nhận phần chênh lệch.' },
+  ],
+  run: async (rows, { dryRun }) => {
+    const [accounts, branches, docs] = await Promise.all([
+      api.get<{ code: string; name: string; isPosting?: boolean; trackPartner?: boolean; isDebt?: boolean }[]>('/api/v1/accounts', { postingOnly: true }),
+      api.get<{ code: string; isActive: boolean }[]>('/api/v1/branches'),
+      api.get<{ docNo: string; branchCode: string; status: string }[]>('/api/v1/documents', { docType: 'opening', pageSize: 1000 }),
+    ]);
+    const acc = new Map(accounts.map((a) => [a.code, a]));
+    const brs = new Set(branches.map((b) => b.code));
+    const daCo = new Map(docs.filter((d) => d.status !== 'cancelled').map((d) => [d.branchCode, d.docNo]));
+    const codes = [...new Set(rows.map((r) => (r.partnerCode ?? '').trim()).filter(Boolean))];
+    const ex = codes.length ? await api.post<{ missing: string[] }>('/api/v1/partners/exists', { codes }) : { missing: [] };
+    const thieuDT = new Set(ex.missing);
+
+    const out: (NhapDong & { g: string; debit: number; credit: number; bal: string })[] = rows.map((r) => {
+      const row = Number(r._row);
+      const errors: string[] = [];
+      const branchCode = (r.branchCode ?? '').trim();
+      const date = ngay(r.docDate);
+      const a = (r.accountCode ?? '').trim();
+      const p = (r.partnerCode ?? '').trim();
+      const debit = soTien(r.debit);
+      const credit = soTien(r.credit);
+      const bal = (r.balancingAccount ?? '').trim();
+      if (!branchCode) errors.push('Thiếu chi nhánh'); else if (!brs.has(branchCode)) errors.push(`Chi nhánh "${branchCode}" chưa có`);
+      if (!date) errors.push(`Ngày chốt số dư "${r.docDate ?? ''}" không đọc được (dd/mm/yyyy)`);
+      const info = acc.get(a);
+      if (!a) errors.push('Thiếu tài khoản');
+      else if (!info) errors.push(`Tài khoản ${a} chưa có hoặc là tài khoản tổng hợp (cần tài khoản chi tiết)`);
+      else if (laiLo(a)) errors.push(`Tài khoản ${a} là doanh thu / chi phí / xác định kết quả, không có số dư đầu kỳ (ghi lãi lỗ luỹ kế vào 4212 hoặc 4211)`);
+      if (info && (info.trackPartner || info.isDebt) && !p) errors.push(`Tài khoản ${a} theo dõi đối tượng: cần Mã đối tượng`);
+      if (p && thieuDT.has(p)) errors.push(`Đối tượng ${p} chưa có — nhập danh mục khách hàng / NCC trước`);
+      if (Number.isNaN(debit) || Number.isNaN(credit)) errors.push('Số tiền không đọc được');
+      else if (debit < 0 || credit < 0) errors.push('Số tiền âm: ghi sang cột bên kia');
+      else if ((debit > 0) === (credit > 0)) errors.push('Mỗi dòng ghi Dư Nợ hoặc Dư Có (không cả hai, không để trống cả hai)');
+      if (bal && (!acc.has(bal) || laiLo(bal))) errors.push(`TK cân đối ${bal} không dùng được (cần tài khoản chi tiết, không phải doanh thu / chi phí)`);
+      return { row, key: `${branchCode} · ${a}${p ? ` · ${p}` : ''}`, action: errors.length ? 'error' : 'create', errors, g: `${branchCode}|${date}`, debit: debit || 0, credit: credit || 0, bal,
+        values: { branchCode, docDate: r.docDate, accountCode: a, partnerCode: p, debit: debit ? tien(debit) : '', credit: credit ? tien(credit) : '', balancingAccount: bal } };
+    });
+
+    // Kiểm theo phiếu (chi nhánh + ngày): đã có phiếu số dư, cân Nợ – Có.
+    const nhom = new Map<string, typeof out>();
+    for (const r of out) nhom.set(r.g, [...(nhom.get(r.g) ?? []), r]);
+    for (const [g, list] of nhom) {
+      const [branchCode] = g.split('|');
+      const loiNhom: string[] = [];
+      if (branchCode && daCo.has(branchCode)) loiNhom.push(`Chi nhánh ${branchCode} đã có phiếu số dư ${daCo.get(branchCode)} — sửa phiếu đó, hoặc huỷ trước khi nhập lại`);
+      const ngays = new Set(out.filter((r) => r.g.startsWith(`${branchCode}|`)).map((r) => r.g));
+      if (ngays.size > 1) loiNhom.push(`Chi nhánh ${branchCode} có nhiều ngày chốt số dư trong tệp — mỗi chi nhánh một ngày`);
+      const no = list.reduce((s, r) => s + r.debit, 0);
+      const co = list.reduce((s, r) => s + r.credit, 0);
+      const bal = list.find((r) => r.bal)?.bal;
+      if (Math.abs(no - co) >= 0.005 && !bal) loiNhom.push(`Chi nhánh ${branchCode}: tổng Dư Nợ ${tien(no)} ≠ tổng Dư Có ${tien(co)} (lệch ${tien(Math.abs(no - co))}) — sửa số hoặc ghi cột TK cân đối`);
+      if (loiNhom.length) for (const r of list) { r.errors.push(...loiNhom.filter((e) => !r.errors.includes(e))); r.action = 'error'; }
+    }
+
+    if (!dryRun) {
+      for (const [g, list] of nhom) {
+        if (list.some((r) => r.action === 'error')) continue; // phiếu của chi nhánh có dòng lỗi: không ghi nửa vời
+        const [branchCode, docDate] = g.split('|') as [string, string];
+        try {
+          await api.post('/api/v1/opening-balances', {
+            branchCode, docDate, description: 'Số dư đầu kỳ (nhập Excel)', balancingAccount: list.find((r) => r.bal)?.bal || undefined,
+            lines: list.map((r) => ({ accountCode: r.values.accountCode, partnerCode: r.values.partnerCode || undefined, debit: r.debit, credit: r.credit })),
+          });
+        } catch (e) { for (const r of list) { r.action = 'error'; r.errors.push(e instanceof Error ? e.message : String(e)); } }
+      }
+    }
+    // Phiếu có dòng lỗi thì cả phiếu không ghi: báo rõ ở các dòng còn lại.
+    for (const list of nhom.values()) {
+      if (!list.some((r) => r.action === 'error')) continue;
+      for (const r of list) if (r.action !== 'error') { r.action = 'error'; r.errors.push('Phiếu số dư của chi nhánh này còn dòng lỗi — sửa hết rồi nhập cả phiếu'); }
+    }
+    const n = (x: NhapDong['action']) => out.filter((r) => r.action === x).length;
+    return { created: n('create'), updated: 0, failed: n('error'), rows: out.map(({ g: _g, debit: _d, credit: _c, bal: _b, ...r }) => r) };
+  },
+};
+
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, KHO, SO_DU];
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);

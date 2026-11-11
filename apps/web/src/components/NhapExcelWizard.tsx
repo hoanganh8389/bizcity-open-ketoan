@@ -106,8 +106,8 @@ export function NhapExcelWizard({ loai, onClose }: { loai: NhapLoai; onClose: ()
     setErr(null); setCheck(null); setDone(null);
     try {
       const XLSX = await import('xlsx');
-      const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-      const b: Book = { name: file.name, sheets: wb.SheetNames, read: (s) => XLSX.utils.sheet_to_json<string[]>(wb.Sheets[s]!, { header: 1, raw: false, defval: '' }) };
+      const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+      const b: Book = { name: file.name, sheets: wb.SheetNames, read: (s) => XLSX.utils.sheet_to_json<string[]>(wb.Sheets[s]!, { header: 1, raw: false, defval: '', dateNF: 'yyyy-mm-dd' }) };
       const first = wb.SheetNames.find((s) => !/hướng dẫn|huong dan/i.test(s)) ?? wb.SheetNames[0] ?? '';
       setBook(b); setSheet(first);
       const rows = b.read(first);

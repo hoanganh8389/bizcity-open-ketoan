@@ -11,6 +11,7 @@
  *   PUT /api/v1/partners/:code        tạo hoặc cập nhật một đối tượng (kèm nhóm, khoá, hạn thanh toán, hạn mức nợ, thông tin công ty, quản lý)
  *   DELETE /api/v1/partners/:code     xoá đối tượng chưa có trên sổ, chứng từ
  *   PUT /api/v1/partners              đồng bộ danh mục từ hệ thống bán hàng / mua hàng (tối đa 1000 đối tượng một lần)
+ *   POST /api/v1/partners/exists      mã nào chưa có (kiểm hàng loạt cho trình nhập Excel)
  *   POST /api/v1/partners/import      nhập Excel (dryRun kiểm từng dòng; ghi chỉ dòng đúng; mode create / update / both) — partner-import.ts
  *   GET /api/v1/partners/:code/balances?asOf=&branchCode=  số dư công nợ của một đối tượng theo từng tài khoản
  *   GET /api/v1/partner-groups        nhóm đối tượng
@@ -309,6 +310,20 @@ export const partnerWriteActions: AnyActionDef[] = [
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.sync', objectType: 'partner', objectId: `${input.partners.length} đối tượng`, after: { codes: input.partners.map((p) => p.code).slice(0, 50) } });
       });
       return { count: input.partners.length };
+    },
+  }),
+  // [2026-11-11 Nguyễn Văn Thủy] trình nhập Excel (số dư, chứng từ) kiểm mã đối tượng hàng loạt (đóng góp)
+  defineAction({
+    id: 'core.partner.exists', title: 'Kiểm danh sách mã đối tượng: trả mã chưa có và tên của mã đã có (chỉ đọc)', tags,
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: z.object({ codes: z.array(z.string().trim().max(64)).max(20000) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/partners/exists' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const codes = [...new Set(input.codes.filter(Boolean))];
+      if (!codes.length) return { missing: [], names: {} };
+      const rows = await ctx.data.tx.selectFrom('partners').select(['code', 'name']).where('tenant_id', '=', ctx.legacyAuth.tenantId).where('code', 'in', codes).execute();
+      const names = Object.fromEntries(rows.map((r) => [r.code, r.name]));
+      return { missing: codes.filter((c) => !(c in names)), names };
     },
   }),
   // [2026-11-11 Nguyễn Văn Thủy] nhập Excel đối tượng cho trình nhập dùng chung (đóng góp)

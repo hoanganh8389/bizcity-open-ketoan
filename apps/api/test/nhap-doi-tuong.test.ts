@@ -56,6 +56,12 @@ describe('Nhập Excel đối tượng', () => {
     expect(c.rows[0]!.action).toBe('update');
   });
 
+  it('kiểm hàng loạt mã đối tượng: trả mã chưa có và tên mã đã có', async () => {
+    const r = await call(ctx, 'POST', '/api/v1/partners/exists', { codes: ['KHCU', 'KHCU', 'KHONGCO', ''] });
+    expect(r.status).toBe(200);
+    expect(r.body.data).toEqual({ missing: ['KHONGCO'], names: { KHCU: 'Khách cũ' } });
+  });
+
   it('nhà cung cấp: tên / địa chỉ vào thông tin công ty (dùng trên hoá đơn)', async () => {
     await imp({ dryRun: false, rows: [{ row: 2, code: 'NCC01', name: 'Công ty CP Sữa', kind: 'Nhà cung cấp', address: 'Bắc Ninh', taxCode: '0100000003' }] });
     expect(await get('NCC01')).toMatchObject({ kind: 'supplier', companyName: 'Công ty CP Sữa', companyAddress: 'Bắc Ninh' });
