@@ -95,7 +95,7 @@ Lưu:
 | Bảng | Ghi gì |
 |---|---|
 | `accounting_events` | dòng cũ được cập nhật sang nội dung v2 |
-| `accounting_event_versions` | cất nguyên bản v1 (tra lại được) |
+| `accounting_event_versions` | lưu nguyên bản v1 (tra lại được) |
 | `ledger_entries`, `ledger_lines` | **thêm** bút toán đảo + bút toán mới; bút toán v1 không bị sửa, chỉ đánh dấu "đã đảo" |
 | **`ledger_links`** | `reversal`: bút toán đảo → bút toán v1 |
 | `tax_invoices`, `sales_lines`, `sales_payments`, `inventory_movements` | ghi lại theo v2 (đây là bảng tra cứu dựng từ chứng từ, không phải sổ kế toán) |

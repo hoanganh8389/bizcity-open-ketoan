@@ -446,3 +446,13 @@ html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-
 .pt-tabs .pt-tools { margin-left: auto; display: flex; gap: 6px; padding-bottom: 4px; }
 .pt-cot { position: absolute; right: 0; top: 100%; z-index: 20; background: #fff; border: 1px solid var(--line, #e3e8ef); border-radius: 6px; padding: 8px 12px; display: grid; gap: 4px; min-width: 220px; box-shadow: 0 6px 18px rgba(15, 34, 61, .12); }
 .pt-f .picker, .pt-f .picker > .input { width: 100%; }
+
+/* [2026-11-11 Nguyễn Văn Thủy] nút ▾ có menu con (Thu tiền ▾ / Chi tiền ▾) trên danh sách chứng từ (đóng góp) */
+.vf-split { display: inline-flex; position: relative; }
+.vf-split > button { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.vf-split-menu > summary { list-style: none; cursor: pointer; padding: 0 8px; display: inline-flex; align-items: center; height: 100%; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid rgba(255, 255, 255, .35); }
+.vf-split-menu > summary::-webkit-details-marker { display: none; }
+.vf-split-menu > div { position: absolute; top: 100%; left: 0; z-index: 30; background: #fff; border: 1px solid var(--line, #e3e8ef); border-radius: 6px; box-shadow: 0 6px 18px rgba(15, 34, 61, .12); min-width: 230px; padding: 4px 0; display: grid; }
+.vf-split-menu > div > button { text-align: left; border: 0; background: none; padding: 7px 12px; color: var(--ink-800, #1d2939); }
+.vf-split-menu > div > button:hover { background: var(--hover, #eef3fb); }
+.vf-toolbar .vf-add2, .vf-split-menu > summary.vf-add2 { background: var(--nav, #2457b3); color: #fff; border-color: var(--nav, #2457b3); }

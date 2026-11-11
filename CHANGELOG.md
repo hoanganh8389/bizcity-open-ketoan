@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thu, chi tiền gọn như mẫu chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Màn **Thu, chi tiền** (`/quy/thu-chi`) và **Thu, chi tiền gửi** (`/quy/thu-chi-tien-gui`): một danh sách phiếu thu + phiếu chi, ô lọc Loại phiếu, cột Loại chứng từ, ô Tổng thu / Tổng chi / Tồn quỹ; nút **Thu tiền ▾** (Phiếu thu · Thu tiền theo hóa đơn) và **Chi tiền ▾** (Phiếu chi · Trả tiền theo hóa đơn). Theo hóa đơn: chọn đối tượng xong tự mở bảng chứng từ còn nợ. Màn Phiếu thu / Phiếu chi / Báo có / Báo nợ cũ vẫn mở được theo đường dẫn.
+- Form chứng từ: bỏ dải "Cảnh báo kiểm chuẩn" của ngày chứng từ (vẫn ghi bằng chứng khi ghi phiếu); chân phiếu **Hủy · Ghi · Ghi và thêm**; ghi phiếu thu / chi, phiếu kế toán không hỏi xác nhận nữa.
+- Khung danh sách: nút có menu con (▾).
+
 ### Phiếu thu / chi: lưới mặc định 6 cột như mẫu chuẩn; tên đối tượng theo dòng <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Lưới Hạch toán mặc định: Diễn giải · TK Nợ · TK Có · Số tiền · Đối tượng · Tên đối tượng; Khoản mục CP, Mục thu/chi… ẩn sẵn (nút Cột), cột có dữ liệu tự hiện.
 - Chọn đối tượng riêng ở dòng thì cột Tên đối tượng hiện đúng tên của dòng đó.

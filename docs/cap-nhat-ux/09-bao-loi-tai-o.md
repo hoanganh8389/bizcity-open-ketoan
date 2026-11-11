@@ -20,7 +20,7 @@ Nhận theo cách form đã đánh dấu sẵn: nhãn có `(*)` (`Field label="T
 
 ## 3. Kỹ thuật
 
-- `components/kiemLoi.ts`: rà ô (`kiemBatBuoc`), bỏ đỏ (`boLoiO`), nhận nút Ghi (`laNutGhi`: btn-primary hoặc chữ Ghi / Lưu / Cất).
+- `components/kiemLoi.ts`: rà ô (`kiemBatBuoc`), bỏ đỏ (`boLoiO`), nhận nút Ghi (`laNutGhi`: btn-primary hoặc chữ Ghi / Lưu).
 - `components/useKiemLoi.tsx`: hook gắn vào thân + chân hộp thoại (bắt bấm nút ở pha capture; nút khoá có `pointer-events: none` nên dò theo toạ độ), dùng ở `ui.tsx` Modal và `voucher/VoucherModal.tsx` (cả Ctrl + S).
 - `Field` thêm `error` (viền đỏ + chữ đỏ). CSS `.o-loi`, `.o-loi-chu`, `.modal-loi` trong `theme.css`.
 - Lỗi máy chủ: `lib/api.ts` phát sự kiện `ketoan:api-loi` khi lần ghi bị từ chối (4xx trừ 401 / 403); hộp thoại trên cùng gọi `ganLoiMayChu`. Máy chủ (`platform/core/http.ts`) trả thêm `error.fields: [{ path, message }]` cho lỗi kiểm dữ liệu, `details` giữ nguyên khuôn câu; test `accounts.test.ts`. Ô khai `<Field truong="name">` để khớp chính xác.

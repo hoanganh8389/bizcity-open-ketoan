@@ -3,7 +3,7 @@
  * Khung form phiếu dùng chung cho mọi chứng từ lập trong phần mềm (phiếu thu chi, phiếu kế toán, phiếu kho,
  * hoá đơn bán, hàng bán trả lại…), xếp như form chứng từ của phần mềm kế toán để bàn:
  *
- *   VoucherModal  hộp phiếu: dòng tiêu đề, thanh nút (Ghi, Ghi và thêm mới, In, Xuất, Xóa, Đóng + nút riêng của phiếu),
+ *   VoucherModal  hộp phiếu: dòng tiêu đề, thanh nút (In, Xuất, Xóa + nút riêng của phiếu), chân Hủy · Ghi · Ghi và thêm,
  *                 thân phiếu, lời báo lỗi, lời báo "chỉ xem" (phiếu người khác lập, kỳ đã khoá, phiếu nhận từ hệ thống khác).
  *   L / C         nhãn và ô của lưới đầu phiếu 3 cột (lớp .vf-head-grid): L c r = nhãn cột c hàng r; C c r = ô; pair: chia đôi; wide: kéo hết hàng.
  *   useVoucherSave  luồng Ghi / Xóa chung: kiểm tra → hỏi xác nhận → gửi → làm mới danh sách → báo về màn danh sách;
@@ -15,9 +15,9 @@ import { useKiemLoi } from '../useKiemLoi';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { Download, LogOut, Printer, Save, X } from 'lucide-react';
+import { Download, Printer, Save, X } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
-import { DocumentGateBanner, useDocumentGate } from '@/components/PostingGate';
+import { useDocumentGate } from '@/components/PostingGate';
 import type { Advisory } from '@/features/system/conformance';
 
 /** Phần chung của phiếu đã lưu (GET /api/v1/documents/:id). */
@@ -35,7 +35,7 @@ export function readOnlyReason(existing: SavedVoucher | undefined, opts: { exter
   return null;
 }
 
-export interface ToolButton { key: string; label: ReactNode; icon?: ReactNode; onClick: () => void; disabled?: boolean; title?: string }
+export interface ToolButton { key: string; label: ReactNode; icon?: ReactNode; onClick: () => void; disabled?: boolean; title?: string; /** Menu con (nút ▾): các lựa chọn của nút. */ menu?: { key: string; label: string; onClick: () => void }[] }
 
 export function VoucherModal({ title, titleExtra, existing, readOnly, saving, onSave, onSaveNew, onPrint, printSlot, onExport, onDelete, onClose, extraButtons, error, readOnlyText, advisories, total, children }: {
   title: string;
@@ -98,17 +98,17 @@ export function VoucherModal({ title, titleExtra, existing, readOnly, saving, on
           {extraButtons?.map((b) => <button key={b.key} disabled={b.disabled} title={b.title} onClick={b.onClick}>{b.icon}{b.label}</button>)}
         </div>
         <div className="vf-body" ref={kl.body} {...kl.bodyProps}>
-          {!readOnly && advisories && <DocumentGateBanner advisories={advisories} />}
+          {/* [2026-11-11 Nguyễn Văn Thủy] bỏ dải cảnh báo kiểm chuẩn của NGÀY chứng từ khỏi form (không nói về phiếu đang lập; mẫu chuẩn không có) — vẫn ghi bằng chứng khi ghi phiếu (đóng góp) */}
           {children}
           {error && <div className="alert alert-bad" style={{ margin: '6px 0 0' }}>{error}</div>}
           {readOnlyText && !cancelled && <div className="alert alert-warn" style={{ margin: '6px 0 0' }}>{readOnlyText}</div>}
         </div>
-        <div className="ct-keys">F9 - Thêm nhanh khách hàng, nhà cung cấp (khi đang ở ô chọn) · Ctrl + S - Ghi · Esc - Thoát</div>
+        <div className="ct-keys">F9 - Thêm nhanh khách hàng, nhà cung cấp (khi đang ở ô chọn) · Ctrl + S - Ghi · Esc - Hủy</div>
         <div className="modal-foot" {...kl.footProps}>
           {kl.banner}
-          <button className="btn" onClick={onClose}><LogOut size={15} /> Thoát</button>
-          {onSaveNew && <button className="btn" disabled={readOnly || saving} onClick={onSaveNew}><Save size={15} /> Ghi và thêm mới</button>}
-          <button className="btn btn-primary" disabled={readOnly || saving} onClick={onSave} title="Ctrl + S"><Save size={15} /> Ghi</button>
+          <button className="btn" onClick={onClose}>Hủy</button>
+          <button className={onSaveNew ? 'btn' : 'btn btn-primary'} disabled={readOnly || saving} onClick={onSave} title="Ctrl + S"><Save size={15} /> Ghi</button>
+          {onSaveNew && <button className="btn btn-primary" disabled={readOnly || saving} onClick={onSaveNew}><Save size={15} /> Ghi và thêm</button>}
         </div>
       </div>
     </div>

@@ -303,7 +303,6 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
   // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: cảnh báo kiểm chuẩn của ngày phiếu
   const { doSave, doDelete, saving, error, setProblem, advisories } = useVoucherSave({
     existing, check, docDate: h.docDate, docType: 'manual', onSaved, onClose,
-    confirm: 'Bạn có chắc chắn muốn Ghi phiếu này không?',
     invalidate: [['documents']],
     submit: () => (existing ? api.put<{ docNo: string }>(`/api/v1/vouchers/${existing.id}`, body()) : api.post<{ docNo: string }>('/api/v1/vouchers', body())),
   });

@@ -52,6 +52,7 @@ import { ProductAccountsPage } from './features/posting/ProductAccountsPage';
 import { PaymentMethodsPage } from './features/posting/PaymentMethodsPage';
 import { DefaultsPage } from './features/posting/DefaultsPage';
 import { VouchersPage } from './features/vouchers/VouchersPage';
+import { CashVouchersPage } from './features/vouchers/CashVouchersPage';
 import { DimensionsPage } from './features/catalog/DimensionsPage';
 import { UsersPage } from './features/access/UsersPage';
 import { ApiKeysPage } from './features/access/ApiKeysPage';
@@ -93,6 +94,8 @@ export const pageRoutes = (
     <Route path="tien-ich/ct-lech-phieu-goc" element={<AccountingVouchersPage key="source-diff" mode="source-diff" />} />
     {/* key khác nhau để chuyển giữa các màn dùng chung thành phần thì dựng lại, không giữ ô lọc cũ */}
     <Route path="nghiep-vu/phieu-thu" element={<VouchersPage key="receipt" type="receipt" />} />
+    <Route path="quy/thu-chi" element={<CashVouchersPage key="thu-chi" type="receipt" pair="payment" />} />
+    <Route path="quy/thu-chi-tien-gui" element={<CashVouchersPage key="thu-chi-tg" type="bank_receipt" pair="bank_payment" />} />
     <Route path="nghiep-vu/phieu-chi" element={<VouchersPage key="payment" type="payment" />} />
     <Route path="nghiep-vu/phieu-bao-no" element={<VouchersPage key="bank_payment" type="bank_payment" />} />
     <Route path="nghiep-vu/phieu-bao-co" element={<VouchersPage key="bank_receipt" type="bank_receipt" />} />

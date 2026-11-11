@@ -88,8 +88,10 @@ function readCols(type: string): ColKey[] {
   try { const v = JSON.parse(localStorage.getItem(colsKey(type)) ?? 'null') as ColKey[] | null; return Array.isArray(v) ? v : COLS_DEFAULT; } catch { return COLS_DEFAULT; }
 }
 
-export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
+export function CashVoucherForm({ type, existing, initial, onClose, onSaved, theoHoaDon }: {
   type: Exclude<VoucherType, 'manual'>;
+  /** Thu / trả tiền theo hoá đơn: chọn đối tượng xong tự mở bảng chứng từ còn nợ để chọn. */
+  theoHoaDon?: boolean;
   existing?: ExistingVoucher;
   initial?: VoucherTemplateInput;
   onClose: () => void;
@@ -210,6 +212,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
     if (!x) return;
     set({ partnerCode: code, partnerName: x.name, counterparty: x.contactName || x.name, phone: x.mobile || x.phone || '', address: x.address || '' });
     if (autoDesc) setDesc(descFor(x.name));
+    if (theoHoaDon) setFinding(true);
     setRows((xs) => xs.map((r) => (r.partner ? r : { ...r, partner: code })));
   };
   const partnerName = h.partnerName || partnerQ.data?.find((x) => x.code === h.partnerCode)?.name || '';
@@ -298,7 +301,6 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
 
   const { doSave, doDelete, saving, error, setProblem, advisories } = useVoucherSave({
     existing, check, docDate: h.docDate, docType: type, onSaved, onClose,
-    confirm: 'Bạn có chắc chắn muốn Ghi phiếu này không?',
     invalidate: [['documents']],
     submit: () => (existing ? api.put<{ docNo: string }>(`/api/v1/vouchers/${existing.id}`, body()) : api.post<{ docNo: string }>('/api/v1/vouchers', body())),
   });
@@ -353,7 +355,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
     });
   };
 
-  const title = isBank ? (isReceipt ? 'Thu tiền gửi' : 'Chi tiền gửi') : meta.title;
+  const title = (isBank ? (isReceipt ? 'Thu tiền gửi' : 'Chi tiền gửi') : meta.title) + (theoHoaDon && !existing ? ' theo hóa đơn' : '');
   const bankAcc = banks.find((b) => b.accountCode === moneyAccount && b.isActive);
   return (
     <>

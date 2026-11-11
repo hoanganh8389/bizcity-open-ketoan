@@ -49,14 +49,14 @@ const MUA = (loai: string) => `/mua-hang/tong-hop?loai=${loai}`;
 export const GON_DEFS: GonDef[] = [
   {
     key: 'tien-mat', label: 'Tiền mặt', icon: 'Banknote', description: 'Thu tiền, chi tiền, sổ quỹ tiền mặt', color: '#0f9d58', module: 'quy', homeLabel: 'Quy trình',
-    the: ['/nghiep-vu/phieu-thu', '/nghiep-vu/phieu-chi'],
-    sections: [{ paths: ['/nghiep-vu/phieu-thu', '/nghiep-vu/phieu-chi'], soon: ['Đề nghị chi tiền', 'Kiểm kê quỹ'] }],
+    the: ['/quy/thu-chi'],
+    sections: [{ paths: ['/quy/thu-chi'], soon: ['Đề nghị chi tiền', 'Kiểm kê quỹ'] }],
     reports: [{ label: 'Tiền mặt', paths: ['/quy/so-du-tien', '/quy/nhat-ky-thu-tien', '/quy/so-chi-tiet-quy', '/quy/nhat-ky-chi-tien', '/quy/so-quy-tien-mat', '/quy/dong-tien'] }],
   },
   {
     key: 'tien-gui', label: 'Tiền gửi', icon: 'Landmark', description: 'Thu, chi tiền gửi, chuyển tiền nội bộ, sổ tiền gửi', color: '#0b8a7a', module: 'quy', homeLabel: 'Quy trình',
-    the: ['/nghiep-vu/phieu-bao-co', '/nghiep-vu/phieu-bao-no', '/quy/phieu-chuyen-tien'],
-    sections: [{ paths: ['/nghiep-vu/phieu-bao-co', '/nghiep-vu/phieu-bao-no', '/quy/phieu-chuyen-tien'], soon: ['Đối chiếu ngân hàng'] }],
+    the: ['/quy/thu-chi-tien-gui', '/quy/phieu-chuyen-tien'],
+    sections: [{ paths: ['/quy/thu-chi-tien-gui', '/quy/phieu-chuyen-tien'], soon: ['Đối chiếu ngân hàng'] }],
     reports: [{ label: 'Tiền gửi', paths: ['/quy/so-tien-gui', '/quy/so-du-ngan-hang', '/quy/so-du-tien', '/quy/chuyen-tien-noi-bo', '/bao-cao/tien-vay'] }],
   },
   {

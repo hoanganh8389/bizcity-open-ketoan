@@ -13,6 +13,8 @@ export const quyMenu: MenuItem[] = [
     label: 'Nghiệp vụ quỹ',
     children: [
       { key: 'q-chuyen-tien', label: 'Phiếu chuyển tiền', path: '/quy/phieu-chuyen-tien', code: 'Q2' },
+      { key: 'q-thu-chi', label: 'Thu, chi tiền', path: '/quy/thu-chi', code: 'ACC51' },
+      { key: 'q-thu-chi-tg', label: 'Thu, chi tiền gửi', path: '/quy/thu-chi-tien-gui', code: 'ACC54' },
       { key: 'q-phieu-thu', label: 'Phiếu thu', path: '/nghiep-vu/phieu-thu', code: 'ACC51' },
       { key: 'q-phieu-chi', label: 'Phiếu chi', path: '/nghiep-vu/phieu-chi', code: 'ACC52' },
       { key: 'q-phieu-bao-no', label: 'Phiếu báo nợ', path: '/nghiep-vu/phieu-bao-no', code: 'ACC53' },

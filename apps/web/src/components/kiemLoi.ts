@@ -69,9 +69,9 @@ export function boLoiO(target: EventTarget | null) {
   box.querySelectorAll('.o-loi-chu[data-tu-kiem]').forEach((s) => s.remove());
 }
 
-/** Nút Ghi / Lưu: btn-primary ở chân hộp thoại, hoặc nút có chữ Ghi / Lưu / Cất. */
+/** Nút Ghi / Lưu: btn-primary ở chân hộp thoại, hoặc nút có chữ Ghi / Lưu. */
 export const laNutGhi = (b: Element | null): b is HTMLButtonElement =>
-  Boolean(b && b.tagName === 'BUTTON' && (b.classList.contains('btn-primary') || /^\s*(Ghi|Lưu|Cất|Gửi duyệt|Duyệt)/.test(b.textContent ?? '')));
+  Boolean(b && b.tagName === 'BUTTON' && (b.classList.contains('btn-primary') || /^\s*(Ghi|Lưu|Gửi duyệt|Duyệt)/.test(b.textContent ?? '')));
 
 /* ------------------------------------------------------------------ Lỗi máy chủ → ô */
 const kd = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').replace(/\(\*\)|\*/g, '').replace(/\s+/g, ' ').toLowerCase().trim();
