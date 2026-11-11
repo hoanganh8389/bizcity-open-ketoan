@@ -7,6 +7,7 @@
  * useListFilter : điều kiện lọc (bản nháp đang sửa / bản đã bấm Tìm kiếm) và widen() nới khoảng ngày cho phiếu vừa ghi.
  */
 import { useRef, useState, type ReactNode } from 'react';
+import { ChiTietChungTu } from './ChiTietChungTu';
 import { useThemTuDiaChi } from '@/lib/themNhanh';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Copy, Download, Pencil, RefreshCw, Search, X } from 'lucide-react';
@@ -34,8 +35,10 @@ export function useListFilter(from = defaultFrom()) {
 }
 
 export function VoucherListPage<R extends { id: string; docKey: string }>({
-  title, code, subtitle, helpKey, filter, query, columns, storageKey, addButtons, canWrite, onOpen, onCopy, canDelete, extraToolbar, extraPanel, notice, setNotice, emptyText, children,
+  title, code, subtitle, helpKey, filter, query, columns, storageKey, addButtons, canWrite, onOpen, onCopy, canDelete, extraToolbar, extraPanel, notice, setNotice, emptyText, children, chiTiet,
 }: {
+  /** Danh sách trên – dưới: bấm một phiếu → nửa dưới hiện dòng hạch toán của phiếu; bấm đúp mới mở phiếu. */
+  chiTiet?: boolean;
   title: string; code: string; subtitle: string; helpKey: string;
   filter: ReturnType<typeof useListFilter>;
   query: { data?: R[]; isLoading: boolean; isFetching: boolean; error: unknown; refetch: () => unknown; queryKey: QueryKey };
@@ -63,6 +66,7 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
   const exportRef = useRef<(() => void) | null>(null);
   const rows = query.data ?? [];
   const picked = rows.filter((r) => selected.has(r.id));
+  const [dang, setDang] = useState<R | null>(null);
   // ?them=1 (nút Thêm nhanh): mở phiếu mới như bấm nút Thêm đầu tiên.
   useThemTuDiaChi(() => addButtons[0]?.onClick(), canWrite && addButtons.length > 0);
 
@@ -136,13 +140,16 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
               storageKey={storageKey}
               rows={rows}
               rowKey={(r) => r.id}
-              onRowClick={(r) => run(async () => { await onOpen(r); })}
+              onRowClick={chiTiet ? (r) => setDang(r) : (r) => run(async () => { await onOpen(r); })}
+              onRowDoubleClick={chiTiet ? (r) => run(async () => { await onOpen(r); }) : undefined}
+              maxHeight={chiTiet ? 'calc(100vh - 470px)' : undefined}
               exportRef={exportRef}
               exportName={`${code}-${f.from}-${f.to}`}
               columns={[pickCol, ...columns]}
             />
           )}
         </div>
+        {chiTiet && rows.length > 0 && <ChiTietChungTu id={dang && rows.some((r) => r.id === dang.id) ? dang.id : null} />}
       </ReportSideLayout>
       {children}
     </>

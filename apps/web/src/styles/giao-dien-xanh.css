@@ -349,3 +349,9 @@ tr.nx-loi td { background: #fff5f5; }
 tr.dgrid-row.clickable td:is([data-col="docNo"], [data-col="entryNo"], [data-col="soPhieu"]) { color: var(--brand-700); cursor: pointer; }
 tr.dgrid-row.clickable:hover td:is([data-col="docNo"], [data-col="entryNo"], [data-col="soPhieu"]) { text-decoration: underline; }
 tr.ct-cho.dgrid-row.clickable td:is([data-col="docNo"], [data-col="entryNo"], [data-col="soPhieu"]) { color: #d4670a; }
+
+/* Danh sách trên – dưới: phần chi tiết phiếu đang chọn. */
+.card.ct-duoi { margin-top: 8px; padding: 0; }
+.ct-duoi-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.ct-duoi-head b { font-size: 13.5px; }
+.ct-duoi-head .muted { flex: 1; font-size: 12px; }

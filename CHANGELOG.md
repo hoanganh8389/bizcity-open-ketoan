@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Danh sách phiếu tiền dạng trên – dưới <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/05 (đóng góp) -->
+
+- **Đổi:** Phiếu thu / chi / báo có / báo nợ / phiếu kế toán: bấm một lần chọn phiếu và xem dòng hạch toán ở nửa dưới; bấm đúp để mở phiếu (trước: bấm một lần là mở).
+- **Thay đổi định khoản:** không.
+
 ### Bảng tham số báo cáo dạng ngăn kéo bên phải <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/04 (đóng góp) -->
 
 - **Đổi:** ở giao diện Xanh, bảng lọc của sổ / báo cáo / danh sách chứng từ thành ngăn kéo bên phải (nút **Chọn tham số**), báo cáo rộng trọn màn, có dòng tóm tắt tham số; bấm Tìm kiếm thì ngăn tự đóng. Nút **Ghim bên trái** / **Bỏ ghim** để đổi (nhớ theo máy).

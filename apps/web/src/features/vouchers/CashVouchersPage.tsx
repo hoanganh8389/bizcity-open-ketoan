@@ -118,6 +118,7 @@ export function CashVouchersPage({ type }: { type: CashType }) {
 
   return (
     <VoucherListPage
+      chiTiet
       title={meta.title} code={meta.code} subtitle={SUBTITLE[type]} helpKey={meta.helpKey}
       filter={filter} query={{ ...q, queryKey: ['documents', 'voucher', type] }} columns={columns} storageKey={`voucher-list-${type}`} canWrite={canWrite}
       notice={notice} setNotice={setNotice}
