@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ nhật ký chung (S03a-DN), Sổ chi tiết các tài khoản theo mẫu <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- ACC89: Ngày hạch toán · Ngày chứng từ · Số chứng từ · Diễn giải · Tài khoản · TK đối ứng · Phát sinh Nợ / Có; tham số kỳ + Cộng gộp các bút toán giống nhau; cột thêm (loại chứng từ, đối tượng, mã hàng…) ẩn sẵn; bỏ dải kéo nhóm.
+- ACC12: chọn nhiều tài khoản; mỗi tài khoản một nhóm "Tài khoản: …" (Số dư đầu kỳ, phát sinh, Dư Nợ / Dư Có chạy, Cộng), cuối bảng Tổng cộng. Bản in cùng bố cục.
+
+
 ### Bảng kê số dư ngân hàng (ACC96), Sổ chi tiết chuyển tiền nội bộ (ACC97) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - ACC96: STT · Tài khoản ngân hàng · Tên ngân hàng · Chi nhánh · Số dư đầu kỳ · Phát sinh Nợ / Có · Số dư cuối kỳ (ghép danh mục tài khoản ngân hàng theo tài khoản kế toán).
 - ACC97: chứng từ chuyển tiền nội bộ — tài khoản đi / đến (số, tên ngân hàng), lý do, diễn giải, TK Nợ, TK Có, số tiền.

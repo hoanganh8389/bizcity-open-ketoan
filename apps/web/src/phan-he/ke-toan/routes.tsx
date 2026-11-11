@@ -13,6 +13,7 @@ import { OpeningBalancesPage } from './opening/OpeningBalancesPage';
 import { PeriodsPage } from './periods/PeriodsPage';
 import { CashPlanPage, CostNormPage } from './planning/PlanningPages';
 import { AccountLedgerPage } from './reports/AccountLedgerPage';
+import { SoChiTietTaiKhoanPage } from './reports/SoChiTietTaiKhoanPage';
 import { AgingDuePage } from './reports/AgingDuePage';
 import { BalanceSheetPage } from './reports/BalanceSheetPage';
 import { ChecksPage, ContractProfitPage, ExpensePage } from './reports/ControlPages';
@@ -31,7 +32,7 @@ export const keToanRoutes = (
   <>
     <Route path="/bang-dieu-khien" element={<DashboardPage />} />
     <Route path="bao-cao/can-doi-phat-sinh" element={<TrialBalancePage />} />
-    <Route path="bao-cao/so-chi-tiet" element={<AccountLedgerPage key="ct" />} />
+    <Route path="bao-cao/so-chi-tiet" element={<SoChiTietTaiKhoanPage />} />
     <Route path="bao-cao/cong-no" element={<PartnerBalancesPage key="acc38" />} />
     <Route path="bao-cao/cong-no-theo-nhan-vien" element={<DebtByEmployeePage />} />
     <Route path="bao-cao/cong-no-theo-mat-hang" element={<DebtByItemPage />} />
