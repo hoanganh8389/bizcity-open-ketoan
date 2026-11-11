@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Form Phiếu thu / Phiếu chi / Thu, chi tiền gửi làm lại theo mẫu chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Ô **Loại** cạnh tiêu đề (mẫu định khoản): Thu tiền khách hàng, Thu hoàn ứng, Rút tiền gửi về quỹ…; Trả tiền NCC, Tạm ứng, Chi mua ngoài có hoá đơn, Trả lương, Gửi tiền vào ngân hàng, Chuyển tiền chi nhánh… — chọn thì điền tài khoản tiền + tài khoản đối ứng (lấy tài khoản chi tiết đầu tiên theo đầu số). Phiếu đã lập tự nhận loại theo tài khoản.
+- Đầu phiếu nhãn trên ô: Mã / Tên đối tượng · Người nộp / nhận · Địa chỉ · Lý do (tự gợi "Chi tiền cho …") · Nhân viên · Kèm theo … chứng từ gốc; bên phải Ngày hạch toán · Số phiếu · Chi nhánh (chỉ khi có từ 2 chi nhánh). Tiền gửi: Nộp vào tài khoản / Tài khoản chi. Bỏ ô Tài khoản tiền, Tiền tệ, Số tiền đầu phiếu (tổng tự tính).
+- Thẻ Hạch toán: # · Diễn giải · TK Nợ · TK Có · Số tiền · Đối tượng · Tên đối tượng; nút **Cột** bật Khoản mục CP (mặc định), Đơn vị, Hợp đồng, Nhân viên, Mã lưu chuyển tiền tệ, Thuế / hoá đơn, Chứng từ thanh toán (cột có dữ liệu luôn hiện). Thêm dòng · Xóa hết dòng · Tìm chứng từ. Dán từ Excel theo cột đang hiện.
+- Dữ liệu gửi đi và cách ghi sổ giữ nguyên. Ghi / Xoá phiếu làm mới các ô số tổng đầu trang (tồn quỹ, số dư tiền gửi). Tên phiếu ở thanh cửa sổ dưới không lẫn chữ ô Loại.
+
 ### Menu: Biên bản đối chiếu công nợ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Mua hàng / Bán hàng → Báo cáo trỏ thẳng màn Biên bản đối chiếu công nợ (CN07) thay dòng "đang phát triển".
 

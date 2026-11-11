@@ -37,8 +37,10 @@ export function readOnlyReason(existing: SavedVoucher | undefined, opts: { exter
 
 export interface ToolButton { key: string; label: ReactNode; icon?: ReactNode; onClick: () => void; disabled?: boolean; title?: string }
 
-export function VoucherModal({ title, existing, readOnly, saving, onSave, onSaveNew, onPrint, printSlot, onExport, onDelete, onClose, extraButtons, error, readOnlyText, advisories, total, children }: {
+export function VoucherModal({ title, titleExtra, existing, readOnly, saving, onSave, onSaveNew, onPrint, printSlot, onExport, onDelete, onClose, extraButtons, error, readOnlyText, advisories, total, children }: {
   title: string;
+  /** Ô đứng ngay sau tiêu đề (vd ô Loại phiếu của phiếu thu / chi). */
+  titleExtra?: ReactNode;
   /** Tổng tiền của phiếu: hiện chữ lớn góc trên phải. */
   total?: number;
   existing?: SavedVoucher;
@@ -84,6 +86,7 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
       <div className="modal wide vf chung-tu" role="dialog" aria-modal="true">
         <div className="modal-head vf-head" ref={(el) => { dock.headRef.current = el; }}>
           <span>{title}{existing ? ` ${existing.docNo}` : ''}{cancelled ? ' (đã huỷ)' : ''}</span>
+          {titleExtra}
           {total !== undefined && <span className="ct-total"><small>Tổng tiền</small><b>{total.toLocaleString('vi-VN', { maximumFractionDigits: 0 })}</b></span>}
           {dock.top && <MinimizeButton onClick={dock.minimize} />}
           <button className="btn btn-sm btn-ghost" title="Đóng" onClick={onClose}><X size={16} /></button>
@@ -146,7 +149,8 @@ export function useVoucherSave<T extends { docNo: string; status?: string }>({ e
   const qc = useQueryClient();
   const gate = useDocumentGate(docDate);
   const [problem, setProblem] = useState<string | null>(null);
-  const refresh = () => { for (const k of [...invalidate, ['document']]) void qc.invalidateQueries({ queryKey: k }); };
+  // Làm mới cả các ô số tổng đầu trang (tồn quỹ, số dư tiền gửi…) — kpi.
+  const refresh = () => { for (const k of [...invalidate, ['document'], ['kpi']]) void qc.invalidateQueries({ queryKey: k }); };
   const save = useMutation({ mutationFn: ({ force }: { addNew: boolean; force: boolean }) => submit(force) });
   const remove = useMutation({ mutationFn: (reason: string) => api.post('/api/v1/documents/cancel', { docKey: existing!.docKey, reason }) });
   const run = (addNew: boolean, force = false) => {
