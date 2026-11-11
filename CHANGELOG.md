@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chuyển kho: chi tiết dòng hàng bên dưới, nhận đủ hàng loạt <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/05 (đóng góp) -->
+
+- **Thêm:** KHO01: nửa dưới hiện dòng hàng của phiếu đang chọn; cột Chọn và nút **Nhận đủ … phiếu đã tích** cho thủ kho nhập.
+- **Thay đổi định khoản:** không.
+
 ### Nhập Excel phiếu thu / chi / báo có / báo nợ / phiếu kế toán + ghi sổ hàng loạt <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §4 (đóng góp) -->
 
 - **Thêm:** trình nhập Excel 5 loại phiếu: dòng cùng số chứng từ là một phiếu; bước kiểm ghi sổ thử rồi huỷ; phiếu nhập vào ở trạng thái chờ duyệt (chưa có bút toán).

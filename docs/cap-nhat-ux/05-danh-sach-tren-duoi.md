@@ -11,4 +11,9 @@ Ngày: 11/11/2026. Áp cho Phiếu thu, Phiếu chi, Phiếu báo có, Phiếu b
 
 Kỹ thuật: `VoucherListPage` thêm `chiTiet` và `kpi`; thẻ `KpiTien` ở `components/KpiDanhMuc.tsx`; (bật ở `CashVouchersPage`); phần dưới `components/voucher/ChiTietChungTu.tsx` đọc `GET /api/v1/documents/:id`.
 
-Còn làm: phiếu bán hàng / trả lại, phiếu chuyển kho (chi tiết dòng hàng).
+## Phiếu chuyển kho (KHO01)
+
+- Nửa dưới hiện dòng hàng của phiếu đang chọn: Mã, Tên, ĐVT, Số lô, Hạn dùng, SL xuất, SL nhận.
+- Cột **Chọn** tích nhiều phiếu; nút **Nhận đủ … phiếu đã tích**: thủ kho nhập xác nhận nhận đủ số lượng các phiếu chờ nhận (ngày nhận hôm nay), phiếu lỗi báo riêng. Nhận thiếu vẫn mở từng phiếu, bấm Nhận hàng.
+
+Còn làm: phiếu bán hàng / trả lại (màn đang chạy dữ liệu mẫu, bán hàng thật đi từ hệ thống bán hàng).

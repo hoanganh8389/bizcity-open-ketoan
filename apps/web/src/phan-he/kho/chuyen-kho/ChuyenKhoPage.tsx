@@ -42,6 +42,10 @@ export function ChuyenKhoPage() {
   const [editing, setEditing] = useState<CkDoc | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [receiving, setReceiving] = useState<CkDoc | null>(null);
+  // [2026-11-11 Nguyễn Văn Thủy] tích nhiều phiếu → Nhận đủ hàng loạt; nửa dưới hiện dòng hàng phiếu đang chọn (đóng góp)
+  const [tich, setTich] = useState<Set<string>>(new Set());
+  const [bao, setBao] = useState<string | null>(null);
+  const [nhanLoat, setNhanLoat] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const params = {
     from: f.from, to: f.to, ...(f.branchCodes && f.branchCodes !== '-' ? { branchCodes: f.branchCodes } : {}), ...(f.warehouses ? { warehouses: f.warehouses } : {}),
@@ -65,6 +69,20 @@ export function ChuyenKhoPage() {
     onSuccess: after,
   });
   useThemTuDiaChi(() => { setEditing(emptyDoc(f.branchCodes)); setFormKey((k) => k + 1); });
+  /** Nhận đủ hàng loạt: mỗi phiếu chờ nhận đã tích nhận đủ số lượng xuất; phiếu lỗi báo riêng. */
+  const nhanDu = async () => {
+    const list = rows.filter((r) => tich.has(r.id) && r.status === 'shipped');
+    if (!list.length || !window.confirm(`Xác nhận NHẬN ĐỦ ${list.length} phiếu chuyển kho (ngày nhận hôm nay)? Tồn bên nhận sẽ cộng.`)) return;
+    setNhanLoat(true); setBao(null);
+    const loi: string[] = [];
+    let ok = 0;
+    for (const r of list) {
+      try { await ckApi.receive(r.id, { receivedDate: today(), lines: r.lines.map((l) => ({ lineKey: l.lineKey, receivedQty: l.qty })), note: '' }); ok++; } catch (e) { loi.push(`${r.docNo}: ${errorText(e)}`); }
+    }
+    setNhanLoat(false); setTich(new Set());
+    void qc.invalidateQueries({ queryKey: ['kho-transfers'] });
+    setBao(`Đã nhận đủ ${ok} phiếu.${loi.length ? ` ${loi.length} phiếu chưa nhận được — ${loi.slice(0, 5).join('; ')}` : ''}`);
+  };
   const open = async (row: CkDoc, edit = false) => { if (edit) openNextInEdit(); setEditing(await ckApi.get(row.id)); setFormKey((k) => k + 1); };
   const openReceive = async (row: CkDoc) => { receive.reset(); setReceiving(await ckApi.get(row.id)); };
   const ask = (text: string, need = false) => { const r = window.prompt(text, ''); if (r === null) return null; if (need && !r.trim()) { window.alert('Cần ghi lý do'); return null; } return r.trim(); };
@@ -103,18 +121,25 @@ export function ChuyenKhoPage() {
             <button className="btn btn-sm" disabled={!live || act.isPending} title="Huỷ cả phần xuất và phần nhập (đảo bút toán bằng số âm), giữ phiếu để tra cứu"
               onClick={() => { if (!sel) return; const r = ask(`Huỷ phiếu chuyển kho ${sel.docNo}? Tồn hai bên trả lại như trước khi chuyển.\nLý do huỷ:`); if (r !== null) act.mutate({ kind: 'cancel', id: sel.id, reason: r }); }}>Huỷ phiếu</button>
             <PrintButton small screen="KHO01" templates={TRADE_TEMPLATES.transfer!} disabled={!sel} title="In phiếu đang chọn" getDocs={async () => (sel ? [toPrintDoc(await ckApi.get(sel.id))] : [])} />
+            <button className="btn btn-sm" disabled={nhanLoat || !rows.some((r) => tich.has(r.id) && r.status === 'shipped')}
+              title="Thủ kho nhập: xác nhận NHẬN ĐỦ số lượng các phiếu chờ nhận đã tích (ngày nhận = hôm nay). Nhận thiếu thì mở từng phiếu, bấm Nhận hàng."
+              onClick={() => void nhanDu()}>{nhanLoat ? 'Đang nhận…' : `Nhận đủ ${rows.filter((r) => tich.has(r.id) && r.status === 'shipped').length || ''} phiếu đã tích`}</button>
             <button className="btn btn-sm" onClick={() => void q.refetch()}>Nạp</button>
             <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
             <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Phiếu chuyển từ website xem ở <Link to="/bao-cao/chuyen-kho">Bảng kê chuyển kho (HH01)</Link></span>
           </div>
+          {bao && <div className="alert alert-ok" style={{ margin: '6px 0' }}>{bao}</div>}
           <ErrorBox error={q.error ? errorText(q.error) : act.error ? errorText(act.error) : null} />
           {q.isLoading ? <Loading /> : (
             <DataGrid
               storageKey="kho01-phieu-chuyen-v1" exportName={`phieu-chuyen-kho-${f.from}-${f.to}`} exportRef={exportRef}
-              rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => void open(r)}
+              rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => void open(r)} maxHeight="calc(100vh - 480px)"
               rowClassName={(r) => dongChungTu(r.status)} footerLabel="Cộng"
               emptyText='Chưa có phiếu chuyển kho trong khoảng này — bấm "+ Thêm"'
               columns={[
+                { key: 'tich', noFilter: true, noSort: true, width: 46, value: () => '',
+                  header: <label className="checkbox" title="Tích tất cả phiếu đang hiện"><input type="checkbox" checked={rows.length > 0 && rows.every((r) => tich.has(r.id))} onChange={(e) => setTich(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())} /> Chọn</label>,
+                  render: (r) => <input type="checkbox" checked={tich.has(r.id)} onClick={(e) => e.stopPropagation()} onChange={(e) => setTich((t) => { const n = new Set(t); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} /> },
                 { key: 'docDate', header: 'Ngày', title: 'Ngày xuất', type: 'date', width: 95 },
                 { key: 'docNo', header: 'Số phiếu', title: 'Số phiếu chuyển kho', type: 'code', width: 115 },
                 { key: 'fromBranchCode', header: 'Chi nhánh xuất', title: 'Chi nhánh giao hàng', type: 'code', width: 115 },
@@ -131,6 +156,22 @@ export function ChuyenKhoPage() {
                 { key: 'receivedBy', header: 'Người nhận', title: 'Người xác nhận nhận hàng', width: 120, hidden: true },
               ]}
             />
+          )}
+          {sel && rows.some((r) => r.id === sel.id) && (
+            <div className="card ct-duoi">
+              <div className="ct-duoi-head" style={{ cursor: 'default' }}><b>Chi tiết · {sel.docNo}</b><span className="muted">bấm đúp phiếu ở trên để mở</span></div>
+              <DataGrid storageKey="kho01-chi-tiet-v1" rows={sel.lines} rowKey={(l) => l.lineKey} maxHeight="210px" footerLabel="Cộng"
+                columns={[
+                  { key: 'sku', header: 'Mã hàng', type: 'code', width: 120 },
+                  { key: 'name', header: 'Tên hàng', width: 300 },
+                  { key: 'unit', header: 'ĐVT', width: 70 },
+                  { key: 'lotNo', header: 'Số lô', type: 'code', width: 110 },
+                  { key: 'expDate', header: 'Hạn dùng', type: 'date', width: 95 },
+                  { key: 'qty', header: 'SL xuất', type: 'number', width: 90, sum: true },
+                  { key: 'receivedQty', header: 'SL nhận', type: 'number', width: 90, sum: true, value: (l) => (sel.status === 'received' ? l.receivedQty ?? l.qty : null) },
+                  { key: 'note', header: 'Ghi chú', width: 200 },
+                ]} />
+            </div>
           )}
           {sel && <div className="muted ck-sel">Đang chọn {sel.docNo}: {viDate(sel.docDate)} · {sel.fromBranchCode}{sel.fromWarehouse ? ` · ${sel.fromWarehouse}` : ''} → {sel.toBranchCode}{sel.toWarehouse ? ` · ${sel.toWarehouse}` : ''} · {qtyText(sel.totalQty)} xuất{sel.status === 'received' ? ` · ${qtyText(sel.totalReceived)} nhận` : ''}</div>}
         </div>
