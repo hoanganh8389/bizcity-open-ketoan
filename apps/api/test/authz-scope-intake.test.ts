@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { closeDb, db } from '../src/db/client.js';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+// [2026-11-09 03:25 PM kiennt] PHASE-028 — S028-19 (giai đoạn 3.3): test phạm vi kho ở cửa nạp — gán theo kho, dòng hàng theo kho, kho mặc định, phiếu không có hàng
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -135,5 +136,56 @@ describe('Cửa nạp theo chi nhánh', () => {
   it('thu hồi lần gán phạm vi: từ chối ngay', async () => {
     expect((await call(ctx, 'POST', `/api/v1/users/${aId}/roles/${aAssign}/revoke`, { reason: 'Chuyển cửa hàng' })).status).toBe(200);
     expect((await postAs(aToken, '/api/v1/documents', sale('SC-THU-HOI', 'CN01'))).statusCode).toBe(403);
+  });
+});
+
+describe('Phạm vi kho (S028-19)', () => {
+  let k1 = '';
+  let kToken = '';
+  const saleAt = (docKey: string, warehouseCode?: string) => {
+    const d = saleDoc({ docKey, docNo: docKey, version: 1 }) as Record<string, unknown> & { lines: Record<string, unknown>[] };
+    d.lines = d.lines.map((l) => (warehouseCode === undefined ? l : { ...l, warehouseCode }));
+    return d;
+  };
+
+  beforeAll(async () => {
+    // CN01: K1 là kho mặc định, K2 là kho thứ hai.
+    expect((await call(ctx, 'POST', '/api/v1/warehouses', { code: 'K1', branchCode: 'CN01', name: 'Kho 1', isDefault: true })).status).toBe(201);
+    expect((await call(ctx, 'POST', '/api/v1/warehouses', { code: 'K2', branchCode: 'CN01', name: 'Kho 2' })).status).toBe(201);
+    const whs = (await call(ctx, 'GET', '/api/v1/warehouses')).body.data as { id: string; code: string }[];
+    k1 = String(whs.find((w) => w.code === 'K1')!.id);
+    const kId = String((await call(ctx, 'POST', '/api/v1/users', { email: 'kho1@ketoan.local', fullName: 'Thủ kho K1', role: 'viewer', password: 'Xem@12345' })).body.data.id);
+    const a = await call(ctx, 'POST', `/api/v1/users/${kId}/roles`, { role: 'accountant', scopeType: 'warehouse', scopeId: k1, reason: 'Làm việc ở kho K1' });
+    expect(a.status, JSON.stringify(a.body)).toBe(201);
+    expect(a.body.data).toMatchObject({ scopeType: 'warehouse', scopeId: k1 });
+    kToken = await login('kho1@ketoan.local', 'Xem@12345');
+  });
+
+  it('kiểm đầu vào: warehouse cần scopeId; kho lạ 404', async () => {
+    expect((await call(ctx, 'POST', `/api/v1/users/${aId}/roles`, { role: 'viewer', scopeType: 'warehouse', reason: 'Gán thử' })).status).toBe(400);
+    expect((await call(ctx, 'POST', `/api/v1/users/${aId}/roles`, { role: 'viewer', scopeType: 'warehouse', scopeId: '999999999', reason: 'Gán thử' })).status).toBe(404);
+  });
+
+  it('nạp phiếu có hàng ở K1 được; ở K2 bị từ chối; dòng không ghi kho = kho mặc định K1', async () => {
+    const ok = await postAs(kToken, '/api/v1/documents', saleAt('KHO-K1', 'K1'));
+    expect(ok.statusCode, ok.body).not.toBe(403);
+    expect(await stored('KHO-K1')).toBe(1);
+    expect((await postAs(kToken, '/api/v1/documents', saleAt('KHO-K2', 'K2'))).statusCode).toBe(403);
+    expect(await stored('KHO-K2')).toBe(0);
+    const dflt = await postAs(kToken, '/api/v1/documents', saleAt('KHO-MD'));
+    expect(dflt.statusCode, dflt.body).not.toBe(403);
+  });
+
+  it('phiếu lẫn K1 và K2: từ chối cả phiếu; phiếu ở chi nhánh khác bị từ chối', async () => {
+    const mixed = saleAt('KHO-LAN') as { lines: Record<string, unknown>[] };
+    mixed.lines = [{ ...mixed.lines[0]!, warehouseCode: 'K1' }, { ...mixed.lines[1]!, warehouseCode: 'K2' }];
+    expect((await postAs(kToken, '/api/v1/documents', mixed)).statusCode).toBe(403);
+    expect((await postAs(kToken, '/api/v1/documents', sale('KHO-CN02', 'CN02'))).statusCode).toBe(403);
+  });
+
+  it('gán theo kho không thành quyền toàn đơn vị; HT12 thấy id kho', async () => {
+    const me = await ctx.app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${kToken}` } });
+    expect(me.json().data.permissions).not.toContain('documents:write');
+    expect(k1).toMatch(/^\d+$/);
   });
 });

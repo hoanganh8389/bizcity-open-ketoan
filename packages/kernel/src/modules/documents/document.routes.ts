@@ -28,6 +28,8 @@ import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 // [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1 (ADR-0027 Phụ lục A, W5 đợt 1; chủ duyệt K3): cửa nạp kiểm quyền theo chi nhánh của chứng từ — có documents:write toàn đơn vị thì như cũ, không thì theo lần gán phạm vi chi nhánh
 import { requireScope } from '@bizcity/platform/core/authz/scope';
 import type { AuthzResourceContext } from '@bizcity/platform/core/authz/types';
+// [2026-11-09 03:15 PM kiennt] PHASE-028 — S028-19: kho mặc định của chi nhánh cho dòng không ghi kho (vị trí của phạm vi kho)
+import { defaultWarehouseOf } from '@bizcity/platform/masterdata/default-warehouse';
 import type { FastifyRequest } from 'fastify';
 import { ok, pageMeta, pageQuerySchema, idParamSchema, queryBool } from '@bizcity/platform/core/http';
 import { documentService } from './document.service.js';
@@ -284,6 +286,11 @@ export const documentWriteActions: AnyActionDef[] = [
  * yêu cầu, AUTHZ-11). Thiếu `branchCode` hoặc mã không có trong đơn vị → vị trí rỗng (`{}`) → requireScope từ chối (đóng an toàn).
  * Chỉ chạy khi người gọi KHÔNG có documents:write toàn đơn vị (requireScope đi đường nhanh trước).
  */
+// [2026-11-09 03:15 PM kiennt] PHASE-028 — S028-19 (giai đoạn 3.3): phạm vi KHO ở cửa nạp — chứng từ có dòng hàng (bán, mua, trả, chuyển kho, điều chỉnh) trả một vị trí cho MỖI kho của dòng
+// (dòng không ghi kho = kho mặc định của chi nhánh, cùng luật với lúc ghi kho); chứng từ không có hàng chỉ có chi nhánh.
+// Chuyển kho: kho XUẤT (phía nhận xác nhận ở bước riêng — hai đầu, hai phép kiểm). Mọi vị trí phải được phép (requireScope).
+const STOCK_DOC_TYPES = new Set(['sale', 'sale_return', 'purchase', 'purchase_return', 'transfer', 'stock_adjustment']);
+
 async function branchesOfDocs(req: FastifyRequest, docs: readonly unknown[]): Promise<AuthzResourceContext[]> {
   const auth = authOf(req);
   const codes = docs.map((d) => (d && typeof d === 'object' && typeof (d as { branchCode?: unknown }).branchCode === 'string' ? (d as { branchCode: string }).branchCode.trim() : ''));
@@ -292,5 +299,26 @@ async function branchesOfDocs(req: FastifyRequest, docs: readonly unknown[]): Pr
     ? await db.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).where('code', 'in', wanted).execute()
     : [];
   const idOf = new Map(rows.map((b) => [b.code, String(b.id)]));
-  return codes.map((c) => (c && idOf.has(c) ? { type: 'document', branchId: idOf.get(c)! } : {}));
+  const out: AuthzResourceContext[] = [];
+  for (const [i, d] of docs.entries()) {
+    const branchId = codes[i] ? idOf.get(codes[i]!) : undefined;
+    if (!branchId) { out.push({}); continue; }
+    const doc = d as { docType?: unknown; lines?: unknown };
+    const lines = STOCK_DOC_TYPES.has(String(doc.docType)) && Array.isArray(doc.lines) ? doc.lines : null;
+    if (!lines) { out.push({ type: 'document', branchId }); continue; }
+    const whCodes = new Set<string>();
+    for (const l of lines) {
+      const c = l && typeof l === 'object' && typeof (l as { warehouseCode?: unknown }).warehouseCode === 'string' ? (l as { warehouseCode: string }).warehouseCode.trim() : '';
+      whCodes.add(c || (await defaultWarehouseOf(db, auth.tenantId, { id: branchId })));
+    }
+    whCodes.delete('');
+    const whs = whCodes.size
+      ? await db.selectFrom('warehouses').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).where('branch_id', '=', branchId).where('code', 'in', [...whCodes]).execute()
+      : [];
+    // Kho không thuộc chi nhánh của phiếu → vị trí rỗng (đóng an toàn); chi nhánh chưa khai kho → chỉ chi nhánh.
+    if (whs.length < whCodes.size) { out.push({}); continue; }
+    if (!whs.length) { out.push({ type: 'document', branchId }); continue; }
+    for (const w of whs) out.push({ type: 'document', branchId, warehouseId: String(w.id) });
+  }
+  return out;
 }

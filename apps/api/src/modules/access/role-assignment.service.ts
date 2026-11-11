@@ -87,13 +87,20 @@ export const roleAssignmentService = {
     const user = await targetUser(trx, auth, userId);
     // [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: phạm vi chi nhánh — kiểm chi nhánh thuộc đơn vị; không thành quyền toàn đơn vị (extraAuthz chỉ đọc dòng tenant)
     const scopeType = input.scopeType ?? 'tenant';
-    if (scopeType === 'tenant' && input.scopeId) throw Errors.validation('scopeId chỉ dùng khi scopeType = branch');
+    if (scopeType === 'tenant' && input.scopeId) throw Errors.validation('scopeId chỉ dùng khi scopeType = branch / warehouse');
     if (scopeType === 'branch') {
       if (!input.scopeId) throw Errors.validation('scopeType = branch cần scopeId (id chi nhánh)');
       const b = await trx.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('id', '=', input.scopeId).executeTakeFirst();
       if (!b) throw Errors.notFound('chi nhánh');
     }
-    const scopeId = scopeType === 'branch' ? input.scopeId! : null;
+    // [2026-11-09 03:15 PM kiennt] PHASE-028 — S028-19 (giai đoạn 3.3): phạm vi KHO: kho phải thuộc đơn vị và đang dùng
+    if (scopeType === 'warehouse') {
+      if (!input.scopeId) throw Errors.validation('scopeType = warehouse cần scopeId (id kho)');
+      const w = await trx.selectFrom('warehouses').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('id', '=', input.scopeId).executeTakeFirst();
+      if (!w) throw Errors.notFound('kho');
+      if (!w.is_active) throw Errors.conflict('Kho đang ngừng dùng — không gán vai trò theo kho này được');
+    }
+    const scopeId = scopeType === 'tenant' ? null : input.scopeId!;
     let label: string;
     if (input.role) {
       assertNotEscalating(auth, input.role);

@@ -37,14 +37,15 @@ const bodySchema = z.object({
 const patchSchema = bodySchema.omit({ code: true }).partial();
 type Body = z.infer<typeof bodySchema>;
 
-export interface WarehouseDto { code: string; branchCode: string; branchName: string; name: string; address: string; isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string }
+// [2026-11-09 03:20 PM kiennt] PHASE-028 — S028-19: trả thêm id kho (gán vai trò theo kho ở HT12 cần warehouses.id); trường cũ giữ nguyên
+export interface WarehouseDto { id: string; code: string; branchCode: string; branchName: string; name: string; address: string; isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string }
 
 const select = (trx: Db, tenantId: string) => trx.selectFrom('warehouses as w').innerJoin('branches as b', 'b.id', 'w.branch_id')
-  .select(['w.code', 'b.code as branch_code', 'b.name as branch_name', 'w.name', 'w.address', 'w.is_active', 'w.is_default', 'w.is_promo', 'w.account', 'w.note'])
+  .select(['w.id', 'w.code', 'b.code as branch_code', 'b.name as branch_name', 'w.name', 'w.address', 'w.is_active', 'w.is_default', 'w.is_promo', 'w.account', 'w.note'])
   .where('w.tenant_id', '=', tenantId);
 type Row = Awaited<ReturnType<ReturnType<typeof select>['executeTakeFirstOrThrow']>>;
 const dto = (r: Row): WarehouseDto => ({
-  code: r.code, branchCode: r.branch_code, branchName: r.branch_name, name: r.name, address: r.address,
+  id: String(r.id), code: r.code, branchCode: r.branch_code, branchName: r.branch_name, name: r.name, address: r.address,
   isActive: r.is_active, isDefault: r.is_default, isPromo: r.is_promo, account: r.account, note: r.note,
 });
 
