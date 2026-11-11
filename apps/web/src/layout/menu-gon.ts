@@ -91,7 +91,7 @@ export const GON_DEFS: GonDef[] = [
       { paths: ['/ban-hang/xuat-dieu-chinh', '/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von'], soon: ['Nhập kho', 'Xuất kho', 'Kiểm kê kho'] },
       { label: 'Danh mục', paths: ['/danh-muc/mat-hang', '/danh-muc/kho', '/danh-muc/don-vi-tinh'] },
     ],
-    reports: [{ label: 'Kho', paths: ['/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/nhap-xuat-ton', '/kho/ton-theo-lo', '/bao-cao/chuyen-kho'], soon: ['Thẻ kho', 'Đối chiếu kho và sổ cái'] }],
+    reports: [{ label: 'Kho', paths: ['/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/nhap-xuat-ton', '/bao-cao/ton-nhieu-kho', '/kho/ton-theo-lo', '/bao-cao/chuyen-kho'], soon: ['Thẻ kho', 'Đối chiếu kho và sổ cái'] }],
   },
   {
     key: 'ccdc', label: 'Công cụ dụng cụ', icon: 'Hammer', description: 'Ghi tăng, phân bổ công cụ dụng cụ, chi phí trả trước', color: '#00838f', module: 'tai-san', homeLabel: 'Quy trình',
@@ -135,6 +135,7 @@ export const GON_DEFS: GonDef[] = [
   {
     key: 'phan-tich', label: 'Phân tích tài chính', icon: 'ChartLine', description: 'Doanh thu, chi phí, lợi nhuận, chỉ số tài chính', color: '#283593',
     sections: [{ paths: ['/bang-dieu-khien'] }],
+    reports: [{ label: 'Theo nhiều chi nhánh', paths: ['/bao-cao/ket-qua-nhieu-chi-nhanh', '/bao-cao/can-doi-tk-nhieu-chi-nhanh', '/bao-cao/ton-nhieu-kho', '/bao-cao/ket-qua-theo-cua-hang'] }],
   },
   {
     key: 'danh-muc', label: 'Danh mục', icon: 'List', description: 'Đối tượng, vật tư hàng hóa, tổ chức, tài khoản, chi phí, tài sản', color: '#0d7a6f', module: 'danh-muc',

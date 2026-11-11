@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Báo cáo theo nhiều chi nhánh <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- ACC9N Kết quả hoạt động kinh doanh theo nhiều chi nhánh: chỉ tiêu B02, Kỳ này / Kỳ trước, mỗi dải cột Tổng + từng chi nhánh.
+- ACC10N Bảng cân đối tài khoản theo nhiều chi nhánh: chọn chỉ tiêu hiển thị (Nợ / Có đầu kỳ, phát sinh, cuối kỳ), bậc tài khoản, nhánh tài khoản.
+- ACC83N Tổng hợp tồn trên nhiều kho (bảng chéo): tồn đến ngày, mỗi kho một cột, xem số lượng hoặc giá trị.
+- Không chọn chi nhánh thì chỉ lấy chi nhánh có phát sinh; cột chi nhánh không có số được ẩn. Menu Phân tích tài chính → Theo nhiều chi nhánh; Kho → Báo cáo.
+
 ### Báo cáo lưu chuyển tiền tệ (ACC13): cột Kỳ trước <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Thêm cột Kỳ trước (cùng khoảng ngày năm trước) như mẫu B03-DN; tiêu đề + kỳ trên màn.
 

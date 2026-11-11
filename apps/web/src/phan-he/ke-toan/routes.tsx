@@ -25,6 +25,7 @@ import { JournalPage } from './reports/JournalPage';
 import { CashFlowPage, CashJournalPage, PurchaseJournalPage, SalesJournalPage, VoucherListingPage } from './reports/JournalsPages';
 import { PartnerBalancesPage } from './reports/PartnerBalancesPage';
 import { ChiTietCongNoPage } from './reports/ChiTietCongNoPage';
+import { CanDoiNhieuChiNhanhPage, KetQuaNhieuChiNhanhPage, TonNhieuKhoPage } from './reports/NhieuChiNhanhPages';
 import { CashBalancesPage, PostingSummaryPage, TaxSummaryPage } from './reports/SummaryPages';
 import { TrialBalancePage } from './reports/TrialBalancePage';
 import { RequirementsPage } from './requirements/RequirementsPage';
@@ -33,6 +34,9 @@ export const keToanRoutes = (
   <>
     <Route path="/bang-dieu-khien" element={<DashboardPage />} />
     <Route path="bao-cao/can-doi-phat-sinh" element={<TrialBalancePage />} />
+    <Route path="bao-cao/ket-qua-nhieu-chi-nhanh" element={<KetQuaNhieuChiNhanhPage />} />
+    <Route path="bao-cao/can-doi-tk-nhieu-chi-nhanh" element={<CanDoiNhieuChiNhanhPage />} />
+    <Route path="bao-cao/ton-nhieu-kho" element={<TonNhieuKhoPage />} />
     <Route path="bao-cao/so-chi-tiet" element={<SoChiTietTaiKhoanPage key="sctk" />} />
     <Route path="bao-cao/cong-no" element={<PartnerBalancesPage key="acc38" />} />
     <Route path="bao-cao/cong-no-theo-nhan-vien" element={<DebtByEmployeePage />} />
