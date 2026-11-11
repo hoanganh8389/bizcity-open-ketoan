@@ -2,11 +2,12 @@
 /**
  * Bộ tính phân quyền (packages/platform/src/core/authz/engine.ts) — không CSDL:
  *   - một người nhiều lần gán, Cho không gộp chéo phạm vi (T028-1); kho báo cáo ≠ kho làm việc (T028-4); chuyển kho hai đầu (T028-5)
- *   - Cấm luôn thắng; Nới chỉ nới điều kiện, không tự cấp (T028-22); hạn sửa theo giờ lập phiếu, người lập
+ *   - Cấm luôn thắng; nới = thêm một Cho có điều kiện rộng hơn, chỉ trong phạm vi của nó (T028-22, D-AUTH-22 — đã bỏ hiệu lực Nới); hạn sửa theo giờ lập phiếu, người lập
  *   - mẫu * không phủ quyền cao / quyền chưa duyệt (T028-2); khoá API / trợ lý không nhận quyền cao (T028-13)
  *   - 6 vai trò cũ × mọi quyền: bộ tính mới = rolePermissions (T028-9); batchAuthorize = gọi lẻ (T028-18)
  *   - sổ quyền: đổi nhãn không đổi nghĩa (T028-16), diff nâng cấp phát hiện quyền mới / rủi ro tăng
  */
+// [2026-11-09 03:00 PM kiennt] PHASE-028 — S028-16 (D-AUTH-22): đã bỏ Nới — đặc quyền "sửa 3 ngày" là một Cho có điều kiện rộng hơn
 import { describe, expect, it } from 'vitest';
 import { ROLES, type Role } from '@ketoan/contracts';
 import type { AuthzAssignment, AuthzRole } from '@bizcity/platform/core/authz/types';
@@ -34,7 +35,7 @@ const role = (id: string, rules: AuthzRole['rules'], kind: AuthzRole['kind'] = '
 const ROLE_MAP = new Map<string, AuthzRole>([
   ['cash', role('cash', [{ id: 'r1', pattern: 'quy:*', effect: 'allow' }])],
   ['viewer', role('viewer', [{ id: 'r2', pattern: '*:*-read', effect: 'allow' }])],
-  ['relax3', role('relax3', [{ id: 'r3', pattern: 'quy:*-update', effect: 'relax', conditions: { edit_window_days: 3 } }], 'privilege')],
+  ['wide3', role('wide3', [{ id: 'r3', pattern: 'quy:receipt-update', effect: 'allow', conditions: { edit_window_days: 3, creator: 'self' } }], 'privilege')],
   ['nocancel', role('nocancel', [{ id: 'r4', pattern: '*:*-cancel', effect: 'deny' }], 'restriction')],
   ['keeper', role('keeper', [{ id: 'r5', pattern: 'kho:transfer-*', effect: 'allow' }, { id: 'r6', pattern: 'kho:cost-read', effect: 'allow' }])],
   ['wild', role('wild', [{ id: 'r7', pattern: '*:*', effect: 'allow' }])],
@@ -46,7 +47,7 @@ const asg = (id: string, roleId: string, scopes: AuthzAssignment['scopes'], purp
 const QLPT: AuthzAssignment[] = [
   asg('a1', 'cash', [PT], ['operate', 'report']),
   asg('a2', 'viewer', [YB], ['report']),
-  asg('a3', 'relax3', [PT], ['operate'], { validTo: '2026-11-30T23:59:59+07:00' }),
+  asg('a3', 'wide3', [PT], ['operate'], { validTo: '2026-11-30T23:59:59+07:00' }),
   asg('a4', 'nocancel', [{ kind: 'all' }], ['operate', 'approve']),
 ];
 const me = { kind: 'user' as const, id: '7' };
@@ -66,10 +67,10 @@ describe('mẫu quyền', () => {
 });
 
 describe('một người nhiều lần gán (T028-1, T028-22)', () => {
-  it('sửa phiếu 2 ngày tuổi ở Phú Thọ: Cho của Kế toán quỹ + Nới 3 ngày cùng phạm vi → được', () => {
+  it('sửa phiếu 2 ngày tuổi ở Phú Thọ: Cho "trong ngày" trượt, Cho "3 ngày" của đặc quyền cùng phạm vi đạt → được', () => {
     const d = authorize({ ...base, assignments: QLPT, permission: 'quy:receipt-update', resource: atPT() });
     expect(d).toMatchObject({ allowed: true, reasonCode: 'AUTHZ-ALLOW', authzVersion: 42 });
-    expect(d.matched.map((m) => m.ruleId)).toEqual(['r1', 'r3']);
+    expect(d.matched.map((m) => m.ruleId)).toEqual(['r3']);
   });
   it('cùng phiếu ở Yên Bái → từ chối: lần gán Yên Bái chỉ báo cáo, không gộp chéo phạm vi', () => {
     // Lần gán "Không huỷ chứng từ" (toàn đơn vị) vẫn sống ở Yên Bái nhưng không có luật Cho → NO-ALLOW, không mượn Cho của Phú Thọ.
@@ -81,9 +82,10 @@ describe('một người nhiều lần gán (T028-1, T028-22)', () => {
     const d = authorize({ ...base, now: new Date('2026-12-01T09:00:00+07:00'), assignments: QLPT, permission: 'quy:receipt-update', resource: atPT({ createdAt: '2026-11-29T10:00:00+07:00' }) });
     expect(d).toMatchObject({ allowed: false, reasonCode: 'AUTHZ-CONDITION', failed: { condition: 'edit_window_days', need: 0, have: 2 } });
   });
-  it('Nới không tự cấp: chỉ có đặc quyền Nới (không Cho) → từ chối', () => {
-    const only = [asg('b1', 'relax3', [PT], ['operate'])];
-    expect(authorize({ ...base, assignments: only, permission: 'quy:receipt-update', resource: atPT() }).reasonCode).toBe('AUTHZ-NO-ALLOW');
+  it('Cho rộng hơn chỉ có tác dụng trong phạm vi của nó: đặc quyền 3 ngày gán ở Phú Thọ không mở phiếu Yên Bái', () => {
+    const only = [asg('b1', 'wide3', [PT], ['operate'])];
+    expect(authorize({ ...base, assignments: only, permission: 'quy:receipt-update', resource: atPT() }).allowed).toBe(true);
+    expect(authorize({ ...base, assignments: only, permission: 'quy:receipt-update', resource: atYB() }).reasonCode).toBe('AUTHZ-NO-ASSIGNMENT');
   });
   it('Cấm luôn thắng (huỷ ở Phú Thọ dù Kế toán quỹ có quy:*)', () => {
     const d = authorize({ ...base, assignments: QLPT, permission: 'quy:receipt-cancel', resource: atPT() });
@@ -95,7 +97,8 @@ describe('một người nhiều lần gán (T028-1, T028-22)', () => {
     expect(authorize({ ...base, roles, assignments: k, permission: 'kho:cost-read', purpose: 'report' }).reasonCode).toBe('AUTHZ-DENIED-BY-RULE');
   });
   it('người lập: phiếu của người khác trượt điều kiện creator=self', () => {
-    const d = authorize({ ...base, assignments: QLPT, permission: 'quy:receipt-update', resource: atPT({ createdBy: 'user:9' }) });
+    // Phiếu lập trong ngày để hạn sửa đạt — chỉ còn điều kiện người lập trượt (không còn Nới ghép điều kiện của hai luật).
+    const d = authorize({ ...base, assignments: QLPT, permission: 'quy:receipt-update', resource: atPT({ createdBy: 'user:9', createdAt: daysAgo(0) }) });
     expect(d.failed).toMatchObject({ condition: 'creator', need: 'self', have: 'user:9' });
   });
   it('có tài nguyên mà thiếu trường điều kiện → đóng an toàn', () => {
