@@ -9,7 +9,7 @@
  * [2026-11-11 Nguyễn Văn Thủy] Hai cách đặt bảng tham số (đóng góp):
  *   - Ngăn kéo (mặc định ở giao diện Xanh): báo cáo chiếm trọn bề ngang; dòng trên cùng tóm tắt tham số đang xem + nút
  *     "Chọn tham số" mở ngăn kéo bên phải; bấm Tìm kiếm / Xem trong ngăn kéo thì ngăn tự đóng.
- *   - Ghim bên trái (như trước; mặc định ở giao diện cổ điển). Nút ghim trong ngăn kéo / trên bảng lọc để đổi, nhớ theo máy.
+ *   - Ghim bên trái (mặc định không ghim). Nút ghim trong ngăn kéo / trên bảng lọc để đổi, nhớ theo máy.
  *   Bảng tham số luôn được dựng (chỉ ẩn), nên đóng / mở không mất các ô đang chọn.
  */
 import { PERIOD_PRESETS, presetOf } from '@/lib/format';
@@ -18,7 +18,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useLocation } from 'react-router-dom';
 import { FileSpreadsheet, Pin, PinOff, Plus, Printer, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
-import { giaoDien } from '@/lib/giaoDien';
 import { useBranches } from './filters';
 import { FilterPanelCtx, useFilterPanel, type FilterPanelContext } from './filterPanel';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — bảng lọc chi nhánh / kho thêm thẻ Cây theo sơ đồ tổ chức (tích cha tích hết con, tới kho)
@@ -38,7 +37,7 @@ const readWidth = () => {
 };
 const saveWidth = (w: number) => { try { localStorage.setItem(WIDTH_KEY, String(w)); } catch { /* bỏ qua */ } };
 const GHIM_KEY = 'ketoan.rp.ghim';
-const readGhim = () => { try { const v = localStorage.getItem(GHIM_KEY); return v === null ? giaoDien.get() !== 'xanh' : v === '1'; } catch { return true; } };
+const readGhim = () => { try { const v = localStorage.getItem(GHIM_KEY); return v === '1'; } catch { return true; } };
 
 const dmy = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v.slice(8, 10)}/${v.slice(5, 7)}/${v.slice(0, 4)}` : v);
 /** Đọc tham số đang chọn từ bảng lọc (nhãn + giá trị ô) để hiện một dòng tóm tắt trên báo cáo. */

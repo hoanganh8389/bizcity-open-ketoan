@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bộ màu gốc, Tổng quan theo bản thiết kế <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/12 (đóng góp) -->
+- Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
+- Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
+
 ### Khung nhìn mặt hàng có ô Biến thể / Gửi lên thuế; họ mã lỗi `POS_*` (đề xuất P-MP-5, P-MP-6 của module pos) <!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — phần Core cho module pos (đóng góp) -->
 
 - **Thêm:** `ERROR_REASONS` thêm 28 mã `POS_*` của module `pos` — 17 mã đợt W1 (BIZCITY-ERRORS 1.7.0-draft §4c) và 11 mã hoàn / đổi / huỷ đợt W2 (1.8.0-draft) (R-ERR-6 / R-ERR-11): dữ liệu kèm lỗi đặt cạnh `reason`, danh sách ở `items`.
