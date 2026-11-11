@@ -9,7 +9,8 @@
  * Không bao giờ đổi quyết định, không bao giờ ném lỗi (lỗi của shadow chỉ đếm `error`). Bật theo đơn vị bằng khoá cấu hình
  * `bizcity.authz.shadow` = on (mặc định off); khi tắt chỉ tốn một lần tra khoá đã đệm 15 giây. Khi bật, mỗi yêu cầu có người dùng đăng nhập
  * nạp lại lần gán + vai trò từ CSDL (không đệm, để không so trên dữ liệu cũ) — dùng để chạy thử một thời gian, không để mãi.
- * Số đếm trong tiến trình (`shadowStats`); nối bizcity_authz_shadow_total vào core/metrics.ts là việc của đợt sau (ngoài phạm vi giữ chỗ).
+ * Số đếm trong tiến trình (`shadowStats`) và số đo Prometheus `bizcity_authz_shadow_total{result}` (PHASE-028 S028-16). Lệch gần nhất
+ * xem theo đơn vị ở GET /api/v1/system/authz-shadow (cần users:write).
  */
 import type { Role } from '@ketoan/contracts';
 import { db, type Db } from '../../db/client.js';
@@ -18,6 +19,8 @@ import { listModulePermissions } from '../auth.js';
 import { authorize } from './engine.js';
 import { buildCatalog, codePermissions, type CatalogEntry } from './catalog.js';
 import { loadAuthzSnapshot } from './store.js';
+// [2026-11-09 02:35 PM kiennt] PHASE-028 — S028-16: mỗi lần đếm cũng tăng bizcity_authz_shadow_total{result}; lệch gần nhất lọc được theo đơn vị
+import { metrics } from '../metrics.js';
 
 export const SHADOW_KEY = 'bizcity.authz.shadow';
 const CACHE_MS = 15_000;
@@ -43,14 +46,27 @@ const recent: ShadowDiff[] = [];
 const enabledCache = new Map<string, { on: boolean; at: number }>();
 let catalogCache: { size: number; map: Map<string, CatalogEntry> } | null = null;
 
-/** Số đếm theo kết quả và các lệch gần nhất (tối đa 50) trong tiến trình này. */
-export function shadowStats(): { counters: Record<ShadowResult, number>; recent: readonly ShadowDiff[] } {
-  return { counters: { ...counters }, recent: [...recent] };
+const zero = (): Record<ShadowResult, number> => ({ match: 0, only_legacy: 0, only_engine: 0, skipped_admin: 0, error: 0 });
+const byTenant = new Map<string, Record<ShadowResult, number>>();
+
+/** Số đếm theo kết quả và các lệch gần nhất (tối đa 50) trong tiến trình này; `tenantId` thì chỉ số đếm và lệch của đơn vị đó. */
+export function shadowStats(tenantId?: string): { counters: Record<ShadowResult, number>; recent: readonly ShadowDiff[] } {
+  if (!tenantId) return { counters: { ...counters }, recent: [...recent] };
+  return { counters: { ...(byTenant.get(tenantId) ?? zero()) }, recent: recent.filter((d) => d.tenantId === tenantId) };
 }
+
+const count = (tenantId: string, r: ShadowResult) => {
+  counters[r]++;
+  const t = byTenant.get(tenantId) ?? zero();
+  t[r]++;
+  byTenant.set(tenantId, t);
+  metrics.authzShadow.inc({ result: r });
+};
 
 export function resetShadowStats(): void {
   for (const k of Object.keys(counters) as ShadowResult[]) counters[k] = 0;
   recent.length = 0;
+  byTenant.clear();
   enabledCache.clear();
 }
 
@@ -79,7 +95,7 @@ function catalog(): Map<string, CatalogEntry> {
  * So một quyết định. Trả kết quả đã đếm; không ném. `log` (nếu có) nhận một dòng cảnh báo khi lệch — chỉ mã và định danh, không dữ liệu kế toán.
  */
 export async function shadowCompare(input: ShadowInput, conn: Db = db, log?: { warn: (o: object, msg: string) => void }): Promise<ShadowResult> {
-  if (input.isAdmin) { counters.skipped_admin++; return 'skipped_admin'; }
+  if (input.isAdmin) { count(input.tenantId, 'skipped_admin'); return 'skipped_admin'; }
   try {
     const snap = await loadAuthzSnapshot(conn, input.tenantId, input.userId);
     const d = authorize({
@@ -87,7 +103,7 @@ export async function shadowCompare(input: ShadowInput, conn: Db = db, log?: { w
       authzVersion: snap.authzVersion, catalog: catalog(), assignments: snap.assignments, roles: snap.roles,
     });
     const result: ShadowResult = d.allowed === input.legacyAllowed ? 'match' : input.legacyAllowed ? 'only_legacy' : 'only_engine';
-    counters[result]++;
+    count(input.tenantId, result);
     if (result !== 'match') {
       const diff: ShadowDiff = { at: new Date().toISOString(), tenantId: input.tenantId, userId: input.userId, permission: input.permission, result, engineReason: d.reasonCode, legacyAllowed: input.legacyAllowed };
       recent.push(diff);
@@ -96,7 +112,7 @@ export async function shadowCompare(input: ShadowInput, conn: Db = db, log?: { w
     }
     return result;
   } catch {
-    counters.error++;
+    count(input.tenantId, 'error');
     return 'error';
   }
 }

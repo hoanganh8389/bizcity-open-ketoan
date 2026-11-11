@@ -11,6 +11,11 @@ import { call, setupTenant, type TestCtx } from './helpers.js';
 // [2026-11-09 02:10 PM kiennt] PHASE-028 — S028-12..15 (80 F1–F4, F9): test vá an toàn — leo thang ở người dùng / khoá API, ký theo quyền, route tường minh, giới hạn đăng nhập sai
 import { signProblem } from '@bizcity/platform/documents/signature.routes';
 import { resetLoginThrottle, LOGIN_LIMITS } from '../src/modules/auth/auth.routes.js';
+// [2026-11-09 02:45 PM kiennt] PHASE-028 — S028-16 (giai đoạn 2): test đệm quyền theo authz_version, so song song có số đếm theo đơn vị (vé SSO tách ra S028-17, chờ dòng POS nhả wp-sso.ts)
+import { sql } from 'kysely';
+import { db } from '../src/db/client.js';
+import { metrics } from '@bizcity/platform/core/metrics';
+import { resetShadowStats, shadowCompare, shadowStats } from '@bizcity/platform/core/authz/shadow';
 
 const OWNER_PASSWORD = 'Test@123'; // setupTenant
 let ctx: TestCtx;
@@ -399,5 +404,49 @@ describe('Vá an toàn sau W5 (80 F1–F4, F9)', () => {
     expect((await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: body('Xem@12345') })).statusCode).toBe(429);
     resetLoginThrottle();
     expect((await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: body('Xem@12345') })).statusCode).toBe(200);
+  });
+});
+
+describe('Giai đoạn 2: đệm theo authz_version, so song song (S028-16)', () => {
+  const tenantIdOf = async (c: TestCtx) => String((await sql<{ id: string }>`SELECT id FROM tenants WHERE code = ${c.tenantCode}`.execute(db)).rows[0]!.id);
+
+  it('đổi luật ở "bản API khác" (ghi thẳng CSDL, không xoá đệm) có hiệu lực ngay yêu cầu kế tiếp', async () => {
+    const u = await call(ctx, 'POST', '/api/v1/users', { email: 'dem@ketoan.local', fullName: 'Đệm', role: 'viewer', password: 'Dem@12345' });
+    const uid = String(u.body.data.id);
+    const r = (await newRole({ code: 'dem_kho', label: 'Đệm khoá kỳ', kind: 'privilege' })).body.data.id;
+    await addRule(r, { permission: 'periods:lock', effect: 'allow', confirmPassword: OWNER_PASSWORD });
+    expect((await assign(uid, { tenantRoleId: r, confirmPassword: OWNER_PASSWORD })).status).toBe(201);
+    const t = await login(ctx, 'dem@ketoan.local', 'Dem@12345');
+    expect(await permsOf(t)).toContain('periods:lock'); // đệm đã nóng
+    // Bản API khác thêm luật Cấm: chỉ có CSDL đổi (trigger tăng authz_version), đệm của tiến trình này không bị xoá.
+    const tid = await tenantIdOf(ctx);
+    await sql`INSERT INTO tenant_role_rules (tenant_id, tenant_role_id, permission, effect, created_by) VALUES (${tid}, ${r}, 'periods:lock', 'deny', 'test')`.execute(db);
+    expect(await permsOf(t)).not.toContain('periods:lock');
+  });
+
+  it('khoá tài khoản ở "bản API khác" chặn vé ngay yêu cầu kế tiếp (trước: tới 15 giây)', async () => {
+    const u = await call(ctx, 'POST', '/api/v1/users', { email: 'khoa@ketoan.local', fullName: 'Khoá', role: 'viewer', password: 'Khoa@12345' });
+    const t = await login(ctx, 'khoa@ketoan.local', 'Khoa@12345');
+    expect((await withToken(t, 'GET', '/api/v1/auth/me')).statusCode).toBe(200);
+    await sql`UPDATE users SET is_active = false WHERE id = ${String(u.body.data.id)}`.execute(db);
+    expect((await withToken(t, 'GET', '/api/v1/auth/me')).statusCode).toBe(401);
+  });
+
+  it('so song song: số đếm và lệch tách theo đơn vị, có số đo Prometheus; API xem cần users:write', async () => {
+    resetShadowStats();
+    const tid = await tenantIdOf(ctx);
+    // Người xem: đường cũ giả sử cho periods:lock, bộ tính từ chối → only_legacy.
+    const res = await shadowCompare({ tenantId: tid, userId: viewerId, permission: 'periods:lock', legacyAllowed: true, isAdmin: false });
+    expect(res).toBe('only_legacy');
+    expect(shadowStats(tid).counters.only_legacy).toBe(1);
+    expect(shadowStats(await tenantIdOf(other)).counters.only_legacy).toBe(0);
+    expect(metrics.authzShadow.render().some((l) => l.includes('result="only_legacy"'))).toBe(true);
+    const view = await call(ctx, 'GET', '/api/v1/system/authz-shadow');
+    expect(view.status).toBe(200);
+    expect(view.body.data.counters.only_legacy).toBe(1);
+    expect(view.body.data.recent).toHaveLength(1);
+    expect((await call(other, 'GET', '/api/v1/system/authz-shadow')).body.data.recent).toEqual([]);
+    viewerToken = await login(ctx, 'xem@ketoan.local', 'Xem@12345');
+    expect((await withToken(viewerToken, 'GET', '/api/v1/system/authz-shadow')).statusCode).toBe(403);
   });
 });

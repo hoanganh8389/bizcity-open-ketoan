@@ -6,6 +6,10 @@
  * PHIÊN ĐĂNG NHẬP THU HỒI ĐƯỢC. Vé (JWT) mang sv = users.session_version lúc cấp; mỗi lần xác thực đối chiếu với bảng người dùng:
  * khác số (đã đổi / đặt lại mật khẩu, đổi vai trò, đăng xuất các thiết bị khác) hoặc tài khoản bị khoá → từ chối (401, máy đó tự
  * đăng xuất). Nhớ đệm CACHE_MS / người dùng để không truy vấn mỗi lần gọi; tăng số trong tiến trình này thì xoá đệm ngay.
+ *
+ * checkSession (đường yêu cầu, PHASE-028 S028-16): KHÔNG đệm — một truy vấn khoá chính users ⋈ tenants mỗi yêu cầu, trả cùng lúc
+ * session_version và tenants.authz_version. Thu hồi phiên / đổi phân quyền có hiệu lực từ yêu cầu kế tiếp ở MỌI bản API (trước: tới 15
+ * giây, mỗi tiến trình đếm riêng). authzVersion dùng làm khoá đệm quyền (role-assignments.ts).
  */
 import { sql } from 'kysely';
 import { db, type Db } from '../../db/client.js';
@@ -24,6 +28,18 @@ export async function sessionStillValid(userId: string, sv: number): Promise<boo
     cache.set(userId, state);
   }
   return state.active && state.version === sv;
+}
+
+// [2026-11-09 02:30 PM kiennt] PHASE-028 — S028-16 (80 §4, draft W0 20 §5): kiểm phiên không đệm, kèm authz_version của đơn vị cho đệm quyền
+export interface SessionCheck { valid: boolean; authzVersion: number }
+
+/** Vé còn dùng được không, và phiên bản phân quyền hiện tại của đơn vị — một truy vấn, không đệm. */
+export async function checkSession(userId: string, sv: number, conn: Db = db): Promise<SessionCheck> {
+  const row = await conn.selectFrom('users').innerJoin('tenants', 'tenants.id', 'users.tenant_id')
+    .select(['users.session_version', 'users.is_active', sql<string>`tenants.authz_version`.as('authz_version')])
+    .where('users.id', '=', userId).executeTakeFirst();
+  if (!row) return { valid: false, authzVersion: 0 };
+  return { valid: row.is_active && Number(row.session_version) === sv, authzVersion: Number(row.authz_version) };
 }
 
 /** Thu hồi mọi vé đang có của người dùng (tăng số phiên bản phiên); trả số mới để cấp vé mới cho máy đang thao tác (nếu cần). */
