@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Phiếu thu / chi: lưới mặc định 6 cột như mẫu chuẩn; tên đối tượng theo dòng <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Lưới Hạch toán mặc định: Diễn giải · TK Nợ · TK Có · Số tiền · Đối tượng · Tên đối tượng; Khoản mục CP, Mục thu/chi… ẩn sẵn (nút Cột), cột có dữ liệu tự hiện.
+- Chọn đối tượng riêng ở dòng thì cột Tên đối tượng hiện đúng tên của dòng đó.
+
 ### Mục thu/chi theo danh mục chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Danh mục Mục thu/chi (DM17): cột Mã · Tên · **Loại** (Mục thu / Mục chi) · **Phát sinh định kỳ** · Diễn giải; form Loại · Mã · Tên · Diễn giải · Thuộc · "Là khoản phát sinh định kỳ hàng tháng". Bỏ hai gốc THU / CHI tự đặt ở 0104.
 - Danh mục mặc định thay bằng 42 mục chuẩn: 100–111 mục thu, 200–229 mục chi (đúng mã, tên, cờ định kỳ).

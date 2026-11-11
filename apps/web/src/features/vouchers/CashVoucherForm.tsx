@@ -60,7 +60,8 @@ const blankRow = (patch: Partial<Row> = {}): Row => ({
 /** Cột thêm của lưới Hạch toán (nút Cột); nhóm Thuế, Chứng từ thanh toán bật / tắt cả nhóm. */
 type ColKey = 'cashItem' | 'costItem' | 'department' | 'contract' | 'employee' | 'cashflowCode' | 'tax' | 'settle';
 const COLS: [ColKey, string][] = [['cashItem', 'Mục thu/chi'], ['costItem', 'Khoản mục CP'], ['department', 'Đơn vị'], ['contract', 'Hợp đồng'], ['employee', 'Nhân viên'], ['cashflowCode', 'Mã lưu chuyển tiền tệ'], ['tax', 'Thuế, hoá đơn'], ['settle', 'Chứng từ thanh toán']];
-const COLS_DEFAULT: ColKey[] = ['costItem']; // Mục thu/chi ẩn sẵn (bật ở nút Cột khi cần báo cáo Dòng tiền)
+/** Như mẫu chuẩn: lưới mặc định 6 cột, các cột thêm (Khoản mục CP, Mục thu/chi…) ẩn sẵn — bật ở nút Cột; cột có dữ liệu tự hiện. */
+const COLS_DEFAULT: ColKey[] = [];
 const hasData = (rows: Row[], k: ColKey) => rows.some((r) => (k === 'tax' ? r.taxCode || r.taxAmount || r.invoiceNo : k === 'settle' ? r.settleItemId : r[k]));
 
 /* DÁN TỪ EXCEL (Ctrl + V) vào lưới: theo thứ tự cột đang hiện (data-f trên ô), hoặc theo dòng tiêu đề. */
@@ -82,7 +83,7 @@ export const parseAmount = (s: string): number => Number(s.replace(/[.,\s]/g, ''
 export const showAmount = (s: string): string => (parseAmount(s) ? money(parseAmount(s)) : '');
 export { useDimension } from '@/components/voucher/lookups';
 
-const colsKey = (type: string) => `pt-cot-${type}`;
+const colsKey = (type: string) => `pt-cot-v2-${type}`;
 function readCols(type: string): ColKey[] {
   try { const v = JSON.parse(localStorage.getItem(colsKey(type)) ?? 'null') as ColKey[] | null; return Array.isArray(v) ? v : COLS_DEFAULT; } catch { return COLS_DEFAULT; }
 }
@@ -304,7 +305,15 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
 
   const dis = readOnly;
   const partnerKind = isReceipt ? 'customer' : 'supplier';
-  const nameOfPartner = (code: string) => (code === h.partnerCode ? partnerName : '');
+  // Tên đối tượng của từng dòng: đối tượng đầu phiếu lấy tên đầu phiếu; mã khác tra danh mục (giữ trong bộ nhớ đệm).
+  const [rowNames, setRowNames] = useState<Record<string, string>>({});
+  const lookupName = async (code: string) => {
+    if (!code || code === h.partnerCode || rowNames[code] !== undefined) return;
+    const list = await qc.fetchQuery({ queryKey: ['partners', 'pick', code], queryFn: () => api.get<PartnerInfo[]>('/api/v1/partners', { search: code, pageSize: 20 }), staleTime: 30_000 });
+    setRowNames((m) => ({ ...m, [code]: list.find((x) => x.code === code)?.name ?? '' }));
+  };
+  useEffect(() => { for (const r of rows) if (r.partner) void lookupName(r.partner); }, [rows.map((r) => r.partner).join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const nameOfPartner = (code: string) => (code === h.partnerCode ? partnerName : rowNames[code] ?? '');
   const moneyPicker = <AccountPicker postingOnly hideName className="input mono" value={moneyAccount} disabled={dis || isBank} onChange={(v) => set({ moneyAccount: v })} />;
   const text = (r: Row, field: 'description' | 'invoiceNo' | 'invoiceSerial' | 'invoiceForm' | 'invoicePartnerName' | 'invoicePartnerTaxCode', cls = 'input') => (
     <input className={cls} value={r[field]} disabled={dis} onChange={(e) => setRow(r.key, { [field]: e.target.value })} />
