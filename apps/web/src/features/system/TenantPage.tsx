@@ -2,6 +2,7 @@
  * Thông tin đơn vị (HT03): tên công ty, mã số thuế, địa chỉ, điện thoại.
  * Tên và logo hiện ở đầu trang, trên phiếu in. Chủ sở hữu, kế toán trưởng sửa được.
  * Logo: chọn ảnh PNG / JPEG / WebP; giao diện thu nhỏ về tối đa 400 điểm ảnh rồi mới gửi.
+ * Mã số thuế: tra cứu như form nhà cung cấp — bấm Lấy thông tin để điền tên, địa chỉ theo Cục Thuế.
  */
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +10,8 @@ import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading } from '@/components/ui';
+// [2026-11-11 10:48 AM kiennt] HT03 — ô mã số thuế có tra cứu (dùng chung với form nhà cung cấp)
+import { TaxCodeField } from '@/components/TaxCodeField';
 
 interface Tenant { code: string; name: string; taxCode: string; address: string; phone: string; logo: string | null }
 
@@ -56,7 +59,13 @@ export function TenantPage() {
           <div className="form-grid">
             <Field label="Mã đơn vị" hint="Dùng khi đăng nhập; không đổi được"><input className="input mono" value={v.code} disabled /></Field>
             <Field label="Tên đơn vị" full><input className="input" value={v.name} disabled={!editable} onChange={(e) => set({ name: e.target.value })} /></Field>
-            <Field label="Mã số thuế"><input className="input mono" value={v.taxCode} disabled={!editable} onChange={(e) => set({ taxCode: e.target.value.trim() })} /></Field>
+            <TaxCodeField label="Mã số thuế" full={false} value={v.taxCode} disabled={!editable} showExisting={false}
+              onChange={(taxCode) => set({ taxCode: taxCode.trim() })} autoWhenEmpty={!v.address.trim()}
+              onFill={(f, overwrite) => set({
+                taxCode: f.taxCode,
+                ...(f.name && (overwrite || !v.name.trim()) ? { name: f.name } : {}),
+                ...(f.address && (overwrite || !v.address.trim()) ? { address: f.address } : {}),
+              })} />
             <Field label="Điện thoại"><input className="input" value={v.phone} disabled={!editable} onChange={(e) => set({ phone: e.target.value })} /></Field>
             <Field label="Địa chỉ" full><input className="input" value={v.address} disabled={!editable} onChange={(e) => set({ address: e.target.value })} /></Field>
             <Field label="Logo" full hint="Ảnh PNG, JPEG hoặc WebP; nên dùng ảnh nền trong suốt. Hiện ở đầu trang và trên phiếu in">
