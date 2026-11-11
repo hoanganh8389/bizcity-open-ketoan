@@ -167,7 +167,13 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
     ),
   );
   // Loại phiếu: phiếu đã lập thì đoán theo tài khoản đối ứng dòng đầu.
-  const [loai, setLoai] = useState(() => (p?.lines[0] ? guessLoai(loaiList, lineSide === 'credit' ? p.lines[0].creditAccount : p.lines[0].debitAccount, lineSide) : -1));
+  // Như mẫu chuẩn: luôn có sẵn một loại — mặc định "Thu khác" / "Chi khác"; theo hoá đơn: thu tiền khách hàng / trả tiền NCC (loại đầu);
+  // phiếu đã lập: đoán theo tài khoản đối ứng, không khớp thì "… khác".
+  const khac = Math.max(0, loaiList.findIndex((l) => l.name === 'Thu khác' || l.name === 'Chi khác'));
+  const [loai, setLoai] = useState(() => {
+    if (p?.lines[0]) { const g = guessLoai(loaiList, lineSide === 'credit' ? p.lines[0].creditAccount : p.lines[0].debitAccount, lineSide); return g >= 0 ? g : khac; }
+    return theoHoaDon ? 0 : khac;
+  });
   // Lý do tự gợi ("Chi tiền cho …") cho tới khi người lập tự sửa.
   const [autoDesc, setAutoDesc] = useState(!p?.description);
   const [cols, setCols] = useState<ColKey[]>(() => readCols(type));
@@ -361,9 +367,8 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
     <>
     <VoucherModal
       title={title} existing={existing} readOnly={dis} saving={saving} total={total + taxTotal}
-      titleExtra={
+      titleExtra={theoHoaDon && !existing ? undefined :
         <select className="select input pt-loai" value={loai} disabled={dis} title="Loại phiếu: chọn để điền sẵn tài khoản" onChange={(e) => chooseLoai(Number(e.target.value))}>
-          <option value={-1}>— Chọn loại {isReceipt ? 'thu' : 'chi'} —</option>
           {loaiList.map((l, i) => <option key={l.name} value={i}>{i + 1}. {l.name}</option>)}
         </select>
       }
