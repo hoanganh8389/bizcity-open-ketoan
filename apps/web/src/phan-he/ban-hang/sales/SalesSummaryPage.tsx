@@ -18,7 +18,7 @@ import { ChonNhomHang } from '@/components/CayNhomHang';
 import { PrintButton } from '@/components/print';
 import { summaryTemplates } from './mauIn/baoCaoBanHang';
 
-type GroupBy = 'document' | 'day' | 'month' | 'branch' | 'product' | 'customer' | 'taxCode' | 'itemGroup1' | 'itemGroup2' | 'itemGroup3' | 'itemType' | 'customerGroup' | 'department';
+type GroupBy = 'document' | 'day' | 'month' | 'branch' | 'product' | 'customer' | 'taxCode' | 'itemGroup1' | 'itemGroup2' | 'itemGroup3' | 'itemType' | 'customerGroup' | 'department' | 'employee';
 /** Mỗi cách nhóm: nhãn thẻ, tiêu đề cột mã / tên / thông tin thêm (để trống = không hiện cột). */
 const GROUPS: { key: GroupBy; tab: string; keyHead: string; labelHead?: string; extraHead?: string }[] = [
   { key: 'document', tab: 'Theo phiếu', keyHead: 'Số phiếu' },
@@ -35,6 +35,7 @@ const GROUPS: { key: GroupBy; tab: string; keyHead: string; labelHead?: string; 
   { key: 'itemType', tab: 'Theo loại hàng', keyHead: 'Mã loại hàng', labelHead: 'Loại hàng' },
   { key: 'customerGroup', tab: 'Theo nhóm khách', keyHead: 'Mã nhóm khách', labelHead: 'Nhóm khách hàng' },
   { key: 'department', tab: 'Theo bộ phận (cửa hàng)', keyHead: 'Mã bộ phận', labelHead: 'Bộ phận' },
+  { key: 'employee', tab: 'Theo nhân viên', keyHead: 'Mã nhân viên', labelHead: 'Tên nhân viên' },
 ];
 
 interface Measures { saleDocs: number; returnDocs: number; saleQty: number; saleAmount: number; returnQty: number; returnAmount: number; netAmount: number; tax: number; total: number }
