@@ -60,7 +60,7 @@ const blankRow = (patch: Partial<Row> = {}): Row => ({
 /** Cột thêm của lưới Hạch toán (nút Cột); nhóm Thuế, Chứng từ thanh toán bật / tắt cả nhóm. */
 type ColKey = 'cashItem' | 'costItem' | 'department' | 'contract' | 'employee' | 'cashflowCode' | 'tax' | 'settle';
 const COLS: [ColKey, string][] = [['cashItem', 'Mục thu/chi'], ['costItem', 'Khoản mục CP'], ['department', 'Đơn vị'], ['contract', 'Hợp đồng'], ['employee', 'Nhân viên'], ['cashflowCode', 'Mã lưu chuyển tiền tệ'], ['tax', 'Thuế, hoá đơn'], ['settle', 'Chứng từ thanh toán']];
-const COLS_DEFAULT: ColKey[] = ['cashItem', 'costItem'];
+const COLS_DEFAULT: ColKey[] = ['costItem']; // Mục thu/chi ẩn sẵn (bật ở nút Cột khi cần báo cáo Dòng tiền)
 const hasData = (rows: Row[], k: ColKey) => rows.some((r) => (k === 'tax' ? r.taxCode || r.taxAmount || r.invoiceNo : k === 'settle' ? r.settleItemId : r[k]));
 
 /* DÁN TỪ EXCEL (Ctrl + V) vào lưới: theo thứ tự cột đang hiện (data-f trên ô), hoặc theo dòng tiêu đề. */
@@ -315,7 +315,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
     <input className={cls} value={r[field]} disabled={dis} onChange={(e) => setRow(r.key, { [field]: e.target.value })} />
   );
   const dimCell = (r: Row, field: 'cashItem' | 'costItem' | 'department' | 'contract' | 'employee', list: Dimension[]) => (
-    <ListPicker items={list.filter((d) => d.isActive || d.code === r[field])} value={r[field]} disabled={dis} onChange={(v) => setRow(r.key, { [field]: v })} hideName />
+    <ListPicker items={list.filter((d) => d.isActive || d.code === r[field])} value={r[field]} disabled={dis} onChange={(v) => setRow(r.key, { [field]: v })} hideName={field !== 'cashItem' && field !== 'costItem'} />
   );
 
   /** Dán từ Excel: có dòng tiêu đề thì ghép theo tên; không có thì từ ô đang đứng ghi sang phải theo các cột đang hiện, thiếu dòng tự thêm. */
@@ -422,8 +422,8 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
               <th style={{ minWidth: 90 }}>TK Nợ</th><th style={{ minWidth: 90 }}>TK Có</th>
               <th style={{ minWidth: 130 }}>Số tiền</th>
               <th style={{ minWidth: 120 }}>Đối tượng</th><th style={{ minWidth: 200 }}>Tên đối tượng</th>
-              {show('cashItem') && <th style={{ minWidth: 120 }} title="Mục thu / chi của dòng tiền — báo cáo Dòng tiền gom theo mục">Mục thu/chi</th>}
-              {show('costItem') && <th style={{ minWidth: 110 }}>Khoản mục CP</th>}
+              {show('cashItem') && <th style={{ minWidth: 220 }} title="Mục thu / chi của dòng tiền — báo cáo Dòng tiền gom theo mục">Mục thu/chi</th>}
+              {show('costItem') && <th style={{ minWidth: 220 }}>Khoản mục CP</th>}
               {show('department') && <th style={{ minWidth: 110 }}>Đơn vị</th>}
               {show('contract') && <th style={{ minWidth: 110 }}>Hợp đồng</th>}
               {show('employee') && <th style={{ minWidth: 110 }}>Nhân viên</th>}

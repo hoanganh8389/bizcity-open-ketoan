@@ -14,7 +14,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Mục thu / chi và báo cáo Dòng tiền <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Chiều phân tích mới **Mục thu/chi** (`cash_item`, trường dòng `cashItem`, ghi ở `ledger_lines.dims.cashItem`) theo đúng khuôn các chiều sẵn có; danh mục DM17 (Danh mục → Chi phí) dạng cây hai gốc THU / CHI, có sẵn 23 mục thường dùng; cờ "Mục thu/chi" trên tài khoản (bắt buộc chọn khi bật). Không bắt buộc với phiếu.
-- Form phiếu thu / chi: cột **Mục thu/chi** (hiện mặc định; phiếu thu chỉ mục thu, phiếu chi chỉ mục chi).
+- Form phiếu thu / chi: cột **Mục thu/chi** ẩn sẵn, bật ở nút Cột (phiếu thu chỉ mục thu, phiếu chi chỉ mục chi); ô Mục thu/chi, Khoản mục CP hiện cả tên cạnh mã.
 - Báo cáo **Dòng tiền** (ACC98, Tiền mặt → Báo cáo): A Tiền tồn đầu kỳ · B Thực thu theo mục thu · C Thực chi theo mục chi · D Tiền tồn cuối kỳ; Kỳ trước / Kỳ này; dòng tiền chưa gán mục hiện ở "(Chưa gán mục …)". API mới GET /api/v1/reports/cash-items.
 - **Nâng cấp cần làm**: chạy migration 0104_muc_thu_chi (mở loại `cash_item` của dimensions, thêm cột `accounts.track_cash_item`, nạp danh mục mặc định cho mọi đơn vị).
 
