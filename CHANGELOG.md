@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Menu: Biên bản đối chiếu công nợ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Mua hàng / Bán hàng → Báo cáo trỏ thẳng màn Biên bản đối chiếu công nợ (CN07) thay dòng "đang phát triển".
+
 ### Tổng hợp bán hàng (BH02): thẻ Theo nhân viên <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Cách nhóm mới `employee` (API /sales-report, lãi gộp dùng chung): theo nhân viên bán hàng ghi trên phiếu (mã, tên); phiếu không ghi nhân viên gom vào "(không có)".
 
