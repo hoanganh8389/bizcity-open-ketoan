@@ -27,6 +27,7 @@ export const khoMenu: MenuItem[] = [
       { key: 'kho-chuyen-kho', label: 'Bảng kê chuyển kho', path: '/bao-cao/chuyen-kho', code: 'HH01' },
       // [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — tồn theo lô (0098) (đóng góp)
       { key: 'kho-ton-theo-lo', label: 'Tồn theo lô', path: '/kho/ton-theo-lo', code: 'KHO05' },
+      { key: 'kho-the-kho', label: 'Thẻ kho', path: '/kho/the-kho', code: 'KHO06' },
     ],
   },
   {

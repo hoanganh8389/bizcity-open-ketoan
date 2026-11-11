@@ -91,7 +91,7 @@ export const GON_DEFS: GonDef[] = [
       { paths: ['/ban-hang/xuat-dieu-chinh', '/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von'], soon: ['Nhập kho', 'Xuất kho', 'Kiểm kê kho'] },
       { label: 'Danh mục', paths: ['/danh-muc/mat-hang', '/danh-muc/kho', '/danh-muc/don-vi-tinh'] },
     ],
-    reports: [{ label: 'Kho', paths: ['/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/nhap-xuat-ton', '/bao-cao/ton-nhieu-kho', '/kho/ton-theo-lo', '/bao-cao/chuyen-kho'], soon: ['Thẻ kho', 'Đối chiếu kho và sổ cái'] }],
+    reports: [{ label: 'Kho', paths: ['/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/nhap-xuat-ton', '/bao-cao/ton-nhieu-kho', '/kho/the-kho', '/kho/ton-theo-lo', '/bao-cao/chuyen-kho'], soon: ['Đối chiếu kho và sổ cái'] }],
   },
   {
     key: 'ccdc', label: 'Công cụ dụng cụ', icon: 'Hammer', description: 'Ghi tăng, phân bổ công cụ dụng cụ, chi phí trả trước', color: '#00838f', module: 'tai-san', homeLabel: 'Quy trình',

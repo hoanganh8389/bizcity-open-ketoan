@@ -19,7 +19,8 @@ export const khoRoutes = (
     <Route path="nghiep-vu/tinh-gia-von" element={<CostingPage />} />
     <Route path="nghiep-vu/cong-thuc-gia-von" element={<CongThucGiaVonPage />} />
     <Route path="bao-cao/nhap-xuat-ton" element={<StockMovementPage />} />
-    <Route path="bao-cao/so-chi-tiet-hang-hoa" element={<ItemLedgerPage />} />
+    <Route path="bao-cao/so-chi-tiet-hang-hoa" element={<ItemLedgerPage key="acc82" />} />
+    <Route path="kho/the-kho" element={<ItemLedgerPage key="kho06" theKho />} />
     <Route path="bao-cao/hanh-trinh-mat-hang" element={<HanhTrinhMatHangPage />} />
     <Route path="ban-hang/lai-gop" element={<GrossProfitPage />} />
     <Route path="bao-cao/chuyen-kho" element={<StockTransfersPage />} />

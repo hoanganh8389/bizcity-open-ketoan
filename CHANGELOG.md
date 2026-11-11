@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thẻ kho (KHO06) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Màn mới ở Kho → Báo cáo, theo mẫu S12-DN: Ngày · Số hiệu chứng từ (Nhập, Xuất) · Diễn giải · Số lượng Nhập / Xuất / Tồn · Ký xác nhận của kế toán; chỉ dòng có số lượng; in mặc định mẫu S12-DN.
+
 ### Báo cáo theo nhiều chi nhánh <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - ACC9N Kết quả hoạt động kinh doanh theo nhiều chi nhánh: chỉ tiêu B02, Kỳ này / Kỳ trước, mỗi dải cột Tổng + từng chi nhánh.
 - ACC10N Bảng cân đối tài khoản theo nhiều chi nhánh: chọn chỉ tiêu hiển thị (Nợ / Có đầu kỳ, phát sinh, cuối kỳ), bậc tài khoản, nhánh tài khoản.

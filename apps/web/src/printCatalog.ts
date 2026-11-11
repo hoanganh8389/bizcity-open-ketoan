@@ -85,7 +85,7 @@ const SCREENS: [string, CatalogScreen['templates']][] = [
   // Tài sản
   ...['ACC29', 'ACC42', 'ACC85', 'ACC27'].map((code): [string, CatalogScreen['templates']] => [code, t(registerTemplates(code))]),
   // Kho, bán hàng, mua hàng
-  ['ACC83', t(STOCK_TEMPLATES)], ['ACC82', t(ITEM_LEDGER_TEMPLATES)], ['ACC49', t(COST_TEMPLATES)],
+  ['ACC83', t(STOCK_TEMPLATES)], ['ACC82', t(ITEM_LEDGER_TEMPLATES)], ['KHO06', t(ITEM_LEDGER_TEMPLATES)], ['ACC49', t(COST_TEMPLATES)],
   ['HH01', t(TRANSFER_TEMPLATES)], ['BH04', t(PROFIT_TEMPLATES)], ['KQ01', t(PNL_TEMPLATES)],
   ['BH01', t(SALES_DETAIL_TEMPLATES)], ['BH02', t(...BH02_GROUPS.map((g) => summaryTemplates(g)))], ['BH03', t(PAYMENTS_TEMPLATES)], ['BH05', t(RECEIPTS_TEMPLATES)],
   ['MH10', t(LOG_TEMPLATES)], ['MH11', t(...MH11_GROUPS.map((g) => buyTemplates(g)))],
