@@ -97,6 +97,25 @@ export const ERROR_REASONS = {
   POLICY_RETIRED: 'Chính sách đã ngừng, dùng mã mới',
   POLICY_BACKDATED: 'Ngày áp sớm hơn bản trước (không viết lại quá khứ)',
   POLICY_REVIEW_NOT_OPEN: 'Sự việc không có phát hiện chính sách cần xem',
+  // [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — module pos: họ mã POS_* của module pos (R-ERR-6, R-ERR-11; BIZCITY-ERRORS 1.7.0-draft §4c, đề xuất P-MP-5, đóng góp)
+  // Máy bán POS (modules/pos)
+  POS_NOT_SUPPORTED_YET: 'Máy chủ POS chưa nhận loại đơn / dòng / thanh toán này ở đợt hiện tại (khuyến mại, quà, QR, ghi nợ, bill Z); kèm field, billZ',
+  POS_UNKNOWN_SKU: 'Mã hàng không có (hoặc ngừng bán) trong danh mục kế toán; items: [{ sku }]',
+  POS_TAX_NOT_DECLARED: 'Mặt hàng chưa khai mã thuế đầu ra; items: [{ sku }]',
+  POS_PRICE_CHANGED: 'Giá / tổng máy bán tính khác máy chủ (hàng Nội bộ phải 0đ); kèm clientTotal, total hoặc items',
+  POS_DISCOUNT_TOO_LARGE: 'Tiền giảm tay lớn hơn thành tiền dòng',
+  POS_CASH_INSUFFICIENT: 'Tiền khách đưa ít hơn số phải thu',
+  POS_NO_CASH_METHOD: 'Danh mục hình thức thanh toán chưa có tiền mặt',
+  POS_UNKNOWN_METHOD: 'Hình thức thanh toán không có trong danh mục',
+  POS_DUPLICATE_METHOD: 'Một hình thức thanh toán lặp lại trong chia tiền',
+  POS_SPLIT_MISMATCH: 'Các phần chia tiền cộng không bằng tổng đơn',
+  POS_UNKNOWN_CUSTOMER: 'Mã khách không có trong danh mục',
+  POS_BAD_PHONE: 'SĐT khách mới sai khuôn',
+  POS_MISSING_NAME: 'Khách mới thiếu tên',
+  POS_UNKNOWN_BRANCH: 'Chi nhánh máy gửi không có trong danh mục / đơn vị chưa khai chi nhánh',
+  POS_BRANCH_REQUIRED: 'Đơn vị nhiều chi nhánh mà máy không gửi branchCode / mã phiếu có ở nhiều chi nhánh',
+  POS_ORDER_ID_REUSED: 'Cùng id đơn đã nhận với nội dung khác (máy phải tạo đơn mới)',
+  POS_CODE_TAKEN: 'Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại)',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

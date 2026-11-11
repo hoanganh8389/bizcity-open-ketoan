@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Khung nhìn mặt hàng có ô Biến thể / Gửi lên thuế; họ mã lỗi `POS_*` (đề xuất P-MP-5, P-MP-6 của module pos) <!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — phần Core cho module pos (đóng góp) -->
+
+- **Thêm:** `ERROR_REASONS` thêm 17 mã `POS_*` của module `pos` (BIZCITY-ERRORS 1.7.0-draft §4c, R-ERR-6 / R-ERR-11): dữ liệu kèm lỗi đặt cạnh `reason`, danh sách ở `items`.
+- **Đổi:** `POST /api/v1/auth/wp-sso` nhận cả quyền do module khai trong vé (manifest `permissions[]`, vd `pos:sell`), lọc bằng `isKnownPermission` như lúc đọc phiên; trước đây chỉ giữ quyền Core nên module không có quyền riêng qua đăng nhập WP (đề xuất P-MP-7). Test `wp-sso-quyen-module.test.ts`.
+- **Đổi:** khung nhìn `bizcity_read.products` thêm `variant_code`, `send_to_tax` (migration 0102, thêm cột cuối, cùng khuôn 0044 / 0070; ADR-0026) — module biết hàng Nội bộ / không gửi thuế mà không đọc chữ cuối mã. Kiểu ở `packages/platform/src/db/types.ts`; test `read-views.test.ts`.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0102 (số lấy lúc gộp).
+- **Bảo mật:** khung nhìn giữ `security_invoker` (RLS bảng gốc) và trigger chặn ghi. Vé WP vẫn bỏ quyền lạ (không có trong Core, không thuộc module đang bật).
+
 ### Thêm nhanh chi nhánh, phân kho ngay trên phiếu <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/10 (đóng góp) -->
 
 - **Thêm:** ô chọn chi nhánh trên form có + / F9 thêm nhanh chi nhánh (tự chọn sau khi ghi); phiếu mua (MH11) ô Phân kho và Kho nhận hàng chọn theo chi nhánh đang chọn, có + thêm phân kho.
