@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ chi tiết vật tư hàng hóa (ACC82) theo mẫu sổ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Tiêu đề + kỳ; dòng Số tồn đầu kỳ, từng lần nhập / xuất (Ngày hạch toán · Số chứng từ · Diễn giải · Đơn giá · Nhập / Xuất / Tồn), Cộng, Số tồn cuối kỳ; cột Kho.
+
 ### Tổng hợp tồn kho (ACC83) theo mẫu quản trị <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Đổi tên "Báo cáo nhập xuất tồn hàng hoá" → "Tổng hợp tồn kho"; cột Mã hàng · Tên hàng · ĐVT · Đầu kỳ / Nhập kho / Xuất kho / Cuối kỳ (Số lượng, Giá trị).
 - Nhiều kho (chi nhánh): nhóm "Kho: …" + Cộng nhóm; ô "Cộng gộp các kho" để xem một dòng mỗi mã. Dòng thiếu tên hàng lấy tên ở kho khác.

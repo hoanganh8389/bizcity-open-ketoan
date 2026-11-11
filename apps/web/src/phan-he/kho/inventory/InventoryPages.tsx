@@ -291,6 +291,8 @@ export function StockMovementPage() {
 interface LedgerRow { eventId: string; docDate: string; docNo: string; docType: string; kindLabel: string; branchCode: string; inQty: number; inValue: number; outQty: number; outValue: number; balanceQty: number; balanceValue: number; uncosted: boolean }
 interface ItemLedger { sku: string; name: string; unit: string; opening: { qty: number; value: number }; rows: LedgerRow[]; closing: { qty: number; value: number } }
 
+const qtyText = (n: number) => n.toLocaleString('vi-VN');
+
 export function ItemLedgerPage() {
   // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: nhận mã hàng / khoảng ngày từ URL (từ Hành trình mặt hàng, danh mục mặt hàng)
   const [sp] = useSearchParams();
@@ -302,7 +304,7 @@ export function ItemLedgerPage() {
   const d = q.data;
   return (
     <>
-      <PageHeader title="Sổ chi tiết hàng hoá" code="ACC82" subtitle="Từng lần nhập, xuất của một mặt hàng và tồn luỹ kế" helpKey="so-chi-tiet-hang-hoa" />
+      <PageHeader title="Sổ chi tiết vật tư hàng hóa" code="ACC82" subtitle="Từng lần nhập, xuất của một mặt hàng: số tồn đầu kỳ, nhập, xuất, tồn sau mỗi lần, số tồn cuối kỳ" helpKey="so-chi-tiet-hang-hoa" />
       <FilterLayout boThamSo={{ value: f, onApply: setF }}
         print={<PrintButton screen="ACC82" templates={ITEM_LEDGER_TEMPLATES} disabled={!d} getDocs={() => (d ? [{ ...d, from: f.from, to: f.to, branchCodes: f.branchCodes, warehouseCodes: f.warehouseCodes }] : [])} />}
         filters={
@@ -319,29 +321,34 @@ export function ItemLedgerPage() {
           <ErrorBox error={q.error ? errorText(q.error) : null} />
           {!f.sku ? <Empty text="Chưa chọn mặt hàng — bấm vào ô Mã hàng ở trên để tìm theo mã hoặc tên." /> : q.isLoading ? <Loading /> : !d ? null : (
             <>
-              <div className="card-body">
-                <b className="mono">{d.sku}</b> {d.name} {d.unit && `(${d.unit})`} <Link className="btn btn-xs" to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(d.sku)}&from=${f.from}&to=${f.to}`}>Truy vết</Link> · Tồn đầu: <b>{d.opening.qty.toLocaleString('vi-VN')}</b> = {money(d.opening.value)} · Tồn cuối: <b>{d.closing.qty.toLocaleString('vi-VN')}</b> = {money(d.closing.value)}
+              <div className="rp-tieu-de"><h2>SỔ CHI TIẾT VẬT TƯ HÀNG HÓA</h2><i>{kyText(f.from, f.to)}</i></div>
+              <div className="card-body" style={{ paddingTop: 0 }}>
+                Mã hàng: <b className="mono">{d.sku}</b> · Tên hàng: <b>{d.name}</b>{d.unit && ` · ĐVT: ${d.unit}`} <Link className="btn btn-xs" to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(d.sku)}&from=${f.from}&to=${f.to}`}>Truy vết</Link>
               </div>
-              {!d.rows.length ? <Empty text="Không có phát sinh trong khoảng này" /> : (
-                <DataGrid
-                  storageKey="acc82"
-                  rows={d.rows}
-                  rowKey={(r, i) => `${r.eventId}-${i}`}
-                  onRowClick={(r) => setDocId(r.eventId)}
-                  columns={[
-                    { key: 'docDate', header: 'Ngày', type: 'date' },
-                    { key: 'docNo', header: 'Số chứng từ', type: 'code' },
-                    { key: 'kindLabel', header: 'Nghiệp vụ' },
-                    { key: 'branchCode', header: 'Chi nhánh', type: 'code' },
-                    { key: 'inQty', header: 'Số lượng', band: 'Nhập', type: 'qty', sum: true },
-                    { key: 'inValue', header: 'Giá trị', band: 'Nhập', type: 'money', sum: true },
-                    { key: 'outQty', header: 'Số lượng', band: 'Xuất', type: 'qty', sum: true },
-                    { key: 'outValue', header: 'Giá trị', band: 'Xuất', type: 'money', sum: true },
-                    { key: 'balanceQty', header: 'Số lượng', band: 'Tồn', type: 'qty' },
-                    { key: 'balanceValue', header: 'Giá trị', band: 'Tồn', type: 'money' },
-                  ]}
-                />
-              )}
+              <DataGrid
+                storageKey="acc82-v2"
+                rows={d.rows}
+                rowKey={(r, i) => `${r.eventId}-${i}`}
+                onRowClick={(r) => setDocId(r.eventId)}
+                footerLabel="Cộng"
+                emptyText="Không có phát sinh trong kỳ"
+                topRows={[{ key: 'open', label: 'Số tồn đầu kỳ', cells: { balanceQty: qtyText(d.opening.qty), balanceValue: money(d.opening.value) } }]}
+                bottomRows={[{ key: 'close', label: 'Số tồn cuối kỳ', cells: { balanceQty: qtyText(d.closing.qty), balanceValue: money(d.closing.value) } }]}
+                exportName={`so-chi-tiet-vthh-${d.sku}`} exportTitle={`Sổ chi tiết vật tư hàng hóa ${d.sku} — ${kyText(f.from, f.to)}`}
+                columns={[
+                  { key: 'docDate', header: 'Ngày hạch toán', type: 'date', width: 104 },
+                  { key: 'docNo', header: 'Số chứng từ', type: 'code', width: 130 },
+                  { key: 'kindLabel', header: 'Diễn giải', width: 220 },
+                  { key: 'price', header: 'Đơn giá', type: 'price', width: 110, title: 'Giá trị ÷ số lượng của lần nhập / xuất', value: (r) => { const q = r.inQty || r.outQty; const v = r.inQty ? r.inValue : r.outValue; return q ? Math.round((v / q) * 100) / 100 : null; } },
+                  { key: 'inQty', header: 'Số lượng', band: 'Nhập', type: 'qty', sum: true },
+                  { key: 'inValue', header: 'Giá trị', band: 'Nhập', type: 'money', sum: true },
+                  { key: 'outQty', header: 'Số lượng', band: 'Xuất', type: 'qty', sum: true },
+                  { key: 'outValue', header: 'Giá trị', band: 'Xuất', type: 'money', sum: true },
+                  { key: 'balanceQty', header: 'Số lượng', band: 'Tồn', type: 'qty' },
+                  { key: 'balanceValue', header: 'Giá trị', band: 'Tồn', type: 'money' },
+                  { key: 'branchCode', header: 'Kho', type: 'code', width: 90 },
+                ]}
+              />
             </>
           )}
         </div>
