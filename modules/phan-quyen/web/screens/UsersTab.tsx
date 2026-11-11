@@ -23,11 +23,11 @@ const SYSTEM_ROLES: { value: string; label: string }[] = [
 ];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function UsersTab() {
+export function UsersTab({ initialUserId = null }: { initialUserId?: string | null } = {}) {
   const api = useApi();
   const qc = useQueryClient();
   const [q, setQ] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(initialUserId && /^\d+$/.test(initialUserId) ? initialUserId : null);
   const [assigning, setAssigning] = useState(false);
   const [revoking, setRevoking] = useState<Assignment | null>(null);
   const [mode, setMode] = useState<'system' | 'tenant'>('tenant');

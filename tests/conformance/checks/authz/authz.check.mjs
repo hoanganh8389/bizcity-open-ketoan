@@ -16,6 +16,12 @@ const TGS_AUTH = 'packages/platform/src/core/auth.ts';
 const READ_ONLY = (p) => p.endsWith(':read');
 
 const LIST = 'tests/conformance/checks/authz/route-giu.json';
+// [2026-11-09 04:00 PM kiennt] PHASE-028 — giai đoạn 5 (80 D-AUTH-20, 70 SC-AUTH-11 phần "quyền mồ côi"): quyền khai trong manifest phải có chỗ chặn ở máy chủ
+// [2026-11-11 09:13 AM kiennt] PHASE-028 — S028-21: SC-AUTH-11 mức info (cảnh báo) như 70; lên mức chặn cần chữ chốt RULE-QUALITY-GATE
+/** Nơi có manifest phân hệ / module / add-in / mẫu module. Thư mục test (fixture của test) không tính. */
+const MANIFEST_ROOTS = ['modules', 'apps/api/src/phan-he', 'apps/api/src/addins', 'templates'];
+/** Tệp được coi là "chỗ chặn" ở máy chủ: mã API (không phải web/ — web chỉ ẩn / hiện) và workflow YAML. */
+const ENFORCE_EXT = ['.ts', '.mts', '.js', '.mjs', '.yaml', '.yml'];
 const ROUTE_RE = /\b(?:r|app|fastify|server|router|api)\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]*)['"`]/;
 const BLOCK_LINES = 8;
 
@@ -105,6 +111,37 @@ export const checks = [
         for (const p of g.derived) if (!justified.has(p)) findings.push(ctx.finding(TGS_GROUPS, Math.max(1, glines.findIndex((l) => l.includes(`"code": "${g.code}"`)) + 1), `nhóm ${g.code} có quyền suy ra ${p} không có ánh xạ chứng minh (cao / đã duyệt)`, `derived:${g.code}:${p}`));
       }
       return { examined: codes.items.length + groups.items.length, findings, notes: [`${codes.items.length} mã · ${groups.items.length} nhóm · ${codes.rows} dòng nguồn`] };
+    },
+  },
+  {
+    id: 'SC-AUTH-11',
+    title: 'Quyền khai trong manifest (permissions[]) phải có chỗ chặn ở máy chủ — không có quyền chỉ để hiện trên ma trận HT12 (quyền mồ côi, AUTHZ-16)',
+    gate: 'CONF-STATIC', contract: 'bizcity_module', rules: ['STD-ACT-1'], conf: [], tier: 1, enforce: 'info', weight: 2, targets: ['repo'],
+    run(ctx) {
+      const r = ctx.repo;
+      const findings = [];
+      let examined = 0;
+      const manifests = r.files({ under: MANIFEST_ROOTS, ext: ['.json'], not: /(^|\/)(test|tests|__tests__|fixtures|node_modules|dist)\// }).filter((f) => f.endsWith('/bizcity.module.json'));
+      for (const mf of manifests) {
+        let m;
+        try { m = r.json(mf); } catch (e) { findings.push(ctx.finding(mf, 1, `JSON hỏng: ${e.message}`, `json:${mf}`)); continue; }
+        const perms = (m.permissions ?? []).map((p) => p?.key).filter((k) => typeof k === 'string');
+        if (!perms.length) continue;
+        const dir = mf.slice(0, -'/bizcity.module.json'.length);
+        const code = r.files({ under: [dir], ext: ENFORCE_EXT, not: /(^|\/)(web|test|tests|__tests__|dist|node_modules)\// }).map((f) => r.read(f)).join('\n');
+        const ui = r.files({ under: [`${dir}/web`], ext: ['.ts', '.tsx'] }).map((f) => r.read(f)).join('\n');
+        const mlines = r.lines(mf);
+        for (const key of perms) {
+          examined++;
+          const quoted = new RegExp(`['"\`]${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]`);
+          if (quoted.test(code)) continue;
+          const line = Math.max(1, mlines.findIndex((l) => l.includes(`"${key}"`)) + 1);
+          findings.push(quoted.test(ui)
+            ? ctx.finding(mf, line, `quyền ${key} chỉ dùng ở giao diện (ẩn / hiện menu) — máy chủ không chặn: gắn vào defineAction / requirePermission / workflow`, `web-only:${key}`)
+            : ctx.finding(mf, line, `quyền ${key} khai trong manifest nhưng không chỗ nào kiểm — bỏ khỏi manifest hoặc gắn vào action / route / workflow`, `orphan:${key}`));
+        }
+      }
+      return { examined, findings, notes: [`${manifests.length} manifest · ${examined} quyền khai`] };
     },
   },
 ];

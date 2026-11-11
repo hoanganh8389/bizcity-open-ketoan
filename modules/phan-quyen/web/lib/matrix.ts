@@ -110,3 +110,18 @@ export const needsPassword = (message: string): boolean => /confirmPassword/.tes
 
 /** Lý do tối thiểu 3 ký tự sau khi cắt khoảng trắng (khớp schema máy chủ). */
 export const validReason = (s: string): boolean => s.trim().length >= 3;
+
+/**
+ * Thao tác cả nhóm (PHASE-028 giai đoạn 4.2) cho một vai trò của đơn vị:
+ *  - allow: mọi quyền RỦI RO THẤP của nhóm chưa có luật Cho đích danh (Cho không dùng *; quyền cao vẫn phải Cho từng quyền, nhập lại mật khẩu);
+ *  - deny: mẫu `<tiền tố>:*` cho mỗi tiền tố quyền của nhóm chưa bị Cấm (Cấm được dùng *, phủ cả quyền cao). Nhóm Lõi có nhiều tiền tố
+ *    (catalog, documents…) nên ra nhiều mẫu; nhóm module ra đúng `<module>:*`.
+ */
+export function groupRulePlan(items: readonly MatrixPermission[], detail: RoleDetail | undefined): { allow: string[]; deny: string[] } {
+  const active = (detail?.rules ?? []).filter((r) => r.active);
+  const allowed = new Set(active.filter((r) => r.effect === 'allow').map((r) => r.permission));
+  const denied = new Set(active.filter((r) => r.effect === 'deny').map((r) => r.permission));
+  const allow = items.filter((p) => p.risk === 'low' && !allowed.has(p.key)).map((p) => p.key).sort();
+  const deny = [...new Set(items.map((p) => `${p.key.split(':')[0]}:*`))].filter((d) => !denied.has(d)).sort();
+  return { allow, deny };
+}

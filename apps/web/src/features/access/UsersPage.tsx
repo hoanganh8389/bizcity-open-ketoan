@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ROLE_LABELS, type Role } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { dateTime } from '@/lib/format';
@@ -16,6 +17,7 @@ type Draft = Partial<User> & { isNew?: boolean; password?: string };
 
 export function UsersPage() {
   const [editing, setEditing] = useState<Draft | null>(null);
+  const navigate = useNavigate();
   const q = useQuery({ queryKey: ['users'], queryFn: () => api.get<User[]>('/api/v1/users') });
   return (
     <>
@@ -35,6 +37,11 @@ export function UsersPage() {
               { key: 'email', header: 'Email' },
               { key: 'role', header: 'Vai trò', value: (u) => ROLE_LABELS[u.role] ?? u.role },
               { key: 'lastLoginAt', header: 'Đăng nhập gần nhất', value: (u) => dateTime(u.lastLoginAt), className: 'muted' },
+              // [2026-11-09 03:45 PM kiennt] PHASE-028 — giai đoạn 4.4: mở HT12 thẻ Người dùng với đúng người này (vai trò bổ sung, theo chi nhánh / kho, Xem như)
+              { key: 'phanQuyen', header: 'Phân quyền', value: () => '', render: (u) => (
+                <button type="button" className="btn btn-xs" title="Gán vai trò bổ sung (cả đơn vị, chi nhánh, kho), xem quyền thực tế — mở HT12"
+                  onClick={(e) => { e.stopPropagation(); navigate(`/app/phan-quyen/vai-tro?tab=nguoi-dung&user=${u.id}`); }}>Phân quyền</button>
+              ) },
               { key: 'isActive', header: 'Trạng thái', value: (u) => (u.isActive ? 'Hoạt động' : 'Đã khoá'), render: (u) => (u.isActive ? <span className="badge badge-ok">Hoạt động</span> : <span className="badge badge-gray">Đã khoá</span>) },
             ] satisfies Column<User>[]}
           />
