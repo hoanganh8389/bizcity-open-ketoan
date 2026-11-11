@@ -63,7 +63,7 @@ export const SO_DO: Record<string, SoDo> = {
     ],
     reports: [
       { label: 'Sổ chi tiết mua hàng', path: '/mua-hang/bao-cao' }, { label: 'Chi tiết công nợ phải trả nhà cung cấp', path: '/bao-cao/chi-tiet-thanh-toan' },
-      { label: 'Tổng hợp mua hàng theo mặt hàng' }, { label: 'Tổng hợp công nợ phải trả nhà cung cấp', path: '/bao-cao/cong-no-phai-tra' },
+      { label: 'Tổng hợp mua hàng theo mặt hàng', path: '/mua-hang/tong-hop-mat-hang' }, { label: 'Tổng hợp công nợ phải trả nhà cung cấp', path: '/bao-cao/cong-no-phai-tra' },
       { label: 'Biên bản đối chiếu và xác nhận công nợ phải trả' },
     ],
     links: [L.ncc, L.vthh],

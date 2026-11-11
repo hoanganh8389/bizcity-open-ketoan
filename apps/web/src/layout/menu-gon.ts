@@ -68,7 +68,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Danh mục', paths: ['/danh-muc/nha-cung-cap', '/danh-muc/mat-hang'] },
     ],
     reports: [
-      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/doi-chieu'], soon: ['Tổng hợp mua hàng theo mặt hàng'] },
+      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/doi-chieu'] },
       { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no'], soon: ['Biên bản đối chiếu công nợ phải trả'] },
     ],
   },

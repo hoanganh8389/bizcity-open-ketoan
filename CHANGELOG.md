@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Tổng hợp mua hàng theo mặt hàng (MH23A) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Mục mới ở Mua hàng → Báo cáo: mở sẵn kiểu cộng dồn theo mã hàng, mọi loại phiếu. Cột chuẩn: Mã hàng · Tên hàng · ĐVT · Số lượng mua · Giá trị mua · Chiết khấu · Số lượng trả lại · Giá trị trả lại · Tổng giá trị mua; cột thêm (nhóm hàng, SL đặt, hàng tặng, thuế, giá bình quân…) ẩn sẵn, bật ở nút Cột.
+
 ### Báo cáo công nợ theo mẫu quản trị <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Tổng hợp công nợ (ACC38 theo đối tượng, ACC38A phải thu khách hàng, ACC38B phải trả nhà cung cấp, ACC61 nội bộ): Mã · Tên · TK công nợ · Số dư đầu kỳ / Phát sinh / Số dư cuối kỳ (Nợ, Có); bỏ Kiểu báo cáo 4 lựa chọn, thay bằng "Tách theo chi nhánh" khi có nhiều chi nhánh.
 - Chi tiết công nợ (ACC40, ACC40A, ACC81, ACC62) màn mới: nhóm từng đối tượng — Số dư đầu kỳ, phát sinh (số dư chạy theo đối tượng), Cộng nhóm; cuối Tổng cộng. Bấm dòng tổng hợp mở thẳng chi tiết của đối tượng.
