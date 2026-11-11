@@ -111,29 +111,29 @@ export function CashVouchersPage({ type }: { type: CashType }) {
                 { key: 'updatedAt', header: 'Ngày sửa', value: (r) => dateTime(r.updatedAt), hidden: true },
                 { key: 'updatedByName', header: 'User sửa', hidden: true },
               ] : [
-                                { key: 'docNo', header: 'Số phiếu', type: 'code' },
+                // [2026-11-11 Nguyễn Văn Thủy] cột chính theo mẫu chuẩn đứng trước; cột thêm ẩn sẵn, bật ở nút Cột (đóng góp)
+                { key: 'docDate', header: 'Ngày hạch toán', type: 'date', width: 104 },
+                { key: 'docNo', header: 'Số chứng từ', type: 'code', width: 130 },
+                { key: 'description', header: 'Diễn giải', width: 300 },
+                { key: 'total', header: 'Số tiền', type: 'money', sum: true, showZero: true, width: 130 },
+                { key: 'partnerCode', header: 'Đối tượng', type: 'code', width: 120 },
+                { key: 'partnerName', header: 'Tên đối tượng', width: 200 },
+                { key: 'counterparty', header: type === 'receipt' || type === 'bank_receipt' ? 'Người nộp' : 'Người nhận', width: 160 },
+                { key: 'employeeName', header: 'Nhân viên', width: 160, value: (r) => r.employeeName || r.employeeCode },
+                { key: 'bank', header: 'Tài khoản ngân hàng', type: 'code', hidden: type === 'receipt' || type === 'payment', value: (r) => bankOf(r.moneyAccount) },
                 { key: 'status', header: 'Trạng thái', width: 100, value: (r) => (r.status === 'pending' ? 'Chờ duyệt' : 'Đã ghi sổ'), title: 'Chờ duyệt = phiếu nháp (nhập Excel…) chưa có bút toán: tích rồi bấm Ghi sổ' },
-                { key: 'employeeCode', header: 'Nhân viên', type: 'code' },
-                { key: 'description', header: 'Ghi chú' },
-                { key: 'currency', header: 'Tiền tệ', value: () => 'VND' },
-                { key: 'rate', header: 'Tỷ giá', type: 'number', value: () => 1 },
-                { key: 'total', header: 'Số tiền', type: 'money', sum: true, showZero: true },
-                { key: 'moneyAccount', header: 'Tài khoản', type: 'code' },
-                { key: 'docDate', header: 'Ngày hạch toán', type: 'date' },
-                { key: 'partnerCode', header: 'Đối tượng', type: 'code' },
-                { key: 'bank', header: 'Ngân hàng', type: 'code', value: (r) => bankOf(r.moneyAccount) },
-                { key: 'reasonCode', header: 'Lý do', type: 'code' },
-                { key: 'invoiceRef', header: 'Số HĐ', type: 'code' },
-                { key: 'counterparty', header: 'Người nhận' },
-                { key: 'address', header: 'Địa chỉ' },
-                { key: 'phone', header: 'Điện thoại' },
-                { key: 'createdAt', header: 'Ngày tạo', value: (r) => dateTime(r.createdAt) },
-                { key: 'updatedAt', header: 'Ngày sửa', value: (r) => dateTime(r.updatedAt) },
-                { key: 'createdByName', header: 'User tạo' },
-                { key: 'updatedByName', header: 'User sửa' },
-                { key: 'employeeName', header: 'Tên nhân viên' },
-                { key: 'branchCode', header: 'Chi nhánh', type: 'code', hidden: true },
-                { key: 'partnerName', header: 'Tên đối tượng', hidden: true },
+                { key: 'branchCode', header: 'Chi nhánh', type: 'code', hidden: (branches?.length ?? 0) < 2 },
+                { key: 'moneyAccount', header: 'Tài khoản tiền', type: 'code', hidden: true },
+                { key: 'reasonCode', header: 'Lý do hạch toán', type: 'code', hidden: true },
+                { key: 'invoiceRef', header: 'Số HĐ', type: 'code', hidden: true },
+                { key: 'address', header: 'Địa chỉ', hidden: true },
+                { key: 'phone', header: 'Điện thoại', hidden: true },
+                { key: 'currency', header: 'Tiền tệ', value: () => 'VND', hidden: true },
+                { key: 'rate', header: 'Tỷ giá', type: 'number', value: () => 1, hidden: true },
+                { key: 'createdAt', header: 'Ngày tạo', value: (r) => dateTime(r.createdAt), hidden: true },
+                { key: 'createdByName', header: 'Người tạo', hidden: true },
+                { key: 'updatedAt', header: 'Ngày sửa', value: (r) => dateTime(r.updatedAt), hidden: true },
+                { key: 'updatedByName', header: 'Người sửa', hidden: true },
               ];
 
   return (
@@ -142,7 +142,7 @@ export function CashVouchersPage({ type }: { type: CashType }) {
       kpi={<KpiTien title={meta.title} total={q.data?.reduce((s, r) => s + (Number(r.total) || 0), 0)} count={q.data?.length} from={f.from} to={f.to}
         tk={type === 'receipt' || type === 'payment' ? '111' : type === 'bank_receipt' || type === 'bank_payment' ? '112' : null} />}
       title={meta.title} code={meta.code} subtitle={SUBTITLE[type]} helpKey={meta.helpKey}
-      filter={filter} query={{ ...q, queryKey: ['documents', 'voucher', type] }} columns={columns} storageKey={`voucher-list-${type}`} canWrite={canWrite}
+      filter={filter} query={{ ...q, queryKey: ['documents', 'voucher', type] }} columns={columns} storageKey={`voucher-list-${type}-v2`} canWrite={canWrite}
       notice={notice} setNotice={setNotice}
       addButtons={[{ key: 'add', label: 'Thêm', icon: <Plus size={15} className="text-ok" />, onClick: () => setForm({ seq: Date.now() }) }]}
       onOpen={async (r) => setForm({ existing: await load(r.id), seq: 0 })}

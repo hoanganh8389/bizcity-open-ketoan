@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Danh sách phiếu thu / chi: cột theo mẫu chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Cột chính: Ngày hạch toán · Số chứng từ · Diễn giải · Số tiền · Đối tượng · Tên đối tượng · Người nộp / nhận · Nhân viên · (tiền gửi: Tài khoản ngân hàng) · Trạng thái; Chi nhánh chỉ khi có từ 2 chi nhánh. Tiền tệ, Tỷ giá, Địa chỉ, Điện thoại, ngày / người tạo, sửa… ẩn sẵn (nút Cột).
+
 ### Form Phiếu thu / Phiếu chi / Thu, chi tiền gửi làm lại theo mẫu chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Ô **Loại** cạnh tiêu đề (mẫu định khoản): Thu tiền khách hàng, Thu hoàn ứng, Rút tiền gửi về quỹ…; Trả tiền NCC, Tạm ứng, Chi mua ngoài có hoá đơn, Trả lương, Gửi tiền vào ngân hàng, Chuyển tiền chi nhánh… — chọn thì điền tài khoản tiền + tài khoản đối ứng (lấy tài khoản chi tiết đầu tiên theo đầu số). Phiếu đã lập tự nhận loại theo tài khoản.
 - Đầu phiếu nhãn trên ô: Mã / Tên đối tượng · Người nộp / nhận · Địa chỉ · Lý do (tự gợi "Chi tiền cho …") · Nhân viên · Kèm theo … chứng từ gốc; bên phải Ngày hạch toán · Số phiếu · Chi nhánh (chỉ khi có từ 2 chi nhánh). Tiền gửi: Nộp vào tài khoản / Tài khoản chi. Bỏ ô Tài khoản tiền, Tiền tệ, Số tiền đầu phiếu (tổng tự tính).
