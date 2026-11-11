@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bộ tham số thông minh dùng chung (thay "Chọn nhanh" chi nhánh); menu không sáng trùng <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Khối **Bộ tham số đã lưu** đầu bảng tham số hiện ở MỌI màn có ô chi nhánh, không cần màn nối tay: ô chi nhánh tự đăng ký với khối này. Lưu một bộ ở màn bất kỳ thì phần chi nhánh của bộ dùng lại ở mọi màn khác (mục "Bộ chi nhánh (dùng mọi màn)"); màn đã nối bộ tham số riêng vẫn lưu / áp nguyên bộ (kỳ, kho, tài khoản…) và bộ mặc định. Bỏ nút "Chọn nhanh" trong ô chi nhánh; các bộ chi nhánh đã lưu bằng Chọn nhanh vẫn còn trong danh sách.
+- Sửa: Đơn mua hàng / Mua hàng / Trả lại / Giảm giá / Chứng từ mua hàng (cùng màn, khác `?loai=`) sáng cùng lúc ở menu và thanh thẻ — nay khớp cả tham số trên địa chỉ (`matchHere`).
+
 ### Xuất Excel định dạng chuẩn ở mọi nơi (kẻ ô, tiêu đề cột nền xám, số có phân cách) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Hàm chung `lib/excelChuan.ts` (exceljs): phông Times New Roman; tiêu đề đậm cỡ 14 gộp ngang; tiêu đề cột đậm nền xám, căn giữa, xuống dòng (hai tầng gộp ô); kẻ ô mảnh toàn bảng; dòng nhóm gộp ngang đậm, dòng Tổng / Cộng đậm; số #,##0 (âm trong ngoặc), số lượng / đơn giá giữ số lẻ; độ rộng cột theo nội dung; cố định dòng tiêu đề cột. Không dời dòng / cột nên tệp mẫu nhập liệu nạp lại vẫn đúng.
 - Áp cho: nút Xuất Excel của mọi bảng (DataGrid — các màn báo cáo, danh sách), tờ khai 01/GTGT + bảng kê + phụ lục, 01/KHBS, 03/TNDN, thuyết minh B09, tệp mẫu Nhập Excel (kèm sheet Hướng dẫn), mẫu nhập tài sản, sơ đồ tổ chức, yêu cầu tài chính kế toán, chiết khấu theo mã, quy cách thùng, đề nghị chuyển hàng, đăng ký tồn max, các tệp xuất của Mua hàng. Trước đây các tệp xuất không kẻ ô, số dài hiện dạng 2.48E+09.

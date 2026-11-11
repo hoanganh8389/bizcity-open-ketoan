@@ -223,6 +223,17 @@ export const matchLen = (path: string | undefined, pathname: string) => {
   return pathname === p || pathname.startsWith(`${p}/`) ? p.length : 0;
 };
 
+// [2026-11-11 Nguyễn Văn Thủy] khớp cả tham số trên địa chỉ: các mục cùng màn khác ?loai= không sáng cùng lúc (đóng góp)
+/** Như matchLen nhưng xét cả tham số của mục (vd ?loai=order): mục có tham số chỉ khớp khi địa chỉ có đúng tham số đó và khớp sát hơn mục không tham số. */
+export const matchHere = (path: string | undefined, pathname: string, search: string) => {
+  const n = matchLen(path, pathname);
+  const q = n && path ? path.split('?')[1] : undefined;
+  if (!q) return n;
+  const cur = new URLSearchParams(search);
+  for (const [k, v] of new URLSearchParams(q)) if (cur.get(k) !== v) return 0;
+  return n + 1;
+};
+
 const groupPaths = (g: GonGroup) => [g.home, ...[...g.sections, ...g.reports].flatMap((s) => s.items.map((i) => i.path))];
 
 /** Nhóm chứa màn đang mở; nhóm đang chọn được ưu tiên nếu cũng chứa màn đó (một màn có thể ở nhiều nhóm). */

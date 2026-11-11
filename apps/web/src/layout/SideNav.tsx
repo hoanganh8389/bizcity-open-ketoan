@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Banknote, BarChart3, Building2, ChartLine, ChevronRight, Hammer, Landmark, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Percent, PiggyBank, Pin, PinOff, Puzzle, Settings, ShoppingBag, ShoppingCart, Warehouse, type LucideIcon } from 'lucide-react';
 import { usePins } from './pins';
-import { DANG_PHAT_TRIEN, matchLen, nhomHien, REPORT_PAGE, type GonGroup } from './menu-gon';
+import { DANG_PHAT_TRIEN, matchHere, nhomHien, REPORT_PAGE, type GonGroup } from './menu-gon';
 import type { MenuItem } from '@ketoan/contracts';
 import { HayDungNav, NutThemNhanh } from './ThemNhanh';
 
@@ -40,7 +40,7 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
   const [open, setOpen] = useState<{ key: string; top: number; left: number } | null>(null);
   const root = useRef<HTMLElement>(null);
   const fly = useRef<HTMLDivElement>(null);
-  const best = active ? Math.max(0, ...active.sections.flatMap((s) => s.items.map((m) => matchLen(m.path, pathname)))) : 0;
+  const best = active ? Math.max(0, ...active.sections.flatMap((s) => s.items.map((m) => matchHere(m.path, pathname, search)))) : 0;
 
   useEffect(() => { setOpen(null); }, [pathname, search]);
   useEffect(() => {
@@ -92,7 +92,7 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
               <div key={s.label ?? i} className="gon-fly-sec">
                 {s.label && <div className="gon-fly-head">{s.label}</div>}
                 {s.items.map((m) => (
-                  <Link key={m.key} to={m.path!} onClick={() => onChoose(openGroup.key)} title={m.code ? `${m.label} (${m.code})` : m.label} className={`gon-fly-item${active?.key === openGroup.key && best > 0 && matchLen(m.path, pathname) === best ? ' active' : ''}${isPinned(m.key) ? ' pinned' : ''}`}>
+                  <Link key={m.key} to={m.path!} onClick={() => onChoose(openGroup.key)} title={m.code ? `${m.label} (${m.code})` : m.label} className={`gon-fly-item${active?.key === openGroup.key && best > 0 && matchHere(m.path, pathname, search) === best ? ' active' : ''}${isPinned(m.key) ? ' pinned' : ''}`}>
                     <span>{m.label}</span>
                     <button type="button" className="pin-btn" title={isPinned(m.key) ? 'Bỏ ghim khỏi thanh trên cùng' : 'Ghim lên thanh trên cùng (màn hay dùng)'} onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(m.key); }}>
                       {isPinned(m.key) ? <PinOff size={13} /> : <Pin size={13} />}
