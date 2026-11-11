@@ -12,7 +12,9 @@
  * Ghi sổ: mỗi tài khoản đối ứng thành một cặp Nợ / Có với tài khoản của dòng (dòng ghi Nợ → đối ứng ghi Có và ngược lại).
  * Các cặp nhớ `group` + `mainSide` để mở lại phiếu hiện đúng như lúc nhập.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ClipboardEvent } from 'react';
+import { bangDan, khongDau, soDan } from '@/lib/danExcel';
+import { ngay } from '@/lib/nhapExcel';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, X } from 'lucide-react';
 import type { VoucherInput, VoucherLine, VoucherTemplateInput } from '@ketoan/contracts';
@@ -52,6 +54,31 @@ const blankRow = (p: Partial<Row> = {}): Row => ({
   ...base(), debit: '', credit: '', taxCode: '', invoicePartnerTaxCode: '', taxAmount: '', invoiceDate: '', invoiceNo: '', invoiceSerial: '', invoiceForm: '', invoicePartnerName: '',
   case: '', project: '', capitalSource: '', cashflowCode: '', counters: [], ...p,
 });
+/* [2026-11-11 Nguyễn Văn Thủy] DÁN TỪ EXCEL (Ctrl + V) vào lưới chi tiết phiếu (đóng góp) */
+type DanTruong = keyof Omit<Row, 'key' | 'counters'>;
+/** Cột của lưới trên theo vị trí ô (cột nút và cột Tk đối ứng chỉ đọc không nhận dán). */
+const DAN_COT: Record<number, DanTruong> = {
+  1: 'account', 3: 'credit', 4: 'debit', 5: 'partner', 6: 'taxCode', 7: 'invoicePartnerTaxCode', 8: 'taxAmount', 9: 'invoiceDate',
+  11: 'invoiceNo', 12: 'invoiceSerial', 13: 'invoiceForm', 14: 'invoicePartnerName', 15: 'employee', 16: 'description', 17: 'department', 18: 'contract', 19: 'costItem',
+};
+const DAN_THU_TU = Object.keys(DAN_COT).map(Number);
+/** Tên cột chép kèm từ Excel → trường; 'no' / 'co' / 'tien' / 'doiUng' là cột kiểu "TK Nợ, TK Có, Số tiền". */
+const DAN_TEN: [RegExp, DanTruong | 'no' | 'co' | 'tien' | 'doiUng'][] = [
+  [/^(tk no|tai khoan no|no)$/, 'no'], [/^(tk co|tai khoan co|co)$/, 'co'], [/^(so tien|thanh tien|tien)$/, 'tien'], [/^(tk doi ung|tai khoan doi ung)$/, 'doiUng'],
+  [/^(tai khoan|tk|so hieu tk)$/, 'account'], [/^(ps no|phat sinh no)$/, 'debit'], [/^(ps co|phat sinh co)$/, 'credit'], [/^(doi tuong|ma doi tuong|ma kh|ma ncc)$/, 'partner'],
+  [/^(dien giai|noi dung)$/, 'description'], [/^(loai thue|thue suat)$/, 'taxCode'], [/^(tien thue)$/, 'taxAmount'], [/^(ma so thue|mst)$/, 'invoicePartnerTaxCode'],
+  [/^(ngay hoa don|ngay hd)$/, 'invoiceDate'], [/^(so hoa don|so hd)$/, 'invoiceNo'], [/^(so seri|ky hieu)$/, 'invoiceSerial'], [/^(mau hoa don|mau so)$/, 'invoiceForm'],
+  [/^(nhan vien|ma nhan vien)$/, 'employee'], [/^(bo phan)$/, 'department'], [/^(hop dong)$/, 'contract'], [/^(khoan muc)$/, 'costItem'],
+];
+const laTk = (v: string) => /^\d{3,}/.test(v.trim());
+const soHieu = (v: string) => v.trim().split(/\s|-|–/)[0] ?? '';
+/** Giá trị một ô theo trường: tiền → định dạng tiền, ngày dd/mm/yyyy → yyyy-mm-dd, tài khoản "1111 - Tiền mặt" → 1111. */
+function giaTriO(f: DanTruong, v: string): string {
+  if (f === 'debit' || f === 'credit' || f === 'taxAmount') { const n = soDan(v); return Number.isFinite(n) && n > 0 ? money(n) : ''; }
+  if (f === 'invoiceDate') return ngay(v);
+  if (f === 'account') return soHieu(v);
+  return v;
+}
 const amountOf = (r: Row) => parseAmount(r.debit) || parseAmount(r.credit);
 /** Số tiền tài khoản đối ứng phải cộng đủ: tiền của dòng + tiền thuế của dòng (cặp thuế ghi sổ cùng đối ứng đầu tiên). */
 const needOf = (r: Row) => amountOf(r) + parseAmount(r.taxAmount);
@@ -128,6 +155,60 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
   const setCounter = (rowKey: number, key: number, patch: Partial<Counter>) =>
     setRows((xs) => xs.map((x) => (x.key === rowKey ? { ...x, counters: x.counters.map((c) => (c.key === key ? { ...c, ...patch } : c)) } : x)));
 
+  /**
+   * Dán từ Excel vào lưới trên.
+   *  - Cột kiểu sổ cũ "TK Nợ, TK Có, Số tiền, Diễn giải" (có dòng tiêu đề, hoặc không tiêu đề mà dán ở cột Tài khoản và hai cột đầu là số hiệu TK):
+   *    mỗi dòng Excel = một dòng chính ghi Nợ + tài khoản đối ứng ghi Có, thêm vào sau các dòng đang có.
+   *  - Tiêu đề trùng tên cột của lưới (Tài khoản, PS Nợ, Diễn giải…): ghép theo tên, thêm dòng.
+   *  - Còn lại: như Excel — từ ô đang đứng ghi sang phải, xuống dưới, thiếu dòng tự thêm.
+   */
+  const onDan = (e: ClipboardEvent<HTMLTableSectionElement>) => {
+    if (dis) return;
+    const bang = bangDan(e.clipboardData.getData('text/plain'));
+    const tr = (e.target as HTMLElement).closest('tr[data-dong]');
+    const td = (e.target as HTMLElement).closest('td');
+    if (!bang || !tr || !td) return;
+    e.preventDefault();
+    const dau = bang[0]!.map((c) => DAN_TEN.find(([re]) => re.test(khongDau(c)))?.[1]);
+    const coTieuDe = dau.filter(Boolean).length >= 2;
+    const cot = coTieuDe ? dau : undefined;
+    const data = coTieuDe ? bang.slice(1) : bang;
+    const kieuSo = cot ? cot.includes('no') && cot.includes('co') : DAN_COT[td.cellIndex] === 'account' && data.every((r) => laTk(r[0] ?? '') && laTk(r[1] ?? '') && Number.isFinite(soDan(r[2] ?? '')));
+    const moi = (cells: string[]): Row => {
+      const get = (k: string) => { const i = cot ? cot.indexOf(k as never) : kieuSo ? ['no', 'co', 'tien', 'description'].indexOf(k) : -1; return i >= 0 ? cells[i] ?? '' : ''; };
+      const r = blankRow({ description: h.description, employee: h.employeeCode });
+      for (const [f, i] of (cot ?? []).map((k, i) => [k, i] as const)) if (f && f !== 'no' && f !== 'co' && f !== 'tien' && f !== 'doiUng') (r as unknown as Record<string, string>)[f] = giaTriO(f, cells[i] ?? '');
+      const tien = soDan(get('tien'));
+      if (kieuSo) {
+        const no = soHieu(get('no')), co = soHieu(get('co'));
+        Object.assign(r, { account: no, debit: Number.isFinite(tien) && tien > 0 ? money(tien) : '', credit: '' });
+        if (!cot) r.description = get('description') || r.description;
+        if (co) r.counters = [{ ...base({ account: co, description: r.description, partner: r.partner, employee: r.employee }), amount: r.debit }];
+      } else if (get('doiUng')) r.counters = [{ ...base({ account: soHieu(get('doiUng')), description: r.description, partner: r.partner, employee: r.employee }), amount: r.debit || r.credit }];
+      return r;
+    };
+    if (kieuSo || cot) {
+      const them = data.map(moi);
+      setRows((xs) => [...xs.filter((x) => x.account || amountOf(x) || x.counters.length), ...them]);
+      if (them[0]) setActiveKey(them[0].key);
+      return;
+    }
+    const r0 = rows.findIndex((x) => String(x.key) === tr.getAttribute('data-dong'));
+    const c0 = Math.max(0, DAN_THU_TU.findIndex((c) => c >= td.cellIndex));
+    setRows((xs) => {
+      const out = [...xs];
+      data.forEach((cells, k) => {
+        const i = r0 + k;
+        while (out.length <= i) out.push(blankRow({ description: h.description, employee: h.employeeCode }));
+        const patch: Record<string, string> = {};
+        cells.forEach((v, j) => { const f = DAN_COT[DAN_THU_TU[c0 + j] ?? -1]; if (f) patch[f] = giaTriO(f, v); });
+        // PS Nợ và PS Có cùng một dòng: giữ bên vừa dán có tiền.
+        if (patch.debit && !patch.credit) patch.credit = ''; else if (patch.credit && !patch.debit) patch.debit = '';
+        out[i] = { ...out[i]!, ...patch };
+      });
+      return out;
+    });
+  };
   /** Thêm chi tiết phiếu (lưới trên): dòng trống mang diễn giải, nhân viên của đầu phiếu. */
   const addRow = () => { const r = blankRow({ description: h.description, employee: h.employeeCode }); setRows((xs) => [...xs, r]); setActiveKey(r.key); };
   const removeRow = (key: number | null) => key !== null && setRows((xs) => xs.filter((x) => x.key !== key));
@@ -297,9 +378,9 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
                   <th style={{ minWidth: 100 }}>Hợp đồng</th><th style={{ minWidth: 100 }}>Khoản mục</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody onPaste={onDan}>
                 {rows.map((r) => (
-                  <tr key={r.key} className={activeKey === r.key ? 'active' : undefined} onFocus={() => setActiveKey(r.key)} onClick={() => setActiveKey(r.key)}>
+                  <tr key={r.key} data-dong={r.key} className={activeKey === r.key ? 'active' : undefined} onFocus={() => setActiveKey(r.key)} onClick={() => setActiveKey(r.key)}>
                     <td className="vf-act"><button disabled={dis} title="Xóa" onClick={() => removeRow(r.key)}><Trash2 size={14} className="text-bad" /></button></td>
                     <td><AccountPicker postingOnly hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td>
                     <td className="vf-act"><button disabled={dis} title="Thêm" onClick={addRow}><Plus size={14} className="text-ok" /></button></td>

@@ -10,6 +10,7 @@ Mỗi đợt cập nhật giao diện một tệp: **đổi gì, người dùng 
 | 2 | [03-nhap-excel-dung-chung.md](03-nhap-excel-dung-chung.md) | Trình nhập Excel 4 bước dùng chung (TI14): khách hàng, NCC, mặt hàng, kho; tự ghép cột, ngầm định, kiểm tra trước khi ghi, tệp lỗi |
 | 3 | [04-tham-so-bao-cao.md](04-tham-so-bao-cao.md) | Bảng tham số báo cáo thành ngăn kéo bên phải (Chọn tham số), dòng tóm tắt tham số, ghim bên trái tuỳ chọn, số chứng từ là liên kết |
 | 4 | [05-danh-sach-tren-duoi.md](05-danh-sach-tren-duoi.md) | Danh sách phiếu thu / chi / báo có / báo nợ / phiếu kế toán: bấm chọn phiếu → nửa dưới hiện dòng hạch toán; bấm đúp mở phiếu |
+| 5 | [06-dan-tu-excel.md](06-dan-tu-excel.md) | Dán từ Excel (Ctrl + V) vào lưới phiếu thu / chi, phiếu kế toán, chứng từ mua; sửa Esc / Enter ở ô chọn mã |
 
 Việc tiếp theo: [02-viec-tiep-theo.md](02-viec-tiep-theo.md).
 

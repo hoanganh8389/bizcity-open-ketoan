@@ -16,7 +16,9 @@
  * "Tìm chứng từ": chọn chứng từ còn nợ của khách hàng / nhà cung cấp, mỗi chứng từ thành một dòng trả đúng số còn nợ;
  *   dòng mang chứng từ nào thì phiếu thanh toán cho khoản công nợ đó.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ClipboardEvent } from 'react';
+import { bangDan, khongDau, soDan } from '@/lib/danExcel';
+import { ngay } from '@/lib/nhapExcel';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileSearch, Plus, Trash2, X } from 'lucide-react';
 import { VOUCHER_MONEY, isMoneyAccountFor, type VoucherInput, type VoucherTemplateInput, type VoucherType } from '@ketoan/contracts';
@@ -54,6 +56,26 @@ const blankRow = (patch: Partial<Row> = {}): Row => ({
   invoiceNo: '', invoiceSerial: '', invoiceForm: '', invoicePartnerName: '', invoicePartnerTaxCode: '', department: '', contract: '', case: '', project: '', capitalSource: '',
   settleItemId: '', settleDocNo: '', settleDocDate: '', settleTotal: null, settleRemaining: null, ...patch,
 });
+/* [2026-11-11 Nguyễn Văn Thủy] DÁN TỪ EXCEL (Ctrl + V) vào lưới chi tiết phiếu thu / chi (đóng góp) */
+type DanTruong = 'account' | 'amount' | 'partner' | 'cashflowCode' | 'description' | 'taxCode' | 'employee' | 'taxAmount' | 'invoiceDate' | 'costItem'
+  | 'invoiceNo' | 'invoiceSerial' | 'invoiceForm' | 'invoicePartnerName' | 'invoicePartnerTaxCode' | 'department' | 'contract';
+/** Cột của lưới theo vị trí ô; cột Nợ / Có chỉ một bên nhập được số tiền (bên kia bỏ qua khi dán). */
+const danCotTien = (side: 'debit' | 'credit'): [number, DanTruong][] => [
+  [2, 'account'], [side === 'debit' ? 3 : 4, 'amount'], [5, 'partner'], [6, 'cashflowCode'], [7, 'description'], [8, 'taxCode'], [9, 'employee'], [10, 'taxAmount'],
+  [11, 'invoiceDate'], [12, 'costItem'], [13, 'invoiceNo'], [14, 'invoiceSerial'], [15, 'invoiceForm'], [16, 'invoicePartnerName'], [17, 'invoicePartnerTaxCode'], [22, 'department'], [23, 'contract'],
+];
+const DAN_TEN_TIEN: [RegExp, DanTruong][] = [
+  [/^(tai khoan|tk|tk doi ung|tai khoan doi ung|tk no|tk co)$/, 'account'], [/^(so tien|thanh tien|tien|no|co|ps no|ps co)$/, 'amount'], [/^(doi tuong|ma doi tuong|ma kh|ma ncc)$/, 'partner'],
+  [/^(dien giai|noi dung|ly do)$/, 'description'], [/^(ma luu chuyen tien te|luu chuyen tien te)$/, 'cashflowCode'], [/^(thue|loai thue|thue suat)$/, 'taxCode'], [/^(nhan vien|ma nhan vien)$/, 'employee'],
+  [/^(tien thue)$/, 'taxAmount'], [/^(ngay hd|ngay hoa don)$/, 'invoiceDate'], [/^(khoan muc)$/, 'costItem'], [/^(so hd|so hoa don)$/, 'invoiceNo'], [/^(so seri|ky hieu)$/, 'invoiceSerial'],
+  [/^(mau hd|mau hoa don)$/, 'invoiceForm'], [/^(doi tuong thue vat|ten don vi)$/, 'invoicePartnerName'], [/^(ma so thue|mst)$/, 'invoicePartnerTaxCode'], [/^(bo phan)$/, 'department'], [/^(hop dong)$/, 'contract'],
+];
+function giaTriTien(f: DanTruong, v: string): string {
+  if (f === 'amount' || f === 'taxAmount') { const n = soDan(v); return Number.isFinite(n) && n > 0 ? money(n) : ''; }
+  if (f === 'invoiceDate') return ngay(v);
+  if (f === 'account') return v.trim().split(/\s|-|–/)[0] ?? '';
+  return v;
+}
 export const parseAmount = (s: string): number => Number(s.replace(/[.,\s]/g, '')) || 0;
 export const showAmount = (s: string): string => (parseAmount(s) ? money(parseAmount(s)) : '');
 export { useDimension } from '@/components/voucher/lookups';
@@ -155,6 +177,40 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
   const total = rows.reduce((s, r) => s + parseAmount(r.amount), 0);
   const taxTotal = rows.reduce((s, r) => s + parseAmount(r.taxAmount), 0);
 
+  /**
+   * Dán từ Excel: có dòng tiêu đề (Tài khoản, Số tiền, Diễn giải…) thì ghép theo tên và thêm dòng; không có thì như Excel —
+   * từ ô đang đứng ghi sang phải (bỏ qua cột Nợ / Có không nhập được), xuống dưới, thiếu dòng tự thêm (mang đối tượng, nhân viên, diễn giải đầu phiếu).
+   */
+  const onDan = (e: ClipboardEvent<HTMLTableSectionElement>) => {
+    if (dis) return;
+    const bang = bangDan(e.clipboardData.getData('text/plain'));
+    const tr = (e.target as HTMLElement).closest('tr[data-dong]');
+    const td = (e.target as HTMLElement).closest('td');
+    if (!bang || !tr || !td) return;
+    e.preventDefault();
+    const moi = () => blankRow({ partner: h.partnerCode, employee: h.employeeCode, description: h.description });
+    const dau = bang[0]!.map((c) => DAN_TEN_TIEN.find(([re]) => re.test(khongDau(c)))?.[1]);
+    if (dau.filter(Boolean).length >= 2) {
+      const them = bang.slice(1).map((cells) => { const r = moi(); dau.forEach((f, i) => { if (f) (r as unknown as Record<string, string>)[f] = giaTriTien(f, cells[i] ?? ''); }); return r; });
+      setRows((xs) => [...xs.filter((x) => x.account || parseAmount(x.amount)), ...them]);
+      if (them[0]) setActiveKey(them[0].key);
+      return;
+    }
+    const cot = danCotTien(lineSide);
+    const c0 = Math.max(0, cot.findIndex(([c]) => c >= td.cellIndex));
+    const r0 = rows.findIndex((x) => String(x.key) === tr.getAttribute('data-dong'));
+    setRows((xs) => {
+      const out = [...xs];
+      bang.forEach((cells, k) => {
+        const i = r0 + k;
+        while (out.length <= i) out.push(moi());
+        const patch: Record<string, string> = {};
+        cells.forEach((v, j) => { const f = cot[c0 + j]?.[1]; if (f) patch[f] = giaTriTien(f, v); });
+        out[i] = { ...out[i]!, ...patch };
+      });
+      return out;
+    });
+  };
   /** Thêm chi tiết phiếu: tài khoản theo lý do, số tiền bằng số tiền đầu phiếu, đối tượng / nhân viên / diễn giải theo đầu phiếu. */
   const addRow = () => {
     const r = blankRow({
@@ -353,9 +409,9 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
                   <th style={{ minWidth: 100 }}>Bộ phận</th><th style={{ minWidth: 100 }}>Hợp đồng</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody onPaste={onDan}>
                 {rows.map((r) => (
-                  <tr key={r.key} className={activeKey === r.key ? 'active' : undefined} onFocus={() => setActiveKey(r.key)} onClick={() => setActiveKey(r.key)}>
+                  <tr key={r.key} data-dong={r.key} className={activeKey === r.key ? 'active' : undefined} onFocus={() => setActiveKey(r.key)} onClick={() => setActiveKey(r.key)}>
                     <td className="vf-act"><button disabled={dis} title="Thêm" onClick={addRow}><Plus size={14} className="text-ok" /></button></td>
                     <td className="vf-act"><button disabled={dis} title="Xóa" onClick={() => removeRow(r.key)}><Trash2 size={14} className="text-bad" /></button></td>
                     <td><AccountPicker postingOnly hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td>

@@ -95,7 +95,8 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
   const focused = useRef(false);
   const [hasFocus, setHasFocus] = useState(false);
 
-  useEffect(() => { committed.current = value; if (!focused.current) setText(value); }, [value]);
+  // Giá trị đổi từ bên ngoài (dán từ Excel, tự điền) khi ô đang focus: hiện ngay, rời ô không ghi đè bằng chữ cũ.
+  useEffect(() => { const tuNgoai = value !== committed.current; committed.current = value; if (!focused.current || tuNgoai) setText(value); }, [value]);
 
   // Chữ dùng để lọc: cả ô, hoặc phần sau dấu phẩy cuối khi chọn nhiều.
   const query = multiple ? (text.split(',').pop() ?? '').trim() : text.trim();
@@ -179,10 +180,17 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
           else if (e.key === 'Enter') {
             e.preventDefault();
             // Gõ đúng một mã có sẵn thì lấy luôn mã đó, không lấy dòng gợi ý đầu.
-            const exact = shown.find((o) => o.code === query);
+            // Gõ nhanh / quét mã: danh sách gợi ý có thể chưa kịp lọc — mã có tên trong danh mục cũng tính là khớp.
+            const exact = shown.find((o) => o.code === query) ?? (!multiple && query && nameOf(query) !== undefined ? { code: query } : undefined);
             if (open && query && !exact && shown[active]) pick(shown[active]);
             else { commit(textRef.current); setOpen(false); }
-          } else if (e.key === 'Escape') { setOpen(false); setText(value); }
+          } else if (e.key === 'Escape') {
+            // Danh sách gợi ý đang mở: Esc chỉ đóng danh sách (không thoát cả phiếu đang nhập); Esc lần nữa mới tới hộp thoại.
+            // preventDefault: ô type="search" — Chrome tự xoá chữ khi Esc (làm mất mã đang chọn lúc rời ô).
+            e.preventDefault();
+            if (open) e.stopPropagation();
+            setOpen(false); setText(committed.current);
+          }
           else if (e.key === 'Tab' && open && query && shown[active] && !shown.some((o) => o.code === query)) { pick(shown[active]); }
         }}
       />

@@ -29,4 +29,5 @@ Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàn
 - **Tồn kho đầu kỳ (số lượng)**: mỗi dòng Kho × Mã hàng × Số lượng tồn (ĐVT nhỏ nhất), cả tệp một ngày. Phần mềm so với tồn trên sổ của kho đó: kết quả hiện *tồn trên sổ → tồn theo tệp*; mỗi kho có chênh lệch thành một phiếu điều chỉnh kho, ghi sổ ngay.
   Mã không có trong tệp giữ nguyên tồn. Nhập lại cả tệp không sinh thêm chênh lệch. Giá trị tồn (tiền) nhập qua số dư tài khoản 156.
 - **Tồn max**: Kho × Mã hàng × Tồn max — dùng tính chuyển hàng về shop và đề xuất đặt mua (xem ở Tồn max).
+- **Dán thẳng vào phiếu đang lập**: chép vùng ô ở Excel, bấm vào lưới dòng của phiếu, Ctrl + V. Phiếu thu / chi: từ ô đang đứng ghi sang phải, xuống dưới. Phiếu kế toán: chép các cột TK Nợ, TK Có, Số tiền, Diễn giải rồi dán ở cột Tài khoản — mỗi dòng thành một bút toán. Phiếu mua: chép Mã hàng, Số lượng, Đơn giá (kèm dòng tiêu đề thì ghép theo tên cột); mã chưa có báo ngay trên bảng.
 - Phiếu nhập mua, đơn đặt hàng: dùng nút **Nhập từ Excel** ở Tổng hợp mua hàng (MH11).

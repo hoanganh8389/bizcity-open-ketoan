@@ -12,8 +12,9 @@
  * Chế độ mẫu (prop `template`): soạn bút toán mẫu — không có ngày, số tiền được để 0, Ghi lưu vào danh mục mẫu.
  * `initial`: điền sẵn phiếu mới từ một bút toán mẫu ({ky}, {thang}, {nam} trong diễn giải thay theo ngày phiếu khi ghi).
  */
+import { bangDan, khongDau, soDan } from '@/lib/danExcel';
 import { workBranch } from '@/lib/workBranch';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState, type ClipboardEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useBankAccounts } from '../catalog/BankAccountsPage';
@@ -120,6 +121,38 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
   const signatures = useSignatures(existing && existing.status !== 'cancelled' ? existing.id : undefined).data;
   const set = (patch: Partial<typeof h>) => setH((x) => ({ ...x, ...patch }));
   const setLine = (i: number, patch: Partial<LineDraft>) => setLines((xs) => xs.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  // [2026-11-11 Nguyễn Văn Thủy] dán từ Excel (Ctrl + V) như Excel: bắt đầu từ ô đang đứng, ghi sang phải và xuống dưới, thiếu dòng tự thêm (đóng góp)
+  const danCot: (keyof LineDraft)[] = cash ? [counterSide, 'amount', 'description'] : ['debit', 'credit', 'amount', 'description'];
+  const onDan = (e: ClipboardEvent<HTMLTableSectionElement>) => {
+    if (readOnly) return;
+    const bang = bangDan(e.clipboardData.getData('text/plain'));
+    const tr = (e.target as HTMLElement).closest('tr[data-dong]');
+    const td = (e.target as HTMLElement).closest('td');
+    if (!bang || !tr || !td) return;
+    e.preventDefault();
+    // Dòng tiêu đề chép kèm (TK Nợ, Số tiền, Diễn giải…) thì bỏ.
+    const rows = /^(tk|tai khoan|so tien|dien giai|doi ung)/.test(khongDau(bang[0]!.join(' '))) ? bang.slice(1) : bang;
+    const r0 = Number(tr.getAttribute('data-dong'));
+    const c0 = Math.min(td.cellIndex, danCot.length - 1);
+    setLines((xs) => {
+      const out = [...xs];
+      rows.forEach((cells, k) => {
+        const i = r0 + k;
+        while (out.length <= i) out.push(blankLine());
+        const patch: Partial<LineDraft> = {};
+        cells.forEach((v, j) => {
+          const key = danCot[c0 + j];
+          if (!key) return;
+          if (key === 'amount') { const n = soDan(v); (patch as Record<string, string>)[key] = Number.isFinite(n) && n > 0 ? money(n) : ''; }
+          // Ô tài khoản chép kiểu "1111 - Tiền mặt" thì lấy số hiệu.
+          else if (key === 'debit' || key === 'credit') (patch as Record<string, string>)[key] = v.split(/\s|-|–/)[0] ?? '';
+          else (patch as Record<string, string>)[key] = v;
+        });
+        out[i] = { ...out[i]!, ...patch };
+      });
+      return out;
+    });
+  };
   const branchCode = h.branchCode || branches?.find((b) => b.isActive)?.code || '';
 
   const partnerQ = useQuery({
@@ -297,10 +330,10 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
                 <th style={{ width: 170 }} className="num">{showTax ? 'Tiền chưa thuế' : 'Số tiền'}</th><th>Diễn giải dòng</th><th style={{ width: 36 }} />
               </tr>
             </thead>
-            <tbody>
+            <tbody onPaste={onDan}>
               {lines.map((l, i) => (
                 <Fragment key={i}>
-                  <tr>
+                  <tr data-dong={i}>
                     {(cash ? [counterSide] : (['debit', 'credit'] as const)).map((side) => (
                       <td key={side}>
                         <AccountPicker postingOnly hideName className="input mono" value={l[side]} disabled={readOnly} onChange={(v) => setLine(i, { [side]: v })} placeholder="Bấm để chọn" />
@@ -367,7 +400,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={cash ? 1 : 2}>{!readOnly && <button className="btn btn-sm" onClick={() => setLines((xs) => [...xs, blankLine()])}><Plus size={14} /> Thêm dòng</button>}</td>
+                <td colSpan={cash ? 1 : 2}>{!readOnly && <button className="btn btn-sm" onClick={() => setLines((xs) => [...xs, blankLine()])}><Plus size={14} /> Thêm dòng</button>}{!readOnly && <span className="muted" style={{ marginLeft: 10, fontSize: 12 }} title={`Chép các cột ${cash ? `${meta.counterLabel}, Số tiền, Diễn giải` : 'TK Nợ, TK Có, Số tiền, Diễn giải'} ở Excel, bấm vào ô bắt đầu rồi Ctrl + V: ghi sang phải và xuống dưới, thiếu dòng tự thêm`}>Ctrl + V dán từ Excel</span>}</td>
                 <td className="num">{money(subtotal, { blankZero: false })}</td>
                 <td colSpan={2} className="muted" style={{ fontWeight: 400 }}>
                   {taxTotal > 0 ? <>Tiền chưa thuế · Thuế <b>{money(taxTotal)}</b> · Tổng thanh toán <b style={{ color: 'var(--ink-900)' }}>{money(total)}</b></> : 'Tổng số tiền'}

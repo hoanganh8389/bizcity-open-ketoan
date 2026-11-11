@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Dán từ Excel (Ctrl + V) vào lưới chứng từ <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/06 (đóng góp) -->
+
+- **Thêm:** dán nhiều ô từ Excel vào lưới phiếu thu / chi / báo có / báo nợ, phiếu kế toán (TK Nợ – TK Có – Số tiền thành dòng + đối ứng), chứng từ mua (qua bộ kiểm Nhập Excel dòng hàng), mẫu phiếu.
+- **Sửa:** ô chọn mã — Esc khi danh sách gợi ý đang mở không còn thoát cả phiếu / xoá mã đang chọn; gõ nhanh hay quét mã rồi Enter không lấy nhầm dòng gợi ý đầu.
+- **Thay đổi định khoản:** không.
+
 ### Nhập Excel: nhóm hàng (cây cha – con) <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §6 (đóng góp) -->
 
 - **Thêm:** TI14 / DM11 nhập nhóm hàng: nhóm cha theo mã hoặc tên, kiểm vòng lặp, mã ngắn theo cấp, ghi cha trước con.

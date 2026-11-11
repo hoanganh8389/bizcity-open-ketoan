@@ -8,6 +8,8 @@
  * Duyệt = ghi sổ thật (bút toán, công nợ, kho). Còn cảnh báo chặn thì không duyệt được; vượt hạn mức thì người có quyền
  * "Duyệt ngoại lệ" (ghi lý do vào nhật ký).
  */
+import { bangDan, soDan } from '@/lib/danExcel';
+import { readTable } from '@bizcity/mua-hang-domain';
 import { Link } from 'react-router-dom';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { gridNav } from '@/lib/gridNav';
@@ -84,6 +86,8 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const [excelLines, setExcelLines] = useState(false);
   const [promoNote, setPromoNote] = useState<string[]>([]);
   const [err, setErr] = useState('');
+  // [2026-11-11 Nguyễn Văn Thủy] dán từ Excel (Ctrl + V) vào bảng hàng: báo số dòng đưa vào / bỏ qua (đóng góp)
+  const [danBao, setDanBao] = useState<{ ok: boolean; text: string } | null>(null);
   const [dirty, setDirty] = useState(false);
   // Thu nhỏ xuống thanh dưới (giữ nguyên phiếu đang nhập); chấm cam ở ô = phiếu có thay đổi chưa lưu.
   const dock = useDockWindow(onClose, dirty, `mh:${value.id}`);
@@ -290,6 +294,29 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
           ...(r.lotNo ? { lotNo: r.lotNo } : {}), ...(r.mfgDate ? { mfgDate: r.mfgDate } : {}), ...(r.expDate ? { expDate: r.expDate } : {}) });
       }));
     }
+  };
+  /**
+   * Dán từ Excel (Ctrl + V) vào bảng hàng: có dòng tiêu đề thì ghép theo tên cột (như tệp nhập Excel); không có thì cột đầu
+   * là Mã hàng, các ô số tiếp theo lần lượt là Số lượng, Đơn giá, CK % (ô chữ như Tên hàng bỏ qua; không có số lượng = 1).
+   * Dòng qua cùng bộ kiểm với Nhập Excel (mã chưa có, ĐVT chưa khai bỏ qua, báo rõ), rồi thêm vào cuối bảng.
+   */
+  const danDong = async (bang: string[][]) => {
+    const spec = nhapDongHang(priceLabel, showKho ? v.warehouseCode || defaultWh : '');
+    const t = readTable(bang, spec.spec, 'sku');
+    const blank = Object.fromEntries(spec.spec.map(([k]) => [k, ''])) as Record<DongHangCot, string>;
+    const raw: (Record<DongHangCot, string> & { row?: number })[] = t.rows.length && !t.missing.length
+      ? t.rows as never
+      : bang.map((cells, i) => {
+        const so = cells.slice(1).map(soDan).filter((x) => Number.isFinite(x));
+        return { ...blank, row: i + 1, sku: cells[0] ?? '', qty: String(so[0] ?? 1), price: so[1] === undefined ? '' : String(so[1]), pct: so[2] === undefined ? '' : String(so[2]) };
+      });
+    const mapped = raw.map((r, i) => ({ row: r.row ?? i + 1, sku: r.sku, ...spec.map(r) }));
+    const ok = mapped.filter((m) => m.value);
+    const checks = ok.length && spec.check ? await spec.check(ok.map((m) => m.value!)) : [];
+    const bad = [...mapped.filter((m) => !m.value).map((m) => `${m.sku || `dòng ${m.row}`}: ${m.error}`), ...ok.flatMap((m, i) => (checks[i] ? [`${m.sku}: ${checks[i]}`] : []))];
+    const good = ok.filter((_, i) => !checks[i]).map((m) => m.value!);
+    if (good.length) await importLines(good);
+    setDanBao({ ok: !bad.length, text: `Đã dán ${good.length} dòng hàng.${bad.length ? ` Bỏ qua ${bad.length} dòng — ${bad.slice(0, 4).join('; ')}${bad.length > 4 ? '…' : ''}` : ''}` });
   };
   /**
    * Thêm mặt hàng từ bộ chọn / ô gõ mã: mã đã có (cùng loại dòng) thì cộng 1, chưa có thì thêm dòng (giá, ĐVT tự lấy).
@@ -816,10 +843,11 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                     <span className="lines-bar-sep" />
                     <button className="btn btn-sm" onClick={() => setExcelLines(true)} title="Nhập dòng hàng từ tệp Excel: có hướng dẫn cột, file mẫu, xem trước (mã / ĐVT sai báo đỏ)">Nhập Excel</button>
                     <button className="btn btn-sm" disabled={!v.lines.some((l) => l.sku)} onClick={() => void xuatDongHang(`${v.docNo || KIND_LABEL[v.kind]}-hang-hoa.xlsx`, calc.lines, priceLabel, showKho ? v.warehouseCode || defaultWh : '')} title="Xuất dòng hàng ra Excel — đúng bộ cột của mẫu nhập, sửa xong nhập lại được">Xuất Excel</button>
-                    <span className="lines-bar-hint" title="Tên, ĐVT, thuế suất, nhãn theo danh mục; giá theo giá mua của NCC; chiết khấu và quà theo chương trình tự áp">tên · ĐVT · thuế · giá · khuyến mại tự điền</span>
+                    <span className="lines-bar-hint" title="Tên, ĐVT, thuế suất, nhãn theo danh mục; giá theo giá mua của NCC; chiết khấu và quà theo chương trình tự áp. Chép các cột Mã hàng, Số lượng, Đơn giá ở Excel rồi bấm vào bảng, Ctrl + V để dán nhiều dòng (kèm dòng tiêu đề thì ghép theo tên cột)">tên · ĐVT · thuế · giá · khuyến mại tự điền · Ctrl + V dán từ Excel</span>
                   </div>
                 )}
                 {/* Bảng hàng tự cuộn trong khung (cao theo màn hình): tiêu đề cột đứng yên, thanh cuộn ngang luôn thấy, phần đầu phiếu không bị cuộn mất. */}
+                {danBao && <div className={`alert ${danBao.ok ? 'alert-ok' : 'alert-warn'}`} style={{ margin: '4px 0', cursor: 'pointer' }} title="Bấm để ẩn" onClick={() => setDanBao(null)}>{danBao.text}</div>}
                 <div className="mh-lines-box">
                   <table className="mh-lines" style={{ minWidth: 1100 }}>
                     <thead><tr>
@@ -828,7 +856,14 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                       {!isGiftDoc && <><th className="num" title="Chiết khấu dòng theo %, tối đa 100%. Gõ % thì cột CK (đ) tự tính; để trống cả hai = tự lấy theo chính sách">CK %</th><th className="num" title="Chiết khấu dòng bằng tiền (theo loại giá của phiếu), tối đa bằng tiền hàng của dòng. Gõ tiền thì cột CK % tự tính lại">CK (đ)</th><th>Thuế suất</th><th className="num">Thành tiền chưa thuế</th><th className="num">Tiền thuế</th><th className="num" title="Thành tiền chưa thuế + tiền thuế (sau chiết khấu)">Thành tiền (gồm thuế)</th><th className="num" title="Giá vốn đơn vị thực tế: trước thuế, sau CK, đã chia quà người bán">Giá vốn / ĐVT</th></>}
                       {isGiftDoc && <th>Chương trình</th>}{!isOrder && <><th>Số lô</th><th>NSX</th><th>Hạn dùng</th></>}<th>Ghi chú</th><th data-minw="72" style={{ minWidth: 72 }} title="Nhân đôi / xoá dòng (cũng có ở cột # đầu dòng và khi bấm chuột phải)" />
                     </tr></thead>
-                    <tbody onKeyDown={(e) => {
+                    <tbody onPaste={(e) => {
+                      // Dán nhiều ô từ Excel: thêm dòng hàng; dán một ô thì ô đang gõ nhận như thường.
+                      if (readOnly) return;
+                      const bang = bangDan(e.clipboardData.getData('text/plain'));
+                      if (!bang) return;
+                      e.preventDefault();
+                      void danDong(bang).catch((x) => setDanBao({ ok: false, text: errorText(x) }));
+                    }} onKeyDown={(e) => {
                       // Phím tắt trên dòng đang chọn: Ctrl+D nhân đôi, Ctrl+Delete xoá dòng; mũi tên đi lại giữa các ô như Excel.
                       if (!readOnly && selKey && e.ctrlKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); lineOps.dup(selKey); return; }
                       if (!readOnly && selKey && e.ctrlKey && e.key === 'Delete') { e.preventDefault(); lineOps.del(selKey); return; }
@@ -915,9 +950,10 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                           </div>}</td>
                         </tr>
                       ))}
-                      {!v.lines.length && <tr><td colSpan={19} className="lines-empty">
+                      {/* Ô trống nhận focus: bấm vào rồi Ctrl + V dán thẳng dòng hàng từ Excel (sự kiện dán đi lên tbody). */}
+                      {!v.lines.length && <tr><td colSpan={19} className="lines-empty" tabIndex={readOnly ? undefined : 0}>
                         {readOnly ? <span className="muted">Phiếu chưa có dòng hàng</span> : <>
-                          <div className="muted">Phiếu chưa có hàng</div>
+                          <div className="muted">Phiếu chưa có hàng — bấm vào đây rồi Ctrl + V để dán dòng hàng chép từ Excel</div>
                           <div className="row" style={{ gap: 8, justifyContent: 'center', marginTop: 8 }}>
                             <button className="btn btn-primary" onClick={() => setPickGoods({ text: '', lineType: 'buy' })}>+ Thêm {isGiftDoc ? 'quà' : 'hàng'} từ danh mục</button>
                             {!isGiftDoc && v.partnerCode && (v.kind === 'order' || v.kind === 'receipt' || v.kind === 'return') && <button className="btn" onClick={() => setFill(true)}>Điền mặt hàng của NCC</button>}

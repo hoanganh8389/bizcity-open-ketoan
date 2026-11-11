@@ -10,7 +10,7 @@ Thứ tự đề xuất; mỗi việc làm xong ghi một tệp mới trong thư
 | 2 | ~~Hộp tham số báo cáo bên phải~~ (đã làm, xem 04) + còn **lưu bộ tham số** | Áp trước cho Sổ nhật ký chung, Sổ chi tiết TK, Cân đối phát sinh, Nhập xuất tồn, Sổ chi tiết hàng, Công nợ phải thu / trả, Sổ quỹ |
 | 3 | ~~Danh sách chứng từ: trên – dưới~~ (đã làm cho phiếu tiền + phiếu kế toán, xem 05; chuyển kho; còn phiếu bán) (bấm phiếu, nửa dưới hiện dòng hàng) dùng chung cho mọi danh sách | Tách từ MH11 thành component |
 | 4 | ~~Duyệt hàng loạt~~ phiếu tiền (nút Ghi sổ, xem 03 §4), chuyển kho (Nhận đủ phiếu đã tích, xem 05); còn phiếu bán | |
-| 5 | **Dán từ Excel (Ctrl + V)** vào lưới dòng của mọi form chứng từ | Phiếu chuyển kho đã có "Dán từ Excel" |
+| 5 | ~~**Dán từ Excel (Ctrl + V)** vào lưới dòng của mọi form chứng từ~~ (đã làm: phiếu tiền, phiếu kế toán, chứng từ mua, mẫu phiếu — xem 06) | Phiếu chuyển kho giữ nút "Dán từ Excel" |
 | 6 | Form mặt hàng hỏi **Loại hàng** trước khi mở (hàng hoá, dịch vụ, CCDC, thành phẩm…), mục **Tài khoản đang áp** chỉ xem | Chờ chốt danh sách loại hàng |
 | 7 | Tính giá vốn: tuỳ chọn theo kho / không theo kho, chọn mặt hàng, chạy nền + thông báo | |
 | 8 | Ô **Tìm kiếm chung** ở thanh trên (màn + chứng từ + danh mục) | Hiện có Ctrl + K tìm màn |
