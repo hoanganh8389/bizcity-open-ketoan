@@ -42,10 +42,10 @@ W1–W5 đã có mã (nhiều vai trò, vai trò của đơn vị Cho / Cấm, H
 |---|---|---|---|
 | D-AUTH-17 | Thứ tự: vá an toàn trước mở rộng | đã làm như vậy | — |
 | D-AUTH-18 | Lấy lại phần draft W0: `registerMenu` / `registerAction`, vai trò mẫu "Dùng mẫu", `maskFields`, bỏ kiểm theo tên vai trò | đã làm: "Dùng mẫu TGS", bỏ kiểm theo tên vai trò ở ký; **chưa**: `registerMenu`, `maskFields` | — |
-| D-AUTH-19 | **Sổ đăng ký loại chứng từ**: phân hệ đăng ký quyền theo thao tác (`registerDocumentType(loại, { read, create, cancel, export })`, quyền khai ở manifest); cửa nạp / danh sách / chi tiết / huỷ / bảng kê bán hàng tra sổ; phân hệ chưa bật → quyền Core | ✅ (`d8f7fb7a`, `397e8210`) | gỡ hai commit đó |
+| D-AUTH-19 | **Sổ đăng ký loại chứng từ**: phân hệ đăng ký quyền theo thao tác (`registerDocumentType(loại, { read, create, cancel, export })`, quyền khai ở manifest); cửa nạp / danh sách / chi tiết / huỷ / bảng kê bán hàng tra sổ; phân hệ chưa bật → quyền Core | ✅ (`d8f7fb7a`, `397e8210`) | gỡ hai commit đó | — chữ chốt đề xuất §3.4, mã S028-22
 | D-AUTH-20 | Quyền khai phải có chỗ chặn (quyền mồ côi) | ✅ SC-AUTH-11 (`83367f15`) | — |
 | D-AUTH-23 | 28 nhóm TGS trong repo công khai (draft W0 D-AUTH-11 nói không) | chưa đổi — xin chủ xác nhận | — |
-| **D-AUTH-24** (mới) | **Quyền kéo theo**: `documents:read` → quyền xem chi tiết, `documents:write` → lập / huỷ, `reports:read` → xuất; tính sau Cho, trước Cấm; **Cấm quyền gốc phủ quyền kéo theo** (luật `documents:*` cũ vẫn chặn được mọi loại phiếu) | ✅ (`d8f7fb7a`, `397e8210`) — để không ai mất quyền khi phân hệ đăng ký | Nới cách hiểu D-AUTH-03 (quyền module mới mặc định chỉ owner có): kế toán có sẵn quyền chứng từ chi tiết. Không duyệt → phải cấp quyền chi tiết cho vai trò hệ thống qua `roles` của manifest |
+| **D-AUTH-24** (mới) | **Quyền kéo theo**: `documents:read` → quyền xem chi tiết, `documents:write` → lập / huỷ, `reports:read` → xuất; tính sau Cho, trước Cấm; **Cấm quyền gốc phủ quyền kéo theo** (luật `documents:*` cũ vẫn chặn được mọi loại phiếu) | ✅ (`d8f7fb7a`, `397e8210`) — để không ai mất quyền khi phân hệ đăng ký | Nới cách hiểu D-AUTH-03 (quyền module mới mặc định chỉ owner có): kế toán có sẵn quyền chứng từ chi tiết. Không duyệt → phải cấp quyền chi tiết cho vai trò hệ thống qua `roles` của manifest | — chữ chốt đề xuất §3.4, mã S028-22
 | **D-AUTH-25** (mới) | Phạm vi **kho** ở lần gán (`scopeType = warehouse`), cửa nạp kiểm mọi kho của dòng hàng (trống = kho mặc định) | chữ chốt đề xuất §3.3; mã S028-19 | — |
 | **D-AUTH-26** (mới) | Ký ô kế toán trưởng / giám đốc theo quyền: ánh xạ tạm `periods:lock` / `payments:approve-final` tới khi có quyền ký riêng (cần nới D-AUTH-13) | ✅ (`638b209f`) | về kiểm theo tên vai trò |
 | **D-AUTH-27** (mới) | Phân hệ đăng ký quyền vào **vai trò mẫu** (`permissions[].roles = "tpl:<mã>"`) + thư viện vai trò mẫu theo phần hành + khởi tạo kiểu WP | đã làm thử rồi **bỏ** (chưa commit) — đổi hợp đồng `bizcity_module@1`, cần chủ chốt trước | — |
@@ -64,6 +64,24 @@ W1–W5 đã có mã (nhiều vai trò, vai trò của đơn vị Cho / Cấm, H
   - `GET /api/v1/warehouses` trả thêm `id`; HT12 thẻ Người dùng có "Một kho".
 - **Ảnh hưởng.** Chỉ người được gán theo kho hoặc chi nhánh; người có quyền toàn đơn vị (kế toán, khoá API) không đổi. Người gán theo chi nhánh vẫn lập được ở mọi kho của chi nhánh đó. Chưa phủ: **xem** / báo cáo theo kho (§5), phía nhận của chuyển kho.
 - **Kiểm bằng.** `apps/api/test/authz-scope-intake.test.ts` (4 ca kho: được / không được kho, dòng trống = kho mặc định, kho khác chi nhánh); typecheck; selfcheck.
+
+### 3.4 Chữ chốt đề xuất D-AUTH-19 + D-AUTH-24 — quyền theo loại chứng từ (S028-22)
+<!-- [2026-11-11 09:30 AM kiennt] PHASE-028 — chữ chốt đề xuất D-AUTH-19, D-AUTH-24 (R-FLOW-2) trước PR code S028-22; hình dạng ở hợp đồng §3a; merge PR này = chủ dự án đồng ý -->
+
+> **Trạng thái:** đề xuất, chờ chủ dự án. Merge PR tài liệu chứa mục này = đồng ý cả hai; không đồng ý thì gỡ dòng giữ chỗ S028-22 (và S028-23 đi sau nó).
+
+- **Vấn đề.** 18 quyền Core không chi tiết tới nghiệp vụ: có `documents:write` là lập / huỷ được mọi loại phiếu; không có cách cho thủ kho chỉ lập phiếu chuyển kho, hay cấm một người huỷ hoá đơn bán. HTsoft / MISA phân theo từng chức năng × thao tác (xem / thêm / sửa / xoá / xuất). Phân hệ cũng chưa có chỗ khai "loại phiếu của tôi cần quyền gì" — lõi phải viết cứng.
+- **Lựa chọn.**
+  - D-AUTH-19: (a) **sổ đăng ký trong mã**, phân hệ đăng ký kiểu hook lúc nạp (`registerDocumentType`), quyền khai ở manifest — **chọn**; (b) thêm quyền Core cho từng loại — loại: D-AUTH-13 không cho thêm quyền Core, và lõi phải biết nghiệp vụ; (c) bảng CSDL loại → quyền — loại: thêm migration, không có lợi hơn khi phân hệ là mã.
+  - D-AUTH-24: (a) **quyền Core kéo theo quyền chi tiết**, Cấm quyền gốc phủ quyền kéo theo — **chọn**: không ai mất quyền khi phân hệ đăng ký, luật Cấm `documents:*` đơn vị đang dùng không bị lách; (b) không kéo theo, khai `roles` cho từng quyền trong manifest và cấp riêng cho khoá API / SSO — loại: dễ sót, khoá API của hệ thống bán hàng ngừng chạy ngay khi phân hệ bật.
+  - **Nới cách hiểu D-AUTH-03:** quyền module mới mặc định chỉ owner có; với quyền chứng từ chi tiết, ai có quyền Core cũng có. Đây là điểm cần chủ dự án đồng ý.
+- **Hình dạng.** [`bizcity_authorization@1` §3a](../../contracts/BIZCITY-AUTHORIZATION-v1.md) (1.2.0-draft): `registerDocumentType`, `documentPermissionOf`, `canDocument`, `withImplied`, `impliersOf`; tên quyền `<module>:<chức-năng>-<xem|lap|huy|xuat>`; nơi thi hành và giới hạn. Năm phân hệ khai 32 quyền: bán hàng (hoá đơn, trả lại — có `-xuat`), mua hàng, kho (chuyển kho, điều chỉnh), quỹ (thu / chi / chuyển tiền), kế toán (phiếu kế toán).
+- **Ảnh hưởng.**
+  - `/auth/me` trả thêm quyền chi tiết (kéo theo); `apps/ticket/exchange` **không** đổi (chỉ quyền Core).
+  - Người có quyền Core: không đổi gì. Người bị Cấm một loại: danh sách không còn loại đó, chi tiết 404, không lập / huỷ / xuất được loại đó.
+  - Action `kho.transfer.*` đổi cổng từ `documents:write` sang `kho:chuyen-kho-lap` / `-huy` (kéo theo từ `documents:write`, không ai mất quyền).
+  - Lõi: `core/auth.ts` (+~100 dòng), `core/authz/*` (kéo theo trong bộ tính shadow), Kernel `document.routes.ts`, `document.repository.ts` (K3). Không migration. Chi tiết từng tệp: [81 §1.3, §1.4, §3.2, §5](81-CHI-TIET-SUA-LOI.md).
+- **Kiểm bằng.** `apps/api/test/authz-scope-intake.test.ts` (kế toán có sẵn mọi quyền chi tiết; Cấm `ban-hang:*`; thủ kho chỉ Cho `kho:chuyen-kho-lap`; Cấm `documents:*` vẫn chặn mọi loại; khoá API vẫn nạp mọi loại; Cấm xem → lọc + 404; Cấm huỷ; Cấm xuất; Cấm lập / huỷ chuyển kho chặn cả action); SC-AUTH-11 (32 quyền đều có chỗ chặn); typecheck; selfcheck.
 
 ## 4. Mã trên nhánh (chưa đẩy, chưa PR)
 
