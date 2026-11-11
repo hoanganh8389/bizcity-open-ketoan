@@ -26,7 +26,23 @@ import { aging, expenseByDimension, profitByContract, type ExpenseGroup, agingBy
 import { debtByEmployee, debtByItem } from './debt-reports.js';
 
 /** Một dòng của báo cáo thuế ra / thuế vào. */
-export interface TaxReportRow { invoiceForm: string; invoiceSerial: string; invoiceNo: string; invoiceDate: string; docNo: string; docDate: string; docType: string; buyerName: string; buyerTaxCode: string; partnerCode: string; partnerName: string; branchCode: string; taxRate: number; amount: number; tax: number; sourceDocumentId: string }
+/** Một dòng bảng kê thuế: một mặt hàng của hoá đơn (hoặc cả hoá đơn theo thuế suất khi cộng gộp — itemName = tên dòng đầu, itemCount = số dòng). */
+export interface TaxReportRow { invoiceForm: string; invoiceSerial: string; invoiceNo: string; invoiceDate: string; docNo: string; docDate: string; docType: string; buyerName: string; buyerTaxCode: string; partnerCode: string; partnerName: string; branchCode: string; sku: string; itemName: string; itemCount: number; unit: string; qty: number; price: number; taxRate: number; amount: number; tax: number; taxAccount: string; sourceDocumentId: string }
+
+/** Nhóm HHDV bán ra theo phụ lục 01-1/GTGT (mã nhóm kê khai → [mã nhóm, nhãn]); 8% (giảm thuế) kê cùng nhóm 10%. */
+export const VAT_OUTPUT_GROUPS: Record<string, [string, string]> = {
+  KCT: ['R-K', '1. Hàng hóa, dịch vụ không chịu thuế giá trị gia tăng (GTGT)'],
+  '0': ['R00', '2. Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 0%'],
+  '5': ['R05', '3. Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 5%'],
+  '8': ['R10', '4. Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 10%'],
+  '10': ['R10', '4. Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 10%'],
+};
+const V01: [string, string] = ['V01', '1. Hàng hoá, dịch vụ dùng riêng cho SXKD chịu thuế GTGT và sử dụng cho các hoạt động cung cấp hàng hoá, dịch vụ không kê khai, nộp thuế GTGT đủ điều kiện khấu trừ thuế'];
+/** Nhóm HHDV mua vào theo phụ lục 01-2/GTGT. */
+export const VAT_INPUT_GROUPS: Record<string, [string, string]> = {
+  KCT: V01, '0': V01, '5': V01, '8': V01, '10': V01,
+  KKK: ['V05', '4. Hàng hoá, dịch vụ không phải tổng hợp trên tờ khai 01/GTGT'],
+};
 
 export interface TrialBalanceRow {
   code: string;
@@ -312,55 +328,40 @@ export const reportService = {
   },
 
   /**
-   * Báo cáo thuế ra (direction=output) / thuế vào (direction=input): bảng kê hoá đơn theo nhóm thuế suất.
-   *
-   * Nhóm thuế ra: 1. Không chịu thuế | 2. Thuế suất 0% | 3. Thuế suất 5% | 4. Thuế suất 10% (gồm cả 8%).
-   * Nhóm thuế vào: 1. Dùng riêng cho SXKD chịu thuế, đủ điều kiện khấu trừ | 4. Không phải kê khai, tính nộp.
-   * Loại thuế không thuộc nhóm nào (không kê khai ở bảng thuế ra) vẫn hiện ở đầu báo cáo, không cộng vào dòng tổng nhóm.
-   * Thuế vào: các dòng cùng số hoá đơn, cùng người bán, cùng ngày, cùng thuế suất được gộp thành một dòng.
-   * Thứ tự trong nhóm: ngày chứng từ, số hoá đơn, mã phiếu.
+   * [2026-11-11 Nguyễn Văn Thủy] Bảng kê hoá đơn, chứng từ HHDV bán ra (direction=output) / mua vào (input) — mẫu quản trị (đóng góp)
+   * Từng dòng mặt hàng; nhóm HHDV theo nhóm kê khai của mã thuế (nhãn như phụ lục 01-1/GTGT, 01-2/GTGT).
+   *   merge = cộng gộp theo từng hoá đơn: các dòng cùng hoá đơn, cùng nhóm, cùng thuế suất thành một dòng (Mặt hàng = dòng đầu, "và n mặt hàng khác").
+   * Nhóm không thuộc nhóm kê khai nào vẫn hiện (đầu báo cáo) nhưng không cộng vào Tổng cộng. Hàng trả lại / điều chỉnh giảm ghi âm.
    */
-  async salesInvoices(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; direction?: 'output' | 'input' }) {
+  async salesInvoices(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; direction?: 'output' | 'input'; merge?: boolean }) {
     const { branchIds } = await resolveScope(auth, q.branchCodes);
     const input = q.direction === 'input';
-    const rows = await reportRepository.salesInvoiceLines(db, { tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, direction: q.direction });
-    const OUTPUT_GROUPS: Record<string, [string, string]> = {
-      KCT: ['R-K', '1. Hàng hoá, dịch vụ không chịu thuế GTGT'],
-      '0': ['R00', '2. Thuế suất 0%'],
-      '5': ['R05', '3. Thuế suất 5%'],
-      '8': ['R10', '4. Thuế suất 10%'],
-      '10': ['R10', '4. Thuế suất 10%'],
-    };
-    const INPUT_GROUPS: Record<string, [string, string]> = {
-      KCT: ['V01', '1. Hàng hoá, dịch vụ dùng riêng cho SXKD chịu thuế GTGT đủ điều kiện khấu trừ thuế'],
-      '0': ['V01', '1. Hàng hoá, dịch vụ dùng riêng cho SXKD chịu thuế GTGT đủ điều kiện khấu trừ thuế'],
-      '5': ['V01', '1. Hàng hoá, dịch vụ dùng riêng cho SXKD chịu thuế GTGT đủ điều kiện khấu trừ thuế'],
-      '8': ['V01', '1. Hàng hoá, dịch vụ dùng riêng cho SXKD chịu thuế GTGT đủ điều kiện khấu trừ thuế'],
-      '10': ['V01', '1. Hàng hoá, dịch vụ dùng riêng cho SXKD chịu thuế GTGT đủ điều kiện khấu trừ thuế'],
-      KKK: ['V05', '4. Hàng hoá, dịch vụ không phải kê khai, tính nộp thuế GTGT'],
-    };
-    const map = input ? INPUT_GROUPS : OUTPUT_GROUPS;
+    const lines = await reportRepository.salesInvoiceLines(db, { tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, direction: q.direction });
+    const groupOf = (reportGroup: string): [string, string] => (input ? VAT_INPUT_GROUPS : VAT_OUTPUT_GROUPS)[reportGroup] ?? ['', ''];
     const groups = new Map<string, { group: string; label: string; rows: TaxReportRow[]; amount: number; tax: number; counted: boolean }>();
     const merged = new Map<string, TaxReportRow>();
-    for (const r of rows) {
-      const [group, label] = map[r.report_group] ?? ['', ''];
+    for (const r of lines) {
+      const [group, label] = groupOf(r.report_group);
       const g = groups.get(group) ?? { group, label, rows: [], amount: 0, tax: 0, counted: group !== '' };
       groups.set(group, g);
+      const qty = toNumber(r.qty);
       const row: TaxReportRow = {
         invoiceForm: r.invoice_form, invoiceSerial: r.invoice_serial, invoiceNo: r.invoice_no, invoiceDate: r.invoice_date,
         docNo: r.doc_no, docDate: r.doc_date, docType: r.doc_type, buyerName: r.buyer_name, buyerTaxCode: r.buyer_tax_code,
         partnerCode: r.partner_code ?? '', partnerName: r.partner_name ?? '', branchCode: r.branch_code,
-        taxRate: toNumber(r.tax_rate), amount: toNumber(r.amount), tax: toNumber(r.tax), sourceDocumentId: r.event_id,
+        sku: r.sku, itemName: r.item_name, itemCount: 1, unit: r.unit, qty, price: 0,
+        taxRate: toNumber(r.tax_rate), amount: toNumber(r.amount), tax: toNumber(r.tax), taxAccount: r.tax_account ?? '', sourceDocumentId: r.event_id,
       };
       // Tiền hàng và tiền thuế trái dấu nhau thì đổi dấu tiền hàng.
       if (row.amount * row.tax < 0) row.amount = -row.amount;
-      if (input) {
-        const key = [group, row.docDate, row.invoiceDate, row.invoiceNo, row.branchCode, row.buyerTaxCode || row.buyerName, row.taxRate, row.invoiceForm, row.invoiceSerial].join('|');
+      if (q.merge) {
+        const key = [r.tax_invoice_id, group, row.taxRate].join('|');
         const prev = merged.get(key);
         if (prev) {
           prev.amount = fromCents(toCents(prev.amount) + toCents(row.amount));
           prev.tax = fromCents(toCents(prev.tax) + toCents(row.tax));
-          if (row.docNo > prev.docNo) prev.docNo = row.docNo;
+          prev.itemCount += 1;
+          prev.qty = 0; prev.unit = '';
           continue;
         }
         merged.set(key, row);
@@ -368,10 +369,11 @@ export const reportService = {
       g.rows.push(row);
     }
     for (const g of groups.values()) {
+      for (const r of g.rows) r.price = r.qty ? Math.round((r.amount / r.qty) * 100) / 100 : 0;
       g.amount = fromCents(g.rows.reduce((s, r) => s + toCents(r.amount), 0));
       g.tax = fromCents(g.rows.reduce((s, r) => s + toCents(r.tax), 0));
     }
-    // Nhóm trống (loại thuế không thuộc nhóm nào) đứng đầu, rồi theo mã nhóm.
+    // Nhóm trống (không thuộc nhóm kê khai) đứng đầu, rồi theo mã nhóm.
     const list = [...groups.values()].sort((a, b) => a.group.localeCompare(b.group));
     const counted = list.filter((g) => g.counted);
     return {
@@ -379,7 +381,7 @@ export const reportService = {
       totals: {
         amount: fromCents(counted.reduce((s, g) => s + toCents(g.amount), 0)),
         tax: fromCents(counted.reduce((s, g) => s + toCents(g.tax), 0)),
-        invoices: new Set(rows.map((r) => r.tax_invoice_id)).size,
+        invoices: new Set(lines.map((r) => r.tax_invoice_id)).size,
       },
     };
   },

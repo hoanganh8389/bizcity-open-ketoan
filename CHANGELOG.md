@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bảng kê hoá đơn, chứng từ HHDV bán ra / mua vào theo mẫu quản trị (ACC65, ACC64) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Mỗi dòng một mặt hàng; nhóm HHDV theo phụ lục 01-1/01-2 GTGT, Cộng nhóm, Tổng cộng; cột Mặt hàng, Tài khoản thuế (theo danh mục mã thuế).
+- Tham số: Cộng gộp theo từng hoá đơn (`merge=1`), Lấy ĐVT / số lượng / đơn giá; nhiều chi nhánh: chọn chi nhánh, Tách theo chi nhánh (chỉ hiện khi có từ 2 chi nhánh).
+- In: Bảng kê (mẫu quản trị) + Phụ lục 01-1/GTGT, 01-2/GTGT. API `/api/v1/reports/sales-invoices` trả từng dòng mặt hàng (thêm itemName, unit, qty, price, taxAccount).
+
 ### Bộ màu gốc, Tổng quan theo bản thiết kế <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/12 (đóng góp) -->
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.

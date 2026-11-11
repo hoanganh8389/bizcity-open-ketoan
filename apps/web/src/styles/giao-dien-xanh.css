@@ -408,3 +408,9 @@ html.gd-xanh .tq-cal button.sel { background: var(--brand-600); }
 .tq-gioi-thieu button { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: var(--base); color: #fff; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
 .tq-gioi-thieu button:hover { background: var(--brand-700); }
 @media (max-width: 1300px) { .tq-nhom-tiles { grid-template-columns: minmax(0, 1fr); } }
+
+/* Tiêu đề báo cáo giữa bảng (bảng kê thuế, sổ…): tên in hoa + kỳ nghiêng, như bản in. */
+.rp-tieu-de { padding: 14px 12px 8px; text-align: center; }
+.rp-tieu-de h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--ink-900); }
+.rp-tieu-de i { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink-700); }
+html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-weight: 600; color: var(--ink-900); }

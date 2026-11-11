@@ -90,7 +90,7 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
 
   r.get('/api/v1/reports/sales-invoices', {
     preHandler: pre,
-    schema: { tags, summary: 'Bảng kê hoá đơn bán ra (direction=output) hoặc mua vào (direction=input)', querystring: z.object({ from: date, to: date, branchCodes, direction: z.enum(['output', 'input']).default('output') }) },
+    schema: { tags, summary: 'Bảng kê hoá đơn bán ra (direction=output) hoặc mua vào (direction=input)', querystring: z.object({ from: date, to: date, branchCodes, direction: z.enum(['output', 'input']).default('output'), merge: z.enum(['0', '1']).optional().transform((v) => v === '1').describe('1 = cộng gộp theo từng hoá đơn') }) },
     handler: async (req) => ok(await reportService.salesInvoices(authOf(req), req.query)),
   });
 
