@@ -477,3 +477,28 @@ html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-
 .vat-info > b { font-weight: 600; }
 .vat-bk th { text-align: center; vertical-align: middle; }
 .vat-bk tr.bold td { background: var(--head-bg, #eef3fb); }
+/* [2026-11-11 Nguyễn Văn Thủy] Khai thuế (ACC66) theo mẫu chuẩn: thanh trên, danh sách tờ khai, khung "cần lập", hộp tờ khai (đóng góp) */
+.kt-bar { display: flex; align-items: center; gap: 18px; padding: 8px 14px; margin-bottom: 10px; }
+.kt-bar > a { display: inline-flex; gap: 6px; align-items: center; }
+.kt-dd { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.kt-pop { position: absolute; top: 100%; right: 0; z-index: 40; background: #fff; border: 1px solid var(--line, #e3e8ef); border-radius: 6px; box-shadow: 0 6px 18px rgba(15, 34, 61, .12); min-width: 240px; padding: 4px 0; display: grid; }
+.kt-pop.kt-pop-up { top: auto; bottom: 100%; }
+.kt-pop > button { text-align: left; border: 0; background: none; padding: 7px 12px; white-space: nowrap; }
+.kt-pop > button:hover { background: var(--hover, #eef3fb); }
+.kt-caret { border: 0; background: none; padding: 0 2px; cursor: pointer; color: var(--nav, #2457b3); }
+.kt-main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; align-items: start; }
+.kt-list { padding: 10px 14px; }
+.kt-list h3, .kt-can-lap h3 { font-size: 15px; margin: 6px 0 8px; }
+.kt-total { padding: 10px 0 2px; }
+.kt-side { padding: 12px 16px; }
+.kt-can-lap > div { margin-top: 4px; }
+.kt-can-lap > a { display: inline-block; margin: 2px 0 12px; }
+.kt-empty { padding: 28px 36px; }
+.kt-empty h2 { font-size: 20px; margin: 0 0 16px; }
+.kt-body { display: block; grid-column: 1 / -1; width: 100%; }
+.kt-tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--line, #e3e8ef); margin-bottom: 8px; }
+.kt-add { width: auto; height: 28px; margin-left: 6px; }
+.kt-form { max-width: 1100px; margin: 0 auto; }
+.kt-tools { display: flex; gap: 8px; margin: 4px 0 10px; }
+.kt-tk td.num input { width: 170px; }
+.kt-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; margin: 16px 0 8px; max-width: 1100px; }

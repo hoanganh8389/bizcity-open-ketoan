@@ -57,8 +57,20 @@ export async function statementRoutes(app: FastifyInstance): Promise<void> {
   });
   r.get('/api/v1/vat-returns/build', {
     preHandler: requirePermission('reports:read'),
-    schema: { tags: ['Thuế'], summary: 'Lập tờ khai thuế GTGT (mẫu 01/GTGT) cho một kỳ', querystring: z.object({ ...periodQuery, branchCodes }) },
+    schema: { tags: ['Thuế'], summary: 'Lập tờ khai thuế GTGT (mẫu 01/GTGT) cho một kỳ', querystring: z.object({ ...periodQuery, branchCodes, excluded: z.string().optional().transform((x) => (x === undefined ? undefined : x.split(',').filter((v) => /^\d+$/.test(v)))) }) },
     handler: async (req) => ok({ form: vatReturnService.form(), ...(await vatReturnService.build(authOf(req), req.query)) }),
+  });
+  // [2026-11-11 Nguyễn Văn Thủy] danh sách tờ khai theo mẫu chuẩn: Xoá / Đánh dấu TCT chấp nhận một lần khai (đóng góp)
+  const oneReturn = z.object({ ...periodQuery, scope: z.string().default(''), revision: z.coerce.number().int().min(0).default(0) });
+  r.delete('/api/v1/vat-returns', {
+    preHandler: requirePermission('documents:write'),
+    schema: { tags: ['Thuế'], summary: 'Xoá một lần khai tờ khai thuế GTGT chưa được chấp nhận', querystring: oneReturn },
+    handler: async (req) => ok(await vatReturnService.remove(authOf(req), req.query)),
+  });
+  r.post('/api/v1/vat-returns/accept', {
+    preHandler: requirePermission('documents:write'),
+    schema: { tags: ['Thuế'], summary: 'Đánh dấu cơ quan thuế chấp nhận tờ khai thuế GTGT', body: oneReturn },
+    handler: async (req) => ok(await vatReturnService.accept(authOf(req), req.body)),
   });
 
   r.get('/api/v1/cit-returns/build', {
@@ -118,6 +130,11 @@ export const statementsMoreWriteActions: AnyActionDef[] = [
         branchCodes: z.array(z.string()).optional(),
         status: z.enum(['draft', 'final']).default('draft'),
         manual: z.object(Object.fromEntries(MANUAL_KEYS.map((k) => [k, z.coerce.number().nullish()]))).partial(),
+        info: z.object({
+          activity: z.string().max(200).optional(), appendices: z.array(z.string().max(20)).max(10).optional(), group4: z.boolean().optional(),
+          excluded: z.array(z.string().regex(/^\d+$/)).max(5000).optional(), signer: z.string().max(120).optional(), signDate: z.string().max(10).optional(),
+          agentStaff: z.string().max(120).optional(), agentCert: z.string().max(60).optional(),
+        }).optional(),
       }), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/vat-returns' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'vat_return' },

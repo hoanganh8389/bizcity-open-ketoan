@@ -20,11 +20,11 @@ import { PrintButton } from '@/components/print';
 import { LONG_TERM_TEMPLATES, NOTES_TEMPLATES, VAT_RETURN_TEMPLATES } from '../mauIn/baoCaoThue';
 
 /* ------------------------------------------------------------------ ACC66 tờ khai thuế GTGT */
-const MANUAL = ['21', '22', '23a', '24a', '25', '32b', '34a', '37', '38', '39a', '40b', '42'] as const;
-type Manual = Partial<Record<(typeof MANUAL)[number], number>>;
+export const MANUAL = ['21', '22', '23a', '24a', '25', '32b', '34a', '37', '38', '39a', '40b', '42'] as const;
+export type Manual = Partial<Record<(typeof MANUAL)[number], number>>;
 
 /** Cùng công thức với máy chủ (vat-return.service.ts → computeForm) để số đổi ngay khi gõ. */
-function computeForm(auto: Record<string, number>, manual: Manual): Record<string, number> {
+export function computeForm(auto: Record<string, number>, manual: Manual): Record<string, number> {
   const v: Record<string, number> = { ...auto };
   for (const k of MANUAL) if (manual[k] !== undefined) v[k] = Number(manual[k]);
   for (const k of ['21', '22', '23a', '24a', '32b', '34a', '37', '38', '39a', '40b', '42']) v[k] = v[k] ?? 0;
@@ -43,8 +43,8 @@ function computeForm(auto: Record<string, number>, manual: Manual): Record<strin
   return v;
 }
 
-interface FormLine { stt: string; name: string; value?: string; tax?: string; bold?: boolean }
-interface Khbs { rows: { code: string; name: string; declared: number; adjusted: number; diff: number }[]; payableIncrease: number; payableDecrease: number; carriedDiff: number; deadline: string; payDate: string; lateDays: number; lateRate: number; lateInterest: number }
+export interface FormLine { stt: string; name: string; value?: string; tax?: string; bold?: boolean }
+export interface Khbs { rows: { code: string; name: string; declared: number; adjusted: number; diff: number }[]; payableIncrease: number; payableDecrease: number; carriedDiff: number; deadline: string; payDate: string; lateDays: number; lateRate: number; lateInterest: number }
 interface SavedReturn { periodKind: 'month' | 'quarter'; year: number; period: number; label: string; scope: string; status: 'draft' | 'final'; revision: number; lateInterest: number; payable: number; carried: number; outputTax: number; deductible: number; updatedBy: string; updatedAt: string }
 interface VatData {
   form: FormLine[]; label: string; from: string; to: string; scope: string;
@@ -62,11 +62,11 @@ interface VatData {
 }
 
 /** Một dòng bảng kê 01-1 / 01-2: một hoá đơn trong một nhóm. */
-interface BkRow { group: number; invoiceNo: string; serial: string; date: string; name: string; taxCode: string; amount: number; tax: number; branchCode: string; docNo: string }
+export interface BkRow { id?: string; group: number; invoiceNo: string; serial: string; date: string; name: string; taxCode: string; amount: number; tax: number; branchCode: string; docNo: string }
 
 // [2026-11-11 Nguyễn Văn Thủy] nhóm bảng kê theo mẫu 01-1/GTGT, 01-2/GTGT (đóng góp)
-const BKBR_GROUPS = ['Hàng hóa, dịch vụ không chịu thuế giá trị gia tăng (GTGT):', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 0%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 5%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 10%:'];
-const BKMV_GROUPS = [
+export const BKBR_GROUPS = ['Hàng hóa, dịch vụ không chịu thuế giá trị gia tăng (GTGT):', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 0%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 5%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 10%:'];
+export const BKMV_GROUPS = [
   'Hàng hóa, dịch vụ dùng riêng cho SXKD chịu thuế GTGT và sử dụng cho các hoạt động cung cấp hàng hóa, dịch vụ không kê khai, nộp thuế GTGT đủ điều kiện khấu trừ thuế:',
   'Hàng hóa, dịch vụ dùng chung cho SXKD chịu thuế và không chịu thuế đủ điều kiện khấu trừ thuế:',
   'Hàng hóa, dịch vụ dùng cho dự án đầu tư đủ điều kiện được khấu trừ thuế:',
@@ -74,7 +74,7 @@ const BKMV_GROUPS = [
 ];
 
 /** Bảng kê hoá đơn theo nhóm: tiêu đề nhóm, từng hoá đơn, "Tổng nhóm n"; cột Chi nhánh để xem theo từng kho. */
-function BangKe({ rows, groups, kind }: { rows: BkRow[]; groups: string[]; kind: 'ban' | 'mua' }) {
+export function BangKe({ rows, groups, kind }: { rows: BkRow[]; groups: string[]; kind: 'ban' | 'mua' }) {
   return (
     <div className="table-wrap" style={{ maxHeight: 'calc(100vh - 330px)', overflow: 'auto' }}>
       <table className="grid vat-bk">
@@ -417,7 +417,7 @@ function KhbsTable({ revision, khbs }: { revision: number; khbs: Khbs }) {
 }
 
 /** Lập tờ khai bổ sung: xem trước giải trình 01/KHBS và tiền chậm nộp theo ngày nộp dự kiến, rồi lưu. */
-function SupplementDialog({ f, manual, label, onClose, onSaved }: { f: { periodKind: 'month' | 'quarter'; year: number; period: number; branchCodes: string }; manual: Manual; label: string; onClose: () => void; onSaved: () => void }) {
+export function SupplementDialog({ f, manual, label, onClose, onSaved }: { f: { periodKind: 'month' | 'quarter'; year: number; period: number; branchCodes: string }; manual: Manual; label: string; onClose: () => void; onSaved: () => void }) {
   const [payDate, setPayDate] = useState(defaultTo());
   const body = { periodKind: f.periodKind, year: f.year, period: f.period, branchCodes: f.branchCodes ? f.branchCodes.split(',') : undefined, manual, payDate };
   const preview = useQuery({ queryKey: ['vat-supplement', body], queryFn: () => api.put<{ revision: number; supplement: Khbs }>('/api/v1/vat-returns/supplement', { ...body, dryRun: true }) });

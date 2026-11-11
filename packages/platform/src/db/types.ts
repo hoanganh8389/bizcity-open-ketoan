@@ -1371,6 +1371,7 @@ export interface VatReturnsTable {
   updated_at: TimestampDefault;
   revision: Generated<number>;
   supplement: ColumnType<Record<string, unknown> | null, string | null | undefined, string | null>;
+  info: ColumnType<Record<string, unknown>, string | undefined, string>;
 }
 
 export interface CitReturnsTable {

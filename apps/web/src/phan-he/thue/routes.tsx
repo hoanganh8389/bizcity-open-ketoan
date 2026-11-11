@@ -3,7 +3,8 @@
  * Thêm màn: import + một <Route> ở đây, mục menu ở menu.ts cùng thư mục.
  */
 import { Route } from 'react-router-dom';
-import { LongTermPage, NotesPage, VatReturnPage } from './statements/StatementPages';
+import { LongTermPage, NotesPage } from './statements/StatementPages';
+import { KhaiThuePage } from './statements/KhaiThuePage';
 import { AuthorityInvoicesPage } from './tax/AuthorityInvoicesPage';
 import { CitReturnPage } from './tax/CitReturnPage';
 import { InvoiceRisksPage } from './tax/InvoiceRisksPage';
@@ -18,7 +19,7 @@ export const thueRoutes = (
     <Route path="thue/nguoi-nop-thue" element={<TaxpayerPage />} />
     <Route path="thue/hoa-don-co-quan-thue" element={<AuthorityInvoicesPage />} />
     <Route path="thue/hoa-don-rui-ro" element={<InvoiceRisksPage />} />
-    <Route path="thue/to-khai-gtgt" element={<VatReturnPage />} />
+    <Route path="thue/to-khai-gtgt" element={<KhaiThuePage />} />
     <Route path="bao-cao/thuyet-minh" element={<NotesPage />} />
     <Route path="bao-cao/phan-loai-dai-han" element={<LongTermPage />} />
     <Route path="thue/bang-ke-mua-vao" element={<SalesInvoicesPage key="input" direction="input" />} />

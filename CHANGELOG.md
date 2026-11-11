@@ -12,6 +12,14 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Khai thuế (ACC66) làm lại theo mẫu chuẩn, gọn như phần mềm mẫu <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Màn **Khai thuế**: danh sách tờ khai tháng / quý (Kỳ kê khai, Loại tờ khai, Thông tư áp dụng, Trạng thái, Chức năng Xem ▾ Đánh dấu TCT chấp nhận / Xóa), khung "Tờ khai cần lập tháng này / năm nay", thanh Thiết lập thông tin cơ quan thuế · Tải lại · Khai bổ sung ▾ · Lập tờ khai ▾. Bỏ bảng tham số và các đoạn giải thích trên màn.
+- **Chọn kỳ tính thuế**: tháng / quý, năm, ngành nghề, chọn phụ lục (BKBR_01-1, BKMV_01-2, PL NQ 204), Lấy lên HHDV mua vào nhóm 4.
+- Hộp **Tờ khai thuế GTGT khấu trừ (01/GTGT)**: thẻ Tờ khai + phụ lục đã chọn (+ Phụ lục); **Chọn CT không tính thuế** (hoá đơn bán ra lên [32a], không lên bảng kê); Lấy lại dữ liệu; Người ký, Ngày ký bắt buộc; Hủy · Ghi · Ghi và In; xem: In ▾ · Tiện ích ▾ (Xuất Excel, hoá đơn mua vào từ 5 triệu, chi tiết theo thuế suất, đối chiếu sổ cái) · Sửa.
+- In: bỏ mẫu "in màn hình"; thêm mẫu in bảng kê 01-1, 01-2; tờ khai in tên người ký, ngày ký.
+- Migration **0107** cột `vat_returns.info` (ngành nghề, phụ lục, nhóm 4, chứng từ không tính thuế, người ký…); API xoá / đánh dấu chấp nhận một lần khai.
+- **0108**: bảng `print_profiles` (0103) thiếu RLS làm kiểm tra sẵn sàng báo TENANT_ISOLATION: bật RLS + FORCE + chính sách.
+
 ### Tờ khai thuế GTGT (ACC66) theo mẫu chuẩn: bảng kê 01-1, 01-2, phụ lục giảm thuế NQ 204 đủ ba phần <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Thẻ như mẫu: **Tờ khai** (thêm đầu tờ khai [01a]–[07]) · **BKBR_01-1/GTGT** bảng kê bán ra theo từng hoá đơn, 4 nhóm (không chịu thuế, 0%, 5%, 10% gồm hàng giảm còn 8%), Tổng nhóm · **BKMV_01-2/GTGT** bảng kê mua vào, nhóm 1–3, ô "Lấy lên HHDV mua vào thuộc nhóm 4" · **PL 204/2025/QH15** đủ I mua vào 8% ([06]), II bán ra ([08]), III chênh lệch [09] = [08] − [06]. Thẻ quản trị giữ: hoá đơn mua vào từ 5 triệu, chi tiết theo thuế suất, đối chiếu sổ cái.
 - Quản trị nhiều chi nhánh: cột Chi nhánh ở hai bảng kê; Xuất Excel một tệp bốn sheet (Tờ khai, BKBR 01-1, BKMV 01-2, Giảm thuế NQ 204) kèm cột Chi nhánh.
