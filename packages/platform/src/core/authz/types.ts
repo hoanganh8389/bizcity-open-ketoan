@@ -6,7 +6,7 @@
  *
  *   quyền        `<module>:<việc>` (khuôn bizcity_module@1), sổ quyền nằm trong CODE; CSDL chỉ giữ bản chụp đã thấy
  *   vai trò      của đơn vị; loại system (6 vai trò cũ, khoá) / job / privilege / restriction / personal
- *   luật         mẫu quyền + hiệu lực allow (Cho) / relax (Nới — chỉ nới điều kiện, không tự cấp) / deny (Cấm — luôn thắng) + điều kiện
+ *   luật         mẫu quyền + hiệu lực allow (Cho) / deny (Cấm — luôn thắng) + điều kiện (D-AUTH-22: đã bỏ relax)
  *   lần gán      người (khoá API / trợ lý) × vai trò × phạm vi[] × mục đích[] × hiệu lực từ–đến
  *   quyết định   { allowed, reasonCode, decisionId, authzVersion, matched, failed } — cùng một kết quả cho API, nút Giải thích, nhật ký
  */
@@ -28,7 +28,8 @@ export type AuthzOperation = (typeof AUTHZ_OPERATIONS)[number];
 export const AUTHZ_PURPOSES = ['operate', 'approve', 'report', 'export'] as const;
 export type AuthzPurpose = (typeof AUTHZ_PURPOSES)[number];
 
-export const AUTHZ_EFFECTS = ['allow', 'relax', 'deny'] as const;
+// [2026-11-09 03:00 PM kiennt] PHASE-028 — S028-16 (D-AUTH-22, PHASE-030 / 22 §3 #1–#3 đã duyệt 06/11): bỏ hiệu lực Nới (relax) — muốn nới thì thêm một luật Cho có điều kiện rộng hơn (Cho hợp trong cùng phạm vi)
+export const AUTHZ_EFFECTS = ['allow', 'deny'] as const;
 export type AuthzEffect = (typeof AUTHZ_EFFECTS)[number];
 
 export const AUTHZ_ROLE_KINDS = ['system', 'job', 'privilege', 'restriction', 'personal'] as const;
@@ -71,28 +72,22 @@ export interface AuthzCatalogEntry extends AuthzPermissionDef {
   hash: string;
 }
 
+// [2026-11-09 03:00 PM kiennt] PHASE-028 — S028-16 (D-AUTH-22, PHASE-030 / 22 §3 #1–#3 đã duyệt 06/11): điều kiện 8 → 5. Hạn theo NGÀY CHỨNG TỪ thuộc khoá ngày (dataLock, date-rules.ts) — bỏ doc_date_back_days,
+// doc_date_forward_days, respect_lock_date; trạng thái nào sửa / chuyển được thuộc workflow — bỏ status_in.
 /** Danh mục điều kiện ĐÓNG (thêm khoá mới = sửa bộ tính ở Platform). Đơn vị ngày tính theo giờ lập phiếu (Phụ lục F §15). */
 export interface AuthzConditions {
-  /** Sửa / huỷ trong N ngày kể từ lúc lập; 0 = trong ngày; null = không giới hạn. */
+  /** Sửa / huỷ trong N ngày kể từ lúc LẬP (không phải ngày chứng từ); 0 = trong ngày; null = không giới hạn. */
   edit_window_days?: number | null;
-  /** Ngày chứng từ lùi tối đa N ngày so với hôm nay. */
-  doc_date_back_days?: number | null;
-  /** Ngày chứng từ tới tối đa N ngày. */
-  doc_date_forward_days?: number | null;
   /** Người lập: chỉ của mình < cùng chi nhánh < tất cả. */
   creator?: 'self' | 'branch' | 'all';
-  /** Chỉ khi chứng từ ở một trong các trạng thái. */
-  status_in?: string[];
-  /** Số tiền tối đa (VND). */
+  /** Hạn mức duyệt cá nhân (VND). Số CẤP duyệt theo khoảng tiền là việc của chính sách duyệt, không phải điều kiện này. */
   amount_max?: number | null;
   /** Chỉ xem dữ liệu trong N ngày gần nhất (báo cáo). */
   view_window_days?: number | null;
-  /** false = được vượt khoá đến ngày (không vượt khoá kỳ của Kernel). */
-  respect_lock_date?: boolean;
   /** Phút xác thực lại. */
   step_up_minutes?: number;
 }
-export const AUTHZ_CONDITION_KEYS = ['edit_window_days', 'doc_date_back_days', 'doc_date_forward_days', 'creator', 'status_in', 'amount_max', 'view_window_days', 'respect_lock_date', 'step_up_minutes'] as const;
+export const AUTHZ_CONDITION_KEYS = ['edit_window_days', 'creator', 'amount_max', 'view_window_days', 'step_up_minutes'] as const;
 export type AuthzConditionKey = (typeof AUTHZ_CONDITION_KEYS)[number];
 
 export interface AuthzRule {

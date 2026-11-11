@@ -1,7 +1,8 @@
 # `bizcity_authorization@1` — Hợp đồng phân quyền (nháp)
 <!-- [2026-11-06 00:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chữ chốt hình dạng bộ tính quyền (W3 đợt 1): mô hình Cho / Nới / Cấm, phạm vi, mục đích, điều kiện, mã lý do; bám ADR-0027 đã chấp nhận -->
+<!-- [2026-11-09 03:05 PM kiennt] PHASE-028 — 1.1.0-draft (D-AUTH-22, thi hành PHASE-030 / 22 §3 #1–#4 đã duyệt 06/11): bỏ hiệu lực Nới; điều kiện 8 → 5 (bỏ doc_date_back_days, doc_date_forward_days, respect_lock_date, status_in); amount_max = hạn mức duyệt cá nhân -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-11-06 · **Trạng thái:** Nháp · **Căn cứ:** [ADR-0027](../adr/ADR-0027-core-authorization-plugin-role-editor.md) (đã chấp nhận) · **Phase:** [PHASE-028](../phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/README.md)
+> **Phiên bản:** 1.1.0-draft · 2026-11-09 (1.0.0-draft · 2026-11-06) · **Trạng thái:** Nháp · **Căn cứ:** [ADR-0027](../adr/ADR-0027-core-authorization-plugin-role-editor.md) (đã chấp nhận) · **Phase:** [PHASE-028](../phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/README.md)
 > **Mở rộng (không thay):** [`bizcity_module@1`](BIZCITY-MODULE-v1.md) §3 `permissions[]`. Hợp đồng này chốt **cách tính một quyết định**; nơi lưu vai trò và lần gán theo ADR-0027 D-AUTH-01 (`user_role_assignments`).
 
 ## 1. Mục đích
@@ -24,7 +25,7 @@ Phạm vi bản này: bộ tính thuần (không CSDL), chưa nối vào đườ
 ```
 lần gán  =  người × vai trò × phạm vi[] × mục đích[] × hiệu lực từ–đến
 vai trò  =  luật[]            luật = mẫu quyền × hiệu lực × điều kiện
-hiệu lực =  allow (Cho) | relax (Nới) | deny (Cấm)
+hiệu lực =  allow (Cho) | deny (Cấm)
 mục đích =  operate | approve | report | export
 phạm vi  =  all | org_unit (cây con tuỳ chọn) | branch | warehouse
 ```
@@ -33,7 +34,7 @@ Quy tắc tính (D-AUTH-04):
 
 1. **Cấm luôn thắng.** Có luật deny khớp trong lần gán còn hiệu lực → từ chối, bất kể có bao nhiêu Cho.
 2. **Cho chỉ hợp trong cùng phạm vi.** Cho ở chi nhánh A không cộng với Cho ở chi nhánh B để tạo quyền ở C. Khác phạm vi → không gộp.
-3. **Nới không tự cấp.** Luật relax chỉ mở rộng điều kiện của một Cho đã có; không có Cho thì Nới vô tác dụng.
+3. **Nới = thêm một Cho rộng hơn.** (1.1.0: đã bỏ hiệu lực `relax`.) Cần cho một người sửa phiếu 3 ngày thay vì trong ngày thì gán thêm vai trò có luật Cho cùng quyền với điều kiện rộng hơn; theo quy tắc 2, Cho đó chỉ có tác dụng trong phạm vi của lần gán chứa nó.
 4. **Mục đích tách bạch.** Phạm vi báo cáo của kho K1 không cho lập hay duyệt phiếu ở K1.
 5. **Điều kiện** (§5) là phần của luật; không đạt điều kiện → từ chối với mã `AUTHZ-CONDITION` và nêu điều kiện nào không đạt.
 6. **Thu hồi có hiệu lực ở yêu cầu kế tiếp**: bộ tính nhận `authzVersion` và danh sách lần gán do bên gọi nạp; hàm không giữ trạng thái.
@@ -43,7 +44,7 @@ Quy tắc tính (D-AUTH-04):
 | Luật | Mẫu `*` được phép? |
 |---|---|
 | deny (Cấm) | Có, phủ mọi quyền khớp (kể cả `risk: high`) — Cấm phải rộng được |
-| allow / relax | Có, nhưng **không bao giờ phủ** quyền `risk: high` hay quyền chưa ở trạng thái `active` (mới, đổi nghĩa, đã bỏ) |
+| allow | Có, nhưng **không bao giờ phủ** quyền `risk: high` hay quyền chưa ở trạng thái `active` (mới, đổi nghĩa, đã bỏ) |
 
 Quyền module mới (`status: new`) chưa ai có cho tới khi được cấp đích danh — khớp D-AUTH-03: vai trò quản trị cao `ADMIN_ROLES` vẫn tự có quyền module theo chữ chốt của ADR; bộ tính chỉ phản ánh quy tắc đó qua vai trò hệ thống (`legacy`), không tự đặt thêm ngoại lệ.
 
@@ -51,14 +52,13 @@ Quyền module mới (`status: new`) chưa ai có cho tới khi được cấp �
 
 | Khoá | Nghĩa |
 |---|---|
-| `edit_window_days` | sửa / huỷ trong N ngày kể từ lúc lập; `0` = trong ngày (giờ lập, múi giờ UTC+7) |
-| `doc_date_back_days`, `doc_date_forward_days` | ngày chứng từ lùi / tới tối đa N ngày so với hôm nay |
+| `edit_window_days` | sửa / huỷ trong N ngày kể từ **lúc lập**; `0` = trong ngày (giờ lập, múi giờ UTC+7) |
 | `creator` | `self` < `branch` < `all`: chỉ phiếu của mình / cùng chi nhánh / tất cả |
-| `status_in` | chỉ khi chứng từ ở một trong các trạng thái |
-| `amount_max` | số tiền tối đa (VND) |
+| `amount_max` | **hạn mức duyệt cá nhân** (VND). Số *cấp* duyệt theo khoảng tiền là việc của chính sách duyệt, không phải điều kiện này |
 | `view_window_days` | chỉ xem dữ liệu N ngày gần nhất (báo cáo) |
-| `respect_lock_date` | `false` = được vượt khoá dữ liệu đến ngày; **không** vượt khoá kỳ của Kernel |
 | `step_up_minutes` | phút xác thực lại cho quyền rủi ro cao |
+
+Không có điều kiện theo **ngày chứng từ** hay **trạng thái**: hạn theo ngày chứng từ là việc của khoá ngày (`dataLock`, `date-rules.ts`; ai được vượt là quyền `documents:bypass-date-lock`), trạng thái nào sửa / chuyển được là việc của workflow (`from`, `editable`). Mỗi câu hỏi một nơi trả lời (PHASE-030 / 22 §2).
 
 Điều kiện không nhận từ client: vị trí và thuộc tính của tài nguyên (`branchId`, `warehouseId`, `orgPath`, `createdBy`, `createdAt`, `status`, `amount`) do **máy chủ** nạp từ bản ghi rồi truyền vào hàm (AUTHZ-11).
 

@@ -9,8 +9,8 @@
  *   2  lần gán còn hiệu lực, đúng mục đích, phạm vi chứa vị trí tài nguyên (tài nguyên không có vị trí → mọi phạm vi đều chứa)
  *   3  luật khớp: đích danh luôn; mẫu * không phủ quyền high và quyền 'new' / 'changed' (chưa duyệt)
  *   4  có luật deny khớp ở BẤT KỲ lần gán sống nào → từ chối
- *   5  mỗi luật allow: điều kiện = mặc định của quyền ⊕ điều kiện luật, nới bằng giá trị rộng nhất của các luật relax khớp
- *      (relax ở lần gán sống — các lần gán này đều chứa tài nguyên nên "cùng phạm vi"); đủ → ĐƯỢC
+ *   5  mỗi luật allow: điều kiện = mặc định của quyền ⊕ điều kiện luật; luật Cho nào đủ điều kiện → ĐƯỢC (muốn nới thì thêm một
+ *      Cho có điều kiện rộng hơn — các lần gán sống đều chứa tài nguyên nên vẫn "cùng phạm vi"; D-AUTH-22 đã bỏ relax)
  *   6  không luật allow đạt → AUTHZ-CONDITION (kèm điều kiện trượt) hoặc AUTHZ-NO-ALLOW / AUTHZ-NOT-GRANTED-YET
  */
 import { randomUUID } from 'node:crypto';
@@ -88,20 +88,7 @@ function assignmentLive(a: AuthzAssignment, p: AuthzPrincipal, purpose: AuthzPur
 /** Việt Nam không có giờ mùa hè: ngày địa phương = UTC+7. "Trong ngày" tính theo giờ lập phiếu (Phụ lục F §15). */
 const VN_OFFSET_MS = 7 * 3600_000;
 const localDay = (d: Date): number => Math.floor((d.getTime() + VN_OFFSET_MS) / 86_400_000);
-const CREATOR_RANK = { self: 0, branch: 1, all: 2 } as const;
-
-/** Nới: lấy giá trị RỘNG hơn của hai (null = không giới hạn là rộng nhất). Xác thực lại không bao giờ bị nới mất. */
-export function widen(base: AuthzConditions, relax: AuthzConditions): AuthzConditions {
-  const out: AuthzConditions = { ...base };
-  const wideNum = (a: number | null | undefined, b: number | null | undefined) => (a === null || b === null ? null : Math.max(a ?? -Infinity, b ?? -Infinity));
-  for (const k of ['edit_window_days', 'doc_date_back_days', 'doc_date_forward_days', 'amount_max', 'view_window_days'] as const) {
-    if (k in relax && k in base) out[k] = wideNum(base[k], relax[k]);
-  }
-  if (relax.creator && base.creator && CREATOR_RANK[relax.creator] > CREATOR_RANK[base.creator]) out.creator = relax.creator;
-  if (relax.status_in && base.status_in) out.status_in = [...new Set([...base.status_in, ...relax.status_in])];
-  if (relax.respect_lock_date === false && 'respect_lock_date' in base) out.respect_lock_date = false;
-  return out;
-}
+// [2026-11-09 03:00 PM kiennt] PHASE-028 — S028-16 (D-AUTH-22, PHASE-030 / 22 §3 #1–#3 đã duyệt 06/11): bỏ widen (Nới).
 
 type CondFail = { condition: AuthzConditionKey; need: unknown; have: unknown };
 
@@ -121,18 +108,13 @@ export function checkConditions(c: AuthzConditions, r: AuthzResourceContext | un
     const me = `${p.kind}:${p.id}`;
     if (r.createdBy !== me) return { condition: 'creator', need: 'self', have: r.createdBy ?? null };
   }
-  if (c.status_in) {
-    if (!r.status || !c.status_in.includes(r.status)) return { condition: 'status_in', need: c.status_in, have: r.status ?? null };
-  }
   if (c.amount_max != null) {
     if (r.amount == null || r.amount > c.amount_max) return { condition: 'amount_max', need: c.amount_max, have: r.amount ?? null };
   }
-  if (c.doc_date_back_days != null || c.doc_date_forward_days != null || c.view_window_days != null) {
-    if (!r.docDate) return { condition: c.view_window_days != null ? 'view_window_days' : 'doc_date_back_days', need: 'docDate', have: null };
-    const diff = localDay(new Date(r.docDate)) - today; // âm = quá khứ
-    if (c.doc_date_back_days != null && -diff > c.doc_date_back_days) return { condition: 'doc_date_back_days', need: c.doc_date_back_days, have: -diff };
-    if (c.doc_date_forward_days != null && diff > c.doc_date_forward_days) return { condition: 'doc_date_forward_days', need: c.doc_date_forward_days, have: diff };
-    if (c.view_window_days != null && -diff > c.view_window_days) return { condition: 'view_window_days', need: c.view_window_days, have: -diff };
+  if (c.view_window_days != null) {
+    if (!r.docDate) return { condition: 'view_window_days', need: 'docDate', have: null };
+    const back = today - localDay(new Date(r.docDate)); // dương = quá khứ
+    if (back > c.view_window_days) return { condition: 'view_window_days', need: c.view_window_days, have: back };
   }
   return null;
 }
@@ -181,16 +163,14 @@ export function explain(input: AuthorizeInput): AuthzExplained {
     return done(false, AUTHZ_REASONS.DENIED_BY_RULE, { matched: [match(deny)] });
   }
 
-  const relax = hits.filter((h) => h.rule.effect === 'relax');
   let firstFail: CondFail | null = null;
   for (const h of hits.filter((x) => x.rule.effect === 'allow')) {
-    let cond: AuthzConditions = { ...(entry.defaults ?? {}), ...(h.rule.conditions ?? {}) };
-    for (const r of relax) cond = widen(cond, r.rule.conditions ?? {});
+    const cond: AuthzConditions = { ...(entry.defaults ?? {}), ...(h.rule.conditions ?? {}) };
     const fail = checkConditions(cond, resource, principal, now);
     if (!fail) {
-      trace.push({ ok: true, step: 'allow', detail: `luật Cho ${h.rule.pattern} của vai trò ${h.role.code}${relax.length ? `, nới bởi ${relax.map((r) => r.role.code).join(', ')}` : ''}` });
+      trace.push({ ok: true, step: 'allow', detail: `luật Cho ${h.rule.pattern} của vai trò ${h.role.code}` });
       const stepUp = cond.step_up_minutes ?? (entry.risk === 'high' ? entry.stepUp ?? DEFAULT_STEP_UP_MINUTES : undefined);
-      return done(true, AUTHZ_REASONS.ALLOW, { matched: [match(h), ...relax.map(match)], ...(stepUp ? { stepUpMinutes: stepUp } : {}) });
+      return done(true, AUTHZ_REASONS.ALLOW, { matched: [match(h)], ...(stepUp ? { stepUpMinutes: stepUp } : {}) });
     }
     trace.push({ ok: false, step: 'condition', detail: `luật Cho ${h.rule.pattern} (${h.role.code}) trượt điều kiện ${fail.condition}: cần ${JSON.stringify(fail.need)}, có ${JSON.stringify(fail.have)}` });
     firstFail ??= fail;
