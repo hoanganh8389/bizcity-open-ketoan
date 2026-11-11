@@ -7,6 +7,7 @@
  * Bấm một dòng để mở phiếu. Phiếu đã xóa (đã đảo bút toán) không hiện trong danh sách.
  * Thêm: "Lập từ mẫu…" điền sẵn từ bút toán mẫu; ký xác nhận hàng loạt các phiếu đã chọn.
  */
+import { KpiTien } from '@/components/KpiDanhMuc';
 import { useState } from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PenLine, Plus } from 'lucide-react';
@@ -119,6 +120,8 @@ export function CashVouchersPage({ type }: { type: CashType }) {
   return (
     <VoucherListPage
       chiTiet
+      kpi={<KpiTien title={meta.title} total={q.data?.reduce((s, r) => s + (Number(r.total) || 0), 0)} count={q.data?.length} from={f.from} to={f.to}
+        tk={type === 'receipt' || type === 'payment' ? '111' : type === 'bank_receipt' || type === 'bank_payment' ? '112' : null} />}
       title={meta.title} code={meta.code} subtitle={SUBTITLE[type]} helpKey={meta.helpKey}
       filter={filter} query={{ ...q, queryKey: ['documents', 'voucher', type] }} columns={columns} storageKey={`voucher-list-${type}`} canWrite={canWrite}
       notice={notice} setNotice={setNotice}

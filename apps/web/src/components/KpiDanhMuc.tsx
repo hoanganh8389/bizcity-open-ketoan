@@ -7,7 +7,7 @@
  * Bấm thẻ mở màn chi tiết. Nguồn nào lỗi / không có quyền thì thẻ đó hiện "…", không làm hỏng danh mục.
  */
 import { useQuery } from '@tanstack/react-query';
-import { AlarmClock, ArrowDownLeft, ArrowUpRight, PackageCheck, PackageMinus, PackageX } from 'lucide-react';
+import { AlarmClock, ArrowDownLeft, ArrowUpRight, Banknote, FileText, PackageCheck, PackageMinus, PackageX, Wallet } from 'lucide-react';
 import { api } from '@/lib/api';
 import { today } from '@/lib/format';
 import { workBranch } from '@/lib/workBranch';
@@ -33,6 +33,23 @@ export function KpiDoiTuong({ kind }: { kind?: string }) {
     items.push({ key: 'tra', label: 'Tổng nợ phải trả', value: tb.data ? acc('331')?.closingCredit ?? 0 : undefined, tone: 'info', icon: <ArrowUpRight size={18} />, to: '/bao-cao/cong-no', hint: 'Dư Có TK 331 tới hôm nay' });
   }
   return <KpiCards items={items} at={al.dataUpdatedAt || tb.dataUpdatedAt || null} />;
+}
+
+/**
+ * Danh sách phiếu tiền: tổng tiền các phiếu đang xem, số phiếu, tồn quỹ tiền mặt (dư Nợ 111) hoặc số dư tiền gửi (dư Nợ 112) đến hôm nay.
+ * `chieu` 'thu' / 'chi' chỉ để đặt nhãn.
+ */
+export function KpiTien({ title, total, count, from, to, tk }: { title: string; total: number | undefined; count: number | undefined; from: string; to: string; tk: '111' | '112' | null }) {
+  const today_ = today();
+  const tb = useQuery({ ...opts, enabled: Boolean(tk), queryKey: ['kpi', 'tb', today_], queryFn: () => api.get<Tb>('/api/v1/reports/trial-balance', { from: `${today_.slice(0, 4)}-01-01`, to: today_ }) });
+  const du = tk ? (tb.data?.rows.find((r) => r.code === tk)?.closingDebit ?? (tb.data ? 0 : undefined)) : undefined;
+  const ky = `${from.slice(8, 10)}/${from.slice(5, 7)} – ${to.slice(8, 10)}/${to.slice(5, 7)}/${to.slice(0, 4)}`;
+  const items: KpiItem[] = [
+    { key: 'tong', label: `Tổng ${title.toLowerCase()} (${ky})`, value: total, tone: 'ok', icon: <Banknote size={18} />, hint: 'Cộng số tiền các phiếu đang hiện trong danh sách (theo kỳ, chi nhánh đã chọn)' },
+    { key: 'so', label: 'Số phiếu', value: count, tone: 'info', icon: <FileText size={18} /> },
+  ];
+  if (tk) items.push({ key: 'du', label: tk === '111' ? 'Tồn quỹ tiền mặt đến hôm nay' : 'Số dư tiền gửi đến hôm nay', value: du, tone: 'warn', icon: <Wallet size={18} />, to: tk === '111' ? '/quy/so-quy-tien-mat' : '/quy/so-tien-gui', hint: `Dư Nợ TK ${tk} tới hôm nay (mọi chi nhánh) — bấm để xem sổ` });
+  return <KpiCards items={items} at={tb.dataUpdatedAt || null} />;
 }
 
 export function KpiMatHang() {

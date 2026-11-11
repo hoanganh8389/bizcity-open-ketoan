@@ -35,10 +35,12 @@ export function useListFilter(from = defaultFrom()) {
 }
 
 export function VoucherListPage<R extends { id: string; docKey: string }>({
-  title, code, subtitle, helpKey, filter, query, columns, storageKey, addButtons, canWrite, onOpen, onCopy, canDelete, extraToolbar, extraPanel, notice, setNotice, emptyText, children, chiTiet,
+  title, code, subtitle, helpKey, filter, query, columns, storageKey, addButtons, canWrite, onOpen, onCopy, canDelete, extraToolbar, extraPanel, notice, setNotice, emptyText, children, chiTiet, kpi,
 }: {
   /** Danh sách trên – dưới: bấm một phiếu → nửa dưới hiện dòng hạch toán của phiếu; bấm đúp mới mở phiếu. */
   chiTiet?: boolean;
+  /** Thẻ chỉ số trên danh sách (KpiCards). */
+  kpi?: ReactNode;
   title: string; code: string; subtitle: string; helpKey: string;
   filter: ReturnType<typeof useListFilter>;
   query: { data?: R[]; isLoading: boolean; isFetching: boolean; error: unknown; refetch: () => unknown; queryKey: QueryKey };
@@ -122,6 +124,7 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
   return (
     <>
       <PageHeader title={title} code={code} subtitle={subtitle} helpKey={helpKey} />
+      {kpi}
       <ReportSideLayout panel={panel}>
         <div className="card" style={{ padding: 0 }}>
           <div className="vf-toolbar">

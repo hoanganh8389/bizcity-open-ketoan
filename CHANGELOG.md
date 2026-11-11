@@ -14,6 +14,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Danh sách phiếu tiền dạng trên – dưới <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/05 (đóng góp) -->
 
+- **Thêm:** thẻ chỉ số trên danh sách phiếu tiền: tổng tiền trong kỳ, số phiếu, tồn quỹ tiền mặt / số dư tiền gửi đến hôm nay.
 - **Đổi:** Phiếu thu / chi / báo có / báo nợ / phiếu kế toán: bấm một lần chọn phiếu và xem dòng hạch toán ở nửa dưới; bấm đúp để mở phiếu (trước: bấm một lần là mở).
 - **Thay đổi định khoản:** không.
 
