@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Hệ thống tài khoản theo chuẩn; báo lỗi tại ô cho mọi hộp thoại <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/08, 09 (đóng góp) -->
+
+- **Thêm:** ACC1 làm lại: danh sách 6 cột (Số TK, Tên, Tính chất, Tên tiếng Anh, Diễn giải, Trạng thái), cây ⊞ / ⊟, Nhân bản, Ngừng / Dùng lại, Xuất Excel đúng mẫu "DANH SÁCH HỆ THỐNG TÀI KHOẢN", Nhập Excel cùng bộ cột. Tài khoản có Diễn giải (migration 0101).
+- **Thêm:** mọi hộp thoại (danh mục, chứng từ): bấm Ghi / Ctrl + S hoặc bấm nút Ghi đang mờ mà ô bắt buộc còn trống → ô viền đỏ, chữ đỏ dưới ô, chân hộp thoại liệt kê ô thiếu.
+- **Thay đổi:** form tài khoản bỏ các ô tích không có tác dụng (TK ngoại tệ, thuế GTGT, vay, tài sản, sổ cái, giá thành, công nợ nội bộ) — dữ liệu giữ nguyên; "Đối tượng" gộp theo dõi đối tượng + ghi nhận công nợ (cùng tác dụng).
+- **Thay đổi định khoản:** không.
+
 ### Lưu bộ tham số báo cáo <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/07 (đóng góp) -->
 
 - **Thêm:** đầu bảng tham số 34 báo cáo: chọn bộ đã lưu, lưu bộ có tên, đặt bộ mặc định khi mở báo cáo; kỳ chọn nhanh (Tháng này…) lưu theo kỳ, tự đổi theo ngày mở.

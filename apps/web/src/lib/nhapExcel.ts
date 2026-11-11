@@ -260,6 +260,84 @@ const NHOM_HANG: NhapLoai = {
 };
 
 
+/* ------------------------------------------------------------------ Hệ thống tài khoản (cùng bộ cột với tệp Xuất ở ACC1: sửa xong nhập lại được) */
+interface TkRow { code: string; name: string; nameEn: string | null; description?: string; parentCode: string | null; normalSide: string; isActive: boolean }
+const TINH_CHAT_DOC: Record<string, string> = { 'du no': 'debit', 'no': 'debit', 'du co': 'credit', 'co': 'credit', 'luong tinh': 'both', 'debit': 'debit', 'credit': 'credit', 'both': 'both' };
+const khongDauNho = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
+const TAI_KHOAN: NhapLoai = {
+  id: 'tai-khoan', nhom: 'Danh mục', title: 'Hệ thống tài khoản', desc: 'Số tài khoản, tên, tài khoản tổng hợp, tính chất (Dư Nợ / Dư Có / Lưỡng tính), tên tiếng Anh, diễn giải, trạng thái', keyField: 'code',
+  listPath: '/danh-muc/tai-khoan', invalidate: ['accounts'],
+  fields: [
+    { key: 'code', header: 'Số tài khoản', required: true, aliases: ['so tk', 'tai khoan', 'ma tai khoan', 'so hieu tai khoan'], example: '13111', note: 'Đã có → cập nhật; chưa có → thêm mới. 3–20 chữ / số.' },
+    { key: 'name', header: 'Tên tài khoản', required: 'moi', aliases: ['ten', 'ten tk'], example: 'Phải thu khách hàng bán lẻ' },
+    { key: 'parentCode', header: 'Tài khoản tổng hợp', aliases: ['tk tong hop', 'tai khoan me', 'tk me', 'tk cap tren'], example: '131', note: 'Chỉ dùng khi thêm mới. Trống: lấy theo số tài khoản (13111 → 1311 hoặc 131 nếu có). Số tài khoản con bắt đầu bằng số tài khoản tổng hợp.' },
+    { key: 'normalSide', header: 'Tính chất', aliases: ['tinh chat tai khoan', 'so du'], example: 'Lưỡng tính', note: 'Dư Nợ / Dư Có / Lưỡng tính. Trống: mới = theo tài khoản tổng hợp; đã có = giữ nguyên.' },
+    { key: 'nameEn', header: 'Tên tiếng Anh', aliases: ['ten tieng anh', 'ten en', 'english name'] },
+    { key: 'description', header: 'Diễn giải', aliases: ['ghi chu', 'mo ta'] },
+    { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang su dung'], note: 'Đang sử dụng / Ngừng sử dụng (hoặc Có / Không). Trống = giữ nguyên (mới: đang sử dụng).' },
+  ],
+  run: async (rows, { dryRun, mode }) => {
+    const ds = await api.get<TkRow[]>('/api/v1/accounts', { includeInactive: true });
+    const have = new Map(ds.map((a) => [a.code, a]));
+    const fileCodes = new Set(rows.map((r) => (r.code ?? '').trim()).filter(Boolean));
+    const seen = new Map<string, number>();
+    // Tài khoản tổng hợp: ghi trong tệp, hoặc tài khoản dài nhất (có sẵn / trong tệp) là phần đầu của số tài khoản.
+    const tongHop = (code: string, ghi: string) => {
+      if (ghi) return ghi;
+      for (let n = code.length - 1; n >= 3; n--) { const p = code.slice(0, n); if (have.has(p) || fileCodes.has(p)) return p; }
+      return '';
+    };
+    const pre = rows.map((r) => {
+      const row = Number(r._row);
+      const code = (r.code ?? '').trim();
+      const before = have.get(code);
+      const errors: string[] = [];
+      if (!code) errors.push('Thiếu số tài khoản'); else if (!/^[0-9A-Za-z]{3,20}$/.test(code)) errors.push('Số tài khoản 3–20 chữ / số, không có khoảng trắng');
+      if (code && seen.has(code)) errors.push(`Trùng số tài khoản với dòng ${seen.get(code)} trong tệp`); else if (code) seen.set(code, row);
+      if (mode === 'create' && before) errors.push(`Tài khoản ${code} đã có — chọn "Cập nhật" nếu muốn sửa`);
+      if (mode === 'update' && !before) errors.push(`Tài khoản ${code} chưa có`);
+      const name = (r.name ?? '').trim();
+      if (!before && !name) errors.push('Tài khoản mới phải có tên');
+      const parent = before ? before.parentCode ?? '' : tongHop(code, (r.parentCode ?? '').trim());
+      if (!before && parent && !code.startsWith(parent)) errors.push(`Số tài khoản phải bắt đầu bằng số tài khoản tổng hợp ${parent}`);
+      if (!before && parent && !have.has(parent) && !fileCodes.has(parent)) errors.push(`Tài khoản tổng hợp ${parent} chưa có`);
+      const tc = (r.normalSide ?? '').trim();
+      const side = tc ? TINH_CHAT_DOC[khongDauNho(tc)] : undefined;
+      if (tc && !side) errors.push(`Tính chất "${tc}" ghi Dư Nợ / Dư Có / Lưỡng tính`);
+      const tt = khongDauNho(r.isActive ?? '');
+      const isActive = !tt ? undefined : /^(dang su dung|co|x|1|true)$/.test(tt) ? true : /^(ngung su dung|khong|0|false)$/.test(tt) ? false : null;
+      if (isActive === null) errors.push('Trạng thái ghi Đang sử dụng / Ngừng sử dụng');
+      return { row, code, before, errors, name, parent, side, isActive, values: { ...r, code, parentCode: parent } as Record<string, string | undefined> };
+    });
+    const out: NhapDong[] = [];
+    // Thêm mới: tài khoản tổng hợp trước tài khoản con (số ngắn trước).
+    const order = [...pre].sort((a, b) => a.code.length - b.code.length || a.code.localeCompare(b.code));
+    const ghiDuoc = new Set(ds.map((a) => a.code));
+    for (const p of order) {
+      const beforeView = p.before ? { name: p.before.name, nameEn: p.before.nameEn ?? '', description: p.before.description ?? '', normalSide: ({ debit: 'Dư Nợ', credit: 'Dư Có', both: 'Lưỡng tính' } as Record<string, string>)[p.before.normalSide] ?? '', isActive: p.before.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng' } : undefined;
+      if (p.errors.length || dryRun) { out.push({ row: p.row, key: p.code, action: p.errors.length ? 'error' : p.before ? 'update' : 'create', errors: p.errors, values: p.values, before: beforeView }); continue; }
+      if (!p.before && p.parent && !ghiDuoc.has(p.parent)) { out.push({ row: p.row, key: p.code, action: 'error', errors: [`Tài khoản tổng hợp ${p.parent} chưa ghi được (dòng của nó lỗi)`], values: p.values }); continue; }
+      const opt = { ...(p.side ? { normalSide: p.side } : {}), ...((p.values.nameEn ?? '').trim() ? { nameEn: p.values.nameEn!.trim() } : {}), ...((p.values.description ?? '').trim() ? { description: p.values.description!.trim() } : {}) };
+      try {
+        if (p.before) await api.patch(`/api/v1/accounts/${encodeURIComponent(p.code)}`, { ...(p.name ? { name: p.name } : {}), ...opt, ...(p.isActive !== undefined ? { isActive: p.isActive } : {}) });
+        else {
+          const cha = p.parent ? have.get(p.parent) : undefined;
+          // Tài khoản con theo dõi chi tiết như tài khoản tổng hợp (đối tượng, khoản mục…).
+          const theoCha = Object.fromEntries(Object.entries((cha ?? {}) as Record<string, unknown>).filter(([k, x]) => (k.startsWith('track') || k === 'isDebt') && x === true));
+          await api.post('/api/v1/accounts', { code: p.code, name: p.name, parentCode: p.parent || undefined, normalSide: p.side ?? cha?.normalSide ?? 'debit', ...theoCha, ...opt });
+          if (p.isActive === false) await api.patch(`/api/v1/accounts/${encodeURIComponent(p.code)}`, { isActive: false });
+        }
+        ghiDuoc.add(p.code);
+        out.push({ row: p.row, key: p.code, action: p.before ? 'update' : 'create', errors: [], values: p.values, before: beforeView });
+      } catch (e) { out.push({ row: p.row, key: p.code, action: 'error', errors: [e instanceof Error ? e.message : String(e)], values: p.values }); }
+    }
+    out.sort((a, b) => a.row - b.row);
+    const n = (a: NhapDong['action']) => out.filter((x) => x.action === a).length;
+    return { created: n('create'), updated: n('update'), failed: n('error'), rows: out };
+  },
+};
+
+
 /* ------------------------------------------------------------------ Số dư tài khoản đầu kỳ (cả công nợ theo đối tượng) */
 /** Số tiền trong ô Excel: "1.000.000", "1,000,000", "1000000,5", "1 000 000" đều đọc được; trống = 0; sai = NaN. */
 export function soTien(v: string | undefined): number {
@@ -541,7 +619,7 @@ const phieuTien = (docType: LoaiPhieu): NhapLoai => {
   };
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, KHO, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, KHO, TAI_KHOAN, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
 /** Loại nhập của một loại phiếu tiền / phiếu kế toán (nút Nhập Excel ở danh sách phiếu). */
 export const nhapPhieu = (docType: string) => NHAP_LOAI.find((l) => l.id === PHIEU[docType as LoaiPhieu]?.id);
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);

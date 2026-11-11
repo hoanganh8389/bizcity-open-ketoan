@@ -323,6 +323,8 @@ export interface AccountsTable {
   code: string;
   name: string;
   name_en: string | null;
+  /** Diễn giải (0101): ghi chú cách dùng, không ảnh hưởng ghi sổ. */
+  description: Generated<string>;
   parent_code: string | null;
   level: Generated<number>;
   normal_side: Generated<string>;

@@ -15,6 +15,7 @@ export function toAccountDto(a: Account): AccountDto {
     code: a.code,
     name: a.name,
     nameEn: a.name_en,
+    description: a.description ?? '',
     parentCode: a.parent_code,
     level: a.level,
     normalSide: a.normal_side,

@@ -19,6 +19,8 @@ export const accountCreateSchema = z.object({
   code: accountCode,
   name: z.string().trim().min(1).max(255),
   nameEn: z.string().trim().max(255).optional(),
+  // [2026-11-11 Nguyễn Văn Thủy] Diễn giải tài khoản (0101) (đóng góp)
+  description: z.string().trim().max(1000).optional(),
   parentCode: accountCode.optional(),
   normalSide: z.enum(['debit', 'credit', 'both']).default('debit'),
   trackPartner: z.boolean().default(false),
@@ -71,6 +73,7 @@ export interface AccountDto {
   code: string;
   name: string;
   nameEn: string | null;
+  description: string;
   parentCode: string | null;
   level: number;
   normalSide: string;

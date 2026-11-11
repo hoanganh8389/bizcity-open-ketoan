@@ -2,7 +2,7 @@
 
 <!-- [2026-11-11 Nguyễn Văn Thủy] hướng dẫn trình nhập Excel dùng chung (đóng góp) -->
 
-Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàng, Nhóm hàng, Kho, Số dư tài khoản đầu kỳ, Tồn kho đầu kỳ, Tồn max, Phiếu thu, Phiếu chi, Báo có, Báo nợ, Phiếu kế toán**. Mở ở **Tiện ích → Nhập dữ liệu từ Excel**, hoặc nút **Nhập Excel** ở danh sách.
+Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàng, Nhóm hàng, Kho, Hệ thống tài khoản, Số dư tài khoản đầu kỳ, Tồn kho đầu kỳ, Tồn max, Phiếu thu, Phiếu chi, Báo có, Báo nợ, Phiếu kế toán**. Mở ở **Tiện ích → Nhập dữ liệu từ Excel**, hoặc nút **Nhập Excel** ở danh sách.
 
 ## Bốn bước
 

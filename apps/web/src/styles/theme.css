@@ -2014,3 +2014,19 @@ button.tk-avatar:hover, button.tk-avatar[aria-expanded="true"] { box-shadow: 0 0
 .bo-ts-new { display: flex; flex-direction: column; gap: 6px; }
 .bo-ts-new .input { height: 28px; }
 .bo-ts-ky { font-size: 11px; }
+
+/* [2026-11-11 Nguyễn Văn Thủy] Báo lỗi tại ô (components/kiemLoi.ts, Field error) (đóng góp) */
+.o-loi input:not([type=checkbox]):not([type=radio]), .o-loi select, .o-loi textarea, input.o-loi, select.o-loi { border-color: var(--bad) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--bad) 18%, transparent) !important; }
+.o-loi > label, label.req:has(+ .o-loi) { color: var(--bad); }
+.o-loi-chu { display: block; color: var(--bad); font-size: 12px; line-height: 1.3; margin-top: 2px; }
+/* Lưới đầu phiếu chứng từ chật: chỉ viền đỏ; nhãn lỗi hiện khi rê chuột / đang đứng ở ô (danh sách đủ ở chân hộp thoại). */
+.vf-cell .o-loi-chu, .vf-pair .o-loi-chu { display: none; position: absolute; top: 100%; left: 0; z-index: 5; background: var(--bad); color: #fff; padding: 1px 6px; border-radius: 3px; margin-top: 2px; white-space: nowrap; }
+.vf-cell.o-loi:hover .o-loi-chu, .vf-cell.o-loi:focus-within .o-loi-chu, .vf-pair.o-loi:hover .o-loi-chu, .vf-pair.o-loi:focus-within .o-loi-chu { display: block; }
+.vf-cell.o-loi, .vf-pair.o-loi { position: relative; }
+.modal-foot .btn:disabled { pointer-events: none; }
+.modal-loi { margin-right: auto; color: var(--bad); font-size: 13px; cursor: pointer; align-self: center; }
+
+/* [2026-11-11 Nguyễn Văn Thủy] Form tài khoản ACC1 (đóng góp) */
+.tk-form { display: grid; grid-template-columns: 200px 1fr; gap: 6px 14px; margin-bottom: 8px; }
+.tk-form .field.full { grid-column: 1 / -1; }
+.tk-theo-doi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 14px; padding: 4px 2px; }

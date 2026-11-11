@@ -11,6 +11,7 @@
  *   readOnlyReason  lý do phiếu chỉ xem (null = sửa được).
  * Sửa giao diện, lời báo, thứ tự nút ở đây là mọi phiếu đổi theo.
  */
+import { useKiemLoi } from '../useKiemLoi';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
@@ -63,11 +64,16 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
   const dock = useDockWindow(onClose);
   // Ctrl + S = Ghi (chỉ hộp thoại trên cùng).
   const mask = useRef<HTMLDivElement>(null);
+  // [2026-11-11 Nguyễn Văn Thủy] báo lỗi tại ô: Ghi / Ctrl + S mà ô bắt buộc (nhãn đỏ) còn trống → tô đỏ, chặn (đóng góp)
+  const kl = useKiemLoi(readOnly);
+  const klRef = useRef(kl);
+  klRef.current = kl;
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 's' || readOnly || saving) return;
       if (mask.current !== [...document.querySelectorAll('.modal-mask:not(.is-min)')].pop()) return;
-      e.preventDefault(); onSave();
+      e.preventDefault();
+      if (klRef.current.kiem()) onSave();
     };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
@@ -88,14 +94,15 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
           <button disabled={readOnly || saving} onClick={onDelete}><X size={15} className="text-bad" /> Xóa</button>
           {extraButtons?.map((b) => <button key={b.key} disabled={b.disabled} title={b.title} onClick={b.onClick}>{b.icon}{b.label}</button>)}
         </div>
-        <div className="vf-body">
+        <div className="vf-body" ref={kl.body} {...kl.bodyProps}>
           {!readOnly && advisories && <DocumentGateBanner advisories={advisories} />}
           {children}
           {error && <div className="alert alert-bad" style={{ margin: '6px 0 0' }}>{error}</div>}
           {readOnlyText && !cancelled && <div className="alert alert-warn" style={{ margin: '6px 0 0' }}>{readOnlyText}</div>}
         </div>
         <div className="ct-keys">F9 - Thêm nhanh khách hàng, nhà cung cấp (khi đang ở ô chọn) · Ctrl + S - Ghi · Esc - Thoát</div>
-        <div className="modal-foot">
+        <div className="modal-foot" {...kl.footProps}>
+          {kl.banner}
           <button className="btn" onClick={onClose}><LogOut size={15} /> Thoát</button>
           {onSaveNew && <button className="btn" disabled={readOnly || saving} onClick={onSaveNew}><Save size={15} /> Ghi và thêm mới</button>}
           <button className="btn btn-primary" disabled={readOnly || saving} onClick={onSave} title="Ctrl + S"><Save size={15} /> Ghi</button>

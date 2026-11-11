@@ -58,6 +58,7 @@ export const accountService = {
       code: input.code,
       name: input.name,
       name_en: input.nameEn ?? null,
+      description: input.description ?? '',
       parent_code: input.parentCode ?? null,
       level,
       normal_side: input.normalSide,
@@ -121,6 +122,7 @@ export const accountService = {
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.nameEn !== undefined) patch.name_en = input.nameEn;
+    if (input.description !== undefined) patch.description = input.description;
     if (input.normalSide !== undefined) patch.normal_side = input.normalSide;
     if (input.trackPartner !== undefined) patch.track_partner = input.trackPartner;
     if (input.trackCostItem !== undefined) patch.track_cost_item = input.trackCostItem;

@@ -1,6 +1,7 @@
 /**
  * Thành phần giao diện nhỏ, dùng chung ở mọi màn hình.
  */
+import { useKiemLoi } from './useKiemLoi';
 import { Children, Fragment, isValidElement, useCallback, useEffect, useRef, useState, type InputHTMLAttributes, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { X } from 'lucide-react';
@@ -132,6 +133,8 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
   const viewSignal = viewAgain?.[0] ?? 0;
   useEffect(() => { if (viewSignal) setLocked(true); }, [viewSignal]);
   const mask = useRef<HTMLDivElement>(null);
+  // [2026-11-11 Nguyễn Văn Thủy] báo lỗi tại ô: bấm Ghi mà ô bắt buộc trống → tô đỏ, báo ở chân hộp thoại (đóng góp)
+  const kl = useKiemLoi(locked);
   const edit = () => { setLocked(false); onEdit?.(); };
   // Thu nhỏ xuống thanh dưới: ẩn bằng CSS, không gỡ — dữ liệu đang nhập còn nguyên.
   const dock = useDockWindow(onClose);
@@ -142,7 +145,8 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
       if (e.key === 'Escape') onClose();
       else if (!locked && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         const btn = mask.current?.querySelector<HTMLButtonElement>('.modal-foot .btn-primary:not(:disabled)');
-        if (btn) { e.preventDefault(); btn.click(); }
+        const khoa = mask.current?.querySelector<HTMLButtonElement>('.modal-foot .btn-primary:disabled');
+        if (btn) { e.preventDefault(); btn.click(); } else if (khoa) { e.preventDefault(); kl.kiem(khoa); }
       } else if (locked && (e.key === 'F2' || (e.key === 'Enter' && !(e.target as HTMLElement).closest?.('button, a, textarea')))) { e.preventDefault(); edit(); }
     };
     window.addEventListener('keydown', onKey);
@@ -166,11 +170,12 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
         <div className="modal-head" ref={(el) => { dock.headRef.current = el; }}>{title}{locked && <span className="badge badge-info modal-viewing">Đang xem</span>}
           {voucher && voucher.total !== undefined && <span className="ct-total" title={voucher.totalLabel ?? 'Tổng tiền thanh toán'}><small>{voucher.totalLabel ?? 'Tổng tiền thanh toán'}</small><b>{(voucher.total ?? 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}</b></span>}
           {dock.top && <MinimizeButton onClick={dock.minimize} />}<button type="button" className="modal-x" data-view-ok onClick={onClose} aria-label="Đóng" title="Đóng (Esc)">✕</button></div>
-        <div className="modal-body" onClickCapture={guard} onMouseDownCapture={guard} onKeyDownCapture={guard} onPasteCapture={guard} onDropCapture={guard} onCutCapture={guard}>
+        <div className="modal-body" ref={kl.body} {...kl.bodyProps} onClickCapture={guard} onMouseDownCapture={guard} onKeyDownCapture={guard} onPasteCapture={guard} onDropCapture={guard} onCutCapture={guard}>
           {children}
         </div>
         {voucher && <div className="ct-keys">{voucher.keys ?? 'F9 - Thêm nhanh khách hàng, nhà cung cấp, mặt hàng (khi đang ở ô chọn) · Ctrl + S - Ghi · Esc - Thoát'}</div>}
-        <div className="modal-foot">
+        <div className="modal-foot" {...kl.footProps}>
+          {kl.banner}
           {locked ? <>
             {viewActions}{keepInView(footer)}
             <button className="btn btn-primary" onClick={edit} autoFocus title="Phím tắt: Enter / F2">Sửa</button>
@@ -216,12 +221,12 @@ function keepInView(node: ReactNode): ReactNode[] {
 
 /** Ô nhập có nhãn. */
 // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — Field.tip: giải thích để ở chú thích rê chuột, màn gọn chữ (đóng góp)
-export function Field({ label, children, full, hint, tip }: { label: string; children: ReactNode; full?: boolean; hint?: string; tip?: string }) {
+export function Field({ label, children, full, hint, tip, error }: { label: string; children: ReactNode; full?: boolean; hint?: string; tip?: string; /** Lỗi của ô (viền đỏ + chữ đỏ dưới ô). */ error?: string | null }) {
   return (
-    <div className={`field ${full ? 'full' : ''}`} title={tip}>
+    <div className={`field ${full ? 'full' : ''}${error ? ' o-loi' : ''}`} title={tip}>
       <label>{label}</label>
       {children}
-      {hint && <span className="muted" style={{ fontSize: 12 }}>{hint}</span>}
+      {error ? <span className="o-loi-chu">{error}</span> : hint && <span className="muted" style={{ fontSize: 12 }}>{hint}</span>}
     </div>
   );
 }

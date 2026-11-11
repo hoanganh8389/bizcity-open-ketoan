@@ -23,6 +23,17 @@ describe('DM Tài khoản', () => {
     expect(u.body.data).toMatchObject({ isVat: true, isLedger: false, isDebt: true });
   });
 
+  // [2026-11-11 Nguyễn Văn Thủy] Diễn giải tài khoản (0101) (đóng góp)
+  it('diễn giải: lưu khi thêm, sửa được, mặc định chuỗi rỗng', async () => {
+    const r = await call(ctx, 'POST', '/api/v1/accounts', { code: '138882', parentCode: '13888', name: 'Phải thu thử diễn giải', description: 'Chỉ dùng cho chi nhánh thử' });
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+    expect(r.body.data.description).toBe('Chỉ dùng cho chi nhánh thử');
+    const u = await call(ctx, 'PATCH', '/api/v1/accounts/138882', { description: '' });
+    expect(u.body.data.description).toBe('');
+    expect((await call(ctx, 'GET', '/api/v1/accounts/1111')).body.data.description).toBe('');
+    expect((await call(ctx, 'DELETE', '/api/v1/accounts/138882')).status).toBe(200);
+  });
+
   it('xoá: chặn tài khoản có con; xoá con cuối thì tài khoản mẹ ghi sổ trực tiếp lại', async () => {
     const parent = await call(ctx, 'DELETE', '/api/v1/accounts/13888');
     expect(parent.status).toBe(409);
