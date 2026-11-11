@@ -16,6 +16,7 @@ Mỗi bản ghi đủ sáu mục:
 
 - **Thêm:** ACC1 làm lại: danh sách 6 cột (Số TK, Tên, Tính chất, Tên tiếng Anh, Diễn giải, Trạng thái), cây ⊞ / ⊟, Nhân bản, Ngừng / Dùng lại, Xuất Excel đúng mẫu "DANH SÁCH HỆ THỐNG TÀI KHOẢN", Nhập Excel cùng bộ cột. Tài khoản có Diễn giải (migration 0101).
 - **Thêm:** mọi hộp thoại (danh mục, chứng từ): bấm Ghi / Ctrl + S hoặc bấm nút Ghi đang mờ mà ô bắt buộc còn trống → ô viền đỏ, chữ đỏ dưới ô, chân hộp thoại liệt kê ô thiếu.
+- **Thêm:** lỗi máy chủ trả về gắn vào đúng ô (máy chủ trả thêm `error.fields` cho lỗi kiểm dữ liệu); màn phiếu mua (MH11) cũng tô đỏ ô đầu phiếu và ô dòng hàng lỗi khi bấm Ghi / Gửi duyệt / Duyệt.
 - **Thay đổi:** form tài khoản bỏ các ô tích không có tác dụng (TK ngoại tệ, thuế GTGT, vay, tài sản, sổ cái, giá thành, công nợ nội bộ) — dữ liệu giữ nguyên; "Đối tượng" gộp theo dõi đối tượng + ghi nhận công nợ (cùng tác dụng).
 - **Thay đổi định khoản:** không.
 

@@ -2023,7 +2023,8 @@ button.tk-avatar:hover, button.tk-avatar[aria-expanded="true"] { box-shadow: 0 0
 .vf-cell .o-loi-chu, .vf-pair .o-loi-chu { display: none; position: absolute; top: 100%; left: 0; z-index: 5; background: var(--bad); color: #fff; padding: 1px 6px; border-radius: 3px; margin-top: 2px; white-space: nowrap; }
 .vf-cell.o-loi:hover .o-loi-chu, .vf-cell.o-loi:focus-within .o-loi-chu, .vf-pair.o-loi:hover .o-loi-chu, .vf-pair.o-loi:focus-within .o-loi-chu { display: block; }
 .vf-cell.o-loi, .vf-pair.o-loi { position: relative; }
-.modal-foot .btn:disabled { pointer-events: none; }
+.modal-foot .btn:disabled, .mh-sheet-foot .btn:disabled { pointer-events: none; }
+td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .modal-loi { margin-right: auto; color: var(--bad); font-size: 13px; cursor: pointer; align-self: center; }
 
 /* [2026-11-11 Nguyễn Văn Thủy] Form tài khoản ACC1 (đóng góp) */

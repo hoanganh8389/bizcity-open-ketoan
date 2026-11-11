@@ -8,6 +8,7 @@
  * Duyệt = ghi sổ thật (bút toán, công nợ, kho). Còn cảnh báo chặn thì không duyệt được; vượt hạn mức thì người có quyền
  * "Duyệt ngoại lệ" (ghi lý do vào nhật ký).
  */
+import { useKiemLoi } from '@/components/useKiemLoi';
 import { bangDan, soDan } from '@/lib/danExcel';
 import { readTable } from '@bizcity/mua-hang-domain';
 import { Link } from 'react-router-dom';
@@ -556,6 +557,14 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     (v.kind === 'cost' || (v.kind === 'rebate' && !v.rebate)) && !(v.refIds ?? []).length && 'Chưa chọn phiếu nhập',
     v.kind === 'payment' && !((v.amount ?? 0) + (v.ckttAmount ?? 0) > 0) && 'Chưa nhập số tiền',
   ].filter(Boolean) as string[];
+  // [2026-11-11 Nguyễn Văn Thủy] báo lỗi tại ô: bấm Ghi / Gửi duyệt / Duyệt mà thiếu → ô đầu phiếu viền đỏ, dòng hàng lỗi tô đỏ (đóng góp)
+  const kl = useKiemLoi(readOnly || viewing, { lyDo: () => (problems.length ? `Chưa ghi được: ${problems.join(' · ')}` : null) });
+  /** Ô dòng hàng đang lỗi (chỉ tô sau khi đã bấm Ghi): mã hàng, số lượng, đơn giá. */
+  const oDong = (l: { sku: string; qty: number; price: number; lineType: string }, o: 'sku' | 'qty' | 'price') => {
+    if (!kl.daKiem) return undefined;
+    const sai = o === 'sku' ? !l.sku : o === 'qty' ? !(l.qty > 0) : !isGiftDoc && l.lineType === 'buy' && l.qty > 0 && !(l.price > 0);
+    return sai ? 'o-loi' : undefined;
+  };
 
   const tabs: [Tab, string][] = v.kind === 'order'
     ? [['hang', `Hàng đặt (${v.lines.length})`], ['tep', 'Tệp đính kèm'], ['tep-ncc', 'Tệp của NCC'], ['lich-su', 'Lịch sử']]
@@ -670,7 +679,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             { key: 'note', header: 'Ghi chú', width: 200, value: (d) => d.note ?? '' },
           ]} />}
         {fill && <DienMatHang doc={v} data={data} onClose={() => setFill(false)} onAdd={(ls) => { setFill(false); set({ lines: [...v.lines.filter((l) => l.sku), ...ls] }); setTab('hang'); }} />}
-        <div className={`mh-sheet-body ${readOnly ? 'view-plain' : ''}`}>
+        <div className={`mh-sheet-body ${readOnly ? 'view-plain' : ''}`} ref={kl.body} {...kl.bodyProps}>
           {/* Thẻ Hàng hoá: khung trái không cuộn cả khối — bảng hàng chiếm phần còn lại và tự cuộn (thanh cuộn ngang luôn thấy, đầu phiếu đứng yên). */}
           <div className={`mh-main ${tab === 'hang' ? 'mh-main-hang' : ''}`}>
             {!headOpen && (
@@ -888,7 +897,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                               <label className="mh-share" title="Tích: giá trị hàng tặng chia vào giá vốn hàng mua cùng mã (hàng chia giá). Bỏ tích: quà cho người tiêu dùng, ghi 0 đồng, vào sổ quà"><input type="checkbox" checked={l.lineType === 'gift_seller'} disabled={info.kind === 'promo' || info.kind === 'gift'} onChange={(e) => setLine(l.lineKey, { lineType: e.target.checked ? 'gift_seller' : 'gift_consumer' })} /> chia vào giá vốn</label>
                             </div>;
                           })()}</td>}
-                          <td style={{ width: 130 }}>{l.sku || readOnly ? <span className="mono">{l.sku || <span className="badge badge-warn">Hàng mới</span>}</span> : <>{(l.newItem || l.refLineKey) && <span className="badge badge-warn" style={{ fontSize: 10 }} title="Chưa có mã: chọn mã đã tạo ở Danh mục mặt hàng để gắn">Hàng mới — gắn mã</span>}<ItemPicker canAdd value={l.sku} onChange={(c) => void pickSku(l.lineKey, c)} hideName style={{ width: 125 }} /></>}{l.newItem && l.sku && <div className="muted" style={{ fontSize: 10.5 }}>đã gắn mã (hàng mới)</div>}</td>
+                          <td style={{ width: 130 }} className={oDong(l, 'sku')} title={oDong(l, 'sku') ? 'Dòng chưa có mã hàng' : undefined}>{l.sku || readOnly ? <span className="mono">{l.sku || <span className="badge badge-warn">Hàng mới</span>}</span> : <>{(l.newItem || l.refLineKey) && <span className="badge badge-warn" style={{ fontSize: 10 }} title="Chưa có mã: chọn mã đã tạo ở Danh mục mặt hàng để gắn">Hàng mới — gắn mã</span>}<ItemPicker canAdd value={l.sku} onChange={(c) => void pickSku(l.lineKey, c)} hideName style={{ width: 125 }} /></>}{l.newItem && l.sku && <div className="muted" style={{ fontSize: 10.5 }}>đã gắn mã (hàng mới)</div>}</td>
                           <td style={{ minWidth: 240 }} title={l.sku ? 'Tên theo danh mục mặt hàng — không sửa trên phiếu' : 'Hàng mới: ghi tên theo NCC'}>{!l.sku && !readOnly ? <div className="row" style={{ gap: 4 }}><input className="input" style={{ flex: 1 }} value={l.name} placeholder="Tên hàng (theo NCC)" onChange={(e) => setLine(l.lineKey, { name: e.target.value })} /><input className="input mono" style={{ width: 90 }} value={l.nccSku ?? ''} placeholder="Mã NCC" onChange={(e) => setLine(l.lineKey, { nccSku: e.target.value || undefined })} /></div> : l.name || <span className="muted">—</span>}{l.nccSku && l.sku && <div className="muted" style={{ fontSize: 10.5 }}>Mã NCC: {l.nccSku}</div>}{(l.program || l.autoGift) && <div className="muted" style={{ fontSize: 11 }}>{l.autoGift && <span className="badge badge-ok" title="Phần mềm tự thêm theo chương trình — số lượng tự chạy theo hàng mua; sửa số lượng thì thôi tự chạy">tự</span>} {l.program ? `CT: ${l.program}` : ''}</div>}</td>
                           <td style={{ whiteSpace: 'nowrap' }}>{(() => { const us = unitsOf(l.sku); if (!l.sku && !readOnly) return l.newItem ? <input className="input" style={{ width: 70 }} value={l.unit} placeholder="Lon" onChange={(e) => setLine(l.lineKey, { unit: e.target.value })} /> : <span className="muted" style={{ fontSize: 11.5 }}>chọn mã trước</span>; return us.length && !readOnly ? (
                             <select className="select input" style={{ width: 112 }} value={us.find((u) => u.unit.toLowerCase() === l.unit.toLowerCase())?.unit ?? ''} onChange={(e) => changeUnit(l, e.target.value)} title="ĐVT khai ở Danh mục mặt hàng (×tỉ lệ về ĐVT nhỏ nhất) — đổi ĐVT thì đơn giá quy đổi theo">
@@ -909,7 +918,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                                 1 {l.unit} = {mid}<b>{n(r)} {b}</b>{l.qty && l.qty !== 1 ? <span className="muted"> · {n(l.qty)} {l.unit} = {n(l.qty * r)} {b}</span> : null}
                               </div>; })()}</td>
                           {showKho && <td style={{ whiteSpace: 'nowrap' }} title="Theo ô Phân kho ở đầu phiếu"><span className="mono">{v.warehouseCode || <span className="muted">mặc định</span>}</span></td>}
-                          <td><NumInput style={{ width: 82 }} step={1} blankZero={false} value={l.qty} title="Số lượng — bấm ▲▼ (hoặc Ctrl + ↑ ↓) để tăng giảm 1" onChange={(n) => setLine(l.lineKey, { qty: n ?? 0, ...(l.autoGift ? { autoGift: false } : {}) })} /></td>
+                          <td className={oDong(l, 'qty')} title={oDong(l, 'qty') ? 'Số lượng phải lớn hơn 0' : undefined}><NumInput style={{ width: 82 }} step={1} blankZero={false} value={l.qty} title="Số lượng — bấm ▲▼ (hoặc Ctrl + ↑ ↓) để tăng giảm 1" onChange={(n) => setLine(l.lineKey, { qty: n ?? 0, ...(l.autoGift ? { autoGift: false } : {}) })} /></td>
                           {isOrder && <>
                             <td style={{ fontSize: 10.5, minWidth: 230, lineHeight: 1.3, verticalAlign: 'top' }} title="Phân tích thông minh — số liệu chụp lúc thêm hàng / lưu đơn (ĐVT nhỏ nhất); mở lại đơn vẫn là số lúc đặt">{l.stockInfo ? <>
                               <div className="tm-facts2">
@@ -921,7 +930,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                               </div>
                               {l.family?.length ? <span className="tm-fam" title="Họ mã: số ở bảng trên đã cộng dồn mã chính + mã con">{l.family.map((m) => <span key={m.sku} className="tm-fam-row"><b className="mono">{m.sku}</b> {m.kind}: {factsText(m)}</span>)}</span> : null}</> : <span className="muted" style={{ whiteSpace: 'normal' }}>{v.status !== 'draft' ? '—' : !need.parent ? '— chi nhánh chưa gắn sơ đồ tổ chức (DM16) nên chưa có phân tích' : need.loading ? 'đang tải phân tích…' : '— mã chưa có trong phân tích (chưa có max, tồn, bán, đi đường, đơn đang đặt)'}</span>}</td>
                           </>}
-                          <td><NumInput style={{ width: 95 }} value={l.price} placeholder={isGiftDoc ? '' : '0 = tặng'} title="Đơn giá có thể có số lẻ: gõ dấu phẩy, vd 506.018,52" onChange={(n) => (isGiftDoc ? setLine(l.lineKey, { price: n ?? 0 }) : setPrice(l, n ?? 0))} />{!readOnly && !isGiftDoc && priceHints(l)}</td>
+                          <td className={oDong(l, 'price')} title={oDong(l, 'price') ? 'Dòng hàng mua chưa nhập đơn giá (hàng tặng thì chọn loại hàng tặng)' : undefined}><NumInput style={{ width: 95 }} value={l.price} placeholder={isGiftDoc ? '' : '0 = tặng'} title="Đơn giá có thể có số lẻ: gõ dấu phẩy, vd 506.018,52" onChange={(n) => (isGiftDoc ? setLine(l.lineKey, { price: n ?? 0 }) : setPrice(l, n ?? 0))} />{!readOnly && !isGiftDoc && priceHints(l)}</td>
                           {!isGiftDoc && <>
                             {/* CK % ⇄ CK (đ): gõ một cột, cột kia tự tính theo tiền hàng của dòng. Trống cả hai = tự lấy theo chính sách. */}
                             <td><NumInput style={{ width: 56 }} decimals={2} value={l.discountAmt !== undefined ? (l.gross ? Math.round((l.lineDiscount / l.gross) * 10000) / 100 : 0) : l.discountPct} blankZero={false} disabled={l.lineType !== 'buy'} placeholder="tự"
@@ -1222,8 +1231,8 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             </div>
           </aside>
         </div>
-        <div className="mh-sheet-foot">
-          <span className="grow">{err ? <span className="mh-bad">{err}</span> : problems.length && !readOnly ? <span className="muted">Chưa ghi được: {problems.join(' · ')}</span> : blocking.length && !readOnly ? <span className="mh-bad">Còn {blocking.length} cảnh báo chặn duyệt{creditOnly ? ' — cần người có quyền bấm Duyệt ngoại lệ' : ''}</span> : null}</span>
+        <div className="mh-sheet-foot" {...kl.footProps}>
+          <span className="grow">{kl.banner ?? (err ? <span className="mh-bad">{err}</span> : problems.length && !readOnly ? <span className="muted">Chưa ghi được: {problems.join(' · ')}</span> : blocking.length && !readOnly ? <span className="mh-bad">Còn {blocking.length} cảnh báo chặn duyệt{creditOnly ? ' — cần người có quyền bấm Duyệt ngoại lệ' : ''}</span> : null)}</span>
           {/* In bản đã ghi (máy chủ trả số liệu) — có ở cả chế độ xem; phiếu mới phải Ghi trước. */}
           {!v.id.startsWith('new-') && <span data-view-ok><PrintButton screen="MH03" memoryKey={`MH03:${(stored ?? v).kind}`} templates={mauInCua(stored ?? v)} title={dirty ? 'In theo nội dung đã ghi (sửa xong bấm Ghi rồi mới in)' : 'In phiếu'}
             getDocs={() => layPhieuIn(v.id, { names, docs: data.docs }).then((p) => [p])} /></span>}

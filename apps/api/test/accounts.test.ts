@@ -34,6 +34,14 @@ describe('DM Tài khoản', () => {
     expect((await call(ctx, 'DELETE', '/api/v1/accounts/138882')).status).toBe(200);
   });
 
+  // [2026-11-11 Nguyễn Văn Thủy] lỗi kiểm dữ liệu trả thêm error.fields (đường dẫn trường) để giao diện tô đỏ đúng ô (đóng góp)
+  it('lỗi kiểm dữ liệu: details giữ khuôn câu, thêm fields [{ path, message }]', async () => {
+    const r = await call(ctx, 'POST', '/api/v1/accounts', { code: '99971', name: 'X'.repeat(300) });
+    expect(r.status).toBe(400);
+    expect(r.body.error.details).toContain('Tên: tối đa 255 ký tự');
+    expect(r.body.error.fields).toContainEqual({ path: 'name', message: 'Tên: tối đa 255 ký tự' });
+  });
+
   it('xoá: chặn tài khoản có con; xoá con cuối thì tài khoản mẹ ghi sổ trực tiếp lại', async () => {
     const parent = await call(ctx, 'DELETE', '/api/v1/accounts/13888');
     expect(parent.status).toBe(409);

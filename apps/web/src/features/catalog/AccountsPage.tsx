@@ -246,17 +246,17 @@ function AccountForm({ value, codes, onClose, onAddNext }: { value: Partial<Acco
       </>}
     >
       <div className="tk-form">
-        <Field label="Số tài khoản (*)" error={loiSo}><input className="input mono" value={v.code ?? ''} disabled={!isNew} autoFocus={isNew} onChange={(e) => set({ code: e.target.value.trim() })} /></Field>
-        <Field label="Tên tài khoản (*)"><input className="input" value={v.name ?? ''} autoFocus={!isNew} onChange={(e) => set({ name: e.target.value })} /></Field>
-        <Field label="Tài khoản tổng hợp" tip="Tài khoản cấp trên; số tài khoản con bắt đầu bằng số tài khoản tổng hợp. Trống = tài khoản cấp 1">
+        <Field label="Số tài khoản (*)" error={loiSo} truong="code"><input className="input mono" value={v.code ?? ''} disabled={!isNew} autoFocus={isNew} onChange={(e) => set({ code: e.target.value.trim() })} /></Field>
+        <Field label="Tên tài khoản (*)" truong="name"><input className="input" value={v.name ?? ''} autoFocus={!isNew} onChange={(e) => set({ name: e.target.value })} /></Field>
+        <Field label="Tài khoản tổng hợp" truong="parentCode" tip="Tài khoản cấp trên; số tài khoản con bắt đầu bằng số tài khoản tổng hợp. Trống = tài khoản cấp 1">
           {isNew ? <AccountPicker value={v.parentCode ?? ''} onChange={(parentCode) => set({ parentCode })} placeholder="Trống = cấp 1" /> : <input className="input mono" value={v.parentCode ?? ''} disabled />}
         </Field>
-        <Field label="Tính chất (*)" tip="Dư Nợ / Dư Có: số dư thường ở bên đó. Lưỡng tính: số dư tách Nợ / Có theo từng đối tượng (131, 331…)">
+        <Field label="Tính chất (*)" truong="normalSide" tip="Dư Nợ / Dư Có: số dư thường ở bên đó. Lưỡng tính: số dư tách Nợ / Có theo từng đối tượng (131, 331…)">
           <select className="select input" value={v.normalSide ?? 'debit'} onChange={(e) => set({ normalSide: e.target.value })}>
             <option value="debit">Dư Nợ</option><option value="credit">Dư Có</option><option value="both">Lưỡng tính</option>
           </select>
         </Field>
-        <Field label="Diễn giải" full><textarea className="input" rows={2} value={v.description ?? ''} onChange={(e) => set({ description: e.target.value })} placeholder="Ghi chú cách dùng tài khoản (không ảnh hưởng ghi sổ)" /></Field>
+        <Field label="Diễn giải" full truong="description"><textarea className="input" rows={2} value={v.description ?? ''} onChange={(e) => set({ description: e.target.value })} placeholder="Ghi chú cách dùng tài khoản (không ảnh hưởng ghi sổ)" /></Field>
       </div>
       <fieldset className="fgroup">
         <legend title="Tích = khi hạch toán vào tài khoản này bắt buộc nhập thông tin đó trên dòng chứng từ">Theo dõi chi tiết theo</legend>
@@ -266,7 +266,7 @@ function AccountForm({ value, codes, onClose, onAddNext }: { value: Partial<Acco
       </fieldset>
       <fieldset className="fgroup">
         <legend>Tên tài khoản theo ngôn ngữ</legend>
-        <Field label="Tên tiếng Anh" full><input className="input" value={v.nameEn ?? ''} onChange={(e) => set({ nameEn: e.target.value })} /></Field>
+        <Field label="Tên tiếng Anh" full truong="nameEn"><input className="input" value={v.nameEn ?? ''} onChange={(e) => set({ nameEn: e.target.value })} /></Field>
       </fieldset>
       <WhyPanel findings={why.findings} onFix={(p) => set(p as Partial<Account>)} />
       <WarnAckBox ack={ack} />

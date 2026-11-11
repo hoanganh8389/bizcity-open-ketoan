@@ -3,6 +3,7 @@
  * Gọi API. Mọi màn hình gọi qua đây để thống nhất: gắn token, đọc khuôn { ok, data | error },
  * hết phiên thì đưa về trang đăng nhập.
  */
+import { SU_KIEN_LOI, type LoiMayChu } from '@/components/kiemLoi';
 import type { ApiFailure, ApiSuccess } from '@ketoan/contracts';
 import { docMaTuPhanHoi, khoMaTraCuu } from './maTraCuu';
 
@@ -23,6 +24,13 @@ export class ApiError extends Error {
 function failure(res: Response, method: string, path: string, code: string, message: string, error?: ApiFailure['error'] | null, details?: unknown): ApiError {
   const ma = docMaTuPhanHoi({ status: res.status, method, path, screen: window.location.pathname, error: error ?? { code }, headerRequestId: res.headers.get('x-request-id') });
   if (res.status !== 401) khoMaTraCuu.ghi(ma);
+  // [2026-11-11 Nguyễn Văn Thủy] lỗi khi ghi (400 / 409 / 422…) → hộp thoại trên cùng gắn lỗi vào ô có nhãn khớp (components/kiemLoi.ts) (đóng góp)
+  if (method !== 'GET' && res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 403) {
+    const list = Array.isArray(details) ? details.map((d) => (typeof d === 'string' ? d : (d as { message?: string })?.message ?? '')).filter(Boolean) : [];
+    const ef = (error as unknown as { fields?: unknown } | null | undefined)?.fields;
+    const fields = Array.isArray(ef) ? (ef as { path: string; message: string }[]) : [];
+    window.dispatchEvent(new CustomEvent<LoiMayChu>(SU_KIEN_LOI, { detail: { message, details: list, fields } }));
+  }
   return new ApiError(code, message, res.status, details, { requestId: ma.requestId, traceId: ma.traceId });
 }
 

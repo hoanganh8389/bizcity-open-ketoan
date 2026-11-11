@@ -11,6 +11,8 @@ Trước: thiếu thông tin thì nút Ghi mờ đi (không biết thiếu gì) 
 - Gõ / chọn vào ô đỏ thì ô đó hết đỏ; hết ô đỏ thì dòng báo ở chân cũng tắt.
 - Đầu phiếu chứng từ (lưới chật): chỉ viền đỏ; dòng chữ lỗi hiện khi rê chuột / đứng ở ô.
 - Form có lỗi riêng (vd số tài khoản trùng) báo đỏ ngay tại ô đó.
+- **Máy chủ từ chối** lần ghi (sai định dạng, quá dài, trùng…): câu lỗi gắn vào đúng ô — khớp chính xác theo tên trường khi ô khai `truong`, không thì theo nhãn ô có trong câu lỗi (lấy nhãn dài nhất). Câu không nhắc ô nào thì vẫn báo như cũ.
+- **Phiếu mua (MH11)**: bấm Ghi / Gửi duyệt / Duyệt mà thiếu → ô đầu phiếu đỏ (Chi nhánh, Nhà cung cấp, Lý do nhập ngoài đơn…), ô **dòng hàng** lỗi tô đỏ (thiếu mã, số lượng ≤ 0, hàng mua chưa có đơn giá), chân màn ghi lý do.
 
 ## 2. Ô nào là bắt buộc
 
@@ -21,4 +23,5 @@ Nhận theo cách form đã đánh dấu sẵn: nhãn có `(*)` (`Field label="T
 - `components/kiemLoi.ts`: rà ô (`kiemBatBuoc`), bỏ đỏ (`boLoiO`), nhận nút Ghi (`laNutGhi`: btn-primary hoặc chữ Ghi / Lưu / Cất).
 - `components/useKiemLoi.tsx`: hook gắn vào thân + chân hộp thoại (bắt bấm nút ở pha capture; nút khoá có `pointer-events: none` nên dò theo toạ độ), dùng ở `ui.tsx` Modal và `voucher/VoucherModal.tsx` (cả Ctrl + S).
 - `Field` thêm `error` (viền đỏ + chữ đỏ). CSS `.o-loi`, `.o-loi-chu`, `.modal-loi` trong `theme.css`.
-- Còn lại: lỗi máy chủ (trùng, sai định dạng) chưa tự gắn vào ô — form tự báo bằng `Field error` khi cần; các màn toàn trang không dùng Modal (phiếu mua MH11) chưa có.
+- Lỗi máy chủ: `lib/api.ts` phát sự kiện `ketoan:api-loi` khi lần ghi bị từ chối (4xx trừ 401 / 403); hộp thoại trên cùng gọi `ganLoiMayChu`. Máy chủ (`platform/core/http.ts`) trả thêm `error.fields: [{ path, message }]` cho lỗi kiểm dữ liệu, `details` giữ nguyên khuôn câu; test `accounts.test.ts`. Ô khai `<Field truong="name">` để khớp chính xác.
+- Phiếu mua: `useKiemLoi(locked, { lyDo })` (lý do riêng của phiếu) + `kl.daKiem` để tô ô dòng hàng. Bộ rà chỉ gỡ ô do nó tô (`data-tk`), không đụng lớp đỏ React đặt.

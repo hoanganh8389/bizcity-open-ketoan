@@ -221,9 +221,9 @@ function keepInView(node: ReactNode): ReactNode[] {
 
 /** Ô nhập có nhãn. */
 // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — Field.tip: giải thích để ở chú thích rê chuột, màn gọn chữ (đóng góp)
-export function Field({ label, children, full, hint, tip, error }: { label: string; children: ReactNode; full?: boolean; hint?: string; tip?: string; /** Lỗi của ô (viền đỏ + chữ đỏ dưới ô). */ error?: string | null }) {
+export function Field({ label, children, full, hint, tip, error, truong }: { label: string; children: ReactNode; full?: boolean; hint?: string; tip?: string; /** Lỗi của ô (viền đỏ + chữ đỏ dưới ô). */ error?: string | null; /** Tên trường gửi lên máy chủ (vd "name"): lỗi máy chủ của trường đó tô đỏ đúng ô này. */ truong?: string }) {
   return (
-    <div className={`field ${full ? 'full' : ''}${error ? ' o-loi' : ''}`} title={tip}>
+    <div className={`field ${full ? 'full' : ''}${error ? ' o-loi' : ''}`} title={tip} data-truong={truong}>
       <label>{label}</label>
       {children}
       {error ? <span className="o-loi-chu">{error}</span> : hint && <span className="muted" style={{ fontSize: 12 }}>{hint}</span>}

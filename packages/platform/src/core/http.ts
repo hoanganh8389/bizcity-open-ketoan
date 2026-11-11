@@ -67,10 +67,11 @@ export function registerErrorHandler(app: FastifyInstance): void {
     const withReason = (reason: ErrorReason, extra?: Record<string, unknown>) => ({ reason, ...extra });
 
     if (err instanceof AppError) return send(err.code, err.message, err.details, err.httpStatus, err.intake === undefined ? undefined : { intake: err.intake });
-    if (err instanceof ZodError) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, err.issues.map(issueText));
+    // [2026-11-11 Nguyễn Văn Thủy] thêm error.fields [{ path, message }] (đường dẫn trường) để giao diện tô đỏ đúng ô; details giữ nguyên khuôn (đóng góp)
+    if (err instanceof ZodError) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, err.issues.map(issueText), undefined, { fields: err.issues.map(issueField) });
     // Lỗi kiểm tra dữ liệu của fastify-type-provider-zod
     const anyErr = err as FastifyError & { validation?: unknown };
-    if (anyErr.validation) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, validationTexts(anyErr.validation));
+    if (anyErr.validation) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, validationTexts(anyErr.validation), undefined, { fields: validationFields(anyErr.validation) });
     // Lỗi ràng buộc / trigger ở CSDL: thông điệp tiếng Việt có chủ đích (bút toán không cân, sổ cái chỉ thêm…)
     const pgCode = (err as { code?: string }).code;
     // [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33: trigger sổ cái (cân, khoá kỳ, chỉ thêm) ra đúng mã §5 trước khi rơi về POSTING_FAILED
@@ -136,6 +137,16 @@ function issueText(i: { code: string; path: (string | number)[]; message: string
 // [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: xuất zodIssueTexts — cửa nạp tự kiểm khuôn (để giữ chứng từ sai khuôn ở bể chờ) mà error.details vẫn cùng khuôn mảng câu như lỗi kiểm của route
 /** Lỗi zod → danh sách câu tiếng Việt, cùng khuôn error.details với lỗi kiểm của route. */
 export const zodIssueTexts = (err: ZodError): string[] => err.issues.map(issueText);
+
+/** Trường lỗi cho giao diện: đường dẫn dạng a.b.0.c + câu tiếng Việt (cùng câu với details). */
+function issueField(i: Parameters<typeof issueText>[0]): { path: string; message: string } {
+  return { path: i.path.join('.'), message: issueText(i) };
+}
+function validationFields(v: unknown): { path: string; message: string }[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((x: { params?: { issue?: Parameters<typeof issueText>[0] }; instancePath?: string; message?: string }) =>
+    x.params?.issue ? issueField(x.params.issue) : { path: (x.instancePath ?? '').replace(/^\//, '').replace(/\//g, '.'), message: `${x.message ?? 'không hợp lệ'}` });
+}
 
 /** Lỗi kiểm tra của fastify-type-provider-zod → danh sách câu tiếng Việt. */
 function validationTexts(v: unknown): string[] {
