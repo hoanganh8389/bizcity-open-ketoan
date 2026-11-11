@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Logo đơn vị hiện ở đầu trang; nút thứ hai trên thanh chứng từ rê chuột không mất chữ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Logo cài ở Thông tin đơn vị (HT03) nay hiện ở góc trên trái (trước chỉ in trên chứng từ, đầu trang luôn là ô chữ viết tắt); chưa cài logo thì vẫn ô chữ viết tắt mã đơn vị.
+- Sửa: rê chuột vào nút thứ hai (vd **Chi tiền gửi**, **Chi tiền**) và nút ▾ trên danh sách chứng từ thành nền nhạt chữ trắng, không đọc được — nay sẫm màu hơn, chữ vẫn trắng. Nút ▾ cạnh nút chính cùng màu nút chính.
+
 ### Bộ tham số thông minh dùng chung (thay "Chọn nhanh" chi nhánh); menu không sáng trùng <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Khối **Bộ tham số đã lưu** đầu bảng tham số hiện ở MỌI màn có ô chi nhánh, không cần màn nối tay: ô chi nhánh tự đăng ký với khối này. Lưu một bộ ở màn bất kỳ thì phần chi nhánh của bộ dùng lại ở mọi màn khác (mục "Bộ chi nhánh (dùng mọi màn)"); màn đã nối bộ tham số riêng vẫn lưu / áp nguyên bộ (kỳ, kho, tài khoản…) và bộ mặc định. Bỏ nút "Chọn nhanh" trong ô chi nhánh; các bộ chi nhánh đã lưu bằng Chọn nhanh vẫn còn trong danh sách.
 - Sửa: Đơn mua hàng / Mua hàng / Trả lại / Giảm giá / Chứng từ mua hàng (cùng màn, khác `?loai=`) sáng cùng lúc ở menu và thanh thẻ — nay khớp cả tham số trên địa chỉ (`matchHere`).

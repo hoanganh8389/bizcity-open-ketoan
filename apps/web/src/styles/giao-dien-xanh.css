@@ -61,6 +61,8 @@ html.gd-xanh .topbar { background: #fff; color: var(--topbar-ink); border-bottom
 html.gd-xanh .brand, html.gd-xanh .brand:hover { color: var(--topbar-ink); }
 html.gd-xanh .brand small { color: var(--ink-500); }
 html.gd-xanh .brand-logo { background: #fff; border: 1px solid var(--line); }
+/* [2026-11-11 Nguyễn Văn Thủy] logo đơn vị ở đầu trang (đóng góp) */
+.brand-anh { height: 32px; max-width: 150px; object-fit: contain; display: block; }
 html.gd-xanh .brand-logo.brand-chu, .brand-logo.brand-chu { background: var(--nav, var(--brand-800)); border: 0; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: -0.02em; text-transform: lowercase; }
 html.gd-xanh .pinbar-co-dinh { color: var(--ink-700); }
 html.gd-xanh .pinbar-co-dinh.active { color: var(--brand-700); }
@@ -456,6 +458,12 @@ html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-
 .vf-split-menu > div > button { text-align: left; border: 0; background: none; padding: 7px 12px; color: var(--ink-800, #1d2939); }
 .vf-split-menu > div > button:hover { background: var(--hover, #eef3fb); }
 .vf-toolbar .vf-add2, .vf-split-menu > summary.vf-add2 { background: var(--nav, #2457b3); color: #fff; border-color: var(--nav, #2457b3); }
+/* [2026-11-11 Nguyễn Văn Thủy] rê chuột nút thứ hai (Chi tiền ▾…) và nút ▾: sẫm hơn, chữ vẫn trắng — trước đây nền nhạt chữ trắng không đọc được (đóng góp) */
+html.gd-xanh .vf-toolbar button.vf-add2 { color: #fff; font-weight: 600; }
+html.gd-xanh .vf-toolbar button.vf-add2 svg, .vf-split-menu > summary svg { color: #fff !important; }
+html.gd-xanh .vf-toolbar button.vf-add2:hover:not(:disabled), .vf-split-menu > summary.vf-add2:hover { background: color-mix(in srgb, var(--nav, #2457b3) 80%, #000); border-color: color-mix(in srgb, var(--nav, #2457b3) 80%, #000); color: #fff; }
+.vf-split-menu > summary.vf-add { background: var(--brand-600); border: 1px solid var(--brand-600); color: #fff; }
+.vf-split-menu > summary.vf-add:hover { background: var(--brand-700); border-color: var(--brand-700); color: #fff; }
 
 /* [2026-11-11 Nguyễn Văn Thủy] Lập báo cáo tài chính (ACC99): bảng chỉ tiêu, ô số sửa tay, menu nút ▾ (đóng góp) */
 .bctc-wrap { max-height: calc(100vh - 360px); overflow: auto; border: 1px solid var(--line, #e3e8ef); border-radius: 6px; }

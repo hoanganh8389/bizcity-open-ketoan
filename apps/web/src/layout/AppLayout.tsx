@@ -36,6 +36,7 @@ import { SavedFlash } from '@/components/WhyPanel';
 
 export function AppLayout() {
   const { user } = useAuth();
+  const logo = useTenant().data?.logo ?? null; // [2026-11-11 Nguyễn Văn Thủy] logo cài ở HT03 hiện ở đầu trang (đóng góp)
   // Chi nhánh đang làm việc lưu theo đơn vị × người dùng.
   workBranch.setScope(user ? `${user.tenant.id}:${user.id}` : '');
   const [changingPassword, setChangingPassword] = useState(false);
@@ -128,8 +129,10 @@ export function AppLayout() {
       <header className="topbar">
         <button type="button" className="mnav-btn" onClick={() => setMobileNav(true)} aria-label="Mở menu"><Menu size={20} /></button>
         <Link to="/" className="brand">
-          {/* [2026-11-11 Nguyễn Văn Thủy] ô chữ viết tắt mã đơn vị trên nền màu menu (không dùng ảnh logo; logo chỉ in trên chứng từ) (đóng góp) */}
-          <span className="brand-logo brand-chu">{(user?.tenant.code ?? '').slice(0, 4) || <BarChart3 size={17} />}</span>
+          {/* [2026-11-11 Nguyễn Văn Thủy] có logo (HT03) thì hiện logo; chưa có thì ô chữ viết tắt mã đơn vị (đóng góp) */}
+          {logo
+            ? <img className="brand-anh" src={logo} alt={user?.tenant.name ?? 'Logo'} />
+            : <span className="brand-logo brand-chu">{(user?.tenant.code ?? '').slice(0, 4) || <BarChart3 size={17} />}</span>}
           <span>
             ERP{bookMode === 'tax' && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: '#d93025', color: '#fff', fontSize: 11, fontWeight: 700 }}>SỔ THUẾ</span>}
             <small>{user?.tenant.name}</small>
