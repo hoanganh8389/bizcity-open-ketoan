@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chặn tài khoản ngoài bảng (loại 0) trên bút toán Nợ / Có; sửa Lập BCTC sau khi thử đủ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- **Sửa**: B01 năm 2026 lệch 666 đồng (Tổng tài sản ≠ Tổng nguồn vốn) do phiếu thu PT26-000001 ghi Nợ 1111 / Có 0011 (tài khoản ngoài bảng). Sổ cái nay từ chối mọi bút toán có tài khoản loại 0 (trừ bút toán đảo để huỷ được chứng từ đã lỡ ghi); ô chọn tài khoản ghi sổ không còn hiện tài khoản loại 0. Phiếu PT26-000001 trên dữ liệu thử đã huỷ: B01 cân.
+- Lập BCTC: bấm Xem mở đúng chế độ xem (trước mở thẳng chế độ sửa); "Lấy lại dữ liệu" chỉ bấm được khi Sửa; bản in ghi ngày lập ở dòng "Ngày … tháng … năm …"; số âm ghi trong ngoặc đơn theo mẫu.
+
 ### Lập báo cáo tài chính (ACC99) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Màn **Tổng hợp → Lập báo cáo tài chính** (`/tong-hop/lap-bctc`): chọn tham số (kỳ Năm / 6 tháng / Quý / Tùy chọn, giả định hoạt động liên tục, chọn B01-DN, B02-DN, B03-DN), hộp lập mỗi mẫu một thẻ, số lấy từ sổ, sửa tay ô chi tiết (dòng tổng tự tính lại), Lấy lại dữ liệu, đã kiểm toán / ý kiến kiểm toán, Người lập / Người đại diện theo pháp luật / Ngày lập bắt buộc (điền sẵn theo Hồ sơ in), **Kiểm tra báo cáo** (280 = 440, B03 [70] = B01 [110], B03 [60] = đầu năm [110], B02 [60] với B01 [420b]), Hủy · Ghi · Ghi và In; danh sách BCTC đã lập (Xem, Xoá). B03-DN gián tiếp: đang phát triển.
 - Bảng mới `financial_statements` (migration 0106), API `/api/v1/financial-statements` (danh sách, lập số, xem, ghi, xoá). Hướng dẫn `docs/huong-dan/lap-bao-cao-tai-chinh.md`.

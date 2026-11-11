@@ -89,6 +89,8 @@ function recalc(rows: BRow[], v: Record<string, [number | null, number | null]>)
   }
   return out;
 }
+/** Số trên báo cáo tài chính: số âm ghi trong ngoặc đơn (mẫu ban hành kèm Thông tư 99). */
+const so = (v: number | null | undefined) => (v === null || v === undefined ? '' : v < 0 ? `(${money(-v, { blankZero: false })})` : money(v, { blankZero: false }));
 const fromRows = (rows: BRow[]) => Object.fromEntries(rows.filter((r) => r.code).map((r) => [r.code, [r.cur, r.prev] as [number | null, number | null]]));
 
 /* ------------------------------------------------------------------ kiểm tra báo cáo */
@@ -128,13 +130,13 @@ export const LAP_BCTC_TEMPLATES: PrintTemplate<PSheet>[] = [{
         return (
           <div key={rep} style={i ? { breakBefore: 'page' } : undefined}>
             <LedgerForm ctx={ctx} d={{
-              title: TITLE[rep], form: `Mẫu số ${rep}`, period: subTitle(rep, s), info: [['Đơn vị tính', 'Đồng']], rows: list, total: false, signs: signs(s),
+              title: TITLE[rep], form: `Mẫu số ${rep}`, period: subTitle(rep, s), to: s.preparedDate, info: [['Đơn vị tính', 'Đồng']], rows: list, total: false, signs: signs(s),
               cols: [
                 { key: 'ct', h: 'Chỉ tiêu', v: (r) => <span style={{ paddingLeft: Math.max((r.level ?? 3) - 1, 0) * 10 }}>{r.bold ? <b>{r.name}</b> : r.name}</span> },
                 { key: 'ma', h: 'Mã số', w: 44, center: true, v: (r) => (r.bold ? <b>{r.code}</b> : r.code) },
                 { key: 'tm', h: 'Thuyết minh', w: 60, center: true, v: (r) => NOTE[rep][r.code] ?? '' },
-                { key: 'c1', h: c1, w: 108, num: true, v: (r) => (r.v[0] === null ? '' : r.bold ? <b>{money(r.v[0])}</b> : money(r.v[0])) },
-                { key: 'c2', h: c2, w: 108, num: true, v: (r) => (r.v[1] === null ? '' : r.bold ? <b>{money(r.v[1])}</b> : money(r.v[1])) },
+                { key: 'c1', h: c1, w: 108, num: true, v: (r) => (r.v[0] === null ? '' : r.bold ? <b>{so(r.v[0])}</b> : so(r.v[0])) },
+                { key: 'c2', h: c2, w: 108, num: true, v: (r) => (r.v[1] === null ? '' : r.bold ? <b>{so(r.v[1])}</b> : so(r.v[1])) },
               ],
             }} />
           </div>
@@ -278,7 +280,7 @@ function BctcForm({ id, init, onClose, onSaved }: { id?: number; init?: Saved; o
   const layLai = () => { if (s && built.data) { setS({ ...s, data: Object.fromEntries(s.reports.map((r) => [r, recalc(built.data![r] ?? [], fromRows(built.data![r] ?? []))])) }); setChecks(null); } };
 
   if (!s || !tab) {
-    return <Modal title="Báo cáo tài chính" wide onClose={onClose} footer={<button className="btn" onClick={onClose}>Hủy</button>}>{(saved.error || built.error) ? <ErrorBox error={errorText(saved.error ?? built.error)} /> : <Loading />}</Modal>;
+    return <Modal key="bctc-loading" title="Báo cáo tài chính" wide onClose={onClose} footer={<button className="btn" onClick={onClose}>Hủy</button>}>{(saved.error || built.error) ? <ErrorBox error={errorText(saved.error ?? built.error)} /> : <Loading />}</Modal>;
   }
   const rows = built.data?.[tab] ?? [];
   const [c1, c2] = colNames(tab, s);
@@ -288,12 +290,12 @@ function BctcForm({ id, init, onClose, onSaved }: { id?: number; init?: Saved; o
   const cell = (r: BRow, i: 0 | 1): ReactNode => {
     const v = vals[r.code]?.[i];
     if (!r.code || (v === null && !r.formula)) return '';
-    if (r.formula?.length) return <b>{money(v ?? 0, { blankZero: false })}</b>;
+    if (r.formula?.length) return <b>{so(v ?? 0)}</b>;
     return <NumInput value={v ?? 0} blankZero={false} decimals={0} allowNegative onChange={(x) => set(tab, r.code, i, x ?? 0)} className="input num bctc-o" title="Sửa tay được; dòng tổng tự tính lại" />;
   };
 
   return (
-    <Modal title="Báo cáo tài chính" wide viewFirst={Boolean(id)} onClose={onClose}
+    <Modal key="bctc-loaded" title="Báo cáo tài chính" wide viewFirst={Boolean(id)} onClose={onClose}
       viewActions={<span className="bctc-in"><PrintButton screen="ACC99" templates={LAP_BCTC_TEMPLATES} getDocs={printDocs} /></span>}
       footer={<>
         <button className="btn" style={{ marginRight: 'auto' }} onClick={() => setChecks(kiemTra(s))} data-view-ok>Kiểm tra báo cáo</button>
@@ -306,7 +308,7 @@ function BctcForm({ id, init, onClose, onSaved }: { id?: number; init?: Saved; o
       <div className="tabs" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
         {s.reports.map((r) => <button key={r} type="button" className={`tab ${r === tab ? 'active' : ''}`} onClick={() => setTab(r)}>{r}</button>)}
         <span style={{ marginLeft: 'auto' }} />
-        <button type="button" className="btn btn-sm" data-view-ok onClick={layLai} title="Lấy lại số từ sổ cho cả các mẫu (bỏ số đã sửa tay)">Lấy lại dữ liệu</button>
+        <button type="button" className="btn btn-sm" onClick={layLai} title="Lấy lại số từ sổ cho cả các mẫu (bỏ số đã sửa tay)">Lấy lại dữ liệu</button>
       </div>
       {save.error && <ErrorBox error={errorText(save.error)} />}
       {save.isSuccess && <div className="alert alert-ok">Đã ghi báo cáo tài chính {s.periodLabel}.</div>}

@@ -58,6 +58,9 @@ function validateLines(entry: DraftEntry, accounts: Map<string, Account>): void 
     else {
       if (!acc.is_active) problems.push(`Tài khoản ${l.accountCode} đã ngừng sử dụng`);
       if (!acc.is_posting) problems.push(`Tài khoản ${l.accountCode} là tài khoản tổng hợp, hãy dùng tài khoản chi tiết`);
+      // [2026-11-11 Nguyễn Văn Thủy] tài khoản ngoài bảng (loại 0) ghi đơn, không vào bút toán Nợ / Có: ghi kép làm Báo cáo tình hình tài chính lệch (đóng góp)
+      // Bút toán đảo vẫn cho qua để huỷ được chứng từ đã lỡ ghi.
+      if (/^0/.test(l.accountCode) && !entry.isReversal) problems.push(`Tài khoản ${l.accountCode} là tài khoản ngoài bảng (loại 0), không dùng trên bút toán Nợ / Có`);
       if ((acc.track_partner || acc.is_debt) && !l.partnerId) problems.push(`Tài khoản ${l.accountCode} bắt buộc phải chọn đối tượng`);
     }
   });

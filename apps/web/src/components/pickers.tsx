@@ -260,7 +260,8 @@ export function AccountPicker({ postingOnly, ...p }: BaseProps & { postingOnly?:
   const options = useMemo(() => {
     const s = plain(q);
     return data
-      .filter((a) => (!postingOnly || a.isPosting) && a.isActive !== false)
+      // [2026-11-11 Nguyễn Văn Thủy] ô chọn tài khoản ghi sổ bỏ tài khoản ngoài bảng (loại 0): máy chủ không nhận trên bút toán Nợ / Có (đóng góp)
+      .filter((a) => (!postingOnly || (a.isPosting && !a.code.startsWith('0'))) && a.isActive !== false)
       .filter((a) => !s || a.code.startsWith(s) || plain(a.name).includes(s))
       .map<PickOption>((a) => ({ code: a.code, name: a.name, level: a.level, strong: !a.isPosting, hint: a.isPosting ? (a.trackPartner || a.isDebt ? 'theo đối tượng' : undefined) : 'TK tổng hợp' }));
   }, [data, q, postingOnly]);
