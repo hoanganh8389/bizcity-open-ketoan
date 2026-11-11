@@ -5,14 +5,14 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 7 |
+| Đang làm | 8 |
 | Chờ merge | 0 |
-| Bị chặn | 29 |
+| Bị chặn | 30 |
 | Chưa ai nhận | 172 |
 | Chờ đủ tín hiệu | 71 |
 | Hoãn | 3 |
 | Xong | 297 |
-| **Tổng** | **579** |
+| **Tổng** | **581** |
 
 ## Theo phân hệ (R-FLOW-10)
 
@@ -25,9 +25,9 @@
 | chung-tu | 65 | 7 | 0 | 25 | 97 |
 | tong-hop | 31 | 8 | 1 | 27 | 67 |
 | thue | 14 | 2 | 1 | 10 | 27 |
-| he-thong | 134 | 22 | 2 | 62 | 220 |
+| he-thong | 134 | 22 | 3 | 63 | 222 |
 
-## Đang làm (7)
+## Đang làm (8)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -36,6 +36,7 @@
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | danh-muc · kho | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | danh-muc · kho | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | he-thong | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
+| [S028-16](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L25) | PHASE-028 | he-thong | Thu hồi có hiệu lực ngay ở mọi bản API: kiểm phiên không đệm (checkSession, một truy vấn khoá chính users ⋈ t… | P0 | kiennt (phiên Claude, PHASE-028 vá) · `feat/phase-028-gd2-dem-quyen` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | mua-hang · ban-hang | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | kho | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
 
@@ -43,7 +44,7 @@
 
 —
 
-## Bị chặn (29)
+## Bị chặn (30)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -61,6 +62,7 @@
 | [S024-9](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L20) | PHASE-024 | danh-muc · kho | Migration K3: itemid ở ledgerlines, inventorymovements, inventorycosts, productunits, productprices; điền ngư… | P0 | — |
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | danh-muc · kho | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
 | [S028-5](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L14) | PHASE-028 | he-thong | PR tài liệu W0 merge vào main (R-FLOW) | P0 | — |
+| [S028-17](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L26) | PHASE-028 | he-thong | Vá F8: vé SSO dùng một lần; phiên mở từ vé sống WPSSOTTLHOURS (mặc định 2) — chờ dòng Module POS · W1 phần Co… | P1 | — |
 | [S029-5](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L14) | PHASE-029 | chung-tu | ctx.ledger.submit tự saveVersion + liên kết ledger; payloadVersion ở GET /documents/:id | P0 | — |
 | [S029-8](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L17) | PHASE-029 | chung-tu | Nâng chẩn đoán lên error khi bản đo trên bản cài thật = 0 | P2 | — |
 | [S029-23](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L33) | PHASE-029 | chung-tu | Người / nhân viên tách người dùng | P2 | — |
