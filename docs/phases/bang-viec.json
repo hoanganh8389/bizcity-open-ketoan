@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 11
     },
     {
       "key": "merging",
@@ -5926,6 +5926,90 @@
       "facet": "F5",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 20
+    },
+    {
+      "id": "S028-12",
+      "phase": "PHASE-028",
+      "title": "Vá F1: tạo / sửa người dùng phải có đủ quyền của vai trò đích và quyền hiện tại của người bị sửa; không tự đổi vai trò, tự khoá, tự đặt lại mật khẩu (80 §2)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-w1-va",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W1 vá — vá an toàn sau W5 (F1–F4 phần ký, F9 ở 80 §2; chi tiết lõi ở 81 §1.1, §4)"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S028-13",
+      "phase": "PHASE-028",
+      "title": "Vá F2: khoá API không mang quyền người tạo không có (scopePermissions ở core/auth.ts)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-w1-va",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W1 vá — vá an toàn sau W5 (F1–F4 phần ký, F9 ở 80 §2; chi tiết lõi ở 81 §1.1, §4)"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S028-14",
+      "phase": "PHASE-028",
+      "title": "Vá F3 + F9: ký / huỷ chữ ký gác documents:write; 12 route nợ SC-API-3 khai bảo vệ, /system/schema không mở cho khoá API; giới hạn đăng nhập sai (10 / tài khoản…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-w1-va",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W1 vá — vá an toàn sau W5 (F1–F4 phần ký, F9 ở 80 §2; chi tiết lõi ở 81 §1.1, §4)"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S028-15",
+      "phase": "PHASE-028",
+      "title": "Vá F4 (phần ký): ô kế toán trưởng / giám đốc và huỷ chữ ký người khác kiểm theo quyền (periods:lock, payments:approve-final — ánh xạ tạm D-AUTH-26) thay tên va…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-w1-va",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W1 vá — vá an toàn sau W5 (F1–F4 phần ký, F9 ở 80 §2; chi tiết lõi ở 81 §1.1, §4)"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 24
     },
     {
       "id": "S029-1",
