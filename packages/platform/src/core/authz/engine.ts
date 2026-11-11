@@ -58,6 +58,8 @@ export function matchPattern(pattern: string, permission: string): boolean {
  * luật Cấm dạng mẫu phủ MỌI quyền khớp — hạn chế phải chặt hơn, không lỏng hơn (vd Cấm *:*-cancel chặn cả quyền huỷ rủi ro cao).
  */
 function ruleCovers(rule: AuthzRule, entry: AuthzCatalogEntry): boolean {
+  // [2026-11-09 05:00 PM kiennt] PHASE-028 — giai đoạn 3.1: Cấm khớp quyền gốc (impliedBy) cũng phủ quyền kéo theo — cùng luật với auth.ts
+  if (rule.effect === 'deny' && (entry.impliedBy ?? []).some((b) => matchPattern(rule.pattern, b))) return true;
   if (!matchPattern(rule.pattern, entry.key)) return false;
   if (!isWildcard(rule.pattern) || rule.effect === 'deny') return true;
   return entry.risk !== 'high' && (entry.status === 'active');

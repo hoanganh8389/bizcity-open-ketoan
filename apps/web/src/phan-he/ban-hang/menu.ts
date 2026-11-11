@@ -11,8 +11,9 @@ export const banHangMenu: MenuItem[] = [
     key: 'ban-hang-nghiep-vu',
     label: 'Nghiệp vụ bán hàng',
     children: [
-      { key: 'bh-phieu-ban', label: 'Phiếu bán hàng', path: '/ban-hang/phieu-ban', code: 'BH10' },
-      { key: 'bh-tra-lai', label: 'Hàng bán trả lại', path: '/ban-hang/tra-lai', code: 'BH11' },
+      // [2026-11-09 06:00 PM kiennt] PHASE-028 — giai đoạn 3.2b: menu gắn quyền XEM của loại chứng từ (ẩn / hiện; máy chủ lọc danh sách theo cùng quyền)
+      { key: 'bh-phieu-ban', label: 'Phiếu bán hàng', path: '/ban-hang/phieu-ban', code: 'BH10', permission: 'ban-hang:hoa-don-xem' },
+      { key: 'bh-tra-lai', label: 'Hàng bán trả lại', path: '/ban-hang/tra-lai', code: 'BH11', permission: 'ban-hang:tra-hang-xem' },
     ],
   },
   {

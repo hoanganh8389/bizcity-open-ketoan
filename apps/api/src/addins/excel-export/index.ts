@@ -15,7 +15,9 @@
 import { z } from 'zod';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { defineAddIn } from '../../core/addins.js';
-import { requirePermission } from '../../core/auth.js';
+// [2026-11-09 05:50 PM kiennt] PHASE-028 — giai đoạn 3.2b: bảng kê bán hàng cần thêm quyền XUẤT của loại chứng từ bán (ban-hang:hoa-don-xuat — reports:read kéo theo; Cấm thì chặn)
+import { canDocument, documentPermissionOf, requirePermission } from '../../core/auth.js';
+import { Errors } from '../../core/errors.js';
 import { AppError } from '../../core/errors.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ErrorCode } from '@ketoan/contracts';
@@ -64,6 +66,10 @@ export default defineAddIn({
   register(app) {
     const r = app.withTypeProvider<ZodTypeProvider>();
     const pre = requirePermission('reports:read');
+    /** Bảng kê bán hàng: thêm quyền xuất của hoá đơn bán và hàng bán trả lại (phân hệ Bán hàng đăng ký). */
+    const salesExport = async (req: { auth?: { permissions: ReadonlySet<string> } }) => {
+      for (const t of ['sale', 'sale_return']) if (!canDocument(req.auth as never, t, 'export')) throw Errors.forbidden(`Không có quyền xuất bảng kê bán hàng (${documentPermissionOf(t, 'export')})`);
+    };
     const tags = ['Add-in: Xuất Excel'];
 
     r.get('/trial-balance.csv', {
@@ -105,7 +111,7 @@ export default defineAddIn({
       reply.header('content-type', 'text/csv; charset=utf-8').header('content-disposition', `attachment; filename="${name}"`).send(csv);
 
     r.get('/sales-detail.csv', {
-      preHandler: pre,
+      preHandler: [pre, salesExport],
       schema: { tags, querystring: salesQuery },
       handler: async (req, reply) => {
         // Xuất toàn bộ kết quả lọc (tối đa 50.000 dòng), không theo trang đang xem.
@@ -117,7 +123,7 @@ export default defineAddIn({
     });
 
     r.get('/sales-summary.csv', {
-      preHandler: pre,
+      preHandler: [pre, salesExport],
       // mặc định gom theo chứng từ (tiêu đề CSV chọn theo groupBy)
       schema: { tags, querystring: salesQuery.extend({ groupBy: z.string().default('document') }) },
       handler: async (req, reply) => {
@@ -135,7 +141,7 @@ export default defineAddIn({
     });
 
     r.get('/sales-payments.csv', {
-      preHandler: pre,
+      preHandler: [pre, salesExport],
       schema: { tags, querystring: salesQuery },
       handler: async (req, reply) => {
         const data = await fromCore(req, '/api/v1/reports/sales-payments');
@@ -215,7 +221,7 @@ export default defineAddIn({
     });
 
     r.get('/sales-journal.csv', {
-      preHandler: pre,
+      preHandler: [pre, salesExport],
       schema: { tags, querystring: ranged.extend({ partnerCode: z.string().optional(), account: z.string().optional(), productSkus: z.string().optional() }) },
       handler: async (req, reply) => {
         const data = await fromCore(req, '/api/v1/reports/sales-journal');

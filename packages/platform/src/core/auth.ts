@@ -87,6 +87,70 @@ export function registerModulePermissions(module: string, defs: readonly ModuleP
 }
 
 export const listModulePermissions = (): (ModulePermissionDef & { module: string })[] => [...modulePermissions.values()];
+
+// [2026-11-09 04:30 PM kiennt] PHASE-028 — giai đoạn 3.1 (80 D-AUTH-19): SỔ ĐĂNG KÝ LOẠI CHỨNG TỪ → QUYỀN (phân hệ đăng ký như hook) + quyền KÉO THEO
+/**
+ * Phân hệ đăng ký quyền lập / sửa cho loại chứng từ của mình qua cửa nạp (`registerDocumentPermission('sale', 'ban-hang:hoa-don-lap')`).
+ * Quyền đó phải khai trong manifest của phân hệ (permissions[]); phân hệ không bật → quyền không có trong sổ → cửa nạp kiểm
+ * `documents:write` như cũ. Quyền chi tiết được `documents:write` KÉO THEO (mọi người đang ghi được chứng từ vẫn ghi được như cũ);
+ * muốn chặn một loại phiếu thì Cấm quyền chi tiết (Cấm tính SAU khi kéo theo), muốn mở hẹp thì chỉ Cho quyền chi tiết.
+ */
+// [2026-11-09 05:40 PM kiennt] PHASE-028 — giai đoạn 3.2b: đủ bộ thao tác theo loại chứng từ — xem / lập / huỷ / xuất; mỗi thao tác do quyền Core đang gác nó kéo theo
+/** Thao tác trên một loại chứng từ. "In" không có quyền riêng: phiếu in ở trình duyệt từ dữ liệu xem (thuộc `read`). */
+export type DocumentOp = 'read' | 'create' | 'cancel' | 'export';
+/** Quyền Core đang gác từng thao tác hôm nay — kéo theo quyền chi tiết để không ai mất quyền khi phân hệ đăng ký. */
+export const DOCUMENT_OP_BASE: Readonly<Record<DocumentOp, CorePermission>> = { read: 'documents:read', create: 'documents:write', cancel: 'documents:write', export: 'reports:read' };
+const documentTypes = new Map<string, Partial<Record<DocumentOp, string>>>();
+const implied = new Map<string, Set<string>>();
+
+/**
+ * Phân hệ đăng ký quyền theo thao tác cho loại chứng từ của mình (gọi ở index.ts của phân hệ, quyền khai ở permissions[] của manifest):
+ * `registerDocumentType('sale', { read: 'ban-hang:hoa-don-xem', create: 'ban-hang:hoa-don-lap', cancel: …, export: … })`.
+ * Mỗi quyền được quyền Core của thao tác đó kéo theo (DOCUMENT_OP_BASE).
+ */
+export function registerDocumentType(docType: string, perms: Partial<Record<DocumentOp, string>>): void {
+  const cur = documentTypes.get(docType) ?? {};
+  for (const [op, permission] of Object.entries(perms) as [DocumentOp, string][]) {
+    if (cur[op] && cur[op] !== permission) throw new Error(`Loại chứng từ ${docType} đã đăng ký quyền ${op} = ${cur[op]}`);
+    if (!MODULE_PERM_RE.test(permission) || (PERMISSIONS as readonly string[]).includes(permission)) throw new Error(`Quyền chứng từ "${permission}" phải là quyền module <module>:<việc>`);
+    cur[op] = permission;
+    const base = DOCUMENT_OP_BASE[op];
+    implied.set(base, (implied.get(base) ?? new Set()).add(permission));
+  }
+  documentTypes.set(docType, cur);
+}
+
+/** Đăng ký riêng quyền lập / sửa (giữ cho chỗ gọi cũ). */
+export function registerDocumentPermission(docType: string, permission: string): void {
+  registerDocumentType(docType, { create: permission });
+}
+
+/** Quyền cần cho `op` trên loại chứng từ: quyền chi tiết nếu phân hệ đã đăng ký VÀ quyền có trong sổ (phân hệ bật), không thì quyền Core. */
+export function documentPermissionOf(docType: unknown, op: DocumentOp = 'create'): Permission {
+  const p = typeof docType === 'string' ? documentTypes.get(docType)?.[op] : undefined;
+  return p && isKnownPermission(p) ? p : DOCUMENT_OP_BASE[op];
+}
+
+/** Các loại chứng từ có quyền `op` riêng đang có hiệu lực (phân hệ bật): [loại, quyền]. */
+export function documentTypesWith(op: DocumentOp): [string, Permission][] {
+  return [...documentTypes].map(([t, ps]) => [t, ps[op]] as const).filter((x): x is [string, string] => !!x[1] && isKnownPermission(x[1])) as [string, Permission][];
+}
+
+/** Người này làm được `op` trên loại chứng từ không (theo quyền toàn đơn vị đã tính, gồm kéo theo và đã trừ Cấm). */
+export const canDocument = (auth: Pick<AuthContext, 'permissions'>, docType: unknown, op: DocumentOp): boolean => auth.permissions.has(documentPermissionOf(docType, op));
+
+/** Quyền được `permission` kéo theo (chỉ quyền đang có trong sổ). */
+export const impliedBy = (permission: string): string[] => [...(implied.get(permission) ?? [])].filter((p) => isKnownPermission(p));
+
+// [2026-11-09 05:00 PM kiennt] PHASE-028 — giai đoạn 3.1: Cấm quyền gốc thì Cấm luôn quyền nó kéo theo — luật Cấm documents:* đang có vẫn chặn được hoá đơn bán sau khi cửa nạp đòi ban-hang:hoa-don-lap
+/** Các quyền gốc kéo theo `permission` (vd documents:write → ban-hang:hoa-don-lap). */
+export const impliersOf = (permission: string): string[] => [...implied].filter(([, s]) => s.has(permission)).map(([b]) => b);
+
+/** Thêm quyền kéo theo vào một tập quyền (trước khi trừ Cấm). */
+export function withImplied<T extends Set<Permission>>(set: T): T {
+  for (const base of [...set]) for (const p of impliedBy(base)) set.add(p as Permission);
+  return set;
+}
 export const isKnownPermission = (p: string): p is Permission => (PERMISSIONS as readonly string[]).includes(p) || modulePermissions.has(p);
 /** Quyền module rủi ro cao: không cấp cho trợ lý AI, khoá API (BIZCITY-MODULE §3). */
 export const isHighRiskPermission = (p: string): boolean => modulePermissions.get(p)?.risk === 'high';
@@ -102,7 +166,8 @@ export const ADMIN_ROLES: ReadonlySet<Role> = new Set<Role>(['owner']);
 export function rolePermissions(role: Role): Set<Permission> {
   const out = new Set<Permission>(ROLE_PERMISSIONS[role] ?? []);
   for (const p of modulePermissions.values()) if (ADMIN_ROLES.has(role) || p.roles?.includes(role)) out.add(p.key as Permission);
-  return out;
+  // [2026-11-09 04:30 PM kiennt] PHASE-028 — giai đoạn 3.1 (80 D-AUTH-19): kéo theo quyền chứng từ chi tiết (vai trò có documents:write giữ nguyên khả năng nộp mọi loại phiếu)
+  return withImplied(out);
 }
 
 /** Quyền hiệu lực của nhiều vai trò (vai trò chính + vai trò bổ sung): hợp các tập quyền — trong phạm vi đơn vị (D-AUTH-04). */
@@ -121,8 +186,10 @@ export function effectivePermissions(roles: readonly Role[]): Set<Permission> {
 export function effectivePermissionsWithTenantRoles(roles: readonly Role[], extra: Pick<ExtraAuthz, 'baseRoles' | 'allow' | 'deny'>): Set<Permission> {
   const out = effectivePermissions([...roles, ...extra.baseRoles]);
   for (const p of extra.allow) if (isKnownPermission(p)) out.add(p);
+  // [2026-11-09 04:30 PM kiennt] PHASE-028 — giai đoạn 3.1 (80 D-AUTH-19): kéo theo SAU khi cộng Cho (Cho documents:write cũng kéo theo), TRƯỚC khi trừ Cấm (Cấm ban-hang:* chặn được người có documents:write)
+  withImplied(out);
   if (!extra.deny.length || roles.some((r) => ADMIN_ROLES.has(r))) return out;
-  for (const p of [...out]) if (extra.deny.some((d) => matchPattern(d, p))) out.delete(p);
+  for (const p of [...out]) if (extra.deny.some((d) => matchPattern(d, p) || impliersOf(p).some((b) => matchPattern(d, b)))) out.delete(p);
   return out;
 }
 
@@ -149,7 +216,8 @@ const SCOPE_PERMISSIONS: Record<string, readonly Permission[]> = {
 // [2026-11-09 01:52 PM kiennt] PHASE-028 — S028-13: lộ ánh xạ phạm vi khoá → quyền để lúc tạo khoá kiểm người tạo có đủ các quyền đó
 /** Quyền mà một tập phạm vi khoá API mang theo (cùng bảng với lúc xác thực khoá). */
 export function scopePermissions(scopes: readonly string[]): Set<Permission> {
-  return new Set<Permission>(scopes.flatMap((s) => SCOPE_PERMISSIONS[s] ?? []));
+  // [2026-11-09 04:30 PM kiennt] PHASE-028 — giai đoạn 3.1: gồm cả quyền chứng từ kéo theo — người bị Cấm một loại phiếu không tạo được khoá documents:write để lách
+  return withImplied(new Set<Permission>(scopes.flatMap((s) => SCOPE_PERMISSIONS[s] ?? [])));
 }
 
 /**
@@ -201,9 +269,10 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
     if (row.app_key && (row.app_status !== 'active' || !getAppManifest(row.app_key))) return null;
     // Ghi lần dùng cuối, không chặn request.
     void db.updateTable('api_keys').set({ last_used_at: new Date() }).where('id', '=', row.id).execute();
-    const perms = row.app_key
+    // [2026-11-09 04:30 PM kiennt] PHASE-028 — giai đoạn 3.1 (80 D-AUTH-19): khoá API / app có documents:write giữ nguyên khả năng nộp mọi loại phiếu (kéo theo quyền chi tiết)
+    const perms = withImplied(row.app_key
       ? new Set<Permission>((row.app_permissions ?? []).filter((p): p is Permission => (PERMISSIONS as readonly string[]).includes(p)))
-      : new Set<Permission>(row.scopes.flatMap((s) => SCOPE_PERMISSIONS[s] ?? []));
+      : new Set<Permission>(row.scopes.flatMap((s) => SCOPE_PERMISSIONS[s] ?? [])));
     return {
       tenantId: row.tenant_id, actor: `apikey:${row.id}`, actorName: row.name, kind: 'apikey', role: null, permissions: perms,
       ...(row.app_key ? { app: row.app_key } : {}),
@@ -222,7 +291,8 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
     const role = claims.role as Role;
     // Đăng nhập qua hệ thống quản trị: quyền theo phân quyền bên đó (trong phiên); còn lại theo vai trò chính + vai trò bổ sung.
     if (claims.perms) {
-      return { tenantId: claims.tid, actor: `user:${claims.sub}`, actorName: claims.name, kind: 'user', role, permissions: new Set(claims.perms.filter(isKnownPermission)) };
+      // [2026-11-09 04:30 PM kiennt] PHASE-028 — giai đoạn 3.1 (80 D-AUTH-19): phiên SSO mang documents:write cũng kéo theo quyền chứng từ chi tiết
+      return { tenantId: claims.tid, actor: `user:${claims.sub}`, actorName: claims.name, kind: 'user', role, permissions: withImplied(new Set(claims.perms.filter(isKnownPermission))) };
     }
     // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1: quyền hiệu lực = vai trò chính ∪ vai trò bổ sung còn hiệu lực (đệm 15 giây, xoá khi gán / thu hồi)
     const extra = await extraAuthz(claims.sub, db, session.authzVersion);

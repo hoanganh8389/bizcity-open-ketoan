@@ -10,7 +10,7 @@
  */
 import { createHash } from 'node:crypto';
 import type { AuthzCatalogEntry, AuthzConditions, AuthzPermissionDef, AuthzPermissionStatus } from './types.js';
-import { PERMISSIONS, listModulePermissions, type CorePermission } from '../auth.js';
+import { PERMISSIONS, impliersOf, listModulePermissions, type CorePermission } from '../auth.js';
 
 type CoreMeta = Omit<AuthzPermissionDef, 'key' | 'label' | 'module'> & { label: string; defaults?: AuthzConditions };
 
@@ -51,6 +51,8 @@ export function codePermissions(): (AuthzPermissionDef & { defaults?: AuthzCondi
     return {
       key: p.key, label: p.label, module: p.module, risk: p.risk ?? 'low', resource: p.resource, operation: p.operation, sensitive: p.sensitive,
       scopeKinds: p.scopeKinds, stepUp: p.stepUp, aliases: p.aliases, suggestedRoles: p.roles, since: p.since, replaces: p.replaces,
+      // [2026-11-09 05:00 PM kiennt] PHASE-028 — giai đoạn 3.1: quyền chứng từ chi tiết biết quyền gốc kéo theo nó (bộ tính cho luật Cấm quyền gốc phủ cả quyền này)
+      ...(impliersOf(p.key).length ? { impliedBy: impliersOf(p.key) } : {}),
     } satisfies AuthzPermissionDef;
   });
   return [...core, ...mods];

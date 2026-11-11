@@ -11,7 +11,7 @@
 import { sql } from 'kysely';
 import type { Role } from '@ketoan/contracts';
 import type { Db } from '../../db/client.js';
-import { ADMIN_ROLES } from '../auth.js';
+import { ADMIN_ROLES, impliedBy } from '../auth.js';
 import { legacyAssignment, systemRole, systemRoles, SYSTEM_ROLE_PREFIX } from './legacy.js';
 import type { AuthzAssignment, AuthzPurpose, AuthzRole, AuthzRule, AuthzScope } from './types.js';
 
@@ -33,8 +33,10 @@ export function tenantRoleToAuthz(row: TenantRoleRow, rules: readonly TenantRule
   const base: AuthzRule[] = row.base_role && !ADMIN_ROLES.has(row.base_role)
     ? systemRole(row.base_role).rules.map((r) => ({ ...r, id: `${id}:base:${r.pattern}` }))
     : [];
+  // [2026-11-09 04:30 PM kiennt] PHASE-028 — giai đoạn 3.1: luật Cho documents:write của vai trò đơn vị cũng kéo theo quyền chứng từ chi tiết (cùng luật với auth.ts)
   const own: AuthzRule[] = rules.filter((r) => String(r.tenant_role_id) === String(row.id))
-    .map((r) => ({ id: `rule:${r.id}`, pattern: r.permission, effect: r.effect }));
+    .flatMap((r) => [{ id: `rule:${r.id}`, pattern: r.permission, effect: r.effect },
+      ...(r.effect === 'allow' ? impliedBy(r.permission).map((p) => ({ id: `rule:${r.id}:${p}`, pattern: p, effect: 'allow' as const })) : [])]);
   return { id, code: row.code, label: row.label, kind: row.kind, isActive: row.is_active, rules: [...base, ...own] };
 }
 

@@ -25,6 +25,11 @@ export interface DocumentListFilter {
   branchCodes?: string;
   /** Kèm thông tin danh sách phiếu thu / chi: lý do, nhân viên, điện thoại, địa chỉ, tài khoản, ngày / người tạo, sửa. */
   voucherInfo?: boolean;
+  // [2026-11-09 05:45 PM kiennt] PHASE-028 — giai đoạn 3.2b: lọc theo quyền XEM từng loại chứng từ (máy chủ đặt, không nhận từ client)
+  /** Bỏ các loại chứng từ người xem không có quyền xem. */
+  excludeDocTypes?: string[];
+  /** Chỉ các loại chứng từ này (người không có documents:read, chỉ có quyền xem chi tiết). */
+  onlyDocTypes?: string[];
   page: number;
   pageSize: number;
 }
@@ -81,6 +86,9 @@ export const documentRepository = {
         AND pl.action IN ('post', 'repost') AND pl.actor LIKE 'apikey:%')`);
     } else if (f.status) q = q.where('d.status', '=', f.status);
     if (f.docType) q = q.where('d.doc_type', '=', f.docType);
+    // [2026-11-09 05:45 PM kiennt] PHASE-028 — giai đoạn 3.2b: phạm vi xem theo loại chứng từ (rỗng = không thấy gì, không bao giờ "rỗng = tất cả")
+    if (f.onlyDocTypes) q = f.onlyDocTypes.length ? q.where('d.doc_type', 'in', f.onlyDocTypes) : q.where(sql<boolean>`false`);
+    if (f.excludeDocTypes?.length) q = q.where('d.doc_type', 'not in', f.excludeDocTypes);
     if (f.sourceSystem) q = q.where('d.source_system', 'in', f.sourceSystem.split(',').map((x) => x.trim()).filter(Boolean));
     // sourceType: loại phiếu ở nguồn; "!loại" = trừ loại đó (ví dụ hoá đơn bán hàng không lẫn phiếu xuất điều chỉnh).
     if (f.sourceType?.startsWith('!')) q = q.where(sql<string>`COALESCE(d.payload->'sourceRef'->>'type', '')`, '<>', f.sourceType.slice(1));

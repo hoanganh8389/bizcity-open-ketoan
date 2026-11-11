@@ -64,6 +64,8 @@ export interface AuthzPermissionDef {
   suggestedRoles?: string[];
   since?: string;
   replaces?: string;
+  // [2026-11-09 05:00 PM kiennt] PHASE-028 — giai đoạn 3.1: quyền gốc kéo theo quyền này (documents:write → quyền chứng từ chi tiết) — luật Cấm khớp quyền gốc cũng phủ quyền này
+  impliedBy?: string[];
 }
 
 export interface AuthzCatalogEntry extends AuthzPermissionDef {
