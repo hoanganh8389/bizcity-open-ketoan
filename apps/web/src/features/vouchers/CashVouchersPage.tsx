@@ -7,10 +7,13 @@
  * Bấm một dòng để mở phiếu. Phiếu đã xóa (đã đảo bút toán) không hiện trong danh sách.
  * Thêm: "Lập từ mẫu…" điền sẵn từ bút toán mẫu; ký xác nhận hàng loạt các phiếu đã chọn.
  */
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapPhieu } from '@/lib/nhapExcel';
 import { KpiTien } from '@/components/KpiDanhMuc';
 import { useState } from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PenLine, Plus } from 'lucide-react';
+import { BookCheck } from 'lucide-react';
 import type { VoucherInput, VoucherTemplateInput, VoucherType } from '@ketoan/contracts';
 import { api, ALL_ROWS } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -30,6 +33,8 @@ interface Row {
   id: string; docKey: string; docNo: string; docDate: string; total: number; branchCode: string; partnerCode: string | null; partnerName: string | null;
   description: string; counterparty: string; reasonCode: string; employeeCode: string; employeeName: string; phone: string; address: string; invoiceRef: string;
   moneyAccount: string; createdAt: string | null; updatedAt: string | null; createdByName: string; updatedByName: string;
+  /** posted = đã ghi sổ; pending = nháp chờ duyệt (nhập Excel, trợ lý đề xuất). */
+  status: string;
 }
 type CashType = VoucherType;
 const SUBTITLE: Record<CashType, string> = {
@@ -58,9 +63,12 @@ export function CashVouchersPage({ type }: { type: CashType }) {
 
   const q = useQuery({
     queryKey: ['documents', 'voucher', type, f],
-    queryFn: async () => (await api.getPage<Row[]>('/api/v1/documents', {
-      from: f.from, to: f.to, branchCodes: f.branchCodes || undefined, docType: type, status: 'posted', voucherInfo: true, pageSize: ALL_ROWS,
-    })).data,
+    // Đã ghi sổ + nháp chờ duyệt (chữ cam, tích rồi bấm Ghi sổ).
+    queryFn: async () => {
+      const get = (status: string) => api.getPage<Row[]>('/api/v1/documents', { from: f.from, to: f.to, branchCodes: f.branchCodes || undefined, docType: type, status, voucherInfo: true, pageSize: ALL_ROWS }).then((r) => r.data);
+      const [posted, pending] = await Promise.all([get('posted'), get('pending')]);
+      return [...pending, ...posted].sort((a, b) => b.docDate.localeCompare(a.docDate) || b.docNo.localeCompare(a.docNo));
+    },
     placeholderData: keepPreviousData,
   });
   const load = (id: string) => qc.fetchQuery({ queryKey: ['document', id], queryFn: () => api.get<ExistingVoucher & { signatures?: SignatureInfo[] }>(`/api/v1/documents/${id}`), staleTime: 0 });
@@ -75,6 +83,16 @@ export function CashVouchersPage({ type }: { type: CashType }) {
     const r = await api.post<{ signed: number; skipped: string[] }>('/api/v1/signatures', { ids: picked.map((x) => x.id), role: signRole });
     setNotice(`Đã ký ${r.signed} phiếu (${SIGN_ROLES.find((x) => x.role === signRole)?.label.toLowerCase()}).${r.skipped.length ? ` Bỏ qua ${r.skipped.length}: ${r.skipped.slice(0, 5).join('; ')}${r.skipped.length > 5 ? '…' : ''}` : ''}`);
     void qc.invalidateQueries({ queryKey: ['signatures'] });
+  };
+  // [2026-11-11 Nguyễn Văn Thủy] ghi sổ hàng loạt phiếu chờ duyệt (đóng góp)
+  const ghiSo = async (list: Row[]) => {
+    const loi: string[] = [];
+    let ok = 0;
+    for (const r of list) {
+      try { await api.post(`/api/v1/vouchers/${r.id}/approve`, {}); ok++; } catch (e) { loi.push(`${r.docNo}: ${e instanceof Error ? e.message : String(e)}`); }
+    }
+    void qc.invalidateQueries({ queryKey: ['documents'] });
+    setNotice(`Đã ghi sổ ${ok} phiếu.${loi.length ? ` ${loi.length} phiếu chưa ghi được — ${loi.slice(0, 5).join('; ')}${loi.length > 5 ? '…' : ''}` : ''}`);
   };
   const bankOf = (acc: string) => banks.find((b) => b.accountCode === acc && b.isActive)?.code ?? '';
   const columns: Column<Row>[] = type === 'manual' ? [
@@ -94,6 +112,7 @@ export function CashVouchersPage({ type }: { type: CashType }) {
                 { key: 'updatedByName', header: 'User sửa', hidden: true },
               ] : [
                                 { key: 'docNo', header: 'Số phiếu', type: 'code' },
+                { key: 'status', header: 'Trạng thái', width: 100, value: (r) => (r.status === 'pending' ? 'Chờ duyệt' : 'Đã ghi sổ'), title: 'Chờ duyệt = phiếu nháp (nhập Excel…) chưa có bút toán: tích rồi bấm Ghi sổ' },
                 { key: 'employeeCode', header: 'Nhân viên', type: 'code' },
                 { key: 'description', header: 'Ghi chú' },
                 { key: 'currency', header: 'Tiền tệ', value: () => 'VND' },
@@ -137,6 +156,8 @@ export function CashVouchersPage({ type }: { type: CashType }) {
       extraPanel={(picked) => <PrintButton screen={VOUCHER_SCREEN[type]} templates={VOUCHER_TEMPLATES[type]} label="In các phiếu đã chọn" getDocs={() => printPicked(picked)} />}
       extraToolbar={(picked, run) => (
         <>
+          {canWrite && <button disabled={!picked.some((r) => r.status === 'pending')} title="Ghi sổ các phiếu chờ duyệt đã tích (phiếu nhập Excel…); phiếu lỗi báo riêng, phiếu khác vẫn ghi" onClick={() => run(() => ghiSo(picked.filter((r) => r.status === 'pending')))}><BookCheck size={15} /> Ghi sổ{picked.some((r) => r.status === 'pending') ? ` ${picked.filter((r) => r.status === 'pending').length}` : ''}</button>}
+          {canWrite && nhapPhieu(type) && <NutNhapExcel loai={nhapPhieu(type)!} />}
           <PrintButton bare screen={VOUCHER_SCREEN[type]} templates={VOUCHER_TEMPLATES[type]} getDocs={() => printPicked(picked)} />
           {canWrite && templates.length > 0 && (
             <select className="select input" style={{ height: 26, marginLeft: 8, width: 'auto' }} value="" title="Lập phiếu điền sẵn từ bút toán mẫu" onChange={(e) => { const t = templates.find((x) => x.code === e.target.value); if (t) { setNotice(null); setForm({ initial: t.voucher, seq: Date.now() }); } }}>

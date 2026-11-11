@@ -2,7 +2,7 @@
 
 <!-- [2026-11-11 Nguyễn Văn Thủy] hướng dẫn trình nhập Excel dùng chung (đóng góp) -->
 
-Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàng, Kho, Số dư tài khoản đầu kỳ**. Mở ở **Tiện ích → Nhập dữ liệu từ Excel**, hoặc nút **Nhập Excel** ở danh sách.
+Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàng, Kho, Số dư tài khoản đầu kỳ, Phiếu thu, Phiếu chi, Báo có, Báo nợ, Phiếu kế toán**. Mở ở **Tiện ích → Nhập dữ liệu từ Excel**, hoặc nút **Nhập Excel** ở danh sách.
 
 ## Bốn bước
 
@@ -22,4 +22,6 @@ Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàn
 - **Số dư tài khoản đầu kỳ**: mỗi dòng một tài khoản (và đối tượng với 131, 331…), ghi Dư Nợ hoặc Dư Có; mỗi chi nhánh thành một phiếu số dư.
   Tổng Dư Nợ phải bằng tổng Dư Có của chi nhánh (hoặc ghi cột *TK cân đối*). Tài khoản doanh thu, chi phí (loại 5–8, 911) không có số dư — lãi lỗ luỹ kế ghi 4212 / 4211.
   Chi nhánh đã có phiếu số dư thì sửa phiếu đó (ACC15) hoặc huỷ trước khi nhập lại. Phiếu của chi nhánh còn dòng lỗi thì cả phiếu chưa ghi.
+- **Phiếu thu / chi / báo có / báo nợ / phiếu kế toán**: các dòng cùng *Số chứng từ* là một phiếu nhiều dòng; để trống số thì mỗi dòng một phiếu, tự cấp số. Bước kiểm tra **ghi sổ thử rồi huỷ** nên báo đúng mọi lỗi (khoản mục, bộ phận, đối tượng bắt buộc, kỳ khoá…).
+  Phiếu nhập vào ở trạng thái **Chờ duyệt** (chữ cam, chưa có bút toán). Ở danh sách phiếu: tích các phiếu rồi bấm **Ghi sổ** để ghi hàng loạt; phiếu nào lỗi báo riêng.
 - Phiếu nhập mua, đơn đặt hàng: dùng nút **Nhập từ Excel** ở Tổng hợp mua hàng (MH11).

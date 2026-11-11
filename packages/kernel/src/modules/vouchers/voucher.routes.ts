@@ -14,13 +14,14 @@
  *   GET  /api/v1/documents/:id
  *   POST /api/v1/documents/cancel
  * Ghi: action core.voucher.{create,update}, core.opening-balance.{create,update} (W6, SC-ACT-1).
+ *   POST /api/v1/vouchers/import  nhập Excel: mỗi phiếu lưu NHÁP chờ duyệt (chưa ghi sổ); dryRun = lưu thử rồi huỷ (kiểm đúng như lưu thật)
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { openingInputSchema, voucherInputSchema } from '@ketoan/contracts';
 import { idParamSchema } from '@bizcity/platform/core/http';
 import { voucherService } from './voucher.service.js';
-import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
+import { defineAction, inSavepoint, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { voucherActions } from './voucher.actions.js';
 
 const tags = ['Chứng từ nhập tay'];
@@ -34,7 +35,37 @@ export async function voucherRoutes(app: FastifyInstance): Promise<void> {
 // (nhật ký nghiệp vụ <loại>.create / .update vẫn do service ghi; bằng chứng action do runtime). Lập mới bắt buộc khoá idempotency.
 const docOut = z.custom<{ id: string; docKey: string; docNo: string; version: number; entryIds: string[] }>((v) => typeof v === 'object' && v !== null && 'docKey' in v);
 
+// [2026-11-11 Nguyễn Văn Thủy] nhập Excel phiếu thu / chi / báo có / báo nợ / phiếu kế toán thành phiếu nháp chờ duyệt (đóng góp)
+const THU_LAI = Symbol('chạy thử: huỷ phiếu vừa lưu');
+const importVoucherInput = z.object({
+  dryRun: z.boolean().default(true),
+  vouchers: z.array(z.object({ rows: z.array(z.number().int()).min(1).max(500), voucher: z.unknown() })).min(1).max(1000),
+});
+const errText = (e: unknown) => (e instanceof Error ? e.message : String(e)) + (Array.isArray((e as { details?: unknown }).details) ? `: ${((e as { details: string[] }).details).join('; ')}` : '');
+
 export const manualWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.voucher.import', title: 'Nhập Excel phiếu nhập tay: mỗi phiếu lưu nháp chờ duyệt; dryRun lưu thử rồi huỷ', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: importVoucherInput, output: z.custom<object>((v) => typeof v === 'object' && v !== null),
+    expose: { http: { method: 'POST', path: '/api/v1/vouchers/import' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'source_document' },
+    handler: async (ctx, input) => {
+      const results: { rows: number[]; ok: boolean; docNo?: string; error?: string }[] = [];
+      for (const v of input.vouchers) {
+        const parsed = voucherInputSchema.safeParse(v.voucher);
+        if (!parsed.success) { results.push({ rows: v.rows, ok: false, error: parsed.error.issues.map((i) => `${i.path.join('.') || 'phiếu'}: ${i.message}`).join('; ') }); continue; }
+        // Bước 1 (cả khi nhập thật): ghi sổ thử trọn vẹn rồi huỷ — bắt mọi lỗi lúc duyệt sẽ gặp (đối tượng bắt buộc, kỳ khoá…).
+        const thu = await inSavepoint(ctx.data.tx, async (t) => { await voucherService.draftIn(t, ctx.legacyAuth, parsed.data, { preview: true }); throw THU_LAI; });
+        if (!thu.ok && thu.error !== THU_LAI) { results.push({ rows: v.rows, ok: false, error: errText(thu.error) }); continue; }
+        if (input.dryRun) { results.push({ rows: v.rows, ok: true, docNo: '' }); continue; }
+        // Bước 2: lưu nháp chờ duyệt (giữ số phiếu, chưa có bút toán).
+        const x = await inSavepoint(ctx.data.tx, (t) => voucherService.draftIn(t, ctx.legacyAuth, parsed.data));
+        results.push(x.ok ? { rows: v.rows, ok: true, docNo: x.value.docNo } : { rows: v.rows, ok: false, error: errText(x.error) });
+      }
+      return { dryRun: input.dryRun, saved: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length, vouchers: results };
+    },
+  }),
   defineAction({
     id: 'core.voucher.create', title: 'Lập phiếu thu / phiếu chi / phiếu kế toán', tags,
     permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'required',

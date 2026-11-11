@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Nhập Excel phiếu thu / chi / báo có / báo nợ / phiếu kế toán + ghi sổ hàng loạt <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §4 (đóng góp) -->
+
+- **Thêm:** trình nhập Excel 5 loại phiếu: dòng cùng số chứng từ là một phiếu; bước kiểm ghi sổ thử rồi huỷ; phiếu nhập vào ở trạng thái chờ duyệt (chưa có bút toán).
+- **Thêm:** API `POST /api/v1/vouchers/import` (dryRun).
+- **Đổi:** danh sách phiếu tiền hiện cả phiếu chờ duyệt (chữ cam, cột Trạng thái); nút **Ghi sổ** ghi hàng loạt phiếu đã tích; nút Nhập Excel trên thanh nút.
+- **Thay đổi định khoản:** không (bút toán như lập phiếu tay, ghi khi duyệt).
+
 ### Nhập Excel số dư tài khoản đầu kỳ <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/03 §3 (đóng góp) -->
 
 - **Thêm:** trình nhập Excel loại *Số dư tài khoản đầu kỳ* (TI14, nút Nhập từ Excel ở ACC15): mỗi chi nhánh một phiếu số dư; kiểm trước tài khoản, đối tượng, cân Nợ – Có, chi nhánh đã có phiếu.

@@ -278,5 +278,82 @@ const SO_DU: NhapLoai = {
   },
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, KHO, SO_DU];
+
+/* ------------------------------------------------------------------ Phiếu thu / chi / báo có / báo nợ / phiếu kế toán */
+type LoaiPhieu = 'receipt' | 'payment' | 'bank_receipt' | 'bank_payment' | 'manual';
+const PHIEU: Record<LoaiPhieu, { id: string; title: string; path: string; nguoi: string; no?: string; co?: string; dg: string }> = {
+  receipt: { id: 'phieu-thu', title: 'Phiếu thu', path: '/nghiep-vu/phieu-thu', nguoi: 'Người nộp', no: '1111', dg: 'Thu tiền' },
+  payment: { id: 'phieu-chi', title: 'Phiếu chi', path: '/nghiep-vu/phieu-chi', nguoi: 'Người nhận', co: '1111', dg: 'Chi tiền' },
+  bank_receipt: { id: 'bao-co', title: 'Phiếu báo có', path: '/nghiep-vu/phieu-bao-co', nguoi: 'Người nộp', dg: 'Thu tiền gửi' },
+  bank_payment: { id: 'bao-no', title: 'Phiếu báo nợ', path: '/nghiep-vu/phieu-bao-no', nguoi: 'Người nhận', dg: 'Chi tiền gửi' },
+  manual: { id: 'phieu-ke-toan', title: 'Phiếu kế toán', path: '/nghiep-vu/phieu-ke-toan', nguoi: 'Người liên quan', dg: 'Hạch toán' },
+};
+const phieuTien = (docType: LoaiPhieu): NhapLoai => {
+  const m = PHIEU[docType];
+  return {
+    id: m.id, nhom: 'Chứng từ', title: m.title, keyField: 'docNo', listPath: m.path, invalidate: ['documents', 'document'], modes: false,
+    desc: 'Mỗi số chứng từ một phiếu (nhiều dòng TK Nợ / TK Có / số tiền); vào ở trạng thái chờ duyệt, duyệt ở danh sách để ghi sổ',
+    fields: [
+      { key: 'docNo', header: 'Số chứng từ', aliases: ['so phieu', 'so ct', 'so chung tu (*)'], note: 'Các dòng cùng số = một phiếu nhiều dòng. Để trống: mỗi dòng một phiếu, phần mềm tự cấp số.' },
+      { key: 'docDate', header: 'Ngày chứng từ', required: true, aliases: ['ngay', 'ngay hach toan', 'ngay ct'], example: '20/10/2026', note: 'dd/mm/yyyy.' },
+      { key: 'branchCode', header: 'Chi nhánh', required: true, aliases: ['ma chi nhanh', 'don vi'], example: '00000' },
+      { key: 'description', header: 'Diễn giải', aliases: ['ly do thu', 'ly do chi', 'noi dung', 'dien giai chung'], defaultValue: m.dg, note: 'Diễn giải chung của phiếu.' },
+      { key: 'partnerCode', header: 'Mã đối tượng', aliases: ['doi tuong', 'ma khach hang', 'ma nha cung cap', 'ma kh', 'ma ncc'], note: 'Bắt buộc khi dòng dùng tài khoản theo dõi đối tượng (131, 331, 141…).' },
+      { key: 'counterparty', header: m.nguoi, aliases: ['nguoi nop', 'nguoi nhan', 'nguoi nop tien', 'nguoi nhan tien', 'ho ten'] },
+      { key: 'reasonCode', header: 'Lý do', aliases: ['ma ly do'] },
+      { key: 'employeeCode', header: 'Nhân viên', aliases: ['ma nhan vien', 'nv'] },
+      { key: 'lineDescription', header: 'Diễn giải dòng', aliases: ['dien giai chi tiet', 'noi dung dong'] },
+      { key: 'debitAccount', header: 'TK Nợ', required: true, aliases: ['tai khoan no', 'tk no'], defaultValue: m.no, example: m.no ?? '1121' },
+      { key: 'creditAccount', header: 'TK Có', required: true, aliases: ['tai khoan co', 'tk co'], defaultValue: m.co, example: m.co ?? '1311' },
+      { key: 'amount', header: 'Số tiền', required: true, aliases: ['so tien', 'thanh tien', 'so tien quy doi'], example: '1.000.000' },
+      { key: 'costItem', header: 'Khoản mục', aliases: ['khoan muc chi phi', 'ma khoan muc'] },
+      { key: 'department', header: 'Bộ phận', aliases: ['ma bo phan', 'phong ban'] },
+    ],
+    run: async (rows, { dryRun }) => {
+      // Gom dòng theo số chứng từ; số trống = mỗi dòng một phiếu.
+      const nhom = new Map<string, Record<string, string>[]>();
+      for (const r of rows) { const k = (r.docNo ?? '').trim() || `#${r._row}`; nhom.set(k, [...(nhom.get(k) ?? []), r]); }
+      const loiTruoc = new Map<number, string[]>();
+      const vouchers: { rows: number[]; voucher: unknown }[] = [];
+      for (const [k, list] of nhom) {
+        const h = list[0]!;
+        const loi: string[] = [];
+        const date = ngay(h.docDate);
+        if (!date) loi.push(`Ngày chứng từ "${h.docDate ?? ''}" không đọc được (dd/mm/yyyy)`);
+        if (list.some((r) => ngay(r.docDate) !== date || (r.branchCode ?? '').trim() !== (h.branchCode ?? '').trim())) loi.push(`Các dòng của phiếu ${k} khác ngày hoặc khác chi nhánh`);
+        const lines = list.map((r) => {
+          const so = soTien(r.amount);
+          if (Number.isNaN(so) || so <= 0) loi.push(`Dòng ${r._row}: số tiền "${r.amount ?? ''}" phải là số lớn hơn 0`);
+          return { debitAccount: (r.debitAccount ?? '').trim(), creditAccount: (r.creditAccount ?? '').trim(), amount: so, description: (r.lineDescription ?? '').trim() || (r.description ?? '').trim(),
+            ...(r.costItem?.trim() ? { costItem: r.costItem.trim() } : {}), ...(r.department?.trim() ? { department: r.department.trim() } : {}) };
+        });
+        const nums = list.map((r) => Number(r._row));
+        if (loi.length) { for (const n of nums) loiTruoc.set(n, loi); continue; }
+        vouchers.push({ rows: nums, voucher: {
+          docType, branchCode: (h.branchCode ?? '').trim(), docDate: date, ...(k.startsWith('#') ? {} : { docNo: k }),
+          description: (h.description ?? '').trim() || m.dg, counterparty: (h.counterparty ?? '').trim(),
+          ...(h.partnerCode?.trim() ? { partnerCode: h.partnerCode.trim() } : {}), ...(h.reasonCode?.trim() ? { reasonCode: h.reasonCode.trim() } : {}),
+          ...(h.employeeCode?.trim() ? { employeeCode: h.employeeCode.trim() } : {}), lines,
+        } });
+      }
+      const kq = vouchers.length ? await api.post<{ vouchers: { rows: number[]; ok: boolean; docNo?: string; error?: string }[] }>('/api/v1/vouchers/import', { dryRun, vouchers }) : { vouchers: [] };
+      const theoDong = new Map<number, { ok: boolean; docNo?: string; error?: string }>();
+      for (const v of kq.vouchers) for (const n of v.rows) theoDong.set(n, v);
+      const out: NhapDong[] = rows.map((r) => {
+        const row = Number(r._row);
+        const v = theoDong.get(row);
+        const errors = loiTruoc.get(row) ?? (v && !v.ok ? [v.error ?? 'Lỗi'] : []);
+        const so = soTien(r.amount);
+        return { row, key: v?.docNo || (r.docNo ?? ''), action: errors.length ? 'error' : 'create', errors,
+          values: { ...r, docNo: v?.docNo || r.docNo || (errors.length ? '' : '(tự cấp)'), amount: Number.isNaN(so) ? r.amount : tien(so) } };
+      });
+      const n = (x: NhapDong['action']) => out.filter((r) => r.action === x).length;
+      return { created: n('create'), updated: 0, failed: n('error'), rows: out };
+    },
+  };
+};
+
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, KHO, SO_DU, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
+/** Loại nhập của một loại phiếu tiền / phiếu kế toán (nút Nhập Excel ở danh sách phiếu). */
+export const nhapPhieu = (docType: string) => NHAP_LOAI.find((l) => l.id === PHIEU[docType as LoaiPhieu]?.id);
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);

@@ -36,7 +36,12 @@ Thêm loại mới: viết một `NhapLoai` (trường + `run`) rồi thêm vào
 - Kiểm trước như máy chủ: tài khoản chi tiết có thật, không phải loại 5–8 / 911; tài khoản theo dõi đối tượng phải có mã đối tượng có thật (`POST /api/v1/partners/exists`); mỗi dòng một bên; cân Nợ – Có theo chi nhánh; chi nhánh đã có phiếu số dư; một chi nhánh một ngày. Phiếu còn dòng lỗi thì không ghi nửa vời.
 - Đọc số "1.000.000" / "1,000,000", ngày dd/mm/yyyy hoặc ô ngày Excel.
 
-## 4. Việc tiếp theo của mục này
+## 4. Bổ sung: phiếu thu / chi / báo có / báo nợ / phiếu kế toán + ghi sổ hàng loạt
 
-- Loại: nhóm hàng, tồn kho đầu kỳ theo mã hàng, phiếu thu / chi, phiếu chuyển kho.
-- Chứng từ nhập vào ở trạng thái chưa duyệt + duyệt hàng loạt.
+- Năm loại phiếu (nhóm Chứng từ; nút *Nhập Excel* trên thanh nút danh sách phiếu). Gom dòng theo *Số chứng từ* (trống = mỗi dòng một phiếu, tự cấp số); ngầm định TK Nợ 1111 (phiếu thu), TK Có 1111 (phiếu chi), Diễn giải theo loại.
+- API `POST /api/v1/vouchers/import` `{ dryRun, vouchers: [{ rows, voucher }] }` (kernel `voucher.routes.ts`): mỗi phiếu **ghi sổ thử rồi huỷ** (savepoint) — bắt cả lỗi chỉ lộ ra lúc ghi sổ (tài khoản theo dõi đối tượng thiếu đối tượng…); qua rồi mới lưu **nháp chờ duyệt** (`draftIn`, giữ số phiếu, chưa có bút toán). Test `apps/api/test/nhap-phieu-tien.test.ts`.
+- Danh sách phiếu tiền hiện cả phiếu chờ duyệt (chữ cam, cột Trạng thái); nút **Ghi sổ** ghi hàng loạt các phiếu chờ duyệt đã tích qua `POST /api/v1/vouchers/:id/approve`, phiếu lỗi báo riêng.
+
+## 5. Việc tiếp theo của mục này
+
+- Loại: nhóm hàng, tồn kho đầu kỳ theo mã hàng, phiếu chuyển kho, phiếu bán hàng.

@@ -9,6 +9,7 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { ChiTietChungTu } from './ChiTietChungTu';
 import { useThemTuDiaChi } from '@/lib/themNhanh';
+import { dongChungTu } from '@/lib/trangThai';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Copy, Download, Pencil, RefreshCw, Search, X } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
@@ -143,6 +144,7 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
               storageKey={storageKey}
               rows={rows}
               rowKey={(r) => r.id}
+              rowClassName={(r) => dongChungTu((r as { status?: string }).status)}
               onRowClick={chiTiet ? (r) => setDang(r) : (r) => run(async () => { await onOpen(r); })}
               onRowDoubleClick={chiTiet ? (r) => run(async () => { await onOpen(r); }) : undefined}
               maxHeight={chiTiet ? 'calc(100vh - 470px)' : undefined}
