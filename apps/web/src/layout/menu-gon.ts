@@ -57,7 +57,7 @@ export const GON_DEFS: GonDef[] = [
     key: 'tien-gui', label: 'Tiền gửi', icon: 'Landmark', description: 'Thu, chi tiền gửi, chuyển tiền nội bộ, sổ tiền gửi', color: '#0b8a7a', module: 'quy', homeLabel: 'Quy trình',
     the: ['/nghiep-vu/phieu-bao-co', '/nghiep-vu/phieu-bao-no', '/quy/phieu-chuyen-tien'],
     sections: [{ paths: ['/nghiep-vu/phieu-bao-co', '/nghiep-vu/phieu-bao-no', '/quy/phieu-chuyen-tien'], soon: ['Đối chiếu ngân hàng'] }],
-    reports: [{ label: 'Tiền gửi', paths: ['/quy/so-tien-gui', '/quy/so-du-tien', '/bao-cao/tien-vay'] }],
+    reports: [{ label: 'Tiền gửi', paths: ['/quy/so-tien-gui', '/quy/so-du-ngan-hang', '/quy/so-du-tien', '/quy/chuyen-tien-noi-bo', '/bao-cao/tien-vay'] }],
   },
   {
     key: 'mua-hang', label: 'Mua hàng', icon: 'ShoppingBag', description: 'Đơn mua hàng, mua hàng, trả lại, giảm giá, hóa đơn đầu vào', color: '#e8710a', module: 'mua-hang', homeLabel: 'Quy trình',

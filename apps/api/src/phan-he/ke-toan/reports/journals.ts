@@ -290,8 +290,8 @@ export async function voucherListing(a: Scope & { accountPrefix?: string; docTyp
      WHERE d.tenant_id = ${a.tenantId} AND d.debit <> 0
        AND d.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        AND ${ACTIVE} ${sql.join(filters, sql` `)}`;
-  const rows = await sql<{ entry_id: string; posting_date: string; doc_no: string; doc_type: string; invoice_no: string | null; description: string; debit_account: string; credit_account: string; amount: string; debit_partner: string | null; credit_partner: string | null; cost_item: string | null; department: string | null; contract: string | null; branch_code: string; reason_code: string | null }>`
-    SELECT d.entry_id, d.posting_date::text AS posting_date, e.doc_no, e.doc_type, e.invoice_no,
+  const rows = await sql<{ entry_id: string; posting_date: string; doc_date: string; entry_description: string; doc_no: string; doc_type: string; invoice_no: string | null; description: string; debit_account: string; credit_account: string; amount: string; debit_partner: string | null; credit_partner: string | null; cost_item: string | null; department: string | null; contract: string | null; branch_code: string; reason_code: string | null }>`
+    SELECT d.entry_id, d.posting_date::text AS posting_date, e.doc_date::text AS doc_date, e.description AS entry_description, e.doc_no, e.doc_type, e.invoice_no,
            COALESCE(NULLIF(d.description, ''), e.description) AS description,
            d.account_code AS debit_account, c.account_code AS credit_account, LEAST(d.debit, c.credit) AS amount,
            pd.code AS debit_partner, pc.code AS credit_partner,
@@ -305,7 +305,7 @@ export async function voucherListing(a: Scope & { accountPrefix?: string; docTyp
   const totals = await sql<{ n: string; amount: string }>`SELECT COUNT(*) AS n, COALESCE(SUM(LEAST(d.debit, c.credit)), 0) AS amount ${from}`.execute(db);
   return {
     rows: rows.rows.map((r) => ({
-      entryId: r.entry_id, postingDate: r.posting_date, docNo: r.doc_no, docType: r.doc_type, invoiceNo: r.invoice_no, description: r.description,
+      entryId: r.entry_id, postingDate: r.posting_date, docDate: r.doc_date, entryDescription: r.entry_description, docNo: r.doc_no, docType: r.doc_type, invoiceNo: r.invoice_no, description: r.description,
       debitAccount: r.debit_account, creditAccount: r.credit_account, amount: toNumber(r.amount),
       debitPartner: r.debit_partner ?? '', creditPartner: r.credit_partner ?? '',
       costItem: r.cost_item ?? '', department: r.department ?? '', contract: r.contract ?? '', branchCode: r.branch_code, reasonCode: r.reason_code ?? '',

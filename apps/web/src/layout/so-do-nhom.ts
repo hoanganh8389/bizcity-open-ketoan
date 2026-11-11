@@ -41,7 +41,8 @@ export const SO_DO: Record<string, SoDo> = {
     ],
     reports: [
       { label: 'Bảng kê số dư tiền theo ngày', path: '/quy/so-du-tien' }, { label: 'Sổ tiền gửi ngân hàng', path: '/quy/so-tien-gui' },
-      { label: 'Bảng kê số dư ngân hàng' }, { label: 'Sổ chi tiết tiền vay', path: '/bao-cao/tien-vay' },
+      { label: 'Bảng kê số dư ngân hàng', path: '/quy/so-du-ngan-hang' }, { label: 'Sổ chi tiết chuyển tiền nội bộ', path: '/quy/chuyen-tien-noi-bo' },
+      { label: 'Sổ chi tiết tiền vay', path: '/bao-cao/tien-vay' },
     ],
     links: [L.tkNganHang, L.khach, L.ncc, L.nhanVien],
   },

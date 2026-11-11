@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bảng kê số dư ngân hàng (ACC96), Sổ chi tiết chuyển tiền nội bộ (ACC97) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- ACC96: STT · Tài khoản ngân hàng · Tên ngân hàng · Chi nhánh · Số dư đầu kỳ · Phát sinh Nợ / Có · Số dư cuối kỳ (ghép danh mục tài khoản ngân hàng theo tài khoản kế toán).
+- ACC97: chứng từ chuyển tiền nội bộ — tài khoản đi / đến (số, tên ngân hàng), lý do, diễn giải, TK Nợ, TK Có, số tiền.
+- API voucher-listing trả thêm docDate, entryDescription. Không thêm bảng.
+
+
 ### Sổ kế toán chi tiết quỹ tiền mặt (ACC76) theo mẫu <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Cột Ngày hạch toán · Ngày chứng từ · Số phiếu thu · Số phiếu chi · Diễn giải · Tài khoản · TK đối ứng · Số phát sinh (Nợ, Có) · Số tồn · Người nhận/Người nộp; tuỳ chọn Cộng gộp các bút toán giống nhau / Cộng gộp theo chứng từ. Bản in cùng cột.
 
