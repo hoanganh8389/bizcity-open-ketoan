@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Lập báo cáo tài chính (ACC99) <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
+- Màn **Tổng hợp → Lập báo cáo tài chính** (`/tong-hop/lap-bctc`): chọn tham số (kỳ Năm / 6 tháng / Quý / Tùy chọn, giả định hoạt động liên tục, chọn B01-DN, B02-DN, B03-DN), hộp lập mỗi mẫu một thẻ, số lấy từ sổ, sửa tay ô chi tiết (dòng tổng tự tính lại), Lấy lại dữ liệu, đã kiểm toán / ý kiến kiểm toán, Người lập / Người đại diện theo pháp luật / Ngày lập bắt buộc (điền sẵn theo Hồ sơ in), **Kiểm tra báo cáo** (280 = 440, B03 [70] = B01 [110], B03 [60] = đầu năm [110], B02 [60] với B01 [420b]), Hủy · Ghi · Ghi và In; danh sách BCTC đã lập (Xem, Xoá). B03-DN gián tiếp: đang phát triển.
+- Bảng mới `financial_statements` (migration 0106), API `/api/v1/financial-statements` (danh sách, lập số, xem, ghi, xoá). Hướng dẫn `docs/huong-dan/lap-bao-cao-tai-chinh.md`.
+
 ### Mua hàng: trả lại Nhà cung cấp mua hàng (MH01), lồng phần đặc thù vào khung chuẩn <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Thẻ **Nhà cung cấp mua hàng** (`/mua-hang/nha-cung-cap`, MH01) mở lại danh sách NCC đang giao dịch → hồ sơ NCC (chính sách, hợp đồng, giá mua, hạn mức), thay cho danh mục DM13; hồ sơ NCC "quay lại" về MH01.
 - Thẻ Mua hàng thêm **Phân tích đặt hàng**, **Tồn max**, **Chính sách mua hàng**, **Hạn mức & công nợ đến hạn**. Lưu đồ Quy trình: Phân tích đặt hàng → Đơn mua hàng → Nhận hàng → Xử lý hóa đơn đầu vào → Trả tiền theo hóa đơn; hàng dưới thêm Công nợ đến hạn; Tiện ích thêm Chính sách mua, Tồn max, Cài đặt mua hàng.

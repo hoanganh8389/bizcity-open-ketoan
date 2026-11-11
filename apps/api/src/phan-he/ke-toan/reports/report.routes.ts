@@ -33,6 +33,7 @@ import { z } from 'zod';
 import { authOf, requirePermission } from '../../../core/auth.js';
 import { ok, pageMeta, pageQuerySchema, queryBool } from '../../../core/http.js';
 import { reportService } from './report.service.js';
+import { BCTC_REPORTS, bctcSaveSchema, lapBctcService } from './lap-bctc.js';
 import { registerActions } from '../../../core/actions.js';
 import { reportActions } from './report.actions.js';
 import { EXPENSE_GROUPS, type ExpenseGroup } from './control-reports.js';
@@ -55,6 +56,35 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
   registerActions(reportActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
   const pre = requirePermission('reports:read');
+
+  // [2026-11-11 Nguyễn Văn Thủy] Lập báo cáo tài chính (ACC99): lập số theo kỳ, lưu bộ đã lập (đóng góp)
+  const bctcWrite = requirePermission('documents:write');
+  const idParam = z.object({ id: z.coerce.number().int().positive() });
+  r.get('/api/v1/financial-statements', {
+    preHandler: pre,
+    schema: { tags, summary: 'Báo cáo tài chính đã lập (danh sách)' },
+    handler: async (req) => ok(await lapBctcService.list(authOf(req))),
+  });
+  r.get('/api/v1/financial-statements/build', {
+    preHandler: pre,
+    schema: { tags, summary: 'Lập số báo cáo tài chính cho một kỳ (B01, B02, B03 từ sổ)', querystring: z.object({ from: date, to: date, reports: z.string().default(BCTC_REPORTS.join(',')).transform((s) => s.split(',').filter((x): x is (typeof BCTC_REPORTS)[number] => (BCTC_REPORTS as readonly string[]).includes(x))) }) },
+    handler: async (req) => ok(await lapBctcService.build(authOf(req), req.query)),
+  });
+  r.get('/api/v1/financial-statements/:id', {
+    preHandler: pre,
+    schema: { tags, summary: 'Một bộ báo cáo tài chính đã lập', params: idParam },
+    handler: async (req) => ok(await lapBctcService.get(authOf(req), req.params.id)),
+  });
+  r.put('/api/v1/financial-statements', {
+    preHandler: bctcWrite,
+    schema: { tags, summary: 'Ghi bộ báo cáo tài chính đã lập (thêm mới hoặc sửa)', body: bctcSaveSchema },
+    handler: async (req) => ok(await lapBctcService.save(authOf(req), req.body)),
+  });
+  r.delete('/api/v1/financial-statements/:id', {
+    preHandler: bctcWrite,
+    schema: { tags, summary: 'Xoá bộ báo cáo tài chính đã lập', params: idParam },
+    handler: async (req) => ok(await lapBctcService.remove(authOf(req), req.params.id)),
+  });
 
   r.get('/api/v1/reports/trial-balance', {
     preHandler: pre,

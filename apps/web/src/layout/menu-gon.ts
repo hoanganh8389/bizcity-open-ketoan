@@ -118,8 +118,8 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'tong-hop', label: 'Tổng hợp', icon: 'Network', description: 'Chứng từ nghiệp vụ khác, kết chuyển lãi lỗ, khóa sổ, báo cáo tài chính', color: '#1f66a3', module: 'ke-toan', homeLabel: 'Quy trình',
-    the: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/cau-hinh/ky-ke-toan'],
-    sections: [{ paths: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/cau-hinh/ky-ke-toan'], soon: ['Đề nghị quyết toán tạm ứng', 'Lập báo cáo tài chính'] }],
+    the: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'],
+    sections: [{ paths: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'], soon: ['Đề nghị quyết toán tạm ứng'] }],
     reports: [
       { label: 'Sổ kế toán', paths: ['/bao-cao/so-chi-tiet', '/bao-cao/nhat-ky-chung', '/bao-cao/so-cai', '/bao-cao/bang-ke-chung-tu', '/bao-cao/tong-hop-chung-tu'] },
       { label: 'Báo cáo tài chính', paths: ['/bao-cao/can-doi-ke-toan', '/bao-cao/ket-qua-kinh-doanh', '/bao-cao/luu-chuyen-tien-te', '/bao-cao/thuyet-minh', '/bao-cao/can-doi-phat-sinh'] },

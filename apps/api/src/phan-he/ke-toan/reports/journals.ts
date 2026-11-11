@@ -319,7 +319,7 @@ export async function voucherListing(a: Scope & { accountPrefix?: string; docTyp
  * Báo cáo lưu chuyển tiền tệ (B03-DN, phương pháp trực tiếp, Thông tư 99/2025/TT-BTC)
  * ------------------------------------------------------------------------- */
 
-interface CashFlowLine { code: string; name: string; bold?: boolean; formula?: string[] }
+export interface CashFlowLine { code: string; name: string; bold?: boolean; formula?: string[] }
 
 /** Chỉ tiêu theo mẫu B03-DN (phương pháp trực tiếp). Dòng có formula là dòng tổng. */
 export const CASH_FLOW_LINES: CashFlowLine[] = [

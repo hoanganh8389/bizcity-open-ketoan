@@ -10,6 +10,7 @@ import { setPrintCatalog, uniqTemplates, type CatalogScreen } from './components
 import type { PrintTemplate } from './components/print';
 import { VOUCHER_SCREEN, VOUCHER_TEMPLATES } from './features/vouchers/VoucherPrint';
 import { OFFSET_TEMPLATES } from './features/vouchers/OffsetPrint';
+import { LAP_BCTC_TEMPLATES } from './phan-he/ke-toan/reports/LapBctcPage';
 import { TRADE_TEMPLATES } from './components/phieu-hang/printTemplates';
 import { EXPORT_ADJUST_TEMPLATES } from './features/documents/ExportAdjustPrint';
 import { CASH_TRANSFER_TEMPLATES } from './features/documents/CashTransferPrint';
@@ -70,7 +71,7 @@ const SCREENS: [string, CatalogScreen['templates']][] = [
   ...LEDGER.map(([code, kind]): [string, CatalogScreen['templates']] => [code, t(ledgerTemplates(kind, code))]),
   ['ACC72', t(CASH_JOURNAL_TEMPLATES)], ['ACC73', t(CASH_JOURNAL_TEMPLATES)],
   ['ACC84', t(SALES_JOURNAL_TEMPLATES)], ['ACC77', t(PURCHASE_JOURNAL_TEMPLATES)], ['ACC60', t(LISTING_TEMPLATES)], ['ACC13', t(CASH_FLOW_TEMPLATES)],
-  ['ACC10', t(TRIAL_BALANCE_TEMPLATES)], ['ACC8', t(BALANCE_SHEET_TEMPLATES)], ['ACC9', t(INCOME_STATEMENT_TEMPLATES)],
+  ['ACC10', t(TRIAL_BALANCE_TEMPLATES)], ['ACC8', t(BALANCE_SHEET_TEMPLATES)], ['ACC9', t(INCOME_STATEMENT_TEMPLATES)], ['ACC99', t(LAP_BCTC_TEMPLATES)],
   ['ACC63', t(POSTING_TEMPLATES)], ['ACC80', t(CASH_BALANCE_TEMPLATES)], ['ACC91', t(TAX_SUMMARY_TEMPLATES)],
   ['ACC44', t(EXPENSE_TEMPLATES)], ['ACC70', t(contractProfitTemplates(false))], ['ACC71', t(contractProfitTemplates(true))], ['ACC93', t(CHECKS_TEMPLATES)],
   ['ACC47', t(EXPENSE_DETAIL_TEMPLATES)], ['ACC69', t(DIMENSION_SUM_TEMPLATES)], ['ACC75', t(CASH_ITEM_TEMPLATES)], ['ACC90', t(ITEM_BRANCH_TEMPLATES)],

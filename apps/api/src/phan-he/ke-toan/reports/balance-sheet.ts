@@ -30,7 +30,7 @@ import { db, toNumber, type Db } from '../../../db/client.js';
 import { partnerNamesAt } from './ten-doi-tuong.js';
 
 type Kind = 'debit' | 'credit' | 'contra' | 'debitByPartner' | 'creditByPartner';
-interface LineDef {
+export interface LineDef {
   code: string;
   name: string;
   /** Cấp trình bày: 0 tổng cộng, 1 mục A/B/C/D, 2 mục I/II, 3 chỉ tiêu, 4 chỉ tiêu con. */

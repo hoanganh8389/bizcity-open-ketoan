@@ -147,6 +147,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   asset_depreciation_overrides: { group: 'assets', label: 'Sửa tay số trích', module: 'assets', purpose: 'Kế toán sửa số trích của một tài sản trong một tháng, kèm lý do và người sửa.' },
   cit_returns: { group: 'tax', label: 'Quyết toán thuế TNDN', term: 'Mẫu 03/TNDN', module: 'statements', purpose: 'Tờ khai quyết toán thuế thu nhập doanh nghiệp đã lưu theo năm: chỉ tiêu tính từ báo cáo kết quả kinh doanh và phần kế toán nhập tay (điều chỉnh tăng, giảm, lỗ chuyển, ưu đãi).' },
   taxpayer_profiles: { group: 'tax', label: 'Thông tin người nộp thuế', term: 'Người nộp thuế', module: 'statements', purpose: 'Tên, mã số thuế, địa chỉ, cơ quan thuế quản lý, đại lý thuế, người ký: in ở phần đầu các tờ khai.' },
+  // [2026-11-11 Nguyễn Văn Thủy] danh mục bảng: financial_statements (0106) (đóng góp)
+  financial_statements: { group: 'tax', label: 'Báo cáo tài chính đã lập', term: 'BCTC B01, B02, B03', module: 'statements', purpose: 'Bộ báo cáo tài chính đã lập theo kỳ: số từng chỉ tiêu (gồm số sửa tay), người lập, người đại diện theo pháp luật, ngày lập, đã kiểm toán.' },
   vat_returns: { group: 'tax', label: 'Tờ khai thuế GTGT', term: 'Mẫu 01/GTGT', module: 'statements', purpose: 'Tờ khai đã lưu theo kỳ (tháng / quý): toàn bộ chỉ tiêu, phần nhập tay; revision 0 là lần đầu, 1, 2… là các lần khai bổ sung (kèm giải trình 01/KHBS, tiền chậm nộp); kỳ sau lấy [43] của lần mới nhất làm [22].' },
   long_term_balances: { group: 'assets', label: 'Phân loại dài hạn', term: 'Ngắn hạn / dài hạn', module: 'statements', purpose: 'Phần dài hạn (còn trên 12 tháng) của số dư phải thu, phải trả, vay tại ngày lập báo cáo; Báo cáo tình hình tài chính chuyển số này sang chỉ tiêu dài hạn.' },
 

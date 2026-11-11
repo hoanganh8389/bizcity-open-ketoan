@@ -2,6 +2,7 @@
  * Màn hình của phân hệ Kế toán. Đường dẫn là duy nhất trong cả phần mềm: menu phân hệ khác trỏ tới cũng mở đúng màn này.
  * Thêm màn: import + một <Route> ở đây, mục menu ở menu.ts cùng thư mục.
  */
+import { LapBctcPage } from './reports/LapBctcPage';
 import { Route } from 'react-router-dom';
 import { ClosingPage } from './closing/ClosingPage';
 import { DashboardPage } from './dashboard/DashboardPage';
@@ -55,6 +56,7 @@ export const keToanRoutes = (
     <Route path="nghiep-vu/so-du-tai-khoan" element={<OpeningBalancesPage />} />
     <Route path="nghiep-vu/ket-chuyen" element={<ClosingPage />} />
     <Route path="bao-cao/ket-qua-kinh-doanh" element={<IncomeStatementPage />} />
+    <Route path="tong-hop/lap-bctc" element={<LapBctcPage />} />
     <Route path="bao-cao/can-doi-ke-toan" element={<BalanceSheetPage />} />
     <Route path="bao-cao/tong-hop-chung-tu" element={<PostingSummaryPage />} />
     <Route path="quy/so-du-tien" element={<CashBalancesPage />} />

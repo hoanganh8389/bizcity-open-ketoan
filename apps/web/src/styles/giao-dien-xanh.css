@@ -456,3 +456,18 @@ html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-
 .vf-split-menu > div > button { text-align: left; border: 0; background: none; padding: 7px 12px; color: var(--ink-800, #1d2939); }
 .vf-split-menu > div > button:hover { background: var(--hover, #eef3fb); }
 .vf-toolbar .vf-add2, .vf-split-menu > summary.vf-add2 { background: var(--nav, #2457b3); color: #fff; border-color: var(--nav, #2457b3); }
+
+/* [2026-11-11 Nguyễn Văn Thủy] Lập báo cáo tài chính (ACC99): bảng chỉ tiêu, ô số sửa tay, menu nút ▾ (đóng góp) */
+.bctc-wrap { max-height: calc(100vh - 360px); overflow: auto; border: 1px solid var(--line, #e3e8ef); border-radius: 6px; }
+.bctc-bang { margin: 0; }
+.bctc-bang thead th { position: sticky; top: 0; z-index: 1; background: var(--head-bg, #eef3fb); }
+.bctc-bang td { padding-top: 3px; padding-bottom: 3px; }
+.bctc-bang tr.bctc-dam td { font-weight: 600; }
+.bctc-bang .bctc-o { height: 26px; text-align: right; border-color: transparent; background: transparent; }
+.bctc-bang .bctc-o:hover, .bctc-bang .bctc-o:focus { border-color: var(--nav, #2457b3); background: #fff; }
+.vf-split-pop { position: absolute; top: 100%; right: 0; z-index: 30; background: #fff; border: 1px solid var(--line, #e3e8ef); border-radius: 6px; box-shadow: 0 6px 18px rgba(15, 34, 61, .12); min-width: 240px; padding: 4px 0; display: grid; }
+.vf-split-pop > button { text-align: left; border: 0; background: none; padding: 7px 12px; color: var(--ink-800, #1d2939); }
+.vf-split-pop > button:hover { background: var(--hover, #eef3fb); }
+.bctc-body { display: block; grid-column: 1 / -1; width: 100%; }
+.bctc-body > .tabs { border-bottom: 1px solid var(--line, #e3e8ef); }
+.bctc-bang { width: 100%; }

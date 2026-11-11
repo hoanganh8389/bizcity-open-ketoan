@@ -142,7 +142,7 @@ export const SO_DO: Record<string, SoDo> = {
     title: 'Nghiệp vụ tổng hợp',
     rows: [
       [{ label: 'Đề nghị quyết toán tạm ứng', icon: 'Send' }, { label: 'Kết chuyển lãi lỗ', icon: 'ChartLine', path: '/nghiep-vu/ket-chuyen' }, { label: 'Khóa sổ kỳ kế toán', icon: 'Lock', path: '/cau-hinh/ky-ke-toan' }],
-      [{ label: 'Chứng từ nghiệp vụ khác', icon: 'FilePen', path: '/nghiep-vu/phieu-ke-toan' }, { label: 'Lập báo cáo tài chính', icon: 'ChartColumn', path: '/bao-cao/can-doi-ke-toan' }],
+      [{ label: 'Chứng từ nghiệp vụ khác', icon: 'FilePen', path: '/nghiep-vu/phieu-ke-toan' }, { label: 'Lập báo cáo tài chính', icon: 'ChartColumn', path: '/tong-hop/lap-bctc' }],
     ],
     reports: [
       { label: 'Sổ chi tiết các tài khoản', path: '/bao-cao/so-chi-tiet' }, { label: 'Sổ nhật ký chung', path: '/bao-cao/nhat-ky-chung' },
