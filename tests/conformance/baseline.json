@@ -17,68 +17,7 @@
     "SC-API-3": {
       "title": "Mọi route khai quyền (requirePermission) hoặc config.public",
       "ref": "R-API-6 · route chỉ cần đăng nhập: khai quyền hoặc config.public có lý do",
-      "debts": [
-        {
-          "fp": "SC-API-3|apps/api/src/modules/access/access.routes.ts|post /api/v1/auth/change-password",
-          "file": "apps/api/src/modules/access/access.routes.ts",
-          "message": "POST /api/v1/auth/change-password không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/auth/auth.routes.ts|get /api/v1/auth/me",
-          "file": "apps/api/src/modules/auth/auth.routes.ts",
-          "message": "GET /api/v1/auth/me không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/print-templates/print-template.routes.ts|get /api/v1/print-templates/effective",
-          "file": "apps/api/src/modules/print-templates/print-template.routes.ts",
-          "message": "GET /api/v1/print-templates/effective không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/print-templates/print-template.routes.ts|get /api/v1/print-templates/settings",
-          "file": "apps/api/src/modules/print-templates/print-template.routes.ts",
-          "message": "GET /api/v1/print-templates/settings không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/print-templates/print-template.routes.ts|put /api/v1/print-templates/settings",
-          "file": "apps/api/src/modules/print-templates/print-template.routes.ts",
-          "message": "PUT /api/v1/print-templates/settings không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/print-templates/print-template.routes.ts|delete /api/v1/print-templates/settings",
-          "file": "apps/api/src/modules/print-templates/print-template.routes.ts",
-          "message": "DELETE /api/v1/print-templates/settings không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/system/system.routes.ts|get /api/v1/settings/data-lock",
-          "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "GET /api/v1/settings/data-lock không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/system/system.routes.ts|get /api/v1/settings/posting-modes",
-          "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "GET /api/v1/settings/posting-modes không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/system/system.routes.ts|get /api/v1/tenant",
-          "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "GET /api/v1/tenant không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/system/system.routes.ts|get /api/v1/system/addins",
-          "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "GET /api/v1/system/addins không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/system/system.routes.ts|get /api/v1/system/modules",
-          "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "GET /api/v1/system/modules không khai requirePermission"
-        },
-        {
-          "fp": "SC-API-3|apps/api/src/modules/system/system.routes.ts|get /api/v1/system/schema",
-          "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "GET /api/v1/system/schema không khai requirePermission"
-        }
-      ]
+      "debts": []
     },
     "SC-DATA-1": {
       "title": "Migration: tên NNNN_ten.sql, số không trùng, không hở",

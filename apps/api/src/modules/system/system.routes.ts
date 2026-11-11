@@ -27,7 +27,7 @@ import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 import { z } from 'zod';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { authOf, requireAuthenticated, requirePermission } from '../../core/auth.js';
+import { authOf, requireAuthenticated, requirePermission, requireUser } from '../../core/auth.js';
 import { writeAudit } from '../../core/audit.js';
 import { dataLockSchema, readDataLock, todayVN } from '../../core/date-rules.js';
 import { Errors } from '../../core/errors.js';
@@ -66,7 +66,9 @@ const IMAGE_DATA_URL = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 export async function systemRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   r.get('/api/v1/settings/data-lock', {
+    preHandler: requireAuthenticated(),
     schema: { tags: ['Hệ thống'], summary: 'Khoá dữ liệu theo ngày: khoá đến ngày, chỉ sửa trong N ngày, chỉ lập phiếu hôm nay, cấm kế toán viên huỷ' },
     handler: async (req) => {
       const auth = authOf(req);
@@ -75,7 +77,9 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   r.get('/api/v1/settings/posting-modes', {
+    preHandler: requireAuthenticated(),
     schema: { tags: ['Hệ thống'], summary: 'Chế độ ghi sổ theo loại chứng từ: ghi ngay (auto) hay chờ duyệt (approve)' },
     handler: async (req) => {
       const t = await db.selectFrom('tenants').select('settings').where('id', '=', authOf(req).tenantId).executeTakeFirstOrThrow();
@@ -93,7 +97,9 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   r.get('/api/v1/tenant', {
+    preHandler: requireAuthenticated(),
     schema: { tags: ['Hệ thống'], summary: 'Thông tin đơn vị đang đăng nhập' },
     handler: async (req) => {
       const t = await db.selectFrom('tenants').select(['code', 'name', 'tax_code', 'address', 'phone', 'settings']).where('id', '=', authOf(req).tenantId).executeTakeFirstOrThrow();
@@ -236,13 +242,17 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   app.get('/api/v1/system/addins', {
+    preHandler: requireAuthenticated(),
     schema: { tags: ['Hệ thống'], summary: 'Add-in đang bật' },
     handler: async () => ok(app.addins.map((a) => a.manifest)),
   });
 
   // [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ?detail=true trả manifest (bizcity.module.json) của phân hệ + add-in đang bật; mặc định giữ mảng mã (giao diện cũ)
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): khai bảo vệ tường minh cho route trước là nợ SC-API-3
   app.get('/api/v1/system/modules', {
+    preHandler: requireAuthenticated(),
     schema: {
       tags: ['Hệ thống'], summary: 'Phân hệ máy chủ đang bật',
       description: 'Mặc định: mảng mã phân hệ đang bật. detail=true: manifest tóm tắt (id, key, kind, version, label, mô tả, năng lực cần, action, docType nộp sổ, giao diện) của phân hệ và add-in đang bật.',
@@ -292,7 +302,9 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 02:00 PM kiennt] PHASE-028 — S028-14 (80 F9): cấu trúc CSDL chỉ cho người dùng đăng nhập (màn TI10), không cho khoá API / app
   app.get('/api/v1/system/schema', {
+    preHandler: requireUser(),
     schema: { tags: ['Hệ thống'], summary: 'Cấu trúc cơ sở dữ liệu kèm giải thích' },
     handler: async () => ok(await readSchema()),
   });

@@ -146,6 +146,12 @@ const SCOPE_PERMISSIONS: Record<string, readonly Permission[]> = {
   'catalog:write': ['catalog:write', 'catalog:read'],
 };
 
+// [2026-11-09 01:52 PM kiennt] PHASE-028 — S028-13: lộ ánh xạ phạm vi khoá → quyền để lúc tạo khoá kiểm người tạo có đủ các quyền đó
+/** Quyền mà một tập phạm vi khoá API mang theo (cùng bảng với lúc xác thực khoá). */
+export function scopePermissions(scopes: readonly string[]): Set<Permission> {
+  return new Set<Permission>(scopes.flatMap((s) => SCOPE_PERMISSIONS[s] ?? []));
+}
+
 /**
  * Phiếu nhập tay (phiếu thu, chi, kế toán, kết chuyển…) chỉ người lập được sửa / huỷ, trừ khi có quyền
  * documents:edit-all (chủ đơn vị, kế toán trưởng, khoá API). Chứng từ nhận từ hệ thống khác không áp luật này.
