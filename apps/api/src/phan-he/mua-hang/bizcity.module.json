@@ -21,6 +21,38 @@
       "documents.workflow"
     ]
   },
+  "permissions": [
+    {
+      "key": "mua-hang:phieu-mua-xem",
+      "label": "Xem phiếu mua hàng",
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:phieu-mua-lap",
+      "label": "Lập / sửa phiếu mua hàng (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:phieu-mua-huy",
+      "label": "Huỷ phiếu mua hàng",
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:tra-ncc-xem",
+      "label": "Xem phiếu trả hàng nhà cung cấp",
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:tra-ncc-lap",
+      "label": "Lập / sửa phiếu trả hàng nhà cung cấp (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:tra-ncc-huy",
+      "label": "Huỷ phiếu trả hàng nhà cung cấp",
+      "risk": "low"
+    }
+  ],
   "data": {
     "tables": [
       "purchase_documents",

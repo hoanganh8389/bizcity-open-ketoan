@@ -9,7 +9,7 @@
 import { db, type Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
 import { writeAudit } from '@bizcity/platform/core/audit';
-import type { AuthContext } from '@bizcity/platform/core/auth';
+import { PERMISSIONS, type AuthContext } from '@bizcity/platform/core/auth';
 import { generateApiKey } from '@bizcity/platform/core/security/password';
 import {
   appEventTypes, getAppManifest, listAppManifests, newWebhookSalt, signAppTicket, verifyAppTicket, webhookSecret, type AppManifest,
@@ -166,7 +166,8 @@ export const appsService = {
       app: auth.app,
       tenant: { id: String(tenant.id), code: tenant.code, name: tenant.name },
       user: { id: String(user.id), name: user.full_name, role: user.role },
-      permissions: [...auth.permissions].sort(),
+      // [2026-11-09 05:20 PM kiennt] PHASE-028 — giai đoạn 3.1: chỉ báo quyền Core app được cấp (như trước) — quyền chứng từ chi tiết được documents:write kéo theo là chi tiết thi hành, không đổi hợp đồng của app
+      permissions: [...auth.permissions].filter((p) => (PERMISSIONS as readonly string[]).includes(p)).sort(),
     };
   },
 };

@@ -24,13 +24,14 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { VOUCHER_MONEY, ingestBatchSchema, type VoucherType } from '@ketoan/contracts';
 import { db, toNumber } from '@bizcity/platform/db/client';
-import { authOf, requirePermission } from '@bizcity/platform/core/auth';
+import { authOf, canDocument, documentPermissionOf, documentTypesWith, requirePermission, type AuthContext, type Permission } from '@bizcity/platform/core/auth';
+import { Errors } from '@bizcity/platform/core/errors';
 // [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1 (ADR-0027 Phụ lục A, W5 đợt 1; chủ duyệt K3): cửa nạp kiểm quyền theo chi nhánh của chứng từ — có documents:write toàn đơn vị thì như cũ, không thì theo lần gán phạm vi chi nhánh
 import { requireScope } from '@bizcity/platform/core/authz/scope';
 import type { AuthzResourceContext } from '@bizcity/platform/core/authz/types';
 // [2026-11-09 03:15 PM kiennt] PHASE-028 — S028-19: kho mặc định của chi nhánh cho dòng không ghi kho (vị trí của phạm vi kho)
 import { defaultWarehouseOf } from '@bizcity/platform/masterdata/default-warehouse';
-import type { FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ok, pageMeta, pageQuerySchema, idParamSchema, queryBool } from '@bizcity/platform/core/http';
 import { documentService } from './document.service.js';
 import { defineAction, mountActions, registerActions, type AnyActionDef } from '@bizcity/platform/core/actions';
@@ -80,7 +81,8 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
 
   // @bizcity-route: cửa nạp (ADR-0014) — chứng từ bị từ chối giữ ở bể chờ bằng giao dịch riêng; idempotent theo docKey + version
   r.post('/api/v1/documents', {
-    preHandler: requireScope('documents:write', (req) => branchesOfDocs(req, [req.body])),
+    // [2026-11-09 04:40 PM kiennt] PHASE-028 — giai đoạn 3.1 (80 D-AUTH-19): cửa nạp kiểm quyền THEO LOẠI CHỨNG TỪ (phân hệ đăng ký), không còn chỉ documents:write
+    preHandler: requireDocumentScope((req) => [req.body]),
     schema: {
       tags,
       summary: 'Gửi một chứng từ',
@@ -98,7 +100,7 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
 
   // @bizcity-route: cửa nạp theo lô — như POST /documents; gom một giao dịch có thể khoá chéo với bể chờ (kết nối riêng)
   r.post('/api/v1/documents/batch', {
-    preHandler: requireScope('documents:write', (req) => branchesOfDocs(req, (req.body as { documents?: unknown[] }).documents ?? [])),
+    preHandler: requireDocumentScope((req) => (req.body as { documents?: unknown[] }).documents ?? []),
     schema: { tags, summary: 'Gửi nhiều chứng từ', body: ingestBatchSchema },
     handler: async (req) => {
       const results = await documentService.ingestBatch(authOf(req), req.body.documents);
@@ -107,8 +109,9 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-09 05:45 PM kiennt] PHASE-028 — giai đoạn 3.2b: xem theo loại chứng từ — có documents:read thì bỏ loại bị Cấm xem; chỉ có quyền xem chi tiết thì chỉ thấy đúng loại đó
   r.get('/api/v1/documents', {
-    preHandler: requirePermission('documents:read'),
+    preHandler: requireDocumentRead(),
     schema: {
       tags,
       summary: 'Danh sách chứng từ',
@@ -128,7 +131,7 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
     },
     handler: async (req) => {
       const auth = authOf(req);
-      const { rows, total } = await documentService.list(auth, req.query);
+      const { rows, total } = await documentService.list(auth, { ...req.query, ...readableTypes(auth) });
       const info = req.query.voucherInfo ? await voucherListNames(auth.tenantId, rows as unknown as VoucherInfoRow[]) : null;
       return ok(
         rows.map((d) => ({
@@ -166,9 +169,13 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
   });
 
   r.get('/api/v1/documents/:id', {
-    preHandler: requirePermission('documents:read'),
+    preHandler: requireDocumentRead(),
     schema: { tags, summary: 'Chi tiết chứng từ', params: idParamSchema },
-    handler: async (req) => ok(await documentService.get(authOf(req), req.params.id)),
+    handler: async (req) => {
+      // [2026-11-09 05:45 PM kiennt] PHASE-028 — giai đoạn 3.2b: không có quyền xem loại này → như không có (404, không lộ phiếu có tồn tại)
+      await assertReadable(authOf(req), req.params.id);
+      return ok(await documentService.get(authOf(req), req.params.id));
+    },
   });
 
   r.get('/api/v1/documents/cash-transfers', {
@@ -193,9 +200,12 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
   });
 
   r.get('/api/v1/documents/:id/preview', {
-    preHandler: requirePermission('documents:read'),
+    preHandler: requireDocumentRead(),
     schema: { tags, summary: 'Xem trước định khoản: bút toán sẽ ghi theo nội dung mới nhất và cấu hình hiện tại (không ghi gì)', params: idParamSchema },
-    handler: async (req) => ok(await documentService.preview(authOf(req), req.params.id)),
+    handler: async (req) => {
+      await assertReadable(authOf(req), req.params.id);
+      return ok(await documentService.preview(authOf(req), req.params.id));
+    },
   });
 
   r.get('/api/v1/documents/:id/posting-log', {
@@ -232,9 +242,14 @@ export const cancelActions: AnyActionDef[] = [
     output: z.object({ reversed: z.number().int(), requested: z.boolean().optional(), cancelled: z.boolean().optional() }),
     expose: { http: { method: 'POST', path: '/api/v1/documents/cancel' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'source_document', objectId: (i) => i.docKey },
-    handler: (ctx, b) => (ctx.legacyAuth.kind === 'apikey'
-      ? documentService.requestCancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason)
-      : documentService.cancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason)),
+    handler: async (ctx, b) => {
+      // [2026-11-09 05:45 PM kiennt] PHASE-028 — giai đoạn 3.2b: huỷ theo loại chứng từ — Cấm quyền huỷ của loại (vd ban-hang:hoa-don-huy) chặn được người có documents:write
+      const ev = await ctx.data.tx.selectFrom('accounting_events').select('doc_type').where('tenant_id', '=', ctx.legacyAuth.tenantId).where('doc_key', '=', b.docKey).executeTakeFirst();
+      if (ev && !canDocument(ctx.legacyAuth, ev.doc_type, 'cancel')) throw Errors.forbidden(`Không có quyền huỷ loại chứng từ này (${documentPermissionOf(ev.doc_type, 'cancel')})`);
+      return ctx.legacyAuth.kind === 'apikey'
+        ? documentService.requestCancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason)
+        : documentService.cancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason);
+    },
   }),
 ];
 
@@ -290,6 +305,55 @@ export const documentWriteActions: AnyActionDef[] = [
 // (dòng không ghi kho = kho mặc định của chi nhánh, cùng luật với lúc ghi kho); chứng từ không có hàng chỉ có chi nhánh.
 // Chuyển kho: kho XUẤT (phía nhận xác nhận ở bước riêng — hai đầu, hai phép kiểm). Mọi vị trí phải được phép (requireScope).
 const STOCK_DOC_TYPES = new Set(['sale', 'sale_return', 'purchase', 'purchase_return', 'transfer', 'stock_adjustment']);
+
+// [2026-11-09 04:40 PM kiennt] PHASE-028 — giai đoạn 3.1 (80 D-AUTH-19)
+/**
+ * Gác cửa nạp theo loại chứng từ: mỗi chứng từ cần quyền `documentPermissionOf(docType)` — quyền chi tiết phân hệ đã đăng ký
+ * (vd `ban-hang:hoa-don-lap`), không có thì `documents:write` như cũ. Có quyền đó toàn đơn vị → qua ngay (không truy vấn); không thì
+ * xét lần gán có phạm vi chi nhánh / kho (requireScope). Lô nhiều loại: nhóm theo quyền, MỌI nhóm phải qua. Lô rỗng: documents:write.
+ */
+// [2026-11-09 05:45 PM kiennt] PHASE-028 — giai đoạn 3.2b: XEM theo loại chứng từ
+/** Bộ lọc loại chứng từ được xem: có documents:read → bỏ loại bị Cấm xem; không có → chỉ loại có quyền xem chi tiết. */
+export function readableTypes(auth: Pick<AuthContext, 'permissions'>): { excludeDocTypes?: string[]; onlyDocTypes?: string[] } {
+  const typed = documentTypesWith('read');
+  if (auth.permissions.has('documents:read')) {
+    const hidden = typed.filter(([, p]) => !auth.permissions.has(p)).map(([t]) => t);
+    return hidden.length ? { excludeDocTypes: hidden } : {};
+  }
+  return { onlyDocTypes: typed.filter(([, p]) => auth.permissions.has(p)).map(([t]) => t) };
+}
+
+/** preHandler xem chứng từ: có documents:read, hoặc có quyền xem của ít nhất một loại chứng từ đã đăng ký. */
+export function requireDocumentRead() {
+  return async (req: FastifyRequest): Promise<void> => {
+    const auth = req.auth;
+    if (!auth) throw Errors.unauthorized();
+    if (auth.permissions.has('documents:read') || documentTypesWith('read').some(([, p]) => auth.permissions.has(p))) return;
+    throw Errors.forbidden('Không có quyền documents:read');
+  };
+}
+
+/** Phiếu `id` thuộc loại người này không được xem → 404 (không lộ phiếu có tồn tại). */
+async function assertReadable(auth: AuthContext, id: string): Promise<void> {
+  const ev = await db.selectFrom('accounting_events').select('doc_type').where('tenant_id', '=', auth.tenantId).where('id', '=', id).executeTakeFirst();
+  if (ev && !canDocument(auth, ev.doc_type, 'read')) throw Errors.notFound('chứng từ');
+}
+
+export function requireDocumentScope(docsOf: (req: FastifyRequest) => readonly unknown[]) {
+  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    const auth = req.auth;
+    if (!auth) throw Errors.unauthorized();
+    const docs = docsOf(req);
+    if (!docs.length) return requireScope('documents:write', () => [])(req, reply);
+    const groups = new Map<Permission, unknown[]>();
+    for (const d of docs) {
+      const p = documentPermissionOf(d && typeof d === 'object' ? (d as { docType?: unknown }).docType : undefined);
+      groups.set(p, [...(groups.get(p) ?? []), d]);
+    }
+    if ([...groups.keys()].every((p) => auth.permissions.has(p))) return;
+    for (const [p, ds] of groups) await requireScope(p, (r) => branchesOfDocs(r, ds))(req, reply);
+  };
+}
 
 async function branchesOfDocs(req: FastifyRequest, docs: readonly unknown[]): Promise<AuthzResourceContext[]> {
   const auth = authOf(req);

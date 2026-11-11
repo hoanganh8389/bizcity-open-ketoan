@@ -189,3 +189,126 @@ describe('Phạm vi kho (S028-19)', () => {
     expect(k1).toMatch(/^\d+$/);
   });
 });
+
+// [2026-11-09 05:05 PM kiennt] PHASE-028 — giai đoạn 3.1 / 3.2: cửa nạp kiểm quyền theo loại chứng từ (phân hệ đăng ký), documents:write kéo theo, Cấm quyền gốc phủ quyền kéo theo
+describe('Quyền theo loại chứng từ ở cửa nạp (giai đoạn 3.1 / 3.2)', () => {
+  const role = async (code: string, kind: 'job' | 'restriction', rules: [string, 'allow' | 'deny'][], baseRole?: string) => {
+    const id = (await call(ctx, 'POST', '/api/v1/roles', { code, label: code, kind, ...(baseRole ? { baseRole } : {}), reason: 'Thử loại phiếu' })).body.data.id;
+    for (const [permission, effect] of rules) expect((await call(ctx, 'POST', `/api/v1/roles/${id}/rules`, { permission, effect, reason: 'Thử loại phiếu' })).status).toBe(201);
+    return id as string;
+  };
+  const user = async (email: string, role = 'viewer') => {
+    const id = String((await call(ctx, 'POST', '/api/v1/users', { email, fullName: email, role, password: 'Xem@12345' })).body.data.id);
+    return { id, token: async () => login(email, 'Xem@12345') };
+  };
+  const permsOf = async (token: string): Promise<string[]> =>
+    (await ctx.app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${token}` } })).json().data.permissions;
+
+  it('kế toán (documents:write) có sẵn mọi quyền chứng từ chi tiết — không ai mất quyền khi nâng cấp', async () => {
+    const kt = await user('kt-loai@ketoan.local', 'accountant');
+    const perms = await permsOf(await kt.token());
+    expect(perms).toEqual(expect.arrayContaining(['documents:write', 'ban-hang:hoa-don-lap', 'kho:chuyen-kho-lap', 'quy:thu-tien-lap', 'ke-toan:but-toan-lap']));
+    expect((await postAs(await kt.token(), '/api/v1/documents', sale('LP-KT', 'CN01'))).statusCode).not.toBe(403);
+  });
+
+  it('Cấm ban-hang:* trên người có documents:write: không nạp được hoá đơn bán, vẫn nạp được chuyển kho', async () => {
+    const kt = await user('kt-cam-ban@ketoan.local', 'accountant');
+    const r = await role('cam_ban_hang', 'restriction', [['ban-hang:*', 'deny']]);
+    expect((await call(ctx, 'POST', `/api/v1/users/${kt.id}/roles`, { tenantRoleId: r, reason: 'Không bán hàng' })).status).toBe(201);
+    const t = await kt.token();
+    expect((await postAs(t, '/api/v1/documents', sale('LP-CAM-BAN', 'CN01'))).statusCode).toBe(403);
+    expect(await stored('LP-CAM-BAN')).toBe(0);
+    expect((await postAs(t, '/api/v1/documents', transfer('LP-CAM-CK', 'out', 'CN01', 'CN02'))).statusCode).not.toBe(403);
+  });
+
+  it('thủ kho chỉ được Cho kho:chuyen-kho-lap (không documents:write): nạp chuyển kho, không nạp hoá đơn bán, lô lẫn bị từ chối cả lô', async () => {
+    const tk = await user('tk-loai@ketoan.local');
+    const r = await role('thu_kho_ck', 'job', [['kho:chuyen-kho-lap', 'allow']], 'viewer');
+    expect((await call(ctx, 'POST', `/api/v1/users/${tk.id}/roles`, { tenantRoleId: r, reason: 'Thủ kho' })).status).toBe(201);
+    const t = await tk.token();
+    const perms = await permsOf(t);
+    expect(perms).toContain('kho:chuyen-kho-lap');
+    expect(perms).not.toContain('documents:write');
+    expect((await postAs(t, '/api/v1/documents', transfer('LP-TK-CK', 'out', 'CN01', 'CN02'))).statusCode).not.toBe(403);
+    expect(await stored('LP-TK-CK')).toBe(1);
+    expect((await postAs(t, '/api/v1/documents', sale('LP-TK-BAN', 'CN01'))).statusCode).toBe(403);
+    expect((await postAs(t, '/api/v1/documents/batch', { documents: [transfer('LP-TK-L1', 'out', 'CN01', 'CN02'), sale('LP-TK-L2', 'CN01')] })).statusCode).toBe(403);
+    expect(await stored('LP-TK-L1')).toBe(0);
+  });
+
+  it('Cấm documents:* (luật cũ) vẫn chặn mọi loại phiếu sau khi có quyền chi tiết', async () => {
+    const kt = await user('kt-cam-all@ketoan.local', 'accountant');
+    const r = await role('cam_moi_phieu', 'restriction', [['documents:*', 'deny']]);
+    expect((await call(ctx, 'POST', `/api/v1/users/${kt.id}/roles`, { tenantRoleId: r, reason: 'Cấm hết' })).status).toBe(201);
+    const t = await kt.token();
+    expect(await permsOf(t)).not.toContain('kho:chuyen-kho-lap');
+    expect((await postAs(t, '/api/v1/documents', transfer('LP-CAM-ALL', 'out', 'CN01', 'CN02'))).statusCode).toBe(403);
+  });
+
+  it('khoá API documents:write vẫn nạp mọi loại phiếu như cũ', async () => {
+    const k = await ctx.app.inject({ method: 'POST', url: '/api/v1/documents', payload: sale('LP-KEY', 'CN01') as never, headers: { 'x-api-key': ctx.apiKey } });
+    expect(k.statusCode, k.body).not.toBe(403);
+  });
+});
+
+// [2026-11-09 06:05 PM kiennt] PHASE-028 — giai đoạn 3.2b: xem / huỷ / xuất theo loại chứng từ (phân hệ đăng ký đủ bộ thao tác)
+describe('Xem / huỷ / xuất theo loại chứng từ (giai đoạn 3.2b)', () => {
+  const asUser = async (email: string, deny: string[]) => {
+    const id = String((await call(ctx, 'POST', '/api/v1/users', { email, fullName: email, role: 'accountant', password: 'Xem@12345' })).body.data.id);
+    const r = (await call(ctx, 'POST', '/api/v1/roles', { code: email.split('@')[0]!.replace(/[^a-z0-9]/g, '_'), label: email, kind: 'restriction', reason: 'Thử thao tác' })).body.data.id;
+    for (const p of deny) expect((await call(ctx, 'POST', `/api/v1/roles/${r}/rules`, { permission: p, effect: 'deny', reason: 'Thử thao tác' })).status).toBe(201);
+    expect((await call(ctx, 'POST', `/api/v1/users/${id}/roles`, { tenantRoleId: r, reason: 'Thử thao tác' })).status).toBe(201);
+    return login(email, 'Xem@12345');
+  };
+  const get = (token: string, url: string) => ctx.app.inject({ method: 'GET', url, headers: { authorization: `Bearer ${token}` } });
+
+  it('kế toán có sẵn đủ bộ: xem / lập / huỷ, xuất (reports:read kéo theo)', async () => {
+    const t = await login('kt-loai@ketoan.local', 'Xem@12345');
+    const perms = (await get(t, '/api/v1/auth/me')).json().data.permissions as string[];
+    expect(perms).toEqual(expect.arrayContaining(['ban-hang:hoa-don-xem', 'ban-hang:hoa-don-lap', 'ban-hang:hoa-don-huy', 'ban-hang:hoa-don-xuat', 'kho:chuyen-kho-xem', 'quy:thu-tien-huy']));
+  });
+
+  it('Cấm xem hoá đơn bán: danh sách không còn phiếu bán (phiếu khác vẫn thấy), mở chi tiết phiếu bán → 404', async () => {
+    const owner = await call(ctx, 'GET', '/api/v1/documents?docType=sale&pageSize=50');
+    const saleId = owner.body.data[0].id as string;
+    expect(owner.body.data.length).toBeGreaterThan(0);
+    const t = await asUser('kt-khong-xem@ketoan.local', ['ban-hang:hoa-don-xem']);
+    expect((await get(t, '/api/v1/documents?docType=sale&pageSize=50')).json().data).toEqual([]);
+    expect((await get(t, '/api/v1/documents?docType=transfer&pageSize=50')).json().data.length).toBeGreaterThan(0);
+    expect((await get(t, `/api/v1/documents/${saleId}`)).statusCode).toBe(404);
+    expect((await get(t, `/api/v1/documents/${saleId}/preview`)).statusCode).toBe(404);
+  });
+
+  it('Cấm huỷ hoá đơn bán: người có documents:write không huỷ được phiếu bán', async () => {
+    const t = await asUser('kt-khong-huy@ketoan.local', ['ban-hang:hoa-don-huy']);
+    const res = await postAs(t, '/api/v1/documents/cancel', { docKey: 'LP-KT', reason: 'Thử huỷ' });
+    expect(res.statusCode, res.body).toBe(403);
+    expect(res.body).toContain('ban-hang:hoa-don-huy');
+  });
+
+  it('Cấm lập / huỷ chuyển kho chặn cả action kho.transfer.* (không chỉ cửa nạp)', async () => {
+    // [2026-11-11 09:25 AM kiennt] PHASE-028 — S028-22: action chuyển kho gác quyền theo loại chứng từ
+    const body = { docDate: '2026-10-06', fromBranchCode: 'CN01', toBranchCode: 'CN02', lines: [{ lineKey: 'a', sku: 'CK-THU', qty: 1 }] };
+    const cancelUrl = '/api/v1/kho/transfers/999999999/cancel';
+    const tLap = await asUser('kt-khong-ck@ketoan.local', ['kho:chuyen-kho-lap']);
+    const tHuy = await asUser('kt-khong-huy-ck@ketoan.local', ['kho:chuyen-kho-huy']);
+    // Cấm lập: không lập được; vẫn qua cổng quyền của huỷ (lỗi khác 403 — phiếu không có).
+    const lap = await postAs(tLap, '/api/v1/kho/transfers', body);
+    expect(lap.statusCode, lap.body).toBe(403);
+    expect(lap.body).toContain('kho:chuyen-kho-lap');
+    expect((await postAs(tLap, cancelUrl, { reason: 'Thử' })).statusCode).not.toBe(403);
+    // Cấm huỷ: không huỷ được; vẫn qua cổng quyền của lập.
+    const huy = await postAs(tHuy, cancelUrl, { reason: 'Thử' });
+    expect(huy.statusCode, huy.body).toBe(403);
+    expect(huy.body).toContain('kho:chuyen-kho-huy');
+    expect((await postAs(tHuy, '/api/v1/kho/transfers', body)).statusCode).not.toBe(403);
+  });
+
+  it('Cấm xuất hoá đơn bán: không tải được bảng kê bán hàng; người khác vẫn tải được', async () => {
+    const q = '?from=2026-10-01&to=2026-10-31';
+    expect((await get(ctx.token, `/api/v1/addins/excel-export/sales-detail.csv${q}`)).statusCode).toBe(200);
+    const t = await asUser('kt-khong-xuat@ketoan.local', ['ban-hang:hoa-don-xuat']);
+    expect((await get(t, `/api/v1/addins/excel-export/sales-detail.csv${q}`)).statusCode).toBe(403);
+    expect((await get(t, `/api/v1/addins/excel-export/trial-balance.csv${q}`)).statusCode).toBe(200);
+  });
+});

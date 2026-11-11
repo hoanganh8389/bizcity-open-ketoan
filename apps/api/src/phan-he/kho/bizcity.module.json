@@ -26,6 +26,38 @@
     "kho.transfer.reject",
     "kho.transfer.cancel"
   ],
+  "permissions": [
+    {
+      "key": "kho:chuyen-kho-xem",
+      "label": "Xem phiếu chuyển kho",
+      "risk": "low"
+    },
+    {
+      "key": "kho:chuyen-kho-lap",
+      "label": "Lập / sửa phiếu chuyển kho (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "kho:chuyen-kho-huy",
+      "label": "Huỷ phiếu chuyển kho",
+      "risk": "low"
+    },
+    {
+      "key": "kho:dieu-chinh-xem",
+      "label": "Xem phiếu điều chỉnh kho",
+      "risk": "low"
+    },
+    {
+      "key": "kho:dieu-chinh-lap",
+      "label": "Lập / sửa phiếu điều chỉnh kho (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "kho:dieu-chinh-huy",
+      "label": "Huỷ phiếu điều chỉnh kho",
+      "risk": "low"
+    }
+  ],
   "ui": {
     "icon": "Warehouse",
     "color": "#7b1fa2",

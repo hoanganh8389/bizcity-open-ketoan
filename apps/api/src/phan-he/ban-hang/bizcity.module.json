@@ -17,6 +17,48 @@
       "masterdata.read"
     ]
   },
+  "permissions": [
+    {
+      "key": "ban-hang:hoa-don-xem",
+      "label": "Xem hoá đơn bán hàng",
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:hoa-don-lap",
+      "label": "Lập / sửa hoá đơn bán hàng (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:hoa-don-huy",
+      "label": "Huỷ hoá đơn bán hàng",
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:hoa-don-xuat",
+      "label": "Xuất Excel hoá đơn bán hàng (bảng kê bán hàng)",
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:tra-hang-xem",
+      "label": "Xem phiếu hàng bán trả lại",
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:tra-hang-lap",
+      "label": "Lập / sửa phiếu hàng bán trả lại (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:tra-hang-huy",
+      "label": "Huỷ phiếu hàng bán trả lại",
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:tra-hang-xuat",
+      "label": "Xuất Excel phiếu hàng bán trả lại (bảng kê bán hàng)",
+      "risk": "low"
+    }
+  ],
   "data": {
     "reads": [
       "bizcity_read.ledger_entries"

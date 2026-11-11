@@ -20,6 +20,23 @@
       "mcp.read"
     ]
   },
+  "permissions": [
+    {
+      "key": "ke-toan:but-toan-xem",
+      "label": "Xem bút toán tổng hợp",
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:but-toan-lap",
+      "label": "Lập / sửa bút toán tổng hợp (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:but-toan-huy",
+      "label": "Huỷ bút toán tổng hợp",
+      "risk": "low"
+    }
+  ],
   "data": {
     "tables": [
       "cash_plans",

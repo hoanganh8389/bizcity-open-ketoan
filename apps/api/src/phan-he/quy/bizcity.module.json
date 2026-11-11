@@ -21,6 +21,53 @@
       "documents.workflow"
     ]
   },
+  "permissions": [
+    {
+      "key": "quy:chuyen-tien-xem",
+      "label": "Xem phiếu chuyển tiền",
+      "risk": "low"
+    },
+    {
+      "key": "quy:chuyen-tien-lap",
+      "label": "Lập / sửa phiếu chuyển tiền (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "quy:chuyen-tien-huy",
+      "label": "Huỷ phiếu chuyển tiền",
+      "risk": "low"
+    },
+    {
+      "key": "quy:thu-tien-xem",
+      "label": "Xem phiếu thu tiền khách hàng",
+      "risk": "low"
+    },
+    {
+      "key": "quy:thu-tien-lap",
+      "label": "Lập / sửa phiếu thu tiền khách hàng (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "quy:thu-tien-huy",
+      "label": "Huỷ phiếu thu tiền khách hàng",
+      "risk": "low"
+    },
+    {
+      "key": "quy:chi-tien-xem",
+      "label": "Xem phiếu chi trả nhà cung cấp",
+      "risk": "low"
+    },
+    {
+      "key": "quy:chi-tien-lap",
+      "label": "Lập / sửa phiếu chi trả nhà cung cấp (cửa nạp chứng từ)",
+      "risk": "low"
+    },
+    {
+      "key": "quy:chi-tien-huy",
+      "label": "Huỷ phiếu chi trả nhà cung cấp",
+      "risk": "low"
+    }
+  ],
   "data": {
     "tables": [
       "payment_requests",
