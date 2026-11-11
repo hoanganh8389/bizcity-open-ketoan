@@ -46,9 +46,24 @@ W1–W5 đã có mã (nhiều vai trò, vai trò của đơn vị Cho / Cấm, H
 | D-AUTH-20 | Quyền khai phải có chỗ chặn (quyền mồ côi) | ✅ SC-AUTH-11 (`83367f15`) | — |
 | D-AUTH-23 | 28 nhóm TGS trong repo công khai (draft W0 D-AUTH-11 nói không) | chưa đổi — xin chủ xác nhận | — |
 | **D-AUTH-24** (mới) | **Quyền kéo theo**: `documents:read` → quyền xem chi tiết, `documents:write` → lập / huỷ, `reports:read` → xuất; tính sau Cho, trước Cấm; **Cấm quyền gốc phủ quyền kéo theo** (luật `documents:*` cũ vẫn chặn được mọi loại phiếu) | ✅ (`d8f7fb7a`, `397e8210`) — để không ai mất quyền khi phân hệ đăng ký | Nới cách hiểu D-AUTH-03 (quyền module mới mặc định chỉ owner có): kế toán có sẵn quyền chứng từ chi tiết. Không duyệt → phải cấp quyền chi tiết cho vai trò hệ thống qua `roles` của manifest |
-| **D-AUTH-25** (mới) | Phạm vi **kho** ở lần gán (`scopeType = warehouse`), cửa nạp kiểm mọi kho của dòng hàng (trống = kho mặc định) | ✅ (`18560aa0`) | — |
+| **D-AUTH-25** (mới) | Phạm vi **kho** ở lần gán (`scopeType = warehouse`), cửa nạp kiểm mọi kho của dòng hàng (trống = kho mặc định) | chữ chốt đề xuất §3.3; mã S028-19 | — |
 | **D-AUTH-26** (mới) | Ký ô kế toán trưởng / giám đốc theo quyền: ánh xạ tạm `periods:lock` / `payments:approve-final` tới khi có quyền ký riêng (cần nới D-AUTH-13) | ✅ (`638b209f`) | về kiểm theo tên vai trò |
 | **D-AUTH-27** (mới) | Phân hệ đăng ký quyền vào **vai trò mẫu** (`permissions[].roles = "tpl:<mã>"`) + thư viện vai trò mẫu theo phần hành + khởi tạo kiểu WP | đã làm thử rồi **bỏ** (chưa commit) — đổi hợp đồng `bizcity_module@1`, cần chủ chốt trước | — |
+
+### 3.3 Chữ chốt đề xuất D-AUTH-25 — phạm vi kho (S028-19)
+<!-- [2026-11-11 09:00 AM kiennt] PHASE-028 — chữ chốt đề xuất D-AUTH-25 (R-FLOW-2) trước PR code S028-19; merge PR này = chủ dự án đồng ý -->
+
+> **Trạng thái:** đề xuất, chờ chủ dự án. Merge PR tài liệu chứa mục này = đồng ý; không đồng ý thì gỡ dòng giữ chỗ S028-19.
+
+- **Vấn đề.** W5 đợt 1 chỉ gán vai trò theo **chi nhánh**. Thủ kho, nhân viên bán hàng ở một kho (HTsoft: `tblUserKho`) không giới hạn được theo kho: được gán chi nhánh là lập phiếu được ở mọi kho của chi nhánh.
+- **Lựa chọn.** (a) Thêm phạm vi **kho** ở lần gán, kiểm ở cửa nạp — **chọn**. (b) Giữ chi nhánh, tách kho thành chi nhánh con — loại: sai mô hình dữ liệu, kho không phải chi nhánh. (c) Để sau W6 — loại: thủ kho là trường hợp thật ở đơn vị đang dùng.
+- **Hình dạng.**
+  - `core.user.role-assign` nhận `scopeType: 'tenant' | 'branch' | 'warehouse'`; `warehouse` cần `scopeId` = id kho của **đơn vị**, kho **đang dùng** (không thì 404 / 409). Không đổi lược đồ (cột `scope_type` / `scope_id` có sẵn từ 0073).
+  - Cửa nạp (`POST /api/v1/documents`, `/batch`, Kernel): chứng từ có dòng hàng — `sale`, `sale_return`, `purchase`, `purchase_return`, `transfer`, `stock_adjustment` — trả **một vị trí cho mỗi kho** của dòng (`{ branchId, warehouseId }`); dòng không ghi kho = kho mặc định của chi nhánh (cùng `defaultWarehouseOf` lúc ghi kho). **Mọi** vị trí phải được phép (`requireScope`). Chuyển kho: kho **xuất**. Kho không thuộc chi nhánh của phiếu → vị trí rỗng → từ chối (đóng an toàn). Chứng từ không có hàng → chỉ chi nhánh (như W5).
+  - Có quyền toàn đơn vị → đi đường nhanh, không truy vấn kho.
+  - `GET /api/v1/warehouses` trả thêm `id`; HT12 thẻ Người dùng có "Một kho".
+- **Ảnh hưởng.** Chỉ người được gán theo kho hoặc chi nhánh; người có quyền toàn đơn vị (kế toán, khoá API) không đổi. Người gán theo chi nhánh vẫn lập được ở mọi kho của chi nhánh đó. Chưa phủ: **xem** / báo cáo theo kho (§5), phía nhận của chuyển kho.
+- **Kiểm bằng.** `apps/api/test/authz-scope-intake.test.ts` (4 ca kho: được / không được kho, dòng trống = kho mặc định, kho khác chi nhánh); typecheck; selfcheck.
 
 ## 4. Mã trên nhánh (chưa đẩy, chưa PR)
 

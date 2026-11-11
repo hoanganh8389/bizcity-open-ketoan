@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 9
     },
     {
       "key": "merging",
@@ -6016,6 +6016,48 @@
       "facet": "F8",
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 26
+    },
+    {
+      "id": "S028-18",
+      "phase": "PHASE-028",
+      "title": "Rút gọn bộ tính (K2, PR bộ tính riêng theo ADR-0027 W3 đợt 2 mục 5): bỏ hiệu lực relax / widen; điều kiện 8 → 5 (bỏ docdatebackdays, docdateforwarddays, respec…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-gd3a-bo-tinh",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W3 đợt 3 — rút gọn bộ tính: bỏ Nới, điều kiện 8 → 5, hợp đồng bizcityauthorization@1 1.…"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S028-19",
+      "phase": "PHASE-028",
+      "title": "Phạm vi kho ở lần gán và ở cửa nạp (D-AUTH-25, chữ chốt đề xuất 80 §3.3); GET /api/v1/warehouses có id; HT12 chọn \"Một kho\"",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, PHASE-028 vá)",
+        "branch": "feat/phase-028-gd3b-pham-vi-kho",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-028 · W5 — phạm vi kho ở lần gán và cửa nạp (D-AUTH-25, chữ chốt đề xuất 80 §3.3)"
+      },
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 28
     },
     {
       "id": "S029-1",
