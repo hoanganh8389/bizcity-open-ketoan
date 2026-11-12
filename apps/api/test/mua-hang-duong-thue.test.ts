@@ -45,9 +45,9 @@ describe('Đường thuế theo mã — mua hàng', () => {
   });
 
   it('TH2 tạo mã quà con không gửi thuế: lần sau chặn và chỉ đúng mã quà; dùng mã quà thì đạt', async () => {
-    const k = await call(t, 'POST', '/api/v1/items/add-child', { parentSku: PARENT, name: 'Anlene Gold thử quà', sku: `${PARENT}Z` });
+    const k = await call(t, 'PUT', `/api/v1/catalog/products/${PARENT}Z?new=1`, { name: 'Anlene Gold thử quà', unit: 'Lon', taxInCode: 'V08', units: [{ unit: 'Lon', ratio: 1, isDefault: true, isPurchaseDefault: true }], ...ack });
     expect(k.status, JSON.stringify(k.body)).toBe(200);
-    GIFT = k.body.data.sku;
+    GIFT = `${PARENT}Z`;
     const wrong = await analyze({ ...base, kind: 'gift_in', gift: { source: 'ncc_extra', hasVat: false }, lines: [line(PARENT, 5, 0, { taxCode: 'KKKN' })] });
     expect(wrong.find((x) => x.code === 'tax_path_gift')!.text).toContain(GIFT);
     const ok = await analyze({ ...base, kind: 'gift_in', gift: { source: 'ncc_extra', hasVat: false }, lines: [line(GIFT, 5, 0, { taxCode: 'KKKN' })] });

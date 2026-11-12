@@ -20,7 +20,6 @@
  *   GET    /api/v1/catalog/feed/prices?after=&limit=   luồng thay đổi dòng giá
  *   POST   /api/v1/catalog/import                     nạp dữ liệu ban đầu từ hệ thống bán hàng
  *   POST   /api/v1/catalog/products/import            nhập Excel mặt hàng (DM10): dryRun=true kiểm tra từng dòng; ghi chỉ dòng đúng
- *   POST   /api/v1/catalog/products/scan-parents      quét họ mã theo mã (mã cha – mã con 1 cấp; overwrite=false giữ mã cha đã chỉnh tay)
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -32,7 +31,7 @@ import { mountActions, defineAction, type AnyActionDef, sameTx } from '../../cor
 import { masterdataActions } from './masterdata.actions.js';
 import { checkToolPassword } from '@bizcity/platform/core/security/tool-password';
 import {
-  deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, sameNameProduct, saveProduct, savePriceList, savePriceRows, scanParents, setPriceListBranches,
+  deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, sameNameProduct, saveProduct, savePriceList, savePriceRows, setPriceListBranches,
 } from './catalog.service.js';
 import { inferSkuCodes, nextSku, SKU_RULE } from './sku-rule.js';
 import { importProducts } from './catalog-import.js';
@@ -142,20 +141,6 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
 const anyOut = z.custom<object | null>((v) => typeof v === 'object');
 
 export const catalogWriteActions: AnyActionDef[] = [
-  defineAction({
-    id: 'core.catalog.products-scan-parents', title: 'Quét họ mã theo mã: mã 9 số + đuôi (trừ T có tem) là mã con của mã gốc có trong danh mục (cần mật khẩu công cụ)', tags,
-    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ overwrite: z.boolean().default(false), password: z.string().max(200).default('') }), output: anyOut,
-    expose: { http: { method: 'POST', path: '/api/v1/catalog/products/scan-parents' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'catalog' },
-    handler: async (ctx, input) => {
-      const trx = ctx.data.tx;
-      const auth = ctx.legacyAuth;
-      // Công cụ chạy cho cả danh mục → hỏi mật khẩu công cụ (cùng mật khẩu nạp dữ liệu mẫu, biến PURCHASE_SEED_PASSWORD; chưa đặt thì tắt — SC-SEC-5).
-      checkToolPassword(input.password, 'quét cha – con');
-      return await sameTx(trx, (trx) => scanParents(trx, auth.tenantId, { overwrite: input.overwrite }));
-    },
-  }),
   defineAction({
     id: 'core.catalog.product-delete', title: 'Xoá mặt hàng chưa có nhập xuất (kèm đơn vị tính, giá)', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',

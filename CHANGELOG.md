@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Form mặt hàng tối giản
+- **Thông tin**: chỉ Nhóm hàng, Mã, Tên, Barcode, Xuất xứ, Ảnh, Mô tả (ngành / nhãn tự theo nhóm). Bỏ Khối lượng, Ghi chú, ô Tài khoản kế toán.
+- **Kế toán**: Thuế suất bán ra (bán hàng dùng) và Thuế suất mua vào (tham khảo) — KCT, 5%, 8%, 10%. Bỏ mã thuế chi tiết, thuế TTĐB.
+- **Đơn vị tính**: bỏ cột KL (kg) và dòng ghi chú dưới bảng. **Mua hàng**: bỏ khối Giá mua riêng của sản phẩm.
+- Xoá hẳn Thêm sản phẩm con, Quét cha – con (giao diện + API); mã cha tự suy theo mã.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Mặt hàng → Mua hàng: giá theo nhà cung cấp dễ dùng hơn
 - Bỏ khối **Tồn max theo chi nhánh – kho** (cấu hình ở màn Tồn max).
 - Giá mua theo từng nhà cung cấp: mỗi NCC một khối, hiện 3 đợt giá gần nhất (xem thêm đợt cũ), nút **Giá mới** cho từng NCC, bấm dòng để sửa / xoá trong hộp nhỏ; **Thêm nhà cung cấp** chọn NCC ngay trong hộp.

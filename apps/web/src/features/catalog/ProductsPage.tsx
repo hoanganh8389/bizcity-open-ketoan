@@ -118,17 +118,7 @@ export function ProductsPage() {
     return { rows, parent, kids };
   }, [q.data]);
   const isChild = (p: Product) => fam.parent.get(p.sku) !== p.sku;
-  const [scan, setScan] = useState<{ pw: string; busy?: boolean; msg?: string; ok?: boolean } | null>(null);
   const [bulk, setBulk] = useState(false);
-  const runScan = async () => {
-    if (!scan) return;
-    setScan({ ...scan, busy: true, msg: undefined });
-    try {
-      const r = await api.post<{ updated: number; families: number; children: number }>('/api/v1/catalog/products/scan-parents', { overwrite: false, password: scan.pw });
-      setScan({ pw: '', ok: true, msg: `Đã cập nhật ${r.updated} mã. Hiện có ${r.families} mã cha, ${r.children} mã con.` });
-      void qc.invalidateQueries({ queryKey: ['products'] });
-    } catch (e) { setScan({ ...scan, busy: false, ok: false, msg: errorText(e) }); }
-  };
   const columns: Column<Product>[] = [
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
@@ -217,14 +207,6 @@ export function ProductsPage() {
         </div>
       </div>
       {bulk && <BulkActivateModal onClose={() => setBulk(false)} groups={groups.data ?? []} />}
-      {scan && (
-        <Modal title="Quét cha – con theo mã (công cụ)" onClose={() => setScan(null)}
-          footer={<><button className="btn btn-primary" disabled={scan.busy || !scan.pw} onClick={() => void runScan()}>{scan.busy ? 'Đang quét…' : 'Chạy'}</button><button className="btn" onClick={() => setScan(null)}>Đóng</button></>}>
-          <div className="full" style={{ fontSize: 13, marginBottom: 8 }}>Mã 9 số + đuôi (Z, Q, K, M, B…; trừ T có tem) nhận mã gốc làm <b>mã cha</b> nếu mã gốc có trong danh mục. Mã cha đã chọn tay ở form mặt hàng <b>được giữ nguyên</b>.</div>
-          <Field label="Mật khẩu công cụ" full><input className="input" type="text" name="tool-key" autoComplete="off" data-lpignore="true" data-1p-ignore style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties} value={scan.pw} autoFocus onChange={(e) => setScan({ ...scan, pw: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && scan.pw && void runScan()} /></Field>
-          {scan.msg && <div className={`alert ${scan.ok ? 'alert-ok' : 'alert-bad'} full`} style={{ marginTop: 8 }}>{scan.msg}</div>}
-        </Modal>
-      )}
       {editing && <ProductFullForm sku={editing.isNew ? null : editing.sku ?? null} initial={editing.isNew ? { groupCode: editing.groupCode ?? null } : undefined} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={() => setEditing(null)} />}
     </>
   );

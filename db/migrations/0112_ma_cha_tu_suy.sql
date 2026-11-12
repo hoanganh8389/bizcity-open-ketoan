@@ -13,8 +13,15 @@ $$;
 COMMENT ON FUNCTION bizcity_parent_from_sku(text) IS 'Mã cha suy từ mã hàng: 9 chữ số + chữ cuối → 9 chữ số đầu; còn lại NULL (0112).';
 
 CREATE OR REPLACE FUNCTION bizcity_products_parent_fill() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  v_p text := bizcity_parent_from_sku(NEW.sku);
 BEGIN
-  NEW.parent_sku := bizcity_parent_from_sku(NEW.sku);
+  -- Mã cha cùng định danh với chính mặt hàng (mã cũ đã đổi sang mã có đuôi): không có cha.
+  IF v_p IS NOT NULL AND bizcity_item_at(NEW.tenant_id, v_p, CURRENT_DATE) IS NOT DISTINCT FROM bizcity_item_at(NEW.tenant_id, NEW.sku, CURRENT_DATE)
+     AND bizcity_item_at(NEW.tenant_id, v_p, CURRENT_DATE) IS NOT NULL THEN
+    v_p := NULL;
+  END IF;
+  NEW.parent_sku := v_p;
   NEW.parent_manual := false;
   RETURN NEW;
 END $$;
@@ -23,7 +30,8 @@ COMMENT ON FUNCTION bizcity_products_parent_fill() IS 'parent_sku luôn suy theo
 CREATE TRIGGER products_parent_fill BEFORE INSERT OR UPDATE OF sku, parent_sku, parent_manual ON products
   FOR EACH ROW EXECUTE FUNCTION bizcity_products_parent_fill();
 
-UPDATE products SET parent_sku = bizcity_parent_from_sku(sku), parent_manual = false
+-- Kích trigger cho các dòng lệch (trigger tự tính parent_sku, kể cả ca trùng định danh).
+UPDATE products SET parent_manual = false
  WHERE parent_sku IS DISTINCT FROM bizcity_parent_from_sku(sku) OR parent_manual;
 
 COMMENT ON COLUMN products.parent_sku IS 'Mã cha suy từ mã (trigger products_parent_fill, 0112): 9 chữ số + chữ cuối → 9 chữ số đầu. Không sửa tay.';

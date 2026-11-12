@@ -41,8 +41,6 @@ describe('T027-SEC — không có mật khẩu viết sẵn trong mã', () => {
     const wrong = await call(ctx, 'POST', '/api/v1/purchase/demo/seed', { password: 'Thuy!@#' });
     expect(wrong.status).toBe(403);
     expect(wrong.body.error.message).toMatch(/Sai mật khẩu/);
-    const scan = await call(ctx, 'POST', '/api/v1/catalog/products/scan-parents', { password: 'Thuy!@#' });
-    expect(scan.status).toBe(403);
   });
 
   it('T027-SEC-3 mật khẩu quản trị ban đầu: tự sinh khi bỏ trống, dùng biến khi có', () => {

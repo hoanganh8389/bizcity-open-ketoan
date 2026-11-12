@@ -117,31 +117,6 @@ async function tombstone(trx: Db, tenantId: string, entity: 'product' | 'unit' |
 
 // ----------------------------------------------------------------------------------------------- họ mã (mã cha – mã con)
 
-/** Mã cha gợi ý theo mã: mã 9 số + đuôi (trừ T có tem) mà mã gốc có trong danh mục và chưa là mã con. */
-export async function suggestParent(trx: Db, tenantId: string, sku: string): Promise<string | null> {
-  const m = /^(\d{9})([A-Z]{1,3})$/.exec(sku.trim().toUpperCase());
-  if (!m || m[2] === 'T') return null;
-  const p = await trx.selectFrom('products').select('parent_sku').where('tenant_id', '=', tenantId).where('sku', '=', m[1]!).executeTakeFirst();
-  return p && !p.parent_sku ? m[1]! : null;
-}
-
-/**
- * Công cụ "Quét cha – con theo mã": gán mã cha cho các mã có đuôi (trừ T) mà mã gốc có trong danh mục. Mặc định chỉ điền mã chưa có
- * mã cha (giữ mã cha đã chỉnh tay); overwrite = quét lại cả mã đã có mã cha theo mã.
- */
-export async function scanParents(trx: Db, tenantId: string, opts: { overwrite?: boolean } = {}): Promise<{ updated: number; families: number; children: number }> {
-  const r = await sql<{ n: string }>`
-    WITH c AS (
-      UPDATE products c SET parent_sku = left(c.sku, 9), updated_at = now()
-       WHERE c.tenant_id = ${tenantId} AND c.sku ~ '^[0-9]{9}[A-Z]{1,3}$' AND substring(c.sku FROM 10) <> 'T'
-         AND NOT c.parent_manual AND (${opts.overwrite ?? false} OR c.parent_sku IS NULL) AND c.parent_sku IS DISTINCT FROM left(c.sku, 9)
-         AND EXISTS (SELECT 1 FROM products p WHERE p.tenant_id = c.tenant_id AND p.sku = left(c.sku, 9) AND p.parent_sku IS NULL)
-      RETURNING 1)
-    SELECT COUNT(*)::text AS n FROM c`.execute(trx);
-  const stat = await trx.selectFrom('products').select([sql<string>`COUNT(DISTINCT parent_sku)`.as('f'), sql<string>`COUNT(*)`.as('c')]).where('tenant_id', '=', tenantId).where('parent_sku', 'is not', null).executeTakeFirst();
-  return { updated: Number(r.rows[0]?.n ?? 0), families: Number(stat?.f ?? 0), children: Number(stat?.c ?? 0) };
-}
-
 async function parentUnits(trx: Db, tenantId: string, sku: string): Promise<UnitInput[]> {
   const rows = await trx.selectFrom('product_units').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', sku).orderBy('ratio').execute();
   return rows.map((u) => ({ unit: u.unit, ratio: Number(u.ratio), isDefault: u.is_default, isPurchaseDefault: u.is_purchase_default, weightKg: num(u.weight_kg), note: u.note }));
@@ -229,28 +204,16 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     const found = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', v).executeTakeFirst();
     if (!found) throw Errors.validation(`Mã phân loại ${v} chưa có trong danh mục`);
   }
-  // Mã hàng cha (họ mã 1 cấp): tạo mới không gửi → gợi ý theo mã; gửi → kiểm mã cha có thật, không phải chính nó, không có mã cha
-  // (chỉ 1 cấp), và mã này không đang là cha của mã khác.
-  if (b.parentSku === undefined && !exists) b = { ...b, parentSku: await suggestParent(trx, tenantId, sku) };
-  if (b.parentSku) {
-    const ps = b.parentSku.trim();
-    if (ps === sku) throw Errors.validation('Mã hàng cha không được là chính mã này');
-    const par = await trx.selectFrom('products').select(['sku', 'parent_sku']).where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst();
-    if (!par) throw Errors.validation(`Mã hàng cha ${ps} chưa có trong danh mục`);
-    if (par.parent_sku) throw Errors.validation(`${ps} đang là mã con của ${par.parent_sku} — họ mã chỉ 1 cấp, chọn mã cha ${par.parent_sku}`);
-    const kids = exists ? await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('parent_sku', '=', sku).limit(3).execute() : [];
-    if (kids.length) throw Errors.validation(`${sku} đang là mã cha của ${kids.map((k) => k.sku).join(', ')} — họ mã chỉ 1 cấp`);
-    // Mã con TẠO MỚI kế thừa đa ĐVT của mã cha (Thùng, Lốc…): ĐVT mã con đã khai giữ nguyên, thêm các ĐVT mã cha còn thiếu.
-    if (!exists) {
-      b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, ps)) };
-      const err = b.units ? checkUnits(b.units) : null;
-      if (err) throw Errors.validation(err);
-    }
+  // [2026-11-12 Nguyễn Văn Thủy] mã cha suy theo mã (trigger 0112), không nhận từ người dùng; mã con tạo mới kế thừa ĐVT của mã cha (đóng góp)
+  b = { ...b, parentSku: undefined };
+  const ps = /^(\d{9})[A-Z]{1,3}$/i.exec(sku)?.[1];
+  if (!exists && ps && await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst()) {
+    b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, ps)) };
+    const err = b.units ? checkUnits(b.units) : null;
+    if (err) throw Errors.validation(err);
   }
   const now = new Date();
   const patch: Record<string, unknown> = { ...productPatch(b), updated_at: now };
-  // Gửi mã cha khác mã gợi ý theo mã (gồm cả bỏ cha) = chỉnh tay → quét cha – con theo mã không gán lại.
-  if (b.parentSku !== undefined) patch.parent_manual = (b.parentSku?.trim() || null) !== (await suggestParent(trx, tenantId, sku));
   // Đơn vị nhỏ nhất (tỉ lệ 1) là ĐVT của mặt hàng.
   if (b.units) patch.unit = b.units.find((u) => Number(u.ratio) === 1)!.unit.trim();
   if (!exists) {

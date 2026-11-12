@@ -15,7 +15,7 @@ import type { Db } from '../../db/client.js';
 import { isItemId, ITEM_CODE_KIND_RE } from '@ketoan/contracts';
 import { applyItemGate } from '../products/item.hints.js';
 // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: core.item.add-child, khoá đổi mã có đuôi (đóng góp)
-import { addChildProduct, guardMerge } from './san-pham-con.js';
+import { guardMerge } from './san-pham-con.js';
 
 const tags = ['Mặt hàng'];
 const refShape = { itemId: z.string().trim().max(26).optional(), sku: z.string().trim().max(160).optional() };
@@ -211,25 +211,4 @@ const merge = defineAction({
   },
 });
 
-const addChild = defineAction({
-  id: 'core.item.add-child', title: 'Thêm sản phẩm con', tags,
-  description: 'Tạo mặt hàng mới có item_id riêng, mã = mã cha + đuôi theo quy tắc mã hàng (K, M, Q, T, B, Z…) hoặc + 2 số, lấy đơn vị tính, nhóm, thuế theo mã cha. Biến thể, gửi lên thuế suy theo mã.',
-  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'],
-  input: z.object({
-    parentSku: z.string().trim().min(1).max(64),
-    name: z.string().trim().min(1, 'Nhập tên sản phẩm con').max(255),
-    sku: z.string().trim().max(64).optional(), // [2026-11-12 Nguyễn Văn Thủy] mã con gõ theo quy tắc mã hàng (mã cha + đuôi); trống = mã cha + số thứ tự (đóng góp)
-    barcode: z.string().trim().max(500).optional(),
-    note: z.string().trim().max(500).optional(),
-    noSaleParent: z.boolean().optional(),
-  }),
-  output: z.custom<object>((v) => typeof v === 'object'),
-  expose: { http: { method: 'POST', path: '/api/v1/items/add-child' }, ai: 'deny' },
-  evidence: { objectType: 'item' },
-  handler: async (ctx, i) => {
-    await setSession(ctx.data.tx, ctx.legacyAuth.actor, `Thêm sản phẩm con của ${i.parentSku}`);
-    return await addChildProduct(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actor, i);
-  },
-});
-
-export const itemActions: AnyActionDef[] = [renameCode, addCode, retireCode, classify, mergePreview, merge, addChild];
+export const itemActions: AnyActionDef[] = [renameCode, addCode, retireCode, classify, mergePreview, merge];

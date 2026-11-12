@@ -54,7 +54,7 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
         </header>
         <div className="dvt-rows">
           <table className="dvt-units">
-          <thead><tr><th style={{ width: 86 }} /><th style={{ width: 220 }}>Tên ĐVT</th><th>Quy đổi</th><th style={{ width: 90 }}>Bán chính</th><th style={{ width: 100 }}>KL (kg)</th><th style={{ width: 44 }} /></tr></thead>
+          <thead><tr><th style={{ width: 86 }} /><th style={{ width: 220 }}>Tên ĐVT</th><th>Quy đổi</th><th style={{ width: 90 }}>Bán chính</th><th style={{ width: 44 }} /></tr></thead>
           <tbody>
           {units.map((u, i) => {
             const isBase = u === base;
@@ -77,7 +77,6 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
                   {prob.rows[i] && <small className="mh-bad">{prob.rows[i]}</small>}
                 </div></td>
                 <td className="c"><label className={`dvt-pill ${u.isDefault ? 'on' : ''}`}><input type="radio" name="dvt-chinh" checked={u.isDefault} onChange={() => onUnit(i, { isDefault: true })} />Bán</label></td>
-                <td><input className="input num" value={u.weightKg ?? ''} onChange={(e) => onUnit(i, { weightKg: num(e.target.value) })} /></td>
                 <td>{units.length > 1 && !isBase && <button type="button" className="btn btn-xs" title="Bỏ ĐVT này (giá của ĐVT bỏ theo)" onClick={() => { setRefs({}); onRemove(i); }}>×</button>}</td>
               </tr>
             );
@@ -93,8 +92,6 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
           {largest && largest !== base && <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>ĐVT mới mặc định quy đổi theo {largest.unit}</span>}
         </div>
       </section>
-
-      <div className="muted" style={{ fontSize: 12 }}>Giá bán khai ở thẻ <b>Giá bán</b>; giá mua (riêng của sản phẩm, theo từng nhà cung cấp) ở thẻ <b>Mua hàng</b>.<br />Lập đơn / phiếu với một NCC: dùng <b>ĐVT trên dòng giá của NCC đó</b> (thẻ Mua hàng); NCC chưa khai mã này thì dùng <b>Bán chính</b>. Số lượng tồn, tồn max, phân tích đặt hàng luôn quy về ĐVT nhỏ nhất.</div>
     </div>
   );
 }

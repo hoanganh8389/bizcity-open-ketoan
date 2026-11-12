@@ -14,14 +14,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
-import { ItemPicker, ListPicker } from '@/components/pickers';
+import { ListPicker } from '@/components/pickers';
 import { HelpDrawer } from '@/components/HelpDrawer';
 // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
 import { LichSuMatHang } from './DoiMaGopMa';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: ô Biến thể, Loại hàng ở thẻ Thông tin, nút Thêm sản phẩm con (đóng góp)
 // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ tạo mã có đuôi (chọn đuôi, ChonDuoiMa): mọi biến thể là sản phẩm con; ô Biến thể sửa được (đóng góp)
 // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — mã cha không có ô Biến thể; thẻ Thông tin gọn: giải thích vào rê chuột, ẩn ngành / nhãn khi đã theo nhóm (đóng góp)
-import { TrungTen, useSameName } from './ThemSanPhamCon';
+import { TrungTen, useSameName } from './TenTrung';
 import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
@@ -72,6 +72,9 @@ const VAT_RATES = [
   { key: '0', label: '0% (hàng xuất khẩu)', out: 'R00', in: 'V00' },
   { key: 'kct', label: 'Không chịu thuế GTGT (KCT)', out: 'KCT', in: 'V13K' },
 ];
+
+const SIMPLE_OUT = [{ code: 'KCT', label: 'KCT' }, { code: 'R05', label: '5%' }, { code: 'R08', label: '8%' }, { code: 'R10', label: '10%' }];
+const SIMPLE_IN = [{ code: 'V13K', label: 'KCT' }, { code: 'V05', label: '5%' }, { code: 'V08', label: '8%' }, { code: 'V10', label: '10%' }];
 
 const fmt = (n: number | null | undefined) => (n === null || n === undefined ? '' : n.toLocaleString('vi-VN'));
 const parseNum = (s: string): number | null => {
@@ -296,18 +299,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Biến thể và Gửi lên thuế: hệ thống tự suy theo mã, đuôi Z = không gửi thuế (0111) (đóng góp) */}
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Loại hàng: đã có Nhóm hàng, bớt khai báo; giá trị cũ giữ nguyên (đóng góp) */}
           <Field label="Barcode" tip="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
-          {(() => {
-            // Có nhóm hàng và ngành / nhãn khớp cây nhóm: chỉ hiện (một chỗ khai — nhóm hàng); chưa khớp thì vẫn chọn tay được.
-            const locked = Boolean(v.groupCode && skuHint && skuHint.industryCode === v.industryCode && skuHint.brandCode === v.brandCode);
-            // Đã theo nhóm hàng thì ngành, nhãn chỉ lặp lại đường dẫn nhóm: ẩn cho gọn.
-            if (locked) return null;
-            return <>
-              <Field label="Ngành hàng" hint={locked ? 'Theo nhóm hàng' : undefined}><ListPicker items={pick('industry')} value={v.industryCode ?? ''} onChange={(c) => set({ industryCode: c || null })} placeholder="Tự lấy khi chọn nhóm hàng" nameFirst disabled={locked} /></Field>
-              <Field label="Nhãn hàng (Brand)" hint={locked ? 'Theo nhóm hàng — khuyến mại, hạn mức, thưởng theo nhãn dùng nhãn này' : undefined}><ListPicker items={pick('brand')} value={v.brandCode ?? ''} onChange={(c) => set({ brandCode: c || null })} placeholder="Tự lấy khi chọn nhóm hàng" nameFirst disabled={locked} /></Field>
-            </>;
-          })()}
+          {/* [2026-11-12 Nguyễn Văn Thủy] thẻ Thông tin tối giản: nhóm, mã, tên, barcode, xuất xứ, ảnh, mô tả; ngành / nhãn tự theo nhóm (đóng góp) */}
           <Field label="Xuất xứ"><input className="input" value={v.origin} onChange={(e) => set({ origin: e.target.value })} /></Field>
-          <Field label="Khối lượng (kg / ĐVT nhỏ nhất)"><input className="input num" value={v.weightKg ?? ''} onChange={(e) => set({ weightKg: parseNum(e.target.value) })} /></Field>
           <Field label="Ảnh (đường dẫn)" full>
             <div className="row" style={{ gap: 8, alignItems: 'center' }}>
               <input className="input" value={v.imageUrl} onChange={(e) => { setImgBad(false); set({ imageUrl: e.target.value }); }} placeholder="https://…" style={{ flex: 1 }} />
@@ -316,7 +309,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             </div>
           </Field>
           <Field label="Mô tả" full><textarea className="input" rows={3} value={v.description} onChange={(e) => set({ description: e.target.value })} /></Field>
-          <Field label="Ghi chú" full><input className="input" value={v.note} onChange={(e) => set({ note: e.target.value })} /></Field>
         </fieldset>
       )}
 
@@ -345,30 +337,21 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {tab === 'acc' && (
         <fieldset className="fgroup">
           <legend>Kế toán</legend>
-          <Field label="Thuế suất GTGT" hint={vatRate ? `Mã VAT ra ${v.taxOutCode} · vào ${v.taxInCode ?? '(trống)'}` : v.taxOutCode ? `Đang dùng mã riêng: ra ${v.taxOutCode} · vào ${v.taxInCode ?? '(trống)'} — sửa ở Mã thuế chi tiết` : 'Chưa khai thuế suất'}>
-            <select className="select input" value={vatRate?.key ?? (v.taxOutCode ? 'other' : '')} onChange={(e) => {
-              const r = VAT_RATES.find((x) => x.key === e.target.value);
-              if (r) set({ taxOutCode: r.out, taxInCode: r.in }); else if (!e.target.value) set({ taxOutCode: null, taxInCode: null });
-            }}>
+          {/* [2026-11-12 Nguyễn Văn Thủy] thẻ Kế toán tối giản: thuế bán ra (bán hàng dùng) + thuế mua vào (tham khảo) — KCT, 5%, 8%, 10% (đóng góp) */}
+          <Field label="Thuế suất bán ra" tip="Bán hàng lấy thuế suất theo ô này">
+            <select className="select input" value={v.taxOutCode ?? ''} onChange={(e) => set({ taxOutCode: e.target.value || null })}>
               <option value="">(chưa khai)</option>
-              {VAT_RATES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
-              {!vatRate && v.taxOutCode && <option value="other">Mã riêng: {v.taxOutCode}</option>}
+              {SIMPLE_OUT.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+              {v.taxOutCode && !SIMPLE_OUT.some((r) => r.code === v.taxOutCode) && <option value={v.taxOutCode}>{v.taxOutCode}</option>}
             </select>
           </Field>
-          {/* [2026-11-10 05:40 PM Nguyễn Văn Thủy] PHASE-026 — bỏ ô Nhóm hạch toán: tài khoản theo Tài khoản ngầm định (ACC41) theo Loại hàng / Biến thể; giá trị cũ giữ nguyên (đóng góp) */}
-          <Field label="Tài khoản kế toán" hint="Không khai theo từng mặt hàng: theo Tài khoản ngầm định (ACC41), riêng theo Biến thể">
-            <input className="input" readOnly value="Theo Tài khoản ngầm định (ACC41)" title="Đổi tài khoản: vào Tài khoản ngầm định, Thêm dòng theo Biến thể" />
+          <Field label="Thuế suất mua vào" tip="Chỉ để tham khảo: phiếu nhập lấy theo hoá đơn nhà cung cấp">
+            <select className="select input" value={v.taxInCode ?? ''} onChange={(e) => set({ taxInCode: e.target.value || null })}>
+              <option value="">(chưa khai)</option>
+              {SIMPLE_IN.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+              {v.taxInCode && !SIMPLE_IN.some((r) => r.code === v.taxInCode) && <option value={v.taxInCode}>{v.taxInCode}</option>}
+            </select>
           </Field>
-          <div className="full">
-            <button type="button" className="btn btn-xs" onClick={() => setTaxDetail((x) => !x)}>{taxDetail ? '▾' : '▸'} Mã thuế chi tiết (kế toán){v.exciseRate ? ` · TTĐB ${v.exciseRate}%` : ''}</button>
-          </div>
-          {taxDetail && (
-            <>
-              <Field label="Mã VAT ra"><select className="select input" value={v.taxOutCode ?? ''} onChange={(e) => set({ taxOutCode: e.target.value || null })}><option value="">(trống)</option>{taxes.filter((t) => t.direction === 'output' && (t.isActive || t.code === v.taxOutCode)).map((t) => <option key={t.code} value={t.code}>{t.code} — {t.name}</option>)}</select></Field>
-              <Field label="Mã VAT vào"><select className="select input" value={v.taxInCode ?? ''} onChange={(e) => set({ taxInCode: e.target.value || null })}><option value="">(trống)</option>{taxes.filter((t) => t.direction === 'input' && (t.isActive || t.code === v.taxInCode)).map((t) => <option key={t.code} value={t.code}>{t.code} — {t.name}</option>)}</select></Field>
-              <Field label="Thuế tiêu thụ đặc biệt (%)" hint="Chỉ hàng chịu thuế TTĐB (rượu, bia, nước ngọt có đường…). Sữa, bỉm, đồ dùng: để trống."><input className="input num" value={v.exciseRate ?? ''} onChange={(e) => set({ exciseRate: parseNum(e.target.value) })} /></Field>
-            </>
-          )}
         </fieldset>
       )}
       {v.isDraft && <div className="alert alert-warn full"><b>Nháp</b> — mặt hàng chưa kích hoạt, chưa dùng được trên chứng từ (cửa nạp giữ chứng từ ở Trạm kiểm tra với mã IN-ITEM-009). Sửa các lỗi chặn bên dưới, Ghi → tự kích hoạt.</div>}
@@ -402,36 +385,5 @@ function MaHangGiaiThich({ sku, hint, auto, isNew }: { sku: string; hint: SkuPre
       {isNew && <span className="muted">{auto ? '· tự sinh theo nhóm' : '· gõ tay'}</span>}
       {diff && <span className="mh-warn"> · khác tiền tố của nhóm đã chọn ({hint!.prefix})</span>}
     </div>
-  );
-}
-
-/**
- * MÃ HÀNG CHA (họ mã 1 cấp): mã con trỏ về mã cha — mã kẹp quà / khuyến mại / chia giá / Z, B… của cùng sản phẩm (tự quét theo mã),
- * hoặc mã đặt tên khác nhưng bản chất là sản phẩm ấy (chọn tay). Phân tích đặt hàng cộng dồn cả họ vào mã cha. Mã cha thì liệt kê mã con.
- */
-/**
- * Chỉ ở mặt hàng đã có (thêm mới luôn là mã cha; biến thể tạo bằng Thêm sản phẩm con). Mã cha: liệt kê mã con.
- * Mã chưa có cha: chọn tay để gom mã cũ của cùng sản phẩm vào mã cha (mã cũ có chữ cuối thì có nút gợi ý theo mã).
- */
-function MaHangCha({ sku, value, onChange}: { sku: string; value: string | null; onChange: (v: string | null) => void }) {
-  const m = /^(\d{9})([A-Z]{1,3})$/.exec(sku.trim().toUpperCase());
-  const suggest = m && m[2] !== 'T' ? m[1]! : '';
-  const pick = (v: string | null) => onChange(v);
-  const kids = useQuery({ queryKey: ['products', 'children', sku], enabled: Boolean(sku), queryFn: () => api.get<{ sku: string; name: string; variantCode?: string }[]>('/api/v1/products', { parent: sku, pageSize: 200 }) });
-  const list = kids.data ?? [];
-  return (
-    <Field label="Mã hàng cha" tip="Mã con gom vào mã cha: báo cáo, đặt hàng cộng dồn; sổ thuế ghi theo mã cha khi cần" hint={list.length ? undefined : value ? undefined : 'Trống = mặt hàng độc lập. Chỉ chọn khi đây là mã cũ của cùng sản phẩm, cần gom vào mã cha'}>
-      {list.length ? (
-        <div style={{ fontSize: 12.5 }} title="Mã này là mã cha — phân tích đặt hàng cộng dồn các mã con vào mã này">
-          <b>Là mã cha của {list.length} mã:</b> {list.map((k) => <span key={k.sku} style={{ marginRight: 6, whiteSpace: 'nowrap' }}><span className="badge badge-gray" title={k.name}>{k.sku}</span></span>)}
-        </div>
-      ) : (
-        <div className="row" style={{ gap: 6, alignItems: 'center' }}>
-          <div style={{ flex: 1 }}><ItemPicker value={value ?? ''} onChange={(c) => pick(c || null)} /></div>
-          {suggest && value !== suggest && <button type="button" className="btn btn-sm" title="Gán mã cha theo mã (bỏ đuôi)" onClick={() => pick(suggest)}>Theo mã: {suggest}</button>}
-          {value && <button type="button" className="btn btn-sm" title="Bỏ mã cha (không thuộc họ mã nào) — quét cha – con theo mã sẽ không gán lại" onClick={() => pick(null)}>Bỏ</button>}
-        </div>
-      )}
-    </Field>
   );
 }

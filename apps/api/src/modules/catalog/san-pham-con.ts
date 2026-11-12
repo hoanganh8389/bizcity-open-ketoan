@@ -34,57 +34,6 @@ export async function listVariantKinds(trx: Db, tenantId: string): Promise<Varia
   return rows.map((r) => ({ code: r.code, name: r.name, legacySuffix: r.legacy_suffix, taxFlow: r.tax_flow, taxSku: r.tax_sku, isActive: r.is_active, note: r.note, products: Number(r.products) }));
 }
 
-/** Mã con kế tiếp: số lớn nhất từng dùng + 1, kể cả mã đã đổi hoặc đã xoá (mã không dùng lại, R-ITEM-0). Quá 99 thì dùng 3 số. */
-export async function nextChildSku(trx: Db, tenantId: string, parentSku: string): Promise<string> {
-  const pattern = `^${parentSku}[0-9]{2,3}$`;
-  const r = await sql<{ n: string | null }>`
-    SELECT MAX(substr(code, ${parentSku.length + 1})::int)::text AS n FROM item_codes
-     WHERE tenant_id = ${tenantId} AND kind IN ('sku', 'alias') AND code ~ ${pattern}`.execute(trx);
-  const n = Number(r.rows[0]?.n ?? 0) + 1;
-  if (n > 999) throw Errors.conflict(`Mã ${parentSku} đã dùng hết số mã con`);
-  return parentSku + String(n).padStart(n > 99 ? 3 : 2, '0');
-}
-
-// [2026-11-12 Nguyễn Văn Thủy] bỏ chọn Biến thể / Gửi lên thuế: mã con = mã cha + đuôi (K, M, Q, T, B, Z…), trigger 0111 suy biến thể và gửi thuế theo mã (đóng góp)
-export interface ChildInput { parentSku: string; name: string; sku?: string; barcode?: string; note?: string; noSaleParent?: boolean }
-
-export async function addChildProduct(trx: Db, tenantId: string, actor: string, i: ChildInput) {
-  const parentSku = i.parentSku.trim();
-  const name = i.name.replace(/\s+/g, ' ').trim();
-  const parent = await trx.selectFrom('products').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', parentSku).forUpdate().executeTakeFirst();
-  if (!parent) throw Errors.notFound(`mặt hàng ${parentSku}`);
-  if (parent.parent_sku) throw Errors.validation(`${parentSku} đang là mã con của ${parent.parent_sku}. Họ mã chỉ một cấp, hãy thêm từ mã cha ${parent.parent_sku}`);
-  if (!name) throw Errors.validation('Nhập tên sản phẩm con');
-
-  // Mã con: mã cha + đuôi 1–3 ký tự chữ / số (quy tắc mã hàng). Trống = mã cha + số thứ tự.
-  let sku = (i.sku ?? '').trim().toUpperCase();
-  if (sku) {
-    if (!sku.startsWith(parentSku) || !/^[A-Z0-9]{1,3}$/.test(sku.slice(parentSku.length))) throw Errors.validation(`Mã con phải bắt đầu bằng mã cha ${parentSku}, thêm 1–3 ký tự chữ / số`);
-    const busy = await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
-    if (busy) throw Errors.conflict(`Mã ${sku} đã có trong danh mục`);
-    const taken = await sql<{ id: string | null }>`SELECT bizcity_item_code_taken(${tenantId}::bigint, ${sku}) AS id`.execute(trx);
-    if (taken.rows[0]?.id) throw Errors.conflict(`Mã ${sku} đã từng thuộc mặt hàng khác, không dùng lại được`);
-  } else {
-    sku = await nextChildSku(trx, tenantId, parentSku);
-  }
-  // Tên không trùng với mọi mặt hàng (không chỉ trong họ): saveProduct kiểm (checkName).
-  // Lấy theo cha mọi thứ ảnh hưởng thuế và phân loại. Giá bán để trống như mã biến thể cũ.
-  await saveProduct(trx, tenantId, actor, sku, {
-    name, unit: parent.unit, note: i.note?.trim() ?? '', barcode: i.barcode?.trim() ?? '',
-    parentSku,
-    groupCode: parent.group_code, industryCode: parent.industry_code, brandCode: parent.brand_code, typeCode: parent.type_code,
-    postingGroupCode: parent.posting_group_code, taxOutCode: parent.tax_out_code, taxInCode: parent.tax_in_code,
-    exciseRate: parent.excise_rate === null ? null : Number(parent.excise_rate),
-    origin: parent.origin, weightKg: parent.weight_kg === null ? null : Number(parent.weight_kg),
-    isMain: parent.is_main, isUnder24m: parent.is_under_24m, exportAdjust: parent.export_adjust,
-    units: undefined,
-  }, { isNew: true, source: 'manual', checkName: true });
-  if (i.noSaleParent && !parent.no_sale) {
-    await trx.updateTable('products').set({ no_sale: true, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', parentSku).execute();
-  }
-  return getProduct(trx, tenantId, sku);
-}
-
 /**
  * Khoá gộp mã: hàng Nội bộ và hàng lên thuế không được gộp với nhau, nếu không phần sau gộp sẽ đi sai đường thuế.
  * Quầy bán chỉ còn thấy mã giữ lại, nên gộp cũng làm đổi đường đi như đổi mã.
