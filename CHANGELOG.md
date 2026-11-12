@@ -177,6 +177,14 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### Module `pos` — danh mục, giá theo chi nhánh, tồn của chi nhánh; ca bán và báo cáo (NT-BH-006, NT-BH-007) <!-- [2026-11-12 07:20 PM Võ Hoàng] POS-CATALOG — module pos đợt danh mục / ca bán (đóng góp) -->
+
+- **Thêm:** `GET /api/v1/m/pos/catalog/snapshot | /catalog/search | /catalog/barcode/:code` — danh mục bán của chi nhánh, giá trọn từng ĐVT đọc từ `bizcity_read.branch_prices` (luật DM14 ở Core), thuế suất, Biến thể, Gửi lên thuế, mã vạch; `GET /stock` — tồn của chính chi nhánh (`bizcity_read.stock_on_hand`). Bootstrap trả `catalogVersion` để máy biết khi nào kéo lại.
+- **Thêm:** ca bán `GET /shifts/current`, `POST /shifts/open`, `POST /shifts/close` (bảng `mod_pos.shifts`, migration module 0004; một ca mở mỗi chi nhánh; chốt ca: tiền phải có, đếm được, chênh lệch, biên bản; còn đơn chờ trả tiền thì phải chốt bất chấp + lý do). Bootstrap trả ca đang mở. `GET /reports/orders` (danh sách đơn, tổng của cả kết quả lọc), `GET /reports/dashboard` (đơn, doanh thu, trả, thuần; theo hình thức, nguồn bán, giờ; mặt hàng bán chạy).
+- **Thay đổi định khoản:** không — chốt ca không lập chứng từ (NT-BH-007 Q1 chờ phòng kế toán).
+- **Nâng cấp cần làm:** `module migrate pos` (migration module 0004, cấp quyền đọc 2 khung nhìn mới khai ở `data.reads`).
+- **Bảo mật:** phạm vi chi nhánh của người dùng chưa thi hành ở Core (PHASE-028 W3) — module lọc theo chi nhánh của yêu cầu; không có đường đọc tồn chi nhánh khác.
+
 ### Module `pos` — sự kiện cho bản sao sổ ở website; app `tgs-wp` <!-- [2026-11-12 06:45 PM Võ Hoàng] POS-MIRROR — module pos đợt bản sao sổ (đóng góp) -->
 
 - **Thêm:** module `pos` phát `pos.order.recorded`, `pos.return.recorded`, `pos.order.cancelled` (outbox, cùng giao dịch với chứng từ; kèm bản chụp đơn / phiếu và tên thu ngân). Manifest `events.emits`, năng lực `events.outbox`.
