@@ -183,6 +183,18 @@ describe('NT-KHO-002 — trường hợp lệch chuẩn', () => {
     expect(await entries(`erp:kk:${c.id}:qd`)).toEqual([]);
   });
 
+  // [2026-11-12 05:40 PM kiennt] NT-KHO-002 — lệch chuẩn 3: kỳ đã khoá thì không ghi nhận chênh lệch, biên bản giữ nguyên
+  it('Kỳ 10/2026 đã khoá (điều chỉnh kho, CN01) → không ghi nhận chênh lệch, biên bản giữ nháp', async () => {
+    ok(await call(ctx, 'PUT', '/api/v1/periods/locks', { year: 2026, month: 10, changes: [{ branchCode: 'CN01', docType: 'stock_adjustment', locked: true }] }));
+    const c = ok(await call<{ data: Count }>(ctx, 'POST', '/api/v1/kho/kiem-ke', {
+      countDate: '2026-10-31', branchCode: 'CN01', warehouseCode: 'KA-1', lines: [{ lineKey: 'x', sku: 'HANG03', name: 'HANG03', unit: 'Chai', bookQty: 0, countedQty: 1 }],
+    }));
+    const r = await call(ctx, 'POST', `/api/v1/kho/kiem-ke/${c.id}/ghi-nhan`, {});
+    expect(r.status).toBe(409);
+    expect(JSON.stringify(r.body)).toMatch(/Kỳ 10\/2026 đã khoá/);
+    expect(ok(await call<{ data: Count }>(ctx, 'GET', `/api/v1/kho/kiem-ke/${c.id}`)).status).toBe('draft');
+  });
+
   it('Quyết định khi tháng chưa tính giá vốn → báo tính giá vốn trước', async () => {
     const book = ok(await call<{ data: { lines: Line[] } }>(ctx, 'GET', '/api/v1/kho/kiem-ke/so-ton?branchCode=CN01&warehouse=KA-1&date=2026-12-31'));
     const lines = book.lines.map((l) => ({ ...l, countedQty: l.sku === 'HANG03' ? l.bookQty - 1 : l.bookQty }));
