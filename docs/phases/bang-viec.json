@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 172
+      "count": 170
     },
     {
       "key": "partial",
@@ -7781,9 +7781,15 @@
       "phase": "PHASE-031",
       "title": "Rule Contract bán hàng sale.pricelist@1, sale.promo.discount@1, sale.promo.buyxgety@1, sale.creditlimit@1 cùng modules/ban-hang (S030-16); publishChecks trần N…",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "H-Joyy (phiên Claude, pos-core-khuyen-mai)",
+        "branch": "feat/pos-core-khuyen-mai",
+        "state": "đang làm",
+        "since": "2026-11-12",
+        "dot": "Module POS · khuyến mại theo Chương trình bán — phần Core (S031-15 phần chương trình bán; số phase …"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -7797,9 +7803,15 @@
       "phase": "PHASE-031",
       "title": "POS WP: tải chính sách, tính theo Rule Contract, gửi policyRefs; bỏ luật khuyến mại riêng của plugin (repo plugin, dòng CLAIMS riêng)",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "H-Joyy (phiên Claude, module-pos-khuyen-mai)",
+        "branch": "feat/module-pos-khuyen-mai",
+        "state": "đang làm",
+        "since": "2026-11-12",
+        "dot": "Module POS · khuyến mại ở máy bán (S031-16 thay POS WP; số phase do chủ dự án đặt) — module pos nhậ…"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"

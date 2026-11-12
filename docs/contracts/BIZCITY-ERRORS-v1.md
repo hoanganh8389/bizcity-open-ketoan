@@ -220,6 +220,8 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POS_PAYMENT_MISMATCH` | `VALIDATION_ERROR` | Số tiền báo về khác phần QR của đơn; kèm `expected`, `amount` | module `pos` (đề xuất, chưa gộp) |
 | `POS_ORDER_CANCELLED` | `CONFLICT` | Đơn đã huỷ: không nhận tiền về / không lập hoá đơn (kế toán hoàn tiền tay) | module `pos` (đề xuất, chưa gộp) |
 | `POS_SHIFT_REQUIRED` | `CONFLICT` | Cài đặt bán hàng bắt buộc mở ca mà chi nhánh chưa có ca mở | module `pos` (đề xuất, chưa gộp) |
+| **Máy bán POS – khuyến mại** (1.11.0-draft) <!-- [2026-11-12 08:50 PM Võ Hoàng] POS-KM — mã khuyến mại của module pos (phiếu NT-BH-003, đóng góp) --> | | | |
+| `POS_GIFT_WITHOUT_POLICY` | `VALIDATION_ERROR` | Dòng quà tặng / dòng giảm giá theo chương trình mà không nêu chương trình (`policyRef`): quà 0đ phải có căn cứ; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 
 **Thứ tự làm:** (1) duyệt (2026-11-09); (2) S022-21: thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
 
@@ -257,6 +259,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-12 08:50 PM Võ Hoàng] POS-KM — 1.11.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.11.0-draft (2026-11-12, module pos — khuyến mại):** §4c thêm `POS_GIFT_WITHOUT_POLICY` (phiếu NT-BH-003). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-12 11:55 PM Võ Hoàng] POS-QR — 1.10.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.10.0-draft (2026-11-12, module pos — QR, ca bắt buộc):** §4c thêm `POS_QR_EXPIRED`, `POS_PAYMENT_MISMATCH`, `POS_ORDER_CANCELLED`, `POS_SHIFT_REQUIRED` (phiếu NT-BH-009, NT-BH-011). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-12 03:30 PM Võ Hoàng] POS-W3 — 1.9.0-draft (đóng góp, chờ chủ dự án duyệt) -->
