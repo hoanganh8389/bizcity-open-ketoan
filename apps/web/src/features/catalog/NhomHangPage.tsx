@@ -118,7 +118,6 @@ export function NhomHangPage() {
           <button className="btn btn-sm" onClick={() => void q.refetch()}><RefreshCw size={14} /> Nạp</button>
           <button className="btn btn-sm" onClick={xuat}><FileDown size={14} /> Xuất</button>
           {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} />}
-          {canWrite && <button className="btn btn-sm btn-primary" onClick={() => setForm({ mode: 'add', parent: null })}><Plus size={14} /> Thêm nhóm cấp 1</button>}
         </div>
         <div className="muted nh-rule">Mã ngắn — cấp 1: {QUY_TAC[1]} · cấp 2: {QUY_TAC[2]} · cấp 3: {QUY_TAC[3]}</div>
         <ErrorBox error={q.error ? errorText(q.error) : null} />
@@ -131,6 +130,12 @@ export function NhomHangPage() {
                 {cot.tao && <th style={{ width: 160 }}>Người tạo</th>}{cot.sua && <th style={{ width: 160 }}>Người sửa</th>}<th style={{ width: 240 }} />
               </tr></thead>
               <tbody>
+                {/* [2026-11-12 Nguyễn Văn Thủy] thêm ngành mới: dòng mờ đầu cây thay cho nút xanh trên thanh (đóng góp) */}
+                {canWrite && !cap && !tim && (
+                  <tr className="nh-them" onClick={() => setForm({ mode: 'add', parent: null })}>
+                    <td colSpan={20}><Plus size={13} /> Thêm nhóm cấp 1 (ngành hàng mới)</td>
+                  </tr>
+                )}
                 {dong.map(({ c, depth, hasKids, isOpen }, stt) => (
                   <tr key={c.code} className={`${c.isActive ? '' : 'muted'} ${vua === c.code ? 'nh-vua' : ''} ${hasKids ? 'nh-mo' : ''}`} onClick={(e) => { if (hasKids && !(e.target as HTMLElement).closest('button')) lat(c.code); }}>
                     <td className="num muted">{stt + 1}</td>

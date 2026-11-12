@@ -38,7 +38,7 @@ Một bảng dạng cây. Mỗi dòng: Mã ngắn, Mã nhóm hàng, Tên nhóm h
 - **+ Mặt hàng** (chỉ ở nhóm cấp 3): mở form thêm mặt hàng, nhóm điền sẵn, mã tự sinh.
 - **+ Nhóm con** (cấp 1, 2): thêm nhóm cấp dưới. Mã ngắn điền sẵn mã kế tiếp, tên nhóm hàng tự ghép; nhập mã nhóm hàng rồi **Ghi**.
 - **Lịch sử**: ai thêm / sửa, lúc nào, đổi gì.
-- **Thêm nhóm cấp 1** (góc phải trên): thêm ngành mới.
+- **＋ Thêm nhóm cấp 1** (dòng đầu bảng, khi xem dạng cây): thêm ngành mới.
 - Không có xoá: muốn ngừng thì **Sửa**, bỏ tích **Đang dùng**.
 
 ## Phần mềm tự chặn

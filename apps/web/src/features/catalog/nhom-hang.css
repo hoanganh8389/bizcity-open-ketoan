@@ -43,3 +43,5 @@
 .nh-table th:last-child, .nh-table td.nh-act { position: sticky; right: 0; background: var(--surface, #fff); z-index: 1; }
 .nh-table th:last-child { background: var(--surface-2, #f4f6f9); z-index: 2; }
 .nh-cot { position: absolute; right: 0; top: 30px; z-index: 20; background: var(--surface, #fff); border: 1px solid var(--line, #e3e7ee); border-radius: 8px; box-shadow: 0 6px 18px rgba(15,34,61,.15); padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 170px; }
+.nh-table tr.nh-them td { cursor: pointer; color: var(--nav, #2457B3); border-style: dashed; padding: 6px 10px; font-size: 13px; }
+.nh-table tr.nh-them:hover td { background: var(--brand-50, #eef4fc); }
