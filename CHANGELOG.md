@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Giao diện sáng làm mặc định
+- Menu trái nền trắng, chữ đậm; mục đang chọn nền xanh nhạt, có vạch trái màu chính. Màu chính #235DA7 theo website công ty.
+- Các bộ màu tối (Xanh dương, Xanh lá, Tím than) vẫn chọn được ở menu tài khoản. Lựa chọn màu đã lưu trước đây được bỏ để mọi máy về giao diện sáng.
+- Ô chọn (mã đối tượng, chi nhánh, mặt hàng…): dòng đang chọn / rê chuột nền xanh nhạt chữ đậm — trước đây nền xanh đậm mà cột Tên vẫn chữ đen, khó đọc.
+- Menu xổ ra từ menu trái: rê chuột không còn làm chữ xuống dòng hay nhảy chỗ (nút ghim luôn giữ chỗ, tên một dòng, cột rộng hơn).
+
 ### Logo đơn vị hiện ở đầu trang; nút thứ hai trên thanh chứng từ rê chuột không mất chữ <!-- [2026-11-11 Nguyễn Văn Thủy] (đóng góp) -->
 - Logo cài ở Thông tin đơn vị (HT03) nay hiện ở góc trên trái (trước chỉ in trên chứng từ, đầu trang luôn là ô chữ viết tắt); chưa cài logo thì vẫn ô chữ viết tắt mã đơn vị.
 - Sửa: rê chuột vào nút thứ hai (vd **Chi tiền gửi**, **Chi tiền**) và nút ▾ trên danh sách chứng từ thành nền nhạt chữ trắng, không đọc được — nay sẫm màu hơn, chữ vẫn trắng. Nút ▾ cạnh nút chính cùng màu nút chính.

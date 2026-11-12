@@ -156,7 +156,7 @@ html.gd-xanh .drawer-head { font-size: 16px; }
 /* ---------------- Ô chọn: nút + thêm mới, chân danh sách ---------------- */
 html.gd-xanh .picker-drop { border-color: var(--line); border-radius: 6px; }
 html.gd-xanh .picker-opt.active { background: var(--brand-600); color: #fff; }
-html.gd-xanh .picker-opt.active .picker-code, html.gd-xanh .picker-opt.active .picker-hint { color: #fff; }
+html.gd-xanh .picker-opt.active .picker-code, html.gd-xanh .picker-opt.active .picker-hint, html.gd-xanh .picker-opt.active .picker-label { color: #fff; }
 
 /* ---------------- Thêm nhanh + Hay dùng (đầu menu trái; dùng cho cả hai giao diện) ---------------- */
 .gd-them { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 32px; margin: 0 0 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--brand-700); font: inherit; font-weight: 600; cursor: pointer; }
@@ -510,3 +510,42 @@ html.gd-xanh .vf-toolbar button.vf-add2:hover:not(:disabled), .vf-split-menu > s
 .kt-tools { display: flex; gap: 8px; margin: 4px 0 10px; }
 .kt-tk td.num input { width: 170px; }
 .kt-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; margin: 16px 0 8px; max-width: 1100px; }
+
+/* [2026-11-12 Nguyễn Văn Thủy] GIAO DIỆN SÁNG (mặc định, lớp html.gd-sang): menu trái nền trắng chữ đậm, mục đang chọn nền xanh nhạt
+   viền trái màu chính; --nav chỉ còn làm màu chữ đậm. Các bộ màu tối giữ nguyên ở menu tài khoản. (đóng góp) */
+html.gd-xanh.gd-sang {
+  --gd-nav: #fff;
+  --gd-nav-2: var(--brand-50);
+  --gd-nav-3: var(--brand-100);
+  --gd-nav-ink: var(--ink-900);
+  --gd-nav-ink-2: var(--ink-500);
+  --gd-nav-hover: var(--brand-50);
+  --bg: color-mix(in srgb, var(--base) 5%, #f3f5f8);
+}
+html.gd-xanh.gd-sang .sidenav, html.gd-xanh.gd-sang .sidenav.gon { border-right: 1px solid var(--line); }
+html.gd-xanh.gd-sang .gon-row:hover, html.gd-xanh.gd-sang .gon-row.open,
+html.gd-xanh.gd-sang .gd-hay-item:hover, html.gd-xanh.gd-sang .gd-hay-item.active { color: var(--brand-700); }
+html.gd-xanh.gd-sang .gon-row:hover svg, html.gd-xanh.gd-sang .gon-row.open svg { color: var(--brand-600); }
+html.gd-xanh.gd-sang .gon-row.active { background: var(--brand-100); color: var(--brand-700); box-shadow: inset 3px 0 0 var(--brand-600); }
+html.gd-xanh.gd-sang .gon-row.active svg { color: var(--brand-600); }
+html.gd-xanh.gd-sang .sidenav-toggle:hover, html.gd-xanh.gd-sang .gd-hay-ghim:hover { color: var(--brand-700); }
+html.gd-xanh.gd-sang .gd-them { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
+html.gd-xanh.gd-sang .gd-them:hover, html.gd-xanh.gd-sang .gd-them.open { background: var(--brand-700); border-color: var(--brand-700); }
+html.gd-xanh.gd-sang .tq-gioi-thieu { background: var(--brand-600); }
+html.gd-xanh.gd-sang .vf-toolbar .vf-add2, html.gd-xanh.gd-sang .vf-split-menu > summary.vf-add2 { background: var(--brand-700); border-color: var(--brand-700); }
+html.gd-xanh.gd-sang .vf-toolbar button.vf-add2:hover:not(:disabled), html.gd-xanh.gd-sang .vf-split-menu > summary.vf-add2:hover { background: var(--brand-800); border-color: var(--brand-800); }
+html.gd-xanh.gd-sang .brand-logo.brand-chu { background: var(--brand-600); }
+/* [2026-11-12 Nguyễn Văn Thủy] ô chọn (mã đối tượng, mặt hàng…) ở giao diện sáng: dòng đang chọn nền xanh nhạt chữ đậm, vạch trái màu chính —
+   trước đây nền xanh đậm nhưng cột Tên vẫn chữ đen, không đọc được (đóng góp) */
+html.gd-xanh.gd-sang .picker-opt.active { background: var(--brand-100); color: var(--ink-900); box-shadow: inset 3px 0 0 var(--brand-600); }
+html.gd-xanh.gd-sang .picker-opt.active .picker-label, html.gd-xanh.gd-sang .picker-opt.active .picker-cell, html.gd-xanh.gd-sang .picker-opt.active .picker-hint { color: var(--ink-900); }
+html.gd-xanh.gd-sang .picker-opt.active .picker-code { color: var(--brand-700); }
+/* [2026-11-12 Nguyễn Văn Thủy] menu xổ ra từ menu trái: rê chuột không làm chữ xuống dòng / nhảy chỗ — nút ghim luôn giữ chỗ (ẩn bằng
+   visibility thay vì display), tên mục một dòng (dài quá thì "…", rê chuột xem đủ ở chú thích), cột rộng hơn cho tên dài. (đóng góp) */
+.gon-fly.cot-2 { width: 560px; }
+.gon-fly.cot-3 { width: 820px; }
+.gon-fly-item > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gon-fly-item .pin-btn, .sidenav-items .pin-btn { display: inline-flex; visibility: hidden; }
+.gon-fly-item:hover .pin-btn, .gon-fly-item.pinned .pin-btn, .sidenav-items a:hover .pin-btn, .sidenav-items a.pinned .pin-btn { visibility: visible; }
+.gon-fly-item.disabled small { flex: none; white-space: nowrap; }
+.gon-fly { max-width: calc(100vw - 16px); }
