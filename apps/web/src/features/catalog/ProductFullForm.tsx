@@ -306,6 +306,10 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               {!vatRate && v.taxOutCode && <option value="other">{v.taxOutCode}</option>}
             </select>
           </Field>
+          <Field label="Trạng thái" tip="Mặt hàng tạo mới mặc định Đang hoạt động. Ngừng hoạt động: không dùng trên chứng từ mới, dữ liệu cũ giữ nguyên">
+            {v.isDraft ? <input className="input" readOnly value="Chờ duyệt (còn thiếu thông tin — sửa rồi Ghi là hoạt động)" />
+              : <select className="select input" value={v.isActive ? '1' : '0'} onChange={(e) => set({ isActive: e.target.value === '1' })}><option value="1">Đang hoạt động</option><option value="0">Ngừng hoạt động</option></select>}
+          </Field>
           <Field label="Xuất xứ"><input className="input" value={v.origin} onChange={(e) => set({ origin: e.target.value })} /></Field>
           <Field label="Ảnh (đường dẫn)" full>
             <div className="row" style={{ gap: 8, alignItems: 'center' }}>
@@ -335,12 +339,11 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             {flag('isUnder24m', 'Sữa cho trẻ dưới 24 tháng (Luật thuế)', 'Nghiêm cấm mọi chương trình khuyến mại cho mặt hàng này.')}
             {flag('noSale', 'Không được bán (vật tư chỉ nhập)', 'Không hiện ở màn bán hàng; chỉ nhập kho / dùng nội bộ.')}
             {flag('exportAdjust', 'Được xuất điều chỉnh dù vẫn bán (BIT1)', 'Cho phép lập phiếu xuất điều chỉnh với mặt hàng đang bán.')}
-            {flag('isActive', 'Đang theo dõi (đang dùng)', 'Bỏ tích để ngừng mặt hàng (không xoá dữ liệu cũ).')}
           </div>
         </fieldset>
       )}
 
-      {v.isDraft && <div className="alert alert-warn full"><b>Nháp</b> — mặt hàng chưa kích hoạt, chưa dùng được trên chứng từ (cửa nạp giữ chứng từ ở Trạm kiểm tra với mã IN-ITEM-009). Sửa các lỗi chặn bên dưới, Ghi → tự kích hoạt.</div>}
+      {v.isDraft && <div className="alert alert-warn full"><b>Chờ duyệt</b> — mặt hàng chưa hoạt động, chưa dùng được trên chứng từ (cửa nạp giữ chứng từ ở Trạm kiểm tra với mã IN-ITEM-009). Sửa các lỗi chặn bên dưới, Ghi → tự kích hoạt.</div>}
       <WhyPanel findings={why.findings} onFix={(p) => set(p as Partial<FullProduct>)} />
       <WarnAckBox ack={ack} />
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}

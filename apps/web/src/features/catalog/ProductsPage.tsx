@@ -13,7 +13,6 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, Pager } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
-import { KpiMatHang } from '@/components/KpiDanhMuc';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
 import { GroupTree } from '../posting/ProductAccountsPage';
@@ -28,6 +27,8 @@ import { Link } from 'react-router-dom';
 
 export type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 interface ItemClass { code: string; name: string; parentCode: string | null; isActive: boolean; products: number; skuCode?: string }
+const trangThai = (p: { isActive: boolean; isDraft?: boolean }) => (!p.isActive ? 'Ngừng hoạt động' : p.isDraft ? 'Chờ duyệt' : 'Đang hoạt động');
+
 interface Product {
   sku: string; name: string; unit: string; postingGroupCode: string | null;
   brandCode: string | null; industryCode: string | null; groupCode: string | null; typeCode: string | null; isActive: boolean; sourceSystem: string;
@@ -127,20 +128,17 @@ export function ProductsPage() {
     { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
     { key: 'unit', header: 'ĐVT', width: 70 },
-    { key: 'industryCode', header: 'Ngành hàng', width: 140, value: (p) => nameOf('industry', p.industryCode) },
-    { key: 'brandCode', header: 'Nhãn hàng', width: 140, value: (p) => nameOf('brand', p.brandCode) },
-    { key: 'taxOutCode', header: 'Mã VAT ra', type: 'code', width: 90 },
-    { key: 'taxInCode', header: 'Mã VAT vào', type: 'code', width: 95 },
-    { key: 'exciseRate', header: 'Thuế TTĐB', type: 'number', width: 85 },
+    // [2026-11-12 Nguyễn Văn Thủy] một cột Thuế GTGT (%) thay Mã VAT ra / vào, TTĐB (đóng góp)
+    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Thuế suất GTGT bán ra', value: (p) => ({ KCT: 'KCT', R00K: 'KCT', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
-    { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
+    // [2026-11-12 Nguyễn Văn Thủy] Trạng thái sản phẩm thay ô Theo dõi: Đang hoạt động / Chờ duyệt / Ngừng hoạt động (đóng góp)
+    { key: 'isActive', header: 'Trạng thái', width: 130, title: 'Đang hoạt động · Chờ duyệt (mặt hàng nháp, chưa dùng được trên chứng từ) · Ngừng hoạt động', value: (p) => trangThai(p), render: (p) => <span className={`badge ${!p.isActive ? 'badge-gray' : p.isDraft ? 'badge-warn' : 'badge-ok'}`}>{trangThai(p)}</span> },
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
 
   return (
     <>
       <PageHeader title="Mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
-      <KpiMatHang />
       <div className="acc17">
         <div className="card acc17-tree">
           <div className="acc17-tree-head">Nhóm hàng</div>
@@ -159,8 +157,6 @@ export function ProductsPage() {
             extra={
               <>
                 <NutNhapExcel loai={nhapLoai('mat-hang')!} disabled={!canWrite} />
-                {sel && <Link className="btn btn-sm" to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(sel.sku)}`} title="Mua → nhập → bán → giá vốn → trả của mặt hàng đang chọn">Hành trình</Link>}
-                {canWrite && <button className="btn btn-sm" title="Mặt hàng nháp (thiếu đơn vị tính / nhóm hạch toán, hoặc mới từ chứng từ): điền một lần cho cả lô rồi kích hoạt" onClick={() => setBulk(true)}>Kích hoạt hàng loạt</button>}
                 <span className="row" style={{ gap: 4 }} title="In tem mã vạch / tem kệ: chọn phạm vi và số tem mỗi mã, mũi tên cạnh nút In tem để chọn mẫu (3–8 cột, tem kệ)">
                   <select className="select input" style={{ height: 30 }} value={labelScope} onChange={(e) => setLabelScope(e.target.value as 'sel' | 'view')}>
                     <option value="sel">Tem: mã đang chọn</option><option value="view">Tem: mọi dòng đang hiện</option>
@@ -173,18 +169,14 @@ export function ProductsPage() {
                   <input className="input" style={{ width: 220, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên, ghi chú" />
                   <button className="btn btn-sm" type="submit">Tìm</button>
                 </form>
-                <select className="select input" style={{ height: 30 }} value={f.postingGroup} onChange={(e) => set({ postingGroup: e.target.value })}>
-                  <option value="">Mọi nhóm hạch toán</option><option value="-">(Chưa gán — nhóm mặc định)</option>
-                  {(groups.data ?? []).map((g) => <option key={g.code} value={g.code}>{g.code} — {g.name}</option>)}
-                </select>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                  <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="draft">Nháp (chưa kích hoạt)</option><option value="inactive">Ngừng</option>
+                  <option value="all">Mọi trạng thái</option><option value="active">Đang hoạt động</option><option value="draft">Chờ duyệt</option><option value="inactive">Ngừng hoạt động</option>
                 </select>
               </>
             }
           />
           <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
-          <AutoCreatedBanner onActivate={canWrite ? () => setBulk(true) : undefined} />
+          <AutoCreatedBanner />
           {q.isLoading ? <Loading /> : (
             <DataGrid
               storageKey="dm10-v3"
@@ -206,7 +198,6 @@ export function ProductsPage() {
           {Number(q.data?.meta?.total ?? 0) > TRANG_MAT_HANG && <Pager page={page} pageSize={TRANG_MAT_HANG} total={Number(q.data?.meta?.total)} onPage={setPage} />}
         </div>
       </div>
-      {bulk && <BulkActivateModal onClose={() => setBulk(false)} groups={groups.data ?? []} />}
       {editing && <ProductFullForm sku={editing.isNew ? null : editing.sku ?? null} initial={editing.isNew ? { groupCode: editing.groupCode ?? null } : undefined} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={() => setEditing(null)} />}
     </>
   );

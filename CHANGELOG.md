@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Danh sách mặt hàng gọn, bảng không sắp xếp khi bấm tiêu đề
+- Mọi bảng: bỏ bấm tiêu đề cột để sắp xếp (hết mũi tên, hết nhảy bảng); rê chuột tiêu đề hiện chú thích cột.
+- Mọi màn danh mục: bỏ nút **Xoá** (và phím Delete).
+- Danh sách mặt hàng: bỏ khối thống kê trên cùng, nút Hành trình, Kích hoạt hàng loạt, lọc nhóm hạch toán, cột Ngành / Nhãn; cột Mã VAT ra / vào, TTĐB gộp thành **Thuế GTGT (%)**; cột **Trạng thái** (Đang hoạt động / Chờ duyệt / Ngừng hoạt động) thay ô Theo dõi.
+- Form mặt hàng: ô **Trạng thái** ở thẻ Thông tin (mặc định Đang hoạt động); tab Lịch sử dạng dòng thời gian theo ngày, cũ → mới.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Thẻ hướng dẫn sử dụng (HT17)
 - Hướng dẫn sử dụng thành **thẻ** lưu trong hệ thống (migration 0113): soạn tự do ở màn **Thẻ hướng dẫn (HT17)** — kiểu đoạn, cỡ chữ, đậm / nghiêng, màu chữ, tô nền, danh sách, căn lề, bảng, ảnh (link, từ máy, dán), liên kết; dán từ Word giữ định dạng.
 - Mỗi màn / hộp thoại có một định danh; nút **Hướng dẫn** hiện thẻ đang gắn, đổi thẻ ngay trong ngăn, **+ Thẻ mới**, **Sửa thẻ** (mở trang soạn ở thẻ trình duyệt mới). Mọi hộp thoại có nút **? Hướng dẫn** ở đầu.

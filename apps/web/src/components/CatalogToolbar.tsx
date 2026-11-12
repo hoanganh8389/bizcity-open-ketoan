@@ -4,7 +4,7 @@
  * Sửa / Xoá làm trên dòng đang chọn của bảng; bấm đúp một dòng cũng là Sửa.
  */
 import { useEffect, useRef, useState } from 'react';
-import { FileSpreadsheet, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { FileSpreadsheet, Pencil, Plus, RefreshCw } from 'lucide-react';
 import { openNextInEdit } from '@/components/ui';
 
 export function CatalogToolbar({ onAdd, onEdit, onDelete, onRefresh, onExport, canWrite, hasSelection, busy, extra }: {
@@ -40,7 +40,8 @@ export function CatalogToolbar({ onAdd, onEdit, onDelete, onRefresh, onExport, c
       if (!e.ctrlKey) return;
       if (e.key === 'n' || e.key === 'N' || e.key === 'Insert') return run(h.onAdd, h.canWrite);
       if (e.key === 'e' || e.key === 'E') return run(h.onEdit && (() => { openNextInEdit(); h.onEdit?.(); }), h.canWrite && h.hasSelection);
-      if (e.key === 'Delete') return run(h.onDelete, h.canWrite && h.hasSelection);
+      // [2026-11-12 Nguyễn Văn Thủy] tạm không cho xoá ở danh mục (đóng góp)
+      if (e.key === 'Delete') return;
       if (e.key === 'F8') return run(h.onExport);
     };
     window.addEventListener('keydown', key);
@@ -51,7 +52,6 @@ export function CatalogToolbar({ onAdd, onEdit, onDelete, onRefresh, onExport, c
     <div className="catalog-toolbar" ref={ref}>
       {onAdd && <button className="btn btn-sm btn-primary" disabled={!canWrite} onClick={onAdd} title="Thêm (Ctrl+N)"><Plus size={14} /> Thêm</button>}
       {onEdit && <button className="btn btn-sm" disabled={!canWrite || !hasSelection} onClick={() => { openNextInEdit(); onEdit(); }} title="Sửa dòng đang chọn (Ctrl+E) — mở thẳng chế độ sửa; bấm đúp dòng để xem"><Pencil size={14} /> Sửa</button>}
-      {onDelete && <button className="btn btn-sm" disabled={!canWrite || !hasSelection || busy} onClick={onDelete} title="Xoá dòng đang chọn (Ctrl+Delete)"><Trash2 size={14} /> Xoá</button>}
       {onRefresh && <button className="btn btn-sm" disabled={loading} onClick={() => void refresh()} title="Nạp lại dữ liệu mới nhất từ máy chủ (F5)"><RefreshCw size={14} className={loading ? 'spin' : undefined} /> {loading ? 'Đang nạp…' : 'Nạp'}</button>}
       {onExport && <button className="btn btn-sm" onClick={onExport} title="Xuất Excel (Ctrl+F8)"><FileSpreadsheet size={14} /> Xuất</button>}
       {loadedAt && !loading && <span className="refresh-note">Đã nạp lúc {loadedAt}</span>}
