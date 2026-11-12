@@ -78,6 +78,7 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     else if (/\s/.test(sku)) errors.push(`Mã hàng "${sku}" có khoảng trắng`);
     else if (sku.length > 64) errors.push('Mã hàng dài quá 64 ký tự');
     if (sku && seen.has(sku)) errors.push(`Trùng mã hàng với dòng ${seen.get(sku)} trong tệp`);
+    else if (sku) seen.set(sku, r.row);
     const ps = sku ? parentFromSku(sku) : null;
     if (sku && !existing.has(sku)) {
       if (ps) {
@@ -87,7 +88,6 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
         errors.push('Mã hàng mới không được có chữ ở đầu hoặc cuối (mã biến thể phải giữ nguyên mã cha đã có)');
       }
     }
-    else if (sku) seen.set(sku, r.row);
     const isNew = !existing.has(sku);
     const name = r.name?.trim() ?? '';
     const unit = r.unit?.trim() ?? '';

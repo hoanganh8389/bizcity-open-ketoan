@@ -41,7 +41,7 @@ describe('Đường thuế theo mã — mua hàng', () => {
     const cs = await analyze({ ...base, kind: 'gift_in', gift: { source: 'ncc_extra', hasVat: false }, lines: [line(PARENT, 5, 0, { taxCode: 'KKKN' })] });
     const c = cs.find((x) => x.code === 'tax_path_gift');
     expect(c).toMatchObject({ level: 'error', blocking: true });
-    expect(c!.text).toMatch(/Thêm sản phẩm con/);
+    expect(c!.text).toMatch(/Mã biến thể/);
   });
 
   it('TH2 tạo mã quà con không gửi thuế: lần sau chặn và chỉ đúng mã quà; dùng mã quà thì đạt', async () => {

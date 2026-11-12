@@ -788,7 +788,7 @@ export function taxPathChecks(doc: PDoc, c: Pick<CheckCtx, 'products' | 'noTaxFo
   const sends = (sku: string) => prod(sku)?.sendToTax !== false;
   const hint = (sku: string) => {
     const alt = (c.noTaxFor?.(sku) ?? []).filter((x) => x !== sku);
-    return alt.length ? `dùng mã ${alt.slice(0, 3).join(', ')}` : `chưa có mã không gửi thuế cho ${sku}: nhờ bộ phận khai báo danh mục tạo sản phẩm con (DM10 → Thêm sản phẩm con, bỏ tích Gửi lên thuế)`;
+    return alt.length ? `dùng mã ${alt.slice(0, 3).join(', ')}` : `chưa có mã không gửi thuế cho ${sku}: thêm mã biến thể của ${sku} (Quản lý mặt hàng → Thêm → Mã biến thể)`;
   };
   const lines = doc.lines.filter((l) => l.sku && l.qty > 0 && prod(l.sku));
   const giftDoc = doc.kind === 'gift_in' || Boolean(doc.gift);

@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Sửa nhập Excel mặt hàng: dòng trùng mã trong cùng tệp lại không bị bắt (lỗi từ đợt luật mã mới).
+- Gỡ tiếp nút xoá dữ liệu đã lưu: thẻ tài sản, dòng kế hoạch, danh sách rủi ro hoá đơn; khoá sổ: Xóa → Huỷ kết chuyển. Gợi ý mã không gửi thuế chỉ sang Mã biến thể; trang CSDL mua hàng ghi luật mã mới.
+- Cập nhật test theo luật mã / nhóm hàng mới (catalog-import, xuong-ca-dinh-danh, product-accounts, mua-hang-duong-thue, mua-hang-loi-30-10).
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Mọi dòng sổ cái / phiếu kho ghi đơn vị nhỏ nhất: định danh bất biến chi nhánh cn_…, kho kho_… (+ mã kho chụp), MST tại ngày chứng từ (0121). Không chọn kho = kho mặc định của chi nhánh. MST đặt ở kho / chi nhánh / nút cơ cấu (thường ở tỉnh), cấp gần nhất thắng; phiên bản theo ngày hiệu lực (tax_id_versions) và phiên bản cơ cấu (org_link_versions) — đổi MST tỉnh hoặc chuyển shop sang tỉnh khác: dòng cũ giữ MST cũ, chứng từ nhập lùi ngày lấy MST đúng ngày. Định danh nút cơ cấu cc_…. Màn Kho / Cơ cấu tổ chức: ô MST kê khai + ngày áp dụng, bảng phiên bản MST. Hàm bizcity_fill_missing_wh_tax() điền dòng cũ theo lô.
 - Luật mã hàng (mã chính / biến thể) chỉ áp cho mặt hàng có nhóm hàng; đường đồng bộ không có nhóm giữ mã nguồn.
 

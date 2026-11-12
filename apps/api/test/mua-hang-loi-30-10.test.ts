@@ -96,7 +96,8 @@ describe('Đợt test 30/10', () => {
       lines: [line(qty, 100_000, { sku: QSKU, taxCode: 'KKKN', lineType: 'gift_consumer', program: 'P3010' })] });
     const wrong = (await analyze({ ...gift(1), lines: [line(1, 100_000, { taxCode: 'KKKN', lineType: 'gift_consumer', program: 'P3010' })] })).find((c) => c.code === 'tax_path_gift');
     expect(wrong).toMatchObject({ level: 'error', blocking: true });
-    expect(wrong?.text).toContain(QSKU);
+    // mã thử không theo dạng số nên không tự gắn họ mã: gợi ý thêm mã biến thể (0112/0115)
+    expect(wrong?.text).toMatch(new RegExp(`${QSKU}|mã biến thể`));
     await approve((await save(gift(8))).id); // 800.000
     const w = (await analyze(gift(3))).find((c) => c.code === 'gift_budget_over');
     expect(w?.level).toBe('warn');
