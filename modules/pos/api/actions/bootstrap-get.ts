@@ -5,7 +5,7 @@
 import { defineAction, z } from '@bizcity/module-sdk';
 import { paymentKind } from '../domain/order.js';
 import { activePaymentMethods, resolveBranch, todayVn } from '../read.js';
-import { RETURN_DAYS } from '../return-service.js';
+import { posSettings } from '../settings.js';
 import { openShiftOf } from '../shifts.js';
 import { catalogVersionOf } from '../catalog.js';
 
@@ -32,7 +32,9 @@ export default defineAction({
     promotionsVersion: z.string(),
   }),
   expose: { http: { method: 'GET', path: '/bootstrap' }, mcp: false, ai: 'read' },
-  handler: async (ctx, input) => ctx.data.module(async (tx) => {
+  handler: async (ctx, input) => {
+    const settings = await posSettings(ctx);
+    return ctx.data.module(async (tx) => {
     const branch = await resolveBranch(tx, input.branch);
     const methods = await activePaymentMethods(tx);
     const day = todayVn();
@@ -49,12 +51,13 @@ export default defineAction({
       saleSources: [{ code: 'tai_quay', name: 'Tại quầy' }],
       minTotal: 0,
       // Hạn trả là tham số (họp kế toán 04/11: 3 ngày); W2 trả ở cửa hàng đã bán (trả khác cửa hàng cùng MST chờ chốt R2).
-      returnPolicy: { days: RETURN_DAYS, crossShop: 'same_shop' as const },
+      returnPolicy: { days: settings.returnDays, crossShop: 'same_shop' as const },
       openShift: shift ? { id: shift.shift_id, openedAt: shift.opened_at.toISOString() } : { id: `ngay-${day}`, openedAt: `${day}T00:00:00+07:00` },
       reservedCodes: { sale: [] },
       coreVersion: '',
       catalogVersion: await catalogVersionOf(tx, branch.code),
       promotionsVersion: '',
     };
-  }),
+    });
+  },
 });
