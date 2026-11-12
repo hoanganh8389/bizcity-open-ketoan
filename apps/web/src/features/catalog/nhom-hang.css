@@ -10,3 +10,20 @@
 .nh-meta { font-size: 12.5px; margin-top: 6px; }
 .nh-tabs { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
 @media (max-width: 900px) { .nh-wrap { grid-template-columns: 1fr; } }
+
+.nh-rule { margin: 0 12px 6px; font-size: 12px; }
+.nh-table-wrap { margin: 0 12px 12px; border: 1px solid var(--line, #e3e7ee); border-radius: 8px; max-height: calc(100vh - 260px); overflow: auto; }
+.nh-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.nh-table th { position: sticky; top: 0; background: var(--surface-2, #f4f6f9); text-align: left; padding: 7px 8px; font-weight: 600; border-bottom: 1px solid var(--line, #e3e7ee); z-index: 1; }
+.nh-table td { padding: 5px 8px; border-bottom: 1px solid var(--line-soft, #eef1f5); vertical-align: middle; }
+.nh-table tr:hover td { background: var(--brand-50, #f3f7fc); }
+.nh-table .num { text-align: right; }
+.nh-tog { display: inline-block; width: 14px; cursor: pointer; color: var(--ink-500, #6b7280); }
+.nh-ai { font-size: 12.5px; }
+.nh-ai span { display: block; color: var(--ink-500, #6b7280); font-size: 11.5px; }
+.nh-act { white-space: nowrap; text-align: right; }
+.nh-act .btn { margin-left: 4px; }
+.nh-table tr.nh-vua td { background: #fff7d6; }
+.nh-table td.mono { white-space: nowrap; }
+.nh-act .btn { background: transparent; }
+.nh-table tr:hover .nh-act .btn { background: var(--surface, #fff); }

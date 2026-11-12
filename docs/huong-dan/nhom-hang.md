@@ -21,16 +21,19 @@ Thêm mặt hàng mới chỉ cần chọn nhóm cấp 3, phần mềm tự sinh
 
 ## Màn hình
 
-- **Trái**: cây nhóm hàng. Gõ tên để tìm.
-- **Phải trên**: thẻ của nhóm đang chọn — đường dẫn, **mã nhóm**, **tên**, cấp, số mặt hàng, ai tạo / sửa lúc nào. Nút **Sửa** và **+ Thêm nhóm con** nằm ngay trên thẻ.
-- **Phải dưới**: **Danh sách nhóm** (mặc định là nhóm con; ô bên phải chọn xem toàn bộ nhóm cấp 1, 2, 3… hoặc tất cả; bấm đúp một dòng để đi tới nhóm đó) và **Lịch sử** (mỗi lần thêm / sửa: ai, lúc nào, đổi gì). Nhóm chưa có mã hiện chữ đỏ *chưa có*.
+Một bảng dạng cây duy nhất. Mỗi dòng là một nhóm: **Mã nhóm**, **Tên**, Cấp, Số mặt hàng, Đang dùng, Người tạo, Người sửa (kèm thời gian). Nhóm chưa có mã hiện chữ đỏ *chưa có*.
 
-## Thao tác
+- Bấm tên nhóm (hoặc mũi tên ▸) để mở / thu nhóm con. **Mở hết / Thu hết** ở trên cùng.
+- Ô **Tìm**: gõ mã hoặc tên, bảng chỉ còn nhóm khớp và đường đi tới nó.
+- Ô **Xem dạng cây / Chỉ nhóm cấp 1…5**: xem riêng toàn bộ nhóm một cấp.
 
-- **Thêm ngành mới**: nút **Thêm nhóm cấp 1** trên cùng.
-- **Thêm nhóm con**: chọn nhóm trên cây → **+ Thêm nhóm con**. Mã điền sẵn mã kế tiếp (sửa được), nhập tên, **Ghi**.
-- **Sửa**: chọn nhóm → **Sửa**. Chuyển sang nhóm khác: nút **Đổi…** ở ô Thuộc nhóm.
-- **Ngừng dùng**: không có xoá — **Sửa**, bỏ tích **Đang dùng**.
+## Thao tác — nút ngay trên từng dòng
+
+- **Sửa**: đổi mã, tên, Đang dùng; nút **Đổi…** để chuyển sang nhóm khác.
+- **+ Nhóm con**: thêm nhóm cấp dưới. Mã điền sẵn mã kế tiếp (sửa được), nhập tên, **Ghi**.
+- **Lịch sử**: ai thêm / sửa, lúc nào, đổi gì.
+- **Thêm nhóm cấp 1** (góc phải trên): thêm ngành mới.
+- Không có xoá: muốn ngừng thì **Sửa**, bỏ tích **Đang dùng**.
 
 ## Phần mềm tự chặn
 
