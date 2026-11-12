@@ -125,7 +125,6 @@ export function ProductsPage() {
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
     { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
-    { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
     { key: 'unit', header: 'ĐVT', width: 70 },
     // [2026-11-12 Nguyễn Văn Thủy] một cột Thuế GTGT (%) thay Mã VAT ra / vào, TTĐB (đóng góp)
@@ -166,7 +165,7 @@ export function ProductsPage() {
                 </span>
                 <span className="spacer" />
                 <form className="row" style={{ gap: 4 }} onSubmit={(e) => { e.preventDefault(); setApplied(search.trim()); setPage(1); }}>
-                  <input className="input" style={{ width: 220, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên, ghi chú" />
+                  <input className="input" style={{ width: 220, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên" />
                   <button className="btn btn-sm" type="submit">Tìm</button>
                 </form>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>

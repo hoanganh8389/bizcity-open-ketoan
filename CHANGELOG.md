@@ -18,6 +18,10 @@ Mỗi bản ghi đủ sáu mục:
 - Mọi màn danh mục: bỏ nút **Xoá** (và phím Delete).
 - Danh sách mặt hàng: bỏ khối thống kê trên cùng, nút Hành trình, Kích hoạt hàng loạt, lọc nhóm hạch toán, cột Ngành / Nhãn; cột Mã VAT ra / vào, TTĐB gộp thành **Thuế GTGT (%)**; cột **Trạng thái** (Đang hoạt động / Chờ duyệt / Ngừng hoạt động) thay ô Theo dõi.
 - Form mặt hàng: ô **Trạng thái** ở thẻ Thông tin (mặc định Đang hoạt động); tab Lịch sử dạng dòng thời gian theo ngày, cũ → mới.
+- Bỏ hộp bắt gõ lý do khi lưu có cảnh báo mềm (mọi form): bấm Ghi là lưu, cảnh báo tự ghi nhận.
+- Bỏ mọi nhắc / chặn **nhóm hạch toán** của mặt hàng (không dùng nữa).
+- Form mặt hàng: nút Ghi luôn bấm được, thiếu mã / tên / ĐVT hay trùng tên thì báo đỏ ngay đầu form (thiếu ĐVT tự mở thẻ Đơn vị tính); bỏ khung "Vì sao" ở cuối form.
+- Ô **Nhóm hàng** chọn theo cây cha – con, có ô tìm; danh sách mặt hàng bỏ cột Ghi chú.
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Thẻ hướng dẫn sử dụng (HT17)
