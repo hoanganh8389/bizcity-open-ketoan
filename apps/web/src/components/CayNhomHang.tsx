@@ -17,7 +17,7 @@ import { plain } from './pickers';
 import { useFilterPanel } from './filterPanel';
 import './cay-don-vi.css';
 
-export interface NhomHang { code: string; name: string; parentCode: string | null; isActive: boolean; products: number; skuCode?: string; fullName?: string; createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null }
+export interface NhomHang { code: string; name: string; parentCode: string | null; isActive: boolean; products: number; skuCode?: string; fullName?: string; note?: string; createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null }
 
 export const useNhomHang = () => useQuery({ queryKey: ['item-classes', 'group'], queryFn: () => api.get<NhomHang[]>('/api/v1/item-classes/group'), staleTime: 60_000 });
 

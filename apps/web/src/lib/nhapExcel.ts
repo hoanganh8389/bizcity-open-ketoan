@@ -205,6 +205,7 @@ const NHOM_HANG: NhapLoai = {
       // Nhóm đang có cùng cha + cùng mã nhóm hàng → cập nhật.
       const same = errors.length ? undefined : kidsOf(parent).find(([, v]) => low(v.name) === low(name));
       const code = same ? same[0] : `moi:${row}`;
+      if (!same && name && [...tree.entries()].some(([, v]) => low(v.name) === low(name))) errors.push(`Mã nhóm hàng "${name}" đã dùng cho nhóm khác — đặt mã khác`);
       const before = have.get(code);
       const sku = (r.skuCode ?? '').trim().toUpperCase();
       if (sku && !/^[0-9A-Z]+$/.test(sku)) errors.push('Mã ngắn chỉ gồm chữ và số');

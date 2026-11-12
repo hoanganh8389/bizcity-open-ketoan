@@ -47,7 +47,7 @@ const SOURCE: Record<string, string> = { document: 'Tự thêm từ chứng từ
 
 /** Đường dẫn cây (cha / con / …) của một mã phân loại. */
 /** Form mặt hàng mở được từ bất kỳ màn nào (phiếu, bảng giá…): tự tải phân loại hàng. sku null = thêm mới. */
-export function ProductEditor({ sku, onClose, startTab, startEditing, initial, onSaved }: { sku: string | null; onClose: () => void; startTab?: string; startEditing?: boolean; initial?: { name?: string }; onSaved?: (sku: string) => void }) {
+export function ProductEditor({ sku, onClose, startTab, startEditing, initial, onSaved }: { sku: string | null; onClose: () => void; startTab?: string; startEditing?: boolean; initial?: { name?: string; groupCode?: string | null }; onSaved?: (sku: string) => void }) {
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
   const groupPath = useMemo(() => pathOf(classes.group.data ?? []), [classes.group.data]);
   return <ProductFullForm sku={sku} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={onClose} startTab={startTab} startEditing={startEditing} initial={initial} onSaved={onSaved} />;

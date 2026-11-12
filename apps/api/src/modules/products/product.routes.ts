@@ -197,7 +197,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       const n = new Map(counts.map((c) => [(c as Record<string, unknown>)[COLUMN[kind]] as string, Number(c.n)]));
       const rows = await db.selectFrom('item_classes').selectAll().where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).orderBy('code').execute();
       return ok(rows.map((c) => ({ code: c.code, name: c.name, parentCode: c.parent_code, isActive: c.is_active, skuCode: c.sku_code, products: n.get(c.code) ?? 0,
-        createdBy: c.created_by, createdAt: c.created_at, updatedBy: c.updated_by, updatedAt: c.updated_at, fullName: c.full_name })));
+        createdBy: c.created_by, createdAt: c.created_at, updatedBy: c.updated_by, updatedAt: c.updated_at, fullName: c.full_name, note: c.note })));
     },
   });
 
@@ -513,7 +513,7 @@ export const productWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'core.item-class.upsert', title: 'Thêm hoặc sửa nhãn / ngành / nhóm / loại hàng (?new=1: thêm mới, báo trùng mã)', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: (z.object({ name: z.string().trim().min(1).max(255), parentCode: code.optional(), isActive: z.boolean().default(true), fullName: z.string().trim().max(500).optional(), skuCode: z.string().trim().max(20).regex(/^[0-9A-Za-z]*$/, 'Mã SKU chỉ gồm chữ và số').optional() })).merge(z.object({ new: queryBool })).merge(z.object({ kind: z.enum(ITEM_CLASS_KINDS), code: z.string().trim().min(1).max(64) })), output: anyOut,
+    input: (z.object({ name: z.string().trim().min(1).max(255), parentCode: code.optional(), isActive: z.boolean().default(true), fullName: z.string().trim().max(500).optional(), note: z.string().max(2000).optional(), skuCode: z.string().trim().max(20).regex(/^[0-9A-Za-z]*$/, 'Mã SKU chỉ gồm chữ và số').optional() })).merge(z.object({ new: queryBool })).merge(z.object({ kind: z.enum(ITEM_CLASS_KINDS), code: z.string().trim().min(1).max(64) })), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/item-classes/:kind/:code', query: z.object({ new: queryBool }) }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'item_class', objectId: (i) => String(i.kind) },
     handler: async (ctx, input) => {
@@ -536,7 +536,7 @@ export const productWriteActions: AnyActionDef[] = [
         const up = new Map(all.map((x) => [x.code, x.parent_code]));
         for (let x: string | null | undefined = b.parentCode, n = 0; x && n < 50; x = up.get(x), n++) if (x === c) throw Errors.validation(`${LABEL[kind]} ${c} không chuyển vào nhóm con của chính nó (${b.parentCode})`);
       }
-      const old = await trx.selectFrom('item_classes').select(['name', 'parent_code', 'is_active', 'sku_code', 'full_name']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
+      const old = await trx.selectFrom('item_classes').select(['name', 'parent_code', 'is_active', 'sku_code', 'full_name', 'note']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
       // [2026-11-12 Nguyễn Văn Thủy] mã nhóm hàng (đoạn ghép vào mã hàng): đủ độ dài theo cấp, chữ hoặc số, cấp 1 không bắt đầu bằng 0 (đóng góp)
       if (kind === 'group') {
         const all = await trx.selectFrom('item_classes').select(['code', 'name', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', 'group').execute();
@@ -548,7 +548,14 @@ export const productWriteActions: AnyActionDef[] = [
         const len = GROUP_CODE_LEN[lv];
         const changed = !old || (old.sku_code ?? '') !== (b.skuCode ?? old.sku_code ?? '') || (old.parent_code ?? null) !== (b.parentCode || null);
         // [2026-11-12 Nguyễn Văn Thủy] nhóm (hoặc nhóm con bên dưới) đã có mặt hàng: không đổi mã ngắn, không chuyển nhóm — mã hàng đã ghép theo (đóng góp)
-        if (old && changed) {
+        // [2026-11-12 Nguyễn Văn Thủy] mã nhóm hàng không trùng nhóm khác trong hệ thống (thêm mới / đổi tên) (đóng góp)
+        if (!old || old.name.trim().toLowerCase() !== b.name.trim().toLowerCase()) {
+          const trung = all.find((x) => x.code !== c && x.name.replace(/\s+/g, ' ').trim().toLowerCase() === b.name.replace(/\s+/g, ' ').trim().toLowerCase());
+          if (trung) throw Errors.conflict(`Mã nhóm hàng "${b.name}" đã dùng cho nhóm khác — đặt mã khác`);
+        }
+        const doiMaCo = Boolean(old?.sku_code) && b.skuCode !== undefined && old!.sku_code !== b.skuCode;
+        const doiCha = Boolean(old) && (old!.parent_code ?? null) !== (b.parentCode || null);
+        if (old && (doiMaCo || doiCha)) {
           const sub = new Set([c]);
           for (let grew = true; grew;) { grew = false; for (const x of all) if (x.parent_code && sub.has(x.parent_code) && !sub.has(x.code)) { sub.add(x.code); grew = true; } }
           const used = await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('group_code', 'in', [...sub]).limit(1).executeTakeFirst();
@@ -573,7 +580,7 @@ export const productWriteActions: AnyActionDef[] = [
           if (dup) throw Errors.conflict(`Mã nhóm hàng ${b.skuCode} đã dùng cho nhóm "${dup.name}" cùng cấp — chọn mã khác`);
         }
       }
-      const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), updated_by: auth.actorName || auth.actor, ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}), ...(b.fullName !== undefined ? { full_name: b.fullName } : {}) };
+      const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), updated_by: auth.actorName || auth.actor, ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}), ...(b.fullName !== undefined ? { full_name: b.fullName } : {}), ...(b.note !== undefined ? { note: b.note } : {}) };
       // Lịch sử: thêm mới / từng ô đổi (trước → sau).
       const nameOf = async (x: string | null) => (x ? (await trx.selectFrom('item_classes').select('name').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', x).executeTakeFirst())?.name ?? x : '(gốc)');
       const diff: string[] = [];
@@ -583,6 +590,7 @@ export const productWriteActions: AnyActionDef[] = [
         if (b.fullName !== undefined && old.full_name !== b.fullName) diff.push(`Tên nhóm hàng: ${old.full_name || '(trống)'} → ${b.fullName || '(trống)'}`);
         if (b.skuCode !== undefined && (old.sku_code ?? '') !== b.skuCode) diff.push(`Mã ngắn: ${old.sku_code || '(trống)'} → ${b.skuCode || '(trống)'}`);
         if ((old.parent_code ?? null) !== (b.parentCode || null)) diff.push(`Thuộc nhóm: ${await nameOf(old.parent_code)} → ${await nameOf(b.parentCode || null)}`);
+        if (b.note !== undefined && (old.note ?? '') !== b.note) diff.push(`Ghi chú: ${old.note || '(trống)'} → ${b.note || '(trống)'}`);
         if (old.is_active !== b.isActive) diff.push(b.isActive ? 'Dùng lại' : 'Ngừng dùng');
       }
       await sameTx(trx, async (trx) => {

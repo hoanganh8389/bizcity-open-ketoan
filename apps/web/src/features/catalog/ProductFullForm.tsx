@@ -99,7 +99,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const isNew = sku === null;
   const [tab, setTab] = useState<string>(startTab ?? 'info');
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: chọn Mã mới hay Mã biến thể (theo mã cha) (đóng góp)
-  const [kind, setKind] = useState<'' | 'new' | 'variant'>(isNew ? '' : 'new');
+  // Mở từ nhóm hàng (đã có nhóm): vào thẳng Mã mới, mã tự sinh theo nhóm.
+  const [kind, setKind] = useState<'' | 'new' | 'variant'>(isNew && !initial?.groupCode ? '' : 'new');
   const [parentErr, setParentErr] = useState('');
   const [newTax, setNewTax] = useState(false);
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: giá mua theo NCC khai trước khi ghi, ghi cùng mặt hàng (đóng góp)
@@ -222,6 +223,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     } catch (e) { setSkuErr(errorText(e)); clearOld(); }
   };
   const pickGroup = (c: string) => { set({ groupCode: c || null }); void genSku(c || null); };
+  // [2026-11-12 Nguyễn Văn Thủy] thêm mặt hàng từ nhóm cấp 3 (DM11): sinh mã ngay theo nhóm đã chọn (đóng góp)
+  useEffect(() => { if (isNew && initial?.groupCode) void genSku(initial.groupCode, true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Danh sách nhóm: chỉ nhóm sản phẩm (cấp 3 trở xuống) — không chọn nhầm ngành / nhãn (cấp 1, 2).
   const depth = useMemo(() => {
     const by = new Map(classes.group.map((c) => [c.code, c]));

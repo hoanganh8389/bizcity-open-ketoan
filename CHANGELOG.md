@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhóm hàng DM11: bấm cả dòng để mở / thu; cột STT, Ghi chú (0119); nút Cột ẩn / hiện Tên nhóm hàng, Ghi chú, Người tạo, Người sửa; nhóm cấp 3 có nút + Mặt hàng (mở form thêm mặt hàng, nhóm điền sẵn, mã tự sinh); mã nhóm hàng không trùng nhóm khác (màn hình, Excel, máy chủ); thêm mới điền sẵn tên gợi ý kèm số ngẫu nhiên; nhóm cũ chưa có mã ngắn điền sẵn gợi ý, nhập mã lần đầu được kể cả đã có mặt hàng; ô không sửa được hiện dạng chữ nền xám; cột nút luôn ở mép phải.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 - Nhóm hàng DM11: một bảng cây (nút Sửa / Nhóm con / Lịch sử trên từng dòng, tìm, lọc cấp, kẻ ô); ba ô Mã nhóm hàng / Mã ngắn / Tên nhóm hàng (0118, tên đầy đủ tự ghép); Số mặt hàng cộng cả nhánh; nhóm đã có mặt hàng (kể cả nhóm con) khoá mã ngắn và chuyển nhóm (màn hình + máy chủ); nhập Excel theo cột Nhóm cha (đường dẫn) / Mã nhóm hàng / Mã ngắn / Tên nhóm hàng / Đang dùng, không cần mã nội bộ.
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->

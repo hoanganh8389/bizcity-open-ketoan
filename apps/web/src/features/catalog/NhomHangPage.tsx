@@ -9,6 +9,7 @@
  */
 import { useMemo, useState } from 'react';
 import { luuExcel } from '@/lib/excelChuan';
+import { ProductEditor } from './ProductsPage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileDown, Pencil, Plus, RefreshCw } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
@@ -48,6 +49,12 @@ export function NhomHangPage() {
   const [form, setForm] = useState<null | { mode: 'add'; parent: string | null } | { mode: 'edit'; code: string }>(null);
   const [lichSu, setLichSu] = useState<NhomHang | null>(null);
   const [vua, setVua] = useState<string | null>(null); // dòng vừa ghi: tô sáng
+  const [themMH, setThemMH] = useState<string | null>(null); // nhóm cấp 3 đang thêm mặt hàng
+  // Cột phụ ẩn / hiện (nhớ theo trình duyệt): Tên nhóm hàng, Ghi chú, Người tạo, Người sửa.
+  const COT_PHU = [['full', 'Tên nhóm hàng'], ['note', 'Ghi chú'], ['tao', 'Người tạo'], ['sua', 'Người sửa']] as const;
+  const [cot, setCot] = useState<Record<string, boolean>>(() => { try { return { full: true, note: true, tao: false, sua: false, ...JSON.parse(localStorage.getItem('dm11-cot') ?? '{}') }; } catch { return { full: true, note: true, tao: false, sua: false }; } });
+  const doiCot = (k: string) => setCot((x) => { const n = { ...x, [k]: !x[k] }; try { localStorage.setItem('dm11-cot', JSON.stringify(n)); } catch { /* bỏ qua */ } return n; });
+  const [moCot, setMoCot] = useState(false);
 
   const thieuMa = (c: NhomHang) => Boolean(MA_NGAN_DAI[ix.level(c.code)]) && !c.skuCode;
   // Số mặt hàng cộng dồn cả nhánh con.
@@ -87,8 +94,8 @@ export function NhomHangPage() {
   const moHet = () => setOpen(new Set((q.data ?? []).filter((c) => (ix.kids.get(c.code) ?? []).length).map((c) => c.code)));
 
   const xuat = () => void luuExcel('nhom-hang.xlsx', [{ name: 'Nhóm hàng', plainBody: true, rows: [
-    ['Nhóm cha', 'Mã nhóm hàng', 'Mã ngắn', 'Tên nhóm hàng', 'Cấp', 'Số mặt hàng', 'Đang dùng', 'Người tạo', 'Lúc tạo', 'Người sửa', 'Lúc sửa'],
-    ...(q.data ?? []).map((c) => [ix.path(ix.parentOf(c.code)), c.name, c.skuCode ?? '', c.fullName ?? '', ix.level(c.code), tongMH.get(c.code) ?? 0, c.isActive ? 'Có' : 'Không', c.createdBy ?? '', luc(c.createdAt), c.updatedBy ?? '', c.updatedBy ? luc(c.updatedAt) : '']),
+    ['Nhóm cha', 'Mã nhóm hàng', 'Mã ngắn', 'Tên nhóm hàng', 'Cấp', 'Số mặt hàng', 'Đang dùng', 'Ghi chú', 'Người tạo', 'Lúc tạo', 'Người sửa', 'Lúc sửa'],
+    ...(q.data ?? []).map((c) => [ix.path(ix.parentOf(c.code)), c.name, c.skuCode ?? '', c.fullName ?? '', ix.level(c.code), tongMH.get(c.code) ?? 0, c.isActive ? 'Có' : 'Không', c.note ?? '', c.createdBy ?? '', luc(c.createdAt), c.updatedBy ?? '', c.updatedBy ? luc(c.updatedAt) : '']),
   ] }]);
 
   return (
@@ -104,6 +111,10 @@ export function NhomHangPage() {
           {!cap && <button className="btn btn-sm" onClick={moHet}>Mở hết</button>}
           {!cap && <button className="btn btn-sm" onClick={() => setOpen(new Set())}>Thu hết</button>}
           <span style={{ flex: 1 }} />
+          <span style={{ position: 'relative' }}>
+            <button className="btn btn-sm" onClick={() => setMoCot((x) => !x)} title="Ẩn / hiện cột">Cột ▾</button>
+            {moCot && <div className="nh-cot" onMouseLeave={() => setMoCot(false)}>{COT_PHU.map(([k, l]) => <label key={k} className="checkbox"><input type="checkbox" checked={Boolean(cot[k])} onChange={() => doiCot(k)} /> {l}</label>)}</div>}
+          </span>
           <button className="btn btn-sm" onClick={() => void q.refetch()}><RefreshCw size={14} /> Nạp</button>
           <button className="btn btn-sm" onClick={xuat}><FileDown size={14} /> Xuất</button>
           {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} />}
@@ -115,35 +126,39 @@ export function NhomHangPage() {
           <div className="nh-table-wrap">
             <table className="nh-table">
               <thead><tr>
-                <th style={{ width: 80 }} title="Mã ngắn (mã ghép) — ghép vào mã hàng">Mã ngắn</th><th>Mã nhóm hàng</th><th>Tên nhóm hàng</th><th style={{ width: 50 }}>Cấp</th>
-                <th style={{ width: 95 }} className="num" title="Số mặt hàng trong nhóm, cộng cả các nhóm con">Số mặt hàng</th><th style={{ width: 80 }}>Đang dùng</th>
-                <th style={{ width: 160 }}>Người tạo</th><th style={{ width: 160 }}>Người sửa</th><th style={{ width: 240 }} />
+                <th style={{ width: 45 }} className="num">STT</th><th style={{ width: 80 }} title="Mã ngắn (mã ghép) — ghép vào mã hàng">Mã ngắn</th><th>Mã nhóm hàng</th>{cot.full && <th>Tên nhóm hàng</th>}<th style={{ width: 50 }}>Cấp</th>
+                <th style={{ width: 95 }} className="num" title="Số mặt hàng trong nhóm, cộng cả các nhóm con">Số mặt hàng</th><th style={{ width: 80 }}>Đang dùng</th>{cot.note && <th style={{ width: 180 }}>Ghi chú</th>}
+                {cot.tao && <th style={{ width: 160 }}>Người tạo</th>}{cot.sua && <th style={{ width: 160 }}>Người sửa</th>}<th style={{ width: 240 }} />
               </tr></thead>
               <tbody>
-                {dong.map(({ c, depth, hasKids, isOpen }) => (
-                  <tr key={c.code} className={`${c.isActive ? '' : 'muted'} ${vua === c.code ? 'nh-vua' : ''}`}>
+                {dong.map(({ c, depth, hasKids, isOpen }, stt) => (
+                  <tr key={c.code} className={`${c.isActive ? '' : 'muted'} ${vua === c.code ? 'nh-vua' : ''} ${hasKids ? 'nh-mo' : ''}`} onClick={(e) => { if (hasKids && !(e.target as HTMLElement).closest('button')) lat(c.code); }}>
+                    <td className="num muted">{stt + 1}</td>
                     <td className="mono">{thieuMa(c) ? <span className="neg" title="Nhóm chưa có mã ngắn — bấm Sửa để nhập">chưa có</span> : c.skuCode}</td>
                     <td>
                       <span style={{ paddingLeft: depth * 20, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <span className="nh-tog" onClick={() => hasKids && lat(c.code)}>{hasKids ? (isOpen ? '▾' : '▸') : ''}</span>
-                        <span onClick={() => hasKids && lat(c.code)} style={{ cursor: hasKids ? 'pointer' : 'default', fontWeight: depth === 0 && !cap ? 600 : 400 }}>{c.name}</span>
+                        <span className="nh-tog">{hasKids ? (isOpen ? '▾' : '▸') : ''}</span>
+                        <span style={{ fontWeight: depth === 0 && !cap ? 600 : 400 }}>{c.name}</span>
                         {cap > 0 && <span className="muted" style={{ fontSize: 12 }}>· {ix.path(ix.parentOf(c.code))}</span>}
                       </span>
                     </td>
-                    <td className="nh-full">{c.fullName}</td>
+                    {cot.full && <td className="nh-full">{c.fullName}</td>}
                     <td>{ix.level(c.code)}</td>
                     <td className="num">{tongMH.get(c.code) || ''}</td>
                     <td>{c.isActive ? 'Có' : <span className="neg">Ngừng</span>}</td>
-                    <td className="nh-ai">{c.createdBy}{c.createdAt ? <span>{luc(c.createdAt)}</span> : null}</td>
-                    <td className="nh-ai">{c.updatedBy}{c.updatedBy && c.updatedAt ? <span>{luc(c.updatedAt)}</span> : null}</td>
+                    {cot.note && <td className="nh-note" title={c.note}>{c.note}</td>}
+                    {cot.tao && <td className="nh-ai">{c.createdBy}{c.createdAt ? <span>{luc(c.createdAt)}</span> : null}</td>}
+                    {cot.sua && <td className="nh-ai">{c.updatedBy}{c.updatedBy && c.updatedAt ? <span>{luc(c.updatedAt)}</span> : null}</td>}
                     <td className="nh-act">
                       {canWrite && <button className="btn btn-xs" onClick={() => setForm({ mode: 'edit', code: c.code })}><Pencil size={12} /> Sửa</button>}
-                      {canWrite && <button className="btn btn-xs" onClick={() => setForm({ mode: 'add', parent: c.code })} title={`Thêm nhóm cấp ${ix.level(c.code) + 1} dưới "${c.name}"`}><Plus size={12} /> Nhóm con</button>}
+                      {canWrite && ix.level(c.code) === 3
+                        ? <button className="btn btn-xs btn-primary" onClick={() => setThemMH(c.code)} title={`Thêm mặt hàng vào nhóm "${c.name}" — mã tự sinh theo nhóm`}><Plus size={12} /> Mặt hàng</button>
+                        : canWrite && ix.level(c.code) < 3 && <button className="btn btn-xs" onClick={() => setForm({ mode: 'add', parent: c.code })} title={`Thêm nhóm cấp ${ix.level(c.code) + 1} dưới "${c.name}"`}><Plus size={12} /> Nhóm con</button>}
                       <button className="btn btn-xs" onClick={() => setLichSu(c)}>Lịch sử</button>
                     </td>
                   </tr>
                 ))}
-                {!dong.length && <tr><td colSpan={9} className="muted" style={{ padding: 12 }}>{tim ? 'Không có nhóm khớp' : 'Chưa có nhóm hàng — bấm Thêm nhóm cấp 1'}</td></tr>}
+                {!dong.length && <tr><td colSpan={11} className="muted" style={{ padding: 12 }}>{tim ? 'Không có nhóm khớp' : 'Chưa có nhóm hàng — bấm Thêm nhóm cấp 1'}</td></tr>}
               </tbody>
             </table>
           </div>
@@ -153,6 +168,7 @@ export function NhomHangPage() {
         setForm(null); setVua(code);
         if (parent) setOpen((o) => { const n = new Set(o); for (let x: string | null = parent; x; x = ix.parentOf(x)) n.add(x); return n; });
       }} />}
+      {themMH && <ProductEditor sku={null} initial={{ groupCode: themMH }} onClose={() => setThemMH(null)} onSaved={() => void q.refetch()} />}
       {lichSu && <Modal title={`Lịch sử nhóm "${lichSu.name}"`} onClose={() => setLichSu(null)} footer={<button className="btn" onClick={() => setLichSu(null)}>Đóng</button>}><div className="full"><LichSuNhom code={lichSu.code} /></div></Modal>}
     </>
   );
@@ -163,10 +179,12 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
   const qc = useQueryClient();
   const old = form.mode === 'edit' ? ix.byCode.get(form.code)! : null;
   const [parent, setParent] = useState<string | null>(form.mode === 'add' ? form.parent : ix.parentOf(form.code));
-  const [ma, setMa] = useState(form.mode === 'add' ? goiYMa(ix, form.parent) : old?.skuCode ?? '');
+  // Nhóm cũ chưa có mã ngắn: điền sẵn mã gợi ý (nhập lần đầu không làm đổi mã hàng đã có).
+  const [ma, setMa] = useState(form.mode === 'add' ? goiYMa(ix, form.parent) : old?.skuCode || (old ? goiYMa(ix, ix.parentOf(old.code)) : ''));
+  const [ghiChu, setGhiChu] = useState(old?.note ?? '');
   const tenDu = (p: string | null, t: string) => [p ? ix.byCode.get(p)?.fullName || ix.path(p).split(' / ').join(' ') : '', t.trim()].filter(Boolean).join(' ');
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: điền sẵn cả 3 ô (mã nhóm, mã ngắn, tên đầy đủ) — sửa lại cho đúng rồi Ghi (đóng góp)
-  const goiYTen = form.mode === 'add' ? `Nhóm mới ${goiYMa(ix, form.parent) || (ix.kids.get(form.parent ?? '')?.length ?? ix.roots.length) + 1}` : '';
+  const goiYTen = form.mode === 'add' ? `${form.parent ? ix.byCode.get(form.parent)?.name ?? 'Nhóm' : 'Nhóm mới'} ${1000 + Math.floor(Math.random() * 9000)}` : '';
   const [ten, setTen] = useState(old?.name ?? goiYTen);
   const [full, setFull] = useState(old?.fullName || (old ? tenDu(ix.parentOf(old.code), old.name) : tenDu(form.mode === 'add' ? form.parent : null, goiYTen)));
   const [fullTay, setFullTay] = useState(Boolean(old)); // sửa tay rồi thì thôi tự điền
@@ -177,7 +195,8 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
   const len = MA_NGAN_DAI[lv];
   // Nhóm (hoặc nhóm con bên dưới) đã có mặt hàng: khoá mã ngắn và chuyển nhóm — mã hàng đã ghép theo.
   const soMH = old ? [...ix.subtree(old.code)].reduce((n, k) => n + (ix.byCode.get(k)?.products ?? 0), 0) : 0;
-  const khoa = soMH > 0;
+  const khoa = soMH > 0 && Boolean(old?.skuCode); // khoá mã ngắn: đã có mã và đã có mặt hàng
+  const khoaChuyen = soMH > 0;
 
   const loiMa = (() => {
     if (!len || khoa) return '';
@@ -191,13 +210,16 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
     mutationFn: async () => {
       const nums = list.map((c) => Number(c.code)).filter((n) => Number.isInteger(n));
       const code = old ? old.code : String((nums.length ? Math.max(...nums) : 0) + 1);
-      await api.put(`/api/v1/item-classes/group/${encodeURIComponent(code)}${old ? '' : '?new=1'}`, { name: ten.trim(), fullName: full.trim(), parentCode: parent || undefined, isActive: dung, skuCode: len ? ma : '' });
+      await api.put(`/api/v1/item-classes/group/${encodeURIComponent(code)}${old ? '' : '?new=1'}`, { name: ten.trim(), fullName: full.trim(), note: ghiChu, parentCode: parent || undefined, isActive: dung, skuCode: len ? ma : '' });
       return code;
     },
     onSuccess: (code) => { void qc.invalidateQueries({ queryKey: ['item-classes'] }); void qc.invalidateQueries({ queryKey: ['item-class-history'] }); onSaved(code, parent); },
     onError: (e) => setErr(errorText(e)),
   });
-  const ghi = () => { const e = !ten.trim() ? 'Nhập mã nhóm hàng' : loiMa || (!full.trim() ? 'Nhập tên nhóm hàng' : ''); setErr(e); if (!e) save.mutate(); };
+  const nn = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
+  const trungTen = ten.trim() && (!old || nn(old.name) !== nn(ten)) ? list.find((x) => x.code !== old?.code && nn(x.name) === nn(ten)) : undefined;
+  const loiTen = trungTen ? `Mã nhóm hàng đã dùng cho nhóm "${ix.path(trungTen.code)}" — đặt mã khác` : '';
+  const ghi = () => { const e = !ten.trim() ? 'Nhập mã nhóm hàng' : loiTen || loiMa || (!full.trim() ? 'Nhập tên nhóm hàng' : ''); setErr(e); if (!e) save.mutate(); };
 
   return (
     <>
@@ -205,26 +227,28 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
         footer={<>{err && <span className="neg" style={{ marginRight: 'auto', fontWeight: 600, fontSize: 13 }}>{err}</span>}<button className="btn btn-primary" disabled={save.isPending} onClick={ghi}>{save.isPending ? 'Đang ghi…' : 'Ghi'}</button><button className="btn" onClick={onClose}>Huỷ bỏ</button></>}>
         <Field label="Thuộc nhóm" full>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            <input className="input" readOnly value={parent ? ix.path(parent) : 'Nhóm hàng (gốc)'} style={{ flex: 1 }} />
+            <div className="nh-chi-xem" style={{ flex: 1 }} title="Không sửa ở đây">{parent ? ix.path(parent) : 'Nhóm hàng (gốc)'}</div>
             <span className="badge">Cấp {lv}</span>
-            {old && !khoa && <button type="button" className="btn btn-sm" title="Chuyển sang nhóm khác" onClick={() => setMoving(true)}>Đổi…</button>}
+            {old && !khoaChuyen && <button type="button" className="btn btn-sm" title="Chuyển sang nhóm khác" onClick={() => setMoving(true)}>Đổi…</button>}
           </div>
         </Field>
         <Field label="Mã nhóm hàng (*)" tip="Tên ngắn hiện trên cây, vd Bỉm/ Tã quần trẻ em">
           <input className="input" value={ten} autoFocus onFocus={(e) => e.target.select()} onChange={(e) => { setTen(e.target.value); setErr(''); if (!fullTay) setFull(tenDu(parent, e.target.value)); }} />
+          {loiTen && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>{loiTen}</div>}
         </Field>
         <Field label={len ? 'Mã ngắn (mã ghép) (*)' : 'Mã ngắn (mã ghép)'}>
-          <input className="input mono" value={ma} disabled={!len || khoa} maxLength={len || 1} placeholder={len ? QUY_TAC[lv] : ''}
-            onChange={(e) => { setMa(e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase()); setErr(''); }} />
+          {(!len || khoa) ? <div className="nh-chi-xem mono">{ma || '—'}</div> : <input className="input mono" value={ma} maxLength={len || 1} placeholder={len ? QUY_TAC[lv] : ''}
+            onChange={(e) => { setMa(e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase()); setErr(''); }} />}
           {khoa
             ? <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>🔒 Nhóm đã có {soMH} mặt hàng — không đổi mã ngắn, không chuyển nhóm (mã hàng đã ghép theo). Đổi tên thì được.</div>
             : loiMa
             ? <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>{loiMa}</div>
-            : <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{len ? `Cấp ${lv}: ${QUY_TAC[lv]}${form.mode === 'add' ? ' — đã điền sẵn mã kế tiếp, sửa được' : ''}` : 'Cấp 4 trở đi không ghép vào mã hàng'}</div>}
+            : <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{len ? `Cấp ${lv}: ${QUY_TAC[lv]}` : 'Cấp 4 trở đi không ghép vào mã hàng'}</div>}
         </Field>
         <Field label="Tên nhóm hàng (*)" full tip="Tên đầy đủ — tự ghép theo nhóm cha, sửa được">
           <input className="input" value={full} onChange={(e) => { setFull(e.target.value); setFullTay(true); setErr(''); }} onKeyDown={(e) => { if (e.key === 'Enter') ghi(); }} />
         </Field>
+        <Field label="Ghi chú" full><textarea className="input" rows={2} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} /></Field>
         <Field label=" "><label className="checkbox"><input type="checkbox" checked={dung} onChange={(e) => setDung(e.target.checked)} /> Đang dùng</label></Field>
       </Modal>
       {moving && old && (

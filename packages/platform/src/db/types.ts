@@ -882,6 +882,8 @@ export interface ItemClassesTable {
   updated_by: Generated<string>;
   /** Tên nhóm đầy đủ (0118). */
   full_name: Generated<string>;
+  /** Ghi chú (0119). */
+  note: Generated<string>;
 }
 /** Lịch sử thêm / sửa nhóm hàng (0116). */
 export interface ItemClassHistoryTable {

@@ -28,14 +28,15 @@ Thêm mặt hàng mới chỉ cần chọn nhóm cấp 3, phần mềm tự sinh
 
 Một bảng dạng cây. Mỗi dòng: Mã ngắn, Mã nhóm hàng, Tên nhóm hàng, Cấp, **Số mặt hàng** (cộng cả nhóm con), Đang dùng, Người tạo, Người sửa (kèm thời gian). Nhóm cấp 1–3 chưa có mã ngắn hiện chữ đỏ *chưa có*.
 
-- Bấm tên nhóm (hoặc ▸) để mở / thu nhóm con. **Mở hết / Thu hết** ở trên cùng.
+- Bấm vào dòng để mở / thu nhóm con. Nút **Cột** ẩn / hiện Tên nhóm hàng, Ghi chú, Người tạo, Người sửa. **Mở hết / Thu hết** ở trên cùng.
 - Ô **Tìm**: gõ mã hoặc tên; bảng chỉ còn nhóm khớp và đường đi tới nó.
 - Ô **Xem dạng cây / Chỉ nhóm cấp 1…5**: xem riêng toàn bộ nhóm một cấp.
 
 ## Thao tác — nút ngay trên từng dòng
 
 - **Sửa**: đổi mã nhóm hàng, tên nhóm hàng, Đang dùng; mã ngắn và nút **Đổi…** (chuyển nhóm) chỉ dùng được khi nhóm chưa có mặt hàng.
-- **+ Nhóm con**: thêm nhóm cấp dưới. Mã ngắn điền sẵn mã kế tiếp, tên nhóm hàng tự ghép; nhập mã nhóm hàng rồi **Ghi**.
+- **+ Mặt hàng** (chỉ ở nhóm cấp 3): mở form thêm mặt hàng, nhóm điền sẵn, mã tự sinh.
+- **+ Nhóm con** (cấp 1, 2): thêm nhóm cấp dưới. Mã ngắn điền sẵn mã kế tiếp, tên nhóm hàng tự ghép; nhập mã nhóm hàng rồi **Ghi**.
 - **Lịch sử**: ai thêm / sửa, lúc nào, đổi gì.
 - **Thêm nhóm cấp 1** (góc phải trên): thêm ngành mới.
 - Không có xoá: muốn ngừng thì **Sửa**, bỏ tích **Đang dùng**.
@@ -44,6 +45,7 @@ Một bảng dạng cây. Mỗi dòng: Mã ngắn, Mã nhóm hàng, Tên nhóm h
 
 - Mã ngắn phải **đúng số ký tự** của cấp (gợi ý luôn hiện dưới ô, sai thì báo đỏ). Hai nhóm cùng cha không trùng mã ngắn.
 - **Nhóm (hoặc nhóm con bên dưới) đã có mặt hàng: không đổi mã ngắn, không chuyển nhóm** — mã hàng đã ghép theo. Đổi tên vẫn được.
+- Mã nhóm hàng không được trùng nhóm khác trong hệ thống.
 - Không chuyển một nhóm vào nhánh con của chính nó.
 
 ## Nhập Excel
