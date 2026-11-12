@@ -71,7 +71,7 @@ Dùng API đính kèm chung đã có (`/api/v1/document-attachments`, khoá `led
 |---|---|
 | Ngày chạy | |
 | Bản code (commit) | |
-| Test tự động | `apps/api/test/dinh-kem-chung-tu.test.ts` |
+| Test tự động | `apps/api/test/dinh-kem-chung-tu.test.ts` (đề xuất — tạo khi code) |
 
 | Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
 |---|---|---|---|---|

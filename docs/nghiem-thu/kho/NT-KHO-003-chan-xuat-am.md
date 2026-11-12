@@ -68,7 +68,7 @@ Theo R-GATE-9 / ADR-0020: mặc định **cho phép + nhắc** như hôm nay; ch
 |---|---|
 | Ngày chạy | |
 | Bản code (commit) | |
-| Test tự động | `apps/api/test/chan-xuat-am.test.ts` |
+| Test tự động | `apps/api/test/chan-xuat-am.test.ts` (đề xuất — tạo khi code) |
 
 | Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
 |---|---|---|---|---|

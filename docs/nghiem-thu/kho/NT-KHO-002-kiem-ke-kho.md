@@ -138,7 +138,7 @@ sang KA-CL; sổ chi tiết 1388 có công nợ Nguyễn Văn A 10.000.
 |---|---|
 | Ngày chạy | |
 | Bản code (commit) | |
-| Test tự động | `apps/api/test/kiem-ke-kho.test.ts` |
+| Test tự động | `apps/api/test/kiem-ke-kho.test.ts` (đề xuất — tạo khi code) |
 
 | Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
 |---|---|---|---|---|
