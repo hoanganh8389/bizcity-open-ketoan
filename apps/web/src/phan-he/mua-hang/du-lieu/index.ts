@@ -143,7 +143,7 @@ export const purchaseApi = {
   productCost: (sku: string) => api.get<{ monthly: { period: string; unitCost: number } | null; current: { qty: number; value: number; unitCost: number } | null }>(`${P}/product-cost/${encodeURIComponent(sku)}`),
   units: (skus: string[]) => api.get<Record<string, ProductUnit[]>>(`${P}/units`, { skus: skus.join(',') }),
   saveSupplierProducts: (rows: Partial<SupplierProduct>[]) => api.post<{ added: number; updated: number }>(`${P}/supplier-products`, { rows }),
-  history: (q: { docNo?: string; partnerCode?: string; event?: string }) => api.get<LogRow[]>(`${P}/logs`, q),
+  history: (q: { docNo?: string; partnerCode?: string; event?: string; sku?: string }) => api.get<LogRow[]>(`${P}/logs`, q),
   openAttachment: (a: Attachment) => api.download(`${P}/attachments/${a.id}/file`, {}, a.fileName),
   attachmentBlob: (a: Attachment) => api.blob(`${P}/attachments/${a.id}/file`),
 };

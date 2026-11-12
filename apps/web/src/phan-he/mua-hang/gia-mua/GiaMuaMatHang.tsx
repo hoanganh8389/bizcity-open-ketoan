@@ -4,7 +4,7 @@
  *      và giá nhập gần nhất để so. NCC nào chưa khai giá riêng thì phiếu nhập so với giá này. Đổi giá = thêm hiệu lực mới
  *      (giữ lịch sử).
  *   ② Giá mua theo từng nhà cung cấp (xanh lá): cùng bảng "Mặt hàng & giá mua" ở hồ sơ NCC (BangGiaMua).
- *   ③ Tồn max theo chi nhánh – kho (cam, cùng bảng với màn Tồn max MH16) · ④ Các lần nhập gần nhất.
+ *   ④ Các lần nhập gần nhất.
  * ĐVT và tỉ lệ khai ở thẻ "Đơn vị tính"; giá bán ở thẻ "Giá bán".
  */
 import { useState } from 'react';
@@ -16,9 +16,7 @@ import { price as donGia, roundPrice } from '@/lib/format';
 import { NumInput } from '@/components/ui';
 import { P, purchaseApi, today, useMuaHang, useNames } from '../du-lieu';
 import { dmy } from '../chung';
-import { TonMinMaxForm } from './TonMinMaxForm';
-import { stockApi, type LevelRow } from '../ton-max/api';
-import { BangGiaMua } from '../thanh-phan/BangGiaMua';
+import { GiaNccTheoMa } from './GiaNccTheoMa';
 import '../mua-hang.css';
 
 type Hist = { date: string; partnerCode: string; docNo: string; unitPrice: number; includesVat: boolean; unit?: string; qty?: number };
@@ -27,8 +25,6 @@ const pct = (a: number, b: number) => Math.round(((a - b) / b) * 1000) / 10;
 export function GiaMuaMatHang({ sku, name }: { sku: string; name: string; units: string[] }) {
   const { data, refresh } = useMuaHang();
   const names = useNames();
-  const [editing, setEditing] = useState<LevelRow | 'new' | null>(null);
-  const lv = useQuery({ queryKey: ['ton-max', 'levels', sku], enabled: Boolean(sku), queryFn: () => stockApi.levels({ skus: [sku] }) });
   const hist = useQuery({ queryKey: ['mua-hang', 'price-history', sku], enabled: Boolean(sku), queryFn: () => api.get<Hist[]>(`${P}/price-history/${encodeURIComponent(sku)}`, { limit: 10 }) });
   if (!sku) return <div className="muted">Ghi mặt hàng trước rồi mới khai mua hàng.</div>;
   if (!data) return <div className="muted">Đang tải…</div>;
@@ -38,22 +34,10 @@ export function GiaMuaMatHang({ sku, name }: { sku: string; name: string; units:
     <div className="full blk-stack" data-view-ok>
       <GiaThamKhao sku={sku} hist={hist.data ?? []} />
       <section className="blk blk-green">
-        <header><div><b>② Giá mua theo từng nhà cung cấp</b><span>NCC nào bán mã này, theo ĐVT nào, giá riêng bao nhiêu — cùng bảng với hồ sơ NCC.</span></div></header>
-        <div className="blk-body"><BangGiaMua sku={sku} skuName={name} data={data} onChanged={() => void refresh()} /></div>
+        <header><div><b>② Giá mua theo từng nhà cung cấp</b><span>Mỗi nhà cung cấp hiện 3 đợt giá gần nhất. Bấm một dòng để sửa.</span></div></header>
+        <div className="blk-body"><GiaNccTheoMa sku={sku} name={name} onChanged={() => void refresh()} /></div>
       </section>
-      <section className="blk blk-orange">
-        <header><div><b>③ Tồn max theo chi nhánh – kho</b><span>Mức hàng muốn có ở từng shop / kho: shop dưới max thì được chia thêm (MH19), kho dưới max thì tính vào cần nhập (MH02).</span></div>
-          <span className="row" style={{ gap: 6 }}><Link className="btn btn-sm" to={`/mua-hang/ton-max?sku=${encodeURIComponent(sku)}`}>Xem mọi shop (MH16)</Link><button type="button" className="btn btn-sm" onClick={() => setEditing('new')}>+ Thêm tồn max</button></span></header>
-        <div className="blk-body">
-          <table className="mh-mini">
-            <thead><tr><th>Chi nhánh / shop</th><th>Kho</th><th className="num">Tồn max</th><th className="num">Tồn min</th><th>Nguồn</th><th /></tr></thead>
-            <tbody>
-              {(lv.data ?? []).map((l) => <tr key={`${l.branchCode}|${l.warehouseCode}`}><td>{l.branchCode} · {names.branchName(l.branchCode)}</td><td className="mono">{l.warehouseCode}</td><td className="num"><b>{l.max.toLocaleString('vi-VN')}</b></td><td className="num">{l.min ? l.min.toLocaleString('vi-VN') : ''}</td><td className="muted" style={{ fontSize: 11.5 }}>{l.source === 'request' ? 'phiếu đăng ký' : l.source === 'import' ? 'nhập Excel' : 'khai tay'} · {l.updatedBy}</td><td><button type="button" className="btn btn-xs" onClick={() => setEditing(l)}>Mở</button></td></tr>)}
-              {!lv.isLoading && !(lv.data ?? []).length && <tr><td colSpan={6} className="muted">Chưa khai.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* [2026-11-12 Nguyễn Văn Thủy] bỏ khối Tồn max ở form mặt hàng: cấu hình ở màn Tồn max (đóng góp) */}
       <section className="blk blk-blue">
         <header><div><b>④ Các lần nhập gần nhất</b><span>Đơn giá thực tế sau chiết khấu.</span></div></header>
         <div className="blk-body">
@@ -66,7 +50,6 @@ export function GiaMuaMatHang({ sku, name }: { sku: string; name: string; units:
           </table>
         </div>
       </section>
-      {editing && <TonMinMaxForm sku={sku} name={name} value={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void lv.refetch(); }} />}
     </div>
   );
 }

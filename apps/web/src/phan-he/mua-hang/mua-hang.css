@@ -268,3 +268,15 @@
 .mh-line-acts { display: flex; gap: 2px; margin-top: 4px; }
 .mh-line-acts .btn { padding: 0 5px; min-width: 0; line-height: 18px; }
 .mh-line-acts .mh-del:hover { background: var(--bad-bg); color: var(--bad); }
+
+/* [2026-11-12 Nguyễn Văn Thủy] giá mua theo NCC ở form mặt hàng (đóng góp) */
+.ncc-gia { border: 1px solid var(--line, #e3e7ee); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: var(--surface, #fff); }
+.ncc-gia-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ncc-gia .row-click { cursor: pointer; }
+.ncc-gia .row-click:hover td { background: var(--brand-50, #eef4fb); }
+.ncc-gia table.mh-mini { table-layout: fixed; width: 100%; }
+.ncc-gia table.mh-mini th:nth-child(1) { width: 90px; }
+.ncc-gia table.mh-mini th:nth-child(2), .ncc-gia table.mh-mini th:nth-child(3) { width: 130px; }
+.ncc-gia table.mh-mini th:nth-child(4) { width: 210px; }
+.ncc-gia table.mh-mini th:nth-child(7) { width: 210px; }
+.ncc-gia table.mh-mini td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
