@@ -54,7 +54,7 @@ Phiếu chuyển kho lập trên website vẫn tự vào sổ qua cầu nối nh
 ## Đính kèm chứng từ gốc
 <!-- [2026-11-12 kiennt] NT-QUY-001 — đính kèm chứng từ gốc trên phiếu chuyển kho -->
 
-Cuối phiếu có khung **Đính kèm chứng từ gốc**: kéo thả hoặc **Chọn tệp…** (ảnh, PDF — tối đa 15 MB / tệp), chọn loại (Biên bản, Chứng từ gốc…).
+Cuối phiếu có khung **Đính kèm**: bấm **Chọn tệp** hoặc kéo và thả tệp vào ô viền đứt (ảnh, PDF — tối đa 15 MB / tệp; tệp ghi loại Biên bản).
 
 - Phiếu mới: **Ghi** trước rồi mới gắn tệp.
 - Đính được cả khi phiếu đang ở chế độ **Xem**, đã huỷ, hay kỳ đã khoá — đính tệp không đổi sổ.

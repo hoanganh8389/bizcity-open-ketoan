@@ -30,7 +30,7 @@ Lý do thu **TBNH** (thu tiền bán hàng các chi nhánh khác) và chuyển t
 ## Đính kèm uỷ nhiệm chi / biên lai
 <!-- [2026-11-12 kiennt] NT-QUY-001 — đính kèm chứng từ gốc trên phiếu chuyển tiền -->
 
-Bấm vào dòng phiếu để mở. Dưới thông tin phiếu có khung **Đính kèm chứng từ gốc**: kéo thả hoặc **Chọn tệp…** uỷ nhiệm chi,
+Bấm vào dòng phiếu để mở. Dưới thông tin phiếu có khung **Đính kèm**: bấm **Chọn tệp** hoặc kéo và thả uỷ nhiệm chi,
 giấy nộp tiền, sao kê (ảnh, PDF — tối đa 15 MB / tệp) để đối chiếu khi **Xác nhận đã nhận tiền**.
 
 - Tệp gắn theo phiếu: cửa hàng sửa phiếu (phiên bản mới) hay phiếu bị huỷ thì tệp vẫn còn.
