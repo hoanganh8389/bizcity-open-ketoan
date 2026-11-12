@@ -177,6 +177,14 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### Khung nhìn giá bán theo chi nhánh và tồn theo chi nhánh; mã lỗi ca bán (module pos, phiếu NT-BH-006 / 007) <!-- [2026-11-12 06:30 PM Võ Hoàng] POS-CATALOG — phần Core cho module pos (đóng góp) -->
+
+- **Thêm:** khung nhìn `bizcity_read.branch_prices` — giá trọn một ĐVT theo chi nhánh đã áp luật DM14 (hàng chính: bảng giá công ty; hàng thường: bảng giá gán cho chi nhánh, ô trống lấy công ty; chi nhánh chưa gán / bảng giá ngừng dùng: công ty), `price_source` = `branch` / `company`; và `bizcity_read.stock_on_hand` — tồn theo chi nhánh × kho × `item_id` (ĐVT nhỏ nhất). Migration 0109, chữ chốt BIZCITY-DATA §8 bổ sung 2026-11-12.
+- **Thêm:** `ERROR_REASONS` thêm `POS_SHIFT_ALREADY_OPEN`, `POS_SHIFT_CLOSED`, `POS_SHIFT_BLOCKED` (BIZCITY-ERRORS 1.9.0-draft §4c).
+- **Sửa:** dòng chú thích họ mã W2 trong `errors.ts` đúng khuôn dấu (SC-SIG-2).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0109. Module đọc hai khung nhìn mới phải khai ở `data.reads` của manifest (quyền cột được cấp lúc `module migrate`).
+- **Bảo mật:** `security_invoker` (RLS bảng gốc), trigger chặn ghi. Phạm vi chi nhánh của người dùng chưa thi hành ở Core (PHASE-028 W3): module lọc theo chi nhánh của yêu cầu.
 ### Khung nhìn mặt hàng có ô Biến thể / Gửi lên thuế; họ mã lỗi `POS_*` (đề xuất P-MP-5, P-MP-6 của module pos) <!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — phần Core cho module pos (đóng góp) -->
 
 - **Thêm:** `ERROR_REASONS` thêm 28 mã `POS_*` của module `pos` — 17 mã đợt W1 (BIZCITY-ERRORS 1.7.0-draft §4c) và 11 mã hoàn / đổi / huỷ đợt W2 (1.8.0-draft) (R-ERR-6 / R-ERR-11): dữ liệu kèm lỗi đặt cạnh `reason`, danh sách ở `items`.
