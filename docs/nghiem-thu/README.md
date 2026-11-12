@@ -48,5 +48,9 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 |---|---|---|
 | [NT-MH-001](mua-hang/NT-MH-001-ck-theo-thung-giai-doan.md) | Nhập mua có CK theo thùng / %, chương trình theo giai đoạn, quà, CKTT, hỗ trợ ngoài | Chờ nghiệm thu |
 | [NT-HT-001](he-thong/NT-HT-001-so-do-to-chuc.md) | Sơ đồ tổ chức làm gốc: cây 3 cấp, gắn chi nhánh, mua hàng theo cây, bộ lọc cây chi nhánh / kho | Chờ nghiệm thu |
+| [NT-KHO-001](kho/NT-KHO-001-ton-o-chon-hang-theo-kho-xuat.md) | Ô chọn mặt hàng ở phiếu chuyển kho hiện tồn theo kho xuất, ngày phiếu | Đã chốt |
+| [NT-KHO-002](kho/NT-KHO-002-kiem-ke-kho.md) | Kiểm kê kho: biên bản, xử lý chênh lệch bằng phiếu điều chỉnh tồn | Đã chốt |
+| [NT-KHO-003](kho/NT-KHO-003-chan-xuat-am.md) | Công tắc "Cho phép xuất quá số tồn" — chặn ở màn lập tay trong kế toán | Đã chốt |
+| [NT-QUY-001](quy/NT-QUY-001-dinh-kem-chung-tu-goc.md) | Đính kèm chứng từ gốc trên phiếu tiền, phiếu chuyển tiền, phiếu kho | Đã chốt |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.
