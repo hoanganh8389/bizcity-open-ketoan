@@ -59,12 +59,12 @@ function useTenNguoi() {
   };
 }
 
-export function TepChungTu({ docRef, defaultKind = 'chung_tu_goc', title = 'Đính kèm chứng từ gốc' }: { docRef: string | null; defaultKind?: string; title?: string }) {
+export function TepChungTu({ docRef, defaultKind = 'chung_tu_goc', title = 'Đính kèm' }: { docRef: string | null; defaultKind?: string; title?: string }) {
   const { can } = useAuth();
   const ghi = can('documents:write');
   const tenNguoi = useTenNguoi();
   const q = useQuery({ queryKey: ['dinh-kem', docRef], queryFn: () => dinhKemApi.list(docRef!), enabled: Boolean(docRef) });
-  const [kind, setKind] = useState(defaultKind);
+  const kind = defaultKind;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [note, setNote] = useState('');
@@ -92,51 +92,39 @@ export function TepChungTu({ docRef, defaultKind = 'chung_tu_goc', title = 'Đí
   };
 
   const files = q.data?.files ?? [];
+  // Giao diện theo kiểu MISA: tiêu đề "Đính kèm · Dung lượng tối đa", ô viền đứt có "Chọn tệp hoặc kéo và thả tệp vào đây",
+  // danh sách tệp gọn bên dưới. Loại tệp lấy theo màn (defaultKind) — không bắt chọn.
   return (
     <div className="dk-box" data-view-ok>
-      <div className="dk-head"><Paperclip size={14} /> <b>{title}</b>{files.length > 0 && <span className="badge badge-info">{files.length}</span>}</div>
-      {!docRef ? <div className="muted" style={{ fontSize: 12 }}>Ghi phiếu trước rồi mới gắn tệp.</div> : <>
+      <div className="dk-head"><Paperclip size={16} /> <span className="dk-title">{title}</span><span className="dk-hint">Dung lượng tối đa 15MB</span></div>
+      {!docRef ? <div className="dk-drop dk-off">Ghi phiếu trước rồi mới gắn tệp.</div> : <>
         {ghi && (
           <div className={`dk-drop ${drag ? 'on' : ''}`} data-view-ok
             onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
             onDrop={(e) => { e.preventDefault(); setDrag(false); void upload(e.dataTransfer.files); }}>
-            <Upload size={16} />
-            <span>{busy ? 'Đang gửi…' : 'Kéo thả tệp vào đây hoặc'}</span>
-            <select className="select input" data-view-ok style={{ width: 200, height: 28 }} value={kind} title="Loại tệp" onChange={(e) => setKind(e.target.value)}>
-              {Object.entries(LOAI_TEP).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-            </select>
-            <button type="button" className="btn btn-sm" data-view-ok disabled={busy} onClick={() => input.current?.click()}>Chọn tệp…</button>
-            <span className="muted" style={{ fontSize: 12 }}>tối đa 15 MB / tệp</span>
+            <Upload size={18} />
+            {busy ? <span>Đang gửi…</span> : <span><button type="button" className="dk-link" data-view-ok onClick={() => input.current?.click()}>Chọn tệp</button> hoặc kéo và thả tệp vào đây</span>}
             <input ref={input} type="file" multiple hidden data-view-ok onChange={(e) => e.target.files && void upload(e.target.files)} />
           </div>
         )}
-        {err && <div className="alert alert-bad" style={{ marginTop: 6 }}>{err}</div>}
-        {note && <div className="alert alert-warn" style={{ marginTop: 6 }}>{note}</div>}
-        <table className="mh-mini dk-table" style={{ marginTop: 6 }}>
-          <thead><tr>
-            <th title="Loại chứng từ gốc chọn khi gửi tệp">Loại</th><th title="Bấm tên tệp: PDF / ảnh xem nhanh, loại khác tải về">Tệp</th>
-            <th className="num" title="Dung lượng tệp">Dung lượng</th><th title="Người gửi tệp lên">Người gửi</th><th title="Thời điểm gửi tệp">Thời gian</th><th />
-          </tr></thead>
-          <tbody>
+        {err && <div className="alert alert-bad dk-msg">{err}</div>}
+        {note && <div className="alert alert-warn dk-msg">{note}</div>}
+        {files.length > 0 && (
+          <ul className="dk-list">
             {files.map((f) => (
-              <tr key={f.id}>
-                <td><span className="badge badge-info">{LOAI_TEP[f.kind] ?? f.kind}</span></td>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  <button type="button" data-view-ok className="btn btn-xs btn-ghost" title={xemDuoc(f) ? 'Xem nhanh trên web' : 'Tải về'} onClick={() => (xemDuoc(f) ? setXem(f) : void dinhKemApi.download(f).catch((e) => setErr(errorText(e))))}>
-                    {xemDuoc(f) ? <Eye size={12} /> : <Paperclip size={12} />} {f.fileName}
-                  </button>
-                  <button type="button" data-view-ok className="btn btn-xs btn-ghost" title="Tải về" onClick={() => void dinhKemApi.download(f).catch((e) => setErr(errorText(e)))}><Download size={12} /></button>
-                </td>
-                <td className="num">{dungLuong(f.sizeBytes)}</td>
-                <td>{tenNguoi(f.createdBy)}</td>
-                <td>{new Date(f.createdAt).toLocaleString('vi-VN', { hour12: false })}</td>
-                <td>{ghi && <button type="button" data-view-ok className="btn btn-xs" title="Gỡ tệp khỏi phiếu (không xoá hẳn)" onClick={() => void go(f)}><Trash2 size={12} /></button>}</td>
-              </tr>
+              <li key={f.id} title={`${LOAI_TEP[f.kind] ?? f.kind} · gửi bởi ${tenNguoi(f.createdBy)} lúc ${new Date(f.createdAt).toLocaleString('vi-VN', { hour12: false })}`}>
+                <button type="button" data-view-ok className="dk-file" onClick={() => (xemDuoc(f) ? setXem(f) : void dinhKemApi.download(f).catch((e) => setErr(errorText(e))))}>
+                  {xemDuoc(f) ? <Eye size={14} /> : <Paperclip size={14} />}<span>{f.fileName}</span>
+                </button>
+                <span className="dk-meta">{dungLuong(f.sizeBytes)} · {tenNguoi(f.createdBy)} · {new Date(f.createdAt).toLocaleString('vi-VN', { hour12: false })}</span>
+                <button type="button" data-view-ok className="dk-icon" title="Tải về" onClick={() => void dinhKemApi.download(f).catch((e) => setErr(errorText(e)))}><Download size={14} /></button>
+                {ghi && <button type="button" data-view-ok className="dk-icon dk-del" title="Gỡ tệp khỏi phiếu (không xoá hẳn)" onClick={() => void go(f)}><Trash2 size={14} /></button>}
+              </li>
             ))}
-            {!q.isLoading && !files.length && <tr><td colSpan={6} className="muted">Chưa có tệp nào.</td></tr>}
-          </tbody>
-        </table>
-        {q.error && <div className="alert alert-bad" style={{ marginTop: 6 }}>{errorText(q.error)}</div>}
+          </ul>
+        )}
+        {!ghi && !q.isLoading && !files.length && <div className="muted dk-msg">Chưa có tệp nào.</div>}
+        {q.error && <div className="alert alert-bad dk-msg">{errorText(q.error)}</div>}
       </>}
       {xem && <XemNhanh file={xem} onClose={() => setXem(null)} />}
     </div>

@@ -1,8 +1,23 @@
-/* [2026-11-12 kiennt] NT-QUY-001 — khung đính kèm chứng từ gốc dùng chung */
-.dk-box { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--tbl-line, #dfe6ee); border-radius: 8px; background: var(--surface, #fff); }
-.dk-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
-.dk-drop { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border: 2px dashed #b8cbe4; border-radius: 8px; background: #f7fbff; color: var(--ink-600, #44515f); font-size: 13px; }
-.dk-drop.on { border-color: var(--brand-500, #2f80ed); background: #eaf3ff; }
-.dk-table { width: 100%; }
+/* [2026-11-12 kiennt] NT-QUY-001 — khung đính kèm chứng từ gốc dùng chung (giao diện theo kiểu MISA) */
+.dk-box { margin-top: 12px; max-width: 580px; }
+.dk-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; color: var(--ink-700, #2b3440); }
+.dk-head svg { color: var(--ink-500, #66717f); }
+.dk-title { font-weight: 600; }
+.dk-hint { color: var(--ink-500, #8a94a1); font-size: 13px; margin-left: 6px; }
+.dk-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 92px; padding: 14px 16px;
+  border: 1.5px dashed #4f9d69; border-radius: 8px; background: #fafbfa; color: var(--ink-600, #5b6572); font-size: 14px; text-align: center; }
+.dk-drop.on { border-color: #2f80ed; background: #eef5ff; }
+.dk-drop.dk-off { border-color: #c9d1da; color: var(--ink-500, #8a94a1); font-size: 13px; }
+.dk-link { border: 0; background: none; padding: 0; color: #2f6fe0; font: inherit; cursor: pointer; }
+.dk-link:hover { text-decoration: underline; }
+.dk-msg { margin-top: 6px; }
+.dk-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-list li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #e3e8ee; border-radius: 6px; background: #fff; }
+.dk-file { display: inline-flex; align-items: center; gap: 6px; min-width: 0; border: 0; background: none; padding: 0; color: #2f6fe0; font: inherit; cursor: pointer; text-align: left; }
+.dk-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-meta { flex: 1; color: var(--ink-500, #8a94a1); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-icon { border: 0; background: none; padding: 2px; color: var(--ink-500, #66717f); cursor: pointer; display: inline-flex; }
+.dk-icon:hover { color: var(--ink-800, #1f2933); }
+.dk-del:hover { color: #c0392b; }
 .dk-pdf { width: 100%; height: 72vh; border: 0; }
 .dk-img { display: block; max-width: 100%; max-height: 72vh; margin: 0 auto; }
