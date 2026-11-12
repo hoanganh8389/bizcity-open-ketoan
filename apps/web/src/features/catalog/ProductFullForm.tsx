@@ -16,6 +16,7 @@ import { api, errorText } from '@/lib/api';
 import { ErrorBox, Field, Loading, Modal, NumInput, useViewAgain } from '@/components/ui';
 import { ItemPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 import { GroupTree } from '../posting/ProductAccountsPage';
+import { NEW_OUTPUT_TAX, TaxForm } from './TaxCodesPage';
 import { HelpDrawer } from '@/components/HelpDrawer';
 // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
 import { LichSuMatHang } from './DoiMaGopMa';
@@ -33,7 +34,7 @@ import type { CatalogWarnAck } from '@ketoan/contracts';
 type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 export interface ItemClassLite { code: string; name: string; parentCode: string | null; isActive: boolean; skuCode?: string }
 interface PostingGroup { code: string; name: string }
-interface TaxCode { code: string; name: string; direction: string; isActive: boolean }
+interface TaxCode { code: string; name: string; direction: string; isActive: boolean; rate?: number }
 interface PriceList { code: string; name: string; isCompany: boolean; isActive: boolean; branchCodes: string[] }
 interface Unit { unit: string; ratio: number; isDefault: boolean; isPurchaseDefault?: boolean; weightKg: number | null; note: string }
 interface Price { priceListCode: string; unit: string; price: number | null; isDefaultUnit: boolean; note: string }
@@ -100,6 +101,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: chọn Mã mới hay Mã biến thể (theo mã cha) (đóng góp)
   const [kind, setKind] = useState<'' | 'new' | 'variant'>(isNew ? '' : 'new');
   const [parentErr, setParentErr] = useState('');
+  const [newTax, setNewTax] = useState(false);
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: giá mua theo NCC khai trước khi ghi, ghi cùng mặt hàng (đóng góp)
   const [nccRows, setNccRows] = useState<NccTam[]>([]);
   const enabled = useEnabledModules();
@@ -273,7 +275,22 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     },
   });
 
-  const vatRate = VAT_RATES.find((r) => r.out === v.taxOutCode);
+  // [2026-11-12 Nguyễn Văn Thủy] Thuế suất GTGT lấy từ danh mục Biểu thuế (thuế đầu ra đang dùng); 5 mã chuẩn xếp đầu (đóng góp)
+  const outTaxes = useMemo(() => {
+    const std = VAT_RATES.map((r) => r.out);
+    const list = taxes.filter((t) => t.direction === 'output' && (t.isActive || t.code === v.taxOutCode));
+    return [...list].sort((a, b) => { const ia = std.indexOf(a.code), ib = std.indexOf(b.code); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.code.localeCompare(b.code); });
+  }, [taxes, v.taxOutCode]);
+  const missingStd = taxes.length ? VAT_RATES.filter((r) => !taxes.some((t) => t.code === r.out && t.direction === 'output')).map((r) => r.out) : [];
+  const pickTax = (code: string) => {
+    if (!code) return set({ taxOutCode: null, taxInCode: null });
+    const t = taxes.find((x) => x.code === code);
+    const std = VAT_RATES.find((r) => r.out === code) ?? VAT_RATES.find((r) => r.key !== 'kct' && Number(r.key) === Number(t?.rate));
+    const inCode = std && taxes.some((x) => x.code === std.in && x.direction === 'input') ? std.in : null;
+    set({ taxOutCode: code, taxInCode: inCode });
+  };
+  const taxLabel = (t: TaxCode) => { const s = VAT_RATES.find((r) => r.out === t.code); return s ? `${s.label} — ${t.code} ${t.name}` : `${t.code} — ${t.name}`; };
+  const vatRate = (() => { const t = taxes.find((x) => x.code === v.taxOutCode); return t ? { label: taxLabel(t) } : v.taxOutCode ? { label: v.taxOutCode } : undefined; })();
   // [2026-11-12 Nguyễn Văn Thủy] Thêm mặt hàng theo từng bước, kiểm bắt buộc ở mỗi bước (đóng góp)
   const STEPS = [
     { k: 'info', t: 'Thông tin chung' },
@@ -399,14 +416,19 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           {/* [2026-11-12 Nguyễn Văn Thủy] thẻ Thông tin tối giản: nhóm, mã, tên, barcode, xuất xứ, ảnh, mô tả; ngành / nhãn tự theo nhóm (đóng góp) */}
           {/* [2026-11-12 Nguyễn Văn Thủy] một ô Thuế suất GTGT (%) — đặt cặp mã thuế ra / vào chuẩn; bỏ thẻ Kế toán (đóng góp) */}
           <Field label="Thuế suất GTGT (%)">
-            <select className="select input" value={vatRate?.key ?? (v.taxOutCode ? 'other' : '')} onChange={(e) => {
-              const r = VAT_RATES.find((x) => x.key === e.target.value);
-              if (r) set({ taxOutCode: r.out, taxInCode: r.in }); else if (!e.target.value) set({ taxOutCode: null, taxInCode: null });
-            }}>
+            <div className="row" style={{ gap: 4 }}>
+            <select className="select input" style={{ flex: 1 }} value={v.taxOutCode ?? ''} onChange={(e) => pickTax(e.target.value)} title="Thuế đầu ra lấy từ danh mục Biểu thuế">
               <option value="">(chưa khai)</option>
-              {VAT_RATES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
-              {!vatRate && v.taxOutCode && <option value="other">{v.taxOutCode}</option>}
+              {outTaxes.map((t) => <option key={t.code} value={t.code}>{taxLabel(t)}</option>)}
+              {v.taxOutCode && !outTaxes.some((t) => t.code === v.taxOutCode) && <option value={v.taxOutCode}>{v.taxOutCode} (chưa có ở Biểu thuế)</option>}
             </select>
+            <button type="button" className="btn btn-sm" title="Thêm loại thuế mới vào danh mục Biểu thuế" onClick={() => setNewTax(true)}>+</button>
+            </div>
+            {newTax && <TaxForm value={NEW_OUTPUT_TAX} onClose={() => setNewTax(false)} onSaved={(code, rate) => {
+              const std = VAT_RATES.find((r) => r.out === code) ?? VAT_RATES.find((r) => r.key !== 'kct' && Number(r.key) === rate);
+              set({ taxOutCode: code, taxInCode: std && taxes.some((x) => x.code === std.in) ? std.in : null });
+            }} />}
+            {missingStd.length > 0 && <div className="neg" style={{ fontSize: 12, marginTop: 3 }}>Biểu thuế chưa khai: {missingStd.join(', ')}</div>}
           </Field>
           <Field label="Trạng thái" tip="Mặt hàng tạo mới mặc định Đang hoạt động. Ngừng hoạt động: không dùng trên chứng từ mới, dữ liệu cũ giữ nguyên">
             {v.isDraft ? <input className="input" readOnly value="Chờ duyệt (còn thiếu thông tin — sửa rồi Ghi là hoạt động)" />

@@ -279,7 +279,7 @@ export const catalogBatchActions: AnyActionDef[] = [
         dryRun: z.boolean().default(true),
         rows: z.array(z.object({
           row: z.number().int(), sku: z.string().max(200), name: cell, unit: cell, note: cell, groupCode: cell, industryCode: cell, brandCode: cell, typeCode: cell,
-          postingGroupCode: cell, taxOutCode: cell, taxInCode: cell, isActive: cell,
+          postingGroupCode: cell, taxOutCode: cell, taxInCode: cell, vatRate: cell, isActive: cell,
         })).min(1).max(5000),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/catalog/products/import' }, mcp: false, ai: 'deny' },

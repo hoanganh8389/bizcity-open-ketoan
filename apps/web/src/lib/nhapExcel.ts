@@ -48,20 +48,15 @@ const rowsOut = (rows: Record<string, string>[]) => rows.map(({ _row, ...r }) =>
 
 /* ------------------------------------------------------------------ Mặt hàng */
 const MAT_HANG: NhapLoai = {
-  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, nhóm / ngành / nhãn, nhóm hạch toán, thuế VAT', keyField: 'sku',
+  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, nhóm hàng, thuế suất GTGT, trạng thái', keyField: 'sku',
   listPath: '/danh-muc/mat-hang', invalidate: ['products', 'inventory-items'], modes: false,
   fields: [
-    { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku', 'ma hang hoa, dich vu'], example: 'SP0001', note: 'Mã đã có → cập nhật; chưa có → thêm mới. Không có khoảng trắng.' },
+    { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku', 'ma hang hoa, dich vu'], example: '100021099', note: 'Mã đã có → cập nhật; chưa có → thêm mới. Mã mới không có chữ ở đầu hoặc cuối. Mã biến thể: giữ nguyên mã cha (đã có hoặc có ở dòng khác trong tệp), thêm tối đa 2 chữ ở đầu hoặc cuối.' },
     { key: 'name', header: 'Tên hàng', required: 'moi', aliases: ['ten', 'ten vthh', 'ten hang hoa', 'ten san pham', 'ten hang hoa, dich vu'], example: 'Sữa bột mẫu 400g' },
     { key: 'unit', header: 'ĐVT', required: 'moi', aliases: ['don vi tinh', 'dvt chinh', 'don vi', 'don vi tinh chinh'], example: 'Hộp', note: 'Mặt hàng đã có: ĐVT không đổi qua Excel (đổi ở form mặt hàng).' },
-    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], note: 'Mã hoặc đúng tên nhóm trong danh mục.' },
-    { key: 'industryCode', header: 'Ngành hàng', aliases: ['nganh'] },
-    { key: 'brandCode', header: 'Nhãn hàng', aliases: ['nhan', 'thuong hieu'] },
-    { key: 'postingGroupCode', header: 'Nhóm hạch toán', aliases: ['nhom hach toan'] },
-    { key: 'taxOutCode', header: 'Mã VAT ra', aliases: ['thue suat', 'thue gtgt', 'vat ra'], note: 'Mã thuế bán ra có sẵn (vd R08).' },
-    { key: 'taxInCode', header: 'Mã VAT vào', aliases: ['vat vao'], note: 'Mã thuế mua vào có sẵn (vd V08).' },
-    { key: 'note', header: 'Ghi chú', aliases: ['dien giai', 'mo ta'] },
-    { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai', 'dang theo doi'], note: 'Có / Không. Trống = giữ nguyên (mới: Có).' },
+    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Mã hoặc đúng tên nhóm cấp 3 trong danh mục. Mã biến thể: bỏ trống, theo mã cha.' },
+    { key: 'vatRate', header: 'Thuế suất GTGT (%)', aliases: ['thue suat', 'thue gtgt', 'vat', 'thue suat gtgt'], example: '8', note: 'KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra khác — phải có ở danh mục Biểu thuế.' },
+    { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang theo doi'], note: 'Đang hoạt động / Ngừng hoạt động. Trống = giữ nguyên (mới: Đang hoạt động).' },
   ],
   run: async (rows, { dryRun }) => {
     const o = await api.post<{ created: number; updated: number; failed: number; rows: { row: number; sku: string; action: NhapDong['action']; errors: string[]; values: Record<string, string>; before?: Record<string, string> }[] }>(

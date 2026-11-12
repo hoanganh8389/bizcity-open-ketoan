@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Thuế suất GTGT ở mặt hàng lấy từ danh mục Biểu thuế (thuế đầu ra), 5 mã chuẩn xếp đầu, báo khi Biểu thuế thiếu mã chuẩn; nút + thêm loại thuế ngay tại chỗ.
+- Nhập Excel mặt hàng theo quy tắc mới: mã chính không chữ đầu / cuối, nhóm cấp 3 bắt buộc khi thêm mới; mã biến thể cần mã cha (đã có hoặc trong tệp, ghi mã cha trước), tối đa 2 chữ, nhóm theo mã cha; cột Thuế suất GTGT (%) kiểm theo Biểu thuế; cột Trạng thái; bỏ cột Ngành / Nhãn / Nhóm hạch toán / Mã VAT / Ghi chú khỏi tệp mẫu.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 - Thêm mặt hàng: chọn Mã mới hoặc Mã biến thể. Mã mới không được có chữ ở đầu / cuối; mã biến thể chọn mã cha (chỉ mã chính), phần mã cha khoá cứng, chỉ thêm chữ ở đầu / cuối, tổng tối đa 2 chữ (mặc định Z), tên điền sẵn theo tên mã cha, nhóm hàng theo mã cha không đổi được. Số thứ tự mã tự sinh chỉ chạy theo mã chính. Chọn nhóm chưa tới cấp 3 báo đỏ ngay (migration 0115).
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
