@@ -104,14 +104,13 @@ const YES = ['có', 'co', 'x', '1', 'true', 'yes'];
 const NO = ['không', 'khong', '0', 'false', 'no'];
 const yn = (v: string | undefined) => { const s = (v ?? '').trim().toLowerCase(); return !s ? undefined : YES.includes(s) ? true : NO.includes(s) ? false : null; };
 const KHO: NhapLoai = {
-  id: 'kho', nhom: 'Danh mục', title: 'Kho', desc: 'Mã kho, chi nhánh, tên, địa chỉ, tài khoản kho, kho mặc định', keyField: 'code',
+  id: 'kho', nhom: 'Danh mục', title: 'Kho', desc: 'Mã kho, chi nhánh, tên, địa chỉ, kho mặc định', keyField: 'code',
   listPath: '/danh-muc/kho', invalidate: ['warehouses'],
   fields: [
     { key: 'code', header: 'Mã kho', required: true, aliases: ['ma'], example: '01-HH' },
     { key: 'branchCode', header: 'Chi nhánh', required: 'moi', aliases: ['ma chi nhanh', 'don vi'], example: '00001', note: 'Mã chi nhánh trong sơ đồ tổ chức.' },
     { key: 'name', header: 'Tên kho', required: 'moi', aliases: ['ten'], example: 'Kho hàng' },
     { key: 'address', header: 'Địa chỉ', aliases: ['dia chi kho'] },
-    { key: 'account', header: 'Tài khoản kho', aliases: ['tk kho'] },
     { key: 'isDefault', header: 'Kho mặc định', aliases: ['mac dinh'], note: 'Có / Không: nhận dòng hàng không ghi mã kho.' },
     { key: 'isPromo', header: 'Kho khuyến mại', aliases: ['khuyen mai'] },
     { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai'] },
@@ -143,7 +142,7 @@ const KHO: NhapLoai = {
       if (errors.length || dryRun) { out.push({ row, key: code, action: errors.length ? 'error' : before ? 'update' : 'create', errors, values, before: before ? { ...before, isActive: before.isActive ? 'Có' : 'Không', isDefault: before.isDefault ? 'Có' : 'Không', isPromo: before.isPromo ? 'Có' : 'Không' } as never : undefined }); continue; }
       const body = {
         branchCode: branchCode || before!.branchCode, name: (r.name ?? '').trim() || before!.name, address: (r.address ?? '').trim() || before?.address || '',
-        account: (r.account ?? '').trim() || before?.account || '', note: (r.note ?? '').trim() || before?.note || '',
+        account: before?.account || '', note: (r.note ?? '').trim() || before?.note || '',
         isActive: flags.isActive ?? before?.isActive ?? true, isDefault: flags.isDefault ?? before?.isDefault ?? false, isPromo: flags.isPromo ?? before?.isPromo ?? false,
       };
       try {
@@ -156,6 +155,62 @@ const KHO: NhapLoai = {
   },
 };
 
+
+/* ------------------------------------------------------------------ Chi nhánh / cửa hàng */
+// [2026-11-13 Nguyễn Văn Thủy] nhập chi nhánh từ Excel: mã, tên, thuộc sơ đồ tổ chức, MST, thông tin in; ít dòng → kiểm ở trình duyệt, ghi từng dòng (đóng góp)
+interface ChiNhanhRow { code: string; name: string; orgUnitCode: string | null; taxCode: string; companyName: string; address: string; phone: string; note: string; isActive: boolean }
+const CHI_NHANH: NhapLoai = {
+  id: 'chi-nhanh', nhom: 'Danh mục', title: 'Chi nhánh, cửa hàng', desc: 'Mã, tên, thuộc cơ cấu tổ chức, MST, tên công ty, địa chỉ, điện thoại', keyField: 'code',
+  listPath: '/danh-muc/chi-nhanh', invalidate: ['branches', 'org-tree', 'warehouses'],
+  fields: [
+    { key: 'code', header: 'Mã chi nhánh', required: true, aliases: ['ma', 'ma cua hang', 'ma shop'], example: '26001' },
+    { key: 'name', header: 'Tên chi nhánh', required: 'moi', aliases: ['ten', 'ten cua hang', 'mo ta'], example: 'Cửa hàng Bảo Hà' },
+    { key: 'orgUnitCode', header: 'Thuộc cơ cấu', aliases: ['ma nut', 'thuoc sdtc', 'so do to chuc', 'thuoc so do to chuc', 'co cau to chuc'], example: '1101', note: 'Mã nút trên Cơ cấu tổ chức (thường là tỉnh). Trống = giữ như cũ.' },
+    { key: 'taxCode', header: 'MST', aliases: ['ma so thue', 'so dang ky kinh doanh/mst'] },
+    { key: 'companyName', header: 'Tên công ty', aliases: ['ten cong ty in'] },
+    { key: 'address', header: 'Địa chỉ', aliases: ['dia chi'] },
+    { key: 'phone', header: 'Điện thoại', aliases: ['dien thoai', 'sdt'] },
+    { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai'], note: 'Có / Không.' },
+    { key: 'note', header: 'Ghi chú', aliases: ['dien giai'] },
+  ],
+  run: async (rows, { dryRun, mode }) => {
+    const [bs, org] = await Promise.all([api.get<ChiNhanhRow[]>('/api/v1/branches'), api.get<{ nodes: { code: string }[] }>('/api/v1/org-units/tree')]);
+    const have = new Map(bs.map((b) => [b.code, b]));
+    const nodes = new Set((org.nodes ?? []).map((n) => n.code));
+    const seen = new Map<string, number>();
+    const out: NhapDong[] = [];
+    for (const r of rows) {
+      const row = Number(r._row);
+      const code = (r.code ?? '').trim();
+      const before = have.get(code);
+      const errors: string[] = [];
+      if (!code) errors.push('Thiếu mã chi nhánh');
+      if (code.length > 32) errors.push('Mã chi nhánh tối đa 32 ký tự');
+      if (code && seen.has(code)) errors.push(`Trùng mã với dòng ${seen.get(code)} trong tệp`); else if (code) seen.set(code, row);
+      if (mode === 'create' && before) errors.push(`Chi nhánh ${code} đã có — chọn "Cập nhật" nếu muốn sửa`);
+      if (mode === 'update' && !before) errors.push(`Chi nhánh ${code} chưa có`);
+      if (!before && !(r.name ?? '').trim()) errors.push('Chi nhánh mới phải có tên');
+      const org1 = (r.orgUnitCode ?? '').trim();
+      if (org1 && !nodes.has(org1)) errors.push(`Nút "${org1}" chưa có trên Cơ cấu tổ chức`);
+      const active = yn(r.isActive);
+      if (active === null) errors.push('Cột Theo dõi ghi Có / Không');
+      const values = { ...r, code };
+      if (errors.length || dryRun) { out.push({ row, key: code, action: errors.length ? 'error' : before ? 'update' : 'create', errors, values, before: before ? { ...before, isActive: before.isActive ? 'Có' : 'Không' } as never : undefined }); continue; }
+      const t = (k: keyof ChiNhanhRow) => (r[k] ?? '').trim() || String(before?.[k] ?? '');
+      const body = { name: t('name'), taxCode: t('taxCode'), companyName: t('companyName'), address: t('address'), phone: t('phone'), note: t('note') };
+      try {
+        if (before) await api.patch(`/api/v1/branches/${encodeURIComponent(code)}`, { ...body, isActive: active ?? before.isActive, ...(org1 && org1 !== before.orgUnitCode ? { orgUnitCode: org1 } : {}) });
+        else {
+          await api.post('/api/v1/branches', { ...body, code });
+          if (org1 || active === false) await api.patch(`/api/v1/branches/${encodeURIComponent(code)}`, { ...(org1 ? { orgUnitCode: org1 } : {}), ...(active === false ? { isActive: false } : {}) });
+        }
+        out.push({ row, key: code, action: before ? 'update' : 'create', errors: [], values });
+      } catch (e) { out.push({ row, key: code, action: 'error', errors: [e instanceof Error ? e.message : String(e)], values }); }
+    }
+    const n = (a: NhapDong['action']) => out.filter((x) => x.action === a).length;
+    return { created: n('create'), updated: n('update'), failed: n('error'), rows: out };
+  },
+};
 
 /* ------------------------------------------------------------------ Nhóm hàng (cây cha – con) */
 // [2026-11-12 Nguyễn Văn Thủy] cột tệp giống màn DM11: Nhóm cha (đường dẫn hoặc tên), Mã nhóm hàng, Mã ngắn, Tên nhóm hàng, Đang dùng;
@@ -619,7 +674,7 @@ const phieuTien = (docType: LoaiPhieu): NhapLoai => {
   };
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, KHO, TAI_KHOAN, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, CHI_NHANH, KHO, TAI_KHOAN, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
 /** Loại nhập của một loại phiếu tiền / phiếu kế toán (nút Nhập Excel ở danh sách phiếu). */
 export const nhapPhieu = (docType: string) => NHAP_LOAI.find((l) => l.id === PHIEU[docType as LoaiPhieu]?.id);
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);

@@ -103,6 +103,8 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
   const canWrite = can('catalog:write');
   const [editing, setEditing] = useState<Draft | null>(null);
   const [sel, setSel] = useState<Row | null>(null);
+  // [2026-11-13 Nguyễn Văn Thủy] mặc định chỉ hiện mục đang dùng; mục đã ẩn xem khi cần (đóng góp)
+  const [showHidden, setShowHidden] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useQuery({ queryKey: ['dimensions', kind], queryFn: () => api.get<Row[]>(`/api/v1/dimensions/${kind}`) });
   const isContract = kind === 'contract';
@@ -127,6 +129,9 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
           onDelete={remove}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          extra={(q.data ?? []).some((r) => !r.isActive) && (
+            <label className="checkbox" style={{ marginLeft: 8, fontSize: 13 }}><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Hiện cả mục đã ẩn ({(q.data ?? []).filter((r) => !r.isActive).length})</label>
+          )}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
@@ -135,7 +140,7 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
             exportName={`danh-muc-${kind}`}
             groupable
             exportRef={exportRef}
-            rows={q.data ?? []}
+            rows={showHidden ? q.data ?? [] : (q.data ?? []).filter((r) => r.isActive)}
             rowKey={(r) => r.code}
             onSelect={setSel}
             onRowDoubleClick={(r) => canWrite && setEditing(r)}

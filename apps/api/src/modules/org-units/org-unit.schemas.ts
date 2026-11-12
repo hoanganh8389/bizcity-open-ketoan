@@ -58,6 +58,8 @@ export const orgImportSchema = z.object({
   nodes: z.array(z.object({
     code, name: z.string().trim().min(1).max(255), parentCode: z.string().trim().max(32).nullable().optional(),
     shortCode: text(32), alias: text(255), note: text(500), sortOrder: z.number().int().min(0).max(100000).optional(),
+    /** MST đặt ở nút (0121); không có cột = giữ như cũ. */
+    taxId: z.string().trim().regex(/^$|^[0-9]{10}(-[0-9]{3})?$/, 'MST gồm 10 số hoặc 10 số-3 số').optional(),
   })).max(5000).default([]),
   /** Gắn chi nhánh / điểm kinh doanh vào nút. */
   assignments: z.array(z.object({ branchCode: z.string().trim().min(1), orgCode: z.string().trim().min(1) })).max(20000).default([]),

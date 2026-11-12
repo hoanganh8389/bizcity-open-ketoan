@@ -293,7 +293,7 @@ export const routesTsWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'mua-hang.purchase.settings', title: 'Lưu cài đặt mua hàng', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
-    input: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false) }), output: anyOut,
+    input: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false), blockOverOrder: z.boolean().default(false) }), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/purchase/settings' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase' },
     handler: async (ctx, input) => {

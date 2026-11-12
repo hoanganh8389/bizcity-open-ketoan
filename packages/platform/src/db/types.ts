@@ -918,6 +918,23 @@ export interface OrgLinkVersionsTable {
   changed_by: Generated<string>;
   changed_at: TimestampDefault;
 }
+/** Tài khoản ngầm định theo loại chứng từ (0126). columns: [{ key, caption, filter: string[], default, bind? }]. */
+export interface AccountDefaultTypesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  code: string;
+  grp: Generated<string>;
+  name: string;
+  columns: ColumnType<AccountDefaultColumn[], string, string>;
+  sort_order: Generated<number>;
+  is_active: Generated<boolean>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  updated_by: Generated<string>;
+  updated_at: TimestampDefault;
+}
+export interface AccountDefaultColumn { key: string; caption: string; filter: string[]; default: string; bind?: string }
+
 export interface ItemClassHistoryTable {
   id: Generated<string>;
   tenant_id: string;
@@ -2003,6 +2020,7 @@ export interface Database {
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;
   item_class_history: ItemClassHistoryTable;
+  account_default_types: AccountDefaultTypesTable;
   tax_id_versions: TaxIdVersionsTable;
   org_link_versions: OrgLinkVersionsTable;
   product_units: ProductUnitsTable;

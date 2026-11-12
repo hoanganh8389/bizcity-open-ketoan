@@ -1,4 +1,4 @@
-{"_bang":"bo-phan","_mo_ta":"Danh mục bộ phận: phòng ban, khối, từng cửa hàng (mã BH + mã cửa hàng, ví dụ BH26001 = cửa hàng 26001). ","_cot":["code","name","parent_code","address","phone","note","is_active"],"_nguon":"gia-lap"}
+{"_bang": "bo-phan", "_mo_ta": "Danh mục bộ phận: phòng ban chức năng (Bán hàng, Mua hàng, Kế toán…). Ở shop nào thì xem theo chi nhánh / kho trên dòng sổ; mọi shop thuộc bộ phận Bán hàng.", "_cot": ["code", "name", "parent_code", "address", "phone", "note", "is_active"], "_nguon": "gia-lap"}
 {"code":"BGD","name":"Ban giám đốc","parent_code":null,"address":"","phone":"","note":"","is_active":true}
 {"code":"KD","name":"Khối kinh doanh","parent_code":null,"address":"","phone":"","note":"","is_active":true}
 {"code":"BH","name":"Bán hàng","parent_code":"KD","address":"","phone":"","note":"","is_active":true}
@@ -9,35 +9,3 @@
 {"code":"HCNS","name":"Hành chính nhân sự","parent_code":"VP","address":"","phone":"","note":"","is_active":true}
 {"code":"IT","name":"Công nghệ thông tin","parent_code":"VP","address":"","phone":"","note":"","is_active":true}
 {"code":"KHO","name":"Kho vận","parent_code":"VP","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00000","name":"Văn phòng công ty","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00001","name":"Cửa hàng Mẫu Hoàn Kiếm","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00002","name":"Cửa hàng Mẫu Ba Đình","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00003","name":"Cửa hàng Mẫu Đống Đa","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14000","name":"Chi nhánh Hà Nội","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14051","name":"Cửa hàng Mẫu Cầu Giấy","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14052","name":"Cửa hàng Mẫu Thanh Xuân","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14053","name":"Cửa hàng Mẫu Long Biên","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01000","name":"Chi nhánh Nam Định","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01001","name":"Cửa hàng Mẫu Nam Định 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01002","name":"Cửa hàng Mẫu Nam Định 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01014","name":"Cửa hàng Mẫu Hải Hậu","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01015","name":"Cửa hàng Mẫu Giao Thủy","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH02001","name":"Cửa hàng Mẫu Thái Bình 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH02002","name":"Cửa hàng Mẫu Thái Bình 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08000","name":"Chi nhánh Phú Thọ","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08001","name":"Cửa hàng Mẫu Việt Trì 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08002","name":"Cửa hàng Mẫu Việt Trì 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08014","name":"Cửa hàng Mẫu Lâm Thao","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08015","name":"Cửa hàng Mẫu Phù Ninh","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08016","name":"Cửa hàng Mẫu Thanh Ba","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH26000","name":"Văn phòng Lào Cai","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH26001","name":"Cửa hàng Mẫu Bảo Hà","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH26002","name":"Cửa hàng Mẫu Sa Pa","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH18001","name":"Cửa hàng Mẫu Yên Bái 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH18002","name":"Cửa hàng Mẫu Yên Bái 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30000","name":"Chi nhánh Hồ Chí Minh","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30001","name":"Cửa hàng Mẫu Quận 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30002","name":"Cửa hàng Mẫu Quận 3","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30003","name":"Cửa hàng Mẫu Quận 5","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH31001","name":"Cửa hàng Mẫu Thủ Dầu Một","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH31002","name":"Cửa hàng Mẫu Dĩ An","parent_code":"BH","address":"","phone":"","note":"","is_active":true}

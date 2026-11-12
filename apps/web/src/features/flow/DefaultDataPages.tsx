@@ -17,11 +17,8 @@ interface RestoreResult { added: number; updated: number; removed: number; deact
 /** Mã màn → bộ dữ liệu gốc (đặt nút ở đầu màn). */
 export const DEFAULT_DATA_SCREENS: Record<string, { key: string; title: string }> = {
   ACC1: { key: 'account_tracking', title: 'Theo dõi chiều của tài khoản' },
-  ACC41: { key: 'posting_defaults', title: 'Tài khoản ngầm định' },
-  DM10: { key: 'products', title: 'Danh mục mặt hàng' },
-  DM11: { key: 'item_classes', title: 'Nhóm hàng' },
-  ACC17: { key: 'posting_groups', title: 'Mặt hàng – tài khoản' },
-  ACC18: { key: 'reasons', title: 'Lý do – tài khoản' },
+  DM10: { key: 'catalog_sample', title: 'Nhóm hàng + mặt hàng' },
+  DM11: { key: 'catalog_sample', title: 'Nhóm hàng + mặt hàng' },
   ACC19: { key: 'tool_group', title: 'Nhóm công cụ dụng cụ' },
   ACC20: { key: 'capital_source', title: 'Danh mục nguồn vốn' },
   DM17: { key: 'cash_item', title: 'Danh mục mục thu/chi' },
@@ -58,8 +55,13 @@ export function RestoreDefaultsButton({ datasetKey, title }: { datasetKey: strin
     onSuccess: (r) => { setDone(r); void qc.invalidateQueries(); },
   });
   if (!can('settings:write')) return null;
-  const ask = () => window.confirm(
-    `Quay về dữ liệu gốc: ${title}?\n\n` +
+  // [2026-11-13 Nguyễn Văn Thủy] bộ nhóm hàng + mặt hàng: xoá vĩnh viễn, giữ mã đã phát sinh (đóng góp)
+  const ask = () => window.confirm(datasetKey === 'catalog_sample'
+    ? 'Quay về dữ liệu gốc: Nhóm hàng + mặt hàng?\n\n' +
+      '- XOÁ VĨNH VIỄN mọi nhóm hàng, mặt hàng chưa phát sinh trên sổ (kèm ĐVT, giá, khai báo nhà cung cấp của chúng).\n' +
+      '- Mặt hàng đã có chứng từ được giữ nguyên.\n' +
+      '- Nạp lại bộ mẫu: 2 cây nhóm hàng, 8 mặt hàng.\n\nKhông lấy lại được. Tiếp tục?'
+    : `Quay về dữ liệu gốc: ${title}?\n\n` +
     '- Bản ghi có trong dữ liệu gốc: thêm lại nếu thiếu, ghi đè tên, tài khoản… theo dữ liệu gốc.\n' +
     '- Bản ghi tự thêm: chưa dùng thì xoá; đã dùng trên sổ sách thì khoá (ngừng dùng).\n\n' +
     'Không sửa chứng từ, sổ cái đã ghi. Tiếp tục?',

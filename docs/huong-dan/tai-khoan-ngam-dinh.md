@@ -1,20 +1,27 @@
 # Tài khoản ngầm định (ACC41)
 
-<!-- [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — danh sách định khoản theo loại chứng từ, thêm / sửa (đóng góp) -->
+<!-- [2026-11-13 Nguyễn Văn Thủy] tài khoản ngầm định theo loại chứng từ: cột tài khoản, lọc, mặc định (đóng góp) -->
 
-Mỗi dòng là một **định khoản mặc định** của một loại chứng từ: **TK Nợ** và **TK Có**. Lọc theo **Loại chứng từ**: Bán hàng, Mua hàng, Nhập xuất kho, Thu chi tiền, Khác.
+Mỗi dòng là một **loại chứng từ** (ví dụ *Bán hàng trong nước thu tiền mặt*, *Phiếu chi trả lương nhân viên*). Lọc theo nhóm: Bán hàng, Mua hàng, Kho, Tiền mặt, Tiền gửi, Tổng hợp, Tài sản – công cụ, Khác.
 
-## Dòng có sẵn
+## Sửa một loại
 
-Là định khoản phần mềm dùng khi không có gì chỉ định khác. Bấm **Sửa** để đổi tài khoản.
+Bấm **Sửa**. Mỗi cột tài khoản của loại (TK Nợ, TK Có, TK thuế GTGT, TK chiết khấu…) có hai ô:
 
-- Một tài khoản có thể dùng ở nhiều dòng. Ví dụ *Phải thu khách hàng 1311* dùng ở bán hàng, khách trả hàng, thu tiền. Sửa ở một dòng là đổi ở mọi dòng dùng chung; hộp sửa ghi rõ các dòng đó.
-- Ô ghi *theo HTTT*: tài khoản tiền lấy theo **Hình thức thanh toán** (tiền mặt 1111, chuyển khoản 112…).
-- Thuế: loại thuế có tài khoản riêng thì theo loại thuế.
+- **Lọc tài khoản**: các đầu số được chọn trên dòng chứng từ, cách nhau bằng dấu `;`. Ví dụ `111; 641` — chọn được 1111, 1112, 6411… Để trống là chọn được mọi tài khoản.
+- **TK ngầm định**: tài khoản điền sẵn khi chọn loại. Phải là tài khoản chi tiết và nằm trong danh sách lọc.
 
-## Công tắc lý do hạch toán
+Kế toán quyết luật ở đây: trên chứng từ, chọn loại là có sẵn tài khoản, và chỉ chọn được trong danh sách lọc.
 
-Khoá `bizcity.posting.use_reasons`, đổi ở Trung tâm cấu hình. Mặc định **tắt**.
+## Cột chứng từ tự hạch toán
 
-- **Tắt**: phần mềm không đọc lý do, nhóm hạch toán, tài khoản theo mặt hàng. Doanh thu, trả lại, giá vốn, kho lấy ở màn này.
-- **Bật**: như phần mềm cũ. Doanh thu, giá vốn, kho theo nhóm hạch toán của mặt hàng; tài khoản trên lý do đè lên các dòng ở đây.
+Một số cột được chứng từ tự hạch toán dùng (bán hàng, nhập mua, giá vốn, kho, phải thu, phải trả, thuế…). Rê chuột vào tên cột để biết. Đổi tài khoản ở cột đó là đổi cho mọi chứng từ ghi sau; các loại khác dùng chung tài khoản đó tự đổi theo.
+
+## Trên phiếu thu, phiếu chi
+
+- Ô **Loại** cạnh tiêu đề lấy danh sách từ đây (nhóm Tiền mặt / Tiền gửi).
+- Nút **Cột** → bỏ chọn **TK Nợ / TK Có** để ẩn cột tài khoản cho gọn. Tài khoản vẫn ghi theo loại.
+
+## Quay về dữ liệu gốc
+
+Đặt lại lọc và tài khoản mặc định của mọi loại như ban đầu. Tài khoản chứng từ tự hạch toán đang dùng giữ nguyên.

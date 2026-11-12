@@ -254,7 +254,8 @@ export function useAccountList() {
  *  - `postingOnly`: chỉ tài khoản chi tiết (ghi sổ được) — dùng khi nhập phiếu, khai báo.
  *  - Bộ lọc báo cáo để mặc định: chọn được cả tài khoản tổng hợp (111 = cộng 1111, 1112…).
  */
-export function AccountPicker({ postingOnly, ...p }: BaseProps & { postingOnly?: boolean }) {
+// [2026-11-13 Nguyễn Văn Thủy] prefixes: chỉ cho chọn tài khoản trong danh sách lọc của loại chứng từ (Tài khoản ngầm định) (đóng góp)
+export function AccountPicker({ postingOnly, prefixes, ...p }: BaseProps & { postingOnly?: boolean; prefixes?: string[] }) {
   const { data = [], isLoading } = useAccountList();
   const [q, setQ] = useState('');
   const options = useMemo(() => {
@@ -262,9 +263,10 @@ export function AccountPicker({ postingOnly, ...p }: BaseProps & { postingOnly?:
     return data
       // [2026-11-11 Nguyễn Văn Thủy] ô chọn tài khoản ghi sổ bỏ tài khoản ngoài bảng (loại 0): máy chủ không nhận trên bút toán Nợ / Có (đóng góp)
       .filter((a) => (!postingOnly || (a.isPosting && !a.code.startsWith('0'))) && a.isActive !== false)
+      .filter((a) => !prefixes?.length || prefixes.some((f) => a.code.startsWith(f)))
       .filter((a) => !s || a.code.startsWith(s) || plain(a.name).includes(s))
       .map<PickOption>((a) => ({ code: a.code, name: a.name, level: a.level, strong: !a.isPosting, hint: a.isPosting ? (a.trackPartner || a.isDebt ? 'theo đối tượng' : undefined) : 'TK tổng hợp' }));
-  }, [data, q, postingOnly]);
+  }, [data, q, postingOnly, prefixes?.join(';')]);
   const names = useMemo(() => new Map(data.map((a) => [a.code, a.name])), [data]);
   return <CodePicker {...p} options={options} nameOf={(c) => names.get(c)} onSearch={setQ} loading={isLoading} emptyText="Không có tài khoản khớp" />;
 }

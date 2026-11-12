@@ -47,8 +47,6 @@ import { VoucherRecurrencesPage, VoucherTemplatesPage } from './features/voucher
 import { OffsetPage } from './features/vouchers/OffsetPage';
 import { TenantPage } from './features/system/TenantPage';
 import { TaxCodesPage } from './features/catalog/TaxCodesPage';
-import { ReasonsPage } from './features/posting/ReasonsPage';
-import { ProductAccountsPage } from './features/posting/ProductAccountsPage';
 import { PaymentMethodsPage } from './features/posting/PaymentMethodsPage';
 import { DefaultsPage } from './features/posting/DefaultsPage';
 import { HuongDanPage } from './features/help/HuongDanPage';
@@ -145,8 +143,9 @@ export const pageRoutes = (
     <Route path="danh-muc/bang-gia" element={<PriceListsPage />} />
     <Route path="bao-cao/lich-thanh-toan-hop-dong" element={<ContractSchedulesPage />} />
     <Route path="danh-muc/loai-thue" element={<TaxCodesPage />} />
-    <Route path="cau-hinh/ly-do" element={<ReasonsPage />} />
-    <Route path="cau-hinh/nhom-hach-toan" element={<ProductAccountsPage />} />
+    {/* [2026-11-13 Nguyễn Văn Thủy] Lý do, Mặt hàng – Tài khoản đã bỏ: về Tài khoản ngầm định (đóng góp) */}
+    <Route path="cau-hinh/ly-do" element={<Navigate to="/cau-hinh/tai-khoan-ngam-dinh" replace />} />
+    <Route path="cau-hinh/nhom-hach-toan" element={<Navigate to="/cau-hinh/tai-khoan-ngam-dinh" replace />} />
     <Route path="cau-hinh/hinh-thuc-thanh-toan" element={<PaymentMethodsPage />} />
     <Route path="cau-hinh/tai-khoan-ngam-dinh" element={<DefaultsPage />} />
     <Route path="cau-hinh/nguoi-dung" element={<UsersPage />} />

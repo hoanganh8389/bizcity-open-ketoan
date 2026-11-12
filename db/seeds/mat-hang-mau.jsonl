@@ -1,0 +1,9 @@
+{"_bang": "mat-hang-mau", "_mo_ta": "Bộ mẫu nhóm hàng + mặt hàng (quay về dữ liệu gốc): 2 cây nhóm (ngành → nhãn → nhóm) và 8 mặt hàng đại diện. Mặt hàng đã phát sinh trên sổ được giữ nguyên. Dữ liệu nạp nằm ở hàm bizcity_reset_catalog_sample (0124) — sửa thì sửa cả hai.", "_cot": ["sku", "name", "unit", "nganh", "nhan", "nhom", "tax_out"]}
+{"sku": "110053001", "name": "Vinamilk Optimum Gold 1 400g", "unit": "Lon", "nganh": "11 Sữa bột", "nhan": "005 Vinamilk", "nhom": "3 Sữa công thức trẻ em", "tax_out": "R08"}
+{"sku": "110053002", "name": "Vinamilk Optimum Gold 2 800g", "unit": "Lon", "nganh": "11 Sữa bột", "nhan": "005 Vinamilk", "nhom": "3 Sữa công thức trẻ em", "tax_out": "R08"}
+{"sku": "110053003", "name": "Vinamilk Dielac Grow Plus 1+ 850g", "unit": "Lon", "nganh": "11 Sữa bột", "nhan": "005 Vinamilk", "nhom": "3 Sữa công thức trẻ em", "tax_out": "R08"}
+{"sku": "110054001", "name": "Vinamilk Sure Prevent Gold 900g", "unit": "Lon", "nganh": "11 Sữa bột", "nhan": "005 Vinamilk", "nhom": "4 Sữa người lớn", "tax_out": "R08"}
+{"sku": "110054002", "name": "Vinamilk CanxiPro 400g", "unit": "Lon", "nganh": "11 Sữa bột", "nhan": "005 Vinamilk", "nhom": "4 Sữa người lớn", "tax_out": "R08"}
+{"sku": "190422001", "name": "Bỉm Merries dán size S 82 miếng", "unit": "Bịch", "nganh": "19 Bỉm tã", "nhan": "042 Merries", "nhom": "2 Bỉm tã dán trẻ em", "tax_out": "R08"}
+{"sku": "190422002", "name": "Bỉm Merries dán size M 64 miếng", "unit": "Bịch", "nganh": "19 Bỉm tã", "nhan": "042 Merries", "nhom": "2 Bỉm tã dán trẻ em", "tax_out": "R08"}
+{"sku": "190423001", "name": "Bỉm Merries quần size L 44 miếng", "unit": "Bịch", "nganh": "19 Bỉm tã", "nhan": "042 Merries", "nhom": "3 Bỉm tã quần trẻ em", "tax_out": "R08"}

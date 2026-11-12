@@ -422,6 +422,7 @@ async function runImport(trx: Db, auth: AuthContext, input: OrgImport) {
   const tenantId = auth.tenantId;
   const errors: ImportError[] = [];
   let created = 0, updated = 0;
+  await sql`SELECT set_config('ketoan.actor_name', ${auth.actorName || auth.actor}, true)`.execute(trx); // người đổi → phiên bản MST / cơ cấu (0121)
   const existing = await loadNodes(trx, tenantId);
   const known = new Set(existing.map((n) => n.code));
   const root = existing.find((n) => !n.parent_id);
@@ -443,7 +444,8 @@ async function runImport(trx: Db, auth: AuthContext, input: OrgImport) {
       for (const n of pending) {
         const parent = n.parentCode ? byCode.get(n.parentCode) : null;
         if (n.parentCode && !parent) { next.push(n); continue; }
-        const v = { name: n.name, short_code: n.shortCode ?? '', alias: n.alias ?? '', note: n.note ?? '', sort_order: n.sortOrder ?? 0, parent_id: parent?.id ?? null, updated_by: auth.actor, updated_at: new Date() };
+        // [2026-11-13 Nguyễn Văn Thủy] nhập kèm MST của nút (cột MST có thì ghi, đổi = phiên bản mới từ hôm nay) (đóng góp)
+        const v = { name: n.name, short_code: n.shortCode ?? '', alias: n.alias ?? '', note: n.note ?? '', sort_order: n.sortOrder ?? 0, parent_id: parent?.id ?? null, updated_by: auth.actor, updated_at: new Date(), ...(n.taxId !== undefined ? { tax_id: n.taxId } : {}) };
         const cur = byCode.get(n.code);
         if (cur) { await withOrg(trx).updateTable('org_units').set(v).where('id', '=', cur.id).execute(); updated++; }
         else { await withOrg(trx).insertInto('org_units').values({ tenant_id: tenantId, code: n.code, created_by: auth.actor, ...v }).execute(); created++; }

@@ -71,10 +71,10 @@ export function OrgUnitsPage() {
   const exportExcel = async () => {
     const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const nodes = [...(tree.data?.nodes ?? [])].sort((a, b) => a.path.localeCompare(b.path));
-    const s1 = [['Mã', 'Tên', 'Mã cha', 'Mô tả', 'PATH']].concat(nodes.map((n) => [n.code, n.name, n.parentCode ?? '', n.note, n.path]));
+    const s1 = [['Mã', 'Tên', 'Mã cha', 'MST', 'Mô tả', 'Đường dẫn']].concat(nodes.map((n) => [n.code, n.name, n.parentCode ?? '', (n as { taxId?: string }).taxId ?? '', n.note, n.path]));
     const s2 = [['Mã chi nhánh', 'Tên chi nhánh', 'Mã nút']].concat((tree.data?.branches ?? []).map((b) => [b.code, b.name, b.orgCode ?? '']));
     const wb = XLSX.utils.book_new();
-    for (const [name, data, cols] of [['Nút', s1, [14, 40, 12, 30, 30]], ['Gắn chi nhánh', s2, [16, 36, 12]]] as const) {
+    for (const [name, data, cols] of [['Nút', s1, [14, 40, 12, 16, 30, 30]], ['Gắn chi nhánh', s2, [16, 36, 12]]] as const) {
       const ws = XLSX.utils.aoa_to_sheet(data as string[][]);
       ws['!cols'] = cols.map((wch) => ({ wch }));
       XLSX.utils.book_append_sheet(wb, ws, name);
@@ -83,9 +83,9 @@ export function OrgUnitsPage() {
   };
 
   const cols: Column<OrgNode>[] = [
-    { key: 'code', header: 'Mã SĐTC', type: 'code', width: 110 },
-    { key: 'name', header: 'Tên SĐTC', width: 280 },
-    { key: 'path', header: 'PATH', width: 240 },
+    { key: 'code', header: 'Mã', type: 'code', width: 110 },
+    { key: 'name', header: 'Tên', width: 280 },
+    { key: 'path', header: 'Đường dẫn', width: 240 },
     { key: 'note', header: 'Mô tả', width: 200 },
   ];
   const editable = Boolean(mode);
@@ -95,7 +95,7 @@ export function OrgUnitsPage() {
 
   return (
     <>
-      <PageHeader title="Sơ đồ tổ chức" code="DM16" helpKey="so-do-to-chuc" subtitle="Công ty → Miền → Chi nhánh → Tỉnh. Chi nhánh gắn vào nút ở Danh mục chi nhánh (ô Thuộc SĐTC)" />
+      <PageHeader title="Cơ cấu tổ chức" code="DM16" helpKey="so-do-to-chuc" subtitle="Công ty → Miền → Chi nhánh → Tỉnh. Chi nhánh, cửa hàng gắn vào nút ở màn Chi nhánh" />
       <div className="card">
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '8px 12px' }}>
           {canWrite && <button className="btn btn-sm" disabled={Boolean(mode) || !node} title="Thêm nút con dưới nút đang chọn" onClick={() => { setF(empty(node!.code)); setMode('add'); setMsg(null); }}><Plus size={14} /> Thêm</button>}
@@ -116,7 +116,7 @@ export function OrgUnitsPage() {
         {tree.isLoading ? <Loading /> : view === 'chart' ? (ix.root ? <SoDoToChucChart root={ix.root} kids={ix.kids} selected={node?.code ?? null} onSelect={(n) => { setSel(n.code); setLevel(null); setView('list'); }} /> : null) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: 12, padding: '0 12px 12px' }}>
             <div>
-              <div style={{ fontWeight: 700, margin: '2px 0 6px' }}>Sơ đồ tổ chức</div>
+              <div style={{ fontWeight: 700, margin: '2px 0 6px' }}>Cơ cấu tổ chức</div>
               <CayDonVi tree={tree.data} selected={node?.code ?? null} onSelect={(n) => { if (mode) return; setSel(n.code); setLevel(null); }} height="calc(100vh - 250px)" openLevel={2} />
             </div>
             <div style={{ minWidth: 0 }}>
@@ -179,17 +179,21 @@ function ImportForm({ onClose, onSaved }: { onClose: () => void; onSaved: (text:
     const XLSX = await import('xlsx');
     const wb = XLSX.read(await file.arrayBuffer());
     const sheet = (...keys: string[]) => { const n = wb.SheetNames.find((s) => keys.some((k) => H(s).includes(k))); return n ? XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[n]!, { defval: '' }) : []; };
-    const nodes = sheet('nut', 'sdtc', 'so do').map((r) => ({ code: pick(r, 'ma', 'ma sdtc', 'ma nut'), name: pick(r, 'ten', 'ten sdtc', 'ten nut'), parentCode: pick(r, 'ma cha', 'nut cha', 'cha') || null, note: pick(r, 'mo ta', 'ghi chu') })).filter((n) => n.code);
+    const coMst = (r: Record<string, unknown>) => Object.keys(r).some((k) => ['mst', 'ma so thue', 'mst ke khai'].includes(H(k)));
+    const nodes = sheet('nut', 'sdtc', 'so do', 'co cau').map((r) => ({ code: pick(r, 'ma', 'ma sdtc', 'ma nut'), name: pick(r, 'ten', 'ten sdtc', 'ten nut'), parentCode: pick(r, 'ma cha', 'nut cha', 'cha') || null, note: pick(r, 'mo ta', 'ghi chu'),
+      ...(coMst(r) ? { taxId: pick(r, 'mst', 'ma so thue', 'mst ke khai') } : {}) })).filter((n) => n.code);
     const assignments = sheet('gan', 'chi nhanh').map((r) => ({ branchCode: pick(r, 'ma chi nhanh', 'chi nhanh', 'ma cn'), orgCode: pick(r, 'ma nut', 'ma sdtc', 'nut', 'sdtc') })).filter((a) => a.branchCode && a.orgCode);
+    const saiMst = nodes.map((n, i) => ({ n, i })).filter(({ n }) => n.taxId && !/^[0-9]{10}(-[0-9]{3})?$/.test(n.taxId));
+    if (saiMst.length) { setErr(`MST sai (gồm 10 số hoặc 10 số-3 số): ${saiMst.slice(0, 10).map(({ n, i }) => `dòng ${i + 2} (${n.code}: ${n.taxId})`).join('; ')}`); return; }
     if (!nodes.length && !assignments.length) { setErr('Không đọc được sheet "Nút" / "Gắn chi nhánh" — dùng tệp từ nút Xuất làm mẫu.'); return; }
     const b = { nodes, assignments };
     setBody(b);
     await run(b, true);
   };
   return (
-    <Modal wide title="Nhập sơ đồ tổ chức từ Excel" onClose={onClose}
+    <Modal wide title="Nhập cơ cấu tổ chức từ Excel" onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={!body || !res || res.errorCount > 0 || busy} onClick={() => body && void run(body, false)}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <div className="full" style={{ fontSize: 13 }}>Tệp 2 sheet (lấy mẫu bằng nút <b>Xuất</b>): <b>Nút</b> (Mã, Tên, Mã cha, Mô tả) · <b>Gắn chi nhánh</b> (Mã chi nhánh, Mã nút). Có lỗi thì không ghi gì.</div>
+      <div className="full" style={{ fontSize: 13 }}>Tệp 2 sheet (lấy mẫu bằng nút <b>Xuất</b>): <b>Nút</b> (Mã, Tên, Mã cha, MST, Mô tả) · <b>Gắn chi nhánh</b> (Mã chi nhánh, Mã nút). Có lỗi thì không ghi gì.</div>
       <Field label="Tệp Excel" full><input type="file" accept=".xlsx,.xls" onChange={(e) => { const file = e.target.files?.[0]; if (file) void read(file); }} /></Field>
       {busy && <Loading />}
       {err && <div className="alert alert-bad full">{err}</div>}

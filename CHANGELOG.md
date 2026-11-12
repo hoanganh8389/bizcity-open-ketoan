@@ -12,6 +12,18 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Bộ phận = phòng ban chức năng (Ban giám đốc, Kinh doanh, Bán hàng, Mua hàng, Marketing, Văn phòng, Kế toán, HCNS, Công nghệ, Kho vận). Bỏ bộ phận theo từng cửa hàng: chi nhánh gắn BH (0123), bộ phận BH<mã shop> ngừng dùng; chi nhánh chưa có bộ phận và chi nhánh mới → BH (0125). Cửa hàng / kho trả lời "ở đâu", bộ phận trả lời "phòng nào", 641 / 642 trả lời bán hàng hay quản lý.
+- Quay về dữ liệu gốc cho Nhóm hàng + mặt hàng (nút ở DM10, DM11): xoá vĩnh viễn nhóm hàng, mặt hàng chưa phát sinh (kèm ĐVT, giá, khai báo NCC), giữ mặt hàng đã có trên sổ / phiếu kho / chứng từ mua / hoá đơn cùng nhóm của chúng, nạp bộ mẫu 2 cây nhóm (Sữa bột → Vinamilk, Bỉm tã → Merries) và 8 mặt hàng theo quy định mã 9 số. Hàm bizcity_reset_catalog_sample (0124), chạy lại được; không chạy trong "Quay về toàn bộ". Thêm chỉ mục cho khoá ngoại trỏ về items còn thiếu.
+- Trang Quy trình phân hệ Danh mục: sơ đồ khai báo theo thứ tự (cơ cấu → chi nhánh → kho → nhóm hàng → mặt hàng → đối tượng → cấu hình hạch toán → phân quyền (đang phát triển) → báo cáo tổng hợp), báo cáo nhiều chi nhánh bên phải; "Luồng chi tiết" có khai báo kèm và số bản ghi. Hướng dẫn danh-muc-quy-trinh.
+- Gọn màn Chi nhánh: bỏ ô Fax, Bộ phận, Mã tham chiếu nguồn; Mô tả → Tên chi nhánh; C1/C2/C3 → một cột Thuộc cơ cấu. Màn Kho: bỏ ô Tài khoản kho (không dùng khi hạch toán); MST chỉ xem (theo chi nhánh / cơ cấu), ô sửa chỉ khi kho đã có MST riêng; bảng phiên bản MST chỉ hiện khi đã đổi.
+- Tài khoản ngầm định (ACC41) làm lại theo LOẠI chứng từ (0126): 133 loại (bán, mua, kho, tiền mặt, tiền gửi, tổng hợp, tài sản), mỗi loại có các cột tài khoản với danh sách lọc theo đầu số + tài khoản mặc định; mặc định phải là tài khoản chi tiết trong lọc. Cột chứng từ tự hạch toán dùng (phải thu, doanh thu, kho, giá vốn, phải trả, thuế…) đồng bộ khoá hạch toán — một nơi khai. Bỏ các loại Séc; "Ủy nhiệm chi" gọi là Chuyển khoản. Nút Quay về dữ liệu gốc.
+- Phiếu thu / chi, thu / chi tiền gửi: ô Loại lấy từ Tài khoản ngầm định (kế toán sửa được), ô tài khoản của dòng chỉ chọn trong lọc của loại; nút Cột → ẩn / hiện TK Nợ / TK Có (vẫn ghi theo loại).
+- Bỏ hẳn màn Lý do – Tài khoản (ACC18) và Mặt hàng – Tài khoản (ACC17) khỏi menu; đường dẫn cũ về Tài khoản ngầm định. Mua hàng lấy tài khoản theo Tài khoản ngầm định; MH12 chỉ hiện "đang dùng" (tài khoản riêng cũ còn thì vẫn hiện để xoá).
+- MH12: công tắc "Không cho nhập vượt số lượng đơn đặt" (bật = chặn duyệt phiếu nhập nhận thừa / mã ngoài đơn; mặc định chỉ cảnh báo). Tài liệu đối chiếu yêu cầu mua hàng docs/nghiep-vu/19.
+- Màn Bộ phận (và các danh mục cùng khuôn): mặc định chỉ hiện mục đang dùng, tích "Hiện cả mục đã ẩn" khi cần.
+- Nhập Excel chi nhánh, cửa hàng (mã, tên, thuộc cơ cấu, MST, thông tin in, theo dõi) ở màn Chi nhánh và trang Nhập Excel. Nhập / xuất cơ cấu tổ chức kèm cột MST (kiểm MST ngay khi chọn tệp); mẫu nhập kho bỏ cột Tài khoản kho.
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Sửa guard sổ cái (0122): bản trong 0121 lỡ mở lại lối điền giá vốn bằng cờ phiên mà 0091 đã khoá; nay giá vốn chỉ điền qua hàm như 0091, vẫn giữ ngoại lệ điền kho / MST còn trống.
 - Chú thích trigger và bảng mới (0113–0121, stock_counts) trong trang cấu trúc dữ liệu; test cập nhật theo luật mã / nhóm hàng / bỏ nhóm hạch toán.
 

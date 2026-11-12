@@ -24,13 +24,15 @@ import { theoMa } from './ma-hien-hanh.js';
 export interface PurchaseSettings { holidays: string[]; brandOpening: Record<string, Record<string, number>>; accounts: Partial<Accounts>; warnDays: number; /** Đơn giá lệch quá % này so với giá NCC / lần nhập trước thì cảnh báo (một mức cho cả đơn vị). */ priceWarnPct: number;
   /** Phiếu nhập mua bắt buộc lập từ đơn đặt đã duyệt (bật: chặn duyệt phiếu nhập không theo đơn; tắt: chỉ cảnh báo). */
   requireOrder: boolean;
+  /** [2026-11-13 Nguyễn Văn Thủy] Chặn duyệt phiếu nhập nhận nhiều hơn phần còn lại của đơn đặt / mã ngoài đơn (tắt: chỉ cảnh báo) (đóng góp) */
+  blockOverOrder?: boolean;
   /** Đuôi mã biến thể tách riêng khi phân tích đặt hàng (MH26) — lưu riêng qua /purchase/variants, MH12 lưu giữ nguyên. */
   variantSeparate?: string[] }
 
 export async function loadSettings(trx: Db, tenantId: string): Promise<PurchaseSettings> {
   const t = await trx.selectFrom('tenants').select('settings').where('id', '=', tenantId).executeTakeFirst();
   const p = ((t?.settings ?? {}) as Record<string, any>).purchase ?? {};
-  return { holidays: p.holidays ?? [], brandOpening: p.brandOpening ?? {}, accounts: p.accounts ?? {}, warnDays: Number(p.warnDays ?? 3), priceWarnPct: Number(p.priceWarnPct ?? 2), requireOrder: Boolean(p.requireOrder), ...(Array.isArray(p.variantSeparate) ? { variantSeparate: p.variantSeparate } : {}) };
+  return { holidays: p.holidays ?? [], brandOpening: p.brandOpening ?? {}, accounts: p.accounts ?? {}, warnDays: Number(p.warnDays ?? 3), priceWarnPct: Number(p.priceWarnPct ?? 2), requireOrder: Boolean(p.requireOrder), blockOverOrder: Boolean(p.blockOverOrder), ...(Array.isArray(p.variantSeparate) ? { variantSeparate: p.variantSeparate } : {}) };
 }
 
 // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): ghi qua writeTenantSection của Platform
@@ -49,17 +51,20 @@ export async function resolveAccounts(trx: Db, tenantId: string, s: PurchaseSett
   const methods = await trx.selectFrom('payment_methods').select(['code', 'account_code', 'is_receivable']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
   const methodAcc = (prefix: string, codes: string[]) => methods.find((m) => codes.includes(m.code) && !m.is_receivable && posting.has(m.account_code))?.account_code
     ?? methods.find((m) => !m.is_receivable && m.account_code.startsWith(prefix) && posting.has(m.account_code))?.account_code;
-  const reason = await trx.selectFrom('posting_reasons').select(['counter_account', 'flags']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
-  const purchase = reason.find((r) => (r.flags as Record<string, unknown>)?.default === 'purchase')?.counter_account;
+  // [2026-11-13 Nguyễn Văn Thủy] một nơi khai: Tài khoản ngầm định theo loại chứng từ (ACC41) → tài khoản riêng cũ ở MH12 (nếu còn) → tự chọn (đóng góp)
+  const defaults = new Map((await trx.selectFrom('posting_defaults').select(['key', 'account_code']).where('tenant_id', '=', tenantId).execute()).map((d) => [d.key, d.account_code]));
+  const types = await trx.selectFrom('account_default_types').select(['name', 'columns']).where('tenant_id', '=', tenantId).execute();
+  const col = (name: string, key: string) => { const c = types.find((t) => t.name === name)?.columns.find((x) => x.key === key)?.default; return c && posting.has(c) ? c : undefined; };
+  const def = (key: string) => { const c = defaults.get(key); return c && posting.has(c) ? c : undefined; };
   return {
-    stock: s.accounts.stock ?? pick('1561', '156'),
-    vatIn: s.accounts.vatIn ?? pick('1331', '133'),
-    payable: s.accounts.payable ?? purchase ?? pick('3312', '33111', '3311', '331'),
-    cash: s.accounts.cash ?? methodAcc('111', ['TM']) ?? pick('1111', '111'),
-    bank: s.accounts.bank ?? methodAcc('112', ['CK', 'NH']) ?? pick('1121', '112'),
+    stock: s.accounts.stock ?? def('inventory') ?? pick('1561', '156'),
+    vatIn: s.accounts.vatIn ?? def('tax_input') ?? pick('1331', '133'),
+    payable: s.accounts.payable ?? def('payable') ?? pick('3312', '33111', '3311', '331'),
+    cash: s.accounts.cash ?? col('Mua hàng trong nước nhập kho – Tiền mặt', 'credit_account') ?? methodAcc('111', ['TM']) ?? pick('1111', '111'),
+    bank: s.accounts.bank ?? col('Mua hàng trong nước nhập kho – Chuyển khoản', 'credit_account') ?? methodAcc('112', ['CK', 'NH']) ?? pick('1121', '112'),
     giftIncome: s.accounts.giftIncome ?? pick('71153', '7118', '711'),
-    giftExpense: s.accounts.giftExpense ?? pick('64184', '64188', '6418', '6428'),
-    finIncome: s.accounts.finIncome ?? pick('5152', '5158', '515'),
+    giftExpense: s.accounts.giftExpense ?? def('promotion_expense') ?? pick('64184', '64188', '6418', '6428'),
+    finIncome: s.accounts.finIncome ?? col('Phiếu chi trả tiền nhà cung cấp theo hóa đơn', 'discount_account') ?? pick('5152', '5158', '515'),
   };
 }
 
@@ -281,7 +286,12 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
       if (rl && Math.abs(rlPrice - p.price) > 0.5) price.push(`${p.sku} giá đặt ${q(p.price)} / ${p.unit}, hoá đơn ${q(rl.price)} / ${rl.unit}${rl.unit !== p.unit ? ` (= ${q(Math.round(rlPrice))} / ${p.unit})` : ''}`);
     }
     const extra = doc.lines.filter((l) => l.lineType === 'buy' && !prog.lines.some((p) => p.sku === l.sku || p.sku.slice(0, 9) === l.sku.slice(0, 9))).map((l) => l.sku);
-    if (over.length || extra.length) orderChecks.push({ level: 'warn', code: 'po_over', text: `Nhận nhiều hơn đơn ${refOrder.docNo}: ${[...over, ...extra.map((x) => `${x} không có trong đơn`)].join('; ')}` });
+    if (over.length || extra.length) {
+      const text = `Nhận nhiều hơn đơn ${refOrder.docNo}: ${[...over, ...extra.map((x) => `${x} không có trong đơn`)].join('; ')}`;
+      orderChecks.push(settings.blockOverOrder
+        ? { level: 'error', code: 'po_over', blocking: true, text: `${text} — đơn vị không cho nhập vượt đơn (MH12): sửa số lượng hoặc lập đơn đặt bổ sung` }
+        : { level: 'warn', code: 'po_over', text });
+    }
     if (price.length) orderChecks.push({ level: 'warn', code: 'po_price', text: `Lệch đơn giá so với đơn ${refOrder.docNo}: ${price.join('; ')}` });
     orderChecks.push(partial.length
       ? { level: 'info', code: 'po_partial', text: `Giao một phần đơn ${refOrder.docNo} (đã nhận trước ${prog.received}/${prog.ordered}) — sau phiếu này còn: ${partial.join('; ')}. Lần giao sau: mở đơn → Lập phiếu nhập từ đơn` }
