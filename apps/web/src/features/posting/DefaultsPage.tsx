@@ -1,3 +1,4 @@
+// [2026-11-12 Nguyễn Văn Thủy] bỏ nút Thêm và ô Áp cho loại hàng / biến thể: chỉ sửa TK Nợ / TK Có của dòng có sẵn; dòng thêm cũ (nếu có) vẫn hiện, sửa / xoá được (đóng góp)
 // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — Tài khoản ngầm định: danh sách định khoản theo loại chứng từ; một hộp Thêm / Sửa đơn giản (dựa trên dòng có sẵn, áp cho loại hàng / biến thể) (đóng góp)
 /**
  * TÀI KHOẢN NGẦM ĐỊNH (ACC41) — mỗi dòng là một định khoản: TK Nợ / TK Có.
@@ -8,7 +9,7 @@
  */
 import { Fragment, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -94,7 +95,7 @@ export function DefaultsPage() {
 
   return (
     <>
-      <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Định khoản mặc định của từng loại chứng từ. Trường hợp riêng (theo loại hàng, biến thể): Thêm" helpKey="tai-khoan-ngam-dinh" />
+      <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Định khoản mặc định của từng loại chứng từ" helpKey="tai-khoan-ngam-dinh" />
       {useReasons && <div className="alert alert-warn" style={{ marginBottom: 8 }}>Đang <b>bật lý do hạch toán</b>: doanh thu, trả lại, giá vốn, kho lấy theo nhóm hạch toán của mặt hàng; tài khoản trên lý do đè lên các dòng dưới đây.</div>}
       <div className="card">
         <div className="catalog-toolbar" style={{ gap: 8, flexWrap: 'wrap' }}>
@@ -106,7 +107,6 @@ export function DefaultsPage() {
           <input className="input" style={{ width: 260 }} placeholder="Tìm: tên, tài khoản" value={search} onChange={(e) => setSearch(e.target.value)} />
           <span style={{ flex: 1 }} />
           <button className="btn btn-sm" onClick={() => { void q.refetch(); void entries.refetch(); }} title="Nạp lại"><RefreshCw size={14} /></button>
-          <button className="btn btn-sm btn-primary" disabled={!canWrite} onClick={() => setOpen({})} title="Định khoản riêng cho một loại hàng / biến thể"><Plus size={14} /> Thêm tài khoản ngầm định</button>
         </div>
         <ErrorBox error={q.error ? errorText(q.error) : entries.error ? errorText(entries.error) : null} />
         {q.isLoading ? <Loading /> : (
@@ -141,7 +141,7 @@ export function DefaultsPage() {
           </table></div>
         )}
         <div className="muted" style={{ fontSize: 12, padding: '8px 0' }}>
-          ↳ là dòng thêm cho một loại hàng / biến thể; ô mờ = như dòng gốc. TK tiền theo <Link to="/cau-hinh/hinh-thuc-thanh-toan">Hình thức thanh toán</Link>.
+          TK tiền theo <Link to="/cau-hinh/hinh-thuc-thanh-toan">Hình thức thanh toán</Link>.
         </div>
       </div>
       {open && <HopDinhKhoan row={open.row} entry={open.entry} defaults={q.data ?? []} options={options} onClose={() => setOpen(null)} />}
@@ -157,20 +157,19 @@ export function DefaultsPage() {
 function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow; entry?: Entry; defaults: DefaultRow[]; options?: Options; onClose: () => void }) {
   const qc = useQueryClient();
   const isSystem = Boolean(row && !entry);
-  const [baseId, setBaseId] = useState(row?.id ?? BASES[0]!.id);
+  const baseId = row?.id ?? BASES[0]!.id;
   const base = SYSTEM.find((x) => x.id === baseId)!;
   const accOf = (c: Cell) => (!c || 'text' in c ? '' : defaults.find((d) => d.key === c.key)?.accountCode ?? '');
-  const [cond, setCond] = useState<Cond>({ itemType: entry?.cond.itemType, variant: entry?.cond.variant });
+  const [cond] = useState<Cond>({ itemType: entry?.cond.itemType, variant: entry?.cond.variant });
   const [debit, setDebit] = useState(entry ? entry.debit ?? accOf(base.debit) : accOf(base.debit));
   const [credit, setCredit] = useState(entry ? entry.credit ?? accOf(base.credit) : accOf(base.credit));
-  const pickBase = (id: string) => { const nb = SYSTEM.find((x) => x.id === id)!; setBaseId(id); setDebit(accOf(nb.debit)); setCredit(accOf(nb.credit)); };
   const keyOf = (c: Cell) => (c && 'key' in c ? c.key : null);
   const usedBy = (key: string | null) => (key ? SYSTEM.filter((s) => s !== base && [s.debit, s.credit].some((c) => keyOf(c) === key)).map((s) => s.name) : []);
   const invalidate = () => { void qc.invalidateQueries({ queryKey: ['posting-defaults'] }); void qc.invalidateQueries({ queryKey: ['posting-rules'] }); };
 
   const changedD = debit && debit !== accOf(base.debit) ? debit : null;
   const changedC = credit && credit !== accOf(base.credit) ? credit : null;
-  const problem = isSystem ? '' : !cond.itemType && !cond.variant ? 'Chọn Loại hàng hoặc Biến thể' : !changedD && !changedC ? 'Đổi ít nhất một tài khoản khác dòng gốc' : '';
+  const problem = isSystem ? '' : !changedD && !changedC ? 'Đổi ít nhất một tài khoản khác dòng gốc' : '';
   const save = useMutation({
     mutationFn: () => {
       if (isSystem) {
@@ -206,27 +205,6 @@ function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow
         <button className="btn" onClick={onClose}>Huỷ</button>
       </>}>
       <ErrorBox error={save.error ? errorText(save.error) : del.error ? errorText(del.error) : null} />
-      {!row && (
-        <Field label="Dựa trên dòng" full>
-          <select className="select input" value={baseId} onChange={(e) => pickBase(e.target.value)}>
-            {GROUPS.map((g) => BASES.some((x) => x.group === g) && (
-              <optgroup key={g} label={g}>{BASES.filter((x) => x.group === g).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>
-            ))}
-          </select>
-        </Field>
-      )}
-      {!isSystem && <>
-      <Field label="Áp cho loại hàng">
-        <select className="select input" value={cond.itemType ?? ''} onChange={(e) => setCond((c) => ({ ...c, itemType: e.target.value || undefined }))}>
-          <option value="">— mọi loại hàng —</option>{(options?.itemTypes ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
-        </select>
-      </Field>
-      <Field label="Áp cho biến thể">
-        <select className="select input" value={cond.variant ?? ''} onChange={(e) => setCond((c) => ({ ...c, variant: e.target.value || undefined }))}>
-          <option value="">— mọi biến thể —</option>{(options?.variants ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
-        </select>
-      </Field>
-      </>}
       {accField('Nợ', base.debit, debit, setDebit)}
       {accField('Có', base.credit, credit, setCredit)}
       {base.note && <div className="muted full" style={{ fontSize: 12 }}>{base.note}</div>}

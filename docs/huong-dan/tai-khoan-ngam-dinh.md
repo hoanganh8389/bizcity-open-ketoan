@@ -12,20 +12,6 @@ Là định khoản phần mềm dùng khi không có gì chỉ định khác. B
 - Ô ghi *theo HTTT*: tài khoản tiền lấy theo **Hình thức thanh toán** (tiền mặt 1111, chuyển khoản 112…).
 - Thuế: loại thuế có tài khoản riêng thì theo loại thuế.
 
-## Thêm tài khoản ngầm định
-
-Dùng cho trường hợp riêng. Ví dụ hàng khuyến mại ghi doanh thu 51113, giá vốn 6323.
-
-1. **Dựa trên dòng**: chọn dòng có sẵn cần đổi, ví dụ *Bán hàng — tiền hàng*.
-2. **Áp cho loại hàng** và / hoặc **Áp cho biến thể** (Chia giá, Khuyến mại, Kẹp quà, Tem, Nội bộ…).
-3. **TK Nợ / TK Có** điền sẵn theo dòng gốc. Đổi bên cần đổi; bên giữ nguyên đi theo dòng gốc.
-
-Dòng thêm hiện ngay dưới dòng gốc, bắt đầu bằng ↳. Không được trùng điều kiện với dòng đã thêm. Bấm **Sửa** để đổi hoặc **Xoá**; áp ngay.
-
-## Thứ tự ưu tiên
-
-Dòng thêm khớp loại hàng / biến thể của mặt hàng thì dùng dòng đó; khớp nhiều điều kiện hơn thì thắng. Không khớp thì theo dòng có sẵn.
-
 ## Công tắc lý do hạch toán
 
 Khoá `bizcity.posting.use_reasons`, đổi ở Trung tâm cấu hình. Mặc định **tắt**.

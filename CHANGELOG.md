@@ -15,6 +15,7 @@ Mỗi bản ghi đủ sáu mục:
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Mặt hàng bỏ ô Loại hàng
 - Form thêm / sửa mặt hàng, danh sách mặt hàng và mẫu nhập Excel không còn ô **Loại hàng**: phân loại theo **Nhóm hàng**, bớt khai báo. Giá trị cũ trên mặt hàng giữ nguyên (báo cáo theo loại hàng vẫn đọc được).
+- Tài khoản ngầm định (ACC41): bỏ nút **Thêm tài khoản ngầm định** và hai ô **Áp cho loại hàng / Áp cho biến thể**; chỉ còn **Sửa** TK Nợ / TK Có của từng dòng.
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Giao diện sáng làm mặc định
