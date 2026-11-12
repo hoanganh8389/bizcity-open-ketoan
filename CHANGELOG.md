@@ -13,6 +13,11 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Thêm mặt hàng theo từng bước
+- **Thêm mặt hàng** thành 5 bước có thanh tiến trình: 1 Thông tin chung (bắt buộc nhóm hàng, mã, tên, thuế suất) → 2 Đơn vị tính (bắt buộc ĐVT nhỏ nhất) → 3 Bán hàng & giá (không bắt buộc) → 4 Xem lại & ghi → 5 Nhà cung cấp (khai giá mua sau khi ghi, không bắt buộc) → Hoàn tất.
+- Mỗi bước bấm **Tiếp tục** mới kiểm, thiếu gì báo ngay; quay lại bước trước bằng **Quay lại** hoặc bấm vào bước đã xong. Sửa mặt hàng đã có vẫn dùng các thẻ như cũ.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Danh sách mặt hàng gọn, bảng không sắp xếp khi bấm tiêu đề
 - Mọi bảng: bỏ bấm tiêu đề cột để sắp xếp (hết mũi tên, hết nhảy bảng); rê chuột tiêu đề hiện chú thích cột.
 - Mọi màn danh mục: bỏ nút **Xoá** (và phím Delete).

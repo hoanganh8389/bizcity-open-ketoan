@@ -97,8 +97,10 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const qc = useQueryClient();
   const isNew = sku === null;
   const [tab, setTab] = useState<string>(startTab ?? 'info');
+  const [savedNew, setSavedNew] = useState(false); // thêm mới: đã ghi xong, đang ở bước Nhà cung cấp
   const enabled = useEnabledModules();
   const extraTabs = PRODUCT_TABS.filter((t) => !enabled || enabled.has(t.module));
+  const buyTab = extraTabs.find((t) => t.key === 'gia-mua');
   const [v, setV] = useState<FullProduct>({ ...EMPTY, ...initial });
   const [shownLists, setShownLists] = useState<string[]>([]);
   const [skuHint, setSkuHint] = useState<SkuPreview | null>(null);
@@ -244,11 +246,39 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       void qc.invalidateQueries({ queryKey: ['unit-names'] });
       void qc.invalidateQueries({ queryKey: ['inventory-items'] });
       if (isNew) onSaved?.(v.sku.trim());
+      // Thêm mới theo bước: ghi xong chuyển sang bước Nhà cung cấp (nếu bật mua hàng), không thì đóng.
+      if (isNew && buyTab) { setSavedNew(true); setErrMsg(''); setTab(buyTab.key); return; }
       if (isNew || v.sku.trim() !== sku) onClose(); else viewAgain[1]();
     },
   });
 
   const vatRate = VAT_RATES.find((r) => r.out === v.taxOutCode);
+  // [2026-11-12 Nguyễn Văn Thủy] Thêm mặt hàng theo từng bước, kiểm bắt buộc ở mỗi bước (đóng góp)
+  const STEPS = [
+    { k: 'info', t: 'Thông tin chung' },
+    { k: 'units', t: 'Đơn vị tính' },
+    { k: 'status', t: 'Bán hàng & giá' },
+    { k: 'review', t: 'Xem lại & ghi' },
+    ...(buyTab ? [{ k: buyTab.key, t: 'Nhà cung cấp' }] : []),
+  ];
+  const stepIdx = Math.max(0, STEPS.findIndex((x) => x.k === tab));
+  const stepErr = (k: string): string => {
+    if (k === 'info') return !v.groupCode ? 'Chọn nhóm hàng.' : !v.sku.trim() ? 'Chưa có mã hàng (chọn nhóm là tự sinh).' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.'
+      : !v.name.trim() ? 'Chưa nhập tên hàng.' : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !v.taxOutCode ? 'Chọn thuế suất GTGT.' : '';
+    if (k === 'units') return !baseUnit ? 'Chưa khai đơn vị tính nhỏ nhất (vd Hộp, Lon, Cái).' : '';
+    return '';
+  };
+  const next = () => {
+    const e = stepErr(tab); setErrMsg(e);
+    if (!e) setTab(STEPS[stepIdx + 1]!.k);
+  };
+  const goStep = (i: number) => {
+    if (savedNew || i > stepIdx) return; // chỉ quay lại bước trước; đi tới bằng Tiếp tục
+    setErrMsg(''); setTab(STEPS[i]!.k);
+  };
+  const companyList = lists.find((l) => l.isCompany);
+  const mainUnit = v.units.find((u) => u.isDefault)?.unit ?? baseUnit;
+  const companyPrice = companyList ? v.prices.find((pr) => pr.priceListCode === companyList.code && pr.unit === mainUnit)?.price : undefined;
   const pick = (k: ClassKind) => classes[k].filter((c) => (c.isActive && (k !== 'group' || (depth.get(c.code) ?? 0) >= 3)) || c.code === v[`${k}Code` as const]).map((c) => ({ code: c.code, name: k === 'group' ? groupPath(c.code) : c.name }));
   const tabBtn = (k: typeof tab, label: string) => <button key={k} role="tab" className={`tab ${tab === k ? 'active' : ''}`} onClick={() => setTab(k)}>{label}</button>;
   const flag = (k: 'isMain' | 'isUnder24m' | 'noSale' | 'exportAdjust' | 'isActive', label: string, hint: string) => (
@@ -262,7 +292,19 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
 
   return (<>
     <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} helpKey="mat-hang" onClose={onClose}
-      footer={<>
+      footer={isNew ? (
+        <>
+          <span className="muted" style={{ marginRight: 'auto', fontSize: 12.5 }}>Bước {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx]!.t}{savedNew ? ' · mặt hàng đã ghi' : ''}</span>
+          {!savedNew && stepIdx > 0 && <button className="btn" onClick={() => { setErrMsg(''); setTab(STEPS[stepIdx - 1]!.k); }}>‹ Quay lại</button>}
+          {!savedNew && tab !== 'review' && <button className="btn btn-primary" onClick={next}>Tiếp tục ›</button>}
+          {!savedNew && tab === 'review' && <button className="btn btn-primary" disabled={save.isPending} onClick={() => {
+            const e = stepErr('info') || stepErr('units'); setErrMsg(e);
+            if (e) { setTab(stepErr('info') ? 'info' : 'units'); return; }
+            ack.request((a) => save.mutate(a));
+          }}>{save.isPending ? 'Đang ghi…' : 'Ghi mặt hàng'}</button>}
+          {savedNew ? <button className="btn btn-primary" onClick={onClose}>Hoàn tất</button> : <button className="btn" onClick={onClose}>Huỷ bỏ</button>}
+        </>
+      ) : <>
         <button className="btn btn-primary" disabled={save.isPending}
           onClick={() => {
             // [2026-11-12 Nguyễn Văn Thủy] bấm Ghi luôn được; thiếu gì báo rõ ở đầu form (đóng góp)
@@ -274,10 +316,14 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           }}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
       {errMsg && <div className="alert alert-bad full" style={{ marginBottom: 8 }}>{errMsg}</div>}
-      <div className="tabs full" role="tablist" style={{ marginBottom: 8 }}>
+      {isNew ? (
+        <div className="full nx-steps them-mh-steps">
+          {STEPS.map((x, i) => <span key={x.k} role="button" tabIndex={-1} onClick={() => goStep(i)} className={i === stepIdx ? 'on' : i < stepIdx || savedNew ? 'xong' : undefined} title={i < stepIdx && !savedNew ? 'Quay lại bước này' : undefined}><b>{i < stepIdx || (savedNew && i < STEPS.length - 1) ? '✓' : i + 1}</b>{x.t}</span>)}
+        </div>
+      ) : <div className="tabs full" role="tablist" style={{ marginBottom: 8 }}>
         {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}{!isNew && tabBtn('history', 'Lịch sử')}
         <span className="spacer" style={{ flex: 1 }} />
-      </div>
+      </div>}
       {help && <HelpDrawer guideKey="mat-hang" onClose={() => setHelp(false)} />}
 
       {tab === 'history' && !isNew && <LichSuMatHang sku={v.sku} />}
@@ -338,9 +384,12 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           onAdd={(u) => set({ units: [...v.units, u] })}
           onRemove={(i) => setV((x) => ({ ...x, units: x.units.filter((_, j) => j !== i), prices: x.prices.filter((p) => p.unit !== x.units[i]!.unit) }))} />
       )}
-      {tab === 'prices' && <GiaBan units={v.units} prices={v.prices} lists={lists} shown={shownLists} setShown={setShownLists} setPrice={setPrice} onlyCompany={v.isMain} />}
+      {isNew && tab === 'status' && <div className="full muted" style={{ fontSize: 12.5, margin: '2px 0 6px' }}>Không bắt buộc: tích các trạng thái cần, khai giá bán (khai sau ở thẻ Giá bán cũng được).</div>}
+      {(tab === 'prices' || (isNew && tab === 'status')) && <GiaBan units={v.units} prices={v.prices} lists={lists} shown={shownLists} setShown={setShownLists} setPrice={setPrice} onlyCompany={v.isMain} />}
 
-      {extraTabs.filter((t) => t.key === tab).map((t) => <t.Component key={t.key} sku={isNew ? '' : v.sku} name={v.name} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} />)}
+      {isNew && savedNew && tab === buyTab?.key && <div className="alert alert-ok full" style={{ marginBottom: 8 }}>Đã ghi mặt hàng <b className="mono">{v.sku}</b> — {v.name}. Khai giá mua của nhà cung cấp ngay bên dưới (không bắt buộc), xong bấm <b>Hoàn tất</b>.</div>}
+      {tab === 'review' && <XemLai v={v} groupLabel={v.groupCode ? groupPath(v.groupCode) : ''} vatLabel={vatRate?.label ?? v.taxOutCode ?? ''} baseUnit={baseUnit} companyPrice={companyPrice} companyName={companyList?.name} />}
+      {extraTabs.filter((t) => t.key === tab).map((t) => <t.Component key={t.key} sku={isNew ? (savedNew ? v.sku : '') : v.sku} name={v.name} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} />)}
 
       {tab === 'status' && (
         <fieldset className="fgroup">
@@ -408,6 +457,20 @@ function ChonNhomCay({ classes, value, label, onChange }: { classes: ItemClassLi
           <GroupTree classes={classes.filter((c) => c.isActive || c.code === value).map((c) => ({ ...c, products: (c as { products?: number }).products ?? 0 })) as never} value={value} onChange={(c) => { if (c) { onChange(c); setOpen(false); } }} leafOnly autoFocus />
         </div>
       )}
+    </div>
+  );
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] bước Xem lại khi thêm mặt hàng (đóng góp)
+function XemLai({ v, groupLabel, vatLabel, baseUnit, companyPrice, companyName }: { v: FullProduct; groupLabel: string; vatLabel: string; baseUnit: string; companyPrice?: number | null; companyName?: string }) {
+  const units = v.units.filter((u) => u.unit.trim());
+  const flags = [v.isMain && 'Hàng chính', v.isUnder24m && 'Sữa trẻ dưới 24 tháng', v.noSale && 'Không được bán', v.exportAdjust && 'Được xuất điều chỉnh'].filter(Boolean) as string[];
+  const row = (k: string, val: React.ReactNode) => <div className="xl-row"><span>{k}</span><b>{val || <span className="muted" style={{ fontWeight: 400 }}>—</span>}</b></div>;
+  return (
+    <div className="full xem-lai">
+      <section><h4>Thông tin chung</h4>{row('Nhóm hàng', groupLabel)}{row('Mã hàng', <span className="mono">{v.sku}</span>)}{row('Tên hàng', v.name)}{row('Thuế suất GTGT', vatLabel)}{row('Barcode', v.barcode)}{row('Xuất xứ', v.origin)}{row('Trạng thái', v.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động')}</section>
+      <section><h4>Đơn vị tính</h4>{row('Nhỏ nhất', baseUnit)}{units.filter((u) => Number(u.ratio) !== 1).map((u) => <div key={u.unit} className="xl-row"><span>{u.unit}</span><b>= {u.ratio} {baseUnit}</b></div>)}{row('Bán chính', units.find((u) => u.isDefault)?.unit ?? baseUnit)}</section>
+      <section><h4>Bán hàng & giá</h4>{row('Trạng thái bán', flags.join(' · '))}{row(`Giá ${companyName ?? 'công ty'}`, companyPrice ? companyPrice.toLocaleString('vi-VN') : '')}</section>
     </div>
   );
 }
