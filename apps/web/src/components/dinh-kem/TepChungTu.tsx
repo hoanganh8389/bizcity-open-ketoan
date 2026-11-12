@@ -47,10 +47,11 @@ export const dinhKemApi = {
   download: (f: TepDinhKem) => api.download(fileUrl(f.id), {}, f.fileName),
 };
 
-/** Tên người gửi: danh sách người dùng (người quản trị đọc được), chính mình, còn lại "Người dùng #id". */
+/** Tên người gửi: danh sách người dùng (người có quyền users:write đọc được), chính mình, còn lại "Người dùng #id". */
 function useTenNguoi() {
-  const { user } = useAuth();
-  const users = useQuery({ queryKey: ['users', 'ten'], queryFn: () => api.get<{ id: string; fullName: string }[]>('/api/v1/users'), retry: false, staleTime: 10 * 60_000 });
+  const { user, can } = useAuth();
+  // Chỉ người có quyền quản lý người dùng mới đọc được danh sách (users:write) — người khác không gọi, khỏi bật thông báo bị từ chối.
+  const users = useQuery({ queryKey: ['users', 'ten'], queryFn: () => api.get<{ id: string; fullName: string }[]>('/api/v1/users'), enabled: can('users:write'), retry: false, staleTime: 10 * 60_000 });
   return (actor: string) => {
     const id = actor.startsWith('user:') ? actor.slice(5) : actor;
     if (user && String(user.id) === id) return user.fullName;
@@ -88,6 +89,7 @@ export function TepChungTu({ docRef, defaultKind = 'chung_tu_goc', title = 'Đí
   };
   const go = async (f: TepDinhKem) => {
     if (!window.confirm(`Gỡ tệp ${f.fileName} khỏi phiếu?\nTệp không bị xoá hẳn (vẫn tra lại được trong nhật ký).`)) return;
+    setErr(''); setNote('');
     try { await dinhKemApi.archive(f.id); await q.refetch(); } catch (e) { setErr(errorText(e)); }
   };
 
