@@ -50,3 +50,13 @@ Nhận thiếu thì phần chênh còn ở *hàng đang chuyển* để kế to�
 ## Phiếu từ website bán hàng
 
 Phiếu chuyển kho lập trên website vẫn tự vào sổ qua cầu nối như trước. Xem chung mọi phiếu chuyển, cả phần còn trên đường, ở **Bảng kê chuyển kho (HH01)**.
+
+## Đính kèm chứng từ gốc
+<!-- [2026-11-12 kiennt] NT-QUY-001 — đính kèm chứng từ gốc trên phiếu chuyển kho -->
+
+Cuối phiếu có khung **Đính kèm chứng từ gốc**: kéo thả hoặc **Chọn tệp…** (ảnh, PDF — tối đa 15 MB / tệp), chọn loại (Biên bản, Chứng từ gốc…).
+
+- Phiếu mới: **Ghi** trước rồi mới gắn tệp.
+- Đính được cả khi phiếu đang ở chế độ **Xem**, đã huỷ, hay kỳ đã khoá — đính tệp không đổi sổ.
+- Gửi lại đúng tệp đã có thì không thêm bản trùng. Bấm tên tệp: PDF / ảnh xem ngay, loại khác tải về.
+- **Gỡ** tệp chỉ ẩn khỏi danh sách, không xoá hẳn (còn trong nhật ký). Người chỉ có quyền xem chứng từ thì xem / tải được, không đính / gỡ.

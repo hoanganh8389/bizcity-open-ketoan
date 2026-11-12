@@ -26,3 +26,12 @@ Lý do thu **TBNH** (thu tiền bán hàng các chi nhánh khác) và chuyển t
 
 - Tổng thẻ **Chờ xác nhận** cuối tháng phải khớp số dư tài khoản **11319** (Sổ chi tiết tài khoản ACC12).
 - Cột **Định khoản** là trạng thái chứng từ ở Định khoản tự động (ACC14); phiếu đang **Chờ định khoản** thì định khoản ở ACC14 trước.
+
+## Đính kèm uỷ nhiệm chi / biên lai
+<!-- [2026-11-12 kiennt] NT-QUY-001 — đính kèm chứng từ gốc trên phiếu chuyển tiền -->
+
+Bấm vào dòng phiếu để mở. Dưới thông tin phiếu có khung **Đính kèm chứng từ gốc**: kéo thả hoặc **Chọn tệp…** uỷ nhiệm chi,
+giấy nộp tiền, sao kê (ảnh, PDF — tối đa 15 MB / tệp) để đối chiếu khi **Xác nhận đã nhận tiền**.
+
+- Tệp gắn theo phiếu: cửa hàng sửa phiếu (phiên bản mới) hay phiếu bị huỷ thì tệp vẫn còn.
+- Gửi lại đúng tệp đã có thì không thêm bản trùng; **Gỡ** chỉ ẩn khỏi danh sách, không xoá hẳn.
