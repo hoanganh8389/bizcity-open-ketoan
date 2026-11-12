@@ -19,7 +19,8 @@
       "actions.runtime",
       "actions.idempotency",
       "evidence.receipt",
-      "ledger.cancel"
+      "ledger.cancel",
+      "events.outbox"
     ]
   },
   "permissions": [
@@ -87,5 +88,21 @@
     "icon": "ShoppingCart",
     "color": "#0e7490",
     "order": 30
+  },
+  "events": {
+    "emits": [
+      {
+        "type": "pos.order.recorded",
+        "version": 1
+      },
+      {
+        "type": "pos.return.recorded",
+        "version": 1
+      },
+      {
+        "type": "pos.order.cancelled",
+        "version": 1
+      }
+    ]
   }
 }

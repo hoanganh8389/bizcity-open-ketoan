@@ -12,7 +12,8 @@ import { fileURLToPath } from 'node:url';
 import type { AppManifest } from '@bizcity/platform/core/apps';
 
 /** Khoá app đã cài (thứ tự = thứ tự hiện ở trang Ứng dụng). App mẫu tối thiểu: PR-5 (ADR-0011). */
-export const APP_KEYS: readonly string[] = [];
+// [2026-11-12 11:40 AM Võ Hoàng] POS-MIRROR — app tgs-wp: website TGS nhận sự kiện máy bán để ghi bản sao local_ledger (đóng góp)
+export const APP_KEYS: readonly string[] = ['tgs-wp'];
 
 function loadAppManifest(key: string): AppManifest {
   const file = fileURLToPath(new URL(`./${key}/bizcity.module.json`, import.meta.url));
@@ -23,6 +24,10 @@ function loadAppManifest(key: string): AppManifest {
     throw new Error(`Không đọc được manifest app ${file}: ${(err as Error).message}`);
   }
   if (m.key !== key) throw new Error(`Manifest app ${file}: key "${m.key}" ≠ thư mục "${key}"`);
+  // [2026-11-12 11:40 AM Võ Hoàng] POS-MIRROR — địa chỉ webhook theo môi trường: APP_WEBHOOK_URL_<KHOÁ> (khoá viết hoa, "-" → "_") đè app.webhook.url của manifest
+  // (máy local / bản thử / bản thật khác địa chỉ website). Vẫn qua appManifestProblems (https, không tài khoản).
+  const override = process.env[`APP_WEBHOOK_URL_${key.toUpperCase().replace(/-/g, '_')}`];
+  if (override && m.app?.webhook) m.app = { ...m.app, webhook: { url: override } };
   return m;
 }
 

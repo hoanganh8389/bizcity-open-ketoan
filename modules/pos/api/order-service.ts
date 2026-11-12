@@ -92,5 +92,9 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     throw err;
   }
   ctx.evidence.note('pos.order', { code, docKey: doc.docKey, docStatus: submitted.status, total: computed.total });
+  // Bản sao WP (local_ledger) nhận qua webhook app: sự kiện ghi cùng giao dịch (outbox) — đơn hỏng thì không có sự kiện.
+  await ctx.events.emit('pos.order.recorded', { orderId: draft.id, code, branchCode: branch.code, docKey: doc.docKey, version: 1, cashier: { name: ctx.actor.name }, order }, {
+    subject: `pos.order:${draft.id}`, dedupeKey: `pos.order.recorded:${draft.id}`,
+  });
   return { order, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: false };
 }
