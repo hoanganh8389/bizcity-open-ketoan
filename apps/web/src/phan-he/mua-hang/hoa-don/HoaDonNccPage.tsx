@@ -140,7 +140,7 @@ function BangNhanDien({ partnerCode, onClose }: { partnerCode: string; onClose: 
                 <td className="mono">{a.nccSku}</td><td>{a.nccName}</td><td>{a.nccUnit}</td><td className="mono"><b>{a.sku}</b></td><td>{a.productName}</td><td>{a.unit}</td>
                 <td className="num">{a.hits}</td><td>{a.source === 'ai' ? 'AI' : a.source === 'auto' ? 'Tự động' : 'Chọn tay'}</td><td>{a.updatedBy || a.createdBy}</td>
                 <td>{a.lastSeenAt ? new Date(a.lastSeenAt).toLocaleString('vi-VN', { hour12: false }) : ''}</td>
-                <td><button type="button" className="btn btn-xs" data-view-ok onClick={() => void del(a.id!, a.nccName || a.nccSku)}>Xoá</button></td>
+                <td />
               </tr>
             ))}
             {!q.isLoading && !(q.data ?? []).length && <tr><td colSpan={12} className="muted">Chưa học cách ghi nào — chọn mã cho dòng hoá đơn chưa nhận diện rồi Ghi.</td></tr>}

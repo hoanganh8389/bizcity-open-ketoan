@@ -183,7 +183,6 @@ function RecurrenceForm({ value, onClose }: { value: Partial<Recurrence>; onClos
   return (
     <Modal viewAgain={viewAgain} viewFirst={Boolean(value.id)} title={v.id ? `Sửa lịch lặp ${v.name}` : 'Thêm lịch lặp'} onClose={onClose}
       footer={<>
-        {v.id && !v.runs && <button data-view-ok className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={del.isPending} onClick={() => del.mutate()}>Xoá</button>}
         <button className="btn" onClick={onClose}>Đóng</button>
         <button className="btn btn-primary" disabled={save.isPending || !v.templateCode || !v.startMonth} onClick={() => save.mutate()}>Ghi</button>
       </>}>

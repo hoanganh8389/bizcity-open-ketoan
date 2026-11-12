@@ -98,7 +98,6 @@ function SoanThe({ id, onDeleted }: { id: string; onDeleted: () => void }) {
       <div className="row" style={{ gap: 6, alignItems: 'center' }}>
         <input className="input hd-title" value={title} onChange={(e) => { setTitle(e.target.value); setDirty(true); }} placeholder="Tiêu đề thẻ" />
         <button className="btn btn-primary" onClick={() => void save()} title="Ctrl + S">Ghi{dirty ? ' *' : ''}</button>
-        <button className="btn" onClick={() => void del()}>Xoá</button>
       </div>
       {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '6px 0' }}>{msg.text}</div>}
       <div className="muted" style={{ fontSize: 12, margin: '6px 0' }}>

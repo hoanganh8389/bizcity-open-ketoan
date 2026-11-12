@@ -97,7 +97,6 @@ export function OrgUnitsPage() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '8px 12px' }}>
           {canWrite && <button className="btn btn-sm" disabled={Boolean(mode) || !node} title="Thêm nút con dưới nút đang chọn" onClick={() => { setF(empty(node!.code)); setMode('add'); setMsg(null); }}><Plus size={14} /> Thêm</button>}
           {canWrite && <button className="btn btn-sm" disabled={Boolean(mode) || !node} onClick={() => { setF(shown); setMode('edit'); setMsg(null); }}><Pencil size={14} /> Sửa</button>}
-          {canWrite && <button className="btn btn-sm" disabled={Boolean(mode) || !node || node.level === 0 || del.isPending} title="Xoá nút đang chọn — chỉ xoá được nút không còn nút con và không còn chi nhánh gắn vào" onClick={() => node && window.confirm(`Xoá nút ${node.code} - ${node.name}?`) && del.mutate(node)}><Trash2 size={14} /> Xoá</button>}
           {canWrite && <button className="btn btn-sm btn-primary" disabled={!mode || !f.name.trim() || (mode === 'add' && !f.code.trim()) || save.isPending} onClick={() => save.mutate()}><Check size={14} /> Ghi</button>}
           <button className="btn btn-sm" disabled={Boolean(mode)} onClick={() => void tree.refetch()}><RefreshCw size={14} /> Nạp</button>
           {canWrite && <button className="btn btn-sm" disabled={!mode} onClick={() => setMode(null)}><Undo2 size={14} /> Hoãn</button>}

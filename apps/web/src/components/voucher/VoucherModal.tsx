@@ -94,7 +94,6 @@ export function VoucherModal({ title, titleExtra, existing, readOnly, saving, on
         <div className="vf-toolbar">
           {printSlot ?? (onPrint && <button disabled={!existing} onClick={onPrint}><Printer size={15} /> In</button>)}
           {onExport && <button onClick={onExport}><Download size={15} /> Xuất</button>}
-          <button disabled={readOnly || saving} onClick={onDelete}><X size={15} className="text-bad" /> Xóa</button>
           {extraButtons?.map((b) => <button key={b.key} disabled={b.disabled} title={b.title} onClick={b.onClick}>{b.icon}{b.label}</button>)}
         </div>
         <div className="vf-body" ref={kl.body} {...kl.bodyProps}>

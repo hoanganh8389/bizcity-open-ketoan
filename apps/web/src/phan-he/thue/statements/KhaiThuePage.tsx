@@ -142,7 +142,6 @@ export function KhaiThuePage() {
                                 <div className="kt-pop">
                                   <button onClick={() => { setMenu(null); xem(s); }}>Xem</button>
                                   {write && s.status !== 'final' && <button onClick={() => { setMenu(null); if (confirm(`Đánh dấu cơ quan thuế đã chấp nhận tờ khai ${kyText(s.periodKind, s.year, s.period)}? Sau đó muốn sửa số phải lập tờ khai bổ sung.`)) act.mutate({ s, kind: 'accept' }); }}>Đánh dấu TCT chấp nhận</button>}
-                                  {write && s.status !== 'final' && <button className="text-bad" onClick={() => { setMenu(null); if (confirm(`Xoá tờ khai ${kyText(s.periodKind, s.year, s.period)}?`)) act.mutate({ s, kind: 'delete' }); }}>Xóa</button>}
                                 </div>
                               )}
                             </td>

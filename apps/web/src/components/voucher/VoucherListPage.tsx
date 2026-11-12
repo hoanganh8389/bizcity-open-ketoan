@@ -140,7 +140,6 @@ export function VoucherListPage<R extends { id: string; docKey: string }>({
             ) : <button key={b.key} className={i === 0 ? 'vf-add' : undefined} disabled={!canWrite || b.disabled} title={b.title} onClick={() => { setNotice(null); b.onClick(); }}>{b.icon}{b.label}</button>)}
             <button disabled={busy} onClick={() => { const r = one(); if (r) run(async () => { openNextInEdit(); await onOpen(r); }); }}><Pencil size={15} /> Sửa</button>
             {onCopy && <button disabled={!canWrite || busy} onClick={() => { const r = one(); if (r) run(async () => { setNotice(null); await onCopy(r); }); }}><Copy size={15} /> Copy</button>}
-            <button disabled={!canWrite || busy} onClick={remove}><X size={15} className="text-bad" /> Xóa</button>
             <button onClick={() => void query.refetch()}><RefreshCw size={15} /> Nạp</button>
             <button disabled={!rows.length} onClick={() => exportRef.current?.()}><Download size={15} /> Xuất</button>
             {extraToolbar?.(picked, run)}

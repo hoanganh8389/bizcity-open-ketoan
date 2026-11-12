@@ -627,7 +627,6 @@ export function AssetEventsPage({ kind }: { kind: EventPageKind }) {
       { key: 'actualQuantity', header: 'SL thực tế', type: 'number' },
     ] satisfies Column<AssetEvent>[])),
     { key: 'note', header: 'Ghi chú' },
-    ...(can('catalog:write') ? [{ key: 'del', header: '', noFilter: true, noSort: true, value: () => '', render: (r: AssetEvent) => <button className="btn btn-sm btn-ghost" title="Xoá" onClick={(e) => { e.stopPropagation(); if (window.confirm(kind === 'transfer' ? 'Xoá lần điều chuyển này? Tài sản trở về chi nhánh cũ.' : 'Xoá dòng này?')) del.mutate(r.id); }}><Trash2 size={15} /></button> } as Column<AssetEvent>] : []),
   ];
   return (
     <>

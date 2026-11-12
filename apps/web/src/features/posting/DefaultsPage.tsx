@@ -200,7 +200,6 @@ function HopDinhKhoan({ row, entry, defaults, options, onClose }: { row?: SysRow
   return (
     <Modal title={row ? `${base.name}${entry ? ` — ${condText(entry.cond, options)}` : ''}` : 'Thêm tài khoản ngầm định'} viewFirst={Boolean(row)} onClose={onClose}
       footer={<>
-        {entry && <button className="btn" style={{ marginRight: 'auto' }} disabled={del.isPending} onClick={() => { if (window.confirm('Xoá dòng này? Hàng đó sẽ ghi như dòng gốc.')) del.mutate(); }}>Xoá</button>}
         <button className="btn btn-primary" disabled={save.isPending || Boolean(problem)} title={problem} onClick={() => save.mutate()}>Ghi</button>
         <button className="btn" onClick={onClose}>Huỷ</button>
       </>}>

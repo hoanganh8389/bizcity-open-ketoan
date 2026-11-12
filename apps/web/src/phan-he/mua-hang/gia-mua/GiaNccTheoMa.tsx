@@ -133,7 +133,6 @@ function HopGia({ v: init, units, rate, onClose, onDone }: { v: Form; units: { u
   return (
     <Modal title={isNew ? 'Khai giá mua' : 'Sửa giá mua'} onClose={onClose}
       footer={<>
-        {!isNew && <button className="btn" style={{ marginRight: 'auto' }} disabled={busy} onClick={() => void del()}>Xoá</button>}
         <button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button>
         <button className="btn" onClick={onClose}>Thoát</button>
       </>}>

@@ -11,6 +11,9 @@ Mỗi bản ghi đủ sáu mục:
 - **Bảo mật**
 
 ## [Chưa phát hành]
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Bỏ mọi nút Xoá dữ liệu đã lưu trên giao diện: cơ cấu tổ chức, chứng từ (danh sách / hộp thoại), phiếu hàng, bộ tham số, thẻ hướng dẫn, khai báo ngầm định, mẫu phiếu, chính sách mua, giá NCC, ánh xạ hoá đơn NCC, báo cáo tài chính, tờ khai thuế, tệp đính kèm mua hàng, sự kiện tài sản, dòng giá NCC đã lưu. Giữ nút bỏ dòng nháp chưa ghi. "Xoá" ở danh sách định khoản đổi tên đúng việc: Bỏ định khoản; Trợ lý: Làm mới.
+
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 - Đổi tên màn: DM10 "Quản lý mặt hàng", DM11 "Danh mục nhóm hàng", nhóm menu "Mặt hàng".
 - Mặt hàng: tối đa 10 đơn vị tính (đếm x/10, đủ thì ẩn nút thêm, vượt báo đỏ, máy chủ chặn); tên hàng tối đa 50 ký tự (bộ đếm, báo đỏ; thêm mới / đổi tên, cả Excel và máy chủ); cột Người sửa / Lúc sửa (products.updated_by, 0120).
