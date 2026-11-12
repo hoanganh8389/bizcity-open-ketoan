@@ -369,8 +369,8 @@ Phạm vi: S031-30. Mở ô cuối còn thiếu của [20 §4](20-TRUY-VET-VA-TH
 7. **Máy bán**: gọi thẳng `POST /api/v1/policies/evaluate` của Core — vé WP của máy bán thêm `catalog:read` (chỉ đọc; thu ngân vốn đã xem danh mục, giá). Đề xuất về sau: `ctx.policies.evaluate` ở module SDK để module tự kiểm lại.
 
 **Phát hiện khi làm (đề xuất cho chủ Kernel, ngoài phạm vi đợt):** <!-- [2026-11-12 11:05 PM Võ Hoàng] POS-KM — ghi khi code (đóng góp) -->
--  so quà theo  ở từng phía: dòng quà nguồn có  mà luật chỉ trả mã (khuôn BH12 chỉ biết mã) thì báo lệch giả. Đề xuất:  quy cả hai phía về  (tra theo mã tại ngày chứng từ) trước khi so. Đợt này module  gửi dòng quà theo chương trình **chỉ kèm mã** (cửa nạp tự tra mặt hàng).
-- Gửi lại bản 2 (cùng nội dung) của phiếu bán có  bị  — có sẵn trên  (thử với chính sách inline , không dính BH12). Máy bán POS không gửi lại phiếu nên chưa vướng; nguồn khác (Woo, sàn) sẽ vướng.
+- `IN-POL-004` so quà theo `itemId ?? sku` ở từng phía: dòng quà nguồn có `itemId` mà luật chỉ trả mã (khuôn BH12 chỉ biết mã) thì báo lệch giả. Đề xuất: `policy-check.ts` quy cả hai phía về `itemId` (tra theo mã tại ngày chứng từ) trước khi so. Đợt này module `pos` gửi dòng quà theo chương trình **chỉ kèm mã** (cửa nạp tự tra mặt hàng).
+- Gửi lại bản 2 (cùng nội dung) của phiếu bán có `policyRefs` bị `LEDGER_APPEND_ONLY` — có sẵn trên `main` (thử với chính sách inline `buy_x_get_y`, không dính BH12). Máy bán POS không gửi lại phiếu nên chưa vướng; nguồn khác (Woo, sàn) sẽ vướng.
 
 **Ngoài đợt này:** bậc, quà theo tổng đơn, voucher, combo, mua bất kỳ tặng món rẻ nhất, khung giờ / sinh nhật, áp riêng (exclusive), trần NĐ81, trả hạn mức theo phiếu trả, công cụ chuyển CTKM từ plugin website. `sale.price_list@1`, `sale.credit_limit@1` của S031-15 vẫn để `modules/ban-hang` (S030-16).
 
