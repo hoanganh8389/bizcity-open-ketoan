@@ -97,11 +97,13 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
 }
 
 /** Thẻ "Giá bán": bảng giá công ty / chi nhánh theo từng ĐVT (cấu hình bán hàng). */
-export function GiaBan({ units, prices, lists, shown, setShown, setPrice }: Pick<Props, 'units' | 'prices' | 'lists' | 'shown' | 'setShown' | 'setPrice'>) {
+// [2026-11-12 Nguyễn Văn Thủy] hàng chính chỉ khai bảng giá công ty (luôn bán theo giá công ty) (đóng góp)
+export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPrice, onlyCompany }: Pick<Props, 'units' | 'prices' | 'lists' | 'shown' | 'setShown' | 'setPrice'> & { onlyCompany?: boolean }) {
   const sorted = sortUnits(units);
   const priceOf = (list: string, unit: string) => prices.find((p) => p.priceListCode === list && p.unit === unit)?.price;
   const rowPrices = (list: string) => sorted.map((u) => ({ unit: u.unit, price: priceOf(list, u.unit) }));
   const company = lists.find((l) => l.isCompany);
+  const shown = onlyCompany ? shownAll.filter((c) => c === company?.code) : shownAll;
   const listName = new Map(lists.map((l) => [l.code, l]));
   const hidden = lists.filter((l) => l.isActive && !shown.includes(l.code));
   /** Dán từ Excel: nhiều số cách nhau bằng Tab / xuống dòng → điền sang phải (ĐVT) và xuống dưới (bảng giá). */
@@ -160,7 +162,8 @@ export function GiaBan({ units, prices, lists, shown, setShown, setPrice }: Pick
             </table>
           </div>
         )}
-        {company && sorted.length > 0 && hidden.length > 0 && (
+        {onlyCompany && company && sorted.length > 0 && <div className="muted" style={{ fontSize: 12, padding: '6px 0' }}>Hàng chính: chỉ khai giá bảng giá công ty.</div>}
+        {!onlyCompany && company && sorted.length > 0 && hidden.length > 0 && (
           <div className="dvt-add">
             <select className="select input" style={{ height: 30, width: 'auto' }} value="" onChange={(e) => e.target.value && setShown((x) => [...x, e.target.value])}>
               <option value="">+ Thêm giá riêng cho bảng giá chi nhánh…</option>

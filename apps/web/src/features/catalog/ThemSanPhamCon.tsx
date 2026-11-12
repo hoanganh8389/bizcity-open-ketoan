@@ -53,7 +53,6 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   const [sku, setSku] = useState(parentSku);
   const [barcode, setBarcode] = useState('');
   const [note, setNote] = useState('');
-  const [noSaleParent, setNoSaleParent] = useState(false);
   const [done, setDone] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
   // Con trỏ sau tên cha để gõ tiếp màu, size.
@@ -68,10 +67,10 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   const can = Boolean(trimmed) && !dup && !sameAsParent && skuOk && !taken;
 
   const save = useMutation({
-    mutationFn: () => api.post<{ sku: string; name: string }>('/api/v1/items/add-child', { parentSku, name: trimmed, sku: tail ? sku.trim().toUpperCase() : undefined, barcode: barcode.trim() || undefined, note: note.trim() || undefined, noSaleParent: noSaleParent || undefined }),
+    mutationFn: () => api.post<{ sku: string; name: string }>('/api/v1/items/add-child', { parentSku, name: trimmed, sku: tail ? sku.trim().toUpperCase() : undefined, barcode: barcode.trim() || undefined, note: note.trim() || undefined }),
     onSuccess: (p) => {
       setDone(`Đã tạo ${p.sku}: ${p.name}`);
-      setName(`${parentName} `); setSku(parentSku); setBarcode(''); setNote(''); setNoSaleParent(false);
+      setName(`${parentName} `); setSku(parentSku); setBarcode(''); setNote('');
       void qc.invalidateQueries({ queryKey: ['products'] });
       void qc.invalidateQueries({ queryKey: ['catalog-product'] });
       void qc.invalidateQueries({ queryKey: ['variant-kinds'] });
@@ -97,12 +96,6 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
       </Field>
       <Field label="Barcode"><input className="input mono" value={barcode} onChange={(e) => setBarcode(e.target.value)} title="Mã vạch riêng của sản phẩm con, để quầy quét ra đúng hàng" /></Field>
       <Field label="Ghi chú" full><input className="input" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} placeholder="Vì sao tạo mã, thuộc chương trình nào" title="Chỉ để người đọc, phần mềm không xử lý theo ghi chú" /></Field>
-      {!parentNoSale && (
-        <label className="checkbox full" style={{ display: 'flex', gap: 8, padding: '6px 0' }} title="Bật khi sản phẩm không có bản chung, chỉ bán theo màu, size. Hàng thông thường không cần bật.">
-          <input type="checkbox" checked={noSaleParent} onChange={(e) => setNoSaleParent(e.target.checked)} />
-          <span>Mã cha <span className="mono">{parentSku}</span> chỉ để gom, không bán trực tiếp</span>
-        </label>
-      )}
       <div className="full muted" style={{ fontSize: 12, marginTop: 4 }}>Đơn vị tính, nhóm hàng, thuế và dấu dưới 24 tháng lấy theo mã cha. Giá bán khai sau ở thẻ Giá bán.</div>
       {list.length > 0 && (
         <div className="full" style={{ marginTop: 8 }}>

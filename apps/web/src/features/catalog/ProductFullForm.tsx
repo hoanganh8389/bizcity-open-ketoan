@@ -329,7 +329,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           onAdd={(u) => set({ units: [...v.units, u] })}
           onRemove={(i) => setV((x) => ({ ...x, units: x.units.filter((_, j) => j !== i), prices: x.prices.filter((p) => p.unit !== x.units[i]!.unit) }))} />
       )}
-      {tab === 'prices' && <GiaBan units={v.units} prices={v.prices} lists={lists} shown={shownLists} setShown={setShownLists} setPrice={setPrice} />}
+      {tab === 'prices' && <GiaBan units={v.units} prices={v.prices} lists={lists} shown={shownLists} setShown={setShownLists} setPrice={setPrice} onlyCompany={v.isMain} />}
 
       {extraTabs.filter((t) => t.key === tab).map((t) => <t.Component key={t.key} sku={isNew ? '' : v.sku} name={v.name} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} />)}
 
