@@ -150,7 +150,7 @@ describe('NT-BH-004 — trường hợp lệch chuẩn (tầng tính)', () => {
     expect(reason(draft({ loyalty: { redeem: ['lp_1'] } }))).toBe('POS_NOT_SUPPORTED_YET');
     expect(reason(draft({ payment: { mode: 'credit' } }))).toBe('POS_NOT_SUPPORTED_YET');
   });
-  // [2026-11-13 12:50 AM Võ Hoàng] POS-QR — QR trả hết / phần QR trong chia tiền: nhận, đơn chờ trả tiền (NT-BH-009) (đóng góp)
+  // [2026-11-12 08:20 PM Võ Hoàng] POS-QR — QR trả hết / phần QR trong chia tiền: nhận, đơn chờ trả tiền (NT-BH-009) (đóng góp)
   it('QR trả hết và phần QR trong chia tiền: nhận; qrAmount = phần QR; ghi sổ theo hình thức QR', () => {
     const all = computeOrder({ draft: draft({ payment: { mode: 'qr' } }), catalog, paymentMethods: methods });
     expect('problem' in all ? all.problem.reason : all.qrAmount).toBe(324_000);

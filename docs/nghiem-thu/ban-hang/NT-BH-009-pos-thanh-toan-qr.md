@@ -52,7 +52,7 @@ Khách trả bằng QR thì đơn chỉ hoàn tất khi tiền về (ngân hàng
 ## 7. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
-| §5 dòng 1 (gửi đơn QR) | chờ trả tiền, có phần `qr`, chứng từ nộp theo hình thức QR | đúng; chưa phát bản sao (chưa thu tiền) | — | test NT-BH-009, 13/11 |
+| §5 dòng 1 (gửi đơn QR) | chờ trả tiền, có phần `qr`, chứng từ nộp theo hình thức QR | đúng; chưa phát bản sao (chưa thu tiền) | — | test NT-BH-009, 12/11 |
 | §5 dòng 2, 4, 5 (ngân hàng báo có) | hoàn tất, nguồn ngân hàng, bản sao; lệch tiền `POS_PAYMENT_MISMATCH`; gọi lại không đổi | đúng; bản sao phiên bản 2 | — | |
 | §5 dòng 3 + lệch chuẩn 2 (bấm tay, chia tiền TM + QR) | ghi người bấm, giờ, ghi chú; phần QR quyết định trạng thái | đúng | — | |
 | §5 dòng 6–7 (gia hạn, quá ngày) | dời hạn 5 phút; sau ngày bán `POS_QR_EXPIRED`, ngân hàng báo có vẫn nhận | đúng | — | |
@@ -67,4 +67,4 @@ Khách trả bằng QR thì đơn chỉ hoàn tất khi tiền về (ngân hàng
 | Ngày | Thay đổi |
 |---|---|
 | 12/11/2026 | Tạo phiếu |
-| 13/11/2026 | Ghi kết quả chạy (test NT-BH-009 5/5) |
+| 12/11/2026 | Ghi kết quả chạy (test NT-BH-009 5/5) |

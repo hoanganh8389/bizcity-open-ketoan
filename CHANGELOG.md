@@ -234,7 +234,7 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không.
 
-### Module `pos` — thanh toán QR, người mua hoá đơn điện tử, bắt buộc mở ca, tồn cả cửa hàng (NT-BH-009, NT-BH-010, NT-BH-011) <!-- [2026-11-13 09:00 AM Võ Hoàng] POS-QR — module pos đợt QR / hoá đơn / ca (đóng góp) -->
+### Module `pos` — thanh toán QR, người mua hoá đơn điện tử, bắt buộc mở ca, tồn cả cửa hàng (NT-BH-009, NT-BH-010, NT-BH-011) <!-- [2026-11-12 08:30 PM Võ Hoàng] POS-QR — module pos đợt QR / hoá đơn / ca (đóng góp) -->
 
 - **Thêm:** đơn trả QR (toàn bộ hoặc một phần) lưu ở trạng thái **chờ trả tiền**, có phần `qr` (số tiền, hạn 5 phút); chứng từ bán nộp ngay theo hình thức QR. `POST /orders/:id/qr/confirm` — tiền về (ngân hàng báo hoặc thu ngân xác nhận tay, ghi người + ghi chú); `POST /orders/:id/qr/renew` — gia hạn trong ngày bán. Tiền lệch `POS_PAYMENT_MISMATCH`, quá ngày bán `POS_QR_EXPIRED` (ngân hàng báo có vẫn nhận), đơn đã huỷ `POS_ORDER_CANCELLED`.
 - **Thêm:** `POST /orders/:id/invoice-buyer` — người mua trên hoá đơn điện tử (MST 10 / 13 số, công ty, địa chỉ, email) và dòng quà dưới 24 tháng không đưa lên hoá đơn; gửi lại cùng nội dung không đổi gì. `GET /stock/all` — tồn cả cửa hàng cho Excel cuối ca.
