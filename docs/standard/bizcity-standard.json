@@ -10,7 +10,7 @@
     "bizcity_action": { "version": "1.4.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
     "bizcity_event": { "version": "1.3.0-draft", "doc": "docs/contracts/BIZCITY-EVENT-v1.md" },
     "bizcity_evidence": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-EVIDENCE-v1.md" },
-    "bizcity_extension": { "version": "1.3.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
+    "bizcity_extension": { "version": "1.4.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
   },
   "kernelContracts": {
     "bizcity_ledger_intake": { "version": "1.4.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
