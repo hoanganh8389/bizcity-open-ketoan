@@ -122,7 +122,6 @@ export function BranchesPage() {
               { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
               // [2026-11-13 Nguyễn Văn Thủy] một cột Thuộc cơ cấu thay C1/C2/C3; bỏ cột Bộ phận, Fax, Mã tham chiếu (đóng góp)
               { key: 'orgPath', header: 'Thuộc cơ cấu', width: 220, title: 'Vị trí trong Cơ cấu tổ chức', render: (b) => b.orgPath || <span className="text-bad">chưa gắn</span> },
-              { key: 'accountingUnitCode', header: 'Đơn vị hạch toán', type: 'code', width: 120 },
               { key: 'siteIds', header: 'Website (blog_id)', type: 'code', width: 110, title: 'Website bên hệ thống bán hàng đang nối với chi nhánh (qua kết nối chính)' },
               { key: 'siteNames', header: 'Tên website', width: 170 },
               { key: 'siteCodes', header: 'Mã kho website', type: 'code', width: 110 },
@@ -142,14 +141,8 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
   const qc = useQueryClient();
   const [v, setV] = useState(value);
   const set = (p: Partial<Branch>) => setV((x) => ({ ...x, ...p }));
-  // Đơn vị hạch toán đã dùng: chọn lại cho đúng mã; gõ mã mới là tạo đơn vị mới.
-  const { data: all = [] } = useQuery({ queryKey: ['branches'], queryFn: () => api.get<Branch[]>('/api/v1/branches') });
   const sites = useBranchSites();
   const mine = (sites.data?.sites ?? []).filter((x) => x.branchCode && x.branchCode === value.code);
-  const units = [...new Set(all.map((b) => b.accountingUnitCode).filter((c): c is string => Boolean(c)))].sort().map((code) => {
-    const members = all.filter((b) => b.accountingUnitCode === code).map((b) => b.code);
-    return { code, name: `${members.length} chi nhánh: ${members.slice(0, 6).join(', ')}${members.length > 6 ? '…' : ''}` };
-  });
   const viewAgain = useViewAgain();
   const save = useMutation({
     mutationFn: () => {
@@ -180,15 +173,12 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
         )}
         <Field label=" "><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>
       </fieldset>
+      {/* [2026-11-13 Nguyễn Văn Thủy] bỏ ô Đơn vị hạch toán (khó hiểu, chưa chi nhánh nào dùng); dữ liệu cũ giữ nguyên (đóng góp) */}
       <fieldset className="fgroup">
         <legend>Thông tin in trên chứng từ</legend>
         {txt('companyName', 'Tên công ty', true)}
         {txt('address', 'Địa chỉ', true)}
         {txt('phone', 'Điện thoại')}
-      </fieldset>
-      <fieldset className="fgroup">
-        <legend>Hạch toán</legend>
-        <Field label="Đơn vị hạch toán" hint="Các chi nhánh cùng đơn vị thì tính giá vốn chung. Gõ mã mới là tạo đơn vị mới"><ListPicker strict={false} items={units} value={v.accountingUnitCode ?? ''} onChange={(accountingUnitCode) => set({ accountingUnitCode })} placeholder="Bấm để chọn" emptyText={units.length ? 'Không có đơn vị khớp — rời ô để tạo đơn vị mới với mã đang gõ' : 'Chưa có đơn vị nào — gõ mã mới để tạo'} /></Field>
       </fieldset>
       {!value.isNew && (
         <fieldset className="fgroup">

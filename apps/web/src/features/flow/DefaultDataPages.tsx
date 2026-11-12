@@ -82,6 +82,8 @@ export function RestoreDefaultsButton({ datasetKey, title }: { datasetKey: strin
   );
 }
 
+const AN_DI = new Set(['posting_defaults', 'posting_groups', 'reasons']);
+
 export function DefaultDataPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
@@ -130,7 +132,8 @@ export function DefaultDataPage() {
           <table className="grid" style={{ margin: 16, width: 'calc(100% - 32px)' }}>
             <thead><tr><th>Bộ dữ liệu</th><th>Màn danh mục</th><th className="num">Trong tệp gốc</th><th className="num">Đang có</th><th>Mô tả</th><th /></tr></thead>
             <tbody>
-              {q.data.datasets.map((d) => (
+              {/* [2026-11-13 Nguyễn Văn Thủy] bộ chạy ngầm cho bộ định khoản (lý do, nhóm hạch toán, khoá ngầm định cũ) không hiện — khai ở Tài khoản ngầm định (đóng góp) */}
+              {q.data.datasets.filter((d) => !AN_DI.has(d.key)).map((d) => (
                 <tr key={d.key}>
                   <td><b>{d.title}</b><div className="muted mono" style={{ fontSize: 12 }}>{d.file}</div></td>
                   <td className="mono">{d.screens.join(', ')}</td>
