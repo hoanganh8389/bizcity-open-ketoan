@@ -1,0 +1,12 @@
+/* [2026-11-12 Nguyễn Văn Thủy] DM11 Nhóm hàng: thẻ nhóm đang chọn + danh sách (đóng góp) */
+.nh-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; }
+.nh-rule { margin-left: auto; font-size: 12px; }
+.nh-wrap { display: grid; grid-template-columns: minmax(240px, 300px) 1fr; gap: 12px; padding: 0 12px 12px; }
+.nh-card { border: 1px solid var(--line, #e3e7ee); border-radius: 10px; padding: 12px 14px; background: var(--surface, #fff); margin-bottom: 10px; }
+.nh-path { font-size: 12.5px; color: var(--ink-500, #6b7280); margin-bottom: 4px; }
+.nh-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.nh-title b { font-size: 17px; }
+.nh-code { font-size: 15px; font-weight: 700; padding: 2px 10px; border-radius: 6px; background: var(--brand-50, #eef4fc); color: var(--nav, #2457B3); }
+.nh-meta { font-size: 12.5px; margin-top: 6px; }
+.nh-tabs { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+@media (max-width: 900px) { .nh-wrap { grid-template-columns: 1fr; } }

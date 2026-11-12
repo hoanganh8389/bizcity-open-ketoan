@@ -22,17 +22,15 @@ Thêm mặt hàng mới chỉ cần chọn nhóm cấp 3, phần mềm tự sinh
 ## Màn hình
 
 - **Trái**: cây nhóm hàng. Gõ tên để tìm.
-- **Phải trên**: nhóm đang chọn — Thuộc nhóm, **Mã nhóm hàng**, **Tên nhóm hàng**, Đang dùng; dòng cuối ghi ai tạo, ai sửa lần cuối, lúc nào.
-- **Phải dưới**: thẻ **Nhóm con** (bấm đúp một dòng để đi xuống) và thẻ **Lịch sử** (mỗi lần thêm / sửa: ai, lúc nào, đổi gì).
+- **Phải trên**: thẻ của nhóm đang chọn — đường dẫn, **mã nhóm**, **tên**, cấp, số mặt hàng, ai tạo / sửa lúc nào. Nút **Sửa** và **+ Thêm nhóm con** nằm ngay trên thẻ.
+- **Phải dưới**: **Danh sách nhóm** (mặc định là nhóm con; ô bên phải chọn xem toàn bộ nhóm cấp 1, 2, 3… hoặc tất cả; bấm đúp một dòng để đi tới nhóm đó) và **Lịch sử** (mỗi lần thêm / sửa: ai, lúc nào, đổi gì). Nhóm chưa có mã hiện chữ đỏ *chưa có*.
 
 ## Thao tác
 
-| Nút | Làm gì |
-|---|---|
-| **Thêm** | Chọn nhóm cha trên cây rồi bấm **Thêm** (chưa chọn: thêm nhóm cấp 1). Mã nhóm điền sẵn số kế tiếp; nhập **Tên** rồi bấm **Ghi**. |
-| **Sửa** | Sửa mã, tên, Đang dùng. Chuyển sang nhóm khác: bấm kính lúp ở ô **Thuộc nhóm**. **Hoãn** để bỏ. |
-| **Ngừng dùng** | Không có xoá. Bấm **Sửa**, bỏ tích **Đang dùng**. |
-| **Nạp / Xuất / Nhập Excel** | Tải lại / xuất lưới ra Excel / nhập nhiều nhóm từ tệp. |
+- **Thêm ngành mới**: nút **Thêm nhóm cấp 1** trên cùng.
+- **Thêm nhóm con**: chọn nhóm trên cây → **+ Thêm nhóm con**. Mã điền sẵn mã kế tiếp (sửa được), nhập tên, **Ghi**.
+- **Sửa**: chọn nhóm → **Sửa**. Chuyển sang nhóm khác: nút **Đổi…** ở ô Thuộc nhóm.
+- **Ngừng dùng**: không có xoá — **Sửa**, bỏ tích **Đang dùng**.
 
 ## Phần mềm tự chặn
 
