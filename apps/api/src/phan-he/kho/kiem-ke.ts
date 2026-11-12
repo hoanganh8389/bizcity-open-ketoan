@@ -96,10 +96,10 @@ interface Row {
   decision_reasons: Record<string, string>; journal_doc_key: string; settled_at: Date | null; settled_by: string | null;
   created_by: string | null; updated_by: string | null; created_at: Date; updated_at: Date;
 }
-const COLS = sql.raw(`id::text, doc_no, to_char(count_date, 'YYYY-MM-DD') AS count_date, branch_code, warehouse_code, quarantine_warehouse, purpose, conclusion,
+const COLS = sql`id::text, doc_no, to_char(count_date, 'YYYY-MM-DD') AS count_date, branch_code, warehouse_code, quarantine_warehouse, purpose, conclusion,
   members, lines, status, adjust_doc_key, transfer_doc_key, recorded_at, recorded_by, causes, verify_note, verified_at, verified_by, decision_no,
   to_char(decision_date, 'YYYY-MM-DD') AS decision_date, decision_signer, decision_reasons, journal_doc_key, settled_at, settled_by,
-  created_by, updated_by, created_at, updated_at`);
+  created_by, updated_by, created_at, updated_at`;
 
 const STATUS_TEXT: Record<Row['status'], string> = { draft: 'Nháp', recorded: 'Đã ghi nhận chênh lệch', verified: 'Đã xác minh', settled: 'Đã xử lý' };
 

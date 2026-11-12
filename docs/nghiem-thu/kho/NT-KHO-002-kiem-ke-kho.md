@@ -8,7 +8,7 @@
 | Màn hình | KHO02 (Kiểm kê kho) — mới |
 | Bộ phận yêu cầu | Kho / Phòng kế toán |
 | Ngày tạo | 12/11/2026 |
-| Trạng thái | Đã chốt (12/11/2026, kiennt — bản sửa theo tài liệu nghiệp vụ) |
+| Trạng thái | Đã chốt (12/11/2026, kiennt — bản sửa theo tài liệu nghiệp vụ) · Chờ nghiệm thu (còn lệch: HSD lô, in 05-VT) |
 | Căn cứ nghiệp vụ | Tài liệu "Mô tả chi tiết nghiệp vụ mua bán hàng hoá thương mại", mục 4 Phân hệ Kho (bước 7 Kiểm kê, bước 8 Xử lý chênh lệch) và bảng hạch toán nghiệp vụ kho dòng 9, 20, 24–28 |
 
 ## 1. Mục đích quản trị
@@ -134,11 +134,38 @@ sang KA-CL; sổ chi tiết 1388 có công nợ Nguyễn Văn A 10.000.
 | 12 | Thu tiền bồi thường của Nguyễn Văn A | Làm ở Phiếu thu (lý do KKTH, Nợ 111 / Có 1388) — ngoài màn Kiểm kê |
 
 ## 7. Kết quả chạy
+<!-- [2026-11-12 03:30 PM kiennt] NT-KHO-002 — kết quả chạy -->
+
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/kiem-ke-kho.test.ts` (đề xuất — tạo khi code) |
+| Ngày chạy | 12/11/2026 |
+| Bản code (commit) | nhánh `feat/kho-kiem-ke` |
+| Test tự động | `apps/api/test/kiem-ke-kho.test.ts` — 12 / 12 đạt |
 
 | Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
 |---|---|---|---|---|
+| Lấy số tồn | 4 dòng theo lô: L02 40, L01 80, M01 50, HANG03 10 | Đúng | 0 | |
+| Chênh lệch theo lô | −2 / 0 / +3 / 0; tổng sổ 180, kiểm kê 181, +1 | Đúng | 0 | |
+| Phiếu điều chỉnh tồn | Một phiếu mixed: L02 −2, M01 +3 | Đúng (`erp:kk:<id>:dc`) | 0 | |
+| Chuyển kho cách ly | L01 × 2 sang KA-CL, không bút toán | Đúng (`erp:kk:<id>:cl`), không bút toán | 0 | |
+| ACC83 / KHO05 | KA-1 HANG01 116 (L01 78, L02 38), HANG02 53, HANG03 10; KA-CL L01 2 | Đúng | 0 | |
+| Bút toán bước 1 | Nợ 1381 20.000 / Có 156; Nợ 156 / Có 3381 15.000 | Đúng số; nằm ở **phiếu giá vốn tháng** `cogs:CN01:2026-11`, đối tượng `CN-CN01` | vị trí | Lõi định giá chứng từ điều chỉnh khi tính giá vốn tháng |
+| Bút toán bước 3 | 1388[NV-A] / 1381 10.000; 632 / 1381 10.000; 3381 / 711 15.000 | 13888[NV-A] / 1381[NV-A] 10.000; 6328 / 1381[CN-CN01] 10.000; 3381[CN-CN01] / 7118 15.000 | TK chi tiết | Hệ thống tài khoản mẫu chỉ cho hạch toán TK chi tiết (13888, 6328, 7118) |
+| 1381 / 3381 sau bước 3 | Về 0 | Về 0 (theo tài khoản) | 0 | Theo đối tượng: 1381 CN-CN01 +10.000 / NV-A −10.000 — phiếu kế toán chỉ có một đối tượng cho cả Nợ và Có |
+| Huỷ quyết định / bỏ ghi nhận | Bút toán đảo; tồn trở lại 120 | Đúng | 0 | |
+| Lệch chuẩn 1 (không chênh lệch) | Không sinh chứng từ, Đã xử lý | Đúng | 0 | |
+| Lệch chuẩn 2 (số âm) | Chặn | 400 | 0 | |
+| Lệch chuẩn 6 (chưa có kho cách ly) | Chặn | 400 | 0 | |
+| Lệch chuẩn 7 (chưa tính giá vốn) | Báo tính giá vốn tháng trước | 409 "Tính giá vốn tháng 12/2026 trước" | 0 | |
+| Lệch chuẩn 8 (tổng nguyên nhân ≠ chênh lệch) | Chặn | 400 | 0 | Sai hướng (thừa thuộc DN cho hàng thiếu) cũng chặn |
+| Lệch chuẩn 9 (ghi thiếu phiếu nhập) | Không 711, đảo phần thừa | Không phiếu kế toán; tồn HANG03 về 10 | 0 | |
+| HSD thực tế khác sổ | Cập nhật HSD trên lô, ghi lịch sử | **Chỉ ghi trên biên bản + đánh dấu**, HSD của lô trong sổ chưa đổi | **lệch** | Lõi chưa có thao tác sửa HSD lô (HSD là một phần khoá của lô) — cần việc lõi |
+| Kho cách ly / 4 lý do "cài đặt" | Ô cài đặt trên màn Kiểm kê | Chọn trên từng biên bản (gợi ý KKBT / KKCP / KKTN) | khác cách | Khoá cài đặt mới phải sửa registry — ngoài phạm vi giữ chỗ |
+| In 05-VT | In biên bản | **Chưa làm** | **thiếu** | Đăng ký mẫu in ở `printCatalog.ts` — ngoài phạm vi giữ chỗ |
+| Lệch chuẩn 3 (kỳ khoá) | Chặn | Có mã chặn (kiểm `period_locks`), **chưa có test** | — | |
+
+Bốn lệnh kiểm (12/11/2026): `npm run typecheck` 0 lỗi · `bash scripts/kiem-chuan.sh` ĐẠT · `selfcheck` không thêm mục mới so với `main`
+(SC-SEC-1 chỉ do tệp `.env` cục bộ) · `nhan-viec kiem` ĐẠT.
+`npm test` (CSDL test mới): 2007 đạt, 3 hỏng — `default-data.test.ts` (2) hỏng cả trên `main`;
+**`db-rules.test.ts` (1) do biên bản này**: bảng `stock_counts` chưa khai nhóm trong `apps/api/src/modules/system/schema-catalog.ts`
+— tệp thuộc dòng giữ chỗ PHASE-026 (người giữ khác), cần người giữ đồng ý / mở rộng phạm vi rồi thêm một dòng khai báo.
