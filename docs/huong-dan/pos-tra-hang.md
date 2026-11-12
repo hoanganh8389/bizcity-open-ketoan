@@ -1,0 +1,19 @@
+# Phiếu trả hàng máy POS (BH14)
+<!-- [2026-11-12 11:10 PM Võ Hoàng] POS-ADMIN — hướng dẫn màn BH14 (đóng góp) -->
+
+Xem phiếu trả hàng và đổi hàng tại quầy, mỗi phiếu nối về **đơn gốc**.
+
+## Mở màn
+Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem quản trị bán lẻ máy POS* (`pos:report`); thu ngân không có quyền này nên không thấy màn.
+
+## Bảng tham số (bên trái)
+- **Kỳ**: chọn nhanh (hôm nay, tháng này…) hoặc gõ từ ngày – đến ngày.
+- **Chi nhánh**: tích một hay nhiều cửa hàng; để trống = mọi cửa hàng.
+- Bấm **Tìm kiếm** để áp. **Lưu bộ tham số** để lần sau chọn lại một lần bấm.
+
+- Ô riêng: **Mã phiếu / đơn gốc** (TH…, HD…).
+
+## Đọc màn
+- **Loại**: Trả hàng (hoàn tiền) hay Đổi hàng (tiền hàng trả đối trừ vào đơn mới).
+- **Hoàn bằng**: tiền mặt / chuyển khoản; **Người duyệt** chỉ có khi trả quá hạn (hạn đặt ở *Cài đặt bán hàng*).
+- Bấm một phiếu: nửa dưới hiện dòng hàng đã trả và tiền hoàn từng dòng.

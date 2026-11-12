@@ -161,7 +161,9 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Nạp chứng từ', paths: ['/chung-tu', '/chung-tu/bang-diem', '/he-thong/chi-nhanh-lam-viec', '/mua-hang/khoi-dau'] },
       { label: 'Đặt hàng theo tồn max', paths: ['/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/dang-ky-max', '/mua-hang/cong-thuc', '/mua-hang/chuyen-shop'] },
       { label: 'Chính sách mua', paths: ['/mua-hang/chinh-sach', '/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky', '/mua-hang/cai-dat', '/mua-hang/bien-the', '/mua-hang/dvt-thung'] },
-      { label: 'Bán lẻ, giá vốn', paths: ['/ban-hang/chuong-trinh', '/ban-hang/thu-tien', '/cau-hinh/hinh-thuc-thanh-toan', '/nghiep-vu/cong-thuc-gia-von', '/tai-san/ke-hoach-khau-hao'] },
+      // [2026-11-12 10:10 PM Võ Hoàng] POS-UIKIT — mục Bán lẻ máy POS: màn quản trị của module pos (NT-BH-008) + Chương trình bán (BH12) cùng một chỗ (đóng góp)
+      { label: 'Bán lẻ máy POS', paths: ['/ban-hang/chuong-trinh', '/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan', '/app/pos/cai-dat'] },
+      { label: 'Bán lẻ, giá vốn', paths: ['/ban-hang/thu-tien', '/cau-hinh/hinh-thuc-thanh-toan', '/nghiep-vu/cong-thuc-gia-von', '/tai-san/ke-hoach-khau-hao'] },
       { label: 'Công nợ', paths: ['/cong-no/khoan-cong-no', '/cong-no/phai-thu', '/cong-no/phai-tra', '/nghiep-vu/can-tru-cong-no', '/cong-no/dat-coc', '/cong-no/yeu-cau-thanh-toan', '/cong-no/chung-tu-nguon', '/cong-no/doi-chieu'] },
     ],
     reports: [
