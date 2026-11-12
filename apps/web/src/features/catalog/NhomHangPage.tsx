@@ -189,7 +189,7 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
   const [ghiChu, setGhiChu] = useState(old?.note ?? '');
   const tenDu = (p: string | null, t: string) => [p ? ix.byCode.get(p)?.fullName || ix.path(p).split(' / ').join(' ') : '', t.trim()].filter(Boolean).join(' ');
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: điền sẵn cả 3 ô (mã nhóm, mã ngắn, tên đầy đủ) — sửa lại cho đúng rồi Ghi (đóng góp)
-  const goiYTen = form.mode === 'add' ? `${form.parent ? ix.byCode.get(form.parent)?.name ?? 'Nhóm' : 'Nhóm mới'} ${1000 + Math.floor(Math.random() * 9000)}` : '';
+  const goiYTen = form.mode === 'add' ? `Nhóm mới ${1000 + Math.floor(Math.random() * 9000)}` : '';
   const [ten, setTen] = useState(old?.name ?? goiYTen);
   const [full, setFull] = useState(old?.fullName || (old ? tenDu(ix.parentOf(old.code), old.name) : tenDu(form.mode === 'add' ? form.parent : null, goiYTen)));
   const [fullTay, setFullTay] = useState(Boolean(old)); // sửa tay rồi thì thôi tự điền
