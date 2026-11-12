@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Thẻ hướng dẫn sử dụng (HT17)
+- Hướng dẫn sử dụng thành **thẻ** lưu trong hệ thống (migration 0113): soạn tự do ở màn **Thẻ hướng dẫn (HT17)** — kiểu đoạn, cỡ chữ, đậm / nghiêng, màu chữ, tô nền, danh sách, căn lề, bảng, ảnh (link, từ máy, dán), liên kết; dán từ Word giữ định dạng.
+- Mỗi màn / hộp thoại có một định danh; nút **Hướng dẫn** hiện thẻ đang gắn, đổi thẻ ngay trong ngăn, **+ Thẻ mới**, **Sửa thẻ** (mở trang soạn ở thẻ trình duyệt mới). Mọi hộp thoại có nút **? Hướng dẫn** ở đầu.
+- Lần đầu mở, tài liệu hướng dẫn có sẵn tự chép thành thẻ; nút **Chép tài liệu có sẵn** chép hết một lần. Tạm thời ai đăng nhập cũng sửa được.
+- Form mặt hàng: bỏ thẻ **Kế toán**, thêm ô **Thuế suất GTGT (%)** (KCT, 5%, 8%, 10%) ở thẻ Thông tin.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Form mặt hàng tối giản
 - **Thông tin**: chỉ Nhóm hàng, Mã, Tên, Barcode, Xuất xứ, Ảnh, Mô tả (ngành / nhãn tự theo nhóm). Bỏ Khối lượng, Ghi chú, ô Tài khoản kế toán.
 - **Kế toán**: Thuế suất bán ra (bán hàng dùng) và Thuế suất mua vào (tham khảo) — KCT, 5%, 8%, 10%. Bỏ mã thuế chi tiết, thuế TTĐB.

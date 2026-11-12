@@ -49,6 +49,7 @@ import { branchRoutes } from '../modules/branches/branch.routes.js';
 import { orgUnitRoutes } from '../modules/org-units/org-unit.routes.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
 import { unitNameRoutes } from '../modules/unit-names/unit-name.routes.js';
+import { helpRoutes } from '../modules/help/help.routes.js';
 import { partnerRoutes } from '../modules/partners/partner.routes.js';
 import { connectionRoutes } from '../modules/connections/connection.routes.js';
 import { dimensionRoutes } from '../modules/dimensions/dimension.routes.js';
@@ -84,7 +85,7 @@ import { inventoryReportRoutes } from '../modules/inventory/inventory-report.rou
 
 export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, gatesRoutes, enginesRoutes, devToolsBoardRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
-  accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
+  accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, unitNameRoutes, helpRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, itemRoutes, postingFlowRoutes, postingRuleRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, printProfileRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,

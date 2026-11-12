@@ -615,6 +615,28 @@ export interface UnitNamesTable {
   updated_at: TimestampDefault;
 }
 
+// [2026-11-12 Nguyễn Văn Thủy] thẻ hướng dẫn (0113) (đóng góp)
+export interface HelpCardsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  title: Generated<string>;
+  body: Generated<string>;
+  format: Generated<string>;
+  source_key: Generated<string>;
+  created_by: Generated<string>;
+  updated_by: Generated<string>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+export interface HelpPlacesTable {
+  tenant_id: string;
+  place_key: string;
+  label: Generated<string>;
+  card_id: string | null;
+  updated_by: Generated<string>;
+  updated_at: TimestampDefault;
+}
+
 /** Hoá đơn đầu vào của NCC (0030). */
 export interface SupplierInvoicesTable {
   id: Generated<string>;
@@ -1966,6 +1988,8 @@ export interface Database {
   order_formulas: OrderFormulasTable;
   transfer_requests: TransferRequestsTable;
   unit_names: UnitNamesTable;
+  help_cards: HelpCardsTable;
+  help_places: HelpPlacesTable;
   payment_request_settings: PaymentRequestSettingsTable;
   debt_allocations: DebtAllocationsTable;
   voucher_recurrences: VoucherRecurrencesTable;

@@ -32,6 +32,8 @@ export const heThongMenu: MenuItem[] = [
       // [2026-11-09 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b: HT15 Chính sách (quyền catalog:read; Core, không phải module nghiệp vụ — D031-11)
       { key: 'chinh-sach', label: 'Chính sách', path: '/he-thong/chinh-sach', code: 'HT15', permission: 'catalog:read' },
       { key: 'cau-hinh-he-thong', label: 'Cấu hình hệ thống', path: '/he-thong/cau-hinh', code: 'HT13' },
+      // [2026-11-12 Nguyễn Văn Thủy] HT17 thẻ hướng dẫn sử dụng (đóng góp)
+      { key: 'the-huong-dan', label: 'Thẻ hướng dẫn', path: '/he-thong/huong-dan', code: 'HT17' },
     ],
   },
 ];

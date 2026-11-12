@@ -66,15 +66,11 @@ const EMPTY: FullProduct = {
 
 /** Thuế suất thường dùng → cặp mã VAT ra / vào chuẩn. Mã khác (R08A, V051…) chọn ở "Mã thuế chi tiết". */
 const VAT_RATES = [
+  { key: 'kct', label: 'KCT', out: 'KCT', in: 'V13K' },
+  { key: '5', label: '5%', out: 'R05', in: 'V05' },
   { key: '8', label: '8%', out: 'R08', in: 'V08' },
   { key: '10', label: '10%', out: 'R10', in: 'V10' },
-  { key: '5', label: '5%', out: 'R05', in: 'V05' },
-  { key: '0', label: '0% (hàng xuất khẩu)', out: 'R00', in: 'V00' },
-  { key: 'kct', label: 'Không chịu thuế GTGT (KCT)', out: 'KCT', in: 'V13K' },
 ];
-
-const SIMPLE_OUT = [{ code: 'KCT', label: 'KCT' }, { code: 'R05', label: '5%' }, { code: 'R08', label: '8%' }, { code: 'R10', label: '10%' }];
-const SIMPLE_IN = [{ code: 'V13K', label: 'KCT' }, { code: 'V05', label: '5%' }, { code: 'V08', label: '8%' }, { code: 'V10', label: '10%' }];
 
 const fmt = (n: number | null | undefined) => (n === null || n === undefined ? '' : n.toLocaleString('vi-VN'));
 const parseNum = (s: string): number | null => {
@@ -249,7 +245,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     },
   });
 
-  const vatRate = VAT_RATES.find((r) => r.out === v.taxOutCode && (r.in === v.taxInCode || !v.taxInCode));
+  const vatRate = VAT_RATES.find((r) => r.out === v.taxOutCode);
   const pick = (k: ClassKind) => classes[k].filter((c) => (c.isActive && (k !== 'group' || (depth.get(c.code) ?? 0) >= 3)) || c.code === v[`${k}Code` as const]).map((c) => ({ code: c.code, name: k === 'group' ? groupPath(c.code) : c.name }));
   const tabBtn = (k: typeof tab, label: string) => <button key={k} role="tab" className={`tab ${tab === k ? 'active' : ''}`} onClick={() => setTab(k)}>{label}</button>;
   const flag = (k: 'isMain' | 'isUnder24m' | 'noSale' | 'exportAdjust' | 'isActive', label: string, hint: string) => (
@@ -262,15 +258,14 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   if (!isNew && loaded.isLoading) return <Modal key="dang-tai" wide title="Mặt hàng" onClose={onClose} footer={null}><Loading /></Modal>;
 
   return (<>
-    <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} onClose={onClose}
+    <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} helpKey="mat-hang" onClose={onClose}
       footer={<>
         <button className="btn btn-primary" disabled={save.isPending || !v.sku.trim() || !v.name.trim() || skuLetters || Boolean(sameName)} title={sameName ? `Tên trùng mã ${sameName.sku}` : skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : blockCount ? 'Còn lỗi chặn: mặt hàng được lưu NHÁP, chưa dùng được trên chứng từ cho tới khi sửa xong' : undefined}
           onClick={() => ack.request((a) => save.mutate(a))}>{blockCount ? `Lưu nháp (còn ${blockCount} lỗi chặn)` : ack.label}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
       <div className="tabs full" role="tablist" style={{ marginBottom: 8 }}>
-        {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{tabBtn('acc', 'Kế toán')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}{!isNew && tabBtn('history', 'Lịch sử')}
+        {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}{!isNew && tabBtn('history', 'Lịch sử')}
         <span className="spacer" style={{ flex: 1 }} />
-        <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)} title="Cách khai mặt hàng, ĐVT, giá, sinh mã hàng">? Hướng dẫn</button>
       </div>
       {help && <HelpDrawer guideKey="mat-hang" onClose={() => setHelp(false)} />}
 
@@ -300,6 +295,17 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Loại hàng: đã có Nhóm hàng, bớt khai báo; giá trị cũ giữ nguyên (đóng góp) */}
           <Field label="Barcode" tip="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
           {/* [2026-11-12 Nguyễn Văn Thủy] thẻ Thông tin tối giản: nhóm, mã, tên, barcode, xuất xứ, ảnh, mô tả; ngành / nhãn tự theo nhóm (đóng góp) */}
+          {/* [2026-11-12 Nguyễn Văn Thủy] một ô Thuế suất GTGT (%) — đặt cặp mã thuế ra / vào chuẩn; bỏ thẻ Kế toán (đóng góp) */}
+          <Field label="Thuế suất GTGT (%)">
+            <select className="select input" value={vatRate?.key ?? (v.taxOutCode ? 'other' : '')} onChange={(e) => {
+              const r = VAT_RATES.find((x) => x.key === e.target.value);
+              if (r) set({ taxOutCode: r.out, taxInCode: r.in }); else if (!e.target.value) set({ taxOutCode: null, taxInCode: null });
+            }}>
+              <option value="">(chưa khai)</option>
+              {VAT_RATES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+              {!vatRate && v.taxOutCode && <option value="other">{v.taxOutCode}</option>}
+            </select>
+          </Field>
           <Field label="Xuất xứ"><input className="input" value={v.origin} onChange={(e) => set({ origin: e.target.value })} /></Field>
           <Field label="Ảnh (đường dẫn)" full>
             <div className="row" style={{ gap: 8, alignItems: 'center' }}>
@@ -334,26 +340,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
         </fieldset>
       )}
 
-      {tab === 'acc' && (
-        <fieldset className="fgroup">
-          <legend>Kế toán</legend>
-          {/* [2026-11-12 Nguyễn Văn Thủy] thẻ Kế toán tối giản: thuế bán ra (bán hàng dùng) + thuế mua vào (tham khảo) — KCT, 5%, 8%, 10% (đóng góp) */}
-          <Field label="Thuế suất bán ra" tip="Bán hàng lấy thuế suất theo ô này">
-            <select className="select input" value={v.taxOutCode ?? ''} onChange={(e) => set({ taxOutCode: e.target.value || null })}>
-              <option value="">(chưa khai)</option>
-              {SIMPLE_OUT.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
-              {v.taxOutCode && !SIMPLE_OUT.some((r) => r.code === v.taxOutCode) && <option value={v.taxOutCode}>{v.taxOutCode}</option>}
-            </select>
-          </Field>
-          <Field label="Thuế suất mua vào" tip="Chỉ để tham khảo: phiếu nhập lấy theo hoá đơn nhà cung cấp">
-            <select className="select input" value={v.taxInCode ?? ''} onChange={(e) => set({ taxInCode: e.target.value || null })}>
-              <option value="">(chưa khai)</option>
-              {SIMPLE_IN.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
-              {v.taxInCode && !SIMPLE_IN.some((r) => r.code === v.taxInCode) && <option value={v.taxInCode}>{v.taxInCode}</option>}
-            </select>
-          </Field>
-        </fieldset>
-      )}
       {v.isDraft && <div className="alert alert-warn full"><b>Nháp</b> — mặt hàng chưa kích hoạt, chưa dùng được trên chứng từ (cửa nạp giữ chứng từ ở Trạm kiểm tra với mã IN-ITEM-009). Sửa các lỗi chặn bên dưới, Ghi → tự kích hoạt.</div>}
       <WhyPanel findings={why.findings} onFix={(p) => set(p as Partial<FullProduct>)} />
       <WarnAckBox ack={ack} />

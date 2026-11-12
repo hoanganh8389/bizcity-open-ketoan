@@ -51,6 +51,7 @@ import { ReasonsPage } from './features/posting/ReasonsPage';
 import { ProductAccountsPage } from './features/posting/ProductAccountsPage';
 import { PaymentMethodsPage } from './features/posting/PaymentMethodsPage';
 import { DefaultsPage } from './features/posting/DefaultsPage';
+import { HuongDanPage } from './features/help/HuongDanPage';
 import { VouchersPage } from './features/vouchers/VouchersPage';
 import { CashVouchersPage } from './features/vouchers/CashVouchersPage';
 import { DimensionsPage } from './features/catalog/DimensionsPage';
@@ -135,6 +136,7 @@ export const pageRoutes = (
     <Route path="he-thong/kiem-chuan" element={<ConformancePage />} />
     <Route path="he-thong/ho-so-ke-toan" element={<AccountingProfilePage />} />
     <Route path="he-thong/quy-dinh-danh-muc" element={<CatalogRulesPage />} />
+    <Route path="he-thong/huong-dan" element={<HuongDanPage />} />
     <Route path="he-thong/tru-cot" element={<PillarsPage />} />
     <Route path="he-thong/chinh-sach" element={<PolicyPage />} />
     <Route path="he-thong/cau-hinh" element={<ConfigCenterPage />} />
