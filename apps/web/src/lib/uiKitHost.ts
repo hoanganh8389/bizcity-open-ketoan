@@ -27,6 +27,7 @@ export function installUiKit(): void {
     Modal: (p) => createElement(Modal, { ...p, footer: p.footer ?? null }),
     api: {
       get: (path, query) => api.get(path, query),
+      getPage: (path, query) => api.getPage(path, query),
       post: (path, body) => api.post(path, body),
       put: (path, body) => api.put(path, body),
       // [2026-11-06 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W4: nối patch của client API cho màn module (Role Editor)

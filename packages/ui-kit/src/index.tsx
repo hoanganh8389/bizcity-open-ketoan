@@ -28,6 +28,8 @@ export interface UiKitApi {
   // [2026-11-06 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W4: thêm patch (core.role.update là PATCH); thêm, không đổi phần cũ
   patch<T>(path: string, body: unknown): Promise<T>;
   delete<T>(path: string): Promise<T>;
+  // [2026-11-12 10:40 PM Võ Hoàng] POS-UIKIT — 1.4.0-draft §3b: đọc kèm meta (phân trang, tổng của cả kết quả lọc — ctx.meta của action) (đóng góp)
+  getPage<T>(path: string, query?: ApiQuery): Promise<{ data: T; meta?: Record<string, unknown> }>;
 }
 
 export interface PageHeaderProps { title: string; code?: string; subtitle?: string; actions?: ReactNode }

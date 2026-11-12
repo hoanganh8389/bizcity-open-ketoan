@@ -56,6 +56,7 @@ Luật slot: thành phần chỉ dùng `@bizcity/ui-kit` và client action; lỗ
 | `PeriodField` | `ReportPanel.SideKy` | `from`, `to`, `onChange(from, to)` — kỳ chọn nhanh (tháng này, quý này…) |
 | `BranchCheckList` | `ReportPanel.BranchCheckList` | `value` (mã cách nhau dấu phẩy), `onChange` — tích nhiều chi nhánh, nhớ theo người dùng |
 | `ItemPicker` · `BranchPicker` | `components/pickers` · `components/filters` | `value`, `onChange`, `placeholder?`, `disabled?` |
+| `useApi().getPage(path, query)` | `lib/api.getPage` | trả `{ data, meta }` — `meta` = `ctx.meta` của action (trang, tổng dòng, tổng tiền của cả kết quả lọc); `get` giữ nguyên chỉ trả `data` |
 
 **Ảnh hưởng.** Chỉ thêm vào `packages/ui-kit` và `apps/web/src/lib/uiKitHost.ts`; màn Core không đổi; module cũ không đổi. Kiểu `UiKitImpl` thêm trường → bản thật phải cung cấp (một chỗ duy nhất: `uiKitHost.ts`).
 
