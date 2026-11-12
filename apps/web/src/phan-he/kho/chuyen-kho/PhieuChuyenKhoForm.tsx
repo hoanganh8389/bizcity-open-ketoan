@@ -20,6 +20,7 @@ import { PrintButton } from '@/components/print';
 import { TRADE_TEMPLATES } from '@/components/phieu-hang/printTemplates';
 import { ChonKho, khoCodeOf, useKho } from '@/components/phieu-hang/ChonKho';
 import { DocumentGateBanner, useDocumentGate } from '@/components/PostingGate';
+import { TepChungTu, docRefOf } from '@/components/dinh-kem/TepChungTu';
 import { ckApi, newLineKey, qtyText, statusClass, statusText, toPrintDoc, viDate, type CkDoc, type CkInput, type CkLine } from './api';
 
 interface ItemRow { sku: string; name: string; unit: string }
@@ -258,6 +259,8 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
           </tfoot>
         </table>
       </div>
+      {/* [2026-11-12 kiennt] NT-QUY-001 — đính kèm chứng từ gốc (biên bản giao nhận, lệnh điều động…) theo chứng từ đầu xuất; phiếu mới: ghi trước */}
+      <div className="full"><TepChungTu docRef={docRefOf(value.outDocKey)} defaultKind="bien_ban" /></div>
       {problems.length > 0 && !readOnly && <div className="full muted" style={{ fontSize: 12 }}>Chưa ghi được: {problems.join(' · ')}</div>}
       {Boolean(error) && <div className="alert alert-bad full">{errorText(error)}</div>}
       {paste !== null && <DanExcel onCancel={() => setPaste(null)} onOk={(t) => void onPaste(t)} />}

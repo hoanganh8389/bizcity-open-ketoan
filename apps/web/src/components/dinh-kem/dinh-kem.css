@@ -1,0 +1,26 @@
+/* [2026-11-12 kiennt] NT-QUY-001 — khung đính kèm chứng từ gốc dùng chung (kiểu MISA, gọn: ô tải lên trái, thẻ tệp lưới phải) */
+.dk-box { margin-top: 10px; }
+.dk-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; color: var(--ink-700, #2b3440); font-size: 13px; }
+.dk-head svg { color: var(--ink-500, #66717f); }
+.dk-title { font-weight: 600; }
+.dk-hint { color: var(--ink-500, #8a94a1); margin-left: 4px; }
+.dk-count { margin-left: 6px; padding: 0 6px; border-radius: 9px; background: #eef3fb; color: #2f5fa7; font-size: 12px; }
+.dk-body { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.dk-drop { flex: 0 0 340px; max-width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 8px 14px;
+  border: 1.5px dashed #4f9d69; border-radius: 8px; background: #fafbfa; color: var(--ink-600, #5b6572); font-size: 13px; text-align: center; }
+.dk-drop.on { border-color: #2f80ed; background: #eef5ff; }
+.dk-drop.dk-off { flex: none; display: inline-flex; min-height: 0; padding: 8px 14px; border-color: #c9d1da; color: var(--ink-500, #8a94a1); }
+.dk-link { border: 0; background: none; padding: 0; color: #2f6fe0; font: inherit; cursor: pointer; }
+.dk-link:hover { text-decoration: underline; }
+.dk-msg { margin-top: 6px; }
+.dk-list { flex: 1 1 320px; min-width: 0; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; }
+.dk-list li { display: flex; align-items: center; gap: 6px; min-width: 0; height: 32px; padding: 0 8px; border: 1px solid #e3e8ee; border-radius: 6px; background: #fff; }
+.dk-file { flex: 1; display: inline-flex; align-items: center; gap: 5px; min-width: 0; border: 0; background: none; padding: 0; color: #2f6fe0; font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+.dk-file svg { flex: none; }
+.dk-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-meta { flex: none; color: var(--ink-500, #8a94a1); font-size: 12px; }
+.dk-icon { flex: none; border: 0; background: none; padding: 2px; color: var(--ink-500, #66717f); cursor: pointer; display: inline-flex; }
+.dk-icon:hover { color: var(--ink-800, #1f2933); }
+.dk-del:hover { color: #c0392b; }
+.dk-pdf { width: 100%; height: 72vh; border: 0; }
+.dk-img { display: block; max-width: 100%; max-height: 72vh; margin: 0 auto; }
