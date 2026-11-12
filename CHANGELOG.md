@@ -21,7 +21,7 @@ Mỗi bản ghi đủ sáu mục:
 - Bỏ hộp bắt gõ lý do khi lưu có cảnh báo mềm (mọi form): bấm Ghi là lưu, cảnh báo tự ghi nhận.
 - Bỏ mọi nhắc / chặn **nhóm hạch toán** của mặt hàng (không dùng nữa).
 - Form mặt hàng: nút Ghi luôn bấm được, thiếu mã / tên / ĐVT hay trùng tên thì báo đỏ ngay đầu form (thiếu ĐVT tự mở thẻ Đơn vị tính); bỏ khung "Vì sao" ở cuối form.
-- Ô **Nhóm hàng** chọn theo cây cha – con, có ô tìm; danh sách mặt hàng bỏ cột Ghi chú.
+- Ô **Nhóm hàng** chọn theo cây cha – con, có ô tìm, nút **✕ Đóng**; danh sách mặt hàng bỏ cột Ghi chú. Thuế suất GTGT thêm **0%**.
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Thẻ hướng dẫn sử dụng (HT17)

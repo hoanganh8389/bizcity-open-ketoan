@@ -25,4 +25,5 @@
 .drawer-mask:has(+ .drawer .help-bar) { z-index: 95; }
 .drawer:has(.help-bar) { z-index: 96; }
 /* Ô chọn nhóm hàng dạng cây (form mặt hàng). */
-.cay-nhom-drop { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface, #fff); border: 1px solid var(--line, #e3e7ee); border-radius: 8px; box-shadow: 0 8px 24px rgba(15, 34, 61, .15); padding: 8px; max-height: 420px; overflow: auto; }
+.cay-nhom-drop { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface, #fff); border: 1px solid var(--line, #e3e7ee); border-radius: 8px; box-shadow: 0 8px 24px rgba(15, 34, 61, .15); padding: 8px; max-height: 320px; overflow: auto; }
+.cay-nhom-x { position: sticky; top: 0; float: right; z-index: 1; }

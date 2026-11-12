@@ -128,7 +128,7 @@ export function ProductsPage() {
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
     { key: 'unit', header: 'ĐVT', width: 70 },
     // [2026-11-12 Nguyễn Văn Thủy] một cột Thuế GTGT (%) thay Mã VAT ra / vào, TTĐB (đóng góp)
-    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Thuế suất GTGT bán ra', value: (p) => ({ KCT: 'KCT', R00K: 'KCT', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
+    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Thuế suất GTGT bán ra', value: (p) => ({ KCT: 'KCT', R00K: 'KCT', R00: '0%', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
     // [2026-11-12 Nguyễn Văn Thủy] Trạng thái sản phẩm thay ô Theo dõi: Đang hoạt động / Chờ duyệt / Ngừng hoạt động (đóng góp)
     { key: 'isActive', header: 'Trạng thái', width: 130, title: 'Đang hoạt động · Chờ duyệt (mặt hàng nháp, chưa dùng được trên chứng từ) · Ngừng hoạt động', value: (p) => trangThai(p), render: (p) => <span className={`badge ${!p.isActive ? 'badge-gray' : p.isDraft ? 'badge-warn' : 'badge-ok'}`}>{trangThai(p)}</span> },

@@ -68,6 +68,7 @@ const EMPTY: FullProduct = {
 /** Thuế suất thường dùng → cặp mã VAT ra / vào chuẩn. Mã khác (R08A, V051…) chọn ở "Mã thuế chi tiết". */
 const VAT_RATES = [
   { key: 'kct', label: 'KCT', out: 'KCT', in: 'V13K' },
+  { key: '0', label: '0%', out: 'R00', in: 'V00' },
   { key: '5', label: '5%', out: 'R05', in: 'V05' },
   { key: '8', label: '8%', out: 'R08', in: 'V08' },
   { key: '10', label: '10%', out: 'R10', in: 'V10' },
@@ -403,6 +404,7 @@ function ChonNhomCay({ classes, value, label, onChange }: { classes: ItemClassLi
       </button>
       {open && (
         <div className="cay-nhom-drop">
+          <button type="button" className="btn btn-sm cay-nhom-x" onClick={() => setOpen(false)} title="Đóng (Esc)">✕ Đóng</button>
           <GroupTree classes={classes.filter((c) => c.isActive || c.code === value).map((c) => ({ ...c, products: (c as { products?: number }).products ?? 0 })) as never} value={value} onChange={(c) => { if (c) { onChange(c); setOpen(false); } }} leafOnly autoFocus />
         </div>
       )}
