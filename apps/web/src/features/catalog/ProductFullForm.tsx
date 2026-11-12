@@ -13,8 +13,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
-import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
-import { ListPicker } from '@/components/pickers';
+import { ErrorBox, Field, Loading, Modal, NumInput, useViewAgain } from '@/components/ui';
+import { ListPicker, PartnerPicker } from '@/components/pickers';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { HelpDrawer } from '@/components/HelpDrawer';
 // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
@@ -97,7 +97,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const qc = useQueryClient();
   const isNew = sku === null;
   const [tab, setTab] = useState<string>(startTab ?? 'info');
-  const [savedNew, setSavedNew] = useState(false); // thêm mới: đã ghi xong, đang ở bước Nhà cung cấp
+  // [2026-11-12 Nguyễn Văn Thủy] thêm mới: giá mua theo NCC khai trước khi ghi, ghi cùng mặt hàng (đóng góp)
+  const [nccRows, setNccRows] = useState<NccTam[]>([]);
   const enabled = useEnabledModules();
   const extraTabs = PRODUCT_TABS.filter((t) => !enabled || enabled.has(t.module));
   const buyTab = extraTabs.find((t) => t.key === 'gia-mua');
@@ -234,7 +235,10 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       const newSku = v.sku.trim();
       return (async () => {
         if (!isNew && sku && newSku !== sku) await api.post('/api/v1/items/rename-code', { sku, newSku, reason: 'Sửa mã trên form mặt hàng' });
-        return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(newSku)}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
+        const saved = await api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(newSku)}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
+        const ncc = isNew ? nccRows.filter((r) => r.partnerCode && r.unit) : [];
+        if (ncc.length) await api.post('/api/v1/purchase/supplier-products', { rows: ncc.map((r) => ({ partnerCode: r.partnerCode, sku: newSku, unit: r.unit, price: r.price, priceIncludesVat: false, validFrom: r.validFrom || undefined, nccSku: r.nccSku, nccName: '', note: '', isActive: true, warnPct: 2, isDefaultUnit: false })) });
+        return saved;
       })();
     },
     onSuccess: () => {
@@ -246,8 +250,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       void qc.invalidateQueries({ queryKey: ['unit-names'] });
       void qc.invalidateQueries({ queryKey: ['inventory-items'] });
       if (isNew) onSaved?.(v.sku.trim());
-      // Thêm mới theo bước: ghi xong chuyển sang bước Nhà cung cấp (nếu bật mua hàng), không thì đóng.
-      if (isNew && buyTab) { setSavedNew(true); setErrMsg(''); setTab(buyTab.key); return; }
       if (isNew || v.sku.trim() !== sku) onClose(); else viewAgain[1]();
     },
   });
@@ -257,15 +259,16 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const STEPS = [
     { k: 'info', t: 'Thông tin chung' },
     { k: 'units', t: 'Đơn vị tính' },
+    ...(buyTab ? [{ k: 'mua', t: 'Khai báo giá mua' }] : []),
     { k: 'status', t: 'Bán hàng & giá' },
     { k: 'review', t: 'Xem lại & ghi' },
-    ...(buyTab ? [{ k: buyTab.key, t: 'Nhà cung cấp' }] : []),
   ];
   const stepIdx = Math.max(0, STEPS.findIndex((x) => x.k === tab));
   const stepErr = (k: string): string => {
-    if (k === 'info') return !v.groupCode ? 'Chọn nhóm hàng.' : !v.sku.trim() ? 'Chưa có mã hàng (chọn nhóm là tự sinh).' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.'
+    if (k === 'info') return !v.groupCode ? 'Chọn nhóm hàng (tới nhóm cấp 3).' : (depth.get(v.groupCode) ?? 0) < 3 ? 'Nhóm hàng phải chọn tới cấp 3 (nhóm sản phẩm).' : !v.sku.trim() ? 'Chưa có mã hàng (chọn nhóm là tự sinh).' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.'
       : !v.name.trim() ? 'Chưa nhập tên hàng.' : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !v.taxOutCode ? 'Chọn thuế suất GTGT.' : '';
     if (k === 'units') return !baseUnit ? 'Chưa khai đơn vị tính nhỏ nhất (vd Hộp, Lon, Cái).' : '';
+    if (k === 'mua') return nccRows.some((r) => !r.partnerCode) ? 'Còn dòng chưa chọn nhà cung cấp (chọn hoặc bỏ dòng đó).' : '';
     return '';
   };
   const next = () => {
@@ -273,7 +276,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     if (!e) setTab(STEPS[stepIdx + 1]!.k);
   };
   const goStep = (i: number) => {
-    if (savedNew || i > stepIdx) return; // chỉ quay lại bước trước; đi tới bằng Tiếp tục
+    if (i > stepIdx) return; // chỉ quay lại bước trước; đi tới bằng Tiếp tục
     setErrMsg(''); setTab(STEPS[i]!.k);
   };
   const companyList = lists.find((l) => l.isCompany);
@@ -294,15 +297,15 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} helpKey="mat-hang" onClose={onClose}
       footer={isNew ? (
         <>
-          <span className="muted" style={{ marginRight: 'auto', fontSize: 12.5 }}>Bước {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx]!.t}{savedNew ? ' · mặt hàng đã ghi' : ''}</span>
-          {!savedNew && stepIdx > 0 && <button className="btn" onClick={() => { setErrMsg(''); setTab(STEPS[stepIdx - 1]!.k); }}>‹ Quay lại</button>}
-          {!savedNew && tab !== 'review' && <button className="btn btn-primary" onClick={next}>Tiếp tục ›</button>}
-          {!savedNew && tab === 'review' && <button className="btn btn-primary" disabled={save.isPending} onClick={() => {
-            const e = stepErr('info') || stepErr('units'); setErrMsg(e);
-            if (e) { setTab(stepErr('info') ? 'info' : 'units'); return; }
+          <span className="muted" style={{ marginRight: 'auto', fontSize: 12.5 }}>Bước {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx]!.t}</span>
+          {stepIdx > 0 && <button className="btn" onClick={() => { setErrMsg(''); setTab(STEPS[stepIdx - 1]!.k); }}>‹ Quay lại</button>}
+          {tab !== 'review' && <button className="btn btn-primary" onClick={next}>Tiếp tục ›</button>}
+          {tab === 'review' && <button className="btn btn-primary" disabled={save.isPending} onClick={() => {
+            const bad = ['info', 'units', 'mua'].find((k) => stepErr(k)); const e = bad ? stepErr(bad) : ''; setErrMsg(e);
+            if (bad) { setTab(bad); return; }
             ack.request((a) => save.mutate(a));
           }}>{save.isPending ? 'Đang ghi…' : 'Ghi mặt hàng'}</button>}
-          {savedNew ? <button className="btn btn-primary" onClick={onClose}>Hoàn tất</button> : <button className="btn" onClick={onClose}>Huỷ bỏ</button>}
+          <button className="btn" onClick={onClose}>Huỷ bỏ</button>
         </>
       ) : <>
         <button className="btn btn-primary" disabled={save.isPending}
@@ -318,7 +321,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {errMsg && <div className="alert alert-bad full" style={{ marginBottom: 8 }}>{errMsg}</div>}
       {isNew ? (
         <div className="full nx-steps them-mh-steps">
-          {STEPS.map((x, i) => <span key={x.k} role="button" tabIndex={-1} onClick={() => goStep(i)} className={i === stepIdx ? 'on' : i < stepIdx || savedNew ? 'xong' : undefined} title={i < stepIdx && !savedNew ? 'Quay lại bước này' : undefined}><b>{i < stepIdx || (savedNew && i < STEPS.length - 1) ? '✓' : i + 1}</b>{x.t}</span>)}
+          {STEPS.map((x, i) => <span key={x.k} role="button" tabIndex={-1} onClick={() => goStep(i)} className={i === stepIdx ? 'on' : i < stepIdx ? 'xong' : undefined} title={i < stepIdx ? 'Quay lại bước này' : undefined}><b>{i < stepIdx ? '✓' : i + 1}</b>{x.t}</span>)}
         </div>
       ) : <div className="tabs full" role="tablist" style={{ marginBottom: 8 }}>
         {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}{!isNew && tabBtn('history', 'Lịch sử')}
@@ -330,9 +333,11 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {tab === 'info' && (
         <fieldset className="fgroup">
           <legend>Thông tin mặt hàng</legend>
-          <Field label="Nhóm hàng" full tip="Chọn nhóm là xong: ngành, nhãn tự điền; mặt hàng mới tự sinh mã = ngành (2) + nhãn (3) + nhóm (1) + số thứ tự (3)">
-            <ChonNhomCay classes={classes.group} value={v.groupCode} label={v.groupCode ? groupPath(v.groupCode) : ''} onChange={pickGroup} />
+          <Field label={isNew ? 'Nhóm hàng (*)' : 'Nhóm hàng'} full tip="Chọn nhóm là xong: mã hàng tự sinh theo nhóm" hint={isNew && !v.groupCode ? 'Chọn nhóm hàng trước — mã hàng tự sinh theo nhóm, các ô khác hiện ra sau khi chọn' : undefined}>
+            <ChonNhomCay classes={classes.group} value={v.groupCode} label={v.groupCode ? groupPath(v.groupCode) : ''} onChange={pickGroup} defaultOpen={isNew && !v.groupCode} />
           </Field>
+          {/* [2026-11-12 Nguyễn Văn Thủy] thêm mới: chọn nhóm hàng trước, các ô khác hiện sau (đóng góp) */}
+          {(!isNew || v.groupCode) && <>
           {/* [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — rà form mặt hàng (đóng góp): Nhóm → Mã → Tên lên đầu; thêm mới = mã cha toàn số, không chọn mã cha;
               tên không trùng (báo ngay); Biến thể không cho đổi sang Nội bộ khi đã có nhập xuất. */}
           <Field label="Mã hàng (*)" hint={skuErr || (skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : undefined)}>
@@ -376,6 +381,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             </div>
           </Field>
           <Field label="Mô tả" full><textarea className="input" rows={3} value={v.description} onChange={(e) => set({ description: e.target.value })} /></Field>
+          </>}
         </fieldset>
       )}
 
@@ -387,9 +393,9 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {isNew && tab === 'status' && <div className="full muted" style={{ fontSize: 12.5, margin: '2px 0 6px' }}>Không bắt buộc: tích các trạng thái cần, khai giá bán (khai sau ở thẻ Giá bán cũng được).</div>}
       {(tab === 'prices' || (isNew && tab === 'status')) && <GiaBan units={v.units} prices={v.prices} lists={lists} shown={shownLists} setShown={setShownLists} setPrice={setPrice} onlyCompany={v.isMain} />}
 
-      {isNew && savedNew && tab === buyTab?.key && <div className="alert alert-ok full" style={{ marginBottom: 8 }}>Đã ghi mặt hàng <b className="mono">{v.sku}</b> — {v.name}. Khai giá mua của nhà cung cấp ngay bên dưới (không bắt buộc), xong bấm <b>Hoàn tất</b>.</div>}
-      {tab === 'review' && <XemLai v={v} groupLabel={v.groupCode ? groupPath(v.groupCode) : ''} vatLabel={vatRate?.label ?? v.taxOutCode ?? ''} baseUnit={baseUnit} companyPrice={companyPrice} companyName={companyList?.name} />}
-      {extraTabs.filter((t) => t.key === tab).map((t) => <t.Component key={t.key} sku={isNew ? (savedNew ? v.sku : '') : v.sku} name={v.name} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} />)}
+      {isNew && tab === 'mua' && <NccTamBang rows={nccRows} setRows={setNccRows} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} mainUnit={v.units.find((u) => u.isPurchaseDefault)?.unit ?? v.units.find((u) => u.isDefault)?.unit ?? baseUnit} vatLabel={vatRate?.label ?? ''} />}
+      {tab === 'review' && <XemLai v={v} groupLabel={v.groupCode ? groupPath(v.groupCode) : ''} vatLabel={vatRate?.label ?? v.taxOutCode ?? ''} baseUnit={baseUnit} companyPrice={companyPrice} companyName={companyList?.name} ncc={nccRows} />}
+      {extraTabs.filter((t) => t.key === tab).map((t) => <t.Component key={t.key} sku={isNew ? '' : v.sku} name={v.name} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} />)}
 
       {tab === 'status' && (
         <fieldset className="fgroup">
@@ -436,8 +442,23 @@ function MaHangGiaiThich({ sku, hint, auto, isNew }: { sku: string; hint: SkuPre
 }
 
 // [2026-11-12 Nguyễn Văn Thủy] ô chọn Nhóm hàng dạng cây cha – con có ô tìm; chỉ chọn nhóm cuối (đóng góp)
-function ChonNhomCay({ classes, value, label, onChange }: { classes: ItemClassLite[]; value: string | null; label: string; onChange: (c: string) => void }) {
-  const [open, setOpen] = useState(false);
+function ChonNhomCay({ classes, value, label, onChange, defaultOpen }: { classes: ItemClassLite[]; value: string | null; label: string; onChange: (c: string) => void; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(defaultOpen));
+  const [msg, setMsg] = useState('');
+  // Cấp của từng nhóm (1 = gốc); chỉ cho chọn từ cấp 3.
+  const lv = useMemo(() => {
+    const by = new Map(classes.map((c) => [c.code, c]));
+    const m = new Map<string, number>();
+    const of = (code: string, seen = new Set<string>()): number => {
+      if (m.has(code)) return m.get(code)!;
+      const c = by.get(code); if (!c || seen.has(code)) return 0;
+      seen.add(code);
+      const d = c.parentCode && by.has(c.parentCode) && c.parentCode !== code ? of(c.parentCode, seen) + 1 : 1;
+      m.set(code, d); return d;
+    };
+    classes.forEach((c) => of(c.code));
+    return m;
+  }, [classes]);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -454,7 +475,12 @@ function ChonNhomCay({ classes, value, label, onChange }: { classes: ItemClassLi
       {open && (
         <div className="cay-nhom-drop">
           <button type="button" className="btn btn-sm cay-nhom-x" onClick={() => setOpen(false)} title="Đóng (Esc)">✕ Đóng</button>
-          <GroupTree classes={classes.filter((c) => c.isActive || c.code === value).map((c) => ({ ...c, products: (c as { products?: number }).products ?? 0 })) as never} value={value} onChange={(c) => { if (c) { onChange(c); setOpen(false); } }} leafOnly autoFocus />
+          <GroupTree classes={classes.filter((c) => c.isActive || c.code === value).map((c) => ({ ...c, products: (c as { products?: number }).products ?? 0 })) as never} value={value} onChange={(c) => {
+            if (!c) return;
+            if ((lv.get(c) ?? 0) < 3) { setMsg('Chỉ chọn được nhóm cấp 3 (nhóm sản phẩm). Bấm vào nhóm để mở tiếp.'); return; }
+            setMsg(''); onChange(c); setOpen(false);
+          }} leafOnly autoFocus />
+          {msg && <div className="neg" style={{ fontSize: 12.5, marginTop: 4 }}>{msg}</div>}
         </div>
       )}
     </div>
@@ -462,7 +488,7 @@ function ChonNhomCay({ classes, value, label, onChange }: { classes: ItemClassLi
 }
 
 // [2026-11-12 Nguyễn Văn Thủy] bước Xem lại khi thêm mặt hàng (đóng góp)
-function XemLai({ v, groupLabel, vatLabel, baseUnit, companyPrice, companyName }: { v: FullProduct; groupLabel: string; vatLabel: string; baseUnit: string; companyPrice?: number | null; companyName?: string }) {
+function XemLai({ v, groupLabel, vatLabel, baseUnit, companyPrice, companyName, ncc }: { v: FullProduct; groupLabel: string; vatLabel: string; baseUnit: string; companyPrice?: number | null; companyName?: string; ncc: NccTam[] }) {
   const units = v.units.filter((u) => u.unit.trim());
   const flags = [v.isMain && 'Hàng chính', v.isUnder24m && 'Sữa trẻ dưới 24 tháng', v.noSale && 'Không được bán', v.exportAdjust && 'Được xuất điều chỉnh'].filter(Boolean) as string[];
   const row = (k: string, val: React.ReactNode) => <div className="xl-row"><span>{k}</span><b>{val || <span className="muted" style={{ fontWeight: 400 }}>—</span>}</b></div>;
@@ -470,7 +496,40 @@ function XemLai({ v, groupLabel, vatLabel, baseUnit, companyPrice, companyName }
     <div className="full xem-lai">
       <section><h4>Thông tin chung</h4>{row('Nhóm hàng', groupLabel)}{row('Mã hàng', <span className="mono">{v.sku}</span>)}{row('Tên hàng', v.name)}{row('Thuế suất GTGT', vatLabel)}{row('Barcode', v.barcode)}{row('Xuất xứ', v.origin)}{row('Trạng thái', v.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động')}</section>
       <section><h4>Đơn vị tính</h4>{row('Nhỏ nhất', baseUnit)}{units.filter((u) => Number(u.ratio) !== 1).map((u) => <div key={u.unit} className="xl-row"><span>{u.unit}</span><b>= {u.ratio} {baseUnit}</b></div>)}{row('Bán chính', units.find((u) => u.isDefault)?.unit ?? baseUnit)}</section>
+      <section><h4>Giá mua</h4>{ncc.filter((r) => r.partnerCode).length ? ncc.filter((r) => r.partnerCode).map((r, i) => <div key={i} className="xl-row"><span className="mono">{r.partnerCode}</span><b>{r.price !== null ? `${r.price.toLocaleString('vi-VN')} / ${r.unit}` : `chưa khai giá · ${r.unit}`}</b></div>) : row('Nhà cung cấp', '')}</section>
       <section><h4>Bán hàng & giá</h4>{row('Trạng thái bán', flags.join(' · '))}{row(`Giá ${companyName ?? 'công ty'}`, companyPrice ? companyPrice.toLocaleString('vi-VN') : '')}</section>
+    </div>
+  );
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] bước Mua hàng khi thêm mặt hàng: nhà cung cấp + giá mua khai trước, ghi cùng mặt hàng (đóng góp)
+interface NccTam { partnerCode: string; unit: string; price: number | null; validFrom: string; nccSku: string }
+function NccTamBang({ rows, setRows, units, mainUnit, vatLabel }: { rows: NccTam[]; setRows: (f: (r: NccTam[]) => NccTam[]) => void; units: string[]; mainUnit: string; vatLabel: string }) {
+  const today = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+  const set = (i: number, p: Partial<NccTam>) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...p } : r)));
+  const add = () => setRows((rs) => [...rs, { partnerCode: '', unit: mainUnit || units[0] || '', price: null, validFrom: today, nccSku: '' }]);
+  return (
+    <div className="full">
+      <div className="row" style={{ gap: 8, alignItems: 'center', marginBottom: 8 }}>
+        <button type="button" className="btn btn-sm btn-primary" onClick={add}>+ Thêm nhà cung cấp</button>
+        <span className="muted" style={{ fontSize: 12.5 }}>Nhà cung cấp nào bán mã này, giá mua chưa thuế theo ĐVT{vatLabel ? ` (thuế ${vatLabel})` : ''}. Không bắt buộc — khai sau ở thẻ Mua hàng cũng được.</span>
+      </div>
+      {rows.length > 0 && (
+        <table className="mh-mini ncc-tam">
+          <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 150 }} title="Giá mua theo ĐVT, chưa thuế">Giá mua chưa thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 150 }}>Mã bên NCC</th><th style={{ width: 50 }} /></tr></thead>
+          <tbody>{rows.map((r, i) => (
+            <tr key={i}>
+              <td><PartnerPicker value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
+              <td><select className="select input" value={r.unit} onChange={(e) => set(i, { unit: e.target.value })}>{units.map((u) => <option key={u} value={u}>{u}</option>)}</select></td>
+              <td><NumInput value={r.price} onChange={(n) => set(i, { price: n })} /></td>
+              <td><input className="input" type="date" value={r.validFrom} onChange={(e) => set(i, { validFrom: e.target.value })} /></td>
+              <td><input className="input mono" value={r.nccSku} onChange={(e) => set(i, { nccSku: e.target.value })} /></td>
+              <td><button type="button" className="btn btn-xs" title="Bỏ dòng" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>✕</button></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      )}
+      {!rows.length && <div className="muted" style={{ padding: '12px 4px' }}>Chưa có nhà cung cấp. Bấm <b>+ Thêm nhà cung cấp</b> để khai giá mua.</div>}
     </div>
   );
 }

@@ -30,7 +30,7 @@ interface ItemClass { code: string; name: string; parentCode: string | null; isA
 const trangThai = (p: { isActive: boolean; isDraft?: boolean }) => (!p.isActive ? 'Ngừng hoạt động' : p.isDraft ? 'Chờ duyệt' : 'Đang hoạt động');
 
 interface Product {
-  sku: string; name: string; unit: string; postingGroupCode: string | null;
+  sku: string; name: string; unit: string; postingGroupCode: string | null; createdAt?: string; createdBy?: string;
   brandCode: string | null; industryCode: string | null; groupCode: string | null; typeCode: string | null; isActive: boolean; sourceSystem: string;
   /** Nháp (PHASE-024 S024-28): còn lỗi chặn, chưa dùng được trên chứng từ. */
   isDraft?: boolean; draftCodes?: string[];
@@ -131,6 +131,9 @@ export function ProductsPage() {
     { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Thuế suất GTGT bán ra', value: (p) => ({ KCT: 'KCT', R00K: 'KCT', R00: '0%', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
     // [2026-11-12 Nguyễn Văn Thủy] Trạng thái sản phẩm thay ô Theo dõi: Đang hoạt động / Chờ duyệt / Ngừng hoạt động (đóng góp)
+    // [2026-11-12 Nguyễn Văn Thủy] truy vết: người tạo, lúc tạo (0114) (đóng góp)
+    { key: 'createdBy', header: 'Người tạo', width: 140, title: 'Người thêm mặt hàng; "Hệ thống (…)" = thêm tự động', value: (p) => p.createdBy ?? '' },
+    { key: 'createdAt', header: 'Lúc tạo', width: 140, title: 'Thời điểm thêm mặt hàng', value: (p) => (p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '') },
     { key: 'isActive', header: 'Trạng thái', width: 130, title: 'Đang hoạt động · Chờ duyệt (mặt hàng nháp, chưa dùng được trên chứng từ) · Ngừng hoạt động', value: (p) => trangThai(p), render: (p) => <span className={`badge ${!p.isActive ? 'badge-gray' : p.isDraft ? 'badge-warn' : 'badge-ok'}`}>{trangThai(p)}</span> },
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
@@ -168,6 +171,10 @@ export function ProductsPage() {
                   <input className="input" style={{ width: 220, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên" />
                   <button className="btn btn-sm" type="submit">Tìm</button>
                 </form>
+                <span className="seg" role="tablist" title="Mặt hàng thêm trong ngày hôm nay (mới nhất trên cùng)">
+                  <button type="button" className={`btn btn-sm${!f.createdFrom ? ' btn-primary' : ''}`} onClick={() => set({ createdFrom: '' })}>Tất cả</button>
+                  <button type="button" className={`btn btn-sm${f.createdFrom ? ' btn-primary' : ''}`} onClick={() => set({ createdFrom: new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10) })}>Thêm hôm nay</button>
+                </span>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
                   <option value="all">Mọi trạng thái</option><option value="active">Đang hoạt động</option><option value="draft">Chờ duyệt</option><option value="inactive">Ngừng hoạt động</option>
                 </select>

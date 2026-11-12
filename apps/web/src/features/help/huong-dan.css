@@ -25,7 +25,7 @@
 .drawer-mask:has(+ .drawer .help-bar) { z-index: 95; }
 .drawer:has(.help-bar) { z-index: 96; }
 /* Ô chọn nhóm hàng dạng cây (form mặt hàng). */
-.cay-nhom-drop { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface, #fff); border: 1px solid var(--line, #e3e7ee); border-radius: 8px; box-shadow: 0 8px 24px rgba(15, 34, 61, .15); padding: 8px; max-height: 320px; overflow: auto; }
+.cay-nhom-drop { position: relative; margin-top: 4px; background: var(--surface, #fff); border: 1px solid var(--line, #e3e7ee); border-radius: 8px; box-shadow: 0 8px 24px rgba(15, 34, 61, .15); padding: 8px; max-height: 320px; overflow: auto; }
 .cay-nhom-x { position: sticky; top: 0; float: right; z-index: 1; }
 
 /* [2026-11-12 Nguyễn Văn Thủy] Thêm mặt hàng theo bước (đóng góp) */
@@ -33,7 +33,7 @@
 .them-mh-steps > span { cursor: default; }
 .them-mh-steps > span.xong { cursor: pointer; color: var(--ink-700); }
 .them-mh-steps > span.xong:hover { color: var(--brand-700); }
-.xem-lai { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.xem-lai { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .xem-lai section { border: 1px solid var(--line, #e3e7ee); border-radius: 8px; padding: 10px 12px; background: var(--surface, #fff); }
 .xem-lai h4 { margin: 0 0 8px; font-size: 13px; color: var(--brand-700, #1d4f8f); }
 .xl-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px dashed var(--line-soft, #eef1f5); font-size: 13px; }

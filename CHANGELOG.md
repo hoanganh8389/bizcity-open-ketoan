@@ -11,6 +11,10 @@ Mỗi bản ghi đủ sáu mục:
 - **Bảo mật**
 
 ## [Chưa phát hành]
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Thêm mặt hàng: bước 1 bắt buộc chọn nhóm hàng cấp 3 (cây chọn ngay trong hộp thoại), bước "Khai báo giá mua" trước bước Bán hàng; giá mua ghi cùng mặt hàng.
+- Danh sách mặt hàng: nút lọc "Thêm hôm nay", cột Người tạo và Lúc tạo để truy vết (cột `products.created_by`, migration 0114).
+
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Thêm mặt hàng theo từng bước

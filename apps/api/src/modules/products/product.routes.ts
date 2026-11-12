@@ -140,6 +140,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         search: z.string().trim().optional(),
         brand: z.string().optional(), industry: z.string().optional(), group: z.string().optional(), type: z.string().optional(),
         postingGroup: z.string().optional().describe('Mã nhóm hạch toán; "-" = chưa gán'),
+        createdFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Chỉ mặt hàng tạo từ ngày này (giờ Việt Nam)'),
         status: z.enum(['all', 'active', 'inactive', 'draft']).default('all').describe('active = đang dùng, KHÔNG gồm nháp (ô chọn của phiếu); draft = chỉ nháp'),
         parent: z.string().trim().max(64).optional().describe('Mã hàng cha: liệt kê các mã con của mã này'),
         variant: z.string().trim().max(32).optional().describe('Mã biến thể (0078)'),
@@ -169,16 +170,17 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       if (f.status === 'draft') q = q.where('is_draft', '=', true);
       else if (f.status === 'active') q = q.where('is_active', '=', true).where('is_draft', '=', false);
       else if (f.status === 'inactive') q = q.where('is_active', '=', false);
+      if (f.createdFrom) q = q.where(sql<boolean>`created_at >= (${f.createdFrom}::date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')`);
       if (f.parent) q = q.where('parent_sku', '=', f.parent);
       if (f.variant) q = q.where(sql<boolean>`variant_code = ${f.variant}`);
       const [rows, total] = await Promise.all([
-        q.selectAll().orderBy('sku').limit(f.pageSize).offset((f.page - 1) * f.pageSize).execute(),
+        q.selectAll().$if(Boolean(f.createdFrom), (x) => x.orderBy('created_at', 'desc')).orderBy('sku').limit(f.pageSize).offset((f.page - 1) * f.pageSize).execute(),
         db.selectFrom(q.select(sql`1`.as('x')).limit(COUNT_CAP + 1).as('c')).select((eb) => eb.fn.countAll<string>().as('n')).executeTakeFirst(),
       ]);
       return ok(rows.map((p) => ({
         sku: p.sku, name: p.name, unit: p.unit, postingGroupCode: p.posting_group_code, brandCode: p.brand_code, industryCode: p.industry_code,
         groupCode: p.group_code, typeCode: p.type_code, isActive: p.is_active, isDraft: p.is_draft, draftCodes: p.draft_codes, sourceSystem: p.source_system,
-        note: p.note, exciseRate: p.excise_rate === null ? null : Number(p.excise_rate), taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, updatedAt: p.updated_at, parentSku: p.parent_sku,
+        note: p.note, exciseRate: p.excise_rate === null ? null : Number(p.excise_rate), taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, updatedAt: p.updated_at, parentSku: p.parent_sku, createdAt: p.created_at, createdBy: p.created_by,
         variantCode: (p as unknown as { variant_code: string }).variant_code,
         sendToTax: (p as unknown as { send_to_tax?: boolean }).send_to_tax ?? true, // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
       })), pageMeta(f, Number(total?.n ?? 0)));

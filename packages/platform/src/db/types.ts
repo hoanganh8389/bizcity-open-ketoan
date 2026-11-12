@@ -584,6 +584,7 @@ export interface ProductsTable {
   /** Mã lỗi chặn khiến còn nháp (ITEM-BLOCK-*). */
   draft_codes: Generated<string[]>;
   /** Lúc thêm mặt hàng (0063). */
+  created_by: Generated<string>;
   created_at: TimestampDefault;
 }
 

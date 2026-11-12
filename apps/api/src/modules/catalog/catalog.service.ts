@@ -217,7 +217,7 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   // Đơn vị nhỏ nhất (tỉ lệ 1) là ĐVT của mặt hàng.
   if (b.units) patch.unit = b.units.find((u) => Number(u.ratio) === 1)!.unit.trim();
   if (!exists) {
-    await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual' }).execute();
+    await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual', created_by: actor }).execute();
   }
   await trx.updateTable('products').set(patch).where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
   // [2026-11-12 Nguyễn Văn Thủy] Biến thể / Gửi lên thuế không nhận từ người dùng: trigger products_variant_fill suy theo mã (0111), đuôi Z = không gửi thuế (đóng góp)
