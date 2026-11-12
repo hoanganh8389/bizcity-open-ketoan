@@ -368,6 +368,10 @@ Phạm vi: S031-30. Mở ô cuối còn thiếu của [20 §4](20-TRUY-VET-VA-TH
 6. **Module `pos`** (S031-16): đơn nhận dòng quà (`isGift`, giá 0) và dòng giảm theo chương trình, mỗi dòng có `policyRef`; đầu phiếu `policyRefs` = các bản đã áp. Dòng quà / giảm thiếu `policyRef` → `POS_GIFT_WITHOUT_POLICY`. Module **không tự tính lại** (không có đường gọi luật); cửa nạp kiểm (`IN-POL-001..004`, mặc định cảnh báo — Q031-2). Hàng tặng không gửi thuế (mã Z) đi chung phiếu, không lên hoá đơn điện tử (như hiện nay).
 7. **Máy bán**: gọi thẳng `POST /api/v1/policies/evaluate` của Core — vé WP của máy bán thêm `catalog:read` (chỉ đọc; thu ngân vốn đã xem danh mục, giá). Đề xuất về sau: `ctx.policies.evaluate` ở module SDK để module tự kiểm lại.
 
+**Phát hiện khi làm (đề xuất cho chủ Kernel, ngoài phạm vi đợt):** <!-- [2026-11-12 11:05 PM Võ Hoàng] POS-KM — ghi khi code (đóng góp) -->
+-  so quà theo  ở từng phía: dòng quà nguồn có  mà luật chỉ trả mã (khuôn BH12 chỉ biết mã) thì báo lệch giả. Đề xuất:  quy cả hai phía về  (tra theo mã tại ngày chứng từ) trước khi so. Đợt này module  gửi dòng quà theo chương trình **chỉ kèm mã** (cửa nạp tự tra mặt hàng).
+- Gửi lại bản 2 (cùng nội dung) của phiếu bán có  bị  — có sẵn trên  (thử với chính sách inline , không dính BH12). Máy bán POS không gửi lại phiếu nên chưa vướng; nguồn khác (Woo, sàn) sẽ vướng.
+
 **Ngoài đợt này:** bậc, quà theo tổng đơn, voucher, combo, mua bất kỳ tặng món rẻ nhất, khung giờ / sinh nhật, áp riêng (exclusive), trần NĐ81, trả hạn mức theo phiếu trả, công cụ chuyển CTKM từ plugin website. `sale.price_list@1`, `sale.credit_limit@1` của S031-15 vẫn để `modules/ban-hang` (S030-16).
 
 **Kiểm bằng:** `apps/api/test/rule-contract-sale-program.test.ts` (vectors qua hàm thuần + endpoint), `apps/api/test/nt-bh-003-ban-hang-chuong-trinh.test.ts` (BH12 → evaluate → phiếu bán → hạn mức trừ / trả), `apps/api/test/nt-bh-003-pos-khuyen-mai.test.ts` (module `pos`).
