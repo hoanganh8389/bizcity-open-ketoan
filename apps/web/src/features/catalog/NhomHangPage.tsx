@@ -245,7 +245,7 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
           {(!len || khoa) ? <div className="nh-chi-xem mono">{ma || '—'}</div> : <input className="input mono" value={ma} maxLength={len || 1} placeholder={len ? QUY_TAC[lv] : ''}
             onChange={(e) => { setMa(e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase()); setErr(''); }} />}
           {khoa
-            ? <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>🔒 Nhóm đã có {soMH} mặt hàng — không đổi mã ngắn, không chuyển nhóm (mã hàng đã ghép theo). Đổi tên thì được.</div>
+            ? <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>🔒 Đã có {soMH} mặt hàng — giữ nguyên mã ngắn</div>
             : loiMa
             ? <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>{loiMa}</div>
             : <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{len ? `Cấp ${lv}: ${QUY_TAC[lv]}` : 'Cấp 4 trở đi không ghép vào mã hàng'}</div>}

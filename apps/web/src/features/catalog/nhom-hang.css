@@ -25,8 +25,8 @@
 .nh-act .btn { margin-left: 4px; }
 .nh-table tr.nh-vua td { background: #fff7d6; }
 .nh-table td.mono { white-space: nowrap; }
-.nh-act .btn { background: transparent; }
-.nh-table tr:hover .nh-act .btn { background: var(--surface, #fff); }
+.nh-act .btn:not(.btn-primary) { background: transparent; }
+.nh-table tr:hover .nh-act .btn:not(.btn-primary) { background: var(--surface, #fff); }
 .nh-full { color: var(--ink-700, #374151); font-size: 12.5px; }
 
 /* Lưới kẻ ô như các bảng khác, dòng gọn một hàng */

@@ -44,7 +44,7 @@ Một bảng dạng cây. Mỗi dòng: Mã ngắn, Mã nhóm hàng, Tên nhóm h
 ## Phần mềm tự chặn
 
 - Mã ngắn phải **đúng số ký tự** của cấp (gợi ý luôn hiện dưới ô, sai thì báo đỏ). Hai nhóm cùng cha không trùng mã ngắn.
-- **Nhóm (hoặc nhóm con bên dưới) đã có mặt hàng: không đổi mã ngắn, không chuyển nhóm** — mã hàng đã ghép theo. Đổi tên vẫn được.
+- **Nhóm (hoặc nhóm con bên dưới) đã có mặt hàng: không đổi mã ngắn, không chuyển nhóm** — mã hàng đã ghép theo.
 - Mã nhóm hàng không được trùng nhóm khác trong hệ thống.
 - Không chuyển một nhóm vào nhánh con của chính nó.
 

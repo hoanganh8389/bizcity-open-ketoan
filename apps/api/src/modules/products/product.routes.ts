@@ -559,7 +559,7 @@ export const productWriteActions: AnyActionDef[] = [
           const sub = new Set([c]);
           for (let grew = true; grew;) { grew = false; for (const x of all) if (x.parent_code && sub.has(x.parent_code) && !sub.has(x.code)) { sub.add(x.code); grew = true; } }
           const used = await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('group_code', 'in', [...sub]).limit(1).executeTakeFirst();
-          if (used) throw Errors.conflict(`Nhóm đã có mặt hàng (vd ${used.sku}): không đổi mã ngắn, không chuyển nhóm — chỉ đổi tên, Đang dùng`);
+          if (used) throw Errors.conflict(`Nhóm đã có mặt hàng (vd ${used.sku}): giữ nguyên mã ngắn và nhóm cha`);
         }
         if (len && changed) {
           const v = (b.skuCode ?? old?.sku_code ?? '').toUpperCase();
