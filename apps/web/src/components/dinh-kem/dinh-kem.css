@@ -1,0 +1,8 @@
+/* [2026-11-12 kiennt] NT-QUY-001 — khung đính kèm chứng từ gốc dùng chung */
+.dk-box { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--tbl-line, #dfe6ee); border-radius: 8px; background: var(--surface, #fff); }
+.dk-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.dk-drop { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border: 2px dashed #b8cbe4; border-radius: 8px; background: #f7fbff; color: var(--ink-600, #44515f); font-size: 13px; }
+.dk-drop.on { border-color: var(--brand-500, #2f80ed); background: #eaf3ff; }
+.dk-table { width: 100%; }
+.dk-pdf { width: 100%; height: 72vh; border: 0; }
+.dk-img { display: block; max-width: 100%; max-height: 72vh; margin: 0 auto; }
