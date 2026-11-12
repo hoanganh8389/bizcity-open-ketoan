@@ -48,7 +48,7 @@ const rowsOut = (rows: Record<string, string>[]) => rows.map(({ _row, ...r }) =>
 
 /* ------------------------------------------------------------------ Mặt hàng */
 const MAT_HANG: NhapLoai = {
-  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, nhóm / ngành / nhãn / loại hàng, nhóm hạch toán, thuế VAT', keyField: 'sku',
+  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, nhóm / ngành / nhãn, nhóm hạch toán, thuế VAT', keyField: 'sku',
   listPath: '/danh-muc/mat-hang', invalidate: ['products', 'inventory-items'], modes: false,
   fields: [
     { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku', 'ma hang hoa, dich vu'], example: 'SP0001', note: 'Mã đã có → cập nhật; chưa có → thêm mới. Không có khoảng trắng.' },
@@ -57,7 +57,6 @@ const MAT_HANG: NhapLoai = {
     { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], note: 'Mã hoặc đúng tên nhóm trong danh mục.' },
     { key: 'industryCode', header: 'Ngành hàng', aliases: ['nganh'] },
     { key: 'brandCode', header: 'Nhãn hàng', aliases: ['nhan', 'thuong hieu'] },
-    { key: 'typeCode', header: 'Loại hàng', aliases: ['tinh chat', 'loai'] },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán', aliases: ['nhom hach toan'] },
     { key: 'taxOutCode', header: 'Mã VAT ra', aliases: ['thue suat', 'thue gtgt', 'vat ra'], note: 'Mã thuế bán ra có sẵn (vd R08).' },
     { key: 'taxInCode', header: 'Mã VAT vào', aliases: ['vat vao'], note: 'Mã thuế mua vào có sẵn (vd V08).' },

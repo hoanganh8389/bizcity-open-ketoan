@@ -22,7 +22,6 @@ Bấm **Thêm**, hoặc bấm đúp một dòng. Bấm **Ghi** một lần là l
 | Mã hàng cha | Chỉ có ở mặt hàng đã lưu. Mã cha thì liệt kê các mã con. Mã chưa có cha: chỉ chọn khi là **mã cũ của cùng sản phẩm** cần gom vào mã cha. |
 | Biến thể | Chỉ ở mã con. Phần mềm xử lý theo ô này (xem bảng dưới). |
 | Gửi lên thuế | Mọi mặt hàng. Xem *Gửi lên thuế* bên dưới. |
-| Loại hàng | Hàng bán, quà, vật tư… để lọc, báo cáo. |
 | Barcode | Nhiều mã cách nhau dấu `/`. |
 | Ảnh, mô tả, xuất xứ, khối lượng, ghi chú | Thông tin thêm. |
 

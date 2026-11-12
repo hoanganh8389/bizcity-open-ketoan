@@ -317,7 +317,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               <span>{v.variantCode === 'internal' ? 'Không (Nội bộ)' : v.sendToTax === false ? 'Không gửi' : 'Có'}{v.hasMovements && v.variantCode !== 'internal' ? <span className="muted"> · đã có nhập xuất, khoá</span> : null}</span>
             </label>
           </Field>
-          {classes.type.length > 0 && <Field label="Loại hàng" tip="Để lọc và báo cáo, không làm đổi định khoản"><ListPicker items={pick('type')} value={v.typeCode ?? ''} onChange={(c) => set({ typeCode: c || null })} placeholder="Bấm để chọn" nameFirst /></Field>}
+          {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Loại hàng: đã có Nhóm hàng, bớt khai báo; giá trị cũ giữ nguyên (đóng góp) */}
           <Field label="Barcode" tip="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
           {(() => {
             // Có nhóm hàng và ngành / nhãn khớp cây nhóm: chỉ hiện (một chỗ khai — nhóm hàng); chưa khớp thì vẫn chọn tay được.
@@ -379,8 +379,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             </select>
           </Field>
           {/* [2026-11-10 05:40 PM Nguyễn Văn Thủy] PHASE-026 — bỏ ô Nhóm hạch toán: tài khoản theo Tài khoản ngầm định (ACC41) theo Loại hàng / Biến thể; giá trị cũ giữ nguyên (đóng góp) */}
-          <Field label="Tài khoản kế toán" hint="Không khai theo từng mặt hàng: theo Tài khoản ngầm định (ACC41), riêng theo Loại hàng / Biến thể">
-            <input className="input" readOnly value="Theo Tài khoản ngầm định (ACC41)" title="Đổi tài khoản: vào Tài khoản ngầm định, Thêm dòng theo Loại hàng / Biến thể" />
+          <Field label="Tài khoản kế toán" hint="Không khai theo từng mặt hàng: theo Tài khoản ngầm định (ACC41), riêng theo Biến thể">
+            <input className="input" readOnly value="Theo Tài khoản ngầm định (ACC41)" title="Đổi tài khoản: vào Tài khoản ngầm định, Thêm dòng theo Biến thể" />
           </Field>
           <div className="full">
             <button type="button" className="btn btn-xs" onClick={() => setTaxDetail((x) => !x)}>{taxDetail ? '▾' : '▸'} Mã thuế chi tiết (kế toán){v.exciseRate ? ` · TTĐB ${v.exciseRate}%` : ''}</button>

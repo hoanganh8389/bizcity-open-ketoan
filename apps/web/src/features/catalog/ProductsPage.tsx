@@ -149,7 +149,6 @@ export function ProductsPage() {
     { key: 'exciseRate', header: 'Thuế TTĐB', type: 'number', width: 85 },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
     { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
-    { key: 'typeCode', header: 'Loại hàng', width: 130, title: 'Hàng bán, quà, vật tư, công cụ, tài sản… Để lọc, báo cáo và làm điều kiện ở Tài khoản ngầm định (ACC41)', value: (p) => nameOf('type', p.typeCode) },
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
 

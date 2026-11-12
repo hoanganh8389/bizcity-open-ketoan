@@ -13,6 +13,10 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Mặt hàng bỏ ô Loại hàng
+- Form thêm / sửa mặt hàng, danh sách mặt hàng và mẫu nhập Excel không còn ô **Loại hàng**: phân loại theo **Nhóm hàng**, bớt khai báo. Giá trị cũ trên mặt hàng giữ nguyên (báo cáo theo loại hàng vẫn đọc được).
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Giao diện sáng làm mặc định
 - Menu trái nền trắng, chữ đậm; mục đang chọn nền xanh nhạt, có vạch trái màu chính. Màu chính #235DA7 theo website công ty.
 - Các bộ màu tối (Xanh dương, Xanh lá, Tím than) vẫn chọn được ở menu tài khoản. Lựa chọn màu đã lưu trước đây được bỏ để mọi máy về giao diện sáng.
