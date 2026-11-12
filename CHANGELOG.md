@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Thêm mặt hàng: chọn Mã mới hoặc Mã biến thể. Mã mới không được có chữ ở đầu / cuối; mã biến thể chọn mã cha (chỉ mã chính), phần mã cha khoá cứng, chỉ thêm chữ ở đầu / cuối, tổng tối đa 2 chữ (mặc định Z), tên điền sẵn theo tên mã cha, nhóm hàng theo mã cha không đổi được. Số thứ tự mã tự sinh chỉ chạy theo mã chính. Chọn nhóm chưa tới cấp 3 báo đỏ ngay (migration 0115).
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 - Thêm mặt hàng: bước 1 bắt buộc chọn nhóm hàng cấp 3 (cây chọn ngay trong hộp thoại), bước "Khai báo giá mua" trước bước Bán hàng; giá mua ghi cùng mặt hàng.
 - Danh sách mặt hàng: nút lọc "Thêm hôm nay", cột Người tạo và Lúc tạo để truy vết (cột `products.created_by`, migration 0114).
 

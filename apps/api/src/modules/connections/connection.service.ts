@@ -23,6 +23,7 @@ import type { AuthContext } from '../../core/auth.js';
 import { documentService, postDocumentIn } from '../../kernel/public.js';
 import { fetchWooPage, wooOrderToDocument } from './woocommerce.js';
 import { env } from '../../config/env.js';
+import { parentFromSku } from '../catalog/sku-rule.js';
 
 type Settings = Record<string, unknown> & { connections?: unknown[]; connectionPulls?: Record<string, ConnectionView['lastPull']> };
 const MAX_PAGES = 500;
@@ -239,8 +240,7 @@ async function linesToParentSku(tenantId: string, raw: unknown): Promise<unknown
   const known = new Map(rows.map((r) => [r.sku, r.parent_sku]));
   const parentOf = (sku: string) => {
     if (known.has(sku)) return known.get(sku) || null;
-    const m = /^(\d{9})[A-Z]{1,3}$/i.exec(sku);
-    return m ? m[1]! : null;
+    return parentFromSku(sku);
   };
   let changed = false;
   const lines = d.lines.map((l) => {

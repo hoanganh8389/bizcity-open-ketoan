@@ -19,6 +19,7 @@ import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
 import { applyItemGate } from '../products/item.hints.js';
+import { parentFromSku } from './sku-rule.js';
 
 // ----------------------------------------------------------------------------------------------- kiểu dữ liệu
 
@@ -206,9 +207,19 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   }
   // [2026-11-12 Nguyễn Văn Thủy] mã cha suy theo mã (trigger 0112), không nhận từ người dùng; mã con tạo mới kế thừa ĐVT của mã cha (đóng góp)
   b = { ...b, parentSku: undefined };
-  const ps = /^(\d{9})[A-Z]{1,3}$/i.exec(sku)?.[1];
-  if (!exists && ps && await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst()) {
-    b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, ps)) };
+  // [2026-11-12 Nguyễn Văn Thủy] mã mới: mã chính không có chữ đầu / cuối; mã biến thể = mã cha thêm chữ, phải có mã cha trước, nhóm theo mã cha (đóng góp)
+  const ps = parentFromSku(sku);
+  const parentRow = ps ? await trx.selectFrom('products').select(['sku', 'group_code', 'industry_code', 'brand_code', 'parent_sku']).where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst() : undefined;
+  if (opts.isNew) {
+    if (ps && !parentRow) throw Errors.validation(`Mã cha ${ps} chưa có — khai mã cha trước rồi mới thêm mã biến thể ${sku}`);
+    if (ps && sku.length - ps.length > 2) throw Errors.validation(`Mã biến thể ${sku}: chỉ thêm tối đa 2 chữ quanh mã cha ${ps}`);
+    if (!ps && (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku)))) {
+      throw Errors.validation(`Mã hàng ${sku} không được có chữ ở đầu hoặc cuối. Muốn tạo mã biến thể thì chọn "Mã biến thể" và chọn mã cha`);
+    }
+  }
+  if (parentRow) b = { ...b, groupCode: parentRow.group_code, industryCode: parentRow.industry_code, brandCode: parentRow.brand_code };
+  if (!exists && parentRow) {
+    b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, parentRow.sku)) };
     const err = b.units ? checkUnits(b.units) : null;
     if (err) throw Errors.validation(err);
   }
@@ -220,6 +231,11 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual', created_by: actor }).execute();
   }
   await trx.updateTable('products').set(patch).where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
+  // Mã biến thể luôn cùng nhóm với mã cha: đổi nhóm mã cha thì các mã biến thể đổi theo.
+  if (!ps && b.groupCode !== undefined) {
+    await trx.updateTable('products').set({ group_code: b.groupCode, industry_code: b.industryCode ?? null, brand_code: b.brandCode ?? null, updated_at: now })
+      .where('tenant_id', '=', tenantId).where('parent_sku', '=', sku).where('group_code', 'is distinct from', b.groupCode ?? null).execute();
+  }
   // [2026-11-12 Nguyễn Văn Thủy] Biến thể / Gửi lên thuế không nhận từ người dùng: trigger products_variant_fill suy theo mã (0111), đuôi Z = không gửi thuế (đóng góp)
   // Hàng KCT (thuế bán ra KCT / R00K) chưa khai thuế mua vào → V13K (không chịu thuế đầu vào), không để phiếu mua tự lấy 8%.
   await trx.updateTable('products').set({ tax_in_code: 'V13K' }).where('tenant_id', '=', tenantId).where('sku', '=', sku).where('tax_in_code', 'is', null).where('tax_out_code', 'in', [...KCT_OUT_CODES]).execute();

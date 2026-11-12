@@ -331,7 +331,7 @@ interface ItemRow { sku: string; name: string; unit: string; stock?: number | nu
  * Danh sách xổ dạng bảng Mã · Tên · ĐVT · Tồn (tồn của chi nhánh đang làm việc, chưa chọn thì cộng mọi chi nhánh).
  * `canAdd`: thêm mặt hàng ngay tại chỗ (nút +, F9) — dùng trên dòng chứng từ.
  */
-export function ItemPicker({ canAdd, ...p }: BaseProps & { canAdd?: boolean }) {
+export function ItemPicker({ canAdd, only, ...p }: BaseProps & { canAdd?: boolean; only?: (sku: string) => boolean }) {
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
   const [adding, setAdding] = useState<string | null>(null);
@@ -340,7 +340,7 @@ export function ItemPicker({ canAdd, ...p }: BaseProps & { canAdd?: boolean }) {
   const branchCode = workBranch.get() || undefined;
   const list = useQuery({ queryKey: ['inventory-items', debounced, branchCode], queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: debounced, limit: 50, branchCode }), staleTime: 60_000 });
   const current = useQuery({ queryKey: ['inventory-items', 'name', p.value], enabled: Boolean(p.value), queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: p.value, limit: 5 }), staleTime: 5 * 60_000 });
-  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.sku, name: x.name, hint: x.unit || undefined, cells: [x.unit, x.stock ?? null] })), [list.data]);
+  const options = useMemo(() => (list.data ?? []).filter((x) => !only || only(x.sku)).map<PickOption>((x) => ({ code: x.sku, name: x.name, hint: x.unit || undefined, cells: [x.unit, x.stock ?? null] })), [list.data]);
   return (
     <>
       <CodePicker

@@ -41,3 +41,11 @@
 .xl-row > span { color: var(--ink-500, #6b7280); flex: none; }
 .xl-row > b { text-align: right; font-weight: 600; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .xem-lai { grid-template-columns: 1fr; } }
+
+/* [2026-11-12 Nguyễn Văn Thủy] chọn Mã mới / Mã biến thể khi thêm mặt hàng (đóng góp) */
+.kieu-ma { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 12px 0; }
+.kieu-ma > button { text-align: left; border: 1px solid var(--line, #e3e7ee); border-radius: 10px; background: var(--surface, #fff); padding: 18px 20px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+.kieu-ma > button:hover { border-color: var(--nav, #2457B3); box-shadow: 0 2px 10px rgba(36, 87, 179, .15); }
+.kieu-ma > button b { font-size: 16px; color: var(--nav, #2457B3); }
+.kieu-ma > button span { color: var(--ink-500, #6b7280); font-size: 13px; }
+.kieu-ma-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 4px; }

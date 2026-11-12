@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { ErrorBox, Field, Loading, Modal, NumInput, useViewAgain } from '@/components/ui';
-import { ListPicker, PartnerPicker } from '@/components/pickers';
+import { ItemPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { HelpDrawer } from '@/components/HelpDrawer';
 // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
@@ -97,6 +97,9 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const qc = useQueryClient();
   const isNew = sku === null;
   const [tab, setTab] = useState<string>(startTab ?? 'info');
+  // [2026-11-12 Nguyễn Văn Thủy] thêm mới: chọn Mã mới hay Mã biến thể (theo mã cha) (đóng góp)
+  const [kind, setKind] = useState<'' | 'new' | 'variant'>(isNew ? '' : 'new');
+  const [parentErr, setParentErr] = useState('');
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: giá mua theo NCC khai trước khi ghi, ghi cùng mặt hàng (đóng góp)
   const [nccRows, setNccRows] = useState<NccTam[]>([]);
   const enabled = useEnabledModules();
@@ -146,6 +149,22 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       return { ...x, units: [...(b0 ? [b0] : []), ...rest.map((u) => ({ ...u }))] };
     });
   }, [isNew, parentData.data, v.parentSku]);
+  // Mã biến thể: nhóm hàng, thuế theo mã cha (không đổi được); mã mặc định = mã cha + Z, sửa chữ đầu / cuối tuỳ ý.
+  useEffect(() => {
+    const p = parentData.data;
+    if (!isNew || kind !== 'variant' || !p || p.sku !== v.parentSku) return;
+    if (p.parentSku || parentFromSku(p.sku)) { setParentErr(`${p.sku} là mã biến thể${p.parentSku ? ` của ${p.parentSku}` : ''} — chọn mã chính làm mã cha.`); return; }
+    setParentErr('');
+    setV((x) => ({ ...x, groupCode: p.groupCode, industryCode: p.industryCode, brandCode: p.brandCode, taxOutCode: p.taxOutCode, taxInCode: p.taxInCode, origin: x.origin || p.origin,
+      sku: parentFromSku(x.sku) === p.sku ? x.sku : `${p.sku}Z`, name: x.name.trim() ? x.name : `${p.name} Z` }));
+    setSkuAuto(false);
+  }, [parentData.data, kind]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Tên mã biến thể = tên mã cha + chữ thêm vào mã; sửa tay rồi thì thôi không đổi theo.
+  const tenBienThe = (code: string) => (parentData.data ? `${parentData.data.name} ${code.replace(parentData.data.sku, '')}`.trim() : '');
+  const lockedGroup = isNew ? kind === 'variant' : Boolean(v.parentSku);
+  const skuBad = !isNew || !v.sku ? ''
+    : kind === 'variant' ? (v.parentSku && v.sku === v.parentSku ? 'Thêm chữ ở đầu hoặc cuối mã cha.' : '')
+    : /[A-Z]$/.test(v.sku) || (/^[A-Z]/.test(v.sku) && !/^[A-Z][0-9]{8}$/.test(v.sku)) ? 'Mã mới không được có chữ ở đầu hoặc cuối. Muốn tạo mã biến thể: bấm Đổi → Mã biến thể.' : '';
 
   // Cột giá hiện sẵn: bảng giá công ty + bảng giá đã có giá cho mặt hàng này.
   const company = lists.find((l) => l.isCompany);
@@ -265,7 +284,10 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   ];
   const stepIdx = Math.max(0, STEPS.findIndex((x) => x.k === tab));
   const stepErr = (k: string): string => {
-    if (k === 'info') return !v.groupCode ? 'Chọn nhóm hàng (tới nhóm cấp 3).' : (depth.get(v.groupCode) ?? 0) < 3 ? 'Nhóm hàng phải chọn tới cấp 3 (nhóm sản phẩm).' : !v.sku.trim() ? 'Chưa có mã hàng (chọn nhóm là tự sinh).' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.'
+    if (k === 'info' && isNew && !kind) return 'Chọn tạo Mã mới hay Mã biến thể.';
+    if (k === 'info' && kind === 'variant' && (!v.parentSku || parentErr)) return parentErr || 'Chọn mã cha.';
+    if (k === 'info' && skuBad) return skuBad;
+    if (k === 'info') return !v.groupCode ? 'Chọn nhóm hàng (tới nhóm cấp 3).' : kind !== 'variant' && (depth.get(v.groupCode) ?? 0) < 3 ? 'Nhóm hàng phải chọn tới cấp 3 (nhóm sản phẩm).' : !v.sku.trim() ? 'Chưa có mã hàng (chọn nhóm là tự sinh).' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.'
       : !v.name.trim() ? 'Chưa nhập tên hàng.' : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !v.taxOutCode ? 'Chọn thuế suất GTGT.' : '';
     if (k === 'units') return !baseUnit ? 'Chưa khai đơn vị tính nhỏ nhất (vd Hộp, Lon, Cái).' : '';
     if (k === 'mua') return nccRows.some((r) => !r.partnerCode) ? 'Còn dòng chưa chọn nhà cung cấp (chọn hoặc bỏ dòng đó).' : '';
@@ -330,26 +352,43 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {help && <HelpDrawer guideKey="mat-hang" onClose={() => setHelp(false)} />}
 
       {tab === 'history' && !isNew && <LichSuMatHang sku={v.sku} />}
-      {tab === 'info' && (
+      {tab === 'info' && isNew && !kind && (
+        <div className="full kieu-ma">
+          <button type="button" onClick={() => setKind('new')}><b>Mã mới</b><span>Mặt hàng chính: chọn nhóm hàng, mã tự sinh theo nhóm.</span></button>
+          <button type="button" onClick={() => { setKind('variant'); set({ sku: '', groupCode: null }); }}><b>Mã biến thể</b><span>Đi theo một mã đã có: giữ nguyên mã cha, nhóm hàng theo mã cha.</span></button>
+        </div>
+      )}
+      {tab === 'info' && (!isNew || kind) && (
         <fieldset className="fgroup">
           <legend>Thông tin mặt hàng</legend>
-          <Field label={isNew ? 'Nhóm hàng (*)' : 'Nhóm hàng'} full tip="Chọn nhóm là xong: mã hàng tự sinh theo nhóm" hint={isNew && !v.groupCode ? 'Chọn nhóm hàng trước — mã hàng tự sinh theo nhóm, các ô khác hiện ra sau khi chọn' : undefined}>
-            <ChonNhomCay classes={classes.group} value={v.groupCode} label={v.groupCode ? groupPath(v.groupCode) : ''} onChange={pickGroup} defaultOpen={isNew && !v.groupCode} />
-          </Field>
+          {isNew && <div className="full kieu-ma-bar">Đang tạo: <b>{kind === 'variant' ? 'Mã biến thể' : 'Mã mới'}</b>
+            <button type="button" className="btn btn-xs" onClick={() => { setKind(''); setParentErr(''); set({ sku: '', groupCode: null, parentSku: null, name: '' }); setSkuHint(null); setErrMsg(''); }}>Đổi</button></div>}
+          {kind === 'variant' && isNew && (
+            <Field label="Mã cha (*)" full tip="Mã chính đã có; mã biến thể giữ nguyên mã này">
+              <ItemPicker only={(c) => /^[0-9]{9}$|^[A-Z][0-9]{8}$/.test(c)} value={v.parentSku ?? ''} onChange={(c) => { setParentErr(''); set({ parentSku: c || null }); }} placeholder="Gõ mã hoặc tên mặt hàng chính" />
+              {parentErr && <div className="alert alert-bad" style={{ marginTop: 6 }}>{parentErr}</div>}
+            </Field>
+          )}
+          {(kind !== 'variant' || v.groupCode) && <Field label={isNew ? 'Nhóm hàng (*)' : 'Nhóm hàng'} full tip={lockedGroup ? 'Theo mã cha, không đổi được' : 'Chọn nhóm là xong: mã hàng tự sinh theo nhóm'} hint={isNew && !v.groupCode ? 'Chọn nhóm hàng cấp 3 trước — mã hàng tự sinh theo nhóm, các ô khác hiện ra sau khi chọn' : undefined}>
+            {lockedGroup
+              ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }} title="Mã biến thể luôn cùng nhóm với mã cha">{v.groupCode ? groupPath(v.groupCode) : <span className="muted">Theo mã cha</span>}</div>
+              : <ChonNhomCay classes={classes.group} value={v.groupCode} label={v.groupCode ? groupPath(v.groupCode) : ''} onChange={pickGroup} defaultOpen={isNew && !v.groupCode} />}
+          </Field>}
           {/* [2026-11-12 Nguyễn Văn Thủy] thêm mới: chọn nhóm hàng trước, các ô khác hiện sau (đóng góp) */}
           {(!isNew || v.groupCode) && <>
           {/* [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — rà form mặt hàng (đóng góp): Nhóm → Mã → Tên lên đầu; thêm mới = mã cha toàn số, không chọn mã cha;
               tên không trùng (báo ngay); Biến thể không cho đổi sang Nội bộ khi đã có nhập xuất. */}
           <Field label="Mã hàng (*)" hint={skuErr || (skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : undefined)}>
             <div className="row" style={{ gap: 4 }}>
-              <input className="input mono" value={v.sku} placeholder={isNew ? 'Chọn nhóm hàng là tự sinh — gõ tay được' : ''} onChange={(e) => { set({ sku: e.target.value.trim().toUpperCase() }); setSkuAuto(false); }} style={{ flex: 1 }} />
-              {isNew && <button type="button" className="btn btn-sm" onClick={() => void genSku(v.groupCode, true)} title="Lấy mã kế tiếp theo nhóm hàng đã chọn (thay mã đang có)">Sinh mã</button>}
+              {kind === 'variant' && isNew && v.parentSku ? <MaBienThe parent={v.parentSku} sku={v.sku} onChange={(x) => set({ sku: x, ...(!v.name.trim() || v.name === tenBienThe(v.sku) ? { name: tenBienThe(x) } : {}) })} /> : <input className="input mono" value={v.sku} placeholder={isNew ? (kind === 'variant' ? 'Mã cha + chữ ở đầu hoặc cuối' : 'Chọn nhóm hàng là tự sinh — gõ tay được') : ''} onChange={(e) => { set({ sku: e.target.value.trim().toUpperCase() }); setSkuAuto(false); }} style={{ flex: 1 }} />}
+              {isNew && kind === 'new' && <button type="button" className="btn btn-sm" onClick={() => void genSku(v.groupCode, true)} title="Lấy mã kế tiếp theo nhóm hàng đã chọn (thay mã đang có)">Sinh mã</button>}
               <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)} title="Quy tắc mã hàng, sản phẩm con, cách kiểm tra">?</button>
             </div>
-            {isNew && !skuLetters && <MaHangGiaiThich sku={v.sku} hint={skuHint} auto={skuAuto} isNew={isNew} />}
+            {skuBad && <div className="neg" style={{ fontSize: 12.5, marginTop: 4, fontWeight: 600 }}>{skuBad}</div>}
+            {isNew && kind === 'new' && !skuLetters && <MaHangGiaiThich sku={v.sku} hint={skuHint} auto={skuAuto} isNew={isNew} />}
           </Field>
           <Field label="Tên hàng (*)" full tip="Không được trùng tên mặt hàng khác. Mã con: ghi phần phân biệt">
-            <input className="input" value={v.name} maxLength={255} onChange={(e) => set({ name: e.target.value })} />
+            <input className="input" value={v.name} maxLength={255} placeholder={kind === 'variant' && parentData.data ? `Mã cha: ${parentData.data.name}` : undefined} onChange={(e) => set({ name: e.target.value })} />
           </Field>
           <TrungTen same={sameName} />
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ khai báo cha – con (ô Mã hàng cha, nút Thêm sản phẩm con): phần mềm tự gom theo mã (0112) (đóng góp) */}
@@ -477,10 +516,10 @@ function ChonNhomCay({ classes, value, label, onChange, defaultOpen }: { classes
           <button type="button" className="btn btn-sm cay-nhom-x" onClick={() => setOpen(false)} title="Đóng (Esc)">✕ Đóng</button>
           <GroupTree classes={classes.filter((c) => c.isActive || c.code === value).map((c) => ({ ...c, products: (c as { products?: number }).products ?? 0 })) as never} value={value} onChange={(c) => {
             if (!c) return;
-            if ((lv.get(c) ?? 0) < 3) { setMsg('Chỉ chọn được nhóm cấp 3 (nhóm sản phẩm). Bấm vào nhóm để mở tiếp.'); return; }
+            if ((lv.get(c) ?? 0) < 3) { setMsg(`"${classes.find((x) => x.code === c)?.name ?? c}" mới là nhóm cấp ${lv.get(c) ?? 0} — phải chọn tới nhóm cấp 3 (nhóm sản phẩm).`); return; }
             setMsg(''); onChange(c); setOpen(false);
           }} leafOnly autoFocus />
-          {msg && <div className="neg" style={{ fontSize: 12.5, marginTop: 4 }}>{msg}</div>}
+          {msg && <div className="alert alert-bad" style={{ marginTop: 6 }}>{msg}</div>}
         </div>
       )}
     </div>
@@ -530,6 +569,35 @@ function NccTamBang({ rows, setRows, units, mainUnit, vatLabel }: { rows: NccTam
         </table>
       )}
       {!rows.length && <div className="muted" style={{ padding: '12px 4px' }}>Chưa có nhà cung cấp. Bấm <b>+ Thêm nhà cung cấp</b> để khai giá mua.</div>}
+    </div>
+  );
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] mã cha suy theo mã: bỏ chữ đầu / cuối quanh mã chính — trùng máy chủ (0115) (đóng góp)
+function parentFromSku(sku: string): string | null {
+  const t = sku.trim().toUpperCase();
+  const m = /^([A-Z]{0,3})([0-9]{9})([A-Z]{0,3})$/.exec(t);
+  if (m && (m[1] || m[3])) return m[2]!;
+  const g = /^([A-Z][0-9]{8})[A-Z]{1,3}$/.exec(t);
+  return g ? g[1]! : null;
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] mã biến thể: phần mã cha khoá cứng, chỉ gõ chữ ở đầu / cuối, tổng tối đa 2 chữ (đóng góp)
+function MaBienThe({ parent, sku, onChange }: { parent: string; sku: string; onChange: (sku: string) => void }) {
+  const at = sku.indexOf(parent);
+  const pre = at >= 0 ? sku.slice(0, at) : '';
+  const suf = at >= 0 ? sku.slice(at + parent.length) : 'Z';
+  const put = (p: string, s: string) => {
+    p = p.toUpperCase().replace(/[^A-Z]/g, ''); s = s.toUpperCase().replace(/[^A-Z]/g, '');
+    if (p.length + s.length > 2) return;
+    onChange(p + parent + s);
+  };
+  return (
+    <div className="row ma-bien-the" style={{ flex: 1, gap: 4, alignItems: 'center' }}>
+      <input className="input mono" style={{ width: 70, textAlign: 'right' }} value={pre} placeholder="chữ" title="Chữ thêm ở đầu (không bắt buộc)" onChange={(e) => put(e.target.value, suf)} />
+      <span className="input mono" style={{ background: 'var(--surface-2, #f4f6f9)', width: 'auto', padding: '0 10px', display: 'flex', alignItems: 'center' }} title="Mã cha — giữ nguyên">{parent}</span>
+      <input className="input mono" style={{ width: 70 }} value={suf} placeholder="chữ" title="Chữ thêm ở cuối" onChange={(e) => put(pre, e.target.value)} />
+      <span className="muted" style={{ fontSize: 12.5 }}>= <b className="mono">{sku}</b></span>
     </div>
   );
 }
