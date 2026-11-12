@@ -199,7 +199,7 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POS_BRANCH_REQUIRED` | `VALIDATION_ERROR` | Đơn vị nhiều chi nhánh mà máy không gửi `branchCode` / mã phiếu có ở nhiều chi nhánh | module `pos` (đề xuất, chưa gộp) |
 | `POS_ORDER_ID_REUSED` | `CONFLICT` | Cùng id đơn đã nhận với nội dung khác (máy phải tạo đơn mới) | module `pos` (đề xuất, chưa gộp) |
 | `POS_CODE_TAKEN` | `CONFLICT` | Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại) | module `pos` (đề xuất, chưa gộp) |
-| **Máy bán POS – hoàn / đổi / huỷ** (1.8.0-draft) <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2: họ mã POS_* đợt W2 (phiếu NT-BH-005, đóng góp) --> | | | |
+| **Máy bán POS – hoàn / đổi / huỷ** (1.8.0-draft) <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — họ mã POS_* đợt W2 (phiếu NT-BH-005, đóng góp) --> | | | |
 | `POS_RETURN_QTY` | `VALIDATION_ERROR` | Trả quá số còn trả được của dòng, hoặc dòng không có trong đơn gốc | module `pos` (đề xuất, chưa gộp) |
 | `POS_RETURN_EXPIRED` | `VALIDATION_ERROR` | Quá hạn trả (tham số, hiện 3 ngày theo ngày bán) mà thiếu người duyệt / lý do duyệt; kèm `deadline` | module `pos` (đề xuất, chưa gộp) |
 | `POS_RETURN_OTHER_SHOP` | `CONFLICT` | Đơn gốc của chi nhánh khác: đợt này chỉ trả ở cửa hàng đã bán | module `pos` (đề xuất, chưa gộp) |
@@ -211,6 +211,10 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POS_EXCHANGE_CUSTOMER` | `VALIDATION_ERROR` | Đổi hàng: khách của đơn mới khác khách của đơn gốc | module `pos` (đề xuất, chưa gộp) |
 | `POS_CANCEL_COMPLETED` | `CONFLICT` | Đơn đã thu tiền xong không huỷ được — lập phiếu trả hàng | module `pos` (đề xuất, chưa gộp) |
 | `POS_RETURN_ID_REUSED` | `CONFLICT` | Cùng id phiếu trả đã nhận với nội dung khác (máy phải lập phiếu mới) | module `pos` (đề xuất, chưa gộp) |
+| **Máy bán POS – ca bán** (1.9.0-draft) <!-- [2026-11-12 03:30 PM Võ Hoàng] POS-W3 — họ mã ca bán của module pos (phiếu NT-BH-007, đóng góp) --> | | | |
+| `POS_SHIFT_ALREADY_OPEN` | `CONFLICT` | Chi nhánh đang có ca mở: không mở ca thứ hai; kèm `shiftId` | module `pos` (đề xuất, chưa gộp) |
+| `POS_SHIFT_CLOSED` | `CONFLICT` | Ca đã chốt: không chốt lại (gửi lại cùng khoá idempotency thì nhận biên bản cũ) | module `pos` (đề xuất, chưa gộp) |
+| `POS_SHIFT_BLOCKED` | `CONFLICT` | Còn việc dở (đơn chờ trả tiền QR…) mà chốt ca không chọn chốt bất chấp + lý do; kèm `items` | module `pos` (đề xuất, chưa gộp) |
 
 **Thứ tự làm:** (1) duyệt (2026-11-09); (2) S022-21: thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
 
@@ -247,7 +251,9 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 
 ## 7. Changelog
 
-<!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2: 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-12 03:30 PM Võ Hoàng] POS-W3 — 1.9.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.9.0-draft (2026-11-12, module pos đợt W3):** §4c thêm 3 mã `POS_SHIFT_*` của ca bán (phiếu NT-BH-007). Không thêm `code`, không đổi HTTP.
 - **1.8.0-draft (2026-11-11, module pos đợt W2):** §4c thêm 11 mã `POS_*` của hoàn hàng / đổi hàng / huỷ đơn (phiếu NT-BH-005). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-10 04:10 PM Võ Hoàng] POS-W1 — module pos: 1.7.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.7.0-draft (2026-11-10, đề xuất P-MP-5 của module pos):** §4c thêm họ mã `POS_*` của module `pos` (17 mã, R-ERR-6 tiền tố key module). Dữ liệu kèm lỗi đặt cạnh `reason` (danh sách ở `items`), không dùng `details.context` (§4b chỉ dành cho ngữ cảnh chứng từ). Không thêm `code`, không đổi HTTP.
