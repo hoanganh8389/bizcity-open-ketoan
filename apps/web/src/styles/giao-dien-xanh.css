@@ -510,3 +510,28 @@ html.gd-xanh .vf-toolbar button.vf-add2:hover:not(:disabled), .vf-split-menu > s
 .kt-tools { display: flex; gap: 8px; margin: 4px 0 10px; }
 .kt-tk td.num input { width: 170px; }
 .kt-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; margin: 16px 0 8px; max-width: 1100px; }
+
+/* [2026-11-12 Nguyễn Văn Thủy] GIAO DIỆN SÁNG (mặc định, lớp html.gd-sang): menu trái nền trắng chữ đậm, mục đang chọn nền xanh nhạt
+   viền trái màu chính; --nav chỉ còn làm màu chữ đậm. Các bộ màu tối giữ nguyên ở menu tài khoản. (đóng góp) */
+html.gd-xanh.gd-sang {
+  --gd-nav: #fff;
+  --gd-nav-2: var(--brand-50);
+  --gd-nav-3: var(--brand-100);
+  --gd-nav-ink: var(--ink-900);
+  --gd-nav-ink-2: var(--ink-500);
+  --gd-nav-hover: var(--brand-50);
+  --bg: color-mix(in srgb, var(--base) 5%, #f3f5f8);
+}
+html.gd-xanh.gd-sang .sidenav, html.gd-xanh.gd-sang .sidenav.gon { border-right: 1px solid var(--line); }
+html.gd-xanh.gd-sang .gon-row:hover, html.gd-xanh.gd-sang .gon-row.open,
+html.gd-xanh.gd-sang .gd-hay-item:hover, html.gd-xanh.gd-sang .gd-hay-item.active { color: var(--brand-700); }
+html.gd-xanh.gd-sang .gon-row:hover svg, html.gd-xanh.gd-sang .gon-row.open svg { color: var(--brand-600); }
+html.gd-xanh.gd-sang .gon-row.active { background: var(--brand-100); color: var(--brand-700); box-shadow: inset 3px 0 0 var(--brand-600); }
+html.gd-xanh.gd-sang .gon-row.active svg { color: var(--brand-600); }
+html.gd-xanh.gd-sang .sidenav-toggle:hover, html.gd-xanh.gd-sang .gd-hay-ghim:hover { color: var(--brand-700); }
+html.gd-xanh.gd-sang .gd-them { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
+html.gd-xanh.gd-sang .gd-them:hover, html.gd-xanh.gd-sang .gd-them.open { background: var(--brand-700); border-color: var(--brand-700); }
+html.gd-xanh.gd-sang .tq-gioi-thieu { background: var(--brand-600); }
+html.gd-xanh.gd-sang .vf-toolbar .vf-add2, html.gd-xanh.gd-sang .vf-split-menu > summary.vf-add2 { background: var(--brand-700); border-color: var(--brand-700); }
+html.gd-xanh.gd-sang .vf-toolbar button.vf-add2:hover:not(:disabled), html.gd-xanh.gd-sang .vf-split-menu > summary.vf-add2:hover { background: var(--brand-800); border-color: var(--brand-800); }
+html.gd-xanh.gd-sang .brand-logo.brand-chu { background: var(--brand-600); }
