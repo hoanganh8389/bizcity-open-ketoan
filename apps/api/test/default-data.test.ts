@@ -43,8 +43,8 @@ describe('Dữ liệu gốc', () => {
     for (const d of list.datasets as { key: string; seedCount: number }[]) seedCount[d.key] = d.seedCount;
     expect(list.seedItems).toBe(seedCount.products);
     expect(seedCount.products).toBeGreaterThan(100);
-    const rows = (await call(ctx, 'GET', '/api/v1/default-data/department/rows?search=BH')).body.data;
-    expect(rows.rows[0]).toMatchObject({ code: 'BH' });
+    const rows = (await call(ctx, 'GET', '/api/v1/default-data/department/rows?search=CN-CH')).body.data;
+    expect(rows.rows[0]).toMatchObject({ code: 'CN-CH' });
     expect((await call(ctx, 'POST', '/api/v1/default-data/cost_item/restore', {})).status).toBe(400);
   });
 
@@ -55,7 +55,7 @@ describe('Dữ liệu gốc', () => {
     // Bộ phận X chưa có: phiếu bị từ chối; ghi lại với bộ phận có thật sau khi nạp bộ phận.
     expect(v.status).toBe(400);
     const rd = await restore('department'); expect(rd.status, JSON.stringify(rd.body)).toBe(200);
-    expect((await call(ctx, 'POST', '/api/v1/vouchers', { docType: 'manual', branchCode: 'CN01', docDate: '2026-10-05', description: 'Chi phí', lines: [{ debitAccount: '64231', creditAccount: '1111', amount: 100000, costItem: 'DA-DUNG', department: 'BH' }] })).status).toBe(201);
+    expect((await call(ctx, 'POST', '/api/v1/vouchers', { docType: 'manual', branchCode: 'CN01', docDate: '2026-10-05', description: 'Chi phí', lines: [{ debitAccount: '64231', creditAccount: '1111', amount: 100000, costItem: 'DA-DUNG', department: 'CN-CH' }] })).status).toBe(201);
     const r = (await restore('cost_item')).body.data;
     expect(r.added).toBeGreaterThan(200);
     expect(r).toMatchObject({ removed: 1, deactivated: 1 });
@@ -69,7 +69,7 @@ describe('Dữ liệu gốc', () => {
 
   it('bộ phận: chi nhánh chưa gắn được gắn theo quy ước BH + mã chi nhánh', async () => {
     const b = (await call(ctx, 'GET', '/api/v1/branches')).body.data.find((x: { code: string }) => x.code === '26001');
-    expect(b.departmentCode).toBe('BH');
+    expect(b.departmentCode).toBe('CN-CH');
     expect((await call(ctx, 'PATCH', '/api/v1/branches/26001', { departmentCode: 'KHONG-CO' })).status).toBe(400);
   });
 
@@ -93,11 +93,11 @@ describe('Dữ liệu gốc', () => {
        WHERE l.tenant_id = ${tenantId} AND e.doc_no = 'BAN-BH-01'`.execute(db);
     // Lý do XBA (bán tại cửa hàng) chỉ định doanh thu 51111, thay tài khoản doanh thu của nhóm mặt hàng (công tắc lý do bật).
     const rev = lines.rows.find((l) => l.account_code.startsWith('511'));
-    expect(rev).toMatchObject({ account_code: '51111', dep: 'BH' });
+    expect(rev).toMatchObject({ account_code: '51111', dep: 'CN-CH' });
     // Mặt hàng chưa có trong danh mục: nhóm hạch toán lấy theo tệp gốc (hàng khuyến mại → giá vốn 6323), giá vốn mang bộ phận.
-    expect(lines.rows.find((l) => l.account_code.startsWith('632'))).toMatchObject({ account_code: '6323', dep: 'BH' });
+    expect(lines.rows.find((l) => l.account_code.startsWith('632'))).toMatchObject({ account_code: '6323', dep: 'CN-CH' });
     // Bộ phận gắn mọi dòng của bút toán (cả dòng tiền, công nợ).
-    expect(lines.rows.every((l) => l.dep === 'BH')).toBe(true);
+    expect(lines.rows.every((l) => l.dep === 'CN-CH')).toBe(true);
     const acc = (await call(ctx, 'GET', '/api/v1/accounts')).body.data.find((a: { code: string }) => a.code === '64231');
     expect(acc).toMatchObject({ trackCostItem: true, trackDepartment: true });
   });
@@ -129,11 +129,11 @@ describe('Dữ liệu gốc', () => {
     expect(br.warnings.join(' ')).toContain('01014Plus → 01014Premium');
     expect(br.warnings.join(' ')).toContain('26001 → 26001Premium');
     const b = (await call(ctx, 'GET', '/api/v1/branches')).body.data;
-    expect(b.find((x: { code: string }) => x.code === '14051')).toMatchObject({ departmentCode: 'BH', isActive: true });
+    expect(b.find((x: { code: string }) => x.code === '14051')).toMatchObject({ departmentCode: 'CN-CH', isActive: true });
     expect(b.find((x: { code: string }) => x.code.endsWith('_OFF')).isActive).toBe(false);
     expect(b.find((x: { code: string }) => x.code === '01014Plus')).toBeUndefined();
     expect(b.find((x: { code: string }) => x.code === '26001')).toBeUndefined();
-    expect(b.find((x: { code: string }) => x.code === '26001Premium')).toMatchObject({ isActive: true, departmentCode: 'BH' });
+    expect(b.find((x: { code: string }) => x.code === '26001Premium')).toMatchObject({ isActive: true, departmentCode: 'CN-CH' });
     // Mã gốc đã có mà còn chi nhánh lẻ cùng cửa hàng: ngừng theo dõi chi nhánh lẻ.
     expect((await call(ctx, 'POST', '/api/v1/branches', { code: '00001', name: 'Vĩnh Hưng lẻ' })).status).toBe(201);
     expect((await ok('branches')).warnings.join(' ')).toContain('00001 (dùng 00001Premium)');

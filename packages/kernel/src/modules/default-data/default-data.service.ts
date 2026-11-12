@@ -97,13 +97,13 @@ async function restoreDimension(trx: Db, tenantId: string, kind: DimensionKind, 
     (c) => trx.updateTable('dimensions').set({ is_active: false }).where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', c).execute(),
     (c) => trx.deleteFrom('dimensions').where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', c).execute());
   if (kind === 'department') {
-    // [2026-11-13 Nguyễn Văn Thủy] bộ phận = phòng ban chức năng (0123): chi nhánh chưa gắn → Bán hàng (BH) (đóng góp)
+    // [2026-11-13 Nguyễn Văn Thủy] bộ phận theo sơ đồ phòng ban (0127): chi nhánh chưa gắn → Cửa hàng (CN-CH) (đóng góp)
     const r = await sql`
-      UPDATE branches b SET department_code = 'BH'
+      UPDATE branches b SET department_code = 'CN-CH'
        WHERE b.tenant_id = ${tenantId} AND b.department_code IS NULL
-         AND EXISTS (SELECT 1 FROM dimensions d WHERE d.tenant_id = b.tenant_id AND d.kind = 'department' AND d.code = 'BH')`.execute(trx);
+         AND EXISTS (SELECT 1 FROM dimensions d WHERE d.tenant_id = b.tenant_id AND d.kind = 'department' AND d.code = 'CN-CH')`.execute(trx);
     const n = Number(r.numAffectedRows ?? 0);
-    if (n) res.warnings.push(`Đã gắn bộ phận Bán hàng cho ${n} chi nhánh`);
+    if (n) res.warnings.push(`Đã gắn bộ phận Cửa hàng cho ${n} chi nhánh`);
     const left = await trx.selectFrom('branches').select('code').where('tenant_id', '=', tenantId).where('is_active', '=', true).where('department_code', 'is', null).execute();
     if (left.length) res.warnings.push(`${left.length} chi nhánh chưa gắn bộ phận (${left.slice(0, 10).map((b) => b.code).join(', ')}${left.length > 10 ? '…' : ''}): gắn ở danh mục Chi nhánh`);
   }
