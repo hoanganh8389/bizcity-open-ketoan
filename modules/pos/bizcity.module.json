@@ -93,7 +93,11 @@
     "pos.admin.returns",
     "pos.admin.shifts",
     "pos.admin.dashboard",
-    "pos.admin.settings"
+    "pos.admin.settings",
+    "pos.order.qr-confirm",
+    "pos.order.qr-renew",
+    "pos.order.invoice-buyer",
+    "pos.stock.all"
   ],
   "ledger": {
     "submits": [

@@ -202,7 +202,7 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
       ['tổng máy khác', { clientTotal: 323_999 }, 409, 'POS_PRICE_CHANGED'],
       ['giảm tiền quá thành tiền', { lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'amount', value: 400_000 } }] }, 400, 'POS_DISCOUNT_TOO_LARGE'],
       ['có CTKM', { promotionSelections: [{ kind: 'coupon', code: 'KM1' }] }, 400, 'POS_NOT_SUPPORTED_YET'],
-      ['trả QR', { payment: { mode: 'qr' } }, 400, 'POS_NOT_SUPPORTED_YET'],
+      // [2026-11-13 12:50 AM Võ Hoàng] POS-QR — trả QR nay được nhận (đơn chờ trả tiền, NT-BH-009): bỏ khỏi lệch chuẩn (đóng góp)
       ['chi nhánh lạ', { branchCode: 'CN99' }, 400, 'POS_UNKNOWN_BRANCH'],
     ];
     const docsBefore = await docCount('pos:%');

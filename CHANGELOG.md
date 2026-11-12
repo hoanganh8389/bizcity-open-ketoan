@@ -234,6 +234,16 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không.
 
+### Module `pos` — thanh toán QR, người mua hoá đơn điện tử, bắt buộc mở ca, tồn cả cửa hàng (NT-BH-009, NT-BH-010, NT-BH-011) <!-- [2026-11-12 08:30 PM Võ Hoàng] POS-QR — module pos đợt QR / hoá đơn / ca (đóng góp) -->
+
+- **Thêm:** đơn trả QR (toàn bộ hoặc một phần) lưu ở trạng thái **chờ trả tiền**, có phần `qr` (số tiền, hạn 5 phút); chứng từ bán nộp ngay theo hình thức QR. `POST /orders/:id/qr/confirm` — tiền về (ngân hàng báo hoặc thu ngân xác nhận tay, ghi người + ghi chú); `POST /orders/:id/qr/renew` — gia hạn trong ngày bán. Tiền lệch `POS_PAYMENT_MISMATCH`, quá ngày bán `POS_QR_EXPIRED` (ngân hàng báo có vẫn nhận), đơn đã huỷ `POS_ORDER_CANCELLED`.
+- **Thêm:** `POST /orders/:id/invoice-buyer` — người mua trên hoá đơn điện tử (MST 10 / 13 số, công ty, địa chỉ, email) và dòng quà dưới 24 tháng không đưa lên hoá đơn; gửi lại cùng nội dung không đổi gì. `GET /stock/all` — tồn cả cửa hàng cho Excel cuối ca.
+- **Đổi:** đơn có số phiên bản (migration module 0006); mỗi lần đổi (xác nhận QR, người mua hoá đơn, huỷ) phát lại sự kiện kèm phiên bản để bản sao ở website đè đúng bản mới nhất. Đơn QR chỉ phát `pos.order.recorded` khi đã thu tiền.
+- **Đổi:** khoá `bizcity.pos.require_open_shift` bật thì chưa mở ca không bán được (`POS_SHIFT_REQUIRED`), trừ đơn bán lúc mất mạng gửi bù; bootstrap trả `requireOpenShift`.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** `module migrate pos` (migration module 0006).
+- **Bảo mật:** website chưa gọi thẳng module được (khoá app chỉ xin quyền Core) — xác nhận QR do máy bán của thu ngân chuyển tiếp, ghi rõ nguồn.
+
 ### Module `pos` — màn quản trị bán lẻ: Đơn bán máy POS, Phiếu trả hàng, Sổ ca bán, Tổng quan bán lẻ, Cài đặt bán hàng (NT-BH-008) <!-- [2026-11-12 11:30 PM Võ Hoàng] POS-ADMIN — module pos màn quản trị bán lẻ (đóng góp) -->
 
 - **Thêm:** năm màn ở *Phần riêng → Bán lẻ máy POS* (`/app/pos/…`): BH13 Đơn bán máy POS (danh sách trên – dưới, thẻ chỉ số của cả kết quả lọc), BH14 Phiếu trả hàng máy POS (nối đơn gốc), BH15 Sổ ca bán (phải có / đếm được / chênh lệch két, lọc ca có chênh lệch), BH16 Tổng quan bán lẻ (theo chi nhánh, hình thức, giờ, mặt hàng), BH17 Cài đặt bán hàng. Giao diện dùng bảng lưới / bộ tham số của Core qua `@bizcity/ui-kit`. Hướng dẫn: `docs/huong-dan/pos-*.md`.

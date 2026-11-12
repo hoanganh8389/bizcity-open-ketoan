@@ -7,6 +7,8 @@ import { codePeriod, computeOrder, parseCode, saleDocKey, toOrderSnapshot, toSal
 import type { OrderDraft } from './domain/schema.js';
 import { lastCode, takeCodes } from './codes.js';
 import { activePaymentMethods, catalogFor, partnerByCode, resolveBranch } from './read.js';
+import { posSettings } from './settings.js';
+import { openShiftOf } from './shifts.js';
 
 export const EINVOICE_NONE = { required: false, lines: [] as unknown[], warnings: [] as string[] };
 
@@ -31,6 +33,7 @@ export async function lockKey(tx: Parameters<Parameters<ActionContext['data']['m
 export type CreatedOrder = { order: Record<string, unknown>; nextReservedCodes: string[]; einvoiceReview: typeof EINVOICE_NONE; replayed: boolean };
 
 export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: { exchange?: { credit: number; returnDocKey: string } } = {}): Promise<CreatedOrder> {
+  const { requireOpenShift } = await posSettings(ctx);
   const prepared = await ctx.data.module(async (tx) => {
     await lockKey(tx, `pos:order:${draft.id}`);
     const old = (await sql<{ snapshot: Record<string, unknown>; same: boolean }>`
@@ -41,6 +44,10 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     if (old) return { kind: 'replay', snapshot: old.snapshot } as const;
 
     const branch = await resolveBranch(tx, draft.branchCode);
+    // Cài đặt bán hàng bắt buộc mở ca (NT-BH-011): đơn ngoại tuyến gửi bù vẫn nhận — hàng đã bán thật.
+    if (requireOpenShift && !draft.offlineCreatedAt && !(await openShiftOf(tx, branch.code))) {
+      throw Errors.conflict(`Chi nhánh ${branch.code} chưa mở ca — mở ca rồi mới bán (Cài đặt bán hàng)`, { reason: 'POS_SHIFT_REQUIRED', branchCode: branch.code });
+    }
     const catalog = await catalogFor(tx, draft.lines.map((l) => l.sku));
     const paymentMethods = await activePaymentMethods(tx);
     const partner = 'partnerId' in draft.customer ? await partnerByCode(tx, draft.customer.partnerId) : null;
@@ -93,7 +100,8 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
   }
   ctx.evidence.note('pos.order', { code, docKey: doc.docKey, docStatus: submitted.status, total: computed.total });
   // Bản sao WP (local_ledger) nhận qua webhook app: sự kiện ghi cùng giao dịch (outbox) — đơn hỏng thì không có sự kiện.
-  await ctx.events.emit('pos.order.recorded', { orderId: draft.id, code, branchCode: branch.code, docKey: doc.docKey, version: 1, cashier: { name: ctx.actor.name }, order }, {
+  // Đơn QR chờ tiền: chưa có bản sao (website chỉ ghi đơn đã hoàn tất) — phát lúc xác nhận tiền về (NT-BH-009).
+  if (order.status === 'completed') await ctx.events.emit('pos.order.recorded', { orderId: draft.id, code, branchCode: branch.code, docKey: doc.docKey, version: 1, cashier: { name: ctx.actor.name }, order }, {
     subject: `pos.order:${draft.id}`, dedupeKey: `pos.order.recorded:${draft.id}`,
   });
   return { order, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: false };

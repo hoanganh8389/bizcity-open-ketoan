@@ -44,6 +44,10 @@ Một đơn đã hoàn tất 660.000 (2 hộp, thuế 8 %).
 ## 7. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 1, 6 (lưu người mua, quà dưới 24 tháng) | đơn có `invoiceBuyer` (MST, công ty, địa chỉ, email, `excludedSkus`); gửi lại không đổi | đúng | — | test NT-BH-010, 12/11 |
+| §5 dòng 2–3 (MST sai, đơn chưa xong / đã huỷ) | `VALIDATION_ERROR`; chưa hoàn tất từ chối; `POS_ORDER_CANCELLED` | đúng | — | |
+| §5 dòng 4 (bản sao website) | bản sao mang người mua, cùng phiếu | sự kiện phiên bản 2 phát đúng; website đè theo phiên bản (tgs_pos 4651051) | — | chạy thật Docker + LocalWP: đợt kế |
+| §5 dòng 5 (tra phiếu trên website) | `mirrored: true` | chưa chạy | — | phần website, chạy cùng lần thử thật |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -53,3 +57,4 @@ Một đơn đã hoàn tất 660.000 (2 hộp, thuế 8 %).
 | Ngày | Thay đổi |
 |---|---|
 | 12/11/2026 | Tạo phiếu |
+| 12/11/2026 | Ghi kết quả chạy (test NT-BH-010 2/2) |
