@@ -49,3 +49,5 @@
 .kieu-ma > button b { font-size: 16px; color: var(--nav, #2457B3); }
 .kieu-ma > button span { color: var(--ink-500, #6b7280); font-size: 13px; }
 .kieu-ma-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 4px; }
+
+.cay-nhom-msg { position: sticky; top: 0; z-index: 2; margin: 0 90px 6px 0; }

@@ -319,7 +319,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} helpKey="mat-hang" onClose={onClose}
       footer={isNew ? (
         <>
-          <span className="muted" style={{ marginRight: 'auto', fontSize: 12.5 }}>Bước {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx]!.t}</span>
+          {errMsg ? <span className="neg" style={{ marginRight: 'auto', fontSize: 13, fontWeight: 600 }}>{errMsg}</span>
+            : <span className="muted" style={{ marginRight: 'auto', fontSize: 12.5 }}>Bước {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx]!.t}</span>}
           {stepIdx > 0 && <button className="btn" onClick={() => { setErrMsg(''); setTab(STEPS[stepIdx - 1]!.k); }}>‹ Quay lại</button>}
           {tab !== 'review' && <button className="btn btn-primary" onClick={next}>Tiếp tục ›</button>}
           {tab === 'review' && <button className="btn btn-primary" disabled={save.isPending} onClick={() => {
@@ -511,15 +512,16 @@ function ChonNhomCay({ classes, value, label, onChange, defaultOpen }: { classes
       <button type="button" className="input" style={{ textAlign: 'left', width: '100%', cursor: 'pointer' }} onClick={() => setOpen((x) => !x)}>
         {label || <span className="muted">Bấm để chọn nhóm hàng</span>}
       </button>
+      {!open && msg && <div className="neg" style={{ fontSize: 12.5, marginTop: 4, fontWeight: 600 }}>{msg}</div>}
       {open && (
         <div className="cay-nhom-drop">
           <button type="button" className="btn btn-sm cay-nhom-x" onClick={() => setOpen(false)} title="Đóng (Esc)">✕ Đóng</button>
+          {msg && <div className="alert alert-bad cay-nhom-msg">{msg}</div>}
           <GroupTree classes={classes.filter((c) => c.isActive || c.code === value).map((c) => ({ ...c, products: (c as { products?: number }).products ?? 0 })) as never} value={value} onChange={(c) => {
             if (!c) return;
             if ((lv.get(c) ?? 0) < 3) { setMsg(`"${classes.find((x) => x.code === c)?.name ?? c}" mới là nhóm cấp ${lv.get(c) ?? 0} — phải chọn tới nhóm cấp 3 (nhóm sản phẩm).`); return; }
             setMsg(''); onChange(c); setOpen(false);
           }} leafOnly autoFocus />
-          {msg && <div className="alert alert-bad" style={{ marginTop: 6 }}>{msg}</div>}
         </div>
       )}
     </div>
