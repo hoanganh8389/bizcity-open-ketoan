@@ -20,6 +20,7 @@ Mỗi bản ghi đủ sáu mục:
 - Phiếu thu / chi, thu / chi tiền gửi: ô Loại lấy từ Tài khoản ngầm định (kế toán sửa được), ô tài khoản của dòng chỉ chọn trong lọc của loại; nút Cột → ẩn / hiện TK Nợ / TK Có (vẫn ghi theo loại).
 - Bỏ hẳn màn Lý do – Tài khoản (ACC18) và Mặt hàng – Tài khoản (ACC17) khỏi menu; đường dẫn cũ về Tài khoản ngầm định. Mua hàng lấy tài khoản theo Tài khoản ngầm định; MH12 chỉ hiện "đang dùng" (tài khoản riêng cũ còn thì vẫn hiện để xoá).
 - MH12: công tắc "Không cho nhập vượt số lượng đơn đặt" (bật = chặn duyệt phiếu nhập nhận thừa / mã ngoài đơn; mặc định chỉ cảnh báo). Tài liệu đối chiếu yêu cầu mua hàng docs/nghiep-vu/19.
+- Chứng từ nghiệp vụ khác: ô Loại (nhóm Tổng hợp / Tài sản – công cụ của Tài khoản ngầm định) — chọn loại điền sẵn TK dòng chính (Nợ) và đối ứng (Có), ô tài khoản chỉ chọn trong lọc; để "(Tự khai)" như cũ.
 - Chi nhánh: bỏ ô Đơn vị hạch toán (chưa chi nhánh nào dùng, dữ liệu cũ giữ). Dữ liệu gốc: ẩn các bộ chạy ngầm (lý do, nhóm hạch toán, khoá ngầm định cũ) — khai ở Tài khoản ngầm định.
 - Màn Bộ phận (và các danh mục cùng khuôn): mặc định chỉ hiện mục đang dùng, tích "Hiện cả mục đã ẩn" khi cần.
 - Nhập Excel chi nhánh, cửa hàng (mã, tên, thuộc cơ cấu, MST, thông tin in, theo dõi) ở màn Chi nhánh và trang Nhập Excel. Nhập / xuất cơ cấu tổ chức kèm cột MST (kiểm MST ngay khi chọn tệp); mẫu nhập kho bỏ cột Tài khoản kho.
