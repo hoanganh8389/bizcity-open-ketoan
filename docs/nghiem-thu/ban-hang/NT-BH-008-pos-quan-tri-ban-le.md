@@ -31,7 +31,7 @@ Như mục 2.
 
 | # | Màn | Kiểm | Kết quả |
 |---|---|---|---|
-| 1 | BH13 | Danh sách kỳ hôm nay, hai chi nhánh | 3 đơn, mới nhất trước; cột: mã phiếu, ngày giờ, chi nhánh, thu ngân, ca, khách, hình thức, tổng tiền, trạng thái đơn, trạng thái chứng từ sổ, bản sao website |
+| 1 | BH13 | Danh sách kỳ hôm nay, hai chi nhánh | 3 đơn, mới nhất trước; cột: mã phiếu, ngày giờ, chi nhánh, thu ngân, ca, khách, hình thức, tổng tiền, trạng thái đơn, trạng thái chứng từ sổ (lúc gửi) |
 | 2 | BH13 | Thẻ chỉ số | Số đơn 3 · Doanh thu 1.315.000 · Đã hoàn 325.000 · Thuần 990.000 |
 | 3 | BH13 | Bấm một lần đơn A | Nửa dưới: 2 dòng hàng (mã, tên, ĐVT, SL, đơn giá, thành tiền, thuế) |
 | 4 | BH13 | Lọc chi nhánh `CN02` | Chỉ đơn 330.000 |
@@ -48,12 +48,12 @@ Như mục 2.
 |---|---|---|
 | 1 | Kỳ không có đơn | Bảng trống "Không có đơn trong kỳ", thẻ chỉ số 0 |
 | 2 | Đơn có chứng từ đang chờ duyệt / lỗi ghi sổ | Cột trạng thái chứng từ hiện đúng (chờ duyệt / lỗi); không ẩn đơn |
-| 3 | Bản sao website chưa nhận / lỗi | Cột bản sao hiện "chưa nhận" / "lỗi"; không chặn gì ở kế toán |
+| 3 | Bản sao website chưa nhận / lỗi | Không hiện ở màn này (module không biết kết quả giao webhook) — xem ở *Hệ thống → Sự kiện* (việc giao `tgs-wp.webhook`) |
 | 4 | Đặt hạn trả hàng ngoài khoảng 0–60 ngày | Từ chối ngay ở ô nhập (lỗi tại ô) |
 | 5 | Cài đặt chưa đặt | Dùng mặc định của khoá (hạn trả 3 ngày, không bắt buộc mở ca, một ca / chi nhánh) |
 
 ## 7. Cài đặt bán hàng (BH17) — khoá cấu hình
-Khoá thuộc module `pos`, khai ở `docs/contracts/bizcity-settings.registry.json` cùng PR code (R-MATRIX-2), module đọc bằng `ctx.settings.get`, ghi qua `PUT /api/v1/settings/values/:key` của Core:
+Khoá thuộc module `pos`, khai ở `modules/pos/settings.registry.json` + mục `settings` của manifest (gộp vào registry lúc nạp module — `registerModuleSettings`), module đọc bằng `ctx.settings.get`, ghi qua `PUT /api/v1/settings/values/:key` của Core:
 
 | Khoá | Kiểu | Mặc định | Ghi chú |
 |---|---|---|---|
@@ -65,6 +65,12 @@ Khoá thuộc module `pos`, khai ở `docs/contracts/bizcity-settings.registry.j
 ## 8. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 1–4 (BH13) | 3 đơn; 1.315.000 / 325.000 / 990.000; lọc CN02 | đúng | — | test NT-BH-008 |
+| §5 dòng 5 (BH14) | 1 phiếu 325.000 nối đơn B | đúng | — | |
+| §5 dòng 6 (BH15) | phải có 1.330.000, đếm 1.320.000, −10.000, tô đỏ | đúng | — | |
+| §5 dòng 7 (BH16) | thuần 990.000; CN01 660.000, CN02 330.000 | đúng | — | |
+| §5 dòng 8 (BH17) | hạn trả 5 → đơn 4 ngày không cần duyệt; 99 bị từ chối | đúng | — | |
+| §5 dòng 10 (quyền) | thu ngân chỉ `pos:sell` → 403 | đúng | — | |
 
 ## 9. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -74,3 +80,4 @@ Khoá thuộc module `pos`, khai ở `docs/contracts/bizcity-settings.registry.j
 | Ngày | Thay đổi |
 |---|---|
 | 12/11/2026 | Tạo phiếu |
+| 12/11/2026 | Bỏ cột bản sao website (module không biết kết quả giao); khoá cấu hình khai ở module; ghi kết quả chạy |

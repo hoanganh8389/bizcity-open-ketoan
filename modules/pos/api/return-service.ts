@@ -7,11 +7,13 @@ import { codePeriod } from './domain/order.js';
 import { computeReturn, returnDeadline, returnDocKey, returnableLines, daysSince, toSaleReturnDocument, type ReturnedSoFar, type SoldLine } from './domain/returns.js';
 import { takeCodes } from './codes.js';
 import { activePaymentMethods, catalogFor, resolveBranch, todayVn } from './read.js';
+import { returnDays } from './settings.js';
 import { isUniqueViolation, lockKey, raise } from './order-service.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 
 /** Hạn trả theo ngày bán (họp kế toán 04/11: tham số, hiện 3 ngày). Cùng số với bootstrap.returnPolicy.days. */
+/** Mặc định hạn trả khi chưa đặt Cài đặt bán hàng (giữ cho test thuần / gọi không có ctx). */
 export const RETURN_DAYS = 3;
 
 export const returnDraftSchema = z.object({
@@ -71,14 +73,14 @@ export async function returnedOf(tx: Tx, orderId: string): Promise<Map<string, R
 }
 
 /** Màn hoàn hàng: phần còn trả được, hạn, lý do không trả được ở cửa hàng này. */
-export async function returnableOf(tx: Tx, order: OrderRow, branchCode: string, today = todayVn()) {
+export async function returnableOf(tx: Tx, order: OrderRow, branchCode: string, days = RETURN_DAYS, today = todayVn()) {
   const lines = returnableLines(await soldLinesOf(tx, order), await returnedOf(tx, order.order_id));
   const blockers: { code: string; message: string }[] = [];
   if (order.status !== 'completed') blockers.push({ code: 'NOT_COMPLETED', message: 'Đơn chưa hoàn tất / đã huỷ: không trả hàng' });
   if (order.branch_code !== branchCode) blockers.push({ code: 'OTHER_SHOP', message: `Đơn của chi nhánh ${order.branch_code}: đợt này chỉ trả ở cửa hàng đã bán` });
   return {
-    order: order.snapshot, lines, warnings: [] as string[], deadline: returnDeadline(order.business_date, RETURN_DAYS),
-    late: daysSince(order.business_date, today) > RETURN_DAYS, blockers, promoSkus: {} as Record<string, string[]>,
+    order: order.snapshot, lines, warnings: [] as string[], deadline: returnDeadline(order.business_date, days),
+    late: daysSince(order.business_date, today) > days, blockers, promoSkus: {} as Record<string, string[]>,
   };
 }
 
@@ -87,6 +89,8 @@ export type CreatedReturn = { snapshot: Record<string, unknown>; docKey: string;
 /** Lập phiếu trả: kiểm → cấp mã TH → nộp sale_return → lưu phiếu + dòng. Đổi hàng: tiền hoàn thành đối trừ (không trả tiền). */
 export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts: { exchangeOrderId?: string } = {}): Promise<CreatedReturn> {
   const exchange = opts.exchangeOrderId !== undefined;
+  // Hạn trả lấy ở Cài đặt bán hàng (BH17, khoá bizcity.pos.return_days; mặc định 3 ngày).
+  const days = await returnDays(ctx);
   const prepared = await ctx.data.module(async (tx) => {
     await lockKey(tx, `pos:return:${draft.id}`);
     const old = (await sql<{ snapshot: Record<string, unknown>; same: boolean; doc_key: string; refund_total: string; branch_code: string }>`
@@ -103,7 +107,7 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
     const today = todayVn();
     const computed = computeReturn({
       draft, order: { status: order.status, branchCode: order.branch_code, businessDate: order.business_date }, lines, done,
-      branchCode: branch.code, today, days: RETURN_DAYS, paymentMethods: await activePaymentMethods(tx), exchange,
+      branchCode: branch.code, today, days, paymentMethods: await activePaymentMethods(tx), exchange,
     });
     if ('problem' in computed) raise(computed.problem);
     const code = (await takeCodes(tx, ctx.tenant.id, branch.code, 'return', codePeriod(today), 1))[0]!;
@@ -133,10 +137,10 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
     await ctx.data.module(async (tx) => {
       await sql`
         INSERT INTO mod_pos.returns (tenant_id, return_id, order_id, branch_code, code, business_date, refund_method, refund_total, refund_net,
-                                     refund_tax, reason, approved_by, approval_note, exchange_order_id, doc_key, doc_status, snapshot, draft, created_by)
+                                     refund_tax, reason, approved_by, approval_note, exchange_order_id, doc_key, doc_status, snapshot, draft, created_by, cashier_name)
         VALUES (${ctx.tenant.id}, ${draft.id}, ${order.order_id}, ${branch.code}, ${code}, ${today}, ${draft.refundMethod}, ${computed.refundTotal},
                 ${computed.net}, ${computed.tax}, ${draft.reason}, ${computed.late ? draft.approval?.by ?? null : null}, ${computed.late ? draft.approval?.note ?? null : null},
-                ${opts.exchangeOrderId ?? null}, ${doc.docKey}, ${submitted.status}, ${JSON.stringify(snapshot)}::jsonb, ${JSON.stringify(draft)}::jsonb, ${ctx.actor.id})`.execute(tx);
+                ${opts.exchangeOrderId ?? null}, ${doc.docKey}, ${submitted.status}, ${JSON.stringify(snapshot)}::jsonb, ${JSON.stringify(draft)}::jsonb, ${ctx.actor.id}, ${ctx.actor.name || null})`.execute(tx);
       for (const l of computed.lines) {
         await sql`
           INSERT INTO mod_pos.return_lines (tenant_id, return_id, order_id, line_key, item_id, sku, unit_qty, refund, refund_net, refund_tax)

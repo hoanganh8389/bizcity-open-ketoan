@@ -1,6 +1,11 @@
 /** Module pos — phía máy chủ của máy bán POS (kế hoạch module POS). Mọi action khai ở đây VÀ trong bizcity.module.json (`actions`). */
 import { defineModule } from '@bizcity/module-sdk';
 import manifest from '../bizcity.module.json' with { type: 'json' };
+import adminDashboard from './actions/admin-dashboard.js';
+import adminOrders from './actions/admin-orders.js';
+import adminReturns from './actions/admin-returns.js';
+import adminSettings from './actions/admin-settings.js';
+import adminShifts from './actions/admin-shifts.js';
 import bootstrapGet from './actions/bootstrap-get.js';
 import catalogBarcode from './actions/catalog-barcode.js';
 import catalogSearch from './actions/catalog-search.js';
@@ -31,6 +36,7 @@ export default defineModule({
     returnCreate, returnList, exchangeCreate, customerSearch, customerLookup, customerOrders,
     catalogSnapshot, catalogSearch, catalogBarcode, stockGet,
     shiftCurrent, shiftOpen, shiftClose, reportOrders, reportDashboard,
+    adminOrders, adminReturns, adminShifts, adminDashboard, adminSettings,
   ],
   subscribers: [],
 });

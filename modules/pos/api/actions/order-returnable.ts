@@ -2,6 +2,7 @@
 import { defineAction, z } from '@bizcity/module-sdk';
 import { findOrder, returnableOf } from '../return-service.js';
 import { resolveBranch } from '../read.js';
+import { returnDays } from '../settings.js';
 
 export default defineAction({
   id: 'pos.order.returnable', title: 'Phần còn trả được của đơn máy POS', tags: ['Máy bán POS'],
@@ -10,8 +11,11 @@ export default defineAction({
   input: z.object({ id: z.string().trim().min(1).max(64), branch: z.string().trim().max(32).optional() }),
   output: z.record(z.unknown()),
   expose: { http: { method: 'GET', path: '/orders/:id/returnable' }, mcp: false, ai: 'read' },
-  handler: async (ctx, { id, branch }) => ctx.data.module(async (tx) => {
+  handler: async (ctx, { id, branch }) => {
+    const days = await returnDays(ctx);
+    return ctx.data.module(async (tx) => {
     const here = await resolveBranch(tx, branch);
-    return returnableOf(tx, await findOrder(tx, id, branch), here.code);
-  }),
+    return returnableOf(tx, await findOrder(tx, id, branch), here.code, days);
+    });
+  },
 });

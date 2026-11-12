@@ -10,13 +10,13 @@ import { lockKey } from './order-service.js';
 import { activePaymentMethods } from './read.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
-type ShiftRow = {
+export type ShiftRow = {
   shift_id: string; branch_code: string; status: 'open' | 'closed'; opened_at: Date; opened_by_name: string; opening_cash: string;
   closed_at: Date | null; report: Record<string, unknown> | null;
 };
 
 /** Mã tiền mặt + tên các hình thức thanh toán của đơn vị (để in tên ở ca / tổng quan). */
-async function methodsOf(tx: Tx): Promise<{ cashCode: string; methodNames: Record<string, string> }> {
+export async function methodsOf(tx: Tx): Promise<{ cashCode: string; methodNames: Record<string, string> }> {
   const list = await activePaymentMethods(tx);
   return { cashCode: list.find((m) => paymentKind(m.code) === 'cash')?.code ?? 'TM', methodNames: Object.fromEntries(list.map((m) => [m.code, m.name])) };
 }
@@ -38,7 +38,7 @@ async function windowData(tx: Tx, branch: string, from: Date, to: Date | null): 
   return { orders, returns };
 }
 
-async function summaryOf(tx: Tx, s: ShiftRow) {
+export async function summaryOf(tx: Tx, s: ShiftRow) {
   const data = await windowData(tx, s.branch_code, s.opened_at, s.closed_at);
   const n = shiftNumbers({ openingCash: Number(s.opening_cash), ...data, ...(await methodsOf(tx)) });
   return { id: s.shift_id, openedAt: s.opened_at.toISOString(), cashier: s.opened_by_name, openingCash: Number(s.opening_cash), ...n };
