@@ -11,6 +11,9 @@ import { useState, type ClipboardEvent } from 'react';
 import { chainText, refOf, sortUnits, suggestPrice, unitProblems } from '@ketoan/contracts';
 import { UnitNameInput } from './UnitNameInput';
 import { useUnitNames } from './UnitNamesPage';
+import { useQueryClient } from '@tanstack/react-query';
+import { api, errorText } from '@/lib/api';
+import { Field, Modal } from '@/components/ui';
 import './dvt-gia-ban.css';
 
 export interface UnitRow { unit: string; ratio: number; isDefault: boolean; isPurchaseDefault?: boolean; weightKg: number | null; note: string }
@@ -104,6 +107,7 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
   const rowPrices = (list: string) => sorted.map((u) => ({ unit: u.unit, price: priceOf(list, u.unit) }));
   const company = lists.find((l) => l.isCompany);
   const shown = onlyCompany ? shownAll.filter((c) => c === company?.code) : shownAll;
+  const [adding, setAdding] = useState(false);
   const listName = new Map(lists.map((l) => [l.code, l]));
   const hidden = lists.filter((l) => l.isActive && !shown.includes(l.code));
   /** Dán từ Excel: nhiều số cách nhau bằng Tab / xuống dòng → điền sang phải (ĐVT) và xuống dưới (bảng giá). */
@@ -163,16 +167,45 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
           </div>
         )}
         {onlyCompany && company && sorted.length > 0 && <div className="muted" style={{ fontSize: 12, padding: '6px 0' }}>Hàng chính: chỉ khai giá bảng giá công ty.</div>}
-        {!onlyCompany && company && sorted.length > 0 && hidden.length > 0 && (
+        {!onlyCompany && company && sorted.length > 0 && (
           <div className="dvt-add">
-            <select className="select input" style={{ height: 30, width: 'auto' }} value="" onChange={(e) => e.target.value && setShown((x) => [...x, e.target.value])}>
+            <select className="select input" style={{ height: 30, width: 'auto' }} value="" onChange={(e) => { const c = e.target.value; if (c === '__new') setAdding(true); else if (c) setShown((x) => [...x, c]); }}>
               <option value="">+ Thêm giá riêng cho bảng giá chi nhánh…</option>
+              <option value="__new">＋ Thêm bảng giá mới…</option>
               {hidden.map((l) => <option key={l.code} value={l.code}>{l.name}{l.branchCodes.length ? ` (${l.branchCodes.length} chi nhánh)` : ''}</option>)}
             </select>
             <span className="muted" style={{ fontSize: 12 }}>Hàng chính chỉ bán theo giá công ty; hàng thường ưu tiên giá chi nhánh rồi tới giá công ty.</span>
           </div>
         )}
       </section>
+      {adding && <ThemBangGia onClose={() => setAdding(false)} onDone={(code) => { setAdding(false); setShown((x) => [...x, code]); }} />}
     </div>
+  );
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] thêm nhanh bảng giá mới ngay ở thẻ Giá bán (đóng góp)
+function ThemBangGia({ onClose, onDone }: { onClose: () => void; onDone: (code: string) => void }) {
+  const qc = useQueryClient();
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    const c = code.trim();
+    if (!c || !name.trim()) { setErr('Nhập mã và tên bảng giá'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(c)}`, { name: name.trim(), isCompany: false, isActive: true, note: '' });
+      await qc.invalidateQueries({ queryKey: ['price-lists'] });
+      onDone(c);
+    } catch (e) { setErr(errorText(e)); setBusy(false); }
+  };
+  return (
+    <Modal title="Thêm bảng giá mới" onClose={onClose} footer={<><button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      {err && <div className="alert alert-bad full">{err}</div>}
+      <Field label="Mã bảng giá (*)"><input className="input mono" value={code} maxLength={64} autoFocus onChange={(e) => setCode(e.target.value)} placeholder="vd BG Hải Dương" /></Field>
+      <Field label="Tên bảng giá (*)"><input className="input" value={name} maxLength={200} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void save(); }} /></Field>
+      <div className="muted full" style={{ fontSize: 12 }}>Gán chi nhánh áp dụng ở màn Bảng giá bán.</div>
+    </Modal>
   );
 }
