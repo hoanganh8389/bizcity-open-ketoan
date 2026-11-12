@@ -37,7 +37,7 @@ afterAll(async () => {
 describe('Dữ liệu gốc', () => {
   it('liệt kê các bộ; xem nội dung tệp gốc; quay về cần quyền và xác nhận', async () => {
     const list = (await call(ctx, 'GET', '/api/v1/default-data')).body.data;
-    expect(list.datasets).toHaveLength(23);
+    expect(list.datasets.length).toBeGreaterThanOrEqual(23); // [2026-11-13 Nguyễn Văn Thủy] bộ mới thêm sau (24) không làm hỏng test (đóng góp)
     expect(list.datasets.map((d: { key: string }) => d.key)).toEqual(expect.arrayContaining(['cost_item', 'department', 'branches', 'reasons', 'posting_groups', 'item_classes', 'products', 'posting_defaults', 'account_tracking', 'tax_codes', 'bank_accounts', 'payment_methods', 'partner_groups', 'partners', 'employee', 'contract', 'asset_categories', 'tool_group', 'capital_source', 'usage_purpose', 'case', 'project', 'warehouses']));
     expect(list.datasets.find((d: { key: string }) => d.key === 'cost_item').seedCount).toBeGreaterThan(200);
     for (const d of list.datasets as { key: string; seedCount: number }[]) seedCount[d.key] = d.seedCount;
@@ -151,7 +151,7 @@ describe('Dữ liệu gốc', () => {
     // Quay về toàn bộ theo thứ tự phụ thuộc: chạy được, các bộ đã đủ thì không thêm gì.
     const all = await call(ctx, 'POST', '/api/v1/default-data/all/restore', { confirm: true });
     expect(all.status, JSON.stringify(all.body).slice(0, 300)).toBe(200);
-    expect(all.body.data).toHaveLength(23);
+    expect(all.body.data).toHaveLength(Object.keys(seedCount).length);
     expect(all.body.data.find((o: { key: string }) => o.key === 'products').result.added).toBe(0);
     // [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: nạp 20.985 mặt hàng ≈ 87 s một mình (đồng bộ Item Master ≈ 15 s trong đó), vượt 120 s khi cả bộ test chạy song song
   }, 240_000);

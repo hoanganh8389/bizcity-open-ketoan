@@ -5,12 +5,18 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { skuInfo, variantName } from '@bizcity/mua-hang-domain';
+import { sql } from 'kysely';
+import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;
 type Sku = { sku: string; segments: { skuCode: string; source: string }[]; industryCode: string; brandCode: string };
 const next = async (g: string) => (await call(t, 'GET', `/api/v1/catalog/next-sku?groupCode=${g}`));
-const group = (code: string, name: string, parentCode?: string) => call(t, 'PUT', `/api/v1/item-classes/group/${code}`, { name, ...(parentCode ? { parentCode } : {}) });
+// [2026-11-13 Nguyễn Văn Thủy] nhóm cũ chưa khai mã ngắn: màn hình nay bắt khai mã ngắn khi thêm (0116), nên dựng thẳng bằng SQL như dữ liệu cũ (đóng góp)
+const group = async (code: string, name: string, parentCode?: string) => {
+  const tid = (await db.selectFrom('tenants').select('id').where('code', '=', t.tenantCode).executeTakeFirstOrThrow()).id;
+  await sql`INSERT INTO item_classes (tenant_id, kind, code, name, parent_code) VALUES (${tid}, 'group', ${code}, ${name}, ${parentCode ?? null})`.execute(db);
+};
 const product = (sku: string, groupCode: string) => call(t, 'PUT', `/api/v1/catalog/products/${sku}?new=1`, { name: `Hàng ${sku}`, groupCode, units: [{ unit: 'Hộp', ratio: 1, isDefault: true }] });
 
 beforeAll(async () => {
@@ -53,13 +59,15 @@ describe('Sinh mã hàng theo nhóm', () => {
   it('quà khuyến mại: Q + nhãn + nhóm + 4 số', async () => {
     expect(((await next('Q3')).body.data as Sku).sku).toBe('Q00610018');
   });
-  it('mã biến thể (đuôi K/M/Q/T, đuôi riêng Z, B): lưu được, không làm lệch số tự sinh; trùng mã bị chặn; mã gõ tay khác quy tắc vẫn lưu', async () => {
-    expect((await product('110054058K', 'G3')).status).toBeLessThan(300);
-    expect((await product('110054058Z', 'G3')).status).toBeLessThan(300);
-    // Số tự sinh chỉ tính mã 9 ký tự: đã có 110054057, 110054058K/Z (chưa có 110054058 thường) → vẫn 110054058.
+  // [2026-11-13 Nguyễn Văn Thủy] luật mã mới: biến thể phải có mã cha trước; mã chính không có chữ đầu / cuối (đóng góp)
+  it('mã biến thể (chữ đầu / cuối mã cha): cần mã cha có trước, không làm lệch số tự sinh; trùng mã bị chặn; mã chính có chữ bị chặn', async () => {
+    expect((await product('110054057K', 'G3')).status).toBeLessThan(300);
+    expect((await product('Z110054057', 'G3')).status).toBeLessThan(300);
+    // Số tự sinh chỉ chạy theo mã chính: biến thể của 110054057 không làm nhảy số → vẫn 110054058.
     expect(((await next('G3')).body.data as Sku).sku).toBe('110054058');
+    expect((await product('110054099K', 'G3')).status).toBe(400);   // mã cha 110054099 chưa có
     expect((await product('110054057', 'G3')).status).toBe(409);
-    expect((await product('MA-RIENG-01', 'G3')).status).toBeLessThan(300);
+    expect((await product('MA-RIENG-01', 'G3')).status).toBe(400);  // mã chính có chữ đầu / cuối
   });
   it('đọc mã: từng đoạn ngành / nhãn / nhóm / số / đuôi; tên mã biến thể theo mẫu', () => {
     expect(skuInfo('171676005K')).toMatchObject({ kind: 'share', industry: '17', brand: '167', group: '6', seq: '005', suffix: 'K', base: '171676005' });

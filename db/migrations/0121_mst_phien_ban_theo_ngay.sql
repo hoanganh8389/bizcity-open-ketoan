@@ -320,8 +320,9 @@ BEGIN
      AND (coalesce(OLD.tax_id, '') = '' OR NEW.tax_id IS NOT DISTINCT FROM OLD.tax_id) THEN
     RETURN NEW;
   END IF;
+  -- 0091 (E1): điền giá vốn chỉ qua hàm ledger_fill_cost_lines (chủ hàm ketoan_ledger_cost); cờ phiên cũ không còn tác dụng.
   IF TG_OP = 'UPDATE'
-     AND current_setting('ketoan.cost_overwrite', true) = 'on'
+     AND current_user = 'ketoan_ledger_cost'
      AND OLD.cost_fill IS NOT NULL AND NEW.cost_fill IS NOT DISTINCT FROM OLD.cost_fill
      AND NEW.entry_id = OLD.entry_id AND NEW.tenant_id = OLD.tenant_id AND NEW.branch_id = OLD.branch_id
      AND NEW.posting_date = OLD.posting_date AND NEW.line_no = OLD.line_no AND NEW.pair_no = OLD.pair_no
