@@ -59,7 +59,7 @@ Luật slot: thành phần chỉ dùng `@bizcity/ui-kit` và client action; lỗ
 
 **Ảnh hưởng.** Chỉ thêm vào `packages/ui-kit` và `apps/web/src/lib/uiKitHost.ts`; màn Core không đổi; module cũ không đổi. Kiểu `UiKitImpl` thêm trường → bản thật phải cung cấp (một chỗ duy nhất: `uiKitHost.ts`).
 
-**Kiểm bằng.** typecheck (`UiKitImpl` đủ trường); test `packages/ui-kit` gọi trước `provideUiKit` báo lỗi rõ; màn đầu tiên dùng là màn quản trị bán lẻ của module `pos` (NT-BH-008) — e2e trên giao diện thật.
+**Kiểm bằng.** typecheck (`UiKitImpl` kế thừa `UiKitGridImpl`: `uiKitHost.ts` thiếu trường nào là không biên dịch được); màn đầu tiên dùng là màn quản trị bán lẻ của module `pos` (NT-BH-008) — chạy thật trên giao diện. <!-- [2026-11-12 10:20 PM Võ Hoàng] POS-UIKIT — bỏ ý test riêng gói ui-kit: npm test gốc chỉ chạy test API, ui-kit chưa có bộ chạy test (đóng góp) -->
 
 ## 3a. Khung nhúng app ngoài tiến trình (ADR-0011 mức 2)
 

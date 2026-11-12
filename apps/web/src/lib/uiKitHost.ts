@@ -3,6 +3,12 @@
 import { createElement } from 'react';
 import { provideUiKit } from '@bizcity/ui-kit';
 import { PageHeader } from '@/components/PageHeader';
+// [2026-11-12 10:00 PM Võ Hoàng] POS-UIKIT — BIZCITY-EXTENSION 1.4.0-draft §3b: bản thật của bảng lưới, thẻ chỉ số, bộ tham số, ô chọn (đóng góp)
+import { DataGrid } from '@/components/DataGrid';
+import { KpiCards } from '@/components/KpiCards';
+import { BranchCheckList, FilterLayout, SideKy } from '@/components/ReportPanel';
+import { BranchPicker } from '@/components/filters';
+import { ItemPicker } from '@/components/pickers';
 import { Empty, ErrorBox, Field, Loading, Modal, Money, StatusBadge } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -10,6 +16,14 @@ import { useAuth } from '@/lib/auth';
 export function installUiKit(): void {
   provideUiKit({
     PageHeader, Loading, ErrorBox, Empty, Field, Money, StatusBadge,
+    // Tập con props của thành phần Core (chữ ký ở packages/ui-kit/src/grid.tsx).
+    DataGrid: DataGrid as never,
+    KpiCards,
+    FilterLayout: (p) => createElement(FilterLayout, p),
+    PeriodField: (p) => createElement(SideKy, p),
+    BranchCheckList: (p) => createElement(BranchCheckList, p),
+    ItemPicker: (p) => createElement(ItemPicker, p),
+    BranchPicker: (p) => createElement(BranchPicker, p),
     Modal: (p) => createElement(Modal, { ...p, footer: p.footer ?? null }),
     api: {
       get: (path, query) => api.get(path, query),
