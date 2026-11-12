@@ -31,7 +31,7 @@ const VAT: Record<string, [string, string]> = { kct: ['KCT', 'V13K'], '0': ['R00
 const low = (s: string) => s.trim().toLowerCase();
 
 // [2026-11-03 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): cả tệp một giao dịch, mỗi dòng một SAVEPOINT
-export async function importProducts(trx: ActionTx, tenantId: string, actor: string, rows: ImportRow[], dryRun: boolean) {
+export async function importProducts(trx: ActionTx, tenantId: string, actor: string, rows: ImportRow[], dryRun: boolean, by?: string) {
   const [products, classes, groups, taxes] = await Promise.all([
     trx.selectFrom('products').select(['sku', 'name', 'unit', 'note', 'group_code', 'industry_code', 'brand_code', 'type_code', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'is_active'])
       .where('tenant_id', '=', tenantId).execute(),
@@ -150,7 +150,7 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
   for (const c of order) {
     const show = { values: c.values, ...(c.before ? { before: c.before } : {}) };
     if (c.errors.length || dryRun) { results.push({ row: c.row, sku: c.sku, action: c.errors.length ? 'error' : c.isNew ? 'create' : 'update', errors: c.errors, ...show }); continue; }
-    const x = await inSavepoint(trx, (t) => saveProduct(t, tenantId, actor, c.sku, c.input, { isNew: c.isNew, source: 'excel', quiet: true, checkName: true }));
+    const x = await inSavepoint(trx, (t) => saveProduct(t, tenantId, actor, c.sku, c.input, { isNew: c.isNew, source: 'excel', quiet: true, checkName: true, by }));
     results.push(x.ok ? { row: c.row, sku: c.sku, action: c.isNew ? 'create' : 'update', errors: [], ...show } : { row: c.row, sku: c.sku, action: 'error', errors: [errorText(x.error)], ...show });
   }
   results.sort((a, b) => a.row - b.row);

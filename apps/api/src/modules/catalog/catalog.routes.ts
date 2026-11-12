@@ -227,7 +227,7 @@ export const catalogMoreWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: saveProduct áp cổng danh mục (nháp / kích hoạt); trả khung Vì sao + ghi nhận cảnh báo mềm.
       // [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — gộp main: gate / findings / held trả qua ctx.meta (action không còn tự dựng phản hồi)
-      const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new, checkName: true }))!;
+      const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new, checkName: true, by: auth.actorName }))!;
       const findings = await itemHints(trx, auth.tenantId, { sku: input.sku, unit: product.unit, postingGroupCode: product.postingGroupCode });
       await recordWarnAck(trx, auth, 'product', input.sku, findings, warnAck);
       Object.assign(ctx.meta, { gate: 'A', findings, ...(product.isDraft ? { held: { kind: 'draft', id: input.sku } } : {}) });
@@ -285,6 +285,6 @@ export const catalogBatchActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/catalog/products/import' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'catalog' },
     handler: async (ctx, input) => {
-      const trx = ctx.data.tx; const auth = ctx.legacyAuth; return await importProducts(trx, auth.tenantId, auth.actor, input.rows, input.dryRun); },
+      const trx = ctx.data.tx; const auth = ctx.legacyAuth; return await importProducts(trx, auth.tenantId, auth.actor, input.rows, input.dryRun, auth.actorName); },
   }),
 ];

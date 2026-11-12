@@ -877,6 +877,20 @@ export interface ItemClassesTable {
   is_active: Generated<boolean>;
   sku_code: Generated<string>;
   updated_at: TimestampDefault;
+  created_by: Generated<string>;
+  created_at: Generated<Date | null>;
+  updated_by: Generated<string>;
+}
+/** Lịch sử thêm / sửa nhóm hàng (0116). */
+export interface ItemClassHistoryTable {
+  id: Generated<string>;
+  tenant_id: string;
+  kind: string;
+  code: string;
+  at: TimestampDefault;
+  by_user: Generated<string>;
+  action: string;
+  changes: Generated<string>;
 }
 
 export interface PostingReasonsTable {
@@ -1939,6 +1953,7 @@ export interface Database {
   tax_invoices: TaxInvoicesTable;
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;
+  item_class_history: ItemClassHistoryTable;
   product_units: ProductUnitsTable;
   price_lists: PriceListsTable;
   price_list_branches: PriceListBranchesTable;

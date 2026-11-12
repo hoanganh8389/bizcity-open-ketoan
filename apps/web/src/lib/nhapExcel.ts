@@ -165,10 +165,10 @@ const NHOM_HANG: NhapLoai = {
   id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: mã nhóm, tên, nhóm cha, mã ngắn ghép vào mã hàng', keyField: 'code',
   listPath: '/danh-muc/phan-loai-hang', invalidate: ['item-classes'],
   fields: [
-    { key: 'code', header: 'Mã nhóm', required: true, aliases: ['ma', 'ma nhom hang', 'ma nhom vthh'], example: 'SUA-BOT', note: 'Mã đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'code', header: 'Mã nội bộ', required: true, aliases: ['ma', 'ma nhom hang', 'ma nhom vthh'], example: 'SUA-BOT', note: 'Mã đã có → cập nhật; chưa có → thêm mới.' },
     { key: 'name', header: 'Tên nhóm', required: 'moi', aliases: ['ten', 'ten nhom hang', 'ten nhom vthh'], example: 'Sữa bột' },
     { key: 'parentCode', header: 'Nhóm cha', aliases: ['ma nhom cha', 'thuoc nhom', 'nhom tren', 'thuoc'], example: 'SUA', note: 'Mã (hoặc đúng tên) nhóm cha — có sẵn hoặc ở dòng khác trong tệp. Trống: nhóm cấp 1 (dòng cập nhật: giữ nguyên).' },
-    { key: 'skuCode', header: 'Mã ngắn', aliases: ['ma sku', 'ma ghep', 'ma viet tat'], example: '01', note: 'Ghép vào đầu mã hàng: cấp 1 đủ 2 ký tự, cấp 2 đủ 3, cấp 3 đủ 1; chữ và số; không trùng nhóm cùng cha.' },
+    { key: 'skuCode', header: 'Mã nhóm hàng (ghép mã hàng)', aliases: ['ma sku', 'ma ghep', 'ma viet tat'], example: '01', note: 'Ghép vào đầu mã hàng: cấp 1 đúng 2 chữ số, không bắt đầu bằng 0; cấp 2 đủ 3 ký tự, cấp 3 đủ 1 (chữ hoặc số); không trùng nhóm cùng cha.' },
     { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai', 'dang dung'], note: 'Có / Không. Trống = giữ nguyên (mới: Có).' },
   ],
   run: async (rows, { dryRun, mode }) => {
@@ -220,6 +220,8 @@ const NHOM_HANG: NhapLoai = {
       const lv = ch.length;
       const sku = tree.get(p.code)!.sku;
       if (sku && MA_NGAN[lv] && sku.length !== MA_NGAN[lv]) p.errors.push(`Nhóm cấp ${lv}: mã ngắn phải đủ ${MA_NGAN[lv]} ký tự (đang "${sku}")`);
+      else if (sku && lv === 1 && !/^[1-9][0-9]$/.test(sku)) p.errors.push(`Nhóm cấp 1: mã phải là 2 chữ số, không bắt đầu bằng 0 (đang "${sku}")`);
+      if (!p.before && MA_NGAN[lv] && !sku) p.errors.push(`Nhóm cấp ${lv} mới phải có mã (${MA_NGAN[lv]} ký tự)`);
       if (sku) {
         const sib = [...tree.entries()].find(([c, v]) => c !== p.code && v.parent === p.parent && v.sku === sku);
         if (sib) p.errors.push(`Mã ngắn ${sku} đã dùng cho nhóm "${sib[1].name}" (${sib[0]}) cùng cấp`);

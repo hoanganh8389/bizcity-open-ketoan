@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhóm hàng (DM11) tối giản: một ô Mã nhóm hàng (ghép vào mã hàng; cấp 1 = 2 chữ số không bắt đầu bằng 0, cấp 2 = 3 ký tự, cấp 3 = 1 ký tự, gợi ý luôn hiện, sai báo đỏ, máy chủ chặn), mã nội bộ tự cấp; bỏ Xoá, Đầu mã hàng, Điền mã ngắn; thêm Người tạo / Lúc tạo / Người sửa / Lúc sửa và thẻ Lịch sử (0116). Người tạo ghi họ tên thay cho mã người dùng (0117).
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 - Thuế suất GTGT ở mặt hàng lấy từ danh mục Biểu thuế (thuế đầu ra), 5 mã chuẩn xếp đầu, báo khi Biểu thuế thiếu mã chuẩn; nút + thêm loại thuế ngay tại chỗ.
 - Nhập Excel mặt hàng theo quy tắc mới: mã chính không chữ đầu / cuối, nhóm cấp 3 bắt buộc khi thêm mới; mã biến thể cần mã cha (đã có hoặc trong tệp, ghi mã cha trước), tối đa 2 chữ, nhóm theo mã cha; cột Thuế suất GTGT (%) kiểm theo Biểu thuế; cột Trạng thái; bỏ cột Ngành / Nhãn / Nhóm hạch toán / Mã VAT / Ghi chú khỏi tệp mẫu.
 

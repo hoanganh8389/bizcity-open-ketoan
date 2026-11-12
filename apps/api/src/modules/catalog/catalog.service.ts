@@ -183,7 +183,7 @@ export async function sameNameProduct(trx: Db, tenantId: string, name: string, e
  * Lưu trọn một mặt hàng. units gửi kèm = THAY cả bộ đơn vị tính; prices gửi kèm = ghi các ô giá gửi lên (price null =
  * xoá ô giá đó). Dòng giá của đơn vị không còn trong bộ đơn vị tính bị xoá theo.
  */
-export async function saveProduct(trx: Db, tenantId: string, actor: string, sku: string, b: ProductInput, opts: { isNew?: boolean; source?: string; quiet?: boolean; checkName?: boolean } = {}) {
+export async function saveProduct(trx: Db, tenantId: string, actor: string, sku: string, b: ProductInput, opts: { isNew?: boolean; source?: string; quiet?: boolean; checkName?: boolean; by?: string } = {}) {
   const exists = await trx.selectFrom('products').select(['id', 'name']).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (opts.isNew && exists) throw Errors.conflict(`Mã hàng ${sku} đã có`);
   // [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng (đóng góp): kiểm khi thêm mới hoặc đổi tên, qua màn / Excel / thêm sản phẩm con.
@@ -228,7 +228,7 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   // Đơn vị nhỏ nhất (tỉ lệ 1) là ĐVT của mặt hàng.
   if (b.units) patch.unit = b.units.find((u) => Number(u.ratio) === 1)!.unit.trim();
   if (!exists) {
-    await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual', created_by: actor }).execute();
+    await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual', created_by: opts.by || actor }).execute();
   }
   await trx.updateTable('products').set(patch).where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
   // Mã biến thể luôn cùng nhóm với mã cha: đổi nhóm mã cha thì các mã biến thể đổi theo.

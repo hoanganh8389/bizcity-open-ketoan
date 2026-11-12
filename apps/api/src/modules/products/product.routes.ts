@@ -196,7 +196,19 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       const counts = await db.selectFrom('products').select([COLUMN[kind], (eb) => eb.fn.countAll<string>().as('n')]).where('tenant_id', '=', auth.tenantId).where(COLUMN[kind], 'is not', null).groupBy(COLUMN[kind]).execute();
       const n = new Map(counts.map((c) => [(c as Record<string, unknown>)[COLUMN[kind]] as string, Number(c.n)]));
       const rows = await db.selectFrom('item_classes').selectAll().where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).orderBy('code').execute();
-      return ok(rows.map((c) => ({ code: c.code, name: c.name, parentCode: c.parent_code, isActive: c.is_active, skuCode: c.sku_code, products: n.get(c.code) ?? 0 })));
+      return ok(rows.map((c) => ({ code: c.code, name: c.name, parentCode: c.parent_code, isActive: c.is_active, skuCode: c.sku_code, products: n.get(c.code) ?? 0,
+        createdBy: c.created_by, createdAt: c.created_at, updatedBy: c.updated_by, updatedAt: c.updated_at })));
+    },
+  });
+
+  // [2026-11-12 Nguyễn Văn Thủy] lịch sử thêm / sửa một nhóm hàng (0116) (đóng góp)
+  r.get('/api/v1/item-classes/:kind/:code/history', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Lịch sử thêm / sửa mã phân loại', params: z.object({ kind: z.enum(ITEM_CLASS_KINDS), code: z.string() }) },
+    handler: async (req) => {
+      const rows = await db.selectFrom('item_class_history').select(['at', 'by_user', 'action', 'changes']).where('tenant_id', '=', authOf(req).tenantId)
+        .where('kind', '=', req.params.kind).where('code', '=', req.params.code).orderBy('at', 'desc').limit(500).execute();
+      return ok(rows.map((x) => ({ at: x.at, by: x.by_user, action: x.action, changes: x.changes })));
     },
   });
 
@@ -483,6 +495,8 @@ export const productWriteActions: AnyActionDef[] = [
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
       const { kind, code: c } = input;
+      // [2026-11-12 Nguyễn Văn Thủy] danh mục không xoá: ngừng dùng thay cho xoá (đóng góp)
+      if (kind === 'group') throw Errors.conflict(`Nhóm hàng không xoá được — bấm Sửa, bỏ tích "Đang dùng" để ngừng`);
       await sameTx(trx, async (trx) => {
         const before = await trx.selectFrom('item_classes').selectAll().where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
         if (!before) throw Errors.notFound(`${LABEL[kind]} ${c}`);
@@ -522,18 +536,50 @@ export const productWriteActions: AnyActionDef[] = [
         const up = new Map(all.map((x) => [x.code, x.parent_code]));
         for (let x: string | null | undefined = b.parentCode, n = 0; x && n < 50; x = up.get(x), n++) if (x === c) throw Errors.validation(`${LABEL[kind]} ${c} không chuyển vào nhóm con của chính nó (${b.parentCode})`);
       }
+      const old = await trx.selectFrom('item_classes').select(['name', 'parent_code', 'is_active', 'sku_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
+      // [2026-11-12 Nguyễn Văn Thủy] mã nhóm hàng (đoạn ghép vào mã hàng): đủ độ dài theo cấp, chữ hoặc số, cấp 1 không bắt đầu bằng 0 (đóng góp)
+      if (kind === 'group') {
+        const all = await trx.selectFrom('item_classes').select(['code', 'name', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', 'group').execute();
+        const by = new Map(all.map((x) => [x.code, x]));
+        let lv = 1;
+        for (let x = b.parentCode ? by.get(b.parentCode) : undefined, n = 0; x && n < 50; x = x.parent_code ? by.get(x.parent_code) : undefined, n++) {
+          if (x.parent_code || !/^nhóm hàng$/i.test(x.name.trim())) lv++;
+        }
+        const len = GROUP_CODE_LEN[lv];
+        const changed = !old || (old.sku_code ?? '') !== (b.skuCode ?? old.sku_code ?? '') || (old.parent_code ?? null) !== (b.parentCode || null);
+        if (len && changed) {
+          const v = (b.skuCode ?? old?.sku_code ?? '').toUpperCase();
+          if (!v) throw Errors.validation(`Nhập mã nhóm hàng cấp ${lv} (${len} ký tự)`);
+          if (!/^[A-Z0-9]+$/.test(v)) throw Errors.validation('Mã nhóm hàng chỉ gồm chữ và số');
+          if (v.length !== len) throw Errors.validation(`Mã nhóm hàng cấp ${lv} phải đúng ${len} ký tự (đang ${v.length})`);
+          if (lv === 1 && !/^[1-9][0-9]$/.test(v)) throw Errors.validation('Mã nhóm hàng cấp 1 chỉ gồm 2 chữ số, không bắt đầu bằng 0');
+          b.skuCode = v;
+        }
+        if (!len) b.skuCode = '';
+      }
       if (kind === 'group' && b.skuCode) {
-        const before = await trx.selectFrom('item_classes').select('sku_code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
-        if (before?.sku_code !== b.skuCode) {
+        const before = old;
+        if (before?.sku_code !== b.skuCode || (before?.parent_code ?? null) !== (b.parentCode || null)) {
           let dupQ = trx.selectFrom('item_classes').select(['code', 'name']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('sku_code', '=', b.skuCode).where('code', '<>', c);
           dupQ = b.parentCode ? dupQ.where('parent_code', '=', b.parentCode) : dupQ.where('parent_code', 'is', null);
           const dup = await dupQ.executeTakeFirst();
-          if (dup) throw Errors.conflict(`Mã ngắn ${b.skuCode} đã dùng cho nhóm "${dup.name}" (${dup.code}) cùng cấp — chọn mã ngắn khác`);
+          if (dup) throw Errors.conflict(`Mã nhóm hàng ${b.skuCode} đã dùng cho nhóm "${dup.name}" cùng cấp — chọn mã khác`);
         }
       }
-      const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}) };
+      const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), updated_by: auth.actorName || auth.actor, ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}) };
+      // Lịch sử: thêm mới / từng ô đổi (trước → sau).
+      const nameOf = async (x: string | null) => (x ? (await trx.selectFrom('item_classes').select('name').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', x).executeTakeFirst())?.name ?? x : '(gốc)');
+      const diff: string[] = [];
+      if (!old) diff.push(`Thêm nhóm "${b.name}"${b.skuCode ? `, mã ${b.skuCode}` : ''}, thuộc ${await nameOf(b.parentCode || null)}`);
+      else {
+        if (old.name !== b.name) diff.push(`Tên: ${old.name} → ${b.name}`);
+        if (b.skuCode !== undefined && (old.sku_code ?? '') !== b.skuCode) diff.push(`Mã nhóm: ${old.sku_code || '(trống)'} → ${b.skuCode || '(trống)'}`);
+        if ((old.parent_code ?? null) !== (b.parentCode || null)) diff.push(`Thuộc nhóm: ${await nameOf(old.parent_code)} → ${await nameOf(b.parentCode || null)}`);
+        if (old.is_active !== b.isActive) diff.push(b.isActive ? 'Dùng lại' : 'Ngừng dùng');
+      }
       await sameTx(trx, async (trx) => {
-        await trx.insertInto('item_classes').values({ tenant_id: auth.tenantId, kind, code: c, ...values }).onConflict((oc) => oc.columns(['tenant_id', 'kind', 'code']).doUpdateSet(values)).execute();
+        await trx.insertInto('item_classes').values({ tenant_id: auth.tenantId, kind, code: c, ...values, created_by: auth.actorName || auth.actor, created_at: new Date() }).onConflict((oc) => oc.columns(['tenant_id', 'kind', 'code']).doUpdateSet(values)).execute();
+        if (diff.length) await trx.insertInto('item_class_history').values({ tenant_id: auth.tenantId, kind, code: c, by_user: auth.actorName || auth.actor, action: old ? 'update' : 'create', changes: diff.join('\n') }).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'item_class.save', objectType: `item_class:${kind}`, objectId: c, after: b });
       });
       return { code: c };
@@ -543,6 +589,9 @@ export const productWriteActions: AnyActionDef[] = [
 
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: kích hoạt hàng loạt mặt hàng nháp — kế toán điền một lần đơn vị tính / nhóm hạch toán còn trống cho cả lô, rồi cổng danh mục
 // quyết định từng mặt hàng (còn lỗi chặn thì vẫn nháp). Kích hoạt xong → bể chờ kiểm lại chứng từ đang chờ vì các mặt hàng đó.
+/** Độ dài mã nhóm hàng theo cấp (ghép thành đầu mã hàng): cấp 1 = 2, cấp 2 = 3, cấp 3 = 1 ký tự. */
+const GROUP_CODE_LEN: Record<number, number> = { 1: 2, 2: 3, 3: 1 };
+
 const activateDrafts = defineAction({
   id: 'core.product.activate-drafts', title: 'Kích hoạt hàng loạt mặt hàng nháp', tags,
   description: 'Điền đơn vị tính / nhóm hạch toán cho mặt hàng nháp còn trống (không ghi đè ô đã có), rồi áp cổng danh mục: hết lỗi chặn → đang dùng. '
