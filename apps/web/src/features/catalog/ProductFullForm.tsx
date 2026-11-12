@@ -21,7 +21,7 @@ import { LichSuMatHang } from './DoiMaGopMa';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: ô Biến thể, Loại hàng ở thẻ Thông tin, nút Thêm sản phẩm con (đóng góp)
 // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ tạo mã có đuôi (chọn đuôi, ChonDuoiMa): mọi biến thể là sản phẩm con; ô Biến thể sửa được (đóng góp)
 // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — mã cha không có ô Biến thể; thẻ Thông tin gọn: giải thích vào rê chuột, ẩn ngành / nhãn khi đã theo nhóm (đóng góp)
-import { ThemSanPhamCon, TrungTen, useSameName } from './ThemSanPhamCon';
+import { TrungTen, useSameName } from './ThemSanPhamCon';
 import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
@@ -107,7 +107,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const [help, setHelp] = useState(false);
   const [imgBad, setImgBad] = useState(false);
   const [taxDetail, setTaxDetail] = useState(false);
-  const [addingChild, setAddingChild] = useState(false);
   const set = (p: Partial<FullProduct>) => setV((x) => ({ ...x, ...p }));
 
   const loaded = useQuery({ queryKey: ['catalog-product', sku], queryFn: () => api.get<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku!)}`), enabled: !isNew });
@@ -262,8 +261,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   return (<>
     <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} onClose={onClose}
       footer={<>
-        {!isNew && !v.parentSku && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Thêm mặt hàng con của mã này"
-          onClick={() => setAddingChild(true)}>Thêm sản phẩm con…</button>}
         <button className="btn btn-primary" disabled={save.isPending || !v.sku.trim() || !v.name.trim() || skuLetters || Boolean(sameName)} title={sameName ? `Tên trùng mã ${sameName.sku}` : skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : blockCount ? 'Còn lỗi chặn: mặt hàng được lưu NHÁP, chưa dùng được trên chứng từ cho tới khi sửa xong' : undefined}
           onClick={() => ack.request((a) => save.mutate(a))}>{blockCount ? `Lưu nháp (còn ${blockCount} lỗi chặn)` : ack.label}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
@@ -278,7 +275,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {tab === 'info' && (
         <fieldset className="fgroup">
           <legend>Thông tin mặt hàng</legend>
-          {isNew && !v.parentSku && <div className="muted full" style={{ fontSize: 12.5 }}>Thêm mặt hàng mới. Mặt hàng con của mặt hàng đã có thì mở mặt hàng đó, bấm <b>Thêm sản phẩm con</b>.</div>}
           <Field label="Nhóm hàng" full tip="Chọn nhóm là xong: ngành, nhãn tự điền; mặt hàng mới tự sinh mã = ngành (2) + nhãn (3) + nhóm (1) + số thứ tự (3)">
             <ListPicker items={pick('group')} value={v.groupCode ?? ''} onChange={pickGroup} placeholder="Gõ tên nhóm / nhãn để tìm — chọn tới nhóm sản phẩm (cấp 3)" nameFirst />
           </Field>
@@ -296,7 +292,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             <input className="input" value={v.name} maxLength={255} onChange={(e) => set({ name: e.target.value })} />
           </Field>
           <TrungTen same={sameName} />
-          {!isNew && <MaHangCha sku={v.sku} value={v.parentSku ?? null} onChange={(parentSku) => set({ parentSku })} />}
+          {/* [2026-11-12 Nguyễn Văn Thủy] bỏ khai báo cha – con (ô Mã hàng cha, nút Thêm sản phẩm con): phần mềm tự gom theo mã (0112) (đóng góp) */}
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Biến thể và Gửi lên thuế: hệ thống tự suy theo mã, đuôi Z = không gửi thuế (0111) (đóng góp) */}
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Loại hàng: đã có Nhóm hàng, bớt khai báo; giá trị cũ giữ nguyên (đóng góp) */}
           <Field label="Barcode" tip="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
@@ -380,7 +376,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       <WarnAckBox ack={ack} />
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
-    {addingChild && <ThemSanPhamCon parentSku={v.sku} parentName={v.name} parentNoSale={v.noSale} onClose={() => setAddingChild(false)} />}
   </>);
 }
 

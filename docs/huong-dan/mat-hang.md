@@ -8,7 +8,7 @@
 
 Bấm **Thêm**, hoặc bấm đúp một dòng. Bấm **Ghi** một lần là lưu cả các thẻ.
 
-- **Thêm** là thêm **mặt hàng mới**. Mặt hàng con của mặt hàng đã có thì mở mặt hàng đó, bấm **Thêm sản phẩm con**.
+- **Thêm** là thêm **mặt hàng mới**.
 - **Mã** gồm chữ số và chữ cái, không dấu cách.
 - **Tên không được trùng** với mặt hàng khác (không phân biệt hoa thường, dấu cách thừa), kể cả mặt hàng đã ngừng. Gõ tới đâu báo tới đó, nút Ghi khoá cho tới khi đổi tên.
 
@@ -19,18 +19,8 @@ Bấm **Thêm**, hoặc bấm đúp một dòng. Bấm **Ghi** một lần là l
 | Nhóm hàng | Chọn tới **nhóm cấp 3** (vd Sữa bột / ABBOTT / Sữa công thức trẻ em). Nhóm quyết định mã hàng; ngành, nhãn tự điền. |
 | Mã hàng | Chọn nhóm là **tự sinh** mã kế tiếp; nút **Sinh mã** để sinh lại. Sửa mã đã lưu: gõ thẳng mã mới vào ô này, bấm Ghi. |
 | Tên hàng | Tên in trên hoá đơn, hiện ở màn bán hàng. Không trùng mặt hàng khác. |
-| Mã hàng cha | Chỉ có ở mặt hàng đã lưu. Mã cha thì liệt kê các mã con. Mã chưa có cha: chỉ chọn khi là **mã cũ của cùng sản phẩm** cần gom vào mã cha. |
 | Barcode | Nhiều mã cách nhau dấu `/`. |
 | Ảnh, mô tả, xuất xứ, khối lượng, ghi chú | Thông tin thêm. |
-
-### Sản phẩm con
-
-Mở **mã cha**, bấm **Thêm sản phẩm con**, gõ **mã con** và tên, bấm **Tạo và thêm tiếp**.
-
-- **Mã con** bắt đầu bằng mã cha. Để nguyên mã cha thì tự cấp mã kế tiếp.
-- **Tên** ghi phần phân biệt (màu, size, kiểu đóng gói…). Không trùng mặt hàng khác.
-- Đơn vị tính, nhóm hàng, thuế suất lấy theo mã cha. Giá bán khai sau, ở thẻ Giá bán.
-- Mã con là **mặt hàng riêng**: tồn riêng, giá riêng; báo cáo, đặt hàng gom được theo mã cha.
 
 ### 2. Đơn vị tính
 
@@ -83,7 +73,6 @@ Chọn **Nhóm hàng** là phần mềm sinh mã kế tiếp theo đoạn mã c�
 2. Phần mềm sinh **Mã hàng** kế tiếp, dưới ô mã hiện từng đoạn `Ngành 17 · Nhãn 167 · Nhóm 6 · Số 005`.
 3. Chọn lại nhóm khác: mã đổi theo nhóm mới.
 4. Gõ tay mã riêng được; mã gõ tay giữ nguyên khi đổi nhóm. Bấm **Sinh mã** để quay về mã chuẩn.
-5. Mặt hàng con: dùng **Thêm sản phẩm con** ở mã cha.
 
 **Đoạn mã của nhóm** (cột *Đoạn mã trong mã hàng* ở **Nhóm hàng (DM11)**) chưa khai thì phần mềm tự lấy từ các mã đang có trong nhóm; nhóm mới tinh thì cấp số kế tiếp sau các nhóm cùng cha. Sửa được ở DM11 → ô **Mã ngắn**.
 
@@ -101,7 +90,6 @@ Chọn **Nhóm hàng** là phần mềm sinh mã kế tiếp theo đoạn mã c�
 | 4 | Gõ tên trùng một mặt hàng đang có (khác hoa thường) | Báo "Tên này đã dùng cho mã …", nút Ghi khoá |
 | 5 | Ghi, rồi thêm mặt hàng khác cùng nhóm | Số tự sinh tăng 1 |
 | 6 | Gõ một mã đã có, Ghi | Báo trùng mã, không lưu |
-| 7 | Mở mặt hàng → **Thêm sản phẩm con** → gõ mã con, tên | Tạo được, mã con trỏ về mã cha |
 
 Phép thử tự động: `apps/api/test/sinh-ma-hang.test.ts`, `apps/api/test/san-pham-con.test.ts`.
 
@@ -150,12 +138,9 @@ Sửa mã: gõ mã mới vào ô **Mã hàng**, bấm **Ghi**. Sổ và chứng 
 
 Thẻ **Lịch sử** hiện từng lần đổi mã: lúc nào, ai.
 
-## Họ mã (mã cha – mã con)
+## Họ mã
 
-- Chỉ 1 cấp: mã con không có con.
-- Mã con tạo bằng **Thêm sản phẩm con**. Mã cũ cùng sản phẩm (chữ cuối, hoặc đặt tên khác) thì gom bằng ô **Mã hàng cha** ở thẻ Thông tin; mã cũ có chữ cuối có nút gợi ý **Theo mã: …**.
-- Nút **Quét cha – con theo mã** (thanh công cụ DM10, cần **mật khẩu công cụ**) gom lại các mã cũ có chữ cuối, giữ mã cha đã chọn tay.
-- Danh sách xếp **mã con ngay dưới mã cha**, thụt vào (└); mã cha có nhãn **+N**. Phân tích đặt hàng (MH02) cộng dồn cả họ vào mã cha.
+Phần mềm tự gom các mã cùng gốc theo mã hàng, không cần khai báo. Danh sách xếp mã gom ngay dưới mã gốc (└), mã gốc có nhãn **+N**; phân tích đặt hàng (MH02) cộng dồn theo mã gốc.
 
 ## Hàng không chịu thuế GTGT (KCT)
 

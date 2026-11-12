@@ -171,7 +171,6 @@ export function ProductsPage() {
                 <NutNhapExcel loai={nhapLoai('mat-hang')!} disabled={!canWrite} />
                 {sel && <Link className="btn btn-sm" to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(sel.sku)}`} title="Mua → nhập → bán → giá vốn → trả của mặt hàng đang chọn">Hành trình</Link>}
                 {canWrite && <button className="btn btn-sm" title="Mặt hàng nháp (thiếu đơn vị tính / nhóm hạch toán, hoặc mới từ chứng từ): điền một lần cho cả lô rồi kích hoạt" onClick={() => setBulk(true)}>Kích hoạt hàng loạt</button>}
-                {canWrite && <button className="btn btn-sm" title="Quét họ mã theo mã: mã 9 số + đuôi (Z, Q, K, M, B…; trừ T có tem) là mã con của mã gốc có trong danh mục. Giữ mã cha đã chọn tay." onClick={() => setScan({ pw: '' })}>Quét cha – con theo mã</button>}
                 <span className="row" style={{ gap: 4 }} title="In tem mã vạch / tem kệ: chọn phạm vi và số tem mỗi mã, mũi tên cạnh nút In tem để chọn mẫu (3–8 cột, tem kệ)">
                   <select className="select input" style={{ height: 30 }} value={labelScope} onChange={(e) => setLabelScope(e.target.value as 'sel' | 'view')}>
                     <option value="sel">Tem: mã đang chọn</option><option value="view">Tem: mọi dòng đang hiện</option>

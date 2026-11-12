@@ -18,7 +18,8 @@ Mỗi bản ghi đủ sáu mục:
 - Giá mua theo từng nhà cung cấp: mỗi NCC một khối, hiện 3 đợt giá gần nhất (xem thêm đợt cũ), nút **Giá mới** cho từng NCC, bấm dòng để sửa / xoá trong hộp nhỏ; **Thêm nhà cung cấp** chọn NCC ngay trong hộp.
 - **Lịch sử** ở từng khối NCC: mọi lần thêm / sửa / xoá giá của NCC đó cho mã này (ai, lúc nào, trước → sau).
 - Thêm sản phẩm con bỏ ô "Mã cha chỉ để gom, không bán trực tiếp". Mặt hàng tích **Hàng chính**: thẻ Giá bán chỉ khai bảng giá công ty.
-- Thẻ Giá bán: ô chọn bảng giá chi nhánh có **＋ Thêm bảng giá mới…** (mã, tên) để thêm nhanh rồi khai giá ngay.
+- Thẻ Giá bán: ô chọn bảng giá chi nhánh có **＋ Thêm bảng giá mới…** (tên, mã, chọn luôn chi nhánh áp dụng) để thêm nhanh rồi khai giá ngay.
+- Bỏ khai báo cha – con: bỏ ô **Mã hàng cha**, nút **Thêm sản phẩm con**, nút **Quét cha – con theo mã**. Mã cha tự suy theo mã hàng (migration 0112).
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Mặt hàng con: chỉ gõ mã, phần mềm tự xử lý

@@ -14,6 +14,7 @@ import { useUnitNames } from './UnitNamesPage';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { Field, Modal } from '@/components/ui';
+import { useBranches } from '@/components/filters';
 import './dvt-gia-ban.css';
 
 export interface UnitRow { unit: string; ratio: number; isDefault: boolean; isPurchaseDefault?: boolean; weightKg: number | null; note: string }
@@ -183,29 +184,46 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
   );
 }
 
-// [2026-11-12 Nguyễn Văn Thủy] thêm nhanh bảng giá mới ngay ở thẻ Giá bán (đóng góp)
+// [2026-11-12 Nguyễn Văn Thủy] thêm nhanh bảng giá mới ngay ở thẻ Giá bán, chọn luôn chi nhánh áp dụng (đóng góp)
 function ThemBangGia({ onClose, onDone }: { onClose: () => void; onDone: (code: string) => void }) {
   const qc = useQueryClient();
+  const branches = (useBranches().data ?? []).filter((b) => b.isActive);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [find, setFind] = useState('');
+  const [picked, setPicked] = useState<string[]>([]);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const t = find.trim().toLowerCase();
+  const shown = branches.filter((b) => !t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t));
+  const toggle = (c: string) => setPicked((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]));
   const save = async () => {
-    const c = code.trim();
-    if (!c || !name.trim()) { setErr('Nhập mã và tên bảng giá'); return; }
+    const c = (code.trim() || name.trim());
+    if (!c || !name.trim()) { setErr('Nhập tên bảng giá'); return; }
     setBusy(true); setErr('');
     try {
       await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(c)}`, { name: name.trim(), isCompany: false, isActive: true, note: '' });
+      if (picked.length) await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(c)}/branches`, { branchCodes: picked });
       await qc.invalidateQueries({ queryKey: ['price-lists'] });
       onDone(c);
     } catch (e) { setErr(errorText(e)); setBusy(false); }
   };
   return (
-    <Modal title="Thêm bảng giá mới" onClose={onClose} footer={<><button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+    <Modal wide title="Thêm bảng giá mới" onClose={onClose} footer={<><button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       {err && <div className="alert alert-bad full">{err}</div>}
-      <Field label="Mã bảng giá (*)"><input className="input mono" value={code} maxLength={64} autoFocus onChange={(e) => setCode(e.target.value)} placeholder="vd BG Hải Dương" /></Field>
-      <Field label="Tên bảng giá (*)"><input className="input" value={name} maxLength={200} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void save(); }} /></Field>
-      <div className="muted full" style={{ fontSize: 12 }}>Gán chi nhánh áp dụng ở màn Bảng giá bán.</div>
+      <Field label="Tên bảng giá (*)"><input className="input" value={name} maxLength={200} autoFocus onChange={(e) => setName(e.target.value)} placeholder="vd BG Hải Dương" /></Field>
+      <Field label="Mã bảng giá" tip="Trống = lấy theo tên"><input className="input mono" value={code} maxLength={64} onChange={(e) => setCode(e.target.value)} placeholder={name || 'theo tên'} /></Field>
+      <Field label={`Chi nhánh áp dụng (${picked.length})`} full>
+        <div className="row" style={{ gap: 6, marginBottom: 6 }}>
+          <input className="input" style={{ flex: 1 }} value={find} onChange={(e) => setFind(e.target.value)} placeholder="Gõ mã / tên chi nhánh để lọc" />
+          <button type="button" className="btn btn-sm" onClick={() => setPicked((x) => [...new Set([...x, ...shown.map((b) => b.code)])])}>Chọn hết đang hiện</button>
+          <button type="button" className="btn btn-sm" onClick={() => setPicked([])}>Bỏ hết</button>
+        </div>
+        <div style={{ maxHeight: 240, overflow: 'auto', columns: 3, border: '1px solid var(--line, #e3e7ee)', borderRadius: 6, padding: 6 }}>
+          {shown.map((b) => <label key={b.code} className="checkbox" style={{ display: 'flex', gap: 6, padding: '2px 0', breakInside: 'avoid' }}><input type="checkbox" checked={picked.includes(b.code)} onChange={() => toggle(b.code)} /><span><span className="mono">{b.code}</span> {b.name}</span></label>)}
+          {!shown.length && <span className="muted">Không có chi nhánh khớp.</span>}
+        </div>
+      </Field>
     </Modal>
   );
 }
