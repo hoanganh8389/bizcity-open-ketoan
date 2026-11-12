@@ -100,7 +100,7 @@ export function NhomHangPage() {
 
   return (
     <>
-      <PageHeader title="Nhóm hàng" code="DM11" helpKey="nhom-hang" subtitle="Cây nhóm hàng — mã hàng ghép từ mã nhóm cấp 1, 2, 3" />
+      <PageHeader title="Danh mục nhóm hàng" code="DM11" helpKey="nhom-hang" subtitle="Cây nhóm hàng — mã hàng ghép từ mã nhóm cấp 1, 2, 3" />
       <div className="card">
         <div className="nh-bar">
           <input className="input" style={{ width: 260 }} placeholder="Tìm theo mã hoặc tên nhóm…" value={tim} onChange={(e) => setTim(e.target.value)} />
@@ -234,7 +234,6 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <div className="nh-chi-xem" style={{ flex: 1 }} title="Không sửa ở đây">{parent ? ix.path(parent) : 'Nhóm hàng (gốc)'}</div>
             <span className="badge">Cấp {lv}</span>
-            {old && !khoaChuyen && <button type="button" className="btn btn-sm" title="Chuyển sang nhóm khác" onClick={() => setMoving(true)}>Đổi…</button>}
           </div>
         </Field>
         <Field label="Mã nhóm hàng (*)" tip="Tên ngắn hiện trên cây, vd Bỉm/ Tã quần trẻ em">

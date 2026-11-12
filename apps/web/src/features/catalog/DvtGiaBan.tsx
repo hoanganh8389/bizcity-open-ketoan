@@ -85,12 +85,14 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
           </table>
         </div>
         {prob.general.map((g) => <div key={g} className="mh-bad" style={{ fontSize: 12 }}>{g}</div>)}
-        <div className="dvt-add">
+        {/* [2026-11-12 Nguyễn Văn Thủy] tối đa 10 đơn vị tính / mặt hàng (đóng góp) */}
+        {units.length > 10 && <div className="mh-bad" style={{ fontSize: 12.5, fontWeight: 600 }}>Tối đa 10 đơn vị tính — đang {units.length}, bỏ bớt dòng.</div>}
+        {units.length >= 10 ? <div className="dvt-add muted" style={{ fontSize: 12.5 }}>Đã đủ 10 đơn vị tính (tối đa 10).</div> : <div className="dvt-add">
           <span className="muted">Thêm ĐVT:</span>
           {quick.map((q) => <button key={q} type="button" className="btn btn-xs dvt-chip" onClick={() => onAdd({ unit: q, ratio: 0, isDefault: false, weightKg: null, note: '' })}>+ {q}</button>)}
           <button type="button" className="btn btn-xs" onClick={() => onAdd({ unit: '', ratio: base ? 0 : 1, isDefault: !units.length, weightKg: null, note: '' })}>+ ĐVT khác…</button>
-          {largest && largest !== base && <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>ĐVT mới mặc định quy đổi theo {largest.unit}</span>}
-        </div>
+          <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{units.length}/10 ĐVT{largest && largest !== base ? ` · ĐVT mới mặc định quy đổi theo ${largest.unit}` : ''}</span>
+        </div>}
       </section>
     </div>
   );

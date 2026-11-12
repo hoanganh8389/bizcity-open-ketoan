@@ -15,7 +15,7 @@ const L = {
   khach: { label: 'Khách hàng', icon: 'User', path: '/danh-muc/khach-hang' },
   ncc: { label: 'Nhà cung cấp', icon: 'Truck', path: '/danh-muc/nha-cung-cap' },
   nhanVien: { label: 'Nhân viên', icon: 'IdCard', path: '/danh-muc/nhan-vien' },
-  vthh: { label: 'Vật tư hàng hóa', icon: 'Package', path: '/danh-muc/mat-hang' },
+  vthh: { label: 'Mặt hàng', icon: 'Package', path: '/danh-muc/mat-hang' },
   coCau: { label: 'Cơ cấu tổ chức', icon: 'Network', path: '/danh-muc/so-do-to-chuc' },
   tkNganHang: { label: 'Tài khoản ngân hàng', icon: 'Landmark', path: '/danh-muc/ngan-hang' },
 } satisfies Record<string, SoDoLink>;

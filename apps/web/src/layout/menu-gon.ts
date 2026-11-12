@@ -143,7 +143,7 @@ export const GON_DEFS: GonDef[] = [
     key: 'danh-muc', label: 'Danh mục', icon: 'List', description: 'Đối tượng, vật tư hàng hóa, tổ chức, tài khoản, chi phí, tài sản', color: '#0d7a6f', module: 'danh-muc',
     sections: [
       { label: 'Đối tượng', paths: ['/danh-muc/khach-hang', '/danh-muc/nha-cung-cap', '/danh-muc/nhan-vien', '/danh-muc/nhom-doi-tuong'] },
-      { label: 'Vật tư hàng hóa', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
+      { label: 'Mặt hàng', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
       { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc', '/danh-muc/chi-nhanh', '/danh-muc/bo-phan'] },
       { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/tai-khoan-ngam-dinh', '/danh-muc/loai-thue', '/danh-muc/ngan-hang', '/cau-hinh/ly-do', '/cau-hinh/nhom-hach-toan'], soon: ['Điều khoản thanh toán'] },
       { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/muc-thu-chi', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },

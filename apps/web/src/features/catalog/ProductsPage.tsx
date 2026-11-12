@@ -30,7 +30,7 @@ interface ItemClass { code: string; name: string; parentCode: string | null; isA
 const trangThai = (p: { isActive: boolean; isDraft?: boolean }) => (!p.isActive ? 'Ngừng hoạt động' : p.isDraft ? 'Chờ duyệt' : 'Đang hoạt động');
 
 interface Product {
-  sku: string; name: string; unit: string; postingGroupCode: string | null; createdAt?: string; createdBy?: string;
+  sku: string; name: string; unit: string; postingGroupCode: string | null; createdAt?: string; createdBy?: string; updatedAt?: string; updatedBy?: string;
   brandCode: string | null; industryCode: string | null; groupCode: string | null; typeCode: string | null; isActive: boolean; sourceSystem: string;
   /** Nháp (PHASE-024 S024-28): còn lỗi chặn, chưa dùng được trên chứng từ. */
   isDraft?: boolean; draftCodes?: string[];
@@ -134,13 +134,15 @@ export function ProductsPage() {
     // [2026-11-12 Nguyễn Văn Thủy] truy vết: người tạo, lúc tạo (0114) (đóng góp)
     { key: 'createdBy', header: 'Người tạo', width: 140, title: 'Người thêm mặt hàng; "Hệ thống (…)" = thêm tự động', value: (p) => p.createdBy ?? '' },
     { key: 'createdAt', header: 'Lúc tạo', width: 140, title: 'Thời điểm thêm mặt hàng', value: (p) => (p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '') },
+    { key: 'updatedBy', header: 'Người sửa', width: 140, title: 'Người sửa lần cuối', value: (p) => p.updatedBy ?? '' },
+    { key: 'updatedAt', header: 'Lúc sửa', width: 140, title: 'Thời điểm sửa lần cuối', value: (p) => (p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '') },
     { key: 'isActive', header: 'Trạng thái', width: 130, title: 'Đang hoạt động · Chờ duyệt (mặt hàng nháp, chưa dùng được trên chứng từ) · Ngừng hoạt động', value: (p) => trangThai(p), render: (p) => <span className={`badge ${!p.isActive ? 'badge-gray' : p.isDraft ? 'badge-warn' : 'badge-ok'}`}>{trangThai(p)}</span> },
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
 
   return (
     <>
-      <PageHeader title="Mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
+      <PageHeader title="Quản lý mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
       <div className="acc17">
         <div className="card acc17-tree">
           <div className="acc17-tree-head">Nhóm hàng</div>

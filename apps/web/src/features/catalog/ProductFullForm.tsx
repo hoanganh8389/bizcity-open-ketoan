@@ -129,6 +129,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const skuLetters = /[^0-9A-Z]/.test(v.sku); // [2026-11-12 Nguyễn Văn Thủy] mã gồm chữ số và chữ in hoa, không dấu cách / ký tự lạ (đóng góp)
   // Tên trùng: chỉ kiểm khi thêm mới / đổi tên — dữ liệu cũ đã trùng vẫn sửa được các ô khác (máy chủ kiểm y hệt).
   const norm = (s?: string) => (s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const tenDai = v.name.trim().length > 50 && (isNew || norm(v.name) !== norm(loaded.data?.name));
   const sameName = useSameName(isNew || norm(v.name) !== norm(loaded.data?.name) ? v.name : '', isNew ? '' : v.sku);
 
   useEffect(() => {
@@ -308,8 +309,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     if (k === 'info' && kind === 'variant' && (!v.parentSku || parentErr)) return parentErr || 'Chọn mã cha.';
     if (k === 'info' && skuBad) return skuBad;
     if (k === 'info') return !v.groupCode ? 'Chọn nhóm hàng (tới nhóm cấp 3).' : kind !== 'variant' && (depth.get(v.groupCode) ?? 0) < 3 ? 'Nhóm hàng phải chọn tới cấp 3 (nhóm sản phẩm).' : !v.sku.trim() ? 'Chưa có mã hàng (chọn nhóm là tự sinh).' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.'
-      : !v.name.trim() ? 'Chưa nhập tên hàng.' : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !v.taxOutCode ? 'Chọn thuế suất GTGT.' : '';
-    if (k === 'units') return !baseUnit ? 'Chưa khai đơn vị tính nhỏ nhất (vd Hộp, Lon, Cái).' : '';
+      : !v.name.trim() ? 'Chưa nhập tên hàng.' : tenDai ? 'Tên hàng tối đa 50 ký tự.' : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !v.taxOutCode ? 'Chọn thuế suất GTGT.' : '';
+    if (k === 'units') return !baseUnit ? 'Chưa khai đơn vị tính nhỏ nhất (vd Hộp, Lon, Cái).' : v.units.filter((u) => u.unit.trim()).length > 10 ? 'Tối đa 10 đơn vị tính.' : '';
     if (k === 'mua') return nccRows.some((r) => !r.partnerCode) ? 'Còn dòng chưa chọn nhà cung cấp (chọn hoặc bỏ dòng đó).' : '';
     return '';
   };
@@ -354,7 +355,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
         <button className="btn btn-primary" disabled={save.isPending}
           onClick={() => {
             // [2026-11-12 Nguyễn Văn Thủy] bấm Ghi luôn được; thiếu gì báo rõ ở đầu form (đóng góp)
-            const loi = !v.sku.trim() ? 'Chưa nhập mã hàng.' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.' : !v.name.trim() ? 'Chưa nhập tên hàng.'
+            const loi = !v.sku.trim() ? 'Chưa nhập mã hàng.' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.' : !v.name.trim() ? 'Chưa nhập tên hàng.' : tenDai ? 'Tên hàng tối đa 50 ký tự.' : v.units.filter((u) => u.unit.trim()).length > 10 ? 'Tối đa 10 đơn vị tính.'
               : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !baseUnit ? 'Chưa khai đơn vị tính: gõ tên ĐVT nhỏ nhất (vd Hộp, Lon, Cái) ở thẻ Đơn vị tính.' : '';
             setErrMsg(loi);
             if (loi) { setTab(!baseUnit && v.sku.trim() && v.name.trim() && !sameName && !skuLetters ? 'units' : 'info'); return; }
@@ -410,6 +411,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           </Field>
           <Field label="Tên hàng (*)" full tip="Không được trùng tên mặt hàng khác. Mã con: ghi phần phân biệt">
             <input className="input" value={v.name} maxLength={255} placeholder={kind === 'variant' && parentData.data ? `Mã cha: ${parentData.data.name}` : undefined} onChange={(e) => set({ name: e.target.value })} />
+            {/* [2026-11-12 Nguyễn Văn Thủy] tên hàng tối đa 50 ký tự, có bộ đếm (đóng góp) */}
+            <div className={tenDai ? 'neg' : 'muted'} style={{ fontSize: 12, marginTop: 3, fontWeight: tenDai ? 600 : 400 }}>{v.name.trim().length}/50 ký tự{tenDai ? ' — vượt quá, rút gọn tên' : ''}</div>
           </Field>
           <TrungTen same={sameName} />
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ khai báo cha – con (ô Mã hàng cha, nút Thêm sản phẩm con): phần mềm tự gom theo mã (0112) (đóng góp) */}

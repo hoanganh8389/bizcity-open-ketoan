@@ -94,8 +94,13 @@ function productPatch(b: ProductInput): Record<string, unknown> {
 }
 
 /** Kiểm tra bộ đơn vị tính: đúng một đơn vị tỉ lệ 1, tối đa một đơn vị bán chính, không trùng tên. */
+export const MAX_DVT = 10;
+/** Tên hàng tối đa 50 ký tự (quy định đặt tên mặt hàng). */
+export const MAX_TEN_HANG = 50;
 export function checkUnits(units: UnitInput[]): string | null {
   if (!units.length) return 'Mặt hàng phải có ít nhất một đơn vị tính (đơn vị nhỏ nhất, tỉ lệ 1)';
+  // [2026-11-12 Nguyễn Văn Thủy] mỗi mặt hàng tối đa 10 đơn vị tính (đóng góp)
+  if (units.length > MAX_DVT) return `Mỗi mặt hàng tối đa ${MAX_DVT} đơn vị tính (đang ${units.length})`;
   const names = new Set<string>();
   for (const u of units) {
     const n = u.unit.trim().toLowerCase();
@@ -188,6 +193,9 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   if (opts.isNew && exists) throw Errors.conflict(`Mã hàng ${sku} đã có`);
   // [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng (đóng góp): kiểm khi thêm mới hoặc đổi tên, qua màn / Excel / thêm sản phẩm con.
   // Dữ liệu cũ đã trùng tên vẫn sửa được các ô khác (không đổi tên thì không kiểm). Nạp từ hệ thống bán hàng không kiểm.
+  if (b.name !== undefined && (!exists || normName(exists.name) !== normName(b.name)) && b.name.trim().length > MAX_TEN_HANG) {
+    throw Errors.validation(`Tên hàng tối đa ${MAX_TEN_HANG} ký tự (đang ${b.name.trim().length})`);
+  }
   if (opts.checkName && b.name !== undefined && (!exists || normName(exists.name) !== normName(b.name))) {
     const same = await sameNameProduct(trx, tenantId, b.name, sku);
     if (same) throw Errors.conflict(`Tên "${same.name}" đã dùng cho mã ${same.sku}${same.isActive ? '' : ' (đã ngừng theo dõi)'}. Đặt tên khác để quầy, kho không chọn nhầm`);
@@ -224,7 +232,7 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     if (err) throw Errors.validation(err);
   }
   const now = new Date();
-  const patch: Record<string, unknown> = { ...productPatch(b), updated_at: now };
+  const patch: Record<string, unknown> = { ...productPatch(b), updated_at: now, updated_by: opts.by || actor };
   // Đơn vị nhỏ nhất (tỉ lệ 1) là ĐVT của mặt hàng.
   if (b.units) patch.unit = b.units.find((u) => Number(u.ratio) === 1)!.unit.trim();
   if (!exists) {

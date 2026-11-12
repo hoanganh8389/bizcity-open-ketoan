@@ -585,6 +585,8 @@ export interface ProductsTable {
   draft_codes: Generated<string[]>;
   /** Lúc thêm mặt hàng (0063). */
   created_by: Generated<string>;
+  /** Người sửa lần cuối (0120). */
+  updated_by: Generated<string>;
   created_at: TimestampDefault;
 }
 

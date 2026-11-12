@@ -93,7 +93,7 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     const unit = r.unit?.trim() ?? '';
     if (isNew && !name) errors.push('Mặt hàng mới phải có Tên hàng');
     if (isNew && !unit) errors.push('Mặt hàng mới phải có ĐVT');
-    if (name.length > 500) errors.push('Tên hàng dài quá 500 ký tự');
+    if (name.length > 50 && (isNew || !products.some((p) => p.sku === sku && p.name === name))) errors.push(`Tên hàng tối đa 50 ký tự (đang ${name.length})`);
     if (!isNew && unit && low(unit) !== low(existing.get(sku) ?? '')) errors.push(`ĐVT "${unit}" khác ĐVT đang có "${existing.get(sku)}" — đổi ĐVT ở form mặt hàng`);
     if (name) input.name = name;
     if (isNew && unit) input.units = [{ unit, ratio: 1, isDefault: true, isPurchaseDefault: true }];

@@ -180,7 +180,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows.map((p) => ({
         sku: p.sku, name: p.name, unit: p.unit, postingGroupCode: p.posting_group_code, brandCode: p.brand_code, industryCode: p.industry_code,
         groupCode: p.group_code, typeCode: p.type_code, isActive: p.is_active, isDraft: p.is_draft, draftCodes: p.draft_codes, sourceSystem: p.source_system,
-        note: p.note, exciseRate: p.excise_rate === null ? null : Number(p.excise_rate), taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, updatedAt: p.updated_at, parentSku: p.parent_sku, createdAt: p.created_at, createdBy: p.created_by,
+        note: p.note, exciseRate: p.excise_rate === null ? null : Number(p.excise_rate), taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, updatedAt: p.updated_at, updatedBy: p.updated_by, parentSku: p.parent_sku, createdAt: p.created_at, createdBy: p.created_by,
         variantCode: (p as unknown as { variant_code: string }).variant_code,
         sendToTax: (p as unknown as { send_to_tax?: boolean }).send_to_tax ?? true, // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
       })), pageMeta(f, Number(total?.n ?? 0)));
@@ -555,7 +555,9 @@ export const productWriteActions: AnyActionDef[] = [
         }
         const doiMaCo = Boolean(old?.sku_code) && b.skuCode !== undefined && old!.sku_code !== b.skuCode;
         const doiCha = Boolean(old) && (old!.parent_code ?? null) !== (b.parentCode || null);
-        if (old && (doiMaCo || doiCha)) {
+        // [2026-11-12 Nguyễn Văn Thủy] nhóm đã tạo không chuyển sang nhóm cha khác (đóng góp)
+        if (doiCha) throw Errors.validation('Nhóm đã tạo không chuyển sang nhóm khác');
+        if (old && doiMaCo) {
           const sub = new Set([c]);
           for (let grew = true; grew;) { grew = false; for (const x of all) if (x.parent_code && sub.has(x.parent_code) && !sub.has(x.code)) { sub.add(x.code); grew = true; } }
           const used = await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('group_code', 'in', [...sub]).limit(1).executeTakeFirst();

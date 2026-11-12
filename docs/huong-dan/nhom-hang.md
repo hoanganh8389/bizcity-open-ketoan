@@ -34,7 +34,7 @@ Một bảng dạng cây. Mỗi dòng: Mã ngắn, Mã nhóm hàng, Tên nhóm h
 
 ## Thao tác — nút ngay trên từng dòng
 
-- **Sửa**: đổi mã nhóm hàng, tên nhóm hàng, Đang dùng; mã ngắn và nút **Đổi…** (chuyển nhóm) chỉ dùng được khi nhóm chưa có mặt hàng.
+- **Sửa**: đổi mã nhóm hàng, tên nhóm hàng, ghi chú, Đang dùng; mã ngắn chỉ đổi được khi nhóm chưa có mặt hàng. Nhóm đã tạo không chuyển sang nhóm khác.
 - **+ Mặt hàng** (chỉ ở nhóm cấp 3): mở form thêm mặt hàng, nhóm điền sẵn, mã tự sinh.
 - **+ Nhóm con** (cấp 1, 2): thêm nhóm cấp dưới. Mã ngắn điền sẵn mã kế tiếp, tên nhóm hàng tự ghép; nhập mã nhóm hàng rồi **Ghi**.
 - **Lịch sử**: ai thêm / sửa, lúc nào, đổi gì.

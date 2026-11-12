@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Đổi tên màn: DM10 "Quản lý mặt hàng", DM11 "Danh mục nhóm hàng", nhóm menu "Mặt hàng".
+- Mặt hàng: tối đa 10 đơn vị tính (đếm x/10, đủ thì ẩn nút thêm, vượt báo đỏ, máy chủ chặn); tên hàng tối đa 50 ký tự (bộ đếm, báo đỏ; thêm mới / đổi tên, cả Excel và máy chủ); cột Người sửa / Lúc sửa (products.updated_by, 0120).
+- Nhóm hàng: bỏ chuyển nhóm (nút Đổi…), máy chủ chặn đổi nhóm cha.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 - Nhóm hàng DM11: bấm cả dòng để mở / thu; cột STT, Ghi chú (0119); nút Cột ẩn / hiện Tên nhóm hàng, Ghi chú, Người tạo, Người sửa; nhóm cấp 3 có nút + Mặt hàng (mở form thêm mặt hàng, nhóm điền sẵn, mã tự sinh); mã nhóm hàng không trùng nhóm khác (màn hình, Excel, máy chủ); thêm mới điền sẵn tên gợi ý kèm số ngẫu nhiên; nhóm cũ chưa có mã ngắn điền sẵn gợi ý, nhập mã lần đầu được kể cả đã có mặt hàng; ô không sửa được hiện dạng chữ nền xám; cột nút luôn ở mép phải.
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->

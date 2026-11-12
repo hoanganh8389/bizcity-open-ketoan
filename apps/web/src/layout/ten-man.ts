@@ -84,8 +84,8 @@ export const TEN_MAN: Record<string, TenMan> = {
   '/ke-hoach/dinh-muc': { label: 'Định mức chi phí' },
   '/bang-dieu-khien': { label: 'Phân tích tài chính' },
   // Danh mục
-  '/danh-muc/mat-hang': { label: 'Vật tư, hàng hóa, dịch vụ' },
-  '/danh-muc/phan-loai-hang': { label: 'Nhóm vật tư, hàng hóa, dịch vụ' },
+  '/danh-muc/mat-hang': { label: 'Quản lý mặt hàng' },
+  '/danh-muc/phan-loai-hang': { label: 'Danh mục nhóm hàng' },
   '/danh-muc/don-vi-tinh': { label: 'Đơn vị tính' },
   '/danh-muc/kho': { label: 'Kho', code: 'DM17' },
   '/danh-muc/nhom-doi-tuong': { label: 'Nhóm khách hàng, nhà cung cấp' },
