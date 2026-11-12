@@ -33,6 +33,9 @@ export default defineAction({
                  WHERE order_id = ${order.order_id}`.execute(tx);
     });
     ctx.evidence.note('pos.order.cancel', { code: order.code, docKey: order.doc_key, reason: why });
+    await ctx.events.emit('pos.order.cancelled', { orderId: order.order_id, code: order.code, branchCode: order.branch_code, docKey: order.doc_key, reason: why, order: snapshot }, {
+      subject: `pos.order:${order.order_id}`, dedupeKey: `pos.order.cancelled:${order.order_id}`,
+    });
     return snapshot;
   },
 });

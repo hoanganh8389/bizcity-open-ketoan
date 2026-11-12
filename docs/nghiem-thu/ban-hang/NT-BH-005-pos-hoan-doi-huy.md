@@ -105,6 +105,7 @@ Giá vốn hàng trả về: phần mềm kế toán tự tính theo đơn giá 
 | Lệch chuẩn 11 (huỷ đơn hoàn tất) | 409 `POS_CANCEL_COMPLETED` | đúng | — | |
 | Lệch chuẩn 3, 4, 5 | quá hạn không duyệt / khác chi nhánh / đơn chưa hoàn tất | đúng (test thuần) | — | `returns.test.ts` |
 | Chạy thật Docker từ WP (vé shop2) | trả TM, đổi hàng, huỷ đơn hoàn tất bị chặn | TH2611000001 330.000; TH2611000002 + HD2611000013 660.000; 409 | — | |
+| Bản sao sổ ở website (sự kiện `pos.order.recorded` / `pos.return.recorded` / `pos.order.cancelled`, app `tgs-wp`) | mỗi đơn / phiếu trả đúng một sự kiện; đơn vị đã kết nối app thì có việc giao cho `tgs-wp.webhook`; website ghi một bộ phiếu bản sao, gửi lại không ghi thêm | HD2611000015 → website 4 phiếu (bán, 2 thu, xuất); phiếu trả TH2611000004 vào hàng chờ của website (chưa ánh xạ); huỷ → phiếu bản sao xoá mềm | — | test NT-BH-005 + chạy thật LocalWP |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -114,3 +115,4 @@ Giá vốn hàng trả về: phần mềm kế toán tự tính theo đơn giá 
 | Ngày | Thay đổi |
 |---|---|
 | 11/11/2026 | Tạo phiếu (kế hoạch module POS đợt W2) |
+| 12/11/2026 | Thêm dòng kết quả: sự kiện cho bản sao sổ ở website (app `tgs-wp`) |

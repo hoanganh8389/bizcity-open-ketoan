@@ -1,0 +1,24 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "tgs.tgs-wp",
+  "key": "tgs-wp",
+  "kind": "app",
+  "version": "0.1.0",
+  "label": "Website bán hàng TGS (WordPress)",
+  "description": "Nhận sự kiện của máy bán POS (module pos) để ghi BẢN SAO chứng từ vào local_ledger của từng shop WordPress (báo cáo shop, tồn, hoá đơn điện tử, báo cáo thuế vẫn đọc như cũ). Kế toán là nơi ghi duy nhất; WP chỉ nhận bản sao một chiều (D17).",
+  "owners": ["@hoanganh8389"],
+  "standard": "^1.0",
+  "requires": { "capabilities": [] },
+  "app": {
+    "scopes": [],
+    "webhook": { "url": "http://localhost/wp-json/tgs-pos/v1/ketoan-events" }
+  },
+  "events": {
+    "subscribes": [
+      { "type": "pos.order.recorded", "version": 1 },
+      { "type": "pos.return.recorded", "version": 1 },
+      { "type": "pos.order.cancelled", "version": 1 }
+    ]
+  },
+  "ui": { "icon": "Globe", "color": "#0e7490", "order": 40 }
+}

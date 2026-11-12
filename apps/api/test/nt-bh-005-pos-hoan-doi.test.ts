@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { runModuleMigrations } from '@bizcity/platform/db/module-db';
 import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
@@ -221,5 +221,45 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     expect(orders.statusCode, orders.body).toBe(200);
     expect(orders.json().data.map((x: { id: string }) => x.id)).toEqual([id]);
     expect(orders.json().meta).toMatchObject({ total: 1, sums: { total: 798_200 } });
+  });
+
+  it('bản sao WP: mỗi đơn / phiếu trả phát đúng một sự kiện outbox (pos.order.recorded / pos.return.recorded) mang bản chụp; gửi lại không phát thêm', async () => {
+    const ev = async (type: string, subject: string) => (await sql<{ data: Record<string, unknown> }>`
+      SELECT data FROM event_outbox WHERE tenant_id = ${tenantId} AND type = ${type} AND subject = ${subject}`.execute(db)).rows;
+    const o = await ev('pos.order.recorded', `pos.order:${O2}`);
+    expect(o).toHaveLength(1);
+    expect(o[0]!.data).toMatchObject({ orderId: O2, branchCode: 'CN01', docKey: `pos:CN01:sale:${O2}`, order: { id: O2, total: 798_200 } });
+    const r = await ev('pos.return.recorded', `pos.return:${R1}`);
+    expect(r).toHaveLength(1);
+    expect(r[0]!.data).toMatchObject({ returnId: R1, orderId: O2, originalDocKey: `pos:CN01:sale:${O2}`, return: { refundTotal: 291_600 } });
+    expect(await ev('pos.order.recorded', `pos.order:${N3}`)).toHaveLength(1);
+  });
+
+  it('app tgs-wp: đơn vị đã kết nối thì sự kiện đơn mới có việc giao cho tgs-wp.webhook; đơn vị chưa kết nối thì không', async () => {
+    const O9 = '0193a1b2-0000-7000-8000-000000005021';
+    const O10 = '0193a1b2-0000-7000-8000-000000005022';
+    const queued = async (id: string) => (await sql<{ status: string }>`
+      SELECT d.status FROM event_deliveries d JOIN event_outbox o ON o.id = d.event_id
+       WHERE d.tenant_id = ${tenantId} AND d.consumer = 'tgs-wp.webhook' AND o.subject = ${`pos.order:${id}`}`.execute(db)).rows;
+    { const r9 = await post('/orders', order(O9, { payment: { mode: 'cash', cashGiven: 800_000 } })); expect(r9.statusCode, r9.body).toBe(201); }
+    expect(await queued(O9)).toHaveLength(0);
+    const inst = await app.inject({ method: 'POST', url: '/api/v1/apps/tgs-wp/install', headers: { authorization: `Bearer ${ctx.token}` } });
+    expect(inst.statusCode, inst.body).toBe(201);
+    expect(inst.json().data).toMatchObject({ events: ['pos.order.recorded', 'pos.return.recorded', 'pos.order.cancelled'] });
+    expect(inst.json().data.webhookSecret).toMatch(/^whsec_/);
+    expect((await post('/orders', order(O10, { payment: { mode: 'cash', cashGiven: 800_000 } }))).statusCode).toBe(201);
+    expect(await queued(O10)).toEqual([{ status: 'pending' }]);
+  });
+
+  it('app tgs-wp: APP_WEBHOOK_URL_TGS_WP đè địa chỉ webhook của manifest (mỗi môi trường một website)', async () => {
+    const before = process.env['APP_WEBHOOK_URL_TGS_WP'];
+    process.env['APP_WEBHOOK_URL_TGS_WP'] = 'http://shop.example.test/wp-json/tgs-pos/v1/ketoan-events';
+    try {
+      vi.resetModules();
+      const { APP_MANIFESTS } = await import('../src/ung-dung/index.js');
+      expect(APP_MANIFESTS.find((m) => m.key === 'tgs-wp')?.app?.webhook?.url).toBe('http://shop.example.test/wp-json/tgs-pos/v1/ketoan-events');
+    } finally {
+      if (before === undefined) delete process.env['APP_WEBHOOK_URL_TGS_WP']; else process.env['APP_WEBHOOK_URL_TGS_WP'] = before;
+    }
   });
 });

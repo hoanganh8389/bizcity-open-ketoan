@@ -148,5 +148,9 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
     throw err;
   }
   ctx.evidence.note('pos.return', { code, docKey: doc.docKey, docStatus: submitted.status, refundTotal: computed.refundTotal, orderCode: order.code });
+  await ctx.events.emit('pos.return.recorded', {
+    returnId: draft.id, code, orderId: order.order_id, orderCode: order.code, branchCode: branch.code, docKey: doc.docKey,
+    originalDocKey: order.doc_key, version: 1, cashier: { name: ctx.actor.name }, return: snapshot,
+  }, { subject: `pos.return:${draft.id}`, dedupeKey: `pos.return.recorded:${draft.id}` });
   return { snapshot, docKey: doc.docKey, refundTotal: computed.refundTotal, branchCode: branch.code, replayed: false };
 }

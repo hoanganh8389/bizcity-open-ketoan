@@ -177,6 +177,15 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### Module `pos` — sự kiện cho bản sao sổ ở website; app `tgs-wp` <!-- [2026-11-12 06:45 PM Võ Hoàng] POS-MIRROR — module pos đợt bản sao sổ (đóng góp) -->
+
+- **Thêm:** module `pos` phát `pos.order.recorded`, `pos.return.recorded`, `pos.order.cancelled` (outbox, cùng giao dịch với chứng từ; kèm bản chụp đơn / phiếu và tên thu ngân). Manifest `events.emits`, năng lực `events.outbox`.
+- **Thêm:** app Core `tgs-wp` (`apps/api/src/ung-dung/tgs-wp`, ADR-0011 mức 2) nhận ba sự kiện trên qua webhook ký HMAC — website TGS ghi bản sao một chiều vào `local_ledger` (sổ chính chỉ ghi ở kế toán). Đơn vị phải kết nối app (Ứng dụng → Kết nối) để có việc giao.
+- **Đổi:** địa chỉ webhook của app đặt được theo môi trường: biến `APP_WEBHOOK_URL_<KHOÁ>` (khoá viết hoa, `-` → `_`) đè `app.webhook.url` của manifest; vẫn qua kiểm https / localhost của `appManifestProblems`.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** đặt `APP_WEBHOOK_URL_TGS_WP` = `https://<website>/wp-json/tgs-pos/v1/ketoan-events`; kết nối app `tgs-wp` ở từng đơn vị, chép bí mật webhook (chỉ hiện một lần) vào `TGS_KETOAN_WEBHOOK_SECRET` của website.
+- **Bảo mật:** chữ ký `Bizcity-Signature` (HMAC-SHA256, bí mật riêng từng đơn vị × app), website từ chối lệch giờ > 5 phút; `Idempotency-Key` = id sự kiện.
+
 ### Khung nhìn giá bán theo chi nhánh và tồn theo chi nhánh; mã lỗi ca bán (module pos, phiếu NT-BH-006 / 007) <!-- [2026-11-12 06:30 PM Võ Hoàng] POS-CATALOG — phần Core cho module pos (đóng góp) -->
 
 - **Thêm:** khung nhìn `bizcity_read.branch_prices` — giá trọn một ĐVT theo chi nhánh đã áp luật DM14 (hàng chính: bảng giá công ty; hàng thường: bảng giá gán cho chi nhánh, ô trống lấy công ty; chi nhánh chưa gán / bảng giá ngừng dùng: công ty), `price_source` = `branch` / `company`; và `bizcity_read.stock_on_hand` — tồn theo chi nhánh × kho × `item_id` (ĐVT nhỏ nhất). Migration 0109, chữ chốt BIZCITY-DATA §8 bổ sung 2026-11-12.
