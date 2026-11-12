@@ -16,7 +16,7 @@ Mỗi bản ghi đủ sáu mục:
 ### Mặt hàng → Mua hàng: giá theo nhà cung cấp dễ dùng hơn
 - Bỏ khối **Tồn max theo chi nhánh – kho** (cấu hình ở màn Tồn max).
 - Giá mua theo từng nhà cung cấp: mỗi NCC một khối, hiện 3 đợt giá gần nhất (xem thêm đợt cũ), nút **Giá mới** cho từng NCC, bấm dòng để sửa / xoá trong hộp nhỏ; **Thêm nhà cung cấp** chọn NCC ngay trong hộp.
-- **Lịch sử thay đổi**: mọi lần thêm / sửa / xoá giá của mã (ai, lúc nào, trước → sau).
+- **Lịch sử** ở từng khối NCC: mọi lần thêm / sửa / xoá giá của NCC đó cho mã này (ai, lúc nào, trước → sau).
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Mặt hàng con: chỉ gõ mã, phần mềm tự xử lý

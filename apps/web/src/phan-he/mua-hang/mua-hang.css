@@ -280,3 +280,7 @@
 .ncc-gia table.mh-mini th:nth-child(4) { width: 210px; }
 .ncc-gia table.mh-mini th:nth-child(7) { width: 210px; }
 .ncc-gia table.mh-mini td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ncc-gia table.ncc-log th:nth-child(1) { width: 160px; }
+.ncc-gia table.ncc-log th:nth-child(2) { width: 140px; }
+.ncc-gia table.ncc-log th:nth-child(3) { width: auto; }
+.ncc-gia-head .btn + .btn { margin-left: 4px; }

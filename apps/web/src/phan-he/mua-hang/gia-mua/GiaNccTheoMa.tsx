@@ -28,7 +28,7 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
   const log = useQuery({ queryKey: ['mua-hang', 'sp-log', sku], queryFn: () => purchaseApi.history({ event: 'supplier_products', sku }) });
   const [open, setOpen] = useState<Form | null>(null);
   const [more, setMore] = useState<Record<string, boolean>>({});
-  const [showLog, setShowLog] = useState(false);
+  const [showLog, setShowLog] = useState<Record<string, boolean>>({});
   const units = q.data?.units[sku] ?? [];
   const rate = (TAX_RATE[cat.data?.[0]?.taxInCode ?? 'V08'] ?? 0) / 100;
   const asPrice = (r: SupplierProduct, inc: boolean) => (r.price === null || r.price === undefined ? null : Boolean(r.priceIncludesVat) === inc ? r.price : inc ? roundPrice(r.price * (1 + rate)) : roundPrice(r.price / (1 + rate)));
@@ -44,14 +44,23 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
   const d0 = today();
   const live = (r: SupplierProduct) => r.isActive && (!r.validFrom || r.validFrom <= d0) && (!r.validTo || r.validTo >= d0);
   const refresh = () => { void q.refetch(); void log.refetch(); void qc.invalidateQueries({ queryKey: ['mua-hang', 'supplier-products'] }); onChanged?.(); };
+  // Lịch sử theo từng NCC: các dòng thay đổi của mã này, nhóm theo NCC (mới nhất trước).
+  const logOf = useMemo(() => {
+    const m = new Map<string, { ts: string; user: string; text: string }[]>();
+    for (const e of log.data ?? []) {
+      const d = e.data as { partnerCode?: string; changes?: { sku: string; text: string }[]; rows?: string[] };
+      const items = d.changes ? d.changes.filter((c) => c.sku === sku).map((c) => c.text) : (d.rows ?? []).filter((x) => String(x).startsWith(`${sku} `)).map((x) => String(x).slice(sku.length + 1));
+      const key = d.partnerCode ?? '';
+      m.set(key, [...(m.get(key) ?? []), ...items.map((text) => ({ ts: e.ts, user: e.user, text }))]);
+    }
+    return m;
+  }, [log.data, sku]);
   const newFor = (pc: string | null, last?: SupplierProduct): Form => ({ partnerCode: pc, sku, unit: last?.unit ?? units.find((u) => u.isPurchaseDefault)?.unit ?? units[0]?.unit ?? '', nccSku: last?.nccSku ?? '', nccName: last?.nccName ?? '', price: null, priceIncludesVat: last?.priceIncludesVat ?? false, validFrom: d0, note: '', isActive: true });
 
   return (
     <div>
       <div className="row" style={{ gap: 6, marginBottom: 8, alignItems: 'center' }}>
         <button type="button" className="btn btn-sm btn-primary" onClick={() => setOpen(newFor(null))} disabled={!units.length} title={units.length ? 'Khai giá mua của một nhà cung cấp cho mã này' : 'Mặt hàng chưa có ĐVT: khai ở thẻ Đơn vị tính trước'}><Plus size={13} /> Thêm nhà cung cấp</button>
-        <span style={{ flex: 1 }} />
-        <button type="button" className="btn btn-sm" onClick={() => setShowLog((x) => !x)}>{showLog ? 'Ẩn lịch sử' : `Lịch sử thay đổi${log.data?.length ? ` (${log.data.length})` : ''}`}</button>
       </div>
       {q.isLoading && <div className="muted">Đang tải…</div>}
       {!q.isLoading && !groups.length && <div className="muted">Chưa nhà cung cấp nào khai giá {name}. Bấm <b>Thêm nhà cung cấp</b>.</div>}
@@ -63,6 +72,7 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
               <b title={pc}>{pc ? names.partnerName(pc) || pc : 'Giá chung mọi nhà cung cấp'}</b>
               {pc && <span className="muted mono" style={{ fontSize: 11.5 }}>{pc}</span>}
               <span style={{ flex: 1 }} />
+              <button type="button" className="btn btn-xs" onClick={() => setShowLog((m) => ({ ...m, [pc]: !m[pc] }))} title="Các lần thêm / sửa / xoá giá của nhà cung cấp này">{showLog[pc] ? 'Ẩn lịch sử' : `Lịch sử (${logOf.get(pc)?.length ?? 0})`}</button>
               <button type="button" className="btn btn-xs" onClick={() => setOpen(newFor(pc || null, list[0]))} title="Thêm đợt giá mới cho nhà cung cấp này (giữ các đợt cũ)"><Plus size={12} /> Giá mới</button>
             </div>
             <table className="mh-mini">
@@ -81,26 +91,19 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
                 ))}
               </tbody>
             </table>
+            {showLog[pc] && (
+              <table className="mh-mini ncc-log" style={{ marginTop: 6 }}>
+                <thead><tr><th>Lúc</th><th>Người</th><th>Thay đổi</th></tr></thead>
+                <tbody>
+                  {(logOf.get(pc) ?? []).map((x, i) => <tr key={i}><td>{new Date(x.ts).toLocaleString('vi-VN', { hour12: false })}</td><td>{x.user}</td><td style={{ fontSize: 12, whiteSpace: 'normal' }}>{x.text}</td></tr>)}
+                  {!(logOf.get(pc) ?? []).length && <tr><td colSpan={3} className="muted">Chưa có thay đổi.</td></tr>}
+                </tbody>
+              </table>
+            )}
             {list.length > SHOW && <button type="button" className="link" style={{ fontSize: 12, marginTop: 4 }} onClick={() => setMore((m) => ({ ...m, [pc]: !m[pc] }))}>{more[pc] ? 'Thu gọn' : `Xem thêm ${list.length - SHOW} đợt giá cũ`}</button>}
           </div>
         );
       })}
-      {showLog && (
-        <div className="ncc-gia" style={{ marginTop: 10 }}>
-          <div className="ncc-gia-head"><b>Lịch sử thay đổi</b><span className="muted" style={{ fontSize: 12 }}>mới nhất trên cùng</span></div>
-          <table className="mh-mini">
-            <thead><tr><th>Lúc</th><th>Người</th><th>Nhà cung cấp</th><th>Thay đổi</th></tr></thead>
-            <tbody>
-              {(log.data ?? []).flatMap((e, i) => {
-                const d = e.data as { partnerCode?: string; changes?: { sku: string; text: string }[]; rows?: string[] };
-                const items = d.changes ? d.changes.filter((c) => c.sku === sku).map((c) => c.text) : (d.rows ?? []).filter((x) => String(x).startsWith(`${sku} `)).map((x) => String(x).slice(sku.length + 1));
-                return items.map((t, j) => <tr key={`${i}-${j}`}><td style={{ whiteSpace: 'nowrap' }}>{new Date(e.ts).toLocaleString('vi-VN', { hour12: false })}</td><td>{e.user}</td><td>{d.partnerCode ? names.partnerName(d.partnerCode) || d.partnerCode : 'Giá chung'}</td><td style={{ fontSize: 12 }}>{t}</td></tr>);
-              })}
-              {!log.isLoading && !(log.data ?? []).length && <tr><td colSpan={4} className="muted">Chưa có thay đổi.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      )}
       {open && <HopGia v={open} units={units} rate={rate} onClose={() => setOpen(null)} onDone={() => { setOpen(null); refresh(); }} />}
     </div>
   );
