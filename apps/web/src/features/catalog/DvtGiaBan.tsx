@@ -54,7 +54,7 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
         </header>
         <div className="dvt-rows">
           <table className="dvt-units">
-          <thead><tr><th style={{ width: 86 }} /><th style={{ width: 220 }}>Tên ĐVT</th><th>Quy đổi</th><th style={{ width: 90 }}>Bán chính</th><th style={{ width: 120 }} title="ĐVT mua chung cho MỌI nhà cung cấp: lập đơn / phiếu tự chọn ĐVT này. NCC nào giao ĐVT khác (vd chỉ bán theo Thùng) thì khai dòng giá ĐVT Thùng cho NCC đó ở thẻ Mua hàng">Mua mặc định<br /><span style={{ fontWeight: 400, fontSize: 11 }}>(mọi NCC)</span></th><th style={{ width: 100 }}>KL (kg)</th><th style={{ width: 44 }} /></tr></thead>
+          <thead><tr><th style={{ width: 86 }} /><th style={{ width: 220 }}>Tên ĐVT</th><th>Quy đổi</th><th style={{ width: 90 }}>Bán chính</th><th style={{ width: 100 }}>KL (kg)</th><th style={{ width: 44 }} /></tr></thead>
           <tbody>
           {units.map((u, i) => {
             const isBase = u === base;
@@ -77,7 +77,6 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
                   {prob.rows[i] && <small className="mh-bad">{prob.rows[i]}</small>}
                 </div></td>
                 <td className="c"><label className={`dvt-pill ${u.isDefault ? 'on' : ''}`}><input type="radio" name="dvt-chinh" checked={u.isDefault} onChange={() => onUnit(i, { isDefault: true })} />Bán</label></td>
-                <td className="c"><label className={`dvt-pill ${u.isPurchaseDefault ? 'on' : ''}`}><input type="radio" name="dvt-mua" checked={Boolean(u.isPurchaseDefault)} onChange={() => onUnit(i, { isPurchaseDefault: true })} />Mua</label></td>
                 <td><input className="input num" value={u.weightKg ?? ''} onChange={(e) => onUnit(i, { weightKg: num(e.target.value) })} /></td>
                 <td>{units.length > 1 && !isBase && <button type="button" className="btn btn-xs" title="Bỏ ĐVT này (giá của ĐVT bỏ theo)" onClick={() => { setRefs({}); onRemove(i); }}>×</button>}</td>
               </tr>
@@ -95,7 +94,7 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
         </div>
       </section>
 
-      <div className="muted" style={{ fontSize: 12 }}>Giá bán khai ở thẻ <b>Giá bán</b>; giá mua (riêng của sản phẩm, theo từng nhà cung cấp) ở thẻ <b>Mua hàng</b>.<br />Lập đơn / phiếu với một NCC: dùng <b>ĐVT trên dòng giá của NCC đó</b> (thẻ Mua hàng); NCC chưa khai mã này thì dùng <b>Mua mặc định</b> → <b>Bán chính</b> → ĐVT nhỏ nhất. Số lượng tồn, tồn max, phân tích đặt hàng luôn quy về ĐVT nhỏ nhất.</div>
+      <div className="muted" style={{ fontSize: 12 }}>Giá bán khai ở thẻ <b>Giá bán</b>; giá mua (riêng của sản phẩm, theo từng nhà cung cấp) ở thẻ <b>Mua hàng</b>.<br />Lập đơn / phiếu với một NCC: dùng <b>ĐVT trên dòng giá của NCC đó</b> (thẻ Mua hàng); NCC chưa khai mã này thì dùng <b>Bán chính</b>. Số lượng tồn, tồn max, phân tích đặt hàng luôn quy về ĐVT nhỏ nhất.</div>
     </div>
   );
 }
@@ -103,7 +102,10 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
 /** Thẻ "Giá bán": bảng giá công ty / chi nhánh theo từng ĐVT (cấu hình bán hàng). */
 // [2026-11-12 Nguyễn Văn Thủy] hàng chính chỉ khai bảng giá công ty (luôn bán theo giá công ty) (đóng góp)
 export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPrice, onlyCompany }: Pick<Props, 'units' | 'prices' | 'lists' | 'shown' | 'setShown' | 'setPrice'> & { onlyCompany?: boolean }) {
-  const sorted = sortUnits(units);
+  // [2026-11-12 Nguyễn Văn Thủy] chỉ khai giá ĐVT bán chính (đã chọn ở thẻ Đơn vị tính), không gợi ý quy đổi (đóng góp)
+  const all = sortUnits(units);
+  const main = all.find((u) => u.isDefault) ?? all[0];
+  const sorted = main ? [main] : [];
   const priceOf = (list: string, unit: string) => prices.find((p) => p.priceListCode === list && p.unit === unit)?.price;
   const rowPrices = (list: string) => sorted.map((u) => ({ unit: u.unit, price: priceOf(list, u.unit) }));
   const company = lists.find((l) => l.isCompany);
@@ -126,7 +128,7 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
       {/* Giá bán theo bảng giá */}
       <section className="blk blk-green">
         <header>
-          <div><b>Giá bán theo bảng giá</b><span>Giá đã gồm thuế. Ô trống hiện <i>giá gợi ý theo tỉ lệ</i> — bấm "lấy" để dùng. Dán được cả dòng số từ Excel.</span></div>
+          <div><b>Giá bán theo bảng giá</b><span>Giá đã gồm thuế, theo ĐVT bán chính{main ? ` (${main.unit})` : ''}. Đổi ĐVT bán chính ở thẻ Đơn vị tính.</span></div>
         </header>
         {!sorted.length ? <div className="muted" style={{ padding: 8 }}>Khai ĐVT ở thẻ Đơn vị tính trước.</div> : !company ? <div className="muted" style={{ padding: 8 }}>Chưa có bảng giá công ty — khai ở màn Bảng giá bán.</div> : (
           <div style={{ overflowX: 'auto' }}>
