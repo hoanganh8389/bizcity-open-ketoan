@@ -63,8 +63,8 @@ export async function searchCustomers(tx: Tx, q: string): Promise<Customer[]> {
 }
 
 /** Bảng bỏ dấu cho translate() của PostgreSQL (khung nhìn không có cột tên không dấu, không cần extension unaccent). */
-const VN_FROM = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
-const VN_TO = [...VN_FROM].map(fold).join('');
+export const VN_FROM = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
+export const VN_TO = [...VN_FROM].map(fold).join('');
 
 export async function customerByPhone(tx: Tx, phone: string): Promise<Customer | null> {
   const digits = phone.replace(/\D/g, '');

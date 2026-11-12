@@ -64,6 +64,11 @@ Tiền đầu ca 1.000.000. Trong ca: đơn A 660.000 (TM 330.000 + CK 330.000);
 ## 8. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 1–2 (mở ca) | ca mới; mở lần hai `POS_SHIFT_ALREADY_OPEN` | đúng | — | test NT-BH-007 |
+| §5 dòng 3–7 (số liệu ca) | 2 đơn 985.000; TM 655.000, CK 330.000; phải có 1.330.000 | đúng | — | |
+| §5 dòng 8–9 (chốt ca) | thiếu 10.000; không lập chứng từ; chốt lại `POS_SHIFT_CLOSED` | đúng | — | |
+| §5 dòng 10–11 (đơn hàng, tổng quan) | danh sách + tổng; tổng quan thuần 660.000 | đúng | — | |
+| Chạy thật máy bán | mở ca 1.000.000 → bán 14.000 tiền mặt → phải có 1.014.000 → chốt khớp | đúng | — | e2e thật |
 
 ## 9. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -73,3 +78,4 @@ Tiền đầu ca 1.000.000. Trong ca: đơn A 660.000 (TM 330.000 + CK 330.000);
 | Ngày | Thay đổi |
 |---|---|
 | 12/11/2026 | Tạo phiếu |
+| 12/11/2026 | Ghi kết quả chạy (test tích hợp + chạy thật) |

@@ -57,6 +57,11 @@ Như mục 2. Tồn tính theo ĐVT nhỏ nhất (Hộp).
 ## 7. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 1–4 (giá) | 320.000 / 3.800.000 / 500.000 / 330.000 | đúng | — | test NT-BH-006 + read-views (Core 0109) |
+| §5 dòng 5–6 (danh mục) | không có hàng ngừng bán; thuế, Biến thể, mã vạch, ĐVT đúng | đúng | — | |
+| §5 dòng 7 (tồn) | CN01 = 17, không thấy 50 của CN02 | đúng | — | |
+| §5 dòng 9 (đổi giá) | lần kéo sau 325.000, phiên bản đổi | đúng | — | |
+| Chạy thật máy bán (LocalWP + Docker) | danh mục tải từ kế toán, bán theo giá bảng giá công ty | đúng | — | e2e thật 3/3 |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -66,3 +71,4 @@ Như mục 2. Tồn tính theo ĐVT nhỏ nhất (Hộp).
 | Ngày | Thay đổi |
 |---|---|
 | 12/11/2026 | Tạo phiếu |
+| 12/11/2026 | Ghi kết quả chạy (test tích hợp + chạy thật) |

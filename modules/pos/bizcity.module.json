@@ -47,14 +47,17 @@
       "order_lines",
       "returns",
       "return_lines",
-      "code_counters"
+      "code_counters",
+      "shifts"
     ],
     "reads": [
       "bizcity_read.branches",
       "bizcity_read.products",
       "bizcity_read.tax_codes",
       "bizcity_read.payment_methods",
-      "bizcity_read.partners"
+      "bizcity_read.partners",
+      "bizcity_read.branch_prices",
+      "bizcity_read.stock_on_hand"
     ]
   },
   "actions": [
@@ -70,7 +73,16 @@
     "pos.exchange.create",
     "pos.customer.search",
     "pos.customer.lookup",
-    "pos.customer.orders"
+    "pos.customer.orders",
+    "pos.catalog.snapshot",
+    "pos.catalog.search",
+    "pos.catalog.barcode",
+    "pos.stock.get",
+    "pos.shift.current",
+    "pos.shift.open",
+    "pos.shift.close",
+    "pos.report.orders",
+    "pos.report.dashboard"
   ],
   "ledger": {
     "submits": [
