@@ -184,6 +184,13 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### `@bizcity/ui-kit` thêm bảng lưới, thẻ chỉ số, bộ tham số kỳ / chi nhánh, ô chọn; mục Bán lẻ máy POS ở nhóm Phần riêng <!-- [2026-11-12 10:20 PM Võ Hoàng] POS-UIKIT — phần Core giao diện cho module pos (đóng góp) -->
+
+- **Thêm:** `@bizcity/ui-kit` 1.4.0-draft (BIZCITY-EXTENSION §3b): `DataGrid`, `KpiCards`, `FilterLayout`, `PeriodField`, `BranchCheckList`, `ItemPicker`, `BranchPicker` — mặt tiền trỏ tới đúng thành phần của màn Core qua `provideUiKit`; màn module nhìn và dùng như màn Mua hàng (lọc, sắp xếp, tổng cột, Xuất Excel chuẩn, bộ tham số đã lưu). Chỉ thêm, phần cũ giữ nguyên.
+- **Đổi:** nhóm *Phần riêng* có mục **Bán lẻ máy POS**: Chương trình bán (BH12, chuyển từ mục "Bán lẻ, giá vốn") và các màn quản trị bán lẻ của module `pos` (`/app/pos/…`, hiện khi module có màn).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
 ### Module `pos` — danh mục, giá theo chi nhánh, tồn của chi nhánh; ca bán và báo cáo (NT-BH-006, NT-BH-007) <!-- [2026-11-12 07:20 PM Võ Hoàng] POS-CATALOG — module pos đợt danh mục / ca bán (đóng góp) -->
 
 - **Thêm:** `GET /api/v1/m/pos/catalog/snapshot | /catalog/search | /catalog/barcode/:code` — danh mục bán của chi nhánh, giá trọn từng ĐVT đọc từ `bizcity_read.branch_prices` (luật DM14 ở Core), thuế suất, Biến thể, Gửi lên thuế, mã vạch; `GET /stock` — tồn của chính chi nhánh (`bizcity_read.stock_on_hand`). Bootstrap trả `catalogVersion` để máy biết khi nào kéo lại.
