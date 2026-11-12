@@ -72,11 +72,11 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     await ctx.data.module(async (tx) => {
       await sql`
         INSERT INTO mod_pos.orders (tenant_id, order_id, branch_code, code, business_date, status, customer_code,
-                                    subtotal, tax_total, total, doc_key, doc_status, snapshot, draft, created_by)
+                                    subtotal, tax_total, total, doc_key, doc_status, snapshot, draft, created_by, cashier_name)
         VALUES (${ctx.tenant.id}, ${draft.id}, ${branch.code}, ${code}, ${draft.businessDate}, ${order.status},
                 ${computed.customer?.code ?? null}, ${computed.subtotal}, ${computed.taxTotal}, ${computed.total},
                 ${saleDocKey(branch.code, draft.id)}, ${submitted.status}, ${JSON.stringify(order)}::jsonb,
-                ${JSON.stringify(draft)}::jsonb, ${ctx.actor.id})`.execute(tx);
+                ${JSON.stringify(draft)}::jsonb, ${ctx.actor.id}, ${ctx.actor.name || null})`.execute(tx);
       // Dòng đơn lưu định danh mặt hàng (item_id, ADR-0017 / STD-DATA-6); mã và tên chỉ là ảnh chụp lúc bán.
       for (const l of computed.lines) {
         await sql`

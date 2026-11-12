@@ -1,0 +1,66 @@
+{
+  "contract": "bizcity_settings@1",
+  "note": "Khoá cấu hình của module pos (Cài đặt bán hàng BH17, phiếu NT-BH-008 §7). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key.",
+  "settings": [
+    {
+      "key": "bizcity.pos.return_days",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.pos.return_days",
+      "schema": "số ngày 0–60 kể từ ngày bán",
+      "valueType": "integer[0..60]",
+      "default": "3",
+      "readBy": "modules/pos/api/settings.ts (phiếu trả, còn trả được, bootstrap)",
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    },
+    {
+      "key": "bizcity.pos.require_open_shift",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.pos.require_open_shift",
+      "schema": "bắt buộc mở ca trước khi bán (NT-BH-007 Q2)",
+      "valueType": "boolean",
+      "default": "false",
+      "readBy": "modules/pos/api/settings.ts (bootstrap báo máy bán)",
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    },
+    {
+      "key": "bizcity.pos.shift_scope",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.pos.shift_scope",
+      "schema": "một ca chung / chi nhánh (branch) hay mỗi máy một ca (device) — NT-BH-007 Q3; đợt này chỉ thi hành branch",
+      "valueType": "enum(branch,device)",
+      "default": "\"branch\"",
+      "readBy": "modules/pos/api/settings.ts",
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    },
+    {
+      "key": "bizcity.pos.cash_diff_alert",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.pos.cash_diff_alert",
+      "schema": "ngưỡng chênh lệch két (đồng) để Sổ ca tô đỏ; 0 = mọi chênh lệch",
+      "valueType": "integer[0..1000000000]",
+      "default": "0",
+      "readBy": "modules/pos/api/settings.ts (Sổ ca bán BH15)",
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    }
+  ]
+}

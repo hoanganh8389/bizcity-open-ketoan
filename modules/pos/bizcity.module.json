@@ -20,7 +20,8 @@
       "actions.idempotency",
       "evidence.receipt",
       "ledger.cancel",
-      "events.outbox"
+      "events.outbox",
+      "settings.registry"
     ]
   },
   "permissions": [
@@ -37,6 +38,11 @@
     {
       "key": "pos:cancel",
       "label": "Huỷ đơn máy POS đang chờ thanh toán",
+      "risk": "low"
+    },
+    {
+      "key": "pos:report",
+      "label": "Xem quản trị bán lẻ máy POS: đơn, phiếu trả, sổ ca, tổng quan, cài đặt bán hàng của mọi chi nhánh (kế toán, quản lý)",
       "risk": "low"
     }
   ],
@@ -82,7 +88,12 @@
     "pos.shift.open",
     "pos.shift.close",
     "pos.report.orders",
-    "pos.report.dashboard"
+    "pos.report.dashboard",
+    "pos.admin.orders",
+    "pos.admin.returns",
+    "pos.admin.shifts",
+    "pos.admin.dashboard",
+    "pos.admin.settings"
   ],
   "ledger": {
     "submits": [
@@ -116,5 +127,11 @@
         "version": 1
       }
     ]
-  }
+  },
+  "settings": [
+    "bizcity.pos.return_days",
+    "bizcity.pos.require_open_shift",
+    "bizcity.pos.shift_scope",
+    "bizcity.pos.cash_diff_alert"
+  ]
 }
