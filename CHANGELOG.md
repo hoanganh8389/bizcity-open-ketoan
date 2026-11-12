@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhóm hàng DM11: một bảng cây (nút Sửa / Nhóm con / Lịch sử trên từng dòng, tìm, lọc cấp, kẻ ô); ba ô Mã nhóm hàng / Mã ngắn / Tên nhóm hàng (0118, tên đầy đủ tự ghép); Số mặt hàng cộng cả nhánh; nhóm đã có mặt hàng (kể cả nhóm con) khoá mã ngắn và chuyển nhóm (màn hình + máy chủ); nhập Excel theo cột Nhóm cha (đường dẫn) / Mã nhóm hàng / Mã ngắn / Tên nhóm hàng / Đang dùng, không cần mã nội bộ.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 - Nhóm hàng (DM11) tối giản: một ô Mã nhóm hàng (ghép vào mã hàng; cấp 1 = 2 chữ số không bắt đầu bằng 0, cấp 2 = 3 ký tự, cấp 3 = 1 ký tự, gợi ý luôn hiện, sai báo đỏ, máy chủ chặn), mã nội bộ tự cấp; bỏ Xoá, Đầu mã hàng, Điền mã ngắn; thêm Người tạo / Lúc tạo / Người sửa / Lúc sửa và thẻ Lịch sử (0116). Người tạo ghi họ tên thay cho mã người dùng (0117).
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->

@@ -27,3 +27,11 @@
 .nh-table td.mono { white-space: nowrap; }
 .nh-act .btn { background: transparent; }
 .nh-table tr:hover .nh-act .btn { background: var(--surface, #fff); }
+.nh-full { color: var(--ink-700, #374151); font-size: 12.5px; }
+
+/* Lưới kẻ ô như các bảng khác, dòng gọn một hàng */
+.nh-table th, .nh-table td { border: 1px solid var(--line, #e3e7ee); white-space: nowrap; }
+.nh-table td { padding: 3px 8px; height: 30px; }
+.nh-table th { padding: 6px 8px; }
+.nh-table td:nth-child(2), .nh-table td:nth-child(3) { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.nh-act .btn { padding: 1px 8px; height: 24px; }
