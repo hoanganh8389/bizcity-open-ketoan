@@ -34,6 +34,7 @@ export const TEN_MAN: Record<string, TenMan> = {
   '/ban-hang/thu-tien-ban-hang': { label: 'Đối chiếu chứng từ bán hàng và thu tiền' },
   // Kho
   '/kho/chuyen-kho': { label: 'Chuyển kho' },
+  '/kho/kiem-ke': { label: 'Kiểm kê kho' },
   '/ban-hang/xuat-dieu-chinh': { label: 'Xuất kho điều chỉnh' },
   '/nghiep-vu/tinh-gia-von': { label: 'Tính giá xuất kho' },
   '/bao-cao/nhap-xuat-ton': { label: 'Tổng hợp tồn kho' },

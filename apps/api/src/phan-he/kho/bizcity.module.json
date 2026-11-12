@@ -24,7 +24,14 @@
     "kho.transfer.receive",
     "kho.transfer.unreceive",
     "kho.transfer.reject",
-    "kho.transfer.cancel"
+    "kho.transfer.cancel",
+    "kho.stock-count.create",
+    "kho.stock-count.update",
+    "kho.stock-count.record",
+    "kho.stock-count.unrecord",
+    "kho.stock-count.verify",
+    "kho.stock-count.decide",
+    "kho.stock-count.undecide"
   ],
   "permissions": [
     {
