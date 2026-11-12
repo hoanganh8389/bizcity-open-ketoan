@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Mọi dòng sổ cái / phiếu kho ghi đơn vị nhỏ nhất: định danh bất biến chi nhánh cn_…, kho kho_… (+ mã kho chụp), MST tại ngày chứng từ (0121). Không chọn kho = kho mặc định của chi nhánh. MST đặt ở kho / chi nhánh / nút cơ cấu (thường ở tỉnh), cấp gần nhất thắng; phiên bản theo ngày hiệu lực (tax_id_versions) và phiên bản cơ cấu (org_link_versions) — đổi MST tỉnh hoặc chuyển shop sang tỉnh khác: dòng cũ giữ MST cũ, chứng từ nhập lùi ngày lấy MST đúng ngày. Định danh nút cơ cấu cc_…. Màn Kho / Cơ cấu tổ chức: ô MST kê khai + ngày áp dụng, bảng phiên bản MST. Hàm bizcity_fill_missing_wh_tax() điền dòng cũ theo lô.
+- Luật mã hàng (mã chính / biến thể) chỉ áp cho mặt hàng có nhóm hàng; đường đồng bộ không có nhóm giữ mã nguồn.
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Bỏ mọi nút Xoá dữ liệu đã lưu trên giao diện: cơ cấu tổ chức, chứng từ (danh sách / hộp thoại), phiếu hàng, bộ tham số, thẻ hướng dẫn, khai báo ngầm định, mẫu phiếu, chính sách mua, giá NCC, ánh xạ hoá đơn NCC, báo cáo tài chính, tờ khai thuế, tệp đính kèm mua hàng, sự kiện tài sản, dòng giá NCC đã lưu. Giữ nút bỏ dòng nháp chưa ghi. "Xoá" ở danh sách định khoản đổi tên đúng việc: Bỏ định khoản; Trợ lý: Làm mới.
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->

@@ -14,6 +14,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import { sql } from 'kysely';
 import { authOf, requirePermission, type AuthContext } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
 import { Errors } from '../../core/errors.js';
@@ -31,6 +32,10 @@ const bodySchema = z.object({
   isActive: z.boolean().default(true),
   isDefault: z.boolean().default(false),
   isPromo: z.boolean().default(false),
+  // [2026-11-13 Nguyễn Văn Thủy] MST kê khai của kho (0121): trống = theo chi nhánh → công ty (đóng góp)
+  taxId: z.string().trim().regex(/^$|^[0-9]{10}(-[0-9]{3})?$/, 'MST gồm 10 số hoặc 10 số-3 số').default(''),
+  /** Ngày MST mới bắt đầu có hiệu lực (YYYY-MM-DD); trống = hôm nay. */
+  taxValidFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   account: z.string().trim().max(32).default(''),
   note: z.string().trim().max(500).default(''),
 });
@@ -38,15 +43,17 @@ const patchSchema = bodySchema.omit({ code: true }).partial();
 type Body = z.infer<typeof bodySchema>;
 
 // [2026-11-09 03:20 PM kiennt] PHASE-028 — S028-19: trả thêm id kho (gán vai trò theo kho ở HT12 cần warehouses.id); trường cũ giữ nguyên
-export interface WarehouseDto { id: string; code: string; branchCode: string; branchName: string; name: string; address: string; isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string }
+export interface WarehouseDto { id: string; code: string; branchCode: string; branchName: string; name: string; address: string; isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string; taxId: string; taxIdUsed: string; uid: string }
 
 const select = (trx: Db, tenantId: string) => trx.selectFrom('warehouses as w').innerJoin('branches as b', 'b.id', 'w.branch_id')
-  .select(['w.id', 'w.code', 'b.code as branch_code', 'b.name as branch_name', 'w.name', 'w.address', 'w.is_active', 'w.is_default', 'w.is_promo', 'w.account', 'w.note'])
+  .select(['w.id', 'w.code', 'b.code as branch_code', 'b.name as branch_name', 'w.name', 'w.address', 'w.is_active', 'w.is_default', 'w.is_promo', 'w.account', 'w.note', 'w.tax_id', 'w.uid',
+    sql<string>`bizcity_tax_id_at(w.tenant_id, w.branch_id, w.id, current_date)`.as('tax_id_used')])
   .where('w.tenant_id', '=', tenantId);
 type Row = Awaited<ReturnType<ReturnType<typeof select>['executeTakeFirstOrThrow']>>;
 const dto = (r: Row): WarehouseDto => ({
   id: String(r.id), code: r.code, branchCode: r.branch_code, branchName: r.branch_name, name: r.name, address: r.address,
   isActive: r.is_active, isDefault: r.is_default, isPromo: r.is_promo, account: r.account, note: r.note,
+  taxId: r.tax_id, taxIdUsed: r.tax_id_used ?? '', uid: r.uid,
 });
 
 async function branchId(trx: Db, tenantId: string, code: string): Promise<string> {
@@ -64,6 +71,21 @@ async function assertOnePromo(trx: Db, tenantId: string, branch: string, code: s
 
 const usedBy = (trx: Db, tenantId: string, code: string) =>
   trx.selectFrom('inventory_movements').select('id').where('tenant_id', '=', tenantId).where('warehouse_code', '=', code).limit(1).executeTakeFirst();
+
+/** Phiên bản MST của kho (0121): mới nhất trước; kèm MST thực dùng tại ngày bắt đầu mỗi phiên bản. */
+export async function warehouseTaxHistory(tenantId: string, code: string) {
+  const res = await sql<{ valid_from: string; valid_to: string | null; tax_id: string; tax_id_used: string; changed_by: string; changed_at: Date }>`
+    SELECT v.valid_from::text, v.valid_to::text, v.tax_id, bizcity_tax_id_at(w.tenant_id, w.branch_id, w.id, greatest(v.valid_from, DATE '2000-01-01')) AS tax_id_used, v.changed_by, v.changed_at
+      FROM tax_id_versions v JOIN warehouses w ON w.id = v.ref_id
+     WHERE v.tenant_id = ${tenantId} AND v.scope = 'warehouse' AND w.code = ${code}
+     ORDER BY v.valid_from DESC LIMIT 200`.execute(db);
+  return res.rows.map((r) => ({ validFrom: r.valid_from, validTo: r.valid_to, taxId: r.tax_id, taxIdUsed: r.tax_id_used, changedBy: r.changed_by, changedAt: r.changed_at }));
+}
+
+/** Biến phiên cho trigger phiên bản (0121): người đổi, ngày hiệu lực (mặc định hôm nay). */
+export async function setVersionContext(trx: Db, by: string, validFrom?: string | null) {
+  await sql`SELECT set_config('ketoan.actor_name', ${by}, true), set_config('ketoan.valid_from', ${validFrom ?? ''}, true)`.execute(trx);
+}
 
 export const warehouseService = {
   async list(auth: AuthContext, branchCodes?: string[]): Promise<WarehouseDto[]> {
@@ -83,9 +105,10 @@ export const warehouseService = {
       if (exists) throw Errors.conflict(`Mã kho ${input.code} đã có`);
       const branch = await branchId(trx, auth.tenantId, input.branchCode);
       if (input.isPromo) await assertOnePromo(trx, auth.tenantId, branch, input.code);
+      await setVersionContext(trx, auth.actorName || auth.actor, input.taxValidFrom); // phiên bản MST kho (0121)
       await trx.insertInto('warehouses').values({
         tenant_id: auth.tenantId, code: input.code, branch_id: branch, name: input.name, address: input.address,
-        is_active: input.isActive, is_default: input.isDefault, is_promo: input.isPromo, account: input.account, note: input.note,
+        is_active: input.isActive, is_default: input.isDefault, is_promo: input.isPromo, account: input.account, note: input.note, tax_id: input.taxId,
       }).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.create', objectType: 'warehouse', objectId: input.code, after: input });
       return dto(await select(trx, auth.tenantId).where('w.code', '=', input.code).executeTakeFirstOrThrow());
@@ -110,9 +133,10 @@ export const warehouseService = {
         patch.branch_id = branch;
       }
       if (input.isPromo ?? cur.is_promo) await assertOnePromo(trx, auth.tenantId, branch, code);
-      for (const [k, col] of [['name', 'name'], ['address', 'address'], ['isActive', 'is_active'], ['isDefault', 'is_default'], ['isPromo', 'is_promo'], ['account', 'account'], ['note', 'note']] as const) {
+      for (const [k, col] of [['name', 'name'], ['address', 'address'], ['isActive', 'is_active'], ['isDefault', 'is_default'], ['isPromo', 'is_promo'], ['account', 'account'], ['note', 'note'], ['taxId', 'tax_id']] as const) {
         if (input[k] !== undefined) patch[col] = input[k];
       }
+      await setVersionContext(trx, auth.actorName || auth.actor, input.taxValidFrom); // phiên bản MST kho (0121)
       await trx.updateTable('warehouses').set(patch).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.update', objectType: 'warehouse', objectId: code, before, after: input });
       return dto(await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirstOrThrow());
@@ -147,6 +171,12 @@ const codesParam = z.string().optional().transform((v) => (v ? v.split(',').map(
 
 export async function warehouseRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
+
+  r.get('/api/v1/warehouses/:code/tax-history', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags: ['Kho'], summary: 'Lịch sử phiên bản MST của kho', params: z.object({ code: z.string() }) },
+    handler: async (req) => ok(await warehouseTaxHistory(authOf(req).tenantId, req.params.code)),
+  });
 
   r.get('/api/v1/warehouses', {
     preHandler: requirePermission('catalog:read'),

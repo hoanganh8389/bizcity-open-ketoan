@@ -28,12 +28,12 @@ import type {
 const withOrg = (d: Db) => d.withTables<OrgTables>();
 const SEP = '\\';
 
-interface NodeRow { id: string; code: string; short_code: string; name: string; alias: string; note: string; parent_id: string | null; level: number; path: string; sort_order: number; is_active: boolean; purchase_branch_id: string | null }
+interface NodeRow { id: string; code: string; short_code: string; name: string; alias: string; note: string; tax_id: string; parent_id: string | null; level: number; path: string; sort_order: number; is_active: boolean; purchase_branch_id: string | null }
 interface BranchRow { id: string; code: string; name: string; is_active: boolean; org_unit_id: string | null; level: string; parent_id: string | null }
 
 async function loadNodes(trx: Db, tenantId: string): Promise<NodeRow[]> {
   const rows = await withOrg(trx).selectFrom('org_units')
-    .select(['id', 'code', 'short_code', 'name', 'alias', 'note', 'parent_id', 'level', 'path', 'sort_order', 'is_active', 'purchase_branch_id'])
+    .select(['id', 'code', 'short_code', 'name', 'alias', 'note', 'tax_id', 'parent_id', 'level', 'path', 'sort_order', 'is_active', 'purchase_branch_id'])
     .where('tenant_id', '=', tenantId).orderBy('sort_order').orderBy('code').execute();
   return rows.map((r) => ({ ...r, id: String(r.id), parent_id: r.parent_id === null ? null : String(r.parent_id), purchase_branch_id: r.purchase_branch_id === null ? null : String(r.purchase_branch_id), level: Number(r.level), sort_order: Number(r.sort_order) }));
 }
@@ -172,7 +172,7 @@ export async function orgTree(trx: Db, tenantId: string): Promise<OrgTreeDto> {
     const ids = t.subtree(n.id);
     const all = [...ids].flatMap((id) => direct.get(id) ?? []);
     return {
-      code: n.code, shortCode: n.short_code, name: n.name, alias: n.alias, note: n.note,
+      code: n.code, shortCode: n.short_code, name: n.name, alias: n.alias, note: n.note, taxId: n.tax_id,
       parentCode: n.parent_id ? t.byId.get(n.parent_id)?.code ?? null : null, level: n.level, path: n.path, sortOrder: n.sort_order, isActive: n.is_active,
       purchaseBranchCode: n.purchase_branch_id ? byBranchId.get(n.purchase_branch_id)?.code ?? null : null,
       purchaseUnitCode: t.nearestPurchase(n.id)?.code ?? null,
@@ -237,7 +237,7 @@ export const orgUnitService = {
       if ((await loadNodes(trx, auth.tenantId)).some((n) => n.code === input.code)) throw Errors.conflict(`Mã ${input.code} đã có trong sơ đồ tổ chức`);
       const parentId = await parentIdOf(trx, auth.tenantId, input.parentCode);
       await withOrg(trx).insertInto('org_units').values({
-        tenant_id: auth.tenantId, code: input.code, name: input.name, parent_id: parentId, short_code: input.shortCode ?? '', alias: input.alias ?? '', note: input.note ?? '',
+        tenant_id: auth.tenantId, code: input.code, name: input.name, parent_id: parentId, short_code: input.shortCode ?? '', alias: input.alias ?? '', note: input.note ?? '', tax_id: input.taxId ?? '',
         sort_order: input.sortOrder ?? 0, created_by: auth.actor, updated_by: auth.actor,
       }).execute();
       await recompute(trx, auth.tenantId);
@@ -259,7 +259,9 @@ export const orgUnitService = {
       if (input.shortCode !== undefined) patch.short_code = input.shortCode;
       if (input.alias !== undefined) patch.alias = input.alias;
       if (input.note !== undefined) patch.note = input.note;
+      if (input.taxId !== undefined) patch.tax_id = input.taxId;
       if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
+      await sql`SELECT set_config('ketoan.actor_name', ${auth.actorName || auth.actor}, true), set_config('ketoan.valid_from', ${input.validFrom ?? ''}, true)`.execute(trx); // phiên bản MST / cơ cấu theo ngày (0121)
       if (input.parentCode !== undefined) {
         const pid = await parentIdOf(trx, auth.tenantId, input.parentCode, before.id);
         if (pid && indexTree(await loadNodes(trx, auth.tenantId)).subtree(before.id).has(pid)) throw Errors.validation('Không chuyển nút vào bên dưới chính nhánh của nó');

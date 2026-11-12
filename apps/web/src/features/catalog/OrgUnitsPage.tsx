@@ -21,8 +21,9 @@ import { CayDonVi } from '@/components/CayDonVi';
 import { SoDoToChucChart } from './SoDoToChucChart';
 import { indexOrg, invalidateOrg, useOrgTree, type OrgNode } from '@/lib/orgUnits';
 
-type Form = { code: string; name: string; note: string; parentCode: string | null };
-const empty = (parentCode: string | null): Form => ({ code: '', name: '', note: '', parentCode });
+type Form = { code: string; name: string; note: string; parentCode: string | null; taxId: string; validFrom: string };
+const homNay = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+const empty = (parentCode: string | null): Form => ({ code: '', name: '', note: '', parentCode, taxId: '', validFrom: homNay() });
 
 export function OrgUnitsPage() {
   const { can } = useAuth();
@@ -41,7 +42,8 @@ export function OrgUnitsPage() {
   const exportRef = useRef<(() => void) | null>(null);
   const [view, setView] = useState<'list' | 'chart'>('list');
 
-  const shown: Form = mode ? f : node ? { code: node.code, name: node.name, note: node.note, parentCode: node.parentCode } : empty(null);
+  const nodeTax = (node as { taxId?: string } | null)?.taxId ?? '';
+  const shown: Form = mode ? f : node ? { code: node.code, name: node.name, note: node.note, parentCode: node.parentCode, taxId: nodeTax, validFrom: homNay() } : empty(null);
   const rows = level === 'all' ? tree.data?.nodes ?? [] : level !== null ? (tree.data?.nodes ?? []).filter((n) => n.level === level) : node ? ix.kids.get(node.code) ?? [] : [];
   const title = level === 'all' ? 'Tất cả' : level !== null ? `Toàn bộ nhóm cấp ${level}` : node?.path ?? '';
 
@@ -49,7 +51,8 @@ export function OrgUnitsPage() {
   const fail = (e: unknown) => setMsg({ ok: false, text: errorText(e) });
   const save = useMutation({
     mutationFn: () => {
-      const body = { name: f.name, note: f.note };
+      // [2026-11-13 Nguyễn Văn Thủy] MST đặt ở nút (vd tỉnh) + ngày hiệu lực; đổi MST = phiên bản mới, dòng cũ giữ MST cũ (0121) (đóng góp)
+      const body = { name: f.name, note: f.note, taxId: f.taxId.trim(), validFrom: f.validFrom || null };
       return mode === 'add' ? api.post('/api/v1/org-units', { ...body, code: f.code.trim(), parentCode: f.parentCode }) : api.patch(`/api/v1/org-units/${encodeURIComponent(node!.code)}`, body);
     },
     onSuccess: () => done('Đã ghi.', mode === 'add' ? f.code.trim() : node?.code), onError: fail,
@@ -121,6 +124,16 @@ export function OrgUnitsPage() {
                 <legend>{mode === 'add' ? `Thêm nút con của ${f.parentCode}` : mode === 'edit' ? `Sửa ${node?.code}` : 'Thông tin'}</legend>
                 <Field label="Mã (*)">{input('code', { mono: true, disabled: mode === 'edit' })}</Field>
                 <Field label="Tên (*)">{input('name')}</Field>
+                <Field label="MST kê khai" tip="Đặt ở nút tỉnh / chi nhánh pháp lý; shop, kho bên dưới không đặt riêng thì theo MST này. Trống = theo nút cha / công ty">
+                  {editable ? <input className="input mono" value={f.taxId} placeholder="10 số hoặc 10 số-3 số" onChange={(e) => setF((x) => ({ ...x, taxId: e.target.value.replace(/[^0-9-]/g, '') }))} />
+                    : <div className="input mono" style={{ background: 'var(--surface-2, #f4f6f9)' }}>{shown.taxId || '—'}</div>}
+                  {editable && f.taxId && !/^[0-9]{10}(-[0-9]{3})?$/.test(f.taxId) && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>MST gồm 10 số hoặc 10 số-3 số</div>}
+                </Field>
+                {mode === 'edit' && f.taxId !== nodeTax && (
+                  <Field label="MST mới áp dụng từ ngày" tip="Chứng từ từ ngày này ghi MST mới; chứng từ trước ngày này giữ MST cũ">
+                    <input className="input" type="date" value={f.validFrom} onChange={(e) => setF((x) => ({ ...x, validFrom: e.target.value }))} />
+                  </Field>
+                )}
                 <Field label="Mô tả" full>{input('note')}</Field>
               </fieldset>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 4px' }}>

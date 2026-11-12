@@ -218,7 +218,8 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   // [2026-11-12 Nguyễn Văn Thủy] mã mới: mã chính không có chữ đầu / cuối; mã biến thể = mã cha thêm chữ, phải có mã cha trước, nhóm theo mã cha (đóng góp)
   const ps = parentFromSku(sku);
   const parentRow = ps ? await trx.selectFrom('products').select(['sku', 'group_code', 'industry_code', 'brand_code', 'parent_sku']).where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst() : undefined;
-  if (opts.isNew) {
+  // Luật mã chỉ áp cho mặt hàng theo cây nhóm hàng (form / Excel luôn gửi nhóm); đường đồng bộ khác không có nhóm thì giữ mã nguồn.
+  if (opts.isNew && (b.groupCode || parentRow)) {
     if (ps && !parentRow) throw Errors.validation(`Mã cha ${ps} chưa có — khai mã cha trước rồi mới thêm mã biến thể ${sku}`);
     if (ps && sku.length - ps.length > 2) throw Errors.validation(`Mã biến thể ${sku}: chỉ thêm tối đa 2 chữ quanh mã cha ${ps}`);
     if (!ps && (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku)))) {

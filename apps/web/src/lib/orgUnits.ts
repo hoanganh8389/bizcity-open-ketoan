@@ -9,7 +9,7 @@ import { plain } from '@/components/pickers';
 
 export interface OrgWarehouse { code: string; name: string; isDefault: boolean; isActive: boolean }
 export interface OrgNode {
-  code: string; shortCode: string; name: string; alias: string; note: string;
+  code: string; shortCode: string; name: string; alias: string; note: string; taxId?: string;
   parentCode: string | null; level: number; path: string; sortOrder: number; isActive: boolean;
   purchaseBranchCode: string | null; purchaseUnitCode: string | null;
   directBranches: number; totalBranches: number; activeBranches: number;

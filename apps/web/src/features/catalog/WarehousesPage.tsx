@@ -21,6 +21,10 @@ import { BranchPicker } from '@/components/filters';
 export interface Warehouse {
   code: string; branchCode: string; branchName: string; name: string; address: string;
   isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string;
+  /** MST kê khai của kho (0121); trống = theo chi nhánh → công ty. taxIdUsed = MST thực dùng khi ghi sổ. */
+  taxId?: string; taxIdUsed?: string; uid?: string;
+  /** Ngày MST mới bắt đầu hiệu lực (gửi khi đổi MST). */
+  taxValidFrom?: string;
 }
 
 export function useWarehouses() {
@@ -83,6 +87,7 @@ export function WarehousesPage() {
               { key: 'isDefault', header: 'Kho mặc định', type: 'check', width: 90 },
               { key: 'isPromo', header: 'Kho khuyến mại', type: 'check', width: 100 },
               { key: 'account', header: 'Tài khoản', type: 'code', width: 90 },
+              { key: 'taxIdUsed', header: 'MST kê khai', type: 'code', width: 130, title: 'MST ghi vào từng dòng sổ của kho này: MST của kho, trống thì theo chi nhánh → công ty' },
               { key: 'note', header: 'Ghi chú', width: 200 },
             ] satisfies Column<Warehouse>[]}
           />
@@ -103,7 +108,8 @@ export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Ware
     mutationFn: () => {
       const body = {
         branchCode: v.branchCode ?? '', name: v.name ?? '', address: v.address ?? '', isActive: v.isActive !== false,
-        isDefault: Boolean(v.isDefault), isPromo: Boolean(v.isPromo), account: v.account ?? '', note: v.note ?? '',
+        isDefault: Boolean(v.isDefault), isPromo: Boolean(v.isPromo), account: v.account ?? '', note: v.note ?? '', taxId: (v.taxId ?? '').trim(),
+        taxValidFrom: (v.taxId ?? '') !== (value.taxId ?? '') ? v.taxValidFrom || null : null,
       };
       return value.isNew ? api.post('/api/v1/warehouses', { ...body, code: v.code?.trim() }) : api.patch(`/api/v1/warehouses/${encodeURIComponent(value.code!)}`, body);
     },
@@ -120,6 +126,16 @@ export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Ware
         <Field label="Chi nhánh (*)"><BranchPicker value={v.branchCode ?? ''} onChange={(branchCode) => set({ branchCode })} activeOnly /></Field>
         {txt('name', 'Tên kho (*)')}
         {txt('account', 'Tài khoản kho', false)}
+        {/* [2026-11-13 Nguyễn Văn Thủy] MST kê khai của kho — mỗi dòng sổ chụp MST lúc ghi; đổi MST có lịch sử phiên bản (0121) (đóng góp) */}
+        <Field label="MST kê khai" tip="Trống = theo MST chi nhánh, rồi công ty. Mỗi dòng sổ giữ MST tại lúc ghi.">
+          <input className="input mono" value={v.taxId ?? ''} placeholder={v.taxIdUsed ? `Đang dùng: ${v.taxIdUsed}` : '10 số hoặc 10 số-3 số'} onChange={(e) => set({ taxId: e.target.value.replace(/[^0-9-]/g, '') })} />
+          {v.taxId && !/^[0-9]{10}(-[0-9]{3})?$/.test(v.taxId) && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>MST gồm 10 số hoặc 10 số-3 số</div>}
+        </Field>
+        {!value.isNew && (v.taxId ?? '') !== (value.taxId ?? '') && (
+          <Field label="MST mới áp dụng từ ngày" tip="Chứng từ từ ngày này ghi MST mới; chứng từ trước ngày này giữ MST cũ">
+            <input className="input" type="date" value={v.taxValidFrom ?? new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)} onChange={(e) => set({ taxValidFrom: e.target.value })} />
+          </Field>
+        )}
         {txt('address', 'Địa chỉ', true)}
         {txt('note', 'Ghi chú', true)}
         <Field label=" " full>
@@ -130,7 +146,26 @@ export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Ware
           </div>
         </Field>
       </fieldset>
+      {!value.isNew && value.code && <LichSuMstKho code={value.code} />}
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
+  );
+}
+
+/** Phiên bản MST của kho: mỗi lần đổi MST / đổi chi nhánh một dòng (0121). */
+function LichSuMstKho({ code }: { code: string }) {
+  const h = useQuery({ queryKey: ['warehouse-tax-history', code], queryFn: () => api.get<{ validFrom: string; validTo: string | null; taxId: string; taxIdUsed: string; changedBy: string; changedAt: string }[]>(`/api/v1/warehouses/${encodeURIComponent(code)}/tax-history`) });
+  const ngay = (d: string | null) => (!d ? '' : d <= '1900-01-01' ? 'Từ đầu' : d.split('-').reverse().join('/'));
+  if (!h.data?.length) return null;
+  return (
+    <fieldset className="fgroup full">
+      <legend>Phiên bản MST</legend>
+      <table className="mh-mini full">
+        <thead><tr><th>Hiệu lực từ</th><th>Đến trước</th><th>MST đặt ở kho</th><th>MST ghi sổ</th><th>Người đổi</th></tr></thead>
+        <tbody>{h.data.map((r, i) => (
+          <tr key={i}><td>{ngay(r.validFrom)}</td><td>{r.validTo ? ngay(r.validTo) : 'nay'}</td><td className="mono">{r.taxId || '— (theo cấp trên)'}</td><td className="mono"><b>{r.taxIdUsed}</b></td><td>{r.changedBy}</td></tr>
+        ))}</tbody>
+      </table>
+    </fieldset>
   );
 }

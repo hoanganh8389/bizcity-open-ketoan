@@ -173,7 +173,7 @@ export async function ensureDemoWarehouses(auth: AuthContext) {
     const taken = await db.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
     if (taken) continue;
     await warehouseService.create(auth, {
-      code, branchCode: b.code, name: 'Kho hàng', address: '', isActive: true, isDefault: true, isPromo: false, account: '',
+      code, branchCode: b.code, name: 'Kho hàng', address: '', isActive: true, isDefault: true, isPromo: false, account: '', taxId: '',
       note: 'Kho mặc định của chi nhánh mẫu (dữ liệu tình huống mua hàng)',
     });
     created.push(code);

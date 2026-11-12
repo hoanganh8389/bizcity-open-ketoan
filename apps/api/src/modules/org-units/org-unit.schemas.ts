@@ -22,6 +22,10 @@ export interface OrgUnitsTable {
   created_at: Generated<Date>;
   updated_by: Generated<string>;
   updated_at: Generated<Date>;
+  /** MST kê khai đặt ở nút (0121). */
+  tax_id: Generated<string>;
+  /** Định danh bất biến cc_<ULID> (0121). */
+  uid: Generated<string>;
 }
 export type OrgTables = {
   org_units: OrgUnitsTable;
@@ -38,6 +42,10 @@ export const orgCreateSchema = z.object({
   parentCode: z.string().trim().max(32).nullable().optional(),
   shortCode: text(32), alias: text(255), note: text(500),
   sortOrder: z.number().int().min(0).max(100000).optional(),
+  // [2026-11-13 Nguyễn Văn Thủy] MST kê khai đặt ở nút (0122): trống = theo nút cha / công ty (đóng góp)
+  taxId: z.string().trim().regex(/^$|^[0-9]{10}(-[0-9]{3})?$/, 'MST gồm 10 số hoặc 10 số-3 số').optional(),
+  /** Ngày hiệu lực của lần đổi MST / đổi nút cha (YYYY-MM-DD); trống = hôm nay (0121). */
+  validFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
 });
 export type OrgCreate = z.infer<typeof orgCreateSchema>;
 
@@ -60,6 +68,8 @@ export type OrgImport = z.infer<typeof orgImportSchema>;
 
 export interface OrgWarehouseDto { code: string; name: string; isDefault: boolean; isActive: boolean }
 export interface OrgNodeDto {
+  /** MST kê khai đặt ở nút (0121). */
+  taxId?: string;
   code: string; shortCode: string; name: string; alias: string; note: string;
   parentCode: string | null; level: number; path: string; sortOrder: number; isActive: boolean;
   /** Đơn vị mua hàng: mã chi nhánh kho tổng (null = không phải). */
