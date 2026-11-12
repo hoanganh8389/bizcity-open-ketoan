@@ -8,7 +8,7 @@
 | Màn hình | KHO02 (Kiểm kê kho) — mới |
 | Bộ phận yêu cầu | Kho / Phòng kế toán |
 | Ngày tạo | 12/11/2026 |
-| Trạng thái | Nháp (sửa theo tài liệu nghiệp vụ 12/11/2026 — chờ chốt lại) |
+| Trạng thái | Đã chốt (12/11/2026, kiennt — bản sửa theo tài liệu nghiệp vụ) |
 | Căn cứ nghiệp vụ | Tài liệu "Mô tả chi tiết nghiệp vụ mua bán hàng hoá thương mại", mục 4 Phân hệ Kho (bước 7 Kiểm kê, bước 8 Xử lý chênh lệch) và bảng hạch toán nghiệp vụ kho dòng 9, 20, 24–28 |
 
 ## 1. Mục đích quản trị
