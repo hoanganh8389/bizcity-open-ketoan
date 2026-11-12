@@ -17,7 +17,8 @@ Mỗi bản ghi đủ sáu mục:
 - Form mặt hàng, danh sách mặt hàng, hộp **Thêm sản phẩm con** bỏ ô **Biến thể** và **Gửi lên thuế**. Thêm sản phẩm con chỉ gõ **mã con** (bắt đầu bằng mã cha) và tên.
 - Biến thể và gửi lên thuế do phần mềm tự suy theo mã mỗi lần thêm / đổi mã (migration 0111); dữ liệu đang có không đổi.
 - Sổ thuế: dòng hàng là mã con thì ghi theo mã cha.
-- Mã hàng mới được gồm cả chữ cái; mã cha có chữ cũng thêm được mã con. Mã đã có nhập xuất không đổi sang mã khác đường thuế.
+- Mã hàng mới được gồm cả chữ cái; mã cha có chữ cũng thêm được mã con.
+- Bỏ nút **Đổi mã** và **Gộp mã** trên form mặt hàng: sửa thẳng ô **Mã hàng** rồi Ghi (phần mềm đổi mã ngầm, giữ lịch sử).
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Mặt hàng bỏ ô Loại hàng

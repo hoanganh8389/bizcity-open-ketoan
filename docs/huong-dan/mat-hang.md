@@ -17,7 +17,7 @@ Bấm **Thêm**, hoặc bấm đúp một dòng. Bấm **Ghi** một lần là l
 | Ô | Ghi chú |
 |---|---|
 | Nhóm hàng | Chọn tới **nhóm cấp 3** (vd Sữa bột / ABBOTT / Sữa công thức trẻ em). Nhóm quyết định mã hàng; ngành, nhãn tự điền. |
-| Mã hàng | Chọn nhóm là **tự sinh** mã kế tiếp; nút **Sinh mã** để sinh lại. Mã đã lưu không sửa ở ô này (dùng nút **Đổi mã**). |
+| Mã hàng | Chọn nhóm là **tự sinh** mã kế tiếp; nút **Sinh mã** để sinh lại. Sửa mã đã lưu: gõ thẳng mã mới vào ô này, bấm Ghi. |
 | Tên hàng | Tên in trên hoá đơn, hiện ở màn bán hàng. Không trùng mặt hàng khác. |
 | Mã hàng cha | Chỉ có ở mặt hàng đã lưu. Mã cha thì liệt kê các mã con. Mã chưa có cha: chỉ chọn khi là **mã cũ của cùng sản phẩm** cần gom vào mã cha. |
 | Barcode | Nhiều mã cách nhau dấu `/`. |
@@ -144,16 +144,11 @@ Khối này liệt kê max của mã ở mọi chi nhánh / shop (cùng bảng v
 
 Khai hàng loạt, xem gợi ý theo tốc độ bán: màn **Tồn max (MH16)** — nút **Xem mọi shop (MH16)** mở sẵn mã này.
 
-## Đổi mã, gộp mã, lịch sử <!-- [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23 (đóng góp) -->
+## Lịch sử
 
-Mở mặt hàng, dùng các nút ở cuối form. Cả hai có hiệu lực từ hôm nay, bắt buộc ghi lý do.
+Sửa mã: gõ mã mới vào ô **Mã hàng**, bấm **Ghi**. Sổ và chứng từ cũ giữ mã cũ; ĐVT, bảng giá, giá nhà cung cấp, tồn max đi theo mã mới.
 
-| Việc | Kết quả |
-|---|---|
-| **Đổi mã** | Sổ và chứng từ cũ giữ mã cũ. ĐVT, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Chứng từ gửi mã cũ vào vẫn ghi đúng mặt hàng. Ô tìm ở danh sách chỉ tìm theo mã hiện hành, tên, ghi chú. |
-| **Gộp mã** | Mã này ngừng dùng và trỏ sang mặt hàng giữ lại. Sổ cũ không đổi. Gộp tiếp được nhiều lần. Phải hết tồn trước khi gộp: còn tồn thì lập phiếu chuyển tồn sang mã giữ lại trước |
-
-Thẻ **Lịch sử** hiện từng lần đổi: lúc nào, ai, hiệu lực từ ngày nào, lý do. Báo cáo theo mặt hàng gom một dòng theo mã hiện hành.
+Thẻ **Lịch sử** hiện từng lần đổi mã: lúc nào, ai.
 
 ## Họ mã (mã cha – mã con)
 

@@ -17,7 +17,7 @@ import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { ItemPicker, ListPicker } from '@/components/pickers';
 import { HelpDrawer } from '@/components/HelpDrawer';
 // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
-import { DoiMaModal, GopMaModal, LichSuMatHang } from './DoiMaGopMa';
+import { LichSuMatHang } from './DoiMaGopMa';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: ô Biến thể, Loại hàng ở thẻ Thông tin, nút Thêm sản phẩm con (đóng góp)
 // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ tạo mã có đuôi (chọn đuôi, ChonDuoiMa): mọi biến thể là sản phẩm con; ô Biến thể sửa được (đóng góp)
 // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — mã cha không có ô Biến thể; thẻ Thông tin gọn: giải thích vào rê chuột, ẩn ngành / nhãn khi đã theo nhóm (đóng góp)
@@ -107,8 +107,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const [help, setHelp] = useState(false);
   const [imgBad, setImgBad] = useState(false);
   const [taxDetail, setTaxDetail] = useState(false);
-  const [renaming, setRenaming] = useState(false);
-  const [merging, setMerging] = useState(false);
   const [addingChild, setAddingChild] = useState(false);
   const set = (p: Partial<FullProduct>) => setV((x) => ({ ...x, ...p }));
 
@@ -118,7 +116,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const pgroups = useQuery({ queryKey: ['groups'], queryFn: () => api.get<PostingGroup[]>('/api/v1/posting/groups'), staleTime: 60_000 }).data ?? [];
 
   // Mã mới chỉ gồm số (bỏ chữ cuối mã). Mã cũ có chữ vẫn sửa được, ô mã khoá.
-  const skuLetters = isNew && /[^0-9A-Z]/.test(v.sku); // [2026-11-12 Nguyễn Văn Thủy] mã gồm chữ số và chữ in hoa, không dấu cách / ký tự lạ (đóng góp)
+  const skuLetters = /[^0-9A-Z]/.test(v.sku); // [2026-11-12 Nguyễn Văn Thủy] mã gồm chữ số và chữ in hoa, không dấu cách / ký tự lạ (đóng góp)
   // Tên trùng: chỉ kiểm khi thêm mới / đổi tên — dữ liệu cũ đã trùng vẫn sửa được các ô khác (máy chủ kiểm y hệt).
   const norm = (s?: string) => (s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
   const sameName = useSameName(isNew || norm(v.name) !== norm(loaded.data?.name) ? v.name : '', isNew ? '' : v.sku);
@@ -229,7 +227,12 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       const unitNames = new Set(units.map((u) => u.unit));
       const prices = v.prices.filter((p) => unitNames.has(p.unit)).map((p) => ({ priceListCode: p.priceListCode, unit: p.unit, price: p.price, isDefaultUnit: p.isDefaultUnit, note: p.note }));
       const { sku: _s, unit: _u, units: _us, prices: _ps, variantCode: _vc, sendToTax: _st, ...rest } = v;
-      return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
+      // [2026-11-12 Nguyễn Văn Thủy] bỏ nút Đổi mã / Gộp mã: sửa thẳng ô Mã hàng, lưu thì đổi mã ngầm (giữ định danh, lịch sử) rồi lưu (đóng góp)
+      const newSku = v.sku.trim();
+      return (async () => {
+        if (!isNew && sku && newSku !== sku) await api.post('/api/v1/items/rename-code', { sku, newSku, reason: 'Sửa mã trên form mặt hàng' });
+        return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(newSku)}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
+      })();
     },
     onSuccess: () => {
       flashSaved(savedNote(why.findings, { draft: blockCount > 0 }));
@@ -240,7 +243,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       void qc.invalidateQueries({ queryKey: ['unit-names'] });
       void qc.invalidateQueries({ queryKey: ['inventory-items'] });
       if (isNew) onSaved?.(v.sku.trim());
-      if (isNew) onClose(); else viewAgain[1]();
+      if (isNew || v.sku.trim() !== sku) onClose(); else viewAgain[1]();
     },
   });
 
@@ -261,8 +264,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       footer={<>
         {!isNew && !v.parentSku && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Thêm mặt hàng con của mã này"
           onClick={() => setAddingChild(true)}>Thêm sản phẩm con…</button>}
-        {!isNew && <button className="btn" data-view-ok title="Đổi sang mã mới từ hôm nay, sổ cũ giữ mã cũ" onClick={() => setRenaming(true)}>Đổi mã</button>}
-        {!isNew && <button className="btn" data-view-ok title="Gộp mã này vào mặt hàng khác từ hôm nay, sổ cũ giữ nguyên" onClick={() => setMerging(true)}>Gộp mã</button>}
         <button className="btn btn-primary" disabled={save.isPending || !v.sku.trim() || !v.name.trim() || skuLetters || Boolean(sameName)} title={sameName ? `Tên trùng mã ${sameName.sku}` : skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : blockCount ? 'Còn lỗi chặn: mặt hàng được lưu NHÁP, chưa dùng được trên chứng từ cho tới khi sửa xong' : undefined}
           onClick={() => ack.request((a) => save.mutate(a))}>{blockCount ? `Lưu nháp (còn ${blockCount} lỗi chặn)` : ack.label}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
@@ -285,7 +286,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               tên không trùng (báo ngay); Biến thể không cho đổi sang Nội bộ khi đã có nhập xuất. */}
           <Field label="Mã hàng (*)" hint={skuErr || (skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : undefined)}>
             <div className="row" style={{ gap: 4 }}>
-              <input className="input mono" value={v.sku} disabled={!isNew} placeholder={isNew ? 'Chọn nhóm hàng là tự sinh — gõ tay được' : ''} onChange={(e) => { set({ sku: e.target.value.trim().toUpperCase() }); setSkuAuto(false); }} style={{ flex: 1 }} />
+              <input className="input mono" value={v.sku} placeholder={isNew ? 'Chọn nhóm hàng là tự sinh — gõ tay được' : ''} onChange={(e) => { set({ sku: e.target.value.trim().toUpperCase() }); setSkuAuto(false); }} style={{ flex: 1 }} />
               {isNew && <button type="button" className="btn btn-sm" onClick={() => void genSku(v.groupCode, true)} title="Lấy mã kế tiếp theo nhóm hàng đã chọn (thay mã đang có)">Sinh mã</button>}
               <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)} title="Quy tắc mã hàng, sản phẩm con, cách kiểm tra">?</button>
             </div>
@@ -379,8 +380,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       <WarnAckBox ack={ack} />
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
-    {renaming && <DoiMaModal sku={v.sku} onClose={() => setRenaming(false)} onDone={() => { setRenaming(false); onClose(); }} />}
-    {merging && <GopMaModal sku={v.sku} onClose={() => setMerging(false)} onDone={() => { setMerging(false); onClose(); }} />}
     {addingChild && <ThemSanPhamCon parentSku={v.sku} parentName={v.name} parentNoSale={v.noSale} onClose={() => setAddingChild(false)} />}
   </>);
 }

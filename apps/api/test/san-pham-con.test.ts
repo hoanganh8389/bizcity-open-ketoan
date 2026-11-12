@@ -195,7 +195,7 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     expect(await sendOf('170521001Z')).toBe(false);
   });
 
-  it('đã có nhập xuất thì không đổi mã sang / bỏ đuôi Z', async () => {
+  it('đã có nhập xuất vẫn đổi mã được (sửa thẳng ô Mã hàng)', async () => {
     const sku = '170521001Q';
     const r = await call(ctx, 'POST', '/api/v1/documents', {
       docType: 'purchase', docKey: `SPC-KHOA-${sku}`, branchCode: 'CN01', docNo: 'SPC-KHOA', docDate: todayVN(), partner: { code: 'NCC-01', name: 'Nhà cung cấp 01' },
@@ -203,8 +203,7 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     });
     expect(r.body.data.status, JSON.stringify(r.body)).toBe('posted');
     const z = await call(ctx, 'POST', '/api/v1/items/rename-code', { sku, newSku: '170521001QZ', reason: 'thử khoá' });
-    expect(z.status).toBe(409);
-    expect(JSON.stringify(z.body)).toContain('đã có nhập xuất');
+    expect(z.status, JSON.stringify(z.body)).toBe(200);
   });
 
   it('luồng kéo danh mục gửi itemId, parentItemId và variantCode', async () => {
