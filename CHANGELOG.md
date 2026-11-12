@@ -228,6 +228,12 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### Mã lỗi QR / ca bắt buộc cho module pos (phiếu NT-BH-009, NT-BH-011) <!-- [2026-11-12 08:30 PM Võ Hoàng] POS-QR — phần Core cho module pos (đóng góp) -->
+
+- **Thêm:** `ERROR_REASONS` thêm `POS_QR_EXPIRED`, `POS_PAYMENT_MISMATCH`, `POS_ORDER_CANCELLED`, `POS_SHIFT_REQUIRED` (BIZCITY-ERRORS 1.10.0-draft §4c).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
 ### Module `pos` — màn quản trị bán lẻ: Đơn bán máy POS, Phiếu trả hàng, Sổ ca bán, Tổng quan bán lẻ, Cài đặt bán hàng (NT-BH-008) <!-- [2026-11-12 11:30 PM Võ Hoàng] POS-ADMIN — module pos màn quản trị bán lẻ (đóng góp) -->
 
 - **Thêm:** năm màn ở *Phần riêng → Bán lẻ máy POS* (`/app/pos/…`): BH13 Đơn bán máy POS (danh sách trên – dưới, thẻ chỉ số của cả kết quả lọc), BH14 Phiếu trả hàng máy POS (nối đơn gốc), BH15 Sổ ca bán (phải có / đếm được / chênh lệch két, lọc ca có chênh lệch), BH16 Tổng quan bán lẻ (theo chi nhánh, hình thức, giờ, mặt hàng), BH17 Cài đặt bán hàng. Giao diện dùng bảng lưới / bộ tham số của Core qua `@bizcity/ui-kit`. Hướng dẫn: `docs/huong-dan/pos-*.md`.

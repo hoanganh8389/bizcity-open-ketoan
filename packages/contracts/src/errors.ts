@@ -132,6 +132,11 @@ export const ERROR_REASONS = {
   POS_SHIFT_ALREADY_OPEN: 'Chi nhánh đang có ca mở — không mở ca thứ hai',
   POS_SHIFT_CLOSED: 'Ca đã chốt — không chốt lại',
   POS_SHIFT_BLOCKED: 'Còn việc dở (đơn chờ trả tiền…) — chốt bất chấp phải ghi lý do',
+  // [2026-11-12 08:20 PM Võ Hoàng] POS-QR — họ mã QR / ca bắt buộc của module pos (BIZCITY-ERRORS 1.10.0-draft §4c, phiếu NT-BH-009, NT-BH-011, đóng góp)
+  POS_QR_EXPIRED: 'Sau ngày bán của đơn — không gia hạn mã QR, không xác nhận tay',
+  POS_PAYMENT_MISMATCH: 'Số tiền báo về khác phần QR của đơn',
+  POS_ORDER_CANCELLED: 'Đơn đã huỷ — không nhận tiền về / không lập hoá đơn',
+  POS_SHIFT_REQUIRED: 'Chưa mở ca — Cài đặt bán hàng bắt buộc mở ca trước khi bán',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 
