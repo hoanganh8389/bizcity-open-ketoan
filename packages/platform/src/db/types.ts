@@ -1910,6 +1910,9 @@ export interface Database {
   'bizcity_read.tax_codes': Pick<TaxCodesTable, 'tenant_id' | 'code' | 'name' | 'rate' | 'direction' | 'report_group' | 'is_active'>;
   'bizcity_read.payment_methods': Pick<PaymentMethodsTable, 'tenant_id' | 'code' | 'name' | 'is_receivable' | 'bank_account_code' | 'partner_code' | 'discount_rate' | 'sort_order' | 'is_active' | 'note'>;
   'bizcity_read.dimensions': Pick<DimensionsTable, 'tenant_id' | 'kind' | 'code' | 'name' | 'parent_code' | 'is_active' | 'note'>;
+  // [2026-11-12 04:00 PM Võ Hoàng] POS-CATALOG — giá theo chi nhánh, tồn theo chi nhánh (0109) (đóng góp)
+  'bizcity_read.branch_prices': { tenant_id: string; branch_code: string; sku: string; item_id: string | null; unit: string; ratio: string; is_default_unit: boolean; price: string | null; price_source: 'branch' | 'company' | null; updated_at: Date | null };
+  'bizcity_read.stock_on_hand': { tenant_id: string; branch_code: string; warehouse_code: string; item_id: string | null; sku: string; qty: string };
   tax_invoices: TaxInvoicesTable;
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;

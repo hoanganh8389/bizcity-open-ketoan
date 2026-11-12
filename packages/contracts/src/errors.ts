@@ -116,7 +116,7 @@ export const ERROR_REASONS = {
   POS_BRANCH_REQUIRED: 'Đơn vị nhiều chi nhánh mà máy không gửi branchCode / mã phiếu có ở nhiều chi nhánh',
   POS_ORDER_ID_REUSED: 'Cùng id đơn đã nhận với nội dung khác (máy phải tạo đơn mới)',
   POS_CODE_TAKEN: 'Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại)',
-  // [2026-11-11 03:30 PM Võ Hoàng] POS-W2: họ mã POS_* đợt W2 — hoàn / đổi / huỷ (BIZCITY-ERRORS 1.8.0-draft §4c, phiếu NT-BH-005, đóng góp)
+  // [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — họ mã POS_* đợt W2 — hoàn / đổi / huỷ (BIZCITY-ERRORS 1.8.0-draft §4c, phiếu NT-BH-005, đóng góp)
   POS_RETURN_QTY: 'Trả quá số còn trả được của dòng, hoặc dòng không có trong đơn gốc',
   POS_RETURN_EXPIRED: 'Quá hạn trả (tham số, hiện 3 ngày theo ngày bán) mà thiếu người duyệt / lý do duyệt; kèm deadline',
   POS_RETURN_OTHER_SHOP: 'Đơn gốc của chi nhánh khác: đợt này chỉ trả ở cửa hàng đã bán',
@@ -128,6 +128,10 @@ export const ERROR_REASONS = {
   POS_EXCHANGE_CUSTOMER: 'Đổi hàng: khách của đơn mới khác khách của đơn gốc',
   POS_CANCEL_COMPLETED: 'Đơn đã thu tiền xong không huỷ được — lập phiếu trả hàng',
   POS_RETURN_ID_REUSED: 'Cùng id phiếu trả đã nhận với nội dung khác (máy phải lập phiếu mới)',
+  // [2026-11-12 04:00 PM Võ Hoàng] POS-W3 — họ mã ca bán của module pos (BIZCITY-ERRORS 1.9.0-draft §4c, phiếu NT-BH-007, đóng góp)
+  POS_SHIFT_ALREADY_OPEN: 'Chi nhánh đang có ca mở — không mở ca thứ hai',
+  POS_SHIFT_CLOSED: 'Ca đã chốt — không chốt lại',
+  POS_SHIFT_BLOCKED: 'Còn việc dở (đơn chờ trả tiền…) — chốt bất chấp phải ghi lý do',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 
