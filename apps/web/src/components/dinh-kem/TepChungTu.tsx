@@ -156,9 +156,9 @@ function XemNhanh({ file, onClose }: { file: TepDinhKem; onClose: () => void }) 
   return (
     <Modal wide title={file.fileName} onClose={onClose}
       footer={<><button type="button" className="btn" data-view-ok onClick={() => void dinhKemApi.download(file)}><Download size={14} /> Tải về</button><button type="button" className="btn" data-view-ok onClick={onClose}>Đóng</button></>}>
-      {err && <div className="alert alert-bad">{err}</div>}
-      {!err && !url && <div className="muted">Đang tải…</div>}
-      {url && (pdf ? <iframe title={file.fileName} src={url} className="dk-pdf" /> : <img src={url} alt={file.fileName} className="dk-img" />)}
+      {err && <div className="alert alert-bad full">{err}</div>}
+      {!err && !url && <div className="muted full">Đang tải…</div>}
+      {url && <div className="full">{pdf ? <iframe title={file.fileName} src={url} className="dk-pdf" /> : <img src={url} alt={file.fileName} className="dk-img" />}</div>}
     </Modal>
   );
 }
