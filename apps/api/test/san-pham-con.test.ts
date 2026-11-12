@@ -6,6 +6,7 @@
  *   - mọi biến thể dùng được với mã số; biến thể đi theo mặt hàng, đổi mã không làm đổi biến thể;
  *   - không gộp hàng Nội bộ với hàng có sang thuế.
  * [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm: test theo luật mới (đóng góp)
+ * [2026-11-12 Nguyễn Văn Thủy] luật 0111: biến thể, gửi lên thuế luôn suy theo mã (đuôi Z = không gửi); mã con = mã cha + đuôi (đóng góp)
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
@@ -19,6 +20,7 @@ let tenantId = '';
 const ack = { warnAck: { reason: 'thử sản phẩm con', codes: ['ITEM-HINT-001', 'ITEM-HINT-003'] } };
 const put = (sku: string, body: Record<string, unknown> = {}) => call(ctx, 'PUT', `/api/v1/products/${sku}`, { name: `Hàng ${sku}`, unit: 'Hộp', ...ack, ...body });
 const addChild = (b: Record<string, unknown>) => call(ctx, 'POST', '/api/v1/items/add-child', b);
+const sendOf = async (sku: string) => (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(db)).rows[0]?.s;
 const variantOf = async (sku: string) => (await sql<{ variant_code: string }>`SELECT variant_code FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(db)).rows[0]?.variant_code;
 const idOf = async (sku: string) => (await sql<{ item_id: string }>`SELECT item_id FROM item_codes WHERE tenant_id = ${tenantId} AND kind = 'sku' AND code = ${sku} AND valid_to IS NULL`.execute(db)).rows[0]?.item_id;
 
@@ -89,10 +91,10 @@ describe('NT-MH-002 — Thêm sản phẩm con', () => {
     expect(JSON.stringify(r.body)).toContain('một cấp');
   });
 
-  it('mã cha còn chữ thì phải đổi sang số trước', async () => {
-    const r = await addChild({ parentSku: 'Q05940063', name: 'Bình xanh' });
-    expect(r.status).toBe(400);
-    expect(JSON.stringify(r.body)).toContain('mã số');
+  it('mã cha có chữ vẫn thêm được mã con (mã con bắt đầu bằng mã cha)', async () => {
+    const r = await addChild({ parentSku: 'Q05940063', name: 'Bình xanh quà', sku: 'Q05940063M' });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data).toMatchObject({ sku: 'Q05940063M', parentSku: 'Q05940063' });
   });
 
   it('số đã dùng không cấp lại, kể cả khi mã con đã xoá', async () => {
@@ -104,39 +106,38 @@ describe('NT-MH-002 — Thêm sản phẩm con', () => {
     expect(b.body.data.sku).toBe('17052100202');
   });
 
-  it.each(['internal', 'clip', 'share', 'promo', 'program'])('biến thể %s là sản phẩm con mã số, ô mang đúng biến thể', async (variantCode) => {
-    const r = await addChild({ parentSku: '170521001', name: `Thử ${variantCode}`, variantCode });
-    expect(r.status).toBe(200);
-    expect(r.body.data.sku).toMatch(/^170521001\d{2}$/);
-    expect(await variantOf(r.body.data.sku)).toBe(variantCode);
+  it.each([['Z', 'internal', false], ['M', 'promo', true], ['K', 'share', true], ['Q', 'clip', true], ['T', 'program', true], ['B', 'expiry', true]])('mã cha + %s: biến thể %s, gửi thuế %s — tự suy theo mã', async (tail, variant, send) => {
+    const r = await addChild({ parentSku: '170521001', name: `Thử đuôi ${tail}`, sku: `170521001${tail}` });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data.sku).toBe(`170521001${tail}`);
+    expect(await variantOf(r.body.data.sku)).toBe(variant);
+    expect(await sendOf(r.body.data.sku)).toBe(send);
   });
 
-  it('biến thể không có thì từ chối', async () => {
-    expect((await addChild({ parentSku: '170521001', name: 'Thử', variantCode: 'khong-co' })).status).toBe(400);
+  it('mã con sai khuôn hoặc đã có thì từ chối', async () => {
+    expect((await addChild({ parentSku: '170521001', name: 'Thử sai', sku: '170521009Z' })).status).toBe(400);
+    expect((await addChild({ parentSku: '170521001', name: 'Thử dài', sku: '170521001ZZZZ' })).status).toBe(400);
+    expect((await addChild({ parentSku: '170521001', name: 'Thử trùng', sku: '170521001Z' })).status).toBe(409);
   });
 });
 
-describe('NT-MH-002 — đổi mã: biến thể đi theo mặt hàng', () => {
+describe('NT-MH-002 — đổi mã: biến thể, gửi thuế theo mã mới', () => {
   const rename = (sku: string, newSku: string) => call(ctx, 'POST', '/api/v1/items/rename-code', { sku, newSku, reason: 'thử đổi mã' });
 
-  it('mã Z đổi sang mã số: vẫn Nội bộ, item_id giữ nguyên', async () => {
+  it('mã Z chưa nhập xuất đổi sang mã số: thành hàng thường, gửi thuế; item_id giữ nguyên', async () => {
     expect((await put('190000001Z')).status).toBe(200);
     const before = await idOf('190000001Z');
     expect((await rename('190000001Z', '19000000101')).status).toBe(200);
     expect(await idOf('19000000101')).toBe(before);
-    expect(await variantOf('19000000101')).toBe('internal');
+    expect(await variantOf('19000000101')).toBe('normal');
+    expect(await sendOf('19000000101')).toBe(true);
   });
 
-  it.each([['190000003M', '19000000301', 'promo'], ['190000004Q', '19000000401', 'clip'], ['190000005T', '19000000501', 'program'], ['190000006K', '19000000601', 'share']])('%s sang mã số %s vẫn mang biến thể %s', async (from, to, variant) => {
-    expect((await put(from)).status).toBe(200);
-    expect((await rename(from, to)).status).toBe(200);
-    expect(await variantOf(to)).toBe(variant);
-  });
-
-  it('mã thường đổi sang mã khác: biến thể không đổi theo mã mới', async () => {
+  it('mã thường đổi sang đuôi Z: Nội bộ, không gửi thuế', async () => {
     expect((await put('190000007')).status).toBe(200);
     expect((await rename('190000007', '190000007Z')).status).toBe(200);
-    expect(await variantOf('190000007Z')).toBe('normal');
+    expect(await variantOf('190000007Z')).toBe('internal');
+    expect(await sendOf('190000007Z')).toBe(false);
   });
 });
 
@@ -186,62 +187,24 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     expect(r.body.data.sku).toBe('170521004');
   });
 
-  it('sửa ô Biến thể ở mặt hàng; biến thể không có thì từ chối', async () => {
-    const r = await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'internal', ...ack });
-    expect(r.status).toBe(200);
-    expect(await variantOf('17052100101')).toBe('internal');
-    const bad = await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'khong-co', ...ack });
-    expect(bad.status).toBe(400);
-    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'normal', ...ack })).status).toBe(200);
+  it('ô Biến thể / Gửi lên thuế gửi lên bị bỏ qua: luôn theo mã', async () => {
+    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'internal', sendToTax: false, ...ack })).status).toBe(200);
+    expect(await variantOf('17052100101')).toBe('normal');
+    expect(await sendOf('17052100101')).toBe(true);
+    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001Z', { name: 'Thử đuôi Z', sendToTax: true, ...ack })).status).toBe(200);
+    expect(await sendOf('170521001Z')).toBe(false);
   });
 
-  it('mã cha không chọn được biến thể khác Thường', async () => {
-    const r = await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', variantCode: 'internal', ...ack });
-    expect(r.status).toBe(400);
-    expect(JSON.stringify(r.body)).toContain('mã cha');
-    expect(await variantOf('170521001')).toBe('normal');
-    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', variantCode: 'normal', ...ack })).status).toBe(200);
-  });
-
-  // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
-  it('Gửi lên thuế: mã cha tắt / bật được; Nội bộ luôn tắt, kể cả khi gửi bật', async () => {
-    const sendOf = async (sku: string) => (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(db)).rows[0]?.s;
-    expect(await sendOf('170521001')).toBe(true);
-    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', sendToTax: false, ...ack })).status).toBe(200);
-    expect(await sendOf('170521001')).toBe(false);
-    expect((await call(ctx, 'GET', '/api/v1/catalog/products/170521001')).body.data.sendToTax).toBe(false);
-    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', sendToTax: true, ...ack })).status).toBe(200);
-    expect(await sendOf('170521001')).toBe(true);
-    const z = await addChild({ parentSku: '170521001', name: 'Thử Nội bộ gửi thuế', variantCode: 'internal', sendToTax: true });
-    expect(z.status).toBe(200);
-    expect(await sendOf(z.body.data.sku)).toBe(false);
-    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${z.body.data.sku}`, { name: 'Thử Nội bộ gửi thuế', sendToTax: true, ...ack })).status).toBe(200);
-    expect(await sendOf(z.body.data.sku)).toBe(false);
-    const k = await addChild({ parentSku: '170521001', name: 'Thử chia giá không thuế', variantCode: 'share', sendToTax: false });
-    expect(await sendOf(k.body.data.sku)).toBe(false);
-    expect(await sendOf('190000001Z') ?? false).toBe(false);
-  });
-
-  // [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi đã có nhập xuất (đóng góp)
-  it('đã có nhập xuất thì không đổi được Gửi lên thuế, kể cả qua đổi biến thể; chưa có thì đổi tự do', async () => {
-    const kid = await addChild({ parentSku: '170521001', name: 'Thử khoá gửi thuế', variantCode: 'clip' });
-    const sku = kid.body.data.sku as string;
-    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', sendToTax: false, ...ack })).status).toBe(200);
-    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', sendToTax: true, ...ack })).status).toBe(200);
+  it('đã có nhập xuất thì không đổi mã sang / bỏ đuôi Z', async () => {
+    const sku = '170521001Q';
     const r = await call(ctx, 'POST', '/api/v1/documents', {
       docType: 'purchase', docKey: `SPC-KHOA-${sku}`, branchCode: 'CN01', docNo: 'SPC-KHOA', docDate: todayVN(), partner: { code: 'NCC-01', name: 'Nhà cung cấp 01' },
-      lines: [{ lineKey: 'l1', sku, name: 'Thử khoá gửi thuế', unit: 'Hộp', qty: 5, amountBeforeTax: 50000, taxCode: 'V08', taxAmount: 0 }], totals: { beforeTax: 50000, tax: 0, total: 50000 },
+      lines: [{ lineKey: 'l1', sku, name: 'Thử đuôi Q', unit: 'Hộp', qty: 5, amountBeforeTax: 50000, taxCode: 'V08', taxAmount: 0 }], totals: { beforeTax: 50000, tax: 0, total: 50000 },
     });
     expect(r.body.data.status, JSON.stringify(r.body)).toBe('posted');
-    expect((await call(ctx, 'GET', `/api/v1/catalog/products/${sku}`)).body.data.hasMovements).toBe(true);
-    const off = await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', sendToTax: false, ...ack });
-    expect(off.status).toBe(409);
-    expect(JSON.stringify(off.body)).toContain('đã có nhập xuất');
-    const toInternal = await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', variantCode: 'internal', ...ack });
-    expect(toInternal.status).toBe(409);
-    expect((await call(ctx, 'GET', `/api/v1/catalog/products/${sku}`)).body.data).toMatchObject({ sendToTax: true, variantCode: 'clip' });
-    // Không đổi ô thuế thì vẫn sửa được các thứ khác.
-    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế 2', sendToTax: true, variantCode: 'program', ...ack })).status).toBe(200);
+    const z = await call(ctx, 'POST', '/api/v1/items/rename-code', { sku, newSku: '170521001QZ', reason: 'thử khoá' });
+    expect(z.status).toBe(409);
+    expect(JSON.stringify(z.body)).toContain('đã có nhập xuất');
   });
 
   it('luồng kéo danh mục gửi itemId, parentItemId và variantCode', async () => {
@@ -251,7 +214,7 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     const dad = items.find((x) => x.sku === '170521001')!;
     expect(kid).toMatchObject({ variantCode: 'normal', parentItemId: dad.itemId });
     expect(kid.itemId).toMatch(/^[0-9A-Z]{26}$/);
-    expect(items.find((x) => x.sku === '19000000101')).toMatchObject({ variantCode: 'internal', sendToTax: false });
+    expect(items.find((x) => x.sku === '190000007Z')).toMatchObject({ variantCode: 'internal', sendToTax: false });
   });
 });
 
@@ -308,8 +271,8 @@ describe('Tên mặt hàng không trùng', () => {
   });
   it('sản phẩm con trùng tên mặt hàng ngoài họ cũng bị chặn', async () => {
     expect((await full('180021001', { name: 'Bỉm Tên Ngoài Họ' }, true)).status).toBe(200);
-    const r = await addChild({ parentSku: '180011001', name: 'bỉm tên ngoài họ', variantCode: 'clip' });
+    const r = await addChild({ parentSku: '180011001', name: 'bỉm tên ngoài họ' });
     expect(r.status).toBe(409);
-    expect((await addChild({ parentSku: '180011001', name: 'Sữa Tên Riêng 900g kẹp bình', variantCode: 'clip' })).status).toBe(200);
+    expect((await addChild({ parentSku: '180011001', name: 'Sữa Tên Riêng 900g kẹp bình', sku: '180011001Q' })).status).toBe(200);
   });
 });

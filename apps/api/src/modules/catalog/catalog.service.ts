@@ -257,30 +257,7 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual' }).execute();
   }
   await trx.updateTable('products').set(patch).where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
-  // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — ô Biến thể sửa được, lưu qua saveProduct; luồng kéo danh mục gửi variantCode (đóng góp)
-  // [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (đóng góp)
-  // Mỗi mã đi trọn một đường thuế: đã có nhập xuất thì không đổi Gửi lên thuế, kể cả gián tiếp qua đổi biến thể sang / khỏi Nội bộ.
-  const taxBefore = exists ? (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(trx)).rows[0]?.s : undefined;
-  if (b.variantCode !== undefined) {
-    const k = await sql<{ code: string }>`SELECT code FROM item_variant_kinds WHERE tenant_id = ${tenantId} AND code = ${b.variantCode} AND is_active`.execute(trx);
-    if (!k.rows[0]) throw Errors.validation(`Biến thể ${b.variantCode} không có hoặc đã ngừng dùng`);
-    // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — mã cha (không có mã cha phía trên) luôn là hàng Thường; biến thể chỉ ở sản phẩm con (đóng góp)
-    if (b.variantCode !== 'normal') {
-      const own = await trx.selectFrom('products').select('parent_sku').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
-      if (!own?.parent_sku) throw Errors.validation(`${sku} là mã cha, không chọn biến thể. Biến thể chỉ dành cho sản phẩm con`);
-    }
-    await sql`UPDATE products SET variant_code = ${b.variantCode}, updated_at = ${now} WHERE tenant_id = ${tenantId} AND sku = ${sku} AND variant_code <> ${b.variantCode}`.execute(trx);
-  }
-  // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093): trigger CSDL ép false cho biến thể Nội bộ (đóng góp)
-  if (b.sendToTax !== undefined) {
-    await sql`UPDATE products SET send_to_tax = ${b.sendToTax}, updated_at = ${now} WHERE tenant_id = ${tenantId} AND sku = ${sku} AND send_to_tax <> ${b.sendToTax}`.execute(trx);
-  }
-  if (taxBefore !== undefined) {
-    const taxAfter = (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(trx)).rows[0]?.s;
-    if (taxAfter !== taxBefore && await hasMovements(trx, tenantId, sku)) {
-      throw Errors.conflict(`Mặt hàng ${sku} đã có nhập xuất, không đổi được Gửi lên thuế (mỗi mã đi trọn một đường thuế). Cần đổi thì tạo mã con mới; hàng đang có chuyển bằng phiếu chuyển đổi`);
-    }
-  }
+  // [2026-11-12 Nguyễn Văn Thủy] Biến thể / Gửi lên thuế không nhận từ người dùng: trigger products_variant_fill suy theo mã (0111), đuôi Z = không gửi thuế (đóng góp)
   // Hàng KCT (thuế bán ra KCT / R00K) chưa khai thuế mua vào → V13K (không chịu thuế đầu vào), không để phiếu mua tự lấy 8%.
   await trx.updateTable('products').set({ tax_in_code: 'V13K' }).where('tenant_id', '=', tenantId).where('sku', '=', sku).where('tax_in_code', 'is', null).where('tax_out_code', 'in', [...KCT_OUT_CODES]).execute();
 

@@ -16,6 +16,7 @@ import { isItemId, ITEM_CODE_KIND_RE } from '@ketoan/contracts';
 import { applyItemGate } from '../products/item.hints.js';
 // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: core.item.add-child, khoá đổi mã có đuôi (đóng góp)
 import { addChildProduct, guardMerge } from './san-pham-con.js';
+import { hasMovements } from './catalog.service.js';
 
 const tags = ['Mặt hàng'];
 const refShape = { itemId: z.string().trim().max(26).optional(), sku: z.string().trim().max(160).optional() };
@@ -61,7 +62,10 @@ const renameCode = defineAction({
     if (busy) throw Errors.conflict(`Mã ${i.newSku} đang là mặt hàng khác`);
     const taken = await sql<{ id: string | null }>`SELECT bizcity_item_code_taken(${tenantId}::bigint, ${i.newSku}) AS id`.execute(tx);
     if (taken.rows[0]?.id) throw Errors.conflict(`Mã ${i.newSku} đã từng thuộc mặt hàng khác, không dùng lại được`);
-    // Biến thể đi theo mặt hàng: đổi 110051001Z → 11005100103 vẫn là Nội bộ (PHASE-026).
+    // [2026-11-12 Nguyễn Văn Thủy] biến thể, gửi lên thuế suy theo mã mới (0111): đã có nhập xuất thì không đổi qua lại đuôi Z (đổi đường thuế) (đóng góp)
+    if (/Z$/i.test(cur.sku) !== /Z$/i.test(i.newSku) && await hasMovements(tx, tenantId, cur.sku)) {
+      throw Errors.conflict(`Mã ${cur.sku} đã có nhập xuất, không đổi sang mã ${i.newSku} được. Tạo mã mới và chuyển hàng bằng phiếu chuyển đổi`);
+    }
     await setSession(tx, ctx.legacyAuth.actor, i.reason);
     const n = await tx.updateTable('products').set({ sku: i.newSku, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', cur.sku).executeTakeFirst();
     if (!Number(n.numUpdatedRows)) throw Errors.notFound(`mặt hàng ${cur.sku} trong danh mục`);
@@ -213,13 +217,12 @@ const merge = defineAction({
 
 const addChild = defineAction({
   id: 'core.item.add-child', title: 'Thêm sản phẩm con', tags,
-  description: 'Tạo mặt hàng mới có item_id riêng, mã = mã cha + 2 số, lấy đơn vị tính, nhóm, thuế theo mã cha.',
+  description: 'Tạo mặt hàng mới có item_id riêng, mã = mã cha + đuôi theo quy tắc mã hàng (K, M, Q, T, B, Z…) hoặc + 2 số, lấy đơn vị tính, nhóm, thuế theo mã cha. Biến thể, gửi lên thuế suy theo mã.',
   permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'],
   input: z.object({
     parentSku: z.string().trim().min(1).max(64),
     name: z.string().trim().min(1, 'Nhập tên sản phẩm con').max(255),
-    variantCode: z.string().trim().min(1).max(32).default('normal'),
-    sendToTax: z.boolean().optional(), // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093): bỏ trống = bật (Nội bộ luôn tắt) (đóng góp)
+    sku: z.string().trim().max(64).optional(), // [2026-11-12 Nguyễn Văn Thủy] mã con gõ theo quy tắc mã hàng (mã cha + đuôi); trống = mã cha + số thứ tự (đóng góp)
     barcode: z.string().trim().max(500).optional(),
     note: z.string().trim().max(500).optional(),
     noSaleParent: z.boolean().optional(),

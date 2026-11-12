@@ -53,16 +53,16 @@ describe('bizcity_read — danh mục chuẩn', () => {
 
   // [2026-11-10 02:30 PM Võ Hoàng] POS-W1 — module pos: 0102: module đọc ô Biến thể / Gửi lên thuế, không đọc chữ cuối mã (đóng góp)
   it('mặt hàng có định danh, ô Biến thể và ô Gửi lên thuế (0102); Nội bộ luôn không gửi thuế', async () => {
-    await db.insertInto('products').values({ tenant_id: tenantId, sku: 'RV-0203', name: 'Quà đọc danh mục', unit: 'Cái' }).execute();
-    await sql`UPDATE products SET variant_code = 'internal' WHERE tenant_id = ${tenantId} AND sku = 'RV-0203'`.execute(db);
-    await db.insertInto('products').values({ tenant_id: tenantId, sku: 'RV-0204', name: 'Hàng không gửi thuế', unit: 'Cái' }).execute();
-    await sql`UPDATE products SET send_to_tax = false WHERE tenant_id = ${tenantId} AND sku = 'RV-0204'`.execute(db);
+    // [2026-11-12 Nguyễn Văn Thủy] luật 0111: biến thể / gửi thuế suy theo mã, sửa tay bị bỏ qua (đóng góp)
+    await db.insertInto('products').values({ tenant_id: tenantId, sku: 'RV-0203Z', name: 'Quà đọc danh mục', unit: 'Cái' }).execute();
+    await db.insertInto('products').values({ tenant_id: tenantId, sku: 'RV-0204', name: 'Hàng thử sửa tay', unit: 'Cái' }).execute();
+    await sql`UPDATE products SET send_to_tax = false, variant_code = 'internal' WHERE tenant_id = ${tenantId} AND sku = 'RV-0204'`.execute(db);
     const rows = await db.selectFrom('bizcity_read.products').select(['sku', 'item_id', 'variant_code', 'send_to_tax'])
-      .where('tenant_id', '=', tenantId).where('sku', 'in', ['RV-01', 'RV-0203', 'RV-0204']).orderBy('sku').execute();
+      .where('tenant_id', '=', tenantId).where('sku', 'in', ['RV-01', 'RV-0203Z', 'RV-0204']).orderBy('sku').execute();
     expect(rows.map(({ sku, variant_code, send_to_tax }) => ({ sku, variant_code, send_to_tax }))).toEqual([
       { sku: 'RV-01', variant_code: 'normal', send_to_tax: true },
-      { sku: 'RV-0203', variant_code: 'internal', send_to_tax: false },
-      { sku: 'RV-0204', variant_code: 'normal', send_to_tax: false },
+      { sku: 'RV-0203Z', variant_code: 'internal', send_to_tax: false },
+      { sku: 'RV-0204', variant_code: 'normal', send_to_tax: true },
     ]);
     for (const r of rows) expect(r.item_id, r.sku).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
   });

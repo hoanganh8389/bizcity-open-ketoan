@@ -49,8 +49,8 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   const kids = useQuery({ queryKey: ['products', 'children', parentSku], queryFn: () => api.get<Child[]>('/api/v1/products', { parent: parentSku, pageSize: 200 }) });
   const list = kids.data ?? [];
   const [name, setName] = useState(`${parentName} `);
-  const [variantCode, setVariantCode] = useState('normal');
-  const [sendToTax, setSendToTax] = useState(true); // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
+  // [2026-11-12 Nguyễn Văn Thủy] bỏ chọn Biến thể / Gửi lên thuế: chỉ gõ mã con, phần mềm tự xử lý theo mã (đóng góp)
+  const [sku, setSku] = useState(parentSku);
   const [barcode, setBarcode] = useState('');
   const [note, setNote] = useState('');
   const [noSaleParent, setNoSaleParent] = useState(false);
@@ -62,14 +62,16 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   const trimmed = name.replace(/\s+/g, ' ').trim();
   const sameAsParent = trimmed.toLowerCase() === parentName.replace(/\s+/g, ' ').trim().toLowerCase();
   const dup = useSameName(sameAsParent ? '' : trimmed);
-  const can = Boolean(trimmed) && !dup && !sameAsParent;
-  const kind = kinds.find((k) => k.code === variantCode);
+  const tail = sku.trim().toUpperCase().slice(parentSku.length);
+  const skuOk = sku.trim().toUpperCase().startsWith(parentSku) && (tail === '' || /^[A-Z0-9]{1,3}$/.test(tail));
+  const taken = list.some((k) => k.sku.toUpperCase() === sku.trim().toUpperCase());
+  const can = Boolean(trimmed) && !dup && !sameAsParent && skuOk && !taken;
 
   const save = useMutation({
-    mutationFn: () => api.post<{ sku: string; name: string }>('/api/v1/items/add-child', { parentSku, name: trimmed, variantCode, sendToTax: variantCode !== 'internal' && sendToTax, barcode: barcode.trim() || undefined, note: note.trim() || undefined, noSaleParent: noSaleParent || undefined }),
+    mutationFn: () => api.post<{ sku: string; name: string }>('/api/v1/items/add-child', { parentSku, name: trimmed, sku: tail ? sku.trim().toUpperCase() : undefined, barcode: barcode.trim() || undefined, note: note.trim() || undefined, noSaleParent: noSaleParent || undefined }),
     onSuccess: (p) => {
       setDone(`Đã tạo ${p.sku}: ${p.name}`);
-      setName(`${parentName} `); setBarcode(''); setNote(''); setNoSaleParent(false);
+      setName(`${parentName} `); setSku(parentSku); setBarcode(''); setNote(''); setNoSaleParent(false);
       void qc.invalidateQueries({ queryKey: ['products'] });
       void qc.invalidateQueries({ queryKey: ['catalog-product'] });
       void qc.invalidateQueries({ queryKey: ['variant-kinds'] });
@@ -79,7 +81,7 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   return (
     <Modal wide title={`Thêm sản phẩm con của ${parentSku}`} onClose={onClose}
       footer={<>
-        <span className="muted" style={{ marginRight: 'auto', fontSize: 12 }} title="Mã được cấp khi lưu, không sửa tay">Mã tự cấp: <span className="mono">{parentSku}</span> + số thứ tự</span>
+        <span className="muted" style={{ marginRight: 'auto', fontSize: 12 }} title="Mã được cấp khi lưu, không sửa tay">Mã con của <span className="mono">{parentSku}</span></span>
         <button className="btn btn-primary" disabled={!can || save.isPending} onClick={() => { setDone(''); save.mutate(); }}>{save.isPending ? 'Đang tạo…' : 'Tạo và thêm tiếp'}</button>
         <button className="btn" onClick={onClose}>Đóng</button>
       </>}>
@@ -89,19 +91,9 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
         <input ref={nameRef} className="input" value={name} maxLength={255} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && can && !save.isPending) { setDone(''); save.mutate(); } }} />
       </Field>
       <TrungTen same={dup} />
-      {sameAsParent && trimmed && <div className="muted full" style={{ fontSize: 12 }}>Gõ thêm phần phân biệt (màu, size, kẹp quà, hàng tặng…) để tên khác mã cha.</div>}
-      <Field label="Biến thể" tip="Phần mềm xử lý theo ô này, không theo tên" hint={kind?.note || undefined}>
-        <select className="select input" value={variantCode} onChange={(e) => { setVariantCode(e.target.value); setSendToTax(true); }}>
-          {kinds.filter((k) => k.isActive && k.code !== 'legacy').map((k) => (
-            <option key={k.code} value={k.code} title={k.note}>{variantLabel(k)}</option>
-          ))}
-        </select>
-      </Field>
-      <Field label="Gửi lên thuế" tip={variantCode === 'internal' ? 'Hàng Nội bộ không bao giờ gửi lên thuế' : 'Bỏ tích: mặt hàng không lên hoá đơn / dữ liệu thuế'}>
-        <label className="checkbox" style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 32 }}>
-          <input type="checkbox" checked={variantCode !== 'internal' && sendToTax} disabled={variantCode === 'internal'} onChange={(e) => setSendToTax(e.target.checked)} />
-          <span>{variantCode === 'internal' ? 'Không (Nội bộ)' : sendToTax ? 'Có' : 'Không gửi'}</span>
-        </label>
+      {sameAsParent && trimmed && <div className="muted full" style={{ fontSize: 12 }}>Gõ thêm phần phân biệt để tên khác mã cha.</div>}
+      <Field label="Mã sản phẩm con" full tip="Để nguyên mã cha thì tự cấp mã kế tiếp" hint={!skuOk ? `Mã con bắt đầu bằng mã cha ${parentSku}` : taken ? 'Mã này đã có' : undefined}>
+        <input className="input mono" value={sku} maxLength={64} onChange={(e) => setSku(e.target.value.toUpperCase())} />
       </Field>
       <Field label="Barcode"><input className="input mono" value={barcode} onChange={(e) => setBarcode(e.target.value)} title="Mã vạch riêng của sản phẩm con, để quầy quét ra đúng hàng" /></Field>
       <Field label="Ghi chú" full><input className="input" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} placeholder="Vì sao tạo mã, thuộc chương trình nào" title="Chỉ để người đọc, phần mềm không xử lý theo ghi chú" /></Field>
@@ -116,8 +108,8 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
         <div className="full" style={{ marginTop: 8 }}>
           <b style={{ fontSize: 13 }}>Đã có {list.length} mã con</b>
           <div className="table-wrap" style={{ maxHeight: 180, overflow: 'auto', marginTop: 4 }}><table className="grid">
-            <thead><tr><th title="Mã hàng">Mã</th><th title="Tên mặt hàng">Tên</th><th title="Biến thể quyết định cách xử lý">Biến thể</th></tr></thead>
-            <tbody>{list.map((k) => <tr key={k.sku} className={k.isActive ? '' : 'muted'}><td className="mono">{k.sku}</td><td>{k.name}</td><td><VariantBadge code={k.variantCode} kinds={kinds} showNormal /></td></tr>)}</tbody>
+            <thead><tr><th title="Mã hàng">Mã</th><th title="Tên mặt hàng">Tên</th></tr></thead>
+            <tbody>{list.map((k) => <tr key={k.sku} className={k.isActive ? '' : 'muted'}><td className="mono">{k.sku}</td><td>{k.name}</td></tr>)}</tbody>
           </table></div>
         </div>
       )}

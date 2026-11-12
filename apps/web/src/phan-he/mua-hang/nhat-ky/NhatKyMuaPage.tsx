@@ -41,7 +41,7 @@ function brief(r: LogRow): string {
     case 'limit_transfer': return `Chuyển hạn mức nhãn ${d.brand}: ${d.from} → ${d.to}, ${money(d.amount)}`;
     case 'rebate_run': return `Tính thưởng ${d.policy}: doanh số ${money(d.base)} → ${d.rate ? `${d.rate}%` : 'theo giai đoạn'} = ${money(d.amount)}`;
     case 'cost_allocated': return `Phân bổ chi phí ${money(d.amount)} vào phiếu ${d.target} theo ${d.basis === 'qty' ? 'số lượng' : 'giá trị'}`;
-    case 'gift_received': return `Nhận ${d.qty} ${d.sku === 'QT-THUNG-SUA' ? 'thùng sữa' : d.sku} quà ${d.source === 'ncc_extra' ? 'ngoài hợp đồng' : 'theo chương trình'}`;
+    case 'gift_received': return `Nhận ${d.qty} ${d.sku === 'QT-THUNG-SUAZ' ? 'thùng sữa' : d.sku} quà ${d.source === 'ncc_extra' ? 'ngoài hợp đồng' : 'theo chương trình'}`;
     case 'policy_changed': return `Lưu chính sách ${d.code} — ${d.name ?? ''}`;
     case 'invoice_created': case 'invoice_updated': return `${r.event === 'invoice_created' ? 'Thêm' : 'Sửa'} hoá đơn NCC ${d.partnerCode} · ${money(d.total)} · ${d.lines} dòng${d.unmatched ? `, ${d.unmatched} chưa nhận diện mã` : ''}`;
     case 'invoice_cancelled': return `Huỷ hoá đơn NCC ${d.partnerCode} — lý do: ${d.reason ?? ''}`;

@@ -19,7 +19,6 @@ import { nhapLoai } from '@/lib/nhapExcel';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { ProductFullForm } from './ProductFullForm';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: cột Biến thể cạnh mã, lọc theo biến thể, Loại hàng (đóng góp)
-import { useVariantKinds, variantLabel } from './ThemSanPhamCon';
 import { PrintButton } from '@/components/print';
 import { PRODUCT_LABEL_TEMPLATES, loadLabelItems } from './productPrint';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: dải báo cáo mặt hàng tự thêm, kích hoạt hàng loạt mặt hàng nháp
@@ -82,8 +81,6 @@ export function ProductsPage() {
   const [applied, setApplied] = useState('');
   const [group, setGroup] = useState<string | null>(null);
   const [f, setF] = useState<Record<string, string>>({ postingGroup: '', status: 'all', variant: '' });
-  const kinds = useVariantKinds().data ?? [];
-  const kindOf = (c?: string) => kinds.find((k) => k.code === c);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<(Partial<Product> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<Product | null>(null);
@@ -136,8 +133,6 @@ export function ProductsPage() {
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
-    { key: 'variantCode', header: 'Biến thể', width: 130, title: 'Biến thể của sản phẩm con: phần mềm tách hàng Nội bộ khỏi thuế và xử lý theo ô này. Thường để trống', value: (p) => (p.variantCode && p.variantCode !== 'normal' ? variantLabel(kindOf(p.variantCode), p.variantCode) : '') },
-    { key: 'sendToTax', header: 'Gửi thuế', width: 80, title: 'Có đưa lên hoá đơn / dữ liệu thuế không. Biến thể Nội bộ luôn Không', value: (p) => (p.sendToTax === false ? 'Không' : '') },
     { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
     { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
@@ -192,10 +187,6 @@ export function ProductsPage() {
                 <select className="select input" style={{ height: 30 }} value={f.postingGroup} onChange={(e) => set({ postingGroup: e.target.value })}>
                   <option value="">Mọi nhóm hạch toán</option><option value="-">(Chưa gán — nhóm mặc định)</option>
                   {(groups.data ?? []).map((g) => <option key={g.code} value={g.code}>{g.code} — {g.name}</option>)}
-                </select>
-                <select className="select input" style={{ height: 30 }} value={f.variant} title="Lọc theo biến thể" onChange={(e) => set({ variant: e.target.value })}>
-                  <option value="">Mọi biến thể</option>
-                  {kinds.map((k) => <option key={k.code} value={k.code}>{variantLabel(k)}</option>)}
                 </select>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
                   <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="draft">Nháp (chưa kích hoạt)</option><option value="inactive">Ngừng</option>

@@ -133,12 +133,12 @@ describe('Đợt test KB', () => {
 
   it('KB-20 — quà nhiều nguồn: xuất 35 bộ tri ân trừ lần lượt vào 50 bộ có VAT và 30 bộ không VAT (không dòng nào âm), còn 45 bộ', async () => {
     const g = (await call(t, 'GET', '/api/v1/purchase/gifts')).body.data;
-    const bo = g.rows.filter((r: { sku: string; branchCode: string }) => r.sku === 'QT-BO-TRIAN' && r.branchCode === 'CN-ND');
+    const bo = g.rows.filter((r: { sku: string; branchCode: string }) => r.sku === 'QT-BO-TRIANZ' && r.branchCode === 'CN-ND');
     expect(bo.reduce((s: number, r: { outQty: number }) => s + r.outQty, 0)).toBe(35);
     expect(bo.reduce((s: number, r: { onHand: number }) => s + r.onHand, 0)).toBe(45);
     expect(bo.every((r: { onHand: number }) => r.onHand >= 0)).toBe(true);
     // xuất thêm 45 vẫn được (đủ tồn), 46 thì bị chặn
-    const out = (qty: number) => call(t, 'POST', '/api/v1/purchase/analyze', { kind: 'gift_out', docDate: '2026-10-20', branchCode: 'CN-ND', partnerCode: 'NCC-QUATANG', priceIncludesVat: false, lines: [{ lineKey: 'x', sku: 'QT-BO-TRIAN', name: 'Bộ quà', unit: 'Bộ', qty, price: 0, taxCode: 'KKKN', lineType: 'gift_consumer', program: 'TGS-TRI-AN' }] });
+    const out = (qty: number) => call(t, 'POST', '/api/v1/purchase/analyze', { kind: 'gift_out', docDate: '2026-10-20', branchCode: 'CN-ND', partnerCode: 'NCC-QUATANG', priceIncludesVat: false, lines: [{ lineKey: 'x', sku: 'QT-BO-TRIANZ', name: 'Bộ quà', unit: 'Bộ', qty, price: 0, taxCode: 'KKKN', lineType: 'gift_consumer', program: 'TGS-TRI-AN' }] });
     expect((await out(45)).body.data.checks.filter((c: { code: string }) => c.code === 'gift_over')).toEqual([]);
     expect((await out(46)).body.data.checks.map((c: { code: string }) => c.code)).toContain('gift_over');
   });

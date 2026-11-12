@@ -45,7 +45,8 @@ export async function nextChildSku(trx: Db, tenantId: string, parentSku: string)
   return parentSku + String(n).padStart(n > 99 ? 3 : 2, '0');
 }
 
-export interface ChildInput { parentSku: string; name: string; variantCode: string; sendToTax?: boolean; barcode?: string; note?: string; noSaleParent?: boolean }
+// [2026-11-12 Nguyễn Văn Thủy] bỏ chọn Biến thể / Gửi lên thuế: mã con = mã cha + đuôi (K, M, Q, T, B, Z…), trigger 0111 suy biến thể và gửi thuế theo mã (đóng góp)
+export interface ChildInput { parentSku: string; name: string; sku?: string; barcode?: string; note?: string; noSaleParent?: boolean }
 
 export async function addChildProduct(trx: Db, tenantId: string, actor: string, i: ChildInput) {
   const parentSku = i.parentSku.trim();
@@ -53,15 +54,20 @@ export async function addChildProduct(trx: Db, tenantId: string, actor: string, 
   const parent = await trx.selectFrom('products').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', parentSku).forUpdate().executeTakeFirst();
   if (!parent) throw Errors.notFound(`mặt hàng ${parentSku}`);
   if (parent.parent_sku) throw Errors.validation(`${parentSku} đang là mã con của ${parent.parent_sku}. Họ mã chỉ một cấp, hãy thêm từ mã cha ${parent.parent_sku}`);
-  if (!/^\d+$/.test(parentSku)) throw Errors.validation(`Mã cha ${parentSku} còn có chữ. Đổi mã cha sang mã số trước rồi mới thêm sản phẩm con`);
   if (!name) throw Errors.validation('Nhập tên sản phẩm con');
 
-  const kinds = await listVariantKinds(trx, tenantId);
-  const kind = kinds.find((k) => k.code === i.variantCode);
-  if (!kind || !kind.isActive) throw Errors.validation(`Biến thể ${i.variantCode} không có hoặc đã ngừng dùng`);
-
+  // Mã con: mã cha + đuôi 1–3 ký tự chữ / số (quy tắc mã hàng). Trống = mã cha + số thứ tự.
+  let sku = (i.sku ?? '').trim().toUpperCase();
+  if (sku) {
+    if (!sku.startsWith(parentSku) || !/^[A-Z0-9]{1,3}$/.test(sku.slice(parentSku.length))) throw Errors.validation(`Mã con phải bắt đầu bằng mã cha ${parentSku}, thêm 1–3 ký tự chữ / số`);
+    const busy = await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
+    if (busy) throw Errors.conflict(`Mã ${sku} đã có trong danh mục`);
+    const taken = await sql<{ id: string | null }>`SELECT bizcity_item_code_taken(${tenantId}::bigint, ${sku}) AS id`.execute(trx);
+    if (taken.rows[0]?.id) throw Errors.conflict(`Mã ${sku} đã từng thuộc mặt hàng khác, không dùng lại được`);
+  } else {
+    sku = await nextChildSku(trx, tenantId, parentSku);
+  }
   // Tên không trùng với mọi mặt hàng (không chỉ trong họ): saveProduct kiểm (checkName).
-  const sku = await nextChildSku(trx, tenantId, parentSku);
   // Lấy theo cha mọi thứ ảnh hưởng thuế và phân loại. Giá bán để trống như mã biến thể cũ.
   await saveProduct(trx, tenantId, actor, sku, {
     name, unit: parent.unit, note: i.note?.trim() ?? '', barcode: i.barcode?.trim() ?? '',
@@ -71,7 +77,7 @@ export async function addChildProduct(trx: Db, tenantId: string, actor: string, 
     exciseRate: parent.excise_rate === null ? null : Number(parent.excise_rate),
     origin: parent.origin, weightKg: parent.weight_kg === null ? null : Number(parent.weight_kg),
     isMain: parent.is_main, isUnder24m: parent.is_under_24m, exportAdjust: parent.export_adjust,
-    units: undefined, variantCode: kind.code, sendToTax: i.sendToTax ?? true,
+    units: undefined,
   }, { isNew: true, source: 'manual', checkName: true });
   if (i.noSaleParent && !parent.no_sale) {
     await trx.updateTable('products').set({ no_sale: true, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', parentSku).execute();

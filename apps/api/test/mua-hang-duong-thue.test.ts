@@ -45,7 +45,7 @@ describe('Đường thuế theo mã — mua hàng', () => {
   });
 
   it('TH2 tạo mã quà con không gửi thuế: lần sau chặn và chỉ đúng mã quà; dùng mã quà thì đạt', async () => {
-    const k = await call(t, 'POST', '/api/v1/items/add-child', { parentSku: PARENT, name: 'Anlene Gold thử quà', variantCode: 'promo', sendToTax: false });
+    const k = await call(t, 'POST', '/api/v1/items/add-child', { parentSku: PARENT, name: 'Anlene Gold thử quà', sku: `${PARENT}Z` });
     expect(k.status, JSON.stringify(k.body)).toBe(200);
     GIFT = k.body.data.sku;
     const wrong = await analyze({ ...base, kind: 'gift_in', gift: { source: 'ncc_extra', hasVat: false }, lines: [line(PARENT, 5, 0, { taxCode: 'KKKN' })] });
@@ -89,6 +89,6 @@ describe('Đường thuế theo mã — mua hàng', () => {
 
   it('Chọn mã quà trên phiếu tự thành hàng tặng người tiêu dùng (theo ô của mặt hàng, không theo chữ cuối mã)', async () => {
     const p = (await call(t, 'GET', `/api/v1/catalog/products/${GIFT}`)).body.data;
-    expect(p).toMatchObject({ sendToTax: false, variantCode: 'promo', parentSku: PARENT });
+    expect(p).toMatchObject({ sendToTax: false, variantCode: 'internal', parentSku: PARENT });
   });
 });

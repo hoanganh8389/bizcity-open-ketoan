@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Mặt hàng con: chỉ gõ mã, phần mềm tự xử lý
+- Form mặt hàng, danh sách mặt hàng, hộp **Thêm sản phẩm con** bỏ ô **Biến thể** và **Gửi lên thuế**. Thêm sản phẩm con chỉ gõ **mã con** (bắt đầu bằng mã cha) và tên.
+- Biến thể và gửi lên thuế do phần mềm tự suy theo mã mỗi lần thêm / đổi mã (migration 0111); dữ liệu đang có không đổi.
+- Sổ thuế: dòng hàng là mã con thì ghi theo mã cha.
+- Mã hàng mới được gồm cả chữ cái; mã cha có chữ cũng thêm được mã con. Mã đã có nhập xuất không đổi sang mã khác đường thuế.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Mặt hàng bỏ ô Loại hàng
 - Form thêm / sửa mặt hàng, danh sách mặt hàng và mẫu nhập Excel không còn ô **Loại hàng**: phân loại theo **Nhóm hàng**, bớt khai báo. Giá trị cũ trên mặt hàng giữ nguyên (báo cáo theo loại hàng vẫn đọc được).
 - Tài khoản ngầm định (ACC41): bỏ nút **Thêm tài khoản ngầm định** và hai ô **Áp cho loại hàng / Áp cho biến thể**; chỉ còn **Sửa** TK Nợ / TK Có của từng dòng.

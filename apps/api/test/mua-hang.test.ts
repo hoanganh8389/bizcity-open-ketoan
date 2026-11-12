@@ -130,8 +130,8 @@ describe('Mua hàng — chứng từ và ghi sổ', () => {
     const retOk = await approve(ret.id);
     expect(retOk.links[0].role).toBe('Trả hàng NCC');
 
-    await call(ctx, 'PUT', '/api/v1/catalog/products/QUA-THUNG?new=true', { name: 'Thùng sữa tặng', unit: 'Thùng', taxInCode: 'V08', sendToTax: false, units: [{ unit: 'Thùng', ratio: 1, isDefault: true }] });
-    const gift = await save({ kind: 'gift_in', docDate: '2026-10-03', branchCode: 'CN01', partnerCode: 'NCC-TH', priceIncludesVat: false, gift: { source: 'ncc_extra', hasVat: false }, lines: [{ lineKey: 'g1', sku: 'QUA-THUNG', name: 'Thùng sữa tặng', unit: 'Thùng', qty: 5, price: 480000, taxCode: 'V08', lineType: 'gift_consumer' }] });
+    await call(ctx, 'PUT', '/api/v1/catalog/products/QUA-THUNGZ?new=true', { name: 'Thùng sữa tặng', unit: 'Thùng', taxInCode: 'V08', units: [{ unit: 'Thùng', ratio: 1, isDefault: true }] });
+    const gift = await save({ kind: 'gift_in', docDate: '2026-10-03', branchCode: 'CN01', partnerCode: 'NCC-TH', priceIncludesVat: false, gift: { source: 'ncc_extra', hasVat: false }, lines: [{ lineKey: 'g1', sku: 'QUA-THUNGZ', name: 'Thùng sữa tặng', unit: 'Thùng', qty: 5, price: 480000, taxCode: 'V08', lineType: 'gift_consumer' }] });
     const g = await approve(gift.id);
     const gev = (await call(ctx, 'GET', `/api/v1/documents/${g.links[0].eventId}`)).body.data;
     expect(gev).toMatchObject({ docType: 'stock_adjustment', total: 2400000 });
@@ -177,7 +177,7 @@ describe('Mua hàng — chứng từ và ghi sổ', () => {
     const lots = (await call(ctx, 'GET', '/api/v1/purchase/lots?asOf=2026-10-23')).body.data;
     expect(lots.lots.find((l: { sku: string }) => l.sku === 'AN-GOLD')).toMatchObject({ lotNo: 'L1' });
     const gifts = (await call(ctx, 'GET', '/api/v1/purchase/gifts')).body.data.rows;
-    expect(gifts.find((g: { sku: string }) => g.sku === 'QUA-THUNG')).toMatchObject({ inQty: 5, onHand: 5 });
+    expect(gifts.find((g: { sku: string }) => g.sku === 'QUA-THUNGZ')).toMatchObject({ inQty: 5, onHand: 5 });
     const sc = (await call(ctx, 'GET', '/api/v1/purchase/scenarios')).body.data;
     expect(sc.filter((s: { ok?: boolean }) => s.ok === false)).toEqual([]);
     expect(sc.filter((s: { ok?: boolean }) => s.ok === true)).toHaveLength(24);
