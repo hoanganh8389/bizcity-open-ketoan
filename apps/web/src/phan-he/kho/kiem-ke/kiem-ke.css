@@ -1,0 +1,15 @@
+/* [2026-11-12 03:30 PM kiennt] NT-KHO-002 — biên bản kiểm kê kho (KHO02) */
+.kk-grid { display: grid; grid-template-columns: 110px 1fr 120px 1fr 110px 1fr; gap: 8px 10px; align-items: center; border: 0; margin: 0; padding: 0; }
+.kk-grid label { color: var(--ink-600, #5b6572); font-size: 13px; }
+.kk-bar { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+.kk-lines { overflow: auto; max-height: 46vh; }
+.kk-lines table { width: 100%; }
+.kk-lines td .input { min-width: 70px; height: 28px; }
+.kk-lines td input[type="date"] { min-width: 130px; }
+.kk-diff > td { background: #fff8e6 !important; }
+.kk-neg { color: #c0392b; font-weight: 600; }
+.kk-pos { color: #1e7e34; font-weight: 600; }
+.kk-warn { border-color: #e0a100 !important; background: #fff8e6; }
+.kk-two { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+.kk-two table { width: 100%; }
+@media (max-width: 1100px) { .kk-grid { grid-template-columns: 110px 1fr 120px 1fr; } .kk-two { grid-template-columns: 1fr; } }

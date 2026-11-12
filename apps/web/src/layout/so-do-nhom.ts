@@ -92,7 +92,7 @@ export const SO_DO: Record<string, SoDo> = {
     title: 'Nghiệp vụ kho',
     rows: [
       [{ label: 'Xuất kho', icon: 'PackageMinus', path: '/ban-hang/xuat-dieu-chinh' }, { label: 'Chuyển kho', icon: 'ArrowLeftRight', path: '/kho/chuyen-kho' }],
-      [{ label: 'Nhập kho', icon: 'PackagePlus' }, { label: 'Tính giá xuất kho', icon: 'Calculator', path: '/nghiep-vu/tinh-gia-von' }, { label: 'Kiểm kê', icon: 'ListChecks' }],
+      [{ label: 'Nhập kho', icon: 'PackagePlus' }, { label: 'Tính giá xuất kho', icon: 'Calculator', path: '/nghiep-vu/tinh-gia-von' }, { label: 'Kiểm kê', icon: 'ListChecks', path: '/kho/kiem-ke' }],
     ],
     reports: [
       { label: 'Sổ chi tiết vật tư hàng hóa', path: '/bao-cao/so-chi-tiet-hang-hoa' }, { label: 'Tổng hợp tồn kho', path: '/bao-cao/nhap-xuat-ton' },

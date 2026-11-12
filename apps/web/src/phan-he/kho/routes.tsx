@@ -4,6 +4,7 @@
  */
 import { Route } from 'react-router-dom';
 import { ChuyenKhoPage } from './chuyen-kho/ChuyenKhoPage';
+import { KiemKePage } from './kiem-ke/KiemKePage';
 import { CostingPage, ItemLedgerPage, StockMovementPage } from './inventory/InventoryPages';
 import { DoiChieuKhoSoCaiPage } from './inventory/DoiChieuKhoSoCaiPage';
 import { CongThucGiaVonPage } from './inventory/CongThucGiaVonPage';
@@ -16,6 +17,7 @@ import { TonTheoLoPage } from '@/features/lots/TonTheoLoPage';
 export const khoRoutes = (
   <>
     <Route path="kho/chuyen-kho" element={<ChuyenKhoPage />} />
+    <Route path="kho/kiem-ke" element={<KiemKePage />} />
     <Route path="kho/ton-theo-lo" element={<TonTheoLoPage />} />
     <Route path="nghiep-vu/tinh-gia-von" element={<CostingPage />} />
     <Route path="nghiep-vu/cong-thuc-gia-von" element={<CongThucGiaVonPage />} />

@@ -12,6 +12,8 @@ export const khoMenu: MenuItem[] = [
     label: 'Nghiệp vụ kho',
     children: [
       { key: 'kho-chuyen-kho', label: 'Phiếu chuyển kho', path: '/kho/chuyen-kho', code: 'KHO01' },
+      // [2026-11-12 03:30 PM kiennt] NT-KHO-002 — biên bản kiểm kê kho
+      { key: 'kiem-ke-kho', label: 'Kiểm kê kho', path: '/kho/kiem-ke', code: 'KHO02' },
       { key: 'kho-gia-von', label: 'Tính giá vốn', path: '/nghiep-vu/tinh-gia-von', code: 'ACC49' },
       { key: 'kho-cong-thuc-gia-von', label: 'Công thức giá vốn', path: '/nghiep-vu/cong-thuc-gia-von', code: 'ACC49A' },
     ],
