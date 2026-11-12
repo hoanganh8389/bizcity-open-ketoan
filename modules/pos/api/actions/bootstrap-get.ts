@@ -26,6 +26,8 @@ export default defineAction({
     minTotal: z.number(),
     returnPolicy: z.object({ days: z.number(), crossShop: z.enum(['same_shop', 'same_tax_code']) }),
     openShift: z.object({ id: z.string(), openedAt: z.string() }).nullable(),
+    /** Cài đặt bán hàng bắt buộc mở ca (NT-BH-011): true mà openShift = null thì máy bán chặn bán, dẫn sang mở ca. */
+    requireOpenShift: z.boolean(),
     reservedCodes: z.object({ sale: z.array(z.string()) }),
     coreVersion: z.string(),
     catalogVersion: z.string(),
@@ -52,7 +54,8 @@ export default defineAction({
       minTotal: 0,
       // Hạn trả là tham số (họp kế toán 04/11: 3 ngày); W2 trả ở cửa hàng đã bán (trả khác cửa hàng cùng MST chờ chốt R2).
       returnPolicy: { days: settings.returnDays, crossShop: 'same_shop' as const },
-      openShift: shift ? { id: shift.shift_id, openedAt: shift.opened_at.toISOString() } : { id: `ngay-${day}`, openedAt: `${day}T00:00:00+07:00` },
+      openShift: shift ? { id: shift.shift_id, openedAt: shift.opened_at.toISOString() } : settings.requireOpenShift ? null : { id: `ngay-${day}`, openedAt: `${day}T00:00:00+07:00` },
+      requireOpenShift: settings.requireOpenShift,
       reservedCodes: { sale: [] },
       coreVersion: '',
       catalogVersion: await catalogVersionOf(tx, branch.code),

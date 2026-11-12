@@ -29,16 +29,16 @@ export const returnDraftSchema = z.object({
 }).passthrough();
 export type ReturnDraft = z.infer<typeof returnDraftSchema>;
 
-type OrderRow = { order_id: string; code: string; branch_code: string; business_date: string; status: string; customer_code: string | null; doc_key: string; snapshot: Record<string, unknown> };
+export type OrderRow = { order_id: string; code: string; branch_code: string; business_date: string; status: string; customer_code: string | null; doc_key: string; snapshot: Record<string, unknown>; version: number };
 
 /** Đơn theo id hoặc mã phiếu (mã chỉ duy nhất trong một chi nhánh → kèm branch khi tra theo mã). */
 export async function findOrder(tx: Tx, idOrCode: string, branch?: string): Promise<OrderRow> {
   const byId = (await sql<OrderRow>`
-    SELECT order_id, code, branch_code, business_date::text AS business_date, status, customer_code, doc_key, snapshot
+    SELECT order_id, code, branch_code, business_date::text AS business_date, status, customer_code, doc_key, snapshot, version
       FROM mod_pos.orders WHERE order_id = ${idOrCode}`.execute(tx)).rows[0];
   if (byId) return byId;
   const rows = (await sql<OrderRow>`
-    SELECT order_id, code, branch_code, business_date::text AS business_date, status, customer_code, doc_key, snapshot
+    SELECT order_id, code, branch_code, business_date::text AS business_date, status, customer_code, doc_key, snapshot, version
       FROM mod_pos.orders WHERE upper(code) = upper(${idOrCode}) ${branch ? sql`AND branch_code = ${branch}` : sql``} ORDER BY id LIMIT 2`.execute(tx)).rows;
   if (rows.length > 1) throw Errors.validation(`Mã phiếu ${idOrCode} có ở nhiều chi nhánh — gửi kèm branch`, { reason: 'POS_BRANCH_REQUIRED' });
   if (!rows.length) throw Errors.notFound(`đơn ${idOrCode}`);

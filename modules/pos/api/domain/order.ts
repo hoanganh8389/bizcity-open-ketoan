@@ -105,6 +105,8 @@ export type ComputedOrder = {
   payments: { methodCode: string; amount: number }[];
   /** Đổi hàng (W2): tiền hàng trả đối trừ vào đơn này — không phải tiền thu (offsets của chứng từ sale). */
   offsets: { docKey: string; amount: number }[];
+  /** Phần trả bằng QR chuyển khoản (NT-BH-009): > 0 thì đơn chờ trả tiền tới khi tiền về / thu ngân xác nhận. */
+  qrAmount: number;
   change: number;
   customer: OrderCustomer;
 };
@@ -127,7 +129,6 @@ export function unsupported(draft: OrderDraft): OrderProblem | null {
   if (draft.promotionSelections.length) return no('đơn có khuyến mại / mã giảm giá', { field: 'promotionSelections' });
   if (draft.lines.some((l) => l.isGift)) return no('dòng quà tặng', { field: 'lines', isGift: true });
   if (draft.loyalty?.redeem.length) return no('đổi điểm thành viên', { field: 'loyalty' });
-  if (draft.payment.mode === 'qr') return no('thanh toán QR', { field: 'payment.mode' });
   if (draft.payment.mode === 'credit') return no('bán ghi nợ', { field: 'payment.mode' });
   return null;
 }
@@ -182,6 +183,7 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   let payments: ComputedOrder['payments'];
   let offsetPaid = 0;
   let change = 0;
+  let qrAmount = 0;
   const p = draft.payment;
   if (p.mode === 'cash') {
     const cash = paymentMethods.find((m) => paymentKind(m.code) === 'cash');
@@ -201,7 +203,8 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
       if (seen.has(part.method)) return fail('validation', 'POS_DUPLICATE_METHOD', `Hình thức ${part.method} lặp lại`, { method: part.method });
       seen.add(part.method);
       const kind = paymentKind(part.method);
-      if (kind === 'qr' || kind === 'credit' || kind === 'offset') {
+      if (kind === 'qr') { qrAmount += part.amount; continue; }
+      if (kind === 'credit' || kind === 'offset') {
         return fail('validation', 'POS_NOT_SUPPORTED_YET', `Máy chủ POS chưa nhận phần ${part.method} trong chia tiền ở đợt này`, { method: part.method });
       }
     }
@@ -211,6 +214,12 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
       return fail('validation', 'POS_SPLIT_MISMATCH', `Phần đối trừ ${offsetPaid} phải đúng bằng tiền hàng trả ${ex.credit}`, { credit: ex.credit, offset: offsetPaid });
     }
     payments = p.parts.filter((x) => !isOffsetMethod(x.method)).map((x) => ({ methodCode: x.method, amount: x.amount }));
+  } else if (p.mode === 'qr') {
+    // Trả hết bằng QR chuyển khoản (NT-BH-009): ghi sổ theo hình thức QR của danh mục; đơn chờ trả tiền.
+    const qr = paymentMethods.find((m) => paymentKind(m.code) === 'qr');
+    if (!qr) return fail('validation', 'POS_UNKNOWN_METHOD', 'Danh mục hình thức thanh toán chưa có QR chuyển khoản', { method: 'QR' });
+    payments = total > 0 ? [{ methodCode: qr.code, amount: total }] : [];
+    qrAmount = total;
   } else {
     return fail('validation', 'POS_NOT_SUPPORTED_YET', 'Hình thức thanh toán chưa nhận ở đợt này');
   }
@@ -230,7 +239,7 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
 
   if (ex && p.mode !== 'split') return fail('validation', 'POS_SPLIT_MISMATCH', 'Đổi hàng phải có phần đối trừ đúng bằng tiền hàng trả', { credit: ex.credit });
   const offsets = ex && ex.credit > 0 ? [{ docKey: ex.returnDocKey, amount: ex.credit }] : [];
-  return { lines, subtotal, taxTotal, total, payments, offsets, change, customer };
+  return { lines, subtotal, taxTotal, total, payments, offsets, change, customer, qrAmount };
 }
 
 // ── Đầu ra ────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -277,6 +286,9 @@ export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; bran
   };
 }
 
+/** Hạn giữ mã QR (gia hạn được trong ngày bán — NT-BH-009). */
+export const QR_HOLD_MS = 5 * 60_000;
+
 /** Đơn trả cho máy (khuôn Order của hợp đồng /pos/*). */
 export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string }) {
   const { draft } = meta;
@@ -284,7 +296,9 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
   return {
     id: draft.id,
     code: meta.code,
-    status: 'completed' as const,
+    // Đơn có phần QR chờ tiền về / thu ngân xác nhận (NT-BH-009); hạn mã 5 phút, gia hạn trong ngày bán.
+    status: (o.qrAmount > 0 ? 'awaiting_payment' : 'completed') as 'completed' | 'awaiting_payment',
+    ...(o.qrAmount > 0 ? { qr: { amount: o.qrAmount, status: 'waiting' as const, expiresAt: new Date(Date.parse(meta.createdAt) + QR_HOLD_MS).toISOString() } } : {}),
     businessDate: draft.businessDate,
     createdAt: meta.createdAt,
     customer: o.customer ? { id: o.customer.code, name: o.customer.name, phone: o.customer.phone } : { id: '', name: 'Khách lẻ', phone: '' },

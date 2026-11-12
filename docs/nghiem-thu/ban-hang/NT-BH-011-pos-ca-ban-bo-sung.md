@@ -44,6 +44,9 @@ Tồn cửa hàng như sổ kho kế toán (NT-BH-006).
 ## 7. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 3 (tắt bắt buộc — mặc định) | chưa mở ca vẫn bán; bootstrap `requireOpenShift = false` | đúng | — | test NT-BH-011, 13/11 |
+| §5 dòng 1, 2, 4 + lệch chuẩn 1 | bật: chưa mở ca `POS_SHIFT_REQUIRED`; đơn ngoại tuyến vẫn nhận; mở ca bán được | đúng | — | |
+| §5 dòng 5 (tồn cả cửa hàng) | mã tồn khác 0, tên, ĐVT, số lượng theo sổ kho | đúng (nhập 20, bán 3 → 17) | — | máy bán React: nút Xuất tồn kho cuối ca (tgs_pos_react 4da54fb) |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -53,3 +56,4 @@ Tồn cửa hàng như sổ kho kế toán (NT-BH-006).
 | Ngày | Thay đổi |
 |---|---|
 | 12/11/2026 | Tạo phiếu |
+| 13/11/2026 | Ghi kết quả chạy (test NT-BH-011 3/3) |

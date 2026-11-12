@@ -144,13 +144,19 @@ describe('NT-BH-004 — trường hợp lệch chuẩn (tầng tính)', () => {
     expect(() => draft({ lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 1, manualDiscount: { kind: 'percent', value: 101 } }] as OrderDraft['lines'] })).toThrow();
     expect(reason(draft({ lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'amount', value: 324_001 } }] as OrderDraft['lines'] }))).toBe('POS_DISCOUNT_TOO_LARGE');
   });
-  it('8. CTKM, dòng quà, đổi điểm, QR, ghi nợ, phần QR trong chia tiền → POS_NOT_SUPPORTED_YET', () => {
+  it('8. CTKM, dòng quà, đổi điểm, ghi nợ → POS_NOT_SUPPORTED_YET (QR nhận từ NT-BH-009)', () => {
     expect(reason(draft({ promotionSelections: [{ kind: 'coupon', code: 'KM1' }] }))).toBe('POS_NOT_SUPPORTED_YET');
     expect(reason(draft({ lines: [{ lineId: 'g', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 0, isGift: true }] as OrderDraft['lines'] }))).toBe('POS_NOT_SUPPORTED_YET');
     expect(reason(draft({ loyalty: { redeem: ['lp_1'] } }))).toBe('POS_NOT_SUPPORTED_YET');
-    expect(reason(draft({ payment: { mode: 'qr' } }))).toBe('POS_NOT_SUPPORTED_YET');
     expect(reason(draft({ payment: { mode: 'credit' } }))).toBe('POS_NOT_SUPPORTED_YET');
-    expect(reason(draft({ payment: { mode: 'split', parts: [{ method: 'TM', amount: 24_000 }, { method: 'QR', amount: 300_000 }] } }))).toBe('POS_NOT_SUPPORTED_YET');
+  });
+  // [2026-11-13 12:50 AM Võ Hoàng] POS-QR — QR trả hết / phần QR trong chia tiền: nhận, đơn chờ trả tiền (NT-BH-009) (đóng góp)
+  it('QR trả hết và phần QR trong chia tiền: nhận; qrAmount = phần QR; ghi sổ theo hình thức QR', () => {
+    const all = computeOrder({ draft: draft({ payment: { mode: 'qr' } }), catalog, paymentMethods: methods });
+    expect('problem' in all ? all.problem.reason : all.qrAmount).toBe(324_000);
+    if (!('problem' in all)) expect(all.payments).toEqual([{ methodCode: 'QR', amount: 324_000 }]);
+    const split = computeOrder({ draft: draft({ payment: { mode: 'split', parts: [{ method: 'TM', amount: 24_000 }, { method: 'QR', amount: 300_000 }] } }), catalog, paymentMethods: methods });
+    expect('problem' in split ? split.problem.reason : split.qrAmount).toBe(300_000);
   });
   it('SĐT sai khuôn / thiếu tên', () => {
     expect(reason(draft({ customer: { phone: '0911', name: 'A' } }))).toBe('POS_BAD_PHONE');

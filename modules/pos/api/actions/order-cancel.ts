@@ -28,12 +28,10 @@ export default defineAction({
     const why = reason?.trim() || 'Huỷ đơn chờ thanh toán từ máy bán';
     await ctx.ledger.cancel(order.doc_key, why);
     const snapshot = { ...order.snapshot, status: 'cancelled' };
-    await ctx.data.module(async (tx) => {
-      await sql`UPDATE mod_pos.orders SET status = 'cancelled', cancelled_at = now(), cancel_reason = ${why}, snapshot = ${JSON.stringify(snapshot)}::jsonb
-                 WHERE order_id = ${order.order_id}`.execute(tx);
-    });
+    const version = await ctx.data.module(async (tx) => (await sql<{ version: number }>`UPDATE mod_pos.orders SET status = 'cancelled', cancelled_at = now(), cancel_reason = ${why}, snapshot = ${JSON.stringify(snapshot)}::jsonb,
+                 version = version + 1 WHERE order_id = ${order.order_id} RETURNING version`.execute(tx)).rows[0]!.version);
     ctx.evidence.note('pos.order.cancel', { code: order.code, docKey: order.doc_key, reason: why });
-    await ctx.events.emit('pos.order.cancelled', { orderId: order.order_id, code: order.code, branchCode: order.branch_code, docKey: order.doc_key, reason: why, order: snapshot }, {
+    await ctx.events.emit('pos.order.cancelled', { orderId: order.order_id, code: order.code, branchCode: order.branch_code, docKey: order.doc_key, reason: why, version, order: snapshot }, {
       subject: `pos.order:${order.order_id}`, dedupeKey: `pos.order.cancelled:${order.order_id}`,
     });
     return snapshot;
