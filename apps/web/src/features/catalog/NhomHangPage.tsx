@@ -164,9 +164,11 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
   const old = form.mode === 'edit' ? ix.byCode.get(form.code)! : null;
   const [parent, setParent] = useState<string | null>(form.mode === 'add' ? form.parent : ix.parentOf(form.code));
   const [ma, setMa] = useState(form.mode === 'add' ? goiYMa(ix, form.parent) : old?.skuCode ?? '');
-  const [ten, setTen] = useState(old?.name ?? '');
   const tenDu = (p: string | null, t: string) => [p ? ix.byCode.get(p)?.fullName || ix.path(p).split(' / ').join(' ') : '', t.trim()].filter(Boolean).join(' ');
-  const [full, setFull] = useState(old?.fullName || (old ? tenDu(ix.parentOf(old.code), old.name) : ''));
+  // [2026-11-12 Nguyễn Văn Thủy] thêm mới: điền sẵn cả 3 ô (mã nhóm, mã ngắn, tên đầy đủ) — sửa lại cho đúng rồi Ghi (đóng góp)
+  const goiYTen = form.mode === 'add' ? `Nhóm mới ${goiYMa(ix, form.parent) || (ix.kids.get(form.parent ?? '')?.length ?? ix.roots.length) + 1}` : '';
+  const [ten, setTen] = useState(old?.name ?? goiYTen);
+  const [full, setFull] = useState(old?.fullName || (old ? tenDu(ix.parentOf(old.code), old.name) : tenDu(form.mode === 'add' ? form.parent : null, goiYTen)));
   const [fullTay, setFullTay] = useState(Boolean(old)); // sửa tay rồi thì thôi tự điền
   const [dung, setDung] = useState(old?.isActive ?? true);
   const [moving, setMoving] = useState(false);
@@ -209,7 +211,7 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
           </div>
         </Field>
         <Field label="Mã nhóm hàng (*)" tip="Tên ngắn hiện trên cây, vd Bỉm/ Tã quần trẻ em">
-          <input className="input" value={ten} autoFocus onChange={(e) => { setTen(e.target.value); setErr(''); if (!fullTay) setFull(tenDu(parent, e.target.value)); }} />
+          <input className="input" value={ten} autoFocus onFocus={(e) => e.target.select()} onChange={(e) => { setTen(e.target.value); setErr(''); if (!fullTay) setFull(tenDu(parent, e.target.value)); }} />
         </Field>
         <Field label={len ? 'Mã ngắn (mã ghép) (*)' : 'Mã ngắn (mã ghép)'}>
           <input className="input mono" value={ma} disabled={!len || khoa} maxLength={len || 1} placeholder={len ? QUY_TAC[lv] : ''}
