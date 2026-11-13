@@ -2048,3 +2048,5 @@ td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .hoi-nho { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 4px; border-radius: 50%;
   border: 1px solid currentColor; font-size: 9px; font-weight: 700; line-height: 1; opacity: .45; cursor: help; vertical-align: 1px; }
 .hoi-nho:hover { opacity: .9; }
+.canh-bao-nho { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 4px; border-radius: 50%;
+  background: #d93025; color: #fff; font-size: 10px; font-weight: 700; line-height: 1; cursor: help; vertical-align: 1px; }

@@ -12,7 +12,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
+import { CanhBao, ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
@@ -87,7 +87,8 @@ export function BranchesPage() {
                 {unknown.length ? <span className="text-bad"> · {unknown.length} website nối chi nhánh chưa có ở danh mục: {unknown.map((x) => `${x.branchCode} (blog ${x.blogId})`).join(', ')}</span> : null}
                 {' '}<button type="button" className="btn btn-sm btn-ghost" onClick={() => void api.get('/api/v1/branches/sites', { refresh: '1' }).then(() => sites.refetch())}>Tải lại</button></>
               : null}
-          {sites.data?.error ? <span className="text-bad"> {sites.data.error}</span> : null}
+          {/* [2026-11-13 Nguyễn Văn Thủy] lỗi kết nối hệ thống bán hàng: dấu ! nhỏ, rê chuột xem chi tiết (đóng góp) */}
+          {sites.data?.error ? <> <CanhBao text={sites.data.error} /></> : null}
         </div>
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
@@ -200,7 +201,7 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
           <legend>Website bán hàng đang nối{sites.data?.connection ? ` (kết nối ${sites.data.connection.code})` : ''}</legend>
           <div className="full" style={{ fontSize: 13 }}>
             {sites.isLoading ? <span className="muted">Đang lấy…</span>
-              : sites.data?.error ? <span className="text-bad">{sites.data.error}</span>
+              : sites.data?.error ? <CanhBao text={sites.data.error} />
               : mine.length === 0 ? <span className="muted">Chưa có website nào nối với chi nhánh này (nối ở Cấu hình phân cấp multisite bên hệ thống bán hàng).</span>
               : (
                 <table className="grid">
