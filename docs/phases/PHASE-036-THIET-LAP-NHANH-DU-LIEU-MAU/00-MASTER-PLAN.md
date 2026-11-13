@@ -18,7 +18,7 @@
 | Giao diện | `@bizcity/ui-kit` có `Modal` (`title`, `footer`, `wide`), `Field`, `Money`, `StatusBadge`; **không có** Stepper / Wizard | `packages/ui-kit/src/index.tsx` |
 | Sao lưu | `scripts/sao-luu.sh` (pg_dump nén, giữ 14 bản); khôi phục ghi đè cả CSDL, chỉ ghi trong chú thích script; `cap-nhat.sh` sao lưu trước khi nâng cấp nhưng không kiểm bản sao lưu | `scripts/sao-luu.sh`, `scripts/cap-nhat.sh` |
 
-## 2. Quyết định đề xuất (chờ chủ dự án duyệt)
+## 2. Quyết định (chủ dự án duyệt 2026-11-13) <!-- [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chủ dự án: "theo đề nghị" — D036-1..12 chấp nhận, Q036-1..6 theo cột Đề nghị -->
 
 | Mã | Quyết định | Vì sao |
 |---|---|---|
@@ -109,7 +109,7 @@ Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-l
 
 B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớm** vì rủi ro mất dữ liệu đang có ở bản cài hiện tại.
 
-## 8. Câu hỏi cho chủ dự án
+## 8. Câu hỏi cho chủ dự án — **đã trả 2026-11-13: theo cột Đề nghị**
 
 | Mã | Câu hỏi | Đề nghị |
 |---|---|---|
@@ -119,3 +119,22 @@ B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớ
 | Q036-4 | Đơn vị mẫu được **xoá cả đơn vị** (ngoại lệ có kiểm soát của câu không thương lượng 2, chỉ cho `is_sample`) hay chỉ "ngừng dùng"? | Xoá được, chỉ đơn vị mẫu, ghi bằng chứng; cần dòng ở RULE-LEDGER danh sách ngoại lệ đóng |
 | Q036-5 | "Thiết lập công ty của tôi" có nạp **danh mục mẫu** (mặt hàng, đối tượng giả lập) không? | Không mặc định — chỉ cấu hình + danh mục chuẩn; danh mục mẫu là tick tuỳ chọn |
 | Q036-6 | Ưu tiên **B6 (chống mất dữ liệu)** trước hộp thoại? | Có — B6 trước hoặc song song B1 |
+
+## 9. Chữ chốt B6 (2026-11-13) <!-- [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B6: S036-8a xem trước có mã + sao lưu danh mục + chặn bộ giả lập; S036-8b lấy lại bản trước; S036-9 nâng cấp và sao lưu -->
+
+**S036-8a — quay về dữ liệu gốc không còn là một cú bấm** (Kernel `modules/default-data`, K1):
+
+- **Xem trước bắt buộc:** `POST /api/v1/default-data/:key/preview` và `POST /api/v1/default-data/all/preview` chạy đúng hàm quay về **trong giao dịch rồi huỷ** → số thêm / sửa / xoá / khoá và cảnh báo **thật**, không ước lượng. Trả `previewToken` (HMAC theo đơn vị, bộ, kết quả, giờ lập; sống 15 phút).
+- **Ghi cần mã xem trước:** `restore` nhận `{ confirm: true, previewToken }`. Thiếu / hết hạn → `VALIDATION`. Ghi xong mà kết quả khác lúc xem trước (dữ liệu đã đổi ở giữa) → huỷ cả giao dịch, `CONFLICT` *"Danh mục đã đổi sau khi xem trước — xem trước lại"*.
+- **Sao lưu tự động trước khi ghi:** bảng `default_data_backups` (migration 0134): đơn vị, bộ, người, giờ, kết quả, ảnh chụp JSON các dòng của đơn vị ở những bảng bộ đó chạm tới (mỗi bộ khai `tables[]`). Giữ 10 bản gần nhất mỗi đơn vị. `GET /api/v1/default-data/backups` (danh sách), `GET /api/v1/default-data/backups/:id` (tải ảnh chụp). Cùng giao dịch với lần ghi: sao lưu hỏng thì không ghi.
+- **Chặn bộ giả lập trên đơn vị thật:** tệp gốc có `_nguon: "gia-lap"` (S030-53) và đơn vị đã có bút toán → từ chối `VALIDATION` *"Tệp gốc là dữ liệu mẫu giả lập… đặt SEEDS_DIR tới bộ danh mục của công ty"*. Áp cho cả `catalog_sample` (làm sạch mặt hàng).
+- **Giao diện:** nút Quay về ở đầu màn danh mục và TI08 mở hộp thoại: xem trước (bảng số theo bộ, cảnh báo) → tick "Tôi hiểu…" → *Quay về* → báo mã bản sao lưu. Không còn `window.confirm`.
+
+**S036-8b — Lấy lại bản trước** từ `default_data_backups` (ghi đè theo mã các bảng trong ảnh chụp); xem lại `org-units/restore-defaults` (sơ đồ tổ chức) theo cùng khuôn. Làm sau 8a.
+
+**S036-9 — nâng cấp và sao lưu** (công cụ hạ tầng):
+
+- `scripts/sao-luu.sh --kiem <tệp>`: tệp tồn tại, gunzip đọc hết, có `COPY public.ledger_entries`, đếm bảng; mã thoát ≠ 0 khi hỏng.
+- `scripts/khoi-phuc-thu.sh <tệp>`: khôi phục vào CSDL tạm `ketoan_khoi_phuc_thu`, đếm dòng các bảng chính, kiểm Nợ = Có, rồi xoá CSDL tạm — **không chạm CSDL đang chạy**.
+- `scripts/cap-nhat.sh`: sao lưu → `sao-luu.sh --kiem` (hỏng thì **dừng**) → in "sắp đổi gì" (số commit, migration mới, tệp `db/seeds` đổi, `SEEDS_DIR` có đặt không, `db/seeds` là bộ giả lập) → hỏi xác nhận (`--yes` bỏ qua) → nâng cấp; lỗi thì in đúng lệnh lùi (`git checkout <commit cũ>` + lệnh khôi phục bản vừa sao).
+- `docs/ops/SAO-LUU-KHOI-PHUC.md`: lịch hằng đêm, giữ bao lâu, chép ra máy khác, kiểm bản sao lưu, khôi phục thử, khôi phục thật (ghi đè), những gì **không** nằm trong bản sao lưu (`.env`, `SEEDS_DIR`, tệp đính kèm).
