@@ -162,7 +162,8 @@ export function CoCauToChucPage() {
             : <SoDoCoCau cc={cc} selected={sel} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} />}
         </div>
       </div>
-      {form && <NutForm cc={cc} nodeKey={form.key} parentKey={form.parentKey} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }} />}
+      {form && <NutForm key={form.key ?? `new:${form.parentKey}`} cc={cc} nodeKey={form.key} parentKey={form.parentKey} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }}
+        onGo={(key) => { setSel(key); setForm({ key, parentKey: null }); }} onAdd={(parentKey) => setForm({ key: null, parentKey })} />}
       {imp && <ImportForm onClose={() => setImp(false)} onSaved={(text) => { setImp(false); invalidateOrg(qc); setMsg({ ok: true, text }); }} />}
     </>
   );
@@ -313,7 +314,7 @@ function formOf(n: CNode | null, parentKey: string | null, cc: CC): F {
   return f;
 }
 
-function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved }: { cc: CC; nodeKey: string | null; parentKey: string | null; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void }) {
+function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onAdd }: { cc: CC; nodeKey: string | null; parentKey: string | null; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void }) {
   const qc = useQueryClient();
   const node = nodeKey ? cc.byKey.get(nodeKey) ?? null : null;
   const isNew = !node;
@@ -439,10 +440,50 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved }: { cc: C
       )}
       {txt('note', f.loai === 'company' || f.loai === 'unit' ? 'Mô tả' : 'Ghi chú', { full: true })}
       {!isNew && <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isActive} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>}
-      {!isNew && insideText && <div className="full muted" style={{ fontSize: 13 }}>Bên trong: {insideText}</div>}
+      {node && node.loai !== 'department' && <BenTrong cc={cc} node={node} text={insideText} onGo={onGo} onAdd={canWrite ? () => onAdd(node.key) : undefined} />}
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
       {node && <div className="full"><div className="field-title">Lịch sử thay đổi</div><LichSuNut node={node} /></div>}
     </Modal>
+  );
+}
+
+/* ------------------------------------------------------------------ bên trong */
+
+// [2026-11-13 Nguyễn Văn Thủy] bấm một nút (trên bảng hay sơ đồ) thấy ngay bên trong có gì: danh sách theo loại, bấm đúp đi tiếp (đóng góp)
+function BenTrong({ cc, node, text, onGo, onAdd }: { cc: CC; node: CNode; text: string; onGo: (key: string) => void; onAdd?: () => void }) {
+  const [loai, setLoai] = useState<Loai | 'direct'>('direct');
+  const all = useMemo(() => cc.under(node.key).filter((x) => !off(x)), [cc, node.key]);
+  const direct = (cc.kids.get(node.key) ?? []).filter((x) => !off(x));
+  const rows = loai === 'direct' ? direct : all.filter((x) => x.loai === loai);
+  const kinds = (['company', 'unit', 'branch', 'warehouse', 'department'] as Loai[]).filter((l) => all.some((x) => x.loai === l));
+  return (
+    <div className="full" data-view-ok>
+      <div className="field-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span>Bên trong{text ? `: ${text}` : ''}</span>
+        {onAdd && <button type="button" className="btn btn-sm" style={{ marginLeft: 'auto' }} onClick={onAdd}><Plus size={13} /> Thêm vào đây</button>}
+      </div>
+      {!all.length ? <div className="muted" style={{ fontSize: 13 }}>Chưa có gì bên trong{onAdd ? ' — bấm Thêm vào đây' : ''}.</div> : (
+        <>
+          <div className="cc-in" style={{ margin: '4px 0' }}>
+            <button type="button" className={`cc-chip${loai === 'direct' ? ' on' : ''}`} onClick={() => setLoai('direct')}>Trực tiếp ({direct.length})</button>
+            {kinds.map((l) => <button key={l} type="button" className={`cc-chip${loai === l ? ' on' : ''}`} onClick={() => setLoai(l)}>{LOAI_ICON[l]} {LOAI_TEN[l]} ({all.filter((x) => x.loai === l).length})</button>)}
+          </div>
+          <div className="table-wrap" style={{ maxHeight: 240 }}>
+            <table className="grid cc-log">
+              <thead><tr><th title="Loại nút">Loại</th><th title="Mã">Mã</th><th title="Tên">Tên</th><th title="Nút chứa trực tiếp">Thuộc</th></tr></thead>
+              <tbody>{rows.map((n) => {
+                const p = n.parentKey ? cc.byKey.get(n.parentKey) : null;
+                return (
+                  <tr key={n.key} className="cc-tr" title="Bấm đúp để mở" onDoubleClick={() => onGo(n.key)}>
+                    <td><span className="cc-loai">{LOAI_ICON[n.loai]} {loaiNhan(n)}</span></td><td className="mono">{n.code}</td><td>{n.name}</td><td className="muted">{p ? p.name : ''}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

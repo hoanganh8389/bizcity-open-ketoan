@@ -18,6 +18,7 @@ Mỗi bản ghi đủ sáu mục:
   Phòng ban riêng của cửa hàng là một ô của cửa hàng, không thành dòng. Kiểu xem Sơ đồ, bấm khối mở hộp thoại.
   Lịch sử thay đổi từng nút (`GET /api/v1/co-cau/history`, đọc nhật ký bằng chứng; phòng ban ghi đủ trước / sau).
   Menu bỏ Chi nhánh (DM02), Danh mục kho (DM12), Bộ phận (ACC26) — đường dẫn cũ vẫn mở được.
+  Bấm một nút (bảng hoặc sơ đồ) thấy ngay **Bên trong**: danh sách cơ cấu / cửa hàng / kho theo loại, bấm đúp đi tiếp, nút Thêm vào đây.
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Chi nhánh: lỗi lấy danh sách website của hệ thống bán hàng hiện bằng dấu ! nhỏ (rê chuột xem chi tiết) thay dòng chữ đỏ.
