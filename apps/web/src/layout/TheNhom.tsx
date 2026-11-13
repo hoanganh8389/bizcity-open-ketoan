@@ -4,21 +4,21 @@
  * Nhóm không khai thẻ (Danh mục, Hệ thống…) thì không hiện dải này.
  */
 import { Link, useLocation } from 'react-router-dom';
-import { matchLen, REPORT_PAGE, type GonGroup } from './menu-gon';
+import { matchHere, matchLen, REPORT_PAGE, type GonGroup } from './menu-gon';
 
 export function TheNhom({ group }: { group?: GonGroup }) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   if (!group?.the.length) return null;
   const links = [
     { key: 'home', label: group.homeLabel ?? 'Tổng quan', path: group.home, title: `Trang chủ ${group.label}` },
     ...group.the.map((m) => ({ key: m.key, label: m.label, path: m.path!, title: m.code ? `${m.label} (${m.code})` : m.label })),
   ];
   const reportPaths = group.reports.flatMap((s) => s.items);
-  const best = Math.max(0, ...links.map((l) => matchLen(l.path, pathname)));
+  const best = Math.max(0, ...links.map((l) => matchHere(l.path, pathname, search)));
   const onReport = pathname === REPORT_PAGE || (best === 0 && reportPaths.some((m) => matchLen(m.path, pathname) > 0));
   return (
     <nav className="gon-the" aria-label={`Màn của nhóm ${group.label}`}>
-      {links.map((l) => <Link key={l.key} to={l.path} title={l.title} className={best > 0 && matchLen(l.path, pathname) === best ? 'active' : ''}>{l.label}</Link>)}
+      {links.map((l) => <Link key={l.key} to={l.path} title={l.title} className={best > 0 && matchHere(l.path, pathname, search) === best ? 'active' : ''}>{l.label}</Link>)}
       {reportPaths.length > 0 && <Link to={`${REPORT_PAGE}?nhom=${group.key}`} title={`Các báo cáo của nhóm ${group.label}`} className={onReport ? 'active' : ''}>Báo cáo</Link>}
     </nav>
   );

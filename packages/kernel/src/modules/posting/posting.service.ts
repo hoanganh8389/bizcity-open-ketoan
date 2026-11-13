@@ -178,7 +178,23 @@ export const postingService = {
     const reason = resolver.reason(headReason, defaultReasonKey(doc));
     const costItem = typeof (reason.flags as Record<string, unknown>)?.costItem === 'string' ? String((reason.flags as Record<string, unknown>).costItem) : undefined;
     const branchIds = [...new Set(parts.map((p) => p.branchId ?? ctx.branchId))];
-    const depOf = new Map((await trx.selectFrom('branches').select(['id', 'department_code']).where('id', 'in', branchIds).execute()).map((b) => [b.id, b.department_code]));
+    const branchRows = await trx.selectFrom('branches').select(['id', 'code', 'department_code']).where('id', 'in', branchIds).execute();
+    const depOf = new Map(branchRows.map((b) => [b.id, b.department_code]));
+    // [2026-11-13 Nguyễn Văn Thủy] tài khoản theo dõi phòng ban mà chi nhánh chưa ánh xạ phòng ban → báo lỗi để vào cấu hình (0129) (đóng góp)
+    {
+      const codes = [...new Set(parts.flatMap((p) => p.lines.map((l) => l.accountCode)))];
+      const tracked = codes.length ? (await trx.selectFrom('accounts').select('code').where('tenant_id', '=', ctx.tenantId).where('code', 'in', codes).where('track_department', '=', true).execute()).map((a) => a.code) : [];
+      const hasDeps = tracked.length ? await trx.selectFrom('dimensions').select('code').where('tenant_id', '=', ctx.tenantId).where('kind', '=', 'department').where('is_active', '=', true).limit(1).executeTakeFirst() : undefined;
+      if (hasDeps) {
+        const bad = new Set<string>();
+        for (const p of parts) {
+          const bid = p.branchId ?? ctx.branchId;
+          if (depOf.get(bid)) continue;
+          for (const l of p.lines) if (tracked.includes(l.accountCode) && !(l.dims as Record<string, unknown> | undefined)?.department) bad.add(`${branchRows.find((b) => b.id === bid)?.code ?? bid} · TK ${l.accountCode}`);
+        }
+        if (bad.size) throw Errors.posting('Chi nhánh chưa ánh xạ phòng ban mà chứng từ ghi vào tài khoản theo dõi phòng ban — vào Danh mục chi nhánh chọn Phòng ban', [...bad]);
+      }
+    }
     const enrich = (lines: (typeof parts)[number]['lines'], branchId: string) => lines.map((l) => {
       const dims: Record<string, unknown> = { ...(l.dims ?? {}) };
       if (doc.employee?.code) dims.employee = doc.employee.code; // nhân viên phụ trách: mọi dòng, để báo cáo công nợ, doanh thu theo nhân viên

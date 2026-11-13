@@ -100,7 +100,7 @@ function FlowTab({ onTable }: { onTable: (n: string) => void }) {
         <FlowArrow label="nhận vào, CHƯA ghi sổ" />
         <FlowStep n="①" title="Sự kiện kế toán = một dòng mỗi phiếu nguồn" tone="in">
           {t('accounting_events')} giữ nguyên JSON phiếu (cột <span className="mono">payload</span>: dòng hàng, khách, hoá đơn, phiếu nguồn để bấm mở lại).
-          Phiếu đổi nội dung → <span className="mono">version</span> tăng, bản trước cất ở {t('accounting_event_versions')}. Gửi lại y nguyên thì không ghi gì thêm.
+          Phiếu đổi nội dung → <span className="mono">version</span> tăng, bản trước lưu ở {t('accounting_event_versions')}. Gửi lại y nguyên thì không ghi gì thêm.
           Mọi lần nhận / định khoản / lỗi / huỷ ghi một dòng {t('posting_log')}.
           <div className="kt-note">Phiếu bán và phiếu thu tiền là <b>hai sự kiện riêng</b>: phiếu thu (Thanh toán khách hàng) trỏ về phiếu bán qua <span className="mono">invoiceDocKey</span>.</div>
         </FlowStep>
@@ -305,7 +305,7 @@ function ExampleTab({ onTable }: { onTable: (n: string) => void }) {
       <h3 className="kt-h">Bước 4 · Hôm sau cửa hàng sửa phiếu thu: chuyển khoản → tiền mặt</h3>
       <ol>
         <li>Bên bán hàng thấy phiếu thu 77 đổi nội dung (dấu vân tay khác) → lần kéo sau gửi <b>version 2</b>.</li>
-        <li>{t('accounting_events')}: <span className="mono">version = 2</span>, <span className="mono">posted_version = 1</span>, <span className="mono">status = 'pending'</span> → ACC14 hiện <b>Chờ định khoản lại</b>. Bản version 1 cất ở {t('accounting_event_versions')}. Sổ vẫn giữ bút toán cũ.</li>
+        <li>{t('accounting_events')}: <span className="mono">version = 2</span>, <span className="mono">posted_version = 1</span>, <span className="mono">status = 'pending'</span> → ACC14 hiện <b>Chờ định khoản lại</b>. Bản version 1 lưu ở {t('accounting_event_versions')}. Sổ vẫn giữ bút toán cũ.</li>
         <li>Kế toán xem trước: "sẽ đảo 1 bút toán, ghi 1 bút toán mới". Bấm định khoản lại.</li>
         <li>Sổ thêm: <b>BT26-0000104</b> = ghi số âm của BT26-0000103 (Nợ 1121 −432.000 / Có 131 −432.000), nối về bút toán gốc ở {t('ledger_links')}; <b>BT26-0000105</b> = Nợ 1111 432.000 / Có 131 432.000.</li>
         <li>Phiếu bán và phiếu hoàn không đổi → bút toán của chúng giữ nguyên (so dấu vân tay <span className="mono">content_hash</span>), không đảo lung tung.</li>

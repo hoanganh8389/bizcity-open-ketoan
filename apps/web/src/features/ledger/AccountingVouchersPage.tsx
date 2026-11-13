@@ -11,7 +11,7 @@
  */
 import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileSpreadsheet, Search, Trash2 } from 'lucide-react';
+import { FileSpreadsheet, Search, Undo2 } from 'lucide-react';
 import { DOC_TYPE_LABELS, DOC_TYPE_LIST } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { date, today } from '@/lib/format';
@@ -161,7 +161,7 @@ export function AccountingVouchersPage({ mode = 'all' }: { mode?: VoucherMode })
         <div className="rp-actions-row">
           {can('documents:write') && (
             <button type="button" className="btn btn-danger" onClick={doDelete} disabled={!checked.size || unpost.isPending} title="Bỏ định khoản các chứng từ đã tích: đảo bút toán, chứng từ về Chờ định khoản (ACC14)">
-              <Trash2 size={14} /> Xoá{checked.size ? ` (${checked.size})` : ''}
+              <Undo2 size={14} /> Bỏ định khoản{checked.size ? ` (${checked.size})` : ''}
             </button>
           )}
           <button type="button" className="btn" onClick={() => exportRef.current?.()} disabled={!rows.length}><FileSpreadsheet size={14} /> Xuất</button>

@@ -12,7 +12,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DOC_TYPE_LABELS, DOC_TYPE_LIST, type DocType } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
-import { date, defaultFrom, defaultTo } from '@/lib/format';
+import { date, defaultFrom, defaultTo, kyText, periodFrom } from '@/lib/format';
+import { useBranches } from '@/components/filters';
 import { PageHeader } from '@/components/PageHeader';
 import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
 import { EntryOpen } from '../../../features/ledger/EntriesPage';
@@ -24,7 +25,7 @@ import { ledgerTemplates, type LedgerSheet } from './mauIn/soTaiKhoan';
 
 type Kind = 'detail' | 'ledger' | 'partner' | 'cash';
 interface Line {
-  postingDate: string; entryId: string; entryNo: string; docNo: string; docType: string; invoiceNo: string | null; description: string; accountCode: string;
+  postingDate: string; docDate: string; counterparty: string; entryId: string; entryNo: string; docNo: string; docType: string; invoiceNo: string | null; description: string; accountCode: string;
   counterAccounts: string; partnerCode: string | null; partnerName: string | null; productSku: string; productName: string; branchCode: string; costItem: string; department: string; contract: string;
   cashColumn: string; debit: number; credit: number; balanceDebit: number; balanceCredit: number;
 }
@@ -44,10 +45,8 @@ const DOC_TYPES: DocType[] = DOC_TYPE_LIST;
 /** Loại CT của sổ quỹ / tiền gửi. */
 const CASH_DOC_TYPES: [string, string][] = [
   ['', 'Tất cả'], ['purchase', 'Phiếu trả tiền NCC'], ['sale', 'Phiếu thu tiền khách hàng'], ['receipt', 'Phiếu thu'], ['payment', 'Phiếu chi'],
-  ['bank_payment', 'Phiếu báo nợ'], ['bank_receipt', 'Phiếu báo có'],
+  ['bank_receipt', 'Thu tiền gửi'], ['bank_payment', 'Chi tiền gửi'],
 ];
-const CASH_IN = [['in_bank', 'Thu ngân hàng'], ['in_sales', 'Thu bán hàng'], ['in_debt', 'Thu công nợ'], ['in_internal', 'Thu CN khác'], ['in_other', 'Thu khác']] as const;
-const CASH_OUT = [['out_bank', 'Chi NH'], ['out_purchase', 'Chi MH'], ['out_debt', 'Chi CN'], ['out_internal', 'Chi CN khác'], ['out_other', 'Chi khác']] as const;
 
 export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
   const kind: Kind = preset?.kind ?? 'detail';
@@ -55,7 +54,8 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
   const [params] = useSearchParams();
   const [f, setF] = useState({
     account: params.get('account') ?? preset?.account ?? '1111',
-    from: params.get('from') ?? defaultFrom(),
+    // Sổ quỹ, sổ tiền gửi mở theo tháng này; sổ khác như cũ.
+    from: params.get('from') ?? (kind === 'cash' ? periodFrom() : defaultFrom()),
     to: params.get('to') ?? defaultTo(),
     branchCodes: '',
     partnerCode: params.get('partnerCode') ?? '',
@@ -66,7 +66,6 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
     docType: '',
     sku: params.get('sku') ?? '',
   });
-  const [cashDetail, setCashDetail] = useState(false);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   // Sổ cái, sổ chi tiết tài khoản: bảng lọc bên trái, sửa ô lọc rồi bấm "Tìm kiếm" mới xem (như màn sổ quen thuộc).
@@ -77,6 +76,8 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
   const d = q.data;
 
   const cash = kind === 'cash';
+  /** Sổ kế toán chi tiết quỹ tiền mặt (ACC76): cột Nợ / Có / Số tồn, tài khoản, TK đối ứng; tuỳ chọn cộng gộp. */
+  const quyCt = preset?.code === 'ACC76';
   const ledger = kind === 'ledger';
   const withBalance = !ledger;
   const label = (t: string) => DOC_TYPE_LABELS[t as DocType] ?? t;
@@ -99,7 +100,12 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
             onChange={(v) => setD({ account: v || preset.account })} placeholder="" />
         </SideField>
       )}
-      {cash && <label className="checkbox" style={{ fontSize: 12 }}><input type="checkbox" checked={cashDetail} onChange={(e) => setCashDetail(e.target.checked)} /> Hiển thị chi tiết từng loại thu chi</label>}
+      {quyCt && (
+        <>
+          <label className="checkbox" style={{ fontSize: 12 }}><input type="checkbox" checked={df.groupMode === '2'} onChange={(e) => setD({ groupMode: e.target.checked ? '2' : '1' })} /> Cộng gộp các bút toán giống nhau</label>
+          <label className="checkbox" style={{ fontSize: 12 }}><input type="checkbox" checked={df.groupMode === '3'} onChange={(e) => setD({ groupMode: e.target.checked ? '3' : '1' })} /> Cộng gộp theo chứng từ</label>
+        </>
+      )}
       {(kind === 'detail' || kind === 'ledger') && <SideField label="Mã hàng"><ItemPicker className="input" hideName placeholder="Tất cả" value={df.sku} onChange={(sku) => setD({ sku })} /></SideField>}
       {(kind === 'detail' || kind === 'partner') && <SideField label={kind === 'partner' ? 'KH/NCC' : 'Mã đối tượng'}><PartnerPicker className="input" placeholder="" value={df.partnerCode} onChange={(partnerCode) => setD({ partnerCode })} /></SideField>}
       <span className="muted" style={{ fontSize: 12, marginTop: 2 }}>Chi nhánh</span>
@@ -132,7 +138,7 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         <div className="card">
           {!f.account ? <Empty text="Chọn Số tài khoản ở bảng bên trái rồi bấm Tìm kiếm." /> : q.isLoading ? <Loading /> : !d ? <Empty /> : cash ? (
-            <CashTable d={d} detail={cashDetail} onOpen={setOpenEntry} storageKey={preset?.code ?? 'acc55'} exportRef={exportRef} />
+            <CashTable d={d} title={preset?.title ?? ''} from={f.from} to={f.to} detail={quyCt} onOpen={setOpenEntry} storageKey={preset?.code ?? 'acc55'} exportRef={exportRef} />
           ) : (
             <LedgerGrid d={d} kind={kind} storageKey={`${preset?.code ?? 'ACC12'}-${kind}-v2`} onOpen={setOpenEntry} exportRef={exportRef} />
           )}
@@ -247,39 +253,62 @@ function PartnerLedgerGrid({ d, storageKey, onOpen, exportRef }: { d: Data; stor
  * Sổ quỹ / tiền gửi: dòng Dư đầu kỳ, từng dòng thu chi (Số tiền thu, Số tiền chi, Dư cuối), Phát sinh trong kỳ, Dư cuối kỳ.
  * Các cột Thu ngân hàng … Chi khác chia số tiền theo tài khoản đối ứng; chỉ có số khi tích "Hiển thị chi tiết từng loại thu chi".
  */
-function CashTable({ d, detail, onOpen, storageKey, exportRef }: { d: Data; detail: boolean; onOpen: (id: string) => void; storageKey: string; exportRef?: { current: (() => void) | null } }) {
+/**
+ * Sổ quỹ tiền mặt (S07a-DN) / Sổ tiền gửi ngân hàng: Ngày ghi sổ · Ngày chứng từ · Số hiệu chứng từ (Thu, Chi) · Diễn giải ·
+ * Số tiền (Thu, Chi, Tồn) · Người nhận/Người nộp · Loại chứng từ · Ghi chú. Dòng Số tồn đầu kỳ, Cộng phát sinh, Số tồn cuối kỳ.
+ * Cột Chi nhánh chỉ hiện khi đơn vị có nhiều chi nhánh.
+ */
+function CashTable({ d, title, from, to, detail, onOpen, storageKey, exportRef }: { d: Data; title: string; from: string; to: string; detail?: boolean; onOpen: (id: string) => void; storageKey: string; exportRef?: { current: (() => void) | null } }) {
+  const multi = (useBranches().data?.length ?? 0) > 1;
   const opening = d.opening.debit - d.opening.credit;
   const closing = d.closing.debit - d.closing.credit;
   const label = (t: string) => DOC_TYPE_LABELS[t as DocType] ?? t;
-  const detailCols: Column<Line>[] = [...CASH_IN, ...CASH_OUT].map(([k, l]) => ({ key: k, header: l, type: 'money', sum: true, value: (r: Line) => (detail && r.cashColumn === k ? r.debit + r.credit : 0) }));
+  const ton = (v: number) => <Money value={v} blankZero={false} />;
   return (
-    <DataGrid
-      storageKey={`${storageKey}-cash-v2`}
-      rows={d.rows}
-      rowKey={(r, i) => `${r.entryId}-${i}`}
-      onRowClick={(r) => onOpen(r.entryId)}
-      exportRef={exportRef}
-      groupable
-      footerLabel="Phát sinh trong kỳ"
-      note={d.truncated ? 'chỉ hiện 20.000 dòng đầu, hãy thu hẹp khoảng ngày' : undefined}
-      topRows={[{ key: 'open', label: 'Dư đầu kỳ', cells: { balance: <Money value={opening} blankZero={false} /> } }]}
-      bottomRows={[{ key: 'close', label: 'Dư cuối kỳ', cells: { balance: <Money value={closing} blankZero={false} /> } }]}
-      columns={[
-        { key: 'postingDate', header: 'Ngày CT', type: 'date' },
-        { key: 'docNo', header: 'Số chứng từ', type: 'code' },
-        { key: 'partnerCode', header: 'Mã KH', type: 'code' },
-        { key: 'partnerName', header: 'Tên KH' },
-        { key: 'description', header: 'Ghi chú' },
-        { key: 'debit', header: 'Số tiền thu', type: 'money', sum: true },
-        { key: 'credit', header: 'Số tiền chi', type: 'money', sum: true },
-        { key: 'balance', header: 'Dư cuối', type: 'money', showZero: true, value: (r) => r.balanceDebit - r.balanceCredit },
-        ...detailCols,
-        { key: 'counterAccounts', header: 'Tài khoản đối ứng', type: 'code' },
-        { key: 'docType', header: 'Loại chứng từ', value: (r) => label(r.docType) },
-        { key: 'branchCode', header: 'Mã chi nhánh', type: 'code' },
-        { key: 'invoiceNo', header: 'Số hóa đơn', type: 'code' },
-        { key: 'accountCode', header: 'Tài khoản', type: 'code' },
-      ]}
-    />
+    <>
+      <div className="rp-tieu-de"><h2>{title.toUpperCase()}</h2><i>{kyText(from, to)}</i></div>
+      <DataGrid
+        storageKey={`${storageKey}-so-quy-v3`}
+        rows={d.rows}
+        rowKey={(r, i) => `${r.entryId}-${i}`}
+        onRowClick={(r) => onOpen(r.entryId)}
+        exportRef={exportRef}
+        exportTitle={`${title} — ${kyText(from, to)}`}
+        footerLabel="Cộng phát sinh"
+        note={d.truncated ? 'chỉ hiện 20.000 dòng đầu, hãy thu hẹp khoảng ngày' : undefined}
+        topRows={[{ key: 'open', label: 'Số tồn đầu kỳ', cells: { ton: ton(opening) } }]}
+        bottomRows={[{ key: 'close', label: 'Số tồn cuối kỳ', cells: { ton: ton(closing) } }]}
+        columns={detail ? [
+          { key: 'postingDate', header: 'Ngày hạch toán', type: 'date', width: 96 },
+          { key: 'docDate', header: 'Ngày chứng từ', type: 'date', width: 96 },
+          { key: 'soThu', header: 'Số phiếu thu', type: 'code', width: 110, value: (r) => (r.debit > 0 ? r.docNo : '') },
+          { key: 'soChi', header: 'Số phiếu chi', type: 'code', width: 110, value: (r) => (r.credit > 0 ? r.docNo : '') },
+          { key: 'description', header: 'Diễn giải', width: 260 },
+          { key: 'accountCode', header: 'Tài khoản', type: 'code', width: 80 },
+          { key: 'counterAccounts', header: 'TK đối ứng', type: 'code', width: 90 },
+          { key: 'debit', header: 'Nợ', title: 'Số phát sinh Nợ', band: 'Số phát sinh', type: 'money', sum: true, width: 120 },
+          { key: 'credit', header: 'Có', title: 'Số phát sinh Có', band: 'Số phát sinh', type: 'money', sum: true, width: 120 },
+          { key: 'ton', header: 'Số tồn', type: 'money', showZero: true, width: 130, value: (r) => r.balanceDebit - r.balanceCredit },
+          { key: 'nguoi', header: 'Người nhận/Người nộp', width: 180, value: (r) => r.counterparty || r.partnerName || '' },
+          { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi },
+        ] : [
+          { key: 'postingDate', header: 'Ngày ghi sổ', type: 'date', width: 96 },
+          { key: 'docDate', header: 'Ngày chứng từ', type: 'date', width: 96 },
+          { key: 'soThu', header: 'Thu', title: 'Số hiệu chứng từ thu', band: 'Số hiệu chứng từ', type: 'code', width: 110, value: (r) => (r.debit > 0 ? r.docNo : '') },
+          { key: 'soChi', header: 'Chi', title: 'Số hiệu chứng từ chi', band: 'Số hiệu chứng từ', type: 'code', width: 110, value: (r) => (r.credit > 0 ? r.docNo : '') },
+          { key: 'description', header: 'Diễn giải', width: 280 },
+          { key: 'debit', header: 'Thu', title: 'Số tiền thu', band: 'Số tiền', type: 'money', sum: true, width: 120 },
+          { key: 'credit', header: 'Chi', title: 'Số tiền chi', band: 'Số tiền', type: 'money', sum: true, width: 120 },
+          { key: 'ton', header: 'Tồn', title: 'Số tiền tồn sau dòng này', band: 'Số tiền', type: 'money', showZero: true, width: 130, value: (r) => r.balanceDebit - r.balanceCredit },
+          { key: 'nguoi', header: 'Người nhận/Người nộp', width: 180, value: (r) => r.counterparty || r.partnerName || '' },
+          { key: 'docType', header: 'Loại chứng từ', width: 140, value: (r) => label(r.docType) },
+          { key: 'ghiChu', header: 'Ghi chú', width: 140, value: () => '' },
+          { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi },
+          { key: 'counterAccounts', header: 'TK đối ứng', type: 'code', width: 90, hidden: true },
+          { key: 'partnerCode', header: 'Mã đối tượng', type: 'code', width: 110, hidden: true },
+          { key: 'invoiceNo', header: 'Số hóa đơn', type: 'code', width: 100, hidden: true },
+        ]}
+      />
+    </>
   );
 }

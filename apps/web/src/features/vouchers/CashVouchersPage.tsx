@@ -20,6 +20,7 @@ import { useAuth } from '@/lib/auth';
 import { useBranches } from '@/components/filters';
 import type { Column } from '@/components/DataGrid';
 import { VoucherListPage, dateTimeShort, useListFilter } from '@/components/voucher/VoucherListPage';
+import type { ToolButton } from '@/components/voucher/VoucherModal';
 import { useBankAccounts } from '../catalog/BankAccountsPage';
 import { VOUCHER_META, type ExistingVoucher } from './VoucherForm';
 import { CashVoucherForm } from './CashVoucherForm';
@@ -35,6 +36,8 @@ interface Row {
   moneyAccount: string; createdAt: string | null; updatedAt: string | null; createdByName: string; updatedByName: string;
   /** posted = đã ghi sổ; pending = nháp chờ duyệt (nhập Excel, trợ lý đề xuất). */
   status: string;
+  /** Loại phiếu của dòng (màn gộp thu, chi). */
+  docType: CashType;
 }
 type CashType = VoucherType;
 const SUBTITLE: Record<CashType, string> = {
@@ -46,14 +49,20 @@ const SUBTITLE: Record<CashType, string> = {
 };
 const dateTime = dateTimeShort;
 
-export function CashVouchersPage({ type }: { type: CashType }) {
+/**
+ * pair: màn gộp như mẫu chuẩn — "Thu, chi tiền" (receipt + payment) / "Thu, chi tiền gửi" (bank_receipt + bank_payment):
+ *   ô lọc Loại phiếu, nút Thu tiền ▾ / Chi tiền ▾ (phiếu thường · theo hoá đơn), cột Loại chứng từ, ô Tổng thu / Tổng chi.
+ */
+export function CashVouchersPage({ type, pair }: { type: CashType; pair?: CashType }) {
   const meta = VOUCHER_META[type];
+  const types: CashType[] = pair ? [type, pair] : [type];
+  const [loai, setLoai] = useState<CashType | ''>('');
   const qc = useQueryClient();
   const canWrite = useAuth().can('documents:write');
   // Danh sách mở ở tháng hiện tại để thấy ngay phiếu vừa lập.
   const filter = useListFilter();
   const { f } = filter;
-  const [form, setForm] = useState<{ existing?: ExistingVoucher; initial?: VoucherTemplateInput; seq: number } | null>(null);
+  const [form, setForm] = useState<{ existing?: ExistingVoucher; initial?: VoucherTemplateInput; seq: number; type?: CashType; theoHoaDon?: boolean } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [signRole, setSignRole] = useState<SignatureInfo['role'] | ''>('');
   const templates = useTemplates(type).data ?? [];
@@ -62,12 +71,12 @@ export function CashVouchersPage({ type }: { type: CashType }) {
   const signable = useSignableRoles().filter((r) => signRolesOf(type).includes(r));
 
   const q = useQuery({
-    queryKey: ['documents', 'voucher', type, f],
+    queryKey: ['documents', 'voucher', types.join('+'), f],
     // Đã ghi sổ + nháp chờ duyệt (chữ cam, tích rồi bấm Ghi sổ).
     queryFn: async () => {
-      const get = (status: string) => api.getPage<Row[]>('/api/v1/documents', { from: f.from, to: f.to, branchCodes: f.branchCodes || undefined, docType: type, status, voucherInfo: true, pageSize: ALL_ROWS }).then((r) => r.data);
-      const [posted, pending] = await Promise.all([get('posted'), get('pending')]);
-      return [...pending, ...posted].sort((a, b) => b.docDate.localeCompare(a.docDate) || b.docNo.localeCompare(a.docNo));
+      const get = (t: CashType, status: string) => api.getPage<Row[]>('/api/v1/documents', { from: f.from, to: f.to, branchCodes: f.branchCodes || undefined, docType: t, status, voucherInfo: true, pageSize: ALL_ROWS }).then((r) => r.data.map((x) => ({ ...x, docType: t })));
+      const all = await Promise.all(types.flatMap((t) => [get(t, 'pending'), get(t, 'posted')]));
+      return all.flat().sort((a, b) => b.docDate.localeCompare(a.docDate) || b.docNo.localeCompare(a.docNo));
     },
     placeholderData: keepPreviousData,
   });
@@ -77,7 +86,7 @@ export function CashVouchersPage({ type }: { type: CashType }) {
   const printPicked = async (picked: Row[]): Promise<PrintSheet[]> => {
     if (!picked.length) throw new Error('Chưa tích ô Chọn ở phiếu nào.');
     const docs = await Promise.all(sorted(picked).map((r) => load(r.id)));
-    return docs.map((d) => ({ type, docNo: d.docNo, voucher: d.payload, signatures: d.signatures, banks, branchName: branches?.find((b) => b.code === d.payload.branchCode)?.name ?? d.payload.branchCode }));
+    return docs.map((d, i) => ({ type: sorted(picked)[i]!.docType ?? type, docNo: d.docNo, voucher: d.payload, signatures: d.signatures, banks, branchName: branches?.find((b) => b.code === d.payload.branchCode)?.name ?? d.payload.branchCode }));
   };
   const signPicked = async (picked: Row[]) => {
     const r = await api.post<{ signed: number; skipped: string[] }>('/api/v1/signatures', { ids: picked.map((x) => x.id), role: signRole });
@@ -111,51 +120,72 @@ export function CashVouchersPage({ type }: { type: CashType }) {
                 { key: 'updatedAt', header: 'Ngày sửa', value: (r) => dateTime(r.updatedAt), hidden: true },
                 { key: 'updatedByName', header: 'User sửa', hidden: true },
               ] : [
-                                { key: 'docNo', header: 'Số phiếu', type: 'code' },
+                // [2026-11-11 Nguyễn Văn Thủy] cột chính theo mẫu chuẩn đứng trước; cột thêm ẩn sẵn, bật ở nút Cột (đóng góp)
+                ...(pair ? [{ key: 'docType', header: 'Loại chứng từ', width: 130, value: (r: Row) => VOUCHER_META[r.docType]?.title ?? '' } as Column<Row>] : []),
+                { key: 'docDate', header: 'Ngày hạch toán', type: 'date', width: 104 },
+                { key: 'docNo', header: 'Số chứng từ', type: 'code', width: 130 },
+                { key: 'description', header: 'Diễn giải', width: 300 },
+                { key: 'total', header: 'Số tiền', type: 'money', sum: true, showZero: true, width: 130 },
+                { key: 'partnerCode', header: 'Đối tượng', type: 'code', width: 120 },
+                { key: 'partnerName', header: 'Tên đối tượng', width: 200 },
+                { key: 'counterparty', header: pair ? 'Người nộp / nhận' : type === 'receipt' || type === 'bank_receipt' ? 'Người nộp' : 'Người nhận', width: 160 },
+                { key: 'employeeName', header: 'Nhân viên', width: 160, value: (r) => r.employeeName || r.employeeCode },
+                { key: 'bank', header: 'Tài khoản ngân hàng', type: 'code', hidden: type === 'receipt' || type === 'payment', value: (r) => bankOf(r.moneyAccount) },
                 { key: 'status', header: 'Trạng thái', width: 100, value: (r) => (r.status === 'pending' ? 'Chờ duyệt' : 'Đã ghi sổ'), title: 'Chờ duyệt = phiếu nháp (nhập Excel…) chưa có bút toán: tích rồi bấm Ghi sổ' },
-                { key: 'employeeCode', header: 'Nhân viên', type: 'code' },
-                { key: 'description', header: 'Ghi chú' },
-                { key: 'currency', header: 'Tiền tệ', value: () => 'VND' },
-                { key: 'rate', header: 'Tỷ giá', type: 'number', value: () => 1 },
-                { key: 'total', header: 'Số tiền', type: 'money', sum: true, showZero: true },
-                { key: 'moneyAccount', header: 'Tài khoản', type: 'code' },
-                { key: 'docDate', header: 'Ngày hạch toán', type: 'date' },
-                { key: 'partnerCode', header: 'Đối tượng', type: 'code' },
-                { key: 'bank', header: 'Ngân hàng', type: 'code', value: (r) => bankOf(r.moneyAccount) },
-                { key: 'reasonCode', header: 'Lý do', type: 'code' },
-                { key: 'invoiceRef', header: 'Số HĐ', type: 'code' },
-                { key: 'counterparty', header: 'Người nhận' },
-                { key: 'address', header: 'Địa chỉ' },
-                { key: 'phone', header: 'Điện thoại' },
-                { key: 'createdAt', header: 'Ngày tạo', value: (r) => dateTime(r.createdAt) },
-                { key: 'updatedAt', header: 'Ngày sửa', value: (r) => dateTime(r.updatedAt) },
-                { key: 'createdByName', header: 'User tạo' },
-                { key: 'updatedByName', header: 'User sửa' },
-                { key: 'employeeName', header: 'Tên nhân viên' },
-                { key: 'branchCode', header: 'Chi nhánh', type: 'code', hidden: true },
-                { key: 'partnerName', header: 'Tên đối tượng', hidden: true },
+                { key: 'branchCode', header: 'Chi nhánh', type: 'code', hidden: (branches?.length ?? 0) < 2 },
+                { key: 'moneyAccount', header: 'Tài khoản tiền', type: 'code', hidden: true },
+                { key: 'reasonCode', header: 'Lý do hạch toán', type: 'code', hidden: true },
+                { key: 'invoiceRef', header: 'Số HĐ', type: 'code', hidden: true },
+                { key: 'address', header: 'Địa chỉ', hidden: true },
+                { key: 'phone', header: 'Điện thoại', hidden: true },
+                { key: 'currency', header: 'Tiền tệ', value: () => 'VND', hidden: true },
+                { key: 'rate', header: 'Tỷ giá', type: 'number', value: () => 1, hidden: true },
+                { key: 'createdAt', header: 'Ngày tạo', value: (r) => dateTime(r.createdAt), hidden: true },
+                { key: 'createdByName', header: 'Người tạo', hidden: true },
+                { key: 'updatedAt', header: 'Ngày sửa', value: (r) => dateTime(r.updatedAt), hidden: true },
+                { key: 'updatedByName', header: 'Người sửa', hidden: true },
               ];
+
+  // Màn gộp: lọc Loại phiếu; mở / lập phiếu theo đúng loại của dòng.
+  const shown = (q.data ?? []).filter((r) => !loai || r.docType === loai);
+  const sum = (t: CashType) => shown.filter((r) => r.docType === t).reduce((s, r) => s + (Number(r.total) || 0), 0);
+  const isBank = type === 'bank_receipt' || type === 'bank_payment';
+  const title = pair ? (isBank ? 'Thu, chi tiền gửi' : 'Thu, chi tiền') : meta.title;
+  const moi = (t: CashType, theoHoaDon = false) => () => setForm({ seq: Date.now(), type: t, theoHoaDon });
+  const addButtons: ToolButton[] = pair ? [
+    { key: 'thu', label: isBank ? 'Thu tiền gửi' : 'Thu tiền', icon: <Plus size={15} />, onClick: moi(type),
+      menu: [{ key: 'thu-phieu', label: isBank ? 'Thu tiền gửi' : 'Phiếu thu', onClick: moi(type) }, { key: 'thu-hd', label: 'Thu tiền theo hóa đơn', onClick: moi(type, true) }] },
+    { key: 'chi', label: isBank ? 'Chi tiền gửi' : 'Chi tiền', icon: <Plus size={15} />, onClick: moi(pair),
+      menu: [{ key: 'chi-phieu', label: isBank ? 'Ủy nhiệm chi' : 'Phiếu chi', onClick: moi(pair) }, { key: 'chi-hd', label: 'Trả tiền theo hóa đơn', onClick: moi(pair, true) }] },
+  ] : [{ key: 'add', label: 'Thêm', icon: <Plus size={15} className="text-ok" />, onClick: () => setForm({ seq: Date.now() }) }];
 
   return (
     <VoucherListPage
       chiTiet
-      kpi={<KpiTien title={meta.title} total={q.data?.reduce((s, r) => s + (Number(r.total) || 0), 0)} count={q.data?.length} from={f.from} to={f.to}
+      kpi={<KpiTien title={meta.title} total={shown.reduce((s, r) => s + (Number(r.total) || 0), 0)} count={shown.length} from={f.from} to={f.to} thuChi={pair ? { thu: sum(type), chi: sum(pair) } : undefined}
         tk={type === 'receipt' || type === 'payment' ? '111' : type === 'bank_receipt' || type === 'bank_payment' ? '112' : null} />}
-      title={meta.title} code={meta.code} subtitle={SUBTITLE[type]} helpKey={meta.helpKey}
-      filter={filter} query={{ ...q, queryKey: ['documents', 'voucher', type] }} columns={columns} storageKey={`voucher-list-${type}`} canWrite={canWrite}
+      title={title} code={meta.code} subtitle={pair ? 'Phiếu thu và phiếu chi trong kỳ: lọc theo loại phiếu, bấm một dòng xem dòng hạch toán, bấm đúp mở phiếu' : SUBTITLE[type]} helpKey={meta.helpKey}
+      filter={filter} query={{ ...q, data: q.data ? shown : undefined, queryKey: ['documents', 'voucher', types.join('+')] }} columns={columns} storageKey={`voucher-list-${types.join('-')}-v2`} canWrite={canWrite}
       notice={notice} setNotice={setNotice}
-      addButtons={[{ key: 'add', label: 'Thêm', icon: <Plus size={15} className="text-ok" />, onClick: () => setForm({ seq: Date.now() }) }]}
-      onOpen={async (r) => setForm({ existing: await load(r.id), seq: 0 })}
+      addButtons={addButtons}
+      onOpen={async (r) => setForm({ existing: await load(r.id), seq: 0, type: r.docType })}
       onCopy={async (r) => {
         // Copy: lập phiếu mới điền sẵn nội dung phiếu đã chọn (ngày hôm nay, số mới; bỏ phần thanh toán chứng từ).
         const d = await load(r.id);
         const { docNo: _n, docDate: _d, settle: _s, ...rest } = d.payload as VoucherInput;
         const lines = rest.lines.map(({ settleItemId: _a, settleDocNo: _b, settleDocDate: _c, settleTotal: _e, settleRemaining: _f, ...l }) => l);
-        setForm({ initial: { ...rest, lines, name: '', isActive: true } as VoucherTemplateInput, seq: Date.now() });
+        setForm({ initial: { ...rest, lines, name: '', isActive: true } as VoucherTemplateInput, seq: Date.now(), type: r.docType });
       }}
       extraPanel={(picked) => <PrintButton screen={VOUCHER_SCREEN[type]} templates={VOUCHER_TEMPLATES[type]} label="In các phiếu đã chọn" getDocs={() => printPicked(picked)} />}
       extraToolbar={(picked, run) => (
         <>
+          {pair && (
+            <select className="select input" style={{ height: 26, marginLeft: 8, width: 'auto' }} value={loai} title="Loại phiếu" onChange={(e) => setLoai(e.target.value as CashType | '')}>
+              <option value="">Loại phiếu: Tất cả</option>
+              <option value={type}>{VOUCHER_META[type].title}</option>
+              <option value={pair}>{VOUCHER_META[pair].title}</option>
+            </select>
+          )}
           {canWrite && <button disabled={!picked.some((r) => r.status === 'pending')} title="Ghi sổ các phiếu chờ duyệt đã tích (phiếu nhập Excel…); phiếu lỗi báo riêng, phiếu khác vẫn ghi" onClick={() => run(() => ghiSo(picked.filter((r) => r.status === 'pending')))}><BookCheck size={15} /> Ghi sổ{picked.some((r) => r.status === 'pending') ? ` ${picked.filter((r) => r.status === 'pending').length}` : ''}</button>}
           {canWrite && nhapPhieu(type) && <NutNhapExcel loai={nhapPhieu(type)!} />}
           <PrintButton bare screen={VOUCHER_SCREEN[type]} templates={VOUCHER_TEMPLATES[type]} getDocs={() => printPicked(picked)} />
@@ -179,14 +209,14 @@ export function CashVouchersPage({ type }: { type: CashType }) {
     >
       {form && (() => {
         const onSaved = (docNo: string, docDate: string, addNew: boolean) => {
-          setNotice(`Đã ghi sổ ${meta.title.toLowerCase()} ${docNo}.`);
-          setForm(addNew ? { seq: Date.now() } : null);
+          setNotice(`Đã ghi sổ ${VOUCHER_META[form.type ?? type].title.toLowerCase()} ${docNo}.`);
+          setForm(addNew ? { seq: Date.now(), type: form.type } : null);
           filter.widen(docDate);
         };
         const key = form.existing?.id ?? `new-${form.seq}`;
         return type === 'manual'
           ? <ManualVoucherForm key={key} existing={form.existing} initial={form.initial} onClose={() => setForm(null)} onSaved={onSaved} />
-          : <CashVoucherForm key={key} type={type} existing={form.existing} initial={form.initial} onClose={() => setForm(null)} onSaved={onSaved} />;
+          : <CashVoucherForm key={key} type={(form.type ?? type) as Exclude<CashType, 'manual'>} theoHoaDon={form.theoHoaDon} existing={form.existing} initial={form.initial} onClose={() => setForm(null)} onSaved={onSaved} />;
       })()}
     </VoucherListPage>
   );

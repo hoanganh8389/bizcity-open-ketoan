@@ -19,6 +19,7 @@ import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
 import { applyItemGate } from '../products/item.hints.js';
+import { parentFromSku } from './sku-rule.js';
 
 // ----------------------------------------------------------------------------------------------- kiểu dữ liệu
 
@@ -93,8 +94,13 @@ function productPatch(b: ProductInput): Record<string, unknown> {
 }
 
 /** Kiểm tra bộ đơn vị tính: đúng một đơn vị tỉ lệ 1, tối đa một đơn vị bán chính, không trùng tên. */
+export const MAX_DVT = 10;
+/** Tên hàng tối đa 50 ký tự (quy định đặt tên mặt hàng). */
+export const MAX_TEN_HANG = 50;
 export function checkUnits(units: UnitInput[]): string | null {
   if (!units.length) return 'Mặt hàng phải có ít nhất một đơn vị tính (đơn vị nhỏ nhất, tỉ lệ 1)';
+  // [2026-11-12 Nguyễn Văn Thủy] mỗi mặt hàng tối đa 10 đơn vị tính (đóng góp)
+  if (units.length > MAX_DVT) return `Mỗi mặt hàng tối đa ${MAX_DVT} đơn vị tính (đang ${units.length})`;
   const names = new Set<string>();
   for (const u of units) {
     const n = u.unit.trim().toLowerCase();
@@ -116,31 +122,6 @@ async function tombstone(trx: Db, tenantId: string, entity: 'product' | 'unit' |
 }
 
 // ----------------------------------------------------------------------------------------------- họ mã (mã cha – mã con)
-
-/** Mã cha gợi ý theo mã: mã 9 số + đuôi (trừ T có tem) mà mã gốc có trong danh mục và chưa là mã con. */
-export async function suggestParent(trx: Db, tenantId: string, sku: string): Promise<string | null> {
-  const m = /^(\d{9})([A-Z]{1,3})$/.exec(sku.trim().toUpperCase());
-  if (!m || m[2] === 'T') return null;
-  const p = await trx.selectFrom('products').select('parent_sku').where('tenant_id', '=', tenantId).where('sku', '=', m[1]!).executeTakeFirst();
-  return p && !p.parent_sku ? m[1]! : null;
-}
-
-/**
- * Công cụ "Quét cha – con theo mã": gán mã cha cho các mã có đuôi (trừ T) mà mã gốc có trong danh mục. Mặc định chỉ điền mã chưa có
- * mã cha (giữ mã cha đã chỉnh tay); overwrite = quét lại cả mã đã có mã cha theo mã.
- */
-export async function scanParents(trx: Db, tenantId: string, opts: { overwrite?: boolean } = {}): Promise<{ updated: number; families: number; children: number }> {
-  const r = await sql<{ n: string }>`
-    WITH c AS (
-      UPDATE products c SET parent_sku = left(c.sku, 9), updated_at = now()
-       WHERE c.tenant_id = ${tenantId} AND c.sku ~ '^[0-9]{9}[A-Z]{1,3}$' AND substring(c.sku FROM 10) <> 'T'
-         AND NOT c.parent_manual AND (${opts.overwrite ?? false} OR c.parent_sku IS NULL) AND c.parent_sku IS DISTINCT FROM left(c.sku, 9)
-         AND EXISTS (SELECT 1 FROM products p WHERE p.tenant_id = c.tenant_id AND p.sku = left(c.sku, 9) AND p.parent_sku IS NULL)
-      RETURNING 1)
-    SELECT COUNT(*)::text AS n FROM c`.execute(trx);
-  const stat = await trx.selectFrom('products').select([sql<string>`COUNT(DISTINCT parent_sku)`.as('f'), sql<string>`COUNT(*)`.as('c')]).where('tenant_id', '=', tenantId).where('parent_sku', 'is not', null).executeTakeFirst();
-  return { updated: Number(r.rows[0]?.n ?? 0), families: Number(stat?.f ?? 0), children: Number(stat?.c ?? 0) };
-}
 
 async function parentUnits(trx: Db, tenantId: string, sku: string): Promise<UnitInput[]> {
   const rows = await trx.selectFrom('product_units').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', sku).orderBy('ratio').execute();
@@ -207,11 +188,14 @@ export async function sameNameProduct(trx: Db, tenantId: string, name: string, e
  * Lưu trọn một mặt hàng. units gửi kèm = THAY cả bộ đơn vị tính; prices gửi kèm = ghi các ô giá gửi lên (price null =
  * xoá ô giá đó). Dòng giá của đơn vị không còn trong bộ đơn vị tính bị xoá theo.
  */
-export async function saveProduct(trx: Db, tenantId: string, actor: string, sku: string, b: ProductInput, opts: { isNew?: boolean; source?: string; quiet?: boolean; checkName?: boolean } = {}) {
+export async function saveProduct(trx: Db, tenantId: string, actor: string, sku: string, b: ProductInput, opts: { isNew?: boolean; source?: string; quiet?: boolean; checkName?: boolean; by?: string } = {}) {
   const exists = await trx.selectFrom('products').select(['id', 'name']).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (opts.isNew && exists) throw Errors.conflict(`Mã hàng ${sku} đã có`);
   // [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng (đóng góp): kiểm khi thêm mới hoặc đổi tên, qua màn / Excel / thêm sản phẩm con.
   // Dữ liệu cũ đã trùng tên vẫn sửa được các ô khác (không đổi tên thì không kiểm). Nạp từ hệ thống bán hàng không kiểm.
+  if (b.name !== undefined && (!exists || normName(exists.name) !== normName(b.name)) && b.name.trim().length > MAX_TEN_HANG) {
+    throw Errors.validation(`Tên hàng tối đa ${MAX_TEN_HANG} ký tự (đang ${b.name.trim().length})`);
+  }
   if (opts.checkName && b.name !== undefined && (!exists || normName(exists.name) !== normName(b.name))) {
     const same = await sameNameProduct(trx, tenantId, b.name, sku);
     if (same) throw Errors.conflict(`Tên "${same.name}" đã dùng cho mã ${same.sku}${same.isActive ? '' : ' (đã ngừng theo dõi)'}. Đặt tên khác để quầy, kho không chọn nhầm`);
@@ -229,58 +213,39 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     const found = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', v).executeTakeFirst();
     if (!found) throw Errors.validation(`Mã phân loại ${v} chưa có trong danh mục`);
   }
-  // Mã hàng cha (họ mã 1 cấp): tạo mới không gửi → gợi ý theo mã; gửi → kiểm mã cha có thật, không phải chính nó, không có mã cha
-  // (chỉ 1 cấp), và mã này không đang là cha của mã khác.
-  if (b.parentSku === undefined && !exists) b = { ...b, parentSku: await suggestParent(trx, tenantId, sku) };
-  if (b.parentSku) {
-    const ps = b.parentSku.trim();
-    if (ps === sku) throw Errors.validation('Mã hàng cha không được là chính mã này');
-    const par = await trx.selectFrom('products').select(['sku', 'parent_sku']).where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst();
-    if (!par) throw Errors.validation(`Mã hàng cha ${ps} chưa có trong danh mục`);
-    if (par.parent_sku) throw Errors.validation(`${ps} đang là mã con của ${par.parent_sku} — họ mã chỉ 1 cấp, chọn mã cha ${par.parent_sku}`);
-    const kids = exists ? await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('parent_sku', '=', sku).limit(3).execute() : [];
-    if (kids.length) throw Errors.validation(`${sku} đang là mã cha của ${kids.map((k) => k.sku).join(', ')} — họ mã chỉ 1 cấp`);
-    // Mã con TẠO MỚI kế thừa đa ĐVT của mã cha (Thùng, Lốc…): ĐVT mã con đã khai giữ nguyên, thêm các ĐVT mã cha còn thiếu.
-    if (!exists) {
-      b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, ps)) };
-      const err = b.units ? checkUnits(b.units) : null;
-      if (err) throw Errors.validation(err);
+  // [2026-11-12 Nguyễn Văn Thủy] mã cha suy theo mã (trigger 0112), không nhận từ người dùng; mã con tạo mới kế thừa ĐVT của mã cha (đóng góp)
+  b = { ...b, parentSku: undefined };
+  // [2026-11-12 Nguyễn Văn Thủy] mã mới: mã chính không có chữ đầu / cuối; mã biến thể = mã cha thêm chữ, phải có mã cha trước, nhóm theo mã cha (đóng góp)
+  const ps = parentFromSku(sku);
+  const parentRow = ps ? await trx.selectFrom('products').select(['sku', 'group_code', 'industry_code', 'brand_code', 'parent_sku']).where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst() : undefined;
+  // Luật mã chỉ áp cho mặt hàng theo cây nhóm hàng (form / Excel luôn gửi nhóm); đường đồng bộ khác không có nhóm thì giữ mã nguồn.
+  if (opts.isNew && (b.groupCode || parentRow)) {
+    if (ps && !parentRow) throw Errors.validation(`Mã cha ${ps} chưa có — khai mã cha trước rồi mới thêm mã biến thể ${sku}`);
+    if (ps && sku.length - ps.length > 2) throw Errors.validation(`Mã biến thể ${sku}: chỉ thêm tối đa 2 chữ quanh mã cha ${ps}`);
+    if (!ps && (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku)))) {
+      throw Errors.validation(`Mã hàng ${sku} không được có chữ ở đầu hoặc cuối. Muốn tạo mã biến thể thì chọn "Mã biến thể" và chọn mã cha`);
     }
   }
+  if (parentRow) b = { ...b, groupCode: parentRow.group_code, industryCode: parentRow.industry_code, brandCode: parentRow.brand_code };
+  if (!exists && parentRow) {
+    b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, parentRow.sku)) };
+    const err = b.units ? checkUnits(b.units) : null;
+    if (err) throw Errors.validation(err);
+  }
   const now = new Date();
-  const patch: Record<string, unknown> = { ...productPatch(b), updated_at: now };
-  // Gửi mã cha khác mã gợi ý theo mã (gồm cả bỏ cha) = chỉnh tay → quét cha – con theo mã không gán lại.
-  if (b.parentSku !== undefined) patch.parent_manual = (b.parentSku?.trim() || null) !== (await suggestParent(trx, tenantId, sku));
+  const patch: Record<string, unknown> = { ...productPatch(b), updated_at: now, updated_by: opts.by || actor };
   // Đơn vị nhỏ nhất (tỉ lệ 1) là ĐVT của mặt hàng.
   if (b.units) patch.unit = b.units.find((u) => Number(u.ratio) === 1)!.unit.trim();
   if (!exists) {
-    await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual' }).execute();
+    await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual', created_by: opts.by || actor }).execute();
   }
   await trx.updateTable('products').set(patch).where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
-  // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — ô Biến thể sửa được, lưu qua saveProduct; luồng kéo danh mục gửi variantCode (đóng góp)
-  // [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (đóng góp)
-  // Mỗi mã đi trọn một đường thuế: đã có nhập xuất thì không đổi Gửi lên thuế, kể cả gián tiếp qua đổi biến thể sang / khỏi Nội bộ.
-  const taxBefore = exists ? (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(trx)).rows[0]?.s : undefined;
-  if (b.variantCode !== undefined) {
-    const k = await sql<{ code: string }>`SELECT code FROM item_variant_kinds WHERE tenant_id = ${tenantId} AND code = ${b.variantCode} AND is_active`.execute(trx);
-    if (!k.rows[0]) throw Errors.validation(`Biến thể ${b.variantCode} không có hoặc đã ngừng dùng`);
-    // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — mã cha (không có mã cha phía trên) luôn là hàng Thường; biến thể chỉ ở sản phẩm con (đóng góp)
-    if (b.variantCode !== 'normal') {
-      const own = await trx.selectFrom('products').select('parent_sku').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
-      if (!own?.parent_sku) throw Errors.validation(`${sku} là mã cha, không chọn biến thể. Biến thể chỉ dành cho sản phẩm con`);
-    }
-    await sql`UPDATE products SET variant_code = ${b.variantCode}, updated_at = ${now} WHERE tenant_id = ${tenantId} AND sku = ${sku} AND variant_code <> ${b.variantCode}`.execute(trx);
+  // Mã biến thể luôn cùng nhóm với mã cha: đổi nhóm mã cha thì các mã biến thể đổi theo.
+  if (!ps && b.groupCode !== undefined) {
+    await trx.updateTable('products').set({ group_code: b.groupCode, industry_code: b.industryCode ?? null, brand_code: b.brandCode ?? null, updated_at: now })
+      .where('tenant_id', '=', tenantId).where('parent_sku', '=', sku).where('group_code', 'is distinct from', b.groupCode ?? null).execute();
   }
-  // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093): trigger CSDL ép false cho biến thể Nội bộ (đóng góp)
-  if (b.sendToTax !== undefined) {
-    await sql`UPDATE products SET send_to_tax = ${b.sendToTax}, updated_at = ${now} WHERE tenant_id = ${tenantId} AND sku = ${sku} AND send_to_tax <> ${b.sendToTax}`.execute(trx);
-  }
-  if (taxBefore !== undefined) {
-    const taxAfter = (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(trx)).rows[0]?.s;
-    if (taxAfter !== taxBefore && await hasMovements(trx, tenantId, sku)) {
-      throw Errors.conflict(`Mặt hàng ${sku} đã có nhập xuất, không đổi được Gửi lên thuế (mỗi mã đi trọn một đường thuế). Cần đổi thì tạo mã con mới; hàng đang có chuyển bằng phiếu chuyển đổi`);
-    }
-  }
+  // [2026-11-12 Nguyễn Văn Thủy] Biến thể / Gửi lên thuế không nhận từ người dùng: trigger products_variant_fill suy theo mã (0111), đuôi Z = không gửi thuế (đóng góp)
   // Hàng KCT (thuế bán ra KCT / R00K) chưa khai thuế mua vào → V13K (không chịu thuế đầu vào), không để phiếu mua tự lấy 8%.
   await trx.updateTable('products').set({ tax_in_code: 'V13K' }).where('tenant_id', '=', tenantId).where('sku', '=', sku).where('tax_in_code', 'is', null).where('tax_out_code', 'in', [...KCT_OUT_CODES]).execute();
 

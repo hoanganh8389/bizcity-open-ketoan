@@ -36,8 +36,8 @@ export const VOUCHER_PREFIX: Record<VoucherType | 'opening', string> = {
 export const VOUCHER_MONEY: Record<VoucherType, { side: 'debit' | 'credit'; prefixes: readonly string[]; label: string } | null> = {
   receipt: { side: 'debit', prefixes: ['111'], label: 'Phiếu thu: tài khoản Nợ phải là tiền mặt (111)' },
   payment: { side: 'credit', prefixes: ['111'], label: 'Phiếu chi: tài khoản Có phải là tiền mặt (111)' },
-  bank_receipt: { side: 'debit', prefixes: ['112', '113'], label: 'Phiếu báo có: tài khoản Nợ phải là tiền gửi ngân hàng (112, 113)' },
-  bank_payment: { side: 'credit', prefixes: ['112', '113'], label: 'Phiếu báo nợ: tài khoản Có phải là tiền gửi ngân hàng (112, 113)' },
+  bank_receipt: { side: 'debit', prefixes: ['112', '113'], label: 'Thu tiền gửi: tài khoản Nợ phải là tiền gửi ngân hàng (112, 113)' },
+  bank_payment: { side: 'credit', prefixes: ['112', '113'], label: 'Chi tiền gửi: tài khoản Có phải là tiền gửi ngân hàng (112, 113)' },
   manual: null,
 };
 
@@ -69,6 +69,8 @@ export const voucherLineSchema = z.object({
   case: z.string().trim().max(64).optional(),
   project: z.string().trim().max(64).optional(),
   capitalSource: z.string().trim().max(64).optional(),
+  /** Mục thu / chi (danh mục cash_item: cây THU / CHI) — báo cáo Dòng tiền gom theo mục. */
+  cashItem: z.string().trim().max(64).optional(),
   /** Mã chỉ tiêu lưu chuyển tiền tệ (01, 02…) của dòng tiền; chỉ dùng khi tài khoản tiền có theo dõi dòng tiền. */
   cashflowCode: z.string().trim().max(16).optional(),
 
@@ -102,9 +104,9 @@ export type VoucherLine = z.infer<typeof voucherLineSchema>;
 
 /** Danh mục chiều phân tích. */
 /** Danh mục dùng chung bảng dimensions. tool_group, usage_purpose chỉ gắn trên thẻ tài sản, không phải chiều phân tích dòng phiếu. */
-export const DIMENSION_KINDS = ['cost_item', 'department', 'contract', 'employee', 'case', 'project', 'capital_source', 'tool_group', 'usage_purpose'] as const;
+export const DIMENSION_KINDS = ['cost_item', 'department', 'contract', 'employee', 'case', 'project', 'capital_source', 'tool_group', 'usage_purpose', 'cash_item'] as const;
 export type DimensionKind = (typeof DIMENSION_KINDS)[number];
-export const DIMENSION_LABELS: Record<DimensionKind, string> = { cost_item: 'Khoản mục', department: 'Bộ phận', contract: 'Hợp đồng', employee: 'Nhân viên', case: 'Vụ việc', project: 'Dự án', capital_source: 'Nguồn vốn', tool_group: 'Nhóm công cụ dụng cụ', usage_purpose: 'Mục đích sử dụng' };
+export const DIMENSION_LABELS: Record<DimensionKind, string> = { cost_item: 'Khoản mục', department: 'Bộ phận', contract: 'Hợp đồng', employee: 'Nhân viên', case: 'Vụ việc', project: 'Dự án', capital_source: 'Nguồn vốn', tool_group: 'Nhóm công cụ dụng cụ', usage_purpose: 'Mục đích sử dụng', cash_item: 'Mục thu/chi' };
 
 /**
  * Các chiều phân tích ghi trên dòng phiếu: tên trường trên dòng phiếu và trong cột dims của dòng sổ (field),
@@ -119,6 +121,7 @@ export const ANALYSIS_DIMS = [
   { field: 'case', kind: 'case', flag: 'trackCase', label: 'Vụ việc' },
   { field: 'project', kind: 'project', flag: 'trackProject', label: 'Dự án' },
   { field: 'capitalSource', kind: 'capital_source', flag: 'trackCapitalSource', label: 'Nguồn vốn' },
+  { field: 'cashItem', kind: 'cash_item', flag: 'trackCashItem', label: 'Mục thu/chi' },
 ] as const;
 export type AnalysisDimField = (typeof ANALYSIS_DIMS)[number]['field'];
 

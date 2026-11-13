@@ -83,6 +83,8 @@ const amountOf = (r: Row) => parseAmount(r.debit) || parseAmount(r.credit);
 /** Số tiền tài khoản đối ứng phải cộng đủ: tiền của dòng + tiền thuế của dòng (cặp thuế ghi sổ cùng đối ứng đầu tiên). */
 const needOf = (r: Row) => amountOf(r) + parseAmount(r.taxAmount);
 const sideOf = (r: Row): 'debit' | 'credit' => (parseAmount(r.debit) ? 'debit' : 'credit');
+/** [2026-11-13 Nguyễn Văn Thủy] dòng chưa nhập tiền coi là bên Nợ (điền tài khoản theo loại) (đóng góp) */
+const mainSide = (r: Row): 'debit' | 'credit' => (parseAmount(r.credit) && !parseAmount(r.debit) ? 'credit' : 'debit');
 
 /** Dựng lại các dòng chính + đối ứng từ các cặp đã lưu (phiếu cũ không có group: mỗi cặp một dòng chính ghi Nợ). */
 function rowsFromLines(lines: VoucherLine[], headPartner = ''): Row[] {
@@ -133,6 +135,13 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
   const contracts = useDimension('contract') as Dimension[];
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.code, a])), [accounts]);
   const reasonList = reasons.filter((r) => (r.kind === 'receipt' || r.kind === 'payment') && (r.isActive || r.code === pv?.reasonCode));
+  // [2026-11-13 Nguyễn Văn Thủy] Loại (Tài khoản ngầm định nhóm Tổng hợp / Tài sản): chọn loại → điền TK còn trống, ô TK chỉ chọn trong lọc (đóng góp)
+  const adTypes = useQuery({ queryKey: ['account-default-types'], queryFn: () => api.get<{ code: string; group: string; name: string; isActive: boolean; columns: { key: string; filter: string[]; default: string }[] }[]>('/api/v1/account-default-types'), staleTime: 60_000 }).data ?? [];
+  const loaiList = adTypes.filter((t) => t.isActive && (t.group === 'Tổng hợp' || t.group === 'Tài sản, công cụ'));
+  const [loaiCode, setLoaiCode] = useState('');
+  const loai = loaiList.find((t) => t.code === loaiCode);
+  const colOf = (key: string) => loai?.columns.find((c) => c.key === key);
+  const filterOf = (side: 'debit' | 'credit') => colOf(side === 'debit' ? 'debit_account' : 'credit_account')?.filter;
 
   const [h, setH] = useState({
     docNo: existing?.docNo ?? '',
@@ -210,13 +219,13 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
     });
   };
   /** Thêm chi tiết phiếu (lưới trên): dòng trống mang diễn giải, nhân viên của đầu phiếu. */
-  const addRow = () => { const r = blankRow({ description: h.description, employee: h.employeeCode }); setRows((xs) => [...xs, r]); setActiveKey(r.key); };
+  const addRow = () => { const r = blankRow({ description: h.description, employee: h.employeeCode, account: colOf('debit_account')?.default ?? '' }); setRows((xs) => [...xs, r]); setActiveKey(r.key); };
   const removeRow = (key: number | null) => key !== null && setRows((xs) => xs.filter((x) => x.key !== key));
   /** Thêm tài khoản đối ứng cho dòng đang chọn: số tiền còn thiếu, thông tin lấy theo dòng. */
   const addCounter = () => {
     if (!active) return setProblem('Chọn một dòng ở lưới trên trước');
     const left = needOf(active) - active.counters.reduce((s, c) => s + parseAmount(c.amount), 0);
-    const c: Counter = { ...base({ partner: active.partner, description: active.description, employee: active.employee, department: active.department, contract: active.contract, costItem: active.costItem }), amount: left > 0 ? money(left) : '' };
+    const c: Counter = { ...base({ account: colOf(mainSide(active) === 'debit' ? 'credit_account' : 'debit_account')?.default ?? '', partner: active.partner, description: active.description, employee: active.employee, department: active.department, contract: active.contract, costItem: active.costItem }), amount: left > 0 ? money(left) : '' };
     setRow(active.key, { counters: [...active.counters, c] });
     setActiveCounter(c.key);
   };
@@ -303,7 +312,6 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
   // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: cảnh báo kiểm chuẩn của ngày phiếu
   const { doSave, doDelete, saving, error, setProblem, advisories } = useVoucherSave({
     existing, check, docDate: h.docDate, docType: 'manual', onSaved, onClose,
-    confirm: 'Bạn có chắc chắn muốn Ghi phiếu này không?',
     invalidate: [['documents']],
     submit: () => (existing ? api.put<{ docNo: string }>(`/api/v1/vouchers/${existing.id}`, body()) : api.post<{ docNo: string }>('/api/v1/vouchers', body())),
   });
@@ -346,6 +354,23 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
             <div className="vf-cell" style={{ gridColumn: '2 / 5', gridRow: 3 }}><input className="input" value={h.description} disabled={dis} onChange={(e) => set({ description: e.target.value })} /></div>
 
             {/* [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Lý do chỉ hiện khi bật lý do hạch toán (đóng góp) */}
+            {!useReasons && <><L c={2} r={1}>Loại</L>
+            <C c={2} r={1}>
+              <select className="select input" value={loaiCode} disabled={dis} title="Chọn loại để điền sẵn tài khoản và giới hạn tài khoản được chọn (khai ở Tài khoản ngầm định)"
+                onChange={(e) => {
+                  const code = e.target.value; setLoaiCode(code);
+                  const t = loaiList.find((x) => x.code === code);
+                  const d = t?.columns.find((c) => c.key === 'debit_account')?.default ?? ''; const cr = t?.columns.find((c) => c.key === 'credit_account')?.default ?? '';
+                  if (!t) return;
+                  setRows((xs) => xs.map((r) => {
+                    const main = mainSide(r) === 'debit' ? d : cr; const other = mainSide(r) === 'debit' ? cr : d;
+                    return { ...r, account: r.account || main, counters: r.counters.map((c) => ({ ...c, account: c.account || other })) };
+                  }));
+                }}>
+                <option value="">(Tự khai)</option>
+                {loaiList.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
+              </select>
+            </C></>}
             {useReasons && <><L c={2} r={1}>Lý do</L>
             <C c={2} r={1}><ListPicker items={reasonList.map((r) => ({ code: r.code, name: r.name }))} value={h.reasonCode} disabled={dis} onChange={(v) => set({ reasonCode: v })} /></C></>}
             <L c={2} r={2}>Nhân viên</L>
@@ -382,7 +407,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
                 {rows.map((r) => (
                   <tr key={r.key} data-dong={r.key} className={activeKey === r.key ? 'active' : undefined} onFocus={() => setActiveKey(r.key)} onClick={() => setActiveKey(r.key)}>
                     <td className="vf-act"><button disabled={dis} title="Xóa" onClick={() => removeRow(r.key)}><Trash2 size={14} className="text-bad" /></button></td>
-                    <td><AccountPicker postingOnly hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td>
+                    <td><AccountPicker postingOnly prefixes={filterOf(mainSide(r))} hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td>
                     <td className="vf-act"><button disabled={dis} title="Thêm" onClick={addRow}><Plus size={14} className="text-ok" /></button></td>
                     <td>{money2(r, 'credit')}</td>
                     <td>{money2(r, 'debit')}</td>
@@ -441,7 +466,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
                 {active?.counters.map((c) => (
                   <tr key={c.key} className={activeCounter === c.key ? 'active' : undefined} onFocus={() => setActiveCounter(c.key)} onClick={() => setActiveCounter(c.key)}>
                     <td className="vf-act"><button disabled={dis} title="Xóa" onClick={() => removeCounter(c.key)}><Trash2 size={14} className="text-bad" /></button></td>
-                    <td><AccountPicker postingOnly hideName className="input mono" value={c.account} disabled={dis} onChange={(v) => setCounter(active.key, c.key, { account: v })} /></td>
+                    <td><AccountPicker postingOnly prefixes={filterOf(active && mainSide(active) === 'debit' ? 'credit' : 'debit')} hideName className="input mono" value={c.account} disabled={dis} onChange={(v) => setCounter(active.key, c.key, { account: v })} /></td>
                     <td className="vf-act"><button disabled={dis} title="Thêm" onClick={addCounter}><Plus size={14} className="text-ok" /></button></td>
                     <td><input className="input num" inputMode="numeric" value={c.amount} disabled={dis} onChange={(e) => setCounter(active.key, c.key, { amount: e.target.value })} onBlur={() => setCounter(active.key, c.key, { amount: showAmount(c.amount) })} /></td>
                     <td><PartnerPicker activeOnly={!existing} addKind="customer" hideName value={c.partner} disabled={dis} onChange={(v) => setCounter(active.key, c.key, { partner: v })} /></td>

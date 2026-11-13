@@ -49,24 +49,21 @@ export const POSTING_TEMPLATES: PrintTemplate<PostingSheet>[] = [
 ];
 
 /* ------------------------------------------------------------------ ACC80 */
-export interface CashBalanceRow { branchCode: string; branchName: string; accountCode: string; accountName: string; opening: number; debit: number; credit: number; closing: number }
-export interface CashBalanceSheet { from: string; to: string; branchCodes: string; accounts: string; rows: CashBalanceRow[] }
+/** Một dòng của Bảng kê số dư tiền theo ngày: nhóm chi nhánh, chỉ tiêu (Tiền mặt / Tiền gửi / Tiền đang chuyển), tài khoản, cộng nhóm. */
+export interface CashBalanceLine { key: string; label: string; level: number; kind: 'group' | 'head' | 'data' | 'subtotal' | 'total'; values: number[] }
+export interface CashBalanceSheet { to: string; days: string[]; branchText: string; lines: CashBalanceLine[] }
 
+const dmy = (d: string) => d.split('-').reverse().join('/');
 export const CASH_BALANCE_TEMPLATES: PrintTemplate<CashBalanceSheet>[] = [
   {
-    id: 'sodutien', name: 'Bảng kê số dư tiền', paper: 'A4L', source: 'rdlcLoadBangKeSoDuTien.rdlc',
+    id: 'sodutien', name: 'Bảng kê số dư tiền theo ngày', paper: 'A4',
     render: (s, ctx) => (
       <LedgerForm ctx={ctx} d={{
-        title: 'BẢNG KÊ SỐ DƯ TIỀN', branchCode: branchOf(s.branchCodes), from: s.from, to: s.to, signs: REPORT_SIGNS, total: 'Tổng cộng', rows: s.rows,
-        info: [['Tài khoản tiền', s.accounts.split(',').join(', ')], ...branchInfo(s.branchCodes)],
-        groupBy: { key: (r) => r.branchCode, label: (k, rs) => `Chi nhánh: ${k} — ${rs[0]?.branchName ?? ''}`, subtotal: 'Cộng chi nhánh' },
+        title: 'BẢNG KÊ SỐ DƯ TIỀN THEO NGÀY', period: `${s.branchText ? `Chi nhánh: ${s.branchText}; ` : ''}Loại tiền: VND; Đến ngày ${dmy(s.to)}`,
+        signs: REPORT_SIGNS, total: false, rows: s.lines,
         cols: [
-          { key: 'tk', h: 'Mã', w: 80, center: true, v: (r) => r.accountCode },
-          { key: 'ten', h: 'Tên ngân hàng / quỹ tiền', v: (r) => r.accountName },
-          { key: 'dau', h: 'Số dư đầu kỳ', w: 120, num: true, v: (r) => m(r.opening), sum: (r) => r.opening },
-          { key: 'no', h: 'Phát sinh Nợ', w: 120, num: true, v: (r) => mb(r.debit), sum: (r) => r.debit },
-          { key: 'co', h: 'Phát sinh Có', w: 120, num: true, v: (r) => mb(r.credit), sum: (r) => r.credit },
-          { key: 'cuoi', h: 'Số dư cuối kỳ', w: 120, num: true, v: (r) => m(r.closing), sum: (r) => r.closing },
+          { key: 'ct', h: 'Chỉ tiêu', v: (r) => { const t = <span style={{ paddingLeft: r.level * 14 }}>{r.label}</span>; return r.kind === 'data' ? t : <b>{t}</b>; } },
+          ...s.days.map((d, i): LedgerCol<CashBalanceLine> => ({ key: `d${i}`, h: `Ngày ${dmy(d)}`, w: 120, num: true, v: (r) => (r.kind === 'group' ? '' : r.kind === 'data' ? m(r.values[i] ?? 0) : <b>{m(r.values[i] ?? 0)}</b>) })),
         ],
       }} />
     ),

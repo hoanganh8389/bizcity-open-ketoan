@@ -52,7 +52,7 @@ export function BangChietKhauMa({ items, onChange, prefer }: { items: ItemDiscou
     queryFn: () => api.post<Record<string, ProductUnit[]>>(`${P}/units`, { skus: shown }) });
   const set = (idx: number, p: Partial<ItemDiscount>) => onChange(items.map((x, j) => (j === idx ? { ...x, ...p } : x)));
   const exportXlsx = async () => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const ws = XLSX.utils.json_to_sheet(items.map((i) => ({ 'Mã hàng': i.sku, 'Tên hàng': nameOf(i.sku) ?? '', '% chiết khấu': i.pct ?? '', 'Giảm tiền': i.amount ?? '', 'ĐVT': i.unit ?? '', 'SL tối thiểu': i.minQty ?? '', 'Ghi chú': i.note ?? '' })));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Chiet khau theo ma'); XLSX.writeFile(wb, 'chiet-khau-theo-ma-hang.xlsx');
   };

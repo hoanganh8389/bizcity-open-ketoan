@@ -8,6 +8,7 @@
  *   GET /api/v1/reports/balance-sheet     Báo cáo tình hình tài chính (B01-DN)
  *   GET /api/v1/reports/tax-summary       Bảng tổng hợp thuế GTGT
  *   GET /api/v1/reports/cash-balances     Bảng kê số dư tiền
+ *   GET /api/v1/reports/cash-items        Dòng tiền theo mục thu / chi
  *   GET /api/v1/reports/posting-summary   Bảng tổng hợp chứng từ
  *   GET /api/v1/reports/expense-by-dimension  Chi phí theo khoản mục, bộ phận, hợp đồng
  *   GET /api/v1/reports/aging             Công nợ theo tuổi nợ
@@ -32,6 +33,7 @@ import { z } from 'zod';
 import { authOf, requirePermission } from '../../../core/auth.js';
 import { ok, pageMeta, pageQuerySchema, queryBool } from '../../../core/http.js';
 import { reportService } from './report.service.js';
+import { BCTC_REPORTS, bctcSaveSchema, lapBctcService } from './lap-bctc.js';
 import { registerActions } from '../../../core/actions.js';
 import { reportActions } from './report.actions.js';
 import { EXPENSE_GROUPS, type ExpenseGroup } from './control-reports.js';
@@ -54,6 +56,35 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
   registerActions(reportActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
   const pre = requirePermission('reports:read');
+
+  // [2026-11-11 Nguyễn Văn Thủy] Lập báo cáo tài chính (ACC99): lập số theo kỳ, lưu bộ đã lập (đóng góp)
+  const bctcWrite = requirePermission('documents:write');
+  const idParam = z.object({ id: z.coerce.number().int().positive() });
+  r.get('/api/v1/financial-statements', {
+    preHandler: pre,
+    schema: { tags, summary: 'Báo cáo tài chính đã lập (danh sách)' },
+    handler: async (req) => ok(await lapBctcService.list(authOf(req))),
+  });
+  r.get('/api/v1/financial-statements/build', {
+    preHandler: pre,
+    schema: { tags, summary: 'Lập số báo cáo tài chính cho một kỳ (B01, B02, B03 từ sổ)', querystring: z.object({ from: date, to: date, reports: z.string().default(BCTC_REPORTS.join(',')).transform((s) => s.split(',').filter((x): x is (typeof BCTC_REPORTS)[number] => (BCTC_REPORTS as readonly string[]).includes(x))) }) },
+    handler: async (req) => ok(await lapBctcService.build(authOf(req), req.query)),
+  });
+  r.get('/api/v1/financial-statements/:id', {
+    preHandler: pre,
+    schema: { tags, summary: 'Một bộ báo cáo tài chính đã lập', params: idParam },
+    handler: async (req) => ok(await lapBctcService.get(authOf(req), req.params.id)),
+  });
+  r.put('/api/v1/financial-statements', {
+    preHandler: bctcWrite,
+    schema: { tags, summary: 'Ghi bộ báo cáo tài chính đã lập (thêm mới hoặc sửa)', body: bctcSaveSchema },
+    handler: async (req) => ok(await lapBctcService.save(authOf(req), req.body)),
+  });
+  r.delete('/api/v1/financial-statements/:id', {
+    preHandler: bctcWrite,
+    schema: { tags, summary: 'Xoá bộ báo cáo tài chính đã lập', params: idParam },
+    handler: async (req) => ok(await lapBctcService.remove(authOf(req), req.params.id)),
+  });
 
   r.get('/api/v1/reports/trial-balance', {
     preHandler: pre,
@@ -90,7 +121,7 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
 
   r.get('/api/v1/reports/sales-invoices', {
     preHandler: pre,
-    schema: { tags, summary: 'Bảng kê hoá đơn bán ra (direction=output) hoặc mua vào (direction=input)', querystring: z.object({ from: date, to: date, branchCodes, direction: z.enum(['output', 'input']).default('output') }) },
+    schema: { tags, summary: 'Bảng kê hoá đơn bán ra (direction=output) hoặc mua vào (direction=input)', querystring: z.object({ from: date, to: date, branchCodes, direction: z.enum(['output', 'input']).default('output'), merge: z.enum(['0', '1']).optional().transform((v) => v === '1').describe('1 = cộng gộp theo từng hoá đơn') }) },
     handler: async (req) => ok(await reportService.salesInvoices(authOf(req), req.query)),
   });
 
@@ -112,6 +143,12 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
     preHandler: pre,
     schema: { tags, summary: 'Bảng tổng hợp thuế GTGT theo chi nhánh', querystring: z.object({ from: date, to: date, branchCodes }) },
     handler: async (req) => ok(await reportService.taxSummary(authOf(req), req.query)),
+  });
+
+  r.get('/api/v1/reports/cash-items', {
+    preHandler: pre,
+    schema: { tags, summary: 'Dòng tiền: thu / chi trên tài khoản tiền theo mục thu / chi', querystring: ranged },
+    handler: async (req) => ok(await reportService.cashItems(authOf(req), req.query)),
   });
 
   r.get('/api/v1/reports/cash-balances', {

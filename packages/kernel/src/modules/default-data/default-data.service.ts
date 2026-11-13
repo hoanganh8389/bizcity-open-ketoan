@@ -64,6 +64,8 @@ interface Dataset {
   screens: string[];
   current: (trx: Db, tenantId: string) => Promise<number>;
   restore: (trx: Db, tenantId: string) => Promise<RestoreResult>;
+  /** false = không chạy trong "Quay về toàn bộ" (bộ làm sạch, xoá vĩnh viễn). */
+  inAll?: boolean;
 }
 
 const empty = (): RestoreResult => ({ added: 0, updated: 0, removed: 0, deactivated: 0, warnings: [] });
@@ -91,17 +93,18 @@ async function restoreDimension(trx: Db, tenantId: string, kind: DimensionKind, 
     }
   }
   const keep = new Set(rows.map((r) => r.code));
+  // [2026-11-13 Nguyễn Văn Thủy] phòng ban riêng của chi nhánh (0129) không thuộc dữ liệu gốc nhưng phải giữ (đóng góp)
+  if (kind === 'department') for (const b of await trx.selectFrom('branches').select('department_code').where('tenant_id', '=', tenantId).where('department_code', 'is not', null).execute()) keep.add(b.department_code!);
   await dropExtras(res, [...have.keys()].filter((c) => !keep.has(c)), (c) => have.get(c)!.is_active, () => usedDimensionCodes(trx, tenantId, kind, [...have.keys()].filter((c) => !keep.has(c))),
     (c) => trx.updateTable('dimensions').set({ is_active: false }).where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', c).execute(),
     (c) => trx.deleteFrom('dimensions').where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', c).execute());
   if (kind === 'department') {
-    // Chi nhánh chưa gắn bộ phận: gắn theo quy ước BH + 5 số đầu của mã chi nhánh nếu bộ phận đó có trong danh mục.
+    // [2026-11-13 Nguyễn Văn Thủy] chi nhánh chưa gắn / gắn chung Cửa hàng → phòng ban riêng của chi nhánh (0129) (đóng góp)
     const r = await sql`
-      UPDATE branches b SET department_code = 'BH' || left(b.code, 5)
-       WHERE b.tenant_id = ${tenantId} AND b.department_code IS NULL AND b.code ~ '^[0-9]{5}'
-         AND EXISTS (SELECT 1 FROM dimensions d WHERE d.tenant_id = b.tenant_id AND d.kind = 'department' AND d.code = 'BH' || left(b.code, 5))`.execute(trx);
+      UPDATE branches b SET department_code = bizcity_ensure_branch_department(b.tenant_id, b.id, b.code, b.name, COALESCE(b.level, ''))
+       WHERE b.tenant_id = ${tenantId} AND (b.department_code IS NULL OR b.department_code IN ('CN-CH', 'CN', 'BH'))`.execute(trx);
     const n = Number(r.numAffectedRows ?? 0);
-    if (n) res.warnings.push(`Đã gắn bộ phận cho ${n} chi nhánh theo quy ước BH + mã cửa hàng`);
+    if (n) res.warnings.push(`Đã gắn phòng ban riêng cho ${n} chi nhánh`);
     const left = await trx.selectFrom('branches').select('code').where('tenant_id', '=', tenantId).where('is_active', '=', true).where('department_code', 'is', null).execute();
     if (left.length) res.warnings.push(`${left.length} chi nhánh chưa gắn bộ phận (${left.slice(0, 10).map((b) => b.code).join(', ')}${left.length > 10 ? '…' : ''}): gắn ở danh mục Chi nhánh`);
   }
@@ -129,6 +132,7 @@ const DIM_USES: Record<DimensionKind, { dims?: string; assetCol?: string; normCo
   capital_source: { dims: 'capitalSource' },
   tool_group: { assetCol: 'tool_group_code' },
   usage_purpose: { assetCol: 'usage_purpose_code' },
+  cash_item: { dims: 'cashItem' },
 };
 
 /** Mã chiều phân tích đang được dùng: sổ cái, thẻ tài sản, định mức, chi nhánh, lý do, lịch hợp đồng, mã con. */
@@ -265,6 +269,17 @@ async function restoreItemClasses(trx: Db, tenantId: string): Promise<RestoreRes
 }
 
 /** Danh mục mặt hàng: thêm / cập nhật mọi mặt hàng của tệp gốc (tên, đơn vị tính, nhóm hạch toán, thuế, phân loại). Không xoá mặt hàng khác. */
+// [2026-11-13 Nguyễn Văn Thủy] Nhóm hàng + mặt hàng: làm sạch hẳn, giữ mã đã phát sinh, nạp bộ mẫu nhỏ (0124) (đóng góp)
+async function resetCatalogSample(trx: Db, tenantId: string): Promise<RestoreResult> {
+  const r = await sql<{ v: { removed_products: number; removed_groups: number; added_products: number; added_groups: number; kept_products: number } }>`SELECT bizcity_reset_catalog_sample(${tenantId}::bigint) AS v`.execute(trx);
+  const v = r.rows[0]!.v;
+  const res = empty();
+  res.added = v.added_products + v.added_groups;
+  res.removed = v.removed_products + v.removed_groups;
+  if (v.kept_products) res.warnings.push(`Giữ ${v.kept_products} mặt hàng đã phát sinh trên sổ (cùng nhóm hàng của chúng).`);
+  return res;
+}
+
 async function restoreProducts(trx: Db, tenantId: string): Promise<RestoreResult> {
   const res = empty();
   const items = readSeed<SeedItem & { group_code: string | null; industry_code: string | null; brand_code: string | null; note?: string; excise_rate?: number | null }>('mat-hang-tai-khoan.jsonl').rows;
@@ -384,12 +399,16 @@ async function restoreBranches(trx: Db, tenantId: string): Promise<RestoreResult
     const cur = have.get(r.code);
     const info = { note: r.note ?? '', company_name: r.company_name ?? '', tax_code: r.tax_code ?? '', phone: r.phone ?? '', fax: r.fax ?? '' };
     if (!cur) { await trx.insertInto('branches').values({ tenant_id: tenantId, code: r.code, name: r.name, address: r.address, department_code: dep, is_active: r.is_active, ...info }).execute(); res.added++; }
-    else if (cur.name !== r.name || (cur.address ?? null) !== r.address || cur.is_active !== r.is_active || (dep && cur.department_code !== dep)
+    else if (cur.name !== r.name || (cur.address ?? null) !== r.address || cur.is_active !== r.is_active || (dep && !cur.department_code)
       || Object.entries(info).some(([k, v]) => (cur as Record<string, unknown>)[k] !== v)) {
-      await trx.updateTable('branches').set({ name: r.name, address: r.address, is_active: r.is_active, ...info, ...(dep ? { department_code: dep } : {}) }).where('tenant_id', '=', tenantId).where('code', '=', r.code).execute();
+      await trx.updateTable('branches').set({ name: r.name, address: r.address, is_active: r.is_active, ...info, ...(dep && !cur.department_code ? { department_code: dep } : {}) }).where('tenant_id', '=', tenantId).where('code', '=', r.code).execute();
       res.updated++;
     }
   }
+  // [2026-11-13 Nguyễn Văn Thủy] gốc ghi phòng ban chung (Cửa hàng) → mỗi chi nhánh phòng ban riêng (0129); phòng ban đã gắn giữ nguyên (đóng góp)
+  if (deps.size) await sql`
+    UPDATE branches b SET department_code = bizcity_ensure_branch_department(b.tenant_id, b.id, b.code, b.name, COALESCE(b.level, ''))
+     WHERE b.tenant_id = ${tenantId} AND (b.department_code IS NULL OR b.department_code IN ('CN-CH', 'CN', 'BH'))`.execute(trx);
   if (noDep) res.warnings.push(`${noDep} chi nhánh chưa gắn được bộ phận vì danh mục bộ phận chưa có mã: quay về dữ liệu gốc của Danh mục bộ phận (ACC26) trước`);
   const own = [...have.keys()].filter((c) => !rows.some((r) => r.code === c));
   if (own.length) res.warnings.push(`Giữ nguyên ${own.length} chi nhánh không có trong dữ liệu gốc (${own.slice(0, 10).join(', ')}${own.length > 10 ? '…' : ''})`);
@@ -539,13 +558,17 @@ export const DATASETS: Dataset[] = [
       usedBy(trx, id, (codes) => sql<{ code: string }>`SELECT DISTINCT tax_code AS code FROM ledger_lines WHERE tenant_id = ${id} AND tax_code = ANY(${codes}::text[]) UNION SELECT tax_out_code FROM products WHERE tenant_id = ${id} AND tax_out_code = ANY(${codes}::text[]) UNION SELECT tax_in_code FROM products WHERE tenant_id = ${id} AND tax_in_code = ANY(${codes}::text[])`)),
   },
   dim('cost_item', 'Danh mục khoản mục', 'cost_item', 'khoan-muc.jsonl', ['ACC24']),
-  dim('department', 'Danh mục bộ phận (gồm từng cửa hàng)', 'department', 'bo-phan.jsonl', ['ACC26']),
+  dim('department', 'Danh mục bộ phận (phòng ban chức năng)', 'department', 'bo-phan.jsonl', ['ACC26']),
   { key: 'branches', title: 'Chi nhánh / cửa hàng', file: 'chi-nhanh.jsonl', screens: ['DM02'], current: tableCount('branches'), restore: restoreBranches },
   { key: 'warehouses', title: 'Kho theo chi nhánh', file: 'kho.jsonl', screens: ['DM12'], current: tableCount('warehouses'), restore: restoreWarehouses },
   { key: 'reasons', title: 'Lý do – tài khoản', file: 'ly-do.jsonl', screens: ['ACC18'], current: countOf('posting_reasons'), restore: restoreReasons },
   { key: 'posting_groups', title: 'Mặt hàng – tài khoản (nhóm hạch toán)', file: 'nhom-hach-toan.jsonl', screens: ['ACC17'], current: countOf('product_posting_groups'), restore: restoreGroups },
-  { key: 'item_classes', title: 'Phân loại hàng hoá (nhóm, ngành, nhãn hàng)', file: 'phan-loai-hang.jsonl', screens: ['DM11'], current: tableCount('item_classes'), restore: restoreItemClasses },
-  { key: 'products', title: 'Danh mục mặt hàng', file: 'mat-hang-tai-khoan.jsonl', screens: ['DM10'], current: tableCount('products'), restore: restoreProducts },
+  {
+    key: 'catalog_sample', title: 'Nhóm hàng + mặt hàng (bộ mẫu, làm sạch)', file: 'mat-hang-mau.jsonl', screens: ['DM10', 'DM11'], inAll: false,
+    current: tableCount('products'), restore: resetCatalogSample,
+  },
+  { key: 'item_classes', title: 'Phân loại hàng hoá (nhóm, ngành, nhãn hàng)', file: 'phan-loai-hang.jsonl', screens: [], current: tableCount('item_classes'), restore: restoreItemClasses },
+  { key: 'products', title: 'Danh mục mặt hàng', file: 'mat-hang-tai-khoan.jsonl', screens: [], current: tableCount('products'), restore: restoreProducts },
   { key: 'partner_groups', title: 'Nhóm đối tượng', file: 'nhom-doi-tuong.jsonl', screens: ['DM08'], current: tableCount('partner_groups'),
     restore: (trx, id) => restoreByCode(trx, id, 'partner_groups', 'nhom-doi-tuong.jsonl', ['name', 'kind', 'parent_code', 'note', 'is_active'],
       usedBy(trx, id, (codes) => sql<{ code: string }>`SELECT group_code AS code FROM partners WHERE tenant_id = ${id} AND group_code = ANY(${codes}::text[]) UNION SELECT parent_code FROM partner_groups WHERE tenant_id = ${id} AND parent_code = ANY(${codes}::text[])`)) },
@@ -583,6 +606,7 @@ export const DATASETS: Dataset[] = [
   dim('usage_purpose', 'Mục đích sử dụng', 'usage_purpose', 'muc-dich-su-dung.jsonl', ['ACC21']),
   dim('case', 'Danh mục vụ việc', 'case', 'vu-viec.jsonl', ['DM06']),
   dim('project', 'Danh mục dự án', 'project', 'du-an.jsonl', ['DM07']),
+  dim('cash_item', 'Danh mục mục thu/chi', 'cash_item', 'muc-thu-chi.jsonl', ['DM17']),
 ];
 
 export function datasetOf(key: string): Dataset {

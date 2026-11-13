@@ -2,9 +2,25 @@
  * Thành phần giao diện nhỏ, dùng chung ở mọi màn hình.
  */
 import { useKiemLoi } from './useKiemLoi';
-import { Children, Fragment, isValidElement, useCallback, useEffect, useRef, useState, type InputHTMLAttributes, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
+import { Children, Fragment, isValidElement, lazy, Suspense, useCallback, useEffect, useRef, useState, type InputHTMLAttributes, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { X } from 'lucide-react';
+import '@/features/help/huong-dan.css';
+// [2026-11-12 Nguyễn Văn Thủy] mọi hộp thoại có nút Hướng dẫn: định danh = đường dẫn màn + tiêu đề (bỏ số, mã), gắn thẻ hướng dẫn (0113) (đóng góp)
+const HelpDrawerLazy = lazy(() => import('./HelpDrawer').then((m) => ({ default: m.HelpDrawer })));
+/** Chữ của tiêu đề (ReactNode) → nhãn ổn định: phần trước " — ", bỏ từ có chữ số. */
+function nodeText(n: ReactNode): string {
+  if (n === null || n === undefined || typeof n === 'boolean') return '';
+  if (typeof n === 'string' || typeof n === 'number') return String(n);
+  if (Array.isArray(n)) return n.map(nodeText).join('');
+  if (isValidElement(n)) return nodeText((n.props as { children?: ReactNode }).children);
+  return '';
+}
+export function modalHelpKey(title: ReactNode): { key: string; label: string } {
+  const head = nodeText(title).split(/\s[—–-]\s/)[0] ?? '';
+  const label = head.split(/\s+/).filter((w) => w && !/\d/.test(w)).join(' ').trim();
+  return { key: `modal:${window.location.pathname}#${label || 'hop-thoai'}`, label: label || 'Hộp thoại' };
+}
 import { money, parseNum, price as priceText } from '@/lib/format';
 
 /** Ô số tiền: căn phải, số âm màu đỏ, 0 để trống (mặc định). */
@@ -128,7 +144,8 @@ export function Drawer({ title, onClose, children, narrow, actions }: { title: R
  * [2026-11-11 Nguyễn Văn Thủy] `voucher`: hộp thoại CHỨNG TỪ — gần toàn màn, tổng tiền chữ lớn góc trên phải, dòng phím tắt ở chân (đóng góp).
  */
 export interface VoucherFrame { total?: number | null; totalLabel?: string; keys?: string }
-export function Modal({ title, onClose, children, footer, wide, viewFirst, viewActions, onEdit, viewAgain, voucher }: { title: ReactNode; onClose: () => void; children: ReactNode; footer: ReactNode; wide?: boolean; viewFirst?: boolean; viewActions?: ReactNode; onEdit?: () => void; viewAgain?: ViewAgain; voucher?: VoucherFrame }) {
+export function Modal({ title, onClose, children, footer, wide, viewFirst, viewActions, onEdit, viewAgain, voucher, helpKey }: { title: ReactNode; onClose: () => void; children: ReactNode; footer: ReactNode; wide?: boolean; viewFirst?: boolean; viewActions?: ReactNode; onEdit?: () => void; viewAgain?: ViewAgain; voucher?: VoucherFrame; /** Định danh hướng dẫn riêng; bỏ trống = tự sinh theo màn + tiêu đề. */ helpKey?: string }) {
+  const [help, setHelp] = useState(false);
   const [locked, setLocked] = useState(() => Boolean(viewFirst) && !takeEditIntent());
   const viewSignal = viewAgain?.[0] ?? 0;
   useEffect(() => { if (viewSignal) setLocked(true); }, [viewSignal]);
@@ -169,6 +186,7 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
       <div className={`modal ${wide || voucher ? 'wide' : ''} ${voucher ? 'chung-tu' : ''} ${locked ? 'is-locked' : ''}`} role="dialog" aria-modal="true">
         <div className="modal-head" ref={(el) => { dock.headRef.current = el; }}>{title}{locked && <span className="badge badge-info modal-viewing">Đang xem</span>}
           {voucher && voucher.total !== undefined && <span className="ct-total" title={voucher.totalLabel ?? 'Tổng tiền thanh toán'}><small>{voucher.totalLabel ?? 'Tổng tiền thanh toán'}</small><b>{(voucher.total ?? 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}</b></span>}
+          <button type="button" className="modal-help" data-view-ok onClick={() => setHelp(true)} title="Hướng dẫn sử dụng của hộp thoại này">? Hướng dẫn</button>
           {dock.top && <MinimizeButton onClick={dock.minimize} />}<button type="button" className="modal-x" data-view-ok onClick={onClose} aria-label="Đóng" title="Đóng (Esc)">✕</button></div>
         <div className="modal-body" ref={kl.body} {...kl.bodyProps} onClickCapture={guard} onMouseDownCapture={guard} onKeyDownCapture={guard} onPasteCapture={guard} onDropCapture={guard} onCutCapture={guard}>
           {children}
@@ -184,6 +202,7 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
         </div>
       </div>
     </div>
+    {help && <Suspense fallback={null}>{(() => { const h = modalHelpKey(title); return <HelpDrawerLazy guideKey={helpKey ?? h.key} label={h.label} onClose={() => setHelp(false)} />; })()}</Suspense>}
     </DockScope>
   );
 }

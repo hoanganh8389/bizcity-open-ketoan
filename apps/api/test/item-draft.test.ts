@@ -25,11 +25,11 @@ afterAll(async () => {
 });
 
 describe('Gate A: khung Vì sao mặt hàng', () => {
-  it('thiếu ĐVT gốc → chặn; chưa nhóm hạch toán (có nhóm mặc định) → cảnh báo mềm', async () => {
+  it('thiếu ĐVT gốc → chặn; chưa nhóm hạch toán không còn nhắc (bỏ nhóm hạch toán 12/11)', async () => {
     const r = await call(ctx, 'POST', '/api/v1/products/validate', { sku: 'MH-X' });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const f = r.body.data.findings as { code: string; level: string; howTo?: string }[];
-    expect(f.map((x) => [x.code, x.level])).toEqual([['ITEM-BLOCK-001', 'block'], ['ITEM-HINT-001', 'warn']]);
+    expect(f.map((x) => [x.code, x.level])).toEqual([['ITEM-BLOCK-001', 'block']]);
     expect(f[0]!.howTo).toMatch(/đơn vị tính/);
   });
 

@@ -9,22 +9,21 @@
  * [2026-11-11 Nguyễn Văn Thủy] Hai cách đặt bảng tham số (đóng góp):
  *   - Ngăn kéo (mặc định ở giao diện Xanh): báo cáo chiếm trọn bề ngang; dòng trên cùng tóm tắt tham số đang xem + nút
  *     "Chọn tham số" mở ngăn kéo bên phải; bấm Tìm kiếm / Xem trong ngăn kéo thì ngăn tự đóng.
- *   - Ghim bên trái (như trước; mặc định ở giao diện cổ điển). Nút ghim trong ngăn kéo / trên bảng lọc để đổi, nhớ theo máy.
+ *   - Ghim bên trái (mặc định không ghim). Nút ghim trong ngăn kéo / trên bảng lọc để đổi, nhớ theo máy.
  *   Bảng tham số luôn được dựng (chỉ ẩn), nên đóng / mở không mất các ô đang chọn.
  */
 import { PERIOD_PRESETS, presetOf } from '@/lib/format';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useLocation } from 'react-router-dom';
-import { FileSpreadsheet, Pin, PinOff, Plus, Printer, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
-import { giaoDien } from '@/lib/giaoDien';
+import { FileSpreadsheet, Pin, PinOff, Printer, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useBranches } from './filters';
 import { FilterPanelCtx, useFilterPanel, type FilterPanelContext } from './filterPanel';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — bảng lọc chi nhánh / kho thêm thẻ Cây theo sơ đồ tổ chức (tích cha tích hết con, tới kho)
 import { CayDonVi } from './CayDonVi';
 import { useOrgTree } from '@/lib/orgUnits';
-import { BoThamSo, type BoThamSoProps } from './BoThamSo';
+import { BoThamSo, BranchBridgeCtx, type BoThamSoProps, type BranchBridge } from './BoThamSo';
 
 /**
  * Bề rộng bảng lọc (nhớ theo máy): mặc định 240px để nhường chỗ cho bảng số liệu; kéo rộng tới 600px,
@@ -38,7 +37,7 @@ const readWidth = () => {
 };
 const saveWidth = (w: number) => { try { localStorage.setItem(WIDTH_KEY, String(w)); } catch { /* bỏ qua */ } };
 const GHIM_KEY = 'ketoan.rp.ghim';
-const readGhim = () => { try { const v = localStorage.getItem(GHIM_KEY); return v === null ? giaoDien.get() !== 'xanh' : v === '1'; } catch { return true; } };
+const readGhim = () => { try { const v = localStorage.getItem(GHIM_KEY); return v === '1'; } catch { return true; } };
 
 const dmy = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v.slice(8, 10)}/${v.slice(5, 7)}/${v.slice(0, 4)}` : v);
 /** Đọc tham số đang chọn từ bảng lọc (nhãn + giá trị ô) để hiện một dòng tóm tắt trên báo cáo. */
@@ -69,9 +68,21 @@ export function ReportSideLayout({ panel, children, boThamSo }: { panel: ReactNo
   const [ghim, setGhim] = useState(readGhim);
   const [mo, setMo] = useState(false);
   const [tt, setTt] = useState<string[]>([]);
+  // Ô chi nhánh trong bảng tham số tự đăng ký: có thì khối Bộ tham số hiện cả ở màn chưa nối bộ tham số riêng.
+  const bridge = useRef<BranchBridge | null>(null);
+  const [coCN, setCoCN] = useState(false);
+  const reg = useCallback((b: BranchBridge | null) => { bridge.current = b; setCoCN(Boolean(b)); }, []);
+  const khoiBo = boThamSo || coCN ? <BoThamSo {...(boThamSo ?? {})} bridge={bridge} /> : null;
+  panel = <BranchBridgeCtx.Provider value={reg}>{panel}</BranchBridgeCtx.Provider>;
   const doiGhim = () => { const g = !ghim; setGhim(g); setMo(false); try { localStorage.setItem(GHIM_KEY, g ? '1' : '0'); } catch { /* bỏ qua */ } };
   // Tóm tắt tham số: đọc lại sau khi vẽ và khi đóng ngăn kéo.
   useEffect(() => { if (ghim) return; const t = setTimeout(() => setTt(tomTat(panelRef.current)), 300); return () => clearTimeout(t); }, [ghim, mo]);
+  // [2026-11-11 Nguyễn Văn Thủy] màn đổi tham số bằng mã (bấm tờ khai đã lưu, mở từ danh sách…): đọc lại tóm tắt khi bảng tham số vẽ lại (đóng góp)
+  useEffect(() => {
+    if (ghim) return;
+    const t = setTimeout(() => { const next = tomTat(panelRef.current); setTt((cur) => (cur.join('|') === next.join('|') ? cur : next)); }, 150);
+    return () => clearTimeout(t);
+  }, [panel, ghim]);
   // Bấm nút chính (Tìm kiếm / Xem) trong ngăn kéo: đóng ngăn, báo cáo hiện trọn bề ngang.
   const onPanelClick = (e: React.MouseEvent) => {
     if (ghim) return;
@@ -156,7 +167,7 @@ export function ReportSideLayout({ panel, children, boThamSo }: { panel: ReactNo
             <button type="button" className="btn btn-sm btn-ghost" onClick={doiGhim} title="Ghim bảng tham số bên trái màn (như trước)"><Pin size={14} /> Ghim bên trái</button>
             <button type="button" className="btn btn-sm btn-ghost" onClick={() => setMo(false)} aria-label="Đóng" title="Đóng (Esc)"><X size={16} /></button>
           </div>
-          {boThamSo && <BoThamSo {...boThamSo} />}
+          {khoiBo}
           {panel}
         </aside>
         <div className="rp-main">{children}</div>
@@ -169,7 +180,7 @@ export function ReportSideLayout({ panel, children, boThamSo }: { panel: ReactNo
       <button type="button" className="rp-mtoggle" onClick={() => setMOpen((x) => !x)}>{mOpen ? '▾' : '▸'} Bộ lọc</button>
       <aside className="rp-panel" ref={panelRef} style={{ height: maxH }}>
         <button type="button" className="rp-boghim" onClick={doiGhim} title="Bỏ ghim: bảng tham số thành ngăn kéo bên phải, báo cáo rộng hết màn"><PinOff size={12} /> Bỏ ghim</button>
-        {boThamSo && <BoThamSo {...boThamSo} />}
+        {khoiBo}
         {panel}
       </aside>
       <div className="rp-split" onMouseDown={startDrag} onDoubleClick={toggle} title="Kéo để đổi bề rộng bảng lọc; kéo hết sang trái hoặc bấm nút để thu gọn">
@@ -215,17 +226,6 @@ export function branchesPicked(branchCodes: string): boolean {
   return false;
 }
 
-/** Bộ chọn chi nhánh đặt tên (dùng chung mọi màn, nhớ theo máy). */
-interface BranchPreset { name: string; codes: string[] }
-const PRESETS_KEY = 'ketoan.cn.presets';
-const readPresets = (): BranchPreset[] => {
-  try {
-    const v = JSON.parse(localStorage.getItem(PRESETS_KEY) ?? '[]') as BranchPreset[];
-    return Array.isArray(v) ? v.filter((p) => p && typeof p.name === 'string' && Array.isArray(p.codes)) : [];
-  } catch { return []; }
-};
-const savePresets = (list: BranchPreset[]) => { try { localStorage.setItem(PRESETS_KEY, JSON.stringify(list)); } catch { /* bỏ qua */ } };
-
 /** Chi nhánh đã tích của từng màn (nhớ theo máy, mỗi màn một chỗ). */
 const pickedKey = (pathname: string) => `ketoan.cn.chon:${pathname}`;
 /** Mã kho đã tích của từng màn. */
@@ -236,8 +236,7 @@ const whKey = (pathname: string) => `ketoan.kho.chon:${pathname}`;
  * Ô tìm lọc theo mã hoặc tên.
  * Nhớ theo màn: lần sau mở lại màn, các ô tích như lần trước (onRestore nhận giá trị nhớ; mặc định gọi onChange).
  *   Màn mở kèm chi nhánh chỉ định sẵn (bấm từ màn khác sang) thì không lấy giá trị nhớ.
- * Chọn nhanh: lưu các ô đang tích thành một bộ có tên (ví dụ "Chi nhánh Phú Thọ"); ở bất kỳ màn nào bấm tên bộ là tích đúng các chi nhánh đó.
- *   Danh sách vẫn hiện đủ mọi chi nhánh, bộ chọn chỉ đặt dấu tích.
+ * Bộ chi nhánh đã lưu: chọn ở khối "Bộ tham số" đầu bảng tham số (dùng mọi màn) — ô này tự đăng ký với khối đó.
  */
 export function BranchCheckList({ value, onChange, onRestore }: { value: string; onChange: (v: string) => void; onRestore?: (v: string) => void }) {
   const { data: raw = [] } = useBranches();
@@ -251,9 +250,6 @@ export function BranchCheckList({ value, onChange, onRestore }: { value: string;
   const keyRef = useRef(pickedKey(pathname));
   const restored = useRef(false);
   const [text, setText] = useState('');
-  const [presetsOpen, setPresetsOpen] = useState(false);
-  const [presets, setPresets] = useState(readPresets);
-  const [newName, setNewName] = useState<string | null>(null);
   const all = data.map((b) => b.code);
   const picked = useMemo(() => new Set(value === BRANCH_NONE ? [] : value ? value.split(',') : all), [value, all.join(',')]);
 
@@ -278,20 +274,18 @@ export function BranchCheckList({ value, onChange, onRestore }: { value: string;
   const toggle = (code: string) => { const s = new Set(picked); if (s.has(code)) s.delete(code); else s.add(code); emit(s); };
   const allOn = all.length > 0 && picked.size === all.length;
 
-  const usePreset = (p: BranchPreset) => { emit(new Set(p.codes.filter((c) => all.includes(c)))); setPresetsOpen(false); };
-  const storePresets = (list: BranchPreset[]) => { setPresets(list); savePresets(list); };
-  const addPreset = () => {
-    const name = (newName ?? '').trim();
-    if (!name) return;
-    if (picked.size === 0) { window.alert('Chưa tích chi nhánh nào để lưu.'); return; }
-    const codes = all.filter((c) => picked.has(c));
-    const exists = presets.some((p) => p.name.toLowerCase() === name.toLowerCase());
-    if (exists && !window.confirm(`Đã có bộ chọn "${name}". Thay bằng các chi nhánh đang tích?`)) return;
-    storePresets([...presets.filter((p) => p.name.toLowerCase() !== name.toLowerCase()), { name, codes }].sort((a, b) => a.name.localeCompare(b.name, 'vi')));
-    setNewName(null);
-  };
-  const removePreset = (p: BranchPreset) => { if (window.confirm(`Xoá bộ chọn "${p.name}"?`)) storePresets(presets.filter((x) => x !== p)); };
-  const isCurrent = (p: BranchPreset) => p.codes.length === picked.size && p.codes.every((c) => picked.has(c));
+  // Đăng ký với khối Bộ tham số: lấy chi nhánh đang tích (rỗng = tất cả), tích lại theo bộ đã lưu.
+  const reg = useContext(BranchBridgeCtx);
+  const live = useRef({ picked, all, emit });
+  live.current = { picked, all, emit };
+  useEffect(() => {
+    if (!reg) return undefined;
+    reg({
+      get: () => (live.current.picked.size === live.current.all.length ? [] : live.current.all.filter((c) => live.current.picked.has(c))),
+      set: (codes) => live.current.emit(new Set(codes.filter((c) => live.current.all.includes(c)))),
+    });
+    return () => reg(null);
+  }, [reg]);
 
   return (
     <div className="rp-branches">
@@ -309,39 +303,8 @@ export function BranchCheckList({ value, onChange, onRestore }: { value: string;
         ))}
         {shown.length === 0 && <div className="muted" style={{ padding: 6 }}>Không thấy chi nhánh nào</div>}
       </div>
-      {presetsOpen && (
-        <div className="rp-presets">
-          {presets.length === 0 && newName === null && <div className="muted rp-presets-empty">Chưa có bộ chọn nào. Tích các chi nhánh rồi bấm "Lưu bộ chọn".</div>}
-          {presets.map((p) => (
-            <div key={p.name} className={`rp-preset${isCurrent(p) ? ' current' : ''}`}>
-              <button type="button" className="rp-preset-use" onClick={() => usePreset(p)} title={p.codes.join(', ')}>
-                <span className="rp-preset-name">{p.name}</span>
-                <span className="muted">{p.codes.length} CN</span>
-              </button>
-              <button type="button" className="rp-preset-del" title="Xoá bộ chọn" onClick={() => removePreset(p)}><X size={12} /></button>
-            </div>
-          ))}
-          {newName === null ? (
-            <button type="button" className="rp-preset-add" onClick={() => setNewName('')}><Plus size={12} /> Lưu bộ chọn mới ({picked.size} chi nhánh đang tích)</button>
-          ) : (
-            <form className="rp-preset-new" data-no-search onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); addPreset(); }}>
-              <input className="input" autoFocus placeholder="Tên, ví dụ: Chi nhánh Phú Thọ" value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setNewName(null); }} />
-              <button type="submit" className="btn btn-primary">Lưu</button>
-              <button type="button" className="btn" onClick={() => setNewName(null)}>Huỷ</button>
-            </form>
-          )}
-        </div>
-      )}
       <div className="rp-branches-foot">
         <span className="muted">{allOn ? `Tất cả ${all.length} chi nhánh` : picked.size === 0 ? 'Chưa chọn chi nhánh nào' : `Đang chọn ${picked.size} / ${all.length}`}</span>
-        <button
-          type="button"
-          className={`rp-preset-btn${presetsOpen ? ' on' : ''}`}
-          title="Chọn nhanh theo bộ chi nhánh đã lưu"
-          onClick={() => { setPresets(readPresets()); setPresetsOpen((x) => !x); setNewName(null); }}
-        >
-          <Sparkles size={12} /> Chọn nhanh
-        </button>
       </div>
     </div>
   );

@@ -232,7 +232,8 @@ function ItemsPanel() {
 }
 
 /** Cây nhóm hàng: bấm để chọn, mũi tên để mở / thu nhóm con (dùng chung cho DM10). */
-export function GroupTree({ classes, value, onChange }: { classes: ItemClass[]; value: string | null; onChange: (code: string | null) => void }) {
+// [2026-11-12 Nguyễn Văn Thủy] leafOnly: chỉ chọn nhóm cuối (nhóm có con thì bấm là mở / thu) — dùng cho ô chọn nhóm ở form mặt hàng (đóng góp)
+export function GroupTree({ classes, value, onChange, leafOnly, autoFocus }: { classes: ItemClass[]; value: string | null; onChange: (code: string | null) => void; leafOnly?: boolean; autoFocus?: boolean }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [q, setQ] = useState('');
   const children = useMemo(() => {
@@ -273,7 +274,7 @@ export function GroupTree({ classes, value, onChange }: { classes: ItemClass[]; 
     const isOpen = open.has(c.code) || Boolean(shown && kids.some((k) => shown.path.has(k.code)));
     return (
       <div key={c.code}>
-        <div className={`tree-node ${value === c.code ? 'active' : ''}`} style={{ paddingLeft: 4 + depth * 14 }} onClick={() => onChange(c.code)}>
+        <div className={`tree-node ${value === c.code ? 'active' : ''}`} style={{ paddingLeft: 4 + depth * 14 }} onClick={() => { if (leafOnly && kids.length) setOpen((o) => { const n = new Set(o); if (n.has(c.code)) n.delete(c.code); else n.add(c.code); return n; }); else onChange(c.code); }}>
           <span className="tree-toggle" onClick={(e) => { e.stopPropagation(); setOpen((o) => { const n = new Set(o); if (n.has(c.code)) n.delete(c.code); else n.add(c.code); return n; }); }}>
             {kids.length ? (isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />) : null}
           </span>
@@ -286,8 +287,8 @@ export function GroupTree({ classes, value, onChange }: { classes: ItemClass[]; 
   };
   return (
     <div className="tree">
-      <input className="input" style={{ height: 28, marginBottom: 6 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm nhóm…" />
-      <div className={`tree-node ${value === null ? 'active' : ''}`} onClick={() => onChange(null)}><span className="tree-toggle" /><b>Nhóm hàng</b></div>
+      <input className="input" style={{ height: 28, marginBottom: 6 }} value={q} autoFocus={autoFocus} onChange={(e) => setQ(e.target.value)} placeholder="Tìm nhóm…" />
+      {!leafOnly && <div className={`tree-node ${value === null ? 'active' : ''}`} onClick={() => onChange(null)}><span className="tree-toggle" /><b>Nhóm hàng</b></div>}
       {(children.get('') ?? []).map((c) => node(c, 1))}
       {shown && !shown.keep.size && <div className="muted" style={{ padding: '6px 4px', fontSize: 12.5 }}>Không có nhóm nào khớp "{q.trim()}"</div>}
     </div>

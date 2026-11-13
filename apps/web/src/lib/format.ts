@@ -118,3 +118,16 @@ export const defaultFrom = (): string => storedPeriod()?.from ?? today();
 export const periodFrom = (): string => storedPeriod()?.from ?? firstDayOfMonth();
 /** Ngày kết thúc mặc định của ô lọc: kỳ đã chọn gần nhất, chưa chọn thì hôm nay. */
 export const defaultTo = (): string => storedPeriod()?.to ?? today();
+
+/** Kỳ của sổ, báo cáo: "Tháng 11 năm 2026", "Quý 4 năm 2026", "Năm 2026", còn lại "Từ ngày … đến ngày …". */
+export function kyText(from: string, to: string): string {
+  const [fy, fm, fd] = from.split('-').map(Number);
+  const [ty, tm, td] = to.split('-').map(Number);
+  const lastDay = new Date(ty!, tm!, 0).getDate();
+  if (fd === 1 && td === lastDay && fy === ty) {
+    if (fm === tm) return `Tháng ${fm} năm ${fy}`;
+    if (fm === 1 && tm === 12) return `Năm ${fy}`;
+    if ((fm! - 1) % 3 === 0 && tm === fm! + 2) return `Quý ${(fm! + 2) / 3} năm ${fy}`;
+  }
+  return `Từ ngày ${date(from)} đến ngày ${date(to)}`;
+}

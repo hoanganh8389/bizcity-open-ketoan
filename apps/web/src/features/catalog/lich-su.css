@@ -1,0 +1,15 @@
+/* [2026-11-12 Nguyễn Văn Thủy] lịch sử mặt hàng dạng dòng thời gian (đóng góp) */
+.ls-wrap { grid-column: 1 / -1; width: 100%; display: flex; flex-direction: column; gap: 14px; padding: 4px 2px; }
+.ls-date { font-weight: 600; font-size: 13px; color: var(--ink-700, #374151); margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line, #e3e7ee); }
+.ls-row { display: grid; grid-template-columns: 170px 1fr; gap: 12px; padding: 8px 0 8px 10px; border-left: 2px solid var(--brand-100, #dbe8f7); margin-left: 4px; }
+.ls-row:hover { border-left-color: var(--brand-600, #235da7); background: var(--brand-50, #f3f7fc); }
+.ls-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.ls-time { font-weight: 600; font-variant-numeric: tabular-nums; }
+.ls-by { color: var(--ink-500, #6b7280); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ls-head { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.ls-body ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.ls-body li { line-height: 1.5; }
+.ls-k { color: var(--ink-500, #6b7280); margin-right: 6px; }
+.ls-k::after { content: ':'; }
+.ls-old { color: var(--ink-400, #9ca3af); text-decoration: line-through; }
+.ls-arrow { margin: 0 6px; color: var(--brand-600, #235da7); }

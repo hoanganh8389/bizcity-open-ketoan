@@ -14,6 +14,8 @@ export const heThongMenu: MenuItem[] = [
       { key: 'chi-nhanh-lam-viec', label: 'Chuyển chi nhánh làm việc', path: '/he-thong/chi-nhanh-lam-viec', code: 'HT04' },
       { key: 'don-vi', label: 'Thông tin đơn vị', path: '/cau-hinh/don-vi', code: 'HT03' },
       { key: 'mau-in', label: 'Mẫu in', path: '/cau-hinh/mau-in', code: 'HT05' },
+      // [2026-11-11 Nguyễn Văn Thủy] HT16 hồ sơ in: thông tin đơn vị trên bản in, người ký, ngày ký (đóng góp)
+      { key: 'bao-cao-chung-tu', label: 'Báo cáo, chứng từ', path: '/cau-hinh/bao-cao-chung-tu', code: 'HT16' },
       { key: 'khoi-anh', label: 'Khối ảnh', path: '/cau-hinh/khoi-anh', code: 'HT11', permission: 'settings:write' },
       { key: 'nguoi-dung', label: 'Người dùng', path: '/cau-hinh/nguoi-dung', code: 'HT01', permission: 'users:write' },
       { key: 'khoa-api', label: 'Khoá API', path: '/cau-hinh/khoa-api', code: 'HT02', permission: 'users:write' },
@@ -30,6 +32,8 @@ export const heThongMenu: MenuItem[] = [
       // [2026-11-09 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b: HT15 Chính sách (quyền catalog:read; Core, không phải module nghiệp vụ — D031-11)
       { key: 'chinh-sach', label: 'Chính sách', path: '/he-thong/chinh-sach', code: 'HT15', permission: 'catalog:read' },
       { key: 'cau-hinh-he-thong', label: 'Cấu hình hệ thống', path: '/he-thong/cau-hinh', code: 'HT13' },
+      // [2026-11-12 Nguyễn Văn Thủy] HT17 thẻ hướng dẫn sử dụng (đóng góp)
+      { key: 'the-huong-dan', label: 'Thẻ hướng dẫn', path: '/he-thong/huong-dan', code: 'HT17' },
     ],
   },
 ];

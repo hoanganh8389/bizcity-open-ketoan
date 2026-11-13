@@ -15,7 +15,10 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 import { ListPicker } from '@/components/pickers';
+import { useDimension } from '@/components/voucher/lookups';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — chi nhánh thuộc nút sơ đồ tổ chức: cột C1 / C2 / C3, ô chọn nút ở form
 import { indexOrg, invalidateOrg, useOrgTree } from '@/lib/orgUnits';
 import { CayDonVi, ChonSoDoToChuc } from '@/components/CayDonVi';
@@ -75,6 +78,7 @@ export function BranchesPage() {
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá chi nhánh ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          extra={<NutNhapExcel loai={nhapLoai('chi-nhanh')!} disabled={!canWrite} />}
         />
         <div className="muted" style={{ fontSize: 12, padding: '4px 8px' }}>
           {sites.isLoading ? 'Đang lấy danh sách website của hệ thống bán hàng…'
@@ -110,21 +114,17 @@ export function BranchesPage() {
             footerLabel={false}
             columns={[
               { key: 'code', header: 'Mã chi nhánh', type: 'code', width: 130 },
-              { key: 'name', header: 'Mô tả', width: 200 },
+              { key: 'name', header: 'Tên chi nhánh', width: 200 },
               { key: 'note', header: 'Ghi chú', width: 150 },
               { key: 'companyName', header: 'Tên công ty', width: 230 },
               { key: 'taxCode', header: 'Số ĐKKD/MST', type: 'code', width: 130 },
               { key: 'address', header: 'Địa chỉ', width: 260 },
               { key: 'phone', header: 'Điện thoại', type: 'code', width: 110 },
-              { key: 'fax', header: 'Fax', type: 'code', width: 90, hidden: true },
               { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
-              { key: 'c1', header: 'Sơ đồ tổ chức C1', type: 'code', width: 90, title: 'Cấp 1 – Miền (theo sơ đồ tổ chức DM16)' },
-              { key: 'c2', header: 'Sơ đồ tổ chức C2', type: 'code', width: 90, title: 'Cấp 2 – Chi nhánh' },
-              { key: 'c3', header: 'Sơ đồ tổ chức C3', type: 'code', width: 90, title: 'Cấp 3 – Tỉnh', render: (b) => b.c3 || (b.orgUnitCode ? '' : <span className="text-bad">chưa gắn</span>) },
-              { key: 'orgPath', header: 'Thuộc SĐTC', width: 180, hidden: true },
-              { key: 'accountingUnitCode', header: 'Đơn vị hạch toán', type: 'code', width: 120 },
-              { key: 'departmentCode', header: 'Bộ phận', type: 'code', width: 100, render: (b) => b.departmentCode ?? <span className="text-bad">chưa gắn</span> },
-              { key: 'externalRef', header: 'Mã tham chiếu nguồn', type: 'code', width: 120, hidden: true },
+              // [2026-11-13 Nguyễn Văn Thủy] một cột Thuộc cơ cấu thay C1/C2/C3; bỏ cột Bộ phận, Fax, Mã tham chiếu (đóng góp)
+              { key: 'orgPath', header: 'Thuộc cơ cấu', width: 220, title: 'Vị trí trong Cơ cấu tổ chức', render: (b) => b.orgPath || <span className="text-bad">chưa gắn</span> },
+              // [2026-11-13 Nguyễn Văn Thủy] ánh xạ phòng ban: chứng từ của chi nhánh tự mang phòng ban này (0129) (đóng góp)
+              { key: 'departmentCode', header: 'Phòng ban', type: 'code', width: 110, title: 'Phòng ban của chi nhánh trên sơ đồ phòng ban: mọi chứng từ ghi cho chi nhánh tự mang phòng ban này. Trống thì chứng từ vào tài khoản theo dõi phòng ban bị chặn', render: (b) => b.departmentCode || <span className="text-bad">chưa gắn</span> },
               { key: 'siteIds', header: 'Website (blog_id)', type: 'code', width: 110, title: 'Website bên hệ thống bán hàng đang nối với chi nhánh (qua kết nối chính)' },
               { key: 'siteNames', header: 'Tên website', width: 170 },
               { key: 'siteCodes', header: 'Mã kho website', type: 'code', width: 110 },
@@ -144,20 +144,13 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
   const qc = useQueryClient();
   const [v, setV] = useState(value);
   const set = (p: Partial<Branch>) => setV((x) => ({ ...x, ...p }));
-  // Đơn vị hạch toán đã dùng: chọn lại cho đúng mã; gõ mã mới là tạo đơn vị mới.
-  const { data: all = [] } = useQuery({ queryKey: ['branches'], queryFn: () => api.get<Branch[]>('/api/v1/branches') });
   const sites = useBranchSites();
   const mine = (sites.data?.sites ?? []).filter((x) => x.branchCode && x.branchCode === value.code);
-  const { data: departments = [] } = useQuery({ queryKey: ['dimensions', 'department'], queryFn: () => api.get<{ code: string; name: string; isActive: boolean }[]>('/api/v1/dimensions/department'), staleTime: 60_000 });
-  const units = [...new Set(all.map((b) => b.accountingUnitCode).filter((c): c is string => Boolean(c)))].sort().map((code) => {
-    const members = all.filter((b) => b.accountingUnitCode === code).map((b) => b.code);
-    return { code, name: `${members.length} chi nhánh: ${members.slice(0, 6).join(', ')}${members.length > 6 ? '…' : ''}` };
-  });
   const viewAgain = useViewAgain();
   const save = useMutation({
     mutationFn: () => {
       const body = {
-        name: v.name, accountingUnitCode: v.accountingUnitCode || undefined, departmentCode: v.departmentCode || null, address: v.address ?? '', externalRef: v.externalRef || undefined,
+        name: v.name, accountingUnitCode: v.accountingUnitCode || undefined, ...(value.isNew ? {} : { departmentCode: v.departmentCode || null }), address: v.address ?? '', externalRef: v.externalRef || undefined,
         note: v.note ?? '', companyName: v.companyName ?? '', taxCode: v.taxCode ?? '', phone: v.phone ?? '', fax: v.fax ?? '',
       };
       const newCode = v.code?.trim();
@@ -167,34 +160,34 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); invalidateOrg(qc); if (value.isNew) onSaved?.(v.code?.trim() ?? ''); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
   });
   const txt = (k: keyof Branch, label: string, full = false) => <Field label={label} full={full}><input className="input" value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Branch>)} /></Field>;
+  const deps = useDimension('department').filter((d) => d.isActive !== false || d.code === v.departmentCode).map((d) => ({ code: d.code, name: d.name }));
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide title="Thông tin chi nhánh" onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <fieldset className="fgroup">
         <legend>Thông tin cơ bản</legend>
-        <Field label="Tên chi nhánh (điểm kinh doanh) (*)" hint={value.isNew ? 'Mã chi nhánh, khớp mã cửa hàng của hệ thống bán hàng' : 'Đổi mã khi shop lên Plus / Premium hoặc đóng (_OFF): chứng từ, sổ sách, kho giữ nguyên'}><input className="input mono" value={v.code ?? ''} onChange={(e) => set({ code: e.target.value })} autoFocus /></Field>
-        {txt('name', 'Mô tả (*)')}
+        <Field label="Mã chi nhánh (*)" hint={value.isNew ? 'Mã chi nhánh, khớp mã cửa hàng của hệ thống bán hàng' : 'Đổi mã khi shop lên Plus / Premium hoặc đóng (_OFF): chứng từ, sổ sách, kho giữ nguyên'}><input className="input mono" value={v.code ?? ''} onChange={(e) => set({ code: e.target.value })} autoFocus /></Field>
+        {txt('name', 'Tên chi nhánh (*)')}
         {txt('note', 'Ghi chú')}
-        {txt('taxCode', 'Số đăng ký kinh doanh/MST')}
+        {txt('taxCode', 'MST')}
         {!value.isNew && (
-          <Field label="Thuộc SĐTC" hint="Nút sơ đồ tổ chức (thường cấp Tỉnh) — báo cáo, bộ lọc cây và nơi nhận hàng đi theo đây">
+          <Field label="Thuộc cơ cấu" hint="Nút trong Cơ cấu tổ chức (thường cấp Tỉnh)">
             <ChonSoDoToChuc value={v.orgUnitCode ?? null} onChange={(orgUnitCode) => set({ orgUnitCode })} />
+          </Field>
+        )}
+        {!value.isNew && (
+          <Field label="Phòng ban" tip="Phòng ban của chi nhánh trên sơ đồ phòng ban; chứng từ của chi nhánh tự mang phòng ban này. Chi nhánh mới tự có phòng ban riêng">
+            <ListPicker value={v.departmentCode ?? ''} onChange={(c) => set({ departmentCode: c || null })} items={deps} />
           </Field>
         )}
         <Field label=" "><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>
       </fieldset>
+      {/* [2026-11-13 Nguyễn Văn Thủy] bỏ ô Đơn vị hạch toán (khó hiểu, chưa chi nhánh nào dùng); dữ liệu cũ giữ nguyên (đóng góp) */}
       <fieldset className="fgroup">
-        <legend>Thông tin in report</legend>
+        <legend>Thông tin in trên chứng từ</legend>
         {txt('companyName', 'Tên công ty', true)}
         {txt('address', 'Địa chỉ', true)}
         {txt('phone', 'Điện thoại')}
-        {txt('fax', 'Fax')}
-      </fieldset>
-      <fieldset className="fgroup">
-        <legend>Hạch toán</legend>
-        <Field label="Đơn vị hạch toán" hint="Nhóm chi nhánh hạch toán chung (dùng cho giá vốn, nội bộ). Gõ mã mới là tạo đơn vị mới"><ListPicker strict={false} items={units} value={v.accountingUnitCode ?? ''} onChange={(accountingUnitCode) => set({ accountingUnitCode })} placeholder="Bấm để chọn" emptyText={units.length ? 'Không có đơn vị khớp — rời ô để tạo đơn vị mới với mã đang gõ' : 'Chưa có đơn vị nào — gõ mã mới để tạo'} /></Field>
-        <Field label="Bộ phận" hint="Doanh thu, giá vốn, chi phí của chi nhánh ghi vào bộ phận này. Quy ước: BH + mã cửa hàng"><ListPicker strict={false} items={departments.filter((d) => d.isActive || d.code === v.departmentCode)} value={v.departmentCode ?? ''} onChange={(departmentCode) => set({ departmentCode: departmentCode || null })} placeholder={`Bấm để chọn (gợi ý BH${(v.code ?? '').slice(0, 5)})`} /></Field>
-        {txt('externalRef', 'Mã tham chiếu ở hệ thống nguồn')}
       </fieldset>
       {!value.isNew && (
         <fieldset className="fgroup">

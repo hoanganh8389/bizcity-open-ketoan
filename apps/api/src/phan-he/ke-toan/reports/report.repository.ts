@@ -127,8 +127,12 @@ export const reportRepository = {
       dims: Record<string, string> | null;
       product_sku: string | null;
       product_name: string | null;
+      doc_date: string;
+      counterparty: string | null;
     }>`
-      SELECT l.id, l.entry_id, l.posting_date::text AS posting_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.event_id,
+      SELECT l.id, l.entry_id, l.posting_date::text AS posting_date, e.doc_date::text AS doc_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.event_id,
+             -- Người nộp / nhận tiền ghi trên phiếu (sổ quỹ, sổ tiền gửi).
+             (SELECT NULLIF(ev.payload->>'counterparty', '') FROM accounting_events ev WHERE ev.id = e.event_id) AS counterparty,
              COALESCE(NULLIF(l.description, ''), e.description) AS description, e.description AS entry_description,
              l.account_code, l.debit, l.credit,
              (SELECT string_agg(DISTINCT o.account_code, ', ')
@@ -214,45 +218,34 @@ export const reportRepository = {
   },
 
   /** Hoá đơn bán ra (hoặc mua vào) trong kỳ, tách theo nhóm thuế suất. */
+  // [2026-11-11 Nguyễn Văn Thủy] bảng kê thuế mẫu quản trị: từng dòng mặt hàng + tài khoản thuế (danh mục mã thuế) (đóng góp)
+  /** Dòng hoá đơn thuế (từng mặt hàng) trong kỳ kê khai, kèm thông tin hoá đơn, chi nhánh, đối tượng, tài khoản thuế của mã thuế. */
   async salesInvoiceLines(db: Db, a: { tenantId: string; from: string; to: string; branchIds: string[] | null; direction?: 'output' | 'input' }) {
     const branchFilter = a.branchIds ? sql`AND i.branch_id = ANY(${a.branchIds}::bigint[])` : sql``;
+    const dir = a.direction ?? 'output';
     const res = await sql<{
-      tax_invoice_id: string;
-      invoice_form: string;
-      invoice_serial: string;
-      invoice_no: string;
-      invoice_date: string;
-      doc_no: string;
-      doc_type: string;
-      buyer_name: string;
-      buyer_tax_code: string;
-      branch_code: string;
-      report_group: string;
-      tax_rate: string;
-      amount: string;
-      tax: string;
-      event_id: string;
-      doc_date: string;
-      partner_code: string | null;
-      partner_name: string | null;
+      tax_invoice_id: string; line_no: number;
+      invoice_form: string; invoice_serial: string; invoice_no: string; invoice_date: string;
+      doc_no: string; doc_type: string; doc_date: string; event_id: string;
+      buyer_name: string; buyer_tax_code: string; branch_code: string; partner_code: string | null; partner_name: string | null;
+      sku: string; item_name: string; unit: string; qty: string;
+      report_group: string; tax_rate: string; amount: string; tax: string; tax_account: string | null;
     }>`
-      SELECT i.id AS tax_invoice_id, i.invoice_form, i.invoice_serial, i.invoice_no, i.invoice_date::text AS invoice_date, i.doc_no, i.doc_type,
-             i.doc_date::text AS doc_date, p.code AS partner_code, p.name AS partner_name,
-             i.buyer_name, i.buyer_tax_code, br.code AS branch_code, l.report_group,
-             MAX(l.tax_rate) AS tax_rate,
-             SUM(l.amount_before_tax) * i.sign AS amount,
-             SUM(l.tax_amount) * i.sign AS tax,
-             i.event_id
+      SELECT i.id AS tax_invoice_id, l.line_no, i.invoice_form, i.invoice_serial, i.invoice_no, i.invoice_date::text AS invoice_date,
+             i.doc_no, i.doc_type, i.doc_date::text AS doc_date, i.event_id,
+             i.buyer_name, i.buyer_tax_code, br.code AS branch_code, p.code AS partner_code, p.name AS partner_name,
+             l.sku, l.name AS item_name, l.unit, l.qty * i.sign AS qty,
+             l.report_group, l.tax_rate, l.amount_before_tax * i.sign AS amount, l.tax_amount * i.sign AS tax, tc.account_code AS tax_account
         FROM tax_invoices i
         JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id
         JOIN branches br ON br.id = i.branch_id
         LEFT JOIN partners p ON p.id = i.partner_id
-       WHERE i.tenant_id = ${a.tenantId} AND i.direction = ${a.direction ?? 'output'}
+        LEFT JOIN tax_codes tc ON tc.tenant_id = i.tenant_id AND tc.code = l.tax_code AND tc.direction = ${dir}
+       WHERE i.tenant_id = ${a.tenantId} AND i.direction = ${dir}
          AND i.status <> 'cancelled'
          AND i.period_date BETWEEN ${a.from}::date AND ${a.to}::date
          ${branchFilter}
-       GROUP BY i.id, br.code, l.report_group, p.code, p.name
-       ORDER BY i.doc_date, i.invoice_no, i.doc_no`.execute(db);
+       ORDER BY i.invoice_date, i.invoice_no, i.doc_no, l.line_no`.execute(db);
     return res.rows;
   },
 

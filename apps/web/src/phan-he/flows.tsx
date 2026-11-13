@@ -5,7 +5,9 @@
  */
 import type { ComponentType } from 'react';
 import { QuyTrinhMuaHang } from './mua-hang/quy-trinh/QuyTrinhMuaHang';
+import { QuyTrinhDanhMuc } from './danh-muc/QuyTrinhDanhMuc';
 
 export const MODULE_FLOWS: Record<string, ComponentType> = {
   'mua-hang': QuyTrinhMuaHang,
+  'danh-muc': QuyTrinhDanhMuc, // [2026-11-13 Nguyễn Văn Thủy] (đóng góp)
 };

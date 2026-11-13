@@ -21,7 +21,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Columns3, FileSpreadsheet, Filter, FilterX, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Columns3, FileSpreadsheet, Filter, FilterX, X } from 'lucide-react';
 import { date as fmtDate, money, price } from '@/lib/format';
 import { Money } from './ui';
 
@@ -365,9 +365,9 @@ export function DataGrid<T>(p: DataGridProps<T>) {
   }
 
   // Xuất Excel đúng những gì đang thấy: cột đang hiện, dòng sau lọc / sắp xếp, dòng tổng.
+  // [2026-11-11 Nguyễn Văn Thủy] xuất qua lib/excelChuan: kẻ ô, tiêu đề cột nền xám (hai tầng gộp ô), số có phân cách, dòng tổng đậm (đóng góp)
   const exportExcel = async () => {
-    const XLSX = await import('xlsx');
-    const head = cols.map((c) => (c.band ? `${c.band} - ${headerTitle(c)}` : headerTitle(c)));
+    const { luuExcel } = await import('@/lib/excelChuan');
     const cellValue = (c: Column<T>, r: T): string | number => {
       const v = valueOf(c, r);
       if (v === null || v === undefined) return '';
@@ -377,10 +377,23 @@ export function DataGrid<T>(p: DataGridProps<T>) {
       return String(v);
     };
     const aoa: (string | number)[][] = [];
+    const merges: [number, number, number, number][] = [];
     // Dòng đầu tệp: tiêu đề báo cáo (lấy theo tên màn đang mở nếu không truyền riêng).
     const title = p.exportTitle ?? rootRef.current?.closest('.ws-panel, .page')?.querySelector('.page-title h1')?.textContent ?? '';
     if (title) aoa.push([title], []);
-    aoa.push(head);
+    const headerRows: number[] = [];
+    if (bands) {
+      // Tiêu đề hai tầng: dòng nhóm (gộp ngang theo nhóm), dòng tên cột; cột không nhóm gộp dọc hai dòng.
+      const r0 = aoa.length;
+      aoa.push(cols.map((c) => c.band ?? headerTitle(c)), cols.map((c) => headerTitle(c)));
+      headerRows.push(r0, r0 + 1);
+      let ci = 0;
+      for (const b of bandCells) {
+        if (b.band) { if (b.span > 1) merges.push([r0, ci, r0, ci + b.span - 1]); }
+        else merges.push([r0, ci, r0 + 1, ci]);
+        ci += b.span;
+      }
+    } else { headerRows.push(aoa.length); aoa.push(cols.map((c) => headerTitle(c))); }
     for (const { r } of view) aoa.push(cols.map((c) => cellValue(c, r)));
     if (showFooter) {
       aoa.push(cols.map((c, i) => {
@@ -390,21 +403,11 @@ export function DataGrid<T>(p: DataGridProps<T>) {
         return i === 0 ? `${p.footerLabel ?? 'Tổng cộng'}` : '';
       }));
     }
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = cols.map((c) => ({ wch: Math.min(60, Math.max(8, Math.round((saved.widths[c.key] ?? c.width ?? (isNumeric(c.type) ? 110 : 140)) / 7))) }));
-    // Định dạng số kiểu Việt Nam cho cột tiền, số lượng.
-    const start = title ? 3 : 1;
-    cols.forEach((c, ci) => {
-      if (!isNumeric(c.type)) return;
-      for (let ri = start; ri < aoa.length; ri++) {
-        const ref = XLSX.utils.encode_cell({ r: ri, c: ci });
-        if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = c.type === 'qty' ? '#,##0.###' : c.type === 'price' ? '#,##0.####' : '#,##0';
-      }
-    });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Bang');
+    const numFmt: Record<number, string> = {};
+    cols.forEach((c, ci) => { if (c.type === 'qty') numFmt[ci] = '#,##0.###;(#,##0.###)'; else if (c.type === 'price') numFmt[ci] = '#,##0.####;(#,##0.####)'; });
+    const widths = cols.map((c) => Math.min(60, Math.max(8, Math.round((saved.widths[c.key] ?? c.width ?? (isNumeric(c.type) ? 110 : 140)) / 7))));
     const stamp = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `${p.exportName ?? p.storageKey ?? 'bang'}-${stamp}.xlsx`);
+    await luuExcel(`${p.exportName ?? p.storageKey ?? 'bang'}-${stamp}.xlsx`, [{ name: (title || 'Bang').slice(0, 31), rows: aoa, headerRows, merges, numFmt, widths, plainBody: true }]);
   };
 
   if (p.exportRef) p.exportRef.current = () => void exportExcel();
@@ -483,19 +486,16 @@ export function DataGrid<T>(p: DataGridProps<T>) {
             )}
             <tr>
               {cols.map((c) => {
-                const s = sort?.key === c.key ? sort.dir : 0;
                 return (
                   <th
                     key={c.key}
                     draggable={p.groupable && !c.noFilter}
                     onDragStart={(e) => { e.dataTransfer.setData('text/dgrid-col', c.key); e.dataTransfer.effectAllowed = 'copy'; }}
-                    className={`${isNumeric(c.type) ? 'num' : ''} ${c.type === 'check' ? 'center' : ''} ${c.noSort ? '' : 'sortable'} ${c.className ?? ''}`}
-                    onClick={() => !c.noSort && setSort(s === 0 ? { key: c.key, dir: 1 } : s === 1 ? { key: c.key, dir: -1 } : null)}
-                    title={c.noSort ? undefined : 'Bấm để sắp xếp'}
+                    // [2026-11-12 Nguyễn Văn Thủy] bỏ bấm tiêu đề cột để sắp xếp (gây nhảy bảng); lọc vẫn ở ô lọc / phễu (đóng góp)
+                    className={`${isNumeric(c.type) ? 'num' : ''} ${c.type === 'check' ? 'center' : ''} ${c.className ?? ''}`}
+                    title={c.title}
                   >
                     {c.header}
-                    {s === 1 && <ArrowUp size={12} className="sort-ico" />}
-                    {s === -1 && <ArrowDown size={12} className="sort-ico" />}
                     {!c.noFilter && (
                       <button
                         className={`dgrid-funnel ${picks[c.key] ? 'on' : ''}`}

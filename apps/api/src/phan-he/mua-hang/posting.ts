@@ -80,6 +80,12 @@ function toBase(units: Units, sku: string, unit: string, qty: number) {
 }
 
 /** Dòng chứng từ kế toán từ dòng phiếu đã tính (bỏ dòng SL 0 không tiền); số lượng ghi kho theo ĐVT nhỏ nhất. */
+/** Tài khoản riêng của dòng còn giá trị (bỏ ô trống). */
+function lineAccounts(l: { accounts?: { inventory?: string; payable?: string; tax?: string } }) {
+  const a = Object.fromEntries(Object.entries(l.accounts ?? {}).filter(([, v]) => v));
+  return Object.keys(a).length ? a : undefined;
+}
+
 function ingestLines(calc: DocCalc, units: Units, filter: (l: DocCalc['lines'][number]) => boolean = () => true) {
   // [2026-11-10 03:30 PM Nguyễn Văn Thủy] PHASE-026 — dòng mang chương trình (policyRef) để quy tắc định khoản theo loại chương trình (đóng góp)
   const refs = new Map(policyRefsOf(calc).map((r) => [r.key, r]));
@@ -88,6 +94,7 @@ function ingestLines(calc: DocCalc, units: Units, filter: (l: DocCalc['lines'][n
     lineKey: l.lineKey, sku: l.sku, name: l.name, unit: b.unit, qty: b.qty,
     unitPrice: b.qty ? Math.round((l.beforeTax / b.qty) * 100) / 100 : 0, amountBeforeTax: l.beforeTax,
     discount: l.lineDiscount + l.orderDiscount, taxCode: l.taxCode, taxAmount: l.tax, isGift: l.lineType !== 'buy', excludeFromCost: l.lineType === 'gift_consumer' || undefined,
+    ...(lineAccounts(l) ? { accounts: lineAccounts(l) } : {}),
     lotNo: l.lotNo, expDate: l.expDate, note: [b.note, l.lineType === 'gift_seller' ? 'KM người bán (chia vào giá)' : l.lineType === 'gift_consumer' ? 'KM người tiêu dùng / quà' : undefined].filter(Boolean).join(' · ') || undefined,
   }); });
 }

@@ -247,29 +247,15 @@ describe('Phân cấp, tồn max, đề xuất chuyển, công thức đặt hà
     expect(one.rows.map((r: { sku: string }) => r.sku)).toEqual(['110063076']);
   });
 
-  it('mã hàng cha: tạo mới tự gợi ý theo mã; chỉ định tay mã khác tên; chặn 2 cấp; công cụ quét điền lại, giữ mã cha chỉnh tay', async () => {
+  // [2026-11-12 Nguyễn Văn Thủy] mã cha suy theo mã (0112): không khai tay, không quét (đóng góp)
+  it('mã hàng cha tự suy theo mã; gửi mã cha tay bị bỏ qua', async () => {
     const get = async (s: string) => (await ok('GET', `/api/v1/catalog/products/${s}`)).parentSku as string | null;
     expect(await get('110063076Q')).toBe('110063076');
     expect(await get('110063076')).toBeNull();
-    // Mã đặt tên khác nhưng bản chất là sản phẩm ấy → chỉ định tay.
     await ok('PUT', '/api/v1/catalog/products/ABBOTT-GOLD-HOP?new=true', { name: 'Abbott Gold hộp lẻ', unit: 'Hộp', taxInCode: 'V08', units: [{ unit: 'Hộp', ratio: 1, isDefault: true }], parentSku: '110063076' });
-    expect(await get('ABBOTT-GOLD-HOP')).toBe('110063076');
-    // Chỉ 1 cấp: mã cha không được là mã con; mã đang là cha không được gán cha.
-    const bad1 = await call(ctx, 'PUT', '/api/v1/catalog/products/ABBOTT-GOLD-HOP', { parentSku: '110063076Q' });
-    expect(bad1.status).toBe(400); expect(JSON.stringify(bad1.body)).toMatch(/chỉ 1 cấp/);
-    const bad2 = await call(ctx, 'PUT', '/api/v1/catalog/products/110063076', { parentSku: 'SUA1' });
-    expect(bad2.status).toBe(400); expect(JSON.stringify(bad2.body)).toMatch(/đang là mã cha/);
-    // Cố ý bỏ mã cha của Z (chỉnh tay) → quét KHÔNG gán lại (kể cả quét lại cả); mã chỉnh tay khác tên giữ nguyên.
+    expect(await get('ABBOTT-GOLD-HOP')).toBeNull();
     await ok('PUT', '/api/v1/catalog/products/110063076Z', { parentSku: null });
-    expect(await get('110063076Z')).toBeNull();
-    expect((await call(ctx, 'POST', '/api/v1/catalog/products/scan-parents', { password: 'sai' })).status).toBe(403);
-    await ok('POST', '/api/v1/catalog/products/scan-parents', { overwrite: true, password: 'Thuy!@#' }, 200);
-    expect(await get('110063076Z')).toBeNull();
-    expect(await get('ABBOTT-GOLD-HOP')).toBe('110063076');
-    // Gán lại đúng mã cha theo mã (= gợi ý) thì hết "chỉnh tay"; xoá cha của mã chưa chỉnh tay ở CSDL → quét điền lại.
-    await ok('PUT', '/api/v1/catalog/products/110063076Z', { parentSku: '110063076' });
     expect(await get('110063076Z')).toBe('110063076');
-    // Danh sách mặt hàng trả mã cha.
     const list = await ok('GET', '/api/v1/products?search=110063076&pageSize=50');
     expect(list.find((p: { sku: string }) => p.sku === '110063076Q').parentSku).toBe('110063076');
   });

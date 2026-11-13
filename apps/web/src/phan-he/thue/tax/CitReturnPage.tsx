@@ -70,7 +70,7 @@ export function CitReturnPage() {
 
   const exportExcel = async () => {
     if (!d) return;
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const rows = [['TỜ KHAI QUYẾT TOÁN THUẾ THU NHẬP DOANH NGHIỆP (Mẫu số 03/TNDN)'], [`Kỳ tính thuế: năm ${year}`], [], ['Mã chỉ tiêu', 'Chỉ tiêu', 'Số tiền'],
       ...d.form.map((l) => [l.code, l.name, l.code.length === 1 && !['D', 'E', 'G'].includes(l.code) ? '' : v(l.code)])];
     const wb = XLSX.utils.book_new();

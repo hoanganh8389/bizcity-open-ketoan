@@ -206,7 +206,7 @@ describe('25 tình huống mua hàng trên sổ thật', () => {
     const g = (await call(t, 'GET', '/api/v1/purchase/gifts')).body.data;
     const q = (f: (r: { source: string; hasVat: boolean }) => boolean) => g.rows.filter(f).reduce((s: number, r: { inQty: number }) => s + r.inQty, 0);
     expect([q((r) => r.source === 'ncc_program'), q((r) => r.source === 'self_buy' && r.hasVat), q((r) => r.source === 'self_buy' && !r.hasVat)]).toEqual([100, 50, 30]);
-    const over = await save({ kind: 'gift_out', docDate: '2026-10-23', branchCode: 'CN-PT', partnerCode: 'NCC-ANLENE', priceIncludesVat: false, lines: [{ lineKey: 'x', sku: 'QT-BINH-01', name: 'Bình', unit: 'Cái', qty: 50, price: 0, taxCode: 'KKKN', lineType: 'gift_consumer', program: 'ANL-T10-BINH' }] });
+    const over = await save({ kind: 'gift_out', docDate: '2026-10-23', branchCode: 'CN-PT', partnerCode: 'NCC-ANLENE', priceIncludesVat: false, lines: [{ lineKey: 'x', sku: 'QT-BINH-01Z', name: 'Bình', unit: 'Cái', qty: 50, price: 0, taxCode: 'KKKN', lineType: 'gift_consumer', program: 'ANL-T10-BINH' }] });
     const r = await call(t, 'POST', `/api/v1/purchase/documents/${over.id}/approve`);
     expect(r.status).toBe(409); expect(r.body.error.message).toMatch(/chỉ còn 35/);
     expect((await call(t, 'POST', '/api/v1/purchase/policies', { code: 'NS-TRI-AN', kind: 'gift_budget', name: 'Ngân sách quà tri ân', rule: { program: 'TGS-TRI-AN', amount: 10000000 } })).status).toBe(201);

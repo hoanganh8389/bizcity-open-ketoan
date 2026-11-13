@@ -23,6 +23,8 @@ interface Extra {
   type?: string; signedDate?: string; endDate?: string; value?: number; partnerCode?: string; partnerName?: string; landlordTax?: boolean; employeeCode?: string; createdBy?: string;
   /** Bộ phận, nhân viên: địa chỉ, điện thoại; nhân viên thêm di động, email, chức vụ, chi nhánh làm việc, mã phòng ban, nhóm. */
   address?: string; phone?: string; mobile?: string; email?: string; position?: string; branchCode?: string; departmentCode?: string; group?: string;
+  /** Mục thu/chi: loại (thu | chi), phát sinh định kỳ hàng tháng. */
+  loai?: 'thu' | 'chi'; dinhKy?: boolean;
 }
 interface Row { code: string; name: string; parentCode: string | null; note: string; isActive: boolean; extra: Extra }
 type Draft = Partial<Row> & { isNew?: boolean };
@@ -41,6 +43,7 @@ interface Meta {
   tracked: boolean;
 }
 const META: Record<DimensionKind, Meta> = {
+  cash_item: { title: 'Mục thu/chi', code: 'DM17', subtitle: 'Mục thu, mục chi gắn trên dòng phiếu thu / chi; báo cáo Dòng tiền gom theo mục', helpKey: 'khoan-muc-bo-phan', form: 'Mục thu/chi', parentLabel: 'Thuộc', cols: { code: 'Mã mục thu/chi', name: 'Tên mục thu/chi', note: 'Diễn giải', parent: 'Thuộc' }, tracked: true },
   cost_item: { title: 'Khoản mục', code: 'ACC24', subtitle: 'Khoản mục chi phí dùng để phân tích chi phí trên từng dòng phiếu', helpKey: 'khoan-muc-bo-phan', form: 'Khoản mục', parentLabel: 'Khoản mục cha', cols: { code: 'Mã khoản mục', name: 'Tên khoản mục', note: 'Ghi chú', parent: 'Khoản mục cha' }, tracked: true },
   department: { title: 'Bộ phận', code: 'ACC26', subtitle: 'Phòng ban, bộ phận chịu chi phí hoặc tạo doanh thu; mỗi cửa hàng một bộ phận BH + mã cửa hàng', helpKey: 'khoan-muc-bo-phan', form: 'Phòng ban/ Bộ phận', parentLabel: 'Thuộc PB', cols: { code: 'Mã PB', name: 'Tên PB', note: 'Ghi chú', parent: 'Bộ phận trực thuộc' }, tracked: true },
   employee: { title: 'Danh mục nhân viên', code: 'DM04', subtitle: 'Nhân viên phụ trách bán hàng, thu tiền: dùng cho báo cáo công nợ theo nhân viên. Nhân viên lập phiếu trên hệ thống bán hàng được tự thêm.', helpKey: 'cong-no-theo-nhan-vien', form: 'Thông tin nhân viên', cols: { code: 'Mã NV', name: 'Tên NV', note: 'Ghi chú' }, tracked: true },
@@ -52,17 +55,33 @@ const META: Record<DimensionKind, Meta> = {
   contract: { title: 'Hợp đồng', code: 'ACC25', subtitle: 'Hợp đồng thuê nhà, tín dụng, mua tài sản, nhà cung cấp…: theo dõi doanh thu, chi phí, công nợ và lịch thanh toán theo từng hợp đồng', helpKey: 'hop-dong', form: 'Thông tin hợp đồng', parentLabel: 'HĐ gốc', cols: { code: 'Số HĐ', name: 'Tên HĐ', note: 'Ghi chú', parent: 'Mã HĐ gốc' }, tracked: true },
 };
 
+/** Xếp theo cây: cha trước, con ngay dưới (theo mã); gắn độ sâu để thụt tên. Không có cha – con thì giữ thứ tự cũ. */
+function asTree(rows: Row[]): (Row & { depth: number; hasKids: boolean })[] {
+  if (!rows.some((r) => r.parentCode)) return rows.map((r) => ({ ...r, depth: 0, hasKids: false }));
+  const codes = new Set(rows.map((r) => r.code));
+  const kids = new Map<string, Row[]>();
+  for (const r of rows) { const p = r.parentCode && codes.has(r.parentCode) ? r.parentCode : ''; kids.set(p, [...(kids.get(p) ?? []), r]); }
+  const out: (Row & { depth: number; hasKids: boolean })[] = [];
+  const walk = (p: string, depth: number) => { for (const r of kids.get(p) ?? []) { out.push({ ...r, depth, hasKids: kids.has(r.code) }); if (depth < 12) walk(r.code, depth + 1); } };
+  walk('', 0);
+  return out;
+}
+
 const hiddenCol: Column<Row> = { key: 'hidden', header: 'Ẩn', type: 'check', width: 50, value: (r) => !r.isActive };
 
-function columnsOf(kind: DimensionKind, employees: Map<string, string>): Column<Row>[] {
+function columnsOf(kind: DimensionKind, employees: Map<string, string>, branchOf: Map<string, string> = new Map()): Column<Row>[] {
   const m = META[kind];
   const code: Column<Row> = { key: 'code', header: m.cols.code, type: 'code', width: 110 };
-  const name: Column<Row> = { key: 'name', header: m.cols.name, width: 300 };
+  // [2026-11-13 Nguyễn Văn Thủy] danh mục có cấp cha – con (phòng ban…): tên thụt theo cấp (đóng góp)
+  const name: Column<Row> = { key: 'name', header: m.cols.name, width: 300, render: (r) => { const d = (r as Row & { depth?: number }).depth ?? 0; return <span style={{ paddingLeft: d * 18, fontWeight: d === 0 && (r as Row & { hasKids?: boolean }).hasKids ? 600 : undefined }}>{r.name}</span>; } };
   const note: Column<Row> = { key: 'note', header: m.cols.note, width: 180 };
   const parent: Column<Row> = { key: 'parentCode', header: m.cols.parent ?? 'Thuộc', type: 'code', width: 130 };
   switch (kind) {
     case 'cost_item': return [code, name, note, parent, { ...hiddenCol, hidden: true }];
-    case 'department': return [code, { ...name, width: 220 }, { key: 'address', header: 'Địa chỉ', width: 200, value: (r) => r.extra.address ?? '' }, { key: 'phone', header: 'Điện thoại', width: 110, value: (r) => r.extra.phone ?? '' }, note, hiddenCol, parent];
+    case 'department': return [code, { ...name, width: 220 },
+      // [2026-11-13 Nguyễn Văn Thủy] ánh xạ ngược: phòng ban này là của chi nhánh / shop nào (0129) (đóng góp)
+      { key: 'branch', header: 'Chi nhánh', type: 'code', width: 120, title: 'Chi nhánh / shop gắn phòng ban này (đổi ở Danh mục chi nhánh)', value: (r) => branchOf.get(r.code) ?? '' },
+      { key: 'address', header: 'Địa chỉ', width: 200, value: (r) => r.extra.address ?? '' }, { key: 'phone', header: 'Điện thoại', width: 110, value: (r) => r.extra.phone ?? '' }, note, hiddenCol, parent];
     case 'contract': return [
       { ...code, width: 120 }, { ...name, width: 240 },
       { key: 'partnerCode', header: 'Khách hàng', type: 'code', width: 110, value: (r) => r.extra.partnerCode ?? '' },
@@ -86,6 +105,8 @@ function columnsOf(kind: DimensionKind, employees: Map<string, string>): Column<
         x('group', 'Nhóm NV', 120), x('branchCode', 'Chi nhánh làm việc', 130, 'code'), note, x('departmentCode', 'Mã phòng ban', 110, 'code'),
       ];
     }
+    case 'cash_item': return [{ ...code, width: 140 }, { ...name, width: 360 }, { key: 'loai', header: 'Loại', width: 110, value: (r) => (r.extra.loai === 'thu' ? 'Mục thu' : r.extra.loai === 'chi' ? 'Mục chi' : '') },
+      { key: 'dinhKy', header: 'Phát sinh định kỳ', type: 'check', width: 130, value: (r) => Boolean(r.extra.dinhKy) }, { ...note, width: 220 }, hiddenCol];
     case 'capital_source': case 'tool_group': case 'usage_purpose': return [code, { ...name, width: 260 }, { ...note, width: 260 }];
     default: return [code, name, ...(m.parentLabel ? [parent] : []), note, hiddenCol];
   }
@@ -98,12 +119,20 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
   const canWrite = can('catalog:write');
   const [editing, setEditing] = useState<Draft | null>(null);
   const [sel, setSel] = useState<Row | null>(null);
+  // [2026-11-13 Nguyễn Văn Thủy] mặc định chỉ hiện mục đang dùng; mục đã ẩn xem khi cần (đóng góp)
+  const [showHidden, setShowHidden] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useQuery({ queryKey: ['dimensions', kind], queryFn: () => api.get<Row[]>(`/api/v1/dimensions/${kind}`) });
   const isContract = kind === 'contract';
   const employeesQ = useQuery({ queryKey: ['dimensions', 'employee'], queryFn: () => api.get<Row[]>('/api/v1/dimensions/employee'), enabled: isContract, staleTime: 60_000 });
   const employees = useMemo(() => new Map((employeesQ.data ?? []).map((e) => [e.code, e.name])), [employeesQ.data]);
-  const columns = useMemo(() => columnsOf(kind, employees), [kind, employees]);
+  const branchesQ = useQuery({ queryKey: ['branches'], queryFn: () => api.get<{ code: string; departmentCode: string | null }[]>('/api/v1/branches'), enabled: kind === 'department', staleTime: 60_000 });
+  const branchOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const b of branchesQ.data ?? []) if (b.departmentCode) m.set(b.departmentCode, m.has(b.departmentCode) ? `${m.get(b.departmentCode)}, ${b.code}` : b.code);
+    return m;
+  }, [branchesQ.data]);
+  const columns = useMemo(() => columnsOf(kind, employees, branchOf), [kind, employees, branchOf]);
   const del = useMutation({
     mutationFn: (code: string) => api.delete(`/api/v1/dimensions/${kind}/${encodeURIComponent(code)}`),
     onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['dimensions', kind] }); },
@@ -122,6 +151,9 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
           onDelete={remove}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          extra={(q.data ?? []).some((r) => !r.isActive) && (
+            <label className="checkbox" style={{ marginLeft: 8, fontSize: 13 }}><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Hiện cả mục đã ẩn ({(q.data ?? []).filter((r) => !r.isActive).length})</label>
+          )}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
@@ -130,7 +162,7 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
             exportName={`danh-muc-${kind}`}
             groupable
             exportRef={exportRef}
-            rows={q.data ?? []}
+            rows={asTree(showHidden ? q.data ?? [] : (q.data ?? []).filter((r) => r.isActive))}
             rowKey={(r) => r.code}
             onSelect={setSel}
             onRowDoubleClick={(r) => canWrite && setEditing(r)}
@@ -188,9 +220,16 @@ function DimensionForm({ kind, value, parents, onClose }: { kind: DimensionKind;
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide={isContract} title={meta.form} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={save.isPending || !code || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Đóng</button></>}>
       {isContract && <div className="field-title full">Thông tin chung hợp đồng</div>}
+      {kind === 'cash_item' && (
+        <Field label="Loại" full>
+          <div className="row" style={{ gap: 16 }}>
+            {(['thu', 'chi'] as const).map((l) => <label key={l} className="checkbox"><input type="radio" checked={(v.extra?.loai ?? 'chi') === l} onChange={() => setExtra({ loai: l })} /> {l === 'thu' ? 'Mục thu' : 'Mục chi'}</label>)}
+          </div>
+        </Field>
+      )}
       <Field label="Mã (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
       <Field label="Tên" full={!isContract}><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
-      <Field label={kind === 'cost_item' || kind === 'department' ? 'Chi chú' : 'Ghi chú'} full={!isContract}><input className="input" value={v.note ?? ''} onChange={(e) => set({ note: e.target.value })} /></Field>
+      <Field label={kind === 'cash_item' ? 'Diễn giải' : kind === 'cost_item' || kind === 'department' ? 'Chi chú' : 'Ghi chú'} full={!isContract}><input className="input" value={v.note ?? ''} onChange={(e) => set({ note: e.target.value })} /></Field>
       {isContract && (
         <>
           <Field label="Ngày ký HĐ"><input type="date" className="input" value={v.extra?.signedDate ?? ''} onChange={(e) => setExtra({ signedDate: e.target.value })} /></Field>
@@ -221,6 +260,7 @@ function DimensionForm({ kind, value, parents, onClose }: { kind: DimensionKind;
           <Field label="Mã phòng ban"><ListPicker items={departments.map((d) => ({ code: d.code, name: d.name }))} value={v.extra?.departmentCode ?? ''} onChange={(departmentCode) => setExtra({ departmentCode })} placeholder="Bấm để chọn" /></Field>
         </>
       )}
+      {kind === 'cash_item' && <Field label=" " full><label className="checkbox"><input type="checkbox" checked={Boolean(v.extra?.dinhKy)} onChange={(e) => setExtra({ dinhKy: e.target.checked })} /> Là khoản phát sinh định kỳ hàng tháng</label></Field>}
       {meta.tracked && <Field label=" "><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>}
       {isContract && (
         <>

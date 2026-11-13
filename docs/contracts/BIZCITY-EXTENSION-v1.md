@@ -5,7 +5,9 @@
 
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: 1.3.0-draft — hook masterdata.referenceCheck có (trả câu báo); document.beforeTransition bỏ (kiểm trong action của module); ctx.notify; slot partner.detail.tab, dashboard.widget vẽ được -->
 
-> **Phiên bản:** 1.3.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
+<!-- [2026-11-12 09:10 PM Võ Hoàng] POS-UIKIT — 1.4.0-draft: §3b thành phần @bizcity/ui-kit mở rộng (bảng lưới, thẻ chỉ số, bộ tham số kỳ / chi nhánh, ô chọn) cho màn module giống màn Core (đóng góp, chờ chủ dự án duyệt) -->
+
+> **Phiên bản:** 1.4.0-draft · 2026-11-12 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
 > **Luật nền:** [R-BOUND](../rules/RULE-MODULE-BOUNDARY.md) · **Năng lực:** `ui.menu`, `ui.kit`, `ui.slots`, `permissions.module`, `settings.registry`, `ai.cell`
 
 ## 1. Mục đích
@@ -37,6 +39,28 @@ Liệt kê **đóng** các chỗ module được cắm vào Core: giao diện, A
 Khai báo phía giao diện: `defineWebModule` ở `@bizcity/module-sdk/web` (ADR-0015 Q5) — kiểm đường dẫn dưới `/app/<key>/`, slot trong danh sách đóng `WEB_SLOTS` (đúng bảng trên), quyền đúng khuôn, ngay lúc nạp.
 
 Luật slot: thành phần chỉ dùng `@bizcity/ui-kit` và client action; lỗi trong slot bị bắt (error boundary) và **không** làm hỏng màn của Core; slot không đọc state của màn chủ ngoài props được truyền.
+
+## 3b. Thành phần `@bizcity/ui-kit` (1.4.0-draft)
+
+**Vấn đề.** Màn của module chỉ được import `@bizcity/ui-kit` (STD-EXT-3). Gói này mới có khung trang, hộp thoại, ô nhập, số tiền, nhãn trạng thái — **không có** bảng lưới, thẻ chỉ số, bộ tham số kỳ / chi nhánh, ô chọn mặt hàng / chi nhánh. Màn danh sách / báo cáo của module (vd màn quản trị bán lẻ của module `pos`, phiếu [NT-BH-008](../nghiem-thu/ban-hang/NT-BH-008-pos-quan-tri-ban-le.md)) vì thế không làm được như màn Core (Mua hàng, Phiếu thu…): thiếu lọc / sắp xếp / tổng cột / xuất Excel chuẩn, thiếu bộ tham số đã lưu, mỗi module tự vẽ bảng một kiểu.
+
+**Lựa chọn.** Mở rộng **mặt tiền** ui-kit theo đúng cách đang có (`provideUiKit`): ui-kit khai chữ ký + hàm chuyển; `apps/web/src/lib/uiKitHost.ts` trỏ tới **chính** thành phần Core đang dùng. Module có giao diện giống hệt màn Core, không nhân đôi mã, đổi giao diện Core không vỡ module (chữ ký là hợp đồng). Đã loại: (a) cho module import `apps/web/src/components` (phá STD-EXT-3, module dính chặt nội bộ web); (b) mỗi module tự viết bảng (lệch giao diện, lặp mã); (c) chép DataGrid vào ui-kit (hai bản, lệch dần). Chuyển hẳn mã thành phần sang gói ui-kit (TARGET-LAYOUT) là việc sau, không đổi chữ ký dưới đây.
+
+**Hình dạng** — thêm, không đổi phần cũ (minor, VER-1); props là **tập con** của thành phần Core, khoá ổn định:
+
+| Thành phần ui-kit | Bản thật (`apps/web`) | Props hợp đồng |
+|---|---|---|
+| `DataGrid<T>` | `components/DataGrid` | `rows`, `columns: GridColumn<T>[]`, `rowKey`, `storageKey?`, `onRowClick?`, `onRowDoubleClick?`, `rowClassName?`, `emptyText?`, `maxHeight?`, `exportName?`, `exportTitle?`, `footerLabel?`, `note?`. `GridColumn<T>` = `key`, `header`, `type?` (`text`·`code`·`number`·`money`·`price`·`qty`·`date`·`check` — đúng ColType của DataGrid), `value?`, `render?`, `sum?`, `width?`, `hidden?`, `noFilter?`, `noSort?`, `bold?` |
+| `KpiCards` | `components/KpiCards` | `items: { key, label, value, tone?: 'ok'·'warn'·'bad'·'info', onClick? }[]`, `at?` |
+| `FilterLayout` | `components/ReportPanel` | `filters`, `children`, `onSearch?`, `boThamSo?: { value, onApply, id? }` — bảng tham số bên trái + bộ tham số đã lưu (`docs/cap-nhat-ux/07-bo-tham-so-bao-cao.md`) |
+| `PeriodField` | `ReportPanel.SideKy` | `from`, `to`, `onChange(from, to)` — kỳ chọn nhanh (tháng này, quý này…) |
+| `BranchCheckList` | `ReportPanel.BranchCheckList` | `value` (mã cách nhau dấu phẩy), `onChange` — tích nhiều chi nhánh, nhớ theo người dùng |
+| `ItemPicker` · `BranchPicker` | `components/pickers` · `components/filters` | `value`, `onChange`, `placeholder?`, `disabled?` |
+| `useApi().getPage(path, query)` | `lib/api.getPage` | trả `{ data, meta }` — `meta` = `ctx.meta` của action (trang, tổng dòng, tổng tiền của cả kết quả lọc); `get` giữ nguyên chỉ trả `data` |
+
+**Ảnh hưởng.** Chỉ thêm vào `packages/ui-kit` và `apps/web/src/lib/uiKitHost.ts`; màn Core không đổi; module cũ không đổi. Kiểu `UiKitImpl` thêm trường → bản thật phải cung cấp (một chỗ duy nhất: `uiKitHost.ts`).
+
+**Kiểm bằng.** typecheck (`UiKitImpl` kế thừa `UiKitGridImpl`: `uiKitHost.ts` thiếu trường nào là không biên dịch được); màn đầu tiên dùng là màn quản trị bán lẻ của module `pos` (NT-BH-008) — chạy thật trên giao diện. <!-- [2026-11-12 10:20 PM Võ Hoàng] POS-UIKIT — bỏ ý test riêng gói ui-kit: npm test gốc chỉ chạy test API, ui-kit chưa có bộ chạy test (đóng góp) -->
 
 ## 3a. Khung nhúng app ngoài tiến trình (ADR-0011 mức 2)
 

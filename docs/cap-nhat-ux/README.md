@@ -15,6 +15,8 @@ Mỗi đợt cập nhật giao diện một tệp: **đổi gì, người dùng 
 | 7 | [08-dm-tai-khoan.md](08-dm-tai-khoan.md) | Hệ thống tài khoản (ACC1) làm lại theo chuẩn: 6 cột, Diễn giải, Nhân bản, Ngừng / Dùng lại, Xuất / Nhập Excel cùng mẫu |
 | 8 | [09-bao-loi-tai-o.md](09-bao-loi-tai-o.md) | Báo lỗi tại ô cho mọi hộp thoại: bấm Ghi mà thiếu → viền đỏ + chữ đỏ dưới ô |
 | 9 | [10-them-nhanh-chi-nhanh-kho.md](10-them-nhanh-chi-nhanh-kho.md) | Ô chi nhánh có + thêm nhanh; ô phân kho theo chi nhánh đang chọn, có + thêm phân kho (cả phiếu mua) |
+| 10 | [11-ho-so-in.md](11-ho-so-in.md) | Hồ sơ in HT16: thông tin đơn vị trên bản in (ẩn / hiện), người ký theo chức danh, ngày ký; đặt riêng từng chi nhánh |
+| 11 | [12-bo-mau-goc.md](12-bo-mau-goc.md) | Bộ màu gốc (--base, --nav, mọi sắc độ tự tính), chọn màu ở menu tài khoản, Tổng quan theo bản thiết kế, bỏ ảnh logo / ảnh quảng cáo |
 
 Việc tiếp theo: [02-viec-tiep-theo.md](02-viec-tiep-theo.md).
 
@@ -27,3 +29,4 @@ Việc tiếp theo: [02-viec-tiep-theo.md](02-viec-tiep-theo.md).
 5. Form chứng từ: `Modal voucher={{ total }}` (hoặc `VoucherModal total`) để có khung toàn màn, tổng tiền góc phải, dòng phím tắt, Ctrl + S.
 6. Danh sách trống: `Empty` có `actions` (nút Thêm / Nhập Excel).
 7. Bảng lọc bên trái: khoảng ngày dùng `SideKy` (có ô Kỳ chọn nhanh).
+| 12 | [13-khung-menu.md](13-khung-menu.md) | Menu theo phân hệ kế toán chuẩn, việc chưa có ghi "đang phát triển", trang Quy trình (lưu đồ + 5 báo cáo chính), Phần riêng bật / tắt, Thiết lập ở nút bánh răng, tên màn một nơi |

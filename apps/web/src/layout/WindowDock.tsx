@@ -42,7 +42,7 @@ export function restoreDock(key: string) { wins.find((w) => w.key === key)?.rest
 /** Chữ của tiêu đề, các phần cách nhau một dấu cách (nhãn "Nháp", "Nhập ngoài đơn" không dính vào nhau); bỏ chữ của nút. */
 function textOf(el: Node): string {
   if (el.nodeType === Node.TEXT_NODE) return el.textContent ?? '';
-  if (el instanceof HTMLElement && (el.tagName === 'BUTTON' || el.classList.contains('modal-viewing') || el.classList.contains('ct-total'))) return '';
+  if (el instanceof HTMLElement && (el.tagName === 'BUTTON' || el.tagName === 'SELECT' || el.classList.contains('modal-viewing') || el.classList.contains('ct-total'))) return '';
   return [...el.childNodes].map(textOf).join(' ');
 }
 

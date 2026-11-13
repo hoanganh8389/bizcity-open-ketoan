@@ -17,10 +17,17 @@ import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
 import { BranchPicker } from '@/components/filters';
+import { useWarehouseTypes } from './WarehouseTypesPage';
 
 export interface Warehouse {
   code: string; branchCode: string; branchName: string; name: string; address: string;
   isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string;
+  /** [2026-11-13 Nguyễn Văn Thủy] Loại kho (DM18, 0128) (đóng góp) */
+  typeCode?: string; typeName?: string;
+  /** MST kê khai của kho (0121); trống = theo chi nhánh → công ty. taxIdUsed = MST thực dùng khi ghi sổ. */
+  taxId?: string; taxIdUsed?: string; uid?: string;
+  /** Ngày MST mới bắt đầu hiệu lực (gửi khi đổi MST). */
+  taxValidFrom?: string;
 }
 
 export function useWarehouses() {
@@ -34,6 +41,7 @@ export function WarehousesPage() {
   const [branch, setBranch] = useState('');
   const [editing, setEditing] = useState<(Partial<Warehouse> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<Warehouse | null>(null);
+  const [quick, setQuick] = useState(false);
   useThemTuDiaChi(() => setEditing({ isNew: true, isActive: true, branchCode: workBranch.get() || '' }), canWrite);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useWarehouses();
@@ -58,7 +66,7 @@ export function WarehousesPage() {
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá kho ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
-          extra={<NutNhapExcel loai={nhapLoai('kho')!} disabled={!canWrite} />}
+          extra={<><button className="btn btn-sm" disabled={!canWrite} onClick={() => setQuick(true)} title="Tạo một lần các kho theo loại cho một chi nhánh (kho bán, khuyến mại, trả lại, lỗi…)">Tạo nhanh bộ kho</button><NutNhapExcel loai={nhapLoai('kho')!} disabled={!canWrite} /></>}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
@@ -81,14 +89,16 @@ export function WarehousesPage() {
               { key: 'address', header: 'Địa chỉ', width: 260 },
               { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
               { key: 'isDefault', header: 'Kho mặc định', type: 'check', width: 90 },
-              { key: 'isPromo', header: 'Kho khuyến mại', type: 'check', width: 100 },
-              { key: 'account', header: 'Tài khoản', type: 'code', width: 90 },
+              { key: 'typeCode', header: 'Loại kho', type: 'code', width: 80, title: 'Loại kho (Danh mục → Loại kho): quyết định kho được dùng cho nghiệp vụ nào' },
+              { key: 'typeName', header: 'Tên loại kho', width: 160 },
+              { key: 'taxIdUsed', header: 'MST', type: 'code', width: 130, title: 'MST ghi vào sổ của kho này hôm nay (theo chi nhánh / cơ cấu tổ chức)' },
               { key: 'note', header: 'Ghi chú', width: 200 },
             ] satisfies Column<Warehouse>[]}
           />
         )}
       </div>
       {editing && <WarehouseForm value={editing} onClose={() => setEditing(null)} />}
+      {quick && <TaoNhanhBoKho branchCode={branch || sel?.branchCode || workBranch.get() || ''} onClose={() => setQuick(false)} />}
     </>
   );
 }
@@ -103,34 +113,101 @@ export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Ware
     mutationFn: () => {
       const body = {
         branchCode: v.branchCode ?? '', name: v.name ?? '', address: v.address ?? '', isActive: v.isActive !== false,
-        isDefault: Boolean(v.isDefault), isPromo: Boolean(v.isPromo), account: v.account ?? '', note: v.note ?? '',
+        isDefault: Boolean(v.isDefault), typeCode: v.typeCode || 'KHH', account: v.account ?? '', note: v.note ?? '', taxId: (v.taxId ?? '').trim(),
+        taxValidFrom: (v.taxId ?? '') !== (value.taxId ?? '') ? v.taxValidFrom || null : null,
       };
       return value.isNew ? api.post('/api/v1/warehouses', { ...body, code: v.code?.trim() }) : api.patch(`/api/v1/warehouses/${encodeURIComponent(value.code!)}`, body);
     },
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['warehouses'] }); if (value.isNew) { onSaved?.(v.code?.trim() ?? ''); onClose(); } else viewAgain[1](); },
   });
   const txt = (k: keyof Warehouse, label: string, full = false) => <Field label={label} full={full}><input className="input" value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Warehouse>)} /></Field>;
-  const check = (k: 'isActive' | 'isDefault' | 'isPromo', label: string) => <label className="checkbox"><input type="checkbox" checked={k === 'isActive' ? v.isActive !== false : Boolean(v[k])} onChange={(e) => set({ [k]: e.target.checked })} /> {label}</label>;
+  const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive || t.code === v.typeCode);
+  const check = (k: 'isActive' | 'isDefault', label: string) => <label className="checkbox"><input type="checkbox" checked={k === 'isActive' ? v.isActive !== false : Boolean(v[k])} onChange={(e) => set({ [k]: e.target.checked })} /> {label}</label>;
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide title="Thông tin kho" onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.branchCode || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <fieldset className="fgroup">
         <legend>Thông tin kho</legend>
-        <Field label="Mã kho (*)" hint="Khớp mã kho của dòng nhập xuất gửi sang"><input className="input mono" maxLength={12} value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value })} autoFocus /></Field>
+        <Field label="Mã kho (*)" hint="Mã kho ghi trên phiếu nhập, xuất"><input className="input mono" maxLength={12} value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value })} autoFocus /></Field>
         <Field label="Chi nhánh (*)"><BranchPicker value={v.branchCode ?? ''} onChange={(branchCode) => set({ branchCode })} activeOnly /></Field>
         {txt('name', 'Tên kho (*)')}
-        {txt('account', 'Tài khoản kho', false)}
+        <Field label="Loại kho (*)" tip="Loại quyết định kho được dùng cho nghiệp vụ nào (nhập mua, bán, trả lại…). Khai loại ở Danh mục → Loại kho">
+          <select className="select input" value={v.typeCode || 'KHH'} onChange={(e) => set({ typeCode: e.target.value })}>
+            {types.map((t) => <option key={t.code} value={t.code} title={t.purpose}>{t.code} · {t.name}</option>)}
+          </select>
+        </Field>
+        {/* [2026-11-13 Nguyễn Văn Thủy] MST khai ở Cơ cấu tổ chức / chi nhánh; kho chỉ xem. Ô sửa chỉ hiện khi kho đã có MST riêng từ trước (đóng góp) */}
+        {!value.taxId ? (
+          <Field label="MST" tip="Theo chi nhánh / Cơ cấu tổ chức. Muốn đổi thì đổi ở đó">
+            <div className="input mono" style={{ background: 'var(--surface-2, #f4f6f9)', color: 'var(--muted, #666)' }}>{v.taxIdUsed || '—'}</div>
+          </Field>
+        ) : <Field label="MST riêng của kho" tip="Xoá trắng để theo chi nhánh / Cơ cấu tổ chức">
+          <input className="input mono" value={v.taxId ?? ''} placeholder={v.taxIdUsed ? `Đang dùng: ${v.taxIdUsed}` : '10 số hoặc 10 số-3 số'} onChange={(e) => set({ taxId: e.target.value.replace(/[^0-9-]/g, '') })} />
+          {v.taxId && !/^[0-9]{10}(-[0-9]{3})?$/.test(v.taxId) && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>MST gồm 10 số hoặc 10 số-3 số</div>}
+        </Field>}
+        {!value.isNew && (v.taxId ?? '') !== (value.taxId ?? '') && (
+          <Field label="MST mới áp dụng từ ngày" tip="Chứng từ từ ngày này ghi MST mới; chứng từ trước ngày này giữ MST cũ">
+            <input className="input" type="date" value={v.taxValidFrom ?? new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)} onChange={(e) => set({ taxValidFrom: e.target.value })} />
+          </Field>
+        )}
         {txt('address', 'Địa chỉ', true)}
         {txt('note', 'Ghi chú', true)}
         <Field label=" " full>
           <div className="row" style={{ gap: 16 }}>
             {check('isActive', 'Theo dõi')}
             {check('isDefault', 'Kho mặc định (nhận dòng không ghi mã kho)')}
-            {check('isPromo', 'Kho khuyến mại')}
           </div>
         </Field>
       </fieldset>
+      {!value.isNew && value.code && <LichSuMstKho code={value.code} />}
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
+  );
+}
+
+/** Tạo nhanh bộ kho cho một chi nhánh: tích các loại cần, máy chủ đặt mã (5 ký tự đầu mã chi nhánh + loại) và tên; loại đã có kho thì bỏ qua. */
+function TaoNhanhBoKho({ branchCode, onClose }: { branchCode: string; onClose: () => void }) {
+  const qc = useQueryClient();
+  const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive);
+  const [branch, setBranch] = useState(branchCode);
+  const [pick, setPick] = useState<string[]>(['KHH', 'KKM', 'KTL', 'KLO']);
+  const run = useMutation({
+    mutationFn: () => api.post<{ created: string[]; skipped: string[] }>('/api/v1/warehouses/quick', { branchCode: branch, typeCodes: pick }),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['warehouses'] }); void qc.invalidateQueries({ queryKey: ['warehouse-types'] }); },
+  });
+  return (
+    <Modal title="Tạo nhanh bộ kho" onClose={onClose}
+      footer={<><button className="btn btn-primary" disabled={run.isPending || !branch || !pick.length} onClick={() => run.mutate()}>Tạo</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      <Field label="Chi nhánh (*)" full><BranchPicker value={branch} onChange={setBranch} activeOnly /></Field>
+      <Field label="Loại kho cần tạo" full tip="Chi nhánh đã có kho thuộc loại nào thì bỏ qua loại đó">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 16px' }}>
+          {types.map((t) => (
+            <label key={t.code} className="checkbox" title={t.purpose}>
+              <input type="checkbox" checked={pick.includes(t.code)} onChange={(e) => setPick((p) => (e.target.checked ? [...p, t.code] : p.filter((x) => x !== t.code)))} /> <span className="mono">{t.code}</span> {t.name}
+            </label>
+          ))}
+        </div>
+      </Field>
+      {run.data && <div className="alert full">Đã tạo: {run.data.created.join(', ') || 'không có'}{run.data.skipped.length ? ` · Bỏ qua: ${run.data.skipped.join('; ')}` : ''}</div>}
+      {run.error && <div className="alert alert-bad full">{errorText(run.error)}</div>}
+    </Modal>
+  );
+}
+
+/** Phiên bản MST của kho: mỗi lần đổi MST / đổi chi nhánh một dòng (0121). */
+function LichSuMstKho({ code }: { code: string }) {
+  const h = useQuery({ queryKey: ['warehouse-tax-history', code], queryFn: () => api.get<{ validFrom: string; validTo: string | null; taxId: string; taxIdUsed: string; changedBy: string; changedAt: string }[]>(`/api/v1/warehouses/${encodeURIComponent(code)}/tax-history`) });
+  const ngay = (d: string | null) => (!d ? '' : d <= '1900-01-01' ? 'Từ đầu' : d.split('-').reverse().join('/'));
+  if ((h.data?.length ?? 0) < 2) return null; // chỉ hiện khi MST đã đổi ít nhất một lần
+  return (
+    <fieldset className="fgroup full">
+      <legend>Phiên bản MST</legend>
+      <table className="mh-mini full">
+        <thead><tr><th>Hiệu lực từ</th><th>Đến trước</th><th>MST đặt ở kho</th><th>MST ghi sổ</th><th>Người đổi</th></tr></thead>
+        <tbody>{(h.data ?? []).map((r, i) => (
+          <tr key={i}><td>{ngay(r.validFrom)}</td><td>{r.validTo ? ngay(r.validTo) : 'nay'}</td><td className="mono">{r.taxId || '— (theo cấp trên)'}</td><td className="mono"><b>{r.taxIdUsed}</b></td><td>{r.changedBy.replace(/\s*\(\d{4}\)$/, '')}</td></tr>
+        ))}</tbody>
+      </table>
+    </fieldset>
   );
 }

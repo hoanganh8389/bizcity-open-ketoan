@@ -10,7 +10,7 @@ export interface GuideColumn { name: string; required?: boolean; aliases?: strin
 export function ExcelGuide({ columns, file, sheet = 'Mau', defaultOpen = true }: { columns: GuideColumn[]; file: string; sheet?: string; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const template = async () => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const ws = XLSX.utils.aoa_to_sheet([columns.map((c) => c.name), columns.map((c) => c.example)]);
     ws['!cols'] = columns.map((c) => ({ wch: Math.max(12, c.name.length + 4) }));
     const wb = XLSX.utils.book_new();

@@ -8,8 +8,8 @@ Các phiếu này là phiếu nhập tay lập nhanh (định khoản như mọi
 | CN02 | Ghi giảm công nợ phải thu | Nợ TK đối ứng (chiết khấu, xoá nợ…) / Có TK phải thu |
 | CN03 | Ghi tăng công nợ phải trả | Nợ TK đối ứng (chi phí, tài sản, trả trước…) / Có TK phải trả |
 | CN03 | Ghi giảm công nợ phải trả | Nợ TK phải trả / Có TK đối ứng |
-| CN04 | Khách đặt cọc, trả trước | Nợ TK tiền / Có TK phải thu — phiếu thu (111) hoặc báo có (112) |
-| CN04 | Đặt cọc, trả trước cho nhà cung cấp | Nợ TK phải trả (hoặc ký quỹ) / Có TK tiền — phiếu chi (111) hoặc báo nợ (112) |
+| CN04 | Khách đặt cọc, trả trước | Nợ TK tiền / Có TK phải thu — phiếu thu (111) hoặc thu tiền gửi (112) |
+| CN04 | Đặt cọc, trả trước cho nhà cung cấp | Nợ TK phải trả (hoặc ký quỹ) / Có TK tiền — phiếu chi (111) hoặc chi tiền gửi (112) |
 
 ## Lập phiếu
 

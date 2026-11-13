@@ -82,7 +82,7 @@ function canXuLy(r: StoredDoc): { text: string; cls: string; all: string } {
  * nhập từ đơn" truyền qua command (thay cho tham số trên địa chỉ) — người dùng vẫn ở hồ sơ NCC.
  */
 /** formsOnly: chỉ chạy lệnh + hộp phiếu / nhập Excel, không vẽ danh sách (hồ sơ NCC lập / mở phiếu tại chỗ; xem danh sách thì mở MH11 / MH23). */
-export interface ChungTuEmbed { embedPartner?: string; embedGroup?: string; command?: { q: string; n: number }; report?: Report; formsOnly?: boolean }
+export interface ChungTuEmbed { embedPartner?: string; embedGroup?: string; command?: { q: string; n: number }; report?: Report; formsOnly?: boolean; /** MH23A Tổng hợp mua hàng theo mặt hàng: thân MH23, mở sẵn kiểu cộng dồn theo mã, thẻ Tất cả. */ theoMa?: boolean }
 /**
  * Hai màn dùng thân màn này (bộ lọc trái, tab loại chứng từ phải — theo thói quen màn cũ):
  *   tong-hop  MH11 Tổng hợp mua hàng — MÀN LÀM VIỆC CHÍNH (thay MH03 cũ, /mua-hang/chung-tu chuyển về đây): danh sách PHIẾU
@@ -100,7 +100,7 @@ const VIEWS: Record<'' | Report, [View, string][]> = {
   'bao-cao': [['dong', 'Chi tiết dòng hàng'], ['ma', 'Cộng dồn theo mã hàng']],
 };
 
-export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOnly }: ChungTuEmbed = {}) {
+export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOnly, theoMa }: ChungTuEmbed = {}) {
   const { data, isLoading, error, refresh } = useMuaHang();
   const names = useNames();
   const [urlParams] = useSearchParams();
@@ -121,7 +121,7 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   };
   // Mở từ sơ đồ Quy trình: ?loai=<nhóm | loại phiếu> · ?trang-thai=draft|pending_approval · ?loi=1 · ?moi=<loại phiếu>
   const kindParam = embedGroup ?? params.get('loai') ?? '';
-  const [group, setGroup] = useState(GROUPS.find((g) => g[0] === kindParam || g[2].includes(kindParam as PDoc['kind']))?.[0] ?? (report === 'bao-cao' ? 'receipt' : 'all'));
+  const [group, setGroup] = useState(GROUPS.find((g) => g[0] === kindParam || g[2].includes(kindParam as PDoc['kind']))?.[0] ?? (report === 'bao-cao' && !theoMa ? 'receipt' : 'all'));
   // Nhúng: hồ sơ NCC đổi nhóm (menu "Xem danh sách …") → đổi thẻ loại phiếu; lệnh nhập Excel → mở hộp nhập.
   useEffect(() => { if (embedded && embedGroup) setGroup(GROUPS.find((g) => g[0] === embedGroup || g[2].includes(embedGroup as PDoc['kind']))?.[0] ?? 'all'); }, [embedded, embedGroup]);
   useEffect(() => { if (embedded && params.get('nhap-excel') === '1') setExcel(true); }, [embedded, params, navKey]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -139,7 +139,7 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   const [search, setSearch] = useState('');
   // Màn riêng: lọc chi nhánh → mã kho ở bảng lọc bên trái (giống ACC82 / ACC83), áp dụng khi bấm Tìm kiếm.
   // Kiểu xem: theo phiếu · chi tiết theo dòng hàng (như BH01) · tổng hợp theo mã hàng (như BH02) — cùng bộ lọc, cùng thẻ loại phiếu.
-  const [view, setView] = useState<View>(VIEWS[report ?? ''][0]![0]);
+  const [view, setView] = useState<View>(theoMa ? 'ma' : VIEWS[report ?? ''][0]![0]);
   const [branchCodes, setBranchCodes] = useState('');
   const [whCodes, setWhCodes] = useState('');
   // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — Báo cáo mua hàng (xem theo dòng / mã): lọc theo nhóm hàng
@@ -273,6 +273,8 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
       {!formsOnly && <>
       {report === 'tong-hop' ? <PageHeader title="Tổng hợp mua hàng" code="MH11" helpKey="mua-hang-chung-tu"
         subtitle="Đơn đặt → phiếu nhập kho → trả tiền: lập, sửa, duyệt phiếu; mỗi phiếu một dòng với tiền trước / sau chiết khấu, thuế, đã trả / còn nợ; gom theo NCC, chi nhánh, mã hàng…" />
+        : report === 'bao-cao' && theoMa ? <PageHeader title="Tổng hợp mua hàng theo mặt hàng" code="MH23A" helpKey="mua-hang-bao-cao"
+          subtitle="Số lượng, giá trị mua, chiết khấu, trả lại và tổng giá trị mua của từng mặt hàng trong kỳ" />
         : report === 'bao-cao' ? <PageHeader title="Báo cáo mua hàng" code="MH23" helpKey="mua-hang-bao-cao"
           subtitle="Chi tiết từng dòng hàng của các phiếu mua hàng theo kỳ: SL, đơn giá, tiền hàng trước / sau chiết khấu, thuế, tổng thanh toán, ký hiệu / số hoá đơn" />
         : !embedded && <PageHeader title="Chứng từ mua hàng" code="MH03" helpKey="mua-hang-chung-tu"

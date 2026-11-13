@@ -1,37 +1,33 @@
-# Báo cáo thuế ra (ACC65)
+# Bảng kê hóa đơn, chứng từ hàng hóa, dịch vụ bán ra (ACC65)
 
-Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ bán ra theo từng nhóm thuế suất — dùng để đối chiếu và kê khai thuế GTGT.
+Bảng kê hoá đơn theo **nhóm hàng hoá, dịch vụ (nhóm HHDV)** để đối chiếu và kê khai thuế GTGT. Mỗi dòng là một mặt hàng trên hoá đơn.
 
 ## Nguồn số liệu
 
-- Lấy từ **sổ hoá đơn**: chỉ chứng từ có hoá đơn hợp lệ, số tiền **đúng như trên hoá đơn đã phát hành**.
-- Hàng bán trả lại, hoá đơn điều chỉnh giảm: ghi **số âm**.
-- Phiếu nội bộ không xuất hoá đơn **không** lên bảng kê.
-- Hoá đơn đã huỷ không lên bảng kê; hoá đơn bị thay thế chỉ còn hoá đơn thay thế.
+- Lấy từ **sổ hoá đơn**: chỉ chứng từ có hoá đơn, số tiền đúng như trên hoá đơn đã phát hành.
+- Hàng trả lại, hoá đơn điều chỉnh giảm ghi **số âm**. Hoá đơn đã huỷ không lên bảng kê.
+- Hoá đơn thuộc kỳ theo **ngày kê khai** của hoá đơn.
 
-## Nhóm
+## Chọn tham số
 
-| Nhóm | Gồm |
-|---|---|
-| 1. Hàng hoá, dịch vụ không chịu thuế GTGT | Loại thuế nhóm "Không chịu thuế" |
-| 2. Thuế suất 0% | Loại thuế 0% |
-| 3. Thuế suất 5% | Loại thuế 5% |
-| 4. Thuế suất 10% | Loại thuế 10% **và cả 8%** (giảm thuế) — cột **Tỷ lệ thuế** của từng dòng cho biết 8% hay 10% |
+- **Kỳ**, **Từ ngày – Đến ngày**.
+- **Cộng gộp theo từng hóa đơn**: mỗi hoá đơn (cùng thuế suất) một dòng; cột Mặt hàng ghi mặt hàng đầu "và n mặt hàng khác".
+- **Lấy số liệu ĐVT, số lượng, đơn giá lên báo cáo**: thêm ba cột này.
+- Đơn vị có nhiều chi nhánh thì có thêm:
+  - **Chi nhánh**: chọn một, nhiều hoặc tất cả chi nhánh.
+  - **Tách theo chi nhánh**: mỗi chi nhánh một khối riêng, mỗi nhóm có dòng cộng riêng; dòng Tổng cộng chung ở cuối.
 
-- Loại thuế không thuộc nhóm nào (ví dụ "không phải kê khai") vẫn hiện ở đầu báo cáo nhưng **không cộng** vào dòng "Tổng:" của nhóm nào.
-- Một hoá đơn có hàng nhiều thuế suất hiện ở mỗi nhóm một dòng.
-- Trong nhóm, dòng xếp theo ngày chứng từ, số hoá đơn, mã phiếu.
+## Bảng
 
-## Cột
+Gồm các cột: Số hóa đơn, Ngày hóa đơn, Tên người mua, Mã số thuế người mua, Mặt hàng, tiền chưa có thuế GTGT, Thuế suất, Thuế GTGT, Tài khoản thuế. Tài khoản thuế lấy theo danh mục mã thuế.
 
-Mẫu số · Ký hiệu HĐ · Mã phiếu · Ngày chứng từ · Ngày HĐ · Số HĐ · Tên người mua · Mã số thuế · Doanh thu chưa thuế · Tỷ lệ thuế · Thuế · Chi nhánh · Mã đối tượng.
+Các nhóm HHDV: 1. Không chịu thuế GTGT · 2. Thuế suất 0% · 3. Thuế suất 5% · 4. Thuế suất 10% (gồm cả dòng được giảm còn 8%). Mỗi nhóm có dòng **Cộng nhóm**; cuối bảng là **Tổng cộng**. Hoá đơn không thuộc nhóm kê khai nào vẫn hiện, nhưng không cộng vào Tổng cộng.
 
-## Thao tác
+- Bấm **số hoá đơn** để mở chứng từ.
+- Nút **Cột** để hiện thêm Số chứng từ, Ngày chứng từ, Ký hiệu, Chi nhánh.
+- **Xuất Excel** theo đúng bảng đang xem.
 
-- Lọc khoảng ngày theo **ngày hoá đơn**, chi nhánh.
-- Bấm một dòng để mở chứng từ gốc.
-- **Xuất Excel** theo đúng cột của bảng kê.
+## In
 
-## Căn cứ pháp lý
-
-Luật Thuế GTGT 48/2024/QH15 (sửa bởi Luật 149/2025/QH15); Nghị định 123/2020/NĐ-CP (sửa bởi Nghị định 70/2025/NĐ-CP). Xem thêm màn **Căn cứ pháp lý** (TI11), trang *Hoá đơn và thuế GTGT*.
+- **Bảng kê (mẫu quản trị)**: như bảng trên màn; ký Người lập biểu, Kế toán trưởng, Giám đốc (tên lấy theo HT16).
+- **Phụ lục bảng kê bán ra (01-1/GTGT)**: mẫu nộp kèm tờ khai, ký người nộp thuế.

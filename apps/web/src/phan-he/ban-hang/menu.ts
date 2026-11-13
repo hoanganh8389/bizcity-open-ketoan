@@ -34,7 +34,6 @@ export const banHangMenu: MenuItem[] = [
     key: 'ban-hang-danh-muc',
     label: 'Danh mục bán hàng',
     children: [
-      { key: 'bh-doi-tuong', label: 'Đối tượng', path: '/danh-muc/doi-tuong', code: 'DM03' },
       { key: 'bh-khach-hang', label: 'Khách hàng', path: '/danh-muc/khach-hang', code: 'DM12' },
       { key: 'bh-nhom-doi-tuong', label: 'Nhóm đối tượng', path: '/danh-muc/nhom-doi-tuong', code: 'DM08' },
       { key: 'bh-hinh-thuc-tt', label: 'Hình thức thanh toán', path: '/cau-hinh/hinh-thuc-thanh-toan', code: 'DM05' },

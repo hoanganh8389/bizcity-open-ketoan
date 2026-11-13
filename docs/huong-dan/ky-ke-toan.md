@@ -8,7 +8,7 @@ Kỳ kế toán là tháng dương lịch, không vắt qua năm. Kỳ **tự t�
 
 Tab **Danh sách kỳ**, nút **Khai kỳ năm …** tạo trước đủ 12 kỳ của năm đang xem (kỳ đã có thì giữ nguyên).
 
-**Chứng từ ngày tương lai:** phiếu thu, chi, báo có, báo nợ, phiếu kế toán, số dư đầu kỳ **không được** có ngày sau cuối tháng hiện tại, trừ khi kỳ của tháng đó đã được khai. Muốn lập trước chứng từ cho tháng sau, khai kỳ trước.
+**Chứng từ ngày tương lai:** phiếu thu, chi, thu tiền gửi, chi tiền gửi, phiếu kế toán, số dư đầu kỳ **không được** có ngày sau cuối tháng hiện tại, trừ khi kỳ của tháng đó đã được khai. Muốn lập trước chứng từ cho tháng sau, khai kỳ trước.
 
 ## Đóng / mở kỳ (lưới khoá)
 

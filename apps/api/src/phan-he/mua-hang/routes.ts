@@ -107,11 +107,13 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/purchase/allocations/:id', { preHandler: read, schema: { tags, summary: 'Phân bổ phiếu chi phí vào phiếu nhập', params: idParamSchema, querystring: z.object({ basis: z.enum(['value', 'qty']).optional() }) },
     handler: async (req) => ok(costAllocation(await ctxOf(authOf(req).tenantId), req.params.id, req.query.basis)) });
   r.get('/api/v1/purchase/real-cost/:id', { preHandler: read, schema: { tags, summary: 'Giá vốn thực tế từng mã của phiếu nhập', params: idParamSchema }, handler: async (req) => ok(await realCost(db, authOf(req).tenantId, await ctxOf(authOf(req).tenantId), req.params.id)) });
-  r.get('/api/v1/purchase/logs', { preHandler: read, schema: { tags, summary: 'Nhật ký mua hàng (JSONL)', querystring: z.object({ event: z.string().optional(), from: z.string().optional(), to: z.string().optional(), docNo: z.string().optional(), partnerCode: z.string().optional() }) },
+  r.get('/api/v1/purchase/logs', { preHandler: read, schema: { tags, summary: 'Nhật ký mua hàng (JSONL)', querystring: z.object({ event: z.string().optional(), from: z.string().optional(), to: z.string().optional(), docNo: z.string().optional(), partnerCode: z.string().optional(), sku: z.string().optional() }) },
     handler: async (req) => {
       const q = req.query;
       // docNo: số phiếu / mã chính sách (lịch sử một phiếu, một chính sách); partnerCode: mọi việc của một NCC.
-      const rows = (await readLog(authOf(req).tenantId, q)).filter((r) => (!q.docNo || r.docNo === q.docNo) && (!q.partnerCode || (r.data as { partnerCode?: string })?.partnerCode === q.partnerCode));
+      const rows = (await readLog(authOf(req).tenantId, q)).filter((r) => (!q.docNo || r.docNo === q.docNo) && (!q.partnerCode || (r.data as { partnerCode?: string })?.partnerCode === q.partnerCode)
+        // sku: lịch sử giá NCC của một mã (bản ghi cũ không có skus thì dò theo dòng tóm tắt).
+        && (!q.sku || ((r.data as { skus?: string[] }).skus ?? ((r.data as { rows?: string[] }).rows ?? []).map((x) => String(x).split(' ')[0])).includes(q.sku)));
       return ok(rows);
     } });
   // Mặt hàng & giá mua của NCC (một nơi: hồ sơ NCC và form mặt hàng cùng dùng).
@@ -270,8 +272,8 @@ export const routesTsWriteActions: AnyActionDef[] = [
       const a = ctx.legacyAuth;
       const out = await sameTx(trx, (trx) => saveSupplierProducts(trx, a.tenantId, a.actorName, input.rows));
       const partners = [...new Set(input.rows.map((r) => r.partnerCode ?? ''))];
-      await logEvents(a.tenantId, partners.map((pc) => ({ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: pc || undefined, ...out, rows: input.rows.filter((r) => (r.partnerCode ?? '') === pc).slice(0, 30).map((r) => `${r.sku} ${r.unit}${r.price !== null && r.price !== undefined ? ` ${r.price.toLocaleString('vi-VN')}đ` : ''}${r.isActive ? '' : ' (bỏ)'}`) } })));
-      return out;
+      await logEvents(a.tenantId, partners.map((pc) => ({ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: pc || undefined, added: out.added, updated: out.updated, skus: [...new Set(input.rows.filter((r) => (r.partnerCode ?? '') === pc).map((r) => r.sku))], rows: input.rows.filter((r) => (r.partnerCode ?? '') === pc).slice(0, 30).map((r) => `${r.sku} ${r.unit}${r.price !== null && r.price !== undefined ? ` ${r.price.toLocaleString('vi-VN')}đ` : ''}${r.isActive ? '' : ' (bỏ)'}`), changes: out.changes.filter((c) => (c.partnerCode ?? '') === pc).slice(0, 100) } })));
+      return { added: out.added, updated: out.updated };
     },
   }),
   defineAction({
@@ -284,14 +286,14 @@ export const routesTsWriteActions: AnyActionDef[] = [
       const trx = ctx.data.tx;
       const a = ctx.legacyAuth;
       const row = await sameTx(trx, (trx) => deleteSupplierProduct(trx, a.tenantId, input.id));
-      await logEvents(a.tenantId, [{ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: row.partnerCode || undefined, added: 0, updated: 0, rows: [`${row.sku} ${row.unit}${row.price !== null && row.price !== undefined ? ` ${row.price.toLocaleString('vi-VN')}đ (${row.priceIncludesVat ? 'gồm' : 'chưa'} thuế)` : ' chưa có giá'}${row.validFrom ? `, hiệu lực từ ${row.validFrom.split('-').reverse().join('/')}` : ''}${row.validTo ? ` đến ${row.validTo.split('-').reverse().join('/')}` : ''}${row.note ? `, ghi chú: ${row.note}` : ''} (xoá vĩnh viễn)`], deleted: row } }]);
+      await logEvents(a.tenantId, [{ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: row.partnerCode || undefined, added: 0, updated: 0, skus: [row.sku], changes: [{ sku: row.sku, partnerCode: row.partnerCode, text: `Xoá: ${row.unit}${row.price !== null && row.price !== undefined ? ` ${row.price.toLocaleString('vi-VN')}đ (${row.priceIncludesVat ? 'gồm' : 'chưa'} thuế)` : ''}${row.validFrom ? `, hiệu lực từ ${row.validFrom.split('-').reverse().join('/')}` : ''}` }], rows: [`${row.sku} ${row.unit}${row.price !== null && row.price !== undefined ? ` ${row.price.toLocaleString('vi-VN')}đ (${row.priceIncludesVat ? 'gồm' : 'chưa'} thuế)` : ' chưa có giá'}${row.validFrom ? `, hiệu lực từ ${row.validFrom.split('-').reverse().join('/')}` : ''}${row.validTo ? ` đến ${row.validTo.split('-').reverse().join('/')}` : ''}${row.note ? `, ghi chú: ${row.note}` : ''} (xoá vĩnh viễn)`], deleted: row } }]);
       return { id: input.id };
     },
   }),
   defineAction({
     id: 'mua-hang.purchase.settings', title: 'Lưu cài đặt mua hàng', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
-    input: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false) }), output: anyOut,
+    input: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false), blockOverOrder: z.boolean().default(false) }), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/purchase/settings' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase' },
     handler: async (ctx, input) => {

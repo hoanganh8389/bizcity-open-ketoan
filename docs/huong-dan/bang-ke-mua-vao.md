@@ -1,32 +1,33 @@
-# Báo cáo thuế vào (ACC64)
+# Bảng kê hóa đơn, chứng từ hàng hóa, dịch vụ mua vào (ACC64)
 
-Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ **mua vào**, nhóm theo thuế suất. Dùng để kê khai thuế GTGT đầu vào được khấu trừ.
+Bảng kê hoá đơn theo **nhóm hàng hoá, dịch vụ (nhóm HHDV)** để đối chiếu và kê khai thuế GTGT. Mỗi dòng là một mặt hàng trên hoá đơn.
 
-## Số liệu lấy từ đâu
+## Nguồn số liệu
 
-1. **Phiếu nhập mua, trả hàng nhà cung cấp** gửi từ hệ thống kho / mua hàng có kèm hoá đơn đầu vào: tự lên bảng kê (trả hàng ghi số âm).
-2. Các dòng **có loại thuế đầu vào và số hoá đơn** trên phiếu chi, phiếu báo nợ, phiếu kế toán nhập tay:
+- Lấy từ **sổ hoá đơn**: chỉ chứng từ có hoá đơn, số tiền đúng như trên hoá đơn đã phát hành.
+- Hàng trả lại, hoá đơn điều chỉnh giảm ghi **số âm**. Hoá đơn đã huỷ không lên bảng kê.
+- Hoá đơn thuộc kỳ theo **ngày kê khai** của hoá đơn.
 
-   - Mở hộp phiếu, đánh dấu **Thuế GTGT, hoá đơn**.
-   - Ở dòng có hoá đơn: nhập **tiền chưa thuế**, chọn **Loại thuế** (V10, V08, V05…). Tiền thuế tự tính theo thuế suất, sửa lại được cho khớp hoá đơn.
-   - Nhập **ký hiệu, số, ngày hoá đơn**, **tên và mã số thuế người bán**.
-   - Ghi sổ. Phần mềm tự ghi thêm bút toán thuế (Nợ 133 / Có tài khoản tiền hoặc công nợ) và đưa hoá đơn vào bảng kê này.
+## Chọn tham số
 
-Mỗi dòng phiếu là một hoá đơn; một phiếu kê được nhiều hoá đơn.
+- **Kỳ**, **Từ ngày – Đến ngày**.
+- **Cộng gộp theo từng hóa đơn**: mỗi hoá đơn (cùng thuế suất) một dòng; cột Mặt hàng ghi mặt hàng đầu "và n mặt hàng khác".
+- **Lấy số liệu ĐVT, số lượng, đơn giá lên báo cáo**: thêm ba cột này.
+- Đơn vị có nhiều chi nhánh thì có thêm:
+  - **Chi nhánh**: chọn một, nhiều hoặc tất cả chi nhánh.
+  - **Tách theo chi nhánh**: mỗi chi nhánh một khối riêng, mỗi nhóm có dòng cộng riêng; dòng Tổng cộng chung ở cuối.
 
-## Lưu ý
+## Bảng
 
-- Chỉ phiếu có số hoá đơn đầu vào (ghi vào **sổ hoá đơn**) mới lên bảng kê.
-- Dòng có loại thuế nhưng **không nhập số hoá đơn** vẫn hạch toán thuế vào tài khoản 133, nhưng không lên bảng kê. Thấy tổng thuế ở đây nhỏ hơn phát sinh tài khoản 133 thì tìm các dòng như vậy.
-- Sửa hoặc huỷ phiếu thì bảng kê tự cập nhật.
-- Tổng thuế ở đây là cột "Thuế đầu vào" trên **Bảng tổng hợp thuế GTGT (ACC91)**.
+Gồm các cột: Số hóa đơn, Ngày hóa đơn, Tên người bán, Mã số thuế người bán, Mặt hàng, tiền chưa có thuế GTGT, Thuế suất, Thuế GTGT, Tài khoản thuế. Tài khoản thuế lấy theo danh mục mã thuế.
 
-## Nhóm và gộp dòng
+Các nhóm HHDV: 1. Dùng riêng cho SXKD chịu thuế, đủ điều kiện khấu trừ · 4. Không phải tổng hợp trên tờ khai 01/GTGT. Mỗi nhóm có dòng **Cộng nhóm**; cuối bảng là **Tổng cộng**. Hoá đơn không thuộc nhóm kê khai nào vẫn hiện, nhưng không cộng vào Tổng cộng.
 
-- Nhóm 1: Hàng hoá, dịch vụ dùng riêng cho sản xuất kinh doanh chịu thuế GTGT đủ điều kiện khấu trừ thuế. Nhóm 4: Hàng hoá, dịch vụ không phải kê khai, tính nộp thuế GTGT.
-- Các dòng **cùng số hoá đơn, cùng người bán, cùng ngày, cùng thuế suất** được gộp thành một dòng (lấy mã phiếu lớn nhất), để một hoá đơn kê trên nhiều phiếu không bị kê trùng.
+- Bấm **số hoá đơn** để mở chứng từ.
+- Nút **Cột** để hiện thêm Số chứng từ, Ngày chứng từ, Ký hiệu, Chi nhánh.
+- **Xuất Excel** theo đúng bảng đang xem.
 
+## In
 
-## Căn cứ pháp lý
-
-Luật Thuế GTGT 48/2024/QH15; Nghị định 181/2025/NĐ-CP (khấu trừ thuế đầu vào). Xem thêm màn **Căn cứ pháp lý** (TI11), trang *Hoá đơn và thuế GTGT*.
+- **Bảng kê (mẫu quản trị)**: như bảng trên màn; ký Người lập biểu, Kế toán trưởng, Giám đốc (tên lấy theo HT16).
+- **Phụ lục bảng kê mua vào (01-2/GTGT)**: mẫu nộp kèm tờ khai, ký người nộp thuế.

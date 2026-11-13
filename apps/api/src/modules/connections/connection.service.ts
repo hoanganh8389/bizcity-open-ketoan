@@ -23,6 +23,7 @@ import type { AuthContext } from '../../core/auth.js';
 import { documentService, postDocumentIn } from '../../kernel/public.js';
 import { fetchWooPage, wooOrderToDocument } from './woocommerce.js';
 import { env } from '../../config/env.js';
+import { parentFromSku } from '../catalog/sku-rule.js';
 
 type Settings = Record<string, unknown> & { connections?: unknown[]; connectionPulls?: Record<string, ConnectionView['lastPull']> };
 const MAX_PAGES = 500;
@@ -56,6 +57,7 @@ export const connectionService = {
    */
   async prepareIncoming(tenantId: string, raw: unknown): Promise<{ doc: unknown; skip?: string }> {
     if (env.BOOK_MODE === 'tax' && !isInvoicedTrade(raw)) return { doc: raw, skip: 'Sổ thuế chỉ nhận phiếu bán / hoàn có số hoá đơn' };
+    if (env.BOOK_MODE === 'tax') raw = await linesToParentSku(tenantId, raw);
     const code = (raw as { sourceSystem?: unknown })?.sourceSystem;
     if (typeof code !== 'string' || !code) return { doc: raw };
     const c = readConnections(await loadSettings(tenantId)).find((x) => x.code === code);
@@ -158,7 +160,8 @@ export const connectionService = {
         // Sổ thuế: bỏ qua (không nhận, không báo nhận) chứng từ không phải bán / hoàn có hoá đơn — cổng chờ đã lọc, đây là chốt chặn.
         if (env.BOOK_MODE === 'tax' && !isInvoicedTrade(raw)) continue;
         result.fetched++;
-        const parsed = ingestDocumentSchema.safeParse(mapMethods({ ...(raw as object), sourceSystem: c.code }, c.methodMap));
+        const doc = env.BOOK_MODE === 'tax' ? await linesToParentSku(auth.tenantId, raw) : raw;
+        const parsed = ingestDocumentSchema.safeParse(mapMethods({ ...(doc as object), sourceSystem: c.code }, c.methodMap));
         const key = String((raw as { docKey?: unknown })?.docKey ?? '?');
         const no = String((raw as { docNo?: unknown })?.docNo ?? key);
         if (!parsed.success) {
@@ -220,6 +223,34 @@ function gateUrl(c: Connection): URL {
   const u = new URL(c.url);
   if (env.BOOK_MODE === 'tax') u.searchParams.set('consumer', 'tax');
   return u;
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] sổ thuế ghi mã con theo mã cha (đóng góp)
+/**
+ * Sổ thuế: dòng hàng là mã con thì ghi theo mã cha (mặc định cho mọi mã con; theo hoá đơn tính sau).
+ * Mã cha lấy ở danh mục (products.parent_sku); chưa có trong danh mục thì theo mã: 9 số + đuôi chữ → 9 số đầu.
+ * Bỏ itemId của dòng đã đổi để sổ tự lấy theo mã cha.
+ */
+async function linesToParentSku(tenantId: string, raw: unknown): Promise<unknown> {
+  const d = raw as { lines?: { sku?: string; itemId?: string }[] };
+  if (!Array.isArray(d?.lines) || !d.lines.length) return raw;
+  const skus = [...new Set(d.lines.map((l) => (l.sku ?? '').trim()).filter(Boolean))];
+  if (!skus.length) return raw;
+  const rows = await db.selectFrom('products').select(['sku', 'parent_sku']).where('tenant_id', '=', tenantId).where('sku', 'in', skus).execute();
+  const known = new Map(rows.map((r) => [r.sku, r.parent_sku]));
+  const parentOf = (sku: string) => {
+    if (known.has(sku)) return known.get(sku) || null;
+    return parentFromSku(sku);
+  };
+  let changed = false;
+  const lines = d.lines.map((l) => {
+    const p = l.sku ? parentOf(l.sku.trim()) : null;
+    if (!p || p === l.sku) return l;
+    changed = true;
+    const { itemId: _i, ...rest } = l;
+    return { ...rest, sku: p };
+  });
+  return changed ? { ...(raw as object), lines } : raw;
 }
 
 /** Phiếu bán / hoàn có số hoá đơn (không phải phiếu nội bộ, hoá đơn chưa huỷ) — loại chứng từ duy nhất của sổ thuế. */

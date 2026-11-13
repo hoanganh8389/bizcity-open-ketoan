@@ -113,7 +113,7 @@ function PhieuDangKy({ parent, init, branches, onClose }: { parent: string; init
   const approve = async () => { setBusy(true); try { await stockApi.approveMaxRequest(req!.id); await qc.invalidateQueries({ queryKey: ['ton-max'] }); onClose(); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); } };
   const cancel = async () => { if (!window.confirm('Huỷ phiếu này?')) return; try { await stockApi.cancelMaxRequest(req!.id); await qc.invalidateQueries({ queryKey: ['ton-max'] }); onClose(); } catch (e) { setErr(errorText(e)); } };
   const template = async () => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const head = ['Tên hàng', 'Mã bên NCC', 'Mã hàng', 'ĐVT', 'Quy cách', 'Ghi chú', ...shops.map((s) => s.code)];
     const body = rows.length ? rows.map((r) => [r.name, r.nccSku ?? '', r.sku, r.unit ?? '', r.pack ?? '', r.note ?? '', ...shops.map((s) => r.maxByShop?.[s.code] ?? '')]) : [['Sữa bột mới 800g', 'NCC-001', '', 'Lon', 6, '', ...shops.map(() => '')]];
     const ws = XLSX.utils.aoa_to_sheet([head, shops.length ? ['', '', '', '', '', 'Tên shop →', ...shops.map((s) => s.name)] : [], ...body]);
@@ -121,7 +121,7 @@ function PhieuDangKy({ parent, init, branches, onClose }: { parent: string; init
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Dang ky max'); XLSX.writeFile(wb, `dang-ky-max-hang-moi-${parent}.xlsx`);
   };
   const exportExisting = async () => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const ws = XLSX.utils.aoa_to_sheet([['Mã hàng', 'Tên hàng', 'Tồn', 'Bán / ngày', 'Max hiện tại', 'Max gợi ý', 'Max đề nghị', 'Ghi chú'], ...rows.map((r) => [r.sku, r.name, tonOf.get(r.sku) ?? '', r.avgPerDay ?? '', r.currentMax ?? 0, r.suggestedMax ?? 0, r.proposedMax ?? 0, r.note ?? ''])]);
     ws['!cols'] = [{ wch: 12 }, { wch: 40 }, { wch: 8 }, { wch: 10 }, { wch: 11 }, { wch: 10 }, { wch: 11 }, { wch: 24 }];
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Dang ky max'); XLSX.writeFile(wb, `dang-ky-max-${br}.xlsx`);

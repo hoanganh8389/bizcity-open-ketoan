@@ -31,6 +31,7 @@ export const accountCreateSchema = z.object({
   trackCase: z.boolean().default(false),
   trackProject: z.boolean().default(false),
   trackCapitalSource: z.boolean().default(false),
+  trackCashItem: z.boolean().default(false),
   trackCashflow: z.boolean().default(false),
   isForeignCurrency: z.boolean().default(false),
   trackProduct: z.boolean().default(false),
@@ -86,6 +87,7 @@ export interface AccountDto {
   trackCase: boolean;
   trackProject: boolean;
   trackCapitalSource: boolean;
+  trackCashItem: boolean;
   trackCashflow: boolean;
   isForeignCurrency: boolean;
   trackProduct: boolean;

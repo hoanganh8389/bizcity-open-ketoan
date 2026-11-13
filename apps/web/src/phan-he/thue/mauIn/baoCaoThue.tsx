@@ -19,7 +19,12 @@ export interface VatReturnSheet {
   label: string; from: string; to: string; branchCodes: string;
   status: 'draft' | 'final' | null; revision: number;
   form: VatFormLine[]; values: Record<string, number>;
-  reduced: { rows: { name: string; amount: number; tax: number; reducedTax: number }[] };
+  reduced: { rows: { name: string; amount: number; tax: number; reducedTax: number }[]; inputRows?: { name: string; amount: number; tax: number }[]; inputTotals?: { amount: number; tax: number }; totals?: { amount: number; tax: number; reducedTax: number } };
+  // [2026-11-11 Nguyễn Văn Thủy] người ký, ngày ký trên tờ khai; bảng kê 01-1, 01-2 in kèm (đóng góp)
+  signer?: string; signDate?: string;
+  salesList?: { group: number; invoiceNo: string; date: string; name: string; taxCode: string; amount: number; tax: number }[];
+  purchaseList?: { group: number; invoiceNo: string; date: string; name: string; taxCode: string; amount: number; tax: number }[];
+  group4?: boolean;
 }
 
 const Motto = () => <div className="pd-center" style={{ margin: '4px 0' }}><b>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><div><b>Độc lập - Tự do - Hạnh phúc</b></div><div>---------------</div></div>;
@@ -58,9 +63,9 @@ function VatReturnDoc({ s, ctx }: { s: VatReturnSheet; ctx: PrintCtx }) {
         </tbody>
       </table>
       <div className="pd-note">Tôi cam đoan số liệu khai trên là đúng và chịu trách nhiệm trước pháp luật về số liệu đã khai./.</div>
-      <Signs date={true} items={[
+      <Signs date={s.signDate ?? true} items={[
         { title: 'Nhân viên đại lý thuế', note: 'Họ và tên: .................... Chứng chỉ hành nghề số: ....................' },
-        { title: 'Người nộp thuế hoặc đại diện hợp pháp của người nộp thuế', note: '(Chữ ký, ghi rõ họ tên; chức vụ và đóng dấu (nếu có) / Ký điện tử)' },
+        { title: 'Người nộp thuế hoặc đại diện hợp pháp của người nộp thuế', note: '(Chữ ký, ghi rõ họ tên; chức vụ và đóng dấu (nếu có) / Ký điện tử)', name: s.signer || undefined },
       ]} />
       <Foot ctx={ctx} />
     </div>
@@ -87,8 +92,47 @@ export const VAT_RETURN_TEMPLATES: PrintTemplate<VatReturnSheet>[] = [
       }} />
     ),
   },
-  screenTemplate<VatReturnSheet>(),
+  bangKeTemplate('bkbr', 'Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ bán ra (01-1/GTGT)', 'BẢNG KÊ HOÁ ĐƠN, CHỨNG TỪ HÀNG HOÁ, DỊCH VỤ BÁN RA', 'ban'),
+  bangKeTemplate('bkmv', 'Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ mua vào (01-2/GTGT)', 'BẢNG KÊ HOÁ ĐƠN, CHỨNG TỪ CỦA HÀNG HOÁ, DỊCH VỤ MUA VÀO', 'mua'),
 ];
+
+const BK_GROUPS = {
+  ban: ['Hàng hóa, dịch vụ không chịu thuế giá trị gia tăng (GTGT):', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 0%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 5%:', 'Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 10%:'],
+  mua: ['Hàng hóa, dịch vụ dùng riêng cho SXKD chịu thuế GTGT và sử dụng cho các hoạt động cung cấp hàng hóa, dịch vụ không kê khai, nộp thuế GTGT đủ điều kiện khấu trừ thuế:',
+    'Hàng hóa, dịch vụ dùng chung cho SXKD chịu thuế và không chịu thuế đủ điều kiện khấu trừ thuế:', 'Hàng hóa, dịch vụ dùng cho dự án đầu tư đủ điều kiện được khấu trừ thuế:', 'Hàng hóa, dịch vụ không đủ điều kiện được khấu trừ:'],
+};
+function bangKeTemplate(id: string, name: string, title: string, kind: 'ban' | 'mua'): PrintTemplate<VatReturnSheet> {
+  return {
+    id, name, paper: 'A4L',
+    render: (s, ctx) => {
+      const rows = (kind === 'ban' ? s.salesList : s.purchaseList) ?? [];
+      const groups = kind === 'mua' && !s.group4 ? BK_GROUPS.mua.slice(0, 3) : BK_GROUPS[kind];
+      return (
+        <div className="pd-ledger">
+          <OrgHead ctx={ctx} form={kind === 'ban' ? 'Mẫu số: 01-1/GTGT' : 'Mẫu số: 01-2/GTGT'} formNote={TT80} />
+          <div className="pd-title"><h1>{title}</h1><div className="pd-date">Kỳ tính thuế: {s.label}</div></div>
+          <Fields rows={[['Tên người nộp thuế', <b>{ctx.org.name}</b>], ['Mã số thuế', ctx.org.taxCode]]} />
+          <div className="pd-right pd-note">Đơn vị tiền: Đồng Việt Nam</div>
+          <table className="pd-table compact">
+            <thead><tr><th style={{ width: 34 }}>STT</th><th style={{ width: 80 }}>Số hóa đơn</th><th style={{ width: 76 }}>Ngày, tháng, năm lập hóa đơn</th><th>{kind === 'ban' ? 'Tên người mua' : 'Tên người bán'}</th><th style={{ width: 96 }}>{kind === 'ban' ? 'Mã số thuế người mua' : 'Mã số thuế người bán'}</th><th style={{ width: 110 }}>{kind === 'ban' ? 'Doanh thu chưa có thuế GTGT' : 'Giá trị HHDV mua vào chưa có thuế'}</th><th style={{ width: 96 }}>Thuế GTGT</th></tr></thead>
+            <tbody>
+              {groups.map((g, gi) => {
+                const list = rows.filter((r) => r.group === gi + 1);
+                return [
+                  <tr key={`h${gi}`} className="pd-strong"><td colSpan={7}>{gi + 1}. {g}</td></tr>,
+                  ...list.map((r, i) => <tr key={`${gi}-${i}`}><td className="c">{i + 1}</td><td>{r.invoiceNo}</td><td className="c">{date(r.date)}</td><td>{r.name}</td><td>{r.taxCode}</td><td className="num">{m(r.amount)}</td><td className="num">{m(r.tax)}</td></tr>),
+                  <tr key={`t${gi}`} className="pd-strong"><td colSpan={5}>Tổng nhóm {gi + 1}</td><td className="num">{m(list.reduce((x, r) => x + r.amount, 0))}</td><td className="num">{m(list.reduce((x, r) => x + r.tax, 0))}</td></tr>,
+                ];
+              })}
+            </tbody>
+          </table>
+          <Signs date={s.signDate ?? true} items={[{ title: 'Người nộp thuế hoặc đại diện hợp pháp của người nộp thuế', note: '(Chữ ký, ghi rõ họ tên; chức vụ và đóng dấu (nếu có) / Ký điện tử)', name: s.signer || undefined }]} />
+          <Foot ctx={ctx} />
+        </div>
+      );
+    },
+  };
+}
 
 /* ------------------------------------------------------------------ B09 */
 export interface NotesSheet {

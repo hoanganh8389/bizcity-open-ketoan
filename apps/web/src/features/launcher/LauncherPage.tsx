@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { SoDoNhom } from './SoDoNhom';
 import { SO_DO } from '../../layout/so-do-nhom';
+import { DANG_PHAT_TRIEN } from '../../layout/menu-gon';
 import { MODULES, isSection, moduleMenu } from '../../layout/menu';
 import { useAppMenu } from '../../layout/useAppMenu';
 import { ModuleIcon } from '../../phan-he/icons';
@@ -96,12 +97,16 @@ export function GroupHomePage() {
         : xem === 'chi-tiet' && Flow ? <>{veSoDo}<Flow /></>
         : soDo ? (
           // Sơ đồ bên trái, báo cáo hay dùng của nhóm bên phải (bố cục trang Quy trình phổ biến).
-          <div className={`sd-layout${g.reports.length ? '' : ' no-bc'}`}>
+          <div className={`sd-layout${g.reports.length || soDo.reports?.length ? "" : " no-bc"}`}>
             <div className="sd-main"><SoDoNhom soDo={soDo} canOpen={(p) => seen.has(p.split('?')[0]!)} extra={nutPhu} /></div>
-            {g.reports.length > 0 && (
+            {(soDo.reports?.length || g.reports.length > 0) && (
               <aside className="card sd-bc">
                 <b>Báo cáo</b>
-                {g.reports.flatMap((s) => s.items).slice(0, 7).map((m) => <Link key={m.key} to={m.path!} title={m.code ? `${m.label} (${m.code})` : m.label}>{m.label}</Link>)}
+                {soDo.reports
+                  ? soDo.reports.filter((r) => !r.path || seen.has(r.path)).map((r) => (r.path
+                    ? <Link key={r.label} to={r.path}>{r.label}</Link>
+                    : <span key={r.label} className="sd-bc-soon" title="Đang phát triển, sẽ có ở bản sau">{r.label} <small>{DANG_PHAT_TRIEN}</small></span>))
+                  : g.reports.flatMap((s) => s.items).slice(0, 7).map((m) => <Link key={m.key} to={m.path!} title={m.code ? `${m.label} (${m.code})` : m.label}>{m.label}</Link>)}
                 <Link className="sd-bc-all" to={`/bao-cao?nhom=${g.key}`}>Tất cả báo cáo ›</Link>
               </aside>
             )}
@@ -115,6 +120,7 @@ export function GroupHomePage() {
                   <div className="module-home-card-head" style={{ borderColor: g.color }}>{s.label ?? g.label}</div>
                   <div className="module-home-card-body">
                     {s.items.map((m) => <Link key={m.key} to={m.path!} className="module-home-item" title={m.code ? `${m.label} (${m.code})` : m.label}><span>{m.label}</span></Link>)}
+                    {s.soon?.map((label) => <span key={label} className="module-home-item disabled" title="Đang phát triển, sẽ có ở bản sau"><span>{label}</span><small>{DANG_PHAT_TRIEN}</small></span>)}
                   </div>
                 </div>
               ))}

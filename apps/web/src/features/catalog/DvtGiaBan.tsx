@@ -11,6 +11,10 @@ import { useState, type ClipboardEvent } from 'react';
 import { chainText, refOf, sortUnits, suggestPrice, unitProblems } from '@ketoan/contracts';
 import { UnitNameInput } from './UnitNameInput';
 import { useUnitNames } from './UnitNamesPage';
+import { useQueryClient } from '@tanstack/react-query';
+import { api, errorText } from '@/lib/api';
+import { Field, Modal } from '@/components/ui';
+import { useBranches } from '@/components/filters';
 import './dvt-gia-ban.css';
 
 export interface UnitRow { unit: string; ratio: number; isDefault: boolean; isPurchaseDefault?: boolean; weightKg: number | null; note: string }
@@ -50,7 +54,7 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
         </header>
         <div className="dvt-rows">
           <table className="dvt-units">
-          <thead><tr><th style={{ width: 86 }} /><th style={{ width: 220 }}>Tên ĐVT</th><th>Quy đổi</th><th style={{ width: 90 }}>Bán chính</th><th style={{ width: 120 }} title="ĐVT mua chung cho MỌI nhà cung cấp: lập đơn / phiếu tự chọn ĐVT này. NCC nào giao ĐVT khác (vd chỉ bán theo Thùng) thì khai dòng giá ĐVT Thùng cho NCC đó ở thẻ Mua hàng">Mua mặc định<br /><span style={{ fontWeight: 400, fontSize: 11 }}>(mọi NCC)</span></th><th style={{ width: 100 }}>KL (kg)</th><th style={{ width: 44 }} /></tr></thead>
+          <thead><tr><th style={{ width: 86 }} /><th style={{ width: 220 }}>Tên ĐVT</th><th>Quy đổi</th><th style={{ width: 90 }}>Bán chính</th><th style={{ width: 44 }} /></tr></thead>
           <tbody>
           {units.map((u, i) => {
             const isBase = u === base;
@@ -73,8 +77,6 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
                   {prob.rows[i] && <small className="mh-bad">{prob.rows[i]}</small>}
                 </div></td>
                 <td className="c"><label className={`dvt-pill ${u.isDefault ? 'on' : ''}`}><input type="radio" name="dvt-chinh" checked={u.isDefault} onChange={() => onUnit(i, { isDefault: true })} />Bán</label></td>
-                <td className="c"><label className={`dvt-pill ${u.isPurchaseDefault ? 'on' : ''}`}><input type="radio" name="dvt-mua" checked={Boolean(u.isPurchaseDefault)} onChange={() => onUnit(i, { isPurchaseDefault: true })} />Mua</label></td>
-                <td><input className="input num" value={u.weightKg ?? ''} onChange={(e) => onUnit(i, { weightKg: num(e.target.value) })} /></td>
                 <td>{units.length > 1 && !isBase && <button type="button" className="btn btn-xs" title="Bỏ ĐVT này (giá của ĐVT bỏ theo)" onClick={() => { setRefs({}); onRemove(i); }}>×</button>}</td>
               </tr>
             );
@@ -83,25 +85,31 @@ export function DvtQuyDoi({ units, onUnit, onAdd, onRemove }: Pick<Props, 'units
           </table>
         </div>
         {prob.general.map((g) => <div key={g} className="mh-bad" style={{ fontSize: 12 }}>{g}</div>)}
-        <div className="dvt-add">
+        {/* [2026-11-12 Nguyễn Văn Thủy] tối đa 10 đơn vị tính / mặt hàng (đóng góp) */}
+        {units.length > 10 && <div className="mh-bad" style={{ fontSize: 12.5, fontWeight: 600 }}>Tối đa 10 đơn vị tính — đang {units.length}, bỏ bớt dòng.</div>}
+        {units.length >= 10 ? <div className="dvt-add muted" style={{ fontSize: 12.5 }}>Đã đủ 10 đơn vị tính (tối đa 10).</div> : <div className="dvt-add">
           <span className="muted">Thêm ĐVT:</span>
           {quick.map((q) => <button key={q} type="button" className="btn btn-xs dvt-chip" onClick={() => onAdd({ unit: q, ratio: 0, isDefault: false, weightKg: null, note: '' })}>+ {q}</button>)}
           <button type="button" className="btn btn-xs" onClick={() => onAdd({ unit: '', ratio: base ? 0 : 1, isDefault: !units.length, weightKg: null, note: '' })}>+ ĐVT khác…</button>
-          {largest && largest !== base && <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>ĐVT mới mặc định quy đổi theo {largest.unit}</span>}
-        </div>
+          <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{units.length}/10 ĐVT{largest && largest !== base ? ` · ĐVT mới mặc định quy đổi theo ${largest.unit}` : ''}</span>
+        </div>}
       </section>
-
-      <div className="muted" style={{ fontSize: 12 }}>Giá bán khai ở thẻ <b>Giá bán</b>; giá mua (riêng của sản phẩm, theo từng nhà cung cấp) ở thẻ <b>Mua hàng</b>.<br />Lập đơn / phiếu với một NCC: dùng <b>ĐVT trên dòng giá của NCC đó</b> (thẻ Mua hàng); NCC chưa khai mã này thì dùng <b>Mua mặc định</b> → <b>Bán chính</b> → ĐVT nhỏ nhất. Số lượng tồn, tồn max, phân tích đặt hàng luôn quy về ĐVT nhỏ nhất.</div>
     </div>
   );
 }
 
 /** Thẻ "Giá bán": bảng giá công ty / chi nhánh theo từng ĐVT (cấu hình bán hàng). */
-export function GiaBan({ units, prices, lists, shown, setShown, setPrice }: Pick<Props, 'units' | 'prices' | 'lists' | 'shown' | 'setShown' | 'setPrice'>) {
-  const sorted = sortUnits(units);
+// [2026-11-12 Nguyễn Văn Thủy] hàng chính chỉ khai bảng giá công ty (luôn bán theo giá công ty) (đóng góp)
+export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPrice, onlyCompany }: Pick<Props, 'units' | 'prices' | 'lists' | 'shown' | 'setShown' | 'setPrice'> & { onlyCompany?: boolean }) {
+  // [2026-11-12 Nguyễn Văn Thủy] chỉ khai giá ĐVT bán chính (đã chọn ở thẻ Đơn vị tính), không gợi ý quy đổi (đóng góp)
+  const all = sortUnits(units);
+  const main = all.find((u) => u.isDefault) ?? all[0];
+  const sorted = main ? [main] : [];
   const priceOf = (list: string, unit: string) => prices.find((p) => p.priceListCode === list && p.unit === unit)?.price;
   const rowPrices = (list: string) => sorted.map((u) => ({ unit: u.unit, price: priceOf(list, u.unit) }));
   const company = lists.find((l) => l.isCompany);
+  const shown = onlyCompany ? shownAll.filter((c) => c === company?.code) : shownAll;
+  const [adding, setAdding] = useState(false);
   const listName = new Map(lists.map((l) => [l.code, l]));
   const hidden = lists.filter((l) => l.isActive && !shown.includes(l.code));
   /** Dán từ Excel: nhiều số cách nhau bằng Tab / xuống dòng → điền sang phải (ĐVT) và xuống dưới (bảng giá). */
@@ -119,7 +127,7 @@ export function GiaBan({ units, prices, lists, shown, setShown, setPrice }: Pick
       {/* Giá bán theo bảng giá */}
       <section className="blk blk-green">
         <header>
-          <div><b>Giá bán theo bảng giá</b><span>Giá đã gồm thuế. Ô trống hiện <i>giá gợi ý theo tỉ lệ</i> — bấm "lấy" để dùng. Dán được cả dòng số từ Excel.</span></div>
+          <div><b>Giá bán theo bảng giá</b><span>Giá đã gồm thuế, theo ĐVT bán chính{main ? ` (${main.unit})` : ''}. Đổi ĐVT bán chính ở thẻ Đơn vị tính.</span></div>
         </header>
         {!sorted.length ? <div className="muted" style={{ padding: 8 }}>Khai ĐVT ở thẻ Đơn vị tính trước.</div> : !company ? <div className="muted" style={{ padding: 8 }}>Chưa có bảng giá công ty — khai ở màn Bảng giá bán.</div> : (
           <div style={{ overflowX: 'auto' }}>
@@ -160,16 +168,63 @@ export function GiaBan({ units, prices, lists, shown, setShown, setPrice }: Pick
             </table>
           </div>
         )}
-        {company && sorted.length > 0 && hidden.length > 0 && (
+        {onlyCompany && company && sorted.length > 0 && <div className="muted" style={{ fontSize: 12, padding: '6px 0' }}>Hàng chính: chỉ khai giá bảng giá công ty.</div>}
+        {!onlyCompany && company && sorted.length > 0 && (
           <div className="dvt-add">
-            <select className="select input" style={{ height: 30, width: 'auto' }} value="" onChange={(e) => e.target.value && setShown((x) => [...x, e.target.value])}>
+            <select className="select input" style={{ height: 30, width: 'auto' }} value="" onChange={(e) => { const c = e.target.value; if (c === '__new') setAdding(true); else if (c) setShown((x) => [...x, c]); }}>
               <option value="">+ Thêm giá riêng cho bảng giá chi nhánh…</option>
+              <option value="__new">＋ Thêm bảng giá mới…</option>
               {hidden.map((l) => <option key={l.code} value={l.code}>{l.name}{l.branchCodes.length ? ` (${l.branchCodes.length} chi nhánh)` : ''}</option>)}
             </select>
             <span className="muted" style={{ fontSize: 12 }}>Hàng chính chỉ bán theo giá công ty; hàng thường ưu tiên giá chi nhánh rồi tới giá công ty.</span>
           </div>
         )}
       </section>
+      {adding && <ThemBangGia onClose={() => setAdding(false)} onDone={(code) => { setAdding(false); setShown((x) => [...x, code]); }} />}
     </div>
+  );
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] thêm nhanh bảng giá mới ngay ở thẻ Giá bán, chọn luôn chi nhánh áp dụng (đóng góp)
+function ThemBangGia({ onClose, onDone }: { onClose: () => void; onDone: (code: string) => void }) {
+  const qc = useQueryClient();
+  const branches = (useBranches().data ?? []).filter((b) => b.isActive);
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [find, setFind] = useState('');
+  const [picked, setPicked] = useState<string[]>([]);
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const t = find.trim().toLowerCase();
+  const shown = branches.filter((b) => !t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t));
+  const toggle = (c: string) => setPicked((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]));
+  const save = async () => {
+    const c = (code.trim() || name.trim());
+    if (!c || !name.trim()) { setErr('Nhập tên bảng giá'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(c)}`, { name: name.trim(), isCompany: false, isActive: true, note: '' });
+      if (picked.length) await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(c)}/branches`, { branchCodes: picked });
+      await qc.invalidateQueries({ queryKey: ['price-lists'] });
+      onDone(c);
+    } catch (e) { setErr(errorText(e)); setBusy(false); }
+  };
+  return (
+    <Modal wide title="Thêm bảng giá mới" onClose={onClose} footer={<><button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      {err && <div className="alert alert-bad full">{err}</div>}
+      <Field label="Tên bảng giá (*)"><input className="input" value={name} maxLength={200} autoFocus onChange={(e) => setName(e.target.value)} placeholder="vd BG Hải Dương" /></Field>
+      <Field label="Mã bảng giá" tip="Trống = lấy theo tên"><input className="input mono" value={code} maxLength={64} onChange={(e) => setCode(e.target.value)} placeholder={name || 'theo tên'} /></Field>
+      <Field label={`Chi nhánh áp dụng (${picked.length})`} full>
+        <div className="row" style={{ gap: 6, marginBottom: 6 }}>
+          <input className="input" style={{ flex: 1 }} value={find} onChange={(e) => setFind(e.target.value)} placeholder="Gõ mã / tên chi nhánh để lọc" />
+          <button type="button" className="btn btn-sm" onClick={() => setPicked((x) => [...new Set([...x, ...shown.map((b) => b.code)])])}>Chọn hết đang hiện</button>
+          <button type="button" className="btn btn-sm" onClick={() => setPicked([])}>Bỏ hết</button>
+        </div>
+        <div style={{ maxHeight: 240, overflow: 'auto', columns: 3, border: '1px solid var(--line, #e3e7ee)', borderRadius: 6, padding: 6 }}>
+          {shown.map((b) => <label key={b.code} className="checkbox" style={{ display: 'flex', gap: 6, padding: '2px 0', breakInside: 'avoid' }}><input type="checkbox" checked={picked.includes(b.code)} onChange={() => toggle(b.code)} /><span><span className="mono">{b.code}</span> {b.name}</span></label>)}
+          {!shown.length && <span className="muted">Không có chi nhánh khớp.</span>}
+        </div>
+      </Field>
+    </Modal>
   );
 }

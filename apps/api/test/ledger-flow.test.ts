@@ -194,7 +194,7 @@ describe('Báo cáo', () => {
   it('bảng kê bán ra: thuế suất 8% nằm trong nhóm 10%, hàng trả lại ghi âm', async () => {
     const { body } = await call(ctx, 'GET', '/api/v1/reports/sales-invoices?from=2026-10-01&to=2026-10-31');
     const g8 = body.data.groups.find((g: any) => g.group === 'R10');
-    expect(g8.label).toBe('4. Thuế suất 10%');
+    expect(g8.label).toBe('4. Hàng hóa, dịch vụ chịu thuế suất thuế GTGT 10%');
     expect(g8.rows.every((r: any) => r.taxRate === 8)).toBe(true);
     expect(g8.amount).toBe(370370 - 185185);
     expect(g8.tax).toBe(29630 - 14815);

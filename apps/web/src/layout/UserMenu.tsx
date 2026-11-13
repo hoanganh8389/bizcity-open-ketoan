@@ -1,7 +1,7 @@
 // [2026-11-06 03:40 AM Nguyễn Văn Thủy] MENU — gom tên, đổi mật khẩu, đăng xuất vào một avatar trên thanh trên cùng (đóng góp)
 import { useEffect, useRef, useState } from 'react';
 import { KeyRound, LogOut, Palette } from 'lucide-react';
-import { giaoDien } from '@/lib/giaoDien';
+import { giaoDien, MAU_GOC } from '@/lib/giaoDien';
 import { ROLE_LABELS, type Role } from '@ketoan/contracts';
 import { useAuth } from '@/lib/auth';
 
@@ -11,6 +11,7 @@ export const initialsOf = (name: string) => name.trim().split(/\s+/).slice(-2).m
 export function UserMenu({ onChangePassword }: { onChangePassword: () => void }) {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [mau, setMau] = useState(() => giaoDien.get().id);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -32,7 +33,14 @@ export function UserMenu({ onChangePassword }: { onChangePassword: () => void })
             <div><b>{name}</b><small>{user?.email}</small><small>{role}</small></div>
           </div>
           <button type="button" role="menuitem" onClick={() => { setOpen(false); onChangePassword(); }}><KeyRound size={16} /> Đổi mật khẩu</button>
-          <button type="button" role="menuitem" title="Đổi giữa giao diện Xanh (mặc định) và giao diện cổ điển; nhớ trên máy này" onClick={() => { giaoDien.set(giaoDien.get() === 'xanh' ? 'co-dien' : 'xanh'); setOpen(false); }}><Palette size={16} /> {giaoDien.get() === 'xanh' ? 'Dùng giao diện cổ điển' : 'Dùng giao diện Xanh'}</button>
+          {/* [2026-11-11 Nguyễn Văn Thủy] chọn màu gốc của giao diện (lib/giaoDien.ts MAU_GOC), nhớ trên máy (đóng góp) */}
+          <div className="tk-mau" title="Màu giao diện, nhớ trên máy này">
+            <Palette size={16} /> Màu
+            {MAU_GOC.map((m) => (
+              <button key={m.id} type="button" role="menuitemradio" aria-checked={mau === m.id} title={m.ten} className={mau === m.id ? 'on' : ''}
+                style={{ background: `linear-gradient(135deg, ${m.nav} 50%, ${m.base} 50%)` }} onClick={() => { giaoDien.set(m.id); setMau(m.id); }} />
+            ))}
+          </div>
           <button type="button" role="menuitem" onClick={logout}><LogOut size={16} /> Đăng xuất</button>
         </div>
       )}

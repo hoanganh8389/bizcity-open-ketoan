@@ -40,6 +40,7 @@ export const branchService = {
         accounting_unit_id: unitId,
         address: input.address ?? null,
         external_ref: input.externalRef ?? null,
+        // [2026-11-13 Nguyễn Văn Thủy] không chọn phòng ban → trigger 0129 tự sinh phòng ban riêng của chi nhánh (đóng góp)
         department_code: await departmentOf(trx, auth.tenantId, input.departmentCode),
         note: input.note ?? '',
         company_name: input.companyName ?? '',

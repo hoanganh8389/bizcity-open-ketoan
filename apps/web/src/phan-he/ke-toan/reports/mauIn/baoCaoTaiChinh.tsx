@@ -15,34 +15,40 @@ const B = ({ on, children }: { on: boolean; children: ReactNode }) => (on ? <b>{
 const sub = (t: string) => <div style={{ fontWeight: 400, fontSize: '0.9em' }}>{t}</div>;
 
 /* ------------------------------------------------------------------ ACC10 */
-export interface TbRow { code: string; name: string; level: number; isPosting: boolean; openingDebit: number; openingCredit: number; debit: number; credit: number; closingDebit: number; closingCredit: number }
+export interface TbRow { code: string; name: string; level: number; isPosting: boolean; openingDebit: number; openingCredit: number; debit: number; credit: number; closingDebit: number; closingCredit: number; cumDebit?: number; cumCredit?: number }
 export interface TbSheet { from: string; to: string; branchCodes: string; account: string; rows: TbRow[] }
-const TB_KEYS = ['openingDebit', 'openingCredit', 'debit', 'credit', 'closingDebit', 'closingCredit'] as const;
+type TbKey = 'openingDebit' | 'openingCredit' | 'debit' | 'credit' | 'cumDebit' | 'cumCredit' | 'closingDebit' | 'closingCredit';
 
-/** Bảng cân đối số phát sinh: tài khoản tổng hợp in đậm, dòng Tổng cộng chỉ cộng tài khoản chi tiết (như màn). */
-const trialBalance: PrintTemplate<TbSheet> = {
-  id: 's06', name: 'Bảng cân đối số phát sinh S06-DN', paper: 'A4L', source: 'BangCDSPS.rdlc',
+/** Bảng cân đối tài khoản: tài khoản tổng hợp in đậm, dòng Tổng cộng chỉ cộng tài khoản chi tiết (như màn). */
+const tbTemplate = (id: string, name: string, title: string, form: string | undefined, cum: boolean, heads: [string, string, string]): PrintTemplate<TbSheet> => ({
+  id, name, paper: 'A4L',
   render: (s, ctx) => {
     const posting = s.rows.filter((r) => r.isPosting);
-    const tot = Object.fromEntries(TB_KEYS.map((k) => [k, m(posting.reduce((a, r) => a + Math.round(r[k] * 100), 0) / 100)]));
-    const money = (k: (typeof TB_KEYS)[number], group: string, h: string) => ({ key: k, h, group, w: 98, num: true, v: (r: TbRow) => <B on={!r.isPosting}>{mb(r[k])}</B> });
+    const keys: TbKey[] = ['openingDebit', 'openingCredit', 'debit', 'credit', ...(cum ? (['cumDebit', 'cumCredit'] as TbKey[]) : []), 'closingDebit', 'closingCredit'];
+    const tot = Object.fromEntries(keys.map((k) => [k, m(posting.reduce((a, r) => a + Math.round((r[k] ?? 0) * 100), 0) / 100)]));
+    const money = (k: TbKey, group: string, h: string) => ({ key: k, h, group, w: cum ? 84 : 98, num: true, v: (r: TbRow) => <B on={!r.isPosting}>{mb(r[k] ?? 0)}</B> });
     return (
       <LedgerForm ctx={ctx} d={{
-        title: 'BẢNG CÂN ĐỐI SỐ PHÁT SINH', form: 'Mẫu số S06-DN', branchCode: branchOf(s.branchCodes), from: s.from, to: s.to,
+        title, form, branchCode: branchOf(s.branchCodes), from: s.from, to: s.to,
         info: s.account ? [['Nhánh tài khoản', s.account]] : undefined, rows: s.rows, signs: REPORT_SIGNS, total: false,
         after: [{ label: 'Tổng cộng', cells: tot }],
         cols: [
-          { key: 'code', h: 'Số hiệu TK', w: 60, v: (r) => <B on={!r.isPosting}>{r.code}</B> },
+          { key: 'code', h: 'Số tài khoản', w: 60, v: (r) => <B on={!r.isPosting}>{r.code}</B> },
           { key: 'name', h: 'Tên tài khoản', v: (r) => <span style={{ paddingLeft: Math.min(Math.max(r.level - 1, 0), 4) * 8 }}><B on={!r.isPosting}>{r.name}</B></span> },
-          money('openingDebit', 'Số dư đầu kỳ', 'Nợ'), money('openingCredit', 'Số dư đầu kỳ', 'Có'),
-          money('debit', 'Số phát sinh trong kỳ', 'Nợ'), money('credit', 'Số phát sinh trong kỳ', 'Có'),
-          money('closingDebit', 'Số dư cuối kỳ', 'Nợ'), money('closingCredit', 'Số dư cuối kỳ', 'Có'),
+          money('openingDebit', heads[0], 'Nợ'), money('openingCredit', heads[0], 'Có'),
+          money('debit', heads[1], 'Nợ'), money('credit', heads[1], 'Có'),
+          ...(cum ? [money('cumDebit', heads[1], 'Nợ lũy kế'), money('cumCredit', heads[1], 'Có lũy kế')] : []),
+          money('closingDebit', heads[2], 'Nợ'), money('closingCredit', heads[2], 'Có'),
         ],
       }} />
     );
   },
-};
-export const TRIAL_BALANCE_TEMPLATES: PrintTemplate<TbSheet>[] = [trialBalance, screenTemplate<TbSheet>()];
+});
+export const TRIAL_BALANCE_TEMPLATES: PrintTemplate<TbSheet>[] = [
+  tbTemplate('qt', 'Bảng cân đối tài khoản (mẫu quản trị)', 'BẢNG CÂN ĐỐI TÀI KHOẢN', undefined, true, ['Đầu kỳ', 'Phát sinh', 'Cuối kỳ']),
+  tbTemplate('s06', 'Bảng cân đối số phát sinh S06-DN', 'BẢNG CÂN ĐỐI SỐ PHÁT SINH', 'Mẫu số: S06-DN', false, ['Số dư đầu kỳ', 'Số phát sinh trong kỳ', 'Số dư cuối kỳ']),
+  screenTemplate<TbSheet>(),
+];
 
 /* ------------------------------------------------------------------ ACC8 */
 export interface BsRow { code: string; name: string; level: number; section: 'assets' | 'sources'; closing: number; opening: number }

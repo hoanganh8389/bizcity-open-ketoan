@@ -143,7 +143,7 @@ export async function readAssetFile(file: File): Promise<{ rows: ParsedRow[]; un
 
 /** Tải tệp mẫu Excel (một sheet dữ liệu có dòng ví dụ, một sheet hướng dẫn). */
 export async function downloadTemplate() {
-  const XLSX = await import('xlsx');
+  const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
   const wb = XLSX.utils.book_new();
   const sample = [
     ['TS0001', 'Máy tính tiền quầy 1', 'TSCĐ', 'TS-MAY', 'CN01', '15/03/2024', '15/03/2024', 36000000, '', 36, 18500000, '31/12/2025', 17, 1000000, '', '2112', '2141', '6424', '', '', '', 'Đang dùng', '', 'Cái', 1, ''],

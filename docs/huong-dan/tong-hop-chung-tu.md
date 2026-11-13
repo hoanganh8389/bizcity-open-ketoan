@@ -12,7 +12,7 @@ Cộng mọi định khoản trong kỳ theo từng **cặp tài khoản Nợ / 
 
 | Ô | Ý nghĩa |
 |---|---|
-| Loại chứng từ | Chỉ tính một loại: hoá đơn bán, hàng trả lại, phiếu thu, chi, báo có, báo nợ, phiếu kế toán, kết chuyển |
+| Loại chứng từ | Chỉ tính một loại: hoá đơn bán, hàng trả lại, phiếu thu, chi, thu tiền gửi, chi tiền gửi, phiếu kế toán, kết chuyển |
 | Tách theo | Chọn các cột cần tách: **Chi nhánh**, **Tháng**, **Loại chứng từ**, **Khoản mục**, **Lý do**. Mặc định tách theo chi nhánh, tháng, khoản mục, lý do. Bỏ hết để chỉ còn cặp tài khoản |
 
 ## Lưu ý

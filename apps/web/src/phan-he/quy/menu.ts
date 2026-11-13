@@ -13,10 +13,12 @@ export const quyMenu: MenuItem[] = [
     label: 'Nghiệp vụ quỹ',
     children: [
       { key: 'q-chuyen-tien', label: 'Phiếu chuyển tiền', path: '/quy/phieu-chuyen-tien', code: 'Q2' },
+      { key: 'q-thu-chi', label: 'Thu, chi tiền', path: '/quy/thu-chi', code: 'ACC51' },
+      { key: 'q-thu-chi-tg', label: 'Thu, chi tiền gửi', path: '/quy/thu-chi-tien-gui', code: 'ACC54' },
       { key: 'q-phieu-thu', label: 'Phiếu thu', path: '/nghiep-vu/phieu-thu', code: 'ACC51' },
       { key: 'q-phieu-chi', label: 'Phiếu chi', path: '/nghiep-vu/phieu-chi', code: 'ACC52' },
-      { key: 'q-phieu-bao-no', label: 'Phiếu báo nợ', path: '/nghiep-vu/phieu-bao-no', code: 'ACC53' },
-      { key: 'q-phieu-bao-co', label: 'Phiếu báo có', path: '/nghiep-vu/phieu-bao-co', code: 'ACC54' },
+      { key: 'q-phieu-bao-no', label: 'Chi tiền gửi', path: '/nghiep-vu/phieu-bao-no', code: 'ACC53' },
+      { key: 'q-phieu-bao-co', label: 'Thu tiền gửi', path: '/nghiep-vu/phieu-bao-co', code: 'ACC54' },
     ],
   },
   {
@@ -29,6 +31,9 @@ export const quyMenu: MenuItem[] = [
       { key: 'q-nk-thu-tien', label: 'Sổ nhật ký thu tiền', path: '/quy/nhat-ky-thu-tien', code: 'ACC72' },
       { key: 'q-nk-chi-tien', label: 'Sổ nhật ký chi tiền', path: '/quy/nhat-ky-chi-tien', code: 'ACC73' },
       { key: 'q-ct-quy', label: 'Sổ kế toán chi tiết quỹ TM', path: '/quy/so-chi-tiet-quy', code: 'ACC76' },
+      { key: 'q-so-du-ngan-hang', label: 'Bảng kê số dư ngân hàng', path: '/quy/so-du-ngan-hang', code: 'ACC96' },
+      { key: 'q-chuyen-tien-noi-bo', label: 'Sổ chi tiết chuyển tiền nội bộ', path: '/quy/chuyen-tien-noi-bo', code: 'ACC97' },
+      { key: 'q-dong-tien', label: 'Dòng tiền', path: '/quy/dong-tien', code: 'ACC98' },
     ],
   },
 ];

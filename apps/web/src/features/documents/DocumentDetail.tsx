@@ -21,6 +21,7 @@ import { EntryLinesById } from '../ledger/EntryDetailGrid';
 import { canOpenSource, openSource } from '@/lib/sourceDoc';
 import { FORM_DOC_TYPES, SaleDocumentForm, type FormDocType, type LinkedPayment, type Offset, type OffsetBy } from './SaleDocumentForm';
 import { FormTabs } from '@/components/FormBlocks';
+import { TepChungTu, docRefOf } from '@/components/dinh-kem/TepChungTu';
 
 interface DocDetail {
   id: string;
@@ -157,6 +158,8 @@ export function DocumentDetail({ id, onClose }: { id: string; onClose: () => voi
               {canOpenSource(d.docKey) && <button type="button" className="btn btn-sm" style={{ marginLeft: 8 }} onClick={() => openSource(d.docKey)}>Mở phiếu nhập kho (xem, sửa)</button>}</dd>
             <dt>Nhận lúc</dt><dd>{dateTime(d.receivedAt)}{d.postedAt ? ` · ghi sổ ${dateTime(d.postedAt)}` : ''}</dd>
           </dl>}
+          {/* [2026-11-12 kiennt] NT-QUY-001 — phiếu chuyển tiền: đính kèm uỷ nhiệm chi / biên lai / sao kê (khoá ledger.event:<docKey>) */}
+          {d.docType === 'cash_transfer' && <TepChungTu docRef={docRefOf(d.docKey)} defaultKind="uy_nhiem_chi" />}
 
           {(d.linkedInvoices ?? []).length > 0 && (
             <>

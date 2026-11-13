@@ -26,7 +26,7 @@ export interface SalesFilter {
   wh?: { codes: string[]; defaultBranchIds: string[] } | null;
 }
 
-export const SALES_GROUPS = ['document', 'day', 'month', 'branch', 'product', 'customer', 'taxCode', 'brand', 'industry', 'itemGroup', 'itemGroup1', 'itemGroup2', 'itemGroup3', 'itemType', 'customerGroup', 'department'] as const;
+export const SALES_GROUPS = ['document', 'day', 'month', 'branch', 'product', 'customer', 'taxCode', 'brand', 'industry', 'itemGroup', 'itemGroup1', 'itemGroup2', 'itemGroup3', 'itemType', 'customerGroup', 'department', 'employee'] as const;
 export type SalesGroupBy = (typeof SALES_GROUPS)[number];
 
 // [2026-11-05 02:00 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: nhóm theo mã hiện hành, một dòng qua đổi mã và gộp mã; mã trên chứng từ giữ nguyên ở dòng chi tiết (đóng góp)
@@ -65,6 +65,8 @@ export const GROUP_SQL: Record<SalesGroupBy, { key: RawBuilder<unknown>; label: 
   customerGroup: { key: sql`COALESCE(p.group_code, '')`, label: sql`COALESCE(MAX(pg.name), '')`, extra: sql`''`, join: sql`LEFT JOIN partner_groups pg ON pg.tenant_id = l.tenant_id AND pg.code = p.group_code` },
   // Bộ phận của chi nhánh (cửa hàng): xem theo điểm bán, HO, chi nhánh.
   department: { key: sql`COALESCE(br.department_code, '')`, label: sql`COALESCE(MAX(dd.name), '')`, extra: sql`''`, join: sql`LEFT JOIN dimensions dd ON dd.tenant_id = l.tenant_id AND dd.kind = 'department' AND dd.code = br.department_code` },
+  // [2026-11-11 Nguyễn Văn Thủy] Nhân viên bán hàng ghi trên phiếu (payload.employee: mã, tên) (đóng góp)
+  employee: { key: sql`COALESCE(d.payload #>> '{employee,code}', '')`, label: sql`COALESCE(MAX(d.payload #>> '{employee,name}'), '')`, extra: sql`''` },
 };
 
 export function where(f: SalesFilter): RawBuilder<unknown> {

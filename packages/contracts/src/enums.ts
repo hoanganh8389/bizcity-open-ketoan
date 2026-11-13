@@ -47,9 +47,9 @@ export const DOC_TYPE_LABELS: Record<DocType, string> = {
   sale_return: 'Hàng bán trả lại',
   receipt: 'Phiếu thu',
   payment: 'Phiếu chi',
-  bank_receipt: 'Phiếu báo có',
-  bank_payment: 'Phiếu báo nợ',
-  manual: 'Phiếu kế toán',
+  bank_receipt: 'Thu tiền gửi',
+  bank_payment: 'Chi tiền gửi',
+  manual: 'Chứng từ nghiệp vụ khác',
   opening: 'Số dư đầu kỳ',
   closing: 'Kết chuyển',
   purchase: 'Nhập mua hàng',
@@ -57,11 +57,11 @@ export const DOC_TYPE_LABELS: Record<DocType, string> = {
   transfer: 'Chuyển kho',
   stock_adjustment: 'Điều chỉnh kho',
   cogs: 'Giá vốn hàng xuất',
-  cash_transfer: 'Chuyển tiền',
+  cash_transfer: 'Chuyển tiền nội bộ',
   customer_payment: 'Thanh toán khách hàng',
   supplier_payment: 'Thanh toán nhà cung cấp',
   depreciation: 'Khấu hao, phân bổ',
-  manual_journal: 'Phiếu kế toán (module)',
+  manual_journal: 'Chứng từ nghiệp vụ khác (module)',
 };
 
 /** Nhóm loại chứng từ ở màn đóng / mở kỳ (ACC2): mỗi nhóm một dải cột trên lưới khoá. */

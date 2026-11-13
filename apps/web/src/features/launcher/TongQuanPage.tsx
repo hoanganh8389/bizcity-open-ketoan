@@ -9,16 +9,15 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDownLeft, ArrowUpRight, BarChart3, ChevronLeft, ChevronRight, CircleDollarSign, HelpCircle, Landmark, Pin, Receipt, RefreshCw, TrendingUp, Wallet, type LucideIcon } from 'lucide-react';
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, BarChart3, ChevronLeft, ChevronRight, CircleDollarSign, HelpCircle, Landmark, Pin, Receipt, RefreshCw, TrendingUp, Wallet, type LucideIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money } from '@/lib/format';
 import { HelpDrawer } from '@/components/HelpDrawer';
-import { KhoiAnh } from '../system/image-blocks';
 import { useAppMenu, useEnabledModules } from '../../layout/useAppMenu';
 import { useGonGroups } from '../../layout/useGon';
 import { GonIcon } from '../../layout/SideNav';
-import { groupCount, REPORT_PAGE } from '../../layout/menu-gon';
+import { groupCount, nhomHien, REPORT_PAGE } from '../../layout/menu-gon';
 import { useHayDung } from '../../layout/hay-dung';
 import { initialsOf } from '../../layout/UserMenu';
 import { useViec, viecOf } from '../../layout/rail/useViec';
@@ -32,25 +31,27 @@ const WEEK = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 function TruyCapNhanh() {
   const navigate = useNavigate();
   const menu = useAppMenu();
-  const groups = useGonGroups(menu);
+  const groups = nhomHien(useGonGroups(menu));
   const hay = useHayDung(menu);
   const [the, setThe] = useState<'nhom' | 'hay'>('nhom');
   return (
     <section className="card tq-card">
-      <div className="tq-head"><h3>Truy cập nhanh</h3></div>
-      <div className="tq-tabs" role="tablist">
-        <button role="tab" aria-selected={the === 'nhom'} className={the === 'nhom' ? 'active' : ''} onClick={() => setThe('nhom')}>Phân hệ</button>
-        <button role="tab" aria-selected={the === 'hay'} className={the === 'hay' ? 'active' : ''} title="Màn đã ghim, rồi tới màn bạn mở nhiều nhất trên máy này" onClick={() => setThe('hay')}>Hay dùng</button>
+      <div className="tq-head">
+        <h3>Truy cập nhanh</h3>
+        <div className="tq-seg" role="tablist">
+          <button role="tab" aria-selected={the === 'nhom'} className={the === 'nhom' ? 'on' : ''} onClick={() => setThe('nhom')}>Phân hệ</button>
+          <button role="tab" aria-selected={the === 'hay'} className={the === 'hay' ? 'on' : ''} title="Màn đã ghim, rồi tới màn bạn mở nhiều nhất trên máy này" onClick={() => setThe('hay')}>Hay dùng</button>
+        </div>
       </div>
       {the === 'nhom' ? (
         <div className="tq-apps">
           {groups.map((g) => (
             <button key={g.key} type="button" title={`${g.description} (${groupCount(g)} chức năng)`} onClick={() => navigate(g.home)}>
-              <span style={{ color: g.color, background: `${g.color}1a` }}><GonIcon name={g.icon} size={22} /></span>{g.label}
+              <span><GonIcon name={g.icon} size={20} /></span>{g.label}
             </button>
           ))}
           <button type="button" title="Tất cả báo cáo, sổ sách" onClick={() => navigate(REPORT_PAGE)}>
-            <span style={{ color: '#2a6cc4', background: '#2a6cc41a' }}><BarChart3 size={22} /></span>Báo cáo
+            <span><BarChart3 size={20} /></span>Báo cáo
           </button>
         </div>
       ) : hay.length ? (
@@ -97,7 +98,7 @@ export function Tile({ icon: Icon, label, value, hint, path, strong }: { icon: L
   return (
     <Link to={path} className={`tq-tile${strong ? ' strong' : ''}`} title={`${hint}. Bấm để xem chi tiết.`}>
       <span className="tq-tile-icon"><Icon size={18} /></span>
-      <span className="tq-tile-label">{label}</span>
+      <span className="tq-tile-label">{label}{value !== null && value < 0 && <em className="tq-am">Âm</em>}</span>
       <b className={value !== null && value < 0 ? 'am' : ''}>{value === null ? '—' : money(value) || '0'}</b>
     </Link>
   );
@@ -121,17 +122,27 @@ function TaiChinh() {
   return (
     <section className="card tq-card">
       <div className="tq-head">
-        <h3>Tình hình tài chính</h3>
+        <h3>Tình hình tài chính <small>{`${from.slice(8)}/${from.slice(5, 7)} – ${today.slice(8)}/${today.slice(5, 7)}/${today.slice(0, 4)}`} · đơn vị VND</small></h3>
         <select className="select" value={ky} aria-label="Kỳ xem" onChange={(e) => setKy(e.target.value as 'thang' | 'nam')}><option value="thang">Tháng này</option><option value="nam">Năm nay</option></select>
         <button type="button" className="tq-icon" title="Tải lại" onClick={refresh}><RefreshCw size={15} /></button>
       </div>
-      <div className="tq-tiles">
-        <Tile icon={Wallet} label="Tiền" value={co && net('111') + net('112')} hint="Tiền mặt 111 và tiền gửi 112, số dư tới hôm nay" path="/quy/so-du-tien" />
-        <Tile icon={ArrowDownLeft} label="Phải thu" value={co && (acc('131')?.closingDebit ?? 0)} hint="Dư Nợ TK 131 tới hôm nay" path="/bao-cao/cong-no" />
-        <Tile icon={ArrowUpRight} label="Phải trả" value={co && (acc('331')?.closingCredit ?? 0)} hint="Dư Có TK 331 tới hôm nay" path="/bao-cao/cong-no" />
-        <Tile icon={Receipt} label="Doanh thu" value={row('10')} hint="Doanh thu thuần trong kỳ, chỉ tiêu 10 của B02-DN" path="/bao-cao/ket-qua-kinh-doanh" />
-        <Tile icon={CircleDollarSign} label="Chi phí" value={row('11', '23', '25', '26', '32', '51', '52')} hint="Giá vốn, chi phí tài chính, bán hàng, quản lý, khác và thuế TNDN trong kỳ" path="/bao-cao/ket-qua-kinh-doanh" />
-        <Tile icon={TrendingUp} label="Lợi nhuận" value={row('60')} hint="Lợi nhuận sau thuế trong kỳ, chỉ tiêu 60 của B02-DN" path="/bao-cao/ket-qua-kinh-doanh" strong />
+      <div className="tq-nhom-tiles">
+        <div>
+          <small>Tiền &amp; công nợ</small>
+          <div className="tq-tiles">
+            <Tile icon={Wallet} label="Tiền" value={co && net('111') + net('112')} hint="Tiền mặt 111 và tiền gửi 112, số dư tới hôm nay" path="/quy/so-du-tien" />
+            <Tile icon={ArrowDownLeft} label="Phải thu" value={co && (acc('131')?.closingDebit ?? 0)} hint="Dư Nợ TK 131 tới hôm nay" path="/bao-cao/cong-no" />
+            <Tile icon={ArrowUpRight} label="Phải trả" value={co && (acc('331')?.closingCredit ?? 0)} hint="Dư Có TK 331 tới hôm nay" path="/bao-cao/cong-no" />
+          </div>
+        </div>
+        <div>
+          <small>Kết quả kinh doanh</small>
+          <div className="tq-tiles">
+            <Tile icon={Receipt} label="Doanh thu" value={row('10')} hint="Doanh thu thuần trong kỳ, chỉ tiêu 10 của B02-DN" path="/bao-cao/ket-qua-kinh-doanh" />
+            <Tile icon={CircleDollarSign} label="Chi phí" value={row('11', '23', '25', '26', '32', '51', '52')} hint="Giá vốn, chi phí tài chính, bán hàng, quản lý, khác và thuế TNDN trong kỳ" path="/bao-cao/ket-qua-kinh-doanh" />
+            <Tile icon={TrendingUp} label="Lợi nhuận" value={row('60')} hint="Lợi nhuận sau thuế trong kỳ, chỉ tiêu 60 của B02-DN" path="/bao-cao/ket-qua-kinh-doanh" strong />
+          </div>
+        </div>
       </div>
       {db.data && <BieuDoDoanhThu days={db.data.days} from={from} to={today} empty={ky === 'thang' ? <button type="button" className="rail-link" onClick={() => setKy('nam')}>Xem cả năm</button> : undefined} />}
       <Link to="/bang-dieu-khien" className="tq-more"><Landmark size={14} /> Bảng điều khiển</Link>
@@ -190,11 +201,24 @@ function LichCongViec() {
         })}
       </div>
       <div className="tq-day">
-        <b>{sel === nowIso ? 'Hôm nay' : `Ngày ${sel.slice(8)}/${sel.slice(5, 7)}`}</b>
+        <b className="tq-day-head">{sel === nowIso ? 'Hôm nay' : `Ngày ${sel.slice(8)}/${sel.slice(5, 7)}`}{homNay.length + list.length > 0 && <em>{homNay.length + list.length} mục</em>}</b>
         {homNay.map((v) => <ViecRow key={v.key} v={v} onGo={() => undefined} />)}
         {list.map((v) => <Link key={v.key} to={v.path} className="tq-job"><span>{v.text}</span>{v.sub && <small>{v.sub}</small>}</Link>)}
         {!homNay.length && !list.length && <div className="tq-empty">Không có việc</div>}
       </div>
+    </section>
+  );
+}
+
+/** Thẻ giới thiệu cuối cột phải (nền màu menu, chỉ chữ). Nội dung khai ở GIOI_THIEU. */
+const GIOI_THIEU = { nhan: 'BTsoft ERP', tieuDe: 'Giải pháp quản trị doanh nghiệp toàn diện, linh hoạt và hiện đại', moTa: 'Bán hàng · Mua hàng · Kho · Kế toán · Báo cáo quản trị', nut: 'Khám phá BTsoft ERP' };
+function GioiThieu({ onHelp }: { onHelp: () => void }) {
+  return (
+    <section className="tq-gioi-thieu">
+      <span className="tq-gt-nhan">{GIOI_THIEU.nhan}</span>
+      <b>{GIOI_THIEU.tieuDe}</b>
+      <small>{GIOI_THIEU.moTa}</small>
+      <button type="button" onClick={onHelp}>{GIOI_THIEU.nut} <ArrowRight size={13} /></button>
     </section>
   );
 }
@@ -219,8 +243,8 @@ export function TongQuanPage() {
           {widgets.length > 0 && <div className="launcher-widgets">{widgets.map((s) => <div key={s.module} className="card card-body"><b>{s.label}</b><s.component /></div>)}</div>}
         </div>
         <div className="tq-col">
-          <KhoiAnh blockKey="tong-quan-banner" className="tq-banner" />
           <LichCongViec />
+          <GioiThieu onHelp={() => setHelp(true)} />
         </div>
       </div>
       {help && <HelpDrawer guideKey="trang-chu" onClose={() => setHelp(false)} />}

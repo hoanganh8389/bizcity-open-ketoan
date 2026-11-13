@@ -39,12 +39,15 @@ export function KpiDoiTuong({ kind }: { kind?: string }) {
  * Danh sách phiếu tiền: tổng tiền các phiếu đang xem, số phiếu, tồn quỹ tiền mặt (dư Nợ 111) hoặc số dư tiền gửi (dư Nợ 112) đến hôm nay.
  * `chieu` 'thu' / 'chi' chỉ để đặt nhãn.
  */
-export function KpiTien({ title, total, count, from, to, tk }: { title: string; total: number | undefined; count: number | undefined; from: string; to: string; tk: '111' | '112' | null }) {
+export function KpiTien({ title, total, count, from, to, tk, thuChi }: { title: string; total: number | undefined; count: number | undefined; from: string; to: string; tk: '111' | '112' | null; /** Màn gộp thu, chi: hai ô Tổng thu, Tổng chi thay cho Tổng tiền + Số phiếu. */ thuChi?: { thu: number; chi: number } }) {
   const today_ = today();
   const tb = useQuery({ ...opts, enabled: Boolean(tk), queryKey: ['kpi', 'tb', today_], queryFn: () => api.get<Tb>('/api/v1/reports/trial-balance', { from: `${today_.slice(0, 4)}-01-01`, to: today_ }) });
   const du = tk ? (tb.data?.rows.find((r) => r.code === tk)?.closingDebit ?? (tb.data ? 0 : undefined)) : undefined;
   const ky = `${from.slice(8, 10)}/${from.slice(5, 7)} – ${to.slice(8, 10)}/${to.slice(5, 7)}/${to.slice(0, 4)}`;
-  const items: KpiItem[] = [
+  const items: KpiItem[] = thuChi ? [
+    { key: 'thu', label: `Tổng thu (${ky})`, value: thuChi.thu, tone: 'ok', icon: <Banknote size={18} />, hint: 'Cộng số tiền các phiếu thu đang hiện (theo kỳ, chi nhánh đã chọn)' },
+    { key: 'chi', label: `Tổng chi (${ky})`, value: thuChi.chi, tone: 'info', icon: <Banknote size={18} />, hint: 'Cộng số tiền các phiếu chi đang hiện (theo kỳ, chi nhánh đã chọn)' },
+  ] : [
     { key: 'tong', label: `Tổng ${title.toLowerCase()} (${ky})`, value: total, tone: 'ok', icon: <Banknote size={18} />, hint: 'Cộng số tiền các phiếu đang hiện trong danh sách (theo kỳ, chi nhánh đã chọn)' },
     { key: 'so', label: 'Số phiếu', value: count, tone: 'info', icon: <FileText size={18} /> },
   ];

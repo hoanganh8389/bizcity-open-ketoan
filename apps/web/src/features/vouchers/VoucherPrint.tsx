@@ -81,7 +81,7 @@ function BankSheet({ s, ctx }: { s: PrintSheet; ctx: PrintCtx }) {
   return (
     <>
       <OrgHead ctx={ctx} branchCode={v.branchCode} />
-      <Title title={isIn ? 'PHIẾU BÁO CÓ' : 'PHIẾU BÁO NỢ'} date={v.docDate} side={<><div>Số: <b>{s.docNo}</b></div><AccSide {...accounts(v)} /></>} />
+      <Title title={isIn ? 'PHIẾU THU TIỀN GỬI' : 'PHIẾU CHI TIỀN GỬI'} date={v.docDate} side={<><div>Số: <b>{s.docNo}</b></div><AccSide {...accounts(v)} /></>} />
       <Fields rows={[
         [isIn ? 'Đơn vị / người chuyển tiền' : 'Đơn vị / người nhận tiền', v.counterparty || v.partnerName || ''],
         ['Địa chỉ', v.address ?? ''],
@@ -112,7 +112,7 @@ function uncData(s: PrintSheet, ctx: PrintCtx): UncData {
     no: s.docNo, date: v.docDate, amount: totalOf(v), description: v.description,
     payer: { name: payer?.holder || ctx.org.name, accountNo: payer?.accountNo, bankName: payer?.bankName, bankBranch: payer?.bankBranch },
     payee: { name: v.partnerName || v.counterparty, address: v.address ?? '' },
-    note: `Hạch toán: Nợ ${uniq(v.lines.map((l) => l.debitAccount)).join(', ')} / Có ${payAcc} · Phiếu báo nợ ${s.docNo}`,
+    note: `Hạch toán: Nợ ${uniq(v.lines.map((l) => l.debitAccount)).join(', ')} / Có ${payAcc} · Chi tiền gửi ${s.docNo}`,
   };
 }
 
@@ -124,7 +124,7 @@ function ManualSheet({ s, ctx }: { s: PrintSheet; ctx: PrintCtx }) {
   return (
     <>
       <OrgHead ctx={ctx} branchCode={v.branchCode} />
-      <Title title="PHIẾU KẾ TOÁN" date={v.docDate} side={<div>Số phiếu: <b>{s.docNo}</b></div>} />
+      <Title title="CHỨNG TỪ NGHIỆP VỤ KHÁC" date={v.docDate} side={<div>Số phiếu: <b>{s.docNo}</b></div>} />
       {(v.partnerName || v.counterparty || v.partnerCode) && <Fields rows={[['Đối tượng', [v.partnerCode, v.partnerName || v.counterparty].filter(Boolean).join(' — ')], ['Diễn giải', v.description]]} />}
       <Table rows={v.lines} minRows={4} cols={[
         { h: 'Ngày tháng', w: 78, center: true, v: () => date(v.docDate) },
@@ -157,11 +157,11 @@ const receiptTemplates = (type: 'receipt' | 'payment'): PrintTemplate<PrintSheet
 export const VOUCHER_TEMPLATES: Record<VoucherType, PrintTemplate<PrintSheet>[]> = {
   receipt: receiptTemplates('receipt'),
   payment: receiptTemplates('payment'),
-  bank_receipt: [tpl({ id: 'bc', name: 'Phiếu báo có', paper: 'A5L', source: 'rdlcPhieuBaoCo.rdlc', render: (s, ctx) => <BankSheet s={s} ctx={ctx} /> })],
+  bank_receipt: [tpl({ id: 'bc', name: 'Phiếu thu tiền gửi', paper: 'A5L', source: 'rdlcPhieuBaoCo.rdlc', render: (s, ctx) => <BankSheet s={s} ctx={ctx} /> })],
   bank_payment: [
-    tpl({ id: 'bn', name: 'Phiếu báo nợ', paper: 'A5L', source: 'rdlcPhieuBaoNo.rdlc', render: (s, ctx) => <BankSheet s={s} ctx={ctx} /> }),
+    tpl({ id: 'bn', name: 'Phiếu chi tiền gửi', paper: 'A5L', source: 'rdlcPhieuBaoNo.rdlc', render: (s, ctx) => <BankSheet s={s} ctx={ctx} /> }),
     tpl({ id: 'unc', name: 'Ủy nhiệm chi', paper: 'A4', source: 'rdlcPhieuBaoNoVCBCP.rdlc, rptUNC001.rpt', render: (s, ctx) => <UncForm u={uncData(s, ctx)} /> }),
   ],
-  manual: [tpl({ id: 'pk', name: 'Phiếu kế toán', paper: 'A4', source: 'rdlcPhieuketoan.rdlc', render: (s, ctx) => <ManualSheet s={s} ctx={ctx} /> })],
+  manual: [tpl({ id: 'pk', name: 'Chứng từ nghiệp vụ khác', paper: 'A4', source: 'rdlcPhieuketoan.rdlc', render: (s, ctx) => <ManualSheet s={s} ctx={ctx} /> })],
 };
 

@@ -157,18 +157,22 @@ async function branchIdsOf(auth: AuthContext, codes?: string[]) {
 export const vatReturnService = {
   form: () => VAT_FORM,
 
-  async build(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[] }) {
+  async build(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; excluded?: string[] }) {
     const { from, to, label } = periodRange(q.periodKind, q.year, q.period);
     const scope = (q.branchCodes ?? []).slice().sort().join(',');
     const branchIds = await branchIdsOf(auth, q.branchCodes);
     const branchFilter = branchIds ? sql`AND i.branch_id = ANY(${branchIds}::bigint[])` : sql``;
+    // [2026-11-11 Nguyễn Văn Thủy] chứng từ bán ra "không tính thuế" (nút Chọn CT không tính thuế): lên [32a], không lên bảng kê 01-1 (đóng góp)
+    const lastInfo = await db.selectFrom('vat_returns').select('info').where('tenant_id', '=', auth.tenantId).where('period_kind', '=', q.periodKind).where('year', '=', q.year).where('period', '=', q.period).where('scope', '=', scope).orderBy('revision', 'desc').executeTakeFirst();
+    const excluded: string[] = q.excluded ?? ((lastInfo?.info as { excluded?: string[] } | undefined)?.excluded ?? []);
+    const exFilter = excluded.length ? sql`AND NOT (i.direction = 'output' AND i.id = ANY(${excluded}::bigint[]))` : sql``;
 
     const groups = await sql<{ direction: string; report_group: string; rate: string; amount: string; tax: string; invoices: string; blocked: string }>`
       SELECT i.direction, l.report_group, l.tax_rate AS rate,
              SUM(l.amount_before_tax * i.sign) AS amount, SUM(l.tax_amount * i.sign) AS tax, COUNT(DISTINCT i.id) AS invoices,
              SUM(CASE WHEN i.deductible THEN 0 ELSE l.tax_amount * i.sign END) AS blocked
         FROM tax_invoices i JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id
-       WHERE i.tenant_id = ${auth.tenantId} AND i.status <> 'cancelled' AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter}
+       WHERE i.tenant_id = ${auth.tenantId} AND i.status <> 'cancelled' AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter} ${exFilter}
        GROUP BY i.direction, l.report_group, l.tax_rate`.execute(db);
 
     const auto: Record<string, number> = { '23': 0, '24': 0, '25': 0, '26': 0, '29': 0, '30': 0, '31': 0, '32': 0, '33': 0, '32a': 0 };
@@ -194,12 +198,48 @@ export const vatReturnService = {
       SELECT COALESCE(NULLIF(l.name, ''), NULLIF(l.sku, ''), '(không tên)') AS name, SUM(l.amount_before_tax * i.sign) AS amount, SUM(l.tax_amount * i.sign) AS tax
         FROM tax_invoices i JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id
        WHERE i.tenant_id = ${auth.tenantId} AND i.status <> 'cancelled' AND i.direction = 'output' AND l.tax_rate = 8
-         AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter}
+         AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter} ${exFilter}
        GROUP BY 1 ORDER BY 2 DESC`.execute(db);
     const reducedRows = reduced.rows.map((r) => {
       const amount = Math.round(toNumber(r.amount));
       return { name: r.name, amount, rateBefore: 10, rateAfter: 8, tax: Math.round(toNumber(r.tax)), reducedTax: Math.round(amount * 0.02) };
     });
+
+    // [2026-11-11 Nguyễn Văn Thủy] Phụ lục giảm thuế NQ 204/2025/QH15 phần I: hàng mua vào thuế suất 8% (thuế GTGT [06]) (đóng góp)
+    const reducedIn = await sql<{ name: string; amount: string; tax: string }>`
+      SELECT COALESCE(NULLIF(l.name, ''), NULLIF(l.sku, ''), '(không tên)') AS name, SUM(l.amount_before_tax * i.sign) AS amount, SUM(l.tax_amount * i.sign) AS tax
+        FROM tax_invoices i JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id
+       WHERE i.tenant_id = ${auth.tenantId} AND i.status <> 'cancelled' AND i.direction = 'input' AND l.tax_rate = 8
+         AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter}
+       GROUP BY 1 ORDER BY 1`.execute(db);
+    const reducedInRows = reducedIn.rows.map((r) => ({ name: r.name, amount: Math.round(toNumber(r.amount)), tax: Math.round(toNumber(r.tax)) }));
+
+    // [2026-11-11 Nguyễn Văn Thủy] Bảng kê 01-1/GTGT bán ra và 01-2/GTGT mua vào theo từng hoá đơn, chia nhóm như mẫu; kèm chi nhánh (quản trị nhiều kho) (đóng góp)
+    //   Bán ra: nhóm 1 không chịu thuế (KCT), 2 thuế suất 0%, 3 thuế suất 5%, 4 thuế suất 10% (gồm hàng giảm còn 8%); hàng không phải kê khai ([32a]) không lên bảng kê.
+    //   Mua vào: nhóm 1 dùng riêng cho SXKD chịu thuế đủ điều kiện khấu trừ; nhóm 4 không đủ điều kiện khấu trừ (đánh dấu ở ACC78).
+    const lists = await sql<{ id: string; direction: string; grp: string; invoice_no: string; invoice_serial: string; invoice_date: string; name: string; tax_code: string; amount: string; tax: string; branch_code: string; doc_no: string; deductible: boolean }>`
+      SELECT i.id::text AS id, i.direction,
+             CASE WHEN i.direction = 'input' THEN (CASE WHEN i.deductible THEN '1' ELSE '4' END)
+                  WHEN l.report_group = 'KCT' THEN '1'
+                  WHEN l.tax_rate = 0 THEN '2'
+                  WHEN l.tax_rate = 5 THEN '3'
+                  WHEN l.tax_rate IN (8, 10) THEN '4' ELSE '' END AS grp,
+             i.invoice_no, i.invoice_serial, i.invoice_date::text, i.buyer_name AS name, i.buyer_tax_code AS tax_code,
+             SUM(l.amount_before_tax * i.sign) AS amount, SUM(l.tax_amount * i.sign) AS tax, b.code AS branch_code, i.doc_no, i.deductible
+        FROM tax_invoices i JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id JOIN branches b ON b.id = i.branch_id
+       WHERE i.tenant_id = ${auth.tenantId} AND i.status <> 'cancelled' AND i.period_date BETWEEN ${from}::date AND ${to}::date ${branchFilter}
+       GROUP BY i.id, i.direction, 3, i.invoice_no, i.invoice_serial, i.invoice_date, i.buyer_name, i.buyer_tax_code, b.code, i.doc_no, i.deductible
+       ORDER BY i.direction, 3, i.invoice_date, i.invoice_no`.execute(db);
+    const listRow = (r: (typeof lists.rows)[number]) => ({
+      id: r.id, group: Number(r.grp), invoiceNo: r.invoice_no, serial: r.invoice_serial, date: r.invoice_date, name: r.name, taxCode: r.tax_code,
+      amount: Math.round(toNumber(r.amount)), tax: Math.round(toNumber(r.tax)), branchCode: r.branch_code, docNo: r.doc_no,
+    });
+    const exSet = new Set(excluded);
+    const salesList = lists.rows.filter((r) => r.direction === 'output' && r.grp && !exSet.has(r.id)).map(listRow);
+    const excludedList = lists.rows.filter((r) => r.direction === 'output' && exSet.has(r.id)).map(listRow);
+    // Chứng từ không tính thuế: cộng giá trị vào [32a] (hàng hoá, dịch vụ bán ra không tính thuế).
+    if (excludedList.length) auto['32a'] = Math.round((auto['32a'] ?? 0) + excludedList.reduce((x, r) => x + r.amount, 0));
+    const purchaseList = lists.rows.filter((r) => r.direction === 'input').map(listRow);
 
     // Hoá đơn mua vào từ 5 triệu đồng (đã có thuế): khấu trừ cần chứng từ thanh toán không dùng tiền mặt.
     const big = await sql<{ event_id: string; invoice_no: string; invoice_serial: string; invoice_date: string; buyer_name: string; buyer_tax_code: string; doc_no: string; total: string; tax: string; branch_code: string; deductible: boolean; payment_ref: string }>`
@@ -239,24 +279,32 @@ export const vatReturnService = {
       deadline: filingDeadline(q.periodKind, q.year, q.period),
       previous: prevSaved ? { status: prevSaved.status, carried43: suggested22 } : null,
       breakdown,
-      reduced: { rows: reducedRows, totals: { amount: reducedRows.reduce((s, r) => s + r.amount, 0), tax: reducedRows.reduce((s, r) => s + r.tax, 0), reducedTax: reducedRows.reduce((s, r) => s + r.reducedTax, 0) } },
+      reduced: {
+        rows: reducedRows, totals: { amount: reducedRows.reduce((s, r) => s + r.amount, 0), tax: reducedRows.reduce((s, r) => s + r.tax, 0), reducedTax: reducedRows.reduce((s, r) => s + r.reducedTax, 0) },
+        /** Phần I: hàng mua vào thuế suất 8%; [06] = tổng thuế; [09] = [08] (thuế được giảm phần II) − [06]. */
+        inputRows: reducedInRows, inputTotals: { amount: reducedInRows.reduce((s, r) => s + r.amount, 0), tax: reducedInRows.reduce((s, r) => s + r.tax, 0) },
+      },
+      salesList, purchaseList, excludedList,
+      info: (saved?.info ?? {}) as Record<string, unknown>,
       bigPurchases: big.rows.map((r) => ({ eventId: r.event_id, deductible: r.deductible, paymentRef: r.payment_ref, invoiceNo: r.invoice_no, serial: r.invoice_serial, date: r.invoice_date, seller: r.buyer_name, taxCode: r.buyer_tax_code, docNo: r.doc_no, branchCode: r.branch_code, total: toNumber(r.total), tax: toNumber(r.tax) })),
       ledger: { ...ledger, inputDiff: (values['24'] ?? 0) - ledger.input, outputDiff: (values['28'] ?? 0) - ledger.output },
     };
   },
 
-  async save(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; status: 'draft' | 'final' }) {
+  async save(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; status: 'draft' | 'final'; info?: Record<string, unknown> }) {
     return db.transaction().execute((trx) => vatReturnService.saveIn(trx, auth, q));
   },
 
   // [2026-11-03 08:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): bản *In chạy trong giao dịch của action; số tự tính đọc trước khi ghi
-  async saveIn(trx: ActionTx, auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; status: 'draft' | 'final' }) {
-    const built = await vatReturnService.build(auth, { ...q });
+  async saveIn(trx: ActionTx, auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; status: 'draft' | 'final'; info?: Record<string, unknown> }) {
+    const excluded = Array.isArray(q.info?.excluded) ? (q.info!.excluded as unknown[]).map(String).filter((x) => /^\d+$/.test(x)) : undefined;
+    const built = await vatReturnService.build(auth, { ...q, excluded });
+    const info = q.info ? { ...q.info, ...(excluded ? { excluded } : {}) } : built.info;
     const values = computeForm(built.auto, q.manual);
     const scope = built.scope;
     return sameTx(trx, async (trx) => {
       const cur = await trx.selectFrom('vat_returns').select(['id', 'status', 'revision']).where('tenant_id', '=', auth.tenantId).where('period_kind', '=', q.periodKind).where('year', '=', q.year).where('period', '=', q.period).where('scope', '=', scope).orderBy('revision', 'desc').executeTakeFirst();
-      const row = { values: JSON.stringify(values), manual: JSON.stringify(q.manual), status: q.status, updated_by: auth.actor, updated_at: new Date() };
+      const row = { values: JSON.stringify(values), manual: JSON.stringify(q.manual), info: JSON.stringify(info), status: q.status, updated_by: auth.actor, updated_at: new Date() };
       if (cur) await trx.updateTable('vat_returns').set(row).where('id', '=', cur.id).execute();
       else await trx.insertInto('vat_returns').values({ tenant_id: auth.tenantId, period_kind: q.periodKind, year: q.year, period: q.period, scope, ...row }).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'vat_return.save', objectType: 'vat_return', objectId: `${q.periodKind}:${q.year}:${q.period}:${scope}`, after: { values, manual: q.manual, status: q.status } });
@@ -284,11 +332,28 @@ export const vatReturnService = {
     await sameTx(trx, async (trx) => {
       await trx.insertInto('vat_returns').values({
         tenant_id: auth.tenantId, period_kind: q.periodKind, year: q.year, period: q.period, scope: built.scope, revision, status: 'final',
-        values: JSON.stringify(values), manual: JSON.stringify(q.manual), supplement: JSON.stringify(khbs), updated_by: auth.actor, updated_at: new Date(),
+        values: JSON.stringify(values), manual: JSON.stringify(q.manual), supplement: JSON.stringify(khbs), info: JSON.stringify(built.info), updated_by: auth.actor, updated_at: new Date(),
       }).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'vat_return.supplement', objectType: 'vat_return', objectId: `${q.periodKind}:${q.year}:${q.period}:${built.scope}:${revision}`, after: { values, supplement: khbs } });
     });
     return { revision, values, supplement: khbs, saved: true };
+  },
+
+  /** Xoá một lần khai (lần đầu hoặc lần bổ sung) chưa được cơ quan thuế chấp nhận. */
+  async remove(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; scope: string; revision: number }) {
+    const row = await db.selectFrom('vat_returns').select(['id', 'status']).where('tenant_id', '=', auth.tenantId).where('period_kind', '=', q.periodKind).where('year', '=', q.year).where('period', '=', q.period).where('scope', '=', q.scope).where('revision', '=', q.revision).executeTakeFirst();
+    if (!row) throw Errors.notFound('tờ khai');
+    if (row.status === 'final') throw Errors.conflict('Tờ khai đã được đánh dấu cơ quan thuế chấp nhận: không xoá được');
+    await db.deleteFrom('vat_returns').where('id', '=', row.id).execute();
+    await writeAudit(db, { tenantId: auth.tenantId, actor: auth.actor, action: 'vat_return.delete', objectType: 'vat_return', objectId: `${q.periodKind}:${q.year}:${q.period}:${q.scope}:${q.revision}`, after: {} });
+    return { deleted: true };
+  },
+
+  /** Đánh dấu cơ quan thuế chấp nhận (status final): khoá số; thay đổi sau đó lập tờ khai bổ sung. */
+  async accept(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; scope: string; revision: number }) {
+    const r = await db.updateTable('vat_returns').set({ status: 'final', updated_by: auth.actor, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('period_kind', '=', q.periodKind).where('year', '=', q.year).where('period', '=', q.period).where('scope', '=', q.scope).where('revision', '=', q.revision).executeTakeFirst();
+    if (!Number(r.numUpdatedRows)) throw Errors.notFound('tờ khai');
+    return { status: 'final' };
   },
 
   async list(auth: AuthContext) {
@@ -296,6 +361,7 @@ export const vatReturnService = {
     return rows.map((r) => ({
       periodKind: r.period_kind, year: r.year, period: r.period, label: periodRange(r.period_kind as PeriodKind, r.year, r.period).label, scope: r.scope, status: r.status,
       revision: r.revision, lateInterest: Number((r.supplement as { lateInterest?: number } | null)?.lateInterest ?? 0),
+      info: r.info,
       payable: Number(r.values['40'] ?? 0), carried: Number(r.values['43'] ?? 0), outputTax: Number(r.values['35'] ?? 0), deductible: Number(r.values['25'] ?? 0), updatedBy: r.updated_by, updatedAt: r.updated_at,
     }));
   },

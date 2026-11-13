@@ -8,9 +8,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { BarChart3, Building2, ChevronRight, Landmark, LayoutGrid, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Pin, PinOff, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
+import { Banknote, BarChart3, Building2, ChartLine, ChevronRight, Hammer, Landmark, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Percent, PiggyBank, Pin, PinOff, Puzzle, Settings, ShoppingBag, ShoppingCart, Warehouse, type LucideIcon } from 'lucide-react';
 import { usePins } from './pins';
-import { matchLen, REPORT_PAGE, type GonGroup } from './menu-gon';
+import { DANG_PHAT_TRIEN, matchHere, nhomHien, REPORT_PAGE, type GonGroup } from './menu-gon';
 import type { MenuItem } from '@ketoan/contracts';
 import { HayDungNav, NutThemNhanh } from './ThemNhanh';
 
@@ -20,7 +20,7 @@ const read = <T,>(key: string, fallback: T): T => {
 };
 const write = (key: string, v: unknown) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* chế độ riêng tư */ } };
 
-const ICONS: Record<string, LucideIcon> = { Building2, Landmark, LayoutGrid, List, ListEnd, Network, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench };
+const ICONS: Record<string, LucideIcon> = { Banknote, Building2, ChartLine, Hammer, Landmark, List, ListEnd, Network, Percent, PiggyBank, Puzzle, Settings, ShoppingBag, ShoppingCart, Warehouse };
 
 /** Biểu tượng của nhóm, dùng chung cho menu trái và trang Tổng quan. */
 export function GonIcon({ name, size, color }: { name: string; size?: number; color?: string }) {
@@ -40,7 +40,7 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
   const [open, setOpen] = useState<{ key: string; top: number; left: number } | null>(null);
   const root = useRef<HTMLElement>(null);
   const fly = useRef<HTMLDivElement>(null);
-  const best = active ? Math.max(0, ...active.sections.flatMap((s) => s.items.map((m) => matchLen(m.path, pathname)))) : 0;
+  const best = active ? Math.max(0, ...active.sections.flatMap((s) => s.items.map((m) => matchHere(m.path, pathname, search)))) : 0;
 
   useEffect(() => { setOpen(null); }, [pathname, search]);
   useEffect(() => {
@@ -69,7 +69,7 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
       <nav className="sidenav-body">
         <NutThemNhanh menu={menu} collapsed={collapsed} />
         <HayDungNav menu={menu} collapsed={collapsed} />
-        {groups.map((g) => {
+        {nhomHien(groups).map((g) => {
           const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
           return (
             <button key={g.key} type="button" className={`gon-row${isActive ? ' active' : ''}${open?.key === g.key ? ' open' : ''}`} title={g.label} aria-expanded={open?.key === g.key} onClick={(e) => toggle(g, e)}>
@@ -92,16 +92,16 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
               <div key={s.label ?? i} className="gon-fly-sec">
                 {s.label && <div className="gon-fly-head">{s.label}</div>}
                 {s.items.map((m) => (
-                  <Link key={m.key} to={m.path!} onClick={() => onChoose(openGroup.key)} title={m.code ? `${m.label} (${m.code})` : m.label} className={`gon-fly-item${active?.key === openGroup.key && best > 0 && matchLen(m.path, pathname) === best ? ' active' : ''}${isPinned(m.key) ? ' pinned' : ''}`}>
+                  <Link key={m.key} to={m.path!} onClick={() => onChoose(openGroup.key)} title={m.code ? `${m.label} (${m.code})` : m.label} className={`gon-fly-item${active?.key === openGroup.key && best > 0 && matchHere(m.path, pathname, search) === best ? ' active' : ''}${isPinned(m.key) ? ' pinned' : ''}`}>
                     <span>{m.label}</span>
                     <button type="button" className="pin-btn" title={isPinned(m.key) ? 'Bỏ ghim khỏi thanh trên cùng' : 'Ghim lên thanh trên cùng (màn hay dùng)'} onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(m.key); }}>
                       {isPinned(m.key) ? <PinOff size={13} /> : <Pin size={13} />}
                     </button>
                   </Link>
                 ))}
+                {s.soon?.map((label) => <span key={label} className="gon-fly-item disabled" title="Chức năng đang phát triển, sẽ có ở bản sau"><span>{label}</span><small>{DANG_PHAT_TRIEN}</small></span>)}
               </div>
             ))}
-            {openGroup.soon?.map((label) => <span key={label} className="gon-fly-item disabled" title="Chức năng này chưa có trong phiên bản hiện tại"><span>{label}</span><small>chưa có</small></span>)}
             {openGroup.reports.length > 0 && <Link className="gon-fly-item gon-fly-report" to={`${REPORT_PAGE}?nhom=${openGroup.key}`} onClick={() => onChoose(openGroup.key)}><span>Báo cáo</span></Link>}
           </div>
         </div>,

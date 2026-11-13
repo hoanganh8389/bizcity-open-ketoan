@@ -24,12 +24,18 @@ import { apiMenu } from '../phan-he/api/menu';
 import { devMenu } from '../phan-he/dev/menu';
 // [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2: nhóm menu của module SDK (mod-<key>)
 import { SDK_WEB } from '../phan-he/sdk-modules';
+import { tenMan } from './ten-man';
 
 export { SECTION_PREFIX, isSection } from './menu-helpers';
 
 /** Thứ tự nhóm trong menu chung (giữ như trước để ô tìm chức năng, tên thẻ không đổi). Nhóm mới không có ở đây thì đứng cuối. */
 const GROUP_ORDER = ['tong-quan', 'nghiep-vu', 'bao-cao-chung', 'cong-no', 'quy', 'thue', 'nghiep-vu-tscd', 'ke-hoach-tai-chinh', 'danh-muc', 'tien-ich', 'ban-hang-nghiep-vu', 'ban-hang', 'ban-hang-danh-muc', 'mua-hang-nghiep-vu', 'mua-hang-danh-muc', 'mua-hang-bao-cao', 'kho-nghiep-vu', 'kho-bao-cao', 'kho-danh-muc', 'quy-nghiep-vu', 'quy-bao-cao', 'tich-hop', 'nha-phat-trien', 'he-thong'];
-const ALL_GROUPS: MenuItem[] = [...keToanMenu, ...quyMenu, ...muaHangMenu, ...banHangMenu, ...khoMenu, ...taiSanMenu, ...thueMenu, ...apiMenu, ...devMenu, ...heThongMenu, ...SDK_WEB.map((p) => p.group as MenuItem)];
+/** Tên, mã hiển thị lấy ở ten-man.ts (một nơi đặt tên). */
+const dat = (m: MenuItem): MenuItem => {
+  const t = tenMan(m.path);
+  return { ...m, ...(t && { label: t.label, ...(t.code && { code: t.code }) }), ...(m.children && { children: m.children.map(dat) }) };
+};
+const ALL_GROUPS: MenuItem[] = [...keToanMenu, ...quyMenu, ...muaHangMenu, ...banHangMenu, ...khoMenu, ...taiSanMenu, ...thueMenu, ...apiMenu, ...devMenu, ...heThongMenu, ...SDK_WEB.map((p) => p.group as MenuItem)].map(dat);
 
 /** Menu chung: nhóm của mọi phân hệ (mỗi phân hệ khai ở src/phan-he/<key>/menu.ts). */
 export const CORE_MENU: MenuItem[] = [...ALL_GROUPS].sort((a, b) => {

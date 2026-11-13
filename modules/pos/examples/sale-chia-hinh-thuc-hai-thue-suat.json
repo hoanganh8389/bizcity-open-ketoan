@@ -1,0 +1,68 @@
+{
+  "docNo": "HD2611900002",
+  "lines": [
+    {
+      "qty": 2,
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Hộp",
+      "isGift": false,
+      "lineKey": "l1",
+      "taxCode": "R08",
+      "unitQty": 2,
+      "discount": 60000,
+      "taxAmount": 43200,
+      "unitPrice": 300000,
+      "unitRatio": 1,
+      "amountBeforeTax": 540000
+    },
+    {
+      "qty": 1,
+      "sku": "171489001",
+      "name": "Thảm đàn Honper cho bé HP-820",
+      "unit": "Cái",
+      "isGift": false,
+      "lineKey": "l2",
+      "taxCode": "R05",
+      "unitQty": 1,
+      "discount": 0,
+      "taxAmount": 15714,
+      "unitPrice": 314286,
+      "unitRatio": 1,
+      "amountBeforeTax": 314286
+    }
+  ],
+  "docKey": "pos:CN01:sale:00000000-0000-7000-8000-00000000a002",
+  "totals": {
+    "tax": 58914,
+    "total": 913200,
+    "beforeTax": 854286
+  },
+  "docDate": "2026-11-10",
+  "docType": "sale",
+  "offsets": [],
+  "partner": {
+    "code": "kh-0001",
+    "name": "Đỗ Ngọc Long"
+  },
+  "version": 1,
+  "payments": [
+    {
+      "amount": 365000,
+      "methodCode": "TM"
+    },
+    {
+      "amount": 548200,
+      "methodCode": "CK"
+    }
+  ],
+  "sourceRef": {
+    "id": "00000000-0000-7000-8000-00000000a002",
+    "type": "pos.order",
+    "label": "HD2611900002"
+  },
+  "branchCode": "CN01",
+  "description": "Bán lẻ máy POS HD2611900002",
+  "internalOnly": false,
+  "sourceSystem": "pos"
+}

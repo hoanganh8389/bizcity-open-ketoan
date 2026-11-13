@@ -127,7 +127,7 @@ function DaChot({ parent }: { parent: string }) {
     try { await stockApi.transferStatus(r.id, a); setOpen(null); await qc.invalidateQueries({ queryKey: ['ton-max'] }); } catch (e) { setErr(errorText(e)); }
   };
   const exportOne = async (r: TransferRequest) => {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
     const ws = XLSX.utils.aoa_to_sheet([[`ĐỀ NGHỊ CHUYỂN HÀNG ${r.code}`], [`Từ: ${r.fromBranch} ${r.fromName} (kho ${r.fromWarehouse}) → ${r.toBranch} ${r.toName} (kho ${r.toWarehouse})`], [], ['STT', 'Mã hàng', 'Tên hàng', 'ĐVT', 'Số lượng', 'Quy đổi thùng', 'Ghi chú'],
       ...r.lines.map((l, i) => [i + 1, l.sku, l.name, l.unit, l.qty, l.pack ? `${Math.floor(l.qty / l.pack)} ${l.packUnit}${l.qty % l.pack ? ` + ${l.qty % l.pack} ${l.unit}` : ''}` : '', l.note ?? ''])]);
     ws['!cols'] = [{ wch: 5 }, { wch: 14 }, { wch: 44 }, { wch: 8 }, { wch: 10 }, { wch: 18 }, { wch: 24 }];

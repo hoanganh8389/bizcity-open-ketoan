@@ -1,101 +1,113 @@
+// [2026-11-11 Nguyễn Văn Thủy] Bảng kê hoá đơn, chứng từ HHDV bán ra / mua vào (mẫu quản trị) — làm lại theo chuẩn (đóng góp)
 /**
- * Báo cáo thuế ra (ACC65) / thuế vào (ACC64): bảng kê hoá đơn theo nhóm thuế suất.
- * Nhóm thuế ra: 1. Không chịu thuế · 2. Thuế suất 0% · 3. Thuế suất 5% · 4. Thuế suất 10% (gồm cả dòng 8%).
- * Nguồn: sổ hoá đơn (chỉ chứng từ có hoá đơn, số tiền theo hoá đơn); hàng trả lại / điều chỉnh giảm ghi âm.
+ * Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ bán ra (ACC65) / mua vào (ACC64) — mẫu quản trị.
+ *   Tham số: kỳ, cộng gộp theo từng hoá đơn, lấy ĐVT / số lượng / đơn giá; nhiều chi nhánh (lớp gắn thêm): chọn chi nhánh,
+ *   tách theo chi nhánh — chỉ hiện khi đơn vị có từ 2 chi nhánh.
+ *   Bảng: nhóm HHDV (nhãn theo phụ lục 01-1/GTGT, 01-2/GTGT), dòng "Cộng nhóm", "Tổng cộng". Bấm số hoá đơn mở chứng từ.
+ *   In: mẫu quản trị, phụ lục 01-1/GTGT (01-2/GTGT) — mauIn/bangKeThue.tsx.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
-import { defaultTo, periodFrom } from '@/lib/format';
+import { date as fmtDate, defaultTo, periodFrom } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
-import { BranchSelect, DateRange } from '@/components/filters';
-import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
-import { DocumentDetail } from '../../../features/documents/DocumentDetail';
+import { BranchSelect, DateRange, useBranches } from '@/components/filters';
+import { Empty, ErrorBox, Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { DOC_TYPE_LABELS, type DocType } from '@ketoan/contracts';
 import { PrintButton } from '@/components/print';
-import { taxInvoiceTemplates } from '../mauIn/bangKeThue';
+import { DocumentDetail } from '../../../features/documents/DocumentDetail';
+import { taxInvoiceTemplates, type TaxInvoiceRow, type TaxInvoiceGroup } from '../mauIn/bangKeThue';
 
-interface Row { invoiceForm: string; invoiceSerial: string; invoiceNo: string; invoiceDate: string; docNo: string; docDate: string; docType: string; buyerName: string; buyerTaxCode: string; partnerCode: string; partnerName: string; branchCode: string; taxRate: number; amount: number; tax: number; sourceDocumentId: string }
-type GridRow = Row & { kind: 'data' | 'group' | 'subtotal'; key: string; counted: boolean };
-const EMPTY: Row = { invoiceForm: '', invoiceSerial: '', invoiceNo: '', invoiceDate: '', docNo: '', docDate: '', docType: '', buyerName: '', buyerTaxCode: '', partnerCode: '', partnerName: '', branchCode: '', taxRate: 0, amount: 0, tax: 0, sourceDocumentId: '' };
-interface Data { groups: { group: string; label: string; rows: Row[]; amount: number; tax: number; counted: boolean }[]; totals: { amount: number; tax: number; invoices: number } }
+interface Data { groups: TaxInvoiceGroup[]; totals: { amount: number; tax: number; invoices: number } }
+type GridRow = Partial<TaxInvoiceRow> & { kind: 'data' | 'group' | 'subtotal'; key: string; label?: string; counted: boolean; amount: number; tax: number };
 
-/** `direction`: 'output' = bảng kê bán ra (mặc định), 'input' = bảng kê mua vào. */
+/** Chia các nhóm HHDV theo chi nhánh (lớp nhiều chi nhánh): mỗi chi nhánh một khối nhóm riêng. */
+export function tachChiNhanh(groups: TaxInvoiceGroup[]): { branch: string; groups: TaxInvoiceGroup[] }[] {
+  const map = new Map<string, TaxInvoiceGroup[]>();
+  for (const g of groups) for (const r of g.rows) {
+    const list = map.get(r.branchCode) ?? [];
+    map.set(r.branchCode, list);
+    let gg = list.find((x) => x.group === g.group);
+    if (!gg) { gg = { ...g, rows: [], amount: 0, tax: 0 }; list.push(gg); }
+    gg.rows.push(r);
+    gg.amount = Math.round((gg.amount + r.amount) * 100) / 100;
+    gg.tax = Math.round((gg.tax + r.tax) * 100) / 100;
+  }
+  return [...map.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([branch, gs]) => ({ branch, groups: gs }));
+}
+
+/** `direction`: 'output' = bán ra (mặc định), 'input' = mua vào. */
 export function SalesInvoicesPage({ direction = 'output' }: { direction?: 'output' | 'input' }) {
   const input = direction === 'input';
-  const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', direction });
+  const { data: branches = [] } = useBranches();
+  const multi = branches.length > 1;
+  const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', direction, merge: false, unitQty: false, split: false });
   const [docId, setDocId] = useState<string | null>(null);
-  const [group, setGroup] = useState('');
-  const q = useQuery({ queryKey: ['sales-invoices', f], queryFn: () => api.get<Data>('/api/v1/reports/sales-invoices', f) });
-  const raw = q.data;
-  // Loại thuế: chỉ xem một nhóm thuế suất.
-  const d = raw && { ...raw, groups: raw.groups.filter((g) => !group || g.group === group) };
+  const q = useQuery({ queryKey: ['sales-invoices', f.from, f.to, f.branchCodes, direction, f.merge], queryFn: () => api.get<Data>('/api/v1/reports/sales-invoices', { from: f.from, to: f.to, branchCodes: f.branchCodes, direction, merge: f.merge ? '1' : '0' }) });
+  const d = q.data;
+  const blocks = useMemo(() => (d ? (multi && f.split ? tachChiNhanh(d.groups) : [{ branch: '', groups: d.groups }]) : []), [d, multi, f.split]);
+  const branchName = (c: string) => branches.find((b) => b.code === c)?.name ?? c;
+
+  const rows: GridRow[] = blocks.flatMap((b) => [
+    ...(b.branch ? [{ kind: 'group' as const, key: `cn-${b.branch}`, label: `Chi nhánh: ${b.branch} - ${branchName(b.branch)}`, counted: false, amount: 0, tax: 0 }] : []),
+    ...b.groups.flatMap((g): GridRow[] => [
+      { kind: 'group', key: `${b.branch}-h-${g.group}`, label: `Nhóm HHDV${input ? ' mua vào' : ''}: ${g.label || 'Không thuộc nhóm kê khai (không cộng vào tổng)'} (${g.rows.length})`, counted: g.counted, amount: 0, tax: 0 },
+      ...g.rows.map((r, i) => ({ ...r, kind: 'data' as const, key: `${b.branch}-${g.group}-${r.invoiceNo}-${r.docNo}-${i}`, counted: g.counted })),
+      { kind: 'subtotal', key: `${b.branch}-t-${g.group}`, label: 'Cộng nhóm', counted: g.counted, amount: g.amount, tax: g.tax },
+    ]),
+  ]);
+  const columns: Column<GridRow>[] = [
+    { key: 'invoiceNo', header: 'Số hóa đơn', type: 'code', width: 110, render: (r) => (r.kind === 'data' ? <a onClick={() => r.sourceDocumentId && setDocId(r.sourceDocumentId)}>{r.invoiceNo}</a> : r.kind === 'subtotal' ? r.label : '') },
+    { key: 'invoiceDate', header: 'Ngày hóa đơn', type: 'date', width: 100 },
+    { key: 'buyerName', header: input ? 'Tên người bán' : 'Tên người mua', width: 230 },
+    { key: 'buyerTaxCode', header: input ? 'Mã số thuế người bán' : 'Mã số thuế người mua', type: 'code', width: 130 },
+    { key: 'itemName', header: 'Mặt hàng', width: 220, value: (r) => (r.kind === 'data' ? (r.itemCount && r.itemCount > 1 ? `${r.itemName} và ${r.itemCount - 1} mặt hàng khác` : r.itemName ?? '') : '') },
+    ...(f.unitQty ? [
+      { key: 'unit', header: 'ĐVT', width: 70 },
+      { key: 'qty', header: 'Số lượng', type: 'number', width: 90 },
+      { key: 'price', header: 'Đơn giá', type: 'money', width: 110 },
+    ] as Column<GridRow>[] : []),
+    { key: 'amount', header: input ? 'Giá trị HHDV mua vào chưa có thuế' : 'Doanh số bán chưa có thuế GTGT', type: 'money', width: 150, showZero: true,
+      value: (r) => (r.kind === 'group' ? null : r.amount), footerValue: () => d?.totals.amount ?? 0 },
+    { key: 'taxRate', header: 'Thuế suất', width: 80, value: (r) => (r.kind === 'data' ? `${r.taxRate} %` : '') },
+    { key: 'tax', header: 'Thuế GTGT', type: 'money', width: 130, showZero: true, value: (r) => (r.kind === 'group' ? null : r.tax), footerValue: () => d?.totals.tax ?? 0 },
+    { key: 'taxAccount', header: 'Tài khoản thuế', type: 'code', width: 90 },
+    { key: 'docNo', header: 'Số chứng từ', type: 'code', width: 110, hidden: true },
+    { key: 'docDate', header: 'Ngày chứng từ', type: 'date', width: 100, hidden: true },
+    { key: 'invoiceSerial', header: 'Ký hiệu', type: 'code', width: 90, hidden: true },
+    { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi },
+  ];
+  const ky = `Từ ngày ${fmtDate(f.from)} đến ngày ${fmtDate(f.to)}`;
 
   return (
     <>
-      <PageHeader
-        title={input ? 'Báo cáo thuế vào' : 'Báo cáo thuế ra'}
-        code={input ? 'ACC64' : 'ACC65'}
-        subtitle={input ? 'Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ mua vào theo thuế suất' : 'Bảng kê hoá đơn, chứng từ hàng hoá, dịch vụ bán ra theo thuế suất'}
-        helpKey={input ? 'bang-ke-mua-vao' : 'bang-ke-ban-ra'}
-      />
+      <PageHeader title={input ? 'Bảng kê hóa đơn, chứng từ hàng hóa, dịch vụ mua vào' : 'Bảng kê hóa đơn, chứng từ hàng hóa, dịch vụ bán ra'} code={input ? 'ACC64' : 'ACC65'}
+        helpKey={input ? 'bang-ke-mua-vao' : 'bang-ke-ban-ra'} />
       <FilterLayout
-        print={<PrintButton screen={input ? 'ACC64' : 'ACC65'} templates={taxInvoiceTemplates(direction)} disabled={!d} getDocs={() => (d ? [{ ...f, groups: d.groups }] : [])} />}
+        boThamSo={{ value: f, onApply: setF }}
+        print={<PrintButton screen={input ? 'ACC64' : 'ACC65'} templates={taxInvoiceTemplates(direction)} disabled={!d}
+          getDocs={() => (d ? [{ direction, from: f.from, to: f.to, branchCodes: f.branchCodes, unitQty: f.unitQty, blocks: blocks.map((b) => ({ branch: b.branch ? `${b.branch} - ${branchName(b.branch)}` : '', groups: b.groups })) }] : [])} />}
         filters={
           <>
             <DateRange from={f.from} to={f.to} onChange={(from, to) => setF((x) => ({ ...x, from, to }))} />
-            <div className="field">
-              <label>Loại thuế</label>
-              <select className="select input" value={group} onChange={(e) => setGroup(e.target.value)}>
-                <option value="">Tất cả</option>
-                {(raw?.groups ?? []).filter((g) => g.label).map((g) => <option key={g.group} value={g.group}>{g.label}</option>)}
-              </select>
-            </div>
-            <BranchSelect value={f.branchCodes} onChange={(branchCodes) => setF((x) => ({ ...x, branchCodes }))} />
+            <label className="checkbox"><input type="checkbox" checked={f.merge} onChange={(e) => setF((x) => ({ ...x, merge: e.target.checked }))} /> Cộng gộp theo từng hóa đơn</label>
+            <label className="checkbox"><input type="checkbox" checked={f.unitQty} onChange={(e) => setF((x) => ({ ...x, unitQty: e.target.checked }))} /> Lấy số liệu ĐVT, số lượng, đơn giá lên báo cáo</label>
+            {multi && <BranchSelect value={f.branchCodes} onChange={(branchCodes) => setF((x) => ({ ...x, branchCodes }))} />}
+            {multi && <label className="checkbox" title="Mỗi chi nhánh một khối, có cộng nhóm riêng"><input type="checkbox" checked={f.split} onChange={(e) => setF((x) => ({ ...x, split: e.target.checked }))} /> Tách theo chi nhánh</label>}
           </>
         }
       >
-        {d && (
-          <div className="kpis">
-            <div className="card kpi"><div className="label">Số hoá đơn</div><div className="value">{d.totals.invoices.toLocaleString('vi-VN')}</div></div>
-            <div className="card kpi"><div className="label">{input ? 'Giá trị mua vào chưa thuế' : 'Doanh thu chưa thuế'}</div><div className="value"><Money value={d.totals.amount} blankZero={false} /></div></div>
-            <div className="card kpi"><div className="label">Thuế GTGT</div><div className="value"><Money value={d.totals.tax} blankZero={false} /></div></div>
-          </div>
-        )}
         <div className="card">
+          <div className="rp-tieu-de">
+            <h2>{input ? 'BẢNG KÊ HÓA ĐƠN, CHỨNG TỪ HÀNG HÓA, DỊCH VỤ MUA VÀO (MẪU QUẢN TRỊ)' : 'BẢNG KÊ HÓA ĐƠN, CHỨNG TỪ HÀNG HÓA, DỊCH VỤ BÁN RA (MẪU QUẢN TRỊ)'}</h2>
+            <i>{ky}</i>
+          </div>
           <ErrorBox error={q.error ? errorText(q.error) : null} />
-          {q.isLoading ? <Loading /> : !d || d.groups.length === 0 ? <Empty text="Không có hoá đơn trong khoảng này" /> : (
-            <DataGrid
-              storageKey={input ? 'acc64-v2' : 'acc65-v2'}
-              rows={d.groups.flatMap((g): GridRow[] => [
-                ...(g.label ? [{ ...EMPTY, kind: 'group' as const, key: `h-${g.group}`, buyerName: g.label, counted: g.counted }] : []),
-                ...g.rows.map((r, i) => ({ ...r, kind: 'data' as const, key: `${g.group}-${r.invoiceNo}-${r.docNo}-${i}`, counted: g.counted })),
-                ...(g.counted ? [{ ...EMPTY, kind: 'subtotal' as const, key: `t-${g.group}`, buyerName: 'Tổng:', amount: g.amount, tax: g.tax, counted: true }] : []),
-              ])}
-              rowKey={(r) => r.key}
-              rowKind={(r) => r.kind}
-              groupLabel={(r) => r.buyerName}
-              onRowClick={(r) => r.sourceDocumentId && setDocId(r.sourceDocumentId)}
-              columns={[
-                { key: 'invoiceSerial', header: 'Ký hiệu', type: 'code' },
-                { key: 'invoiceForm', header: 'Mẫu số' },
-                { key: 'invoiceDate', header: 'Ngày HĐ', type: 'date' },
-                { key: 'invoiceNo', header: 'Số hóa đơn', type: 'code' },
-                { key: 'buyerName', header: 'Tên đối tượng' },
-                { key: 'buyerTaxCode', header: 'Mã số thuế', type: 'code' },
-                { key: 'amount', header: 'Doanh thu chưa thuế', type: 'money', showZero: true, footerValue: (rows) => rows.filter((r) => r.counted).reduce((s, r) => s + Math.round(r.amount * 100), 0) / 100 },
-                { key: 'taxRate', header: 'Tỷ lệ thuế', type: 'number', render: (r) => (r.kind === 'data' ? `${r.taxRate}%` : '') },
-                { key: 'tax', header: 'Số tiền thuế', type: 'money', showZero: true, footerValue: (rows) => rows.filter((r) => r.counted).reduce((s, r) => s + Math.round(r.tax * 100), 0) / 100 },
-                { key: 'branchCode', header: 'Mã CN', type: 'code' },
-                { key: 'docDate', header: 'Ngày chứng từ', type: 'date' },
-                { key: 'docNo', header: 'Số phiếu', type: 'code' },
-                { key: 'docType', header: 'Loại phiếu', value: (r) => (r.docType ? DOC_TYPE_LABELS[r.docType as DocType] ?? r.docType : '') },
-                { key: 'partnerCode', header: 'Mã đối tượng', type: 'code', hidden: true },
-                { key: 'partnerName', header: 'Đối tượng', hidden: true },
-              ] satisfies Column<GridRow>[]}
-            />
+          {q.isLoading ? <Loading /> : !d || d.groups.length === 0 ? <Empty text="Không có hóa đơn trong kỳ này" /> : (
+            <DataGrid storageKey={input ? 'acc64-v3' : 'acc65-v3'} rows={rows} rowKey={(r) => r.key} rowKind={(r) => r.kind}
+              groupLabel={(r) => r.label} columns={columns} footerLabel="Tổng cộng"
+              exportName={input ? 'bang-ke-mua-vao' : 'bang-ke-ban-ra'} exportTitle={`${input ? 'Bảng kê hóa đơn, chứng từ HHDV mua vào' : 'Bảng kê hóa đơn, chứng từ HHDV bán ra'} — ${ky}`} />
           )}
         </div>
       </FilterLayout>

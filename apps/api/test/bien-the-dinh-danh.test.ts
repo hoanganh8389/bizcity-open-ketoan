@@ -15,7 +15,6 @@ let ctx: TestCtx;
 let tenantId = '';
 const ack = { warnAck: { reason: 'thử họ mặt hàng', codes: ['ITEM-HINT-001', 'ITEM-HINT-003'] } };
 const put = (sku: string, body: Record<string, unknown> = {}) => call(ctx, 'PUT', `/api/v1/products/${sku}`, { name: sku, unit: 'Hộp', ...ack, ...body });
-const setParent = (sku: string, parent: string | null) => sql`UPDATE products SET parent_sku = ${parent} WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(db);
 const idOf = async (sku: string) => (await sql<{ item_id: string }>`
   SELECT item_id FROM item_codes WHERE tenant_id = ${tenantId} AND kind = 'sku' AND code = ${sku} AND valid_to IS NULL`.execute(db)).rows[0]?.item_id;
 const parentOf = async (sku: string) => (await sql<{ parent_item_id: string | null }>`
@@ -31,42 +30,37 @@ afterAll(async () => {
 });
 
 describe('Họ mặt hàng theo định danh', () => {
+  // [2026-11-13 Nguyễn Văn Thủy] mã cha suy theo mã (0112/0115), không khai tay: thử bằng mã số + chữ đầu / cuối (đóng góp)
   it('parent_sku → parent_item_id; mặt hàng cha thêm sau con thì nhận các con đang chờ', async () => {
-    for (const s of ['BT-P', 'BT-PQ', 'BT-PZ']) expect((await put(s)).status).toBe(200);
-    await setParent('BT-PQ', 'BT-P');
-    await setParent('BT-PZ', 'BT-P');
-    const p = await idOf('BT-P');
-    expect(await parentOf('BT-PQ')).toBe(p);
-    expect(await parentOf('BT-PZ')).toBe(p);
+    for (const s of ['800000001', '800000001Q', 'Z800000001']) expect((await put(s)).status).toBe(200);
+    const p = await idOf('800000001');
+    expect(await parentOf('800000001Q')).toBe(p);
+    expect(await parentOf('Z800000001')).toBe(p);
 
-    expect((await put('BT-CQ')).status).toBe(200);
-    await setParent('BT-CQ', 'BT-C');                      // mã cha chưa có trong danh mục
-    expect(await parentOf('BT-CQ')).toBeNull();
-    expect((await put('BT-C')).status).toBe(200);           // thêm cha → nhận con
-    expect(await parentOf('BT-CQ')).toBe(await idOf('BT-C'));
-
-    await setParent('BT-CQ', null);                         // bỏ họ
-    expect(await parentOf('BT-CQ')).toBeNull();
+    expect((await put('800000002Q')).status).toBe(200);      // mã cha chưa có trong danh mục
+    expect(await parentOf('800000002Q')).toBeNull();
+    expect((await put('800000002')).status).toBe(200);        // thêm cha → nhận con
+    expect(await parentOf('800000002Q')).toBe(await idOf('800000002'));
     expect(Number((await sql<{ n: number }>`SELECT bizcity_items_link_parents(${tenantId}::bigint) AS n`.execute(db)).rows[0]!.n)).toBe(0); // chạy lại: không đổi gì
   });
 
   it('đổi mã cha không đứt họ; Hành trình hiện cha / biến thể / cùng cha theo mã hiện hành', async () => {
-    const p = await idOf('BT-P');
-    await sql`UPDATE products SET sku = 'BT-P2' WHERE tenant_id = ${tenantId} AND sku = 'BT-P'`.execute(db);
-    expect(await idOf('BT-P2')).toBe(p);
-    expect(await parentOf('BT-PQ')).toBe(p);                // con vẫn trỏ cùng định danh (parent_sku cũ là ảnh chụp)
+    const p = await idOf('800000001');
+    await sql`UPDATE products SET sku = '800000009' WHERE tenant_id = ${tenantId} AND sku = '800000001'`.execute(db);
+    expect(await idOf('800000009')).toBe(p);
+    expect(await parentOf('800000001Q')).toBe(p);                // con vẫn trỏ cùng định danh (parent_sku cũ là ảnh chụp)
 
-    const child = (await call(ctx, 'GET', '/api/v1/lineage/items/BT-PQ')).body.data;
-    expect(child.item.family.parent).toMatchObject({ itemId: p, sku: 'BT-P2' });
-    expect(child.item.family.siblings.map((x: { sku: string }) => x.sku)).toEqual(['BT-PZ']);
-    const parent = (await call(ctx, 'GET', '/api/v1/lineage/items/BT-P2')).body.data;
+    const child = (await call(ctx, 'GET', '/api/v1/lineage/items/800000001Q')).body.data;
+    expect(child.item.family.parent).toMatchObject({ itemId: p, sku: '800000009' });
+    expect(child.item.family.siblings.map((x: { sku: string }) => x.sku)).toEqual(['Z800000001']);
+    const parent = (await call(ctx, 'GET', '/api/v1/lineage/items/800000009')).body.data;
     expect(parent.item.family.parent).toBeNull();
-    expect(parent.item.family.children.map((x: { sku: string }) => x.sku).sort()).toEqual(['BT-PQ', 'BT-PZ']);
+    expect(parent.item.family.children.map((x: { sku: string }) => x.sku).sort()).toEqual(['800000001Q', 'Z800000001']);
   });
 
   it('bất biến: không tự làm cha mình, không vòng, cha cùng đơn vị', async () => {
-    const p = (await idOf('BT-P2'))!;
-    const c = (await idOf('BT-PQ'))!;
+    const p = (await idOf('800000009'))!;
+    const c = (await idOf('800000001Q'))!;
     await expect(sql`UPDATE items SET parent_item_id = item_id WHERE item_id = ${p}`.execute(db)).rejects.toThrow(/chính nó/);
     await expect(sql`UPDATE items SET parent_item_id = ${c} WHERE item_id = ${p}`.execute(db)).rejects.toThrow(/vòng/);
     const other = (await sql<{ item_id: string }>`SELECT item_id FROM items WHERE tenant_id <> ${tenantId} LIMIT 1`.execute(db)).rows[0]?.item_id;
@@ -76,15 +70,14 @@ describe('Họ mặt hàng theo định danh', () => {
 
 describe('Lịch sử mặt hàng (S026-10)', () => {
   it('tra bằng mã cũ hay mã mới đều ra một lịch sử: tạo, đổi mã có hiệu lực, phân loại ban đầu, sửa có lý do', async () => {
-    const h = (await call(ctx, 'GET', '/api/v1/lineage/items/BT-P/history')).body.data;   // mã cũ (đã đổi sang BT-P2)
-    expect(h.sku).toBe('BT-P2');
-    expect(h.itemId).toBe(await idOf('BT-P2'));
+    const h = (await call(ctx, 'GET', '/api/v1/lineage/items/800000001/history')).body.data;   // mã cũ (đã đổi sang 800000009)
+    expect(h.sku).toBe('800000009');
+    expect(h.itemId).toBe(await idOf('800000009'));
     const texts = h.entries.map((e: { text: string }) => e.text);
     expect(texts.some((t: string) => /^Tạo định danh mặt hàng/.test(t))).toBe(true);
-    expect(texts.some((t: string) => /^Đổi mã BT-P → BT-P2 \(hiệu lực từ \d{4}-\d{2}-\d{2}\)$/.test(t))).toBe(true);
+    expect(texts.some((t: string) => /^Đổi mã 800000001 → 800000009 \(hiệu lực từ \d{4}-\d{2}-\d{2}\)$/.test(t))).toBe(true);
     expect(texts.some((t: string) => /^Phân loại hạch toán ban đầu: nhóm /.test(t))).toBe(true);
-    expect(texts.some((t: string) => /lý do: "thử họ mặt hàng"/.test(t))).toBe(true);     // cảnh báo mềm (ITEM-HINT-001) lưu có lý do
-    expect(texts.some((t: string) => /\(khi còn mã BT-P\)/.test(t))).toBe(true);           // thao tác trước khi đổi mã ghi rõ mã lúc đó
+    expect(texts.some((t: string) => /\(khi còn mã 800000001\)/.test(t))).toBe(true);           // thao tác trước khi đổi mã ghi rõ mã lúc đó
     const at = h.entries.map((e: { at: string }) => e.at);
     expect([...at].sort().reverse()).toEqual(at);                                          // mới nhất trước
     expect((await call(ctx, 'GET', '/api/v1/lineage/items/KHONG-CO/history')).status).toBe(404);

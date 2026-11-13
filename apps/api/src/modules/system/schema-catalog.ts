@@ -95,6 +95,16 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // ④ Thuế
   ledger_links: { group: 'ledger', label: 'Liên kết bút toán', term: 'Bút toán đảo, trả hàng ↔ bút toán gốc', module: 'ledger', purpose: 'Mỗi dòng nối một bút toán mới (đảo, trả hàng, điều chỉnh, quà tặng, thay thế) với bút toán gốc. Chỉ thêm, không sửa, không xoá; mỗi bút toán chỉ bị đảo một lần.' },
   contract_schedules: { group: 'catalog', label: 'Lịch thanh toán hợp đồng', term: 'Kỳ thanh toán', module: 'dimensions', purpose: 'Các kỳ thanh toán theo hợp đồng (thuê nhà, tín dụng, mua tài sản…): ngày đến hạn, số tiền, thuế nộp thay, đã trả hay chưa. Dùng để nhắc hạn.' },
+  // [2026-11-13 Nguyễn Văn Thủy] bảng mới 0113–0121 (đóng góp)
+  stock_counts: { group: 'catalog', label: 'Phiếu kiểm kê kho', term: 'Kiểm kê kho', module: 'warehouses', purpose: 'Phiếu kiểm kê: số sổ sách, số thực đếm, chênh lệch theo kho (0110).' },
+  warehouse_types: { group: 'catalog', label: 'Loại kho', term: 'KHH, KKM, KTL…: được bán, thuộc sở hữu, hạn dùng, TK kho', module: 'warehouses', purpose: 'Danh mục loại kho (12 loại gốc, thêm được); kho chọn một loại (0128).' },
+  warehouse_type_ops: { group: 'catalog', label: 'Nghiệp vụ dùng loại kho', term: 'Nhập mua, bán, khách trả… dùng loại kho nào, theo thứ tự ưu tiên', module: 'warehouses', purpose: 'Màn hình tự chọn kho theo loại đứng đầu; kho loại không có trong danh sách bị chặn (0128).' },
+  account_default_types: { group: 'rules', label: 'Tài khoản ngầm định theo loại', term: 'Loại chứng từ → cột tài khoản, danh sách được chọn, mặc định', module: 'posting', purpose: 'Mỗi loại (bán hàng thu tiền mặt, mua hàng chưa thanh toán…) có các cột tài khoản với danh sách lọc và tài khoản mặc định; cột gắn khoá thì đồng bộ tài khoản ngầm định của bộ định khoản (0126).' },
+  item_class_history: { group: 'catalog', label: 'Lịch sử nhóm hàng', term: 'Ai thêm / sửa nhóm hàng', module: 'products', purpose: 'Mỗi lần thêm / sửa nhóm hàng một dòng: ai, lúc nào, đổi gì (0116).' },
+  tax_id_versions: { group: 'catalog', label: 'Phiên bản MST', term: 'MST theo ngày hiệu lực', module: 'warehouses', purpose: 'MST đặt ở kho / chi nhánh / nút cơ cấu, mỗi lần đổi là một phiên bản từ ngày; dòng sổ lấy MST theo ngày chứng từ (0121).' },
+  org_link_versions: { group: 'catalog', label: 'Phiên bản cơ cấu', term: 'Shop thuộc nút nào từ ngày nào', module: 'org-units', purpose: 'Chi nhánh thuộc nút cơ cấu / chi nhánh cha, nút thuộc nút cha — theo ngày hiệu lực, để báo cáo theo cơ cấu tại thời điểm (0121).' },
+  help_cards: { group: 'platform', label: 'Thẻ hướng dẫn', term: 'Hướng dẫn sử dụng', module: 'help', purpose: 'Nội dung hướng dẫn soạn ở HT17 (0113).' },
+  help_places: { group: 'platform', label: 'Chỗ gắn thẻ hướng dẫn', term: 'Màn / hộp thoại ↔ thẻ', module: 'help', purpose: 'Định danh màn / hộp thoại gắn với thẻ hướng dẫn (0113).' },
   item_classes: { group: 'catalog', label: 'Phân loại hàng hoá', term: 'Nhãn / ngành / nhóm / loại hàng', module: 'products', purpose: 'Nhãn hàng, ngành hàng, nhóm hàng, loại hàng (có cha – con) gắn trên mặt hàng, để báo cáo phân tích theo nhóm hàng.' },
   debt_items: { group: 'ledger', label: 'Khoản công nợ', term: 'Công nợ theo chứng từ', module: 'debts', purpose: 'Mỗi (chứng từ, đối tượng, tài khoản theo dõi đối tượng) một khoản ghi Nợ hoặc ghi Có, có hạn thanh toán và số còn lại. Dựng lại được từ sổ: đồng bộ mỗi lần chứng từ ghi sổ, sửa, huỷ.' },
   debt_allocations: { group: 'ledger', label: 'Đối trừ công nợ', term: 'Thanh toán trừ vào khoản nào', module: 'debts', purpose: 'Ghép một khoản ghi Nợ với một khoản ghi Có cùng đối tượng, cùng tài khoản (thu tiền trừ hoá đơn nào, đặt cọc trừ hoá đơn nào). Có người ghép, ngày ghép; gỡ được.' },
@@ -147,6 +157,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   asset_depreciation_overrides: { group: 'assets', label: 'Sửa tay số trích', module: 'assets', purpose: 'Kế toán sửa số trích của một tài sản trong một tháng, kèm lý do và người sửa.' },
   cit_returns: { group: 'tax', label: 'Quyết toán thuế TNDN', term: 'Mẫu 03/TNDN', module: 'statements', purpose: 'Tờ khai quyết toán thuế thu nhập doanh nghiệp đã lưu theo năm: chỉ tiêu tính từ báo cáo kết quả kinh doanh và phần kế toán nhập tay (điều chỉnh tăng, giảm, lỗ chuyển, ưu đãi).' },
   taxpayer_profiles: { group: 'tax', label: 'Thông tin người nộp thuế', term: 'Người nộp thuế', module: 'statements', purpose: 'Tên, mã số thuế, địa chỉ, cơ quan thuế quản lý, đại lý thuế, người ký: in ở phần đầu các tờ khai.' },
+  // [2026-11-11 Nguyễn Văn Thủy] danh mục bảng: financial_statements (0106) (đóng góp)
+  financial_statements: { group: 'tax', label: 'Báo cáo tài chính đã lập', term: 'BCTC B01, B02, B03', module: 'statements', purpose: 'Bộ báo cáo tài chính đã lập theo kỳ: số từng chỉ tiêu (gồm số sửa tay), người lập, người đại diện theo pháp luật, ngày lập, đã kiểm toán.' },
   vat_returns: { group: 'tax', label: 'Tờ khai thuế GTGT', term: 'Mẫu 01/GTGT', module: 'statements', purpose: 'Tờ khai đã lưu theo kỳ (tháng / quý): toàn bộ chỉ tiêu, phần nhập tay; revision 0 là lần đầu, 1, 2… là các lần khai bổ sung (kèm giải trình 01/KHBS, tiền chậm nộp); kỳ sau lấy [43] của lần mới nhất làm [22].' },
   long_term_balances: { group: 'assets', label: 'Phân loại dài hạn', term: 'Ngắn hạn / dài hạn', module: 'statements', purpose: 'Phần dài hạn (còn trên 12 tháng) của số dư phải thu, phải trả, vay tại ngày lập báo cáo; Báo cáo tình hình tài chính chuyển số này sang chỉ tiêu dài hạn.' },
 
@@ -195,6 +207,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 1: danh mục bảng tenant_roles, tenant_role_rules (0075, ADR-0027 Phụ lục A)
   tenant_roles: { group: 'platform', label: 'Vai trò của đơn vị', term: 'Phân quyền', module: 'access', purpose: 'Vai trò tuỳ biến (vd Thủ kho): vai trò nền + luật Cho / Cấm riêng. Không xoá, vô hiệu bằng is_active; mã, loại, vai trò nền bất biến (ADR-0027 Phụ lục A).' },
   tenant_role_rules: { group: 'platform', label: 'Luật của vai trò của đơn vị', term: 'Phân quyền', module: 'access', purpose: 'Luật Cho (đích danh) / Cấm (được dùng *) của vai trò tuỳ biến; cấp quyền module cho nhóm người đi qua đây. Chỉ thêm, gỡ có lý do.' },
+  // [2026-11-11 Nguyễn Văn Thủy] danh mục bảng: print_profiles (0103) (đóng góp)
+  print_profiles: { group: 'platform', label: 'Hồ sơ in', term: 'Mẫu in', module: 'print-templates', purpose: 'Thông tin đơn vị in trên báo cáo, chứng từ (tên, địa chỉ, MST, liên hệ, logo), hiện / ẩn, ngày ký, người ký (chức danh, tiêu đề, tên) theo cả đơn vị hoặc từng chi nhánh (màn HT16). Chỉ lưu phần khác mặc định.' },
   print_template_settings: { group: 'platform', label: 'Cấu hình mẫu in', term: 'Mẫu in', module: 'print-templates', purpose: 'Bật / tắt mẫu in, mẫu mặc định, chỉnh tiêu đề, số liên, chức danh ký… theo đơn vị, chi nhánh hoặc người dùng (màn HT05). Chỉ lưu phần khác mặc định; bố cục mẫu nằm trong code giao diện.' },
   api_keys: { group: 'platform', label: 'Khoá API', module: 'access', purpose: 'Khoá cho hệ thống khác gửi sự kiện vào (chỉ lưu bản băm). Khoá có app_key là khoá của app ngoài tiến trình: quyền theo kết nối app.' },
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — danh mục bảng: app_installations (0050, app ngoài tiến trình ADR-0011 mức 2)
@@ -234,6 +248,9 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
 /** Giải thích trigger theo tên hàm trigger. */
 export const TRIGGER_NOTES: Record<string, string> = {
+  bizcity_branch_own_department: 'Chi nhánh mới chưa chọn phòng ban thì tự có phòng ban riêng (BH + số mã) trên sơ đồ phòng ban, dưới Cửa hàng / Giám đốc chi nhánh (0129).',
+  bizcity_warehouse_type_sync: 'Kho phải thuộc một loại có trong danh mục Loại kho; ô kho khuyến mại cũ đi theo loại KKM (0128).',
+  bizcity_tenant_seed_warehouse_types: 'Đơn vị mới có sẵn 12 loại kho gốc và nghiệp vụ dùng loại kho (0128).',
   assert_entry_balanced: 'Kiểm lúc kết thúc giao dịch: tổng Nợ phải bằng tổng Có của bút toán, lệch một đồng là huỷ cả giao dịch.',
   forbid_ledger_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Sai thì ghi số âm rồi ghi lại.',
   assert_negative_only_on_reversal: 'Số tiền âm chỉ được ghi trong bút toán ghi số âm (is_reversal = true).',
@@ -267,6 +284,12 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_items_parent_guard: 'Họ mặt hàng (R-ITEM-3): mặt hàng cha cùng đơn vị, không tự làm cha mình, không tạo vòng.',
   bizcity_items_sync_parent: 'Giữ items.parent_item_id khớp mã cha (products.parent_sku) theo ĐỊNH DANH: đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ.',
   bizcity_set_item_id: 'Dòng mới (sổ cái, kho, giá vốn, đơn vị quy đổi, bảng giá) tự gắn item_id theo mã có hiệu lực tại ngày của dòng; mã chưa có trong danh mục → để rỗng, điền khi mặt hàng được tạo (bizcity_item_fill_refs).',
+  // [2026-11-13 Nguyễn Văn Thủy] 0121 — dòng nhỏ nhất, MST / cơ cấu theo phiên bản ngày (đóng góp)
+  bizcity_fill_wh_tax: 'Dòng sổ / phiếu kho mới: không chọn kho thì lấy kho mặc định của chi nhánh; lưu định danh cn_ / kho_ và MST tại ngày chứng từ (kho → chi nhánh → nút cơ cấu → công ty) (0121).',
+  bizcity_versions_warehouse: 'Đổi MST của kho → thêm phiên bản MST theo ngày hiệu lực (0121).',
+  bizcity_versions_branch: 'Đổi MST / nút cơ cấu / chi nhánh cha của chi nhánh → thêm phiên bản theo ngày hiệu lực (0121).',
+  bizcity_versions_org_unit: 'Đổi MST / nút cha của nút cơ cấu → thêm phiên bản theo ngày hiệu lực (0121).',
+  bizcity_uid_guard: 'Định danh cn_ / kho_ / cc_ là bất biến, không sửa được (0121).',
   bizcity_set_line_name: 'Dòng sổ mới tự lưu tên mặt hàng lúc ghi theo item_id. Đổi tên về sau không ảnh hưởng dòng đã ghi (0072).',
 };
 

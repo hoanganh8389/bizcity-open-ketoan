@@ -20,7 +20,6 @@
  *   GET    /api/v1/catalog/feed/prices?after=&limit=   luồng thay đổi dòng giá
  *   POST   /api/v1/catalog/import                     nạp dữ liệu ban đầu từ hệ thống bán hàng
  *   POST   /api/v1/catalog/products/import            nhập Excel mặt hàng (DM10): dryRun=true kiểm tra từng dòng; ghi chỉ dòng đúng
- *   POST   /api/v1/catalog/products/scan-parents      quét họ mã theo mã (mã cha – mã con 1 cấp; overwrite=false giữ mã cha đã chỉnh tay)
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -32,7 +31,7 @@ import { mountActions, defineAction, type AnyActionDef, sameTx } from '../../cor
 import { masterdataActions } from './masterdata.actions.js';
 import { checkToolPassword } from '@bizcity/platform/core/security/tool-password';
 import {
-  deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, sameNameProduct, saveProduct, savePriceList, savePriceRows, scanParents, setPriceListBranches,
+  deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, sameNameProduct, saveProduct, savePriceList, savePriceRows, setPriceListBranches,
 } from './catalog.service.js';
 import { inferSkuCodes, nextSku, SKU_RULE } from './sku-rule.js';
 import { importProducts } from './catalog-import.js';
@@ -70,8 +69,8 @@ const productSchema = z.object({
   isMain: z.boolean().optional(), isUnder24m: z.boolean().optional(), noSale: z.boolean().optional(), exportAdjust: z.boolean().optional(),
   isKct: z.boolean().optional(), trackIdentifier: z.boolean().optional(),
   parentSku: z.string().trim().max(64).nullable().optional(),
-  sendToTax: z.boolean().optional(), // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
-  variantCode: z.string().trim().min(1).max(32).optional(), // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — ô Biến thể sửa được, lưu qua saveProduct; luồng kéo danh mục gửi variantCode (đóng góp)
+  sendToTax: z.boolean().optional(), // nhận để không vỡ client cũ, bỏ qua: suy theo mã (0111)
+  variantCode: z.string().trim().min(1).max(32).optional(), // nhận để không vỡ client cũ, bỏ qua: suy theo mã (0111)
   units: z.array(unitSchema).max(50).optional(),
   prices: z.array(priceSchema).max(2000).optional(),
 });
@@ -142,20 +141,6 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
 const anyOut = z.custom<object | null>((v) => typeof v === 'object');
 
 export const catalogWriteActions: AnyActionDef[] = [
-  defineAction({
-    id: 'core.catalog.products-scan-parents', title: 'Quét họ mã theo mã: mã 9 số + đuôi (trừ T có tem) là mã con của mã gốc có trong danh mục (cần mật khẩu công cụ)', tags,
-    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ overwrite: z.boolean().default(false), password: z.string().max(200).default('') }), output: anyOut,
-    expose: { http: { method: 'POST', path: '/api/v1/catalog/products/scan-parents' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'catalog' },
-    handler: async (ctx, input) => {
-      const trx = ctx.data.tx;
-      const auth = ctx.legacyAuth;
-      // Công cụ chạy cho cả danh mục → hỏi mật khẩu công cụ (cùng mật khẩu nạp dữ liệu mẫu, biến PURCHASE_SEED_PASSWORD; chưa đặt thì tắt — SC-SEC-5).
-      checkToolPassword(input.password, 'quét cha – con');
-      return await sameTx(trx, (trx) => scanParents(trx, auth.tenantId, { overwrite: input.overwrite }));
-    },
-  }),
   defineAction({
     id: 'core.catalog.product-delete', title: 'Xoá mặt hàng chưa có nhập xuất (kèm đơn vị tính, giá)', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
@@ -242,7 +227,7 @@ export const catalogMoreWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: saveProduct áp cổng danh mục (nháp / kích hoạt); trả khung Vì sao + ghi nhận cảnh báo mềm.
       // [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — gộp main: gate / findings / held trả qua ctx.meta (action không còn tự dựng phản hồi)
-      const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new, checkName: true }))!;
+      const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new, checkName: true, by: auth.actorName }))!;
       const findings = await itemHints(trx, auth.tenantId, { sku: input.sku, unit: product.unit, postingGroupCode: product.postingGroupCode });
       await recordWarnAck(trx, auth, 'product', input.sku, findings, warnAck);
       Object.assign(ctx.meta, { gate: 'A', findings, ...(product.isDraft ? { held: { kind: 'draft', id: input.sku } } : {}) });
@@ -294,12 +279,12 @@ export const catalogBatchActions: AnyActionDef[] = [
         dryRun: z.boolean().default(true),
         rows: z.array(z.object({
           row: z.number().int(), sku: z.string().max(200), name: cell, unit: cell, note: cell, groupCode: cell, industryCode: cell, brandCode: cell, typeCode: cell,
-          postingGroupCode: cell, taxOutCode: cell, taxInCode: cell, isActive: cell,
+          postingGroupCode: cell, taxOutCode: cell, taxInCode: cell, vatRate: cell, isActive: cell,
         })).min(1).max(5000),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/catalog/products/import' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'catalog' },
     handler: async (ctx, input) => {
-      const trx = ctx.data.tx; const auth = ctx.legacyAuth; return await importProducts(trx, auth.tenantId, auth.actor, input.rows, input.dryRun); },
+      const trx = ctx.data.tx; const auth = ctx.legacyAuth; return await importProducts(trx, auth.tenantId, auth.actor, input.rows, input.dryRun, auth.actorName); },
   }),
 ];

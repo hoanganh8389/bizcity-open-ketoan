@@ -539,6 +539,24 @@
       "note": "Khoá mẫu của kho setting_values (PHASE-029 E2): giao diện sáng / tối theo đơn vị, ghi đè theo chi nhánh (màn quầy) và theo người dùng. Thay dần localStorage của trình duyệt."
     },
     {
+      "key": "bizcity.ui.phan_rieng",
+      "class": "C",
+      "owner": "core",
+      "scopes": [
+        "tenant"
+      ],
+      "storage": "setting_values",
+      "type": "enum on|off",
+      "valueType": "enum(on|off)",
+      "default": "\"on\"",
+      "readBy": "usePhanRieng() (apps/web/src/lib/phanRieng.ts) — GET /api/v1/settings/values/bizcity.ui.phan_rieng",
+      "writeBy": "core.settings.set (PUT /api/v1/settings/values/:key)",
+      "permission": "settings:write",
+      "audit": "settings.set",
+      "affectsPosting": false,
+      "note": "Nhóm menu Phần riêng (lớp gắn thêm cho chuỗi cửa hàng: nạp chứng từ từ máy bán hàng, tồn max, chính sách mua, công nợ nội bộ…). off = ẩn nhóm khỏi menu trái và trang Tổng quan; màn vẫn mở được bằng ô tìm. Không đổi dữ liệu, không đổi định khoản."
+    },
+    {
       "key": "bizcity.authz.shadow",
       "class": "A",
       "owner": "core",

@@ -9,7 +9,8 @@ import { WindowDock } from './WindowDock';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { BarChart3, Menu } from 'lucide-react';
+import { BarChart3, Menu, Settings } from 'lucide-react';
+import { groupHome, THIET_LAP } from './menu-gon';
 import { ChangePasswordModal } from '@/features/access/ChangePasswordModal';
 import { api } from '@/lib/api';
 import { useAuth, inFrame } from '@/lib/auth';
@@ -35,6 +36,7 @@ import { SavedFlash } from '@/components/WhyPanel';
 
 export function AppLayout() {
   const { user } = useAuth();
+  const logo = useTenant().data?.logo ?? null; // [2026-11-11 Nguyễn Văn Thủy] logo cài ở HT03 hiện ở đầu trang (đóng góp)
   // Chi nhánh đang làm việc lưu theo đơn vị × người dùng.
   workBranch.setScope(user ? `${user.tenant.id}:${user.id}` : '');
   const [changingPassword, setChangingPassword] = useState(false);
@@ -67,7 +69,6 @@ export function AppLayout() {
   useEffect(() => { document.documentElement.style.setProperty('--nav-w', `${collapsed ? 48 : navWidth}px`); }, [collapsed, navWidth]);
   const addins = useAddIns();
   const menu = useAppMenu();
-  const { data: tenant } = useTenant();
   const mod = useActiveModule(menu);
   const gon = useGon(menu);
   useGhiHayDung(menu);
@@ -128,9 +129,10 @@ export function AppLayout() {
       <header className="topbar">
         <button type="button" className="mnav-btn" onClick={() => setMobileNav(true)} aria-label="Mở menu"><Menu size={20} /></button>
         <Link to="/" className="brand">
-          {tenant?.logo
-            ? <span className="brand-logo" style={{ background: '#fff', width: 'auto', minWidth: 34, padding: '0 4px' }}><img src={tenant.logo} alt="" style={{ maxHeight: 26, maxWidth: 90 }} /></span>
-            : <span className="brand-logo"><BarChart3 size={17} color="#2a6cc4" /></span>}
+          {/* [2026-11-11 Nguyễn Văn Thủy] có logo (HT03) thì hiện logo; chưa có thì ô chữ viết tắt mã đơn vị (đóng góp) */}
+          {logo
+            ? <img className="brand-anh" src={logo} alt={user?.tenant.name ?? 'Logo'} />
+            : <span className="brand-logo brand-chu">{(user?.tenant.code ?? '').slice(0, 4) || <BarChart3 size={17} />}</span>}
           <span>
             ERP{bookMode === 'tax' && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: '#d93025', color: '#fff', fontSize: 11, fontWeight: 700 }}>SỔ THUẾ</span>}
             <small>{user?.tenant.name}</small>
@@ -142,6 +144,8 @@ export function AppLayout() {
           <DangOnline menu={menu} />
           <NutChiNhanh />
           <MenuSearch items={menu} />
+          {/* [2026-11-11 Nguyễn Văn Thủy] nút bánh răng mở Thiết lập (đơn vị, người dùng, mẫu in, cấu hình) — không nằm ở menu trái (đóng góp) */}
+          <Link to={groupHome(THIET_LAP)} className="nut-thiet-lap" title="Thiết lập: thông tin đơn vị, người dùng, mẫu in, cấu hình" aria-label="Thiết lập"><Settings size={18} /></Link>
           <UserMenu onChangePassword={() => setChangingPassword(true)} />
         </div>
       </header>

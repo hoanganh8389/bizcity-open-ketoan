@@ -1,0 +1,45 @@
+{
+  "docNo": "HD2611900001",
+  "lines": [
+    {
+      "qty": 2,
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Hộp",
+      "isGift": false,
+      "lineKey": "l1",
+      "taxCode": "R08",
+      "unitQty": 2,
+      "discount": 0,
+      "taxAmount": 48000,
+      "unitPrice": 300000,
+      "unitRatio": 1,
+      "amountBeforeTax": 600000
+    }
+  ],
+  "docKey": "pos:CN01:sale:00000000-0000-7000-8000-00000000a001",
+  "totals": {
+    "tax": 48000,
+    "total": 648000,
+    "beforeTax": 600000
+  },
+  "docDate": "2026-11-10",
+  "docType": "sale",
+  "offsets": [],
+  "version": 1,
+  "payments": [
+    {
+      "amount": 648000,
+      "methodCode": "TM"
+    }
+  ],
+  "sourceRef": {
+    "id": "00000000-0000-7000-8000-00000000a001",
+    "type": "pos.order",
+    "label": "HD2611900001"
+  },
+  "branchCode": "CN01",
+  "description": "Bán lẻ máy POS HD2611900001",
+  "internalOnly": false,
+  "sourceSystem": "pos"
+}

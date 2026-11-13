@@ -56,6 +56,7 @@ export const muaHangRoutes = (
     <Route path="mua-hang/nhat-ky" element={<NhatKyMuaPage />} />
     <Route path="mua-hang/tong-hop" element={<ChungTuPage key="tong-hop" report="tong-hop" />} />
     <Route path="mua-hang/bao-cao" element={<ChungTuPage key="bao-cao" report="bao-cao" />} />
+    <Route path="mua-hang/tong-hop-mat-hang" element={<ChungTuPage key="tong-hop-mat-hang" report="bao-cao" theoMa />} />
     <Route path="mua-hang/so-kho" element={<SoKhoTheoMatHangPage />} />
     <Route path="mua-hang/ton-kho" element={<TonKhoTheoMatHangPage />} />
     <Route path="mua-hang/doi-chieu" element={<DoiChieuDonPage />} />

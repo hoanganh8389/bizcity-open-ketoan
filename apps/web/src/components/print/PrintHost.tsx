@@ -14,8 +14,10 @@ import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/features/system/TenantPage';
 import { useBranches } from '@/components/filters';
 import { khoFullLabel, useKho } from '@/components/phieu-hang/ChonKho';
-import type { PrintOverrides } from '@ketoan/contracts';
+import { PRINT_PROFILE_DEFAULT, type PrintOverrides, type PrintProfile } from '@ketoan/contracts';
 import { PrintOverridesCtx } from './overrides';
+import { PrintProfileCtx, usePrintProfile } from './profile';
+import { useWorkBranch } from '@/lib/workBranch';
 
 /** A4 dọc, A4 ngang, A5 ngang (nửa tờ A4), A5 dọc, giấy cuộn 80mm (máy in bill), tờ tem (A4, không lề). */
 export type Paper = 'A4' | 'A4L' | 'A5L' | 'A5' | 'roll80' | 'label';
@@ -23,11 +25,13 @@ export const PAPER_LABEL: Record<Paper, string> = { A4: 'A4 dọc', A4L: 'A4 nga
 
 /** Thông tin chung mọi mẫu cần: đơn vị, chi nhánh, người in. */
 export interface PrintCtx {
-  org: { name: string; address: string; taxCode: string; phone: string; logo: string | null };
+  org: { name: string; address: string; taxCode: string; phone: string; email: string; website: string; bankAccount: string; logo: string | null };
   branchName: (code: string | undefined) => string;
   /** Phân kho thật "mã · tên": mã trống = kho mặc định của chi nhánh (như sổ kho tự gán). */
   kho: (branchCode: string | undefined, warehouseCode?: string) => string;
   userName: string;
+  /** Hồ sơ in (HT16) áp tại chi nhánh đang làm việc: thông tin đơn vị trên bản in, hiện / ẩn, ngày ký, người ký. */
+  profile: PrintProfile;
 }
 
 export interface PrintTemplate<T> {
@@ -59,17 +63,25 @@ export function usePrintCtx(): PrintCtx {
   const { data: tenant } = useTenant();
   const { data: branches } = useBranches();
   const khoAll = useKho();
+  const branchCode = useWorkBranch();
+  const profile = usePrintProfile(branchCode).data?.effective ?? PRINT_PROFILE_DEFAULT;
+  // Thông tin đơn vị trên bản in: hồ sơ in (HT16) có thì dùng, trống thì theo Thông tin đơn vị (HT03).
+  const c = profile.company;
   return {
     org: {
-      name: tenant?.name ?? user?.tenant.name ?? '',
-      address: tenant?.address ?? '',
-      taxCode: tenant?.taxCode ?? '',
-      phone: tenant?.phone ?? '',
+      name: c.reportName || tenant?.name || user?.tenant.name || '',
+      address: c.address || tenant?.address || '',
+      taxCode: c.taxCode || tenant?.taxCode || '',
+      phone: c.phone || tenant?.phone || '',
+      email: c.email,
+      website: c.website,
+      bankAccount: c.bankAccount,
       logo: tenant?.logo ?? null,
     },
     branchName: (code) => (code ? branches?.find((b) => b.code === code)?.name ?? code : ''),
     kho: (branchCode, warehouseCode) => khoFullLabel(khoAll, branchCode, warehouseCode),
     userName: user?.fullName ?? '',
+    profile,
   };
 }
 
@@ -95,5 +107,5 @@ export function PrintJob<T>({ job, onDone }: { job: PrintJobSpec<T>; onDone: () 
   else docs.forEach((d, i) => {
     for (let c = 1; c <= copies; c++) pages.push(<div key={`${i}-${c}`} className="pdoc" data-paper={paper}>{tpl.render(d, { ...ctx, copy: c })}{foot}</div>);
   });
-  return createPortal(<PrintOverridesCtx.Provider value={ov}><div className="pdoc-root">{pages}</div></PrintOverridesCtx.Provider>, document.body);
+  return createPortal(<PrintProfileCtx.Provider value={ctx.profile}><PrintOverridesCtx.Provider value={ov}><div className="pdoc-root">{pages}</div></PrintOverridesCtx.Provider></PrintProfileCtx.Provider>, document.body);
 }

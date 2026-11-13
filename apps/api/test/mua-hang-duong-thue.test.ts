@@ -41,13 +41,13 @@ describe('Đường thuế theo mã — mua hàng', () => {
     const cs = await analyze({ ...base, kind: 'gift_in', gift: { source: 'ncc_extra', hasVat: false }, lines: [line(PARENT, 5, 0, { taxCode: 'KKKN' })] });
     const c = cs.find((x) => x.code === 'tax_path_gift');
     expect(c).toMatchObject({ level: 'error', blocking: true });
-    expect(c!.text).toMatch(/Thêm sản phẩm con/);
+    expect(c!.text).toMatch(/Mã biến thể/);
   });
 
   it('TH2 tạo mã quà con không gửi thuế: lần sau chặn và chỉ đúng mã quà; dùng mã quà thì đạt', async () => {
-    const k = await call(t, 'POST', '/api/v1/items/add-child', { parentSku: PARENT, name: 'Anlene Gold thử quà', variantCode: 'promo', sendToTax: false });
+    const k = await call(t, 'PUT', `/api/v1/catalog/products/${PARENT}Z?new=1`, { name: 'Anlene Gold thử quà', unit: 'Lon', taxInCode: 'V08', units: [{ unit: 'Lon', ratio: 1, isDefault: true, isPurchaseDefault: true }], ...ack });
     expect(k.status, JSON.stringify(k.body)).toBe(200);
-    GIFT = k.body.data.sku;
+    GIFT = `${PARENT}Z`;
     const wrong = await analyze({ ...base, kind: 'gift_in', gift: { source: 'ncc_extra', hasVat: false }, lines: [line(PARENT, 5, 0, { taxCode: 'KKKN' })] });
     expect(wrong.find((x) => x.code === 'tax_path_gift')!.text).toContain(GIFT);
     const ok = await analyze({ ...base, kind: 'gift_in', gift: { source: 'ncc_extra', hasVat: false }, lines: [line(GIFT, 5, 0, { taxCode: 'KKKN' })] });
@@ -89,6 +89,6 @@ describe('Đường thuế theo mã — mua hàng', () => {
 
   it('Chọn mã quà trên phiếu tự thành hàng tặng người tiêu dùng (theo ô của mặt hàng, không theo chữ cuối mã)', async () => {
     const p = (await call(t, 'GET', `/api/v1/catalog/products/${GIFT}`)).body.data;
-    expect(p).toMatchObject({ sendToTax: false, variantCode: 'promo', parentSku: PARENT });
+    expect(p).toMatchObject({ sendToTax: false, variantCode: 'internal', parentSku: PARENT });
   });
 });
