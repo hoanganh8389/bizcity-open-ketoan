@@ -44,6 +44,8 @@ export const lineSchema = z.object({
   barcode: z.string().trim().max(500).optional(),
   newItem: z.boolean().optional(),
   refLineKey: z.string().trim().max(64).optional(),
+  // [2026-11-13 Nguyễn Văn Thủy] tài khoản riêng của dòng (đóng góp)
+  accounts: z.object({ inventory: z.string().trim().max(20).optional(), payable: z.string().trim().max(20).optional(), tax: z.string().trim().max(20).optional() }).optional(),
   stockInfo: z.record(z.number().finite()).optional(),
   family: z.array(z.object({ sku: z.string().max(64), kind: z.string().max(80), tonKho: z.number().finite(), tonShop: z.number().finite(), banShop: z.number().finite(), dangDat: z.number().finite(), maxKho: z.number().finite().optional(), maxShop: z.number().finite().optional(), diDuong: z.number().finite().optional(), banThangTruoc: z.number().finite().optional() })).max(50).optional(),
 });

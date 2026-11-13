@@ -142,9 +142,7 @@ export const keToanMenu: MenuItem[] = [
       { key: 'hinh-thuc-tt', label: 'Hình thức thanh toán', path: '/cau-hinh/hinh-thuc-thanh-toan', code: 'DM05' },
       { key: 'ngan-hang', label: 'Tài khoản ngân hàng', path: '/danh-muc/ngan-hang', code: 'DM09' },
       // [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — Lý do (ACC18), Mặt hàng - Tài khoản (ACC17) xuống mục "cũ": chỉ dùng khi bật lý do hạch toán; định khoản khai ở Tài khoản ngầm định ACC41 (đóng góp)
-      sec('dm-tu-tra-cu', 'Nguồn tài khoản tự tra (cũ)'),
-      { key: 'ly-do', label: 'Lý do - Tài khoản (cũ)', path: '/cau-hinh/ly-do', code: 'ACC18' },
-      { key: 'nhom-hach-toan', label: 'Mặt hàng - Tài khoản (cũ)', path: '/cau-hinh/nhom-hach-toan', code: 'ACC17' },
+      // [2026-11-13 Nguyễn Văn Thủy] bỏ hẳn Lý do (ACC18), Mặt hàng - Tài khoản (ACC17): định khoản theo Tài khoản ngầm định theo loại chứng từ (đóng góp)
       sec('dm-doi-tuong', 'Đối tượng, tổ chức'),
       { key: 'khach-hang', label: 'Khách hàng', path: '/danh-muc/khach-hang', code: 'DM12' },
       { key: 'nha-cung-cap', label: 'Nhà cung cấp', path: '/danh-muc/nha-cung-cap', code: 'DM13' },
@@ -152,6 +150,7 @@ export const keToanMenu: MenuItem[] = [
       { key: 'so-do-to-chuc', label: 'Sơ đồ tổ chức', path: '/danh-muc/so-do-to-chuc', code: 'DM16' },
       { key: 'chi-nhanh', label: 'Chi nhánh', path: '/danh-muc/chi-nhanh', code: 'DM02' },
       { key: 'kho', label: 'Danh mục kho', path: '/danh-muc/kho', code: 'DM12' },
+      { key: 'loai-kho', label: 'Loại kho', path: '/danh-muc/loai-kho', code: 'DM18' },
       { key: 'bo-phan', label: 'Danh mục bộ phận', path: '/danh-muc/bo-phan', code: 'ACC26' },
       { key: 'nhan-vien', label: 'Danh mục nhân viên', path: '/danh-muc/nhan-vien', code: 'DM04' },
       sec('dm-hang', 'Mặt hàng'),

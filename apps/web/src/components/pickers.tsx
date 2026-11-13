@@ -254,7 +254,8 @@ export function useAccountList() {
  *  - `postingOnly`: chỉ tài khoản chi tiết (ghi sổ được) — dùng khi nhập phiếu, khai báo.
  *  - Bộ lọc báo cáo để mặc định: chọn được cả tài khoản tổng hợp (111 = cộng 1111, 1112…).
  */
-export function AccountPicker({ postingOnly, ...p }: BaseProps & { postingOnly?: boolean }) {
+// [2026-11-13 Nguyễn Văn Thủy] prefixes: chỉ cho chọn tài khoản trong danh sách lọc của loại chứng từ (Tài khoản ngầm định) (đóng góp)
+export function AccountPicker({ postingOnly, prefixes, ...p }: BaseProps & { postingOnly?: boolean; prefixes?: string[] }) {
   const { data = [], isLoading } = useAccountList();
   const [q, setQ] = useState('');
   const options = useMemo(() => {
@@ -262,9 +263,10 @@ export function AccountPicker({ postingOnly, ...p }: BaseProps & { postingOnly?:
     return data
       // [2026-11-11 Nguyễn Văn Thủy] ô chọn tài khoản ghi sổ bỏ tài khoản ngoài bảng (loại 0): máy chủ không nhận trên bút toán Nợ / Có (đóng góp)
       .filter((a) => (!postingOnly || (a.isPosting && !a.code.startsWith('0'))) && a.isActive !== false)
+      .filter((a) => !prefixes?.length || prefixes.some((f) => a.code.startsWith(f)))
       .filter((a) => !s || a.code.startsWith(s) || plain(a.name).includes(s))
       .map<PickOption>((a) => ({ code: a.code, name: a.name, level: a.level, strong: !a.isPosting, hint: a.isPosting ? (a.trackPartner || a.isDebt ? 'theo đối tượng' : undefined) : 'TK tổng hợp' }));
-  }, [data, q, postingOnly]);
+  }, [data, q, postingOnly, prefixes?.join(';')]);
   const names = useMemo(() => new Map(data.map((a) => [a.code, a.name])), [data]);
   return <CodePicker {...p} options={options} nameOf={(c) => names.get(c)} onSearch={setQ} loading={isLoading} emptyText="Không có tài khoản khớp" />;
 }
@@ -331,7 +333,7 @@ interface ItemRow { sku: string; name: string; unit: string; stock?: number | nu
  * Danh sách xổ dạng bảng Mã · Tên · ĐVT · Tồn (tồn của chi nhánh đang làm việc, chưa chọn thì cộng mọi chi nhánh).
  * `canAdd`: thêm mặt hàng ngay tại chỗ (nút +, F9) — dùng trên dòng chứng từ.
  */
-export function ItemPicker({ canAdd, ...p }: BaseProps & { canAdd?: boolean }) {
+export function ItemPicker({ canAdd, only, ...p }: BaseProps & { canAdd?: boolean; only?: (sku: string) => boolean }) {
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
   const [adding, setAdding] = useState<string | null>(null);
@@ -340,7 +342,7 @@ export function ItemPicker({ canAdd, ...p }: BaseProps & { canAdd?: boolean }) {
   const branchCode = workBranch.get() || undefined;
   const list = useQuery({ queryKey: ['inventory-items', debounced, branchCode], queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: debounced, limit: 50, branchCode }), staleTime: 60_000 });
   const current = useQuery({ queryKey: ['inventory-items', 'name', p.value], enabled: Boolean(p.value), queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: p.value, limit: 5 }), staleTime: 5 * 60_000 });
-  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.sku, name: x.name, hint: x.unit || undefined, cells: [x.unit, x.stock ?? null] })), [list.data]);
+  const options = useMemo(() => (list.data ?? []).filter((x) => !only || only(x.sku)).map<PickOption>((x) => ({ code: x.sku, name: x.name, hint: x.unit || undefined, cells: [x.unit, x.stock ?? null] })), [list.data]);
   return (
     <>
       <CodePicker

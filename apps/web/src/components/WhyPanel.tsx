@@ -75,13 +75,11 @@ export function useWarnAck(findings: readonly CatalogFinding[]) {
   const valid = reason.trim().length >= WARN_ACK_MIN_REASON;
   return {
     count: warns.length,
-    label: warns.length ? `Ghi (có ${warns.length} cảnh báo)` : 'Ghi',
+    label: 'Ghi',
     asking, reason, setReason, valid,
-    /** Bấm Ghi: không có cảnh báo mềm → lưu ngay; có → mở hộp lý do, lưu khi xác nhận. */
+    // [2026-11-12 Nguyễn Văn Thủy] bỏ hộp bắt ghi lý do cảnh báo mềm: bấm Ghi là lưu, cảnh báo tự ghi nhận vào nhật ký (đóng góp)
     request(save: (ack?: CatalogWarnAck) => void) {
-      if (!warns.length) { save(undefined); return; }
-      setPending(() => save);
-      setAsking(true);
+      save(warns.length ? { reason: 'Tự ghi nhận cảnh báo khi lưu', codes: warns.map((w) => w.code) } : undefined);
     },
     confirm() {
       if (!valid || !pending) return;

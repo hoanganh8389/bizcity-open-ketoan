@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Eye, FileSpreadsheet, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { BookOpen, Eye, FileSpreadsheet, Plus, RefreshCw, Search, Trash2, Undo2 } from 'lucide-react';
 import type { ClosingRule } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { date, dateTime, today } from '@/lib/format';
@@ -176,7 +176,7 @@ function ClosingList() {
           <div className="catalog-toolbar">
             {can('periods:lock') && <button className="btn btn-sm" onClick={() => setAdding({})}><Plus size={14} /> Thêm</button>}
             <button className="btn btn-sm" onClick={view} title="Xem phiếu đang chọn (hoặc bấm đúp dòng)"><Eye size={14} /> Xem</button>
-            {can('periods:lock') && <button className="btn btn-sm" onClick={remove} disabled={cancel.isPending} title="Xoá các phiếu đã tích ở cột Chọn"><Trash2 size={14} /> Xóa{checked.size ? ` (${checked.size})` : ''}</button>}
+            {can('periods:lock') && <button className="btn btn-sm" onClick={remove} disabled={cancel.isPending} title="Huỷ (đảo) các phiếu kết chuyển đã tích ở cột Chọn"><Undo2 size={14} /> Huỷ kết chuyển{checked.size ? ` (${checked.size})` : ''}</button>}
             <button className="btn btn-sm" onClick={() => void runs.refetch()} disabled={runs.isFetching}><RefreshCw size={14} className={runs.isFetching ? 'spin' : undefined} /> Nạp</button>
             <button className="btn btn-sm" onClick={() => setCatalogue(true)}><BookOpen size={14} /> Bút toán kết chuyển mẫu</button>
             <button className="btn btn-sm" onClick={() => exportRef.current?.()} disabled={!rows.length}><FileSpreadsheet size={14} /> Xuất</button>

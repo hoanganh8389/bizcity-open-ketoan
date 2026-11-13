@@ -52,7 +52,7 @@
     ]
   },
   {
-    "sku": "QT-THUNG-SUA",
+    "sku": "QT-THUNG-SUAZ",
     "name": "Thùng sữa tặng kèm (ngoài hợp đồng)",
     "unit": "Thùng",
     "brandCode": "QUA",
@@ -63,7 +63,7 @@
     "giftValue": 480000
   },
   {
-    "sku": "QT-BINH-01",
+    "sku": "QT-BINH-01Z",
     "name": "Bình giữ nhiệt Anlene (quà chương trình)",
     "unit": "Cái",
     "brandCode": "QUA",
@@ -74,7 +74,7 @@
     "giftValue": 85000
   },
   {
-    "sku": "QT-BO-TRIAN",
+    "sku": "QT-BO-TRIANZ",
     "name": "Bộ quà tri ân khách hàng TGS",
     "unit": "Bộ",
     "brandCode": "QUA",

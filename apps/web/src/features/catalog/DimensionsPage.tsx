@@ -55,12 +55,25 @@ const META: Record<DimensionKind, Meta> = {
   contract: { title: 'Hợp đồng', code: 'ACC25', subtitle: 'Hợp đồng thuê nhà, tín dụng, mua tài sản, nhà cung cấp…: theo dõi doanh thu, chi phí, công nợ và lịch thanh toán theo từng hợp đồng', helpKey: 'hop-dong', form: 'Thông tin hợp đồng', parentLabel: 'HĐ gốc', cols: { code: 'Số HĐ', name: 'Tên HĐ', note: 'Ghi chú', parent: 'Mã HĐ gốc' }, tracked: true },
 };
 
+/** Xếp theo cây: cha trước, con ngay dưới (theo mã); gắn độ sâu để thụt tên. Không có cha – con thì giữ thứ tự cũ. */
+function asTree(rows: Row[]): (Row & { depth: number; hasKids: boolean })[] {
+  if (!rows.some((r) => r.parentCode)) return rows.map((r) => ({ ...r, depth: 0, hasKids: false }));
+  const codes = new Set(rows.map((r) => r.code));
+  const kids = new Map<string, Row[]>();
+  for (const r of rows) { const p = r.parentCode && codes.has(r.parentCode) ? r.parentCode : ''; kids.set(p, [...(kids.get(p) ?? []), r]); }
+  const out: (Row & { depth: number; hasKids: boolean })[] = [];
+  const walk = (p: string, depth: number) => { for (const r of kids.get(p) ?? []) { out.push({ ...r, depth, hasKids: kids.has(r.code) }); if (depth < 12) walk(r.code, depth + 1); } };
+  walk('', 0);
+  return out;
+}
+
 const hiddenCol: Column<Row> = { key: 'hidden', header: 'Ẩn', type: 'check', width: 50, value: (r) => !r.isActive };
 
 function columnsOf(kind: DimensionKind, employees: Map<string, string>): Column<Row>[] {
   const m = META[kind];
   const code: Column<Row> = { key: 'code', header: m.cols.code, type: 'code', width: 110 };
-  const name: Column<Row> = { key: 'name', header: m.cols.name, width: 300 };
+  // [2026-11-13 Nguyễn Văn Thủy] danh mục có cấp cha – con (phòng ban…): tên thụt theo cấp (đóng góp)
+  const name: Column<Row> = { key: 'name', header: m.cols.name, width: 300, render: (r) => { const d = (r as Row & { depth?: number }).depth ?? 0; return <span style={{ paddingLeft: d * 18, fontWeight: d === 0 && (r as Row & { hasKids?: boolean }).hasKids ? 600 : undefined }}>{r.name}</span>; } };
   const note: Column<Row> = { key: 'note', header: m.cols.note, width: 180 };
   const parent: Column<Row> = { key: 'parentCode', header: m.cols.parent ?? 'Thuộc', type: 'code', width: 130 };
   switch (kind) {
@@ -103,6 +116,8 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
   const canWrite = can('catalog:write');
   const [editing, setEditing] = useState<Draft | null>(null);
   const [sel, setSel] = useState<Row | null>(null);
+  // [2026-11-13 Nguyễn Văn Thủy] mặc định chỉ hiện mục đang dùng; mục đã ẩn xem khi cần (đóng góp)
+  const [showHidden, setShowHidden] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useQuery({ queryKey: ['dimensions', kind], queryFn: () => api.get<Row[]>(`/api/v1/dimensions/${kind}`) });
   const isContract = kind === 'contract';
@@ -127,6 +142,9 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
           onDelete={remove}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          extra={(q.data ?? []).some((r) => !r.isActive) && (
+            <label className="checkbox" style={{ marginLeft: 8, fontSize: 13 }}><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Hiện cả mục đã ẩn ({(q.data ?? []).filter((r) => !r.isActive).length})</label>
+          )}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
@@ -135,7 +153,7 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
             exportName={`danh-muc-${kind}`}
             groupable
             exportRef={exportRef}
-            rows={q.data ?? []}
+            rows={asTree(showHidden ? q.data ?? [] : (q.data ?? []).filter((r) => r.isActive))}
             rowKey={(r) => r.code}
             onSelect={setSel}
             onRowDoubleClick={(r) => canWrite && setEditing(r)}

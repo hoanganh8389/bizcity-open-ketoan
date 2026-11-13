@@ -20,6 +20,11 @@ async function departmentOf(trx: Db, tenantId: string, code: string | null | und
   return d.code;
 }
 
+async function defaultDepartment(trx: Db, tenantId: string): Promise<string | null> {
+  const d = await trx.selectFrom('dimensions').select('code').where('tenant_id', '=', tenantId).where('kind', '=', 'department').where('code', '=', 'CN-CH').where('is_active', '=', true).executeTakeFirst();
+  return d?.code ?? null;
+}
+
 export const branchService = {
   async list(auth: AuthContext): Promise<BranchDto[]> {
     return (await branchRepository.list(db, auth.tenantId)).map(toBranchDto);
@@ -40,7 +45,8 @@ export const branchService = {
         accounting_unit_id: unitId,
         address: input.address ?? null,
         external_ref: input.externalRef ?? null,
-        department_code: await departmentOf(trx, auth.tenantId, input.departmentCode),
+        // [2026-11-13 Nguyễn Văn Thủy] form không còn ô Bộ phận: chi nhánh mới mặc định bộ phận Cửa hàng (CN-CH) nếu danh mục có (đóng góp)
+        department_code: await departmentOf(trx, auth.tenantId, input.departmentCode ?? (await defaultDepartment(trx, auth.tenantId))),
         note: input.note ?? '',
         company_name: input.companyName ?? '',
         tax_code: input.taxCode ?? '',

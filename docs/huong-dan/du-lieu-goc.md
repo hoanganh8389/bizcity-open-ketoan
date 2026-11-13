@@ -14,12 +14,13 @@ Mọi màn danh mục đều có nút **Quay về dữ liệu gốc** ở đầu
 | Tài khoản ngầm định | ACC41 | `tai-khoan-ngam-dinh.jsonl` | 12 |
 | Loại thuế | ACC43 | `loai-thue.jsonl` | 51 |
 | Danh mục khoản mục | ACC24 | `khoan-muc.jsonl` | 295 |
-| Danh mục bộ phận (gồm từng cửa hàng) | ACC26 | `bo-phan.jsonl` | 42 (giả lập) |
+| Danh mục bộ phận (phòng ban chức năng: Bán hàng, Mua hàng, Kế toán, Kho vận…) | ACC26 | `bo-phan.jsonl` | 10 |
 | Chi nhánh / cửa hàng | DM02 | `chi-nhanh.jsonl` | 32 (giả lập) |
 | Lý do – tài khoản | ACC18 | `ly-do.jsonl` | 97 |
 | Mặt hàng – tài khoản (nhóm hạch toán) | ACC17 | `nhom-hach-toan.jsonl` | 21 |
-| Phân loại hàng hoá (nhóm, ngành, nhãn hàng) | DM11 | `phan-loai-hang.jsonl` | 72 (giả lập) |
-| Danh mục mặt hàng | DM10 | `mat-hang-tai-khoan.jsonl` | 401 (giả lập) |
+| **Nhóm hàng + mặt hàng (bộ mẫu, làm sạch)** — nút ở màn DM10, DM11 | DM10, DM11 | `mat-hang-mau.jsonl` | 8 mặt hàng, 2 cây nhóm |
+| Phân loại hàng hoá (nhóm, ngành, nhãn hàng) | — | `phan-loai-hang.jsonl` | 72 (giả lập) |
+| Danh mục mặt hàng | — | `mat-hang-tai-khoan.jsonl` | 401 (giả lập) |
 | Nhóm đối tượng | DM08 | `nhom-doi-tuong.jsonl` | 12 |
 | Đối tượng | DM03 | `doi-tuong.jsonl` | 125 (giả lập) |
 | Tài khoản ngân hàng | DM09 | `ngan-hang.jsonl` | 12 (giả lập) |
@@ -60,3 +61,17 @@ Riêng từng bộ:
 
 - Nên quay về dữ liệu gốc khi mới khởi tạo đơn vị, hoặc khi danh mục bị sửa sai nhiều chỗ. Sửa lẻ một vài mã thì sửa thẳng ở màn danh mục.
 - Muốn đổi bản gốc (công ty thêm khoản mục, mở cửa hàng mới…) thì sửa tệp trong thư mục `db/seeds` và cập nhật phần mềm. Mỗi dòng tệp là một bản ghi JSON; dòng đầu là mô tả tệp.
+
+## Nhóm hàng + mặt hàng: làm sạch về bộ mẫu
+
+Nút **Quay về dữ liệu gốc** ở màn *Quản lý mặt hàng* (DM10) và *Danh mục nhóm hàng* (DM11):
+
+- **Xoá vĩnh viễn** mọi nhóm hàng, mặt hàng chưa phát sinh (kèm đơn vị tính, giá, khai báo nhà cung cấp của chúng). Không lấy lại được.
+- **Giữ nguyên** mặt hàng đã có trên sổ, phiếu kho, chứng từ mua, hoá đơn — cùng nhóm hàng của chúng — để sổ sách không gãy.
+- Nạp lại bộ mẫu theo quy định mã hàng (mã 9 số = ngành 2 + nhãn 3 + nhóm 1 + số thứ tự 3):
+  - Sữa bột → Vinamilk → Sữa công thức trẻ em / Sữa người lớn (5 mặt hàng)
+  - Bỉm tã → Merries → Bỉm tã dán / Bỉm tã quần trẻ em (3 mặt hàng)
+- Bấm lại bao nhiêu lần cũng ra cùng một kết quả.
+
+Nút này không chạy trong **Quay về toàn bộ**.
+

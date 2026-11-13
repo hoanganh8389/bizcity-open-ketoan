@@ -52,7 +52,7 @@ export function TepDinhKem({ ownerType, ownerId, defaultKind = 'khac', compact }
               <td style={{ whiteSpace: 'nowrap' }}><button type="button" data-view-ok className="btn btn-xs btn-ghost" onClick={() => (canPreview(f) ? setPreview(f) : void purchaseApi.openAttachment(f))} title={canPreview(f) ? 'Xem nhanh trên web' : 'Tải về'}>{canPreview(f) ? <Eye size={12} /> : <Paperclip size={12} />} {f.fileName}</button>
                 <button type="button" data-view-ok className="btn btn-xs btn-ghost" title="Tải về" onClick={() => void purchaseApi.openAttachment(f)}><Download size={12} /></button></td>
               {!compact && <><td className="num">{size(f.size)}</td><td>{f.uploadedBy}</td><td>{new Date(f.createdAt).toLocaleString('vi-VN', { hour12: false })}</td></>}
-              <td><button type="button" className="btn btn-xs" title="Xoá tệp" onClick={() => { if (window.confirm(`Xoá tệp ${f.fileName}?`)) void purchaseApi.deleteAttachment(f.id).then(() => q.refetch()); }}><Trash2 size={12} /></button></td>
+              <td />
             </tr>
           ))}
           {!q.isLoading && !(q.data?.files ?? []).length && <tr><td colSpan={6} className="muted">Chưa có tệp nào.</td></tr>}

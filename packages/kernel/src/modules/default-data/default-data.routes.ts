@@ -71,7 +71,7 @@ export const defaultDataActions: AnyActionDef[] = [
     evidence: { objectType: 'default_data', objectId: () => 'all' },
     handler: async (ctx) => {
       const out: { key: string; title: string; result: RestoreResult }[] = [];
-      for (const d of DATASETS) out.push({ key: d.key, title: d.title, result: await d.restore(ctx.data.tx, ctx.tenant.id) });
+      for (const d of DATASETS.filter((x) => x.inAll !== false)) out.push({ key: d.key, title: d.title, result: await d.restore(ctx.data.tx, ctx.tenant.id) });
       return out;
     },
   }),

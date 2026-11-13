@@ -51,7 +51,15 @@ export async function listSupplierProducts(trx: Db, tenantId: string, f: { partn
 }
 
 /** Thêm / sửa nhiều dòng một lần (id = sửa; không id = thêm, trùng NCC × mã × ĐVT × hiệu lực thì cập nhật). ĐVT phải có ở mặt hàng. */
-export async function saveSupplierProducts(trx: Db, tenantId: string, actor: string, items: SupplierProductInput[], isDemo = false): Promise<{ added: number; updated: number }> {
+// [2026-11-12 Nguyễn Văn Thủy] lịch sử thay đổi giá NCC theo mã: trả từng thay đổi (trước → sau) để ghi nhật ký (đóng góp)
+export type SupplierChange = { sku: string; partnerCode: string | null; text: string };
+const dmyOf = (d?: string | null) => (d ? d.split('-').reverse().join('/') : '');
+const descOf = (x: { unit: string; price?: number | null; priceIncludesVat: boolean; validFrom?: string | null; validTo?: string | null; nccSku?: string; nccName?: string; note?: string; isActive?: boolean }) => [
+  x.unit, x.price !== null && x.price !== undefined ? `${x.price.toLocaleString('vi-VN')}đ (${x.priceIncludesVat ? 'gồm' : 'chưa'} thuế)` : 'chưa có giá',
+  x.validFrom || x.validTo ? `hiệu lực ${dmyOf(x.validFrom) || '…'} → ${dmyOf(x.validTo) || '…'}` : '',
+  x.nccSku ? `mã NCC ${x.nccSku}` : '', x.nccName ? `tên NCC ${x.nccName}` : '', x.note ? `ghi chú: ${x.note}` : '', x.isActive === false ? 'ngừng áp' : '',
+].filter(Boolean).join(', ');
+export async function saveSupplierProducts(trx: Db, tenantId: string, actor: string, items: SupplierProductInput[], isDemo = false): Promise<{ added: number; updated: number; changes: SupplierChange[] }> {
   // Hai dòng cùng NCC × mã × ĐVT × hiệu lực trong một lần lưu: báo ngay (không âm thầm ghi đè nhau).
   const seen = new Map<string, number>();
   items.forEach((it, i) => {
@@ -62,6 +70,7 @@ export async function saveSupplierProducts(trx: Db, tenantId: string, actor: str
   const skus = [...new Set(items.map((i) => i.sku))];
   const units = await unitsOf(trx, tenantId, skus);
   let added = 0, updated = 0;
+  const changes: SupplierChange[] = [];
   for (const it of items) {
     const us = units[it.sku];
     if (!us?.length) throw Errors.validation(`Mã ${it.sku} chưa có trong danh mục mặt hàng`);
@@ -75,10 +84,15 @@ export async function saveSupplierProducts(trx: Db, tenantId: string, actor: str
       // Có ngày hiệu lực: đúng dòng hiệu lực đó (đổi giá theo đợt = thêm dòng); không ghi ngày: cập nhật dòng mới nhất cùng NCC × mã × ĐVT.
       .$if(Boolean(it.validFrom), (q) => q.where('valid_from', '=', it.validFrom!)).orderBy(sql`valid_from DESC NULLS LAST`).limit(1).executeTakeFirst();
     if (existing && !it.validFrom) delete (values as Partial<typeof values>).valid_from;
-    if (existing) { await trx.updateTable('supplier_products').set(values).where('tenant_id', '=', tenantId).where('id', '=', existing.id).execute(); updated++; }
-    else { await trx.insertInto('supplier_products').values({ tenant_id: tenantId, ...values, is_demo: isDemo, created_by: actor }).execute(); added++; }
+    const after = descOf({ ...it, unit: u.unit });
+    if (existing) {
+      const old = await trx.selectFrom('supplier_products').selectAll().where('tenant_id', '=', tenantId).where('id', '=', existing.id).executeTakeFirst();
+      await trx.updateTable('supplier_products').set(values).where('tenant_id', '=', tenantId).where('id', '=', existing.id).execute(); updated++;
+      const before = old ? descOf(toItem(old as unknown as Row)) : '';
+      if (before !== after) changes.push({ sku: it.sku, partnerCode: it.partnerCode, text: `Sửa: ${before} → ${after}` });
+    } else { await trx.insertInto('supplier_products').values({ tenant_id: tenantId, ...values, is_demo: isDemo, created_by: actor }).execute(); added++; changes.push({ sku: it.sku, partnerCode: it.partnerCode, text: `Thêm: ${after}` }); }
   }
-  return { added, updated };
+  return { added, updated, changes };
 }
 
 /** Xoá hẳn một dòng mặt hàng & giá mua (phiếu đã lập giữ đơn giá riêng nên không ảnh hưởng phiếu cũ). */

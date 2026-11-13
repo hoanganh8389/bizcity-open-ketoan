@@ -105,7 +105,6 @@ export function PhieuHangPage({ kind, code, seed, helpKey = 'phieu-hang', subtit
         <div className="row" style={{ gap: 6, padding: '6px 0', flexWrap: 'wrap' }}>
           <button className="btn btn-sm btn-primary" onClick={() => setEditing(emptyDoc(kind, workBranch.get() || (f.branchCodes.split(',')[0] ?? '')))}>+ Thêm</button>
           <button className="btn btn-sm" disabled={!sel} onClick={() => { if (!sel) return; if (sel.status !== 'approved') openNextInEdit(); void open(sel); }}>{sel?.status === 'approved' ? 'Xem' : 'Sửa'}</button>
-          <button className="btn btn-sm" disabled={!sel || sel.status === 'approved' || del.isPending} onClick={() => { if (sel && window.confirm(`Xoá ${info.label.toLowerCase()} ${sel.docNo}?`)) del.mutate(sel.id); }}>Xoá</button>
           <button className="btn btn-sm" disabled={!sel || status.isPending} onClick={() => { if (!sel) return; const s = sel.status === 'approved' ? 'draft' : 'approved'; if (s === 'approved' && gate.advisories.length && !window.confirm(`Duyệt phiếu ${sel.docNo || '(mới)'}?` + advisoryText(gate.advisories))) return; status.mutate({ id: sel.id, s }); }}>{sel?.status === 'approved' ? 'Bỏ duyệt' : 'Duyệt'}</button>
           {TRADE_TEMPLATES[kind] && <PrintButton small screen={code} templates={TRADE_TEMPLATES[kind]!} disabled={!sel} title="In phiếu đang chọn" getDocs={async () => (sel ? [await svc.get(sel.id)] : [])} />}
           <button className="btn btn-sm" onClick={() => void q.refetch()}>Nạp</button>

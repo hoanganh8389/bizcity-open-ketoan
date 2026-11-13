@@ -109,7 +109,6 @@ export function BoThamSo({ value, onApply, id, bridge }: Partial<BoThamSoProps> 
         </select>
         <button type="button" className="btn btn-sm" title={coMan ? 'Lưu các tham số đang chọn thành một bộ có tên (trùng tên thì ghi đè); chi nhánh đang tích dùng lại được ở mọi màn' : 'Lưu các chi nhánh đang tích thành bộ có tên, dùng lại ở mọi màn'} onClick={() => { setTen(dang.startsWith('cn:') ? dang.slice(3) : dang); setMacDinh(Boolean(chon?.macDinh)); }}><Save size={13} /></button>
         {coMan && <button type="button" className={`btn btn-sm${chon?.macDinh ? ' on' : ''}`} disabled={!chon} title={chon?.macDinh ? 'Đang là bộ mặc định khi mở báo cáo — bấm để bỏ' : 'Đặt làm bộ mặc định khi mở báo cáo'} onClick={doiMacDinh}><Star size={13} fill={chon?.macDinh ? 'currentColor' : 'none'} /></button>}
-        <button type="button" className="btn btn-sm" disabled={!dang} title="Xoá bộ đang chọn" onClick={xoa}><Trash2 size={13} /></button>
       </div>
       {ten !== null && (
         <form className="bo-ts-new" onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); luu(); }}>

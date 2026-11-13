@@ -48,12 +48,7 @@ export async function itemHints(db: Db, tenantId: string, d: ItemDraft): Promise
   if (from && to && from !== to && (await hasMovements(db, tenantId, d.sku))) {
     out.push(catalogFinding('ITEM-HINT-003', { sku: d.sku, from, to }, { field: 'unit' }));
   }
-  if (!d.postingGroupCode) {
-    const def = await db.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).where('is_default', '=', true).executeTakeFirst();
-    out.push(def
-      ? catalogFinding('ITEM-HINT-001', { sku: d.sku, group: def.code }, { field: 'postingGroupCode' })
-      : catalogFinding('ITEM-BLOCK-002', { sku: d.sku }, { field: 'postingGroupCode' }));
-  }
+  // [2026-11-12 Nguyễn Văn Thủy] bỏ nhắc / chặn nhóm hạch toán: mặt hàng không khai nhóm hạch toán nữa (tài khoản theo ACC41) (đóng góp)
   return reviewFindings(db, tenantId, out); // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị
 }
 
@@ -81,12 +76,11 @@ export async function applyItemGate(trx: Db, auth: AuthContext, sku: string, opt
 export async function applyItemGateBulk(trx: Db, auth: AuthContext, skus: readonly string[]): Promise<{ drafts: string[]; activated: string[]; recheck: { checked: number; cleared: number } }> {
   const none = { drafts: [], activated: [], recheck: { checked: 0, cleared: 0 } };
   if (!skus.length) return none;
-  const hasDefault = Boolean(await trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', auth.tenantId).where('is_default', '=', true).executeTakeFirst());
   const rows = await trx.selectFrom('products').select(['sku', 'unit', 'posting_group_code', 'is_draft', 'draft_codes']).where('tenant_id', '=', auth.tenantId).where('sku', 'in', [...new Set(skus)]).execute();
   const drafts: string[] = [];
   const activated: string[] = [];
   for (const r of rows) {
-    const codes = [...(!r.unit.trim() ? ['ITEM-BLOCK-001'] : []), ...(!r.posting_group_code && !hasDefault ? ['ITEM-BLOCK-002'] : [])];
+    const codes = !r.unit.trim() ? ['ITEM-BLOCK-001'] : [];
     const isDraft = codes.length > 0;
     if (isDraft) drafts.push(r.sku);
     if (r.is_draft && !isDraft) activated.push(r.sku);

@@ -152,7 +152,6 @@ function RiskyListTab() {
     { key: 'source', header: 'Nguồn / căn cứ', width: 220 },
     { key: 'note', header: 'Ghi chú', width: 200 },
     { key: 'updatedBy', header: 'Người ghi', width: 120, value: (r) => `${r.updatedBy} · ${dateTime(r.updatedAt)}` },
-    ...(editable ? [{ key: 'del', header: '', width: 40, noFilter: true, noSort: true, render: (r: Risky) => <button className="btn btn-sm" title="Bỏ khỏi danh sách" onClick={(e) => { e.stopPropagation(); if (window.confirm(`Bỏ ${r.taxCode} khỏi danh sách rủi ro?`)) del.mutate(r.id); }}><Trash2 size={14} /></button> } as Column<Risky>] : []),
   ];
   return (
     <div style={{ padding: 16 }}>

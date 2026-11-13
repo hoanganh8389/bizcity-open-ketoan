@@ -95,6 +95,16 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // ④ Thuế
   ledger_links: { group: 'ledger', label: 'Liên kết bút toán', term: 'Bút toán đảo, trả hàng ↔ bút toán gốc', module: 'ledger', purpose: 'Mỗi dòng nối một bút toán mới (đảo, trả hàng, điều chỉnh, quà tặng, thay thế) với bút toán gốc. Chỉ thêm, không sửa, không xoá; mỗi bút toán chỉ bị đảo một lần.' },
   contract_schedules: { group: 'catalog', label: 'Lịch thanh toán hợp đồng', term: 'Kỳ thanh toán', module: 'dimensions', purpose: 'Các kỳ thanh toán theo hợp đồng (thuê nhà, tín dụng, mua tài sản…): ngày đến hạn, số tiền, thuế nộp thay, đã trả hay chưa. Dùng để nhắc hạn.' },
+  // [2026-11-13 Nguyễn Văn Thủy] bảng mới 0113–0121 (đóng góp)
+  stock_counts: { group: 'catalog', label: 'Phiếu kiểm kê kho', term: 'Kiểm kê kho', module: 'warehouses', purpose: 'Phiếu kiểm kê: số sổ sách, số thực đếm, chênh lệch theo kho (0110).' },
+  warehouse_types: { group: 'catalog', label: 'Loại kho', term: 'KHH, KKM, KTL…: được bán, thuộc sở hữu, hạn dùng, TK kho', module: 'warehouses', purpose: 'Danh mục loại kho (12 loại gốc, thêm được); kho chọn một loại (0128).' },
+  warehouse_type_ops: { group: 'catalog', label: 'Nghiệp vụ dùng loại kho', term: 'Nhập mua, bán, khách trả… dùng loại kho nào, theo thứ tự ưu tiên', module: 'warehouses', purpose: 'Màn hình tự chọn kho theo loại đứng đầu; kho loại không có trong danh sách bị chặn (0128).' },
+  account_default_types: { group: 'rules', label: 'Tài khoản ngầm định theo loại', term: 'Loại chứng từ → cột tài khoản, danh sách được chọn, mặc định', module: 'posting', purpose: 'Mỗi loại (bán hàng thu tiền mặt, mua hàng chưa thanh toán…) có các cột tài khoản với danh sách lọc và tài khoản mặc định; cột gắn khoá thì đồng bộ tài khoản ngầm định của bộ định khoản (0126).' },
+  item_class_history: { group: 'catalog', label: 'Lịch sử nhóm hàng', term: 'Ai thêm / sửa nhóm hàng', module: 'products', purpose: 'Mỗi lần thêm / sửa nhóm hàng một dòng: ai, lúc nào, đổi gì (0116).' },
+  tax_id_versions: { group: 'catalog', label: 'Phiên bản MST', term: 'MST theo ngày hiệu lực', module: 'warehouses', purpose: 'MST đặt ở kho / chi nhánh / nút cơ cấu, mỗi lần đổi là một phiên bản từ ngày; dòng sổ lấy MST theo ngày chứng từ (0121).' },
+  org_link_versions: { group: 'catalog', label: 'Phiên bản cơ cấu', term: 'Shop thuộc nút nào từ ngày nào', module: 'org-units', purpose: 'Chi nhánh thuộc nút cơ cấu / chi nhánh cha, nút thuộc nút cha — theo ngày hiệu lực, để báo cáo theo cơ cấu tại thời điểm (0121).' },
+  help_cards: { group: 'platform', label: 'Thẻ hướng dẫn', term: 'Hướng dẫn sử dụng', module: 'help', purpose: 'Nội dung hướng dẫn soạn ở HT17 (0113).' },
+  help_places: { group: 'platform', label: 'Chỗ gắn thẻ hướng dẫn', term: 'Màn / hộp thoại ↔ thẻ', module: 'help', purpose: 'Định danh màn / hộp thoại gắn với thẻ hướng dẫn (0113).' },
   item_classes: { group: 'catalog', label: 'Phân loại hàng hoá', term: 'Nhãn / ngành / nhóm / loại hàng', module: 'products', purpose: 'Nhãn hàng, ngành hàng, nhóm hàng, loại hàng (có cha – con) gắn trên mặt hàng, để báo cáo phân tích theo nhóm hàng.' },
   debt_items: { group: 'ledger', label: 'Khoản công nợ', term: 'Công nợ theo chứng từ', module: 'debts', purpose: 'Mỗi (chứng từ, đối tượng, tài khoản theo dõi đối tượng) một khoản ghi Nợ hoặc ghi Có, có hạn thanh toán và số còn lại. Dựng lại được từ sổ: đồng bộ mỗi lần chứng từ ghi sổ, sửa, huỷ.' },
   debt_allocations: { group: 'ledger', label: 'Đối trừ công nợ', term: 'Thanh toán trừ vào khoản nào', module: 'debts', purpose: 'Ghép một khoản ghi Nợ với một khoản ghi Có cùng đối tượng, cùng tài khoản (thu tiền trừ hoá đơn nào, đặt cọc trừ hoá đơn nào). Có người ghép, ngày ghép; gỡ được.' },
@@ -238,6 +248,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
 /** Giải thích trigger theo tên hàm trigger. */
 export const TRIGGER_NOTES: Record<string, string> = {
+  bizcity_warehouse_type_sync: 'Kho phải thuộc một loại có trong danh mục Loại kho; ô kho khuyến mại cũ đi theo loại KKM (0128).',
+  bizcity_tenant_seed_warehouse_types: 'Đơn vị mới có sẵn 12 loại kho gốc và nghiệp vụ dùng loại kho (0128).',
   assert_entry_balanced: 'Kiểm lúc kết thúc giao dịch: tổng Nợ phải bằng tổng Có của bút toán, lệch một đồng là huỷ cả giao dịch.',
   forbid_ledger_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Sai thì ghi số âm rồi ghi lại.',
   assert_negative_only_on_reversal: 'Số tiền âm chỉ được ghi trong bút toán ghi số âm (is_reversal = true).',
@@ -271,6 +283,12 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_items_parent_guard: 'Họ mặt hàng (R-ITEM-3): mặt hàng cha cùng đơn vị, không tự làm cha mình, không tạo vòng.',
   bizcity_items_sync_parent: 'Giữ items.parent_item_id khớp mã cha (products.parent_sku) theo ĐỊNH DANH: đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ.',
   bizcity_set_item_id: 'Dòng mới (sổ cái, kho, giá vốn, đơn vị quy đổi, bảng giá) tự gắn item_id theo mã có hiệu lực tại ngày của dòng; mã chưa có trong danh mục → để rỗng, điền khi mặt hàng được tạo (bizcity_item_fill_refs).',
+  // [2026-11-13 Nguyễn Văn Thủy] 0121 — dòng nhỏ nhất, MST / cơ cấu theo phiên bản ngày (đóng góp)
+  bizcity_fill_wh_tax: 'Dòng sổ / phiếu kho mới: không chọn kho thì lấy kho mặc định của chi nhánh; lưu định danh cn_ / kho_ và MST tại ngày chứng từ (kho → chi nhánh → nút cơ cấu → công ty) (0121).',
+  bizcity_versions_warehouse: 'Đổi MST của kho → thêm phiên bản MST theo ngày hiệu lực (0121).',
+  bizcity_versions_branch: 'Đổi MST / nút cơ cấu / chi nhánh cha của chi nhánh → thêm phiên bản theo ngày hiệu lực (0121).',
+  bizcity_versions_org_unit: 'Đổi MST / nút cha của nút cơ cấu → thêm phiên bản theo ngày hiệu lực (0121).',
+  bizcity_uid_guard: 'Định danh cn_ / kho_ / cc_ là bất biến, không sửa được (0121).',
   bizcity_set_line_name: 'Dòng sổ mới tự lưu tên mặt hàng lúc ghi theo item_id. Đổi tên về sau không ảnh hưởng dòng đã ghi (0072).',
 };
 

@@ -33,7 +33,7 @@ import { SignaturePanel, useSignatures } from './Signatures';
 import { VoucherModal, readOnlyReason, useVoucherSave } from '@/components/voucher/VoucherModal';
 import { useDimension } from '@/components/voucher/lookups';
 import { useUseReasons } from '@/lib/useReasons';
-import { LOAI_PHIEU, guessLoai, pickAccount } from './loaiPhieu';
+import { guessLoai, pickAccount, useLoaiPhieu } from './loaiPhieu';
 
 interface Account { code: string; name: string; isPosting: boolean; trackPartner: boolean; isDebt?: boolean; normalSide: string; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean; trackEmployee: boolean }
 interface Dimension { code: string; name: string; isActive: boolean }
@@ -110,7 +110,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
   const pv = p as Partial<VoucherInput> | undefined;
   const cancelled = existing?.status === 'cancelled';
   const readOnly = cancelled || existing?.canModify === false;
-  const loaiList = LOAI_PHIEU[type];
+  const loaiList = useLoaiPhieu(type);
 
   const { data: branches } = useBranches();
   const multi = (branches?.filter((b) => b.isActive).length ?? 0) > 1;
@@ -169,11 +169,19 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
   // Loại phiếu: phiếu đã lập thì đoán theo tài khoản đối ứng dòng đầu.
   // Như mẫu chuẩn: luôn có sẵn một loại — mặc định "Thu khác" / "Chi khác"; theo hoá đơn: thu tiền khách hàng / trả tiền NCC (loại đầu);
   // phiếu đã lập: đoán theo tài khoản đối ứng, không khớp thì "… khác".
-  const khac = Math.max(0, loaiList.findIndex((l) => l.name === 'Thu khác' || l.name === 'Chi khác'));
-  const [loai, setLoai] = useState(() => {
+  const khac = Math.max(0, loaiList.findIndex((l) => /^(Thu|Chi) khác$/i.test(l.name)));
+  const firstLoai = () => {
     if (p?.lines[0]) { const g = guessLoai(loaiList, lineSide === 'credit' ? p.lines[0].creditAccount : p.lines[0].debitAccount, lineSide); return g >= 0 ? g : khac; }
     return theoHoaDon ? 0 : khac;
-  });
+  };
+  const [loai, setLoai] = useState(firstLoai);
+  // Danh sách loại tải xong từ Tài khoản ngầm định thì chọn lại theo danh sách mới.
+  useEffect(() => { setLoai(firstLoai()); }, [loaiList]); // eslint-disable-line react-hooks/exhaustive-deps
+  // [2026-11-13 Nguyễn Văn Thủy] ẩn / hiện cột tài khoản (vẫn ghi theo loại) — nhớ theo máy (đóng góp)
+  const [showAcc, setShowAcc] = useState(() => { try { return localStorage.getItem('ketoan.phieu.an-tk') !== '1'; } catch { return true; } });
+  const toggleAcc = () => setShowAcc((v) => { try { localStorage.setItem('ketoan.phieu.an-tk', v ? '1' : '0'); } catch { /* bỏ qua */ } return !v; });
+  const lineFilter = lineSide === 'credit' ? loaiList[loai]?.coFilter : loaiList[loai]?.noFilter;
+  const moneyFilter = lineSide === 'credit' ? loaiList[loai]?.noFilter : loaiList[loai]?.coFilter;
   // Lý do tự gợi ("Chi tiền cho …") cho tới khi người lập tự sửa.
   const [autoDesc, setAutoDesc] = useState(!p?.description);
   const [cols, setCols] = useState<ColKey[]>(() => readCols(type));
@@ -322,7 +330,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
   };
   useEffect(() => { for (const r of rows) if (r.partner) void lookupName(r.partner); }, [rows.map((r) => r.partner).join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
   const nameOfPartner = (code: string) => (code === h.partnerCode ? partnerName : rowNames[code] ?? '');
-  const moneyPicker = <AccountPicker postingOnly hideName className="input mono" value={moneyAccount} disabled={dis || isBank} onChange={(v) => set({ moneyAccount: v })} />;
+  const moneyPicker = <AccountPicker postingOnly prefixes={moneyFilter} hideName className="input mono" value={moneyAccount} disabled={dis || isBank} onChange={(v) => set({ moneyAccount: v })} />;
   const text = (r: Row, field: 'description' | 'invoiceNo' | 'invoiceSerial' | 'invoiceForm' | 'invoicePartnerName' | 'invoicePartnerTaxCode', cls = 'input') => (
     <input className={cls} value={r[field]} disabled={dis} onChange={(e) => setRow(r.key, { [field]: e.target.value })} />
   );
@@ -418,6 +426,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
             <button className="btn btn-sm" onClick={() => setColMenu((x) => !x)} title="Bật / tắt cột thêm của lưới"><Columns3 size={14} /> Cột</button>
             {colMenu && (
               <div className="pt-cot" onMouseLeave={() => setColMenu(false)}>
+                <label className="checkbox" title="Tắt để form gọn: tài khoản vẫn ghi theo loại phiếu"><input type="checkbox" checked={showAcc} onChange={toggleAcc} /> TK Nợ / TK Có</label>
                 {COLS.map(([k, l]) => <label key={k} className="checkbox"><input type="checkbox" checked={show(k)} disabled={hasData(rows, k)} onChange={() => toggleCol(k)} /> {l}</label>)}
               </div>
             )}
@@ -430,7 +439,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
             <tr>
               <th className="vf-act">#</th>
               <th style={{ minWidth: 280 }}>Diễn giải</th>
-              <th style={{ minWidth: 90 }}>TK Nợ</th><th style={{ minWidth: 90 }}>TK Có</th>
+              {showAcc && <><th style={{ minWidth: 90 }}>TK Nợ</th><th style={{ minWidth: 90 }}>TK Có</th></>}
               <th style={{ minWidth: 130 }}>Số tiền</th>
               <th style={{ minWidth: 120 }}>Đối tượng</th><th style={{ minWidth: 200 }}>Tên đối tượng</th>
               {show('cashItem') && <th style={{ minWidth: 220 }} title="Mục thu / chi của dòng tiền — báo cáo Dòng tiền gom theo mục">Mục thu/chi</th>}
@@ -449,9 +458,9 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
               <tr key={r.key} data-dong={r.key}>
                 <td className="vf-act num">{i + 1}</td>
                 <td data-f="description">{text(r, 'description')}</td>
-                {lineSide === 'debit'
-                  ? <><td data-f="account"><AccountPicker postingOnly hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td><td>{moneyPicker}</td></>
-                  : <><td>{moneyPicker}</td><td data-f="account"><AccountPicker postingOnly hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td></>}
+                {showAcc && (lineSide === 'debit'
+                  ? <><td data-f="account"><AccountPicker postingOnly prefixes={lineFilter} hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td><td>{moneyPicker}</td></>
+                  : <><td>{moneyPicker}</td><td data-f="account"><AccountPicker postingOnly prefixes={lineFilter} hideName className="input mono" value={r.account} disabled={dis} onChange={(v) => setRow(r.key, { account: v })} /></td></>)}
                 <td data-f="amount"><input className="input num" inputMode="numeric" value={r.amount} disabled={dis} onChange={(e) => setRow(r.key, { amount: e.target.value })} onBlur={() => setRow(r.key, { amount: showAmount(r.amount) })} /></td>
                 <td data-f="partner"><PartnerPicker activeOnly={!existing} addKind={partnerKind} hideName value={r.partner} disabled={dis} onChange={(v) => setRow(r.key, { partner: v })} /></td>
                 <td className="ro">{nameOfPartner(r.partner || h.partnerCode)}</td>

@@ -4,6 +4,7 @@
  *   Đổi mã: POST /api/v1/items/rename-code
  *   Gộp mã: xem trước POST /api/v1/items/merge-preview, rồi POST /api/v1/items/merge
  */
+import './lich-su.css';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ItemHistory } from '@ketoan/contracts';
@@ -80,20 +81,53 @@ export function GopMaModal({ sku, onClose, onDone }: { sku: string; onClose: () 
   );
 }
 
+// [2026-11-12 Nguyễn Văn Thủy] lịch sử mặt hàng dạng dòng thời gian: gom theo ngày, mỗi thay đổi một dòng, cũ → mới (đóng góp)
+const ai = (by: string) => (by.startsWith('system:') ? 'Hệ thống' : by.replace(/^user:/, 'Người dùng #'));
+/** "Sửa khai báo: tên: A → B; đơn vị tính: X → Y" → tiêu đề + từng thay đổi. */
+function tachNoiDung(text: string): { head: string; items: string[] } {
+  const m = /^([^:]{2,40}):\s(.*)$/s.exec(text);
+  if (m && /;|→|=/.test(m[2]!)) return { head: m[1]!, items: m[2]!.split(/;\s+/).filter(Boolean) };
+  return { head: '', items: [text] };
+}
+function DongThayDoi({ s }: { s: string }) {
+  const k = s.indexOf(': ');
+  const label = k > 0 && k < 40 ? s.slice(0, k) : '';
+  const rest = label ? s.slice(k + 2) : s;
+  const [a, b] = rest.split(' → ');
+  return (
+    <li>
+      {label && <span className="ls-k">{label}</span>}
+      {b !== undefined ? <><span className="ls-old">{a}</span><span className="ls-arrow">→</span><b>{b}</b></> : <span>{rest.replace(/ = /g, ': ')}</span>}
+    </li>
+  );
+}
 export function LichSuMatHang({ sku }: { sku: string }) {
   const h = useQuery({ queryKey: ['lineage-history', sku], queryFn: () => api.get<ItemHistory>(`/api/v1/lineage/items/${encodeURIComponent(sku)}/history`) });
   if (h.isLoading) return <Loading />;
   if (h.error) return <ErrorBox error={errorText(h.error)} />;
+  const days = new Map<string, NonNullable<typeof h.data>['entries']>();
+  for (const e of h.data?.entries ?? []) { const d = new Date(e.at).toLocaleDateString('vi-VN'); days.set(d, [...(days.get(d) ?? []), e]); }
   return (
-    <fieldset className="fgroup">
-      <legend>Lịch sử thay đổi</legend>
-      <table className="table">
-        <thead><tr><th title="Lúc thao tác">Lúc</th><th title="Ngày thay đổi có hiệu lực">Hiệu lực từ</th><th title="Người hoặc hệ thống thực hiện">Người</th><th title="Thay đổi gì">Nội dung</th></tr></thead>
-        <tbody>{h.data?.entries.map((e, i) => (
-          <tr key={i}><td>{new Date(e.at).toLocaleString('vi-VN')}</td><td>{e.effectiveFrom ?? ''}</td><td>{e.by}</td><td>{e.text}</td></tr>
-        ))}</tbody>
-      </table>
-      {h.data?.truncated && <div className="muted">Chỉ hiện các thay đổi gần nhất.</div>}
-    </fieldset>
+    <div className="ls-wrap full">
+      {!days.size && <div className="muted">Chưa có thay đổi.</div>}
+      {[...days.entries()].map(([d, list]) => (
+        <section key={d} className="ls-day">
+          <div className="ls-date">{d}</div>
+          {list.map((e, i) => {
+            const t = tachNoiDung(e.text);
+            return (
+              <div key={i} className="ls-row">
+                <div className="ls-meta"><span className="ls-time">{new Date(e.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span><span className="ls-by" title={e.by}>{ai(e.by)}</span></div>
+                <div className="ls-body">
+                  {t.head && <div className="ls-head">{t.head}{e.effectiveFrom ? <span className="muted"> · hiệu lực từ {e.effectiveFrom}</span> : null}</div>}
+                  <ul>{t.items.map((x, j) => <DongThayDoi key={j} s={x} />)}</ul>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      ))}
+      {h.data?.truncated && <div className="muted" style={{ fontSize: 12 }}>Chỉ hiện các thay đổi gần nhất.</div>}
+    </div>
   );
 }

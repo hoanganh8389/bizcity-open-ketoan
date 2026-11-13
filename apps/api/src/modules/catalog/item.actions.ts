@@ -15,7 +15,7 @@ import type { Db } from '../../db/client.js';
 import { isItemId, ITEM_CODE_KIND_RE } from '@ketoan/contracts';
 import { applyItemGate } from '../products/item.hints.js';
 // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: core.item.add-child, khoá đổi mã có đuôi (đóng góp)
-import { addChildProduct, guardMerge } from './san-pham-con.js';
+import { guardMerge } from './san-pham-con.js';
 
 const tags = ['Mặt hàng'];
 const refShape = { itemId: z.string().trim().max(26).optional(), sku: z.string().trim().max(160).optional() };
@@ -61,7 +61,7 @@ const renameCode = defineAction({
     if (busy) throw Errors.conflict(`Mã ${i.newSku} đang là mặt hàng khác`);
     const taken = await sql<{ id: string | null }>`SELECT bizcity_item_code_taken(${tenantId}::bigint, ${i.newSku}) AS id`.execute(tx);
     if (taken.rows[0]?.id) throw Errors.conflict(`Mã ${i.newSku} đã từng thuộc mặt hàng khác, không dùng lại được`);
-    // Biến thể đi theo mặt hàng: đổi 110051001Z → 11005100103 vẫn là Nội bộ (PHASE-026).
+    // [2026-11-12 Nguyễn Văn Thủy] đổi mã tự do (người dùng sửa thẳng ô Mã hàng); biến thể, gửi thuế suy theo mã mới (0111) (đóng góp)
     await setSession(tx, ctx.legacyAuth.actor, i.reason);
     const n = await tx.updateTable('products').set({ sku: i.newSku, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', cur.sku).executeTakeFirst();
     if (!Number(n.numUpdatedRows)) throw Errors.notFound(`mặt hàng ${cur.sku} trong danh mục`);
@@ -211,26 +211,4 @@ const merge = defineAction({
   },
 });
 
-const addChild = defineAction({
-  id: 'core.item.add-child', title: 'Thêm sản phẩm con', tags,
-  description: 'Tạo mặt hàng mới có item_id riêng, mã = mã cha + 2 số, lấy đơn vị tính, nhóm, thuế theo mã cha.',
-  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'],
-  input: z.object({
-    parentSku: z.string().trim().min(1).max(64),
-    name: z.string().trim().min(1, 'Nhập tên sản phẩm con').max(255),
-    variantCode: z.string().trim().min(1).max(32).default('normal'),
-    sendToTax: z.boolean().optional(), // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093): bỏ trống = bật (Nội bộ luôn tắt) (đóng góp)
-    barcode: z.string().trim().max(500).optional(),
-    note: z.string().trim().max(500).optional(),
-    noSaleParent: z.boolean().optional(),
-  }),
-  output: z.custom<object>((v) => typeof v === 'object'),
-  expose: { http: { method: 'POST', path: '/api/v1/items/add-child' }, ai: 'deny' },
-  evidence: { objectType: 'item' },
-  handler: async (ctx, i) => {
-    await setSession(ctx.data.tx, ctx.legacyAuth.actor, `Thêm sản phẩm con của ${i.parentSku}`);
-    return await addChildProduct(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actor, i);
-  },
-});
-
-export const itemActions: AnyActionDef[] = [renameCode, addCode, retireCode, classify, mergePreview, merge, addChild];
+export const itemActions: AnyActionDef[] = [renameCode, addCode, retireCode, classify, mergePreview, merge];

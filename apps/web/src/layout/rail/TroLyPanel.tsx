@@ -62,7 +62,7 @@ export function TroLyPanel({ menu, items, group, onShowViec, onGo }: { menu: Men
           </>
         )}
         {!msgs.length && !viec.length && <div className="rail-ai-hello"><Sparkles size={26} /><b>{group ? `Đang làm: ${group.label}` : 'Bạn cần gì?'}</b><span>Gõ tên màn hoặc điều cần làm</span></div>}
-        {msgs.length > 0 && <div className="rail-sec-head"><b>Hỏi đáp</b><button type="button" className="rail-link" onClick={() => setMsgs([])}>Xoá</button></div>}
+        {msgs.length > 0 && <div className="rail-sec-head"><b>Hỏi đáp</b><button type="button" className="rail-link" onClick={() => setMsgs([])}>Làm mới</button></div>}
         <div className="rail-chat">
           {msgs.map((m, i) => (
             <div key={i} className={`troly-msg ${m.from}`}>

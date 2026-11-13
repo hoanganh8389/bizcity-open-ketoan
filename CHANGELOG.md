@@ -12,9 +12,123 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+### Loại kho (DM18)
+- Danh mục Loại kho: 12 loại gốc (KHH, KKM, KHG, KTL, KCL, KLO, KHHAN, KHHSD, KDC, KNB, KCB, KCC), thêm được loại mới; công tắc Được bán / Thuộc sở hữu / Theo dõi hạn dùng, đầu số TK kho. Luật: không sở hữu thì không bán; ngừng loại khi còn kho thì chặn.
+- Nghiệp vụ dùng loại kho theo thứ tự ưu tiên (nhập mua, trả NCC, quà, bán, khách trả, gửi bán, chuyển kho, nhập/xuất khác): ô chọn kho chỉ hiện kho đúng loại và tự chọn loại đứng đầu; máy chủ chặn phiếu mua dùng kho sai loại.
+- Danh mục kho: ô Loại kho thay ô Kho khuyến mại (kho khuyến mại cũ thành KKM); nút Tạo nhanh bộ kho cho chi nhánh. Sơ đồ Danh mục thêm bước Loại kho. Migration 0128.
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Tài khoản trên dòng chứng từ: dòng chứng từ của lõi nhận `accounts` (TK kho / TK công nợ / TK thuế), bộ hạch toán nhập mua / trả NCC dùng nếu có, không thì theo tài khoản ngầm định. Phiếu nhập mua / trả NCC / đổi hàng có cột TK Kho, TK Công nợ, TK thuế — điền sẵn theo Tài khoản ngầm định của loại, bấm chỉ xổ tài khoản trong lọc, công tắc Hiển thị tài khoản; máy chủ chặn duyệt nếu tài khoản ngoài lọc hoặc là tài khoản tổng hợp.
+- Tài khoản ngầm định: ô Lọc tài khoản chọn bằng ô tích trên toàn bộ hệ thống tài khoản (tìm theo số / tên; tích tài khoản tổng hợp là gồm mọi tài khoản con), không phải gõ "a; b; c".
+- Bộ phận thành cây theo sơ đồ phòng ban (0127): công ty (Giám đốc điều hành → BP Tài chính kế toán / Kế hoạch kinh doanh / Truyền thông / Hành chính pháp chế → phòng → tổ) và chi nhánh (mã CN-…: Kế toán + Logistic, Marketing, Kinh doanh + Cửa hàng + Mua hàng, HCNS). Chi nhánh / cửa hàng gắn Cửa hàng (CN-CH) thay Bán hàng (BH); BH, MH, MKT, VP, IT, KHO ngừng dùng. Màn danh mục có cha – con hiện dạng cây (tên thụt theo cấp).
+- Bộ phận = phòng ban chức năng (Ban giám đốc, Kinh doanh, Bán hàng, Mua hàng, Marketing, Văn phòng, Kế toán, HCNS, Công nghệ, Kho vận). Bỏ bộ phận theo từng cửa hàng: chi nhánh gắn BH (0123), bộ phận BH<mã shop> ngừng dùng; chi nhánh chưa có bộ phận và chi nhánh mới → BH (0125). Cửa hàng / kho trả lời "ở đâu", bộ phận trả lời "phòng nào", 641 / 642 trả lời bán hàng hay quản lý.
+- Quay về dữ liệu gốc cho Nhóm hàng + mặt hàng (nút ở DM10, DM11): xoá vĩnh viễn nhóm hàng, mặt hàng chưa phát sinh (kèm ĐVT, giá, khai báo NCC), giữ mặt hàng đã có trên sổ / phiếu kho / chứng từ mua / hoá đơn cùng nhóm của chúng, nạp bộ mẫu 2 cây nhóm (Sữa bột → Vinamilk, Bỉm tã → Merries) và 8 mặt hàng theo quy định mã 9 số. Hàm bizcity_reset_catalog_sample (0124), chạy lại được; không chạy trong "Quay về toàn bộ". Thêm chỉ mục cho khoá ngoại trỏ về items còn thiếu.
+- Trang Quy trình phân hệ Danh mục: sơ đồ khai báo theo thứ tự (cơ cấu → chi nhánh → kho → nhóm hàng → mặt hàng → đối tượng → cấu hình hạch toán → phân quyền (đang phát triển) → báo cáo tổng hợp), báo cáo nhiều chi nhánh bên phải; "Luồng chi tiết" có khai báo kèm và số bản ghi. Hướng dẫn danh-muc-quy-trinh.
+- Gọn màn Chi nhánh: bỏ ô Fax, Bộ phận, Mã tham chiếu nguồn; Mô tả → Tên chi nhánh; C1/C2/C3 → một cột Thuộc cơ cấu. Màn Kho: bỏ ô Tài khoản kho (không dùng khi hạch toán); MST chỉ xem (theo chi nhánh / cơ cấu), ô sửa chỉ khi kho đã có MST riêng; bảng phiên bản MST chỉ hiện khi đã đổi.
+- Tài khoản ngầm định (ACC41) làm lại theo LOẠI chứng từ (0126): 133 loại (bán, mua, kho, tiền mặt, tiền gửi, tổng hợp, tài sản), mỗi loại có các cột tài khoản với danh sách lọc theo đầu số + tài khoản mặc định; mặc định phải là tài khoản chi tiết trong lọc. Cột chứng từ tự hạch toán dùng (phải thu, doanh thu, kho, giá vốn, phải trả, thuế…) đồng bộ khoá hạch toán — một nơi khai. Bỏ các loại Séc; "Ủy nhiệm chi" gọi là Chuyển khoản. Nút Quay về dữ liệu gốc.
+- Phiếu thu / chi, thu / chi tiền gửi: ô Loại lấy từ Tài khoản ngầm định (kế toán sửa được), ô tài khoản của dòng chỉ chọn trong lọc của loại; nút Cột → ẩn / hiện TK Nợ / TK Có (vẫn ghi theo loại).
+- Bỏ hẳn màn Lý do – Tài khoản (ACC18) và Mặt hàng – Tài khoản (ACC17) khỏi menu; đường dẫn cũ về Tài khoản ngầm định. Mua hàng lấy tài khoản theo Tài khoản ngầm định; MH12 chỉ hiện "đang dùng" (tài khoản riêng cũ còn thì vẫn hiện để xoá).
+- MH12: công tắc "Không cho nhập vượt số lượng đơn đặt" (bật = chặn duyệt phiếu nhập nhận thừa / mã ngoài đơn; mặc định chỉ cảnh báo). Tài liệu đối chiếu yêu cầu mua hàng docs/nghiep-vu/19.
+- Chứng từ nghiệp vụ khác: ô Loại (nhóm Tổng hợp / Tài sản – công cụ của Tài khoản ngầm định) — chọn loại điền sẵn TK dòng chính (Nợ) và đối ứng (Có), ô tài khoản chỉ chọn trong lọc; để "(Tự khai)" như cũ.
+- Chi nhánh: bỏ ô Đơn vị hạch toán (chưa chi nhánh nào dùng, dữ liệu cũ giữ). Dữ liệu gốc: ẩn các bộ chạy ngầm (lý do, nhóm hạch toán, khoá ngầm định cũ) — khai ở Tài khoản ngầm định.
+- Màn Bộ phận (và các danh mục cùng khuôn): mặc định chỉ hiện mục đang dùng, tích "Hiện cả mục đã ẩn" khi cần.
+- Nhập Excel chi nhánh, cửa hàng (mã, tên, thuộc cơ cấu, MST, thông tin in, theo dõi) ở màn Chi nhánh và trang Nhập Excel. Nhập / xuất cơ cấu tổ chức kèm cột MST (kiểm MST ngay khi chọn tệp); mẫu nhập kho bỏ cột Tài khoản kho.
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Sửa guard sổ cái (0122): bản trong 0121 lỡ mở lại lối điền giá vốn bằng cờ phiên mà 0091 đã khoá; nay giá vốn chỉ điền qua hàm như 0091, vẫn giữ ngoại lệ điền kho / MST còn trống.
+- Chú thích trigger và bảng mới (0113–0121, stock_counts) trong trang cấu trúc dữ liệu; test cập nhật theo luật mã / nhóm hàng / bỏ nhóm hạch toán.
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Sửa nhập Excel mặt hàng: dòng trùng mã trong cùng tệp lại không bị bắt (lỗi từ đợt luật mã mới).
+- Gỡ tiếp nút xoá dữ liệu đã lưu: thẻ tài sản, dòng kế hoạch, danh sách rủi ro hoá đơn; khoá sổ: Xóa → Huỷ kết chuyển. Gợi ý mã không gửi thuế chỉ sang Mã biến thể; trang CSDL mua hàng ghi luật mã mới.
+- Cập nhật test theo luật mã / nhóm hàng mới (catalog-import, xuong-ca-dinh-danh, product-accounts, mua-hang-duong-thue, mua-hang-loi-30-10).
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Mọi dòng sổ cái / phiếu kho ghi đơn vị nhỏ nhất: định danh bất biến chi nhánh cn_…, kho kho_… (+ mã kho chụp), MST tại ngày chứng từ (0121). Không chọn kho = kho mặc định của chi nhánh. MST đặt ở kho / chi nhánh / nút cơ cấu (thường ở tỉnh), cấp gần nhất thắng; phiên bản theo ngày hiệu lực (tax_id_versions) và phiên bản cơ cấu (org_link_versions) — đổi MST tỉnh hoặc chuyển shop sang tỉnh khác: dòng cũ giữ MST cũ, chứng từ nhập lùi ngày lấy MST đúng ngày. Định danh nút cơ cấu cc_…. Màn Kho / Cơ cấu tổ chức: ô MST kê khai + ngày áp dụng, bảng phiên bản MST. Hàm bizcity_fill_missing_wh_tax() điền dòng cũ theo lô.
+- Luật mã hàng (mã chính / biến thể) chỉ áp cho mặt hàng có nhóm hàng; đường đồng bộ không có nhóm giữ mã nguồn.
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Bỏ mọi nút Xoá dữ liệu đã lưu trên giao diện: cơ cấu tổ chức, chứng từ (danh sách / hộp thoại), phiếu hàng, bộ tham số, thẻ hướng dẫn, khai báo ngầm định, mẫu phiếu, chính sách mua, giá NCC, ánh xạ hoá đơn NCC, báo cáo tài chính, tờ khai thuế, tệp đính kèm mua hàng, sự kiện tài sản, dòng giá NCC đã lưu. Giữ nút bỏ dòng nháp chưa ghi. "Xoá" ở danh sách định khoản đổi tên đúng việc: Bỏ định khoản; Trợ lý: Làm mới.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Đổi tên màn: DM10 "Quản lý mặt hàng", DM11 "Danh mục nhóm hàng", nhóm menu "Mặt hàng".
+- Mặt hàng: tối đa 10 đơn vị tính (đếm x/10, đủ thì ẩn nút thêm, vượt báo đỏ, máy chủ chặn); tên hàng tối đa 50 ký tự (bộ đếm, báo đỏ; thêm mới / đổi tên, cả Excel và máy chủ); cột Người sửa / Lúc sửa (products.updated_by, 0120).
+- Nhóm hàng: bỏ chuyển nhóm (nút Đổi…), máy chủ chặn đổi nhóm cha.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhóm hàng DM11: bấm cả dòng để mở / thu; cột STT, Ghi chú (0119); nút Cột ẩn / hiện Tên nhóm hàng, Ghi chú, Người tạo, Người sửa; nhóm cấp 3 có nút + Mặt hàng (mở form thêm mặt hàng, nhóm điền sẵn, mã tự sinh); mã nhóm hàng không trùng nhóm khác (màn hình, Excel, máy chủ); thêm mới điền sẵn tên gợi ý kèm số ngẫu nhiên; nhóm cũ chưa có mã ngắn điền sẵn gợi ý, nhập mã lần đầu được kể cả đã có mặt hàng; ô không sửa được hiện dạng chữ nền xám; cột nút luôn ở mép phải.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhóm hàng DM11: một bảng cây (nút Sửa / Nhóm con / Lịch sử trên từng dòng, tìm, lọc cấp, kẻ ô); ba ô Mã nhóm hàng / Mã ngắn / Tên nhóm hàng (0118, tên đầy đủ tự ghép); Số mặt hàng cộng cả nhánh; nhóm đã có mặt hàng (kể cả nhóm con) khoá mã ngắn và chuyển nhóm (màn hình + máy chủ); nhập Excel theo cột Nhóm cha (đường dẫn) / Mã nhóm hàng / Mã ngắn / Tên nhóm hàng / Đang dùng, không cần mã nội bộ.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhóm hàng (DM11) tối giản: một ô Mã nhóm hàng (ghép vào mã hàng; cấp 1 = 2 chữ số không bắt đầu bằng 0, cấp 2 = 3 ký tự, cấp 3 = 1 ký tự, gợi ý luôn hiện, sai báo đỏ, máy chủ chặn), mã nội bộ tự cấp; bỏ Xoá, Đầu mã hàng, Điền mã ngắn; thêm Người tạo / Lúc tạo / Người sửa / Lúc sửa và thẻ Lịch sử (0116). Người tạo ghi họ tên thay cho mã người dùng (0117).
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Thuế suất GTGT ở mặt hàng lấy từ danh mục Biểu thuế (thuế đầu ra), 5 mã chuẩn xếp đầu, báo khi Biểu thuế thiếu mã chuẩn; nút + thêm loại thuế ngay tại chỗ.
+- Nhập Excel mặt hàng theo quy tắc mới: mã chính không chữ đầu / cuối, nhóm cấp 3 bắt buộc khi thêm mới; mã biến thể cần mã cha (đã có hoặc trong tệp, ghi mã cha trước), tối đa 2 chữ, nhóm theo mã cha; cột Thuế suất GTGT (%) kiểm theo Biểu thuế; cột Trạng thái; bỏ cột Ngành / Nhãn / Nhóm hạch toán / Mã VAT / Ghi chú khỏi tệp mẫu.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Thêm mặt hàng: chọn Mã mới hoặc Mã biến thể. Mã mới không được có chữ ở đầu / cuối; mã biến thể chọn mã cha (chỉ mã chính), phần mã cha khoá cứng, chỉ thêm chữ ở đầu / cuối, tổng tối đa 2 chữ (mặc định Z), tên điền sẵn theo tên mã cha, nhóm hàng theo mã cha không đổi được. Số thứ tự mã tự sinh chỉ chạy theo mã chính. Chọn nhóm chưa tới cấp 3 báo đỏ ngay (migration 0115).
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+- Thêm mặt hàng: bước 1 bắt buộc chọn nhóm hàng cấp 3 (cây chọn ngay trong hộp thoại), bước "Khai báo giá mua" trước bước Bán hàng; giá mua ghi cùng mặt hàng.
+- Danh sách mặt hàng: nút lọc "Thêm hôm nay", cột Người tạo và Lúc tạo để truy vết (cột `products.created_by`, migration 0114).
+
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Thêm mặt hàng theo từng bước
+- **Thêm mặt hàng** thành 5 bước có thanh tiến trình: 1 Thông tin chung (bắt buộc nhóm hàng, mã, tên, thuế suất) → 2 Đơn vị tính (bắt buộc ĐVT nhỏ nhất) → 3 Bán hàng & giá (không bắt buộc) → 4 Xem lại & ghi → 5 Nhà cung cấp (khai giá mua sau khi ghi, không bắt buộc) → Hoàn tất.
+- Mỗi bước bấm **Tiếp tục** mới kiểm, thiếu gì báo ngay; quay lại bước trước bằng **Quay lại** hoặc bấm vào bước đã xong. Sửa mặt hàng đã có vẫn dùng các thẻ như cũ.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Danh sách mặt hàng gọn, bảng không sắp xếp khi bấm tiêu đề
+- Mọi bảng: bỏ bấm tiêu đề cột để sắp xếp (hết mũi tên, hết nhảy bảng); rê chuột tiêu đề hiện chú thích cột.
+- Mọi màn danh mục: bỏ nút **Xoá** (và phím Delete).
+- Danh sách mặt hàng: bỏ khối thống kê trên cùng, nút Hành trình, Kích hoạt hàng loạt, lọc nhóm hạch toán, cột Ngành / Nhãn; cột Mã VAT ra / vào, TTĐB gộp thành **Thuế GTGT (%)**; cột **Trạng thái** (Đang hoạt động / Chờ duyệt / Ngừng hoạt động) thay ô Theo dõi.
+- Form mặt hàng: ô **Trạng thái** ở thẻ Thông tin (mặc định Đang hoạt động); tab Lịch sử dạng dòng thời gian theo ngày, cũ → mới.
+- Bỏ hộp bắt gõ lý do khi lưu có cảnh báo mềm (mọi form): bấm Ghi là lưu, cảnh báo tự ghi nhận.
+- Bỏ mọi nhắc / chặn **nhóm hạch toán** của mặt hàng (không dùng nữa).
+- Form mặt hàng: nút Ghi luôn bấm được, thiếu mã / tên / ĐVT hay trùng tên thì báo đỏ ngay đầu form (thiếu ĐVT tự mở thẻ Đơn vị tính); bỏ khung "Vì sao" ở cuối form.
+- Ô **Nhóm hàng** chọn theo cây cha – con, có ô tìm, nút **✕ Đóng**; danh sách mặt hàng bỏ cột Ghi chú. Thuế suất GTGT thêm **0%**.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Thẻ hướng dẫn sử dụng (HT17)
+- Hướng dẫn sử dụng thành **thẻ** lưu trong hệ thống (migration 0113): soạn tự do ở màn **Thẻ hướng dẫn (HT17)** — kiểu đoạn, cỡ chữ, đậm / nghiêng, màu chữ, tô nền, danh sách, căn lề, bảng, ảnh (link, từ máy, dán), liên kết; dán từ Word giữ định dạng.
+- Mỗi màn / hộp thoại có một định danh; nút **Hướng dẫn** hiện thẻ đang gắn, đổi thẻ ngay trong ngăn, **+ Thẻ mới**, **Sửa thẻ** (mở trang soạn ở thẻ trình duyệt mới). Mọi hộp thoại có nút **? Hướng dẫn** ở đầu.
+- Lần đầu mở, tài liệu hướng dẫn có sẵn tự chép thành thẻ; nút **Chép tài liệu có sẵn** chép hết một lần. Tạm thời ai đăng nhập cũng sửa được.
+- Form mặt hàng: bỏ thẻ **Kế toán**, thêm ô **Thuế suất GTGT (%)** (KCT, 5%, 8%, 10%) ở thẻ Thông tin.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Form mặt hàng tối giản
+- **Thông tin**: chỉ Nhóm hàng, Mã, Tên, Barcode, Xuất xứ, Ảnh, Mô tả (ngành / nhãn tự theo nhóm). Bỏ Khối lượng, Ghi chú, ô Tài khoản kế toán.
+- **Kế toán**: Thuế suất bán ra (bán hàng dùng) và Thuế suất mua vào (tham khảo) — KCT, 5%, 8%, 10%. Bỏ mã thuế chi tiết, thuế TTĐB.
+- **Đơn vị tính**: bỏ cột KL (kg) và dòng ghi chú dưới bảng. **Mua hàng**: bỏ khối Giá mua riêng của sản phẩm.
+- Xoá hẳn Thêm sản phẩm con, Quét cha – con (giao diện + API); mã cha tự suy theo mã.
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Mặt hàng → Mua hàng: giá theo nhà cung cấp dễ dùng hơn
+- Bỏ khối **Tồn max theo chi nhánh – kho** (cấu hình ở màn Tồn max).
+- Giá mua theo từng nhà cung cấp: mỗi NCC một khối, hiện 3 đợt giá gần nhất (xem thêm đợt cũ), nút **Giá mới** cho từng NCC, bấm dòng để sửa / xoá trong hộp nhỏ; **Thêm nhà cung cấp** chọn NCC ngay trong hộp.
+- **Lịch sử** ở từng khối NCC: mọi lần thêm / sửa / xoá giá của NCC đó cho mã này (ai, lúc nào, trước → sau).
+- Thêm sản phẩm con bỏ ô "Mã cha chỉ để gom, không bán trực tiếp". Mặt hàng tích **Hàng chính**: thẻ Giá bán chỉ khai bảng giá công ty.
+- Thẻ Giá bán: ô chọn bảng giá chi nhánh có **＋ Thêm bảng giá mới…** (tên, mã, chọn luôn chi nhánh áp dụng) để thêm nhanh rồi khai giá ngay.
+- Thẻ Giá bán chỉ khai giá **ĐVT bán chính** (không gợi ý quy đổi). Thẻ Đơn vị tính bỏ cột **Mua mặc định (mọi NCC)**: ĐVT mua theo dòng giá NCC ở thẻ Mua hàng.
+- Bỏ khai báo cha – con: bỏ ô **Mã hàng cha**, nút **Thêm sản phẩm con**, nút **Quét cha – con theo mã**. Mã cha tự suy theo mã hàng (migration 0112).
+
+<!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
+### Mặt hàng con: chỉ gõ mã, phần mềm tự xử lý
+- Form mặt hàng, danh sách mặt hàng, hộp **Thêm sản phẩm con** bỏ ô **Biến thể** và **Gửi lên thuế**. Thêm sản phẩm con chỉ gõ **mã con** (bắt đầu bằng mã cha) và tên.
+- Biến thể và gửi lên thuế do phần mềm tự suy theo mã mỗi lần thêm / đổi mã (migration 0111); dữ liệu đang có không đổi.
+- Sổ thuế: dòng hàng là mã con thì ghi theo mã cha.
+- Mã hàng mới được gồm cả chữ cái; mã cha có chữ cũng thêm được mã con.
+- Bỏ nút **Đổi mã** và **Gộp mã** trên form mặt hàng: sửa thẳng ô **Mã hàng** rồi Ghi (phần mềm đổi mã ngầm, giữ lịch sử).
+
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Mặt hàng bỏ ô Loại hàng
 - Form thêm / sửa mặt hàng, danh sách mặt hàng và mẫu nhập Excel không còn ô **Loại hàng**: phân loại theo **Nhóm hàng**, bớt khai báo. Giá trị cũ trên mặt hàng giữ nguyên (báo cáo theo loại hàng vẫn đọc được).
+- Tài khoản ngầm định (ACC41): bỏ nút **Thêm tài khoản ngầm định** và hai ô **Áp cho loại hàng / Áp cho biến thể**; chỉ còn **Sửa** TK Nợ / TK Có của từng dòng.
 
 <!-- [2026-11-12 Nguyễn Văn Thủy] (đóng góp) -->
 ### Giao diện sáng làm mặc định
@@ -187,6 +301,22 @@ Mỗi bản ghi đủ sáu mục:
 ### Bộ màu gốc, Tổng quan theo bản thiết kế <!-- [2026-11-11 Nguyễn Văn Thủy] docs/cap-nhat-ux/12 (đóng góp) -->
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
+
+### Mã lỗi QR / ca bắt buộc cho module pos (phiếu NT-BH-009, NT-BH-011) <!-- [2026-11-12 08:30 PM Võ Hoàng] POS-QR — phần Core cho module pos (đóng góp) -->
+
+- **Thêm:** `ERROR_REASONS` thêm `POS_QR_EXPIRED`, `POS_PAYMENT_MISMATCH`, `POS_ORDER_CANCELLED`, `POS_SHIFT_REQUIRED` (BIZCITY-ERRORS 1.10.0-draft §4c).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
+### Module `pos` — thanh toán QR, người mua hoá đơn điện tử, bắt buộc mở ca, tồn cả cửa hàng (NT-BH-009, NT-BH-010, NT-BH-011) <!-- [2026-11-12 08:30 PM Võ Hoàng] POS-QR — module pos đợt QR / hoá đơn / ca (đóng góp) -->
+
+- **Thêm:** đơn trả QR (toàn bộ hoặc một phần) lưu ở trạng thái **chờ trả tiền**, có phần `qr` (số tiền, hạn 5 phút); chứng từ bán nộp ngay theo hình thức QR. `POST /orders/:id/qr/confirm` — tiền về (ngân hàng báo hoặc thu ngân xác nhận tay, ghi người + ghi chú); `POST /orders/:id/qr/renew` — gia hạn trong ngày bán. Tiền lệch `POS_PAYMENT_MISMATCH`, quá ngày bán `POS_QR_EXPIRED` (ngân hàng báo có vẫn nhận), đơn đã huỷ `POS_ORDER_CANCELLED`.
+- **Thêm:** `POST /orders/:id/invoice-buyer` — người mua trên hoá đơn điện tử (MST 10 / 13 số, công ty, địa chỉ, email) và dòng quà dưới 24 tháng không đưa lên hoá đơn; gửi lại cùng nội dung không đổi gì. `GET /stock/all` — tồn cả cửa hàng cho Excel cuối ca.
+- **Đổi:** đơn có số phiên bản (migration module 0006); mỗi lần đổi (xác nhận QR, người mua hoá đơn, huỷ) phát lại sự kiện kèm phiên bản để bản sao ở website đè đúng bản mới nhất. Đơn QR chỉ phát `pos.order.recorded` khi đã thu tiền.
+- **Đổi:** khoá `bizcity.pos.require_open_shift` bật thì chưa mở ca không bán được (`POS_SHIFT_REQUIRED`), trừ đơn bán lúc mất mạng gửi bù; bootstrap trả `requireOpenShift`.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** `module migrate pos` (migration module 0006).
+- **Bảo mật:** website chưa gọi thẳng module được (khoá app chỉ xin quyền Core) — xác nhận QR do máy bán của thu ngân chuyển tiếp, ghi rõ nguồn.
 
 ### Module `pos` — màn quản trị bán lẻ: Đơn bán máy POS, Phiếu trả hàng, Sổ ca bán, Tổng quan bán lẻ, Cài đặt bán hàng (NT-BH-008) <!-- [2026-11-12 11:30 PM Võ Hoàng] POS-ADMIN — module pos màn quản trị bán lẻ (đóng góp) -->
 

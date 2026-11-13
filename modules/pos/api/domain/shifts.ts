@@ -13,11 +13,12 @@ export type OrderSnap = {
 export type ReturnSnap = { refundMethod: string; refundTotal: number };
 export type MethodAmount = { method: string; name: string; amount: number };
 
-export function orderPayments(o: Pick<OrderSnap, 'payment' | 'total'>, cashCode: string): MethodAmount[] {
+export function orderPayments(o: Pick<OrderSnap, 'payment' | 'total'>, cashCode: string, qrCode = 'QR'): MethodAmount[] {
   if (o.payment.mode === 'split') {
     return (o.payment.parts ?? []).filter((p) => !isOffsetMethod(p.method) && p.amount > 0).map((p) => ({ method: p.method, name: p.method, amount: p.amount }));
   }
   if (o.payment.mode === 'cash') return o.total > 0 ? [{ method: cashCode, name: cashCode, amount: o.total }] : [];
+  if (o.payment.mode === 'qr') return o.total > 0 ? [{ method: qrCode, name: qrCode, amount: o.total }] : [];
   return o.total > 0 ? [{ method: o.payment.mode, name: o.payment.mode, amount: o.total }] : [];
 }
 

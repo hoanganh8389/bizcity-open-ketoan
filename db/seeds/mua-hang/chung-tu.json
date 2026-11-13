@@ -180,7 +180,7 @@
     "lines": [
       {
         "lineKey": "c1",
-        "sku": "QT-THUNG-SUA",
+        "sku": "QT-THUNG-SUAZ",
         "name": "Thùng sữa tặng kèm (ngoài hợp đồng)",
         "unit": "Thùng",
         "qty": 5,
@@ -1106,7 +1106,7 @@
     "lines": [
       {
         "lineKey": "r1",
-        "sku": "QT-BINH-01",
+        "sku": "QT-BINH-01Z",
         "name": "Bình giữ nhiệt Anlene (quà chương trình)",
         "unit": "Cái",
         "qty": 100,
@@ -1152,7 +1152,7 @@
     "lines": [
       {
         "lineKey": "s1",
-        "sku": "QT-BO-TRIAN",
+        "sku": "QT-BO-TRIANZ",
         "name": "Bộ quà tri ân khách hàng TGS",
         "unit": "Bộ",
         "qty": 50,
@@ -1169,7 +1169,7 @@
     "lines": [
       {
         "lineKey": "s1",
-        "sku": "QT-BO-TRIAN",
+        "sku": "QT-BO-TRIANZ",
         "name": "Bộ quà tri ân khách hàng TGS",
         "unit": "Bộ",
         "qty": 50,
@@ -1221,7 +1221,7 @@
     "lines": [
       {
         "lineKey": "t1",
-        "sku": "QT-BO-TRIAN",
+        "sku": "QT-BO-TRIANZ",
         "name": "Bộ quà tri ân khách hàng TGS",
         "unit": "Bộ",
         "qty": 30,
@@ -1238,7 +1238,7 @@
     "lines": [
       {
         "lineKey": "t1",
-        "sku": "QT-BO-TRIAN",
+        "sku": "QT-BO-TRIANZ",
         "name": "Bộ quà tri ân khách hàng TGS",
         "unit": "Bộ",
         "qty": 30,

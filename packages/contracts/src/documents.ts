@@ -95,6 +95,11 @@ export const documentLineSchema = z.object({
   policyRef: z.object({ key: policyKey, version: z.number().int().min(1), line: z.string().trim().max(32).optional() }).optional(),
   /** Giá vốn của dòng nếu nguồn đã có. Để trống thì ghi giá vốn sau. */
   cost: money.optional(),
+  /**
+   * [2026-11-13 Nguyễn Văn Thủy] Tài khoản riêng của dòng (người lập chọn trong lọc của Tài khoản ngầm định theo loại chứng từ).
+   * Trống = theo tài khoản ngầm định. inventory: TK kho; payable: TK công nợ NCC; tax: TK thuế GTGT (đóng góp)
+   */
+  accounts: z.object({ inventory: z.string().trim().regex(/^[0-9]{3,20}$/).optional(), payable: z.string().trim().regex(/^[0-9]{3,20}$/).optional(), tax: z.string().trim().regex(/^[0-9]{3,20}$/).optional() }).optional(),
 });
 export type DocumentLine = z.infer<typeof documentLineSchema>;
 

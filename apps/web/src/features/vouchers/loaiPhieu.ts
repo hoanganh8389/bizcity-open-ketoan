@@ -5,9 +5,13 @@
  *   Ô trống = người lập tự chọn (thu khác, chi khác, chi mua ngoài có hoá đơn).
  *   Tài khoản tiền: phiếu thu / báo có ở bên Nợ, phiếu chi / báo nợ ở bên Có; tiền gửi lấy theo tài khoản ngân hàng chọn trên phiếu.
  */
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { VoucherType } from '@ketoan/contracts';
+import { api } from '@/lib/api';
 
-export interface LoaiPhieu { name: string; no?: string; co?: string }
+/** no / co: tài khoản mặc định (hoặc đầu số); noFilter / coFilter: danh sách được chọn trên dòng (theo đầu số, trống = mọi tài khoản). */
+export interface LoaiPhieu { name: string; no?: string; co?: string; noFilter?: string[]; coFilter?: string[] }
 
 export const LOAI_PHIEU: Record<Exclude<VoucherType, 'manual'>, LoaiPhieu[]> = {
   receipt: [
@@ -50,10 +54,49 @@ export const LOAI_PHIEU: Record<Exclude<VoucherType, 'manual'>, LoaiPhieu[]> = {
   ],
 };
 
+// [2026-11-13 Nguyễn Văn Thủy] loại phiếu đọc từ Tài khoản ngầm định theo loại (ACC41): kế toán sửa lọc / mặc định ở đó, form theo (đóng góp)
+interface AdCol { key: string; filter: string[]; default: string }
+interface AdType { code: string; group: string; name: string; columns: AdCol[]; isActive: boolean }
+const only = (f: string[] | undefined, pre: string) => Boolean(f?.length) && f!.every((x) => x.startsWith(pre));
+const shortName = (n: string) => {
+  const t = n.replace(/^Phiếu (thu|chi) /i, (_m, a: string) => (a.toLowerCase() === 'thu' ? 'Thu ' : 'Chi '))
+    .replace(/ bằng (tiền mặt|tiền gửi|Chuyển khoản)$/i, '').replace(/^(Thu|Chi) (Thu|Chi) /, '$2 ');
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+/** Loại phiếu của một màn thu / chi: lấy theo Tài khoản ngầm định; chưa tải xong thì dùng danh sách sẵn. */
+export function useLoaiPhieu(type: Exclude<VoucherType, 'manual'>): LoaiPhieu[] {
+  const q = useQuery({ queryKey: ['account-default-types'], queryFn: () => api.get<AdType[]>('/api/v1/account-default-types'), staleTime: 60_000 });
+  return useMemo(() => {
+    if (!q.data?.length) return LOAI_PHIEU[type];
+    const money = type === 'receipt' || type === 'payment' ? '111' : '112';
+    const grp = money === '111' ? 'Tiền mặt' : 'Tiền gửi';
+    const recv = type === 'receipt' || type === 'bank_receipt';
+    const out: LoaiPhieu[] = [];
+    for (const t of q.data) {
+      if (t.group !== grp || !t.isActive) continue;
+      const d = t.columns.find((c) => c.key === 'debit_account');
+      const c = t.columns.find((x) => x.key === 'credit_account');
+      const isMoney = (col?: AdCol) => (col?.default || col?.filter[0] || '').startsWith(money) || only(col?.filter, money);
+      const dm = isMoney(d);
+      const cm = isMoney(c);
+      if (dm === cm || dm !== recv) continue; // chuyển tiền giữa hai tài khoản tiền, và chiều ngược: bỏ qua
+      out.push({ name: shortName(t.name), no: d?.default || undefined, co: c?.default || undefined, noFilter: d?.filter, coFilter: c?.filter });
+    }
+    // Thu tiền khách / trả tiền NCC lên đầu (phiếu theo hoá đơn lấy loại đầu), loại "… khác" xuống cuối.
+    const rank = (n: string) => (/^(Thu|Chi) khác$/i.test(n) ? 3 : /(khách hàng|nhà cung cấp)/i.test(n) ? (/không theo/i.test(n) ? 0 : 1) : 2);
+    out.sort((a, b) => rank(a.name) - rank(b.name));
+    return out.length ? out : LOAI_PHIEU[type];
+  }, [q.data, type]);
+}
+
 /** Tài khoản chi tiết đầu tiên có đầu số `prefix` (khớp đúng mã thì lấy luôn). */
 export const pickAccount = (accounts: { code: string }[], prefix?: string): string =>
   !prefix ? '' : accounts.find((a) => a.code === prefix)?.code ?? accounts.find((a) => a.code.startsWith(prefix))?.code ?? '';
 
 /** Đoán loại của phiếu đã lập theo tài khoản đối ứng của dòng đầu. */
-export const guessLoai = (list: LoaiPhieu[], counter: string, lineSide: 'debit' | 'credit'): number =>
-  counter ? list.findIndex((l) => { const p = lineSide === 'debit' ? l.no : l.co; return Boolean(p && counter.startsWith(p)); }) : -1;
+export const guessLoai = (list: LoaiPhieu[], counter: string, lineSide: 'debit' | 'credit'): number => {
+  if (!counter) return -1;
+  const exact = list.findIndex((l) => (lineSide === 'debit' ? l.no : l.co) === counter);
+  if (exact >= 0) return exact;
+  return list.findIndex((l) => { const p = lineSide === 'debit' ? l.no : l.co; return Boolean(p && counter.startsWith(p)); });
+};

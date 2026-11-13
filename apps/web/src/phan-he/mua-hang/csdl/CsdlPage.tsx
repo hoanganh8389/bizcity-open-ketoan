@@ -63,8 +63,7 @@ const IDEAS: { n: string; title: string; text: string; tables: string[]; cls: st
 const TERMS: [string, string, string][] = [
   ['Nhà cung cấp, nhóm NCC', 'partners, partner_groups', 'MH01 Nhà cung cấp · DM08 Nhóm NCC'],
   ['Mặt hàng + cây Ngành → Nhãn → Nhóm (nhãn khai MỘT chỗ ở đây)', 'products (industry_code, brand_code, group_code), item_classes', 'DM10 Danh mục mặt hàng · DM11 Nhóm hàng (cây)'],
-  ['Mã hàng: ngành 2 + nhãn 3 + nhóm 1 + số 3 (quà: Q + 3 + 1 + 4); sản phẩm con = mã cha + 2 số', 'products.sku · products.parent_sku · item_classes.sku_code (đoạn mã của nhóm)', 'DM10 → chọn nhóm hàng là tự sinh mã · Thêm sản phẩm con'],
-  ['Biến thể của sản phẩm con (Thường, Nội bộ, Kẹp quà…), thay chữ cuối mã cũ', 'products.variant_code · item_variant_kinds', 'DM10 → Thêm sản phẩm con / thẻ Thông tin'],
+  ['Mã hàng: mã ngắn nhóm cấp 1 + 2 + 3 + số thứ tự 3 số; mã biến thể = mã cha + tối đa 2 chữ ở đầu / cuối', 'products.sku · products.parent_sku · item_classes.sku_code (mã ngắn của nhóm)', 'Quản lý mặt hàng → Thêm → Mã mới (chọn nhóm cấp 3) / Mã biến thể (chọn mã cha)'],
   ['Gửi lên thuế: căn cứ duy nhất để tách khỏi thuế (Nội bộ luôn tắt)', 'products.send_to_tax', 'DM10 → thẻ Thông tin, cột Gửi thuế'],
   ['Nhãn của từng dòng phiếu · nhãn chính của phiếu (tự suy, không nhập)', 'purchase_documents.data.lines[].brandCode · brand_code', 'Máy chủ ghi theo danh mục mặt hàng khi lưu phiếu'],
   ['Tên ĐVT (Hộp, Lốc_4, Thùng…)', 'unit_names', 'DM15 Danh mục đơn vị tính'],

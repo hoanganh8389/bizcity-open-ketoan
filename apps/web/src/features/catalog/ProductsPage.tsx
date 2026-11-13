@@ -13,13 +13,11 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, Pager } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
-import { KpiMatHang } from '@/components/KpiDanhMuc';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { ProductFullForm } from './ProductFullForm';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: cột Biến thể cạnh mã, lọc theo biến thể, Loại hàng (đóng góp)
-import { useVariantKinds, variantLabel } from './ThemSanPhamCon';
 import { PrintButton } from '@/components/print';
 import { PRODUCT_LABEL_TEMPLATES, loadLabelItems } from './productPrint';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: dải báo cáo mặt hàng tự thêm, kích hoạt hàng loạt mặt hàng nháp
@@ -29,8 +27,10 @@ import { Link } from 'react-router-dom';
 
 export type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 interface ItemClass { code: string; name: string; parentCode: string | null; isActive: boolean; products: number; skuCode?: string }
+const trangThai = (p: { isActive: boolean; isDraft?: boolean }) => (!p.isActive ? 'Ngừng hoạt động' : p.isDraft ? 'Chờ duyệt' : 'Đang hoạt động');
+
 interface Product {
-  sku: string; name: string; unit: string; postingGroupCode: string | null;
+  sku: string; name: string; unit: string; postingGroupCode: string | null; createdAt?: string; createdBy?: string; updatedAt?: string; updatedBy?: string;
   brandCode: string | null; industryCode: string | null; groupCode: string | null; typeCode: string | null; isActive: boolean; sourceSystem: string;
   /** Nháp (PHASE-024 S024-28): còn lỗi chặn, chưa dùng được trên chứng từ. */
   isDraft?: boolean; draftCodes?: string[];
@@ -47,7 +47,7 @@ const SOURCE: Record<string, string> = { document: 'Tự thêm từ chứng từ
 
 /** Đường dẫn cây (cha / con / …) của một mã phân loại. */
 /** Form mặt hàng mở được từ bất kỳ màn nào (phiếu, bảng giá…): tự tải phân loại hàng. sku null = thêm mới. */
-export function ProductEditor({ sku, onClose, startTab, startEditing, initial, onSaved }: { sku: string | null; onClose: () => void; startTab?: string; startEditing?: boolean; initial?: { name?: string }; onSaved?: (sku: string) => void }) {
+export function ProductEditor({ sku, onClose, startTab, startEditing, initial, onSaved }: { sku: string | null; onClose: () => void; startTab?: string; startEditing?: boolean; initial?: { name?: string; groupCode?: string | null }; onSaved?: (sku: string) => void }) {
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
   const groupPath = useMemo(() => pathOf(classes.group.data ?? []), [classes.group.data]);
   return <ProductFullForm sku={sku} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={onClose} startTab={startTab} startEditing={startEditing} initial={initial} onSaved={onSaved} />;
@@ -82,8 +82,6 @@ export function ProductsPage() {
   const [applied, setApplied] = useState('');
   const [group, setGroup] = useState<string | null>(null);
   const [f, setF] = useState<Record<string, string>>({ postingGroup: '', status: 'all', variant: '' });
-  const kinds = useVariantKinds().data ?? [];
-  const kindOf = (c?: string) => kinds.find((k) => k.code === c);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<(Partial<Product> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<Product | null>(null);
@@ -121,41 +119,30 @@ export function ProductsPage() {
     return { rows, parent, kids };
   }, [q.data]);
   const isChild = (p: Product) => fam.parent.get(p.sku) !== p.sku;
-  const [scan, setScan] = useState<{ pw: string; busy?: boolean; msg?: string; ok?: boolean } | null>(null);
   const [bulk, setBulk] = useState(false);
-  const runScan = async () => {
-    if (!scan) return;
-    setScan({ ...scan, busy: true, msg: undefined });
-    try {
-      const r = await api.post<{ updated: number; families: number; children: number }>('/api/v1/catalog/products/scan-parents', { overwrite: false, password: scan.pw });
-      setScan({ pw: '', ok: true, msg: `Đã cập nhật ${r.updated} mã. Hiện có ${r.families} mã cha, ${r.children} mã con.` });
-      void qc.invalidateQueries({ queryKey: ['products'] });
-    } catch (e) { setScan({ ...scan, busy: false, ok: false, msg: errorText(e) }); }
-  };
   const columns: Column<Product>[] = [
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
-    { key: 'variantCode', header: 'Biến thể', width: 130, title: 'Biến thể của sản phẩm con: phần mềm tách hàng Nội bộ khỏi thuế và xử lý theo ô này. Thường để trống', value: (p) => (p.variantCode && p.variantCode !== 'normal' ? variantLabel(kindOf(p.variantCode), p.variantCode) : '') },
-    { key: 'sendToTax', header: 'Gửi thuế', width: 80, title: 'Có đưa lên hoá đơn / dữ liệu thuế không. Biến thể Nội bộ luôn Không', value: (p) => (p.sendToTax === false ? 'Không' : '') },
     { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
-    { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
     { key: 'unit', header: 'ĐVT', width: 70 },
-    { key: 'industryCode', header: 'Ngành hàng', width: 140, value: (p) => nameOf('industry', p.industryCode) },
-    { key: 'brandCode', header: 'Nhãn hàng', width: 140, value: (p) => nameOf('brand', p.brandCode) },
-    { key: 'taxOutCode', header: 'Mã VAT ra', type: 'code', width: 90 },
-    { key: 'taxInCode', header: 'Mã VAT vào', type: 'code', width: 95 },
-    { key: 'exciseRate', header: 'Thuế TTĐB', type: 'number', width: 85 },
+    // [2026-11-12 Nguyễn Văn Thủy] một cột Thuế GTGT (%) thay Mã VAT ra / vào, TTĐB (đóng góp)
+    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Thuế suất GTGT bán ra', value: (p) => ({ KCT: 'KCT', R00K: 'KCT', R00: '0%', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
-    { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
+    // [2026-11-12 Nguyễn Văn Thủy] Trạng thái sản phẩm thay ô Theo dõi: Đang hoạt động / Chờ duyệt / Ngừng hoạt động (đóng góp)
+    // [2026-11-12 Nguyễn Văn Thủy] truy vết: người tạo, lúc tạo (0114) (đóng góp)
+    { key: 'createdBy', header: 'Người tạo', width: 140, title: 'Người thêm mặt hàng; "Hệ thống (…)" = thêm tự động', value: (p) => p.createdBy ?? '' },
+    { key: 'createdAt', header: 'Lúc tạo', width: 140, title: 'Thời điểm thêm mặt hàng', value: (p) => (p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '') },
+    { key: 'updatedBy', header: 'Người sửa', width: 140, title: 'Người sửa lần cuối', value: (p) => p.updatedBy ?? '' },
+    { key: 'updatedAt', header: 'Lúc sửa', width: 140, title: 'Thời điểm sửa lần cuối', value: (p) => (p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '') },
+    { key: 'isActive', header: 'Trạng thái', width: 130, title: 'Đang hoạt động · Chờ duyệt (mặt hàng nháp, chưa dùng được trên chứng từ) · Ngừng hoạt động', value: (p) => trangThai(p), render: (p) => <span className={`badge ${!p.isActive ? 'badge-gray' : p.isDraft ? 'badge-warn' : 'badge-ok'}`}>{trangThai(p)}</span> },
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
 
   return (
     <>
-      <PageHeader title="Mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
-      <KpiMatHang />
+      <PageHeader title="Quản lý mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
       <div className="acc17">
         <div className="card acc17-tree">
           <div className="acc17-tree-head">Nhóm hàng</div>
@@ -174,9 +161,6 @@ export function ProductsPage() {
             extra={
               <>
                 <NutNhapExcel loai={nhapLoai('mat-hang')!} disabled={!canWrite} />
-                {sel && <Link className="btn btn-sm" to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(sel.sku)}`} title="Mua → nhập → bán → giá vốn → trả của mặt hàng đang chọn">Hành trình</Link>}
-                {canWrite && <button className="btn btn-sm" title="Mặt hàng nháp (thiếu đơn vị tính / nhóm hạch toán, hoặc mới từ chứng từ): điền một lần cho cả lô rồi kích hoạt" onClick={() => setBulk(true)}>Kích hoạt hàng loạt</button>}
-                {canWrite && <button className="btn btn-sm" title="Quét họ mã theo mã: mã 9 số + đuôi (Z, Q, K, M, B…; trừ T có tem) là mã con của mã gốc có trong danh mục. Giữ mã cha đã chọn tay." onClick={() => setScan({ pw: '' })}>Quét cha – con theo mã</button>}
                 <span className="row" style={{ gap: 4 }} title="In tem mã vạch / tem kệ: chọn phạm vi và số tem mỗi mã, mũi tên cạnh nút In tem để chọn mẫu (3–8 cột, tem kệ)">
                   <select className="select input" style={{ height: 30 }} value={labelScope} onChange={(e) => setLabelScope(e.target.value as 'sel' | 'view')}>
                     <option value="sel">Tem: mã đang chọn</option><option value="view">Tem: mọi dòng đang hiện</option>
@@ -186,25 +170,21 @@ export function ProductsPage() {
                 </span>
                 <span className="spacer" />
                 <form className="row" style={{ gap: 4 }} onSubmit={(e) => { e.preventDefault(); setApplied(search.trim()); setPage(1); }}>
-                  <input className="input" style={{ width: 220, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên, ghi chú" />
+                  <input className="input" style={{ width: 220, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên" />
                   <button className="btn btn-sm" type="submit">Tìm</button>
                 </form>
-                <select className="select input" style={{ height: 30 }} value={f.postingGroup} onChange={(e) => set({ postingGroup: e.target.value })}>
-                  <option value="">Mọi nhóm hạch toán</option><option value="-">(Chưa gán — nhóm mặc định)</option>
-                  {(groups.data ?? []).map((g) => <option key={g.code} value={g.code}>{g.code} — {g.name}</option>)}
-                </select>
-                <select className="select input" style={{ height: 30 }} value={f.variant} title="Lọc theo biến thể" onChange={(e) => set({ variant: e.target.value })}>
-                  <option value="">Mọi biến thể</option>
-                  {kinds.map((k) => <option key={k.code} value={k.code}>{variantLabel(k)}</option>)}
-                </select>
+                <span className="seg" role="tablist" title="Mặt hàng thêm trong ngày hôm nay (mới nhất trên cùng)">
+                  <button type="button" className={`btn btn-sm${!f.createdFrom ? ' btn-primary' : ''}`} onClick={() => set({ createdFrom: '' })}>Tất cả</button>
+                  <button type="button" className={`btn btn-sm${f.createdFrom ? ' btn-primary' : ''}`} onClick={() => set({ createdFrom: new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10) })}>Thêm hôm nay</button>
+                </span>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                  <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="draft">Nháp (chưa kích hoạt)</option><option value="inactive">Ngừng</option>
+                  <option value="all">Mọi trạng thái</option><option value="active">Đang hoạt động</option><option value="draft">Chờ duyệt</option><option value="inactive">Ngừng hoạt động</option>
                 </select>
               </>
             }
           />
           <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
-          <AutoCreatedBanner onActivate={canWrite ? () => setBulk(true) : undefined} />
+          <AutoCreatedBanner />
           {q.isLoading ? <Loading /> : (
             <DataGrid
               storageKey="dm10-v3"
@@ -226,15 +206,6 @@ export function ProductsPage() {
           {Number(q.data?.meta?.total ?? 0) > TRANG_MAT_HANG && <Pager page={page} pageSize={TRANG_MAT_HANG} total={Number(q.data?.meta?.total)} onPage={setPage} />}
         </div>
       </div>
-      {bulk && <BulkActivateModal onClose={() => setBulk(false)} groups={groups.data ?? []} />}
-      {scan && (
-        <Modal title="Quét cha – con theo mã (công cụ)" onClose={() => setScan(null)}
-          footer={<><button className="btn btn-primary" disabled={scan.busy || !scan.pw} onClick={() => void runScan()}>{scan.busy ? 'Đang quét…' : 'Chạy'}</button><button className="btn" onClick={() => setScan(null)}>Đóng</button></>}>
-          <div className="full" style={{ fontSize: 13, marginBottom: 8 }}>Mã 9 số + đuôi (Z, Q, K, M, B…; trừ T có tem) nhận mã gốc làm <b>mã cha</b> nếu mã gốc có trong danh mục. Mã cha đã chọn tay ở form mặt hàng <b>được giữ nguyên</b>.</div>
-          <Field label="Mật khẩu công cụ" full><input className="input" type="text" name="tool-key" autoComplete="off" data-lpignore="true" data-1p-ignore style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties} value={scan.pw} autoFocus onChange={(e) => setScan({ ...scan, pw: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && scan.pw && void runScan()} /></Field>
-          {scan.msg && <div className={`alert ${scan.ok ? 'alert-ok' : 'alert-bad'} full`} style={{ marginTop: 8 }}>{scan.msg}</div>}
-        </Modal>
-      )}
       {editing && <ProductFullForm sku={editing.isNew ? null : editing.sku ?? null} initial={editing.isNew ? { groupCode: editing.groupCode ?? null } : undefined} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={() => setEditing(null)} />}
     </>
   );

@@ -181,7 +181,6 @@ export function LapBctcPage() {
     { key: 'fn', header: 'Chức năng', width: 130, noSort: true, render: (r) => (
       <span style={{ display: 'inline-flex', gap: 10 }}>
         <a href="#" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen({ id: r.id, seq: Date.now() }); }}>Xem</a>
-        {canWrite && <a href="#" className="text-bad" onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm(`Xoá báo cáo tài chính ${r.periodLabel}?`)) del.mutate(r.id); }}><Trash2 size={13} /> Xoá</a>}
       </span>
     ) },
   ];

@@ -71,7 +71,9 @@ export function TaxCodesPage() {
   );
 }
 
-function TaxForm({ value, onClose }: { value: Partial<TaxCode> & { isNew?: boolean }; onClose: () => void }) {
+// [2026-11-12 Nguyễn Văn Thủy] dùng lại ở form mặt hàng (nút + cạnh ô Thuế suất GTGT); onSaved trả mã vừa thêm (đóng góp)
+export const NEW_OUTPUT_TAX: Partial<TaxCode> & { isNew?: boolean } = { isNew: true, direction: 'output', reportGroup: '8', rate: 8, accountCode: '33311' };
+export function TaxForm({ value, onClose, onSaved }: { value: Partial<TaxCode> & { isNew?: boolean }; onClose: () => void; onSaved?: (code: string, rate: number) => void }) {
   const qc = useQueryClient();
   const [v, setV] = useState(value);
   const set = (p: Partial<TaxCode>) => setV((x) => ({ ...x, ...p }));
@@ -81,7 +83,7 @@ function TaxForm({ value, onClose }: { value: Partial<TaxCode> & { isNew?: boole
       const body = { name: v.name, rate: Number(v.rate), direction: v.direction, accountCode: v.accountCode || undefined, reportGroup: v.reportGroup };
       return value.isNew ? api.post('/api/v1/tax-codes', { ...body, code: v.code }) : api.patch(`/api/v1/tax-codes/${value.code}`, { ...body, isActive: v.isActive });
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['tax-codes'] }); if (value.isNew) onClose(); else viewAgain[1](); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['tax-codes'] }); if (value.isNew) { onSaved?.(v.code!, Number(v.rate)); onClose(); } else viewAgain[1](); },
   });
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title="Loại thuế" onClose={onClose}

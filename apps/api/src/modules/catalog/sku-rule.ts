@@ -51,6 +51,15 @@ function chainOf(groups: Map<string, GroupNode>, code: string): GroupNode[] {
   return up.length && isContainerRoot(up[0]!) ? up.slice(1) : up;
 }
 
+// [2026-11-12 Nguyễn Văn Thủy] mã cha suy theo mã: bỏ chữ ở đầu / cuối quanh mã chính — trùng hàm SQL bizcity_parent_from_sku (0115) (đóng góp)
+export function parentFromSku(sku: string): string | null {
+  const s = sku.trim().toUpperCase();
+  const m = /^([A-Z]{0,3})([0-9]{9})([A-Z]{0,3})$/.exec(s);
+  if (m && (m[1] || m[3])) return m[2]!;
+  const g = /^([A-Z][0-9]{8})[A-Z]{1,3}$/.exec(s);
+  return g ? g[1]! : null;
+}
+
 export interface SkuPreview {
   prefix: string; sku: string; next: number;
   segments: { level: number; code: string; name: string; skuCode: string; source: 'declared' | 'inferred' | 'new' }[];
@@ -128,7 +137,7 @@ export async function nextSku(trx: Db, tenantId: string, groupCode: string): Pro
   const pattern = `^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[0-9]{${seqLen}}$`;
   const row = await sql<{ n: string | null }>`
     SELECT MAX(right(sku, ${seqLen})::int)::text AS n FROM products
-     WHERE tenant_id = ${tenantId} AND sku ~ ${pattern}`.execute(trx);
+     WHERE tenant_id = ${tenantId} AND sku ~ ${pattern} AND parent_sku IS NULL`.execute(trx); // số thứ tự chỉ chạy theo mã chính
   const next = Number(row.rows[0]?.n ?? 0) + 1;
   if (String(next).length > seqLen) throw Errors.conflict(`Tiền tố ${prefix} đã hết số thứ tự (${seqLen} chữ số)`);
   return { prefix, next, sku: prefix + String(next).padStart(seqLen, '0'), segments: segs, industryCode: chain[0]!.code, brandCode: chain[1]!.code };

@@ -186,6 +186,8 @@ export interface BranchesTable {
   parent_id: ColumnType<string | null, string | null | undefined, string | null>;
   /** branch = chi nhánh cha (kho tổng), shop = cửa hàng con, '' = chưa xếp. */
   level: Generated<string>;
+  /** Định danh bất biến cn_<ULID> (0121). */
+  uid: Generated<string>;
 }
 
 /** Kho của từng chi nhánh (DM12). */
@@ -202,6 +204,38 @@ export interface WarehousesTable {
   account: Generated<string>;
   note: Generated<string>;
   created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+  /** MST kê khai riêng của kho, hiện hành (0121); thường trống = theo chi nhánh / tỉnh. */
+  tax_id: Generated<string>;
+  /** Định danh bất biến kho_<ULID> (0121). */
+  uid: Generated<string>;
+  /** Loại kho (warehouse_types.code, 0128). */
+  type_code: Generated<string>;
+}
+
+/** Loại kho (0128). */
+export interface WarehouseTypesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  code: string;
+  name: string;
+  purpose: Generated<string>;
+  can_sell: Generated<boolean>;
+  owned: Generated<boolean>;
+  track_expiry: Generated<boolean>;
+  account_prefix: Generated<string>;
+  is_system: Generated<boolean>;
+  is_active: Generated<boolean>;
+  sort_order: Generated<number>;
+  updated_by: Generated<string>;
+  updated_at: TimestampDefault;
+}
+/** Nghiệp vụ → loại kho được dùng theo thứ tự ưu tiên (0128). */
+export interface WarehouseTypeOpsTable {
+  tenant_id: string;
+  op: string;
+  type_codes: ColumnType<string[], string[], string[]>;
+  updated_by: Generated<string>;
   updated_at: TimestampDefault;
 }
 
@@ -584,6 +618,9 @@ export interface ProductsTable {
   /** Mã lỗi chặn khiến còn nháp (ITEM-BLOCK-*). */
   draft_codes: Generated<string[]>;
   /** Lúc thêm mặt hàng (0063). */
+  created_by: Generated<string>;
+  /** Người sửa lần cuối (0120). */
+  updated_by: Generated<string>;
   created_at: TimestampDefault;
 }
 
@@ -612,6 +649,28 @@ export interface UnitNamesTable {
   created_by: Generated<string>;
   updated_by: Generated<string>;
   created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+// [2026-11-12 Nguyễn Văn Thủy] thẻ hướng dẫn (0113) (đóng góp)
+export interface HelpCardsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  title: Generated<string>;
+  body: Generated<string>;
+  format: Generated<string>;
+  source_key: Generated<string>;
+  created_by: Generated<string>;
+  updated_by: Generated<string>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+export interface HelpPlacesTable {
+  tenant_id: string;
+  place_key: string;
+  label: Generated<string>;
+  card_id: string | null;
+  updated_by: Generated<string>;
   updated_at: TimestampDefault;
 }
 
@@ -854,6 +913,65 @@ export interface ItemClassesTable {
   is_active: Generated<boolean>;
   sku_code: Generated<string>;
   updated_at: TimestampDefault;
+  created_by: Generated<string>;
+  created_at: Generated<Date | null>;
+  updated_by: Generated<string>;
+  /** Tên nhóm đầy đủ (0118). */
+  full_name: Generated<string>;
+  /** Ghi chú (0119). */
+  note: Generated<string>;
+}
+/** Lịch sử thêm / sửa nhóm hàng (0116). */
+/** Phiên bản MST theo ngày hiệu lực của kho / chi nhánh / nút cơ cấu (0121). valid_to loại trừ. */
+export interface TaxIdVersionsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  scope: 'warehouse' | 'branch' | 'org_unit';
+  ref_id: string;
+  tax_id: Generated<string>;
+  valid_from: ColumnType<Date, Date | string, Date | string>;
+  valid_to: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  changed_by: Generated<string>;
+  changed_at: TimestampDefault;
+}
+/** Phiên bản cơ cấu (0121): branch_org / branch_parent / org_parent. */
+export interface OrgLinkVersionsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  scope: 'branch_org' | 'branch_parent' | 'org_parent';
+  ref_id: string;
+  parent_id: string | null;
+  valid_from: ColumnType<Date, Date | string, Date | string>;
+  valid_to: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  changed_by: Generated<string>;
+  changed_at: TimestampDefault;
+}
+/** Tài khoản ngầm định theo loại chứng từ (0126). columns: [{ key, caption, filter: string[], default, bind? }]. */
+export interface AccountDefaultTypesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  code: string;
+  grp: Generated<string>;
+  name: string;
+  columns: ColumnType<AccountDefaultColumn[], string, string>;
+  sort_order: Generated<number>;
+  is_active: Generated<boolean>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  updated_by: Generated<string>;
+  updated_at: TimestampDefault;
+}
+export interface AccountDefaultColumn { key: string; caption: string; filter: string[]; default: string; bind?: string }
+
+export interface ItemClassHistoryTable {
+  id: Generated<string>;
+  tenant_id: string;
+  kind: string;
+  code: string;
+  at: TimestampDefault;
+  by_user: Generated<string>;
+  action: string;
+  changes: Generated<string>;
 }
 
 export interface PostingReasonsTable {
@@ -1117,6 +1235,14 @@ export interface LedgerLinesTable {
   cost_fill: ColumnType<string | null, string | null | undefined, string | null>;
   /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
   item_id: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Định danh chi nhánh / shop cn_… (0121, trigger điền). */
+  branch_uid: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Định danh kho kho_… (0121); không truyền = kho mặc định của chi nhánh (trigger). */
+  warehouse_uid: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Mã kho chụp lúc ghi (0121). */
+  warehouse_code: ColumnType<string | null, string | null | undefined, string | null>;
+  /** MST tại ngày hạch toán (0121): kho → chi nhánh → … → nút cơ cấu → công ty (trigger). */
+  tax_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface LedgerLinksTable {
@@ -1235,6 +1361,11 @@ export interface SalesLinesTable {
 
 export interface InventoryMovementsTable {
   id: Generated<string>;
+  /** MST tại ngày chứng từ (0121, trigger). */
+  tax_id: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Định danh chi nhánh / shop cn_…, kho kho_… (0121, trigger). */
+  branch_uid: ColumnType<string | null, string | null | undefined, string | null>;
+  warehouse_uid: ColumnType<string | null, string | null | undefined, string | null>;
   /** Không tính vào đơn giá bình quân (quà KM người tiêu dùng). */
   exclude_cost: Generated<boolean>;
   tenant_id: string;
@@ -1859,6 +1990,8 @@ export interface Database {
   accounting_units: AccountingUnitsTable;
   branches: BranchesTable;
   warehouses: WarehousesTable;
+  warehouse_types: WarehouseTypesTable;
+  warehouse_type_ops: WarehouseTypeOpsTable;
   audit_logs: AuditLogsTable;
   diagnostic_runs: DiagnosticRunsTable;
   action_requests: ActionRequestsTable;
@@ -1916,6 +2049,10 @@ export interface Database {
   tax_invoices: TaxInvoicesTable;
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;
+  item_class_history: ItemClassHistoryTable;
+  account_default_types: AccountDefaultTypesTable;
+  tax_id_versions: TaxIdVersionsTable;
+  org_link_versions: OrgLinkVersionsTable;
   product_units: ProductUnitsTable;
   price_lists: PriceListsTable;
   price_list_branches: PriceListBranchesTable;
@@ -1966,6 +2103,8 @@ export interface Database {
   order_formulas: OrderFormulasTable;
   transfer_requests: TransferRequestsTable;
   unit_names: UnitNamesTable;
+  help_cards: HelpCardsTable;
+  help_places: HelpPlacesTable;
   payment_request_settings: PaymentRequestSettingsTable;
   debt_allocations: DebtAllocationsTable;
   voucher_recurrences: VoucherRecurrencesTable;

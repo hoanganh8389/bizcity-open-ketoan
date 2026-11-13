@@ -192,7 +192,6 @@ function AssetForm({ value, kind, printScreen, onClose }: { value: Partial<Asset
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew && !readOnly} wide title={value.isNew ? `Thêm ${KIND_LABEL[kind].toLowerCase()}` : `${KIND_LABEL[kind]} ${value.code}`} onClose={onClose}
       footer={<>
-        {!value.isNew && !readOnly && <button data-view-ok className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={remove.isPending} onClick={() => window.confirm('Xoá thẻ này? Chỉ xoá được thẻ chưa trích tháng nào.') && remove.mutate()}>Xoá thẻ</button>}
         {!value.isNew && value.code && <span data-view-ok><PrintButton screen={printScreen} templates={assetTemplates(kind, value.status === 'disposed' ? 'first' : false)} title="In thẻ theo nội dung đã ghi" getDocs={() => loadAssetCards([value as Asset])} /></span>}
         <button className="btn" onClick={onClose}>Đóng</button>
         {!readOnly && <button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name || !v.startDate || !v.originalCost || !v.usefulLifeMonths || !v.depreciationAccount || !v.expenseAccount || (allocations.length > 0 && Math.abs(allocTotal - 100) > 0.001)} onClick={() => save.mutate()}>Ghi</button>}
@@ -627,7 +626,6 @@ export function AssetEventsPage({ kind }: { kind: EventPageKind }) {
       { key: 'actualQuantity', header: 'SL thực tế', type: 'number' },
     ] satisfies Column<AssetEvent>[])),
     { key: 'note', header: 'Ghi chú' },
-    ...(can('catalog:write') ? [{ key: 'del', header: '', noFilter: true, noSort: true, value: () => '', render: (r: AssetEvent) => <button className="btn btn-sm btn-ghost" title="Xoá" onClick={(e) => { e.stopPropagation(); if (window.confirm(kind === 'transfer' ? 'Xoá lần điều chuyển này? Tài sản trở về chi nhánh cũ.' : 'Xoá dòng này?')) del.mutate(r.id); }}><Trash2 size={15} /></button> } as Column<AssetEvent>] : []),
   ];
   return (
     <>

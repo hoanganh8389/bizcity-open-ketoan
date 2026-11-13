@@ -15,7 +15,7 @@ const L = {
   khach: { label: 'Khách hàng', icon: 'User', path: '/danh-muc/khach-hang' },
   ncc: { label: 'Nhà cung cấp', icon: 'Truck', path: '/danh-muc/nha-cung-cap' },
   nhanVien: { label: 'Nhân viên', icon: 'IdCard', path: '/danh-muc/nhan-vien' },
-  vthh: { label: 'Vật tư hàng hóa', icon: 'Package', path: '/danh-muc/mat-hang' },
+  vthh: { label: 'Mặt hàng', icon: 'Package', path: '/danh-muc/mat-hang' },
   coCau: { label: 'Cơ cấu tổ chức', icon: 'Network', path: '/danh-muc/so-do-to-chuc' },
   tkNganHang: { label: 'Tài khoản ngân hàng', icon: 'Landmark', path: '/danh-muc/ngan-hang' },
 } satisfies Record<string, SoDoLink>;
@@ -45,6 +45,31 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Sổ chi tiết tiền vay', path: '/bao-cao/tien-vay' },
     ],
     links: [L.tkNganHang, L.khach, L.ncc, L.nhanVien],
+  },
+  // [2026-11-13 Nguyễn Văn Thủy] Danh mục theo góc người quản trị: khai báo → cấu hình → phân quyền → báo cáo tổng hợp (đóng góp)
+  'danh-muc': {
+    title: 'Khai báo hệ thống — làm theo thứ tự',
+    rows: [
+      [
+        { label: 'Cơ cấu tổ chức', icon: 'Network', path: '/danh-muc/so-do-to-chuc' },
+        { label: 'Chi nhánh, cửa hàng', icon: 'Store', path: '/danh-muc/chi-nhanh' },
+        { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' },
+        { label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' },
+        { label: 'Nhóm hàng', icon: 'FolderTree', path: '/danh-muc/phan-loai-hang' },
+        { label: 'Mặt hàng', icon: 'Package', path: '/danh-muc/mat-hang' },
+      ],
+      [
+        { label: 'Đối tượng', icon: 'Users', path: '/danh-muc/khach-hang', sub: [{ label: 'Khách hàng', path: '/danh-muc/khach-hang' }, { label: 'Nhà cung cấp', path: '/danh-muc/nha-cung-cap' }, { label: 'Nhân viên', path: '/danh-muc/nhan-vien' }] },
+        { label: 'Cấu hình hạch toán', icon: 'Settings2', path: '/cau-hinh/tai-khoan-ngam-dinh', sub: [{ label: 'Tài khoản ngầm định', path: '/cau-hinh/tai-khoan-ngam-dinh' }, { label: 'Hệ thống tài khoản', path: '/danh-muc/tai-khoan' }, { label: 'Biểu thuế', path: '/danh-muc/loai-thue' }] },
+        { label: 'Phân quyền', icon: 'ShieldCheck' },
+        { label: 'Báo cáo tổng hợp', icon: 'ChartLine', path: '/bao-cao/ket-qua-nhieu-chi-nhanh' },
+      ],
+    ],
+    reports: [
+      { label: 'Kết quả kinh doanh nhiều chi nhánh', path: '/bao-cao/ket-qua-nhieu-chi-nhanh' }, { label: 'Tồn kho nhiều kho', path: '/bao-cao/ton-nhieu-kho' },
+      { label: 'Cân đối tài khoản nhiều chi nhánh', path: '/bao-cao/can-doi-tk-nhieu-chi-nhanh' }, { label: 'Kết quả theo cửa hàng', path: '/bao-cao/ket-qua-theo-cua-hang' },
+    ],
+    links: [{ label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }, { label: 'Bảng giá', icon: 'Tags', path: '/danh-muc/bang-gia' }, { label: 'Bộ phận', icon: 'Briefcase', path: '/danh-muc/bo-phan' }, L.tkNganHang, { label: 'Dữ liệu gốc', icon: 'RotateCcw', path: '/tien-ich/du-lieu-goc' }],
   },
   'mua-hang': {
     title: 'Nghiệp vụ mua hàng',
@@ -99,7 +124,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp tồn kho theo lô', path: '/kho/ton-theo-lo' }, { label: 'Sổ chuyển kho nội bộ', path: '/bao-cao/chuyen-kho' },
       { label: 'Đối chiếu kho và sổ cái', path: '/kho/doi-chieu-so-cai' },
     ],
-    links: [{ label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' }, L.vthh, { label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }],
+    links: [{ label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' }, { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' }, L.vthh, { label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }],
   },
   ccdc: {
     title: 'Nghiệp vụ công cụ dụng cụ, chi phí trả trước',

@@ -78,16 +78,19 @@ describe('Đổi mã', () => {
     expect(res.body.data).toMatchObject({ itemId: id, sku: 'XC-C2' });
   });
 
-  it('mã con đi theo khi đổi mã cha', async () => {
-    await put('XC-P');
-    await call(ctx, 'PUT', '/api/v1/products/XC-PZ', { name: 'XC-PZ', unit: 'Hộp', parentSku: 'XC-P', ...ack });
-    await sql`UPDATE products SET parent_sku = 'XC-P' WHERE tenant_id = ${tenantId} AND sku = 'XC-PZ'`.execute(db);
-    const p = (await idOf('XC-P'))!;
-    expect((await rename('XC-P', 'XC-P2')).status).toBe(200);
-    const child = (await sql<{ parent_sku: string; parent_item_id: string }>`
-      SELECT p.parent_sku, i.parent_item_id FROM products p JOIN item_codes c ON c.tenant_id = p.tenant_id AND c.kind = 'sku' AND c.code = p.sku AND c.valid_to IS NULL
-      JOIN items i ON i.item_id = c.item_id WHERE p.tenant_id = ${tenantId} AND p.sku = 'XC-PZ'`.execute(db)).rows[0]!;
-    expect(child).toEqual({ parent_sku: 'XC-P2', parent_item_id: p });
+  // [2026-11-13 Nguyễn Văn Thủy] mã cha suy theo mã (0112/0115): mã biến thể = mã cha + chữ đầu / cuối (đóng góp)
+  it('mã con tự gắn mã cha theo mã (chữ đầu hoặc cuối), định danh cha đúng', async () => {
+    await put('900000001');
+    await call(ctx, 'PUT', '/api/v1/products/900000001Z', { name: '900000001Z', unit: 'Hộp', ...ack });
+    await call(ctx, 'PUT', '/api/v1/products/K900000001', { name: 'K900000001', unit: 'Hộp', ...ack });
+    const p = (await idOf('900000001'))!;
+    const rows = (await sql<{ sku: string; parent_sku: string; parent_item_id: string }>`
+      SELECT p.sku, p.parent_sku, i.parent_item_id FROM products p JOIN item_codes c ON c.tenant_id = p.tenant_id AND c.kind = 'sku' AND c.code = p.sku AND c.valid_to IS NULL
+      JOIN items i ON i.item_id = c.item_id WHERE p.tenant_id = ${tenantId} AND p.sku IN ('900000001Z', 'K900000001') ORDER BY p.sku`.execute(db)).rows;
+    expect(rows).toEqual([
+      { sku: '900000001Z', parent_sku: '900000001', parent_item_id: p },
+      { sku: 'K900000001', parent_sku: '900000001', parent_item_id: p },
+    ]);
   });
 
   it('không dùng lại mã của hàng còn sống, không đè mã đang dùng; gửi lại không đổi gì', async () => {

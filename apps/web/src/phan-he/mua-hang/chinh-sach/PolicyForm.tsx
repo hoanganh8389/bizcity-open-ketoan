@@ -74,7 +74,7 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
   };
   return (
     <Modal viewAgain={viewAgain} viewFirst={!isNew} wide={p.kind === 'item_discount' || p.kind === 'promo_gift'} title={`${POLICY_LABEL[p.kind]} ${isNew ? '(mới)' : p.code}`} onClose={onClose}
-      footer={<>{!isNew && <button data-view-ok className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy} onClick={() => void remove()} title="Chỉ xoá được chính sách chưa áp vào phiếu nào — đã áp thì bấm Sửa, bỏ tích Áp dụng">Xoá</button>}<button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      footer={<><button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label="Nhà cung cấp (trống = áp cho mọi NCC)" full>
         {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
       </Field>

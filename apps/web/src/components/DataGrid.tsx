@@ -21,7 +21,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Columns3, FileSpreadsheet, Filter, FilterX, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Columns3, FileSpreadsheet, Filter, FilterX, X } from 'lucide-react';
 import { date as fmtDate, money, price } from '@/lib/format';
 import { Money } from './ui';
 
@@ -486,19 +486,16 @@ export function DataGrid<T>(p: DataGridProps<T>) {
             )}
             <tr>
               {cols.map((c) => {
-                const s = sort?.key === c.key ? sort.dir : 0;
                 return (
                   <th
                     key={c.key}
                     draggable={p.groupable && !c.noFilter}
                     onDragStart={(e) => { e.dataTransfer.setData('text/dgrid-col', c.key); e.dataTransfer.effectAllowed = 'copy'; }}
-                    className={`${isNumeric(c.type) ? 'num' : ''} ${c.type === 'check' ? 'center' : ''} ${c.noSort ? '' : 'sortable'} ${c.className ?? ''}`}
-                    onClick={() => !c.noSort && setSort(s === 0 ? { key: c.key, dir: 1 } : s === 1 ? { key: c.key, dir: -1 } : null)}
-                    title={c.noSort ? undefined : 'Bấm để sắp xếp'}
+                    // [2026-11-12 Nguyễn Văn Thủy] bỏ bấm tiêu đề cột để sắp xếp (gây nhảy bảng); lọc vẫn ở ô lọc / phễu (đóng góp)
+                    className={`${isNumeric(c.type) ? 'num' : ''} ${c.type === 'check' ? 'center' : ''} ${c.className ?? ''}`}
+                    title={c.title}
                   >
                     {c.header}
-                    {s === 1 && <ArrowUp size={12} className="sort-ico" />}
-                    {s === -1 && <ArrowDown size={12} className="sort-ico" />}
                     {!c.noFilter && (
                       <button
                         className={`dgrid-funnel ${picks[c.key] ? 'on' : ''}`}

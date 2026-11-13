@@ -61,10 +61,10 @@ describe('Tài khoản ngầm định khi tắt lý do / nhóm hạch toán', ()
   });
 
   it('định khoản theo Biến thể: hàng Khuyến mại → doanh thu 51113, hàng thường giữ 51111', async () => {
-    await sql`INSERT INTO products (tenant_id, sku, name, unit, variant_code) VALUES (${tenantId}, 'TK-BT', 'Hàng khuyến mại (biến thể)', 'Hộp', 'promo') ON CONFLICT DO NOTHING`.execute(db);
+    await sql`INSERT INTO products (tenant_id, sku, name, unit, variant_code) VALUES (${tenantId}, '110059001M', 'Hàng khuyến mại (biến thể)', 'Hộp', 'promo') ON CONFLICT DO NOTHING`.execute(db);
     const r = await call<{ data: { id: string } }>(ctx, 'POST', '/api/v1/posting-rules/defaults', { business: 'sale', part: 'goods', name: 'Hàng khuyến mại — doanh thu', cond: { variant: 'promo' }, credit: '51113' });
     ok(r);
-    ok(await sale('TK-6', 'TK-BT'));
+    ok(await sale('TK-6', '110059001M'));
     ok(await sale('TK-7', 'TK-THUONG'));
     expect(await revenueOf('TK-6')).toEqual(['51113']);
     expect(await revenueOf('TK-7')).toEqual(['51111']);

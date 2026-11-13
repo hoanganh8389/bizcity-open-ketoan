@@ -202,7 +202,7 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
       ['tổng máy khác', { clientTotal: 323_999 }, 409, 'POS_PRICE_CHANGED'],
       ['giảm tiền quá thành tiền', { lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'amount', value: 400_000 } }] }, 400, 'POS_DISCOUNT_TOO_LARGE'],
       ['có CTKM', { promotionSelections: [{ kind: 'coupon', code: 'KM1' }] }, 400, 'POS_NOT_SUPPORTED_YET'],
-      ['trả QR', { payment: { mode: 'qr' } }, 400, 'POS_NOT_SUPPORTED_YET'],
+      // [2026-11-13 12:50 AM Võ Hoàng] POS-QR — trả QR nay được nhận (đơn chờ trả tiền, NT-BH-009): bỏ khỏi lệch chuẩn (đóng góp)
       ['chi nhánh lạ', { branchCode: 'CN99' }, 400, 'POS_UNKNOWN_BRANCH'],
     ];
     const docsBefore = await docCount('pos:%');
@@ -254,20 +254,20 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
   });
 
   // Mã số cha – con (khung nhìn 0102): thuế xét ô Gửi lên thuế, giá 0đ xét ô Biến thể; mã chỉ là số, không đọc chữ cuối mã.
-  it('lệch chuẩn 12–13: hàng Nội bộ 0đ (bill Z) chặn rõ; mã không gửi thuế mà thu tiền vẫn bán, đơn ghi sendTax = false; dòng chứng từ mang itemId', async () => {
+  // [2026-11-12 Nguyễn Văn Thủy] luật 0111: gửi lên thuế suy theo mã (chỉ đuôi Z không gửi), mã con có tiền luôn sendTax = true (đóng góp)
+  it('lệch chuẩn 12–13: hàng Nội bộ 0đ (bill Z) chặn rõ; mã con thu tiền vẫn bán, gửi thuế theo mã; dòng chứng từ mang itemId', async () => {
     await sql`INSERT INTO products (tenant_id, sku, name, unit, tax_out_code, variant_code) VALUES
-      (${tenantId}, '11005100103', 'Bình sữa quà tặng', 'Cái', 'R08', 'internal'),
+      (${tenantId}, '11005100103Z', 'Bình sữa quà tặng', 'Cái', 'R08', 'internal'),
       (${tenantId}, '11005100102', 'Bình sữa kẹp quà', 'Cái', 'R08', 'clip')`.execute(db);
-    await sql`UPDATE products SET send_to_tax = false WHERE tenant_id = ${tenantId} AND sku = '11005100102'`.execute(db);
     const docsBefore = await docCount('pos:%');
 
     const z = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000c1', lines: [
       { lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000 },
-      { lineId: 'l2', sku: '11005100103', unitName: 'Cái', unitQty: 1, clientUnitPrice: 0 },
+      { lineId: 'l2', sku: '11005100103Z', unitName: 'Cái', unitQty: 1, clientUnitPrice: 0 },
     ] }));
     expect(z.statusCode, z.body).toBe(400);
-    expect(z.json().error.details).toMatchObject({ reason: 'POS_NOT_SUPPORTED_YET', billZ: ['11005100103'] });
-    const price = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000c2', lines: [{ lineId: 'l1', sku: '11005100103', unitName: 'Cái', unitQty: 1, clientUnitPrice: 5_000 }], clientTotal: 5_000 }));
+    expect(z.json().error.details).toMatchObject({ reason: 'POS_NOT_SUPPORTED_YET', billZ: ['11005100103Z'] });
+    const price = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000c2', lines: [{ lineId: 'l1', sku: '11005100103Z', unitName: 'Cái', unitQty: 1, clientUnitPrice: 5_000 }], clientTotal: 5_000 }));
     expect(price.statusCode, price.body).toBe(409);
     expect(price.json().error.details.reason).toBe('POS_PRICE_CHANGED');
     expect(await docCount('pos:%')).toBe(docsBefore);
@@ -281,7 +281,7 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     const o = r.json().data.order;
     expect(o.total).toBe(378_000);
     expect(o).not.toHaveProperty('zBill');
-    expect(o.lines.map((l: { sku: string; sendTax: boolean }) => [l.sku, l.sendTax])).toEqual([['SUA400', true], ['11005100102', false]]);
+    expect(o.lines.map((l: { sku: string; sendTax: boolean }) => [l.sku, l.sendTax])).toEqual([['SUA400', true], ['11005100102', true]]);
     const ids = (await sql<{ sku: string; item_id: string }>`SELECT sku, item_id FROM products WHERE tenant_id = ${tenantId} AND sku IN ('SUA400', '11005100102') ORDER BY sku`.execute(db)).rows;
     const payload = (await sql<{ p: { lines: { sku: string; itemId?: string }[] } }>`
       SELECT payload AS p FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ${`pos:CN01:sale:${id}`}`.execute(db)).rows[0]!.p;

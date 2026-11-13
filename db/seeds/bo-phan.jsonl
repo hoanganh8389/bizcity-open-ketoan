@@ -1,43 +1,52 @@
-{"_bang":"bo-phan","_mo_ta":"Danh mục bộ phận: phòng ban, khối, từng cửa hàng (mã BH + mã cửa hàng, ví dụ BH26001 = cửa hàng 26001). ","_cot":["code","name","parent_code","address","phone","note","is_active"],"_nguon":"gia-lap"}
-{"code":"BGD","name":"Ban giám đốc","parent_code":null,"address":"","phone":"","note":"","is_active":true}
-{"code":"KD","name":"Khối kinh doanh","parent_code":null,"address":"","phone":"","note":"","is_active":true}
-{"code":"BH","name":"Bán hàng","parent_code":"KD","address":"","phone":"","note":"","is_active":true}
-{"code":"MH","name":"Mua hàng","parent_code":"KD","address":"","phone":"","note":"","is_active":true}
-{"code":"MKT","name":"Marketing","parent_code":"KD","address":"","phone":"","note":"","is_active":true}
-{"code":"VP","name":"Khối văn phòng","parent_code":null,"address":"","phone":"","note":"","is_active":true}
-{"code":"KT","name":"Kế toán","parent_code":"VP","address":"","phone":"","note":"","is_active":true}
-{"code":"HCNS","name":"Hành chính nhân sự","parent_code":"VP","address":"","phone":"","note":"","is_active":true}
-{"code":"IT","name":"Công nghệ thông tin","parent_code":"VP","address":"","phone":"","note":"","is_active":true}
-{"code":"KHO","name":"Kho vận","parent_code":"VP","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00000","name":"Văn phòng công ty","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00001","name":"Cửa hàng Mẫu Hoàn Kiếm","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00002","name":"Cửa hàng Mẫu Ba Đình","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH00003","name":"Cửa hàng Mẫu Đống Đa","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14000","name":"Chi nhánh Hà Nội","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14051","name":"Cửa hàng Mẫu Cầu Giấy","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14052","name":"Cửa hàng Mẫu Thanh Xuân","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH14053","name":"Cửa hàng Mẫu Long Biên","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01000","name":"Chi nhánh Nam Định","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01001","name":"Cửa hàng Mẫu Nam Định 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01002","name":"Cửa hàng Mẫu Nam Định 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01014","name":"Cửa hàng Mẫu Hải Hậu","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH01015","name":"Cửa hàng Mẫu Giao Thủy","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH02001","name":"Cửa hàng Mẫu Thái Bình 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH02002","name":"Cửa hàng Mẫu Thái Bình 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08000","name":"Chi nhánh Phú Thọ","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08001","name":"Cửa hàng Mẫu Việt Trì 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08002","name":"Cửa hàng Mẫu Việt Trì 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08014","name":"Cửa hàng Mẫu Lâm Thao","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08015","name":"Cửa hàng Mẫu Phù Ninh","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH08016","name":"Cửa hàng Mẫu Thanh Ba","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH26000","name":"Văn phòng Lào Cai","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH26001","name":"Cửa hàng Mẫu Bảo Hà","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH26002","name":"Cửa hàng Mẫu Sa Pa","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH18001","name":"Cửa hàng Mẫu Yên Bái 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH18002","name":"Cửa hàng Mẫu Yên Bái 2","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30000","name":"Chi nhánh Hồ Chí Minh","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30001","name":"Cửa hàng Mẫu Quận 1","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30002","name":"Cửa hàng Mẫu Quận 3","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH30003","name":"Cửa hàng Mẫu Quận 5","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH31001","name":"Cửa hàng Mẫu Thủ Dầu Một","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
-{"code":"BH31002","name":"Cửa hàng Mẫu Dĩ An","parent_code":"BH","address":"","phone":"","note":"","is_active":true}
+{"_bang": "bo-phan", "_mo_ta": "Danh mục bộ phận theo sơ đồ phòng ban: phần công ty (Giám đốc điều hành → BP Tài chính kế toán, Kế hoạch kinh doanh, Truyền thông, Hành chính pháp chế) và phần chi nhánh (Giám đốc chi nhánh → Kế toán, Marketing, Kinh doanh, Hành chính nhân sự). Chứng từ ghi vào phòng ban cấp cuối, báo cáo cộng lên cấp trên. Cửa hàng ghi vào Kinh doanh chi nhánh → Cửa hàng.", "_cot": ["code", "name", "parent_code", "address", "phone", "note", "is_active"]}
+{"code": "BGD", "name": "Giám đốc điều hành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "TCKT", "name": "BP Tài chính kế toán", "parent_code": "BGD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KSTC", "name": "Kiểm soát tài chính", "parent_code": "TCKT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KHTC", "name": "Kế hoạch tài chính", "parent_code": "KSTC", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KSNB", "name": "Kiểm soát nội bộ", "parent_code": "KSTC", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KT", "name": "Kế toán", "parent_code": "TCKT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KTQT", "name": "Kế toán quản trị", "parent_code": "KT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KTTH", "name": "Kế toán thuế", "parent_code": "KT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KHKD", "name": "BP Kế hoạch kinh doanh", "parent_code": "BGD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "HH", "name": "Hàng hoá", "parent_code": "KHKD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "HH-MH", "name": "Mua hàng, định giá", "parent_code": "HH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "HH-TD", "name": "Theo dõi hàng", "parent_code": "HH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "PTD", "name": "Phát triển điểm, xây dựng cơ bản", "parent_code": "KHKD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "PTD-PT", "name": "Phát triển điểm", "parent_code": "PTD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "PTD-XD", "name": "Xây dựng cơ bản", "parent_code": "PTD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KD", "name": "Kinh doanh", "parent_code": "KHKD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KD-ONL", "name": "Kinh doanh online", "parent_code": "KD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KD-OFF", "name": "Kinh doanh offline", "parent_code": "KD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "TT", "name": "BP Truyền thông", "parent_code": "BGD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "DM", "name": "Digital marketing", "parent_code": "TT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "DM-CT", "name": "Content", "parent_code": "DM", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "DM-MD", "name": "Media", "parent_code": "DM", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CSKH", "name": "Chăm sóc khách hàng", "parent_code": "TT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "TTNB", "name": "Truyền thông nội bộ", "parent_code": "TT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "HCPC", "name": "BP Hành chính pháp chế", "parent_code": "BGD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "VHDN", "name": "Văn hoá doanh nghiệp", "parent_code": "HCPC", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "VHNB", "name": "Văn hoá nội bộ", "parent_code": "VHDN", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "DT", "name": "Đào tạo", "parent_code": "VHDN", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "HCNS", "name": "Hành chính nhân sự", "parent_code": "HCPC", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "TCNS", "name": "Tổ chức nhân sự", "parent_code": "HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "HCQT", "name": "Hành chính quản trị", "parent_code": "HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "PC", "name": "Pháp chế", "parent_code": "HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "VTLT", "name": "Văn thư lưu trữ", "parent_code": "HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "DN", "name": "Đối ngoại", "parent_code": "HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN", "name": "Giám đốc chi nhánh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-KT", "name": "Kế toán chi nhánh", "parent_code": "CN", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-KTNB", "name": "Kế toán nội bộ, thanh toán", "parent_code": "CN-KT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-KTT", "name": "Kế toán thuế chi nhánh", "parent_code": "CN-KT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-LOG", "name": "Logistic", "parent_code": "CN-KT", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-KHO", "name": "Kho", "parent_code": "CN-LOG", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-XE", "name": "Đội xe, giao nhận", "parent_code": "CN-LOG", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-MKT", "name": "Marketing chi nhánh", "parent_code": "CN", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-KD", "name": "Kinh doanh chi nhánh", "parent_code": "CN", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-QLKD", "name": "Quản lý kinh doanh", "parent_code": "CN-KD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-CH", "name": "Cửa hàng", "parent_code": "CN-KD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-MH", "name": "Mua hàng chi nhánh", "parent_code": "CN-KD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-HCNS", "name": "Hành chính nhân sự chi nhánh", "parent_code": "CN", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-HCQT", "name": "Quản trị hành chính", "parent_code": "CN-HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-TCNS", "name": "Tổ chức nhân sự chi nhánh", "parent_code": "CN-HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-IT", "name": "IT", "parent_code": "CN-HCNS", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "CN-BV", "name": "Bảo vệ, tạp vụ", "parent_code": "CN-HCNS", "address": "", "phone": "", "note": "", "is_active": true}

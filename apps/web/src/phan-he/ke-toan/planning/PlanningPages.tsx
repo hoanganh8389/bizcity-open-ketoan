@@ -65,7 +65,6 @@ export function CashPlanPage() {
     { key: 'in', header: 'Dự kiến thu', type: 'money', sum: true, value: (r) => (r.direction === 'in' ? r.amount : 0) },
     { key: 'out', header: 'Dự kiến chi', type: 'money', sum: true, value: (r) => (r.direction === 'out' ? r.amount : 0) },
     { key: 'source', header: 'Nguồn', value: (r) => SOURCE[r.source] ?? r.source, width: 110 },
-    ...(editable ? [{ key: 'del', header: '', width: 40, noFilter: true, noSort: true, render: (r: Plan) => <button className="btn btn-sm" title="Xoá dòng" onClick={(e) => { e.stopPropagation(); if (window.confirm('Xoá dòng kế hoạch này?')) del.mutate(r.id); }}><Trash2 size={14} /></button> } as Column<Plan>] : []),
   ];
   const vsCols: Column<VsRow>[] = [
     { key: 'period', header: 'Tháng', value: (r) => mm(r.period), width: 80 },
