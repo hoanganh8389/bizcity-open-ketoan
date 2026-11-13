@@ -65,6 +65,14 @@ Mỗi chương trình là một bản chính sách phát hành ở sổ đăng k
 ## 7. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 1–5 (giỏ §4) | bậc 20 % A; combo B + 2 C; D 0đ; giảm tổng đơn có mã chia theo dòng; quà tổng đơn chưa đủ | đúng (A 100.000; B 26.667 / C 13.333; D 30.000; tổng đơn 41.500 chia 25.000 / 10.000 / 5.000 / 1.500) | — | test nt-bh-012, 13/11 |
+| §5 dòng 6 (điều kiện) | thiếu mã, ngoài thứ / giờ, sinh nhật, hạng → bỏ qua nói rõ | đúng | — | |
+| §5 dòng 7 (áp riêng) | chương trình áp riêng giữ dòng A | đúng; giảm tổng đơn tính trên dòng còn lại | — | |
+| §5 dòng 8 (trần NĐ81) | 75 % → kẹp 50 %; miễn trần thì không kẹp | đúng (150.000 → 100.000, `capped[]`) | — | món rẻ nhất: trần theo cả nhóm |
+| §5 dòng 9 (kiểm phát hành) | bậc không tăng dần → từ chối | đúng | — | test rule-contract-sale-promo |
+| §5 dòng 10 (trả hàng) | trả 1 quà → dùng 2 → 1; huỷ trả → 2 | đúng | — | |
+| §5 dòng 11 (cửa nạp) | không lệch oan | đúng | — | |
+| Chạy thật Docker (demo, 13/11) | 5 chương trình, giá thật CN01 | bậc 630.000; combo 63.000 / 56.800; tổng đơn kẹp trần 50.000 chia 3 dòng; quà tổng đơn; "chỉ áp thứ 7"; không mã → bỏ qua; đơn HD2611000025 (3.548.200) duyệt ghi sổ, cửa nạp đạt | — | |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -74,3 +82,4 @@ Mỗi chương trình là một bản chính sách phát hành ở sổ đăng k
 | Ngày | Thay đổi |
 |---|---|
 | 13/11/2026 | Tạo phiếu |
+| 13/11/2026 | Ghi kết quả chạy (test + chạy thật Docker) |

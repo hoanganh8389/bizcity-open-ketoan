@@ -29,7 +29,9 @@ export async function recomputeGifts(trx: Db, req: RecomputeRequest): Promise<Re
   const branches = arr(scope.branchCodes), channels = arr(scope.channels);
   if (branches.length && (!req.branchCode || !branches.includes(req.branchCode))) return null;
   if (channels.length && (!req.channel || !channels.includes(req.channel))) return null;
-  const result = contract.evaluate(parsed.data, { lines: req.lines.map((l, n) => ({ lineKey: l.lineKey ?? String(n), sku: l.sku, qty: l.qty, ...(l.itemId ? { itemId: l.itemId } : {}) })) }) as { gifts?: { sku: string; itemId?: string; qty: number }[] };
+  // [2026-11-13 10:20 AM Võ Hoàng] POS-KM2 — 00 §18 mục 4: điều kiện cửa nạp không biết (giờ, mã, khách) coi như đạt; khuôn cần tiền mà dòng không có giá → không so.
+  const result = contract.evaluate(parsed.data, { lines: req.lines.map((l, n) => ({ lineKey: l.lineKey ?? String(n), sku: l.sku, qty: l.qty, ...(l.itemId ? { itemId: l.itemId } : {}) })), context: { lenient: true, docDate: req.docDate } }) as { gifts?: { sku: string; itemId?: string; qty: number }[]; indeterminate?: boolean };
+  if (result?.indeterminate) return null;
   return Array.isArray(result?.gifts) ? { gifts: result.gifts } : null;
 }
 

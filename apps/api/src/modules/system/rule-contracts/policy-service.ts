@@ -76,7 +76,11 @@ export async function listPolicies(trx: Db, tenantId: string, q: { at?: string; 
 
 /** `price`: đơn giá trọn (gồm thuế, trước giảm) trên một đơn vị nhỏ nhất — cần cho chương trình giảm giá. */
 export interface EvalLine { lineKey: string; sku: string; qty: number; itemId?: string; price?: number }
-export interface EvaluateRequest { docDate: string; branchCode?: string; channel?: string; lines: EvalLine[]; policies?: { key: string; version?: number }[] }
+/** [2026-11-13 10:20 AM Võ Hoàng] POS-KM2 — 00 §18 mục 3: ngữ cảnh cho điều kiện của khuôn khuyến mại (giờ / thứ, khách, mã giảm giá). */
+export interface EvaluateRequest {
+  docDate: string; branchCode?: string; channel?: string; lines: EvalLine[]; policies?: { key: string; version?: number }[];
+  at?: { time?: string; weekday?: number }; customer?: { birthday?: string; memberLevel?: string }; coupons?: string[];
+}
 export interface PolicyRefOut { key: string; version: number; hash: string; policyId: string }
 
 /**
@@ -101,7 +105,13 @@ export async function evaluatePolicies(trx: Db, tenantId: string, req: EvaluateR
       else if (w.version !== undefined && hit.version !== w.version) skipped.push({ key: w.key, version: w.version, reason: `bản ${w.version} không phủ ngày chứng từ; bản hiệu lực là ${hit.version}` });
     }
   }
-  for (const i of items) {
+  // [2026-11-13 10:20 AM Võ Hoàng] POS-KM2 — 00 §18 mục 3: thứ tự theo ưu tiên (lớn trước) rồi mã; chương trình áp riêng giữ các dòng nó đã dùng.
+  const context = { docDate: req.docDate, ...(req.at ? { at: req.at } : {}), ...(req.customer ? { customer: req.customer } : {}), ...(req.coupons ? { coupons: req.coupons } : {}) };
+  const paramOf = (i: PolicyView) => (i.params && typeof i.params === 'object' ? (i.params as { priority?: number; exclusive?: boolean; legalCapPct?: number | null }) : {});
+  const ordered = [...items].sort((a, b) => Number(paramOf(b).priority ?? 0) - Number(paramOf(a).priority ?? 0) || a.policyKey.localeCompare(b.policyKey));
+  const taken = new Map<string, string>();
+  const capOf = new Map<string, number | null>();
+  for (const i of ordered) {
     if (wanted && !wanted.some((w) => w.key === i.policyKey && (w.version === undefined || w.version === i.version))) continue;
     const reason = (() => {
       if (i.problem) return i.problem;
@@ -118,23 +128,52 @@ export async function evaluatePolicies(trx: Db, tenantId: string, req: EvaluateR
     const avail: { skip?: string; info?: Record<string, unknown> } = env ? await policyAvailability(trx, tenantId, env, { branchCode: req.branchCode, docDate: req.docDate }) : {};
     if (avail.skip) { skipped.push({ key: i.policyKey, version: i.version, reason: avail.skip }); continue; }
     const contract = getRuleContract(i.ruleContract)!;
-    const result = contract.evaluate(i.params, { lines: req.lines });
+    const free = req.lines.filter((l) => !taken.has(l.lineKey));
+    const result = contract.evaluate(i.params, { lines: free, context });
+    if ((result as { indeterminate?: boolean }).indeterminate) { skipped.push({ key: i.policyKey, version: i.version, reason: contract.explain(i.params, result) }); continue; }
     const gift = (result as { gifts?: { sku: string; itemId?: string; qty: number }[] }).gifts ?? [];
     const disc = (result as { discounts?: { lineKey: string; sku: string; qty: number; amount: number }[] }).discounts ?? [];
-    if (!gift.length && !disc.length) { skipped.push({ key: i.policyKey, version: i.version, reason: contract.explain(i.params, result) }); continue; }
+    if (!gift.length && !disc.length) {
+      const by = [...new Set(req.lines.filter((l) => taken.has(l.lineKey)).map((l) => taken.get(l.lineKey)!))];
+      skipped.push({ key: i.policyKey, version: i.version, reason: contract.explain(i.params, result) + (by.length ? ` (dòng đã được chương trình áp riêng ${by.join(', ')} dùng)` : '') });
+      continue;
+    }
+    const pp = paramOf(i);
+    if (pp.exclusive) for (const lk of (result as { touched?: string[] }).touched ?? disc.map((d) => d.lineKey)) taken.set(lk, i.policyKey);
+    if ('legalCapPct' in pp && !(result as { selfCapped?: boolean }).selfCapped) capOf.set(i.policyKey, pp.legalCapPct ?? null);
     const policyRef = { key: i.policyKey, version: i.version, hash: i.contentHash, policyId: i.policyId };
     applied.push({ policyRef, ruleContract: i.ruleContract, result, explain: contract.explain(i.params, result), treatment: contract.treatment(result), ...(avail.info?.quota ? { quota: avail.info.quota } : {}) });
     for (const g of gift) gifts.push({ ...g, isGift: true, policyRef: { key: i.policyKey, version: i.version, line: 'gift' } });
     for (const x of disc) discounts.push({ ...x, policyRef: { key: i.policyKey, version: i.version, line: 'discount' } });
   }
-  return { docDate: req.docDate, applied, skipped, policyRefs: applied.map((a) => ({ key: a.policyRef.key, version: a.policyRef.version, hash: a.policyRef.hash, policyId: a.policyRef.policyId })), gifts, discounts };
+  // Trần NĐ81 (00 §18 mục 3): tổng giảm của các chương trình có trần trên một dòng ≤ trần % tiền dòng; kẹp chương trình tính sau trước.
+  const capped: { lineKey: string; key: string; before: number; after: number; capPct: number }[] = [];
+  const grossOf = new Map(req.lines.map((l) => [l.lineKey, l.price !== undefined ? Math.round(l.qty * l.price) : null]));
+  for (const lk of [...new Set(discounts.map((d) => d.lineKey))]) {
+    const list = discounts.filter((d) => d.lineKey === lk && capOf.has(d.policyRef.key) && capOf.get(d.policyRef.key) !== null);
+    const g = grossOf.get(lk);
+    if (!list.length || g == null) continue;
+    const pct = Math.min(...list.map((d) => capOf.get(d.policyRef.key)!));
+    let over = list.reduce((s, d) => s + d.amount, 0) - Math.floor((g * pct) / 100);
+    for (const d of [...list].reverse()) {
+      if (over <= 0) break;
+      const cut = Math.min(d.amount, over);
+      capped.push({ lineKey: lk, key: d.policyRef.key, before: d.amount, after: d.amount - cut, capPct: pct });
+      d.amount -= cut; over -= cut;
+    }
+  }
+  const finalDiscounts = discounts.filter((d) => d.amount > 0);
+  return {
+    docDate: req.docDate, applied, skipped, policyRefs: applied.map((a) => ({ key: a.policyRef.key, version: a.policyRef.version, hash: a.policyRef.hash, policyId: a.policyRef.policyId })),
+    gifts, discounts: finalDiscounts, ...(capped.length ? { capped } : {}),
+  };
 }
 
 export interface PublishRequest { key: string; ruleContract: string; params?: unknown; scope?: PolicyScope; effectiveFrom: string; reason?: string; legalRef?: string }
 
 /**
  * Phát hành một bản chính sách inline. Kiểm: mã đúng khuôn; Rule Contract có thật và miền có module chủ; nội dung đúng khuôn zod;
- * kiểm chéo trường của Rule Contract; lùi về trước hôm nay cần lý do. Trần pháp lý (NĐ81) CHƯA kiểm — 00 §9.8.
+ * kiểm chéo trường của Rule Contract; lùi về trước hôm nay cần lý do. Trần pháp lý (NĐ81): kẹp lúc tính (evaluate, 00 §18), không chặn phát hành.
  */
 export async function publishPolicy(trx: Db, who: { tenantId: string; actor: string }, req: PublishRequest) {
   if (!KEY_RE.test(req.key)) throw Errors.validation(`Mã chính sách "${req.key}" sai khuôn: chữ hoa, số, _ . - ; tối đa 64 ký tự, bắt đầu bằng chữ hoặc số`);

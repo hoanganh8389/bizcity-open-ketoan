@@ -325,6 +325,15 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### Khuyến mại mở rộng do Core tính: bậc, tổng đơn / mã giảm giá, quà tổng đơn, combo, món rẻ nhất; áp riêng; trần NĐ81; trả hạn mức khi khách trả hàng (phiếu NT-BH-012, S031-15 đợt 2) <!-- [2026-11-13 11:30 AM Võ Hoàng] POS-KM2 — khuyến mại mở rộng (đóng góp) -->
+
+- **Thêm:** 5 Rule Contract nội dung nội tuyến (phát hành qua `POST /api/v1/policies`): `sale.promo.tiered@1`, `sale.promo.order_discount@1`, `sale.promo.order_gift@1`, `sale.promo.combo@1`, `sale.promo.cheapest_free@1` — điều kiện chung (thứ, khung giờ, tổng đơn tối thiểu, mã giảm giá, tháng sinh nhật, hạng thành viên), ưu tiên, áp riêng, trần NĐ81 (`legalCapPct`, mặc định 50 %, null = miễn; món rẻ nhất tính trần theo cả nhóm). Vectors qua hàm thuần + endpoint.
+- **Thêm:** `POST /api/v1/policies/evaluate` nhận ngữ cảnh `at { time, weekday }`, `customer { birthday, memberLevel }`, `coupons[]`; tính theo ưu tiên, áp riêng giữ dòng; kết quả thêm `capped[]` khi kẹp trần.
+- **Đổi:** cửa nạp (IN-POL-004) tính lại với điều kiện không biết được coi như đạt; khuôn cần tiền mà chứng từ không có giá → không so.
+- **Đổi:** người nghe `ban-hang.sale-program-usage` đối chiếu lượt dùng hạn mức BH12 theo cả phiếu trả: phiếu trả ghi sổ → giảm đúng số trả; huỷ phiếu trả → dùng lại.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (không migration).
+
 ### Chương trình bán (BH12) tính được ở Core: khuôn luật tặng hàng / giảm giá, hạn mức tự trừ, thẻ Thử tính (phiếu NT-BH-003, S031-15 phần chương trình bán) <!-- [2026-11-13 09:00 AM Võ Hoàng] POS-KM — phần Core cho khuyến mại máy bán (đóng góp) -->
 
 - **Thêm:** Rule Contract `sale.program.gift@1` (mua X tặng Y, tặng lặp lại, trần quà) và `sale.program.discount@1` (giảm %, giảm tiền / đơn vị, giá chương trình) — trước đây BH12 đã ghi tên khuôn ở sổ đăng ký nhưng khuôn chưa có nên `POST /api/v1/policies/evaluate` và `IN-POL-004` bỏ qua chương trình BH12. Vectors chạy qua hàm thuần và endpoint.
