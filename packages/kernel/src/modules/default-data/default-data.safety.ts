@@ -6,7 +6,7 @@
  *   1. Xem trước bắt buộc: chạy action quay về ở chế độ chạy thử (?dryRun=1) → kết quả thật rồi huỷ, kèm previewToken
  *      (HMAC theo đơn vị, người, phạm vi, số thêm / sửa / xoá / khoá; sống 15 phút). Chạy thật phải gửi lại mã đó;
  *      kết quả thật khác lúc xem trước (danh mục đã đổi ở giữa) → CONFLICT, huỷ cả giao dịch.
- *   2. Ảnh chụp: trước khi ghi, chụp các dòng của đơn vị ở những bảng bộ đó chạm tới vào default_data_backups (0136),
+ *   2. Ảnh chụp: trước khi ghi, chụp các dòng của đơn vị ở những bảng bộ đó chạm tới vào default_data_backups (0137),
  *      cùng giao dịch; giữ 10 bản gần nhất.
  *   3. Bộ giả lập trên đơn vị thật: tệp gốc có "_nguon": "gia-lap" (S030-53) mà đơn vị đã có bút toán → từ chối, chỉ cách
  *      đặt SEEDS_DIR tới danh mục của công ty. Bộ làm sạch catalog_sample KHÔNG chặn theo bút toán (thiết kế để chạy trên đơn vị
