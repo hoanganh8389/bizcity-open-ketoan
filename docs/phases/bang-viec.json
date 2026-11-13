@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 169
+      "count": 170
     },
     {
       "key": "partial",
@@ -9102,14 +9102,8 @@
       "title": "B6 — cap-nhat.sh kiểm bản sao lưu + bảng \"cái gì có thể đổi\" + cảnh báo SEEDSDIR; sao-luu.sh --kiem, khoi-phuc-thu.sh; docs/ops/SAO-LUU-KHOI-PHUC.md",
       "priority": "P0",
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thiet-lap-nhanh)",
-        "branch": "feat/s036-9-sao-luu-nang-cap",
-        "state": "đang làm",
-        "since": "2026-11-13",
-        "dot": "PHASE-036 · S036-9 — nâng cấp và sao lưu: kiểm bản sao lưu, khôi phục thử vào CSDL tạm, cap-nhat.sh…"
-      },
+      "column": "todo",
+      "claim": null,
       "modules": [
         "he-thong"
       ],
