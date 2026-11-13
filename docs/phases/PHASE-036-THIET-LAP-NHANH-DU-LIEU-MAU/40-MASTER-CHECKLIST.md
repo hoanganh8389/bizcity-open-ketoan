@@ -14,7 +14,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S036-5 | B3 — hộp thoại 4 bước `modules/thiet-lap/` (TI09) + `Steps` ở ui-kit; `docs/huong-dan/thiet-lap-nhanh.md` | W2 | P0 | có | ☐ |
 | S036-6 | B4 — `bizcity_preset@1` 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói `thuong-mai-ban-le` 1.1; SC-PRESET-1 kiểm khối mới | W2 | P0 | có | ☐ |
 | S036-7 | B5 — đơn vị mẫu riêng (`tenants.is_sample`, migration, tạo / chuyển đơn vị) + tự nạp ở `db-migrate` (`BIZCITY_SAMPLE`); chặn gửi ra ngoài ở đơn vị mẫu | W3 | P1 | có | ☐ sau Q036-1, Q036-4 |
-| S036-8a | B6 — TI08 an toàn: xem trước bắt buộc có `previewToken`, `default_data_backups` (0134) tự sao lưu trước khi ghi, chặn bộ giả lập trên đơn vị có bút toán, hộp thoại xem trước ([00 §9](00-MASTER-PLAN.md)) | W1 | P0 | có | ☐ |
+| S036-8a | B6 — TI08 an toàn: xem trước bắt buộc có `previewToken`, `default_data_backups` (migration số kế tiếp) tự sao lưu trước khi ghi, chặn bộ giả lập trên đơn vị có bút toán, hộp thoại xem trước ([00 §9](00-MASTER-PLAN.md)) | W1 | P0 | có | ☐ |
 | S036-8b | B6 — *Lấy lại bản trước* từ `default_data_backups`; `org-units/restore-defaults` theo cùng khuôn; đơn vị trắng đổi nút thành *Thiết lập nhanh* (sau B3) | W2 | P1 | có | ☐ sau S036-8a |
 | S036-9 | B6 — `cap-nhat.sh` kiểm bản sao lưu + bảng "cái gì có thể đổi" + cảnh báo `SEEDS_DIR`; `sao-luu.sh --kiem`, `khoi-phuc-thu.sh`; `docs/ops/SAO-LUU-KHOI-PHUC.md` | W1 | P0 | có | ☐ |
 | S036-10 | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật `docs/huong-dan/` | W3 | P1 | có | ☐ |
