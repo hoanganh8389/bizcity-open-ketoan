@@ -15,7 +15,7 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 30
+      "count": 29
     },
     {
       "key": "todo",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 78
+      "count": 75
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 299
+      "count": 303
     }
   ],
   "items": [
@@ -5821,8 +5821,8 @@
       "phase": "PHASE-028",
       "title": "PR tài liệu W0 merge vào main (R-FLOW)",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -6232,8 +6232,8 @@
       "phase": "PHASE-029",
       "title": "ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CANON / CONG-BO; sửa bizcitymasterdata@1 §2, bizcityd…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "chung-tu"
@@ -6562,8 +6562,8 @@
       "phase": "PHASE-029",
       "title": "Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-0028 / CANON §0.7–§0.8",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "chung-tu"
@@ -7302,8 +7302,8 @@
       "phase": "PHASE-030",
       "title": "Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), T030-EVT-1..5 — Kernel K2",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "mua-hang",
@@ -8021,7 +8021,7 @@
       "phase": "PHASE-031",
       "title": "W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL-004) + khối ở tab Theo dõi (00 §15); giá trị hàng…",
       "priority": "P1",
-      "status": "partial",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
