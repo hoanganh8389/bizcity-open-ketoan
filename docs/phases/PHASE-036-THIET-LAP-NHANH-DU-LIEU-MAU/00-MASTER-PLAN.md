@@ -1,5 +1,5 @@
-# PHASE-035 · 00 — Kế hoạch & thiết kế: Thiết lập nhanh và dữ liệu mẫu
-<!-- [2026-11-10 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-035 — W0: hiện trạng đọc mã, quyết định D035-1..12, hộp thoại 4 bước, gói mẫu, 18 báo cáo đích, chống mất dữ liệu, bước thắng nhỏ B1..B7, câu hỏi Q035-1..6 -->
+# PHASE-036 · 00 — Kế hoạch & thiết kế: Thiết lập nhanh và dữ liệu mẫu
+<!-- [2026-11-10 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — W0: hiện trạng đọc mã, quyết định D036-1..12, hộp thoại 4 bước, gói mẫu, 18 báo cáo đích, chống mất dữ liệu, bước thắng nhỏ B1..B7, câu hỏi Q036-1..6 -->
 
 > Đề bài và trả lời ngắn: [README](README.md). Bản mẫu chạy được: [mockups/thiet-lap-nhanh.html](mockups/thiet-lap-nhanh.html).
 
@@ -22,18 +22,18 @@
 
 | Mã | Quyết định | Vì sao |
 |---|---|---|
-| D035-1 | **"Đơn vị trắng"** = đơn vị chưa có bút toán nào trên sổ **và** chưa có chứng từ nào ở bất kỳ trạng thái nào (kể cả nháp, chờ duyệt, bị giữ). Danh mục do `seed()` tạo không tính. Một hàm duy nhất `tenantEmptiness()` trả `{ empty, reasons[] }`; mọi nơi (hộp thoại, tự nạp, nạp mẫu) gọi lại hàm này **trong giao dịch, có khoá** ngay trước khi ghi | Tránh nạp mẫu chồng lên dữ liệu thật khi hai người cùng bấm, hoặc khi kế toán vừa nhập chứng từ đầu tiên |
-| D035-2 | **Dữ liệu mẫu ở một đơn vị mẫu riêng** (mã `mau`, tên "Công ty mẫu", cờ `tenants.is_sample`), không nạp nghiệp vụ mẫu vào đơn vị thật. Đơn vị mẫu có biểu ngữ "Dữ liệu mẫu" trên mọi màn, **không gửi được tờ khai / hoá đơn ra ngoài**, xoá cả đơn vị được (chỉ đơn vị có cờ mẫu) | Sổ chỉ thêm (câu không thương lượng 2): chứng từ mẫu trong đơn vị thật không xoá được, đảo bút toán vẫn để lại vết trên sổ và tờ khai. Tách đơn vị thì "bắt đầu thật" sạch |
-| D035-3 | **Cài mới tự nạp:** job `db-migrate` thấy CSDL vừa khởi tạo (chưa có đơn vị nào ngoài đơn vị vừa tạo, đơn vị đó trắng) và biến `BIZCITY_SAMPLE=<preset>` thì tạo đơn vị mẫu và nạp gói. `cai-nhanh.sh` đặt mặc định `BIZCITY_SAMPLE=thuong-mai-ban-le`; image cho khách có thể tắt (`BIZCITY_SAMPLE=off`) | Ai cài mới cũng thấy hệ thống chạy ngay (smallwin) mà không phải học dòng lệnh |
-| D035-4 | **Không bao giờ nạp mẫu vào đơn vị đã có dữ liệu**, kể cả khi người dùng bấm. Nâng cấp image không chạy lại gói mẫu ở đơn vị đã nạp (ghi `sample_runs` theo phiên bản gói) | Đề bài 3: chống mất / lẫn dữ liệu |
-| D035-5 | **Gói mẫu = preset mở rộng** (`bizcity_preset@1` 1.1.0): thêm khối `openings` (số dư đầu kỳ), `vouchers` (thu chi lẻ), `assets` (tài sản + chạy khấu hao), `close` (kết chuyển cuối tháng), `returns` (lập tờ khai nháp), `settings` (tài khoản ngầm định, chế độ ghi sổ). Mỗi khối chỉ gọi API Core có sẵn | Một khuôn cho preset ngành và gói mẫu; người đóng góp thêm ngành mới (dịch vụ, sản xuất…) không phải viết mã |
-| D035-6 | **Nghiệp vụ mẫu đi đúng đường của chứng từ thật:** cửa nạp (`postDocumentIn` → luật định khoản → `ledgerService.post()`), phiếu và tài sản qua route Core. **Không** ghi thẳng bảng sổ, **không** số tài khoản trong gói, **không** tự tính giá vốn (STD-PRE-3, STD-PRE-7, bốn câu không thương lượng) | Báo cáo mẫu khớp sổ vì chính Kernel định khoản; gói mẫu cũng là bài kiểm luồng đầu–cuối |
-| D035-7 | **Máy chủ chạy gói** (`core.setup.*`), không bắt trình duyệt gọi trăm lần API: `core.setup.status` (trắng hay không, đã nạp gói nào), `core.setup.plan` (xem trước: số dòng mỗi khối, báo cáo sẽ lên số; không ghi), `core.setup.apply` (chạy nền, có tiến độ từng bước, chạy lại được: `docKey` / mã cố định nên lần hai bỏ qua phần đã có). `cai-preset.mjs` gọi lại `core.setup.apply` thay vì tự gọi từng API | Một đường, một bộ kiểm; chạy lại sau lỗi mạng không nhân đôi |
-| D035-8 | **Ngày tương đối:** gói mẫu trải **3 tháng gần nhất đến hôm nay** (`@month-2`…`@today`), kỳ đầu có số dư đầu kỳ; tháng trước được kết chuyển để B02 có số, tờ khai GTGT tháng trước lập được | Báo cáo theo kỳ hiện tại và kỳ trước đều có số khi mở |
-| D035-9 | **Quay về dữ liệu gốc (TI08) an toàn:** bắt buộc bước **xem trước** (thêm / sửa / đổi mã / xoá / khoá theo từng bộ); **tự sao lưu** các bảng danh mục chạm tới (bảng `default_data_backups`, giữ 10 lần) trước khi ghi, có nút *Lấy lại bản trước*; **chặn** khi tệp gốc là bộ giả lập (`_nguon: "gia-lap"`) mà đơn vị đã có chứng từ — báo dùng `SEEDS_DIR`. Đơn vị trắng thì nút này đổi thành *Thiết lập nhanh* | Đề bài 3 |
-| D035-10 | **Nâng cấp image (`cap-nhat.sh`):** sao lưu → **kiểm bản sao lưu** (`pg_restore --list` / đọc thử, cỡ tệp > 0, đếm bảng) → in bảng "cái gì có thể đổi" (migration mới, tệp gốc đổi, `SEEDS_DIR` có đặt không) → hỏi xác nhận (bỏ qua bằng `--yes`) → nâng cấp → kiểm sức khoẻ; lỗi thì in đúng lệnh lùi lại | Đề bài 3 |
-| D035-11 | **Tài liệu vận hành sao lưu – khôi phục** `docs/ops/SAO-LUU-KHOI-PHUC.md`: lịch (hằng đêm, giữ bao lâu, để ở máy khác), kiểm bản sao lưu, **khôi phục thử vào CSDL tạm** trước khi ghi đè, khôi phục một đơn vị; `sao-luu.sh --kiem <tệp>` và `khoi-phuc-thu.sh <tệp>` | Hướng dẫn SQL hiện chỉ nằm trong chú thích script |
-| D035-12 | **Thư viện và dữ liệu mẫu chung một mục tiêu:** danh mục chuẩn của gói mẫu lấy từ thư viện (`core.khoan-muc`, `vn.loai-thue`, `core.ly-do-dinh-khoan`, `vn.ngay-nghi-le`) và bộ giả lập `db/seeds`; mỗi chứng từ mẫu qua được `npx bizcity event check` (L5) | PHASE-030: thư viện tham chiếu đặt mục tiêu "cài mới là chạy" |
+| D036-1 | **"Đơn vị trắng"** = đơn vị chưa có bút toán nào trên sổ **và** chưa có chứng từ nào ở bất kỳ trạng thái nào (kể cả nháp, chờ duyệt, bị giữ). Danh mục do `seed()` tạo không tính. Một hàm duy nhất `tenantEmptiness()` trả `{ empty, reasons[] }`; mọi nơi (hộp thoại, tự nạp, nạp mẫu) gọi lại hàm này **trong giao dịch, có khoá** ngay trước khi ghi | Tránh nạp mẫu chồng lên dữ liệu thật khi hai người cùng bấm, hoặc khi kế toán vừa nhập chứng từ đầu tiên |
+| D036-2 | **Dữ liệu mẫu ở một đơn vị mẫu riêng** (mã `mau`, tên "Công ty mẫu", cờ `tenants.is_sample`), không nạp nghiệp vụ mẫu vào đơn vị thật. Đơn vị mẫu có biểu ngữ "Dữ liệu mẫu" trên mọi màn, **không gửi được tờ khai / hoá đơn ra ngoài**, xoá cả đơn vị được (chỉ đơn vị có cờ mẫu) | Sổ chỉ thêm (câu không thương lượng 2): chứng từ mẫu trong đơn vị thật không xoá được, đảo bút toán vẫn để lại vết trên sổ và tờ khai. Tách đơn vị thì "bắt đầu thật" sạch |
+| D036-3 | **Cài mới tự nạp:** job `db-migrate` thấy CSDL vừa khởi tạo (chưa có đơn vị nào ngoài đơn vị vừa tạo, đơn vị đó trắng) và biến `BIZCITY_SAMPLE=<preset>` thì tạo đơn vị mẫu và nạp gói. `cai-nhanh.sh` đặt mặc định `BIZCITY_SAMPLE=thuong-mai-ban-le`; image cho khách có thể tắt (`BIZCITY_SAMPLE=off`) | Ai cài mới cũng thấy hệ thống chạy ngay (smallwin) mà không phải học dòng lệnh |
+| D036-4 | **Không bao giờ nạp mẫu vào đơn vị đã có dữ liệu**, kể cả khi người dùng bấm. Nâng cấp image không chạy lại gói mẫu ở đơn vị đã nạp (ghi `sample_runs` theo phiên bản gói) | Đề bài 3: chống mất / lẫn dữ liệu |
+| D036-5 | **Gói mẫu = preset mở rộng** (`bizcity_preset@1` 1.1.0): thêm khối `openings` (số dư đầu kỳ), `vouchers` (thu chi lẻ), `assets` (tài sản + chạy khấu hao), `close` (kết chuyển cuối tháng), `returns` (lập tờ khai nháp), `settings` (tài khoản ngầm định, chế độ ghi sổ). Mỗi khối chỉ gọi API Core có sẵn | Một khuôn cho preset ngành và gói mẫu; người đóng góp thêm ngành mới (dịch vụ, sản xuất…) không phải viết mã |
+| D036-6 | **Nghiệp vụ mẫu đi đúng đường của chứng từ thật:** cửa nạp (`postDocumentIn` → luật định khoản → `ledgerService.post()`), phiếu và tài sản qua route Core. **Không** ghi thẳng bảng sổ, **không** số tài khoản trong gói, **không** tự tính giá vốn (STD-PRE-3, STD-PRE-7, bốn câu không thương lượng) | Báo cáo mẫu khớp sổ vì chính Kernel định khoản; gói mẫu cũng là bài kiểm luồng đầu–cuối |
+| D036-7 | **Máy chủ chạy gói** (`core.setup.*`), không bắt trình duyệt gọi trăm lần API: `core.setup.status` (trắng hay không, đã nạp gói nào), `core.setup.plan` (xem trước: số dòng mỗi khối, báo cáo sẽ lên số; không ghi), `core.setup.apply` (chạy nền, có tiến độ từng bước, chạy lại được: `docKey` / mã cố định nên lần hai bỏ qua phần đã có). `cai-preset.mjs` gọi lại `core.setup.apply` thay vì tự gọi từng API | Một đường, một bộ kiểm; chạy lại sau lỗi mạng không nhân đôi |
+| D036-8 | **Ngày tương đối:** gói mẫu trải **3 tháng gần nhất đến hôm nay** (`@month-2`…`@today`), kỳ đầu có số dư đầu kỳ; tháng trước được kết chuyển để B02 có số, tờ khai GTGT tháng trước lập được | Báo cáo theo kỳ hiện tại và kỳ trước đều có số khi mở |
+| D036-9 | **Quay về dữ liệu gốc (TI08) an toàn:** bắt buộc bước **xem trước** (thêm / sửa / đổi mã / xoá / khoá theo từng bộ); **tự sao lưu** các bảng danh mục chạm tới (bảng `default_data_backups`, giữ 10 lần) trước khi ghi, có nút *Lấy lại bản trước*; **chặn** khi tệp gốc là bộ giả lập (`_nguon: "gia-lap"`) mà đơn vị đã có chứng từ — báo dùng `SEEDS_DIR`. Đơn vị trắng thì nút này đổi thành *Thiết lập nhanh* | Đề bài 3 |
+| D036-10 | **Nâng cấp image (`cap-nhat.sh`):** sao lưu → **kiểm bản sao lưu** (`pg_restore --list` / đọc thử, cỡ tệp > 0, đếm bảng) → in bảng "cái gì có thể đổi" (migration mới, tệp gốc đổi, `SEEDS_DIR` có đặt không) → hỏi xác nhận (bỏ qua bằng `--yes`) → nâng cấp → kiểm sức khoẻ; lỗi thì in đúng lệnh lùi lại | Đề bài 3 |
+| D036-11 | **Tài liệu vận hành sao lưu – khôi phục** `docs/ops/SAO-LUU-KHOI-PHUC.md`: lịch (hằng đêm, giữ bao lâu, để ở máy khác), kiểm bản sao lưu, **khôi phục thử vào CSDL tạm** trước khi ghi đè, khôi phục một đơn vị; `sao-luu.sh --kiem <tệp>` và `khoi-phuc-thu.sh <tệp>` | Hướng dẫn SQL hiện chỉ nằm trong chú thích script |
+| D036-12 | **Thư viện và dữ liệu mẫu chung một mục tiêu:** danh mục chuẩn của gói mẫu lấy từ thư viện (`core.khoan-muc`, `vn.loai-thue`, `core.ly-do-dinh-khoan`, `vn.ngay-nghi-le`) và bộ giả lập `db/seeds`; mỗi chứng từ mẫu qua được `npx bizcity event check` (L5) | PHASE-030: thư viện tham chiếu đặt mục tiêu "cài mới là chạy" |
 
 ## 3. Luồng tổng
 
@@ -53,7 +53,7 @@ Cài mới (cai-nhanh.sh / docker compose up)
 
 Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-lap-nhanh.html). Dựng trên `Modal` của ui-kit (thêm `Steps` — thành phần chỉ báo bước, đề xuất vào ui-kit, R-KER-8: ≥ 2 màn dùng — hộp thoại này và nhập Excel). Màn ở module mới `modules/thiet-lap/` (ADR-0024), mã màn **TI09**.
 
-**Khi nào hiện:** đơn vị trắng (D035-1) **và** người dùng có `settings:write` **và** chưa bấm "Để sau" trong phiên. Người không có quyền thấy biểu ngữ "Đơn vị chưa có dữ liệu — nhờ chủ đơn vị thiết lập".
+**Khi nào hiện:** đơn vị trắng (D036-1) **và** người dùng có `settings:write` **và** chưa bấm "Để sau" trong phiên. Người không có quyền thấy biểu ngữ "Đơn vị chưa có dữ liệu — nhờ chủ đơn vị thiết lập".
 
 | Bước | Tên | Nội dung | Nút |
 |---|---|---|---|
@@ -82,18 +82,18 @@ Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-l
 
 **18 báo cáo đích** (mã màn): ACC8 B01 · ACC9 B02 · ACC13 B03 · ACC10 cân đối phát sinh · ACC88 sổ cái · ACC89 nhật ký chung · ACC38 công nợ · ACC67 tuổi nợ · ACC83 nhập xuất tồn · ACC82 thẻ kho · ACC80 sổ quỹ · BH02 bán hàng tổng hợp · BH05 lãi gộp · ACC66 tờ khai GTGT · ACC64 / ACC65 bảng kê mua vào / bán ra · ACC28 sổ tài sản · Tổng quan (`/`).
 
-**Ca nghiệm thu T035-1:** nạp gói trên CSDL test sạch → mỗi báo cáo đích **khác rỗng**; `scripts/doi-chieu-ke-toan.sql` ĐẠT (Nợ = Có, công nợ ↔ 131 / 331, hoá đơn ↔ 133, kho ↔ 156); chạy lại `apply` lần hai **không thêm dòng nào**. **Lương** ngoài phạm vi (chưa có phân hệ) — khi có thì thêm khối.
+**Ca nghiệm thu T036-1:** nạp gói trên CSDL test sạch → mỗi báo cáo đích **khác rỗng**; `scripts/doi-chieu-ke-toan.sql` ĐẠT (Nợ = Có, công nợ ↔ 131 / 331, hoá đơn ↔ 133, kho ↔ 156); chạy lại `apply` lần hai **không thêm dòng nào**. **Lương** ngoài phạm vi (chưa có phân hệ) — khi có thì thêm khối.
 
 ## 6. An toàn (gom đề bài 3)
 
 | Rủi ro | Chặn ở đâu | Bằng chứng |
 |---|---|---|
-| Nạp mẫu chồng dữ liệu thật | `tenantEmptiness()` trong giao dịch có khoá; D035-4 | T035-2: đơn vị có 1 chứng từ nháp → `apply` trả `CONFLICT` mã `SETUP-NOT-EMPTY` |
-| Quay về gốc ghi đè danh mục thật | Xem trước bắt buộc, sao lưu tự động, chặn bộ giả lập trên đơn vị có chứng từ (D035-9) | T035-5..7 |
-| Tệp gốc là bộ giả lập trên bản cài thật | Thẻ cảnh báo ở TI08 + dòng cảnh báo ở `cap-nhat.sh` khi chưa đặt `SEEDS_DIR` | T035-8 |
-| Nâng cấp hỏng, không lùi được | Kiểm bản sao lưu trước khi nâng cấp (D035-10) | `scripts/kiem-nang-cap.sh` + ca `cap-nhat.sh --kiem` |
-| Sao lưu có mà không khôi phục được | `khoi-phuc-thu.sh` vào CSDL tạm, đếm bảng / Nợ = Có (D035-11) | ca chạy tay trong tài liệu ops, ghi bằng chứng |
-| Dữ liệu mẫu bị gửi ra ngoài (tờ khai, hoá đơn điện tử) | Đơn vị `is_sample` chặn ở action gửi (connector), không chỉ ẩn nút | T035-4 |
+| Nạp mẫu chồng dữ liệu thật | `tenantEmptiness()` trong giao dịch có khoá; D036-4 | T036-2: đơn vị có 1 chứng từ nháp → `apply` trả `CONFLICT` mã `SETUP-NOT-EMPTY` |
+| Quay về gốc ghi đè danh mục thật | Xem trước bắt buộc, sao lưu tự động, chặn bộ giả lập trên đơn vị có chứng từ (D036-9) | T036-5..7 |
+| Tệp gốc là bộ giả lập trên bản cài thật | Thẻ cảnh báo ở TI08 + dòng cảnh báo ở `cap-nhat.sh` khi chưa đặt `SEEDS_DIR` | T036-8 |
+| Nâng cấp hỏng, không lùi được | Kiểm bản sao lưu trước khi nâng cấp (D036-10) | `scripts/kiem-nang-cap.sh` + ca `cap-nhat.sh --kiem` |
+| Sao lưu có mà không khôi phục được | `khoi-phuc-thu.sh` vào CSDL tạm, đếm bảng / Nợ = Có (D036-11) | ca chạy tay trong tài liệu ops, ghi bằng chứng |
+| Dữ liệu mẫu bị gửi ra ngoài (tờ khai, hoá đơn điện tử) | Đơn vị `is_sample` chặn ở action gửi (connector), không chỉ ẩn nút | T036-4 |
 
 ## 7. Bước thắng nhỏ (mỗi bước một PR, có giữ chỗ)
 
@@ -102,10 +102,10 @@ Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-l
 | B1 | `tenantEmptiness()` + `core.setup.status`; biểu ngữ "Đơn vị chưa có dữ liệu" ở Tổng quan | Cài mới vào là được chỉ đường, không còn màn "—" | K1 |
 | B2 | `core.setup.plan` / `apply` chạy preset có sẵn ở máy chủ; `cai-preset.mjs` gọi qua đây | Một nút nạp 3 chứng từ mẫu → B01 / B02 có số | K1 |
 | B3 | Hộp thoại 4 bước (`modules/thiet-lap/`, TI09) + `Steps` ở ui-kit | Kế toán tự nạp không cần dòng lệnh | R1 |
-| B4 | Gói `thuong-mai-ban-le` 1.1 (preset 1.1.0: openings, vouchers, assets, close, returns) | 18 báo cáo đích có số, T035-1 | R2 |
-| B5 | Đơn vị mẫu riêng (`is_sample`, Q035-1) + tự nạp ở `db-migrate` (`BIZCITY_SAMPLE`) | Cài mới là có Công ty mẫu | K2 (migration, tạo đơn vị) |
-| B6 | TI08 an toàn (D035-9) + `cap-nhat.sh` kiểm sao lưu (D035-10) + `docs/ops/SAO-LUU-KHOI-PHUC.md` (D035-11) | Hết đường mất dữ liệu bằng một cú bấm | K1 |
-| B7 | Nghiệm thu: T035-1..8, `docs/huong-dan/thiet-lap-nhanh.md`, ảnh màn | Ai cài mới cũng đi hết luồng trong 5 phút | — |
+| B4 | Gói `thuong-mai-ban-le` 1.1 (preset 1.1.0: openings, vouchers, assets, close, returns) | 18 báo cáo đích có số, T036-1 | R2 |
+| B5 | Đơn vị mẫu riêng (`is_sample`, Q036-1) + tự nạp ở `db-migrate` (`BIZCITY_SAMPLE`) | Cài mới là có Công ty mẫu | K2 (migration, tạo đơn vị) |
+| B6 | TI08 an toàn (D036-9) + `cap-nhat.sh` kiểm sao lưu (D036-10) + `docs/ops/SAO-LUU-KHOI-PHUC.md` (D036-11) | Hết đường mất dữ liệu bằng một cú bấm | K1 |
+| B7 | Nghiệm thu: T036-1..8, `docs/huong-dan/thiet-lap-nhanh.md`, ảnh màn | Ai cài mới cũng đi hết luồng trong 5 phút | — |
 
 B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớm** vì rủi ro mất dữ liệu đang có ở bản cài hiện tại.
 
@@ -113,9 +113,9 @@ B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớ
 
 | Mã | Câu hỏi | Đề nghị |
 |---|---|---|
-| Q035-1 | Dữ liệu mẫu ở **đơn vị mẫu riêng** (cần năng lực tạo / chuyển đơn vị — hiện chưa có route) hay nạp thẳng vào **đơn vị trắng đang dùng** (bắt đầu thật = tạo đơn vị mới / cài lại)? | Đơn vị mẫu riêng (D035-2) |
-| Q035-2 | Cài mới **mặc định bật** nạp mẫu (`BIZCITY_SAMPLE=thuong-mai-ban-le`), hay mặc định tắt và chỉ hộp thoại hỏi? | Bật ở `cai-nhanh.sh` (bản dùng thử), tắt ở image phát hành cho khách — hộp thoại vẫn hỏi |
-| Q035-3 | Gói mẫu đầu tiên chỉ **thương mại bán lẻ**, hay làm luôn **dịch vụ**? | Thương mại bán lẻ trước (đã có preset, phủ kho + giá vốn); dịch vụ là gói thứ hai |
-| Q035-4 | Đơn vị mẫu được **xoá cả đơn vị** (ngoại lệ có kiểm soát của câu không thương lượng 2, chỉ cho `is_sample`) hay chỉ "ngừng dùng"? | Xoá được, chỉ đơn vị mẫu, ghi bằng chứng; cần dòng ở RULE-LEDGER danh sách ngoại lệ đóng |
-| Q035-5 | "Thiết lập công ty của tôi" có nạp **danh mục mẫu** (mặt hàng, đối tượng giả lập) không? | Không mặc định — chỉ cấu hình + danh mục chuẩn; danh mục mẫu là tick tuỳ chọn |
-| Q035-6 | Ưu tiên **B6 (chống mất dữ liệu)** trước hộp thoại? | Có — B6 trước hoặc song song B1 |
+| Q036-1 | Dữ liệu mẫu ở **đơn vị mẫu riêng** (cần năng lực tạo / chuyển đơn vị — hiện chưa có route) hay nạp thẳng vào **đơn vị trắng đang dùng** (bắt đầu thật = tạo đơn vị mới / cài lại)? | Đơn vị mẫu riêng (D036-2) |
+| Q036-2 | Cài mới **mặc định bật** nạp mẫu (`BIZCITY_SAMPLE=thuong-mai-ban-le`), hay mặc định tắt và chỉ hộp thoại hỏi? | Bật ở `cai-nhanh.sh` (bản dùng thử), tắt ở image phát hành cho khách — hộp thoại vẫn hỏi |
+| Q036-3 | Gói mẫu đầu tiên chỉ **thương mại bán lẻ**, hay làm luôn **dịch vụ**? | Thương mại bán lẻ trước (đã có preset, phủ kho + giá vốn); dịch vụ là gói thứ hai |
+| Q036-4 | Đơn vị mẫu được **xoá cả đơn vị** (ngoại lệ có kiểm soát của câu không thương lượng 2, chỉ cho `is_sample`) hay chỉ "ngừng dùng"? | Xoá được, chỉ đơn vị mẫu, ghi bằng chứng; cần dòng ở RULE-LEDGER danh sách ngoại lệ đóng |
+| Q036-5 | "Thiết lập công ty của tôi" có nạp **danh mục mẫu** (mặt hàng, đối tượng giả lập) không? | Không mặc định — chỉ cấu hình + danh mục chuẩn; danh mục mẫu là tick tuỳ chọn |
+| Q036-6 | Ưu tiên **B6 (chống mất dữ liệu)** trước hộp thoại? | Có — B6 trước hoặc song song B1 |
