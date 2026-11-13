@@ -7,7 +7,16 @@
 | Màn hình | Máy bán POS React (`/pos/sale`); phía kế toán: ACC14, Sổ cái, Nhật ký bán hàng |
 | Bộ phận yêu cầu | Phòng kế toán, bộ phận bán lẻ |
 | Ngày tạo | 09/11/2026 |
-| Trạng thái | Nháp |
+| Trạng thái | **Đã chốt 13/11/2026** — người dùng (Võ Hoàng) chốt theo đề xuất của nhóm POS, sai thì sửa sau; phòng kế toán xác nhận lại theo tệp *Nghiep-vu-ban-hang-POS-2026-11-13-da-chot.xlsx* |
+
+<!-- [2026-11-13 02:10 PM Võ Hoàng] CHOT-0 — đợt 0: chốt nghiệp vụ theo đề xuất (đóng góp) -->
+**Chốt 13/11/2026:**
+- **Ghi sổ ngay** (A3): chế độ định khoản `sale`, `sale_return` = tự ghi (`bizcity.posting.modes`, bộ cài sẵn *thương mại bán lẻ*); chứng từ lỗi vào bể chờ ACC14 để kế toán sửa. Như POS cũ: phiếu bán tạo ra đã duyệt, đẩy thuế ngay.
+- Mỗi đơn một chứng từ (A2); bán qua 1311 rồi thu tiền, kể cả khách lẻ (A4); tiền thối không ghi (A7); thuế tính từng dòng (A8).
+- Giảm giá tay / khuyến mại / voucher đổi điểm trừ thẳng doanh thu, không ghi 5211 (K12, P3). Giá vốn tính bình quân cuối tháng (K19).
+- Mã hàng chưa có / chưa khai thuế: chặn ở quầy (A9). Mã khách mới = SĐT (A6). Kho xuất = kho mặc định của chi nhánh (A13). Mất mạng: ngày chứng từ = ngày bán (A14).
+- Hàng không lên thuế mà có thu tiền: sổ nội bộ ghi doanh thu và thuế theo thuế suất của mã; sổ thuế không nhận dòng không lên hoá đơn (A11, xem lại sau).
+- QR / thẻ: theo tài liệu mới — về TK công ty Nợ 13681, về TK chi nhánh Nợ 11319 (B3; kế toán đặt ở hình thức thanh toán DM05).
 
 ## 1. Mục đích quản trị
 Mỗi đơn chốt ở quầy vào sổ đúng một chứng từ bán hàng, đúng tiền hàng, tiền thuế, tiền thu theo từng hình thức, đúng ngày bán, không trùng khi máy gửi lại. Kế toán dùng để đối chiếu doanh thu, thuế đầu ra, tiền mặt / tiền gửi của từng cửa hàng theo ngày.

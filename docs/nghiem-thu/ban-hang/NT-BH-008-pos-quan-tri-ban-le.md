@@ -7,7 +7,13 @@
 | Màn hình | BH13 Đơn bán máy POS · BH14 Phiếu trả hàng máy POS · BH15 Sổ ca bán · BH16 Tổng quan bán lẻ · BH17 Cài đặt bán hàng |
 | Bộ phận yêu cầu | Phòng kế toán (đối chiếu đơn, tiền mặt, chênh lệch két), cửa hàng trưởng, ban điều hành (tổng quan) |
 | Ngày tạo | 12/11/2026 |
-| Trạng thái | Nháp |
+| Trạng thái | **Đã chốt 13/11/2026** — người dùng (Võ Hoàng) chốt theo đề xuất của nhóm POS, sai thì sửa sau; phòng kế toán xác nhận lại theo tệp *Nghiep-vu-ban-hang-POS-2026-11-13-da-chot.xlsx* |
+
+<!-- [2026-11-13 02:10 PM Võ Hoàng] CHOT-0 — đợt 0: chốt nghiệp vụ theo đề xuất (đóng góp) -->
+**Chốt 13/11/2026:**
+- Giữ mặc định BH17: hạn trả 3 ngày, không bắt buộc mở ca, một ca / chi nhánh, ngưỡng tô đỏ chênh lệch két 0 đ.
+- Quyền `pos:report` (xem 5 màn quản trị bán lẻ) cấp cho kế toán và quản lý bán lẻ; thu ngân không có.
+- Năm màn BH13–BH17 và chương trình bán BH12 chuyển vào **nhóm Bán hàng** (Phần riêng giữ lối tắt) — đợt menu (NT-BH-013).
 
 Căn cứ: đơn / phiếu trả / ca bán đã ghi ở module `pos` (NT-BH-004, 005, 006, 007); giao diện theo khung chung của phần mềm (danh sách trên – dưới `docs/cap-nhat-ux/05-danh-sach-tren-duoi.md`, bộ tham số kỳ / chi nhánh `docs/cap-nhat-ux/07-bo-tham-so-bao-cao.md`, thẻ chỉ số, menu theo phân hệ `docs/cap-nhat-ux/13-khung-menu.md`). Máy bán là nơi thu ngân thao tác; các màn ở đây là nơi **kế toán và quản lý xem, đối chiếu, cài đặt** — không bán hàng trên các màn này.
 
