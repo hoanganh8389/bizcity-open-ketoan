@@ -76,10 +76,14 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'ban-hang', label: 'Bán hàng', icon: 'ShoppingCart', description: 'Bán hàng, trả lại hàng bán, công nợ phải thu', color: '#d93025', module: 'ban-hang', homeLabel: 'Quy trình',
-    the: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/danh-muc/khach-hang'],
+    // [2026-11-13 04:00 PM Võ Hoàng] UX-14 — nhóm Bán hàng theo mẫu Mua hàng: máy POS (BH13–BH17) và chương trình bán BH12 vào nhóm; Phần riêng giữ lối tắt (NT-BH-013 §5 dòng 5) (đóng góp)
+    the: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/app/pos/don-ban', '/ban-hang/chuong-trinh', '/danh-muc/khach-hang'],
     sections: [
-      { paths: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai'], soon: ['Đơn đặt hàng', 'Giảm giá hàng bán'] },
-      { label: 'Danh mục', paths: ['/danh-muc/khach-hang', '/danh-muc/bang-gia'] },
+      { paths: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/ban-hang/thu-tien'], soon: ['Đơn đặt hàng', 'Giảm giá hàng bán'] },
+      { label: 'Bán lẻ máy POS', paths: ['/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan'] },
+      { label: 'Chính sách bán', paths: ['/ban-hang/chuong-trinh', '/danh-muc/bang-gia'], soon: ['Khuyến mại', 'Hạn mức nợ khách'] },
+      { label: 'Danh mục', paths: ['/danh-muc/khach-hang', '/danh-muc/mat-hang', '/cau-hinh/hinh-thuc-thanh-toan'] },
+      { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/tai-khoan-ngam-dinh'], soon: ['Định khoản bán hàng'] },
     ],
     reports: [
       { label: 'Bán hàng', paths: ['/ban-hang/bao-cao', '/ban-hang/tong-hop', '/cong-no/nhat-ky-ban-hang', '/ban-hang/lai-gop', '/ban-hang/thu-tien-ban-hang'] },
