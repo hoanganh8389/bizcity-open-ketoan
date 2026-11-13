@@ -21,6 +21,7 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Hoi, Loading, Modal, useViewAgain } from '@/components/ui';
 import { ListPicker, plain } from '@/components/pickers';
+import { TaxCodeField } from '@/components/TaxCodeField';
 import { invalidateOrg, useOrgTree, type OrgNode } from '@/lib/orgUnits';
 import type { Branch } from './BranchesPage';
 import { useWarehouses, type Warehouse } from './WarehousesPage';
@@ -372,10 +373,18 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onA
       {txt('name', 'Tên (*)')}
 
       {(f.loai === 'company' || f.loai === 'unit' || f.loai === 'branch') && (
-        <Field label="MST" tip={f.loai === 'branch' ? 'Số ĐKKD / MST in trên chứng từ của cửa hàng' : 'Cửa hàng, kho bên dưới không đặt MST riêng thì dùng MST này. Trống = theo nút trên'}>
-          <input className="input mono" value={f.taxId} placeholder="10 số hoặc 10 số-3 số" onChange={(e) => set({ taxId: e.target.value.replace(/[^0-9-]/g, '') })} />
-          {taxBad && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>MST gồm 10 số hoặc 10 số-3 số</div>}
-        </Field>
+        // [2026-11-13 Nguyễn Văn Thủy] ô MST có tra cứu như form nhà cung cấp: Lấy thông tin → hiện tên, địa chỉ, tình trạng theo Cục Thuế, điền sẵn, sửa lại được (đóng góp)
+        <>
+          <TaxCodeField label="MST" full value={f.taxId} showExisting={false} autoWhenEmpty={isNew && !f.name.trim()}
+            onChange={(v) => set({ taxId: v.replace(/[^0-9-]/g, '') })}
+            onFill={(t, overwrite) => setF((x) => {
+              const pick = (cur: string, v: string) => (overwrite || !cur.trim() ? v || cur : cur);
+              if (x.loai === 'branch') return { ...x, companyName: pick(x.companyName, t.name), address: pick(x.address, t.address) };
+              if (x.loai === 'company') return { ...x, name: pick(x.name, t.name), note: pick(x.note, t.address) };
+              return { ...x, note: pick(x.note, [t.name, t.address].filter(Boolean).join(' — ')) };
+            })} />
+          {taxBad && <div className="neg full" style={{ fontSize: 12.5, marginTop: -4, fontWeight: 600 }}>MST gồm 10 số hoặc 10 số-3 số</div>}
+        </>
       )}
       {changedPlace && (
         <Field label="Áp dụng từ ngày" tip="Chứng từ từ ngày này theo nơi thuộc / MST mới; chứng từ trước ngày này giữ như cũ">
