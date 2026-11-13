@@ -140,7 +140,7 @@ sang KA-CL; sổ chi tiết 1388 có công nợ Nguyễn Văn A 10.000.
 |---|---|
 | Ngày chạy | 12/11/2026 |
 | Bản code (commit) | nhánh `feat/kho-kiem-ke` |
-| Test tự động | `apps/api/test/kiem-ke-kho.test.ts` — 12 / 12 đạt |
+| Test tự động | `apps/api/test/kiem-ke-kho.test.ts` — 13 / 13 đạt |
 
 | Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
 |---|---|---|---|---|
@@ -162,10 +162,9 @@ sang KA-CL; sổ chi tiết 1388 có công nợ Nguyễn Văn A 10.000.
 | HSD thực tế khác sổ | Cập nhật HSD trên lô, ghi lịch sử | **Chỉ ghi trên biên bản + đánh dấu**, HSD của lô trong sổ chưa đổi | **lệch** | Lõi chưa có thao tác sửa HSD lô (HSD là một phần khoá của lô) — cần việc lõi |
 | Kho cách ly / 4 lý do "cài đặt" | Ô cài đặt trên màn Kiểm kê | Chọn trên từng biên bản (gợi ý KKBT / KKCP / KKTN) | khác cách | Khoá cài đặt mới phải sửa registry — ngoài phạm vi giữ chỗ |
 | In 05-VT | In biên bản | **Chưa làm** | **thiếu** | Đăng ký mẫu in ở `printCatalog.ts` — ngoài phạm vi giữ chỗ |
-| Lệch chuẩn 3 (kỳ khoá) | Chặn | Có mã chặn (kiểm `period_locks`), **chưa có test** | — | |
+| Lệch chuẩn 3 (kỳ khoá) | Chặn | 409 "Kỳ 10/2026 đã khoá", biên bản giữ nháp | 0 | |
 
 Bốn lệnh kiểm (12/11/2026): `npm run typecheck` 0 lỗi · `bash scripts/kiem-chuan.sh` ĐẠT · `selfcheck` không thêm mục mới so với `main`
 (SC-SEC-1 chỉ do tệp `.env` cục bộ) · `nhan-viec kiem` ĐẠT.
 `npm test` (CSDL test mới): 2007 đạt, 3 hỏng — `default-data.test.ts` (2) hỏng cả trên `main`;
-**`db-rules.test.ts` (1) do biên bản này**: bảng `stock_counts` chưa khai nhóm trong `apps/api/src/modules/system/schema-catalog.ts`
-— tệp thuộc dòng giữ chỗ PHASE-026 (người giữ khác), cần người giữ đồng ý / mở rộng phạm vi rồi thêm một dòng khai báo.
+`db-rules.test.ts` (1): bảng `stock_counts` chưa khai nhóm trong `schema-catalog.ts` — **đã được khai trên `main`** (13/11/2026), `db-rules` đạt 19 / 19.
