@@ -1,7 +1,7 @@
 # PHASE-027 — Core kế toán cho dev: công cụ kiểm, sáu chuẩn, vai trò theo trụ cột
 <!-- [2026-11-03 10:14 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — mở phase sở hữu các đợt CK-1 / CK-2 / CK-3 (đã giữ chỗ ở CLAIMS.md); ghi các quyết định và đề xuất của tài liệu "Kiện toàn framework v2" vào main trước khi code (R-FLOW) -->
 
-> **Trạng thái:** 🟡 W0 tài liệu 2026-11-03 · **Code:** chưa vào `main` (CK-1..3 chờ PR mã sau khi tài liệu này merge)
+> **Trạng thái:** ✅ **Xong 2026-11-13** <!-- [2026-11-13 07:26 PM Johnny Chu - Chu Hoàng Anh] TIEN-DO — đối chiếu mã trên main 2026-11-13 (5b3448da): trạng thái khớp mã --> (chủ dự án xác nhận "core kế toán ổn") · **Code:** đã vào `main`, có test — CK-1 CLI `bizcity` + skills + đối soát kho (3fce2964), CK-2 SC-DOC-4..6 (#72), CK-3 SC-SEC-5 không mật khẩu mặc định (0614d942). S027-6..9 là đề xuất Q027, chưa mở.
 > **Mức Kernel:** K0 cho W0; CK-1 có một API đọc mới (đối chiếu kho ↔ sổ cái) và một mã tự chẩn đoán; CK-2 / CK-3 là phép kiểm chuẩn
 > **Mục tiêu:** Dev và AI xây POS, bán hàng, kho, CRM, ERP nội bộ ghi sổ đúng chuẩn **mà không phải học kế toán**: app chỉ kể sự việc, Core định khoản; mỗi bước có một lệnh trả PASS / FAIL / SKIP và mã lỗi có bước sửa.
 > **Việc lộ trình:** —
