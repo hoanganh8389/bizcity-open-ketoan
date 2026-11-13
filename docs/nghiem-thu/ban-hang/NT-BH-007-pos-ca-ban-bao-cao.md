@@ -7,7 +7,13 @@
 | Màn hình | Máy bán POS React: *Chốt ca*, *Đơn hàng*, *Tổng quan* |
 | Bộ phận yêu cầu | Bộ phận bán lẻ (cửa hàng trưởng), phòng kế toán (đối chiếu tiền mặt) |
 | Ngày tạo | 12/11/2026 |
-| Trạng thái | Nháp |
+| Trạng thái | **Đã chốt 13/11/2026** — người dùng (Võ Hoàng) chốt theo đề xuất của nhóm POS, sai thì sửa sau; phòng kế toán xác nhận lại theo tệp *Nghiep-vu-ban-hang-POS-2026-11-13-da-chot.xlsx* |
+
+<!-- [2026-11-13 02:10 PM Võ Hoàng] CHOT-0 — đợt 0: chốt nghiệp vụ theo đề xuất (đóng góp) -->
+**Chốt 13/11/2026:**
+- Q1 — chênh lệch két khi chốt ca: **lập chứng từ** — thiếu Nợ 1381 / Có 1111, thừa Nợ 1111 / Có 3381 (kế toán đổi tài khoản được). Đổi so với mặc định tạm (không lập): làm ở đợt Cài đặt bán hàng; tới lúc đó vẫn chỉ lưu biên bản ca.
+- Q2 — không bắt buộc mở ca (mặc định), bật được ở BH17 (`bizcity.pos.require_open_shift`).
+- Q3 — một ca chung / chi nhánh.
 
 Căn cứ: màn Chốt ca / Tổng quan của POS hiện tại; hợp đồng máy bán `openapi/pos.yaml` (Ca bán, Báo cáo).
 

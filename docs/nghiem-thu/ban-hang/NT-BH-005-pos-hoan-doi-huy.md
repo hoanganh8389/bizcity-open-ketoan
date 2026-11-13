@@ -7,7 +7,15 @@
 | Màn hình | Máy bán POS React (`/pos/returns`, hộp *Hoàn hàng*, nút *Đổi hàng*); phía kế toán: ACC14, Sổ cái, Nhật ký bán hàng |
 | Bộ phận yêu cầu | Phòng kế toán, bộ phận bán lẻ, bộ phận kinh doanh (duyệt quá hạn) |
 | Ngày tạo | 11/11/2026 |
-| Trạng thái | Nháp |
+| Trạng thái | **Đã chốt 13/11/2026** — người dùng (Võ Hoàng) chốt theo đề xuất của nhóm POS, sai thì sửa sau; phòng kế toán xác nhận lại theo tệp *Nghiep-vu-ban-hang-POS-2026-11-13-da-chot.xlsx* |
+
+<!-- [2026-11-13 02:10 PM Võ Hoàng] CHOT-0 — đợt 0: chốt nghiệp vụ theo đề xuất (đóng góp) -->
+**Chốt 13/11/2026:**
+- Tài khoản hàng bán bị trả lại **52131** (R12) — bảng tài khoản ngầm định ACC41 đang ghi 5212 / 5213, chỉnh cho khớp ở đợt Cài đặt bán hàng.
+- Hạn trả 3 ngày (tham số BH17); quá hạn và đổi sang hàng rẻ hơn (trả tiền chênh) do **bộ phận kinh doanh** duyệt, lưu tên người duyệt (K20, R8).
+- Trả ở cửa hàng khác cùng mã số thuế: ghi ở cửa hàng nhận trả (chi tiền, nhập kho), phiếu trả nối đơn gốc (R2).
+- Tiền hoàn theo tiền khách đã trả của dòng, chia theo số lượng, lần cuối lấy phần còn lại (R3, R4); trả bằng tiền mặt hoặc chuyển khoản (R6); bắt trả kèm quà (K21, R5); không hoàn voucher (R13); trả hàng trừ lại điểm theo tỉ lệ (R7, đợt điểm).
+- Huỷ đơn: theo ghi sổ ngay — đơn chưa thu tiền (chờ QR) huỷ được, chứng từ tự huỷ; đơn đã thu tiền không huỷ, lập phiếu trả (R9, R11); bắt ghi lý do (R10).
 
 Căn cứ: biên bản họp phòng kế toán 04/11/2026 (câu G1, G2: hạn 3 ngày là tham số, quá hạn bộ phận kinh doanh duyệt, chỉ trả ở cửa hàng cùng mã số thuế, trả hàng chính thì quà trả theo, đổi hàng bằng hoặc cao hơn giá trị). Các câu còn mở ghi ở bảng *Nghiệp vụ bán hàng POS – đã chốt / cần chốt* (11/11/2026) mục 8.4 (R2–R13).
 

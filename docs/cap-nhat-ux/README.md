@@ -30,3 +30,4 @@ Việc tiếp theo: [02-viec-tiep-theo.md](02-viec-tiep-theo.md).
 6. Danh sách trống: `Empty` có `actions` (nút Thêm / Nhập Excel).
 7. Bảng lọc bên trái: khoảng ngày dùng `SideKy` (có ô Kỳ chọn nhanh).
 | 12 | [13-khung-menu.md](13-khung-menu.md) | Menu theo phân hệ kế toán chuẩn, việc chưa có ghi "đang phát triển", trang Quy trình (lưu đồ + 5 báo cáo chính), Phần riêng bật / tắt, Thiết lập ở nút bánh răng, tên màn một nơi |
+| 14 | [14-luong-chi-tiet-dung-chung.md](14-luong-chi-tiet-dung-chung.md) | Khuôn Luồng chi tiết dùng chung cho trang Quy trình (khoá theo nhóm menu); Bán hàng làm đầu tiên, Mua hàng / Danh mục chuyển sang khai dữ liệu — chữ chốt, chưa làm <!-- [2026-11-13 02:10 PM Võ Hoàng] UX-14 (đóng góp) --> |
