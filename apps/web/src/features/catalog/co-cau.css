@@ -95,3 +95,6 @@
 .cc-loai-opt input { margin: 0; }
 .cc-loai-opt.on { border-color: var(--nav, #2457b3); background: #eef4ff; font-weight: 600; }
 .cc-loai-opt.dis { opacity: .45; cursor: default; }
+
+.cc-xem { margin-left: auto; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.cc-xem .muted { font-size: 12.5px; margin-right: 2px; }

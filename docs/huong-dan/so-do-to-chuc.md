@@ -34,14 +34,19 @@ Cấp tự tính theo cây (gốc = cấp 0), không gõ tay.
 
 ## Thao tác
 
-- **Một bảng** dạng cây: Mã · Tên · Loại · MST · Ghi chú · Theo dõi. Bấm mũi tên để mở nhánh; ô tìm lọc theo mã, tên.
+- **Xem**: *Cây* (bấm một dòng là mở / đóng nhánh), *Sơ đồ*, hoặc danh sách kiểu Excel theo loại — *Cơ cấu*, *Cửa hàng*, *Kho*, *Phòng ban*, *Tất cả*:
+  có hàng lọc dưới tiêu đề để lọc từng cột, bấm tiêu đề để sắp xếp, nút Cột để ẩn / hiện cột, kéo cột lên để nhóm, **Xuất danh sách này**.
 - **Thêm**: chọn dòng làm nút cha (không chọn = công ty mới), bấm Thêm. Trong hộp thoại chọn **Loại** trước; ô **Thuộc** chỉ cho chọn nút cha hợp lệ
   (kho → cửa hàng; cửa hàng, cơ cấu, phòng ban → công ty / cơ cấu). Các ô riêng của loại hiện ngay trong hộp.
 - **Xem / sửa**: bấm đúp một dòng. Hộp thoại mở ở chế độ xem, bấm **Sửa** mới sửa. Đổi nơi thuộc, đổi MST thì chọn **Áp dụng từ ngày** — chứng từ trước ngày đó giữ như cũ.
 - Cuối hộp thoại: **Bên trong** (đếm cơ cấu, cửa hàng, kho, phòng ban) và **Lịch sử thay đổi** (thời gian, người làm, việc, ô nào đổi từ gì sang gì).
 - **Sơ đồ**: khối công ty / cơ cấu, mỗi khối ghi số cửa hàng, kho, phòng ban bên trong; bấm khối mở hộp thoại của nút đó.
 - **Chưa xếp vào cơ cấu**: cửa hàng chưa gắn cơ cấu, phòng ban chưa đặt chỗ — mở từng dòng, Sửa ô Thuộc.
-- **Xuất / Nhập Excel**, **Quay về dữ liệu gốc** như trước.
+- **Xuất**: tệp 4 sheet *Cơ cấu*, *Cửa hàng*, *Kho*, *Phòng ban* — cũng là mẫu để nhập.
+- **Nhập Excel**: sửa tệp vừa xuất (thêm dòng mới, đổi tên, đổi Thuộc…) rồi nhập lại. Mã chưa có → thêm; mã đã có → chỉ sửa ô khác đi;
+  bỏ cột nào khỏi tệp thì cột đó giữ nguyên. Xem trước số dòng thêm / sửa / lỗi rồi mới bấm Ghi; có lỗi thì không ghi gì.
+- Trong hộp thoại, mở một mục ở danh sách "Thuộc …" để đi sâu; nút **Quay lại** ở chân hộp thoại lùi về mục vừa xem.
+- **Quay về dữ liệu gốc** như trước.
 
 Không có nút Xoá dữ liệu đã lưu: ngừng dùng bằng cách bỏ tích **Theo dõi**.
 

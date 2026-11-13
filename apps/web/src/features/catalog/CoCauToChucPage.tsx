@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, ChevronDown, ChevronRight, FileDown, FileUp, FolderOpen, Network, Plus, RefreshCw, RotateCcw, Store, Users, Warehouse as WarehouseIcon } from 'lucide-react';
+import { ArrowLeft, Building2, ChevronDown, ChevronRight, FileDown, FileUp, FolderOpen, Network, Plus, RefreshCw, RotateCcw, Store, Users, Warehouse as WarehouseIcon } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
@@ -26,12 +26,12 @@ import type { Branch } from './BranchesPage';
 import { useWarehouses, type Warehouse } from './WarehousesPage';
 import { useWarehouseTypes } from './WarehouseTypesPage';
 import type { DimRow } from './DimensionsPage';
-import { ImportForm } from './OrgUnitsPage';
+import { DanhSachLoai, NhapCoCau, xuatCoCau, type KieuDs } from './CoCauExcel';
 import './co-cau.css';
 
 export type Loai = 'company' | 'unit' | 'branch' | 'warehouse' | 'department' | 'none';
-const LOAI_TEN: Record<Loai, string> = { company: 'Công ty', unit: 'Cơ cấu', branch: 'Cửa hàng', warehouse: 'Kho', department: 'Phòng ban', none: '' };
-const LOAI_ICON: Record<Loai, ReactNode> = {
+export const LOAI_TEN: Record<Loai, string> = { company: 'Công ty', unit: 'Cơ cấu', branch: 'Cửa hàng', warehouse: 'Kho', department: 'Phòng ban', none: '' };
+export const LOAI_ICON: Record<Loai, ReactNode> = {
   company: <Building2 size={14} />, unit: <Network size={14} />, branch: <Store size={14} />, warehouse: <WarehouseIcon size={14} />, department: <Users size={14} />, none: <FolderOpen size={14} />,
 };
 /** Loại cha hợp lệ của từng loại. */
@@ -44,10 +44,10 @@ export interface CNode {
   org?: OrgNode; branch?: Branch; warehouse?: Warehouse; dept?: DimRow;
 }
 
-const NONE_KEY = 'x:none';
-const homNay = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
-const loaiNhan = (n: CNode) => (n.loai === 'unit' ? `Cơ cấu cấp ${n.depth}` : LOAI_TEN[n.loai]);
-const off = (n: { code: string; isActive: boolean }) => !n.isActive || /_OFF$/i.test(n.code);
+export const NONE_KEY = 'x:none';
+export const homNay = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+export const loaiNhan = (n: CNode) => (n.loai === 'unit' ? `Cơ cấu cấp ${n.depth}` : LOAI_TEN[n.loai]);
+export const off = (n: { code: string; isActive: boolean }) => !n.isActive || /_OFF$/i.test(n.code);
 const MST_OK = /^[0-9]{10}(-[0-9]{3})?$/;
 
 /** Gom 4 nguồn (cơ cấu, cửa hàng, kho, phòng ban chung) thành một cây. */
@@ -97,7 +97,7 @@ export function useCoCau() {
     refetch: () => { void org.refetch(); void branches.refetch(); void whs.refetch(); void deps.refetch(); },
   };
 }
-type CC = ReturnType<typeof useCoCau>;
+export type CC = ReturnType<typeof useCoCau>;
 
 export function CoCauToChucPage() {
   const { can } = useAuth();
@@ -105,8 +105,12 @@ export function CoCauToChucPage() {
   const qc = useQueryClient();
   const cc = useCoCau();
   const [sel, setSel] = useState<string | null>(null);
-  const [view, setView] = useState<'table' | 'chart'>('table');
-  const [form, setForm] = useState<{ key: string | null; parentKey: string | null } | null>(null);
+  // [2026-11-13 Nguyễn Văn Thủy] kiểu xem: cây, sơ đồ, hoặc danh sách kiểu Excel theo loại (đóng góp)
+  const [view, setView] = useState<'table' | 'chart' | KieuDs>('table');
+  const [showOff, setShowOff] = useState(false);
+  const listExport = useRef<(() => void) | null>(null);
+  /** back: các nút đã đi qua (bấm đúp dòng bên trong) để Quay lại. */
+  const [form, setForm] = useState<{ key: string | null; parentKey: string | null; back?: string[] } | null>(null);
   const [imp, setImp] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -120,23 +124,6 @@ export function CoCauToChucPage() {
     onError: (e) => setMsg({ ok: false, text: errorText(e) }),
   });
 
-  const exportExcel = async () => {
-    const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan());
-    const rows: (string | number)[][] = [['Loại', 'Mã', 'Tên', 'Thuộc (mã)', 'MST', 'Ghi chú', 'Theo dõi']];
-    const walk = (list: CNode[]) => { for (const n of list) { if (n.loai !== 'none') { const p = n.parentKey ? cc.byKey.get(n.parentKey) : null; rows.push([loaiNhan(n), n.code, n.name, p?.code ?? '', mstOf(n), ghiChu(n, cc), off(n) ? '' : 'x']); } walk(cc.kids.get(n.key) ?? []); } };
-    walk(cc.roots);
-    const nodes = [...(cc.orgTree?.nodes ?? [])].sort((a, b) => a.path.localeCompare(b.path));
-    const s2 = [['Mã', 'Tên', 'Mã cha', 'MST', 'Mô tả', 'Đường dẫn']].concat(nodes.map((n) => [n.code, n.name, n.parentCode ?? '', n.taxId ?? '', n.note, n.path]));
-    const s3 = [['Mã chi nhánh', 'Tên chi nhánh', 'Mã nút']].concat((cc.orgTree?.branches ?? []).map((b) => [b.code, b.name, b.orgCode ?? '']));
-    const wb = XLSX.utils.book_new();
-    for (const [name, data, cols] of [['Cơ cấu', rows, [16, 14, 40, 14, 16, 30, 9]], ['Nút', s2, [14, 40, 12, 16, 30, 30]], ['Gắn chi nhánh', s3, [16, 36, 12]]] as const) {
-      const ws = XLSX.utils.aoa_to_sheet(data as unknown as string[][]);
-      ws['!cols'] = cols.map((wch) => ({ wch }));
-      XLSX.utils.book_append_sheet(wb, ws, name);
-    }
-    XLSX.writeFile(wb, 'co-cau-to-chuc.xlsx');
-  };
-
   const selNode = sel ? cc.byKey.get(sel) : null;
   const addParent = selNode && selNode.loai !== 'none' && selNode.loai !== 'department' ? (selNode.loai === 'warehouse' ? selNode.parentKey : selNode.key) : null;
   return (
@@ -146,11 +133,13 @@ export function CoCauToChucPage() {
         <div className="cc-toolbar">
           {canWrite && <button className="btn btn-sm btn-primary" title="Thêm vào dưới dòng đang chọn (chưa chọn: thêm công ty mới)" onClick={() => { setMsg(null); setForm({ key: null, parentKey: addParent }); }}><Plus size={14} /> Thêm</button>}
           <button className="btn btn-sm" onClick={cc.refetch}><RefreshCw size={14} /> Nạp</button>
-          <button className="btn btn-sm" onClick={() => void exportExcel()}><FileDown size={14} /> Xuất</button>
+          <button className="btn btn-sm" title="Tệp 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — sửa rồi Nhập Excel lại được" onClick={() => void xuatCoCau(cc)}><FileDown size={14} /> Xuất</button>
           {canWrite && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
-            <button className={`btn btn-sm${view === 'table' ? ' btn-primary' : ''}`} onClick={() => setView('table')}>Bảng</button>
-            <button className={`btn btn-sm${view === 'chart' ? ' btn-primary' : ''}`} onClick={() => setView('chart')}>Sơ đồ</button>
+          <div className="cc-xem">
+            <span className="muted">Xem:</span>
+            {([['table', 'Cây'], ['chart', 'Sơ đồ'], ['org', 'Cơ cấu'], ['branch', 'Cửa hàng'], ['warehouse', 'Kho'], ['department', 'Phòng ban'], ['all', 'Tất cả']] as const).map(([k, t]) => (
+              <button key={k} className={`btn btn-sm${view === k ? ' btn-primary' : ''}`} title={k === 'table' || k === 'chart' ? undefined : `Danh sách ${t.toLowerCase()} dạng bảng: lọc từng cột, sắp xếp, xuất Excel`} onClick={() => setView(k)}>{t}</button>
+            ))}
           </div>
           {can('settings:write') && <button className="btn btn-sm" disabled={restore.isPending} title="Đặt lại cây và việc gắn cửa hàng theo tệp gốc" onClick={() => restore.mutate()}><RotateCcw size={14} /> Quay về dữ liệu gốc</button>}
         </div>
@@ -158,19 +147,31 @@ export function CoCauToChucPage() {
         <ErrorBox error={cc.error ? errorText(cc.error) : null} />
         <div style={{ padding: '0 12px 12px' }}>
           {cc.loading ? <Loading /> : view === 'table'
-            ? <BangCoCau cc={cc} selected={sel} onSelect={setSel} onOpen={(n) => n.loai !== 'none' && setForm({ key: n.key, parentKey: n.parentKey })} />
-            : <SoDoCoCau cc={cc} selected={sel} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} />}
+            ? <BangCoCau cc={cc} selected={sel} onSelect={setSel} onOpen={(n) => n.loai !== 'none' && setForm({ key: n.key, parentKey: n.parentKey })} showOff={showOff} setShowOff={setShowOff} />
+            : view === 'chart' ? <SoDoCoCau cc={cc} selected={sel} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} />
+            : (
+              <>
+                <div className="cc-filter">
+                  <label className="checkbox"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện đã ngừng</label>
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => listExport.current?.()}><FileDown size={13} /> Xuất danh sách này</button>
+                  <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Gõ vào hàng lọc dưới tiêu đề để lọc từng cột · bấm đúp một dòng để xem / sửa</span>
+                </div>
+                <DanhSachLoai cc={cc} kieu={view} showOff={showOff} exportRef={listExport} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} />
+              </>
+            )}
         </div>
       </div>
       {form && <NutForm key={form.key ?? `new:${form.parentKey}`} cc={cc} nodeKey={form.key} parentKey={form.parentKey} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }}
-        onGo={(key) => { setSel(key); setForm({ key, parentKey: null }); }} onAdd={(parentKey) => setForm({ key: null, parentKey })} />}
-      {imp && <ImportForm onClose={() => setImp(false)} onSaved={(text) => { setImp(false); invalidateOrg(qc); setMsg({ ok: true, text }); }} />}
+        onGo={(key) => { setSel(key); setForm((x) => ({ key, parentKey: null, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] })); }}
+        onBack={form.back?.length ? () => { const back = [...form.back!]; const key = back.pop()!; setSel(key); setForm({ key, parentKey: null, back }); } : undefined}
+        onAdd={(parentKey) => setForm((x) => ({ key: null, parentKey, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] }))} />}
+      {imp && <NhapCoCau cc={cc} onClose={() => setImp(false)} onDone={(text) => { setImp(false); setMsg({ ok: true, text }); }} />}
     </>
   );
 }
 
-const mstOf = (n: CNode) => n.org?.taxId ?? n.branch?.taxCode ?? (n.warehouse ? n.warehouse.taxId ?? '' : '');
-function ghiChu(n: CNode, cc: CC): string {
+export const mstOf = (n: CNode) => n.org?.taxId ?? n.branch?.taxCode ?? (n.warehouse ? n.warehouse.taxId ?? '' : '');
+export function ghiChu(n: CNode, cc: CC): string {
   if (n.org) return n.org.note;
   if (n.branch) return n.branch.departmentCode ? `Phòng ban ${n.branch.departmentCode}` : '';
   if (n.warehouse) { const t = n.warehouse.typeName || n.warehouse.typeCode; return [t, n.warehouse.isDefault ? 'kho mặc định' : ''].filter(Boolean).join(' · '); }
@@ -181,11 +182,11 @@ function ghiChu(n: CNode, cc: CC): string {
 
 /* ------------------------------------------------------------------ bảng cây */
 
-function BangCoCau({ cc, selected, onSelect, onOpen }: { cc: CC; selected: string | null; onSelect: (key: string) => void; onOpen: (n: CNode) => void }) {
+function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc: CC; selected: string | null; onSelect: (key: string) => void; onOpen: (n: CNode) => void; showOff: boolean; setShowOff: (v: boolean) => void }) {
   const [open, setOpen] = useState<Set<string>>(() => new Set(cc.nodes.filter((n) => n.org && n.depth < 1).map((n) => n.key)));
   const [q, setQ] = useState('');
-  const [show, setShow] = useState({ warehouse: true, off: false });
-  const visible = (n: CNode) => (n.loai !== 'warehouse' || show.warehouse) && (show.off || !off(n));
+  const [show, setShow] = useState({ warehouse: true });
+  const visible = (n: CNode) => (n.loai !== 'warehouse' || show.warehouse) && (showOff || !off(n));
   const words = plain(q).split(/\s+/).filter(Boolean);
   const hit = useMemo(() => {
     if (!words.length) return null;
@@ -201,7 +202,7 @@ function BangCoCau({ cc, selected, onSelect, onOpen }: { cc: CC; selected: strin
       const kids = (cc.kids.get(n.key) ?? []).filter(visible);
       const o = hit ? true : open.has(n.key);
       out.push(
-        <tr key={n.key} className={`cc-tr cc-${n.loai}${selected === n.key ? ' on' : ''}${off(n) ? ' muted' : ''}`} onClick={() => onSelect(n.key)} onDoubleClick={() => onOpen(n)}>
+        <tr key={n.key} className={`cc-tr cc-${n.loai}${selected === n.key ? ' on' : ''}${off(n) ? ' muted' : ''}`} onClick={() => { onSelect(n.key); if (kids.length && !hit) toggle(n.key); }} onDoubleClick={() => onOpen(n)} title="Bấm: mở / đóng nhánh · bấm đúp: xem / sửa">
           <td>
             <div className="cc-cell" style={{ paddingLeft: n.depth * 18 }}>
               <button type="button" className="cc-tog" disabled={!kids.length} onClick={(e) => { e.stopPropagation(); toggle(n.key); }}>{kids.length ? (o ? <ChevronDown size={13} /> : <ChevronRight size={13} />) : null}</button>
@@ -225,10 +226,10 @@ function BangCoCau({ cc, selected, onSelect, onOpen }: { cc: CC; selected: strin
       <div className="cc-filter">
         <input className="input" style={{ width: 320 }} placeholder="Tìm mã, tên" value={q} onChange={(e) => setQ(e.target.value)} />
         <label className="checkbox"><input type="checkbox" checked={show.warehouse} onChange={(e) => setShow((s) => ({ ...s, warehouse: e.target.checked }))} /> Hiện kho</label>
-        <label className="checkbox"><input type="checkbox" checked={show.off} onChange={(e) => setShow((s) => ({ ...s, off: e.target.checked }))} /> Hiện đã ngừng</label>
+        <label className="checkbox"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện đã ngừng</label>
         <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set(cc.nodes.filter((n) => n.org).map((n) => n.key)))}>Mở hết cơ cấu</button>
         <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set())}>Thu gọn</button>
-        <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Bấm đúp một dòng để xem / sửa</span>
+        <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Bấm một dòng: mở / đóng nhánh · bấm đúp: xem / sửa</span>
       </div>
       <div className="table-wrap cc-table">
         <table className="grid">
@@ -294,13 +295,13 @@ function SoDoCoCau({ cc, selected, onOpen }: { cc: CC; selected: string | null; 
 
 /* ------------------------------------------------------------------ một hộp thoại cho mọi loại */
 
-interface F {
+export interface F {
   loai: Exclude<Loai, 'none'>; parentKey: string | null; code: string; name: string; note: string; isActive: boolean;
   taxId: string; validFrom: string;
   /** cửa hàng */ address: string; phone: string; companyName: string; departmentCode: string;
   /** kho */ typeCode: string; isDefault: boolean;
 }
-function formOf(n: CNode | null, parentKey: string | null, cc: CC): F {
+export function formOf(n: CNode | null, parentKey: string | null, cc: CC): F {
   const base: F = { loai: 'unit', parentKey, code: '', name: '', note: '', isActive: true, taxId: '', validFrom: homNay(), address: '', phone: '', companyName: '', departmentCode: '', typeCode: 'KHH', isDefault: false };
   if (!n) {
     const p = parentKey ? cc.byKey.get(parentKey) : null;
@@ -314,7 +315,7 @@ function formOf(n: CNode | null, parentKey: string | null, cc: CC): F {
   return f;
 }
 
-function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onAdd }: { cc: CC; nodeKey: string | null; parentKey: string | null; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void }) {
+function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onAdd, onBack }: { cc: CC; nodeKey: string | null; parentKey: string | null; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void; /** Lùi về nút vừa xem. */ onBack?: () => void }) {
   const qc = useQueryClient();
   const node = nodeKey ? cc.byKey.get(nodeKey) ?? null : null;
   const isNew = !node;
@@ -332,43 +333,9 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onA
   const parentOk = !f.parentKey || CHA[f.loai].includes(parent?.loai ?? 'none');
   const changedPlace = !isNew && (f.parentKey !== start.parentKey || ((f.loai === 'company' || f.loai === 'unit') && f.taxId !== start.taxId));
   const taxBad = f.taxId !== '' && !MST_OK.test(f.taxId) && f.loai !== 'branch';
-  const orgOf = (k: string | null) => (k ? cc.byKey.get(k)?.org?.code ?? null : null);
 
   const save = useMutation({
-    mutationFn: async (): Promise<string> => {
-      const code = f.code.trim(), name = f.name.trim();
-      const vf = changedPlace ? f.validFrom || null : null;
-      if (f.loai === 'company' || f.loai === 'unit') {
-        const body = { kind: f.loai, name, note: f.note, taxId: f.taxId.trim(), validFrom: vf };
-        if (isNew) await api.post('/api/v1/org-units', { ...body, code, parentCode: orgOf(f.parentKey) });
-        else await api.patch(`/api/v1/org-units/${encodeURIComponent(node!.code)}`, { ...body, isActive: f.isActive, ...(f.parentKey !== start.parentKey ? { parentCode: orgOf(f.parentKey) } : {}) });
-        return `o:${isNew ? code : node!.code}`;
-      }
-      if (f.loai === 'branch') {
-        const body = { name, note: f.note, taxCode: f.taxId.trim(), address: f.address, phone: f.phone, companyName: f.companyName };
-        if (isNew) {
-          await api.post('/api/v1/branches', { ...body, code });
-          if (f.parentKey) await api.patch(`/api/v1/branches/${encodeURIComponent(code)}`, { orgUnitCode: orgOf(f.parentKey) });
-          return `b:${code}`;
-        }
-        await api.patch(`/api/v1/branches/${encodeURIComponent(node!.code)}`, {
-          ...body, isActive: f.isActive, departmentCode: f.departmentCode || null,
-          ...(code && code !== node!.code ? { newCode: code } : {}),
-          ...(f.parentKey !== start.parentKey ? { orgUnitCode: orgOf(f.parentKey), validFrom: vf } : {}),
-        });
-        return `b:${code || node!.code}`;
-      }
-      if (f.loai === 'warehouse') {
-        const branchCode = parent?.branch?.code ?? '';
-        const body = { branchCode, name, note: f.note, address: f.address, isActive: f.isActive, isDefault: f.isDefault, typeCode: f.typeCode || 'KHH' };
-        if (isNew) await api.post('/api/v1/warehouses', { ...body, code });
-        else await api.patch(`/api/v1/warehouses/${encodeURIComponent(node!.code)}`, body);
-        return `w:${isNew ? code : node!.code}`;
-      }
-      const extra = { ...(node?.dept?.extra ?? {}), orgUnitCode: orgOf(f.parentKey) ?? '' };
-      await api.put(`/api/v1/dimensions/department/${encodeURIComponent(isNew ? code : node!.code)}`, { name, parentCode: node?.dept?.parentCode || undefined, note: f.note, isActive: f.isActive, extra });
-      return `d:${isNew ? code : node!.code}`;
-    },
+    mutationFn: () => luuNut(cc, f, node, start, changedPlace ? f.validFrom || null : null),
     onSuccess: (key) => {
       invalidateOrg(qc);
       for (const k of [['warehouses'], ['dimensions', 'department'], ['co-cau-history']]) void qc.invalidateQueries({ queryKey: k });
@@ -385,7 +352,7 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onA
   const ok = f.name.trim() && f.code.trim() && parentOk && !taxBad && (!needParent || parent?.branch);
   return (
     <Modal wide viewAgain={viewAgain} viewFirst={!isNew} title={title.charAt(0).toUpperCase() + title.slice(1)} onClose={onClose} helpKey="so-do-to-chuc"
-      footer={<>{canWrite && <button className="btn btn-primary" disabled={!ok || save.isPending} onClick={() => save.mutate()}>Ghi</button>}<button className="btn" onClick={onClose}>Thoát</button></>}>
+      footer={<>{onBack && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Lùi về nút vừa xem" onClick={onBack}><ArrowLeft size={14} /> Quay lại</button>}{canWrite && <button className="btn btn-primary" disabled={!ok || save.isPending} onClick={() => save.mutate()}>Ghi</button>}<button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label="Loại (*)" full tip="Công ty: đơn vị pháp lý có MST. Cơ cấu: cấp quản lý (miền, chi nhánh, tỉnh…). Cửa hàng: điểm bán / chi nhánh hạch toán. Kho: thuộc một cửa hàng. Phòng ban: phòng ban chung">
         <div className="cc-loai-pick">
           {(['company', 'unit', 'branch', 'warehouse', 'department'] as const).map((l) => (
@@ -447,6 +414,48 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onA
   );
 }
 
+/**
+ * Ghi một nút theo loại — dùng chung cho hộp thoại và Nhập Excel. start = giá trị trước khi sửa (null = thêm mới).
+ * Trả khoá nút (o: / b: / w: / d: + mã).
+ */
+export async function luuNut(cc: CC, f: F, node: CNode | null, start: F | null, validFrom: string | null): Promise<string> {
+  const isNew = !node;
+  const orgOf = (k: string | null) => (k ? cc.byKey.get(k)?.org?.code ?? (k.startsWith('o:') ? k.slice(2) : null) : null);
+  const code = f.code.trim(), name = f.name.trim();
+  const moved = !isNew && f.parentKey !== (start?.parentKey ?? null);
+  if (f.loai === 'company' || f.loai === 'unit') {
+    const body = { kind: f.loai, name, note: f.note, taxId: f.taxId.trim(), validFrom };
+    if (isNew) await api.post('/api/v1/org-units', { ...body, code, parentCode: orgOf(f.parentKey) });
+    else await api.patch(`/api/v1/org-units/${encodeURIComponent(node.code)}`, { ...body, isActive: f.isActive, ...(moved ? { parentCode: orgOf(f.parentKey) } : {}) });
+    return `o:${isNew ? code : node.code}`;
+  }
+  if (f.loai === 'branch') {
+    const body = { name, note: f.note, taxCode: f.taxId.trim(), address: f.address, phone: f.phone, companyName: f.companyName };
+    if (isNew) {
+      await api.post('/api/v1/branches', { ...body, code });
+      const extra = { ...(f.parentKey ? { orgUnitCode: orgOf(f.parentKey) } : {}), ...(f.departmentCode ? { departmentCode: f.departmentCode } : {}), ...(f.isActive ? {} : { isActive: false }) };
+      if (Object.keys(extra).length) await api.patch(`/api/v1/branches/${encodeURIComponent(code)}`, extra);
+      return `b:${code}`;
+    }
+    await api.patch(`/api/v1/branches/${encodeURIComponent(node.code)}`, {
+      ...body, isActive: f.isActive, departmentCode: f.departmentCode || null,
+      ...(code && code !== node.code ? { newCode: code } : {}),
+      ...(moved ? { orgUnitCode: orgOf(f.parentKey), validFrom } : {}),
+    });
+    return `b:${code || node.code}`;
+  }
+  if (f.loai === 'warehouse') {
+    const branchCode = f.parentKey ? (cc.byKey.get(f.parentKey)?.branch?.code ?? f.parentKey.replace(/^b:/, '')) : '';
+    const body = { branchCode, name, note: f.note, address: f.address, isActive: f.isActive, isDefault: f.isDefault, typeCode: f.typeCode || 'KHH' };
+    if (isNew) await api.post('/api/v1/warehouses', { ...body, code });
+    else await api.patch(`/api/v1/warehouses/${encodeURIComponent(node.code)}`, body);
+    return `w:${isNew ? code : node.code}`;
+  }
+  const extra = { ...(node?.dept?.extra ?? {}), orgUnitCode: orgOf(f.parentKey) ?? '' };
+  await api.put(`/api/v1/dimensions/department/${encodeURIComponent(isNew ? code : node.code)}`, { name, parentCode: node?.dept?.parentCode || undefined, note: f.note, isActive: f.isActive, extra });
+  return `d:${isNew ? code : node.code}`;
+}
+
 /* ------------------------------------------------------------------ bên trong */
 
 // [2026-11-13 Nguyễn Văn Thủy] bấm một nút (trên bảng hay sơ đồ) thấy ngay bên trong có gì: danh sách theo loại, bấm đúp đi tiếp (đóng góp)
@@ -459,15 +468,18 @@ function BenTrong({ cc, node, text, onGo, onAdd }: { cc: CC; node: CNode; text: 
   return (
     <div className="full" data-view-ok>
       <div className="field-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span>Bên trong{text ? `: ${text}` : ''}</span>
+        <span>Thuộc {node.name}{text ? `: ${text}` : ''}</span>
         {onAdd && <button type="button" className="btn btn-sm" style={{ marginLeft: 'auto' }} onClick={onAdd}><Plus size={13} /> Thêm vào đây</button>}
       </div>
-      {!all.length ? <div className="muted" style={{ fontSize: 13 }}>Chưa có gì bên trong{onAdd ? ' — bấm Thêm vào đây' : ''}.</div> : (
+      {!all.length ? <div className="muted" style={{ fontSize: 13 }}>Chưa có mục nào{onAdd ? ' — bấm Thêm vào đây để thêm' : ''}.</div> : (
         <>
-          <div className="cc-in" style={{ margin: '4px 0' }}>
-            <button type="button" className={`cc-chip${loai === 'direct' ? ' on' : ''}`} onClick={() => setLoai('direct')}>Trực tiếp ({direct.length})</button>
-            {kinds.map((l) => <button key={l} type="button" className={`cc-chip${loai === l ? ' on' : ''}`} onClick={() => setLoai(l)}>{LOAI_ICON[l]} {LOAI_TEN[l]} ({all.filter((x) => x.loai === l).length})</button>)}
-          </div>
+          {/* Chỉ một loại, không có cấp sâu hơn: không cần nút chọn, hiện thẳng danh sách */}
+          {!(kinds.length === 1 && direct.length === all.length) && (
+            <div className="cc-in" style={{ margin: '4px 0' }}>
+              <button type="button" className={`cc-chip${loai === 'direct' ? ' on' : ''}`} title="Chỉ các mục nằm ngay dưới, chưa mở các cấp sâu hơn" onClick={() => setLoai('direct')}>Cấp ngay dưới ({direct.length})</button>
+              {kinds.map((l) => <button key={l} type="button" className={`cc-chip${loai === l ? ' on' : ''}`} title={`Mọi ${LOAI_TEN[l].toLowerCase()} trong nhánh này, kể cả các cấp sâu hơn`} onClick={() => setLoai(l)}>{LOAI_ICON[l]} {LOAI_TEN[l]} ({all.filter((x) => x.loai === l).length})</button>)}
+            </div>
+          )}
           <div className="table-wrap" style={{ maxHeight: 240 }}>
             <table className="grid cc-log">
               <thead><tr><th title="Loại nút">Loại</th><th title="Mã">Mã</th><th title="Tên">Tên</th><th title="Nút chứa trực tiếp">Thuộc</th></tr></thead>
