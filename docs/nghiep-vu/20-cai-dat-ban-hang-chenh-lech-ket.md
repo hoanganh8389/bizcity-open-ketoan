@@ -26,7 +26,9 @@ Phiếu nghiệm thu: [NT-BH-014](../nghiem-thu/ban-hang/NT-BH-014-cai-dat-ban-h
 - Bật / tắt bằng khoá mới của module: `bizcity.pos.cash_diff_journal` (boolean, mặc định **bật** theo chốt Q1). Mã hai lý do giữ ở khoá `bizcity.pos.cash_diff_reasons` (`{ short, over }`, mặc định như bảng trên).
 - Đã chọn không làm: Kernel tự sinh phiếu từ biên bản ca (ngoài phạm vi phân hệ); lập phiếu thu / chi tiền mặt (chênh lệch chưa rõ nguyên nhân là tài sản thiếu / thừa chờ xử lý, không phải thu / chi).
 
-**B — sửa dữ liệu mẫu và đơn vị đang có, không đổi code định khoản.**
+**B — sửa dữ liệu mẫu và đơn vị đang có, không đổi code định khoản.** <!-- [2026-11-13 08:00 PM Võ Hoàng] NGHIEM-THU — phần B chuyển cho Nguyễn Văn Thủy (người làm bảng loại 0126): chờ xác nhận danh mục tài khoản thật của TGS (5212 / 5213) trước khi sửa (đóng góp) -->
+
+> **13/11 tối:** phần B **chuyển cho Thủy** (người làm bảng loại 0126), làm ở dòng giữ chỗ riêng sau khi kế toán TGS xác nhận 5212 / 5213 trong danh mục tài khoản thật. Hướng sửa dưới đây là đề xuất, chưa chốt. Đợt 3 Bán hàng chỉ làm A và C.
 - `tai-khoan-ngam-dinh-theo-loai.jsonl`: các dòng **Hàng bán trả lại** (cột TK trả lại) lọc `3387; 5213; 711`, mặc định `5213`. Các dòng **Giảm giá hàng bán** (cột TK giảm giá) lọc `3387; 5212; 711`, mặc định `5212`. Dòng đại lý / uỷ thác (331, 3388) giữ nguyên.
 - Migration `0132_tai_khoan_tra_lai_5213.sql`: đổi đúng các cột đó ở `account_default_types` của mọi đơn vị.
   - Chỉ đổi lọc khi lọc còn đúng giá trị gốc của 0126 (kế toán đã sửa tay thì giữ).
