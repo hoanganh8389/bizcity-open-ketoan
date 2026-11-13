@@ -100,6 +100,7 @@ export function recompute(doc: TradeDoc): TradeDoc {
 export type DataSource = 'mock' | 'api';
 const SRC_KEY = 'ketoan.datasource.';
 export function getSource(kind: TradeKind): DataSource {
+  if (MODULE_ENDPOINT[kind]) return 'api';
   try { return localStorage.getItem(SRC_KEY + kind) === 'api' ? 'api' : 'mock'; } catch { return 'mock'; }
 }
 export function setSource(kind: TradeKind, s: DataSource) {
@@ -108,6 +109,10 @@ export function setSource(kind: TradeKind, s: DataSource) {
 
 /** Endpoint ĐỀ XUẤT cho API thật (một tài nguyên chung, lọc theo docType) — xem docs/api/13-phieu-nhap-tay.md. */
 export const TRADE_ENDPOINT = '/api/v1/trade-documents';
+
+// [2026-11-13 11:45 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: phiếu bán / trả nhập tay chạy API thật của module phieu-ban, thôi dữ liệu giả (đóng góp)
+/** Loại phiếu đã có API thật ở module (luôn chạy API, không còn chọn dữ liệu giả): phiếu bán, hàng bán trả lại — module phieu-ban (NT-BH-015). */
+export const MODULE_ENDPOINT: Partial<Record<TradeKind, string>> = { sale: '/api/v1/m/phieu-ban/docs', sale_return: '/api/v1/m/phieu-ban/docs' };
 
 export interface TradeApi {
   source: DataSource;
@@ -148,13 +153,14 @@ export function tradeApi(kind: TradeKind, seed: TradeDoc[] = []): TradeApi {
   const source = getSource(kind);
   const store = storeOf(kind, seed);
   if (source === 'api') {
+    const endpoint = MODULE_ENDPOINT[kind] ?? TRADE_ENDPOINT;
     return {
       source,
-      list: (q) => api.getPage<TradeDoc[]>(TRADE_ENDPOINT, { ...q, docType: kind }).then((r) => ({ data: r.data, meta: { total: Number(r.meta?.total ?? r.data.length), page: q.page ?? 1, pageSize: q.pageSize ?? r.data.length } })),
-      get: (id) => api.get<TradeDoc>(`${TRADE_ENDPOINT}/${encodeURIComponent(id)}`),
-      save: (doc) => (doc.id ? api.put<TradeDoc>(`${TRADE_ENDPOINT}/${encodeURIComponent(doc.id)}`, doc) : api.post<TradeDoc>(TRADE_ENDPOINT, { ...doc, docType: kind })),
-      remove: (id) => api.delete<void>(`${TRADE_ENDPOINT}/${encodeURIComponent(id)}`),
-      setStatus: (id, status) => api.post<TradeDoc>(`${TRADE_ENDPOINT}/${encodeURIComponent(id)}/${status === 'approved' ? 'approve' : 'unapprove'}`),
+      list: (q) => api.getPage<TradeDoc[]>(endpoint, { ...q, docType: kind }).then((r) => ({ data: r.data, meta: { total: Number(r.meta?.total ?? r.data.length), page: q.page ?? 1, pageSize: q.pageSize ?? r.data.length } })),
+      get: (id) => api.get<TradeDoc>(`${endpoint}/${encodeURIComponent(id)}`),
+      save: (doc) => (doc.id ? api.put<TradeDoc>(`${endpoint}/${encodeURIComponent(doc.id)}`, doc) : api.post<TradeDoc>(endpoint, { ...doc, docType: kind })),
+      remove: (id) => api.delete<void>(`${endpoint}/${encodeURIComponent(id)}`),
+      setStatus: (id, status) => api.post<TradeDoc>(`${endpoint}/${encodeURIComponent(id)}/${status === 'approved' ? 'approve' : 'unapprove'}`),
       resetMock: () => store.reset(),
       mockCount: () => store.count(),
     };

@@ -135,3 +135,15 @@ Dấu "đã chuyển" của cửa hàng: khoá cấu hình module `bizcity.phieu
   - `npx bizcity module check phieu-ban`;
   - selfcheck, kiem-chuan.
 - **Chạy thật trên Docker demo:** lập → duyệt → xem sổ, tồn → bỏ duyệt → trả.
+
+## 6. Làm thật khác chữ chốt (bước 1, 13/11)
+<!-- [2026-11-13 11:55 PM Võ Hoàng] NGHIEM-THU — ghi điểm làm thật khác chữ chốt đợt (b) bước 1 (đóng góp) -->
+
+| # | Chữ chốt | Làm thật | Vì sao |
+|---|---|---|---|
+| 1 | Màn ở `/app/phieu-ban/…` của module, đường cũ chuyển hướng | Màn BH10 / BH11 **giữ ở khung giao diện** (`components/phieu-hang`); `lib/tradeDocs.ts` trỏ `sale` / `sale_return` sang `/api/v1/m/phieu-ban/docs`, luôn chạy API thật. Module không có màn riêng | Màn đã đủ ô, đọc dữ liệu qua `tradeApi` đúng khuôn TradeDoc — làm lại màn trong module (chỉ ui-kit) là dư; menu, Luồng chi tiết không phải sửa |
+| 2 | Giá theo bảng giá cửa hàng + `core.policy.evaluate` trên màn | **Bước 2** | Phải sửa form dùng chung `components/phieu-hang/PhieuHangForm.tsx` (dùng cho cả mua hàng, chuyển kho) — mở rộng phạm vi giữ chỗ trước |
+| 3 | Cảnh báo tồn / cửa hàng chưa chuyển kho (khoá `stock_cutover`) | **Bước 2** | Như mục 2 (cảnh báo hiện ở dòng của form) |
+| 4 | Không nhắc | `package-lock.json` thêm 2 mục khai báo workspace của module (18 dòng) | Bản dựng Docker chạy `npm ci`; tệp đang trong dòng giữ chỗ MH22 (quá hạn) — mở rộng phạm vi khi người giữ đồng ý |
+| 5 | Lỗi có mã `reason` | Chỉ câu báo | Thêm mã vào `ERROR_REASONS` là đổi `packages/contracts` |
+| 6 | Quyền `documents:read` / `documents:write` | Quyền của module `phieu-ban:read` / `phieu-ban:write` (vai trò chủ, kế toán trưởng, kế toán; xem thêm viewer) | Luật module: quyền `<key>:<việc>` |

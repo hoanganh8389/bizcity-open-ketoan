@@ -1,0 +1,31 @@
+# Phiếu bán hàng, hàng bán trả lại nhập tay (BH10, BH11)
+<!-- [2026-11-13 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: hướng dẫn phiếu bán / trả nhập tay vào sổ thật (đóng góp) -->
+
+Dùng cho bán buôn, bán nợ, bán ngoài quầy — những phiếu kế toán tự lập. Bán lẻ tại quầy đi máy bán POS. Từ 13/11/2026 hai màn này **ghi phiếu thật vào sổ kế toán** (trước đây là dữ liệu thử ở trình duyệt).
+
+## Lập phiếu bán
+
+1. **Bán hàng → Phiếu bán hàng → Thêm.**
+2. Chọn **Chi nhánh**, **Kho xuất hàng**, **Khách hàng**. Bán nợ (thu chưa đủ) bắt buộc chọn khách.
+3. **Số phiếu** để trống: phần mềm cấp theo cửa hàng, dạng `BH2611000001` (BH + năm tháng + 6 số). Mỗi cửa hàng một dãy riêng. Gõ tay số đã có ở cùng cửa hàng → báo trùng.
+4. Thêm dòng hàng: chọn mã, số lượng, đơn giá, chiết khấu. Tên, ĐVT, thuế lấy theo danh mục mặt hàng; tiền và thuế phần mềm tính lại khi Ghi.
+5. Thu tiền: nhập theo hình thức (tiền mặt, chuyển khoản…); để trống = ghi công nợ.
+6. Đã xuất hoá đơn ở phần mềm hoá đơn: ghi **Số hoá đơn**, **Ký hiệu** để phiếu lên bảng kê bán ra.
+7. **Ghi** → phiếu nháp, sửa / xoá được.
+
+## Duyệt, bỏ duyệt
+
+- **Duyệt**: phiếu vào sổ — ghi ngay, hoặc chờ kế toán duyệt ở Trạm chứng từ ACC14 theo *Cài đặt bán hàng (BH17)*. Phiếu đã duyệt không sửa, không xoá.
+- **Bỏ duyệt**: phần mềm đảo bút toán (ghi số âm), phiếu về nháp để sửa; duyệt lại là ghi bút toán mới. Phiếu bán đã có phiếu trả đã duyệt thì phải bỏ duyệt phiếu trả trước.
+
+## Hàng bán trả lại
+
+- Ghi **Phiếu gốc** là số phiếu bán nhập tay (cùng cửa hàng): phiếu trả nối phiếu gốc, phần mềm không cho trả quá số đã bán (đã trừ các lần trả trước).
+- Hàng trả từ đơn máy bán POS: trả ở máy bán (BH14), không lập ở đây.
+
+## Lưu ý
+
+- Bán vượt tồn **không bị chặn** (như máy bán); giá vốn tính cuối tháng.
+- Tồn kho lấy theo sổ kế toán. Cửa hàng chưa chuyển kho sang phần mềm kế toán thì số tồn có thể khác tồn thực tế.
+- Phiếu thử lập trên máy trước đây (dữ liệu giả) không chuyển sang sổ: màn báo một lần, bấm *Đã hiểu* để ẩn.
+- Chưa có: tự áp giá theo cửa hàng và khuyến mại trên màn nhập, phát hành hoá đơn điện tử từ phiếu — làm ở đợt sau.
