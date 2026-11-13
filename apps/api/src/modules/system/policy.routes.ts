@@ -76,6 +76,10 @@ const evaluate = defineAction({
     docDate: date, branchCode: z.string().trim().max(32).optional(), channel: z.string().trim().max(32).optional(),
     lines: z.array(evalLine).min(1).max(2000),
     policies: z.array(z.object({ key: code, version: z.number().int().min(1).optional() })).max(50).optional(),
+    // [2026-11-13 10:20 AM Võ Hoàng] POS-KM2 — PHASE-031 · 00 §18 mục 3: ngữ cảnh cho điều kiện khuyến mại (đóng góp)
+    at: z.object({ time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:MM').optional(), weekday: z.number().int().min(1).max(7).optional() }).optional(),
+    customer: z.object({ birthday: z.string().trim().max(10).optional(), memberLevel: z.string().trim().max(32).optional() }).optional(),
+    coupons: z.array(z.string().trim().min(1).max(64)).max(20).optional(),
   }),
   output: anyOut,
   expose: { http: { method: 'POST', path: '/api/v1/policies/evaluate' }, mcp: false, ai: 'deny' },

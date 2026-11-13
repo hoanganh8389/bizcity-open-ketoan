@@ -6,7 +6,7 @@
  *   - Bộ đọc nội dung: bản BH12 ở sổ đăng ký là `store = module` (nội dung ở `sale_programs`). Trả nội dung hiện tại của chương trình
  *     CHỈ KHI băm khớp băm của bản được hỏi — bản cũ đã bị sửa đè thì `null` (không tính được, không đoán).
  *   - Bộ kiểm áp được: chương trình có hạn mức theo cửa hàng → cần `branchCode`; chưa giao / hết hạn mức / đã ngừng → bỏ qua kèm lý do.
- *   - Người nghe `bizcity.ledger.entry.posted` (phiếu bán) / `.reversed` (huỷ): ghi lượt dùng theo (phiếu, dòng) từ các dòng có
+ *   - Người nghe `bizcity.ledger.entry.posted` / `.reversed` của phiếu bán VÀ phiếu trả (00 §18): ghi lượt dùng theo (phiếu, dòng) từ các dòng có
  *     `policyRef.key` = mã chương trình; huỷ thì trả lại. Không chặn khi vượt hạn mức (đã bán thật — chốt 05/11), báo cáo hiện phần vượt.
  */
 import { sql } from 'kysely';
@@ -51,22 +51,41 @@ export async function programAvailability(trx: Db, tenantId: string, e: PolicyEn
 }
 
 type DocLine = { lineKey?: string; sku?: string; qty?: number; amountBeforeTax?: number; discount?: number; isGift?: boolean; policyRef?: { key?: string; line?: string } };
-type DocPayload = { branchCode?: string; docDate?: string; docNo?: string; lines?: DocLine[] };
+type DocPayload = { branchCode?: string; docDate?: string; docNo?: string; originalDocKey?: string; lines?: DocLine[] };
+const ACTOR = 'subscriber:ban-hang.sale-program-usage';
+const parse = (p: DocPayload | string) => (typeof p === 'string' ? JSON.parse(p) : p) as DocPayload;
+
+// [2026-11-13 10:40 AM Võ Hoàng] POS-KM2 — PHASE-031 · 00 §18 mục 5 (đóng góp): một hàm đối chiếu cho bán / huỷ / trả / huỷ trả.
+/**
+ * Lượt dùng hạn mức của một phiếu bán = số lượng các dòng có chương trình trên phiếu (khi phiếu đang ghi sổ) − tổng số đã trả của
+ * dòng đó qua các phiếu trả ĐÃ GHI SỔ (dòng phiếu trả mang khoá dòng của đơn gốc). Phiếu bán không còn ghi sổ → trả hết.
+ */
+export async function reconcileSaleUsage(tx: Db, tenantId: string, saleDocKey: string): Promise<void> {
+  const sale = (await sql<{ payload: DocPayload | string; status: string; doc_type: string }>`SELECT payload, status, doc_type FROM accounting_events
+    WHERE tenant_id = ${tenantId} AND doc_key = ${saleDocKey}`.execute(tx)).rows[0];
+  if (!sale || sale.doc_type !== 'sale' || sale.status !== 'posted') { await release(tx, tenantId, ACTOR, saleDocKey); return; }
+  const p = parse(sale.payload);
+  if (!p.branchCode || !p.docDate) return;
+  const returned = new Map<string, number>();
+  const rets = (await sql<{ payload: DocPayload | string }>`SELECT payload FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_type = 'sale_return'
+    AND status = 'posted' AND payload->>'originalDocKey' = ${saleDocKey}`.execute(tx)).rows;
+  for (const r of rets) for (const l of parse(r.payload).lines ?? []) if (l.lineKey && (l.qty ?? 0) > 0) returned.set(l.lineKey, (returned.get(l.lineKey) ?? 0) + l.qty!);
+  const lines = (p.lines ?? []).filter((l) => l.policyRef?.key && l.lineKey && (l.qty ?? 0) > 0)
+    .map((l) => ({ lineKey: l.lineKey!, program: l.policyRef!.key!, sku: l.sku, qty: Math.round(((l.qty ?? 0) - (returned.get(l.lineKey!) ?? 0)) * 10_000) / 10_000, amount: Math.max(0, Number(l.discount ?? 0)) }))
+    .filter((l) => l.qty > 0);
+  await consume(tx, tenantId, ACTOR, { branchCode: p.branchCode, docKey: saleDocKey, docNo: p.docNo, docDate: p.docDate, source: 'ledger', lines }, { force: true });
+}
 
 export const saleProgramUsageSubscriber = defineSubscriber({
   id: 'ban-hang.sale-program-usage', module: OWNER, on: ['bizcity.ledger.entry.posted', 'bizcity.ledger.entry.reversed'],
   handle: async (ctx, evt) => {
     const d = evt.data as { docKey?: string; docType?: string };
-    if (d.docType !== 'sale' || !d.docKey) return;
-    const actor = 'subscriber:ban-hang.sale-program-usage';
-    if (evt.type === 'bizcity.ledger.entry.reversed') { await release(ctx.tx, ctx.tenantId, actor, d.docKey); return; }
-    const doc = (await sql<{ payload: DocPayload | string }>`SELECT payload FROM accounting_events WHERE tenant_id = ${ctx.tenantId} AND doc_key = ${d.docKey}`.execute(ctx.tx)).rows[0];
-    if (!doc) return;
-    const p = (typeof doc.payload === 'string' ? JSON.parse(doc.payload) : doc.payload) as DocPayload;
-    const lines = (p.lines ?? []).filter((l) => l.policyRef?.key && l.lineKey && (l.qty ?? 0) > 0)
-      .map((l) => ({ lineKey: l.lineKey!, program: l.policyRef!.key!, sku: l.sku, qty: l.qty!, amount: Math.max(0, Number(l.discount ?? 0)) }));
-    if (!p.branchCode || !p.docDate) return;
-    await consume(ctx.tx, ctx.tenantId, actor, { branchCode: p.branchCode, docKey: d.docKey, docNo: p.docNo, docDate: p.docDate, source: 'ledger', lines }, { force: true });
+    if (!d.docKey) return;
+    if (d.docType === 'sale') { await reconcileSaleUsage(ctx.tx, ctx.tenantId, d.docKey); return; }
+    if (d.docType !== 'sale_return') return;
+    const ret = (await sql<{ payload: DocPayload | string }>`SELECT payload FROM accounting_events WHERE tenant_id = ${ctx.tenantId} AND doc_key = ${d.docKey}`.execute(ctx.tx)).rows[0];
+    const original = ret ? parse(ret.payload).originalDocKey : undefined;
+    if (original) await reconcileSaleUsage(ctx.tx, ctx.tenantId, original);
   },
 });
 

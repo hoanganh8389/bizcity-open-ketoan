@@ -8,12 +8,14 @@ import type { Db } from '@bizcity/platform/db/client';
 import type { PolicyEnvelope } from '@bizcity/platform/core/policies';
 import { saleBuyXGetY } from './sale-promo-buy-x-get-y.js';
 import { saleProgramDiscount, saleProgramGift } from './sale-program.js';
+import { SALE_PROMO_CONTRACTS } from './sale-promo.js';
 import type { AnyRuleContract } from './types.js';
 
 export type { AnyRuleContract, FieldDoc, PublishIssue, RuleContract, Treatment, Vector } from './types.js';
 
 // [2026-11-12 09:15 PM Võ Hoàng] POS-KM — S031-15 phần chương trình bán (PHASE-031 · 00 §17 mục 1): thêm hai khuôn của BH12 (đóng góp)
-export const RULE_CONTRACTS: readonly AnyRuleContract[] = [saleBuyXGetY, saleProgramGift, saleProgramDiscount];
+// [2026-11-13 10:20 AM Võ Hoàng] POS-KM2 — PHASE-031 · 00 §18 (đóng góp): năm khuôn khuyến mại mở rộng (nội tuyến)
+export const RULE_CONTRACTS: readonly AnyRuleContract[] = [saleBuyXGetY, saleProgramGift, saleProgramDiscount, ...SALE_PROMO_CONTRACTS];
 
 const byId = new Map(RULE_CONTRACTS.map((c) => [c.id, c]));
 export const getRuleContract = (id: string): AnyRuleContract | undefined => byId.get(id);
