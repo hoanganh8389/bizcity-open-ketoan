@@ -18,6 +18,7 @@ import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
 import { ListPicker } from '@/components/pickers';
+import { useDimension } from '@/components/voucher/lookups';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — chi nhánh thuộc nút sơ đồ tổ chức: cột C1 / C2 / C3, ô chọn nút ở form
 import { indexOrg, invalidateOrg, useOrgTree } from '@/lib/orgUnits';
 import { CayDonVi, ChonSoDoToChuc } from '@/components/CayDonVi';
@@ -122,6 +123,8 @@ export function BranchesPage() {
               { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
               // [2026-11-13 Nguyễn Văn Thủy] một cột Thuộc cơ cấu thay C1/C2/C3; bỏ cột Bộ phận, Fax, Mã tham chiếu (đóng góp)
               { key: 'orgPath', header: 'Thuộc cơ cấu', width: 220, title: 'Vị trí trong Cơ cấu tổ chức', render: (b) => b.orgPath || <span className="text-bad">chưa gắn</span> },
+              // [2026-11-13 Nguyễn Văn Thủy] ánh xạ phòng ban: chứng từ của chi nhánh tự mang phòng ban này (0129) (đóng góp)
+              { key: 'departmentCode', header: 'Phòng ban', type: 'code', width: 110, title: 'Phòng ban của chi nhánh trên sơ đồ phòng ban: mọi chứng từ ghi cho chi nhánh tự mang phòng ban này. Trống thì chứng từ vào tài khoản theo dõi phòng ban bị chặn', render: (b) => b.departmentCode || <span className="text-bad">chưa gắn</span> },
               { key: 'siteIds', header: 'Website (blog_id)', type: 'code', width: 110, title: 'Website bên hệ thống bán hàng đang nối với chi nhánh (qua kết nối chính)' },
               { key: 'siteNames', header: 'Tên website', width: 170 },
               { key: 'siteCodes', header: 'Mã kho website', type: 'code', width: 110 },
@@ -147,7 +150,7 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
   const save = useMutation({
     mutationFn: () => {
       const body = {
-        name: v.name, accountingUnitCode: v.accountingUnitCode || undefined, address: v.address ?? '', externalRef: v.externalRef || undefined,
+        name: v.name, accountingUnitCode: v.accountingUnitCode || undefined, ...(value.isNew ? {} : { departmentCode: v.departmentCode || null }), address: v.address ?? '', externalRef: v.externalRef || undefined,
         note: v.note ?? '', companyName: v.companyName ?? '', taxCode: v.taxCode ?? '', phone: v.phone ?? '', fax: v.fax ?? '',
       };
       const newCode = v.code?.trim();
@@ -157,6 +160,7 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); invalidateOrg(qc); if (value.isNew) onSaved?.(v.code?.trim() ?? ''); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
   });
   const txt = (k: keyof Branch, label: string, full = false) => <Field label={label} full={full}><input className="input" value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Branch>)} /></Field>;
+  const deps = useDimension('department').filter((d) => d.isActive !== false || d.code === v.departmentCode).map((d) => ({ code: d.code, name: d.name }));
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide title="Thông tin chi nhánh" onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
@@ -169,6 +173,11 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
         {!value.isNew && (
           <Field label="Thuộc cơ cấu" hint="Nút trong Cơ cấu tổ chức (thường cấp Tỉnh)">
             <ChonSoDoToChuc value={v.orgUnitCode ?? null} onChange={(orgUnitCode) => set({ orgUnitCode })} />
+          </Field>
+        )}
+        {!value.isNew && (
+          <Field label="Phòng ban" tip="Phòng ban của chi nhánh trên sơ đồ phòng ban; chứng từ của chi nhánh tự mang phòng ban này. Chi nhánh mới tự có phòng ban riêng">
+            <ListPicker value={v.departmentCode ?? ''} onChange={(c) => set({ departmentCode: c || null })} items={deps} />
           </Field>
         )}
         <Field label=" "><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>

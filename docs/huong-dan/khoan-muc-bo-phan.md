@@ -34,3 +34,11 @@ Trong **DM Tài khoản (ACC1)**, mỗi tài khoản có các ô "Theo dõi theo
 - Danh mục **đã có mã**: tài khoản nào bật theo dõi chiều đó thì dòng phiếu **bắt buộc** chọn, thiếu sẽ báo "tài khoản … bắt buộc phải chọn bộ phận".
 
 Vì vậy nên khai đủ danh mục trước, rồi mới bắt đầu nhập phiếu.
+
+## Phòng ban của chi nhánh, cửa hàng
+
+- Sơ đồ phòng ban có nhánh **Cửa hàng**: mỗi shop một phòng ban riêng (mã BH + số mã shop, vd BH00001 Shop Vĩnh Hưng). Chi nhánh cấp trên nằm dưới Giám đốc chi nhánh.
+- Cột **Chi nhánh** cho biết phòng ban này là của chi nhánh / shop nào. Đổi ánh xạ ở Danh mục chi nhánh → ô **Phòng ban**.
+- Chi nhánh mới tự có phòng ban riêng, không phải khai.
+- Mọi chứng từ ghi cho chi nhánh tự mang phòng ban của chi nhánh. Sau này chi nhánh ngừng, sổ vẫn giữ phòng ban.
+- Chứng từ ghi vào tài khoản **theo dõi phòng ban** (chi phí 6xx, 8xx…) mà chi nhánh chưa gắn phòng ban → báo lỗi, không ghi. Vào Danh mục chi nhánh chọn Phòng ban rồi ghi lại.

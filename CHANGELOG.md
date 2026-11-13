@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+### Phòng ban theo chi nhánh / shop
+- Mỗi chi nhánh, cửa hàng một phòng ban riêng trên sơ đồ phòng ban (BH + số mã shop, dùng lại mã cũ BH00001… nên sổ cũ khớp): shop dưới Cửa hàng (CN-CH), chi nhánh dưới Giám đốc chi nhánh. Chi nhánh mới tự sinh phòng ban (trigger). Migration 0129.
+- Danh mục chi nhánh có lại cột / ô Phòng ban (ánh xạ); Danh mục phòng ban có cột Chi nhánh (ánh xạ ngược). Quay về dữ liệu gốc giữ phòng ban riêng.
+- Chứng từ ghi vào tài khoản theo dõi phòng ban mà chi nhánh chưa ánh xạ phòng ban → báo lỗi, nhắc vào Danh mục chi nhánh gắn. Sơ đồ Danh mục: Phòng ban chuyển lên bước Cơ cấu tổ chức.
+
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 ### Loại kho (DM18)
 - Danh mục Loại kho: 12 loại gốc (KHH, KKM, KHG, KTL, KCL, KLO, KHHAN, KHHSD, KDC, KNB, KCB, KCC), thêm được loại mới; công tắc Được bán / Thuộc sở hữu / Theo dõi hạn dùng, đầu số TK kho. Luật: không sở hữu thì không bán; ngừng loại khi còn kho thì chặn.
 - Nghiệp vụ dùng loại kho theo thứ tự ưu tiên (nhập mua, trả NCC, quà, bán, khách trả, gửi bán, chuyển kho, nhập/xuất khác): ô chọn kho chỉ hiện kho đúng loại và tự chọn loại đứng đầu; máy chủ chặn phiếu mua dùng kho sai loại.

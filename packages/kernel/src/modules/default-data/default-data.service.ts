@@ -93,17 +93,18 @@ async function restoreDimension(trx: Db, tenantId: string, kind: DimensionKind, 
     }
   }
   const keep = new Set(rows.map((r) => r.code));
+  // [2026-11-13 Nguyễn Văn Thủy] phòng ban riêng của chi nhánh (0129) không thuộc dữ liệu gốc nhưng phải giữ (đóng góp)
+  if (kind === 'department') for (const b of await trx.selectFrom('branches').select('department_code').where('tenant_id', '=', tenantId).where('department_code', 'is not', null).execute()) keep.add(b.department_code!);
   await dropExtras(res, [...have.keys()].filter((c) => !keep.has(c)), (c) => have.get(c)!.is_active, () => usedDimensionCodes(trx, tenantId, kind, [...have.keys()].filter((c) => !keep.has(c))),
     (c) => trx.updateTable('dimensions').set({ is_active: false }).where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', c).execute(),
     (c) => trx.deleteFrom('dimensions').where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', c).execute());
   if (kind === 'department') {
-    // [2026-11-13 Nguyễn Văn Thủy] bộ phận theo sơ đồ phòng ban (0127): chi nhánh chưa gắn → Cửa hàng (CN-CH) (đóng góp)
+    // [2026-11-13 Nguyễn Văn Thủy] chi nhánh chưa gắn / gắn chung Cửa hàng → phòng ban riêng của chi nhánh (0129) (đóng góp)
     const r = await sql`
-      UPDATE branches b SET department_code = 'CN-CH'
-       WHERE b.tenant_id = ${tenantId} AND b.department_code IS NULL
-         AND EXISTS (SELECT 1 FROM dimensions d WHERE d.tenant_id = b.tenant_id AND d.kind = 'department' AND d.code = 'CN-CH')`.execute(trx);
+      UPDATE branches b SET department_code = bizcity_ensure_branch_department(b.tenant_id, b.id, b.code, b.name, COALESCE(b.level, ''))
+       WHERE b.tenant_id = ${tenantId} AND (b.department_code IS NULL OR b.department_code IN ('CN-CH', 'CN', 'BH'))`.execute(trx);
     const n = Number(r.numAffectedRows ?? 0);
-    if (n) res.warnings.push(`Đã gắn bộ phận Cửa hàng cho ${n} chi nhánh`);
+    if (n) res.warnings.push(`Đã gắn phòng ban riêng cho ${n} chi nhánh`);
     const left = await trx.selectFrom('branches').select('code').where('tenant_id', '=', tenantId).where('is_active', '=', true).where('department_code', 'is', null).execute();
     if (left.length) res.warnings.push(`${left.length} chi nhánh chưa gắn bộ phận (${left.slice(0, 10).map((b) => b.code).join(', ')}${left.length > 10 ? '…' : ''}): gắn ở danh mục Chi nhánh`);
   }
@@ -398,12 +399,16 @@ async function restoreBranches(trx: Db, tenantId: string): Promise<RestoreResult
     const cur = have.get(r.code);
     const info = { note: r.note ?? '', company_name: r.company_name ?? '', tax_code: r.tax_code ?? '', phone: r.phone ?? '', fax: r.fax ?? '' };
     if (!cur) { await trx.insertInto('branches').values({ tenant_id: tenantId, code: r.code, name: r.name, address: r.address, department_code: dep, is_active: r.is_active, ...info }).execute(); res.added++; }
-    else if (cur.name !== r.name || (cur.address ?? null) !== r.address || cur.is_active !== r.is_active || (dep && cur.department_code !== dep)
+    else if (cur.name !== r.name || (cur.address ?? null) !== r.address || cur.is_active !== r.is_active || (dep && !cur.department_code)
       || Object.entries(info).some(([k, v]) => (cur as Record<string, unknown>)[k] !== v)) {
-      await trx.updateTable('branches').set({ name: r.name, address: r.address, is_active: r.is_active, ...info, ...(dep ? { department_code: dep } : {}) }).where('tenant_id', '=', tenantId).where('code', '=', r.code).execute();
+      await trx.updateTable('branches').set({ name: r.name, address: r.address, is_active: r.is_active, ...info, ...(dep && !cur.department_code ? { department_code: dep } : {}) }).where('tenant_id', '=', tenantId).where('code', '=', r.code).execute();
       res.updated++;
     }
   }
+  // [2026-11-13 Nguyễn Văn Thủy] gốc ghi phòng ban chung (Cửa hàng) → mỗi chi nhánh phòng ban riêng (0129); phòng ban đã gắn giữ nguyên (đóng góp)
+  if (deps.size) await sql`
+    UPDATE branches b SET department_code = bizcity_ensure_branch_department(b.tenant_id, b.id, b.code, b.name, COALESCE(b.level, ''))
+     WHERE b.tenant_id = ${tenantId} AND (b.department_code IS NULL OR b.department_code IN ('CN-CH', 'CN', 'BH'))`.execute(trx);
   if (noDep) res.warnings.push(`${noDep} chi nhánh chưa gắn được bộ phận vì danh mục bộ phận chưa có mã: quay về dữ liệu gốc của Danh mục bộ phận (ACC26) trước`);
   const own = [...have.keys()].filter((c) => !rows.some((r) => r.code === c));
   if (own.length) res.warnings.push(`Giữ nguyên ${own.length} chi nhánh không có trong dữ liệu gốc (${own.slice(0, 10).join(', ')}${own.length > 10 ? '…' : ''})`);

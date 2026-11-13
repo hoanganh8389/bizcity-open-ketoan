@@ -30,6 +30,8 @@ describe('Danh mục khoản mục, bộ phận', () => {
     expect((await call(ctx, 'PUT', '/api/v1/dimensions/cost_item/VPP', { name: 'Văn phòng phẩm', parentCode: 'CPVP' })).status).toBe(200);
     expect((await call(ctx, 'PUT', '/api/v1/dimensions/department/KT', { name: 'Phòng kế toán' })).status).toBe(200);
     expect((await call(ctx, 'PUT', '/api/v1/dimensions/department/KD', { name: 'Phòng kinh doanh' })).status).toBe(200);
+    // [2026-11-13 Nguyễn Văn Thủy] chi nhánh có trước danh mục phòng ban: gắn phòng ban (0129 chặn chứng từ khi chưa gắn) (đóng góp)
+    expect((await call(ctx, 'PATCH', '/api/v1/branches/CN01', { departmentCode: 'KD' })).status).toBe(200);
     const list = await call(ctx, 'GET', '/api/v1/dimensions/cost_item');
     expect(list.body.data.map((d: any) => d.code)).toEqual(['CPVP', 'VPP']);
   });
