@@ -27,6 +27,7 @@ interface Row {
   reasonCode: string | null; sourceType?: string | null; description: string; accountCode: string; counterAccounts: string; debit: number; credit: number;
   partnerCode: string | null; partnerName: string | null; productSku: string | null; productName: string | null; branchCode: string; isReversal: boolean; entryStatus?: string;
   /** Số dòng mã hàng gộp vào (chế độ Cộng gộp). */ lineCount?: number;
+  /** Số mã hàng khác nhau trong dòng gộp; một mã thì productSku có giá trị. */ skuCount?: number;
 }
 interface Data { rows: Row[]; totals: { lines: number; entries: number; debit: number; credit: number } }
 
@@ -89,7 +90,8 @@ export function JournalPage() {
                 { key: 'docType', header: 'Loại chứng từ', width: 150, hidden: true, value: (r) => (r.sourceType === 'export_adjust' ? 'Xuất kho điều chỉnh' : DOC_TYPE_LABELS[r.docType] ?? r.docType) },
                 { key: 'partnerCode', header: 'Mã đối tượng', type: 'code', width: 110, hidden: true },
                 { key: 'partnerName', header: 'Tên đối tượng', width: 180, hidden: true },
-                { key: 'productSku', header: 'Mã hàng', type: 'code', width: 110, hidden: true },
+                // [2026-11-13 Nguyễn Văn Thủy] chế độ gộp: một mã thì hiện mã, nhiều mã thì ghi số mã (đóng góp)
+                { key: 'productSku', header: 'Mã hàng', type: 'code', width: 110, hidden: true, value: (r) => r.productSku ?? ((r.skuCount ?? 0) > 1 ? `${r.skuCount} mã hàng` : ''), title: 'Chế độ Cộng gộp: dòng có nhiều mã hàng ghi số mã; bấm dòng để xem từng mã' },
                 { key: 'productName', header: 'Tên hàng', width: 180, hidden: true },
                 { key: 'invoiceNo', header: 'Số hoá đơn', type: 'code', width: 100, hidden: true },
                 { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi },

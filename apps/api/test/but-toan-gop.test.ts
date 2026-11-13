@@ -71,6 +71,10 @@ describe('Bút toán gộp theo tài khoản', () => {
     const sum = (rows: { debit: number }[]) => Math.round(rows.reduce((s, r) => s + r.debit, 0));
     expect(sum(gp.rows)).toBe(sum(ct.rows));
     expect(gp.rows.find((r: { accountCode: string; docNo: string }) => r.docNo === 'BAN-5' && r.accountCode.startsWith('511'))?.lineCount).toBe(5);
+    // mã hàng ở chế độ gộp: nhiều mã → không có mã, đếm số mã; một mã → có mã
+    expect(gp.rows.find((r: { accountCode: string; docNo: string }) => r.docNo === 'BAN-5' && r.accountCode.startsWith('511'))).toMatchObject({ productSku: null, skuCount: 5 });
+    const one = gp.rows.find((r: { lineCount: number; productSku: string | null }) => r.lineCount === 1 && r.productSku);
+    if (one) expect(one.skuCount).toBe(1);
     // trang 2 của chế độ gộp: phân trang trong CSDL
     const p2 = (await call(ctx, 'GET', '/api/v1/reports/journal?from=2026-10-01&to=2026-10-31&groupMode=2&pageSize=3&page=2')).body.data;
     expect(p2.rows.length).toBeLessThanOrEqual(3);

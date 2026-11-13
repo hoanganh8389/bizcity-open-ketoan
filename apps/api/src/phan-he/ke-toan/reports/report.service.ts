@@ -306,6 +306,7 @@ export const reportService = {
           debit: fromCents(l.d),
           credit: fromCents(l.c),
           lineCount: l.n,
+          skuCount: Number((l as { sku_count?: number }).sku_count ?? (l.product_sku ? 1 : 0)),
           balanceDebit: fromCents(bd),
           balanceCredit: fromCents(bc),
         };
@@ -535,8 +536,8 @@ export const reportService = {
           id: `${r.entry_id}:${r.account_code}:${r.counter_accounts}:${r.side}`, entryId: r.entry_id, postingDate: r.posting_date, docDate: r.doc_date,
           entryNo: r.entry_no, docNo: r.doc_no, docType: r.doc_type, invoiceNo: r.invoice_no, reasonCode: r.reason_code, sourceType: r.source_type,
           description: r.description, accountCode: r.account_code, counterAccounts: r.counter_accounts, debit: toNumber(r.debit), credit: toNumber(r.credit),
-          partnerCode: r.partner_code, partnerName: r.partner_name, productSku: null as string | null, productName: null as string | null, branchCode: r.branch_code,
-          isReversal: r.is_reversal, entryStatus: r.entry_status, lineCount: Number(r.line_count),
+          partnerCode: r.partner_code, partnerName: r.partner_name, productSku: r.product_sku, productName: r.product_name, branchCode: r.branch_code,
+          isReversal: r.is_reversal, entryStatus: r.entry_status, lineCount: Number(r.line_count), skuCount: Number(r.sku_count),
         })),
         totals: { lines: Number(g.totals.n), entries: Number(g.totals.entries), debit: toNumber(g.totals.debit), credit: toNumber(g.totals.credit) },
         total: Number(g.totals.rows),
