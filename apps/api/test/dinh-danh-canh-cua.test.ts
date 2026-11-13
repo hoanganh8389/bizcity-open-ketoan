@@ -18,28 +18,9 @@ const LUAT: [cot: string, dinhDanh: string, ten: string][] = [
   ['partner_id', 'partner_uid', 'dt'],
 ];
 
-/** Bảng cũ còn thiếu định danh lúc đặt canh cửa (13/11/2026) — chỉ được gạch bớt, không thêm. */
-const NO_CU: Record<string, string[]> = {
-  accounting_events: ['cn', 'dt'],
-  asset_allocations: ['cn'],
-  assets: ['cn'],
-  cash_plans: ['cn', 'dt'],
-  cost_norms: ['cn'],
-  debt_items: ['cn', 'dt'],
-  inventory_lot_moves: ['cn', 'kho'],
-  item_lots: ['dt'],
-  ledger_balances_daily: ['cn', 'dt'],
-  ledger_entries: ['cn', 'dt'],
-  long_term_balances: ['dt'],
-  payment_requests: ['dt'],
-  period_lock_events: ['cn'],
-  period_locks: ['cn'],
-  reference_documents: ['dt'],
-  stock_counts: ['kho'],
-  stock_levels: ['kho'],
-  tax_invoices: ['cn', 'dt'],
-  warehouses: ['cn'],
-};
+/** Bảng cũ còn thiếu định danh (chỉ được gạch bớt, không thêm). */
+// 0137 đã phủ kín cả 19 bảng cũ — danh sách nợ rỗng; bảng mới thiếu định danh là đỏ.
+const NO_CU: Record<string, string[]> = {};
 
 describe('Canh cửa bộ định danh cn_ / kho_ / dt_', () => {
   it('bảng có cột chi nhánh / kho / đối tượng phải có định danh tương ứng (trừ nợ cũ đã ghi, danh sách chỉ ngắn đi)', async () => {
