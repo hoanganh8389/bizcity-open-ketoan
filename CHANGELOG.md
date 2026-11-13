@@ -12,7 +12,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
-- **Phủ kín bộ định danh** (0137): 19 bảng cũ có cột chi nhánh / kho / đối tượng thêm `branch_uid` cn_ / `warehouse_uid` kho_ / `partner_uid` dt_ (bút toán, số dư ngày, sự việc kế toán, hoá đơn thuế, công nợ, tài sản, phân bổ, kế hoạch tiền, định mức, lô hàng, tồn kho, kiểm kê, khoá kỳ, đề nghị thanh toán, chứng từ tham chiếu, số dư dài hạn, kho). Ba trigger dùng chung điền khi ghi / đổi chi nhánh, kho, đối tượng; dữ liệu cũ điền trong migration (bút toán tạm mở khoá chỉ-ghi-thêm lúc điền). Test canh cửa: danh sách nợ cũ rỗng.
+- **Phủ kín bộ định danh** (0138): 19 bảng cũ có cột chi nhánh / kho / đối tượng thêm `branch_uid` cn_ / `warehouse_uid` kho_ / `partner_uid` dt_ (bút toán, số dư ngày, sự việc kế toán, hoá đơn thuế, công nợ, tài sản, phân bổ, kế hoạch tiền, định mức, lô hàng, tồn kho, kiểm kê, khoá kỳ, đề nghị thanh toán, chứng từ tham chiếu, số dư dài hạn, kho). Ba trigger dùng chung điền khi ghi / đổi chi nhánh, kho, đối tượng; dữ liệu cũ điền trong migration (bút toán tạm mở khoá chỉ-ghi-thêm lúc điền). Test canh cửa: danh sách nợ cũ rỗng.
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Bút toán gộp theo tài khoản mang đủ bộ định danh như dòng sổ (0136): `branch_uid` cn_, `partner_uid` dt_, `warehouse_uid` kho_ + mã kho, `department_uid` pb_, `tax_id` MST tại ngày; khác kho / phòng ban / MST thì tách dòng gộp (sổ gộp lọc, cộng được theo MST, theo kho). Test canh cửa `dinh-danh-canh-cua`: bảng có cột chi nhánh / kho / đối tượng phải có cn_ / kho_ / dt_; 19 bảng cũ còn thiếu ghi thành nợ cũ, danh sách chỉ được ngắn đi.
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->

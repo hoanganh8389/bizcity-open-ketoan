@@ -19,7 +19,7 @@ const LUAT: [cot: string, dinhDanh: string, ten: string][] = [
 ];
 
 /** Bảng cũ còn thiếu định danh (chỉ được gạch bớt, không thêm). */
-// 0137 đã phủ kín cả 19 bảng cũ — danh sách nợ rỗng; bảng mới thiếu định danh là đỏ.
+// 0138 đã phủ kín cả 19 bảng cũ — danh sách nợ rỗng; bảng mới thiếu định danh là đỏ.
 const NO_CU: Record<string, string[]> = {};
 
 describe('Canh cửa bộ định danh cn_ / kho_ / dt_', () => {

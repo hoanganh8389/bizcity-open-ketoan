@@ -14,7 +14,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_sync_branch_uid() IS 'Điền định danh chi nhánh cn_… (branch_uid) theo branch_id khi ghi / đổi chi nhánh (0137).';
+COMMENT ON FUNCTION bizcity_sync_branch_uid() IS 'Điền định danh chi nhánh cn_… (branch_uid) theo branch_id khi ghi / đổi chi nhánh (0138).';
 
 CREATE OR REPLACE FUNCTION bizcity_sync_partner_uid() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -25,7 +25,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_sync_partner_uid() IS 'Điền định danh đối tượng dt_… (partner_uid) theo partner_id khi ghi / đổi đối tượng (0137).';
+COMMENT ON FUNCTION bizcity_sync_partner_uid() IS 'Điền định danh đối tượng dt_… (partner_uid) theo partner_id khi ghi / đổi đối tượng (0138).';
 
 CREATE OR REPLACE FUNCTION bizcity_sync_warehouse_uid() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -36,7 +36,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_sync_warehouse_uid() IS 'Điền định danh phân kho kho_… (warehouse_uid) theo mã kho lúc ghi / đổi kho (0137).';
+COMMENT ON FUNCTION bizcity_sync_warehouse_uid() IS 'Điền định danh phân kho kho_… (warehouse_uid) theo mã kho lúc ghi / đổi kho (0138).';
 
 -- ── Cột + trigger + điền dữ liệu cũ ─────────────────────────────────────────────────────────────────────────────────────────
 DO $$
@@ -49,26 +49,26 @@ BEGIN
   FOREACH t IN ARRAY ARRAY['accounting_events', 'asset_allocations', 'assets', 'cash_plans', 'cost_norms', 'debt_items', 'inventory_lot_moves',
                            'ledger_balances_daily', 'ledger_entries', 'period_lock_events', 'period_locks', 'tax_invoices', 'warehouses'] LOOP
     EXECUTE format('ALTER TABLE %I ADD COLUMN branch_uid text', t);
-    EXECUTE format('COMMENT ON COLUMN %I.branch_uid IS %L', t, 'Định danh bất biến chi nhánh / shop cn_… theo branch_id (0137, trigger điền).');
+    EXECUTE format('COMMENT ON COLUMN %I.branch_uid IS %L', t, 'Định danh bất biến chi nhánh / shop cn_… theo branch_id (0138, trigger điền).');
     EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF branch_id ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_sync_branch_uid()', t || '_branch_uid', t);
-    EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_branch_uid', t, 'Điền định danh chi nhánh cn_… (0137).');
+    EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_branch_uid', t, 'Điền định danh chi nhánh cn_… (0138).');
     EXECUTE format('UPDATE %I x SET branch_uid = b.uid FROM branches b WHERE b.id = x.branch_id AND x.branch_uid IS NULL', t);
   END LOOP;
 
   FOREACH t IN ARRAY ARRAY['accounting_events', 'cash_plans', 'debt_items', 'item_lots', 'ledger_balances_daily', 'ledger_entries',
                            'long_term_balances', 'payment_requests', 'reference_documents', 'tax_invoices'] LOOP
     EXECUTE format('ALTER TABLE %I ADD COLUMN partner_uid text', t);
-    EXECUTE format('COMMENT ON COLUMN %I.partner_uid IS %L', t, 'Định danh bất biến đối tượng dt_… theo partner_id (0137, trigger điền); NULL = không theo đối tượng.');
+    EXECUTE format('COMMENT ON COLUMN %I.partner_uid IS %L', t, 'Định danh bất biến đối tượng dt_… theo partner_id (0138, trigger điền); NULL = không theo đối tượng.');
     EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF partner_id ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_sync_partner_uid()', t || '_partner_uid', t);
-    EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_partner_uid', t, 'Điền định danh đối tượng dt_… (0137).');
+    EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_partner_uid', t, 'Điền định danh đối tượng dt_… (0138).');
     EXECUTE format('UPDATE %I x SET partner_uid = p.uid FROM partners p WHERE p.id = x.partner_id AND x.partner_uid IS NULL', t);
   END LOOP;
 
   FOREACH t IN ARRAY ARRAY['inventory_lot_moves', 'stock_counts', 'stock_levels'] LOOP
     EXECUTE format('ALTER TABLE %I ADD COLUMN warehouse_uid text', t);
-    EXECUTE format('COMMENT ON COLUMN %I.warehouse_uid IS %L', t, 'Định danh bất biến phân kho kho_… theo mã kho lúc ghi (0137, trigger điền).');
+    EXECUTE format('COMMENT ON COLUMN %I.warehouse_uid IS %L', t, 'Định danh bất biến phân kho kho_… theo mã kho lúc ghi (0138, trigger điền).');
     EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF warehouse_code ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_sync_warehouse_uid()', t || '_warehouse_uid', t);
-    EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_warehouse_uid', t, 'Điền định danh phân kho kho_… (0137).');
+    EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_warehouse_uid', t, 'Điền định danh phân kho kho_… (0138).');
     EXECUTE format('UPDATE %I x SET warehouse_uid = w.uid FROM warehouses w WHERE w.tenant_id = x.tenant_id AND w.code = x.warehouse_code AND x.warehouse_uid IS NULL', t);
   END LOOP;
 
