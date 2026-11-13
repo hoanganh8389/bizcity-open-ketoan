@@ -53,7 +53,7 @@ export async function stockRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await orderAnalysisMany(db, authOf(req).tenantId, req.query.branchCode.split(','), req.query)) });
 
   // ---------------- Chuyển hàng xuống shop
-  r.get('/api/v1/stock/transfer-suggest', { preHandler: read, schema: { tags, summary: 'Đề xuất chuyển hàng từ kho chi nhánh cha xuống shop (max − tồn − đi đường, làm tròn thùng)', querystring: z.object({ branchCode: z.string().min(1), fromWarehouse: z.string().optional(), shopCodes: list, asOf: day.optional() }) },
+  r.get('/api/v1/stock/transfer-suggest', { preHandler: read, schema: { tags, summary: 'Đề xuất chuyển hàng từ kho chi nhánh cha xuống shop (max − tồn − đi đường, làm tròn thùng)', querystring: z.object({ branchCode: z.string().min(1), fromWarehouse: z.string().optional(), shopCodes: list, asOf: day.optional(), rounding: z.enum(['sku', 'pack', 'none']).optional(), allocation: z.enum(['shortage', 'selected', 'equal', 'manual']).optional() }) },
     handler: async (req) => ok(await transferSuggest(db, authOf(req).tenantId, req.query.branchCode, req.query)) });
   r.get('/api/v1/stock/transfer-requests', { preHandler: read, schema: { tags, summary: 'Đề nghị chuyển hàng đã chốt (kho / POS quét để lên phiếu chuyển)', querystring: z.object({ from: day.optional(), to: day.optional(), status: z.string().optional(), branchCode: z.string().optional() }) },
     handler: async (req) => ok(await listTransferRequests(db, authOf(req).tenantId, req.query)) });

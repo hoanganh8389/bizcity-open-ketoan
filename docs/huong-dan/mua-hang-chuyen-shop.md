@@ -29,6 +29,25 @@ Ngưỡng "nửa thùng" đổi được ở **Công thức đặt hàng (MH18)*
 
 Đề nghị đã chốt mà kho chưa làm thì tính như hàng sắp đi. Lần đề xuất sau không đề xuất lại các dòng đó.
 
+## Chọn shop, làm tròn, khi kho không đủ
+<!-- [2026-11-13 10:00 AM kiennt] NT-MH-004 — tuỳ chọn khi phân tích -->
+
+Mở được từ **Mua hàng → Chuyển hàng xuống shop** hoặc **Kho → Chuyển hàng xuống shop**.
+
+- **Shop phân tích**: bấm các shop theo thứ tự ưu tiên (số thứ tự hiện trên nút). Không chọn = mọi shop của chi nhánh, theo mã shop.
+- **Làm tròn**: *Theo cài từng mã* (cài ở Tồn max — Tự động / Nguyên thùng / Chuyển lẻ) · *Nguyên thùng* (mọi mã làm tròn theo đơn vị mua,
+  thiếu chưa đủ ngưỡng thùng thì chờ lần sau) · *Không làm tròn* (đúng số thiếu). Mã không có thùng thì như không làm tròn.
+- **Khi kho không đủ** (kho đủ thì mọi shop nhận đủ):
+  - *Thiếu nhiều nhất trước*: shop thiếu nhiều nhất so với max được chia trước.
+  - *Theo thứ tự shop đã chọn*: chia đủ cho shop chọn trước, còn lại mới tới shop sau.
+  - *Chia đều*: mỗi shop bằng nhau (từng hộp, hoặc từng thùng nếu nguyên thùng), không vượt số cần; phần lẻ cho shop chọn trước.
+  - *Chỉnh tay*: mã thiếu hàng để trống cột Chuyển — tự nhập cho từng shop.
+- Tổng chia một mã (cộng cả đề nghị đã chốt chưa làm) **không được vượt tồn kho chuyển**: vượt thì báo đỏ, không chốt được.
+- Lựa chọn làm tròn và cách chia được nhớ cho lần mở sau (trên máy đang dùng).
+
+Ví dụ kho còn 60 hộp, shop thiếu 80 / 40 / 5, chọn thứ tự S2, S3, S1: thiếu nhiều nhất trước 60 / 0 / 0 · theo thứ tự 15 / 40 / 5 ·
+chia đều 27 / 28 / 5.
+
 ## Đề nghị đã chốt
 
 - Lọc theo ngày chốt và trạng thái (**Chờ lên phiếu** / Đã lên phiếu / Đã huỷ). Không phân trang.

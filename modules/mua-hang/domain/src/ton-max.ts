@@ -1,6 +1,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 06:18 PM Nguyễn Văn Thủy] R-REV — công thức đặt hàng: thêm "Kho lấy min" (minWarehouses, tuỳ chọn) (commit 6c085e9, đóng góp).
 // [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — duyệt thay đổi của Nguyễn Văn Thủy (commit 6c085e9), biên bản docs/audits/REVIEW-2026-10-31-THUY.md §7.
+// [2026-11-13 10:00 AM kiennt] NT-MH-004 — chuyển hàng xuống shop: tuỳ chọn làm tròn chung (theo mã / nguyên thùng / không làm tròn), phân bổ khi kho thiếu (thiếu nhiều nhất / theo thứ tự shop / chia đều / chỉnh tay).
 /**
  * TỒN MAX → CHUYỂN HÀNG SHOP → ĐẶT MUA (docs/nghiep-vu/09-ton-max-dat-hang.md). Hàm thuần, dùng chung máy chủ + giao diện.
  *
@@ -207,23 +208,73 @@ export function roundTransfer(gap: number, pack: number | undefined, mode: Trans
 export interface TransferNeed { shopCode: string; sku: string; max: number; ton: number; diDuong: number; pack?: number; mode: TransferMode }
 export interface TransferLine extends TransferNeed { gap: number; want: number; qty: number; short: number }
 
+/** Làm tròn chung khi phân tích (NT-MH-004): theo cài từng mã (như cũ) · mọi mã nguyên thùng · không làm tròn (đúng số thiếu). */
+export type TransferRounding = 'sku' | 'pack' | 'none';
+export const TRANSFER_ROUNDINGS: { key: TransferRounding; label: string; hint: string }[] = [
+  { key: 'sku', label: 'Theo cài từng mã', hint: 'Mỗi mã làm tròn theo cài đặt ở Tồn max (Tự động / Nguyên thùng / Chuyển lẻ)' },
+  { key: 'pack', label: 'Nguyên thùng', hint: 'Mọi mã làm tròn theo đơn vị mua (thùng); thiếu chưa đủ ngưỡng thì chờ lần sau' },
+  { key: 'none', label: 'Không làm tròn', hint: 'Chuyển đúng số thiếu theo ĐVT nhỏ nhất' },
+];
+/** Cách làm tròn của một mã khi phân tích: tuỳ chọn chung ghi đè cài từng mã (trừ "theo cài từng mã"). */
+export const modeFor = (rounding: TransferRounding, skuMode: TransferMode): TransferMode => (rounding === 'pack' ? 'pack' : rounding === 'none' ? 'unit' : skuMode);
+
+/** Cách chia khi kho không đủ (NT-MH-004). */
+export type TransferAllocation = 'shortage' | 'selected' | 'equal' | 'manual';
+export const TRANSFER_ALLOCATIONS: { key: TransferAllocation; label: string; hint: string }[] = [
+  { key: 'shortage', label: 'Thiếu nhiều nhất trước', hint: 'Shop thiếu nhiều nhất so với max (tỉ lệ) được chia trước' },
+  { key: 'selected', label: 'Theo thứ tự shop đã chọn', hint: 'Chia đủ cho shop chọn trước, còn lại mới tới shop sau' },
+  { key: 'equal', label: 'Chia đều', hint: 'Mỗi shop bằng nhau (từng hộp, hoặc từng thùng nếu nguyên thùng), không vượt số cần; phần lẻ cho shop chọn trước' },
+  { key: 'manual', label: 'Chỉnh tay', hint: 'Mã thiếu hàng để trống số chuyển — tự nhập; tổng một mã không vượt tồn kho chuyển' },
+];
+
 /**
- * Chia tồn kho cho các shop của một mã. want = số muốn chuyển (đã làm tròn); kho không đủ thì ưu tiên shop thiếu nhiều nhất
- * so với max (tỉ lệ thiếu cao trước), cấp theo bước thùng nếu chế độ thùng, còn lẻ thì cấp lẻ.
+ * Chia tồn kho cho các shop của một mã. want = số muốn chuyển (đã làm tròn). Kho đủ thì mọi shop nhận đủ want. Kho không đủ thì theo
+ * `allocation`: shortage = ưu tiên shop thiếu nhiều nhất so với max (tỉ lệ thiếu cao trước), cấp theo bước thùng nếu chế độ thùng;
+ * selected = theo thứ tự `order` (mã shop; shop không có trong order đi sau, theo mã); equal = chia bằng nhau theo bước (thùng nếu
+ * nguyên thùng, không thì từng ĐVT nhỏ nhất), không vượt want, phần dư cho shop đứng trước trong `order`; manual = để 0, người dùng tự nhập.
  */
-export function allocateTransfers(needs: TransferNeed[], available: number, threshold = 0.5): TransferLine[] {
+export function allocateTransfers(needs: TransferNeed[], available: number, threshold = 0.5, opts: { allocation?: TransferAllocation; order?: string[] } = {}): TransferLine[] {
   const lines: TransferLine[] = needs.map((n) => {
     const gap = Math.max(0, n.max - n.ton - n.diDuong);
     return { ...n, gap, want: roundTransfer(gap, n.pack, n.mode, threshold), qty: 0, short: 0 };
   });
   let left = Math.max(0, available);
-  const order = [...lines].filter((l) => l.want > 0).sort((a, b) => (b.gap / Math.max(1, b.max)) - (a.gap / Math.max(1, a.max)) || b.gap - a.gap);
-  for (const l of order) {
-    if (left <= 0) break;
-    if (l.want <= left) { l.qty = l.want; left -= l.want; continue; }
-    const step = l.mode !== 'unit' && l.pack && l.pack > 1 ? l.pack : 1;
-    const give = l.mode === 'pack' ? Math.floor(left / step) * step : left;
-    l.qty = give; left -= give;
+  const wanting = lines.filter((l) => l.want > 0);
+  const allocation = opts.allocation ?? 'shortage';
+  const pos = (code: string) => { const i = opts.order?.indexOf(code) ?? -1; return i < 0 ? Number.MAX_SAFE_INTEGER : i; };
+  const byOrder = (a: TransferLine, b: TransferLine) => pos(a.shopCode) - pos(b.shopCode) || a.shopCode.localeCompare(b.shopCode);
+  const stepOf = (l: TransferLine) => (l.mode !== 'unit' && l.pack && l.pack > 1 ? l.pack : 1);
+  /** Cấp phần còn lại cho một dòng: chế độ nguyên thùng chỉ cấp bội số thùng, còn lại cấp lẻ. */
+  const give = (l: TransferLine) => {
+    if (l.want <= left) { l.qty = l.want; left -= l.want; return; }
+    const step = stepOf(l);
+    const g = l.mode === 'pack' ? Math.floor(left / step) * step : left;
+    l.qty = g; left -= g;
+  };
+  if (wanting.reduce((s, l) => s + l.want, 0) <= left) {
+    for (const l of wanting) { l.qty = l.want; left -= l.want; }
+  } else if (allocation === 'manual') {
+    // Để trống: người dùng tự nhập số chuyển, tổng theo mã kiểm khi chốt đề nghị.
+  } else if (allocation === 'selected') {
+    for (const l of [...wanting].sort(byOrder)) { if (left <= 0) break; give(l); }
+  } else if (allocation === 'equal') {
+    // Chia bằng nhau theo bước (cùng một mã nên cùng thùng, cùng cách làm tròn): mỗi vòng mỗi shop còn thiếu nhận như nhau,
+    // vòng cuối không đủ chia đều thì lần lượt mỗi shop một bước theo thứ tự đã chọn.
+    const step = wanting.length ? (wanting[0]!.mode === 'pack' ? stepOf(wanting[0]!) : 1) : 1;
+    let steps = Math.floor(left / step + 1e-9);
+    const cap = new Map(wanting.map((l) => [l, Math.floor(l.want / step + 1e-9)]));
+    const got = new Map(wanting.map((l) => [l, 0]));
+    let active = [...wanting].sort(byOrder).filter((l) => cap.get(l)! > 0);
+    while (steps > 0 && active.length) {
+      const share = Math.floor(steps / active.length);
+      if (share === 0) { for (const l of active.slice(0, steps)) got.set(l, got.get(l)! + 1); steps = 0; break; }
+      for (const l of active) { const g = Math.min(share, cap.get(l)! - got.get(l)!); got.set(l, got.get(l)! + g); steps -= g; }
+      active = active.filter((l) => got.get(l)! < cap.get(l)!);
+    }
+    for (const l of wanting) { l.qty = got.get(l)! * step; left -= l.qty; }
+  } else {
+    const order = [...wanting].sort((a, b) => (b.gap / Math.max(1, b.max)) - (a.gap / Math.max(1, a.max)) || b.gap - a.gap);
+    for (const l of order) { if (left <= 0) break; give(l); }
   }
   for (const l of lines) l.short = Math.max(0, l.want - l.qty);
   return lines;

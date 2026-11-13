@@ -8,18 +8,24 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileSpreadsheet, Send } from 'lucide-react';
-import { TRANSFER_MODES } from '@bizcity/mua-hang-domain';
+import { TRANSFER_ALLOCATIONS, TRANSFER_MODES, TRANSFER_ROUNDINGS, type TransferAllocation, type TransferRounding } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading, Modal } from '@/components/ui';
-import { errorText } from '@/lib/api';
+import { api, errorText } from '@/lib/api';
 import { monthStart, today } from '../du-lieu';
-import { num, qtyFmt, stockApi, useHierarchy, type TransferRequest, type TransferSuggestLine } from './api';
+import { num, qtyFmt, stockApi, useHierarchy, type TransferRequest, type TransferSuggest, type TransferSuggestLine } from './api';
 import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from './chung';
 
 type Row = TransferSuggestLine & { _group?: boolean; _key: string };
 const lk = (l: TransferSuggestLine) => `${l.shopCode}|${l.sku}`;
 const STATUS: Record<TransferRequest['status'], string> = { open: 'Chờ lên phiếu', done: 'Đã lên phiếu', cancelled: 'Đã huỷ' };
+// [2026-11-13 10:00 AM kiennt] NT-MH-004 — tuỳ chọn làm tròn / phân bổ khi kho thiếu, nhớ trên máy người dùng
+const OPT_KEY = 'mh19-tuy-chon';
+const readOpts = (): { rounding: TransferRounding; allocation: TransferAllocation } => {
+  try { const o = JSON.parse(localStorage.getItem(OPT_KEY) ?? '{}'); return { rounding: o.rounding ?? 'sku', allocation: o.allocation ?? 'shortage' }; } catch { return { rounding: 'sku', allocation: 'shortage' }; }
+};
+const saveOpts = (o: { rounding: TransferRounding; allocation: TransferAllocation }) => { try { localStorage.setItem(OPT_KEY, JSON.stringify(o)); } catch { /* trình duyệt chặn lưu: bỏ qua */ } };
 
 export function ChuyenShopPage() {
   const [tab, setTab] = useState<'suggest' | 'list'>('suggest');
@@ -49,7 +55,16 @@ function DeXuat({ parent, onDone }: { parent: string; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [quick, setQuick] = useState<'' | 'short'>('');
   const exportRef = useRef<(() => void) | null>(null);
-  const q = useQuery({ queryKey: ['ton-max', 'transfer-suggest', parent, wh], queryFn: () => stockApi.transferSuggest(parent, wh || undefined) });
+  // NT-MH-004: chọn shop (giữ thứ tự chọn — dùng cho "theo thứ tự" và phần dư khi chia đều), làm tròn, cách phân bổ khi kho thiếu.
+  const h = useHierarchy();
+  const shopList = (h.data?.branches ?? []).filter((b) => b.level === 'shop' && b.parentCode === parent && b.isActive).sort((a, b) => a.code.localeCompare(b.code));
+  const [sel, setSel] = useState<string[]>([]);
+  const [opts, setOptsState] = useState(readOpts);
+  const setOpts = (p: Partial<typeof opts>) => { const o = { ...opts, ...p }; setOptsState(o); saveOpts(o); setEdit({}); };
+  const q = useQuery({
+    queryKey: ['ton-max', 'transfer-suggest', parent, wh, sel.join(','), opts.rounding, opts.allocation],
+    queryFn: () => api.get<TransferSuggest>('/api/v1/stock/transfer-suggest', { branchCode: parent, fromWarehouse: wh || undefined, shopCodes: sel.length ? sel.join(',') : undefined, rounding: opts.rounding, allocation: opts.allocation }),
+  });
   const lines = q.data?.lines ?? [];
   const qty = (l: TransferSuggestLine) => edit[lk(l)] ?? l.qty;
   const rows = useMemo(() => {
@@ -63,6 +78,12 @@ function DeXuat({ parent, onDone }: { parent: string; onDone: () => void }) {
   }, [lines, quick]);
   const picked = lines.filter((l) => !off[lk(l)] && qty(l) > 0);
   const shops = new Set(picked.map((l) => l.shopCode));
+  // Tổng chia một mã không vượt tồn kho chuyển (khoTon đã trừ đề nghị chốt chưa làm) — nhất là khi chỉnh tay.
+  const over = useMemo(() => {
+    const sum = new Map<string, { q: number; ton: number }>();
+    for (const l of picked) { const x = sum.get(l.sku) ?? { q: 0, ton: l.khoTon }; x.q += qty(l); sum.set(l.sku, x); }
+    return [...sum].filter(([, x]) => x.q > x.ton + 1e-9).map(([sku, x]) => `${sku}: chia ${qtyFmt(x.q)} > tồn kho ${qtyFmt(x.ton)}`);
+  }, [picked, edit]); // eslint-disable-line react-hooks/exhaustive-deps
   const cols: Column<Row>[] = [
     { key: 'pick', header: '', width: 34, noFilter: true, noSort: true, render: (l) => <input type="checkbox" checked={!off[lk(l)]} onChange={(e) => setOff({ ...off, [lk(l)]: !e.target.checked })} /> },
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 110 },
@@ -95,11 +116,28 @@ function DeXuat({ parent, onDone }: { parent: string; onDone: () => void }) {
           <select className="select input" style={{ minWidth: 200 }} value={wh || q.data?.fromWarehouse || ''} onChange={(e) => setWh(e.target.value)}>
             {(q.data?.warehouses ?? []).map((w) => <option key={w.code} value={w.code}>{w.code} · {w.name}{w.isDefault ? ' (mặc định)' : ''}</option>)}
           </select></label>
-        <span className="muted" style={{ fontSize: 12 }}>Tự động: thiếu từ {Math.round((q.data?.threshold ?? 0.5) * 100)}% thùng trở lên thì lên nguyên thùng (đổi ở Công thức đặt hàng).</span>
+        <label className="tm-parent" title={TRANSFER_ROUNDINGS.find((x) => x.key === opts.rounding)?.hint}><span>Làm tròn</span>
+          <select className="select input" value={opts.rounding} onChange={(e) => setOpts({ rounding: e.target.value as TransferRounding })}>
+            {TRANSFER_ROUNDINGS.map((x) => <option key={x.key} value={x.key} title={x.hint}>{x.label}</option>)}
+          </select></label>
+        <label className="tm-parent" title={TRANSFER_ALLOCATIONS.find((x) => x.key === opts.allocation)?.hint}><span>Khi kho không đủ</span>
+          <select className="select input" value={opts.allocation} onChange={(e) => setOpts({ allocation: e.target.value as TransferAllocation })}>
+            {TRANSFER_ALLOCATIONS.map((x) => <option key={x.key} value={x.key} title={x.hint}>{x.label}</option>)}
+          </select></label>
+        <span className="muted" style={{ fontSize: 12 }} title="Ngưỡng làm tròn thùng đổi ở Công thức đặt hàng">Ngưỡng thùng {Math.round((q.data?.threshold ?? 0.5) * 100)}%</span>
         <span className="grow" />
         <button className="btn btn-sm" onClick={() => exportRef.current?.()}><FileSpreadsheet size={14} /> Xuất Excel</button>
-        <button className="btn btn-primary" disabled={!picked.length || busy} onClick={() => void commit()}><Send size={14} /> Chốt đề nghị ({shops.size} shop · {picked.length} dòng)</button>
+        <button className="btn btn-primary" disabled={!picked.length || busy || over.length > 0} title={over.length ? `Tổng chia vượt tồn kho: ${over.join('; ')}` : undefined} onClick={() => void commit()}><Send size={14} /> Chốt đề nghị ({shops.size} shop · {picked.length} dòng)</button>
       </div>
+      <div className="tm-bar tm-shops" style={{ paddingTop: 0, flexWrap: 'wrap' }}>
+        <span className="muted" title="Bấm để chọn shop theo thứ tự ưu tiên (số thứ tự hiện trên nút); không chọn = mọi shop, theo mã">Shop phân tích:</span>
+        <button type="button" className={`btn btn-xs${sel.length ? '' : ' btn-primary'}`} onClick={() => { setSel([]); setEdit({}); }}>Tất cả shop</button>
+        {shopList.map((b) => { const i = sel.indexOf(b.code); return (
+          <button key={b.code} type="button" className={`btn btn-xs${i >= 0 ? ' btn-primary' : ''}`} title={b.name}
+            onClick={() => { setSel(i >= 0 ? sel.filter((c) => c !== b.code) : [...sel, b.code]); setEdit({}); }}>{i >= 0 ? `${i + 1}. ` : ''}{b.code}</button>); })}
+      </div>
+      {over.length > 0 && <div className="alert alert-bad" style={{ margin: '0 12px 8px' }}>Tổng chia vượt tồn kho chuyển — sửa trước khi chốt: {over.join('; ')}</div>}
+      {opts.allocation === 'manual' && lines.some((l) => l.short > 0) && <div className="alert alert-warn" style={{ margin: '0 12px 8px' }}>Chỉnh tay: các mã kho không đủ để trống cột Chuyển — tự nhập số cho từng shop (tổng mỗi mã ≤ tồn kho).</div>}
       <div className="tm-stats">
         <KhoiSo label="Shop cần chia hàng" value={new Set(lines.map((l) => l.shopCode)).size} tone="green" />
         <KhoiSo label="Dòng đề xuất" value={lines.length} active={quick === ''} onClick={() => setQuick('')} />
