@@ -26,6 +26,11 @@ export const orderLineDraftSchema = z.object({
   giftKey: z.string().optional(),
   giftSourceLineId: z.string().optional(),
   promotionId: z.number().int().optional(),
+  // [2026-11-12 10:35 PM Võ Hoàng] POS-KM — NT-BH-003 (đóng góp): dòng sinh ra / được giảm theo chương trình bán (Core tính, POST /api/v1/policies/evaluate).
+  /** Chương trình của dòng: dòng quà (`line: gift`) hoặc dòng được giảm (`line: discount`). Key phải có trong `policyRefs` của đơn. */
+  policyRef: z.object({ key: z.string().trim().min(1).max(64), version: z.number().int().min(1), line: z.enum(['gift', 'discount']).optional() }).optional(),
+  /** Tiền giảm theo chương trình (gồm thuế) của cả dòng — đúng `discounts[].amount` Core trả. */
+  promoDiscount: vnd.min(0, 'Tiền giảm không được âm').optional(),
 }).passthrough();
 
 export const paymentDraftSchema = z.discriminatedUnion('mode', [
