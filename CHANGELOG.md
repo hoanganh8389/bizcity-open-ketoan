@@ -321,6 +321,17 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### Chương trình bán (BH12) tính được ở Core: khuôn luật tặng hàng / giảm giá, hạn mức tự trừ, thẻ Thử tính (phiếu NT-BH-003, S031-15 phần chương trình bán) <!-- [2026-11-13 09:00 AM Võ Hoàng] POS-KM — phần Core cho khuyến mại máy bán (đóng góp) -->
+
+- **Thêm:** Rule Contract `sale.program.gift@1` (mua X tặng Y, tặng lặp lại, trần quà) và `sale.program.discount@1` (giảm %, giảm tiền / đơn vị, giá chương trình) — trước đây BH12 đã ghi tên khuôn ở sổ đăng ký nhưng khuôn chưa có nên `POST /api/v1/policies/evaluate` và `IN-POL-004` bỏ qua chương trình BH12. Vectors chạy qua hàm thuần và endpoint.
+- **Thêm:** `rule-contracts` có `registerPolicyContentReader` / `registerPolicyAvailability`: bản `store = module` đọc được qua module chủ (BH12 trả nội dung chỉ khi băm khớp bản); chương trình BH12 chỉ áp khi chi nhánh còn hạn mức (hết / chưa giao → `skipped` kèm lý do; `applied[].quota`).
+- **Thêm:** `evaluate` nhận `lines[].price` (đơn giá trọn trên một đơn vị nhỏ nhất), trả `discounts[]` kèm `policyRef { line: 'discount' }` cạnh `gifts[]`.
+- **Thêm:** người nghe `ban-hang.sale-program-usage`: phiếu bán ghi sổ (`bizcity.ledger.entry.posted`) có dòng mang mã chương trình → ghi lượt dùng, trừ hạn mức (giao lại không trừ thêm; vượt vẫn ghi — đã bán thật); huỷ (`.reversed`) → trả lại. `consume` thêm chế độ `force` cho đường này.
+- **Thêm:** BH12 thẻ **Thử tính** (giỏ hàng mẫu → quà, tiền giảm, chương trình bị bỏ qua kèm lý do) và cột **Bản**; hướng dẫn `docs/huong-dan/bh-chuong-trinh.md`.
+- **Thêm:** `ERROR_REASONS` thêm `POS_GIFT_WITHOUT_POLICY` (BIZCITY-ERRORS 1.11.0-draft §4c).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (không migration).
+
 ### Mã lỗi QR / ca bắt buộc cho module pos (phiếu NT-BH-009, NT-BH-011) <!-- [2026-11-12 08:30 PM Võ Hoàng] POS-QR — phần Core cho module pos (đóng góp) -->
 
 - **Thêm:** `ERROR_REASONS` thêm `POS_QR_EXPIRED`, `POS_PAYMENT_MISMATCH`, `POS_ORDER_CANCELLED`, `POS_SHIFT_REQUIRED` (BIZCITY-ERRORS 1.10.0-draft §4c).

@@ -55,16 +55,20 @@ const COLS = sql`p.id::text, p.code, p.name, p.program_kind, p.mode, p.sku, p.bu
 const num = (v: string | null) => (v === null ? null : Number(v));
 
 /** Nội dung chính sách (không gồm hạn mức — hạn mức là phân bổ vận hành, đổi thường xuyên). */
-const contentOf = (p: ProgramRow | ProgramInput) => {
+const contentOf = (p: ProgramRow | ProgramInput | Record<string, unknown>) => {
   const r = p as Record<string, unknown>;
   const pick = (a: string, b: string) => (r[a] !== undefined ? r[a] : r[b]);
   return {
-    code: p.code, name: p.name, programKind: pick('programKind', 'program_kind'), mode: p.mode, sku: p.sku,
+    code: r.code as string, name: r.name as string, programKind: pick('programKind', 'program_kind'), mode: r.mode as 'gift' | 'discount', sku: r.sku as string,
     buyQty: Number(pick('buyQty', 'buy_qty') ?? 1), giftSku: pick('giftSku', 'gift_sku') ?? null, giftQty: num((pick('giftQty', 'gift_qty') ?? null) as string | null),
     discountPct: num((pick('discountPct', 'discount_pct') ?? null) as string | null), discountAmount: num((pick('discountAmount', 'discount_amount') ?? null) as string | null),
     salePrice: num((pick('salePrice', 'sale_price') ?? null) as string | null), validFrom: pick('validFrom', 'valid_from'), validTo: pick('validTo', 'valid_to'),
   };
 };
+
+// [2026-11-12 09:45 PM Võ Hoàng] POS-KM — PHASE-031 · 00 §17 mục 2 (đóng góp): bộ đọc nội dung bản ở sổ đăng ký dựng lại nội dung theo đúng hàm đã băm lúc đăng ký.
+/** Nội dung bản chính sách của một dòng `sale_programs` (cùng hàm băm lúc đăng ký bản). */
+export const programContent = (row: Record<string, unknown>) => contentOf(row);
 
 async function quotasOf(trx: Db, tenantId: string, ids: string[]) {
   if (!ids.length) return new Map<string, { branchCode: string; quotaQty: number; usedQty: number; remaining: number }[]>();
@@ -254,8 +258,14 @@ export interface ConsumeInput {
  * Trừ hạn mức cho các dòng của một phiếu bán (một giao dịch: thiếu một dòng là không trừ dòng nào). Khoá dòng hạn mức theo thứ tự
  * (chương trình, cửa hàng) để hai máy cùng bán món cuối thì một máy bị từ chối. Gửi lại cùng phiếu = không trừ thêm (idempotent).
  */
-export async function consume(trx: Db, tenantId: string, actor: string, c: ConsumeInput) {
-  if (!c.lines.length) return { docKey: c.docKey, lines: [] };
+/**
+ * [2026-11-12 09:45 PM Võ Hoàng] POS-KM — PHASE-031 · 00 §17 mục 4 (đóng góp): `force` cho người nghe phiếu bán đã ghi sổ — hàng đã bán thật nên KHÔNG chặn:
+ * vượt hạn mức vẫn ghi (báo cáo hiện phần vượt), dòng trỏ chương trình không có / số lượng không dương thì bỏ qua, cửa hàng chưa
+ * được giao hạn mức thì vẫn ghi lượt dùng (không cộng vào hạn mức), ngoài thời gian chương trình vẫn ghi (cửa nạp đã báo IN-POL-002).
+ */
+export async function consume(trx: Db, tenantId: string, actor: string, c: ConsumeInput, opts: { force?: boolean } = {}) {
+  const force = opts.force === true;
+  if (!c.lines.length && !force) return { docKey: c.docKey, lines: [] };
   const codes = [...new Set(c.lines.map((l) => l.program))];
   const programs = (await sql<ProgramRow>`SELECT ${COLS} FROM sale_programs p WHERE p.tenant_id = ${tenantId} AND p.code = ANY(${codes})`.execute(trx)).rows;
   const byCode = new Map(programs.map((p) => [p.code, p]));
@@ -263,17 +273,17 @@ export async function consume(trx: Db, tenantId: string, actor: string, c: Consu
   const sorted = [...c.lines].sort((a, b) => a.program.localeCompare(b.program) || a.lineKey.localeCompare(b.lineKey));
   for (const l of sorted) {
     const p = byCode.get(l.program);
-    if (!p) throw Errors.validation(`Chương trình ${l.program} không có`);
-    if (!p.is_active || c.docDate < p.valid_from || c.docDate > p.valid_to) throw Errors.validation(`Chương trình ${p.code} không áp ngày ${c.docDate} (${p.valid_from} → ${p.valid_to}${p.is_active ? '' : ', đã ngừng'})`);
-    if (!(l.qty > 0)) throw Errors.validation(`Dòng ${l.lineKey}: số lượng phải dương`);
+    if (!p) { if (force) continue; throw Errors.validation(`Chương trình ${l.program} không có`); }
+    if (!force && (!p.is_active || c.docDate < p.valid_from || c.docDate > p.valid_to)) throw Errors.validation(`Chương trình ${p.code} không áp ngày ${c.docDate} (${p.valid_from} → ${p.valid_to}${p.is_active ? '' : ', đã ngừng'})`);
+    if (!(l.qty > 0)) { if (force) continue; throw Errors.validation(`Dòng ${l.lineKey}: số lượng phải dương`); }
     const sku = l.sku || (p.mode === 'gift' ? p.gift_sku ?? p.sku : p.sku);
     const q = (await sql<{ quota_qty: string; used_qty: string }>`SELECT quota_qty::text, used_qty::text FROM sale_program_quotas
       WHERE tenant_id = ${tenantId} AND program_id = ${p.id} AND branch_code = ${c.branchCode} FOR UPDATE`.execute(trx)).rows[0];
-    if (!q) throw Errors.validation(`Cửa hàng ${c.branchCode} không có hạn mức của chương trình ${p.code}`);
+    if (!q && !force) throw Errors.validation(`Cửa hàng ${c.branchCode} không có hạn mức của chương trình ${p.code}`);
     const prev = (await sql<{ qty: string }>`SELECT qty::text FROM sale_program_usage WHERE tenant_id = ${tenantId} AND program_id = ${p.id} AND doc_key = ${c.docKey} AND line_key = ${l.lineKey}`.execute(trx)).rows[0];
     const delta = l.qty - Number(prev?.qty ?? 0);
-    const remaining = Number(q.quota_qty) - Number(q.used_qty);
-    if (delta > remaining) throw Errors.conflict(`Chương trình ${p.code} ở cửa hàng ${c.branchCode} chỉ còn ${remaining} (cần ${delta})`);
+    const remaining = q ? Number(q.quota_qty) - Number(q.used_qty) : 0;
+    if (delta > remaining && !force) throw Errors.conflict(`Chương trình ${p.code} ở cửa hàng ${c.branchCode} chỉ còn ${remaining} (cần ${delta})`);
     if (prev) {
       await sql`UPDATE sale_program_usage SET qty = ${l.qty}, amount = ${l.amount ?? 0}, doc_no = ${c.docNo ?? ''}, doc_date = ${c.docDate}::date, sku = ${sku}
                 WHERE tenant_id = ${tenantId} AND program_id = ${p.id} AND doc_key = ${c.docKey} AND line_key = ${l.lineKey}`.execute(trx);
@@ -281,7 +291,7 @@ export async function consume(trx: Db, tenantId: string, actor: string, c: Consu
       await sql`INSERT INTO sale_program_usage (tenant_id, program_id, branch_code, doc_key, line_key, doc_no, doc_date, sku, qty, amount, source, created_by)
                 VALUES (${tenantId}, ${p.id}, ${c.branchCode}, ${c.docKey}, ${l.lineKey}, ${c.docNo ?? ''}, ${c.docDate}::date, ${sku}, ${l.qty}, ${l.amount ?? 0}, ${c.source ?? ''}, ${actor})`.execute(trx);
     }
-    if (delta !== 0) await sql`UPDATE sale_program_quotas SET used_qty = used_qty + ${delta}, updated_at = now() WHERE tenant_id = ${tenantId} AND program_id = ${p.id} AND branch_code = ${c.branchCode}`.execute(trx);
+    if (delta !== 0 && q) await sql`UPDATE sale_program_quotas SET used_qty = GREATEST(0, used_qty + ${delta}), updated_at = now() WHERE tenant_id = ${tenantId} AND program_id = ${p.id} AND branch_code = ${c.branchCode}`.execute(trx);
     out.push({ lineKey: l.lineKey, program: p.code, qty: l.qty, remaining: remaining - delta, ...(delta === 0 ? { already: true } : {}) });
   }
   // Dòng của phiếu không còn gửi (sửa phiếu bỏ dòng) → trả hạn mức.

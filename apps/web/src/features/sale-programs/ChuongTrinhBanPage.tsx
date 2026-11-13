@@ -4,10 +4,14 @@
  *   chương trình = mặt hàng chính + kiểu (tặng hàng / giảm giá) + thời gian + hạn mức từng cửa hàng.
  *   Cửa hàng bán theo chương trình thì trừ hạn mức (POS gọi /api/v1/sale-programs/consume); hết hạn hoặc hết hạn mức thì bán giá thường.
  * Thẻ "Báo cáo": hạn mức, đã dùng, còn lại, giá trị, tốc độ dùng so với thời gian — tính từ các dòng đã bán.
+ *
+ * [2026-11-12 10:20 PM Võ Hoàng] POS-KM — PHASE-031 · 00 §17 mục 4–5 (đóng góp): Core tính chương trình (Rule Contract sale.program.*@1) qua /api/v1/policies/evaluate;
+ * phiếu bán ghi sổ có dòng mang mã chương trình thì hạn mức tự trừ, huỷ thì tự trả. Thẻ "Thử tính": chọn cửa hàng + giỏ hàng mẫu → xem
+ * đúng kết quả máy bán sẽ nhận (quà, tiền giảm, chương trình bị bỏ qua kèm lý do). Cột "Bản": bản chính sách hiện hành của chương trình.
  */
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Gift, Percent, Plus } from 'lucide-react';
+import { Calculator, Gift, Percent, Plus, Trash2 } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, NumInput } from '@/components/ui';
@@ -162,6 +166,7 @@ function DanhSach() {
             <th title="Mã chương trình (dòng bán gắn mã này)">Mã</th><th title="Tên chương trình">Tên</th><th title="Loại chương trình">Loại</th><th title="Mặt hàng chính">Mặt hàng</th>
             <th title="Nội dung ưu đãi">Ưu đãi</th><th title="Thời gian áp dụng">Thời gian</th><th className="num" title="Tổng hạn mức các cửa hàng">Hạn mức</th>
             <th className="num" title="Đã dùng (đã bán theo chương trình)">Đã dùng</th><th className="num" title="Còn lại">Còn lại</th><th title="Trạng thái">Trạng thái</th>
+            <th className="num" title="Bản chính sách hiện hành ở sổ đăng ký — máy bán và phiếu bán trỏ đúng bản này; Core tính theo khuôn sale.program.*@1">Bản</th>
           </tr></thead>
           <tbody>
             {rows.map((p) => (
@@ -173,9 +178,10 @@ function DanhSach() {
                 <td className="num">{money(p.quotaTotal)}</td><td className="num">{money(p.usedTotal)}</td>
                 <td className="num"><b className={p.remainingTotal ? '' : 'neg'}>{money(p.remainingTotal)}</b></td>
                 <td><span className={`tkht-badge ${STATE[p.state][1]}`}>{STATE[p.state][0]}</span></td>
+                <td className="num mono" title={`Khuôn sale.program.${p.mode}@1`}>{p.version ? `v${p.version}` : '—'}</td>
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={10} className="muted">Chưa có chương trình. Thêm chương trình thay cho việc tạo mã tặng / mã giảm giá riêng.</td></tr>}
+            {!rows.length && <tr><td colSpan={11} className="muted">Chưa có chương trình. Thêm chương trình thay cho việc tạo mã tặng / mã giảm giá riêng.</td></tr>}
           </tbody>
         </table></div>
       )}
@@ -244,8 +250,85 @@ function BaoCao() {
   );
 }
 
+// ------------------------------------------------------------------------------------------------ thử tính
+interface TryLine { sku: string; qty: number; price: number }
+interface EvalResult {
+  applied: { policyRef: { key: string; version: number }; explain: string; quota?: { remaining: number; quotaQty: number } }[];
+  skipped: { key: string; version?: number; reason: string }[];
+  gifts: { sku: string; qty: number; policyRef: { key: string; version: number } }[];
+  discounts: { lineKey: string; sku: string; qty: number; amount: number; policyRef: { key: string; version: number } }[];
+}
+
+/** Gọi đúng hàm tính máy bán gọi (POST /api/v1/policies/evaluate) với giỏ hàng mẫu — không ghi gì. */
+function ThuTinh() {
+  const branches = (useBranches().data ?? []).filter((b) => b.isActive !== false);
+  const [branch, setBranch] = useState('');
+  const [date, setDate] = useState(today());
+  const [lines, setLines] = useState<TryLine[]>([{ sku: '', qty: 1, price: 0 }]);
+  const run = useMutation({
+    mutationFn: () => api.post<EvalResult>('/api/v1/policies/evaluate', {
+      docDate: date, ...(branch ? { branchCode: branch } : {}),
+      lines: lines.filter((l) => l.sku && l.qty > 0).map((l, i) => ({ lineKey: String(i + 1), sku: l.sku, qty: l.qty, ...(l.price > 0 ? { price: l.price } : {}) })),
+    }),
+  });
+  const setLine = (i: number, patch: Partial<TryLine>) => setLines((x) => x.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  const r = run.data;
+  const ok = lines.some((l) => l.sku && l.qty > 0);
+  return (
+    <div>
+      <div className="alert alert-info">Thử giỏ hàng như máy bán: Core tính theo chương trình đang chạy, lọc theo hạn mức của cửa hàng. Số lượng theo đơn vị nhỏ nhất; đơn giá (gồm thuế) cần cho chương trình giảm giá. Không ghi gì vào sổ, không trừ hạn mức.</div>
+      <div className="ctb-toolbar">
+        <label>Cửa hàng <select className="select input" value={branch} onChange={(e) => setBranch(e.target.value)}><option value="">— chọn —</option>{branches.map((b) => <option key={b.code} value={b.code}>{b.code} — {b.name}</option>)}</select></label>
+        <label>Ngày bán <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+      </div>
+      <div className="table-wrap"><table className="grid">
+        <thead><tr><th title="Mặt hàng trong giỏ">Mặt hàng</th><th className="num" title="Số lượng (đơn vị nhỏ nhất)">Số lượng</th><th className="num" title="Đơn giá gồm thuế, trước giảm (đơn vị nhỏ nhất)">Đơn giá</th><th /></tr></thead>
+        <tbody>
+          {lines.map((l, i) => (
+            <tr key={i}>
+              <td style={{ minWidth: 260 }}><ItemPicker value={l.sku} onChange={(v) => setLine(i, { sku: v ?? '' })} /></td>
+              <td className="num"><NumInput value={l.qty} onChange={(v) => setLine(i, { qty: v ?? 0 })} style={{ width: 90 }} /></td>
+              <td className="num"><NumInput value={l.price} onChange={(v) => setLine(i, { price: v ?? 0 })} decimals={0} style={{ width: 130 }} /></td>
+              <td><button type="button" className="btn btn-xs" title="Bỏ dòng" disabled={lines.length === 1} onClick={() => setLines((x) => x.filter((_, j) => j !== i))}><Trash2 size={13} /></button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table></div>
+      <div className="ctb-toolbar">
+        <button type="button" className="btn btn-sm" onClick={() => setLines((x) => [...x, { sku: '', qty: 1, price: 0 }])}><Plus size={13} /> Thêm dòng</button>
+        <span style={{ flex: 1 }} />
+        <button type="button" className="btn btn-primary btn-sm" disabled={!ok || run.isPending} title={!ok ? 'Chọn ít nhất một mặt hàng có số lượng lớn hơn 0' : run.isPending ? 'Đang tính, chờ kết quả' : 'Tính như máy bán — không ghi gì'} onClick={() => run.mutate()}><Calculator size={13} /> {run.isPending ? 'Đang tính…' : 'Thử tính'}</button>
+      </div>
+      <ErrorBox error={run.error ? errorText(run.error) : null} />
+      {r && (
+        <div className="table-wrap"><table className="grid">
+          <thead><tr><th title="Chương trình">Chương trình</th><th title="Kết quả">Kết quả</th><th title="Giải thích / lý do">Giải thích</th></tr></thead>
+          <tbody>
+            {r.applied.map((a) => (
+              <tr key={`a-${a.policyRef.key}`}>
+                <td className="mono">{a.policyRef.key} <span className="muted">v{a.policyRef.version}</span></td>
+                <td>
+                  {r.gifts.filter((g) => g.policyRef.key === a.policyRef.key).map((g) => <div key={g.sku}><Gift size={12} /> Tặng {g.qty} <span className="mono">{g.sku}</span></div>)}
+                  {r.discounts.filter((d) => d.policyRef.key === a.policyRef.key).map((d) => <div key={d.lineKey}><Percent size={12} /> Giảm {money(d.amount)} đ (<span className="mono">{d.sku}</span>)</div>)}
+                </td>
+                <td>{a.explain}{a.quota ? <span className="muted"> · cửa hàng còn {money(a.quota.remaining)} / {money(a.quota.quotaQty)}</span> : null}</td>
+              </tr>
+            ))}
+            {r.skipped.map((x) => (
+              <tr key={`s-${x.key}-${x.version ?? ''}`} className="muted">
+                <td className="mono">{x.key}{x.version ? <span> v{x.version}</span> : null}</td><td>Không áp</td><td>{x.reason}</td>
+              </tr>
+            ))}
+            {!r.applied.length && !r.skipped.length && <tr><td colSpan={3} className="muted">Không có chương trình nào đang chạy vào ngày này.</td></tr>}
+          </tbody>
+        </table></div>
+      )}
+    </div>
+  );
+}
+
 export function ChuongTrinhBanPage() {
-  const [tab, setTab] = useState<'ds' | 'bc'>('ds');
+  const [tab, setTab] = useState<'ds' | 'bc' | 'tt'>('ds');
   return (
     <div className="page">
       <PageHeader title="Chương trình bán" code="BH12" helpKey="bh-chuong-trinh"
@@ -253,8 +336,9 @@ export function ChuongTrinhBanPage() {
       <div className="tabs" role="tablist" style={{ marginBottom: 8 }}>
         <button role="tab" className={`tab ${tab === 'ds' ? 'active' : ''}`} onClick={() => setTab('ds')}>Chương trình</button>
         <button role="tab" className={`tab ${tab === 'bc' ? 'active' : ''}`} onClick={() => setTab('bc')} title="Hạn mức, đã dùng, còn lại theo cửa hàng — tính từ các dòng đã bán">Báo cáo quản lý</button>
+        <button role="tab" className={`tab ${tab === 'tt' ? 'active' : ''}`} onClick={() => setTab('tt')} title="Thử giỏ hàng như máy bán: quà, tiền giảm, chương trình bị bỏ qua kèm lý do">Thử tính</button>
       </div>
-      {tab === 'ds' ? <DanhSach /> : <BaoCao />}
+      {tab === 'ds' ? <DanhSach /> : tab === 'bc' ? <BaoCao /> : <ThuTinh />}
     </div>
   );
 }

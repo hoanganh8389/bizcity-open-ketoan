@@ -4,13 +4,16 @@
  * DỊCH VỤ CHÍNH SÁCH cho nguồn ngoài (POS, Woo, sàn): đọc từ sổ đăng ký (@bizcity/platform/core/policies), chạy Rule Contract.
  * Chỉ nội dung inline (store = inline) mới có `params` ở đây; chính sách mà nội dung ở bảng của module chủ (mua hàng) hiện ra
  * trong danh sách nhưng không có params và không tính được ở W3a.
+ *
+ * [2026-11-12 09:25 PM Võ Hoàng] POS-KM — PHASE-031 · 00 §17 mục 2–3 (đóng góp): bản `store = module` đọc được qua bộ đọc của module chủ (BH12 đăng ký, khớp băm);
+ * evaluate nhận `lines[].price`, trả thêm `discounts[]`; chính sách của module có bộ kiểm áp được (hạn mức chi nhánh) thì lọc trước.
  */
 import { createHash } from 'node:crypto';
 import type { Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
 import { settingsToday } from '@bizcity/platform/core/settings';
 import { inlinePolicyId, listPublishedPolicies, publishInlinePolicy, type PolicyEnvelope } from '@bizcity/platform/core/policies';
-import { getRuleContract, type Treatment } from './index.js';
+import { getRuleContract, policyAvailability, policyContent, type Treatment } from './index.js';
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const KEY_RE = /^[A-Z0-9][A-Z0-9_.-]{0,63}$/;
@@ -51,12 +54,18 @@ export async function listPolicies(trx: Db, tenantId: string, q: { at?: string; 
       scope, effectiveFrom: e.effectiveFrom, effectiveTo: e.effectiveTo, contentHash: e.contentHash, params: null,
     };
     const contract = getRuleContract(e.ruleContract);
-    if (e.store === 'inline' && contract) {
-      const parsed = contract.params.safeParse(e.content);
-      if (!parsed.success) view.problem = 'nội dung không đúng khuôn của Rule Contract';
-      else {
-        if (!coversWindow(contract.window(parsed.data), at)) continue;
-        view.params = parsed.data;
+    if (contract) {
+      const content = await policyContent(trx, tenantId, e, e.content);
+      if (content === null) {
+        // Bản module không đọc được (module chủ chưa có bộ đọc, hoặc bản đã bị sửa đè): giữ trong danh sách, params null — như W3a.
+        if (e.store === 'inline') view.problem = 'bản không có nội dung';
+      } else {
+        const parsed = contract.params.safeParse(content);
+        if (!parsed.success) view.problem = 'nội dung không đúng khuôn của Rule Contract';
+        else {
+          if (!coversWindow(contract.window(parsed.data), at)) continue;
+          view.params = parsed.data;
+        }
       }
     } else if (e.store === 'inline') view.problem = `chưa có Rule Contract ${e.ruleContract}`;
     items.push(view);
@@ -65,7 +74,8 @@ export async function listPolicies(trx: Db, tenantId: string, q: { at?: string; 
   return { asOf: at, etag, items };
 }
 
-export interface EvalLine { lineKey: string; sku: string; qty: number; itemId?: string }
+/** `price`: đơn giá trọn (gồm thuế, trước giảm) trên một đơn vị nhỏ nhất — cần cho chương trình giảm giá. */
+export interface EvalLine { lineKey: string; sku: string; qty: number; itemId?: string; price?: number }
 export interface EvaluateRequest { docDate: string; branchCode?: string; channel?: string; lines: EvalLine[]; policies?: { key: string; version?: number }[] }
 export interface PolicyRefOut { key: string; version: number; hash: string; policyId: string }
 
@@ -78,9 +88,11 @@ export async function evaluatePolicies(trx: Db, tenantId: string, req: EvaluateR
   if (!DAY.test(req.docDate)) throw Errors.validation(`docDate "${req.docDate}" sai khuôn YYYY-MM-DD`);
   const { items } = await listPolicies(trx, tenantId, { at: req.docDate, domain: 'sale' });
   const wanted = req.policies?.length ? req.policies : null;
-  const applied: { policyRef: PolicyRefOut; ruleContract: string; result: unknown; explain: string; treatment: Treatment[] }[] = [];
+  const applied: { policyRef: PolicyRefOut; ruleContract: string; result: unknown; explain: string; treatment: Treatment[]; quota?: unknown }[] = [];
   const skipped: { key: string; version?: number; reason: string }[] = [];
   const gifts: { sku: string; itemId?: string; qty: number; isGift: true; policyRef: { key: string; version: number; line: 'gift' } }[] = [];
+  const discounts: { lineKey: string; sku: string; qty: number; amount: number; policyRef: { key: string; version: number; line: 'discount' } }[] = [];
+  const envelopes = new Map((await listPublishedPolicies(trx, tenantId, { at: req.docDate, ruleContractPrefix: 'sale.' })).map((e) => [`${e.policyId}@${e.version}`, e]));
 
   if (wanted) {
     for (const w of wanted) {
@@ -101,15 +113,21 @@ export async function evaluatePolicies(trx: Db, tenantId: string, req: EvaluateR
       return null;
     })();
     if (reason) { skipped.push({ key: i.policyKey, version: i.version, reason }); continue; }
+    // Bộ kiểm của module chủ (BH12: hạn mức của chi nhánh) — trước khi tính, để chương trình hết suất không gợi ý quà.
+    const env = envelopes.get(`${i.policyId}@${i.version}`);
+    const avail: { skip?: string; info?: Record<string, unknown> } = env ? await policyAvailability(trx, tenantId, env, { branchCode: req.branchCode, docDate: req.docDate }) : {};
+    if (avail.skip) { skipped.push({ key: i.policyKey, version: i.version, reason: avail.skip }); continue; }
     const contract = getRuleContract(i.ruleContract)!;
     const result = contract.evaluate(i.params, { lines: req.lines });
     const gift = (result as { gifts?: { sku: string; itemId?: string; qty: number }[] }).gifts ?? [];
-    if (!gift.length) { skipped.push({ key: i.policyKey, version: i.version, reason: contract.explain(i.params, result) }); continue; }
+    const disc = (result as { discounts?: { lineKey: string; sku: string; qty: number; amount: number }[] }).discounts ?? [];
+    if (!gift.length && !disc.length) { skipped.push({ key: i.policyKey, version: i.version, reason: contract.explain(i.params, result) }); continue; }
     const policyRef = { key: i.policyKey, version: i.version, hash: i.contentHash, policyId: i.policyId };
-    applied.push({ policyRef, ruleContract: i.ruleContract, result, explain: contract.explain(i.params, result), treatment: contract.treatment(result) });
+    applied.push({ policyRef, ruleContract: i.ruleContract, result, explain: contract.explain(i.params, result), treatment: contract.treatment(result), ...(avail.info?.quota ? { quota: avail.info.quota } : {}) });
     for (const g of gift) gifts.push({ ...g, isGift: true, policyRef: { key: i.policyKey, version: i.version, line: 'gift' } });
+    for (const x of disc) discounts.push({ ...x, policyRef: { key: i.policyKey, version: i.version, line: 'discount' } });
   }
-  return { docDate: req.docDate, applied, skipped, policyRefs: applied.map((a) => ({ key: a.policyRef.key, version: a.policyRef.version, hash: a.policyRef.hash, policyId: a.policyRef.policyId })), gifts };
+  return { docDate: req.docDate, applied, skipped, policyRefs: applied.map((a) => ({ key: a.policyRef.key, version: a.policyRef.version, hash: a.policyRef.hash, policyId: a.policyRef.policyId })), gifts, discounts };
 }
 
 export interface PublishRequest { key: string; ruleContract: string; params?: unknown; scope?: PolicyScope; effectiveFrom: string; reason?: string; legalRef?: string }

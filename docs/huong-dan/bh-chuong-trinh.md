@@ -22,6 +22,14 @@ Quà tặng, giảm giá, xả hàng cận date **trên chính mặt hàng** —
 - Hết hạn mức hoặc hết hạn: bán giá thường.
 - Huỷ phiếu: hạn mức được trả lại.
 - Hạn mức **không hạ được dưới số đã dùng**; cửa hàng đã dùng thì không bỏ khỏi chương trình được.
+- <!-- [2026-11-12 10:25 PM Võ Hoàng] POS-KM — NT-BH-003 (đóng góp) --> **Máy bán POS** tự hiện quà / tiền giảm theo chương trình (phần mềm kế toán tính, cùng một cách tính cho mọi nơi). Dòng quà là dòng 0đ ghi tên chương trình; hàng tặng không gửi thuế thì không lên hoá đơn điện tử.
+- Phiếu bán **đã ghi sổ** có dòng theo chương trình thì hạn mức **tự trừ**; huỷ phiếu thì **tự trả**. Phiếu đã bán thật mà vượt hạn mức (hai máy cùng bán món cuối) vẫn ghi đủ — xem phần vượt ở *Báo cáo quản lý*.
+
+## 2b. Thử tính
+
+Thẻ **Thử tính**: chọn cửa hàng, ngày bán, nhập vài mặt hàng (số lượng theo đơn vị nhỏ nhất, đơn giá gồm thuế) rồi bấm **Thử tính** — thấy đúng kết quả máy bán sẽ nhận: quà tặng, tiền giảm, chương trình nào không áp và vì sao (hết hạn mức, cửa hàng chưa được giao, chưa đủ số lượng…). Không ghi gì vào sổ, không trừ hạn mức.
+
+Cột **Bản** ở danh sách: bản hiện hành của chương trình. Mỗi lần sửa nội dung (không tính hạn mức) là một bản mới; phiếu bán cũ vẫn trỏ bản cũ.
 
 ## 3. Báo cáo quản lý
 
