@@ -13,7 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Cha – con đợt 2: chính sách mua khai ở đơn vị mẹ có ô *Áp cho cả đơn vị con* (chính sách riêng của đơn vị con cùng loại được ưu tiên); hạn mức khai ở mẹ thì cả nhóm dùng chung (kiểm khi lập phiếu, MH01 hiện "chung nhóm").
-  MH01 có cột *Thuộc đơn vị cha* và ô *Gộp theo đơn vị mẹ* (dòng Cả nhóm cộng nợ, quá hạn, sắp đến hạn); nhập Excel đối tượng có cột *Mã đơn vị cha* (để trống mã thì cấp mã cha-00x).
+  MH01 có cột *Thuộc đơn vị cha* và ô *Xem theo nhóm mẹ – chi nhánh* (mỗi nhóm một dòng mang tổng cả nhóm, bấm *+n chi nhánh* để bung); nhập Excel đối tượng có cột *Mã đơn vị cha* (để trống mã thì cấp mã cha-00x).
 
 ### Cài đặt bán hàng một màn; phiếu kế toán chênh lệch két khi chốt ca (phiếu NT-BH-014, chữ chốt nghiep-vu/20) <!-- [2026-11-13 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014 đợt 3 Bán hàng (đóng góp) -->
 

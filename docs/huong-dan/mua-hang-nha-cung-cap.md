@@ -10,7 +10,7 @@ Mỗi NCC một dòng: STT, mã, tên, MST, **nợ phải trả** (theo sổ), *
 - Lọc, sắp xếp từng cột; **Xuất Excel**. Dòng có nợ quá hạn tô vàng; hợp đồng hết hạn tô đỏ, sắp hết hạn (30 ngày) tô cam.
 - Bấm đúp một dòng (hoặc gõ mã / tên ở ô trên cùng) để mở **hồ sơ NCC**. NCC mới: nút **+ Thêm nhà cung cấp** (cùng một form với danh mục đối tượng — không khai ở nơi khác).
 - Cột **Thuộc đơn vị cha**: chi nhánh của NCC nằm dưới đơn vị mẹ nào (khai ở Danh mục → Nhà cung cấp → Cây cha – con).
-- Tích **Gộp theo đơn vị mẹ**: mỗi nhóm mẹ – chi nhánh có một dòng **Cả nhóm** in đậm cộng nợ, quá hạn, sắp đến hạn, mua tháng này, đơn đang mở; các đơn vị nằm ngay dưới. Dòng cộng nhóm không tính vào dòng Cộng cuối bảng.
+- Tích **Xem theo nhóm mẹ – chi nhánh**: mỗi nhóm chỉ còn **một dòng** là đơn vị mẹ, các số nợ, quá hạn, sắp đến hạn, mua tháng này trên dòng đó là **tổng cả nhóm**. Bấm nhãn **+n chi nhánh ▸** cạnh tên để bung từng đơn vị (chữ nhạt, thụt vào, số riêng từng đơn vị); bấm lần nữa để thu lại.
 - Hạn mức khai ở đơn vị mẹ và tích **Áp cho cả đơn vị con**: các chi nhánh không có hạn mức riêng dùng chung hạn mức đó, cột *Đã dùng hạn mức* là số của cả nhóm (ghi "chung nhóm"). Lập phiếu vượt hạn mức chung thì bị chặn như hạn mức thường.
 
 ## Hồ sơ nhà cung cấp
