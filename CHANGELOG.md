@@ -13,6 +13,10 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Chi nhánh: lỗi lấy danh sách website của hệ thống bán hàng hiện bằng dấu ! nhỏ (rê chuột xem chi tiết) thay dòng chữ đỏ.
+
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 ### Định danh bất biến phòng ban trên sổ
 - Mỗi mục chiều phân tích có định danh bất biến (phòng ban pb_…, mục khác dm_…), không sửa được. Dòng sổ cái lưu thêm department_uid (lấy theo mã phòng ban lúc ghi), như branch_uid / warehouse_uid; dòng cũ đã điền. Đổi tên / mã / ngừng phòng ban sau này sổ vẫn bám đúng. Migration 0130.
 

@@ -251,6 +251,11 @@ export function Field({ label, children, full, hint, tip, error, truong }: { lab
   );
 }
 
+/** Dấu ! nhỏ màu đỏ: có lỗi / cảnh báo phụ, rê chuột xem chi tiết (không chiếm chỗ trên màn). */
+export function CanhBao({ text }: { text: string }) {
+  return <span className="canh-bao-nho" title={text} aria-label={text}>!</span>;
+}
+
 /** Dấu ? nhỏ: rê chuột xem giải thích (thay dòng chữ giải thích dài trên màn). */
 export function Hoi({ text }: { text: string }) {
   return <span className="hoi-nho" title={text} aria-label={text}>?</span>;
