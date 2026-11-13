@@ -26,6 +26,8 @@ export interface SupplierRow {
   createdBy: string; createdAt: string | null;
   /** advance: tiền đã ứng / trả trước NCC chưa đối trừ vào hoá đơn (bên Nợ 331 còn lại) — đã trừ trong debt, KHÔNG trừ trong overdue. */
   debt: number; overdue: number; dueSoon: number; advance: number; creditLimit: number | null; creditUsed: number; creditPolicy?: string;
+  /** Đơn vị cha / đơn vị gốc của nhóm (cha – con 0132); hạn mức dùng chung của cả nhóm thì creditPool = mã đơn vị mẹ khai hạn mức. */
+  parentCode: string | null; rootCode: string; creditPool?: string;
   term: string; policies: number; items: number; contractTo?: string; contractNo?: string; lastReceipt?: string; monthPurchase: number; documents: number; attachments: number; openOrders: number;
 }
 
@@ -51,6 +53,15 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
   const atts = await trx.selectFrom('document_attachments').select(['doc_ref', sql<string>`COUNT(*)`.as('n')]).where('tenant_id', '=', tenantId).where('doc_ref', 'like', 'mua-hang.partner:%').where('archived_at', 'is', null).groupBy('doc_ref').execute();
   const attOf = new Map(atts.map((a) => [a.doc_ref.slice('mua-hang.partner:'.length), toNumber(a.n)]));
   const active = new Set<string>([...ctx.policies.map((p) => p.scope.partnerCode ?? ''), ...ctx.docs.map((d) => d.partnerCode), ...debts.filter((d) => Math.abs(toNumber(d.debt)) > 0.5).map((d) => d.code), ...attOf.keys(), ...itemsOf.keys()].filter(Boolean));
+  // [2026-11-13 Nguyễn Văn Thủy] cha – con: kèm đơn vị cha, gốc nhóm; đơn vị mẹ của NCC đang giao dịch cũng hiện để gộp nhóm (đóng góp)
+  const tree = await sql<{ code: string; parent: string | null; root: string }>`
+    WITH RECURSIVE t AS (
+      SELECT uid, code, parent_uid, code AS root, 0 AS d FROM partners WHERE tenant_id = ${tenantId} AND parent_uid IS NULL
+      UNION ALL
+      SELECT p.uid, p.code, p.parent_uid, t.root, t.d + 1 FROM partners p JOIN t ON p.parent_uid = t.uid WHERE p.tenant_id = ${tenantId} AND t.d < 20
+    ) SELECT t.code, (SELECT pp.code FROM partners pp WHERE pp.uid = t.parent_uid) AS parent, t.root FROM t WHERE t.d > 0 OR EXISTS (SELECT 1 FROM partners c WHERE c.parent_uid = t.uid)`.execute(trx);
+  const treeOf = new Map(tree.rows.map((r) => [r.code, r]));
+  for (const c of [...active]) { let x = treeOf.get(c); for (let i = 0; x?.parent && i < 20; i++) { active.add(x.parent); x = treeOf.get(x.parent); } }
   let q = trx.selectFrom('partners').select(['code', 'name', 'company_name', 'tax_code', 'group_code', 'phone', 'address', 'company_address', 'is_active', 'credit_limit', 'payment_term_days', 'kind', 'created_by', 'created_at']).where('tenant_id', '=', tenantId);
   q = scope === 'all' ? q.where((eb) => eb.or([eb('kind', '=', 'supplier'), sql<boolean>`'supplier' = ANY(also_kinds)`, eb('code', 'in', [...active, ''])])) : q.where('code', 'in', [...active, '']);
   const partners = await q.orderBy('code').execute();
@@ -61,11 +72,16 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
     const docs = ctx.docs.filter((d) => d.partnerCode === p.code && d.status !== 'cancelled');
     const d = debtOf.get(p.code);
     const debt = toNumber(d?.debt ?? 0);
-    const lim = findPolicy(pols.filter((x) => !x.scope.brandCode), 'credit_limit', { date: asOf, partnerCode: p.code });
+    // Hạn mức: của chính NCC, không có thì hạn mức đơn vị mẹ "áp cho cả đơn vị con" (cả nhóm dùng chung).
+    const lim = findPolicy(ctx.policies.filter((x) => x.isActive && x.scope.partnerCode && !x.scope.brandCode), 'credit_limit', { date: asOf, partnerCode: p.code });
+    const pooled = lim && lim.scope.partnerCode !== p.code ? [lim.scope.partnerCode!, ...(lim.familyCodes ?? [])] : null;
     const limit = lim ? (Number(lim.rule.limit) || 0) : p.credit_limit ? toNumber(p.credit_limit) : null;
     const openOrders = docs.filter((x) => x.kind === 'order' && x.status === 'approved' && !orderProgress(x, ctx.docs, undefined, orderUnits).done);
-    const pending = docs.filter((x) => x.status === 'pending_approval' && (x.kind === 'receipt' || x.kind === 'order')).reduce((s, x) => s + x.totals.total, 0)
-      + openOrders.reduce((s, x) => { const pr = orderProgress(x, ctx.docs, undefined, orderUnits); return s + (pr.ordered ? (x.totals.total * pr.remaining) / pr.ordered : 0); }, 0);
+    const pendOf = (codes: string[]) => { const ds = ctx.docs.filter((d) => codes.includes(d.partnerCode) && d.status !== 'cancelled');
+      return ds.filter((x) => x.status === 'pending_approval' && (x.kind === 'receipt' || x.kind === 'order')).reduce((s, x) => s + x.totals.total, 0)
+        + ds.filter((x) => x.kind === 'order' && x.status === 'approved').reduce((s, x) => { const pr = orderProgress(x, ctx.docs, undefined, orderUnits); return s + (pr.done || !pr.ordered ? 0 : (x.totals.total * pr.remaining) / pr.ordered); }, 0); };
+    const pending = pendOf([p.code]);
+    const used = pooled ? pooled.reduce((s, c) => s + toNumber(debtOf.get(c)?.debt ?? 0), 0) + pendOf(pooled) : debt + pending;
     const termPol = pols.find((x) => x.kind === 'payment_term');
     const contract = pols.filter((x) => x.kind === 'contract').sort((a, b) => (b.validTo ?? '9999').localeCompare(a.validTo ?? '9999'))[0];
     const receipts = docs.filter((x) => x.kind === 'receipt' && x.status === 'approved');
@@ -73,7 +89,8 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
       // NCC là doanh nghiệp: tên / địa chỉ chính thức (trên hoá đơn) = khối công ty, chưa có thì lấy tên / địa chỉ chung.
       code: p.code, name: p.company_name || p.name, taxCode: p.tax_code, groupCode: p.group_code, phone: p.phone, address: p.company_address || p.address, isActive: p.is_active,
       createdBy: p.created_by ?? '', createdAt: p.created_at ? new Date(p.created_at as unknown as string).toISOString() : null,
-      debt, advance: Math.round(toNumber(debtOf.get(p.code)?.advance ?? 0)), overdue: dueBy.get(p.code)?.overdue ?? 0, dueSoon: dueBy.get(p.code)?.dueSoon ?? 0, creditLimit: limit, creditUsed: Math.round(debt + pending), creditPolicy: lim?.code,
+      debt, advance: Math.round(toNumber(debtOf.get(p.code)?.advance ?? 0)), overdue: dueBy.get(p.code)?.overdue ?? 0, dueSoon: dueBy.get(p.code)?.dueSoon ?? 0, creditLimit: limit, creditUsed: Math.round(used), creditPolicy: lim?.code,
+      parentCode: treeOf.get(p.code)?.parent ?? null, rootCode: treeOf.get(p.code)?.root ?? p.code, ...(pooled ? { creditPool: lim!.scope.partnerCode } : {}),
       term: termPol ? termText(termFromRule(termPol.rule)) : p.payment_term_days ? `${p.payment_term_days} ngày (danh mục đối tượng)` : '',
       policies: pols.length, items: Math.max(itemsOf.get(p.code) ?? 0, new Set(docs.flatMap((x) => (x.kind === 'receipt' || x.kind === 'order' ? x.lines.map((l) => l.sku) : []))).size), contractTo: contract?.validTo, contractNo: contract ? String(contract.rule.no ?? '') : undefined,
       lastReceipt: receipts.map((x) => x.docDate).sort().pop(), monthPurchase: receipts.filter((x) => x.docDate.startsWith(month)).reduce((s, x) => s + x.totals.beforeTax, 0),

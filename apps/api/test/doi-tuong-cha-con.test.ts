@@ -5,6 +5,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
+import { computeDoc, type PDoc, type Policy } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;
@@ -87,5 +88,52 @@ describe('Đối tượng cha – con', () => {
     expect(nhom.parties).toMatchObject({ signedWith: 'NCC-ME', family: true, payer: 'NCC-TRUNGHAU', receiver: 'CN-PT' });
     expect(nhom.parties.members).toEqual(expect.arrayContaining(['NCC-ME', 'NCC-ME-001', 'NCC-TRUNGHAU']));
     expect(nhom.byPartner.map((x: { code: string }) => x.code)).toEqual(['NCC-TRUNGHAU']);
+  });
+});
+
+describe('Đợt 2 — chính sách, hạn mức, MH01, nhập Excel theo cha – con', () => {
+  it('chiết khấu khai ở đơn vị mẹ, tích "Áp cho cả đơn vị con": phiếu của đơn vị con được hưởng; đơn vị con có CK riêng thì CK riêng thắng', async () => {
+    const P = (body: Record<string, unknown>) => call(t, 'POST', '/api/v1/purchase/policies', { isActive: true, validFrom: '2026-01-01', ...body });
+    expect((await P({ code: 'ME-CK', kind: 'trade_discount', name: 'CK mẹ 5%', scope: { partnerCode: 'NCC-ME', withChildren: true }, rule: { pct: 5 } })).status).toBeLessThan(300);
+    const list = (await call(t, 'GET', '/api/v1/purchase/policies')).body.data as Policy[];
+    const me = list.find((x) => x.code === 'ME-CK')!;
+    expect(me.familyCodes).toEqual(expect.arrayContaining(['NCC-ME-001', 'NCC-TRUNGHAU']));
+    const doc = (partnerCode: string): PDoc => ({ id: 'x', kind: 'receipt', status: 'draft', docNo: '', docDate: '2026-11-10', branchCode: 'CN-PT', partnerCode, priceIncludesVat: false,
+      lines: [{ lineKey: 'a', sku: 'SP-THU', name: 'Hàng thử', unit: 'Hộp', qty: 10, price: 100000, taxCode: 'V08', lineType: 'buy' }] } as PDoc);
+    const only = list.filter((x) => x.code === 'ME-CK');
+    expect(computeDoc(doc('NCC-ME-001'), only).beforeTax).toBe(950000);
+    expect(computeDoc(doc('NCC-ME2'), only).beforeTax).toBe(1000000);
+    // Đơn vị con có CK riêng cùng loại: riêng thắng (không cộng hai lần khi chọn một chính sách cùng loại).
+    expect((await P({ code: 'CON-CK', kind: 'trade_discount', name: 'CK con 2%', scope: { partnerCode: 'NCC-ME-001' }, rule: { pct: 2 } })).status).toBeLessThan(300);
+    const both = ((await call(t, 'GET', '/api/v1/purchase/policies')).body.data as Policy[]).filter((x) => x.code === 'ME-CK' || x.code === 'CON-CK');
+    const c = computeDoc(doc('NCC-ME-001'), both);
+    expect(c.trace.some((x) => x.policy === 'CON-CK')).toBe(true);
+  });
+
+  it('hạn mức khai ở đơn vị mẹ, áp cả đơn vị con: MH01 tính số đã dùng của cả nhóm; dòng có cha, gốc nhóm', async () => {
+    const r = await call(t, 'POST', '/api/v1/purchase/policies', { code: 'ME-HM', kind: 'credit_limit', name: 'Hạn mức nhóm', isActive: true, validFrom: '2026-01-01', scope: { partnerCode: 'NCC-ME', withChildren: true }, rule: { limit: 1000000000, warnPct: 90, branches: {} } });
+    expect(r.status, JSON.stringify(r.body)).toBeLessThan(300);
+    const rows = (await call(t, 'GET', '/api/v1/purchase/suppliers?scope=active')).body.data as { code: string; parentCode: string | null; rootCode: string; creditPool?: string; creditUsed: number; creditLimit: number | null; debt: number }[];
+    // NCC-TRUNGHAU có hạn mức riêng (600 triệu): riêng thắng.
+    expect(rows.find((x) => x.code === 'NCC-TRUNGHAU')).toMatchObject({ parentCode: 'NCC-ME', rootCode: 'NCC-ME', creditLimit: 600000000 });
+    expect(rows.some((x) => x.code === 'NCC-ME')).toBe(true); // đơn vị mẹ hiện để gộp nhóm
+    // Đơn vị con không có hạn mức riêng: dùng hạn mức chung, số đã dùng là của cả nhóm (gồm nợ NCC-TRUNGHAU).
+    const all = (await call(t, 'GET', '/api/v1/purchase/suppliers?scope=all')).body.data as typeof rows;
+    const con = all.find((x) => x.code === 'NCC-ME-001')!;
+    const th = all.find((x) => x.code === 'NCC-TRUNGHAU')!;
+    expect(con).toMatchObject({ parentCode: 'NCC-ME', creditPool: 'NCC-ME', creditLimit: 1000000000 });
+    expect(con.creditUsed).toBeGreaterThanOrEqual(Math.round(th.debt));
+  });
+
+  it('nhập Excel: cột Mã đơn vị cha — để trống mã thì cấp mã cha-00x; cha chưa có thì báo lỗi', async () => {
+    const r = await call(t, 'POST', '/api/v1/partners/import', { dryRun: false, mode: 'both', rows: [
+      { row: 2, name: 'Chi nhánh Đà Nẵng', kind: 'Nhà cung cấp', parentCode: 'NCC-ME' },
+      { row: 3, name: 'Chi nhánh lạc', kind: 'Nhà cung cấp', parentCode: 'KHONG-CO' },
+    ] });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    const out = r.body.data.rows as { row: number; code: string; action: string; errors: string[] }[];
+    expect(out[0]).toMatchObject({ action: 'create', code: 'NCC-ME-002' });
+    expect(out[1]!.action).toBe('error');
+    expect((await one('NCC-ME-002')).parentCode).toBe('NCC-ME');
   });
 });

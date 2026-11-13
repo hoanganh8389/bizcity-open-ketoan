@@ -82,6 +82,12 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
         <select className="select input" value={p.kind} onChange={(e) => { const k = e.target.value as PolicyKind; upd({ ...p, kind: k, rule: TEMPLATES[k]?.[0]?.rule ? { ...TEMPLATES[k][0]!.rule } : defaultRule(k) }); }}>{kinds.map((k) => <option key={k} value={k}>{POLICY_LABEL[k]}</option>)}</select>
         <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{KIND_HINT[p.kind]}</div>
       </Field>
+      {/* [2026-11-13 Nguyễn Văn Thủy] chính sách đơn vị mẹ áp cho mọi đơn vị con (đóng góp) */}
+      {p.scope.partnerCode && !REBATE_KINDS.includes(p.kind) && <label className="mh-tick full">
+        <input type="checkbox" checked={Boolean(p.scope.withChildren)} onChange={(e) => upd({ ...p, scope: { ...p.scope, withChildren: e.target.checked || undefined } })} />
+        <span><b>Áp cho cả đơn vị con</b> của {names.partnerName(p.scope.partnerCode)} — phiếu của các chi nhánh / đơn vị con cũng hưởng chính sách này{p.kind === 'credit_limit' ? '; hạn mức dùng chung cho cả nhóm' : ''}.
+          <span className="muted"> Đơn vị con có chính sách riêng cùng loại thì chính sách riêng được ưu tiên.</span></span>
+      </label>}
       {REBATE_KINDS.includes(p.kind) && <CacBenThuong p={p} onChange={(rule) => upd({ ...p, rule })} />}
       {p.kind !== 'item_discount' && p.kind !== 'promo_gift' && <Field label="Mã hàng (trống = mọi mã)"><ItemPicker value={p.scope.sku ?? ''} onChange={(c) => setScope('sku', c)} /></Field>}
       <Field label="Chi nhánh (trống = mọi chi nhánh)"><BranchPicker value={p.scope.branchCode ?? ''} onChange={(c) => setScope('branchCode', c)} activeOnly /></Field>

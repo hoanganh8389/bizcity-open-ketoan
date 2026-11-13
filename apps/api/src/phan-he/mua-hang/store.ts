@@ -366,7 +366,7 @@ export const policyInputSchema = z.object({
   code: z.string().trim().min(1).max(64),
   kind: z.enum(POLICY_KINDS as [PolicyKind, ...PolicyKind[]]),
   name: z.string().trim().min(1).max(255),
-  scope: z.object({ partnerCode: z.string().optional(), brandCode: z.string().optional(), sku: z.string().optional(), branchCode: z.string().optional() }).default({}),
+  scope: z.object({ partnerCode: z.string().optional(), brandCode: z.string().optional(), sku: z.string().optional(), branchCode: z.string().optional(), withChildren: z.boolean().optional() }).default({}),
   validFrom: day.optional().nullable(),
   validTo: day.optional().nullable(),
   priority: z.number().int().default(0),
@@ -392,6 +392,10 @@ export async function listPolicies(trx: Db, tenantId: string, opts: { exclude?: 
   if (opts.exclude?.length) q = q.where('kind', 'not in', opts.exclude);
   const rows = await q.orderBy('kind').orderBy('code').execute();
   const versions = rows.length ? await policyVersionsByPolicy(trx, tenantId) : new Map<string, PolicyVersion[]>();
+  // [2026-11-13 Nguyễn Văn Thủy] chính sách đơn vị mẹ áp cho đơn vị con: điền mã mọi cấp con (không lưu) (đóng góp)
+  const heads = [...new Set(rows.filter((r) => (r.scope as Policy['scope'] | null)?.withChildren && (r.scope as Policy['scope']).partnerCode).map((r) => (r.scope as Policy['scope']).partnerCode!))];
+  const fam = new Map<string, string[]>();
+  for (const h of heads) fam.set(h, await partnerDescendants(trx, tenantId, h));
   return rows.map((r) => {
     const vs = versions.get(String(r.id)) ?? [];
     return {
@@ -400,8 +404,20 @@ export async function listPolicies(trx: Db, tenantId: string, opts: { exclude?: 
       priority: r.priority, isActive: r.is_active, rule: (r.rule ?? {}) as Record<string, unknown>, programKind: (r as { program_kind?: string | null }).program_kind ?? null,
       createdBy: r.created_by, createdAt: new Date(r.created_at as unknown as string).toISOString(), updatedBy: r.updated_by, updatedAt: new Date(r.updated_at as unknown as string).toISOString(),
       ...(vs.length ? { version: vs.at(-1)!.version, contentHash: vs.at(-1)!.hash, versions: vs } : {}),
+      ...((r.scope as Policy['scope'] | null)?.withChildren && fam.get((r.scope as Policy['scope']).partnerCode ?? '') ? { familyCodes: fam.get((r.scope as Policy['scope']).partnerCode!) } : {}),
     };
   });
+}
+
+/** Mã mọi cấp đơn vị con của một đối tượng (không gồm chính nó) — cha – con 0132. */
+export async function partnerDescendants(trx: Db, tenantId: string, code: string): Promise<string[]> {
+  const r = await sql<{ code: string }>`
+    WITH RECURSIVE t AS (
+      SELECT uid, code, 0 AS d FROM partners WHERE tenant_id = ${tenantId} AND code = ${code}
+      UNION ALL
+      SELECT p.uid, p.code, t.d + 1 FROM partners p JOIN t ON p.parent_uid = t.uid WHERE p.tenant_id = ${tenantId} AND t.d < 20
+    ) SELECT code FROM t WHERE d > 0`.execute(trx);
+  return r.rows.map((x) => x.code);
 }
 
 /* ------------------------------------------------------------------ phiên bản chính sách */
