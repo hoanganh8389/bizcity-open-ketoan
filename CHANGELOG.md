@@ -12,6 +12,8 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Bút toán gộp theo tài khoản mang đủ bộ định danh như dòng sổ (0136): `branch_uid` cn_, `partner_uid` dt_, `warehouse_uid` kho_ + mã kho, `department_uid` pb_, `tax_id` MST tại ngày; khác kho / phòng ban / MST thì tách dòng gộp (sổ gộp lọc, cộng được theo MST, theo kho). Test canh cửa `dinh-danh-canh-cua`: bảng có cột chi nhánh / kho / đối tượng phải có cn_ / kho_ / dt_; 19 bảng cũ còn thiếu ghi thành nợ cũ, danh sách chỉ được ngắn đi.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Sổ chế độ Cộng gộp: dòng gộp chỉ một mã hàng thì hiện Mã / Tên hàng, nhiều mã thì cột Mã hàng ghi *n mã hàng* (0135: bảng gộp thêm sku_count, product_sku, product_name, item_id). Thanh tóm tắt tham số báo cáo hiện thêm các ô tích đang bật (vd *Cộng gộp các bút toán giống nhau*).
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - **Bút toán gộp theo tài khoản** (0134, lớp trung gian giữa sổ chi tiết và sổ sách): sổ vẫn lưu từng dòng mã hàng; bảng `ledger_entry_accounts` giữ sẵn mỗi bút toán × TK × TK đối ứng × đối tượng × bên một dòng, trigger trên `ledger_lines` cập nhật khi ghi sổ, khi điền giá vốn tháng và khi dọn dữ liệu (dựng lại theo bút toán, dữ liệu cũ dựng trong migration). Nhật ký chung (ACC89) và Sổ chi tiết TK / Sổ cái / sổ quỹ / sổ công nợ chế độ *Cộng gộp các bút toán giống nhau* đọc bảng này (Nhật ký chung gộp + phân trang trong CSDL), không quét dòng mã hàng; cột **Số dòng** (số dòng mã hàng đã gộp), bấm dòng mở bút toán xem từng mã. Mặc định: ACC89, ACC88 gộp; ACC12 từng dòng; máy nhớ lựa chọn. Tổng khớp sổ chi tiết (test but-toan-gop).
