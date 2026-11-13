@@ -217,6 +217,33 @@ export async function freezeApproved(trx: Db): Promise<{ frozen: number; skipped
 
 const GOODS = ['order', 'receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
 
+/** Loại chứng từ ở Tài khoản ngầm định của từng loại phiếu mua và cột tương ứng với TK kho / TK công nợ / TK thuế của dòng. */
+export const LINE_ACCOUNT_TYPES: Record<string, { code: string; inventory: string; payable: string; tax: string }> = {
+  receipt: { code: 'mua-hang-trong-nuoc-nhap-kho-chua-thanh-toan', inventory: 'debit_account', payable: 'credit_account', tax: 'vat_account' },
+  return: { code: 'hang-mua-tra-lai-giam-tru-cong-no-tra-lai-hang-trong-kho', inventory: 'credit_account', payable: 'debit_account', tax: 'vat_account' },
+};
+LINE_ACCOUNT_TYPES.exchange = LINE_ACCOUNT_TYPES.receipt!;
+
+async function lineAccountChecks(trx: Db, tenantId: string, doc: PDoc): Promise<Check[]> {
+  const spec = LINE_ACCOUNT_TYPES[doc.kind];
+  const used = doc.lines.filter((l) => l.accounts && Object.values(l.accounts).some(Boolean));
+  if (!spec || !used.length) return [];
+  const t = await trx.selectFrom('account_default_types').select('columns').where('tenant_id', '=', tenantId).where('code', '=', spec.code).executeTakeFirst();
+  const posting = new Set((await trx.selectFrom('accounts').select('code').where('tenant_id', '=', tenantId).where('is_posting', '=', true).execute()).map((a) => a.code));
+  const label = { inventory: 'TK kho', payable: 'TK công nợ', tax: 'TK thuế GTGT' } as const;
+  const bad: string[] = [];
+  for (const l of used) {
+    for (const k of ['inventory', 'payable', 'tax'] as const) {
+      const acc = l.accounts?.[k];
+      if (!acc) continue;
+      const filter = t?.columns.find((c) => c.key === spec[k])?.filter ?? [];
+      if (!posting.has(acc)) bad.push(`${l.sku || l.lineKey}: ${label[k]} ${acc} không phải tài khoản chi tiết`);
+      else if (filter.length && !filter.some((f) => acc.startsWith(f))) bad.push(`${l.sku || l.lineKey}: ${label[k]} ${acc} ngoài danh sách được chọn (${filter.join('; ')})`);
+    }
+  }
+  return bad.length ? [{ level: 'error', code: 'line_account', blocking: true, text: `Tài khoản trên dòng không đúng Tài khoản ngầm định: ${bad.join(' · ')}` }] : [];
+}
+
 export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): Promise<Analysis> {
   const { policies, docs, settings, accounts } = ctx;
   // ĐVT của các mã trên phiếu: bảng chiết khấu theo mã ghi ĐVT khác ĐVT phiếu (vd giảm / Thùng, phiếu theo Lon) quy đổi theo tỉ lệ.
@@ -316,6 +343,8 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
     }).filter((c) => doc.kind === 'receipt' || doc.kind === 'order' || !['no_invoice', 'gift_qty', 'price_last', 'price_fixed'].includes(c.code))
       .filter((c) => !(['gift_in', 'gift_out', 'return', 'exchange'].includes(doc.kind) && (c.code === 'near_expiry' || c.code === 'expired')));
     if (doc.kind === 'gift_out') checks = checks.filter((c) => c.code !== 'lot_missing');
+    // [2026-11-13 Nguyễn Văn Thủy] tài khoản người lập chọn trên dòng phải là TK chi tiết trong lọc của Tài khoản ngầm định (đóng góp)
+    for (const t of await lineAccountChecks(trx, tenantId, doc)) checks.push(t);
     if (doc.kind !== 'exchange' && calc.orderDiscount > calc.gross - calc.lineDiscount) checks.push({ level: 'error', code: 'discount_over', blocking: true, text: `Chiết khấu trên đơn ${calc.orderDiscount.toLocaleString('vi-VN')} lớn hơn tiền hàng ${(calc.gross - calc.lineDiscount).toLocaleString('vi-VN')} — số phải trả bị âm` });
   }
   // Trả tiền theo phiếu nhập đã tất toán (hết nợ): nhắc — tiền sẽ thành khoản trả trước / trừ vào phiếu khác, dễ trả trùng.

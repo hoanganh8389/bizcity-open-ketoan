@@ -58,6 +58,8 @@ export interface PLine {
   nccName?: string;
   /** Mã vạch (in đơn gửi NCC). */
   barcode?: string;
+  /** [2026-11-13 Nguyễn Văn Thủy] Tài khoản riêng của dòng (trong lọc của Tài khoản ngầm định); trống = theo ngầm định (đóng góp) */
+  accounts?: { inventory?: string; payable?: string; tax?: string };
   /** Dòng hàng mới chưa có mã trong danh mục (đơn đặt): có mã thì gắn sku sau. */
   newItem?: boolean;
   /** Phiếu nhập lập từ đơn: khoá dòng của đơn (gắn mã hàng mới thì ghi ngược vào đơn). */

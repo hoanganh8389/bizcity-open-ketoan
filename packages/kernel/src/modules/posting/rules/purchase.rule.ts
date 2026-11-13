@@ -26,6 +26,7 @@ import type { PostingPart } from './stock.rule.js';
 import { EntryBuilder } from '../entry-builder.js';
 import { lineTags, type RuleContext } from './sale.rule.js';
 
+// [2026-11-13 Nguyễn Văn Thủy] dòng có tài khoản riêng (line.accounts) thì dùng, không thì theo tài khoản ngầm định (đóng góp)
 export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): PostingPart[] {
   const { resolver, partnerId } = ctx;
   const reason = resolver.reason(doc.reasonCode, 'purchase');
@@ -40,8 +41,8 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
       tags,
       part: 'goods',
       productSku: line.sku,
-      debitAccount: resolver.reasonExpense(reason) ?? group.inventory_account,
-      creditAccount: payable,
+      debitAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? group.inventory_account,
+      creditAccount: line.accounts?.payable ?? payable,
       amount: line.amountBeforeTax,
       creditPartnerId: partnerId,
       taxCode: line.taxCode,
@@ -51,8 +52,8 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
       tags,
       part: 'tax',
       productSku: line.sku,
-      debitAccount: resolver.inputTaxAccount(line.taxCode, line.taxAmount),
-      creditAccount: payable,
+      debitAccount: line.accounts?.tax ?? resolver.inputTaxAccount(line.taxCode, line.taxAmount),
+      creditAccount: line.accounts?.payable ?? payable,
       amount: line.taxAmount,
       creditPartnerId: partnerId,
       taxCode: line.taxCode,
@@ -96,8 +97,8 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
       tags,
       part: 'goods',
       productSku: line.sku,
-      debitAccount: payable,
-      creditAccount: resolver.reasonExpense(reason) ?? group.inventory_account,
+      debitAccount: line.accounts?.payable ?? payable,
+      creditAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? group.inventory_account,
       amount: Math.abs(line.amountBeforeTax),
       debitPartnerId: partnerId,
       taxCode: line.taxCode,
@@ -107,8 +108,8 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
       tags,
       part: 'tax',
       productSku: line.sku,
-      debitAccount: payable,
-      creditAccount: resolver.inputTaxAccount(line.taxCode, line.taxAmount),
+      debitAccount: line.accounts?.payable ?? payable,
+      creditAccount: line.accounts?.tax ?? resolver.inputTaxAccount(line.taxCode, line.taxAmount),
       amount: Math.abs(line.taxAmount),
       debitPartnerId: partnerId,
       taxCode: line.taxCode,

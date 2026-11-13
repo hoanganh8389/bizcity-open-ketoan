@@ -14,6 +14,7 @@ import { plain } from '@/components/pickers';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading, Modal } from '@/components/ui';
 import { AccountPicker } from '@/components/pickers';
+import { ChonNhieuTaiKhoan } from '@/components/ChonNhieuTaiKhoan';
 
 export interface AdColumn { key: string; caption: string; filter: string[]; default: string; bind?: string }
 export interface AdType { code: string; group: string; name: string; columns: AdColumn[]; isActive: boolean; updatedBy: string; updatedAt: string }
@@ -87,21 +88,19 @@ export function DefaultsPage() {
   );
 }
 
-const splitFilter = (s: string) => [...new Set(s.split(/[;,\s]+/).map((x) => x.trim()).filter(Boolean))];
 
 function SuaLoai({ type, canWrite, onClose }: { type: AdType; canWrite: boolean; onClose: () => void }) {
   const qc = useQueryClient();
-  const [cols, setCols] = useState(type.columns.map((c) => ({ ...c, filterText: c.filter.join('; ') })));
+  const [cols, setCols] = useState(type.columns);
   const set = (key: string, patch: Partial<(typeof cols)[number]>) => setCols((xs) => xs.map((c) => (c.key === key ? { ...c, ...patch } : c)));
   const bad = (c: (typeof cols)[number]) => {
-    const f = splitFilter(c.filterText);
-    if (f.some((x) => !/^[0-9]+$/.test(x))) return 'Lọc chỉ gồm số tài khoản, cách nhau bằng dấu ;';
+    const f = c.filter;
     if (c.default && f.length && !f.some((x) => c.default.startsWith(x))) return `${c.default} không nằm trong danh sách lọc`;
     if (c.bind && !c.default) return 'Cần tài khoản mặc định';
     return '';
   };
   const save = useMutation({
-    mutationFn: () => api.put(`/api/v1/account-default-types/${encodeURIComponent(type.code)}`, { columns: cols.map((c) => ({ key: c.key, filter: splitFilter(c.filterText), default: c.default })) }),
+    mutationFn: () => api.put(`/api/v1/account-default-types/${encodeURIComponent(type.code)}`, { columns: cols.map((c) => ({ key: c.key, filter: c.filter, default: c.default })) }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['account-default-types'] }); void qc.invalidateQueries({ queryKey: ['posting-defaults'] }); onClose(); },
   });
   const anyBad = cols.some((c) => bad(c));
@@ -114,17 +113,17 @@ function SuaLoai({ type, canWrite, onClose }: { type: AdType; canWrite: boolean;
       <div className="full" style={{ marginBottom: 8 }}>Loại chứng từ: <b>{type.name}</b></div>
       <ErrorBox error={save.error ? errorText(save.error) : null} />
       <table className="grid full">
-        <thead><tr><th style={{ width: 200 }}>Tên cột</th><th title="Tài khoản được chọn trên dòng chứng từ, theo đầu số, cách nhau bằng dấu ; — để trống là chọn được mọi tài khoản">Lọc tài khoản</th><th style={{ width: 220 }}>TK ngầm định</th></tr></thead>
+        <thead><tr><th style={{ width: 200 }}>Tên cột</th><th title="Tài khoản được chọn trên dòng chứng từ: bấm để tích. Tích tài khoản tổng hợp là gồm mọi tài khoản con. Để trống là chọn được mọi tài khoản">Lọc tài khoản</th><th style={{ width: 220 }}>TK ngầm định</th></tr></thead>
         <tbody>{cols.map((c) => {
           const err = bad(c);
           return (
             <tr key={c.key}>
               <td title={c.bind ? 'Chứng từ tự hạch toán dùng tài khoản mặc định của cột này' : undefined}>{c.caption}</td>
               <td>
-                <input className={`input mono${err && err.startsWith('Lọc') ? ' input-bad' : ''}`} value={c.filterText} readOnly={!canWrite} onChange={(e) => set(c.key, { filterText: e.target.value })} />
+                <ChonNhieuTaiKhoan value={c.filter} disabled={!canWrite} onChange={(filter) => set(c.key, { filter })} />
               </td>
               <td>
-                <AccountPicker postingOnly prefixes={splitFilter(c.filterText)} value={c.default} onChange={(v) => set(c.key, { default: v })} disabled={!canWrite} />
+                <AccountPicker postingOnly prefixes={c.filter} value={c.default} onChange={(v) => set(c.key, { default: v })} disabled={!canWrite} />
                 {err && <div className="neg" style={{ fontSize: 12, marginTop: 2, fontWeight: 600 }}>{err}</div>}
               </td>
             </tr>

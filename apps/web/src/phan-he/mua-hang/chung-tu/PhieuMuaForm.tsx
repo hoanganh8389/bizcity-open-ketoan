@@ -28,7 +28,7 @@ import { Modal, NumInput, openNextInEdit } from '@/components/ui';
 import { roundPrice } from '@/lib/format';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { BranchPicker } from '@/components/filters';
-import { ItemPicker, ListPicker, PartnerPicker, useAccountList } from '@/components/pickers';
+import { AccountPicker, ItemPicker, ListPicker, PartnerPicker, useAccountList } from '@/components/pickers';
 import { GOODS_KINDS, KIND_LABEL, P, STATUS_LABEL, TAX_LABEL, lastUsed, today, purchaseApi, useBrands, useNames, useSupplierBrands, vnd, type Analysis, type MhData, type StoredDoc } from '../du-lieu';
 import { CheckList, UsageBar, dmy, statusBadge } from '../chung';
 import { ChonMatHang, type CatalogItem } from '../thanh-phan/ChonMatHang';
@@ -50,6 +50,14 @@ import { ChonChungTu, OChonChungTu } from '../thanh-phan/ChonChungTu';
 import { HoaDonModal } from '../hoa-don/HoaDonModal';
 import type { InvoiceRow } from '../hoa-don/api';
 import { layPhieuIn, mauInCua } from './mauIn';
+
+type AccKey = 'inventory' | 'payable' | 'tax';
+/** Loại ở Tài khoản ngầm định của từng loại phiếu mua (khớp LINE_ACCOUNT_TYPES phía máy chủ) và cột ứng với TK kho / công nợ / thuế. */
+const LINE_ACC: Record<string, { code: string } & Record<AccKey, string>> = {
+  receipt: { code: 'mua-hang-trong-nuoc-nhap-kho-chua-thanh-toan', inventory: 'debit_account', payable: 'credit_account', tax: 'vat_account' },
+  exchange: { code: 'mua-hang-trong-nuoc-nhap-kho-chua-thanh-toan', inventory: 'debit_account', payable: 'credit_account', tax: 'vat_account' },
+  return: { code: 'hang-mua-tra-lai-giam-tru-cong-no-tra-lai-hang-trong-kho', inventory: 'credit_account', payable: 'debit_account', tax: 'vat_account' },
+};
 
 type Tab = 'hang' | 'thanh-toan' | 'hoa-don' | 'hach-toan' | 'gia-von' | 'tep' | 'tep-ncc' | 'lich-su';
 const LINE_TYPE: Record<LineType, string> = { buy: 'Hàng mua', gift_seller: 'KM người bán (chia giá)', gift_consumer: 'KM người tiêu dùng / quà' };
@@ -154,7 +162,20 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const isGoods = GOODS_KINDS.includes(v.kind);
   const isGiftDoc = v.kind === 'gift_in' || v.kind === 'gift_out';
   // Ngày nghỉ lễ (MH12): hạn "N ngày làm việc" bỏ cả ngày lễ — trùng với hạn máy chủ tính (tab Hạn trả tiền, hạn lưu vào phiếu).
-  const settings = useQuery({ queryKey: ['mua-hang', 'settings'], queryFn: () => api.get<{ holidays: string[] }>(`${P}/settings`), staleTime: 300_000 });
+  const settings = useQuery({ queryKey: ['mua-hang', 'settings'], queryFn: () => api.get<{ holidays: string[]; resolvedAccounts?: Record<string, string> }>(`${P}/settings`), staleTime: 300_000 });
+  // [2026-11-13 Nguyễn Văn Thủy] tài khoản trên dòng: điền sẵn theo Tài khoản ngầm định của loại chứng từ, bấm vào chỉ xổ tài khoản trong lọc; ẩn / hiện được (đóng góp)
+  const adTypes = useQuery({ queryKey: ['account-default-types'], queryFn: () => api.get<{ code: string; columns: { key: string; filter: string[]; default: string }[] }[]>('/api/v1/account-default-types'), staleTime: 60_000 }).data;
+  const accSpec = LINE_ACC[v.kind];
+  const accType = accSpec ? adTypes?.find((t) => t.code === accSpec.code) : undefined;
+  const accCol = (k: AccKey) => (accSpec ? accType?.columns.find((c) => c.key === accSpec[k]) : undefined);
+  const accDefault = (k: AccKey) => accCol(k)?.default || settings.data?.resolvedAccounts?.[k === 'inventory' ? 'stock' : k === 'payable' ? 'payable' : 'vatIn'] || '';
+  const [showAcc, setShowAcc] = useState(() => { try { return localStorage.getItem('ketoan.mua.an-tk') !== '1'; } catch { return true; } });
+  const toggleAcc = () => setShowAcc((x) => { try { localStorage.setItem('ketoan.mua.an-tk', x ? '1' : '0'); } catch { /* bỏ qua */ } return !x; });
+  const accOn = Boolean(accSpec) && showAcc;
+  const accCell = (l: PLine, k: AccKey) => (
+    <td><AccountPicker postingOnly hideName prefixes={accCol(k)?.filter} className="input mono" style={{ width: 84 }} value={l.accounts?.[k] ?? ''} placeholder={accDefault(k)} disabled={readOnly}
+      onChange={(acc) => setLine(l.lineKey, { accounts: { ...l.accounts, [k]: acc && acc !== accDefault(k) ? acc : undefined } })} /></td>
+  );
   const holidays = settings.data?.holidays;
   const set = (p: Partial<PDoc>) => { setV((x) => ({ ...x, ...p })); setDirty(true); };
   const setLine = (key: string, p: Partial<PLine>) => { setV((x) => ({ ...x, lines: x.lines.map((l) => (l.lineKey === key ? { ...l, ...p } : l)) })); setDirty(true); };
@@ -853,10 +874,11 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {/* Bảng hàng tự cuộn trong khung (cao theo màn hình): tiêu đề cột đứng yên, thanh cuộn ngang luôn thấy, phần đầu phiếu không bị cuộn mất. */}
                 {danBao && <div className={`alert ${danBao.ok ? 'alert-ok' : 'alert-warn'}`} style={{ margin: '4px 0', cursor: 'pointer' }} title="Bấm để ẩn" onClick={() => setDanBao(null)}>{danBao.text}</div>}
+                {accSpec && <label className="checkbox" style={{ fontSize: 12.5, margin: '2px 0 4px' }} title="Tắt để form gọn: tài khoản vẫn ghi theo Tài khoản ngầm định của loại chứng từ"><input type="checkbox" checked={showAcc} onChange={toggleAcc} /> Hiển thị tài khoản</label>}
                 <div className="mh-lines-box">
                   <table className="mh-lines" style={{ minWidth: 1100 }}>
                     <thead><tr>
-                      <th data-minw="56">#</th>{v.kind === 'exchange' && <th>Chiều</th>}{!isGiftDoc && <th title="Tự nhận theo mã hàng (quy tắc mã hàng) và đơn giá: giá 0 = hàng tặng">Loại hàng</th>}<th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th>{showKho && <th title="Theo ô Phân kho ở đầu phiếu — mọi dòng cùng một phân kho">Phân kho</th>}<th className="num">SL</th>{isOrder && <th title="Phân tích thông minh: số liệu tồn chụp lúc thêm hàng / lưu đơn (Phân tích đặt hàng MH02)">Phân tích tồn</th>}
+                      <th data-minw="56">#</th>{v.kind === 'exchange' && <th>Chiều</th>}{!isGiftDoc && <th title="Tự nhận theo mã hàng (quy tắc mã hàng) và đơn giá: giá 0 = hàng tặng">Loại hàng</th>}<th>Mã hàng</th><th>Tên hàng</th><th>ĐVT</th>{showKho && <th title="Theo ô Phân kho ở đầu phiếu — mọi dòng cùng một phân kho">Phân kho</th>}{accOn && <><th title="Tài khoản kho của dòng — bấm để đổi trong danh sách được chọn (Tài khoản ngầm định)">TK Kho</th><th title="Tài khoản công nợ nhà cung cấp của dòng">TK Công nợ</th><th title="Tài khoản thuế GTGT đầu vào của dòng">TK thuế</th></>}<th className="num">SL</th>{isOrder && <th title="Phân tích thông minh: số liệu tồn chụp lúc thêm hàng / lưu đơn (Phân tích đặt hàng MH02)">Phân tích tồn</th>}
                       <th className="num">{isGiftDoc ? 'Giá trị / ĐVT' : v.priceIncludesVat ? 'Đơn giá gồm thuế' : 'Đơn giá chưa thuế'}</th>
                       {!isGiftDoc && <><th className="num" title="Chiết khấu dòng theo %, tối đa 100%. Gõ % thì cột CK (đ) tự tính; để trống cả hai = tự lấy theo chính sách">CK %</th><th className="num" title="Chiết khấu dòng bằng tiền (theo loại giá của phiếu), tối đa bằng tiền hàng của dòng. Gõ tiền thì cột CK % tự tính lại">CK (đ)</th><th>Thuế suất</th><th className="num">Thành tiền chưa thuế</th><th className="num">Tiền thuế</th><th className="num" title="Thành tiền chưa thuế + tiền thuế (sau chiết khấu)">Thành tiền (gồm thuế)</th><th className="num" title="Giá vốn đơn vị thực tế: trước thuế, sau CK, đã chia quà người bán">Giá vốn / ĐVT</th></>}
                       {isGiftDoc && <th>Chương trình</th>}{!isOrder && <><th>Số lô</th><th>NSX</th><th>Hạn dùng</th></>}<th>Ghi chú</th><th data-minw="72" style={{ minWidth: 72 }} title="Nhân đôi / xoá dòng (cũng có ở cột # đầu dòng và khi bấm chuột phải)" />
@@ -914,6 +936,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                                 1 {l.unit} = {mid}<b>{n(r)} {b}</b>{l.qty && l.qty !== 1 ? <span className="muted"> · {n(l.qty)} {l.unit} = {n(l.qty * r)} {b}</span> : null}
                               </div>; })()}</td>
                           {showKho && <td style={{ whiteSpace: 'nowrap' }} title="Theo ô Phân kho ở đầu phiếu"><span className="mono">{v.warehouseCode || <span className="muted">mặc định</span>}</span></td>}
+                          {accOn && <>{accCell(l, 'inventory')}{accCell(l, 'payable')}{accCell(l, 'tax')}</>}
                           <td className={oDong(l, 'qty')} title={oDong(l, 'qty') ? 'Số lượng phải lớn hơn 0' : undefined}><NumInput style={{ width: 82 }} step={1} blankZero={false} value={l.qty} title="Số lượng — bấm ▲▼ (hoặc Ctrl + ↑ ↓) để tăng giảm 1" onChange={(n) => setLine(l.lineKey, { qty: n ?? 0, ...(l.autoGift ? { autoGift: false } : {}) })} /></td>
                           {isOrder && <>
                             <td style={{ fontSize: 10.5, minWidth: 230, lineHeight: 1.3, verticalAlign: 'top' }} title="Phân tích thông minh — số liệu chụp lúc thêm hàng / lưu đơn (ĐVT nhỏ nhất); mở lại đơn vẫn là số lúc đặt">{l.stockInfo ? <>
@@ -956,7 +979,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                         </tr>
                       ))}
                       {/* Ô trống nhận focus: bấm vào rồi Ctrl + V dán thẳng dòng hàng từ Excel (sự kiện dán đi lên tbody). */}
-                      {!v.lines.length && <tr><td colSpan={19} className="lines-empty" tabIndex={readOnly ? undefined : 0}>
+                      {!v.lines.length && <tr><td colSpan={19 + (accOn ? 3 : 0)} className="lines-empty" tabIndex={readOnly ? undefined : 0}>
                         {readOnly ? <span className="muted">Phiếu chưa có dòng hàng</span> : <>
                           <div className="muted">Phiếu chưa có hàng — bấm vào đây rồi Ctrl + V để dán dòng hàng chép từ Excel</div>
                           <div className="row" style={{ gap: 8, justifyContent: 'center', marginTop: 8 }}>
@@ -969,7 +992,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                     </tbody>
                     {!isGiftDoc && (
                       <tfoot>
-                        <tr><td colSpan={(v.kind === 'exchange' ? 7 : 6) + (showKho ? 1 : 0)}>Cộng — mua {fmt(calc.buyQty)} · KM người bán {fmt(calc.giftSellerQty)} · KM NTD / quà {fmt(calc.giftConsumerQty)}</td>
+                        <tr><td colSpan={(v.kind === 'exchange' ? 7 : 6) + (showKho ? 1 : 0) + (accOn ? 3 : 0)}>Cộng — mua {fmt(calc.buyQty)} · KM người bán {fmt(calc.giftSellerQty)} · KM NTD / quà {fmt(calc.giftConsumerQty)}</td>
                           <td colSpan={4} className="num">Tiền hàng {fmt(calc.gross)} − CK {fmt(calc.lineDiscount + calc.orderDiscount)}</td>
                           <td className="num">{fmt(calc.beforeTax)}</td><td className="num">{fmt(calc.tax)}</td><td className="num"><b>{fmt(calc.beforeTax + calc.tax)}</b></td><td colSpan={isOrder ? 3 : 6} /></tr>
                       </tfoot>
