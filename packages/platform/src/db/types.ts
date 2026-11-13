@@ -1239,6 +1239,8 @@ export interface LedgerLinesTable {
   branch_uid: ColumnType<string | null, string | null | undefined, string | null>;
   /** Định danh kho kho_… (0121); không truyền = kho mặc định của chi nhánh (trigger). */
   warehouse_uid: ColumnType<string | null, string | null | undefined, string | null>;
+  /** [2026-11-13 Nguyễn Văn Thủy] Định danh phòng ban pb_… theo dims.department (0130, trigger) (đóng góp) */
+  department_uid: ColumnType<string | null, string | null | undefined, string | null>;
   /** Mã kho chụp lúc ghi (0121). */
   warehouse_code: ColumnType<string | null, string | null | undefined, string | null>;
   /** MST tại ngày hạch toán (0121): kho → chi nhánh → … → nút cơ cấu → công ty (trigger). */
@@ -1586,6 +1588,8 @@ export interface DimensionsTable {
   note: Generated<string>;
   extra: JsonDefault;
   is_active: Generated<boolean>;
+  /** [2026-11-13 Nguyễn Văn Thủy] Định danh bất biến pb_… / dm_… (0130, trigger) (đóng góp) */
+  uid: Generated<string>;
 }
 
 export interface ContractSchedulesTable {

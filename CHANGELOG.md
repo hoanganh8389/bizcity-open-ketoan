@@ -13,6 +13,11 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+### Định danh bất biến phòng ban trên sổ
+- Mỗi mục chiều phân tích có định danh bất biến (phòng ban pb_…, mục khác dm_…), không sửa được. Dòng sổ cái lưu thêm department_uid (lấy theo mã phòng ban lúc ghi), như branch_uid / warehouse_uid; dòng cũ đã điền. Đổi tên / mã / ngừng phòng ban sau này sổ vẫn bám đúng. Migration 0130.
+
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 ### Giao diện gọn
 - Giải thích của ô nhập (hint / tip) thành dấu ? nhỏ cạnh nhãn, rê chuột mới hiện (thay dòng chữ xám dưới ô). Kho mặc định: giải thích vào dấu ?.
 - Menu xổ trái chừa chỗ thanh cửa sổ dưới đáy, dài thì cuộn (mục Bảng giá không còn bị che).

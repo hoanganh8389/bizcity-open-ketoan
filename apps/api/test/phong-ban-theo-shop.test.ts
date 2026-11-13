@@ -42,5 +42,11 @@ describe('Phòng ban theo shop', () => {
     expect(good.body.data.status, JSON.stringify(good.body).slice(0, 400)).toBe('posted');
     const deps = await sql<{ dep: string | null }>`SELECT DISTINCT l.dims->>'department' AS dep FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id WHERE l.tenant_id = ${tenantId} AND e.doc_no = 'PB2'`.execute(db);
     expect(deps.rows.map((r) => r.dep)).toEqual(['CN-CH']);
+    // 0130: dòng sổ mang định danh bất biến của phòng ban
+    const pb = await db.selectFrom('dimensions').select('uid').where('tenant_id', '=', tenantId).where('kind', '=', 'department').where('code', '=', 'CN-CH').executeTakeFirstOrThrow();
+    expect(pb.uid).toMatch(/^pb_/);
+    const uids = await sql<{ u: string | null }>`SELECT DISTINCT l.department_uid AS u FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id WHERE l.tenant_id = ${tenantId} AND e.doc_no = 'PB2'`.execute(db);
+    expect(uids.rows.map((r) => r.u)).toEqual([pb.uid]);
+    await expect(sql`UPDATE dimensions SET uid = 'pb_x' WHERE uid = ${pb.uid}`.execute(db)).rejects.toThrow();
   });
 });
