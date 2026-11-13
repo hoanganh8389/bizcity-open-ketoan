@@ -2,6 +2,7 @@
 --
 -- Bảng có cột chi nhánh (branch_id) → branch_uid cn_…; cột kho (warehouse_code) → warehouse_uid kho_…; cột đối tượng (partner_id)
 -- → partner_uid dt_…. Ba trigger dùng chung điền khi ghi mới và khi đổi chi nhánh / kho / đối tượng; dữ liệu cũ điền một lần ở đây.
+-- Chạy lại an toàn (đã có cột / trigger / chỉ mục thì bỏ qua): bản cùng nội dung từng mang số 0137 vài phút trên main.
 -- Định danh bất biến nên đổi mã chi nhánh, mã kho, mã đối tượng, sáp nhập, gộp cha – con về sau không làm lệch số đã ghi.
 
 -- ── Trigger dùng chung ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -48,8 +49,9 @@ BEGIN
 
   FOREACH t IN ARRAY ARRAY['accounting_events', 'asset_allocations', 'assets', 'cash_plans', 'cost_norms', 'debt_items', 'inventory_lot_moves',
                            'ledger_balances_daily', 'ledger_entries', 'period_lock_events', 'period_locks', 'tax_invoices', 'warehouses'] LOOP
-    EXECUTE format('ALTER TABLE %I ADD COLUMN branch_uid text', t);
+    EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS branch_uid text', t);
     EXECUTE format('COMMENT ON COLUMN %I.branch_uid IS %L', t, 'Định danh bất biến chi nhánh / shop cn_… theo branch_id (0138, trigger điền).');
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', t || '_branch_uid', t);
     EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF branch_id ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_sync_branch_uid()', t || '_branch_uid', t);
     EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_branch_uid', t, 'Điền định danh chi nhánh cn_… (0138).');
     EXECUTE format('UPDATE %I x SET branch_uid = b.uid FROM branches b WHERE b.id = x.branch_id AND x.branch_uid IS NULL', t);
@@ -57,16 +59,18 @@ BEGIN
 
   FOREACH t IN ARRAY ARRAY['accounting_events', 'cash_plans', 'debt_items', 'item_lots', 'ledger_balances_daily', 'ledger_entries',
                            'long_term_balances', 'payment_requests', 'reference_documents', 'tax_invoices'] LOOP
-    EXECUTE format('ALTER TABLE %I ADD COLUMN partner_uid text', t);
+    EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS partner_uid text', t);
     EXECUTE format('COMMENT ON COLUMN %I.partner_uid IS %L', t, 'Định danh bất biến đối tượng dt_… theo partner_id (0138, trigger điền); NULL = không theo đối tượng.');
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', t || '_partner_uid', t);
     EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF partner_id ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_sync_partner_uid()', t || '_partner_uid', t);
     EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_partner_uid', t, 'Điền định danh đối tượng dt_… (0138).');
     EXECUTE format('UPDATE %I x SET partner_uid = p.uid FROM partners p WHERE p.id = x.partner_id AND x.partner_uid IS NULL', t);
   END LOOP;
 
   FOREACH t IN ARRAY ARRAY['inventory_lot_moves', 'stock_counts', 'stock_levels'] LOOP
-    EXECUTE format('ALTER TABLE %I ADD COLUMN warehouse_uid text', t);
+    EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS warehouse_uid text', t);
     EXECUTE format('COMMENT ON COLUMN %I.warehouse_uid IS %L', t, 'Định danh bất biến phân kho kho_… theo mã kho lúc ghi (0138, trigger điền).');
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', t || '_warehouse_uid', t);
     EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF warehouse_code ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_sync_warehouse_uid()', t || '_warehouse_uid', t);
     EXECUTE format('COMMENT ON TRIGGER %I ON %I IS %L', t || '_warehouse_uid', t, 'Điền định danh phân kho kho_… (0138).');
     EXECUTE format('UPDATE %I x SET warehouse_uid = w.uid FROM warehouses w WHERE w.tenant_id = x.tenant_id AND w.code = x.warehouse_code AND x.warehouse_uid IS NULL', t);
@@ -76,6 +80,6 @@ BEGIN
   ALTER TABLE ledger_entries ENABLE TRIGGER ledger_entries_no_update;
 END $$;
 
-CREATE INDEX ledger_entries_partner_uid ON ledger_entries (tenant_id, partner_uid) WHERE partner_uid IS NOT NULL;
-CREATE INDEX ledger_balances_daily_partner_uid ON ledger_balances_daily (tenant_id, partner_uid) WHERE partner_uid IS NOT NULL;
-CREATE INDEX tax_invoices_partner_uid ON tax_invoices (tenant_id, partner_uid) WHERE partner_uid IS NOT NULL;
+CREATE INDEX IF NOT EXISTS ledger_entries_partner_uid ON ledger_entries (tenant_id, partner_uid) WHERE partner_uid IS NOT NULL;
+CREATE INDEX IF NOT EXISTS ledger_balances_daily_partner_uid ON ledger_balances_daily (tenant_id, partner_uid) WHERE partner_uid IS NOT NULL;
+CREATE INDEX IF NOT EXISTS tax_invoices_partner_uid ON tax_invoices (tenant_id, partner_uid) WHERE partner_uid IS NOT NULL;
