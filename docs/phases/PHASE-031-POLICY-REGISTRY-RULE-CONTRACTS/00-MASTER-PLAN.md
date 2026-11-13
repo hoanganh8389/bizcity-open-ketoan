@@ -375,3 +375,19 @@ Phạm vi: S031-30. Mở ô cuối còn thiếu của [20 §4](20-TRUY-VET-VA-TH
 **Ngoài đợt này:** bậc, quà theo tổng đơn, voucher, combo, mua bất kỳ tặng món rẻ nhất, khung giờ / sinh nhật, áp riêng (exclusive), trần NĐ81, trả hạn mức theo phiếu trả, công cụ chuyển CTKM từ plugin website. `sale.price_list@1`, `sale.credit_limit@1` của S031-15 vẫn để `modules/ban-hang` (S030-16).
 
 **Kiểm bằng:** `apps/api/test/rule-contract-sale-program.test.ts` (vectors qua hàm thuần + endpoint), `apps/api/test/nt-bh-003-ban-hang-chuong-trinh.test.ts` (BH12 → evaluate → phiếu bán → hạn mức trừ / trả), `apps/api/test/nt-bh-003-pos-khuyen-mai.test.ts` (module `pos`).
+
+## 18. Chữ chốt S031-15 đợt 2 — khuyến mại mở rộng (K1, API; R-FLOW-2) <!-- [2026-11-13 09:45 AM Võ Hoàng] POS-KM2 — người dùng duyệt làm tiếp phần chính sách (đóng góp; phiếu NT-BH-012) -->
+
+**Vấn đề.** Sau §17 Core mới tính được tặng hàng / giảm giá trên một mặt hàng (BH12). Plugin website còn bậc, theo tổng đơn, mã giảm giá, combo, món rẻ nhất, điều kiện giờ / thứ / sinh nhật / hạng, ưu tiên + áp riêng. Thêm cột cho BH12 cần migration + `schema-catalog.ts` (đang trong dòng giữ chỗ PHASE-026).
+
+**Quyết định.**
+1. **Năm Rule Contract mới, nội dung nội tuyến** (phát hành qua `POST /api/v1/policies` sẵn có, chủ `ban-hang`; không migration, không đổi BH12): `sale.promo.tiered@1`, `sale.promo.order_discount@1`, `sale.promo.order_gift@1`, `sale.promo.combo@1`, `sale.promo.cheapest_free@1` — tham số / bước tính / vectors theo phiếu NT-BH-012 §2, §5. Tiền giảm làm tròn đồng; chia tiền giảm của bộ / của đơn cho các dòng theo tỉ lệ tiền dòng (phần dư cho dòng tiền lớn nhất). "Tổng đơn" = tổng tiền hàng trọn **trước** khuyến mại của các dòng trong phạm vi.
+2. **Khối chung của năm khuôn**: `validFrom`/`validTo`, `priority` (mặc định 0, lớn tính trước), `exclusive` (mặc định false), `conditions { weekdays[1..7], timeFrom, timeTo, minOrderAmount, couponCodes[], birthdayMonth, memberLevels[] }`, `legalCapPct` (mặc định 50, `null` = miễn trần — NĐ81/2018 Điều 7). Kết quả mỗi khuôn có `touched[]` (dòng đã dùng) để áp riêng.
+3. **Evaluate** nhận thêm ngữ cảnh `at { time, weekday }`, `customer { birthday, memberLevel }`, `coupons[]` (tuỳ chọn). Thứ tự: theo `priority` giảm dần rồi mã; chương trình `exclusive` đã áp thì các dòng nó dùng không đưa vào chương trình sau. Sau cùng kẹp trần NĐ81 từng dòng (tổng giảm của các chương trình không miễn trần ≤ `legalCapPct` % tiền dòng; kẹp chương trình tính sau trước), kết quả có `capped[]`. Chương trình BH12 (§17) giữ nguyên, không tham gia trần đợt này.
+4. **Cửa nạp (IN-POL-004)** tính lại quà của khuôn mới với ngữ cảnh không biết (giờ, mã, khách) coi như đạt — chỉ điều kiện tính được từ dòng (tổng đơn tối thiểu, ngày) mới kiểm; tránh báo lệch oan.
+5. **Trả hạn mức khi khách trả hàng** (BH12): người nghe `ban-hang.sale-program-usage` thêm phiếu `sale_return` ghi sổ / huỷ: đối chiếu lại lượt dùng của đơn gốc = số lượng dòng có chương trình trên phiếu bán − tổng số đã trả của dòng đó qua các phiếu trả đã ghi sổ (dòng phiếu trả mang khoá dòng của đơn gốc). Một hàm đối chiếu dùng cho cả bán, huỷ, trả, huỷ trả.
+6. **Một dòng nhiều chương trình**: phiếu bán ghi `policyRef` của chương trình giảm nhiều nhất ở dòng (khuôn dòng có một tham chiếu); máy bán giữ đủ danh sách ở đơn. Nhiều tham chiếu trên một dòng là đề xuất cho bizcity_ledger_intake (ngoài đợt).
+
+**Ngoài đợt này:** màn khai báo (đợt giao diện); mã giảm giá phát hành / dùng một lần (cần bảng + migration); hạn mức cho chương trình nội tuyến; cột BH12 mới; `sale.price_list@1`, `sale.credit_limit@1`; công cụ chuyển CTKM từ plugin website.
+
+**Kiểm bằng:** `apps/api/test/rule-contract-sale-promo.test.ts` (vectors năm khuôn qua hàm thuần + endpoint, kiểm phát hành), `apps/api/test/nt-bh-012-khuyen-mai-mo-rong.test.ts` (giỏ §4: điều kiện, ưu tiên / áp riêng, trần, cửa nạp, trả hàng trả hạn mức).
