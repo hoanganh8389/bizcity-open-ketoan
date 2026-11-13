@@ -242,12 +242,18 @@ function keepInView(node: ReactNode): ReactNode[] {
 // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — Field.tip: giải thích để ở chú thích rê chuột, màn gọn chữ (đóng góp)
 export function Field({ label, children, full, hint, tip, error, truong }: { label: string; children: ReactNode; full?: boolean; hint?: string; tip?: string; /** Lỗi của ô (viền đỏ + chữ đỏ dưới ô). */ error?: string | null; /** Tên trường gửi lên máy chủ (vd "name"): lỗi máy chủ của trường đó tô đỏ đúng ô này. */ truong?: string }) {
   return (
-    <div className={`field ${full ? 'full' : ''}${error ? ' o-loi' : ''}`} title={tip} data-truong={truong}>
-      <label>{label}</label>
+    <div className={`field ${full ? 'full' : ''}${error ? ' o-loi' : ''}`} title={tip ?? hint} data-truong={truong}>
+      {/* [2026-11-13 Nguyễn Văn Thủy] giải thích (hint / tip) thành dấu ? nhỏ cạnh nhãn, rê chuột mới hiện — màn gọn chữ (đóng góp) */}
+      <label>{label}{(tip ?? hint) && label.trim() ? <Hoi text={(tip ?? hint)!} /> : null}</label>
       {children}
-      {error ? <span className="o-loi-chu">{error}</span> : hint && <span className="muted" style={{ fontSize: 12 }}>{hint}</span>}
+      {error ? <span className="o-loi-chu">{error}</span> : null}
     </div>
   );
+}
+
+/** Dấu ? nhỏ: rê chuột xem giải thích (thay dòng chữ giải thích dài trên màn). */
+export function Hoi({ text }: { text: string }) {
+  return <span className="hoi-nho" title={text} aria-label={text}>?</span>;
 }
 
 /** Phân trang đơn giản. */

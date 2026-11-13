@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { useThemTuDiaChi } from '@/lib/themNhanh';
 import { workBranch } from '@/lib/workBranch';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
+import { ErrorBox, Field, Hoi, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
@@ -122,7 +122,7 @@ export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Ware
   });
   const txt = (k: keyof Warehouse, label: string, full = false) => <Field label={label} full={full}><input className="input" value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Warehouse>)} /></Field>;
   const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive || t.code === v.typeCode);
-  const check = (k: 'isActive' | 'isDefault', label: string) => <label className="checkbox"><input type="checkbox" checked={k === 'isActive' ? v.isActive !== false : Boolean(v[k])} onChange={(e) => set({ [k]: e.target.checked })} /> {label}</label>;
+  const check = (k: 'isActive' | 'isDefault', label: string, tip?: string) => <label className="checkbox"><input type="checkbox" checked={k === 'isActive' ? v.isActive !== false : Boolean(v[k])} onChange={(e) => set({ [k]: e.target.checked })} /> {label}{tip && <Hoi text={tip} />}</label>;
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide title="Thông tin kho" onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.branchCode || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
@@ -155,7 +155,7 @@ export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Ware
         <Field label=" " full>
           <div className="row" style={{ gap: 16 }}>
             {check('isActive', 'Theo dõi')}
-            {check('isDefault', 'Kho mặc định (nhận dòng không ghi mã kho)')}
+            {check('isDefault', 'Kho mặc định', 'Nhận các dòng nhập xuất không ghi mã kho')}
           </div>
         </Field>
       </fieldset>

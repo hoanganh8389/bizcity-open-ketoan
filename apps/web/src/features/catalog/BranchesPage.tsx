@@ -35,7 +35,7 @@ function useBranchSites() {
 interface Branch {
   code: string; name: string; accountingUnitCode: string | null; departmentCode: string | null; address: string | null; externalRef: string | null; isActive: boolean;
   note: string; companyName: string; taxCode: string; phone: string; fax: string;
-  orgUnitCode: string | null; orgPath: string;
+  orgUnitCode: string | null; orgPath: string; validFrom?: string;
 }
 
 export function BranchesPage() {
@@ -155,7 +155,7 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
       };
       const newCode = v.code?.trim();
       return value.isNew ? api.post('/api/v1/branches', { ...body, code: newCode })
-        : api.patch(`/api/v1/branches/${encodeURIComponent(value.code!)}`, { ...body, isActive: v.isActive, ...(newCode && newCode !== value.code ? { newCode } : {}), ...((v.orgUnitCode ?? null) !== (value.orgUnitCode ?? null) ? { orgUnitCode: v.orgUnitCode || null } : {}) });
+        : api.patch(`/api/v1/branches/${encodeURIComponent(value.code!)}`, { ...body, isActive: v.isActive, ...(newCode && newCode !== value.code ? { newCode } : {}), ...((v.orgUnitCode ?? null) !== (value.orgUnitCode ?? null) ? { orgUnitCode: v.orgUnitCode || null, validFrom: v.validFrom || null } : {}) });
     },
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); invalidateOrg(qc); if (value.isNew) onSaved?.(v.code?.trim() ?? ''); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
   });
@@ -173,6 +173,12 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
         {!value.isNew && (
           <Field label="Thuộc cơ cấu" hint="Nút trong Cơ cấu tổ chức (thường cấp Tỉnh)">
             <ChonSoDoToChuc value={v.orgUnitCode ?? null} onChange={(orgUnitCode) => set({ orgUnitCode })} />
+          </Field>
+        )}
+        {/* [2026-11-13 Nguyễn Văn Thủy] đổi cơ cấu: chọn ngày có hiệu lực; chứng từ trước ngày giữ cơ cấu cũ (đóng góp) */}
+        {!value.isNew && (v.orgUnitCode ?? null) !== (value.orgUnitCode ?? null) && (
+          <Field label="Cơ cấu mới áp dụng từ ngày" tip="Chứng từ từ ngày này tính vào nút cơ cấu mới; chứng từ trước ngày này giữ nút cũ">
+            <input className="input" type="date" value={v.validFrom ?? new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)} onChange={(e) => set({ validFrom: e.target.value })} />
           </Field>
         )}
         {!value.isNew && (

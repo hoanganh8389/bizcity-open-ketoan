@@ -23,6 +23,8 @@ export const branchUpdateSchema = branchCreateSchema.omit({ code: true }).partia
   isActive: z.boolean().optional(), newCode: z.string().trim().min(1).max(32).optional(),
   // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đổi nút sơ đồ tổ chức của chi nhánh ngay ở DM02 (null = bỏ gắn) (đóng góp)
   orgUnitCode: z.string().trim().min(1).max(32).nullable().optional(),
+  /** [2026-11-13 Nguyễn Văn Thủy] ngày chuyển cơ cấu có hiệu lực (phiên bản 0121); trống = hôm nay (đóng góp) */
+  validFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
 });
 export type BranchUpdate = z.infer<typeof branchUpdateSchema>;
 

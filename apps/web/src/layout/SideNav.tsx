@@ -54,7 +54,12 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
   // Danh sách dài thì đẩy lên cho vừa đáy màn.
   useEffect(() => {
     if (!open || !fly.current) return;
-    const over = fly.current.getBoundingClientRect().bottom - window.innerHeight + 8;
+    // [2026-11-13 Nguyễn Văn Thủy] chừa chỗ thanh cửa sổ dưới đáy (win-dock); dài hơn màn thì cuộn trong khung (đóng góp)
+    const dock = document.querySelector('.win-dock')?.getBoundingClientRect();
+    const floor = (dock && dock.height > 0 ? dock.top : window.innerHeight) - 8;
+    fly.current.style.maxHeight = `${floor - 8}px`;
+    fly.current.style.overflowY = 'auto';
+    const over = fly.current.getBoundingClientRect().bottom - floor;
     if (over > 0) setOpen((o) => (o ? { ...o, top: Math.max(8, o.top - over) } : o));
   }, [open?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 

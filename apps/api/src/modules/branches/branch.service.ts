@@ -8,6 +8,7 @@ import { branchRepository, toBranchDto } from './branch.repository.js';
 import type { BranchCreate, BranchDto, BranchUpdate } from './branch.schemas.js';
 import type { Db } from '../../db/client.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
+import { sql } from 'kysely';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đổi nút sơ đồ tổ chức ở DM02 thì tính lại phân cấp chi nhánh (đóng góp)
 import { syncBranchLevels } from '../org-units/org-unit.service.js';
 import type { OrgTables } from '../org-units/org-unit.schemas.js';
@@ -105,6 +106,7 @@ export const branchService = {
         finalCode = input.newCode;
       }
       if (input.orgUnitCode !== undefined) {
+        await sql`SELECT set_config('ketoan.actor_name', ${auth.actorName || auth.actor}, true), set_config('ketoan.valid_from', ${input.validFrom ?? ''}, true)`.execute(trx); // phiên bản cơ cấu theo ngày (0121)
         let orgId: string | null = null;
         if (input.orgUnitCode) {
           const o = await trx.withTables<OrgTables>().selectFrom('org_units').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('code', '=', input.orgUnitCode).executeTakeFirst();

@@ -2043,3 +2043,8 @@ td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .hs-bang th { font-weight: 600; background: var(--panel-2, #f4f6f8); }
 .hs-bang .c { text-align: center; }
 .hs-bang .input { width: 100%; }
+
+/* [2026-11-13 Nguyễn Văn Thủy] dấu ? nhỏ cạnh nhãn: rê chuột xem giải thích (đóng góp) */
+.hoi-nho { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 4px; border-radius: 50%;
+  border: 1px solid currentColor; font-size: 9px; font-weight: 700; line-height: 1; opacity: .45; cursor: help; vertical-align: 1px; }
+.hoi-nho:hover { opacity: .9; }

@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+### Giao diện gọn
+- Giải thích của ô nhập (hint / tip) thành dấu ? nhỏ cạnh nhãn, rê chuột mới hiện (thay dòng chữ xám dưới ô). Kho mặc định: giải thích vào dấu ?.
+- Menu xổ trái chừa chỗ thanh cửa sổ dưới đáy, dài thì cuộn (mục Bảng giá không còn bị che).
+- Chi nhánh: đổi Thuộc cơ cấu thì hiện ô "Cơ cấu mới áp dụng từ ngày" (phiên bản theo ngày, trước chỉ ngầm lấy hôm nay).
+
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 ### Phòng ban theo chi nhánh / shop
 - Mỗi chi nhánh, cửa hàng một phòng ban riêng trên sơ đồ phòng ban (BH + số mã shop, dùng lại mã cũ BH00001… nên sổ cũ khớp): shop dưới Cửa hàng (CN-CH), chi nhánh dưới Giám đốc chi nhánh. Chi nhánh mới tự sinh phòng ban (trigger). Migration 0129.
 - Danh mục chi nhánh có lại cột / ô Phòng ban (ánh xạ); Danh mục phòng ban có cột Chi nhánh (ánh xạ ngược). Quay về dữ liệu gốc giữ phòng ban riêng.
