@@ -5,10 +5,10 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 169 |
+| Chưa ai nhận | 170 |
 | Chờ đủ tín hiệu | 69 |
 | Hoãn | 3 |
 | Xong | 311 |
@@ -25,9 +25,9 @@
 | chung-tu | 67 | 5 | 0 | 25 | 97 |
 | tong-hop | 31 | 8 | 1 | 27 | 67 |
 | thue | 14 | 2 | 1 | 10 | 27 |
-| he-thong | 143 | 23 | 3 | 60 | 229 |
+| he-thong | 143 | 23 | 2 | 61 | 229 |
 
-## Đang làm (8)
+## Đang làm (7)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -38,7 +38,6 @@
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | he-thong | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | mua-hang · ban-hang | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | kho | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
-| [S036-9](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L19) | PHASE-036 | he-thong | B6 — cap-nhat.sh kiểm bản sao lưu + bảng "cái gì có thể đổi" + cảnh báo SEEDSDIR; sao-luu.sh --kiem, khoi-phu… | P0 | hoanganh8389 (phiên Claude, thiet-lap-nhanh) · `feat/s036-9-sao-luu-nang-cap` |
 
 ## Chờ merge (0)
 
@@ -77,7 +76,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | mua-hang · ban-hang | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | mua-hang · ban-hang | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (169)
+## Chưa ai nhận (170)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -249,6 +248,7 @@
 | [S036-6](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L15) | PHASE-036 | he-thong | B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-l… | P0 | — |
 | [S036-7](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-036 | he-thong | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | — |
 | [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | — |
+| [S036-9](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L19) | PHASE-036 | he-thong | B6 — cap-nhat.sh kiểm bản sao lưu + bảng "cái gì có thể đổi" + cảnh báo SEEDSDIR; sao-luu.sh --kiem, khoi-phu… | P0 | — |
 | [S036-10](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L20) | PHASE-036 | he-thong | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
 
 ## Chờ đủ tín hiệu (69)
