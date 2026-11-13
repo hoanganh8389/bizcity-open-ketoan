@@ -11,6 +11,8 @@ Mỗi bản ghi đủ sáu mục:
 - **Bảo mật**
 
 ## [Chưa phát hành]
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Menu điện thoại / màn hẹp (nút ☰) dùng đúng bố trí menu trái của máy tính: Hay dùng, nhóm Tiền mặt … Phần riêng, mục con theo tiêu đề, Báo cáo — không còn bộ phân hệ cũ (Kế toán, Quỹ, Nghiệp vụ mua hàng…).
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - **Cơ cấu tổ chức một màn (DM16)**: công ty, cơ cấu các cấp, cửa hàng, kho, phòng ban chung khai ở một bảng cây + một hộp thoại chọn loại

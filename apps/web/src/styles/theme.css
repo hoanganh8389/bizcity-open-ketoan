@@ -2050,3 +2050,7 @@ td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .hoi-nho:hover { opacity: .9; }
 .canh-bao-nho { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 4px; border-radius: 50%;
   background: #d93025; color: #fff; font-size: 10px; font-weight: 700; line-height: 1; cursor: help; vertical-align: 1px; }
+/* [2026-11-13 Nguyễn Văn Thủy] menu điện thoại theo nhóm menu trái: nhóm đang ở đậm màu, Hay dùng có khoảng cách (đóng góp) */
+.mnav-group-head.cur { background: #c7dcf5; }
+.mnav-body .gd-hay { margin-bottom: 6px; }
+.mnav-item.top { justify-content: flex-start; margin-top: 6px; }

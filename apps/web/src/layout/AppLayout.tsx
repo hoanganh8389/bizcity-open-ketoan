@@ -18,7 +18,6 @@ import { SideNav, sideNavCollapsed, sideNavWidth } from './SideNav';
 import { PinBar } from './PinBar';
 import { MenuSearch } from './MenuSearch';
 import { TabWorkspace } from './TabWorkspace';
-import { useActiveModule } from './ModuleBar';
 import { useGon } from './useGon';
 import { UserMenu } from './UserMenu';
 import { useGhiHayDung } from './hay-dung';
@@ -69,7 +68,6 @@ export function AppLayout() {
   useEffect(() => { document.documentElement.style.setProperty('--nav-w', `${collapsed ? 48 : navWidth}px`); }, [collapsed, navWidth]);
   const addins = useAddIns();
   const menu = useAppMenu();
-  const mod = useActiveModule(menu);
   const gon = useGon(menu);
   useGhiHayDung(menu);
   useFitTables();
@@ -166,7 +164,7 @@ export function AppLayout() {
       </div>
       {/* Thanh mép phải: việc cần làm, trợ lý, thông báo. */}
       <RightRail menu={menu} groups={gon.groups} active={gon.active} assistant={addins.some((a) => a.id === 'tro-ly')} />
-      {mobileNav && <MobileNav modules={mod.modules} current={mod.current.key} menu={menu} onChoose={mod.choose} onClose={() => setMobileNav(false)} />}
+      {mobileNav && <MobileNav menu={menu} groups={gon.groups} active={gon.active} onChoose={gon.choose} onClose={() => setMobileNav(false)} />}
       {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
       {/* Mã tra cứu của lỗi API gần nhất (PHASE-019 W1): người dùng chép gửi dev. */}
       <MaTraCuu />
