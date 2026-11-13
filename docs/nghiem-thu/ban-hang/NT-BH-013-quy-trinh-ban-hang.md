@@ -52,6 +52,7 @@ Kế toán bán hàng mở phân hệ Bán hàng là thấy cả luồng (giốn
 | §5 dòng 1–3 (Luồng chi tiết Bán hàng) | 7 bước, tầng Khai báo / Phát sinh, ô chưa có màn mờ | đúng (chụp Docker demo 13/11) | — | đợt 1 |
 | §5 dòng 4 (việc cần làm) | chứng từ lỗi / chờ, hạn mức ≥ 90 %, nợ quá hạn, đơn QR, ca chưa chốt | đúng; test `ban-hang-viec-can-lam` 2/2 (chờ 1, hạn mức 1, nợ quá hạn 1 khách 200.000); Docker: 27 chứng từ chờ (trước khi đặt ghi sổ ngay) | — | |
 | §5 dòng 6 (Mua hàng, Danh mục sau khi đổi khuôn) | giao diện y như trước | đúng — công thức đặt hàng, "In:", "Lập mới", việc cần làm còn nguyên | — | |
+| §5 dòng 5 (menu Bán hàng) | các mục theo mẫu Mua hàng, Phần riêng giữ lối tắt | đúng (chụp Docker demo 13/11; đã bỏ mục "Cài đặt bán hàng" trùng tên) | — | đợt 2; sơ đồ ít chữ cập nhật sau khi dòng NT-KHO-002 nhả |
 | §5 dòng 7 (nhóm chưa có luồng) | không có nút | Tiền mặt không có nút "Luồng chi tiết" | — | |
 | §5 dòng 8 (hướng dẫn) | nút Hướng dẫn mở đúng bài | bài ban-hang-quy-trinh.md, khoá trợ giúp theo nhóm (`ban-hang-quy-trinh`) | — | |
 
@@ -64,3 +65,4 @@ Kế toán bán hàng mở phân hệ Bán hàng là thấy cả luồng (giốn
 |---|---|
 | 13/11/2026 | Tạo phiếu |
 | 13/11/2026 | Ghi kết quả chạy đợt 1 (luồng chi tiết) |
+| 13/11/2026 | Ghi kết quả chạy đợt 2 (menu) |

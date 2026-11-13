@@ -341,6 +341,12 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không.
 
+### Menu nhóm Bán hàng theo mẫu Mua hàng (phiếu NT-BH-013 §5 dòng 5) <!-- [2026-11-13 04:40 PM Võ Hoàng] UX-14 — menu Bán hàng (đóng góp) -->
+
+- **Đổi:** nhóm **Bán hàng** có thêm các mục: Bán lẻ máy POS (BH13–BH16), Chính sách bán (chương trình bán BH12, bảng giá; *khuyến mại*, *hạn mức nợ khách* đang phát triển), Danh mục (khách hàng, mặt hàng, hình thức thanh toán), Cài đặt (Cài đặt bán hàng BH17, tài khoản ngầm định; *định khoản bán hàng* đang phát triển); thu tiền theo hình thức thanh toán vào mục chứng từ. Phần riêng giữ lối tắt cũ.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
 ### Khuyến mại mở rộng do Core tính: bậc, tổng đơn / mã giảm giá, quà tổng đơn, combo, món rẻ nhất; áp riêng; trần NĐ81; trả hạn mức khi khách trả hàng (phiếu NT-BH-012, S031-15 đợt 2) <!-- [2026-11-13 11:30 AM Võ Hoàng] POS-KM2 — khuyến mại mở rộng (đóng góp) -->
 
 - **Thêm:** 5 Rule Contract nội dung nội tuyến (phát hành qua `POST /api/v1/policies`): `sale.promo.tiered@1`, `sale.promo.order_discount@1`, `sale.promo.order_gift@1`, `sale.promo.combo@1`, `sale.promo.cheapest_free@1` — điều kiện chung (thứ, khung giờ, tổng đơn tối thiểu, mã giảm giá, tháng sinh nhật, hạng thành viên), ưu tiên, áp riêng, trần NĐ81 (`legalCapPct`, mặc định 50 %, null = miễn; món rẻ nhất tính trần theo cả nhóm). Vectors qua hàm thuần + endpoint.
