@@ -1,7 +1,8 @@
 -- [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: bảng default_data_backups — ảnh chụp danh mục trước mỗi lần quay về dữ liệu gốc
 -- [2026-11-13 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: đổi số migration 0135 → 0136 khi gộp main (0135 thuộc bút toán gộp mã hàng — so-tiep-theo kiem)
+-- [2026-11-13 09:08 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: đổi số 0136 → 0137 — 0136_but_toan_gop_dinh_danh (Nguyễn Văn Thủy) vào main cùng phút; đổi số của mình thay vì sửa tệp người đóng góp
 -- =============================================================================
--- 0136 Sao lưu tự động trước khi "Quay về dữ liệu gốc" (PHASE-036 · 00 §9, D036-9).
+-- 0137 Sao lưu tự động trước khi "Quay về dữ liệu gốc" (PHASE-036 · 00 §9, D036-9).
 --   Mỗi lần quay về (một bộ hoặc toàn bộ) chạy thật: chụp các dòng của đơn vị ở những bảng danh mục bộ đó chạm tới
 --   (JSON, cùng giao dịch với lần ghi — chụp hỏng thì không ghi). Giữ 10 bản gần nhất mỗi đơn vị.
 --   Đây là bản sao của danh mục (không phải sổ): xoá bản cũ khi vượt số giữ là việc của dịch vụ default-data.
