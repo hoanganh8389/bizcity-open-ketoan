@@ -229,6 +229,9 @@ export interface WarehouseTypesTable {
   sort_order: Generated<number>;
   updated_by: Generated<string>;
   updated_at: TimestampDefault;
+  /** Thùng rác (0133): thời điểm, người chuyển vào; NULL = đang dùng. */
+  deleted_at: Date | null;
+  deleted_by: Generated<string>;
 }
 /** Nghiệp vụ → loại kho được dùng theo thứ tự ưu tiên (0128). */
 export interface WarehouseTypeOpsTable {

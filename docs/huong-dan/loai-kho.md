@@ -1,31 +1,24 @@
 # Loại kho
 
-Mỗi kho thuộc **một loại**. Loại quyết định hàng trong kho được bán hay không, có thuộc sở hữu không, và kho được dùng cho nghiệp vụ nào.
+Mỗi kho thuộc **một loại**. Loại quyết định kho được dùng cho nghiệp vụ nào (nhập mua, bán, khách trả…).
 
 ## Loại kho
 
-| Ô | Nghĩa |
-|---|---|
-| Được bán | Hàng trong kho loại này được bán (tính vào tồn bán được) |
-| Thuộc sở hữu | Hàng của đơn vị: tính giá vốn, ghi sổ kho. Bỏ tích = hàng nhận giữ hộ, chỉ theo dõi số lượng, không bán |
-| Theo dõi hạn dùng | Cảnh báo hàng cận hạn, hết hạn |
-| TK kho | Đầu số tài khoản kho (156, 157…). Trống = theo Tài khoản ngầm định |
+Bảng gồm: Mã · Tên loại kho · Công dụng · TK kho (đầu số tài khoản kho 156, 157…; trống = theo Tài khoản ngầm định) · Số kho đang dùng.
 
-Có sẵn 12 loại gốc (KHH hàng kinh doanh, KKM khuyến mại, KHG gửi bán, KTL trả lại, KCL cách ly, KLO lỗi, KHHAN cận hạn, KHHSD hết hạn, KDC điều chuyển, KNB nhận giữ hộ, KCB chờ bán, KCC chờ chứng từ). Thêm loại mới bằng nút **Thêm**.
+Có sẵn 12 loại gốc (KHH hàng kinh doanh, KKM khuyến mại, KHG gửi bán, KTL trả lại, KCL cách ly, KLO lỗi, KHHAN cận hạn, KHHSD hết hạn, KDC điều chuyển, KNB nhận giữ hộ, KCB chờ bán, KCC chờ chứng từ).
 
-Luật:
-- Hàng không thuộc sở hữu thì không được bán.
-- Loại gốc không đổi mã.
-- Ngừng dùng một loại chỉ khi không còn kho đang theo dõi thuộc loại đó.
+- **Thêm / Sửa**: mã, tên, công dụng, đầu số TK kho. Ở form kho (Cơ cấu tổ chức) ô Loại kho có nút **+** để thêm loại mới ngay tại chỗ.
+- **Xoá**: loại kho chuyển vào **Thùng rác** — vẫn lưu trong dữ liệu, không còn hiện ở danh sách, tự bỏ khỏi các nghiệp vụ. Còn kho đang dùng loại đó thì phải đổi loại của kho trước.
+- **Thùng rác** (nút góc phải): **Khôi phục** để dùng lại, hoặc **Xoá vĩnh viễn** (cần quyền quản trị; nhật ký vẫn ghi đủ nội dung). Chứng từ, bút toán đã ghi với kho thuộc loại đó giữ nguyên.
 
 ## Nghiệp vụ dùng loại kho
 
-Mỗi nghiệp vụ (nhập mua, trả NCC, bán, khách trả, chuyển kho, xuất khác…) có danh sách loại kho dùng được, **theo thứ tự ưu tiên**:
-- Loại đứng đầu: chứng từ tự chọn kho thuộc loại này của chi nhánh.
-- Ô chọn kho chỉ hiện kho thuộc loại có trong danh sách; ghi chứng từ với kho loại khác thì bị chặn.
-- Bấm ← → để đổi thứ tự, × để bỏ, **+ thêm loại** để thêm.
+Mỗi nghiệp vụ một dòng: **Tự chọn kho loại** (chứng từ điền sẵn kho thuộc loại này của chi nhánh) · **Dùng được thêm** (các loại khác chọn được). Kho thuộc loại không có trong dòng thì không chọn được.
 
-Ví dụ: Khách trả hàng = KTL, KHH → phiếu khách trả tự vào kho hàng trả lại; nhập mua không vào được kho hàng lỗi.
+Bấm **Sửa** (hoặc bấm đúp dòng): tích ô **Dùng được** cho các loại kho, chấm **Tự chọn** cho một loại.
+
+Ví dụ: Khách trả hàng tự chọn Kho hàng trả lại, dùng được thêm Kho hàng hoá kinh doanh → phiếu khách trả tự vào kho hàng trả lại; nhập mua không vào được kho hàng lỗi.
 
 ## Kho
 

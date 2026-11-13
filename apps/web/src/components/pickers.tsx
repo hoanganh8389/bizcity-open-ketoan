@@ -374,7 +374,8 @@ export function ItemPicker({ canAdd, only, ...p }: BaseProps & { canAdd?: boolea
  * Tìm không dấu, nhiều từ theo thứ tự tuỳ ý ("etsuko sua tam" ra "… / ETSUKO / Sữa tắm, gội"); mặc định chỉ nhận giá
  * trị có trong danh sách (strict).
  */
-export function ListPicker({ items, emptyText, strict = true, ...p }: BaseProps & { items: { code: string; name: string; hint?: string }[]; emptyText?: string }) {
+// [2026-11-13 Nguyễn Văn Thủy] ListPicker nhận onAdd / addLabel: nút + thêm nhanh ngay tại ô (đóng góp)
+export function ListPicker({ items, emptyText, strict = true, onAdd, addLabel, ...p }: BaseProps & { items: { code: string; name: string; hint?: string }[]; emptyText?: string; onAdd?: (text: string) => void; addLabel?: string }) {
   const [q, setQ] = useState('');
   const options = useMemo(() => {
     const words = plain(q).split(/\s+/).filter(Boolean);
@@ -386,5 +387,5 @@ export function ListPicker({ items, emptyText, strict = true, ...p }: BaseProps 
     return hit.sort((a, b) => Number(plain(b.code) === s) - Number(plain(a.code) === s) || Number(plain(b.code).startsWith(s)) - Number(plain(a.code).startsWith(s)));
   }, [items, q, p.value]);
   const names = useMemo(() => new Map(items.map((x) => [x.code, x.name])), [items]);
-  return <CodePicker {...p} strict={strict} options={options} nameOf={(c) => names.get(c)} onSearch={setQ} emptyText={emptyText} />;
+  return <CodePicker {...p} strict={strict} options={options} nameOf={(c) => names.get(c)} onSearch={setQ} emptyText={emptyText} onAdd={onAdd} addLabel={addLabel} />;
 }
