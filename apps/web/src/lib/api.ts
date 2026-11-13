@@ -107,6 +107,8 @@ export const api = {
   get: <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>('GET', path, { query, signal }).then((r) => r.data),
   getPage: <T>(path: string, query?: Query) => request<T>('GET', path, { query }),
   post: <T>(path: string, body?: unknown, opts?: WriteOptions) => request<T>('POST', path, { body: body ?? {}, ...opts }).then((r) => r.data),
+  // [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: ghi và lấy cả meta của phản hồi (previewToken của ?dryRun=1, backupId…)
+  postMeta: <T>(path: string, body?: unknown, query?: Query, opts?: WriteOptions) => request<T>('POST', path, { body: body ?? {}, query, ...opts }),
   put: <T>(path: string, body: unknown, opts?: WriteOptions) => request<T>('PUT', path, { body, ...opts }).then((r) => r.data),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, { body }).then((r) => r.data),
   delete: <T>(path: string) => request<T>('DELETE', path).then((r) => r.data),

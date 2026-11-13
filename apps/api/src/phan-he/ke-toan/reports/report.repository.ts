@@ -170,7 +170,7 @@ export const reportRepository = {
       description: string; entry_description: string; account_code: string; debit: string; credit: string;
       counter_accounts: string | null; counter_note: string | null; partner_id: string | null; partner_code: string | null; partner_name: string | null;
       branch_code: string; reason_code: string | null; dims: Record<string, string> | null; product_sku: string | null; product_name: string | null;
-      doc_date: string; counterparty: string | null; line_count: number;
+      doc_date: string; counterparty: string | null; line_count: number; sku_count: number;
     }>`
       SELECT g.entry_id || ':' || g.account_code || ':' || g.counter_accounts || ':' || g.partner_id || ':' || g.side AS id,
              g.entry_id, g.posting_date::text AS posting_date, e.doc_date::text AS doc_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.event_id,
@@ -179,11 +179,12 @@ export const reportRepository = {
              NULLIF(g.counter_accounts, '') AS counter_accounts, NULL::text AS counter_note,
              NULLIF(g.partner_id, 0)::text AS partner_id, p.code AS partner_code,
              COALESCE(CASE WHEN g.partner_id <> 0 AND e.partner_id = g.partner_id THEN e.partner_name END, p.name) AS partner_name,
-             br.code AS branch_code, e.reason_code, NULL::jsonb AS dims, NULL::text AS product_sku, NULL::text AS product_name, g.line_count
+             br.code AS branch_code, e.reason_code, NULL::jsonb AS dims, g.product_sku, COALESCE(g.product_name, pr.name) AS product_name, g.line_count, g.sku_count
         FROM bizcity_read.ledger_entry_accounts g
         JOIN bizcity_read.ledger_entries e ON e.id = g.entry_id
         JOIN branches br ON br.id = g.branch_id
         LEFT JOIN partners p ON p.id = NULLIF(g.partner_id, 0)
+        LEFT JOIN bizcity_read.items pr ON pr.item_id = g.item_id
        WHERE g.tenant_id = ${a.tenantId}
          AND g.account_code LIKE ${a.accountPrefix + '%'}
          AND g.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
@@ -205,6 +206,11 @@ export const reportRepository = {
     const filtered = sql`
       SELECT g.entry_id, g.account_code, g.counter_accounts, g.side, min(g.posting_date) AS pd, min(g.branch_id) AS branch_id,
              sum(g.debit) AS d, sum(g.credit) AS c, sum(g.line_count)::int AS n, min(g.first_line_no) AS fl,
+             -- mã hàng: mọi nhóm con cùng một mã thì giữ mã đó; số mã cộng các nhóm con (nhóm con khác đối tượng hiếm khi trùng mã)
+             CASE WHEN max(g.sku_count) = 1 AND count(DISTINCT g.product_sku) = 1 AND bool_and(g.product_sku IS NOT NULL) THEN min(g.product_sku) END AS sku,
+             CASE WHEN max(g.sku_count) = 1 AND count(DISTINCT g.product_sku) = 1 AND bool_and(g.product_sku IS NOT NULL) THEN min(g.product_name) END AS sku_name,
+             CASE WHEN max(g.sku_count) = 1 AND count(DISTINCT g.product_sku) = 1 AND bool_and(g.product_sku IS NOT NULL) THEN min(g.item_id) END AS item,
+             CASE WHEN max(g.sku_count) = 1 AND count(DISTINCT g.product_sku) = 1 THEN 1 ELSE sum(g.sku_count) END::int AS sku_count,
              CASE WHEN count(DISTINCT g.partner_id) = 1 THEN min(g.partner_id) END AS partner_id
         FROM bizcity_read.ledger_entry_accounts g
         JOIN bizcity_read.ledger_entries e ON e.id = g.entry_id
@@ -221,17 +227,20 @@ export const reportRepository = {
     const rows = await sql<{
       entry_id: string; posting_date: string; doc_date: string; entry_no: string; doc_no: string; doc_type: string; invoice_no: string | null; reason_code: string | null;
       description: string; account_code: string; counter_accounts: string; side: number; debit: string; credit: string; line_count: number;
+      product_sku: string | null; product_name: string | null; sku_count: number;
       partner_code: string | null; partner_name: string | null; branch_code: string; is_reversal: boolean; entry_status: string; source_type: string | null;
     }>`
       WITH x AS (${filtered})
       SELECT x.entry_id, x.pd::text AS posting_date, e.doc_date::text AS doc_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.reason_code,
              e.description, x.account_code, x.counter_accounts, x.side, x.d AS debit, x.c AS credit, x.n AS line_count,
+             x.sku AS product_sku, COALESCE(x.sku_name, pr.name) AS product_name, x.sku_count,
              p.code AS partner_code, COALESCE(CASE WHEN x.partner_id <> 0 AND e.partner_id = x.partner_id THEN e.partner_name END, p.name) AS partner_name,
              br.code AS branch_code, e.is_reversal, e.status AS entry_status,
              (SELECT ev.payload->'sourceRef'->>'type' FROM accounting_events ev WHERE ev.id = e.event_id) AS source_type
         FROM x JOIN bizcity_read.ledger_entries e ON e.id = x.entry_id
         JOIN branches br ON br.id = x.branch_id
         LEFT JOIN partners p ON p.id = NULLIF(x.partner_id, 0)
+        LEFT JOIN bizcity_read.items pr ON pr.item_id = x.item
        ORDER BY x.pd, e.doc_no, e.entry_no, x.fl, x.side DESC
        LIMIT ${a.limit} OFFSET ${a.offset}`.execute(db);
     const totals = await sql<{ rows: string; n: string; entries: string; debit: string; credit: string }>`
