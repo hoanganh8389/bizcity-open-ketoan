@@ -5,6 +5,7 @@ import adminDashboard from './actions/admin-dashboard.js';
 import adminOrders from './actions/admin-orders.js';
 import adminReturns from './actions/admin-returns.js';
 import adminSettings from './actions/admin-settings.js';
+import adminShiftJournal from './actions/admin-shift-journal.js';
 import adminShifts from './actions/admin-shifts.js';
 import bootstrapGet from './actions/bootstrap-get.js';
 import catalogBarcode from './actions/catalog-barcode.js';
@@ -40,7 +41,7 @@ export default defineModule({
     returnCreate, returnList, exchangeCreate, customerSearch, customerLookup, customerOrders,
     catalogSnapshot, catalogSearch, catalogBarcode, stockGet,
     shiftCurrent, shiftOpen, shiftClose, reportOrders, reportDashboard,
-    adminOrders, adminReturns, adminShifts, adminDashboard, adminSettings,
+    adminOrders, adminReturns, adminShifts, adminDashboard, adminSettings, adminShiftJournal,
     orderQrConfirm, orderQrRenew, orderInvoiceBuyer, stockAll,
   ],
   subscribers: [],

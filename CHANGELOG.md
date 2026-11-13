@@ -11,6 +11,14 @@ Mỗi bản ghi đủ sáu mục:
 - **Bảo mật**
 
 ## [Chưa phát hành]
+
+### Cài đặt bán hàng một màn; phiếu kế toán chênh lệch két khi chốt ca (phiếu NT-BH-014, chữ chốt nghiep-vu/20) <!-- [2026-11-13 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014 đợt 3 Bán hàng (đóng góp) -->
+
+- **Thêm:** chốt ca máy POS có chênh lệch két → module `pos` nộp một phiếu kế toán `manual_journal` theo lý do `POS-THIEU-KET` (mặc định Nợ 1381 / Có 1111) hoặc `POS-THUA-KET` (Nợ 1111 / Có 3381), đối tượng chi nhánh `CN-<mã>`, khoá `pos:shift:<ca>:cash-diff`. Core từ chối phiếu (chưa khai lý do…) không làm hỏng chốt ca: biên bản ghi "chưa lập", kế toán bấm **Lập lại phiếu kế toán** ở Sổ ca (`POST /api/v1/m/pos/admin/shifts/:id/journal`, quyền `documents:write`).
+- **Thêm:** khoá `bizcity.pos.cash_diff_journal` (mặc định bật), `bizcity.pos.cash_short_reason`, `bizcity.pos.cash_over_reason`; manifest `pos` nộp thêm `manual_journal`.
+- **Đổi:** BH17 *Cài đặt bán hàng* gom 4 khối — máy bán tại quầy; ghi sổ phiếu bán / trả (ghi ngay / chờ duyệt); chênh lệch két (tài khoản sửa tại chỗ, tạo lý do khi Ghi); tài khoản hạch toán bán hàng (chỉ đọc ACC41). Sổ ca BH15 thêm cột *Phiếu kế toán*. Bỏ mục mờ "Định khoản bán hàng" ở menu; ô cùng tên ở Luồng chi tiết mở BH17.
+- **Thay đổi định khoản:** có — ca lệch két sinh bút toán 1381 / 1111 hoặc 1111 / 3381 (từ lúc cập nhật; ca đã chốt không lập bù trừ khi bấm Lập lại phiếu). Phiếu theo chế độ ghi sổ của loại "phiếu kế toán" (mặc định chờ duyệt ở ACC14).
+- **Nâng cấp cần làm:** kế toán mở BH17 kiểm tài khoản thiếu / thừa rồi bấm **Ghi** để tạo hai lý do (chưa tạo thì phiếu "chưa lập").
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Menu điện thoại / màn hẹp (nút ☰) dùng đúng bố trí menu trái của máy tính: Hay dùng, nhóm Tiền mặt … Phần riêng, mục con theo tiêu đề, Báo cáo — không còn bộ phân hệ cũ (Kế toán, Quỹ, Nghiệp vụ mua hàng…).
 

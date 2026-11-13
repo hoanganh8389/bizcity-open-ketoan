@@ -98,6 +98,8 @@ export async function adminShifts(tx: Tx, f: Range & { diffOnly?: boolean; alert
       // Vượt ngưỡng Cài đặt bán hàng (bizcity.pos.cash_diff_alert; 0 = mọi chênh lệch).
       alert: difference !== null && difference !== 0 && Math.abs(difference) >= f.alert,
       byPayment: (rep.byPayment as unknown[]) ?? [],
+      // Phiếu kế toán chênh lệch két (NT-BH-014): trạng thái lúc chốt ca; sửa lỗi / ghi sổ lại xem ở ACC14.
+      journal: (closed ? (s.report as { journal?: unknown }).journal ?? null : null) as { docKey: string; docNo: string; status: string; amount: number; error?: string } | null,
     };
     if (!f.diffOnly || (difference !== null && difference !== 0)) items.push(item);
   }

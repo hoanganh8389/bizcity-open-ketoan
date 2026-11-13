@@ -5,6 +5,7 @@
  *   Việc cần làm: Core (/api/v1/ban-hang/viec-can-lam — chứng từ lỗi / chờ, hạn mức chương trình, phải thu quá hạn) + module pos (đơn chờ
  *   tiền QR, ca chưa chốt từ hôm trước). Module pos tắt / không có quyền xem → ẩn ô máy POS, không đếm.
  */
+// [2026-11-13 09:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: ô Định khoản bán hàng mở khối tài khoản của Cài đặt bán hàng BH17 (đóng góp)
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { LuongChiTiet, type LuongNode, type LuongStage, type ViecCanLam } from '@/components/quy-trinh/LuongChiTiet';
@@ -33,7 +34,7 @@ const STAGES: { node: Node; config: Node[]; side: Node[] }[] = [
       auto: ['Máy bán gửi từng đơn, phần mềm tự lập chứng từ bán và ghi sổ ngay', 'Gửi lại cùng đơn không ghi trùng', 'Hàng chưa có / chưa khai thuế bị chặn ngay ở quầy'] },
     config: [
       { label: 'Mặt hàng', code: 'DM10', icon: 'Package', color: GRAY, path: '/danh-muc/mat-hang', hint: 'Mã thuế đầu ra, gửi lên thuế, ĐVT' },
-      { label: 'Cài đặt bán hàng', code: 'BH17', icon: 'Settings', color: GRAY, path: '/app/pos/cai-dat', pos: true, hint: 'Hạn trả, bắt buộc mở ca, ngưỡng chênh két' },
+      { label: 'Cài đặt bán hàng', code: 'BH17', icon: 'Settings', color: GRAY, path: '/app/pos/cai-dat', pos: true, hint: 'Máy bán, ghi sổ chứng từ bán, chênh lệch két, tài khoản' },
     ],
     side: [
       { label: 'Đơn bán máy POS', code: 'BH13', icon: 'Store', color: '#d93025', path: '/app/pos/don-ban', pos: true, todo: ['pos_qr'], hint: 'Đơn tại quầy, đối chiếu với chứng từ' },
@@ -50,7 +51,7 @@ const STAGES: { node: Node; config: Node[]; side: Node[] }[] = [
   },
   {
     node: { label: 'Thu tiền', code: 'BH03', icon: 'Banknote', color: '#16a34a', path: '/ban-hang/thu-tien',
-      auto: ['Mỗi hình thức (tiền mặt, chuyển khoản, QR, thẻ, voucher) một phiếu thu về đúng tài khoản', 'QR: đơn chờ tiền về hoặc thu ngân xác nhận', 'Tiền thối không ghi sổ'] },
+      auto: ['Mỗi hình thức (tiền mặt, chuyển khoản, QR, thẻ, voucher) một phiếu thu về đúng tài khoản', 'QR: đơn chờ tiền về hoặc thu ngân xác nhận', 'Tiền thối không ghi sổ', 'Chốt ca lệch két: tự lập phiếu kế toán thiếu (1381) / thừa (3381)'] },
     config: [
       { label: 'Hình thức thanh toán', code: 'DM05', icon: 'CreditCard', color: GRAY, path: '/cau-hinh/hinh-thuc-thanh-toan', hint: 'Mỗi hình thức một tài khoản tiền' },
     ],
@@ -83,7 +84,7 @@ const STAGES: { node: Node; config: Node[]; side: Node[] }[] = [
       auto: ['Doanh số, trả lại, doanh thu thuần theo cửa hàng, mặt hàng, khách', 'Đơn máy POS khớp từng chứng từ trong sổ', 'Lãi gộp sau khi tính giá vốn cuối tháng'] },
     config: [
       { label: 'Tài khoản ngầm định', code: 'ACC41', icon: 'BookOpen', color: GRAY, path: '/cau-hinh/tai-khoan-ngam-dinh', hint: 'Doanh thu, thuế, phải thu, trả lại' },
-      { label: 'Định khoản bán hàng', icon: 'Split', color: GRAY, hint: 'Tách tài khoản theo hình thức, chương trình, hàng tặng' },
+      { label: 'Định khoản bán hàng', code: 'BH17', icon: 'Split', color: GRAY, path: '/app/pos/cai-dat', pos: true, hint: 'Tài khoản theo loại chứng từ bán, phiếu chênh lệch két' },
     ],
     side: [
       { label: 'Tổng quan bán lẻ', code: 'BH16', icon: 'LayoutDashboard', color: '#d35400', path: '/app/pos/tong-quan', pos: true },

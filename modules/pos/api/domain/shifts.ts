@@ -3,6 +3,7 @@
  * Tiền theo hình thức: đơn "tiền mặt" (mode cash) = tổng đơn vào hình thức tiền mặt (đã trừ thối); đơn nhiều hình thức lấy từng
  * phần; phần đối trừ (đổi hàng) không phải tiền thu nên không tính.
  */
+import { roundMoney } from '@bizcity/module-sdk';
 import { isOffsetMethod, paymentKind } from './order.js';
 
 export type OrderSnap = {
@@ -93,5 +94,49 @@ export function dashboard(input: {
     byPromotion: [],
     topProducts: [...prod].map(([sku, v]) => ({ sku, ...v })).sort((a, b) => b.total - a.total || a.sku.localeCompare(b.sku)).slice(0, input.top ?? 10),
     byHour: [...hours].map(([hour, v]) => ({ hour, ...v })).sort((a, b) => a.hour - b.hour),
+  };
+}
+
+// [2026-11-13 08:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: phiếu kế toán chênh lệch két khi chốt ca (chữ chốt nghiep-vu/20 §3) (đóng góp)
+/** Số tiền kiểu 1.320.000 (không phụ thuộc locale của máy chủ). */
+const money = (n: number) => String(Math.abs(roundMoney(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+/** Ngày, giờ:phút theo giờ Việt Nam (UTC+7) của một thời điểm. */
+const vnStamp = (d: Date) => { const s = new Date(d.getTime() + 7 * 3600_000).toISOString(); return { date: s.slice(0, 10), hm: s.slice(11, 16) }; };
+
+/** Khoá chứng từ phiếu kế toán chênh lệch két của một ca (cố định theo ca: gửi lại không ghi trùng). */
+export const cashDiffDocKey = (shiftId: string) => `pos:shift:${shiftId}:cash-diff`;
+
+/**
+ * Phiếu kế toán chênh lệch két (manual_journal, NT-BH-014). Lệch 0 → null. Thiếu → lý do `shortReason` (mặc định Nợ 1381 /
+ * Có 1111), thừa → `overReason` (Nợ 1111 / Có 3381) — module không viết số tài khoản, tài khoản do kế toán khai ở lý do.
+ * Đối tượng: `CN-<chi nhánh>` khi đã có trong danh mục (1381 / 3381 theo dõi đối tượng); chưa có → không gửi, Kernel báo lỗi
+ * định khoản, chứng từ nằm ở ACC14 thẻ Lỗi (ca vẫn chốt).
+ */
+export function cashDiffJournal(input: {
+  shiftId: string; branchCode: string; openedAt: Date; closedAt: Date; cashier: string;
+  expectedCash: number; countedCash: number; shortReason: string; overReason: string; partnerCode: string | null;
+}) {
+  const diff = roundMoney(input.countedCash - input.expectedCash);
+  if (diff === 0) return null;
+  const o = vnStamp(input.openedAt);
+  const c = vnStamp(input.closedAt);
+  const short = diff < 0;
+  const amount = Math.abs(diff);
+  return {
+    docType: 'manual_journal' as const,
+    docKey: cashDiffDocKey(input.shiftId),
+    version: 1,
+    branchCode: input.branchCode,
+    docNo: `CA-${input.branchCode}-${c.date.replaceAll('-', '')}-${c.hm.replace(':', '')}`.slice(0, 64),
+    docDate: c.date,
+    description: `Chênh lệch két ca ${o.date === c.date ? o.hm : `${o.hm} ${o.date}`}–${c.hm} ngày ${c.date}, thu ngân ${input.cashier || '—'}`.slice(0, 1000),
+    lines: [{
+      lineKey: '1',
+      reasonCode: short ? input.shortReason : input.overReason,
+      amount,
+      ...(input.partnerCode ? { partnerCode: input.partnerCode } : {}),
+      description: `${short ? 'Thiếu' : 'Thừa'} tiền két ${money(amount)}: phải có ${money(input.expectedCash)}, đếm được ${money(input.countedCash)}`,
+    }],
+    totals: { total: amount },
   };
 }

@@ -82,13 +82,16 @@ describe.skipIf(!HAS)('NT-BH-007 — ca bán và báo cáo của máy bán POS',
     for (const m of cur.byPayment) expect(m.name).toBeTruthy();
   });
 
-  it('§5 dòng 8–9: chốt ca đếm 1.320.000 → thiếu 10.000; không lập chứng từ; chốt lại → POS_SHIFT_CLOSED, gửi lại cùng khoá → biên bản cũ', async () => {
+  // [2026-11-13 09:20 PM Võ Hoàng] NGHIEM-THU — NT-BH-007 Q1 chốt 13/11 (NT-BH-014): chốt ca lệch két lập một phiếu kế toán theo lý do thiếu (đóng góp)
+  it('§5 dòng 8–9: chốt ca đếm 1.320.000 → thiếu 10.000; phiếu kế toán theo lý do (Q1 chốt 13/11, NT-BH-014: chưa khai lý do → chưa lập, ca vẫn chốt); chốt lại → POS_SHIFT_CLOSED, gửi lại cùng khoá → biên bản cũ', async () => {
     const docsBefore = Number((await sql<{ n: string }>`SELECT count(*) AS n FROM accounting_events WHERE tenant_id = ${tenantId}`.execute(db)).rows[0]!.n);
     const key = `nt-bh-007-chot-${Date.now()}`;
     const r = await post('/shifts/close', { shiftId, countedCash: 1_320_000, note: 'Thiếu 10.000' }, key);
     expect(r.statusCode, r.body).toBe(200);
     expect(r.json().data).toMatchObject({ id: shiftId, expectedCash: 1_330_000, countedCash: 1_320_000, difference: -10_000, forced: false, note: 'Thiếu 10.000' });
+    // Đơn vị test chưa khai lý do POS-THIEU-KET: Core từ chối phiếu, ca vẫn chốt, biên bản ghi "chưa lập" (đủ luồng ở NT-BH-014).
     expect(Number((await sql<{ n: string }>`SELECT count(*) AS n FROM accounting_events WHERE tenant_id = ${tenantId}`.execute(db)).rows[0]!.n)).toBe(docsBefore);
+    expect(r.json().data.journal).toMatchObject({ reasonCode: 'POS-THIEU-KET', amount: 10_000, status: 'not_created' });
     const replay = await post('/shifts/close', { shiftId, countedCash: 1_320_000, note: 'Thiếu 10.000' }, key);
     expect(replay.statusCode).toBe(200);
     expect(replay.json().data.difference).toBe(-10_000);
