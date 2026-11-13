@@ -18,7 +18,7 @@ import { useAppMenu } from '../../layout/useAppMenu';
 import { ModuleIcon } from '../../phan-he/icons';
 import { GonIcon } from '../../layout/SideNav';
 import { useGonGroups } from '../../layout/useGon';
-import { MODULE_FLOWS } from '../../phan-he/flows';
+import { GROUP_FLOWS, MODULE_FLOWS } from '../../phan-he/flows';
 // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — thẻ "Trụ cột" cạnh "Quy trình": phân hệ này dựa vào trụ cột nào của Core, đạt tới đâu (training cho kế toán, kim chỉ nam cho dev)
 import { PillarMatrix } from '../system/PillarsPage';
 import '@/components/quy-trinh/quy-trinh.css';
@@ -79,10 +79,11 @@ export function GroupHomePage() {
   const g = groups.find((x) => x.key === key);
   if (!g) return <div className="card card-body">Không có nhóm "{key}" hoặc bạn chưa được cấp chức năng nào trong nhóm này. <Link to="/">Về trang Tổng quan</Link></div>;
   const seen = new Set(groups.flatMap((x) => [...x.sections, ...x.reports].flatMap((s) => s.items.map((i) => i.path!.split('?')[0]))));
-  const Flow = g.module ? MODULE_FLOWS[g.module] : undefined;
+  // [2026-11-13 02:55 PM Võ Hoàng] UX-14 — luồng chi tiết khoá theo nhóm menu (chữ chốt cap-nhat-ux/14) (đóng góp)
+  const Flow = GROUP_FLOWS[g.key];
   const xem = sp.get('xem');
   const soDo = SO_DO[g.key];
-  const helpKey = Flow ? `${g.module}-quy-trinh` : 'trang-chu';
+  const helpKey = Flow ? `${g.key}-quy-trinh` : 'trang-chu';
   const nutPhu = (
     <>
       {Flow && <button type="button" onClick={() => setSp({ xem: 'chi-tiet' }, { replace: true })} title="Sơ đồ đầy đủ: từng bước phần mềm tự làm gì, việc cần làm"><Workflow size={16} /> Luồng chi tiết</button>}

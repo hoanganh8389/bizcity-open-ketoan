@@ -4,15 +4,15 @@
  *   khai báo tổ chức → hàng hoá → đối tượng → cấu hình → phân quyền → báo cáo tổng hợp.
  * Mỗi bước: bấm để mở màn; ô nhỏ phía trên là khai báo đi kèm; phía dưới là chỗ xem lại / đối chiếu.
  * Dùng chung khung giao diện với Quy trình mua hàng (mf-*). Không có nội dung kỹ thuật.
+ * [2026-11-13 02:50 PM Võ Hoàng] UX-14 — vẽ bằng khuôn dùng chung components/quy-trinh/LuongChiTiet (chữ chốt cap-nhat-ux/14); giao diện không đổi (đóng góp).
  */
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { LuongChiTiet, type LuongNode } from '@/components/quy-trinh/LuongChiTiet';
 import { useQuery } from '@tanstack/react-query';
-import * as Icons from 'lucide-react';
 import { api } from '@/lib/api';
-import '../mua-hang/quy-trinh/quy-trinh-mua-hang.css';
 
-interface Node { label: string; code?: string; icon: string; color: string; path: string; hint?: string; soon?: boolean; count?: string }
+interface Node extends LuongNode { label: string; code?: string; icon: string; color: string; path: string; hint?: string; soon?: boolean; count?: string }
 interface Stage { node: Node; auto: ReactNode[]; config: Node[]; side: Node[] }
 
 const GRAY = '#64748b';
@@ -84,13 +84,7 @@ const STAGES: Stage[] = [
   },
 ];
 
-const Icon = ({ name, size = 18, color }: { name: string; size?: number; color?: string }) => {
-  const C = (Icons as unknown as Record<string, Icons.LucideIcon>)[name] || Icons.Circle;
-  return <C size={size} color={color} />;
-};
-
 export function QuyTrinhDanhMuc() {
-  const navigate = useNavigate();
   const dd = useQuery({ queryKey: ['default-data'], queryFn: () => api.get<{ datasets: { key: string; currentCount: number }[] }>('/api/v1/default-data'), staleTime: 60_000 });
   const counts = new Map((dd.data?.datasets ?? []).map((d) => [d.key, d.currentCount]));
   const badge = (n: Node) => {
@@ -98,51 +92,16 @@ export function QuyTrinhDanhMuc() {
     const c = n.count ? counts.get(n.count) : undefined;
     return c !== undefined ? <span className="mf-badge info">{c.toLocaleString('vi-VN')}</span> : null;
   };
-  const small = (n: Node, kind: 'cfg' | 'side') => (
-    <div key={n.path + n.label} className={`mf-small ${kind}`} role="button" tabIndex={0} title={n.hint} onClick={() => navigate(n.path)} onKeyDown={(e) => e.key === 'Enter' && navigate(n.path)}>
-      <span className="mf-small-icon" style={{ color: n.color }}><Icon name={n.icon} size={16} /></span>
-      <span className="mf-small-text">
-        <span className="mf-small-label">{n.label}{n.code && <i>{n.code}</i>}</span>
-        {n.hint && <span className="mf-small-hint">{n.hint}</span>}
-        {badge(n)}
-      </span>
-    </div>
-  );
-
   return (
-    <div className="mf">
-      <div className="mf-card">
-        <div className="mf-head">Khai báo một lần — mọi chứng từ mua, bán, kho, quỹ dùng chung</div>
-        <div className="mf-scroll">
-          <div className="mf-grid" style={{ ['--n' as string]: STAGES.length, gridTemplateColumns: `96px ${STAGES.map(() => 'minmax(126px, 1fr)').join(' ')}` }}>
-            <div className="mf-lane-label cfg"><Icons.Settings2 size={15} /> Khai báo kèm<small>làm cùng bước bên dưới</small></div>
-            {STAGES.map((s, i) => <div key={i} className={`mf-cell cfg ${s.config.length ? 'has' : ''}`}>{s.config.map((n) => small(n, 'cfg'))}</div>)}
-
-            <div className="mf-lane-label main"><Icons.Workflow size={15} /> Thứ tự<small>làm từ trái sang phải</small></div>
-            {STAGES.map((s, i) => (
-              <div key={i} className={`mf-cell main ${i < STAGES.length - 1 ? 'next' : ''}`}>
-                <div className="mf-stage" role="button" tabIndex={0} title="Bấm để mở" style={{ ['--c' as string]: s.node.color }}
-                  onClick={() => navigate(s.node.path)} onKeyDown={(e) => e.key === 'Enter' && navigate(s.node.path)}>
-                  <div className="mf-stage-top">
-                    <span className="mf-num">{i + 1}</span>
-                    <span className="mf-stage-icon"><Icon name={s.node.icon} size={22} color="#fff" /></span>
-                    {badge(s.node)}
-                  </div>
-                  <div className="mf-stage-label">{s.node.label}{s.node.code && <i>{s.node.code}</i>}</div>
-                  <ul className="mf-auto">{s.auto.map((a, k) => <li key={k}><Icons.Sparkles size={12} /> <span>{a}</span></li>)}</ul>
-                </div>
-              </div>
-            ))}
-
-            <div className="mf-lane-label side"><Icons.CornerDownRight size={15} /> Xem thêm<small>dùng khi cần</small></div>
-            {STAGES.map((s, i) => <div key={i} className={`mf-cell side ${s.side.length ? 'has' : ''}`}>{s.side.map((n) => small(n, 'side'))}</div>)}
-          </div>
-          <div className="mf-loop">
-            <Icons.RefreshCcw size={14} /> Danh mục càng gọn, chứng từ càng ít sai: chọn chi nhánh là có kho, có mã số thuế; chọn mặt hàng là có đơn vị tính, thuế suất, tài khoản.
-            {' '}Cần làm lại từ đầu: <Link to="/tien-ich/du-lieu-goc">Dữ liệu gốc</Link>.
-          </div>
-        </div>
-      </div>
-    </div>
+    <LuongChiTiet
+      title="Khai báo một lần — mọi chứng từ mua, bán, kho, quỹ dùng chung"
+      stages={STAGES.map((s) => ({ ...s, node: { ...s.node, auto: s.auto } }))}
+      lanes={{ cfg: ['Khai báo kèm', 'làm cùng bước bên dưới'], main: ['Thứ tự', 'làm từ trái sang phải'], side: ['Xem thêm', 'dùng khi cần'] }}
+      column={() => 'minmax(126px, 1fr)'}
+      soonLabel="sắp có"
+      badge={(n) => badge(n as Node)}
+      loop={<>Danh mục càng gọn, chứng từ càng ít sai: chọn chi nhánh là có kho, có mã số thuế; chọn mặt hàng là có đơn vị tính, thuế suất, tài khoản.
+        {' '}Cần làm lại từ đầu: <Link to="/tien-ich/du-lieu-goc">Dữ liệu gốc</Link>.</>}
+    />
   );
 }

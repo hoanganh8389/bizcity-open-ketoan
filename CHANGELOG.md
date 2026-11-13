@@ -333,6 +333,14 @@ Mỗi bản ghi đủ sáu mục:
 - Giao diện chỉ còn hai màu gốc (`--base` màu chính, `--nav` menu trái); mọi sắc độ tự tính. Mặc định theo bản thiết kế (Blue Zodiac `#0F223D`, xanh dương `#2457B3`); chọn màu ở menu tài khoản. Bỏ giao diện cổ điển.
 - Góc trên trái: ô chữ mã đơn vị thay ảnh logo. Tổng quan: Truy cập nhanh một tông màu, Tình hình tài chính hai nhóm (Tiền & công nợ / Kết quả kinh doanh, nhãn Âm), thẻ giới thiệu chữ thay ảnh quảng cáo.
 
+### Trang Quy trình: khuôn Luồng chi tiết dùng chung; Luồng chi tiết phân hệ Bán hàng (phiếu NT-BH-013, chữ chốt cap-nhat-ux/14) <!-- [2026-11-13 04:30 PM Võ Hoàng] UX-14 — luồng chi tiết dùng chung (đóng góp) -->
+
+- **Thêm:** component `components/quy-trinh/LuongChiTiet` (tầng Khai báo / Luồng chính / Phát sinh, việc cần làm có thử lại khi lỗi, ô chưa có màn hiện mờ "đang phát triển") — trang của phân hệ chỉ khai dữ liệu.
+- **Thêm:** Luồng chi tiết **Bán hàng** (`/nhom/ban-hang?xem=chi-tiet`): 7 bước từ giá & chính sách tới đối chiếu; việc cần làm từ `GET /api/v1/ban-hang/viec-can-lam` (chứng từ bán / trả lỗi, chờ định khoản; chương trình bán ≥ 90 % hạn mức; khách nợ quá hạn) và module `pos` (đơn chờ tiền QR, ca chưa chốt) — module tắt thì ẩn ô máy POS. Hướng dẫn `docs/huong-dan/ban-hang-quy-trinh.md`.
+- **Đổi:** Mua hàng, Danh mục vẽ bằng khuôn chung (giao diện không đổi); luồng chi tiết khoá theo **nhóm menu** (`GROUP_FLOWS`), không theo module; Danh mục thôi import CSS của Mua hàng. Bỏ khuôn cũ `components/quy-trinh/QuyTrinh.tsx` (không màn nào dùng).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
 ### Khuyến mại mở rộng do Core tính: bậc, tổng đơn / mã giảm giá, quà tổng đơn, combo, món rẻ nhất; áp riêng; trần NĐ81; trả hạn mức khi khách trả hàng (phiếu NT-BH-012, S031-15 đợt 2) <!-- [2026-11-13 11:30 AM Võ Hoàng] POS-KM2 — khuyến mại mở rộng (đóng góp) -->
 
 - **Thêm:** 5 Rule Contract nội dung nội tuyến (phát hành qua `POST /api/v1/policies`): `sale.promo.tiered@1`, `sale.promo.order_discount@1`, `sale.promo.order_gift@1`, `sale.promo.combo@1`, `sale.promo.cheapest_free@1` — điều kiện chung (thứ, khung giờ, tổng đơn tối thiểu, mã giảm giá, tháng sinh nhật, hạng thành viên), ưu tiên, áp riêng, trần NĐ81 (`legalCapPct`, mặc định 50 %, null = miễn; món rẻ nhất tính trần theo cả nhóm). Vectors qua hàm thuần + endpoint.
