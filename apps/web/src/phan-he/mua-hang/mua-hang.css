@@ -289,3 +289,5 @@
 .mh-nhom-tag { margin-left: 8px; padding: 0 8px; border: 1px solid #b9cdee; border-radius: 10px; background: #eef4fd; color: #1d4f9c; font-size: 11.5px; font-weight: 600; cursor: pointer; line-height: 18px; }
 .mh-nhom-tag:hover { background: #dce8fb; }
 tr.mh-ncc-con td { font-weight: 400 !important; color: #5b6573; background: #fafbfd; }
+tr.mh-cong-nhom td { background: #eef4fd !important; color: #1d3f78; font-weight: 700; border-bottom: 1px solid #c9d8f0; }
+tr.mh-me td { font-weight: 600; }

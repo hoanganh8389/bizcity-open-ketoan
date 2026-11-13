@@ -223,6 +223,23 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-13 Nguyễn Văn Thủy] cây cha – con cho báo cáo gộp theo đơn vị mẹ: chỉ đối tượng có cha hoặc có con (đóng góp)
+  r.get('/api/v1/partners/families', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Các nhóm cha – con: mỗi đối tượng thuộc nhóm (có cha hoặc có con) kèm đơn vị cha, đơn vị gốc, cấp' },
+    handler: async (req) => {
+      const { tenantId } = authOf(req);
+      const r = await sql<{ code: string; name: string; parent_code: string | null; root_code: string; root_name: string; depth: number }>`
+        WITH RECURSIVE t AS (
+          SELECT uid, code, name, parent_uid, code AS root_code, name AS root_name, 0 AS depth FROM partners WHERE tenant_id = ${tenantId} AND parent_uid IS NULL
+            AND EXISTS (SELECT 1 FROM partners c WHERE c.parent_uid = partners.uid)
+          UNION ALL
+          SELECT p.uid, p.code, p.name, p.parent_uid, t.root_code, t.root_name, t.depth + 1 FROM partners p JOIN t ON p.parent_uid = t.uid WHERE p.tenant_id = ${tenantId} AND t.depth < 20
+        ) SELECT t.code, t.name, (SELECT pp.code FROM partners pp WHERE pp.uid = t.parent_uid) AS parent_code, t.root_code, t.root_name, t.depth FROM t ORDER BY t.root_code, t.depth, t.code`.execute(db);
+      return ok(r.rows.map((x) => ({ code: x.code, name: x.name, parentCode: x.parent_code, rootCode: x.root_code, rootName: x.root_name, depth: Number(x.depth) })));
+    },
+  });
+
   r.get('/api/v1/partner-groups', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Nhóm đối tượng' },

@@ -10,7 +10,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
-import { DataGrid, type Column, type RowKind } from '@/components/DataGrid';
+import { DataGrid, type Column } from '@/components/DataGrid';
+import { MaThut, gopNhom, usePartnerFamilies, type GopRow } from '../../../features/catalog/nhomChaCon';
 import { ListPicker, PartnerPicker } from '@/components/pickers';
 import { api, errorText } from '@/lib/api';
 import { purchaseApi, today, vnd, type SupplierRow } from '../du-lieu';
@@ -37,43 +38,27 @@ export function NhaCungCapPage() {
     for (let added = true; added;) { added = false; for (const g of groupList) if (g.parentCode && set.has(g.parentCode) && !set.has(g.code)) { set.add(g.code); added = true; } }
     return set;
   }, [group, groupList]);
-  /** _kind 'subtotal' = dòng đơn vị trong nhóm (bung ra), không cộng vào dòng Cộng; _members = số đơn vị của nhóm (dòng đơn vị mẹ). */
-  type Row = SupplierRow & { stt: number; _kind?: RowKind; _depth?: number; _members?: number; _own?: boolean };
+  type Row = GopRow<SupplierRow & { stt: number }>;
   const flat = (q.data ?? []).filter((r) => (group === '-' ? !r.groupCode : !inGroup || (r.groupCode !== null && inGroup.has(r.groupCode))));
-  const families = useMemo(() => { const m = new Map<string, SupplierRow[]>(); for (const r of flat) if ((r.rootCode && r.rootCode !== r.code) || flat.some((x) => x.rootCode === r.code && x.code !== r.code)) m.set(r.rootCode ?? r.code, [...(m.get(r.rootCode ?? r.code) ?? []), r]); return m; }, [flat]);
-  const depthOf = (r: SupplierRow) => { let d = 0, c: SupplierRow | undefined = r; while (c?.parentCode && d < 10) { d++; c = flat.find((x) => x.code === c!.parentCode); } return d; };
-  // [2026-11-13 Nguyễn Văn Thủy] xem theo nhóm: một dòng / nhóm (số = tổng cả nhóm), bấm "+n chi nhánh" bung từng đơn vị (đóng góp)
-  const [bung, setBung] = useState<Set<string>>(new Set());
-  const toggle = (c: string) => setBung((o) => { const x = new Set(o); if (x.has(c)) x.delete(c); else x.add(c); return x; });
-  const rows: Row[] = useMemo(() => {
-    if (!gop) return flat.map((r, i) => ({ ...r, stt: i + 1 }));
-    const out: Row[] = []; const done = new Set<string>(); let n = 0;
-    for (const r of flat) {
-      if (done.has(r.code)) continue;
-      const fam = families.get(r.rootCode ?? r.code);
-      if (!fam) { out.push({ ...r, stt: ++n }); done.add(r.code); continue; }
-      const root = flat.find((x) => x.code === (r.rootCode ?? r.code)) ?? fam[0]!;
-      const sum = (k: 'debt' | 'overdue' | 'dueSoon' | 'monthPurchase' | 'documents' | 'openOrders' | 'advance') => fam.reduce((s, x) => s + (x[k] ?? 0), 0);
-      const pool = fam.find((x) => x.creditPool === root.code) ?? (root.creditLimit ? root : undefined);
-      out.push({ ...root, stt: ++n, debt: sum('debt'), advance: sum('advance'), overdue: sum('overdue'), dueSoon: sum('dueSoon'), monthPurchase: sum('monthPurchase'), documents: sum('documents'), openOrders: sum('openOrders'),
-        creditLimit: pool ? pool.creditLimit : root.creditLimit, creditUsed: pool ? pool.creditUsed : root.creditUsed, _members: fam.length });
-      fam.forEach((x) => done.add(x.code));
-      if (bung.has(root.code)) {
-        const ordered = [...fam].sort((a, b) => (a.code === root.code ? -1 : b.code === root.code ? 1 : a.code.localeCompare(b.code)));
-        for (const x of ordered) out.push({ ...x, stt: 0, _kind: 'subtotal', _depth: depthOf(x) + 1, _own: x.code === root.code });
-      }
-    }
-    return out;
-  }, [gop, flat, families, bung]); // eslint-disable-line react-hooks/exhaustive-deps
+  // [2026-11-13 Nguyễn Văn Thủy] xem theo nhóm mẹ – chi nhánh: chi nhánh ngay dưới đơn vị mẹ, cuối nhóm dòng Cộng nhóm (đóng góp)
+  const fam = usePartnerFamilies();
+  const sumK = (list: SupplierRow[], k: 'debt' | 'overdue' | 'dueSoon' | 'monthPurchase' | 'documents' | 'openOrders' | 'advance') => list.reduce((s, x) => s + (x[k] ?? 0), 0);
+  const rows: Row[] = gopNhom(flat.map((r, i) => ({ ...r, stt: i + 1 })), gop, fam, {
+    partnerOf: (r) => r.code, nameKey: 'name',
+    merge: (list) => {
+      const pool = list.find((x) => x.creditPool);
+      return { ...list[0]!, code: '', stt: 0, parentCode: null, groupCode: null, createdBy: '', createdAt: null, taxCode: null, phone: null, address: null, term: '', policies: 0, items: 0, attachments: 0, contractTo: undefined, contractNo: undefined, lastReceipt: undefined,
+        debt: sumK(list, 'debt'), advance: sumK(list, 'advance'), overdue: sumK(list, 'overdue'), dueSoon: sumK(list, 'dueSoon'), monthPurchase: sumK(list, 'monthPurchase'), documents: sumK(list, 'documents'), openOrders: sumK(list, 'openOrders'),
+        creditLimit: pool?.creditPool ? pool.creditLimit : null, creditUsed: pool?.creditPool ? pool.creditUsed : 0, creditPool: pool?.creditPool };
+    },
+  });
+  const nhomCount = fam.count;
   const soon = (d?: string) => d && d >= today() && d <= new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
   const open = (code: string) => navigate(`/mua-hang/nha-cung-cap/${encodeURIComponent(code)}`);
   const columns: Column<Row>[] = [
     { key: 'stt', header: 'STT', type: 'number', width: 50, render: (r) => (r._kind ? '' : r.stt) },
-    { key: 'code', header: 'Mã NCC', type: 'code', width: 140, render: (r) => <span style={{ paddingLeft: (r._depth ?? 0) * 14 }}>{(r._depth ?? 0) > 0 && <span className="muted">└ </span>}<Link to={`/mua-hang/nha-cung-cap/${encodeURIComponent(r.code)}`}>{r.code}</Link></span>, value: (r) => r.code },
-    { key: 'name', header: 'Nhà cung cấp', width: 300, bold: (r) => !r._kind, value: (r) => r.name,
-      render: (r) => <span>{r.name}{r._own && <span className="muted"> (đơn vị mẹ)</span>}{r._members && r._members > 1 ? (
-        <button type="button" className="mh-nhom-tag" title={bung.has(r.code) ? 'Thu lại' : 'Số trên dòng này là tổng cả nhóm — bấm để xem từng đơn vị'} onClick={(e) => { e.stopPropagation(); toggle(r.code); }}>
-          +{r._members - 1} chi nhánh {bung.has(r.code) ? '▾' : '▸'}</button>) : null}</span> },
+    { key: 'code', header: 'Mã NCC', type: 'code', width: 150, render: (r) => (r._kind ? '' : <MaThut depth={r._depth}><Link to={`/mua-hang/nha-cung-cap/${encodeURIComponent(r.code)}`}>{r.code}</Link></MaThut>), value: (r) => r.code },
+    { key: 'name', header: 'Nhà cung cấp', width: 300, bold: true },
     { key: 'parentCode', header: 'Thuộc đơn vị cha', type: 'code', width: 120, title: 'Đơn vị mẹ của chi nhánh NCC (Danh mục → Nhà cung cấp → Cây cha – con)', value: (r) => r.parentCode ?? '' },
     { key: 'groupCode', header: 'Nhóm NCC', width: 150, value: (r) => groupName(r.groupCode) },
     { key: 'taxCode', header: 'MST', type: 'code', width: 110 },
@@ -110,13 +95,13 @@ export function NhaCungCapPage() {
           </div>
           <div style={{ width: 280 }}><PartnerPicker value={pick} onChange={(c) => { setPick(c); if (c) open(c); }} placeholder="Mở NCC: gõ mã hoặc tên" /></div>
           <button className="btn btn-sm btn-primary" onClick={() => setAdding(true)}>+ Thêm nhà cung cấp</button>
-          <label className="checkbox" title="Nhà cung cấp có đơn vị mẹ và chi nhánh: mỗi nhóm một dòng, số nợ là tổng cả nhóm; bấm '+ chi nhánh' để xem từng đơn vị"><input type="checkbox" checked={gop} onChange={(e) => setGop(e.target.checked)} /> Xem theo nhóm mẹ – chi nhánh{families.size ? ` (${families.size} nhóm)` : ''}</label>
+          <label className="checkbox" title="Nhà cung cấp có đơn vị mẹ và chi nhánh: chi nhánh xếp ngay dưới đơn vị mẹ, cuối nhóm có dòng Cộng nhóm (nợ, quá hạn, hạn mức chung của cả nhóm)"><input type="checkbox" checked={gop} onChange={(e) => setGop(e.target.checked)} /> Xem theo nhóm mẹ – chi nhánh{nhomCount ? ` (${nhomCount} nhóm)` : ''}</label>
           <span className="muted" style={{ fontSize: 12 }}>{flat.length} nhà cung cấp · bấm đúp một dòng để mở hồ sơ</span>
         </div>
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : (
-          <DataGrid storageKey="mh-ncc-v2" rowKind={(r) => r._kind ?? 'data'} exportName="nha-cung-cap-mua-hang" exportTitle="NHÀ CUNG CẤP MUA HÀNG" rows={rows} rowKey={(r) => (r._kind ? `con:${r.code}` : r.code)} columns={columns}
-            onRowDoubleClick={(r) => open(r.code)} rowClassName={(r) => (r._kind ? 'mh-ncc-con' : r.overdue > 0 ? 'mh-row-warn' : '')} footerLabel="Cộng" emptyText={group ? `Không có nhà cung cấp ${group === '-' ? 'chưa có nhóm' : `thuộc nhóm ${groupName(group)}`}${scope === 'active' ? ' đang giao dịch — thử tab "Mọi nhà cung cấp"' : ''}` : 'Chưa có nhà cung cấp đang giao dịch — gõ mã / tên NCC ở ô bên trên để mở hồ sơ và khai báo'} />
+          <DataGrid storageKey="mh-ncc-v2" rowKind={(r) => r._kind ?? 'data'} exportName="nha-cung-cap-mua-hang" exportTitle="NHÀ CUNG CẤP MUA HÀNG" rows={rows} rowKey={(r) => (r._kind ? `cong:${r.name}` : r.code)} columns={columns}
+            onRowDoubleClick={(r) => !r._kind && open(r.code)} rowClassName={(r) => (r._kind ? 'mh-cong-nhom' : r._head ? 'mh-me' : r.overdue > 0 ? 'mh-row-warn' : '')} footerLabel="Cộng" emptyText={group ? `Không có nhà cung cấp ${group === '-' ? 'chưa có nhóm' : `thuộc nhóm ${groupName(group)}`}${scope === 'active' ? ' đang giao dịch — thử tab "Mọi nhà cung cấp"' : ''}` : 'Chưa có nhà cung cấp đang giao dịch — gõ mã / tên NCC ở ô bên trên để mở hồ sơ và khai báo'} />
         )}
       </div>
       {adding && <PartnerEditor kind="supplier" onClose={() => { setAdding(false); void q.refetch(); }} />}

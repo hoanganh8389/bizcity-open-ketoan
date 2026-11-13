@@ -21,6 +21,11 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { AccountPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 import { PrintButton } from '@/components/print';
 import { PARTNER_BALANCE_TEMPLATES, type PartnerBalanceRow } from './mauIn/congNoTongHop';
+import { MaThut, gopNhom, usePartnerFamilies, type GopRow } from '../../../features/catalog/nhomChaCon';
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
+/** Số dư bù trừ một bên (Nợ hoặc Có) — dùng khi cộng cả nhóm mẹ – chi nhánh. */
+const net = (d: number, c: number) => (d - c >= 0 ? [r2(d - c), 0] : [0, r2(c - d)]) as [number, number];
 
 interface Row extends PartnerBalanceRow { taxCode: string; groupCode?: string; groupName?: string }
 interface Data { rows: Row[] }
@@ -42,8 +47,21 @@ export function PartnerBalancesPage({ preset }: { preset?: PartnerBalancesPreset
   // Lọc nhóm, đối tượng; bỏ đối tượng chỉ có phát sinh (đầu kỳ, cuối kỳ đều 0) nếu không tích.
   const rows = (q.data?.rows ?? []).filter((r) => (!f.groupCode || r.groupCode === f.groupCode) && (!f.partnerCode || r.partnerCode === f.partnerCode)
     && (f.withMovement || r.openingDebit || r.openingCredit || r.closingDebit || r.closingCredit));
-  const openDetail = (r: Row) => {
-    const s = new URLSearchParams({ account: r.accountCode, from: f.from, to: f.to, partnerCode: r.partnerCode, ...(f.branchCodes ? { branchCodes: f.branchCodes } : {}) });
+  // [2026-11-13 Nguyễn Văn Thủy] gộp theo đơn vị mẹ: mỗi nhóm mẹ – chi nhánh một dòng (số dư bù trừ cả nhóm), bấm +n đơn vị để bung (đóng góp)
+  const fam = usePartnerFamilies();
+  const [gop, setGop] = useState(false);
+  const sumK = (list: Row[], k: keyof PartnerBalanceRow) => list.reduce((s, x) => s + Number(x[k] ?? 0), 0);
+  const shown = gopNhom(rows, gop, fam, {
+    partnerOf: (r) => r.partnerCode, keyOf: (r) => `${r.accountCode}|${r.branchCode ?? ''}`, nameKey: 'partnerName',
+    merge: (list) => {
+      const [od, oc] = net(sumK(list, 'openingDebit'), sumK(list, 'openingCredit'));
+      const [cd, cc] = net(sumK(list, 'closingDebit'), sumK(list, 'closingCredit'));
+      return { ...list[0]!, partnerCode: '', taxCode: '', groupCode: undefined, groupName: undefined, openingDebit: od, openingCredit: oc, debit: r2(sumK(list, 'debit')), credit: r2(sumK(list, 'credit')), closingDebit: cd, closingCredit: cc };
+    },
+  });
+  const openDetail = (r: GopRow<Row>) => {
+    if (r._kind) return;
+    const s = new URLSearchParams({ account: r.accountCode, from: f.from, to: f.to, partnerCode: r.partnerCode, ...(f.branchCodes ? { branchCodes: f.branchCodes } : {}), ...(r._head ? { gop: '1' } : {}) });
     navigate(`${p.detailPath ?? '/bao-cao/so-chi-tiet-cong-no'}?${s.toString()}`);
   };
   const money = (key: keyof PartnerBalanceRow, band: string, header: string): Column<Row> => ({ key, header, band, type: 'money', sum: true, width: 130 });
@@ -66,6 +84,7 @@ export function PartnerBalancesPage({ preset }: { preset?: PartnerBalancesPreset
             <label className="checkbox"><input type="checkbox" checked={f.withMovement} onChange={(e) => set({ withMovement: e.target.checked })} /> Hiển thị cả {who} chỉ có phát sinh trong kỳ</label>
             {multi && <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />}
             {multi && <label className="checkbox"><input type="checkbox" checked={f.byBranch} onChange={(e) => set({ byBranch: e.target.checked })} /> Tách theo chi nhánh</label>}
+            {fam.count > 0 && <label className="checkbox" title={`${who[0]!.toUpperCase() + who.slice(1)} có đơn vị mẹ – chi nhánh: chi nhánh xếp ngay dưới đơn vị mẹ, cuối nhóm có dòng Cộng nhóm (số dư bù trừ Nợ / Có của cả nhóm)`}><input type="checkbox" checked={gop} onChange={(e) => setGop(e.target.checked)} /> Xem theo nhóm mẹ – chi nhánh ({fam.count} nhóm)</label>}
           </>
         }
       >
@@ -75,14 +94,16 @@ export function PartnerBalancesPage({ preset }: { preset?: PartnerBalancesPreset
           {q.isLoading ? <Loading /> : !rows.length ? <Empty text="Không có công nợ trong kỳ này" /> : (
             <DataGrid
               storageKey={`${p.code.toLowerCase()}-v3`}
-              rows={rows}
-              rowKey={(r) => `${r.accountCode}-${r.partnerCode}-${r.branchCode}`}
+              rows={shown}
+              rowKey={(r) => `${r._kind ? `cong:${r.partnerName}:` : ''}${r.accountCode}-${r.partnerCode}-${r.branchCode}`}
+              rowKind={(r) => r._kind ?? 'data'}
+              rowClassName={(r) => (r._kind ? 'mh-cong-nhom' : r._head ? 'mh-me' : '')}
               onRowClick={(r) => r.partnerCode && openDetail(r)}
               footerLabel="Tổng cộng"
               exportName={p.title} exportTitle={`${p.title} — ${kyText(f.from, f.to)}`}
               columns={[
-                { key: 'partnerCode', header: `Mã ${who}`, type: 'code', width: 130 },
-                { key: 'partnerName', header: `Tên ${who}`, width: 260 },
+                { key: 'partnerCode', header: `Mã ${who}`, type: 'code', width: 150, render: (r) => <MaThut depth={r._depth}>{r.partnerCode}</MaThut> },
+                { key: 'partnerName', header: `Tên ${who}`, width: 300 },
                 { key: 'accountCode', header: 'TK công nợ', type: 'code', width: 90 },
                 money('openingDebit', 'Số dư đầu kỳ', 'Nợ'), money('openingCredit', 'Số dư đầu kỳ', 'Có'),
                 money('debit', 'Phát sinh', 'Nợ'), money('credit', 'Phát sinh', 'Có'),

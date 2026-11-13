@@ -125,6 +125,13 @@ describe('Đợt 2 — chính sách, hạn mức, MH01, nhập Excel theo cha �
     expect(con.creditUsed).toBeGreaterThanOrEqual(Math.round(th.debt));
   });
 
+  it('cây cha – con cho báo cáo: mỗi đơn vị trong nhóm có đơn vị gốc, cấp', async () => {
+    const f = (await call(t, 'GET', '/api/v1/partners/families')).body.data as { code: string; rootCode: string; depth: number; parentCode: string | null }[];
+    expect(f.find((x) => x.code === 'NCC-ME')).toMatchObject({ rootCode: 'NCC-ME', depth: 0, parentCode: null });
+    expect(f.find((x) => x.code === 'NCC-TRUNGHAU')).toMatchObject({ rootCode: 'NCC-ME', depth: 1, parentCode: 'NCC-ME' });
+    expect(f.some((x) => x.code === 'NCC-KHAC')).toBe(false);
+  });
+
   it('nhập Excel: cột Mã đơn vị cha — để trống mã thì cấp mã cha-00x; cha chưa có thì báo lỗi', async () => {
     const r = await call(t, 'POST', '/api/v1/partners/import', { dryRun: false, mode: 'both', rows: [
       { row: 2, name: 'Chi nhánh Đà Nẵng', kind: 'Nhà cung cấp', parentCode: 'NCC-ME' },
