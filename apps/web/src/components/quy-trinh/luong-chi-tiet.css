@@ -67,3 +67,7 @@
 /* Dòng "In: …" — mẫu in của bước (mở phiếu → bấm In). */
 .mf-print { display: flex; gap: 4px; align-items: flex-start; font-size: 11px; line-height: 1.35; color: #475569; background: #f1f5f9; border-radius: 6px; padding: 3px 6px; }
 .mf-print svg { flex: none; margin-top: 1px; color: #0f766e; }
+
+/* [2026-11-13 02:45 PM Võ Hoàng] UX-14 — ô chưa có màn: mờ, không bấm (đóng góp) */
+.mf-stage.soon, .mf-small.soon { opacity: .55; cursor: default; }
+.mf-stage.soon:hover, .mf-small.soon:hover { transform: none; box-shadow: none; }

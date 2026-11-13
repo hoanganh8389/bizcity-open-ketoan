@@ -5,9 +5,13 @@
  *                → đối chiếu tiến độ nhập → công nợ & hạn trả → trả tiền NCC. Mỗi bước ghi rõ máy TỰ ĐỘNG làm gì.
  *   Tầng dưới  — phát sinh bên rìa, treo dưới đúng bước sinh ra nó: ứng trước, chuyển xuống shop, quà, chi phí, lô hạn, trả hàng, thưởng…
  *   Việc cần làm (máy chủ gom ở /purchase/todo) hiện ở trên và gắn cảnh báo vào đúng ô trên sơ đồ.
+ *
+ * [2026-11-13 02:50 PM Võ Hoàng] UX-14 — khung vẽ chuyển sang khuôn dùng chung components/quy-trinh/LuongChiTiet (chữ chốt cap-nhat-ux/14); trang này chỉ còn khai
+ * dữ liệu (STAGES), việc cần làm, số phiếu, mẫu in, công thức đặt hàng sống. Giao diện không đổi (đóng góp).
  */
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { LuongChiTiet, type LuongNode } from '@/components/quy-trinh/LuongChiTiet';
 import { useQuery } from '@tanstack/react-query';
 import * as Icons from 'lucide-react';
 import { api } from '@/lib/api';
@@ -16,12 +20,11 @@ import { DEFAULT_FORMULA, normalizeFormula, varLabel, type FormulaConfig } from 
 import { lastParent, stockApi, useHierarchy } from '../ton-max/api';
 import { P, vnd } from '../du-lieu';
 import { MAU_IN } from '../chung-tu/mauIn';
-import './quy-trinh-mua-hang.css';
 
 interface TodoItem { key: string; level: 'error' | 'warn' | 'info'; text: string; count: number; amount?: number; path: string }
 interface Todo { byKind: Record<string, { draft: number; pending: number; approved: number }>; items: TodoItem[] }
 
-interface Node {
+interface Node extends LuongNode {
   label: string;
   code?: string;
   icon: string;
@@ -126,11 +129,6 @@ const PrintLine = ({ n, short }: { n: Node; short?: boolean }) => {
   return names.length ? <span className="mf-print" title={`Mở phiếu → bấm In (chọn mẫu, khổ giấy). Mẫu: ${names.join('; ')}`}><Icons.Printer size={12} /> In: {short && names.length > 1 ? `${names[0]} (+${names.length - 1} mẫu)` : names.join(' · ')}</span> : null;
 };
 
-const Icon = ({ name, size = 18, color }: { name: string; size?: number; color?: string }) => {
-  const C = (Icons as unknown as Record<string, Icons.LucideIcon>)[name] || Icons.Circle;
-  return <C size={size} color={color} />;
-};
-
 /** Các thành phần đang bật của công thức đặt hàng, mỗi dòng một dấu + / −. */
 function FormulaTerms({ cfg }: { cfg: FormulaConfig }) {
   const on = cfg.terms.filter((t) => t.on);
@@ -174,64 +172,16 @@ export function QuyTrinhMuaHang() {
   ));
   const NewBtn = ({ n }: { n: Node }) => n.newPath ? <button type="button" className="mf-new" onClick={(e) => { e.stopPropagation(); navigate(n.newPath!); }}><Icons.Plus size={13} /> Lập mới</button> : null;
 
-  const small = (n: Node, kind: 'cfg' | 'side') => (
-    <div key={n.path} className={`mf-small ${kind}`} role="button" tabIndex={0} title={n.hint} onClick={() => navigate(n.path)} onKeyDown={(e) => e.key === 'Enter' && navigate(n.path)}>
-      <span className="mf-small-icon" style={{ color: n.color }}><Icon name={n.icon} size={16} /></span>
-      <span className="mf-small-text">
-        <span className="mf-small-label">{n.label}{n.code && <i>{n.code}</i>}</span>
-        {n.hint && <span className="mf-small-hint">{n.hint}</span>}
-        <PrintLine n={n} short />
-        {count(n.kinds)}{alerts(n.todo)}
-        <NewBtn n={n} />
-      </span>
-    </div>
-  );
-
+  const stages = STAGES.map((st, i) => (i === 1 ? { ...st, node: { ...st.node, auto: orderAuto } } : st));
   return (
-    <div className="mf">
-      <div className="mf-card">
-        <div className="mf-head">Việc cần làm {q.isFetching && <span className="muted" style={{ fontWeight: 400 }}>· đang cập nhật…</span>}</div>
-        {items.length ? (
-          <div className="mf-todo">
-            {items.map((t) => <Link key={t.key} to={t.path} className={`mf-todo-item ${t.level}`}><b>{t.count}</b><span>{t.text}{t.amount ? ` · ${vnd(t.amount)}` : ''}</span></Link>)}
-          </div>
-        ) : <div className="mf-todo-ok">{q.isLoading ? 'Đang kiểm tra…' : '✓ Không có việc tồn đọng — mọi chứng từ đã xử lý.'}</div>}
-      </div>
-
-      <div className="mf-card">
-        <div className="mf-head">
-          Luồng mua hàng — đi từ tồn max đến trả tiền nhà cung cấp
-        </div>
-        <div className="mf-scroll">
-          <div className="mf-grid" style={{ ['--n' as string]: STAGES.length, gridTemplateColumns: `96px ${STAGES.map((_, i) => (i === 1 ? 'minmax(230px, 1.9fr)' : 'minmax(132px, 1fr)')).join(' ')}` }}>
-            <div className="mf-lane-label cfg"><Icons.Settings2 size={15} /> Khai báo<small>làm một lần, sửa khi cần</small></div>
-            {STAGES.map((s, i) => <div key={i} className={`mf-cell cfg ${s.config.length ? 'has' : ''}`}>{s.config.map((n) => small(n, 'cfg'))}</div>)}
-
-            <div className="mf-lane-label main"><Icons.Workflow size={15} /> Luồng chính<small>theo thứ tự thời gian</small></div>
-            {STAGES.map((s, i) => (
-              <div key={i} className={`mf-cell main ${i < STAGES.length - 1 ? 'next' : ''}`}>
-                <div className="mf-stage" role="button" tabIndex={0} title="Bấm để mở" style={{ ['--c' as string]: s.node.color }}
-                  onClick={() => navigate(s.node.path)} onKeyDown={(e) => e.key === 'Enter' && navigate(s.node.path)}>
-                  <div className="mf-stage-top">
-                    <span className="mf-num">{i + 1}</span>
-                    <span className="mf-stage-icon"><Icon name={s.node.icon} size={22} color="#fff" /></span>
-                    {count(s.node.kinds)}
-                  </div>
-                  <div className="mf-stage-label">{s.node.label}{s.node.code && <i>{s.node.code}</i>}</div>
-                  <ul className="mf-auto">{(i === 1 ? orderAuto : s.node.auto)?.map((a, i) => <li key={i}><Icons.Sparkles size={12} /> <span>{a}</span></li>)}</ul>
-                  <PrintLine n={s.node} />
-                  {alerts(s.node.todo)}
-                  <NewBtn n={s.node} />
-                </div>
-              </div>
-            ))}
-
-            <div className="mf-lane-label side"><Icons.CornerDownRight size={15} /> Phát sinh<small>treo dưới bước sinh ra nó</small></div>
-            {STAGES.map((s, i) => <div key={i} className={`mf-cell side ${s.side.length ? 'has' : ''}`}>{s.side.map((n) => small(n, 'side'))}</div>)}
-          </div>
-          <div className="mf-loop"><Icons.RefreshCcw size={14} /> Hàng bán ra ở shop làm tồn giảm → <b>Phân tích đặt hàng</b> tự đề xuất lần đặt kế tiếp — vòng mua hàng lặp lại.</div>
-        </div>
-      </div>
-    </div>
+    <LuongChiTiet
+      title="Luồng mua hàng — đi từ tồn max đến trả tiền nhà cung cấp"
+      stages={stages}
+      column={(i) => (i === 1 ? 'minmax(230px, 1.9fr)' : 'minmax(132px, 1fr)')}
+      badge={(n) => count((n as Node).kinds)}
+      extra={(n, place) => <><PrintLine n={n as Node} short={place !== 'stage'} />{alerts((n as Node).todo)}<NewBtn n={n as Node} /></>}
+      todo={{ items, loading: q.isLoading, fetching: q.isFetching, error: q.isError, retry: () => void q.refetch(), money: vnd }}
+      loop={<>Hàng bán ra ở shop làm tồn giảm → <b>Phân tích đặt hàng</b> tự đề xuất lần đặt kế tiếp — vòng mua hàng lặp lại.</>}
+    />
   );
 }
