@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 310
+      "count": 311
     }
   ],
   "items": [
@@ -9071,15 +9071,9 @@
       "phase": "PHASE-036",
       "title": "B6 — TI08 an toàn: xem trước bắt buộc có previewToken, defaultdatabackups (migration số kế tiếp) tự sao lưu trước khi ghi, chặn bộ giả lập trên đơn vị có bút t…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thiet-lap-nhanh)",
-        "branch": "feat/s036-8a-quay-ve-goc-an-toan",
-        "state": "đang làm",
-        "since": "2026-11-13",
-        "dot": "PHASE-036 · S036-8a — quay về dữ liệu gốc an toàn: xem trước có mã, tự sao lưu danh mục, chặn bộ gi…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "modules": [
         "he-thong"
       ],
