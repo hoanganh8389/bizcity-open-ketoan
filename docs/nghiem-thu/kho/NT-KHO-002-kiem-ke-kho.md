@@ -167,5 +167,4 @@ sang KA-CL; sổ chi tiết 1388 có công nợ Nguyễn Văn A 10.000.
 Bốn lệnh kiểm (12/11/2026): `npm run typecheck` 0 lỗi · `bash scripts/kiem-chuan.sh` ĐẠT · `selfcheck` không thêm mục mới so với `main`
 (SC-SEC-1 chỉ do tệp `.env` cục bộ) · `nhan-viec kiem` ĐẠT.
 `npm test` (CSDL test mới): 2007 đạt, 3 hỏng — `default-data.test.ts` (2) hỏng cả trên `main`;
-**`db-rules.test.ts` (1) do biên bản này**: bảng `stock_counts` chưa khai nhóm trong `apps/api/src/modules/system/schema-catalog.ts`
-— tệp thuộc dòng giữ chỗ PHASE-026 (người giữ khác), cần người giữ đồng ý / mở rộng phạm vi rồi thêm một dòng khai báo.
+`db-rules.test.ts` (1): bảng `stock_counts` chưa khai nhóm trong `schema-catalog.ts` — **đã được khai trên `main`** (13/11/2026), `db-rules` đạt 19 / 19.
