@@ -14,8 +14,9 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { DataGrid } from '@/components/DataGrid';
+import { AccountPicker } from '@/components/pickers';
 
-export interface WarehouseType { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
+export interface WarehouseType { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; accountName?: string | null; accountPosting?: boolean; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
 export interface WarehouseOp { op: string; label: string; area: string; typeCodes: string[] }
 interface TrashRow { code: string; name: string; purpose: string; accountPrefix: string; deletedAt: string | null; deletedBy: string }
 
@@ -67,7 +68,11 @@ export function WarehouseTypesPage() {
                 { key: 'code', header: 'Mã', type: 'code', width: 90 },
                 { key: 'name', header: 'Tên loại kho', width: 240 },
                 { key: 'purpose', header: 'Công dụng', width: 340 },
-                { key: 'accountPrefix', header: 'TK kho', type: 'code', width: 80, title: 'Đầu số tài khoản kho của loại (156, 157…). Trống = theo Tài khoản ngầm định' },
+                // [2026-11-13 Nguyễn Văn Thủy] TK kho của loại = TK ghi sổ của mọi bút toán vào kho thuộc loại; TK tổng hợp thì báo đỏ, đang dùng TK ngầm định (đóng góp)
+                { key: 'accountPrefix', header: 'TK kho', type: 'code', width: 110, title: 'Tài khoản kho của loại: mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này (ưu tiên hơn Tài khoản ngầm định). Trống = theo Tài khoản ngầm định',
+                  render: (t) => !t.accountPrefix ? <span className="muted">ngầm định</span>
+                    : t.accountPosting ? <span className="mono" title={t.accountName ?? ''}>{t.accountPrefix}</span>
+                    : <span className="mono" style={{ color: 'var(--bad, #c62828)' }} title={`${t.accountPrefix} là tài khoản tổng hợp, không ghi sổ được — bút toán đang dùng Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết.`}>{t.accountPrefix} ⚠</span> },
                 { key: 'activeWarehouses', header: 'Số kho', type: 'number', width: 80, title: 'Số kho đang dùng thuộc loại này' },
               ]}
             />
@@ -101,8 +106,8 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
       </Field>
       <Field label="Tên loại kho (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Công dụng" full><input className="input" value={v.purpose ?? ''} onChange={(e) => set({ purpose: e.target.value })} /></Field>
-      <Field label="Đầu số TK kho" tip="156, 157… Trống = theo Tài khoản ngầm định">
-        <input className="input mono" value={v.accountPrefix ?? ''} placeholder="156" onChange={(e) => set({ accountPrefix: e.target.value.replace(/[^0-9]/g, '') })} />
+      <Field label="TK kho" tip="Mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này, ưu tiên hơn Tài khoản ngầm định. Chỉ chọn tài khoản chi tiết. Trống = theo Tài khoản ngầm định">
+        <AccountPicker postingOnly value={v.accountPrefix ?? ''} placeholder="Trống = ngầm định" onChange={(c) => set({ accountPrefix: c })} />
       </Field>
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>

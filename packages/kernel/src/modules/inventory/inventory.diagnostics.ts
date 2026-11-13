@@ -30,7 +30,8 @@ const cogsRuns = (s: DiagScope) => sql`
 const ledgerVsStock = (s: DiagScope) => {
   const to = s.to ? sql`${s.to}::date` : sql`current_date`;
   return sql`
-    WITH acc AS (SELECT DISTINCT inventory_account AS code FROM product_posting_groups WHERE tenant_id = ${s.tenantId}),
+    WITH acc AS (SELECT inventory_account AS code FROM product_posting_groups WHERE tenant_id = ${s.tenantId}
+                 UNION SELECT a.code FROM warehouse_types t JOIN accounts a ON a.tenant_id = t.tenant_id AND a.code = t.account_prefix AND a.is_posting WHERE t.tenant_id = ${s.tenantId} AND t.account_prefix <> '' AND t.deleted_at IS NULL),
          gl AS (SELECT l.branch_id, coalesce(l.product_sku, '') AS sku, sum(l.debit - l.credit) AS v FROM ledger_lines l
                  WHERE l.tenant_id = ${s.tenantId} AND l.account_code IN (SELECT code FROM acc) AND l.posting_date <= ${to} ${branchCond(s, 'l')}
                  GROUP BY 1, 2),

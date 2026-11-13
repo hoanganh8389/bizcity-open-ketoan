@@ -12,6 +12,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- **TK kho theo loại kho**: mọi bút toán có hàng vào / ra kho (nhập mua, trả NCC, giá vốn bán và giá vốn tháng, khách trả, chuyển kho từng đầu, nhập / xuất khác, kiểm kê) ghi vào TK kho của loại kho của kho trên dòng (dòng không ghi kho = kho mặc định chi nhánh), ưu tiên hơn Tài khoản ngầm định và bảng quy tắc định khoản. Loại kho khai TK tổng hợp (156) hoặc trống → như cũ; cột TK kho ở DM18 báo đỏ TK tổng hợp; khai mới / đổi TK kho phải là TK chi tiết (ô chọn tài khoản). KHO07 và bảng kiểm sổ kho ↔ sổ cái tính thêm TK kho của các loại.
+  - **Thay đổi định khoản**: chứng từ ghi từ nay ở kho thuộc loại có TK chi tiết sẽ vào TK đó; chứng từ đã ghi giữ nguyên.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Loại kho (DM18) gọn lại: bỏ cột Được bán / Thuộc sở hữu / Theo dõi hạn dùng / Theo dõi; nút **Xoá** chuyển vào **Thùng rác** (0133, vẫn lưu trong CSDL; khôi phục / xoá vĩnh viễn ở thùng rác, xoá vĩnh viễn cần quyền quản trị). Thẻ Nghiệp vụ hiện bằng chữ (Tự chọn · Dùng được thêm), sửa trong hộp thoại tích chọn. Ô Loại kho ở form kho có nút + thêm nhanh; đổi loại nút mà Thuộc không hợp thì tự chuyển sang nút cùng mã hợp loại.
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Báo cáo **xem theo nhóm mẹ – chi nhánh** (không nút bấm, hai cấp như sổ sách: đơn vị mẹ → chi nhánh thụt vào → dòng *Cộng nhóm*): MH01, ACC38 tổng hợp công nợ (số dư bù trừ cả nhóm), ACC40 chi tiết công nợ (khối theo nhóm, cột *Đơn vị*; chọn đơn vị mẹ lấy cả chi nhánh), BH02 thẻ Theo khách hàng. API `GET /api/v1/partners/families`.

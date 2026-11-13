@@ -73,9 +73,11 @@ export function buildTransferParts(doc: TransferDocument, ctx: RuleContext): Pos
     const b = new EntryBuilder();
     const other = stock.toBranchPartnerId ?? null;
     for (const line of doc.lines) {
-      const inventory = resolver.groupForSku(line.sku).inventory_account;
+      // Phiếu một đầu: kho của dòng (xuất: warehouseCode; nhận: toWarehouseCode, trống thì warehouseCode) ở chi nhánh của phiếu.
+      const wh = resolver.warehouseAccount(doc.leg === 'in' ? line.toWarehouseCode || line.warehouseCode : line.warehouseCode, doc.branchCode);
+      const inventory = wh ?? resolver.groupForSku(line.sku).inventory_account;
       const amount = Math.abs(line.amount);
-      const tags = { biz: 'transfer', reason: doc.reasonCode ?? null, leg: doc.leg, sameUnit: Boolean(stock.sameAccountingUnit) };
+      const tags = { biz: 'transfer', reason: doc.reasonCode ?? null, leg: doc.leg, sameUnit: Boolean(stock.sameAccountingUnit), ...(wh ? (doc.leg === 'out' ? { whCredit: true } : { whDebit: true }) : {}) };
       if (doc.leg === 'out') valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: other, description: 'Xuất chuyển kho' });
       else valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: other, description: 'Nhập chuyển kho' });
     }
@@ -86,12 +88,14 @@ export function buildTransferParts(doc: TransferDocument, ctx: RuleContext): Pos
   const out = new EntryBuilder();
   const into = new EntryBuilder();
   for (const line of doc.lines) {
-    const inventory = resolver.groupForSku(line.sku).inventory_account;
+    const base = resolver.groupForSku(line.sku).inventory_account;
+    const whOut = resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
+    const whIn = resolver.warehouseAccount(line.toWarehouseCode, doc.toBranchCode);
     const amount = Math.abs(line.amount);
     const same = Boolean(stock.sameAccountingUnit);
-    valued(out, { tags: { biz: 'transfer', reason: doc.reasonCode ?? null, leg: 'out', sameUnit: same }, part: 'goods', productSku: line.sku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: stock.toBranchPartnerId, description: 'Xuất chuyển kho' });
+    valued(out, { tags: { biz: 'transfer', reason: doc.reasonCode ?? null, leg: 'out', sameUnit: same, ...(whOut ? { whCredit: true } : {}) }, part: 'goods', productSku: line.sku, debitAccount: transit, creditAccount: whOut ?? base, amount, debitPartnerId: stock.toBranchPartnerId, description: 'Xuất chuyển kho' });
     if (doc.status === 'received') {
-      valued(into, { tags: { biz: 'transfer', reason: doc.reasonCode ?? null, leg: 'in', sameUnit: same }, part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: stock.branchPartnerId, description: 'Nhập chuyển kho' });
+      valued(into, { tags: { biz: 'transfer', reason: doc.reasonCode ?? null, leg: 'in', sameUnit: same, ...(whIn ? { whDebit: true } : {}) }, part: 'goods', productSku: line.sku, debitAccount: whIn ?? base, creditAccount: transit, amount, creditPartnerId: stock.branchPartnerId, description: 'Nhập chuyển kho' });
     }
   }
   resolver.assertComplete();
@@ -118,11 +122,12 @@ export function buildStockAdjustmentLines(doc: StockAdjustmentDocument, ctx: Rul
   const partner = ctx.partnerId ?? ctx.stock?.branchPartnerId ?? null;
   const b = new EntryBuilder();
   for (const line of doc.lines) {
-    const inventory = resolver.groupForSku(line.sku).inventory_account;
+    const wh = resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
+    const inventory = wh ?? resolver.groupForSku(line.sku).inventory_account;
     const amount = Math.abs(line.amount);
     const increase = incOf(line.qty);
     const counter = counterOf(increase);
-    const tags = { biz: increase ? 'stock_increase' : 'stock_decrease', reason: doc.reasonCode ?? null };
+    const tags = { biz: increase ? 'stock_increase' : 'stock_decrease', reason: doc.reasonCode ?? null, ...(wh ? (increase ? { whDebit: true } : { whCredit: true }) : {}) };
     if (increase) valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: inventory, creditAccount: counter, amount, creditPartnerId: partner, description: 'Điều chỉnh tăng kho' });
     else valued(b, { tags, part: 'goods', productSku: line.sku, debitAccount: counter, creditAccount: inventory, amount, debitPartnerId: partner, description: 'Điều chỉnh giảm kho' });
   }

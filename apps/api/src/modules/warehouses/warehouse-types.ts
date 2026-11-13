@@ -40,16 +40,18 @@ export const WAREHOUSE_OPS: { op: string; label: string; area: string }[] = [
   { op: 'stock_out_other', label: 'Xuất kho khác, tiêu huỷ', area: 'Kho' },
 ];
 
-export interface WarehouseTypeDto { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
+export interface WarehouseTypeDto { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; accountName: string | null; accountPosting: boolean; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
 
 export async function listWarehouseTypes(trx: Db, tenantId: string) {
   const rows = await trx.selectFrom('warehouse_types as t')
-    .select(['t.code', 't.name', 't.purpose', 't.can_sell', 't.owned', 't.track_expiry', 't.account_prefix', 't.is_system', 't.is_active', 't.sort_order',
+    .leftJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 't.tenant_id').onRef('a.code', '=', 't.account_prefix'))
+    .select(['t.code', 't.name', 't.purpose', 't.can_sell', 't.owned', 't.track_expiry', 't.account_prefix', 't.is_system', 't.is_active', 't.sort_order', 'a.name as account_name', 'a.is_posting as account_posting',
       (eb) => eb.selectFrom('warehouses as w').whereRef('w.tenant_id', '=', 't.tenant_id').whereRef('w.type_code', '=', 't.code').select((e) => e.fn.countAll<string>().as('n')).as('n'),
       (eb) => eb.selectFrom('warehouses as w').whereRef('w.tenant_id', '=', 't.tenant_id').whereRef('w.type_code', '=', 't.code').where('w.is_active', '=', true).select((e) => e.fn.countAll<string>().as('n')).as('na')])
     .where('t.tenant_id', '=', tenantId).where('t.deleted_at', 'is', null).orderBy('t.sort_order').orderBy('t.code').execute();
   const types: WarehouseTypeDto[] = rows.map((r) => ({
     code: r.code, name: r.name, purpose: r.purpose, canSell: r.can_sell, owned: r.owned, trackExpiry: r.track_expiry, accountPrefix: r.account_prefix,
+    accountName: r.account_name ?? null, accountPosting: Boolean(r.account_posting),
     isSystem: r.is_system, isActive: r.is_active, sortOrder: r.sort_order, warehouses: Number(r.n ?? 0), activeWarehouses: Number(r.na ?? 0),
   }));
   const ops = new Map((await trx.selectFrom('warehouse_type_ops').select(['op', 'type_codes']).where('tenant_id', '=', tenantId).execute()).map((o) => [o.op, o.type_codes]));
@@ -97,13 +99,15 @@ const typeInput = z.object({
 
 async function saveType(trx: Db, tenantId: string, actor: string, i: z.infer<typeof typeInput>) {
   if (i.canSell && !i.owned) throw Errors.validation('Hàng không thuộc sở hữu (nhận giữ hộ) thì không được bán — bỏ tích "Được bán" hoặc tích "Thuộc sở hữu"');
-  if (i.accountPrefix) {
-    const a = await trx.selectFrom('accounts').select('code').where('tenant_id', '=', tenantId).where('code', 'like', `${i.accountPrefix}%`).executeTakeFirst();
-    if (!a) throw Errors.validation(`Không có tài khoản nào bắt đầu bằng ${i.accountPrefix} trong hệ thống tài khoản`);
-  }
-  if (!i.owned && i.accountPrefix) throw Errors.validation('Hàng không thuộc sở hữu không ghi sổ kho — để trống đầu số TK kho');
-  const cur = await trx.selectFrom('warehouse_types').select(['id', 'is_active', 'deleted_at']).where('tenant_id', '=', tenantId).where('code', '=', i.code).executeTakeFirst();
+  const cur = await trx.selectFrom('warehouse_types').select(['id', 'is_active', 'deleted_at', 'account_prefix']).where('tenant_id', '=', tenantId).where('code', '=', i.code).executeTakeFirst();
   if (cur?.deleted_at) throw Errors.conflict(`Mã ${i.code} đang nằm trong Thùng rác — vào Thùng rác bấm Khôi phục, hoặc dùng mã khác`);
+  // [2026-11-13 Nguyễn Văn Thủy] TK kho là tài khoản ghi sổ của mọi bút toán vào kho thuộc loại này → khai mới / đổi thì phải là TK chi tiết (đóng góp)
+  if (i.accountPrefix && i.accountPrefix !== cur?.account_prefix) {
+    const a = await trx.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', tenantId).where('code', '=', i.accountPrefix).executeTakeFirst();
+    if (!a) throw Errors.validation(`Không có tài khoản ${i.accountPrefix} trong hệ thống tài khoản`);
+    if (!a.is_posting) throw Errors.validation(`${i.accountPrefix} là tài khoản tổng hợp — chọn tài khoản chi tiết (ví dụ ${i.accountPrefix}1)`);
+  }
+  if (!i.owned && i.accountPrefix) throw Errors.validation('Hàng không thuộc sở hữu không ghi sổ kho — để trống TK kho');
   if (cur && cur.is_active && !i.isActive) {
     const used = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', tenantId).where('type_code', '=', i.code).where('is_active', '=', true).executeTakeFirst();
     if (used) throw Errors.conflict(`Còn kho ${used.code} đang theo dõi thuộc loại ${i.code} — đổi loại hoặc ngừng theo dõi kho đó trước`);

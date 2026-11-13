@@ -248,6 +248,10 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
 /** Giải thích trigger theo tên hàm trigger. */
 export const TRIGGER_NOTES: Record<string, string> = {
+  // [2026-11-13 Nguyễn Văn Thủy] đối tượng cha – con (0132) (đóng góp)
+  bizcity_partner_parent_check: 'Đơn vị mẹ của đối tượng (0132): không tự làm mẹ của mình, không khác đơn vị, không tạo vòng mẹ – con.',
+  bizcity_fill_partner_uid: 'Dòng bút toán có đối tượng tự điền định danh dt_ (partner_uid) để báo cáo gộp theo nhóm mẹ – chi nhánh (0132).',
+  bizcity_purchase_partner_uid: 'Chứng từ mua tự điền định danh dt_ của nhà cung cấp (0132).',
   bizcity_dimension_uid: 'Mục chiều phân tích mới có định danh bất biến: phòng ban pb_<ULID>, mục khác dm_<ULID> (0130).',
   bizcity_fill_department_uid: 'Dòng sổ ghi định danh phòng ban (department_uid) theo mã phòng ban trong dims lúc ghi (0130).',
   bizcity_branch_own_department: 'Chi nhánh mới chưa chọn phòng ban thì tự có phòng ban riêng (BH + số mã) trên sơ đồ phòng ban, dưới Cửa hàng / Giám đốc chi nhánh (0129).',
@@ -291,7 +295,7 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_versions_warehouse: 'Đổi MST của kho → thêm phiên bản MST theo ngày hiệu lực (0121).',
   bizcity_versions_branch: 'Đổi MST / nút cơ cấu / chi nhánh cha của chi nhánh → thêm phiên bản theo ngày hiệu lực (0121).',
   bizcity_versions_org_unit: 'Đổi MST / nút cha của nút cơ cấu → thêm phiên bản theo ngày hiệu lực (0121).',
-  bizcity_uid_guard: 'Định danh cn_ / kho_ / cc_ là bất biến, không sửa được (0121).',
+  bizcity_uid_guard: 'Định danh cn_ / kho_ / cc_ / dt_ là bất biến, không sửa được (0121).',
   bizcity_set_line_name: 'Dòng sổ mới tự lưu tên mặt hàng lúc ghi theo item_id. Đổi tên về sau không ảnh hưởng dòng đã ghi (0072).',
 };
 
