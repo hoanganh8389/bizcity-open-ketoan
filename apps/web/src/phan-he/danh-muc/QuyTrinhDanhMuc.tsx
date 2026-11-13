@@ -46,7 +46,7 @@ const STAGES: Stage[] = [
   },
   {
     node: { label: 'Đối tượng', icon: 'Users', color: '#9b51e0', path: '/danh-muc/khach-hang', count: 'partners' },
-    auto: ['Khách hàng, nhà cung cấp, nhân viên dùng chung một danh mục', 'Khai một lần, chứng từ mua, bán, thu chi chọn lại'],
+    auto: ['Khách hàng, nhà cung cấp, nhân viên dùng chung một danh mục', 'Khai một lần, chứng từ mua, bán, thu chi chọn lại', 'Cha – con: đơn vị mẹ → chi nhánh, mã con = mã cha-001; số liệu gom lên cha'],
     config: [
       { label: 'Nhà cung cấp', icon: 'Building2', color: GRAY, path: '/danh-muc/nha-cung-cap' },
       { label: 'Nhóm đối tượng', icon: 'UsersRound', color: GRAY, path: '/danh-muc/nhom-doi-tuong' },

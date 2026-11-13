@@ -13,6 +13,16 @@
    - Một chính sách + một kỳ chỉ tạo **một** phiếu (chặn tính trùng).
    - Có hàng trả / hoá đơn điều chỉnh sau kỳ: huỷ phiếu cũ, tính lại.
 
+## Thưởng của nhà cung cấp có đơn vị mẹ – chi nhánh
+
+Ở chính sách thưởng (MH04) khai thêm mục **Các bên của chính sách thưởng**:
+- **Ký với nhà cung cấp**: đơn vị đã ký (thường là đơn vị mẹ).
+- **Tính doanh số trên**: chỉ đơn vị ký, hoặc **đơn vị ký và mọi đơn vị con** (chi nhánh giao hàng).
+- **Bên trả thưởng**: đơn vị lập hoá đơn chiết khấu / trừ nợ (trống = bên ký).
+- **Bên mình nhận thưởng tại**: chi nhánh nhận (trống = chi nhánh mua nhiều nhất).
+
+Màn MH06 hiện các bên này và doanh số từng đơn vị giao hàng; **Tạo phiếu thưởng** lập cho đúng bên trả, vào đúng chi nhánh nhận.
+
 Hoá đơn mua gốc giữ nguyên; hoá đơn điều chỉnh (nếu có) lập theo phiếu thưởng.
 
 ## Tổng hợp thưởng theo tháng

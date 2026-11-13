@@ -8,6 +8,20 @@ Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ — dùng đ�
 - Hệ thống bán hàng, mua hàng có thể **đồng bộ cả danh mục** qua API (`PUT /api/v1/partners`, tối đa 1000 đối tượng một lần).
 - Chứng từ không có khách → gắn đối tượng **KHACH-LE** (Khách lẻ).
 
+## Cha – con (đơn vị mẹ và chi nhánh)
+
+Nhà cung cấp hay khách hàng lớn thường có **đơn vị mẹ** và nhiều **chi nhánh** (cùng hoặc khác mã số thuế). Hợp đồng ký một nơi, hàng do nơi khác giao, thưởng lại do nơi khác trả — nên phải biết đơn vị nào thuộc đơn vị nào.
+
+- **Thêm chi nhánh**: chọn đơn vị mẹ trên danh sách → **+ Thêm đơn vị con** (hoặc mở hồ sơ đơn vị mẹ → mục *Đơn vị con* → **Thêm đơn vị con**). Mã tự cấp **mã cha-001**, **-002**…; MST chi nhánh dạng *MST mẹ-005* thì mã lấy đúng đuôi *-005*.
+- Ô **Thuộc đơn vị cha** ở đầu hồ sơ: chọn / bỏ đơn vị mẹ. Đơn vị cũ (mã có từ trước) gắn vào mẹ được, giữ nguyên mã.
+- Gõ MST chi nhánh mà đã có đơn vị mang MST mẹ: phần mềm hỏi **Gắn làm đơn vị con?**
+- Trong một nhóm mẹ – con được dùng chung MST; đơn vị ngoài nhóm trùng MST thì bị chặn.
+- Không chọn chính mình, không vòng lặp; đơn vị con mang mã của mẹ thì không chuyển sang mẹ khác — lập đơn vị mới dưới mẹ mới, ngừng dùng mã cũ.
+- **Xem dạng cây**: nút **Cây cha – con** trên thanh công cụ; bấm dòng mở / đóng, bấm đúp mở hồ sơ, đi sâu thì có **Quay lại**.
+- Ô chọn đối tượng trên phiếu hiện kèm **thuộc …** để biết chi nhánh của bên nào.
+- Phiếu, hoá đơn luôn ghi vào **đơn vị nhỏ nhất** (đơn vị xuất / nhận hoá đơn). Mỗi đối tượng có định danh cố định *dt_…* lưu cả vào sổ cái và chứng từ mua, nên đổi mã, tên hay đơn vị mẹ sau này số liệu cũ vẫn đúng chỗ; báo cáo gom lên đơn vị mẹ theo cây.
+- Mọi lần sửa ghi vào **Lịch sử thay đổi** trong hồ sơ (ai, lúc nào, ô nào từ gì sang gì).
+
 ## Màn hình
 
 Ngoài màn **Đối tượng (DM03)** gồm mọi kiểu, có hai màn tách riêng theo kiểu (cùng cách dùng, cùng form):
@@ -24,7 +38,7 @@ Thanh nút: Thêm (Ctrl+N) · Sửa (Ctrl+E, hoặc bấm đúp dòng) · Xoá (
 
 Lưới theo thứ tự cột của danh mục khách hàng: Mã KH, Tên KH, Địa chỉ NR, Điện thoại, Di động, Nhóm KH, Người đại diện, Địa chỉ cty, MST, Fax, Email, Website, Chức vụ, Ngày tạo KH, Theo dõi, Người QL, Chi nhánh QL, Ghi chú, Tên viết tắt, Tên công ty, Tài khoản NH, Chủ TK, Mở tại, Giới hạn nợ, Giới hạn ngày nợ, Giới hạn số phiếu nợ, Người tạo. Danh sách hiện toàn bộ đối tượng (không phân trang).
 
-Form **Khách hàng / Nhà cung cấp** (giống màn của HTsoft):
+Form **Khách hàng / Nhà cung cấp**:
 - **Thuộc kiểu** (đầu form): khách hàng, nhà cung cấp, nhân viên, nội bộ, khác. Nhóm chỉ hiện các nhóm khai cho kiểu đó.
 - **Thông tin chung**:
   - Ngày tạo KH, **Thuộc nhóm (\*)**, **Mã (\*)**; Khách hàng tiềm năng, Ghi chú.
@@ -36,7 +50,7 @@ Form **Khách hàng / Nhà cung cấp** (giống màn của HTsoft):
 
 ### Mã tự động khi thêm mới
 
-Như HTsoft (lấy mã khách hàng theo nhóm): chọn **Thuộc nhóm** thì mã tự nhảy tới mã kế tiếp của **dãy mã đông nhất trong nhóm** đó, giữ nguyên tiền tố và độ dài. Ví dụ nhóm NCC hàng hoá đang có `NC100001`…`NC100642` thì mã mới là `NC100643`; nhóm Chủ nhà đang tới `NC400638` thì mã mới là `NC400639`. Dòng nhỏ dưới ô mã cho biết đang nối dãy nào.
+Mã theo nhóm: chọn **Thuộc nhóm** thì mã tự nhảy tới mã kế tiếp của **dãy mã đông nhất trong nhóm** đó, giữ nguyên tiền tố và độ dài. Ví dụ nhóm NCC hàng hoá đang có `NC100001`…`NC100642` thì mã mới là `NC100643`; nhóm Chủ nhà đang tới `NC400638` thì mã mới là `NC400639`. Dòng nhỏ dưới ô mã cho biết đang nối dãy nào.
 
 - Nhóm chưa có mã nào có đuôi số: nối dãy đông nhất của mọi đối tượng cùng kiểu. Vẫn chưa có: tiền tố mặc định theo kiểu + `000001` (khách hàng `KH`, nhà cung cấp `NCC`, nhân viên `NV`, nội bộ `NB`, khác `DT`).
 - Mã gợi ý đã có (trùng với dãy khác) thì tự tăng tiếp.

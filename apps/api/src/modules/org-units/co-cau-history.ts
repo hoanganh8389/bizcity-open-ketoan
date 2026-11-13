@@ -19,6 +19,8 @@ const TYPES = {
   branch: { objectTypes: ['branch'], table: 'branches', dept: false },
   warehouse: { objectTypes: ['warehouse'], table: 'warehouses', dept: false },
   department: { objectTypes: ['dimension:department', 'dimension'], table: 'dimensions', dept: true },
+  // [2026-11-13 Nguyễn Văn Thủy] lịch sử nhà cung cấp / khách hàng (đóng góp)
+  partner: { objectTypes: ['partner'], table: 'partners', dept: false },
 } as const;
 type Kind = keyof typeof TYPES;
 
@@ -27,10 +29,13 @@ const LABEL: Record<string, string> = {
   name: 'Tên', code: 'Mã', new_code: 'Mã mới', note: 'Ghi chú', kind: 'Loại', parent_code: 'Thuộc', parent_id: 'Thuộc', org_unit_code: 'Thuộc cơ cấu', org_code: 'Thuộc cơ cấu',
   tax_id: 'MST', tax_code: 'MST', company_name: 'Tên công ty', address: 'Địa chỉ', phone: 'Điện thoại', fax: 'Fax', is_active: 'Theo dõi',
   department_code: 'Phòng ban', branch_code: 'Cửa hàng / chi nhánh', type_code: 'Loại kho', is_default: 'Kho mặc định', is_promo: 'Kho khuyến mại',
-  account: 'Tài khoản', valid_from: 'Áp dụng từ ngày', tax_valid_from: 'Áp dụng từ ngày', sort_order: 'Thứ tự', unit_code: 'Đơn vị hạch toán', external_ref: 'Mã tham chiếu',
+  account: 'Tài khoản', group_code: 'Nhóm', contact_name: 'Người liên hệ', position: 'Chức vụ', mobile: 'Di động', email: 'Email', website: 'Website',
+  short_name: 'Tên viết tắt', bank_account_no: 'Số tài khoản', bank_account_holder: 'Chủ tài khoản', bank_name: 'Ngân hàng', also_kinds: 'Vai trò thêm',
+  credit_limit: 'Hạn mức nợ', payment_term_days: 'Hạn thanh toán (ngày)', max_open_docs: 'Số phiếu nợ tối đa', manager_code: 'Người quản lý', company_address: 'Địa chỉ công ty',
+  alias: 'Tên gọi khác', customer_type: 'Loại khách', is_prospect: 'Khách tiềm năng', birth_date: 'Ngày sinh', gender: 'Giới tính', parent_name: 'Tên đơn vị cha', valid_from: 'Áp dụng từ ngày', tax_valid_from: 'Áp dụng từ ngày', sort_order: 'Thứ tự', unit_code: 'Đơn vị hạch toán', external_ref: 'Mã tham chiếu',
 };
-const ACTION: Record<string, string> = { create: 'Thêm', update: 'Sửa', delete: 'Xoá', save: 'Ghi', assign: 'Gắn cửa hàng', restore_defaults: 'Quay về dữ liệu gốc' };
-const SKIP = new Set(['id', 'tenant_id', 'uid', 'created_at', 'created_by', 'updated_at', 'updated_by', 'org_path', 'path', 'level', 'levels_changed', 'branch_codes', 'created_by_name']);
+const ACTION: Record<string, string> = { create: 'Thêm', update: 'Sửa', delete: 'Xoá', save: 'Ghi', upsert: 'Ghi', assign: 'Gắn cửa hàng', restore_defaults: 'Quay về dữ liệu gốc' };
+const SKIP = new Set(['warn_ack', 'parent_uid', 'child_count', 'created_time', 'parent_name', 'id', 'tenant_id', 'uid', 'created_at', 'created_by', 'updated_at', 'updated_by', 'org_path', 'path', 'level', 'levels_changed', 'branch_codes', 'created_by_name']);
 const snake = (k: string) => k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 const show = (v: unknown): string => (v === null || v === undefined || v === '' ? '(trống)' : v === true ? 'Có' : v === false ? 'Không' : typeof v === 'object' ? JSON.stringify(v) : String(v));
 const flat = (o: unknown): Record<string, unknown> => {
@@ -87,7 +92,7 @@ export async function coCauHistory(tenantId: string, kind: Kind, code: string): 
     for (const p of pairs) {
       const verb = p.action.split('.').pop() ?? p.action;
       const changes = verb === 'delete' ? [] : diffText(p.before, p.after);
-      if (verb === 'update' && !changes.length) continue;
+      if ((verb === 'update' || verb === 'upsert') && !changes.length) continue;
       const line: HistoryLine = { at: r.created_at.toISOString(), by: names.get(r.actor) ?? r.actor, action: ACTION[verb] ?? verb, changes };
       // Bản qua action và bản ghi cũ của cùng một lần đổi: chỉ giữ một dòng.
       const prev = out[out.length - 1];
@@ -104,7 +109,7 @@ export async function coCauHistoryRoutes(app: FastifyInstance) {
     preHandler: requirePermission('catalog:read'),
     schema: {
       tags: ['Cơ cấu tổ chức'], summary: 'Lịch sử thay đổi của một nút cơ cấu (công ty, cơ cấu, cửa hàng, kho, phòng ban)',
-      querystring: z.object({ type: z.enum(['org', 'branch', 'warehouse', 'department']), code: z.string().trim().min(1).max(64) }),
+      querystring: z.object({ type: z.enum(['org', 'branch', 'warehouse', 'department', 'partner']), code: z.string().trim().min(1).max(64) }),
     },
     handler: async (req) => ok(await coCauHistory(authOf(req).tenantId, req.query.type, req.query.code)),
   });

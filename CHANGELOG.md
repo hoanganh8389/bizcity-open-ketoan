@@ -20,6 +20,11 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** có — ca lệch két sinh bút toán 1381 / 1111 hoặc 1111 / 3381 (từ lúc cập nhật; ca đã chốt không lập bù trừ khi bấm Lập lại phiếu). Phiếu theo chế độ ghi sổ của loại "phiếu kế toán" (mặc định chờ duyệt ở ACC14).
 - **Nâng cấp cần làm:** kế toán mở BH17 kiểm tài khoản thiếu / thừa rồi bấm **Ghi** để tạo hai lý do (chưa tạo thì phiếu "chưa lập").
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhà cung cấp / khách hàng **cha – con** (0132): định danh bất biến `dt_…` cho mọi đối tượng, lưu cả vào sổ cái (`ledger_lines.partner_uid`) và chứng từ mua (`purchase_documents.partner_uid`) — ghi theo đơn vị nhỏ nhất, báo cáo gom lên cha.
+  Ô *Thuộc đơn vị cha*, nút *+ Thêm đơn vị con* (mã tự cấp mã cha-001, MST chi nhánh lấy đúng đuôi), gợi ý gắn cha khi gõ MST chi nhánh, xem *Cây cha – con*, mục *Đơn vị con* + *Lịch sử thay đổi* trong hồ sơ, nút Quay lại khi đi sâu;
+  chặn tự trỏ / vòng lặp / chuyển đơn vị con theo mã sang cha khác; trong một nhóm dùng chung MST được. Ô chọn đối tượng trên phiếu hiện "thuộc …".
+- Chính sách thưởng (MH04) có *Các bên*: ký với, tính doanh số trên đơn vị ký hoặc **cả nhóm**, bên trả thưởng, chi nhánh mình nhận; MH06 cộng doanh số cả nhóm, hiện doanh số từng đơn vị giao hàng, lập phiếu thưởng đúng bên trả + chi nhánh nhận.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Menu điện thoại / màn hẹp (nút ☰) dùng đúng bố trí menu trái của máy tính: Hay dùng, nhóm Tiền mặt … Phần riêng, mục con theo tiêu đề, Báo cáo — không còn bộ phân hệ cũ (Kế toán, Quỹ, Nghiệp vụ mua hàng…).
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->

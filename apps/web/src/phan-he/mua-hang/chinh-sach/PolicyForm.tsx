@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { POLICY_LABEL, STACK_KINDS, canRepeat, giftItemsOf, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
-import { Field, Modal, useViewAgain } from '@/components/ui';
+import { Field, Hoi, Modal, useViewAgain } from '@/components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { BranchPicker } from '@/components/filters';
@@ -75,13 +75,14 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
   return (
     <Modal viewAgain={viewAgain} viewFirst={!isNew} wide={p.kind === 'item_discount' || p.kind === 'promo_gift'} title={`${POLICY_LABEL[p.kind]} ${isNew ? '(mới)' : p.code}`} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Nhà cung cấp (trống = áp cho mọi NCC)" full>
+      <Field label={REBATE_KINDS.includes(p.kind) ? 'Ký với nhà cung cấp (trống = mọi NCC)' : 'Nhà cung cấp (trống = áp cho mọi NCC)'} full>
         {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
       </Field>
       <Field label="Loại chính sách" full>
         <select className="select input" value={p.kind} onChange={(e) => { const k = e.target.value as PolicyKind; upd({ ...p, kind: k, rule: TEMPLATES[k]?.[0]?.rule ? { ...TEMPLATES[k][0]!.rule } : defaultRule(k) }); }}>{kinds.map((k) => <option key={k} value={k}>{POLICY_LABEL[k]}</option>)}</select>
         <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{KIND_HINT[p.kind]}</div>
       </Field>
+      {REBATE_KINDS.includes(p.kind) && <CacBenThuong p={p} onChange={(rule) => upd({ ...p, rule })} />}
       {p.kind !== 'item_discount' && p.kind !== 'promo_gift' && <Field label="Mã hàng (trống = mọi mã)"><ItemPicker value={p.scope.sku ?? ''} onChange={(c) => setScope('sku', c)} /></Field>}
       <Field label="Chi nhánh (trống = mọi chi nhánh)"><BranchPicker value={p.scope.branchCode ?? ''} onChange={(c) => setScope('branchCode', c)} activeOnly /></Field>
       {<Field label="Nhãn hàng (trống = mọi nhãn của NCC)">
@@ -90,8 +91,8 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
       </Field>}
       <div className="full" style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
         <b style={{ fontSize: 13 }}>Nội dung</b>
-        {templates.length > 0 && <div className="mh-templates"><span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>Mẫu nhanh:</span>{templates.map((t) => <button key={t.label} type="button" onClick={() => upd({ ...p, rule: { ...t.rule, ...(p.rule.apply ? { apply: p.rule.apply } : {}) } })}>{t.label}</button>)}</div>}
-        <div style={{ marginTop: 6 }}><RuleEditor kind={p.kind} rule={p.rule as Record<string, any>} onChange={(rule) => upd({ ...p, rule })} /></div>
+        {templates.length > 0 && <div className="mh-templates"><span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>Mẫu nhanh:</span>{templates.map((t) => <button key={t.label} type="button" onClick={() => upd({ ...p, rule: { ...t.rule, ...(p.rule.apply ? { apply: p.rule.apply } : {}), ...partiesOf(p.rule) } })}>{t.label}</button>)}</div>}
+        <div style={{ marginTop: 6 }}><RuleEditor kind={p.kind} rule={p.rule as Record<string, any>} onChange={(rule) => upd({ ...p, rule: { ...rule, ...partiesOf(p.rule) } })} /></div>
         <div className="alert alert-ok" style={{ fontSize: 12.5, marginTop: 6 }}>Phần mềm sẽ hiểu là: <b>{ruleText(p)}</b> — áp cho {p.scope.partnerCode ? names.partnerName(p.scope.partnerCode) : 'mọi nhà cung cấp'}{scopeTag(p) ? `, ${scopeTag(p)}` : ''}.</div>
       </div>
       {STACK_KINDS.includes(p.kind) && p.kind !== 'promo_gift' && <CachAp p={p} onChange={(rule) => upd({ ...p, rule })} />}
@@ -113,6 +114,40 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
       {!isNew && <div className="muted full" style={{ fontSize: 12 }}>Tạo bởi {p.createdBy || '—'} lúc {p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN') : '—'} · Sửa gần nhất {p.updatedBy || '—'} lúc {p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN') : '—'}</div>}
       {err && <div className="alert alert-bad full">{err}</div>}
     </Modal>
+  );
+}
+
+// [2026-11-13 Nguyễn Văn Thủy] thưởng theo cha – con: tính trên cả nhóm, bên trả, chi nhánh mình nhận (đóng góp)
+const REBATE_KINDS: PolicyKind[] = ['period_rebate', 'target_rebate', 'stage_rebate'];
+/** Giữ các bên của chính sách thưởng khi đổi mẫu / sửa nội dung. */
+const partiesOf = (r: Policy['rule']) => Object.fromEntries((['family', 'payer', 'receiver'] as const).filter((k) => r[k] !== undefined).map((k) => [k, r[k]]));
+
+/**
+ * Các bên của chính sách thưởng — nói rõ ai ký, tính trên doanh số của ai, ai trả, bên mình nhận ở đâu.
+ * Ví dụ: ký với công ty mẹ, cộng hàng mua của mọi chi nhánh của họ, chi nhánh Hà Nội của họ trả, chi nhánh Phú Thọ bên mình nhận.
+ */
+function CacBenThuong({ p, onChange }: { p: Policy; onChange: (rule: Policy['rule']) => void }) {
+  const names = useNames();
+  const r = p.rule;
+  const ncc = p.scope.partnerCode;
+  const nccName = ncc ? names.partnerName(ncc) : '';
+  const set = (k: 'family' | 'payer' | 'receiver', val: unknown) => onChange({ ...r, [k]: val || undefined });
+  return (
+    <fieldset className="fgroup full">
+      <legend>Các bên của chính sách thưởng <Hoi text="Nhà cung cấp lớn có công ty mẹ và nhiều chi nhánh: hợp đồng ký ở một nơi, hàng do nơi khác giao, thưởng lại do nơi khác trả. Khai đủ ba ô dưới để phần mềm tự cộng đúng doanh số và lập phiếu thưởng đúng bên." /></legend>
+      <div className="field full">
+        <label>Tính doanh số trên</label>
+        <div className="row" style={{ gap: 16, flexWrap: 'wrap' }}>
+          <label className="checkbox"><input type="radio" checked={!r.family} onChange={() => set('family', false)} /> Chỉ hàng mua của {ncc ? <b>{ncc}</b> : 'NCC đã chọn'}</label>
+          <label className="checkbox"><input type="radio" disabled={!ncc} checked={Boolean(r.family)} onChange={() => set('family', true)} /> {ncc ? <b>{ncc}</b> : 'NCC'} và <b>mọi đơn vị con</b> (chi nhánh) của họ</label>
+        </div>
+      </div>
+      <Field label="Bên trả thưởng (trống = bên ký)"><PartnerPicker value={String(r.payer ?? '')} onChange={(c) => set('payer', c)} placeholder={ncc ? `${ncc} - ${nccName}` : 'Bên ký'} /></Field>
+      <Field label="Bên mình nhận thưởng tại (trống = chi nhánh mua nhiều nhất)"><BranchPicker value={String(r.receiver ?? '')} onChange={(c) => set('receiver', c)} activeOnly /></Field>
+      <div className="muted full" style={{ fontSize: 12.5 }}>
+        Ký với <b>{ncc || 'mọi NCC'}</b> · tính trên {r.family ? 'cả nhóm (đơn vị mẹ + đơn vị con)' : 'riêng đơn vị ký'} · <b>{String(r.payer || ncc || 'bên ký')}</b> trả · bên mình nhận tại <b>{r.receiver ? names.branchName(String(r.receiver)) : 'chi nhánh mua nhiều nhất'}</b>
+      </div>
+    </fieldset>
   );
 }
 

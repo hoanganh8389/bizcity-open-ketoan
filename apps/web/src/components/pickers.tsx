@@ -273,7 +273,7 @@ export function AccountPicker({ postingOnly, prefixes, ...p }: BaseProps & { pos
 
 /* ------------------------------------------------------------------ Đối tượng */
 
-interface PartnerRow { code: string; name: string; taxCode?: string | null; address?: string | null; phone?: string | null; mobile?: string | null }
+interface PartnerRow { code: string; name: string; taxCode?: string | null; address?: string | null; phone?: string | null; mobile?: string | null; parentCode?: string | null; parentName?: string | null }
 
 /**
  * Chọn khách hàng / nhà cung cấp — tìm theo mã, tên hoặc mã số thuế (tìm phía máy chủ).
@@ -295,7 +295,8 @@ export function PartnerPicker({ activeOnly, addKind, ...p }: BaseProps & { activ
     staleTime: 5 * 60_000,
   });
   const wide = Boolean(addKind);
-  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.code, name: x.name, hint: x.taxCode ?? undefined, cells: [x.taxCode, x.address, x.mobile || x.phone] })), [list.data]);
+  // [2026-11-13 Nguyễn Văn Thủy] đơn vị con hiện kèm "thuộc <đơn vị cha>" để biết là chi nhánh của bên nào (đóng góp)
+  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.code, name: x.name, hint: [x.taxCode, x.parentCode ? `thuộc ${x.parentName || x.parentCode}` : ''].filter(Boolean).join(' · ') || undefined, cells: [x.taxCode, x.address, x.mobile || x.phone] })), [list.data]);
   const canAdd = Boolean(addKind) && can('catalog:write');
   return (
     <>

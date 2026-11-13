@@ -540,6 +540,10 @@ export interface PartnersTable {
   is_prospect: Generated<boolean>;
   customer_type: Generated<string>;
   also_kinds: Generated<string[]>;
+  /** Định danh bất biến dt_<ULID> (0132). */
+  uid: Generated<string>;
+  /** Đơn vị cha (partners.uid), trống = gốc (0132). */
+  parent_uid: string | null;
 }
 
 export interface PartnerGroupsTable {

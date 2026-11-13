@@ -321,6 +321,18 @@ export function rowValues(doc: PDoc & { invoiceTotal?: number }, calc: { beforeT
 export const POLICY_KINDS: PolicyKind[] = ['trade_discount', 'item_discount', 'qty_tier', 'payment_discount', 'promo_gift', 'period_rebate', 'target_rebate', 'stage_rebate', 'credit_limit', 'payment_term', 'supply_target', 'lot_tracking', 'gift_budget', 'contract'];
 const num = z.number().finite().min(0);
 const pct = z.number().finite().min(0).max(100);
+// [2026-11-13 Nguyễn Văn Thủy] thưởng theo cha – con: tính doanh số trên cả nhóm, bên trả thưởng, chi nhánh mình nhận (đóng góp)
+/**
+ * Các bên của chính sách thưởng (ký với NCC = scope.partnerCode):
+ *   family   — tính doanh số trên NCC ký và mọi đơn vị con của họ (vd ký với công ty mẹ, hàng do các chi nhánh giao);
+ *   payer    — mã NCC trả thưởng (đơn vị lập hoá đơn chiết khấu / trừ nợ); trống = NCC ký;
+ *   receiver — chi nhánh bên mình nhận thưởng (phiếu thưởng ghi vào chi nhánh này); trống = chi nhánh mua nhiều nhất.
+ */
+const REBATE_PARTIES = {
+  family: z.boolean().optional(),
+  payer: z.string().trim().max(64).optional().transform((x) => x || undefined),
+  receiver: z.string().trim().max(64).optional().transform((x) => x || undefined),
+};
 /** Khuôn quy tắc từng loại — kế toán nhập bằng form, máy chủ vẫn kiểm. */
 export const RULE_SCHEMAS: Record<PolicyKind, z.ZodTypeAny> = {
   trade_discount: z.union([z.object({ pct }), z.object({ amount: num })]),
@@ -340,9 +352,9 @@ export const RULE_SCHEMAS: Record<PolicyKind, z.ZodTypeAny> = {
     })).min(1, 'thêm ít nhất một dòng mua – tặng').max(5000) }),
     z.object({ buy: z.number().int().positive(), get: z.number().int().positive(), giftSku: z.string().default(''), splitIntoCost: z.boolean() }),
   ]),
-  period_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), tiers: z.array(z.object({ from: num, pct })).min(1), vatPct: z.number().optional() }),
-  target_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), target: z.number().positive(), tiers: z.array(z.object({ fromPct: num, pct })).min(1) }),
-  stage_rebate: z.object({ mode: z.enum(['stage', 'cumulative']), stages: z.array(z.object({ from: z.number().int().min(1).max(31), to: z.number().int().min(1).max(31), min: num, pct: pct.optional(), amount: num.optional() })).min(1) }),
+  period_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), tiers: z.array(z.object({ from: num, pct })).min(1), vatPct: z.number().optional(), ...REBATE_PARTIES }),
+  target_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), target: z.number().positive(), tiers: z.array(z.object({ fromPct: num, pct })).min(1), ...REBATE_PARTIES }),
+  stage_rebate: z.object({ mode: z.enum(['stage', 'cumulative']), stages: z.array(z.object({ from: z.number().int().min(1).max(31), to: z.number().int().min(1).max(31), min: num, pct: pct.optional(), amount: num.optional() })).min(1), ...REBATE_PARTIES }),
   credit_limit: z.object({ limit: z.number().positive(), warnPct: pct.default(90), branches: z.record(num).default({}) }),
   payment_term: termSchema,
   supply_target: z.object({ period: z.string().regex(/^\d{4}-\d{2}$/), branches: z.record(num) }),
