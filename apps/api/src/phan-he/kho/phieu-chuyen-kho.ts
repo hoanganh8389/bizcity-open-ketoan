@@ -26,7 +26,7 @@ import { sql } from 'kysely';
 import { ingestDocumentSchema, type IngestDocument } from '@ketoan/contracts';
 import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { db, toNumber, type Db } from '../../db/client.js';
-import { authOf, canDocument, documentPermissionOf, requirePermission, type AuthContext } from '../../core/auth.js';
+import { authOf, documentPermissionOf, requirePermission, type AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { idParamSchema, ok } from '../../core/http.js';
 import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
@@ -390,58 +390,59 @@ export async function transferDocRoutes(app: FastifyInstance): Promise<void> {
 const anyOut = z.any();
 const reasonBody = z.object({ reason: z.string().trim().max(500).default('') });
 
-// [2026-11-11 09:37 AM kiennt] PHASE-028 — S028-22: action chuyển kho kiểm thêm quyền theo loại chứng từ (canDocument). Cổng vẫn là documents:write vì route
-// thuộc nhóm hàng hoá (GOODS) — bật cả khi phân hệ Kho tắt; Kho bật → đòi kho:chuyen-kho-lap / -huy (kéo theo từ documents:write), Kho tắt → documents:write.
-const transferGate = (auth: AuthContext, op: 'create' | 'cancel'): void => {
-  if (!canDocument(auth, 'transfer', op)) throw Errors.forbidden(`Không có quyền ${op === 'create' ? 'lập / sửa / nhận' : 'huỷ / từ chối'} phiếu chuyển kho (${documentPermissionOf('transfer', op)})`);
-};
+// [2026-11-11 09:37 AM kiennt] PHASE-028 — S028-22: action chuyển kho gác quyền theo loại chứng từ.
+// [2026-11-11 10:09 AM kiennt] PHASE-028 — S028-22 sửa: quyền theo loại chứng từ tính khi kiểm (getter, documentPermissionOf) — phân hệ Kho bật thì
+// kho:chuyen-kho-lap / -huy (documents:write kéo theo, thủ kho chỉ được Cho quyền chi tiết vẫn lập được); Kho tắt (route nhóm hàng hoá vẫn bật) thì
+// documents:write. Bộ action là hằng (registry so đúng đối tượng — dựng app nhiều lần trong một tiến trình không báo trùng mã).
+// [2026-11-11 10:55 AM kiennt] PHASE-028 — S028-22 sửa: hàm dựng action mỗi lần gắn route làm registry báo "Trùng mã action" khi dựng app lần hai → getter
+const transferPerm = (op: 'create' | 'cancel') => documentPermissionOf('transfer', op);
 export const transferActions: AnyActionDef[] = [
   defineAction({
     id: 'kho.transfer.create', title: 'Lập phiếu chuyển kho (lưu là xuất: trừ tồn bên chuyển)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: transferInputSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => i.docNo || 'new' },
-    handler: (ctx, i) => { transferGate(ctx.legacyAuth, 'create'); return createTransfer(ctx.data.tx, ctx.legacyAuth, i); },
+    handler: (ctx, i) => createTransfer(ctx.data.tx, ctx.legacyAuth, i),
   }),
   defineAction({
     id: 'kho.transfer.update', title: 'Sửa phiếu chuyển kho (ghi lại hai đầu)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: transferInputSchema.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/kho/transfers/:id' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
-    handler: (ctx, i) => { transferGate(ctx.legacyAuth, 'create'); const { id, ...body } = i; return updateTransfer(ctx.data.tx, ctx.legacyAuth, String(id), body); },
+    handler: (ctx, i) => { const { id, ...body } = i; return updateTransfer(ctx.data.tx, ctx.legacyAuth, String(id), body); },
   }),
   defineAction({
     id: 'kho.transfer.receive', title: 'Thủ kho nhập xác nhận nhận hàng (cộng tồn bên nhận theo số thực nhận)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: receiveSchema.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/receive' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
-    handler: (ctx, i) => { transferGate(ctx.legacyAuth, 'create'); const { id, ...body } = i; return receiveTransfer(ctx.data.tx, ctx.legacyAuth, String(id), body); },
+    handler: (ctx, i) => { const { id, ...body } = i; return receiveTransfer(ctx.data.tx, ctx.legacyAuth, String(id), body); },
   }),
   defineAction({
     id: 'kho.transfer.unreceive', title: 'Bỏ xác nhận nhận (huỷ đầu nhập)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/unreceive' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
-    handler: (ctx, i) => { transferGate(ctx.legacyAuth, 'create'); return unreceiveTransfer(ctx.data.tx, ctx.legacyAuth, String(i.id)); },
+    handler: (ctx, i) => unreceiveTransfer(ctx.data.tx, ctx.legacyAuth, String(i.id)),
   }),
   defineAction({
     id: 'kho.transfer.reject', title: 'Bên nhận từ chối (huỷ đầu xuất, trả tồn bên chuyển)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return transferPerm('cancel'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: reasonBody.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/reject' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
-    handler: (ctx, i) => { transferGate(ctx.legacyAuth, 'cancel'); return rejectTransfer(ctx.data.tx, ctx.legacyAuth, String(i.id), i.reason); },
+    handler: (ctx, i) => rejectTransfer(ctx.data.tx, ctx.legacyAuth, String(i.id), i.reason),
   }),
   defineAction({
     id: 'kho.transfer.cancel', title: 'Huỷ phiếu chuyển kho (đảo cả hai đầu, giữ phiếu)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return transferPerm('cancel'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: reasonBody.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/cancel' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
-    handler: (ctx, i) => { transferGate(ctx.legacyAuth, 'cancel'); return cancelTransfer(ctx.data.tx, ctx.legacyAuth, String(i.id), i.reason); },
+    handler: (ctx, i) => cancelTransfer(ctx.data.tx, ctx.legacyAuth, String(i.id), i.reason),
   }),
 ];
