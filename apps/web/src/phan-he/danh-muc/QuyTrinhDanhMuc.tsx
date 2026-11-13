@@ -20,9 +20,11 @@ const STAGES: Stage[] = [
   {
     node: { label: 'Cơ cấu tổ chức', code: 'DM16', icon: 'Network', color: '#0d7a6f', path: '/danh-muc/so-do-to-chuc' },
     auto: ['Một cây: công ty → vùng → chi nhánh → tỉnh → cửa hàng', 'Mã số thuế đặt ở tỉnh, cửa hàng và kho bên dưới tự theo', 'Đổi cơ cấu, đổi mã số thuế có ngày hiệu lực — chứng từ cũ giữ nguyên',
+      'Mỗi chi nhánh, cửa hàng một phòng ban riêng: chứng từ của chi nhánh tự mang phòng ban',
       'Mỗi kho một loại: chứng từ tự chọn kho theo loại ưu tiên của nghiệp vụ, chặn kho sai loại'],
     config: [
       { label: 'Chi nhánh, cửa hàng', code: 'DM02', icon: 'Store', color: GRAY, path: '/danh-muc/chi-nhanh', hint: 'Gắn vào một nút trên cây', count: 'branches' },
+      { label: 'Phòng ban', code: 'ACC26', icon: 'Briefcase', color: GRAY, path: '/danh-muc/bo-phan', hint: 'Phòng ban công ty, chi nhánh; mỗi shop một phòng ban' },
       { label: 'Loại kho', code: 'DM18', icon: 'Layers', color: GRAY, path: '/danh-muc/loai-kho', hint: 'Được bán, thuộc sở hữu, nghiệp vụ dùng loại nào' },
       { label: 'Kho', code: 'DM12', icon: 'Warehouse', color: GRAY, path: '/danh-muc/kho', hint: 'Mỗi kho một loại — tạo nhanh bộ kho cho chi nhánh', count: 'warehouses' },
     ],
@@ -51,7 +53,6 @@ const STAGES: Stage[] = [
     config: [
       { label: 'Nhà cung cấp', icon: 'Building2', color: GRAY, path: '/danh-muc/nha-cung-cap' },
       { label: 'Nhóm đối tượng', icon: 'UsersRound', color: GRAY, path: '/danh-muc/nhom-doi-tuong' },
-      { label: 'Bộ phận', icon: 'Briefcase', color: GRAY, path: '/danh-muc/bo-phan', hint: 'Bán hàng, Mua hàng, Kế toán, Kho vận…' },
     ],
     side: [
       { label: 'Tài khoản ngân hàng', icon: 'Landmark', color: '#2d9cdb', path: '/danh-muc/ngan-hang' },
@@ -59,7 +60,7 @@ const STAGES: Stage[] = [
   },
   {
     node: { label: 'Cấu hình hạch toán', icon: 'Settings2', color: '#e8710a', path: '/cau-hinh/tai-khoan-ngam-dinh' },
-    auto: ['Chứng từ tự định khoản theo khai báo', 'Khai một nơi, mọi phân hệ dùng chung'],
+    auto: ['Chứng từ tự định khoản theo khai báo', 'Khai một nơi, mọi phân hệ dùng chung', 'Tài khoản theo dõi phòng ban mà chi nhánh chưa gắn phòng ban → báo lỗi, vào Chi nhánh gắn'],
     config: [
       { label: 'Hệ thống tài khoản', icon: 'BookOpen', color: GRAY, path: '/danh-muc/tai-khoan' },
       { label: 'Hình thức thanh toán', icon: 'CreditCard', color: GRAY, path: '/cau-hinh/hinh-thuc-thanh-toan' },

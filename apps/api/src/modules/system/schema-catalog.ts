@@ -248,6 +248,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
 /** Giải thích trigger theo tên hàm trigger. */
 export const TRIGGER_NOTES: Record<string, string> = {
+  bizcity_branch_own_department: 'Chi nhánh mới chưa chọn phòng ban thì tự có phòng ban riêng (BH + số mã) trên sơ đồ phòng ban, dưới Cửa hàng / Giám đốc chi nhánh (0129).',
   bizcity_warehouse_type_sync: 'Kho phải thuộc một loại có trong danh mục Loại kho; ô kho khuyến mại cũ đi theo loại KKM (0128).',
   bizcity_tenant_seed_warehouse_types: 'Đơn vị mới có sẵn 12 loại kho gốc và nghiệp vụ dùng loại kho (0128).',
   assert_entry_balanced: 'Kiểm lúc kết thúc giao dịch: tổng Nợ phải bằng tổng Có của bút toán, lệch một đồng là huỷ cả giao dịch.',

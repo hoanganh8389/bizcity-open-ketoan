@@ -14,3 +14,7 @@ Form: **Thông tin cơ bản** (Mã chi nhánh*, Mô tả*, Ghi chú, Số ĐKKD
 | Mã tham chiếu ở hệ thống nguồn | Ví dụ mã site bán hàng, để tra ngược |
 
 Chỉ xoá được chi nhánh chưa có chứng từ; chi nhánh đã dùng thì bỏ tích "Theo dõi" để ngừng.
+
+## Phòng ban của chi nhánh
+
+Cột / ô **Phòng ban**: phòng ban của chi nhánh trên sơ đồ phòng ban. Chi nhánh mới tự có phòng ban riêng (BH + số mã). Chứng từ của chi nhánh tự mang phòng ban này; chưa gắn mà chứng từ vào tài khoản theo dõi phòng ban thì bị chặn kèm lời nhắc vào đây gắn.

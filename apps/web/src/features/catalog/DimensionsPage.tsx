@@ -69,7 +69,7 @@ function asTree(rows: Row[]): (Row & { depth: number; hasKids: boolean })[] {
 
 const hiddenCol: Column<Row> = { key: 'hidden', header: 'Ẩn', type: 'check', width: 50, value: (r) => !r.isActive };
 
-function columnsOf(kind: DimensionKind, employees: Map<string, string>): Column<Row>[] {
+function columnsOf(kind: DimensionKind, employees: Map<string, string>, branchOf: Map<string, string> = new Map()): Column<Row>[] {
   const m = META[kind];
   const code: Column<Row> = { key: 'code', header: m.cols.code, type: 'code', width: 110 };
   // [2026-11-13 Nguyễn Văn Thủy] danh mục có cấp cha – con (phòng ban…): tên thụt theo cấp (đóng góp)
@@ -78,7 +78,10 @@ function columnsOf(kind: DimensionKind, employees: Map<string, string>): Column<
   const parent: Column<Row> = { key: 'parentCode', header: m.cols.parent ?? 'Thuộc', type: 'code', width: 130 };
   switch (kind) {
     case 'cost_item': return [code, name, note, parent, { ...hiddenCol, hidden: true }];
-    case 'department': return [code, { ...name, width: 220 }, { key: 'address', header: 'Địa chỉ', width: 200, value: (r) => r.extra.address ?? '' }, { key: 'phone', header: 'Điện thoại', width: 110, value: (r) => r.extra.phone ?? '' }, note, hiddenCol, parent];
+    case 'department': return [code, { ...name, width: 220 },
+      // [2026-11-13 Nguyễn Văn Thủy] ánh xạ ngược: phòng ban này là của chi nhánh / shop nào (0129) (đóng góp)
+      { key: 'branch', header: 'Chi nhánh', type: 'code', width: 120, title: 'Chi nhánh / shop gắn phòng ban này (đổi ở Danh mục chi nhánh)', value: (r) => branchOf.get(r.code) ?? '' },
+      { key: 'address', header: 'Địa chỉ', width: 200, value: (r) => r.extra.address ?? '' }, { key: 'phone', header: 'Điện thoại', width: 110, value: (r) => r.extra.phone ?? '' }, note, hiddenCol, parent];
     case 'contract': return [
       { ...code, width: 120 }, { ...name, width: 240 },
       { key: 'partnerCode', header: 'Khách hàng', type: 'code', width: 110, value: (r) => r.extra.partnerCode ?? '' },
@@ -123,7 +126,13 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
   const isContract = kind === 'contract';
   const employeesQ = useQuery({ queryKey: ['dimensions', 'employee'], queryFn: () => api.get<Row[]>('/api/v1/dimensions/employee'), enabled: isContract, staleTime: 60_000 });
   const employees = useMemo(() => new Map((employeesQ.data ?? []).map((e) => [e.code, e.name])), [employeesQ.data]);
-  const columns = useMemo(() => columnsOf(kind, employees), [kind, employees]);
+  const branchesQ = useQuery({ queryKey: ['branches'], queryFn: () => api.get<{ code: string; departmentCode: string | null }[]>('/api/v1/branches'), enabled: kind === 'department', staleTime: 60_000 });
+  const branchOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const b of branchesQ.data ?? []) if (b.departmentCode) m.set(b.departmentCode, m.has(b.departmentCode) ? `${m.get(b.departmentCode)}, ${b.code}` : b.code);
+    return m;
+  }, [branchesQ.data]);
+  const columns = useMemo(() => columnsOf(kind, employees, branchOf), [kind, employees, branchOf]);
   const del = useMutation({
     mutationFn: (code: string) => api.delete(`/api/v1/dimensions/${kind}/${encodeURIComponent(code)}`),
     onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['dimensions', kind] }); },
