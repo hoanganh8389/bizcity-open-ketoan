@@ -5,7 +5,7 @@
 > **Việc lộ trình:** — (mở rộng PHASE-034 HT10; dùng lại `bang-viec.json` của R-FLOW-8 và `ScoreBar` của HT10)
 > **Phân hệ:** he-thong <!-- [2026-11-11 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-035 — B1: dòng Phân hệ (R-FLOW-10) cho HT11 -->
 > **Checklist công bố:** —
-> **Trạng thái:** 🟡 **W0 chốt 2026-11-11; B1 đã vào (#301)** <!-- [2026-11-13 07:26 PM Johnny Chu - Chu Hoàng Anh] TIEN-DO — đối chiếu mã trên main 2026-11-13 (5b3448da): trạng thái khớp mã --> — `docs/standard/modules.json` + bảng việc gắn phân hệ. **Còn:** API (S035-4), màn HT11 (S035-5), SC-MODS-1..3 (S035-6). ⚠ Số 035 trùng với [PHASE-035 Thiết lập nhanh dữ liệu mẫu](../PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/README.md) (cùng mã S035-1..8) — một trong hai cần đổi số.
+> **Trạng thái:** 🟡 **W0 chốt 2026-11-11; B1 đã vào (#301)** <!-- [2026-11-13 07:26 PM Johnny Chu - Chu Hoàng Anh] TIEN-DO — đối chiếu mã trên main 2026-11-13 (5b3448da): trạng thái khớp mã --> — `docs/standard/modules.json` + bảng việc gắn phân hệ. **Còn:** API (S035-4), màn HT11 (S035-5), SC-MODS-1..3 (S035-6). Phase "Thiết lập nhanh dữ liệu mẫu" từng trùng số 035 đã đổi thành [PHASE-036](../PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/README.md) ngày 2026-11-13.
 > **Phụ trách:** **Thuy2k** (Nguyễn Văn Thủy) — người rà và đánh giá tiến độ theo HT11 mỗi tuần; làm B1..B6 cùng nhóm Lõi. Chủ dự án giao 2026-11-11.
 > **Tệp:** [00 — Kế hoạch & thiết kế](00-MASTER-PLAN.md) · [40 — Checklist](40-MASTER-CHECKLIST.md) · [Bản mẫu](mockups/modules-muc-dat.html) · [Ảnh](evidence/)
 

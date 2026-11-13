@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 75
+      "count": 69
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 303
+      "count": 309
     }
   ],
   "items": [
@@ -5836,8 +5836,8 @@
       "phase": "PHASE-028",
       "title": "W1: userroleassignments (0073) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / thu hồi — chữ chốt 00 §4a",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -5851,8 +5851,8 @@
       "phase": "PHASE-028",
       "title": "W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — chữ chốt ADR-0027 Phụ lục A; cấp quyền module = luật…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -5932,8 +5932,8 @@
       "phase": "PHASE-028",
       "title": "Vá F1: tạo / sửa người dùng phải có đủ quyền của vai trò đích và quyền hiện tại của người bị sửa; không tự đổi vai trò, tự khoá, tự đặt lại mật khẩu (80 §2)",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -5962,8 +5962,8 @@
       "phase": "PHASE-028",
       "title": "Vá F3 + F9: ký / huỷ chữ ký gác documents:write; 12 route nợ SC-API-3 khai bảo vệ, /system/schema không mở cho khoá API; giới hạn đăng nhập sai (10 / tài khoản…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -6022,8 +6022,8 @@
       "phase": "PHASE-028",
       "title": "Rút gọn bộ tính (K2, PR bộ tính riêng theo ADR-0027 W3 đợt 2 mục 5): bỏ hiệu lực relax / widen; điều kiện 8 → 5 (bỏ docdatebackdays, docdateforwarddays, respec…",
       "priority": "P1",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -6067,8 +6067,8 @@
       "phase": "PHASE-028",
       "title": "SC-AUTH-11 phần \"quyền mồ côi\" (70, AUTHZ-16): quyền khai trong manifest phải có chỗ chặn ở máy chủ; chỉ ở web → web-only, không ai kiểm → orphan. Mức info (cả…",
       "priority": "P2",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -8857,21 +8857,6 @@
       "line": 10
     },
     {
-      "id": "S035-1",
-      "phase": "PHASE-035",
-      "title": "README, 00, checklist, bản mẫu hộp thoại",
-      "priority": "P0",
-      "status": "done",
-      "column": "done",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F7",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
-      "line": 10
-    },
-    {
       "id": "S035-2",
       "phase": "PHASE-035",
       "title": "Chủ dự án duyệt D035-1..8, trả Q035-1..3; giao Thuy2k người rà (issue GitHub)",
@@ -8884,21 +8869,6 @@
       ],
       "facet": "F1",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
-      "line": 11
-    },
-    {
-      "id": "S035-2",
-      "phase": "PHASE-035",
-      "title": "Chủ dự án duyệt D035-1..12, trả Q035-1..6",
-      "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F1",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 11
     },
     {
@@ -8917,21 +8887,6 @@
       "line": 12
     },
     {
-      "id": "S035-3",
-      "phase": "PHASE-035",
-      "title": "B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan",
-      "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F1",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
-      "line": 12
-    },
-    {
       "id": "S035-4",
       "phase": "PHASE-035",
       "title": "B2 — apps/api/src/modules/system/modules.routes.ts: GET /api/v1/system/modules (sổ + mức ô D035-2 + việc kèm cột + người giữ từ CLAIMS); COPY docs/standard/mod…",
@@ -8944,21 +8899,6 @@
       ],
       "facet": "F7",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
-      "line": 13
-    },
-    {
-      "id": "S035-4",
-      "phase": "PHASE-035",
-      "title": "B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); cai-preset.mjs gọi qua đây",
-      "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F1",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 13
     },
     {
@@ -8977,21 +8917,6 @@
       "line": 14
     },
     {
-      "id": "S035-5",
-      "phase": "PHASE-035",
-      "title": "B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md",
-      "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F7",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
-      "line": 14
-    },
-    {
       "id": "S035-6",
       "phase": "PHASE-035",
       "title": "B4 — SC-MODS-1 (chặn: phủ 100 % phan-he/ và mã màn menu.ts), SC-MODS-2 (việc có modules[]; baseline phase ≤ 034), SC-MODS-3 (tasks / tests / checks / docs / sc…",
@@ -9004,21 +8929,6 @@
       ],
       "facet": "F5",
       "file": "docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md",
-      "line": 15
-    },
-    {
-      "id": "S035-6",
-      "phase": "PHASE-035",
-      "title": "B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-le 1.1; SC-PRESET-1 kiểm khối mới",
-      "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F5",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 15
     },
     {
@@ -9037,21 +8947,6 @@
       "line": 16
     },
     {
-      "id": "S035-7",
-      "phase": "PHASE-035",
-      "title": "B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE); chặn gửi ra ngoài ở đơn vị mẫu",
-      "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F1",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
-      "line": 16
-    },
-    {
       "id": "S035-8",
       "phase": "PHASE-035",
       "title": "B5 — thẻ Việc <phân hệ> hôm nay (kho, mua hàng, bán hàng, quỹ, công nợ, thuế, tài sản, danh mục): component chung đọc GET /system/diagnostics lọc theo PC của p…",
@@ -9067,8 +8962,113 @@
       "line": 17
     },
     {
-      "id": "S035-8",
-      "phase": "PHASE-035",
+      "id": "S036-1",
+      "phase": "PHASE-036",
+      "title": "README, 00, checklist, bản mẫu hộp thoại",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S036-2",
+      "phase": "PHASE-036",
+      "title": "Chủ dự án duyệt D036-1..12, trả Q036-1..6",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S036-3",
+      "phase": "PHASE-036",
+      "title": "B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S036-4",
+      "phase": "PHASE-036",
+      "title": "B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); cai-preset.mjs gọi qua đây",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S036-5",
+      "phase": "PHASE-036",
+      "title": "B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S036-6",
+      "phase": "PHASE-036",
+      "title": "B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-le 1.1; SC-PRESET-1 kiểm khối mới",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S036-7",
+      "phase": "PHASE-036",
+      "title": "B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE); chặn gửi ra ngoài ở đơn vị mẫu",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S036-8",
+      "phase": "PHASE-036",
       "title": "B6 — TI08 an toàn: xem trước bắt buộc, defaultdatabackups + Lấy lại bản trước, chặn bộ giả lập trên đơn vị có chứng từ; đơn vị trắng đổi nút thành Thiết lập nh…",
       "priority": "P0",
       "status": "todo",
@@ -9078,12 +9078,12 @@
         "he-thong"
       ],
       "facet": "F1",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 17
     },
     {
-      "id": "S035-9",
-      "phase": "PHASE-035",
+      "id": "S036-9",
+      "phase": "PHASE-036",
       "title": "B6 — cap-nhat.sh kiểm bản sao lưu + bảng \"cái gì có thể đổi\" + cảnh báo SEEDSDIR; sao-luu.sh --kiem, khoi-phuc-thu.sh; docs/ops/SAO-LUU-KHOI-PHUC.md",
       "priority": "P0",
       "status": "todo",
@@ -9093,13 +9093,13 @@
         "he-thong"
       ],
       "facet": "F5",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 18
     },
     {
-      "id": "S035-10",
-      "phase": "PHASE-035",
-      "title": "B7 — nghiệm thu T035-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/",
+      "id": "S036-10",
+      "phase": "PHASE-036",
+      "title": "B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/",
       "priority": "P1",
       "status": "todo",
       "column": "todo",
@@ -9108,7 +9108,7 @@
         "he-thong"
       ],
       "facet": "F7",
-      "file": "docs/phases/PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
+      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 19
     }
   ]
