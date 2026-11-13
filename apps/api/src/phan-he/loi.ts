@@ -48,6 +48,7 @@ import { branchRoutes } from '../modules/branches/branch.routes.js';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — CORE_ROUTES thêm orgUnitRoutes (sơ đồ tổ chức, đơn vị mua hàng) (đóng góp)
 import { orgUnitRoutes } from '../modules/org-units/org-unit.routes.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
+import { warehouseTypeRoutes } from '../modules/warehouses/warehouse-types.js';
 import { unitNameRoutes } from '../modules/unit-names/unit-name.routes.js';
 import { helpRoutes } from '../modules/help/help.routes.js';
 import { partnerRoutes } from '../modules/partners/partner.routes.js';
@@ -87,7 +88,7 @@ import { inventoryReportRoutes } from '../modules/inventory/inventory-report.rou
 
 export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, gatesRoutes, enginesRoutes, devToolsBoardRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
-  accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, unitNameRoutes, helpRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
+  accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, warehouseTypeRoutes, unitNameRoutes, helpRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, itemRoutes, postingFlowRoutes, postingRuleRoutes, accountDefaultTypeRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, printProfileRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,

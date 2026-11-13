@@ -10,7 +10,14 @@ import { useAuth } from '@/lib/auth';
 // [2026-11-11 Nguyễn Văn Thủy] nút + cạnh ô kho: thêm kho cho chi nhánh ngay trên phiếu (đóng góp)
 const WarehouseForm = lazy(() => import('@/features/catalog/WarehousesPage').then((m) => ({ default: m.WarehouseForm })));
 
-export interface KhoOption { code: string; branchCode: string; name: string; isActive: boolean; isDefault: boolean; isPromo?: boolean }
+export interface KhoOption { code: string; branchCode: string; name: string; isActive: boolean; isDefault: boolean; isPromo?: boolean; typeCode?: string; typeName?: string }
+
+/** [2026-11-13 Nguyễn Văn Thủy] Loại kho dùng được cho nghiệp vụ (Danh mục → Loại kho), theo thứ tự ưu tiên; null = mọi loại (đóng góp) */
+export function useLoaiKhoCho(op?: string): string[] | null {
+  const q = useQuery({ queryKey: ['warehouse-types'], queryFn: () => api.get<{ ops: { op: string; typeCodes: string[] }[] }>('/api/v1/warehouse-types'), staleTime: 60_000, enabled: Boolean(op) });
+  const codes = op ? q.data?.ops.find((o) => o.op === op)?.typeCodes : undefined;
+  return codes?.length ? codes : null;
+}
 
 export function useKho() {
   return useQuery({ queryKey: ['warehouses'], queryFn: () => api.get<KhoOption[]>('/api/v1/warehouses'), staleTime: 60_000 }).data ?? [];
@@ -31,7 +38,7 @@ export const khoFullLabel = (all: KhoOption[], branchCode?: string, code?: strin
   return c ? `${c}${w ? ` · ${w.name}` : ''}` : 'mặc định (chưa khai kho)';
 };
 
-export function ChonKho(props: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string }) {
+export function ChonKho(props: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string; /** Nghiệp vụ: chỉ hiện kho thuộc loại dùng được, tự chọn theo loại ưu tiên. */ op?: string }) {
   const [adding, setAdding] = useState(false);
   const { can } = useAuth();
   const canAdd = !props.disabled && Boolean(props.branchCode) && can('catalog:write');
@@ -49,24 +56,28 @@ export function ChonKho(props: { branchCode: string; value: string; onChange: (c
   );
 }
 
-function ChonKhoO({ branchCode, value, onChange, disabled, avoid }: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string }) {
+function ChonKhoO({ branchCode, value, onChange, disabled, avoid, op }: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string; op?: string }) {
   const all = useKho();
-  const list = all.filter((w) => w.branchCode === branchCode && w.isActive);
-  const def = list.find((w) => w.isDefault) ?? (list.length === 1 ? list[0] : undefined);
+  const allowed = useLoaiKhoCho(op);
+  const rank = (w: KhoOption) => (allowed ? allowed.indexOf(w.typeCode ?? 'KHH') : 0);
+  // Có nghiệp vụ: chỉ kho thuộc loại dùng được, xếp theo loại ưu tiên (cùng loại thì kho mặc định trước); kho đầu = tự chọn.
+  const list = all.filter((w) => w.branchCode === branchCode && w.isActive && rank(w) >= 0)
+    .sort((a, b) => (allowed ? rank(a) - rank(b) || Number(b.isDefault) - Number(a.isDefault) : 0));
+  const def = allowed ? list[0] : list.find((w) => w.isDefault) ?? (list.length === 1 ? list[0] : undefined);
   // Chưa chọn / kho không thuộc chi nhánh mới → kho mặc định (hoặc kho đầu tiên khác `avoid` khi chuyển trong cùng chi nhánh).
   useEffect(() => {
     if (disabled || !branchCode || !all.length) return;
     if (value && list.some((w) => w.code === value)) return;
     const pick = avoid && def?.code === avoid ? list.find((w) => w.code !== avoid) : def;
     if ((pick?.code ?? '') !== value) onChange(pick?.code ?? '');
-  }, [branchCode, all.length, avoid]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [branchCode, all.length, avoid, allowed?.join()]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!branchCode) return <select className="select input" disabled><option>— chọn chi nhánh trước —</option></select>;
   if (!list.length) return <select className="select input" disabled title="Khai kho cho chi nhánh ở Danh mục kho (DM12)"><option>mặc định (chi nhánh chưa khai kho)</option></select>;
   return (
     <select className="select input" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
       {/* Phiếu cũ chưa ghi kho (trống) = kho mặc định của chi nhánh — hiện đúng như vậy, không để trình duyệt tự hiện kho đầu danh sách. */}
       {!value && <option value="">mặc định{def ? ` (${def.code} · ${def.name})` : ''}</option>}
-      {list.map((w) => <option key={w.code} value={w.code} title={`${w.name}${w.isDefault ? ' (mặc định)' : ''}${w.isPromo ? ' · kho khuyến mại' : ''}`}>{w.code}</option>)}
+      {list.map((w) => <option key={w.code} value={w.code} title={`${w.name}${w.isDefault ? ' (mặc định)' : ''}${w.typeName ? ` · ${w.typeName}` : ''}`}>{w.code}{allowed && w.typeCode ? ` · ${w.typeCode}` : ''}</option>)}
     </select>
   );
 }

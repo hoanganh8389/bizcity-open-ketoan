@@ -44,6 +44,7 @@ export const khoMenu: MenuItem[] = [
       { key: 'kho-so-do-to-chuc', label: 'Sơ đồ tổ chức', path: '/danh-muc/so-do-to-chuc', code: 'DM16' },
       { key: 'kho-chi-nhanh', label: 'Chi nhánh (kho, cửa hàng)', path: '/danh-muc/chi-nhanh', code: 'DM02' },
       { key: 'kho-kho', label: 'Danh mục kho', path: '/danh-muc/kho', code: 'DM12' },
+      { key: 'kho-loai-kho', label: 'Loại kho', path: '/danh-muc/loai-kho', code: 'DM18' },
     ],
   },
 ];

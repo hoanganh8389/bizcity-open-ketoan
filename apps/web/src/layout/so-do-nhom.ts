@@ -53,6 +53,7 @@ export const SO_DO: Record<string, SoDo> = {
       [
         { label: 'Cơ cấu tổ chức', icon: 'Network', path: '/danh-muc/so-do-to-chuc' },
         { label: 'Chi nhánh, cửa hàng', icon: 'Store', path: '/danh-muc/chi-nhanh' },
+        { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' },
         { label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' },
         { label: 'Nhóm hàng', icon: 'FolderTree', path: '/danh-muc/phan-loai-hang' },
         { label: 'Mặt hàng', icon: 'Package', path: '/danh-muc/mat-hang' },
@@ -123,7 +124,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp tồn kho theo lô', path: '/kho/ton-theo-lo' }, { label: 'Sổ chuyển kho nội bộ', path: '/bao-cao/chuyen-kho' },
       { label: 'Đối chiếu kho và sổ cái', path: '/kho/doi-chieu-so-cai' },
     ],
-    links: [{ label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' }, L.vthh, { label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }],
+    links: [{ label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' }, { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' }, L.vthh, { label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }],
   },
   ccdc: {
     title: 'Nghiệp vụ công cụ dụng cụ, chi phí trả trước',

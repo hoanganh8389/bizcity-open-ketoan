@@ -34,6 +34,7 @@ import { AccountingVouchersPage } from './features/ledger/AccountingVouchersPage
 import { AccountsPage } from './features/catalog/AccountsPage';
 import { BranchesPage } from './features/catalog/BranchesPage';
 import { WarehousesPage } from './features/catalog/WarehousesPage';
+import { WarehouseTypesPage } from './features/catalog/WarehouseTypesPage';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — màn Sơ đồ tổ chức (DM16)
 import { OrgUnitsPage } from './features/catalog/OrgUnitsPage';
 import { UnitNamesPage } from './features/catalog/UnitNamesPage';
@@ -110,6 +111,7 @@ export const pageRoutes = (
     <Route path="danh-muc/tai-khoan" element={<AccountsPage />} />
     <Route path="danh-muc/chi-nhanh" element={<BranchesPage />} />
     <Route path="danh-muc/kho" element={<WarehousesPage />} />
+    <Route path="danh-muc/loai-kho" element={<WarehouseTypesPage />} />
     <Route path="danh-muc/so-do-to-chuc" element={<OrgUnitsPage />} />
     <Route path="danh-muc/don-vi-tinh" element={<UnitNamesPage />} />
     <Route path="danh-muc/doi-tuong" element={<Navigate to="/danh-muc/khach-hang" replace />} />

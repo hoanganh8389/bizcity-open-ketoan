@@ -20,6 +20,10 @@ import { listSupplierProducts, unitsOf } from './gia-mua.js';
 import { invoiceCheck } from './hoa-don.js';
 // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
 import { theoMa } from './ma-hien-hanh.js';
+import { checkWarehouseFor } from '../../modules/warehouses/warehouse-types.js';
+
+/** [2026-11-13 Nguyễn Văn Thủy] Loại phiếu mua → nghiệp vụ dùng kho (Danh mục → Loại kho) (đóng góp) */
+export const WAREHOUSE_OP_OF: Record<string, string> = { receipt: 'purchase_in', return: 'purchase_return_out', gift_in: 'gift_in', gift_out: 'gift_out' };
 
 export interface PurchaseSettings { holidays: string[]; brandOpening: Record<string, Record<string, number>>; accounts: Partial<Accounts>; warnDays: number; /** Đơn giá lệch quá % này so với giá NCC / lần nhập trước thì cảnh báo (một mức cho cả đơn vị). */ priceWarnPct: number;
   /** Phiếu nhập mua bắt buộc lập từ đơn đặt đã duyệt (bật: chặn duyệt phiếu nhập không theo đơn; tắt: chỉ cảnh báo). */
@@ -345,6 +349,9 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
     if (doc.kind === 'gift_out') checks = checks.filter((c) => c.code !== 'lot_missing');
     // [2026-11-13 Nguyễn Văn Thủy] tài khoản người lập chọn trên dòng phải là TK chi tiết trong lọc của Tài khoản ngầm định (đóng góp)
     for (const t of await lineAccountChecks(trx, tenantId, doc)) checks.push(t);
+    const whOp = WAREHOUSE_OP_OF[doc.kind];
+    const whErr = whOp && doc.warehouseCode ? await checkWarehouseFor(trx, tenantId, doc.warehouseCode, whOp) : '';
+    if (whErr) checks.push({ level: 'error', code: 'warehouse_type', blocking: true, text: whErr });
     if (doc.kind !== 'exchange' && calc.orderDiscount > calc.gross - calc.lineDiscount) checks.push({ level: 'error', code: 'discount_over', blocking: true, text: `Chiết khấu trên đơn ${calc.orderDiscount.toLocaleString('vi-VN')} lớn hơn tiền hàng ${(calc.gross - calc.lineDiscount).toLocaleString('vi-VN')} — số phải trả bị âm` });
   }
   // Trả tiền theo phiếu nhập đã tất toán (hết nợ): nhắc — tiền sẽ thành khoản trả trước / trừ vào phiếu khác, dễ trả trùng.

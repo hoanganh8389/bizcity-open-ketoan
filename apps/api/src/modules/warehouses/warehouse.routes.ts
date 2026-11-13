@@ -32,6 +32,8 @@ const bodySchema = z.object({
   isActive: z.boolean().default(true),
   isDefault: z.boolean().default(false),
   isPromo: z.boolean().default(false),
+  /** [2026-11-13 Nguyễn Văn Thủy] Loại kho (0128); trống = KHH (hoặc KKM nếu isPromo) (đóng góp) */
+  typeCode: z.string().trim().regex(/^[A-Z][A-Z0-9_]{1,11}$/, 'Mã loại kho viết hoa').optional(),
   // [2026-11-13 Nguyễn Văn Thủy] MST kê khai của kho (0121): trống = theo chi nhánh → công ty (đóng góp)
   taxId: z.string().trim().regex(/^$|^[0-9]{10}(-[0-9]{3})?$/, 'MST gồm 10 số hoặc 10 số-3 số').default(''),
   /** Ngày MST mới bắt đầu có hiệu lực (YYYY-MM-DD); trống = hôm nay. */
@@ -43,16 +45,17 @@ const patchSchema = bodySchema.omit({ code: true }).partial();
 type Body = z.infer<typeof bodySchema>;
 
 // [2026-11-09 03:20 PM kiennt] PHASE-028 — S028-19: trả thêm id kho (gán vai trò theo kho ở HT12 cần warehouses.id); trường cũ giữ nguyên
-export interface WarehouseDto { id: string; code: string; branchCode: string; branchName: string; name: string; address: string; isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string; taxId: string; taxIdUsed: string; uid: string }
+export interface WarehouseDto { id: string; code: string; branchCode: string; branchName: string; name: string; address: string; isActive: boolean; isDefault: boolean; isPromo: boolean; account: string; note: string; typeCode: string; typeName: string; taxId: string; taxIdUsed: string; uid: string }
 
 const select = (trx: Db, tenantId: string) => trx.selectFrom('warehouses as w').innerJoin('branches as b', 'b.id', 'w.branch_id')
-  .select(['w.id', 'w.code', 'b.code as branch_code', 'b.name as branch_name', 'w.name', 'w.address', 'w.is_active', 'w.is_default', 'w.is_promo', 'w.account', 'w.note', 'w.tax_id', 'w.uid',
+  .select(['w.id', 'w.code', 'b.code as branch_code', 'b.name as branch_name', 'w.name', 'w.address', 'w.is_active', 'w.is_default', 'w.is_promo', 'w.account', 'w.note', 'w.tax_id', 'w.uid', 'w.type_code',
+    sql<string>`(SELECT t.name FROM warehouse_types t WHERE t.tenant_id = w.tenant_id AND t.code = w.type_code)`.as('type_name'),
     sql<string>`bizcity_tax_id_at(w.tenant_id, w.branch_id, w.id, current_date)`.as('tax_id_used')])
   .where('w.tenant_id', '=', tenantId);
 type Row = Awaited<ReturnType<ReturnType<typeof select>['executeTakeFirstOrThrow']>>;
 const dto = (r: Row): WarehouseDto => ({
   id: String(r.id), code: r.code, branchCode: r.branch_code, branchName: r.branch_name, name: r.name, address: r.address,
-  isActive: r.is_active, isDefault: r.is_default, isPromo: r.is_promo, account: r.account, note: r.note,
+  isActive: r.is_active, isDefault: r.is_default, isPromo: r.is_promo, account: r.account, note: r.note, typeCode: r.type_code, typeName: r.type_name ?? '',
   taxId: r.tax_id, taxIdUsed: r.tax_id_used ?? '', uid: r.uid,
 });
 
@@ -60,6 +63,13 @@ async function branchId(trx: Db, tenantId: string, code: string): Promise<string
   const b = await trx.selectFrom('branches').select('id').where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
   if (!b) throw Errors.validation(`Chi nhánh ${code} không có trong danh mục chi nhánh`);
   return b.id;
+}
+
+/** Loại kho phải có trong danh mục và đang dùng (0128). */
+async function assertType(trx: Db, tenantId: string, code: string) {
+  const t = await trx.selectFrom('warehouse_types').select('is_active').where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
+  if (!t) throw Errors.validation(`Loại kho ${code} chưa có trong danh mục Loại kho`);
+  if (!t.is_active) throw Errors.validation(`Loại kho ${code} đã ngừng dùng`);
 }
 
 /** Mỗi chi nhánh tối đa một kho khuyến mại. */
@@ -104,11 +114,13 @@ export const warehouseService = {
       const exists = await trx.selectFrom('warehouses').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).executeTakeFirst();
       if (exists) throw Errors.conflict(`Mã kho ${input.code} đã có`);
       const branch = await branchId(trx, auth.tenantId, input.branchCode);
-      if (input.isPromo) await assertOnePromo(trx, auth.tenantId, branch, input.code);
+      const typeCode = input.typeCode ?? (input.isPromo ? 'KKM' : 'KHH');
+      await assertType(trx, auth.tenantId, typeCode);
+      if (typeCode === 'KKM') await assertOnePromo(trx, auth.tenantId, branch, input.code);
       await setVersionContext(trx, auth.actorName || auth.actor, input.taxValidFrom); // phiên bản MST kho (0121)
       await trx.insertInto('warehouses').values({
-        tenant_id: auth.tenantId, code: input.code, branch_id: branch, name: input.name, address: input.address,
-        is_active: input.isActive, is_default: input.isDefault, is_promo: input.isPromo, account: input.account, note: input.note, tax_id: input.taxId,
+        tenant_id: auth.tenantId, code: input.code, branch_id: branch, name: input.name, address: input.address, type_code: typeCode,
+        is_active: input.isActive, is_default: input.isDefault, is_promo: typeCode === 'KKM', account: input.account, note: input.note, tax_id: input.taxId,
       }).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.create', objectType: 'warehouse', objectId: input.code, after: input });
       return dto(await select(trx, auth.tenantId).where('w.code', '=', input.code).executeTakeFirstOrThrow());
@@ -132,10 +144,13 @@ export const warehouseService = {
         branch = await branchId(trx, auth.tenantId, input.branchCode);
         patch.branch_id = branch;
       }
-      if (input.isPromo ?? cur.is_promo) await assertOnePromo(trx, auth.tenantId, branch, code);
-      for (const [k, col] of [['name', 'name'], ['address', 'address'], ['isActive', 'is_active'], ['isDefault', 'is_default'], ['isPromo', 'is_promo'], ['account', 'account'], ['note', 'note'], ['taxId', 'tax_id']] as const) {
+      if (input.typeCode !== undefined) { await assertType(trx, auth.tenantId, input.typeCode); patch.type_code = input.typeCode; }
+      const promo = input.typeCode !== undefined ? input.typeCode === 'KKM' : input.isPromo ?? cur.is_promo;
+      if (promo) await assertOnePromo(trx, auth.tenantId, branch, code);
+      for (const [k, col] of [['name', 'name'], ['address', 'address'], ['isActive', 'is_active'], ['isDefault', 'is_default'], ['account', 'account'], ['note', 'note'], ['taxId', 'tax_id']] as const) {
         if (input[k] !== undefined) patch[col] = input[k];
       }
+      if (input.typeCode === undefined && input.isPromo !== undefined) patch.is_promo = input.isPromo; // nơi gửi cũ: trigger suy ra loại
       await setVersionContext(trx, auth.actorName || auth.actor, input.taxValidFrom); // phiên bản MST kho (0121)
       await trx.updateTable('warehouses').set(patch).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.update', objectType: 'warehouse', objectId: code, before, after: input });

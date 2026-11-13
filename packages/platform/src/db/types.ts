@@ -209,6 +209,34 @@ export interface WarehousesTable {
   tax_id: Generated<string>;
   /** Định danh bất biến kho_<ULID> (0121). */
   uid: Generated<string>;
+  /** Loại kho (warehouse_types.code, 0128). */
+  type_code: Generated<string>;
+}
+
+/** Loại kho (0128). */
+export interface WarehouseTypesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  code: string;
+  name: string;
+  purpose: Generated<string>;
+  can_sell: Generated<boolean>;
+  owned: Generated<boolean>;
+  track_expiry: Generated<boolean>;
+  account_prefix: Generated<string>;
+  is_system: Generated<boolean>;
+  is_active: Generated<boolean>;
+  sort_order: Generated<number>;
+  updated_by: Generated<string>;
+  updated_at: TimestampDefault;
+}
+/** Nghiệp vụ → loại kho được dùng theo thứ tự ưu tiên (0128). */
+export interface WarehouseTypeOpsTable {
+  tenant_id: string;
+  op: string;
+  type_codes: ColumnType<string[], string[], string[]>;
+  updated_by: Generated<string>;
+  updated_at: TimestampDefault;
 }
 
 export interface AuditLogsTable {
@@ -1962,6 +1990,8 @@ export interface Database {
   accounting_units: AccountingUnitsTable;
   branches: BranchesTable;
   warehouses: WarehousesTable;
+  warehouse_types: WarehouseTypesTable;
+  warehouse_type_ops: WarehouseTypeOpsTable;
   audit_logs: AuditLogsTable;
   diagnostic_runs: DiagnosticRunsTable;
   action_requests: ActionRequestsTable;

@@ -11,6 +11,13 @@ Mỗi bản ghi đủ sáu mục:
 - **Bảo mật**
 
 ## [Chưa phát hành]
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+### Loại kho (DM18)
+- Danh mục Loại kho: 12 loại gốc (KHH, KKM, KHG, KTL, KCL, KLO, KHHAN, KHHSD, KDC, KNB, KCB, KCC), thêm được loại mới; công tắc Được bán / Thuộc sở hữu / Theo dõi hạn dùng, đầu số TK kho. Luật: không sở hữu thì không bán; ngừng loại khi còn kho thì chặn.
+- Nghiệp vụ dùng loại kho theo thứ tự ưu tiên (nhập mua, trả NCC, quà, bán, khách trả, gửi bán, chuyển kho, nhập/xuất khác): ô chọn kho chỉ hiện kho đúng loại và tự chọn loại đứng đầu; máy chủ chặn phiếu mua dùng kho sai loại.
+- Danh mục kho: ô Loại kho thay ô Kho khuyến mại (kho khuyến mại cũ thành KKM); nút Tạo nhanh bộ kho cho chi nhánh. Sơ đồ Danh mục thêm bước Loại kho. Migration 0128.
+
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Tài khoản trên dòng chứng từ: dòng chứng từ của lõi nhận `accounts` (TK kho / TK công nợ / TK thuế), bộ hạch toán nhập mua / trả NCC dùng nếu có, không thì theo tài khoản ngầm định. Phiếu nhập mua / trả NCC / đổi hàng có cột TK Kho, TK Công nợ, TK thuế — điền sẵn theo Tài khoản ngầm định của loại, bấm chỉ xổ tài khoản trong lọc, công tắc Hiển thị tài khoản; máy chủ chặn duyệt nếu tài khoản ngoài lọc hoặc là tài khoản tổng hợp.
 - Tài khoản ngầm định: ô Lọc tài khoản chọn bằng ô tích trên toàn bộ hệ thống tài khoản (tìm theo số / tên; tích tài khoản tổng hợp là gồm mọi tài khoản con), không phải gõ "a; b; c".

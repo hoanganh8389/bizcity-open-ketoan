@@ -97,6 +97,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   contract_schedules: { group: 'catalog', label: 'Lịch thanh toán hợp đồng', term: 'Kỳ thanh toán', module: 'dimensions', purpose: 'Các kỳ thanh toán theo hợp đồng (thuê nhà, tín dụng, mua tài sản…): ngày đến hạn, số tiền, thuế nộp thay, đã trả hay chưa. Dùng để nhắc hạn.' },
   // [2026-11-13 Nguyễn Văn Thủy] bảng mới 0113–0121 (đóng góp)
   stock_counts: { group: 'catalog', label: 'Phiếu kiểm kê kho', term: 'Kiểm kê kho', module: 'warehouses', purpose: 'Phiếu kiểm kê: số sổ sách, số thực đếm, chênh lệch theo kho (0110).' },
+  warehouse_types: { group: 'catalog', label: 'Loại kho', term: 'KHH, KKM, KTL…: được bán, thuộc sở hữu, hạn dùng, TK kho', module: 'warehouses', purpose: 'Danh mục loại kho (12 loại gốc, thêm được); kho chọn một loại (0128).' },
+  warehouse_type_ops: { group: 'catalog', label: 'Nghiệp vụ dùng loại kho', term: 'Nhập mua, bán, khách trả… dùng loại kho nào, theo thứ tự ưu tiên', module: 'warehouses', purpose: 'Màn hình tự chọn kho theo loại đứng đầu; kho loại không có trong danh sách bị chặn (0128).' },
   account_default_types: { group: 'rules', label: 'Tài khoản ngầm định theo loại', term: 'Loại chứng từ → cột tài khoản, danh sách được chọn, mặc định', module: 'posting', purpose: 'Mỗi loại (bán hàng thu tiền mặt, mua hàng chưa thanh toán…) có các cột tài khoản với danh sách lọc và tài khoản mặc định; cột gắn khoá thì đồng bộ tài khoản ngầm định của bộ định khoản (0126).' },
   item_class_history: { group: 'catalog', label: 'Lịch sử nhóm hàng', term: 'Ai thêm / sửa nhóm hàng', module: 'products', purpose: 'Mỗi lần thêm / sửa nhóm hàng một dòng: ai, lúc nào, đổi gì (0116).' },
   tax_id_versions: { group: 'catalog', label: 'Phiên bản MST', term: 'MST theo ngày hiệu lực', module: 'warehouses', purpose: 'MST đặt ở kho / chi nhánh / nút cơ cấu, mỗi lần đổi là một phiên bản từ ngày; dòng sổ lấy MST theo ngày chứng từ (0121).' },
@@ -246,6 +248,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
 /** Giải thích trigger theo tên hàm trigger. */
 export const TRIGGER_NOTES: Record<string, string> = {
+  bizcity_warehouse_type_sync: 'Kho phải thuộc một loại có trong danh mục Loại kho; ô kho khuyến mại cũ đi theo loại KKM (0128).',
+  bizcity_tenant_seed_warehouse_types: 'Đơn vị mới có sẵn 12 loại kho gốc và nghiệp vụ dùng loại kho (0128).',
   assert_entry_balanced: 'Kiểm lúc kết thúc giao dịch: tổng Nợ phải bằng tổng Có của bút toán, lệch một đồng là huỷ cả giao dịch.',
   forbid_ledger_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Sai thì ghi số âm rồi ghi lại.',
   assert_negative_only_on_reversal: 'Số tiền âm chỉ được ghi trong bút toán ghi số âm (is_reversal = true).',

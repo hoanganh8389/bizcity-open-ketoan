@@ -150,6 +150,7 @@ export const keToanMenu: MenuItem[] = [
       { key: 'so-do-to-chuc', label: 'Sơ đồ tổ chức', path: '/danh-muc/so-do-to-chuc', code: 'DM16' },
       { key: 'chi-nhanh', label: 'Chi nhánh', path: '/danh-muc/chi-nhanh', code: 'DM02' },
       { key: 'kho', label: 'Danh mục kho', path: '/danh-muc/kho', code: 'DM12' },
+      { key: 'loai-kho', label: 'Loại kho', path: '/danh-muc/loai-kho', code: 'DM18' },
       { key: 'bo-phan', label: 'Danh mục bộ phận', path: '/danh-muc/bo-phan', code: 'ACC26' },
       { key: 'nhan-vien', label: 'Danh mục nhân viên', path: '/danh-muc/nhan-vien', code: 'DM04' },
       sec('dm-hang', 'Mặt hàng'),
