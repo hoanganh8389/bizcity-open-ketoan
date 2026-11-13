@@ -39,8 +39,8 @@ Kế toán bán hàng có **một màn** xem và sửa mọi cài đặt bán l�
 | 5 | Chốt ca thiếu 10.000 | một phiếu kế toán: Nợ 1381 (đối tượng `CN-<mã>`) / Có 1111 — 10.000; diễn giải có ca, thu ngân, số phải có / đếm được; Sổ ca hiện "đã lập phiếu kế toán" |
 | 6 | Chốt ca thừa 5.000 | Nợ 1111 / Có 3381 (đối tượng `CN-<mã>`) — 5.000 |
 | 7 | Lệch 0, hoặc khối ③ tắt | không lập phiếu; biên bản ca như cũ |
-| 8 | ACC41 dòng trả lại | lọc 3387; 5213; 711, mặc định 52131 — **Ghi được** |
-| 9 | ACC41 dòng giảm giá hàng bán | lọc 3387; 5212; 711, mặc định tài khoản con của 5212 |
+| 8 | ACC41 dòng trả lại *(chuyển Thủy — chờ xác nhận danh mục TGS)* | lọc 3387; 5213; 711, mặc định 52131 — **Ghi được** |
+| 9 | ACC41 dòng giảm giá hàng bán *(chuyển Thủy)* | lọc 3387; 5212; 711, mặc định tài khoản con của 5212 |
 | 10 | Menu, Luồng chi tiết | không còn mục mờ "Định khoản bán hàng"; ô *Tài khoản hạch toán* / *Cài đặt bán hàng* mở BH17 |
 | 11 | Hướng dẫn | bài `pos-cai-dat.md`, `pos-ca-ban.md` viết lại theo màn mới |
 
@@ -67,3 +67,4 @@ Kế toán bán hàng có **một màn** xem và sửa mọi cài đặt bán l�
 | Ngày | Thay đổi |
 |---|---|
 | 13/11/2026 | Tạo phiếu |
+| 13/11/2026 | §5 dòng 8–9 (ACC41 5212 / 5213) chuyển cho Thủy, chờ kế toán TGS xác nhận danh mục tài khoản |
