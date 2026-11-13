@@ -28,12 +28,12 @@ import type {
 const withOrg = (d: Db) => d.withTables<OrgTables>();
 const SEP = '\\';
 
-interface NodeRow { id: string; code: string; short_code: string; name: string; alias: string; note: string; tax_id: string; parent_id: string | null; level: number; path: string; sort_order: number; is_active: boolean; purchase_branch_id: string | null }
+interface NodeRow { id: string; kind: string; code: string; short_code: string; name: string; alias: string; note: string; tax_id: string; parent_id: string | null; level: number; path: string; sort_order: number; is_active: boolean; purchase_branch_id: string | null }
 interface BranchRow { id: string; code: string; name: string; is_active: boolean; org_unit_id: string | null; level: string; parent_id: string | null }
 
 async function loadNodes(trx: Db, tenantId: string): Promise<NodeRow[]> {
   const rows = await withOrg(trx).selectFrom('org_units')
-    .select(['id', 'code', 'short_code', 'name', 'alias', 'note', 'tax_id', 'parent_id', 'level', 'path', 'sort_order', 'is_active', 'purchase_branch_id'])
+    .select(['id', 'kind', 'code', 'short_code', 'name', 'alias', 'note', 'tax_id', 'parent_id', 'level', 'path', 'sort_order', 'is_active', 'purchase_branch_id'])
     .where('tenant_id', '=', tenantId).orderBy('sort_order').orderBy('code').execute();
   return rows.map((r) => ({ ...r, id: String(r.id), parent_id: r.parent_id === null ? null : String(r.parent_id), purchase_branch_id: r.purchase_branch_id === null ? null : String(r.purchase_branch_id), level: Number(r.level), sort_order: Number(r.sort_order) }));
 }
@@ -72,11 +72,12 @@ function indexTree(nodes: NodeRow[]) {
 async function recompute(trx: Db, tenantId: string): Promise<void> {
   const nodes = await loadNodes(trx, tenantId);
   if (!nodes.length) return;
+  // [2026-11-13 Nguyễn Văn Thủy] nhiều gốc (nhiều công ty cha) được phép (0131); mỗi gốc tính cấp từ 0 (đóng góp)
   const roots = nodes.filter((n) => !n.parent_id);
-  if (roots.length !== 1) throw Errors.validation(`Sơ đồ tổ chức phải có đúng một gốc (đang có ${roots.length})`);
+  if (!roots.length) throw Errors.validation('Cơ cấu tổ chức phải có ít nhất một gốc');
   const { kids } = indexTree(nodes);
   const want = new Map<string, { level: number; path: string }>();
-  const queue: { n: NodeRow; level: number; path: string }[] = [{ n: roots[0]!, level: 0, path: roots[0]!.code }];
+  const queue: { n: NodeRow; level: number; path: string }[] = roots.map((r) => ({ n: r, level: 0, path: r.code }));
   while (queue.length) {
     const { n, level, path } = queue.shift()!;
     if (want.has(n.id)) continue;
@@ -172,7 +173,7 @@ export async function orgTree(trx: Db, tenantId: string): Promise<OrgTreeDto> {
     const ids = t.subtree(n.id);
     const all = [...ids].flatMap((id) => direct.get(id) ?? []);
     return {
-      code: n.code, shortCode: n.short_code, name: n.name, alias: n.alias, note: n.note, taxId: n.tax_id,
+      kind: n.kind, code: n.code, shortCode: n.short_code, name: n.name, alias: n.alias, note: n.note, taxId: n.tax_id,
       parentCode: n.parent_id ? t.byId.get(n.parent_id)?.code ?? null : null, level: n.level, path: n.path, sortOrder: n.sort_order, isActive: n.is_active,
       purchaseBranchCode: n.purchase_branch_id ? byBranchId.get(n.purchase_branch_id)?.code ?? null : null,
       purchaseUnitCode: t.nearestPurchase(n.id)?.code ?? null,
@@ -212,11 +213,7 @@ async function nodeOrThrow(trx: Db, tenantId: string, code: string): Promise<Nod
 }
 
 async function parentIdOf(trx: Db, tenantId: string, parentCode: string | null | undefined, selfId?: string): Promise<string | null> {
-  if (!parentCode) {
-    const root = (await loadNodes(trx, tenantId)).find((n) => !n.parent_id);
-    if (root && root.id !== selfId) throw Errors.validation(`Đã có gốc ${root.code} — chọn nút cha cho nút mới`);
-    return null;
-  }
+  if (!parentCode) return null; // [2026-11-13 Nguyễn Văn Thủy] nút không có cha = một gốc (công ty cha) mới (0131) (đóng góp)
   const p = (await loadNodes(trx, tenantId)).find((n) => n.code === parentCode);
   if (!p) throw Errors.validation(`Không có nút cha ${parentCode}`);
   if (selfId && p.id === selfId) throw Errors.validation('Nút không làm cha của chính nó');
@@ -237,7 +234,7 @@ export const orgUnitService = {
       if ((await loadNodes(trx, auth.tenantId)).some((n) => n.code === input.code)) throw Errors.conflict(`Mã ${input.code} đã có trong sơ đồ tổ chức`);
       const parentId = await parentIdOf(trx, auth.tenantId, input.parentCode);
       await withOrg(trx).insertInto('org_units').values({
-        tenant_id: auth.tenantId, code: input.code, name: input.name, parent_id: parentId, short_code: input.shortCode ?? '', alias: input.alias ?? '', note: input.note ?? '', tax_id: input.taxId ?? '',
+        tenant_id: auth.tenantId, code: input.code, name: input.name, parent_id: parentId, kind: input.kind ?? (parentId ? 'unit' : 'company'), short_code: input.shortCode ?? '', alias: input.alias ?? '', note: input.note ?? '', tax_id: input.taxId ?? '',
         sort_order: input.sortOrder ?? 0, created_by: auth.actor, updated_by: auth.actor,
       }).execute();
       await recompute(trx, auth.tenantId);
@@ -260,6 +257,7 @@ export const orgUnitService = {
       if (input.alias !== undefined) patch.alias = input.alias;
       if (input.note !== undefined) patch.note = input.note;
       if (input.taxId !== undefined) patch.tax_id = input.taxId;
+      if (input.kind !== undefined) patch.kind = input.kind;
       if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
       await sql`SELECT set_config('ketoan.actor_name', ${auth.actorName || auth.actor}, true), set_config('ketoan.valid_from', ${input.validFrom ?? ''}, true)`.execute(trx); // phiên bản MST / cơ cấu theo ngày (0121)
       if (input.parentCode !== undefined) {
@@ -292,7 +290,7 @@ export const orgUnitService = {
   async removeIn(trx: ActionTx, auth: AuthContext, code: string) {
     return sameTx(trx, async (trx) => {
       const before = await nodeOrThrow(trx, auth.tenantId, code);
-      if (!before.parent_id) throw Errors.validation('Không xoá được nút gốc');
+      if (!before.parent_id && (await loadNodes(trx, auth.tenantId)).filter((n) => !n.parent_id).length <= 1) throw Errors.validation('Không xoá được gốc duy nhất');
       const kid = await withOrg(trx).selectFrom('org_units').select('code').where('tenant_id', '=', auth.tenantId).where('parent_id', '=', before.id).limit(1).executeTakeFirst();
       if (kid) throw Errors.conflict(`Nút ${code} còn nút con (${kid.code}) — xoá hoặc chuyển nút con trước`);
       const used = await withOrg(trx).selectFrom('branches').select('code').where('tenant_id', '=', auth.tenantId).where('org_unit_id', '=', before.id).limit(5).execute();
@@ -381,7 +379,7 @@ async function restoreDefaults(trx: Db, auth: AuthContext) {
   const cur = await loadNodes(trx, tenantId);
   const curRoot = cur.find((n) => !n.parent_id);
   // Gốc tự tạo khác mã gốc trong tệp: đổi mã cho khớp (không tạo gốc thứ hai).
-  if (seedRoot && curRoot && curRoot.code !== seedRoot.code) {
+  if (seedRoot && curRoot && curRoot.code !== seedRoot.code && !cur.some((n) => n.code === seedRoot.code) && cur.filter((n) => !n.parent_id).length === 1) {
     if (cur.some((n) => n.code === seedRoot.code)) throw Errors.conflict(`Mã ${seedRoot.code} đang dùng cho một nút không phải gốc — đổi mã nút đó trước`);
     await withOrg(trx).updateTable('org_units').set({ code: seedRoot.code }).where('id', '=', curRoot.id).execute();
   }
@@ -429,9 +427,8 @@ async function runImport(trx: Db, auth: AuthContext, input: OrgImport) {
   const dup = new Set<string>();
   input.nodes.forEach((n, i) => { if (dup.has(n.code)) errors.push({ sheet: 'Nút', row: i + 2, code: n.code, message: 'Mã trùng trong tệp' }); dup.add(n.code); });
   const inFile = new Set(input.nodes.map((n) => n.code));
-  const roots = input.nodes.filter((n) => !n.parentCode);
-  if (roots.length > 1) roots.slice(1).forEach((n) => errors.push({ sheet: 'Nút', row: input.nodes.indexOf(n) + 2, code: n.code, message: 'Chỉ được một gốc (dòng không có mã cha)' }));
-  if (root && roots[0] && roots[0].code !== root.code) errors.push({ sheet: 'Nút', row: input.nodes.indexOf(roots[0]) + 2, code: roots[0].code, message: `Đơn vị đã có gốc ${root.code} — để trống mã cha chỉ dùng cho dòng gốc ${root.code}` });
+  // [2026-11-13 Nguyễn Văn Thủy] dòng không có mã cha = một gốc (công ty cha); được nhiều gốc (0131) (đóng góp)
+  void root;
   input.nodes.forEach((n, i) => { if (n.parentCode && !inFile.has(n.parentCode) && !known.has(n.parentCode)) errors.push({ sheet: 'Nút', row: i + 2, code: n.code, message: `Không có nút cha ${n.parentCode}` }); });
 
   if (!errors.length) {
@@ -448,7 +445,7 @@ async function runImport(trx: Db, auth: AuthContext, input: OrgImport) {
         const v = { name: n.name, short_code: n.shortCode ?? '', alias: n.alias ?? '', note: n.note ?? '', sort_order: n.sortOrder ?? 0, parent_id: parent?.id ?? null, updated_by: auth.actor, updated_at: new Date(), ...(n.taxId !== undefined ? { tax_id: n.taxId } : {}) };
         const cur = byCode.get(n.code);
         if (cur) { await withOrg(trx).updateTable('org_units').set(v).where('id', '=', cur.id).execute(); updated++; }
-        else { await withOrg(trx).insertInto('org_units').values({ tenant_id: tenantId, code: n.code, created_by: auth.actor, ...v }).execute(); created++; }
+        else { await withOrg(trx).insertInto('org_units').values({ tenant_id: tenantId, code: n.code, created_by: auth.actor, kind: parent ? 'unit' : 'company', ...v }).execute(); created++; }
       }
       pending = next;
     }

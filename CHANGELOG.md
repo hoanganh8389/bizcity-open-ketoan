@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- **Cơ cấu tổ chức một màn (DM16)**: công ty, cơ cấu các cấp, cửa hàng, kho, phòng ban chung khai ở một bảng cây + một hộp thoại chọn loại
+  (ô riêng theo loại, ô Thuộc chỉ cho nút cha hợp lệ). Được nhiều công ty cha (migration 0131: bỏ ràng buộc một gốc, cột `org_units.kind`).
+  Phòng ban riêng của cửa hàng là một ô của cửa hàng, không thành dòng. Kiểu xem Sơ đồ, bấm khối mở hộp thoại.
+  Lịch sử thay đổi từng nút (`GET /api/v1/co-cau/history`, đọc nhật ký bằng chứng; phòng ban ghi đủ trước / sau).
+  Menu bỏ Chi nhánh (DM02), Danh mục kho (DM12), Bộ phận (ACC26) — đường dẫn cũ vẫn mở được.
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Chi nhánh: lỗi lấy danh sách website của hệ thống bán hàng hiện bằng dấu ! nhỏ (rê chuột xem chi tiết) thay dòng chữ đỏ.
 
 

@@ -32,7 +32,7 @@ function useBranchSites() {
   return useQuery({ queryKey: ['branch-sites'], queryFn: () => api.get<BranchSites>('/api/v1/branches/sites'), staleTime: 60_000 });
 }
 
-interface Branch {
+export interface Branch {
   code: string; name: string; accountingUnitCode: string | null; departmentCode: string | null; address: string | null; externalRef: string | null; isActive: boolean;
   note: string; companyName: string; taxCode: string; phone: string; fax: string;
   orgUnitCode: string | null; orgPath: string; validFrom?: string;
@@ -155,7 +155,8 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
         note: v.note ?? '', companyName: v.companyName ?? '', taxCode: v.taxCode ?? '', phone: v.phone ?? '', fax: v.fax ?? '',
       };
       const newCode = v.code?.trim();
-      return value.isNew ? api.post('/api/v1/branches', { ...body, code: newCode })
+      // [2026-11-13 Nguyễn Văn Thủy] thêm từ Cơ cấu tổ chức: ghi xong gắn luôn vào nút cơ cấu đang chọn (đóng góp)
+      return value.isNew ? api.post('/api/v1/branches', { ...body, code: newCode }).then((r) => (v.orgUnitCode ? api.patch(`/api/v1/branches/${encodeURIComponent(newCode ?? '')}`, { orgUnitCode: v.orgUnitCode }) : r))
         : api.patch(`/api/v1/branches/${encodeURIComponent(value.code!)}`, { ...body, isActive: v.isActive, ...(newCode && newCode !== value.code ? { newCode } : {}), ...((v.orgUnitCode ?? null) !== (value.orgUnitCode ?? null) ? { orgUnitCode: v.orgUnitCode || null, validFrom: v.validFrom || null } : {}) });
     },
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); invalidateOrg(qc); if (value.isNew) onSaved?.(v.code?.trim() ?? ''); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
@@ -171,7 +172,7 @@ export function BranchForm({ value, onClose, onSaved }: { value: Partial<Branch>
         {txt('name', 'Tên chi nhánh (*)')}
         {txt('note', 'Ghi chú')}
         {txt('taxCode', 'MST')}
-        {!value.isNew && (
+        {(!value.isNew || value.orgUnitCode) && (
           <Field label="Thuộc cơ cấu" hint="Nút trong Cơ cấu tổ chức (thường cấp Tỉnh)">
             <ChonSoDoToChuc value={v.orgUnitCode ?? null} onChange={(orgUnitCode) => set({ orgUnitCode })} />
           </Field>

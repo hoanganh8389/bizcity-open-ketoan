@@ -68,7 +68,7 @@ export const dimensionWriteActions: AnyActionDef[] = [
         const parent = await trx.selectFrom('dimensions').select('id').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
         if (!parent) throw Errors.validation(`${DIMENSION_LABELS[kind]} cha "${b.parentCode}" không có trong danh mục`);
       }
-      const cur = await trx.selectFrom('dimensions').select('extra').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', code).executeTakeFirst();
+      const cur = await trx.selectFrom('dimensions').select(['extra', 'name', 'note', 'is_active', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', code).executeTakeFirst();
       const { partnerName: _p, createdBy: _c, ...rest } = b.extra as Record<string, unknown>;
       const createdBy = (cur?.extra as { createdBy?: string } | undefined)?.createdBy ?? (cur ? undefined : auth.actorName);
       const values = { name: b.name, parent_code: b.parentCode || null, note: b.note, is_active: b.isActive, extra: JSON.stringify(createdBy ? { ...rest, createdBy } : rest) };
@@ -78,7 +78,10 @@ export const dimensionWriteActions: AnyActionDef[] = [
           .values({ tenant_id: auth.tenantId, kind, code, ...values })
           .onConflict((oc) => oc.columns(['tenant_id', 'kind', 'code']).doUpdateSet(values))
           .execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'dimension.save', objectType: `dimension:${kind}`, objectId: code, after: { name: b.name, isActive: b.isActive } });
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'dimension.save', objectType: `dimension:${kind}`, objectId: code,
+          // [2026-11-13 Nguyễn Văn Thủy] ghi đủ trước / sau để xem lịch sử thay đổi (Cơ cấu tổ chức) (đóng góp)
+          before: cur ? { name: cur.name, note: cur.note, isActive: cur.is_active, parentCode: cur.parent_code, extra: cur.extra } : undefined,
+          after: { name: b.name, note: b.note, isActive: b.isActive, parentCode: b.parentCode || null, extra: rest } });
       });
       return { code };
     },

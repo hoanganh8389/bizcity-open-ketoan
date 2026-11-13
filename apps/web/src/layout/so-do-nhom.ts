@@ -52,9 +52,7 @@ export const SO_DO: Record<string, SoDo> = {
     rows: [
       [
         { label: 'Cơ cấu tổ chức', icon: 'Network', path: '/danh-muc/so-do-to-chuc' },
-        { label: 'Chi nhánh, cửa hàng', icon: 'Store', path: '/danh-muc/chi-nhanh' },
         { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' },
-        { label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' },
         { label: 'Nhóm hàng', icon: 'FolderTree', path: '/danh-muc/phan-loai-hang' },
         { label: 'Mặt hàng', icon: 'Package', path: '/danh-muc/mat-hang' },
       ],
@@ -69,7 +67,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Kết quả kinh doanh nhiều chi nhánh', path: '/bao-cao/ket-qua-nhieu-chi-nhanh' }, { label: 'Tồn kho nhiều kho', path: '/bao-cao/ton-nhieu-kho' },
       { label: 'Cân đối tài khoản nhiều chi nhánh', path: '/bao-cao/can-doi-tk-nhieu-chi-nhanh' }, { label: 'Kết quả theo cửa hàng', path: '/bao-cao/ket-qua-theo-cua-hang' },
     ],
-    links: [{ label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }, { label: 'Bảng giá', icon: 'Tags', path: '/danh-muc/bang-gia' }, { label: 'Bộ phận', icon: 'Briefcase', path: '/danh-muc/bo-phan' }, L.tkNganHang, { label: 'Dữ liệu gốc', icon: 'RotateCcw', path: '/tien-ich/du-lieu-goc' }],
+    links: [{ label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }, { label: 'Bảng giá', icon: 'Tags', path: '/danh-muc/bang-gia' }, L.tkNganHang, { label: 'Dữ liệu gốc', icon: 'RotateCcw', path: '/tien-ich/du-lieu-goc' }],
   },
   'mua-hang': {
     title: 'Nghiệp vụ mua hàng',
@@ -124,7 +122,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp tồn kho theo lô', path: '/kho/ton-theo-lo' }, { label: 'Sổ chuyển kho nội bộ', path: '/bao-cao/chuyen-kho' },
       { label: 'Đối chiếu kho và sổ cái', path: '/kho/doi-chieu-so-cai' },
     ],
-    links: [{ label: 'Kho', icon: 'Warehouse', path: '/danh-muc/kho' }, { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' }, L.vthh, { label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }],
+    links: [{ label: 'Cơ cấu tổ chức (kho)', icon: 'Network', path: '/danh-muc/so-do-to-chuc' }, { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' }, L.vthh, { label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }],
   },
   ccdc: {
     title: 'Nghiệp vụ công cụ dụng cụ, chi phí trả trước',

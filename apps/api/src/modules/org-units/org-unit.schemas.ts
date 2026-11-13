@@ -26,6 +26,8 @@ export interface OrgUnitsTable {
   tax_id: Generated<string>;
   /** Định danh bất biến cc_<ULID> (0121). */
   uid: Generated<string>;
+  /** Loại nút company / unit (0131). */
+  kind: Generated<string>;
 }
 export type OrgTables = {
   org_units: OrgUnitsTable;
@@ -46,6 +48,8 @@ export const orgCreateSchema = z.object({
   taxId: z.string().trim().regex(/^$|^[0-9]{10}(-[0-9]{3})?$/, 'MST gồm 10 số hoặc 10 số-3 số').optional(),
   /** Ngày hiệu lực của lần đổi MST / đổi nút cha (YYYY-MM-DD); trống = hôm nay (0121). */
   validFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  // [2026-11-13 Nguyễn Văn Thủy] loại nút: company = công ty, unit = đơn vị cơ cấu; trống = gốc là công ty, còn lại đơn vị (0131) (đóng góp)
+  kind: z.enum(['company', 'unit']).optional(),
 });
 export type OrgCreate = z.infer<typeof orgCreateSchema>;
 
@@ -72,6 +76,8 @@ export interface OrgWarehouseDto { code: string; name: string; isDefault: boolea
 export interface OrgNodeDto {
   /** MST kê khai đặt ở nút (0121). */
   taxId?: string;
+  /** Loại nút company / unit (0131). */
+  kind?: string;
   code: string; shortCode: string; name: string; alias: string; note: string;
   parentCode: string | null; level: number; path: string; sortOrder: number; isActive: boolean;
   /** Đơn vị mua hàng: mã chi nhánh kho tổng (null = không phải). */

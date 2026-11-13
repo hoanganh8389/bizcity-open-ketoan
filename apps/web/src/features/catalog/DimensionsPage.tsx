@@ -18,6 +18,7 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ListPicker, PartnerPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
+import { ChonSoDoToChuc } from '@/components/CayDonVi';
 
 interface Extra {
   type?: string; signedDate?: string; endDate?: string; value?: number; partnerCode?: string; partnerName?: string; landlordTax?: boolean; employeeCode?: string; createdBy?: string;
@@ -25,8 +26,12 @@ interface Extra {
   address?: string; phone?: string; mobile?: string; email?: string; position?: string; branchCode?: string; departmentCode?: string; group?: string;
   /** Mục thu/chi: loại (thu | chi), phát sinh định kỳ hàng tháng. */
   loai?: 'thu' | 'chi'; dinhKy?: boolean;
+  /** [2026-11-13 Nguyễn Văn Thủy] Phòng ban: nút Cơ cấu tổ chức chứa phòng ban (0131) (đóng góp) */
+  orgUnitCode?: string;
 }
-interface Row { code: string; name: string; parentCode: string | null; note: string; isActive: boolean; extra: Extra }
+export interface DimRow { code: string; name: string; parentCode: string | null; note: string; isActive: boolean; extra: Extra }
+type Row = DimRow;
+export type DimDraft = Partial<Row> & { isNew?: boolean };
 type Draft = Partial<Row> & { isNew?: boolean };
 interface Schedule { seq: number; dueDate: string; amount: number; taxAmount: number; description: string; status: 'pending' | 'paid' | 'cancelled'; paidDate: string | null; paidRef: string }
 
@@ -189,7 +194,7 @@ function generate(first: string, periods: number, months: number, amount: number
   });
 }
 
-function DimensionForm({ kind, value, parents, onClose }: { kind: DimensionKind; value: Draft; parents: Row[]; onClose: () => void }) {
+export function DimensionForm({ kind, value, parents, onClose, onSaved }: { kind: DimensionKind; value: Draft; parents: Row[]; onClose: () => void; /** Ghi xong: mã vừa ghi. */ onSaved?: (code: string) => void }) {
   const qc = useQueryClient();
   const meta = META[kind];
   const isContract = kind === 'contract';
@@ -211,7 +216,7 @@ function DimensionForm({ kind, value, parents, onClose }: { kind: DimensionKind;
       await api.put(`/api/v1/dimensions/${kind}/${encodeURIComponent(code)}`, { name: v.name, parentCode: v.parentCode || undefined, note: v.note ?? '', isActive: v.isActive !== false, extra: v.extra ?? {} });
       if (isContract && schedDirty) await api.put(`/api/v1/contracts/${encodeURIComponent(code)}/schedules`, { schedules: sched });
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['dimensions', kind] }); void qc.invalidateQueries({ queryKey: ['contract-schedules'] }); if (value.isNew) onClose(); else viewAgain[1](); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['dimensions', kind] }); void qc.invalidateQueries({ queryKey: ['contract-schedules'] }); onSaved?.(code); if (value.isNew) onClose(); else viewAgain[1](); },
   });
   const setRow = (i: number, p: Partial<Schedule>) => { setSched((xs) => xs.map((x, j) => (j === i ? { ...x, ...p } : x))); setSchedDirty(true); };
   const n = (s: string) => Number(s.replace(/[^\d]/g, '')) || 0;
@@ -244,6 +249,10 @@ function DimensionForm({ kind, value, parents, onClose }: { kind: DimensionKind;
       )}
       {kind === 'department' && (
         <>
+          {/* [2026-11-13 Nguyễn Văn Thủy] phòng ban đặt ở nút Cơ cấu tổ chức (vd Kế toán dưới Công ty); phòng ban của cửa hàng tự theo cửa hàng (đóng góp) */}
+          <Field label="Thuộc cơ cấu" tip="Nút trong Cơ cấu tổ chức chứa phòng ban này. Phòng ban của cửa hàng tự nằm dưới cửa hàng, không cần chọn">
+            <ChonSoDoToChuc value={v.extra?.orgUnitCode || null} onChange={(c) => setExtra({ orgUnitCode: c ?? '' })} />
+          </Field>
           <Field label="Địa chỉ"><input className="input" value={v.extra?.address ?? ''} onChange={(e) => setExtra({ address: e.target.value })} /></Field>
           <Field label="Điện thoại"><input className="input" value={v.extra?.phone ?? ''} onChange={(e) => setExtra({ phone: e.target.value })} /></Field>
         </>

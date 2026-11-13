@@ -166,7 +166,7 @@ export function WarehouseForm({ value, onClose, onSaved }: { value: Partial<Ware
 }
 
 /** Tạo nhanh bộ kho cho một chi nhánh: tích các loại cần, máy chủ đặt mã (5 ký tự đầu mã chi nhánh + loại) và tên; loại đã có kho thì bỏ qua. */
-function TaoNhanhBoKho({ branchCode, onClose }: { branchCode: string; onClose: () => void }) {
+export function TaoNhanhBoKho({ branchCode, onClose }: { branchCode: string; onClose: () => void }) {
   const qc = useQueryClient();
   const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive);
   const [branch, setBranch] = useState(branchCode);

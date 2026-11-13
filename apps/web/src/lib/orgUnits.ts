@@ -10,6 +10,8 @@ import { plain } from '@/components/pickers';
 export interface OrgWarehouse { code: string; name: string; isDefault: boolean; isActive: boolean }
 export interface OrgNode {
   code: string; shortCode: string; name: string; alias: string; note: string; taxId?: string;
+  /** Loại nút: company = công ty, unit = đơn vị cơ cấu (0131). */
+  kind?: 'company' | 'unit';
   parentCode: string | null; level: number; path: string; sortOrder: number; isActive: boolean;
   purchaseBranchCode: string | null; purchaseUnitCode: string | null;
   directBranches: number; totalBranches: number; activeBranches: number;
@@ -41,6 +43,8 @@ export const branchOff = (b: { code: string; isActive: boolean }) => !b.isActive
 
 export interface OrgIndex {
   root: OrgNode | null;
+  /** [2026-11-13 Nguyễn Văn Thủy] mọi gốc (được nhiều công ty cha, 0131); root = gốc đầu tiên (đóng góp) */
+  roots: OrgNode[];
   byCode: Map<string, OrgNode>;
   kids: Map<string, OrgNode[]>;
   /** Chi nhánh gắn thẳng vào nút. */
@@ -71,7 +75,8 @@ export function indexOrg(tree: OrgTree | undefined): OrgIndex {
     return out;
   };
   const branchesUnder = (code: string) => [...subtree(code)].flatMap((c) => branchesAt.get(c) ?? []);
-  return { root: nodes.find((n) => !n.parentCode) ?? null, byCode, kids, branchesAt, branchesUnder, subtree, unassigned };
+  const roots = nodes.filter((n) => !n.parentCode).sort((a, b) => a.sortOrder - b.sortOrder || a.code.localeCompare(b.code));
+  return { root: roots[0] ?? null, roots, byCode, kids, branchesAt, branchesUnder, subtree, unassigned };
 }
 
 /** Khớp tìm kiếm không dấu, nhiều từ (mã, tên, mã ngắn, alias). */

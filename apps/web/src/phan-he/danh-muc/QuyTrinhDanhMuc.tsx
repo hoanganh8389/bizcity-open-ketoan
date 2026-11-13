@@ -19,14 +19,11 @@ const GRAY = '#64748b';
 const STAGES: Stage[] = [
   {
     node: { label: 'Cơ cấu tổ chức', code: 'DM16', icon: 'Network', color: '#0d7a6f', path: '/danh-muc/so-do-to-chuc' },
-    auto: ['Một cây: công ty → vùng → chi nhánh → tỉnh → cửa hàng', 'Mã số thuế đặt ở tỉnh, cửa hàng và kho bên dưới tự theo', 'Đổi cơ cấu, đổi mã số thuế có ngày hiệu lực — chứng từ cũ giữ nguyên',
+    auto: ['Một màn khai tất cả: công ty, cơ cấu các cấp, cửa hàng, kho, phòng ban — chọn loại rồi điền ô riêng của loại đó', 'Được nhiều công ty cha; xem dạng cây hoặc sơ đồ, bấm nút thấy bên trong có gì', 'Mỗi nút có lịch sử thay đổi: ai, lúc nào, đổi gì', 'Mã số thuế đặt ở tỉnh, cửa hàng và kho bên dưới tự theo', 'Đổi cơ cấu, đổi mã số thuế có ngày hiệu lực — chứng từ cũ giữ nguyên',
       'Mỗi chi nhánh, cửa hàng một phòng ban riêng: chứng từ của chi nhánh tự mang phòng ban',
       'Mỗi kho một loại: chứng từ tự chọn kho theo loại ưu tiên của nghiệp vụ, chặn kho sai loại'],
     config: [
-      { label: 'Chi nhánh, cửa hàng', code: 'DM02', icon: 'Store', color: GRAY, path: '/danh-muc/chi-nhanh', hint: 'Gắn vào một nút trên cây', count: 'branches' },
-      { label: 'Phòng ban', code: 'ACC26', icon: 'Briefcase', color: GRAY, path: '/danh-muc/bo-phan', hint: 'Phòng ban công ty, chi nhánh; mỗi shop một phòng ban' },
       { label: 'Loại kho', code: 'DM18', icon: 'Layers', color: GRAY, path: '/danh-muc/loai-kho', hint: 'Được bán, thuộc sở hữu, nghiệp vụ dùng loại nào' },
-      { label: 'Kho', code: 'DM12', icon: 'Warehouse', color: GRAY, path: '/danh-muc/kho', hint: 'Mỗi kho một loại — tạo nhanh bộ kho cho chi nhánh', count: 'warehouses' },
     ],
     side: [],
   },

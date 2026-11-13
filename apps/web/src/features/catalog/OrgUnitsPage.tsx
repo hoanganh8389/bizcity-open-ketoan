@@ -161,7 +161,7 @@ const H = (s: unknown) => plain(String(s ?? '')).replace(/[^a-z0-9]+/g, ' ').tri
 const pick = (row: Record<string, unknown>, ...names: string[]) => { for (const [k, v] of Object.entries(row)) if (names.includes(H(k))) return String(v ?? '').trim(); return ''; };
 
 /** Nhập Excel 2 sheet (lấy mẫu bằng nút Xuất): Nút · Gắn chi nhánh. Xem trước rồi mới ghi; có lỗi thì không ghi gì. */
-function ImportForm({ onClose, onSaved }: { onClose: () => void; onSaved: (text: string) => void }) {
+export function ImportForm({ onClose, onSaved }: { onClose: () => void; onSaved: (text: string) => void }) {
   const [body, setBody] = useState<Record<string, unknown> | null>(null);
   const [res, setRes] = useState<ImportResult | null>(null);
   const [err, setErr] = useState('');

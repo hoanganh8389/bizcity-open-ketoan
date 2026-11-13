@@ -91,7 +91,7 @@ export const GON_DEFS: GonDef[] = [
     the: ['/ban-hang/xuat-dieu-chinh', '/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von'],
     sections: [
       { paths: ['/ban-hang/xuat-dieu-chinh', '/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von'], soon: ['Nhập kho', 'Xuất kho', 'Kiểm kê kho'] },
-      { label: 'Danh mục', paths: ['/danh-muc/mat-hang', '/danh-muc/kho', '/danh-muc/loai-kho', '/danh-muc/don-vi-tinh'] },
+      { label: 'Danh mục', paths: ['/danh-muc/mat-hang', '/danh-muc/so-do-to-chuc', '/danh-muc/loai-kho', '/danh-muc/don-vi-tinh'] },
     ],
     reports: [{ label: 'Kho', paths: ['/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/nhap-xuat-ton', '/bao-cao/ton-nhieu-kho', '/kho/the-kho', '/kho/ton-theo-lo', '/bao-cao/chuyen-kho', '/kho/doi-chieu-so-cai'] }],
   },
@@ -143,8 +143,9 @@ export const GON_DEFS: GonDef[] = [
     key: 'danh-muc', label: 'Danh mục', icon: 'List', description: 'Đối tượng, vật tư hàng hóa, tổ chức, tài khoản, chi phí, tài sản', color: '#0d7a6f', module: 'danh-muc', homeLabel: 'Quy trình',
     sections: [
       { label: 'Đối tượng', paths: ['/danh-muc/khach-hang', '/danh-muc/nha-cung-cap', '/danh-muc/nhan-vien', '/danh-muc/nhom-doi-tuong'] },
-      { label: 'Mặt hàng', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/kho', '/danh-muc/loai-kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
-      { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc', '/danh-muc/chi-nhanh', '/danh-muc/bo-phan'] },
+      { label: 'Mặt hàng', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/loai-kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
+      // [2026-11-13 Nguyễn Văn Thủy] chi nhánh, kho, phòng ban khai chung ở Cơ cấu tổ chức (đóng góp)
+      { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc'] },
       { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/tai-khoan-ngam-dinh', '/danh-muc/loai-thue', '/danh-muc/ngan-hang'], soon: ['Điều khoản thanh toán'] },
       { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/muc-thu-chi', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
       { label: 'Tài sản', paths: ['/danh-muc/loai-tai-san', '/danh-muc/nhom-ccdc', '/danh-muc/nguon-von', '/danh-muc/muc-dich-su-dung'] },

@@ -150,7 +150,7 @@ export function CayDonVi({
           onClick={() => (onSelect ? onSelect(n) : has && toggleOpen(n.code))} title={`${n.path} — ${levelName(n.level)}${n.isActive ? '' : ' (ngừng dùng)'} · ${n.totalBranches} điểm kinh doanh`}>
           <button type="button" className="cdv-tog" disabled={!has} onClick={(e) => { e.stopPropagation(); toggleOpen(n.code); }}>{has ? (o ? <ChevronDown size={13} /> : <ChevronRight size={13} />) : null}</button>
           {checkable && <Check state={nodeState(n.code)} onClick={() => setBranches(branchesIn(n.code).map((b) => b.code), nodeState(n.code) !== 'on')} title="Tích / bỏ cả nhánh" />}
-          {n.level === 0 ? <Building2 size={14} className="cdv-ic" /> : <MapPin size={13} className="cdv-ic" />}
+          {n.level === 0 || n.kind === 'company' ? <Building2 size={14} className="cdv-ic" /> : <MapPin size={13} className="cdv-ic" />}
           <span className="mono cdv-code">{n.code}</span>
           <span className="cdv-name">{n.name}</span>
           {nodeExtra?.(n)}
@@ -178,13 +178,13 @@ export function CayDonVi({
           <button type="button" className="btn btn-sm" onClick={() => emit(new Set(allVisible.map((b) => b.code)), new Set())}>Chọn tất</button>
           <button type="button" className="btn btn-sm" onClick={() => emit(new Set(), new Set())}>Bỏ chọn</button>
           <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set((tree?.nodes ?? []).map((n) => n.code)))}>Mở hết</button>
-          <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set(ix.root ? [ix.root.code] : []))}>Thu gọn</button>
+          <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set(ix.roots.map((r) => r.code)))}>Thu gọn</button>
         </div>
       )}
       <div className="cdv-body" style={{ maxHeight: height }}>
         {!tree ? <div className="muted cdv-empty">Đang tải sơ đồ tổ chức…</div>
           : !ix.root ? <div className="muted cdv-empty">Chưa có sơ đồ tổ chức — khai ở Danh mục → Sơ đồ tổ chức (DM16).</div>
-          : renderNode(ix.root, 0)}
+          : ix.roots.map((r) => renderNode(r, 0))}
       </div>
       {checkable && (
         <div className="cdv-foot muted">

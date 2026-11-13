@@ -1,7 +1,53 @@
-# Sơ đồ tổ chức (DM16)
+# Cơ cấu tổ chức (DM16)
 <!-- [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — hướng dẫn màn Sơ đồ tổ chức -->
 <!-- [2026-11-03 02:10 PM Nguyễn Văn Thủy] SDTC — viết lại gọn theo màn đơn giản, bỏ "đơn vị mua hàng" -->
 <!-- [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — bỏ ô Mã ngắn, Alias -->
+
+<!-- [2026-11-13 Nguyễn Văn Thủy] Cơ cấu tổ chức một màn: công ty, cơ cấu, cửa hàng, kho, phòng ban; nhiều công ty cha; lịch sử thay đổi -->
+
+**Cơ cấu tổ chức** là màn DUY NHẤT để khai báo bộ máy: công ty, các cấp cơ cấu, cửa hàng / chi nhánh, kho và phòng ban
+cùng nằm trên một cây.
+
+```
+Công ty A (công ty cha)            Công ty B (công ty cha thứ hai — được phép)
+└─ BAC  Miền Bắc        cơ cấu cấp 1
+   └─ PT  Phú Thọ       cơ cấu cấp 2
+      └─ PTO  Tỉnh Phú Thọ   cơ cấu cấp 3
+         ├─ 08001  Cửa hàng …        cửa hàng / chi nhánh
+         │  └─ 08001-KHH  Kho hàng hoá   kho
+         └─ …
+```
+
+## Loại nút
+
+| Loại | Ô riêng khi thêm / sửa |
+|---|---|
+| **Công ty** | Mã, Tên, Thuộc (trống = công ty cha độc lập), MST, Mô tả |
+| **Cơ cấu cấp N** | Mã, Tên (Miền, Chi nhánh, Tỉnh… tự đặt), Thuộc, MST kê khai (trống = theo nút trên), Mô tả |
+| **Cửa hàng / chi nhánh** | Mã (khớp hệ thống bán hàng), Tên, MST, Thuộc cơ cấu, Phòng ban hạch toán, thông tin in chứng từ |
+| **Kho** | Mã kho, Cửa hàng chứa kho, Loại kho, Kho mặc định, Địa chỉ |
+| **Phòng ban** | Phòng ban chung (kế toán, kinh doanh…): Mã, Tên, Thuộc cơ cấu / phòng ban cha |
+
+Phòng ban riêng của cửa hàng (BH + số mã, tự tạo khi thêm cửa hàng) **không hiện thành dòng** trên cây: nó là ô **Phòng ban** trong thông tin cửa hàng. Chứng từ của cửa hàng tự mang phòng ban này.
+
+Cấp tự tính theo cây (gốc = cấp 0), không gõ tay.
+
+## Thao tác
+
+- **Một bảng** dạng cây: Mã · Tên · Loại · MST · Ghi chú · Theo dõi. Bấm mũi tên để mở nhánh; ô tìm lọc theo mã, tên.
+- **Thêm**: chọn dòng làm nút cha (không chọn = công ty mới), bấm Thêm. Trong hộp thoại chọn **Loại** trước; ô **Thuộc** chỉ cho chọn nút cha hợp lệ
+  (kho → cửa hàng; cửa hàng, cơ cấu, phòng ban → công ty / cơ cấu). Các ô riêng của loại hiện ngay trong hộp.
+- **Xem / sửa**: bấm đúp một dòng. Hộp thoại mở ở chế độ xem, bấm **Sửa** mới sửa. Đổi nơi thuộc, đổi MST thì chọn **Áp dụng từ ngày** — chứng từ trước ngày đó giữ như cũ.
+- Cuối hộp thoại: **Bên trong** (đếm cơ cấu, cửa hàng, kho, phòng ban) và **Lịch sử thay đổi** (thời gian, người làm, việc, ô nào đổi từ gì sang gì).
+- **Sơ đồ**: khối công ty / cơ cấu, mỗi khối ghi số cửa hàng, kho, phòng ban bên trong; bấm khối mở hộp thoại của nút đó.
+- **Chưa xếp vào cơ cấu**: cửa hàng chưa gắn cơ cấu, phòng ban chưa đặt chỗ — mở từng dòng, Sửa ô Thuộc.
+- **Xuất / Nhập Excel**, **Quay về dữ liệu gốc** như trước.
+
+Không có nút Xoá dữ liệu đã lưu: ngừng dùng bằng cách bỏ tích **Theo dõi**.
+
+---
+
+## Ghi chú cũ (trước khi gộp một màn)
 
 Sơ đồ tổ chức là cây quản lý của công ty:
 

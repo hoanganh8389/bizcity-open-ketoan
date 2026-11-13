@@ -94,9 +94,12 @@ describe('NT-HT-001 — Sơ đồ tổ chức làm gốc', () => {
     expect((await hierarchy()).get('08001')).toMatchObject({ level: 'shop', parentCode: '08000' });
   });
 
-  it('lệch chuẩn: vòng lặp cha – con, hai gốc, trùng mã, ngừng dùng nút còn chi nhánh — đều bị chặn', async () => {
+  it('lệch chuẩn: vòng lặp cha – con, trùng mã, ngừng dùng nút còn chi nhánh — đều bị chặn', async () => {
     await fails('PATCH', '/api/v1/org-units/PT', { parentCode: 'PTO' }, 'bên dưới chính nhánh');
-    await fails('POST', '/api/v1/org-units', { code: 'GOC2', name: 'Gốc thứ hai' }, 'Đã có gốc');
+    // [2026-11-13 Nguyễn Văn Thủy] 0131: được nhiều gốc (công ty cha song song); gốc là loại Công ty, xoá được khi còn gốc khác (đóng góp)
+    await ok('POST', '/api/v1/org-units', { code: 'GOC2', name: 'Gốc thứ hai' });
+    expect(await node('GOC2')).toMatchObject({ level: 0, parentCode: null, kind: 'company' });
+    expect((await call(ctx, 'DELETE', '/api/v1/org-units/GOC2')).status).toBe(200);
     await fails('POST', '/api/v1/org-units', { code: 'PT', name: 'Trùng', parentCode: 'BAC' }, 'đã có');
     await fails('PATCH', '/api/v1/org-units/PTO', { isActive: false }, 'còn chi nhánh đang dùng');
     // [2026-11-03 03:10 PM Nguyễn Văn Thủy] SDTC — Xoá nút: chặn khi còn chi nhánh / nút con; nút trống xoá được
