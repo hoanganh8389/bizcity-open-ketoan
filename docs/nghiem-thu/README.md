@@ -47,6 +47,7 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | Mã | Tính năng | Trạng thái |
 |---|---|---|
 | [NT-MH-001](mua-hang/NT-MH-001-ck-theo-thung-giai-doan.md) | Nhập mua có CK theo thùng / %, chương trình theo giai đoạn, quà, CKTT, hỗ trợ ngoài | Chờ nghiệm thu |
+| [NT-MH-004](mua-hang/NT-MH-004-chuyen-hang-xuong-shop.md) | Chuyển hàng xuống shop (MH19): tuỳ chọn làm tròn thùng, phân bổ khi kho thiếu (thiếu nhiều nhất / theo thứ tự shop / chia đều / chỉnh tay); mục ở menu Kho | Đã chốt |
 | [NT-HT-001](he-thong/NT-HT-001-so-do-to-chuc.md) | Sơ đồ tổ chức làm gốc: cây 3 cấp, gắn chi nhánh, mua hàng theo cây, bộ lọc cây chi nhánh / kho | Chờ nghiệm thu |
 | [NT-KHO-001](kho/NT-KHO-001-ton-o-chon-hang-theo-kho-xuat.md) | Ô chọn mặt hàng ở phiếu chuyển kho hiện tồn theo kho xuất, ngày phiếu | Đã chốt |
 | [NT-KHO-002](kho/NT-KHO-002-kiem-ke-kho.md) | Kiểm kê kho theo lô / HSD: biên bản kiểm kê → xác minh → quyết định xử lý; chênh lệch vào 1381 / 3381, hàng kém phẩm chất sang kho cách ly, tất toán theo quyết định | Đã chốt |
