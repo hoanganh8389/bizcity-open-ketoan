@@ -61,7 +61,8 @@ Chương trình khuyến mại khai **một nơi** (BH12) và **một luật tí
 | §5 dòng 1 (tặng hàng) | 4 SUA330 → 2 QUA01 kèm chương trình + bản; dư không đủ lần hai | đúng; vectors khuôn `sale.program.gift@1` qua hàm thuần và endpoint | — | test rule-contract-sale-program, nt-bh-003-ban-hang-chuong-trinh, 13/11 |
 | §5 dòng 2 (giảm giá) | SUA900 900.000 × 10 % → 90.000; giảm tiền / giá chương trình; giá chương trình cao hơn → không giảm | đúng | — | |
 | §5 dòng 3 (hạn mức cửa hàng) | CN02 không giao / thiếu chi nhánh → bỏ qua kèm lý do; CN01 còn → áp, kèm số còn | đúng | — | |
-| §5 dòng 4 (Thử tính BH12) | cùng hàm tính | thẻ Thử tính gọi đúng `POST /api/v1/policies/evaluate` | — | chạy thật trên giao diện: đợt kế |
+| §5 dòng 4 (Thử tính BH12) | cùng hàm tính | chạy thật (Docker, đơn vị demo, 13/11): CN01, 4 × 100021001 + 1 × 100021001B giá 325.000 → tặng 2 × 100021002, giảm 32.500, kèm "cửa hàng còn 5 / 5" | — | giao diện BH12, không lỗi trình duyệt |
+| Chạy thật trọn vòng | máy gửi đơn có quà / giảm → phiếu bán → duyệt ghi sổ → hạn mức trừ | đơn HD2611000024 tổng 1.592.500; cửa nạp kiểm tham chiếu đạt, không lệch; phiếu chờ trạm định khoản (cài đặt của đơn vị demo) — duyệt ghi sổ xong hạn mức tự trừ: giảm giá dùng 1 / còn 4, tặng hàng dùng 2 / còn 8 | — | hạn mức trừ lúc phiếu **ghi sổ**, không lúc lưu đơn |
 | §5 dòng 5 (máy gửi đơn có quà / giảm) | nhận; phiếu bán có dòng quà, dòng giảm, policyRefs; cửa nạp không lệch | đúng (đơn 2.130.000; policy_check đạt) | — | test nt-bh-003-pos-khuyen-mai |
 | §5 dòng 6 (trừ hạn mức) | CN01 dùng 2 quà, 1 giảm; giao lại không trừ thêm | đúng | — | |
 | §5 dòng 7 (huỷ) | hạn mức trả lại đủ | đúng | — | |
