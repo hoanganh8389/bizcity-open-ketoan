@@ -336,6 +336,13 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không (không migration).
 
+### Module `pos` — dòng quà / dòng giảm theo Chương trình bán do Core tính (NT-BH-003, S031-16) <!-- [2026-11-13 09:00 AM Võ Hoàng] POS-KM — module pos đợt khuyến mại (đóng góp) -->
+
+- **Thêm:** dòng đơn nhận `policyRef { key, version, line }` và `promoDiscount` (tiền giảm theo chương trình, gồm thuế); dòng quà 0đ (`isGift`). Dòng quà / dòng giảm phải nêu chương trình có trong `policyRefs` của đơn kèm băm — thiếu → `POS_GIFT_WITHOUT_POLICY`. Phiếu bán mang `policyRefs` của chương trình có dòng, dòng mang `policyRef` — cửa nạp kiểm lại (`IN-POL-001..004`).
+- **Đổi:** quà là hàng không gửi thuế (mã Z) nhận được khi có căn cứ chương trình — đi chung phiếu, không lên hoá đơn điện tử. Dòng quà theo chương trình gửi kèm mã hàng, không kèm `itemId` (khuôn BH12 chỉ biết mã; `IN-POL-004` so theo `itemId ?? sku` — đề xuất ở PHASE-031 · 00 §17).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
 ### Mã lỗi QR / ca bắt buộc cho module pos (phiếu NT-BH-009, NT-BH-011) <!-- [2026-11-12 08:30 PM Võ Hoàng] POS-QR — phần Core cho module pos (đóng góp) -->
 
 - **Thêm:** `ERROR_REASONS` thêm `POS_QR_EXPIRED`, `POS_PAYMENT_MISMATCH`, `POS_ORDER_CANCELLED`, `POS_SHIFT_REQUIRED` (BIZCITY-ERRORS 1.10.0-draft §4c).

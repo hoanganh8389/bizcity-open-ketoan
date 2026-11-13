@@ -144,9 +144,8 @@ describe('NT-BH-004 — trường hợp lệch chuẩn (tầng tính)', () => {
     expect(() => draft({ lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 1, manualDiscount: { kind: 'percent', value: 101 } }] as OrderDraft['lines'] })).toThrow();
     expect(reason(draft({ lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'amount', value: 324_001 } }] as OrderDraft['lines'] }))).toBe('POS_DISCOUNT_TOO_LARGE');
   });
-  it('8. CTKM, dòng quà, đổi điểm, ghi nợ → POS_NOT_SUPPORTED_YET (QR nhận từ NT-BH-009)', () => {
+  it('8. CTKM kiểu plugin website (promotionSelections), đổi điểm, ghi nợ → POS_NOT_SUPPORTED_YET (QR nhận từ NT-BH-009; quà / giảm theo chương trình nhận từ NT-BH-003)', () => {
     expect(reason(draft({ promotionSelections: [{ kind: 'coupon', code: 'KM1' }] }))).toBe('POS_NOT_SUPPORTED_YET');
-    expect(reason(draft({ lines: [{ lineId: 'g', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 0, isGift: true }] as OrderDraft['lines'] }))).toBe('POS_NOT_SUPPORTED_YET');
     expect(reason(draft({ loyalty: { redeem: ['lp_1'] } }))).toBe('POS_NOT_SUPPORTED_YET');
     expect(reason(draft({ payment: { mode: 'credit' } }))).toBe('POS_NOT_SUPPORTED_YET');
   });
@@ -157,6 +156,28 @@ describe('NT-BH-004 — trường hợp lệch chuẩn (tầng tính)', () => {
     if (!('problem' in all)) expect(all.payments).toEqual([{ methodCode: 'QR', amount: 324_000 }]);
     const split = computeOrder({ draft: draft({ payment: { mode: 'split', parts: [{ method: 'TM', amount: 24_000 }, { method: 'QR', amount: 300_000 }] } }), catalog, paymentMethods: methods });
     expect('problem' in split ? split.problem.reason : split.qrAmount).toBe(300_000);
+  });
+  // [2026-11-12 10:40 PM Võ Hoàng] POS-KM — quà / giảm theo chương trình bán có căn cứ (NT-BH-003) (đóng góp)
+  it('NT-BH-003: quà 0đ + giảm theo chương trình có policyRef → nhận, phiếu mang policyRefs; thiếu căn cứ → POS_GIFT_WITHOUT_POLICY', () => {
+    const refs = [{ key: 'CT-SUA', version: 1, hash: 'h'.repeat(64) }, { key: 'CT-TA', version: 2, hash: 'k'.repeat(64) }];
+    const lines = [
+      { lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 2, clientUnitPrice: 324_000 },
+      { lineId: 'l2', sku: 'TA01', unitName: 'Gói', unitQty: 1, clientUnitPrice: 200_000, promoDiscount: 20_000, policyRef: { key: 'CT-TA', version: 2, line: 'discount' } },
+      { lineId: 'g1', sku: '11005100103', unitName: 'Cái', unitQty: 1, clientUnitPrice: 0, isGift: true, policyRef: { key: 'CT-SUA', version: 1, line: 'gift' } },
+    ] as OrderDraft['lines'];
+    const ok = computeOrder({ draft: draft({ lines, policyRefs: refs, clientTotal: 828_000, payment: { mode: 'cash', cashGiven: 900_000 } }), catalog, paymentMethods: methods });
+    if ('problem' in ok) throw new Error(ok.problem.message);
+    expect(ok.total).toBe(828_000);
+    const doc = toSaleDocument(ok, { draft: draft({ lines, policyRefs: refs }), branchCode: 'CN01', code: 'HD2611000001' });
+    expect(doc.policyRefs).toEqual(refs);
+    expect(doc.lines.find((l) => l.lineKey === 'g1')).toMatchObject({ isGift: true, amountBeforeTax: 0, taxAmount: 0, policyRef: { key: 'CT-SUA', version: 1, line: 'gift' } });
+    expect(doc.lines.find((l) => l.lineKey === 'l2')).toMatchObject({ amountBeforeTax: 163_636, discount: 18_182, policyRef: { key: 'CT-TA', version: 2, line: 'discount' } });
+    // Thiếu căn cứ: quà không nêu chương trình / chương trình không có ở policyRefs / sai bản
+    const gift = (over: object) => [{ lineId: 'g1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 0, isGift: true, ...over }] as OrderDraft['lines'];
+    expect(reason(draft({ lines: gift({}), clientTotal: 0 }))).toBe('POS_GIFT_WITHOUT_POLICY');
+    expect(reason(draft({ lines: gift({ policyRef: { key: 'KHAC', version: 1 } }), policyRefs: refs, clientTotal: 0 }))).toBe('POS_GIFT_WITHOUT_POLICY');
+    expect(reason(draft({ lines: gift({ policyRef: { key: 'CT-SUA', version: 9 } }), policyRefs: refs, clientTotal: 0 }))).toBe('POS_GIFT_WITHOUT_POLICY');
+    expect(reason(draft({ lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, promoDiscount: 1 }] as OrderDraft['lines'], clientTotal: 323_999 }))).toBe('POS_GIFT_WITHOUT_POLICY');
   });
   it('SĐT sai khuôn / thiếu tên', () => {
     expect(reason(draft({ customer: { phone: '0911', name: 'A' } }))).toBe('POS_BAD_PHONE');

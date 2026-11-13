@@ -36,10 +36,10 @@ export type OrderProblem = { kind: 'validation' | 'conflict'; reason: string; me
 
 export type LineMoney = { gross: number; net: number; tax: number; discountGross: number; discountNet: number };
 
-/** Tiền của một dòng theo giá gồm thuế. `taxRate` %, 0 = KCT / 0%. */
-export function lineMoney(unitPrice: number, qty: number, taxRate: number, manual?: ManualDiscount): LineMoney {
+/** Tiền của một dòng theo giá gồm thuế. `taxRate` %, 0 = KCT / 0%. `promo`: tiền giảm theo chương trình (gồm thuế, NT-BH-003). */
+export function lineMoney(unitPrice: number, qty: number, taxRate: number, manual?: ManualDiscount, promo = 0): LineMoney {
   const base = unitPrice * qty;
-  const disc = !manual ? 0 : manual.kind === 'amount' ? manual.value : (base * manual.value) / 100;
+  const disc = (!manual ? 0 : manual.kind === 'amount' ? manual.value : (base * manual.value) / 100) + Math.max(0, promo);
   const exact = base - Math.min(Math.max(disc, 0), base);
   const gross = roundMoney(exact);
   const net = roundMoney(exact / (1 + taxRate / 100));
@@ -126,8 +126,9 @@ const fail = (kind: OrderProblem['kind'], reason: string, message: string, detai
 /** Những gì W1 chưa nhận (D-MP-7): chặn cả đơn, nói rõ, không ghi sai một phần. */
 export function unsupported(draft: OrderDraft): OrderProblem | null {
   const no = (what: string, details?: unknown): OrderProblem => ({ kind: 'validation', reason: 'POS_NOT_SUPPORTED_YET', message: `Máy chủ POS chưa nhận ${what} ở đợt này — dùng đường bán cũ cho đơn này`, details });
+  // Khuyến mại theo luật riêng của máy (chọn quà / mã giảm giá kiểu plugin website) chưa nhận; khuyến mại do Core tính đi theo
+  // dòng (policyRef + promoDiscount / dòng quà) — NT-BH-003.
   if (draft.promotionSelections.length) return no('đơn có khuyến mại / mã giảm giá', { field: 'promotionSelections' });
-  if (draft.lines.some((l) => l.isGift)) return no('dòng quà tặng', { field: 'lines', isGift: true });
   if (draft.loyalty?.redeem.length) return no('đổi điểm thành viên', { field: 'loyalty' });
   if (draft.payment.mode === 'credit') return no('bán ghi nợ', { field: 'payment.mode' });
   return null;
@@ -137,6 +138,13 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   const { draft, catalog, paymentMethods } = input;
   const notYet = unsupported(draft);
   if (notYet) return { problem: notYet };
+
+  // [2026-11-12 10:35 PM Võ Hoàng] POS-KM — NT-BH-003 (đóng góp): quà 0đ / tiền giảm theo chương trình phải có căn cứ — chương trình nêu ở dòng và ở policyRefs (kèm băm).
+  const refs = new Map((draft.policyRefs ?? []).filter((r) => r.hash).map((r) => [r.key, r]));
+  const noPolicy = draft.lines.filter((l) => (l.isGift || (l.promoDiscount ?? 0) > 0) && (!l.policyRef || !refs.has(l.policyRef.key) || refs.get(l.policyRef.key)!.version !== l.policyRef.version));
+  if (noPolicy.length) {
+    return fail('validation', 'POS_GIFT_WITHOUT_POLICY', `Dòng quà / giảm theo chương trình thiếu căn cứ (chương trình + bản ở dòng và ở policyRefs kèm băm): ${noPolicy.map((l) => l.sku).join(', ')}`, noPolicy.map((l) => ({ lineId: l.lineId, sku: l.sku })));
+  }
 
   const lines: PricedLine[] = [];
   const missing: string[] = [];
@@ -152,7 +160,12 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
     if (l.manualDiscount?.kind === 'amount' && l.manualDiscount.value > l.clientUnitPrice * l.unitQty) {
       return fail('validation', 'POS_DISCOUNT_TOO_LARGE', `Dòng ${l.sku}: tiền giảm lớn hơn thành tiền`, { lineId: l.lineId });
     }
-    lines.push({ draft: l, item: { ...item, taxCode: item.taxCode, taxRate: item.taxRate }, unitRatio: l.unitRatio ?? 1, money: lineMoney(l.clientUnitPrice, l.unitQty, item.taxRate, l.manualDiscount) });
+    if ((l.promoDiscount ?? 0) > l.clientUnitPrice * l.unitQty) {
+      return fail('validation', 'POS_DISCOUNT_TOO_LARGE', `Dòng ${l.sku}: tiền giảm theo chương trình lớn hơn thành tiền`, { lineId: l.lineId });
+    }
+    // Dòng quà: 0đ (giá máy gửi chỉ để hiện "trị giá"), không giảm.
+    const money = l.isGift ? lineMoney(0, l.unitQty, item.taxRate) : lineMoney(l.clientUnitPrice, l.unitQty, item.taxRate, l.manualDiscount, l.promoDiscount ?? 0);
+    lines.push({ draft: l, item: { ...item, taxCode: item.taxCode, taxRate: item.taxRate }, unitRatio: l.unitRatio ?? 1, money });
   }
   if (missing.length) return fail('validation', 'POS_UNKNOWN_SKU', `Không có mã hàng trong danh mục kế toán: ${missing.join(', ')}`, missing.map((sku) => ({ sku })));
   if (untaxed.length) return fail('validation', 'POS_TAX_NOT_DECLARED', `Mã hàng chưa khai mã thuế đầu ra: ${untaxed.join(', ')}`, untaxed.map((sku) => ({ sku })));
@@ -160,7 +173,8 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   // Bill Z (D-MP-12): dòng 0đ của mã không gửi thuế tách thành phiếu riêng ở POS đang chạy (xuất tặng, không lên hoá đơn).
   // Cách ghi sổ của phiếu đó đi cùng quà (W3), chưa có phiếu nghiệm thu → W1 chặn rõ. Dòng không gửi thuế mà THU TIỀN thì
   // POS không tách (phiếu thu phải khớp phiếu bán): nhận như dòng bán, đơn ghi sendTax = false để không lên hoá đơn.
-  const noTax = lines.filter((l) => !l.item.sendTax);
+  // NT-BH-003: quà có căn cứ chương trình mà là hàng không gửi thuế (mã Z, quà dưới 24 tháng) thì nhận — đi chung phiếu, không lên hoá đơn.
+  const noTax = lines.filter((l) => !l.item.sendTax && !(l.draft.isGift && l.draft.policyRef));
   if (noTax.length && noTax.reduce((s, l) => s + l.money.gross, 0) === 0) {
     return fail('validation', 'POS_NOT_SUPPORTED_YET', `Máy chủ POS chưa nhận hàng 0đ không gửi thuế (bill Z) ở đợt này — dùng đường bán cũ cho đơn này: ${noTax.map((l) => l.item.sku).join(', ')}`, { field: 'lines', billZ: noTax.map((l) => l.item.sku) });
   }
@@ -264,8 +278,10 @@ export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; bran
     lines: o.lines.map((l) => ({
       lineKey: l.draft.lineId,
       sku: l.item.sku,
-      // Kế toán khớp dòng theo định danh, mã chỉ để đọc.
-      ...(l.item.itemId ? { itemId: l.item.itemId } : {}),
+      // Kế toán khớp dòng theo định danh, mã chỉ để đọc. Riêng dòng quà theo chương trình: chỉ gửi mã (NT-BH-003) — khuôn BH12 chỉ biết
+      // mã, cửa nạp so quà theo itemId ?? sku (IN-POL-004) nên gửi itemId là lệch giả; cửa nạp tự tra mặt hàng theo mã tại ngày chứng từ.
+      // Đề xuất Core: IN-POL-004 quy cả hai phía về itemId trước khi so (ghi ở chữ chốt PHASE-031 · 00 §17).
+      ...(l.item.itemId && !(l.draft.isGift && l.draft.policyRef) ? { itemId: l.item.itemId } : {}),
       name: l.item.name,
       unit: l.item.unit,
       qty: l.draft.unitQty * l.unitRatio,
@@ -278,12 +294,21 @@ export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; bran
       discount: l.money.discountNet,
       taxCode: l.item.taxCode,
       taxAmount: l.money.tax,
+      ...(l.draft.isGift ? { isGift: true } : {}),
+      ...(l.draft.policyRef ? { policyRef: { key: l.draft.policyRef.key, version: l.draft.policyRef.version, line: l.draft.policyRef.line ?? (l.draft.isGift ? 'gift' : 'discount') } } : {}),
       ...(l.draft.note ? { note: l.draft.note } : {}),
     })),
+    // Bản chính sách đã áp (NT-BH-003): đúng mảng Core trả, chỉ các chương trình có dòng trên phiếu — cửa nạp kiểm lại (IN-POL-001..004).
+    ...(usedRefs(o, draft).length ? { policyRefs: usedRefs(o, draft) } : {}),
     payments: o.payments,
     ...(o.offsets.length ? { offsets: o.offsets } : {}),
     totals: { beforeTax: o.subtotal, tax: o.taxTotal, total: o.total },
   };
+}
+
+function usedRefs(o: ComputedOrder, draft: OrderDraft) {
+  const keys = new Set(o.lines.map((l) => l.draft.policyRef?.key).filter((k): k is string => Boolean(k)));
+  return (draft.policyRefs ?? []).filter((r) => keys.has(r.key) && r.hash).map((r) => ({ key: r.key, version: r.version, hash: r.hash! }));
 }
 
 /** Hạn giữ mã QR (gia hạn được trong ngày bán — NT-BH-009). */
@@ -310,7 +335,7 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
       taxRate: l.item.taxRate,
       amount: l.money.net,
       taxAmount: l.money.tax,
-      promoDiscount: 0,
+      promoDiscount: l.draft.promoDiscount ?? 0,
       promotions: [] as { promotionId: number; amount: number }[],
       ...(l.item.itemId ? { itemId: l.item.itemId } : {}),
       // false = không lên hoá đơn thuế (máy bán và hoá đơn điện tử đọc cờ này).

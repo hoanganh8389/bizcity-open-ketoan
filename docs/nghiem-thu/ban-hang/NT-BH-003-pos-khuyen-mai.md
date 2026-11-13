@@ -58,6 +58,19 @@ Chương trình khuyến mại khai **một nơi** (BH12) và **một luật tí
 ## 7. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 1 (tặng hàng) | 4 SUA330 → 2 QUA01 kèm chương trình + bản; dư không đủ lần hai | đúng; vectors khuôn `sale.program.gift@1` qua hàm thuần và endpoint | — | test rule-contract-sale-program, nt-bh-003-ban-hang-chuong-trinh, 13/11 |
+| §5 dòng 2 (giảm giá) | SUA900 900.000 × 10 % → 90.000; giảm tiền / giá chương trình; giá chương trình cao hơn → không giảm | đúng | — | |
+| §5 dòng 3 (hạn mức cửa hàng) | CN02 không giao / thiếu chi nhánh → bỏ qua kèm lý do; CN01 còn → áp, kèm số còn | đúng | — | |
+| §5 dòng 4 (Thử tính BH12) | cùng hàm tính | chạy thật (Docker, đơn vị demo, 13/11): CN01, 4 × 100021001 + 1 × 100021001B giá 325.000 → tặng 2 × 100021002, giảm 32.500, kèm "cửa hàng còn 5 / 5" | — | giao diện BH12, không lỗi trình duyệt |
+| Chạy thật trọn vòng | máy gửi đơn có quà / giảm → phiếu bán → duyệt ghi sổ → hạn mức trừ | đơn HD2611000024 tổng 1.592.500; cửa nạp kiểm tham chiếu đạt, không lệch; phiếu chờ trạm định khoản (cài đặt của đơn vị demo) — duyệt ghi sổ xong hạn mức tự trừ: giảm giá dùng 1 / còn 4, tặng hàng dùng 2 / còn 8 | — | hạn mức trừ lúc phiếu **ghi sổ**, không lúc lưu đơn |
+| §5 dòng 5 (máy gửi đơn có quà / giảm) | nhận; phiếu bán có dòng quà, dòng giảm, policyRefs; cửa nạp không lệch | đúng (đơn 2.130.000; policy_check đạt) | — | test nt-bh-003-pos-khuyen-mai |
+| §5 dòng 6 (trừ hạn mức) | CN01 dùng 2 quà, 1 giảm; giao lại không trừ thêm | đúng | — | |
+| §5 dòng 7 (huỷ) | hạn mức trả lại đủ | đúng | — | |
+| §5 dòng 8 (thiếu căn cứ) | `POS_GIFT_WITHOUT_POLICY`, không đơn, không chứng từ | đúng | — | |
+| §5 dòng 9 (quà mã Z) | nhận, không lên hoá đơn | đúng ở test thuần module (quà hàng không gửi thuế có căn cứ) | — | |
+| §5 dòng 10 (sửa chương trình) | bản 2; bản 1 bị sửa đè không còn tính; chứng từ cũ trỏ bản 1 | đúng | — | |
+| §6 dòng 1 (vượt hạn mức) | phiếu đã ghi sổ vẫn ghi lượt dùng; evaluate bỏ qua khi hết suất | đúng | — | |
+| §6 dòng 4 (quyền máy bán) | vé thêm `catalog:read` | tgs_pos 20c65d9; máy bán React gọi Core (d1a449e) | — | |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -67,3 +80,4 @@ Chương trình khuyến mại khai **một nơi** (BH12) và **một luật tí
 | Ngày | Thay đổi |
 |---|---|
 | 12/11/2026 | Tạo phiếu |
+| 13/11/2026 | Ghi kết quả chạy (test Core + module) |
