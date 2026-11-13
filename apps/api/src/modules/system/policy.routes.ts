@@ -64,11 +64,13 @@ const contractGet = defineAction({
 const evalLine = z.object({
   lineKey: code, sku: code, qty: z.number().finite(),
   itemId: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/, 'itemId không đúng khuôn').optional(),
+  // [2026-11-12 09:25 PM Võ Hoàng] POS-KM — PHASE-031 · 00 §17 mục 3: đơn giá trọn trên một đơn vị nhỏ nhất, cho chương trình giảm giá (đóng góp)
+  price: z.number().finite().min(0).optional(),
 });
 const evaluate = defineAction({
   id: 'core.policy.evaluate', title: 'Tính theo chính sách đã phát hành', tags,
   description: 'Áp các chính sách bán hàng phủ ngày docDate lên các dòng hàng (độc lập, cộng dồn). Trả applied (kèm giải thích), skipped (kèm lý do, không im lặng), '
-    + 'gifts (dòng quà gợi ý) và policyRefs — đúng mảng gắn vào chứng từ nạp để cửa nạp kiểm lại. Không ghi gì.',
+    + 'gifts (dòng quà gợi ý), discounts (tiền giảm theo dòng — chương trình giảm giá BH12, cần lines[].price) và policyRefs — đúng mảng gắn vào chứng từ nạp để cửa nạp kiểm lại. Không ghi gì.',
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
   input: z.object({
     docDate: date, branchCode: z.string().trim().max(32).optional(), channel: z.string().trim().max(32).optional(),

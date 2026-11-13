@@ -22,6 +22,9 @@ import { defineAction, mountActions, type AnyActionDef } from '../../core/action
 import {
   activeFor, consume, listProgramKinds, listPrograms, programReport, release, saveProgram, saveProgramKind, setQuotas, usageDetail,
 } from './sale-programs.service.js';
+// [2026-11-12 09:45 PM Võ Hoàng] POS-KM — PHASE-031 · 00 §17 mục 2–4 (đóng góp): BH12 nối Rule Contract + tự trừ / trả hạn mức khi phiếu bán ghi sổ / huỷ
+import { registerSubscribers } from '../../core/events.js';
+import { saleProgramUsageSubscriber, wireSaleProgramPolicies } from './policy-bridge.js';
 
 const tags = ['Chương trình bán'];
 const anyOut = z.any();
@@ -35,6 +38,8 @@ const programSchema = z.object({
 });
 
 export async function saleProgramRoutes(app: FastifyInstance): Promise<void> {
+  wireSaleProgramPolicies();
+  registerSubscribers([saleProgramUsageSubscriber]);
   const r = app.withTypeProvider<ZodTypeProvider>();
   const read = requirePermission('catalog:read');
 

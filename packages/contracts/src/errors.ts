@@ -137,6 +137,8 @@ export const ERROR_REASONS = {
   POS_PAYMENT_MISMATCH: 'Số tiền báo về khác phần QR của đơn',
   POS_ORDER_CANCELLED: 'Đơn đã huỷ — không nhận tiền về / không lập hoá đơn',
   POS_SHIFT_REQUIRED: 'Chưa mở ca — Cài đặt bán hàng bắt buộc mở ca trước khi bán',
+  // [2026-11-12 09:55 PM Võ Hoàng] POS-KM — mã khuyến mại của module pos (BIZCITY-ERRORS 1.11.0-draft §4c, phiếu NT-BH-003, đóng góp)
+  POS_GIFT_WITHOUT_POLICY: 'Dòng quà / dòng giảm theo chương trình không nêu chương trình (policyRef); items: [{ lineId, sku }]',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 
