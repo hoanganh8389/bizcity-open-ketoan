@@ -83,7 +83,8 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Bán lẻ máy POS', paths: ['/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan'] },
       { label: 'Chính sách bán', paths: ['/ban-hang/chuong-trinh', '/danh-muc/bang-gia'], soon: ['Khuyến mại', 'Hạn mức nợ khách'] },
       { label: 'Danh mục', paths: ['/danh-muc/khach-hang', '/danh-muc/mat-hang', '/cau-hinh/hinh-thuc-thanh-toan'] },
-      { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/tai-khoan-ngam-dinh'], soon: ['Định khoản bán hàng'] },
+      // [2026-11-13 09:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: bỏ mục mờ "Định khoản bán hàng" — tài khoản bán hàng xem ở khối ④ của BH17, sửa ở ACC41 (đóng góp)
+      { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/tai-khoan-ngam-dinh'] },
     ],
     reports: [
       { label: 'Bán hàng', paths: ['/ban-hang/bao-cao', '/ban-hang/tong-hop', '/cong-no/nhat-ky-ban-hang', '/ban-hang/lai-gop', '/ban-hang/thu-tien-ban-hang'] },

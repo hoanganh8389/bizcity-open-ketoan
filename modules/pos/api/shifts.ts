@@ -76,7 +76,7 @@ export async function closeShift(tx: Tx, input: { shiftId: string; countedCash: 
   }
   if (summary.blockers.length && !note) throw Errors.validation('Chốt bất chấp phải ghi lý do', { reason: 'POS_SHIFT_BLOCKED', items: summary.blockers.map((b) => b.ref) });
   const report = {
-    ...summary, closedAt: closedAt.toISOString(), countedCash: input.countedCash, difference: input.countedCash - summary.expectedCash,
+    ...summary, branchCode: s.branch_code, closedAt: closedAt.toISOString(), countedCash: input.countedCash, difference: input.countedCash - summary.expectedCash,
     forced: Boolean(input.force && summary.blockers.length), ...(note ? { note } : {}),
   };
   await sql`

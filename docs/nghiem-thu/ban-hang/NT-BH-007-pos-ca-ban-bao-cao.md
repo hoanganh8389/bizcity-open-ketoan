@@ -11,7 +11,7 @@
 
 <!-- [2026-11-13 02:10 PM Võ Hoàng] CHOT-0 — đợt 0: chốt nghiệp vụ theo đề xuất (đóng góp) -->
 **Chốt 13/11/2026:**
-- Q1 — chênh lệch két khi chốt ca: **lập chứng từ** — thiếu Nợ 1381 / Có 1111, thừa Nợ 1111 / Có 3381 (kế toán đổi tài khoản được). Đổi so với mặc định tạm (không lập): làm ở đợt Cài đặt bán hàng; tới lúc đó vẫn chỉ lưu biên bản ca.
+- Q1 — chênh lệch két khi chốt ca: **lập chứng từ** — thiếu Nợ 1381 / Có 1111, thừa Nợ 1111 / Có 3381 (kế toán đổi tài khoản được). **Đã làm 13/11** ở [NT-BH-014](NT-BH-014-cai-dat-ban-hang.md) (phiếu kế toán theo lý do, bật / tắt ở BH17). <!-- [2026-11-13 10:00 PM Võ Hoàng] NGHIEM-THU — Q1 đã làm ở NT-BH-014 (đóng góp) -->
 - Q2 — không bắt buộc mở ca (mặc định), bật được ở BH17 (`bizcity.pos.require_open_shift`).
 - Q3 — một ca chung / chi nhánh.
 
@@ -45,7 +45,7 @@ Tiền đầu ca 1.000.000. Trong ca: đơn A 660.000 (TM 330.000 + CK 330.000);
 | 6 | Tiền mặt chi hoàn | 325.000 |
 | 7 | Tiền phải có trong két | 1.000.000 + 655.000 − 325.000 = 1.330.000 |
 | 8 | Chốt ca, đếm được 1.320.000 | Chênh lệch −10.000 (thiếu); lưu giờ chốt, người chốt, ghi chú |
-| 9 | Chốt ca không ghi sổ | Chốt ca **không** lập chứng từ; chênh lệch tiền xử lý theo mục *Nghiệp vụ cần chốt* |
+| 9 | Chốt ca lệch két | Từ 13/11 (NT-BH-014): lập một phiếu kế toán theo lý do thiếu / thừa; chưa khai lý do → ca vẫn chốt, biên bản ghi "chưa lập" |
 | 10 | Đơn hàng | Danh sách đơn của chi nhánh, mới nhất trước; tổng tiền của cả kết quả lọc |
 | 11 | Tổng quan ngày | Số đơn 2, doanh thu 985.000, trả 1 phiếu 325.000, thuần 660.000; theo hình thức, nguồn bán, giờ, mặt hàng bán chạy |
 | 12 | Máy chi nhánh `CN01` | Chỉ thấy ca, đơn, tổng quan của `CN01` |
@@ -85,3 +85,4 @@ Tiền đầu ca 1.000.000. Trong ca: đơn A 660.000 (TM 330.000 + CK 330.000);
 |---|---|
 | 12/11/2026 | Tạo phiếu |
 | 12/11/2026 | Ghi kết quả chạy (test tích hợp + chạy thật) |
+| 13/11/2026 | Q1 đã làm ở NT-BH-014: §5 dòng 9 đổi thành lập phiếu kế toán theo lý do |

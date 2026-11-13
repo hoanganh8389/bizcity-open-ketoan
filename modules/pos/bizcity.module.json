@@ -94,6 +94,7 @@
     "pos.admin.shifts",
     "pos.admin.dashboard",
     "pos.admin.settings",
+    "pos.admin.shift-journal",
     "pos.order.qr-confirm",
     "pos.order.qr-renew",
     "pos.order.invoice-buyer",
@@ -107,6 +108,10 @@
       },
       {
         "docType": "sale_return",
+        "contract": "bizcity_ledger_intake@1"
+      },
+      {
+        "docType": "manual_journal",
         "contract": "bizcity_ledger_intake@1"
       }
     ]
@@ -136,6 +141,9 @@
     "bizcity.pos.return_days",
     "bizcity.pos.require_open_shift",
     "bizcity.pos.shift_scope",
-    "bizcity.pos.cash_diff_alert"
+    "bizcity.pos.cash_diff_alert",
+    "bizcity.pos.cash_diff_journal",
+    "bizcity.pos.cash_short_reason",
+    "bizcity.pos.cash_over_reason"
   ]
 }

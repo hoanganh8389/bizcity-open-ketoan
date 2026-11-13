@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_settings@1",
-  "note": "Khoá cấu hình của module pos (Cài đặt bán hàng BH17, phiếu NT-BH-008 §7). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key.",
+  "note": "Khoá cấu hình của module pos (Cài đặt bán hàng BH17, phiếu NT-BH-008 §7; chênh lệch két NT-BH-014). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key.",
   "settings": [
     {
       "key": "bizcity.pos.return_days",
@@ -61,6 +61,51 @@
       "permission": "settings:write",
       "audit": "có",
       "affectsPosting": false
+    },
+    {
+      "key": "bizcity.pos.cash_diff_journal",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": true,
+      "storage": "tenants.settings.pos.cash_diff_journal",
+      "schema": "chốt ca lệch két thì lập phiếu kế toán manual_journal theo lý do (NT-BH-007 Q1, NT-BH-014; chữ chốt nghiep-vu/20)",
+      "valueType": "boolean",
+      "default": "true",
+      "readBy": "modules/pos/api/actions/shift-close.ts"
+    },
+    {
+      "key": "bizcity.pos.cash_short_reason",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": true,
+      "storage": "tenants.settings.pos.cash_short_reason",
+      "schema": "mã lý do loại journal cho tiền két thiếu (mặc định POS-THIEU-KET: Nợ 1381 / Có 1111 — tài khoản khai ở lý do)",
+      "valueType": "string",
+      "default": "\"POS-THIEU-KET\"",
+      "readBy": "modules/pos/api/actions/shift-close.ts"
+    },
+    {
+      "key": "bizcity.pos.cash_over_reason",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": true,
+      "storage": "tenants.settings.pos.cash_over_reason",
+      "schema": "mã lý do loại journal cho tiền két thừa (mặc định POS-THUA-KET: Nợ 1111 / Có 3381)",
+      "valueType": "string",
+      "default": "\"POS-THUA-KET\"",
+      "readBy": "modules/pos/api/actions/shift-close.ts"
     }
   ]
 }

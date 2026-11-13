@@ -95,3 +95,16 @@ Khoá cấu hình mới (`modules/pos/settings.registry.json`, lớp B, `affects
 - Test module `pos`: chốt ca thiếu 10.000 → một `manual_journal` 1381 / 1111 10.000; thừa → 1111 / 3381; lệch 0 / khoá tắt → không có chứng từ; chốt lại → `POS_SHIFT_CLOSED`, không chứng từ thứ hai; lý do chưa có → ca vẫn chốt, chứng từ lỗi.
 - `apps/api/test/tai-khoan-tra-lai-5213.test.ts` (đề xuất, viết ở PR code): đơn vị mới và đơn vị đã có (sau migration) — dòng trả lại lọc 5213 và Ghi được 52131; dòng giảm giá lọc 5212; dòng đã sửa tay giữ nguyên.
 - `npx bizcity module check pos`, selfcheck, kiem-chuan; chạy thật Docker: chốt ca lệch, xem phiếu ở ACC14, sổ cái 1381.
+
+## 6. Làm thật khác chữ chốt (13/11, PR code đợt 3)
+<!-- [2026-11-13 10:30 PM Võ Hoàng] NGHIEM-THU — ghi các điểm làm thật khác chữ chốt §2–§3 (đóng góp) -->
+
+| # | Chữ chốt | Làm thật | Vì sao |
+|---|---|---|---|
+| 1 | Lý do chưa có → Kernel lưu chứng từ trạng thái lỗi ở ACC14, kế toán *Ghi sổ lại* | Core **từ chối ngay lúc nhận** (`POSTING_FAILED`, cả ở chế độ chờ duyệt). Module bọc lần nộp trong SAVEPOINT; từ chối thì quay lui đúng phần phiếu, ca vẫn chốt, biên bản ghi `journal.status = not_created` + câu lỗi. Sổ ca có nút **Lập lại phiếu kế toán** (`POST /api/v1/m/pos/admin/shifts/:id/journal`, quyền `documents:write`) | Bắt lỗi mà không quay lui thì Core để lại sự việc dở trong `accounting_events` (đã thấy trong test) |
+| 2 | Khoá `bizcity.pos.cash_diff_reasons` kiểu `{ short, over }` | Hai khoá chuỗi `bizcity.pos.cash_short_reason`, `bizcity.pos.cash_over_reason` | Kho cài đặt (`checkSettingValue`) chưa nhận kiểu object |
+| 3 | Manifest `ledger.submits` khai `reasons: { kind: "journal" }` | Khai `manual_journal` **không** kèm `reasons` | Khuôn manifest (BIZCITY-MODULE-v1.schema) chỉ nhận `kind` in / out / receipt / payment — thêm `journal` là đổi hợp đồng của Core, để đề xuất riêng |
+| 4 | — | Lỗi của nút Lập lại phiếu chỉ có câu báo, chưa có mã `reason` | Thêm mã vào `ERROR_REASONS` là đổi `packages/contracts` — để đợt sau nếu máy cần phân biệt |
+| 5 | Phiếu kế toán theo chế độ ghi sổ | Mặc định **chờ duyệt** (chế độ của loại `manual_journal`, dùng chung cho mọi phiếu kế toán phân hệ lập); BH17 chỉ hiện chế độ, đổi ở ACC14 | Đổi ở BH17 sẽ đổi luôn phiếu kiểm kê kho của phân hệ Kho |
+
+Phần B (ACC41 5212 / 5213) chuyển cho Thủy — xem ghi chú ở §2.
