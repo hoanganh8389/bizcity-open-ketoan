@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 299
+      "count": 298
     }
   ],
   "items": [
@@ -7781,9 +7781,15 @@
       "phase": "PHASE-031",
       "title": "Rule Contract bán hàng sale.pricelist@1, sale.promo.discount@1, sale.promo.buyxgety@1, sale.creditlimit@1 cùng modules/ban-hang (S030-16); publishChecks trần N…",
       "priority": "P0",
-      "status": "done",
-      "column": "done",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "H-Joyy (phiên Claude, pos-core-khuyen-mai-2)",
+        "branch": "feat/pos-core-khuyen-mai-2",
+        "state": "đang làm",
+        "since": "2026-11-13",
+        "dot": "Khuyến mại mở rộng do Core tính (S031-15 đợt 2; số phase do chủ dự án đặt) — 5 Rule Contract nội tu…"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"
