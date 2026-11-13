@@ -159,6 +159,87 @@ export const reportRepository = {
     return res.rows;
   },
 
+  // [2026-11-13 Nguyễn Văn Thủy] lớp trung gian "bút toán gộp theo tài khoản" (0134): sổ sách chế độ Cộng gộp đọc đây, không quét dòng mã hàng (đóng góp)
+  /**
+   * Như accountLines nhưng đọc bảng gộp (bizcity_read.ledger_entry_accounts): mỗi bút toán × tài khoản × TK đối ứng × đối tượng × bên
+   * một dòng; line_count = số dòng mã hàng gộp vào. Không có mã hàng, chiều phân tích, ghi chú dòng đối ứng (diễn giải = của chứng từ).
+   */
+  async accountLinesGrouped(db: Db, a: { tenantId: string; accountPrefix: string; from: string; to: string; branchIds: string[] | null; partnerId?: string; showCorrections?: boolean; counterPrefix?: string; docType?: string; cashOrder?: boolean }) {
+    const res = await sql<{
+      id: string; entry_id: string; posting_date: string; entry_no: string; doc_no: string; doc_type: string; invoice_no: string | null; event_id: string | null;
+      description: string; entry_description: string; account_code: string; debit: string; credit: string;
+      counter_accounts: string | null; counter_note: string | null; partner_id: string | null; partner_code: string | null; partner_name: string | null;
+      branch_code: string; reason_code: string | null; dims: Record<string, string> | null; product_sku: string | null; product_name: string | null;
+      doc_date: string; counterparty: string | null; line_count: number;
+    }>`
+      SELECT g.entry_id || ':' || g.account_code || ':' || g.counter_accounts || ':' || g.partner_id || ':' || g.side AS id,
+             g.entry_id, g.posting_date::text AS posting_date, e.doc_date::text AS doc_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.event_id,
+             (SELECT NULLIF(ev.payload->>'counterparty', '') FROM accounting_events ev WHERE ev.id = e.event_id) AS counterparty,
+             e.description, e.description AS entry_description, g.account_code, g.debit, g.credit,
+             NULLIF(g.counter_accounts, '') AS counter_accounts, NULL::text AS counter_note,
+             NULLIF(g.partner_id, 0)::text AS partner_id, p.code AS partner_code,
+             COALESCE(CASE WHEN g.partner_id <> 0 AND e.partner_id = g.partner_id THEN e.partner_name END, p.name) AS partner_name,
+             br.code AS branch_code, e.reason_code, NULL::jsonb AS dims, NULL::text AS product_sku, NULL::text AS product_name, g.line_count
+        FROM bizcity_read.ledger_entry_accounts g
+        JOIN bizcity_read.ledger_entries e ON e.id = g.entry_id
+        JOIN branches br ON br.id = g.branch_id
+        LEFT JOIN partners p ON p.id = NULLIF(g.partner_id, 0)
+       WHERE g.tenant_id = ${a.tenantId}
+         AND g.account_code LIKE ${a.accountPrefix + '%'}
+         AND g.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
+         ${a.branchIds ? sql`AND g.branch_id = ANY(${a.branchIds}::bigint[])` : sql``}
+         ${a.partnerId ? sql`AND g.partner_id = ${a.partnerId}` : sql``}
+         ${a.showCorrections ? sql`` : sql`AND e.status = 'posted' AND NOT e.is_reversal`}
+         ${a.docType ? sql`AND e.doc_type = ${a.docType}` : sql``}
+         ${a.counterPrefix ? sql`AND EXISTS (SELECT 1 FROM unnest(string_to_array(g.counter_accounts, ', ')) c WHERE c LIKE ${a.counterPrefix + '%'})` : sql``}
+       ORDER BY ${a.cashOrder ? sql`g.posting_date, (g.debit = 0), e.entry_no, g.first_line_no` : sql`g.posting_date, e.entry_no, g.first_line_no`}`.execute(db);
+    return res.rows;
+  },
+
+  /**
+   * Sổ nhật ký chung chế độ Cộng gộp (theo chứng từ + TK đối ứng) đọc bảng gộp: gom bút toán × tài khoản × TK đối ứng × bên,
+   * phân trang ngay trong CSDL (không đọc hết kỳ). Đối tượng khác nhau trong cùng dòng gộp → để trống.
+   */
+  async journalGrouped(db: Db, a: { tenantId: string; from: string; to: string; branchIds: string[] | null; docType?: string; search?: string; showCorrections?: boolean; corrections?: 'hide' | 'all' | 'only'; accountPrefix?: string; counterPrefix?: string; limit: number; offset: number }) {
+    const corr = a.corrections ?? (a.showCorrections ? 'all' : 'hide');
+    const filtered = sql`
+      SELECT g.entry_id, g.account_code, g.counter_accounts, g.side, min(g.posting_date) AS pd, min(g.branch_id) AS branch_id,
+             sum(g.debit) AS d, sum(g.credit) AS c, sum(g.line_count)::int AS n, min(g.first_line_no) AS fl,
+             CASE WHEN count(DISTINCT g.partner_id) = 1 THEN min(g.partner_id) END AS partner_id
+        FROM bizcity_read.ledger_entry_accounts g
+        JOIN bizcity_read.ledger_entries e ON e.id = g.entry_id
+       WHERE g.tenant_id = ${a.tenantId}
+         AND g.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
+         ${a.branchIds ? sql`AND g.branch_id = ANY(${a.branchIds}::bigint[])` : sql``}
+         ${a.accountPrefix ? sql`AND g.account_code LIKE ${a.accountPrefix + '%'}` : sql``}
+         ${a.counterPrefix ? sql`AND EXISTS (SELECT 1 FROM unnest(string_to_array(g.counter_accounts, ', ')) c WHERE c LIKE ${a.counterPrefix + '%'})` : sql``}
+         ${a.docType ? sql`AND e.doc_type = ${a.docType}` : sql``}
+         ${corr === 'all' ? sql`` : corr === 'only' ? sql`AND (e.status <> 'posted' OR e.is_reversal)` : sql`AND e.status = 'posted' AND NOT e.is_reversal`}
+         ${a.search ? sql`AND (e.doc_no ILIKE ${'%' + a.search + '%'} OR e.entry_no ILIKE ${'%' + a.search + '%'} OR e.description ILIKE ${'%' + a.search + '%'} OR g.account_code LIKE ${a.search + '%'})` : sql``}
+       GROUP BY g.entry_id, g.account_code, g.counter_accounts, g.side
+      HAVING sum(g.debit) <> 0 OR sum(g.credit) <> 0`;
+    const rows = await sql<{
+      entry_id: string; posting_date: string; doc_date: string; entry_no: string; doc_no: string; doc_type: string; invoice_no: string | null; reason_code: string | null;
+      description: string; account_code: string; counter_accounts: string; side: number; debit: string; credit: string; line_count: number;
+      partner_code: string | null; partner_name: string | null; branch_code: string; is_reversal: boolean; entry_status: string; source_type: string | null;
+    }>`
+      WITH x AS (${filtered})
+      SELECT x.entry_id, x.pd::text AS posting_date, e.doc_date::text AS doc_date, e.entry_no, e.doc_no, e.doc_type, e.invoice_no, e.reason_code,
+             e.description, x.account_code, x.counter_accounts, x.side, x.d AS debit, x.c AS credit, x.n AS line_count,
+             p.code AS partner_code, COALESCE(CASE WHEN x.partner_id <> 0 AND e.partner_id = x.partner_id THEN e.partner_name END, p.name) AS partner_name,
+             br.code AS branch_code, e.is_reversal, e.status AS entry_status,
+             (SELECT ev.payload->'sourceRef'->>'type' FROM accounting_events ev WHERE ev.id = e.event_id) AS source_type
+        FROM x JOIN bizcity_read.ledger_entries e ON e.id = x.entry_id
+        JOIN branches br ON br.id = x.branch_id
+        LEFT JOIN partners p ON p.id = NULLIF(x.partner_id, 0)
+       ORDER BY x.pd, e.doc_no, e.entry_no, x.fl, x.side DESC
+       LIMIT ${a.limit} OFFSET ${a.offset}`.execute(db);
+    const totals = await sql<{ rows: string; n: string; entries: string; debit: string; credit: string }>`
+      WITH x AS (${filtered})
+      SELECT COUNT(*) AS rows, COALESCE(SUM(n), 0) AS n, COUNT(DISTINCT entry_id) AS entries, COALESCE(SUM(d), 0) AS debit, COALESCE(SUM(c), 0) AS credit FROM x`.execute(db);
+    return { rows: rows.rows, totals: totals.rows[0]! };
+  },
+
   /**
    * Sổ nhật ký chung: mọi dòng sổ cái trong kỳ theo trình tự thời gian, kèm tài khoản đối ứng.
    * Mặc định ẩn bút toán gốc đã sửa và bút toán ghi số âm của nó (triệt tiêu nhau).

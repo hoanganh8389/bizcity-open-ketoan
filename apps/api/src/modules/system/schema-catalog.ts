@@ -88,6 +88,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // ③ Sổ cái
   ledger_entries: { group: 'ledger', label: 'Bút toán', term: 'Bút toán (journal entry)', module: 'ledger', purpose: 'Phiếu cha của bút toán: số liên tục, ngày ghi sổ, chi nhánh, loại chứng từ, số phiếu, trỏ về sự kiện. Một sự kiện sinh một hoặc vài bút toán; content_hash (dấu vân tay) để khi định khoản lại chỉ đảo bút toán có thay đổi.' },
   ledger_lines: { group: 'ledger', label: 'Dòng bút toán', term: 'Định khoản Nợ / Có', module: 'ledger', purpose: 'Mỗi dòng ghi một bên Nợ hoặc Có của một tài khoản. Tổng Nợ = tổng Có trong mỗi bút toán (cơ sở dữ liệu tự kiểm). Chỉ thêm.' },
+  // [2026-11-13 Nguyễn Văn Thủy] lớp trung gian bút toán gộp theo tài khoản (0134) (đóng góp)
+  ledger_entry_accounts: { group: 'ledger', label: 'Bút toán gộp theo tài khoản', term: 'Cộng gộp bút toán', module: 'ledger', purpose: 'Mỗi bút toán × tài khoản × TK đối ứng × đối tượng × bên một dòng (cộng các dòng mã hàng giống nhau), để Nhật ký chung, Sổ cái, sổ chi tiết chế độ Cộng gộp khỏi quét từng dòng mã hàng. Trigger trên dòng sổ giữ đồng bộ.' },
   ledger_balances_daily: { group: 'ledger', label: 'Số phát sinh theo ngày', term: 'Số dư / phát sinh', module: 'ledger', purpose: 'Cộng dồn Nợ / Có theo chi nhánh × tài khoản × ngày × đối tượng, để báo cáo tổng hợp khỏi quét toàn bộ dòng sổ.' },
   ledger_entry_sequences: { group: 'ledger', label: 'Bộ đếm số bút toán', term: 'Đánh số liên tục', module: 'ledger', purpose: 'Cấp số bút toán liền mạch, không trùng, không nhảy số theo năm.' },
   document_sequences: { group: 'ledger', label: 'Bộ đếm số chứng từ', term: 'Đánh số chứng từ', module: 'documents', purpose: 'Cấp số cho chứng từ lập trong ERP: phiếu kế toán tay, đề nghị thanh toán, phiếu mua hàng, chứng từ của module (ctx.documents.nextNumber). Chỉ Kernel ghi (documentNumbers).' },
@@ -248,6 +250,9 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
 /** Giải thích trigger theo tên hàm trigger. */
 export const TRIGGER_NOTES: Record<string, string> = {
+  bizcity_entry_accounts_on_insert: 'Ghi dòng sổ mới → dựng dòng bút toán gộp theo tài khoản của bút toán đó (0134).',
+  bizcity_entry_accounts_on_update: 'Điền giá vốn (đổi số tiền dòng sổ) → dựng lại dòng bút toán gộp theo tài khoản (0134).',
+  bizcity_entry_accounts_on_delete: 'Dọn dòng sổ (việc dọn dữ liệu được phép) → dựng lại / bỏ dòng bút toán gộp (0134).',
   // [2026-11-13 Nguyễn Văn Thủy] đối tượng cha – con (0132) (đóng góp)
   bizcity_partner_parent_check: 'Đơn vị mẹ của đối tượng (0132): không tự làm mẹ của mình, không khác đơn vị, không tạo vòng mẹ – con.',
   bizcity_fill_partner_uid: 'Dòng bút toán có đối tượng tự điền định danh dt_ (partner_uid) để báo cáo gộp theo nhóm mẹ – chi nhánh (0132).',

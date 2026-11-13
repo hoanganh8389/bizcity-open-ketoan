@@ -20,11 +20,13 @@ import { EntryOpen } from '../../../features/ledger/EntriesPage';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { PrintButton } from '@/components/print';
 import { NKC_TEMPLATES } from './mauIn/soNhatKyChung';
+import { gopMacDinh, nhoGop } from './gopNho';
 
 interface Row {
   id: string; entryId: string; postingDate: string; docDate: string; entryNo: string; docNo: string; docType: DocType; invoiceNo: string | null;
   reasonCode: string | null; sourceType?: string | null; description: string; accountCode: string; counterAccounts: string; debit: number; credit: number;
   partnerCode: string | null; partnerName: string | null; productSku: string | null; productName: string | null; branchCode: string; isReversal: boolean; entryStatus?: string;
+  /** Số dòng mã hàng gộp vào (chế độ Cộng gộp). */ lineCount?: number;
 }
 interface Data { rows: Row[]; totals: { lines: number; entries: number; debit: number; credit: number } }
 
@@ -32,7 +34,7 @@ export function JournalPage() {
   const [params] = useSearchParams();
   const multi = (useBranches().data?.length ?? 0) > 1;
   // draft: ô đang sửa; f: điều kiện đã bấm "Tìm kiếm".
-  const start = { from: periodFrom(), to: defaultTo(), branchCodes: '', account: params.get('account') ?? '', counterAccount: '', docType: params.get('docType') ?? '', sku: params.get('sku') ?? '', groupMode: '1', corrections: 'hide' };
+  const start = { from: periodFrom(), to: defaultTo(), branchCodes: '', account: params.get('account') ?? '', counterAccount: '', docType: params.get('docType') ?? '', sku: params.get('sku') ?? '', groupMode: gopMacDinh('ACC89', true) ? '2' : '1', corrections: 'hide' };
   const [draft, setDraft] = useState(start);
   const [f, setF] = useState(start);
   const [entryId, setEntryId] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export function JournalPage() {
   const panel = (
     <>
       <SideKy from={draft.from} to={draft.to} onChange={(from, to) => set({ from, to })} />
-      <label className="checkbox" style={{ fontSize: 12 }}><input type="checkbox" checked={draft.groupMode === '2'} onChange={(e) => set({ groupMode: e.target.checked ? '2' : '1' })} /> Cộng gộp các bút toán giống nhau</label>
+      <label className="checkbox" style={{ fontSize: 12 }}><input type="checkbox" checked={draft.groupMode === '2'} onChange={(e) => { nhoGop('ACC89', e.target.checked); set({ groupMode: e.target.checked ? '2' : '1' }); }} /> Cộng gộp các bút toán giống nhau</label>
       {multi && (
         <>
           <span className="muted" style={{ fontSize: 12, marginTop: 2 }}>Chi nhánh</span>
@@ -83,6 +85,7 @@ export function JournalPage() {
                 { key: 'counterAccounts', header: 'TK đối ứng', type: 'code', width: 90 },
                 { key: 'debit', header: 'Phát sinh Nợ', type: 'money', sum: true, width: 130 },
                 { key: 'credit', header: 'Phát sinh Có', type: 'money', sum: true, width: 130 },
+                { key: 'lineCount', header: 'Số dòng', type: 'number', width: 70, hidden: detail, title: 'Số dòng chi tiết (từng mã hàng) đã cộng gộp vào dòng này. Bấm vào dòng để xem bút toán với từng dòng mã hàng.' },
                 { key: 'docType', header: 'Loại chứng từ', width: 150, hidden: true, value: (r) => (r.sourceType === 'export_adjust' ? 'Xuất kho điều chỉnh' : DOC_TYPE_LABELS[r.docType] ?? r.docType) },
                 { key: 'partnerCode', header: 'Mã đối tượng', type: 'code', width: 110, hidden: true },
                 { key: 'partnerName', header: 'Tên đối tượng', width: 180, hidden: true },

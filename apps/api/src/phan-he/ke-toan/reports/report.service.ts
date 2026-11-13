@@ -218,10 +218,16 @@ export const reportService = {
     const [openingRows, lines] = await Promise.all([
       // Lọc một mã hàng (vd 156 chi tiết theo mã): số dư đầu kỳ cũng chỉ của mã đó.
       sku ? reportRepository.openingBySku(db, { ...scope, from: q.from, sku, codeOnly: q.codeOnly }) : reportRepository.openingByPartner(db, { ...scope, from: q.from }),
-      reportRepository.accountLines(db, {
-        ...scope, from: q.from, to: q.to, showCorrections: q.showCorrections,
-        counterPrefix: q.counterAccount?.trim() || undefined, docType: q.docType || undefined, cashOrder: kind === 'cash', sku, codeOnly: q.codeOnly,
-      }),
+      // Cộng gộp (2, 3) mà không lọc mã hàng: đọc lớp trung gian bút toán gộp theo tài khoản (0134) thay vì quét từng dòng mã hàng.
+      (q.groupMode ?? 1) !== 1 && !sku
+        ? reportRepository.accountLinesGrouped(db, {
+          ...scope, from: q.from, to: q.to, showCorrections: q.showCorrections,
+          counterPrefix: q.counterAccount?.trim() || undefined, docType: q.docType || undefined, cashOrder: kind === 'cash',
+        })
+        : reportRepository.accountLines(db, {
+          ...scope, from: q.from, to: q.to, showCorrections: q.showCorrections,
+          counterPrefix: q.counterAccount?.trim() || undefined, docType: q.docType || undefined, cashOrder: kind === 'cash', sku, codeOnly: q.codeOnly,
+        }),
     ]);
 
     // Dư đầu: sổ quỹ bù trừ thành một số; sổ khác theo đối tượng thì tách Nợ/Có từng đối tượng rồi cộng.
@@ -237,22 +243,24 @@ export const reportService = {
     }
 
     // Gom dòng theo kiểu báo cáo.
-    type Row = (typeof lines)[number] & { d: number; c: number };
+    type Row = (typeof lines)[number] & { d: number; c: number; n: number };
     const mode = q.groupMode ?? 1;
     const grouped: Row[] = [];
     const index = new Map<string, Row>();
     for (const l of lines) {
       const d = toCents(toNumber(l.debit));
       const c = toCents(toNumber(l.credit));
-      if (mode === 1) { grouped.push({ ...l, d, c }); continue; }
+      // n: số dòng mã hàng gộp vào (dòng đọc từ lớp gộp 0134 mang sẵn line_count).
+      const n = Number((l as { line_count?: number }).line_count ?? 1);
+      if (mode === 1) { grouped.push({ ...l, d, c, n }); continue; }
       const key = mode === 2 ? `${l.entry_id}|${l.counter_accounts ?? ''}|${d ? 'N' : 'C'}` : l.entry_id;
       const cur = index.get(key);
       if (!cur) {
-        const row: Row = { ...l, d, c, description: l.entry_description || l.description };
+        const row: Row = { ...l, d, c, n, description: l.entry_description || l.description };
         index.set(key, row);
         grouped.push(row);
       } else {
-        cur.d += d; cur.c += c;
+        cur.d += d; cur.c += c; cur.n += n;
         if (mode === 3) cur.counter_accounts = [...new Set([...(cur.counter_accounts ?? '').split(', '), ...(l.counter_accounts ?? '').split(', ')].filter(Boolean))].join(', ');
       }
     }
@@ -297,6 +305,7 @@ export const reportService = {
           cashColumn: kind === 'cash' ? cashColumnOf(l.d > 0 ? 'in' : 'out', counter) : '',
           debit: fromCents(l.d),
           credit: fromCents(l.c),
+          lineCount: l.n,
           balanceDebit: fromCents(bd),
           balanceCredit: fromCents(bc),
         };
@@ -513,6 +522,26 @@ export const reportService = {
   async journal(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; docType?: string; search?: string; showCorrections?: boolean; corrections?: 'hide' | 'all' | 'only'; account?: string; counterAccount?: string; sku?: string; codeOnly?: boolean; groupMode?: 1 | 2 | 3; page: number; pageSize: number }) {
     const { branchIds } = await resolveScope(auth, q.branchCodes);
     const mode = q.groupMode ?? 1;
+    // [2026-11-13 Nguyễn Văn Thủy] Cộng gộp theo chứng từ + TK đối ứng: đọc lớp trung gian (0134), gộp + phân trang trong CSDL (đóng góp)
+    if (mode === 2 && !q.sku?.trim()) {
+      const g = await reportRepository.journalGrouped(db, {
+        tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, docType: q.docType, search: q.search?.trim() || undefined,
+        showCorrections: q.showCorrections, corrections: q.corrections, accountPrefix: q.account?.trim() || undefined, counterPrefix: q.counterAccount?.trim() || undefined,
+        limit: q.pageSize, offset: (q.page - 1) * q.pageSize,
+      });
+      return {
+        groupMode: mode,
+        rows: g.rows.map((r) => ({
+          id: `${r.entry_id}:${r.account_code}:${r.counter_accounts}:${r.side}`, entryId: r.entry_id, postingDate: r.posting_date, docDate: r.doc_date,
+          entryNo: r.entry_no, docNo: r.doc_no, docType: r.doc_type, invoiceNo: r.invoice_no, reasonCode: r.reason_code, sourceType: r.source_type,
+          description: r.description, accountCode: r.account_code, counterAccounts: r.counter_accounts, debit: toNumber(r.debit), credit: toNumber(r.credit),
+          partnerCode: r.partner_code, partnerName: r.partner_name, productSku: null as string | null, productName: null as string | null, branchCode: r.branch_code,
+          isReversal: r.is_reversal, entryStatus: r.entry_status, lineCount: Number(r.line_count),
+        })),
+        totals: { lines: Number(g.totals.n), entries: Number(g.totals.entries), debit: toNumber(g.totals.debit), credit: toNumber(g.totals.credit) },
+        total: Number(g.totals.rows),
+      };
+    }
     const { rows, totals } = await reportRepository.journal(db, {
       tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, docType: q.docType, search: q.search?.trim() || undefined,
       showCorrections: q.showCorrections, corrections: q.corrections, accountPrefix: q.account?.trim() || undefined, counterPrefix: q.counterAccount?.trim() || undefined, sku: q.sku?.trim() || undefined, codeOnly: q.codeOnly,

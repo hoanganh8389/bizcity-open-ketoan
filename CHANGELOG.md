@@ -12,6 +12,8 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- **Bút toán gộp theo tài khoản** (0134, lớp trung gian giữa sổ chi tiết và sổ sách): sổ vẫn lưu từng dòng mã hàng; bảng `ledger_entry_accounts` giữ sẵn mỗi bút toán × TK × TK đối ứng × đối tượng × bên một dòng, trigger trên `ledger_lines` cập nhật khi ghi sổ, khi điền giá vốn tháng và khi dọn dữ liệu (dựng lại theo bút toán, dữ liệu cũ dựng trong migration). Nhật ký chung (ACC89) và Sổ chi tiết TK / Sổ cái / sổ quỹ / sổ công nợ chế độ *Cộng gộp các bút toán giống nhau* đọc bảng này (Nhật ký chung gộp + phân trang trong CSDL), không quét dòng mã hàng; cột **Số dòng** (số dòng mã hàng đã gộp), bấm dòng mở bút toán xem từng mã. Mặc định: ACC89, ACC88 gộp; ACC12 từng dòng; máy nhớ lựa chọn. Tổng khớp sổ chi tiết (test but-toan-gop).
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - **TK kho theo loại kho**: mọi bút toán có hàng vào / ra kho (nhập mua, trả NCC, giá vốn bán và giá vốn tháng, khách trả, chuyển kho từng đầu, nhập / xuất khác, kiểm kê) ghi vào TK kho của loại kho của kho trên dòng (dòng không ghi kho = kho mặc định chi nhánh), ưu tiên hơn Tài khoản ngầm định và bảng quy tắc định khoản. Loại kho khai TK tổng hợp (156) hoặc trống → như cũ; cột TK kho ở DM18 báo đỏ TK tổng hợp; khai mới / đổi TK kho phải là TK chi tiết (ô chọn tài khoản). KHO07 và bảng kiểm sổ kho ↔ sổ cái tính thêm TK kho của các loại.
   - **Thay đổi định khoản**: chứng từ ghi từ nay ở kho thuộc loại có TK chi tiết sẽ vào TK đó; chứng từ đã ghi giữ nguyên.
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
