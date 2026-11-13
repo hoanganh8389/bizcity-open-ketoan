@@ -7,7 +7,7 @@
 | Màn hình | MH19 Chuyển hàng xuống shop (giữ nguyên tên); thêm mục cùng tên ở menu Kho |
 | Bộ phận yêu cầu | Kho / Mua hàng |
 | Ngày tạo | 13/11/2026 |
-| Trạng thái | Đã chốt (13/11/2026, kiennt) |
+| Trạng thái | Đã chốt (13/11/2026, kiennt) · Chờ nghiệm thu |
 
 ## 1. Mục đích quản trị
 Giống Phân tích đặt hàng bên Mua hàng: kế toán kho chọn **kho chuyển** rồi chọn **các shop** cần phân tích, phần mềm gợi ý số chuyển
@@ -82,11 +82,28 @@ Như mục 2. Kho chỉ có 60 hộp, tổng cần 125 hộp → phải phân b�
 | 5 | Chỉnh tay nhập số âm | Chặn |
 
 ## 7. Kết quả chạy
+<!-- [2026-11-13 10:00 AM kiennt] NT-MH-004 — kết quả chạy -->
+
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/chuyen-hang-xuong-shop.test.ts` (đề xuất — tạo khi code) |
+| Ngày chạy | 13/11/2026 |
+| Bản code (commit) | nhánh `feat/chuyen-hang-xuong-shop` |
+| Test tự động | `apps/api/test/chuyen-hang-xuong-shop.test.ts` — 10 / 10 đạt; `ton-max.test.ts` 28 / 28 (không đổi hành vi cũ) |
 
 | Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
 |---|---|---|---|---|
+| Muốn chuyển — Không làm tròn | 80 / 40 / 5 | 80 / 40 / 5 | 0 | |
+| Muốn chuyển — Nguyên thùng | 84 / 36 / 0 | 84 / 36 / 0 | 0 | |
+| Muốn chuyển — Theo cài từng mã (Tự động) | 84 / 40 / 5 | 84 / 40 / 5 | 0 | |
+| Thiếu nhiều nhất trước | 60 / 0 / 0 | 60 / 0 / 0 | 0 | |
+| Theo thứ tự S2 → S3 → S1 | 15 / 40 / 5; S1 thiếu 65 | 15 / 40 / 5; 65 | 0 | |
+| Chia đều | 27 / 28 / 5 | 27 / 28 / 5 | 0 | |
+| Chia đều + Nguyên thùng | 24 / 36 / 0 | 24 / 36 / 0 | 0 | |
+| Chỉnh tay | để trống | 0 / 0 / 0 | 0 | |
+| Chỉnh tay tổng 70 > 60 | Không cho chốt | 400 "SUA01: chia 70 > tồn kho 60"; giao diện báo đỏ, khoá nút Chốt | 0 | Kiểm cả máy chủ (cộng đề nghị đã chốt chưa làm) |
+| Lệch chuẩn 1 (kho đủ) | = số muốn chuyển | Đúng cả 4 cách | 0 | |
+| Lệch chuẩn 2 (không có thùng + Nguyên thùng) | Như không làm tròn | Đúng | 0 | |
+| Lệch chuẩn 3 (chưa chọn shop) | Mọi shop, theo mã | Đúng | 0 | |
+| Lệch chuẩn 4 (đề nghị đã chốt chưa làm) | Trừ vào tồn kho chia được | Tồn kho chia được về 0; chốt thêm bị chặn | 0 | |
+| Menu Kho | Mục "Chuyển hàng xuống shop" | Có, mở MH19; tên màn giữ nguyên | 0 | |
+| Nhớ tuỳ chọn | Lần mở sau giữ lựa chọn | Lưu trên máy người dùng | 0 | |

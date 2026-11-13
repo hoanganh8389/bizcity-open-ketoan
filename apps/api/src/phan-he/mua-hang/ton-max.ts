@@ -13,7 +13,7 @@ import { catalogEnsure } from '@bizcity/platform/masterdata/catalog-ensure';
 import { sql } from 'kysely';
 import { z } from 'zod';
 import {
-  TAX_RATE, allocateTransfers, avgPerDay, buyOptions, canAutoApprove, normalizeFormula, familiesBy, orderNeed, orderProgress, priceFor, roundPack, skuInfo, suggestMax, suggestWarehouseMax,
+  TAX_RATE, allocateTransfers, modeFor, type TransferAllocation, type TransferRounding, avgPerDay, buyOptions, canAutoApprove, normalizeFormula, familiesBy, orderNeed, orderProgress, priceFor, roundPack, skuInfo, suggestMax, suggestWarehouseMax,
   type FormulaConfig, type MaxRequestItem, type NeedInput, type ProductUnit, type TransferMode, giftItemsOf } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
@@ -568,7 +568,8 @@ export async function maxBoard(trx: Db, tenantId: string, parentCode: string, f:
 
 /* ------------------------------------------------------------------ đề xuất chuyển hàng xuống shop */
 
-export async function transferSuggest(trx: Db, tenantId: string, parentCode: string, f: { fromWarehouse?: string; shopCodes?: string[]; asOf?: string } = {}) {
+// [2026-11-13 10:00 AM kiennt] NT-MH-004 — tuỳ chọn làm tròn chung (rounding) và cách phân bổ khi kho thiếu (allocation); thứ tự shop = thứ tự đã chọn
+export async function transferSuggest(trx: Db, tenantId: string, parentCode: string, f: { fromWarehouse?: string; shopCodes?: string[]; asOf?: string; rounding?: TransferRounding; allocation?: TransferAllocation } = {}) {
   const snap = await snapshot(trx, tenantId, parentCode, f.asOf ?? today());
   const { tree, cfg } = snap;
   const fromWh = f.fromWarehouse || defaultWh(tree.parent);
@@ -582,6 +583,8 @@ export async function transferSuggest(trx: Db, tenantId: string, parentCode: str
     reserved.set(`${r.to_branch}|${l.sku}`, (reserved.get(`${r.to_branch}|${l.sku}`) ?? 0) + l.qty);
     if ((r.from_warehouse || fromWh) === fromWh) reservedKho.set(l.sku, (reservedKho.get(l.sku) ?? 0) + l.qty);
   }
+  // Thứ tự shop: đúng thứ tự người dùng chọn; chưa chọn thì theo mã shop (dùng cho "theo thứ tự" và phần dư khi chia đều).
+  const order = f.shopCodes?.length ? f.shopCodes : shops.map((s) => s.code).sort();
   const skus = new Set<string>();
   for (const k of snap.levels.keys()) { const [bc, , s] = k.split('|'); if (shops.some((x) => x.code === bc)) skus.add(s!); }
   const list = [...skus];
@@ -590,19 +593,19 @@ export async function transferSuggest(trx: Db, tenantId: string, parentCode: str
   const lines: (ReturnType<typeof allocateTransfers>[number] & { name: string; baseUnit: string; packUnit?: string; reserved: number; khoTon: number })[] = [];
   for (const sku of list) {
     const pk = packOf(units[sku]);
-    const mode = snap.settings.get(sku)?.transferMode ?? 'auto';
+    const mode = modeFor(f.rounding ?? 'sku', snap.settings.get(sku)?.transferMode ?? 'auto');
     const khoTon = (snap.stock.get(`${parentCode}|${fromWh}|${sku}`) ?? 0) - (reservedKho.get(sku) ?? 0);
     const needs = shops.map((s) => {
       const wh = snap.shopWh.get(s.code)!;
       return { shopCode: s.code, sku, max: snap.levels.get(`${s.code}|${wh}|${sku}`)?.max ?? 0, ton: snap.stock.get(`${s.code}|${wh}|${sku}`) ?? 0, diDuong: (snap.transit.get(`${s.code}|${sku}`) ?? 0) + (reserved.get(`${s.code}|${sku}`) ?? 0), pack: pk.pack, mode };
     }).filter((x) => x.max > 0);
-    for (const l of allocateTransfers(needs, khoTon, cfg.packThreshold)) {
+    for (const l of allocateTransfers(needs, khoTon, cfg.packThreshold, { allocation: f.allocation, order })) {
       if (l.want <= 0) continue;
       lines.push({ ...l, name: nameOf.get(sku) ?? sku, baseUnit: pk.baseUnit, packUnit: pk.packUnit, reserved: reserved.get(`${l.shopCode}|${sku}`) ?? 0, khoTon: r3(khoTon) });
     }
   }
   const shopName = new Map(tree.shops.map((s) => [s.code, s.name]));
-  return { lines: lines.map((l) => ({ ...l, shopName: shopName.get(l.shopCode) ?? l.shopCode, toWarehouse: snap.shopWh.get(l.shopCode) ?? '' })), fromWarehouse: fromWh, parent: { code: tree.parent.code, name: tree.parent.name }, warehouses: tree.parent.warehouses, asOf: snap.asOf, threshold: cfg.packThreshold };
+  return { lines: lines.map((l) => ({ ...l, shopName: shopName.get(l.shopCode) ?? l.shopCode, toWarehouse: snap.shopWh.get(l.shopCode) ?? '' })), fromWarehouse: fromWh, parent: { code: tree.parent.code, name: tree.parent.name }, warehouses: tree.parent.warehouses, asOf: snap.asOf, threshold: cfg.packThreshold, rounding: f.rounding ?? 'sku', allocation: f.allocation ?? 'shortage' };
 }
 
 /* ------------------------------------------------------------------ đề nghị chuyển hàng đã chốt */
@@ -623,6 +626,17 @@ async function nextCode(trx: Db, tenantId: string, table: 'transfer_requests' | 
 
 export async function createTransferRequests(trx: Db, tenantId: string, actor: string, body: z.infer<typeof transferCreateSchema>) {
   const tree = await treeOf(trx, tenantId, body.fromBranch);
+  // [2026-11-13 10:00 AM kiennt] NT-MH-004 — tổng chia một mã (cả các shop của lần chốt + đề nghị đã chốt chưa làm) không vượt tồn kho chuyển
+  const fromWh = body.fromWarehouse || defaultWh(tree.parent);
+  const total = new Map<string, number>();
+  for (const s of body.shops) for (const l of s.lines) total.set(l.sku, (total.get(l.sku) ?? 0) + l.qty);
+  if (total.size) {
+    const snap = await snapshot(trx, tenantId, body.fromBranch, today(), { skus: [...total.keys()] });
+    const open = await trx.selectFrom('transfer_requests').select(['from_warehouse', 'data']).where('tenant_id', '=', tenantId).where('status', '=', 'open').where('from_branch', '=', body.fromBranch).execute();
+    for (const r of open) if ((r.from_warehouse || fromWh) === fromWh) for (const l of json<{ lines?: { sku: string; qty: number }[] }>(r.data).lines ?? []) if (total.has(l.sku)) total.set(l.sku, total.get(l.sku)! + l.qty);
+    const over = [...total].map(([sku, q]) => ({ sku, q: r3(q), ton: r3(snap.stock.get(`${body.fromBranch}|${fromWh}|${sku}`) ?? 0) })).filter((x) => x.q > x.ton + 1e-9);
+    if (over.length) throw Errors.validation(`Tổng chia vượt tồn kho chuyển ${fromWh}: ${over.slice(0, 10).map((x) => `${x.sku}: chia ${x.q} > tồn kho ${x.ton}`).join('; ')}`);
+  }
   const code = await nextCode(trx, tenantId, 'transfer_requests', 'DNC');
   const out: string[] = [];
   for (const [i, s] of body.shops.entries()) {
