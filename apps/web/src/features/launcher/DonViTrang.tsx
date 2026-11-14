@@ -63,8 +63,10 @@ export function DonViTrang() {
       {coThietLap && nhac && (
         <Modal title="Thiết lập nhanh" onClose={deSau}
           footer={<><button type="button" className="btn" onClick={deSau}>Để sau</button><button type="button" className="btn btn-primary" onClick={batDau}>Bắt đầu</button></>}>
-          <p>Đơn vị chưa có dữ liệu. Thiết lập nhanh mất khoảng 1 phút: thông tin công ty, chế độ ghi sổ chuẩn, danh mục mẫu nếu muốn.</p>
-          <p className="muted">Bấm <b>Để sau</b> thì trong phiên này không hỏi lại; vẫn mở được bằng nút Thiết lập nhanh ở Tổng quan hoặc menu TI15.</p>
+          <div className="full" style={{ gridColumn: '1 / -1' }}>
+            <p>Đơn vị chưa có dữ liệu. Thiết lập nhanh mất khoảng 1 phút: thông tin công ty, chế độ ghi sổ chuẩn, danh mục mẫu nếu muốn.</p>
+            <p className="muted">Bấm <b>Để sau</b> thì trong phiên này không hỏi lại; vẫn mở được bằng nút Thiết lập nhanh ở Tổng quan hoặc menu TI15.</p>
+          </div>
         </Modal>
       )}
     </section>

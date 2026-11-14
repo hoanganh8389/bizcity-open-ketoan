@@ -279,7 +279,8 @@ export const setupRunActions: AnyActionDef[] = [
       previousRun: runSchema.nullable(), missingCapabilities: z.array(z.string()),
       blocks: z.array(z.object({ key: z.string(), label: z.string(), total: z.number(), existing: z.number(), toAdd: z.number() })),
     }),
-    expose: { http: { method: 'GET', path: '/api/v1/setup/presets/:id/plan' }, mcp: true, ai: 'read' },
+    // [2026-11-14 07:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5: plan cần settings:write → không mở cho MCP / AI (CONF-MCP-5; lỗi của S036-4, mcp-write.test.ts đỏ trên main)
+    expose: { http: { method: 'GET', path: '/api/v1/setup/presets/:id/plan' }, mcp: false, ai: 'deny' },
     handler: async (ctx, input) => { const { _blocks, ...plan } = await planPreset(ctx.data.tx, ctx.tenant.id, input.id, { sample: input.sample, blocks: parseBlocks(input.blocks) }); return plan; },
   }),
   defineAction({
