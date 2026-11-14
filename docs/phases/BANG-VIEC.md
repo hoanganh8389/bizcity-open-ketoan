@@ -11,8 +11,8 @@
 | Chưa ai nhận | 169 |
 | Chờ đủ tín hiệu | 69 |
 | Hoãn | 3 |
-| Xong | 312 |
-| **Tổng** | **588** |
+| Xong | 313 |
+| **Tổng** | **589** |
 
 ## Theo phân hệ (R-FLOW-10)
 
@@ -25,7 +25,7 @@
 | chung-tu | 67 | 5 | 0 | 25 | 97 |
 | tong-hop | 31 | 8 | 1 | 27 | 67 |
 | thue | 14 | 2 | 1 | 10 | 27 |
-| he-thong | 144 | 23 | 2 | 60 | 229 |
+| he-thong | 145 | 23 | 2 | 60 | 230 |
 
 ## Đang làm (7)
 
@@ -332,6 +332,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | he-thong | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | chung-tu | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (312)
+## Xong (313)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
