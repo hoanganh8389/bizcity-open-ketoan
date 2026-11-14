@@ -8996,7 +8996,7 @@
       "phase": "PHASE-036",
       "title": "B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan",
       "priority": "P0",
-      "status": "partial",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",

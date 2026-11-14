@@ -30,3 +30,13 @@ Phần mềm chia thành các **phân hệ**, mỗi phân hệ là một "ứng 
 - **Báo cáo** nằm ở một trang riêng, mở từ cuối menu trái hoặc thẻ Báo cáo của nhóm.
 - **Thanh mép phải** có Việc cần làm (dấu `!` là có việc gấp ở nhóm đang làm), Trợ lý và Thông báo. Bấm icon để mở; đưa chuột ra ngoài hoặc bấm nút thu nhỏ để thu lại; bấm ghim nếu muốn giữ bảng mở.
 - Biết mã màn thì bấm Ctrl + K rồi gõ mã, mã vẫn dùng như cũ.
+
+## Đơn vị chưa có chứng từ <!-- [2026-11-14 03:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3 -->
+
+Đơn vị mới (chưa có bút toán, chưa có chứng từ nào kể cả nháp) thì đầu Tổng quan hiện thẻ **Đơn vị chưa có chứng từ nào** với ba đường bắt đầu:
+
+1. **Nạp danh mục chuẩn**: màn Dữ liệu gốc (TI08), xem trước rồi nạp.
+2. **Nhập số dư đầu kỳ**: tiền, công nợ, hàng tồn khi bắt đầu dùng phần mềm.
+3. **Lập chứng từ đầu tiên**: phiếu thu, phiếu chi, phiếu mua, bán.
+
+Người không có quyền cài đặt thấy dòng *Đơn vị chưa có dữ liệu — nhờ chủ đơn vị thiết lập*. Có chứng từ đầu tiên là thẻ tự ẩn. Máy chủ trả trạng thái này ở `GET /api/v1/setup/status`.
