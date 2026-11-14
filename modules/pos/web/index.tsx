@@ -12,6 +12,9 @@ import { TongQuanPage } from './screens/TongQuanPage';
 import { TraHangPage } from './screens/TraHangPage';
 
 const P = 'pos:report';
+// [2026-11-15 11:40 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: Chương trình khuyến mại là chính sách bán chung (máy bán + phiếu bán nhập tay), không phải
+// quản trị máy bán — xem theo quyền đọc danh mục như API chính sách của Core (catalog:read); thêm / sửa vẫn theo settings:write, catalog:write.
+const KM = 'catalog:read';
 
 export default defineWebModule({
   key: 'pos',
@@ -22,7 +25,8 @@ export default defineWebModule({
     { key: 'pos-ca-ban', label: 'Sổ ca bán', path: '/app/pos/ca-ban', code: 'BH15', permission: P },
     { key: 'pos-tong-quan', label: 'Tổng quan bán lẻ', path: '/app/pos/tong-quan', code: 'BH16', permission: P },
     { key: 'pos-cai-dat', label: 'Cài đặt bán hàng', path: '/app/pos/cai-dat', code: 'BH17', permission: P },
-    { key: 'pos-khuyen-mai', label: 'Khuyến mại', path: '/app/pos/khuyen-mai', code: 'BH18', permission: P },
+    // [2026-11-15 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: một màn Chương trình khuyến mại (gộp BH12) (đóng góp)
+    { key: 'pos-khuyen-mai', label: 'Chương trình khuyến mại', path: '/app/pos/khuyen-mai', code: 'BH18', permission: KM },
   ],
   routes: [
     { path: '/app/pos/don-ban', component: DonBanPage, permission: P },
@@ -30,6 +34,6 @@ export default defineWebModule({
     { path: '/app/pos/ca-ban', component: SoCaPage, permission: P },
     { path: '/app/pos/tong-quan', component: TongQuanPage, permission: P },
     { path: '/app/pos/cai-dat', component: CaiDatPage, permission: P },
-    { path: '/app/pos/khuyen-mai', component: KhuyenMaiPage, permission: P },
+    { path: '/app/pos/khuyen-mai', component: KhuyenMaiPage, permission: KM },
   ],
 });
