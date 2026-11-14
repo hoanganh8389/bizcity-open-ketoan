@@ -5,7 +5,7 @@
   "kind": "app",
   "version": "0.1.0",
   "label": "Website bán hàng TGS (WordPress)",
-  "description": "Nhận sự kiện của máy bán POS (module pos) để ghi BẢN SAO chứng từ vào local_ledger của từng shop WordPress (báo cáo shop, tồn, hoá đơn điện tử, báo cáo thuế vẫn đọc như cũ). Kế toán là nơi ghi duy nhất; WP chỉ nhận bản sao một chiều (D17).",
+  "description": "Nhận sự kiện của máy bán POS (module pos) và phiếu bán / trả kế toán lập (module phieu-ban, NT-BH-017) để ghi BẢN SAO chứng từ vào local_ledger của từng shop WordPress (báo cáo shop, tồn, hoá đơn điện tử, báo cáo thuế vẫn đọc như cũ). Kế toán là nơi ghi duy nhất; WP chỉ nhận bản sao một chiều (D17).",
   "owners": ["@hoanganh8389"],
   "standard": "^1.0",
   "requires": { "capabilities": [] },
@@ -17,7 +17,9 @@
     "subscribes": [
       { "type": "pos.order.recorded", "version": 1 },
       { "type": "pos.return.recorded", "version": 1 },
-      { "type": "pos.order.cancelled", "version": 1 }
+      { "type": "pos.order.cancelled", "version": 1 },
+      { "type": "phieu-ban.doc.recorded", "version": 1 },
+      { "type": "phieu-ban.doc.cancelled", "version": 1 }
     ]
   },
   "ui": { "icon": "Globe", "color": "#0e7490", "order": 40 }

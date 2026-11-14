@@ -30,6 +30,17 @@ Mỗi bản ghi đủ sáu mục:
 - Cha – con đợt 2: chính sách mua khai ở đơn vị mẹ có ô *Áp cho cả đơn vị con* (chính sách riêng của đơn vị con cùng loại được ưu tiên); hạn mức khai ở mẹ thì cả nhóm dùng chung (kiểm khi lập phiếu, MH01 hiện "chung nhóm").
   MH01 có cột *Thuộc đơn vị cha* và ô *Xem theo nhóm mẹ – chi nhánh*; nhập Excel đối tượng có cột *Mã đơn vị cha* (để trống mã thì cấp mã cha-00x).
 
+### Phiếu bán / trả hàng nhập tay vào sổ thật — module `phieu-ban` (phiếu NT-BH-015 bước 1, chữ chốt nghiep-vu/21) <!-- [2026-11-13 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 bước 1 (đóng góp) -->
+
+- **Thêm:** module `phieu-ban` — phiếu bán (BH10) / hàng bán trả lại (BH11) nhập tay lưu ở máy chủ (`/api/v1/m/phieu-ban/docs`):
+  - nháp → duyệt nộp `sale` / `sale_return` qua cửa nạp → bỏ duyệt đảo bút toán, duyệt lại phiên bản mới;
+  - số `BH` / `TL` + năm tháng + 6 số theo cửa hàng, chặn trùng;
+  - tiền / thuế tính lại ở máy chủ;
+  - trả hàng nối phiếu gốc, không trả quá số đã bán.
+- **Đổi:** BH10 / BH11 thôi chạy dữ liệu giả (`lib/tradeDocs.ts` trỏ API module). Phiếu thử cũ trên trình duyệt không chuyển sang sổ — màn báo một lần. `docs/api/13`: phiếu bán / trả đã có API thật; loại còn lại viết thành module (ADR-0024).
+- **Thay đổi định khoản:** có — phiếu nhập tay đã duyệt sinh bút toán bán / trả như chứng từ bán hiện có (cùng luật định khoản, không số tài khoản trong module).
+- **Nâng cấp cần làm:** `npm install` (module mới trong workspace); chạy migration module `phieu-ban`. Chưa có (bước 2): giá theo cửa hàng, khuyến mại, cảnh báo tồn trên màn.
+
 ### Cài đặt bán hàng một màn; phiếu kế toán chênh lệch két khi chốt ca (phiếu NT-BH-014, chữ chốt nghiep-vu/20) <!-- [2026-11-13 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014 đợt 3 Bán hàng (đóng góp) -->
 
 - **Thêm:** chốt ca máy POS có chênh lệch két → module `pos` nộp một phiếu kế toán `manual_journal` theo lý do `POS-THIEU-KET` (mặc định Nợ 1381 / Có 1111) hoặc `POS-THUA-KET` (Nợ 1111 / Có 3381), đối tượng chi nhánh `CN-<mã>`, khoá `pos:shift:<ca>:cash-diff`. Core từ chối phiếu (chưa khai lý do…) không làm hỏng chốt ca: biên bản ghi "chưa lập", kế toán bấm **Lập lại phiếu kế toán** ở Sổ ca (`POST /api/v1/m/pos/admin/shifts/:id/journal`, quyền `documents:write`).

@@ -1,6 +1,9 @@
 # 13. Phiếu nhập tay trong phần mềm — hợp đồng đề xuất (`/api/v1/trade-documents`)
 <!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
+<!-- [2026-11-13 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: phiếu bán / trả đã có API thật ở module phieu-ban (đóng góp) -->
+> **Phiếu bán hàng (BH10), hàng bán trả lại (BH11) đã có API thật** ở module `phieu-ban`: `/api/v1/m/phieu-ban/docs` — cùng khuôn `TradeDoc` và cùng các lệnh dưới đây (chỉ khác gốc đường dẫn, quyền `phieu-ban:read` / `phieu-ban:write`), thêm `GET …/docs/:id/returnable`. Số phiếu `BH` / `TL` + năm tháng + 6 số theo cửa hàng. Xem [modules/phieu-ban/README.md](../../modules/phieu-ban/README.md), phiếu [NT-BH-015](../nghiem-thu/ban-hang/NT-BH-015-phieu-ban-nhap-tay.md). Hai loại này không còn chạy dữ liệu giả.
+>
 > **Phiếu chuyển kho (KHO01) đã có API thật riêng** `/api/v1/kho/transfers` — xem [nghiệp vụ 17](../nghiep-vu/17-chuyen-kho.md).
 >
 > **Mua hàng, trả hàng NCC không dùng hợp đồng này**: làm ở phân hệ Mua hàng, API thật `/api/v1/purchase/*` — xem [14-mua-hang](14-mua-hang.md).
@@ -9,7 +12,7 @@ Các màn **Phiếu bán hàng (BH10), Hàng bán trả lại (BH11), Phiếu ch
 
 - Mã giao diện gọi API: `apps/web/src/lib/tradeDocs.ts` (`tradeApi`, phần `source === 'api'`).
 - Dữ liệu mẫu (đúng khuôn JSON): `apps/web/src/phan-he/ban-hang/phieu-ban/mau-*.json`, `phan-he/kho/chuyen-kho/mau-chuyen-kho.json`.
-- Viết endpoint ở thư mục **`apps/api/src/phan-he/api/`** (khu của phân hệ API), khai vào `phan-he/api/index.ts`.
+- Endpoint mới cho loại phiếu còn lại: viết thành module ở `modules/<key>/` (ADR-0024 — `phan-he/` đã đóng băng), như module `phieu-ban`.
 
 ## Endpoint
 
