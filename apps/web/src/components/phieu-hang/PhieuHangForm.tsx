@@ -8,12 +8,14 @@
  *   Thu tiền (bán / trả lại): các khoản theo hình thức thanh toán; để trống = ghi công nợ.
  *   Phiếu bán / trả (module phieu-ban, NT-BH-015 bước 2): đơn giá theo bảng giá CỦA CỬA HÀNG (như máy bán); dòng bán vượt tồn
  *   theo sổ của kho đã chọn hiện cảnh báo "tồn sổ còn X" (không chặn — giá vốn tính cuối tháng).
+ *   Phiếu bán: khối Khuyến mại — Core tính như máy bán (POST /api/v1/policies/evaluate: chương trình BH12 + khuyến mại BH18 đang
+ *   chạy ở cửa hàng tại ngày phiếu); người lập bỏ chọn được từng chương trình; tiền giảm gồm thuế quy về chiết khấu trước thuế.
  * Danh mục (mặt hàng, đối tượng, chi nhánh, hình thức thanh toán) đọc từ API thật; chỉ phần LƯU phiếu theo nguồn dữ liệu.
  */
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
-import { KIND_INFO, TAX_OPTIONS, TAX_RATES, recompute, type TradeDoc, type TradeLine } from '@/lib/tradeDocs';
+import { KIND_INFO, TAX_OPTIONS, TAX_RATES, applyPromo, clearPromo, promoLines, recompute, type PromoGiftInfo, type PromoResult, type TradeDoc, type TradeLine } from '@/lib/tradeDocs';
 import { Field, Modal, NumInput } from '@/components/ui';
 import { roundPrice } from '@/lib/format';
 import { BranchPicker } from '@/components/filters';
@@ -78,6 +80,45 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
     const skus = [...new Set(v.lines.map((l) => l.sku).filter(Boolean))];
     void fetchQuote(skus).then((rows) => setQuotes(Object.fromEntries(rows.map((q) => [q.sku, q]))));
   }, [v.branchCode, v.warehouseCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // [2026-11-14 11:50 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 §5 dòng 4: khuyến mại trên phiếu bán nhập tay (đóng góp)
+  const usePromo = v.docType === 'sale';
+  const [promo, setPromo] = useState<{ result: PromoResult; keys: Set<string>; sig: string; gifts: Record<string, PromoGiftInfo> } | null>(null);
+  const [coupon, setCoupon] = useState('');
+  const [promoErr, setPromoErr] = useState('');
+  const [promoBusy, setPromoBusy] = useState(false);
+  /** Dấu của giỏ (mã, SL, giá, cửa hàng, ngày) — đổi sau khi áp thì nhắc áp lại. */
+  const sigOf = (d: TradeDoc) => JSON.stringify([d.branchCode, d.docDate, d.lines.filter((l) => !(l.isGift && l.policyRef)).map((l) => [l.sku, l.qty, l.unitPrice, l.unit])]);
+  const ratioOf = (l: TradeLine) => (quotes[l.sku] && quotes[l.sku]!.unit === l.unit ? quotes[l.sku]!.ratio : 1);
+  const giftOf = (gifts: Record<string, PromoGiftInfo>) => (sku: string) => gifts[sku] ?? { name: sku, unit: '' };
+  const runPromo = async () => {
+    setPromoErr('');
+    const lines = promoLines(v, ratioOf);
+    if (!v.branchCode || !lines.length) { setPromoErr('Chọn cửa hàng và ít nhất một dòng hàng có số lượng trước'); return; }
+    setPromoBusy(true);
+    try {
+      const coupons = coupon.split(/[\s,;]+/).filter(Boolean);
+      const result = await api.post<PromoResult>('/api/v1/policies/evaluate', { docDate: v.docDate, branchCode: v.branchCode, lines, ...(coupons.length ? { coupons } : {}) });
+      // Tên, ĐVT nhỏ nhất, thuế của hàng tặng: theo danh mục (Core tính quà theo đơn vị nhỏ nhất).
+      const gifts: Record<string, PromoGiftInfo> = {};
+      for (const sku of [...new Set(result.gifts.map((g) => g.sku))]) {
+        const p = await api.get<CatalogProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku)}`).catch(() => null);
+        gifts[sku] = { name: p?.name ?? sku, unit: p?.unit ?? '', taxCode: p?.taxOutCode ?? 'R08' };
+      }
+      const keys = new Set(result.applied.map((a) => a.policyRef.key));
+      setPromo({ result, keys, sig: sigOf(v), gifts });
+      setV(applyPromo(v, result, keys, giftOf(gifts), lineKey));
+    } catch (e) { setPromoErr(errorText(e)); } finally { setPromoBusy(false); }
+  };
+  const togglePromo = (key: string, on: boolean) => {
+    if (!promo) return;
+    const keys = new Set(promo.keys);
+    if (on) keys.add(key); else keys.delete(key);
+    setPromo({ ...promo, keys, sig: sigOf(v) });
+    setV(applyPromo(v, promo.result, keys, giftOf(promo.gifts), lineKey));
+  };
+  const promoStale = promo !== null && promo.sig !== sigOf(v);
+  const promoReady = Boolean(v.branchCode) && v.lines.some((l) => l.sku && !l.isGift && l.qty > 0);
 
   /** Chọn mã hàng → điền tên, ĐVT bán chính, đơn giá bảng giá công ty, loại thuế của mặt hàng. */
   const pickItem = async (i: number, sku: string) => {
@@ -195,7 +236,10 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
                   </td>
                   {!info.isTransfer && <>
                     <td><NumInput value={l.unitPrice} disabled={readOnly || l.isGift} title="Đơn giá có thể có số lẻ: gõ dấu phẩy, vd 506.018,52" onChange={(n) => setLine(i, { unitPrice: n ?? 0 })} /></td>
-                    <td><input className="input num" value={money(l.discount)} disabled={readOnly || l.isGift} onChange={(e) => setLine(i, { discount: num(e.target.value) })} /></td>
+                    <td>
+                      <input className="input num" value={money(l.discount)} disabled={readOnly || l.isGift || Boolean(l.policyRef)} title={l.policyRef ? `Giảm theo chương trình ${l.policyRef.key} (bản ${l.policyRef.version}) — đổi ở khối Khuyến mại` : undefined} onChange={(e) => setLine(i, { discount: num(e.target.value) })} />
+                      {l.policyRef && <div className="muted mono" style={{ fontSize: 11 }} title={`Chương trình ${l.policyRef.key} bản ${l.policyRef.version}`}>KM {l.policyRef.key}</div>}
+                    </td>
                     <td className="num">{l.isGift ? <span className="muted">tặng</span> : money(l.amountBeforeTax)}</td>
                     <td><select className="select input" value={l.taxCode ?? ''} disabled={readOnly} onChange={(e) => setLine(i, { taxCode: e.target.value })}>{taxOptions.map(([c, t]) => <option key={c} value={c}>{t}</option>)}</select></td>
                     <td className="num">{money(l.taxAmount)}</td>
@@ -215,6 +259,46 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
         </div>
         {!readOnly && <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} onClick={addLine}>+ Thêm dòng</button>}
       </div>
+
+      {usePromo && (!readOnly || (v.policyRefs ?? []).length > 0) && (
+        <fieldset className="fgroup">
+          <legend>Khuyến mại — Core tính như máy bán</legend>
+          <div className="full">
+            {!readOnly && (
+              <div className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-sm" disabled={promoBusy || !promoReady}
+                  title={!v.branchCode ? 'Chọn cửa hàng trước' : !promoReady ? 'Thêm ít nhất một dòng hàng có số lượng' : promoBusy ? 'Đang tính, chờ kết quả' : 'Tính chương trình bán (BH12) + khuyến mại (BH18) đang chạy ở cửa hàng tại ngày phiếu'}
+                  onClick={() => void runPromo()}>{promoBusy ? 'Đang tính…' : promo ? 'Áp khuyến mại lại' : 'Áp khuyến mại'}</button>
+                <input className="input mono" style={{ width: 180 }} placeholder="Mã giảm giá (nếu có)" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} />
+                {(promo || (v.policyRefs ?? []).length > 0) && <button type="button" className="btn btn-sm" title="Bỏ mọi khuyến mại đã áp (dòng quà, tiền giảm)" onClick={() => { setPromo(null); setV(clearPromo(v)); }}>Bỏ khuyến mại</button>}
+                {promoStale && <span style={{ color: 'var(--warn, #b45309)', fontSize: 12 }}>Đã đổi dòng hàng / cửa hàng / ngày sau khi áp — bấm Áp khuyến mại lại</span>}
+              </div>
+            )}
+            {promoErr && <div className="alert alert-bad" style={{ marginTop: 6 }}>{promoErr}</div>}
+            {promo && (
+              <table className="grid-table" style={{ width: '100%', marginTop: 6 }}>
+                <thead><tr><th style={{ width: 34 }} title="Bỏ chọn = không áp chương trình này" /><th style={{ width: 160 }}>Chương trình</th><th>Kết quả</th></tr></thead>
+                <tbody>
+                  {promo.result.applied.map((a) => (
+                    <tr key={a.policyRef.key}>
+                      <td style={{ textAlign: 'center' }}><input type="checkbox" checked={promo.keys.has(a.policyRef.key)} title="Bỏ chọn = không áp chương trình này" onChange={(e) => togglePromo(a.policyRef.key, e.target.checked)} /></td>
+                      <td className="mono" title={`${a.ruleContract} · bản ${a.policyRef.version}`}>{a.policyRef.key}</td>
+                      <td>{a.explain}</td>
+                    </tr>
+                  ))}
+                  {promo.result.skipped.map((x) => (
+                    <tr key={`s-${x.key}`} className="muted"><td /><td className="mono">{x.key}</td><td>Không áp: {x.reason}</td></tr>
+                  ))}
+                  {!promo.result.applied.length && !promo.result.skipped.length && <tr><td colSpan={3} className="muted">Không có chương trình nào đang chạy ở cửa hàng này tại ngày phiếu</td></tr>}
+                </tbody>
+              </table>
+            )}
+            {!promo && (v.policyRefs ?? []).length > 0 && (
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Đã áp: {(v.policyRefs ?? []).map((p) => `${p.key} (bản ${p.version})`).join(', ')}</div>
+            )}
+          </div>
+        </fieldset>
+      )}
 
       {info.hasPayments && (
         <fieldset className="fgroup" disabled={readOnly}>

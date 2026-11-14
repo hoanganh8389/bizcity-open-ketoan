@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Phiếu bán nhập tay: khuyến mại cùng bộ tính máy bán (NT-BH-015 §5 dòng 4) <!-- [2026-11-14 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 §5 dòng 4: khuyến mại trên phiếu bán nhập tay (đóng góp) -->
+
+- **Thêm:** khối **Khuyến mại** ở phiếu bán (BH10): *Áp khuyến mại* gọi `POST /api/v1/policies/evaluate` (chương trình BH12 + khuyến mại BH18 đang chạy ở cửa hàng), ô mã giảm giá, bỏ chọn từng chương trình, nhắc áp lại khi đổi giỏ.
+- **Đổi:** module `phieu-ban` nhận `lines[].policyRef` + `policyRefs` (kiểm căn cứ như máy bán), nộp sổ kèm căn cứ; tiền giảm gồm thuế quy về chiết khấu trước thuế.
+- **Thay đổi định khoản:** không.
+
 ### Phiếu bán nhập tay: giá theo cửa hàng, cảnh báo tồn; ghi kết quả chạy thật về website (NT-BH-015 bước 2, NT-BH-017) <!-- [2026-11-14 03:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 bước 2 (đóng góp) -->
 
 - **Thêm:** `GET /api/v1/m/phieu-ban/quote` — giá theo bảng giá cửa hàng (như máy bán) và tồn theo sổ của kho.

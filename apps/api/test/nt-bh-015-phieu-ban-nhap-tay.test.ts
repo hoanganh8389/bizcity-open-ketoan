@@ -148,4 +148,50 @@ describe.skipIf(!HAS)('NT-BH-015 — phiếu bán / trả nhập tay vào sổ t
     expect(r.json().data).toEqual([expect.objectContaining({ sku: 'SUA330', taxCode: 'R08', stock: -2 })]);
     expect((await app.inject({ method: 'GET', url: `${M}/quote?skus=SUA330`, headers: auth() })).json().data).toEqual([]);
   });
+
+  // [2026-11-14 11:50 PM Võ Hoàng] NGHIEM-THU — §5 dòng 4: khuyến mại trên phiếu nhập tay, cùng bộ tính máy bán (đóng góp)
+  it('§5 dòng 4: Core tính khuyến mại (giảm bậc + mua X tặng Y) → phiếu mang mã chương trình; tiền giảm gồm thuế quy về chiết khấu trước thuế; sổ khớp', async () => {
+    expect((await call(ctx, 'PUT', '/api/v1/products', { products: [{ sku: 'LY01', name: 'Ly quà', unit: 'Cái' }] })).status).toBeLessThan(300);
+    expect((await call(ctx, 'PUT', '/api/v1/products/LY01', { taxOutCode: 'R08' })).status).toBe(200);
+    const base = { priority: 0, exclusive: false, legalCapPct: 50 };
+    for (const [key, ruleContract, params] of [
+      ['KM-BAC', 'sale.promo.tiered@1', { ...base, skus: ['SUA330'], basis: 'qty', tiers: [{ min: 3, pct: 10 }] }],
+      ['KM-QUA', 'sale.promo.buy_x_get_y@1', { buy: { sku: 'SUA330', qty: 2 }, get: { sku: 'LY01', qty: 1 }, repeat: false }],
+    ] as const) {
+      const r = await call(ctx, 'POST', '/api/v1/policies', { key, ruleContract, params, effectiveFrom: TODAY, reason: 'NT-BH-015 §5 dòng 4' });
+      expect(r.status, JSON.stringify(r.body)).toBe(201);
+    }
+    // Như màn (promoLines): đơn giá GỒM thuế = 300.000 × 1,08.
+    const ev = await call(ctx, 'POST', '/api/v1/policies/evaluate', { docDate: TODAY, branchCode: 'CN01', lines: [{ lineKey: 'L1', sku: 'SUA330', qty: 3, price: 324_000 }] });
+    expect(ev.status, JSON.stringify(ev.body)).toBe(200);
+    const out = ev.body.data as { applied: { policyRef: { key: string; version: number; hash: string } }[]; discounts: { lineKey: string; amount: number }[]; gifts: { sku: string; qty: number }[] };
+    expect(out.discounts).toEqual([expect.objectContaining({ lineKey: 'L1', amount: 97_200 })]);
+    expect(out.gifts).toEqual([expect.objectContaining({ sku: 'LY01', qty: 1 })]);
+    // Như màn (applyPromo): chiết khấu trước thuế = làm tròn(97.200 / 1,08) = 90.000; quà thêm dòng 0đ.
+    const policyRefs = out.applied.map((a) => ({ key: a.policyRef.key, version: a.policyRef.version, hash: a.policyRef.hash }));
+    const lines = [
+      { lineKey: 'L1', sku: 'SUA330', qty: 3, unitPrice: 300_000, discount: Math.round(97_200 / 1.08), policyRef: { key: 'KM-BAC', version: 1, line: 'discount' } },
+      { lineKey: 'G1', sku: 'LY01', qty: 1, isGift: true, policyRef: { key: 'KM-QUA', version: 1, line: 'gift' } },
+    ];
+    // Thiếu căn cứ (không có policyRefs) → chặn, chỉ rõ dòng.
+    const bad = await req('POST', '/docs', sale({ lines, payments: [] }));
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json().error.message).toContain('KM-BAC bản 1 không có trong căn cứ khuyến mại');
+
+    const c = await req('POST', '/docs', sale({ lines, policyRefs, payments: [] }));
+    expect(c.statusCode, c.body).toBe(200);
+    expect(c.json().data.totals).toEqual({ beforeTax: 810_000, tax: 64_800, total: 874_800 });
+    expect(c.json().data.policyRefs.map((p: { key: string }) => p.key).sort()).toEqual(['KM-BAC', 'KM-QUA']);
+    const id = c.json().data.id as string;
+    expect((await req('POST', `/docs/${id}/approve`)).statusCode).toBe(200);
+    expect(await net(`phieu-ban:${id}`)).toMatchObject({ '33311': -64_800 });
+    // Chứng từ nộp sổ mang đúng căn cứ như máy bán: dòng giảm có policyRef, dòng quà chỉ gửi mã (không itemId), policyRefs kèm băm.
+    const p = (await sql<{ payload: { lines: { sku: string; itemId?: string; isGift?: boolean; discount: number; policyRef?: { key: string; line: string } }[]; policyRefs?: { key: string; hash: string }[] } }>`
+      SELECT payload FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ${`phieu-ban:${id}`}`.execute(db)).rows[0]!.payload;
+    expect(p.lines.find((l) => l.sku === 'SUA330')).toMatchObject({ discount: 90_000, policyRef: { key: 'KM-BAC', line: 'discount' } });
+    const gift = p.lines.find((l) => l.sku === 'LY01')!;
+    expect(gift).toMatchObject({ isGift: true, policyRef: { key: 'KM-QUA', line: 'gift' } });
+    expect(gift.itemId).toBeUndefined();
+    expect(p.policyRefs?.every((r) => r.hash)).toBe(true);
+  });
 });
