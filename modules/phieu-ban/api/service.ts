@@ -1,7 +1,10 @@
 /**
  * Nghiệp vụ phiếu bán / trả nhập tay (NT-BH-015): lưu nháp (tính lại ở máy chủ, cấp số theo cửa hàng, chặn trùng), duyệt (nộp sổ),
  * bỏ duyệt (huỷ chứng từ trong sổ = đảo bút toán), số còn trả được. Mọi action ghi chạy trong một giao dịch của runtime.
+ * Duyệt / bỏ duyệt phát sự kiện cùng giao dịch (outbox) để website shop có bản sao phiếu — không cần plugin POS (NT-BH-017,
+ * chữ chốt nghiep-vu/23): phieu-ban.doc.recorded (kèm TradeDoc đã tính, phiên bản sổ), phieu-ban.doc.cancelled.
  */
+// [2026-11-14 11:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-017: phát sự kiện duyệt / bỏ duyệt cho bản sao website (đóng góp)
 // [2026-11-13 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: nghiệp vụ phiếu bán / trả nhập tay (đóng góp)
 import { randomUUID } from 'node:crypto';
 import { Errors, type ActionContext } from '@bizcity/module-sdk';
@@ -84,6 +87,12 @@ export async function approve(ctx: ActionContext, id: string) {
     });
     await setStatus(tx, id, { status: 'approved', ledgerVersion: version, ledgerStatus: submitted.status, actor: ctx.actor.id });
     return toTradeDoc(await getDoc(tx, id));
+  }).then(async (doc) => {
+    await ctx.events.emit('phieu-ban.doc.recorded', {
+      docId: id, docKey: docKeyOf(id), version, kind: prepared.r.kind, branchCode: prepared.r.branch_code, cashier: { name: ctx.actor.name },
+      doc, ...(prepared.original ? { originalDocKey: docKeyOf(prepared.original.doc_id) } : {}),
+    }, { subject: `phieu-ban.doc:${id}`, dedupeKey: `phieu-ban.doc.recorded:${id}:${version}` });
+    return doc;
   });
 }
 
@@ -102,6 +111,10 @@ export async function unapprove(ctx: ActionContext, id: string, reason: string) 
   return ctx.data.module(async (tx) => {
     await setStatus(tx, id, { status: 'draft', ledgerStatus: res.cancelled ? 'cancelled' : res.requested ? 'cancel_requested' : r.ledger_status, actor: ctx.actor.id });
     return { ...toTradeDoc(await getDoc(tx, id)), reversed: res.reversed };
+  }).then(async (doc) => {
+    await ctx.events.emit('phieu-ban.doc.cancelled', { docId: id, docKey: docKeyOf(id), version: r.ledger_version, kind: r.kind, branchCode: r.branch_code },
+      { subject: `phieu-ban.doc:${id}`, dedupeKey: `phieu-ban.doc.cancelled:${id}:${r.ledger_version}` });
+    return doc;
   });
 }
 

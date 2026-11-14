@@ -9,7 +9,7 @@
   "owners": ["@hoanganh8389"],
   "standard": "^1.0",
   "requires": {
-    "capabilities": ["ledger.submit", "ledger.cancel", "data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt"]
+    "capabilities": ["ledger.submit", "ledger.cancel", "data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.outbox"]
   },
   "permissions": [
     { "key": "phieu-ban:read", "label": "Xem phiếu bán / trả hàng nhập tay", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" },
@@ -34,6 +34,12 @@
     "submits": [
       { "docType": "sale", "contract": "bizcity_ledger_intake@1" },
       { "docType": "sale_return", "contract": "bizcity_ledger_intake@1" }
+    ]
+  },
+  "events": {
+    "emits": [
+      { "type": "phieu-ban.doc.recorded", "version": 1 },
+      { "type": "phieu-ban.doc.cancelled", "version": 1 }
     ]
   },
   "ui": { "icon": "FileText", "color": "#0e7490", "order": 31 }
