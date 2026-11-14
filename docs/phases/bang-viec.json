@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 313
+      "count": 314
     }
   ],
   "items": [
@@ -8996,15 +8996,9 @@
       "phase": "PHASE-036",
       "title": "B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
-        "branch": "feat/s036-3-don-vi-trang",
-        "state": "đang làm",
-        "since": "2026-11-14",
-        "dot": "PHASE-036 · S036-3 — B1 đơn vị trắng: tenantEmptiness() + core.setup.status + biểu ngữ ở Tổng quan;…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "modules": [
         "he-thong"
       ],

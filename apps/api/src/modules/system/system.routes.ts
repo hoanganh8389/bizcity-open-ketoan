@@ -52,6 +52,8 @@ import { notifyActions } from './notify.actions.js';
 import { queueActions } from './queue.routes.js';
 // [2026-11-08 02:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13): API chính sách cho nguồn ngoài
 import { policyActions } from './policy.routes.js';
+// [2026-11-14 03:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3: đơn vị trắng (core.setup.status)
+import { setupActions } from './setup-status.js';
 import { zodToJson } from '../../core/json-schema.js';
 
 // [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
@@ -279,6 +281,7 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, notifyActions);
   mountActions(app, queueActions);
   mountActions(app, policyActions); // PHASE-031 W3a
+  mountActions(app, setupActions); // PHASE-036 S036-3
 
   // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: chạy seed[] của manifest cho đơn vị (dữ liệu mẫu qua core.*.upsert)
   // @bizcity-route: nạp dữ liệu mẫu bằng cách gọi các action danh mục chuẩn (mỗi mục đã có bằng chứng riêng)
