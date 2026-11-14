@@ -77,12 +77,13 @@ export const GON_DEFS: GonDef[] = [
   {
     key: 'ban-hang', label: 'Bán hàng', icon: 'ShoppingCart', description: 'Bán hàng, trả lại hàng bán, công nợ phải thu', color: '#d93025', module: 'ban-hang', homeLabel: 'Quy trình',
     // [2026-11-13 04:00 PM Võ Hoàng] UX-14 — nhóm Bán hàng theo mẫu Mua hàng: máy POS (BH13–BH17) và chương trình bán BH12 vào nhóm; Phần riêng giữ lối tắt (NT-BH-013 §5 dòng 5) (đóng góp)
-    the: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/app/pos/don-ban', '/ban-hang/chuong-trinh', '/danh-muc/khach-hang'],
+    // [2026-11-15 10:15 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: BH12 gộp vào BH18 Chương trình khuyến mại — mọi lối tắt trỏ màn mới (đóng góp)
+    the: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/app/pos/don-ban', '/app/pos/khuyen-mai', '/danh-muc/khach-hang'],
     sections: [
       { paths: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/ban-hang/thu-tien'], soon: ['Đơn đặt hàng', 'Giảm giá hàng bán'] },
       { label: 'Bán lẻ máy POS', paths: ['/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan'] },
       // [2026-11-14 01:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: Khuyến mại hết mờ, mở BH18 (đóng góp)
-      { label: 'Chính sách bán', paths: ['/ban-hang/chuong-trinh', '/app/pos/khuyen-mai', '/danh-muc/bang-gia'], soon: ['Hạn mức nợ khách'] },
+      { label: 'Chính sách bán', paths: ['/app/pos/khuyen-mai', '/danh-muc/bang-gia'], soon: ['Hạn mức nợ khách'] },
       { label: 'Danh mục', paths: ['/danh-muc/khach-hang', '/danh-muc/mat-hang', '/cau-hinh/hinh-thuc-thanh-toan'] },
       // [2026-11-13 09:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: bỏ mục mờ "Định khoản bán hàng" — tài khoản bán hàng xem ở khối ④ của BH17, sửa ở ACC41 (đóng góp)
       { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/tai-khoan-ngam-dinh'] },
@@ -169,7 +170,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Đặt hàng theo tồn max', paths: ['/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/dang-ky-max', '/mua-hang/cong-thuc', '/mua-hang/chuyen-shop'] },
       { label: 'Chính sách mua', paths: ['/mua-hang/chinh-sach', '/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky', '/mua-hang/cai-dat', '/mua-hang/bien-the', '/mua-hang/dvt-thung'] },
       // [2026-11-12 10:10 PM Võ Hoàng] POS-UIKIT — mục Bán lẻ máy POS: màn quản trị của module pos (NT-BH-008) + Chương trình bán (BH12) cùng một chỗ (đóng góp)
-      { label: 'Bán lẻ máy POS', paths: ['/ban-hang/chuong-trinh', '/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan', '/app/pos/cai-dat'] },
+      { label: 'Bán lẻ máy POS', paths: ['/app/pos/khuyen-mai', '/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan', '/app/pos/cai-dat'] },
       { label: 'Bán lẻ, giá vốn', paths: ['/ban-hang/thu-tien', '/cau-hinh/hinh-thuc-thanh-toan', '/nghiep-vu/cong-thuc-gia-von', '/tai-san/ke-hoach-khau-hao'] },
       { label: 'Công nợ', paths: ['/cong-no/khoan-cong-no', '/cong-no/phai-thu', '/cong-no/phai-tra', '/nghiep-vu/can-tru-cong-no', '/cong-no/dat-coc', '/cong-no/yeu-cau-thanh-toan', '/cong-no/chung-tu-nguon', '/cong-no/doi-chieu'] },
     ],

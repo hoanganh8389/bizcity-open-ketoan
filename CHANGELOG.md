@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Một màn Chương trình khuyến mại: gộp Chương trình bán (BH12) vào Khuyến mại (BH18) (phiếu NT-BH-018) <!-- [2026-11-15 10:50 AM Võ Hoàng] NGHIEM-THU — NT-BH-018 (đóng góp) -->
+
+- **Đổi:** màn BH18 thành **Chương trình khuyến mại** (module `pos`): thẻ *Khuyến mại* (6 loại), *Có hạn mức* (tặng hàng / giảm giá trên một mặt hàng, hạn mức từng cửa hàng — trước là BH12), *Báo cáo hạn mức*; **+ Thêm** có 8 loại; **Thử tính** chung mọi chương trình.
+- **Đổi:** menu Bán hàng → Chính sách bán, Phần riêng, ô *Giá & chính sách* ở Luồng chi tiết mở BH18; bỏ mục *Chương trình bán*. Đường cũ `/ban-hang/chuong-trinh` chuyển sang thẻ *Có hạn mức*.
+- **Không đổi:** API `/api/v1/sale-programs`, dữ liệu, khuôn `sale.program.*@1`, tự trừ / trả hạn mức khi ghi sổ / huỷ.
+- **Thay đổi định khoản:** không.
+
 ### Phiếu bán nhập tay: khuyến mại cùng bộ tính máy bán (NT-BH-015 §5 dòng 4) <!-- [2026-11-14 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 §5 dòng 4: khuyến mại trên phiếu bán nhập tay (đóng góp) -->
 
 - **Thêm:** khối **Khuyến mại** ở phiếu bán (BH10): *Áp khuyến mại* gọi `POST /api/v1/policies/evaluate` (chương trình BH12 + khuyến mại BH18 đang chạy ở cửa hàng), ô mã giảm giá, bỏ chọn từng chương trình, nhắc áp lại khi đổi giỏ.
