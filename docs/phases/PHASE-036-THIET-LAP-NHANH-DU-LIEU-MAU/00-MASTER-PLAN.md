@@ -187,3 +187,72 @@ B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớ
 - Gọi một lần khi mở Tổng quan, `staleTime` 60 giây.
 
 **Kiểm:** `apps/api/test/setup-status.test.ts` — đơn vị mới → trắng; mỗi loại trong danh sách làm đơn vị hết trắng (ít nhất: phiếu thu chi nháp / chứng từ cửa nạp, phiếu mua nháp, bể chờ); đơn vị khác không thấy (RLS); người không có `settings:write` → `canSetup: false`.
+
+## 11. Chữ chốt B2 — máy chủ chạy gói mẫu (2026-11-14) <!-- [2026-11-14 05:48 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B2 (S036-4): core.setup.presets / plan / apply / run, sample_runs, chạy nền gọi lại action Core, cai-preset.mjs thành vỏ mỏng -->
+
+**Đường duy nhất: gọi lại action Core trong tiến trình.** Bộ chạy (`apps/api/src/modules/system/setup-run.ts`) đọc `presets/<id>/` và gọi `runAction` với quyền **của người bấm** cho từng bản ghi:
+
+| Khối | Action |
+|---|---|
+| chế độ ghi sổ | `core.posting-modes.update` |
+| chi nhánh | `core.branch.create` |
+| đối tượng | `core.partner.upsert` |
+| mặt hàng | `core.product.upsert` |
+| chứng từ | `core.document.submit` |
+
+Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định khoản, bằng chứng như khi gõ tay (STD-PRE-3, D036-6) — không SQL, không ghi thẳng bảng, không số tài khoản. Tiền lệ: `runModuleSeed` (`POST /api/v1/system/modules/:key/seed`).
+
+**Chạy lại không nhân đôi, không ghi đè:**
+
+- Danh mục chỉ **tạo khi chưa có**: tra mã trước, đã có thì *bỏ qua*, không sửa bản ghi người dùng đã chỉnh.
+- Chứng từ theo `docKey` `preset:<id>:…` + `version` → lần hai `unchanged`.
+- Chế độ ghi sổ chỉ đặt ở **lần chạy đầu** (đơn vị còn trắng lúc bắt đầu).
+- Idempotency-Key mỗi bước: `setup:<runId>:<bước>`.
+- Ngày `@today-N` thay theo ngày máy chủ (giờ Việt Nam).
+
+**Bảng `sample_runs`** (migration số kế tiếp, tệp `*_sample_runs.sql`):
+
+- Cột: đơn vị, `preset_id`, `preset_version`, `status` (`running` | `done` | `failed`), `steps jsonb` (mỗi khối: tổng, ghi, bỏ qua, lỗi, mã lỗi + requestId của mục lỗi đầu), `started_by`, `started_at`, `heartbeat_at`, `finished_at`.
+- Chỉ mục duy nhất một phần `(tenant_id) WHERE status = 'running'`: hai lệnh cùng lúc → lệnh sau `CONFLICT` (T036-3).
+- `running` mà `heartbeat_at` cũ hơn 5 phút (API khởi động lại giữa chừng) → đọc / bấm lại thì coi là `failed`, cho chạy lại.
+- RLS theo đơn vị, `COMMENT ON`; `ketoan_app`: SELECT, INSERT, UPDATE.
+
+**Ai được chạy:** đơn vị **trắng** (`tenantEmptiness(trx, id, { lock: true })`, §10), **hoặc** đã có một lần chạy của **cùng gói** (chạy tiếp sau lỗi / chạy lại). Ngoài ra → `CONFLICT` `details.reason = SETUP_NOT_EMPTY`, không ghi gì (D036-4, T036-2). Đang chạy → `SETUP_RUNNING`. Kiểm + ghi dòng `running` cùng một giao dịch có khoá; từng bước sau đó là giao dịch riêng của action.
+
+**Giao diện máy:**
+
+| Action / route | Đường | Quyền | Ghi chú |
+|---|---|---|---|
+| `core.setup.presets` | `GET /api/v1/setup/presets` | `catalog:read` | danh sách gói: id, phiên bản, tên, mô tả, khối |
+| `core.setup.plan` | `GET /api/v1/setup/presets/:id/plan` | `settings:write` | xem trước, không ghi: mỗi khối tổng / đã có / sẽ thêm; `allowed` + lý do; năng lực Core thiếu (STD-PRE-6) |
+| apply (route giữ) | `POST /api/v1/setup/presets/:id/apply` | `settings:write` | trả **202** `{ runId }` rồi chạy nền; `Idempotency-Key` bắt buộc; không mở cho AI |
+| `core.setup.run` | `GET /api/v1/setup/runs/:id` | `catalog:read` | tiến độ từng khối |
+| `core.setup.status` | `GET /api/v1/setup/status` | `catalog:read` | thêm `runs[]`: lần chạy gần nhất của mỗi gói |
+
+- **Vì sao apply là route giữ, không phải `defineAction`:** bộ chạy nền cần `AuthContext` của người bấm để gọi lại action con với đúng quyền. Handler action không có `AuthContext` (chỉ `ctx.actor`, `ctx.can`). Thêm năng lực đó vào runtime là việc Platform riêng (bậc 4).
+- Route vào danh sách đóng `tests/conformance/checks/authz/route-giu.json` (lớp `quyen`) kèm lý do `@bizcity-route`, như `/system/modules/:key/seed`. Mỗi bản ghi bên trong đã có bằng chứng của action con.
+
+**Thứ đi kèm:**
+
+- `PRESETS_DIR` ở `packages/platform/src/db/paths.ts` (mặc định `<gốc>/presets`).
+- `docker/api.Dockerfile` chép `presets/` vào ảnh.
+- Mã lý do `SETUP_NOT_EMPTY`, `SETUP_RUNNING` thêm vào `ERROR_REASONS` (`packages/contracts/src/errors.ts`) và bảng [BIZCITY-ERRORS §4c](../../contracts/BIZCITY-ERRORS-v1.md).
+- [BIZCITY-PRESET-v1](../../contracts/BIZCITY-PRESET-v1.md) 1.1.0: STD-PRE-3 thêm "máy chủ chạy qua action Core"; §1 đổi đường cài; changelog.
+
+**`scripts/cai-preset.mjs` thành vỏ mỏng:**
+
+- Đăng nhập → `plan` (in bảng) → `apply` → hỏi `run` mỗi giây tới khi xong → in kết quả từng khối.
+- `--dry-run` chỉ gọi `plan`. `--no-sample` giữ (chỉ khối cấu hình).
+- Mã thoát ≠ 0 khi `failed` / `SETUP_NOT_EMPTY`.
+
+**Kiểm:** `apps/api/test/setup-apply.test.ts`:
+
+- đơn vị trắng → `done`, có bút toán của chứng từ mẫu;
+- chạy lại → 0 ghi;
+- đơn vị có phiếu nháp → `SETUP_NOT_EMPTY`, không có `sample_runs`;
+- hai lệnh cùng lúc → một `SETUP_RUNNING`;
+- `plan` không ghi gì;
+- người không có `settings:write` → 403;
+- `running` cũ → coi là `failed`.
+
+`apps/api/test/preset.test.ts` chạy `cai-preset.mjs` vào máy chủ thật như cũ.
