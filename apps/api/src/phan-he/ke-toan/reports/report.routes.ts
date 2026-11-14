@@ -34,6 +34,9 @@ import { authOf, requirePermission } from '../../../core/auth.js';
 import { ok, pageMeta, pageQuerySchema, queryBool } from '../../../core/http.js';
 import { reportService } from './report.service.js';
 import { BCTC_REPORTS, bctcSaveSchema, lapBctcService } from './lap-bctc.js';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — Lập BCTC gác theo thao tác màn ACC99 (lưu / xoá) (đóng góp)
+import { quyenThaoTac } from '../../../modules/access/man-hinh.js';
+import '../man-hinh-ke-toan.js'; // đăng ký màn Kế toán trước khi lệnh đọc quyền
 import { registerActions } from '../../../core/actions.js';
 import { reportActions } from './report.actions.js';
 import { EXPENSE_GROUPS, type ExpenseGroup } from './control-reports.js';
@@ -58,7 +61,6 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
   const pre = requirePermission('reports:read');
 
   // [2026-11-11 Nguyễn Văn Thủy] Lập báo cáo tài chính (ACC99): lập số theo kỳ, lưu bộ đã lập (đóng góp)
-  const bctcWrite = requirePermission('documents:write');
   const idParam = z.object({ id: z.coerce.number().int().positive() });
   r.get('/api/v1/financial-statements', {
     preHandler: pre,
@@ -76,12 +78,12 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await lapBctcService.get(authOf(req), req.params.id)),
   });
   r.put('/api/v1/financial-statements', {
-    preHandler: bctcWrite,
+    preHandler: requirePermission(quyenThaoTac('ke-toan.lap-bctc', 'luu')), // [2026-11-13 08:00 PM kiennt] NT-HT-003 — thao tác luu của màn ACC99 (đóng góp)
     schema: { tags, summary: 'Ghi bộ báo cáo tài chính đã lập (thêm mới hoặc sửa)', body: bctcSaveSchema },
     handler: async (req) => ok(await lapBctcService.save(authOf(req), req.body)),
   });
   r.delete('/api/v1/financial-statements/:id', {
-    preHandler: bctcWrite,
+    preHandler: requirePermission(quyenThaoTac('ke-toan.lap-bctc', 'xoa')), // [2026-11-13 08:00 PM kiennt] NT-HT-003 — thao tác xoa của màn ACC99 (đóng góp)
     schema: { tags, summary: 'Xoá bộ báo cáo tài chính đã lập', params: idParam },
     handler: async (req) => ok(await lapBctcService.remove(authOf(req), req.params.id)),
   });

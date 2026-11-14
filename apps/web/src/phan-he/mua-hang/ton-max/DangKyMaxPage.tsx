@@ -19,10 +19,12 @@ import { ChonMatHang } from '../thanh-phan/ChonMatHang';
 import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
 import { fold, num, qtyFmt, stockApi, useHierarchy, type BranchNode, type MaxRequest } from './api';
 import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from './chung';
+import { useThaoTac } from '@/lib/manHinh';
 
 const TONE: Record<MaxRequestStatus, string> = { draft: 'info', submitted: 'warn', approved: 'ok', cancelled: 'bad' };
 
 export function DangKyMaxPage() {
+  const tt = useThaoTac('mua-hang.dang-ky-max'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút lập phiếu theo thao tác "them" của màn MH17 (đóng góp)
   const h = useHierarchy();
   const [parent, setParent] = useState('');
   const [from, setFrom] = useState(monthStart());
@@ -55,8 +57,8 @@ export function DangKyMaxPage() {
           <label className="tm-parent"><span>Từ</span><input type="date" className="input" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
           <label className="tm-parent"><span>Đến</span><input type="date" className="input" value={to} onChange={(e) => setTo(e.target.value)} /></label>
           <span className="grow" />
-          <button className="btn btn-sm" disabled={!parent} onClick={() => setOpen({ kind: 'new_item', branchCode: parent })}><Plus size={14} /> Phiếu hàng mới</button>
-          <button className="btn btn-primary" disabled={!parent} onClick={() => setOpen({ kind: 'existing' })}><Plus size={14} /> Phiếu shop đăng ký max</button>
+          {tt.them && <button className="btn btn-sm" disabled={!parent} onClick={() => setOpen({ kind: 'new_item', branchCode: parent })}><Plus size={14} /> Phiếu hàng mới</button>}
+          {tt.them && <button className="btn btn-primary" disabled={!parent} onClick={() => setOpen({ kind: 'existing' })}><Plus size={14} /> Phiếu shop đăng ký max</button>}
         </div>
         <div className="tm-stats">
           <KhoiSo label="Tất cả" value={all.length} active={!status} onClick={() => setStatus('')} />
@@ -75,6 +77,8 @@ export function DangKyMaxPage() {
 
 function PhieuDangKy({ parent, init, branches, onClose }: { parent: string; init: { id?: string; kind: MaxRequestKind; branchCode?: string }; branches: BranchNode[]; onClose: () => void }) {
   const qc = useQueryClient();
+  const tt = useThaoTac('mua-hang.dang-ky-max'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — Lưu / Gửi duyệt / Duyệt / Huỷ theo thao tác màn MH17 (đóng góp)
+  const luu = init.id ? tt.sua : tt.them;
   const shops = branches.filter((b) => b.level === 'shop' && b.parentCode === parent);
   const cur = useQuery({ queryKey: ['ton-max', 'max-request', init.id], enabled: Boolean(init.id), queryFn: () => stockApi.maxRequest(init.id!) });
   const [branch, setBranch] = useState(init.branchCode ?? '');
@@ -130,15 +134,15 @@ function PhieuDangKy({ parent, init, branches, onClose }: { parent: string; init
   return (
     <Modal wide title={req ? `${req.code} · ${kind === 'new_item' ? 'Đăng ký max hàng mới' : 'Shop đăng ký tồn max'} — ${MAX_REQUEST_STATUS[req.status]}` : kind === 'new_item' ? 'Phiếu đăng ký max hàng mới (mặt hàng × shop)' : 'Phiếu shop đăng ký tồn max'} onClose={onClose}
       footer={<>
-        {req && req.status !== 'cancelled' && !(req.status === 'approved' && kind === 'existing') && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => void cancel()}>Huỷ phiếu</button>}
+        {req && req.status !== 'cancelled' && !(req.status === 'approved' && kind === 'existing') && tt.huy && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => void cancel()}>Huỷ phiếu</button>}
         <button className="btn" onClick={() => void (kind === 'new_item' ? template() : exportExisting())}><FileDown size={14} /> Xuất Excel</button>
         {!locked && <>
-          {(!req || req.status === 'draft') && <button className="btn" disabled={busy} onClick={() => void save({})}>Lưu nháp</button>}
-          {(!req || req.status === 'draft') && <button className="btn" disabled={busy} onClick={() => void save({ submit: true })}>Gửi duyệt</button>}
-          {req?.status === 'approved' && kind === 'new_item' && <button className="btn btn-primary" disabled={busy} onClick={() => void save({})}>Lưu (gắn mã → ghi max)</button>}
-          {req?.status === 'submitted' && <button className="btn" disabled={busy} onClick={() => void save({ submit: true })}>Lưu sửa</button>}
-          {req?.status === 'submitted' ? <button className="btn btn-primary" disabled={busy} onClick={() => void approve()}>Duyệt (ghi max)</button>
-            : req?.status !== 'approved' && <button className="btn btn-primary" disabled={busy} onClick={() => void save({ approve: true })}>Lưu & duyệt</button>}
+          {(!req || req.status === 'draft') && luu && <button className="btn" disabled={busy} onClick={() => void save({})}>Lưu nháp</button>}
+          {(!req || req.status === 'draft') && luu && <button className="btn" disabled={busy} onClick={() => void save({ submit: true })}>Gửi duyệt</button>}
+          {req?.status === 'approved' && kind === 'new_item' && tt.sua && <button className="btn btn-primary" disabled={busy} onClick={() => void save({})}>Lưu (gắn mã → ghi max)</button>}
+          {req?.status === 'submitted' && tt.sua && <button className="btn" disabled={busy} onClick={() => void save({ submit: true })}>Lưu sửa</button>}
+          {req?.status === 'submitted' ? tt.duyet && <button className="btn btn-primary" disabled={busy} onClick={() => void approve()}>Duyệt (ghi max)</button>
+            : req?.status !== 'approved' && luu && tt.duyet && <button className="btn btn-primary" disabled={busy} onClick={() => void save({ approve: true })}>Lưu & duyệt</button>}
         </>}
         <button className="btn" onClick={onClose}>Đóng</button>
       </>}>

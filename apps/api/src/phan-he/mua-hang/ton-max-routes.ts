@@ -22,6 +22,9 @@ import {
 } from './ton-max.js';
 import { maxImport, maxPreview, maxRowsSchema, priceImport, pricePreview, priceRowsSchema, reconcileApply, reconcilePreview, stockRowsSchema } from './khoi-dau.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — tồn max (MH16), đăng ký max (MH17), chuyển shop (MH19) gác theo thao tác màn; documents:read / write kéo theo (đóng góp)
+import { quyenThaoTac } from '../../modules/access/man-hinh.js';
+import './man-hinh-mua-hang.js'; // đăng ký màn Mua hàng trước khi lệnh đọc quyền
 
 const tags = ['Mua hàng: Tồn max & đặt hàng'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -38,9 +41,9 @@ export async function stockRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/stock/hierarchy', { preHandler: read, schema: { tags, summary: 'Chi nhánh cha → shop (2 cấp) + kho của từng chi nhánh' }, handler: async (req) => ok(await hierarchy(db, authOf(req).tenantId)) });
 
   // ---------------- Tồn max
-  r.get('/api/v1/stock/levels', { preHandler: read, schema: { tags, summary: 'Tồn max / min (lọc theo chi nhánh, mã)', querystring: z.object({ branchCodes: list, skus: list }) },
+  r.get('/api/v1/stock/levels', { preHandler: requirePermission(quyenThaoTac('mua-hang.ton-max', 'xem')), schema: { tags, summary: 'Tồn max / min (lọc theo chi nhánh, mã)', querystring: z.object({ branchCodes: list, skus: list }) },
     handler: async (req) => ok(await listLevels(db, authOf(req).tenantId, { branchCodes: req.query.branchCodes, skus: req.query.skus })) });
-  r.get('/api/v1/stock/max-board', { preHandler: read, schema: { tags, summary: 'Bảng tồn max: một chi nhánh / shop (mỗi mã một dòng) hoặc một mã ở mọi chi nhánh trong cây', querystring: z.object({ parentCode: z.string().min(1), branchCode: z.string().optional(), warehouseCode: z.string().optional(), sku: z.string().optional(), asOf: day.optional() }) },
+  r.get('/api/v1/stock/max-board', { preHandler: requirePermission(quyenThaoTac('mua-hang.ton-max', 'xem')), schema: { tags, summary: 'Bảng tồn max: một chi nhánh / shop (mỗi mã một dòng) hoặc một mã ở mọi chi nhánh trong cây', querystring: z.object({ parentCode: z.string().min(1), branchCode: z.string().optional(), warehouseCode: z.string().optional(), sku: z.string().optional(), asOf: day.optional() }) },
     handler: async (req) => ok(await maxBoard(db, authOf(req).tenantId, req.query.parentCode, req.query)) });
   r.get('/api/v1/stock/sku-settings', { preHandler: read, schema: { tags, summary: 'Cài riêng từng mã (số ngày đo bán, số ngày đủ hàng, cách làm tròn khi chuyển)', querystring: z.object({ skus: list }) },
     handler: async (req) => ok(await listSkuSettings(db, authOf(req).tenantId, req.query.skus)) });
@@ -53,17 +56,17 @@ export async function stockRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await orderAnalysisMany(db, authOf(req).tenantId, req.query.branchCode.split(','), req.query)) });
 
   // ---------------- Chuyển hàng xuống shop
-  r.get('/api/v1/stock/transfer-suggest', { preHandler: read, schema: { tags, summary: 'Đề xuất chuyển hàng từ kho chi nhánh cha xuống shop (max − tồn − đi đường, làm tròn thùng)', querystring: z.object({ branchCode: z.string().min(1), fromWarehouse: z.string().optional(), shopCodes: list, asOf: day.optional(), rounding: z.enum(['sku', 'pack', 'none']).optional(), allocation: z.enum(['shortage', 'selected', 'equal', 'manual']).optional() }) },
+  r.get('/api/v1/stock/transfer-suggest', { preHandler: requirePermission(quyenThaoTac('mua-hang.chuyen-shop', 'xem')), schema: { tags, summary: 'Đề xuất chuyển hàng từ kho chi nhánh cha xuống shop (max − tồn − đi đường, làm tròn thùng)', querystring: z.object({ branchCode: z.string().min(1), fromWarehouse: z.string().optional(), shopCodes: list, asOf: day.optional(), rounding: z.enum(['sku', 'pack', 'none']).optional(), allocation: z.enum(['shortage', 'selected', 'equal', 'manual']).optional() }) },
     handler: async (req) => ok(await transferSuggest(db, authOf(req).tenantId, req.query.branchCode, req.query)) });
-  r.get('/api/v1/stock/transfer-requests', { preHandler: read, schema: { tags, summary: 'Đề nghị chuyển hàng đã chốt (kho / POS quét để lên phiếu chuyển)', querystring: z.object({ from: day.optional(), to: day.optional(), status: z.string().optional(), branchCode: z.string().optional() }) },
+  r.get('/api/v1/stock/transfer-requests', { preHandler: requirePermission(quyenThaoTac('mua-hang.chuyen-shop', 'xem')), schema: { tags, summary: 'Đề nghị chuyển hàng đã chốt (kho / POS quét để lên phiếu chuyển)', querystring: z.object({ from: day.optional(), to: day.optional(), status: z.string().optional(), branchCode: z.string().optional() }) },
     handler: async (req) => ok(await listTransferRequests(db, authOf(req).tenantId, req.query)) });
 
   // ---------------- Phiếu đăng ký tồn max
-  r.get('/api/v1/stock/max-requests', { preHandler: read, schema: { tags, summary: 'Phiếu đăng ký tồn max (lọc ngày lập, trạng thái, chi nhánh, loại)', querystring: z.object({ from: day.optional(), to: day.optional(), status: z.string().optional(), branchCode: z.string().optional(), kind: z.string().optional() }) },
+  r.get('/api/v1/stock/max-requests', { preHandler: requirePermission(quyenThaoTac('mua-hang.dang-ky-max', 'xem')), schema: { tags, summary: 'Phiếu đăng ký tồn max (lọc ngày lập, trạng thái, chi nhánh, loại)', querystring: z.object({ from: day.optional(), to: day.optional(), status: z.string().optional(), branchCode: z.string().optional(), kind: z.string().optional() }) },
     handler: async (req) => ok(await listMaxRequests(db, authOf(req).tenantId, req.query)) });
-  r.get('/api/v1/stock/max-requests/suggest', { preHandler: read, schema: { tags, summary: 'Dòng gợi ý cho phiếu đăng ký của một shop (bán / ngày, max gợi ý, max hiện tại)', querystring: z.object({ branchCode: z.string().min(1) }) },
+  r.get('/api/v1/stock/max-requests/suggest', { preHandler: requirePermission(quyenThaoTac('mua-hang.dang-ky-max', 'xem')), schema: { tags, summary: 'Dòng gợi ý cho phiếu đăng ký của một shop (bán / ngày, max gợi ý, max hiện tại)', querystring: z.object({ branchCode: z.string().min(1) }) },
     handler: async (req) => ok(await maxRequestSuggest(db, authOf(req).tenantId, req.query.branchCode)) });
-  r.get('/api/v1/stock/max-requests/:id', { preHandler: read, schema: { tags, summary: 'Một phiếu đăng ký tồn max', params: idParamSchema }, handler: async (req) => ok(await getMaxRequest(db, authOf(req).tenantId, req.params.id)) });
+  r.get('/api/v1/stock/max-requests/:id', { preHandler: requirePermission(quyenThaoTac('mua-hang.dang-ky-max', 'xem')), schema: { tags, summary: 'Một phiếu đăng ký tồn max', params: idParamSchema }, handler: async (req) => ok(await getMaxRequest(db, authOf(req).tenantId, req.params.id)) });
 
   // ---------------- Nhập dữ liệu khởi đầu (MH20)
   const init = requirePermission('catalog:write');
@@ -78,7 +81,8 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   // [2026-11-03 11:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: ba route đổi trạng thái đề nghị chuyển hàng (trước: vòng lặp tạo route, công cụ bỏ sót)
   ...([['done', 'done', 'Đánh dấu đã lên phiếu chuyển'], ['cancel', 'cancelled', 'Huỷ đề nghị'], ['reopen', 'open', 'Mở lại đề nghị']] as const).map(([path, status, title]) => defineAction({
     id: `mua-hang.transfer-request.${path}`, title, tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    // [2026-11-13 08:00 PM kiennt] NT-HT-003 — huỷ đề nghị theo thao tác huy, đã lên phiếu / mở lại theo thao tác xong của màn MH19 (đóng góp)
+    get permission() { return quyenThaoTac('mua-hang.chuyen-shop', path === 'cancel' ? 'huy' : 'xong'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: `/api/v1/stock/transfer-requests/:id/${path}` }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'transfer_request', objectId: (i) => String(i.id) },
@@ -108,7 +112,7 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.stock.levels', title: 'Ghi hàng loạt tồn max / min (kho trống = kho mặc định; remove = xoá)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.ton-max', 'sua'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({ items: z.array(levelInputSchema).min(1).max(20000), source: z.enum(['manual', 'import', 'suggest']).default('manual') }), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/stock/levels' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock' },
@@ -117,7 +121,7 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.stock.sku-settings', title: 'Ghi cài riêng từng mã', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.ton-max', 'sua'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({ items: z.array(skuSettingSchema).min(1).max(20000) }), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/stock/sku-settings' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock' },
@@ -136,7 +140,7 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.transfer-request.create', title: 'Chốt đề nghị chuyển hàng (mỗi shop một đề nghị)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'required',
+    get permission() { return quyenThaoTac('mua-hang.chuyen-shop', 'them'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'required',
     input: transferCreateSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/stock/transfer-requests', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'transfer_request' },
@@ -145,7 +149,7 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.max-request.create', title: 'Lập phiếu đăng ký tồn max (submit = gửi duyệt; POS gửi source pos)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'required',
+    get permission() { return quyenThaoTac('mua-hang.dang-ky-max', 'them'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'required',
     input: maxRequestSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/stock/max-requests', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'max_request' },
@@ -154,7 +158,7 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.max-request.update', title: 'Sửa phiếu (phiếu hàng mới đã duyệt: gắn mã thì ghi max ngay)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.dang-ky-max', 'sua'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: (maxRequestSchema).merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/stock/max-requests/:id' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'max_request', objectId: (i) => String(i.id) },
@@ -164,7 +168,7 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.max-request.approve', title: 'Duyệt = ghi tồn max', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.dang-ky-max', 'duyet'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/stock/max-requests/:id/approve' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'max_request', objectId: (i) => String(i.id) },
@@ -173,7 +177,7 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.max-request.cancel', title: 'Huỷ phiếu', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.dang-ky-max', 'huy'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/stock/max-requests/:id/cancel' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'max_request', objectId: (i) => String(i.id) },

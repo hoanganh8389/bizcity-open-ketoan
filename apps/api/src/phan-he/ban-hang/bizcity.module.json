@@ -57,6 +57,86 @@
       "key": "ban-hang:tra-hang-xuat",
       "label": "Xuất Excel phiếu hàng bán trả lại (bảng kê bán hàng)",
       "risk": "low"
+    },
+    {
+      "key": "ban-hang:hoa-don-sua",
+      "label": "Sửa hoá đơn bán hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:hoa-don-duyet",
+      "label": "Duyệt / bỏ duyệt hoá đơn bán hàng",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:tra-hang-sua",
+      "label": "Sửa phiếu hàng bán trả lại",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:tra-hang-duyet",
+      "label": "Duyệt / bỏ duyệt phiếu hàng bán trả lại",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:chuong-trinh-xem",
+      "label": "Xem chương trình bán",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:chuong-trinh-lap",
+      "label": "Thêm chương trình bán",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:chuong-trinh-sua",
+      "label": "Sửa / ngừng chương trình bán",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ban-hang:chuong-trinh-han-muc",
+      "label": "Đổi hạn mức chương trình bán theo cửa hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
     }
   ],
   "data": {

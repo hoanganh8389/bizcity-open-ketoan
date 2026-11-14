@@ -15,6 +15,7 @@ import { FileBarChart, Plus, Trash2 } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { date, money, today } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, NumInput } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -151,7 +152,9 @@ export function LapBctcPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const canWrite = can('documents:write');
+  // [2026-11-13 08:00 PM kiennt] NT-HT-003 — lập / lưu theo thao tác màn ACC99 (đóng góp)
+  const tt = useThaoTac('ke-toan.lap-bctc');
+  const canWrite = can('documents:write') && Boolean(tt.luu);
   const list = useQuery({ queryKey: ['bctc', 'list'], queryFn: () => api.get<ListRow[]>('/api/v1/financial-statements') });
   const [thamSo, setThamSo] = useState(false);
   const [open, setOpen] = useState<{ init?: Saved; id?: number; seq: number } | null>(null);

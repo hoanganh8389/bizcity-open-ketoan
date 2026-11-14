@@ -24,6 +24,9 @@ import { notesService } from './notes.service.js';
 import { MANUAL_KEYS, vatReturnService } from './vat-return.service.js';
 import { CIT_MANUAL_KEYS, TAXPAYER_FIELDS, citReturnService, taxpayerService } from './cit-return.service.js';
 import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — lệnh tờ khai / phần dài hạn gác theo thao tác màn Thuế đã đăng ký (đóng góp)
+import { quyenThaoTac } from '../../../modules/access/man-hinh.js';
+import '../man-hinh-thue.js'; // đăng ký màn Thuế trước khi lệnh đọc quyền
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
 const branchCodes = z
@@ -63,12 +66,12 @@ export async function statementRoutes(app: FastifyInstance): Promise<void> {
   // [2026-11-11 Nguyễn Văn Thủy] danh sách tờ khai theo mẫu chuẩn: Xoá / Đánh dấu TCT chấp nhận một lần khai (đóng góp)
   const oneReturn = z.object({ ...periodQuery, scope: z.string().default(''), revision: z.coerce.number().int().min(0).default(0) });
   r.delete('/api/v1/vat-returns', {
-    preHandler: requirePermission('documents:write'),
+    preHandler: requirePermission(quyenThaoTac('thue.to-khai-gtgt', 'xoa')), // [2026-11-13 08:00 PM kiennt] NT-HT-003 — xoá lần khai theo thao tác màn ACC66 (đóng góp)
     schema: { tags: ['Thuế'], summary: 'Xoá một lần khai tờ khai thuế GTGT chưa được chấp nhận', querystring: oneReturn },
     handler: async (req) => ok(await vatReturnService.remove(authOf(req), req.query)),
   });
   r.post('/api/v1/vat-returns/accept', {
-    preHandler: requirePermission('documents:write'),
+    preHandler: requirePermission(quyenThaoTac('thue.to-khai-gtgt', 'chapNhan')), // [2026-11-13 08:00 PM kiennt] NT-HT-003 — đánh dấu chấp nhận theo thao tác màn ACC66 (đóng góp)
     schema: { tags: ['Thuế'], summary: 'Đánh dấu cơ quan thuế chấp nhận tờ khai thuế GTGT', body: oneReturn },
     handler: async (req) => ok(await vatReturnService.accept(authOf(req), req.body)),
   });
@@ -101,7 +104,7 @@ const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 export const statementsWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'thue.long-term-balance.update', title: 'Lưu phần dài hạn của một ngày (thay toàn bộ)', tags: ['Báo cáo tài chính'],
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('thue.phan-loai-dai-han', 'luu'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn đã đăng ký (đóng góp) */ effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({ asOf: date, lines: z.array(z.object({ accountCode: z.string().trim().min(1), partnerCode: z.string().trim().nullish(), amount: z.coerce.number(), note: z.string().optional() })) }), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/long-term-balances' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'long_term_balance' },
@@ -124,7 +127,7 @@ export const statementsWriteActions: AnyActionDef[] = [
 export const statementsMoreWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'thue.vat-return.save', title: 'Lưu tờ khai thuế GTGT (nháp hoặc chính thức)', tags: ['Thuế'],
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('thue.to-khai-gtgt', 'luu'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn đã đăng ký (đóng góp) */ effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({
         ...periodQuery,
         branchCodes: z.array(z.string()).optional(),
@@ -146,7 +149,7 @@ export const statementsMoreWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'thue.vat-return.supplement', title: 'Lập tờ khai bổ sung (kèm giải trình 01/KHBS, tiền chậm nộp); dryRun = chỉ tính', tags: ['Thuế'],
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('thue.to-khai-gtgt', 'boSung'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn đã đăng ký (đóng góp) */ effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({
         ...periodQuery,
         branchCodes: z.array(z.string()).optional(),
@@ -164,7 +167,7 @@ export const statementsMoreWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'thue.cit-return.save', title: 'Lưu tờ khai quyết toán thuế TNDN (nháp hoặc chính thức)', tags: ['Thuế'],
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('thue.quyet-toan-tndn', 'luu'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn đã đăng ký (đóng góp) */ effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({
         year: z.number().int().min(2000).max(2100),
         status: z.enum(['draft', 'final']).default('draft'),

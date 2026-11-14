@@ -51,6 +51,491 @@
       "key": "mua-hang:tra-ncc-huy",
       "label": "Huỷ phiếu trả hàng nhà cung cấp",
       "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-xem",
+      "label": "Xem chứng từ mua hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:hoa-don-ncc-xem",
+      "label": "Xem hoá đơn đầu vào của NCC",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:ton-max-xem",
+      "label": "Xem tồn max",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:dang-ky-max-xem",
+      "label": "Xem phiếu đăng ký tồn max",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chuyen-shop-xem",
+      "label": "Xem đề nghị chuyển hàng xuống shop",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:cong-thuc-xem",
+      "label": "Xem công thức đặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:nha-cung-cap-xem",
+      "label": "Xem nhà cung cấp mua hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chinh-sach-xem",
+      "label": "Xem chính sách mua hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:cai-dat-xem",
+      "label": "Xem cài đặt mua hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:bien-the-xem",
+      "label": "Xem biến thể mặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:dvt-thung-xem",
+      "label": "Xem ĐVT Thùng đặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:khoi-dau-xem",
+      "label": "Xem màn nhập dữ liệu khởi đầu",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:han-muc-xem",
+      "label": "Xem hạn mức & công nợ đến hạn NCC",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:thuong-xem",
+      "label": "Xem tính thưởng cuối kỳ",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:lo-han-xem",
+      "label": "Xem lô & hạn dùng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:qua-tang-xem",
+      "label": "Xem quà tặng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:doi-chieu-xem",
+      "label": "Xem đối chiếu đơn đặt ↔ phiếu nhập",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:so-kho-xem",
+      "label": "Xem sổ kho theo mặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:ton-kho-xem",
+      "label": "Xem tồn kho theo mặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-lap",
+      "label": "Thêm chứng từ mua hàng (đơn mua, phiếu nhập, trả lại, giảm giá…)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-sua",
+      "label": "Sửa chứng từ mua hàng nháp / chờ duyệt",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-gui-duyet",
+      "label": "Gửi duyệt chứng từ mua hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-duyet",
+      "label": "Duyệt (ghi sổ) chứng từ mua hàng",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-bo-duyet",
+      "label": "Bỏ duyệt chứng từ mua hàng (huỷ chứng từ kế toán đã sinh)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-huy",
+      "label": "Huỷ chứng từ mua hàng chưa duyệt",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chung-tu-duyet-ngoai-le",
+      "label": "Duyệt ngoại lệ vượt hạn mức / rà soát nhập ngoài đơn (còn cần quyền duyệt chi)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:hoa-don-ncc-lap",
+      "label": "Thêm / nhập / đọc hoá đơn đầu vào của NCC",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:hoa-don-ncc-sua",
+      "label": "Sửa hoá đơn đầu vào của NCC, xoá cách ghi mã đã học",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:hoa-don-ncc-huy",
+      "label": "Huỷ hoá đơn đầu vào của NCC",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:ton-max-sua",
+      "label": "Ghi tồn max / min, cài riêng từng mã",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:dang-ky-max-lap",
+      "label": "Lập phiếu đăng ký tồn max",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:dang-ky-max-sua",
+      "label": "Sửa phiếu đăng ký tồn max",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:dang-ky-max-duyet",
+      "label": "Duyệt phiếu đăng ký tồn max (ghi tồn max)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:dang-ky-max-huy",
+      "label": "Huỷ phiếu đăng ký tồn max",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chuyen-shop-lap",
+      "label": "Chốt đề nghị chuyển hàng xuống shop",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chuyen-shop-xong",
+      "label": "Đánh dấu đề nghị chuyển đã lên phiếu / mở lại",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chuyen-shop-huy",
+      "label": "Huỷ đề nghị chuyển hàng xuống shop",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:cong-thuc-sua",
+      "label": "Lưu công thức đặt hàng (còn cần quyền cấu hình)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:gia-mua-sua",
+      "label": "Thêm / sửa / xoá mặt hàng & giá mua NCC (còn cần quyền danh mục)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chinh-sach-lap",
+      "label": "Thêm chính sách mua hàng (còn cần quyền danh mục)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chinh-sach-sua",
+      "label": "Sửa chính sách mua hàng, điều chuyển hạn mức (còn cần quyền danh mục)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:chinh-sach-xoa",
+      "label": "Xoá chính sách mua hàng chưa áp (còn cần quyền danh mục)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:cai-dat-sua",
+      "label": "Lưu cài đặt mua hàng (còn cần quyền cấu hình)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:bien-the-sua",
+      "label": "Lưu biến thể mặt hàng (còn cần quyền cấu hình)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:dvt-thung-sua",
+      "label": "Chạy ĐVT Thùng đặt hàng / dọn dòng Thùng trống (còn cần quyền cấu hình)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:khoi-dau-nhap",
+      "label": "Ghi dữ liệu khởi đầu: giá mua, cân tồn, tồn max (còn cần quyền danh mục)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
     }
   ],
   "data": {

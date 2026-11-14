@@ -10,6 +10,8 @@ import { FileSpreadsheet, FileCode2, Trash2 } from 'lucide-react';
 import { AUTHORITY_INVOICE_STATUS_LABELS, type AuthorityInvoiceInput } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút nhập / xoá / chuyển tham chiếu theo thao tác màn THUE01 (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { date as fmtDate, money, today } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
@@ -55,6 +57,7 @@ export function AuthorityInvoicesPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [readErr, setReadErr] = useState<string | null>(null);
   const editable = can('documents:write');
+  const tt = useThaoTac('thue.hoa-don-co-quan-thue');
 
   const q = useQuery({ queryKey: ['authority-reconcile', direction, from, to], queryFn: () => api.get<Result>('/api/v1/authority-invoices/reconcile', { direction, from, to }) });
   const refresh = () => { setPicked(new Set()); void qc.invalidateQueries({ queryKey: ['authority-reconcile'] }); void qc.invalidateQueries({ queryKey: ['invoice-risks'] }); };
@@ -106,7 +109,7 @@ export function AuthorityInvoicesPage() {
   );
   const pickable = (r: Row) => r.kind === 'missing_in_books' && r.portal && !r.portal.referenceDocKey;
   const columns: Column<Row>[] = [
-    ...(editable ? [{
+    ...(editable && tt.thamChieu ? [{
       key: 'pick', header: '', width: 34, noFilter: true, noSort: true,
       render: (r: Row) => (pickable(r) ? <input type="checkbox" checked={picked.has(r.portal!.id)} onClick={(e) => e.stopPropagation()}
         onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(r.portal!.id); else n.delete(r.portal!.id); return n; })} /> : null),
@@ -143,19 +146,19 @@ export function AuthorityInvoicesPage() {
             </div>
             <div className="field"><label>Từ ngày</label><input type="date" className="input" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
             <div className="field"><label>Đến ngày</label><input type="date" className="input" value={to} onChange={(e) => setTo(e.target.value)} /></div>
-            {editable && (
+            {editable && (tt.nhap || tt.xoa) && (
               <div className="row" style={{ gap: 8, alignSelf: 'flex-end', flexWrap: 'wrap' }}>
-                <label className="btn" title="Tệp tải bằng nút Xuất excel ở màn tra cứu hoá đơn của cổng; chiều mua vào / bán ra theo ô Hoá đơn">
+                {tt.nhap && <><label className="btn" title="Tệp tải bằng nút Xuất excel ở màn tra cứu hoá đơn của cổng; chiều mua vào / bán ra theo ô Hoá đơn">
                   <FileSpreadsheet size={16} /> Nhập Excel từ cổng
                   <input type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={(e) => { void onExcel(e.target.files?.[0]); e.target.value = ''; }} />
                 </label>
                 <label className="btn" title="Chọn một hoặc nhiều tệp XML hoá đơn; tự nhận mua vào / bán ra theo mã số thuế người bán">
                   <FileCode2 size={16} /> Nhập XML hoá đơn
                   <input type="file" accept=".xml" multiple style={{ display: 'none' }} onChange={(e) => { void onXml(e.target.files); e.target.value = ''; }} />
-                </label>
-                <button className="btn" disabled={del.isPending || !s?.portal} onClick={() => window.confirm(`Xoá ${s?.portal} hoá đơn ${direction === 'input' ? 'mua vào' : 'bán ra'} đã nhập từ cổng trong khoảng ngày này? (Không ảnh hưởng sổ.)`) && del.mutate()}>
+                </label></>}
+                {tt.xoa && <button className="btn" disabled={del.isPending || !s?.portal} onClick={() => window.confirm(`Xoá ${s?.portal} hoá đơn ${direction === 'input' ? 'mua vào' : 'bán ra'} đã nhập từ cổng trong khoảng ngày này? (Không ảnh hưởng sổ.)`) && del.mutate()}>
                   <Trash2 size={16} /> Xoá dữ liệu cổng
-                </button>
+                </button>}
               </div>
             )}
           </>
@@ -175,7 +178,7 @@ export function AuthorityInvoicesPage() {
               </div>
             )}
             {s && s.portal === 0 && <div className="muted" style={{ marginBottom: 8 }}>Chưa nhập hoá đơn nào từ cổng trong khoảng ngày này: mọi hoá đơn trong sổ hiện là "Không có trên cổng".</div>}
-            {editable && picked.size > 0 && (
+            {editable && tt.thamChieu && picked.size > 0 && (
               <div className="row" style={{ gap: 8, marginBottom: 10, alignItems: 'flex-end' }}>
                 <div className="field"><label>Chi nhánh nhận</label>
                   <BranchPicker activeOnly value={branchCode || branches?.find((b) => b.isActive)?.code || ''} onChange={setBranchCode} />

@@ -19,6 +19,7 @@ import { ALL_KINDS, PolicyForm, newPolicy } from './PolicyForm';
 import { purchaseApi, today, useMuaHang, useNames, type LogRow } from '../du-lieu';
 import { dmy } from '../chung';
 import '../mua-hang.css';
+import { useThaoTac } from '@/lib/manHinh';
 
 type Row = Policy & { stt: number; state: string };
 /** Cách áp / cộng dồn của một chính sách: ô tích (chỉ đọc) cho quen mắt; loại không có lựa chọn này thì gạch ngang. */
@@ -33,6 +34,7 @@ const stamp = (iso?: string) => (iso ? new Date(iso).toLocaleString('vi-VN', { h
 
 export function ChinhSachPage() {
   const { data, isLoading, refresh } = useMuaHang();
+  const tt = useThaoTac('mua-hang.chinh-sach'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — Thêm chính sách theo thao tác "them" của màn MH04 (đóng góp)
   const names = useNames();
   const [params, setParams] = useSearchParams();
   const [kind, setKind] = useState<PolicyKind | ''>((params.get('loai') as PolicyKind) ?? '');
@@ -91,7 +93,7 @@ export function ChinhSachPage() {
           <select className="select input" style={{ width: 215 }} value={apply} onChange={(e) => setApply(e.target.value)} title="Áp riêng: mã nhận chương trình thì không nhận chương trình khác; áp đồng thời: cộng với các chương trình khác"><option value="">Áp riêng / đồng thời: tất cả</option><option value="Áp riêng">☑ Áp riêng</option><option value="Áp đồng thời">☐ Áp đồng thời</option><option value="Theo dòng">◪ Theo dòng</option></select>
           <select className="select input" style={{ width: 175 }} value={repeat} onChange={(e) => setRepeat(e.target.value)} title="Cộng dồn: đủ điều kiện mấy lần hưởng mấy lần (mua X tặng Y, CK số tiền có mức tổng đơn)"><option value="">Cộng dồn: tất cả</option><option value="Cộng dồn">☑ Cộng dồn</option><option value="Một lần">☐ Chỉ một lần</option><option value="Theo dòng">◪ Theo dòng</option></select>
           <select className="select input" style={{ width: 170 }} value={state} onChange={(e) => setState(e.target.value)}><option value="">Mọi trạng thái</option><option>Đang áp</option><option>Hết hiệu lực</option><option>Chưa tới hiệu lực</option><option>Tắt</option></select>
-          {<button className="btn btn-sm btn-primary" onClick={() => setEditing(newPolicy(kind || 'trade_discount', partner ? { partnerCode: partner } : {}))}>+ Thêm chính sách</button>}
+          {tt.them && <button className="btn btn-sm btn-primary" onClick={() => setEditing(newPolicy(kind || 'trade_discount', partner ? { partnerCode: partner } : {}))}>+ Thêm chính sách</button>}
           <span className="muted" style={{ fontSize: 12 }}>{rows.length} chính sách · mới nhất ở trên · bấm đúp để xem / sửa</span>
           {partner && <Link className="btn btn-sm" to={`/mua-hang/nha-cung-cap/${encodeURIComponent(partner)}`}>Mở hồ sơ NCC →</Link>}
           <Link className="btn btn-sm" to="/mua-hang/chi-tiet-chinh-sach" title="Trải từng dòng ưu đãi: từng mã hàng, từng bậc, từng chi nhánh">Xem chi tiết từng dòng (MH14) →</Link>

@@ -10,6 +10,8 @@ import { Download, Plus, Trash2 } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { date, defaultTo, money } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — lưu phần dài hạn theo thao tác màn B01D (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
@@ -284,7 +286,8 @@ export function LongTermPage() {
   });
   const setLine = (i: number, p: Partial<Draft>) => setLines((xs) => xs.map((x, j) => (j === i ? { ...x, ...p } : x)));
   const info = (l: Draft) => q.data?.rows.find((r) => r.accountCode === l.accountCode && (r.partnerCode ?? '') === l.partnerCode);
-  const readOnly = !can('documents:write');
+  const tt = useThaoTac('thue.phan-loai-dai-han');
+  const readOnly = !can('documents:write') || !tt.luu;
   return (
     <>
       <PageHeader title="Phân loại dài hạn" code="B01D" subtitle="Phần còn trên 12 tháng của phải thu, phải trả, vay tại ngày lập Báo cáo tình hình tài chính" helpKey="phan-loai-dai-han"

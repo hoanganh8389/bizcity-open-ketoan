@@ -20,6 +20,7 @@ import { ChonMatHang } from '../thanh-phan/ChonMatHang';
 import { num, qtyFmt, stockApi, useHierarchy, type MaxBoardRow } from './api';
 import { ChonChiNhanhCha, ChonShop, ChuaPhanCap, KhoiSo, isOff } from './chung';
 import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
+import { useThaoTac } from '@/lib/manHinh';
 
 type Draft = { max?: number; min?: number; mode?: TransferMode };
 type Filter = '' | 'below' | 'nomax' | 'diff' | 'set';
@@ -27,6 +28,7 @@ const k = (r: { branchCode: string; warehouseCode: string; sku: string }) => `${
 
 export function TonMaxPage() {
   const qc = useQueryClient();
+  const tt = useThaoTac('mua-hang.ton-max'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút ghi tồn max theo thao tác "sua" của màn MH16 (đóng góp)
   const h = useHierarchy();
   const [parent, setParent] = useState('');
   const [params] = useSearchParams();
@@ -150,12 +152,12 @@ export function TonMaxPage() {
             <ChonNhomHang value={nhom} onChange={setNhom} />
           </> : <div style={{ width: 300 }}><ItemPicker value={sku} onChange={setSku} placeholder="Gõ mã / tên hàng" /></div>}
           <span className="grow" />
-          {mode === 'branch' && <button className="btn btn-sm" onClick={() => setAdd(true)}><Plus size={14} /> Thêm mã</button>}
+          {mode === 'branch' && tt.sua && <button className="btn btn-sm" onClick={() => setAdd(true)}><Plus size={14} /> Thêm mã</button>}
           <button className="btn btn-sm" onClick={() => applySuggest(true)} title="Điền gợi ý cho các dòng đang lọc mà chưa có max"><Sparkles size={14} /> Gợi ý cho mã chưa có max</button>
           <button className="btn btn-sm" onClick={() => applySuggest(false)} title="Điền gợi ý cho MỌI dòng đang lọc (ghi đè max đang có)">Áp gợi ý cho dòng đang lọc</button>
-          <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>
+          {tt.sua && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
           {dirty > 0 && <button className="btn btn-sm" onClick={() => { setDrafts({}); setExtra([]); }}>Bỏ ({dirty})</button>}
-          <button className="btn btn-primary" disabled={!dirty || busy} onClick={() => void save()}>Lưu{dirty ? ` (${dirty})` : ''}</button>
+          {tt.sua && <button className="btn btn-primary" disabled={!dirty || busy} onClick={() => void save()}>Lưu{dirty ? ` (${dirty})` : ''}</button>}
         </div>
         <div className="tm-stats">
           <KhoiSo label="Số mã" value={stats.all} active={filter === ''} onClick={() => setFilter('')} />

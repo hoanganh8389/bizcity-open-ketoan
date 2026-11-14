@@ -19,6 +19,8 @@ import { CalendarPlus, Lock, Unlock } from 'lucide-react';
 import { DOC_TYPE_GROUPS, DOC_TYPE_LABELS, type DocType } from '@ketoan/contracts';
 import { api, ApiError, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút khai kỳ / khoá / mở khoá theo thao tác màn ACC2 (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { date, dateTime } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { BranchSelect } from '@/components/filters';
@@ -71,8 +73,9 @@ export function PeriodsPage() {
 
 function GridTab({ year, month }: { year: number; month: number }) {
   const { can } = useAuth();
+  const tt = useThaoTac('ke-toan.ky-ke-toan');
   const qc = useQueryClient();
-  const editable = can('periods:lock');
+  const editable = can('periods:lock') && Boolean(tt.khoa && tt.moKhoa); // lưới vừa khoá vừa mở
   const [search, setSearch] = useState('');
   const [draft, setDraft] = useState<Map<string, boolean>>(new Map());
   const [asking, setAsking] = useState(false);
@@ -247,6 +250,7 @@ function ReasonDialog({ count, pending, error, onClose, onOk }: { count: number;
 
 function ListTab({ year }: { year: number }) {
   const { can } = useAuth();
+  const tt = useThaoTac('ke-toan.ky-ke-toan');
   const qc = useQueryClient();
   const [locking, setLocking] = useState(false);
   const q = useQuery({ queryKey: ['periods', year], queryFn: () => api.get<Period[]>('/api/v1/periods', { year }) });
@@ -260,10 +264,10 @@ function ListTab({ year }: { year: number }) {
   };
   return (
     <div style={{ padding: '0 16px 16px' }}>
-      {can('periods:lock') && (
+      {can('periods:lock') && (tt.khaiKy || tt.khoa) && (
         <div className="row" style={{ gap: 8, marginBottom: 10 }}>
-          <button className="btn" disabled={create.isPending} onClick={() => window.confirm(`Khai đủ 12 kỳ kế toán của năm ${year}?`) && create.mutate()}><CalendarPlus size={16} /> Khai kỳ năm {year}</button>
-          <button className="btn" onClick={() => setLocking(true)}><Lock size={16} /> Khoá chung</button>
+          {tt.khaiKy && <button className="btn" disabled={create.isPending} onClick={() => window.confirm(`Khai đủ 12 kỳ kế toán của năm ${year}?`) && create.mutate()}><CalendarPlus size={16} /> Khai kỳ năm {year}</button>}
+          {tt.khoa && <button className="btn" onClick={() => setLocking(true)}><Lock size={16} /> Khoá chung</button>}
         </div>
       )}
       <ErrorBox error={q.error ? errorText(q.error) : unlock.error ? errorText(unlock.error) : create.error ? errorText(create.error) : null} />
@@ -285,7 +289,7 @@ function ListTab({ year }: { year: number }) {
                         <span className="badge badge-warn">Khoá chung</span>
                         <span>{l.branch ?? 'mọi chi nhánh'} · {typeLabel(l.docType)}</span>
                         <span className="muted">{l.lockedBy} · {dateTime(l.lockedAt)}</span>
-                        {can('periods:lock') && <button className="btn btn-sm" onClick={() => askUnlock(l.id)}><Unlock size={14} /> Mở khoá</button>}
+                        {can('periods:lock') && tt.moKhoa && <button className="btn btn-sm" onClick={() => askUnlock(l.id)}><Unlock size={14} /> Mở khoá</button>}
                       </div>
                     ))}
                   </td>

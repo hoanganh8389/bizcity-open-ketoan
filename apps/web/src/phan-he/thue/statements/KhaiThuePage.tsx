@@ -17,6 +17,8 @@ import { ChevronDown, RefreshCw, Settings } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { date, money, today } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút khai thuế GTGT theo thao tác màn ACC66 (luu / boSung / chapNhan) (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { Empty, ErrorBox, Field, Loading, Modal, Money } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -59,7 +61,8 @@ export function KhaiThuePage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { can } = useAuth();
-  const write = can('documents:write');
+  const tt = useThaoTac('thue.to-khai-gtgt');
+  const write = can('documents:write') && Boolean(tt.luu);
   const list = useQuery({ queryKey: ['vat-returns'], queryFn: () => api.get<Saved[]>('/api/v1/vat-returns') });
   const [chon, setChon] = useState(false);
   const [open, setOpen] = useState<Open | null>(null);
@@ -96,10 +99,10 @@ export function KhaiThuePage() {
         <a href="#" onClick={(e) => { e.preventDefault(); navigate('/thue/nguoi-nop-thue'); }}><Settings size={14} /> Thiết lập thông tin cơ quan thuế, tổ chức, cá nhân cung cấp dịch vụ thuế</a>
         <a href="#" onClick={(e) => { e.preventDefault(); reload(); }}><RefreshCw size={14} /> Tải lại</a>
         <span style={{ marginLeft: 'auto' }} />
-        <span className="kt-dd">
+        {tt.boSung && <span className="kt-dd">
           <button className="btn" disabled={!write || !finals.length} title={finals.length ? 'Lập tờ khai bổ sung cho kỳ đã được cơ quan thuế chấp nhận' : 'Chưa có tờ khai đã được chấp nhận'} onClick={(e) => { e.stopPropagation(); setMenu(menu === 'kbs' ? null : 'kbs'); }}>Khai bổ sung <ChevronDown size={14} /></button>
           {menu === 'kbs' && <div className="kt-pop">{finals.map((s) => <button key={`${s.periodKind}${s.year}${s.period}${s.scope}${s.revision}`} onClick={() => setBs(s)}>{kyText(s.periodKind, s.year, s.period)}{s.revision ? ` (bổ sung lần ${s.revision})` : ''}</button>)}</div>}
-        </span>
+        </span>}
         <span className="kt-dd">
           <span className="vf-split">
             <button className="btn btn-primary" disabled={!write} onClick={() => setChon(true)}>Lập tờ khai</button>
@@ -141,7 +144,7 @@ export function KhaiThuePage() {
                               {menu === key && (
                                 <div className="kt-pop">
                                   <button onClick={() => { setMenu(null); xem(s); }}>Xem</button>
-                                  {write && s.status !== 'final' && <button onClick={() => { setMenu(null); if (confirm(`Đánh dấu cơ quan thuế đã chấp nhận tờ khai ${kyText(s.periodKind, s.year, s.period)}? Sau đó muốn sửa số phải lập tờ khai bổ sung.`)) act.mutate({ s, kind: 'accept' }); }}>Đánh dấu TCT chấp nhận</button>}
+                                  {can('documents:write') && tt.chapNhan && s.status !== 'final' && <button onClick={() => { setMenu(null); if (confirm(`Đánh dấu cơ quan thuế đã chấp nhận tờ khai ${kyText(s.periodKind, s.year, s.period)}? Sau đó muốn sửa số phải lập tờ khai bổ sung.`)) act.mutate({ s, kind: 'accept' }); }}>Đánh dấu TCT chấp nhận</button>}
                                 </div>
                               )}
                             </td>
@@ -211,6 +214,7 @@ function ChonKy({ defaults, onClose, onOk }: { defaults: { year: number; month: 
 function ToKhai({ o, existing, onClose, onSaved }: { o: Open; existing?: Saved; onClose: () => void; onSaved: () => void }) {
   const qc = useQueryClient();
   const { can } = useAuth();
+  const tt = useThaoTac('thue.to-khai-gtgt');
   const [appx, setAppx] = useState<Appx[]>(o.appendices);
   const [tab, setTab] = useState<'TK' | Appx>('TK');
   const [excluded, setExcluded] = useState<string[] | undefined>(undefined);
@@ -243,7 +247,7 @@ function ToKhai({ o, existing, onClose, onSaved }: { o: Open; existing?: Saved; 
     mutationFn: () => api.put('/api/v1/vat-returns', { periodKind: o.kind, year: o.year, period: o.period, status: 'draft', manual, info: { ...info, appendices: appx, excluded: excluded ?? info.excluded ?? [] } }),
     onSuccess: () => { onSaved(); void qc.invalidateQueries({ queryKey: ['vat-return'] }); },
   });
-  const editable = (k?: string) => Boolean(k && (MANUAL as readonly string[]).includes(k)) && can('documents:write') && !final;
+  const editable = (k?: string) => Boolean(k && (MANUAL as readonly string[]).includes(k)) && can('documents:write') && Boolean(tt.luu) && !final;
   const cell = (k?: string): ReactNode => {
     if (!k) return null;
     if (k === '21') return <input type="checkbox" checked={Boolean(manual['21'])} disabled={!editable(k)} onChange={(e) => setManual((m) => ({ ...m, '21': e.target.checked ? 1 : 0 }))} />;
@@ -324,8 +328,8 @@ function ToKhai({ o, existing, onClose, onSaved }: { o: Open; existing?: Saved; 
         footer={final ? <><span className="kt-in"><PrintButton screen="ACC66" templates={VAT_RETURN_TEMPLATES} disabled={!d} getDocs={docs} /></span><TienIch onPick={setTienIch} onExcel={exportExcel} /><button className="btn" onClick={onClose}>Đóng</button></> : <>
           <span className="kt-in" style={{ display: 'none' }}><PrintButton screen="ACC66" templates={VAT_RETURN_TEMPLATES} disabled={!d} getDocs={docs} /></span>
           <button className="btn" onClick={onClose}>Hủy</button>
-          <button className="btn" disabled={!d || save.isPending} onClick={() => ghi(false)}>Ghi</button>
-          <button className="btn btn-primary" disabled={!d || save.isPending} onClick={() => ghi(true)}>Ghi và In</button>
+          {tt.luu && <button className="btn" disabled={!d || save.isPending} onClick={() => ghi(false)}>Ghi</button>}
+          {tt.luu && <button className="btn btn-primary" disabled={!d || save.isPending} onClick={() => ghi(true)}>Ghi và In</button>}
         </>}>
         {body}
         {ctOpen && d && <ChonCt rows={[...d.salesList, ...d.excludedList]} chosen={excluded ?? d.excludedList.map((r) => r.id)} onClose={() => setCtOpen(false)} onOk={(ids) => { setCtOpen(false); setExcluded(ids); }} />}

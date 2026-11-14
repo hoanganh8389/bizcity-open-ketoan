@@ -9,6 +9,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút kế hoạch thu chi (KH01) / định mức chi phí (KH02) theo thao tác màn đã đăng ký (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { date, money, today } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -32,6 +34,7 @@ const SOURCE: Record<string, string> = { manual: 'Nhập tay', debt: 'Khoản c�
 export function CashPlanPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
+  const tt = useThaoTac('ke-toan.ke-hoach-thu-chi');
   const editable = can('documents:write');
   const [tab, setTab] = useState<'plan' | 'compare'>('plan');
   const [from, setFrom] = useState(thisMonth());
@@ -90,7 +93,7 @@ export function CashPlanPage() {
         <div className="filters">
           <div className="field"><label>Từ tháng</label><input type="month" className="input" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
           <div className="field"><label>Đến tháng</label><input type="month" className="input" value={to} onChange={(e) => setTo(e.target.value)} /></div>
-          {tab === 'plan' && editable && (
+          {tab === 'plan' && editable && tt.them && (
             <div className="row" style={{ gap: 8, alignSelf: 'flex-end' }}>
               <button className="btn" disabled={fill.isPending} title="Điền các khoản phải thu / phải trả còn nợ có hạn trong tháng và kỳ thanh toán hợp đồng chưa trả; điền lại thì cập nhật" onClick={() => fill.mutate()}><RefreshCw size={16} /> Điền từ công nợ, hợp đồng</button>
               <button className="btn btn-primary" onClick={() => setEditing({ period: from, direction: 'out', amount: 0 })}><Plus size={16} /> Thêm dòng</button>
@@ -103,7 +106,7 @@ export function CashPlanPage() {
             q.isLoading ? <Loading /> : (
               <>
                 <div className="muted" style={{ marginBottom: 6 }}>Dự kiến thu <b>{money(sum('in'))}</b> · dự kiến chi <b>{money(sum('out'))}</b> · chênh <b>{money(sum('in') - sum('out'))}</b>. Bấm một dòng để sửa.</div>
-                <DataGrid storageKey="kh01" rows={rows} rowKey={(r) => r.id} columns={columns} onRowClick={editable ? (r) => setEditing(r) : undefined} exportName={`ke-hoach-thu-chi-${from}-${to}`} />
+                <DataGrid storageKey="kh01" rows={rows} rowKey={(r) => r.id} columns={columns} onRowClick={editable && tt.sua ? (r) => setEditing(r) : undefined} exportName={`ke-hoach-thu-chi-${from}-${to}`} />
               </>
             )
           ) : vs.isLoading ? <Loading /> : (
@@ -159,7 +162,8 @@ type Draft = { branchCode: string; departmentCode: string; costItemCode: string;
 export function CostNormPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const editable = can('catalog:write');
+  const tt = useThaoTac('ke-toan.dinh-muc');
+  const editable = can('catalog:write') && Boolean(tt.sua);
   const { data: branches = [] } = useBranches();
   const { data: items = [] } = useCostItems();
   const { data: departments = [] } = useDepartments();

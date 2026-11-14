@@ -32,6 +32,7 @@ import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { NccInfo } from '../thanh-phan/NccInfo';
 import { PrintButton } from '@/components/print';
 import { layPhieuIn, mauInCua } from './mauIn';
+import { useThaoTac } from '@/lib/manHinh';
 
 const GROUPS: [string, string, PDoc['kind'][]][] = [
   ['all', 'Tất cả', []], ['order', 'Đơn đặt hàng', ['order']], ['receipt', 'Nhập mua', ['receipt']], ['return', 'Trả / đổi hàng', ['return', 'exchange']],
@@ -102,6 +103,7 @@ const VIEWS: Record<'' | Report, [View, string][]> = {
 
 export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOnly, theoMa }: ChungTuEmbed = {}) {
   const { data, isLoading, error, refresh } = useMuaHang();
+  const tt = useThaoTac('mua-hang.chung-tu'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — Thêm chứng từ / Nhập từ Excel theo thao tác "them" của màn MH11 (đóng góp)
   const names = useNames();
   const [urlParams] = useSearchParams();
   const embedded = Boolean(embedPartner);
@@ -301,14 +303,14 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
               {onlyErr && <button className="btn btn-sm" onClick={() => setOnlyErr(false)} title="Bỏ lọc">Chỉ phiếu còn lỗi ✕</button>}
             </div>}
         <div className="row" style={{ gap: 6, padding: '6px 12px', flexWrap: 'wrap' }}>
-          {report !== 'bao-cao' && <select className="select input" style={{ width: 180, height: 28 }} value="" onChange={(e) => e.target.value && setEditing(newDoc(e.target.value as PDoc['kind']))}>
+          {report !== 'bao-cao' && tt.them && <select className="select input" style={{ width: 180, height: 28 }} value="" onChange={(e) => e.target.value && setEditing(newDoc(e.target.value as PDoc['kind']))}>
             <option value="">+ Thêm chứng từ…</option>{NEW_KINDS.map((k) => <option key={k} value={k}>{k === 'rebate' ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[k]}</option>)}
           </select>}
           <button className="btn btn-sm" disabled={!sel} onClick={() => sel && setEditing(sel)}>{sel?.status === 'approved' ? 'Xem' : 'Mở / sửa'}</button>
           {/* In phiếu đang chọn; mẫu theo loại phiếu (đơn đặt, nhập kho, trả hàng, phiếu chi…), số liệu nạp lại từ máy chủ. */}
           <PrintButton small screen="MH03" memoryKey={`MH03:${sel?.kind ?? ''}`} templates={mauInCua(sel ?? { kind: 'receipt' })} disabled={!sel} title={sel ? `In ${KIND_LABEL[sel.kind].toLowerCase()} ${sel.docNo}` : 'Chọn một chứng từ để in'}
             getDocs={async () => (sel ? [await layPhieuIn(sel.id, { names, docs: data?.docs ?? [] })] : [])} />
-          {report !== 'bao-cao' && <button className="btn btn-sm" onClick={() => setExcel(true)}>Nhập từ Excel</button>}
+          {report !== 'bao-cao' && tt.them && <button className="btn btn-sm" onClick={() => setExcel(true)}>Nhập từ Excel</button>}
           {report === 'bao-cao' && <Link className="btn btn-sm" to="/mua-hang/tong-hop" title="Lập / sửa / duyệt phiếu ở Tổng hợp mua hàng (MH11)">Lập phiếu ở MH11 →</Link>}
           <button className="btn btn-sm" onClick={() => void refresh()}>Nạp</button>
           <span className="row" style={{ gap: 0, marginLeft: 8 }} title="Xem cùng các phiếu đang lọc theo phiếu, theo từng dòng hàng (như BH01 Báo cáo bán hàng) hoặc cộng dồn theo mã hàng (như BH02 Tổng hợp bán hàng)">

@@ -7,6 +7,8 @@ import { salesReportRoutes } from '../../modules/sales/sales-report.routes.js';
 import { viecCanLamRoutes } from './viec-can-lam.js';
 // [2026-11-09 04:50 PM kiennt] PHASE-028 — giai đoạn 3.2 (80 D-AUTH-19): phân hệ đăng ký quyền lập / sửa cho loại chứng từ của mình ở cửa nạp (khai ở permissions[] của manifest; documents:write kéo theo)
 import { registerDocumentType } from '@bizcity/platform/core/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — màn hình + thao tác phân hệ Bán hàng (BH10, BH11, BH12) (đóng góp)
+import './man-hinh-ban-hang.js';
 // [2026-11-09 05:55 PM kiennt] PHASE-028 — giai đoạn 3.2b: đủ bộ thao tác xem / lập / huỷ (/ xuất) cho từng loại chứng từ của phân hệ
 registerDocumentType('sale', { read: 'ban-hang:hoa-don-xem', create: 'ban-hang:hoa-don-lap', cancel: 'ban-hang:hoa-don-huy', export: 'ban-hang:hoa-don-xuat' });
 registerDocumentType('sale_return', { read: 'ban-hang:tra-hang-xem', create: 'ban-hang:tra-hang-lap', cancel: 'ban-hang:tra-hang-huy', export: 'ban-hang:tra-hang-xuat' });

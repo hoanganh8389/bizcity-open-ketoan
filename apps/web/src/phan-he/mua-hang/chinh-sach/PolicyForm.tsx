@@ -15,6 +15,7 @@ import { monthStart, purchaseApi, today, useBrands, useNames, useSupplierBrands 
 import { BrandInput } from '../chung';
 import { LichSu } from '../thanh-phan/LichSu';
 import { PhienBan } from './PhienBan';
+import { useThaoTac } from '@/lib/manHinh';
 
 /** Loại chính sách lập được ở màn Chính sách (tồn min–max đã chuyển sang màn Tồn max MH16 — bảng stock_levels). */
 export const ALL_KINDS: PolicyKind[] = Object.keys(POLICY_LABEL) as PolicyKind[];
@@ -33,6 +34,7 @@ function toGiftTable(v: Policy): Policy {
 
 export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose, onSaved }: { value: Policy; all: Policy[]; kinds?: PolicyKind[]; lockPartner?: boolean; onClose: () => void; onSaved: (code: string, stay?: boolean) => void }) {
   const isNew = value.id.startsWith('new-');
+  const tt = useThaoTac('mua-hang.chinh-sach'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút Ghi theo thao tác "them" / "sua" của màn MH04 (đóng góp)
   const names = useNames();
   const brands = useBrands(all);
   const scopeTag = (x: Policy) => [x.scope.brandCode && `nhãn ${x.scope.brandCode}`, x.scope.sku && `mã ${x.scope.sku}`, x.scope.branchCode && names.branchName(x.scope.branchCode)].filter(Boolean).join(', ');
@@ -74,7 +76,7 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
   };
   return (
     <Modal viewAgain={viewAgain} viewFirst={!isNew} wide={p.kind === 'item_discount' || p.kind === 'promo_gift'} title={`${POLICY_LABEL[p.kind]} ${isNew ? '(mới)' : p.code}`} onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      footer={<>{(isNew ? tt.them : tt.sua) && <button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button>}<button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label={REBATE_KINDS.includes(p.kind) ? 'Ký với nhà cung cấp (trống = mọi NCC)' : 'Nhà cung cấp (trống = áp cho mọi NCC)'} full>
         {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
       </Field>

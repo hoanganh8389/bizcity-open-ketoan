@@ -16,6 +16,8 @@ import { Download, Plus, Trash2, Upload } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { date, defaultFrom, defaultTo, money, periodFrom } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút tài sản theo thao tác màn đã đăng ký (ACC28 thẻ tài sản, ACC32 biến động, ACC31 khấu hao, ACC37 loại tài sản) (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange, useBranches, SearchFilter, searchRows, BranchPicker } from '@/components/filters';
@@ -69,6 +71,7 @@ export function AssetsPage({ kind, decrease = false }: { kind: AssetKind; decrea
     ? { ...META[kind], title: 'Giảm tài sản cố định', code: 'ACC30', subtitle: 'Thanh lý, nhượng bán, mất mát: chọn tài sản, ghi ngày ghi giảm; khấu hao trích tới hết ngày trước ngày đó' }
     : META[kind];
   const { can } = useAuth();
+  const tt = useThaoTac('tai-san.the-tai-san');
   const [editing, setEditing] = useState<Partial<Asset> & { isNew?: boolean } | null>(null);
   const [importing, setImporting] = useState(false);
   const [showDisposed, setShowDisposed] = useState(false);
@@ -79,7 +82,7 @@ export function AssetsPage({ kind, decrease = false }: { kind: AssetKind; decrea
   return (
     <>
       <PageHeader title={meta.title} code={meta.code} subtitle={meta.subtitle} helpKey="tai-san"
-        actions={decrease ? undefined : can('catalog:write') ? <>
+        actions={decrease ? undefined : can('catalog:write') && tt.them ? <>
           <button className="btn" onClick={() => setImporting(true)}><Upload size={16} /> Nhập từ Excel</button>
           <button className="btn btn-primary" onClick={() => setEditing({ isNew: true, kind, status: 'in_use', quantity: 1, allocations: [] })}><Plus size={16} /> Thêm</button>
         </> : undefined} />
@@ -142,7 +145,9 @@ export function AssetsPage({ kind, decrease = false }: { kind: AssetKind; decrea
 function AssetForm({ value, kind, printScreen, onClose }: { value: Partial<Asset> & { isNew?: boolean }; kind: AssetKind; printScreen: string; onClose: () => void }) {
   const qc = useQueryClient();
   const { can } = useAuth();
-  const readOnly = !can('catalog:write');
+  const tt = useThaoTac('tai-san.the-tai-san');
+  const ttBd = useThaoTac('tai-san.bien-dong');
+  const readOnly = !can('catalog:write') || (value.isNew ? !tt.them : !tt.sua);
   const [v, setV] = useState(value);
   const [eventKind, setEventKind] = useState<'revaluation' | 'transfer' | 'audit' | null>(null);
   const [posting, setPosting] = useState<'increase' | 'decrease' | null>(null);
@@ -279,11 +284,11 @@ function AssetForm({ value, kind, printScreen, onClose }: { value: Partial<Asset
           ) : <div className="muted">Chưa có đánh giá lại, điều chuyển, kiểm kê.</div>}
           {!readOnly && (
             <div className="row" style={{ marginTop: 6, gap: 6 }}>
-              <button className="btn btn-sm" onClick={() => setEventKind('revaluation')}>Đánh giá lại</button>
+              {ttBd.them && <><button className="btn btn-sm" onClick={() => setEventKind('revaluation')}>Đánh giá lại</button>
               <button className="btn btn-sm" onClick={() => setEventKind('transfer')}>Điều chuyển</button>
-              <button className="btn btn-sm" onClick={() => setEventKind('audit')}>Kiểm kê</button>
-              <button className="btn btn-sm" onClick={() => setPosting('increase')} title="Lập phiếu kế toán ghi tăng: Nợ TK nguyên giá / chờ phân bổ, Có TK đối ứng">Hạch toán ghi tăng</button>
-              <button className="btn btn-sm" onClick={() => setPosting('decrease')} title="Lập phiếu kế toán ghi giảm, thanh lý, nhượng bán; chuyển thẻ sang đã ghi giảm">Ghi giảm / thanh lý</button>
+              <button className="btn btn-sm" onClick={() => setEventKind('audit')}>Kiểm kê</button></>}
+              {tt.ghiSo && <button className="btn btn-sm" onClick={() => setPosting('increase')} title="Lập phiếu kế toán ghi tăng: Nợ TK nguyên giá / chờ phân bổ, Có TK đối ứng">Hạch toán ghi tăng</button>}
+              {tt.ghiSo && <button className="btn btn-sm" onClick={() => setPosting('decrease')} title="Lập phiếu kế toán ghi giảm, thanh lý, nhượng bán; chuyển thẻ sang đã ghi giảm">Ghi giảm / thanh lý</button>}
             </div>
           )}
           <div className="row" style={{ marginTop: 6 }}><button className="btn btn-sm" onClick={() => setShowPlan(true)}>Lịch khấu hao / phân bổ</button></div>
@@ -506,8 +511,9 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
 /* ------------------------------------------------------------------ Loại tài sản */
 export function AssetCategoriesPage() {
   const { can } = useAuth();
+  const tt = useThaoTac('tai-san.loai-tai-san');
   const qc = useQueryClient();
-  const canWrite = can('catalog:write');
+  const canWrite = can('catalog:write') && Boolean(tt.them || tt.sua || tt.xoa);
   const [editing, setEditing] = useState<Partial<Category> & { isNew?: boolean } | null>(null);
   const [sel, setSel] = useState<Category | null>(null);
   const exportRef = useRef<(() => void) | null>(null);
@@ -530,7 +536,7 @@ export function AssetCategoriesPage() {
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
           <DataGrid storageKey="acc37-v2" exportName="loai-tai-san" groupable exportRef={exportRef} rows={q.data ?? []} rowKey={(r) => r.code}
-            onSelect={setSel} onRowDoubleClick={(r) => canWrite && setEditing(r)} rowClassName={(r) => (r.isActive ? '' : 'muted')} footerLabel={false}
+            onSelect={setSel} onRowDoubleClick={(r) => canWrite && tt.sua && setEditing(r)} rowClassName={(r) => (r.isActive ? '' : 'muted')} footerLabel={false}
             columns={[
               { key: 'code', header: 'Mã loại TS', type: 'code', width: 150 },
               { key: 'name', header: 'Tên loại TS', width: 280 },
@@ -595,6 +601,8 @@ export function AssetEventsPage({ kind }: { kind: EventPageKind }) {
   const meta = EVENT_META[kind];
   const qc = useQueryClient();
   const { can } = useAuth();
+  const ttThe = useThaoTac('tai-san.the-tai-san');
+  const tt = useThaoTac('tai-san.bien-dong');
   const [f, setF] = useState({ from: `${new Date().getFullYear()}-01-01`, to: defaultTo() });
   const [adding, setAdding] = useState(false);
   const [posting, setPosting] = useState<AssetEvent | null>(null);
@@ -617,7 +625,7 @@ export function AssetEventsPage({ kind }: { kind: EventPageKind }) {
         key: 'postings', header: 'Hạch toán', noFilter: true, value: (r) => (r.postings ?? []).map((p) => p.docNo).join(', '),
         render: (r) => r.postings?.length
           ? <span className="mono">{r.postings.map((p) => p.docNo).join(', ')}</span>
-          : can('documents:write') ? <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); setPosting(r); }}>Hạch toán…</button> : null,
+          : can('documents:write') && ttThe.ghiSo ? <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); setPosting(r); }}>Hạch toán…</button> : null,
       },
     ] satisfies Column<AssetEvent>[]) : ([
       { key: 'branchCode', header: 'Chi nhánh', type: 'code' },
@@ -630,7 +638,7 @@ export function AssetEventsPage({ kind }: { kind: EventPageKind }) {
   return (
     <>
       <PageHeader title={meta.title} code={meta.code} subtitle={meta.subtitle} helpKey="tai-san"
-        actions={can('catalog:write') && <button className="btn btn-primary" onClick={() => setAdding(true)}><Plus size={16} /> Thêm</button>} />
+        actions={can('catalog:write') && tt.them && <button className="btn btn-primary" onClick={() => setAdding(true)}><Plus size={16} /> Thêm</button>} />
       <FilterLayout
         filters={
           <>
@@ -709,6 +717,7 @@ interface RunResult {
 export function DepreciationPage() {
   const qc = useQueryClient();
   const { can } = useAuth();
+  const tt = useThaoTac('tai-san.khau-hao');
   const [period, setPeriod] = useState(thisMonth());
   const [override, setOverride] = useState<RegisterRow | null>(null);
   const [catchUp, setCatchUp] = useState(false);
@@ -721,7 +730,7 @@ export function DepreciationPage() {
   return (
     <>
       <PageHeader title="Tính khấu hao, phân bổ" code="ACC31" subtitle="Khấu hao tài sản cố định, phân bổ công cụ dụng cụ và chi phí trả trước trong tháng; ghi sổ một chứng từ cho mỗi chi nhánh" helpKey="tai-san"
-        actions={can('periods:lock') && <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate()}>{run.isPending ? 'Đang tính…' : `Tính tháng ${mm}`}</button>} />
+        actions={can('periods:lock') && tt.tinh && <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate()}>{run.isPending ? 'Đang tính…' : `Tính tháng ${mm}`}</button>} />
       <div className="card">
         <div className="filters">
           <div className="field"><label>Tháng</label><input type="month" className="input w-md" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
@@ -750,7 +759,7 @@ export function DepreciationPage() {
           </div>
         )}
         {preview.isLoading ? <Loading /> : !preview.data?.rows.length ? <Empty text="Chưa có thẻ tài sản nào đang trích trong tháng này" /> : (
-          <RegisterGrid data={preview.data} storageKey="acc31" onRowClick={can('periods:lock') ? setOverride : undefined} />
+          <RegisterGrid data={preview.data} storageKey="acc31" onRowClick={can('periods:lock') && tt.suaTay ? setOverride : undefined} />
         )}
       </div>
       {override && <OverrideDialog row={override} period={period} onClose={() => setOverride(null)} />}
