@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 167
+      "count": 166
     },
     {
       "key": "partial",
@@ -9024,11 +9024,17 @@
     {
       "id": "S036-5",
       "phase": "PHASE-036",
-      "title": "B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md",
+      "title": "B3 — hộp thoại 4 bước modules/thiet-lap/ (TI15) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
+        "branch": "feat/s036-5-hop-thoai-thiet-lap",
+        "state": "đang làm",
+        "since": "2026-11-14",
+        "dot": "PHASE-036 · S036-5 — B3 hộp thoại Thiết lập nhanh: module modules/thiet-lap/ (TI15, chỉ giao diện),…"
+      },
       "modules": [
         "he-thong"
       ],
