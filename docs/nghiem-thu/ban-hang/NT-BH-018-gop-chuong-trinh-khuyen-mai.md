@@ -62,6 +62,7 @@ Docker demo (15/11), kịch bản trình duyệt + test hàm thuần `modules/po
 | §5 dòng 5 | báo cáo | thẻ *Báo cáo hạn mức* hiện `KM-THU-HM` theo cửa hàng, ô tổng | — | |
 | §5 dòng 6 | thử tính chung | 3 lon `100021001` ở CN03 → `KM-THU-BAC` (giảm bậc), `KM-THU-QUA` (mua X tặng Y), `KM-THU-HM` (có hạn mức) cùng áp | — | |
 | §5 dòng 7 | không đổi số liệu | API `/api/v1/sale-programs` không đổi; chương trình tạo bằng API cũ hiện đủ | — | |
+| Quyền xem | kế toán thấy menu | BH18 xem theo `catalog:read` (như API chính sách của Core) — trước theo `pos:report` của module pos nên vai trò kế toán / viewer không thấy mục (anh Hoàng báo 15/11) | đã sửa | các màn quản trị máy bán BH13–BH17 vẫn theo `pos:report` |
 | §6 dòng 1 | không quyền | Thêm / Sửa mờ kèm lý do theo quyền (`settings:write` khuyến mại, `catalog:write` có hạn mức) | — | |
 
 ## 8. Biên bản nghiệm thu
