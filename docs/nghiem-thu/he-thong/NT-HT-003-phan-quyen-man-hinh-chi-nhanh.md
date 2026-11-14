@@ -7,7 +7,7 @@
 | Màn hình | HT12 Phân quyền (Sửa vai trò, Người dùng) · nút Chi nhánh làm việc (Alt+B), HT04 · nút Thêm / Sửa / Xoá / Duyệt… trên 62 màn |
 | Bộ phận yêu cầu | Quản trị, phòng kế toán; yêu cầu của chủ dự án: "mỗi phân hệ tự đăng ký menu + quyền thêm / sửa / xoá vào bộ quản lý vai trò như WordPress, không phân quyền cứng trong code" |
 | Ngày tạo | 13/11/2026 · viết lại 14/11/2026 |
-| Trạng thái | Chờ chốt thiết kế — bản thử đã chạy trên máy (nhánh tích hợp, chưa đẩy) |
+| Trạng thái | Đã chốt thiết kế 14/11/2026 (mục 8) — đang làm GĐ1 |
 | Liên quan | ADR-0027 / PHASE-028 (sổ quyền, vai trò của đơn vị, Cho / Cấm, kéo theo `registerDocumentType`) · NT-HT-002 (cửa hàng ↔ site) |
 | Người duyệt thiết kế | Johnny Chu – Chu Hoàng Anh (người phụ trách PHASE-028) |
 
@@ -23,7 +23,7 @@
 
 ## 2. Thiết kế
 
-### A. Sổ đăng ký màn (`apps/api/src/phan-he/man-hinh.ts`) (đề xuất, chưa có trong mã)
+### A. Sổ đăng ký màn (`apps/api/src/modules/access/man-hinh.ts`) (đề xuất, chưa có trong mã)
 Phân hệ gọi `dangKyManHinh` ở `index.ts` của mình:
 ```ts
 dangKyManHinh({ key: 'quy.phieu-chi', ma: 'ACC52', nhom: 'Quỹ', nhan: 'Phiếu chi', duongDan: '/nghiep-vu/phieu-chi',
@@ -52,7 +52,8 @@ Hai cách, phân hệ chọn theo lệnh:
 - `capNhat`: cửa nạp vừa lập mới vừa sửa (gửi lại cùng `docKey`) → `capNhat: false` chỉ khi `docKey` chưa có (Thêm), `true` khi đã có (Sửa).
 - Khoá API, chủ đơn vị (`ADMIN_ROLES`): không áp.
 
-### C. Theo chi nhánh (`apps/api/src/phan-he/quyen-chi-nhanh.ts`) (đề xuất, chưa có trong mã)
+### C. Theo chi nhánh (`apps/api/src/modules/access/quyen-chi-nhanh.ts`) (đề xuất, chưa có trong mã)
+- **Công tắc đơn vị** `bizcity.authz.branch_scope` (khoá mới trong `docs/contracts/bizcity-settings.registry.json`; lưu ở kho `setting_values`, `enum(on|off)`, **mặc định `off`**, loại B; quyền `settings:write`, nhật ký `settings.set`; bật / tắt ở Trung tâm cấu hình qua `PUT /api/v1/settings/values/:key`). **Tắt**: như hôm nay — lần gán tại chi nhánh chỉ cộng quyền ở cửa nạp, không giới hạn phạm vi, không cộng / trừ quyền theo chi nhánh. **Bật**: áp các mục dưới đây. Bảng rà trước khi bật: `GET /api/v1/quyen-chi-nhanh/ra-soat` (đề xuất, chưa có trong mã) — ai có lần gán tại chi nhánh / kho, phạm vi sẽ thành gì; hiện ở HT12 thẻ Người dùng (GĐ2).
 - **Phạm vi làm việc** = chi nhánh của các lần gán tại chi nhánh + chi nhánh chứa kho của lần gán tại kho, còn hiệu lực hôm nay, **trừ vai trò Hạn chế**. Không có lần gán nào → mọi chi nhánh. Chủ đơn vị, khoá API → không áp.
 - **Quyền tại chi nhánh**: vai trò gán tại chi nhánh B chỉ có hiệu lực ở B (nền + Cho − Cấm; Cấm toàn đơn vị vẫn trừ).
 - **Vai trò Hạn chế gán tại B**: không thu hẹp phạm vi; luật Cấm của nó trừ thẳng vào quyền hiệu lực (kể cả quyền của vai trò chính) khi yêu cầu ở B — "Kế toán, nhưng ở OC02 không được lập phiếu chi".
@@ -68,8 +69,8 @@ Hai cách, phân hệ chọn theo lệnh:
 ### E. Thứ dùng chung bị đụng (R-FLOW-2) — cần chốt
 | Đụng | Vì sao | Đề xuất |
 |---|---|---|
-| `apps/api/src/app.ts` — đăng ký 1 plugin `preHandler` toàn app | móc gác lệnh + áp quyền chi nhánh cho mọi yêu cầu của người dùng | 1 dòng, sau `authPlugin`; tệp framework → chữ ký kiến trúc |
-| `tests/conformance/lib/layers.mjs` | SC-LAYER-2: phân hệ (`D phan-he/*`) import `phan-he/man-hinh.ts` (`D`) | khai `phan-he/man-hinh.ts`, `phan-he/quyen-chi-nhanh.ts` là tệp dùng chung của lớp D (hoặc chuyển sang lớp Platform) — sửa RULE-MODULE-BOUNDARY trước |
+| `apps/api/src/app.ts` — đăng ký 1 plugin `preHandler` toàn app | móc gác lệnh + áp quyền chi nhánh cho mọi yêu cầu của người dùng | 1 dòng, sau `authPlugin`; tệp framework → chữ ký kiến trúc của người phụ trách PHASE-028 trước khi merge |
+| Vị trí tệp (SC-LAYER-2) | phân hệ (`D phan-he/*`) import sổ đăng ký màn | **chốt: đặt ở `apps/api/src/modules/access/`** (lớp P `permissions`) — phân hệ import xuống đúng chiều, **không sửa** `layers.mjs`; tệp lớp P cần chữ ký kiến trúc (RULE-SIGNATURE R-SIG-1) |
 | Mượn quyền gốc trong một yêu cầu | đổi cách tính quyền hiệu lực (thêm vào `auth.permissions` của yêu cầu) | chỉ quyền rủi ro thấp, chỉ khi lệnh do màn gác và đúng loại phiếu |
 | `docs/standard/quyen.json` (S028-11) | sổ quyền tăng 198 quyền chi tiết | sinh lại bằng `scripts/phan-quyen/quyen-snapshot.mjs` khi S028-11 vào main (đề xuất, chưa có trong mã) |
 
@@ -78,8 +79,8 @@ Không sửa `packages/*`.
 ## 3. Công việc và tệp
 | Bước | Việc | Tệp |
 |---|---|---|
-| 1 | Sổ đăng ký màn + gác lệnh + mượn quyền | `apps/api/src/phan-he/man-hinh.ts` (đề xuất, chưa có trong mã) |
-| 2 | Theo chi nhánh + móc toàn app | `apps/api/src/phan-he/quyen-chi-nhanh.ts`, `apps/api/src/app.ts` (đề xuất, chưa có trong mã) |
+| 1 | Sổ đăng ký màn + gác lệnh + mượn quyền | `apps/api/src/modules/access/man-hinh.ts` (đề xuất, chưa có trong mã) |
+| 2 | Theo chi nhánh + móc toàn app + công tắc | `apps/api/src/modules/access/quyen-chi-nhanh.ts`, `apps/api/src/app.ts`, `docs/contracts/bizcity-settings.registry.json` (đề xuất, chưa có trong mã) |
 | 3 | Đăng ký màn 8 phân hệ (manifest + `man-hinh-*.ts` + gác trực tiếp ở route của phân hệ) | `apps/api/src/phan-he/{kho,quy,mua-hang,ban-hang,ke-toan,tai-san,thue,he-thong}/**` |
 | 4 | Giao diện: ẩn nút / menu, chi nhánh làm việc | `apps/web/src/lib/{manHinh.ts,auth.tsx,api.ts}`, `apps/web/src/components/ChiNhanhLamViec.tsx`, `apps/web/src/layout/useAppMenu.ts`, các màn ở mục 6 |
 | 5 | HT12 lưới theo màn | `modules/phan-quyen/web/lib/man-hinh-grid.ts`, `modules/phan-quyen/web/screens/RoleEditor.tsx` (đề xuất, chưa có trong mã) |
@@ -123,18 +124,22 @@ Không sửa `packages/*`.
 - Duyệt phiếu bán / trả lại (chưa có lệnh ở máy chủ); nút Nhập Excel chưa ẩn theo Cấm tại chi nhánh.
 - Phạm vi theo **kho** cho thủ kho (gán tại kho hôm nay chỉ mở chi nhánh của kho).
 
-## 8. Câu hỏi cần chốt (người duyệt thiết kế)
-1. **Mượn quyền gốc rủi ro thấp** trong đúng lệnh do màn gác (mục B) — đồng ý? (Thay thế: chỉ cho Cấm, không cho Cho riêng ở lệnh của lõi — khi đó HT12 phải khoá ô Cho của các thao tác đó.)
-2. **Giới hạn theo chi nhánh luôn bật** (bản thử) hay **công tắc đơn vị, mặc định tắt** + bảng rà trước khi bật (nháp 13/11)? Đề xuất: công tắc — tránh khoá nhầm người đang được "gán thêm để hỗ trợ".
-3. Đặt `man-hinh.ts` / `quyen-chi-nhanh.ts` ở đâu cho đúng lớp: giữ ở `apps/api/src/phan-he/` (khai tệp dùng chung lớp D trong `layers.mjs`) hay chuyển sang Platform (`apps/api/src/modules/access/`)?
-4. Vai trò Hạn chế gán tại chi nhánh: **không** thu hẹp phạm vi, chỉ Cấm tại đó (bản thử) — đồng ý?
-5. Lần gán theo kho có tính chi nhánh của kho vào phạm vi? (Bản thử: có.)
+## 8. Câu hỏi cần chốt — đã chốt 14/11/2026
+| # | Câu hỏi | Chốt |
+|---|---|---|
+| 1 | Mượn quyền gốc rủi ro thấp trong đúng lệnh do màn gác (mục B) | **Có** — theo bản thử; không mượn quyền rủi ro cao (khai `goc`) |
+| 2 | Giới hạn theo chi nhánh luôn bật hay công tắc | **Công tắc đơn vị, mặc định tắt** + bảng rà ở HT12 (mục C) |
+| 3 | Vị trí `man-hinh.ts` / `quyen-chi-nhanh.ts` | **`apps/api/src/modules/access/`** (lớp P) — không sửa `layers.mjs` |
+| 4 | Hạn chế gán tại chi nhánh | **Chỉ Cấm tại chi nhánh đó, không thu hẹp phạm vi** — theo bản thử |
+| 5 | Lần gán theo kho | **Mở chi nhánh của kho vào phạm vi** — theo bản thử (quyền theo kho để GĐ sau) |
+
+Người chốt: kiennt (bộ phận yêu cầu) theo đề xuất của phiếu. Tệp lớp P (`modules/access`, `app.ts`) vẫn cần chữ ký kiến trúc của người phụ trách PHASE-028 trước khi merge PR code (RULE-SIGNATURE).
 
 ## 9. Kế hoạch đẩy (R-FLOW)
-1. PR tài liệu: phiếu này + giữ chỗ (`CLAIMS.md`) — chờ duyệt mục 8.
-2. Nếu mục 8 câu 3 cần sửa bảng lớp: PR tài liệu RULE-MODULE-BOUNDARY + `layers.mjs` (người phụ trách).
-3. PR code GĐ1 (từ `main` mới): mục 3 bước 1–2 + Kho + Quỹ + test (nhỏ, dễ duyệt).
-4. PR code GĐ2: các phân hệ còn lại + giao diện + HT12.
+1. ~~PR tài liệu: phiếu + giữ chỗ~~ — #365 đã merge.
+2. PR tài liệu: chốt mục 8 + nới phạm vi giữ chỗ (`modules/access`, registry cấu hình, HT12) — PR này.
+3. PR code GĐ1 (từ `main` mới): sổ đăng ký màn + gác lệnh + mượn quyền, theo chi nhánh + công tắc, Kho + Quỹ, giao diện ẩn nút / chi nhánh làm việc, test.
+4. PR code GĐ2: Mua hàng, Bán hàng, Kế toán, Tài sản, Thuế, Danh mục / Hệ thống + HT12 lưới theo màn.
 5. Tệp trong phạm vi người khác (mục 3): PR riêng sau khi người giữ xong.
 
 ## 10. Kết quả chạy (bản thử, 14/11/2026)
@@ -153,3 +158,4 @@ Không sửa `packages/*`.
 |---|---|
 | 13/11/2026 | Tạo nháp "giới hạn nơi làm việc theo lần gán tại chi nhánh" (công tắc mặc định tắt, mã ở `modules/access`) |
 | 14/11/2026 | Viết lại theo bản thử: sổ đăng ký màn × thao tác (yêu cầu chủ dự án), gác lệnh + mượn quyền gốc rủi ro thấp, quyền theo chi nhánh, Hạn chế theo chi nhánh, HT12 lưới theo màn; câu hỏi chốt mục 8 |
+| 14/11/2026 | Chốt mục 8: mượn quyền gốc rủi ro thấp; công tắc giới hạn chi nhánh (mặc định tắt); tệp ở `modules/access`; Hạn chế tại chi nhánh chỉ Cấm; gán tại kho mở chi nhánh của kho |
