@@ -18,13 +18,12 @@ const day = (offset = 0) => new Date(Date.now() + 7 * 3600_000 + offset * 86_400
 
 const STAGES: { node: Node; config: Node[]; side: Node[] }[] = [
   {
-    node: { label: 'Giá & chính sách', code: 'BH12', icon: 'BadgePercent', color: '#7c3aed', path: '/ban-hang/chuong-trinh', todo: ['program_quota'],
+    node: { label: 'Giá & chính sách', code: 'BH18', icon: 'BadgePercent', color: '#7c3aed', path: '/app/pos/khuyen-mai', todo: ['program_quota'], hint: 'Chương trình khuyến mại: 6 loại khuyến mại + tặng / giảm có hạn mức cửa hàng',
       auto: ['Giá lấy theo bảng giá cửa hàng → chi nhánh → công ty', 'Khuyến mại do phần mềm kế toán tính, mọi máy cùng một kết quả', 'Mỗi cửa hàng một hạn mức chương trình, tự trừ khi bán, tự trả khi huỷ / trả hàng'] },
     config: [
       { label: 'Bảng giá', code: 'DM14', icon: 'Tags', color: GRAY, path: '/danh-muc/bang-gia', hint: 'Bảng giá công ty, chi nhánh' },
       { label: 'Khách hàng', code: 'DM12', icon: 'Users', color: GRAY, path: '/danh-muc/khach-hang', hint: 'Khách lẻ, khách theo SĐT, hạng thành viên' },
-      // [2026-11-14 01:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: ô Khuyến mại mở BH18 (đóng góp)
-      { label: 'Khuyến mại', code: 'BH18', icon: 'Sparkles', color: GRAY, path: '/app/pos/khuyen-mai', pos: true, hint: 'Bậc, tổng đơn, mã giảm giá, combo, món rẻ nhất' },
+      // [2026-11-15 10:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: bỏ ô Khuyến mại riêng — ô lớn "Giá & chính sách" mở BH18 Chương trình khuyến mại (gộp BH12) (đóng góp)
     ],
     side: [
       { label: 'Sổ chính sách', code: 'HT15', icon: 'BookMarked', color: '#7c3aed', path: '/he-thong/chinh-sach', hint: 'Mọi bản chương trình đã phát hành, chứng từ đã áp' },
@@ -127,7 +126,7 @@ export function QuyTrinhBanHang() {
       badge={badge}
       extra={(n) => <>{extra(n)}</>}
       todo={{ items, loading: core.isLoading, fetching: core.isFetching, error: core.isError, retry: () => void core.refetch() }}
-      loop={<>Bán ra làm tồn giảm → <b>Mua hàng</b> đặt hàng lần kế; chương trình hết hạn mức → kinh doanh phân bổ lại ở <b>BH12</b>.</>}
+      loop={<>Bán ra làm tồn giảm → <b>Mua hàng</b> đặt hàng lần kế; chương trình hết hạn mức → kinh doanh phân bổ lại ở <b>BH18</b> (thẻ Có hạn mức).</>}
     />
   );
 }
