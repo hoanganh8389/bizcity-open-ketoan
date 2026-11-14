@@ -1,12 +1,19 @@
 /**
  * BH18 Khuyến mại (phiếu NT-BH-016, chữ chốt docs/nghiep-vu/22): danh sách khuyến mại (khuôn `sale.promo.*` ở sổ đăng ký chính sách của Core),
  * Thêm theo 6 loại, Sửa (bản mới từ ngày chọn), Ngừng (bản mới kết thúc hôm trước ngày ngừng), Thử tính trên giỏ hàng. Chỉ gọi API chính sách
- * có sẵn của Core — module không lưu gì. Chương trình bán có hạn mức (BH12) không hiện ở đây.
+ * có sẵn của Core — module không lưu gì.
+ * 15/11 (phiếu NT-BH-018): một màn *Chương trình khuyến mại* — gộp Chương trình bán có hạn mức (trước là BH12): thẻ *Có hạn mức*, *Báo cáo hạn
+ * mức* (API /api/v1/sale-programs giữ nguyên), Thêm có 8 loại (6 khuyến mại + tặng hàng / giảm giá có hạn mức), Thử tính chung mọi chương trình.
+ * Đường cũ /ban-hang/chuong-trinh chuyển về đây, thẻ Có hạn mức (?the=han-muc).
  */
 // [2026-11-14 01:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: màn Khuyến mại BH18 (đóng góp)
+// [2026-11-15 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: gộp BH12 vào BH18 thành một màn Chương trình khuyến mại (đóng góp)
 import { useMemo, useState } from 'react';
 import { BranchPicker, DataGrid, ErrorBox, Field, Loading, Modal, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient, type GridColumn } from '@bizcity/ui-kit';
 import { Badge, vnd } from '../lib';
+import { HanMucForm } from './khuyen-mai/HanMucForm';
+import { HanMucList, HanMucReport } from './khuyen-mai/HanMucTab';
+import { QUOTA_KINDS, type Program } from './khuyen-mai/han-muc';
 import { KmForm } from './khuyen-mai/KmForm';
 import { KIND_BY_CONTRACT, KIND_INFO, STATUS_LABEL, STOP_REASON, emptyForm, fromParams, statusOf, stopParams, type Form, type PromoKind } from './khuyen-mai/model';
 
@@ -32,11 +39,25 @@ const cols: GridColumn<Row>[] = [
   { key: 'note', header: 'Tên / ghi chú', width: 260 },
 ];
 
+type Tab = 'km' | 'han-muc' | 'bao-cao';
+const TABS: [Tab, string, string][] = [
+  ['km', 'Khuyến mại', 'Giảm theo bậc, tổng đơn / mã giảm giá, quà theo tổng đơn, combo, món rẻ nhất, mua X tặng Y'],
+  ['han-muc', 'Có hạn mức', 'Tặng hàng / giảm giá trên một mặt hàng, mỗi cửa hàng một số suất (trước là màn Chương trình bán BH12)'],
+  ['bao-cao', 'Báo cáo hạn mức', 'Hạn mức, đã dùng, còn lại theo cửa hàng — tính từ các dòng đã bán'],
+];
+const tabFromUrl = (): Tab => {
+  try { const t = new URLSearchParams(window.location.search).get('the'); return t === 'han-muc' || t === 'bao-cao' ? t : 'km'; } catch { return 'km'; }
+};
+
 export function KhuyenMaiPage() {
   const api = useApi();
   const can = useCan();
   const qc = useQueryClient();
   const writable = can('settings:write');
+  /** Chương trình có hạn mức ghi qua /api/v1/sale-programs — quyền ghi danh mục. */
+  const quotaWritable = can('catalog:write');
+  const [tab, setTab] = useState<Tab>(tabFromUrl);
+  const [quotaForm, setQuotaForm] = useState<{ program: Program | null; mode: 'gift' | 'discount' } | null>(null);
   const reg = useQuery({ queryKey: ['km', 'registry'], queryFn: () => api.get<{ items: RegPolicy[] }>('/api/v1/policy-registry') });
   const cur = useQuery({ queryKey: ['km', 'current'], queryFn: () => api.get<{ items: PolicyView[] }>('/api/v1/policies', { domain: 'sale' }) });
   const [pick, setPick] = useState<Row | null>(null);
@@ -93,31 +114,52 @@ export function KhuyenMaiPage() {
 
   if (reg.isLoading || cur.isLoading) return <Loading />;
   if (reg.error || cur.error) return <ErrorBox error={errorText(reg.error ?? cur.error)} />;
+  const canAdd = writable || quotaWritable;
   return (
     <div>
-      <PageHeader title="Khuyến mại" code="BH18" subtitle="Khuyến mại máy bán và phiếu bán áp tự động: giảm theo bậc, theo tổng đơn / mã giảm giá, quà theo tổng đơn, combo, món rẻ nhất, mua X tặng Y. Chương trình có hạn mức theo cửa hàng khai ở Chương trình bán (BH12)." />
+      <PageHeader title="Chương trình khuyến mại" code="BH18" subtitle="Mọi ưu đãi bán hàng ở một chỗ — máy bán và phiếu bán áp tự động, Core tính chung. Khuyến mại theo đơn / nhóm hàng (6 loại) và chương trình tặng hàng / giảm giá có hạn mức từng cửa hàng." />
+      <div className="tabs" role="tablist" style={{ margin: '8px 0' }}>
+        {TABS.map(([k, l, t]) => <button key={k} type="button" role="tab" className={`tab ${tab === k ? 'active' : ''}`} title={t} onClick={() => setTab(k)}>{l}</button>)}
+      </div>
       <div className="row" style={{ gap: 8, margin: '8px 0', alignItems: 'center' }}>
-        {writable && <button type="button" className="btn btn-primary" onClick={() => setChooseKind(true)}>+ Thêm</button>}
-        {writable && <button type="button" className="btn" disabled={!pick || edit.isPending} title={pick ? '' : 'Chọn một khuyến mại ở bảng'} onClick={() => pick && edit.mutate(pick)}>Sửa</button>}
-        {writable && <button type="button" className="btn" disabled={!pick || pick.status === 'stopped' || pick.status === 'ended'} title={pick ? '' : 'Chọn một khuyến mại ở bảng'} onClick={() => setStopOf(pick)}>Ngừng</button>}
-        <button type="button" className="btn" onClick={() => setTrial(pick ? [pick.key] : [])}>Thử tính{pick ? ` ${pick.key}` : ' (mọi khuyến mại)'}</button>
+        {canAdd && <button type="button" className="btn btn-primary" onClick={() => setChooseKind(true)}>+ Thêm</button>}
+        {tab === 'km' && writable && <button type="button" className="btn" disabled={!pick || edit.isPending} title={pick ? '' : 'Chọn một khuyến mại ở bảng'} onClick={() => pick && edit.mutate(pick)}>Sửa</button>}
+        {tab === 'km' && writable && <button type="button" className="btn" disabled={!pick || pick.status === 'stopped' || pick.status === 'ended'} title={!pick ? 'Chọn một khuyến mại ở bảng' : pick.status === 'stopped' || pick.status === 'ended' ? 'Khuyến mại đã ngừng / đã hết' : ''} onClick={() => setStopOf(pick)}>Ngừng</button>}
+        <button type="button" className="btn" title="Tính một giỏ hàng như máy bán — mọi chương trình đang chạy (cả có hạn mức), hoặc khuyến mại đang chọn; không ghi gì"
+          onClick={() => setTrial(tab === 'km' && pick ? [pick.key] : [])}>Thử tính{tab === 'km' && pick ? ` ${pick.key}` : ' (mọi chương trình)'}</button>
+        {tab === 'han-muc' && <span className="muted">Bấm một dòng để xem / sửa hạn mức.</span>}
         {msg && <span className="muted">{msg}</span>}
-        {!writable && <span className="muted">Chỉ người có quyền ghi cấu hình (kế toán trưởng / quản trị) thêm, sửa, ngừng được.</span>}
+        {!canAdd && <span className="muted">Thêm / sửa cần quyền ghi cấu hình (khuyến mại) hoặc ghi danh mục (chương trình có hạn mức).</span>}
       </div>
       {edit.error && <ErrorBox error={errorText(edit.error)} />}
-      <DataGrid rows={rows} columns={cols} rowKey={(r) => r.key} storageKey="pos.khuyen-mai" onRowClick={setPick} onRowDoubleClick={(r) => writable && edit.mutate(r)}
-        rowClassName={(r) => (r.key === pick?.key ? 'selected' : '')} emptyText="Chưa có khuyến mại — bấm Thêm" exportName="khuyen-mai" exportTitle="Khuyến mại" />
+      {tab === 'km' && (
+        <DataGrid rows={rows} columns={cols} rowKey={(r) => r.key} storageKey="pos.khuyen-mai" onRowClick={setPick} onRowDoubleClick={(r) => writable && edit.mutate(r)}
+          rowClassName={(r) => (r.key === pick?.key ? 'selected' : '')} emptyText="Chưa có khuyến mại — bấm Thêm" exportName="khuyen-mai" exportTitle="Khuyến mại" />
+      )}
+      {tab === 'han-muc' && <HanMucList onOpen={(p) => setQuotaForm({ program: p, mode: p.mode })} />}
+      {tab === 'bao-cao' && <HanMucReport today={d0} />}
 
       {chooseKind && (
-        <Modal title="Thêm khuyến mại — chọn loại" onClose={() => setChooseKind(false)}>
+        <Modal title="Thêm chương trình — chọn loại" onClose={() => setChooseKind(false)}>
           <div style={{ display: 'grid', gap: 6, gridColumn: '1 / -1' }}>
             {(Object.keys(KIND_INFO) as PromoKind[]).map((k) => (
-              <button key={k} type="button" className="btn" style={{ textAlign: 'left' }} onClick={() => { setChooseKind(false); setForm({ f: emptyForm(k, d0), editing: false }); }}>
+              <button key={k} type="button" className="btn" style={{ textAlign: 'left' }} disabled={!writable} title={writable ? '' : 'Cần quyền ghi cấu hình (settings:write)'}
+                onClick={() => { setChooseKind(false); setForm({ f: emptyForm(k, d0), editing: false }); }}>
                 <b>{KIND_INFO[k].label}</b><br /><span className="muted">{KIND_INFO[k].hint}</span>
+              </button>
+            ))}
+            {(Object.keys(QUOTA_KINDS) as (keyof typeof QUOTA_KINDS)[]).map((m) => (
+              <button key={m} type="button" className="btn" style={{ textAlign: 'left' }} disabled={!quotaWritable} title={quotaWritable ? '' : 'Cần quyền ghi danh mục (catalog:write)'}
+                onClick={() => { setChooseKind(false); setTab('han-muc'); setQuotaForm({ program: null, mode: m }); }}>
+                <b>{QUOTA_KINDS[m].label}</b><br /><span className="muted">{QUOTA_KINDS[m].hint}</span>
               </button>
             ))}
           </div>
         </Modal>
+      )}
+      {quotaForm && (
+        <HanMucForm key={quotaForm.program?.id ?? `new-${quotaForm.mode}`} program={quotaForm.program} mode={quotaForm.mode} today={d0} writable={quotaWritable}
+          onClose={() => setQuotaForm(null)} onDone={(code) => { setQuotaForm(null); setMsg(`Đã lưu chương trình ${code}.`); void refresh(); }} />
       )}
       {form && <KmForm initial={form.f} editing={form.editing} onClose={() => setForm(null)} onDone={(k) => { setForm(null); setMsg(`Đã phát hành ${k}.`); void refresh(); }} />}
       {stopOf && <StopDialog row={stopOf} pending={stop.isPending} error={stop.error ? errorText(stop.error) : ''} onClose={() => setStopOf(null)} onStop={(from) => stop.mutate({ r: stopOf, from })} />}

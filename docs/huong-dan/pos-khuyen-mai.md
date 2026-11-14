@@ -1,11 +1,20 @@
-# Khuyến mại (BH18)
+# Chương trình khuyến mại (BH18)
 <!-- [2026-11-14 01:40 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: hướng dẫn màn Khuyến mại (đóng góp) -->
+<!-- [2026-11-15 10:40 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: một màn Chương trình khuyến mại — gộp Chương trình bán BH12 (đóng góp) -->
 
 Khai báo khuyến mại cho máy bán POS (và phiếu bán): mua nhiều giảm nhiều, giảm theo tổng đơn / mã giảm giá, quà theo tổng đơn, combo, mua bất kỳ tặng món rẻ nhất, mua X tặng Y. Phát hành xong máy bán áp từ ngày áp dụng, không phải cài lại máy.
 
-Mở: **Bán hàng → Chính sách bán → Khuyến mại**. Ai cũng xem và thử tính được; thêm / sửa / ngừng cần quyền ghi cấu hình (kế toán trưởng, quản trị).
+Mở: **Bán hàng → Chính sách bán → Chương trình khuyến mại**. Ai cũng xem và thử tính được; thêm / sửa / ngừng khuyến mại cần quyền ghi cấu hình (kế toán trưởng, quản trị), chương trình có hạn mức cần quyền ghi danh mục.
 
-Chương trình có **hạn mức theo cửa hàng** (quà của nhà cung cấp, giảm giá có số suất) khai ở *Chương trình bán (BH12)*, không ở đây.
+Từ 15/11/2026 đây là **màn duy nhất** khai ưu đãi bán hàng — màn *Chương trình bán (BH12)* đã gộp vào đây (đường cũ tự chuyển sang thẻ *Có hạn mức*). Ba thẻ:
+
+| Thẻ | Nội dung |
+|---|---|
+| **Khuyến mại** | 6 loại khuyến mại theo đơn / nhóm hàng (bên dưới) |
+| **Có hạn mức** | Tặng hàng / giảm giá (kể cả cận date) trên **một mặt hàng**, mỗi cửa hàng một số suất — quà của nhà cung cấp, hàng xả. Bấm một dòng để xem, **Sửa** hạn mức. Chi tiết: [Chương trình có hạn mức](bh-chuong-trinh.md) |
+| **Báo cáo hạn mức** | Hạn mức / đã dùng / còn lại từng cửa hàng, tốc độ dùng, số dùng trong kỳ |
+
+**+ Thêm** có 8 loại: 6 loại khuyến mại và *Tặng hàng có hạn mức cửa hàng*, *Giảm giá có hạn mức cửa hàng*. **Thử tính** (không chọn dòng nào) tính một giỏ hàng với **mọi** chương trình đang chạy, cả hai kiểu — đúng kết quả máy bán và phiếu bán nhập tay nhận.
 
 ## Danh sách
 

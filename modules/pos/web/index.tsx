@@ -22,7 +22,8 @@ export default defineWebModule({
     { key: 'pos-ca-ban', label: 'Sổ ca bán', path: '/app/pos/ca-ban', code: 'BH15', permission: P },
     { key: 'pos-tong-quan', label: 'Tổng quan bán lẻ', path: '/app/pos/tong-quan', code: 'BH16', permission: P },
     { key: 'pos-cai-dat', label: 'Cài đặt bán hàng', path: '/app/pos/cai-dat', code: 'BH17', permission: P },
-    { key: 'pos-khuyen-mai', label: 'Khuyến mại', path: '/app/pos/khuyen-mai', code: 'BH18', permission: P },
+    // [2026-11-15 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: một màn Chương trình khuyến mại (gộp BH12) (đóng góp)
+    { key: 'pos-khuyen-mai', label: 'Chương trình khuyến mại', path: '/app/pos/khuyen-mai', code: 'BH18', permission: P },
   ],
   routes: [
     { path: '/app/pos/don-ban', component: DonBanPage, permission: P },

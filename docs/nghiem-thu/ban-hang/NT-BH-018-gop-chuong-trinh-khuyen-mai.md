@@ -7,7 +7,7 @@
 | Màn hình | BH18 *Chương trình khuyến mại* (`/app/pos/khuyen-mai`); BH12 *Chương trình bán* (`/ban-hang/chuong-trinh`) thôi là màn riêng |
 | Bộ phận yêu cầu | Kế toán bán hàng, kinh doanh / marketing |
 | Ngày tạo | 14/11/2026 |
-| Trạng thái | Nháp — anh Hoàng chốt 14/11: "chỉ nên có 1 màn" |
+| Trạng thái | Đã làm 15/11 — Q1 chốt: anh Thủy bàn giao phần BH12, anh Hoàng quản lý (15/11) |
 
 ## 1. Mục đích quản trị
 Hiện có hai màn khai ưu đãi bán hàng: **BH12** (tặng hàng / giảm giá theo một mặt hàng, có **hạn mức từng cửa hàng**) và **BH18** (6 loại khuyến mại theo đơn / nhóm hàng). Cả hai đều do Core tính chung một chỗ (`POST /api/v1/policies/evaluate`) và máy bán, phiếu bán nhập tay áp như nhau — chỉ khác chỗ khai. Người dùng phải biết loại nào khai ở màn nào. Đợt này gộp thành **một màn**: một danh sách, một nút Thêm với đủ loại, một chỗ thử tính.
@@ -46,11 +46,23 @@ Chương trình có hạn mức `KM-T11-LY` (mua 2 `SUA330` tặng 1 `LY01`, `CN
 
 | # | Câu hỏi | Mặc định tạm |
 |---|---|---|
-| Q1 | Màn BH12 do anh Thủy làm (`apps/web/src/features/sale-programs`) | Chuyển phần giao diện sang module `pos` (chỉ dùng `@bizcity/ui-kit`), tệp cũ thành chuyển hướng — **cần anh Thủy đồng ý**; API / dữ liệu `sale-programs` của anh Thủy giữ nguyên |
+| Q1 | Màn BH12 do anh Thủy làm (`apps/web/src/features/sale-programs`) | **Chốt 15/11:** anh Thủy bàn giao, anh Hoàng quản lý — giao diện chuyển sang module `pos`, tệp cũ thành chuyển hướng; API / dữ liệu `sale-programs` giữ nguyên |
 | Q2 | Mã màn | Giữ **BH18**; BH12 thôi dùng làm mã màn |
 
 ## 7. Kết quả chạy
-Chưa chạy.
+<!-- [2026-11-15 11:00 AM Võ Hoàng] NGHIEM-THU — kết quả NT-BH-018 (đóng góp) -->
+Docker demo (15/11), kịch bản trình duyệt + test hàm thuần `modules/pos/test/han-muc.test.ts` (4/4), `module check pos` ĐẠT.
+
+| Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
+|---|---|---|---|---|
+| §5 dòng 1 | một mục menu | Chính sách bán / Phần riêng chỉ còn *Chương trình khuyến mại* (BH18); bỏ mục *Chương trình bán*; ô *Giá & chính sách* ở Luồng chi tiết mở BH18, bỏ ô *Khuyến mại* trùng | — | |
+| §5 dòng 2 | đường cũ chuyển | `/ban-hang/chuong-trinh` → `/app/pos/khuyen-mai?the=han-muc`, thẻ *Có hạn mức* mở sẵn | — | thẻ làm việc cũ mang tên đường dẫn còn lại một lần (đường chuyển hướng không có tên màn) |
+| §5 dòng 3 | Thêm 8 loại | hộp Thêm có 8 nút; *Tặng hàng / Giảm giá có hạn mức* mở form như BH12 | — | |
+| §5 dòng 4 | thẻ Có hạn mức | danh sách `KM-THU-HM` (lọc trạng thái, tìm, hạn mức / đã dùng / còn lại / bản); sửa hạn mức CN03 5 → 8, lưu, đọc lại `CN03=8`; không hạ dưới số đã dùng (kiểm ở màn + API) | — | |
+| §5 dòng 5 | báo cáo | thẻ *Báo cáo hạn mức* hiện `KM-THU-HM` theo cửa hàng, ô tổng | — | |
+| §5 dòng 6 | thử tính chung | 3 lon `100021001` ở CN03 → `KM-THU-BAC` (giảm bậc), `KM-THU-QUA` (mua X tặng Y), `KM-THU-HM` (có hạn mức) cùng áp | — | |
+| §5 dòng 7 | không đổi số liệu | API `/api/v1/sale-programs` không đổi; chương trình tạo bằng API cũ hiện đủ | — | |
+| §6 dòng 1 | không quyền | Thêm / Sửa mờ kèm lý do theo quyền (`settings:write` khuyến mại, `catalog:write` có hạn mức) | — | |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -60,3 +72,4 @@ Chưa chạy.
 | Ngày | Thay đổi |
 |---|---|
 | 14/11/2026 | Tạo phiếu |
+| 15/11/2026 | Chốt Q1, làm, ghi kết quả |
