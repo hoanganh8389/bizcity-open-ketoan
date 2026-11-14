@@ -11,6 +11,17 @@ Mỗi bản ghi đủ sáu mục:
 - **Bảo mật**
 
 ## [Chưa phát hành]
+
+### Màn Khuyến mại BH18 — khai báo, thử tính, sửa, ngừng 6 loại khuyến mại (phiếu NT-BH-016, chữ chốt nghiep-vu/22) <!-- [2026-11-14 01:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-016 đợt 4a (đóng góp) -->
+
+- **Thêm:** màn **Khuyến mại** (`/app/pos/khuyen-mai`, module `pos`):
+  - danh sách khuyến mại `sale.promo.*` (trạng thái sắp chạy / đang chạy / đã hết / đã ngừng, số chứng từ đã áp);
+  - form 6 loại: bậc, tổng đơn / mã giảm giá, quà theo tổng đơn, combo, món rẻ nhất, mua X tặng Y — kèm điều kiện thứ / giờ / sinh nhật / hạng, ưu tiên, áp riêng, trần NĐ81;
+  - **Sửa** = bản mới từ ngày chọn; **Ngừng** từ ngày; **Thử tính** trên giỏ hàng.
+  - Chỉ gọi API chính sách có sẵn của Core.
+- **Đổi:** menu Bán hàng → Chính sách bán: *Khuyến mại* hết mờ; ô Khuyến mại ở Luồng chi tiết mở BH18.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - **Phủ kín bộ định danh** (0138): 19 bảng cũ có cột chi nhánh / kho / đối tượng thêm `branch_uid` cn_ / `warehouse_uid` kho_ / `partner_uid` dt_ (bút toán, số dư ngày, sự việc kế toán, hoá đơn thuế, công nợ, tài sản, phân bổ, kế hoạch tiền, định mức, lô hàng, tồn kho, kiểm kê, khoá kỳ, đề nghị thanh toán, chứng từ tham chiếu, số dư dài hạn, kho). Ba trigger dùng chung điền khi ghi / đổi chi nhánh, kho, đối tượng; dữ liệu cũ điền trong migration (bút toán tạm mở khoá chỉ-ghi-thêm lúc điền). Test canh cửa: danh sách nợ cũ rỗng.
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->

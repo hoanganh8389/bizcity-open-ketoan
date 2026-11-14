@@ -63,6 +63,11 @@ Mặt hàng `A` 100.000, `B` 200.000, `C` 50.000, `D` 30.000; cửa hàng `CN01`
 ## 7. Kết quả chạy
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
+| §5 dòng 1–6 (6 loại) | số theo §5 | đúng — test `nt-bh-016`: form của màn → phát hành → Core tính: bậc 100.000; tổng đơn có mã 41.500 chia 25.000 / 10.000 / 5.000 / 1.500, thiếu mã → "cần mã giảm giá"; quà 1 QUA01; combo 26.667 / 13.333; món rẻ nhất 30.000; mua 4 A tặng 2 C | — | |
+| §5 dòng 7 (điều kiện chung) | đi vào params, áp đúng | đúng — thứ 7 / CN, khung giờ, ưu tiên, áp riêng, trần 30 %; khứ hồi params → form → params không đổi | — | |
+| §5 dòng 9–10 (sửa, ngừng) | bản mới từ ngày chọn; ngừng từ ngày | đúng — 30/06 giảm 10 %, 01/07 giảm 20 %; ngừng từ 10/07: 09/07 còn áp, 10/07 không áp; sổ đăng ký 3 bản | — | |
+| §5 dòng 8, 11 + chạy thật | phát hành, menu | Docker demo qua giao diện: Bán hàng → Khuyến mại → Thêm "Giảm theo bậc" → Phát hành → Thử tính 3 × 100.000 giảm 10 % = 30.000 → Ngừng; không lỗi trình duyệt; mục Khuyến mại hết mờ | — | đã sửa bố cục hộp form (trước dồn một cột) |
+| §6 dòng 1 (form sai) | chặn | màn báo đúng ô (thiếu nhóm mã, bậc không tăng, mã sai khuôn) trước khi gửi; Core kiểm lại khi phát hành | — | |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -72,3 +77,4 @@ Mặt hàng `A` 100.000, `B` 200.000, `C` 50.000, `D` 30.000; cửa hàng `CN01`
 | Ngày | Thay đổi |
 |---|---|
 | 14/11/2026 | Tạo phiếu |
+| 14/11/2026 | Ghi kết quả chạy (test tích hợp 3/3, thuần 6/6, chạy thật Docker) |

@@ -82,7 +82,7 @@ Trạng thái ở danh sách (tính ở màn từ bản hiệu lực + `validFro
 ## 4. Đề xuất Core (bậc 4 — chủ dự án quyết, chưa viết mã)
 
 1. **Tên chính sách.** `core.policy.publish` thêm `title` (chuỗi ≤ 200) lưu theo chính sách; sổ đăng ký trả `title`.
-   - Hiện tham số khuyến mại bỏ trường lạ, màn chỉ hiện mã + lý do phát hành.
+   - Hiện tham số khuyến mại **từ chối** trường lạ (khuôn `.strict()`), nên không gửi kèm tên được; màn chỉ hiện mã + lý do phát hành.
    - Tạm thời: mã gợi nhớ + tên ở lý do bản 1.
 2. **Thử tính bản nháp.** `core.policy.evaluate` nhận `drafts: [{ ruleContract, params }]`. Core tính như bản đã phát hành nhưng không ghi gì, không trả `policyRefs`. Như vậy người khai thử được trước khi phát hành.
 
@@ -102,3 +102,13 @@ Trạng thái ở danh sách (tính ở màn từ bản hiệu lực + `validFro
 - Test thuần màn (`modules/pos/test/`): dựng `params` từ form từng loại khớp `vectors` của khuôn, tính trạng thái danh sách.
 - Test tích hợp (`apps/api/test/nt-bh-016-khuyen-mai.test.ts`, đề xuất): phát hành 6 loại qua API như màn gửi, `evaluate` ra đúng §5 NT-BH-016; sửa → bản 2 từ ngày chọn; ngừng → hôm sau không áp.
 - Chạy thật trên Docker demo: khai → phát hành → bán ở máy bán thấy giảm; ngừng → không áp.
+
+## 7. Làm thật (14/11, PR code đợt 4a)
+<!-- [2026-11-14 01:00 PM Võ Hoàng] NGHIEM-THU — ghi điểm làm thật đợt 4a (đóng góp) -->
+
+| # | Chữ chốt | Làm thật |
+|---|---|---|
+| 1 | §2 form theo loại | Đúng như bảng. Phần thuần (form ↔ `params`, trạng thái, nội dung bản "ngừng") ở `modules/pos/web/screens/khuyen-mai/model.ts` |
+| 2 | Ngừng = bản mới `validTo` = hôm nay | **Ngừng từ ngày chọn**: bản mới áp từ ngày đó, `validTo` = hôm trước; khuyến mại chưa chạy thì thu cửa sổ về trước ngày ngừng. Hôm nay = ngừng ngay |
+| 3 | Sửa | Mặc định áp từ ngày mai (bản đang chạy) hoặc giữ ngày áp (bản sắp chạy) |
+| 4 | Test tích hợp import hàm thuần của màn | Test ở `apps/api/test` nạp động `model.ts` theo đường dẫn (tệp nằm ngoài rootDir của apps/api) |

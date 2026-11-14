@@ -5,6 +5,8 @@
 import { defineWebModule } from '@bizcity/module-sdk/web';
 import { CaiDatPage } from './screens/CaiDatPage';
 import { DonBanPage } from './screens/DonBanPage';
+// [2026-11-14 01:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: màn Khuyến mại BH18 (đóng góp)
+import { KhuyenMaiPage } from './screens/KhuyenMaiPage';
 import { SoCaPage } from './screens/SoCaPage';
 import { TongQuanPage } from './screens/TongQuanPage';
 import { TraHangPage } from './screens/TraHangPage';
@@ -20,6 +22,7 @@ export default defineWebModule({
     { key: 'pos-ca-ban', label: 'Sổ ca bán', path: '/app/pos/ca-ban', code: 'BH15', permission: P },
     { key: 'pos-tong-quan', label: 'Tổng quan bán lẻ', path: '/app/pos/tong-quan', code: 'BH16', permission: P },
     { key: 'pos-cai-dat', label: 'Cài đặt bán hàng', path: '/app/pos/cai-dat', code: 'BH17', permission: P },
+    { key: 'pos-khuyen-mai', label: 'Khuyến mại', path: '/app/pos/khuyen-mai', code: 'BH18', permission: P },
   ],
   routes: [
     { path: '/app/pos/don-ban', component: DonBanPage, permission: P },
@@ -27,5 +30,6 @@ export default defineWebModule({
     { path: '/app/pos/ca-ban', component: SoCaPage, permission: P },
     { path: '/app/pos/tong-quan', component: TongQuanPage, permission: P },
     { path: '/app/pos/cai-dat', component: CaiDatPage, permission: P },
+    { path: '/app/pos/khuyen-mai', component: KhuyenMaiPage, permission: P },
   ],
 });
