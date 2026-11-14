@@ -63,6 +63,105 @@
       "key": "kho:dieu-chinh-huy",
       "label": "Huỷ phiếu điều chỉnh kho",
       "risk": "low"
+    },
+    {
+      "key": "kho:chuyen-kho-sua",
+      "label": "Sửa phiếu chuyển kho đã ghi",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:chuyen-kho-nhan",
+      "label": "Nhận hàng / bỏ nhận phiếu chuyển kho (thủ kho bên nhận)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-xem",
+      "label": "Xem biên bản kiểm kê kho",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-lap",
+      "label": "Lập biên bản kiểm kê (nháp)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-sua",
+      "label": "Sửa biên bản kiểm kê nháp",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-ghi-nhan",
+      "label": "Ghi nhận chênh lệch kiểm kê (sinh chứng từ điều chỉnh, chuyển kho cách ly)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-bo-ghi-nhan",
+      "label": "Bỏ ghi nhận chênh lệch kiểm kê",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-xac-minh",
+      "label": "Biên bản xác minh chênh lệch",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-quyet-dinh",
+      "label": "Quyết định xử lý chênh lệch (phiếu kế toán tất toán)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "kho:kiem-ke-huy-quyet-dinh",
+      "label": "Huỷ quyết định xử lý chênh lệch",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
     }
   ],
   "ui": {

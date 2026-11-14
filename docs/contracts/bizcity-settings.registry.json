@@ -637,6 +637,23 @@
         }
       ],
       "note": "Tắt (mặc định): định khoản không đọc tài khoản trên lý do — tài khoản theo Tài khoản ngầm định (ACC41), kể cả dòng thêm theo loại hàng / biến thể; giao diện ẩn ô / màn lý do. Bật: tài khoản trên lý do đè lên cấu hình như phần mềm cũ. Đọc theo ngày chứng từ: bật / tắt từ một ngày, chứng từ trước ngày đó giữ cách cũ khi định khoản lại."
+    },
+    {
+      "key": "bizcity.authz.branch_scope",
+      "class": "B",
+      "owner": "core",
+      "scopes": [
+        "tenant"
+      ],
+      "storage": "setting_values",
+      "valueType": "enum(on|off)",
+      "default": "\"off\"",
+      "readBy": "quyenTheoChiNhanh() (apps/api/src/modules/access/quyen-chi-nhanh.ts) — mỗi yêu cầu của người dùng",
+      "writeBy": "core.settings.set (PUT /api/v1/settings/values/:key) — Trung tâm cấu hình",
+      "permission": "settings:write",
+      "audit": "settings.set",
+      "affectsPosting": false,
+      "note": "NT-HT-003: on = người có lần gán vai trò tại chi nhánh / kho chỉ làm việc ở các chi nhánh đó, vai trò gán tại chi nhánh chỉ có hiệu lực ở đó, Hạn chế tại chi nhánh Cấm ở đó; off (mặc định) = như cũ (lần gán tại chi nhánh chỉ cộng quyền ở cửa nạp). Trước khi bật xem bảng rà GET /api/v1/quyen-chi-nhanh/ra-soat (HT12)."
     }
   ],
   "$comment": "[2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1: valueType (khuôn máy đọc), phạm vi user, khoá mới lưu setting_values; khoá có valueType ghi qua core.settings.set (bizcity_settings@1 1.1.0-draft §2)"

@@ -65,6 +65,7 @@ import { registerAppManifests } from '@bizcity/platform/core/apps';
 import { APP_MANIFESTS } from './ung-dung/index.js';
 import { registerDocumentNumberer } from './core/documents.js';
 import { registerCollector } from './core/metrics.js';
+import { quyenChiNhanh } from './modules/access/quyen-chi-nhanh.js';
 
 
 
@@ -114,6 +115,7 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   await app.register(swaggerUi, { routePrefix: '/api/docs' });
 
   await app.register(authPlugin);
+  await app.register(quyenChiNhanh); // [2026-11-13 06:30 PM kiennt] PHAN-QUYEN — bản thử: quyền theo chi nhánh (móc kiểm toàn app) (đóng góp)
 
   // Sự kiện miền (core/events.ts): subscriber của Platform. Vòng dispatcher + đồng hồ chạy ở main.ts, không chạy trong test.
   // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn mỗi đêm cho từng đơn vị (bizcity.clock.daily 01:00 giờ VN)

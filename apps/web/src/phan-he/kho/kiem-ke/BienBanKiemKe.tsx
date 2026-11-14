@@ -19,12 +19,14 @@ import { FormTabs } from '@/components/FormBlocks';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { ChonKho } from '@/components/phieu-hang/ChonKho';
 import { TepChungTu } from '@/components/dinh-kem/TepChungTu';
+import { useThaoTac } from '@/lib/manHinh';
 import { CAUSE_TEXT, STATUS_CLASS, causesFor, diffOf, kkApi, qty, viDate, type CauseKind, type KkCause, type KkDoc, type KkInput, type KkLine } from './api';
 
 type Tab = 'bb' | 'xm' | 'qd';
 const lotKey = (l: Pick<KkLine, 'sku' | 'lotNo'>) => `${l.sku}|${l.lotNo}`;
 
 export function BienBanKiemKe({ value, onClose, onChanged }: { value: KkDoc; onClose: () => void; onChanged: (d: KkDoc) => void }) {
+  const tt = useThaoTac('kho.kiem-ke'); // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: nút theo thao tác đã đăng ký của màn KHO02 (đóng góp)
   const [v, setV] = useState<KkDoc>(value);
   const [tab, setTab] = useState<Tab>(value.status === 'verified' ? 'qd' : value.status === 'recorded' ? 'xm' : 'bb');
   const [busy, setBusy] = useState(false);
@@ -91,13 +93,13 @@ export function BienBanKiemKe({ value, onClose, onChanged }: { value: KkDoc; onC
     <Modal wide title={title} onClose={onClose}
       footer={<>
         {draft && <>
-          <button className="btn btn-primary" disabled={busy || !v.branchCode} onClick={() => void save()} title="Lưu nháp — chưa đụng sổ">Ghi</button>
-          <button className="btn" disabled={busy || !v.lines.length} title="Lưu rồi sinh chứng từ điều chỉnh tồn + chuyển hàng kém phẩm chất sang kho cách ly"
-            onClick={async () => { const d = await save(); if (d && window.confirm(`Ghi nhận chênh lệch biên bản ${d.docNo}?\nPhần mềm sẽ ghi chứng từ điều chỉnh tồn${totals.poor ? ' và chuyển hàng kém / mất phẩm chất sang kho cách ly' : ''}.`)) await run(() => kkApi.record(d.id), 'Đã ghi nhận chênh lệch.'); }}>Ghi nhận chênh lệch</button>
+          {(v.id ? tt.sua : tt.them) && <button className="btn btn-primary" disabled={busy || !v.branchCode} onClick={() => void save()} title="Lưu nháp — chưa đụng sổ">Ghi</button>}
+          {tt.ghiNhan && (v.id ? tt.sua : tt.them) && <button className="btn" disabled={busy || !v.lines.length} title="Lưu rồi sinh chứng từ điều chỉnh tồn + chuyển hàng kém phẩm chất sang kho cách ly"
+            onClick={async () => { const d = await save(); if (d && window.confirm(`Ghi nhận chênh lệch biên bản ${d.docNo}?\nPhần mềm sẽ ghi chứng từ điều chỉnh tồn${totals.poor ? ' và chuyển hàng kém / mất phẩm chất sang kho cách ly' : ''}.`)) await run(() => kkApi.record(d.id), 'Đã ghi nhận chênh lệch.'); }}>Ghi nhận chênh lệch</button>}
         </>}
-        {!draft && !(v.status === 'settled' && v.journalDocKey) && <button className="btn" disabled={busy} title="Huỷ chứng từ điều chỉnh / chuyển kho đã sinh (bút toán đảo), biên bản về nháp"
+        {tt.boGhiNhan && !draft && !(v.status === 'settled' && v.journalDocKey) && <button className="btn" disabled={busy} title="Huỷ chứng từ điều chỉnh / chuyển kho đã sinh (bút toán đảo), biên bản về nháp"
           onClick={() => { const r = window.prompt(`Bỏ ghi nhận chênh lệch biên bản ${v.docNo}? Chứng từ đã sinh sẽ bị huỷ (bút toán đảo).\nLý do:`, ''); if (r !== null) void run(() => kkApi.unrecord(v.id, r), 'Đã bỏ ghi nhận — biên bản về nháp.'); }}>Bỏ ghi nhận</button>}
-        {v.status === 'settled' && v.decisionNo && <button className="btn" disabled={busy} title="Huỷ phiếu kế toán tất toán (bút toán đảo), biên bản về Đã xác minh"
+        {tt.huyQuyetDinh && v.status === 'settled' && v.decisionNo && <button className="btn" disabled={busy} title="Huỷ phiếu kế toán tất toán (bút toán đảo), biên bản về Đã xác minh"
           onClick={() => { const r = window.prompt(`Huỷ quyết định ${v.decisionNo}? Phiếu kế toán tất toán sẽ bị huỷ (bút toán đảo).\nLý do:`, ''); if (r !== null) void run(() => kkApi.undecide(v.id, r), 'Đã huỷ quyết định.'); }}>Huỷ quyết định</button>}
         <button className="btn" onClick={onClose}>Thoát</button>
       </>}>
@@ -184,7 +186,8 @@ function XacMinh({ v, busy, onSave }: { v: KkDoc; busy: boolean; onSave: (b: { c
   const lines = v.lines.filter((l) => diffOf(l) !== 0);
   const [causes, setCauses] = useState<KkCause[]>(() => (v.causes.length ? v.causes : lines.map((l) => ({ lineKey: l.lineKey, cause: 'unknown' as CauseKind, qty: Math.abs(diffOf(l)) }))));
   const [note, setNote] = useState(v.verifyNote);
-  const open = v.status === 'recorded' || v.status === 'verified';
+  const coQuyen = useThaoTac('kho.kiem-ke').xacMinh; // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: không có quyền xác minh → chỉ xem (đóng góp)
+  const open = (v.status === 'recorded' || v.status === 'verified') && coQuyen;
   if (v.status === 'draft') return <div className="full muted">Ghi nhận chênh lệch ở thẻ Biên bản kiểm kê trước khi xác minh.</div>;
   if (!lines.length) return <div className="full muted">Biên bản không có chênh lệch số lượng.</div>;
   const upd = (i: number, p: Partial<KkCause>) => setCauses((c) => c.map((x, j) => (j === i ? { ...x, ...p } : x)));
@@ -230,7 +233,8 @@ function QuyetDinh({ v, busy, onSave }: { v: KkDoc; busy: boolean; onSave: (b: {
   const [rs, setRs] = useState<KkDoc['decisionReasons']>(v.decisionReasons);
   const pick = (k: 'compensate' | 'expense' | 'owned', fallback: string) => rs[k] ?? (has(fallback) ? fallback : '');
   const need = new Set(v.causes.map((c) => c.cause));
-  const open = v.status === 'verified';
+  const coQuyen = useThaoTac('kho.kiem-ke').quyetDinh; // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: không có quyền quyết định → chỉ xem (đóng góp)
+  const open = v.status === 'verified' && coQuyen;
   if (v.status === 'draft' || v.status === 'recorded') return <div className="full muted">Ghi biên bản xác minh trước khi ghi quyết định xử lý.</div>;
   const sel = (k: 'compensate' | 'expense' | 'owned', label: string, fallback: string, hint: string) => need.has(k) && (
     <><label title={hint}>{label}</label>

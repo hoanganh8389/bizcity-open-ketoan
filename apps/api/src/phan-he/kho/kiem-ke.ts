@@ -33,6 +33,8 @@ import { Errors } from '../../core/errors.js';
 import { idParamSchema, ok } from '../../core/http.js';
 import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
 import { documentNumbers, documentService, documentStatusIn, postDocumentIn } from '../../kernel/public.js';
+import { quyenThaoTac } from '../../modules/access/man-hinh.js';
+import './man-hinh-kho.js'; // đăng ký màn KHO01 / KHO02 trước khi lệnh đọc quyền
 
 const tags = ['Kho — kiểm kê'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
@@ -454,7 +456,7 @@ export async function undecideCount(trx: Db, auth: AuthContext, id: string, reas
 
 export async function stockCountRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
-  const read = requirePermission('documents:read');
+  const read = requirePermission(quyenThaoTac('kho.kiem-ke', 'xem')); // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: xem theo thao tác màn KHO02 (đóng góp)
   r.get('/api/v1/kho/kiem-ke', {
     preHandler: read,
     schema: { tags, summary: 'Danh sách biên bản kiểm kê', querystring: z.object({ from: day.optional(), to: day.optional(), search: z.string().max(100).optional() }) },
@@ -483,19 +485,22 @@ const reasonBody = z.object({ reason: z.string().trim().max(500).default('') });
 const countGate = (auth: AuthContext, op: 'create' | 'cancel'): void => {
   if (!canDocument(auth, 'stock_adjustment', op)) throw Errors.forbidden(`Không có quyền ${op === 'create' ? 'lập / ghi nhận / xử lý' : 'bỏ ghi nhận / huỷ quyết định'} biên bản kiểm kê (${documentPermissionOf('stock_adjustment', op)})`);
 };
-const act = (id: string, title: string, method: 'POST' | 'PUT', path: string, input: z.AnyZodObject, op: 'create' | 'cancel', fn: (trx: Db, auth: AuthContext, i: never) => Promise<unknown>) =>
+/** Thao tác sinh / huỷ chứng từ điều chỉnh, chuyển kho cách ly, phiếu kế toán — còn đòi quyền của phiếu điều chỉnh kho; lưu nháp, xác minh thì không (PHAN-QUYEN bản thử). */
+const SINH_CHUNG_TU = new Set(['ghiNhan', 'boGhiNhan', 'quyetDinh', 'huyQuyetDinh']);
+const act = (id: string, title: string, method: 'POST' | 'PUT', path: string, input: z.AnyZodObject, tt: string, fn: (trx: Db, auth: AuthContext, i: never) => Promise<unknown>) =>
   defineAction({
-    id, title, tags, permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: mỗi lệnh kiểm kê gác theo thao tác của màn KHO02 (đóng góp)
+    id, title, tags, get permission() { return quyenThaoTac('kho.kiem-ke', tt); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input, output: anyOut, expose: { http: { method, path }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_count', objectId: (i: { id?: string | number; docNo?: string }) => String(i.id ?? i.docNo ?? 'new') },
-    handler: (ctx, i) => { countGate(ctx.legacyAuth, op); return fn(ctx.data.tx, ctx.legacyAuth, i as never); },
+    handler: (ctx, i) => { if (SINH_CHUNG_TU.has(tt)) countGate(ctx.legacyAuth, tt === 'boGhiNhan' || tt === 'huyQuyetDinh' ? 'cancel' : 'create'); return fn(ctx.data.tx, ctx.legacyAuth, i as never); },
   });
 export const stockCountActions: AnyActionDef[] = [
-  act('kho.stock-count.create', 'Lập biên bản kiểm kê (nháp, chưa đụng sổ)', 'POST', '/api/v1/kho/kiem-ke', countInputSchema, 'create', (t, a, i) => createCount(t, a, i)),
-  act('kho.stock-count.update', 'Sửa biên bản kiểm kê nháp', 'PUT', '/api/v1/kho/kiem-ke/:id', countInputSchema.merge(idParamSchema), 'create', (t, a, i: CountInput & { id: string }) => { const { id, ...b } = i; return updateCount(t, a, String(id), b); }),
-  act('kho.stock-count.record', 'Ghi nhận chênh lệch kiểm kê (điều chỉnh tồn + chuyển kho cách ly)', 'POST', '/api/v1/kho/kiem-ke/:id/ghi-nhan', idParamSchema, 'create', (t, a, i: { id: string }) => recordCount(t, a, String(i.id))),
-  act('kho.stock-count.unrecord', 'Bỏ ghi nhận chênh lệch kiểm kê (huỷ chứng từ, biên bản về nháp)', 'POST', '/api/v1/kho/kiem-ke/:id/bo-ghi-nhan', reasonBody.merge(idParamSchema), 'cancel', (t, a, i: { id: string; reason: string }) => unrecordCount(t, a, String(i.id), i.reason)),
-  act('kho.stock-count.verify', 'Biên bản xác minh chênh lệch kiểm kê', 'POST', '/api/v1/kho/kiem-ke/:id/xac-minh', verifySchema.merge(idParamSchema), 'create', (t, a, i: z.input<typeof verifySchema> & { id: string }) => { const { id, ...b } = i; return verifyCount(t, a, String(id), b); }),
-  act('kho.stock-count.decide', 'Quyết định xử lý chênh lệch kiểm kê (phiếu kế toán tất toán)', 'POST', '/api/v1/kho/kiem-ke/:id/quyet-dinh', decideSchema.merge(idParamSchema), 'create', (t, a, i: z.input<typeof decideSchema> & { id: string }) => { const { id, ...b } = i; return decideCount(t, a, String(id), b); }),
-  act('kho.stock-count.undecide', 'Huỷ quyết định xử lý chênh lệch kiểm kê', 'POST', '/api/v1/kho/kiem-ke/:id/huy-quyet-dinh', reasonBody.merge(idParamSchema), 'cancel', (t, a, i: { id: string; reason: string }) => undecideCount(t, a, String(i.id), i.reason)),
+  act('kho.stock-count.create', 'Lập biên bản kiểm kê (nháp, chưa đụng sổ)', 'POST', '/api/v1/kho/kiem-ke', countInputSchema, 'them', (t, a, i) => createCount(t, a, i)),
+  act('kho.stock-count.update', 'Sửa biên bản kiểm kê nháp', 'PUT', '/api/v1/kho/kiem-ke/:id', countInputSchema.merge(idParamSchema), 'sua', (t, a, i: CountInput & { id: string }) => { const { id, ...b } = i; return updateCount(t, a, String(id), b); }),
+  act('kho.stock-count.record', 'Ghi nhận chênh lệch kiểm kê (điều chỉnh tồn + chuyển kho cách ly)', 'POST', '/api/v1/kho/kiem-ke/:id/ghi-nhan', idParamSchema, 'ghiNhan', (t, a, i: { id: string }) => recordCount(t, a, String(i.id))),
+  act('kho.stock-count.unrecord', 'Bỏ ghi nhận chênh lệch kiểm kê (huỷ chứng từ, biên bản về nháp)', 'POST', '/api/v1/kho/kiem-ke/:id/bo-ghi-nhan', reasonBody.merge(idParamSchema), 'boGhiNhan', (t, a, i: { id: string; reason: string }) => unrecordCount(t, a, String(i.id), i.reason)),
+  act('kho.stock-count.verify', 'Biên bản xác minh chênh lệch kiểm kê', 'POST', '/api/v1/kho/kiem-ke/:id/xac-minh', verifySchema.merge(idParamSchema), 'xacMinh', (t, a, i: z.input<typeof verifySchema> & { id: string }) => { const { id, ...b } = i; return verifyCount(t, a, String(id), b); }),
+  act('kho.stock-count.decide', 'Quyết định xử lý chênh lệch kiểm kê (phiếu kế toán tất toán)', 'POST', '/api/v1/kho/kiem-ke/:id/quyet-dinh', decideSchema.merge(idParamSchema), 'quyetDinh', (t, a, i: z.input<typeof decideSchema> & { id: string }) => { const { id, ...b } = i; return decideCount(t, a, String(id), b); }),
+  act('kho.stock-count.undecide', 'Huỷ quyết định xử lý chênh lệch kiểm kê', 'POST', '/api/v1/kho/kiem-ke/:id/huy-quyet-dinh', reasonBody.merge(idParamSchema), 'huyQuyetDinh', (t, a, i: { id: string; reason: string }) => undecideCount(t, a, String(i.id), i.reason)),
 ];

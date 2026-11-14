@@ -29,6 +29,11 @@ import { useTemplates } from './TemplatesPage';
 import { VOUCHER_SCREEN, VOUCHER_TEMPLATES, signRolesOf, type PrintSheet, type SignatureInfo } from './VoucherPrint';
 import { PrintButton } from '@/components/print';
 import { SIGN_ROLES, useSignableRoles } from './Signatures';
+import { useThaoTac } from '@/lib/manHinh';
+/** Loại phiếu tiền → màn đã đăng ký ở phân hệ Quỹ (apps/api/src/phan-he/quy/man-hinh-quy.ts). */
+const MAN_PHIEU_TIEN: Record<string, string> = { receipt: 'quy.phieu-thu', payment: 'quy.phieu-chi', bank_receipt: 'quy.bao-co', bank_payment: 'quy.bao-no',
+  // [2026-11-13 08:00 PM kiennt] PHAN-QUYEN — bản thử: phiếu kế toán → màn ACC16 của phân hệ Kế toán (apps/api/src/phan-he/ke-toan/man-hinh-ke-toan.ts) (đóng góp)
+  manual: 'ke-toan.phieu-ke-toan' };
 
 interface Row {
   id: string; docKey: string; docNo: string; docDate: string; total: number; branchCode: string; partnerCode: string | null; partnerName: string | null;
@@ -58,7 +63,10 @@ export function CashVouchersPage({ type, pair }: { type: CashType; pair?: CashTy
   const types: CashType[] = pair ? [type, pair] : [type];
   const [loai, setLoai] = useState<CashType | ''>('');
   const qc = useQueryClient();
-  const canWrite = useAuth().can('documents:write');
+  // [2026-11-13 07:30 PM kiennt] PHAN-QUYEN — bản thử: nút theo thao tác của màn phiếu tiền đã đăng ký (Quỹ); máy chủ gác đúng từng lệnh (đóng góp)
+  const tt = useThaoTac(MAN_PHIEU_TIEN[type] ?? '');
+  const ttPair = useThaoTac(MAN_PHIEU_TIEN[pair ?? type] ?? '');
+  const canWrite = useAuth().can('documents:write') && Boolean(tt.them || tt.sua || tt.huy || ttPair.them || ttPair.sua || ttPair.huy);
   // Danh sách mở ở tháng hiện tại để thấy ngay phiếu vừa lập.
   const filter = useListFilter();
   const { f } = filter;
@@ -157,7 +165,7 @@ export function CashVouchersPage({ type, pair }: { type: CashType; pair?: CashTy
       menu: [{ key: 'thu-phieu', label: isBank ? 'Thu tiền gửi' : 'Phiếu thu', onClick: moi(type) }, { key: 'thu-hd', label: 'Thu tiền theo hóa đơn', onClick: moi(type, true) }] },
     { key: 'chi', label: isBank ? 'Chi tiền gửi' : 'Chi tiền', icon: <Plus size={15} />, onClick: moi(pair),
       menu: [{ key: 'chi-phieu', label: isBank ? 'Ủy nhiệm chi' : 'Phiếu chi', onClick: moi(pair) }, { key: 'chi-hd', label: 'Trả tiền theo hóa đơn', onClick: moi(pair, true) }] },
-  ] : [{ key: 'add', label: 'Thêm', icon: <Plus size={15} className="text-ok" />, onClick: () => setForm({ seq: Date.now() }) }];
+  ] : tt.them ? [{ key: 'add', label: 'Thêm', icon: <Plus size={15} className="text-ok" />, onClick: () => setForm({ seq: Date.now() }) }] : [];
 
   return (
     <VoucherListPage

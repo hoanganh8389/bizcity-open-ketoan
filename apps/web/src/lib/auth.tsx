@@ -4,6 +4,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api, tokenStore } from './api';
+import { useWorkBranch } from './workBranch';
 
 export interface SessionUser {
   id: string;
@@ -12,7 +13,16 @@ export interface SessionUser {
   role: string;
   tenant: { id: string; code: string; name: string };
   permissions: string[];
+  /** [2026-11-13 06:30 PM kiennt] PHAN-QUYEN — bản thử: chi nhánh được làm việc (null = mọi chi nhánh) và quyền thêm ở từng chi nhánh (vai trò gán tại chi nhánh). */
+  branches?: string[] | null;
+  theoChiNhanh?: Record<string, string[]>;
+  /** [2026-11-14 07:30 PM kiennt] PHAN-QUYEN — luật Cấm của vai trò gán tại từng chi nhánh (vd Hạn chế tại CN02) — trừ khi làm việc ở đó (đóng góp) */
+  camTheoChiNhanh?: Record<string, string[]>;
 }
+
+/** Mẫu quyền của luật Cấm: `*` khớp một vế `[a-z0-9-]*`, không vượt dấu `:` (như máy chủ). */
+const khopMau = (mau: string, p: string): boolean =>
+  mau.includes('*') ? new RegExp(`^${mau.split('*').map((x) => x.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[a-z0-9-]*')}$`).test(p) : mau === p;
 
 interface AuthState {
   user: SessionUser | null;
@@ -71,7 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      setUser(await api.get<SessionUser>('/api/v1/auth/me'));
+      const me = await api.get<SessionUser>('/api/v1/auth/me');
+      const q = await api.get<{ branches: string[] | null; theoChiNhanh: Record<string, string[]>; camTheoChiNhanh?: Record<string, string[]> }>('/api/v1/quyen-chi-nhanh').catch(() => null);
+      setUser({ ...me, branches: q?.branches ?? null, theoChiNhanh: q?.theoChiNhanh ?? {}, camTheoChiNhanh: q?.camTheoChiNhanh ?? {} });
     } catch {
       tokenStore.clear();
       setUser(null);
@@ -99,7 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const can = useCallback((p: string) => Boolean(user?.permissions.includes(p)), [user]);
+  // Quyền = quyền toàn đơn vị + quyền của vai trò gán tại chi nhánh đang làm việc (đổi chi nhánh → menu / nút đổi theo).
+  const wb = useWorkBranch();
+  // Cấm của vai trò gán tại chi nhánh đang làm việc thắng (máy chủ còn trừ cả quyền chi tiết kéo theo từ quyền gốc bị Cấm).
+  const can = useCallback((p: string) => {
+    if (user?.camTheoChiNhanh?.[wb]?.some((m) => khopMau(m, p))) return false;
+    return Boolean(user?.permissions.includes(p) || user?.theoChiNhanh?.[wb]?.includes(p));
+  }, [user, wb]);
 
   return <AuthContext.Provider value={{ user, loading, login, logout, can, reload: loadMe }}>{children}</AuthContext.Provider>;
 }

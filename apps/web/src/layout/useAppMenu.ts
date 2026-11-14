@@ -5,6 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { ganQuyenXem, useManHinh } from '@/lib/manHinh';
 import { CORE_MENU, filterMenu, mergeAddInMenu, type AddInManifestDto } from './menu';
 import { useApps, type AppDto } from '@/features/ung-dung/useApps';
 
@@ -30,7 +31,8 @@ export function appMenuEntries(apps: AppDto[]): AddInManifestDto[] {
 export function useAppMenu() {
   const { can } = useAuth();
   const apps = useApps().data ?? [];
-  return filterMenu(mergeAddInMenu(CORE_MENU, [...useAddIns(), ...appMenuEntries(apps)]), can);
+  const manHinh = useManHinh().data; // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: màn đã đăng ký ẩn khi không có quyền xem (đóng góp)
+  return filterMenu(ganQuyenXem(mergeAddInMenu(CORE_MENU, [...useAddIns(), ...appMenuEntries(apps)]), manHinh), can);
 }
 
 /** Mã phân hệ máy chủ đang bật (ENABLED_MODULES); null khi chưa biết / máy chủ bản cũ → coi như bật hết. */
