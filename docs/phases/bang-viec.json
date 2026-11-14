@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 170
+      "count": 169
     },
     {
       "key": "partial",
@@ -9125,21 +9125,6 @@
       "facet": "F7",
       "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
       "line": 20
-    },
-    {
-      "id": "S036-11",
-      "phase": "PHASE-036",
-      "title": "B6 — SEEDSDIR có tác dụng trên bản cài Docker: docker-compose.yml truyền biến vào api (+ db-migrate) và gắn thư mục danh mục của công ty (chỉ đọc); trống thì d…",
-      "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
-      "modules": [
-        "he-thong"
-      ],
-      "facet": "F8",
-      "file": "docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md",
-      "line": 21
     }
   ]
 }

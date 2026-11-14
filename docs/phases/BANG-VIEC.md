@@ -8,11 +8,11 @@
 | Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 170 |
+| Chưa ai nhận | 169 |
 | Chờ đủ tín hiệu | 69 |
 | Hoãn | 3 |
 | Xong | 312 |
-| **Tổng** | **589** |
+| **Tổng** | **588** |
 
 ## Theo phân hệ (R-FLOW-10)
 
@@ -25,7 +25,7 @@
 | chung-tu | 67 | 5 | 0 | 25 | 97 |
 | tong-hop | 31 | 8 | 1 | 27 | 67 |
 | thue | 14 | 2 | 1 | 10 | 27 |
-| he-thong | 144 | 23 | 2 | 61 | 230 |
+| he-thong | 144 | 23 | 2 | 60 | 229 |
 
 ## Đang làm (7)
 
@@ -76,7 +76,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | mua-hang · ban-hang | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | mua-hang · ban-hang | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (170)
+## Chưa ai nhận (169)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -249,7 +249,6 @@
 | [S036-7](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-036 | he-thong | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | — |
 | [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | — |
 | [S036-10](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L20) | PHASE-036 | he-thong | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
-| [S036-11](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L21) | PHASE-036 | he-thong | B6 — SEEDSDIR có tác dụng trên bản cài Docker: docker-compose.yml truyền biến vào api (+ db-migrate) và gắn t… | P0 | — |
 
 ## Chờ đủ tín hiệu (69)
 

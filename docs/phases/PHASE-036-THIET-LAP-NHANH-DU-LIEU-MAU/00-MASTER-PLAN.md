@@ -138,3 +138,12 @@ B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớ
 - `scripts/khoi-phuc-thu.sh <tệp>`: khôi phục vào CSDL tạm `ketoan_khoi_phuc_thu`, đếm dòng các bảng chính, kiểm Nợ = Có, rồi xoá CSDL tạm — **không chạm CSDL đang chạy**.
 - `scripts/cap-nhat.sh`: sao lưu → `sao-luu.sh --kiem` (hỏng thì **dừng**) → in "sắp đổi gì" (số commit, migration mới, tệp `db/seeds` đổi, `SEEDS_DIR` có đặt không, `db/seeds` là bộ giả lập) → hỏi xác nhận (`--yes` bỏ qua) → nâng cấp; lỗi thì in đúng lệnh lùi (`git checkout <commit cũ>` + lệnh khôi phục bản vừa sao).
 - `docs/ops/SAO-LUU-KHOI-PHUC.md`: lịch hằng đêm, giữ bao lâu, chép ra máy khác, kiểm bản sao lưu, khôi phục thử, khôi phục thật (ghi đè), những gì **không** nằm trong bản sao lưu (`.env`, `SEEDS_DIR`, tệp đính kèm).
+
+**S036-11 — `SEEDS_DIR` có tác dụng trên bản cài Docker** (hạ tầng, K1) <!-- [2026-11-14 01:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt S036-11: compose gắn thư mục danh mục của công ty chỉ đọc, biến trong container chỉ có khi .env đặt; cap-nhat dừng khi thư mục sai / thiếu tệp; TI08 báo bộ đang đọc -->
+
+- **Compose:** `SEEDS_DIR` trong `.env` là đường dẫn **trên máy chủ**. Service `api` và `db-migrate` gắn `${SEEDS_DIR:-./db/seeds}` vào `/srv/bizcity-seeds` **chỉ đọc**, và đặt biến trong container `SEEDS_DIR: ${SEEDS_DIR:+/srv/bizcity-seeds}` — trống thì biến trong container trống, API đọc `db/seeds` có sẵn trong ảnh như cũ (không đổi hành vi bản cài chưa đặt).
+- **`packages/platform/src/db/paths.ts`:** chuỗi rỗng coi như chưa đặt (`||` thay `??`) cho `DB_DIR`, `SEEDS_DIR`, `PACKS_DIR`.
+- **Thay cả thư mục, không trộn từng tệp:** thư mục của công ty phải là bản **đủ** (chép cả `db/seeds` rồi thay tệp thật). Không tự lấy tệp thiếu từ bộ giả lập — lấy nhầm là nạp dữ liệu giả vào đơn vị thật.
+- **`scripts/cap-nhat.sh`:** `SEEDS_DIR` đặt mà thư mục không có, hoặc thiếu tệp có trong `db/seeds` của bản mới → **dừng trước khi kéo mã**, in danh sách tệp thiếu. Docker không được tự tạo thư mục rỗng thay cho bộ danh mục.
+- **TI08:** `GET /api/v1/default-data` trả `seedsSource` (`bundled` | `custom`, không lộ đường dẫn máy chủ) và mỗi bộ `synthetic` (tệp có `_nguon: "gia-lap"`); màn TI08 hiện dải báo đang đọc bộ nào, bộ nào là giả lập.
+- **Kiểm:** `docker compose config` với `.env` có / không đặt `SEEDS_DIR`; test API cho `seedsSource` / `synthetic`; chạy thật trên stack dev với thư mục ngoài repo.
