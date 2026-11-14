@@ -67,6 +67,7 @@ Shop `CN01` (website shop2 trên LocalWP) **không bật** máy bán POS; mặt 
 | §5 dòng 6 | không gửi ngược | bên kế toán chỉ có 1 chứng từ (`phieu-ban:…`), không chứng từ `btsoft:…` | — | |
 | §5 dòng 7 | gửi lại không trùng | sự kiện lỗi trước khi sửa hàng rào được Core giao lại → ghi một lần; hộp nhận chống trùng | — | |
 | §6 (huỷ khi chưa có bản sao) | bỏ qua | "skipped" | — | |
+| §5 dòng 5 | phiếu trả nối gốc | **15/11, cầu nối 0.5.0** (LocalWP shop3 + Docker): `TL2611000001` trả 1 hộp từ `BH2611000001` (CN03), trả tiền mặt 324.000 → website phiếu hoàn #7 loại 11 cha #4 (phiếu bán gốc), dòng loại 3 `100021001`×1 thuế 24.000; phiếu chi #8 loại 8 cha #7; bỏ duyệt → cả hai xoá mềm, duyệt lại → hiện lại đúng #7, #8; không gửi ngược. Phiếu trả máy bán React `TH2611000001` (đơn `HD2611000001`, shop2) → phiếu hoàn #72 cha #69, 300.926 + 24.074 = 325.000, phiếu chi #73 <!-- [2026-11-15 12:30 AM Võ Hoàng] NGHIEM-THU — kết quả bản sao phiếu trả (đóng góp) --> | — | |
 | Shop bật POS React | nhận | **lỗi lần đầu**: hàng rào ghi của tgs_pos chặn ghi `local_ledger` → sửa tgs_pos (react, 8e7ebc7) cho qua bản sao của cầu nối | đã sửa | shop không cài POS không có hàng rào |
 | Kết nối app có sẵn | nghe sự kiện mới | đơn vị đã kết nối app tgs-wp trước phải **đồng ý phạm vi mới** (`POST /api/v1/apps/:key/scope` (key `tgs-wp`) hoặc Tiện ích → Ứng dụng) | thêm bước triển khai | |
 
