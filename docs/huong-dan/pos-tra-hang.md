@@ -4,7 +4,7 @@
 Xem phiếu trả hàng và đổi hàng tại quầy, mỗi phiếu nối về **đơn gốc**.
 
 ## Mở màn
-Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem quản trị bán lẻ máy POS* (`pos:report`); thu ngân không có quyền này nên không thấy màn.
+Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem quản trị bán lẻ máy POS* (`pos:report`) — mặc định có ở chủ đơn vị, kế toán trưởng, kế toán, người xem; thu ngân không có quyền này nên không thấy màn. <!-- [2026-11-15 12:30 PM Võ Hoàng] NGHIEM-THU — pos:report mặc định cho vai trò kế toán (anh Hoàng đồng ý 15/11) (đóng góp) -->
 
 ## Bảng tham số (bên trái)
 - **Kỳ**: chọn nhanh (hôm nay, tháng này…) hoặc gõ từ ngày – đến ngày.

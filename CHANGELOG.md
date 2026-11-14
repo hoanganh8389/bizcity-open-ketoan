@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Kế toán xem được các màn quản trị máy bán (quyền `pos:report`) <!-- [2026-11-15 12:30 PM Võ Hoàng] NGHIEM-THU — anh Hoàng đồng ý 15/11 (đóng góp) -->
+
+- **Đổi:** quyền *Xem quản trị bán lẻ máy POS* (`pos:report`, chỉ đọc) mặc định cấp cho kế toán trưởng, kế toán, người xem (trước chỉ chủ đơn vị) — thấy Đơn bán, Phiếu trả, Sổ ca, Tổng quan, Cài đặt bán hàng (BH13–BH17). Thu ngân vẫn không có.
+- **Thay đổi định khoản:** không.
+
 ### Một màn Chương trình khuyến mại: gộp Chương trình bán (BH12) vào Khuyến mại (BH18) (phiếu NT-BH-018) <!-- [2026-11-15 10:50 AM Võ Hoàng] NGHIEM-THU — NT-BH-018 (đóng góp) -->
 
 - **Đổi:** màn BH18 thành **Chương trình khuyến mại** (module `pos`): thẻ *Khuyến mại* (6 loại), *Có hạn mức* (tặng hàng / giảm giá trên một mặt hàng, hạn mức từng cửa hàng — trước là BH12), *Báo cáo hạn mức*; **+ Thêm** có 8 loại; **Thử tính** chung mọi chương trình.
