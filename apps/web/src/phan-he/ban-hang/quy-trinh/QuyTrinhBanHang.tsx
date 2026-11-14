@@ -23,7 +23,8 @@ const STAGES: { node: Node; config: Node[]; side: Node[] }[] = [
     config: [
       { label: 'Bảng giá', code: 'DM14', icon: 'Tags', color: GRAY, path: '/danh-muc/bang-gia', hint: 'Bảng giá công ty, chi nhánh' },
       { label: 'Khách hàng', code: 'DM12', icon: 'Users', color: GRAY, path: '/danh-muc/khach-hang', hint: 'Khách lẻ, khách theo SĐT, hạng thành viên' },
-      { label: 'Khuyến mại', icon: 'Sparkles', color: GRAY, hint: 'Bậc, tổng đơn, mã giảm giá, combo, món rẻ nhất' },
+      // [2026-11-14 01:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: ô Khuyến mại mở BH18 (đóng góp)
+      { label: 'Khuyến mại', code: 'BH18', icon: 'Sparkles', color: GRAY, path: '/app/pos/khuyen-mai', pos: true, hint: 'Bậc, tổng đơn, mã giảm giá, combo, món rẻ nhất' },
     ],
     side: [
       { label: 'Sổ chính sách', code: 'HT15', icon: 'BookMarked', color: '#7c3aed', path: '/he-thong/chinh-sach', hint: 'Mọi bản chương trình đã phát hành, chứng từ đã áp' },

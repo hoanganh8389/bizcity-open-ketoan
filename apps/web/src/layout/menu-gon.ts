@@ -81,7 +81,8 @@ export const GON_DEFS: GonDef[] = [
     sections: [
       { paths: ['/ban-hang/phieu-ban', '/ban-hang/tra-lai', '/ban-hang/thu-tien'], soon: ['Đơn đặt hàng', 'Giảm giá hàng bán'] },
       { label: 'Bán lẻ máy POS', paths: ['/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan'] },
-      { label: 'Chính sách bán', paths: ['/ban-hang/chuong-trinh', '/danh-muc/bang-gia'], soon: ['Khuyến mại', 'Hạn mức nợ khách'] },
+      // [2026-11-14 01:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: Khuyến mại hết mờ, mở BH18 (đóng góp)
+      { label: 'Chính sách bán', paths: ['/ban-hang/chuong-trinh', '/app/pos/khuyen-mai', '/danh-muc/bang-gia'], soon: ['Hạn mức nợ khách'] },
       { label: 'Danh mục', paths: ['/danh-muc/khach-hang', '/danh-muc/mat-hang', '/cau-hinh/hinh-thuc-thanh-toan'] },
       // [2026-11-13 09:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: bỏ mục mờ "Định khoản bán hàng" — tài khoản bán hàng xem ở khối ④ của BH17, sửa ở ACC41 (đóng góp)
       { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/tai-khoan-ngam-dinh'] },
