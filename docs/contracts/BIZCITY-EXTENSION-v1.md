@@ -56,6 +56,7 @@ Luật slot: thành phần chỉ dùng `@bizcity/ui-kit` và client action; lỗ
 | `PeriodField` | `ReportPanel.SideKy` | `from`, `to`, `onChange(from, to)` — kỳ chọn nhanh (tháng này, quý này…) |
 | `BranchCheckList` | `ReportPanel.BranchCheckList` | `value` (mã cách nhau dấu phẩy), `onChange` — tích nhiều chi nhánh, nhớ theo người dùng |
 | `ItemPicker` · `BranchPicker` | `components/pickers` · `components/filters` | `value`, `onChange`, `placeholder?`, `disabled?` |
+| `Steps` <!-- [2026-11-14 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 (00 §12): thanh chỉ báo bước --> | thành phần thuần trong ui-kit (`packages/ui-kit/src/steps.tsx`), lớp CSS `.nx-steps` của thanh bước nhập Excel | `steps: string[]`, `current: number` — bước trước `current` là xong; chỉ hiển thị |
 | `useApi().getPage(path, query)` | `lib/api.getPage` | trả `{ data, meta }` — `meta` = `ctx.meta` của action (trang, tổng dòng, tổng tiền của cả kết quả lọc); `get` giữ nguyên chỉ trả `data` |
 
 **Ảnh hưởng.** Chỉ thêm vào `packages/ui-kit` và `apps/web/src/lib/uiKitHost.ts`; màn Core không đổi; module cũ không đổi. Kiểu `UiKitImpl` thêm trường → bản thật phải cung cấp (một chỗ duy nhất: `uiKitHost.ts`).

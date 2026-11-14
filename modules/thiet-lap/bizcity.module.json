@@ -1,0 +1,13 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.thiet-lap",
+  "key": "thiet-lap",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Thiết lập nhanh",
+  "description": "Thiết lập nhanh (TI15): hộp thoại bốn bước cho đơn vị trắng — thông tin công ty, chế độ ghi sổ chuẩn, danh mục mẫu nếu muốn. Chỉ giao diện trên API Core core.setup.* và core.tenant.update (PHASE-036 · 00 §12).",
+  "owners": ["@hoanganh8389"],
+  "standard": "^1.0",
+  "requires": { "capabilities": [] },
+  "ui": { "icon": "Settings", "color": "#0b5cad", "order": 92 }
+}

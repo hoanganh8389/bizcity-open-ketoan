@@ -3,7 +3,7 @@
 /**
  * @bizcity/ui-kit (BIZCITY-EXTENSION §3, STD-EXT): phần web của module chỉ import gói này, không import `apps/web/src/*`.
  *
- *   Thành phần   PageHeader · Loading · ErrorBox · Empty · Field · Modal · Money · StatusBadge · LibraryPicker (ô chọn theo thư viện)
+ *   Thành phần   PageHeader · Loading · ErrorBox · Empty · Field · Modal · Money · StatusBadge · LibraryPicker (ô chọn theo thư viện) · Steps (thanh bước)
  *   Dữ liệu      useApi() — client API có phiên đăng nhập, lệnh ghi tự gắn Idempotency-Key; errorText(err)
  *                useQuery / useMutation / useQueryClient — cùng bộ đệm với khung giao diện
  *   Quyền        useCan()(permission) — ẩn nút theo quyền (máy chủ vẫn kiểm lại)
@@ -102,3 +102,6 @@ export { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-47: ô chọn theo thư viện bizcity_library@1 (thêm, không đổi phần cũ)
 export { LibraryPicker, type LibraryPickerProps, type LibraryRow, type LibraryItemsResult } from './library-picker';
+
+// [2026-11-14 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5: thanh chỉ báo bước (thêm, không đổi phần cũ)
+export { Steps, stepState, type StepsProps } from './steps';

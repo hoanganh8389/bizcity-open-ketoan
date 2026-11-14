@@ -17,7 +17,7 @@ async function fresh(): Promise<{ ctx: TestCtx; id: string }> {
 }
 afterAll(async () => { for (const c of opened) await c.app.close(); });
 
-const apply = (c: TestCtx, key = `ap-${Math.random()}`) => call(c, 'POST', `/api/v1/setup/presets/${PRESET}/apply`, {}, { 'idempotency-key': key });
+const apply = (c: TestCtx, key = `ap-${Math.random()}`, q = '') => call(c, 'POST', `/api/v1/setup/presets/${PRESET}/apply${q}`, {}, { 'idempotency-key': key });
 async function waitRun(c: TestCtx, runId: string) {
   for (let i = 0; i < 200; i++) {
     const r = await call(c, 'GET', `/api/v1/setup/runs/${runId}`);
@@ -140,5 +140,45 @@ describe('Máy chủ chạy gói mẫu (core.setup.*)', () => {
     expect((await waitRun(t.ctx, a.body.data.runId)).status).toBe('done');
     const row = await sql<{ status: string }>`SELECT status FROM sample_runs WHERE id = ${r.rows[0]!.id}`.execute(db);
     expect(row.rows[0]!.status).toBe('failed');
+  });
+  // [2026-11-14 07:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 (00 §12): chọn khối; T036-9 siết luật chạy tiếp theo khối
+  it('chọn khối: plan / apply chỉ chạy khối đã chọn (cấu hình luôn có); khối lạ → 400', async () => {
+    const t = await fresh();
+    const plan = await call(t.ctx, 'GET', `/api/v1/setup/presets/${PRESET}/plan?blocks=products,branches`);
+    expect(plan.status, JSON.stringify(plan.body)).toBe(200);
+    expect(plan.body.data.blocks.map((b: { key: string }) => b.key)).toEqual(['settings', 'branches', 'products']);
+    expect((await call(t.ctx, 'GET', `/api/v1/setup/presets/${PRESET}/plan?blocks=documents,xyz`)).status).toBe(400);
+    expect((await apply(t.ctx, undefined, '?blocks=xyz')).status).toBe(400);
+    const a = await apply(t.ctx, undefined, '?blocks=branches,partners,products');
+    expect(a.status, JSON.stringify(a.body)).toBe(202);
+    const run = await waitRun(t.ctx, a.body.data.runId);
+    expect(run.status).toBe('done');
+    expect(run.steps.map((s) => s.key)).toEqual(['settings', 'branches', 'partners', 'products']);
+    const c = await counts(t.id);
+    expect(c.ev).toBe(0);
+    expect(c.pr).toBeGreaterThan(0);
+  });
+
+  it('T036-9: nạp cấu hình + danh mục → có chứng từ thật → xin khối chứng từ mẫu bị chặn; xin lại khối đã chạy thì được', async () => {
+    const t = await fresh();
+    const a = await apply(t.ctx, undefined, '?blocks=branches,partners,products');
+    expect((await waitRun(t.ctx, a.body.data.runId)).status).toBe('done');
+    await sql`INSERT INTO purchase_documents (tenant_id, kind, status, doc_no, doc_date, branch_code, partner_code, total, created_by)
+      VALUES (${t.id}, 'receipt', 'draft', 'PM-THAT-1', '2026-10-12', 'CN01', 'NCC-GL', 1000, 'test')`.execute(db);
+    const before = await counts(t.id);
+    const plan = await call(t.ctx, 'GET', `/api/v1/setup/presets/${PRESET}/plan?blocks=documents`);
+    expect(plan.body.data).toMatchObject({ allowed: false, empty: false });
+    expect(plan.body.data.reason).toContain('Chứng từ');
+    const all = await apply(t.ctx);
+    expect(all.status).toBe(409);
+    expect(all.body.error.details.reason).toBe('SETUP_NOT_EMPTY');
+    const docs = await apply(t.ctx, undefined, '?blocks=documents');
+    expect(docs.status).toBe(409);
+    expect((await counts(t.id)).ev).toBe(before.ev);
+    const again = await apply(t.ctx, undefined, '?blocks=products');
+    expect(again.status, JSON.stringify(again.body)).toBe(202);
+    const run = await waitRun(t.ctx, again.body.data.runId);
+    expect(run.status).toBe('done');
+    expect(run.steps.reduce((n, s) => n + s.written, 0)).toBe(0);
   });
 });
