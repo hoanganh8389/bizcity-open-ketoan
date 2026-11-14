@@ -150,6 +150,8 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `VERSION_STALE` | `CONFLICT` | Đã có phiên bản mới hơn bản gửi lên | `document.service.ts` (kiểm `existing.version > doc.version`) |
 | `VERSION_CONTENT_MISMATCH` | `CONFLICT` | (đã chốt ở §4, [DOCUMENT §7.3](BIZCITY-DOCUMENT-v1.md)) | chưa nối — S029-34 |
 | `DOC_NOT_DRAFT` | `CONFLICT` | Thao tác chỉ cho phiếu nháp; phiếu đã ghi sổ / chờ huỷ | `voucher.service.ts` |
+| `SETUP_NOT_EMPTY` | `CONFLICT` | Nạp gói mẫu vào đơn vị đã có dữ liệu nghiệp vụ (chưa từng chạy cùng gói) — PHASE-036 · 00 §11 <!-- [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 --> | `modules/system/setup-run.ts` |
+| `SETUP_RUNNING` | `CONFLICT` | Đơn vị đang chạy một gói mẫu | `modules/system/setup-run.ts` |
 | `DOC_CANCELLED` | `CONFLICT` | Phiếu đã huỷ | `voucher.service.ts` |
 | `DOC_SOURCE_READONLY` | `CONFLICT` | Chứng từ nhận từ hệ thống khác: sửa ở nguồn rồi gửi lại | `voucher.service.ts`, `intake/repair.ts` (khoá app) |
 | `DOC_ALREADY_CONFIRMED` | `CONFLICT` | Đã xác nhận nhận tiền trước đó | `document.service.ts` |

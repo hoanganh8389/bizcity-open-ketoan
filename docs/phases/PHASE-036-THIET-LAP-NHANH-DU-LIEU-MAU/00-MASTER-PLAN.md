@@ -197,7 +197,7 @@ B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớ
 | chế độ ghi sổ | `core.posting-modes.update` |
 | chi nhánh | `core.branch.create` |
 | đối tượng | `core.partner.upsert` |
-| mặt hàng | `core.product.upsert` |
+| mặt hàng | `core.catalog-product.save` (`new: true`, như đường `PUT /catalog/products/:sku?new=true` script cũ dùng) <!-- [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: mặt hàng đi core.catalog-product.save (khuôn tệp mẫu có taxOutCode / taxInCode như màn mặt hàng) thay core.product.upsert --> |
 | chứng từ | `core.document.submit` |
 
 Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định khoản, bằng chứng như khi gõ tay (STD-PRE-3, D036-6) — không SQL, không ghi thẳng bảng, không số tài khoản. Tiền lệ: `runModuleSeed` (`POST /api/v1/system/modules/:key/seed`).

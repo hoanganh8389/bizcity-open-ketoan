@@ -21,4 +21,6 @@ export const MIGRATIONS_DIR = path.join(DB_DIR, 'migrations');
 export const SEEDS_DIR = process.env.SEEDS_DIR || path.join(DB_DIR, 'seeds');
 // [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: true = máy chủ đặt SEEDS_DIR (bộ danh mục của công ty), false = db/seeds đóng kèm (TI08 báo bộ đang đọc)
 export const SEEDS_CUSTOM = Boolean(process.env.SEEDS_DIR);
+// [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: thư mục gói mẫu theo ngành (bizcity_preset@1) — máy chủ chạy gói (core.setup.*); Docker: /app/presets
+export const PRESETS_DIR = process.env.PRESETS_DIR || path.resolve(DB_DIR, '..', 'presets');
 export const PACKS_DIR = process.env.PACKS_DIR || path.join(DB_DIR, 'packs');

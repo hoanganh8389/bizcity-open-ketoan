@@ -37,9 +37,9 @@ describe('Đơn vị trắng (core.setup.status)', () => {
   beforeAll(async () => { a = await fresh(); b = await fresh(); });
 
   it('đơn vị mới (chỉ danh mục của seed) → trắng; chủ đơn vị canSetup, người xem không', async () => {
-    expect(await status(a.ctx)).toEqual({ empty: true, kinds: [], canSetup: true });
+    expect(await status(a.ctx)).toEqual({ empty: true, kinds: [], canSetup: true, runs: [] });
     const v = await viewerOf(a.ctx);
-    expect(await status(v)).toEqual({ empty: true, kinds: [], canSetup: false });
+    expect(await status(v)).toEqual({ empty: true, kinds: [], canSetup: false, runs: [] });
   });
 
   it('nạp danh mục (Quay về dữ liệu gốc) vẫn trắng', async () => {

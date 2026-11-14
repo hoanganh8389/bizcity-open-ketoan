@@ -10,6 +10,8 @@ import { sql } from 'kysely';
 import { z } from 'zod';
 import type { Db } from '@bizcity/platform/db/client';
 import { defineAction, type AnyActionDef } from '@bizcity/platform/core/actions';
+// [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: status trả thêm runs[] (lần chạy gói mẫu gần nhất mỗi gói)
+import { latestRuns, runSchema } from './setup-run.js';
 
 /** Loại dữ liệu nghiệp vụ → bảng. Danh sách đóng (PHASE-036 · 00 §10). */
 export const EMPTINESS_PROBES = [
@@ -50,11 +52,11 @@ const status = defineAction({
     + 'Danh mục không tính. `kinds` = các loại dữ liệu nghiệp vụ đã có (không trả số dòng, số tiền, tên). `canSetup` = người gọi có quyền settings:write.',
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
   input: z.object({}),
-  output: z.object({ empty: z.boolean(), kinds: z.array(z.enum(KINDS)), canSetup: z.boolean() }),
+  output: z.object({ empty: z.boolean(), kinds: z.array(z.enum(KINDS)), canSetup: z.boolean(), runs: z.array(runSchema) }),
   expose: { http: { method: 'GET', path: '/api/v1/setup/status' }, mcp: true, ai: 'read' },
   handler: async (ctx) => {
     const e = await tenantEmptiness(ctx.data.tx, ctx.tenant.id);
-    return { ...e, canSetup: ctx.can('settings:write') };
+    return { ...e, canSetup: ctx.can('settings:write'), runs: await latestRuns(ctx.data.tx, ctx.tenant.id) };
   },
 });
 

@@ -54,6 +54,8 @@ import { queueActions } from './queue.routes.js';
 import { policyActions } from './policy.routes.js';
 // [2026-11-14 03:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3: đơn vị trắng (core.setup.status)
 import { setupActions } from './setup-status.js';
+// [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: máy chủ chạy gói mẫu (core.setup.presets / plan / run + route nạp)
+import { executeRun, setupRunActions, startRun } from './setup-run.js';
 import { zodToJson } from '../../core/json-schema.js';
 
 // [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
@@ -282,6 +284,24 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, queueActions);
   mountActions(app, policyActions); // PHASE-031 W3a
   mountActions(app, setupActions); // PHASE-036 S036-3
+  mountActions(app, setupRunActions); // PHASE-036 S036-4
+
+  // [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 (00 §11): nạp gói mẫu — kiểm (đơn vị trắng / đã chạy cùng gói, có khoá) + ghi lần chạy, trả 202 runId, chạy nền
+  // @bizcity-route: nạp gói mẫu chạy nền, gọi lại action Core (chi nhánh, đối tượng, mặt hàng, chứng từ) với quyền người bấm — mỗi bản ghi có bằng chứng của action con
+  app.post('/api/v1/setup/presets/:id/apply', {
+    preHandler: requirePermission('settings:write'),
+    schema: { tags: ['Thiết lập'], summary: 'Nạp một gói mẫu cho đơn vị đang dùng (chạy nền; hỏi tiến độ ở GET /api/v1/setup/runs/:id)', params: z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/).max(64) }), querystring: z.object({ sample: queryBool.optional() }) },
+    handler: async (req, reply) => {
+      const key = req.headers['idempotency-key'];
+      const idem = Array.isArray(key) ? key[0] : key;
+      if (!idem || !idem.trim()) throw Errors.validation('Thiếu Idempotency-Key: gửi lại cùng khoá trả cùng lần chạy');
+      const auth = authOf(req);
+      const { run, fresh } = await startRun(auth, (req.params as { id: string }).id, idem.trim().slice(0, 200), { sample: (req.query as { sample?: boolean }).sample !== false });
+      if (fresh) setImmediate(() => { void executeRun(auth, run); });
+      void reply.code(202);
+      return ok({ runId: run.id, status: run.status, fresh });
+    },
+  });
 
   // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: chạy seed[] của manifest cho đơn vị (dữ liệu mẫu qua core.*.upsert)
   // @bizcity-route: nạp dữ liệu mẫu bằng cách gọi các action danh mục chuẩn (mỗi mục đã có bằng chứng riêng)
