@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Empty, ErrorBox, Field, Loading, errorText, useApi, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { FS, groupPermissions, ROLE_TEXT, type MatrixData } from '../lib/matrix';
 import { WriteDialog } from './WriteDialog';
+import { GioiHanChiNhanh } from './GioiHanChiNhanh'; // [2026-11-14 11:00 PM kiennt] NT-HT-003 — công tắc + bảng rà (đóng góp)
 
 interface UserRow { id: string; email: string; fullName: string; role: string; isActive: boolean }
 interface Effective { userId: string; isActive: boolean; primaryRole: string; roles: string[]; baseRoles: string[]; allow: string[]; deny: string[]; permissions: string[] }
@@ -60,6 +61,8 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
   const assignValid = (mode === 'system' ? !!role : !!tenantRoleId) && (!validTo || DATE_RE.test(validTo)) && (scopeType === 'tenant' || (scopeType === 'branch' ? !!branchId : !!warehouseId));
 
   return (
+    <>
+    <GioiHanChiNhanh />
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 340px) 1fr', gap: 16, alignItems: 'start' }}>
       <div className="card card-body">
         <input className="input" style={{ width: '100%', fontSize: FS.body }} placeholder="Tìm người dùng" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -182,6 +185,7 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
         </WriteDialog>
       ) : null}
     </div>
+    </>
   );
 }
 
