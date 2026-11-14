@@ -33,7 +33,9 @@ Phần mềm chia thành các **phân hệ**, mỗi phân hệ là một "ứng 
 
 ## Đơn vị chưa có chứng từ <!-- [2026-11-14 03:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3 -->
 
-Đơn vị mới (chưa có bút toán, chưa có chứng từ nào kể cả nháp) thì đầu Tổng quan hiện thẻ **Đơn vị chưa có chứng từ nào** với ba đường bắt đầu:
+Đơn vị mới (chưa có bút toán, chưa có chứng từ nào kể cả nháp) thì đầu Tổng quan hiện thẻ **Đơn vị chưa có chứng từ nào** với các đường bắt đầu:
+
+- <!-- [2026-11-14 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 --> **Thiết lập nhanh** (nút chính, khi module Thiết lập nhanh bật): thông tin công ty, chế độ ghi sổ chuẩn, danh mục mẫu nếu muốn — [thiet-lap-nhanh.md](thiet-lap-nhanh.md). Lần đầu trong phiên phần mềm hỏi *Bắt đầu / Để sau*.
 
 1. **Nạp danh mục chuẩn**: màn Dữ liệu gốc (TI08), xem trước rồi nạp.
 2. **Nhập số dư đầu kỳ**: tiền, công nợ, hàng tồn khi bắt đầu dùng phần mềm.

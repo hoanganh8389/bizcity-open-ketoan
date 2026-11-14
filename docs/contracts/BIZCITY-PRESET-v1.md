@@ -22,7 +22,7 @@ Preset là **dữ liệu**, không phải code. Một preset gồm ba lớp, l�
 |---|---|---|
 | Phân hệ | `modules` | `ENABLED_MODULES` trong `.env` (script in ra dòng cần đặt) |
 | Định khoản | `postingPack` → gói `bizcity_posting_template@1` | màn Cấu hình định khoản (xem trước); cài tự động khi có năng lực `templates.posting` (Phase 3) |
-| Cấu hình + dữ liệu mẫu | `settings`, `sample` | máy chủ chạy gói (`core.setup.plan` → `POST /api/v1/setup/presets/:id/apply` → `core.setup.run`), mỗi bản ghi qua **action Core**; `scripts/cai-preset.mjs` gọi cùng đường |
+| Cấu hình + dữ liệu mẫu | `settings`, `sample` | máy chủ chạy gói (`core.setup.plan` → `POST /api/v1/setup/presets/:id/apply` → `core.setup.run`), mỗi bản ghi qua **action Core**; `?blocks=` chọn khối (`settings` luôn có) <!-- [2026-11-14 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5: blocks --> ; `scripts/cai-preset.mjs` gọi cùng đường |
 
 ## 2. Cấu trúc
 
@@ -41,7 +41,7 @@ presets/<id>/
 |---|---|---|
 | **STD-PRE-1** | `preset.json` đúng schema; `id` = tên thư mục | SC-PRESET-1 |
 | **STD-PRE-2** *(T0)* | Dữ liệu mẫu **hư cấu** (`sample.fictional: true`): không tên, MST, SĐT, địa chỉ thật. Repo công khai (R-SEC-10). Dữ liệu thật của khách nằm ngoài repo | SC-PRESET-1, review |
-| **STD-PRE-3** *(T0)* | Dữ liệu mẫu vào hệ thống **chỉ qua action Core** (máy chủ chạy gói gọi lại action với quyền người bấm — 1.1.0; trước đó: HTTP API), chứng từ qua `core.document.submit` (cửa nạp). Danh mục chỉ tạo khi chưa có; chỉ nạp vào đơn vị trắng hoặc đã từng chạy cùng gói (`SETUP_NOT_EMPTY`). Không SQL, không seed thẳng bảng: chứng từ mẫu được định khoản, kiểm, ghi bằng chứng như thật (câu 3) | `scripts/cai-preset.mjs` |
+| **STD-PRE-3** *(T0)* | Dữ liệu mẫu vào hệ thống **chỉ qua action Core** (máy chủ chạy gói gọi lại action với quyền người bấm — 1.1.0; trước đó: HTTP API), chứng từ qua `core.document.submit` (cửa nạp). Danh mục chỉ tạo khi chưa có; chỉ nạp vào đơn vị trắng, hoặc đơn vị đã có dữ liệu mà mọi khối xin chạy đều đã nạp ở lần chạy trước của cùng gói (`SETUP_NOT_EMPTY`) <!-- [2026-11-14 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5: luật chạy tiếp theo khối (T036-9) -->. Không SQL, không seed thẳng bảng: chứng từ mẫu được định khoản, kiểm, ghi bằng chứng như thật (câu 3) | `scripts/cai-preset.mjs` |
 | **STD-PRE-4** | `docKey` chứng từ mẫu bắt đầu bằng `preset:<id>:` để nhận ra và huỷ được; cài lại không trùng (docKey + version) | SC-PRESET-1; `test/preset.test.ts` |
 | **STD-PRE-5** | Ngày chứng từ mẫu viết `@today` / `@today-N`, máy chủ thay bằng ngày cài (giờ Việt Nam) để không rơi vào kỳ đã khoá | `apps/api/src/modules/system/setup-run.ts` |
 | **STD-PRE-6** | `requires.capabilities` phải `available` trên Core đích; `core.setup.plan` báo thiếu, nạp bị từ chối | `setup-run.ts` |
@@ -59,3 +59,4 @@ presets/<id>/
 
 - 1.0.0 (2026-10-30): khởi tạo; preset `thuong-mai-ban-le`; `scripts/cai-preset.mjs`; check SC-PRESET-1.
 - 1.1.0 (2026-11-14, PHASE-036 · 00 §11): máy chủ chạy gói (`core.setup.presets` / `plan` / `run`, `POST /api/v1/setup/presets/:id/apply`, bảng `sample_runs`); `cai-preset.mjs` thành vỏ mỏng; khuôn `preset.json` không đổi.
+  - bổ sung cùng ngày, trước khi có người dùng ngoài repo (PHASE-036 · 00 §12) <!-- [2026-11-14 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 -->: `plan` / apply nhận `blocks`; đơn vị không trắng chỉ chạy lại khối đã nạp (vá lỗ hổng: nạp cấu hình rồi có chứng từ thật vẫn nạp được chứng từ mẫu).

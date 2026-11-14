@@ -6,6 +6,8 @@
  *    (STD-PRE-3, D036-6). Không SQL ghi bảng nghiệp vụ, không số tài khoản. Tiền lệ: runModuleSeed.
  *  - Chạy lại không nhân đôi, không ghi đè: danh mục chỉ tạo khi chưa có; chứng từ theo docKey (lần hai unchanged); cấu hình chỉ ở lần đầu.
  *  - Chỉ chạy trên đơn vị trắng, hoặc đơn vị đã từng chạy cùng gói (chạy tiếp / chạy lại). Ngoài ra SETUP_NOT_EMPTY (D036-4).
+ *  - Chọn khối (`blocks`, S036-5): đơn vị không trắng chỉ chạy lại được các khối đã có trong những lần chạy trước của cùng gói —
+ *    lần đầu chỉ nạp cấu hình rồi có chứng từ thật thì không nạp thêm chứng từ mẫu được (T036-9).
  *  - sample_runs giữ trạng thái + tiến độ; một đơn vị một lần chạy đang chạy; mất nhịp sống quá 5 phút → failed.
  */
 import fs from 'node:fs';
@@ -66,12 +68,26 @@ export function fillDates<T>(v: T, now = new Date()): T {
 }
 
 // ── Khối ──────────────────────────────────────────────────────────────────────────
+// [2026-11-14 07:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 (00 §12): chọn khối khi xem trước / nạp; settings luôn có; khoá lạ → VALIDATION
+export const BLOCK_KEYS = ['settings', 'branches', 'partners', 'products', 'documents'] as const;
+export type BlockKey = (typeof BLOCK_KEYS)[number];
+
+/** `blocks` của query (`branches,partners`) → tập khối; trống = mọi khối (null). Khối cấu hình luôn có. */
+export function parseBlocks(raw: string | undefined | null): Set<BlockKey> | null {
+  const parts = (raw ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (!parts.length) return null;
+  const bad = parts.filter((x) => !(BLOCK_KEYS as readonly string[]).includes(x));
+  if (bad.length) throw Errors.validation(`Khối không có: ${bad.join(', ')} — chọn trong ${BLOCK_KEYS.join(', ')}`, { field: 'blocks' });
+  return new Set<BlockKey>(['settings', ...(parts as BlockKey[])]);
+}
+
 
 /** Một bản ghi: action Core + đầu vào; `key` để tra đã có chưa. */
 interface Item { key: string; action: string; input: Record<string, unknown> }
-interface Block { key: 'settings' | 'branches' | 'partners' | 'products' | 'documents'; label: string; items: Item[] }
+interface Block { key: BlockKey; label: string; items: Item[] }
 
-function blocksOf(p: PresetFile, opts: { sample?: boolean; now?: Date } = {}): Block[] {
+function blocksOf(p: PresetFile, opts: { sample?: boolean; now?: Date; only?: Set<BlockKey> | null } = {}): Block[] {
+  if (opts.only) return blocksOf(p, { ...opts, only: null }).filter((b) => opts.only!.has(b.key));
   const now = opts.now ?? new Date();
   const out: Block[] = [];
   if (p.settings?.postingModes) out.push({ key: 'settings', label: 'Chế độ ghi sổ theo loại chứng từ', items: [{ key: 'postingModes', action: 'core.posting-modes.update', input: p.settings.postingModes }] });
@@ -138,7 +154,7 @@ export interface PlanResult {
   blocks: { key: string; label: string; total: number; existing: number; toAdd: number }[];
 }
 
-export async function planPreset(trx: Db, tenantId: string, id: string, opts: { lock?: boolean; sample?: boolean } = {}): Promise<PlanResult & { _blocks: Block[] }> {
+export async function planPreset(trx: Db, tenantId: string, id: string, opts: { lock?: boolean; sample?: boolean; blocks?: Set<BlockKey> | null } = {}): Promise<PlanResult & { _blocks: Block[] }> {
   const p = readPreset(id);
   const emptiness = await tenantEmptiness(trx, tenantId, { lock: opts.lock });
   const prev = await sql<Record<string, unknown>>`SELECT * FROM sample_runs WHERE tenant_id = ${tenantId} AND preset_id = ${id} ORDER BY id DESC LIMIT 1`.execute(trx);
@@ -146,7 +162,12 @@ export async function planPreset(trx: Db, tenantId: string, id: string, opts: { 
   const caps = (STANDARD?.capabilities ?? []) as { id: string; status: string }[];
   const available = new Set(caps.filter((c) => c.status === 'available').map((c) => c.id));
   const missingCapabilities = (p.requires?.capabilities ?? []).filter((c) => !available.has(c));
-  const blocks = blocksOf(p, { sample: opts.sample });
+  const blocks = blocksOf(p, { sample: opts.sample, only: opts.blocks });
+  // [2026-11-14 07:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5: siết luật chạy tiếp theo khối (T036-9)
+  // khối đã có trong những lần chạy trước của gói này (mọi trạng thái) — đơn vị không trắng chỉ chạy lại được trong tập này (T036-9)
+  const ran = await sql<{ k: string }>`SELECT DISTINCT s->>'key' AS k FROM sample_runs, jsonb_array_elements(steps) s WHERE tenant_id = ${tenantId} AND preset_id = ${id}`.execute(trx);
+  const ranKeys = new Set(ran.rows.map((r) => r.k));
+  const newKeys = blocks.map((b) => b.key).filter((k) => !ranKeys.has(k));
   const counted = [];
   for (const b of blocks) {
     // cấu hình chỉ đặt ở lần chạy đầu (đơn vị trắng); khối khác: mã / docKey đã có trong đơn vị
@@ -155,18 +176,19 @@ export async function planPreset(trx: Db, tenantId: string, id: string, opts: { 
   }
   const reason = missingCapabilities.length ? `Core chưa có năng lực: ${missingCapabilities.join(', ')}`
     : !emptiness.empty && !previousRun ? 'Đơn vị đã có dữ liệu nghiệp vụ — chỉ nạp gói mẫu vào đơn vị trắng (hoặc đơn vị mẫu riêng)'
-      : null;
+      : !emptiness.empty && newKeys.length ? `Đơn vị đã có dữ liệu nghiệp vụ — chỉ chạy lại các khối đã nạp trước đây; khối mới (${blocks.filter((b) => newKeys.includes(b.key)).map((b) => b.label).join(', ')}) chỉ nạp vào đơn vị trắng`
+        : null;
   return { presetId: p.id, presetVersion: p.version, title: p.title, allowed: reason === null, reason, empty: emptiness.empty, previousRun, missingCapabilities, blocks: counted, _blocks: blocks };
 }
 
 // ── Chạy ──────────────────────────────────────────────────────────────────────────
 
 /** Bắt đầu một lần chạy: kiểm (có khoá) + ghi dòng running trong một giao dịch. Trả lần chạy (cũ nếu cùng Idempotency-Key). */
-export async function startRun(auth: AuthContext, id: string, idempotencyKey: string, opts: { sample?: boolean } = {}): Promise<{ run: RunRow; fresh: boolean }> {
+export async function startRun(auth: AuthContext, id: string, idempotencyKey: string, opts: { sample?: boolean; blocks?: Set<BlockKey> | null } = {}): Promise<{ run: RunRow; fresh: boolean }> {
   readPreset(id);
   return db.transaction().execute(async (trx) => {
     const tenantId = auth.tenantId;
-    const plan = await planPreset(trx, tenantId, id, { lock: true, sample: opts.sample });
+    const plan = await planPreset(trx, tenantId, id, { lock: true, sample: opts.sample, blocks: opts.blocks });
     await failStale(trx, tenantId);
     const same = await sql<Record<string, unknown>>`SELECT * FROM sample_runs WHERE tenant_id = ${tenantId} AND idempotency_key = ${idempotencyKey}`.execute(trx);
     if (same.rows[0]) return { run: runDto(same.rows[0]), fresh: false };
@@ -246,16 +268,19 @@ export const setupRunActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'core.setup.plan', title: 'Thiết lập: xem trước một gói mẫu cho đơn vị đang dùng (không ghi gì)', tags,
-    description: 'Mỗi khối: tổng, đã có, sẽ thêm. allowed = chạy được không (đơn vị trắng, hoặc đã từng chạy cùng gói); reason nói vì sao không.',
+    description: 'Mỗi khối: tổng, đã có, sẽ thêm. allowed = chạy được không (đơn vị trắng; hoặc đã có dữ liệu mà mọi khối xin chạy đều đã nạp trong lần chạy trước của cùng gói); reason nói vì sao không.',
     permission: 'settings:write', effect: 'read', idempotency: 'none',
-    input: z.object({ id: z.string().regex(ID_RE).max(64), sample: queryBool.default(true).describe('false = chỉ khối cấu hình, không dữ liệu mẫu') }),
+    input: z.object({
+      id: z.string().regex(ID_RE).max(64), sample: queryBool.default(true).describe('false = chỉ khối cấu hình, không dữ liệu mẫu'),
+      blocks: z.string().max(200).optional().describe(`khối cần nạp, cách nhau dấu phẩy (${BLOCK_KEYS.join(', ')}); trống = mọi khối; settings luôn có`),
+    }),
     output: z.object({
       presetId: z.string(), presetVersion: z.string(), title: z.string(), allowed: z.boolean(), reason: z.string().nullable(), empty: z.boolean(),
       previousRun: runSchema.nullable(), missingCapabilities: z.array(z.string()),
       blocks: z.array(z.object({ key: z.string(), label: z.string(), total: z.number(), existing: z.number(), toAdd: z.number() })),
     }),
     expose: { http: { method: 'GET', path: '/api/v1/setup/presets/:id/plan' }, mcp: true, ai: 'read' },
-    handler: async (ctx, input) => { const { _blocks, ...plan } = await planPreset(ctx.data.tx, ctx.tenant.id, input.id, { sample: input.sample }); return plan; },
+    handler: async (ctx, input) => { const { _blocks, ...plan } = await planPreset(ctx.data.tx, ctx.tenant.id, input.id, { sample: input.sample, blocks: parseBlocks(input.blocks) }); return plan; },
   }),
   defineAction({
     id: 'core.setup.run', title: 'Thiết lập: tiến độ một lần chạy gói mẫu', tags,
