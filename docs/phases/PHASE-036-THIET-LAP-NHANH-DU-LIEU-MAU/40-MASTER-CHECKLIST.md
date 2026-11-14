@@ -10,7 +10,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S036-1 | README, [00](00-MASTER-PLAN.md), checklist, [bản mẫu hộp thoại](mockups/thiet-lap-nhanh.html) | W0 | P0 | không | ✅ 2026-11-10 |
 | S036-2 | Chủ dự án duyệt D036-1..12, trả Q036-1..6 | W0 | P0 | không | ✅ 2026-11-13 (chủ dự án: "theo đề nghị") |
 | S036-3 | B1 — `tenantEmptiness()` + `core.setup.status`; biểu ngữ đơn vị trắng ở Tổng quan | W1 | P0 | có | ✅ 2026-11-14 <!-- [2026-11-14 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3 chữ chốt ở 00 §10 --> |
-| S036-4 | B2 — `core.setup.plan` / `core.setup.apply` chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); `cai-preset.mjs` gọi qua đây | W1 | P0 | có | ☐ |
+| S036-4 | B2 — `core.setup.plan` / `core.setup.apply` chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); `cai-preset.mjs` gọi qua đây | W1 | P0 | có | 🟡 2026-11-14 <!-- [2026-11-14 05:48 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 chữ chốt ở 00 §11 --> |
 | S036-5 | B3 — hộp thoại 4 bước `modules/thiet-lap/` (TI09) + `Steps` ở ui-kit; `docs/huong-dan/thiet-lap-nhanh.md` | W2 | P0 | có | ☐ |
 | S036-6 | B4 — `bizcity_preset@1` 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói `thuong-mai-ban-le` 1.1; SC-PRESET-1 kiểm khối mới | W2 | P0 | có | ☐ |
 | S036-7 | B5 — đơn vị mẫu riêng (`tenants.is_sample`, migration, tạo / chuyển đơn vị) + tự nạp ở `db-migrate` (`BIZCITY_SAMPLE`); chặn gửi ra ngoài ở đơn vị mẫu | W3 | P1 | có | ☐ sau Q036-1, Q036-4 |

@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 168
+      "count": 167
     },
     {
       "key": "partial",
@@ -9011,9 +9011,15 @@
       "phase": "PHASE-036",
       "title": "B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); cai-preset.mjs gọi qua đây",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
+        "branch": "feat/s036-4-may-chu-chay-goi",
+        "state": "đang làm",
+        "since": "2026-11-14",
+        "dot": "PHASE-036 · S036-4 — B2 máy chủ chạy gói mẫu: core.setup.presets / plan / apply / run, bảng sampler…"
+      },
       "modules": [
         "he-thong"
       ],
