@@ -6,6 +6,7 @@
 import { SU_KIEN_LOI, type LoiMayChu } from '@/components/kiemLoi';
 import type { ApiFailure, ApiSuccess } from '@ketoan/contracts';
 import { docMaTuPhanHoi, khoMaTraCuu } from './maTraCuu';
+import { workBranch } from './workBranch';
 
 const TOKEN_KEY = 'ketoan.token';
 
@@ -74,6 +75,8 @@ async function request<T>(method: string, path: string, opts: { query?: Query; b
     headers: {
       ...(opts.body !== undefined ? { 'content-type': 'application/json' } : {}),
       ...(token ? { authorization: `Bearer ${token}` } : {}),
+      // [2026-11-13 06:30 PM kiennt] PHAN-QUYEN — bản thử: chi nhánh đang làm việc → máy chủ tính quyền tại chi nhánh đó (đóng góp)
+      ...(workBranch.get() ? { 'x-chi-nhanh': encodeURIComponent(workBranch.get()) } : {}),
       ...(method !== 'GET' ? { 'idempotency-key': opts.idempotencyKey ?? newIdempotencyKey() } : {}),
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,

@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useWorkBranch, workBranch } from '@/lib/workBranch';
+import { useAuth } from '@/lib/auth';
 import { useBranches } from './filters';
 import { Modal } from './ui';
 
@@ -30,6 +31,13 @@ function useBranchList() {
   }, [tree.data, flat.data]);
 }
 
+// [2026-11-13 06:30 PM kiennt] PHAN-QUYEN — bản thử: người có vai trò gán theo chi nhánh chỉ thấy / chỉ chuyển sang các chi nhánh đó (đóng góp)
+/** Chi nhánh được làm việc (null = mọi chi nhánh). */
+export function useMyBranches(): string[] | null {
+  const { user } = useAuth();
+  return user?.branches?.length ? user.branches : null;
+}
+
 export function useWorkBranchName() {
   const code = useWorkBranch();
   const list = useBranchList();
@@ -39,7 +47,9 @@ export function useWorkBranchName() {
 
 /** Bảng chọn chi nhánh (dùng trong hộp thoại và màn HT04). */
 export function ChonChiNhanh({ onPicked, autoFocus = true }: { onPicked?: (code: string) => void; autoFocus?: boolean }) {
-  const list = useBranchList();
+  const all = useBranchList();
+  const mine = useMyBranches();
+  const list = useMemo(() => (mine ? all.filter((b) => mine.includes(b.code)) : all), [all, mine]);
   const current = useWorkBranch();
   const [q, setQ] = useState('');
   const [hi, setHi] = useState(0);
@@ -57,7 +67,7 @@ export function ChonChiNhanh({ onPicked, autoFocus = true }: { onPicked?: (code:
       <div className="cnlv-now">
         <MapPin size={15} /> Đang làm việc ở: {cur ? <b>{cur.code} · {cur.name}</b> : <span className="muted">chưa chọn — phiếu mới chưa tự điền chi nhánh</span>}
         {cur?.parentName && <span className="muted"> (thuộc {cur.parentName})</span>}
-        {current && <button type="button" className="btn btn-xs" style={{ marginLeft: 'auto' }} onClick={() => pick('')}>Bỏ chọn</button>}
+        {current && !mine && <button type="button" className="btn btn-xs" style={{ marginLeft: 'auto' }} onClick={() => pick('')}>Bỏ chọn</button>}
       </div>
       <input className="input" type="search" autoFocus={autoFocus} placeholder="Gõ mã hoặc tên chi nhánh (vd 08000, phu tho, lam thao)…" value={q} onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => {
@@ -75,6 +85,7 @@ export function ChonChiNhanh({ onPicked, autoFocus = true }: { onPicked?: (code:
         ))}
         {!shown.length && <div className="muted" style={{ padding: 8 }}>Không thấy chi nhánh nào.</div>}
       </div>
+      {mine && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Bạn được làm việc ở {mine.length} chi nhánh: {mine.join(', ')} (theo vai trò gán tại chi nhánh ở HT12). Đổi chi nhánh thì quyền, menu, nút đổi theo.</div>}
     </div>
   );
 }
@@ -82,15 +93,19 @@ export function ChonChiNhanh({ onPicked, autoFocus = true }: { onPicked?: (code:
 /** Nút trên thanh trên cùng: hiện chi nhánh đang ở, bấm để chuyển (phím tắt Alt + B). */
 export function NutChiNhanh() {
   const { code, name } = useWorkBranchName();
+  const mine = useMyBranches();
+  const fixed = mine?.length === 1;
   const [open, setOpen] = useState(false);
+  // Chi nhánh làm việc phải nằm trong phạm vi (bị thu hồi lần gán sau khi đã chọn → về chi nhánh đầu tiên).
+  useEffect(() => { if (mine && !mine.includes(code)) workBranch.set(mine[0]!); }, [mine, code]);
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.altKey && e.key.toLowerCase() === 'b') { e.preventDefault(); setOpen(true); } };
+    const k = (e: KeyboardEvent) => { if (!fixed && e.altKey && e.key.toLowerCase() === 'b') { e.preventDefault(); setOpen(true); } };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
-  }, []);
+  }, [fixed]);
   return (
     <>
-      <button type="button" className={`cnlv-btn${code ? '' : ' empty'}`} onClick={() => setOpen(true)} title={`${code ? `Đang làm việc: ${code} ${name}` : 'Chưa chọn chi nhánh làm việc'} — phiếu mới tự điền chi nhánh này. Bấm để chuyển (Alt + B)`}>
+      <button type="button" className={`cnlv-btn${code ? '' : ' empty'}`} onClick={() => !fixed && setOpen(true)} style={fixed ? { cursor: 'default' } : undefined} title={`${code ? `Đang làm việc: ${code} ${name}` : 'Chưa chọn chi nhánh làm việc'} — phiếu mới tự điền chi nhánh này. ${fixed ? 'Bạn chỉ làm việc ở chi nhánh này' : 'Bấm để chuyển (Alt + B)'}`}>
         <MapPin size={15} /> <span>{code ? <><b>{code}</b><span className="cnlv-name"> {name}</span></> : <>Chọn chi nhánh<span className="cnlv-name"> làm việc</span></>}</span>
       </button>
       {open && <Modal title="Chuyển chi nhánh làm việc" onClose={() => setOpen(false)} footer={<button className="btn" onClick={() => setOpen(false)}>Đóng</button>}>

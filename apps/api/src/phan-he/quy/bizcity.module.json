@@ -66,6 +66,210 @@
       "key": "quy:chi-tien-huy",
       "label": "Huỷ phiếu chi trả nhà cung cấp",
       "risk": "low"
+    },
+    {
+      "key": "quy:phieu-thu-xem",
+      "label": "Xem phiếu thu",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-thu-lap",
+      "label": "Lập phiếu thu",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-thu-sua",
+      "label": "Sửa phiếu thu",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-thu-huy",
+      "label": "Huỷ phiếu thu",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-thu-duyet",
+      "label": "Duyệt / ghi sổ phiếu thu",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-chi-xem",
+      "label": "Xem phiếu chi",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-chi-lap",
+      "label": "Lập phiếu chi",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-chi-sua",
+      "label": "Sửa phiếu chi",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-chi-huy",
+      "label": "Huỷ phiếu chi",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:phieu-chi-duyet",
+      "label": "Duyệt / ghi sổ phiếu chi",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-co-xem",
+      "label": "Xem giấy báo có (thu tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-co-lap",
+      "label": "Lập giấy báo có (thu tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-co-sua",
+      "label": "Sửa giấy báo có (thu tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-co-huy",
+      "label": "Huỷ giấy báo có (thu tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-co-duyet",
+      "label": "Duyệt / ghi sổ giấy báo có (thu tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-no-xem",
+      "label": "Xem giấy báo nợ (chi tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-no-lap",
+      "label": "Lập giấy báo nợ (chi tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-no-sua",
+      "label": "Sửa giấy báo nợ (chi tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-no-huy",
+      "label": "Huỷ giấy báo nợ (chi tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "quy:bao-no-duyet",
+      "label": "Duyệt / ghi sổ giấy báo nợ (chi tiền gửi)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
     }
   ],
   "data": {

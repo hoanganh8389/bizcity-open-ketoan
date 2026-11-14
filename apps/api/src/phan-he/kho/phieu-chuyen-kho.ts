@@ -32,6 +32,8 @@ import { idParamSchema, ok } from '../../core/http.js';
 import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
 import { documentNumbers, documentService, documentStatusIn, postDocumentIn } from '../../kernel/public.js';
 import { documentLots } from '../../modules/lots/lots.service.js';
+import { quyenThaoTac } from '../../modules/access/man-hinh.js';
+import './man-hinh-kho.js'; // đăng ký màn KHO01 / KHO02 trước khi lệnh đọc quyền
 
 const tags = ['Kho — phiếu chuyển kho'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
@@ -368,7 +370,8 @@ export async function cancelTransfer(trx: Db, auth: AuthContext, id: string, rea
 
 export async function transferDocRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
-  const read = requirePermission('documents:read');
+  // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: xem theo thao tác đã đăng ký của màn KHO01 (documents:read kéo theo) (đóng góp)
+  const read = requirePermission(quyenThaoTac('kho.chuyen-kho', 'xem'));
   r.get('/api/v1/kho/transfers', {
     preHandler: read,
     schema: { tags, summary: 'Danh sách phiếu chuyển kho', querystring: z.object({ from: day.optional(), to: day.optional(), branchCodes: z.string().max(20000).optional(), warehouses: z.string().max(20000).optional(), status: z.enum(['shipped', 'pending', 'received', 'rejected', 'cancelled']).optional().or(z.literal('')), search: z.string().max(100).optional() }) },
@@ -395,11 +398,11 @@ const reasonBody = z.object({ reason: z.string().trim().max(500).default('') });
 // kho:chuyen-kho-lap / -huy (documents:write kéo theo, thủ kho chỉ được Cho quyền chi tiết vẫn lập được); Kho tắt (route nhóm hàng hoá vẫn bật) thì
 // documents:write. Bộ action là hằng (registry so đúng đối tượng — dựng app nhiều lần trong một tiến trình không báo trùng mã).
 // [2026-11-11 10:55 AM kiennt] PHASE-028 — S028-22 sửa: hàm dựng action mỗi lần gắn route làm registry báo "Trùng mã action" khi dựng app lần hai → getter
-const transferPerm = (op: 'create' | 'cancel') => documentPermissionOf('transfer', op);
+// [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: lệnh chuyển kho gác theo thao tác của màn KHO01 (them / sua / nhan / huy) thay quyền chung theo loại chứng từ (đóng góp)
 export const transferActions: AnyActionDef[] = [
   defineAction({
     id: 'kho.transfer.create', title: 'Lập phiếu chuyển kho (lưu là xuất: trừ tồn bên chuyển)', tags,
-    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('kho.chuyen-kho', 'them'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: transferInputSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => i.docNo || 'new' },
@@ -407,7 +410,7 @@ export const transferActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'kho.transfer.update', title: 'Sửa phiếu chuyển kho (ghi lại hai đầu)', tags,
-    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('kho.chuyen-kho', 'sua'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: transferInputSchema.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/kho/transfers/:id' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
@@ -415,7 +418,7 @@ export const transferActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'kho.transfer.receive', title: 'Thủ kho nhập xác nhận nhận hàng (cộng tồn bên nhận theo số thực nhận)', tags,
-    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('kho.chuyen-kho', 'nhan'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: receiveSchema.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/receive' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
@@ -423,7 +426,7 @@ export const transferActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'kho.transfer.unreceive', title: 'Bỏ xác nhận nhận (huỷ đầu nhập)', tags,
-    get permission() { return transferPerm('create'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('kho.chuyen-kho', 'nhan'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/unreceive' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
@@ -431,7 +434,7 @@ export const transferActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'kho.transfer.reject', title: 'Bên nhận từ chối (huỷ đầu xuất, trả tồn bên chuyển)', tags,
-    get permission() { return transferPerm('cancel'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('kho.chuyen-kho', 'huy'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: reasonBody.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/reject' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },
@@ -439,7 +442,7 @@ export const transferActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'kho.transfer.cancel', title: 'Huỷ phiếu chuyển kho (đảo cả hai đầu, giữ phiếu)', tags,
-    get permission() { return transferPerm('cancel'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('kho.chuyen-kho', 'huy'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: reasonBody.merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/kho/transfers/:id/cancel' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock_transfer', objectId: (i) => String(i.id) },

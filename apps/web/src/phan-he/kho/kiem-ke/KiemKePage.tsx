@@ -16,6 +16,7 @@ import { ErrorBox, Loading } from '@/components/ui';
 import { STATUS_CLASS, kkApi, qty, type KkDoc } from './api';
 import { BienBanKiemKe } from './BienBanKiemKe';
 import './kiem-ke.css';
+import { useThaoTac } from '@/lib/manHinh';
 
 const monthStart = () => `${today().slice(0, 8)}01`;
 const emptyDoc = (): KkDoc => ({
@@ -24,6 +25,7 @@ const emptyDoc = (): KkDoc => ({
 });
 
 export function KiemKePage() {
+  const tt = useThaoTac('kho.kiem-ke'); // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: nút Thêm theo thao tác màn KHO02 (đóng góp)
   const qc = useQueryClient();
   const [f, setF] = useState({ from: monthStart(), to: today(), search: '' });
   const [search, setSearch] = useState('');
@@ -48,7 +50,7 @@ export function KiemKePage() {
         }>
         <div className="card">
           <div className="row ck-toolbar">
-            <button className="btn btn-sm btn-primary" onClick={() => { setEditing(emptyDoc()); setFormKey((k) => k + 1); }} title="Lập biên bản kiểm kê mới — chi nhánh đang làm việc, ngày hôm nay">+ Thêm</button>
+            {tt.them && <button className="btn btn-sm btn-primary" onClick={() => { setEditing(emptyDoc()); setFormKey((k) => k + 1); }} title="Lập biên bản kiểm kê mới — chi nhánh đang làm việc, ngày hôm nay">+ Thêm</button>}
             <button className="btn btn-sm" disabled={!sel} onClick={() => sel && void open(sel)}>Mở</button>
             <button className="btn btn-sm" onClick={() => void q.refetch()}>Nạp</button>
             <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>

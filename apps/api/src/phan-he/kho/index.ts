@@ -9,4 +9,7 @@ import { registerDocumentType } from '@bizcity/platform/core/auth';
 registerDocumentType('transfer', { read: 'kho:chuyen-kho-xem', create: 'kho:chuyen-kho-lap', cancel: 'kho:chuyen-kho-huy' });
 registerDocumentType('stock_adjustment', { read: 'kho:dieu-chinh-xem', create: 'kho:dieu-chinh-lap', cancel: 'kho:dieu-chinh-huy' });
 
+// [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: màn hình + thao tác của phân hệ Kho đăng ký ở man-hinh-kho.ts (route import trước khi đọc quyền) (đóng góp)
+import './man-hinh-kho.js';
+
 export const kho: ApiModule = { key: 'kho', label: 'Kho', routes: [...LEDGER, ...GOODS] };
