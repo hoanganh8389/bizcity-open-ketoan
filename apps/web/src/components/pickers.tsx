@@ -273,7 +273,7 @@ export function AccountPicker({ postingOnly, prefixes, ...p }: BaseProps & { pos
 
 /* ------------------------------------------------------------------ Đối tượng */
 
-interface PartnerRow { code: string; name: string; taxCode?: string | null; address?: string | null; phone?: string | null; mobile?: string | null }
+interface PartnerRow { code: string; name: string; taxCode?: string | null; address?: string | null; phone?: string | null; mobile?: string | null; parentCode?: string | null; parentName?: string | null }
 
 /**
  * Chọn khách hàng / nhà cung cấp — tìm theo mã, tên hoặc mã số thuế (tìm phía máy chủ).
@@ -295,7 +295,8 @@ export function PartnerPicker({ activeOnly, addKind, ...p }: BaseProps & { activ
     staleTime: 5 * 60_000,
   });
   const wide = Boolean(addKind);
-  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.code, name: x.name, hint: x.taxCode ?? undefined, cells: [x.taxCode, x.address, x.mobile || x.phone] })), [list.data]);
+  // [2026-11-13 Nguyễn Văn Thủy] đơn vị con hiện kèm "thuộc <đơn vị cha>" để biết là chi nhánh của bên nào (đóng góp)
+  const options = useMemo(() => (list.data ?? []).map<PickOption>((x) => ({ code: x.code, name: x.name, hint: [x.taxCode, x.parentCode ? `thuộc ${x.parentName || x.parentCode}` : ''].filter(Boolean).join(' · ') || undefined, cells: [x.taxCode, x.address, x.mobile || x.phone] })), [list.data]);
   const canAdd = Boolean(addKind) && can('catalog:write');
   return (
     <>
@@ -373,7 +374,8 @@ export function ItemPicker({ canAdd, only, ...p }: BaseProps & { canAdd?: boolea
  * Tìm không dấu, nhiều từ theo thứ tự tuỳ ý ("etsuko sua tam" ra "… / ETSUKO / Sữa tắm, gội"); mặc định chỉ nhận giá
  * trị có trong danh sách (strict).
  */
-export function ListPicker({ items, emptyText, strict = true, ...p }: BaseProps & { items: { code: string; name: string; hint?: string }[]; emptyText?: string }) {
+// [2026-11-13 Nguyễn Văn Thủy] ListPicker nhận onAdd / addLabel: nút + thêm nhanh ngay tại ô (đóng góp)
+export function ListPicker({ items, emptyText, strict = true, onAdd, addLabel, ...p }: BaseProps & { items: { code: string; name: string; hint?: string }[]; emptyText?: string; onAdd?: (text: string) => void; addLabel?: string }) {
   const [q, setQ] = useState('');
   const options = useMemo(() => {
     const words = plain(q).split(/\s+/).filter(Boolean);
@@ -385,5 +387,5 @@ export function ListPicker({ items, emptyText, strict = true, ...p }: BaseProps 
     return hit.sort((a, b) => Number(plain(b.code) === s) - Number(plain(a.code) === s) || Number(plain(b.code).startsWith(s)) - Number(plain(a.code).startsWith(s)));
   }, [items, q, p.value]);
   const names = useMemo(() => new Map(items.map((x) => [x.code, x.name])), [items]);
-  return <CodePicker {...p} strict={strict} options={options} nameOf={(c) => names.get(c)} onSearch={setQ} emptyText={emptyText} />;
+  return <CodePicker {...p} strict={strict} options={options} nameOf={(c) => names.get(c)} onSearch={setQ} emptyText={emptyText} onAdd={onAdd} addLabel={addLabel} />;
 }

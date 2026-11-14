@@ -90,6 +90,8 @@ const doiTuong = (kind: 'customer' | 'supplier'): NhapLoai => {
       { key: 'creditLimit', header: 'Hạn mức nợ', aliases: ['so no toi da', 'han muc', 'han muc no'] },
       { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai', 'dang giao dich'], note: 'Có / Không.' },
       { key: 'note', header: 'Ghi chú', aliases: ['dien giai'] },
+      // [2026-11-13 Nguyễn Văn Thủy] đơn vị mẹ của chi nhánh (cha – con) (đóng góp)
+      { key: 'parentCode', header: 'Mã đơn vị cha', aliases: ['don vi cha', 'ma cha', 'thuoc don vi cha', 'ma don vi me'], note: 'Đơn vị mẹ của chi nhánh. Thêm mới để trống mã thì mã tự cấp mã cha-001, -002…; đơn vị cha mới thì đặt dòng của nó lên trên.' },
     ],
     run: async (rows, { dryRun, mode }) => {
       const o = await api.post<{ created: number; updated: number; failed: number; rows: (Omit<NhapDong, 'key'> & { code: string })[] }>('/api/v1/partners/import', { dryRun, mode, rows: rowsOut(rows) });

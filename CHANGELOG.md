@@ -11,6 +11,24 @@ Mỗi bản ghi đủ sáu mục:
 - **Bảo mật**
 
 ## [Chưa phát hành]
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- **Phủ kín bộ định danh** (0138): 19 bảng cũ có cột chi nhánh / kho / đối tượng thêm `branch_uid` cn_ / `warehouse_uid` kho_ / `partner_uid` dt_ (bút toán, số dư ngày, sự việc kế toán, hoá đơn thuế, công nợ, tài sản, phân bổ, kế hoạch tiền, định mức, lô hàng, tồn kho, kiểm kê, khoá kỳ, đề nghị thanh toán, chứng từ tham chiếu, số dư dài hạn, kho). Ba trigger dùng chung điền khi ghi / đổi chi nhánh, kho, đối tượng; dữ liệu cũ điền trong migration (bút toán tạm mở khoá chỉ-ghi-thêm lúc điền). Test canh cửa: danh sách nợ cũ rỗng.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Bút toán gộp theo tài khoản mang đủ bộ định danh như dòng sổ (0136): `branch_uid` cn_, `partner_uid` dt_, `warehouse_uid` kho_ + mã kho, `department_uid` pb_, `tax_id` MST tại ngày; khác kho / phòng ban / MST thì tách dòng gộp (sổ gộp lọc, cộng được theo MST, theo kho). Test canh cửa `dinh-danh-canh-cua`: bảng có cột chi nhánh / kho / đối tượng phải có cn_ / kho_ / dt_; 19 bảng cũ còn thiếu ghi thành nợ cũ, danh sách chỉ được ngắn đi.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Sổ chế độ Cộng gộp: dòng gộp chỉ một mã hàng thì hiện Mã / Tên hàng, nhiều mã thì cột Mã hàng ghi *n mã hàng* (0135: bảng gộp thêm sku_count, product_sku, product_name, item_id). Thanh tóm tắt tham số báo cáo hiện thêm các ô tích đang bật (vd *Cộng gộp các bút toán giống nhau*).
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- **Bút toán gộp theo tài khoản** (0134, lớp trung gian giữa sổ chi tiết và sổ sách): sổ vẫn lưu từng dòng mã hàng; bảng `ledger_entry_accounts` giữ sẵn mỗi bút toán × TK × TK đối ứng × đối tượng × bên một dòng, trigger trên `ledger_lines` cập nhật khi ghi sổ, khi điền giá vốn tháng và khi dọn dữ liệu (dựng lại theo bút toán, dữ liệu cũ dựng trong migration). Nhật ký chung (ACC89) và Sổ chi tiết TK / Sổ cái / sổ quỹ / sổ công nợ chế độ *Cộng gộp các bút toán giống nhau* đọc bảng này (Nhật ký chung gộp + phân trang trong CSDL), không quét dòng mã hàng; cột **Số dòng** (số dòng mã hàng đã gộp), bấm dòng mở bút toán xem từng mã. Mặc định: ACC89, ACC88 gộp; ACC12 từng dòng; máy nhớ lựa chọn. Tổng khớp sổ chi tiết (test but-toan-gop).
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- **TK kho theo loại kho**: mọi bút toán có hàng vào / ra kho (nhập mua, trả NCC, giá vốn bán và giá vốn tháng, khách trả, chuyển kho từng đầu, nhập / xuất khác, kiểm kê) ghi vào TK kho của loại kho của kho trên dòng (dòng không ghi kho = kho mặc định chi nhánh), ưu tiên hơn Tài khoản ngầm định và bảng quy tắc định khoản. Loại kho khai TK tổng hợp (156) hoặc trống → như cũ; cột TK kho ở DM18 báo đỏ TK tổng hợp; khai mới / đổi TK kho phải là TK chi tiết (ô chọn tài khoản). KHO07 và bảng kiểm sổ kho ↔ sổ cái tính thêm TK kho của các loại.
+  - **Thay đổi định khoản**: chứng từ ghi từ nay ở kho thuộc loại có TK chi tiết sẽ vào TK đó; chứng từ đã ghi giữ nguyên.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Loại kho (DM18) gọn lại: bỏ cột Được bán / Thuộc sở hữu / Theo dõi hạn dùng / Theo dõi; nút **Xoá** chuyển vào **Thùng rác** (0133, vẫn lưu trong CSDL; khôi phục / xoá vĩnh viễn ở thùng rác, xoá vĩnh viễn cần quyền quản trị). Thẻ Nghiệp vụ hiện bằng chữ (Tự chọn · Dùng được thêm), sửa trong hộp thoại tích chọn. Ô Loại kho ở form kho có nút + thêm nhanh; đổi loại nút mà Thuộc không hợp thì tự chuyển sang nút cùng mã hợp loại.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Báo cáo **xem theo nhóm mẹ – chi nhánh** (không nút bấm, hai cấp như sổ sách: đơn vị mẹ → chi nhánh thụt vào → dòng *Cộng nhóm*): MH01, ACC38 tổng hợp công nợ (số dư bù trừ cả nhóm), ACC40 chi tiết công nợ (khối theo nhóm, cột *Đơn vị*; chọn đơn vị mẹ lấy cả chi nhánh), BH02 thẻ Theo khách hàng. API `GET /api/v1/partners/families`.
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Cha – con đợt 2: chính sách mua khai ở đơn vị mẹ có ô *Áp cho cả đơn vị con* (chính sách riêng của đơn vị con cùng loại được ưu tiên); hạn mức khai ở mẹ thì cả nhóm dùng chung (kiểm khi lập phiếu, MH01 hiện "chung nhóm").
+  MH01 có cột *Thuộc đơn vị cha* và ô *Xem theo nhóm mẹ – chi nhánh*; nhập Excel đối tượng có cột *Mã đơn vị cha* (để trống mã thì cấp mã cha-00x).
 
 ### Cài đặt bán hàng một màn; phiếu kế toán chênh lệch két khi chốt ca (phiếu NT-BH-014, chữ chốt nghiep-vu/20) <!-- [2026-11-13 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014 đợt 3 Bán hàng (đóng góp) -->
 
@@ -19,6 +37,11 @@ Mỗi bản ghi đủ sáu mục:
 - **Đổi:** BH17 *Cài đặt bán hàng* gom 4 khối — máy bán tại quầy; ghi sổ phiếu bán / trả (ghi ngay / chờ duyệt); chênh lệch két (tài khoản sửa tại chỗ, tạo lý do khi Ghi); tài khoản hạch toán bán hàng (chỉ đọc ACC41). Sổ ca BH15 thêm cột *Phiếu kế toán*. Bỏ mục mờ "Định khoản bán hàng" ở menu; ô cùng tên ở Luồng chi tiết mở BH17.
 - **Thay đổi định khoản:** có — ca lệch két sinh bút toán 1381 / 1111 hoặc 1111 / 3381 (từ lúc cập nhật; ca đã chốt không lập bù trừ khi bấm Lập lại phiếu). Phiếu theo chế độ ghi sổ của loại "phiếu kế toán" (mặc định chờ duyệt ở ACC14).
 - **Nâng cấp cần làm:** kế toán mở BH17 kiểm tài khoản thiếu / thừa rồi bấm **Ghi** để tạo hai lý do (chưa tạo thì phiếu "chưa lập").
+<!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
+- Nhà cung cấp / khách hàng **cha – con** (0132): định danh bất biến `dt_…` cho mọi đối tượng, lưu cả vào sổ cái (`ledger_lines.partner_uid`) và chứng từ mua (`purchase_documents.partner_uid`) — ghi theo đơn vị nhỏ nhất, báo cáo gom lên cha.
+  Ô *Thuộc đơn vị cha*, nút *+ Thêm đơn vị con* (mã tự cấp mã cha-001, MST chi nhánh lấy đúng đuôi), gợi ý gắn cha khi gõ MST chi nhánh, xem *Cây cha – con*, mục *Đơn vị con* + *Lịch sử thay đổi* trong hồ sơ, nút Quay lại khi đi sâu;
+  chặn tự trỏ / vòng lặp / chuyển đơn vị con theo mã sang cha khác; trong một nhóm dùng chung MST được. Ô chọn đối tượng trên phiếu hiện "thuộc …".
+- Chính sách thưởng (MH04) có *Các bên*: ký với, tính doanh số trên đơn vị ký hoặc **cả nhóm**, bên trả thưởng, chi nhánh mình nhận; MH06 cộng doanh số cả nhóm, hiện doanh số từng đơn vị giao hàng, lập phiếu thưởng đúng bên trả + chi nhánh nhận.
 <!-- [2026-11-13 Nguyễn Văn Thủy] (đóng góp) -->
 - Menu điện thoại / màn hẹp (nút ☰) dùng đúng bố trí menu trái của máy tính: Hay dùng, nhóm Tiền mặt … Phần riêng, mục con theo tiêu đề, Báo cáo — không còn bộ phân hệ cũ (Kế toán, Quỹ, Nghiệp vụ mua hàng…).
 

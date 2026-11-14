@@ -21,13 +21,14 @@ import { AccountPicker } from '@/components/pickers';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { BOOK_SIGNS, LedgerForm, mb, screenTemplate, PrintButton, type PrintTemplate } from '@/components/print';
 import { EntryOpen } from '../../../features/ledger/EntriesPage';
+import { gopMacDinh, nhoGop } from './gopNho';
 
-interface Line { entryId: string; postingDate: string; docDate: string; docNo: string; description: string; counterAccounts: string; branchCode: string; debit: number; credit: number; balanceDebit: number; balanceCredit: number }
+interface Line { entryId: string; postingDate: string; docDate: string; docNo: string; description: string; counterAccounts: string; branchCode: string; debit: number; credit: number; balanceDebit: number; balanceCredit: number; lineCount?: number }
 interface Data { account: { code: string; name: string }; opening: { debit: number; credit: number }; closing: { debit: number; credit: number }; totals: { debit: number; credit: number }; rows: Line[] }
 
 /** Một dòng bảng: tiêu đề tài khoản, số dư đầu, phát sinh, cộng tài khoản, tổng cộng. */
 interface Row {
-  key: string; acc: string; kind: 'group' | 'open' | 'data' | 'sub' | 'total'; label?: string; entryId?: string;
+  key: string; acc: string; kind: 'group' | 'open' | 'data' | 'sub' | 'total'; label?: string; entryId?: string; lineCount?: number;
   postingDate?: string; docDate?: string; docNo?: string; description?: string; counter?: string; branchCode?: string;
   debit: number; credit: number; dn: number; dc: number;
 }
@@ -40,13 +41,13 @@ function buildRows(list: Data[], soCai = false): Row[] {
     out.push({ key: `g${a}`, acc: a, kind: 'group', label: `Tài khoản: ${a} - ${d.account.name}`, debit: 0, credit: 0, dn: 0, dc: 0 });
     if (soCai) {
       out.push({ key: `o${a}`, acc: a, kind: 'open', description: 'Số dư đầu kỳ', debit: d.opening.debit, credit: d.opening.credit, dn: 0, dc: 0 });
-      d.rows.forEach((r, i) => out.push({ key: `d${a}-${i}`, acc: a, kind: 'data', entryId: r.entryId, postingDate: r.postingDate, docDate: r.docDate || r.postingDate, docNo: r.docNo, description: r.description, counter: r.counterAccounts, branchCode: r.branchCode, debit: r.debit, credit: r.credit, dn: 0, dc: 0 }));
+      d.rows.forEach((r, i) => out.push({ key: `d${a}-${i}`, acc: a, kind: 'data', entryId: r.entryId, lineCount: r.lineCount, postingDate: r.postingDate, docDate: r.docDate || r.postingDate, docNo: r.docNo, description: r.description, counter: r.counterAccounts, branchCode: r.branchCode, debit: r.debit, credit: r.credit, dn: 0, dc: 0 }));
       out.push({ key: `s${a}`, acc: a, kind: 'sub', description: 'Cộng số phát sinh', debit: d.totals.debit, credit: d.totals.credit, dn: 0, dc: 0 });
       out.push({ key: `c${a}`, acc: a, kind: 'sub', description: 'Số dư cuối kỳ', debit: d.closing.debit, credit: d.closing.credit, dn: 0, dc: 0 });
       continue;
     }
     if (d.opening.debit || d.opening.credit) out.push({ key: `o${a}`, acc: a, kind: 'open', description: 'Số dư đầu kỳ', debit: 0, credit: 0, dn: d.opening.debit, dc: d.opening.credit });
-    d.rows.forEach((r, i) => out.push({ key: `d${a}-${i}`, acc: a, kind: 'data', entryId: r.entryId, postingDate: r.postingDate, docDate: r.docDate || r.postingDate, docNo: r.docNo, description: r.description, counter: r.counterAccounts, branchCode: r.branchCode, debit: r.debit, credit: r.credit, dn: r.balanceDebit, dc: r.balanceCredit }));
+    d.rows.forEach((r, i) => out.push({ key: `d${a}-${i}`, acc: a, kind: 'data', entryId: r.entryId, lineCount: r.lineCount, postingDate: r.postingDate, docDate: r.docDate || r.postingDate, docNo: r.docNo, description: r.description, counter: r.counterAccounts, branchCode: r.branchCode, debit: r.debit, credit: r.credit, dn: r.balanceDebit, dc: r.balanceCredit }));
     out.push({ key: `s${a}`, acc: a, kind: 'sub', description: 'Cộng', debit: d.totals.debit, credit: d.totals.credit, dn: d.closing.debit, dc: d.closing.credit });
     td += d.totals.debit; tc += d.totals.credit;
   }
@@ -113,7 +114,7 @@ const SO_CAI_TEMPLATES: PrintTemplate<Sheet>[] = [
 export function SoChiTietTaiKhoanPage({ soCai = false }: { soCai?: boolean } = {}) {
   const [params] = useSearchParams();
   const multi = (useBranches().data?.length ?? 0) > 1;
-  const [f, setF] = useState({ from: params.get('from') ?? periodFrom(), to: params.get('to') ?? defaultTo(), accounts: params.get('account') ?? '111', branchCodes: '', gop: false });
+  const [f, setF] = useState({ from: params.get('from') ?? periodFrom(), to: params.get('to') ?? defaultTo(), accounts: params.get('account') ?? '111', branchCodes: '', gop: gopMacDinh(soCai ? 'ACC88' : 'ACC12', soCai) });
   const [entryId, setEntryId] = useState<string | null>(null);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const accounts = [...new Set(f.accounts.split(',').map((s) => s.trim()).filter(Boolean))];
@@ -135,6 +136,7 @@ export function SoChiTietTaiKhoanPage({ soCai = false }: { soCai?: boolean } = {
     { key: 'counter', header: 'Số hiệu TK đối ứng', type: 'code', width: 110, noSort: true },
     { key: 'debit', header: 'Nợ', band: 'Số tiền', type: 'money', width: 140, noSort: true, value: (r) => money(r, r.debit) },
     { key: 'credit', header: 'Có', band: 'Số tiền', type: 'money', width: 140, noSort: true, value: (r) => money(r, r.credit) },
+    { key: 'lineCount', header: 'Số dòng', type: 'number', width: 70, noSort: true, hidden: !f.gop, title: 'Số dòng chi tiết (từng mã hàng) đã cộng gộp vào dòng này. Bấm vào dòng để xem bút toán với từng dòng mã hàng.' },
     { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi, noSort: true },
   ] : [
     { key: 'postingDate', header: 'Ngày hạch toán', type: 'date', width: 104, noSort: true },
@@ -144,6 +146,7 @@ export function SoChiTietTaiKhoanPage({ soCai = false }: { soCai?: boolean } = {
     { key: 'counter', header: 'TK đối ứng', type: 'code', width: 90, noSort: true },
     { key: 'debit', header: 'Phát sinh Nợ', type: 'money', width: 130, noSort: true, value: (r) => money(r, r.debit) },
     { key: 'credit', header: 'Phát sinh Có', type: 'money', width: 130, noSort: true, value: (r) => money(r, r.credit) },
+    { key: 'lineCount', header: 'Số dòng', type: 'number', width: 70, noSort: true, hidden: !f.gop, title: 'Số dòng chi tiết (từng mã hàng) đã cộng gộp vào dòng này. Bấm vào dòng để xem bút toán với từng dòng mã hàng.' },
     { key: 'dn', header: 'Dư Nợ', type: 'money', width: 130, noSort: true, value: (r) => (r.kind === 'total' ? null : money(r, r.dn)) },
     { key: 'dc', header: 'Dư Có', type: 'money', width: 130, noSort: true, value: (r) => (r.kind === 'total' ? null : money(r, r.dc)) },
     { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90, hidden: !multi, noSort: true },
@@ -157,7 +160,7 @@ export function SoChiTietTaiKhoanPage({ soCai = false }: { soCai?: boolean } = {
           <>
             <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
             <div className="field"><label>Tài khoản (chọn nhiều)</label><AccountPicker multiple className="input w-lg mono" value={f.accounts} onChange={(accounts) => set({ accounts })} /></div>
-            <label className="checkbox"><input type="checkbox" checked={f.gop} onChange={(e) => set({ gop: e.target.checked })} /> Cộng gộp các bút toán giống nhau</label>
+            <label className="checkbox"><input type="checkbox" checked={f.gop} onChange={(e) => { nhoGop(soCai ? 'ACC88' : 'ACC12', e.target.checked); set({ gop: e.target.checked }); }} /> Cộng gộp các bút toán giống nhau</label>
             {multi && <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />}
           </>
         }

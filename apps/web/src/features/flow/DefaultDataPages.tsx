@@ -1,6 +1,8 @@
 /**
  * Dữ liệu gốc (TI08): các bộ danh mục, cấu hình định khoản chuẩn lưu bằng tệp trong phần mềm; xem nội dung tệp,
  * quay về dữ liệu gốc từng bộ. Nút "Quay về dữ liệu gốc" cũng có ở đầu từng màn danh mục liên quan.
+ * [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: quay về = hộp thoại xem trước (chạy thử ?dryRun=1, số thật) → tick đồng ý → ghi với previewToken;
+ *   phần mềm tự chụp danh mục trước khi ghi (10 bản gần nhất). Bỏ window.confirm.
  */
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -45,39 +47,88 @@ export const DEFAULT_DATA_SCREENS: Record<string, { key: string; title: string }
 const resultText = (r: RestoreResult) =>
   [`thêm ${r.added}`, `cập nhật ${r.updated}`, r.removed ? `xoá ${r.removed} mã tự thêm chưa dùng` : '', r.deactivated ? `khoá ${r.deactivated} mã tự thêm đã dùng` : ''].filter(Boolean).join(', ');
 
-/** Nút "Quay về dữ liệu gốc": hỏi xác nhận, chạy, báo kết quả. Chỉ hiện cho người có quyền cài đặt. */
+type Outcome = { key: string; title: string; result: RestoreResult };
+type Meta = Record<string, unknown> | undefined;
+
+// [2026-11-13 Nguyễn Văn Thủy] bộ nhóm hàng + mặt hàng: xoá vĩnh viễn, giữ mã đã phát sinh (đóng góp) — lời cảnh báo giữ nguyên, chuyển vào hộp thoại xem trước (S036-8a)
+const CATALOG_SAMPLE_NOTE = 'XOÁ VĨNH VIỄN mọi nhóm hàng, mặt hàng chưa phát sinh trên sổ (kèm ĐVT, giá, khai báo nhà cung cấp của chúng). Mặt hàng đã có chứng từ được giữ nguyên. Nạp lại bộ mẫu: 2 cây nhóm hàng, 8 mặt hàng.';
+
+/**
+ * Hộp thoại quay về dữ liệu gốc (một bộ hoặc toàn bộ): 1) xem trước — chạy thử trên máy chủ rồi huỷ, ra số thêm / sửa / xoá / khoá thật;
+ * 2) tick "đã xem" → Quay về (gửi mã xem trước; danh mục đổi ở giữa thì máy chủ từ chối, bấm xem trước lại); 3) báo kết quả + số bản chụp.
+ */
+export function RestorePreviewModal({ scope, title, onClose }: { scope: string; title: string; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [agree, setAgree] = useState(false);
+  const url = `/api/v1/default-data/${scope}/restore`;
+  const toList = (data: RestoreResult | Outcome[]): Outcome[] => (Array.isArray(data) ? data : [{ key: scope, title, result: data }]);
+  const preview = useQuery({
+    queryKey: ['default-data-preview', scope], gcTime: 0, staleTime: 0, retry: false,
+    queryFn: async () => { const r = await api.postMeta<RestoreResult | Outcome[]>(url, { confirm: true }, { dryRun: 1 }); return { list: toList(r.data), meta: r.meta as Meta }; },
+  });
+  const run = useMutation({
+    mutationFn: async () => { const r = await api.postMeta<RestoreResult | Outcome[]>(url, { confirm: true, previewToken: preview.data?.meta?.previewToken }); return { list: toList(r.data), meta: r.meta as Meta }; },
+    onSuccess: () => void qc.invalidateQueries(),
+  });
+  const shown = run.data ?? preview.data;
+  const changed = (r: RestoreResult) => r.added + r.updated + r.removed + r.deactivated;
+  const total = shown?.list.reduce((n, o) => n + changed(o.result), 0) ?? 0;
+  return (
+    <Modal wide title={`Quay về dữ liệu gốc: ${title}`} onClose={onClose}
+      footer={run.data
+        ? <button className="btn btn-primary" onClick={onClose}>Đóng</button>
+        : <>
+            <button className="btn" onClick={onClose}>Huỷ</button>
+            <button className="btn" disabled={preview.isFetching || run.isPending} onClick={() => { setAgree(false); run.reset(); void preview.refetch(); }}>Xem trước lại</button>
+            <button className="btn btn-primary" disabled={!agree || !preview.data || total === 0 || run.isPending}
+              title={!preview.data ? 'Đang xem trước' : total === 0 ? 'Danh mục đã đúng dữ liệu gốc — không có gì để ghi' : !agree ? 'Tick ô "Tôi đã xem" trước' : undefined}
+              onClick={() => run.mutate()}><RotateCcw size={16} /> {run.isPending ? 'Đang quay về…' : 'Quay về'}</button>
+          </>}>
+      <div className="full">
+        <ErrorBox error={preview.error ? errorText(preview.error) : run.error ? errorText(run.error) : null} />
+        {preview.isLoading && <Loading />}
+        {shown && (
+          <>
+            <p style={{ marginTop: 0 }}>
+              {run.data
+                ? <><b>Đã quay về.</b> Danh mục trước khi ghi đã được chụp lại{run.data.meta?.backupId ? <> (bản chụp số <b className="mono">{String(run.data.meta.backupId)}</b>, {Number(run.data.meta.backupRows ?? 0).toLocaleString('vi-VN')} dòng)</> : null} — giữ 10 bản gần nhất.</>
+                : total === 0
+                  ? <>Danh mục đã đúng dữ liệu gốc — không có gì thay đổi.</>
+                  : <><b>Xem trước</b> (chưa ghi gì): nếu bấm Quay về, phần mềm sẽ làm đúng các việc dưới đây. Chứng từ, sổ cái đã ghi không đổi.</>}
+            </p>
+            {scope === 'catalog_sample' && !run.data && <div className="alert alert-warn" style={{ marginBottom: 8 }}>{CATALOG_SAMPLE_NOTE}</div>}
+            <table className="grid">
+              <thead><tr><th>Bộ dữ liệu</th><th className="num">Thêm</th><th className="num">Ghi đè</th><th className="num">Xoá</th><th className="num">Khoá</th><th>Cần xem</th></tr></thead>
+              <tbody>{shown.list.map((o) => (
+                <tr key={o.key}>
+                  <td>{o.title}</td><td className="num">{o.result.added}</td><td className="num">{o.result.updated}</td>
+                  <td className="num">{o.result.removed ? <b>{o.result.removed}</b> : 0}</td><td className="num">{o.result.deactivated}</td>
+                  <td>{o.result.warnings.map((w) => <div key={w} className="muted" style={{ fontSize: 12 }}>{w}</div>)}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+            {!run.data && total > 0 && (
+              <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 12 }}>
+                <input id="dd-agree" type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+                <span>Tôi đã xem: bản ghi có trong dữ liệu gốc sẽ bị <b>ghi đè</b> theo tệp gốc; bản ghi tự thêm chưa dùng sẽ bị <b>xoá</b>, đã dùng thì khoá. Phần mềm tự chụp danh mục hiện tại trước khi ghi.</span>
+              </label>
+            )}
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/** Nút "Quay về dữ liệu gốc" ở đầu màn danh mục: mở hộp thoại xem trước. Chỉ hiện cho người có quyền cài đặt. */
 export function RestoreDefaultsButton({ datasetKey, title }: { datasetKey: string; title: string }) {
   const { can } = useAuth();
-  const qc = useQueryClient();
-  const [done, setDone] = useState<RestoreResult | null>(null);
-  const run = useMutation({
-    mutationFn: () => api.post<RestoreResult>(`/api/v1/default-data/${datasetKey}/restore`, { confirm: true }),
-    onSuccess: (r) => { setDone(r); void qc.invalidateQueries(); },
-  });
+  const [open, setOpen] = useState(false);
   if (!can('settings:write')) return null;
-  // [2026-11-13 Nguyễn Văn Thủy] bộ nhóm hàng + mặt hàng: xoá vĩnh viễn, giữ mã đã phát sinh (đóng góp)
-  const ask = () => window.confirm(datasetKey === 'catalog_sample'
-    ? 'Quay về dữ liệu gốc: Nhóm hàng + mặt hàng?\n\n' +
-      '- XOÁ VĨNH VIỄN mọi nhóm hàng, mặt hàng chưa phát sinh trên sổ (kèm ĐVT, giá, khai báo nhà cung cấp của chúng).\n' +
-      '- Mặt hàng đã có chứng từ được giữ nguyên.\n' +
-      '- Nạp lại bộ mẫu: 2 cây nhóm hàng, 8 mặt hàng.\n\nKhông lấy lại được. Tiếp tục?'
-    : `Quay về dữ liệu gốc: ${title}?\n\n` +
-    '- Bản ghi có trong dữ liệu gốc: thêm lại nếu thiếu, ghi đè tên, tài khoản… theo dữ liệu gốc.\n' +
-    '- Bản ghi tự thêm: chưa dùng thì xoá; đã dùng trên sổ sách thì khoá (ngừng dùng).\n\n' +
-    'Không sửa chứng từ, sổ cái đã ghi. Tiếp tục?',
-  ) && run.mutate();
   return (
     <>
-      <button className="btn" disabled={run.isPending} onClick={ask} title="Đưa danh mục về đúng dữ liệu gốc"><RotateCcw size={16} /> {run.isPending ? 'Đang quay về…' : 'Quay về dữ liệu gốc'}</button>
-      {(done || run.error) && (
-        <Modal title={`Quay về dữ liệu gốc: ${title}`} onClose={() => { setDone(null); run.reset(); }} footer={<button className="btn btn-primary" onClick={() => { setDone(null); run.reset(); }}>Đóng</button>}>
-          <div className="full">
-            <ErrorBox error={run.error ? errorText(run.error) : null} />
-            {done && <p>Xong: {resultText(done)}.</p>}
-            {done?.warnings.map((w) => <div key={w} className="alert alert-warn" style={{ marginBottom: 6 }}>{w}</div>)}
-          </div>
-        </Modal>
-      )}
+      <button className="btn" onClick={() => setOpen(true)} title="Xem trước rồi đưa danh mục về đúng dữ liệu gốc"><RotateCcw size={16} /> Quay về dữ liệu gốc</button>
+      {open && <RestorePreviewModal scope={datasetKey} title={title} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -86,39 +137,14 @@ const AN_DI = new Set(['posting_defaults', 'posting_groups', 'reasons']);
 
 export function DefaultDataPage() {
   const { can } = useAuth();
-  const qc = useQueryClient();
   const q = useQuery({ queryKey: ['default-data'], queryFn: () => api.get<{ datasets: Dataset[]; seedItems: number }>('/api/v1/default-data') });
   const [view, setView] = useState<{ d: Dataset; file: 'main' | 'items' } | null>(null);
-  const all = useMutation({
-    mutationFn: () => api.post<{ key: string; title: string; result: RestoreResult }[]>('/api/v1/default-data/all/restore', { confirm: true }),
-    onSuccess: () => void qc.invalidateQueries(),
-  });
-  const askAll = () => window.confirm(
-    'Quay về dữ liệu gốc TOÀN BỘ danh mục (theo thứ tự trong bảng)?\n\n' +
-    '- Bản ghi có trong dữ liệu gốc: thêm lại nếu thiếu, ghi đè theo dữ liệu gốc.\n' +
-    '- Bản ghi tự thêm: chưa dùng thì xoá; đã dùng thì khoá. Chi nhánh, đối tượng, mặt hàng tự thêm giữ nguyên.\n\n' +
-    'Không sửa chứng từ, sổ cái đã ghi. Có thể mất vài chục giây. Tiếp tục?',
-  ) && all.mutate();
+  const [allOpen, setAllOpen] = useState(false);
   return (
     <>
       <PageHeader title="Dữ liệu gốc" code="TI08" subtitle="Bộ danh mục và cấu hình định khoản chuẩn của công ty, lưu bằng tệp trong phần mềm; quay về khi danh mục bị sửa lộn xộn" helpKey="du-lieu-goc"
-        actions={can('settings:write') && <button className="btn btn-primary" disabled={all.isPending} onClick={askAll}><RotateCcw size={16} /> {all.isPending ? 'Đang quay về toàn bộ…' : 'Quay về toàn bộ'}</button>} />
-      {(all.data || all.error) && (
-        <div className="card">
-          <div className="card-body">
-            <ErrorBox error={all.error ? errorText(all.error) : null} />
-            {all.data && (
-              <>
-                <b>Đã quay về toàn bộ dữ liệu gốc.</b>
-                <table className="grid" style={{ marginTop: 8 }}>
-                  <thead><tr><th>Bộ dữ liệu</th><th>Kết quả</th><th>Cần xem</th></tr></thead>
-                  <tbody>{all.data.map((o) => <tr key={o.key}><td>{o.title}</td><td>{resultText(o.result)}</td><td>{o.result.warnings.map((w) => <div key={w} className="muted" style={{ fontSize: 12 }}>{w}</div>)}</td></tr>)}</tbody>
-                </table>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+        actions={can('settings:write') && <button className="btn btn-primary" onClick={() => setAllOpen(true)}><RotateCcw size={16} /> Quay về toàn bộ</button>} />
+      {allOpen && <RestorePreviewModal scope="all" title="toàn bộ danh mục (theo thứ tự trong bảng)" onClose={() => setAllOpen(false)} />}
       <div className="card">
         <div className="card-body" style={{ paddingBottom: 0 }}>
           <p className="muted" style={{ margin: 0 }}>

@@ -75,3 +75,12 @@ Nút **Quay về dữ liệu gốc** ở màn *Quản lý mặt hàng* (DM10) v�
 
 Nút này không chạy trong **Quay về toàn bộ**.
 
+## Quay về dữ liệu gốc an toàn <!-- [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a -->
+
+Bấm **Quay về dữ liệu gốc** (đầu màn danh mục) hoặc **Quay về toàn bộ** (TI08) không ghi ngay nữa:
+
+1. Phần mềm **xem trước**: chạy thử trên máy chủ rồi huỷ, hiện đúng số bản ghi sẽ **thêm**, **ghi đè**, **xoá**, **khoá** của từng bộ và các cảnh báo. Chưa ghi gì.
+2. Đọc bảng, tick **Tôi đã xem**, bấm **Quay về**. Nếu ai đó vừa sửa danh mục sau lúc xem trước, phần mềm từ chối — bấm **Xem trước lại**. Mã xem trước có hạn 15 phút.
+3. Trước khi ghi, phần mềm **tự chụp** danh mục hiện tại của các bảng bị chạm (giữ 10 bản gần nhất). Số bản chụp hiện ở thông báo kết quả; người quản trị tải lại bằng `GET /api/v1/default-data/backups/:id`.
+
+**Bị chặn:** tệp gốc là **dữ liệu mẫu giả lập** (bản phát hành, xem `db/seeds/README.md`) mà đơn vị đã có bút toán — quay về sẽ ghi dữ liệu mẫu đè lên danh mục thật. Người quản trị máy chủ đặt biến `SEEDS_DIR` tới bộ danh mục của công ty rồi làm lại.

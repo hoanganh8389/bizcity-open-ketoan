@@ -9,6 +9,9 @@
  *   POST /api/v1/default-data/:key/restore { confirm: true }   quay về dữ liệu gốc (quyền settings:write)
  *   POST /api/v1/default-data/all/restore { confirm: true }    quay về toàn bộ theo thứ tự phụ thuộc
  * Ghi: action core.default-data.{restore,restore-all} (W6, SC-ACT-1).
+ * [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: xem trước bắt buộc — gọi ?dryRun=1 lấy meta.previewToken, chạy thật gửi { confirm: true, previewToken };
+ *   chạy thật chụp danh mục vào default_data_backups trước khi ghi (meta.backupId); bộ giả lập trên đơn vị có bút toán bị chặn.
+ *   GET /api/v1/default-data/backups, GET /api/v1/default-data/backups/:id   các bản chụp gần nhất (10) / tải một bản
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -19,6 +22,7 @@ import { ok } from '@bizcity/platform/core/http';
 import { Errors } from '@bizcity/platform/core/errors';
 import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { DATASETS, datasetOf, readSeed, seedCount } from './default-data.service.js';
+import { assertSameAsPreview, checkPreviewToken, digestOf, getBackup, guardSampleSeeds, issuePreviewToken, listBackups, setBackupResult, snapshotTables, tablesOf } from './default-data.safety.js';
 
 const tags = ['Dữ liệu gốc'];
 
@@ -61,26 +65,61 @@ export async function defaultDataRoutes(app: FastifyInstance): Promise<void> {
 type RestoreResult = Awaited<ReturnType<(typeof DATASETS)[number]['restore']>>;
 const restoreOut = z.custom<RestoreResult>((v) => typeof v === 'object' && v !== null);
 
+// [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: một lõi chạy cho cả xem trước (dryRun) và chạy thật — cùng hàm quay về, cùng giao dịch
+type Ctx = Parameters<AnyActionDef['handler']>[0];
+type Outcome = { key: string; title: string; result: RestoreResult };
+async function runRestore(ctx: Ctx, scope: string, keys: string[], previewToken: string | undefined): Promise<Outcome[]> {
+  const tx = ctx.data.tx;
+  const tenantId = ctx.tenant.id;
+  await guardSampleSeeds(tx, tenantId, keys);
+  const previewDigest = ctx.dryRun ? null : checkPreviewToken(previewToken, tenantId, ctx.actor.id, scope);
+  const backup = ctx.dryRun ? null : await snapshotTables(tx, tenantId, scope, ctx.actor.id, tablesOf(keys));
+  const out: Outcome[] = [];
+  for (const k of keys) { const d = datasetOf(k); out.push({ key: d.key, title: d.title, result: await d.restore(tx, tenantId) }); }
+  if (ctx.dryRun) {
+    ctx.meta('previewToken', issuePreviewToken(tenantId, ctx.actor.id, scope, digestOf(out)));
+    ctx.meta('previewExpiresInSeconds', 900);
+  } else {
+    assertSameAsPreview(previewDigest!, out);
+    await setBackupResult(tx, tenantId, backup!.id, out);
+    ctx.meta('backupId', backup!.id);
+    ctx.meta('backupRows', backup!.rowCount);
+  }
+  return out;
+}
+
 export const defaultDataActions: AnyActionDef[] = [
   defineAction({
-    id: 'core.default-data.restore-all', title: 'Quay về dữ liệu gốc toàn bộ danh mục, theo thứ tự phụ thuộc', tags,
-    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ confirm: z.literal(true) }),
+    id: 'core.default-data.restore-all', title: 'Quay về dữ liệu gốc toàn bộ danh mục, theo thứ tự phụ thuộc (xem trước bằng ?dryRun=1)', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural', dryRun: true,
+    input: z.object({ confirm: z.literal(true), previewToken: z.string().max(200).optional() }),
     output: z.array(z.object({ key: z.string(), title: z.string(), result: restoreOut })),
     expose: { http: { method: 'POST', path: '/api/v1/default-data/all/restore' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'default_data', objectId: () => 'all' },
-    handler: async (ctx) => {
-      const out: { key: string; title: string; result: RestoreResult }[] = [];
-      for (const d of DATASETS.filter((x) => x.inAll !== false)) out.push({ key: d.key, title: d.title, result: await d.restore(ctx.data.tx, ctx.tenant.id) });
-      return out;
-    },
+    handler: (ctx, { previewToken }) => runRestore(ctx, 'all', DATASETS.filter((x) => x.inAll !== false).map((d) => d.key), previewToken),
   }),
   defineAction({
-    id: 'core.default-data.restore', title: 'Quay về dữ liệu gốc cho một bộ (ghi đè theo tệp gốc)', tags,
-    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ key: z.string(), confirm: z.literal(true) }), output: restoreOut,
+    id: 'core.default-data.restore', title: 'Quay về dữ liệu gốc cho một bộ (ghi đè theo tệp gốc; xem trước bằng ?dryRun=1)', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural', dryRun: true,
+    input: z.object({ key: z.string(), confirm: z.literal(true), previewToken: z.string().max(200).optional() }), output: restoreOut,
     expose: { http: { method: 'POST', path: '/api/v1/default-data/:key/restore' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'default_data', objectId: (i) => i.key },
-    handler: (ctx, { key }) => datasetOf(key).restore(ctx.data.tx, ctx.tenant.id),
+    handler: async (ctx, { key, previewToken }) => (await runRestore(ctx, datasetOf(key).key, [key], previewToken))[0]!.result,
+  }),
+  defineAction({
+    id: 'core.default-data.backups', title: 'Các bản chụp danh mục trước những lần quay về dữ liệu gốc gần nhất', tags,
+    permission: 'settings:write', effect: 'read', idempotency: 'none',
+    input: z.object({}),
+    output: z.array(z.object({ id: z.string(), datasetKey: z.string(), tables: z.array(z.string()), rowCount: z.number(), createdBy: z.string(), createdAt: z.string(), result: z.unknown() })),
+    expose: { http: { method: 'GET', path: '/api/v1/default-data/backups' }, mcp: false, ai: 'deny' },
+    handler: (ctx) => listBackups(ctx.data.tx, ctx.tenant.id),
+  }),
+  defineAction({
+    id: 'core.default-data.backup', title: 'Tải một bản chụp danh mục (JSON các dòng trước khi quay về)', tags,
+    permission: 'settings:write', effect: 'read', idempotency: 'none',
+    input: z.object({ id: z.string() }),
+    output: z.custom<Awaited<ReturnType<typeof getBackup>>>((v) => typeof v === 'object' && v !== null),
+    expose: { http: { method: 'GET', path: '/api/v1/default-data/backups/:id' }, mcp: false, ai: 'deny' },
+    handler: (ctx, { id }) => getBackup(ctx.data.tx, ctx.tenant.id, id),
   }),
 ];

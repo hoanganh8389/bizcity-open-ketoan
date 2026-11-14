@@ -57,6 +57,11 @@ export interface PostingConfig {
   // [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán (bizcity.posting.use_reasons, mặc định tắt) (đóng góp)
   /** Bật: tài khoản trên lý do đè cấu hình (như phần mềm cũ). Tắt: định khoản không đọc tài khoản trên lý do. Đọc theo ngày chứng từ. */
   useReasons: boolean;
+  // [2026-11-13 Nguyễn Văn Thủy] TK kho theo loại kho (0128/0133): kho → TK kho chi tiết của loại; chi nhánh → kho mặc định (đóng góp)
+  /** Mã kho → TK kho của loại kho (chỉ loại có TK kho là tài khoản chi tiết). Ưu tiên hơn TK kho ngầm định. */
+  warehouseAccounts: Map<string, string>;
+  /** Mã chi nhánh → mã kho mặc định (dòng không ghi mã kho). */
+  defaultWarehouse: Map<string, string>;
 }
 
 /** Công tắc lý do hạch toán tại một ngày (khoá cấu hình chung, có phiên bản theo ngày hiệu lực). */
@@ -147,12 +152,17 @@ export async function loadPolicyRaw(db: Db, tenantId: string): Promise<PolicyRaw
 
 export const postingConfigRepository = {
   async loadPostingConfig(db: Db, tenantId: string, skus: string[] = [], opts: { asOf?: string; actor?: string; programKeys?: string[] } = {}): Promise<PostingConfig> {
-    const [accounts, live, products, ruleTable, useReasons] = await Promise.all([
+    const [accounts, live, products, ruleTable, useReasons, whs] = await Promise.all([
       db.selectFrom('accounts').selectAll().where('tenant_id', '=', tenantId).execute(),
       loadPolicyRaw(db, tenantId),
       loadProducts(db, tenantId, skus, opts.asOf),
       loadRuleTable(db, tenantId, skus, opts.programKeys),
       useReasonsAt(db, tenantId, opts.asOf),
+      sql<{ code: string; branch_code: string; is_default: boolean; account: string | null }>`
+        SELECT w.code, b.code AS branch_code, w.is_default,
+               (SELECT a.code FROM warehouse_types t JOIN accounts a ON a.tenant_id = t.tenant_id AND a.code = t.account_prefix AND a.is_posting
+                 WHERE t.tenant_id = w.tenant_id AND t.code = w.type_code AND t.account_prefix <> '' AND t.deleted_at IS NULL) AS account
+          FROM warehouses w JOIN branches b ON b.id = w.branch_id WHERE w.tenant_id = ${tenantId}`.execute(db),
     ]);
     const picked = opts.asOf ? await selectPolicy(db, tenantId, live, opts.asOf, opts.actor ?? 'system') : { raw: live, version: null };
     const { reasons, groups, paymentMethods: methods, taxCodes: taxes, defaults, bankAccounts: banks } = picked.raw;
@@ -176,6 +186,8 @@ export const postingConfigRepository = {
       policyVersion: picked.version,
       ruleTable,
       useReasons,
+      warehouseAccounts: new Map(whs.rows.filter((w) => w.account).map((w) => [w.code, w.account!])),
+      defaultWarehouse: new Map(whs.rows.filter((w) => w.is_default).map((w) => [w.branch_code, w.code])),
     };
   },
 };

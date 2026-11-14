@@ -398,7 +398,22 @@ open-ketoan đang trong giai đoạn **xây dựng / chuẩn hoá framework**. K
 | Kết nối một chạm với Bizcity Cell (Zalo / web chat) | Đặc tả xong, chưa code (PHASE-015) |
 | NATS, Redis, Kong, Kubernetes | Tuỳ chọn ở các giai đoạn sau |
 
-Tiến độ chi tiết: [PHASES](docs/standard/PHASES.md) (máy đọc: `docs/standard/roadmap.json`). Việc chia thành **18 thư mục phase** (kế hoạch, checklist con, bằng chứng; phase nào đã có code): [docs/phases/](docs/phases/README.md). Đánh giá codebase so với kiến trúc (khoảng 50% kiến trúc công bố): [AUDIT-2026-10-30-KIEN-TRUC](docs/audits/AUDIT-2026-10-30-KIEN-TRUC.md). Điểm tuân thủ 9 yêu cầu bắt buộc tự tính mỗi lần chạy bộ kiểm: [Bản công bố kiến trúc §4.1](docs/CONG-BO-KIEN-TRUC.md). Thay đổi theo phiên bản: [CHANGELOG.md](CHANGELOG.md).
+<!-- [2026-11-13 07:26 PM Johnny Chu - Chu Hoàng Anh] TIEN-DO — tiến độ PHASE-027 → 035 đối chiếu mã trên main 2026-11-13 -->
+**Tiến độ các phase gần đây** (đối chiếu mã trên `main` ngày 13/11/2026 — chi tiết từng việc ở checklist của phase; mức hoàn thiện Core xem màn *Hệ thống → Trụ cột & mức đạt* HT10):
+
+| Phase | Mã trên `main` | Còn lại chính |
+|---|---|---|
+| [027 Core kế toán cho dev](docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/README.md) | ✅ xong — CLI `bizcity`, skills, SC-DOC-4..6, SC-SEC-5 | các đề xuất S027-6..9 chưa mở |
+| [028 Phân quyền, Role Editor](docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/README.md) | 🟡 ~85% — vai trò của đơn vị, bộ tính quyền, Role Editor, phạm vi chi nhánh | W6, SSO một lần (chờ đội POS) |
+| [029 Chứng từ gốc, truy vết](docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/README.md) | 🟡 ~40% — lịch sử chứng từ, nền móng 17 trụ cột, khoá kỳ ở CSDL | W2: tự lưu phiên bản khi ghi sổ, xoá an toàn |
+| [030 Thư viện nghiệp vụ](docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/README.md) | 🟡 ~60% — thư viện dùng chung, hàng việc, cấu hình HT13, bút toán luôn có chứng từ | golden test theo nghiệp vụ, cổng G5 |
+| [031 Policy Registry](docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/README.md) | 🟡 ~85% — chính sách có phiên bản, kiểm ở cửa nạp, Rule Contract bán hàng, màn HT15 | Rule Contract mua hàng |
+| [032 Inventory Engine](docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/README.md) | 🟡 ~20% — khoá thử, việc hôm nay, chẩn đoán đêm, 23 điều kiện khoá sổ, trả hàng theo giá vốn gốc | **lõi giá vốn**: lớp giá vốn, lần tính giá, FIFO |
+| [034 HT10 bảng hoàn thiện](docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/README.md) | ✅ xong — Nền móng, Cổng & bộ kiểm, Bộ máy, Nhà phát triển | — |
+| [035 HT11 Modules & mức đạt](docs/phases/PHASE-035-HT11-MODULES-MUC-DAT/README.md) | 🟡 ~20% — sổ `modules.json` | API, màn HT11 |
+| [036 Thiết lập nhanh dữ liệu mẫu](docs/phases/PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/README.md) | chưa — chờ duyệt | toàn bộ |
+
+Tiến độ chi tiết: [PHASES](docs/standard/PHASES.md) (máy đọc: `docs/standard/roadmap.json`). Việc chia thành **35 thư mục phase** (kế hoạch, checklist con, bằng chứng; phase nào đã có code): [docs/phases/](docs/phases/README.md). Đánh giá codebase so với kiến trúc (khoảng 50% kiến trúc công bố): [AUDIT-2026-10-30-KIEN-TRUC](docs/audits/AUDIT-2026-10-30-KIEN-TRUC.md). Điểm tuân thủ 9 yêu cầu bắt buộc tự tính mỗi lần chạy bộ kiểm: [Bản công bố kiến trúc §4.1](docs/CONG-BO-KIEN-TRUC.md). Thay đổi theo phiên bản: [CHANGELOG.md](CHANGELOG.md).
 
 **Không coi bản công bố kiến trúc là chứng nhận tuân thủ pháp luật hoặc bảo đảm sẵn sàng production.** Các chế độ kế toán và quy định pháp lý cần được đối chiếu theo đối tượng sử dụng, thời điểm áp dụng và kiểm nghiệm thực tế.
 

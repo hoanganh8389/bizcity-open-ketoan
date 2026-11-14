@@ -39,3 +39,6 @@ Thẻ **Theo phiếu** liệt kê mỗi hoá đơn bán / phiếu trả lại m�
 
 Các thẻ còn lại gom số liệu theo ngày, tháng, chi nhánh, mặt hàng, khách hàng, loại thuế; tổng cộng ở mọi thẻ như nhau.
 
+## Theo khách hàng — xem theo nhóm mẹ – chi nhánh
+
+Ở thẻ **Theo khách hàng**, khách có đơn vị mẹ – chi nhánh thì có ô **Xem theo nhóm mẹ – chi nhánh**: chi nhánh xếp ngay dưới đơn vị mẹ, cuối nhóm dòng **Cộng nhóm** là doanh số, hàng trả lại, doanh thu thuần của cả nhóm.

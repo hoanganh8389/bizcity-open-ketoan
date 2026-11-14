@@ -426,11 +426,13 @@ interface CogsMovement {
   counterName: string | null;
   counterGroup: string | null;
   qty: number;
+  /** Kho của dòng xuất nhập (TK kho theo loại kho). */
+  warehouseCode: string;
 }
 
 async function unvaluedMovements(trx: Db, tenantId: string, p: Period): Promise<CogsMovement[]> {
-  const res = await sql<{ event_id: string; branch_id: string; code: string; name: string; grp: string; kind: string; sku: string; ikey: string; reason_code: string | null; is_gift: boolean; counter_branch_id: string | null; ccode: string | null; cname: string | null; cgrp: string | null; qty: string }>`
-    SELECT m.event_id::text, m.branch_id, b.code, b.name, COALESCE(b.accounting_unit_id, 0)::text AS grp, m.kind, m.sku, COALESCE(m.item_id, m.sku) AS ikey, m.reason_code, m.is_gift,
+  const res = await sql<{ event_id: string; branch_id: string; code: string; name: string; grp: string; kind: string; sku: string; ikey: string; reason_code: string | null; is_gift: boolean; counter_branch_id: string | null; ccode: string | null; cname: string | null; cgrp: string | null; qty: string; wh: string }>`
+    SELECT m.event_id::text, m.branch_id, b.code, b.name, COALESCE(b.accounting_unit_id, 0)::text AS grp, m.kind, m.sku, COALESCE(m.item_id, m.sku) AS ikey, m.reason_code, m.is_gift, COALESCE(m.warehouse_code, '') AS wh,
            m.counter_branch_id, cb.code AS ccode, cb.name AS cname,
            CASE WHEN cb.id IS NULL THEN NULL ELSE COALESCE(cb.accounting_unit_id, 0)::text END AS cgrp,
            SUM(m.qty) AS qty
@@ -440,9 +442,9 @@ async function unvaluedMovements(trx: Db, tenantId: string, p: Period): Promise<
      WHERE m.tenant_id = ${tenantId} AND m.amount IS NULL
        AND m.kind IN ('sale', 'sale_return', 'transfer_out', 'transfer_in', 'adjust_out', 'adjust_in')
        AND m.doc_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date
-     GROUP BY m.event_id, m.branch_id, b.code, b.name, 5, m.kind, m.sku, 8, m.reason_code, m.is_gift, m.counter_branch_id, cb.code, cb.name, 14
+     GROUP BY m.event_id, m.branch_id, b.code, b.name, 5, m.kind, m.sku, 8, m.reason_code, m.is_gift, 11, m.counter_branch_id, cb.code, cb.name, 15
      HAVING SUM(m.qty) <> 0`.execute(trx);
-  return res.rows.map((r) => ({ eventId: r.event_id, branchId: r.branch_id, branchCode: r.code, branchName: r.name, group: r.grp, kind: r.kind, sku: r.sku, ikey: r.ikey, reasonCode: r.reason_code, isGift: r.is_gift, counterBranchId: r.counter_branch_id, counterCode: r.ccode, counterName: r.cname, counterGroup: r.cgrp, qty: Number(r.qty) }));
+  return res.rows.map((r) => ({ eventId: r.event_id, branchId: r.branch_id, branchCode: r.code, branchName: r.name, group: r.grp, kind: r.kind, sku: r.sku, ikey: r.ikey, reasonCode: r.reason_code, isGift: r.is_gift, counterBranchId: r.counter_branch_id, counterCode: r.ccode, counterName: r.cname, counterGroup: r.cgrp, qty: Number(r.qty), warehouseCode: r.wh }));
 }
 
 export interface CostingResult {
@@ -634,14 +636,17 @@ async function postBranch(
     // dòng kho (ảnh chụp); dòng sổ cái gắn item_id theo mã đó (0066) nên vẫn về đúng định danh.
     const productSku = m.sku;
     const group = resolver.groupForSku(m.sku);
-    const inventory = group.inventory_account;
+    // [2026-11-13 Nguyễn Văn Thủy] TK kho theo loại kho của kho xuất / nhập (ưu tiên hơn ngầm định, quy tắc không đè) (đóng góp)
+    const wh = resolver.warehouseAccount(m.warehouseCode, a.branchCode);
+    const inventory = wh ?? group.inventory_account;
     const out = m.qty < 0;
+    const lockInv = (debitIsInventory: boolean) => (wh ? (debitIsInventory ? { whDebit: true } : { whCredit: true }) : {});
     switch (m.kind) {
       case 'sale':
       case 'sale_return': {
         const reason = reasonFor(m.reasonCode, m.kind);
         const cogs = resolver.cogsAccount(reason, group, m.isGift);
-        const tags = { biz: m.kind, reason: m.reasonCode, gift: m.isGift };
+        const tags = { biz: m.kind, reason: m.reasonCode, gift: m.isGift, ...lockInv(!out) };
         if (out) b.add({ tags, part: 'cogs', productSku, debitAccount: cogs, creditAccount: inventory, amount, description: m.isGift ? 'Giá vốn hàng khuyến mãi' : 'Giá vốn hàng bán' });
         else b.add({ tags, part: 'cogs', productSku, debitAccount: inventory, creditAccount: cogs, amount, description: 'Nhập lại kho hàng khách trả' });
         break;
@@ -654,7 +659,7 @@ async function postBranch(
           ? resolver.counterOr(reason, 'goods_in_transit', 'tài khoản hàng đang chuyển giữa các chi nhánh')
           : resolver.counterOr(reason, 'internal_receivable_goods', 'tài khoản phải thu nội bộ hàng', 'internal_receivable');
         const other = m.counterCode ? await branchPartner(m.counterCode, m.counterName ?? '') : own;
-        const tags = { biz: 'transfer', reason: m.reasonCode, leg: m.kind === 'transfer_out' ? 'out' as const : 'in' as const, sameUnit: same };
+        const tags = { biz: 'transfer', reason: m.reasonCode, leg: m.kind === 'transfer_out' ? 'out' as const : 'in' as const, sameUnit: same, ...lockInv(m.kind === 'transfer_in') };
         if (m.kind === 'transfer_out') b.add({ tags, part: 'goods', productSku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: other, description: 'Xuất chuyển kho (theo giá vốn)' });
         else b.add({ tags, part: 'goods', productSku, debitAccount: inventory, creditAccount: transit, amount, creditPartnerId: other, description: 'Nhập chuyển kho (theo giá vốn)' });
         break;
@@ -664,7 +669,7 @@ async function postBranch(
         const increase = m.kind === 'adjust_in';
         const reason = reasonFor(m.reasonCode, `stock_adjustment:${increase ? 'increase' : 'decrease'}`);
         const counter = increase ? resolver.counterOr(reason, 'stock_surplus', 'tài khoản hàng thừa chờ xử lý') : resolver.counterOr(reason, 'stock_shortage', 'tài khoản hàng thiếu chờ xử lý');
-        const tags = { biz: increase ? 'stock_increase' : 'stock_decrease', reason: m.reasonCode };
+        const tags = { biz: increase ? 'stock_increase' : 'stock_decrease', reason: m.reasonCode, ...lockInv(increase) };
         if (increase) b.add({ tags, part: 'goods', productSku, debitAccount: inventory, creditAccount: counter, amount, creditPartnerId: own, description: 'Điều chỉnh tăng kho (theo giá vốn)' });
         else b.add({ tags, part: 'goods', productSku, debitAccount: counter, creditAccount: inventory, amount, debitPartnerId: own, description: 'Điều chỉnh giảm kho (theo giá vốn)' });
         break;

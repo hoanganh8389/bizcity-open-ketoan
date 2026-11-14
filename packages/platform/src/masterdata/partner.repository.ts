@@ -46,6 +46,15 @@ export interface PartnerDto {
   customerType: string;
   /** Vai trò thêm ngoài kind (NCC vừa là khách hàng…). */
   alsoKinds: string[];
+  // [2026-11-13 Nguyễn Văn Thủy] định danh bất biến + đơn vị cha (0132) (đóng góp)
+  /** Định danh bất biến dt_<ULID>. */
+  uid: string;
+  /** Đơn vị cha (định danh / mã / tên); trống = đơn vị gốc. */
+  parentUid: string | null;
+  parentCode: string | null;
+  parentName: string | null;
+  /** Số đơn vị con trực tiếp. */
+  childCount: number;
 }
 
 export interface PartnerListFilter {
@@ -84,7 +93,16 @@ export interface PartnerAccountingInfo {
   isProspect?: boolean;
   customerType?: string;
   alsoKinds?: string[];
+  /** Mã đơn vị cha; chuỗi rỗng / null = bỏ cha (về gốc). */
+  parentCode?: string | null;
 }
+
+/** Cột đọc thêm: mã, tên đơn vị cha và số con trực tiếp (0132). */
+const parentCols = [
+  sql<string | null>`(SELECT pp.code FROM partners pp WHERE pp.uid = partners.parent_uid)`.as('parent_code'),
+  sql<string | null>`(SELECT pp.name FROM partners pp WHERE pp.uid = partners.parent_uid)`.as('parent_name'),
+  sql<string>`(SELECT count(*) FROM partners pc WHERE pc.parent_uid = partners.uid)`.as('child_count'),
+] as const;
 
 export const partnerRepository = {
   async list(db: Db, tenantId: string, f: PartnerListFilter, page: number, pageSize: number) {
@@ -100,14 +118,14 @@ export const partnerRepository = {
     if (f.status === 'active') q = q.where('is_active', '=', true);
     if (f.status === 'inactive') q = q.where('is_active', '=', false);
     const [rows, total] = await Promise.all([
-      q.selectAll().orderBy('code').limit(pageSize).offset((page - 1) * pageSize).execute(),
+      q.selectAll().select([...parentCols]).orderBy('code').limit(pageSize).offset((page - 1) * pageSize).execute(),
       q.select((eb) => eb.fn.countAll<string>().as('n')).executeTakeFirst(),
     ]);
     return { rows: rows.map(toPartnerDto), total: Number(total?.n ?? 0) };
   },
 
   findByCode(db: Db, tenantId: string, code: string) {
-    return db.selectFrom('partners').selectAll().where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
+    return db.selectFrom('partners').selectAll().select([...parentCols]).where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
   },
 
   /**
@@ -172,6 +190,10 @@ export const partnerRepository = {
     if (info.isProspect !== undefined) patch.is_prospect = info.isProspect;
     if (info.customerType !== undefined) patch.customer_type = info.customerType;
     if (info.alsoKinds !== undefined) patch.also_kinds = info.alsoKinds.filter((k) => k !== (info.kind ?? '')) as never;
+    if (info.parentCode !== undefined) {
+      const pc = info.parentCode?.trim();
+      patch.parent_uid = pc ? sql`(SELECT uid FROM partners WHERE tenant_id = ${tenantId} AND code = ${pc})` : null;
+    }
     if (!Object.keys(patch).length) return;
     await db.updateTable('partners').set({ ...patch, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('code', '=', code).execute();
   },
@@ -184,6 +206,7 @@ export function toPartnerDto(r: {
   mobile?: string; fax?: string; website?: string; position?: string; company_name?: string; company_address?: string; short_name?: string;
   manager_code?: string | null; branch_code?: string | null; created_at?: unknown; created_by?: string;
   birth_date?: string | null; gender?: string; alias?: string; is_prospect?: boolean; customer_type?: string; also_kinds?: string[];
+  uid?: string; parent_uid?: string | null; parent_code?: string | null; parent_name?: string | null; child_count?: unknown;
 }): PartnerDto {
   return {
     id: r.id, code: r.code, name: r.name, kind: r.kind, taxCode: r.tax_code, address: r.address, email: r.email, phone: r.phone,
@@ -201,5 +224,6 @@ export function toPartnerDto(r: {
     createdAt: r.created_at ? new Date(r.created_at as string).toISOString().slice(0, 10) : null, createdBy: r.created_by ?? '',
     createdTime: r.created_at ? new Date(r.created_at as string).toISOString() : null,
     birthDate: r.birth_date ?? null, gender: r.gender ?? '', alias: r.alias ?? '', isProspect: r.is_prospect ?? false, customerType: r.customer_type ?? '', alsoKinds: r.also_kinds ?? [],
+    uid: r.uid ?? '', parentUid: r.parent_uid ?? null, parentCode: r.parent_code ?? null, parentName: r.parent_name ?? null, childCount: Number(r.child_count ?? 0),
   };
 }

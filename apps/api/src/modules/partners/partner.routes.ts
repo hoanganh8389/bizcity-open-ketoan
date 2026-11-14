@@ -36,6 +36,7 @@ import type { PartnerInput } from '@ketoan/contracts';
 import { partnerRepository, toPartnerDto, type PartnerAccountingInfo } from './partner.repository.js';
 import { suggestPartnerCode } from './partner-code.js';
 import { importPartners, PARTNER_IMPORT_KEYS } from './partner-import.js';
+import { checkParent, nextChildCode, sameFamily } from './partner-family.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): adapter tra MST qua cổng
 import { corePort } from '@bizcity/platform/core/ports';
 import { partnerHints } from './partner.hints.js';
@@ -74,10 +75,12 @@ const accountingInfo = {
   isProspect: z.boolean().optional().describe('Khách hàng tiềm năng'),
   customerType: z.enum(['', 'personal', 'business']).optional().describe('Loại khách hàng: cá nhân / doanh nghiệp'),
   alsoKinds: z.array(z.enum(['customer', 'supplier'])).max(2).optional().describe('Vai trò thêm ngoài Thuộc kiểu (vd NCC vừa là khách hàng)'),
+  // [2026-11-13 Nguyễn Văn Thủy] đơn vị cha (0132) (đóng góp)
+  parentCode: z.string().trim().max(64).nullish().describe('Mã đơn vị cha (công ty mẹ của chi nhánh NCC / khách hàng); rỗng / null = đơn vị gốc'),
 };
 const INFO_KEYS = ['kind', 'groupCode', 'isActive', 'paymentTermDays', 'creditLimit', 'note', 'contactName', 'bankAccountNo', 'bankAccountHolder', 'bankName', 'maxOpenDocs',
   'mobile', 'fax', 'website', 'position', 'companyName', 'companyAddress', 'shortName', 'managerCode', 'branchCode',
-  'birthDate', 'gender', 'alias', 'isProspect', 'customerType', 'alsoKinds'] as const;
+  'birthDate', 'gender', 'alias', 'isProspect', 'customerType', 'alsoKinds', 'parentCode'] as const;
 /** Tách phần thông tin kế toán bổ sung khỏi phần thông tin đối tượng gửi từ hệ thống nguồn. */
 function split<T extends Record<string, unknown>>(b: T) {
   const info: Record<string, unknown> = {};
@@ -103,12 +106,15 @@ async function assertGroups(trx: Db, tenantId: string, codes: (string | null | u
  * Chỉ kiểm khi MST mới hoặc vừa đổi — đối tượng cũ đã trùng MST từ trước (dữ liệu chuyển sang) vẫn sửa được các thông tin khác.
  * Đồng bộ từ hệ thống bán hàng / mua hàng và đối tượng tự tạo theo chứng từ không chặn ở đây.
  */
-async function assertTaxCodeFree(trx: Db, tenantId: string, code: string, taxCode: string | null | undefined, current?: string | null) {
+async function assertTaxCodeFree(trx: Db, tenantId: string, code: string, taxCode: string | null | undefined, current?: string | null, familyUid?: string | null) {
   const t = taxCode?.trim();
   if (!t || t === current?.trim()) return;
   // Hai người cùng ghi một MST lúc: người sau phải thấy đối tượng của người trước.
   await sql`SELECT pg_advisory_xact_lock(hashtext(${`partner-tax:${tenantId}:${t}`}))`.execute(trx);
-  const dup = await trx.selectFrom('partners').select(['code', 'name', 'kind']).where('tenant_id', '=', tenantId).where('tax_code', '=', t).where('code', '<>', code).executeTakeFirst();
+  const dups = await trx.selectFrom('partners').select(['code', 'name', 'kind', 'uid']).where('tenant_id', '=', tenantId).where('tax_code', '=', t).where('code', '<>', code).execute();
+  // Cùng một nhà cung cấp / khách hàng mẹ (cha – con, 0132): một pháp nhân nhiều điểm giao dịch dùng chung MST được.
+  let dup: (typeof dups)[number] | undefined;
+  for (const d of dups) if (!familyUid || !(await sameFamily(trx, familyUid, d.uid))) { dup = d; break; }
   if (dup) throw Errors.conflict(`Mã số thuế ${t} đã có ở ${KIND_TEXT[dup.kind] ?? dup.kind} ${dup.code} - ${dup.name || '(chưa có tên)'}. Mỗi mã số thuế chỉ dùng cho một đối tượng.`);
 }
 
@@ -164,8 +170,13 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
 
   r.get('/api/v1/partners/next-code', {
     preHandler: requirePermission('catalog:read'),
-    schema: { tags, summary: 'Gợi ý mã đối tượng mới theo nhóm (dãy mã đông nhất của nhóm + 1)', querystring: z.object({ groupCode: z.string().trim().max(64).optional(), kind: z.enum(KINDS).optional() }) },
-    handler: async (req) => ok(await suggestPartnerCode(db, authOf(req).tenantId, req.query)),
+    schema: { tags, summary: 'Gợi ý mã đối tượng mới: theo nhóm (dãy mã đông nhất của nhóm + 1); có parentCode thì mã con = mã cha-001, -002… (MST chi nhánh MSTcha-NNN thì lấy NNN)',
+      querystring: z.object({ groupCode: z.string().trim().max(64).optional(), kind: z.enum(KINDS).optional(), parentCode: z.string().trim().max(64).optional(), taxCode: z.string().trim().max(32).optional() }) },
+    handler: async (req) => {
+      const { tenantId } = authOf(req);
+      if (req.query.parentCode) { const c = await nextChildCode(db, tenantId, req.query.parentCode, req.query.taxCode); return ok({ code: c.code, basis: c.basis, series: `${c.parent}-NNN`, count: 0, parentName: c.parentName }); }
+      return ok(await suggestPartnerCode(db, tenantId, req.query));
+    },
   });
 
   r.get('/api/v1/partners/tax-lookup/:taxCode', {
@@ -194,6 +205,38 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
       if (exclude) q = q.where('code', '<>', exclude);
       const rows = await q.orderBy('code').limit(5).execute();
       return ok(rows.map(toPartnerDto));
+    },
+  });
+
+  // [2026-11-13 Nguyễn Văn Thủy] đơn vị con trực tiếp của một đối tượng (thẻ Đơn vị con trong hồ sơ) (đóng góp)
+  r.get('/api/v1/partners/:code/children', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Đơn vị con trực tiếp của một đối tượng (cha – con)', params: z.object({ code: z.string() }) },
+    handler: async (req) => {
+      const { tenantId } = authOf(req);
+      const p = await partnerRepository.findByCode(db, tenantId, req.params.code);
+      if (!p) throw Errors.notFound(`đối tượng ${req.params.code}`);
+      const rows = await db.selectFrom('partners').select('code').where('tenant_id', '=', tenantId).where('parent_uid', '=', p.uid).orderBy('code').execute();
+      const out = [];
+      for (const r of rows) out.push(toPartnerDto((await partnerRepository.findByCode(db, tenantId, r.code))!));
+      return ok(out);
+    },
+  });
+
+  // [2026-11-13 Nguyễn Văn Thủy] cây cha – con cho báo cáo gộp theo đơn vị mẹ: chỉ đối tượng có cha hoặc có con (đóng góp)
+  r.get('/api/v1/partners/families', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Các nhóm cha – con: mỗi đối tượng thuộc nhóm (có cha hoặc có con) kèm đơn vị cha, đơn vị gốc, cấp' },
+    handler: async (req) => {
+      const { tenantId } = authOf(req);
+      const r = await sql<{ code: string; name: string; parent_code: string | null; root_code: string; root_name: string; depth: number }>`
+        WITH RECURSIVE t AS (
+          SELECT uid, code, name, parent_uid, code AS root_code, name AS root_name, 0 AS depth FROM partners WHERE tenant_id = ${tenantId} AND parent_uid IS NULL
+            AND EXISTS (SELECT 1 FROM partners c WHERE c.parent_uid = partners.uid)
+          UNION ALL
+          SELECT p.uid, p.code, p.name, p.parent_uid, t.root_code, t.root_name, t.depth + 1 FROM partners p JOIN t ON p.parent_uid = t.uid WHERE p.tenant_id = ${tenantId} AND t.depth < 20
+        ) SELECT t.code, t.name, (SELECT pp.code FROM partners pp WHERE pp.uid = t.parent_uid) AS parent_code, t.root_code, t.root_name, t.depth FROM t ORDER BY t.root_code, t.depth, t.code`.execute(db);
+      return ok(r.rows.map((x) => ({ code: x.code, name: x.name, parentCode: x.parent_code, rootCode: x.root_code, rootName: x.root_name, depth: Number(x.depth) })));
     },
   });
 
@@ -251,7 +294,8 @@ export const partnerWriteActions: AnyActionDef[] = [
         const existing = await partnerRepository.findByCode(trx, auth.tenantId, code);
         if (existing) throw Errors.conflict(`Mã ${code} đã có: ${existing.name || '(chưa có tên)'} (${KIND_TEXT[existing.kind] ?? existing.kind}). Bấm "Lấy mã mới" hoặc nhập mã khác.`);
         await assertGroups(trx, auth.tenantId, [info.groupCode]);
-        await assertTaxCodeFree(trx, auth.tenantId, code, rest.taxCode);
+        const parentUid = await checkParent(trx, auth.tenantId, code, info.parentCode, null);
+        await assertTaxCodeFree(trx, auth.tenantId, code, rest.taxCode, null, parentUid);
         await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code } as PartnerInput, info.kind);
         await partnerRepository.updateAccountingInfo(trx, auth.tenantId, code, info);
         await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
@@ -279,12 +323,13 @@ export const partnerWriteActions: AnyActionDef[] = [
         await assertGroups(trx, auth.tenantId, [info.groupCode]);
         const before = await partnerRepository.findByCode(trx, auth.tenantId, input.code);
         const isNew = !before;
-        await assertTaxCodeFree(trx, auth.tenantId, input.code, rest.taxCode, before?.tax_code);
+        const parentUid = info.parentCode === undefined ? before?.parent_uid ?? null : await checkParent(trx, auth.tenantId, input.code, info.parentCode, before ?? null);
+        await assertTaxCodeFree(trx, auth.tenantId, input.code, rest.taxCode, before?.tax_code, parentUid ?? before?.uid ?? null);
         await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code: input.code } as PartnerInput, info.kind);
         await partnerRepository.updateAccountingInfo(trx, auth.tenantId, input.code, info);
         if (isNew) await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).execute();
         findings = await partnerHints(trx, auth.tenantId, { code: input.code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.upsert', objectType: 'partner', objectId: input.code, after: reqBody });
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.upsert', objectType: 'partner', objectId: input.code, before: before ? toPartnerDto(before) : undefined, after: reqBody });
         await recordWarnAck(trx, auth, 'partner', input.code, findings, ack);
       });
       return (Object.assign(ctx.meta, { findings }), toPartnerDto((await partnerRepository.findByCode(trx, auth.tenantId, input.code))!));

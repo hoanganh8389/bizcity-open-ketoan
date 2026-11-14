@@ -155,6 +155,8 @@ export interface SupplierRow {
   code: string; name: string; taxCode: string | null; groupCode: string | null; phone: string | null; address: string | null; isActive: boolean;
   debt: number; overdue: number; dueSoon: number; /** Ứng / trả trước NCC chưa đối trừ (đã trừ trong debt). */ advance: number; creditLimit: number | null; creditUsed: number; creditPolicy?: string;
   term: string; policies: number; items: number; contractTo?: string; contractNo?: string; lastReceipt?: string; monthPurchase: number; documents: number; attachments: number; openOrders: number;
+  /** Cha – con: đơn vị cha, gốc nhóm; creditPool = đơn vị mẹ khai hạn mức dùng chung cả nhóm. */
+  parentCode?: string | null; rootCode?: string; creditPool?: string;
 }
 export interface SupplierProfile {
   partner: { code: string; name: string; taxCode: string | null; address: string | null; phone: string | null; email: string | null; contactName: string; bankAccount: string; bankName: string; groupCode: string | null; kind: string; isActive: boolean };

@@ -90,11 +90,12 @@ function buildReturnGoods(doc: SaleReturnDocument, ctx: RuleContext, reason: Ret
     });
     // Giá vốn hàng trả KHÔNG ghi trên phiếu hoàn (22/10/2026) — vào phiếu giá vốn tháng; chỉ ghi khi nguồn gửi sẵn.
     if (line.cost !== undefined && line.cost !== 0) {
+      const wh = resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
       b.add({
-        tags,
+        tags: wh ? { ...tags, whDebit: true } : tags,
         part: 'cogs',
         productSku: line.sku,
-        debitAccount: group.inventory_account,
+        debitAccount: wh ?? group.inventory_account,
         creditAccount: resolver.cogsAccount(reason, group, line.isGift),
         amount: Math.abs(line.cost),
         description: 'Nhập lại kho hàng trả',

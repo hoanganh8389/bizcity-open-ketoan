@@ -21,6 +21,13 @@ Mọi điều kiện mua hàng khai ở **một nơi**. Mỗi chính sách gồm
 4. Đọc dòng **Phần mềm sẽ hiểu là…** để kiểm lại.
 5. **Mã** và **Tên** tự đặt theo loại + phạm vi + nội dung (ví dụ `CK-ANLENE`, *Chiết khấu 7% trên tổng đơn — Công ty Trung Hậu*); gõ đè nếu muốn. Hiệu lực mặc định từ đầu tháng này.
 
+## Nhà cung cấp có đơn vị mẹ – chi nhánh: ☑ Áp cho cả đơn vị con
+
+Chọn nhà cung cấp là **đơn vị mẹ** thì có ô **Áp cho cả đơn vị con**: phiếu của mọi chi nhánh / đơn vị con của họ cũng hưởng chính sách này (chiết khấu, bậc số lượng, khuyến mại, hạn trả, hạn mức…).
+- Chi nhánh có chính sách **riêng cùng loại** thì chính sách riêng được chọn trước.
+- Hạn mức khai ở mẹ có tích: cả nhóm dùng **chung một hạn mức** (nợ + đơn chưa về của mọi đơn vị trong nhóm).
+- Thưởng doanh số dùng mục **Các bên của chính sách thưởng** (tính trên cả nhóm, bên trả, chi nhánh mình nhận) — xem Tính thưởng cuối kỳ (MH06).
+
 ## Chương trình theo giai đoạn — áp theo ngày chứng từ
 Mọi chính sách (chiết khấu, bậc số lượng, khuyến mại, CKTT, hạn mức, điều khoản…) chọn theo **ngày chứng từ** ghi trên đơn / phiếu. Đơn mới tự điền ngày hôm nay, **sửa được**: nhập kho muộn cho hàng mua trong chương trình đã qua thì ghi đúng ngày chứng từ, phiếu tự lấy chương trình của ngày đó.
 

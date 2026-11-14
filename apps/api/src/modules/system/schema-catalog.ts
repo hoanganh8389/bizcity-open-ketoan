@@ -88,6 +88,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // ③ Sổ cái
   ledger_entries: { group: 'ledger', label: 'Bút toán', term: 'Bút toán (journal entry)', module: 'ledger', purpose: 'Phiếu cha của bút toán: số liên tục, ngày ghi sổ, chi nhánh, loại chứng từ, số phiếu, trỏ về sự kiện. Một sự kiện sinh một hoặc vài bút toán; content_hash (dấu vân tay) để khi định khoản lại chỉ đảo bút toán có thay đổi.' },
   ledger_lines: { group: 'ledger', label: 'Dòng bút toán', term: 'Định khoản Nợ / Có', module: 'ledger', purpose: 'Mỗi dòng ghi một bên Nợ hoặc Có của một tài khoản. Tổng Nợ = tổng Có trong mỗi bút toán (cơ sở dữ liệu tự kiểm). Chỉ thêm.' },
+  // [2026-11-13 Nguyễn Văn Thủy] lớp trung gian bút toán gộp theo tài khoản (0134) (đóng góp)
+  ledger_entry_accounts: { group: 'ledger', label: 'Bút toán gộp theo tài khoản', term: 'Cộng gộp bút toán', module: 'ledger', purpose: 'Mỗi bút toán × tài khoản × TK đối ứng × đối tượng × bên một dòng (cộng các dòng mã hàng giống nhau), để Nhật ký chung, Sổ cái, sổ chi tiết chế độ Cộng gộp khỏi quét từng dòng mã hàng. Trigger trên dòng sổ giữ đồng bộ.' },
   ledger_balances_daily: { group: 'ledger', label: 'Số phát sinh theo ngày', term: 'Số dư / phát sinh', module: 'ledger', purpose: 'Cộng dồn Nợ / Có theo chi nhánh × tài khoản × ngày × đối tượng, để báo cáo tổng hợp khỏi quét toàn bộ dòng sổ.' },
   ledger_entry_sequences: { group: 'ledger', label: 'Bộ đếm số bút toán', term: 'Đánh số liên tục', module: 'ledger', purpose: 'Cấp số bút toán liền mạch, không trùng, không nhảy số theo năm.' },
   document_sequences: { group: 'ledger', label: 'Bộ đếm số chứng từ', term: 'Đánh số chứng từ', module: 'documents', purpose: 'Cấp số cho chứng từ lập trong ERP: phiếu kế toán tay, đề nghị thanh toán, phiếu mua hàng, chứng từ của module (ctx.documents.nextNumber). Chỉ Kernel ghi (documentNumbers).' },
@@ -195,6 +197,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: cấu hình thư viện + phiếu đề xuất (0087); chỉ thêm hai khoá này (chủ dự án cho phép, tệp thuộc dòng giữ chỗ khác)
   // [2026-11-08 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: đổi số migration 0087 → 0088 khi gộp main (0087 thuộc PHASE-029 S029-19 — so-tiep-theo kiem)
   library_settings: { group: 'platform', label: 'Cấu hình thư viện của đơn vị', term: 'Thư viện', module: 'system', purpose: 'Mỗi lần đơn vị đổi cấu hình một thư viện là một phiên bản mới (chỉ thêm): bật / tắt thư viện tuỳ chọn, đọc theo ngày, mức luật đã hạ, giá trị ghi đè có ngày hiệu lực. Không đổi thư viện gốc (PHASE-030 · 26 §7.1).' },
+  // [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a
+  default_data_backups: { group: 'platform', label: 'Bản chụp danh mục trước khi quay về dữ liệu gốc', term: 'Dữ liệu gốc', module: 'system', purpose: 'Mỗi lần Quay về dữ liệu gốc chạy thật, chụp các dòng của đơn vị ở những bảng danh mục bộ đó chạm tới (JSON, cùng giao dịch) để lấy lại khi quay về nhầm; giữ 10 bản gần nhất (PHASE-036 · 00 §9).' },
   library_change_requests: { group: 'platform', label: 'Phiếu đề xuất cập nhật thư viện', term: 'Thư viện', module: 'system', purpose: 'Đơn vị đề xuất Nhóm Lõi thêm mục, sửa giá trị, căn cứ, báo sai, ngừng dùng; trạng thái gửi → nhận → đã vào bản / từ chối, người gửi rút được. Không xoá, không sửa nội dung.' },
   library_usage_daily: { group: 'platform', label: 'Lượt dùng thư viện', term: 'Thư viện', module: 'system', purpose: 'Đếm lượt dùng thư viện bizcity_library@1 theo ngày: thư viện, bản, nguồn (module / kênh), mã mục, kết quả qua / cảnh báo / chặn, mã phát hiện. Chỉ mã, không lưu giá trị người nhập; ghi gom sau khi kiểm — số quan sát, không phải sự thật kế toán (PHASE-030 · 26 §8).' },
   // [2026-11-07 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1: sổ đăng ký chính sách (0079); chỉ thêm khoá này (chủ dự án cho phép, tệp thuộc dòng giữ chỗ khác)
@@ -248,6 +252,13 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
 /** Giải thích trigger theo tên hàm trigger. */
 export const TRIGGER_NOTES: Record<string, string> = {
+  bizcity_entry_accounts_on_insert: 'Ghi dòng sổ mới → dựng dòng bút toán gộp theo tài khoản của bút toán đó (0134).',
+  bizcity_entry_accounts_on_update: 'Điền giá vốn (đổi số tiền dòng sổ) → dựng lại dòng bút toán gộp theo tài khoản (0134).',
+  bizcity_entry_accounts_on_delete: 'Dọn dòng sổ (việc dọn dữ liệu được phép) → dựng lại / bỏ dòng bút toán gộp (0134).',
+  // [2026-11-13 Nguyễn Văn Thủy] đối tượng cha – con (0132) (đóng góp)
+  bizcity_partner_parent_check: 'Đơn vị mẹ của đối tượng (0132): không tự làm mẹ của mình, không khác đơn vị, không tạo vòng mẹ – con.',
+  bizcity_fill_partner_uid: 'Dòng bút toán có đối tượng tự điền định danh dt_ (partner_uid) để báo cáo gộp theo nhóm mẹ – chi nhánh (0132).',
+  bizcity_purchase_partner_uid: 'Chứng từ mua tự điền định danh dt_ của nhà cung cấp (0132).',
   bizcity_dimension_uid: 'Mục chiều phân tích mới có định danh bất biến: phòng ban pb_<ULID>, mục khác dm_<ULID> (0130).',
   bizcity_fill_department_uid: 'Dòng sổ ghi định danh phòng ban (department_uid) theo mã phòng ban trong dims lúc ghi (0130).',
   bizcity_branch_own_department: 'Chi nhánh mới chưa chọn phòng ban thì tự có phòng ban riêng (BH + số mã) trên sơ đồ phòng ban, dưới Cửa hàng / Giám đốc chi nhánh (0129).',
@@ -291,7 +302,7 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_versions_warehouse: 'Đổi MST của kho → thêm phiên bản MST theo ngày hiệu lực (0121).',
   bizcity_versions_branch: 'Đổi MST / nút cơ cấu / chi nhánh cha của chi nhánh → thêm phiên bản theo ngày hiệu lực (0121).',
   bizcity_versions_org_unit: 'Đổi MST / nút cha của nút cơ cấu → thêm phiên bản theo ngày hiệu lực (0121).',
-  bizcity_uid_guard: 'Định danh cn_ / kho_ / cc_ là bất biến, không sửa được (0121).',
+  bizcity_uid_guard: 'Định danh cn_ / kho_ / cc_ / dt_ là bất biến, không sửa được (0121).',
   bizcity_set_line_name: 'Dòng sổ mới tự lưu tên mặt hàng lúc ghi theo item_id. Đổi tên về sau không ảnh hưởng dòng đã ghi (0072).',
 };
 

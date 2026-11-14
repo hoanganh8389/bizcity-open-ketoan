@@ -79,6 +79,15 @@ export class AccountResolver {
     return group;
   }
 
+  /**
+   * [2026-11-13 Nguyễn Văn Thủy] TK kho theo loại kho của kho trên dòng (trống mã kho = kho mặc định của chi nhánh).
+   * undefined = loại kho không khai TK kho chi tiết → dùng TK kho ngầm định / nhóm hạch toán như cũ (đóng góp)
+   */
+  warehouseAccount(warehouseCode?: string | null, branchCode?: string | null): string | undefined {
+    const code = warehouseCode || (branchCode ? this.cfg.defaultWarehouse?.get(branchCode) : undefined);
+    return code ? this.cfg.warehouseAccounts?.get(code) : undefined;
+  }
+
   /** Công tắc lý do hạch toán đang bật tại ngày chứng từ. */
   get useReasons(): boolean {
     return this.cfg.useReasons;
