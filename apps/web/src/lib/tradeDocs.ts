@@ -32,6 +32,8 @@ export interface TradeLine {
   lotNo?: string;
   expDate?: string;
   receivedQty?: number;
+  /** Phiếu bán (module phieu-ban): dòng quà / dòng được giảm theo chương trình khuyến mại Core tính (NT-BH-015 §5 dòng 4). */
+  policyRef?: { key: string; version: number; line?: 'gift' | 'discount' };
 }
 export interface TradePayment { methodCode: string; amount: number; reference?: string }
 export interface TradeDoc {
@@ -57,6 +59,8 @@ export interface TradeDoc {
   payments?: TradePayment[];
   totals: { beforeTax: number; tax: number; total: number };
   note?: string;
+  /** Bản chính sách đã áp — đúng mảng `policyRefs` của POST /api/v1/policies/evaluate. */
+  policyRefs?: { key: string; version: number; hash: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -93,6 +97,62 @@ export function recompute(doc: TradeDoc): TradeDoc {
   const beforeTax = lines.reduce((s, l) => s + l.amountBeforeTax, 0);
   const tax = lines.reduce((s, l) => s + (l.taxAmount ?? 0), 0);
   return { ...doc, lines, totals: { beforeTax, tax, total: beforeTax + tax } };
+}
+
+/* ------------------------------------------------------------------ khuyến mại (phiếu bán nhập tay) */
+// [2026-11-14 11:50 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 §5 dòng 4: khuyến mại trên phiếu bán nhập tay — cùng bộ tính máy bán (đóng góp)
+
+/** Kết quả POST /api/v1/policies/evaluate (phần màn dùng). Tiền giảm `discounts[].amount` GỒM thuế, của cả dòng. */
+export interface PromoResult {
+  applied: { policyRef: { key: string; version: number; hash: string }; ruleContract: string; explain: string }[];
+  skipped: { key: string; version?: number; reason: string }[];
+  gifts: { sku: string; qty: number; policyRef: { key: string; version: number; line: 'gift' } }[];
+  discounts: { lineKey: string; sku: string; qty: number; amount: number; policyRef: { key: string; version: number; line: 'discount' } }[];
+}
+export type PromoGiftInfo = { name: string; unit: string; taxCode?: string };
+
+/** Dòng gửi Core tính: SL và đơn giá GỒM thuế theo đơn vị nhỏ nhất (`ratio` = tỉ lệ ĐVT của dòng; quà / dòng chưa có mã bỏ qua). */
+export function promoLines(doc: TradeDoc, ratioOf: (l: TradeLine) => number = () => 1) {
+  return doc.lines.filter((l) => l.sku && !l.isGift && l.qty > 0).map((l) => {
+    const r = ratioOf(l) || 1;
+    const gross = (l.unitPrice ?? 0) * (1 + (TAX_RATES[l.taxCode ?? ''] ?? 0) / 100);
+    return { lineKey: l.lineKey, sku: l.sku, qty: l.qty * r, price: gross / r };
+  });
+}
+
+/** Bỏ tác động khuyến mại đã áp: dòng quà theo chương trình bỏ, dòng được giảm trả chiết khấu về 0. */
+export function clearPromo(doc: TradeDoc): TradeDoc {
+  const lines = doc.lines.filter((l) => !(l.isGift && l.policyRef)).map((l) => (l.policyRef ? { ...l, discount: 0, policyRef: undefined } : l));
+  return recompute({ ...doc, lines, policyRefs: undefined });
+}
+
+/**
+ * Áp các chương trình được chọn (`keys`) từ kết quả Core lên phiếu (đã bỏ khuyến mại cũ). Tiền giảm gồm thuế quy về chiết khấu
+ * TRƯỚC thuế của dòng = làm tròn(tiền giảm / (1 + thuế suất)) — phiếu tính thuế trên tiền trước thuế, nên tổng thanh toán lệch
+ * tối đa vài đồng so với máy bán (làm tròn). Dòng được nhiều chương trình giảm: cộng dồn, mang mã chương trình đầu. Quà: thêm dòng 0đ.
+ */
+export function applyPromo(doc: TradeDoc, r: PromoResult, keys: ReadonlySet<string>, gift: (sku: string) => PromoGiftInfo, newKey: () => string): TradeDoc {
+  const base = clearPromo(doc);
+  const disc = new Map<string, { amount: number; ref: PromoResult['discounts'][number]['policyRef'] }>();
+  for (const d of r.discounts) {
+    if (!keys.has(d.policyRef.key)) continue;
+    const cur = disc.get(d.lineKey);
+    disc.set(d.lineKey, { amount: (cur?.amount ?? 0) + d.amount, ref: cur?.ref ?? d.policyRef });
+  }
+  const lines: TradeLine[] = base.lines.map((l) => {
+    const d = disc.get(l.lineKey);
+    if (!d || l.isGift) return l;
+    const rate = TAX_RATES[l.taxCode ?? ''] ?? 0;
+    const max = Math.round(l.qty * (l.unitPrice ?? 0));
+    return { ...l, discount: Math.min(max, Math.round(d.amount / (1 + rate / 100))), policyRef: { key: d.ref.key, version: d.ref.version, line: 'discount' } };
+  });
+  for (const g of r.gifts) {
+    if (!keys.has(g.policyRef.key)) continue;
+    const info = gift(g.sku);
+    lines.push({ lineKey: newKey(), sku: g.sku, name: info.name, unit: info.unit, qty: g.qty, unitPrice: 0, discount: 0, amountBeforeTax: 0, taxCode: info.taxCode, isGift: true, policyRef: { key: g.policyRef.key, version: g.policyRef.version, line: 'gift' } });
+  }
+  const policyRefs = r.applied.map((a) => a.policyRef).filter((p) => keys.has(p.key)).map((p) => ({ key: p.key, version: p.version, hash: p.hash }));
+  return recompute({ ...base, lines, ...(policyRefs.length ? { policyRefs } : {}) });
 }
 
 /* ------------------------------------------------------------------ nguồn dữ liệu */

@@ -74,7 +74,7 @@ Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàn
 |---|---|---|---|---|
 | §5 dòng 1–2 | lưu máy chủ, số theo cửa hàng, chặn trùng | đúng — test `nt-bh-015`: CN01 `BH<yyMM>000001`, `…000002`; CN02 dãy riêng `…000001`; gõ số đã có → 400 "đã có ở chi nhánh CN01" | — | |
 | §5 dòng 3 (giá) | giá theo cửa hàng | **bước 2 (14/11)**: chọn mã → đơn giá theo bảng giá của cửa hàng (`/api/v1/m/phieu-ban/quote`, view `branch_prices` như máy bán), cửa hàng chưa có giá → giá công ty | — | |
-| §5 dòng 4 (khuyến mại) | gợi ý khuyến mại | **chưa làm** — để bước sau (cần quy đổi tiền giảm có thuế ↔ chưa thuế khớp phép tính lại của Core) | bước sau | |
+| §5 dòng 4 (khuyến mại) | gợi ý khuyến mại | **bước 3 (14/11)**: nút *Áp khuyến mại* — Core tính như máy bán (BH12 + BH18), bỏ chọn từng chương trình; test: 3 `SUA330` 300.000 + `KM-BAC` −10 % + `KM-QUA` mua 2 tặng 1 `LY01` → Core giảm 97.200 gồm thuế → chiết khấu trước thuế 90.000, quà 0đ; phiếu 874.800 (810.000 + 64.800); thiếu căn cứ → 400; chứng từ nộp sổ mang `policyRef` từng dòng + `policyRefs` kèm băm, dòng quà không `itemId` | — | |
 | §5 dòng 5 | duyệt → sổ | đúng — chứng từ `sale` posted, phiếu 2 hộp 648.000: Nợ 131x 648.000, Nợ = Có | — | |
 | §5 dòng 6 | bỏ duyệt đảo, duyệt lại | đúng — số dư chứng từ về 0; sửa 3 hộp, duyệt lại phiên bản 2: Nợ 131x 972.000 | — | |
 | §5 dòng 7 | trả nối gốc, không quá số bán | đúng — `TL<yyMM>000001` mang `originalDocKey`; còn trả được 2; trả 3 → 400 "còn trả được 2"; bỏ duyệt phiếu bán còn phiếu trả → 400 | — | |
@@ -92,4 +92,5 @@ Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàn
 |---|---|
 | 13/11/2026 | Tạo phiếu |
 | 14/11/2026 | Bước 2: giá theo cửa hàng, cảnh báo tồn; khuyến mại để bước sau |
+| 14/11/2026 | Bước 3: khuyến mại trên phiếu bán (§5 dòng 4) |
 | 13/11/2026 | Ghi kết quả bước 1 (lưu thật, số, duyệt / bỏ duyệt, trả); §5 dòng 3–4, §6 dòng 1, 3 sang bước 2 |

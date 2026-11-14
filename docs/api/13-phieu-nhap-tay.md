@@ -74,6 +74,8 @@ Phản hồi theo [quy ước chung](01-quy-uoc.md): `{ ok: true, data, meta }` 
 | `lines[]` | mọi | ≥ 1 dòng; `sku` có ở danh mục mặt hàng; `qty > 0`. Chuyển kho: không tiền (`amountBeforeTax` = 0, không thuế) |
 | `lines[].amountBeforeTax` | trừ transfer | = `round(qty × unitPrice − discount)`, hàng tặng (`isGift`) = 0 |
 | `lines[].taxCode`, `taxAmount` | trừ transfer | Bán / trả lại: `R08`, `R10`, `R05`, `R00`, `KCT`. Mua / trả NCC: `V08`, `V10`, `V05`, `V00`, `KKKN`. `taxAmount = round(amountBeforeTax × thuế suất)` |
+| `lines[].policyRef` | sale (module phieu-ban) | `{ key, version, line: gift | discount }` — dòng quà / dòng được giảm theo chương trình Core tính (`POST /api/v1/policies/evaluate`); `discount` là tiền giảm **trước thuế** = round(tiền giảm gồm thuế ÷ (1 + thuế suất)). Phải có trong `policyRefs` cùng bản, không thì 400. Dòng quà theo chương trình nộp sổ chỉ mang mã (không `itemId`), như máy bán <!-- [2026-11-14 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 §5 dòng 4 (đóng góp) --> |
+| `policyRefs[]` | sale (module phieu-ban) | `{ key, version, hash }` đúng mảng `applied[].policyRef` Core trả; máy chủ chỉ giữ các chương trình có dòng trên phiếu, nộp kèm chứng từ (cửa nạp kiểm IN-POL-001..004) |
 | `payments[]` | sale (thu), sale_return (trả khách) | Trống = công nợ. Tổng ≤ `totals.total` |
 | `totals` | mọi | Máy chủ **tính lại** từ dòng (không tin số gửi lên); `total = beforeTax + tax` |
 
