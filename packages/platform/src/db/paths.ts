@@ -10,12 +10,15 @@
  *   db/packs/                    gói định khoản (bizcity_posting_template@1); gói nền vn-tt99-nen cài khi khởi tạo đơn vị
  * Chạy từ src (tsx) hay dist (node, trong Docker là /app/apps/api/dist/db) thì <gốc>/db đều cách 4 cấp.
  * Đổi chỗ: biến DB_DIR (hoặc riêng SEEDS_DIR).
+ * [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: biến rỗng coi như chưa đặt (compose đặt SEEDS_DIR="" khi .env không có) — ?? sẽ ra đường dẫn tương đối
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const DB_DIR = process.env.DB_DIR ?? path.resolve(here, '../../../../db');
+export const DB_DIR = process.env.DB_DIR || path.resolve(here, '../../../../db');
 export const MIGRATIONS_DIR = path.join(DB_DIR, 'migrations');
-export const SEEDS_DIR = process.env.SEEDS_DIR ?? path.join(DB_DIR, 'seeds');
-export const PACKS_DIR = process.env.PACKS_DIR ?? path.join(DB_DIR, 'packs');
+export const SEEDS_DIR = process.env.SEEDS_DIR || path.join(DB_DIR, 'seeds');
+// [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: true = máy chủ đặt SEEDS_DIR (bộ danh mục của công ty), false = db/seeds đóng kèm (TI08 báo bộ đang đọc)
+export const SEEDS_CUSTOM = Boolean(process.env.SEEDS_DIR);
+export const PACKS_DIR = process.env.PACKS_DIR || path.join(DB_DIR, 'packs');

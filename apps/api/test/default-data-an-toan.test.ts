@@ -113,3 +113,17 @@ describe('Quay về dữ liệu gốc: bộ giả lập trên đơn vị đã c�
     expect((await preview('cost_item', other)).status).toBe(200);
   });
 });
+
+// [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: TI08 biết đang đọc bộ nào (không lộ đường dẫn máy chủ)
+describe('Dữ liệu gốc: bộ đang đọc', () => {
+  it('chưa đặt SEEDS_DIR → bundled; bộ giả lập có cờ synthetic, bộ chuẩn không', async () => {
+    const r = await call(ctx, 'GET', '/api/v1/default-data');
+    expect(r.status).toBe(200);
+    const d = r.body.data as { seedsSource: string; datasets: { key: string; file: string; synthetic: boolean }[] };
+    expect(d.seedsSource).toBe(process.env.SEEDS_DIR ? 'custom' : 'bundled');
+    expect(d.datasets.find((x) => x.key === 'partners')?.synthetic).toBe(true);
+    expect(d.datasets.find((x) => x.key === 'cost_item')?.synthetic).toBe(false);
+    expect(d.datasets.find((x) => x.key === 'catalog_sample')?.synthetic).toBe(false);
+    expect(JSON.stringify(r.body)).not.toContain('/srv/');
+  });
+});

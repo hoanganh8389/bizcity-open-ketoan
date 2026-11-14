@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Empty, ErrorBox, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 
-export interface Dataset { key: string; title: string; file: string; screens: string[]; description: string; seedCount: number; currentCount: number }
+export interface Dataset { key: string; title: string; file: string; screens: string[]; description: string; seedCount: number; currentCount: number; synthetic?: boolean } // [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: synthetic
 interface RestoreResult { added: number; updated: number; removed: number; deactivated: number; warnings: string[] }
 
 /** Mã màn → bộ dữ liệu gốc (đặt nút ở đầu màn). */
@@ -137,7 +137,7 @@ const AN_DI = new Set(['posting_defaults', 'posting_groups', 'reasons']);
 
 export function DefaultDataPage() {
   const { can } = useAuth();
-  const q = useQuery({ queryKey: ['default-data'], queryFn: () => api.get<{ datasets: Dataset[]; seedItems: number }>('/api/v1/default-data') });
+  const q = useQuery({ queryKey: ['default-data'], queryFn: () => api.get<{ datasets: Dataset[]; seedItems: number; seedsSource?: 'bundled' | 'custom' }>('/api/v1/default-data') });
   const [view, setView] = useState<{ d: Dataset; file: 'main' | 'items' } | null>(null);
   const [allOpen, setAllOpen] = useState(false);
   return (
@@ -147,8 +147,16 @@ export function DefaultDataPage() {
       {allOpen && <RestorePreviewModal scope="all" title="toàn bộ danh mục (theo thứ tự trong bảng)" onClose={() => setAllOpen(false)} />}
       <div className="card">
         <div className="card-body" style={{ paddingBottom: 0 }}>
+          {/* [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: dải báo bộ dữ liệu gốc đang đọc */}
+          {q.data && (q.data.seedsSource === 'custom'
+            ? <div className="alert alert-ok" style={{ marginBottom: 8 }}>Đang đọc <b>bộ danh mục của công ty</b> (máy chủ đặt <span className="mono">SEEDS_DIR</span>).</div>
+            : q.data.datasets.some((d) => d.synthetic) && (
+              <div className="alert alert-warn" style={{ marginBottom: 8 }}>
+                Đang đọc <b>bộ dữ liệu mẫu giả lập</b> đóng kèm phần mềm: các bộ có nhãn <i>giả lập</i> chứa đối tượng, nhân viên, chi nhánh, kho, mặt hàng <b>giả</b>.
+                Đơn vị đã có sổ thì không quay về được các bộ đó. Bản cài thật: người quản trị máy chủ đặt <span className="mono">SEEDS_DIR</span> tới bộ danh mục của công ty (xem tài liệu <i>Sao lưu và khôi phục</i>).
+              </div>))}
           <p className="muted" style={{ margin: 0 }}>
-            Dữ liệu gốc nằm trong thư mục <b className="mono">apps/api/seeds</b> của phần mềm (mỗi bộ một tệp, dòng đầu mô tả tệp). Danh mục đang dùng nằm trong cơ sở dữ liệu
+            Dữ liệu gốc nằm trong thư mục <b className="mono">db/seeds</b> của phần mềm (hoặc thư mục máy chủ đặt ở <span className="mono">SEEDS_DIR</span>) (mỗi bộ một tệp, dòng đầu mô tả tệp). Danh mục đang dùng nằm trong cơ sở dữ liệu
             vì chứng từ, sổ cái trỏ tới. Người dùng thêm, sửa, xoá thoải mái; bấm <b>Quay về dữ liệu gốc</b> để chép đè bộ đó từ tệp về.
             Mặt hàng: tệp gốc có {q.data ? q.data.seedItems.toLocaleString('vi-VN') : '…'} mặt hàng kèm bộ tài khoản, loại thuế; mặt hàng chưa có trong phần mềm thì bộ định khoản đọc thẳng từ tệp.
           </p>
@@ -161,7 +169,7 @@ export function DefaultDataPage() {
               {/* [2026-11-13 Nguyễn Văn Thủy] bộ chạy ngầm cho bộ định khoản (lý do, nhóm hạch toán, khoá ngầm định cũ) không hiện — khai ở Tài khoản ngầm định (đóng góp) */}
               {q.data.datasets.filter((d) => !AN_DI.has(d.key)).map((d) => (
                 <tr key={d.key}>
-                  <td><b>{d.title}</b><div className="muted mono" style={{ fontSize: 12 }}>{d.file}</div></td>
+                  <td><b>{d.title}</b>{d.synthetic && <span className="badge badge-warn" style={{ marginLeft: 6 }} title="Tệp gốc là dữ liệu mẫu giả lập">giả lập</span>}<div className="muted mono" style={{ fontSize: 12 }}>{d.file}</div></td>
                   <td className="mono">{d.screens.join(', ')}</td>
                   <td className="num">{d.seedCount.toLocaleString('vi-VN')}</td>
                   <td className="num">{d.currentCount.toLocaleString('vi-VN')}</td>
