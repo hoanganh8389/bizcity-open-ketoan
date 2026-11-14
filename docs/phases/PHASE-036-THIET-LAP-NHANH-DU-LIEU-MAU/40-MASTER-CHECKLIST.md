@@ -18,7 +18,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S036-8b | B6 — *Lấy lại bản trước* từ `default_data_backups`; `org-units/restore-defaults` theo cùng khuôn; đơn vị trắng đổi nút thành *Thiết lập nhanh* (sau B3) | W2 | P1 | có | ☐ sau S036-8a |
 | S036-9 | B6 — `cap-nhat.sh` kiểm bản sao lưu + bảng "cái gì có thể đổi" + cảnh báo `SEEDS_DIR`; `sao-luu.sh --kiem`, `khoi-phuc-thu.sh`; `docs/ops/SAO-LUU-KHOI-PHUC.md` | W1 | P0 | có | ✅ 2026-11-13 |
 | S036-10 | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật `docs/huong-dan/` | W3 | P1 | có | ☐ |
-| S036-11 | B6 — `SEEDS_DIR` có tác dụng trên bản cài Docker: `docker-compose.yml` truyền biến vào `api` (+ `db-migrate`) và gắn thư mục danh mục của công ty (chỉ đọc); trống thì dùng `db/seeds` trong ảnh; `cap-nhat.sh` / TI08 báo đang đọc bộ nào | W1 | P0 | có | ☐ |
+| S036-11 | B6 — `SEEDS_DIR` có tác dụng trên bản cài Docker: `docker-compose.yml` truyền biến vào `api` (+ `db-migrate`) và gắn thư mục danh mục của công ty (chỉ đọc); trống thì dùng `db/seeds` trong ảnh; `cap-nhat.sh` / TI08 báo đang đọc bộ nào | W1 | P0 | có | ☐ | <!-- [2026-11-14 01:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11 chữ chốt ở 00 §9 -->
 
 ## Ca kiểm
 
