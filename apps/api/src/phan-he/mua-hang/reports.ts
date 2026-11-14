@@ -198,21 +198,39 @@ export function periodRange(period: string): [string, string] {
   throw Errors.validation('Kỳ theo dạng YYYY-MM, YYYY-Qn hoặc YYYY');
 }
 
+/** Mã NCC và mọi cấp đơn vị con của nó (cha – con, 0132). */
+async function partnerFamily(trx: Db, tenantId: string, code: string): Promise<string[]> {
+  const r = await sql<{ code: string }>`
+    WITH RECURSIVE t AS (
+      SELECT uid, code FROM partners WHERE tenant_id = ${tenantId} AND code = ${code}
+      UNION ALL
+      SELECT p.uid, p.code FROM partners p JOIN t ON p.parent_uid = t.uid WHERE p.tenant_id = ${tenantId}
+    ) SELECT code FROM t`.execute(trx);
+  return r.rows.length ? r.rows.map((x) => x.code) : [code];
+}
+
 export async function rebatePreview(trx: Db, tenantId: string, ctx: Ctx, p: Policy, period: string, manualTotal?: number) {
   const [from, to] = periodRange(period);
+  // [2026-11-13 Nguyễn Văn Thủy] ký với công ty mẹ, tính trên cả nhóm: cộng phiếu của NCC ký và mọi đơn vị con (đóng góp)
+  const partners = p.scope.partnerCode ? (p.rule.family ? await partnerFamily(trx, tenantId, p.scope.partnerCode) : [p.scope.partnerCode]) : null;
   const match = (d: StoredDoc) => d.status === 'approved' && d.docDate >= from && d.docDate <= to && (d.kind === 'receipt' || d.kind === 'return')
-    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!p.scope.partnerCode || d.partnerCode === p.scope.partnerCode);
+    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!partners || partners.includes(d.partnerCode)) && (!p.scope.branchCode || d.branchCode === p.scope.branchCode);
   // Thưởng theo nhãn: chỉ cộng các dòng thuộc nhãn (nhãn của mặt hàng; phiếu cũ chưa ghi nhãn dòng thì theo nhãn phiếu).
   const inBrand = (l: { brandCode?: string }, d: StoredDoc) => !p.scope.brandCode || (l.brandCode ?? d.brandCode) === p.scope.brandCode;
   const byDay: Record<number, number> = {};
   const skus = new Map<string, { sku: string; name: string; purchased: number; qty: number }>();
   // Theo ngày: giá trị mua từng mã (thưởng giai đoạn chỉ chia cho hàng mua trong giai đoạn được thưởng).
   const skuDay = new Map<string, Map<number, number>>();
+  /** Doanh số theo từng đơn vị (NCC ký / đơn vị con) và theo chi nhánh bên mình — xem ai đóng góp bao nhiêu. */
+  const byPartner = new Map<string, number>(), byBranch = new Map<string, number>();
   for (const d of ctx.docs.filter(match)) {
     const sign = d.kind === 'return' ? -1 : 1;
     const c = computeDoc(d, []);
     const day = Number(d.docDate.slice(8, 10));
-    byDay[day] = (byDay[day] ?? 0) + sign * c.lines.filter((l) => inBrand(l, d)).reduce((s, l) => s + l.beforeTax, 0);
+    const v = sign * c.lines.filter((l) => inBrand(l, d)).reduce((s, l) => s + l.beforeTax, 0);
+    byDay[day] = (byDay[day] ?? 0) + v;
+    byPartner.set(d.partnerCode, (byPartner.get(d.partnerCode) ?? 0) + v);
+    byBranch.set(d.branchCode, (byBranch.get(d.branchCode) ?? 0) + v);
     for (const l of c.lines.filter((x) => x.lineType !== 'gift_consumer' && x.sku && inBrand(x, d))) {
       const r = skus.get(l.sku) ?? { sku: l.sku, name: l.name, purchased: 0, qty: 0 };
       r.purchased += sign * l.beforeTax; r.qty += sign * l.qty; skus.set(l.sku, r);
@@ -239,7 +257,14 @@ export async function rebatePreview(trx: Db, tenantId: string, ctx: Ctx, p: Poli
     return { ...x, onHand: held, amount, stock, sold: amount - stock };
   });
   const existing = ctx.docs.find((d) => d.kind === 'rebate' && d.status !== 'cancelled' && d.rebate?.policyCode === p.code && d.rebate?.period === period);
-  return { policy: p.code, kind: p.kind, period, from, to, docsTotal, base: r.base, rate: r.rate, amount: r.amount, detail: r.detail, byDay, allocation, existing: existing ? { id: existing.id, docNo: existing.docNo } : null };
+  const top = (m: Map<string, number>) => [...m].sort((a, b) => b[1] - a[1]).map(([code, value]) => ({ code, value }));
+  const branches = top(byBranch);
+  const parties = {
+    signedWith: p.scope.partnerCode ?? null, family: Boolean(p.rule.family && p.scope.partnerCode), members: partners ?? [],
+    payer: String(p.rule.payer ?? '') || p.scope.partnerCode || null,
+    receiver: String(p.rule.receiver ?? '') || p.scope.branchCode || branches[0]?.code || null,
+  };
+  return { policy: p.code, kind: p.kind, period, from, to, docsTotal, base: r.base, rate: r.rate, amount: r.amount, detail: r.detail, byDay, allocation, byPartner: top(byPartner), byBranch: branches, parties, existing: existing ? { id: existing.id, docNo: existing.docNo } : null };
 }
 
 export function costAllocation(ctx: Ctx, costId: string, basis?: 'value' | 'qty') {
@@ -404,7 +429,7 @@ export async function rebateOverview(trx: Db, tenantId: string, ctx: Ctx, month:
     const doc = ctx.docs.find((d) => d.kind === 'rebate' && d.status !== 'cancelled' && d.rebate?.policyCode === p.code && d.rebate?.period === period);
     const target = Number(p.rule.target ?? 0);
     out.push({
-      policy: p.code, name: p.name, kind: p.kind, brandCode: p.scope.brandCode, partnerCode: p.scope.partnerCode, period, base: r.base, target: target || null,
+      policy: p.code, name: p.name, kind: p.kind, brandCode: p.scope.brandCode, partnerCode: p.scope.partnerCode, parties: r.parties, period, base: r.base, target: target || null,
       // Cắt (không làm tròn lên) 2 số lẻ — 549.999.999 / 500 triệu hiện 109,99%, khớp với mức thưởng thực tính.
       completion: target ? Math.floor((r.base / target) * 10000) / 100 : null, rate: r.rate, amount: r.amount,
       doc: doc ? { id: doc.id, docNo: doc.docNo, status: doc.status, amount: doc.amount ?? 0, diff: r.amount - (doc.amount ?? 0) } : null,

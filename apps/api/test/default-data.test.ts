@@ -12,7 +12,13 @@ let ctx: TestCtx;
 let tenantId: string;
 // [2026-11-10 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-53: db/seeds là bộ giả lập (26 §11.2) — ngưỡng đếm lấy theo số dòng của tệp gốc (seedCount), không ghi cứng số của dữ liệu thật
 const seedCount: Record<string, number> = {};
-const restore = (key: string) => call(ctx, 'POST', `/api/v1/default-data/${key}/restore`, { confirm: true });
+// [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: quay về = xem trước (?dryRun=1, lấy previewToken) rồi chạy thật với mã đó
+const restore = async (key: string, c: TestCtx = ctx) => {
+  const url = `/api/v1/default-data/${key}/restore`;
+  const p = await call(c, 'POST', `${url}?dryRun=1`, { confirm: true });
+  if (p.status !== 200) return p;
+  return call(c, 'POST', url, { confirm: true, previewToken: p.body.meta.previewToken });
+};
 const sale = (key: string, sku: string) => ({
   docType: 'sale', docKey: key, branchCode: '26001', docNo: key, docDate: '2026-10-04',
   lines: [{ lineKey: 'l1', sku, name: 'Hàng thử', unit: 'Hộp', qty: 1, amountBeforeTax: 100000, taxCode: 'R08', taxAmount: 8000, cost: 70000 }],
@@ -103,56 +109,63 @@ describe('Dữ liệu gốc', () => {
   });
 
   it('mọi danh mục còn lại: phân loại, mặt hàng, nhóm đối tượng, đối tượng, ngân hàng, hình thức thanh toán, loại thuế, chi nhánh, loại tài sản, hợp đồng, nhân viên', async () => {
-    const ok = async (key: string) => { const r = await restore(key); expect(r.status, `${key}: ${JSON.stringify(r.body)}`).toBe(200); return r.body.data; };
+    // [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: tệp gốc là bộ giả lập (S030-53) → đơn vị đã có bút toán (ctx) bị chặn; các bộ giả lập chạy trên đơn vị sạch ctx2
+    const blocked = await call(ctx, 'POST', '/api/v1/default-data/partners/restore?dryRun=1', { confirm: true });
+    expect(blocked.status).toBe(400);
+    expect(JSON.stringify(blocked.body)).toContain('SEEDS_DIR');
+    const ctx2 = await setupTenant();
+    expect((await call(ctx2, 'POST', '/api/v1/branches', { code: '26001', name: 'Cửa hàng Bảo Hà' })).status).toBe(201);
+    const ok = async (key: string) => { const r = await restore(key, ctx2); expect(r.status, `${key}: ${JSON.stringify(r.body)}`).toBe(200); return r.body.data; };
+    await ok('department'); await ok('posting_groups'); // đơn vị sạch: bộ phận, nhóm hạch toán trước (như thứ tự quay về toàn bộ)
     expect((await ok('item_classes')).added).toBe(seedCount.item_classes);
     const prod = await ok('products');
-    // 110051001M đã vào danh mục khi ghi chứng từ bán ở ca trên → không tính là thêm
-    expect(prod.added).toBe(seedCount.products! - 1);
-    const item = (await call(ctx, 'GET', '/api/v1/products?search=110051001M')).body.data[0];
+    expect(prod.added).toBe(seedCount.products);
+    const item = (await call(ctx2, 'GET', '/api/v1/products?search=110051001M')).body.data[0];
     expect(item).toMatchObject({ sku: '110051001M', postingGroupCode: 'NHT02' });
     expect(item.brandCode).toBeTruthy();
     expect((await ok('partner_groups')).added).toBeGreaterThan(0);
     const partners = await ok('partners');
     expect(partners.added).toBe(seedCount.partners);
-    expect((await call(ctx, 'GET', '/api/v1/partners?search=00000AA00002')).body.data[0]).toMatchObject({ code: '00000AA00002', groupCode: 'NCC-TSDV' });
+    expect((await call(ctx2, 'GET', '/api/v1/partners?search=00000AA00002')).body.data[0]).toMatchObject({ code: '00000AA00002', groupCode: 'NCC-TSDV' });
     const banks = await ok('bank_accounts');
     expect(banks.warnings.join(' ')).toContain('Đã tạo tài khoản');
     expect((await ok('payment_methods')).added).toBeGreaterThan(0);
     const taxes = await ok('tax_codes');
     expect(taxes.added).toBeGreaterThan(30);
-    expect((await call(ctx, 'GET', '/api/v1/tax-codes')).body.data.find((x: { code: string }) => x.code === 'R08')).toMatchObject({ reportGroup: '8' });
+    expect((await call(ctx2, 'GET', '/api/v1/tax-codes')).body.data.find((x: { code: string }) => x.code === 'R08')).toMatchObject({ reportGroup: '8' });
     // Shop đổi đuôi: chi nhánh cũ (mã gốc trước đây) đổi mã sang mã mới; chi nhánh lẻ trùng cửa hàng thì ngừng theo dõi.
-    expect((await call(ctx, 'POST', '/api/v1/branches', { code: '01014Plus', name: 'Thịnh Long (mã cũ)' })).status).toBe(201);
+    expect((await call(ctx2, 'POST', '/api/v1/branches', { code: '01014Plus', name: 'Thịnh Long (mã cũ)' })).status).toBe(201);
     const br = await ok('branches');
     // 01014Plus, 26001 đổi mã (không tính là thêm)
     expect(br.added).toBe(seedCount.branches! - 2);
     expect(br.warnings.join(' ')).toContain('01014Plus → 01014Premium');
     expect(br.warnings.join(' ')).toContain('26001 → 26001Premium');
-    const b = (await call(ctx, 'GET', '/api/v1/branches')).body.data;
+    const b = (await call(ctx2, 'GET', '/api/v1/branches')).body.data;
     expect(b.find((x: { code: string }) => x.code === '14051')).toMatchObject({ departmentCode: 'BH14051', isActive: true });
     expect(b.find((x: { code: string }) => x.code.endsWith('_OFF')).isActive).toBe(false);
     expect(b.find((x: { code: string }) => x.code === '01014Plus')).toBeUndefined();
     expect(b.find((x: { code: string }) => x.code === '26001')).toBeUndefined();
     expect(b.find((x: { code: string }) => x.code === '26001Premium')).toMatchObject({ isActive: true, departmentCode: 'BH26001' });
     // Mã gốc đã có mà còn chi nhánh lẻ cùng cửa hàng: ngừng theo dõi chi nhánh lẻ.
-    expect((await call(ctx, 'POST', '/api/v1/branches', { code: '00001', name: 'Vĩnh Hưng lẻ' })).status).toBe(201);
+    expect((await call(ctx2, 'POST', '/api/v1/branches', { code: '00001', name: 'Vĩnh Hưng lẻ' })).status).toBe(201);
     expect((await ok('branches')).warnings.join(' ')).toContain('00001 (dùng 00001Premium)');
-    expect((await call(ctx, 'GET', '/api/v1/branches')).body.data.find((x: { code: string }) => x.code === '00001')).toMatchObject({ isActive: false });
+    expect((await call(ctx2, 'GET', '/api/v1/branches')).body.data.find((x: { code: string }) => x.code === '00001')).toMatchObject({ isActive: false });
     expect((await ok('asset_categories')).added).toBeGreaterThan(0);
-    expect((await call(ctx, 'GET', '/api/v1/asset-categories')).body.data.find((x: { code: string }) => x.code === '12')).toMatchObject({ assetAccount: '2112' });
+    expect((await call(ctx2, 'GET', '/api/v1/asset-categories')).body.data.find((x: { code: string }) => x.code === '12')).toMatchObject({ assetAccount: '2112' });
     expect((await ok('contract')).added).toBe(seedCount.contract);
     expect(seedCount.contract).toBe(4);
     expect((await ok('employee')).added).toBe(seedCount.employee);
     // Danh mục gốc trống (vụ việc): mã tự thêm chưa dùng thì xoá.
-    await call(ctx, 'PUT', '/api/v1/dimensions/case/VV-TU-THEM', { name: 'Vụ việc tự thêm' });
+    await call(ctx2, 'PUT', '/api/v1/dimensions/case/VV-TU-THEM', { name: 'Vụ việc tự thêm' });
     expect(await ok('case')).toMatchObject({ added: 0, removed: 1 });
     // Chạy lại một bộ: không còn gì thay đổi.
     expect(await ok('partners')).toMatchObject({ added: 0 });
     // Quay về toàn bộ theo thứ tự phụ thuộc: chạy được, các bộ đã đủ thì không thêm gì.
-    const all = await call(ctx, 'POST', '/api/v1/default-data/all/restore', { confirm: true });
+    const all = await restore('all', ctx2);
     expect(all.status, JSON.stringify(all.body).slice(0, 300)).toBe(200);
     expect(all.body.data).toHaveLength(Object.keys(seedCount).length - 1); // trừ bộ làm sạch nhóm hàng + mặt hàng (không chạy trong toàn bộ)
     expect(all.body.data.find((o: { key: string }) => o.key === 'products').result.added).toBe(0);
+    await ctx2.app.close();
     // [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: nạp 20.985 mặt hàng ≈ 87 s một mình (đồng bộ Item Master ≈ 15 s trong đó), vượt 120 s khi cả bộ test chạy song song
 
     // [2026-11-13 Nguyễn Văn Thủy] Nhóm hàng + mặt hàng: làm sạch hẳn, giữ mã đã vào sổ, nạp bộ mẫu (0124) (đóng góp)

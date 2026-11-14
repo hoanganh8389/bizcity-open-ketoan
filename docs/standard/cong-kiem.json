@@ -817,7 +817,6 @@
         "apps/api/test/item-id-so-kho.test.ts",
         "apps/api/test/item-master.test.ts",
         "apps/api/test/mua-hang-duong-thue.test.ts",
-        "apps/api/test/posting-flow.test.ts",
         "apps/api/test/quy-dinh-danh-muc.test.ts",
         "apps/api/test/san-pham-con.test.ts",
         "apps/api/test/xuong-ca-dinh-danh.test.ts"
@@ -828,7 +827,6 @@
       "ITEM-HINT-003": [
         "apps/api/test/bien-the-dinh-danh.test.ts",
         "apps/api/test/mua-hang-duong-thue.test.ts",
-        "apps/api/test/posting-flow.test.ts",
         "apps/api/test/san-pham-con.test.ts"
       ],
       "LIB-DEPRECATED-001": [
@@ -1335,6 +1333,14 @@
         "id": "SC-AUTH-04",
         "title": "Thư viện phân quyền mẫu TGS (docs/standard/phan-quyen): khớp bản sinh lại từ CSV nguồn, quyền Core có thật, báo cáo không ra quyền ghi, quyền suy ra không thừa",
         "enforce": "block",
+        "lane": "selfcheck",
+        "file": "tests/conformance/checks/authz/authz.check.mjs",
+        "selftest": true
+      },
+      {
+        "id": "SC-AUTH-11",
+        "title": "Quyền khai trong manifest (permissions[]) phải có chỗ chặn ở máy chủ — không có quyền chỉ để hiện trên ma trận HT12 (quyền mồ côi, AUTHZ-16)",
+        "enforce": "info",
         "lane": "selfcheck",
         "file": "tests/conformance/checks/authz/authz.check.mjs",
         "selftest": true
@@ -2082,6 +2088,21 @@
         "migration": "0085_ma_thuc_the.sql"
       },
       {
+        "name": "branches_own_department",
+        "table": "branches",
+        "migration": "0129_phong_ban_theo_shop.sql"
+      },
+      {
+        "name": "branches_uid_guard",
+        "table": "branches",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
+        "name": "branches_versions",
+        "table": "branches",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
         "name": "conformance_runs_guard",
         "table": "conformance_runs",
         "migration": "0055_kiem_chuan.sql"
@@ -2090,6 +2111,16 @@
         "name": "diagnostic_runs_no_update",
         "table": "diagnostic_runs",
         "migration": "0034_chan_doan.sql"
+      },
+      {
+        "name": "dimensions_uid",
+        "table": "dimensions",
+        "migration": "0130_dinh_danh_phong_ban.sql"
+      },
+      {
+        "name": "dimensions_uid_guard",
+        "table": "dimensions",
+        "migration": "0130_dinh_danh_phong_ban.sql"
       },
       {
         "name": "document_versions_no_truncate",
@@ -2135,6 +2166,11 @@
         "name": "inventory_movements_item_id",
         "table": "inventory_movements",
         "migration": "0066_item_id_so_kho.sql"
+      },
+      {
+        "name": "inventory_movements_wh_tax",
+        "table": "inventory_movements",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
       },
       {
         "name": "item_classification_guard",
@@ -2227,6 +2263,11 @@
         "migration": "0006_goc_so_cai.sql"
       },
       {
+        "name": "ledger_lines_department_uid",
+        "table": "ledger_lines",
+        "migration": "0130_dinh_danh_phong_ban.sql"
+      },
+      {
         "name": "ledger_lines_item_id",
         "table": "ledger_lines",
         "migration": "0066_item_id_so_kho.sql"
@@ -2257,6 +2298,16 @@
         "migration": "0087_thuoc_tinh_thuc_the.sql"
       },
       {
+        "name": "ledger_lines_partner_uid",
+        "table": "ledger_lines",
+        "migration": "0132_doi_tuong_cha_con.sql"
+      },
+      {
+        "name": "ledger_lines_wh_tax",
+        "table": "ledger_lines",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
         "name": "ledger_links_no_update",
         "table": "ledger_links",
         "migration": "0006_goc_so_cai.sql"
@@ -2277,6 +2328,16 @@
         "migration": "0088_cau_hinh_thu_vien.sql"
       },
       {
+        "name": "org_units_uid_guard",
+        "table": "org_units",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
+        "name": "org_units_versions",
+        "table": "org_units",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
         "name": "partners_entity_attrs_sync",
         "table": "partners",
         "migration": "0087_thuoc_tinh_thuc_the.sql"
@@ -2290,6 +2351,16 @@
         "name": "partners_identity_guard",
         "table": "partners",
         "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "partners_parent_check",
+        "table": "partners",
+        "migration": "0132_doi_tuong_cha_con.sql"
+      },
+      {
+        "name": "partners_uid_guard",
+        "table": "partners",
+        "migration": "0132_doi_tuong_cha_con.sql"
       },
       {
         "name": "policy_registry_guard",
@@ -2342,6 +2413,11 @@
         "migration": "0014_danh_muc_dvt.sql"
       },
       {
+        "name": "products_created_by",
+        "table": "products",
+        "migration": "0114_mat_hang_nguoi_tao.sql"
+      },
+      {
         "name": "products_item_id",
         "table": "products",
         "migration": "0070_item_id_phu_kin.sql"
@@ -2372,6 +2448,11 @@
         "migration": "0067_bien_the_dinh_danh.sql"
       },
       {
+        "name": "products_parent_fill",
+        "table": "products",
+        "migration": "0112_ma_cha_tu_suy.sql"
+      },
+      {
         "name": "products_variant_fill",
         "table": "products",
         "migration": "0092_bien_the_mat_hang.sql"
@@ -2390,6 +2471,11 @@
         "name": "purchase_documents_item_id",
         "table": "purchase_documents",
         "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "purchase_documents_partner_uid",
+        "table": "purchase_documents",
+        "migration": "0132_doi_tuong_cha_con.sql"
       },
       {
         "name": "purchase_policy_versions_guard",
@@ -2497,6 +2583,11 @@
         "migration": "0014_danh_muc_dvt.sql"
       },
       {
+        "name": "tenants_seed_warehouse_types",
+        "table": "tenants",
+        "migration": "0128_loai_kho.sql"
+      },
+      {
         "name": "transfer_requests_item_id",
         "table": "transfer_requests",
         "migration": "0070_item_id_phu_kin.sql"
@@ -2530,6 +2621,21 @@
         "name": "warehouses_identity_guard",
         "table": "warehouses",
         "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "warehouses_type_sync",
+        "table": "warehouses",
+        "migration": "0128_loai_kho.sql"
+      },
+      {
+        "name": "warehouses_uid_guard",
+        "table": "warehouses",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
+        "name": "warehouses_versions",
+        "table": "warehouses",
+        "migration": "0121_mst_phien_ban_theo_ngay.sql"
       }
     ]
   }

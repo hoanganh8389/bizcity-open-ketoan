@@ -18,3 +18,7 @@ Sổ cái của **một tài khoản** theo mẫu S03b: số dư đầu kỳ, t�
 - Sổ chỉ hiện bút toán đang có hiệu lực; chứng từ đã sửa thì hiện theo bản mới nhất.
 
 Muốn xem mọi tài khoản cùng lúc theo trình tự thời gian, dùng **Sổ nhật ký chung (ACC89)**.
+
+## Cộng gộp các bút toán giống nhau
+
+Mặc định Sổ cái **gộp**: mỗi chứng từ một dòng cho mỗi TK đối ứng (cộng các dòng mã hàng giống nhau), cột **Số dòng** cho biết đã gộp bao nhiêu dòng mã hàng; bấm dòng để xem từng mã. Bỏ tích để xem từng dòng; máy nhớ lựa chọn. Tổng phát sinh, số dư không đổi.

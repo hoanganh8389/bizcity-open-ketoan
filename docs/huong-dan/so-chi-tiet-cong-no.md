@@ -15,3 +15,7 @@ Cột: Ngày, tháng ghi sổ, Số CT, Diễn Giải, Ps Nợ, Ps Có, Nợ cu�
 - Dòng Số dư đầu kỳ ở trên, Phát sinh trong kỳ và Số dư cuối kỳ ở dưới. Bấm một dòng để mở bút toán và chứng từ gốc.
 
 Cách nhanh nhất để tới đây: mở **Sổ tổng hợp công nợ phát sinh (ACC38)** rồi bấm vào dòng của đối tượng cần xem.
+
+## Xem theo nhóm mẹ – chi nhánh
+
+Tích **Xem theo nhóm mẹ – chi nhánh** trong Chọn tham số: mỗi nhóm một khối — số dư đầu kỳ cả nhóm, từng dòng phát sinh có cột **Đơn vị** (đơn vị mẹ hay chi nhánh nào), cuối khối Cộng nhóm. Chọn đơn vị mẹ ở ô đối tượng thì lấy luôn mọi chi nhánh.

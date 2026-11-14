@@ -54,6 +54,13 @@ function tomTat(panel: HTMLElement | null): string[] {
     if (!v || v === 'Tuỳ chọn' || /^(—|-)/.test(v)) return;
     out.push(`${label}: ${v}`);
   });
+  // [2026-11-13 Nguyễn Văn Thủy] ô tích đang bật (vd Cộng gộp các bút toán giống nhau) cũng hiện thành nhãn (đóng góp)
+  panel.querySelectorAll<HTMLLabelElement>('label.checkbox').forEach((l) => {
+    if (l.closest('.rp-branches')) return;
+    const box = l.querySelector<HTMLInputElement>('input[type=checkbox]');
+    const text = (l.textContent ?? '').trim();
+    if (box?.checked && text) out.push(text);
+  });
   const list = panel.querySelector('.rp-branches');
   if (list) {
     const boxes = [...list.querySelectorAll<HTMLInputElement>('.rp-branch input[type=checkbox]')];

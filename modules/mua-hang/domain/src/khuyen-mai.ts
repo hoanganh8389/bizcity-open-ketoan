@@ -16,7 +16,7 @@
  *   - "gợi ý": mua thêm bao nhiêu để được tặng / lên bậc chiết khấu.
  * syncGifts: tự thêm / sửa / bỏ dòng quà theo chương trình mỗi khi bảng hàng đổi (dòng quà người dùng tự sửa SL thì giữ nguyên).
  */
-import { exclusiveBySku, findPolicy, policyApplies, isRepeat, tradeTimes, giftPlan, policiesFor, policiesForSku, itemDiscountFor, pickTier, tradeDiscountMin, tradeDiscountReady, type DocCalc, type ItemDiscount, type LineType, type PDoc, type PLine, type Policy, type PolicyKind } from './engine.js';
+import { exclusiveBySku, findPolicy, policyApplies, scopeRank, isRepeat, tradeTimes, giftPlan, policiesFor, policiesForSku, itemDiscountFor, pickTier, tradeDiscountMin, tradeDiscountReady, type DocCalc, type ItemDiscount, type LineType, type PDoc, type PLine, type Policy, type PolicyKind } from './engine.js';
 
 /** Nhãn chính của phiếu: nhãn có tổng giá trị hàng mua lớn nhất (chưa có giá thì theo số dòng). */
 export function docBrand(lines: Pick<PLine, 'brandCode' | 'qty' | 'price' | 'lineType'>[]): string | undefined {
@@ -84,7 +84,7 @@ export function promoBoard(doc: PDoc, policies: Policy[], calc: DocCalc): PromoR
     const manual = src?.discountPct !== undefined || src?.discountAmt !== undefined;
     // CK trên đơn khai riêng mã này (đứng sau bảng CK theo mã và bậc SL, như bộ tính computeDoc).
     const own = !hit && !t ? policies.filter((p) => p.kind === 'trade_discount' && p.scope.sku === l.sku && policyApplies(p, ctx))
-      .sort((a, b) => Object.values(b.scope).filter(Boolean).length - Object.values(a.scope).filter(Boolean).length || (b.priority ?? 0) - (a.priority ?? 0))[0] : undefined;
+      .sort((a, b) => scopeRank(b, ctx.partnerCode) - scopeRank(a, ctx.partnerCode) || (b.priority ?? 0) - (a.priority ?? 0))[0] : undefined;
     const policyText = hit ? (hit.item.pct ? `CK ${Number(hit.item.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(hit.item.amount ?? 0)}đ / ${hit.item.unit || l.unit}`) : t ? `CK ${Number(t.pct).toLocaleString('vi-VN')}% (bậc từ ${t.from})`
       : own ? (Number(own.rule.pct) ? `CK ${Number(Number(own.rule.pct)).toLocaleString('vi-VN')}% riêng mã` : `giảm ${vn(Number(own.rule.amount) || 0)}đ riêng mã`) : '';
     const policyOf = hit ? hit.policy : t ? tier! : own;

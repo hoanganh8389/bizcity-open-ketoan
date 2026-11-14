@@ -16,7 +16,8 @@ import { ruleText } from '../chinh-sach/quyTac';
 import '../mua-hang.css';
 
 interface Overview { policy: string; name: string; kind: string; brandCode?: string; partnerCode?: string; period: string; base: number; target: number | null; completion: number | null; rate: number; amount: number; doc: { id: string; docNo: string; status: string; amount: number; diff: number } | null }
-interface Preview { policy: string; period: string; from: string; to: string; docsTotal: number; base: number; rate: number; amount: number; detail: string[]; allocation: { sku: string; name: string; purchased: number; qty: number; onHand: number; amount: number; stock: number; sold: number }[]; existing: { id: string; docNo: string } | null }
+interface Parties { signedWith: string | null; family: boolean; members: string[]; payer: string | null; receiver: string | null }
+interface Preview { policy: string; period: string; from: string; to: string; docsTotal: number; base: number; rate: number; amount: number; detail: string[]; parties?: Parties; byPartner?: { code: string; value: number }[]; byBranch?: { code: string; value: number }[]; allocation: { sku: string; name: string; purchased: number; qty: number; onHand: number; amount: number; stock: number; sold: number }[]; existing: { id: string; docNo: string } | null }
 const periodOf = (kind: string, d = today()) => (kind === 'year' ? d.slice(0, 4) : kind === 'quarter' ? `${d.slice(0, 4)}-Q${Math.floor((Number(d.slice(5, 7)) - 1) / 3) + 1}` : d.slice(0, 7));
 
 export function ThuongPage() {
@@ -35,14 +36,15 @@ export function ThuongPage() {
   const ov = useQuery({ queryKey: ['mua-hang', 'rebate-overview', month], queryFn: () => api.get<Overview[]>(`${P}/rebates/overview`, { month }) });
   const q = useQuery({ queryKey: ['mua-hang', 'rebate', p?.code, per, manual], enabled: Boolean(p && per), queryFn: () => api.post<Preview>(`${P}/rebates/preview`, { policyCode: p!.code, period: per, manualTotal: manual }) });
   const r = q.data;
-  const partnerCode = p?.scope.partnerCode ?? partner;
+  // [2026-11-13 Nguyễn Văn Thủy] phiếu thưởng lập cho đúng bên trả và đúng chi nhánh bên mình nhận (đóng góp)
+  const partnerCode = r?.parties?.payer || p?.scope.partnerCode || partner;
 
   const create = async () => {
     if (!p || !r || !partnerCode) return;
     setMsg(null);
     try {
       const doc = await purchaseApi.save({
-        id: `new-${Date.now()}`, kind: 'rebate', status: 'draft', docNo: '', docDate: r.to > today() ? today() : r.to, branchCode: data?.docs.find((d) => d.partnerCode === partnerCode)?.branchCode ?? '', partnerCode, brandCode: p.scope.brandCode,
+        id: `new-${Date.now()}`, kind: 'rebate', status: 'draft', docNo: '', docDate: r.to > today() ? today() : r.to, branchCode: r.parties?.receiver || data?.docs.find((d) => d.partnerCode === partnerCode)?.branchCode || '', partnerCode, brandCode: p.scope.brandCode,
         priceIncludesVat: false, lines: [], amount: r.amount, taxCode: vat || undefined, rebate: { policyCode: p.code, period: per, base: r.base, rate: r.rate, detail: r.detail },
         allocation: r.allocation.map((a) => ({ sku: a.sku, name: a.name, amount: a.amount })), note: `${p.name} — kỳ ${per}`,
       });
@@ -96,6 +98,18 @@ export function ThuongPage() {
                 <div className="card kpi"><div className="label">Mức thưởng</div><div className="value">{p.kind === 'stage_rebate' ? 'theo giai đoạn' : `${Number(r.rate).toLocaleString('vi-VN')}%`}</div></div>
                 <div className="card kpi"><div className="label">Tiền thưởng</div><div className="value mh-ok">{vnd(r.amount)}</div><div className="hint">{vat ? `VAT ${vat.slice(1)}%: ${vnd(Math.round(r.amount * Number(vat.slice(1)) / 100))} · tổng giảm công nợ ${vnd(r.amount + Math.round(r.amount * Number(vat.slice(1)) / 100))}` : 'Không có hoá đơn điều chỉnh: giảm công nợ đúng số thưởng'}</div></div>
               </div>
+              {r.parties && (r.parties.signedWith || r.parties.payer) && <div className="card card-body" style={{ marginBottom: 10 }}>
+                <h4 style={{ margin: '0 0 6px' }}>Ai ký · tính trên ai · ai trả · bên mình nhận ở đâu</h4>
+                <div className="row" style={{ gap: 18, flexWrap: 'wrap', fontSize: 13 }}>
+                  <span>Ký với: <b>{r.parties.signedWith ? names.partnerName(r.parties.signedWith) : 'mọi NCC'}</b></span>
+                  <span>Tính trên: <b>{r.parties.family ? `cả nhóm (${r.parties.members.length} đơn vị)` : 'riêng đơn vị ký'}</b></span>
+                  <span>Bên trả thưởng: <b>{r.parties.payer ? names.partnerName(r.parties.payer) : '—'}</b></span>
+                  <span>Bên mình nhận tại: <b>{r.parties.receiver ? names.branchName(r.parties.receiver) : '—'}</b></span>
+                </div>
+                {(r.byPartner ?? []).length > 1 && <table className="mh-mini" style={{ marginTop: 6 }}><thead><tr><th>Đơn vị giao hàng</th><th className="num">Doanh số mua thuần</th></tr></thead><tbody>
+                  {(r.byPartner ?? []).map((x) => <tr key={x.code}><td>{x.code} <span className="muted">{names.partnerName(x.code)}</span></td><td className="num">{vnd(x.value)}</td></tr>)}
+                </tbody></table>}
+              </div>}
               <div className="card card-body" style={{ marginBottom: 10 }}>
                 <h4 style={{ margin: '0 0 6px' }}>Cách tính</h4>
                 {r.detail.map((d, i) => <div key={i} className="mh-check info">{d}</div>)}

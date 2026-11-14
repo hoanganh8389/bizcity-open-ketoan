@@ -26,6 +26,15 @@ Tiền khách trả đi kèm hoá đơn bán được ghi thành **bút toán ri
 
 Đổi kiểu báo cáo không đổi tổng Nợ / Có.
 
+## Cộng gộp các bút toán giống nhau
+
+Sổ luôn lưu **chi tiết từng mã hàng** (hoá đơn 10 mã hàng ≈ 30 dòng: tiền hàng, thuế, giá vốn từng mã). Tích **Cộng gộp các bút toán giống nhau** thì mỗi chứng từ chỉ còn một dòng cho mỗi tài khoản + TK đối ứng (hoá đơn đó còn 3 dòng: Nợ 131 / Có 511 / Có 3331).
+
+- Sổ gộp đọc **bảng bút toán gộp** được cộng sẵn ngay lúc ghi sổ (và khi tính giá vốn tháng), nên mở nhanh dù dữ liệu nhiều.
+- Cột **Số dòng**: số dòng mã hàng đã cộng vào dòng gộp. **Bấm dòng** để mở bút toán, thấy từng dòng mã hàng bên trong.
+- Gộp hay không gộp, tổng Nợ / Có như nhau.
+- Mặc định: Sổ nhật ký chung và Sổ cái **gộp**; Sổ chi tiết tài khoản **từng dòng**. Đổi ô tích thì máy nhớ cho lần sau.
+
 ## Cột
 
 Hiện sẵn: **Ngày chứng từ, Số chứng từ, Tài khoản, Tài khoản đối ứng, Ghi chú, Số tiền Nợ, Số tiền Có, Chi nhánh, Mã lý do**.

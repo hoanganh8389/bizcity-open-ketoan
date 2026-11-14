@@ -138,12 +138,13 @@ function buildSaleGoods(doc: SaleDocument, ctx: RuleContext, reason: ReturnType<
     // Giá vốn KHÔNG ghi trên phiếu bán (22/10/2026): tính giá vốn tháng sinh một phiếu giá vốn riêng liệt kê từng mã
     // hàng (costing.service). Chỉ ghi ở đây khi hệ thống nguồn đã gửi sẵn giá vốn (vd. giá vốn nội bộ theo giá bán).
     if (cost !== undefined && cost !== 0) {
+      const wh = resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
       b.add({
-        tags,
+        tags: wh ? { ...tags, whCredit: true } : tags,
         part: 'cogs',
         productSku: line.sku,
         debitAccount: resolver.cogsAccount(reason, group, line.isGift),
-        creditAccount: group.inventory_account,
+        creditAccount: wh ?? group.inventory_account,
         amount: cost,
         description: atSalePrice ? 'Giá vốn hàng bán nội bộ (theo giá bán)' : line.isGift ? 'Giá vốn hàng khuyến mãi' : 'Giá vốn hàng bán',
       });

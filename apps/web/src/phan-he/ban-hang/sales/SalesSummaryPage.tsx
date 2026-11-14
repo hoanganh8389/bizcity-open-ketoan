@@ -17,6 +17,7 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { ChonNhomHang } from '@/components/CayNhomHang';
 import { PrintButton } from '@/components/print';
 import { summaryTemplates } from './mauIn/baoCaoBanHang';
+import { MaThut, gopNhom, usePartnerFamilies, type GopRow } from '../../../features/catalog/nhomChaCon';
 
 type GroupBy = 'document' | 'day' | 'month' | 'branch' | 'product' | 'customer' | 'taxCode' | 'itemGroup1' | 'itemGroup2' | 'itemGroup3' | 'itemType' | 'customerGroup' | 'department' | 'employee';
 /** Mỗi cách nhóm: nhãn thẻ, tiêu đề cột mã / tên / thông tin thêm (để trống = không hiện cột). */
@@ -55,6 +56,14 @@ export function SalesSummaryPage() {
   const d = q.data;
   const g = GROUPS.find((x) => x.key === f.groupBy)!;
   const lead = 1 + (g.labelHead ? 1 : 0) + (g.extraHead ? 1 : 0);
+  // [2026-11-13 Nguyễn Văn Thủy] theo khách hàng: xem theo nhóm mẹ – chi nhánh, chi nhánh ngay dưới, dòng Cộng nhóm (đóng góp)
+  const fam = usePartnerFamilies();
+  const [gop, setGop] = useState(false);
+  const MEASURES = ['saleDocs', 'returnDocs', 'saleQty', 'saleAmount', 'returnQty', 'returnAmount', 'netAmount', 'tax', 'total'] as const;
+  const shown: GopRow<Row>[] = gopNhom(d?.rows ?? [], gop && f.groupBy === 'customer', fam, {
+    partnerOf: (r) => r.key, nameKey: 'label',
+    merge: (list) => ({ ...list[0]!, key: '', extra: '', ...Object.fromEntries(MEASURES.map((k) => [k, list.reduce((s, x) => s + (x[k] ?? 0), 0)])) }),
+  });
   const showKey = (r: Row) => (f.groupBy === 'day' ? date(r.key) : f.groupBy === 'month' ? r.label : r.key || '(không có)');
 
   return (
@@ -92,16 +101,19 @@ export function SalesSummaryPage() {
               <button key={x.key} role="tab" aria-selected={f.groupBy === x.key} className={`tab ${f.groupBy === x.key ? 'active' : ''}`} onClick={() => set({ groupBy: x.key })}>{x.tab}</button>
             ))}
           </div>
+          {f.groupBy === 'customer' && fam.count > 0 && <div style={{ padding: '6px 12px' }}><label className="checkbox" title="Khách hàng có đơn vị mẹ – chi nhánh: chi nhánh xếp ngay dưới đơn vị mẹ, cuối nhóm có dòng Cộng nhóm (doanh số cả nhóm)"><input type="checkbox" checked={gop} onChange={(e) => setGop(e.target.checked)} /> Xem theo nhóm mẹ – chi nhánh ({fam.count} nhóm)</label></div>}
           <ErrorBox error={q.error ? errorText(q.error) : null} />
           {q.isLoading ? <Loading /> : !d || d.rows.length === 0 ? <Empty text="Không có số liệu bán hàng trong khoảng này" /> : f.groupBy === 'document' ? (
             <DocumentTable d={d} onOpen={setDocId} />
           ) : (
             <DataGrid
               storageKey={`bh02-${f.groupBy}`}
-              rows={d.rows}
-              rowKey={(r) => r.key}
+              rows={shown}
+              rowKey={(r) => (r._kind ? `cong:${r.label}` : r.key)}
+              rowKind={(r) => r._kind ?? 'data'}
+              rowClassName={(r) => (r._kind ? 'mh-cong-nhom' : r._head ? 'mh-me' : '')}
               columns={[
-                { key: 'key', header: g.keyHead, type: f.groupBy === 'day' ? 'date' : g.labelHead ? 'code' : 'text', value: (r) => (f.groupBy === 'month' ? r.label : r.key), render: (r) => showKey(r) },
+                { key: 'key', header: g.keyHead, type: f.groupBy === 'day' ? 'date' : g.labelHead ? 'code' : 'text', value: (r) => (f.groupBy === 'month' ? r.label : r.key), render: (r) => (r._kind ? '' : <MaThut depth={r._depth}>{showKey(r)}</MaThut>) },
                 ...(g.labelHead ? [{ key: 'label', header: g.labelHead }] : []),
                 ...(g.extraHead ? [{ key: 'extra', header: g.extraHead }] : []),
                 { key: 'saleDocs', header: 'Số CT bán', type: 'number', footer: d.totals.saleDocs.toLocaleString('vi-VN') },
@@ -112,7 +124,7 @@ export function SalesSummaryPage() {
                 { key: 'netAmount', header: 'Doanh thu thuần', type: 'money', sum: true, bold: true },
                 { key: 'tax', header: 'Thuế GTGT', type: 'money', sum: true },
                 { key: 'total', header: 'Tổng thanh toán', type: 'money', sum: true },
-              ] satisfies Column<Row>[]}
+              ] satisfies Column<GopRow<Row>>[]}
             />
           )}
         </div>

@@ -9,6 +9,7 @@
  *   - Mã số thuế không trùng giữa các dòng trong tệp và với đối tượng khác đã có.
  *   - Dòng cập nhật: ô trống giữ nguyên giá trị đang có.
  */
+import { checkParent, nextChildCode } from './partner-family.js';
 import { sql } from 'kysely';
 import { inSavepoint, type ActionTx } from '@bizcity/platform/core/actions';
 import type { PartnerInput } from '@ketoan/contracts';
@@ -19,7 +20,7 @@ import { suggestPartnerCode } from './partner-code.js';
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const low = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').trim().toLowerCase();
 
-export const PARTNER_IMPORT_KEYS = ['code', 'name', 'kind', 'groupCode', 'taxCode', 'address', 'phone', 'mobile', 'email', 'contactName', 'bankAccountNo', 'bankName', 'paymentTermDays', 'creditLimit', 'isActive', 'note'] as const;
+export const PARTNER_IMPORT_KEYS = ['code', 'name', 'kind', 'groupCode', 'taxCode', 'address', 'phone', 'mobile', 'email', 'contactName', 'bankAccountNo', 'bankName', 'paymentTermDays', 'creditLimit', 'isActive', 'note', 'parentCode'] as const;
 export type PartnerImportRow = { row: number } & Partial<Record<(typeof PARTNER_IMPORT_KEYS)[number], string>>;
 type Show = Partial<Record<(typeof PARTNER_IMPORT_KEYS)[number], string>>;
 export interface PartnerImportResult { row: number; code: string; action: 'create' | 'update' | 'error'; errors: string[]; values: Show; before?: Show }
@@ -41,7 +42,8 @@ const toNumber = (s: string) => { const n = Number(s.replace(/[.,\s](?=\d{3}(\D|
 
 export async function importPartners(trx: ActionTx, tenantId: string, actor: string, actorName: string, rows: PartnerImportRow[], dryRun: boolean, mode: 'create' | 'update' | 'both' = 'both') {
   const [partners, groups] = await Promise.all([
-    trx.selectFrom('partners').select(['code', 'name', 'kind', 'group_code', 'tax_code', 'address', 'phone', 'mobile', 'email', 'contact_name', 'bank_account_no', 'bank_name', 'payment_term_days', 'credit_limit', 'is_active', 'note'])
+    trx.selectFrom('partners').select(['code', 'name', 'kind', 'group_code', 'tax_code', 'address', 'phone', 'mobile', 'email', 'contact_name', 'bank_account_no', 'bank_name', 'payment_term_days', 'credit_limit', 'is_active', 'note',
+      sql<string | null>`(SELECT pp.code FROM partners pp WHERE pp.uid = partners.parent_uid)`.as('parent_code')])
       .where('tenant_id', '=', tenantId).execute(),
     trx.selectFrom('partner_groups').select(['code', 'name', 'kind']).where('tenant_id', '=', tenantId).execute(),
   ]);
@@ -55,7 +57,7 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
     code: p.code, name: p.name, kind: KIND_TEXT[p.kind] ?? p.kind, groupCode: showGroup(p.group_code), taxCode: p.tax_code ?? '', address: p.address ?? '', phone: p.phone ?? '',
     mobile: p.mobile ?? '', email: p.email ?? '', contactName: p.contact_name ?? '', bankAccountNo: p.bank_account_no ?? '', bankName: p.bank_name ?? '',
     paymentTermDays: p.payment_term_days === null ? '' : String(p.payment_term_days), creditLimit: p.credit_limit === null ? '' : String(p.credit_limit),
-    isActive: p.is_active ? 'Có' : 'Không', note: p.note ?? '',
+    isActive: p.is_active ? 'Có' : 'Không', note: p.note ?? '', parentCode: p.parent_code ?? '',
   });
 
   const seenCode = new Map<string, number>();
@@ -86,7 +88,7 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
     if (taxCode) {
       if (!isTaxCode(taxCode)) errors.push(`Mã số thuế "${taxCode}" sai dạng (10 số, 10 số-3 số, hoặc 12 số CCCD)`);
       const owner = taxOwner.get(taxCode);
-      if (owner && owner !== code) errors.push(`Mã số thuế ${taxCode} đã có ở đối tượng ${owner}`);
+      if (owner && owner !== code && owner !== t('parentCode')) errors.push(`Mã số thuế ${taxCode} đã có ở đối tượng ${owner}`);
       if (seenTax.has(taxCode)) errors.push(`Trùng mã số thuế với dòng ${seenTax.get(taxCode)} trong tệp`);
       else seenTax.set(taxCode, r.row);
     }
@@ -102,11 +104,18 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
     const isActive = act ? (YES.has(low(act)) ? true : NO.has(low(act)) ? false : undefined) : undefined;
     if (act && isActive === undefined) errors.push(`Theo dõi "${act}" không hiểu — ghi Có / Không`);
 
+    // [2026-11-13 Nguyễn Văn Thủy] cột Mã đơn vị cha: đơn vị cha phải có sẵn hoặc nằm ở dòng trên; thêm mới để trống mã thì cấp mã cha-001… (đóng góp)
+    const parentCode = t('parentCode');
+    if (parentCode) {
+      if (parentCode === code) errors.push('Đơn vị cha không được là chính nó');
+      else if (!byCode.has(parentCode) && !(seenCode.has(parentCode) && seenCode.get(parentCode)! < r.row)) errors.push(`Đơn vị cha ${parentCode} chưa có — thêm đơn vị cha trước (hoặc đặt dòng của nó lên trên)`);
+      if (isNew && code && !code.startsWith(`${parentCode}-`)) errors.push(`Mã đơn vị con phải bắt đầu bằng "${parentCode}-" — để trống mã thì phần mềm tự cấp`);
+    }
     const input: PartnerInput = { code, name, ...(taxCode ? { taxCode } : {}), ...(t('address') ? { address: t('address') } : {}), ...(email ? { email } : {}), ...(t('phone') ? { phone: t('phone') } : {}) };
     const info: PartnerAccountingInfo = {
       ...(kind ? { kind } : {}), ...(groupCode ? { groupCode } : {}), ...(isActive !== undefined ? { isActive } : isNew ? { isActive: true } : {}),
       ...(termN !== undefined && !Number.isNaN(termN) ? { paymentTermDays: termN } : {}), ...(limitN !== undefined && !Number.isNaN(limitN) ? { creditLimit: limitN } : {}),
-      ...(t('note') ? { note: t('note') } : {}), ...(t('contactName') ? { contactName: t('contactName') } : {}), ...(t('mobile') ? { mobile: t('mobile') } : {}),
+      ...(t('note') ? { note: t('note') } : {}), ...(parentCode ? { parentCode } : {}), ...(t('contactName') ? { contactName: t('contactName') } : {}), ...(t('mobile') ? { mobile: t('mobile') } : {}),
       ...(t('bankAccountNo') ? { bankAccountNo: t('bankAccountNo') } : {}), ...(t('bankName') ? { bankName: t('bankName') } : {}),
       // Nhà cung cấp: tên / địa chỉ chính thức dùng trên hoá đơn (như form đối tượng).
       ...((kind ?? before?.kind) === 'supplier' && name ? { companyName: name } : {}), ...((kind ?? before?.kind) === 'supplier' && t('address') ? { companyAddress: t('address') } : {}),
@@ -115,7 +124,7 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
     const values: Show = {
       code: code || (isNew ? '(tự cấp)' : ''), name, kind: kind ? KIND_TEXT[kind] : kindRaw, groupCode: groupCode ? showGroup(groupCode) : groupRaw, taxCode, address: t('address'), phone: t('phone'),
       mobile: t('mobile'), email, contactName: t('contactName'), bankAccountNo: t('bankAccountNo'), bankName: t('bankName'), paymentTermDays: term, creditLimit: limit,
-      isActive: isActive === undefined ? (isNew && !act ? 'Có' : act) : isActive ? 'Có' : 'Không', note: t('note'),
+      isActive: isActive === undefined ? (isNew && !act ? 'Có' : act) : isActive ? 'Có' : 'Không', note: t('note'), parentCode,
     };
     return { row: r.row, code, isNew, input, info, errors, values, before: before ? beforeOf(before) : undefined };
   });
@@ -129,7 +138,11 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
       let code = c.code;
       if (!code) {
         await sql`SELECT pg_advisory_xact_lock(hashtext(${`partner-code:${tenantId}`}))`.execute(t);
-        code = (await suggestPartnerCode(t, tenantId, { groupCode: c.info.groupCode, kind: c.info.kind })).code;
+        code = c.info.parentCode ? (await nextChildCode(t, tenantId, c.info.parentCode, c.input.taxCode)).code : (await suggestPartnerCode(t, tenantId, { groupCode: c.info.groupCode, kind: c.info.kind })).code;
+      }
+      if (c.info.parentCode !== undefined) {
+        const before = await t.selectFrom('partners').select(['uid', 'parent_uid']).where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
+        await checkParent(t, tenantId, code, c.info.parentCode, before ?? null);
       }
       await partnerRepository.upsert(t, tenantId, { ...c.input, code }, c.info.kind ?? 'customer');
       await partnerRepository.updateAccountingInfo(t, tenantId, code, c.info);
