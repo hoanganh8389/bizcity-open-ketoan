@@ -147,3 +147,43 @@ B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớ
 - **`scripts/cap-nhat.sh`:** `SEEDS_DIR` đặt mà thư mục không có, hoặc thiếu tệp có trong `db/seeds` của bản mới → **dừng trước khi kéo mã**, in danh sách tệp thiếu. Docker không được tự tạo thư mục rỗng thay cho bộ danh mục.
 - **TI08:** `GET /api/v1/default-data` trả `seedsSource` (`bundled` | `custom`, không lộ đường dẫn máy chủ) và mỗi bộ `synthetic` (tệp có `_nguon: "gia-lap"`); màn TI08 hiện dải báo đang đọc bộ nào, bộ nào là giả lập.
 - **Kiểm:** `docker compose config` với `.env` có / không đặt `SEEDS_DIR`; test API cho `seedsSource` / `synthetic`; chạy thật trên stack dev với thư mục ngoài repo.
+
+## 10. Chữ chốt B1 — đơn vị trắng (2026-11-14) <!-- [2026-11-14 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B1 (S036-3): tenantEmptiness, core.setup.status, biểu ngữ Tổng quan -->
+
+**`tenantEmptiness(trx, tenantId, { lock })`** — `apps/api/src/modules/system/setup-status.ts` (Core, lớp P như `policy-insight.ts`; chỉ đọc, không đụng Kernel):
+
+- Trả `{ empty: boolean, kinds: string[] }`. `kinds` = các loại dữ liệu nghiệp vụ đã có (mỗi loại một `EXISTS … LIMIT 1`, không đếm hết bảng).
+- **Danh sách đóng** loại → bảng (thêm loại chứng từ mới thì thêm dòng ở đây và ở test):
+
+  | Loại | Bảng | Ghi chú |
+  |---|---|---|
+  | `ledger` | `ledger_entries` | bút toán |
+  | `event` | `accounting_events` | mọi trạng thái (pending / posted / error / cancelled) — gồm phiếu thu chi, số dư đầu kỳ, chứng từ cửa nạp |
+  | `intake` | `intake_inbox` | bể chờ đầu vào (chứng từ bị giữ) |
+  | `purchase` | `purchase_documents` | phiếu mua mọi trạng thái, kể cả nháp |
+  | `supplier_invoice` | `supplier_invoices` | hoá đơn NCC |
+  | `stock_transfer` | `stock_transfer_docs` | phiếu chuyển kho |
+  | `payment_request` | `payment_requests` | đề nghị thanh toán, kể cả nháp |
+  | `transfer_request` | `transfer_requests` | đề nghị chuyển hàng |
+  | `asset` | `assets` | tài sản (danh mục loại tài sản do `seed()` tạo **không** tính) |
+  | `tax_invoice` | `tax_invoices` | hoá đơn bán ra |
+  | `vat_return` | `vat_returns` | tờ khai GTGT |
+  | `cit_return` | `cit_returns` | tờ khai TNDN |
+
+- Danh mục (tài khoản, đối tượng, mặt hàng, chi nhánh…) **không** tính: `seed()` và *Quay về dữ liệu gốc* tạo chúng trên đơn vị mới.
+- `lock: true` → `pg_advisory_xact_lock` theo đơn vị (khoá `setup:<tenantId>`) trước khi đọc, giữ tới hết giao dịch. B2 (`core.setup.apply`) gọi với `lock: true` cùng giao dịch ghi, rồi trả `SETUP-NOT-EMPTY` (D036-1, T036-2). B1 chỉ dùng `lock: false`.
+
+**Action `core.setup.status`** — `GET /api/v1/setup/status`, chỉ đọc, `idempotency: 'none'`, quyền `catalog:read` (người dùng nào của đơn vị cũng cần biết đơn vị trắng), `mcp: true`, `ai: 'read'`:
+
+- Trả `{ empty, kinds, canSetup }`; `canSetup` = người gọi có `settings:write`.
+- Không trả số tiền, số dòng hay tên — chỉ loại.
+- Trường "đã nạp gói nào" (D036-7) thêm ở B2, khi có bảng `sample_runs`.
+
+**Biểu ngữ ở Tổng quan (`/`)** — thành phần mới `apps/web/src/features/launcher/DonViTrang.tsx`, chèn một dòng vào `TongQuanPage.tsx` (của Nguyễn Văn Thủy, chỉ thêm, không đổi bố cục):
+
+- `empty && canSetup`: *"Đơn vị chưa có chứng từ nào"*, kèm ba đường: nạp danh mục chuẩn (TI08), nhập số dư đầu kỳ, lập chứng từ đầu tiên. Thêm dòng *"Thiết lập nhanh (nạp công ty mẫu) sắp có"* cho tới B3.
+- `empty && !canSetup`: *"Đơn vị chưa có dữ liệu — nhờ chủ đơn vị thiết lập"*.
+- `!empty`: không hiện gì.
+- Gọi một lần khi mở Tổng quan, `staleTime` 60 giây.
+
+**Kiểm:** `apps/api/test/setup-status.test.ts` — đơn vị mới → trắng; mỗi loại trong danh sách làm đơn vị hết trắng (ít nhất: phiếu thu chi nháp / chứng từ cửa nạp, phiếu mua nháp, bể chờ); đơn vị khác không thấy (RLS); người không có `settings:write` → `canSetup: false`.
