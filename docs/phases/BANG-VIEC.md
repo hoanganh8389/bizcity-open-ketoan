@@ -7,25 +7,25 @@
 |---|---|
 | Đang làm | 7 |
 | Chờ merge | 0 |
-| Bị chặn | 30 |
+| Bị chặn | 28 |
 | Chưa ai nhận | 170 |
-| Chờ đủ tín hiệu | 78 |
+| Chờ đủ tín hiệu | 69 |
 | Hoãn | 3 |
-| Xong | 299 |
-| **Tổng** | **587** |
+| Xong | 311 |
+| **Tổng** | **588** |
 
 ## Theo phân hệ (R-FLOW-10)
 
 | Phân hệ | Xong | Chờ đủ tín hiệu | Đang làm | Còn lại | Tổng |
 |---|---|---|---|---|---|
 | danh-muc | 18 | 16 | 2 | 38 | 74 |
-| mua-hang | 51 | 7 | 1 | 28 | 87 |
-| kho | 43 | 24 | 3 | 75 | 145 |
-| ban-hang | 51 | 7 | 1 | 28 | 87 |
-| chung-tu | 65 | 7 | 0 | 25 | 97 |
+| mua-hang | 52 | 6 | 1 | 28 | 87 |
+| kho | 44 | 23 | 3 | 75 | 145 |
+| ban-hang | 52 | 6 | 1 | 28 | 87 |
+| chung-tu | 67 | 5 | 0 | 25 | 97 |
 | tong-hop | 31 | 8 | 1 | 27 | 67 |
 | thue | 14 | 2 | 1 | 10 | 27 |
-| he-thong | 134 | 29 | 2 | 63 | 228 |
+| he-thong | 143 | 23 | 2 | 61 | 229 |
 
 ## Đang làm (7)
 
@@ -43,7 +43,7 @@
 
 —
 
-## Bị chặn (30)
+## Bị chặn (28)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -60,7 +60,6 @@
 | [S023-5](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L16) | PHASE-023 | danh-muc | Tệp giải nghĩa data/giai-nghia-tai-khoan/vn-tt99.json: 30 tài khoản (D023-5), nháp theo Q023-1; căn cứ trỏ do… | P0 | — |
 | [S024-9](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L20) | PHASE-024 | danh-muc · kho | Migration K3: itemid ở ledgerlines, inventorymovements, inventorycosts, productunits, productprices; điền ngư… | P0 | — |
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | danh-muc · kho | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
-| [S028-5](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L14) | PHASE-028 | he-thong | PR tài liệu W0 merge vào main (R-FLOW) | P0 | — |
 | [S028-17](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L26) | PHASE-028 | he-thong | Vá F8: vé SSO dùng một lần; phiên mở từ vé sống WPSSOTTLHOURS (mặc định 2) — chờ dòng Module POS · W1 phần Co… | P1 | — |
 | [S029-5](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L14) | PHASE-029 | chung-tu | ctx.ledger.submit tự saveVersion + liên kết ledger; payloadVersion ở GET /documents/:id | P0 | — |
 | [S029-8](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L17) | PHASE-029 | chung-tu | Nâng chẩn đoán lên error khi bản đo trên bản cài thật = 0 | P2 | — |
@@ -76,7 +75,6 @@
 | [S031-3](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L12) | PHASE-031 | mua-hang · ban-hang | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | P0 | — |
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | mua-hang · ban-hang | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | mua-hang · ban-hang | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
-| [S035-2](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L11) | PHASE-035 | he-thong | Chủ dự án duyệt D035-1..12, trả Q035-1..6 | P0 | — |
 
 ## Chưa ai nhận (170)
 
@@ -239,21 +237,21 @@
 | [S032-34](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L43) | PHASE-032 | kho | Ma trận thời gian tiêu chí × tuần / tháng (60 §10): đọc bản chụp S032-31 / 33, mốc M0..M4 từ checklist; GET /… | P1 | — |
 | [S032-37](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L46) | PHASE-032 | kho | SDK defineCheck + extensions.checks của bizcitymodule@1 (R-DIAG-15) | P1 | — |
 | [S032-38](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L47) | PHASE-032 | kho | Bảng "trường cần để kiểm" theo loại chứng từ ở bizcityledgerintake@1; trạng thái "không kiểm được" trên bàn (… | P1 | — |
-| [S035-3](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L12) | PHASE-035 | he-thong | B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan | P0 | — |
 | [S035-4](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L13) | PHASE-035 | he-thong | B2 — apps/api/src/modules/system/modules.routes.ts: GET /api/v1/system/modules (sổ + mức ô D035-2 + việc kèm … | P0 | — |
-| [S035-4](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L13) | PHASE-035 | he-thong | B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); c… | P0 | — |
 | [S035-5](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L14) | PHASE-035 | he-thong | B3 — apps/web/src/features/system/ModulesPage.tsx (HT11, ?xem=<key>, lọc chưa đạt / người làm / ưu tiên, dùng… | P0 | — |
-| [S035-5](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L14) | PHASE-035 | he-thong | B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md | P0 | — |
 | [S035-6](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L15) | PHASE-035 | he-thong | B4 — SC-MODS-1 (chặn: phủ 100 % phan-he/ và mã màn menu.ts), SC-MODS-2 (việc có modules[]; baseline phase ≤ 0… | P0 | — |
-| [S035-6](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L15) | PHASE-035 | he-thong | B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-l… | P0 | — |
 | [S035-7](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L16) | PHASE-035 | he-thong | B6 — docs/huong-dan/modules-muc-dat.md; nếp rà hằng tuần (00 §5) vào AGENTS.md + RULE-FLOW; in HT11 cùng HT10 | P1 | — |
-| [S035-7](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-035 | he-thong | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | — |
 | [S035-8](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L17) | PHASE-035 | he-thong | B5 — thẻ Việc <phân hệ> hôm nay (kho, mua hàng, bán hàng, quỹ, công nợ, thuế, tài sản, danh mục): component c… | P1 | — |
-| [S035-8](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L17) | PHASE-035 | he-thong | B6 — TI08 an toàn: xem trước bắt buộc, defaultdatabackups + Lấy lại bản trước, chặn bộ giả lập trên đơn vị có… | P0 | — |
-| [S035-9](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-035 | he-thong | B6 — cap-nhat.sh kiểm bản sao lưu + bảng "cái gì có thể đổi" + cảnh báo SEEDSDIR; sao-luu.sh --kiem, khoi-phu… | P0 | — |
-| [S035-10](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L19) | PHASE-035 | he-thong | B7 — nghiệm thu T035-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
+| [S036-3](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L12) | PHASE-036 | he-thong | B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan | P0 | — |
+| [S036-4](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L13) | PHASE-036 | he-thong | B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); c… | P0 | — |
+| [S036-5](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L14) | PHASE-036 | he-thong | B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md | P0 | — |
+| [S036-6](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L15) | PHASE-036 | he-thong | B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-l… | P0 | — |
+| [S036-7](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-036 | he-thong | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | — |
+| [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | — |
+| [S036-9](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L19) | PHASE-036 | he-thong | B6 — cap-nhat.sh kiểm bản sao lưu + bảng "cái gì có thể đổi" + cảnh báo SEEDSDIR; sao-luu.sh --kiem, khoi-phu… | P0 | — |
+| [S036-10](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L20) | PHASE-036 | he-thong | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
 
-## Chờ đủ tín hiệu (78)
+## Chờ đủ tín hiệu (69)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -297,31 +295,22 @@
 | [S026-11](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L20) | PHASE-026 | danh-muc | Chỉ mục tham chiếu mdreferences + GET …/impact; thẻ Tác động + xem trước khi đổi mã / nhóm / ngừng | P0 | — |
 | [S026-14](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L27) | PHASE-026 | danh-muc | Benchmark 1.000.000 mặt hàng × 300 chi nhánh; đồng bộ theo câu lệnh cho đường nạp lô; EXCLUDE USING gist; số … | P2 | — |
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | danh-muc | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | — |
-| [S028-6](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L15) | PHASE-028 | he-thong | W1: userroleassignments (0073) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / t… | P0 | — |
-| [S028-7](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L16) | PHASE-028 | he-thong | W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — ch… | P0 | — |
 | [S028-8](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L17) | PHASE-028 | he-thong | W3 đợt 2: khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow core/authz, requireScope() — chữ chốt ADR-0027… | P1 | — |
 | [S028-9](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L18) | PHASE-028 | he-thong | W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chố… | P1 | — |
-| [S028-12](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L21) | PHASE-028 | he-thong | Vá F1: tạo / sửa người dùng phải có đủ quyền của vai trò đích và quyền hiện tại của người bị sửa; không tự đổ… | P0 | — |
 | [S028-13](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L22) | PHASE-028 | he-thong | Vá F2: khoá API không mang quyền người tạo không có (scopePermissions ở core/auth.ts) | P0 | — |
-| [S028-14](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L23) | PHASE-028 | he-thong | Vá F3 + F9: ký / huỷ chữ ký gác documents:write; 12 route nợ SC-API-3 khai bảo vệ, /system/schema không mở ch… | P0 | — |
 | [S028-15](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L24) | PHASE-028 | he-thong | Vá F4 (phần ký): ô kế toán trưởng / giám đốc và huỷ chữ ký người khác kiểm theo quyền (periods:lock, payments… | P0 | — |
 | [S028-16](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L25) | PHASE-028 | he-thong | Thu hồi có hiệu lực ngay ở mọi bản API: kiểm phiên không đệm (checkSession, một truy vấn khoá chính users ⋈ t… | P0 | — |
-| [S028-18](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L27) | PHASE-028 | he-thong | Rút gọn bộ tính (K2, PR bộ tính riêng theo ADR-0027 W3 đợt 2 mục 5): bỏ hiệu lực relax / widen; điều kiện 8 →… | P1 | — |
 | [S028-19](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L28) | PHASE-028 | he-thong | Phạm vi kho ở lần gán và ở cửa nạp (D-AUTH-25, chữ chốt đề xuất 80 §3.3); GET /api/v1/warehouses có id; HT12 … | P1 | — |
 | [S028-20](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L29) | PHASE-028 | he-thong | HT12 giao diện theo khuôn đã có (chỉ gọi API sẵn có): nút "Dùng mẫu" dựng vai trò Công việc từ thư viện TGS (… | P2 | — |
-| [S028-21](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L30) | PHASE-028 | he-thong | SC-AUTH-11 phần "quyền mồ côi" (70, AUTHZ-16): quyền khai trong manifest phải có chỗ chặn ở máy chủ; chỉ ở we… | P2 | — |
 | [S028-22](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L31) | PHASE-028 | he-thong | Quyền theo loại chứng từ (D-AUTH-19) + quyền kéo theo (D-AUTH-24): sổ đăng ký registerDocumentType, 5 phân hệ… | P1 | — |
 | [S028-23](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L32) | PHASE-028 | he-thong | HT12 màn "Sửa vai trò" dạng bảng chức năng × thao tác (Xem / Thêm–sửa / Huỷ / Xuất Excel / Khác), thẻ Danh mụ… | P2 | — |
-| [S029-9](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L18) | PHASE-029 | chung-tu | ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CAN… | P0 | — |
 | [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | chung-tu | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | — |
 | [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | chung-tu | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | — |
-| [S029-31](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L40) | PHASE-029 | chung-tu | Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-00… | P0 | — |
 | [S030-2](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L9) | PHASE-030 | mua-hang · kho · ban-hang | Mockup mockups/thu-vien-nghiep-vu.html — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026… | P0 | — |
 | [S030-9](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L16) | PHASE-030 | mua-hang · kho · ban-hang | Khuôn golden test 60 + danh sách 73 ca; nhóm Lõi duyệt khuôn | P0 | — |
 | [S030-18](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L25) | PHASE-030 | mua-hang · kho · ban-hang | Kinh nghiệm cốt lõi 15: phân tầng 20 cơ chế, STD-030-1..12, K-030-7..12, P-030-1..8, phản mẫu A1–A12; nhóm Lõ… | P0 | — |
 | [S030-30](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L37) | PHASE-030 | mua-hang · kho · ban-hang | Q030-5 = B: bản niêm phong của bằng chứng. S030-30a ✅ ADR-0030 + bizcityevidence@1 1.2.0-draft (STD-EVD-4 có … | P1 | — |
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | mua-hang · kho · ban-hang | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
-| [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | mua-hang · kho · ban-hang | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | mua-hang · ban-hang | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
 | [S032-4](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L13) | PHASE-032 | kho | Hướng dẫn tính giá vốn (docs/huong-dan/tinh-gia-von.md), căn cứ (can-cu/04), nghiệp vụ (11) thêm mục Kiến trú… | P1 | — |
 | [S032-6](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L15) | PHASE-032 | kho | Kế toán trưởng trả Q032-1 (phạm vi nhóm tính giá), Q032-5 (hoàn không có gốc); nhóm Lõi trả Q032-2 (nhịp FIFO… | P0 | — |
@@ -344,6 +333,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | he-thong | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | chung-tu | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (299)
+## Xong (311)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

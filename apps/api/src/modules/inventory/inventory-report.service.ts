@@ -274,7 +274,10 @@ export const inventoryReportService = {
     const s = await scope(auth, q.branchCodes);
     const search = q.search?.trim() || undefined;
     const groups = await db.selectFrom('product_posting_groups').select(['code', 'inventory_account', 'is_default']).where('tenant_id', '=', auth.tenantId).execute();
-    const accounts = [...new Set(groups.map((g) => g.inventory_account))].sort();
+    // [2026-11-13 Nguyễn Văn Thủy] cộng thêm TK kho của các loại kho (định khoản theo loại kho của kho trên dòng) (đóng góp)
+    const whAccounts = (await sql<{ code: string }>`SELECT DISTINCT a.code FROM warehouse_types t JOIN accounts a ON a.tenant_id = t.tenant_id AND a.code = t.account_prefix AND a.is_posting
+       WHERE t.tenant_id = ${auth.tenantId} AND t.account_prefix <> '' AND t.deleted_at IS NULL`.execute(db)).rows.map((r) => r.code);
+    const accounts = [...new Set([...groups.map((g) => g.inventory_account), ...whAccounts])].sort();
     const defaultAccount = groups.find((g) => g.is_default)?.inventory_account ?? null;
     if (!accounts.length) return { period: q.period, to, accounts, defaultAccount, totals: [], rows: [], summary: { ok: 0, diff: 0, uncosted: 0, wrong_account: 0, no_product: 0 } };
 
@@ -325,7 +328,7 @@ export const inventoryReportService = {
       r.accounts.sort((a, b) => a.code.localeCompare(b.code));
       if (!r.sku) r.status = r.ledgerValue !== 0 ? 'no_product' : 'ok';
       else if (r.uncosted > 0) r.status = 'uncosted';
-      else if (r.accounts.some((a) => a.code !== r.expectedAccount && Math.abs(a.value) >= 1)) r.status = 'wrong_account';
+      else if (r.accounts.some((a) => a.code !== r.expectedAccount && !whAccounts.includes(a.code) && Math.abs(a.value) >= 1)) r.status = 'wrong_account';
       else if (Math.abs(r.diff) >= 1) r.status = 'diff';
       return r;
     }).filter((r) => r.status !== 'ok' || r.qty !== 0 || r.subledgerValue !== 0 || r.ledgerValue !== 0);

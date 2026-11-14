@@ -35,3 +35,7 @@ Tài khoản (gõ số rồi Enter), khoảng ngày, chi nhánh, **mã đối t�
 - Sổ các tài khoản hàng hoá (15*) hiện sẵn cột **Mã hàng** và **Tên hàng** trên từng dòng; tài khoản khác bật hai cột này ở nút **Cột**.
 - Ô **Mã hàng** ở bảng lọc: chỉ xem dòng sổ của một mã. **Số dư đầu kỳ, phát sinh và số dư cuối kỳ đều tính riêng cho mã đó**, vd sổ 1561 của mã 110061004 để đối chiếu với tồn kho theo mặt hàng.
 - Dòng không gắn mã hàng (thuế, tiền, công nợ…) để trống cột mã hàng và không hiện khi lọc theo mã.
+
+## Cộng gộp các bút toán giống nhau
+
+Tích ô này thì mỗi chứng từ còn một dòng cho mỗi TK đối ứng (cộng các dòng mã hàng giống nhau), cột **Số dòng** cho biết số dòng mã hàng đã gộp; bấm dòng để xem từng mã. Khi lọc theo **Mã hàng** thì luôn xem từng dòng. Máy nhớ lựa chọn cho lần sau.

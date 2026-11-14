@@ -54,4 +54,29 @@ describe('Loại kho', () => {
     // ngừng loại còn kho đang theo dõi → chặn
     expect((await call(ctx, 'PUT', '/api/v1/warehouse-types/KLO', { name: 'Kho hàng lỗi', isActive: false })).status).toBe(409);
   });
+  it('thùng rác: xoá vào thùng rác (vẫn trong dữ liệu, bỏ khỏi nghiệp vụ), kho đang dùng thì chặn, khôi phục, xoá vĩnh viễn', async () => {
+    const types = async () => ((await call(ctx, 'GET', '/api/v1/warehouse-types')).body.data as { types: { code: string }[]; ops: { op: string; typeCodes: string[] }[] });
+    const trash = async () => (await call(ctx, 'GET', '/api/v1/warehouse-types/trash')).body.data as { code: string; deletedBy: string }[];
+    // KLO đang có kho 09000-KLO → không xoá được
+    expect((await call(ctx, 'DELETE', '/api/v1/warehouse-types/KLO')).status).toBe(409);
+    // KCC: không có kho → vào thùng rác
+    expect((await types()).ops.some((o) => o.typeCodes.includes('KCC'))).toBe(true);
+    expect((await call(ctx, 'DELETE', '/api/v1/warehouse-types/KCC')).status).toBe(200);
+    const d = await types();
+    expect(d.types.some((t) => t.code === 'KCC')).toBe(false);
+    expect(d.ops.some((o) => o.typeCodes.includes('KCC'))).toBe(false);
+    expect((await trash()).map((x) => x.code)).toContain('KCC');
+    const row = await db.selectFrom('warehouse_types').select(['deleted_at']).where('tenant_id', '=', tenantId).where('code', '=', 'KCC').executeTakeFirst();
+    expect(row?.deleted_at).toBeTruthy(); // vẫn trong dữ liệu
+    // thêm mới trùng mã đang ở thùng rác → báo
+    expect((await call(ctx, 'PUT', '/api/v1/warehouse-types/KCC', { name: 'Trùng' })).status).toBe(409);
+    // khôi phục
+    expect((await call(ctx, 'POST', '/api/v1/warehouse-types/KCC/restore', {})).status).toBe(200);
+    expect((await types()).types.some((t) => t.code === 'KCC')).toBe(true);
+    // xoá lại rồi xoá vĩnh viễn
+    expect((await call(ctx, 'DELETE', '/api/v1/warehouse-types/KCC')).status).toBe(200);
+    expect((await call(ctx, 'DELETE', '/api/v1/warehouse-types/KCC/permanent')).status).toBe(200);
+    expect((await trash()).map((x) => x.code)).not.toContain('KCC');
+    expect(await db.selectFrom('warehouse_types').select('id').where('tenant_id', '=', tenantId).where('code', '=', 'KCC').executeTakeFirst()).toBeUndefined();
+  });
 });

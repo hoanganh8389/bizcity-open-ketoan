@@ -21,3 +21,7 @@ Cột: Mã khách hàng, Tên khách hàng, Nợ đầu kỳ, Có đầu kỳ, P
 - **Dư Nợ** tài khoản 131: khách còn nợ mình. **Dư Có** tài khoản 131: khách trả thừa / trả trước.
 - Mỗi đối tượng bù trừ Nợ − Có thành một bên; dư Nợ và dư Có **giữa các đối tượng không bù trừ cho nhau**: dòng tổng cộng có thể có cả hai bên, và khớp với dòng tài khoản đó trên Bảng cân đối số phát sinh (ACC10).
 - Bấm vào một dòng để mở **Sổ chi tiết công nợ (ACC40)** của riêng đối tượng đó, xem từng chứng từ.
+
+## Xem theo nhóm mẹ – chi nhánh
+
+Khi danh mục có đơn vị mẹ – chi nhánh, bảng Chọn tham số có ô **Xem theo nhóm mẹ – chi nhánh**: chi nhánh xếp ngay dưới đơn vị mẹ (thụt vào, dấu └), cuối mỗi nhóm có dòng **Cộng nhóm** — số dư đầu kỳ, cuối kỳ bù trừ Nợ / Có của cả nhóm, phát sinh cộng cả nhóm. Dòng Cộng nhóm không tính vào Tổng cộng. Bấm dòng đơn vị mẹ mở chi tiết công nợ của cả nhóm.

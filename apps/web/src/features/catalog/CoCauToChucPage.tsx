@@ -25,7 +25,7 @@ import { TaxCodeField } from '@/components/TaxCodeField';
 import { invalidateOrg, useOrgTree, type OrgNode } from '@/lib/orgUnits';
 import type { Branch } from './BranchesPage';
 import { useWarehouses, type Warehouse } from './WarehousesPage';
-import { useWarehouseTypes } from './WarehouseTypesPage';
+import { LoaiKhoForm, useWarehouseTypes } from './WarehouseTypesPage';
 import type { DimRow } from './DimensionsPage';
 import { DanhSachLoai, NhapCoCau, xuatCoCau, type KieuDs } from './CoCauExcel';
 import './co-cau.css';
@@ -327,6 +327,7 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onA
   const viewAgain = useViewAgain();
   const needParent = f.loai === 'warehouse';
   const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive || t.code === f.typeCode);
+  const [themLoai, setThemLoai] = useState<string | null>(null);
   const parents = useMemo(() => cc.nodes.filter((n) => CHA[f.loai].includes(n.loai) && n.key !== nodeKey && !(nodeKey && cc.pathOf(n).some((x) => x.key === nodeKey)))
     .map((n) => ({ code: n.code, name: `${n.name}${n.loai === 'unit' ? ` (cơ cấu cấp ${n.depth})` : n.loai === 'company' ? ' (công ty)' : ''}` })), [cc, f.loai, nodeKey]);
   const keyOf = (code: string) => (code ? `${needParent ? 'b' : 'o'}:${code}` : null);
@@ -358,7 +359,13 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onA
         <div className="cc-loai-pick">
           {(['company', 'unit', 'branch', 'warehouse', 'department'] as const).map((l) => (
             <label key={l} className={`cc-loai-opt${f.loai === l ? ' on' : ''}${!isNew && f.loai !== l && !((l === 'company' || l === 'unit') && (f.loai === 'company' || f.loai === 'unit')) ? ' dis' : ''}`}>
-              <input type="radio" checked={f.loai === l} disabled={!isNew && !((l === 'company' || l === 'unit') && (f.loai === 'company' || f.loai === 'unit'))} onChange={() => set({ loai: l })} /> {LOAI_ICON[l]} {LOAI_TEN[l]}
+              <input type="radio" checked={f.loai === l} disabled={!isNew && !((l === 'company' || l === 'unit') && (f.loai === 'company' || f.loai === 'unit'))} onChange={() => {
+                // [2026-11-13 Nguyễn Văn Thủy] đổi loại mà "Thuộc" không hợp: chuyển sang nút cùng mã hợp loại (vd cửa hàng cùng mã), không có thì để trống (đóng góp)
+                const cur = f.parentKey ? cc.byKey.get(f.parentKey) : null;
+                const ok = !cur || CHA[l].includes(cur.loai);
+                const same = cur && !ok ? cc.nodes.find((n) => n.code === cur.code && CHA[l].includes(n.loai)) : undefined;
+                set({ loai: l, ...(ok ? {} : { parentKey: same?.key ?? null }) });
+              }} /> {LOAI_ICON[l]} {LOAI_TEN[l]}
             </label>
           ))}
         </div>
@@ -406,9 +413,9 @@ function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onA
       {f.loai === 'warehouse' && (
         <>
           <Field label="Loại kho (*)" tip="Loại quyết định kho dùng cho nghiệp vụ nào (nhập mua, bán, trả lại…). Khai loại ở Danh mục → Loại kho">
-            <select className="select input" value={f.typeCode} onChange={(e) => set({ typeCode: e.target.value })}>
-              {types.map((t) => <option key={t.code} value={t.code} title={t.purpose}>{t.code} · {t.name}</option>)}
-            </select>
+            <ListPicker items={types.map((t) => ({ code: t.code, name: t.name, hint: t.purpose }))} value={f.typeCode} onChange={(c) => set({ typeCode: c || 'KHH' })}
+              onAdd={(t) => setThemLoai(t)} addLabel="Thêm loại kho" />
+            {themLoai !== null && <LoaiKhoForm value={{ isNew: true, name: themLoai }} onClose={() => setThemLoai(null)} onSaved={(c) => set({ typeCode: c })} />}
           </Field>
           <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isDefault} onChange={(e) => set({ isDefault: e.target.checked })} /> Kho mặc định<Hoi text="Nhận các dòng nhập xuất không ghi mã kho" /></label></Field>
           {txt('address', 'Địa chỉ', { full: true })}

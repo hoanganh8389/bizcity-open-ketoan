@@ -9,6 +9,9 @@
  *   GET  /api/v1/warehouses/pick?branchCode=&op=    kho tự chọn cho màn hình: kho đang dùng của chi nhánh thuộc loại ưu tiên nhất
  *                                                   (cùng loại thì kho mặc định trước)
  *   POST /api/v1/warehouses/quick                   tạo nhanh bộ kho cho chi nhánh theo các loại chọn (mã gợi ý 5 số đầu + loại)
+ *   THÙNG RÁC (0133): DELETE /api/v1/warehouse-types/:code → vào thùng rác (vẫn trong CSDL, ngừng dùng, bỏ khỏi nghiệp vụ);
+ *     GET /api/v1/warehouse-types/trash; POST /api/v1/warehouse-types/:code/restore khôi phục;
+ *     DELETE /api/v1/warehouse-types/:code/permanent xoá vĩnh viễn (nhật ký ghi đủ nội dung). Chứng từ đã ghi giữ nguyên.
  * checkWarehouseFor(): luật dùng chung cho các phân hệ — kho có thuộc loại được dùng cho nghiệp vụ không.
  */
 import type { FastifyInstance } from 'fastify';
@@ -37,16 +40,18 @@ export const WAREHOUSE_OPS: { op: string; label: string; area: string }[] = [
   { op: 'stock_out_other', label: 'Xuất kho khác, tiêu huỷ', area: 'Kho' },
 ];
 
-export interface WarehouseTypeDto { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
+export interface WarehouseTypeDto { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; accountName: string | null; accountPosting: boolean; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
 
 export async function listWarehouseTypes(trx: Db, tenantId: string) {
   const rows = await trx.selectFrom('warehouse_types as t')
-    .select(['t.code', 't.name', 't.purpose', 't.can_sell', 't.owned', 't.track_expiry', 't.account_prefix', 't.is_system', 't.is_active', 't.sort_order',
+    .leftJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 't.tenant_id').onRef('a.code', '=', 't.account_prefix'))
+    .select(['t.code', 't.name', 't.purpose', 't.can_sell', 't.owned', 't.track_expiry', 't.account_prefix', 't.is_system', 't.is_active', 't.sort_order', 'a.name as account_name', 'a.is_posting as account_posting',
       (eb) => eb.selectFrom('warehouses as w').whereRef('w.tenant_id', '=', 't.tenant_id').whereRef('w.type_code', '=', 't.code').select((e) => e.fn.countAll<string>().as('n')).as('n'),
       (eb) => eb.selectFrom('warehouses as w').whereRef('w.tenant_id', '=', 't.tenant_id').whereRef('w.type_code', '=', 't.code').where('w.is_active', '=', true).select((e) => e.fn.countAll<string>().as('n')).as('na')])
-    .where('t.tenant_id', '=', tenantId).orderBy('t.sort_order').orderBy('t.code').execute();
+    .where('t.tenant_id', '=', tenantId).where('t.deleted_at', 'is', null).orderBy('t.sort_order').orderBy('t.code').execute();
   const types: WarehouseTypeDto[] = rows.map((r) => ({
     code: r.code, name: r.name, purpose: r.purpose, canSell: r.can_sell, owned: r.owned, trackExpiry: r.track_expiry, accountPrefix: r.account_prefix,
+    accountName: r.account_name ?? null, accountPosting: Boolean(r.account_posting),
     isSystem: r.is_system, isActive: r.is_active, sortOrder: r.sort_order, warehouses: Number(r.n ?? 0), activeWarehouses: Number(r.na ?? 0),
   }));
   const ops = new Map((await trx.selectFrom('warehouse_type_ops').select(['op', 'type_codes']).where('tenant_id', '=', tenantId).execute()).map((o) => [o.op, o.type_codes]));
@@ -94,12 +99,15 @@ const typeInput = z.object({
 
 async function saveType(trx: Db, tenantId: string, actor: string, i: z.infer<typeof typeInput>) {
   if (i.canSell && !i.owned) throw Errors.validation('Hàng không thuộc sở hữu (nhận giữ hộ) thì không được bán — bỏ tích "Được bán" hoặc tích "Thuộc sở hữu"');
-  if (i.accountPrefix) {
-    const a = await trx.selectFrom('accounts').select('code').where('tenant_id', '=', tenantId).where('code', 'like', `${i.accountPrefix}%`).executeTakeFirst();
-    if (!a) throw Errors.validation(`Không có tài khoản nào bắt đầu bằng ${i.accountPrefix} trong hệ thống tài khoản`);
+  const cur = await trx.selectFrom('warehouse_types').select(['id', 'is_active', 'deleted_at', 'account_prefix']).where('tenant_id', '=', tenantId).where('code', '=', i.code).executeTakeFirst();
+  if (cur?.deleted_at) throw Errors.conflict(`Mã ${i.code} đang nằm trong Thùng rác — vào Thùng rác bấm Khôi phục, hoặc dùng mã khác`);
+  // [2026-11-13 Nguyễn Văn Thủy] TK kho là tài khoản ghi sổ của mọi bút toán vào kho thuộc loại này → khai mới / đổi thì phải là TK chi tiết (đóng góp)
+  if (i.accountPrefix && i.accountPrefix !== cur?.account_prefix) {
+    const a = await trx.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', tenantId).where('code', '=', i.accountPrefix).executeTakeFirst();
+    if (!a) throw Errors.validation(`Không có tài khoản ${i.accountPrefix} trong hệ thống tài khoản`);
+    if (!a.is_posting) throw Errors.validation(`${i.accountPrefix} là tài khoản tổng hợp — chọn tài khoản chi tiết (ví dụ ${i.accountPrefix}1)`);
   }
-  if (!i.owned && i.accountPrefix) throw Errors.validation('Hàng không thuộc sở hữu không ghi sổ kho — để trống đầu số TK kho');
-  const cur = await trx.selectFrom('warehouse_types').select(['id', 'is_active']).where('tenant_id', '=', tenantId).where('code', '=', i.code).executeTakeFirst();
+  if (!i.owned && i.accountPrefix) throw Errors.validation('Hàng không thuộc sở hữu không ghi sổ kho — để trống TK kho');
   if (cur && cur.is_active && !i.isActive) {
     const used = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', tenantId).where('type_code', '=', i.code).where('is_active', '=', true).executeTakeFirst();
     if (used) throw Errors.conflict(`Còn kho ${used.code} đang theo dõi thuộc loại ${i.code} — đổi loại hoặc ngừng theo dõi kho đó trước`);
@@ -114,10 +122,51 @@ async function saveType(trx: Db, tenantId: string, actor: string, i: z.infer<typ
   return (await listWarehouseTypes(trx, tenantId)).types.find((t) => t.code === i.code);
 }
 
+// [2026-11-13 Nguyễn Văn Thủy] thùng rác loại kho (0133) (đóng góp)
+export async function listTrash(trx: Db, tenantId: string) {
+  const rows = await trx.selectFrom('warehouse_types').select(['code', 'name', 'purpose', 'account_prefix', 'is_system', 'deleted_at', 'deleted_by'])
+    .where('tenant_id', '=', tenantId).where('deleted_at', 'is not', null).orderBy('deleted_at', 'desc').execute();
+  return rows.map((r) => ({ code: r.code, name: r.name, purpose: r.purpose, accountPrefix: r.account_prefix, isSystem: r.is_system, deletedAt: r.deleted_at ? new Date(r.deleted_at).toISOString() : null, deletedBy: r.deleted_by }));
+}
+
+async function trashType(trx: Db, tenantId: string, actor: string, code: string) {
+  const cur = await trx.selectFrom('warehouse_types').selectAll().where('tenant_id', '=', tenantId).where('code', '=', code).where('deleted_at', 'is', null).executeTakeFirst();
+  if (!cur) throw Errors.notFound(`loại kho ${code}`);
+  const used = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', tenantId).where('type_code', '=', code).where('is_active', '=', true).executeTakeFirst();
+  if (used) throw Errors.conflict(`Kho ${used.code} đang thuộc loại ${code} — đổi loại của kho đó (Cơ cấu tổ chức) rồi mới xoá được`);
+  await trx.updateTable('warehouse_types').set({ deleted_at: new Date(), deleted_by: actor, is_active: false, updated_by: actor, updated_at: new Date() }).where('id', '=', cur.id).execute();
+  // Bỏ khỏi danh sách loại kho của các nghiệp vụ.
+  const ops = await trx.selectFrom('warehouse_type_ops').select(['op', 'type_codes']).where('tenant_id', '=', tenantId).execute();
+  for (const o of ops.filter((x) => x.type_codes.includes(code))) {
+    await trx.updateTable('warehouse_type_ops').set({ type_codes: o.type_codes.filter((c) => c !== code), updated_by: actor, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('op', '=', o.op).execute();
+  }
+  await writeAudit(trx, { tenantId, actor, action: 'warehouse_type.trash', objectType: 'warehouse_type', objectId: code, before: cur });
+  return { code };
+}
+
+async function restoreType(trx: Db, tenantId: string, actor: string, code: string) {
+  const cur = await trx.selectFrom('warehouse_types').select('id').where('tenant_id', '=', tenantId).where('code', '=', code).where('deleted_at', 'is not', null).executeTakeFirst();
+  if (!cur) throw Errors.notFound(`loại kho ${code} trong thùng rác`);
+  await trx.updateTable('warehouse_types').set({ deleted_at: null, deleted_by: '', is_active: true, updated_by: actor, updated_at: new Date() }).where('id', '=', cur.id).execute();
+  await writeAudit(trx, { tenantId, actor, action: 'warehouse_type.restore', objectType: 'warehouse_type', objectId: code });
+  return { code };
+}
+
+async function purgeType(trx: Db, tenantId: string, actor: string, code: string) {
+  const cur = await trx.selectFrom('warehouse_types').selectAll().where('tenant_id', '=', tenantId).where('code', '=', code).where('deleted_at', 'is not', null).executeTakeFirst();
+  if (!cur) throw Errors.notFound(`loại kho ${code} trong thùng rác`);
+  const used = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', tenantId).where('type_code', '=', code).executeTakeFirst();
+  if (used) throw Errors.conflict(`Kho ${used.code} (kể cả kho đã ngừng) còn ghi loại ${code} — đổi loại của kho đó rồi mới xoá vĩnh viễn được; hoặc để trong thùng rác`);
+  await trx.deleteFrom('warehouse_types').where('id', '=', cur.id).execute();
+  await writeAudit(trx, { tenantId, actor, action: 'warehouse_type.purge', objectType: 'warehouse_type', objectId: code, before: cur });
+  return { code };
+}
+
 async function saveOp(trx: Db, tenantId: string, actor: string, op: string, typeCodes: string[]) {
   if (!WAREHOUSE_OPS.some((o) => o.op === op)) throw Errors.notFound(`nghiệp vụ ${op}`);
   const codes = [...new Set(typeCodes)];
   if (!codes.length) throw Errors.validation('Nghiệp vụ phải dùng ít nhất một loại kho');
+  if (codes.length > 40) throw Errors.validation('Tối đa 40 loại kho cho một nghiệp vụ');
   const types = new Map((await trx.selectFrom('warehouse_types').select(['code', 'is_active', 'owned']).where('tenant_id', '=', tenantId).execute()).map((t) => [t.code, t]));
   const bad = codes.filter((c) => !types.get(c)?.is_active);
   if (bad.length) throw Errors.validation(`Loại kho chưa có hoặc đã ngừng dùng: ${bad.join(', ')}`);
@@ -154,6 +203,11 @@ export async function warehouseTypeRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Loại kho và nghiệp vụ dùng loại kho nào' },
     handler: async (req) => ok(await listWarehouseTypes(db, authOf(req).tenantId)),
   });
+  r.get('/api/v1/warehouse-types/trash', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Thùng rác loại kho (đã xoá, chưa xoá vĩnh viễn)' },
+    handler: async (req) => ok(await listTrash(db, authOf(req).tenantId)),
+  });
   r.get('/api/v1/warehouses/pick', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Kho tự chọn theo chi nhánh và nghiệp vụ', querystring: z.object({ branchCode: z.string().min(1), op: z.string().min(1) }) },
@@ -163,6 +217,30 @@ export async function warehouseTypeRoutes(app: FastifyInstance): Promise<void> {
 }
 
 const actions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.warehouse-type.trash', title: 'Xoá loại kho (chuyển vào thùng rác, vẫn lưu trong CSDL)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string().trim().min(1).max(12) }), output: z.any(),
+    expose: { http: { method: 'DELETE', path: '/api/v1/warehouse-types/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse_type', objectId: (i) => i.code },
+    handler: (ctx, i) => trashType(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actorName || ctx.legacyAuth.actor, i.code),
+  }),
+  defineAction({
+    id: 'core.warehouse-type.restore', title: 'Khôi phục loại kho từ thùng rác', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string().trim().min(1).max(12) }), output: z.any(),
+    expose: { http: { method: 'POST', path: '/api/v1/warehouse-types/:code/restore' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse_type', objectId: (i) => i.code },
+    handler: (ctx, i) => restoreType(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actorName || ctx.legacyAuth.actor, i.code),
+  }),
+  defineAction({
+    id: 'core.warehouse-type.purge', title: 'Xoá vĩnh viễn loại kho trong thùng rác (nhật ký ghi đủ nội dung)', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string().trim().min(1).max(12) }), output: z.any(),
+    expose: { http: { method: 'DELETE', path: '/api/v1/warehouse-types/:code/permanent' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse_type', objectId: (i) => i.code },
+    handler: (ctx, i) => purgeType(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actorName || ctx.legacyAuth.actor, i.code),
+  }),
   defineAction({
     id: 'core.warehouse-type.save', title: 'Thêm / sửa loại kho', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',

@@ -109,10 +109,11 @@ export async function noTaxFamily(trx: Db, tenantId: string, products: Product[]
 const evKeys = (d: StoredDoc) => d.links.map((l) => l.eventId).filter(Boolean);
 
 /** Nợ phải trả NCC trên 331* tới ngày asOf (theo sổ), trừ các chứng từ kế toán của phiếu đang xét. */
-export async function apBalance(trx: Db, tenantId: string, partnerCode: string, asOf: string, excludeEvents: string[] = []): Promise<number> {
+export async function apBalance(trx: Db, tenantId: string, partnerCode: string | string[], asOf: string, excludeEvents: string[] = []): Promise<number> {
+  const codes = Array.isArray(partnerCode) ? partnerCode : [partnerCode];
   let q = trx.selectFrom('debt_items as i').innerJoin('partners as p', 'p.id', 'i.partner_id')
     .select(sql<string>`COALESCE(SUM(CASE WHEN i.side = 'credit' THEN i.amount ELSE -i.amount END), 0)`.as('bal'))
-    .where('i.tenant_id', '=', tenantId).where('p.code', '=', partnerCode).where('i.account_code', 'like', '331%').where('i.doc_date', '<=', asOf);
+    .where('i.tenant_id', '=', tenantId).where('p.code', 'in', codes.length ? codes : ['']).where('i.account_code', 'like', '331%').where('i.doc_date', '<=', asOf);
   if (excludeEvents.length) q = q.where('i.event_id', 'not in', excludeEvents);
   return toNumber((await q.executeTakeFirst())?.bal ?? 0);
 }
@@ -258,14 +259,16 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   const affectsDebt = doc.kind === 'receipt' || doc.kind === 'order' || (doc.kind === 'exchange' && calc.payable > 0);
   if (affectsDebt && doc.partnerCode) {
     // Hạn mức theo NCC: chỉ chính sách đang bật VÀ còn hiệu lực ở ngày phiếu (từ / đến), như hạn mức theo nhãn bên dưới.
-    let pp = findPolicy(policies.filter((p) => p.scope.partnerCode === doc.partnerCode && !p.scope.brandCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode });
+    // [2026-11-13 Nguyễn Văn Thủy] hạn mức khai ở đơn vị mẹ "áp cho cả đơn vị con": cả nhóm dùng chung một hạn mức (đóng góp)
+    let pp = findPolicy(policies.filter((p) => p.scope.partnerCode && !p.scope.brandCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode });
+    const pool = pp && pp.scope.partnerCode !== doc.partnerCode ? [pp.scope.partnerCode!, ...(pp.familyCodes ?? [])] : [doc.partnerCode];
     const partner = await trx.selectFrom('partners').select(['credit_limit', 'name']).where('tenant_id', '=', tenantId).where('code', '=', doc.partnerCode).executeTakeFirst();
     if (!pp) {
       // Không khai chính sách: dùng hạn mức ở danh mục đối tượng (DM13) nếu có.
       if (partner?.credit_limit && toNumber(partner.credit_limit) > 0) pp = { id: 'dm13', code: 'DM13', kind: 'credit_limit', name: 'Hạn mức ở danh mục đối tượng', scope: { partnerCode: doc.partnerCode }, isActive: true, rule: { limit: toNumber(partner.credit_limit), warnPct: 90 } };
     }
-    const cs = creditStatus(pp, await apBalance(trx, tenantId, doc.partnerCode, doc.docDate, selfEvents), pendingOf(docs, (d) => d.partnerCode === doc.partnerCode, doc.docDate, doc), calc.payable);
-    if (cs) credit.push({ ...cs, scope: `NCC ${partner?.name || doc.partnerCode}` });
+    const cs = creditStatus(pp, await apBalance(trx, tenantId, pool, doc.docDate, selfEvents), pendingOf(docs, (d) => pool.includes(d.partnerCode), doc.docDate, doc), calc.payable);
+    if (cs) credit.push({ ...cs, scope: pool.length > 1 ? `Cả nhóm ${pp!.scope.partnerCode} (${pool.length} đơn vị, hạn mức chung)` : `NCC ${partner?.name || doc.partnerCode}` });
     // Hạn mức toàn nhãn phân bổ chi nhánh: mỗi nhãn có trong phiếu tính theo PHẦN của nhãn (phiếu nhiều nhãn chia đúng phần).
     for (const { brandCode: brand, share } of brandMix(doc)) {
       const bp = findPolicy(policies.filter((p) => !p.scope.partnerCode), 'credit_limit', { date: doc.docDate, brandCode: brand, branchCode: doc.branchCode });

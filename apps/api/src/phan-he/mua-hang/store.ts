@@ -321,6 +321,18 @@ export function rowValues(doc: PDoc & { invoiceTotal?: number }, calc: { beforeT
 export const POLICY_KINDS: PolicyKind[] = ['trade_discount', 'item_discount', 'qty_tier', 'payment_discount', 'promo_gift', 'period_rebate', 'target_rebate', 'stage_rebate', 'credit_limit', 'payment_term', 'supply_target', 'lot_tracking', 'gift_budget', 'contract'];
 const num = z.number().finite().min(0);
 const pct = z.number().finite().min(0).max(100);
+// [2026-11-13 Nguyễn Văn Thủy] thưởng theo cha – con: tính doanh số trên cả nhóm, bên trả thưởng, chi nhánh mình nhận (đóng góp)
+/**
+ * Các bên của chính sách thưởng (ký với NCC = scope.partnerCode):
+ *   family   — tính doanh số trên NCC ký và mọi đơn vị con của họ (vd ký với công ty mẹ, hàng do các chi nhánh giao);
+ *   payer    — mã NCC trả thưởng (đơn vị lập hoá đơn chiết khấu / trừ nợ); trống = NCC ký;
+ *   receiver — chi nhánh bên mình nhận thưởng (phiếu thưởng ghi vào chi nhánh này); trống = chi nhánh mua nhiều nhất.
+ */
+const REBATE_PARTIES = {
+  family: z.boolean().optional(),
+  payer: z.string().trim().max(64).optional().transform((x) => x || undefined),
+  receiver: z.string().trim().max(64).optional().transform((x) => x || undefined),
+};
 /** Khuôn quy tắc từng loại — kế toán nhập bằng form, máy chủ vẫn kiểm. */
 export const RULE_SCHEMAS: Record<PolicyKind, z.ZodTypeAny> = {
   trade_discount: z.union([z.object({ pct }), z.object({ amount: num })]),
@@ -340,9 +352,9 @@ export const RULE_SCHEMAS: Record<PolicyKind, z.ZodTypeAny> = {
     })).min(1, 'thêm ít nhất một dòng mua – tặng').max(5000) }),
     z.object({ buy: z.number().int().positive(), get: z.number().int().positive(), giftSku: z.string().default(''), splitIntoCost: z.boolean() }),
   ]),
-  period_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), tiers: z.array(z.object({ from: num, pct })).min(1), vatPct: z.number().optional() }),
-  target_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), target: z.number().positive(), tiers: z.array(z.object({ fromPct: num, pct })).min(1) }),
-  stage_rebate: z.object({ mode: z.enum(['stage', 'cumulative']), stages: z.array(z.object({ from: z.number().int().min(1).max(31), to: z.number().int().min(1).max(31), min: num, pct: pct.optional(), amount: num.optional() })).min(1) }),
+  period_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), tiers: z.array(z.object({ from: num, pct })).min(1), vatPct: z.number().optional(), ...REBATE_PARTIES }),
+  target_rebate: z.object({ period: z.enum(['month', 'quarter', 'year']), target: z.number().positive(), tiers: z.array(z.object({ fromPct: num, pct })).min(1), ...REBATE_PARTIES }),
+  stage_rebate: z.object({ mode: z.enum(['stage', 'cumulative']), stages: z.array(z.object({ from: z.number().int().min(1).max(31), to: z.number().int().min(1).max(31), min: num, pct: pct.optional(), amount: num.optional() })).min(1), ...REBATE_PARTIES }),
   credit_limit: z.object({ limit: z.number().positive(), warnPct: pct.default(90), branches: z.record(num).default({}) }),
   payment_term: termSchema,
   supply_target: z.object({ period: z.string().regex(/^\d{4}-\d{2}$/), branches: z.record(num) }),
@@ -354,7 +366,7 @@ export const policyInputSchema = z.object({
   code: z.string().trim().min(1).max(64),
   kind: z.enum(POLICY_KINDS as [PolicyKind, ...PolicyKind[]]),
   name: z.string().trim().min(1).max(255),
-  scope: z.object({ partnerCode: z.string().optional(), brandCode: z.string().optional(), sku: z.string().optional(), branchCode: z.string().optional() }).default({}),
+  scope: z.object({ partnerCode: z.string().optional(), brandCode: z.string().optional(), sku: z.string().optional(), branchCode: z.string().optional(), withChildren: z.boolean().optional() }).default({}),
   validFrom: day.optional().nullable(),
   validTo: day.optional().nullable(),
   priority: z.number().int().default(0),
@@ -380,6 +392,10 @@ export async function listPolicies(trx: Db, tenantId: string, opts: { exclude?: 
   if (opts.exclude?.length) q = q.where('kind', 'not in', opts.exclude);
   const rows = await q.orderBy('kind').orderBy('code').execute();
   const versions = rows.length ? await policyVersionsByPolicy(trx, tenantId) : new Map<string, PolicyVersion[]>();
+  // [2026-11-13 Nguyễn Văn Thủy] chính sách đơn vị mẹ áp cho đơn vị con: điền mã mọi cấp con (không lưu) (đóng góp)
+  const heads = [...new Set(rows.filter((r) => (r.scope as Policy['scope'] | null)?.withChildren && (r.scope as Policy['scope']).partnerCode).map((r) => (r.scope as Policy['scope']).partnerCode!))];
+  const fam = new Map<string, string[]>();
+  for (const h of heads) fam.set(h, await partnerDescendants(trx, tenantId, h));
   return rows.map((r) => {
     const vs = versions.get(String(r.id)) ?? [];
     return {
@@ -388,8 +404,20 @@ export async function listPolicies(trx: Db, tenantId: string, opts: { exclude?: 
       priority: r.priority, isActive: r.is_active, rule: (r.rule ?? {}) as Record<string, unknown>, programKind: (r as { program_kind?: string | null }).program_kind ?? null,
       createdBy: r.created_by, createdAt: new Date(r.created_at as unknown as string).toISOString(), updatedBy: r.updated_by, updatedAt: new Date(r.updated_at as unknown as string).toISOString(),
       ...(vs.length ? { version: vs.at(-1)!.version, contentHash: vs.at(-1)!.hash, versions: vs } : {}),
+      ...((r.scope as Policy['scope'] | null)?.withChildren && fam.get((r.scope as Policy['scope']).partnerCode ?? '') ? { familyCodes: fam.get((r.scope as Policy['scope']).partnerCode!) } : {}),
     };
   });
+}
+
+/** Mã mọi cấp đơn vị con của một đối tượng (không gồm chính nó) — cha – con 0132. */
+export async function partnerDescendants(trx: Db, tenantId: string, code: string): Promise<string[]> {
+  const r = await sql<{ code: string }>`
+    WITH RECURSIVE t AS (
+      SELECT uid, code, 0 AS d FROM partners WHERE tenant_id = ${tenantId} AND code = ${code}
+      UNION ALL
+      SELECT p.uid, p.code, t.d + 1 FROM partners p JOIN t ON p.parent_uid = t.uid WHERE p.tenant_id = ${tenantId} AND t.d < 20
+    ) SELECT code FROM t WHERE d > 0`.execute(trx);
+  return r.rows.map((x) => x.code);
 }
 
 /* ------------------------------------------------------------------ phiên bản chính sách */

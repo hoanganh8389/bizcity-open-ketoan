@@ -36,12 +36,14 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
-    const tags = lineTags(BIZ, doc.reasonCode, line);
+    // TK kho theo loại kho của kho trên dòng (ưu tiên hơn ngầm định); TK ghi tay trên dòng / mua vào chi phí vẫn đứng trước.
+    const wh = line.accounts?.inventory || resolver.reasonExpense(reason) ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
+    const tags = { ...lineTags(BIZ, doc.reasonCode, line), ...(wh ? { whDebit: true } : {}) };
     b.add({
       tags,
       part: 'goods',
       productSku: line.sku,
-      debitAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? group.inventory_account,
+      debitAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? wh ?? group.inventory_account,
       creditAccount: line.accounts?.payable ?? payable,
       amount: line.amountBeforeTax,
       creditPartnerId: partnerId,
@@ -92,13 +94,14 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
+    const wh = line.accounts?.inventory || resolver.reasonExpense(reason) ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
     const tags = lineTags(BIZ, doc.reasonCode, line);
     b.add({
-      tags,
+      tags: wh ? { ...tags, whCredit: true } : tags,
       part: 'goods',
       productSku: line.sku,
       debitAccount: line.accounts?.payable ?? payable,
-      creditAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? group.inventory_account,
+      creditAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? wh ?? group.inventory_account,
       amount: Math.abs(line.amountBeforeTax),
       debitPartnerId: partnerId,
       taxCode: line.taxCode,

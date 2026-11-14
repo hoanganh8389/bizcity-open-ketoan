@@ -87,6 +87,9 @@ export interface RuleTags {
   sameUnit?: boolean;
   /** Số tiền âm nên luật đã đổi bên Nợ / Có của cặp (quy tắc cũng đổi theo). */
   swapped?: boolean;
+  /** Phía Nợ / Có là TK kho lấy theo loại kho — quy tắc không đè (TK theo loại kho thắng). */
+  whDebit?: boolean;
+  whCredit?: boolean;
 }
 
 export interface RuleTable {
@@ -247,8 +250,8 @@ export function applyRuleTable(
     const [debitLine, creditLine] = tags.swapped ? [second, first] : [first, second];
     const hit: RuleHit = { pairNo, part: first.part, ruleId: r.id, debitBefore: debitLine.accountCode, creditBefore: creditLine.accountCode, debitAfter: debitLine.accountCode, creditAfter: creditLine.accountCode };
     let changed = false;
-    if (r.debit && r.debit !== debitLine.accountCode) { debitLine.accountCode = r.debit; changed = true; }
-    if (r.credit && r.credit !== creditLine.accountCode) { creditLine.accountCode = r.credit; changed = true; }
+    if (r.debit && !tags.whDebit && r.debit !== debitLine.accountCode) { debitLine.accountCode = r.debit; changed = true; }
+    if (r.credit && !tags.whCredit && r.credit !== creditLine.accountCode) { creditLine.accountCode = r.credit; changed = true; }
     hit.debitAfter = debitLine.accountCode;
     hit.creditAfter = creditLine.accountCode;
     hits.push(hit);

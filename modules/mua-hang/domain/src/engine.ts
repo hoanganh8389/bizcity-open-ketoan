@@ -155,7 +155,8 @@ export interface Partner { code: string; name: string; taxCode?: string; group?:
 
 export type PolicyKind = 'trade_discount' | 'item_discount' | 'qty_tier' | 'payment_discount' | 'promo_gift' | 'period_rebate' | 'target_rebate' | 'stage_rebate'
   | 'credit_limit' | 'payment_term' | 'supply_target' | 'lot_tracking' | 'gift_budget' | 'contract';
-export interface Scope { partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string }
+// [2026-11-13 Nguyễn Văn Thủy] withChildren: chính sách khai ở đơn vị mẹ áp cho mọi đơn vị con (cha – con 0132) (đóng góp)
+export interface Scope { partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string; withChildren?: boolean }
 export interface Policy {
   /** Người tạo / sửa và thời điểm (máy chủ điền khi đọc). */
   createdBy?: string; createdAt?: string; updatedBy?: string; updatedAt?: string;
@@ -170,6 +171,8 @@ export interface Policy {
   isActive: boolean;
   /** Khuôn theo kind — xem RULE_HINT. */
   rule: Record<string, unknown>;
+  /** Mã các đơn vị con (mọi cấp) của scope.partnerCode — máy chủ điền khi scope.withChildren; không lưu. */
+  familyCodes?: string[];
   // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): bản chính sách (sổ đăng ký 0079); engine chọn bản theo ngày chứng từ
   /** Bản đang mang nội dung trên (purchase_policy_versions / policy_registry) và băm nội dung. */
   version?: number;
@@ -407,12 +410,20 @@ export function policyApplies(p: Policy, ctx: { date: string; partnerCode?: stri
   if (p.validFrom && ctx.date < p.validFrom) return false;
   if (p.validTo && ctx.date > p.validTo) return false;
   const s = p.scope;
-  return (!s.partnerCode || s.partnerCode === ctx.partnerCode) && (!s.brandCode || s.brandCode === ctx.brandCode)
+  return (!s.partnerCode || s.partnerCode === ctx.partnerCode || Boolean(s.withChildren && ctx.partnerCode && p.familyCodes?.includes(ctx.partnerCode))) && (!s.brandCode || s.brandCode === ctx.brandCode)
     && (!s.sku || s.sku === ctx.sku) && (!s.branchCode || s.branchCode === ctx.branchCode);
+}
+/**
+ * Độ hẹp phạm vi để chọn chính sách: số ô phạm vi đã khai (không tính withChildren), cộng nửa điểm khi khai đúng NCC của phiếu
+ * — chính sách riêng của đơn vị con thắng chính sách đơn vị mẹ áp xuống.
+ */
+export function scopeRank(p: Pick<Policy, 'scope'>, partnerCode?: string): number {
+  const s = p.scope;
+  return [s.partnerCode, s.brandCode, s.sku, s.branchCode].filter(Boolean).length + (s.partnerCode && s.partnerCode === partnerCode ? 0.5 : 0);
 }
 /** Chính sách khớp nhất (phạm vi hẹp hơn, ưu tiên cao hơn đứng trước). */
 export function findPolicy(policies: Policy[], kind: PolicyKind, ctx: Parameters<typeof policyApplies>[1]): Policy | undefined {
-  const spec = (p: Policy) => Object.values(p.scope).filter(Boolean).length;
+  const spec = (p: Policy) => scopeRank(p, ctx.partnerCode);
   return policies.filter((p) => p.kind === kind && policyApplies(p, ctx)).sort((a, b) => spec(b) - spec(a) || (b.priority ?? 0) - (a.priority ?? 0))[0];
 }
 /**
@@ -427,7 +438,7 @@ export interface ItemDiscount { sku: string; pct?: number; amount?: number; unit
  * SL tối thiểu so sau khi quy về cùng ĐVT. Dòng đúng ĐVT được ưu tiên.
  */
 export function itemDiscountFor(policies: Policy[], ctx: Parameters<typeof policyApplies>[1] & { sku: string; unit?: string; qty: number; units?: ProductUnit[] }): { policy: Policy; item: ItemDiscount; factor: number } | undefined {
-  const spec = (p: Policy) => Object.values(p.scope).filter(Boolean).length;
+  const spec = (p: Policy) => scopeRank(p, ctx.partnerCode);
   const cands = policies.filter((p) => p.kind === 'item_discount' && policyApplies(p, { ...ctx, sku: undefined })).sort((a, b) => spec(b) - spec(a) || (b.priority ?? 0) - (a.priority ?? 0));
   const same = (a?: string, b?: string) => (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase();
   const us = ctx.units ?? [];
@@ -593,7 +604,7 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
     // — không cộng trùng). CK trên đơn không ghi mã vẫn áp cả đơn ở bước 2. Ghi vết là item_discount để không lẫn với CK đơn.
     if (pct === undefined && amt === undefined && l.lineType === 'buy' && (doc.kind === 'receipt' || doc.kind === 'order')) {
       const own = policies.filter((p) => p.kind === 'trade_discount' && p.scope.sku === l.sku && policyApplies(p, { ...ctxBase, brandCode: l.brandCode ?? doc.brandCode, sku: l.sku }))
-        .sort((a, b) => Object.values(b.scope).filter(Boolean).length - Object.values(a.scope).filter(Boolean).length || (b.priority ?? 0) - (a.priority ?? 0))[0];
+        .sort((a, b) => scopeRank(b, doc.partnerCode) - scopeRank(a, doc.partnerCode) || (b.priority ?? 0) - (a.priority ?? 0))[0];
       if (own) {
         if (num(own.rule.pct)) pct = num(own.rule.pct); else if (num(own.rule.amount)) amt = num(own.rule.amount);
         if (pct !== undefined || amt !== undefined) trace.push({ policy: own.code, kind: 'item_discount', text: `${l.sku}: ${pct ? `CK ${Number(pct).toLocaleString('vi-VN')}%` : `giảm ${num(own.rule.amount).toLocaleString('vi-VN')}đ`} trên đơn (riêng mã) — ${own.name}` });
