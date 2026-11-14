@@ -10,5 +10,6 @@ import docList from './actions/doc-list.js';
 import docReturnable from './actions/doc-returnable.js';
 import docUnapprove from './actions/doc-unapprove.js';
 import docUpdate from './actions/doc-update.js';
+import quoteGet from './actions/quote-get.js';
 
-export default defineModule({ manifest, actions: [docList, docGet, docCreate, docUpdate, docDelete, docApprove, docUnapprove, docReturnable], subscribers: [] });
+export default defineModule({ manifest, actions: [docList, docGet, docCreate, docUpdate, docDelete, docApprove, docUnapprove, docReturnable, quoteGet], subscribers: [] });

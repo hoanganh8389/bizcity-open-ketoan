@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Phiếu bán nhập tay: giá theo cửa hàng, cảnh báo tồn; ghi kết quả chạy thật về website (NT-BH-015 bước 2, NT-BH-017) <!-- [2026-11-14 03:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 bước 2 (đóng góp) -->
+
+- **Thêm:** `GET /api/v1/m/phieu-ban/quote` — giá theo bảng giá cửa hàng (như máy bán) và tồn theo sổ của kho.
+- **Đổi:** form phiếu bán / trả (BH10, BH11) điền đơn giá theo cửa hàng; dòng bán vượt tồn sổ hiện "tồn sổ còn X" (không chặn).
+- **Nâng cấp cần làm:** đơn vị đã kết nối app `tgs-wp` đồng ý phạm vi sự kiện mới (Tiện ích → Ứng dụng) để phiếu kế toán lập về website.
+- **Thay đổi định khoản:** không.
+
 ### Màn Khuyến mại BH18 — khai báo, thử tính, sửa, ngừng 6 loại khuyến mại (phiếu NT-BH-016, chữ chốt nghiep-vu/22) <!-- [2026-11-14 01:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-016 đợt 4a (đóng góp) -->
 
 - **Thêm:** màn **Khuyến mại** (`/app/pos/khuyen-mai`, module `pos`):

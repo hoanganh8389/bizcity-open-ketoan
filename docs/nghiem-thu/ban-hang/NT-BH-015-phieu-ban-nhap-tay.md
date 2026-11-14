@@ -73,12 +73,14 @@ Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàn
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
 | §5 dòng 1–2 | lưu máy chủ, số theo cửa hàng, chặn trùng | đúng — test `nt-bh-015`: CN01 `BH<yyMM>000001`, `…000002`; CN02 dãy riêng `…000001`; gõ số đã có → 400 "đã có ở chi nhánh CN01" | — | |
-| §5 dòng 3–4 | giá theo cửa hàng, gợi ý khuyến mại | **chưa làm** — màn vẫn điền giá bảng giá công ty, chưa gọi bộ tính chính sách | bước 2 | cần sửa form dùng chung `components/phieu-hang` (ngoài phạm vi) |
+| §5 dòng 3 (giá) | giá theo cửa hàng | **bước 2 (14/11)**: chọn mã → đơn giá theo bảng giá của cửa hàng (`/api/v1/m/phieu-ban/quote`, view `branch_prices` như máy bán), cửa hàng chưa có giá → giá công ty | — | |
+| §5 dòng 4 (khuyến mại) | gợi ý khuyến mại | **chưa làm** — để bước sau (cần quy đổi tiền giảm có thuế ↔ chưa thuế khớp phép tính lại của Core) | bước sau | |
 | §5 dòng 5 | duyệt → sổ | đúng — chứng từ `sale` posted, phiếu 2 hộp 648.000: Nợ 131x 648.000, Nợ = Có | — | |
 | §5 dòng 6 | bỏ duyệt đảo, duyệt lại | đúng — số dư chứng từ về 0; sửa 3 hộp, duyệt lại phiên bản 2: Nợ 131x 972.000 | — | |
 | §5 dòng 7 | trả nối gốc, không quá số bán | đúng — `TL<yyMM>000001` mang `originalDocKey`; còn trả được 2; trả 3 → 400 "còn trả được 2"; bỏ duyệt phiếu bán còn phiếu trả → 400 | — | |
 | §5 dòng 10 | báo phiếu thử cũ | màn hiện thông báo khi máy còn phiếu thử; bấm Đã hiểu thì bỏ | — | |
-| §6 dòng 1, 3 | cảnh báo tồn / chưa chuyển kho | **chưa làm** (không chặn, như máy bán) | bước 2 | |
+| §6 dòng 1 (vượt tồn) | cảnh báo, không chặn | **bước 2**: dòng bán vượt tồn sổ của kho đã chọn hiện "tồn sổ còn X"; test `quote`: bán 3 trả 1 → tồn −2 | — | |
+| §6 dòng 3 (chưa chuyển kho) | cảnh báo | chưa làm (chờ quy trình chuyển shop, chữ chốt §1) | — | |
 | §6 dòng 2, 5 | thiếu thuế / mã lạ; phiếu đã duyệt | đúng — báo đủ lỗi một lần; sửa / xoá phiếu đã duyệt → 409 | — | |
 
 ## 8. Biên bản nghiệm thu
@@ -89,4 +91,5 @@ Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàn
 | Ngày | Thay đổi |
 |---|---|
 | 13/11/2026 | Tạo phiếu |
+| 14/11/2026 | Bước 2: giá theo cửa hàng, cảnh báo tồn; khuyến mại để bước sau |
 | 13/11/2026 | Ghi kết quả bước 1 (lưu thật, số, duyệt / bỏ duyệt, trả); §5 dòng 3–4, §6 dòng 1, 3 sang bước 2 |

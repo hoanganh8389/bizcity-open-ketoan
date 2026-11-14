@@ -86,3 +86,13 @@ Các bước của cửa nhận `TGS_Acc_Ketoan_Events`:
 - **Website** (LocalWP shop2 tắt POS React + Docker): theo NT-BH-017 §5 dòng 1–9.
   - Cầu nối báo 0 phiếu bản sao bị gửi ngược.
   - Gửi lại cùng sự kiện không ghi thêm; chữ ký sai trả 401.
+
+## 6. Làm thật (14/11)
+<!-- [2026-11-14 03:30 PM Võ Hoàng] NGHIEM-THU — ghi điểm làm thật NT-BH-017 (đóng góp) -->
+
+| # | Chữ chốt | Làm thật |
+|---|---|---|
+| 1 | `tgs_pos` dùng lại lõi của cầu nối | Chưa đổi `TGS_POS_Ledger_Mirror` (giữ nguyên cho máy bán); lõi của cầu nối là bản chép, dùng chung bảng `tgs_pos_mirror`. Sự kiện `pos.*` tới cửa nhận của cầu nối được chuyển cho `TGS_POS_Ketoan_Events::process` |
+| 2 | — | Hàng rào ghi của tgs_pos (shop bật POS React) chặn bản sao của cầu nối → tgs_pos cho qua khi `TGS_Acc_Ledger_Mirror::is_mirroring()` (tgs_pos react 8e7ebc7) |
+| 3 | — | **Triển khai:** đơn vị đã kết nối app `tgs-wp` phải đồng ý phạm vi sự kiện mới (Tiện ích → Ứng dụng, hoặc `POST /api/v1/apps/:key/scope` (key `tgs-wp`)); sự kiện phát trước lúc đồng ý không được giao |
+| 4 | Phiếu trả | Vào hàng chờ (chưa có mẫu phiếu nhập trả của POS cũ) |
