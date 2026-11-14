@@ -82,6 +82,8 @@ COPY --from=conformance /tmp/scoreboard.json build/scoreboard.json
 COPY docs/contracts/bizcity-settings.registry.json docs/contracts/bizcity-settings.registry.json
 # [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: thư viện dùng chung (packages/platform/src/core/libraries đọc libraries/*/library.json lúc chạy; thiếu thư mục thì API trả danh sách rỗng)
 COPY libraries libraries
+# [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: gói mẫu theo ngành (presets/<id>/) cho máy chủ chạy (core.setup.*, PRESETS_DIR = /app/presets)
+COPY presets presets
 COPY docker/api-entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 WORKDIR /app/apps/api

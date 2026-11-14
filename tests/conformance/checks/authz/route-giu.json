@@ -22,6 +22,7 @@
     { "route": "POST /api/v1/documents", "class": "giao-thuc" },
     { "route": "POST /api/v1/documents/batch", "class": "giao-thuc" },
     { "route": "POST /api/v1/system/modules/:key/seed", "class": "quyen" },
+    { "route": "POST /api/v1/setup/presets/:id/apply", "class": "quyen", "$comment": "[2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 (PHASE-036 · 00 §11): nạp gói mẫu chạy nền, gọi lại action Core với AuthContext người bấm — mỗi bản ghi có bằng chứng của action con" },
     { "route": "POST /api/v1/purchase/demo/seed", "class": "quyen" },
     { "route": "POST /api/v1/purchase/demo/warehouses", "class": "quyen" },
     { "route": "POST /api/v1/purchase/demo/clear", "class": "quyen" }
