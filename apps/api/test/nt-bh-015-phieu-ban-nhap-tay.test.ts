@@ -194,4 +194,43 @@ describe.skipIf(!HAS)('NT-BH-015 — phiếu bán / trả nhập tay vào sổ t
     expect(gift.itemId).toBeUndefined();
     expect(p.policyRefs?.every((r) => r.hash)).toBe(true);
   });
+
+  // [2026-11-15 01:30 PM Võ Hoàng] NGHIEM-THU — đóng NT-BH-015: §5 dòng 8, 9; §6 dòng 4 (đóng góp)
+  it('§5 dòng 8: hoá đơn ghi tay (số, ký hiệu) → duyệt thì vào sổ hoá đơn — nguồn bảng kê bán ra', async () => {
+    const c = await req('POST', '/docs', sale({ invoice: { no: '0001234', serial: '1C26TAA', date: TODAY } }));
+    expect(c.statusCode, c.body).toBe(200);
+    const id = c.json().data.id as string;
+    expect((await req('POST', `/docs/${id}/approve`)).statusCode).toBe(200);
+    const inv = (await sql<{ invoice_no: string; invoice_serial: string }>`
+      SELECT t.invoice_no, t.invoice_serial FROM tax_invoices t JOIN accounting_events a ON a.id = t.event_id
+       WHERE a.tenant_id = ${tenantId} AND a.doc_key = ${`phieu-ban:${id}`}`.execute(db)).rows;
+    expect(inv).toEqual([{ invoice_no: '0001234', invoice_serial: '1C26TAA' }]);
+  });
+
+  it('§5 dòng 9: danh sách lọc cửa hàng, trạng thái; tìm theo số hoá đơn / mã khách; mỗi dòng có cửa hàng cạnh số phiếu', async () => {
+    const list = async (q: string) => (await app.inject({ method: 'GET', url: `${M}/docs?docType=sale&${q}`, headers: auth() })).json().data as { docNo: string; branchCode: string; status: string; invoice?: { no: string } }[];
+    const cn02 = await list('branchCodes=CN02');
+    expect(cn02.length).toBeGreaterThan(0);
+    expect(cn02.every((d) => d.branchCode === 'CN02')).toBe(true);
+    expect((await list('status=approved')).every((d) => d.status === 'approved')).toBe(true);
+    expect((await list('status=draft')).every((d) => d.status === 'draft')).toBe(true);
+    const byInv = await list('search=0001234');
+    expect(byInv.length).toBe(1);
+    expect(byInv[0]!.invoice?.no).toBe('0001234');
+    expect((await list('search=KH001')).length).toBeGreaterThan(0);
+    expect((await list(`from=${TODAY}&to=${TODAY}&branchCodes=CN01`)).every((d) => d.branchCode === 'CN01')).toBe(true);
+  });
+
+  it('§6 dòng 4: kỳ đã khoá → duyệt bị chặn, phiếu vẫn nháp', async () => {
+    const c = await req('POST', '/docs', sale({ docDate: '2026-01-15' }));
+    expect(c.statusCode, c.body).toBe(200);
+    const id = c.json().data.id as string;
+    const lock = await call(ctx, 'POST', '/api/v1/periods/locks', { year: 2026, month: 1, branchCode: 'CN01', docType: 'sale', acceptDiagnostics: 'NT-BH-015 §6 dòng 4 — khoá thử' });
+    expect(lock.status, JSON.stringify(lock.body)).toBe(200);
+    const a = await req('POST', `/docs/${id}/approve`);
+    expect(a.statusCode, a.body).toBeGreaterThanOrEqual(400);
+    expect(a.body).toMatch(/khoá|PERIOD_LOCKED/i);
+    const g = await app.inject({ method: 'GET', url: `${M}/docs/${id}`, headers: auth() });
+    expect(g.json().data.status).toBe('draft');
+  });
 });
