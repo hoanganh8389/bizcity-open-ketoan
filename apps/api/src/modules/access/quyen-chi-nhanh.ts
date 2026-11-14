@@ -185,11 +185,12 @@ async function raSoat(tenantId: string) {
        AND a.valid_from <= ${TODAY_VN} AND (a.valid_to IS NULL OR a.valid_to >= ${TODAY_VN})
        AND (a.tenant_role_id IS NULL OR r.is_active)
      ORDER BY u.email, code`.execute(db);
+  const TEN: Record<string, string> = { owner: 'Chủ đơn vị', chief_accountant: 'Kế toán trưởng', accountant: 'Kế toán', viewer: 'Người xem', developer: 'Nhà phát triển', auditor: 'Kiểm soát' };
   const by = new Map<string, { userId: string; email: string; fullName: string; role: string; branches: string[]; ganTai: string[]; camTai: string[] }>();
   for (const x of rows) {
     if (!x.code) continue;
     const o = by.get(x.user_id) ?? by.set(x.user_id, { userId: x.user_id, email: x.email, fullName: x.full_name, role: x.role, branches: [], ganTai: [], camTai: [] }).get(x.user_id)!;
-    o.ganTai.push(`${x.vai_tro} tại ${x.scope_type === 'warehouse' ? 'kho của ' : ''}${x.code}`);
+    o.ganTai.push(`${TEN[x.vai_tro ?? ''] ?? x.vai_tro} tại ${x.scope_type === 'warehouse' ? 'kho của ' : ''}${x.code}`);
     if (x.kind === 'restriction') { if (!o.camTai.includes(x.code)) o.camTai.push(x.code); }
     else if (!o.branches.includes(x.code)) o.branches.push(x.code);
   }
