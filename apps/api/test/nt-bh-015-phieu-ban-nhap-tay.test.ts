@@ -19,7 +19,7 @@ import { call, setupTenant, type TestCtx } from './helpers.js';
 const DIR = fileURLToPath(new URL('../../../modules/phieu-ban/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/phieu-ban';
-const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners'];
+const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand'];
 const TODAY = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 const PERIOD = `${TODAY.slice(2, 4)}${TODAY.slice(5, 7)}`;
 
@@ -139,5 +139,13 @@ describe.skipIf(!HAS)('NT-BH-015 — phiếu bán / trả nhập tay vào sổ t
     const u = await req('POST', `/docs/${saleId}/unapprove`, {});
     expect(u.statusCode).toBe(400);
     expect(u.json().error.message).toContain('bỏ duyệt phiếu trả trước');
+  });
+
+  // [2026-11-14 03:20 PM Võ Hoàng] NGHIEM-THU — bước 2: giá theo cửa hàng + tồn sổ cho form (đóng góp)
+  it('bước 2: quote — mặt hàng, mã thuế, tồn theo sổ của chi nhánh (sau bán 3 trả 1 → −2); mã lạ không có; thiếu chi nhánh → rỗng', async () => {
+    const r = await app.inject({ method: 'GET', url: `${M}/quote?branch=CN01&skus=SUA330,KHONG-CO`, headers: auth() });
+    expect(r.statusCode, r.body).toBe(200);
+    expect(r.json().data).toEqual([expect.objectContaining({ sku: 'SUA330', taxCode: 'R08', stock: -2 })]);
+    expect((await app.inject({ method: 'GET', url: `${M}/quote?skus=SUA330`, headers: auth() })).json().data).toEqual([]);
   });
 });

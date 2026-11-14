@@ -30,6 +30,7 @@ Ghi (nháp) ──► Duyệt ──► ctx.ledger.submit(sale | sale_return, do
 |---|---|---|
 | GET | `/docs?docType=&from=&to=&branchCodes=&status=&search=&page=&pageSize=` | `phieu-ban:read` |
 | GET | `/docs/:id`, `/docs/:id/returnable` | `phieu-ban:read` |
+| GET | `/quote?branch=&warehouse=&skus=` (giá theo cửa hàng, tồn sổ — cho form) | `phieu-ban:read` |
 | POST / PUT / DELETE | `/docs`, `/docs/:id` (nháp) | `phieu-ban:write` |
 | POST | `/docs/:id/approve`, `/docs/:id/unapprove` | `phieu-ban:write` |
 
@@ -37,6 +38,6 @@ Khuôn dữ liệu: `TradeDoc` ([docs/api/13-phieu-nhap-tay.md](../../docs/api/1
 
 ## Chưa làm (đợt sau)
 
-- Giá theo bảng giá cửa hàng và khuyến mại / chương trình bán (`core.policy.evaluate`) trên màn nhập — cần sửa form dùng chung `components/phieu-hang`.
+- Khuyến mại / chương trình bán (`core.policy.evaluate`) trên màn nhập. (Giá theo cửa hàng + cảnh báo tồn: đã có từ 14/11 — `GET /api/v1/m/phieu-ban/quote`.)
 - Phát hành hoá đơn điện tử từ phiếu (NT-BH-015 Q1).
 - Chặn vượt hạn mức nợ khách (Q2, đợt 4).

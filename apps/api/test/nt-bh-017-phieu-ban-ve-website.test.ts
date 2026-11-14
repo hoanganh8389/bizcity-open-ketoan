@@ -18,7 +18,7 @@ import { call, setupTenant, type TestCtx } from './helpers.js';
 const DIR = fileURLToPath(new URL('../../../modules/phieu-ban/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/phieu-ban';
-const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners'];
+const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand'];
 const TODAY = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 
 describe.skipIf(!HAS)('NT-BH-017 — phiếu kế toán lập phát sự kiện cho bản sao website', () => {

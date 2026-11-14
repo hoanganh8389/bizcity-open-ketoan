@@ -6,6 +6,8 @@
  *   Dòng hàng: chọn mã hàng → tự điền tên, ĐVT, đơn giá trước thuế (bán: từ bảng giá công ty đã gồm thuế), loại thuế
  *   của mặt hàng; tiền tự tính.
  *   Thu tiền (bán / trả lại): các khoản theo hình thức thanh toán; để trống = ghi công nợ.
+ *   Phiếu bán / trả (module phieu-ban, NT-BH-015 bước 2): đơn giá theo bảng giá CỦA CỬA HÀNG (như máy bán); dòng bán vượt tồn
+ *   theo sổ của kho đã chọn hiện cảnh báo "tồn sổ còn X" (không chặn — giá vốn tính cuối tháng).
  * Danh mục (mặt hàng, đối tượng, chi nhánh, hình thức thanh toán) đọc từ API thật; chỉ phần LƯU phiếu theo nguồn dữ liệu.
  */
 import { useEffect, useRef, useState } from 'react';
@@ -21,6 +23,10 @@ import { PrintButton } from '@/components/print';
 import { TRADE_TEMPLATES } from './printTemplates';
 import { ChonKho, khoLabel, useKho } from './ChonKho';
 import { DocumentGateBanner, useDocumentGate } from '@/components/PostingGate';
+// [2026-11-14 03:10 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 bước 2: giá theo cửa hàng, cảnh báo tồn cho phiếu bán / trả (đóng góp)
+
+/** Giá theo cửa hàng + tồn sổ của module phieu-ban (GET /api/v1/m/phieu-ban/quote). */
+interface Quote { sku: string; unit: string; ratio: number; price: number | null; taxCode: string | null; stock: number }
 
 interface CatalogProduct { sku: string; name: string; unit: string; taxOutCode: string | null; taxInCode: string | null; units: { unit: string; isDefault: boolean }[]; prices: { unit: string; price: number | null }[] }
 interface PaymentMethod { code: string; name: string; isActive?: boolean }
@@ -59,6 +65,19 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
   const taxOptions = info.taxDir ? TAX_OPTIONS[info.taxDir] : [];
   const khoAll = useKho();
   const khoName = info.isTransfer ? `${khoLabel(khoAll, v.warehouseCode)} → ${khoLabel(khoAll, v.toWarehouseCode)}` : khoLabel(khoAll, v.warehouseCode);
+  /** Phiếu bán / trả: giá theo cửa hàng + tồn sổ (theo kho đã chọn) — các loại phiếu khác không dùng. */
+  const useQuote = v.docType === 'sale' || v.docType === 'sale_return';
+  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
+  const fetchQuote = async (skus: string[]): Promise<Quote[]> => {
+    if (!useQuote || !v.branchCode || !skus.length) return [];
+    return api.get<Quote[]>('/api/v1/m/phieu-ban/quote', { branch: v.branchCode, warehouse: v.warehouseCode ?? '', skus: skus.join(',') }).catch(() => []);
+  };
+  // Đổi cửa hàng / kho → đọc lại tồn của mọi dòng (giá đã điền giữ nguyên, người lập tự sửa nếu cần).
+  useEffect(() => {
+    if (readOnly || !useQuote) return;
+    const skus = [...new Set(v.lines.map((l) => l.sku).filter(Boolean))];
+    void fetchQuote(skus).then((rows) => setQuotes(Object.fromEntries(rows.map((q) => [q.sku, q]))));
+  }, [v.branchCode, v.warehouseCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Chọn mã hàng → điền tên, ĐVT bán chính, đơn giá bảng giá công ty, loại thuế của mặt hàng. */
   const pickItem = async (i: number, sku: string) => {
@@ -72,8 +91,12 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
       // Bảng giá bán là giá ĐÃ gồm thuế → quy về đơn giá trước thuế (phiếu tính thuế trên tiền trước thuế). Mua hàng: chưa có
       // giá nhập trong danh mục → để 0 cho người nhập gõ theo hoá đơn.
       const rate = TAX_RATES[taxCode ?? ''] ?? 0;
-      const unitPrice = info.isTransfer ? undefined : info.taxDir === 'output' && price ? roundPrice(price / (1 + rate / 100)) : 0;
-      setLine(i, { sku, name: p.name, unit, unitPrice, taxCode });
+      // Phiếu bán / trả: giá theo bảng giá của cửa hàng (đã gồm thuế, ĐVT mặc định); cửa hàng chưa có giá → giá công ty như cũ.
+      const q = (await fetchQuote([sku]))[0];
+      if (q) setQuotes((x) => ({ ...x, [sku]: q }));
+      const shopPrice = q?.price ?? null;
+      const unitPrice = info.isTransfer ? undefined : info.taxDir === 'output' && (shopPrice ?? price) ? roundPrice((shopPrice ?? price)! / (1 + rate / 100)) : 0;
+      setLine(i, { sku, name: p.name, unit: shopPrice !== null && q?.unit ? q.unit : unit, unitPrice, taxCode });
     } catch { /* mã chỉ có ở kho, chưa có trong danh mục hàng: giữ mã, nhập tay tên */ }
   };
   const addLine = () => set({ lines: [...v.lines, { lineKey: lineKey(), sku: '', name: '', unit: '', qty: 1, unitPrice: 0, amountBeforeTax: 0, taxCode: info.taxDir === 'input' ? 'V08' : info.taxDir === 'output' ? 'R08' : undefined }] });
@@ -163,7 +186,13 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
                   <td><input className="input" value={l.name} disabled={readOnly} onChange={(e) => setLine(i, { name: e.target.value })} /></td>
                   <td><input className="input" value={l.unit} disabled={readOnly} onChange={(e) => setLine(i, { unit: e.target.value })} /></td>
                   <td className="muted" style={{ fontSize: 12 }}>{khoName}</td>
-                  <td><NumInput value={l.qty} disabled={readOnly} onChange={(n) => setLine(i, { qty: n ?? 0 })} /></td>
+                  <td>
+                    <NumInput value={l.qty} disabled={readOnly} onChange={(n) => setLine(i, { qty: n ?? 0 })} />
+                    {/* Bán vượt tồn theo sổ của kho đã chọn: chỉ cảnh báo (máy bán cũng không chặn). */}
+                    {!readOnly && v.docType === 'sale' && quotes[l.sku] && l.qty * (quotes[l.sku]!.ratio || 1) > quotes[l.sku]!.stock && (
+                      <div className="muted" style={{ color: 'var(--warn, #b45309)', fontSize: 11 }} title="Tồn theo sổ kế toán của kho đã chọn (ĐVT nhỏ nhất)">tồn sổ còn {quotes[l.sku]!.stock.toLocaleString('vi-VN')}</div>
+                    )}
+                  </td>
                   {!info.isTransfer && <>
                     <td><NumInput value={l.unitPrice} disabled={readOnly || l.isGift} title="Đơn giá có thể có số lẻ: gõ dấu phẩy, vd 506.018,52" onChange={(n) => setLine(i, { unitPrice: n ?? 0 })} /></td>
                     <td><input className="input num" value={money(l.discount)} disabled={readOnly || l.isGift} onChange={(e) => setLine(i, { discount: num(e.target.value) })} /></td>

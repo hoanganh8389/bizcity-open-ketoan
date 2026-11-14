@@ -18,7 +18,7 @@
   "data": {
     "schema": "mod_phieu_ban",
     "tables": ["docs", "code_counters"],
-    "reads": ["bizcity_read.branches", "bizcity_read.products", "bizcity_read.tax_codes", "bizcity_read.payment_methods", "bizcity_read.partners"]
+    "reads": ["bizcity_read.branches", "bizcity_read.products", "bizcity_read.tax_codes", "bizcity_read.payment_methods", "bizcity_read.partners", "bizcity_read.branch_prices", "bizcity_read.stock_on_hand"]
   },
   "actions": [
     "phieu-ban.doc.list",
@@ -28,7 +28,8 @@
     "phieu-ban.doc.delete",
     "phieu-ban.doc.approve",
     "phieu-ban.doc.unapprove",
-    "phieu-ban.doc.returnable"
+    "phieu-ban.doc.returnable",
+    "phieu-ban.quote.get"
   ],
   "ledger": {
     "submits": [
