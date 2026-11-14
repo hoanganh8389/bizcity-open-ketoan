@@ -42,7 +42,7 @@ Cài mới (cai-nhanh.sh / docker compose up)
   └─ job db-migrate: migration → seed() → [BIZCITY_SAMPLE ≠ off và CSDL vừa khởi tạo]
         └─ tạo đơn vị "Công ty mẫu" (is_sample) → core.setup.apply(thuong-mai-ban-le)
 Đăng nhập
-  ├─ đơn vị đang dùng TRẮNG + quyền settings:write → mở hộp thoại Thiết lập nhanh (một lần; tắt được, mở lại ở menu TI09)
+  ├─ đơn vị đang dùng TRẮNG + quyền settings:write → mở hộp thoại Thiết lập nhanh (một lần; tắt được, mở lại ở menu TI15 — §12) <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — TI09 đã dùng (Hướng dẫn sử dụng) → TI15 -->
   │     ├─ "Xem công ty mẫu"            → chuyển sang đơn vị mẫu (tạo + nạp nếu chưa có) → Tổng quan có số
   │     └─ "Thiết lập công ty của tôi"  → nạp cấu hình + danh mục chuẩn vào đơn vị này (không nghiệp vụ mẫu)
   ├─ đơn vị mẫu → biểu ngữ "Dữ liệu mẫu · Bắt đầu với công ty của bạn"
@@ -51,7 +51,7 @@ Cài mới (cai-nhanh.sh / docker compose up)
 
 ## 4. Hộp thoại Thiết lập nhanh (UI / UX)
 
-Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-lap-nhanh.html). Dựng trên `Modal` của ui-kit (thêm `Steps` — thành phần chỉ báo bước, đề xuất vào ui-kit, R-KER-8: ≥ 2 màn dùng — hộp thoại này và nhập Excel). Màn ở module mới `modules/thiet-lap/` (ADR-0024), mã màn **TI09**.
+Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-lap-nhanh.html). Dựng trên `Modal` của ui-kit (thêm `Steps` — thành phần chỉ báo bước, đề xuất vào ui-kit, R-KER-8: ≥ 2 màn dùng — hộp thoại này và nhập Excel). Màn ở module mới `modules/thiet-lap/` (ADR-0024), mã màn **TI15** (§12). <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — TI09 → TI15 -->
 
 **Khi nào hiện:** đơn vị trắng (D036-1) **và** người dùng có `settings:write` **và** chưa bấm "Để sau" trong phiên. Người không có quyền thấy biểu ngữ "Đơn vị chưa có dữ liệu — nhờ chủ đơn vị thiết lập".
 
@@ -101,7 +101,7 @@ Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-l
 |---|---|---|---|
 | B1 | `tenantEmptiness()` + `core.setup.status`; biểu ngữ "Đơn vị chưa có dữ liệu" ở Tổng quan | Cài mới vào là được chỉ đường, không còn màn "—" | K1 |
 | B2 | `core.setup.plan` / `apply` chạy preset có sẵn ở máy chủ; `cai-preset.mjs` gọi qua đây | Một nút nạp 3 chứng từ mẫu → B01 / B02 có số | K1 |
-| B3 | Hộp thoại 4 bước (`modules/thiet-lap/`, TI09) + `Steps` ở ui-kit | Kế toán tự nạp không cần dòng lệnh | R1 |
+| B3 | Hộp thoại 4 bước (`modules/thiet-lap/`, TI15 — §12) + `Steps` ở ui-kit | Kế toán tự nạp không cần dòng lệnh | R1 |
 | B4 | Gói `thuong-mai-ban-le` 1.1 (preset 1.1.0: openings, vouchers, assets, close, returns) | 18 báo cáo đích có số, T036-1 | R2 |
 | B5 | Đơn vị mẫu riêng (`is_sample`, Q036-1) + tự nạp ở `db-migrate` (`BIZCITY_SAMPLE`) | Cài mới là có Công ty mẫu | K2 (migration, tạo đơn vị) |
 | B6 | TI08 an toàn (D036-9) + `cap-nhat.sh` kiểm sao lưu (D036-10) + `docs/ops/SAO-LUU-KHOI-PHUC.md` (D036-11) | Hết đường mất dữ liệu bằng một cú bấm | K1 |
@@ -256,3 +256,65 @@ Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định kho
 - `running` cũ → coi là `failed`.
 
 `apps/api/test/preset.test.ts` chạy `cai-preset.mjs` vào máy chủ thật như cũ.
+
+
+## 12. Chữ chốt B3 — hộp thoại Thiết lập nhanh (2026-11-14) <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B3 (S036-5): module thiet-lap TI15, lối vào ở biểu ngữ đơn vị trắng, chọn khối khi nạp, siết luật chạy tiếp, Steps ở ui-kit -->
+
+**Mã màn TI15.** TI09 đã là *Hướng dẫn sử dụng* (`GuidesPage.tsx`), TI14 là *Nhập dữ liệu từ Excel*. Các chỗ ghi TI09 ở trên đổi thành TI15.
+
+**Module `modules/thiet-lap/`** (ADR-0024, tạo bằng `npx bizcity module new thiet-lap --label "Thiết lập nhanh"`):
+
+- **Chỉ giao diện**, như `thu-vien`: phần máy chủ không action, không bảng, không migration.
+- Mọi việc đi qua API Core đã có: `core.setup.status`, `core.setup.presets`, `core.setup.plan`, `POST /api/v1/setup/presets/:id/apply`, `core.setup.run`, `GET` / `PUT /api/v1/tenant` (`core.tenant.update`).
+- Menu `/app/thiet-lap`, mã **TI15**, quyền `settings:write`. Màn chỉ dùng `@bizcity/ui-kit`.
+
+**Lối vào:** ở biểu ngữ *Đơn vị chưa có dữ liệu* (`apps/web/src/features/launcher/DonViTrang.tsx`, B1), **không** dùng slot `dashboard.widget`.
+
+- Lý do: Tổng quan vẽ khung thẻ có tiêu đề cho mọi widget, kể cả widget không có nội dung. Đơn vị đã có dữ liệu sẽ mang một thẻ rỗng mãi.
+- Khi module `thiet-lap` đang bật: nút chính *Thiết lập nhanh* (thay dòng "sắp có" của B1).
+- Người có `settings:write`, đơn vị trắng, chưa bấm *Để sau* trong phiên: hiện hộp nhắc một lần (*Bắt đầu* → TI15 · *Để sau*).
+- Module tắt: biểu ngữ như B1, không có nút.
+- Core chỉ biết đường dẫn của module, không import mã module.
+
+**Bốn bước** (thanh bước `Steps`, đi tới / lùi được tới khi bấm nạp):
+
+| Bước | Nội dung | Ghi chú |
+|---|---|---|
+| 1 Bắt đầu | Hai thẻ. **Thiết lập công ty của tôi** chọn sẵn. **Xem công ty mẫu** hiện mờ, ghi *"sắp có"* | Q036-1: dữ liệu mẫu ở đơn vị mẫu riêng (B5). B3 **không** nạp chứng từ mẫu vào đơn vị đang dùng |
+| 2 Công ty | Tên, MST, địa chỉ, điện thoại (điền sẵn từ `GET /api/v1/tenant`). Lưu bằng `core.tenant.update` khi bấm *Tiếp*; lỗi của máy chủ hiện ngay dưới ô. Chế độ kế toán (TT99) và phương pháp GTGT (khấu trừ) chỉ hiện, không chọn | Chưa có khoá cấu hình cho hai mục này; mỗi mục một lựa chọn |
+| 2 Công ty — ngành | Danh sách gói từ `core.setup.presets`. Ngành chưa có gói (Dịch vụ, Sản xuất, Xây dựng) hiện mờ *"sắp có"* | |
+| 3 Nạp gì | Từ `core.setup.plan`: mỗi khối một hàng (tên · tổng · đã có · sẽ thêm). **Cấu hình** luôn bật (khoá). **Danh mục mẫu** (chi nhánh, đối tượng, mặt hàng) tick được, mặc định tắt (Q036-5). **Chứng từ mẫu** không hiện ở đường "công ty của tôi". Dòng *Danh mục chuẩn* (hệ thống tài khoản…): "đã có từ lúc tạo đơn vị", kèm liên kết TI08 | `allowed = false` → hiện `reason`, khoá nút *Nạp dữ liệu* |
+| 4 Đang nạp → Xong | Gọi apply, rồi hỏi `core.setup.run` mỗi giây. Mỗi khối: chờ / đang chạy / xong (ghi, đã có) / lỗi (mã lỗi đầu + *Thử lại*). Xong: *Mở Tổng quan* và ba đường tiếp (số dư đầu kỳ, phiếu thu, TI08) | *Thử lại* = apply lại; phần đã có được bỏ qua |
+
+- Đóng giữa chừng không dừng việc nạp (máy chủ chạy nền). Mở lại TI15 mà `status.runs` còn lần `running` thì vào thẳng bước 4.
+- Lưới *"Báo cáo sẽ có số"* và dòng *Kiểm sổ* sau khi nạp làm ở B4 / B5. Đường "công ty của tôi" không có chứng từ nên báo cáo còn trống.
+
+**Đổi ở API (K1, `setup-run.ts`, `system.routes.ts`):**
+
+- `core.setup.plan` và apply nhận thêm `blocks`: danh sách khoá khối, cách nhau dấu phẩy (`branches,partners,products`).
+  - Khối `settings` luôn có. Khoá lạ → `VALIDATION`.
+  - Không gửi `blocks` → mọi khối, như B2.
+  - `sample=0` giữ nguyên nghĩa (chỉ `settings`).
+- Lần chạy chỉ ghi các khối đã chọn vào `steps`.
+- **Siết luật chạy tiếp.** Lỗ hổng của B2: trước đây chỉ cần "đã từng chạy cùng gói". Ví dụ: lần đầu chỉ nạp cấu hình → đơn vị nhập chứng từ thật → vẫn nạp được chứng từ mẫu.
+  - Luật mới: đơn vị **không trắng** chỉ chạy được khi các khối xin chạy **nằm trong** hợp các khối của những lần chạy trước của cùng gói.
+  - Ngoài trường hợp đó → `SETUP_NOT_EMPTY`, như cũ.
+  - Ca **T036-9**.
+
+**`Steps` ở `@bizcity/ui-kit`** (`packages/ui-kit/src/steps.tsx`, thành phần thuần như `LibraryPicker`):
+
+- `<Steps steps={['Bắt đầu', 'Công ty', 'Nạp gì', 'Xong']} current={i} />`: bước trước `current` là xong, bước `current` đang làm.
+- Vẽ bằng lớp CSS `.nx-steps` của thanh bước nhập Excel (TI14, `NhapExcelWizard.tsx`) → hai màn một kiểu, không thêm CSS (R-KER-8: hộp thoại này và TI14).
+- Chuyển `NhapExcelWizard.tsx` sang `<Steps>` là việc ghi cho người đóng góp; B3 **không** sửa tệp đó.
+- Thêm một dòng vào bảng [BIZCITY-EXTENSION §3b](../../contracts/BIZCITY-EXTENSION-v1.md).
+
+**Hướng dẫn:** `docs/huong-dan/thiet-lap-nhanh.md` (SC-DOC-6); sửa `docs/huong-dan/trang-chu.md` (nút mới ở biểu ngữ).
+
+**Kiểm:**
+
+- `setup-apply.test.ts` thêm:
+  - `blocks` chọn đúng khối, khoá lạ → 400;
+  - **T036-9**: chỉ nạp cấu hình → thêm chứng từ thật → xin khối chứng từ mẫu → `SETUP_NOT_EMPTY`; xin lại đúng khối đã chạy → được.
+- Test hợp đồng module (`modules/thiet-lap/test/`); `npx bizcity module check thiet-lap` ĐẠT.
+- Chạy thật trên giao diện, đơn vị trắng: đi hết bốn bước, có ảnh màn.
+- Phá thử luật chạy tiếp → test đỏ.

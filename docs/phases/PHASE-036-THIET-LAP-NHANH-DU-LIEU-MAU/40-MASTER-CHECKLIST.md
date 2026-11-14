@@ -11,7 +11,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S036-2 | Chủ dự án duyệt D036-1..12, trả Q036-1..6 | W0 | P0 | không | ✅ 2026-11-13 (chủ dự án: "theo đề nghị") |
 | S036-3 | B1 — `tenantEmptiness()` + `core.setup.status`; biểu ngữ đơn vị trắng ở Tổng quan | W1 | P0 | có | ✅ 2026-11-14 <!-- [2026-11-14 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3 chữ chốt ở 00 §10 --> |
 | S036-4 | B2 — `core.setup.plan` / `core.setup.apply` chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); `cai-preset.mjs` gọi qua đây | W1 | P0 | có | ✅ 2026-11-14 <!-- [2026-11-14 05:48 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 chữ chốt ở 00 §11 --> |
-| S036-5 | B3 — hộp thoại 4 bước `modules/thiet-lap/` (TI09) + `Steps` ở ui-kit; `docs/huong-dan/thiet-lap-nhanh.md` | W2 | P0 | có | ☐ |
+| S036-5 | B3 — hộp thoại 4 bước `modules/thiet-lap/` (TI15) + `Steps` ở ui-kit; `docs/huong-dan/thiet-lap-nhanh.md` | W2 | P0 | có | 🟡 2026-11-14 <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 bắt đầu; chữ chốt §12; TI09 → TI15 --> |
 | S036-6 | B4 — `bizcity_preset@1` 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói `thuong-mai-ban-le` 1.1; SC-PRESET-1 kiểm khối mới | W2 | P0 | có | ☐ |
 | S036-7 | B5 — đơn vị mẫu riêng (`tenants.is_sample`, migration, tạo / chuyển đơn vị) + tự nạp ở `db-migrate` (`BIZCITY_SAMPLE`); chặn gửi ra ngoài ở đơn vị mẫu | W3 | P1 | có | ☐ sau Q036-1, Q036-4 |
 | S036-8a | B6 — TI08 an toàn: xem trước bắt buộc có `previewToken`, `default_data_backups` (migration số kế tiếp) tự sao lưu trước khi ghi, chặn bộ giả lập trên đơn vị có bút toán, hộp thoại xem trước ([00 §9](00-MASTER-PLAN.md)) | W1 | P0 | có | ✅ 2026-11-13 |
@@ -32,6 +32,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | T036-6 | TI08 ghi xong → *Lấy lại bản trước* trả danh mục về đúng như trước | B6 |
 | T036-7 | Tệp gốc `_nguon: "gia-lap"` + đơn vị có chứng từ → quay về gốc bị chặn, báo dùng `SEEDS_DIR` | B6 |
 | T036-8 | `cap-nhat.sh` với bản sao lưu hỏng (tệp rỗng) → dừng trước khi nâng cấp, in lệnh lùi | B6 |
+| T036-9 | Chỉ nạp cấu hình → đơn vị có chứng từ thật → xin khối chứng từ mẫu → `SETUP_NOT_EMPTY`; xin lại đúng khối đã chạy → được <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — T036-9 (§12) --> | B3 |
 
 ## Nhật ký
 
