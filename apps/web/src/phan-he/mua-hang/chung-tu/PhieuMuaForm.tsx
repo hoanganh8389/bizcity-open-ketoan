@@ -51,6 +51,9 @@ import { HoaDonModal } from '../hoa-don/HoaDonModal';
 import type { InvoiceRow } from '../hoa-don/api';
 import { layPhieuIn, mauInCua } from './mauIn';
 
+/** Loại phiếu sửa sau duyệt bằng bản điều chỉnh (khớp ADJUST_KINDS phía máy chủ). */
+const ADJUST_KINDS: string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out', 'cost', 'rebate'];
+
 type Tab = 'hang' | 'thanh-toan' | 'hoa-don' | 'hach-toan' | 'gia-von' | 'tep' | 'tep-ncc' | 'lich-su';
 const LINE_TYPE: Record<LineType, string> = { buy: 'Hàng mua', gift_seller: 'KM người bán (chia giá)', gift_consumer: 'KM người tiêu dùng / quà' };
 const num = (s: string) => { const n = Number(s.replace(/\./g, '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
@@ -580,7 +583,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     <div className={`mh-sheet${dock.minimized ? ' is-min' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="mh-sheet-box" role="dialog" aria-modal="true" onDoubleClick={viewing && !frozen ? (e) => { if (!(e.target as HTMLElement).closest('button, a, .tab, .tabs')) setViewing(false); } : undefined}>
         <div className="mh-sheet-head" ref={(el) => { dock.headRef.current = el; }}>
-          <h2>{v.kind === 'rebate' && !v.rebate ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[v.kind]} {v.docNo || '(mới)'} <span className={`badge ${statusBadge(v.status)}`}>{STATUS_LABEL[v.status]}</span>{v.override && <span className="badge badge-warn" style={{ marginLeft: 6 }}>Duyệt ngoại lệ: {v.override.by}</span>}{outside && <span className="badge badge-warn" style={{ marginLeft: 6 }} title={v.outsideOrder?.by ? `Lý do: ${v.outsideOrder.reason}
+          <h2>{v.kind === 'rebate' && !v.rebate ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[v.kind]} {v.docNo || '(mới)'} {stored?.adjust ? <span className="badge badge-warn" title="Phiếu đã ghi sổ đang sửa; sổ còn theo bản đã duyệt">Đang điều chỉnh</span> : <span className={`badge ${statusBadge(v.status)}`}>{STATUS_LABEL[v.status]}</span>}{v.override && <span className="badge badge-warn" style={{ marginLeft: 6 }}>Duyệt ngoại lệ: {v.override.by}</span>}{outside && <span className="badge badge-warn" style={{ marginLeft: 6 }} title={v.outsideOrder?.by ? `Lý do: ${v.outsideOrder.reason}
 Duyệt: ${v.outsideOrder.by} · ${new Date(v.outsideOrder.at!).toLocaleString('vi-VN', { hour12: false })}${v.outsideOrder.reviewedBy ? `
 Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.outsideOrder.reviewNote}` : ''}` : ''}` : 'Phiếu nhập không theo đơn đặt nào — phải ghi lý do'}>Nhập ngoài đơn{v.outsideOrder?.reviewedBy ? ' · đã rà soát' : v.outsideOrder?.by ? ' · chờ rà soát' : ''}</span>}{dirty && !readOnly && <span className="badge badge-gray" style={{ marginLeft: 6 }}>chưa ghi</span>}{viewing && !frozen && <span className="badge badge-info" style={{ marginLeft: 6 }}>Đang xem — bấm Sửa để thay đổi</span>}</h2>
           {/* [2026-11-11 Nguyễn Văn Thủy] tổng tiền chữ lớn ở đầu phiếu như các form chứng từ khác (đóng góp) */}
@@ -828,6 +831,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
               </div>
             </fieldset>
 
+            {stored?.adjust && <div className="alert alert-warn" style={{ margin: '0 0 8px' }} title="Bút toán bản đã duyệt vẫn nằm trong sổ. Duyệt bản này: phần mềm đảo bút toán cũ (số âm) rồi ghi bút toán mới, cùng chứng từ kế toán">
+              <b>Đang điều chỉnh phiếu đã ghi sổ</b> — sổ vẫn theo bản đã duyệt ({stored!.adjust!.fromDocNos.join(', ') || 'chứng từ cũ'}) cho tới khi duyệt bản này. Lý do: {stored!.adjust!.reason} · {stored!.adjust!.by}, {new Date(stored!.adjust!.at).toLocaleString('vi-VN')}
+            </div>}
             <div className="tabs" style={{ padding: 0, marginBottom: 8 }}>{tabs.map(([k, l]) => <button key={k} className={`tab ${tab === k ? 'active' : ''}`} onClick={() => setTab(k)}>{l}</button>)}<button type="button" className="btn btn-xs" data-view-ok style={{ marginLeft: 'auto', alignSelf: 'center' }} onClick={() => setHeadOpen(!headOpen)} title={headOpen ? 'Thu gọn đầu phiếu thành một dòng — bảng hàng rộng chỗ hơn' : 'Mở lại đầu phiếu'}>{headOpen ? 'Thu gọn đầu phiếu ▴' : 'Mở đầu phiếu ▾'}</button></div>
 
             {tab === 'hang' && (<>
@@ -1119,6 +1125,12 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
               </>
             )}
 
+            {tab === 'lich-su' && !!stored?.adjustments?.length && <div className="mh-panel" style={{ marginBottom: 8 }}>
+              <b>Các lần điều chỉnh sau khi ghi sổ</b>
+              <table className="mh-mini" style={{ marginTop: 6 }}><thead><tr><th>Lập</th><th>Lý do</th><th>Duyệt</th><th>Thay đổi</th></tr></thead><tbody>
+                {stored!.adjustments!.map((x, i) => <tr key={i}><td>{x.by}<br /><small className="muted">{new Date(x.at).toLocaleString('vi-VN')}</small></td><td>{x.reason}</td><td>{x.approvedBy}<br /><small className="muted">{new Date(x.approvedAt).toLocaleString('vi-VN')}</small></td><td>{x.changes.length ? x.changes.join('; ') : <span className="muted">—</span>}</td></tr>)}
+              </tbody></table>
+            </div>}
             {tab === 'lich-su' && <div className="mh-panel">{v.docNo && !v.id.startsWith('new-') ? <LichSu docNo={v.docNo} title={`Lịch sử phiếu ${v.docNo}: ai tạo / sửa / duyệt, lúc nào, đổi gì`} /> : <div className="muted">Phiếu chưa ghi.</div>}</div>}
             {tab === 'tep-ncc' && <div className="mh-panel"><h4>Tệp của nhà cung cấp {v.partnerCode ? `${v.partnerCode} — ${names.partnerName(v.partnerCode)}` : ''} (hợp đồng, phụ lục, báo giá, CO / CQ… — dùng chung mọi phiếu của NCC, xem cả ở hồ sơ NCC)</h4>
               {v.partnerCode ? <TepDinhKem ownerType="partner" ownerId={v.partnerCode} defaultKind="hop_dong" /> : <div className="muted">Chọn nhà cung cấp trước.</div>}</div>}
@@ -1235,8 +1247,8 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             getDocs={() => layPhieuIn(v.id, { names, docs: data.docs }).then((p) => [p])} /></span>}
           {!readOnly && <button className="btn" disabled={busy || problems.length > 0} onClick={() => void save()}>Ghi</button>}
           {viewing && !frozen && <button className="btn btn-primary" onClick={() => setViewing(false)}>Sửa</button>}
-          {!frozen && v.status === 'draft' && <button className="btn" disabled={busy || problems.length > 0} onClick={() => void act((id) => purchaseApi.submit(id))}>Gửi duyệt</button>}
-          {!frozen && <button className={`btn ${viewing ? '' : 'btn-primary'}`} disabled={busy || problems.length > 0 || blocking.length > 0 || !a} title={blocking.map((c) => c.text).join('\n')} onClick={() => void act((id) => purchaseApi.approve(id))}>Duyệt (ghi sổ)</button>}
+          {!frozen && v.status === 'draft' && !stored?.adjust && <button className="btn" disabled={busy || problems.length > 0} onClick={() => void act((id) => purchaseApi.submit(id))}>Gửi duyệt</button>}
+          {!frozen && <button className={`btn ${viewing ? '' : 'btn-primary'}`} disabled={busy || problems.length > 0 || blocking.length > 0 || !a} title={blocking.map((c) => c.text).join('\n')} onClick={() => void act((id) => purchaseApi.approve(id))}>{stored?.adjust ? 'Duyệt điều chỉnh (đảo bản cũ, ghi bản mới)' : v.kind === 'order' ? 'Duyệt đơn' : 'Duyệt (ghi sổ)'}</button>}
           {!frozen && creditOnly && <button className="btn btn-danger" disabled={busy || problems.length > 0} onClick={() => {
             const reason = window.prompt(`Duyệt ngoại lệ (${blocking.map((c) => (c.code === 'po_none' ? 'nhập ngoài đơn' : c.code === 'code_swap' ? 'đổi mã so với đơn' : 'vượt hạn mức')).filter((x, i, a) => a.indexOf(x) === i).join(', ')}) — nhập lý do (ghi vào nhật ký, người duyệt chịu trách nhiệm):`);
             if (reason) void act((id) => purchaseApi.override(id, reason));
@@ -1245,8 +1257,18 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             const note = window.prompt('Rà soát phiếu nhập ngoài đơn — ghi chú (tuỳ chọn):', '');
             if (note !== null) void act((id) => purchaseApi.reviewOutside(id, note), false);
           }}>Đã rà soát nhập ngoài đơn</button>}
-          {v.status === 'approved' && <button className="btn" disabled={busy} onClick={() => { if (window.confirm('Bỏ duyệt: các chứng từ kế toán của phiếu này sẽ bị huỷ (đảo bút toán bằng số âm), phiếu về nháp. Tiếp tục?')) void act((id) => purchaseApi.unapprove(id), false); }}>Bỏ duyệt</button>}
-          {v.status !== 'cancelled' && !v.id.startsWith('new-') && v.status !== 'approved' && <button className="btn" disabled={busy} onClick={() => { if (window.confirm('Huỷ phiếu này?')) void act((id) => purchaseApi.cancel(id), false); }}>Huỷ phiếu</button>}
+          {/* [2026-11-15 Nguyễn Văn Thủy] nút sửa theo loại phiếu: đơn đặt (không ghi sổ) → Mở lại đơn; phiếu ghi sổ qua cổng chờ → Lập điều chỉnh; phiếu tiền → Huỷ ghi sổ (đóng góp) */}
+          {v.status === 'approved' && v.kind === 'order' && <button className="btn" disabled={busy} title="Đơn đặt không phát sinh kế toán. Đơn đã có phiếu nhập theo đơn thì không mở lại được (chỉ giảm phần còn lại / đóng đơn)" onClick={() => {
+            const reason = window.prompt('Mở lại đơn để sửa — ghi lý do (vd NCC đổi số lượng giao):', '');
+            if (reason && reason.trim().length >= 5) void act((id) => purchaseApi.unapprove(id, `Mở lại đơn: ${reason.trim()}`), false); else if (reason !== null) window.alert('Ghi lý do ít nhất 5 ký tự');
+          }}>Mở lại đơn</button>}
+          {v.status === 'approved' && ADJUST_KINDS.includes(v.kind) && <button className="btn" disabled={busy} title="Phiếu đã ghi sổ: lập bản điều chỉnh để sửa. Sổ giữ bản đang có cho tới khi duyệt bản điều chỉnh; khi duyệt, phần mềm đảo bút toán cũ và ghi bút toán mới" onClick={() => {
+            const reason = window.prompt('Lập điều chỉnh — ghi lý do (bắt buộc, lưu vào lịch sử phiếu):', '');
+            if (reason && reason.trim().length >= 5) void act((id) => purchaseApi.adjust(id, reason.trim()), false); else if (reason !== null) window.alert('Ghi lý do ít nhất 5 ký tự');
+          }}>Lập điều chỉnh</button>}
+          {v.status === 'approved' && (v.kind === 'payment' || v.kind === 'prepayment') && <button className="btn" disabled={busy} onClick={() => { if (window.confirm('Huỷ ghi sổ: phiếu chi / uỷ nhiệm chi của phiếu này bị huỷ (đảo bút toán bằng số âm), phiếu về nháp. Tiếp tục?')) void act((id) => purchaseApi.unapprove(id), false); }}>Huỷ ghi sổ</button>}
+          {stored?.adjust && <button className="btn" disabled={busy} title="Bỏ các thay đổi đang sửa, phiếu về đúng bản đã duyệt; sổ không đổi" onClick={() => { if (window.confirm('Huỷ điều chỉnh: bỏ các thay đổi, phiếu về bản đã duyệt. Tiếp tục?')) void act((id) => purchaseApi.adjustCancel(id), false); }}>Huỷ điều chỉnh</button>}
+          {v.status !== 'cancelled' && !v.id.startsWith('new-') && v.status !== 'approved' && !stored?.adjust && <button className="btn" disabled={busy} onClick={() => { if (window.confirm('Huỷ phiếu này?')) void act((id) => purchaseApi.cancel(id), false); }}>Huỷ phiếu</button>}
           <button className="btn" onClick={onClose}>Thoát</button>
         </div>
       </div>

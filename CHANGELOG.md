@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Mua hàng: sửa phiếu đã ghi sổ bằng bản điều chỉnh; đơn đặt "Mở lại đơn"; tách trạng thái phiếu / sổ <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** `POST /api/v1/purchase/documents/:id/adjust` (bắt buộc `reason` ≥ 5 ký tự) và `/adjust-cancel`. Lập điều chỉnh: phiếu về nháp để sửa, **bút toán bản đã duyệt giữ nguyên trong sổ**; duyệt bản điều chỉnh = gửi phiên bản mới cùng chứng từ kế toán → đảo bút toán cũ (số âm) + ghi bút toán mới; chứng từ kế toán bản cũ có mà bản mới không còn thì huỷ (đảo). Huỷ điều chỉnh: phiếu về đúng bản đã duyệt, sổ không đổi. Lịch sử phiếu lưu từng lần điều chỉnh (lý do, người lập / duyệt, thay đổi); nhật ký mua hàng thêm sự kiện lập / huỷ điều chỉnh.
+- **Đổi:** nút trên phiếu theo loại: đơn đặt (không ghi sổ) → "Mở lại đơn" (bắt buộc lý do; đơn đã có phiếu nhập thì không mở được); phiếu ghi sổ qua cổng chờ → "Lập điều chỉnh"; phiếu tiền → "Huỷ ghi sổ". Phiếu đang điều chỉnh không huỷ được (409) — huỷ điều chỉnh trước.
+- **Đổi:** danh sách chứng từ mua: cột Phiếu (có "Đang điều chỉnh") và cột Sổ (Không ghi sổ / Chưa vào sổ / Chờ định khoản / Đã ghi sổ / Lỗi / Đã đảo); cột mặc định theo loại phiếu. ACC14 đổi tên **Chứng từ chờ vào sổ**, vào nhóm Tổng hợp.
+
 ### Mua hàng, Bán hàng: vào là mở Luồng chi tiết; menu Mua hàng đủ theo sơ đồ; tồn max rõ tác nhân <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** `/nhom/mua-hang`, `/nhom/ban-hang` mở thẳng Luồng chi tiết; sơ đồ rút gọn là nút phụ (`?xem=rut-gon`). Sơ đồ rút gọn Mua hàng theo đúng các bước của luồng (tồn max → phân tích đặt hàng → đơn mua → nhận hàng → hoá đơn đầu vào → trả tiền; chuyển hàng xuống shop, trả lại / đổi, giảm giá / thưởng, công nợ đến hạn, giá vốn thực tế); bỏ ô chưa dùng (Hợp đồng mua hàng, Đơn đặt hàng / Giảm giá hàng bán ở Bán hàng).

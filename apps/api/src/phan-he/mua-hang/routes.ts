@@ -386,6 +386,23 @@ export const routesWriteActions: AnyActionDef[] = [
       return { count: res.count };
     },
   }),
+  // [2026-11-15 Nguyễn Văn Thủy] sửa phiếu đã ghi sổ bằng bản điều chỉnh: sổ giữ bản cũ tới khi duyệt bản mới (đóng góp)
+  defineAction({
+    id: 'mua-hang.purchase.documents-adjust', title: 'Lập điều chỉnh phiếu đã duyệt: về nháp để sửa, sổ giữ bản cũ tới khi duyệt bản điều chỉnh (body { reason })', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema.extend({ reason: z.string().trim().min(5).max(500) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/adjust' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.startAdjustIn(ctx.data.tx, ctx.legacyAuth, input.id, input.reason),
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.documents-adjust-cancel', title: 'Huỷ điều chỉnh: phiếu về bản đã duyệt, sổ không đổi', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/adjust-cancel' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.cancelAdjustIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
   // [2026-11-03 06:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4: bỏ duyệt trong giao dịch của action (huỷ chứng từ con + về nháp cùng lúc)
   defineAction({
     id: 'mua-hang.purchase.documents-unapprove', title: 'Bỏ duyệt: huỷ chứng từ kế toán đã sinh, về nháp (body tuỳ chọn { reason })', tags,

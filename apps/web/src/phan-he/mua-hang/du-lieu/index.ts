@@ -18,6 +18,10 @@ export interface StoredDoc extends PDoc {
   debt?: { owed: number; owedPaid: number; advance: number; advanceUsed: number };
   /** Trạng thái sổ do máy chủ gộp: none = loại không ghi sổ (đơn đặt). */
   ledger?: 'none' | 'not_sent' | 'pending' | 'posted' | 'error' | 'cancelled';
+  /** Đang điều chỉnh phiếu đã ghi sổ: sổ còn theo bản đã duyệt cho tới khi duyệt bản này. */
+  adjust?: { reason: string; by: string; at: string; fromRevision: number; fromDocNos: string[] };
+  /** Các lần điều chỉnh đã duyệt. */
+  adjustments?: { reason: string; by: string; at: string; fromRevision: number; fromDocNos: string[]; approvedBy: string; approvedAt: string; changes: string[] }[];
   dueDate?: string;
   isDemo: boolean;
   createdByName: string;
@@ -124,7 +128,10 @@ export const purchaseApi = {
   override: (id: string, reason: string) => api.post<StoredDoc>(`${P}/documents/${id}/override`, { reason }),
   /** Rà soát phiếu nhập ngoài đơn đã duyệt. */
   reviewOutside: (id: string, note: string) => api.post<StoredDoc>(`${P}/documents/${id}/review-outside`, { note }),
-  unapprove: (id: string) => api.post<StoredDoc>(`${P}/documents/${id}/unapprove`, {}),
+  unapprove: (id: string, reason?: string) => api.post<StoredDoc>(`${P}/documents/${id}/unapprove`, reason ? { reason } : {}),
+  /** Lập bản điều chỉnh cho phiếu đã ghi sổ (sổ giữ bản cũ tới khi duyệt bản điều chỉnh). */
+  adjust: (id: string, reason: string) => api.post<StoredDoc>(`${P}/documents/${id}/adjust`, { reason }),
+  adjustCancel: (id: string) => api.post<StoredDoc>(`${P}/documents/${id}/adjust-cancel`),
   cancel: (id: string) => api.post<StoredDoc>(`${P}/documents/${id}/cancel`),
   deletePolicy: (id: string) => api.delete(`${P}/policies/${id}`),
   deleteSupplierProduct: (id: string) => api.delete(`${P}/supplier-products/${id}`),

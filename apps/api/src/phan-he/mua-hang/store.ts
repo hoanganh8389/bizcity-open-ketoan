@@ -102,7 +102,7 @@ export const docInputSchema = z.object({
 export type DocInput = z.infer<typeof docInputSchema>;
 
 /** Phần lưu ở cột data (jsonb). */
-const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies'] as const;
+const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments'] as const;
 
 type Row = Awaited<ReturnType<typeof selectDocs>>[number];
 function selectDocs(trx: Db, tenantId: string) {
@@ -182,7 +182,14 @@ export interface StoredDoc extends PDoc {
   /** [2026-11-15 Nguyễn Văn Thủy] Trạng thái sổ (withLedgerStatus): none = loại không ghi sổ (đơn đặt); not_sent = chưa duyệt, chưa gửi
    *  vào cổng chờ; pending = đang chờ định khoản (kể cả có phiên bản mới, sổ còn theo bản cũ); posted; error; cancelled (đóng góp) */
   ledger?: LedgerStatus;
+  /** [2026-11-15 Nguyễn Văn Thủy] Đang điều chỉnh phiếu đã ghi sổ (bản nháp mới; sổ còn theo bản cũ cho tới khi duyệt) (đóng góp) */
+  adjust?: AdjustInfo;
+  /** Các lần điều chỉnh đã duyệt (lịch sử phiên bản). */
+  adjustments?: (AdjustInfo & { approvedBy: string; approvedAt: string; changes: string[] })[];
 }
+export interface AdjustInfo { reason: string; by: string; at: string; fromRevision: number; fromDocNos: string[]; snapshot?: Record<string, unknown> }
+/** Loại phiếu sửa sau duyệt bằng BẢN ĐIỀU CHỈNH (ghi sổ qua cổng chờ: đảo bản cũ + ghi bản mới). Phiếu tiền (trả tiền, ứng trước) dùng huỷ. */
+export const ADJUST_KINDS: readonly string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out', 'cost', 'rebate'];
 export type LedgerStatus = 'none' | 'not_sent' | 'pending' | 'posted' | 'error' | 'cancelled';
 /** Loại phiếu KHÔNG phát sinh kế toán (loại A): chỉ có trạng thái phiếu, không bao giờ vào cổng chờ / sổ. */
 export const NO_LEDGER_KINDS: readonly string[] = ['order'];
@@ -249,7 +256,7 @@ export function toDoc(r: Row): StoredDoc {
     invoice: r.invoice_no ? { no: r.invoice_no, serial: r.invoice_serial || undefined, date: String(r.invoice_date ?? r.doc_date).slice(0, 10), total: d.invoiceTotal } : undefined,
     orderDiscount: d.orderDiscount, term: d.term, cktt: d.cktt, lines: d.lines ?? [], schedule: d.schedule, amount: d.amount, method: d.method, moneyAccount: d.moneyAccount || undefined, ckttAmount: d.ckttAmount,
     taxCode: d.taxCode, costType: d.costType, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
-    override: d.override, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies,
+    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies,
     revision: r.revision, links: (r.links ?? []) as StoredDoc['links'],
     totals: { beforeTax: toNumber(r.total_before_tax), tax: toNumber(r.total_tax), total: toNumber(r.total) },
     dueDate: r.due_date ? String(r.due_date).slice(0, 10) : undefined,
