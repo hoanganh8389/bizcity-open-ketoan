@@ -1,10 +1,11 @@
 # NT-BH-020 · Tích điểm thành viên ở máy bán: sổ điểm ở phần mềm kế toán
 <!-- [2026-11-15 09:35 PM Võ Hoàng] NGHIEM-THU — tạo phiếu: tích điểm / voucher máy bán còn chạy dữ liệu giả (đóng góp) -->
 <!-- [2026-11-15 10:45 AM Võ Hoàng] NGHIEM-THU — chốt Q1–Q4: điểm chỉ hạch toán lúc đổi (đóng góp) -->
+<!-- [2026-11-15 03:00 PM Võ Hoàng] NGHIEM-THU — chia ba bước, số liệu bước 1, cách làm (đóng góp) -->
 
 | | |
 |---|---|
-| Phân hệ | Bán hàng (module `pos`) |
+| Phân hệ | Bán hàng — module mới `loyalty` (sổ điểm) + module `pos` (đổi điểm, bước 2) |
 | Màn hình | Máy bán POS React: khách → điểm, hạng; đổi điểm lấy quà / voucher; nhập mã voucher |
 | Bộ phận yêu cầu | Kế toán, kinh doanh (CRM) |
 | Ngày tạo | 15/11/2026 |
@@ -22,6 +23,18 @@ Phòng kế toán yêu cầu 4 việc: liên kết quản lý khách (CRM), **h�
 2. Khách đổi điểm lấy quà / voucher ở quầy → điểm trừ lô cũ trước; quà ra dòng 0đ (bill Z nếu mã Z — NT-BH-019).
 3. Trả hàng → điểm đã tích của phần trả **tự hoàn**.
 4. Cuối ngày: lô hết hạn tự ghi dòng hết hạn.
+
+## 4. Số liệu đầu vào (bước 1)
+
+Cửa hàng `CN01`. Chính sách website đẩy sang: `TICH10K` (loại 1: 1 điểm / 10.000đ, hạn 365 ngày), `THUONG1TR` (loại 4: đơn từ 1.000.000đ thưởng 20 điểm); hạng thành viên ×1, bạc từ 1.000 điểm ×1,2, vàng từ 5.000 điểm ×1,5; bật nhân hạng. Khách `0901234567`.
+
+| Tình huống | Kết quả |
+|---|---|
+| Đơn 325.000 | +32 điểm (lô hạn +365 ngày), số dư 32, hạng thành viên |
+| Đơn 1.300.000 | +150 điểm (130 + thưởng 20), số dư 182 |
+| Trả 650.000 của đơn 1.300.000 | −75 điểm (150 × 650.000 / 1.300.000, làm tròn xuống), số dư 107 |
+| Sự kiện giao lại / đơn đổi phiên bản | không thêm dòng |
+| Khách lẻ, đơn chờ thanh toán | không tích (đơn QR tích khi xác nhận tiền) |
 
 ## 5. Kết quả mong đợi (tóm tắt)
 
@@ -43,6 +56,12 @@ Phòng kế toán yêu cầu 4 việc: liên kết quản lý khách (CRM), **h�
 | Q3 | Điểm cũ ở website | nạp số dư đầu theo khách một lần (lô có hạn theo chính sách); ngày chốt số dư = ngày cửa hàng chuyển sang máy bán React |
 | Q4 | Thứ tự | sau NT-BH-019 (quà đổi điểm có thể là mã Z) |
 
+**Cách làm (15/11/2026)** — thiết kế đầy đủ ở `tgs_pos_react/docs/module-pos/70-TICH-DIEM.md`:
+- Module `modules/loyalty`, sổ `mod_loyalty.entries` chỉ thêm (dòng dương là lô có hạn, dòng âm phân bổ theo lô), khách khoá theo `partner_id`.
+- Chính sách của website: website đẩy `LoyaltyProgram` từng cửa hàng sang `PUT /api/v1/m/loyalty/program` (Cổng kế toán); module lưu từng phiên bản. Không nhận chính sách từ máy bán.
+- Tích / hoàn theo sự kiện `pos.order.recorded` / `pos.return.recorded` (subscriber của module, chống làm hai lần theo đơn / phiếu trả); bộ tính điểm chép từ máy bán (đã khớp PHP).
+- Bước 1: sổ điểm, tích, hoàn, máy bán đọc điểm thật (kiểm 1, 3). Bước 2: đổi điểm lấy quà / voucher (kiểm 2). Bước 3: hết hạn, nạp số dư đầu, báo cáo (kiểm 4, 5, 6).
+
 ## 7. Kết quả chạy
 Chưa chạy.
 
@@ -55,3 +74,4 @@ Chưa chạy.
 |---|---|
 | 15/11/2026 | Tạo phiếu (nháp) |
 | 15/11/2026 | Chốt Q1–Q4 |
+| 15/11/2026 | Chia ba bước, số liệu bước 1, cách làm |
