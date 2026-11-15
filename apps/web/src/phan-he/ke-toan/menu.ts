@@ -13,7 +13,7 @@ export const keToanMenu: MenuItem[] = [
     label: '1. Chứng từ và định khoản',
     children: [
       sec('dinh-khoan', 'Định khoản'),
-      { key: 'ds-chung-tu', label: 'Định khoản tự động', path: '/chung-tu', code: 'ACC14' },
+      { key: 'ds-chung-tu', label: 'Chứng từ chờ vào sổ', path: '/chung-tu', code: 'ACC14' },
       { key: 'bang-diem-dau-vao', label: 'Bảng điểm đầu vào', path: '/chung-tu/bang-diem', code: 'ACC94' },
       { key: 'but-toan', label: 'Bút toán sổ cái', path: '/so-cai/but-toan', code: 'SC01' },
       // [2026-11-10 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 (D004-16): màn theo dõi sửa đầu bút toán

@@ -16,7 +16,7 @@ import { documentService } from '../../kernel/public.js';
 import { analyze, isOutsideOrder, loadCtx, withBrands, type Analysis } from './analysis.js';
 import { postPurchase, refReceipts, spreadOverMany } from './posting.js';
 import { logEvents, type LogRow } from './log.js';
-import { dependentsOf, docInputSchema, FREEZE_KINDS, freezeOf, getDoc, listDocs, listDocsFor, nextDocNo, withUserLabels, withDebtStatus, rowValues, type DocInput, type StoredDoc } from './store.js';
+import { dependentsOf, docInputSchema, FREEZE_KINDS, freezeOf, getDoc, listDocs, listDocsFor, nextDocNo, withUserLabels, withDebtStatus, withLedgerStatus, rowValues, type DocInput, type StoredDoc } from './store.js';
 import { resolveWarehouse } from '../../modules/warehouses/default-warehouse.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
@@ -66,7 +66,7 @@ export function docChanges(b: StoredDoc, a: StoredDoc): string[] {
   return out.slice(0, 40);
 }
 export const purchaseService = {
-  list: async (auth: AuthContext, f: Parameters<typeof listDocs>[2] = {}) => withDebtStatus(db, auth.tenantId, await withUserLabels(db, auth.tenantId, await listDocs(db, auth.tenantId, f))),
+  list: async (auth: AuthContext, f: Parameters<typeof listDocs>[2] = {}) => withLedgerStatus(db, auth.tenantId, await withDebtStatus(db, auth.tenantId, await withUserLabels(db, auth.tenantId, await listDocs(db, auth.tenantId, f)))),
 
   async get(auth: AuthContext, id: string): Promise<{ doc: StoredDoc; analysis: Analysis }> {
     const doc = await getDoc(db, auth.tenantId, id);

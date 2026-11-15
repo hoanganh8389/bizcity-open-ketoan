@@ -126,8 +126,9 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'tong-hop', label: 'Tổng hợp', icon: 'Network', description: 'Chứng từ nghiệp vụ khác, kết chuyển lãi lỗ, khóa sổ, báo cáo tài chính', color: '#1f66a3', module: 'ke-toan', homeLabel: 'Quy trình',
-    the: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'],
-    sections: [{ paths: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'], soon: ['Đề nghị quyết toán tạm ứng'] }],
+    // [2026-11-15 Nguyễn Văn Thủy] cổng chờ vào sổ (ACC14) về nhóm kế toán: kế toán nhìn một chỗ biết cái gì chưa vào sổ (đóng góp)
+    the: ['/chung-tu', '/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'],
+    sections: [{ paths: ['/chung-tu', '/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'], soon: ['Đề nghị quyết toán tạm ứng'] }],
     reports: [
       { label: 'Sổ kế toán', paths: ['/bao-cao/so-chi-tiet', '/bao-cao/nhat-ky-chung', '/bao-cao/so-cai', '/bao-cao/bang-ke-chung-tu', '/bao-cao/tong-hop-chung-tu'] },
       { label: 'Báo cáo tài chính', paths: ['/bao-cao/can-doi-ke-toan', '/bao-cao/ket-qua-kinh-doanh', '/bao-cao/luu-chuyen-tien-te', '/bao-cao/thuyet-minh', '/bao-cao/can-doi-phat-sinh'] },
@@ -167,7 +168,7 @@ export const GON_DEFS: GonDef[] = [
     key: 'phan-rieng', label: 'Phần riêng', icon: 'Puzzle', rieng: true, color: '#455a64',
     description: 'Chức năng gắn thêm cho chuỗi cửa hàng: nạp chứng từ từ máy bán hàng, máy POS, công nợ nội bộ',
     sections: [
-      { label: 'Nạp chứng từ', paths: ['/chung-tu', '/chung-tu/bang-diem', '/he-thong/chi-nhanh-lam-viec', '/mua-hang/khoi-dau'] },
+      { label: 'Nạp chứng từ', paths: ['/chung-tu/bang-diem', '/he-thong/chi-nhanh-lam-viec', '/mua-hang/khoi-dau'] },
       // [2026-11-12 10:10 PM Võ Hoàng] POS-UIKIT — mục Bán lẻ máy POS: màn quản trị của module pos (NT-BH-008) + Chương trình bán (BH12) cùng một chỗ (đóng góp)
       { label: 'Bán lẻ máy POS', paths: ['/app/pos/khuyen-mai', '/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan', '/app/pos/cai-dat'] },
       { label: 'Bán lẻ, giá vốn', paths: ['/ban-hang/thu-tien', '/cau-hinh/hinh-thuc-thanh-toan', '/nghiep-vu/cong-thuc-gia-von', '/tai-san/ke-hoach-khau-hao'] },

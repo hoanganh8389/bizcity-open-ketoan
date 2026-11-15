@@ -179,7 +179,13 @@ export interface StoredDoc extends PDoc {
   /** Công nợ NCC (TK 331) phát sinh từ phiếu đã ghi sổ — danh sách chứng từ điền (withDebtStatus):
    *  owed / owedPaid  = phải trả NCC (bên Có) và số đã trả / đã đối trừ; advance / advanceUsed = NCC nợ lại mình (ứng trước, trả hàng, thưởng…) và số đã đối trừ. */
   debt?: { owed: number; owedPaid: number; advance: number; advanceUsed: number };
+  /** [2026-11-15 Nguyễn Văn Thủy] Trạng thái sổ (withLedgerStatus): none = loại không ghi sổ (đơn đặt); not_sent = chưa duyệt, chưa gửi
+   *  vào cổng chờ; pending = đang chờ định khoản (kể cả có phiên bản mới, sổ còn theo bản cũ); posted; error; cancelled (đóng góp) */
+  ledger?: LedgerStatus;
 }
+export type LedgerStatus = 'none' | 'not_sent' | 'pending' | 'posted' | 'error' | 'cancelled';
+/** Loại phiếu KHÔNG phát sinh kế toán (loại A): chỉ có trạng thái phiếu, không bao giờ vào cổng chờ / sổ. */
+export const NO_LEDGER_KINDS: readonly string[] = ['order'];
 
 /** Gắn tình trạng công nợ cho từng phiếu đã ghi sổ: cộng debt_items TK 331 của các chứng từ kế toán phiếu sinh ra (một lượt truy vấn). */
 export async function withDebtStatus(trx: Db, tenantId: string, docs: StoredDoc[]): Promise<StoredDoc[]> {
@@ -197,6 +203,25 @@ export async function withDebtStatus(trx: Db, tenantId: string, docs: StoredDoc[
     const t = { owed: 0, owedPaid: 0, advance: 0, advanceUsed: 0 };
     for (const l of d.links) { const x = by.get(l.eventId); if (x) { t.owed += x.owed; t.owedPaid += x.owedPaid; t.advance += x.advance; t.advanceUsed += x.advanceUsed; } }
     return { ...d, debt: t };
+  });
+}
+
+/** Trạng thái sổ của từng phiếu: gộp trạng thái các chứng từ kế toán phiếu sinh ra (xấu nhất thắng: lỗi > chờ > đã huỷ > đã ghi). */
+export async function withLedgerStatus(trx: Db, tenantId: string, docs: StoredDoc[]): Promise<StoredDoc[]> {
+  const ev = [...new Set(docs.flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean))];
+  const st = new Map<string, LedgerStatus>();
+  if (ev.length) {
+    for (const r of await trx.selectFrom('accounting_events').select(['id', 'status', 'version', 'posted_version']).where('tenant_id', '=', tenantId).where('id', 'in', ev).execute()) {
+      const s = r.status === 'posted' && r.posted_version !== null && Number(r.posted_version) < Number(r.version) ? 'pending' : r.status;
+      st.set(String(r.id), (['pending', 'posted', 'error', 'cancelled'].includes(s) ? s : 'pending') as LedgerStatus);
+    }
+  }
+  const rank: LedgerStatus[] = ['error', 'pending', 'cancelled', 'posted'];
+  return docs.map((d) => {
+    if (NO_LEDGER_KINDS.includes(d.kind)) return { ...d, ledger: 'none' };
+    const all = d.links.map((l) => st.get(l.eventId)).filter(Boolean) as LedgerStatus[];
+    if (!all.length) return { ...d, ledger: 'not_sent' };
+    return { ...d, ledger: rank.find((x) => all.includes(x)) ?? 'posted' };
   });
 }
 

@@ -16,6 +16,8 @@ export interface StoredDoc extends PDoc {
   totals: { beforeTax: number; tax: number; total: number };
   /** Công nợ NCC (TK 331) phiếu đã ghi sổ sinh ra: phải trả / đã trả; NCC nợ lại mình (ứng trước, trả hàng…) / đã đối trừ. */
   debt?: { owed: number; owedPaid: number; advance: number; advanceUsed: number };
+  /** Trạng thái sổ do máy chủ gộp: none = loại không ghi sổ (đơn đặt). */
+  ledger?: 'none' | 'not_sent' | 'pending' | 'posted' | 'error' | 'cancelled';
   dueDate?: string;
   isDemo: boolean;
   createdByName: string;
