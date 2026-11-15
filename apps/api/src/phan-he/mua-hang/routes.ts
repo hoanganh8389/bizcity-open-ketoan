@@ -29,7 +29,6 @@ import { purchaseService } from './service.js';
 import { stockLedgerBySku, stockOnHandBySku } from './bao-cao-kho.js';
 import { saveVariantSeparate, variantOverview, variantSeparate } from './bien-the.js';
 import { skuInfoRows } from './thong-tin-ma.js';
-import { deleteEmptyThungRows, emptyThungRows, thungApply, thungPlan } from './dvt-thung.js';
 import { deletePolicy, listDocs, listPolicies, policyInputSchema, policyVersions, savePolicy } from './store.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
@@ -40,7 +39,6 @@ const policyVersionInput = z.object({ effectiveFrom: day.nullish(), reason: z.st
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
 const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(db, tenantId), { full: true });
-const thungBody = z.object({ days: z.number().int().min(0).max(3650).default(30), specs: z.record(z.string(), z.string().trim().max(60)).default({}) });
 const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
 
 // [2026-11-03 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 (SC-ACT-1): chủ của tệp đính kèm — dùng ở GET và action
@@ -140,8 +138,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { const a = authOf(req); const s = await loadSettings(db, a.tenantId); return ok({ ...s, resolvedAccounts: await resolveAccounts(db, a.tenantId, s) }); } });
   r.get('/api/v1/purchase/variants', { preHandler: read, schema: { tags, summary: 'Biến thể mặt hàng (MH26): đuôi mã, số mã con, đuôi nào tách riêng khi phân tích đặt hàng' },
     handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
-  r.get('/api/v1/purchase/units/thung/empty-rows', { preHandler: read, schema: { tags, summary: 'MH27: dòng Thùng trống giá thừa (bản đầu từng thêm) — cùng NCC × mã còn dòng có giá' },
-    handler: async (req) => ok(await emptyThungRows(db, authOf(req).tenantId)) });
   // @bizcity-route: công cụ dữ liệu tình huống (cần mật khẩu) — dựng / xoá từng tình huống bằng service ghi sổ, mỗi tình huống một giao dịch, cố ý bỏ qua lỗi từng phần
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset })); } });
@@ -370,22 +366,6 @@ export const routesWriteActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/purchase/sku-info' }, mcp: false, ai: 'read' },
     handler: (ctx, input) => skuInfoRows(ctx.data.tx, ctx.tenant.id, input.skus),
   }),
-  defineAction({
-    id: 'mua-hang.unit.thung-empty-rows-delete', title: 'MH27: xoá vĩnh viễn các dòng Thùng trống giá thừa, ghi nhật ký đủ nội dung', tags,
-    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({}), output: z.object({ count: z.number() }),
-    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/empty-rows/delete' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'supplier_product' },
-    handler: async (ctx) => {
-      const a = ctx.legacyAuth;
-      const res = await deleteEmptyThungRows(ctx.data.tx, a.tenantId);
-      if (res.count) {
-        ctx.evidence.note('deleted', res.deleted);
-        await logEvents(a.tenantId, [{ event: 'units_thung_cleanup', docNo: '', user: a.actorName, data: { count: res.count, deleted: res.deleted } }]);
-      }
-      return { count: res.count };
-    },
-  }),
   // [2026-11-15 Nguyễn Văn Thủy] sửa phiếu đã ghi sổ bằng bản điều chỉnh: sổ giữ bản cũ tới khi duyệt bản mới (đóng góp)
   defineAction({
     id: 'mua-hang.purchase.documents-adjust', title: 'Lập điều chỉnh phiếu đã duyệt: về nháp để sửa, sổ giữ bản cũ tới khi duyệt bản điều chỉnh (body { reason })', tags,
@@ -472,31 +452,6 @@ export const routesWriteActions: AnyActionDef[] = [
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
       return await unitsOf(trx, ctx.legacyAuth.tenantId, input.skus);
-    },
-  }),
-  defineAction({
-    id: 'mua-hang.unit.thung-preview', title: 'ĐVT Thùng đặt hàng (MH27): xem trước — mã có tương tác mua / NCC khai trong N ngày, quy cách nhập vào (specs: 12 Lốc, 12CAN/THÙNG) quy về ĐVT nhỏ nhất; không có thì đoán theo ngữ cảnh (mặc định 48)', tags,
-    permission: 'documents:read', effect: 'read', idempotency: 'none',
-    input: thungBody, output: anyOut,
-    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/preview' }, mcp: false, ai: 'read' },
-    handler: async (ctx, input) => {
-      const trx = ctx.data.tx;
-      return await thungPlan(trx, ctx.legacyAuth.tenantId, input);
-    },
-  }),
-  defineAction({
-    id: 'mua-hang.unit.thung-apply', title: 'ĐVT Thùng đặt hàng (MH27): chạy thật cho các mã chọn — thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định; dòng giá NCC giữ nguyên (lập đơn tự quy đổi)', tags,
-    permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
-    input: thungBody.extend({ skus: z.array(z.string().trim().min(1).max(64)).min(1).max(20000) }), output: anyOut,
-    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/apply' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'unit' },
-    handler: async (ctx, input) => {
-      const trx = ctx.data.tx;
-      const a = ctx.legacyAuth;
-      const res = await sameTx(trx, (trx) => thungApply(trx, a.tenantId, a.actor, input));
-      const manual = Object.keys(input.specs).filter((k) => input.skus.includes(k));
-      await logEvents(a.tenantId, [{ event: 'units_thung', docNo: '', user: a.actorName, data: { ...res, days: input.days, manual: manual.slice(0, 200), skus: input.skus.slice(0, 500) } }]);
-      return res;
     },
   }),
 ];

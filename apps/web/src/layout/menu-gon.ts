@@ -66,7 +66,7 @@ export const GON_DEFS: GonDef[] = [
     sections: [
       { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('exchange'), MUA('rebate'), MUA('gift_in'), MUA('cost'), MUA('payment'), MUA('prepayment'), '/mua-hang/tong-hop'] },
       { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/thue/hoa-don-co-quan-thue', '/mua-hang/doi-chieu'] },
-      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop', '/mua-hang/bien-the', '/mua-hang/dvt-thung'] },
+      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop', '/mua-hang/bien-the'] },
       { label: 'Công nợ, thưởng, giá vốn', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky'] },
       { label: 'Danh mục, cài đặt', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/danh-muc/mat-hang', '/mua-hang/cai-dat'] },
     ],
@@ -155,7 +155,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Mặt hàng', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/loai-kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
       // [2026-11-13 Nguyễn Văn Thủy] chi nhánh, kho, phòng ban khai chung ở Cơ cấu tổ chức (đóng góp)
       { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc'] },
-      { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/quy-tac-hach-toan', '/danh-muc/loai-thue', '/danh-muc/ngan-hang'], soon: ['Điều khoản thanh toán'] },
+      { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/quy-tac-hach-toan', '/danh-muc/loai-thue', '/danh-muc/ngan-hang', '/cau-hinh/hinh-thuc-thanh-toan'], soon: ['Điều khoản thanh toán'] },
       { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/muc-thu-chi', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
       { label: 'Tài sản', paths: ['/danh-muc/loai-tai-san', '/danh-muc/nhom-ccdc', '/danh-muc/nguon-von', '/danh-muc/muc-dich-su-dung'] },
     ],
