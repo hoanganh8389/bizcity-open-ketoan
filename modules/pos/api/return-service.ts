@@ -48,7 +48,9 @@ export async function findOrder(tx: Tx, idOrCode: string, branch?: string): Prom
 /** Dòng bán của đơn: bản chụp đơn + dòng đơn đã lưu (mã thuế, định danh). Đơn trước khi có order_lines: mã thuế theo danh mục. */
 export async function soldLinesOf(tx: Tx, order: OrderRow): Promise<SoldLine[]> {
   type SnapLine = { lineId: string; sku: string; name?: string; unitName: string; unitQty: number; unitRatio?: number; amount: number; taxAmount: number; taxRate: number; itemId?: string; isGift?: boolean; promotionId?: number };
-  const snapLines = ((order.snapshot as { lines?: SnapLine[] }).lines ?? []);
+  // Dòng bill Z (NT-BH-019) nằm ở zBill của bản chụp nhưng vẫn là dòng của chứng từ bán: trả được như dòng quà.
+  const snap = order.snapshot as { lines?: SnapLine[]; zBill?: { lines?: SnapLine[] } };
+  const snapLines = [...(snap.lines ?? []), ...(snap.zBill?.lines ?? [])];
   const saved = new Map((await sql<{ line_key: string; tax_code: string; item_id: string | null }>`
     SELECT line_key, tax_code, item_id FROM mod_pos.order_lines WHERE order_id = ${order.order_id}`.execute(tx)).rows.map((r) => [r.line_key, r]));
   const missing = snapLines.filter((l) => !saved.has(l.lineId)).map((l) => l.sku);

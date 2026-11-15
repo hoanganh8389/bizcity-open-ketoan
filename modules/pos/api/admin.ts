@@ -38,12 +38,12 @@ export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status
   const returned = Number(agg.returned ?? 0);
   return {
     items: rows.map((r) => {
-      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[] };
+      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[]; zBill?: { lines?: unknown[] } };
       return {
         id: r.order_id, code: r.code, branchCode: r.branch_code, businessDate: r.business_date, createdAt: r.created_at.toISOString(), status: r.status,
         total: Number(r.total), taxTotal: Number(r.tax_total), docKey: r.doc_key, docStatus: r.doc_status, cashier: r.cashier_name ?? '',
         shiftId: r.draft?.shiftId ?? '', customerName: snap.customer?.name ?? '', customerPhone: snap.customer?.phone ?? '',
-        payments: orderPayments(snap, cashCode).map((p) => ({ ...p, name: methodNames[p.method] ?? p.method })), lines: snap.lines ?? [],
+        payments: orderPayments(snap, cashCode).map((p) => ({ ...p, name: methodNames[p.method] ?? p.method })), lines: [...(snap.lines ?? []), ...(snap.zBill?.lines ?? [])],
       };
     }),
     meta: { page: f.page, pageSize: f.pageSize, total: Number(agg.n), sums: { orders: Number(agg.n), total, returned, net: total - returned } },

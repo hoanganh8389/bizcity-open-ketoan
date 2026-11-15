@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Máy bán POS nhận bill Z (hàng 0đ không gửi thuế) — phiếu NT-BH-019 bước 1 <!-- [2026-11-15 11:20 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1 (đóng góp) -->
+
+- **Đổi:** đơn máy bán có dòng 0đ của mã không gửi thuế (hàng Nội bộ, quà mã Z không theo chương trình) không còn bị chặn (`POS_NOT_SUPPORTED_YET`): dòng đó vào chứng từ bán dạng dòng quà 0đ (`isGift`), đơn trả máy tách các dòng đó sang `zBill` (mã đơn + `Z`, chỉ khi mọi dòng không gửi thuế cộng lại 0đ — cùng luật máy bán và POS cũ) để máy bán in bill Z riêng, hoá đơn điện tử bỏ dòng, bản sao website ghi phiếu `zsale` / `zexport`. Trả hàng và màn quản trị đơn đọc cả dòng bill Z.
+- **Không đổi:** khách mới tại quầy vẫn đi kèm đơn (cửa nạp tự thêm đối tượng theo `partner` của chứng từ bán); dòng không gửi thuế mà thu tiền vẫn bán như dòng thường.
+- **Thay đổi định khoản:** không — dòng 0đ không sinh doanh thu / thuế; giá vốn tháng ghi theo luật hàng khuyến mãi đang có (lý do / chính sách hạch toán do kế toán đặt).
+
 ### Kế toán xem được các màn quản trị máy bán (quyền `pos:report`) <!-- [2026-11-15 12:30 PM Võ Hoàng] NGHIEM-THU — anh Hoàng đồng ý 15/11 (đóng góp) -->
 
 - **Đổi:** quyền *Xem quản trị bán lẻ máy POS* (`pos:report`, chỉ đọc) mặc định cấp cho kế toán trưởng, kế toán, người xem (trước chỉ chủ đơn vị) — thấy Đơn bán, Phiếu trả, Sổ ca, Tổng quan, Cài đặt bán hàng (BH13–BH17). Thu ngân vẫn không có.

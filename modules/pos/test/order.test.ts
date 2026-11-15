@@ -1,6 +1,6 @@
 /** NT-BH-004 — phần tính thuần của đơn bán tại quầy (không CSDL). Phần ghi sổ: apps/api/test/nt-bh-004-pos-don-ban.test.ts. */
 import { describe, expect, it } from 'vitest';
-import { codePeriod, computeOrder, formatCode, lineMoney, parseCode, paymentKind, toOrderSnapshot, toSaleDocument, type CatalogItem } from '../api/domain/order.js';
+import { codePeriod, computeOrder, formatCode, lineMoney, parseCode, paymentKind, toOrderSnapshot, toSaleDocument, type CatalogItem, isBillZLine, splitBillZ } from '../api/domain/order.js';
 import { orderDraftSchema, type OrderDraft } from '../api/domain/schema.js';
 
 const ITEM_SUA = '01JC0S0A4000000000000000AA';
@@ -213,10 +213,36 @@ describe('ô Gửi lên thuế / Biến thể của mặt hàng', () => {
     expect(snap.lines[0]).toMatchObject({ itemId: ITEM_SUA, sendTax: true });
   });
 
-  it('hàng 0đ không gửi thuế (bill Z): W1 chặn rõ, kể cả mã chỉ là số', () => {
+  // NT-BH-019 bước 1: bill Z nhận, không chặn.
+  it('hàng 0đ không gửi thuế (bill Z, mã chỉ là số): nhận; chứng từ bán ghi dòng quà 0đ, đơn trả máy sendTax = false', () => {
     const d = draft({ lines: lines({}, { sku: '11005100103', unitName: 'Cái', clientUnitPrice: 0 }) });
     const o = computeOrder({ draft: d, catalog, paymentMethods: methods });
-    expect('problem' in o && o.problem).toMatchObject({ kind: 'validation', reason: 'POS_NOT_SUPPORTED_YET', details: { billZ: ['11005100103'] } });
+    if ('problem' in o) throw new Error(o.problem.message);
+    expect(o.total).toBe(324_000);
+    expect(o.lines.map(isBillZLine)).toEqual([false, true]);
+    const doc = toSaleDocument(o, { draft: d, branchCode: 'CN01', code: 'HD2611000003' });
+    expect(doc.lines[1]).toMatchObject({ sku: '11005100103', isGift: true, unitPrice: 0, amountBeforeTax: 0, discount: 0, taxAmount: 0 });
+    expect(doc.lines[0]).not.toHaveProperty('isGift');
+    expect(doc.totals).toEqual({ beforeTax: 300_000, tax: 24_000, total: 324_000 });
+    const snap = toOrderSnapshot(o, { draft: d, code: 'HD2611000003', branch: { code: 'CN01', name: 'CN01', taxCode: '', address: '' }, createdAt: '2026-11-09T00:00:00Z' });
+    // Đơn trả máy tách bill Z (mã đơn + Z) như máy bán / POS cũ; chứng từ bán vẫn đủ hai dòng.
+    expect(snap.lines.map((l) => [l.sku, l.sendTax, l.amount])).toEqual([['SUA400', true, 300_000]]);
+    expect(snap.zBill).toEqual({ code: 'HD2611000003Z', lines: [expect.objectContaining({ sku: '11005100103', sendTax: false, amount: 0, taxAmount: 0 })] });
+  });
+
+  it('tách bill Z: chỉ khi mọi dòng không gửi thuế cộng lại 0đ; có dòng thu tiền thì không tách', () => {
+    const L = (sku: string, sendTax: boolean, amount: number) => ({ sku, sendTax, amount, taxAmount: 0 });
+    expect(splitBillZ([L('A', true, 100), L('Z1', false, 0), L('Z2', false, 0)])).toEqual({ main: [L('A', true, 100)], z: [L('Z1', false, 0), L('Z2', false, 0)] });
+    expect(splitBillZ([L('A', true, 100), L('Z1', false, 0), L('B', false, 54)])).toEqual({ main: [L('A', true, 100), L('Z1', false, 0), L('B', false, 54)], z: [] });
+    expect(splitBillZ([L('A', true, 100)]).z).toEqual([]);
+  });
+
+  it('mã không gửi thuế mà thu tiền: không phải dòng bill Z, chứng từ không đánh dấu quà', () => {
+    const d = draft({ lines: lines({ sku: '11005100102', unitName: 'Cái', clientUnitPrice: 54_000 }), clientTotal: 54_000 });
+    const o = computeOrder({ draft: d, catalog, paymentMethods: methods });
+    if ('problem' in o) throw new Error(o.problem.message);
+    expect(o.lines.map(isBillZLine)).toEqual([false]);
+    expect(toSaleDocument(o, { draft: d, branchCode: 'CN01', code: 'HD2611000004' }).lines[0]).not.toHaveProperty('isGift');
   });
 
   it('hàng Nội bộ máy gửi giá khác 0 → POS_PRICE_CHANGED (Nội bộ luôn 0đ)', () => {
