@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Module mới `loyalty` — sổ điểm thành viên (phiếu NT-BH-020 bước 1) <!-- [2026-11-15 04:30 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1 (đóng góp) -->
+
+- **Thêm:** module `modules/loyalty` (schema `mod_loyalty`): sổ điểm chỉ thêm theo lô có hạn; chính sách tích điểm do website đẩy sang `POST /api/v1/m/loyalty/program` (quyền `catalog:write`, giữ mọi phiên bản); tự tích khi đơn máy bán hoàn tất (nghe `pos.order.recorded`), tự hoàn khi trả hàng (nghe `pos.return.recorded`); máy bán đọc `GET /program?branch=`, `GET /customers/:id` (quyền mới `loyalty:read`).
+- **Thay đổi định khoản:** không — điểm chỉ hạch toán lúc đổi (bước 2, trên chứng từ bán).
+- **Nâng cấp cần làm:** chạy migration module `loyalty` và đồng bộ module (`module sync`); website (Cổng kế toán) đẩy chính sách từng cửa hàng; vé thu ngân cấp thêm `loyalty:read`.
+
 ### Bỏ màn MH27 ĐVT Thùng đặt hàng <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Bỏ:** màn **ĐVT Thùng đặt hàng (MH27)**, mục menu, ô trên luồng chi tiết Mua hàng; API `/api/v1/purchase/units/thung/*` (action `mua-hang.unit.thung-preview`, `-apply`, `-empty-rows-delete`). Mua theo thùng thì khai ĐVT Thùng ở Danh mục mặt hàng như mọi ĐVT khác. ĐVT Thùng và dòng giá NCC đã có giữ nguyên. Đường dẫn cũ `/mua-hang/dvt-thung` chuyển sang Danh mục mặt hàng.
