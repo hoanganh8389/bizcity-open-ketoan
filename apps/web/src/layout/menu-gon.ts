@@ -66,7 +66,7 @@ export const GON_DEFS: GonDef[] = [
     sections: [
       { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('exchange'), MUA('rebate'), MUA('gift_in'), MUA('cost'), MUA('payment'), MUA('prepayment'), '/mua-hang/tong-hop'] },
       { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/thue/hoa-don-co-quan-thue', '/mua-hang/doi-chieu'] },
-      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop', '/mua-hang/bien-the', '/mua-hang/dvt-thung'] },
+      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop', '/mua-hang/bien-the'] },
       { label: 'Công nợ, thưởng, giá vốn', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky'] },
       { label: 'Danh mục, cài đặt', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/danh-muc/mat-hang', '/mua-hang/cai-dat'] },
     ],

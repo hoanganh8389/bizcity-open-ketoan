@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bỏ màn MH27 ĐVT Thùng đặt hàng <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Bỏ:** màn **ĐVT Thùng đặt hàng (MH27)**, mục menu, ô trên luồng chi tiết Mua hàng; API `/api/v1/purchase/units/thung/*` (action `mua-hang.unit.thung-preview`, `-apply`, `-empty-rows-delete`). Mua theo thùng thì khai ĐVT Thùng ở Danh mục mặt hàng như mọi ĐVT khác. ĐVT Thùng và dòng giá NCC đã có giữ nguyên. Đường dẫn cũ `/mua-hang/dvt-thung` chuyển sang Danh mục mặt hàng.
+
 ### Mặt hàng: mã biến thể chỉ cần chữ đầu hoặc chữ cuối; giá mua chưa thuế / gồm thuế; ảnh dán link hoặc tải lên <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Sửa:** thêm mã biến thể — ô chữ đầu / chữ cuối đều không bắt buộc, chỉ cần một trong hai (trước đây ô chữ đầu trống bị báo "Mã hàng không được để trống").
