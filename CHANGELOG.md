@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Máy bán POS: chuyển dòng 0đ sang bill Z; phiếu trả mang cờ quà — phiếu NT-BH-019 bước 2 <!-- [2026-11-15 02:10 PM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 2 (đóng góp) -->
+
+- **Thêm:** `POST /api/v1/m/pos/orders/:id/lines/:lineId/move-to-z` (action `pos.order.move-to-z`, quyền `pos:sell`): chuyển một dòng 0đ của đơn đã hoàn tất sang bill Z (mã đơn + `Z`) — đơn phiên bản mới, bản sao website ghi lại (`zsale` / `zexport`). Dòng có tiền → `CONFLICT`; đơn chờ thanh toán / đã huỷ → `CONFLICT`; gọi lại khi dòng đã ở bill Z → trả đơn, không tăng phiên bản. Chứng từ bán và sổ không đổi (dòng 0đ).
+- **Đổi:** phiếu trả (`sale_return`) mang `isGift` cho dòng quà (quà theo chương trình và dòng bill Z), như chứng từ bán.
+- **Thay đổi định khoản:** giá vốn tháng của quà khách trả lại đảo theo luật hàng khuyến mãi (cùng tài khoản lúc tặng) thay vì luật hàng bán thường; áp cho phiếu trả lập sau khi cập nhật.
+
 ### Máy bán POS nhận bill Z (hàng 0đ không gửi thuế) — phiếu NT-BH-019 bước 1 <!-- [2026-11-15 11:20 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1 (đóng góp) -->
 
 - **Đổi:** đơn máy bán có dòng 0đ của mã không gửi thuế (hàng Nội bộ, quà mã Z không theo chương trình) không còn bị chặn (`POS_NOT_SUPPORTED_YET`): dòng đó vào chứng từ bán dạng dòng quà 0đ (`isGift`), đơn trả máy tách các dòng đó sang `zBill` (mã đơn + `Z`, chỉ khi mọi dòng không gửi thuế cộng lại 0đ — cùng luật máy bán và POS cũ) để máy bán in bill Z riêng, hoá đơn điện tử bỏ dòng, bản sao website ghi phiếu `zsale` / `zexport`. Trả hàng và màn quản trị đơn đọc cả dòng bill Z.
