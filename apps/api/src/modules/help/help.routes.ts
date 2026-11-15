@@ -10,6 +10,12 @@
  *   PATCH  /api/v1/help/cards/:id            sửa thẻ
  *   DELETE /api/v1/help/cards/:id            xoá thẻ (nơi đang gắn thành chưa gắn)
  *   POST   /api/v1/help/import               chép nhiều tài liệu có sẵn thành thẻ, gắn vào nơi cùng khoá nếu nơi đó chưa có thẻ
+ *   [2026-11-15 Nguyễn Văn Thủy] mang thẻ sang máy chủ khác (đóng góp):
+ *   GET    /api/v1/help/export               gói JSON mọi thẻ (kèm nội dung, ảnh trong nội dung) + nơi gắn
+ *   POST   /api/v1/help/package/preview      xem trước nhập gói: thẻ nào thêm / ghi đè / không đổi, màn nào đổi thẻ
+ *   POST   /api/v1/help/package/import       nhập gói: GHI ĐÈ thẻ khớp, thêm thẻ mới, gắn đúng các nơi trong gói
+ *     Khớp thẻ (mã số thẻ mỗi máy chủ khác nhau): cùng mã nguồn (sourceKey) → thẻ đang gắn ở một nơi của thẻ trong gói → cùng tiêu đề.
+ *     Thẻ có ở máy chủ này mà không có trong gói: giữ nguyên (không xoá).
  * Tạm thời ai đăng nhập cũng sửa được (quyền tính sau).
  */
 import type { FastifyInstance } from 'fastify';
@@ -50,7 +56,87 @@ async function bind(trx: Db, auth: AuthContext, key: string, label: string, card
       updated_by = EXCLUDED.updated_by, updated_at = now()`.execute(trx);
 }
 
+// ---------------------------------------------------------------- gói xuất / nhập
+const PKG_KIND = 'bizcity.help-cards';
+const pkgCard = z.object({
+  title: z.string().trim().max(300).default(''),
+  format: z.enum(['md', 'html']).default('html'),
+  body: z.string().max(5_000_000).default(''),
+  sourceKey: z.string().trim().max(200).default(''),
+  places: z.array(z.object({ key: keySchema, label: z.string().trim().max(300).default('') })).max(500).default([]),
+});
+const pkgSchema = z.object({
+  kind: z.literal(PKG_KIND, { errorMap: () => ({ message: 'Không phải tệp thẻ hướng dẫn (kind phải là bizcity.help-cards)' }) }),
+  version: z.number().int().min(1).max(1),
+  exportedAt: z.string().optional(),
+  cards: z.array(pkgCard).max(3000),
+});
+type Pkg = z.infer<typeof pkgSchema>;
+type PlanRow = { title: string; action: 'new' | 'update' | 'same'; targetId: string | null; targetTitle: string | null; titleChanged: boolean; bodyChanged: boolean;
+  places: { key: string; label: string; before: string | null; change: boolean }[] };
+
+/** Ghép từng thẻ trong gói với thẻ ở máy chủ này (không ghi gì). */
+async function planPackage(trx: Db, tenantId: string, pkg: Pkg): Promise<PlanRow[]> {
+  const cards = await trx.selectFrom('help_cards').select(['id', 'title', 'body', 'format', 'source_key']).where('tenant_id', '=', tenantId).execute();
+  const places = await trx.selectFrom('help_places').select(['place_key', 'card_id']).where('tenant_id', '=', tenantId).execute();
+  const byId = new Map(cards.map((c) => [String(c.id), c]));
+  const used = new Set<string>();
+  return pkg.cards.map((c) => {
+    // chỉ ghép với thẻ chưa bị thẻ khác trong gói lấy (thẻ trùng tiêu đề / mã nguồn vẫn ghép đúng cặp)
+    const pick = (f: (x: (typeof cards)[number]) => boolean) => cards.find((x) => !used.has(String(x.id)) && f(x));
+    const sameTitle = (x: { title: string }) => x.title.trim().toLowerCase() === c.title.trim().toLowerCase();
+    const bound = c.places.map((p) => places.find((x) => x.place_key === p.key)?.card_id).find((id) => id && !used.has(String(id)));
+    const t = (c.sourceKey ? pick((x) => x.source_key === c.sourceKey && sameTitle(x)) : undefined)
+      ?? (bound ? byId.get(String(bound)) : undefined)
+      ?? (c.sourceKey ? pick((x) => x.source_key === c.sourceKey) : undefined)
+      ?? pick(sameTitle);
+    if (t) used.add(String(t.id));
+    const titleChanged = Boolean(t) && t!.title !== c.title;
+    const bodyChanged = Boolean(t) && (t!.body !== c.body || t!.format !== c.format);
+    const pl = c.places.map((p) => {
+      const cur = places.find((x) => x.place_key === p.key)?.card_id;
+      const before = cur ? byId.get(String(cur))?.title ?? null : null;
+      return { key: p.key, label: p.label, before, change: !t || String(cur ?? '') !== String(t.id) };
+    });
+    return { title: c.title, action: !t ? 'new' : titleChanged || bodyChanged ? 'update' : 'same', targetId: t ? String(t.id) : null, targetTitle: t?.title ?? null, titleChanged, bodyChanged, places: pl };
+  });
+}
+
 export const helpService = {
+  /** Gói JSON mọi thẻ + nơi gắn (mang sang máy chủ khác). */
+  async exportPackage(auth: AuthContext) {
+    const cards = await db.selectFrom('help_cards').select(['id', 'title', 'body', 'format', 'source_key']).where('tenant_id', '=', auth.tenantId).orderBy(sql`lower(title)`).execute();
+    const places = await db.selectFrom('help_places').select(['place_key', 'label', 'card_id']).where('tenant_id', '=', auth.tenantId).where('card_id', 'is not', null).execute();
+    return {
+      kind: PKG_KIND, version: 1, exportedAt: new Date().toISOString(),
+      cards: cards.map((c) => ({ title: c.title, format: c.format, body: c.body, sourceKey: c.source_key, places: places.filter((p) => String(p.card_id) === String(c.id)).map((p) => ({ key: p.place_key, label: p.label })) })),
+    };
+  },
+  async previewPackage(auth: AuthContext, pkg: Pkg) {
+    const rows = await planPackage(db, auth.tenantId, pkg);
+    return { rows, counts: { new: rows.filter((x) => x.action === 'new').length, update: rows.filter((x) => x.action === 'update').length, same: rows.filter((x) => x.action === 'same').length, placesChanged: rows.reduce((n, x) => n + x.places.filter((p) => p.change).length, 0) } };
+  },
+  /** Nhập gói: ghi đè thẻ khớp, thêm thẻ mới, gắn đúng các nơi trong gói. */
+  async importPackageIn(trx: ActionTx, auth: AuthContext, pkg: Pkg) {
+    return sameTx(trx, async (trx) => {
+      const rows = await planPackage(trx, auth.tenantId, pkg);
+      let added = 0, updated = 0, bound = 0;
+      for (const [i, row] of rows.entries()) {
+        const c = pkg.cards[i]!;
+        let id = row.targetId;
+        if (!id) {
+          id = String((await trx.insertInto('help_cards').values({ tenant_id: auth.tenantId, title: c.title, body: c.body, format: c.format, source_key: c.sourceKey, created_by: auth.actorName, updated_by: auth.actorName }).returning('id').executeTakeFirstOrThrow()).id);
+          added++;
+        } else if (row.action === 'update') {
+          await trx.updateTable('help_cards').set({ title: c.title, body: c.body, format: c.format, ...(c.sourceKey ? { source_key: c.sourceKey } : {}), updated_by: auth.actorName, updated_at: new Date() })
+            .where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+          updated++;
+        }
+        for (const p of row.places) if (p.change) { await bind(trx, auth, p.key, p.label, id); bound++; }
+      }
+      return { added, updated, same: rows.filter((x) => x.action === 'same').length, bound };
+    });
+  },
   async place(auth: AuthContext, key: string) {
     const p = await db.selectFrom('help_places').selectAll().where('tenant_id', '=', auth.tenantId).where('place_key', '=', key).executeTakeFirst();
     if (!p?.card_id) return { key, label: p?.label ?? '', card: null };
@@ -117,6 +203,9 @@ export async function helpRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
   r.get('/api/v1/help/place', { preHandler: read, schema: { tags, summary: 'Thẻ hướng dẫn đang gắn ở một màn / hộp thoại', querystring: z.object({ key: keySchema }) }, handler: async (req) => ok(await helpService.place(authOf(req), req.query.key)) });
   r.get('/api/v1/help/cards', { preHandler: read, schema: { tags, summary: 'Danh sách thẻ hướng dẫn' }, handler: async (req) => ok(await helpService.cards(authOf(req))) });
+  r.get('/api/v1/help/export', { preHandler: read, schema: { tags, summary: 'Xuất gói JSON thẻ hướng dẫn + nơi gắn (mang sang máy chủ khác)' }, handler: async (req) => ok(await helpService.exportPackage(authOf(req))) });
+  r.post('/api/v1/help/package/preview', { preHandler: read, bodyLimit: 100 * 1024 * 1024, schema: { tags, summary: 'Xem trước nhập gói thẻ hướng dẫn: thêm / ghi đè / không đổi, nơi gắn đổi', body: z.object({ package: pkgSchema }) },
+    handler: async (req) => ok(await helpService.previewPackage(authOf(req), req.body.package)) });
   r.get('/api/v1/help/cards/:id', { preHandler: read, schema: { tags, summary: 'Một thẻ hướng dẫn', params: idParam }, handler: async (req) => ok(await helpService.card(authOf(req), req.params.id)) });
   mountActions(app, helpActions);
 }
@@ -149,5 +238,11 @@ const helpActions: AnyActionDef[] = [
     input: z.object({ docs: z.array(z.object({ key: z.string().trim().min(1).max(200), title: z.string().trim().max(300), body: z.string().max(2_000_000) })).max(500) }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/help/import' }, mcp: false, ai: 'deny' }, evidence: { objectType: 'help_card' },
     handler: (ctx, i) => helpService.importIn(ctx.data.tx, ctx.legacyAuth, i.docs),
+  }),
+  defineAction({
+    id: 'core.help.package-import', title: 'Nhập gói thẻ hướng dẫn (ghi đè thẻ khớp, thêm thẻ mới, gắn nơi)', tags, permission: 'catalog:read', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ package: pkgSchema }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/help/package/import', bodyLimit: 100 * 1024 * 1024 }, mcp: false, ai: 'deny' }, evidence: { objectType: 'help_card' },
+    handler: (ctx, i) => helpService.importPackageIn(ctx.data.tx, ctx.legacyAuth, i.package),
   }),
 ];

@@ -312,12 +312,17 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     if (k === 'mua') return nccRows.some((r) => !r.partnerCode) ? 'Còn dòng chưa chọn nhà cung cấp (chọn hoặc bỏ dòng đó).' : '';
     return '';
   };
+  // [2026-11-16 Nguyễn Văn Thủy] bước đã từng tới thì bấm qua lại tự do (quay lại xem rồi nhảy thẳng về bước đang làm); bước chưa tới thì khoá (đóng góp)
+  const [reached, setReached] = useState<string[]>(['info']);
+  const reachedIdx = Math.max(stepIdx, ...STEPS.map((x, i) => (reached.includes(x.k) ? i : 0)));
   const next = () => {
     const e = stepErr(tab); setErrMsg(e);
-    if (!e) setTab(STEPS[stepIdx + 1]!.k);
+    if (!e) { const k = STEPS[stepIdx + 1]!.k; setReached((r) => (r.includes(k) ? r : [...r, k])); setTab(k); }
   };
   const goStep = (i: number) => {
-    if (i > stepIdx) return; // chỉ quay lại bước trước; đi tới bằng Tiếp tục
+    if (i > reachedIdx) return; // bước chưa từng tới: đi bằng Tiếp tục
+    // nhảy tới bước sau: các bước ở giữa phải còn hợp lệ, lỗi thì dừng ở bước lỗi
+    for (let j = stepIdx; j < i; j++) { const e = stepErr(STEPS[j]!.k); if (e) { setErrMsg(e); setTab(STEPS[j]!.k); return; } }
     setErrMsg(''); setTab(STEPS[i]!.k);
   };
   const companyList = lists.find((l) => l.isCompany);
@@ -364,7 +369,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       <i className="sp-form-mark" hidden />
       {isNew ? (
         <div className="full nx-steps them-mh-steps">
-          {STEPS.map((x, i) => <span key={x.k} role="button" tabIndex={-1} onClick={() => goStep(i)} className={i === stepIdx ? 'on' : i < stepIdx ? 'xong' : undefined} title={i < stepIdx ? 'Quay lại bước này' : undefined}><b>{i < stepIdx ? '✓' : i + 1}</b>{x.t}</span>)}
+          {STEPS.map((x, i) => <span key={x.k} role="button" tabIndex={-1} onClick={() => goStep(i)} className={i === stepIdx ? 'on' : i <= reachedIdx ? 'xong' : undefined} title={i < stepIdx ? 'Quay lại bước này' : i > stepIdx && i <= reachedIdx ? 'Đi tới bước đã làm' : i > reachedIdx ? 'Bấm Tiếp tục để tới bước này' : undefined}><b>{i !== stepIdx && i <= reachedIdx ? '✓' : i + 1}</b>{x.t}</span>)}
         </div>
       ) : <div className="tabs full" role="tablist" style={{ marginBottom: 8 }}>
         {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}{!isNew && tabBtn('history', 'Lịch sử')}
@@ -585,12 +590,14 @@ function NccTamBang({ rows, setRows, units, mainUnit, vatLabel, vatPct }: { rows
       </div>
       {rows.length > 0 && (
         <table className="mh-mini ncc-tam">
-          <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 160 }} title="Giá mua theo ĐVT, chưa thuế — nhập ô này thì ô gồm thuế tự tính">Giá mua chưa thuế</th><th className="num" style={{ width: 160 }} title={`Giá mua theo ĐVT, gồm thuế${vatPct ? ` ${vatPct}%` : ''} — NCC báo giá gồm thuế thì nhập ô này`}>Giá mua gồm thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 50 }} /></tr></thead>
+          <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 160 }} title="Giá mua theo ĐVT, chưa thuế — nhập ô này thì ô gồm thuế tự tính">Giá mua chưa thuế</th><th className="num" style={{ width: 90 }} title={`Thuế suất GTGT đầu vào đã chọn ở bước Thông tin chung${vatLabel ? ` (${vatLabel})` : ''} — đổi ở bước 1`}>Thuế %</th><th className="num" style={{ width: 160 }} title={`Giá mua theo ĐVT, gồm thuế${vatPct ? ` ${vatPct}%` : ''} — NCC báo giá gồm thuế thì nhập ô này`}>Giá mua gồm thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 50 }} /></tr></thead>
           <tbody>{rows.map((r, i) => (
             <tr key={i}>
               <td><PartnerPicker value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
               <td><select className="select input" value={r.unit} onChange={(e) => set(i, { unit: e.target.value })}>{units.map((u) => <option key={u} value={u}>{u}</option>)}</select></td>
               <td><NumInput value={net(r)} onChange={(n) => set(i, { price: n, incVat: false })} /></td>
+              {/* [2026-11-15 Nguyễn Văn Thủy] hiện thuế suất đã chọn ở đầu để thấy giá gồm thuế tính theo bao nhiêu % (đóng góp) */}
+              <td className="num" title={vatLabel || 'Chưa chọn thuế suất ở bước 1'}>{vatPct ? `${vatPct}%` : <span className="muted">0%</span>}</td>
               <td><NumInput value={gross(r)} onChange={(n) => set(i, { price: n, incVat: true })} /></td>
               <td><input className="input" type="date" value={r.validFrom} onChange={(e) => set(i, { validFrom: e.target.value })} /></td>
               <td><button type="button" className="btn btn-xs" title="Bỏ dòng" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>✕</button></td>

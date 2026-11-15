@@ -66,7 +66,9 @@ export const GON_DEFS: GonDef[] = [
     sections: [
       { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('exchange'), MUA('rebate'), MUA('gift_in'), MUA('cost'), MUA('payment'), MUA('prepayment'), '/mua-hang/tong-hop'] },
       { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/thue/hoa-don-co-quan-thue', '/mua-hang/doi-chieu'] },
-      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop', '/mua-hang/bien-the'] },
+      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop'] },
+      // [2026-11-15 Nguyễn Văn Thủy] sổ kho / tồn kho theo mặt hàng đưa lên menu cho dễ thấy (đóng góp)
+      { label: 'Sổ kho, tồn kho', paths: ['/mua-hang/so-kho', '/mua-hang/ton-kho'] },
       { label: 'Công nợ, thưởng, giá vốn', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky'] },
       { label: 'Danh mục, cài đặt', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/danh-muc/mat-hang', '/mua-hang/cai-dat'] },
     ],
@@ -183,7 +185,8 @@ export const GON_DEFS: GonDef[] = [
     sections: [
       { label: 'Đơn vị', paths: ['/cau-hinh/don-vi', '/cau-hinh/mau-in', '/cau-hinh/bao-cao-chung-tu', '/cau-hinh/khoi-anh'] },
       { label: 'Người dùng', paths: ['/cau-hinh/nguoi-dung', '/app/phan-quyen/vai-tro', '/cau-hinh/khoa-api'] },
-      { label: 'Cấu hình', paths: ['/he-thong/cau-hinh', '/he-thong/chinh-sach', '/he-thong/quy-dinh-danh-muc', '/tien-ich/nhap-excel', '/tien-ich/du-lieu-goc', '/tien-ich/add-in', '/app/thu-vien/kho', '/addins/spreadsheet-ai', '/addins/tro-ly'] },
+      // [2026-11-15 Nguyễn Văn Thủy] MH26 tách / gộp mã con chuyển từ Mua hàng sang Thiết lập (người quản trị đặt một lần) (đóng góp)
+      { label: 'Cấu hình', paths: ['/he-thong/cau-hinh', '/he-thong/chinh-sach', '/he-thong/quy-dinh-danh-muc', '/mua-hang/bien-the', '/tien-ich/nhap-excel', '/tien-ich/du-lieu-goc', '/tien-ich/add-in', '/app/thu-vien/kho', '/addins/spreadsheet-ai', '/addins/tro-ly'] },
       { label: 'Kiểm tra dữ liệu', paths: ['/he-thong/kiem-chuan', '/he-thong/ho-so-ke-toan', '/he-thong/ban-danh-gia', '/he-thong/tru-cot', '/bao-cao/kiem-tra-chung-tu', '/tien-ich/ct-mat-lien-ket', '/tien-ich/ct-lech-than-chi-tiet', '/tien-ich/ct-lech-phieu-goc', '/so-cai/but-toan', '/so-cai/sua-dau-but-toan', '/nghiep-vu/but-toan-mau', '/nghiep-vu/but-toan-lap'] },
       { label: 'Tài liệu', paths: ['/tien-ich/huong-dan', '/yeu-cau/tai-chinh-ke-toan', '/tien-ich/kien-truc', '/tien-ich/can-cu', '/mua-hang/hieu-nghiep-vu', '/mua-hang/tong-quan', '/mua-hang/csdl'] },
       { label: 'API', paths: ['/tich-hop/thu-api', '/tich-hop/huong-dan', '/tich-hop/nguon-du-lieu'] },
