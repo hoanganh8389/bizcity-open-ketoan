@@ -18,3 +18,4 @@
 {"key": "internal_revenue", "account_code": "51116", "name": "Doanh thu bán hàng nội bộ"}
 {"key": "internal_cogs", "account_code": "6326", "name": "Giá vốn hàng bán nội bộ"}
 {"key": "inventory", "account_code": "1561", "name": "Kho hàng hoá"}
+{"key": "payment_discount_income", "account_code": "5152", "name": "Chiết khấu thanh toán được hưởng"}

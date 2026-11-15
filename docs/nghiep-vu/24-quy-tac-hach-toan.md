@@ -91,6 +91,9 @@ Phạm vi đầu số của từng khoá:
 | `cash_in_transit` | Tiền đang chuyển | 113 |
 | `stock_surplus` / `stock_shortage` | Thừa / thiếu chờ xử lý | 338, 711 / 138, 632, 811 |
 | `promotion_expense` | Chi phí hàng khuyến mại (màn mua hàng) | 641, 642 |
+| `payment_discount_income` | Chiết khấu thanh toán được hưởng khi trả NCC đúng hạn | 515 |
+
+Quà NCC tặng không hoá đơn ghi theo mục đích **NQUA** (mặc định 711…), xuất quà tặng khách theo **XQUA**: sửa tài khoản ở bảng mục đích xuất; phân hệ Mua hàng chỉ tạo hai mục đích này lần đầu, không ghi đè.
 
 Mục đích xuất chọn trong: 138, 15, 211, 241, 242, 334, 338, 353, 632, 641, 642, 711, 811.
 

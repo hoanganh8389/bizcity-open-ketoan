@@ -35,6 +35,7 @@
     "tax_output": "33311",
     "tax_input": "1331",
     "promotion_expense": "64184",
+    "payment_discount_income": "5152",
     "internal_receivable": "13681",
     "internal_payable": "33681",
     "internal_receivable_goods": "13681",

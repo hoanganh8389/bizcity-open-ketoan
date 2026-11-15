@@ -43,7 +43,11 @@ async function ensureReason(trx: Db, tenantId: string, code: string, name: strin
 
 // [2026-11-15 Nguyễn Văn Thủy] nhận / xuất quà là phiếu điều chỉnh kho có MỤC ĐÍCH XUẤT (Quy tắc hạch toán) — tài khoản theo cài đặt Mua hàng (đóng góp)
 /** Mục đích "Nhận quà NCC" (tăng kho, Có thu nhập quà) / "Xuất quà tặng khách" (giảm kho, Nợ chi phí quà): đổi cài đặt thì mục đích đổi theo. */
+// [2026-11-15 Nguyễn Văn Thủy] mục đích NQUA / XQUA chỉ tạo lần đầu; đã có thì giữ tài khoản kế toán khai ở Quy tắc hạch toán (đóng góp)
 async function ensureGiftPurpose(trx: Db, tenantId: string, code: string, name: string, isIn: boolean, account: string) {
+  const had = await trx.selectFrom('stock_purposes').select(['name', 'account_code', 'is_active']).where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
+  if (had?.is_active) return;
+  if (had) { name = had.name; account = had.account_code; }
   await ensureStockPurpose(trx, tenantId, 'mua-hang', 'module:mua-hang', { code, name, direction: isIn ? 'increase' : 'decrease', accountCode: account });
 }
 

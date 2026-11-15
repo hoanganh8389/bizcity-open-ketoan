@@ -34,4 +34,23 @@ describe('Nhập mua — tài khoản chỉ theo Quy tắc hạch toán', () => 
     expect(acc.sort()).toEqual(def.sort());
     expect(acc).not.toContain('1111');
   });
+
+  it('quà không hoá đơn: tài khoản theo mục đích NQUA kế toán khai — phiếu quà sau không ghi đè lại', async () => {
+    const purposes = (await call(t, 'GET', '/api/v1/posting/purposes')).body.data as { code: string; accountCode: string }[];
+    const cur = purposes.find((p) => p.code === 'NQUA')?.accountCode ?? '';
+    const acc = (await call(t, 'GET', '/api/v1/accounts')).body.data as { code: string; isPosting: boolean }[];
+    const other = acc.find((a) => a.isPosting && a.code.startsWith('711') && a.code !== cur)?.code;
+    expect(other, 'cần một TK 711 chi tiết khác').toBeTruthy();
+    const put = await call(t, 'PUT', '/api/v1/posting/purposes/NQUA', { name: 'Nhận quà NCC', direction: 'increase', accountCode: other });
+    expect(put.status, JSON.stringify(put.body)).toBe(200);
+    const g = await save({ kind: 'gift_in', docDate: '2026-10-09', branchCode: 'CN-NA', partnerCode: 'NCC-TKDONG', gift: { source: 'ncc_extra', hasVat: false }, priceIncludesVat: false, orderDiscount: {},
+      lines: [{ lineKey: 'q', sku: 'QT-THUNG-SUAZ', name: 'Thùng sữa tặng kèm (ngoài hợp đồng)', unit: 'Thùng', qty: 2, price: 480000, taxCode: 'KKKN', lineType: 'gift_consumer' }] });
+    const ok = await call(t, 'POST', `/api/v1/purchase/documents/${g.id}/approve`);
+    expect(ok.status, JSON.stringify(ok.body).slice(0, 400)).toBe(200);
+    const d = ok.body.data as Doc;
+    const e = (await call(t, 'GET', `/api/v1/documents/${d.links[0]!.eventId}`)).body.data.entries as { lines: { accountCode: string; credit: number }[] }[];
+    expect(e.flatMap((x) => x.lines).filter((l) => l.credit > 0).map((l) => l.accountCode)).toContain(other);
+    const after = (await call(t, 'GET', '/api/v1/posting/purposes')).body.data as { code: string; accountCode: string }[];
+    expect(after.find((p) => p.code === 'NQUA')?.accountCode).toBe(other);
+  });
 });

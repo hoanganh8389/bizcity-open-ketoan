@@ -31,7 +31,7 @@ interface Scheme {
 interface PreviewLine { accountCode: string; accountName: string; debit: number; credit: number; description: string; sku: string | null }
 interface PreviewRes { ok: boolean; error?: string; entries?: { docType: string | null; docNo: string | null; lines: PreviewLine[] }[] }
 
-const AMOUNT: Record<string, string> = { goods: 'Tiền hàng', tax: 'Tiền thuế', total: 'Tổng tiền', paid: 'Số đã thu / trả', unpaid: 'Số còn nợ', cost: 'Giá vốn' };
+const AMOUNT: Record<string, string> = { goods: 'Tiền hàng', tax: 'Tiền thuế', total: 'Tổng tiền', paid: 'Số đã thu / trả', unpaid: 'Số còn nợ', cost: 'Giá vốn', discount: 'Số chiết khấu' };
 const SOURCE: Record<Source, { label: string; tip: string; link?: string }> = {
   rule: { label: 'Tài khoản của quy tắc', tip: 'Đổi ngay ở đây, chỉ trong phạm vi đầu số cho phép' },
   payment: { label: 'Hình thức thanh toán', tip: 'Mỗi hình thức (tiền mặt, chuyển khoản, QR…) một tài khoản; sửa ở danh mục Hình thức thanh toán', link: '/cau-hinh/hinh-thuc-thanh-toan' },

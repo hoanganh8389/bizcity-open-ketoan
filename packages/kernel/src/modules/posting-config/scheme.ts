@@ -15,7 +15,7 @@
  */
 
 export type SchemeSource = 'rule' | 'payment' | 'warehouse' | 'tax' | 'purpose';
-export type SchemeAmount = 'goods' | 'tax' | 'total' | 'paid' | 'unpaid' | 'cost';
+export type SchemeAmount = 'goods' | 'tax' | 'total' | 'paid' | 'unpaid' | 'cost' | 'discount';
 
 export interface SchemeLine {
   side: 'debit' | 'credit';
@@ -72,6 +72,8 @@ export const RULE_KEYS: Record<string, RuleKey> = {
   cash_in_transit: { label: 'Tiền đang chuyển', range: ['113'], suggest: '11319', help: 'Chuyển tiền giữa hai chi nhánh cùng đơn vị hạch toán.' },
   stock_surplus: { label: 'Hàng thừa chờ xử lý', range: ['338', '711'], suggest: '3381', help: 'Phiếu tăng kho không ghi mục đích (kiểm kê thừa).' },
   stock_shortage: { label: 'Hàng thiếu chờ xử lý', range: ['138', '632', '811'], suggest: '1381', help: 'Phiếu giảm kho không ghi mục đích (kiểm kê thiếu).' },
+  // [2026-11-15 Nguyễn Văn Thủy] chiết khấu thanh toán được hưởng khi trả NCC đúng hạn (đóng góp)
+  payment_discount_income: { label: 'Chiết khấu thanh toán được hưởng', range: ['515'], suggest: '5152', help: 'Trả nhà cung cấp đúng hạn được giảm (CKTT): Nợ phải trả NCC / Có tài khoản này.' },
   promotion_expense: { label: 'Chi phí hàng khuyến mại (mua hàng)', range: ['641', '642'], suggest: '64184', help: 'Hàng khuyến mại nhận từ NCC ghi chi phí ở màn mua hàng.' },
 };
 
@@ -174,6 +176,10 @@ export const SCHEME: SchemeBusiness[] = [
       { name: 'Trả tiền', lines: [
         { side: 'debit', role: 'Giảm phải trả NCC', amount: 'total', source: 'rule', key: 'payable' },
         { side: 'credit', role: 'Tiền trả', amount: 'total', source: 'payment' },
+      ] },
+      { name: 'Chiết khấu thanh toán', lines: [
+        { side: 'debit', role: 'Giảm phải trả NCC', amount: 'discount', source: 'rule', key: 'payable', when: 'Trả đúng hạn được CKTT' },
+        { side: 'credit', role: 'Chiết khấu thanh toán được hưởng', amount: 'discount', source: 'rule', key: 'payment_discount_income' },
       ] },
     ],
   },

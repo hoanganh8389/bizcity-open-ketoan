@@ -51,6 +51,7 @@ describe('Quy tắc hạch toán', () => {
     for (const b of s.businesses) for (const g of b.groups) for (const l of g.lines) if (l.key) expect(keys, `${b.code} dùng khoá ${l.key}`).toContain(l.key);
     for (const k of s.keys) expect(k.range.length, k.key).toBeGreaterThan(0);
     expect(s.sources.purposes.length).toBeGreaterThan(0); // nạp mục đích gốc khi mở màn lần đầu
+    expect(s.keys.find((k) => k.key === 'payment_discount_income')?.range).toEqual(['515']); // CKTT khai ở đây, không ở cài đặt mua hàng
   });
 
   it('đổi tài khoản: khoá lạ, ngoài phạm vi, TK tổng hợp bị chặn; hợp lệ thì phiếu bán mới ghi doanh thu vào TK mới', async () => {

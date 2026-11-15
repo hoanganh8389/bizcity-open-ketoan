@@ -66,7 +66,7 @@ export async function resolveAccounts(trx: Db, tenantId: string, _s?: PurchaseSe
     bank: methodAcc('112', ['CK', 'NH']) ?? pick('1121', '112'),
     giftIncome: pick('71153', '7118', '711'),
     giftExpense: def('promotion_expense') ?? pick('64184', '64188', '6418', '6428'),
-    finIncome: pick('5152', '5158', '515'),
+    finIncome: def('payment_discount_income') ?? pick('5152', '5158', '515'),
   };
 }
 
