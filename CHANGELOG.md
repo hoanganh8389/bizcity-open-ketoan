@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chứng từ: bỏ dải "Cảnh báo kiểm chuẩn" trên form <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** form chứng từ không còn dải "Cảnh báo kiểm chuẩn … chỉ thông tin, vẫn lưu được" (chiếm chỗ, không chặn). Kiểm chuẩn vẫn chạy, xem ở màn Kiểm chuẩn; cảnh báo khi khoá kỳ giữ nguyên.
+
 ### Chuyển kho: nháp → duyệt xuất; sửa sau duyệt bằng điều chỉnh (khoá nhận); hai đầu cần bên nhận xác nhận; phiếu điện tử <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** migration 0145 — `stock_transfer_docs.status` thêm `draft`; cột `adjust`, `adjustments`, `einvoice`. API `POST /api/v1/kho/transfers/:id/{ship,adjust,adjust-confirm,adjust-approve,adjust-cancel}`, `PUT /api/v1/kho/transfers/:id/einvoice`; lập phiếu có `mode: draft | ship` (mặc định ship như cũ).
