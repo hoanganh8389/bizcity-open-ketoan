@@ -31,7 +31,7 @@ const monthStart = () => `${today().slice(0, 8)}01`;
 /** Phiếu mới: chi nhánh xuất = chi nhánh đang làm việc; chưa chọn thì chi nhánh đầu tiên đang lọc. */
 const emptyDoc = (filterBranches = ''): CkDoc => ({
   id: '', docNo: '', docDate: today(), fromBranchCode: workBranch.get() || (filterBranches !== '-' ? filterBranches.split(',')[0] ?? '' : ''), fromWarehouse: '', toBranchCode: '', toWarehouse: '', note: '',
-  status: 'shipped', lines: [], totalQty: 0, totalReceived: 0, short: false,
+  status: 'draft', lines: [], totalQty: 0, totalReceived: 0, short: false,
 });
 
 export function ChuyenKhoPage() {
@@ -70,10 +70,15 @@ export function ChuyenKhoPage() {
       p.kind === 'unreceive' ? ckApi.unreceive(p.id) : p.kind === 'reject' ? ckApi.reject(p.id, p.reason ?? '') : ckApi.cancel(p.id, p.reason ?? ''),
     onSuccess: after,
   });
+  // [2026-11-15 Nguyễn Văn Thủy] thao tác trên phiếu đang mở (duyệt xuất, điều chỉnh, xác nhận, phiếu điện tử): xong thì mở lại đúng phiếu (đóng góp)
+  const run = useMutation({
+    mutationFn: (fn: () => Promise<CkDoc>) => fn(),
+    onSuccess: (d) => { after(d); setEditing(d); setFormKey((k) => k + 1); },
+  });
   useThemTuDiaChi(() => { if (!tt.them) return; setEditing(emptyDoc(f.branchCodes)); setFormKey((k) => k + 1); });
   /** Nhận đủ hàng loạt: mỗi phiếu chờ nhận đã tích nhận đủ số lượng xuất; phiếu lỗi báo riêng. */
   const nhanDu = async () => {
-    const list = rows.filter((r) => tich.has(r.id) && r.status === 'shipped');
+    const list = rows.filter((r) => tich.has(r.id) && r.status === 'shipped' && !r.adjust);
     if (!list.length || !window.confirm(`Xác nhận NHẬN ĐỦ ${list.length} phiếu chuyển kho (ngày nhận hôm nay)? Tồn bên nhận sẽ cộng.`)) return;
     setNhanLoat(true); setBao(null);
     const loi: string[] = [];
@@ -103,7 +108,7 @@ export function ChuyenKhoPage() {
             <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouses, onChange: (warehouses) => set({ warehouses }) }} />
             <div className="field"><label title="Chờ nhận = đã xuất, thủ kho nhập chưa xác nhận">Trạng thái</label>
               <select className="select input" value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                <option value="">Mọi trạng thái</option><option value="pending">Đã xuất, chờ nhận</option><option value="received">Đã nhận</option>
+                <option value="">Mọi trạng thái</option><option value="draft">Nháp</option><option value="pending">Đã xuất, chờ nhận</option><option value="received">Đã nhận</option>
                 <option value="rejected">Bên nhận từ chối</option><option value="cancelled">Đã huỷ</option>
               </select>
             </div>
@@ -123,9 +128,9 @@ export function ChuyenKhoPage() {
             {tt.huy && <button className="btn btn-sm" disabled={!live || act.isPending} title="Huỷ cả phần xuất và phần nhập (đảo bút toán bằng số âm), giữ phiếu để tra cứu"
               onClick={() => { if (!sel) return; const r = ask(`Huỷ phiếu chuyển kho ${sel.docNo}? Tồn hai bên trả lại như trước khi chuyển.\nLý do huỷ:`); if (r !== null) act.mutate({ kind: 'cancel', id: sel.id, reason: r }); }}>Huỷ phiếu</button>}
             <PrintButton small screen="KHO01" templates={TRADE_TEMPLATES.transfer!} disabled={!sel} title="In phiếu đang chọn" getDocs={async () => (sel ? [toPrintDoc(await ckApi.get(sel.id))] : [])} />
-            {tt.nhan && <button className="btn btn-sm" disabled={nhanLoat || !rows.some((r) => tich.has(r.id) && r.status === 'shipped')}
+            {tt.nhan && <button className="btn btn-sm" disabled={nhanLoat || !rows.some((r) => tich.has(r.id) && r.status === 'shipped' && !r.adjust)}
               title="Thủ kho nhập: xác nhận NHẬN ĐỦ số lượng các phiếu chờ nhận đã tích (ngày nhận = hôm nay). Nhận thiếu thì mở từng phiếu, bấm Nhận hàng."
-              onClick={() => void nhanDu()}>{nhanLoat ? 'Đang nhận…' : `Nhận đủ ${rows.filter((r) => tich.has(r.id) && r.status === 'shipped').length || ''} phiếu đã tích`}</button>}
+              onClick={() => void nhanDu()}>{nhanLoat ? 'Đang nhận…' : `Nhận đủ ${rows.filter((r) => tich.has(r.id) && r.status === 'shipped' && !r.adjust).length || ''} phiếu đã tích`}</button>}
             <button className="btn btn-sm" onClick={() => void q.refetch()}>Nạp</button>
             <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
             <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Phiếu chuyển từ website xem ở <Link to="/bao-cao/chuyen-kho">Bảng kê chuyển kho (HH01)</Link></span>
@@ -179,7 +184,7 @@ export function ChuyenKhoPage() {
         </div>
       </FilterLayout>
       {editing && (
-        <PhieuChuyenKhoForm key={formKey} value={editing} saving={save.isPending} error={save.error}
+        <PhieuChuyenKhoForm key={formKey} value={editing} saving={save.isPending || run.isPending} error={save.error ?? run.error} onAction={(fn) => { save.reset(); run.mutate(fn); }}
           onSave={(d, close) => save.mutate({ d, close })} onClose={() => { setEditing(null); save.reset(); }}
           onReceive={editing.id ? () => void openReceive(editing) : undefined} />
       )}

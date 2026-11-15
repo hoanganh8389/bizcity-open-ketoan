@@ -4,9 +4,10 @@
 
 Chuyển hàng giữa hai chi nhánh, hoặc giữa hai kho trong cùng một chi nhánh. Một phiếu có cả hai đầu: chi nhánh và kho **xuất**, chi nhánh và kho **nhập**.
 
-## Ghi phiếu là xuất kho
+## Nháp và duyệt xuất
 
-- Bấm **Ghi**: tồn ở chi nhánh + kho xuất **giảm ngay**. Hàng nằm ở *hàng đang chuyển* (1579, khác đơn vị hạch toán thì 13681).
+- **Ghi nháp**: chưa trừ tồn, chưa vào sổ, sửa thoải mái. Bên nhận chưa nhận được.
+- **Ghi và duyệt xuất**: tồn ở chi nhánh + kho xuất **giảm ngay**. Hàng nằm ở *hàng đang chuyển* (1579, khác đơn vị hạch toán thì 13681).
 - Bên nhận **chưa tăng** cho tới khi thủ kho nhập xác nhận.
 - Chuyển trong **cùng chi nhánh** (hai kho): mặc định **nhận luôn** khi ghi. Muốn chờ xác nhận thì bỏ tích *Nhận luôn khi ghi*.
 
@@ -38,14 +39,28 @@ Phiếu **không có ô lý do**: tài khoản (Nợ 1579 / Có 1561, khác đơ
 
 Nhận thiếu thì phần chênh còn ở *hàng đang chuyển* để kế toán xử lý (bắt bồi thường, ghi hao hụt…). Danh sách hiện trạng thái **Nhận thiếu**.
 
-## Sửa, từ chối, huỷ
+## Sửa sau khi duyệt xuất
+
+Phiếu đã duyệt xuất ảnh hưởng cả bên nhận và phiếu xuất kho kiêm vận chuyển nội bộ, nên không sửa thẳng:
+
+| Lúc | Làm gì |
+|---|---|
+| Đã duyệt xuất, **bên nhận chưa nhận** | **Lập điều chỉnh** (ghi lý do) → sửa → **Duyệt điều chỉnh**. Trong lúc điều chỉnh, bên nhận **bị khoá nhận**; sổ giữ bản cũ. Duyệt thì đảo phần xuất cũ (số âm) và ghi phần xuất mới |
+| **Bên nhận đã nhận**, chỉ lệch số nhận | Bên nhận lập **Biên bản chênh lệch**: ghi lại số thực nhận, bắt buộc lý do |
+| **Bên nhận đã nhận**, sai phiếu | **Đề nghị điều chỉnh hai đầu** → bên nhận **xác nhận** → **Duyệt điều chỉnh**: đảo và ghi lại cả phần xuất, phần nhập |
+| Muốn bỏ thay đổi | **Huỷ điều chỉnh**: phiếu về bản đã duyệt, sổ không đổi |
+
+**Phiếu điện tử**: bấm **Ghi số phiếu điện tử** để lưu số phiếu XK-VCNB đã phát hành. Phiếu đã có số mà điều chỉnh thì khi duyệt phải ghi **số phiếu thay thế / điều chỉnh**. Lịch sử phiếu lưu số cũ → số mới.
+
+Mọi lần điều chỉnh, biên bản chênh lệch đều nằm ở bảng **Lịch sử điều chỉnh / chênh lệch** cuối phiếu: ai lập, lý do, ai xác nhận, ai duyệt, đổi gì.
+
+## Từ chối, huỷ
 
 | Nút | Việc |
 |---|---|
-| Sửa | Sửa được cả phiếu đã nhận. Phần xuất và phần nhập ghi lại theo phiếu mới, bút toán cũ đảo bằng số âm |
 | Bỏ nhận | Huỷ phần nhập, phiếu về *chờ nhận* |
 | Từ chối | Bên nhận không nhận hàng: huỷ phần xuất, bên chuyển được **trả lại tồn** |
-| Huỷ phiếu | Huỷ cả hai phần. Phiếu vẫn giữ lại để tra cứu, không xoá |
+| Huỷ phiếu | Huỷ cả hai phần (phiếu nháp: chỉ đổi trạng thái). Phiếu vẫn giữ lại để tra cứu, không xoá. Đang điều chỉnh thì huỷ điều chỉnh trước |
 
 ## Phiếu từ website bán hàng
 

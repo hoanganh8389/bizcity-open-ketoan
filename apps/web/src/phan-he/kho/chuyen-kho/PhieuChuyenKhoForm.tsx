@@ -27,12 +27,20 @@ interface ItemRow { sku: string; name: string; unit: string }
 
 const round4 = (n: number) => Math.round(n * 10000) / 10000;
 
-export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onReceive }: {
+export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onReceive, onAction }: {
   value: CkDoc; saving: boolean; error: unknown;
   onSave: (d: CkInput, close: boolean) => void; onClose: () => void; onReceive?: () => void;
+  /** Thao tác trên phiếu đã ghi (duyệt xuất, điều chỉnh, xác nhận, phiếu điện tử). */
+  onAction?: (fn: () => Promise<CkDoc>) => void;
 }) {
   const isNew = !value.id;
-  const readOnly = value.status === 'cancelled' || value.status === 'rejected';
+  // [2026-11-15 Nguyễn Văn Thủy] đã duyệt xuất / đã nhận: chỉ sửa khi đang điều chỉnh (đóng góp)
+  const adj = value.adjust;
+  const posted = value.status === 'shipped' || value.status === 'received';
+  const readOnly = value.status === 'cancelled' || value.status === 'rejected' || (posted && !adj);
+  const draftLike = isNew || value.status === 'draft';
+  const ask = (text: string, min = 5) => { const r = window.prompt(text, ''); if (r === null) return null; if (r.trim().length < min) { window.alert(`Ghi rõ lý do (ít nhất ${min} ký tự)`); return null; } return r.trim(); };
+  const doAct = (fn: () => Promise<CkDoc>) => onAction?.(fn);
   const [v, setV] = useState<CkDoc>(value);
   const [receiveNow, setReceiveNow] = useState<boolean | null>(null);
   const [help, setHelp] = useState(false);
@@ -136,11 +144,11 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
     v.lines.some((l) => !l.sku || !(l.qty > 0)) && 'Có dòng thiếu mã hàng hoặc số lượng',
   ].filter(Boolean) as string[];
 
-  const save = (close: boolean) => {
+  const save = (close: boolean, mode?: 'draft' | 'ship') => {
     if (over.length && !window.confirm(`Vượt tồn ở kho xuất: ${over.map((s) => `${s} (cần ${qtyText(usedBySku.get(s))}, tồn ${qtyText(stock[s])})`).join(', ')}.\nVẫn ghi phiếu?`)) return;
     onSave({
       docNo: v.docNo, docDate: v.docDate, fromBranchCode: v.fromBranchCode, fromWarehouse: v.fromWarehouse, toBranchCode: v.toBranchCode, toWarehouse: v.toWarehouse,
-      reasonCode: v.reasonCode, note: v.note, lines: v.lines, receiveNow: isNew ? receiving : undefined,
+      reasonCode: v.reasonCode, note: v.note, lines: v.lines, receiveNow: draftLike ? receiving : undefined, mode: draftLike ? mode ?? 'ship' : undefined,
     }, close);
   };
   const totalQty = round4(v.lines.reduce((s, l) => s + (l.qty || 0), 0));
@@ -149,24 +157,43 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
   const title = <>Phiếu chuyển kho {v.docNo || '(mới)'} {!isNew && <span className={`badge ${statusClass(value)}`} style={{ marginLeft: 8 }}>{statusText(value)}</span>}</>;
 
   return (
-    <Modal wide voucher={{ total: totalQty, totalLabel: 'Tổng số lượng' }} viewFirst={!isNew && !readOnly} title={title} onClose={onClose}
-      viewActions={!isNew && value.status === 'shipped' && onReceive ? <button className="btn btn-primary" data-view-ok onClick={onReceive} title="Thủ kho nhập xác nhận đã nhận hàng (cộng tồn bên nhận)">Nhận hàng</button> : undefined}
+    <Modal wide voucher={{ total: totalQty, totalLabel: 'Tổng số lượng' }} viewFirst={!isNew && !adj && value.status !== 'cancelled' && value.status !== 'rejected'} title={title} onClose={onClose}
+      viewActions={!isNew && value.status === 'shipped' && !adj && onReceive ? <button className="btn btn-primary" data-view-ok onClick={onReceive} title="Thủ kho nhập xác nhận đã nhận hàng (cộng tồn bên nhận)">Nhận hàng</button> : undefined}
       footer={<>
         {!isNew && <span data-view-ok style={{ marginRight: 'auto' }}><PrintButton screen="KHO01" templates={TRADE_TEMPLATES.transfer!} title="In phiếu theo nội dung đã ghi (sửa xong bấm Ghi rồi mới in)" getDocs={() => [toPrintDoc(value)]} /></span>}
-        {!readOnly && <>
-          <button className="btn btn-primary" disabled={saving || problems.length > 0} title={problems.join('; ') || 'Ghi phiếu = xuất kho (Ctrl+S)'} onClick={() => save(false)}>Ghi</button>
-          <button className="btn" disabled={saving || problems.length > 0} title={problems.join('; ')} onClick={() => save(true)}>Ghi và Đóng</button>
+        {draftLike && !readOnly && <>
+          <button className="btn" disabled={saving || problems.length > 0} title={problems.join('; ') || 'Ghi nháp: chưa trừ tồn, chưa vào sổ, sửa thoải mái'} onClick={() => save(false, 'draft')}>Ghi nháp</button>
+          <button className="btn btn-primary" disabled={saving || problems.length > 0} title={problems.join('; ') || 'Ghi và duyệt xuất: trừ tồn bên chuyển, ghi sổ đầu xuất (Ctrl+S)'} onClick={() => save(false, 'ship')}>Ghi và duyệt xuất</button>
+        </>}
+        {adj && <>
+          <button className="btn" disabled={saving || problems.length > 0} title="Ghi nội dung điều chỉnh — sổ chưa đổi" onClick={() => save(false)}>Ghi</button>
+          {adj.both && !adj.confirmedBy && <button className="btn" disabled={saving} title="Bên nhận đồng ý điều chỉnh hai đầu (phiếu đã nhận)" onClick={() => doAct(() => ckApi.adjustConfirm(value.id))}>Bên nhận xác nhận</button>}
+          <button className="btn btn-primary" disabled={saving || problems.length > 0 || (adj.both && !adj.confirmedBy)} title={adj.both && !adj.confirmedBy ? 'Chờ bên nhận xác nhận' : 'Đảo bút toán bản đã duyệt, ghi bản điều chỉnh'} onClick={() => {
+            if (value.einvoice) { const no = window.prompt(`Phiếu XK-VCNB điện tử ${value.einvoice.no} đã phát hành — ghi số phiếu thay thế / điều chỉnh:`, ''); if (!no?.trim()) return; doAct(() => ckApi.adjustApprove(value.id, { no: no.trim(), serial: value.einvoice?.serial })); }
+            else doAct(() => ckApi.adjustApprove(value.id));
+          }}>Duyệt điều chỉnh (đảo bản cũ, ghi bản mới)</button>
+          <button className="btn" disabled={saving} title="Bỏ thay đổi, phiếu về bản đã duyệt; sổ không đổi" onClick={() => { if (window.confirm('Huỷ điều chỉnh: bỏ thay đổi, phiếu về bản đã duyệt?')) doAct(() => ckApi.adjustCancel(value.id)); }}>Huỷ điều chỉnh</button>
+        </>}
+        {posted && !adj && <>
+          <button className="btn" data-view-ok disabled={saving} title={value.status === 'received' ? 'Phiếu đã nhận: sửa phiếu phải điều chỉnh cả hai đầu, bên nhận xác nhận rồi mới duyệt' : 'Phiếu đã duyệt xuất: lập điều chỉnh để sửa — đầu nhận bị khoá nhận tới khi duyệt'} onClick={() => { const r = ask(value.status === 'received' ? 'Đề nghị điều chỉnh hai đầu — ghi lý do:' : 'Lập điều chỉnh — ghi lý do:'); if (r) doAct(() => ckApi.adjust(value.id, r)); }}>{value.status === 'received' ? 'Đề nghị điều chỉnh hai đầu' : 'Lập điều chỉnh'}</button>
+          {value.status === 'received' && onReceive && <button className="btn" data-view-ok disabled={saving} title="Lệch số nhận: ghi lại số thực nhận, bắt buộc lý do, lưu lịch sử" onClick={onReceive}>Biên bản chênh lệch</button>}
+          {!value.einvoice && <button className="btn" data-view-ok disabled={saving} title="Ghi số phiếu xuất kho kiêm vận chuyển nội bộ điện tử đã phát hành" onClick={() => { const no = window.prompt('Số phiếu XK-VCNB điện tử đã phát hành:', ''); if (no?.trim()) doAct(() => ckApi.einvoice(value.id, { no: no.trim() })); }}>Ghi số phiếu điện tử</button>}
         </>}
         <button className="btn" onClick={onClose}>Thoát</button>
       </>}>
       <div className="full row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <span className="muted" style={{ fontSize: 12 }}>
-          {isNew ? 'Ghi phiếu là xuất kho: tồn bên chuyển giảm ngay.' : value.status === 'shipped' ? `Đã xuất ${viDate(value.docDate)}, chờ thủ kho nhập xác nhận.` : value.status === 'received' ? `Đã nhận ${viDate(value.receivedDate)}${value.receivedBy ? ` · ${value.receivedBy}` : ''}${value.receivedNote ? ` · ${value.receivedNote}` : ''}.` : value.receivedNote || ''}
+          {draftLike ? 'Ghi nháp: chưa trừ tồn. Ghi và duyệt xuất: tồn bên chuyển giảm ngay.' : value.status === 'shipped' ? `Đã xuất ${viDate(value.docDate)}, chờ thủ kho nhập xác nhận.` : value.status === 'received' ? `Đã nhận ${viDate(value.receivedDate)}${value.receivedBy ? ` · ${value.receivedBy}` : ''}${value.receivedNote ? ` · ${value.receivedNote}` : ''}.` : value.receivedNote || ''}
         </span>
         <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)}>? Hướng dẫn</button>
       </div>
       {help && <HelpDrawer guideKey="kho-phieu-chuyen-kho" onClose={() => setHelp(false)} />}
       <DocumentGateBanner advisories={gate.advisories} />
+      {adj && <div className="full alert alert-warn" title="Bút toán bản đã duyệt vẫn nằm trong sổ cho tới khi duyệt điều chỉnh">
+        <b>{adj.both ? 'Đang điều chỉnh hai đầu (phiếu đã nhận)' : 'Đang điều chỉnh phiếu đã duyệt xuất'}</b> — sổ vẫn theo bản đã duyệt; đầu nhận bị khoá nhận. Lý do: {adj.reason} · {adj.by}, {new Date(adj.at).toLocaleString('vi-VN')}
+        {adj.both && <> · {adj.confirmedBy ? `Bên nhận đã xác nhận: ${adj.confirmedBy}` : 'Chờ bên nhận xác nhận'}</>}
+        {value.einvoice && <> · Phiếu XK-VCNB điện tử {value.einvoice.no} đã phát hành: khi duyệt phải ghi số phiếu thay thế / điều chỉnh</>}
+      </div>}
       {msg && <div className="full alert alert-ok ck-msg">{msg}</div>}
 
       <div className="full ck-head">
@@ -191,7 +218,8 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
             <label>Số phiếu</label><input className="input mono" value={v.docNo} placeholder="(tự sinh)" onChange={(e) => set({ docNo: e.target.value.trim() })} />
             <label title="Ngày xuất kho">Ngày</label><input className="input" type="date" value={v.docDate} onChange={(e) => set({ docDate: e.target.value })} />
             <label>Trạng thái</label><span className={isNew ? 'ck-new' : ''}>{isNew ? 'Mới' : statusText(value)}</span>
-            {isNew && <>
+            {value.einvoice && <><label title="Phiếu xuất kho kiêm vận chuyển nội bộ điện tử đã phát hành">Phiếu điện tử</label><span className="mono">{value.einvoice.serial ? `${value.einvoice.serial} · ` : ''}{value.einvoice.no}</span></>}
+            {draftLike && <>
               <label />
               <label className="row" style={{ gap: 6, fontWeight: 400 }} title="Bỏ tích: chờ thủ kho nhập xác nhận (hàng nằm ở hàng đang chuyển). Cùng chi nhánh thì mặc định nhận luôn">
                 <input type="checkbox" checked={receiving} onChange={(e) => setReceiveNow(e.target.checked)} /> Nhận luôn khi ghi
@@ -261,6 +289,12 @@ export function PhieuChuyenKhoForm({ value, saving, error, onSave, onClose, onRe
       </div>
       {/* [2026-11-12 kiennt] NT-QUY-001 — đính kèm chứng từ gốc (biên bản giao nhận, lệnh điều động…) theo chứng từ đầu xuất; phiếu mới: ghi trước */}
       <div className="full"><TepChungTu docRef={docRefOf(value.outDocKey)} defaultKind="bien_ban" /></div>
+      {!!value.adjustments?.length && <div className="full">
+        <b>Lịch sử điều chỉnh / chênh lệch</b>
+        <table className="grid full" style={{ marginTop: 4 }}><thead><tr><th>Loại</th><th>Lập</th><th>Lý do</th><th>Xác nhận / duyệt</th><th>Thay đổi</th><th>Phiếu điện tử</th></tr></thead><tbody>
+          {value.adjustments.map((h, i) => <tr key={i}><td>{h.kind === 'chenh_lech' ? 'Biên bản chênh lệch' : h.both ? 'Điều chỉnh hai đầu' : 'Điều chỉnh đầu xuất'}</td><td>{h.by}<br /><small className="muted">{new Date(h.at).toLocaleString('vi-VN')}</small></td><td>{h.reason}</td><td>{[h.confirmedBy && `Nhận xác nhận: ${h.confirmedBy}`, h.approvedBy && `Duyệt: ${h.approvedBy}`].filter(Boolean).join(' · ') || '—'}</td><td>{h.changes.join('; ') || '—'}</td><td>{h.einvoiceOld?.no && h.einvoiceNew?.no && h.einvoiceOld.no !== h.einvoiceNew.no ? `${h.einvoiceOld.no} → ${h.einvoiceNew.no}` : h.einvoiceNew?.no ?? '—'}</td></tr>)}
+        </tbody></table>
+      </div>}
       {problems.length > 0 && !readOnly && <div className="full muted" style={{ fontSize: 12 }}>Chưa ghi được: {problems.join(' · ')}</div>}
       {Boolean(error) && <div className="alert alert-bad full">{errorText(error)}</div>}
       {paste !== null && <DanExcel onCancel={() => setPaste(null)} onOk={(t) => void onPaste(t)} />}

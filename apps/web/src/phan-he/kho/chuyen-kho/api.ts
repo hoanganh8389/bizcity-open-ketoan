@@ -17,7 +17,11 @@ export interface CkLine {
   /** Chỉ ở giao diện: lô do phần mềm gợi ý (đổi số lượng thì gợi ý lại); gõ tay thì thôi. */
   lotAuto?: boolean;
 }
-export type CkStatus = 'shipped' | 'received' | 'rejected' | 'cancelled';
+export type CkStatus = 'draft' | 'shipped' | 'received' | 'rejected' | 'cancelled';
+export interface CkEInvoice { no: string; serial?: string; date?: string }
+/** [2026-11-15 Nguyễn Văn Thủy] đang điều chỉnh phiếu đã duyệt xuất; both = phiếu đã nhận (điều chỉnh hai đầu, bên nhận xác nhận) (đóng góp) */
+export interface CkAdjust { reason: string; by: string; at: string; both: boolean; confirmedBy?: string; confirmedAt?: string }
+export interface CkHistory { kind: 'adjust' | 'chenh_lech'; reason: string; by: string; at: string; both?: boolean; confirmedBy?: string; approvedBy?: string; approvedAt?: string; changes: string[]; einvoiceOld?: CkEInvoice | null; einvoiceNew?: CkEInvoice | null }
 export interface CkDoc {
   id: string;
   docNo: string;
@@ -44,15 +48,20 @@ export interface CkDoc {
   short: boolean;
   outLots?: Record<string, { lotNo: string; expDate: string | null; qty: number }[]>;
   ledger?: { out: { status: string; version: number } | null; in: { status: string; version: number } | null };
+  adjust?: CkAdjust;
+  adjustments?: CkHistory[];
+  einvoice?: CkEInvoice;
 }
 export interface CkInput {
   docNo: string; docDate: string; fromBranchCode: string; fromWarehouse: string; toBranchCode: string; toWarehouse: string;
   reasonCode?: string; note: string; lines: CkLine[]; receiveNow?: boolean;
+  /** draft = ghi nháp (chưa trừ tồn); ship = ghi và duyệt xuất. */
+  mode?: 'draft' | 'ship';
 }
 
-export const STATUS_TEXT: Record<CkStatus, string> = { shipped: 'Đã xuất, chờ nhận', received: 'Đã nhận', rejected: 'Bên nhận từ chối', cancelled: 'Đã huỷ' };
-export const statusText = (d: Pick<CkDoc, 'status' | 'short'>) => (d.status === 'received' && d.short ? 'Nhận thiếu' : STATUS_TEXT[d.status] ?? d.status);
-export const statusClass = (d: Pick<CkDoc, 'status' | 'short'>) => (d.status === 'shipped' ? 'badge-warn' : d.status === 'received' ? (d.short ? 'badge-warn' : 'badge-ok') : 'badge-bad');
+export const STATUS_TEXT: Record<CkStatus, string> = { draft: 'Nháp', shipped: 'Đã xuất, chờ nhận', received: 'Đã nhận', rejected: 'Bên nhận từ chối', cancelled: 'Đã huỷ' };
+export const statusText = (d: Pick<CkDoc, 'status' | 'short'> & { adjust?: CkAdjust }) => (d.adjust ? (d.adjust.both && !d.adjust.confirmedBy ? 'Điều chỉnh — chờ bên nhận xác nhận' : 'Đang điều chỉnh') : d.status === 'received' && d.short ? 'Nhận thiếu' : STATUS_TEXT[d.status] ?? d.status);
+export const statusClass = (d: Pick<CkDoc, 'status' | 'short'> & { adjust?: CkAdjust }) => (d.adjust ? 'badge-warn' : d.status === 'draft' ? 'badge-gray' : d.status === 'shipped' ? 'badge-warn' : d.status === 'received' ? (d.short ? 'badge-warn' : 'badge-ok') : 'badge-bad');
 
 const strip = (l: CkLine) => ({ lineKey: l.lineKey, sku: l.sku, name: l.name, unit: l.unit, qty: l.qty, receivedQty: l.receivedQty, lotNo: l.lotNo || undefined, expDate: l.expDate || undefined, note: l.note || undefined });
 const body = (d: CkInput) => ({ ...d, reasonCode: d.reasonCode || undefined, lines: d.lines.map(strip) });
@@ -66,6 +75,12 @@ export const ckApi = {
   unreceive: (id: string) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/unreceive`, {}),
   reject: (id: string, reason: string) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/reject`, { reason }),
   cancel: (id: string, reason: string) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/cancel`, { reason }),
+  ship: (id: string, receiveNow?: boolean) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/ship`, receiveNow === undefined ? {} : { receiveNow }),
+  adjust: (id: string, reason: string) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/adjust`, { reason }),
+  adjustConfirm: (id: string) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/adjust-confirm`, {}),
+  adjustApprove: (id: string, einvoiceReplacement?: CkEInvoice) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/adjust-approve`, einvoiceReplacement ? { einvoiceReplacement } : {}),
+  adjustCancel: (id: string) => api.post<CkDoc>(`/api/v1/kho/transfers/${id}/adjust-cancel`, {}),
+  einvoice: (id: string, e: CkEInvoice) => api.put<CkDoc>(`/api/v1/kho/transfers/${id}/einvoice`, e),
   stock: (q: { branchCode: string; warehouse?: string; date: string; skus: string[]; exceptId?: string }) =>
     api.get<{ warehouse: string; stock: Record<string, number> }>('/api/v1/kho/transfers/stock', { branchCode: q.branchCode, warehouse: q.warehouse ?? '', date: q.date, skus: q.skus.join(','), ...(q.exceptId ? { exceptId: q.exceptId } : {}) }),
   suggest: (q: { branchCode: string; warehouse: string; date: string; items: { sku: string; qty: number }[]; except?: string[] }) =>

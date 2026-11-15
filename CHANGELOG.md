@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chuyển kho: nháp → duyệt xuất; sửa sau duyệt bằng điều chỉnh (khoá nhận); hai đầu cần bên nhận xác nhận; phiếu điện tử <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** migration 0145 — `stock_transfer_docs.status` thêm `draft`; cột `adjust`, `adjustments`, `einvoice`. API `POST /api/v1/kho/transfers/:id/{ship,adjust,adjust-confirm,adjust-approve,adjust-cancel}`, `PUT /api/v1/kho/transfers/:id/einvoice`; lập phiếu có `mode: draft | ship` (mặc định ship như cũ).
+- **Đổi:** phiếu đã duyệt xuất không sửa thẳng (409): **Lập điều chỉnh** (lý do bắt buộc) → đầu nhận **bị khoá nhận**, sổ giữ bản cũ → **Duyệt điều chỉnh** đảo đầu xuất cũ, ghi đầu xuất mới. Phiếu đã nhận: **đề nghị điều chỉnh hai đầu**, bên nhận **xác nhận** rồi mới duyệt (đảo và ghi lại cả hai đầu). Nhận lại phiếu đã nhận = **biên bản chênh lệch** (bắt buộc lý do). Phiếu XK-VCNB điện tử đã ghi số thì duyệt điều chỉnh phải ghi số phiếu thay thế / điều chỉnh. Lịch sử điều chỉnh / chênh lệch trên phiếu; nhật ký thao tác `stock_transfer.*`.
+- **Đổi:** màn KHO01: nút Ghi nháp / Ghi và duyệt xuất; Lập điều chỉnh / Đề nghị điều chỉnh hai đầu / Bên nhận xác nhận / Duyệt điều chỉnh / Huỷ điều chỉnh / Biên bản chênh lệch / Ghi số phiếu điện tử; lọc trạng thái Nháp; nhận đủ hàng loạt bỏ qua phiếu đang điều chỉnh.
+- **Sửa:** manifest phân hệ Mua hàng khai action điều chỉnh (`documents-adjust`, `documents-adjust-cancel`).
+
 ### Mua hàng: sửa phiếu đã ghi sổ bằng bản điều chỉnh; đơn đặt "Mở lại đơn"; tách trạng thái phiếu / sổ <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** `POST /api/v1/purchase/documents/:id/adjust` (bắt buộc `reason` ≥ 5 ký tự) và `/adjust-cancel`. Lập điều chỉnh: phiếu về nháp để sửa, **bút toán bản đã duyệt giữ nguyên trong sổ**; duyệt bản điều chỉnh = gửi phiên bản mới cùng chứng từ kế toán → đảo bút toán cũ (số âm) + ghi bút toán mới; chứng từ kế toán bản cũ có mà bản mới không còn thì huỷ (đảo). Huỷ điều chỉnh: phiếu về đúng bản đã duyệt, sổ không đổi. Lịch sử phiếu lưu từng lần điều chỉnh (lý do, người lập / duyệt, thay đổi); nhật ký mua hàng thêm sự kiện lập / huỷ điều chỉnh.

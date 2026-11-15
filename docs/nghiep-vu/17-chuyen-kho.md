@@ -39,6 +39,14 @@ Không có sổ riêng. Mỗi phiếu thành **hai chứng từ `transfer` một
 - Đầu nhập: dòng có lô thì nhận đúng lô đó. Không có thì đọc **các lô đầu xuất đã xuất** cho dòng (`documentLots`), chia số thực nhận theo thứ tự các lô đó. Phần còn lại vào lô không số.
 - Màn gợi ý lô qua `GET /api/v1/lots/suggest?…&except=<out_doc_key>`. `except` để phiếu đang sửa không tự giữ chỗ lô của chính nó.
 
+## Nháp, điều chỉnh, phiếu điện tử (0145)
+
+- `status` thêm `draft`: ghi nháp không trừ tồn, không vào sổ; `POST …/:id/ship` duyệt xuất.
+- Đã duyệt xuất: `PUT` bị chặn (409) trừ khi đang điều chỉnh. `POST …/:id/adjust {reason}` chụp bản đang có, khoá nhận; phiếu đã nhận thì điều chỉnh hai đầu, cần `POST …/:id/adjust-confirm` (bên nhận). `POST …/:id/adjust-approve {einvoiceReplacement?}` ghi phiên bản mới từng đầu (lõi đảo bút toán cũ); `POST …/:id/adjust-cancel` trả về bản chụp.
+- Đã nhận mà gọi lại `receive` = biên bản chênh lệch, bắt buộc `note` ≥ 5 ký tự.
+- `PUT …/:id/einvoice {no, serial, date}` lưu số phiếu XK-VCNB điện tử; đã có số thì duyệt điều chỉnh phải gửi `einvoiceReplacement`.
+- Lịch sử: cột `adjustments` (điều chỉnh / chênh lệch), nhật ký thao tác `stock_transfer.*`.
+
 ## API
 
 | Lệnh | Đường dẫn |
