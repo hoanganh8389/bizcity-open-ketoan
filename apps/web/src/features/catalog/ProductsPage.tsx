@@ -15,7 +15,7 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
-import { GroupTree } from '../posting/ProductAccountsPage';
+import { GroupTree } from './GroupTree';
 import { ProductFullForm } from './ProductFullForm';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: cột Biến thể cạnh mã, lọc theo biến thể, Loại hàng (đóng góp)
 import { PrintButton } from '@/components/print';
@@ -40,7 +40,6 @@ interface Product {
   variantCode?: string;
   sendToTax?: boolean; // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
 }
-interface PostingGroup { code: string; name: string; isDefault: boolean }
 
 export const useClasses = (kind: ClassKind) => useQuery({ queryKey: ['item-classes', kind], queryFn: () => api.get<ItemClass[]>(`/api/v1/item-classes/${kind}`), staleTime: 60_000 });
 const SOURCE: Record<string, string> = { document: 'Tự thêm từ chứng từ', manual: 'Kế toán thêm', default: 'Dữ liệu gốc' };
@@ -98,7 +97,6 @@ export function ProductsPage() {
     return loadLabelItems(list.map((p) => p.sku), labelCopies);
   };
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
-  const groups = useQuery({ queryKey: ['groups'], queryFn: () => api.get<PostingGroup[]>('/api/v1/posting/groups'), staleTime: 60_000 });
   const params = { search: applied, page, pageSize: TRANG_MAT_HANG, group: group ?? undefined, ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)) };
   const q = useQuery({ queryKey: ['products', params], queryFn: () => api.getPage<Product[]>('/api/v1/products', params), placeholderData: keepPreviousData });
   const groupPath = useMemo(() => pathOf(classes.group.data ?? []), [classes.group.data]);

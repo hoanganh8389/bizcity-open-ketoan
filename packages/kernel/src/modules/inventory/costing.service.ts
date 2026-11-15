@@ -78,7 +78,7 @@ import { eventStore } from '../documents/event-store.js';
 import { partnerRepository } from '@bizcity/platform/masterdata/partner.repository';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { AccountResolver } from '../posting/account-resolver.js';
-import { applyRuleTable } from '../posting/rule-table.js';
+import { stripPairTags } from '../posting/pair-tags.js';
 import { EntryBuilder } from '../posting/entry-builder.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
@@ -428,23 +428,26 @@ interface CogsMovement {
   qty: number;
   /** Kho của dòng xuất nhập (TK kho theo loại kho). */
   warehouseCode: string;
+  /** Mục đích xuất của phiếu điều chỉnh kho (purposeCode trên chứng từ). */
+  purposeCode: string | null;
 }
 
 async function unvaluedMovements(trx: Db, tenantId: string, p: Period): Promise<CogsMovement[]> {
-  const res = await sql<{ event_id: string; branch_id: string; code: string; name: string; grp: string; kind: string; sku: string; ikey: string; reason_code: string | null; is_gift: boolean; counter_branch_id: string | null; ccode: string | null; cname: string | null; cgrp: string | null; qty: string; wh: string }>`
+  const res = await sql<{ event_id: string; branch_id: string; code: string; name: string; grp: string; kind: string; sku: string; ikey: string; reason_code: string | null; is_gift: boolean; counter_branch_id: string | null; ccode: string | null; cname: string | null; cgrp: string | null; qty: string; wh: string; purpose: string | null }>`
     SELECT m.event_id::text, m.branch_id, b.code, b.name, COALESCE(b.accounting_unit_id, 0)::text AS grp, m.kind, m.sku, COALESCE(m.item_id, m.sku) AS ikey, m.reason_code, m.is_gift, COALESCE(m.warehouse_code, '') AS wh,
            m.counter_branch_id, cb.code AS ccode, cb.name AS cname,
            CASE WHEN cb.id IS NULL THEN NULL ELSE COALESCE(cb.accounting_unit_id, 0)::text END AS cgrp,
-           SUM(m.qty) AS qty
+           SUM(m.qty) AS qty, NULLIF(ev.payload->>'purposeCode', '') AS purpose
       FROM inventory_movements m
       JOIN branches b ON b.id = m.branch_id
       LEFT JOIN branches cb ON cb.id = m.counter_branch_id
+      LEFT JOIN accounting_events ev ON ev.id = m.event_id
      WHERE m.tenant_id = ${tenantId} AND m.amount IS NULL
        AND m.kind IN ('sale', 'sale_return', 'transfer_out', 'transfer_in', 'adjust_out', 'adjust_in')
        AND m.doc_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date
-     GROUP BY m.event_id, m.branch_id, b.code, b.name, 5, m.kind, m.sku, 8, m.reason_code, m.is_gift, 11, m.counter_branch_id, cb.code, cb.name, 15
+     GROUP BY m.event_id, m.branch_id, b.code, b.name, 5, m.kind, m.sku, 8, m.reason_code, m.is_gift, 11, m.counter_branch_id, cb.code, cb.name, 15, 17
      HAVING SUM(m.qty) <> 0`.execute(trx);
-  return res.rows.map((r) => ({ eventId: r.event_id, branchId: r.branch_id, branchCode: r.code, branchName: r.name, group: r.grp, kind: r.kind, sku: r.sku, ikey: r.ikey, reasonCode: r.reason_code, isGift: r.is_gift, counterBranchId: r.counter_branch_id, counterCode: r.ccode, counterName: r.cname, counterGroup: r.cgrp, qty: Number(r.qty), warehouseCode: r.wh }));
+  return res.rows.map((r) => ({ eventId: r.event_id, branchId: r.branch_id, branchCode: r.code, branchName: r.name, group: r.grp, kind: r.kind, sku: r.sku, ikey: r.ikey, reasonCode: r.reason_code, isGift: r.is_gift, counterBranchId: r.counter_branch_id, counterCode: r.ccode, counterName: r.cname, counterGroup: r.cgrp, qty: Number(r.qty), warehouseCode: r.wh, purposeCode: r.purpose }));
 }
 
 export interface CostingResult {
@@ -636,7 +639,7 @@ async function postBranch(
     // dòng kho (ảnh chụp); dòng sổ cái gắn item_id theo mã đó (0066) nên vẫn về đúng định danh.
     const productSku = m.sku;
     const group = resolver.groupForSku(m.sku);
-    // [2026-11-13 Nguyễn Văn Thủy] TK kho theo loại kho của kho xuất / nhập (ưu tiên hơn ngầm định, quy tắc không đè) (đóng góp)
+    // [2026-11-13 Nguyễn Văn Thủy] TK kho theo loại kho của kho xuất / nhập (ưu tiên hơn TK kho của quy tắc) (đóng góp)
     const wh = resolver.warehouseAccount(m.warehouseCode, a.branchCode);
     const inventory = wh ?? group.inventory_account;
     const out = m.qty < 0;
@@ -653,11 +656,10 @@ async function postBranch(
       }
       case 'transfer_out':
       case 'transfer_in': {
-        const reason = reasonFor(m.reasonCode, 'transfer');
         const same = m.counterGroup === null || m.counterGroup === m.group;
         const transit = same
-          ? resolver.counterOr(reason, 'goods_in_transit', 'tài khoản hàng đang chuyển giữa các chi nhánh')
-          : resolver.counterOr(reason, 'internal_receivable_goods', 'tài khoản phải thu nội bộ hàng', 'internal_receivable');
+          ? resolver.counterOr(undefined, 'goods_in_transit', 'tài khoản hàng đang chuyển giữa các chi nhánh')
+          : resolver.counterOr(undefined, 'internal_receivable_goods', 'tài khoản phải thu nội bộ hàng', 'internal_receivable');
         const other = m.counterCode ? await branchPartner(m.counterCode, m.counterName ?? '') : own;
         const tags = { biz: 'transfer', reason: m.reasonCode, leg: m.kind === 'transfer_out' ? 'out' as const : 'in' as const, sameUnit: same, ...lockInv(m.kind === 'transfer_in') };
         if (m.kind === 'transfer_out') b.add({ tags, part: 'goods', productSku, debitAccount: transit, creditAccount: inventory, amount, debitPartnerId: other, description: 'Xuất chuyển kho (theo giá vốn)' });
@@ -667,8 +669,9 @@ async function postBranch(
       case 'adjust_out':
       case 'adjust_in': {
         const increase = m.kind === 'adjust_in';
-        const reason = reasonFor(m.reasonCode, `stock_adjustment:${increase ? 'increase' : 'decrease'}`);
-        const counter = increase ? resolver.counterOr(reason, 'stock_surplus', 'tài khoản hàng thừa chờ xử lý') : resolver.counterOr(reason, 'stock_shortage', 'tài khoản hàng thiếu chờ xử lý');
+        // [2026-11-15 Nguyễn Văn Thủy] TK đối ứng theo Mục đích xuất của phiếu, không có thì thừa / thiếu chờ xử lý (đóng góp)
+        const counter = m.purposeCode ? resolver.purposeAccount(m.purposeCode, increase)
+          : increase ? resolver.counterOr(undefined, 'stock_surplus', 'tài khoản hàng thừa chờ xử lý') : resolver.counterOr(undefined, 'stock_shortage', 'tài khoản hàng thiếu chờ xử lý');
         const tags = { biz: increase ? 'stock_increase' : 'stock_decrease', reason: m.reasonCode, ...lockInv(increase) };
         if (increase) b.add({ tags, part: 'goods', productSku, debitAccount: inventory, creditAccount: counter, amount, creditPartnerId: own, description: 'Điều chỉnh tăng kho (theo giá vốn)' });
         else b.add({ tags, part: 'goods', productSku, debitAccount: counter, creditAccount: inventory, amount, debitPartnerId: own, description: 'Điều chỉnh giảm kho (theo giá vốn)' });
@@ -684,10 +687,7 @@ async function postBranch(
   const filledTotal = 0;
   if (filled) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'costing.clear_slots', objectType: 'branch', objectId: `${a.branchCode}:${label(a.period)}`, after: { pairs: filled } });
 
-  // Bảng quy tắc định khoản (0096): giá vốn hàng bán / hàng tặng, chuyển kho, điều chỉnh kho theo quy tắc đã duyệt tại cuối kỳ.
-  const ruled = applyRuleTable(b.toLines(), cfg.ruleTable, { date: lastDay(a.period), book: 'internal' });
-  if (ruled.errors.length) throw Errors.posting('Bảng quy tắc định khoản có quy tắc ngang hàng', [...new Set(ruled.errors)]);
-  const lines = ruled.lines;
+  const lines = stripPairTags(b.toLines());
   // Đối tượng chỉ giữ ở phía tài khoản theo dõi đối tượng.
   for (const l of lines) {
     const acc = cfg.accounts.get(l.accountCode);

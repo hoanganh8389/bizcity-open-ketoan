@@ -17,7 +17,7 @@ const EVENT: Record<string, [string, string]> = {
   price_check: ['Lệch giá mua', 'badge-warn'], limit_check: ['Kiểm hạn mức', 'badge-warn'], invoice_mismatch: ['Đối soát hoá đơn', 'badge-warn'], lot_check: ['Lô / hạn dùng', 'badge-warn'], gift_check: ['Đối chiếu quà', 'badge-warn'],
   variants_saved: ['Cấu hình biến thể', 'badge-info'], units_thung: ['ĐVT Thùng đặt hàng', 'badge-info'], units_thung_cleanup: ['Dọn dòng Thùng trống', 'badge-warn'], policy_applied: ['Chính sách đã áp', 'badge-info'], override_approved: ['Duyệt ngoại lệ', 'badge-bad'], outside_order_approved: ['Nhập ngoài đơn', 'badge-warn'], outside_order_reviewed: ['Rà soát nhập ngoài đơn', 'badge-ok'], limit_transfer: ['Điều chuyển hạn mức', 'badge-info'], rebate_run: ['Tính thưởng', 'badge-ok'],
   cost_allocated: ['Phân bổ chi phí', 'badge-ok'], gift_received: ['Nhận quà', 'badge-ok'], policy_changed: ['Sửa chính sách', 'badge-info'],
-  doc_saved: ['Ghi phiếu', 'badge-gray'], doc_submitted: ['Gửi duyệt', 'badge-gray'], doc_approved: ['Duyệt phiếu', 'badge-ok'], doc_unapproved: ['Bỏ duyệt', 'badge-gray'], doc_cancelled: ['Huỷ phiếu', 'badge-gray'], demo_seeded: ['Nạp dữ liệu mẫu', 'badge-gray'], demo_cleared: ['Xoá dữ liệu mẫu', 'badge-gray'], demo_warehouses: ['Thêm kho chi nhánh mẫu', 'badge-gray'],
+  doc_saved: ['Ghi phiếu', 'badge-gray'], doc_submitted: ['Gửi duyệt', 'badge-gray'], doc_approved: ['Duyệt phiếu', 'badge-ok'], doc_unapproved: ['Bỏ duyệt', 'badge-gray'], doc_adjust_started: ['Lập điều chỉnh', 'badge-warn'], doc_adjust_cancelled: ['Huỷ điều chỉnh', 'badge-gray'], doc_cancelled: ['Huỷ phiếu', 'badge-gray'], demo_seeded: ['Nạp dữ liệu mẫu', 'badge-gray'], demo_cleared: ['Xoá dữ liệu mẫu', 'badge-gray'], demo_warehouses: ['Thêm kho chi nhánh mẫu', 'badge-gray'],
   invoice_created: ['Thêm hoá đơn NCC', 'badge-info'], invoice_updated: ['Sửa hoá đơn NCC', 'badge-info'], invoice_cancelled: ['Huỷ hoá đơn NCC', 'badge-gray'], invoice_imported: ['Nhập hoá đơn NCC', 'badge-info'],
   invoice_scanned: ['Quét hoá đơn (AI)', 'badge-info'], alias_learned: ['Học mã hàng NCC', 'badge-ok'], alias_deleted: ['Xoá mã đã học', 'badge-gray'],
 };
@@ -30,6 +30,8 @@ function brief(r: LogRow): string {
     case 'doc_submitted': return `Gửi duyệt — số tiền ${money(d.payable)}`;
     case 'doc_approved': return `Duyệt phiếu, đã ghi sổ — số tiền ${money(d.payable)}${Array.isArray(d.ledger) && d.ledger.length ? ` (${d.ledger.join(', ')})` : ''}`;
     case 'doc_unapproved': return `Bỏ duyệt phiếu, huỷ chứng từ kế toán ${Array.isArray(d.cancelled) ? d.cancelled.join(', ') : ''}`;
+    case 'doc_adjust_started': return `Lập điều chỉnh phiếu đã ghi sổ — lý do: ${d.reason ?? ''} (sổ giữ ${Array.isArray(d.ledger) ? d.ledger.join(', ') : 'bản cũ'} tới khi duyệt bản điều chỉnh)`;
+    case 'doc_adjust_cancelled': return `Huỷ điều chỉnh, phiếu về bản đã duyệt — lý do lúc lập: ${d.reason ?? ''}`;
     case 'doc_cancelled': return 'Huỷ phiếu';
     case 'outside_order_approved': return `Duyệt phiếu nhập NGOÀI ĐƠN (không theo đơn đặt) — lý do: ${d.reason ?? ''} · ${money(d.payable)}`;
     case 'outside_order_reviewed': return `Kế toán rà soát phiếu nhập ngoài đơn${d.note ? ` — ${d.note}` : ''} (lý do nhập: ${d.reason ?? ''})`;

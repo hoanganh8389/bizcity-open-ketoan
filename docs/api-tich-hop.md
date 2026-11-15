@@ -21,7 +21,7 @@ Mã lỗi ổn định: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDD
 2. **Số tiền đã chốt ở nguồn**, đúng như trên hoá đơn đã phát hành. Kế toán không tính lại thuế.
 3. **`docKey` duy nhất và ổn định** cho mỗi chứng từ (ví dụ `btsoft:<shop>:sale:<id>`).
 4. **`version` tăng dần** khi nội dung đổi. Gửi lại cùng version → `unchanged`. Version mới → khi định khoản lại, kế toán ghi số âm bút toán cũ rồi ghi bút toán mới. Version nhỏ hơn bản đang có → `409 CONFLICT`.
-5. Mọi **mã** (chi nhánh, loại thuế, hình thức thanh toán, lý do) phải có trong danh mục bên kế toán.
+5. Mọi **mã** (chi nhánh, loại thuế, hình thức thanh toán, mục đích xuất) phải có trong danh mục bên kế toán. Đọc quy tắc và xem thử bút toán trước khi gửi: [api/17](api/17-quy-tac-hach-toan.md).
 
 > **Nhận, định khoản và số liệu thuế.** Chứng từ gửi sang được lưu làm chứng từ nguồn và hiện ở màn **Định khoản tự động (ACC14)**; mặc định kế toán chọn chứng từ rồi định khoản (loại chứng từ đặt chế độ định khoản ngay thì ghi sổ luôn). Mỗi đơn vị có **một sổ kế toán** (sổ nhật ký chung). Chứng từ có hoá đơn vào thêm **sổ hoá đơn**; số liệu thuế lấy từ **hệ thống thuế** — một cơ sở dữ liệu riêng, được chuyển định kỳ các phiếu bán, phiếu trả có số hoá đơn. Phiếu `internalOnly` không vào sổ hoá đơn, không chuyển sang hệ thống thuế.
 
@@ -66,7 +66,7 @@ Mã lỗi ổn định: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDD
 | `lines[].cost` | | Giá vốn của dòng nếu đã có; bỏ trống thì ghi giá vốn sau |
 | `payments[]` | | Mỗi khoản thu: `methodCode` đã khai báo + `amount` |
 | `totals` | ✓ | Phải bằng tổng các dòng (kiểm tới xu); `total = beforeTax + tax` |
-| `reasonCode` | | Bỏ trống → lý do mặc định của loại chứng từ |
+| `reasonCode` | | Nhãn để lọc báo cáo; không đổi tài khoản. Bỏ trống → lý do mặc định của loại chứng từ |
 | `extra` | | Dữ liệu riêng của nguồn, lưu để tra cứu |
 
 ### Hàng bán trả lại / điều chỉnh giảm
@@ -117,7 +117,7 @@ Như trên với `"docType": "sale_return"`, thêm `originalDocKey` (khoá hoá 
 
 ### Điều chỉnh kho
 
-`"docType": "stock_adjustment"`, thêm `"direction": "increase"` (kiểm kê thừa…) hoặc `"decrease"` (kiểm kê thiếu, hàng hỏng, xuất dùng…). Dòng hàng như chuyển kho (`sku`, `qty`, `amount`). Định khoản: tăng Nợ 1561 / Có 3381; giảm Nợ 1381 / Có 1561 (đổi tài khoản đối ứng bằng `reasonCode` có khai tài khoản riêng, ví dụ xuất dùng vào 641).
+`"docType": "stock_adjustment"`, thêm `"direction": "increase"` (kiểm kê thừa…) hoặc `"decrease"` (kiểm kê thiếu, hàng hỏng, xuất dùng…). Dòng hàng như chuyển kho (`sku`, `qty`, `amount`). Định khoản: tăng Nợ 1561 / Có 3381; giảm Nợ 1381 / Có 1561. Gửi `purposeCode` (mục đích xuất: `HUY`, `DUNG-BH`, `TANG-KH`…) thì tài khoản đối ứng theo mục đích — xem [api/17](api/17-quy-tac-hach-toan.md).
 
 ### Kết quả
 

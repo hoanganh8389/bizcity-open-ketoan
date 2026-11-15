@@ -102,8 +102,6 @@ export const TEN_MAN: Record<string, TenMan> = {
   '/danh-muc/nguon-von': { label: 'Nguồn vốn' },
   '/danh-muc/muc-dich-su-dung': { label: 'Mục đích sử dụng' },
   '/danh-muc/loai-thue': { label: 'Biểu thuế' },
-  '/cau-hinh/ly-do': { label: 'Lý do – Tài khoản' },
-  '/cau-hinh/nhom-hach-toan': { label: 'Mặt hàng – Tài khoản' },
   // Số dư ban đầu
   '/nghiep-vu/so-du-tai-khoan': { label: 'Số dư tài khoản' },
 };

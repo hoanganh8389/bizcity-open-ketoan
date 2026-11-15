@@ -86,9 +86,15 @@ describe('DM Tài khoản', () => {
     expect(r.body.error.message).toMatch(/phát sinh/);
   });
 
-  it('tài khoản ngầm định: mười một ô của form trước, khoá mới có giá trị khởi tạo', async () => {
-    const rows = (await call(ctx, 'GET', '/api/v1/posting/defaults')).body.data as { key: string; accountCode: string | null; onForm: boolean }[];
-    expect(rows.filter((r) => r.onForm).map((r) => r.key)).toEqual(['cash', 'tax_output', 'tax_input', 'goods_in_transit', 'internal_receivable_goods', 'internal_payable_goods', 'internal_receivable', 'internal_payable', 'internal_cogs', 'commission_debit', 'commission_credit']);
-    expect(Object.fromEntries(rows.map((r) => [r.key, r.accountCode]))).toMatchObject({ internal_receivable_goods: '13681', internal_cogs: '6326', commission_debit: '6418', commission_credit: '33881' });
+  // [2026-11-15 Nguyễn Văn Thủy] tài khoản của Quy tắc hạch toán: mỗi khoá có phạm vi, đơn vị mới có đủ tài khoản từ gói nền (đóng góp)
+  it('tài khoản của quy tắc: mỗi khoá có phạm vi, gói nền điền đủ, tài khoản nằm trong phạm vi', async () => {
+    const rows = (await call(ctx, 'GET', '/api/v1/posting/defaults')).body.data as { key: string; accountCode: string | null; range: string[] }[];
+    expect(rows.length).toBeGreaterThan(10);
+    for (const r of rows) {
+      expect(r.range.length, r.key).toBeGreaterThan(0);
+      expect(r.accountCode, `${r.key} chưa có tài khoản`).toBeTruthy();
+      expect(r.range.some((p) => r.accountCode!.startsWith(p)), `${r.key} = ${r.accountCode} ngoài ${r.range.join(', ')}`).toBe(true);
+    }
+    expect(Object.fromEntries(rows.map((r) => [r.key, r.accountCode]))).toMatchObject({ internal_receivable_goods: '13681', internal_revenue: '51116', internal_cogs: '6326', gift_cogs: '6321' });
   });
 });

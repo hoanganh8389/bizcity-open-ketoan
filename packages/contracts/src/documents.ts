@@ -95,11 +95,6 @@ export const documentLineSchema = z.object({
   policyRef: z.object({ key: policyKey, version: z.number().int().min(1), line: z.string().trim().max(32).optional() }).optional(),
   /** Giá vốn của dòng nếu nguồn đã có. Để trống thì ghi giá vốn sau. */
   cost: money.optional(),
-  /**
-   * [2026-11-13 Nguyễn Văn Thủy] Tài khoản riêng của dòng (người lập chọn trong lọc của Tài khoản ngầm định theo loại chứng từ).
-   * Trống = theo tài khoản ngầm định. inventory: TK kho; payable: TK công nợ NCC; tax: TK thuế GTGT (đóng góp)
-   */
-  accounts: z.object({ inventory: z.string().trim().regex(/^[0-9]{3,20}$/).optional(), payable: z.string().trim().regex(/^[0-9]{3,20}$/).optional(), tax: z.string().trim().regex(/^[0-9]{3,20}$/).optional() }).optional(),
 });
 export type DocumentLine = z.infer<typeof documentLineSchema>;
 
@@ -257,6 +252,8 @@ export const stockAdjustmentDocumentSchema = z.object({
   ...baseDocument,
   docType: z.literal('stock_adjustment'),
   direction: z.enum(['increase', 'decrease', 'mixed']),
+  // [2026-11-15 Nguyễn Văn Thủy] Mục đích xuất (hủy hàng hỏng, dùng cho bộ phận, tặng khách…) quyết TK đối ứng; trống = thừa / thiếu chờ xử lý (đóng góp)
+  purposeCode: z.string().trim().max(32).optional(),
   lines: z.array(stockLineSchema).min(1).max(2000),
   totals: stockTotalsSchema,
 });

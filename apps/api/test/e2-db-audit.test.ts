@@ -71,16 +71,20 @@ describe('T004-DB — UPDATE thẳng bằng ketoan_app vào bảy cột E2 để
   it('T004-DB-2 mỗi trong chín cột đổi đều bị ghi (bảy cột E2 + partner_name, partner_attr_id của 0087)', async () => {
     const values: Record<(typeof E2_DB_COLUMNS)[number], string> = {
       doc_no: `'DB1-SUA'`, invoice_no: `'HD-SUA'`, reason_code: `'ly-do-sua'`, partner_id: 'NULL', description: `'mô tả sửa'`, content_hash: `'sha256:sua'`, event_version: '99',
-      partner_name: `'Tên đối tượng sửa lén'`, partner_attr_id: 'NULL',
+      partner_name: `'Tên đối tượng sửa lén'`, partner_attr_id: 'NULL', partner_uid: `'dt_sua_len'`,
     };
     for (const col of E2_DB_COLUMNS) {
+      // partner_uid: trigger tự điền theo partner_id (0138); ketoan_app không có quyền UPDATE trực tiếp cột này — kiểm qua partner_id.
+      if (col === 'partner_uid') continue;
       const r = await asApp(async (c) => {
         await c.query(`UPDATE ledger_entries SET ${col} = ${values[col]} WHERE id = $1`, [entryId]);
         return headerAudit(c);
       });
       expect(r.error?.message, col).toBeUndefined();
       expect(r.value, col).toHaveLength(1);
-      expect(Object.keys(r.value![0]!.before_data), col).toEqual([col]);
+      // [2026-11-15 Nguyễn Văn Thủy] partner_uid đi theo partner_id (trigger 0138) nên đổi partner_id có thể ghi cả hai (đóng góp)
+      const keys = Object.keys(r.value![0]!.before_data).sort();
+      expect(keys, col).toEqual(col === 'partner_id' && keys.includes('partner_uid') ? ['partner_id', 'partner_uid'] : [col]);
       expect(r.value![0]!.after_data, col).toHaveProperty('_source', 'db');
     }
   });

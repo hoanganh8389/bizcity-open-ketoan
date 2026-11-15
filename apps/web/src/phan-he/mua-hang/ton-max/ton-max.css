@@ -104,3 +104,8 @@
 .tm-prov { margin-bottom: 8px; }
 .tm-prov-head { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--line-soft); margin-bottom: 4px; cursor: pointer; }
 .tm-prov-head .muted { font-size: 11.5px; }
+/* [2026-11-15 Nguyễn Văn Thủy] dải hai cách đặt tồn max (đóng góp) */
+.tm-hai-cach { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px 0; }
+.tm-cach { flex: 1 1 320px; display: flex; gap: 8px; align-items: baseline; padding: 6px 10px; border: 1px solid var(--line, #dfe3ea); border-radius: 6px; font-size: 13px; color: var(--muted, #5f6b7a); }
+.tm-cach > b { color: var(--nav, #2457B3); }
+.tm-cach.on { border-color: var(--nav, #2457B3); background: color-mix(in srgb, var(--nav, #2457B3) 6%, transparent); color: inherit; }

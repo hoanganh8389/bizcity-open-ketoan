@@ -61,16 +61,17 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'mua-hang', label: 'Mua hàng', icon: 'ShoppingBag', description: 'Đơn mua hàng, mua hàng, trả lại, giảm giá, hóa đơn đầu vào', color: '#e8710a', module: 'mua-hang', homeLabel: 'Quy trình',
-    // [2026-11-11 Nguyễn Văn Thủy] lồng phần đặc thù: NCC mua hàng (MH01), phân tích đặt hàng, tồn max, chính sách, hạn mức (đóng góp)
-    the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), '/mua-hang/hoa-don-ncc', '/mua-hang/nha-cung-cap', '/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/chinh-sach', '/mua-hang/han-muc'],
+    // [2026-11-15 Nguyễn Văn Thủy] menu đủ theo sơ đồ Quy trình: chứng từ → hoá đơn đầu vào → tồn max, đặt hàng → công nợ, thưởng, giá vốn → danh mục, cài đặt (đóng góp)
+    the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), MUA('payment'), '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/han-muc', '/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/mua-hang/cai-dat'],
     sections: [
-      { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), '/mua-hang/tong-hop'], soon: ['Hợp đồng mua hàng'] },
-      { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/thue/hoa-don-co-quan-thue'] },
-      { label: 'Đặt hàng, chính sách', paths: ['/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/chinh-sach', '/mua-hang/han-muc'] },
-      { label: 'Danh mục', paths: ['/mua-hang/nha-cung-cap', '/danh-muc/mat-hang'] },
+      { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('exchange'), MUA('rebate'), MUA('gift_in'), MUA('cost'), MUA('payment'), MUA('prepayment'), '/mua-hang/tong-hop'] },
+      { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/thue/hoa-don-co-quan-thue', '/mua-hang/doi-chieu'] },
+      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop', '/mua-hang/bien-the', '/mua-hang/dvt-thung'] },
+      { label: 'Công nợ, thưởng, giá vốn', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky'] },
+      { label: 'Danh mục, cài đặt', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/danh-muc/mat-hang', '/mua-hang/cai-dat'] },
     ],
     reports: [
-      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/doi-chieu'] },
+      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/chi-tiet-chinh-sach', '/mua-hang/so-kho', '/mua-hang/ton-kho'] },
       { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no', '/cong-no/doi-chieu'] },
     ],
   },
@@ -86,7 +87,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Chính sách bán', paths: ['/app/pos/khuyen-mai', '/danh-muc/bang-gia'], soon: ['Hạn mức nợ khách'] },
       { label: 'Danh mục', paths: ['/danh-muc/khach-hang', '/danh-muc/mat-hang', '/cau-hinh/hinh-thuc-thanh-toan'] },
       // [2026-11-13 09:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: bỏ mục mờ "Định khoản bán hàng" — tài khoản bán hàng xem ở khối ④ của BH17, sửa ở ACC41 (đóng góp)
-      { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/tai-khoan-ngam-dinh'] },
+      { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/quy-tac-hach-toan'] },
     ],
     reports: [
       { label: 'Bán hàng', paths: ['/ban-hang/bao-cao', '/ban-hang/tong-hop', '/cong-no/nhat-ky-ban-hang', '/ban-hang/lai-gop', '/ban-hang/thu-tien-ban-hang'] },
@@ -125,8 +126,9 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'tong-hop', label: 'Tổng hợp', icon: 'Network', description: 'Chứng từ nghiệp vụ khác, kết chuyển lãi lỗ, khóa sổ, báo cáo tài chính', color: '#1f66a3', module: 'ke-toan', homeLabel: 'Quy trình',
-    the: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'],
-    sections: [{ paths: ['/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'], soon: ['Đề nghị quyết toán tạm ứng'] }],
+    // [2026-11-15 Nguyễn Văn Thủy] cổng chờ vào sổ (ACC14) về nhóm kế toán: kế toán nhìn một chỗ biết cái gì chưa vào sổ (đóng góp)
+    the: ['/chung-tu', '/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'],
+    sections: [{ paths: ['/chung-tu', '/nghiep-vu/phieu-ke-toan', '/nghiep-vu/ket-chuyen', '/tong-hop/lap-bctc', '/cau-hinh/ky-ke-toan'], soon: ['Đề nghị quyết toán tạm ứng'] }],
     reports: [
       { label: 'Sổ kế toán', paths: ['/bao-cao/so-chi-tiet', '/bao-cao/nhat-ky-chung', '/bao-cao/so-cai', '/bao-cao/bang-ke-chung-tu', '/bao-cao/tong-hop-chung-tu'] },
       { label: 'Báo cáo tài chính', paths: ['/bao-cao/can-doi-ke-toan', '/bao-cao/ket-qua-kinh-doanh', '/bao-cao/luu-chuyen-tien-te', '/bao-cao/thuyet-minh', '/bao-cao/can-doi-phat-sinh'] },
@@ -153,7 +155,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Mặt hàng', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/loai-kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
       // [2026-11-13 Nguyễn Văn Thủy] chi nhánh, kho, phòng ban khai chung ở Cơ cấu tổ chức (đóng góp)
       { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc'] },
-      { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/tai-khoan-ngam-dinh', '/danh-muc/loai-thue', '/danh-muc/ngan-hang'], soon: ['Điều khoản thanh toán'] },
+      { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/quy-tac-hach-toan', '/danh-muc/loai-thue', '/danh-muc/ngan-hang'], soon: ['Điều khoản thanh toán'] },
       { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/muc-thu-chi', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
       { label: 'Tài sản', paths: ['/danh-muc/loai-tai-san', '/danh-muc/nhom-ccdc', '/danh-muc/nguon-von', '/danh-muc/muc-dich-su-dung'] },
     ],
@@ -164,18 +166,16 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'phan-rieng', label: 'Phần riêng', icon: 'Puzzle', rieng: true, color: '#455a64',
-    description: 'Chức năng gắn thêm cho chuỗi cửa hàng: nạp chứng từ từ máy bán hàng, tồn max, chính sách mua, công nợ nội bộ',
+    description: 'Chức năng gắn thêm cho chuỗi cửa hàng: nạp chứng từ từ máy bán hàng, máy POS, công nợ nội bộ',
     sections: [
-      { label: 'Nạp chứng từ', paths: ['/chung-tu', '/chung-tu/bang-diem', '/he-thong/chi-nhanh-lam-viec', '/mua-hang/khoi-dau'] },
-      { label: 'Đặt hàng theo tồn max', paths: ['/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/dang-ky-max', '/mua-hang/cong-thuc', '/mua-hang/chuyen-shop'] },
-      { label: 'Chính sách mua', paths: ['/mua-hang/chinh-sach', '/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky', '/mua-hang/cai-dat', '/mua-hang/bien-the', '/mua-hang/dvt-thung'] },
+      { label: 'Nạp chứng từ', paths: ['/chung-tu/bang-diem', '/he-thong/chi-nhanh-lam-viec', '/mua-hang/khoi-dau'] },
       // [2026-11-12 10:10 PM Võ Hoàng] POS-UIKIT — mục Bán lẻ máy POS: màn quản trị của module pos (NT-BH-008) + Chương trình bán (BH12) cùng một chỗ (đóng góp)
       { label: 'Bán lẻ máy POS', paths: ['/app/pos/khuyen-mai', '/app/pos/don-ban', '/app/pos/tra-hang', '/app/pos/ca-ban', '/app/pos/tong-quan', '/app/pos/cai-dat'] },
       { label: 'Bán lẻ, giá vốn', paths: ['/ban-hang/thu-tien', '/cau-hinh/hinh-thuc-thanh-toan', '/nghiep-vu/cong-thuc-gia-von', '/tai-san/ke-hoach-khau-hao'] },
       { label: 'Công nợ', paths: ['/cong-no/khoan-cong-no', '/cong-no/phai-thu', '/cong-no/phai-tra', '/nghiep-vu/can-tru-cong-no', '/cong-no/dat-coc', '/cong-no/yeu-cau-thanh-toan', '/cong-no/chung-tu-nguon', '/cong-no/doi-chieu'] },
     ],
     reports: [
-      { label: 'Phần riêng', paths: ['/mua-hang/ton-kho', '/mua-hang/so-kho', '/mua-hang/chi-tiet-chinh-sach', '/bao-cao/hanh-trinh-mat-hang', '/bao-cao/ket-qua-theo-cua-hang', '/bao-cao/phan-loai-dai-han', '/bao-cao/cong-no-noi-bo', '/bao-cao/cong-no-noi-bo-chi-tiet', '/quy/nhat-ky-chi-tien-khoan-muc'] },
+      { label: 'Phần riêng', paths: ['/bao-cao/hanh-trinh-mat-hang', '/bao-cao/ket-qua-theo-cua-hang', '/bao-cao/phan-loai-dai-han', '/bao-cao/cong-no-noi-bo', '/bao-cao/cong-no-noi-bo-chi-tiet', '/quy/nhat-ky-chi-tien-khoan-muc'] },
     ],
   },
   {

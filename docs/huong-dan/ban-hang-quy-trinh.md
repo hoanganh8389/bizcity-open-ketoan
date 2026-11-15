@@ -30,6 +30,6 @@ Không còn việc nào thì trang báo **"Không có việc tồn đọng"**.
 | 4. Thu tiền (BH03) | mỗi hình thức một phiếu thu; QR chờ tiền về; chốt ca lệch két tự lập phiếu kế toán thiếu / thừa | Hình thức thanh toán (DM05) | Sổ ca bán (BH15), Thu tiền bán hàng (BH05) |
 | 5. Trả / đổi hàng (BH11) | nối đơn gốc; quá hạn cần người duyệt; trả kèm quà; trả hạn mức chương trình | — | Phiếu trả máy POS (BH14) |
 | 6. Công nợ phải thu (ACC39) | hạn thu theo điều khoản khách; nhắc đến hạn, quá hạn | Hạn mức nợ khách (đang phát triển) | Tuổi nợ quá hạn, Đối chiếu công nợ |
-| 7. Đối chiếu & báo cáo (BH02) | doanh số, trả lại, thuần; đơn POS khớp chứng từ; lãi gộp sau giá vốn cuối tháng | Tài khoản ngầm định (ACC41), Định khoản bán hàng (khối ④ của BH17) | Tổng quan bán lẻ (BH16), Lãi gộp (BH04), Sổ nhật ký bán hàng |
+| 7. Đối chiếu & báo cáo (BH02) | doanh số, trả lại, thuần; đơn POS khớp chứng từ; lãi gộp sau giá vốn cuối tháng | Quy tắc hạch toán (ACC41), Định khoản bán hàng (khối ④ của BH17) | Tổng quan bán lẻ (BH16), Lãi gộp (BH04), Sổ nhật ký bán hàng |
 
 Đơn vị không dùng máy bán POS: các ô máy POS không hiện.

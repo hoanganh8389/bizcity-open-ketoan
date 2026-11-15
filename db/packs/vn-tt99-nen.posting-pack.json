@@ -32,17 +32,15 @@
   },
   "postingDefaults": {
     "receivable": "1311",
-    "cash": "1111",
     "tax_output": "33311",
     "tax_input": "1331",
     "promotion_expense": "64184",
+    "payment_discount_income": "5152",
     "internal_receivable": "13681",
     "internal_payable": "33681",
     "internal_receivable_goods": "13681",
-    "internal_payable_goods": "33681",
+    "internal_revenue": "51116",
     "internal_cogs": "6326",
-    "commission_debit": "6418",
-    "commission_credit": "33881",
     "payable": "3312",
     "goods_in_transit": "1579",
     "stock_surplus": "3381",
@@ -51,6 +49,7 @@
     "revenue": "51111",
     "sales_return": "52131",
     "cogs": "6321",
+    "gift_cogs": "6321",
     "inventory": "1561"
   },
   "reasons": [

@@ -953,22 +953,20 @@ export interface OrgLinkVersionsTable {
   changed_by: Generated<string>;
   changed_at: TimestampDefault;
 }
-/** Tài khoản ngầm định theo loại chứng từ (0126). columns: [{ key, caption, filter: string[], default, bind? }]. */
-export interface AccountDefaultTypesTable {
+/** Mục đích xuất (0140): phiếu xuất kho không bán / điều chỉnh kho → TK đối ứng. */
+export interface StockPurposesTable {
   id: Generated<string>;
   tenant_id: string;
   code: string;
-  grp: Generated<string>;
   name: string;
-  columns: ColumnType<AccountDefaultColumn[], string, string>;
-  sort_order: Generated<number>;
+  /** increase | decrease | both */
+  direction: Generated<string>;
+  account_code: string;
   is_active: Generated<boolean>;
-  created_by: Generated<string>;
-  created_at: TimestampDefault;
+  sort_order: Generated<number>;
   updated_by: Generated<string>;
   updated_at: TimestampDefault;
 }
-export interface AccountDefaultColumn { key: string; caption: string; filter: string[]; default: string; bind?: string }
 
 export interface ItemClassHistoryTable {
   id: Generated<string>;
@@ -2061,7 +2059,7 @@ export interface Database {
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;
   item_class_history: ItemClassHistoryTable;
-  account_default_types: AccountDefaultTypesTable;
+  stock_purposes: StockPurposesTable;
   tax_id_versions: TaxIdVersionsTable;
   org_link_versions: OrgLinkVersionsTable;
   product_units: ProductUnitsTable;

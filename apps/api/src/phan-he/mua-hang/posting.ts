@@ -4,7 +4,7 @@
  *   nhập mua, chi phí mua hàng    → chứng từ "purchase" qua cổng chứng từ (bút toán, sổ hoá đơn mua vào, công nợ, kho, lô)
  *   trả hàng, thưởng cuối kỳ      → chứng từ "purchase_return" (thưởng: dòng SL 0, chỉ giảm giá trị → giá vốn bình quân tự chia)
  *   đổi hàng                      → một "purchase_return" (dòng trả đi) + một "purchase" (dòng nhận về) + đối trừ / trả chênh lệch
- *   nhận quà / xuất quà           → "stock_adjustment" tăng / giảm, lý do NQUA (Có 711…) / XQUA (Nợ 641…)
+ *   nhận quà / xuất quà           → "stock_adjustment" tăng / giảm, mục đích xuất NQUA (Có 711…) / XQUA (Nợ 641…)
  *   ứng trước, trả tiền, CKTT     → phiếu chi / báo nợ / phiếu kế toán, trừ thẳng vào khoản công nợ (debt_items)
  *   đơn đặt hàng                  → không ghi sổ (chỉ giữ hạn mức)
  * Mỗi chứng từ kế toán sinh ra lưu ở links; bỏ duyệt = huỷ đúng các chứng từ đó (đảo bút toán bằng số âm, không xoá).
@@ -17,10 +17,9 @@ import { toNumber, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { zodIssueTexts } from '@bizcity/platform/core/http';
-import { postDocumentIn, voucherService, allocateDebt, ensurePostingReason } from '../../kernel/public.js';
+import { postDocumentIn, voucherService, allocateDebt, ensurePostingReason, ensureStockPurpose } from '../../kernel/public.js';
 import type { Accounts } from '@bizcity/mua-hang-domain';
 import type { StoredDoc } from './store.js';
-import { syncModuleRule } from '../../modules/posting-flow/posting-rules.service.js';
 
 export interface Link { docKey: string; docNo: string; eventId: string; role: string }
 
@@ -42,14 +41,14 @@ async function ensureReason(trx: Db, tenantId: string, code: string, name: strin
   await ensurePostingReason(trx, tenantId, 'mua-hang', 'module:mua-hang', { code, name, kind, counterAccount: counter });
 }
 
-// [2026-11-10 11:45 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán tắt: nhận / xuất quà là nghiệp vụ phân hệ tự khai, không nhờ tài khoản trên lý do (đóng góp)
-// [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — tài khoản quà khai một nơi (cài đặt Mua hàng): đổi cài đặt thì dòng định khoản đổi theo (đóng góp)
-/** "Nhận quà NCC" (dựa trên Nhập điều chỉnh kho, Có thu nhập quà) / "Xuất quà tặng khách" (Xuất điều chỉnh kho, Nợ chi phí quà) theo tài khoản ở cài đặt Mua hàng. */
-async function ensureGiftBusiness(trx: Db, tenantId: string, code: string, name: string, isIn: boolean, account: string) {
-  await syncModuleRule(trx, tenantId, 'module:mua-hang', {
-    reasonCode: code, name, baseCode: isIn ? 'stock_increase' : 'stock_decrease', side: isIn ? 'credit' : 'debit', account,
-    note: isIn ? 'Nhận quà / hàng tặng NCC không hoá đơn: Có thu nhập khác' : 'Xuất quà tặng khách: Nợ chi phí bán hàng',
-  });
+// [2026-11-15 Nguyễn Văn Thủy] nhận / xuất quà là phiếu điều chỉnh kho có MỤC ĐÍCH XUẤT (Quy tắc hạch toán) — tài khoản theo cài đặt Mua hàng (đóng góp)
+/** Mục đích "Nhận quà NCC" (tăng kho, Có thu nhập quà) / "Xuất quà tặng khách" (giảm kho, Nợ chi phí quà): đổi cài đặt thì mục đích đổi theo. */
+// [2026-11-15 Nguyễn Văn Thủy] mục đích NQUA / XQUA chỉ tạo lần đầu; đã có thì giữ tài khoản kế toán khai ở Quy tắc hạch toán (đóng góp)
+async function ensureGiftPurpose(trx: Db, tenantId: string, code: string, name: string, isIn: boolean, account: string) {
+  const had = await trx.selectFrom('stock_purposes').select(['name', 'account_code', 'is_active']).where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
+  if (had?.is_active) return;
+  if (had) { name = had.name; account = had.account_code; }
+  await ensureStockPurpose(trx, tenantId, 'mua-hang', 'module:mua-hang', { code, name, direction: isIn ? 'increase' : 'decrease', accountCode: account });
 }
 
 /**
@@ -80,12 +79,6 @@ function toBase(units: Units, sku: string, unit: string, qty: number) {
 }
 
 /** Dòng chứng từ kế toán từ dòng phiếu đã tính (bỏ dòng SL 0 không tiền); số lượng ghi kho theo ĐVT nhỏ nhất. */
-/** Tài khoản riêng của dòng còn giá trị (bỏ ô trống). */
-function lineAccounts(l: { accounts?: { inventory?: string; payable?: string; tax?: string } }) {
-  const a = Object.fromEntries(Object.entries(l.accounts ?? {}).filter(([, v]) => v));
-  return Object.keys(a).length ? a : undefined;
-}
-
 function ingestLines(calc: DocCalc, units: Units, filter: (l: DocCalc['lines'][number]) => boolean = () => true) {
   // [2026-11-10 03:30 PM Nguyễn Văn Thủy] PHASE-026 — dòng mang chương trình (policyRef) để quy tắc định khoản theo loại chương trình (đóng góp)
   const refs = new Map(policyRefsOf(calc).map((r) => [r.key, r]));
@@ -94,7 +87,6 @@ function ingestLines(calc: DocCalc, units: Units, filter: (l: DocCalc['lines'][n
     lineKey: l.lineKey, sku: l.sku, name: l.name, unit: b.unit, qty: b.qty,
     unitPrice: b.qty ? Math.round((l.beforeTax / b.qty) * 100) / 100 : 0, amountBeforeTax: l.beforeTax,
     discount: l.lineDiscount + l.orderDiscount, taxCode: l.taxCode, taxAmount: l.tax, isGift: l.lineType !== 'buy', excludeFromCost: l.lineType === 'gift_consumer' || undefined,
-    ...(lineAccounts(l) ? { accounts: lineAccounts(l) } : {}),
     lotNo: l.lotNo, expDate: l.expDate, note: [b.note, l.lineType === 'gift_seller' ? 'KM người bán (chia vào giá)' : l.lineType === 'gift_consumer' ? 'KM người tiêu dùng / quà' : undefined].filter(Boolean).join(' · ') || undefined,
   }); });
 }
@@ -292,9 +284,9 @@ export async function postPurchase(trx: Db, auth: AuthContext, d: StoredDoc, cal
       const isIn = d.kind === 'gift_in';
       const code = isIn ? 'NQUA' : 'XQUA';
       await ensureReason(trx, auth.tenantId, code, isIn ? 'Nhận quà / hàng tặng không hoá đơn (phân hệ Mua hàng)' : 'Xuất quà tặng khách (phân hệ Mua hàng)', isIn ? 'in' : 'out', isIn ? A.giftIncome : A.giftExpense);
-      await ensureGiftBusiness(trx, auth.tenantId, code, isIn ? 'Nhận quà NCC (Mua hàng)' : 'Xuất quà tặng khách (Mua hàng)', isIn, isIn ? A.giftIncome : A.giftExpense);
+      await ensureGiftPurpose(trx, auth.tenantId, code, isIn ? 'Nhận quà NCC (Mua hàng)' : 'Xuất quà tặng khách (Mua hàng)', isIn, isIn ? A.giftIncome : A.giftExpense);
       const lines = d.lines.filter((l) => l.sku && l.qty > 0).map((l) => { const b = toBase(units, l.sku, l.unit, l.qty); return { lineKey: l.lineKey, sku: l.sku, name: l.name, unit: b.unit, qty: b.qty, amount: isIn ? giftLineValue(l) : 0 }; });
-      links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'stock_adjustment', direction: isIn ? 'increase' : 'decrease', reasonCode: code, lines, totals: { total: lines.reduce((s, l) => s + l.amount, 0) } }, isIn ? 'Nhận quà' : 'Xuất quà', d.warehouseCode));
+      links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'stock_adjustment', direction: isIn ? 'increase' : 'decrease', reasonCode: code, purposeCode: code, lines, totals: { total: lines.reduce((s, l) => s + l.amount, 0) } }, isIn ? 'Nhận quà' : 'Xuất quà', d.warehouseCode));
       break;
     }
     case 'cost': {

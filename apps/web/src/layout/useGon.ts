@@ -5,7 +5,6 @@ import type { MenuItem } from '@ketoan/contracts';
 import { MODULES, moduleMenu } from './menu';
 import { useEnabledModules } from './useAppMenu';
 import { buildGon, groupOfPath, type GonGroup } from './menu-gon';
-import { useUseReasons } from '@/lib/useReasons';
 import { usePhanRieng } from '@/lib/phanRieng';
 
 // [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — tắt lý do hạch toán thì ẩn màn Lý do – Tài khoản, Mặt hàng – Tài khoản khỏi menu (đóng góp)
@@ -18,14 +17,13 @@ const read = () => { try { return localStorage.getItem(KEY) ?? undefined; } catc
 /** Nhóm menu người dùng được thấy: chỉ màn thuộc phân hệ đang bật. */
 export function useGonGroups(menu: MenuItem[]): GonGroup[] {
   const enabled = useEnabledModules();
-  const useReasons = useUseReasons();
   const phanRieng = usePhanRieng();
   return useMemo(() => {
     const on = MODULES.filter((m) => !enabled || enabled.has(m.key));
     const seen = new Set<string>();
     const visible = on.flatMap((m) => moduleMenu(menu, m.key)).filter((g) => !seen.has(g.key) && seen.add(g.key));
-    return buildGon(useReasons ? visible : dropPaths(visible, REASON_PATHS), phanRieng);
-  }, [menu, enabled, useReasons, phanRieng]);
+    return buildGon(dropPaths(visible, REASON_PATHS), phanRieng);
+  }, [menu, enabled, phanRieng]);
 }
 
 /** Nhóm đang làm việc: tự theo màn đang mở, nhớ theo máy để màn nằm ở nhiều nhóm không nhảy nhóm. */

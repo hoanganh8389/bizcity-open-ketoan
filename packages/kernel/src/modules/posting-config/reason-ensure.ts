@@ -28,3 +28,24 @@ export async function ensurePostingReason(trx: Db, tenantId: string, module: str
   if (added) await writeAudit(trx, { tenantId, actor, action: 'reason.ensure', objectType: 'posting_reason', objectId: r.code, after: { ...r, module } });
   return Boolean(added);
 }
+
+// [2026-11-15 Nguyễn Văn Thủy] phân hệ cần mục đích xuất riêng (nhận / xuất quà…) thì nhờ Kernel ghi — không ghi thẳng stock_purposes (đóng góp)
+export interface EnsurePurposeInput {
+  code: string;
+  name: string;
+  direction: 'increase' | 'decrease' | 'both';
+  accountCode: string;
+}
+
+/**
+ * Mục đích xuất do phân hệ quản: thêm nếu chưa có, có rồi thì cập nhật tài khoản theo cài đặt của phân hệ (đổi cài đặt → mục đích
+ * đổi theo, một nơi khai). Ghi bằng chứng `purpose.ensure` khi tài khoản đổi.
+ */
+export async function ensureStockPurpose(trx: Db, tenantId: string, module: string, actor: string, p: EnsurePurposeInput): Promise<void> {
+  const before = await trx.selectFrom('stock_purposes').select(['account_code', 'name', 'direction', 'is_active']).where('tenant_id', '=', tenantId).where('code', '=', p.code).executeTakeFirst();
+  if (before && before.account_code === p.accountCode && before.name === p.name && before.direction === p.direction && before.is_active) return;
+  const values = { name: p.name, direction: p.direction, account_code: p.accountCode, is_active: true, updated_by: actor, updated_at: new Date() };
+  await trx.insertInto('stock_purposes').values({ tenant_id: tenantId, code: p.code, sort_order: 90, ...values })
+    .onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet(values)).execute();
+  await writeAudit(trx, { tenantId, actor, action: 'purpose.ensure', objectType: 'stock_purpose', objectId: p.code, before: before ?? null, after: { ...p, module } });
+}

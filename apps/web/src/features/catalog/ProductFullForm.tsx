@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { ErrorBox, Field, Loading, Modal, NumInput, useViewAgain } from '@/components/ui';
 import { ItemPicker, ListPicker, PartnerPicker } from '@/components/pickers';
-import { GroupTree } from '../posting/ProductAccountsPage';
+import { GroupTree } from './GroupTree';
 import { NEW_OUTPUT_TAX, TaxForm } from './TaxCodesPage';
 import { HelpDrawer } from '@/components/HelpDrawer';
 // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
@@ -33,7 +33,6 @@ import type { CatalogWarnAck } from '@ketoan/contracts';
 
 type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 export interface ItemClassLite { code: string; name: string; parentCode: string | null; isActive: boolean; skuCode?: string }
-interface PostingGroup { code: string; name: string }
 interface TaxCode { code: string; name: string; direction: string; isActive: boolean; rate?: number }
 interface PriceList { code: string; name: string; isCompany: boolean; isActive: boolean; branchCodes: string[] }
 interface Unit { unit: string; ratio: number; isDefault: boolean; isPurchaseDefault?: boolean; weightKg: number | null; note: string }
@@ -123,7 +122,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const loaded = useQuery({ queryKey: ['catalog-product', sku], queryFn: () => api.get<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku!)}`), enabled: !isNew });
   const lists = useQuery({ queryKey: ['price-lists'], queryFn: () => api.get<PriceList[]>('/api/v1/catalog/price-lists'), staleTime: 60_000 }).data ?? [];
   const taxes = useQuery({ queryKey: ['tax-codes'], queryFn: () => api.get<TaxCode[]>('/api/v1/tax-codes'), staleTime: 60_000 }).data ?? [];
-  const pgroups = useQuery({ queryKey: ['groups'], queryFn: () => api.get<PostingGroup[]>('/api/v1/posting/groups'), staleTime: 60_000 }).data ?? [];
 
   // Mã mới chỉ gồm số (bỏ chữ cuối mã). Mã cũ có chữ vẫn sửa được, ô mã khoá.
   const skuLetters = /[^0-9A-Z]/.test(v.sku); // [2026-11-12 Nguyễn Văn Thủy] mã gồm chữ số và chữ in hoa, không dấu cách / ký tự lạ (đóng góp)

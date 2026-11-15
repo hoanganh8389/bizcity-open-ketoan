@@ -112,7 +112,7 @@ export { ledgerRoutes } from './modules/ledger/ledger.routes.js';
 export { periodRoutes } from './modules/periods/period.routes.js';
 export { postingConfigRoutes } from './modules/posting-config/posting-config.routes.js';
 // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): phân hệ nhờ Kernel thêm lý do riêng
-export { ensurePostingReason, type EnsureReasonInput } from './modules/posting-config/reason-ensure.js';
+export { ensurePostingReason, ensureStockPurpose, type EnsureReasonInput, type EnsurePurposeInput } from './modules/posting-config/reason-ensure.js';
 export { taxCodeRoutes } from './modules/tax-codes/tax-code.routes.js';
 export { taxInfoRoutes } from './modules/tax-info/tax-info.routes.js';
 export { voucherRoutes } from './modules/vouchers/voucher.routes.js';
@@ -121,10 +121,8 @@ export { conformanceRoutes } from './modules/conformance/conformance.routes.js';
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (route, danh mục giả định lỗi)
 export { reviewRoutes } from './modules/review/review.routes.js';
 export { FAULT_CATALOG, type FaultCase } from './modules/review/fault-catalog.js';
-// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — bảng quy tắc định khoản: hàm chọn / kiểm đụng quy tắc (đóng góp)
-export {
-  COND_KEYS, PART_LABEL, condKeys, findTies, pickRule,
-  type CondKey, type PostingBusiness, type PostingRule, type RuleBook, type RuleCond, type RuleHit, type RulePart, type RuleTable, type RuleTags,
-} from './modules/posting/rule-table.js';
+// [2026-11-15 Nguyễn Văn Thủy] nhãn cặp Nợ / Có (bỏ bảng quy tắc định khoản có điều kiện) (đóng góp)
+export { stripPairTags, type RulePart, type RuleTags } from './modules/posting/pair-tags.js';
+export { RULE_KEYS, SCHEME, PURPOSE_RANGE, inRange, type RuleKey, type SchemeBusiness, type SchemeGroup, type SchemeLine } from './modules/posting-config/scheme.js';
 // [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — lô hàng: phân lô lại theo thứ tự ngày (đóng góp)
 export { rebuildLots, allocateLots } from './modules/inventory/lot.service.js';

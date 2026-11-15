@@ -16,9 +16,7 @@ let tenantId: string;
 beforeAll(async () => {
   ctx = await setupTenant();
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
-  // [2026-11-10 11:45 PM Nguyễn Văn Thủy] PHASE-026 — tệp này kiểm cách định khoản THEO LÝ DO (chuyển tiền theo đối ứng của lý do, bán nội bộ XCN): bật công tắc lý do hạch toán (đóng góp)
-  const on = await call(ctx, 'PUT', '/api/v1/settings/values/bizcity.posting.use_reasons', { value: 'on', validFrom: '2000-01-01', reason: 'Kiểm định khoản theo lý do' }, { 'idempotency-key': 'use-reasons-on' });
-  expect(on.status, JSON.stringify(on.body)).toBe(200);
+  // [2026-11-15 Nguyễn Văn Thủy] lý do không đổi tài khoản: chuyển tiền qua tài khoản của Quy tắc hạch toán; bán nội bộ theo cờ của lý do (đóng góp)
   await call(ctx, 'POST', '/api/v1/branches', { code: 'CN02', name: 'Cửa hàng 02' });
   await call(ctx, 'POST', '/api/v1/branches', { code: 'KHO-MB', name: 'Kho miền Bắc', accountingUnitCode: 'DV-MB' });
   // Lý do chuyển tiền chép từ HTsoft (CPCT / TPCT không ghi sổ) và tài khoản ngân hàng cho phiếu chuyển tiền.
@@ -90,9 +88,10 @@ describe('Chuyển tiền', () => {
     expect(await lines('CT-3')).toEqual(['CN01 13681[CN-KHO-MB] Nợ 1000000', 'CN01 1111 Có 1000000', 'KHO-MB 11210005 Nợ 1000000', 'KHO-MB 33681[CN-CN01] Có 1000000']);
   });
 
-  it('lý do thu TBNH (đối ứng 13681, trả nợ nội bộ): nơi chuyển Nợ 33681, nơi nhận Có 13681', async () => {
+  // [2026-11-15 Nguyễn Văn Thủy] lý do không đổi tài khoản: khác đơn vị hạch toán luôn qua phải thu / phải trả nội bộ của Quy tắc hạch toán (đóng góp)
+  it('khác đơn vị hạch toán (lý do thu TBNH chỉ là nhãn): nơi chuyển Nợ 13681, nơi nhận Có 33681', async () => {
     await post(transfer({ docKey: 'CT-4', docNo: 'CT-4', toBranchCode: 'KHO-MB', toReasonCode: 'TBNH', status: 'received', totals: { total: 700000 } }));
-    expect(await lines('CT-4')).toEqual(['CN01 33681[CN-KHO-MB] Nợ 700000', 'CN01 1111 Có 700000', 'KHO-MB 11210005 Nợ 700000', 'KHO-MB 13681[CN-CN01] Có 700000']);
+    expect(await lines('CT-4')).toEqual(['CN01 13681[CN-KHO-MB] Nợ 700000', 'CN01 1111 Có 700000', 'KHO-MB 11210005 Nợ 700000', 'KHO-MB 33681[CN-CN01] Có 700000']);
   });
 
   it('lý do chi CPCT, lý do thu TPCT (không ghi sổ, chép từ HTsoft): vẫn qua 11319 như mặc định', async () => {
@@ -153,13 +152,10 @@ describe('Chuyển tiền', () => {
     expect((confirmed.body.data as { docNo: string; receipt: string; confirmedBy: string | null }[]).filter((r) => ['CT-10', 'CT-11'].includes(r.docNo)).every((r) => r.receipt === 'confirmed' && r.confirmedBy)).toBe(true);
   });
 
-  it('mã tài khoản ngân hàng chưa khai báo / lý do thu chưa hỗ trợ: lỗi định khoản, không ghi sổ', async () => {
+  it('mã tài khoản ngân hàng chưa khai báo: lỗi định khoản, không ghi sổ', async () => {
     const r1 = await call(ctx, 'POST', '/api/v1/documents', transfer({ docKey: 'CT-7', docNo: 'CT-7', fromBankCode: 'KHONG-CO', status: 'received' }));
     expect(r1.body.data?.status, JSON.stringify(r1.body)).toBe('error');
     expect(JSON.stringify(r1.body)).toContain('KHONG-CO');
-    const r2 = await call(ctx, 'POST', '/api/v1/documents', transfer({ docKey: 'CT-8', docNo: 'CT-8', toReasonCode: 'TKH3', status: 'received' }));
-    expect(r2.body.data?.status, JSON.stringify(r2.body)).toBe('error');
-    expect(JSON.stringify(r2.body)).toContain('TKH3');
   });
 });
 

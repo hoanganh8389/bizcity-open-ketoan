@@ -8,7 +8,7 @@ Phiếu nghiệm thu: [NT-BH-014](../nghiem-thu/ban-hang/NT-BH-014-cai-dat-ban-h
 | # | Hiện trạng trên `main` | Hệ quả |
 |---|---|---|
 | A | Chốt ca chỉ lưu biên bản chênh lệch két (`mod_pos.shifts.difference`), không lập chứng từ | Tiền thiếu / thừa không lên sổ; kế toán phải lập tay từng ca |
-| B | Bảng loại ở ACC41 (`db/seeds/tai-khoan-ngam-dinh-theo-loai.jsonl`, 0126) đặt **5212 = trả lại, 5213 = giảm giá** theo tên Thông tư 200. Hệ thống tài khoản của đơn vị (`tai-khoan.csv`) lại là **5212 = Giảm giá hàng bán, 5213 = Hàng bán bị trả lại** (52131 trả lại bán lẻ) | Dòng "Hàng bán trả lại …" hiện mặc định 52131 (lấy từ bộ định khoản) nhưng lọc 5212 → bấm Ghi báo "52131 không nằm trong danh sách lọc"; dòng "Giảm giá hàng bán" mặc định rơi vào tài khoản trả lại |
+| B | Bảng loại ở ACC41 (`packages/kernel/src/modules/posting-config/scheme.ts`, 0126) đặt **5212 = trả lại, 5213 = giảm giá** theo tên Thông tư 200. Hệ thống tài khoản của đơn vị (`tai-khoan.csv`) lại là **5212 = Giảm giá hàng bán, 5213 = Hàng bán bị trả lại** (52131 trả lại bán lẻ) | Dòng "Hàng bán trả lại …" hiện mặc định 52131 (lấy từ bộ định khoản) nhưng lọc 5212 → bấm Ghi báo "52131 không nằm trong danh sách lọc"; dòng "Giảm giá hàng bán" mặc định rơi vào tài khoản trả lại |
 | C | Cài đặt của bán lẻ nằm rải: BH17 (4 tham số máy bán), chế độ ghi sổ ở hộp thoại ACC14, tài khoản ở ACC41; menu có mục mờ "Định khoản bán hàng" | Kế toán bán hàng không có một chỗ xem / sửa cài đặt bán hàng |
 
 ## 2. Lựa chọn

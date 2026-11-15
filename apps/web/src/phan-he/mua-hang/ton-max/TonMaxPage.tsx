@@ -18,7 +18,7 @@ import { errorText } from '@/lib/api';
 import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
 import { ChonMatHang } from '../thanh-phan/ChonMatHang';
 import { num, qtyFmt, stockApi, useHierarchy, type MaxBoardRow } from './api';
-import { ChonChiNhanhCha, ChonShop, ChuaPhanCap, KhoiSo, isOff } from './chung';
+import { ChonChiNhanhCha, ChonShop, ChuaPhanCap, KhoiSo, isOff, HaiCachMax } from './chung';
 import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 
 type Draft = { max?: number; min?: number; mode?: TransferMode };
@@ -130,8 +130,9 @@ export function TonMaxPage() {
 
   return (
     <>
-      <PageHeader title="Tồn max" code="MH16" helpKey="mua-hang-ton-max" subtitle="Khai tồn max theo chi nhánh – kho – mã. Gợi ý từ tốc độ bán (shop) và tổng max shop (kho). Max là gốc của chia hàng xuống shop và đặt mua" />
+      <PageHeader title="Tồn max (kế toán mua hàng)" code="MH16" helpKey="mua-hang-ton-max" subtitle="Kế toán mua hàng xem và sửa max theo chi nhánh – kho – mã. Gợi ý từ tốc độ bán (shop) và tổng max shop (kho). Max là gốc của chia hàng xuống shop và đặt mua" />
       <div className="card">
+        <HaiCachMax here="ton-max" />
         <ChuaPhanCap branches={h.data?.branches} />
         <div className="tm-bar">
           <ChonChiNhanhCha value={parent} onChange={(v) => { setParent(v); setTarget(''); setWh(''); setDrafts({}); setExtra([]); }} />

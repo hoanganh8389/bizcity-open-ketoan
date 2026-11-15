@@ -20,7 +20,10 @@ type Values = {
 type Resp = { values: Values; keys: Record<keyof Values, string> };
 type Mode = 'auto' | 'approve';
 type Reason = { code: string; name: string; kind: string; debitAccount: string | null; creditAccount: string | null; isActive: boolean };
-type AdType = { code: string; group: string; name: string; isActive: boolean; columns: { key: string; caption: string; default: string }[] };
+// [2026-11-15 Nguyễn Văn Thủy] tài khoản bán hàng đọc từ Quy tắc hạch toán (ACC41) — bỏ Tài khoản ngầm định theo loại (đóng góp)
+type SchemeLine = { side: 'debit' | 'credit'; role: string; source: string; key?: string; when?: string };
+type Scheme = { businesses: { code: string; name: string; groups: { name: string; lines: SchemeLine[] }[] }[]; keys: { key: string; accountCode: string | null; accountName: string | null }[] };
+const SOURCE_LABEL: Record<string, string> = { payment: 'theo hình thức thanh toán', warehouse: 'theo loại kho', tax: 'theo loại thuế', purpose: 'theo mục đích xuất' };
 type Pair = { debit: string; credit: string };
 
 const SALE_TYPES: [string, string][] = [['sale', 'Phiếu bán hàng (đơn máy POS, BH10)'], ['sale_return', 'Phiếu trả hàng (BH11, BH14)']];
@@ -43,7 +46,7 @@ export function CaiDatPage() {
   const q = useQuery({ queryKey: ['pos-admin', 'settings'], queryFn: () => api.get<Resp>(`${M}/admin/settings`) });
   const modesQ = useQuery({ queryKey: ['posting-modes'], queryFn: () => api.get<Record<string, Mode>>('/api/v1/settings/posting-modes') });
   const reasonsQ = useQuery({ queryKey: ['reasons'], queryFn: () => api.get<Reason[]>('/api/v1/posting/reasons') });
-  const typesQ = useQuery({ queryKey: ['account-default-types'], queryFn: () => api.get<AdType[]>('/api/v1/account-default-types') });
+  const typesQ = useQuery({ queryKey: ['posting-scheme'], queryFn: () => api.get<Scheme>('/api/v1/posting/scheme') });
   const [v, setV] = useState<Values | null>(null);
   const [modes, setModes] = useState<Record<string, Mode>>({});
   const [pairs, setPairs] = useState<{ short: Pair; over: Pair }>(DEF_PAIR);
@@ -100,8 +103,9 @@ export function CaiDatPage() {
     || (v.cashDiffJournal && reasonsQ.data && (pairChanged('short') || pairChanged('over')));
   const reset = () => { setV(q.data!.values); if (modesQ.data) setModes(modesQ.data); setErr({}); setPairs(savedPairs(q.data!.values)); };
   const ready = (code: string) => { const r = reasonOf(code); return r?.kind === 'journal' && r.isActive && r.debitAccount && r.creditAccount; };
-  const saleTypes = (typesQ.data ?? []).filter((t) => t.group === 'Bán hàng' && t.isActive);
-  const acc = (t: AdType, key: string) => t.columns.find((c) => c.key === key)?.default ?? '';
+  const saleBiz = (typesQ.data?.businesses ?? []).filter((b) => b.code === 'sale' || b.code === 'sale_return');
+  const keyAcc = (k?: string) => typesQ.data?.keys.find((x) => x.key === k);
+  const accText = (l: SchemeLine) => (l.source === 'rule' ? `${keyAcc(l.key)?.accountCode ?? '—'} ${keyAcc(l.key)?.accountName ?? ''}` : SOURCE_LABEL[l.source] ?? l.source);
   const pairRow = (side: 'short' | 'over', label: string, code: string) => (
     <div className="row" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
       <span style={{ minWidth: 150 }}>{label} <span className="muted">({code})</span></span>
@@ -161,14 +165,16 @@ export function CaiDatPage() {
         )}
       </Block>
 
-      <Block title="④ Tài khoản hạch toán bán hàng" hint="Theo Tài khoản ngầm định (ACC41), nhóm Bán hàng. Bộ định khoản dùng các tài khoản này cho chứng từ bán, trả, giảm giá.">
+      <Block title="④ Tài khoản hạch toán bán hàng" hint="Theo Quy tắc hạch toán (ACC41): khung Nợ / Có của bán hàng và hàng bán trả lại, tài khoản đang dùng.">
         {typesQ.error ? <ErrorBox error={errorText(typesQ.error)} /> : !typesQ.data ? <Loading /> : (
           <table className="grid">
-            <thead><tr><th>Loại</th><th>TK Nợ</th><th>TK Có</th></tr></thead>
-            <tbody>{saleTypes.map((t) => <tr key={t.code}><td>{t.name}</td><td>{acc(t, 'debit_account')}</td><td>{acc(t, 'credit_account')}</td></tr>)}</tbody>
+            <thead><tr><th title="Nghiệp vụ">Nghiệp vụ</th><th title="Dòng sổ">Dòng sổ</th><th title="Nợ / Có">Bên</th><th title="Tài khoản">Tài khoản</th></tr></thead>
+            <tbody>{saleBiz.flatMap((b) => b.groups.flatMap((g) => g.lines.map((l, i) => (
+              <tr key={`${b.code}-${g.name}-${i}`}><td title={b.name}>{b.name}</td><td title={l.when ?? l.role}>{l.role}</td><td>{l.side === 'debit' ? 'Nợ' : 'Có'}</td><td title={accText(l)}>{accText(l)}</td></tr>
+            ))))}</tbody>
           </table>
         )}
-        <div><a className="btn" href="/cau-hinh/tai-khoan-ngam-dinh">Sửa ở ACC41</a></div>
+        <div><a className="btn" href="/cau-hinh/quy-tac-hach-toan">Sửa ở Quy tắc hạch toán (ACC41)</a></div>
       </Block>
 
       {save.error && <ErrorBox error={errorText(save.error)} />}
