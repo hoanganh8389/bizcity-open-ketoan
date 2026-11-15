@@ -25,7 +25,7 @@ Kế hoạch: `tgs_pos_react/docs/module-pos/` (repo của nhóm POS TGS — quy
 Đợt W1 chỉ nhận đơn tiền mặt / chia tiền (không QR, ghi nợ, đối trừ), giảm giá tay; đơn có CTKM, quà, đổi điểm bị chặn với `details.reason = POS_NOT_SUPPORTED_YET` (D-MP-7).
 
 **Mã số cha – con (D-MP-12).** Mã hàng chỉ còn là số; module xét ô của mặt hàng, không đọc chữ cuối mã (khung nhìn `bizcity_read.products`, cột `variant_code`, `send_to_tax` — migration Core 0102, đề xuất P-MP-6):
-- dòng 0đ của mã không gửi thuế (bill Z ở POS đang chạy, vd hàng Nội bộ) → `POS_NOT_SUPPORTED_YET` kèm `info.billZ` (ghi sổ bill Z đi cùng quà);
+- dòng 0đ của mã không gửi thuế (bill Z ở POS đang chạy, vd hàng Nội bộ, quà mã Z) → nhận (NT-BH-019): trên chứng từ bán là **dòng quà** 0đ (`isGift`, không doanh thu, không thuế, giá vốn tháng theo luật hàng khuyến mãi), đơn trả máy tách sang `zBill` (mã đơn + `Z`) khi mọi dòng không gửi thuế cộng lại 0đ → máy bán in bill Z riêng, hoá đơn điện tử bỏ dòng, bản sao website ghi `zsale` / `zexport`;
 - hàng Nội bộ máy gửi giá khác 0 → `POS_PRICE_CHANGED`;
 - mã không gửi thuế mà thu tiền → bán như dòng thường, đơn trả máy ghi `sendTax = false` (không lên hoá đơn điện tử);
 - mọi dòng chứng từ mang `itemId` của mặt hàng.
