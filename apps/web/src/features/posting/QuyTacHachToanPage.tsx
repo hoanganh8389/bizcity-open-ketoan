@@ -31,6 +31,9 @@ interface Scheme {
 interface PreviewLine { accountCode: string; accountName: string; debit: number; credit: number; description: string; sku: string | null }
 interface PreviewRes { ok: boolean; error?: string; entries?: { docType: string | null; docNo: string | null; lines: PreviewLine[] }[] }
 
+// [2026-11-15 Nguyễn Văn Thủy] mục đích hiện theo nghiệp vụ: nhập kho khác = tăng kho, xuất kho không bán = giảm kho, mua hàng = quà NQUA / XQUA (đóng góp)
+const purposeFor = (biz: string | undefined, p: { code: string; direction: string }) =>
+  biz === 'purchase' ? p.code === 'NQUA' || p.code === 'XQUA' : biz === 'stock_in' ? p.direction !== 'decrease' : p.direction !== 'increase';
 const AMOUNT: Record<string, string> = { goods: 'Tiền hàng', tax: 'Tiền thuế', total: 'Tổng tiền', paid: 'Số đã thu / trả', unpaid: 'Số còn nợ', cost: 'Giá vốn', discount: 'Số chiết khấu' };
 const SOURCE: Record<Source, { label: string; tip: string; link?: string }> = {
   rule: { label: 'Tài khoản của quy tắc', tip: 'Đổi ngay ở đây, chỉ trong phạm vi đầu số cho phép' },
@@ -129,7 +132,7 @@ export function QuyTacHachToanPage() {
                 <table className="grid full">
                   <thead><tr><th title="Mã gửi kèm phiếu (purposeCode)">Mã</th><th title="Tên mục đích">Mục đích</th><th title="Dùng cho phiếu giảm kho, tăng kho hay cả hai">Dùng cho</th><th title="Tài khoản đối ứng">Tài khoản</th><th title="Đang dùng / ngừng dùng">Trạng thái</th><th /></tr></thead>
                   <tbody>
-                    {data.sources.purposes.filter((p) => biz?.code === 'stock_in' ? p.direction !== 'decrease' : p.direction !== 'increase').map((p) => (
+                    {data.sources.purposes.filter((p) => purposeFor(biz?.code, p)).map((p) => (
                       <tr key={p.code} className={p.isActive ? '' : 'muted'}>
                         <td className="mono" title="Mã mục đích">{p.code}</td><td title={p.name}>{p.name}</td>
                         <td title="Chiều phiếu">{p.direction === 'decrease' ? 'Giảm kho' : p.direction === 'increase' ? 'Tăng kho' : 'Cả hai'}</td>
@@ -272,7 +275,7 @@ function PreviewCard({ biz, scheme }: { biz: Business; scheme: Scheme }) {
   const isPurchase = biz.docType.startsWith('purchase');
   const taxes = scheme.sources.taxCodes.filter((t) => (isPurchase ? t.direction === 'input' : t.direction !== 'input'));
   const methods = scheme.sources.paymentMethods;
-  const purposes = scheme.sources.purposes.filter((p) => p.isActive && (biz.code === 'stock_in' ? p.direction !== 'decrease' : p.direction !== 'increase'));
+  const purposes = scheme.sources.purposes.filter((p) => p.isActive && purposeFor(biz.code, p));
   const [f, setF] = useState({ branch: '', sku: '', amount: 100000, tax: '', cost: 70000, method: '', paid: 0, purpose: '', gift: false });
   const set = (x: Partial<typeof f>) => setF((o) => ({ ...o, ...x }));
   const branch = f.branch || branches[0]?.code || '';
