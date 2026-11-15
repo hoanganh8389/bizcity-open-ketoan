@@ -34,6 +34,22 @@ const emptyDoc = (filterBranches = ''): CkDoc => ({
   status: 'draft', lines: [], totalQty: 0, totalReceived: 0, short: false,
 });
 
+/** [2026-11-15 Nguyễn Văn Thủy] trạng thái từng đầu: [chữ, lớp nhãn, chú thích] (đóng góp) */
+function dauXuat(r: CkDoc): [string, string, string] {
+  if (r.adjust) return ['Đang điều chỉnh', 'badge-warn', `Lý do: ${r.adjust.reason} — sổ còn theo bản đã duyệt`];
+  if (r.status === 'draft') return ['Nháp', 'badge-gray', 'Chưa trừ tồn, chưa vào sổ'];
+  if (r.status === 'cancelled') return ['Đã huỷ', 'badge-bad', 'Đã đảo bút toán'];
+  if (r.status === 'rejected') return ['Trả lại tồn', 'badge-bad', 'Bên nhận từ chối: đầu xuất đã huỷ'];
+  return ['Đã duyệt xuất', 'badge-ok', r.adjustments?.some((h) => h.kind === 'adjust') ? 'Có điều chỉnh đã duyệt (xem lịch sử trên phiếu)' : 'Đã trừ tồn bên chuyển'];
+}
+function dauNhan(r: CkDoc): [string, string, string] {
+  if (r.status === 'draft' || r.status === 'cancelled') return ['—', 'badge-gray', r.status === 'draft' ? 'Bên xuất chưa duyệt xuất' : 'Phiếu đã huỷ'];
+  if (r.status === 'rejected') return ['Từ chối', 'badge-bad', r.receivedNote || ''];
+  if (r.adjust) return r.adjust.both ? [r.adjust.confirmedBy ? 'Đã xác nhận điều chỉnh' : 'Chờ xác nhận điều chỉnh', 'badge-warn', 'Điều chỉnh hai đầu: bên nhận xác nhận rồi mới duyệt'] : ['Khoá nhận', 'badge-warn', 'Bên xuất đang điều chỉnh'];
+  if (r.status === 'shipped') return ['Chờ nhận', 'badge-warn', 'Hàng đang chuyển'];
+  return r.short ? ['Nhận thiếu', 'badge-warn', r.receivedNote || ''] : ['Đã nhận', 'badge-ok', r.adjustments?.some((h) => h.kind === 'chenh_lech') ? 'Có biên bản chênh lệch' : ''];
+}
+
 export function ChuyenKhoPage() {
   const tt = useThaoTac('kho.chuyen-kho'); // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: nút theo thao tác đã đăng ký của màn KHO01 (đóng góp)
   const qc = useQueryClient();
@@ -139,7 +155,7 @@ export function ChuyenKhoPage() {
           <ErrorBox error={q.error ? errorText(q.error) : act.error ? errorText(act.error) : null} />
           {q.isLoading ? <Loading /> : (
             <DataGrid
-              storageKey="kho01-phieu-chuyen-v1" exportName={`phieu-chuyen-kho-${f.from}-${f.to}`} exportRef={exportRef}
+              storageKey="kho01-phieu-chuyen-v2" exportName={`phieu-chuyen-kho-${f.from}-${f.to}`} exportRef={exportRef}
               rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => void open(r)} maxHeight="calc(100vh - 480px)"
               rowClassName={(r) => dongChungTu(r.status)} footerLabel="Cộng"
               emptyText='Chưa có phiếu chuyển kho trong khoảng này — bấm "+ Thêm"'
@@ -149,14 +165,16 @@ export function ChuyenKhoPage() {
                   render: (r) => <input type="checkbox" checked={tich.has(r.id)} onClick={(e) => e.stopPropagation()} onChange={(e) => setTich((t) => { const n = new Set(t); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} /> },
                 { key: 'docDate', header: 'Ngày', title: 'Ngày xuất', type: 'date', width: 95 },
                 { key: 'docNo', header: 'Số phiếu', title: 'Số phiếu chuyển kho', type: 'code', width: 115 },
-                { key: 'fromBranchCode', header: 'Chi nhánh xuất', title: 'Chi nhánh giao hàng', type: 'code', width: 115 },
-                { key: 'fromWarehouse', header: 'Kho xuất', title: 'Phân kho xuất', type: 'code', width: 90 },
-                { key: 'toBranchCode', header: 'Chi nhánh nhập', title: 'Chi nhánh nhận hàng', type: 'code', width: 115 },
-                { key: 'toWarehouse', header: 'Kho nhập', title: 'Phân kho nhập', type: 'code', width: 90 },
-                { key: 'lines', header: 'Số dòng', title: 'Số dòng hàng trên phiếu', type: 'number', width: 70, value: (r) => r.lines.length },
+                // [2026-11-15 Nguyễn Văn Thủy] hai đầu tách rõ: Xuất từ / Nhập vào gộp chi nhánh · kho; trạng thái riêng từng đầu; phiếu điện tử (đóng góp)
+                { key: 'from', header: 'Xuất từ', title: 'Chi nhánh · phân kho giao hàng', type: 'code', width: 150, value: (r) => [r.fromBranchCode, r.fromWarehouse].filter(Boolean).join(' · ') },
+                { key: 'to', header: 'Nhập vào', title: 'Chi nhánh · phân kho nhận hàng', type: 'code', width: 150, value: (r) => [r.toBranchCode, r.toWarehouse].filter(Boolean).join(' · ') },
+                { key: 'outState', header: 'Đầu xuất', title: 'Nháp (chưa trừ tồn) · Đã duyệt xuất · Đang điều chỉnh · Đã huỷ', width: 130, value: (r) => dauXuat(r)[0], render: (r) => { const [t, c, tip] = dauXuat(r); return <span className={`badge ${c}`} title={tip}>{t}</span>; } },
+                { key: 'inState', header: 'Đầu nhận', title: 'Chưa nhận được (nháp) · Chờ nhận · Khoá nhận (bên xuất đang điều chỉnh) · Đã nhận · Nhận thiếu · Từ chối', width: 140, value: (r) => dauNhan(r)[0], render: (r) => { const [t, c, tip] = dauNhan(r); return <span className={`badge ${c}`} title={tip}>{t}</span>; } },
                 { key: 'totalQty', header: 'SL xuất', title: 'Tổng số lượng xuất (đơn vị tính tồn kho)', type: 'number', width: 85, sum: true },
                 { key: 'totalReceived', header: 'SL nhận', title: 'Tổng số thủ kho nhập xác nhận; trống = chưa nhận', type: 'number', width: 85, sum: true, value: (r) => (r.status === 'received' ? r.totalReceived : null) },
-                { key: 'status', header: 'Trạng thái', title: 'Đã xuất, chờ nhận · Đã nhận · Nhận thiếu · Bên nhận từ chối · Đã huỷ', width: 135, value: (r) => statusText(r), render: (r) => <span className={`badge ${statusClass(r)}`}>{statusText(r)}</span> },
+                { key: 'einvoice', header: 'Phiếu điện tử', title: 'Số phiếu xuất kho kiêm vận chuyển nội bộ điện tử đã phát hành', type: 'code', width: 110, value: (r) => r.einvoice?.no ?? '' },
+                { key: 'lines', header: 'Số dòng', title: 'Số dòng hàng trên phiếu', type: 'number', width: 70, hidden: true, value: (r) => r.lines.length },
+                { key: 'status', header: 'Trạng thái chung', title: 'Trạng thái gộp của phiếu', width: 135, hidden: true, value: (r) => statusText(r), render: (r) => <span className={`badge ${statusClass(r)}`}>{statusText(r)}</span> },
                 { key: 'receivedDate', header: 'Ngày nhận', title: 'Ngày thủ kho nhập xác nhận', type: 'date', width: 95 },
                 { key: 'note', header: 'Diễn giải', title: 'Diễn giải của phiếu; khi nhận thiếu / từ chối thì kèm ghi chú bên nhận', width: 220, value: (r) => [r.note, r.receivedNote].filter(Boolean).join(' · ') },
                 { key: 'createdBy', header: 'Người lập', title: 'Người lập phiếu', width: 120, hidden: true },
