@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Module mới `loyalty` — sổ điểm thành viên (phiếu NT-BH-020 bước 1) <!-- [2026-11-15 04:30 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1 (đóng góp) -->
+
+- **Thêm:** module `modules/loyalty` (schema `mod_loyalty`): sổ điểm chỉ thêm theo lô có hạn; chính sách tích điểm do website đẩy sang `POST /api/v1/m/loyalty/program` (quyền `catalog:write`, giữ mọi phiên bản); tự tích khi đơn máy bán hoàn tất (nghe `pos.order.recorded`), tự hoàn khi trả hàng (nghe `pos.return.recorded`); máy bán đọc `GET /program?branch=`, `GET /customers/:id` (quyền mới `loyalty:read`).
+- **Thay đổi định khoản:** không — điểm chỉ hạch toán lúc đổi (bước 2, trên chứng từ bán).
+- **Nâng cấp cần làm:** chạy migration module `loyalty` và đồng bộ module (`module sync`); website (Cổng kế toán) đẩy chính sách từng cửa hàng; vé thu ngân cấp thêm `loyalty:read`.
+
 ### Máy bán POS: chuyển dòng 0đ sang bill Z; phiếu trả mang cờ quà — phiếu NT-BH-019 bước 2 <!-- [2026-11-15 02:10 PM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 2 (đóng góp) -->
 
 - **Thêm:** `POST /api/v1/m/pos/orders/:id/lines/:lineId/move-to-z` (action `pos.order.move-to-z`, quyền `pos:sell`): chuyển một dòng 0đ của đơn đã hoàn tất sang bill Z (mã đơn + `Z`) — đơn phiên bản mới, bản sao website ghi lại (`zsale` / `zexport`). Dòng có tiền → `CONFLICT`; đơn chờ thanh toán / đã huỷ → `CONFLICT`; gọi lại khi dòng đã ở bill Z → trả đơn, không tăng phiên bản. Chứng từ bán và sổ không đổi (dòng 0đ).
