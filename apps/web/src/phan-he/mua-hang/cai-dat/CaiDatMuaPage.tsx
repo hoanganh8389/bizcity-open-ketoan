@@ -16,7 +16,7 @@ import { BrandInput, dmy } from '../chung';
 import { NhapExcelChung, docNgay, xuatExcel } from '../thanh-phan/NhapExcelChung';
 import '../mua-hang.css';
 
-interface Settings { holidays: string[]; warnDays: number; priceWarnPct?: number; requireOrder?: boolean; blockOverOrder?: boolean; brandOpening: Record<string, Record<string, number>>; accounts: Record<string, string>; resolvedAccounts: Record<string, string> }
+interface Settings { holidays: string[]; warnDays: number; priceWarnPct?: number; requireOrder?: boolean; blockOverOrder?: boolean; brandOpening: Record<string, Record<string, number>>; resolvedAccounts: Record<string, string> }
 const ACC_LABEL: Record<string, string> = { stock: 'Hàng hoá (kho)', vatIn: 'Thuế GTGT đầu vào', payable: 'Phải trả nhà cung cấp', bank: 'Tiền gửi ngân hàng (trả chuyển khoản)', cash: 'Tiền mặt', giftIncome: 'Thu nhập từ quà tặng không hoá đơn', giftExpense: 'Chi phí xuất quà tặng khách', finIncome: 'Chiết khấu thanh toán được hưởng' };
 const THU = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
 const LE_CO_DINH: [string, string][] = [['01-01', 'Tết Dương lịch'], ['04-30', 'Giải phóng miền Nam'], ['05-01', 'Quốc tế Lao động'], ['09-02', 'Quốc khánh']];
@@ -42,7 +42,7 @@ export function CaiDatMuaPage() {
   const addDays = (list: string[]) => upd({ holidays: [...new Set([...s.holidays, ...list])].sort() });
   const save = async () => {
     setMsg(null);
-    try { await api.put(`${P}/settings`, { holidays: s.holidays, warnDays: s.warnDays, priceWarnPct: s.priceWarnPct ?? 2, requireOrder: Boolean(s.requireOrder), blockOverOrder: Boolean(s.blockOverOrder), brandOpening: s.brandOpening, accounts: Object.fromEntries(Object.entries(s.accounts).filter(([, v]) => v)) }); setMsg({ ok: true, text: 'Đã lưu cài đặt' }); void q.refetch(); }
+    try { await api.put(`${P}/settings`, { holidays: s.holidays, warnDays: s.warnDays, priceWarnPct: s.priceWarnPct ?? 2, requireOrder: Boolean(s.requireOrder), blockOverOrder: Boolean(s.blockOverOrder), brandOpening: s.brandOpening }); setMsg({ ok: true, text: 'Đã lưu cài đặt' }); void q.refetch(); }
     catch (e) { setMsg({ ok: false, text: errorText(e) }); }
   };
   const days = s.holidays.filter((h) => h.startsWith(year));
@@ -113,22 +113,15 @@ export function CaiDatMuaPage() {
               <label className="row" style={{ gap: 6, alignItems: 'center', marginTop: 8 }} title="Quy trình: khai mã + giá của NCC → đơn đặt (duyệt, giữ hạn mức) → phiếu nhập lập từ đơn"><input type="checkbox" checked={Boolean(s.requireOrder)} onChange={(e) => upd({ requireOrder: e.target.checked })} /> Phiếu nhập mua phải lập từ đơn đặt đã duyệt (bật: chặn duyệt phiếu nhập không theo đơn; tắt: chỉ cảnh báo vàng)</label>
               <label className="row" style={{ gap: 6, alignItems: 'center', marginTop: 8 }} title="Phiếu nhập nhận nhiều hơn phần còn lại của đơn đặt, hoặc có mã không có trong đơn"><input type="checkbox" checked={Boolean(s.blockOverOrder)} onChange={(e) => upd({ blockOverOrder: e.target.checked })} /> Không cho nhập vượt số lượng đơn đặt (bật: chặn duyệt; tắt: chỉ cảnh báo vàng)</label></div>
           </section>
-          {/* [2026-11-13 Nguyễn Văn Thủy] tài khoản khai một nơi ở Tài khoản ngầm định (ACC41); mục này chỉ hiện khi đơn vị còn tài khoản riêng cũ (đóng góp) */}
-          {Object.values(s.accounts).some(Boolean) ? <section className="blk blk-green">
-            <header><div><b>④ Tài khoản riêng (cũ)</b><span>Tài khoản khai ở Tài khoản ngầm định. Xoá trắng ô để theo Tài khoản ngầm định (cột "Đang dùng").</span></div></header>
-            <div className="blk-body">
-              <table className="mh-mini"><thead><tr><th>Khoản</th><th style={{ width: 150 }}>Tài khoản riêng</th><th style={{ width: 120 }}>Đang dùng</th></tr></thead><tbody>
-                {Object.entries(ACC_LABEL).map(([k, l]) => <tr key={k}><td>{l}</td><td><input className="input mono" value={s.accounts[k] ?? ''} placeholder="tự chọn" onChange={(e) => upd({ accounts: { ...s.accounts, [k]: e.target.value.trim() } })} /></td><td className="mono">{s.resolvedAccounts[k]}</td></tr>)}
-              </tbody></table>
-            </div>
-          </section> : <section className="blk blk-green">
+          {/* [2026-11-15 Nguyễn Văn Thủy] tài khoản chỉ khai ở Quy tắc hạch toán; ở đây chỉ xem (đóng góp) */}
+          <section className="blk blk-green">
             <header><div><b>④ Tài khoản hạch toán</b><span>Theo <a href="/cau-hinh/quy-tac-hach-toan">Quy tắc hạch toán</a> (nghiệp vụ Mua hàng).</span></div></header>
             <div className="blk-body">
               <table className="mh-mini"><thead><tr><th>Khoản</th><th style={{ width: 120 }}>Đang dùng</th></tr></thead><tbody>
                 {Object.entries(ACC_LABEL).map(([k, l]) => <tr key={k}><td>{l}</td><td className="mono">{s.resolvedAccounts[k]}</td></tr>)}
               </tbody></table>
             </div>
-          </section>}
+          </section>
         </div>
       </div>
       <div className="mh-savebar">

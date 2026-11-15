@@ -26,7 +26,7 @@ import type { PostingPart } from './stock.rule.js';
 import { EntryBuilder } from '../entry-builder.js';
 import { lineTags, type RuleContext } from './sale.rule.js';
 
-// [2026-11-13 Nguyễn Văn Thủy] dòng có tài khoản riêng (line.accounts) thì dùng, không thì theo tài khoản ngầm định (đóng góp)
+// [2026-11-15 Nguyễn Văn Thủy] tài khoản chỉ theo Quy tắc hạch toán (loại kho → TK kho của quy tắc); phiếu không mang tài khoản (đóng góp)
 export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): PostingPart[] {
   const { resolver, partnerId } = ctx;
   const reason = resolver.reason(doc.reasonCode, 'purchase');
@@ -36,15 +36,15 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
-    // TK kho: TK ghi tay trên dòng → TK theo loại kho của kho trên dòng → TK kho của quy tắc.
-    const wh = line.accounts?.inventory ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
+    // TK kho: TK theo loại kho của kho trên dòng → TK kho của quy tắc.
+    const wh = resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
     const tags = { ...lineTags(BIZ, doc.reasonCode, line), ...(wh ? { whDebit: true } : {}) };
     b.add({
       tags,
       part: 'goods',
       productSku: line.sku,
-      debitAccount: line.accounts?.inventory ?? wh ?? group.inventory_account,
-      creditAccount: line.accounts?.payable ?? payable,
+      debitAccount: wh ?? group.inventory_account,
+      creditAccount: payable,
       amount: line.amountBeforeTax,
       creditPartnerId: partnerId,
       taxCode: line.taxCode,
@@ -54,8 +54,8 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
       tags,
       part: 'tax',
       productSku: line.sku,
-      debitAccount: line.accounts?.tax ?? resolver.inputTaxAccount(line.taxCode, line.taxAmount),
-      creditAccount: line.accounts?.payable ?? payable,
+      debitAccount: resolver.inputTaxAccount(line.taxCode, line.taxAmount),
+      creditAccount: payable,
       amount: line.taxAmount,
       creditPartnerId: partnerId,
       taxCode: line.taxCode,
@@ -94,14 +94,14 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
-    const wh = line.accounts?.inventory ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
+    const wh = resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
     const tags = lineTags(BIZ, doc.reasonCode, line);
     b.add({
       tags: wh ? { ...tags, whCredit: true } : tags,
       part: 'goods',
       productSku: line.sku,
-      debitAccount: line.accounts?.payable ?? payable,
-      creditAccount: line.accounts?.inventory ?? wh ?? group.inventory_account,
+      debitAccount: payable,
+      creditAccount: wh ?? group.inventory_account,
       amount: Math.abs(line.amountBeforeTax),
       debitPartnerId: partnerId,
       taxCode: line.taxCode,
@@ -111,8 +111,8 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
       tags,
       part: 'tax',
       productSku: line.sku,
-      debitAccount: line.accounts?.payable ?? payable,
-      creditAccount: line.accounts?.tax ?? resolver.inputTaxAccount(line.taxCode, line.taxAmount),
+      debitAccount: payable,
+      creditAccount: resolver.inputTaxAccount(line.taxCode, line.taxAmount),
       amount: Math.abs(line.taxAmount),
       debitPartnerId: partnerId,
       taxCode: line.taxCode,

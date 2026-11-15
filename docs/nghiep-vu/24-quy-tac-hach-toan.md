@@ -32,7 +32,7 @@ Mỗi chân bút toán lấy tài khoản từ **đúng một** nguồn. Mỗi n
 | **Loại thuế** (qua dòng hàng, thuế suất theo mã hàng có ngày hiệu lực) | Tài khoản thuế | Loại thuế (ACC43) |
 | **Mục đích xuất** | Tài khoản đối ứng của phiếu xuất kho không bán / nhập kho khác | Quy tắc hạch toán (ACC41), mục Mục đích xuất |
 
-Thứ tự khi trùng: tài khoản ghi tay trên dòng phiếu (có lưu vết, chỉ trong phạm vi) → mục đích xuất → hình thức thanh toán / loại kho / loại thuế → tài khoản của quy tắc.
+Thứ tự khi trùng: mục đích xuất → hình thức thanh toán / loại kho / loại thuế → tài khoản của quy tắc. Trên phiếu nghiệp vụ (mua, bán, kho, chuyển kho) không có ô chọn tài khoản: tài khoản chỉ quyết định ở màn Quy tắc hạch toán. Chỉ chứng từ kế toán tự lập (phiếu thu, phiếu chi, phiếu kế toán, đề nghị chi) mới chọn tài khoản trên phiếu.
 
 **Không còn** tài khoản theo từng mặt hàng. Đổi thuế suất hàng loạt (theo nhóm hàng, có ngày hiệu lực) không đụng quy tắc, vì tài khoản thuế nằm ở loại thuế.
 

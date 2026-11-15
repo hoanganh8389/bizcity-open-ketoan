@@ -8,7 +8,6 @@
  *   - Ứng trước         = phần chưa đối trừ của phiếu ứng trước gắn cùng đơn đặt.
  *   - Tài khoản         = tài khoản thật của đơn vị (cài đặt mua hàng, không khai thì chọn theo hệ thống tài khoản).
  */
-import { RULE_KEYS } from '../../kernel/public.js';
 import { writeTenantSection } from '@bizcity/platform/core/settings';
 import { sql } from 'kysely';
 import {
@@ -26,7 +25,7 @@ import { checkWarehouseFor } from '../../modules/warehouses/warehouse-types.js';
 /** [2026-11-13 Nguyễn Văn Thủy] Loại phiếu mua → nghiệp vụ dùng kho (Danh mục → Loại kho) (đóng góp) */
 export const WAREHOUSE_OP_OF: Record<string, string> = { receipt: 'purchase_in', return: 'purchase_return_out', gift_in: 'gift_in', gift_out: 'gift_out' };
 
-export interface PurchaseSettings { holidays: string[]; brandOpening: Record<string, Record<string, number>>; accounts: Partial<Accounts>; warnDays: number; /** Đơn giá lệch quá % này so với giá NCC / lần nhập trước thì cảnh báo (một mức cho cả đơn vị). */ priceWarnPct: number;
+export interface PurchaseSettings { holidays: string[]; brandOpening: Record<string, Record<string, number>>; warnDays: number; /** Đơn giá lệch quá % này so với giá NCC / lần nhập trước thì cảnh báo (một mức cho cả đơn vị). */ priceWarnPct: number;
   /** Phiếu nhập mua bắt buộc lập từ đơn đặt đã duyệt (bật: chặn duyệt phiếu nhập không theo đơn; tắt: chỉ cảnh báo). */
   requireOrder: boolean;
   /** [2026-11-13 Nguyễn Văn Thủy] Chặn duyệt phiếu nhập nhận nhiều hơn phần còn lại của đơn đặt / mã ngoài đơn (tắt: chỉ cảnh báo) (đóng góp) */
@@ -37,7 +36,7 @@ export interface PurchaseSettings { holidays: string[]; brandOpening: Record<str
 export async function loadSettings(trx: Db, tenantId: string): Promise<PurchaseSettings> {
   const t = await trx.selectFrom('tenants').select('settings').where('id', '=', tenantId).executeTakeFirst();
   const p = ((t?.settings ?? {}) as Record<string, any>).purchase ?? {};
-  return { holidays: p.holidays ?? [], brandOpening: p.brandOpening ?? {}, accounts: p.accounts ?? {}, warnDays: Number(p.warnDays ?? 3), priceWarnPct: Number(p.priceWarnPct ?? 2), requireOrder: Boolean(p.requireOrder), blockOverOrder: Boolean(p.blockOverOrder), ...(Array.isArray(p.variantSeparate) ? { variantSeparate: p.variantSeparate } : {}) };
+  return { holidays: p.holidays ?? [], brandOpening: p.brandOpening ?? {}, warnDays: Number(p.warnDays ?? 3), priceWarnPct: Number(p.priceWarnPct ?? 2), requireOrder: Boolean(p.requireOrder), blockOverOrder: Boolean(p.blockOverOrder), ...(Array.isArray(p.variantSeparate) ? { variantSeparate: p.variantSeparate } : {}) };
 }
 
 // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): ghi qua writeTenantSection của Platform
@@ -45,8 +44,8 @@ export async function saveSettings(trx: Db, tenantId: string, s: PurchaseSetting
   await writeTenantSection(trx, tenantId, 'purchase', s);
 }
 
-/** Tài khoản dùng khi ghi sổ / xem trước: cài đặt → lý do mặc định → tài khoản chi tiết đầu tiên có trong hệ thống tài khoản. */
-export async function resolveAccounts(trx: Db, tenantId: string, s: PurchaseSettings): Promise<Accounts> {
+/** Tài khoản dùng khi ghi sổ / xem trước: Quy tắc hạch toán / hình thức thanh toán → tài khoản chi tiết đầu tiên có trong hệ thống tài khoản. */
+export async function resolveAccounts(trx: Db, tenantId: string, _s?: PurchaseSettings): Promise<Accounts> {
   const rows = await trx.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', tenantId).execute();
   const posting = new Set(rows.filter((r) => r.is_posting).map((r) => r.code));
   const sorted = [...posting].sort();
@@ -56,18 +55,18 @@ export async function resolveAccounts(trx: Db, tenantId: string, s: PurchaseSett
   const methods = await trx.selectFrom('payment_methods').select(['code', 'account_code', 'is_receivable']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
   const methodAcc = (prefix: string, codes: string[]) => methods.find((m) => codes.includes(m.code) && !m.is_receivable && posting.has(m.account_code))?.account_code
     ?? methods.find((m) => !m.is_receivable && m.account_code.startsWith(prefix) && posting.has(m.account_code))?.account_code;
-  // [2026-11-15 Nguyễn Văn Thủy] một nơi khai: tài khoản của Quy tắc hạch toán (ACC41) → tài khoản riêng cũ ở MH12 (nếu còn) → tự chọn (đóng góp)
+  // [2026-11-15 Nguyễn Văn Thủy] một nơi khai: tài khoản của Quy tắc hạch toán (ACC41) → tự chọn; cài đặt mua hàng không còn tài khoản riêng (đóng góp)
   const defaults = new Map((await trx.selectFrom('posting_defaults').select(['key', 'account_code']).where('tenant_id', '=', tenantId).execute()).map((d) => [d.key, d.account_code]));
   const def = (key: string) => { const c = defaults.get(key); return c && posting.has(c) ? c : undefined; };
   return {
-    stock: s.accounts.stock ?? def('inventory') ?? pick('1561', '156'),
-    vatIn: s.accounts.vatIn ?? def('tax_input') ?? pick('1331', '133'),
-    payable: s.accounts.payable ?? def('payable') ?? pick('3312', '33111', '3311', '331'),
-    cash: s.accounts.cash ?? methodAcc('111', ['TM']) ?? pick('1111', '111'),
-    bank: s.accounts.bank ?? methodAcc('112', ['CK', 'NH']) ?? pick('1121', '112'),
-    giftIncome: s.accounts.giftIncome ?? pick('71153', '7118', '711'),
-    giftExpense: s.accounts.giftExpense ?? def('promotion_expense') ?? pick('64184', '64188', '6418', '6428'),
-    finIncome: s.accounts.finIncome ?? pick('5152', '5158', '515'),
+    stock: def('inventory') ?? pick('1561', '156'),
+    vatIn: def('tax_input') ?? pick('1331', '133'),
+    payable: def('payable') ?? pick('3312', '33111', '3311', '331'),
+    cash: methodAcc('111', ['TM']) ?? pick('1111', '111'),
+    bank: methodAcc('112', ['CK', 'NH']) ?? pick('1121', '112'),
+    giftIncome: pick('71153', '7118', '711'),
+    giftExpense: def('promotion_expense') ?? pick('64184', '64188', '6418', '6428'),
+    finIncome: pick('5152', '5158', '515'),
   };
 }
 
@@ -221,28 +220,6 @@ export async function freezeApproved(trx: Db): Promise<{ frozen: number; skipped
 
 const GOODS = ['order', 'receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
 
-// [2026-11-15 Nguyễn Văn Thủy] TK ghi tay trên dòng phiếu mua: tài khoản chi tiết, trong phạm vi của Quy tắc hạch toán (đóng góp)
-/** Phạm vi TK kho / TK công nợ / TK thuế ghi tay trên dòng phiếu mua (như khoá inventory / payable / tax_input của quy tắc). */
-export const LINE_ACCOUNT_RANGE = { inventory: RULE_KEYS.inventory!.range, payable: RULE_KEYS.payable!.range, tax: RULE_KEYS.tax_input!.range } as const;
-
-async function lineAccountChecks(trx: Db, tenantId: string, doc: PDoc): Promise<Check[]> {
-  const used = doc.lines.filter((l) => l.accounts && Object.values(l.accounts).some(Boolean));
-  if (!['receipt', 'return', 'exchange'].includes(doc.kind) || !used.length) return [];
-  const posting = new Set((await trx.selectFrom('accounts').select('code').where('tenant_id', '=', tenantId).where('is_posting', '=', true).execute()).map((a) => a.code));
-  const label = { inventory: 'TK kho', payable: 'TK công nợ', tax: 'TK thuế GTGT' } as const;
-  const bad: string[] = [];
-  for (const l of used) {
-    for (const k of ['inventory', 'payable', 'tax'] as const) {
-      const acc = l.accounts?.[k];
-      if (!acc) continue;
-      const range = LINE_ACCOUNT_RANGE[k];
-      if (!posting.has(acc)) bad.push(`${l.sku || l.lineKey}: ${label[k]} ${acc} không phải tài khoản chi tiết`);
-      else if (!range.some((f) => acc.startsWith(f))) bad.push(`${l.sku || l.lineKey}: ${label[k]} ${acc} ngoài phạm vi ${range.join(', ')}`);
-    }
-  }
-  return bad.length ? [{ level: 'error', code: 'line_account', blocking: true, text: `Tài khoản trên dòng không đúng Quy tắc hạch toán: ${bad.join(' · ')}` }] : [];
-}
-
 export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): Promise<Analysis> {
   const { policies, docs, settings, accounts } = ctx;
   // ĐVT của các mã trên phiếu: bảng chiết khấu theo mã ghi ĐVT khác ĐVT phiếu (vd giảm / Thùng, phiếu theo Lon) quy đổi theo tỉ lệ.
@@ -344,8 +321,6 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
     }).filter((c) => doc.kind === 'receipt' || doc.kind === 'order' || !['no_invoice', 'gift_qty', 'price_last', 'price_fixed'].includes(c.code))
       .filter((c) => !(['gift_in', 'gift_out', 'return', 'exchange'].includes(doc.kind) && (c.code === 'near_expiry' || c.code === 'expired')));
     if (doc.kind === 'gift_out') checks = checks.filter((c) => c.code !== 'lot_missing');
-    // [2026-11-13 Nguyễn Văn Thủy] tài khoản người lập chọn trên dòng phải là TK chi tiết trong lọc của Tài khoản ngầm định (đóng góp)
-    for (const t of await lineAccountChecks(trx, tenantId, doc)) checks.push(t);
     const whOp = WAREHOUSE_OP_OF[doc.kind];
     const whErr = whOp && doc.warehouseCode ? await checkWarehouseFor(trx, tenantId, doc.warehouseCode, whOp) : '';
     if (whErr) checks.push({ level: 'error', code: 'warehouse_type', blocking: true, text: whErr });

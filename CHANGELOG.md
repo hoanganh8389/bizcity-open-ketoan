@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Phiếu nghiệp vụ không chọn tài khoản <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Bỏ:** cột TK Kho / TK Công nợ / TK thuế và ô "Hiển thị tài khoản" trên phiếu nhập mua, trả NCC, đổi hàng; mục "Tài khoản riêng (cũ)" ở Cài đặt mua hàng (chỉ còn xem tài khoản đang dùng); trường `lines[].accounts` của chứng từ `purchase` / `purchase_return` (cổng bỏ qua nếu máy khách cũ còn gửi) và `accounts` của `PUT /api/v1/purchase/settings`.
+- **Thay đổi định khoản:** phiếu mua / trả NCC ghi TK kho theo loại kho → TK kho của quy tắc, công nợ và thuế theo Quy tắc hạch toán; không còn tài khoản ghi tay trên dòng. Chứng từ kế toán tự lập (phiếu thu, chi, phiếu kế toán, đề nghị chi, chứng từ công nợ) vẫn chọn tài khoản.
+
 ### Quy tắc hạch toán: một màn, năm nguồn tài khoản, mục đích xuất thay lý do <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** màn **Quy tắc hạch toán (ACC41)** `/cau-hinh/quy-tac-hach-toan`: mỗi nghiệp vụ (bán, trả lại, mua, trả NCC, thu, chi, chuyển kho, xuất / nhập kho khác, chuyển tiền) hiện khung Nợ / Có cố định và tài khoản lấy từ đâu; đổi tài khoản của quy tắc chỉ trong phạm vi đầu số, chỉ tài khoản chi tiết; xem thử bút toán một phiếu (không lưu).

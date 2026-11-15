@@ -5,7 +5,7 @@
 | **① Ngày nghỉ, lễ** | Lọc theo **năm** (mỗi năm một thẻ). Thêm bằng: chọn ngày → **+ Thêm ngày**; **+ Lễ cố định năm …** (01/01, 30/04, 01/05, 02/09); **Dán nhiều ngày…**; **Nhập Excel** (có file mẫu, cột *Ngày*). **Xuất Excel** để lưu / gửi. Hạn trả tính theo "ngày làm việc" bỏ qua các ngày này (thứ 7, chủ nhật luôn bỏ qua) |
 | **③ Cảnh báo sắp đến hạn** | Số ngày báo trước hạn ở màn Hạn mức & công nợ đến hạn (MH05) |
 | **② Số dư nợ theo nhãn tại chi nhánh** | Nợ của nhãn tại từng chi nhánh lúc bắt đầu dùng phần mềm — để hạn mức nhãn phân bổ chi nhánh tính đúng. Chọn nhãn, chi nhánh từ danh mục → **Thêm / cập nhật**. Nhiều dòng thì **Nhập Excel** (cột *Nhãn, Chi nhánh, Số dư*); có ô **Tìm**, bảng cuộn trong khung |
-| **④ Tài khoản hạch toán** | Để trống: phần mềm tự chọn theo hệ thống tài khoản (cột **Đang dùng**). Muốn dùng tài khoản khác (ví dụ quà không hoá đơn ghi 71153) thì nhập vào cột **Tài khoản riêng** |
+| **④ Tài khoản hạch toán** | Chỉ xem tài khoản đang dùng. Muốn đổi thì vào **Quy tắc hạch toán** (ACC41) — tài khoản chỉ khai ở một nơi. Trên phiếu mua không có ô chọn tài khoản. |
 
 Bấm **Lưu cài đặt** ở thanh dưới cùng (luôn hiện; ghi "Có thay đổi chưa lưu" khi đã sửa). Thay đổi áp cho các phiếu lập / duyệt sau đó; phiếu đã duyệt giữ nguyên.
 
