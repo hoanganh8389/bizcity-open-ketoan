@@ -14,7 +14,7 @@ Làm **từ trái sang phải, từ trên xuống dưới**. Mọi ô đều b�
 | 4. Nhóm hàng | Ba cấp: ngành → nhãn → nhóm, mỗi cấp một mã ngắn | Mã ngắn khoá lại khi nhóm đã có mặt hàng; mọi lần sửa đều có lịch sử |
 | 5. Mặt hàng | Mã, tên, đơn vị tính, thuế suất | Chọn nhóm cấp 3 là có sẵn mã kế tiếp; số lượng luôn ghi theo đơn vị nhỏ nhất |
 | 6. Đối tượng | Khách hàng, nhà cung cấp, nhân viên | Khai một lần, mọi chứng từ chọn lại |
-| 7. Cấu hình hạch toán | Tài khoản ngầm định, hệ thống tài khoản, biểu thuế | Chứng từ tự định khoản |
+| 7. Cấu hình hạch toán | Quy tắc hạch toán, hệ thống tài khoản, biểu thuế | Chứng từ tự định khoản |
 | 8. Phân quyền | *(đang phát triển)* Ai được xem, sửa chi nhánh nào, màn nào | Theo đúng nhánh trên cơ cấu |
 | 9. Báo cáo tổng hợp | — | Cộng dồn theo cây: cửa hàng → tỉnh → chi nhánh → toàn công ty |
 

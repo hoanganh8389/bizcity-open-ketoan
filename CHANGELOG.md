@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Quy tắc hạch toán: một màn, năm nguồn tài khoản, mục đích xuất thay lý do <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** màn **Quy tắc hạch toán (ACC41)** `/cau-hinh/quy-tac-hach-toan`: mỗi nghiệp vụ (bán, trả lại, mua, trả NCC, thu, chi, chuyển kho, xuất / nhập kho khác, chuyển tiền) hiện khung Nợ / Có cố định và tài khoản lấy từ đâu; đổi tài khoản của quy tắc chỉ trong phạm vi đầu số, chỉ tài khoản chi tiết; xem thử bút toán một phiếu (không lưu).
+- **Thêm:** **Mục đích xuất** (bảng `stock_purposes`, migration 0140) — phiếu `stock_adjustment` gửi `purposeCode` (`HUY`, `DUNG-BH`, `TANG-KH`…) quyết tài khoản đối ứng; không gửi thì thừa / thiếu chờ xử lý. Nhận / xuất quà ở Mua hàng dùng mục đích `NQUA` / `XQUA`.
+- **Thêm API:** `GET /api/v1/posting/scheme`, `PUT /api/v1/posting/scheme/accounts/:key`, `GET /api/v1/posting/purposes`, `PUT /api/v1/posting/purposes/:code`, `POST /api/v1/posting/scheme/preview` — tài liệu [docs/api/17](docs/api/17-quy-tac-hach-toan.md); chuẩn nghiệp vụ [docs/nghiep-vu/24](docs/nghiep-vu/24-quy-tac-hach-toan.md).
+- **Thêm:** khoá `gift_cogs` (giá vốn hàng tặng kèm, phạm vi 632 / 641 / 642, mặc định như giá vốn).
+- **Bỏ:** Tài khoản ngầm định theo loại chứng từ (133 dòng, bảng `account_default_types`), bảng quy tắc định khoản có điều kiện (`posting_rules`, `posting_businesses`), công tắc `bizcity.posting.use_reasons`, tài khoản trên lý do, tài khoản theo mặt hàng / nhóm hạch toán trong bộ định khoản, các màn Lý do – Tài khoản, Mặt hàng – Tài khoản, API `/api/v1/account-default-types`, `/api/v1/posting-rules`, `/api/v1/posting-flow`. Khoá không dùng: `cash`, `internal_payable_goods`, `internal_cogs`, `commission_*`.
+- **Thay đổi định khoản:** lý do trên chứng từ không đổi tài khoản (chỉ là nhãn). `PUT /api/v1/posting/defaults` chặn tài khoản ngoài phạm vi / tổng hợp. Loại phiếu thu chi, phiếu kế toán dùng mẫu cố định trong code.
+
 ### Máy bán POS: chuyển dòng 0đ sang bill Z; phiếu trả mang cờ quà — phiếu NT-BH-019 bước 2 <!-- [2026-11-15 02:10 PM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 2 (đóng góp) -->
 
 - **Thêm:** `POST /api/v1/m/pos/orders/:id/lines/:lineId/move-to-z` (action `pos.order.move-to-z`, quyền `pos:sell`): chuyển một dòng 0đ của đơn đã hoàn tất sang bill Z (mã đơn + `Z`) — đơn phiên bản mới, bản sao website ghi lại (`zsale` / `zexport`). Dòng có tiền → `CONFLICT`; đơn chờ thanh toán / đã huỷ → `CONFLICT`; gọi lại khi dòng đã ở bill Z → trả đơn, không tăng phiên bản. Chứng từ bán và sổ không đổi (dòng 0đ).

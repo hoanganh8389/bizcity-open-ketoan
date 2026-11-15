@@ -20,6 +20,10 @@ const TRANSIT_DAYS = 30;
 const asOf = (s: DiagScope): RawBuilder<unknown> => (s.to ? sql`${s.to}::date` : sql`current_date`);
 const branchCond = (s: DiagScope, t: string): RawBuilder<unknown> => (s.branchId ? sql`AND ${sql.ref(`${t}.branch_id`)} = ${s.branchId}` : sql``);
 /** Tài khoản của các khoá ngầm định + tài khoản con của chúng. */
+// [2026-11-15 Nguyễn Văn Thủy] tài khoản tiền mặt lấy từ hình thức thanh toán (nguồn TK tiền của Quy tắc hạch toán), không từ khoá 'cash' đã bỏ (đóng góp)
+/** Tài khoản tiền mặt của đơn vị: TK (đầu 111) của các hình thức thanh toán đang dùng, không phải ghi nợ. */
+const cashAccounts = (tenantId: string) => sql`
+  SELECT DISTINCT pm.account_code FROM payment_methods pm WHERE pm.tenant_id = ${tenantId} AND pm.is_active AND NOT pm.is_receivable AND pm.account_code LIKE '111%'`;
 const defaultAccounts = (tenantId: string, keys: string[]) => sql`
   SELECT a.code FROM accounts a
    WHERE a.tenant_id = ${tenantId}
@@ -40,10 +44,10 @@ export const BALANCE_DIAGNOSTICS: DiagCheck[] = [
     fix: 'Quỹ âm nghĩa là chi khi sổ chưa có tiền: thiếu phiếu thu, nhập trễ, hoặc chi ghi nhầm ngày — dấu hiệu bị hỏi khi thanh tra. Mẫu: <chi nhánh>:<tài khoản>@<ngày âm đầu tiên>.',
     run: (trx, s) => sqlCounts(trx,
       sql`SELECT count(*)::int AS n FROM (SELECT DISTINCT l.branch_id, l.account_code FROM ledger_lines l
-            WHERE l.tenant_id = ${s.tenantId} ${branchCond(s, 'l')} AND l.account_code IN (${defaultAccounts(s.tenantId, ['cash'])})
+            WHERE l.tenant_id = ${s.tenantId} ${branchCond(s, 'l')} AND l.account_code IN (${cashAccounts(s.tenantId)})
               AND l.posting_date <= ${asOf(s)}) x`,
       sql`WITH d AS (SELECT l.branch_id, l.account_code, l.posting_date AS day, sum(l.debit - l.credit) AS q FROM ledger_lines l
-                      WHERE l.tenant_id = ${s.tenantId} ${branchCond(s, 'l')} AND l.account_code IN (${defaultAccounts(s.tenantId, ['cash'])})
+                      WHERE l.tenant_id = ${s.tenantId} ${branchCond(s, 'l')} AND l.account_code IN (${cashAccounts(s.tenantId)})
                         AND l.posting_date <= ${asOf(s)}
                       GROUP BY 1, 2, 3),
                r AS (SELECT d.*, sum(d.q) OVER (PARTITION BY d.branch_id, d.account_code ORDER BY d.day) AS bal FROM d)

@@ -26,7 +26,7 @@ import type { DraftLine } from '../../ledger/ledger.types.js';
 import type { AccountResolver } from '../account-resolver.js';
 import { EntryBuilder } from '../entry-builder.js';
 import type { PostingPart } from './stock.rule.js';
-import type { RuleTags } from '../rule-table.js';
+import type { RuleTags } from '../pair-tags.js';
 
 /** Nhãn của các cặp sinh từ một dòng hàng: nghiệp vụ, lý do chứng từ, hàng tặng, chương trình của dòng (policyRef). */
 export function lineTags(biz: string, reasonCode: string | undefined, line: { isGift?: boolean; policyRef?: { key: string } }): RuleTags {
@@ -72,7 +72,9 @@ export interface StockContext {
 export function buildSaleParts(doc: SaleDocument, ctx: RuleContext): PostingPart[] {
   const { resolver, partnerId } = ctx;
   const reason = resolver.reason(doc.reasonCode, 'sale');
-  const counter = resolver.counterAccount(reason);
+  // [2026-11-15 Nguyễn Văn Thủy] bán nội bộ cho chi nhánh khác (lý do có cờ giá vốn theo giá bán): công nợ / doanh thu / giá vốn nội bộ của quy tắc (đóng góp)
+  const internal = Boolean((reason.flags as Record<string, unknown> | null)?.costAtSalePrice);
+  const counter = internal ? resolver.defaultAccount('internal_receivable_goods', 'tài khoản phải thu nội bộ hàng') : resolver.counterAccount(reason);
   const payReason = resolver.defaultReason('receipt');
   const parts: PostingPart[] = [{ lines: buildSaleGoods(doc, ctx, reason, counter) }];
   for (const pay of doc.payments) {
@@ -82,7 +84,7 @@ export function buildSaleParts(doc: SaleDocument, ctx: RuleContext): PostingPart
     b.add({
       part: 'payment',
       debitAccount: account,
-      creditAccount: (resolver.useReasons ? payReason?.counter_account : undefined) ?? counter,
+      creditAccount: counter,
       amount: pay.amount,
       // Phía tài khoản tiền: đối tượng nhận hộ của hình thức (QR, thẻ vào tài khoản công ty → 13681 chi tiết công ty),
       // không có thì gắn khách (ví dụ voucher ghi vào 1388). Tài khoản không theo dõi đối tượng thì sổ số dư bỏ qua.
@@ -117,7 +119,7 @@ function buildSaleGoods(doc: SaleDocument, ctx: RuleContext, reason: ReturnType<
       part: 'goods',
       productSku: line.sku,
       debitAccount: counter,
-      creditAccount: resolver.revenueAccount(reason, group),
+      creditAccount: atSalePrice ? resolver.defaultAccount('internal_revenue', 'tài khoản doanh thu bán hàng nội bộ') : resolver.revenueAccount(reason, group),
       amount: line.amountBeforeTax,
       debitPartnerId: partnerId,
       taxCode: line.taxCode,
@@ -143,7 +145,7 @@ function buildSaleGoods(doc: SaleDocument, ctx: RuleContext, reason: ReturnType<
         tags: wh ? { ...tags, whCredit: true } : tags,
         part: 'cogs',
         productSku: line.sku,
-        debitAccount: resolver.cogsAccount(reason, group, line.isGift),
+        debitAccount: atSalePrice ? resolver.defaultAccount('internal_cogs', 'tài khoản giá vốn hàng bán nội bộ') : resolver.cogsAccount(reason, group, line.isGift),
         creditAccount: wh ?? group.inventory_account,
         amount: cost,
         description: atSalePrice ? 'Giá vốn hàng bán nội bộ (theo giá bán)' : line.isGift ? 'Giá vốn hàng khuyến mãi' : 'Giá vốn hàng bán',

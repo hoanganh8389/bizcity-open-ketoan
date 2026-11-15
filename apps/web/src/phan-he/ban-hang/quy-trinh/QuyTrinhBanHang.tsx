@@ -83,7 +83,7 @@ const STAGES: { node: Node; config: Node[]; side: Node[] }[] = [
     node: { label: 'Đối chiếu & báo cáo', code: 'BH02', icon: 'GitCompareArrows', color: '#d35400', path: '/ban-hang/tong-hop',
       auto: ['Doanh số, trả lại, doanh thu thuần theo cửa hàng, mặt hàng, khách', 'Đơn máy POS khớp từng chứng từ trong sổ', 'Lãi gộp sau khi tính giá vốn cuối tháng'] },
     config: [
-      { label: 'Tài khoản ngầm định', code: 'ACC41', icon: 'BookOpen', color: GRAY, path: '/cau-hinh/tai-khoan-ngam-dinh', hint: 'Doanh thu, thuế, phải thu, trả lại' },
+      { label: 'Quy tắc hạch toán', code: 'ACC41', icon: 'BookOpen', color: GRAY, path: '/cau-hinh/quy-tac-hach-toan', hint: 'Nghiệp vụ ghi Nợ gì, Có gì' },
       { label: 'Định khoản bán hàng', code: 'BH17', icon: 'Split', color: GRAY, path: '/app/pos/cai-dat', pos: true, hint: 'Tài khoản theo loại chứng từ bán, phiếu chênh lệch két' },
     ],
     side: [

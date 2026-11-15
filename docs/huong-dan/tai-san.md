@@ -89,7 +89,7 @@ Thao tác ở màn riêng (ACC32, ACC33, ACC35) hoặc ngay trên thẻ, phần 
     - bên nhận: Nợ TK nguyên giá / Có TK hao mòn = hao mòn luỹ kế; Nợ TK nguyên giá / Có 33681 (đối tượng chi nhánh giao) = giá trị còn lại;
     - công cụ dụng cụ, chi phí trả trước: bên giao Nợ 13681 / Có TK chờ phân bổ, bên nhận Nợ TK chờ phân bổ / Có 33681 = phần chưa phân bổ.
 
-    Tài khoản 13681 / 33681 lấy theo **Tài khoản ngầm định** (phải thu, phải trả nội bộ). Thẻ chưa trích đủ tới tháng trước thì có cảnh báo: nên tính khấu hao trước. Một lần điều chuyển chỉ hạch toán một lần; đã hạch toán thì phải huỷ hai phiếu trước khi xoá lần điều chuyển.
+    Tài khoản 13681 / 33681 lấy theo **Quy tắc hạch toán** (phải thu, phải trả nội bộ). Thẻ chưa trích đủ tới tháng trước thì có cảnh báo: nên tính khấu hao trước. Một lần điều chuyển chỉ hạch toán một lần; đã hạch toán thì phải huỷ hai phiếu trước khi xoá lần điều chuyển.
 - **Kiểm kê**: kết quả (còn tốt, hỏng, không dùng, thiếu), số lượng thực tế. Tài sản thiếu, hỏng thì xử lý bằng ghi giảm hoặc tạm ngừng.
 
 ## Sửa tay số trích của một tháng

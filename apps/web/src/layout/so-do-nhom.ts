@@ -58,7 +58,7 @@ export const SO_DO: Record<string, SoDo> = {
       ],
       [
         { label: 'Đối tượng', icon: 'Users', path: '/danh-muc/khach-hang', sub: [{ label: 'Khách hàng', path: '/danh-muc/khach-hang' }, { label: 'Nhà cung cấp', path: '/danh-muc/nha-cung-cap' }, { label: 'Nhân viên', path: '/danh-muc/nhan-vien' }] },
-        { label: 'Cấu hình hạch toán', icon: 'Settings2', path: '/cau-hinh/tai-khoan-ngam-dinh', sub: [{ label: 'Tài khoản ngầm định', path: '/cau-hinh/tai-khoan-ngam-dinh' }, { label: 'Hệ thống tài khoản', path: '/danh-muc/tai-khoan' }, { label: 'Biểu thuế', path: '/danh-muc/loai-thue' }] },
+        { label: 'Cấu hình hạch toán', icon: 'Settings2', path: '/cau-hinh/quy-tac-hach-toan', sub: [{ label: 'Quy tắc hạch toán', path: '/cau-hinh/quy-tac-hach-toan' }, { label: 'Hệ thống tài khoản', path: '/danh-muc/tai-khoan' }, { label: 'Biểu thuế', path: '/danh-muc/loai-thue' }] },
         { label: 'Phân quyền', icon: 'ShieldCheck' },
         { label: 'Báo cáo tổng hợp', icon: 'ChartLine', path: '/bao-cao/ket-qua-nhieu-chi-nhanh' },
       ],
@@ -172,7 +172,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp công nợ nhân viên', path: '/bao-cao/cong-no-theo-nhan-vien' }, { label: 'Tổng hợp công nợ theo đối tượng', path: '/bao-cao/cong-no' },
       { label: 'Báo cáo tình hình tài chính', path: '/bao-cao/can-doi-ke-toan' },
     ],
-    links: [{ label: 'Hệ thống tài khoản', icon: 'BookOpen', path: '/danh-muc/tai-khoan' }, { label: 'Tài khoản ngầm định', icon: 'Link', path: '/cau-hinh/tai-khoan-ngam-dinh' }, { label: 'Khoản mục chi phí', icon: 'Coins', path: '/danh-muc/khoan-muc' }],
+    links: [{ label: 'Hệ thống tài khoản', icon: 'BookOpen', path: '/danh-muc/tai-khoan' }, { label: 'Quy tắc hạch toán', icon: 'Link', path: '/cau-hinh/quy-tac-hach-toan' }, { label: 'Khoản mục chi phí', icon: 'Coins', path: '/danh-muc/khoan-muc' }],
   },
   'ngan-sach': {
     title: 'Nghiệp vụ ngân sách',

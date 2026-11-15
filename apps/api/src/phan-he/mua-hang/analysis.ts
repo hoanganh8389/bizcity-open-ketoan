@@ -8,6 +8,7 @@
  *   - Ứng trước         = phần chưa đối trừ của phiếu ứng trước gắn cùng đơn đặt.
  *   - Tài khoản         = tài khoản thật của đơn vị (cài đặt mua hàng, không khai thì chọn theo hệ thống tài khoản).
  */
+import { RULE_KEYS } from '../../kernel/public.js';
 import { writeTenantSection } from '@bizcity/platform/core/settings';
 import { sql } from 'kysely';
 import {
@@ -55,20 +56,18 @@ export async function resolveAccounts(trx: Db, tenantId: string, s: PurchaseSett
   const methods = await trx.selectFrom('payment_methods').select(['code', 'account_code', 'is_receivable']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
   const methodAcc = (prefix: string, codes: string[]) => methods.find((m) => codes.includes(m.code) && !m.is_receivable && posting.has(m.account_code))?.account_code
     ?? methods.find((m) => !m.is_receivable && m.account_code.startsWith(prefix) && posting.has(m.account_code))?.account_code;
-  // [2026-11-13 Nguyễn Văn Thủy] một nơi khai: Tài khoản ngầm định theo loại chứng từ (ACC41) → tài khoản riêng cũ ở MH12 (nếu còn) → tự chọn (đóng góp)
+  // [2026-11-15 Nguyễn Văn Thủy] một nơi khai: tài khoản của Quy tắc hạch toán (ACC41) → tài khoản riêng cũ ở MH12 (nếu còn) → tự chọn (đóng góp)
   const defaults = new Map((await trx.selectFrom('posting_defaults').select(['key', 'account_code']).where('tenant_id', '=', tenantId).execute()).map((d) => [d.key, d.account_code]));
-  const types = await trx.selectFrom('account_default_types').select(['name', 'columns']).where('tenant_id', '=', tenantId).execute();
-  const col = (name: string, key: string) => { const c = types.find((t) => t.name === name)?.columns.find((x) => x.key === key)?.default; return c && posting.has(c) ? c : undefined; };
   const def = (key: string) => { const c = defaults.get(key); return c && posting.has(c) ? c : undefined; };
   return {
     stock: s.accounts.stock ?? def('inventory') ?? pick('1561', '156'),
     vatIn: s.accounts.vatIn ?? def('tax_input') ?? pick('1331', '133'),
     payable: s.accounts.payable ?? def('payable') ?? pick('3312', '33111', '3311', '331'),
-    cash: s.accounts.cash ?? col('Mua hàng trong nước nhập kho – Tiền mặt', 'credit_account') ?? methodAcc('111', ['TM']) ?? pick('1111', '111'),
-    bank: s.accounts.bank ?? col('Mua hàng trong nước nhập kho – Chuyển khoản', 'credit_account') ?? methodAcc('112', ['CK', 'NH']) ?? pick('1121', '112'),
+    cash: s.accounts.cash ?? methodAcc('111', ['TM']) ?? pick('1111', '111'),
+    bank: s.accounts.bank ?? methodAcc('112', ['CK', 'NH']) ?? pick('1121', '112'),
     giftIncome: s.accounts.giftIncome ?? pick('71153', '7118', '711'),
     giftExpense: s.accounts.giftExpense ?? def('promotion_expense') ?? pick('64184', '64188', '6418', '6428'),
-    finIncome: s.accounts.finIncome ?? col('Phiếu chi trả tiền nhà cung cấp theo hóa đơn', 'discount_account') ?? pick('5152', '5158', '515'),
+    finIncome: s.accounts.finIncome ?? pick('5152', '5158', '515'),
   };
 }
 
@@ -222,18 +221,13 @@ export async function freezeApproved(trx: Db): Promise<{ frozen: number; skipped
 
 const GOODS = ['order', 'receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
 
-/** Loại chứng từ ở Tài khoản ngầm định của từng loại phiếu mua và cột tương ứng với TK kho / TK công nợ / TK thuế của dòng. */
-export const LINE_ACCOUNT_TYPES: Record<string, { code: string; inventory: string; payable: string; tax: string }> = {
-  receipt: { code: 'mua-hang-trong-nuoc-nhap-kho-chua-thanh-toan', inventory: 'debit_account', payable: 'credit_account', tax: 'vat_account' },
-  return: { code: 'hang-mua-tra-lai-giam-tru-cong-no-tra-lai-hang-trong-kho', inventory: 'credit_account', payable: 'debit_account', tax: 'vat_account' },
-};
-LINE_ACCOUNT_TYPES.exchange = LINE_ACCOUNT_TYPES.receipt!;
+// [2026-11-15 Nguyễn Văn Thủy] TK ghi tay trên dòng phiếu mua: tài khoản chi tiết, trong phạm vi của Quy tắc hạch toán (đóng góp)
+/** Phạm vi TK kho / TK công nợ / TK thuế ghi tay trên dòng phiếu mua (như khoá inventory / payable / tax_input của quy tắc). */
+export const LINE_ACCOUNT_RANGE = { inventory: RULE_KEYS.inventory!.range, payable: RULE_KEYS.payable!.range, tax: RULE_KEYS.tax_input!.range } as const;
 
 async function lineAccountChecks(trx: Db, tenantId: string, doc: PDoc): Promise<Check[]> {
-  const spec = LINE_ACCOUNT_TYPES[doc.kind];
   const used = doc.lines.filter((l) => l.accounts && Object.values(l.accounts).some(Boolean));
-  if (!spec || !used.length) return [];
-  const t = await trx.selectFrom('account_default_types').select('columns').where('tenant_id', '=', tenantId).where('code', '=', spec.code).executeTakeFirst();
+  if (!['receipt', 'return', 'exchange'].includes(doc.kind) || !used.length) return [];
   const posting = new Set((await trx.selectFrom('accounts').select('code').where('tenant_id', '=', tenantId).where('is_posting', '=', true).execute()).map((a) => a.code));
   const label = { inventory: 'TK kho', payable: 'TK công nợ', tax: 'TK thuế GTGT' } as const;
   const bad: string[] = [];
@@ -241,12 +235,12 @@ async function lineAccountChecks(trx: Db, tenantId: string, doc: PDoc): Promise<
     for (const k of ['inventory', 'payable', 'tax'] as const) {
       const acc = l.accounts?.[k];
       if (!acc) continue;
-      const filter = t?.columns.find((c) => c.key === spec[k])?.filter ?? [];
+      const range = LINE_ACCOUNT_RANGE[k];
       if (!posting.has(acc)) bad.push(`${l.sku || l.lineKey}: ${label[k]} ${acc} không phải tài khoản chi tiết`);
-      else if (filter.length && !filter.some((f) => acc.startsWith(f))) bad.push(`${l.sku || l.lineKey}: ${label[k]} ${acc} ngoài danh sách được chọn (${filter.join('; ')})`);
+      else if (!range.some((f) => acc.startsWith(f))) bad.push(`${l.sku || l.lineKey}: ${label[k]} ${acc} ngoài phạm vi ${range.join(', ')}`);
     }
   }
-  return bad.length ? [{ level: 'error', code: 'line_account', blocking: true, text: `Tài khoản trên dòng không đúng Tài khoản ngầm định: ${bad.join(' · ')}` }] : [];
+  return bad.length ? [{ level: 'error', code: 'line_account', blocking: true, text: `Tài khoản trên dòng không đúng Quy tắc hạch toán: ${bad.join(' · ')}` }] : [];
 }
 
 export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): Promise<Analysis> {

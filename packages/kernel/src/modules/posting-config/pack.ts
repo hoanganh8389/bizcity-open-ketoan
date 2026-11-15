@@ -20,6 +20,7 @@
  * Gói là dữ liệu: không code, không đổi luật định khoản. Tình huống mẫu (scenarios) và gợi ý AI lưu trong manifest, không cài.
  */
 import { z } from 'zod';
+import { RULE_KEYS } from './scheme.js';
 import { APPROVABLE_DOC_TYPES } from '@ketoan/contracts';
 import type { Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
@@ -48,7 +49,8 @@ export const postingPackSchema = z.object({
     code: account, parent: account, name: z.string().min(2),
     track: z.array(z.enum(['partner', 'cost_item', 'department', 'contract', 'employee', 'cashflow', 'product'])).optional(),
   }).strict()).optional(),
-  postingDefaults: z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), account).optional(),
+  // [2026-11-15 Nguyễn Văn Thủy] chỉ nhận khoá tài khoản của Quy tắc hạch toán (scheme.ts) (đóng góp)
+  postingDefaults: z.record(z.enum(Object.keys(RULE_KEYS) as [string, ...string[]]), account).optional(),
   reasons: z.array(z.object({
     code, name: z.string().min(2).max(200), kind: z.enum(['in', 'out', 'receipt', 'payment', 'journal']),
     counterAccount: account.optional(), revenueAccount: account.optional(), expenseAccount: account.optional(), cashflowCode: z.string().optional(),

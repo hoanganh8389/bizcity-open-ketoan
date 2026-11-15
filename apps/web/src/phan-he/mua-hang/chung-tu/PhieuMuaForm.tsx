@@ -52,12 +52,10 @@ import type { InvoiceRow } from '../hoa-don/api';
 import { layPhieuIn, mauInCua } from './mauIn';
 
 type AccKey = 'inventory' | 'payable' | 'tax';
-/** Loại ở Tài khoản ngầm định của từng loại phiếu mua (khớp LINE_ACCOUNT_TYPES phía máy chủ) và cột ứng với TK kho / công nợ / thuế. */
-const LINE_ACC: Record<string, { code: string } & Record<AccKey, string>> = {
-  receipt: { code: 'mua-hang-trong-nuoc-nhap-kho-chua-thanh-toan', inventory: 'debit_account', payable: 'credit_account', tax: 'vat_account' },
-  exchange: { code: 'mua-hang-trong-nuoc-nhap-kho-chua-thanh-toan', inventory: 'debit_account', payable: 'credit_account', tax: 'vat_account' },
-  return: { code: 'hang-mua-tra-lai-giam-tru-cong-no-tra-lai-hang-trong-kho', inventory: 'credit_account', payable: 'debit_account', tax: 'vat_account' },
-};
+// [2026-11-15 Nguyễn Văn Thủy] phạm vi TK ghi tay trên dòng theo Quy tắc hạch toán (khớp LINE_ACCOUNT_RANGE phía máy chủ) (đóng góp)
+/** Loại phiếu mua có ô tài khoản trên dòng, và phạm vi đầu số của TK kho / công nợ / thuế. */
+const LINE_ACC_KINDS = ['receipt', 'exchange', 'return'];
+const LINE_ACC_RANGE: Record<AccKey, string[]> = { inventory: ['15'], payable: ['331'], tax: ['133'] };
 
 type Tab = 'hang' | 'thanh-toan' | 'hoa-don' | 'hach-toan' | 'gia-von' | 'tep' | 'tep-ncc' | 'lich-su';
 const LINE_TYPE: Record<LineType, string> = { buy: 'Hàng mua', gift_seller: 'KM người bán (chia giá)', gift_consumer: 'KM người tiêu dùng / quà' };
@@ -163,17 +161,14 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const isGiftDoc = v.kind === 'gift_in' || v.kind === 'gift_out';
   // Ngày nghỉ lễ (MH12): hạn "N ngày làm việc" bỏ cả ngày lễ — trùng với hạn máy chủ tính (tab Hạn trả tiền, hạn lưu vào phiếu).
   const settings = useQuery({ queryKey: ['mua-hang', 'settings'], queryFn: () => api.get<{ holidays: string[]; resolvedAccounts?: Record<string, string> }>(`${P}/settings`), staleTime: 300_000 });
-  // [2026-11-13 Nguyễn Văn Thủy] tài khoản trên dòng: điền sẵn theo Tài khoản ngầm định của loại chứng từ, bấm vào chỉ xổ tài khoản trong lọc; ẩn / hiện được (đóng góp)
-  const adTypes = useQuery({ queryKey: ['account-default-types'], queryFn: () => api.get<{ code: string; columns: { key: string; filter: string[]; default: string }[] }[]>('/api/v1/account-default-types'), staleTime: 60_000 }).data;
-  const accSpec = LINE_ACC[v.kind];
-  const accType = accSpec ? adTypes?.find((t) => t.code === accSpec.code) : undefined;
-  const accCol = (k: AccKey) => (accSpec ? accType?.columns.find((c) => c.key === accSpec[k]) : undefined);
-  const accDefault = (k: AccKey) => accCol(k)?.default || settings.data?.resolvedAccounts?.[k === 'inventory' ? 'stock' : k === 'payable' ? 'payable' : 'vatIn'] || '';
+  // [2026-11-13 Nguyễn Văn Thủy] tài khoản trên dòng: điền sẵn theo Quy tắc hạch toán, bấm vào chỉ xổ tài khoản trong phạm vi; ẩn / hiện được (đóng góp)
+  const accSpec = LINE_ACC_KINDS.includes(v.kind);
+  const accDefault = (k: AccKey) => settings.data?.resolvedAccounts?.[k === 'inventory' ? 'stock' : k === 'payable' ? 'payable' : 'vatIn'] || '';
   const [showAcc, setShowAcc] = useState(() => { try { return localStorage.getItem('ketoan.mua.an-tk') !== '1'; } catch { return true; } });
   const toggleAcc = () => setShowAcc((x) => { try { localStorage.setItem('ketoan.mua.an-tk', x ? '1' : '0'); } catch { /* bỏ qua */ } return !x; });
   const accOn = Boolean(accSpec) && showAcc;
   const accCell = (l: PLine, k: AccKey) => (
-    <td><AccountPicker postingOnly hideName prefixes={accCol(k)?.filter} className="input mono" style={{ width: 84 }} value={l.accounts?.[k] ?? ''} placeholder={accDefault(k)} disabled={readOnly}
+    <td><AccountPicker postingOnly hideName prefixes={LINE_ACC_RANGE[k]} className="input mono" style={{ width: 84 }} value={l.accounts?.[k] ?? ''} placeholder={accDefault(k)} disabled={readOnly}
       onChange={(acc) => setLine(l.lineKey, { accounts: { ...l.accounts, [k]: acc && acc !== accDefault(k) ? acc : undefined } })} /></td>
   );
   const holidays = settings.data?.holidays;
@@ -874,7 +869,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {/* Bảng hàng tự cuộn trong khung (cao theo màn hình): tiêu đề cột đứng yên, thanh cuộn ngang luôn thấy, phần đầu phiếu không bị cuộn mất. */}
                 {danBao && <div className={`alert ${danBao.ok ? 'alert-ok' : 'alert-warn'}`} style={{ margin: '4px 0', cursor: 'pointer' }} title="Bấm để ẩn" onClick={() => setDanBao(null)}>{danBao.text}</div>}
-                {accSpec && <label className="checkbox" style={{ fontSize: 12.5, margin: '2px 0 4px' }} title="Tắt để form gọn: tài khoản vẫn ghi theo Tài khoản ngầm định của loại chứng từ"><input type="checkbox" checked={showAcc} onChange={toggleAcc} /> Hiển thị tài khoản</label>}
+                {accSpec && <label className="checkbox" style={{ fontSize: 12.5, margin: '2px 0 4px' }} title="Tắt để form gọn: tài khoản vẫn ghi theo Quy tắc hạch toán"><input type="checkbox" checked={showAcc} onChange={toggleAcc} /> Hiển thị tài khoản</label>}
                 <div className="mh-lines-box">
                   <table className="mh-lines" style={{ minWidth: 1100 }}>
                     <thead><tr>

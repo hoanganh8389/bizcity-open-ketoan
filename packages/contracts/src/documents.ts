@@ -257,6 +257,8 @@ export const stockAdjustmentDocumentSchema = z.object({
   ...baseDocument,
   docType: z.literal('stock_adjustment'),
   direction: z.enum(['increase', 'decrease', 'mixed']),
+  // [2026-11-15 Nguyễn Văn Thủy] Mục đích xuất (hủy hàng hỏng, dùng cho bộ phận, tặng khách…) quyết TK đối ứng; trống = thừa / thiếu chờ xử lý (đóng góp)
+  purposeCode: z.string().trim().max(32).optional(),
   lines: z.array(stockLineSchema).min(1).max(2000),
   totals: stockTotalsSchema,
 });

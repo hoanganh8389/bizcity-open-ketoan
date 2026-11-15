@@ -1,6 +1,6 @@
 /**
  * [2026-11-13 Nguyễn Văn Thủy] Tài khoản trên dòng phiếu nhập mua (đóng góp)
- * Trống = theo Tài khoản ngầm định; chọn TK kho khác trong lọc → bút toán ghi Nợ đúng tài khoản đó;
+ * Trống = theo Quy tắc hạch toán; chọn TK kho khác trong phạm vi → bút toán ghi Nợ đúng tài khoản đó;
  * chọn ngoài lọc (vd 1111 làm TK kho) → chặn duyệt.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -21,7 +21,6 @@ beforeAll(async () => {
   t = await setupTenant();
   expect((await call(t, 'POST', '/api/v1/purchase/demo/seed', { password: 'Thuy!@#' })).status).toBe(200);
   await call(t, 'PUT', '/api/v1/partners/NCC-TKDONG', { name: 'NCC tài khoản dòng', kind: 'supplier' });
-  await call(t, 'GET', '/api/v1/account-default-types'); // nạp Tài khoản ngầm định theo loại
   const acc = (await call(t, 'GET', '/api/v1/accounts')).body.data as { code: string; isPosting: boolean }[];
   stock2 = acc.find((a) => a.isPosting && a.code.startsWith('153'))?.code ?? '';
   if (!stock2) {
@@ -48,6 +47,6 @@ describe('Nhập mua — tài khoản trên dòng', () => {
     const d = await save(body({ inventory: '1111' }));
     const r = await call(t, 'POST', `/api/v1/purchase/documents/${d.id}/approve`);
     expect(r.status).toBeGreaterThanOrEqual(400);
-    expect(JSON.stringify(r.body)).toContain('Tài khoản ngầm định');
+    expect(JSON.stringify(r.body)).toContain('Quy tắc hạch toán');
   });
 });

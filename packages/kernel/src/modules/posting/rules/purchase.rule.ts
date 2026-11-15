@@ -36,19 +36,19 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
-    // TK kho theo loại kho của kho trên dòng (ưu tiên hơn ngầm định); TK ghi tay trên dòng / mua vào chi phí vẫn đứng trước.
-    const wh = line.accounts?.inventory || resolver.reasonExpense(reason) ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
+    // TK kho: TK ghi tay trên dòng → TK theo loại kho của kho trên dòng → TK kho của quy tắc.
+    const wh = line.accounts?.inventory ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
     const tags = { ...lineTags(BIZ, doc.reasonCode, line), ...(wh ? { whDebit: true } : {}) };
     b.add({
       tags,
       part: 'goods',
       productSku: line.sku,
-      debitAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? wh ?? group.inventory_account,
+      debitAccount: line.accounts?.inventory ?? wh ?? group.inventory_account,
       creditAccount: line.accounts?.payable ?? payable,
       amount: line.amountBeforeTax,
       creditPartnerId: partnerId,
       taxCode: line.taxCode,
-      description: resolver.reasonExpense(reason) ? 'Mua hàng, dịch vụ vào chi phí' : 'Nhập mua hàng',
+      description: 'Nhập mua hàng',
     });
     b.add({
       tags,
@@ -94,14 +94,14 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
 
   for (const line of doc.lines) {
     const group = resolver.groupForSku(line.sku);
-    const wh = line.accounts?.inventory || resolver.reasonExpense(reason) ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
+    const wh = line.accounts?.inventory ? undefined : resolver.warehouseAccount(line.warehouseCode, doc.branchCode);
     const tags = lineTags(BIZ, doc.reasonCode, line);
     b.add({
       tags: wh ? { ...tags, whCredit: true } : tags,
       part: 'goods',
       productSku: line.sku,
       debitAccount: line.accounts?.payable ?? payable,
-      creditAccount: line.accounts?.inventory ?? resolver.reasonExpense(reason) ?? wh ?? group.inventory_account,
+      creditAccount: line.accounts?.inventory ?? wh ?? group.inventory_account,
       amount: Math.abs(line.amountBeforeTax),
       debitPartnerId: partnerId,
       taxCode: line.taxCode,

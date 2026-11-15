@@ -11,7 +11,7 @@
  */
 import { fromCents, toCents, type LinePart } from '@ketoan/contracts';
 import type { DraftLine } from '../ledger/ledger.types.js';
-import type { RuleTags } from './rule-table.js';
+import type { RuleTags } from './pair-tags.js';
 
 interface PairInput {
   part: LinePart;
@@ -30,7 +30,7 @@ interface PairInput {
    * cuối tháng ghi đè số tiền. costKey: 'cost:out' | 'cost:in' (chiều hàng), thêm ':gift' với hàng khuyến mãi.
    */
   costKey?: string;
-  /** Nhãn chọn quy tắc định khoản (rule-table.ts). Cặp khác nhãn không gộp. */
+  /** Nhãn cặp (pair-tags.ts). Cặp khác nhãn không gộp. */
   tags?: RuleTags;
 }
 

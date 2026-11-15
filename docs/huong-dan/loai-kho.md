@@ -14,11 +14,11 @@ Có sẵn 12 loại gốc (KHH hàng kinh doanh, KKM khuyến mại, KHG gửi b
 
 ## TK kho của loại
 
-Mọi bút toán có hàng đi vào / ra kho thuộc loại này ghi vào **TK kho của loại**, ưu tiên hơn Tài khoản ngầm định: nhập mua, trả hàng nhà cung cấp, giá vốn bán hàng, khách trả hàng, chuyển kho (mỗi đầu theo kho của đầu đó), nhập / xuất kho khác, kiểm kê.
+Mọi bút toán có hàng đi vào / ra kho thuộc loại này ghi vào **TK kho của loại**, ưu tiên hơn Quy tắc hạch toán: nhập mua, trả hàng nhà cung cấp, giá vốn bán hàng, khách trả hàng, chuyển kho (mỗi đầu theo kho của đầu đó), nhập / xuất kho khác, kiểm kê.
 
 - Dòng chứng từ không ghi kho → theo kho mặc định của chi nhánh.
-- TK kho trống → theo Tài khoản ngầm định như trước.
-- TK kho là tài khoản tổng hợp (ví dụ 156) → không ghi sổ được: cột TK kho hiện **đỏ ⚠**, bút toán vẫn theo Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết (1561, 1562…).
+- TK kho trống → theo Quy tắc hạch toán như trước.
+- TK kho là tài khoản tổng hợp (ví dụ 156) → không ghi sổ được: cột TK kho hiện **đỏ ⚠**, bút toán vẫn theo Quy tắc hạch toán. Sửa loại kho, chọn tài khoản chi tiết (1561, 1562…).
 - Đặt tên loại kho thế nào tuỳ đơn vị; kho thuộc loại nào thì ghi vào TK kho của loại đó.
 - Chứng từ đã ghi giữ nguyên; muốn định khoản lại theo TK mới thì ghi lại chứng từ.
 

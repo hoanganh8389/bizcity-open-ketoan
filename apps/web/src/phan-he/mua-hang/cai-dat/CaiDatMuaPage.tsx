@@ -122,7 +122,7 @@ export function CaiDatMuaPage() {
               </tbody></table>
             </div>
           </section> : <section className="blk blk-green">
-            <header><div><b>④ Tài khoản hạch toán</b><span>Theo <a href="/cau-hinh/tai-khoan-ngam-dinh">Tài khoản ngầm định</a> (loại Mua hàng).</span></div></header>
+            <header><div><b>④ Tài khoản hạch toán</b><span>Theo <a href="/cau-hinh/quy-tac-hach-toan">Quy tắc hạch toán</a> (nghiệp vụ Mua hàng).</span></div></header>
             <div className="blk-body">
               <table className="mh-mini"><thead><tr><th>Khoản</th><th style={{ width: 120 }}>Đang dùng</th></tr></thead><tbody>
                 {Object.entries(ACC_LABEL).map(([k, l]) => <tr key={k}><td>{l}</td><td className="mono">{s.resolvedAccounts[k]}</td></tr>)}

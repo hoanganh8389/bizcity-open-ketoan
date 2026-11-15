@@ -40,7 +40,7 @@ describe('Gói định khoản', () => {
     expect(item(items, 'reason', 'XBA')).toBe('conflict'); // lý do đơn vị đã có, khác gói → giữ (STD-TPL-7)
     expect(item(items, 'paymentMethod', 'CK')).toBe('conflict');
     expect(item(items, 'taxCode', 'V08')).toBe('keep');
-    expect(item(items, 'default', 'cash')).toBe('keep');
+    expect(item(items, 'default', 'receivable')).toBe('keep');
     expect(r.body.data.policyVersion).toBeGreaterThan(0);
     expect(r.body.meta.dryRun).toBe(true);
     expect(await reason('CMH')).toBeUndefined();

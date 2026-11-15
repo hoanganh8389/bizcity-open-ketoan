@@ -8,7 +8,7 @@ Phần mềm kế toán lấy **sổ cái** làm trung tâm. Chứng từ bán h
 2. **Danh mục → Chi nhánh**: khai báo đủ cửa hàng, mã trùng với mã hệ thống bán hàng gửi sang.
 3. **Danh mục → Loại thuế (ACC43)**: mã loại thuế (R08, R05, KCT…) trùng với mã trên dòng hàng.
 4. **Danh mục → Hình thức thanh toán**: mỗi hình thức (tiền mặt, QR, thẻ…) gắn một tài khoản tiền.
-5. **Danh mục → Lý do - Tài khoản (ACC18)**, **Mặt hàng - Tài khoản (ACC17)**, **Tài khoản ngầm định (ACC41)**.
+5. **Danh mục → Lý do - Tài khoản (ACC18)**, **Mặt hàng - Tài khoản (ACC17)**, **Quy tắc hạch toán (ACC41)**.
 6. Cho hệ thống bán hàng bắt đầu gửi chứng từ; theo dõi ở **Nghiệp vụ kế toán → Định khoản tự động (ACC14)**.
 
 ## Một sổ kế toán

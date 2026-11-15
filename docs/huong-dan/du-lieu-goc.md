@@ -11,7 +11,7 @@ Mọi màn danh mục đều có nút **Quay về dữ liệu gốc** ở đầu
 | Bộ | Màn | Tệp | Số bản ghi gốc |
 |---|---|---|---|
 | Theo dõi chiều của tài khoản | ACC1 | `tai-khoan.csv` | hệ thống tài khoản |
-| Tài khoản ngầm định | ACC41 | `tai-khoan-ngam-dinh.jsonl` | 12 |
+| Quy tắc hạch toán | ACC41 | `tai-khoan-ngam-dinh.jsonl` | 12 |
 | Loại thuế | ACC43 | `loai-thue.jsonl` | 51 |
 | Danh mục khoản mục | ACC24 | `khoan-muc.jsonl` | 295 |
 | Danh mục bộ phận (phòng ban chức năng: Bán hàng, Mua hàng, Kế toán, Kho vận…) | ACC26 | `bo-phan.jsonl` | 10 |
