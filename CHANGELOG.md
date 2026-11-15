@@ -23,6 +23,7 @@ Mỗi bản ghi đủ sáu mục:
 - **Thêm:** HT17 Thẻ hướng dẫn có **Xuất JSON** (mọi thẻ, ảnh trong nội dung, nơi gắn màn / hộp thoại) và **Nhập JSON** — xem trước thẻ nào thêm mới / ghi đè / không đổi và nơi gắn nào đổi thẻ, bấm Nhập thì ghi đè. Khớp thẻ theo mã nguồn → nơi đang gắn → tiêu đề; thẻ không có trong tệp giữ nguyên. API `GET /api/v1/help/export`, `POST /api/v1/help/package/preview`, `POST /api/v1/help/package/import` (action `core.help.package-import`). Test `help-package.test.ts`.
 - **Đổi:** menu Mua hàng thêm nhóm **Sổ kho, tồn kho** (MH24 Sổ kho theo mặt hàng, MH25 Tồn kho theo mặt hàng); **MH26 Tách / gộp mã con** chuyển sang Thiết lập › Cấu hình, bỏ khỏi menu và sơ đồ quy trình Mua hàng.
 - **Đổi:** thêm mặt hàng theo bước: bước đã từng tới thì bấm qua lại tự do (quay lại xem rồi nhảy thẳng về bước đang làm, các bước giữa vẫn kiểm bắt buộc); bước chưa tới thì khoá.
+- **Đổi:** nút Thiết lập (bánh răng) ở thanh trên: đang mở Thiết lập thì bấm lại để đóng thẻ đó, nút sáng lên khi đang mở.
 - **Thêm:** thêm mặt hàng bước Khai báo giá mua hiện cột **Thuế %** (thuế suất chọn ở bước 1) cạnh giá chưa / gồm thuế.
 
 ### Bỏ màn MH27 ĐVT Thùng đặt hàng <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
