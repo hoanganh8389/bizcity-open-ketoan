@@ -231,6 +231,8 @@ export function toSaleReturnDocument(r: ComputedReturn, meta: {
       amountBeforeTax: l.refundNet,
       taxCode: l.taxCode,
       taxAmount: l.refundTax,
+      // NT-BH-019 bước 2: dòng quà trả lại mang cờ quà như lúc bán — giá vốn đảo cùng luật hàng khuyến mãi.
+      ...(l.isGift ? { isGift: true } : {}),
     })),
     payments: r.methodCode && r.refundTotal > 0 ? [{ methodCode: r.methodCode, amount: r.refundTotal }] : [],
     totals: { beforeTax: r.net, tax: r.tax, total: r.refundTotal },

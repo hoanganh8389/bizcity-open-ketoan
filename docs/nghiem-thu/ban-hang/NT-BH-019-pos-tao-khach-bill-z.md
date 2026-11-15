@@ -8,7 +8,7 @@
 | Màn hình | Máy bán POS React (vỏ WP `/pos/`): ô Khách hàng → *Thêm khách*; giỏ có hàng 0đ không gửi thuế (quà mã Z) |
 | Bộ phận yêu cầu | Thu ngân, kế toán bán hàng |
 | Ngày tạo | 15/11/2026 |
-| Trạng thái | Bước 1: Chờ nghiệm thu (kiểm 1, 2, 3; kiểm 6 ở máy bán khi lên bản) · Bước 2: Đã chốt, chưa làm (kiểm 4, 5) |
+| Trạng thái | Chờ nghiệm thu (bước 1: kiểm 1, 2, 3; bước 2: kiểm 4, 5, 6) |
 
 ## 1. Mục đích quản trị
 Máy bán React ở cửa hàng đã đi kế toán thật cho bán, trả, ca, danh mục, khuyến mại. Còn hai việc vẫn chạy dữ liệu giả (dải vàng báo "Còn dùng dữ liệu giả"), dùng tới là **không ghi sổ**:
@@ -35,7 +35,7 @@ Cửa hàng `CN01`; mặt hàng `100021001` 325.000 (gửi thuế 8 %); quà `11
 | 2 | Bán có hàng 0đ không gửi thuế | đơn được nhận; dòng 0đ mã không gửi thuế nằm trên chứng từ bán dạng **dòng quà** (0đ, không doanh thu, không thuế), đơn trả máy tách dòng đó sang `zBill` (mã đơn + `Z`) → máy bán in **bill Z** riêng, không lên hoá đơn điện tử; vẫn trừ tồn, giá vốn tháng ghi theo luật hàng khuyến mãi |
 | 3 | Website | bản sao về shop: phiếu bán + phiếu `zsale` / `zexport` như POS cũ |
 | 4 | Chuyển sang bill Z | dòng 0đ của đơn đã hoàn tất chuyển sang bill Z; dòng có tiền → chặn |
-| 5 | Trả hàng có quà Z | trả cả quà theo bill Z; phiếu trả mang cờ quà như chứng từ bán (bước 2 — hiện phiếu trả chưa mang cờ quà cho mọi dòng quà, kể cả quà theo chương trình) |
+| 5 | Trả hàng có quà Z | trả cả quà theo bill Z; phiếu trả mang cờ quà như chứng từ bán (giá vốn đảo cùng luật hàng khuyến mãi) |
 | 6 | Dải vàng | dùng hai việc trên không còn hiện "Còn dùng dữ liệu giả" |
 
 ## 6. Trường hợp lệch chuẩn
@@ -68,8 +68,18 @@ Cửa hàng `CN01`; mặt hàng `100021001` 325.000 (gửi thuế 8 %); quà `11
 
 Chênh lệch, ghi chú:
 - Mã quà phải có ở danh mục website thì bản sao mới ghi được (mã chỉ có ở kế toán → website trả lỗi `tgs_map_unknown_sku`, sự kiện thử lại) — đúng thiết kế bản sao, không phải lỗi bill Z.
-- Trả hàng: quà bill Z vẫn trả được (0đ). Phiếu trả chưa mang cờ quà cho dòng quà (cả quà theo chương trình, có từ trước) → để bước 2 (kiểm 5).
+- Trả hàng: quà bill Z vẫn trả được (0đ); cờ quà trên phiếu trả làm ở bước 2.
 - Bộ kiểm: `module check pos` ĐẠT, `kiem-chuan` ĐẠT, typecheck 0 lỗi, `selfcheck --strict` giống `main` (13 mục đỏ có sẵn, không thêm). `npm test` nhóm bán hàng: 113/114 — ca đỏ `NT-BH-005 · app tgs-wp` đỏ sẵn trên `main`, không do bước này.
+
+**Bước 2 — 15/11/2026, nhánh `feat/nt-bh-019-buoc-2`.** Test `apps/api/test/nt-bh-019-pos-bill-z.test.ts` (6/6).
+
+| Kiểm | Mong đợi | Phần mềm (test + chạy thật Docker demo) |
+|---|---|---|
+| 4 | chuyển dòng 0đ của đơn đã xong sang bill Z; dòng có tiền chặn | test: dòng giảm 100% → `zBill` mã đơn + Z, đơn phiên bản 2, một sự kiện `pos.order.recorded:…:v2`, sổ không đổi; dòng có tiền 409, dòng không có 404, gọi lại 200 không tăng phiên bản. Chạy thật `HD2611000026` → `HD2611000026Z`; website ghi lại: phiếu xuất chính còn dòng có tiền, thêm `HD2611000026Z` (0đ) + phiếu xuất Z |
+| 5 | trả cả quà theo bill Z | test: trả lon sữa + quà → phiếu trả 325.000, dòng quà `isGift` 0đ. Chạy thật `TH2611000011` trả `HD2611000023` (lon + quà `100045001Z`): đã ghi sổ, quà mang cờ quà |
+| 6 | dải vàng không còn báo hai việc này | máy bán React bản hybrid: `move-to-z` đi module thật (bỏ khỏi phần giả); khách mới đi kèm đơn không gọi `POST /pos/customers` |
+
+Ghi chú: dòng giảm 100% chuyển sang bill Z giữ đơn giá gốc ở bản sao website (tổng 0đ), như dòng có giảm.
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -81,3 +91,4 @@ Chênh lệch, ghi chú:
 | 15/11/2026 | Tạo phiếu (nháp) |
 | 15/11/2026 | Chốt Q1–Q3; sửa kết quả 1, 2 và lệch chuẩn 2 theo cách làm đã chốt |
 | 15/11/2026 | Bước 1 xong, ghi kết quả chạy; chuyển Chờ nghiệm thu |
+| 15/11/2026 | Bước 2 xong (chuyển sang bill Z, cờ quà phiếu trả), ghi kết quả chạy |

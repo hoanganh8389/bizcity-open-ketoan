@@ -132,8 +132,8 @@ describe.skipIf(!HAS)('NT-BH-019 — máy bán POS: bill Z và khách mới đi 
     expect((await get('/customers?q=0901234567')).json().data[0].orderCount).toBe(2);
   });
 
-  // Bước 1 chỉ giữ cho quà bill Z trả được (không thụt lùi); cờ quà trên phiếu trả để bước 2 (kiểm 5).
-  it('trả hàng: quà bill Z vẫn trả được (0đ), lon sữa trả đúng tiền', async () => {
+  // [2026-11-15 01:50 PM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 2: phiếu trả mang cờ quà (đóng góp)
+  it('kiểm 5: trả hàng — quà bill Z trả kèm, phiếu trả ghi dòng quà 0đ như chứng từ bán; lon sữa trả đúng tiền', async () => {
     const left = await get(`/orders/${ID1}/returnable?branch=CN01`);
     expect(left.statusCode, left.body).toBe(200);
     expect(left.json().data.lines.map((l: { lineId: string; returnableQty: number; lineTotal: number }) => [l.lineId, l.returnableQty, l.lineTotal])).toEqual([['l1', 1, 325_000], ['l2', 1, 0]]);
@@ -143,8 +143,42 @@ describe.skipIf(!HAS)('NT-BH-019 — máy bán POS: bill Z và khách mới đi 
     expect(r.json().data).toMatchObject({ refundTotal: 325_000 });
     const p = (await sql<{ p: { lines: { sku: string; isGift?: boolean; amountBeforeTax: number }[]; totals: unknown } }>`
       SELECT payload AS p FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ${`pos:CN01:sale_return:${RID}`}`.execute(db)).rows[0]!.p;
-    expect(p.lines.map((l) => [l.sku, l.amountBeforeTax])).toEqual([[SKU, 300_926], [QUA, 0]]);
+    expect(p.lines.map((l) => [l.sku, l.isGift ?? false, l.amountBeforeTax])).toEqual([[SKU, false, 300_926], [QUA, true, 0]]);
     expect(p.totals).toEqual({ beforeTax: 300_926, tax: 24_074, total: 325_000 });
+  });
+
+  it('kiểm 4: chuyển dòng 0đ của đơn đã xong sang bill Z — đơn phiên bản mới, bản sao website phát lại; sổ không đổi; dòng có tiền bị chặn', async () => {
+    const ID3 = '0193a1b2-0000-7000-8000-000000019005';
+    // Dòng 0đ của mã CÓ gửi thuế (giảm tay 100%) ở bill chính — POS cũ cho chuyển sang bill Z để không lên hoá đơn.
+    const r = await post('/orders', order({ id: ID3, customer: { retail: true }, lines: [
+      { lineId: 'l1', sku: SKU, unitName: 'Lon', unitQty: 1, clientUnitPrice: 325_000 },
+      { lineId: 'l2', sku: SKU, unitName: 'Lon', unitQty: 1, clientUnitPrice: 325_000, manualDiscount: { kind: 'percent', value: 100 } },
+    ] }));
+    expect(r.statusCode, r.body).toBe(201);
+    const o = r.json().data.order;
+    expect(o.zBill).toBeUndefined();
+    const ledgerBefore = await byAccount(`pos:CN01:sale:${ID3}`);
+
+    const money = await post(`/orders/${ID3}/lines/l1/move-to-z`, {});
+    expect(money.statusCode, money.body).toBe(409);
+    expect((await post(`/orders/${ID3}/lines/khong-co/move-to-z`, {})).statusCode).toBe(404);
+
+    const m = await post(`/orders/${ID3}/lines/l2/move-to-z`, {});
+    expect(m.statusCode, m.body).toBe(200);
+    const moved = m.json().data;
+    expect(moved.lines.map((l: { lineId: string }) => l.lineId)).toEqual(['l1']);
+    expect(moved.zBill).toEqual({ code: `${o.code}Z`, lines: [expect.objectContaining({ lineId: 'l2', amount: 0, sendTax: false })] });
+    // Gọi lại: trả đơn như đã chuyển, không tăng phiên bản.
+    const again = await post(`/orders/${ID3}/lines/l2/move-to-z`, {});
+    expect(again.statusCode, again.body).toBe(200);
+    expect(again.json().data.zBill.lines).toHaveLength(1);
+    const row = (await sql<{ version: number }>`SELECT version FROM mod_pos.orders WHERE tenant_id = ${tenantId} AND order_id = ${ID3}`.execute(db)).rows[0]!;
+    expect(row.version).toBe(2);
+    const evts = (await sql<{ n: string }>`SELECT count(*) AS n FROM event_outbox WHERE tenant_id = ${tenantId} AND dedupe_key = ${`pos.order.recorded:${ID3}:v2`}`.execute(db)).rows[0]!.n;
+    expect(Number(evts)).toBe(1);
+    // Sổ không đổi: một phiên bản chứng từ, cùng số phát sinh.
+    expect(await byAccount(`pos:CN01:sale:${ID3}`)).toEqual(ledgerBefore);
+    expect((await get(`/orders/${ID3}?branch=CN01`)).json().data.zBill.code).toBe(`${o.code}Z`);
   });
 
   it('lệch chuẩn 1: SĐT sai khuôn / thiếu tên → chặn, chỉ rõ ô', async () => {

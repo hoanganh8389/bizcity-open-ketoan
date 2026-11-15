@@ -19,6 +19,7 @@ import orderCancel from './actions/order-cancel.js';
 import orderCreate from './actions/order-create.js';
 import orderGet from './actions/order-get.js';
 import orderInvoiceBuyer from './actions/order-invoice-buyer.js';
+import orderMoveToZ from './actions/order-move-to-z.js';
 import orderQrConfirm from './actions/order-qr-confirm.js';
 import orderQrRenew from './actions/order-qr-renew.js';
 import orderLookup from './actions/order-lookup.js';
@@ -42,7 +43,7 @@ export default defineModule({
     catalogSnapshot, catalogSearch, catalogBarcode, stockGet,
     shiftCurrent, shiftOpen, shiftClose, reportOrders, reportDashboard,
     adminOrders, adminReturns, adminShifts, adminDashboard, adminSettings, adminShiftJournal,
-    orderQrConfirm, orderQrRenew, orderInvoiceBuyer, stockAll,
+    orderQrConfirm, orderQrRenew, orderInvoiceBuyer, orderMoveToZ, stockAll,
   ],
   subscribers: [],
 });

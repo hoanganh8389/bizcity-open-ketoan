@@ -51,6 +51,7 @@ export async function soldLinesOf(tx: Tx, order: OrderRow): Promise<SoldLine[]> 
   // Dòng bill Z (NT-BH-019) nằm ở zBill của bản chụp nhưng vẫn là dòng của chứng từ bán: trả được như dòng quà.
   const snap = order.snapshot as { lines?: SnapLine[]; zBill?: { lines?: SnapLine[] } };
   const snapLines = [...(snap.lines ?? []), ...(snap.zBill?.lines ?? [])];
+  const zIds = new Set((snap.zBill?.lines ?? []).map((l) => l.lineId));
   const saved = new Map((await sql<{ line_key: string; tax_code: string; item_id: string | null }>`
     SELECT line_key, tax_code, item_id FROM mod_pos.order_lines WHERE order_id = ${order.order_id}`.execute(tx)).rows.map((r) => [r.line_key, r]));
   const missing = snapLines.filter((l) => !saved.has(l.lineId)).map((l) => l.sku);
@@ -61,7 +62,8 @@ export async function soldLinesOf(tx: Tx, order: OrderRow): Promise<SoldLine[]> 
       lineId: l.lineId, sku: l.sku, name: l.name ?? l.sku, unitName: l.unitName, unitRatio: l.unitRatio ?? 1, soldQty: Number(l.unitQty),
       net: Number(l.amount), tax: Number(l.taxAmount), taxRate: Number(l.taxRate),
       taxCode: s?.tax_code ?? catalog.get(l.sku)?.taxCode ?? '', itemId: s?.item_id ?? l.itemId ?? null,
-      isGift: l.isGift === true, ...(l.promotionId !== undefined ? { promotionId: l.promotionId } : {}),
+      // [2026-11-15 01:45 PM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 2: dòng bill Z là dòng quà trên chứng từ bán → trả cũng là dòng quà (đóng góp)
+      isGift: l.isGift === true || zIds.has(l.lineId), ...(l.promotionId !== undefined ? { promotionId: l.promotionId } : {}),
     };
   });
 }
