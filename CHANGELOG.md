@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Mặt hàng: mã biến thể chỉ cần chữ đầu hoặc chữ cuối; giá mua chưa thuế / gồm thuế; ảnh dán link hoặc tải lên <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Sửa:** thêm mã biến thể — ô chữ đầu / chữ cuối đều không bắt buộc, chỉ cần một trong hai (trước đây ô chữ đầu trống bị báo "Mã hàng không được để trống").
+- **Đổi:** hộp thoại thêm / sửa mặt hàng cao cố định (88% màn hình), các bước ít nội dung không bị chụm.
+- **Đổi:** bước Khai báo giá mua có hai ô **Giá mua chưa thuế** và **Giá mua gồm thuế** (theo thuế suất của mặt hàng), nhập ô nào ô kia tự tính; lưu đúng kiểu đã nhập (`priceIncludesVat`). Ẩn cột Mã bên NCC khi thêm.
+- **Thêm:** ô **Ảnh** (thêm và sửa): dán đường dẫn hoặc **Tải ảnh lên** (≤ 5 MB, lưu ở tệp đính kèm `danh-muc.product-image:<mã>`); nhận ra ảnh thì hiện xem trước. Cầu nối website tải ảnh nội bộ về uploads/tgs-erp-images khi kéo danh mục.
+
 ### Chứng từ: bỏ dải "Cảnh báo kiểm chuẩn" trên form <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** form chứng từ không còn dải "Cảnh báo kiểm chuẩn … chỉ thông tin, vẫn lưu được" (chiếm chỗ, không chặn). Kiểm chuẩn vẫn chạy, xem ở màn Kiểm chuẩn; cảnh báo khi khoá kỳ giữ nguyên.

@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { ErrorBox, Field, Loading, Modal, NumInput, useViewAgain } from '@/components/ui';
+import { AnhMatHang } from './AnhMatHang';
 import { ItemPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 import { GroupTree } from './GroupTree';
 import { NEW_OUTPUT_TAX, TaxForm } from './TaxCodesPage';
@@ -115,7 +116,6 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const [skuAuto, setSkuAuto] = useState(!initial?.sku);
   const [help, setHelp] = useState(false);
   const [errMsg, setErrMsg] = useState('');
-  const [imgBad, setImgBad] = useState(false);
   const [taxDetail, setTaxDetail] = useState(false);
   const set = (p: Partial<FullProduct>) => setV((x) => ({ ...x, ...p }));
 
@@ -165,7 +165,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const tenBienThe = (code: string) => (parentData.data ? `${parentData.data.name} ${code.replace(parentData.data.sku, '')}`.trim() : '');
   const lockedGroup = isNew ? kind === 'variant' : Boolean(v.parentSku);
   const skuBad = !isNew || !v.sku ? ''
-    : kind === 'variant' ? (v.parentSku && v.sku === v.parentSku ? 'Thêm chữ ở đầu hoặc cuối mã cha.' : '')
+    : kind === 'variant' ? (v.parentSku && v.sku === v.parentSku ? 'Nhập chữ đầu hoặc chữ cuối (một trong hai là đủ).' : '')
     : /[A-Z]$/.test(v.sku) || (/^[A-Z]/.test(v.sku) && !/^[A-Z][0-9]{8}$/.test(v.sku)) ? 'Mã mới không được có chữ ở đầu hoặc cuối. Muốn tạo mã biến thể: bấm Đổi → Mã biến thể.' : '';
 
   // Cột giá hiện sẵn: bảng giá công ty + bảng giá đã có giá cho mặt hàng này.
@@ -260,7 +260,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
         if (!isNew && sku && newSku !== sku) await api.post('/api/v1/items/rename-code', { sku, newSku, reason: 'Sửa mã trên form mặt hàng' });
         const saved = await api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(newSku)}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
         const ncc = isNew ? nccRows.filter((r) => r.partnerCode && r.unit) : [];
-        if (ncc.length) await api.post('/api/v1/purchase/supplier-products', { rows: ncc.map((r) => ({ partnerCode: r.partnerCode, sku: newSku, unit: r.unit, price: r.price, priceIncludesVat: false, validFrom: r.validFrom || undefined, nccSku: r.nccSku, nccName: '', note: '', isActive: true, warnPct: 2, isDefaultUnit: false })) });
+        if (ncc.length) await api.post('/api/v1/purchase/supplier-products', { rows: ncc.map((r) => ({ partnerCode: r.partnerCode, sku: newSku, unit: r.unit, price: r.price, priceIncludesVat: r.incVat, validFrom: r.validFrom || undefined, nccSku: r.nccSku, nccName: '', note: '', isActive: true, warnPct: 2, isDefaultUnit: false })) });
         return saved;
       })();
     },
@@ -292,7 +292,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
     set({ taxOutCode: code, taxInCode: inCode });
   };
   const taxLabel = (t: TaxCode) => { const s = VAT_RATES.find((r) => r.out === t.code); return s ? `${s.label} — ${t.code} ${t.name}` : `${t.code} — ${t.name}`; };
-  const vatRate = (() => { const t = taxes.find((x) => x.code === v.taxOutCode); return t ? { label: taxLabel(t) } : v.taxOutCode ? { label: v.taxOutCode } : undefined; })();
+  const vatRate = (() => { const t = taxes.find((x) => x.code === v.taxOutCode); return t ? { label: taxLabel(t), rate: Number(t.rate ?? 0) || 0 } : v.taxOutCode ? { label: v.taxOutCode, rate: 0 } : undefined; })();
   // [2026-11-12 Nguyễn Văn Thủy] Thêm mặt hàng theo từng bước, kiểm bắt buộc ở mỗi bước (đóng góp)
   const STEPS = [
     { k: 'info', t: 'Thông tin chung' },
@@ -361,6 +361,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           }}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
       {errMsg && <div className="alert alert-bad full" style={{ marginBottom: 8 }}>{errMsg}</div>}
+      <i className="sp-form-mark" hidden />
       {isNew ? (
         <div className="full nx-steps them-mh-steps">
           {STEPS.map((x, i) => <span key={x.k} role="button" tabIndex={-1} onClick={() => goStep(i)} className={i === stepIdx ? 'on' : i < stepIdx ? 'xong' : undefined} title={i < stepIdx ? 'Quay lại bước này' : undefined}><b>{i < stepIdx ? '✓' : i + 1}</b>{x.t}</span>)}
@@ -439,12 +440,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               : <select className="select input" value={v.isActive ? '1' : '0'} onChange={(e) => set({ isActive: e.target.value === '1' })}><option value="1">Đang hoạt động</option><option value="0">Ngừng hoạt động</option></select>}
           </Field>
           <Field label="Xuất xứ"><input className="input" value={v.origin} onChange={(e) => set({ origin: e.target.value })} /></Field>
-          <Field label="Ảnh (đường dẫn)" full>
-            <div className="row" style={{ gap: 8, alignItems: 'center' }}>
-              <input className="input" value={v.imageUrl} onChange={(e) => { setImgBad(false); set({ imageUrl: e.target.value }); }} placeholder="https://…" style={{ flex: 1 }} />
-              {v.imageUrl && !imgBad && <img src={v.imageUrl} alt="" onError={() => setImgBad(true)} style={{ height: 48, width: 48, objectFit: 'contain', border: '1px solid var(--line)', borderRadius: 4 }} />}
-              {v.imageUrl && imgBad && <span className="neg" style={{ fontSize: 12 }}>Không tải được ảnh</span>}
-            </div>
+          <Field label="Ảnh" full tip="Dán đường dẫn ảnh hoặc tải ảnh từ máy lên; nhận ra ảnh thì hiện ảnh xem trước">
+            <AnhMatHang value={v.imageUrl} sku={v.sku} onChange={(url) => set({ imageUrl: url })} />
           </Field>
           <Field label="Mô tả" full><textarea className="input" rows={3} value={v.description} onChange={(e) => set({ description: e.target.value })} /></Field>
           </>}
@@ -459,7 +456,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {isNew && tab === 'status' && <div className="full muted" style={{ fontSize: 12.5, margin: '2px 0 6px' }}>Không bắt buộc: tích các trạng thái cần, khai giá bán (khai sau ở thẻ Giá bán cũng được).</div>}
       {(tab === 'prices' || (isNew && tab === 'status')) && <GiaBan units={v.units} prices={v.prices} lists={lists} shown={shownLists} setShown={setShownLists} setPrice={setPrice} onlyCompany={v.isMain} />}
 
-      {isNew && tab === 'mua' && <NccTamBang rows={nccRows} setRows={setNccRows} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} mainUnit={v.units.find((u) => u.isPurchaseDefault)?.unit ?? v.units.find((u) => u.isDefault)?.unit ?? baseUnit} vatLabel={vatRate?.label ?? ''} />}
+      {isNew && tab === 'mua' && <NccTamBang rows={nccRows} setRows={setNccRows} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} mainUnit={v.units.find((u) => u.isPurchaseDefault)?.unit ?? v.units.find((u) => u.isDefault)?.unit ?? baseUnit} vatLabel={vatRate?.label ?? ''} vatPct={vatRate?.rate ?? 0} />}
       {tab === 'review' && <XemLai v={v} groupLabel={v.groupCode ? groupPath(v.groupCode) : ''} vatLabel={vatRate?.label ?? v.taxOutCode ?? ''} baseUnit={baseUnit} companyPrice={companyPrice} companyName={companyList?.name} ncc={nccRows} />}
       {extraTabs.filter((t) => t.key === tab).map((t) => <t.Component key={t.key} sku={isNew ? '' : v.sku} name={v.name} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} />)}
 
@@ -563,34 +560,39 @@ function XemLai({ v, groupLabel, vatLabel, baseUnit, companyPrice, companyName, 
     <div className="full xem-lai">
       <section><h4>Thông tin chung</h4>{row('Nhóm hàng', groupLabel)}{row('Mã hàng', <span className="mono">{v.sku}</span>)}{row('Tên hàng', v.name)}{row('Thuế suất GTGT', vatLabel)}{row('Barcode', v.barcode)}{row('Xuất xứ', v.origin)}{row('Trạng thái', v.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động')}</section>
       <section><h4>Đơn vị tính</h4>{row('Nhỏ nhất', baseUnit)}{units.filter((u) => Number(u.ratio) !== 1).map((u) => <div key={u.unit} className="xl-row"><span>{u.unit}</span><b>= {u.ratio} {baseUnit}</b></div>)}{row('Bán chính', units.find((u) => u.isDefault)?.unit ?? baseUnit)}</section>
-      <section><h4>Giá mua</h4>{ncc.filter((r) => r.partnerCode).length ? ncc.filter((r) => r.partnerCode).map((r, i) => <div key={i} className="xl-row"><span className="mono">{r.partnerCode}</span><b>{r.price !== null ? `${r.price.toLocaleString('vi-VN')} / ${r.unit}` : `chưa khai giá · ${r.unit}`}</b></div>) : row('Nhà cung cấp', '')}</section>
+      <section><h4>Giá mua</h4>{ncc.filter((r) => r.partnerCode).length ? ncc.filter((r) => r.partnerCode).map((r, i) => <div key={i} className="xl-row"><span className="mono">{r.partnerCode}</span><b>{r.price !== null ? `${r.price.toLocaleString('vi-VN')} / ${r.unit} (${r.incVat ? 'gồm' : 'chưa'} thuế)` : `chưa khai giá · ${r.unit}`}</b></div>) : row('Nhà cung cấp', '')}</section>
       <section><h4>Bán hàng & giá</h4>{row('Trạng thái bán', flags.join(' · '))}{row(`Giá ${companyName ?? 'công ty'}`, companyPrice ? companyPrice.toLocaleString('vi-VN') : '')}</section>
     </div>
   );
 }
 
 // [2026-11-12 Nguyễn Văn Thủy] bước Mua hàng khi thêm mặt hàng: nhà cung cấp + giá mua khai trước, ghi cùng mặt hàng (đóng góp)
-interface NccTam { partnerCode: string; unit: string; price: number | null; validFrom: string; nccSku: string }
-function NccTamBang({ rows, setRows, units, mainUnit, vatLabel }: { rows: NccTam[]; setRows: (f: (r: NccTam[]) => NccTam[]) => void; units: string[]; mainUnit: string; vatLabel: string }) {
+// [2026-11-15 Nguyễn Văn Thủy] giá mua nhập theo chưa thuế HOẶC gồm thuế (NCC báo giá kiểu nào nhập kiểu đó); lưu đúng ô đã nhập (đóng góp)
+interface NccTam { partnerCode: string; unit: string; price: number | null; incVat: boolean; validFrom: string; nccSku: string }
+function NccTamBang({ rows, setRows, units, mainUnit, vatLabel, vatPct }: { rows: NccTam[]; setRows: (f: (r: NccTam[]) => NccTam[]) => void; units: string[]; mainUnit: string; vatLabel: string; vatPct: number }) {
+  const k = 1 + (vatPct || 0) / 100;
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  const net = (r: NccTam) => (r.price === null ? null : r.incVat ? r2(r.price / k) : r.price);
+  const gross = (r: NccTam) => (r.price === null ? null : r.incVat ? r.price : r2(r.price * k));
   const today = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
   const set = (i: number, p: Partial<NccTam>) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...p } : r)));
-  const add = () => setRows((rs) => [...rs, { partnerCode: '', unit: mainUnit || units[0] || '', price: null, validFrom: today, nccSku: '' }]);
+  const add = () => setRows((rs) => [...rs, { partnerCode: '', unit: mainUnit || units[0] || '', price: null, incVat: false, validFrom: today, nccSku: '' }]);
   return (
     <div className="full">
       <div className="row" style={{ gap: 8, alignItems: 'center', marginBottom: 8 }}>
         <button type="button" className="btn btn-sm btn-primary" onClick={add}>+ Thêm nhà cung cấp</button>
-        <span className="muted" style={{ fontSize: 12.5 }}>Nhà cung cấp nào bán mã này, giá mua chưa thuế theo ĐVT{vatLabel ? ` (thuế ${vatLabel})` : ''}. Không bắt buộc — khai sau ở thẻ Mua hàng cũng được.</span>
+        <span className="muted" style={{ fontSize: 12.5 }}>Nhà cung cấp nào bán mã này, giá mua theo ĐVT — nhập ô <b>chưa thuế</b> hoặc <b>gồm thuế</b>, ô kia tự tính{vatLabel ? ` (thuế ${vatLabel})` : ''}. Không bắt buộc — khai sau ở thẻ Mua hàng cũng được.</span>
       </div>
       {rows.length > 0 && (
         <table className="mh-mini ncc-tam">
-          <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 150 }} title="Giá mua theo ĐVT, chưa thuế">Giá mua chưa thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 150 }}>Mã bên NCC</th><th style={{ width: 50 }} /></tr></thead>
+          <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 160 }} title="Giá mua theo ĐVT, chưa thuế — nhập ô này thì ô gồm thuế tự tính">Giá mua chưa thuế</th><th className="num" style={{ width: 160 }} title={`Giá mua theo ĐVT, gồm thuế${vatPct ? ` ${vatPct}%` : ''} — NCC báo giá gồm thuế thì nhập ô này`}>Giá mua gồm thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 50 }} /></tr></thead>
           <tbody>{rows.map((r, i) => (
             <tr key={i}>
               <td><PartnerPicker value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
               <td><select className="select input" value={r.unit} onChange={(e) => set(i, { unit: e.target.value })}>{units.map((u) => <option key={u} value={u}>{u}</option>)}</select></td>
-              <td><NumInput value={r.price} onChange={(n) => set(i, { price: n })} /></td>
+              <td><NumInput value={net(r)} onChange={(n) => set(i, { price: n, incVat: false })} /></td>
+              <td><NumInput value={gross(r)} onChange={(n) => set(i, { price: n, incVat: true })} /></td>
               <td><input className="input" type="date" value={r.validFrom} onChange={(e) => set(i, { validFrom: e.target.value })} /></td>
-              <td><input className="input mono" value={r.nccSku} onChange={(e) => set(i, { nccSku: e.target.value })} /></td>
               <td><button type="button" className="btn btn-xs" title="Bỏ dòng" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>✕</button></td>
             </tr>
           ))}</tbody>
@@ -622,9 +624,12 @@ function MaBienThe({ parent, sku, onChange }: { parent: string; sku: string; onC
   };
   return (
     <div className="row ma-bien-the" style={{ flex: 1, gap: 4, alignItems: 'center' }}>
-      <input className="input mono" style={{ width: 70, textAlign: 'right' }} value={pre} placeholder="chữ" title="Chữ thêm ở đầu (không bắt buộc)" onChange={(e) => put(e.target.value, suf)} />
+      {/* [2026-11-15 Nguyễn Văn Thủy] mã đầy đủ (chỉ đọc) đứng đầu để bộ kiểm ô bắt buộc không bắt nhập chữ đầu: chữ đầu / chữ cuối
+          đều không bắt buộc, chỉ cần một trong hai — thiếu cả hai thì báo ở dòng gợi ý của Mã hàng (đóng góp) */}
+      <input readOnly tabIndex={-1} aria-hidden value={sku} style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
+      <input className="input mono" style={{ width: 80, textAlign: 'right' }} value={pre} placeholder="chữ đầu" title="Chữ thêm ở đầu mã — không bắt buộc (cần chữ đầu hoặc chữ cuối)" onChange={(e) => put(e.target.value, suf)} />
       <span className="input mono" style={{ background: 'var(--surface-2, #f4f6f9)', width: 'auto', padding: '0 10px', display: 'flex', alignItems: 'center' }} title="Mã cha — giữ nguyên">{parent}</span>
-      <input className="input mono" style={{ width: 70 }} value={suf} placeholder="chữ" title="Chữ thêm ở cuối" onChange={(e) => put(pre, e.target.value)} />
+      <input className="input mono" style={{ width: 80 }} value={suf} placeholder="chữ cuối" title="Chữ thêm ở cuối mã — không bắt buộc (cần chữ đầu hoặc chữ cuối)" onChange={(e) => put(pre, e.target.value)} />
       <span className="muted" style={{ fontSize: 12.5 }}>= <b className="mono">{sku}</b></span>
     </div>
   );
