@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Mua hàng, Bán hàng: vào là mở Luồng chi tiết; menu Mua hàng đủ theo sơ đồ; tồn max rõ tác nhân <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** `/nhom/mua-hang`, `/nhom/ban-hang` mở thẳng Luồng chi tiết; sơ đồ rút gọn là nút phụ (`?xem=rut-gon`). Sơ đồ rút gọn Mua hàng theo đúng các bước của luồng (tồn max → phân tích đặt hàng → đơn mua → nhận hàng → hoá đơn đầu vào → trả tiền; chuyển hàng xuống shop, trả lại / đổi, giảm giá / thưởng, công nợ đến hạn, giá vốn thực tế); bỏ ô chưa dùng (Hợp đồng mua hàng, Đơn đặt hàng / Giảm giá hàng bán ở Bán hàng).
+- **Đổi:** Luồng chi tiết Mua hàng: bước 5 là Hoá đơn đầu vào & đối chiếu (MH22, đối chiếu đơn đặt MH21 treo dưới); thêm khai báo Tách / gộp mã con (MH26), ĐVT Thùng (MH27), Nhật ký mua hàng (MH10).
+- **Đổi:** menu Mua hàng chia 5 nhóm theo sơ đồ (chứng từ; hoá đơn đầu vào; tồn max, đặt hàng; công nợ, thưởng, giá vốn; danh mục, cài đặt) — thêm lối vào đổi hàng, quà, chi phí mua hàng, trả tiền, ứng trước NCC và Cài đặt mua hàng; nhóm Phần riêng bỏ phần trùng.
+- **Đổi:** tồn max ghi rõ hai cách: ① shop lập phiếu đăng ký (MH17) → kế toán mua hàng duyệt; ② kế toán mua hàng sửa thẳng ở bảng tồn max (MH16).
+
 ### Phiếu nghiệp vụ không chọn tài khoản <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Bỏ:** cột TK Kho / TK Công nợ / TK thuế và ô "Hiển thị tài khoản" trên phiếu nhập mua, trả NCC, đổi hàng; mục "Tài khoản riêng (cũ)" ở Cài đặt mua hàng (chỉ còn xem tài khoản đang dùng); trường `lines[].accounts` của chứng từ `purchase` / `purchase_return` (cổng bỏ qua nếu máy khách cũ còn gửi) và `accounts` của `PUT /api/v1/purchase/settings`.

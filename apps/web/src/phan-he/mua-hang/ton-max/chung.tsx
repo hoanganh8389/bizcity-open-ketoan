@@ -117,3 +117,15 @@ export function KhoiSo({ label, value, tone = 'blue', active, onClick, hint }: {
     </button>
   );
 }
+
+// [2026-11-15 Nguyễn Văn Thủy] hai cách đặt tồn max, mỗi cách một tác nhân — hiện ở đầu MH16 và MH17 (đóng góp)
+/** Dải "Hai cách đặt tồn max": ① shop đăng ký → kế toán mua hàng duyệt; ② kế toán mua hàng sửa thẳng. `here` = màn đang mở. */
+export function HaiCachMax({ here }: { here: 'ton-max' | 'dang-ky' }) {
+  const step = (on: boolean, n: string, body: ReactNode) => <div className={`tm-cach${on ? ' on' : ''}`}><b>{n}</b><span>{body}</span></div>;
+  return (
+    <div className="tm-hai-cach" title="Max có hiệu lực ngay khi được duyệt (cách ①) hoặc khi lưu (cách ②); phân tích đặt hàng và chuyển hàng xuống shop dùng max mới">
+      {step(here === 'dang-ky', '①', <><b>Shop</b> lập phiếu đăng ký (2 lần / tháng, hoặc gửi từ máy POS) → <b>Kế toán mua hàng</b> duyệt → ghi vào tồn max{here !== 'dang-ky' && <> · <Link to="/mua-hang/dang-ky-max">Phiếu đăng ký</Link></>}</>)}
+      {step(here === 'ton-max', '②', <><b>Kế toán mua hàng</b> sửa thẳng max ở bảng tồn max (hàng mới, điều chỉnh gấp){here !== 'ton-max' && <> · <Link to="/mua-hang/ton-max">Bảng tồn max</Link></>}</>)}
+    </div>
+  );
+}

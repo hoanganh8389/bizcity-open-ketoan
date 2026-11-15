@@ -45,16 +45,18 @@ interface Node extends LuongNode {
 }
 interface Stage { node: Node; config: Node[]; side: Node[] }
 
-const L = (kind: string) => `/mua-hang/chung-tu?loai=${kind}`;
-const N = (kind: string) => `/mua-hang/chung-tu?moi=${kind}`;
+const L = (kind: string) => `/mua-hang/tong-hop?loai=${kind}`;
+const N = (kind: string) => `/mua-hang/tong-hop?moi=${kind}`;
 
 const STAGES: Stage[] = [
   {
+    // [2026-11-15 Nguyễn Văn Thủy] tồn max có hai tác nhân: shop đăng ký, kế toán mua hàng duyệt hoặc sửa thẳng (đóng góp)
     node: { label: 'Tồn max', code: 'MH16', icon: 'Gauge', color: '#5b6cff', path: '/mua-hang/ton-max',
-      auto: ['Mỗi shop có mức tồn tối đa cho từng mã hàng', 'Shop gửi phiếu đăng ký, duyệt xong là mức mới có hiệu lực'] },
+      auto: [<><b>Shop</b> gửi phiếu đăng ký (2 lần / tháng, hoặc từ máy POS) → <b>kế toán mua hàng</b> duyệt → max có hiệu lực</>,
+        <><b>Kế toán mua hàng</b> sửa thẳng max ở bảng Tồn max (hàng mới, điều chỉnh gấp)</>, 'Lệch nhỏ (≤ % cài ở Công thức) thì tự duyệt'] },
     config: [
-      { label: 'Sơ đồ tổ chức', code: 'DM16', icon: 'Network', color: '#64748b', path: '/danh-muc/so-do-to-chuc', hint: 'Chi nhánh (vd Phú Thọ) mua hàng cho mọi tỉnh bên dưới, hàng về kho chi nhánh rồi chia xuống cửa hàng' },
-      { label: 'Phiếu đăng ký tồn max', code: 'MH17', icon: 'FilePen', color: '#64748b', path: '/mua-hang/dang-ky-max', hint: 'Shop đề nghị mức tồn' },
+      { label: 'Cơ cấu tổ chức', code: 'DM16', icon: 'Network', color: '#64748b', path: '/danh-muc/so-do-to-chuc', hint: 'Chi nhánh mua hàng cho mọi shop bên dưới, hàng về kho chi nhánh rồi chia xuống shop' },
+      { label: 'Phiếu đăng ký tồn max', code: 'MH17', icon: 'FilePen', color: '#64748b', path: '/mua-hang/dang-ky-max', hint: 'Shop lập, kế toán mua hàng duyệt' },
     ],
     side: [],
   },
@@ -64,6 +66,8 @@ const STAGES: Stage[] = [
     config: [
       { label: 'Công thức đặt hàng', code: 'MH18', icon: 'Sigma', color: '#64748b', path: '/mua-hang/cong-thuc', hint: 'Số ngày bán, shop tính vào, kho chuẩn' },
       { label: 'Mặt hàng & phân cha – con', code: 'DM10', icon: 'Package', color: '#64748b', path: '/danh-muc/mat-hang', hint: 'Gắn mã con (quà, kẹp quà, mã Z…) vào mã cha để mua không bị thừa' },
+      { label: 'Tách / gộp mã con', code: 'MH26', icon: 'Split', color: '#64748b', path: '/mua-hang/bien-the', hint: 'Đuôi mã nào đặt riêng, đuôi nào cộng vào mã gốc' },
+      { label: 'ĐVT Thùng đặt hàng', code: 'MH27', icon: 'Box', color: '#64748b', path: '/mua-hang/dvt-thung', hint: 'Số lượng đặt làm tròn theo thùng' },
     ],
     side: [],
   },
@@ -92,11 +96,11 @@ const STAGES: Stage[] = [
     ],
   },
   {
-    node: { label: 'Đối chiếu tiến độ nhập', code: 'MH21', icon: 'GitCompareArrows', color: '#d35400', path: '/mua-hang/doi-chieu', todo: ['outside'],
-      auto: ['Thấy ngay đơn nào giao thiếu, giao thừa, lệch giá', 'Phiếu nhập không theo đơn được tách riêng để rà soát', 'Biết đơn nào còn chờ NCC giao', 'Hoá đơn NCC so từng dòng với phiếu nhập: số lượng, giá, thuế, tổng tiền'] },
+    node: { label: 'Hoá đơn đầu vào & đối chiếu', code: 'MH22', icon: 'FileCheck2', color: '#0f766e', path: '/mua-hang/hoa-don-ncc', todo: ['inv_unmatched', 'inv_no_receipt'],
+      auto: ['Nhập Excel / quét hoá đơn NCC, phần mềm tự nhận mã hàng', 'So từng dòng với phiếu nhập: số lượng, giá, thuế, tổng tiền', 'Hoá đơn chưa có phiếu nhập thì lập phiếu nhập từ hoá đơn'] },
     config: [],
     side: [
-      { label: 'Hoá đơn NCC & đối soát', code: 'MH22', icon: 'FileCheck2', color: '#0f766e', path: '/mua-hang/hoa-don-ncc', todo: ['inv_unmatched', 'inv_no_receipt'], hint: 'Nhập Excel / quét hoá đơn NCC, phần mềm tự nhận mã và so từng dòng với phiếu nhập' },
+      { label: 'Đối chiếu đơn đặt ↔ phiếu nhập', code: 'MH21', icon: 'GitCompareArrows', color: '#d35400', path: '/mua-hang/doi-chieu', todo: ['outside'], hint: 'Giao thiếu, thừa, lệch giá; phiếu nhập ngoài đơn' },
       { label: 'Trả lại / đổi hàng', icon: 'RotateCcw', color: '#eb5757', path: L('return'), newPath: N('return'), kinds: ['return', 'exchange'], print: ['return', 'exchange'], hint: 'Hàng sai, hỏng, cận date — gắn phiếu gốc' },
     ],
   },
@@ -117,6 +121,7 @@ const STAGES: Stage[] = [
     ],
     side: [
       { label: 'Phân bổ & giá vốn thực tế', code: 'MH07', icon: 'Calculator', color: '#34495e', path: '/mua-hang/phan-bo', hint: 'Chi phí, thưởng, quà → giá từng mã' },
+      { label: 'Nhật ký mua hàng', code: 'MH10', icon: 'History', color: '#64748b', path: '/mua-hang/nhat-ky', hint: 'Cảnh báo, ngoại lệ đã duyệt, lần tính thưởng' },
     ],
   },
 ];

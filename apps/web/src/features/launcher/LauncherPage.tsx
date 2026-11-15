@@ -70,6 +70,9 @@ export function ModuleHomePage() {
   );
 }
 
+/** Nhóm mở thẳng Luồng chi tiết khi vào trang Quy trình. */
+const FLOW_FIRST = ['mua-hang', 'ban-hang'];
+
 export function GroupHomePage() {
   const { key = '' } = useParams();
   const menu = useAppMenu();
@@ -81,21 +84,34 @@ export function GroupHomePage() {
   const seen = new Set(groups.flatMap((x) => [...x.sections, ...x.reports].flatMap((s) => s.items.map((i) => i.path!.split('?')[0]))));
   // [2026-11-13 02:55 PM Võ Hoàng] UX-14 — luồng chi tiết khoá theo nhóm menu (chữ chốt cap-nhat-ux/14) (đóng góp)
   const Flow = GROUP_FLOWS[g.key];
-  const xem = sp.get('xem');
+  // [2026-11-15 Nguyễn Văn Thủy] Mua hàng / Bán hàng: vào là mở Luồng chi tiết; sơ đồ rút gọn là nút phụ (?xem=rut-gon) (đóng góp)
+  const flowFirst = Boolean(Flow) && FLOW_FIRST.includes(g.key);
+  const xem = sp.get('xem') ?? (flowFirst ? 'chi-tiet' : null);
   const soDo = SO_DO[g.key];
   const helpKey = Flow ? `${g.key}-quy-trinh` : 'trang-chu';
   const nutPhu = (
     <>
-      {Flow && <button type="button" onClick={() => setSp({ xem: 'chi-tiet' }, { replace: true })} title="Sơ đồ đầy đủ: từng bước phần mềm tự làm gì, việc cần làm"><Workflow size={16} /> Luồng chi tiết</button>}
+      {Flow && !flowFirst && <button type="button" onClick={() => setSp({ xem: 'chi-tiet' }, { replace: true })} title="Sơ đồ đầy đủ: từng bước phần mềm tự làm gì, việc cần làm"><Workflow size={16} /> Luồng chi tiết</button>}
+      {flowFirst && xem !== 'chi-tiet' && <button type="button" onClick={() => setSp({}, { replace: true })} title="Sơ đồ đầy đủ: từng bước phần mềm tự làm gì, việc cần làm"><Workflow size={16} /> Luồng chi tiết</button>}
       {g.module && <button type="button" onClick={() => setSp({ xem: 'tru-cot' }, { replace: true })} title="Nhóm này dựa vào trụ cột nào của Core và hôm nay đạt tới đâu"><Columns3 size={16} /> Trụ cột</button>}
       <button type="button" onClick={() => setHelp(true)}><HelpCircle size={16} /> Hướng dẫn</button>
     </>
   );
-  const veSoDo = <button type="button" className="btn btn-sm" style={{ marginBottom: 10 }} onClick={() => setSp({}, { replace: true })}><ArrowLeft size={14} /> Về sơ đồ</button>;
+  const veSoDo = flowFirst
+    ? <button type="button" className="btn btn-sm" style={{ marginBottom: 10 }} onClick={() => setSp({}, { replace: true })}><ArrowLeft size={14} /> Về luồng chi tiết</button>
+    : <button type="button" className="btn btn-sm" style={{ marginBottom: 10 }} onClick={() => setSp({}, { replace: true })}><ArrowLeft size={14} /> Về sơ đồ</button>;
+  // Thanh nút trên luồng chi tiết (nhóm mở luồng trước): xem rút gọn, trụ cột, hướng dẫn.
+  const thanhLuong = (
+    <div className="row" style={{ gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+      {soDo && <button type="button" className="btn btn-sm" onClick={() => setSp({ xem: 'rut-gon' }, { replace: true })} title="Chỉ các bước chính và báo cáo hay dùng"><LayoutGrid size={14} /> Sơ đồ rút gọn</button>}
+      {g.module && <button type="button" className="btn btn-sm" onClick={() => setSp({ xem: 'tru-cot' }, { replace: true })}><Columns3 size={14} /> Trụ cột</button>}
+      <button type="button" className="btn btn-sm" onClick={() => setHelp(true)}><HelpCircle size={14} /> Hướng dẫn</button>
+    </div>
+  );
   return (
     <>
       {xem === 'tru-cot' && g.module ? <>{veSoDo}<PillarMatrix module={g.module} compact /></>
-        : xem === 'chi-tiet' && Flow ? <>{veSoDo}<Flow /></>
+        : xem === 'chi-tiet' && Flow ? <>{flowFirst ? thanhLuong : veSoDo}<Flow /></>
         : soDo ? (
           // Sơ đồ bên trái, báo cáo hay dùng của nhóm bên phải (bố cục trang Quy trình phổ biến).
           <div className={`sd-layout${g.reports.length || soDo.reports?.length ? "" : " no-bc"}`}>

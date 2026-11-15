@@ -69,10 +69,12 @@ export const SO_DO: Record<string, SoDo> = {
     ],
     links: [{ label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }, { label: 'Bảng giá', icon: 'Tags', path: '/danh-muc/bang-gia' }, L.tkNganHang, { label: 'Dữ liệu gốc', icon: 'RotateCcw', path: '/tien-ich/du-lieu-goc' }],
   },
+  // [2026-11-15 Nguyễn Văn Thủy] sơ đồ rút gọn theo đúng các bước của Luồng chi tiết; bỏ ô chưa dùng (hợp đồng mua hàng) (đóng góp)
   'mua-hang': {
     title: 'Nghiệp vụ mua hàng',
     rows: [
       [
+        { label: 'Tồn max', icon: 'Gauge', path: '/mua-hang/ton-max', sub: [{ label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max' }, { label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max' }] },
         { label: 'Phân tích đặt hàng', icon: 'ChartColumn', path: '/mua-hang/dat-hang' },
         { label: 'Đơn mua hàng', icon: 'ClipboardList', path: mua('order') },
         { label: 'Nhận hàng hóa, dịch vụ', icon: 'PackageCheck', path: mua('receipt'), sub: [{ label: 'Mua hàng', path: mua('receipt') }, { label: 'Quà tặng', path: mua('gift_in') }, { label: 'Chi phí mua hàng', path: mua('cost') }] },
@@ -80,10 +82,11 @@ export const SO_DO: Record<string, SoDo> = {
         { label: 'Trả tiền theo hóa đơn', icon: 'Banknote', path: mua('payment'), sub: [{ label: 'Trả tiền', path: mua('payment') }, { label: 'Ứng trước', path: mua('prepayment') }] },
       ],
       [
-        { label: 'Hợp đồng mua hàng', icon: 'FileSignature' },
-        { label: 'Trả lại hàng mua', icon: 'RotateCcw', path: mua('return') },
-        { label: 'Giảm giá hàng mua', icon: 'BadgePercent', path: mua('rebate') },
+        { label: 'Chuyển hàng xuống shop', icon: 'Store', path: '/mua-hang/chuyen-shop' },
+        { label: 'Trả lại hàng mua', icon: 'RotateCcw', path: mua('return'), sub: [{ label: 'Trả lại hàng mua', path: mua('return') }, { label: 'Đổi hàng', path: mua('exchange') }] },
+        { label: 'Giảm giá, thưởng', icon: 'BadgePercent', path: mua('rebate'), sub: [{ label: 'Giảm giá hàng mua', path: mua('rebate') }, { label: 'Tính thưởng cuối kỳ', path: '/mua-hang/thuong' }] },
         { label: 'Công nợ đến hạn', icon: 'CalendarClock', path: '/mua-hang/han-muc' },
+        { label: 'Giá vốn thực tế', icon: 'Calculator', path: '/mua-hang/phan-bo' },
       ],
     ],
     reports: [
@@ -91,18 +94,16 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp mua hàng theo mặt hàng', path: '/mua-hang/tong-hop-mat-hang' }, { label: 'Tổng hợp công nợ phải trả nhà cung cấp', path: '/bao-cao/cong-no-phai-tra' },
       { label: 'Biên bản đối chiếu và xác nhận công nợ phải trả', path: '/cong-no/doi-chieu' },
     ],
-    links: [{ label: 'Nhà cung cấp', icon: 'Truck', path: '/mua-hang/nha-cung-cap' }, L.vthh, { label: 'Chính sách mua', icon: 'Tags', path: '/mua-hang/chinh-sach' }, { label: 'Tồn max', icon: 'Gauge', path: '/mua-hang/ton-max' }, { label: 'Cài đặt mua hàng', icon: 'Settings', path: '/mua-hang/cai-dat' }],
+    links: [{ label: 'Nhà cung cấp', icon: 'Truck', path: '/mua-hang/nha-cung-cap' }, L.vthh, { label: 'Chính sách mua', icon: 'Tags', path: '/mua-hang/chinh-sach' }, { label: 'Công thức đặt hàng', icon: 'Sigma', path: '/mua-hang/cong-thuc' }, { label: 'Cài đặt mua hàng', icon: 'Settings', path: '/mua-hang/cai-dat' }],
   },
   'ban-hang': {
     title: 'Nghiệp vụ bán hàng',
     rows: [
       [
-        { label: 'Đơn đặt hàng', icon: 'ClipboardList' },
         { label: 'Bán hàng', icon: 'Receipt', path: '/ban-hang/phieu-ban' },
-        { label: 'Trả lại hàng bán', icon: 'RotateCcw', path: '/ban-hang/tra-lai' },
         { label: 'Thu tiền theo hóa đơn', icon: 'ArrowDownLeft', path: '/nghiep-vu/phieu-thu', sub: [{ label: 'Thu tiền mặt', path: '/nghiep-vu/phieu-thu' }, { label: 'Thu tiền gửi', path: '/nghiep-vu/phieu-bao-co' }] },
       ],
-      [{ label: 'Giảm giá hàng bán', icon: 'BadgePercent' }],
+      [{ label: 'Trả lại hàng bán', icon: 'RotateCcw', path: '/ban-hang/tra-lai' }],
     ],
     reports: [
       { label: 'Sổ chi tiết bán hàng', path: '/ban-hang/bao-cao' }, { label: 'Chi tiết công nợ phải thu khách hàng', path: '/bao-cao/chi-tiet-cong-no-phai-thu' },
