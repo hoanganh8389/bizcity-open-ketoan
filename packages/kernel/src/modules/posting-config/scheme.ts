@@ -146,6 +146,11 @@ export const SCHEME: SchemeBusiness[] = [
         { side: 'debit', role: 'Giảm phải trả NCC', amount: 'paid', source: 'rule', key: 'payable', when: 'Có khoản trả tiền' },
         { side: 'credit', role: 'Tiền trả', amount: 'paid', source: 'payment', when: 'Có khoản trả tiền' },
       ] },
+      // [2026-11-15 Nguyễn Văn Thủy] quà NCC không hoá đơn: phiếu nhận quà ghi theo mục đích NQUA (sửa ở bảng Mục đích xuất) (đóng góp)
+      { name: 'Nhận quà không hoá đơn', lines: [
+        { side: 'debit', role: 'Quà vào kho', amount: 'cost', source: 'warehouse', key: 'inventory', when: 'Phiếu nhận quà' },
+        { side: 'credit', role: 'Thu nhập quà tặng (mục đích NQUA)', amount: 'cost', source: 'purpose', key: 'stock_surplus', when: 'Phiếu nhận quà' },
+      ] },
     ],
   },
   {

@@ -52,6 +52,7 @@ describe('Quy tắc hạch toán', () => {
     for (const k of s.keys) expect(k.range.length, k.key).toBeGreaterThan(0);
     expect(s.sources.purposes.length).toBeGreaterThan(0); // nạp mục đích gốc khi mở màn lần đầu
     expect(s.keys.find((k) => k.key === 'payment_discount_income')?.range).toEqual(['515']); // CKTT khai ở đây, không ở cài đặt mua hàng
+    expect(s.sources.purposes.map((p) => p.code)).toEqual(expect.arrayContaining(['NQUA', 'XQUA'])); // quà không hoá đơn cài được trước khi có phiếu quà
   });
 
   it('đổi tài khoản: khoá lạ, ngoài phạm vi, TK tổng hợp bị chặn; hợp lệ thì phiếu bán mới ghi doanh thu vào TK mới', async () => {

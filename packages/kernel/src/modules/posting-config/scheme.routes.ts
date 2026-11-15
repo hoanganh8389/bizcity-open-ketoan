@@ -22,8 +22,13 @@ import { documentService } from '../documents/document.service.js';
 
 const tags = ['Quy tắc hạch toán'];
 
-/** Mục đích xuất gốc — nạp khi đơn vị mở màn lần đầu, chỉ những dòng có tài khoản chi tiết trong hệ thống tài khoản. */
-const SEED_PURPOSES: { code: string; name: string; direction: 'increase' | 'decrease' | 'both'; account: string }[] = [
+/**
+ * Mục đích xuất gốc — nạp mã còn thiếu khi mở màn (mã đã có, kể cả đã ngừng, giữ nguyên); tài khoản lấy ứng viên chi tiết đầu tiên có trong hệ thống tài khoản.
+ * [2026-11-15 Nguyễn Văn Thủy] thêm NQUA / XQUA (quà NCC không hoá đơn, xuất quà tặng khách — phân hệ Mua hàng) để kế toán cài trước khi có phiếu quà (đóng góp)
+ */
+const SEED_PURPOSES: { code: string; name: string; direction: 'increase' | 'decrease' | 'both'; account: string | string[] }[] = [
+  { code: 'NQUA', name: 'Nhận quà NCC (Mua hàng)', direction: 'increase', account: ['71153', '7118'] },
+  { code: 'XQUA', name: 'Xuất quà tặng khách (Mua hàng)', direction: 'decrease', account: ['64184', '64188'] },
   { code: 'HUY', name: 'Hủy hàng hỏng, hết hạn', direction: 'decrease', account: '6328' },
   { code: 'MAT', name: 'Mất, thất thoát hàng', direction: 'decrease', account: '8115' },
   { code: 'TANG-KH', name: 'Tặng khách dùng thử, marketing', direction: 'decrease', account: '64184' },
@@ -36,11 +41,13 @@ const SEED_PURPOSES: { code: string; name: string; direction: 'increase' | 'decr
 ];
 
 async function ensurePurposes(trx: Db, tenantId: string): Promise<void> {
-  const any = await trx.selectFrom('stock_purposes').select('id').where('tenant_id', '=', tenantId).limit(1).executeTakeFirst();
-  if (any) return;
+  const have = new Set((await trx.selectFrom('stock_purposes').select('code').where('tenant_id', '=', tenantId).execute()).map((r) => r.code));
+  const missing = SEED_PURPOSES.filter((p) => !have.has(p.code));
+  if (!missing.length) return;
+  const cands = (p: (typeof SEED_PURPOSES)[number]) => (Array.isArray(p.account) ? p.account : [p.account]);
   const posting = new Set((await trx.selectFrom('accounts').select('code').where('tenant_id', '=', tenantId).where('is_posting', '=', true).where('is_active', '=', true)
-    .where('code', 'in', SEED_PURPOSES.map((p) => p.account)).execute()).map((a) => a.code));
-  const rows = SEED_PURPOSES.filter((p) => posting.has(p.account)).map((p, i) => ({ tenant_id: tenantId, code: p.code, name: p.name, direction: p.direction, account_code: p.account, sort_order: i + 1, updated_by: 'system' }));
+    .where('code', 'in', missing.flatMap(cands)).execute()).map((a) => a.code));
+  const rows = missing.flatMap((p) => { const acc = cands(p).find((c) => posting.has(c)); return acc ? [{ tenant_id: tenantId, code: p.code, name: p.name, direction: p.direction, account_code: acc, sort_order: SEED_PURPOSES.indexOf(p) + 1, updated_by: 'system' }] : []; });
   if (rows.length) await trx.insertInto('stock_purposes').values(rows).onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
 }
 

@@ -22,7 +22,7 @@ Mỗi bản ghi đủ sáu mục:
 ### Phiếu nghiệp vụ không chọn tài khoản <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Bỏ:** cột TK Kho / TK Công nợ / TK thuế và ô "Hiển thị tài khoản" trên phiếu nhập mua, trả NCC, đổi hàng; mục "Tài khoản riêng (cũ)" ở Cài đặt mua hàng (chỉ còn xem tài khoản đang dùng); trường `lines[].accounts` của chứng từ `purchase` / `purchase_return` (cổng bỏ qua nếu máy khách cũ còn gửi) và `accounts` của `PUT /api/v1/purchase/settings`.
-- **Thêm:** khoá `payment_discount_income` (chiết khấu thanh toán được hưởng, phạm vi 515, migration 0144 chép theo tài khoản đang tự chọn). Mục đích NQUA / XQUA (quà không hoá đơn / xuất quà) chỉ tạo lần đầu — sửa tài khoản ở bảng mục đích xuất, phiếu quà sau không ghi đè.
+- **Thêm:** khoá `payment_discount_income` (chiết khấu thanh toán được hưởng, phạm vi 515, migration 0144 chép theo tài khoản đang tự chọn). Mục đích NQUA / XQUA (quà không hoá đơn / xuất quà) chỉ tạo lần đầu — sửa tài khoản ở bảng mục đích xuất, phiếu quà sau không ghi đè. Mục đích gốc NQUA (71153 / 7118) và XQUA (64184) nạp sẵn khi mở màn Quy tắc hạch toán (đơn vị đã có mục đích cũng được nạp mã còn thiếu); nghiệp vụ Mua hàng hiện nhóm "Nhận quà không hoá đơn".
 - **Thay đổi định khoản:** phiếu mua / trả NCC ghi TK kho theo loại kho → TK kho của quy tắc, công nợ và thuế theo Quy tắc hạch toán; không còn tài khoản ghi tay trên dòng. Chứng từ kế toán tự lập (phiếu thu, chi, phiếu kế toán, đề nghị chi, chứng từ công nợ) vẫn chọn tài khoản.
 
 ### Quy tắc hạch toán: một màn, năm nguồn tài khoản, mục đích xuất thay lý do <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
