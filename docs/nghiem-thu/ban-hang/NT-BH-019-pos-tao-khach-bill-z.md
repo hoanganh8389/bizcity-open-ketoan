@@ -1,5 +1,6 @@
 # NT-BH-019 · Máy bán POS: tạo khách mới tại quầy, bán hàng 0đ không gửi thuế (bill Z) qua kế toán
 <!-- [2026-11-15 09:30 PM Võ Hoàng] NGHIEM-THU — tạo phiếu: hai phần máy bán React còn chạy dữ liệu giả ở bản hybrid (đóng góp) -->
+<!-- [2026-11-15 10:45 AM Võ Hoàng] NGHIEM-THU — chốt Q1–Q3; Q1, Q2 ghi cách làm theo năng lực Core đang có; chia hai bước (đóng góp) -->
 
 | | |
 |---|---|
@@ -7,7 +8,7 @@
 | Màn hình | Máy bán POS React (vỏ WP `/pos/`): ô Khách hàng → *Thêm khách*; giỏ có hàng 0đ không gửi thuế (quà mã Z) |
 | Bộ phận yêu cầu | Thu ngân, kế toán bán hàng |
 | Ngày tạo | 15/11/2026 |
-| Trạng thái | Nháp — chờ anh Hoàng duyệt hướng (Cần chốt Q1–Q3) |
+| Trạng thái | Đã chốt (15/11/2026) — bước 1: nhận bill Z khi bán, khách mới đi kèm đơn; bước 2: chuyển sang bill Z, trả hàng có quà Z |
 
 ## 1. Mục đích quản trị
 Máy bán React ở cửa hàng đã đi kế toán thật cho bán, trả, ca, danh mục, khuyến mại. Còn hai việc vẫn chạy dữ liệu giả (dải vàng báo "Còn dùng dữ liệu giả"), dùng tới là **không ghi sổ**:
@@ -30,8 +31,8 @@ Cửa hàng `CN01`; mặt hàng `100021001` 325.000 (gửi thuế 8 %); quà `QZ
 
 | # | Kiểm | Kết quả |
 |---|---|---|
-| 1 | Tạo khách | khách `0901234567` có ở danh mục đối tượng (DM12) bên kế toán ngay khi lưu; đơn mang khách đó; SĐT đã có → báo trùng, gợi ý khách cũ |
-| 2 | Bán có quà mã Z | đơn được nhận; chứng từ bán chỉ mang dòng gửi thuế; dòng 0đ mã Z đi **bill Z** riêng (không thuế, không hoá đơn điện tử), vẫn trừ tồn |
+| 1 | Tạo khách | đơn bán cho khách mới `0901234567` được nhận → khách có ở danh mục đối tượng (DM12) theo đối tượng của chứng từ bán; tìm lại ở máy bán thấy kèm số đơn; SĐT đã có → máy bán hiện khách cũ, không tạo trùng |
+| 2 | Bán có hàng 0đ không gửi thuế | đơn được nhận; dòng 0đ mã không gửi thuế nằm trên chứng từ bán dạng **dòng quà** (0đ, không doanh thu, không thuế), đơn trả máy mang `sendTax = false` → máy bán in **bill Z** riêng, không lên hoá đơn điện tử; vẫn trừ tồn, giá vốn tháng ghi theo luật hàng khuyến mãi |
 | 3 | Website | bản sao về shop: phiếu bán + phiếu `zsale` / `zexport` như POS cũ |
 | 4 | Chuyển sang bill Z | dòng 0đ của đơn đã hoàn tất chuyển sang bill Z; dòng có tiền → chặn |
 | 5 | Trả hàng có quà Z | trả cả quà theo bill Z |
@@ -42,16 +43,16 @@ Cửa hàng `CN01`; mặt hàng `100021001` 325.000 (gửi thuế 8 %); quà `QZ
 | # | Tình huống | Xử lý |
 |---|---|---|
 | 1 | SĐT sai khuôn / thiếu tên | chặn, chỉ rõ ô |
-| 2 | Dòng mã Z có tiền | chặn (hàng không gửi thuế không bán có tiền ở máy bán) |
+| 2 | Dòng mã không gửi thuế có tiền | nhận như dòng bán, không tách bill Z, không lên hoá đơn (`sendTax = false`) — giữ như POS đang chạy (D-MP-12); không chặn vì chỉ bất biến lõi mới chặn (R-GATE-9) |
 | 3 | Mất mạng khi tạo khách | đơn vẫn bán được với khách lẻ, nhắc tạo lại |
 
-## Cần chốt (mặc định tạm — làm theo mặc định nếu không ai sửa)
+## Đã chốt (15/11/2026)
 
-| # | Câu hỏi | Mặc định tạm |
+| # | Câu hỏi | Chốt |
 |---|---|---|
-| Q1 | Tạo khách đi đường nào | Module pos gọi Core tạo đối tượng (hành động `core.partner.upsert` qua cổng của module); nếu cổng chưa cho module gọi → **đề xuất Core** (bậc 4), không tự vá |
-| Q2 | Bill Z nộp sổ thế nào | Dòng mã Z **không** vào chứng từ bán (không doanh thu, không thuế); nộp phiếu **xuất kho quà** riêng (lý do xuất quà theo tài khoản quà của loại chương trình — chốt 10/11) để trừ tồn, giá vốn |
-| Q3 | Thứ tự | Tạo khách trước (nhỏ), bill Z sau |
+| Q1 | Tạo khách đi đường nào | **Khách mới đi kèm đơn**: chứng từ bán mang `partner` (mã = SĐT, tên, SĐT), cửa nạp Core tự thêm đối tượng theo mã (`document.service` → `partnerRepository.upsert`). Không tạo khách rời khi chưa bán. Không sửa Core: `ctx.actions.call` của module chỉ gọi action đọc nên module không gọi được `core.partner.upsert`, và cũng không cần |
+| Q2 | Bill Z nộp sổ thế nào | Không doanh thu, không thuế, không hoá đơn điện tử; vẫn trừ tồn và có giá vốn. Cách nộp: dòng 0đ mã không gửi thuế đi **chung chứng từ bán dạng dòng quà** (`isGift`), như quà mã Z theo chương trình đã làm ở NT-BH-003; tài khoản giá vốn hàng khuyến mãi do kế toán đặt (lý do / chính sách hạch toán, chốt 10/11). **Không** nộp phiếu điều chỉnh giảm kho riêng: luật định khoản loại `stock_adjustment` ghi đối ứng "hàng thiếu chờ xử lý" khi lý do chỉ khai tài khoản chi phí (lý do quà `XTA*`) → sai bản chất. Bill Z là phiếu in của máy bán (tách theo `sendTax`), như POS đang chạy |
+| Q3 | Thứ tự | Bước 1: nhận bill Z khi bán + khách mới đi kèm đơn (kiểm 1, 2, 3, 6). Bước 2: chuyển sang bill Z, trả hàng có quà Z (kiểm 4, 5) |
 
 ## 7. Kết quả chạy
 Chưa chạy.
@@ -64,3 +65,4 @@ Chưa chạy.
 | Ngày | Thay đổi |
 |---|---|
 | 15/11/2026 | Tạo phiếu (nháp) |
+| 15/11/2026 | Chốt Q1–Q3; sửa kết quả 1, 2 và lệch chuẩn 2 theo cách làm đã chốt |
