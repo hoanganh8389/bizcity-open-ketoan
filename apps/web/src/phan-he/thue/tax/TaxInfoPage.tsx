@@ -9,6 +9,8 @@ import { DOC_TYPE_LABELS, type DocType } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { date, defaultFrom, defaultTo, money } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — ghi / xoá thông tin thuế theo thao tác màn ACC78 (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
@@ -118,7 +120,8 @@ export function TaxInfoPage() {
 function TaxInfoDialog({ row, onClose }: { row: Row; onClose: () => void }) {
   const qc = useQueryClient();
   const { can } = useAuth();
-  const readOnly = !can('documents:write');
+  const tt = useThaoTac('thue.bo-sung-thong-tin');
+  const readOnly = !can('documents:write') || !tt.sua;
   const p = row.patch;
   const [inv, setInv] = useState<Record<string, string>>({
     no: p?.invoice.no ?? '', serial: p?.invoice.serial ?? '', form: p?.invoice.form ?? '', date: p?.invoice.date ?? '',
@@ -145,7 +148,7 @@ function TaxInfoDialog({ row, onClose }: { row: Row; onClose: () => void }) {
   return (
     <Modal wide title={`Bổ sung thông tin thuế — ${DOC_TYPE_LABELS[row.docType as DocType] ?? row.docType} ${row.docNo}`} onClose={onClose}
       footer={<>
-        {p && !readOnly && <button className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={remove.isPending} onClick={() => window.confirm('Bỏ toàn bộ phần đã bổ sung, trở về thông tin gốc của chứng từ?') && remove.mutate()}>Bỏ phần bổ sung</button>}
+        {p && !readOnly && tt.xoa && <button className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={remove.isPending} onClick={() => window.confirm('Bỏ toàn bộ phần đã bổ sung, trở về thông tin gốc của chứng từ?') && remove.mutate()}>Bỏ phần bổ sung</button>}
         <button className="btn" onClick={onClose}>Đóng</button>
         {!readOnly && <button className="btn btn-primary" disabled={save.isPending} onClick={() => save.mutate()}>Ghi</button>}
       </>}>

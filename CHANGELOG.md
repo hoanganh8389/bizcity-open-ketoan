@@ -12,6 +12,87 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Không bật hộp "Từ chối đúng luật" vì số liệu phụ <!-- [2026-11-16 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Sửa:** màn Quy trình Bán hàng gọi số liệu máy POS (đơn chờ QR, ca chưa đóng) và thanh Việc cần làm gọi việc mua hàng / cảnh báo / hàng đợi: tài khoản không có quyền nguồn đó thì bỏ qua im lặng, không bật hộp Mã tra cứu FORBIDDEN. Thêm `api.getQuiet` cho lời gọi phụ.
+
+### Module mới `loyalty` — sổ điểm thành viên (phiếu NT-BH-020 bước 1) <!-- [2026-11-15 04:30 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1 (đóng góp) -->
+
+- **Thêm:** module `modules/loyalty` (schema `mod_loyalty`): sổ điểm chỉ thêm theo lô có hạn; chính sách tích điểm do website đẩy sang `POST /api/v1/m/loyalty/program` (quyền `catalog:write`, giữ mọi phiên bản); tự tích khi đơn máy bán hoàn tất (nghe `pos.order.recorded`), tự hoàn khi trả hàng (nghe `pos.return.recorded`); máy bán đọc `GET /program?branch=`, `GET /customers/:id` (quyền mới `loyalty:read`).
+- **Thay đổi định khoản:** không — điểm chỉ hạch toán lúc đổi (bước 2, trên chứng từ bán).
+- **Nâng cấp cần làm:** chạy migration module `loyalty` và đồng bộ module (`module sync`); website (Cổng kế toán) đẩy chính sách từng cửa hàng; vé thu ngân cấp thêm `loyalty:read`.
+
+### HT17 thẻ hướng dẫn: xuất / nhập JSON; menu Mua hàng; thuế % ở giá mua <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** HT17 Thẻ hướng dẫn có **Xuất JSON** (mọi thẻ, ảnh trong nội dung, nơi gắn màn / hộp thoại) và **Nhập JSON** — xem trước thẻ nào thêm mới / ghi đè / không đổi và nơi gắn nào đổi thẻ, bấm Nhập thì ghi đè. Khớp thẻ theo mã nguồn → nơi đang gắn → tiêu đề; thẻ không có trong tệp giữ nguyên. API `GET /api/v1/help/export`, `POST /api/v1/help/package/preview`, `POST /api/v1/help/package/import` (action `core.help.package-import`). Test `help-package.test.ts`.
+- **Đổi:** menu Mua hàng thêm nhóm **Sổ kho, tồn kho** (MH24 Sổ kho theo mặt hàng, MH25 Tồn kho theo mặt hàng); **MH26 Tách / gộp mã con** chuyển sang Thiết lập › Cấu hình, bỏ khỏi menu và sơ đồ quy trình Mua hàng.
+- **Đổi:** thêm mặt hàng theo bước: bước đã từng tới thì bấm qua lại tự do (quay lại xem rồi nhảy thẳng về bước đang làm, các bước giữa vẫn kiểm bắt buộc); bước chưa tới thì khoá.
+- **Đổi:** nút Thiết lập (bánh răng) ở thanh trên: đang mở Thiết lập thì bấm lại để đóng thẻ đó, nút sáng lên khi đang mở.
+- **Thêm:** thêm mặt hàng bước Khai báo giá mua hiện cột **Thuế %** (thuế suất chọn ở bước 1) cạnh giá chưa / gồm thuế.
+
+### Bỏ màn MH27 ĐVT Thùng đặt hàng <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Bỏ:** màn **ĐVT Thùng đặt hàng (MH27)**, mục menu, ô trên luồng chi tiết Mua hàng; API `/api/v1/purchase/units/thung/*` (action `mua-hang.unit.thung-preview`, `-apply`, `-empty-rows-delete`). Mua theo thùng thì khai ĐVT Thùng ở Danh mục mặt hàng như mọi ĐVT khác. ĐVT Thùng và dòng giá NCC đã có giữ nguyên. Đường dẫn cũ `/mua-hang/dvt-thung` chuyển sang Danh mục mặt hàng.
+
+### Mặt hàng: mã biến thể chỉ cần chữ đầu hoặc chữ cuối; giá mua chưa thuế / gồm thuế; ảnh dán link hoặc tải lên <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Sửa:** thêm mã biến thể — ô chữ đầu / chữ cuối đều không bắt buộc, chỉ cần một trong hai (trước đây ô chữ đầu trống bị báo "Mã hàng không được để trống").
+- **Đổi:** hộp thoại thêm / sửa mặt hàng cao cố định (88% màn hình), các bước ít nội dung không bị chụm.
+- **Đổi:** bước Khai báo giá mua có hai ô **Giá mua chưa thuế** và **Giá mua gồm thuế** (theo thuế suất của mặt hàng), nhập ô nào ô kia tự tính; lưu đúng kiểu đã nhập (`priceIncludesVat`). Ẩn cột Mã bên NCC khi thêm.
+- **Thêm:** ô **Ảnh** (thêm và sửa): dán đường dẫn hoặc **Tải ảnh lên** (≤ 5 MB, lưu ở tệp đính kèm `danh-muc.product-image:<mã>`); nhận ra ảnh thì hiện xem trước. Cầu nối website tải ảnh nội bộ về uploads/tgs-erp-images khi kéo danh mục.
+
+### Chứng từ: bỏ dải "Cảnh báo kiểm chuẩn" trên form <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** form chứng từ không còn dải "Cảnh báo kiểm chuẩn … chỉ thông tin, vẫn lưu được" (chiếm chỗ, không chặn). Kiểm chuẩn vẫn chạy, xem ở màn Kiểm chuẩn; cảnh báo khi khoá kỳ giữ nguyên.
+
+### Chuyển kho: nháp → duyệt xuất; sửa sau duyệt bằng điều chỉnh (khoá nhận); hai đầu cần bên nhận xác nhận; phiếu điện tử <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** migration 0145 — `stock_transfer_docs.status` thêm `draft`; cột `adjust`, `adjustments`, `einvoice`. API `POST /api/v1/kho/transfers/:id/{ship,adjust,adjust-confirm,adjust-approve,adjust-cancel}`, `PUT /api/v1/kho/transfers/:id/einvoice`; lập phiếu có `mode: draft | ship` (mặc định ship như cũ).
+- **Đổi:** phiếu đã duyệt xuất không sửa thẳng (409): **Lập điều chỉnh** (lý do bắt buộc) → đầu nhận **bị khoá nhận**, sổ giữ bản cũ → **Duyệt điều chỉnh** đảo đầu xuất cũ, ghi đầu xuất mới. Phiếu đã nhận: **đề nghị điều chỉnh hai đầu**, bên nhận **xác nhận** rồi mới duyệt (đảo và ghi lại cả hai đầu). Nhận lại phiếu đã nhận = **biên bản chênh lệch** (bắt buộc lý do). Phiếu XK-VCNB điện tử đã ghi số thì duyệt điều chỉnh phải ghi số phiếu thay thế / điều chỉnh. Lịch sử điều chỉnh / chênh lệch trên phiếu; nhật ký thao tác `stock_transfer.*`.
+- **Đổi:** danh sách KHO01: cột Xuất từ / Nhập vào (chi nhánh · kho), trạng thái riêng **Đầu xuất** (Nháp / Đã duyệt xuất / Đang điều chỉnh / Đã huỷ / Trả lại tồn) và **Đầu nhận** (Chờ nhận / Khoá nhận / Chờ xác nhận điều chỉnh / Đã nhận / Nhận thiếu / Từ chối), cột Phiếu điện tử; Số dòng, trạng thái chung ẩn mặc định.
+- **Đổi:** màn KHO01: nút Ghi nháp / Ghi và duyệt xuất; Lập điều chỉnh / Đề nghị điều chỉnh hai đầu / Bên nhận xác nhận / Duyệt điều chỉnh / Huỷ điều chỉnh / Biên bản chênh lệch / Ghi số phiếu điện tử; lọc trạng thái Nháp; nhận đủ hàng loạt bỏ qua phiếu đang điều chỉnh.
+- **Sửa:** manifest phân hệ Mua hàng khai action điều chỉnh (`documents-adjust`, `documents-adjust-cancel`).
+
+### Mua hàng: sửa phiếu đã ghi sổ bằng bản điều chỉnh; đơn đặt "Mở lại đơn"; tách trạng thái phiếu / sổ <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** `POST /api/v1/purchase/documents/:id/adjust` (bắt buộc `reason` ≥ 5 ký tự) và `/adjust-cancel`. Lập điều chỉnh: phiếu về nháp để sửa, **bút toán bản đã duyệt giữ nguyên trong sổ**; duyệt bản điều chỉnh = gửi phiên bản mới cùng chứng từ kế toán → đảo bút toán cũ (số âm) + ghi bút toán mới; chứng từ kế toán bản cũ có mà bản mới không còn thì huỷ (đảo). Huỷ điều chỉnh: phiếu về đúng bản đã duyệt, sổ không đổi. Lịch sử phiếu lưu từng lần điều chỉnh (lý do, người lập / duyệt, thay đổi); nhật ký mua hàng thêm sự kiện lập / huỷ điều chỉnh.
+- **Đổi:** nút trên phiếu theo loại: đơn đặt (không ghi sổ) → "Mở lại đơn" (bắt buộc lý do; đơn đã có phiếu nhập thì không mở được); phiếu ghi sổ qua cổng chờ → "Lập điều chỉnh"; phiếu tiền → "Huỷ ghi sổ". Phiếu đang điều chỉnh không huỷ được (409) — huỷ điều chỉnh trước.
+- **Đổi:** danh sách chứng từ mua: cột Phiếu (có "Đang điều chỉnh") và cột Sổ (Không ghi sổ / Chưa vào sổ / Chờ định khoản / Đã ghi sổ / Lỗi / Đã đảo); cột mặc định theo loại phiếu. ACC14 đổi tên **Chứng từ chờ vào sổ**, vào nhóm Tổng hợp.
+
+### Mua hàng, Bán hàng: vào là mở Luồng chi tiết; menu Mua hàng đủ theo sơ đồ; tồn max rõ tác nhân <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** `/nhom/mua-hang`, `/nhom/ban-hang` mở thẳng Luồng chi tiết; sơ đồ rút gọn là nút phụ (`?xem=rut-gon`). Sơ đồ rút gọn Mua hàng theo đúng các bước của luồng (tồn max → phân tích đặt hàng → đơn mua → nhận hàng → hoá đơn đầu vào → trả tiền; chuyển hàng xuống shop, trả lại / đổi, giảm giá / thưởng, công nợ đến hạn, giá vốn thực tế); bỏ ô chưa dùng (Hợp đồng mua hàng, Đơn đặt hàng / Giảm giá hàng bán ở Bán hàng).
+- **Đổi:** Luồng chi tiết Mua hàng: bước 5 là Hoá đơn đầu vào & đối chiếu (MH22, đối chiếu đơn đặt MH21 treo dưới); thêm khai báo Tách / gộp mã con (MH26), ĐVT Thùng (MH27), Nhật ký mua hàng (MH10).
+- **Đổi:** menu Mua hàng chia 5 nhóm theo sơ đồ (chứng từ; hoá đơn đầu vào; tồn max, đặt hàng; công nợ, thưởng, giá vốn; danh mục, cài đặt) — thêm lối vào đổi hàng, quà, chi phí mua hàng, trả tiền, ứng trước NCC và Cài đặt mua hàng; nhóm Phần riêng bỏ phần trùng.
+- **Đổi:** tồn max ghi rõ hai cách: ① shop lập phiếu đăng ký (MH17) → kế toán mua hàng duyệt; ② kế toán mua hàng sửa thẳng ở bảng tồn max (MH16).
+
+### Phiếu nghiệp vụ không chọn tài khoản <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Bỏ:** cột TK Kho / TK Công nợ / TK thuế và ô "Hiển thị tài khoản" trên phiếu nhập mua, trả NCC, đổi hàng; mục "Tài khoản riêng (cũ)" ở Cài đặt mua hàng (chỉ còn xem tài khoản đang dùng); trường `lines[].accounts` của chứng từ `purchase` / `purchase_return` (cổng bỏ qua nếu máy khách cũ còn gửi) và `accounts` của `PUT /api/v1/purchase/settings`.
+- **Thêm:** khoá `payment_discount_income` (chiết khấu thanh toán được hưởng, phạm vi 515, migration 0144 chép theo tài khoản đang tự chọn). Mục đích NQUA / XQUA (quà không hoá đơn / xuất quà) chỉ tạo lần đầu — sửa tài khoản ở bảng mục đích xuất, phiếu quà sau không ghi đè. Mục đích gốc NQUA (71153 / 7118) và XQUA (64184) nạp sẵn khi mở màn Quy tắc hạch toán (đơn vị đã có mục đích cũng được nạp mã còn thiếu); nghiệp vụ Mua hàng hiện nhóm "Nhận quà không hoá đơn".
+- **Thay đổi định khoản:** phiếu mua / trả NCC ghi TK kho theo loại kho → TK kho của quy tắc, công nợ và thuế theo Quy tắc hạch toán; không còn tài khoản ghi tay trên dòng. Chứng từ kế toán tự lập (phiếu thu, chi, phiếu kế toán, đề nghị chi, chứng từ công nợ) vẫn chọn tài khoản.
+
+### Quy tắc hạch toán: một màn, năm nguồn tài khoản, mục đích xuất thay lý do <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** màn **Quy tắc hạch toán (ACC41)** `/cau-hinh/quy-tac-hach-toan`: mỗi nghiệp vụ (bán, trả lại, mua, trả NCC, thu, chi, chuyển kho, xuất / nhập kho khác, chuyển tiền) hiện khung Nợ / Có cố định và tài khoản lấy từ đâu; đổi tài khoản của quy tắc chỉ trong phạm vi đầu số, chỉ tài khoản chi tiết; xem thử bút toán một phiếu (không lưu).
+- **Thêm:** **Mục đích xuất** (bảng `stock_purposes`, migration 0140) — phiếu `stock_adjustment` gửi `purposeCode` (`HUY`, `DUNG-BH`, `TANG-KH`…) quyết tài khoản đối ứng; không gửi thì thừa / thiếu chờ xử lý. Nhận / xuất quà ở Mua hàng dùng mục đích `NQUA` / `XQUA`.
+- **Thêm API:** `GET /api/v1/posting/scheme`, `PUT /api/v1/posting/scheme/accounts/:key`, `GET /api/v1/posting/purposes`, `PUT /api/v1/posting/purposes/:code`, `POST /api/v1/posting/scheme/preview` — tài liệu [docs/api/17](docs/api/17-quy-tac-hach-toan.md); chuẩn nghiệp vụ [docs/nghiep-vu/24](docs/nghiep-vu/24-quy-tac-hach-toan.md).
+- **Thêm:** khoá `gift_cogs` (giá vốn hàng tặng kèm, phạm vi 632 / 641 / 642, mặc định như giá vốn).
+- **Bỏ:** Tài khoản ngầm định theo loại chứng từ (133 dòng, bảng `account_default_types`), bảng quy tắc định khoản có điều kiện (`posting_rules`, `posting_businesses`), công tắc `bizcity.posting.use_reasons`, tài khoản trên lý do, tài khoản theo mặt hàng / nhóm hạch toán trong bộ định khoản, các màn Lý do – Tài khoản, Mặt hàng – Tài khoản, API `/api/v1/account-default-types`, `/api/v1/posting-rules`, `/api/v1/posting-flow`. Khoá không dùng: `cash`, `internal_payable_goods`, `internal_cogs`, `commission_*`.
+- **Thay đổi định khoản:** lý do trên chứng từ không đổi tài khoản (chỉ là nhãn). `PUT /api/v1/posting/defaults` chặn tài khoản ngoài phạm vi / tổng hợp. Loại phiếu thu chi, phiếu kế toán dùng mẫu cố định trong code.
+
+### Máy bán POS: chuyển dòng 0đ sang bill Z; phiếu trả mang cờ quà — phiếu NT-BH-019 bước 2 <!-- [2026-11-15 02:10 PM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 2 (đóng góp) -->
+
+- **Thêm:** `POST /api/v1/m/pos/orders/:id/lines/:lineId/move-to-z` (action `pos.order.move-to-z`, quyền `pos:sell`): chuyển một dòng 0đ của đơn đã hoàn tất sang bill Z (mã đơn + `Z`) — đơn phiên bản mới, bản sao website ghi lại (`zsale` / `zexport`). Dòng có tiền → `CONFLICT`; đơn chờ thanh toán / đã huỷ → `CONFLICT`; gọi lại khi dòng đã ở bill Z → trả đơn, không tăng phiên bản. Chứng từ bán và sổ không đổi (dòng 0đ).
+- **Đổi:** phiếu trả (`sale_return`) mang `isGift` cho dòng quà (quà theo chương trình và dòng bill Z), như chứng từ bán.
+- **Thay đổi định khoản:** giá vốn tháng của quà khách trả lại đảo theo luật hàng khuyến mãi (cùng tài khoản lúc tặng) thay vì luật hàng bán thường; áp cho phiếu trả lập sau khi cập nhật.
+
+### Máy bán POS nhận bill Z (hàng 0đ không gửi thuế) — phiếu NT-BH-019 bước 1 <!-- [2026-11-15 11:20 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1 (đóng góp) -->
+
+- **Đổi:** đơn máy bán có dòng 0đ của mã không gửi thuế (hàng Nội bộ, quà mã Z không theo chương trình) không còn bị chặn (`POS_NOT_SUPPORTED_YET`): dòng đó vào chứng từ bán dạng dòng quà 0đ (`isGift`), đơn trả máy tách các dòng đó sang `zBill` (mã đơn + `Z`, chỉ khi mọi dòng không gửi thuế cộng lại 0đ — cùng luật máy bán và POS cũ) để máy bán in bill Z riêng, hoá đơn điện tử bỏ dòng, bản sao website ghi phiếu `zsale` / `zexport`. Trả hàng và màn quản trị đơn đọc cả dòng bill Z.
+- **Không đổi:** khách mới tại quầy vẫn đi kèm đơn (cửa nạp tự thêm đối tượng theo `partner` của chứng từ bán); dòng không gửi thuế mà thu tiền vẫn bán như dòng thường.
+- **Thay đổi định khoản:** không — dòng 0đ không sinh doanh thu / thuế; giá vốn tháng ghi theo luật hàng khuyến mãi đang có (lý do / chính sách hạch toán do kế toán đặt).
+
 ### Kế toán xem được các màn quản trị máy bán (quyền `pos:report`) <!-- [2026-11-15 12:30 PM Võ Hoàng] NGHIEM-THU — anh Hoàng đồng ý 15/11 (đóng góp) -->
 
 - **Đổi:** quyền *Xem quản trị bán lẻ máy POS* (`pos:report`, chỉ đọc) mặc định cấp cho kế toán trưởng, kế toán, người xem (trước chỉ chủ đơn vị) — thấy Đơn bán, Phiếu trả, Sổ ca, Tổng quan, Cài đặt bán hàng (BH13–BH17). Thu ngân vẫn không có.

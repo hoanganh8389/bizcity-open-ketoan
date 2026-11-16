@@ -20,6 +20,8 @@ import { BranchCheckList, ReportSideLayout, SideField, SideKy, branchesPicked } 
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút kết chuyển theo thao tác màn ACC6 (chay / namTruoc / huy / cauHinh) (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { useBranches } from '@/components/filters';
 import { Empty, ErrorBox, Field, Loading, Modal, Money, Pager } from '@/components/ui';
@@ -90,6 +92,7 @@ const STATUS_TEXT: Record<string, string> = { posted: 'Đã ghi sổ', cancelled
 function ClosingList() {
   const qc = useQueryClient();
   const { can } = useAuth();
+  const tt = useThaoTac('ke-toan.ket-chuyen');
   const y = Number(lastMonth().slice(0, 4));
   const [df, setDf] = useState({ from: `${y}-01-01`, to: `${y}-12-31` });
   const [f, setF] = useState(df);
@@ -174,14 +177,14 @@ function ClosingList() {
       <ReportSideLayout panel={panel}>
         <div className="card">
           <div className="catalog-toolbar">
-            {can('periods:lock') && <button className="btn btn-sm" onClick={() => setAdding({})}><Plus size={14} /> Thêm</button>}
+            {can('periods:lock') && tt.chay && <button className="btn btn-sm" onClick={() => setAdding({})}><Plus size={14} /> Thêm</button>}
             <button className="btn btn-sm" onClick={view} title="Xem phiếu đang chọn (hoặc bấm đúp dòng)"><Eye size={14} /> Xem</button>
-            {can('periods:lock') && <button className="btn btn-sm" onClick={remove} disabled={cancel.isPending} title="Huỷ (đảo) các phiếu kết chuyển đã tích ở cột Chọn"><Undo2 size={14} /> Huỷ kết chuyển{checked.size ? ` (${checked.size})` : ''}</button>}
+            {can('periods:lock') && tt.huy && <button className="btn btn-sm" onClick={remove} disabled={cancel.isPending} title="Huỷ (đảo) các phiếu kết chuyển đã tích ở cột Chọn"><Undo2 size={14} /> Huỷ kết chuyển{checked.size ? ` (${checked.size})` : ''}</button>}
             <button className="btn btn-sm" onClick={() => void runs.refetch()} disabled={runs.isFetching}><RefreshCw size={14} className={runs.isFetching ? 'spin' : undefined} /> Nạp</button>
             <button className="btn btn-sm" onClick={() => setCatalogue(true)}><BookOpen size={14} /> Bút toán kết chuyển mẫu</button>
             <button className="btn btn-sm" onClick={() => exportRef.current?.()} disabled={!rows.length}><FileSpreadsheet size={14} /> Xuất</button>
             <span className="spacer" />
-            {can('periods:lock') && <button className="btn btn-sm btn-ghost" onClick={() => setYearEnd(true)} title="Đầu năm mới: chuyển lợi nhuận năm nay (4212) sang lợi nhuận năm trước (4211)">Lợi nhuận năm trước</button>}
+            {can('periods:lock') && tt.namTruoc && <button className="btn btn-sm btn-ghost" onClick={() => setYearEnd(true)} title="Đầu năm mới: chuyển lợi nhuận năm nay (4212) sang lợi nhuận năm trước (4211)">Lợi nhuận năm trước</button>}
           </div>
           <ErrorBox error={runs.error ? errorText(runs.error) : cancel.error ? errorText(cancel.error) : null} />
           {notice && <div className="alert alert-ok" style={{ margin: 8 }}>{notice}</div>}
@@ -220,7 +223,8 @@ function ClosingList() {
 function ClosingAddForm({ initialPeriod, initialBranches, onClose, onDone }: { initialPeriod?: string; initialBranches?: string; onClose: () => void; onDone: (msg: string) => void }) {
   const qc = useQueryClient();
   const { can } = useAuth();
-  const canEditRules = can('settings:write');
+  const tt = useThaoTac('ke-toan.ket-chuyen');
+  const canEditRules = can('settings:write') && Boolean(tt.cauHinh);
   const [period, setPeriod] = useState(initialPeriod ?? '');
   const [year, setYear] = useState(Number((initialPeriod ?? lastMonth()).slice(0, 4)));
   const [branchCodes, setBranchCodes] = useState(initialBranches ?? '');
@@ -341,6 +345,7 @@ interface FiscalPeriod { id: string; year: number; month: number; startDate: str
 /** Xem phiếu kết chuyển (frmViewClosingEntry "Thông tin bút toán kết chuyển"). */
 function ClosingViewForm({ run, onClose, onRerun }: { run: Run; onClose: () => void; onRerun: (r: Run) => void }) {
   const { can } = useAuth();
+  const tt = useThaoTac('ke-toan.ket-chuyen');
   const [sources, setSources] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const exportRef = useRef<(() => void) | null>(null);
@@ -365,7 +370,7 @@ function ClosingViewForm({ run, onClose, onRerun }: { run: Run; onClose: () => v
       <>
         {run.sources && <button className="btn" onClick={() => setSources(true)}>Nguồn kết chuyển</button>}
         <button className="btn" onClick={() => setDetail(run.id)}>Xem chứng từ</button>
-        {run.status === 'posted' && run.kind !== 'year-end' && can('periods:lock') && <button className="btn" onClick={() => onRerun(run)}>Kết chuyển lại</button>}
+        {run.status === 'posted' && run.kind !== 'year-end' && can('periods:lock') && tt.chay && <button className="btn" onClick={() => onRerun(run)}>Kết chuyển lại</button>}
         <span className="spacer" />
         <button className="btn" onClick={() => exportRef.current?.()} disabled={!lines.length}><FileSpreadsheet size={14} /> Xuất Excel</button>
         <button className="btn" onClick={onClose}>Đóng</button>
@@ -471,7 +476,8 @@ const MODE_LABEL = LOAI_LABEL;
 function CatalogueList({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const { can } = useAuth();
-  const editable = can('settings:write');
+  const tt = useThaoTac('ke-toan.ket-chuyen');
+  const editable = can('settings:write') && Boolean(tt.cauHinh);
   const q = useQuery({ queryKey: ['closing-rules'], queryFn: () => api.get<RulesData>('/api/v1/closing/rules') });
   const [sel, setSel] = useState<{ r: ClosingRule; index: number } | null>(null);
   const [editing, setEditing] = useState<{ index: number | null } | null>(null);
@@ -624,6 +630,7 @@ interface YearEndResult { branchCode: string; status: 'posted' | 'empty' | 'prev
 function YearEndTab() {
   const qc = useQueryClient();
   const { can } = useAuth();
+  const tt = useThaoTac('ke-toan.ket-chuyen');
   const { data: branches = [] } = useBranches();
   const [f, setF] = useState({ year: new Date().getFullYear(), fromAccount: '4212', toAccount: '4211' });
   const [rows, setRows] = useState<YearEndResult[] | null>(null);
@@ -641,7 +648,7 @@ function YearEndTab() {
         <div className="field"><label>TK lợi nhuận năm nay</label><AccountPicker className="input mono" value={f.fromAccount} onChange={(fromAccount) => change({ fromAccount })} /></div>
         <div className="field"><label>TK lợi nhuận năm trước</label><AccountPicker postingOnly className="input mono" value={f.toAccount} onChange={(toAccount) => change({ toAccount })} /></div>
         <button className="btn" disabled={!branchCodes.length || preview.isPending} onClick={() => preview.mutate()}>Xem trước</button>
-        {can('periods:lock') && (
+        {can('periods:lock') && tt.namTruoc && (
           <button className="btn btn-primary" disabled={!isPreview || run.isPending} title={isPreview ? '' : 'Bấm Xem trước để kiểm tra trước khi ghi sổ'}
             onClick={() => window.confirm(`Chuyển số dư ${f.fromAccount} đến 31/12/${f.year - 1} sang ${f.toAccount}, ghi ngày 01/01/${f.year}?`) && run.mutate()}>Kết chuyển</button>
         )}

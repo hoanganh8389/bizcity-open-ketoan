@@ -26,6 +26,6 @@ Phiếu bán hàng và phiếu trả hàng: **Ghi ngay** (lên sổ khi máy bá
 
 ## ④ Tài khoản hạch toán bán hàng
 
-Danh sách loại chứng từ nhóm *Bán hàng* của Tài khoản ngầm định (ACC41) với TK Nợ / TK Có đang dùng. Chỉ xem; bấm **Sửa ở ACC41** để đổi.
+Danh sách loại chứng từ nhóm *Bán hàng* của Quy tắc hạch toán (ACC41) với TK Nợ / TK Có đang dùng. Chỉ xem; bấm **Sửa ở ACC41** để đổi.
 
 Bấm **Ghi**: giá trị mới có hiệu lực từ hôm nay; lịch sử ai đổi, lúc nào lưu ở *Thiết lập → Cấu hình hệ thống*. **Bỏ sửa** để trả lại giá trị đang áp.

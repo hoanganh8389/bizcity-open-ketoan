@@ -176,7 +176,7 @@ Khuôn `rule` từng loại: tài liệu 08 mục 4.2.
 
 | Lệnh | Đường dẫn | Việc | Quyền |
 |---|---|---|---|
-| GET / PUT | `/api/v1/purchase/settings` | `{ holidays: [YYYY-MM-DD], warnDays, brandOpening: { nhãn: { mã CN: số dư } }, accounts: { stock, vatIn, payable, cash, bank, giftIncome, giftExpense, finIncome } }`; GET trả thêm `resolvedAccounts` (tài khoản đang dùng) | đọc `documents:read`, ghi `settings:write` |
+| GET / PUT | `/api/v1/purchase/settings` | `{ holidays: [YYYY-MM-DD], warnDays, brandOpening: { nhãn: { mã CN: số dư } } }`; GET trả thêm `resolvedAccounts` (tài khoản đang dùng, chỉ đọc — tài khoản khai ở `/api/v1/posting/scheme`) | đọc `documents:read`, ghi `settings:write` |
 | POST | `/api/v1/purchase/demo/seed` | Nạp 25 tình huống + ví dụ bổ sung VD1–VD8 (`db/seeds/mua-hang/*.json`) vào **sổ thật** của đơn vị đang đăng nhập. Thân: `{ password, reset }` — sai mật khẩu → 403; đã nạp → 409, `reset: true` = xoá bản cũ rồi nạp. Mã hàng đã có trong danh mục thì dòng phiếu lấy tên / ĐVT theo danh mục | `settings:write` |
 | POST | `/api/v1/purchase/demo/clear` | Thân `{ password }`. Bỏ duyệt (đảo bút toán) và xoá chứng từ / chính sách tình huống, đảo số dư đầu kỳ mẫu | `settings:write` |
 | GET | `/api/v1/purchase/price-history/:sku?asOf&limit` | Các lần nhập gần nhất của một mã: ngày, phiếu, NCC, ĐVT, SL, đơn giá thực tế sau CK | `purchase:read` |

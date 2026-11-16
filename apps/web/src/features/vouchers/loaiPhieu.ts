@@ -5,10 +5,7 @@
  *   Ô trống = người lập tự chọn (thu khác, chi khác, chi mua ngoài có hoá đơn).
  *   Tài khoản tiền: phiếu thu / báo có ở bên Nợ, phiếu chi / báo nợ ở bên Có; tiền gửi lấy theo tài khoản ngân hàng chọn trên phiếu.
  */
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import type { VoucherType } from '@ketoan/contracts';
-import { api } from '@/lib/api';
 
 /** no / co: tài khoản mặc định (hoặc đầu số); noFilter / coFilter: danh sách được chọn trên dòng (theo đầu số, trống = mọi tài khoản). */
 export interface LoaiPhieu { name: string; no?: string; co?: string; noFilter?: string[]; coFilter?: string[] }
@@ -54,40 +51,25 @@ export const LOAI_PHIEU: Record<Exclude<VoucherType, 'manual'>, LoaiPhieu[]> = {
   ],
 };
 
-// [2026-11-13 Nguyễn Văn Thủy] loại phiếu đọc từ Tài khoản ngầm định theo loại (ACC41): kế toán sửa lọc / mặc định ở đó, form theo (đóng góp)
-interface AdCol { key: string; filter: string[]; default: string }
-interface AdType { code: string; group: string; name: string; columns: AdCol[]; isActive: boolean }
-const only = (f: string[] | undefined, pre: string) => Boolean(f?.length) && f!.every((x) => x.startsWith(pre));
-const shortName = (n: string) => {
-  const t = n.replace(/^Phiếu (thu|chi) /i, (_m, a: string) => (a.toLowerCase() === 'thu' ? 'Thu ' : 'Chi '))
-    .replace(/ bằng (tiền mặt|tiền gửi|Chuyển khoản)$/i, '').replace(/^(Thu|Chi) (Thu|Chi) /, '$2 ');
-  return t.charAt(0).toUpperCase() + t.slice(1);
-};
-/** Loại phiếu của một màn thu / chi: lấy theo Tài khoản ngầm định; chưa tải xong thì dùng danh sách sẵn. */
+// [2026-11-15 Nguyễn Văn Thủy] mẫu loại phiếu cố định trong code (bỏ bảng Tài khoản ngầm định theo loại) (đóng góp)
+/** Loại phiếu của một màn thu / chi (mẫu định khoản điền sẵn). */
 export function useLoaiPhieu(type: Exclude<VoucherType, 'manual'>): LoaiPhieu[] {
-  const q = useQuery({ queryKey: ['account-default-types'], queryFn: () => api.get<AdType[]>('/api/v1/account-default-types'), staleTime: 60_000 });
-  return useMemo(() => {
-    if (!q.data?.length) return LOAI_PHIEU[type];
-    const money = type === 'receipt' || type === 'payment' ? '111' : '112';
-    const grp = money === '111' ? 'Tiền mặt' : 'Tiền gửi';
-    const recv = type === 'receipt' || type === 'bank_receipt';
-    const out: LoaiPhieu[] = [];
-    for (const t of q.data) {
-      if (t.group !== grp || !t.isActive) continue;
-      const d = t.columns.find((c) => c.key === 'debit_account');
-      const c = t.columns.find((x) => x.key === 'credit_account');
-      const isMoney = (col?: AdCol) => (col?.default || col?.filter[0] || '').startsWith(money) || only(col?.filter, money);
-      const dm = isMoney(d);
-      const cm = isMoney(c);
-      if (dm === cm || dm !== recv) continue; // chuyển tiền giữa hai tài khoản tiền, và chiều ngược: bỏ qua
-      out.push({ name: shortName(t.name), no: d?.default || undefined, co: c?.default || undefined, noFilter: d?.filter, coFilter: c?.filter });
-    }
-    // Thu tiền khách / trả tiền NCC lên đầu (phiếu theo hoá đơn lấy loại đầu), loại "… khác" xuống cuối.
-    const rank = (n: string) => (/^(Thu|Chi) khác$/i.test(n) ? 3 : /(khách hàng|nhà cung cấp)/i.test(n) ? (/không theo/i.test(n) ? 0 : 1) : 2);
-    out.sort((a, b) => rank(a.name) - rank(b.name));
-    return out.length ? out : LOAI_PHIEU[type];
-  }, [q.data, type]);
+  return LOAI_PHIEU[type];
 }
+
+/** Loại PHIẾU KẾ TOÁN: chọn loại → điền tài khoản còn trống; ô tài khoản chỉ chọn trong danh sách lọc (đầu số). */
+export interface LoaiKeToan { code: string; name: string; debit?: string; credit?: string; debitFilter?: string[]; creditFilter?: string[] }
+export const LOAI_KE_TOAN: LoaiKeToan[] = [
+  { code: 'tinh-khau-hao-tscd', name: 'Tính khấu hao TSCĐ', debitFilter: ['623', '627', '641', '642', '3533', '632', '811', '241', '3562', '154', '138', '136'], creditFilter: ['214'] },
+  { code: 'phan-bo-ccdc', name: 'Phân bổ CCDC', debitFilter: ['623', '627', '641', '642', '632', '811', '241', '3533', '3562', '154', '138', '136'], creditFilter: ['242'] },
+  { code: 'hach-toan-chi-phi-luong', name: 'Hạch toán chi phí lương', credit: '334', creditFilter: ['334'] },
+  { code: 'hach-toan-thue-tndn-phai-nop', name: 'Hạch toán thuế TNDN phải nộp', debit: '8211', credit: '3334', debitFilter: ['821'], creditFilter: ['3334'] },
+  { code: 'khau-tru-thue-tieu-thu-dac-biet', name: 'Khấu trừ thuế tiêu thụ đặc biệt', debit: '3332', credit: '1383', debitFilter: ['3332'], creditFilter: ['1383'] },
+  { code: 'ket-chuyen-lai-lo-dau-nam', name: 'Kết chuyển lãi lỗ đầu năm', debitFilter: ['421'], creditFilter: ['421'] },
+  { code: 'vay-ngan-hang-chuyen-tra-cho-nha-cung-cap', name: 'Vay ngân hàng chuyển trả cho nhà cung cấp', debit: '331', credit: '3411', debitFilter: ['331', '3388', '635'], creditFilter: ['341', '335'] },
+  { code: 'quyet-toan-tam-ung', name: 'Quyết toán tạm ứng', credit: '141', debitFilter: ['641', '642', '627', '621', '623', '242', '811', '133'], creditFilter: ['141'] },
+  { code: 'chung-tu-nghiep-vu-khac', name: 'Chứng từ nghiệp vụ khác' },
+];
 
 /** Tài khoản chi tiết đầu tiên có đầu số `prefix` (khớp đúng mã thì lấy luôn). */
 export const pickAccount = (accounts: { code: string }[], prefix?: string): string =>

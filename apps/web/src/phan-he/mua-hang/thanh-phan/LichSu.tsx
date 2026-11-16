@@ -10,7 +10,7 @@ import { purchaseApi, vnd, type LogRow } from '../du-lieu';
 
 export const EVENT_LABEL: Record<string, string> = {
   doc_created: 'Tạo phiếu', doc_saved: 'Sửa phiếu', doc_submitted: 'Gửi duyệt', approved: 'Duyệt (ghi sổ)', doc_approved: 'Duyệt (ghi sổ)', override_approved: 'Duyệt ngoại lệ',
-  doc_unapproved: 'Bỏ duyệt', doc_cancelled: 'Huỷ phiếu', policy_created: 'Tạo chính sách', policy_changed: 'Sửa chính sách', policy_deleted: 'Xoá chính sách', attachment_added: 'Gắn tệp',
+  doc_unapproved: 'Bỏ duyệt', doc_adjust_started: 'Lập điều chỉnh', doc_adjust_cancelled: 'Huỷ điều chỉnh', doc_cancelled: 'Huỷ phiếu', policy_created: 'Tạo chính sách', policy_changed: 'Sửa chính sách', policy_deleted: 'Xoá chính sách', attachment_added: 'Gắn tệp',
   limit_transfer: 'Điều chuyển hạn mức', supplier_items: 'Cập nhật mặt hàng NCC', supplier_products: 'Cập nhật mặt hàng & giá mua', price_check: 'Kiểm giá', limit_check: 'Kiểm hạn mức', policy_applied: 'Áp chính sách',
   invoice_created: 'Thêm hoá đơn NCC', invoice_updated: 'Sửa hoá đơn NCC', invoice_cancelled: 'Huỷ hoá đơn NCC', invoice_imported: 'Nhập hoá đơn NCC', invoice_scanned: 'Quét hoá đơn (AI)', alias_learned: 'Học mã hàng NCC', alias_deleted: 'Xoá mã đã học',
 };

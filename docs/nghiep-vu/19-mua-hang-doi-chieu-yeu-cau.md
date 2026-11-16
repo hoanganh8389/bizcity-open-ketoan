@@ -24,7 +24,7 @@ Ký hiệu: **Có** = đã chạy · **Một phần** = có nhưng thiếu ý ·
 
 ## 2. Hạch toán mua hàng
 
-Định khoản lấy từ **Tài khoản ngầm định** theo loại chứng từ (ACC41) — một nơi khai. Mua hàng không còn bảng tài khoản riêng (MH12 chỉ hiện "đang dùng").
+Định khoản lấy từ **Quy tắc hạch toán** theo loại chứng từ (ACC41) — một nơi khai. Mua hàng không còn bảng tài khoản riêng (MH12 chỉ hiện "đang dùng").
 
 | Nghiệp vụ | Định khoản theo tài liệu | Phần mềm |
 |---|---|---|

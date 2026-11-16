@@ -12,6 +12,7 @@ import type { OpeningInput } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { date, money } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { useBranches, BranchPicker } from '@/components/filters';
 import { Empty, ErrorBox, Field, Loading, Modal, Money, StatusBadge, useViewAgain } from '@/components/ui';
@@ -30,6 +31,7 @@ const show = (s: string): string => (parseAmount(s) ? money(parseAmount(s)) : ''
 export function OpeningBalancesPage() {
   const qc = useQueryClient();
   const { can } = useAuth();
+  const tt = useThaoTac('ke-toan.so-du-dau-ky'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút theo thao tác màn ACC15 (đóng góp)
   const [form, setForm] = useState<{ existing?: Existing } | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export function OpeningBalancesPage() {
         code="ACC15"
         subtitle="Số dư đầu kỳ của từng tài khoản, từng đối tượng khi bắt đầu dùng phần mềm"
         helpKey="so-du-tai-khoan"
-        actions={can('documents:write') ? <><NutNhapExcel loai={nhapLoai('so-du-tai-khoan')!} label="Nhập từ Excel" /><button className="btn btn-primary" onClick={() => { setNotice(null); setForm({}); }}><Plus size={16} /> Nhập số dư đầu kỳ</button></> : undefined}
+        actions={can('documents:write') && tt.them ? <><NutNhapExcel loai={nhapLoai('so-du-tai-khoan')!} label="Nhập từ Excel" /><button className="btn btn-primary" onClick={() => { setNotice(null); setForm({}); }}><Plus size={16} /> Nhập số dư đầu kỳ</button></> : undefined}
       />
       {notice && <div className="alert alert-ok" style={{ marginBottom: 14 }}>{notice}</div>}
       <div className="card">
@@ -85,7 +87,8 @@ export function OpeningBalancesPage() {
 function OpeningForm({ existing, onClose, onSaved }: { existing?: Existing; onClose: () => void; onSaved: (docNo: string) => void }) {
   const qc = useQueryClient();
   const p = existing?.payload;
-  const readOnly = existing?.status === 'cancelled';
+  const tt = useThaoTac('ke-toan.so-du-dau-ky'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — sửa / huỷ theo thao tác màn ACC15 (đóng góp)
+  const readOnly = existing?.status === 'cancelled' || (existing ? !tt.sua : !tt.them);
   const { data: branches } = useBranches();
   const { data: accounts = [] } = useQuery({ queryKey: ['accounts', 'posting'], queryFn: () => api.get<Account[]>('/api/v1/accounts', { postingOnly: true }), staleTime: 60_000 });
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.code, a])), [accounts]);
@@ -143,11 +146,11 @@ function OpeningForm({ existing, onClose, onSaved }: { existing?: Existing; onCl
   return (
     <Modal viewAgain={viewAgain} viewFirst={Boolean(existing)}
       wide
-      title={existing ? `Số dư đầu kỳ ${existing.docNo}${readOnly ? ' (đã huỷ)' : ''}` : 'Nhập số dư đầu kỳ'}
+      title={existing ? `Số dư đầu kỳ ${existing.docNo}${existing.status === 'cancelled' ? ' (đã huỷ)' : ''}` : 'Nhập số dư đầu kỳ'}
       onClose={onClose}
       footer={
         <>
-          {existing && !readOnly && <button data-view-ok className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={cancel.isPending} onClick={() => { const r = window.prompt('Lý do huỷ số dư đầu kỳ này:'); if (r) cancel.mutate(r); }}>Huỷ phiếu</button>}
+          {existing && existing.status !== 'cancelled' && tt.huy && <button data-view-ok className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={cancel.isPending} onClick={() => { const r = window.prompt('Lý do huỷ số dư đầu kỳ này:'); if (r) cancel.mutate(r); }}>Huỷ phiếu</button>}
           <button className="btn" onClick={onClose}>Đóng</button>
           {!readOnly && <button className="btn btn-primary" disabled={!canSave || save.isPending} onClick={() => save.mutate()}>{existing ? 'Ghi lại' : 'Ghi sổ'}</button>}
         </>

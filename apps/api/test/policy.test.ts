@@ -14,9 +14,8 @@ import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId = '';
-const group = (revenueAccount: string) => ({
-  name: 'Hàng hoá bán lẻ', inventoryAccount: '1561', cogsAccount: '6321', revenueAccount, discountAccount: '52111', salesReturnAccount: '52131', isDefault: true,
-});
+// [2026-11-15 Nguyễn Văn Thủy] đổi doanh thu ở Quy tắc hạch toán (tài khoản của quy tắc) thay cho nhóm hạch toán mặt hàng (đóng góp)
+const setRevenue = (accountCode: string) => call(ctx, 'PUT', '/api/v1/posting/scheme/accounts/revenue', { accountCode });
 const sale = (no: string, date: string, version = 1) => saleDoc({
   docKey: `pos:CN01:${no}`, docNo: no, docDate: date, version, invoice: undefined,
   lines: [{ lineKey: 'l1', sku: 'POL-01', name: 'Hàng thử chính sách', unit: 'Cái', qty: 1, amountBeforeTax: 100000, taxCode: 'R08', taxAmount: 8000 }],
@@ -35,11 +34,6 @@ const versions = async () => (await call(ctx, 'GET', '/api/v1/posting/policy/ver
 
 beforeAll(async () => {
   ctx = await setupTenant();
-  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — tệp này kiểm nhóm hạch toán / lý do: bật công tắc lý do hạch toán (mặc định tắt) (đóng góp)
-  {
-    const on = await call(ctx, 'PUT', '/api/v1/settings/values/bizcity.posting.use_reasons', { value: 'on', validFrom: '2000-01-01', reason: 'Kiểm nhóm hạch toán / lý do' }, { 'idempotency-key': 'bat-ly-do-hach-toan' });
-    if (on.status !== 200) throw new Error(JSON.stringify(on.body));
-  }
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
 });
 afterAll(async () => {
@@ -56,7 +50,7 @@ describe('Chính sách kế toán có phiên bản', () => {
   });
 
   it('sửa cấu hình → bản amend cùng ngày hiệu lực, có tác dụng ngay (như trước khi có phiên bản)', async () => {
-    expect((await call(ctx, 'PUT', '/api/v1/posting/groups/HH-BANLE', group('51112'))).status).toBe(200);
+    expect((await setRevenue('51112')).status).toBe(200);
     expect((await call(ctx, 'POST', '/api/v1/documents', sale('POL-B', '2026-10-06'))).body.data.status).toBe('posted');
     expect((await versions())[0]).toMatchObject({ version: 2, kind: 'amend', effectiveFrom: '1900-01-01' });
     expect(await posted('POL-B')).toEqual({ revenue: ['51112'], policy: [2] });
@@ -68,7 +62,7 @@ describe('Chính sách kế toán có phiên bản', () => {
     expect(pub.body.data).toMatchObject({ version: 3, kind: 'publish', effectiveFrom: '2026-11-01' });
     expect(pub.body.meta.receipt.evidenceId).toMatch(/^\d+$/);
     // Chế độ mới: doanh thu bán lẻ sang 51113 (sửa sau khi phát hành = sửa chế độ đang đứng đầu, hiệu lực từ 01/11).
-    expect((await call(ctx, 'PUT', '/api/v1/posting/groups/HH-BANLE', group('51113'))).status).toBe(200);
+    expect((await setRevenue('51113')).status).toBe(200);
     expect((await call(ctx, 'POST', '/api/v1/documents', sale('POL-C', '2026-11-03'))).body.data.status).toBe('posted');
     expect((await versions())[0]).toMatchObject({ version: 4, kind: 'amend', effectiveFrom: '2026-11-01' });
     expect(await posted('POL-C')).toEqual({ revenue: ['51113'], policy: [4] });

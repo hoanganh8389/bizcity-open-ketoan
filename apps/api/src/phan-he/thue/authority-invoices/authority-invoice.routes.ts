@@ -30,6 +30,9 @@ import { writeAudit } from '../../../core/audit.js';
 import { catalogEnsure } from '@bizcity/platform/masterdata/catalog-ensure';
 import { ensureReferenceDocument } from '../../../modules/reference-documents/reference-document.routes.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — lệnh hoá đơn cơ quan thuế gác theo thao tác màn THUE01; người nộp thuế rủi ro (catalog:write) gác thêm qua lenh ở man-hinh-thue.ts (đóng góp)
+import { quyenThaoTac } from '../../../modules/access/man-hinh.js';
+import '../man-hinh-thue.js'; // đăng ký màn Thuế trước khi lệnh đọc quyền
 
 const tags = ['Hoá đơn cơ quan thuế'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -167,7 +170,7 @@ const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 export const authorityInvoiceWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'thue.authority-invoice.update', title: 'Nhập hoá đơn tải từ cổng hoá đơn điện tử', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('thue.hoa-don-co-quan-thue', 'nhap'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn THUE01 (đóng góp) */ effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: authorityImportSchema, output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/authority-invoices' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'authority_invoice' },
@@ -208,7 +211,7 @@ export const authorityInvoiceWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'thue.authority-invoice.to-reference', title: 'Chuyển hoá đơn trên cổng thành chứng từ nguồn để lập phiếu công nợ', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('thue.hoa-don-co-quan-thue', 'thamChieu'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn THUE01 (đóng góp) */ effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(1000), branchCode: z.string().trim().min(1) }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/authority-invoices/to-reference' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'authority_invoice' },
@@ -247,7 +250,7 @@ export const authorityInvoiceWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'thue.authority-invoice.delete', title: 'Xoá dữ liệu cổng đã nhập trong khoảng ngày', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('thue.hoa-don-co-quan-thue', 'xoa'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn THUE01 (đóng góp) */ effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: rangeQuery.extend({ direction: directionEnum }), output: anyOut,
     expose: { http: { method: 'DELETE', path: '/api/v1/authority-invoices' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'authority_invoice' },

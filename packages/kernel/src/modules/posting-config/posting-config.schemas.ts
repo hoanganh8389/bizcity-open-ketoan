@@ -4,6 +4,7 @@
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting-config/posting-config.schemas.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 // [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: lý do kind "journal" + debitAccount / creditAccount
 import { z } from 'zod';
+import { RULE_KEYS } from './scheme.js';
 
 const acc = z.string().trim().max(20);
 
@@ -55,31 +56,7 @@ export type PaymentMethodInput = z.infer<typeof paymentMethodSchema>;
  * Các khoá tài khoản ngầm định. Mười một khoá đầu là form ACC41 (đúng thứ tự trên màn); các khoá sau
  * là nguồn cuối cùng của bộ định khoản khi lý do / hình thức thanh toán / loại thuế không chỉ định.
  */
-export const DEFAULT_KEYS = {
-  cash: 'TK tiền mặt mặc định',
-  tax_output: 'TK thuế đầu ra ngầm định',
-  tax_input: 'TK thuế đầu vào ngầm định',
-  goods_in_transit: 'TK hàng gửi đi bán',
-  internal_receivable_goods: 'TK phải thu nội bộ hàng',
-  internal_payable_goods: 'TK phải trả nội bộ hàng',
-  internal_receivable: 'TK phải thu nội bộ tiền',
-  internal_payable: 'TK phải trả nội bộ tiền',
-  internal_cogs: 'TK ghi nhận giá vốn nội bộ khi chuyển kho',
-  commission_debit: 'TK Nợ mặc định ghi nhận hoa hồng',
-  commission_credit: 'TK Có mặc định ghi nhận hoa hồng',
-  receivable: 'Phải thu khách hàng (khi lý do không chỉ định)',
-  payable: 'Phải trả nhà cung cấp (khi lý do nhập mua không chỉ định)',
-  promotion_expense: 'Chi phí hàng khuyến mãi, tặng khách',
-  cash_in_transit: 'Tiền đang chuyển giữa các chi nhánh (chuyển tiền)',
-  stock_surplus: 'Hàng thừa chờ xử lý (điều chỉnh tăng)',
-  stock_shortage: 'Hàng thiếu chờ xử lý (điều chỉnh giảm)',
-  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — công tắc lý do / nhóm hạch toán tắt: tài khoản theo mặt hàng lấy ở đây (đóng góp)
-  revenue: 'Doanh thu bán hàng',
-  sales_return: 'Hàng bán bị trả lại',
-  cogs: 'Giá vốn hàng bán',
-  inventory: 'Kho hàng hoá',
-} as const;
-/** Khoá thuộc form ACC41 (phần trên); các khoá còn lại hiện ở phần "Bộ định khoản". */
-export const FORM_KEYS = ['cash', 'tax_output', 'tax_input', 'goods_in_transit', 'internal_receivable_goods', 'internal_payable_goods', 'internal_receivable', 'internal_payable', 'internal_cogs', 'commission_debit', 'commission_credit'] as const;
+// [2026-11-15 Nguyễn Văn Thủy] khoá tài khoản của quy tắc lấy từ scheme.ts (một nguồn: màn Quy tắc hạch toán, API, tài liệu) (đóng góp)
+export const DEFAULT_KEYS: Record<string, string> = Object.fromEntries(Object.entries(RULE_KEYS).map(([k, v]) => [k, v.label]));
 
-export const defaultsSchema = z.record(z.enum(Object.keys(DEFAULT_KEYS) as [keyof typeof DEFAULT_KEYS]), acc.min(3));
+export const defaultsSchema = z.record(z.enum(Object.keys(RULE_KEYS) as [string, ...string[]]), acc.min(3));

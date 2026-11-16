@@ -32,7 +32,6 @@ import { PrintButton } from '@/components/print';
 import { SignaturePanel, useSignatures } from './Signatures';
 import { VoucherModal, readOnlyReason, useVoucherSave } from '@/components/voucher/VoucherModal';
 import { useDimension } from '@/components/voucher/lookups';
-import { useUseReasons } from '@/lib/useReasons';
 import { guessLoai, pickAccount, useLoaiPhieu } from './loaiPhieu';
 
 interface Account { code: string; name: string; isPosting: boolean; trackPartner: boolean; isDebt?: boolean; normalSide: string; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean; trackEmployee: boolean }
@@ -98,7 +97,6 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
   /** addNew = bấm "Ghi và thêm mới": mở tiếp phiếu trống. */
   onSaved: (docNo: string, docDate: string, addNew: boolean) => void;
 }) {
-  const useReasons = useUseReasons();
   const qc = useQueryClient();
   const meta = VOUCHER_META[type];
   const moneySide = VOUCHER_MONEY[type]!.side;
@@ -129,12 +127,6 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
   const moneyAccounts = useMemo(() => accounts.filter((a) => isMoneyAccountFor(type, a.code)), [accounts, type]);
   const reasonKind = isReceipt ? 'receipt' : 'payment';
   // Lý do hạch toán theo màn (chỉ khi bật lý do): màn đã gán lý do thì chỉ hiện các lý do đó.
-  const screenKey = isReceipt ? 'cash_receipt' : 'cash_payment';
-  const screen = useQuery({ queryKey: ['posting-flow', 'screen-reasons', screenKey], staleTime: 60_000, enabled: useReasons,
-    queryFn: () => api.get<{ assigned: boolean; reasons: { code: string; isDefault: boolean }[] }>(`/api/v1/posting-flow/screens/${screenKey}/reasons`) }).data;
-  const allowed = screen?.assigned ? new Set(screen.reasons.map((r) => r.code)) : null;
-  const reasonList = reasons.filter((r) => r.kind === reasonKind && (r.isActive || r.code === pv?.reasonCode) && (!allowed || allowed.has(r.code) || r.code === pv?.reasonCode));
-  const screenDefault = screen?.assigned ? screen.reasons.find((r) => r.isDefault)?.code : undefined;
 
   const [h, setH] = useState({
     docNo: existing?.docNo ?? '',
@@ -152,7 +144,6 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
     reference: existing?.payload.reference ?? '',
   });
   const set = (patch: Partial<typeof h>) => setH((x) => ({ ...x, ...patch }));
-  useEffect(() => { if (!existing && screenDefault) setH((x) => (x.reasonCode ? x : { ...x, reasonCode: screenDefault })); }, [existing, screenDefault]);
   const branchCode = h.branchCode || branches?.find((b) => b.isActive)?.code || '';
   const [rows, setRows] = useState<Row[]>(() =>
     (p?.lines ?? []).map((l) =>
@@ -237,7 +228,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
   /** Thêm dòng: tài khoản theo loại (hoặc lý do), đối tượng / nhân viên / diễn giải theo đầu phiếu. */
   const addRow = () => {
     const l = loaiList[loai];
-    const account = pickAccount(accounts, lineSide === 'credit' ? l?.co : l?.no) || ((useReasons ? reasons.find((x) => x.code === h.reasonCode)?.counterAccount : undefined) ?? '');
+    const account = pickAccount(accounts, lineSide === 'credit' ? l?.co : l?.no) || '';
     setRows((xs) => [...xs, blankRow({ account, partner: h.partnerCode, employee: h.employeeCode, description: h.description })]);
   };
   const removeRow = (key: number) => setRows((xs) => xs.filter((x) => x.key !== key));
@@ -414,7 +405,6 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
           <div className="pt-f"><label className="req">Ngày hạch toán</label><input type="date" className="input" value={h.docDate} disabled={dis} onChange={(e) => set({ docDate: e.target.value })} /></div>
           <div className="pt-f"><label>{isBank ? 'Số chứng từ' : isReceipt ? 'Số phiếu thu' : 'Số phiếu chi'}</label><input className="input mono" value={h.docNo} disabled={dis || Boolean(existing)} placeholder="Tự cấp khi ghi" onChange={(e) => set({ docNo: e.target.value })} /></div>
           {multi && <div className="pt-f"><label className="req">Chi nhánh</label><BranchPicker activeOnly value={branchCode} disabled={dis || Boolean(existing)} onChange={(c) => set({ branchCode: c })} /></div>}
-          {useReasons && <div className="pt-f"><label>Lý do hạch toán</label><ListPicker items={reasonList.map((r) => ({ code: r.code, name: r.name }))} value={h.reasonCode} disabled={dis} onChange={(v) => set({ reasonCode: v })} /></div>}
         </div>
       </div>
 

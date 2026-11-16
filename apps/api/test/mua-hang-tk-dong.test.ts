@@ -1,7 +1,7 @@
 /**
- * [2026-11-13 Nguyễn Văn Thủy] Tài khoản trên dòng phiếu nhập mua (đóng góp)
- * Trống = theo Tài khoản ngầm định; chọn TK kho khác trong lọc → bút toán ghi Nợ đúng tài khoản đó;
- * chọn ngoài lọc (vd 1111 làm TK kho) → chặn duyệt.
+ * [2026-11-15 Nguyễn Văn Thủy] Phiếu nhập mua không mang tài khoản (đóng góp)
+ * Tài khoản chỉ quyết định ở Quy tắc hạch toán: dòng phiếu gửi kèm tài khoản (máy khách cũ) thì bị bỏ qua,
+ * bút toán vẫn ghi TK kho của quy tắc / loại kho.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { call, setupTenant, type TestCtx } from './helpers.js';
@@ -15,39 +15,42 @@ const debits = async (d: Doc) => {
   const e = (await call(t, 'GET', `/api/v1/documents/${d.links[0]!.eventId}`)).body.data.entries as { lines: { accountCode: string; debit: number }[] }[];
   return [...new Set(e.flatMap((x) => x.lines).filter((l) => l.debit > 0).map((l) => l.accountCode))];
 };
-let stock2 = '';
 
 beforeAll(async () => {
   t = await setupTenant();
   expect((await call(t, 'POST', '/api/v1/purchase/demo/seed', { password: 'Thuy!@#' })).status).toBe(200);
   await call(t, 'PUT', '/api/v1/partners/NCC-TKDONG', { name: 'NCC tài khoản dòng', kind: 'supplier' });
-  await call(t, 'GET', '/api/v1/account-default-types'); // nạp Tài khoản ngầm định theo loại
-  const acc = (await call(t, 'GET', '/api/v1/accounts')).body.data as { code: string; isPosting: boolean }[];
-  stock2 = acc.find((a) => a.isPosting && a.code.startsWith('153'))?.code ?? '';
-  if (!stock2) {
-    const r = await call(t, 'POST', '/api/v1/accounts', { code: '1531', name: 'Công cụ dụng cụ', parentCode: '153', type: 'asset', normalSide: 'debit' });
-    expect(r.status, JSON.stringify(r.body)).toBeLessThan(300);
-    stock2 = '1531';
-  }
 }, 60_000);
 afterAll(async () => { await t.app.close(); });
 
-describe('Nhập mua — tài khoản trên dòng', () => {
-  it('trống = theo ngầm định; chọn TK kho khác trong lọc thì ghi Nợ tài khoản đó', async () => {
+describe('Nhập mua — tài khoản chỉ theo Quy tắc hạch toán', () => {
+  it('dòng gửi kèm tài khoản bị bỏ qua: ghi Nợ TK kho của quy tắc, không ghi tài khoản gửi kèm', async () => {
     const def = await debits((await call(t, 'POST', `/api/v1/purchase/documents/${(await save(body())).id}/approve`)).body.data as Doc);
     expect(def.some((a) => a.startsWith('156'))).toBe(true);
-    const d = await save(body({ inventory: stock2 }));
+    const d = await save(body({ inventory: '1111', payable: '1121', tax: '6421' }));
     const ok = await call(t, 'POST', `/api/v1/purchase/documents/${d.id}/approve`);
     expect(ok.status, JSON.stringify(ok.body).slice(0, 400)).toBe(200);
     const acc = await debits(ok.body.data as Doc);
-    expect(acc).toContain(stock2);
-    expect(acc.some((a) => a.startsWith('156'))).toBe(false);
+    expect(acc.sort()).toEqual(def.sort());
+    expect(acc).not.toContain('1111');
   });
 
-  it('TK kho ngoài lọc (1111) → chặn duyệt', async () => {
-    const d = await save(body({ inventory: '1111' }));
-    const r = await call(t, 'POST', `/api/v1/purchase/documents/${d.id}/approve`);
-    expect(r.status).toBeGreaterThanOrEqual(400);
-    expect(JSON.stringify(r.body)).toContain('Tài khoản ngầm định');
+  it('quà không hoá đơn: tài khoản theo mục đích NQUA kế toán khai — phiếu quà sau không ghi đè lại', async () => {
+    const purposes = (await call(t, 'GET', '/api/v1/posting/purposes')).body.data as { code: string; accountCode: string }[];
+    const cur = purposes.find((p) => p.code === 'NQUA')?.accountCode ?? '';
+    const acc = (await call(t, 'GET', '/api/v1/accounts')).body.data as { code: string; isPosting: boolean }[];
+    const other = acc.find((a) => a.isPosting && a.code.startsWith('711') && a.code !== cur)?.code;
+    expect(other, 'cần một TK 711 chi tiết khác').toBeTruthy();
+    const put = await call(t, 'PUT', '/api/v1/posting/purposes/NQUA', { name: 'Nhận quà NCC', direction: 'increase', accountCode: other });
+    expect(put.status, JSON.stringify(put.body)).toBe(200);
+    const g = await save({ kind: 'gift_in', docDate: '2026-10-09', branchCode: 'CN-NA', partnerCode: 'NCC-TKDONG', gift: { source: 'ncc_extra', hasVat: false }, priceIncludesVat: false, orderDiscount: {},
+      lines: [{ lineKey: 'q', sku: 'QT-THUNG-SUAZ', name: 'Thùng sữa tặng kèm (ngoài hợp đồng)', unit: 'Thùng', qty: 2, price: 480000, taxCode: 'KKKN', lineType: 'gift_consumer' }] });
+    const ok = await call(t, 'POST', `/api/v1/purchase/documents/${g.id}/approve`);
+    expect(ok.status, JSON.stringify(ok.body).slice(0, 400)).toBe(200);
+    const d = ok.body.data as Doc;
+    const e = (await call(t, 'GET', `/api/v1/documents/${d.links[0]!.eventId}`)).body.data.entries as { lines: { accountCode: string; credit: number }[] }[];
+    expect(e.flatMap((x) => x.lines).filter((l) => l.credit > 0).map((l) => l.accountCode)).toContain(other);
+    const after = (await call(t, 'GET', '/api/v1/posting/purposes')).body.data as { code: string; accountCode: string }[];
+    expect(after.find((p) => p.code === 'NQUA')?.accountCode).toBe(other);
   });
 });

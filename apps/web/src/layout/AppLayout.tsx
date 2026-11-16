@@ -6,7 +6,7 @@
  */
 import { useTenant } from '../features/system/TenantPage';
 import { WindowDock } from './WindowDock';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { BarChart3, Menu, Settings } from 'lucide-react';
@@ -143,7 +143,8 @@ export function AppLayout() {
           <NutChiNhanh />
           <MenuSearch items={menu} />
           {/* [2026-11-11 Nguyễn Văn Thủy] nút bánh răng mở Thiết lập (đơn vị, người dùng, mẫu in, cấu hình) — không nằm ở menu trái (đóng góp) */}
-          <Link to={groupHome(THIET_LAP)} className="nut-thiet-lap" title="Thiết lập: thông tin đơn vị, người dùng, mẫu in, cấu hình" aria-label="Thiết lập"><Settings size={18} /></Link>
+          {/* [2026-11-16 Nguyễn Văn Thủy] bấm lại nút Thiết lập khi đang mở thì đóng thẻ Thiết lập (đóng góp) */}
+          <NutThietLap />
           <UserMenu onChangePassword={() => setChangingPassword(true)} />
         </div>
       </header>
@@ -169,5 +170,19 @@ export function AppLayout() {
       {/* Mã tra cứu của lỗi API gần nhất (PHASE-019 W1): người dùng chép gửi dev. */}
       <MaTraCuu />
     </>
+  );
+}
+
+/** Nút bánh răng: bấm mở Thiết lập; đang ở Thiết lập thì bấm lại để đóng thẻ đó (về thẻ trước). */
+function NutThietLap() {
+  const { pathname } = useLocation();
+  const home = groupHome(THIET_LAP);
+  const dangMo = pathname === home;
+  return (
+    <Link to={home} className={`nut-thiet-lap${dangMo ? ' on' : ''}`} aria-pressed={dangMo}
+      title={dangMo ? 'Đóng Thiết lập' : 'Thiết lập: thông tin đơn vị, người dùng, mẫu in, cấu hình'} aria-label="Thiết lập"
+      onClick={(e) => { if (dangMo) { e.preventDefault(); window.dispatchEvent(new CustomEvent('ws-close-tab', { detail: home })); } }}>
+      <Settings size={18} />
+    </Link>
   );
 }

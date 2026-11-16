@@ -29,9 +29,11 @@ import { purchaseService } from './service.js';
 import { stockLedgerBySku, stockOnHandBySku } from './bao-cao-kho.js';
 import { saveVariantSeparate, variantOverview, variantSeparate } from './bien-the.js';
 import { skuInfoRows } from './thong-tin-ma.js';
-import { deleteEmptyThungRows, emptyThungRows, thungApply, thungPlan } from './dvt-thung.js';
 import { deletePolicy, listDocs, listPolicies, policyInputSchema, policyVersions, savePolicy } from './store.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — chứng từ mua hàng gác theo thao tác màn MH11 (xem / them / sua / gửi duyệt / duyệt / bỏ duyệt / huỷ), báo cáo theo xem của màn; documents:read / write kéo theo (đóng góp)
+import { quyenThaoTac } from '../../modules/access/man-hinh.js';
+import './man-hinh-mua-hang.js'; // đăng ký màn Mua hàng trước khi lệnh đọc quyền
 
 const tags = ['Mua hàng'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -40,7 +42,6 @@ const policyVersionInput = z.object({ effectiveFrom: day.nullish(), reason: z.st
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
 const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(db, tenantId), { full: true });
-const thungBody = z.object({ days: z.number().int().min(0).max(3650).default(30), specs: z.record(z.string(), z.string().trim().max(60)).default({}) });
 const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
 
 // [2026-11-03 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 (SC-ACT-1): chủ của tệp đính kèm — dùng ở GET và action
@@ -52,14 +53,16 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   const write = requirePermission('documents:write');
   const catalog = requirePermission('catalog:write');
   const settings = requirePermission('settings:write');
+  // [2026-11-13 08:00 PM kiennt] NT-HT-003 — xem chứng từ (MH11) và báo cáo chỉ xem theo màn đã đăng ký (đóng góp)
+  const xemCT = requirePermission(quyenThaoTac('mua-hang.chung-tu', 'xem'));
 
   // ---------------- Chứng từ
-  r.get('/api/v1/purchase/documents', { preHandler: read, schema: { tags, summary: 'Danh sách chứng từ mua hàng', querystring: z.object({ kind: z.string().optional(), status: z.string().optional(), partnerCode: z.string().optional(), from: day.optional(), to: day.optional() }) },
+  r.get('/api/v1/purchase/documents', { preHandler: xemCT, schema: { tags, summary: 'Danh sách chứng từ mua hàng', querystring: z.object({ kind: z.string().optional(), status: z.string().optional(), partnerCode: z.string().optional(), from: day.optional(), to: day.optional() }) },
     handler: async (req) => {
       const rows = await purchaseService.list(authOf(req), req.query);
       return ok(rows, { total: rows.length, page: 1, pageSize: rows.length });
     } });
-  r.get('/api/v1/purchase/documents/:id', { preHandler: read, schema: { tags, summary: 'Một chứng từ + kết quả bộ máy', params: idParamSchema }, handler: async (req) => ok(await purchaseService.get(authOf(req), req.params.id)) });
+  r.get('/api/v1/purchase/documents/:id', { preHandler: xemCT, schema: { tags, summary: 'Một chứng từ + kết quả bộ máy', params: idParamSchema }, handler: async (req) => ok(await purchaseService.get(authOf(req), req.params.id)) });
 
   // ---------------- Nhà cung cấp (mọi việc mua hàng đi từ NCC)
   r.get('/api/v1/purchase/suppliers', { preHandler: read, schema: { tags, summary: 'Nhà cung cấp mua hàng: nợ, quá hạn, hạn mức, điều khoản, chính sách, hợp đồng, lần nhập gần nhất', querystring: z.object({ scope: z.enum(['active', 'all']).default('active'), asOf: day.optional() }) },
@@ -83,26 +86,26 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await policyVersions(db, authOf(req).tenantId, (req.params as { id: string }).id)) });
 
   // ---------------- Báo cáo
-  r.get('/api/v1/purchase/credit', { preHandler: read, schema: { tags, summary: 'Hạn mức NCC / nhãn theo chi nhánh, chỉ tiêu cung ứng', querystring: z.object({ asOf: day.optional() }) },
+  r.get('/api/v1/purchase/credit', { preHandler: requirePermission(quyenThaoTac('mua-hang.han-muc', 'xem')), schema: { tags, summary: 'Hạn mức NCC / nhãn theo chi nhánh, chỉ tiêu cung ứng', querystring: z.object({ asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await creditOverview(db, a.tenantId, await ctxOf(a.tenantId), req.query.asOf)); } });
   r.get('/api/v1/purchase/due', { preHandler: read, schema: { tags, summary: 'Khoản phải trả NCC đang mở, từng đợt, tuổi nợ', querystring: z.object({ partnerCode: z.string().optional(), asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await dueList(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/price-history/:sku', { preHandler: read, schema: { tags, summary: 'Các lần nhập gần nhất của một mã (đơn giá thực tế sau CK, mọi nguồn nhập)', params: z.object({ sku: z.string().min(1) }), querystring: z.object({ asOf: day.optional(), limit: z.coerce.number().int().min(1).max(50).default(10) }) },
     handler: async (req) => { const a = authOf(req); return ok(await priceHistory(db, a.tenantId, req.params.sku, req.query.asOf ?? '9999-12-31', undefined, req.query.limit)); } });
-  r.get('/api/v1/purchase/lots', { preHandler: read, schema: { tags, summary: 'Tồn theo lô / hạn dùng (FEFO)', querystring: z.object({ asOf: day.optional() }) },
+  r.get('/api/v1/purchase/lots', { preHandler: requirePermission(quyenThaoTac('mua-hang.lo-han', 'xem')), schema: { tags, summary: 'Tồn theo lô / hạn dùng (FEFO)', querystring: z.object({ asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await lotStock(db, a.tenantId, await ctxOf(a.tenantId), req.query.asOf)); } });
-  r.get('/api/v1/purchase/gifts', { preHandler: read, schema: { tags, summary: 'Nhập - xuất - tồn quà theo kỳ, ngân sách chương trình', querystring: z.object({ from: day.optional(), to: day.optional() }) },
+  r.get('/api/v1/purchase/gifts', { preHandler: requirePermission(quyenThaoTac('mua-hang.qua-tang', 'xem')), schema: { tags, summary: 'Nhập - xuất - tồn quà theo kỳ, ngân sách chương trình', querystring: z.object({ from: day.optional(), to: day.optional() }) },
     handler: async (req) => ok(giftLedger(await ctxOf(authOf(req).tenantId), req.query)) });
-  r.get('/api/v1/purchase/order-reconcile', { preHandler: read, schema: { tags, summary: 'Đối chiếu đơn đặt ↔ phiếu nhập theo mã (đặt / nhận / chờ / chênh / lệch giá / ngoài đơn / đổi mã) + phiếu nhập ngoài đơn', querystring: z.object({ from: day.optional(), to: day.optional(), partnerCode: z.string().max(64).optional(), branchCode: z.string().max(64).optional() }) },
+  r.get('/api/v1/purchase/order-reconcile', { preHandler: requirePermission(quyenThaoTac('mua-hang.doi-chieu', 'xem')), schema: { tags, summary: 'Đối chiếu đơn đặt ↔ phiếu nhập theo mã (đặt / nhận / chờ / chênh / lệch giá / ngoài đơn / đổi mã) + phiếu nhập ngoài đơn', querystring: z.object({ from: day.optional(), to: day.optional(), partnerCode: z.string().max(64).optional(), branchCode: z.string().max(64).optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await orderReconcileReport(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   const codes = z.string().optional().transform((v) => (v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined));
-  r.get('/api/v1/purchase/stock-ledger', { preHandler: read, schema: { tags, summary: 'Sổ kho theo mặt hàng: tồn đầu, nhập, nhập lại, nhập / xuất nội bộ, xuất bán, xuất trả, xuất điều chỉnh, SL điều chỉnh ±, khác, tồn cuối', querystring: z.object({ from: day, to: day, branchCodes: codes, warehouseCodes: codes, search: z.string().optional() }) },
+  r.get('/api/v1/purchase/stock-ledger', { preHandler: requirePermission(quyenThaoTac('mua-hang.so-kho', 'xem')), schema: { tags, summary: 'Sổ kho theo mặt hàng: tồn đầu, nhập, nhập lại, nhập / xuất nội bộ, xuất bán, xuất trả, xuất điều chỉnh, SL điều chỉnh ±, khác, tồn cuối', querystring: z.object({ from: day, to: day, branchCodes: codes, warehouseCodes: codes, search: z.string().optional() }) },
     handler: async (req) => ok(await stockLedgerBySku(db, authOf(req).tenantId, req.query)) });
-  r.get('/api/v1/purchase/stock-on-hand', { preHandler: read, schema: { tags, summary: 'Tồn kho theo mặt hàng theo kho: số lượng, đơn giá, thành tiền, đi đường, tồn max / min, SL cần nhập', querystring: z.object({ to: day, branchCodes: codes, warehouseCodes: codes, search: z.string().optional() }) },
+  r.get('/api/v1/purchase/stock-on-hand', { preHandler: requirePermission(quyenThaoTac('mua-hang.ton-kho', 'xem')), schema: { tags, summary: 'Tồn kho theo mặt hàng theo kho: số lượng, đơn giá, thành tiền, đi đường, tồn max / min, SL cần nhập', querystring: z.object({ to: day, branchCodes: codes, warehouseCodes: codes, search: z.string().optional() }) },
     handler: async (req) => ok(await stockOnHandBySku(db, authOf(req).tenantId, req.query)) });
   r.get('/api/v1/purchase/summary', { preHandler: read, schema: { tags, summary: 'Tổng hợp mua hàng theo NCC / nhãn / ngành / nhóm / mã / chi nhánh', querystring: z.object({ from: day, to: day, groupBy: z.enum(['partner', 'brand', 'industry', 'group', 'sku', 'branch']).default('sku') }) },
     handler: async (req) => { const a = authOf(req); return ok(await purchaseSummary(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
-  r.get('/api/v1/purchase/rebates/overview', { preHandler: read, schema: { tags, summary: 'Tổng hợp thưởng mọi chính sách trong kỳ', querystring: z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }) },
+  r.get('/api/v1/purchase/rebates/overview', { preHandler: requirePermission(quyenThaoTac('mua-hang.thuong', 'xem')), schema: { tags, summary: 'Tổng hợp thưởng mọi chính sách trong kỳ', querystring: z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }) },
     handler: async (req) => { const a = authOf(req); return ok(await rebateOverview(db, a.tenantId, await ctxOf(a.tenantId), req.query.month)); } });
   r.get('/api/v1/purchase/allocations/:id', { preHandler: read, schema: { tags, summary: 'Phân bổ phiếu chi phí vào phiếu nhập', params: idParamSchema, querystring: z.object({ basis: z.enum(['value', 'qty']).optional() }) },
     handler: async (req) => ok(costAllocation(await ctxOf(authOf(req).tenantId), req.params.id, req.query.basis)) });
@@ -140,8 +143,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { const a = authOf(req); const s = await loadSettings(db, a.tenantId); return ok({ ...s, resolvedAccounts: await resolveAccounts(db, a.tenantId, s) }); } });
   r.get('/api/v1/purchase/variants', { preHandler: read, schema: { tags, summary: 'Biến thể mặt hàng (MH26): đuôi mã, số mã con, đuôi nào tách riêng khi phân tích đặt hàng' },
     handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
-  r.get('/api/v1/purchase/units/thung/empty-rows', { preHandler: read, schema: { tags, summary: 'MH27: dòng Thùng trống giá thừa (bản đầu từng thêm) — cùng NCC × mã còn dòng có giá' },
-    handler: async (req) => ok(await emptyThungRows(db, authOf(req).tenantId)) });
   // @bizcity-route: công cụ dữ liệu tình huống (cần mật khẩu) — dựng / xoá từng tình huống bằng service ghi sổ, mỗi tình huống một giao dịch, cố ý bỏ qua lỗi từng phần
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset })); } });
@@ -162,7 +163,7 @@ const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 export const routesTsWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'mua-hang.purchase.document-upsert', title: 'Sửa chứng từ nháp / chờ duyệt', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.chung-tu', 'sua'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema.passthrough(), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/purchase/documents/:id' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
@@ -180,7 +181,7 @@ export const routesTsWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.purchase.documents-submit', title: 'Gửi duyệt', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.chung-tu', 'guiDuyet'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/submit' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
@@ -189,7 +190,7 @@ export const routesTsWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'mua-hang.purchase.documents-approve', title: 'Duyệt = ghi sổ (409 nếu còn cảnh báo chặn)', tags,
     // [2026-11-10 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, DOCUMENT 1.4.0 §5.1, R-WF-17): duyệt = ghi sổ → sideEffects có 'ledger' (SC-ACT-2, STD-ACT-9)
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.chung-tu', 'duyet'); }, effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/approve' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
@@ -220,7 +221,7 @@ export const routesTsWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.purchase.documents-cancel', title: 'Huỷ chứng từ chưa duyệt (không xoá)', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.chung-tu', 'huy'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/cancel' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
@@ -293,7 +294,7 @@ export const routesTsWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'mua-hang.purchase.settings', title: 'Lưu cài đặt mua hàng', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
-    input: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false), blockOverOrder: z.boolean().default(false) }), output: anyOut,
+    input: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false), blockOverOrder: z.boolean().default(false) }), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/purchase/settings' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase' },
     handler: async (ctx, input) => {
@@ -370,26 +371,27 @@ export const routesWriteActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/purchase/sku-info' }, mcp: false, ai: 'read' },
     handler: (ctx, input) => skuInfoRows(ctx.data.tx, ctx.tenant.id, input.skus),
   }),
+  // [2026-11-15 Nguyễn Văn Thủy] sửa phiếu đã ghi sổ bằng bản điều chỉnh: sổ giữ bản cũ tới khi duyệt bản mới (đóng góp)
   defineAction({
-    id: 'mua-hang.unit.thung-empty-rows-delete', title: 'MH27: xoá vĩnh viễn các dòng Thùng trống giá thừa, ghi nhật ký đủ nội dung', tags,
-    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({}), output: z.object({ count: z.number() }),
-    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/empty-rows/delete' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'supplier_product' },
-    handler: async (ctx) => {
-      const a = ctx.legacyAuth;
-      const res = await deleteEmptyThungRows(ctx.data.tx, a.tenantId);
-      if (res.count) {
-        ctx.evidence.note('deleted', res.deleted);
-        await logEvents(a.tenantId, [{ event: 'units_thung_cleanup', docNo: '', user: a.actorName, data: { count: res.count, deleted: res.deleted } }]);
-      }
-      return { count: res.count };
-    },
+    id: 'mua-hang.purchase.documents-adjust', title: 'Lập điều chỉnh phiếu đã duyệt: về nháp để sửa, sổ giữ bản cũ tới khi duyệt bản điều chỉnh (body { reason })', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema.extend({ reason: z.string().trim().min(5).max(500) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/adjust' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.startAdjustIn(ctx.data.tx, ctx.legacyAuth, input.id, input.reason),
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.documents-adjust-cancel', title: 'Huỷ điều chỉnh: phiếu về bản đã duyệt, sổ không đổi', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/adjust-cancel' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.cancelAdjustIn(ctx.data.tx, ctx.legacyAuth, input.id),
   }),
   // [2026-11-03 06:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4: bỏ duyệt trong giao dịch của action (huỷ chứng từ con + về nháp cùng lúc)
   defineAction({
     id: 'mua-hang.purchase.documents-unapprove', title: 'Bỏ duyệt: huỷ chứng từ kế toán đã sinh, về nháp (body tuỳ chọn { reason })', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('mua-hang.chung-tu', 'boDuyet'); }, effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
     input: idParamSchema.extend({ reason: z.string().trim().max(500).optional() }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/unapprove' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
@@ -397,7 +399,7 @@ export const routesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.purchase.document-create', title: 'Thêm chứng từ (nháp); số phiếu trống thì tự cấp', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'required',
+    get permission() { return quyenThaoTac('mua-hang.chung-tu', 'them'); }, effect: 'write', sideEffects: ['documents'], idempotency: 'required',
     input: z.object({}).passthrough(), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/documents', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'purchase' },
@@ -435,7 +437,7 @@ export const routesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.rebate.preview', title: 'Tính thưởng cuối kỳ (xem trước)', tags,
-    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    get permission() { return quyenThaoTac('mua-hang.thuong', 'xem'); }, effect: 'read', idempotency: 'none',
     input: z.object({ policyCode: z.string().min(1), period: z.string().min(4), manualTotal: z.number().nonnegative().optional() }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/purchase/rebates/preview' }, mcp: false, ai: 'read' },
     handler: async (ctx, input) => {
@@ -455,31 +457,6 @@ export const routesWriteActions: AnyActionDef[] = [
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
       return await unitsOf(trx, ctx.legacyAuth.tenantId, input.skus);
-    },
-  }),
-  defineAction({
-    id: 'mua-hang.unit.thung-preview', title: 'ĐVT Thùng đặt hàng (MH27): xem trước — mã có tương tác mua / NCC khai trong N ngày, quy cách nhập vào (specs: 12 Lốc, 12CAN/THÙNG) quy về ĐVT nhỏ nhất; không có thì đoán theo ngữ cảnh (mặc định 48)', tags,
-    permission: 'documents:read', effect: 'read', idempotency: 'none',
-    input: thungBody, output: anyOut,
-    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/preview' }, mcp: false, ai: 'read' },
-    handler: async (ctx, input) => {
-      const trx = ctx.data.tx;
-      return await thungPlan(trx, ctx.legacyAuth.tenantId, input);
-    },
-  }),
-  defineAction({
-    id: 'mua-hang.unit.thung-apply', title: 'ĐVT Thùng đặt hàng (MH27): chạy thật cho các mã chọn — thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định; dòng giá NCC giữ nguyên (lập đơn tự quy đổi)', tags,
-    permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
-    input: thungBody.extend({ skus: z.array(z.string().trim().min(1).max(64)).min(1).max(20000) }), output: anyOut,
-    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/apply' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'unit' },
-    handler: async (ctx, input) => {
-      const trx = ctx.data.tx;
-      const a = ctx.legacyAuth;
-      const res = await sameTx(trx, (trx) => thungApply(trx, a.tenantId, a.actor, input));
-      const manual = Object.keys(input.specs).filter((k) => input.skus.includes(k));
-      await logEvents(a.tenantId, [{ event: 'units_thung', docNo: '', user: a.actorName, data: { ...res, days: input.days, manual: manual.slice(0, 200), skus: input.skus.slice(0, 500) } }]);
-      return res;
     },
   }),
 ];

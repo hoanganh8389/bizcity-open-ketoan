@@ -12,6 +12,8 @@ import { DOC_TYPE_LABELS, VOUCHER_PURPOSES, type DocType, type VoucherPurpose } 
 import { api, errorText, ALL_ROWS } from '@/lib/api';
 import { date, money, today } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — đối trừ / gỡ đối trừ theo thao tác màn CN01 (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { Empty, ErrorBox, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -28,6 +30,7 @@ const parseAmount = (s: string): number => Number(s.replace(/[.,\s]/g, '')) || 0
 
 export function DebtItemsPage() {
   const { can } = useAuth();
+  const tt = useThaoTac('ke-toan.doi-tru-cong-no');
   const qc = useQueryClient();
   const [f, setF] = useState({ partnerCode: '', account: '', side: '', status: 'open', dueTo: '', search: '', page: 1 });
   const [matching, setMatching] = useState<DebtItem | null>(null);
@@ -44,7 +47,7 @@ export function DebtItemsPage() {
   return (
     <>
       <PageHeader title="Khoản công nợ và đối trừ" code="CN01" subtitle="Công nợ theo từng chứng từ: hạn thanh toán, đã đối trừ, còn lại; thu / chi tiền trừ vào khoản nào" helpKey="khoan-cong-no"
-        actions={can('documents:write') && (
+        actions={can('documents:write') && tt.doiTru && (
           <button className="btn" disabled={auto.isPending} title="Trong từng đối tượng và tài khoản: khoản ghi Nợ cũ nhất ghép với khoản ghi Có cũ nhất"
             onClick={() => window.confirm(f.partnerCode ? `Tự đối trừ theo hạn cũ trước cho đối tượng ${f.partnerCode}?` : 'Chưa chọn đối tượng: tự đối trừ cho MỌI đối tượng theo hạn cũ trước?') && auto.mutate()}>Tự đối trừ (cũ trước)</button>
         )} />
@@ -102,6 +105,7 @@ export function DebtItemsPage() {
 
 /** Đối trừ một khoản với các khoản bên đối ứng cùng đối tượng, cùng tài khoản. */
 function MatchDialog({ item, canWrite, onClose }: { item: DebtItem; canWrite: boolean; onClose: () => void }) {
+  const tt = useThaoTac('ke-toan.doi-tru-cong-no');
   const qc = useQueryClient();
   const other = item.side === 'debit' ? 'credit' : 'debit';
   const cur = useQuery({ queryKey: ['debt-item', item.id], queryFn: () => api.get<DebtItem[]>('/api/v1/debt-items', { partnerCode: item.partnerCode, account: item.accountCode, status: 'all', search: item.docNo, pageSize: ALL_ROWS }).then((rows) => rows.find((r) => r.id === item.id) ?? item) });
@@ -135,9 +139,9 @@ function MatchDialog({ item, canWrite, onClose }: { item: DebtItem; canWrite: bo
   return (
     <Modal wide title={`Đối trừ ${item.docNo} — ${item.partnerCode} ${item.partnerName}`} onClose={onClose}
       footer={<>
-        {canWrite && <button className="btn" style={{ marginRight: 'auto' }} disabled={!candidates.length || me.remaining <= 0} onClick={suggest}>Gợi ý theo hạn cũ trước</button>}
+        {canWrite && tt.doiTru && <button className="btn" style={{ marginRight: 'auto' }} disabled={!candidates.length || me.remaining <= 0} onClick={suggest}>Gợi ý theo hạn cũ trước</button>}
         <button className="btn" onClick={onClose}>Đóng</button>
-        {canWrite && <button className="btn btn-primary" disabled={!picked.length || over || save.isPending} onClick={() => save.mutate()}>Ghi đối trừ {total ? money(total) : ''}</button>}
+        {canWrite && tt.doiTru && <button className="btn btn-primary" disabled={!picked.length || over || save.isPending} onClick={() => save.mutate()}>Ghi đối trừ {total ? money(total) : ''}</button>}
       </>}>
       <div className="full row" style={{ gap: 24, flexWrap: 'wrap' }}>
         <span>{docKindLabel(item)} ngày {date(item.docDate)}, hạn {date(item.dueDate)}</span>
@@ -174,7 +178,7 @@ function MatchDialog({ item, canWrite, onClose }: { item: DebtItem; canWrite: bo
               {used.data!.map((a) => (
                 <tr key={a.id}>
                   <td>{date(a.date)}</td><td className="mono">{a.docNo}</td><td>{date(a.docDate)}</td><td className="num">{money(a.amount)}</td><td>{a.isAuto ? 'Tự động' : 'Chọn tay'}</td><td>{a.createdBy}</td>
-                  <td>{canWrite && <button className="btn btn-sm" disabled={undo.isPending} onClick={() => undo.mutate(a.id)}>Gỡ</button>}</td>
+                  <td>{canWrite && tt.goDoiTru && <button className="btn btn-sm" disabled={undo.isPending} onClick={() => undo.mutate(a.id)}>Gỡ</button>}</td>
                 </tr>
               ))}
             </tbody>

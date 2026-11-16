@@ -51,3 +51,8 @@
 .kieu-ma-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 4px; }
 
 .cay-nhom-msg { position: sticky; top: 0; z-index: 2; margin: 0 90px 6px 0; }
+
+/* [2026-11-15 Nguyễn Văn Thủy] hộp thoại thêm / sửa mặt hàng cao cố định — các bước ít nội dung không bị chụm (đóng góp) */
+.modal:has(.sp-form-mark) { height: min(88vh, 920px); }
+.modal:has(.sp-form-mark) .modal-body { flex: 1; min-height: 0; align-content: start; }
+.anh-mh { width: 100%; }

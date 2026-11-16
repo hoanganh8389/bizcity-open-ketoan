@@ -1,5 +1,8 @@
 # 18. Công tắc lý do hạch toán (mặc định tắt)
 
+> **Đã thay (15/11/2026)** bằng [24. Quy tắc hạch toán](24-quy-tac-hach-toan.md): lý do không còn đổi tài khoản, công tắc lý do và Tài khoản ngầm định theo loại đã bỏ; trường hợp riêng của phiếu kho dùng Mục đích xuất. Tài liệu giữ để tra lịch sử.
+
+
 <!-- [2026-11-10 09:30 PM Nguyễn Văn Thủy] PHASE-026 — công tắc lý do hạch toán (đóng góp) -->
 
 ## Chốt lại (10/11/2026, muộn): giữ lý do, thêm công tắc

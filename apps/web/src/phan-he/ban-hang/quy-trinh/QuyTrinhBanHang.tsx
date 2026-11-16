@@ -83,7 +83,7 @@ const STAGES: { node: Node; config: Node[]; side: Node[] }[] = [
     node: { label: 'Đối chiếu & báo cáo', code: 'BH02', icon: 'GitCompareArrows', color: '#d35400', path: '/ban-hang/tong-hop',
       auto: ['Doanh số, trả lại, doanh thu thuần theo cửa hàng, mặt hàng, khách', 'Đơn máy POS khớp từng chứng từ trong sổ', 'Lãi gộp sau khi tính giá vốn cuối tháng'] },
     config: [
-      { label: 'Tài khoản ngầm định', code: 'ACC41', icon: 'BookOpen', color: GRAY, path: '/cau-hinh/tai-khoan-ngam-dinh', hint: 'Doanh thu, thuế, phải thu, trả lại' },
+      { label: 'Quy tắc hạch toán', code: 'ACC41', icon: 'BookOpen', color: GRAY, path: '/cau-hinh/quy-tac-hach-toan', hint: 'Nghiệp vụ ghi Nợ gì, Có gì' },
       { label: 'Định khoản bán hàng', code: 'BH17', icon: 'Split', color: GRAY, path: '/app/pos/cai-dat', pos: true, hint: 'Tài khoản theo loại chứng từ bán, phiếu chênh lệch két' },
     ],
     side: [
@@ -98,9 +98,9 @@ export function QuyTrinhBanHang() {
   const core = useQuery({ queryKey: ['ban-hang', 'viec-can-lam'], queryFn: () => api.get<CoreTodo>('/api/v1/ban-hang/viec-can-lam'), refetchOnWindowFocus: true });
   // Module pos: đơn chờ tiền QR (30 ngày gần đây), ca còn mở từ hôm trước (7 ngày). Lỗi (module tắt / không có quyền) → coi như không có máy POS.
   const qr = useQuery({ queryKey: ['ban-hang', 'pos-qr'], retry: false,
-    queryFn: async () => Number((await api.getPage<unknown[]>('/api/v1/m/pos/admin/orders', { status: 'awaiting_payment', from: day(-30), to: day(), pageSize: 1 })).meta?.total ?? 0) });
+    queryFn: async () => Number((await api.getQuiet<unknown[]>('/api/v1/m/pos/admin/orders', { status: 'awaiting_payment', from: day(-30), to: day(), pageSize: 1 })).meta?.total ?? 0) });
   const shifts = useQuery({ queryKey: ['ban-hang', 'pos-shift'], retry: false, enabled: qr.isSuccess,
-    queryFn: async () => (await api.get<{ status?: string }[]>('/api/v1/m/pos/admin/shifts', { from: day(-7), to: day(-1) })).filter((s) => s.status === 'open').length });
+    queryFn: async () => (await api.getQuiet<{ status?: string }[]>('/api/v1/m/pos/admin/shifts', { from: day(-7), to: day(-1) })).data.filter((s) => s.status === 'open').length });
   const posOn = qr.isSuccess;
 
   const items: ViecCanLam[] = [

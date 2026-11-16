@@ -31,8 +31,24 @@ const monthStart = () => `${today().slice(0, 8)}01`;
 /** Phiếu mới: chi nhánh xuất = chi nhánh đang làm việc; chưa chọn thì chi nhánh đầu tiên đang lọc. */
 const emptyDoc = (filterBranches = ''): CkDoc => ({
   id: '', docNo: '', docDate: today(), fromBranchCode: workBranch.get() || (filterBranches !== '-' ? filterBranches.split(',')[0] ?? '' : ''), fromWarehouse: '', toBranchCode: '', toWarehouse: '', note: '',
-  status: 'shipped', lines: [], totalQty: 0, totalReceived: 0, short: false,
+  status: 'draft', lines: [], totalQty: 0, totalReceived: 0, short: false,
 });
+
+/** [2026-11-15 Nguyễn Văn Thủy] trạng thái từng đầu: [chữ, lớp nhãn, chú thích] (đóng góp) */
+function dauXuat(r: CkDoc): [string, string, string] {
+  if (r.adjust) return ['Đang điều chỉnh', 'badge-warn', `Lý do: ${r.adjust.reason} — sổ còn theo bản đã duyệt`];
+  if (r.status === 'draft') return ['Nháp', 'badge-gray', 'Chưa trừ tồn, chưa vào sổ'];
+  if (r.status === 'cancelled') return ['Đã huỷ', 'badge-bad', 'Đã đảo bút toán'];
+  if (r.status === 'rejected') return ['Trả lại tồn', 'badge-bad', 'Bên nhận từ chối: đầu xuất đã huỷ'];
+  return ['Đã duyệt xuất', 'badge-ok', r.adjustments?.some((h) => h.kind === 'adjust') ? 'Có điều chỉnh đã duyệt (xem lịch sử trên phiếu)' : 'Đã trừ tồn bên chuyển'];
+}
+function dauNhan(r: CkDoc): [string, string, string] {
+  if (r.status === 'draft' || r.status === 'cancelled') return ['—', 'badge-gray', r.status === 'draft' ? 'Bên xuất chưa duyệt xuất' : 'Phiếu đã huỷ'];
+  if (r.status === 'rejected') return ['Từ chối', 'badge-bad', r.receivedNote || ''];
+  if (r.adjust) return r.adjust.both ? [r.adjust.confirmedBy ? 'Đã xác nhận điều chỉnh' : 'Chờ xác nhận điều chỉnh', 'badge-warn', 'Điều chỉnh hai đầu: bên nhận xác nhận rồi mới duyệt'] : ['Khoá nhận', 'badge-warn', 'Bên xuất đang điều chỉnh'];
+  if (r.status === 'shipped') return ['Chờ nhận', 'badge-warn', 'Hàng đang chuyển'];
+  return r.short ? ['Nhận thiếu', 'badge-warn', r.receivedNote || ''] : ['Đã nhận', 'badge-ok', r.adjustments?.some((h) => h.kind === 'chenh_lech') ? 'Có biên bản chênh lệch' : ''];
+}
 
 export function ChuyenKhoPage() {
   const tt = useThaoTac('kho.chuyen-kho'); // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: nút theo thao tác đã đăng ký của màn KHO01 (đóng góp)
@@ -70,10 +86,15 @@ export function ChuyenKhoPage() {
       p.kind === 'unreceive' ? ckApi.unreceive(p.id) : p.kind === 'reject' ? ckApi.reject(p.id, p.reason ?? '') : ckApi.cancel(p.id, p.reason ?? ''),
     onSuccess: after,
   });
+  // [2026-11-15 Nguyễn Văn Thủy] thao tác trên phiếu đang mở (duyệt xuất, điều chỉnh, xác nhận, phiếu điện tử): xong thì mở lại đúng phiếu (đóng góp)
+  const run = useMutation({
+    mutationFn: (fn: () => Promise<CkDoc>) => fn(),
+    onSuccess: (d) => { after(d); setEditing(d); setFormKey((k) => k + 1); },
+  });
   useThemTuDiaChi(() => { if (!tt.them) return; setEditing(emptyDoc(f.branchCodes)); setFormKey((k) => k + 1); });
   /** Nhận đủ hàng loạt: mỗi phiếu chờ nhận đã tích nhận đủ số lượng xuất; phiếu lỗi báo riêng. */
   const nhanDu = async () => {
-    const list = rows.filter((r) => tich.has(r.id) && r.status === 'shipped');
+    const list = rows.filter((r) => tich.has(r.id) && r.status === 'shipped' && !r.adjust);
     if (!list.length || !window.confirm(`Xác nhận NHẬN ĐỦ ${list.length} phiếu chuyển kho (ngày nhận hôm nay)? Tồn bên nhận sẽ cộng.`)) return;
     setNhanLoat(true); setBao(null);
     const loi: string[] = [];
@@ -103,7 +124,7 @@ export function ChuyenKhoPage() {
             <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouses, onChange: (warehouses) => set({ warehouses }) }} />
             <div className="field"><label title="Chờ nhận = đã xuất, thủ kho nhập chưa xác nhận">Trạng thái</label>
               <select className="select input" value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                <option value="">Mọi trạng thái</option><option value="pending">Đã xuất, chờ nhận</option><option value="received">Đã nhận</option>
+                <option value="">Mọi trạng thái</option><option value="draft">Nháp</option><option value="pending">Đã xuất, chờ nhận</option><option value="received">Đã nhận</option>
                 <option value="rejected">Bên nhận từ chối</option><option value="cancelled">Đã huỷ</option>
               </select>
             </div>
@@ -123,9 +144,9 @@ export function ChuyenKhoPage() {
             {tt.huy && <button className="btn btn-sm" disabled={!live || act.isPending} title="Huỷ cả phần xuất và phần nhập (đảo bút toán bằng số âm), giữ phiếu để tra cứu"
               onClick={() => { if (!sel) return; const r = ask(`Huỷ phiếu chuyển kho ${sel.docNo}? Tồn hai bên trả lại như trước khi chuyển.\nLý do huỷ:`); if (r !== null) act.mutate({ kind: 'cancel', id: sel.id, reason: r }); }}>Huỷ phiếu</button>}
             <PrintButton small screen="KHO01" templates={TRADE_TEMPLATES.transfer!} disabled={!sel} title="In phiếu đang chọn" getDocs={async () => (sel ? [toPrintDoc(await ckApi.get(sel.id))] : [])} />
-            {tt.nhan && <button className="btn btn-sm" disabled={nhanLoat || !rows.some((r) => tich.has(r.id) && r.status === 'shipped')}
+            {tt.nhan && <button className="btn btn-sm" disabled={nhanLoat || !rows.some((r) => tich.has(r.id) && r.status === 'shipped' && !r.adjust)}
               title="Thủ kho nhập: xác nhận NHẬN ĐỦ số lượng các phiếu chờ nhận đã tích (ngày nhận = hôm nay). Nhận thiếu thì mở từng phiếu, bấm Nhận hàng."
-              onClick={() => void nhanDu()}>{nhanLoat ? 'Đang nhận…' : `Nhận đủ ${rows.filter((r) => tich.has(r.id) && r.status === 'shipped').length || ''} phiếu đã tích`}</button>}
+              onClick={() => void nhanDu()}>{nhanLoat ? 'Đang nhận…' : `Nhận đủ ${rows.filter((r) => tich.has(r.id) && r.status === 'shipped' && !r.adjust).length || ''} phiếu đã tích`}</button>}
             <button className="btn btn-sm" onClick={() => void q.refetch()}>Nạp</button>
             <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
             <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Phiếu chuyển từ website xem ở <Link to="/bao-cao/chuyen-kho">Bảng kê chuyển kho (HH01)</Link></span>
@@ -134,7 +155,7 @@ export function ChuyenKhoPage() {
           <ErrorBox error={q.error ? errorText(q.error) : act.error ? errorText(act.error) : null} />
           {q.isLoading ? <Loading /> : (
             <DataGrid
-              storageKey="kho01-phieu-chuyen-v1" exportName={`phieu-chuyen-kho-${f.from}-${f.to}`} exportRef={exportRef}
+              storageKey="kho01-phieu-chuyen-v2" exportName={`phieu-chuyen-kho-${f.from}-${f.to}`} exportRef={exportRef}
               rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => void open(r)} maxHeight="calc(100vh - 480px)"
               rowClassName={(r) => dongChungTu(r.status)} footerLabel="Cộng"
               emptyText='Chưa có phiếu chuyển kho trong khoảng này — bấm "+ Thêm"'
@@ -144,14 +165,16 @@ export function ChuyenKhoPage() {
                   render: (r) => <input type="checkbox" checked={tich.has(r.id)} onClick={(e) => e.stopPropagation()} onChange={(e) => setTich((t) => { const n = new Set(t); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} /> },
                 { key: 'docDate', header: 'Ngày', title: 'Ngày xuất', type: 'date', width: 95 },
                 { key: 'docNo', header: 'Số phiếu', title: 'Số phiếu chuyển kho', type: 'code', width: 115 },
-                { key: 'fromBranchCode', header: 'Chi nhánh xuất', title: 'Chi nhánh giao hàng', type: 'code', width: 115 },
-                { key: 'fromWarehouse', header: 'Kho xuất', title: 'Phân kho xuất', type: 'code', width: 90 },
-                { key: 'toBranchCode', header: 'Chi nhánh nhập', title: 'Chi nhánh nhận hàng', type: 'code', width: 115 },
-                { key: 'toWarehouse', header: 'Kho nhập', title: 'Phân kho nhập', type: 'code', width: 90 },
-                { key: 'lines', header: 'Số dòng', title: 'Số dòng hàng trên phiếu', type: 'number', width: 70, value: (r) => r.lines.length },
+                // [2026-11-15 Nguyễn Văn Thủy] hai đầu tách rõ: Xuất từ / Nhập vào gộp chi nhánh · kho; trạng thái riêng từng đầu; phiếu điện tử (đóng góp)
+                { key: 'from', header: 'Xuất từ', title: 'Chi nhánh · phân kho giao hàng', type: 'code', width: 150, value: (r) => [r.fromBranchCode, r.fromWarehouse].filter(Boolean).join(' · ') },
+                { key: 'to', header: 'Nhập vào', title: 'Chi nhánh · phân kho nhận hàng', type: 'code', width: 150, value: (r) => [r.toBranchCode, r.toWarehouse].filter(Boolean).join(' · ') },
+                { key: 'outState', header: 'Đầu xuất', title: 'Nháp (chưa trừ tồn) · Đã duyệt xuất · Đang điều chỉnh · Đã huỷ', width: 130, value: (r) => dauXuat(r)[0], render: (r) => { const [t, c, tip] = dauXuat(r); return <span className={`badge ${c}`} title={tip}>{t}</span>; } },
+                { key: 'inState', header: 'Đầu nhận', title: 'Chưa nhận được (nháp) · Chờ nhận · Khoá nhận (bên xuất đang điều chỉnh) · Đã nhận · Nhận thiếu · Từ chối', width: 140, value: (r) => dauNhan(r)[0], render: (r) => { const [t, c, tip] = dauNhan(r); return <span className={`badge ${c}`} title={tip}>{t}</span>; } },
                 { key: 'totalQty', header: 'SL xuất', title: 'Tổng số lượng xuất (đơn vị tính tồn kho)', type: 'number', width: 85, sum: true },
                 { key: 'totalReceived', header: 'SL nhận', title: 'Tổng số thủ kho nhập xác nhận; trống = chưa nhận', type: 'number', width: 85, sum: true, value: (r) => (r.status === 'received' ? r.totalReceived : null) },
-                { key: 'status', header: 'Trạng thái', title: 'Đã xuất, chờ nhận · Đã nhận · Nhận thiếu · Bên nhận từ chối · Đã huỷ', width: 135, value: (r) => statusText(r), render: (r) => <span className={`badge ${statusClass(r)}`}>{statusText(r)}</span> },
+                { key: 'einvoice', header: 'Phiếu điện tử', title: 'Số phiếu xuất kho kiêm vận chuyển nội bộ điện tử đã phát hành', type: 'code', width: 110, value: (r) => r.einvoice?.no ?? '' },
+                { key: 'lines', header: 'Số dòng', title: 'Số dòng hàng trên phiếu', type: 'number', width: 70, hidden: true, value: (r) => r.lines.length },
+                { key: 'status', header: 'Trạng thái chung', title: 'Trạng thái gộp của phiếu', width: 135, hidden: true, value: (r) => statusText(r), render: (r) => <span className={`badge ${statusClass(r)}`}>{statusText(r)}</span> },
                 { key: 'receivedDate', header: 'Ngày nhận', title: 'Ngày thủ kho nhập xác nhận', type: 'date', width: 95 },
                 { key: 'note', header: 'Diễn giải', title: 'Diễn giải của phiếu; khi nhận thiếu / từ chối thì kèm ghi chú bên nhận', width: 220, value: (r) => [r.note, r.receivedNote].filter(Boolean).join(' · ') },
                 { key: 'createdBy', header: 'Người lập', title: 'Người lập phiếu', width: 120, hidden: true },
@@ -179,7 +202,7 @@ export function ChuyenKhoPage() {
         </div>
       </FilterLayout>
       {editing && (
-        <PhieuChuyenKhoForm key={formKey} value={editing} saving={save.isPending} error={save.error}
+        <PhieuChuyenKhoForm key={formKey} value={editing} saving={save.isPending || run.isPending} error={save.error ?? run.error} onAction={(fn) => { save.reset(); run.mutate(fn); }}
           onSave={(d, close) => save.mutate({ d, close })} onClose={() => { setEditing(null); save.reset(); }}
           onReceive={editing.id ? () => void openReceive(editing) : undefined} />
       )}

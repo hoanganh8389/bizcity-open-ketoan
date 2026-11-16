@@ -99,6 +99,7 @@
     "pos.order.qr-confirm",
     "pos.order.qr-renew",
     "pos.order.invoice-buyer",
+    "pos.order.move-to-z",
     "pos.stock.all"
   ],
   "ledger": {

@@ -9,6 +9,8 @@ import { Download } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { date, money } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — lưu tờ khai TNDN theo thao tác màn TNDN03 (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading, Money } from '@/components/ui';
 
@@ -48,7 +50,9 @@ interface CitData {
 
 export function CitReturnPage() {
   const qc = useQueryClient();
-  const { can } = useAuth();
+  const { can: canGoc } = useAuth();
+  const tt = useThaoTac('thue.quyet-toan-tndn');
+  const can = (p: string) => canGoc(p) && (p !== 'documents:write' || Boolean(tt.luu)); // mọi nút ghi của màn là thao tác lưu
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear() - (now.getMonth() < 3 ? 1 : 0));
   const q = useQuery({ queryKey: ['cit-return', year], queryFn: () => api.get<CitData>('/api/v1/cit-returns/build', { year }) });

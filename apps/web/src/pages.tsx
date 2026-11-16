@@ -50,7 +50,7 @@ import { OffsetPage } from './features/vouchers/OffsetPage';
 import { TenantPage } from './features/system/TenantPage';
 import { TaxCodesPage } from './features/catalog/TaxCodesPage';
 import { PaymentMethodsPage } from './features/posting/PaymentMethodsPage';
-import { DefaultsPage } from './features/posting/DefaultsPage';
+import { QuyTacHachToanPage } from './features/posting/QuyTacHachToanPage';
 import { HuongDanPage } from './features/help/HuongDanPage';
 import { VouchersPage } from './features/vouchers/VouchersPage';
 import { CashVouchersPage } from './features/vouchers/CashVouchersPage';
@@ -146,11 +146,12 @@ export const pageRoutes = (
     <Route path="danh-muc/bang-gia" element={<PriceListsPage />} />
     <Route path="bao-cao/lich-thanh-toan-hop-dong" element={<ContractSchedulesPage />} />
     <Route path="danh-muc/loai-thue" element={<TaxCodesPage />} />
-    {/* [2026-11-13 Nguyễn Văn Thủy] Lý do, Mặt hàng – Tài khoản đã bỏ: về Tài khoản ngầm định (đóng góp) */}
-    <Route path="cau-hinh/ly-do" element={<Navigate to="/cau-hinh/tai-khoan-ngam-dinh" replace />} />
-    <Route path="cau-hinh/nhom-hach-toan" element={<Navigate to="/cau-hinh/tai-khoan-ngam-dinh" replace />} />
+    {/* [2026-11-15 Nguyễn Văn Thủy] Lý do, Mặt hàng – Tài khoản, Tài khoản ngầm định đã bỏ: về Quy tắc hạch toán (đóng góp) */}
+    <Route path="cau-hinh/ly-do" element={<Navigate to="/cau-hinh/quy-tac-hach-toan" replace />} />
+    <Route path="cau-hinh/nhom-hach-toan" element={<Navigate to="/cau-hinh/quy-tac-hach-toan" replace />} />
+    <Route path="cau-hinh/tai-khoan-ngam-dinh" element={<Navigate to="/cau-hinh/quy-tac-hach-toan" replace />} />
     <Route path="cau-hinh/hinh-thuc-thanh-toan" element={<PaymentMethodsPage />} />
-    <Route path="cau-hinh/tai-khoan-ngam-dinh" element={<DefaultsPage />} />
+    <Route path="cau-hinh/quy-tac-hach-toan" element={<QuyTacHachToanPage />} />
     <Route path="cau-hinh/nguoi-dung" element={<UsersPage />} />
     <Route path="cau-hinh/khoa-api" element={<ApiKeysPage />} />
     <Route path="tien-ich/add-in" element={<AddInsPage />} />

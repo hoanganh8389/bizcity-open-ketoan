@@ -83,7 +83,7 @@ Khai báo theo thứ tự này, vì cái sau dựa vào cái trước.
 | 4 | Tài khoản | ACC1 | Danh sách tài khoản dùng | Không định khoản được |
 | 5 | Nhóm hạch toán của hàng | ACC17 | Hàng này dùng TK kho, giá vốn, doanh thu nào | Sai báo cáo lãi lỗ |
 | 6 | Lý do | ACC18 | Vì sao hàng di chuyển, TK đối ứng là gì | Sai định khoản |
-| 7 | Tài khoản ngầm định | ACC41 | TK dùng khi không chỉ định gì | Chứng từ báo lỗi, không vào sổ |
+| 7 | Quy tắc hạch toán | ACC41 | TK dùng khi không chỉ định gì | Chứng từ báo lỗi, không vào sổ |
 | 8 | Nhóm hàng | DM11 | Ngành, nhãn, nhóm để báo cáo và sinh mã | Báo cáo theo nhóm sai |
 | 9 | Mặt hàng | DM10 | Mã, tên, ĐVT, thuế, nhóm | Mọi khâu sau sai |
 | 10 | NCC, chính sách mua | DM13, MH04 | Giá, chiết khấu, khuyến mại, thưởng | Giá vốn và công nợ sai |
@@ -99,7 +99,7 @@ Lý do của phiếu  ──►  có chỉ định TK?  ── có ──► dù
 Nhóm hạch toán của mặt hàng  ──► có ──► dùng TK của nhóm
                            │ không
                            ▼
-Tài khoản ngầm định  ──► không có ──► chứng từ báo lỗi, KHÔNG ghi bừa
+Quy tắc hạch toán  ──► không có ──► chứng từ báo lỗi, KHÔNG ghi bừa
 ```
 
 Ví dụ thật trong cấu hình hiện có:
