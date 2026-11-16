@@ -2,6 +2,7 @@
 <!-- [2026-11-15 09:35 PM Võ Hoàng] NGHIEM-THU — tạo phiếu: tích điểm / voucher máy bán còn chạy dữ liệu giả (đóng góp) -->
 <!-- [2026-11-15 10:45 AM Võ Hoàng] NGHIEM-THU — chốt Q1–Q4: điểm chỉ hạch toán lúc đổi (đóng góp) -->
 <!-- [2026-11-15 03:00 PM Võ Hoàng] NGHIEM-THU — chia ba bước, số liệu bước 1, cách làm (đóng góp) -->
+<!-- [2026-11-15 06:30 PM Võ Hoàng] NGHIEM-THU — số liệu và cách làm bước 2: đổi điểm, dùng voucher (đóng góp) -->
 
 | | |
 |---|---|
@@ -36,6 +37,18 @@ Cửa hàng `CN01`. Chính sách website đẩy sang: `TICH10K` (loại 1: 1 đi
 | Sự kiện giao lại / đơn đổi phiên bản | không thêm dòng |
 | Khách lẻ, đơn chờ thanh toán | không tích (đơn QR tích khi xác nhận tiền) |
 
+### Số liệu bước 2 (đổi điểm, dùng voucher)
+
+Thêm vào chính sách CN01: `DOIVC` (loại 6: 100 điểm đổi voucher giảm 50.000đ, hạn 30 ngày, tiền tố `TGS50-`), `DOIQUA` (loại 5: 50 điểm đổi 1 hộp quà `100045001Z`). Khách `0901234567` đang có 107 điểm (lô 1 còn 32, lô 2 còn 75).
+
+| Tình huống | Kết quả |
+|---|---|
+| Đơn 325.000 + đổi `DOIVC` | trừ 100 điểm: lô 1 hết 32, lô 2 trừ 68; tích +32 → số dư 39; voucher `TGS50-…` (mã in trên bill) còn hiệu lực 30 ngày |
+| Đơn sau 325.000 dùng voucher | khách trả 275.000; chứng từ bán ghi chiết khấu 50.000 (trước thuế 46.296, thuế 3.704); tích +27 (theo 275.000) → số dư 66; voucher chuyển "đã dùng" |
+| Dùng lại voucher đó | chặn: voucher đã dùng (ghi mã đơn đã dùng) |
+| Đơn 325.000 + đổi `DOIQUA` | dòng quà `100045001Z` 0đ (dòng quà trên chứng từ bán, bill Z vì không gửi thuế); trừ 50, tích +32 → số dư 48 |
+| Đổi khi không đủ điểm / sai hạng / khách lẻ | chặn trước khi lập đơn, nói rõ lý do |
+
 ## 5. Kết quả mong đợi (tóm tắt)
 
 | # | Kiểm | Kết quả |
@@ -60,7 +73,9 @@ Cửa hàng `CN01`. Chính sách website đẩy sang: `TICH10K` (loại 1: 1 đi
 - Module `modules/loyalty`, sổ `mod_loyalty.entries` chỉ thêm (dòng dương là lô có hạn, dòng âm phân bổ theo lô), khách theo mã đối tượng (khung nhìn đối tượng chỉ mở mã, như module `pos`).
 - Chính sách của website: website đẩy `LoyaltyProgram` từng cửa hàng sang `POST /api/v1/m/loyalty/program` (Cổng kế toán); module lưu từng phiên bản. Không nhận chính sách từ máy bán.
 - Tích / hoàn theo sự kiện `pos.order.recorded` / `pos.return.recorded` (subscriber của module, chống làm hai lần theo đơn / phiếu trả); bộ tính điểm chép từ máy bán (đã khớp PHP).
-- Bước 1: sổ điểm, tích, hoàn, máy bán đọc điểm thật (kiểm 1, 3). Bước 2: đổi điểm lấy quà / voucher (kiểm 2). Bước 3: hết hạn, nạp số dư đầu, báo cáo (kiểm 4, 5, 6).
+- Bước 1: sổ điểm, tích, hoàn, máy bán đọc điểm thật (kiểm 1, 3).
+- Bước 2 — đổi điểm: đơn mang `loyalty.redeem`; module `pos` hỏi module `loyalty` (action đọc `loyalty.redeem.quote`, gọi chéo qua `ctx.actions.call`, quyền thu ngân `loyalty:read`): đủ điểm, đúng hạng, quà đúng mã / số lượng. Quà là dòng quà 0đ trên chứng từ bán (giá vốn hàng tặng, kế toán đặt). Mã voucher định trước theo mã đơn (in ngay trên bill). Trừ điểm + phát voucher theo sự kiện `pos.order.recorded` (cùng chỗ tích). Hai máy cùng lúc dùng điểm của một khách → trừ phần còn, ghi chú.
+- Bước 2 — dùng voucher: `pos` đọc voucher (`loyalty.voucher.get`), chia tiền giảm theo thành tiền dòng như máy bán; chứng từ bán ghi **chiết khấu** (định khoản kế toán đặt). Đánh dấu đã dùng theo sự kiện; dùng trùng ở hai máy cùng lúc → đơn sau ghi chú để kế toán xử lý. Bước 2: đổi điểm lấy quà / voucher (kiểm 2). Bước 3: hết hạn, nạp số dư đầu, báo cáo (kiểm 4, 5, 6).
 
 ## 7. Kết quả chạy
 
@@ -88,3 +103,4 @@ Ghi chú:
 | 15/11/2026 | Chốt Q1–Q4 |
 | 15/11/2026 | Chia ba bước, số liệu bước 1, cách làm |
 | 15/11/2026 | Bước 1 xong, ghi kết quả chạy; chuyển Chờ nghiệm thu |
+| 15/11/2026 | Số liệu và cách làm bước 2 |
