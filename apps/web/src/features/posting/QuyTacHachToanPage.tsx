@@ -76,7 +76,7 @@ export function QuyTacHachToanPage() {
 
   return (
     <>
-      <PageHeader title="Quy tắc hạch toán" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" />
+      <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" />
       <div className="row" style={{ marginBottom: 8 }}>{nutXem}</div>
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {missing.length > 0 && (
