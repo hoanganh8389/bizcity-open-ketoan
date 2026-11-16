@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Điểm thành viên: hết hạn hằng ngày, nạp số dư cũ, màn BH19 (phiếu NT-BH-020 bước 3) <!-- [2026-11-16 12:00 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 3 (đóng góp) -->
+
+- **Thêm:** module `loyalty` nghe `bizcity.clock.daily` — lô điểm quá hạn còn điểm ghi dòng hết hạn (mỗi lô một lần).
+- **Thêm:** `POST /api/v1/m/loyalty/opening` (quyền `catalog:write`) — nạp số dư điểm cũ từ website một lần theo khách: lô tích = tổng đã tích + dòng đổi = phần đã dùng (giữ đúng số dư và hạng); khách đã nạp bỏ qua; dòng sai trả lý do.
+- **Thêm:** `GET /api/v1/m/loyalty/report` và màn **BH19 Điểm thành viên** (Phần riêng, chỉ xem, quyền `loyalty:read`): phát sinh trong kỳ theo cửa hàng × loại, số dư theo hạng, danh sách khách; hướng dẫn `docs/huong-dan/loyalty-diem.md`.
+- **Thay đổi định khoản:** không — điểm không hạch toán lúc tích / hết hạn.
+
 ### Máy bán POS: đổi điểm lấy quà / voucher, dùng voucher (phiếu NT-BH-020 bước 2) <!-- [2026-11-16 09:00 AM Võ Hoàng] LOYALTY — NT-BH-020 bước 2 (đóng góp) -->
 
 - **Thêm:** module `loyalty` (manifest 0.2.0) — bảng `vouchers` (migration module 0002), action đọc `loyalty.redeem.quote` (module `pos` gọi chéo), `GET /api/v1/m/loyalty/vouchers/:code`; khi nhận `pos.order.recorded`: trừ điểm đổi theo lô, phát voucher, đánh dấu voucher đã dùng.

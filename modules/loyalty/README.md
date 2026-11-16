@@ -25,6 +25,8 @@ bán của module `pos`, định khoản do kế toán đặt).
 | `GET /program?branch=` | `loyalty:read` | chính sách mới nhất của cửa hàng (khuôn `LoyaltyProgram` của máy bán); không `branch` → danh sách cửa hàng đã có |
 | `GET /customers/:id?branch=` | `loyalty:read` | điểm của khách (khuôn `CustomerLoyalty`): số dư, dùng được, hạng, lô, 50 dòng gần nhất, voucher còn dùng |
 | `GET /vouchers/:code` | `loyalty:read` | tra voucher đổi điểm (khuôn `LoyaltyVoucher`); đã dùng / hết hạn vẫn trả kèm trạng thái |
+| `POST /opening` | `catalog:write` | website nạp số dư điểm cũ một lần theo khách `{ customerCode, totalEarned, balance }`: lô tích = tổng đã tích + dòng đổi = phần đã dùng (giữ số dư và hạng); khách đã nạp bỏ qua |
+| `GET /report?from=&to=` | `loyalty:read` | báo cáo kỳ: phát sinh theo cửa hàng × loại, số dư theo hạng, 500 khách điểm còn nhiều nhất — màn BH19 |
 | action `loyalty.redeem.quote` (không HTTP) | `loyalty:read` | module `pos` gọi chéo lúc nhận đơn có khách / voucher: phần thưởng đổi được không, quà gì, mã voucher sẽ phát (định theo đơn), tiền giảm voucher, điểm đơn này |
 
 ## Đổi điểm, voucher (bước 2)
@@ -33,10 +35,16 @@ bán của module `pos`, định khoản do kế toán đặt).
 - Khi nhận sự kiện đơn đã ghi sổ: một dòng **đổi** trừ lô hết hạn sớm nhất trước (thiếu thì trừ phần còn, ghi chú), phát voucher (bảng `vouchers`), rồi tích điểm.
 - **Dùng voucher**: mã trong `promotionSelections` (coupon); `pos` chia tiền giảm theo thành tiền dòng (`allocate`) — chứng từ bán mang tiền giảm ở dòng (doanh thu ghi sau giảm). Khi nhận sự kiện: voucher chuyển *đã dùng*; dùng trùng ở hai máy cùng lúc → ghi chú ở voucher.
 
+## Hết hạn, số dư cũ, báo cáo (bước 3)
+
+- **Hết hạn**: nghe `bizcity.clock.daily` (01:00 giờ Việt Nam), lô quá hạn còn điểm → dòng `expire` = −phần còn; mỗi lô một lần.
+- **Số dư cũ**: website (`tgs_pos` `TGS_POS_Loyalty_Push::push_opening`, tự chạy khi cửa hàng đầu tiên bật máy bán React, hoặc `wp tgs-pos loyalty-opening`) đẩy ví điểm toàn mạng (mã = tên đăng nhập SĐT).
+- **Màn BH19 Điểm thành viên** (Phần riêng, quyền `loyalty:read`, hướng dẫn `docs/huong-dan/loyalty-diem.md`).
+
 ## Sự kiện nghe
 
-`pos.order.recorded` (đổi, phát / dùng voucher, tích), `pos.return.recorded` (hoàn). Chưa phát sự kiện riêng.
+`pos.order.recorded` (đổi, phát / dùng voucher, tích), `pos.return.recorded` (hoàn), `bizcity.clock.daily` (hết hạn). Chưa phát sự kiện riêng.
 
-## Chưa làm (NT-BH-020 bước 3)
+## Chưa làm
 
-Hết hạn lô hằng ngày; nạp số dư đầu từ website; báo cáo, màn quản trị; hoàn điểm đã đổi khi trả hàng có quà đổi điểm.
+Điều chỉnh điểm tay (màn); hoàn điểm đã đổi khi khách trả quà đổi điểm.

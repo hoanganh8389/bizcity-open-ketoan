@@ -21,6 +21,27 @@ export async function latestProgram(tx: Tx, branchCode: string): Promise<Program
   return r ? { version: r.version, storeId: Number(r.store_id), program: r.program, receivedAt: r.received_at } : null;
 }
 
+// [2026-11-16 10:25 AM Võ Hoàng] LOYALTY — NT-BH-020 bước 3: hết hạn, nạp số dư cũ, báo cáo (đóng góp)
+/** Chính sách mới nhất của đơn vị (bất kỳ cửa hàng) — hạng / hệ số là cài đặt chung của website, dùng cho báo cáo. */
+export async function latestAnyProgram(tx: Tx): Promise<ProgramRow | null> {
+  const r = (await sql<{ version: string; store_id: number; program: LoyaltyProgram; received_at: string }>`
+    SELECT version, store_id, program, received_at::text FROM mod_loyalty.programs ORDER BY received_at DESC LIMIT 1`.execute(tx)).rows[0];
+  return r ? { version: r.version, storeId: Number(r.store_id), program: r.program, receivedAt: r.received_at } : null;
+}
+
+/** Khách có lô đã quá hạn lúc `now` (dòng dương có expires_at ≤ now) — ứng viên ghi hết hạn. */
+export async function partnersWithDueLots(tx: Tx, now: string): Promise<string[]> {
+  return (await sql<{ partner_code: string }>`
+    SELECT DISTINCT partner_code FROM mod_loyalty.entries WHERE points > 0 AND expires_at IS NOT NULL AND expires_at <= ${now}`.execute(tx)).rows.map((r) => r.partner_code);
+}
+
+/** Mọi dòng sổ trước `to` (báo cáo): mã khách, loại, điểm, lúc, cửa hàng. */
+export async function entriesBefore(tx: Tx, to: string) {
+  return (await sql<{ partner_code: string; kind: LedgerEntry['kind']; points: string; at: string; branch_code: string | null }>`
+    SELECT partner_code, kind, points, at::text, branch_code FROM mod_loyalty.entries WHERE at < ${to}`.execute(tx)).rows
+    .map((r) => ({ partnerCode: r.partner_code, kind: r.kind, points: Number(r.points), at: new Date(r.at).toISOString(), branchCode: r.branch_code }));
+}
+
 /** Cửa hàng đã có chính sách: phiên bản mới nhất, lúc nhận. */
 export async function programBranches(tx: Tx): Promise<{ branchCode: string; version: string; receivedAt: string }[]> {
   return (await sql<{ branch_code: string; version: string; received_at: string }>`
