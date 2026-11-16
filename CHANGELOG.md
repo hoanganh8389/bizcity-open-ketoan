@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Danh mục: bỏ Luồng chi tiết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Bỏ:** trang Quy trình Danh mục không còn nút / màn **Luồng chi tiết** (gỡ `phan-he/danh-muc/QuyTrinhDanhMuc.tsx`); chỉ còn sơ đồ khai báo theo thứ tự. `?xem=chi-tiet` cũ về sơ đồ.
+
 ### ACC41 Tài khoản ngầm định: chế độ Gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** màn ACC41 đổi tên "Quy tắc hạch toán" → **Tài khoản ngầm định** ở menu, sơ đồ, tiêu đề. ACC41 mở ở chế độ **Gọn**: chọn Loại chứng từ, tìm kiếm, bảng Loại · TK Nợ · TK Có · Sửa; Sửa mở hộp Tên cột · Lọc tài khoản (đầu số được chọn) · TK ngầm định. Nút **Chi tiết** chuyển sang màn khung Nợ / Có, nguồn tài khoản, xem thử bút toán như cũ (nhớ theo trình duyệt).

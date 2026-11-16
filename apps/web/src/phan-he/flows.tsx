@@ -8,12 +8,11 @@
  */
 import type { ComponentType } from 'react';
 import { QuyTrinhMuaHang } from './mua-hang/quy-trinh/QuyTrinhMuaHang';
-import { QuyTrinhDanhMuc } from './danh-muc/QuyTrinhDanhMuc';
 import { QuyTrinhBanHang } from './ban-hang/quy-trinh/QuyTrinhBanHang';
 
 export const GROUP_FLOWS: Record<string, ComponentType> = {
   'mua-hang': QuyTrinhMuaHang,
-  'danh-muc': QuyTrinhDanhMuc, // [2026-11-13 Nguyễn Văn Thủy] (đóng góp)
+  // [2026-11-17 Nguyễn Văn Thủy] bỏ Luồng chi tiết của Danh mục — chỉ dùng sơ đồ (đóng góp)
   'ban-hang': QuyTrinhBanHang,
 };
 
