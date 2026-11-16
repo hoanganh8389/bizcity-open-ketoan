@@ -39,13 +39,14 @@ function fromAlerts(a: Alerts): Viec[] {
   return out;
 }
 
+// [2026-11-16 Nguyễn Văn Thủy] việc cần làm là số liệu phụ: thiếu quyền một nguồn thì bỏ qua, không bật hộp lỗi (đóng góp)
 export function useViec() {
   const { can } = useAuth();
   const enabled = can('documents:read');
   const opts = { enabled, retry: false, staleTime: 60_000, refetchInterval: 120_000 } as const;
-  const mua = useQuery({ ...opts, queryKey: ['rail', 'purchase-todo'], queryFn: () => api.get<{ items: { key: string; level: ViecLevel; text: string; count: number; amount?: number; path: string }[] }>('/api/v1/purchase/todo') });
-  const cn = useQuery({ ...opts, queryKey: ['rail', 'alerts'], queryFn: () => api.get<Alerts>('/api/v1/alerts') });
-  const hv = useQuery({ ...opts, queryKey: ['rail', 'queue-mine'], queryFn: () => api.get<{ viec: Viec[] }>('/api/v1/queue/mine') });
+  const mua = useQuery({ ...opts, queryKey: ['rail', 'purchase-todo'], queryFn: () => api.getQuiet<{ items: { key: string; level: ViecLevel; text: string; count: number; amount?: number; path: string }[] }>('/api/v1/purchase/todo').then((r) => r.data) });
+  const cn = useQuery({ ...opts, queryKey: ['rail', 'alerts'], queryFn: () => api.getQuiet<Alerts>('/api/v1/alerts').then((r) => r.data) });
+  const hv = useQuery({ ...opts, queryKey: ['rail', 'queue-mine'], queryFn: () => api.getQuiet<{ viec: Viec[] }>('/api/v1/queue/mine').then((r) => r.data) });
   const items: Viec[] = [
     ...(cn.data ? fromAlerts(cn.data) : []),
     ...(mua.data?.items ?? []).map((v) => ({ ...v, key: `mua:${v.key}`, groups: MUA_GROUPS[v.key] ?? ['mua-hang'] })),
