@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Máy bán POS: đổi điểm lấy quà / voucher, dùng voucher (phiếu NT-BH-020 bước 2) <!-- [2026-11-16 09:00 AM Võ Hoàng] LOYALTY — NT-BH-020 bước 2 (đóng góp) -->
+
+- **Thêm:** module `loyalty` 0.2.0 — bảng `vouchers` (migration module 0002), action đọc `loyalty.redeem.quote` (module `pos` gọi chéo), `GET /api/v1/m/loyalty/vouchers/:code`; khi nhận `pos.order.recorded`: trừ điểm đổi theo lô, phát voucher, đánh dấu voucher đã dùng.
+- **Đổi:** module `pos` nhận đơn có `loyalty.redeem` (đổi điểm, cần khách) và mã voucher đổi điểm trong `promotionSelections` (một mã / đơn); quà đổi điểm (`giftKey lp:…`) là dòng quà 0đ; tiền giảm voucher chia vào dòng theo thành tiền; đơn trả máy có `loyalty` (điểm tích / đổi / còn, voucher phát) và `usedVouchers`. Khuyến mại kiểu plugin website (chọn dòng, hạ số quà) vẫn chặn.
+- **Thay đổi định khoản:** không đổi luật — voucher là tiền giảm trên dòng chứng từ bán (doanh thu ghi sau giảm, như mọi khoản giảm dòng); quà đổi điểm là dòng quà 0đ (giá vốn hàng tặng).
+
 ### Module mới `loyalty` — sổ điểm thành viên (phiếu NT-BH-020 bước 1) <!-- [2026-11-15 04:30 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1 (đóng góp) -->
 
 - **Thêm:** module `modules/loyalty` (schema `mod_loyalty`): sổ điểm chỉ thêm theo lô có hạn; chính sách tích điểm do website đẩy sang `POST /api/v1/m/loyalty/program` (quyền `catalog:write`, giữ mọi phiên bản); tự tích khi đơn máy bán hoàn tất (nghe `pos.order.recorded`), tự hoàn khi trả hàng (nghe `pos.return.recorded`); máy bán đọc `GET /program?branch=`, `GET /customers/:id` (quyền mới `loyalty:read`).
