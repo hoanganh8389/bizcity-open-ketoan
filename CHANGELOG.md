@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Mua hàng / Bán hàng: sơ đồ rút gọn v2 mặc định <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** vào Quy trình Mua hàng / Bán hàng mở **sơ đồ rút gọn v2** (thẻ theo bước như Danh mục: bước làm lần lượt, cuối rẽ ra việc làm song song; mỗi thẻ liệt kê màn, lọc theo quyền). Bán hàng bổ sung đủ: khai báo, giá & khuyến mại, bán hàng / máy POS / ca bán, thu tiền & công nợ, trả lại, doanh số, công nợ phải thu, thuế đầu ra. Luồng chi tiết vẫn mở bằng nút.
+- **Thêm:** Mua hàng giữ **sơ đồ rút gọn v1** (icon cũ) — nút "Sơ đồ rút gọn v1" / `?xem=rut-gon-v1`. `SoDoNhomBuoc.items` cho thẻ khai màn thẳng.
+
 ### Danh mục: bỏ Luồng chi tiết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Bỏ:** trang Quy trình Danh mục không còn nút / màn **Luồng chi tiết** (gỡ `phan-he/danh-muc/QuyTrinhDanhMuc.tsx`); chỉ còn sơ đồ khai báo theo thứ tự. `?xem=chi-tiet` cũ về sơ đồ.
