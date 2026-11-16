@@ -30,6 +30,10 @@ import { kiemLenhManHinh, manHinhRoutes } from './man-hinh.js';
 const TODAY_VN = sql`(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`;
 interface Gan { code: string; scope_type: 'branch' | 'warehouse'; role: Role | null; tenant_role_id: string | null; base_role: Role | null; kind: string | null }
 
+// [2026-11-16 10:00 AM kiennt] NT-HT-003 — Chủ đơn vị theo MỌI vai trò toàn đơn vị (chính hoặc gán thêm ở HT12), không chỉ vai trò chính (đóng góp)
+/** Người dùng có vai trò quản trị đơn vị (Chủ đơn vị) — vai trò chính hoặc vai trò gán thêm toàn đơn vị còn hiệu lực. */
+const laChuDonVi = (auth: AuthContext): boolean => [auth.role, ...(auth.roles ?? [])].some((r) => !!r && ADMIN_ROLES.has(r));
+
 const userIdOf = (auth: AuthContext) => (auth.kind === 'user' && auth.actor.startsWith('user:') ? auth.actor.slice(5) : null);
 
 /** Các lần gán theo chi nhánh / kho còn hiệu lực hôm nay của người dùng, quy về mã chi nhánh. */
@@ -67,7 +71,7 @@ export async function batGioiHan(tenantId: string): Promise<boolean> {
 /** Phạm vi + quyền thêm + quyền bị Cấm ở từng chi nhánh. */
 export async function quyenTheoChiNhanh(auth: AuthContext): Promise<QuyenChiNhanh> {
   const uid = userIdOf(auth);
-  if (!uid || (!!auth.role && ADMIN_ROLES.has(auth.role))) return KHONG;
+  if (!uid || laChuDonVi(auth)) return KHONG;
   if (!(await batGioiHan(auth.tenantId))) return KHONG;
   const gan = await lanGanTheoChiNhanh(auth.tenantId, uid);
   if (!gan.length) return KHONG;
@@ -141,7 +145,7 @@ async function chiNhanhCuaYeuCau(req: FastifyRequest, auth: AuthContext): Promis
 
 async function moc(req: FastifyRequest): Promise<void> {
   const auth = req.auth;
-  if (!auth || auth.kind !== 'user' || (!!auth.role && ADMIN_ROLES.has(auth.role))) return;
+  if (!auth || auth.kind !== 'user' || laChuDonVi(auth)) return;
   const cam = await apChiNhanh(req, auth);
   await kiemLenhManHinh(req, auth, cam); // [2026-11-13 07:30 PM kiennt] PHAN-QUYEN — gác lệnh theo thao tác màn (sau khi áp quyền chi nhánh) (đóng góp)
 }
@@ -174,7 +178,11 @@ async function apChiNhanh(req: FastifyRequest, auth: AuthContext): Promise<strin
 /** Bảng rà trước khi bật công tắc: ai có lần gán tại chi nhánh / kho (trừ vai trò Hạn chế), phạm vi sẽ thành gì. */
 async function raSoat(tenantId: string) {
   const { rows } = await sql<{ user_id: string; email: string; full_name: string; role: string; code: string; scope_type: string; kind: string | null; vai_tro: string | null }>`
-    SELECT u.id::text AS user_id, u.email, u.full_name, u.role, COALESCE(b.code, bw.code) AS code, a.scope_type, r.kind, COALESCE(r.label, a.role) AS vai_tro
+    SELECT u.id::text AS user_id, u.email, u.full_name,
+           CASE WHEN u.role = 'owner' OR EXISTS (SELECT 1 FROM user_role_assignments o WHERE o.tenant_id = a.tenant_id AND o.user_id = u.id
+             AND o.scope_type = 'tenant' AND o.role = 'owner' AND o.revoked_at IS NULL AND o.valid_from <= ${TODAY_VN} AND (o.valid_to IS NULL OR o.valid_to >= ${TODAY_VN}))
+             THEN 'owner' ELSE u.role END AS role,
+           COALESCE(b.code, bw.code) AS code, a.scope_type, r.kind, COALESCE(r.label, a.role) AS vai_tro
       FROM user_role_assignments a
       JOIN users u ON u.id = a.user_id AND u.tenant_id = a.tenant_id
       LEFT JOIN tenant_roles r ON r.id = a.tenant_role_id AND r.tenant_id = a.tenant_id
@@ -198,9 +206,27 @@ async function raSoat(tenantId: string) {
   return [...by.values()].map((o) => ({ ...o, branches: o.role === 'owner' || !o.branches.length ? null : o.branches.sort() }));
 }
 
+/** userId → tên các vai trò gán thêm TOÀN ĐƠN VỊ còn hiệu lực (vai trò hệ thống theo mã, vai trò của đơn vị theo tên). */
+async function vaiTroThem(tenantId: string): Promise<Record<string, { ma: string | null; ten: string }[]>> {
+  const { rows } = await sql<{ user_id: string; role: string | null; label: string | null }>`
+    SELECT a.user_id::text AS user_id, a.role, r.label
+      FROM user_role_assignments a LEFT JOIN tenant_roles r ON r.id = a.tenant_role_id AND r.tenant_id = a.tenant_id
+     WHERE a.tenant_id = ${tenantId} AND a.scope_type = 'tenant' AND a.revoked_at IS NULL
+       AND a.valid_from <= ${TODAY_VN} AND (a.valid_to IS NULL OR a.valid_to >= ${TODAY_VN}) AND (a.tenant_role_id IS NULL OR r.is_active)
+     ORDER BY a.user_id, a.id`.execute(db);
+  const out: Record<string, { ma: string | null; ten: string }[]> = {};
+  for (const x of rows) (out[x.user_id] ??= []).push({ ma: x.role, ten: x.label ?? x.role ?? '' });
+  return out;
+}
+
 export const quyenChiNhanh = fp(async (app: FastifyInstance) => {
   app.addHook('preHandler', moc);
   await manHinhRoutes(app);
+  app.get('/api/v1/quyen-chi-nhanh/vai-tro-them', {
+    preHandler: requirePermission('users:write'),
+    schema: { tags: ['Phân quyền'], summary: 'Vai trò gán thêm toàn đơn vị còn hiệu lực của từng người dùng (HT12 hiện cạnh vai trò chính)' },
+    handler: async (req) => ok(await vaiTroThem(req.auth!.tenantId)),
+  });
   app.get('/api/v1/quyen-chi-nhanh/ra-soat', {
     preHandler: requirePermission('users:write'),
     schema: { tags: ['Phân quyền'], summary: 'Bảng rà trước khi bật giới hạn theo chi nhánh: người có lần gán tại chi nhánh / kho và phạm vi sẽ thành' },
