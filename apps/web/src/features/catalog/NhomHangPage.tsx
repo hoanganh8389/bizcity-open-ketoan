@@ -13,6 +13,7 @@ import { ProductEditor } from './ProductsPage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileDown, Pencil, Plus, RefreshCw } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
+import { ThungRacDanhMuc } from '@/components/ThungRacDanhMuc';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
@@ -50,6 +51,7 @@ export function NhomHangPage() {
   const [lichSu, setLichSu] = useState<NhomHang | null>(null);
   const [vua, setVua] = useState<string | null>(null); // dòng vừa ghi: tô sáng
   const [themMH, setThemMH] = useState<string | null>(null); // nhóm cấp 3 đang thêm mặt hàng
+  const [chon, setChon] = useState<NhomHang | null>(null); // [2026-11-17 Nguyễn Văn Thủy] dòng chọn để Xoá vào thùng rác (đóng góp)
   // Cột phụ ẩn / hiện (nhớ theo trình duyệt): Tên nhóm hàng, Ghi chú, Người tạo, Người sửa.
   const COT_PHU = [['full', 'Tên nhóm hàng'], ['note', 'Ghi chú'], ['tao', 'Người tạo'], ['sua', 'Người sửa']] as const;
   const [cot, setCot] = useState<Record<string, boolean>>(() => { try { return { full: true, note: true, tao: false, sua: false, ...JSON.parse(localStorage.getItem('dm11-cot') ?? '{}') }; } catch { return { full: true, note: true, tao: false, sua: false }; } });
@@ -117,6 +119,7 @@ export function NhomHangPage() {
           </span>
           <button className="btn btn-sm" onClick={() => void q.refetch()}><RefreshCw size={14} /> Nạp</button>
           <button className="btn btn-sm" onClick={xuat}><FileDown size={14} /> Xuất</button>
+          <ThungRacDanhMuc catalog="item-classes.group" title="Nhóm hàng" sel={chon ? { key: chon.code, label: chon.name } : null} onDone={() => setChon(null)} />
           {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} />}
         </div>
         <div className="muted nh-rule">Mã ngắn — cấp 1: {QUY_TAC[1]} · cấp 2: {QUY_TAC[2]} · cấp 3: {QUY_TAC[3]}</div>
@@ -137,7 +140,7 @@ export function NhomHangPage() {
                   </tr>
                 )}
                 {dong.map(({ c, depth, hasKids, isOpen }, stt) => (
-                  <tr key={c.code} className={`${c.isActive ? '' : 'muted'} ${vua === c.code ? 'nh-vua' : ''} ${hasKids ? 'nh-mo' : ''}`} onClick={(e) => { if (hasKids && !(e.target as HTMLElement).closest('button')) lat(c.code); }}>
+                  <tr key={c.code} className={`${c.isActive ? '' : 'muted'} ${vua === c.code ? 'nh-vua' : ''} ${hasKids ? 'nh-mo' : ''}`} style={chon?.code === c.code ? { background: 'var(--brand-50, #e8f0fe)' } : undefined} onClick={(e) => { setChon(c); if (hasKids && !(e.target as HTMLElement).closest('button')) lat(c.code); }}>
                     <td className="num muted">{stt + 1}</td>
                     <td className="mono">{thieuMa(c) ? <span className="neg" title="Nhóm chưa có mã ngắn — bấm Sửa để nhập">chưa có</span> : c.skuCode}</td>
                     <td>

@@ -40,6 +40,7 @@ export function TaxCodesPage() {
       <PageHeader title="Loại thuế" code="ACC43" subtitle="Mã loại thuế dùng trên dòng hàng của chứng từ (taxCode)" helpKey="loai-thue" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'tax-codes', title: 'Biểu thuế', sel: sel ? { key: sel.code, label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}

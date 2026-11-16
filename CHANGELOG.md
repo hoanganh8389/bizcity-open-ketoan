@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thùng rác chung cho danh mục: Xoá / Thùng rác / Xoá hết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** mọi màn danh mục (Biểu thuế, Đơn vị tính, Hình thức thanh toán, Tài khoản ngân hàng, Hệ thống tài khoản, Khoản mục chi phí, Mục thu/chi, Hợp đồng, Vụ việc, Công trình, Nhân viên, Nguồn vốn, Mục đích sử dụng, Nhóm CCDC, Khách hàng, NCC, Nhóm KH/NCC, Loại tài sản, Bảng giá, Mặt hàng, Nhóm hàng) có nút **Xoá** (vào thùng rác, lưu nguyên dòng kể cả item_id), **Thùng rác** (Khôi phục / Xoá vĩnh viễn từng dòng, Khôi phục hết, Xoá hết vĩnh viễn) và **Xoá hết** cả danh mục. Xoá hết / Xoá hết vĩnh viễn cần mật khẩu (`CATALOG_WIPE_PASSWORD`). Dòng đang được chứng từ / sổ dùng thì không xoá được, báo lại.
+- **Thêm:** mặt hàng khôi phục giữ đúng item_id (mở lại mã); xoá vĩnh viễn gỡ cả item_id, mã, phân loại nếu chưa có chứng từ dùng (có chứng từ thì giữ định danh ở trạng thái ngừng dùng).
+- **Nâng cấp cần làm:** migration `0146_thung_rac_danh_muc.sql` (bảng `catalog_trash`, cờ phiên `bizcity.catalog_purge` cho chốt bất biến mặt hàng). API `/api/v1/catalog-trash` (action `core.catalog-trash.trash` / `.restore` / `.purge`).
+
 ### Danh mục gọn: Quy trình theo nhóm, thanh nút chung, cột mặc định (UX đợt 15) <!-- [2026-11-16 kiennt] (đóng góp) -->
 
 - **Đổi:** trang Quy trình của Danh mục vẽ theo nhóm chức năng của menu (Tổ chức → Đối tượng → Tài khoản, ngân hàng → Chi phí · Mặt hàng · Tài sản · Thuế suất); Biểu thuế tách thành nhóm menu Thuế suất.

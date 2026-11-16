@@ -145,6 +145,7 @@ export function ProductsPage() {
         </div>
         <div className="card acc17-main">
           <CatalogToolbar
+          trash={{ catalog: 'products', title: 'Mặt hàng', sel: sel ? { key: sel.sku, label: sel.name } : null }}
               phai
             canWrite={canWrite}
             hasSelection={Boolean(sel)}
