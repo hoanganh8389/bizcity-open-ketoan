@@ -46,7 +46,7 @@ export const SO_DO_V2: Record<string, SoDo> = {
           { label: 'Nhận / xuất quà tặng', path: mua('gift_in') }, { label: 'Chi phí mua hàng', path: mua('cost') },
           { label: 'Chuyển hàng xuống shop', path: '/mua-hang/chuyen-shop' }] },
         { nhom: 'Hoá đơn & thanh toán', icon: 'Banknote', ghiChu: 'Hoá đơn đầu vào, trả tiền NCC', items: [
-          { label: 'Xử lý hoá đơn đầu vào', path: '/mua-hang/hoa-don-ncc' }, { label: 'Hoá đơn từ cơ quan thuế', path: '/thue/hoa-don-co-quan-thue' },
+          { label: 'Xử lý hoá đơn đầu vào', path: '/mua-hang/hoa-don-ncc' },
           { label: 'Tình hình thực hiện đơn mua hàng', path: '/mua-hang/doi-chieu' }, { label: 'Trả tiền nhà cung cấp', path: mua('payment') },
           { label: 'Ứng trước nhà cung cấp', path: mua('prepayment') }, { label: 'Hạn mức & công nợ đến hạn', path: '/mua-hang/han-muc' }] },
       ],

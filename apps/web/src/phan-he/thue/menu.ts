@@ -15,7 +15,8 @@ export const thueMenu: MenuItem[] = [
       { key: 'bo-sung-thue', label: 'Bổ sung thông tin thuế', path: '/thue/bo-sung-thong-tin', code: 'ACC78' },
       { key: 'to-khai', label: 'Khai thuế', path: '/thue/to-khai-gtgt', code: 'ACC66' },
       { key: 'quyet-toan-tndn', label: 'Quyết toán thuế TNDN', path: '/thue/quyet-toan-tndn', code: 'TNDN03' },
-      { key: 'hd-co-quan-thue', label: 'Hoá đơn từ cơ quan thuế', path: '/thue/hoa-don-co-quan-thue', code: 'THUE01' },
+      // [2026-11-17 Nguyễn Văn Thủy] tạm ẩn THUE01 Hoá đơn từ cơ quan thuế khỏi menu — đã có Hoá đơn đầu vào; màn vẫn mở được bằng đường dẫn (đóng góp)
+      // { key: 'hd-co-quan-thue', label: 'Hoá đơn từ cơ quan thuế', path: '/thue/hoa-don-co-quan-thue', code: 'THUE01' },
       { key: 'hd-rui-ro', label: 'Cảnh báo hoá đơn rủi ro', path: '/thue/hoa-don-rui-ro', code: 'THUE02' },
       { key: 'nguoi-nop-thue', label: 'Thông tin người nộp thuế', path: '/thue/nguoi-nop-thue', code: 'TT01' },
       sec('thue-bao-cao', 'Báo cáo'),

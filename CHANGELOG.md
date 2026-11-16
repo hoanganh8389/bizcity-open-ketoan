@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Tạm ẩn menu Hoá đơn từ cơ quan thuế <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** tạm ẩn **THUE01 Hoá đơn từ cơ quan thuế** khỏi menu Thuế, menu Mua hàng (nhóm Hoá đơn đầu vào) và sơ đồ Mua hàng v2 — đã có Xử lý hoá đơn đầu vào (MH22). Màn vẫn mở được bằng đường dẫn `/thue/hoa-don-co-quan-thue`.
+
 ### DM10 Quản lý mặt hàng: khung Nhóm hàng co giãn, thu gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** khung lọc Nhóm hàng bên trái kéo mép phải để giãn / co (160–700px), nút « thu gọn thành dải dọc "» Nhóm hàng" (tô màu khi đang lọc nhóm), bấm để mở lại; nhớ theo trình duyệt.
