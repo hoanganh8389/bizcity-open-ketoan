@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### ACC41 Tài khoản ngầm định: chế độ Gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** ACC41 mở ở chế độ **Gọn**: chọn Loại chứng từ, tìm kiếm, bảng Loại · TK Nợ · TK Có · Sửa; Sửa mở hộp Tên cột · Lọc tài khoản (đầu số được chọn) · TK ngầm định. Nút **Chi tiết** chuyển sang màn khung Nợ / Có, nguồn tài khoản, xem thử bút toán như cũ (nhớ theo trình duyệt).
+
 ### Quay về dữ liệu gốc phải nhập mật khẩu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** mọi nút **Quay về dữ liệu gốc** (từng danh mục, toàn bộ, sơ đồ / cơ cấu tổ chức) hỏi mật khẩu trước khi chạy thật; máy chủ kiểm (`RESTORE_DEFAULT_PASSWORD`, không đặt thì dùng `CATALOG_WIPE_PASSWORD`). Xem trước vẫn không cần mật khẩu. API `default-data/*/restore` và `org-units/restore-defaults` nhận thêm `password`.
