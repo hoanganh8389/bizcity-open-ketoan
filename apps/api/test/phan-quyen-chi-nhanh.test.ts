@@ -90,3 +90,27 @@ describe('Gán vai trò tại chi nhánh', () => {
     ok(await as('GET', '/api/v1/kho/kiem-ke', undefined, 'CN03'));
   });
 });
+
+// [2026-11-16 10:00 AM kiennt] NT-HT-003 — Chủ đơn vị gán THÊM (vai trò chính Người xem) không bị giới hạn chi nhánh (đóng góp)
+describe('Chủ đơn vị gán thêm ở HT12', () => {
+  let chu = '';
+  let tokChu = '';
+  beforeAll(async () => {
+    const u = ok(await call<{ data: { id: string } }>(ctx, 'POST', '/api/v1/users', { email: 'chu-them@pqcn.local', fullName: 'Chủ gán thêm', role: 'viewer', password: 'Pqcn@12345' }));
+    chu = String(u.id);
+    // Gán Chủ đơn vị là quyền rủi ro cao: người gán (tester@ketoan.local) nhập lại mật khẩu
+    ok(await call(ctx, 'POST', `/api/v1/users/${chu}/roles`, { role: 'owner', reason: 'Gán thêm Chủ đơn vị', confirmPassword: 'Test@123' }));
+    ok(await call(ctx, 'POST', `/api/v1/users/${chu}/roles`, { role: 'accountant', scopeType: 'branch', scopeId: bid.CN01, reason: 'Gán tại CN01' }));
+    tokChu = (await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { tenantCode: ctx.tenantCode, email: 'chu-them@pqcn.local', password: 'Pqcn@12345' } })).json().data.token;
+  });
+
+  it('công tắc bật: vẫn mọi chi nhánh, lập ở CN03 được; bảng rà ghi mọi chi nhánh; HT12 thấy vai trò gán thêm', async () => {
+    const q = ok(await call(ctx, 'GET', '/api/v1/quyen-chi-nhanh', undefined, { authorization: `Bearer ${tokChu}` })) as { branches: string[] | null };
+    expect(q.branches).toBeNull();
+    expect((await call(ctx, 'POST', '/api/v1/kho/kiem-ke', draft('CN03'), { authorization: `Bearer ${tokChu}` })).status).toBeLessThan(300);
+    const ra = ok(await call(ctx, 'GET', '/api/v1/quyen-chi-nhanh/ra-soat')) as { nguoi: { userId: string; role: string; branches: string[] | null }[] };
+    expect(ra.nguoi.find((x) => x.userId === chu)).toMatchObject({ role: 'owner', branches: null });
+    const them = ok(await call(ctx, 'GET', '/api/v1/quyen-chi-nhanh/vai-tro-them')) as Record<string, { ma: string | null }[]>;
+    expect(them[chu]!.map((x) => x.ma)).toContain('owner');
+  });
+});
