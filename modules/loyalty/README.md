@@ -23,12 +23,20 @@ bán của module `pos`, định khoản do kế toán đặt).
 |---|---|---|
 | `POST /program` | `catalog:write` | website đẩy chính sách `{ branchCode, storeId, program }`; cùng phiên bản → `changed: false` (đặt trạng thái, không cần Idempotency-Key) |
 | `GET /program?branch=` | `loyalty:read` | chính sách mới nhất của cửa hàng (khuôn `LoyaltyProgram` của máy bán); không `branch` → danh sách cửa hàng đã có |
-| `GET /customers/:id?branch=` | `loyalty:read` | điểm của khách (khuôn `CustomerLoyalty`): số dư, dùng được, hạng, lô, 50 dòng gần nhất |
+| `GET /customers/:id?branch=` | `loyalty:read` | điểm của khách (khuôn `CustomerLoyalty`): số dư, dùng được, hạng, lô, 50 dòng gần nhất, voucher còn dùng |
+| `GET /vouchers/:code` | `loyalty:read` | tra voucher đổi điểm (khuôn `LoyaltyVoucher`); đã dùng / hết hạn vẫn trả kèm trạng thái |
+| action `loyalty.redeem.quote` (không HTTP) | `loyalty:read` | module `pos` gọi chéo lúc nhận đơn có khách / voucher: phần thưởng đổi được không, quà gì, mã voucher sẽ phát (định theo đơn), tiền giảm voucher, điểm đơn này |
+
+## Đổi điểm, voucher (bước 2)
+
+- **Đổi điểm** khi bán: đơn mang `loyalty.redeem`; module `pos` hỏi `loyalty.redeem.quote` (đủ điểm, đúng hạng, quà đúng mã / số lượng). Quà là dòng quà 0đ trên chứng từ bán (giá vốn hàng tặng — kế toán đặt). Voucher có mã định theo đơn (in ngay trên bill).
+- Khi nhận sự kiện đơn đã ghi sổ: một dòng **đổi** trừ lô hết hạn sớm nhất trước (thiếu thì trừ phần còn, ghi chú), phát voucher (bảng `vouchers`), rồi tích điểm.
+- **Dùng voucher**: mã trong `promotionSelections` (coupon); `pos` chia tiền giảm theo thành tiền dòng (`allocate`) — chứng từ bán mang tiền giảm ở dòng (doanh thu ghi sau giảm). Khi nhận sự kiện: voucher chuyển *đã dùng*; dùng trùng ở hai máy cùng lúc → ghi chú ở voucher.
 
 ## Sự kiện nghe
 
-`pos.order.recorded` (tích), `pos.return.recorded` (hoàn). Chưa phát sự kiện riêng.
+`pos.order.recorded` (đổi, phát / dùng voucher, tích), `pos.return.recorded` (hoàn). Chưa phát sự kiện riêng.
 
-## Chưa làm (NT-BH-020 bước 2, 3)
+## Chưa làm (NT-BH-020 bước 3)
 
-Đổi điểm lấy quà / voucher khi bán, dùng voucher; hết hạn lô hằng ngày; nạp số dư đầu từ website; báo cáo, màn quản trị.
+Hết hạn lô hằng ngày; nạp số dư đầu từ website; báo cáo, màn quản trị; hoàn điểm đã đổi khi trả hàng có quà đổi điểm.

@@ -97,3 +97,52 @@ export async function refundedBefore(tx: Tx, orderId: string): Promise<number> {
     SELECT sum((meta->>'refundTotal')::numeric) AS v FROM mod_loyalty.entries WHERE kind = 'reverse' AND meta->>'orderId' = ${orderId}`.execute(tx)).rows[0];
   return Number(r?.v ?? 0);
 }
+
+// [2026-11-15 07:15 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 2: voucher đổi điểm (đóng góp)
+type VoucherDb = {
+  code: string; partner_code: string | null; name: string; discount_type: 'fixed' | 'percent'; discount_value: string; max_discount: string;
+  min_order_amount: string; expires_at: string | null; status: 'active' | 'used'; used_order_id: string | null; used_order_code: string | null;
+};
+const toVoucher = (r: VoucherDb) => ({
+  code: r.code, name: r.name, partnerCode: r.partner_code, discountType: r.discount_type, discountValue: Number(r.discount_value),
+  maxDiscount: Number(r.max_discount), minOrderAmount: Number(r.min_order_amount), expiresAt: r.expires_at ? iso(r.expires_at) : null,
+  status: r.status, usedOrderId: r.used_order_id, usedOrderCode: r.used_order_code,
+});
+export type StoredVoucher = ReturnType<typeof toVoucher>;
+const VCOLS = sql`code, partner_code, name, discount_type, discount_value, max_discount, min_order_amount, expires_at::text, status, used_order_id, used_order_code`;
+
+export async function voucherByCode(tx: Tx, code: string): Promise<StoredVoucher | null> {
+  const r = (await sql<VoucherDb>`SELECT ${VCOLS} FROM mod_loyalty.vouchers WHERE code = ${code.trim().toUpperCase()}`.execute(tx)).rows[0];
+  return r ? toVoucher(r) : null;
+}
+
+export async function vouchersOf(tx: Tx, partnerCode: string): Promise<StoredVoucher[]> {
+  return (await sql<VoucherDb>`SELECT ${VCOLS} FROM mod_loyalty.vouchers WHERE partner_code = ${partnerCode} ORDER BY created_at DESC LIMIT 50`.execute(tx)).rows.map(toVoucher);
+}
+
+export async function insertVoucher(tx: Tx, tenantId: string, v: {
+  code: string; partnerCode: string; name: string; discountType: 'fixed' | 'percent'; discountValue: number; maxDiscount: number;
+  minOrderAmount: number; expiresAt: string | null; rewardIndex: string; orderId: string; orderCode: string;
+}): Promise<void> {
+  await sql`
+    INSERT INTO mod_loyalty.vouchers (tenant_id, code, partner_code, name, discount_type, discount_value, max_discount, min_order_amount, expires_at,
+                                      reward_index, issued_order_id, issued_order_code)
+    VALUES (${tenantId}, ${v.code}, ${v.partnerCode}, ${v.name}, ${v.discountType}, ${v.discountValue}, ${v.maxDiscount}, ${v.minOrderAmount},
+            ${v.expiresAt}, ${v.rewardIndex}, ${v.orderId}, ${v.orderCode})
+    ON CONFLICT (tenant_id, code) DO NOTHING`.execute(tx);
+}
+
+/** Đánh dấu voucher đã dùng ở đơn; đơn khác đã dùng trước → ghi chú (dùng trùng ở hai máy cùng lúc), không ghi đè. */
+export async function markVoucherUsed(tx: Tx, code: string, order: { id: string; code: string; at: string }): Promise<'used' | 'again' | 'other' | 'missing'> {
+  const v = await voucherByCode(tx, code);
+  if (!v) return 'missing';
+  if (v.usedOrderId === order.id) return 'again';
+  if (v.status === 'used') {
+    const note = `Dùng trùng ở đơn ${order.code} (đã dùng ở ${v.usedOrderCode ?? '?'})`;
+    await sql`UPDATE mod_loyalty.vouchers SET note = concat_ws(' · ', note, ${note}) WHERE code = ${v.code}`.execute(tx);
+    return 'other';
+  }
+  await sql`UPDATE mod_loyalty.vouchers SET status = 'used', used_order_id = ${order.id}, used_order_code = ${order.code}, used_at = ${order.at}
+             WHERE code = ${v.code} AND status = 'active'`.execute(tx);
+  return 'used';
+}

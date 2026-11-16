@@ -21,7 +21,8 @@
       "evidence.receipt",
       "ledger.cancel",
       "events.outbox",
-      "settings.registry"
+      "settings.registry",
+      "actions.call"
     ]
   },
   "permissions": [
@@ -43,7 +44,12 @@
     {
       "key": "pos:report",
       "label": "Xem quản trị bán lẻ máy POS: đơn, phiếu trả, sổ ca, tổng quan, cài đặt bán hàng của mọi chi nhánh (kế toán, quản lý)",
-      "roles": ["owner", "chief_accountant", "accountant", "viewer"],
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer"
+      ],
       "risk": "low"
     }
   ],
