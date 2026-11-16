@@ -47,6 +47,8 @@ Mỗi bản ghi đủ sáu mục:
 
 - **Đổi:** trang Quy trình của Danh mục vẽ theo nhóm chức năng của menu (Tổ chức → Đối tượng → Tài khoản, ngân hàng → Chi phí · Mặt hàng · Tài sản · Thuế suất); Biểu thuế tách thành nhóm menu Thuế suất.
 - **Đổi:** các màn danh mục: nút chức năng lề phải, cao 28px, In cạnh Xuất, bỏ nút Sửa (bấm đúp mở chi tiết) và dòng "Đã nạp lúc"; bỏ thanh lọc trên, lọc ở từng cột; cột mặc định gọn ở DM04, DM12, DM13, DM15; "Trả về mặc định" lên đầu danh sách cột.
+- **Đổi:** Nhóm hàng (DM11): kiểu cây – chi tiết (cây bên trái; bên phải đường dẫn, số liệu, cấu trúc mã hàng, nhóm con bấm để đi xuống).
+- **Đổi:** Mặt hàng (DM10): In tem gom vào một bảng (phạm vi, mẫu tem, số tem); cột Nhóm hàng hiện tên nhóm cuối, cột mặc định gọn.
 - **Đổi:** Khách hàng / NCC: Thuộc đơn vị cha chỉ chọn trong cùng nhóm; Mobile + Telephone gộp ô Di động (Nhân viên cũng vậy). Loại kho: một danh sách, Nghiệp vụ dùng loại kho vào ngăn Hướng dẫn, hộp thoại mở ở chế độ xem, TK kho phải là tài khoản cấp cuối.
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không (không đổi API, không migration). Loại kho đang để TK tổng hợp (⚠) phải chọn lại TK chi tiết mới Ghi được.

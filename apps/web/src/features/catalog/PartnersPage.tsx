@@ -597,7 +597,7 @@ export function PartnerGroupsPage() {
               { key: 'parentCode', header: 'Nhóm cha', type: 'code', width: 100 },
               { key: 'kind', header: 'Dùng cho', width: 110, value: (g) => (g.kind === 'any' ? 'Mọi loại' : KIND[g.kind] ?? g.kind) },
               { key: 'partners', header: 'Số đối tượng', type: 'number', width: 100 },
-              { key: 'inactive', header: 'Ngừng dùng', type: 'check', width: 85, hidden: true, value: (g) => !g.isActive },
+              { key: 'active', header: 'Hoạt động', type: 'check', width: 85, value: (g) => g.isActive },
             ] satisfies Column<Group>[]} />
         )}
       </div>

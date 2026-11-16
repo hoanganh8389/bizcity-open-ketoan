@@ -99,6 +99,8 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
                 {s.items.map((m) => (
                   <Link key={m.key} to={m.path!} onClick={() => onChoose(openGroup.key)} title={m.code ? `${m.label} (${m.code})` : m.label} className={`gon-fly-item${active?.key === openGroup.key && best > 0 && matchHere(m.path, pathname, search) === best ? ' active' : ''}${isPinned(m.key) ? ' pinned' : ''}`}>
                     <span>{m.label}</span>
+                    {/* [2026-11-17 kiennt] hiện lại mã màn cạnh tên (DM05, ACC41…) (đóng góp) */}
+                    {m.code && <small className="gon-fly-code">{m.code}</small>}
                     <button type="button" className="pin-btn" title={isPinned(m.key) ? 'Bỏ ghim khỏi thanh trên cùng' : 'Ghim lên thanh trên cùng (màn hay dùng)'} onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(m.key); }}>
                       {isPinned(m.key) ? <PinOff size={13} /> : <Pin size={13} />}
                     </button>

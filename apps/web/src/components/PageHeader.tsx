@@ -8,6 +8,7 @@
 import { useState, type ReactNode } from 'react';
 import { HelpCircle, Info, Printer } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { useAppMenu } from '@/layout/useAppMenu';
 import { useAuth } from '@/lib/auth';
 import { tenMan } from '@/layout/ten-man';
 import { HelpDrawer } from './HelpDrawer';
@@ -17,8 +18,12 @@ export function PageHeader({ title, code, subtitle, note, actions, helpKey, help
   const [help, setHelp] = useState(false);
   const { user } = useAuth();
   // Tên, mã của màn đặt ở một nơi (layout/ten-man.ts): khớp đúng đường dẫn đang mở thì dùng.
-  const t = tenMan(useLocation().pathname);
-  if (t) { title = t.label; code = t.code ?? code; }
+  const pathname = useLocation().pathname;
+  const t = tenMan(pathname);
+  // [2026-11-17 kiennt] tiêu đề, mã đồng nhất với menu: màn có trong menu thì lấy tên + mã ở menu (đóng góp)
+  const menu = useAppMenu();
+  const m = t ? undefined : menu.flatMap((g) => [g, ...(g.children ?? [])]).find((x) => x.path === pathname);
+  if (t) { title = t.label; code = t.code ?? code; } else if (m) { title = m.label; code = code ?? m.code; } // mã của màn giữ nguyên (dùng tra nút Quay về dữ liệu gốc)
   return (
     <div className="page-header">
       {/* Chỉ hiện khi in: tên đơn vị ở đầu trang. */}
