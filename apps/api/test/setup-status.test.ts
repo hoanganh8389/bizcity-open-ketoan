@@ -44,7 +44,7 @@ describe('Đơn vị trắng (core.setup.status)', () => {
 
   it('nạp danh mục (Quay về dữ liệu gốc) vẫn trắng', async () => {
     const p = await call(a.ctx, 'POST', '/api/v1/default-data/cost_item/restore?dryRun=1', { confirm: true });
-    const r = await call(a.ctx, 'POST', '/api/v1/default-data/cost_item/restore', { confirm: true, previewToken: p.body.meta.previewToken });
+    const r = await call(a.ctx, 'POST', '/api/v1/default-data/cost_item/restore', { confirm: true, password: 'Thuy!@#', previewToken: p.body.meta.previewToken });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect((await status(a.ctx)).empty).toBe(true);
   });

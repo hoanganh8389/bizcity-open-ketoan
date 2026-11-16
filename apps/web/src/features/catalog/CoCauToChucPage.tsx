@@ -119,7 +119,9 @@ export function CoCauToChucPage() {
     mutationFn: async () => {
       const info = await api.get<{ nodes: number; assignments: number }>('/api/v1/org-units/defaults');
       if (!window.confirm(`Quay về dữ liệu gốc cơ cấu tổ chức?\n\nTệp gốc: ${info.nodes} nút, ${info.assignments} cửa hàng gắn nút.`)) return null;
-      return api.post<{ created: number; updated: number; assigned: number }>('/api/v1/org-units/restore-defaults', { confirm: true });
+      const password = window.prompt('Nhập mật khẩu để quay về dữ liệu gốc cơ cấu tổ chức:'); // [2026-11-17 Nguyễn Văn Thủy] đỡ bấm nhầm (đóng góp)
+      if (!password) return null;
+      return api.post<{ created: number; updated: number; assigned: number }>('/api/v1/org-units/restore-defaults', { confirm: true, password });
     },
     onSuccess: (r) => { if (r) { invalidateOrg(qc); setMsg({ ok: true, text: `Đã quay về dữ liệu gốc: ${r.created + r.updated} nút, gắn ${r.assigned} cửa hàng.` }); } },
     onError: (e) => setMsg({ ok: false, text: errorText(e) }),

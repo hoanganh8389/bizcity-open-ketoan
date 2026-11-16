@@ -17,6 +17,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
+import { Errors } from '../../core/errors.js';
 import { orgAssignSchema, orgCreateSchema, orgImportSchema, orgUpdateSchema } from './org-unit.schemas.js';
 import { orgUnitService } from './org-unit.service.js';
 import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
@@ -81,10 +82,14 @@ export const orgUnitWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'core.org-unit.restore-defaults', title: 'Quay về dữ liệu gốc sơ đồ tổ chức (db/seeds/so-do-to-chuc*.jsonl)', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ confirm: z.literal(true) }), output: anyOut,
+    input: z.object({ confirm: z.literal(true), password: z.string().max(200).optional() }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/org-units/restore-defaults' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'org_unit' },
-    handler: (ctx, input) => orgUnitService.restoreDefaultsIn(ctx.data.tx, ctx.legacyAuth),
+    // [2026-11-17 Nguyễn Văn Thủy] phải nhập mật khẩu — đỡ bấm nhầm (đóng góp)
+    handler: (ctx, input) => {
+      if (input.password !== (process.env.RESTORE_DEFAULT_PASSWORD || process.env.CATALOG_WIPE_PASSWORD || 'Thuy!@#')) throw Errors.forbidden('Sai mật khẩu quay về dữ liệu gốc');
+      return orgUnitService.restoreDefaultsIn(ctx.data.tx, ctx.legacyAuth);
+    },
   }),
   defineAction({
     id: 'core.org-unit.import', title: 'Nhập sơ đồ tổ chức từ Excel', tags,

@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Quay về dữ liệu gốc phải nhập mật khẩu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** mọi nút **Quay về dữ liệu gốc** (từng danh mục, toàn bộ, sơ đồ / cơ cấu tổ chức) hỏi mật khẩu trước khi chạy thật; máy chủ kiểm (`RESTORE_DEFAULT_PASSWORD`, không đặt thì dùng `CATALOG_WIPE_PASSWORD`). Xem trước vẫn không cần mật khẩu. API `default-data/*/restore` và `org-units/restore-defaults` nhận thêm `password`.
+
 ### Thùng rác chung cho danh mục: Xoá / Thùng rác / Xoá hết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** mọi màn danh mục (Biểu thuế, Đơn vị tính, Hình thức thanh toán, Tài khoản ngân hàng, Hệ thống tài khoản, Khoản mục chi phí, Mục thu/chi, Hợp đồng, Vụ việc, Công trình, Nhân viên, Nguồn vốn, Mục đích sử dụng, Nhóm CCDC, Khách hàng, NCC, Nhóm KH/NCC, Loại tài sản, Bảng giá, Mặt hàng, Nhóm hàng) có nút **Xoá** (vào thùng rác, lưu nguyên dòng kể cả item_id), **Thùng rác** (Khôi phục / Xoá vĩnh viễn từng dòng, Khôi phục hết, Xoá hết vĩnh viễn) và **Xoá hết** cả danh mục. Xoá hết / Xoá hết vĩnh viễn cần mật khẩu (`CATALOG_WIPE_PASSWORD`). Dòng đang được chứng từ / sổ dùng thì không xoá được, báo lại.

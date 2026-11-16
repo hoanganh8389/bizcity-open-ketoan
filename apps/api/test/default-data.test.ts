@@ -17,7 +17,7 @@ const restore = async (key: string, c: TestCtx = ctx) => {
   const url = `/api/v1/default-data/${key}/restore`;
   const p = await call(c, 'POST', `${url}?dryRun=1`, { confirm: true });
   if (p.status !== 200) return p;
-  return call(c, 'POST', url, { confirm: true, previewToken: p.body.meta.previewToken });
+  return call(c, 'POST', url, { confirm: true, password: 'Thuy!@#', previewToken: p.body.meta.previewToken });
 };
 const sale = (key: string, sku: string) => ({
   docType: 'sale', docKey: key, branchCode: '26001', docNo: key, docDate: '2026-10-04',
