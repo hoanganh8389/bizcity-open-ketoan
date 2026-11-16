@@ -69,9 +69,9 @@ Kiểm kê 2026-11-06 trên `origin/main` (dee8bf4) của open-ketoan và `main`
 |---|---|---|---|---|---|---|
 | BH01 | Cơ hội bán hàng | ☐ | — | `lfood_salesorder/models/lead.py` | modules/ban-hang (tuỳ chọn) | P3 |
 | BH02 | Báo giá | ☐ | — | `sale.order` state draft | modules/ban-hang | **P0** |
-| BH03 | Đơn bán hàng | ☐ | BH10 chạy JSON mẫu; `sale` chỉ đến từ POS / Woo | `sale.order` | modules/ban-hang | **P0** |
+| BH03 | Đơn bán hàng | 🟡 | phiếu bán nhập tay BH10 (`modules/phieu-ban`: lập, duyệt, bỏ duyệt để sửa) + đơn máy bán (`modules/pos`); chưa báo giá / đơn đặt hàng (SO) <!-- [2026-11-16 03:30 PM Võ Hoàng] TIEN-DO — đối chiếu mã trên main 2026-11-16 (e6213651) (đóng góp) --> | `sale.order` | modules/ban-hang | **P0** |
 | BH04 | Bảng giá theo kênh | 🟡 | `price_lists`, `price_list_branches` | `lfood.pricelist`, `sale.channel` | modules/ban-hang | **P0** |
-| BH05 | Khuyến mãi, chiết khấu thương mại (NĐ81/2018, trần 50 %) | 🟡 | engine khuyến mãi chỉ phía mua | `lfood_promotion/models/promotion.py` | modules/ban-hang | **P0** |
+| BH05 | Khuyến mãi, chiết khấu thương mại (NĐ81/2018, trần 50 %) | 🟡 | khuyến mãi phía bán do Core tính: 8 Rule Contract `sale.promo.*` / `sale.program.*`, trần 50 % NĐ81 khi phát hành, máy bán dùng (PHASE-031 S031-15); còn chiết khấu thương mại theo doanh số (521) <!-- [2026-11-16 03:30 PM Võ Hoàng] TIEN-DO — đối chiếu mã trên main 2026-11-16 (e6213651) (đóng góp) --> | `lfood_promotion/models/promotion.py` | modules/ban-hang | **P0** |
 | BH06 | Hạn mức công nợ khách | 🟡 | `partners.credit_limit` chỉ kiểm phía NCC | `sale_order.py:175-205` (nợ + đơn mở + đơn này > hạn mức → chờ duyệt) | modules/ban-hang | **P0** |
 | BH07 | Hợp đồng, chính sách nhà phân phối (bậc, thưởng) | ☐ | — | `lfood_contract/models/distributor.py` | modules/ban-hang | P2 |
 | BH08 | Hoá đơn điện tử có mã CQT | 🟡 | `tax_invoices` nhận về; chưa phát hành | `lfood_sale/models/sale_invoice.py` | modules/ban-hang + thue | P1 |
@@ -202,7 +202,7 @@ Kiểm kê 2026-11-06 trên `origin/main` (dee8bf4) của open-ketoan và `main`
 |---|---|---|---|---|---|---|
 | HT / CH / DM | 33 | 14 | 13 | 6 | 0 | nền tảng mạnh hơn Erp-vn; thiếu **seed tham số pháp lý VN** và tiền tệ |
 | MH | 13 | 6 | 3 | 4 | 0 | thiếu yêu cầu mua, báo giá, nông sản, nhập khẩu, đánh giá NCC |
-| BH | 14 | 2 | 6 | 6 | 0 | **khoảng trống lớn nhất đang có người dùng**: không có đơn bán, bảng giá / kênh / khuyến mãi / hạn mức phía bán |
+| BH | 14 | 2 | 7 | 5 | 0 | **khoảng trống lớn nhất đang có người dùng**: chưa có báo giá / đơn đặt hàng (SO), bảng giá theo kênh, hạn mức công nợ phía bán; khuyến mãi phía bán đã có (16/11) |
 | KHO | 11 | 1 | 8 | 2 | 0 | có số liệu, thiếu **chứng từ** (chuyển, kiểm kê, tiêu huỷ, cách ly) và **lô ở Kernel** |
 | TS | 13 | 6 | 3 | 4 | 0 | thiếu XDCB, thuê, bảo trì, đội xe |
 | KT | 18 | 11 | 2 | 5 | 0 | thiếu đối soát ngân hàng, tạm ứng, trích trước, tỷ giá, dự phòng |
@@ -210,7 +210,7 @@ Kiểm kê 2026-11-06 trên `origin/main` (dee8bf4) của open-ketoan và `main`
 | THUE | 13 | 5 | 1 | 7 | 0 | thiếu toàn bộ nhánh TNCN và nghĩa vụ thuế |
 | NSU / LUONG | 30 | 0 | 0 | 30 | 0 | chưa có |
 | BC / CL / RD | 23 | 6 | 2 | 2 | 13 | CL / RD ngoài phạm vi |
-| **Tổng** | **173** | **51** | **40** | **69** | **13** | |
+| **Tổng** | **173** | **51** | **41** | **68** | **13** | |
 
 ## 3. Chỗ Erp-vn yếu hơn open-ketoan — blueprint phải viết theo open-ketoan (D030-8)
 
