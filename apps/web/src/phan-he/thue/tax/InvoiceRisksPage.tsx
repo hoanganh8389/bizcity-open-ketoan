@@ -12,6 +12,8 @@ import { FileSpreadsheet, Plus, Trash2 } from 'lucide-react';
 import { RISK_KINDS, taxCodeProblem, type RiskKind, type RiskyTaxpayerInput } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — sửa danh sách người nộp thuế rủi ro theo thao tác màn THUE02 (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { date as fmtDate, dateTime, today } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -126,7 +128,8 @@ async function readRiskyExcel(file: File): Promise<{ items: RiskyTaxpayerInput[]
 function RiskyListTab() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const editable = can('catalog:write');
+  const tt = useThaoTac('thue.hoa-don-rui-ro');
+  const editable = can('catalog:write') && Boolean(tt.sua);
   const q = useQuery({ queryKey: ['risky-taxpayers'], queryFn: () => api.get<Risky[]>('/api/v1/risky-taxpayers') });
   const [editing, setEditing] = useState<RiskyTaxpayerInput | null>(null);
   const [readMsg, setReadMsg] = useState<string | null>(null);

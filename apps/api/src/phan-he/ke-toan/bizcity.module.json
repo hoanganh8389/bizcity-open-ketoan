@@ -35,6 +35,335 @@
       "key": "ke-toan:but-toan-huy",
       "label": "Huỷ bút toán tổng hợp",
       "risk": "low"
+    },
+    {
+      "key": "ke-toan:phieu-ke-toan-xem",
+      "label": "Phiếu kế toán: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:phieu-ke-toan-lap",
+      "label": "Phiếu kế toán: Thêm",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:phieu-ke-toan-sua",
+      "label": "Phiếu kế toán: Sửa",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:phieu-ke-toan-huy",
+      "label": "Phiếu kế toán: Huỷ",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:phieu-ke-toan-duyet",
+      "label": "Phiếu kế toán: Duyệt / ghi sổ",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:so-du-dau-ky-xem",
+      "label": "Số dư tài khoản đầu kỳ: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:so-du-dau-ky-lap",
+      "label": "Số dư tài khoản đầu kỳ: Nhập số dư",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:so-du-dau-ky-sua",
+      "label": "Số dư tài khoản đầu kỳ: Sửa",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:so-du-dau-ky-huy",
+      "label": "Số dư tài khoản đầu kỳ: Huỷ",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:gia-von-xem",
+      "label": "Tính giá vốn: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:gia-von-tinh",
+      "label": "Tính giá vốn: Tính giá vốn",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ket-chuyen-xem",
+      "label": "Kết chuyển lãi / lỗ: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ket-chuyen-chay",
+      "label": "Kết chuyển lãi / lỗ: Kết chuyển",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ket-chuyen-nam-truoc",
+      "label": "Kết chuyển lãi / lỗ: Chuyển lợi nhuận năm trước",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ket-chuyen-huy",
+      "label": "Kết chuyển lãi / lỗ: Huỷ kết chuyển",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ket-chuyen-cau-hinh",
+      "label": "Kết chuyển lãi / lỗ: Sửa thứ tự / quy tắc kết chuyển",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ky-ke-toan-xem",
+      "label": "Đóng / mở kỳ kế toán: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ky-ke-toan-khai",
+      "label": "Đóng / mở kỳ kế toán: Khai kỳ (năm)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ky-ke-toan-khoa",
+      "label": "Đóng / mở kỳ kế toán: Khoá kỳ",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ky-ke-toan-mo-khoa",
+      "label": "Đóng / mở kỳ kế toán: Mở khoá kỳ",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:doi-tru-xem",
+      "label": "Khoản công nợ và đối trừ: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:doi-tru-lap",
+      "label": "Khoản công nợ và đối trừ: Đối trừ / tự đối trừ",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:doi-tru-go",
+      "label": "Khoản công nợ và đối trừ: Gỡ đối trừ",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:lap-bctc-xem",
+      "label": "Lập báo cáo tài chính: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:lap-bctc-luu",
+      "label": "Lập báo cáo tài chính: Lưu bộ báo cáo",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:lap-bctc-xoa",
+      "label": "Lập báo cáo tài chính: Xoá bộ báo cáo",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ke-hoach-thu-chi-xem",
+      "label": "Kế hoạch thu chi: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ke-hoach-thu-chi-lap",
+      "label": "Kế hoạch thu chi: Thêm / điền tự động",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ke-hoach-thu-chi-sua",
+      "label": "Kế hoạch thu chi: Sửa",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:ke-hoach-thu-chi-xoa",
+      "label": "Kế hoạch thu chi: Xoá",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:dinh-muc-xem",
+      "label": "Định mức chi phí: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ke-toan:dinh-muc-sua",
+      "label": "Định mức chi phí: Sửa / sao chép định mức",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
     }
   ],
   "data": {

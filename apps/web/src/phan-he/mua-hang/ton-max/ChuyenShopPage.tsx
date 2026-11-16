@@ -16,6 +16,7 @@ import { api, errorText } from '@/lib/api';
 import { monthStart, today } from '../du-lieu';
 import { num, qtyFmt, stockApi, useHierarchy, type TransferRequest, type TransferSuggest, type TransferSuggestLine } from './api';
 import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from './chung';
+import { useThaoTac } from '@/lib/manHinh';
 
 type Row = TransferSuggestLine & { _group?: boolean; _key: string };
 const lk = (l: TransferSuggestLine) => `${l.shopCode}|${l.sku}`;
@@ -48,6 +49,7 @@ export function ChuyenShopPage() {
 
 function DeXuat({ parent, onDone }: { parent: string; onDone: () => void }) {
   const qc = useQueryClient();
+  const tt = useThaoTac('mua-hang.chuyen-shop'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — Chốt đề nghị theo thao tác "them" của màn MH19 (đóng góp)
   const [wh, setWh] = useState('');
   const [edit, setEdit] = useState<Record<string, number>>({});
   const [off, setOff] = useState<Record<string, boolean>>({});
@@ -127,7 +129,7 @@ function DeXuat({ parent, onDone }: { parent: string; onDone: () => void }) {
         <span className="muted" style={{ fontSize: 12 }} title="Ngưỡng làm tròn thùng đổi ở Công thức đặt hàng">Ngưỡng thùng {Math.round((q.data?.threshold ?? 0.5) * 100)}%</span>
         <span className="grow" />
         <button className="btn btn-sm" onClick={() => exportRef.current?.()}><FileSpreadsheet size={14} /> Xuất Excel</button>
-        <button className="btn btn-primary" disabled={!picked.length || busy || over.length > 0} title={over.length ? `Tổng chia vượt tồn kho: ${over.join('; ')}` : undefined} onClick={() => void commit()}><Send size={14} /> Chốt đề nghị ({shops.size} shop · {picked.length} dòng)</button>
+        {tt.them && <button className="btn btn-primary" disabled={!picked.length || busy || over.length > 0} title={over.length ? `Tổng chia vượt tồn kho: ${over.join('; ')}` : undefined} onClick={() => void commit()}><Send size={14} /> Chốt đề nghị ({shops.size} shop · {picked.length} dòng)</button>}
       </div>
       <div className="tm-bar tm-shops" style={{ paddingTop: 0, flexWrap: 'wrap' }}>
         <span className="muted" title="Bấm để chọn shop theo thứ tự ưu tiên (số thứ tự hiện trên nút); không chọn = mọi shop, theo mã">Shop phân tích:</span>
@@ -155,6 +157,7 @@ function DeXuat({ parent, onDone }: { parent: string; onDone: () => void }) {
 
 function DaChot({ parent }: { parent: string }) {
   const qc = useQueryClient();
+  const tt = useThaoTac('mua-hang.chuyen-shop'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — Huỷ / Mở lại / Đã lên phiếu theo thao tác màn MH19 (đóng góp)
   const [from, setFrom] = useState(monthStart());
   const [to, setTo] = useState(today());
   const [status, setStatus] = useState('open');
@@ -193,10 +196,10 @@ function DaChot({ parent }: { parent: string }) {
       {err && <div className="alert alert-bad" style={{ margin: '0 12px 8px' }}>{err}</div>}
       {q.isLoading ? <Loading /> : <DataGrid rows={q.data ?? []} columns={cols} rowKey={(r) => r.id} storageKey="chuyen-shop-da-chot" onRowClick={setOpen} exportName={`de-nghi-chuyen-${parent}`} emptyText="Chưa có đề nghị nào trong khoảng ngày này." />}
       {open && <Modal wide title={`Đề nghị chuyển ${open.code} → ${open.toBranch} ${open.toName}`} onClose={() => setOpen(null)} footer={<>
-        {open.status === 'open' && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => void act(open, 'cancel')}>Huỷ đề nghị</button>}
-        {open.status !== 'open' && <button className="btn" style={{ marginRight: 'auto' }} onClick={() => void act(open, 'reopen')}>Mở lại</button>}
+        {open.status === 'open' && tt.huy && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => void act(open, 'cancel')}>Huỷ đề nghị</button>}
+        {open.status !== 'open' && tt.xong && <button className="btn" style={{ marginRight: 'auto' }} onClick={() => void act(open, 'reopen')}>Mở lại</button>}
         <button className="btn" onClick={() => void exportOne(open)}><FileSpreadsheet size={14} /> Xuất Excel</button>
-        {open.status === 'open' && <button className="btn btn-primary" onClick={() => void act(open, 'done')}>Đã lên phiếu chuyển</button>}
+        {open.status === 'open' && tt.xong && <button className="btn btn-primary" onClick={() => void act(open, 'done')}>Đã lên phiếu chuyển</button>}
         <button className="btn" onClick={() => setOpen(null)}>Đóng</button></>}>
         <div className="full muted" style={{ fontSize: 12.5 }}>Từ {open.fromBranch} {open.fromName} (kho {open.fromWarehouse}) · chốt bởi {open.createdBy} lúc {new Date(open.createdAt).toLocaleString('vi-VN')}{open.doneBy ? ` · ${STATUS[open.status].toLowerCase()} bởi ${open.doneBy}` : ''}</div>
         <div className="full"><table className="mh-mini"><thead><tr><th>#</th><th>Mã</th><th>Tên hàng</th><th className="num">SL</th><th>ĐVT</th><th>Quy đổi</th></tr></thead><tbody>

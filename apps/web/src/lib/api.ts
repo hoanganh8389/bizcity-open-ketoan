@@ -22,9 +22,10 @@ export class ApiError extends Error {
 }
 
 /** Dựng ApiError + ghi khay Mã tra cứu. 401 không ghi (đã đưa về trang đăng nhập). */
-function failure(res: Response, method: string, path: string, code: string, message: string, error?: ApiFailure['error'] | null, details?: unknown): ApiError {
+function failure(res: Response, method: string, path: string, code: string, message: string, error?: ApiFailure['error'] | null, details?: unknown, quiet = false): ApiError {
   const ma = docMaTuPhanHoi({ status: res.status, method, path, screen: window.location.pathname, error: error ?? { code }, headerRequestId: res.headers.get('x-request-id') });
-  if (res.status !== 401) khoMaTraCuu.ghi(ma);
+  // [2026-11-16 Nguyễn Văn Thủy] lời gọi phụ (quiet: số liệu tham khảo, không có quyền thì thôi) không bật hộp Mã tra cứu (đóng góp)
+  if (res.status !== 401 && !(quiet && res.status === 403)) khoMaTraCuu.ghi(ma);
   // [2026-11-11 Nguyễn Văn Thủy] lỗi khi ghi (400 / 409 / 422…) → hộp thoại trên cùng gắn lỗi vào ô có nhãn khớp (components/kiemLoi.ts) (đóng góp)
   if (method !== 'GET' && res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 403) {
     const list = Array.isArray(details) ? details.map((d) => (typeof d === 'string' ? d : (d as { message?: string })?.message ?? '')).filter(Boolean) : [];
@@ -68,7 +69,7 @@ interface WriteOptions {
   idempotencyKey?: string;
 }
 
-async function request<T>(method: string, path: string, opts: { query?: Query; body?: unknown; signal?: AbortSignal } & WriteOptions = {}): Promise<{ data: T; meta?: Record<string, unknown> }> {
+async function request<T>(method: string, path: string, opts: { query?: Query; body?: unknown; signal?: AbortSignal; quiet?: boolean } & WriteOptions = {}): Promise<{ data: T; meta?: Record<string, unknown> }> {
   const token = tokenStore.get();
   const res = await fetch(buildUrl(path, opts.query), {
     method,
@@ -87,14 +88,14 @@ async function request<T>(method: string, path: string, opts: { query?: Query; b
     json = await res.json();
   } catch {
     // Thân hỏng (proxy 502/504): requestId lấy từ header X-Request-Id nếu proxy chuyển lại.
-    throw failure(res, method, path, 'INTERNAL_ERROR', res.status === 504 ? 'Quá thời gian chờ (504): báo cáo chạy lâu hơn giới hạn của máy chủ — thu hẹp chi nhánh / kho / kỳ rồi tìm lại' : `Máy chủ trả lỗi ${res.status}`);
+    throw failure(res, method, path, 'INTERNAL_ERROR', res.status === 504 ? 'Quá thời gian chờ (504): báo cáo chạy lâu hơn giới hạn của máy chủ — thu hẹp chi nhánh / kho / kỳ rồi tìm lại' : `Máy chủ trả lỗi ${res.status}`, undefined, undefined, opts.quiet);
   }
   if (!json.ok) {
     if (res.status === 401 && path !== '/api/v1/auth/login' && path !== '/api/v1/auth/wp-sso') {
       tokenStore.clear();
       window.dispatchEvent(new Event('ketoan:logout'));
     }
-    throw failure(res, method, path, json.error.code, json.error.message, json.error, json.error.details);
+    throw failure(res, method, path, json.error.code, json.error.message, json.error, json.error.details, opts.quiet);
   }
   return { data: json.data, meta: json.meta as Record<string, unknown> | undefined };
 }
@@ -109,6 +110,8 @@ export const api = {
   /** signal: huỷ được (react-query truyền vào queryFn) — báo cáo nặng bấm Huỷ thì trình duyệt cắt luôn yêu cầu. */
   get: <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>('GET', path, { query, signal }).then((r) => r.data),
   getPage: <T>(path: string, query?: Query) => request<T>('GET', path, { query }),
+  /** GET số liệu phụ: không có quyền (403) thì im lặng, không bật hộp Mã tra cứu. */
+  getQuiet: <T>(path: string, query?: Query) => request<T>('GET', path, { query, quiet: true }),
   post: <T>(path: string, body?: unknown, opts?: WriteOptions) => request<T>('POST', path, { body: body ?? {}, ...opts }).then((r) => r.data),
   // [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: ghi và lấy cả meta của phản hồi (previewToken của ?dryRun=1, backupId…)
   postMeta: <T>(path: string, body?: unknown, query?: Query, opts?: WriteOptions) => request<T>('POST', path, { body: body ?? {}, query, ...opts }),

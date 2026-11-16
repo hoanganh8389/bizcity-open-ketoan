@@ -16,6 +16,164 @@
       "masterdata.read"
     ]
   },
+  "permissions": [
+    {
+      "key": "tai-san:the-tai-san-xem",
+      "label": "Thẻ tài sản (tăng / giảm TSCĐ): Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:the-tai-san-lap",
+      "label": "Thẻ tài sản (tăng / giảm TSCĐ): Thêm / nhập Excel",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:the-tai-san-sua",
+      "label": "Thẻ tài sản (tăng / giảm TSCĐ): Sửa (cả ghi giảm, tạm ngừng, ảnh)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:the-tai-san-xoa",
+      "label": "Thẻ tài sản (tăng / giảm TSCĐ): Xoá thẻ chưa trích",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:the-tai-san-ghi-so",
+      "label": "Thẻ tài sản (tăng / giảm TSCĐ): Lập chứng từ ghi tăng / điều chuyển",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:bien-dong-xem",
+      "label": "Biến động tài sản (đánh giá lại, điều chuyển, kiểm kê): Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:bien-dong-lap",
+      "label": "Biến động tài sản (đánh giá lại, điều chuyển, kiểm kê): Thêm sự kiện",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:bien-dong-xoa",
+      "label": "Biến động tài sản (đánh giá lại, điều chuyển, kiểm kê): Xoá sự kiện",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:khau-hao-xem",
+      "label": "Tính khấu hao, phân bổ: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:khau-hao-tinh",
+      "label": "Tính khấu hao, phân bổ: Tính khấu hao và ghi sổ",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:khau-hao-sua-tay",
+      "label": "Tính khấu hao, phân bổ: Sửa tay số trích",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:loai-tai-san-xem",
+      "label": "Loại tài sản: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:loai-tai-san-lap",
+      "label": "Loại tài sản: Thêm",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:loai-tai-san-sua",
+      "label": "Loại tài sản: Sửa",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "tai-san:loai-tai-san-xoa",
+      "label": "Loại tài sản: Xoá",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    }
+  ],
   "data": {
     "tables": [
       "assets",

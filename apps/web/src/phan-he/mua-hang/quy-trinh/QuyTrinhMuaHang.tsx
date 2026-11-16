@@ -66,7 +66,6 @@ const STAGES: Stage[] = [
     config: [
       { label: 'Công thức đặt hàng', code: 'MH18', icon: 'Sigma', color: '#64748b', path: '/mua-hang/cong-thuc', hint: 'Số ngày bán, shop tính vào, kho chuẩn' },
       { label: 'Mặt hàng & phân cha – con', code: 'DM10', icon: 'Package', color: '#64748b', path: '/danh-muc/mat-hang', hint: 'Gắn mã con (quà, kẹp quà, mã Z…) vào mã cha để mua không bị thừa' },
-      { label: 'Tách / gộp mã con', code: 'MH26', icon: 'Split', color: '#64748b', path: '/mua-hang/bien-the', hint: 'Đuôi mã nào đặt riêng, đuôi nào cộng vào mã gốc' },
     ],
     side: [],
   },

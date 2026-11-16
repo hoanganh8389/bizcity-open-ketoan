@@ -420,6 +420,7 @@ html.gd-xanh table.dgrid-table tr.group-row td { background: var(--n-100); font-
 /* Nút bánh răng Thiết lập ở thanh trên */
 .nut-thiet-lap { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--ink-600, #475569); }
 .nut-thiet-lap:hover { background: color-mix(in srgb, var(--base) 10%, transparent); color: var(--base); }
+.nut-thiet-lap.on { background: color-mix(in srgb, var(--base) 14%, transparent); color: var(--base); } /* đang mở Thiết lập: bấm lại để đóng */
 /* Việc đang phát triển trong menu bung */
 .gon-fly-item.disabled { opacity: .55; cursor: default; }
 .gon-fly-item.disabled small { margin-left: auto; font-size: 11px; font-style: italic; }

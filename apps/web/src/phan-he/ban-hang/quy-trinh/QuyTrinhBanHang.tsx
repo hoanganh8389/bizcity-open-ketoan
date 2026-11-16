@@ -98,9 +98,9 @@ export function QuyTrinhBanHang() {
   const core = useQuery({ queryKey: ['ban-hang', 'viec-can-lam'], queryFn: () => api.get<CoreTodo>('/api/v1/ban-hang/viec-can-lam'), refetchOnWindowFocus: true });
   // Module pos: đơn chờ tiền QR (30 ngày gần đây), ca còn mở từ hôm trước (7 ngày). Lỗi (module tắt / không có quyền) → coi như không có máy POS.
   const qr = useQuery({ queryKey: ['ban-hang', 'pos-qr'], retry: false,
-    queryFn: async () => Number((await api.getPage<unknown[]>('/api/v1/m/pos/admin/orders', { status: 'awaiting_payment', from: day(-30), to: day(), pageSize: 1 })).meta?.total ?? 0) });
+    queryFn: async () => Number((await api.getQuiet<unknown[]>('/api/v1/m/pos/admin/orders', { status: 'awaiting_payment', from: day(-30), to: day(), pageSize: 1 })).meta?.total ?? 0) });
   const shifts = useQuery({ queryKey: ['ban-hang', 'pos-shift'], retry: false, enabled: qr.isSuccess,
-    queryFn: async () => (await api.get<{ status?: string }[]>('/api/v1/m/pos/admin/shifts', { from: day(-7), to: day(-1) })).filter((s) => s.status === 'open').length });
+    queryFn: async () => (await api.getQuiet<{ status?: string }[]>('/api/v1/m/pos/admin/shifts', { from: day(-7), to: day(-1) })).data.filter((s) => s.status === 'open').length });
   const posOn = qr.isSuccess;
 
   const items: ViecCanLam[] = [

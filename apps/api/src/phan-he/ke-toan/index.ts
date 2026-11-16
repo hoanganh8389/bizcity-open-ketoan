@@ -12,6 +12,9 @@ import { registerDocumentType } from '@bizcity/platform/core/auth';
 // [2026-11-09 05:55 PM kiennt] PHASE-028 — giai đoạn 3.2b: đủ bộ thao tác xem / lập / huỷ (/ xuất) cho từng loại chứng từ của phân hệ
 registerDocumentType('manual_journal', { read: 'ke-toan:but-toan-xem', create: 'ke-toan:but-toan-lap', cancel: 'ke-toan:but-toan-huy' });
 
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — màn hình + thao tác phân hệ Kế toán (đóng góp)
+import './man-hinh-ke-toan.js';
+
 export const keToan: ApiModule = {
   key: 'ke-toan', label: 'Kế toán',
   routes: [...LEDGER, voucherRoutes, closingRoutes, debtConfirmationRoutes, dimensionReportRoutes, planningRoutes],

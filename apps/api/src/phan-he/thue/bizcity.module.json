@@ -17,6 +17,231 @@
       "masterdata.read"
     ]
   },
+  "permissions": [
+    {
+      "key": "thue:to-khai-gtgt-xem",
+      "label": "Khai thuế GTGT: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:to-khai-gtgt-luu",
+      "label": "Khai thuế GTGT: Lưu tờ khai",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:to-khai-gtgt-bo-sung",
+      "label": "Khai thuế GTGT: Lập tờ khai bổ sung",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:to-khai-gtgt-chap-nhan",
+      "label": "Khai thuế GTGT: Đánh dấu cơ quan thuế chấp nhận",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:to-khai-gtgt-xoa",
+      "label": "Khai thuế GTGT: Xoá lần khai chưa chấp nhận",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:quyet-toan-tndn-xem",
+      "label": "Quyết toán thuế TNDN: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:quyet-toan-tndn-luu",
+      "label": "Quyết toán thuế TNDN: Lưu tờ khai",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:hoa-don-cqt-xem",
+      "label": "Hoá đơn từ cơ quan thuế: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:hoa-don-cqt-nhap",
+      "label": "Hoá đơn từ cơ quan thuế: Nhập hoá đơn từ cổng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:hoa-don-cqt-tham-chieu",
+      "label": "Hoá đơn từ cơ quan thuế: Chuyển thành chứng từ tham chiếu",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:hoa-don-cqt-xoa",
+      "label": "Hoá đơn từ cơ quan thuế: Xoá hoá đơn đã nhập",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:hoa-don-rui-ro-xem",
+      "label": "Cảnh báo hoá đơn rủi ro: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:hoa-don-rui-ro-sua",
+      "label": "Cảnh báo hoá đơn rủi ro: Thêm / sửa người nộp thuế rủi ro",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:hoa-don-rui-ro-xoa",
+      "label": "Cảnh báo hoá đơn rủi ro: Xoá người nộp thuế rủi ro",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:nguoi-nop-thue-xem",
+      "label": "Thông tin người nộp thuế: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:nguoi-nop-thue-sua",
+      "label": "Thông tin người nộp thuế: Sửa",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:bo-sung-thong-tin-xem",
+      "label": "Bổ sung thông tin thuế: Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:bo-sung-thong-tin-sua",
+      "label": "Bổ sung thông tin thuế: Ghi thông tin thuế",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:bo-sung-thong-tin-xoa",
+      "label": "Bổ sung thông tin thuế: Xoá thông tin thuế",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:phan-loai-dai-han-xem",
+      "label": "Phân loại dài hạn (B01): Xem",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "thue:phan-loai-dai-han-luu",
+      "label": "Phân loại dài hạn (B01): Lưu phần dài hạn",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    }
+  ],
   "data": {
     "tables": [
       "vat_returns",

@@ -18,11 +18,23 @@ Mỗi bản ghi đủ sáu mục:
 - **Đổi:** module `pos` nhận đơn có `loyalty.redeem` (đổi điểm, cần khách) và mã voucher đổi điểm trong `promotionSelections` (một mã / đơn); quà đổi điểm (`giftKey lp:…`) là dòng quà 0đ; tiền giảm voucher chia vào dòng theo thành tiền; đơn trả máy có `loyalty` (điểm tích / đổi / còn, voucher phát) và `usedVouchers`. Khuyến mại kiểu plugin website (chọn dòng, hạ số quà) vẫn chặn.
 - **Thay đổi định khoản:** không đổi luật — voucher là tiền giảm trên dòng chứng từ bán (doanh thu ghi sau giảm, như mọi khoản giảm dòng); quà đổi điểm là dòng quà 0đ (giá vốn hàng tặng).
 
+### Không bật hộp "Từ chối đúng luật" vì số liệu phụ <!-- [2026-11-16 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Sửa:** màn Quy trình Bán hàng gọi số liệu máy POS (đơn chờ QR, ca chưa đóng) và thanh Việc cần làm gọi việc mua hàng / cảnh báo / hàng đợi: tài khoản không có quyền nguồn đó thì bỏ qua im lặng, không bật hộp Mã tra cứu FORBIDDEN. Thêm `api.getQuiet` cho lời gọi phụ.
+
 ### Module mới `loyalty` — sổ điểm thành viên (phiếu NT-BH-020 bước 1) <!-- [2026-11-15 04:30 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1 (đóng góp) -->
 
 - **Thêm:** module `modules/loyalty` (schema `mod_loyalty`): sổ điểm chỉ thêm theo lô có hạn; chính sách tích điểm do website đẩy sang `POST /api/v1/m/loyalty/program` (quyền `catalog:write`, giữ mọi phiên bản); tự tích khi đơn máy bán hoàn tất (nghe `pos.order.recorded`), tự hoàn khi trả hàng (nghe `pos.return.recorded`); máy bán đọc `GET /program?branch=`, `GET /customers/:id` (quyền mới `loyalty:read`).
 - **Thay đổi định khoản:** không — điểm chỉ hạch toán lúc đổi (bước 2, trên chứng từ bán).
 - **Nâng cấp cần làm:** chạy migration module `loyalty` và đồng bộ module (`module sync`); website (Cổng kế toán) đẩy chính sách từng cửa hàng; vé thu ngân cấp thêm `loyalty:read`.
+
+### HT17 thẻ hướng dẫn: xuất / nhập JSON; menu Mua hàng; thuế % ở giá mua <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** HT17 Thẻ hướng dẫn có **Xuất JSON** (mọi thẻ, ảnh trong nội dung, nơi gắn màn / hộp thoại) và **Nhập JSON** — xem trước thẻ nào thêm mới / ghi đè / không đổi và nơi gắn nào đổi thẻ, bấm Nhập thì ghi đè. Khớp thẻ theo mã nguồn → nơi đang gắn → tiêu đề; thẻ không có trong tệp giữ nguyên. API `GET /api/v1/help/export`, `POST /api/v1/help/package/preview`, `POST /api/v1/help/package/import` (action `core.help.package-import`). Test `help-package.test.ts`.
+- **Đổi:** menu Mua hàng thêm nhóm **Sổ kho, tồn kho** (MH24 Sổ kho theo mặt hàng, MH25 Tồn kho theo mặt hàng); **MH26 Tách / gộp mã con** chuyển sang Thiết lập › Cấu hình, bỏ khỏi menu và sơ đồ quy trình Mua hàng.
+- **Đổi:** thêm mặt hàng theo bước: bước đã từng tới thì bấm qua lại tự do (quay lại xem rồi nhảy thẳng về bước đang làm, các bước giữa vẫn kiểm bắt buộc); bước chưa tới thì khoá.
+- **Đổi:** nút Thiết lập (bánh răng) ở thanh trên: đang mở Thiết lập thì bấm lại để đóng thẻ đó, nút sáng lên khi đang mở.
+- **Thêm:** thêm mặt hàng bước Khai báo giá mua hiện cột **Thuế %** (thuế suất chọn ở bước 1) cạnh giá chưa / gồm thuế.
 
 ### Bỏ màn MH27 ĐVT Thùng đặt hàng <!-- [2026-11-15 Nguyễn Văn Thủy] (đóng góp) -->
 
