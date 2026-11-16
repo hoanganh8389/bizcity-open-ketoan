@@ -318,3 +318,59 @@ Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định kho
 - Test hợp đồng module (`modules/thiet-lap/test/`); `npx bizcity module check thiet-lap` ĐẠT.
 - Chạy thật trên giao diện, đơn vị trắng: đi hết bốn bước, có ảnh màn.
 - Phá thử luật chạy tiếp → test đỏ.
+
+
+## 13. Chữ chốt B4 — gói `thuong-mai-ban-le` 1.1, ba tháng nghiệp vụ (2026-11-16) <!-- [2026-11-16 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B4 (S036-6): khối openings / assets / close, ngày theo tháng, ngoại lệ STD-PRE-7 cho số dư đầu kỳ và thẻ tài sản, T036-1 -->
+
+**Chủ dự án chọn 2026-11-16: ngoại lệ hẹp cho STD-PRE-7.**
+
+- Số dư đầu kỳ (`core.opening-balance.create`) và thẻ tài sản (`core.asset.create`: `depreciationAccount`, `expenseAccount`) chỉ nhận **số hiệu tài khoản**. Tài khoản ngầm định không có vai trò thay thế (vốn chủ sở hữu, hao mòn).
+- Số hiệu tài khoản **chỉ** được ghi ở hai khối `openings` và `assets`. Đây là dữ liệu theo chế độ của gói (`regime: vn-tt99`), giống người dùng gõ ở màn số dư / thẻ tài sản; không phải định khoản.
+- Bút toán vẫn do Kernel dựng. Khối chứng từ, phiếu thu chi, chi phí **không** có số tài khoản: chi phí lẻ đi `supplier_payment` + `reasonCode` có sẵn (CPQL, Tra01…), luật định khoản lấy tài khoản đối ứng từ lý do.
+- `core.setup.plan` kiểm mỗi số hiệu ở hai khối đó **có trong hệ thống tài khoản của đơn vị và là tài khoản chi tiết**. Thiếu → `allowed = false`, `reason` nêu số thiếu, không nạp.
+- SC-PRESET-1 chặn số tài khoản ở mọi tệp mẫu khác (trường `*Account`, `accountCode`).
+
+**Khối mới** (`preset.json` → `sample`; thứ tự chạy cố định):
+
+| Khối | Tệp | Action | Đã có = |
+|---|---|---|---|
+| `settings` | `preset.json` | `core.posting-modes.update` | lần chạy đầu (như B2) |
+| `branches` · `partners` · `products` | `mau/*.json` | như B2 | mã đã có |
+| `openings` (mới) | `mau/so-du.json` | `core.opening-balance.create` | `docNo` đã có ở phiếu số dư của đơn vị |
+| `documents` | `mau/chung-tu.json` | `core.document.submit` | `docKey` (chạy lại → `unchanged`) |
+| `assets` (mới) | `mau/tai-san.json` | `core.asset.create` | mã tài sản đã có |
+| `close` (mới) | `mau/cuoi-ky.json` | `core.inventory.costing-run`, `core.asset.depreciation`, `core.closing.run` theo kỳ | chỉ chạy khi lần chạy này **ghi được chứng từ mẫu mới**; chạy lại mà chứng từ đều `unchanged` → bỏ qua cả khối |
+
+- Đường "công ty của tôi" (B3) không thấy ba khối mới: chúng là dữ liệu của công ty mẫu.
+- Lý do tách `close`: giá vốn, khấu hao, kết chuyển là việc Kernel tự lập (eventStore), gói chỉ **bấm** đúng action như kế toán bấm ở màn — không tự tính giá vốn (STD-PRE-7, câu 3).
+
+**Ngày theo tháng (STD-PRE-5 mở rộng).** Gói trải ba tháng tới hôm nay:
+
+- `@today` / `@today-N`: như cũ.
+- `@m-N/DD`: ngày `DD` của tháng (hiện tại − `N`). `DD` lớn hơn số ngày của tháng → ngày cuối tháng (`@m-3/31` = cuối tháng trước ba tháng). Ra sau hôm nay → **hôm nay**.
+- `@period-N`: kỳ `YYYY-MM` của tháng (hiện tại − `N`) — dùng ở khối `close`.
+- Số dư đầu kỳ ngày `@m-3/31`; nghiệp vụ tháng `@m-2`, `@m-1` và tháng này; kết chuyển `@period-2`, `@period-1`; giá vốn và khấu hao cả ba kỳ.
+
+**Gói `thuong-mai-ban-le` 1.1** (hư cấu, theo bảng §5, trừ lương và tờ khai GTGT nháp):
+
+- Danh mục: 3 chi nhánh, ~30 đối tượng (NCC, khách buôn), ~40 mặt hàng ba mức thuế (0 / 5 / 8 / 10 %).
+- Số dư đầu kỳ: tiền mặt, tiền gửi, hàng tồn, phải thu, phải trả, vốn góp — Nợ = Có.
+- Chứng từ: mua có hoá đơn (có NCC trả chậm), trả hàng NCC, bán lẻ + bán buôn (tiền mặt / chuyển khoản / công nợ), khách trả hàng, thu tiền khách, trả tiền NCC, nộp tiền vào ngân hàng (`cash_transfer`), chi phí lẻ theo lý do, chuyển kho, kiểm kê điều chỉnh.
+- Tài sản: 2 tài sản cố định + 1 CCDC, khấu hao ba kỳ.
+- **Không làm ở B4:** tờ khai GTGT nháp (action lưu `thue.vat-return.save` của phân hệ thuế đòi đủ số liệu tờ khai; màn tờ khai vẫn tính từ sổ nên vẫn có số), lương (chưa có phân hệ).
+
+**Đổi ở `setup-run.ts`:** thêm `openings`, `assets`, `close` vào `BLOCK_KEYS` và `blocksOf`; ngày `@m-N/DD`, `@period-N`; kiểm số hiệu tài khoản ở `plan`; luật chạy tiếp theo khối (T036-9) giữ nguyên.
+
+**Hợp đồng:** [BIZCITY-PRESET-v1](../../contracts/BIZCITY-PRESET-v1.md) **1.2.0** — khối mới, ngày theo tháng, STD-PRE-7 có ngoại lệ hẹp; schema thêm `sample.openings` / `assets` / `close`; `bizcity-standard.json` `bizcity_preset` 1.2.0.
+
+**Kiểm:**
+
+- **T036-1** (`apps/api/test/preset-bao-cao.test.ts`, mới), nạp gói trên đơn vị sạch:
+  - lần chạy `done`, không mục nào lỗi;
+  - 18 báo cáo đích (§5) trả số **khác rỗng / khác 0** qua API của từng màn;
+  - Nợ = Có; công nợ ↔ 131 / 331; tồn kho ↔ 156 (truy vấn cùng ý `scripts/doi-chieu-ke-toan.sql`);
+  - apply lần hai thêm **0** dòng sổ.
+- Chạy tay `psql -v tenant=<mã> < scripts/doi-chieu-ke-toan.sql` trên đơn vị vừa nạp, dán kết quả vào PR (R-REV-6, R2).
+- `setup-apply.test.ts`: số hiệu tài khoản không có trong đơn vị → `plan` `allowed = false`.
+- SC-PRESET-1: khối mới đúng khuôn, ngày theo tháng, không số tài khoản ngoài hai khối.
+- Phá thử: bỏ kiểm số hiệu tài khoản; chạy `close` khi chứng từ `unchanged` → test đỏ.
