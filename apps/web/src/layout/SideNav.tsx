@@ -12,7 +12,7 @@ import { Banknote, BarChart3, Building2, ChartLine, ChevronRight, Hammer, Landma
 import { usePins } from './pins';
 import { DANG_PHAT_TRIEN, matchHere, nhomHien, REPORT_PAGE, type GonGroup } from './menu-gon';
 import type { MenuItem } from '@ketoan/contracts';
-import { HayDungNav, NutThemNhanh } from './ThemNhanh';
+import { NhanPhanHe, NutThemNhanh } from './ThemNhanh';
 
 const COLLAPSED_KEY = 'ketoan.sidenav.collapsed';
 const read = <T,>(key: string, fallback: T): T => {
@@ -73,7 +73,7 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
     <aside className={`sidenav gon${collapsed ? ' collapsed' : ''}`} aria-label="Menu chức năng" ref={root}>
       <nav className="sidenav-body">
         <NutThemNhanh menu={menu} collapsed={collapsed} />
-        <HayDungNav menu={menu} collapsed={collapsed} />
+        <NhanPhanHe collapsed={collapsed} />
         {nhomHien(groups).map((g) => {
           const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
           return (

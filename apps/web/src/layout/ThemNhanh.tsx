@@ -62,6 +62,49 @@ export function NutThemNhanh({ menu, collapsed }: { menu: MenuItem[]; collapsed:
 
 const OPEN_KEY = 'ketoan.hay-dung.mo';
 
+// [2026-11-17 Nguyễn Văn Thủy] Hay dùng lên thanh trên: rê chuột vào "Hay dùng" là xổ danh sách (màn ghim + màn mở nhiều), ghim / bỏ ghim trang đang xem (đóng góp)
+export function HayDungTop({ menu }: { menu: MenuItem[] }) {
+  const list = useHayDung(menu).slice(0, 12);
+  const { pathname } = useLocation();
+  const { isPinned, toggle } = usePins();
+  const [open, setOpen] = useState(false);
+  const [at, setAt] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const show = () => { window.clearTimeout(timer.current); const r = btnRef.current?.getBoundingClientRect(); if (r) setAt({ top: r.bottom + 4, left: r.left }); setOpen(true); };
+  const hide = () => { window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setOpen(false), 200); };
+  useEffect(() => { setOpen(false); }, [pathname]);
+  const current = menu.flatMap((g) => g.children ?? []).find((m) => m.path?.split('?')[0] === pathname);
+  return (
+    <span className="hay-top" onMouseEnter={show} onMouseLeave={hide}>
+      <button ref={btnRef} type="button" className={`pinbar-co-dinh hay-top-btn${open ? ' open' : ''}`} onClick={() => (open ? setOpen(false) : show())} aria-expanded={open} title="Màn đã ghim và màn mở nhiều">
+        <Star size={15} /> Hay dùng <ChevronDown size={13} />
+      </button>
+      {open && createPortal(
+        <div className="hay-top-pop" role="menu" style={{ top: at.top, left: at.left }} onMouseEnter={show} onMouseLeave={hide}>
+          {list.map((h) => (
+            <NavLink key={h.item.key} role="menuitem" to={h.item.path!} className="hay-top-item" title={h.item.code ? `${h.item.label} (${h.item.code})` : h.item.label}>
+              {h.pinned ? <Pin size={13} /> : <Star size={13} />}<span>{h.item.label}</span>{h.item.code && <small>{h.item.code}</small>}
+            </NavLink>
+          ))}
+          {!list.length && <div className="hay-top-trong">Màn mở nhiều sẽ hiện ở đây</div>}
+          {current && (
+            <button type="button" className="hay-top-ghim" onClick={() => toggle(current.key)} title={`${isPinned(current.key) ? 'Bỏ ghim' : 'Ghim'} ${current.label}`}>
+              {isPinned(current.key) ? <><PinOff size={13} /> Bỏ ghim trang này</> : <><Pin size={13} /> Hay dùng trang này</>}
+            </button>
+          )}
+        </div>,
+        document.body,
+      )}
+    </span>
+  );
+}
+
+/** Menu trái chỉ còn nhãn "Phân hệ" (Hay dùng đã lên thanh trên). */
+export function NhanPhanHe({ collapsed }: { collapsed: boolean }) {
+  return collapsed ? null : <div className="gd-hay"><div className="gd-nav-label">Phân hệ</div></div>;
+}
+
 export function HayDungNav({ menu, collapsed }: { menu: MenuItem[]; collapsed: boolean }) {
   const list = useHayDung(menu).slice(0, 6);
   const { pathname } = useLocation();
