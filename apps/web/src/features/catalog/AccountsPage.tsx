@@ -159,6 +159,7 @@ export function AccountsPage() {
       <PageHeader title="Hệ thống tài khoản" code="ACC1" subtitle="Theo Thông tư 99/2025; tài khoản tổng hợp (có tài khoản con) in đậm, chỉ tài khoản chi tiết được ghi sổ" helpKey="tai-khoan" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'accounts', title: 'Hệ thống tài khoản', sel: sel ? { key: sel.code, label: sel.name } : null }}
           // [2026-11-16 kiennt] bảng dạng cây: giữ ô tìm (lọc cột chỉ thấy dòng đang mở), bỏ chọn trạng thái — lọc ở cột (đóng góp)
           left={
             <span className="row" style={{ gap: 6, alignItems: 'center' }}>

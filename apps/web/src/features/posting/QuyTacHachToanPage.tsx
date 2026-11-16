@@ -57,10 +57,27 @@ export function QuyTacHachToanPage() {
   const keys = useMemo(() => new Map((data?.keys ?? []).map((k) => [k.key, k])), [data]);
   const missing = (data?.keys ?? []).filter((k) => k.status !== 'ok');
   const sources = useMemo(() => new Set(biz?.groups.flatMap((g) => g.lines.map((l) => l.source)) ?? []), [biz]);
+  // [2026-11-17 Nguyễn Văn Thủy] hai chế độ: Gọn (mặc định — Loại · TK Nợ · TK Có · Sửa) và Chi tiết (khung Nợ / Có, nguồn, xem thử) (đóng góp)
+  const [chiTiet, setChiTiet] = useState(() => { try { return localStorage.getItem('acc41-xem') === 'chi-tiet'; } catch { return false; } });
+  const doiXem = (v: boolean) => { setChiTiet(v); try { localStorage.setItem('acc41-xem', v ? 'chi-tiet' : 'gon'); } catch { /* bỏ qua */ } };
+  const nutXem = (
+    <span className="row" style={{ gap: 0 }}>
+      <button className={`btn btn-sm${chiTiet ? '' : ' btn-primary'}`} onClick={() => doiXem(false)} title="Mỗi dòng một loại: TK Nợ, TK Có">Gọn</button>
+      <button className={`btn btn-sm${chiTiet ? ' btn-primary' : ''}`} onClick={() => doiXem(true)} title="Khung Nợ / Có từng nghiệp vụ, tài khoản lấy từ đâu, xem thử bút toán">Chi tiết</button>
+    </span>
+  );
+  if (!chiTiet) return (
+    <>
+      <PageHeader title="Tài khoản ngầm định" code="ACC41" helpKey="quy-tac-hach-toan" />
+      <ErrorBox error={q.error ? errorText(q.error) : null} />
+      {q.isLoading || !data ? <Loading /> : <GonView data={data} canWrite={canWrite} nutXem={nutXem} />}
+    </>
+  );
 
   return (
     <>
       <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" />
+      <div className="row" style={{ marginBottom: 8 }}>{nutXem}</div>
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {missing.length > 0 && (
         <div className="alert alert-warn" style={{ marginBottom: 8 }} title="Chứng từ dùng tới tài khoản chưa đặt sẽ báo lỗi khi ghi sổ">
@@ -351,5 +368,83 @@ function PreviewCard({ biz, scheme }: { biz: Business; scheme: Scheme }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Tài khoản hiện ở chế độ gọn cho một dòng sổ: TK của quy tắc; nguồn khác (HTTT, loại kho, loại thuế) thì TK dự phòng. */
+const NGUON_NGAN: Record<Source, string> = { rule: '', payment: 'theo HTTT', warehouse: 'theo loại kho', tax: 'theo loại thuế', purpose: 'theo mục đích' };
+const tkCua = (l: SLine, keys: Map<string, Key>) => (l.key ? keys.get(l.key)?.accountCode ?? '' : NGUON_NGAN[l.source]);
+const uniq = (a: string[]) => [...new Set(a.filter(Boolean))];
+
+/** CHẾ ĐỘ GỌN: Loại chứng từ · tìm · bảng Loại / TK Nợ / TK Có / Sửa (một dòng = một nhóm dòng sổ của nghiệp vụ). */
+function GonView({ data, canWrite, nutXem }: { data: Scheme; canWrite: boolean; nutXem: React.ReactNode }) {
+  const [loai, setLoai] = useState('');
+  const [tim, setTim] = useState('');
+  const [sua, setSua] = useState<{ title: string; lines: SLine[] } | null>(null);
+  const keys = useMemo(() => new Map(data.keys.map((k) => [k.key, k])), [data]);
+  const rows = data.businesses.filter((b) => !loai || b.code === loai).flatMap((b) => b.groups.map((g) => {
+    const no = uniq(g.lines.filter((l) => l.side === 'debit').map((l) => tkCua(l, keys)));
+    const co = uniq(g.lines.filter((l) => l.side === 'credit').map((l) => tkCua(l, keys)));
+    const sai = g.lines.some((l) => l.source === 'rule' && l.key && keys.get(l.key)?.status !== 'ok');
+    return { id: `${b.code}|${g.name}`, title: `${b.name} – ${g.name.replace(/\s*\(.*\)$/, '')}`, no, co, sai, lines: g.lines, sua: g.lines.some((l) => l.source === 'rule' && l.key) };
+  }));
+  const t = tim.trim().toLowerCase();
+  const view = t ? rows.filter((r) => `${r.title} ${r.no.join(' ')} ${r.co.join(' ')}`.toLowerCase().includes(t)) : rows;
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div className="row" style={{ gap: 8, padding: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <label style={{ display: 'grid', gap: 2 }}><span style={{ fontSize: 12 }}>Loại chứng từ</span>
+          <select className="input" style={{ width: 260 }} value={loai} onChange={(e) => setLoai(e.target.value)}>
+            <option value="">Tất cả</option>{data.businesses.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+          </select></label>
+        <input className="input" style={{ width: 260 }} placeholder="Tìm kiếm" value={tim} onChange={(e) => setTim(e.target.value)} />
+        <span style={{ marginLeft: 'auto' }}>{nutXem}</span>
+      </div>
+      <table className="grid full">
+        <thead><tr><th>Loại</th><th style={{ width: 200 }}>TK Nợ</th><th style={{ width: 200 }}>TK Có</th><th style={{ width: 90, textAlign: 'center' }}>Chức năng</th></tr></thead>
+        <tbody>{view.map((r) => (
+          <tr key={r.id} onDoubleClick={() => { if (r.sua && canWrite) setSua(r); }}>
+            <td className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.title}</td>
+            <td className="mono">{r.no.join('; ')}</td><td className="mono">{r.co.join('; ')}</td>
+            <td style={{ textAlign: 'center' }}>{r.sua && canWrite && <a href="#" onClick={(e) => { e.preventDefault(); setSua(r); }}>Sửa</a>}</td>
+          </tr>
+        ))}</tbody>
+      </table>
+      <div style={{ padding: '6px 10px' }}>Tổng số: <b>{view.length}</b></div>
+      {sua && <SuaGon title={sua.title} lines={sua.lines} keys={keys} onClose={() => setSua(null)} />}
+    </div>
+  );
+}
+
+/** Sửa tài khoản ngầm định: Tên cột · Lọc tài khoản (đầu số được chọn) · TK ngầm định. Dòng lấy theo danh mục khác chỉ xem. */
+function SuaGon({ title, lines, keys, onClose }: { title: string; lines: SLine[]; keys: Map<string, Key>; onClose: () => void }) {
+  const qc = useQueryClient();
+  const dong = lines.filter((l, i) => !l.key || lines.findIndex((x) => x.key === l.key && x.side === l.side) === i);
+  const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries(dong.filter((l) => l.source === 'rule' && l.key).map((l) => [l.key!, keys.get(l.key!)?.accountCode ?? ''])));
+  const doi = Object.entries(v).filter(([k, a]) => a && a !== (keys.get(k)?.accountCode ?? ''));
+  const m = useMutation({
+    mutationFn: async () => { for (const [k, a] of doi) await api.put(`/api/v1/posting/scheme/accounts/${encodeURIComponent(k)}`, { accountCode: a }); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['posting-scheme'] }); onClose(); },
+  });
+  return (
+    <Modal wide title="Sửa tài khoản ngầm định" onClose={onClose} helpKey="quy-tac-hach-toan"
+      footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={!doi.length || m.isPending} onClick={() => m.mutate()}>Ghi</button></>}>
+      <ErrorBox error={m.error ? errorText(m.error) : null} />
+      <div className="full">Loại chứng từ: <b>{title}</b></div>
+      <table className="grid full">
+        <thead><tr><th style={{ width: 260 }}>Tên cột</th><th>Lọc tài khoản</th><th style={{ width: 300 }}>TK ngầm định</th></tr></thead>
+        <tbody>{dong.map((l, i) => {
+          const k = l.key ? keys.get(l.key) : undefined;
+          return (
+            <tr key={i}>
+              <td>{l.side === 'debit' ? 'TK Nợ' : 'TK Có'} – {l.role}</td>
+              <td className="mono">{l.source === 'rule' ? k?.range.join('; ') : <span className="muted">theo {SOURCE[l.source].label.toLowerCase()}</span>}</td>
+              <td>{l.source === 'rule' && l.key ? <AccountPicker postingOnly prefixes={k?.range} value={v[l.key] ?? ''} onChange={(a) => setV((o) => ({ ...o, [l.key!]: a }))} />
+                : <span className="mono">{k?.accountCode ?? ''}</span>}</td>
+            </tr>
+          );
+        })}</tbody>
+      </table>
+    </Modal>
   );
 }

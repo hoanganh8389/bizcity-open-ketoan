@@ -13,6 +13,7 @@ import { ProductEditor } from './ProductsPage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, FileDown, History, Pencil, Plus, Printer, RefreshCw } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
+import { ThungRacDanhMuc } from '@/components/ThungRacDanhMuc';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
@@ -95,6 +96,8 @@ export function NhomHangPage() {
             <button className="btn btn-sm" onClick={() => void q.refetch()}><RefreshCw size={14} /> Nạp</button>
             <button className="btn btn-sm" onClick={xuat}><FileDown size={14} /> Xuất</button>
             <button className="btn btn-sm" onClick={() => window.print()} title="In màn hình đang xem"><Printer size={14} /> In</button>
+            {/* [2026-11-17 Nguyễn Văn Thủy] Thùng rác chung cho danh mục — xoá nhóm đang chọn (đóng góp) */}
+            <ThungRacDanhMuc catalog="item-classes.group" title="Nhóm hàng" sel={g ? { key: g.code, label: g.name } : null} onDone={() => setSel(null)} />
             {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} />}
           </div>
           <ErrorBox error={q.error ? errorText(q.error) : null} />

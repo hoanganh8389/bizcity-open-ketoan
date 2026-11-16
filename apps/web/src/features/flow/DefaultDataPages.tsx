@@ -67,7 +67,9 @@ export function RestorePreviewModal({ scope, title, onClose }: { scope: string; 
     queryFn: async () => { const r = await api.postMeta<RestoreResult | Outcome[]>(url, { confirm: true }, { dryRun: 1 }); return { list: toList(r.data), meta: r.meta as Meta }; },
   });
   const run = useMutation({
-    mutationFn: async () => { const r = await api.postMeta<RestoreResult | Outcome[]>(url, { confirm: true, previewToken: preview.data?.meta?.previewToken }); return { list: toList(r.data), meta: r.meta as Meta }; },
+    // [2026-11-17 Nguyễn Văn Thủy] chạy thật phải nhập mật khẩu (đóng góp)
+    mutationFn: async () => { const password = window.prompt(`Quay về dữ liệu gốc: ${title}
+Nhập mật khẩu để xác nhận:`); if (!password) throw new Error('Chưa nhập mật khẩu — chưa quay về dữ liệu gốc'); const r = await api.postMeta<RestoreResult | Outcome[]>(url, { confirm: true, password, previewToken: preview.data?.meta?.previewToken }); return { list: toList(r.data), meta: r.meta as Meta }; },
     onSuccess: () => void qc.invalidateQueries(),
   });
   const shown = run.data ?? preview.data;

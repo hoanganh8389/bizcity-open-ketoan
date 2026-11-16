@@ -133,6 +133,7 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
       <KpiDoiTuong kind={fixedKind} />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: fixedKind ? `partners.${fixedKind}` : 'partners', title: fixedKind === 'customer' ? 'Khách hàng' : fixedKind === 'supplier' ? 'Nhà cung cấp' : 'Đối tượng', sel: sel ? { key: sel.code, label: sel.name } : null }}
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}
@@ -574,6 +575,7 @@ export function PartnerGroupsPage() {
       <PageHeader title="Nhóm đối tượng" code="DM08" subtitle="Nhóm khách hàng, nhà cung cấp dùng để lọc và gom báo cáo theo nhóm" helpKey="doi-tuong" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'partner-groups', title: 'Nhóm khách hàng, nhà cung cấp', sel: sel ? { key: sel.code, label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}

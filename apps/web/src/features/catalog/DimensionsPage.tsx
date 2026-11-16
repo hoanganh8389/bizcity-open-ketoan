@@ -150,6 +150,7 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
       <PageHeader title={meta.title} code={meta.code} subtitle={meta.subtitle} helpKey={meta.helpKey} />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: `dimensions.${kind}`, title: 'danh mục này', sel: sel ? { key: sel.code, label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}

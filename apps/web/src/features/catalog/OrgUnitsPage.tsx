@@ -62,7 +62,9 @@ export function OrgUnitsPage() {
     mutationFn: async () => {
       const info = await api.get<{ nodes: number; assignments: number }>('/api/v1/org-units/defaults');
       if (!window.confirm(`Quay về dữ liệu gốc sơ đồ tổ chức?\n\nTệp gốc: ${info.nodes} nút, ${info.assignments} chi nhánh gắn nút. Nút tự thêm không còn chi nhánh sẽ bị xoá.`)) return null;
-      return api.post<{ created: number; updated: number; assigned: number; removed: number }>('/api/v1/org-units/restore-defaults', { confirm: true });
+      const password = window.prompt('Nhập mật khẩu để quay về dữ liệu gốc sơ đồ tổ chức:'); // [2026-11-17 Nguyễn Văn Thủy] đỡ bấm nhầm (đóng góp)
+      if (!password) return null;
+      return api.post<{ created: number; updated: number; assigned: number; removed: number }>('/api/v1/org-units/restore-defaults', { confirm: true, password });
     },
     onSuccess: (r) => r && done(`Đã quay về dữ liệu gốc: ${r.created + r.updated} nút, gắn ${r.assigned} chi nhánh${r.removed ? `, xoá ${r.removed} nút tự thêm` : ''}.`),
     onError: fail,

@@ -54,7 +54,7 @@ export class AccountResolver {
   groupForSku(_sku: string): ProductPostingGroup {
     this.defaultGroupCache ??= {
       ...(this.cfg.defaultGroup ?? {}),
-      code: 'ACC41', name: 'Quy tắc hạch toán',
+      code: 'ACC41', name: 'Tài khoản ngầm định',
       revenue_account: this.fromDefault('revenue', 'tài khoản doanh thu bán hàng'),
       sales_return_account: this.fromDefault('sales_return', 'tài khoản hàng bán bị trả lại'),
       cogs_account: this.fromDefault('cogs', 'tài khoản giá vốn hàng bán'),

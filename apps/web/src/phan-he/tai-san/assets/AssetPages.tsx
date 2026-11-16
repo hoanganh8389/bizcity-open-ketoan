@@ -524,6 +524,7 @@ export function AssetCategoriesPage() {
       <PageHeader title="Loại tài sản" code="ACC37" subtitle="Tài khoản và số tháng ngầm định khi thêm thẻ tài sản, công cụ dụng cụ, chi phí trả trước" helpKey="tai-san" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'asset-categories', title: 'Loại tài sản', sel: sel ? { key: sel.code, label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}

@@ -9,7 +9,7 @@ export interface SoDoNode { label: string; icon: string; path?: string; sub?: { 
 export interface SoDoLink { label: string; icon: string; path: string }
 export interface SoDoReport { label: string; path?: string }
 /** Bước của sơ đồ nhóm chức năng: trỏ tới một mục của menu gọn (menu-gon.ts) theo nhãn, thẻ liệt kê các màn trong mục đó. */
-export interface SoDoNhomBuoc { nhom: string; icon: string; ghiChu?: string }
+export interface SoDoNhomBuoc { nhom: string; icon: string; ghiChu?: string; /** Màn của thẻ khai thẳng (không lấy theo mục menu). */ items?: { label: string; path: string }[] }
 /**
  * `nhom`: sơ đồ theo nhóm chức năng thay cho `rows` — các nhóm `chuoi` làm lần lượt, xong thì các nhóm `nhanh` làm song song.
  * Màn trong từng nhóm lấy đúng như menu (đã lọc theo quyền), khỏi khai hai nơi.
@@ -25,6 +25,79 @@ const L = {
   coCau: { label: 'Cơ cấu tổ chức', icon: 'Network', path: '/danh-muc/so-do-to-chuc' },
   tkNganHang: { label: 'Tài khoản ngân hàng', icon: 'Landmark', path: '/danh-muc/ngan-hang' },
 } satisfies Record<string, SoDoLink>;
+
+// [2026-11-17 Nguyễn Văn Thủy] SƠ ĐỒ RÚT GỌN V2 (mặc định khi vào Mua hàng / Bán hàng): thẻ theo bước như Danh mục — các bước làm
+// lần lượt, cuối rẽ ra các việc làm song song; mỗi thẻ liệt kê màn bấm thẳng vào. Mua hàng còn giữ V1 (SO_DO, ?xem=rut-gon-v1) (đóng góp)
+const ban = { khach: { label: 'Khách hàng', path: '/danh-muc/khach-hang' }, mh: { label: 'Mặt hàng', path: '/danh-muc/mat-hang' } };
+export const SO_DO_V2: Record<string, SoDo> = {
+  'mua-hang': {
+    title: 'Nghiệp vụ mua hàng — làm theo thứ tự',
+    rows: [],
+    nhom: {
+      chuoi: [
+        { nhom: 'Khai báo', icon: 'Settings', ghiChu: 'Nhà cung cấp, chính sách, mặt hàng', items: [
+          { label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap' }, { label: 'Chính sách mua hàng', path: '/mua-hang/chinh-sach' },
+          { label: 'Quản lý mặt hàng', path: '/danh-muc/mat-hang' }, { label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat' }] },
+        { nhom: 'Kế hoạch đặt hàng', icon: 'Gauge', ghiChu: 'Tồn max, số cần mua', items: [
+          { label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max' }, { label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max' },
+          { label: 'Công thức đặt hàng', path: '/mua-hang/cong-thuc' }, { label: 'Phân tích đặt hàng', path: '/mua-hang/dat-hang' }] },
+        { nhom: 'Đặt & nhận hàng', icon: 'PackageCheck', ghiChu: 'Đơn đặt, nhập kho, chuyển shop', items: [
+          { label: 'Đơn mua hàng', path: mua('order') }, { label: 'Mua hàng (nhập kho)', path: mua('receipt') },
+          { label: 'Nhận / xuất quà tặng', path: mua('gift_in') }, { label: 'Chi phí mua hàng', path: mua('cost') },
+          { label: 'Chuyển hàng xuống shop', path: '/mua-hang/chuyen-shop' }] },
+        { nhom: 'Hoá đơn & thanh toán', icon: 'Banknote', ghiChu: 'Hoá đơn đầu vào, trả tiền NCC', items: [
+          { label: 'Xử lý hoá đơn đầu vào', path: '/mua-hang/hoa-don-ncc' },
+          { label: 'Tình hình thực hiện đơn mua hàng', path: '/mua-hang/doi-chieu' }, { label: 'Trả tiền nhà cung cấp', path: mua('payment') },
+          { label: 'Ứng trước nhà cung cấp', path: mua('prepayment') }, { label: 'Hạn mức & công nợ đến hạn', path: '/mua-hang/han-muc' }] },
+      ],
+      nhanh: [
+        { nhom: 'Trả lại, giảm giá', icon: 'RotateCcw', items: [
+          { label: 'Trả lại hàng mua', path: mua('return') }, { label: 'Đổi hàng nhà cung cấp', path: mua('exchange') },
+          { label: 'Giảm giá hàng mua', path: mua('rebate') }, { label: 'Tính thưởng cuối kỳ', path: '/mua-hang/thuong' }] },
+        { nhom: 'Giá vốn, lô hàng', icon: 'Calculator', items: [
+          { label: 'Phân bổ & giá vốn thực tế', path: '/mua-hang/phan-bo' }, { label: 'Lô & hạn dùng', path: '/mua-hang/lo-han' },
+          { label: 'Quà tặng', path: '/mua-hang/qua-tang' }] },
+        { nhom: 'Sổ kho, tồn kho', icon: 'Warehouse', items: [
+          { label: 'Sổ kho theo mặt hàng', path: '/mua-hang/so-kho' }, { label: 'Tồn kho theo mặt hàng', path: '/mua-hang/ton-kho' },
+          { label: 'Nhật ký thao tác mua hàng', path: '/mua-hang/nhat-ky' }] },
+      ],
+    },
+    links: [],
+  },
+  'ban-hang': {
+    title: 'Nghiệp vụ bán hàng — làm theo thứ tự',
+    rows: [],
+    nhom: {
+      chuoi: [
+        { nhom: 'Khai báo', icon: 'Settings', ghiChu: 'Khách hàng, mặt hàng, thanh toán', items: [
+          ban.khach, { label: 'Nhóm khách hàng, nhà cung cấp', path: '/danh-muc/nhom-doi-tuong' }, ban.mh,
+          { label: 'Hình thức thanh toán', path: '/cau-hinh/hinh-thuc-thanh-toan' }, { label: 'Tài khoản ngầm định', path: '/cau-hinh/quy-tac-hach-toan' }] },
+        { nhom: 'Giá & khuyến mại', icon: 'BadgePercent', ghiChu: 'Bảng giá, chương trình, máy bán', items: [
+          { label: 'Bảng giá bán', path: '/danh-muc/bang-gia' }, { label: 'Chương trình khuyến mại', path: '/app/pos/khuyen-mai' },
+          { label: 'Cài đặt máy bán', path: '/app/pos/cai-dat' }] },
+        { nhom: 'Bán hàng', icon: 'ShoppingCart', ghiChu: 'Phiếu bán, máy bán POS, ca bán', items: [
+          { label: 'Phiếu bán hàng', path: '/ban-hang/phieu-ban' }, { label: 'Đơn bán máy POS', path: '/app/pos/don-ban' },
+          { label: 'Ca bán', path: '/app/pos/ca-ban' }, { label: 'Tổng quan máy bán', path: '/app/pos/tong-quan' }] },
+        { nhom: 'Thu tiền & công nợ', icon: 'Wallet', ghiChu: 'Thu theo hình thức, đối chiếu', items: [
+          { label: 'Thu tiền theo hình thức thanh toán', path: '/ban-hang/thu-tien' }, { label: 'Thu tiền mặt', path: '/nghiep-vu/phieu-thu' },
+          { label: 'Thu tiền gửi', path: '/nghiep-vu/phieu-bao-co' }, { label: 'Đối chiếu công nợ', path: '/cong-no/doi-chieu' }] },
+      ],
+      nhanh: [
+        { nhom: 'Trả lại hàng', icon: 'RotateCcw', items: [
+          { label: 'Hàng bán trả lại', path: '/ban-hang/tra-lai' }, { label: 'Trả hàng máy POS', path: '/app/pos/tra-hang' }] },
+        { nhom: 'Doanh số, lãi gộp', icon: 'ChartColumn', items: [
+          { label: 'Báo cáo bán hàng', path: '/ban-hang/bao-cao' }, { label: 'Tổng hợp bán hàng', path: '/ban-hang/tong-hop' },
+          { label: 'Lãi gộp', path: '/ban-hang/lai-gop' }, { label: 'Báo cáo thu tiền bán hàng', path: '/ban-hang/thu-tien-ban-hang' },
+          { label: 'Sổ nhật ký bán hàng', path: '/cong-no/nhat-ky-ban-hang' }] },
+        { nhom: 'Công nợ phải thu', icon: 'Users', items: [
+          { label: 'Tổng hợp công nợ phải thu', path: '/bao-cao/cong-no-phai-thu' }, { label: 'Chi tiết công nợ phải thu', path: '/bao-cao/chi-tiet-cong-no-phai-thu' },
+          { label: 'Công nợ theo hạn', path: '/bao-cao/cong-no-theo-han' }, { label: 'Tuổi nợ', path: '/bao-cao/tuoi-no' }] },
+        { nhom: 'Thuế đầu ra', icon: 'Percent', items: [{ label: 'Báo cáo thuế ra', path: '/thue/bang-ke-ban-ra' }] },
+      ],
+    },
+    links: [],
+  },
+};
 
 export const SO_DO: Record<string, SoDo> = {
   'tien-mat': {
