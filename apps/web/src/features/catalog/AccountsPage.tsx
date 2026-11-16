@@ -91,7 +91,6 @@ export function AccountsPage() {
   const setEditing = (x: Partial<Account> & { isNew?: boolean } | null) => { if (x) setLan((n) => n + 1); setEditingState(x); };
   const [sel, setSel] = useState<Account | null>(null);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'' | 'active' | 'inactive'>('');
   const [open, setOpen] = useState<Set<string>>(new Set());
   // Truyền exportRef để lưới không hiện nút Xuất riêng — Xuất ở thanh nút xuất đúng mẫu danh sách hệ thống tài khoản.
   const exportRef = useRef<(() => void) | null>(null);
@@ -106,11 +105,11 @@ export function AccountsPage() {
   };
 
   const all = useMemo(() => [...(q.data ?? [])].sort((a, b) => a.code.localeCompare(b.code)), [q.data]);
-  const filtering = Boolean(search.trim() || status);
+  const filtering = Boolean(search.trim());
   const matched = useMemo(() => {
     const k = fold(search.trim());
-    return all.filter((a) => (!k || fold(a.code).startsWith(k) || fold(a.name).includes(k)) && (!status || (status === 'active') === a.isActive));
-  }, [all, search, status]);
+    return all.filter((a) => !k || fold(a.code).startsWith(k) || fold(a.name).includes(k));
+  }, [all, search]);
   const children = useMemo(() => {
     const m = new Map<string, Account[]>();
     for (const a of all) if (a.parentCode) m.set(a.parentCode, [...(m.get(a.parentCode) ?? []), a]);
@@ -161,6 +160,14 @@ export function AccountsPage() {
       <PageHeader title="Hệ thống tài khoản" code="ACC1" subtitle="Theo Thông tư 99/2025; tài khoản tổng hợp (có tài khoản con) in đậm, chỉ tài khoản chi tiết được ghi sổ" helpKey="tai-khoan" />
       <div className="card">
         <CatalogToolbar
+          // [2026-11-16 kiennt] bảng dạng cây: giữ ô tìm (lọc cột chỉ thấy dòng đang mở), bỏ chọn trạng thái — lọc ở cột (đóng góp)
+          left={
+            <span className="row" style={{ gap: 6, alignItems: 'center' }}>
+              <input className="input" style={{ width: 260, height: 28 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo số hoặc tên tài khoản" />
+              {!filtering && <button className="btn btn-sm btn-ghost" onClick={() => setOpen(moHet ? new Set() : new Set(coCon))} title={moHet ? 'Thu gọn về tài khoản cấp 1' : 'Mở toàn bộ cây tài khoản'}>{moHet ? 'Thu gọn' : 'Mở rộng'}</button>}
+              <span className="muted">{filtering ? `${matched.length} / ${all.length} tài khoản khớp` : `Tổng số: ${all.length}`}</span>
+            </span>
+          }
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending || doiTrangThai.isPending}
@@ -177,14 +184,6 @@ export function AccountsPage() {
             </>
           }
         />
-        <div className="acc-filters">
-          <input className="input" style={{ width: 280 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo số hoặc tên tài khoản" />
-          <select className="select input" value={status} onChange={(e) => setStatus(e.target.value as typeof status)} title="Trạng thái">
-            <option value="">Mọi trạng thái</option><option value="active">Đang sử dụng</option><option value="inactive">Ngừng sử dụng</option>
-          </select>
-          {!filtering && <button className="btn btn-sm btn-ghost" onClick={() => setOpen(moHet ? new Set() : new Set(coCon))} title={moHet ? 'Thu gọn về tài khoản cấp 1' : 'Mở toàn bộ cây tài khoản'}>{moHet ? 'Thu gọn' : 'Mở rộng'}</button>}
-          <span className="muted">{filtering ? `${matched.length} / ${all.length} tài khoản khớp` : `Tổng số: ${all.length}`}</span>
-        </div>
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : doiTrangThai.error ? errorText(doiTrangThai.error) : null} />
         {q.isLoading ? <Loading /> : (
           <DataGrid

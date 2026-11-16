@@ -12,6 +12,14 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Danh mục gọn: Quy trình theo nhóm, thanh nút chung, cột mặc định (UX đợt 15) <!-- [2026-11-16 kiennt] (đóng góp) -->
+
+- **Đổi:** trang Quy trình của Danh mục vẽ theo nhóm chức năng của menu (Tổ chức → Đối tượng → Tài khoản, ngân hàng → Chi phí · Mặt hàng · Tài sản · Thuế suất); Biểu thuế tách thành nhóm menu Thuế suất.
+- **Đổi:** các màn danh mục: nút chức năng lề phải, cao 28px, In cạnh Xuất, bỏ nút Sửa (bấm đúp mở chi tiết) và dòng "Đã nạp lúc"; bỏ thanh lọc trên, lọc ở từng cột; cột mặc định gọn ở DM04, DM12, DM13, DM15; "Trả về mặc định" lên đầu danh sách cột.
+- **Đổi:** Khách hàng / NCC: Thuộc đơn vị cha chỉ chọn trong cùng nhóm; Mobile + Telephone gộp ô Di động (Nhân viên cũng vậy). Loại kho: một danh sách, Nghiệp vụ dùng loại kho vào ngăn Hướng dẫn, hộp thoại mở ở chế độ xem, TK kho phải là tài khoản cấp cuối.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (không đổi API, không migration). Loại kho đang để TK tổng hợp (⚠) phải chọn lại TK chi tiết mới Ghi được.
+
 ### Điểm thành viên: hết hạn hằng ngày, nạp số dư cũ, màn BH19 (phiếu NT-BH-020 bước 3) <!-- [2026-11-16 12:00 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 3 (đóng góp) -->
 
 - **Thêm:** module `loyalty` nghe `bizcity.clock.daily` — lô điểm quá hạn còn điểm ghi dòng hết hạn (mỗi lô một lần).

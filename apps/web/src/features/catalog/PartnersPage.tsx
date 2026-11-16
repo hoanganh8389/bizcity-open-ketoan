@@ -66,10 +66,6 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
   const { can } = useAuth();
   const qc = useQueryClient();
   const canWrite = can('catalog:write');
-  const [search, setSearch] = useState('');
-  const [applied, setApplied] = useState('');
-  const [f, setF] = useState({ groupCode: '', kind: fixedKind ?? '', status: 'all' });
-  const [page, setPage] = useState(1);
   const [editing, setEditingRaw] = useState<(Partial<Partner> & { isNew?: boolean }) | null>(null);
   /** Các hồ sơ đã đi qua khi mở đơn vị con / thêm con — nút Quay lại lùi về. */
   const [back, setBack] = useState<(Partial<Partner> & { isNew?: boolean })[]>([]);
@@ -82,59 +78,59 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
   const employees = useEmployees();
   // ?them=1 (&loai=supplier): mở thẳng form thêm mới — nút Thêm nhanh, nút "+" chọn đối tượng ở trang quản trị.
   useThemTuDiaChi((p) => setEditing({ isNew: true, kind: fixedKind ?? (p.get('loai') === 'supplier' ? 'supplier' : 'customer'), isActive: true, groupCode: null }), canWrite);
-  const params = { search: applied, page, pageSize: ALL_ROWS, groupCode: f.groupCode || undefined, kind: f.kind || undefined, status: f.status };
+  // [2026-11-16 kiennt] bỏ thanh lọc trên (tìm, nhóm, trạng thái): lọc theo từng cột ở bảng (đóng góp)
+  const params = { page: 1, pageSize: ALL_ROWS, kind: fixedKind, status: 'all' };
   const q = useQuery({ queryKey: ['partners', params], queryFn: () => api.getPage<Partner[]>('/api/v1/partners', params), placeholderData: keepPreviousData });
-  const groupChoices = (groups.data ?? []).filter((g) => !fixedKind || g.kind === 'any' || g.kind === fixedKind);
   const groupName = (c: string | null) => (c ? groups.data?.find((g) => g.code === c)?.name ?? c : '');
   const empName = (c: string | null) => (c ? employees.data?.find((e) => e.code === c)?.name ?? c : '');
-  const set = (patch: Partial<typeof f>) => { setF((x) => ({ ...x, ...patch })); setPage(1); };
   const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/partners/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['partners'] }); } });
 
+  // [2026-11-16 kiennt] mặc định chỉ hiện Mã, Tên, Thuộc đơn vị cha, Nhóm, Tên công ty, Người tạo (DM13 thêm MST, Giới hạn nợ, ẩn Tên công ty); cột khác bật ở nút Cột (đóng góp)
   const columns: Column<Partner>[] = [
     // Mã NCC mở hồ sơ nhà cung cấp (hợp đồng, mặt hàng & giá mua, nhận hàng).
     { key: 'code', header: `Mã ${abbr}`, type: 'code', width: 120, render: (p) => (p.kind === 'supplier' || p.alsoKinds?.includes('supplier')
       ? <Link to={`/mua-hang/nha-cung-cap/${encodeURIComponent(p.code)}`} onClick={(e) => e.stopPropagation()} title="Mở hồ sơ nhà cung cấp: hợp đồng, mặt hàng và giá mua">{p.code}</Link> : p.code) },
     { key: 'name', header: `Tên ${abbr}`, width: 240 },
     { key: 'parentCode', header: 'Thuộc đơn vị cha', width: 200, title: 'Đơn vị mẹ của chi nhánh / đơn vị con; trống = đơn vị độc lập', value: (p) => (p.parentCode ? `${p.parentCode} - ${p.parentName ?? ''}` : '') },
-    { key: 'childCount', header: 'Số đơn vị con', type: 'number', width: 90, title: 'Số chi nhánh / đơn vị con trực tiếp' },
+    { key: 'childCount', header: 'Số đơn vị con', type: 'number', width: 90, title: 'Số chi nhánh / đơn vị con trực tiếp', hidden: true },
     // [2026-11-11 Nguyễn Văn Thủy] cột Chức năng: lập chứng từ cho đối tượng ngay từ danh sách (đóng góp)
-    { key: 'chuc-nang', header: 'Chức năng', width: 120, noFilter: true, noSort: true, value: () => '', render: (p) => {
+    { key: 'chuc-nang', header: 'Chức năng', width: 120, hidden: true, noFilter: true, noSort: true, value: () => '', render: (p) => {
       const to = p.kind === 'supplier' ? `/mua-hang/tong-hop?moi=receipt&ncc=${encodeURIComponent(p.code)}` : p.kind === 'customer' ? `/ban-hang/phieu-ban?them=1&kh=${encodeURIComponent(p.code)}` : null;
       return to ? <Link className="row-act" to={to} onClick={(e) => e.stopPropagation()} title={p.kind === 'supplier' ? 'Lập phiếu nhập mua của nhà cung cấp này' : 'Lập phiếu bán hàng cho khách này'}>{p.kind === 'supplier' ? 'Lập phiếu nhập' : 'Lập phiếu bán'}</Link> : null;
     } },
-    { key: 'address', header: 'Địa chỉ NR', width: 220 },
-    { key: 'phone', header: 'Điện thoại', type: 'code', width: 110 },
-    { key: 'mobile', header: 'Di động', type: 'code', width: 110 },
+    { key: 'address', header: 'Địa chỉ NR', width: 220, hidden: true },
+    { key: 'phone', header: 'Điện thoại', type: 'code', width: 110, hidden: true },
+    { key: 'mobile', header: 'Di động', type: 'code', width: 110, hidden: true },
     { key: 'groupCode', header: `Nhóm ${abbr}`, width: 150, value: (p) => groupName(p.groupCode) },
-    { key: 'contactName', header: 'Người đại diện', width: 150 },
-    { key: 'companyAddress', header: 'Địa chỉ cty', width: 220 },
-    { key: 'taxCode', header: 'MST', type: 'code', width: 120 },
-    { key: 'fax', header: 'Fax', type: 'code', width: 100 },
-    { key: 'email', header: 'Email', width: 170 },
-    { key: 'website', header: 'Website', width: 150 },
-    { key: 'position', header: 'Chức vụ', width: 120 },
-    { key: 'createdAt', header: `Ngày tạo ${abbr}`, type: 'date', width: 100 },
-    { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
-    { key: 'managerCode', header: 'Người QL', width: 150, value: (p) => empName(p.managerCode) },
-    { key: 'branchCode', header: 'Chi nhánh QL', type: 'code', width: 120 },
-    { key: 'note', header: 'Ghi chú', width: 180 },
-    { key: 'shortName', header: 'Tên viết tắt', width: 120 },
-    { key: 'companyName', header: 'Tên công ty', width: 220 },
-    { key: 'bankAccountNo', header: 'Tài khoản NH', type: 'code', width: 130 },
-    { key: 'bankAccountHolder', header: 'Chủ TK', width: 160 },
-    { key: 'bankName', header: 'Mở tại', width: 180 },
-    { key: 'creditLimit', header: 'Giới hạn nợ', type: 'money', width: 120 },
-    { key: 'paymentTermDays', header: 'Giới hạn ngày nợ', type: 'number', width: 110 },
-    { key: 'maxOpenDocs', header: 'Giới hạn số phiếu nợ', type: 'number', width: 130 },
+    { key: 'contactName', header: 'Người đại diện', width: 150, hidden: true },
+    { key: 'companyAddress', header: 'Địa chỉ cty', width: 220, hidden: true },
+    { key: 'taxCode', header: 'MST', type: 'code', width: 120, hidden: fixedKind !== 'supplier' },
+    { key: 'fax', header: 'Fax', type: 'code', width: 100, hidden: true },
+    { key: 'email', header: 'Email', width: 170, hidden: true },
+    { key: 'website', header: 'Website', width: 150, hidden: true },
+    { key: 'position', header: 'Chức vụ', width: 120, hidden: true },
+    { key: 'createdAt', header: `Ngày tạo ${abbr}`, type: 'date', width: 100, hidden: true },
+    { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70, hidden: true },
+    { key: 'managerCode', header: 'Người QL', width: 150, value: (p) => empName(p.managerCode), hidden: true },
+    { key: 'branchCode', header: 'Chi nhánh QL', type: 'code', width: 120, hidden: true },
+    { key: 'note', header: 'Ghi chú', width: 180, hidden: true },
+    { key: 'shortName', header: 'Tên viết tắt', width: 120, hidden: true },
+    { key: 'companyName', header: 'Tên công ty', width: 220, hidden: fixedKind === 'supplier' },
+    { key: 'bankAccountNo', header: 'Tài khoản NH', type: 'code', width: 130, hidden: true },
+    { key: 'bankAccountHolder', header: 'Chủ TK', width: 160, hidden: true },
+    { key: 'bankName', header: 'Mở tại', width: 180, hidden: true },
+    { key: 'creditLimit', header: 'Giới hạn nợ', type: 'money', width: 120, hidden: fixedKind !== 'supplier' },
+    { key: 'paymentTermDays', header: 'Giới hạn ngày nợ', type: 'number', width: 110, hidden: true },
+    { key: 'maxOpenDocs', header: 'Giới hạn số phiếu nợ', type: 'number', width: 130, hidden: true },
     { key: 'createdBy', header: 'Người tạo', width: 120 },
     // Vai trò: hiện rõ đối tượng vừa là NCC vừa là khách hàng (cùng một mã nằm ở cả hai danh sách).
-    { key: 'kind', header: 'Vai trò', width: 170, value: (p) => [KIND[p.kind] ?? p.kind, ...(p.alsoKinds ?? []).map((k) => KIND[k] ?? k)].join(' + ') },
+    { key: 'kind', header: 'Vai trò', width: 170, value: (p) => [KIND[p.kind] ?? p.kind, ...(p.alsoKinds ?? []).map((k) => KIND[k] ?? k)].join(' + '), hidden: Boolean(fixedKind) },
   ];
 
   return (
     <>
       <PageHeader title={screen?.title ?? 'Đối tượng'} code={screen?.code ?? 'DM03'} subtitle={screen?.subtitle ?? 'Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ'} helpKey="doi-tuong" />
-      <KpiDoiTuong kind={fixedKind ?? (f.kind || undefined)} />
+      <KpiDoiTuong kind={fixedKind} />
       <div className="card">
         <CatalogToolbar
           canWrite={canWrite}
@@ -145,35 +141,18 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá đối tượng ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
-          extra={
-            <>
-              <NutNhapExcel loai={nhapLoai(fixedKind === 'supplier' || f.kind === 'supplier' ? 'nha-cung-cap' : 'khach-hang')!} disabled={!canWrite} />
-              {canWrite && <button type="button" className="btn btn-sm" disabled={!sel} title={sel ? `Thêm chi nhánh / đơn vị con của ${sel.code} - ${sel.name}` : 'Chọn một dòng trước'} onClick={() => sel && setEditing(childOf(sel))}>+ Thêm đơn vị con</button>}
-              <span className="cc-xem" style={{ marginLeft: 6 }}>
-                <button type="button" className={`btn btn-sm${xem === 'ds' ? ' btn-primary' : ''}`} onClick={() => setXem('ds')}>Danh sách</button>
-                <button type="button" className={`btn btn-sm${xem === 'cay' ? ' btn-primary' : ''}`} title="Xem theo đơn vị mẹ → chi nhánh / đơn vị con" onClick={() => setXem('cay')}>Cây cha – con</button>
-              </span>
-              <span className="spacer" />
-              <form className="row" style={{ gap: 4 }} onSubmit={(e) => { e.preventDefault(); setApplied(search.trim()); setPage(1); }}>
-                <input className="input" style={{ width: 230, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên, MST, điện thoại" />
-                <button className="btn btn-sm" type="submit">Tìm</button>
-              </form>
-              <ListPicker className="input w-md" items={[{ code: '-', name: '(Chưa có nhóm)' }, ...groupChoices.map((g) => ({ code: g.code, name: g.name }))]} value={f.groupCode} onChange={(groupCode) => set({ groupCode })} placeholder="Tất cả nhóm" />
-              {!fixedKind && (
-                <select className="select input" style={{ height: 30 }} value={f.kind} onChange={(e) => set({ kind: e.target.value })}>
-                  <option value="">Mọi loại</option>{Object.entries(KIND).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                </select>
-              )}
-              <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="inactive">Đã khoá</option>
-              </select>
-            </>
+          left={
+            <span className="cc-xem">
+              <button type="button" className={`btn btn-sm${xem === 'ds' ? ' btn-primary' : ''}`} onClick={() => setXem('ds')}>Danh sách</button>
+              <button type="button" className={`btn btn-sm${xem === 'cay' ? ' btn-primary' : ''}`} title="Xem theo đơn vị mẹ → chi nhánh / đơn vị con" onClick={() => setXem('cay')}>Cây cha – con</button>
+            </span>
           }
+          extra={<NutNhapExcel loai={nhapLoai(fixedKind === 'supplier' ? 'nha-cung-cap' : 'khach-hang')!} disabled={!canWrite} />}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : xem === 'cay' ? <CayDoiTuong rows={q.data?.data ?? []} selected={sel?.code} onSelect={setSel} onOpen={(p) => setEditing(p)} /> : (
           <DataGrid
-            storageKey={`${(screen?.code ?? 'DM03').toLowerCase()}-v2`}
+            storageKey={`${(screen?.code ?? 'DM03').toLowerCase()}-v3`}
             exportName={screen ? { customer: 'khach-hang', supplier: 'nha-cung-cap' }[fixedKind!] : 'doi-tuong'}
             groupable
             exportRef={exportRef}
@@ -183,7 +162,6 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
             onRowDoubleClick={(p) => canWrite && setEditing(p)}
             rowClassName={(p) => (p.isActive ? '' : 'muted')}
             footerLabel={false}
-            note="tìm nhanh, lọc ở trên tải lại từ máy chủ"
             columns={columns}
           />
         )}
@@ -276,7 +254,12 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
     set({ kind: k, groupCode });
     void fetchCode(groupCode, k);
   };
-  const changeGroup = (groupCode: string | null) => { set({ groupCode }); void fetchCode(groupCode, kind); };
+  // Đơn vị cha chỉ chọn trong cùng nhóm: đổi nhóm thì bỏ đơn vị cha đang chọn.
+  const changeGroup = (groupCode: string | null) => {
+    const boCha = Boolean(v.parentCode) && groupCode !== v.groupCode;
+    set({ groupCode, ...(boCha ? { parentCode: null, parentName: null } : {}) });
+    void fetchCode(groupCode, kind, boCha, boCha ? null : v.parentCode);
+  };
   // [2026-11-13 Nguyễn Văn Thủy] chọn đơn vị cha: thêm mới thì mã thành mã cha-00x, mang theo vai trò + nhóm của cha (đóng góp)
   const changeParent = async (parentCode: string | null) => {
     set({ parentCode, parentName: null });
@@ -401,7 +384,7 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
         })()}
         {!isNew && <span className="muted">Sửa {noun} {v.code}</span>}
       </div>
-      <ODonViCha value={v.parentCode} self={v.code} isNew={isNew} onChange={(c) => void changeParent(c)} />
+      <ODonViCha value={v.parentCode} self={v.code} isNew={isNew} groupCode={v.groupCode} onChange={(c) => void changeParent(c)} />
       {suggest && <div className="alert full" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <span>MST <b className="mono">{v.taxCode}</b> là MST chi nhánh của <b>{suggest.code} - {suggest.name}</b> (MST {suggest.taxCode}). Gắn {noun} này làm đơn vị con?</span>
         <button type="button" className="btn btn-sm btn-primary" onClick={() => void changeParent(suggest.code)}>Gắn làm đơn vị con</button>
@@ -441,8 +424,8 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
             <legend>Thông tin cá nhân</legend>
             <Field label={`Tên ${noun}`} full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} autoFocus={!isNew} /></Field>
             {txt('address', 'Địa chỉ NR', true)}
-            {txt('mobile', 'Mobile', false, true, (val) => void checkDuplicate('phone', val, 'Số di động'))}
-            {txt('phone', 'Telephone', false, true, (val) => void checkDuplicate('phone', val, 'Số điện thoại'))}
+            {/* [2026-11-16 kiennt] một ô Di động thay cho Mobile + Telephone: ghi vào cả hai trường để tra cứu, máy bán hàng dùng chung (đóng góp) */}
+            <Field label="Di động"><input className="input mono" value={v.mobile || v.phone || ''} onChange={(e) => set({ mobile: e.target.value, phone: e.target.value })} onBlur={(e) => void checkDuplicate('phone', e.target.value.trim(), 'Số di động')} /></Field>
             <Field label="Ngày sinh"><input type="date" className="input" value={v.birthDate ?? ''} onChange={(e) => set({ birthDate: e.target.value || null })} /></Field>
             <Field label="Giới tính">
               <select className="select input" value={v.gender ?? ''} onChange={(e) => set({ gender: e.target.value })}><option value="">—</option><option value="male">Nam</option><option value="female">Nữ</option></select>
@@ -591,6 +574,7 @@ export function PartnerGroupsPage() {
       <PageHeader title="Nhóm đối tượng" code="DM08" subtitle="Nhóm khách hàng, nhà cung cấp dùng để lọc và gom báo cáo theo nhóm" helpKey="doi-tuong" />
       <div className="card">
         <CatalogToolbar
+          phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}

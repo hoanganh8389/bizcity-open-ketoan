@@ -29,6 +29,7 @@ export function PaymentMethodsPage() {
       <PageHeader title="Hình thức thanh toán" code="DM05" subtitle="Mỗi hình thức ứng với một tài khoản tiền (tiền mặt, tài khoản ngân hàng…)" helpKey="hinh-thuc-thanh-toan" />
       <div className="card">
         <CatalogToolbar
+          phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}

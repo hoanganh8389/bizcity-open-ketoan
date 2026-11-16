@@ -437,10 +437,11 @@ export function DataGrid<T>(p: DataGridProps<T>) {
           <button className="btn btn-sm btn-ghost" onClick={() => setChooser((v) => !v)} title="Ẩn / hiện cột"><Columns3 size={14} /> Cột</button>
           {chooser && (
             <div className="dgrid-chooser-drop">
+              {/* [2026-11-16 kiennt] Trả về mặc định lên đầu, dính trên khi cuộn danh sách cột (đóng góp) */}
+              <button className="btn btn-sm dgrid-chooser-reset" onClick={() => setSaved({ widths: {}, hidden: [] })}>Trả về mặc định</button>
               {p.columns.map((c) => (
-                <label key={c.key} className="checkbox"><input type="checkbox" checked={!hiddenSet.has(c.key)} onChange={() => toggleCol(c)} /> {headerTitle(c)}{c.band ? <span className="muted"> ({c.band})</span> : null}</label>
+                <label key={c.key} className="checkbox"><input type="checkbox" checked={!hiddenSet.has(c.key)} onChange={() => toggleCol(c)} /> {typeof c.header === 'string' ? c.header : headerTitle(c)}{c.band ? <span className="muted"> ({c.band})</span> : null}</label>
               ))}
-              <button className="btn btn-sm" onClick={() => setSaved({ widths: {}, hidden: [] })}>Trả về mặc định</button>
             </div>
           )}
         </div>

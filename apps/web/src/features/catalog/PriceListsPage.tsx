@@ -55,6 +55,7 @@ export function PriceListsPage() {
       <PageHeader title="Bảng giá bán" code="DM14" subtitle="Bảng giá công ty và bảng giá chi nhánh, chi nhánh áp bảng giá nào; chọn một bảng giá để xem và sửa giá từng mặt hàng ở dưới" helpKey="bang-gia" />
       <div className="card">
         <CatalogToolbar
+          phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}
@@ -63,7 +64,7 @@ export function PriceListsPage() {
           onDelete={() => { if (sel && window.confirm(`Xoá bảng giá ${sel.code} - ${sel.name}? Giá đã khai ở bảng giá này bị xoá theo.`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
-          extra={<><span className="spacer" /><PrintButton screen="DM14" templates={PRICE_LIST_TEMPLATES} disabled={!sel} title="In bảng giá đang chọn (mọi mặt hàng có giá) — mũi tên để chọn mẫu báo giá" getDocs={async () => (sel ? [await loadQuote(qc, sel)] : [])} /></>}
+          extra={<><PrintButton screen="DM14" label="In bảng giá" templates={PRICE_LIST_TEMPLATES} disabled={!sel} title="In bảng giá đang chọn (mọi mặt hàng có giá) — mũi tên để chọn mẫu báo giá" getDocs={async () => (sel ? [await loadQuote(qc, sel)] : [])} /></>}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (

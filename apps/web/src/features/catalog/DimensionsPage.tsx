@@ -103,11 +103,13 @@ function columnsOf(kind: DimensionKind, employees: Map<string, string>, branchOf
       note,
     ];
     case 'employee': {
-      const x = (k: keyof Extra, header: string, width: number, type?: 'code'): Column<Row> => ({ key: k, header, width, type, value: (r) => String(r.extra[k] ?? '') });
+      const x = (k: keyof Extra, header: string, width: number, type?: 'code', hidden?: boolean): Column<Row> => ({ key: k, header, width, type, hidden, value: (r) => String(r.extra[k] ?? '') });
+      // [2026-11-16 kiennt] mặc định hiện Mã, Tên, Chức vụ, Email, Chi nhánh làm việc; Điện thoại + Di động gộp một cột Di động (ẩn) (đóng góp)
       return [
-        { ...code, width: 120 }, { ...name, width: 200 }, x('address', 'Địa chỉ', 200), x('phone', 'Điện thoại', 110, 'code'), x('mobile', 'Di động', 110, 'code'),
-        x('position', 'Chức vụ', 140), x('email', 'Email', 170), { key: 'tracked', header: 'Theo dõi', type: 'check', width: 70, value: (r) => r.isActive },
-        x('group', 'Nhóm NV', 120), x('branchCode', 'Chi nhánh làm việc', 130, 'code'), note, x('departmentCode', 'Mã phòng ban', 110, 'code'),
+        { ...code, width: 120 }, { ...name, width: 200 }, x('position', 'Chức vụ', 140), x('email', 'Email', 170), x('branchCode', 'Chi nhánh làm việc', 130, 'code'),
+        { key: 'mobile', header: 'Di động', type: 'code', width: 110, hidden: true, value: (r) => r.extra.mobile || r.extra.phone || '' },
+        x('address', 'Địa chỉ', 200, undefined, true), { key: 'tracked', header: 'Theo dõi', type: 'check', width: 70, hidden: true, value: (r) => r.isActive },
+        x('group', 'Nhóm NV', 120, undefined, true), { ...note, hidden: true }, x('departmentCode', 'Mã phòng ban', 110, 'code', true),
       ];
     }
     case 'cash_item': return [{ ...code, width: 140 }, { ...name, width: 360 }, { key: 'loai', header: 'Loại', width: 110, value: (r) => (r.extra.loai === 'thu' ? 'Mục thu' : r.extra.loai === 'chi' ? 'Mục chi' : '') },
@@ -148,6 +150,7 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
       <PageHeader title={meta.title} code={meta.code} subtitle={meta.subtitle} helpKey={meta.helpKey} />
       <div className="card">
         <CatalogToolbar
+          phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}
@@ -156,7 +159,7 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
           onDelete={remove}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
-          extra={(q.data ?? []).some((r) => !r.isActive) && (
+          left={(q.data ?? []).some((r) => !r.isActive) && (
             <label className="checkbox" style={{ marginLeft: 8, fontSize: 13 }}><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Hiện cả mục đã ẩn ({(q.data ?? []).filter((r) => !r.isActive).length})</label>
           )}
         />
@@ -260,8 +263,8 @@ export function DimensionForm({ kind, value, parents, onClose, onSaved }: { kind
       {kind === 'employee' && (
         <>
           <Field label="Địa chỉ" full><input className="input" value={v.extra?.address ?? ''} onChange={(e) => setExtra({ address: e.target.value })} /></Field>
-          <Field label="Điện thoại"><input className="input" value={v.extra?.phone ?? ''} onChange={(e) => setExtra({ phone: e.target.value })} /></Field>
-          <Field label="Di động"><input className="input" value={v.extra?.mobile ?? ''} onChange={(e) => setExtra({ mobile: e.target.value })} /></Field>
+          {/* Một ô Di động thay cho Điện thoại + Di động: ghi vào cả hai trường (đóng góp kiennt 2026-11-16) */}
+          <Field label="Di động"><input className="input" value={v.extra?.mobile || v.extra?.phone || ''} onChange={(e) => setExtra({ mobile: e.target.value, phone: e.target.value })} /></Field>
           <Field label="Email"><input className="input" value={v.extra?.email ?? ''} onChange={(e) => setExtra({ email: e.target.value })} /></Field>
           <Field label="Chức vụ"><input className="input" value={v.extra?.position ?? ''} onChange={(e) => setExtra({ position: e.target.value })} /></Field>
           <Field label="Nhóm"><input className="input" value={v.extra?.group ?? ''} onChange={(e) => setExtra({ group: e.target.value })} /></Field>

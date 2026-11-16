@@ -8,7 +8,13 @@
 export interface SoDoNode { label: string; icon: string; path?: string; sub?: { label: string; path: string }[] }
 export interface SoDoLink { label: string; icon: string; path: string }
 export interface SoDoReport { label: string; path?: string }
-export interface SoDo { title: string; rows: SoDoNode[][]; reports?: SoDoReport[]; links: SoDoLink[] }
+/** Bước của sơ đồ nhóm chức năng: trỏ tới một mục của menu gọn (menu-gon.ts) theo nhãn, thẻ liệt kê các màn trong mục đó. */
+export interface SoDoNhomBuoc { nhom: string; icon: string; ghiChu?: string }
+/**
+ * `nhom`: sơ đồ theo nhóm chức năng thay cho `rows` — các nhóm `chuoi` làm lần lượt, xong thì các nhóm `nhanh` làm song song.
+ * Màn trong từng nhóm lấy đúng như menu (đã lọc theo quyền), khỏi khai hai nơi.
+ */
+export interface SoDo { title: string; rows: SoDoNode[][]; nhom?: { chuoi: SoDoNhomBuoc[]; nhanh: SoDoNhomBuoc[] }; reports?: SoDoReport[]; links: SoDoLink[] }
 
 const mua = (loai: string) => `/mua-hang/tong-hop?loai=${loai}`;
 const L = {
@@ -47,27 +53,28 @@ export const SO_DO: Record<string, SoDo> = {
     links: [L.tkNganHang, L.khach, L.ncc, L.nhanVien],
   },
   // [2026-11-13 Nguyễn Văn Thủy] Danh mục theo góc người quản trị: khai báo → cấu hình → phân quyền → báo cáo tổng hợp (đóng góp)
+  // [2026-11-16 kiennt] sơ đồ theo nhóm chức năng của menu: Tổ chức → Đối tượng → Tài khoản, ngân hàng → Chi phí · Mặt hàng · Tài sản · Thuế suất (đóng góp)
   'danh-muc': {
-    title: 'Khai báo hệ thống — làm theo thứ tự',
-    rows: [
-      [
-        { label: 'Cơ cấu tổ chức', icon: 'Network', path: '/danh-muc/so-do-to-chuc' },
-        { label: 'Loại kho', icon: 'Layers', path: '/danh-muc/loai-kho' },
-        { label: 'Nhóm hàng', icon: 'FolderTree', path: '/danh-muc/phan-loai-hang' },
-        { label: 'Mặt hàng', icon: 'Package', path: '/danh-muc/mat-hang' },
+    title: 'Khai báo danh mục — làm theo thứ tự',
+    rows: [],
+    nhom: {
+      chuoi: [
+        { nhom: 'Tổ chức', icon: 'Network', ghiChu: 'Chi nhánh, kho, phòng ban' },
+        { nhom: 'Đối tượng', icon: 'Users', ghiChu: 'Khách hàng, nhà cung cấp, nhân viên' },
+        { nhom: 'Tài khoản, ngân hàng', icon: 'Landmark', ghiChu: 'Tài khoản kế toán, tiền' },
       ],
-      [
-        { label: 'Đối tượng', icon: 'Users', path: '/danh-muc/khach-hang', sub: [{ label: 'Khách hàng', path: '/danh-muc/khach-hang' }, { label: 'Nhà cung cấp', path: '/danh-muc/nha-cung-cap' }, { label: 'Nhân viên', path: '/danh-muc/nhan-vien' }] },
-        { label: 'Cấu hình hạch toán', icon: 'Settings2', path: '/cau-hinh/quy-tac-hach-toan', sub: [{ label: 'Quy tắc hạch toán', path: '/cau-hinh/quy-tac-hach-toan' }, { label: 'Hệ thống tài khoản', path: '/danh-muc/tai-khoan' }, { label: 'Biểu thuế', path: '/danh-muc/loai-thue' }] },
-        { label: 'Phân quyền', icon: 'ShieldCheck' },
-        { label: 'Báo cáo tổng hợp', icon: 'ChartLine', path: '/bao-cao/ket-qua-nhieu-chi-nhanh' },
+      nhanh: [
+        { nhom: 'Chi phí', icon: 'Coins' },
+        { nhom: 'Mặt hàng', icon: 'Package' },
+        { nhom: 'Tài sản', icon: 'Building2' },
+        { nhom: 'Thuế suất', icon: 'Percent' },
       ],
-    ],
+    },
     reports: [
       { label: 'Kết quả kinh doanh nhiều chi nhánh', path: '/bao-cao/ket-qua-nhieu-chi-nhanh' }, { label: 'Tồn kho nhiều kho', path: '/bao-cao/ton-nhieu-kho' },
       { label: 'Cân đối tài khoản nhiều chi nhánh', path: '/bao-cao/can-doi-tk-nhieu-chi-nhanh' }, { label: 'Kết quả theo cửa hàng', path: '/bao-cao/ket-qua-theo-cua-hang' },
     ],
-    links: [{ label: 'Đơn vị tính', icon: 'Ruler', path: '/danh-muc/don-vi-tinh' }, { label: 'Bảng giá', icon: 'Tags', path: '/danh-muc/bang-gia' }, L.tkNganHang, { label: 'Dữ liệu gốc', icon: 'RotateCcw', path: '/tien-ich/du-lieu-goc' }],
+    links: [{ label: 'Nhập từ Excel', icon: 'FileSpreadsheet', path: '/tien-ich/nhap-excel' }, { label: 'Dữ liệu gốc', icon: 'RotateCcw', path: '/tien-ich/du-lieu-goc' }],
   },
   // [2026-11-15 Nguyễn Văn Thủy] sơ đồ rút gọn theo đúng các bước của Luồng chi tiết; bỏ ô chưa dùng (hợp đồng mua hàng) (đóng góp)
   'mua-hang': {

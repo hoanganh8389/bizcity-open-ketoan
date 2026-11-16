@@ -13,7 +13,7 @@ import { tenMan } from '@/layout/ten-man';
 import { HelpDrawer } from './HelpDrawer';
 import { DEFAULT_DATA_SCREENS, RestoreDefaultsButton } from '@/features/flow/DefaultDataPages';
 
-export function PageHeader({ title, code, subtitle, note, actions, helpKey }: { title: string; code?: string; subtitle?: string; /** Dòng luôn hiện dưới tiêu đề, dành cho thông tin theo dữ liệu đang xem. */ note?: string; actions?: ReactNode; helpKey?: string }) {
+export function PageHeader({ title, code, subtitle, note, actions, helpKey, helpExtra }: { title: string; code?: string; subtitle?: string; /** Dòng luôn hiện dưới tiêu đề, dành cho thông tin theo dữ liệu đang xem. */ note?: string; actions?: ReactNode; helpKey?: string; /** Phần riêng của màn hiện trong ngăn Hướng dẫn, dưới thẻ hướng dẫn. */ helpExtra?: ReactNode }) {
   const [help, setHelp] = useState(false);
   const { user } = useAuth();
   // Tên, mã của màn đặt ở một nơi (layout/ten-man.ts): khớp đúng đường dẫn đang mở thì dùng.
@@ -35,7 +35,8 @@ export function PageHeader({ title, code, subtitle, note, actions, helpKey }: { 
         {actions}
         {code && DEFAULT_DATA_SCREENS[code] && <RestoreDefaultsButton datasetKey={DEFAULT_DATA_SCREENS[code]!.key} title={DEFAULT_DATA_SCREENS[code]!.title} />}
         {code && (
-          <button className="btn" onClick={() => window.print()} title="In màn hình đang xem">
+          // Màn danh mục có nút In trên thanh công cụ (cạnh Xuất) thì nút này ẩn — xem .nut-in-man ở theme.css.
+          <button className="btn nut-in-man" onClick={() => window.print()} title="In màn hình đang xem">
             <Printer size={16} /> In
           </button>
         )}
@@ -45,7 +46,7 @@ export function PageHeader({ title, code, subtitle, note, actions, helpKey }: { 
           </button>
         )}
       </div>
-      {help && helpKey && <HelpDrawer guideKey={helpKey} onClose={() => setHelp(false)} />}
+      {help && helpKey && <HelpDrawer guideKey={helpKey} onClose={() => setHelp(false)} extra={helpExtra} />}
     </div>
   );
 }
