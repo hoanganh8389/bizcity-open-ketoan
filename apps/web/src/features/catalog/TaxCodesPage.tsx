@@ -22,7 +22,7 @@ const COLUMNS: Column<TaxCode>[] = [
   { key: 'accountCode', header: 'Tài khoản', type: 'code', width: 100 },
   { key: 'direction', header: 'Chiều', width: 90, hidden: true, value: (t) => (t.direction === 'output' ? 'Đầu ra' : 'Đầu vào') },
   { key: 'reportGroup', header: 'Nhóm bảng kê', width: 120, hidden: true, value: (t) => GROUPS.find(([k]) => k === t.reportGroup)?.[1] ?? t.reportGroup },
-  { key: 'inactive', header: 'Ngừng dùng', type: 'check', width: 85, hidden: true, value: (t) => !t.isActive },
+  { key: 'active', header: 'Hoạt động', type: 'check', width: 85, value: (t) => t.isActive },
 ];
 
 export function TaxCodesPage() {
@@ -88,7 +88,7 @@ export function TaxForm({ value, onClose, onSaved }: { value: Partial<TaxCode> &
   });
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title="Loại thuế" onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Đóng</button></>}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label="Mã thuế (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} /></Field>
       <Field label="Tên thuế (*)" full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Chiều"><select className="select input" value={v.direction} onChange={(e) => set({ direction: e.target.value })}><option value="output">Đầu ra (bán)</option><option value="input">Đầu vào (mua)</option></select></Field>

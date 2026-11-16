@@ -571,7 +571,7 @@ function CategoryForm({ value, parents, onClose }: { value: Partial<Category> & 
   const isGroup = !value.isNew && parents.some((p) => p.parentCode === value.code);
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title="Loại tài sản" onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name || !v.depreciationAccount || !v.expenseAccount} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Đóng</button></>}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name || !v.depreciationAccount || !v.expenseAccount} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label="Mã (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} /></Field>
       <Field label="Tên" full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Loại cha"><ListPicker items={parents.filter((p) => p.code !== v.code).map((p) => ({ code: p.code, name: p.name }))} value={v.parentCode ?? ''} onChange={(parentCode) => set({ parentCode })} placeholder="Không" /></Field>

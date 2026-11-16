@@ -215,7 +215,7 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
   return (
     <>
       <Modal title={old ? `Sửa nhóm "${old.name}"` : parent ? `Thêm nhóm con của "${ix.byCode.get(parent)?.name}"` : 'Thêm nhóm cấp 1'} helpKey="nhom-hang" onClose={onClose}
-        footer={<>{err && <span className="neg" style={{ marginRight: 'auto', fontWeight: 600, fontSize: 13 }}>{err}</span>}<button className="btn btn-primary" disabled={save.isPending} onClick={ghi}>{save.isPending ? 'Đang ghi…' : 'Ghi'}</button><button className="btn" onClick={onClose}>Huỷ bỏ</button></>}>
+        footer={<>{err && <span className="neg" style={{ marginRight: 'auto', fontWeight: 600, fontSize: 13 }}>{err}</span>}<button className="btn btn-primary" disabled={save.isPending} onClick={ghi}>{save.isPending ? 'Đang ghi…' : 'Ghi'}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
         <Field label="Thuộc nhóm" full>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <div className="nh-chi-xem" style={{ flex: 1 }} title="Không sửa ở đây">{parent ? ix.path(parent) : 'Nhóm hàng (gốc)'}</div>

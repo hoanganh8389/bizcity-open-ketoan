@@ -147,8 +147,18 @@ export interface VoucherFrame { total?: number | null; totalLabel?: string; keys
 export function Modal({ title, onClose, children, footer, wide, viewFirst, viewActions, onEdit, viewAgain, voucher, helpKey }: { title: ReactNode; onClose: () => void; children: ReactNode; footer: ReactNode; wide?: boolean; viewFirst?: boolean; viewActions?: ReactNode; onEdit?: () => void; viewAgain?: ViewAgain; voucher?: VoucherFrame; /** Định danh hướng dẫn riêng; bỏ trống = tự sinh theo màn + tiêu đề. */ helpKey?: string }) {
   const [help, setHelp] = useState(false);
   const [locked, setLocked] = useState(() => Boolean(viewFirst) && !takeEditIntent());
+  // [2026-11-17 kiennt] bấm vào ô đang khoá (chế độ xem): nhắc "bấm Sửa", nháy nút Sửa — trước đây bấm không thấy gì xảy ra (đóng góp)
+  const [nhacSua, setNhacSua] = useState(0);
+  useEffect(() => { if (!nhacSua) return; const t = window.setTimeout(() => setNhacSua(0), 2500); return () => window.clearTimeout(t); }, [nhacSua]);
   const viewSignal = viewAgain?.[0] ?? 0;
-  useEffect(() => { if (viewSignal) setLocked(true); }, [viewSignal]);
+  // [2026-11-17 kiennt] "Ghi và thoát": ghi xong đóng hộp thoại thay vì quay về chế độ xem (đóng góp)
+  const thoatSauGhi = useRef(false);
+  useEffect(() => { if (!viewSignal) return; if (thoatSauGhi.current) { thoatSauGhi.current = false; onClose(); } else setLocked(true); }, [viewSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ghiVaThoat = () => {
+    const btn = mask.current?.querySelector<HTMLButtonElement>('.modal-foot .btn-primary:not(:disabled):not(.ghi-thoat)');
+    const khoa = mask.current?.querySelector<HTMLButtonElement>('.modal-foot .btn-primary:disabled:not(.ghi-thoat)');
+    if (btn) { btn.click(); thoatSauGhi.current = true; } else if (khoa) kl.kiem(khoa);
+  };
   const mask = useRef<HTMLDivElement>(null);
   // [2026-11-11 Nguyễn Văn Thủy] báo lỗi tại ô: bấm Ghi mà ô bắt buộc trống → tô đỏ, báo ở chân hộp thoại (đóng góp)
   const kl = useKiemLoi(locked);
@@ -179,6 +189,7 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
       if (k.key === 'Tab' || k.key === 'Escape' || ((k.ctrlKey || k.metaKey) && (k.key === 'c' || k.key === 'a'))) return;
     }
     e.preventDefault(); e.stopPropagation();
+    if (e.type === 'mousedown') setNhacSua(Date.now());
   };
   return (
     <DockScope>
@@ -192,13 +203,17 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
           {children}
         </div>
         {voucher && <div className="ct-keys">{voucher.keys ?? 'F9 - Thêm nhanh khách hàng, nhà cung cấp, mặt hàng (khi đang ở ô chọn) · Ctrl + S - Ghi · Esc - Thoát'}</div>}
-        <div className="modal-foot" {...kl.footProps}>
+        <div className="modal-foot" {...kl.footProps} onClickCapture={(e) => { if ((e.target as HTMLElement).closest?.('.btn-primary:not(.ghi-thoat)')) thoatSauGhi.current = false; kl.footProps.onClickCapture(e); }}>
           {kl.banner}
           {locked ? <>
             {viewActions}{keepInView(footer)}
-            <button className="btn btn-primary" onClick={edit} autoFocus title="Phím tắt: Enter / F2">Sửa</button>
+            {nhacSua > 0 && <span className="modal-nhac-sua">Đang xem — bấm <b>Sửa</b> (hoặc F2) để thay đổi</span>}
+            <button key={nhacSua} className={`btn btn-primary${nhacSua ? ' nhay' : ''}`} onClick={edit} autoFocus title="Phím tắt: Enter / F2">Sửa</button>
             <button className="btn" onClick={onClose}>Thoát</button>
-          </> : footer}
+          </> : <>
+            {viewFirst && viewAgain && <button type="button" className="btn btn-primary ghi-thoat" title="Ghi rồi đóng hộp thoại" onClick={ghiVaThoat}>Ghi và thoát</button>}
+            {footer}
+          </>}
         </div>
       </div>
     </div>

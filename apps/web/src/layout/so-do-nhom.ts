@@ -180,7 +180,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp công nợ nhân viên', path: '/bao-cao/cong-no-theo-nhan-vien' }, { label: 'Tổng hợp công nợ theo đối tượng', path: '/bao-cao/cong-no' },
       { label: 'Báo cáo tình hình tài chính', path: '/bao-cao/can-doi-ke-toan' },
     ],
-    links: [{ label: 'Hệ thống tài khoản', icon: 'BookOpen', path: '/danh-muc/tai-khoan' }, { label: 'Quy tắc hạch toán', icon: 'Link', path: '/cau-hinh/quy-tac-hach-toan' }, { label: 'Khoản mục chi phí', icon: 'Coins', path: '/danh-muc/khoan-muc' }],
+    links: [{ label: 'Hệ thống tài khoản', icon: 'BookOpen', path: '/danh-muc/tai-khoan' }, { label: 'Tài khoản ngầm định', icon: 'Link', path: '/cau-hinh/quy-tac-hach-toan' }, { label: 'Khoản mục chi phí', icon: 'Coins', path: '/danh-muc/khoan-muc' }],
   },
   'ngan-sach': {
     title: 'Nghiệp vụ ngân sách',

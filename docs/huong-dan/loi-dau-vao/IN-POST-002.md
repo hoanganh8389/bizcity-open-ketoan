@@ -13,8 +13,8 @@ Thanh toán qua tài khoản ngân hàng BANK9 chưa khai hoặc đã ngừng d�
 
 ## Ví dụ đúng
 
-Khai đủ tài khoản của Quy tắc hạch toán và tài khoản ngân hàng mà thông báo nêu.
+Khai đủ tài khoản của Tài khoản ngầm định và tài khoản ngân hàng mà thông báo nêu.
 
 ## Sửa ở đâu
 
-Quy tắc hạch toán (ACC41), Lý do – Tài khoản (ACC18).
+Tài khoản ngầm định (ACC41), Lý do – Tài khoản (ACC18).

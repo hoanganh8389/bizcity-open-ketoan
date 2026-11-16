@@ -15,12 +15,13 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Building2, ChevronDown, ChevronRight, FileDown, FileUp, FolderOpen, Network, Plus, RefreshCw, RotateCcw, Store, Users, Warehouse as WarehouseIcon } from 'lucide-react';
+import { ArrowLeft, Building2, ChevronDown, ChevronRight, FileDown, FileUp, Filter, FolderOpen, Network, Plus, Printer, RefreshCw, RotateCcw, Store, Users, Warehouse as WarehouseIcon } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Hoi, Loading, Modal, useViewAgain } from '@/components/ui';
 import { ListPicker, plain } from '@/components/pickers';
+import { ValuePicker } from '@/components/DataGrid';
 import { TaxCodeField } from '@/components/TaxCodeField';
 import { invalidateOrg, useOrgTree, type OrgNode } from '@/lib/orgUnits';
 import type { Branch } from './BranchesPage';
@@ -129,20 +130,22 @@ export function CoCauToChucPage() {
   const addParent = selNode && selNode.loai !== 'none' && selNode.loai !== 'department' ? (selNode.loai === 'warehouse' ? selNode.parentKey : selNode.key) : null;
   return (
     <>
-      <PageHeader title="Cơ cấu tổ chức" code="DM16" helpKey="so-do-to-chuc" />
+      {/* [2026-11-17 kiennt] như các màn danh mục: Quay về dữ liệu gốc ở tiêu đề; thanh nút — kiểu xem bên trái, nút chức năng lề phải (đóng góp) */}
+      <PageHeader title="Cơ cấu tổ chức" code="DM16" helpKey="so-do-to-chuc"
+        actions={can('settings:write') && <button className="btn" disabled={restore.isPending} title="Đặt lại cây và việc gắn cửa hàng theo tệp gốc" onClick={() => restore.mutate()}><RotateCcw size={16} /> Quay về dữ liệu gốc</button>} />
       <div className="card">
-        <div className="cc-toolbar">
-          {canWrite && <button className="btn btn-sm btn-primary" title="Thêm vào dưới dòng đang chọn (chưa chọn: thêm công ty mới)" onClick={() => { setMsg(null); setForm({ key: null, parentKey: addParent }); }}><Plus size={14} /> Thêm</button>}
-          <button className="btn btn-sm" onClick={cc.refetch}><RefreshCw size={14} /> Nạp</button>
-          <button className="btn btn-sm" title="Tệp 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — sửa rồi Nhập Excel lại được" onClick={() => void xuatCoCau(cc)}><FileDown size={14} /> Xuất</button>
-          {canWrite && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
-          <div className="cc-xem">
-            <span className="muted">Xem:</span>
+        <div className="catalog-toolbar canh-phai">
+          <span className="cc-xem">
             {([['table', 'Cây'], ['chart', 'Sơ đồ'], ['org', 'Cơ cấu'], ['branch', 'Cửa hàng'], ['warehouse', 'Kho'], ['department', 'Phòng ban'], ['all', 'Tất cả']] as const).map(([k, t]) => (
               <button key={k} className={`btn btn-sm${view === k ? ' btn-primary' : ''}`} title={k === 'table' || k === 'chart' ? undefined : `Danh sách ${t.toLowerCase()} dạng bảng: lọc từng cột, sắp xếp, xuất Excel`} onClick={() => setView(k)}>{t}</button>
             ))}
-          </div>
-          {can('settings:write') && <button className="btn btn-sm" disabled={restore.isPending} title="Đặt lại cây và việc gắn cửa hàng theo tệp gốc" onClick={() => restore.mutate()}><RotateCcw size={14} /> Quay về dữ liệu gốc</button>}
+          </span>
+          <span className="spacer" />
+          {canWrite && <button className="btn btn-sm btn-primary" title="Thêm vào dưới dòng đang chọn (chưa chọn: thêm công ty mới)" onClick={() => { setMsg(null); setForm({ key: null, parentKey: addParent }); }}><Plus size={14} /> Thêm</button>}
+          <button className="btn btn-sm" onClick={cc.refetch}><RefreshCw size={14} /> Nạp</button>
+          <button className="btn btn-sm" title="Tệp 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — sửa rồi Nhập Excel lại được" onClick={() => void xuatCoCau(cc)}><FileDown size={14} /> Xuất</button>
+          <button className="btn btn-sm" onClick={() => window.print()} title="In màn hình đang xem"><Printer size={14} /> In</button>
+          {canWrite && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
         </div>
         {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 12px 8px' }}>{msg.text}</div>}
         <ErrorBox error={cc.error ? errorText(cc.error) : null} />
@@ -185,16 +188,43 @@ export function ghiChu(n: CNode, cc: CC): string {
 
 function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc: CC; selected: string | null; onSelect: (key: string) => void; onOpen: (n: CNode) => void; showOff: boolean; setShowOff: (v: boolean) => void }) {
   const [open, setOpen] = useState<Set<string>>(() => new Set(cc.nodes.filter((n) => n.org && n.depth < 1).map((n) => n.key)));
-  const [q, setQ] = useState('');
+  // [2026-11-17 kiennt] hàng lọc dưới tiêu đề như các bảng khác: mỗi cột một ô; dòng khớp mọi ô thì hiện kèm các nút cha (đóng góp)
+  const [loc, setLoc] = useState<Record<string, string>>({});
+  // Phễu ở tiêu đề cột: tích chọn giá trị (như các bảng khác).
+  const [picks, setPicks] = useState<Record<string, Set<string>>>({});
+  const [picker, setPicker] = useState<{ key: string; x: number; y: number } | null>(null);
   const [show, setShow] = useState({ warehouse: true });
   const visible = (n: CNode) => (n.loai !== 'warehouse' || show.warehouse) && (showOff || !off(n));
-  const words = plain(q).split(/\s+/).filter(Boolean);
+  const COT: [string, (n: CNode) => string][] = [
+    ['code', (n) => n.code], ['name', (n) => n.name], ['loai', (n) => loaiNhan(n)], ['mst', (n) => mstOf(n)], ['note', (n) => ghiChu(n, cc)],
+    ['active', (n) => (n.loai === 'none' ? '' : off(n) ? 'Ngừng' : 'Đang dùng')],
+  ];
   const hit = useMemo(() => {
-    if (!words.length) return null;
+    const dk = COT.map(([k, f]) => [plain(loc[k] ?? '').split(/\s+/).filter(Boolean), f] as const).filter(([w]) => w.length);
+    const pk = COT.filter(([k]) => picks[k]);
+    if (!dk.length && !pk.length) return null;
     const keep = new Set<string>();
-    for (const n of cc.nodes) if (words.every((w) => plain(`${n.code} ${n.name}`).includes(w))) for (const x of cc.pathOf(n)) keep.add(x.key);
+    for (const n of cc.nodes) {
+      if (!visible(n)) continue;
+      if (!dk.every(([w, f]) => { const v = plain(f(n)); return w.every((x) => v.includes(x)); })) continue;
+      if (!pk.every(([k, f]) => picks[k]!.has(f(n)))) continue;
+      for (const x of cc.pathOf(n)) keep.add(x.key);
+    }
     return keep;
-  }, [q, cc]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loc, picks, cc, show, showOff]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Giá trị của cột (kèm số dòng) cho hộp phễu — trên các dòng đang hiện được (theo Hiện kho / Hiện đã ngừng).
+  const giaTri = (k: string): [string, number][] => {
+    const f = COT.find(([x]) => x === k)![1];
+    const m = new Map<string, number>();
+    for (const n of cc.nodes) if (visible(n)) { const v = f(n); m.set(v, (m.get(v) ?? 0) + 1); }
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'vi'));
+  };
+  const pheu = (k: string) => (
+    <button type="button" className={`dgrid-funnel ${picks[k] ? 'on' : ''}`} title="Lọc nhanh theo giá trị"
+      onClick={(e) => { e.stopPropagation(); const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setPicker(picker?.key === k ? null : { key: k, x: Math.min(b.left, window.innerWidth - 300), y: b.bottom + 4 }); }}>
+      <Filter size={11} />
+    </button>
+  );
   const toggle = (k: string) => setOpen((o) => { const s = new Set(o); if (s.has(k)) s.delete(k); else s.add(k); return s; });
   const out: ReactNode[] = [];
   const walk = (list: CNode[]) => {
@@ -225,21 +255,26 @@ function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc
   return (
     <>
       <div className="cc-filter">
-        <input className="input" style={{ width: 320 }} placeholder="Tìm mã, tên" value={q} onChange={(e) => setQ(e.target.value)} />
         <label className="checkbox"><input type="checkbox" checked={show.warehouse} onChange={(e) => setShow((s) => ({ ...s, warehouse: e.target.checked }))} /> Hiện kho</label>
         <label className="checkbox"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện đã ngừng</label>
         <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set(cc.nodes.filter((n) => n.org).map((n) => n.key)))}>Mở hết cơ cấu</button>
         <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set())}>Thu gọn</button>
+        {hit && <button type="button" className="btn btn-sm btn-ghost" onClick={() => { setLoc({}); setPicks({}); }}>Bỏ lọc</button>}
         <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Bấm một dòng: mở / đóng nhánh · bấm đúp: xem / sửa</span>
       </div>
       <div className="table-wrap cc-table">
         <table className="grid">
           <thead><tr>
-            <th style={{ width: 300 }} title="Mã của nút">Mã</th><th title="Tên">Tên</th><th style={{ width: 130 }} title="Công ty, cơ cấu (cấp tính theo cây), cửa hàng, kho, phòng ban">Loại</th>
-            <th style={{ width: 140 }} title="Mã số thuế đặt ở nút; trống = theo nút trên">MST</th><th style={{ width: 220 }} title="Mô tả; cửa hàng: phòng ban; kho: loại kho">Ghi chú</th><th style={{ width: 70 }} title="Đang dùng">Theo dõi</th>
+            <th style={{ width: 300 }} title="Mã của nút">Mã{pheu('code')}</th><th title="Tên">Tên{pheu('name')}</th><th style={{ width: 130 }} title="Công ty, cơ cấu (cấp tính theo cây), cửa hàng, kho, phòng ban">Loại{pheu('loai')}</th>
+            <th style={{ width: 140 }} title="Mã số thuế đặt ở nút; trống = theo nút trên">MST{pheu('mst')}</th><th style={{ width: 220 }} title="Mô tả; cửa hàng: phòng ban; kho: loại kho">Ghi chú{pheu('note')}</th><th style={{ width: 90 }} title="Đang dùng">Theo dõi{pheu('active')}</th>
+          </tr>
+          <tr className="dgrid-filter">
+            {COT.map(([k]) => <th key={k}><input size={1} value={loc[k] ?? ''} onChange={(e) => setLoc((x) => ({ ...x, [k]: e.target.value }))} placeholder="🔍" /></th>)}
           </tr></thead>
-          <tbody>{out}</tbody>
+          <tbody>{out}{hit && !hit.size && <tr><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 16 }}>Không có dòng nào khớp ô lọc</td></tr>}</tbody>
         </table>
+        {picker && <ValuePicker x={picker.x} y={picker.y} values={giaTri(picker.key)} selected={picks[picker.key]} onClose={() => setPicker(null)}
+          onApply={(sel) => { setPicks((x) => { const n = { ...x }; if (sel) n[picker.key] = sel; else delete n[picker.key]; return n; }); setPicker(null); }} />}
       </div>
     </>
   );

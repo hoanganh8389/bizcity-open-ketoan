@@ -576,6 +576,8 @@ td .picker > .input, .modal-body .picker > .input { width: 100%; }
 /* Bố cục danh mục: phần chọn kiểu xem bên trái, nút chức năng lề phải, nút cao 28px. */
 .catalog-toolbar.canh-phai { align-items: center; }
 .catalog-toolbar.canh-phai .btn { height: 28px; }
+/* Nhóm nút chọn kiểu xem (Danh sách / Cây…, Cây / Sơ đồ… ở DM16) nằm bên trái thanh, không tự dạt sang phải. */
+.catalog-toolbar .cc-xem { margin-left: 0; display: inline-flex; gap: 4px; flex-wrap: wrap; }
 /* In tem (DM10): một nút mở bảng nhỏ chọn phạm vi, số tem, mẫu. */
 .in-tem { position: relative; display: inline-flex; }
 .in-tem-pop { position: absolute; z-index: 40; top: calc(100% + 4px); right: 0; width: 290px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 20px rgba(15, 35, 60, .18); font-size: 13px; }
@@ -1776,6 +1778,9 @@ table.dgrid-table thead th { padding-top: 4px; padding-bottom: 4px; }
 .gon-fly-item > span { flex: 1; min-width: 0; }
 .gon-fly-item:hover { background: var(--brand-50); text-decoration: none; }
 .gon-fly-item.active { background: var(--brand-100); color: var(--brand-800); font-weight: 600; }
+.gon-fly-code { flex: none; font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--ink-500, #8a96a3); font-weight: 400; }
+/* [2026-11-17 kiennt] mã màn trong menu bay ra: nhỏ, nhạt (đóng góp) */
+.gon-fly .gon-fly-code { font-size: 10.5px; opacity: .7; }
 .gon-fly-item.disabled { color: var(--ink-400, #9aa7b4); cursor: default; }
 .gon-fly-item.disabled:hover { background: none; }
 .gon-fly-item .pin-btn { display: none; flex: none; align-items: center; padding: 2px; border: 0; border-radius: 3px; background: none; color: var(--ink-400, #9aa7b4); cursor: pointer; }
@@ -2111,3 +2116,9 @@ td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .mnav-group-head.cur { background: #c7dcf5; }
 .mnav-body .gd-hay { margin-bottom: 6px; }
 .mnav-item.top { justify-content: flex-start; margin-top: 6px; }
+
+/* [2026-11-17 kiennt] Hộp thoại đang xem: bấm vào ô khoá thì nhắc bấm Sửa, nút Sửa nháy (đóng góp) */
+.modal-nhac-sua { margin-right: auto; padding: 4px 10px; border-radius: 6px; background: #fff6d9; color: #7a5a00; font-size: 13px; }
+.modal-foot .btn.nhay { animation: nhay-sua .5s ease 2; }
+@keyframes nhay-sua { 50% { box-shadow: 0 0 0 4px var(--brand-100, #e3eef8); transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .modal-foot .btn.nhay { animation: none; } }
