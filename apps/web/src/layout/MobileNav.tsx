@@ -43,7 +43,7 @@ export function MobileNav({ menu, groups, active, onChoose, onClose }: {
                       {s.label && <div className="mnav-section">{s.label}</div>}
                       {s.items.map((m) => (
                         <button key={m.key} type="button" className={`mnav-item ${here(m.path) ? 'active' : ''}`} onClick={() => go(g.key, m.path!)}>
-                          <span>{m.label}</span>
+                          <span>{m.label}</span>{m.code && <small className="gon-fly-code">{m.code}</small>}
                         </button>
                       ))}
                       {s.soon?.map((label) => <div key={label} className="mnav-item disabled"><span>{label}</span><small>{DANG_PHAT_TRIEN}</small></div>)}

@@ -562,3 +562,6 @@ html.gd-xanh.gd-sang .picker-opt.active .picker-code { color: var(--brand-700); 
 .hay-top-item:hover, .hay-top-item.active { background: var(--brand-50, #eef3fc); }
 .hay-top-trong { padding: 8px; color: var(--muted, #6b7686); font-size: 12.5px; }
 .hay-top-ghim { display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 4px; padding: 6px 8px; border: 0; border-top: 1px solid var(--line, #dfe4ec); background: none; font: inherit; font-size: 12.5px; color: var(--base); cursor: pointer; text-align: left; }
+
+/* [2026-11-17 Nguyễn Văn Thủy] mã màn nhỏ cạnh tên ở hàng thẻ của nhóm (đóng góp) */
+.gon-the-code { margin-left: 4px; font-size: 10px; color: var(--muted, #6b7686); font-family: var(--mono, ui-monospace, monospace); }

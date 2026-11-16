@@ -25,6 +25,8 @@ export function NutThemNhanh({ menu, collapsed }: { menu: MenuItem[]; collapsed:
     const ok = allowedPaths(menu);
     return THEM_NHANH.map((g) => ({ ...g, items: g.items.filter((i) => ok.has(i.base)) })).filter((g) => g.items.length);
   }, [menu]);
+  // [2026-11-17 Nguyễn Văn Thủy] mã màn cạnh tên trong bảng Thêm nhanh (đóng góp)
+  const codeOf = useMemo(() => { const c = new Map<string, string>(); for (const m of menu.flatMap((g) => [g, ...(g.children ?? [])])) { const b = m.path?.split('?')[0]; if (b && m.code && !c.has(b)) c.set(b, m.code); } return c; }, [menu]);
   useEffect(() => { setAt(null); }, [pathname, search]);
   useEffect(() => {
     if (!at) return;
@@ -50,7 +52,7 @@ export function NutThemNhanh({ menu, collapsed }: { menu: MenuItem[]; collapsed:
           {groups.map((g) => (
             <div key={g.label} className="gd-them-nhom">
               <div className="gd-them-head">{g.label}</div>
-              {g.items.map((i) => <Link key={i.path} role="menuitem" to={i.path}>{i.label}</Link>)}
+              {g.items.map((i) => <Link key={i.path} role="menuitem" to={i.path}>{i.label}{codeOf.get(i.base) && <small className="gon-fly-code" style={{ marginLeft: 6 }}>{codeOf.get(i.base)}</small>}</Link>)}
             </div>
           ))}
         </div>,

@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Mã màn ở mọi menu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** mã màn (MH11, DM10, ACC41…) hiện nhỏ cạnh tên ở hàng thẻ của nhóm (dưới thanh thẻ), menu điện thoại và bảng Thêm nhanh — cùng với menu xổ bên trái.
+
 ### Hay dùng lên thanh trên; bỏ Tài khoản ngầm định khỏi Bán hàng <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** mục **Hay dùng** chuyển từ menu trái lên thanh trên (cạnh Tổng quan / Báo cáo): rê chuột xổ danh sách màn đã ghim + màn mở nhiều (12 mục), có "Hay dùng trang này" / "Bỏ ghim trang này". Menu trái chỉ còn Thêm nhanh và Phân hệ (điện thoại giữ như cũ).
