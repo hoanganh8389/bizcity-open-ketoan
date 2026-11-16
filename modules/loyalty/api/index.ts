@@ -5,9 +5,12 @@ import manifest from '../bizcity.module.json' with { type: 'json' };
 import customerGet from './actions/customer-get.js';
 import programGet from './actions/program-get.js';
 import programPut from './actions/program-put.js';
+import openingImport from './actions/opening-import.js';
 import redeemQuote from './actions/redeem-quote.js';
+import reportGet from './actions/report-get.js';
 import voucherGet from './actions/voucher-get.js';
+import expireDaily from './subscribers/expire-daily.js';
 import orderEarn from './subscribers/order-recorded.js';
 import returnReverse from './subscribers/return-recorded.js';
 
-export default defineModule({ manifest, actions: [programPut, programGet, customerGet, redeemQuote, voucherGet], subscribers: [orderEarn, returnReverse] });
+export default defineModule({ manifest, actions: [programPut, programGet, customerGet, redeemQuote, voucherGet, openingImport, reportGet], subscribers: [orderEarn, returnReverse, expireDaily] });

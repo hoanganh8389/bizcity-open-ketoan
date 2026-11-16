@@ -5,8 +5,10 @@
   "kind": "module",
   "version": "0.2.0",
   "label": "Điểm thành viên",
-  "description": "Sổ điểm thành viên (NT-BH-020): chính sách tích điểm do website đẩy sang theo từng cửa hàng; tự tích điểm khi đơn máy bán POS ghi sổ, tự hoàn khi trả hàng; sổ chỉ thêm theo lô có hạn. Không nộp chứng từ — điểm chỉ hạch toán lúc đổi (trên chứng từ bán).",
-  "owners": ["@hoanganh8389"],
+  "description": "Sổ điểm thành viên (NT-BH-020): chính sách do website đẩy sang; tích / hoàn theo đơn máy bán; đổi quà / voucher; hết hạn lô hằng ngày; nạp số dư cũ; báo cáo BH19. Không nộp chứng từ — điểm chỉ hạch toán lúc đổi (trên chứng từ bán).",
+  "owners": [
+    "@hoanganh8389"
+  ],
   "standard": "^1.0",
   "requires": {
     "capabilities": [
@@ -16,23 +18,63 @@
       "actions.runtime",
       "actions.idempotency",
       "evidence.receipt",
-      "events.subscribe"
+      "events.subscribe",
+      "events.clock"
     ]
   },
   "permissions": [
-    { "key": "loyalty:read", "label": "Xem điểm thành viên: chính sách tích điểm của cửa hàng, số dư / lô / lịch sử điểm của khách (máy bán, kế toán)", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" }
+    {
+      "key": "loyalty:read",
+      "label": "Xem điểm thành viên: chính sách tích điểm của cửa hàng, số dư / lô / lịch sử điểm của khách (máy bán, kế toán)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer"
+      ],
+      "risk": "low"
+    }
   ],
   "data": {
     "schema": "mod_loyalty",
-    "tables": ["programs", "entries", "vouchers"],
-    "reads": ["bizcity_read.partners", "bizcity_read.branches"]
-  },
-  "actions": ["loyalty.program.put", "loyalty.program.get", "loyalty.customer.get", "loyalty.redeem.quote", "loyalty.voucher.get"],
-  "events": {
-    "subscribes": [
-      { "type": "pos.order.recorded", "version": 1 },
-      { "type": "pos.return.recorded", "version": 1 }
+    "tables": [
+      "programs",
+      "entries",
+      "vouchers"
+    ],
+    "reads": [
+      "bizcity_read.partners",
+      "bizcity_read.branches"
     ]
   },
-  "ui": { "icon": "Award", "color": "#b45309", "order": 31 }
+  "actions": [
+    "loyalty.program.put",
+    "loyalty.program.get",
+    "loyalty.customer.get",
+    "loyalty.redeem.quote",
+    "loyalty.voucher.get",
+    "loyalty.opening.import",
+    "loyalty.report.get"
+  ],
+  "events": {
+    "subscribes": [
+      {
+        "type": "pos.order.recorded",
+        "version": 1
+      },
+      {
+        "type": "pos.return.recorded",
+        "version": 1
+      },
+      {
+        "type": "bizcity.clock.daily",
+        "version": 1
+      }
+    ]
+  },
+  "ui": {
+    "icon": "Award",
+    "color": "#b45309",
+    "order": 31
+  }
 }

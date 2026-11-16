@@ -10,7 +10,7 @@
 | Màn hình | Máy bán POS React: khách → điểm, hạng; đổi điểm lấy quà / voucher; nhập mã voucher |
 | Bộ phận yêu cầu | Kế toán, kinh doanh (CRM) |
 | Ngày tạo | 15/11/2026 |
-| Trạng thái | Bước 1, 2: Chờ nghiệm thu (kiểm 1, 2, 3) · Bước 3: Đã chốt, chưa làm (kiểm 4, 5, 6) |
+| Trạng thái | Chờ nghiệm thu (bước 1, 2, 3 — kiểm 1–6) |
 
 ## 1. Mục đích quản trị
 Phòng kế toán yêu cầu 4 việc: liên kết quản lý khách (CRM), **hạch toán / định khoản** điểm, quản lý quy đổi điểm ra quà, báo cáo đầy đủ. Hiện máy bán React hiện điểm / voucher bằng dữ liệu giả (không ghi sổ). Đợt này: sổ điểm thật — mỗi lần tích / đổi / hết hạn / điều chỉnh / hoàn là một dòng, lô điểm có hạn, đổi trừ lô cũ trước.
@@ -107,6 +107,17 @@ Ghi chú:
 - Chạy thật bước 2 ở mức máy chủ (chính sách đổi điểm đẩy bằng khoá quản trị): website LocalWP lúc chạy bị dừng (502), phần website đẩy chính sách đã kiểm ở bước 1.
 - Bộ kiểm: `module check loyalty` / `pos` ĐẠT, typecheck 0 lỗi. Test NT-BH-004 sửa ca "có CTKM": mã coupon giờ là voucher đổi điểm, ca chặn đổi sang khuyến mại kiểu plugin (`row`).
 
+**Bước 3 — 16/11/2026, nhánh `feat/nt-bh-020-buoc-3`** (thiết kế `tgs_pos_react/docs/module-pos/70-TICH-DIEM.md` §5). Test `apps/api/test/nt-bh-020-pos-het-han.test.ts` (3/3), `modules/loyalty/test/opening.test.ts` (5/5).
+
+| Kiểm | Mong đợi | Phần mềm |
+|---|---|---|
+| 4 hết hạn | lô 100 hết hạn 10/11/2026, đã dùng 30 → ngày 16/11/2026 −70; chạy lại không thêm | test: nhịp `bizcity.clock.daily` 16/11 ghi −70, số dư 0; nhịp 17/11 không thêm; lô chưa hạn giữ nguyên |
+| số dư cũ | `0912345678` tích 6.000, dư 4.200 → lô +6.000 hạn 16/11/2027, đổi −1.800, hạng Vàng; nạp lại không thêm | test: đúng; dòng sai (dư > tổng) trả lý do. Chạy thật: website (`wp tgs-pos loyalty-opening` / tự chạy khi bật React) đẩy ví điểm → kế toán 4.200 điểm, tổng đã tích 6.000, Vàng, lô hạn 15/11/2027 (giờ Việt Nam 16/11); tài khoản không phải SĐT bỏ qua; lần hai "đã nạp trước đó" |
+| 5 báo cáo | phát sinh theo cửa hàng / loại khớp sổ; số dư theo hạng | test: kỳ 01/11/2025 – 17/11/2026 tích 6.100, đổi −1.830, hết hạn −70, số dư 4.200. Chạy thật màn BH19 kỳ 01–16/11: còn 4.248 (2 khách), CN01 tích 273 = 32 + 150 + 32 + 27 + 32, đổi −150, hoàn −75; Vàng 1 khách 4.200, Thành viên 1 khách 48 |
+| 6 dải vàng | máy bán không còn báo tích điểm / voucher là dữ liệu giả | chính sách, điểm khách, tra voucher, đổi điểm, dùng voucher đều đi module `loyalty` (bước 1, 2) |
+
+Bộ kiểm: `module check loyalty` ĐẠT, test hợp đồng module (GET không tham số trả 200) ĐẠT, typecheck 0 lỗi.
+
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
 |---|---|---|---|
@@ -120,3 +131,4 @@ Ghi chú:
 | 15/11/2026 | Bước 1 xong, ghi kết quả chạy; chuyển Chờ nghiệm thu |
 | 15/11/2026 | Số liệu và cách làm bước 2 |
 | 16/11/2026 | Bước 2 xong, ghi kết quả chạy; chuyển Chờ nghiệm thu |
+| 16/11/2026 | Bước 3 xong (hết hạn, số dư cũ, báo cáo BH19), ghi kết quả chạy |
