@@ -52,6 +52,9 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
   const history = useQuery({ queryKey: ['phan-quyen', 'history', userId], queryFn: () => api.get<History>(`/api/v1/users/${userId}/roles`), enabled: !!userId });
   const refresh = () => qc.invalidateQueries({ queryKey: ['phan-quyen'] });
 
+  // [2026-11-16 10:00 AM kiennt] NT-HT-003 — vai trò gán thêm toàn đơn vị hiện cạnh vai trò chính (vd "Người xem · + Chủ đơn vị") (đóng góp)
+  const them = useQuery({ queryKey: ['phan-quyen', 'vai-tro-them'], queryFn: () => api.get<Record<string, { ma: string | null; ten: string }[]>>('/api/v1/quyen-chi-nhanh/vai-tro-them'), retry: false });
+  const tenThem = (id: string): string[] => (them.data?.[id] ?? []).map((x) => (x.ma ? ROLE_TEXT[x.ma] ?? x.ma : x.ten));
   const list = (users.data ?? []).filter((u) => !q.trim() || `${u.fullName} ${u.email}`.toLowerCase().includes(q.trim().toLowerCase()));
   const picked = users.data?.find((u) => u.id === userId);
   const activeTenantRoles = (roles.data ?? []).filter((r) => r.isActive);
@@ -76,7 +79,9 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
                     style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
                       background: active ? 'rgba(100,116,139,.22)' : 'transparent', opacity: u.isActive ? 1 : 0.6 }}>
                     <div style={{ fontSize: FS.body, fontWeight: 600 }}>{u.fullName}</div>
-                    <div className="muted" style={{ fontSize: FS.small, marginTop: 2 }}>{u.email} · {ROLE_TEXT[u.role] ?? u.role}{u.isActive ? '' : ' · đã khoá'}</div>
+                    <div className="muted" style={{ fontSize: FS.small, marginTop: 2 }}>{u.email} · {ROLE_TEXT[u.role] ?? u.role}
+                      {tenThem(u.id).map((t) => <strong key={t} title="Vai trò gán thêm toàn đơn vị (HT12) — quyền cộng vào vai trò chính" style={{ color: t === 'Chủ đơn vị' ? '#b26a00' : undefined }}> · + {t}</strong>)}
+                      {u.isActive ? '' : ' · đã khoá'}</div>
                   </button>
                 </li>
               );
