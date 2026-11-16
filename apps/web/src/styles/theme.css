@@ -2122,3 +2122,6 @@ td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .modal-foot .btn.nhay { animation: nhay-sua .5s ease 2; }
 @keyframes nhay-sua { 50% { box-shadow: 0 0 0 4px var(--brand-100, #e3eef8); transform: scale(1.05); } }
 @media (prefers-reduced-motion: reduce) { .modal-foot .btn.nhay { animation: none; } }
+/* [2026-11-17 kiennt] "Ghi và thoát" luôn đứng ngay trước nút Ghi (nút chính của form), dù chân form có phần bên trái (Theo dõi, Tạo bởi…) (đóng góp) */
+.modal-foot > .ghi-thoat { order: 1; }
+.modal-foot > .btn-primary:not(.ghi-thoat), .modal-foot > .btn-primary:not(.ghi-thoat) ~ * { order: 2; }
