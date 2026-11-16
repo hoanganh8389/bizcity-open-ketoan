@@ -18,5 +18,345 @@
     "icon": "Settings",
     "color": "#546e7a",
     "order": 90
-  }
+  },
+  "permissions": [
+    {
+      "key": "he-thong:mat-hang-sua",
+      "label": "Thêm / sửa — Danh mục mặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:mat-hang-xoa",
+      "label": "Xoá — Danh mục mặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:mat-hang-nhap-excel",
+      "label": "Nhập Excel — Danh mục mặt hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:nhom-hang-sua",
+      "label": "Thêm / sửa — Nhóm hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:nhom-hang-xoa",
+      "label": "Xoá — Nhóm hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:don-vi-tinh-them",
+      "label": "Thêm — Đơn vị tính",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:don-vi-tinh-sua",
+      "label": "Sửa — Đơn vị tính",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:don-vi-tinh-xoa",
+      "label": "Xoá — Đơn vị tính",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:doi-tuong-them",
+      "label": "Thêm — Khách hàng / nhà cung cấp",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:doi-tuong-sua",
+      "label": "Sửa — Khách hàng / nhà cung cấp",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:doi-tuong-xoa",
+      "label": "Xoá — Khách hàng / nhà cung cấp",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:doi-tuong-nhap-excel",
+      "label": "Nhập Excel — Khách hàng / nhà cung cấp",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:nhom-doi-tuong-sua",
+      "label": "Thêm / sửa — Nhóm đối tượng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:nhom-doi-tuong-xoa",
+      "label": "Xoá — Nhóm đối tượng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:chi-nhanh-them",
+      "label": "Thêm — Chi nhánh",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:chi-nhanh-sua",
+      "label": "Sửa — Chi nhánh",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:chi-nhanh-xoa",
+      "label": "Xoá — Chi nhánh",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:kho-them",
+      "label": "Thêm — Danh mục kho",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:kho-sua",
+      "label": "Sửa — Danh mục kho",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:kho-xoa",
+      "label": "Xoá — Danh mục kho",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:loai-kho-sua",
+      "label": "Thêm / sửa — Loại kho",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:tai-khoan-them",
+      "label": "Thêm — Hệ thống tài khoản",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:tai-khoan-sua",
+      "label": "Sửa — Hệ thống tài khoản",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:tai-khoan-xoa",
+      "label": "Xoá — Hệ thống tài khoản",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:tk-ngan-hang-sua",
+      "label": "Thêm / sửa — Tài khoản ngân hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:tk-ngan-hang-xoa",
+      "label": "Xoá — Tài khoản ngân hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:bang-gia-sua",
+      "label": "Thêm / sửa — Bảng giá",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:bang-gia-xoa",
+      "label": "Xoá — Bảng giá",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:don-vi-sua",
+      "label": "Sửa thông tin / cài đặt — Thông tin đơn vị, cài đặt",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:don-vi-khoi-anh",
+      "label": "Khối ảnh — Thông tin đơn vị, cài đặt",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:nguoi-dung-them",
+      "label": "Thêm — Người dùng",
+      "roles": [
+        "owner"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:nguoi-dung-sua",
+      "label": "Sửa / khoá / đặt lại mật khẩu — Người dùng",
+      "roles": [
+        "owner"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:nguoi-dung-gan-vai-tro",
+      "label": "Gán / thu hồi vai trò — Người dùng",
+      "roles": [
+        "owner"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:khoa-api-them",
+      "label": "Cấp khoá — Khoá API",
+      "roles": [
+        "owner"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "he-thong:khoa-api-xoa",
+      "label": "Thu hồi khoá — Khoá API",
+      "roles": [
+        "owner"
+      ],
+      "risk": "low"
+    }
+  ]
 }

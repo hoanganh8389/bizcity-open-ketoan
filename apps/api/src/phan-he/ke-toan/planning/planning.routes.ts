@@ -28,6 +28,9 @@ import { ok, idParamSchema } from '../../../core/http.js';
 import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — kế hoạch thu chi gác theo thao tác màn KH01; định mức chi phí (catalog:write) gác thêm qua lenh ở man-hinh-ke-toan.ts (đóng góp)
+import { quyenThaoTac } from '../../../modules/access/man-hinh.js';
+import '../man-hinh-ke-toan.js'; // đăng ký màn Kế toán trước khi lệnh đọc quyền
 
 const tags = ['Kế hoạch tài chính'];
 const month = z.string().regex(/^\d{4}-\d{2}$/, 'Tháng dạng YYYY-MM');
@@ -222,7 +225,7 @@ const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 export const planningWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'ke-toan.cash-plan.update', title: 'Sửa dòng kế hoạch thu / chi', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('ke-toan.ke-hoach-thu-chi', 'sua'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn KH01 (đóng góp) */ effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
     input: (planInput).merge(idParamSchema), output: anyOut,
     expose: { http: { method: 'PATCH', path: '/api/v1/cash-plans/:id' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'cash_plan', objectId: (i) => String(i.id) },
@@ -243,7 +246,7 @@ export const planningWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'ke-toan.cash-plan.delete', title: 'Xoá dòng kế hoạch thu / chi', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('ke-toan.ke-hoach-thu-chi', 'xoa'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn KH01 (đóng góp) */ effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
     input: idParamSchema, output: anyOut,
     expose: { http: { method: 'DELETE', path: '/api/v1/cash-plans/:id' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'cash_plan', objectId: (i) => String(i.id) },
@@ -256,7 +259,7 @@ export const planningWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'ke-toan.cash-plan.fill', title: 'Điền kế hoạch từ khoản công nợ đến hạn và lịch thanh toán hợp đồng', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    get permission() { return quyenThaoTac('ke-toan.ke-hoach-thu-chi', 'them'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn KH01 (đóng góp) */ effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
     input: z.object({ period: month }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/cash-plans/fill' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'cash_plan' },
@@ -373,7 +376,7 @@ export const planningWriteActions: AnyActionDef[] = [
 export const planningMoreWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'ke-toan.cash-plan.create', title: 'Thêm dòng kế hoạch thu / chi', tags,
-    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'required',
+    get permission() { return quyenThaoTac('ke-toan.ke-hoach-thu-chi', 'them'); }, /* [2026-11-13 08:00 PM kiennt] NT-HT-003 — gác theo thao tác màn KH01 (đóng góp) */ effect: 'write', sideEffects: ['settings'], idempotency: 'required',
     input: planInput, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/cash-plans', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'cash_plan' },

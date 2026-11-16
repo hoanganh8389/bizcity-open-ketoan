@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+// [2026-11-13 08:00 PM kiennt] NT-HT-003 — sửa thông tin người nộp thuế theo thao tác màn TT01 (đóng góp)
+import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading } from '@/components/ui';
 
@@ -24,7 +26,8 @@ export function TaxpayerPage() {
     mutationFn: () => api.put('/api/v1/taxpayer', Object.fromEntries(FIELDS.map(([k]) => [k, v[k] ?? '']))),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['taxpayer'] }),
   });
-  const readOnly = !can('catalog:write');
+  const tt = useThaoTac('thue.nguoi-nop-thue');
+  const readOnly = !can('catalog:write') || !tt.sua;
   return (
     <>
       <PageHeader title="Thông tin người nộp thuế" code="TT01" subtitle="In ở phần đầu tờ khai thuế GTGT, quyết toán thuế TNDN" helpKey="quyet-toan-tndn"
