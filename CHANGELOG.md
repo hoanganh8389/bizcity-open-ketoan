@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Không bật hộp "Từ chối đúng luật" vì số liệu phụ <!-- [2026-11-16 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Sửa:** màn Quy trình Bán hàng gọi số liệu máy POS (đơn chờ QR, ca chưa đóng) và thanh Việc cần làm gọi việc mua hàng / cảnh báo / hàng đợi: tài khoản không có quyền nguồn đó thì bỏ qua im lặng, không bật hộp Mã tra cứu FORBIDDEN. Thêm `api.getQuiet` cho lời gọi phụ.
+
 ### Module mới `loyalty` — sổ điểm thành viên (phiếu NT-BH-020 bước 1) <!-- [2026-11-15 04:30 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1 (đóng góp) -->
 
 - **Thêm:** module `modules/loyalty` (schema `mod_loyalty`): sổ điểm chỉ thêm theo lô có hạn; chính sách tích điểm do website đẩy sang `POST /api/v1/m/loyalty/program` (quyền `catalog:write`, giữ mọi phiên bản); tự tích khi đơn máy bán hoàn tất (nghe `pos.order.recorded`), tự hoàn khi trả hàng (nghe `pos.return.recorded`); máy bán đọc `GET /program?branch=`, `GET /customers/:id` (quyền mới `loyalty:read`).
