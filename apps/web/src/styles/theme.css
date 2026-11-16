@@ -576,6 +576,16 @@ td .picker > .input, .modal-body .picker > .input { width: 100%; }
 /* Bố cục danh mục: phần chọn kiểu xem bên trái, nút chức năng lề phải, nút cao 28px. */
 .catalog-toolbar.canh-phai { align-items: center; }
 .catalog-toolbar.canh-phai .btn { height: 28px; }
+/* In tem (DM10): một nút mở bảng nhỏ chọn phạm vi, số tem, mẫu. */
+.in-tem { position: relative; display: inline-flex; }
+.in-tem-pop { position: absolute; z-index: 40; top: calc(100% + 4px); right: 0; width: 290px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 20px rgba(15, 35, 60, .18); font-size: 13px; }
+.in-tem-pop[hidden] { display: none; }
+.in-tem-pop .radio { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.in-tem-so { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.in-tem-so .input { width: 72px; height: 28px; }
+.in-tem-so select.input { width: 160px; }
+.in-tem-foot .btn { height: 28px; }
+.in-tem-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line-soft); }
 /* Phần riêng của màn trong ngăn Hướng dẫn (vd Nghiệp vụ dùng loại kho). */
 .help-extra { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); overflow-x: auto; }
 .help-extra h3 { margin: 0 0 4px; font-size: 14px; }
