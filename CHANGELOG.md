@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### DM10 Quản lý mặt hàng: khung Nhóm hàng co giãn, thu gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** khung lọc Nhóm hàng bên trái kéo mép phải để giãn / co (160–700px), nút « thu gọn thành dải dọc "» Nhóm hàng" (tô màu khi đang lọc nhóm), bấm để mở lại; nhớ theo trình duyệt.
+
 ### Mua hàng / Bán hàng: sơ đồ rút gọn v2 mặc định <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** vào Quy trình Mua hàng / Bán hàng mở **sơ đồ rút gọn v2** (thẻ theo bước như Danh mục: bước làm lần lượt, cuối rẽ ra việc làm song song; mỗi thẻ liệt kê màn, lọc theo quyền). Bán hàng bổ sung đủ: khai báo, giá & khuyến mại, bán hàng / máy POS / ca bán, thu tiền & công nợ, trả lại, doanh số, công nợ phải thu, thuế đầu ra. Luồng chi tiết vẫn mở bằng nút.

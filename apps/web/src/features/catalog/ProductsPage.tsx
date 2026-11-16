@@ -135,14 +135,36 @@ export function ProductsPage() {
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
 
+  const [treeOpen, setTreeOpen] = useState(() => { try { return localStorage.getItem('dm10-cay-mo') !== '0'; } catch { return true; } });
+  const [treeW, setTreeW] = useState(() => { try { const w = Number(localStorage.getItem('dm10-cay-rong')); return w >= 160 && w <= 700 ? w : 280; } catch { return 280; } });
+  const saveTree = (open: boolean, w: number) => { setTreeOpen(open); setTreeW(w); try { localStorage.setItem('dm10-cay-mo', open ? '1' : '0'); localStorage.setItem('dm10-cay-rong', String(w)); } catch { /* bỏ qua */ } };
+  const keoTree = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const x0 = e.clientX, w0 = treeW;
+    document.body.style.userSelect = 'none'; // kéo không bôi đen chữ
+    let w = w0;
+    const move = (ev: MouseEvent) => { w = Math.min(700, Math.max(160, w0 + ev.clientX - x0)); setTreeW(w); };
+    const up = () => { document.body.style.userSelect = ''; window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); saveTree(true, w); };
+    window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+  };
   return (
     <>
       <PageHeader title="Quản lý mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
-      <div className="acc17">
-        <div className="card acc17-tree">
-          <div className="acc17-tree-head">Nhóm hàng</div>
-          {classes.group.isLoading ? <Loading /> : <GroupTree classes={classes.group.data ?? []} value={group} onChange={(g) => { setGroup(g); setPage(1); }} />}
-        </div>
+      {/* [2026-11-17 Nguyễn Văn Thủy] khung Nhóm hàng kéo giãn được (mép phải) và thu gọn / mở; nhớ theo trình duyệt (đóng góp) */}
+      <div className="acc17" style={{ gridTemplateColumns: `${treeOpen ? treeW : 28}px minmax(0, 1fr)` }}>
+        {treeOpen ? (
+          <div className="card acc17-tree" style={{ position: 'relative' }}>
+            <div className="acc17-tree-head row" style={{ alignItems: 'center' }}>
+              <span>Nhóm hàng</span>
+              <button type="button" className="btn btn-xs" style={{ marginLeft: 'auto' }} title="Thu gọn khung nhóm hàng" onClick={() => saveTree(false, treeW)}>«</button>
+            </div>
+            {classes.group.isLoading ? <Loading /> : <GroupTree classes={classes.group.data ?? []} value={group} onChange={(g) => { setGroup(g); setPage(1); }} />}
+            <div title="Kéo để giãn / co" onMouseDown={keoTree} style={{ position: 'absolute', top: 0, right: -6, width: 10, height: '100%', cursor: 'col-resize' }} />
+          </div>
+        ) : (
+          <button type="button" className="card" title={group ? `Mở khung nhóm hàng (đang lọc: ${group})` : 'Mở khung nhóm hàng'} onClick={() => saveTree(true, treeW)}
+            style={{ height: 160, padding: 0, cursor: 'pointer', writingMode: 'vertical-rl', fontWeight: 600, background: group ? 'var(--brand-50, #e8f0fe)' : undefined }}>» Nhóm hàng</button>
+        )}
         <div className="card acc17-main">
           <CatalogToolbar
           trash={{ catalog: 'products', title: 'Mặt hàng', sel: sel ? { key: sel.sku, label: sel.name } : null }}
