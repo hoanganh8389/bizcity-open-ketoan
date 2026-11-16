@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 166
+      "count": 165
     },
     {
       "key": "partial",
@@ -9041,9 +9041,15 @@
       "phase": "PHASE-036",
       "title": "B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-le 1.1; SC-PRESET-1 kiểm khối mới",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
+        "branch": "feat/s036-6-goi-mau-ba-thang",
+        "state": "đang làm",
+        "since": "2026-11-16",
+        "dot": "PHASE-036 · S036-6 — B4 gói thuong-mai-ban-le 1.1 ba tháng nghiệp vụ: khối openings / assets / clos…"
+      },
       "modules": [
         "he-thong"
       ],
