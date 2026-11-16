@@ -3,7 +3,7 @@
   "id": "bizcity.loyalty",
   "key": "loyalty",
   "kind": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "label": "Điểm thành viên",
   "description": "Sổ điểm thành viên (NT-BH-020): chính sách tích điểm do website đẩy sang theo từng cửa hàng; tự tích điểm khi đơn máy bán POS ghi sổ, tự hoàn khi trả hàng; sổ chỉ thêm theo lô có hạn. Không nộp chứng từ — điểm chỉ hạch toán lúc đổi (trên chứng từ bán).",
   "owners": ["@hoanganh8389"],
@@ -24,10 +24,10 @@
   ],
   "data": {
     "schema": "mod_loyalty",
-    "tables": ["programs", "entries"],
+    "tables": ["programs", "entries", "vouchers"],
     "reads": ["bizcity_read.partners", "bizcity_read.branches"]
   },
-  "actions": ["loyalty.program.put", "loyalty.program.get", "loyalty.customer.get"],
+  "actions": ["loyalty.program.put", "loyalty.program.get", "loyalty.customer.get", "loyalty.redeem.quote", "loyalty.voucher.get"],
   "events": {
     "subscribes": [
       { "type": "pos.order.recorded", "version": 1 },

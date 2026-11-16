@@ -3,7 +3,7 @@
  * cả handler trong một giao dịch, nên kiểm + cấp mã + nộp chứng từ sale + lưu đơn cùng thành công hoặc cùng huỷ.
  */
 import { Errors, sql, type ActionContext } from '@bizcity/module-sdk';
-import { codePeriod, computeOrder, parseCode, saleDocKey, toOrderSnapshot, toSaleDocument, type OrderProblem } from './domain/order.js';
+import { codePeriod, computeOrder, couponCodes, parseCode, saleDocKey, toOrderSnapshot, toSaleDocument, type OrderProblem } from './domain/order.js';
 import type { OrderDraft } from './domain/schema.js';
 import { lastCode, takeCodes } from './codes.js';
 import { activePaymentMethods, catalogFor, partnerByCode, resolveBranch } from './read.js';
@@ -30,6 +30,50 @@ export async function lockKey(tx: Parameters<Parameters<ActionContext['data']['m
   await sql`SELECT pg_advisory_xact_lock(hashtext(${key}))`.execute(tx);
 }
 
+// [2026-11-15 07:50 PM Võ Hoàng] POS-LOYALTY — NT-BH-020 bước 2: hỏi module loyalty trước khi nhận đơn (đóng góp)
+type QuoteReward = { index: string; kind: 'gift' | 'voucher'; points: number; sku?: string; quantity?: number; voucher?: { code: string; discountType: string; discountValue: number; maxDiscount: number; minOrderAmount: number; expiresAt: string | null } };
+type Quote = { enabled: boolean; tierKey?: string; tierName?: string; balance?: number; rewards: QuoteReward[]; points: number; earned: number; voucher?: { code: string; amount: number }; problems: string[] };
+
+/**
+ * Đổi điểm / voucher / điểm đơn này (NT-BH-020 bước 2): hỏi action đọc `loyalty.redeem.quote` của module loyalty (gọi chéo theo mã,
+ * quyền của thu ngân). Đơn có đổi điểm hoặc voucher mà module chưa bật / báo lỗi → chặn, nói rõ. Đơn chỉ có khách: hỏi để in điểm
+ * trên bill, module chưa bật thì bỏ qua. `base`: đơn tính thử chưa có voucher (tổng để kiểm đơn tối thiểu, chia tiền giảm).
+ */
+async function quoteLoyalty(ctx: ActionContext, draft: OrderDraft, branchCode: string, base: ReturnType<typeof computeOrder>) {
+  if ('problem' in base) raise(base.problem);
+  const coupons = couponCodes(draft);
+  const redeem = draft.loyalty?.redeem ?? [];
+  const customer = base.customer?.code;
+  if (redeem.length && !customer) throw Errors.validation('Đổi điểm phải chọn khách thành viên', { field: 'loyalty' });
+  if (!customer && !coupons.length) return null;
+  const must = coupons.length > 0 || redeem.length > 0;
+  let q: Quote;
+  try {
+    q = await ctx.actions.call<Quote>('loyalty.redeem.quote', {
+      ...(customer ? { customer } : {}), branch: branchCode, orderId: draft.id, orderTotal: base.total, redeem,
+      items: base.lines.filter((l) => !l.draft.isGift).map((l) => ({ sku: l.item.sku, qty: l.draft.unitQty * l.unitRatio })),
+      ...(coupons[0] ? { voucher: coupons[0] } : {}),
+    });
+  } catch (e) {
+    if (!must) return null;
+    throw Errors.validation(`Chưa đổi điểm / dùng voucher được: ${(e as Error).message}`, { field: coupons.length ? 'promotionSelections' : 'loyalty' });
+  }
+  if (q.problems.length) throw Errors.validation(q.problems.join('; '), { field: coupons.length && !redeem.length ? 'promotionSelections' : 'loyalty' });
+  if (!q.enabled && !q.voucher) return null;
+  const gifts = new Map(q.rewards.filter((r) => r.kind === 'gift' && r.sku).map((r) => [r.index, { sku: r.sku!, quantity: r.quantity ?? 1 }]));
+  const issued = q.rewards.filter((r) => r.kind === 'voucher' && r.voucher).map((r) => r.voucher!);
+  return {
+    input: { gifts, ...(q.voucher ? { voucher: q.voucher } : {}) },
+    snapshot: q.enabled && customer
+      ? {
+          earned: q.earned, redeemed: q.points, balanceAfter: (q.balance ?? 0) - q.points + q.earned, tierKey: q.tierKey ?? '', tierName: q.tierName ?? '',
+          vouchers: issued.map((v) => ({ code: v.code, discountType: v.discountType, discountValue: v.discountValue, maxDiscount: v.maxDiscount, minOrderAmount: v.minOrderAmount, expiresAt: v.expiresAt })),
+          rewards: q.rewards,
+        }
+      : undefined,
+  };
+}
+
 export type CreatedOrder = { order: Record<string, unknown>; nextReservedCodes: string[]; einvoiceReview: typeof EINVOICE_NONE; replayed: boolean };
 
 export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: { exchange?: { credit: number; returnDocKey: string } } = {}): Promise<CreatedOrder> {
@@ -51,7 +95,9 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     const catalog = await catalogFor(tx, draft.lines.map((l) => l.sku));
     const paymentMethods = await activePaymentMethods(tx);
     const partner = 'partnerId' in draft.customer ? await partnerByCode(tx, draft.customer.partnerId) : null;
-    const computed = computeOrder({ draft, catalog, paymentMethods, partner, ...(opts.exchange ? { exchange: opts.exchange } : {}) });
+    const base = { draft, catalog, paymentMethods, partner, ...(opts.exchange ? { exchange: opts.exchange } : {}) };
+    const loyalty = await quoteLoyalty(ctx, draft, branch.code, computeOrder({ ...base, loyalty: { lenient: true } }));
+    const computed = computeOrder({ ...base, ...(loyalty ? { loyalty: loyalty.input } : {}) });
     if ('problem' in computed) raise(computed.problem);
 
     // Mã phiếu: dùng số máy đã được cấp trước (đúng khuôn, đã cấp, chưa dùng); không thì cấp số mới. Khoá theo số để hai máy
@@ -66,14 +112,14 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       if (!used) code = draft.reservedCode!;
     }
     code ??= (await takeCodes(tx, ctx.tenant.id, branch.code, 'sale', period, 1))[0]!;
-    return { kind: 'new', computed, branch, code } as const;
+    return { kind: 'new', computed, branch, code, loyalty } as const;
   });
   if (prepared.kind === 'replay') return { order: prepared.snapshot, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: true };
 
-  const { computed, branch, code } = prepared;
+  const { computed, branch, code, loyalty } = prepared;
   const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code });
   const submitted = await ctx.ledger.submit(doc);
-  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString() });
+  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}) });
 
   try {
     await ctx.data.module(async (tx) => {

@@ -1,6 +1,6 @@
 /** NT-BH-004 — phần tính thuần của đơn bán tại quầy (không CSDL). Phần ghi sổ: apps/api/test/nt-bh-004-pos-don-ban.test.ts. */
 import { describe, expect, it } from 'vitest';
-import { codePeriod, computeOrder, formatCode, lineMoney, parseCode, paymentKind, toOrderSnapshot, toSaleDocument, type CatalogItem, isBillZLine, splitBillZ } from '../api/domain/order.js';
+import { codePeriod, computeOrder, formatCode, lineMoney, parseCode, paymentKind, toOrderSnapshot, toSaleDocument, type CatalogItem, isBillZLine, splitBillZ, unsupported } from '../api/domain/order.js';
 import { orderDraftSchema, type OrderDraft } from '../api/domain/schema.js';
 
 const ITEM_SUA = '01JC0S0A4000000000000000AA';
@@ -144,9 +144,11 @@ describe('NT-BH-004 — trường hợp lệch chuẩn (tầng tính)', () => {
     expect(() => draft({ lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 1, manualDiscount: { kind: 'percent', value: 101 } }] as OrderDraft['lines'] })).toThrow();
     expect(reason(draft({ lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'amount', value: 324_001 } }] as OrderDraft['lines'] }))).toBe('POS_DISCOUNT_TOO_LARGE');
   });
-  it('8. CTKM kiểu plugin website (promotionSelections), đổi điểm, ghi nợ → POS_NOT_SUPPORTED_YET (QR nhận từ NT-BH-009; quà / giảm theo chương trình nhận từ NT-BH-003)', () => {
-    expect(reason(draft({ promotionSelections: [{ kind: 'coupon', code: 'KM1' }] }))).toBe('POS_NOT_SUPPORTED_YET');
-    expect(reason(draft({ loyalty: { redeem: ['lp_1'] } }))).toBe('POS_NOT_SUPPORTED_YET');
+  it('8. CTKM kiểu plugin website (chọn dòng, hạ số quà), hai voucher một đơn, ghi nợ → POS_NOT_SUPPORTED_YET; voucher đổi điểm, đổi điểm nhận (NT-BH-020 bước 2)', () => {
+    expect(reason(draft({ promotionSelections: [{ kind: 'row', rowKey: 'KM1' }] }))).toBe('POS_NOT_SUPPORTED_YET');
+    expect(reason(draft({ promotionSelections: [{ kind: 'coupon', code: 'A' }, { kind: 'coupon', code: 'B' }] }))).toBe('POS_NOT_SUPPORTED_YET');
+    expect(unsupported(draft({ promotionSelections: [{ kind: 'coupon', code: 'tgs50-ab' }, { kind: 'coupon', code: 'TGS50-AB' }] }))).toBeNull();
+    expect(unsupported(draft({ loyalty: { redeem: ['lp_1'] } }))).toBeNull();
     expect(reason(draft({ payment: { mode: 'credit' } }))).toBe('POS_NOT_SUPPORTED_YET');
   });
   // [2026-11-12 08:20 PM Võ Hoàng] POS-QR — QR trả hết / phần QR trong chia tiền: nhận, đơn chờ trả tiền (NT-BH-009) (đóng góp)

@@ -2,7 +2,7 @@
 /** GET /api/v1/m/loyalty/customers/:id?branch= — số dư, điểm dùng được, hạng, lô, lịch sử (khuôn CustomerLoyalty). id = mã khách. */
 import { defineAction, z } from '@bizcity/module-sdk';
 import { customerLoyalty } from '../domain/settle.js';
-import { entriesOf, latestProgram } from '../store.js';
+import { entriesOf, latestProgram, vouchersOf } from '../store.js';
 
 export default defineAction({
   id: 'loyalty.customer.get', title: 'Điểm thành viên của khách', tags: ['Điểm thành viên'],
@@ -12,6 +12,10 @@ export default defineAction({
   expose: { http: { method: 'GET', path: '/customers/:id' }, mcp: false, ai: 'read' },
   handler: async (ctx, { id, branch }) => ctx.data.module(async (tx) => {
     const program = branch ? await latestProgram(tx, branch) : null;
-    return customerLoyalty(program?.program ?? null, id, await entriesOf(tx, id), new Date().toISOString());
+    const now = new Date().toISOString();
+    // Voucher còn dùng được của khách (NT-BH-020 bước 2): máy bán hiện ở khung điểm, bấm Dùng.
+    const vouchers = (await vouchersOf(tx, id)).filter((v) => v.status === 'active' && (!v.expiresAt || v.expiresAt > now))
+      .map((v) => ({ code: v.code, name: v.name, customerId: v.partnerCode, discountType: v.discountType, discountValue: v.discountValue, maxDiscount: v.maxDiscount, minOrderAmount: v.minOrderAmount, expiresAt: v.expiresAt, status: v.status }));
+    return { ...customerLoyalty(program?.program ?? null, id, await entriesOf(tx, id), now), vouchers };
   }),
 });
