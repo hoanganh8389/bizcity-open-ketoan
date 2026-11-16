@@ -115,7 +115,7 @@ export function GroupHomePage() {
         : soDo ? (
           // Sơ đồ bên trái, báo cáo hay dùng của nhóm bên phải (bố cục trang Quy trình phổ biến).
           <div className={`sd-layout${g.reports.length || soDo.reports?.length ? "" : " no-bc"}`}>
-            <div className="sd-main"><SoDoNhom soDo={soDo} canOpen={(p) => seen.has(p.split('?')[0]!)} extra={nutPhu} /></div>
+            <div className="sd-main"><SoDoNhom soDo={soDo} canOpen={(p) => seen.has(p.split('?')[0]!)} extra={nutPhu} sections={g.sections} /></div>
             {(soDo.reports?.length || g.reports.length > 0) && (
               <aside className="card sd-bc">
                 <b>Báo cáo</b>

@@ -99,14 +99,15 @@ export function CayDoiTuong<T extends PartnerNode>({ rows, selected, onSelect, o
 }
 
 /** Ô Đơn vị cha trong hồ sơ: chọn công ty mẹ; thêm mới thì mã tự thành mã cha-00x. */
-export function ODonViCha({ value, onChange, self, isNew, disabled }: { value: string | null | undefined; onChange: (code: string | null) => void; self?: string; isNew: boolean; disabled?: boolean }) {
+export function ODonViCha({ value, onChange, self, isNew, disabled, groupCode }: { value: string | null | undefined; onChange: (code: string | null) => void; self?: string; isNew: boolean; disabled?: boolean; /** Chỉ chọn đơn vị cha trong nhóm này; chưa chọn nhóm thì khoá ô. */ groupCode?: string | null }) {
+  const chuaNhom = !groupCode && !value;
   return (
     <div className="field full">
       <label>Thuộc đơn vị cha <Hoi text={'Chọn khi đối tượng này là chi nhánh / đơn vị con của một nhà cung cấp hoặc khách hàng lớn (vd Công ty mẹ → Chi nhánh Hà Nội). '
         + 'Phiếu, hoá đơn vẫn ghi vào đúng đơn vị này; đơn vị cha dùng để cộng gộp doanh số, công nợ và tính thưởng cho cả nhóm.'
         + (isNew ? ' Chọn cha thì mã tự thành "mã cha-001", "-002"…' : '')} /></label>
       <div className="row" style={{ gap: 6 }}>
-        <div style={{ flex: 1 }}><PartnerPicker value={value ?? ''} onChange={(c) => onChange(c && c !== self ? c : null)} disabled={disabled} placeholder="Không có — là đơn vị độc lập / đơn vị mẹ" /></div>
+        <div style={{ flex: 1 }}><PartnerPicker groupCode={groupCode ?? undefined} value={value ?? ''} onChange={(c) => onChange(c && c !== self ? c : null)} disabled={disabled || chuaNhom} placeholder={chuaNhom ? 'Chọn "Thuộc nhóm" trước — chỉ chọn đơn vị cha trong cùng nhóm' : 'Không có — là đơn vị độc lập / đơn vị mẹ'} /></div>
         {value && !disabled && <button type="button" className="btn btn-sm" title="Bỏ đơn vị cha" onClick={() => onChange(null)}>Bỏ</button>}
       </div>
     </div>

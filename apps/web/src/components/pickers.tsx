@@ -279,7 +279,8 @@ interface PartnerRow { code: string; name: string; taxCode?: string | null; addr
  * Chọn khách hàng / nhà cung cấp — tìm theo mã, tên hoặc mã số thuế (tìm phía máy chủ).
  * `addKind`: cho thêm nhanh ngay tại chỗ (nút +, F9) — dùng trên form chứng từ; danh sách xổ dạng bảng Mã · Tên · MST · Địa chỉ · Điện thoại.
  */
-export function PartnerPicker({ activeOnly, addKind, ...p }: BaseProps & { activeOnly?: boolean; addKind?: 'customer' | 'supplier' }) {
+// [2026-11-16 kiennt] groupCode: chỉ liệt kê đối tượng thuộc nhóm đó (ô Thuộc đơn vị cha) (đóng góp)
+export function PartnerPicker({ activeOnly, addKind, groupCode, ...p }: BaseProps & { activeOnly?: boolean; addKind?: 'customer' | 'supplier'; groupCode?: string }) {
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
   const [adding, setAdding] = useState<string | null>(null);
@@ -287,7 +288,7 @@ export function PartnerPicker({ activeOnly, addKind, ...p }: BaseProps & { activ
   const qc = useQueryClient();
   useEffect(() => { const t = setTimeout(() => setDebounced(q), 250); return () => clearTimeout(t); }, [q]);
   // activeOnly: chỉ đối tượng đang theo dõi (dùng khi lập phiếu); báo cáo thì tra cả đối tượng đã khoá.
-  const list = useQuery({ queryKey: ['partners', 'picker', debounced, activeOnly], queryFn: () => api.get<PartnerRow[]>('/api/v1/partners', { search: debounced, pageSize: 30, status: activeOnly ? 'active' : 'all' }), staleTime: 60_000 });
+  const list = useQuery({ queryKey: ['partners', 'picker', debounced, activeOnly, groupCode], queryFn: () => api.get<PartnerRow[]>('/api/v1/partners', { search: debounced, pageSize: 30, status: activeOnly ? 'active' : 'all', groupCode: groupCode || undefined }), staleTime: 60_000 });
   const current = useQuery({
     queryKey: ['partners', 'picker-name', p.value],
     enabled: Boolean(p.value) && !p.multiple,

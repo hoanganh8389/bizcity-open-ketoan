@@ -157,7 +157,9 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Mặt hàng', paths: ['/danh-muc/mat-hang', '/danh-muc/phan-loai-hang', '/danh-muc/loai-kho', '/danh-muc/don-vi-tinh', '/danh-muc/bang-gia'] },
       // [2026-11-13 Nguyễn Văn Thủy] chi nhánh, kho, phòng ban khai chung ở Cơ cấu tổ chức (đóng góp)
       { label: 'Tổ chức', paths: ['/danh-muc/so-do-to-chuc'] },
-      { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/quy-tac-hach-toan', '/danh-muc/loai-thue', '/danh-muc/ngan-hang', '/cau-hinh/hinh-thuc-thanh-toan'], soon: ['Điều khoản thanh toán'] },
+      { label: 'Tài khoản, ngân hàng', paths: ['/danh-muc/tai-khoan', '/cau-hinh/quy-tac-hach-toan', '/danh-muc/ngan-hang', '/cau-hinh/hinh-thuc-thanh-toan'], soon: ['Điều khoản thanh toán'] },
+      // [2026-11-16 kiennt] Biểu thuế tách thành nhóm Thuế suất riêng, ngay dưới Tài khoản, ngân hàng (đóng góp)
+      { label: 'Thuế suất', paths: ['/danh-muc/loai-thue'] },
       { label: 'Chi phí', paths: ['/danh-muc/khoan-muc', '/danh-muc/muc-thu-chi', '/danh-muc/hop-dong', '/danh-muc/vu-viec', '/danh-muc/du-an'] },
       { label: 'Tài sản', paths: ['/danh-muc/loai-tai-san', '/danh-muc/nhom-ccdc', '/danh-muc/nguon-von', '/danh-muc/muc-dich-su-dung'] },
     ],

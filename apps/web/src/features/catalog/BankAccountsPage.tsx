@@ -36,6 +36,7 @@ export function BankAccountsPage() {
       <PageHeader title="Ngân hàng" code="DM09" subtitle="Tài khoản ngân hàng; mỗi tài khoản gắn một tài khoản kế toán 112 chi tiết" helpKey="hinh-thuc-thanh-toan" />
       <div className="card">
         <CatalogToolbar
+          phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}

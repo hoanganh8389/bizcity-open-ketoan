@@ -77,10 +77,7 @@ export function ProductsPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const canWrite = can('catalog:write');
-  const [search, setSearch] = useState('');
-  const [applied, setApplied] = useState('');
   const [group, setGroup] = useState<string | null>(null);
-  const [f, setF] = useState<Record<string, string>>({ postingGroup: '', status: 'all', variant: '' });
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<(Partial<Product> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<Product | null>(null);
@@ -97,11 +94,11 @@ export function ProductsPage() {
     return loadLabelItems(list.map((p) => p.sku), labelCopies);
   };
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
-  const params = { search: applied, page, pageSize: TRANG_MAT_HANG, group: group ?? undefined, ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)) };
+  // [2026-11-16 kiennt] bỏ thanh lọc trên (tìm, ngày thêm, trạng thái): lọc theo từng cột ở bảng (đóng góp)
+  const params = { page, pageSize: TRANG_MAT_HANG, group: group ?? undefined, status: 'all' };
   const q = useQuery({ queryKey: ['products', params], queryFn: () => api.getPage<Product[]>('/api/v1/products', params), placeholderData: keepPreviousData });
   const groupPath = useMemo(() => pathOf(classes.group.data ?? []), [classes.group.data]);
   const nameOf = (k: ClassKind, c: string | null) => (c ? classes[k].data?.find((x) => x.code === c)?.name ?? c : '');
-  const set = (patch: Record<string, string>) => { setF((x) => ({ ...x, ...patch })); setPage(1); };
   const del = useMutation({ mutationFn: (sku: string) => api.delete(`/api/v1/products/${encodeURIComponent(sku)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['products'] }); } });
 
   // HỌ MÃ (1 cấp, mã cha lưu ở mặt hàng — quét theo mã hoặc chọn tay): mã con xếp ngay dưới mã cha, thụt vào; mã cha ghi số mã con.
@@ -148,6 +145,7 @@ export function ProductsPage() {
         </div>
         <div className="card acc17-main">
           <CatalogToolbar
+              phai
             canWrite={canWrite}
             hasSelection={Boolean(sel)}
             busy={del.isPending}
@@ -166,18 +164,6 @@ export function ProductsPage() {
                   <input className="input num" type="number" min={1} max={500} style={{ width: 52, height: 30 }} value={labelCopies} title="Số tem mỗi mặt hàng" onChange={(e) => setLabelCopies(Math.max(1, Math.min(500, Math.floor(Number(e.target.value)) || 1)))} />
                   <PrintButton screen="DM10" label="In tem" templates={PRODUCT_LABEL_TEMPLATES} disabled={labelScope === 'sel' && !sel} getDocs={labelDocs} />
                 </span>
-                <span className="spacer" />
-                <form className="row" style={{ gap: 4 }} onSubmit={(e) => { e.preventDefault(); setApplied(search.trim()); setPage(1); }}>
-                  <input className="input" style={{ width: 220, height: 30 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhanh: mã, tên" />
-                  <button className="btn btn-sm" type="submit">Tìm</button>
-                </form>
-                <span className="seg" role="tablist" title="Mặt hàng thêm trong ngày hôm nay (mới nhất trên cùng)">
-                  <button type="button" className={`btn btn-sm${!f.createdFrom ? ' btn-primary' : ''}`} onClick={() => set({ createdFrom: '' })}>Tất cả</button>
-                  <button type="button" className={`btn btn-sm${f.createdFrom ? ' btn-primary' : ''}`} onClick={() => set({ createdFrom: new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10) })}>Thêm hôm nay</button>
-                </span>
-                <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                  <option value="all">Mọi trạng thái</option><option value="active">Đang hoạt động</option><option value="draft">Chờ duyệt</option><option value="inactive">Ngừng hoạt động</option>
-                </select>
               </>
             }
           />
@@ -196,7 +182,6 @@ export function ProductsPage() {
               onRowDoubleClick={(p) => canWrite && setEditing(p)}
               rowClassName={(p) => (p.isActive ? '' : 'muted')}
               footerLabel={false}
-              note="tìm nhanh, lọc ở trên tải lại từ máy chủ"
               emptyText="Chưa có mặt hàng. Bấm Quay về dữ liệu gốc để nạp danh mục mặt hàng chuẩn của công ty; mặt hàng mới cũng tự thêm khi chứng từ mang mã hàng mới hoặc hệ thống bán hàng đồng bộ qua API."
               columns={columns}
             />
