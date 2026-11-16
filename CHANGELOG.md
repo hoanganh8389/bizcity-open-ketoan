@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Hay dùng lên thanh trên; bỏ Tài khoản ngầm định khỏi Bán hàng <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** mục **Hay dùng** chuyển từ menu trái lên thanh trên (cạnh Tổng quan / Báo cáo): rê chuột xổ danh sách màn đã ghim + màn mở nhiều (12 mục), có "Hay dùng trang này" / "Bỏ ghim trang này". Menu trái chỉ còn Thêm nhanh và Phân hệ (điện thoại giữ như cũ).
+- **Đổi:** bỏ Tài khoản ngầm định khỏi menu Bán hàng (Cài đặt) và sơ đồ Bán hàng v2 — chỉ ở Danh mục.
+
 ### Tạm ẩn menu Hoá đơn từ cơ quan thuế <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** tạm ẩn **THUE01 Hoá đơn từ cơ quan thuế** khỏi menu Thuế, menu Mua hàng (nhóm Hoá đơn đầu vào) và sơ đồ Mua hàng v2 — đã có Xử lý hoá đơn đầu vào (MH22). Màn vẫn mở được bằng đường dẫn `/thue/hoa-don-co-quan-thue`.

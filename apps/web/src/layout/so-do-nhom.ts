@@ -71,7 +71,7 @@ export const SO_DO_V2: Record<string, SoDo> = {
       chuoi: [
         { nhom: 'Khai báo', icon: 'Settings', ghiChu: 'Khách hàng, mặt hàng, thanh toán', items: [
           ban.khach, { label: 'Nhóm khách hàng, nhà cung cấp', path: '/danh-muc/nhom-doi-tuong' }, ban.mh,
-          { label: 'Hình thức thanh toán', path: '/cau-hinh/hinh-thuc-thanh-toan' }, { label: 'Tài khoản ngầm định', path: '/cau-hinh/quy-tac-hach-toan' }] },
+          { label: 'Hình thức thanh toán', path: '/cau-hinh/hinh-thuc-thanh-toan' }] },
         { nhom: 'Giá & khuyến mại', icon: 'BadgePercent', ghiChu: 'Bảng giá, chương trình, máy bán', items: [
           { label: 'Bảng giá bán', path: '/danh-muc/bang-gia' }, { label: 'Chương trình khuyến mại', path: '/app/pos/khuyen-mai' },
           { label: 'Cài đặt máy bán', path: '/app/pos/cai-dat' }] },
