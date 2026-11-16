@@ -1,6 +1,6 @@
 {
   "name": "@bizcity-module/loyalty",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Điểm thành viên — sổ điểm (NT-BH-020), module Bizcity (bizcity_module@1).",
