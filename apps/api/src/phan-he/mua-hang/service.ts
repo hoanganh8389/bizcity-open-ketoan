@@ -16,7 +16,7 @@ import { documentService } from '../../kernel/public.js';
 import { analyze, isOutsideOrder, loadCtx, withBrands, type Analysis } from './analysis.js';
 import { postPurchase, refReceipts, spreadOverMany } from './posting.js';
 import { logEvents, type LogRow } from './log.js';
-import { dependentsOf, docInputSchema, FREEZE_KINDS, freezeOf, getDoc, listDocs, listDocsFor, nextDocNo, withUserLabels, withDebtStatus, rowValues, type DocInput, type StoredDoc } from './store.js';
+import { dependentsOf, docInputSchema, FREEZE_KINDS, freezeOf, getDoc, listDocs, listDocsFor, nextDocNo, withUserLabels, withDebtStatus, withLedgerStatus, rowValues, ADJUST_KINDS, type AdjustInfo, type DocInput, type StoredDoc } from './store.js';
 import { resolveWarehouse } from '../../modules/warehouses/default-warehouse.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
@@ -66,7 +66,7 @@ export function docChanges(b: StoredDoc, a: StoredDoc): string[] {
   return out.slice(0, 40);
 }
 export const purchaseService = {
-  list: async (auth: AuthContext, f: Parameters<typeof listDocs>[2] = {}) => withDebtStatus(db, auth.tenantId, await withUserLabels(db, auth.tenantId, await listDocs(db, auth.tenantId, f))),
+  list: async (auth: AuthContext, f: Parameters<typeof listDocs>[2] = {}) => withLedgerStatus(db, auth.tenantId, await withDebtStatus(db, auth.tenantId, await withUserLabels(db, auth.tenantId, await listDocs(db, auth.tenantId, f)))),
 
   async get(auth: AuthContext, id: string): Promise<{ doc: StoredDoc; analysis: Analysis }> {
     const doc = await getDoc(db, auth.tenantId, id);
@@ -117,6 +117,9 @@ export const purchaseService = {
         const dup = docs.find((d) => d.id !== id && d.kind === 'rebate' && d.status !== 'cancelled' && d.rebate?.policyCode === doc.rebate!.policyCode && d.rebate?.period === doc.rebate!.period);
         if (dup) throw Errors.conflict(`Chính sách ${doc.rebate.policyCode} kỳ ${doc.rebate.period} đã tính thưởng ở phiếu ${dup.docNo} — huỷ phiếu đó nếu cần tính lại`);
       }
+      // Đang điều chỉnh: giữ thông tin điều chỉnh (lý do, bản chụp) và lịch sử điều chỉnh khi ghi nháp.
+      if (cur?.adjust) extra.adjust = cur.adjust;
+      if (cur?.adjustments) extra.adjustments = cur.adjustments;
       const values = rowValues(doc, a.calc, extra);
       const dupNo = docs.find((d) => d.kind === doc.kind && d.docNo === doc.docNo && d.id !== id);
       if (dupNo) throw Errors.conflict(`Số phiếu ${doc.docNo} đã có`);
@@ -176,11 +179,21 @@ export const purchaseService = {
       // Nhập ngoài đơn: đóng dấu người duyệt + thời điểm cùng lý do (giữ mãi trên phiếu, lọc / rà soát riêng).
       const outside = isOutsideOrder(d, a.refOrder) ? { reason: d.outsideOrder!.reason.trim(), by: auth.actorName, at: new Date().toISOString() } : undefined;
       const links = await postPurchase(trx, auth, d, a.calc, a.accounts, docs);
-      const data = { ...(await trx.selectFrom('purchase_documents').select('data').where('id', '=', id).executeTakeFirstOrThrow()).data as Record<string, unknown>, checks: checksOf(a), policyTrace: a.calc.trace, ...((FREEZE_KINDS as readonly string[]).includes(d.kind) ? { frozen: freezeOf(d, a.calc, ctx.policies) } : {}), override: ov, outsideOrder: outside, approvedActor: auth.actor }; // duyệt thường: không mang dấu duyệt ngoại lệ của lần trước
+      // [2026-11-15 Nguyễn Văn Thủy] duyệt bản điều chỉnh: cùng mã chứng từ, phiên bản mới → cổng chờ tự đảo bút toán bản cũ rồi ghi bản mới;
+      // chứng từ kế toán bản cũ có mà bản mới không còn (vd bỏ hết dòng hàng nhận về) thì huỷ (đảo) (đóng góp)
+      if (d.adjust) {
+        const keep = new Set(links.map((l) => l.docKey));
+        for (const l of d.links.filter((x) => !keep.has(x.docKey))) await documentService.cancelIn(trx, auth, l.docKey, `Điều chỉnh ${d.docNo}: ${d.adjust.reason}`);
+      }
+      const rowData = (await trx.selectFrom('purchase_documents').select('data').where('id', '=', id).executeTakeFirstOrThrow()).data as Record<string, unknown>;
+      const adjustDone = d.adjust ? { ...d.adjust, snapshot: undefined, approvedBy: auth.actorName, approvedAt: new Date().toISOString(), changes: d.adjust.snapshot?.doc ? docChanges(d.adjust.snapshot.doc as StoredDoc, d) : [] } : undefined;
+      if (adjustDone) { delete rowData.adjust; rowData.adjustments = [...(d.adjustments ?? []), adjustDone]; }
+      const data = { ...rowData, checks: checksOf(a), policyTrace: a.calc.trace, ...((FREEZE_KINDS as readonly string[]).includes(d.kind) ? { frozen: freezeOf(d, a.calc, ctx.policies) } : {}), override: ov, outsideOrder: outside, approvedActor: auth.actor }; // duyệt thường: không mang dấu duyệt ngoại lệ của lần trước
       await trx.updateTable('purchase_documents').set({
         status: step.to, revision: d.revision + 1, links: JSON.stringify(links), data: JSON.stringify(data), approved_by: auth.actorName, approved_at: new Date(),
         due_date: a.calc.dueDate ?? null, updated_at: new Date(),
       }).where('id', '=', id).execute();
+      if (adjustDone) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'purchase.adjust_approved', objectType: 'purchase_document', objectId: id, after: { docNo: d.docNo, reason: adjustDone.reason, fromRevision: adjustDone.fromRevision, changes: adjustDone.changes } });
       if (ov) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'purchase.override_credit', objectType: 'purchase_document', objectId: id, after: { docNo: d.docNo, reason: ov.reason, credit: a.credit } });
       return { doc: await getDoc(trx, auth.tenantId, id), a, ov, outside };
     }).catch((e: { code?: string }) => { if (e?.code === '23505') throw Errors.conflict('Hoá đơn này đã có ở chứng từ khác đã duyệt'); throw e; });
@@ -211,6 +224,41 @@ export const purchaseService = {
     return getDoc(trx, auth.tenantId, id);
   },
 
+  // [2026-11-15 Nguyễn Văn Thủy] SỬA PHIẾU ĐÃ GHI SỔ = BẢN ĐIỀU CHỈNH (đóng góp)
+  //   Lập điều chỉnh: phiếu về nháp để sửa, bắt buộc lý do; chứng từ kế toán / bút toán bản cũ GIỮ NGUYÊN trong sổ.
+  //   Duyệt bản điều chỉnh: approveIn gửi phiên bản mới cùng mã chứng từ → đảo bản cũ + ghi bản mới; lưu lịch sử thay đổi.
+  //   Huỷ điều chỉnh: trả phiếu về đúng bản đã duyệt (bản chụp), sổ không đổi.
+  /** Lập bản điều chỉnh cho phiếu đã duyệt (đã ghi sổ). */
+  async startAdjustIn(trx: ActionTx, auth: AuthContext, id: string, reason: string): Promise<StoredDoc> {
+    const d = await getDoc(trx, auth.tenantId, id);
+    if (d.status !== 'approved') throw Errors.conflict('Chỉ lập điều chỉnh cho phiếu đã duyệt');
+    if (!ADJUST_KINDS.includes(d.kind)) throw Errors.conflict(d.kind === 'order' ? 'Đơn đặt hàng không ghi sổ: dùng "Mở lại đơn" để sửa' : 'Phiếu tiền (trả tiền, ứng trước): huỷ phiếu rồi lập phiếu mới');
+    if (reason.trim().length < 5) throw Errors.validation('Ghi lý do điều chỉnh (ít nhất 5 ký tự)');
+    const dependents = (await dependentsOf(trx, auth.tenantId, id)).filter((x) => x.kind !== 'payment' && x.status !== 'cancelled');
+    if (dependents.length) throw Errors.conflict(`Phiếu ${dependents.map((x) => x.docNo).join(', ')} đang dựa trên phiếu này — điều chỉnh các phiếu đó trước`);
+    const row = await trx.selectFrom('purchase_documents').select(['status', 'doc_no', 'doc_date', 'branch_code', 'partner_code', 'brand_code', 'invoice_no', 'invoice_serial', 'invoice_date', 'due_date', 'total_before_tax', 'total_tax', 'total', 'ref_ids', 'revision', 'links', 'data', 'approved_by', 'approved_at'])
+      .where('tenant_id', '=', auth.tenantId).where('id', '=', id).executeTakeFirstOrThrow();
+    const adjust: AdjustInfo = { reason: reason.trim(), by: auth.actorName, at: new Date().toISOString(), fromRevision: d.revision, fromDocNos: d.links.map((l) => l.docNo), snapshot: { row, doc: d } };
+    const data = { ...(row.data as Record<string, unknown>), adjust };
+    await trx.updateTable('purchase_documents').set({ status: 'draft', data: JSON.stringify(data), updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'purchase.adjust_started', objectType: 'purchase_document', objectId: id, after: { docNo: d.docNo, reason: adjust.reason, fromRevision: d.revision } });
+    await logEvents(auth.tenantId, [{ event: 'doc_adjust_started', docNo: d.docNo, user: auth.actorName, data: { reason: adjust.reason, ledger: adjust.fromDocNos } }]);
+    return getDoc(trx, auth.tenantId, id);
+  },
+
+  /** Huỷ điều chỉnh: trả phiếu về bản đã duyệt (bản chụp lúc lập điều chỉnh); sổ không đổi. */
+  async cancelAdjustIn(trx: ActionTx, auth: AuthContext, id: string): Promise<StoredDoc> {
+    const d = await getDoc(trx, auth.tenantId, id);
+    const snap = d.adjust?.snapshot?.row as Record<string, unknown> | undefined;
+    if (!d.adjust || !snap) throw Errors.conflict('Phiếu không đang điều chỉnh');
+    const { data, links, ...cols } = snap;
+    await trx.updateTable('purchase_documents').set({ ...(cols as object), data: JSON.stringify(data), links: JSON.stringify(links), updated_at: new Date() } as never)
+      .where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'purchase.adjust_cancelled', objectType: 'purchase_document', objectId: id, after: { docNo: d.docNo, reason: d.adjust.reason } });
+    await logEvents(auth.tenantId, [{ event: 'doc_adjust_cancelled', docNo: d.docNo, user: auth.actorName, data: { reason: d.adjust.reason } }]);
+    return getDoc(trx, auth.tenantId, id);
+  },
+
   /** Bỏ duyệt: huỷ các chứng từ kế toán đã sinh (đảo bút toán, gỡ kho, gỡ đối trừ) rồi về nháp. */
   async unapprove(auth: AuthContext, id: string, reason = 'Bỏ duyệt phiếu mua hàng'): Promise<StoredDoc> {
     return db.transaction().execute((trx) => purchaseService.unapproveIn(trx, auth, id, reason));
@@ -238,6 +286,8 @@ export const purchaseService = {
   async cancelIn(trx: ActionTx, auth: AuthContext, id: string): Promise<StoredDoc> {
     const d = await getDoc(trx, auth.tenantId, id);
     if (d.status === 'cancelled') return d;
+    // Phiếu đang điều chỉnh còn chứng từ kế toán bản cũ trong sổ: huỷ điều chỉnh trước (rồi mới quyết định huỷ / sửa).
+    if (d.adjust) throw Errors.conflict('Phiếu đang điều chỉnh (sổ còn bản đã duyệt): bấm Huỷ điều chỉnh trước');
     const step = wf.plan('cancel', d, workflowActor(auth));
     await trx.updateTable('purchase_documents').set({ status: step.to, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await logEvents(auth.tenantId, [{ event: 'doc_cancelled', docNo: d.docNo, user: auth.actorName, data: {} }]);

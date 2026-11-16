@@ -94,6 +94,9 @@ export type PricedLine = {
   money: LineMoney;
 };
 
+/** Dòng bill Z (NT-BH-019): mã không gửi thuế, 0đ. Trên chứng từ bán là dòng quà; máy bán in sang bill Z theo sendTax. */
+export const isBillZLine = (l: PricedLine) => !l.item.sendTax && l.money.gross === 0;
+
 export type OrderCustomer = { code: string; name: string; phone: string } | null;
 
 export type ComputedOrder = {
@@ -170,14 +173,12 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   if (missing.length) return fail('validation', 'POS_UNKNOWN_SKU', `Không có mã hàng trong danh mục kế toán: ${missing.join(', ')}`, missing.map((sku) => ({ sku })));
   if (untaxed.length) return fail('validation', 'POS_TAX_NOT_DECLARED', `Mã hàng chưa khai mã thuế đầu ra: ${untaxed.join(', ')}`, untaxed.map((sku) => ({ sku })));
 
-  // Bill Z (D-MP-12): dòng 0đ của mã không gửi thuế tách thành phiếu riêng ở POS đang chạy (xuất tặng, không lên hoá đơn).
-  // Cách ghi sổ của phiếu đó đi cùng quà (W3), chưa có phiếu nghiệm thu → W1 chặn rõ. Dòng không gửi thuế mà THU TIỀN thì
-  // POS không tách (phiếu thu phải khớp phiếu bán): nhận như dòng bán, đơn ghi sendTax = false để không lên hoá đơn.
-  // NT-BH-003: quà có căn cứ chương trình mà là hàng không gửi thuế (mã Z, quà dưới 24 tháng) thì nhận — đi chung phiếu, không lên hoá đơn.
-  const noTax = lines.filter((l) => !l.item.sendTax && !(l.draft.isGift && l.draft.policyRef));
-  if (noTax.length && noTax.reduce((s, l) => s + l.money.gross, 0) === 0) {
-    return fail('validation', 'POS_NOT_SUPPORTED_YET', `Máy chủ POS chưa nhận hàng 0đ không gửi thuế (bill Z) ở đợt này — dùng đường bán cũ cho đơn này: ${noTax.map((l) => l.item.sku).join(', ')}`, { field: 'lines', billZ: noTax.map((l) => l.item.sku) });
-  }
+  // [2026-11-15 10:55 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1 (đóng góp): nhận bill Z thay vì chặn.
+  // Bill Z (D-MP-12): dòng 0đ của mã không gửi thuế — POS đang chạy in thành phiếu riêng (xuất tặng, không lên hoá đơn). Ở đây
+  // đơn vẫn là một chứng từ bán: dòng đó là dòng quà 0đ (isBillZ → isGift trên chứng từ, không doanh thu, không thuế; giá vốn
+  // tháng ghi theo luật hàng khuyến mãi), đơn trả máy mang sendTax = false → máy bán tách bill Z khi in, hoá đơn điện tử bỏ dòng.
+  // Không nộp phiếu điều chỉnh giảm kho riêng: loại stock_adjustment ghi đối ứng "hàng thiếu chờ xử lý" (NT-BH-019 Q2).
+  // Dòng không gửi thuế mà THU TIỀN: nhận như dòng bán (phiếu thu khớp phiếu bán), sendTax = false, không lên hoá đơn.
 
   const subtotal = lines.reduce((s, l) => s + l.money.net, 0);
   const taxTotal = lines.reduce((s, l) => s + l.money.tax, 0);
@@ -294,7 +295,7 @@ export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; bran
       discount: l.money.discountNet,
       taxCode: l.item.taxCode,
       taxAmount: l.money.tax,
-      ...(l.draft.isGift ? { isGift: true } : {}),
+      ...(l.draft.isGift || isBillZLine(l) ? { isGift: true } : {}),
       ...(l.draft.policyRef ? { policyRef: { key: l.draft.policyRef.key, version: l.draft.policyRef.version, line: l.draft.policyRef.line ?? (l.draft.isGift ? 'gift' : 'discount') } } : {}),
       ...(l.draft.note ? { note: l.draft.note } : {}),
     })),
@@ -314,20 +315,22 @@ function usedRefs(o: ComputedOrder, draft: OrderDraft) {
 /** Hạn giữ mã QR (gia hạn được trong ngày bán — NT-BH-009). */
 export const QR_HOLD_MS = 5 * 60_000;
 
+/**
+ * Tách bill Z cho đơn trả máy (NT-BH-019; cùng luật máy bán tgs_pos_react core/zBill.ts và POS cũ split_products_by_promo_sku):
+ * dòng ứng viên = mã không gửi thuế; chỉ tách khi TẤT CẢ ứng viên cộng lại bằng 0đ (có dòng thu tiền thì không tách gì — phiếu thu
+ * đã theo tổng đơn). Mã bill Z = mã đơn + "Z". Chỉ là cách trình bày đơn (in bill, bản sao website zsale / zexport): chứng từ bán
+ * vẫn mang đủ dòng, dòng bill Z là dòng quà 0đ.
+ */
+export function splitBillZ<L extends { sendTax: boolean; amount: number; taxAmount: number }>(lines: readonly L[]): { main: L[]; z: L[] } {
+  const z = lines.filter((l) => !l.sendTax);
+  if (!z.length || z.reduce((t, l) => t + l.amount + l.taxAmount, 0) !== 0) return { main: [...lines], z: [] };
+  return { main: lines.filter((l) => l.sendTax), z };
+}
+
 /** Đơn trả cho máy (khuôn Order của hợp đồng /pos/*). */
 export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string }) {
   const { draft } = meta;
-  const payment = draft.payment.mode === 'cash' ? { ...draft.payment, change: o.change } : draft.payment;
-  return {
-    id: draft.id,
-    code: meta.code,
-    // Đơn có phần QR chờ tiền về / thu ngân xác nhận (NT-BH-009); hạn mã 5 phút, gia hạn trong ngày bán.
-    status: (o.qrAmount > 0 ? 'awaiting_payment' : 'completed') as 'completed' | 'awaiting_payment',
-    ...(o.qrAmount > 0 ? { qr: { amount: o.qrAmount, status: 'waiting' as const, expiresAt: new Date(Date.parse(meta.createdAt) + QR_HOLD_MS).toISOString() } } : {}),
-    businessDate: draft.businessDate,
-    createdAt: meta.createdAt,
-    customer: o.customer ? { id: o.customer.code, name: o.customer.name, phone: o.customer.phone } : { id: '', name: 'Khách lẻ', phone: '' },
-    lines: o.lines.map((l) => ({
+  const all = o.lines.map((l) => ({
       ...l.draft,
       name: l.item.name,
       unitRatio: l.unitRatio,
@@ -340,7 +343,20 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
       ...(l.item.itemId ? { itemId: l.item.itemId } : {}),
       // false = không lên hoá đơn thuế (máy bán và hoá đơn điện tử đọc cờ này).
       sendTax: l.item.sendTax,
-    })),
+    }));
+  const bill = splitBillZ(all);
+  const payment = draft.payment.mode === 'cash' ? { ...draft.payment, change: o.change } : draft.payment;
+  return {
+    id: draft.id,
+    code: meta.code,
+    // Đơn có phần QR chờ tiền về / thu ngân xác nhận (NT-BH-009); hạn mã 5 phút, gia hạn trong ngày bán.
+    status: (o.qrAmount > 0 ? 'awaiting_payment' : 'completed') as 'completed' | 'awaiting_payment',
+    ...(o.qrAmount > 0 ? { qr: { amount: o.qrAmount, status: 'waiting' as const, expiresAt: new Date(Date.parse(meta.createdAt) + QR_HOLD_MS).toISOString() } } : {}),
+    businessDate: draft.businessDate,
+    createdAt: meta.createdAt,
+    customer: o.customer ? { id: o.customer.code, name: o.customer.name, phone: o.customer.phone } : { id: '', name: 'Khách lẻ', phone: '' },
+    lines: bill.main,
+    ...(bill.z.length ? { zBill: { code: `${meta.code}Z`, lines: bill.z } } : {}),
     subtotal: o.subtotal,
     taxTotal: o.taxTotal,
     total: o.total,

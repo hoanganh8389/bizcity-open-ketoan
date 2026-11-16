@@ -56,7 +56,7 @@ const STAGES: Stage[] = [
     ],
   },
   {
-    node: { label: 'Cấu hình hạch toán', icon: 'Settings2', color: '#e8710a', path: '/cau-hinh/tai-khoan-ngam-dinh' },
+    node: { label: 'Cấu hình hạch toán', icon: 'Settings2', color: '#e8710a', path: '/cau-hinh/quy-tac-hach-toan' },
     auto: ['Chứng từ tự định khoản theo khai báo', 'Khai một nơi, mọi phân hệ dùng chung', 'Tài khoản theo dõi phòng ban mà chi nhánh chưa gắn phòng ban → báo lỗi, vào Chi nhánh gắn'],
     config: [
       { label: 'Hệ thống tài khoản', icon: 'BookOpen', color: GRAY, path: '/danh-muc/tai-khoan' },

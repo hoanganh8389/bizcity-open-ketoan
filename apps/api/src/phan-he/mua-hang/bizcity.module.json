@@ -173,18 +173,6 @@
       "risk": "low"
     },
     {
-      "key": "mua-hang:dvt-thung-xem",
-      "label": "Xem ĐVT Thùng đặt hàng",
-      "roles": [
-        "owner",
-        "chief_accountant",
-        "accountant",
-        "viewer",
-        "auditor"
-      ],
-      "risk": "low"
-    },
-    {
       "key": "mua-hang:khoi-dau-xem",
       "label": "Xem màn nhập dữ liệu khởi đầu",
       "roles": [
@@ -519,15 +507,6 @@
       "risk": "low"
     },
     {
-      "key": "mua-hang:dvt-thung-sua",
-      "label": "Chạy ĐVT Thùng đặt hàng / dọn dòng Thùng trống (còn cần quyền cấu hình)",
-      "roles": [
-        "owner",
-        "chief_accountant"
-      ],
-      "risk": "low"
-    },
-    {
       "key": "mua-hang:khoi-dau-nhap",
       "label": "Ghi dữ liệu khởi đầu: giá mua, cân tồn, tồn max (còn cần quyền danh mục)",
       "roles": [
@@ -605,8 +584,6 @@
     "mua-hang.policy.transfer-limit",
     "mua-hang.rebate.preview",
     "mua-hang.unit.lookup",
-    "mua-hang.unit.thung-preview",
-    "mua-hang.unit.thung-apply",
     "mua-hang.stock.hierarchy",
     "mua-hang.stock.hierarchy-auto",
     "mua-hang.stock.levels",
@@ -624,9 +601,10 @@
     "mua-hang.stock.init-max-preview",
     "mua-hang.stock.init-max-import",
     "mua-hang.purchase.documents-unapprove",
+    "mua-hang.purchase.documents-adjust",
+    "mua-hang.purchase.documents-adjust-cancel",
     "mua-hang.invoice.scan", "mua-hang.invoice.ingest-xml",
     "mua-hang.sku-info.lookup",
-    "mua-hang.unit.thung-empty-rows-delete",
     "mua-hang.transfer-request.done",
     "mua-hang.transfer-request.cancel",
     "mua-hang.transfer-request.reopen",

@@ -44,8 +44,6 @@ export const lineSchema = z.object({
   barcode: z.string().trim().max(500).optional(),
   newItem: z.boolean().optional(),
   refLineKey: z.string().trim().max(64).optional(),
-  // [2026-11-13 Nguyễn Văn Thủy] tài khoản riêng của dòng (đóng góp)
-  accounts: z.object({ inventory: z.string().trim().max(20).optional(), payable: z.string().trim().max(20).optional(), tax: z.string().trim().max(20).optional() }).optional(),
   stockInfo: z.record(z.number().finite()).optional(),
   family: z.array(z.object({ sku: z.string().max(64), kind: z.string().max(80), tonKho: z.number().finite(), tonShop: z.number().finite(), banShop: z.number().finite(), dangDat: z.number().finite(), maxKho: z.number().finite().optional(), maxShop: z.number().finite().optional(), diDuong: z.number().finite().optional(), banThangTruoc: z.number().finite().optional() })).max(50).optional(),
 });
@@ -104,7 +102,7 @@ export const docInputSchema = z.object({
 export type DocInput = z.infer<typeof docInputSchema>;
 
 /** Phần lưu ở cột data (jsonb). */
-const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies'] as const;
+const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments'] as const;
 
 type Row = Awaited<ReturnType<typeof selectDocs>>[number];
 function selectDocs(trx: Db, tenantId: string) {
@@ -181,7 +179,20 @@ export interface StoredDoc extends PDoc {
   /** Công nợ NCC (TK 331) phát sinh từ phiếu đã ghi sổ — danh sách chứng từ điền (withDebtStatus):
    *  owed / owedPaid  = phải trả NCC (bên Có) và số đã trả / đã đối trừ; advance / advanceUsed = NCC nợ lại mình (ứng trước, trả hàng, thưởng…) và số đã đối trừ. */
   debt?: { owed: number; owedPaid: number; advance: number; advanceUsed: number };
+  /** [2026-11-15 Nguyễn Văn Thủy] Trạng thái sổ (withLedgerStatus): none = loại không ghi sổ (đơn đặt); not_sent = chưa duyệt, chưa gửi
+   *  vào cổng chờ; pending = đang chờ định khoản (kể cả có phiên bản mới, sổ còn theo bản cũ); posted; error; cancelled (đóng góp) */
+  ledger?: LedgerStatus;
+  /** [2026-11-15 Nguyễn Văn Thủy] Đang điều chỉnh phiếu đã ghi sổ (bản nháp mới; sổ còn theo bản cũ cho tới khi duyệt) (đóng góp) */
+  adjust?: AdjustInfo;
+  /** Các lần điều chỉnh đã duyệt (lịch sử phiên bản). */
+  adjustments?: (AdjustInfo & { approvedBy: string; approvedAt: string; changes: string[] })[];
 }
+export interface AdjustInfo { reason: string; by: string; at: string; fromRevision: number; fromDocNos: string[]; snapshot?: Record<string, unknown> }
+/** Loại phiếu sửa sau duyệt bằng BẢN ĐIỀU CHỈNH (ghi sổ qua cổng chờ: đảo bản cũ + ghi bản mới). Phiếu tiền (trả tiền, ứng trước) dùng huỷ. */
+export const ADJUST_KINDS: readonly string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out', 'cost', 'rebate'];
+export type LedgerStatus = 'none' | 'not_sent' | 'pending' | 'posted' | 'error' | 'cancelled';
+/** Loại phiếu KHÔNG phát sinh kế toán (loại A): chỉ có trạng thái phiếu, không bao giờ vào cổng chờ / sổ. */
+export const NO_LEDGER_KINDS: readonly string[] = ['order'];
 
 /** Gắn tình trạng công nợ cho từng phiếu đã ghi sổ: cộng debt_items TK 331 của các chứng từ kế toán phiếu sinh ra (một lượt truy vấn). */
 export async function withDebtStatus(trx: Db, tenantId: string, docs: StoredDoc[]): Promise<StoredDoc[]> {
@@ -199,6 +210,25 @@ export async function withDebtStatus(trx: Db, tenantId: string, docs: StoredDoc[
     const t = { owed: 0, owedPaid: 0, advance: 0, advanceUsed: 0 };
     for (const l of d.links) { const x = by.get(l.eventId); if (x) { t.owed += x.owed; t.owedPaid += x.owedPaid; t.advance += x.advance; t.advanceUsed += x.advanceUsed; } }
     return { ...d, debt: t };
+  });
+}
+
+/** Trạng thái sổ của từng phiếu: gộp trạng thái các chứng từ kế toán phiếu sinh ra (xấu nhất thắng: lỗi > chờ > đã huỷ > đã ghi). */
+export async function withLedgerStatus(trx: Db, tenantId: string, docs: StoredDoc[]): Promise<StoredDoc[]> {
+  const ev = [...new Set(docs.flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean))];
+  const st = new Map<string, LedgerStatus>();
+  if (ev.length) {
+    for (const r of await trx.selectFrom('accounting_events').select(['id', 'status', 'version', 'posted_version']).where('tenant_id', '=', tenantId).where('id', 'in', ev).execute()) {
+      const s = r.status === 'posted' && r.posted_version !== null && Number(r.posted_version) < Number(r.version) ? 'pending' : r.status;
+      st.set(String(r.id), (['pending', 'posted', 'error', 'cancelled'].includes(s) ? s : 'pending') as LedgerStatus);
+    }
+  }
+  const rank: LedgerStatus[] = ['error', 'pending', 'cancelled', 'posted'];
+  return docs.map((d) => {
+    if (NO_LEDGER_KINDS.includes(d.kind)) return { ...d, ledger: 'none' };
+    const all = d.links.map((l) => st.get(l.eventId)).filter(Boolean) as LedgerStatus[];
+    if (!all.length) return { ...d, ledger: 'not_sent' };
+    return { ...d, ledger: rank.find((x) => all.includes(x)) ?? 'posted' };
   });
 }
 
@@ -226,7 +256,7 @@ export function toDoc(r: Row): StoredDoc {
     invoice: r.invoice_no ? { no: r.invoice_no, serial: r.invoice_serial || undefined, date: String(r.invoice_date ?? r.doc_date).slice(0, 10), total: d.invoiceTotal } : undefined,
     orderDiscount: d.orderDiscount, term: d.term, cktt: d.cktt, lines: d.lines ?? [], schedule: d.schedule, amount: d.amount, method: d.method, moneyAccount: d.moneyAccount || undefined, ckttAmount: d.ckttAmount,
     taxCode: d.taxCode, costType: d.costType, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
-    override: d.override, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies,
+    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies,
     revision: r.revision, links: (r.links ?? []) as StoredDoc['links'],
     totals: { beforeTax: toNumber(r.total_before_tax), tax: toNumber(r.total_tax), total: toNumber(r.total) },
     dueDate: r.due_date ? String(r.due_date).slice(0, 10) : undefined,

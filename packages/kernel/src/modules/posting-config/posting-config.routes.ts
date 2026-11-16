@@ -11,7 +11,7 @@
  *   GET/PUT/DELETE  /api/v1/posting/reasons[/:code]    lý do (xoá: chưa dùng trên chứng từ)
  *   GET/PUT  /api/v1/posting/groups[/:code]            nhóm hạch toán mặt hàng
  *   GET/PUT  /api/v1/posting/payment-methods[/:code]   hình thức thanh toán
- *   GET/PUT  /api/v1/posting/defaults                  tài khoản ngầm định
+ *   GET/PUT  /api/v1/posting/defaults                  tài khoản của quy tắc (khoá RULE_KEYS) — màn dùng /api/v1/posting/scheme
  *
  * PUT theo mã = tạo mới hoặc cập nhật (idempotent), tiện cho cả giao diện lẫn nạp từ file.
  */
@@ -23,11 +23,13 @@ import { db } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
 import { Errors } from '@bizcity/platform/core/errors';
-import { DEFAULT_KEYS, FORM_KEYS, defaultsSchema, groupSchema, paymentMethodSchema, reasonSchema } from './posting-config.schemas.js';
+import { DEFAULT_KEYS, defaultsSchema, groupSchema, paymentMethodSchema, reasonSchema } from './posting-config.schemas.js';
 import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { policyActions } from './policy.actions.js';
 import { packActions } from './pack.actions.js';
 import { profileActions } from './profile.actions.js';
+import { RULE_KEYS, inRange } from './scheme.js';
+import { schemeRoutes } from './scheme.routes.js';
 
 const tags = ['Cấu hình hạch toán'];
 const codeParam = z.object({ code: z.string() });
@@ -105,11 +107,13 @@ export async function postingConfigRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => {
       const rows = await db.selectFrom('posting_defaults').selectAll().where('tenant_id', '=', authOf(req).tenantId).execute();
       const map = new Map(rows.map((x) => [x.key, x.account_code]));
-      return ok(Object.entries(DEFAULT_KEYS).map(([key, label]) => ({ key, label, accountCode: map.get(key) ?? null, onForm: (FORM_KEYS as readonly string[]).includes(key) })));
+      return ok(Object.entries(DEFAULT_KEYS).map(([key, label]) => ({ key, label, accountCode: map.get(key) ?? null, range: RULE_KEYS[key]?.range ?? [] })));
     },
   });
 
   mountActions(app, postingConfigActions);
+  // [2026-11-15 Nguyễn Văn Thủy] Quy tắc hạch toán (màn ACC41) (đóng góp)
+  await schemeRoutes(app);
 }
 
 // [2026-11-03 03:05 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): ghi cấu hình hạch toán (lý do, nhóm hạch toán, hình thức thanh toán, tài khoản ngầm định) qua defineAction —
@@ -249,13 +253,22 @@ export const postingConfigActions: AnyActionDef[] = [
     },
   }),
   defineAction({
-    id: 'core.posting-defaults.update', title: 'Cập nhật tài khoản ngầm định', tags,
+    id: 'core.posting-defaults.update', title: 'Cập nhật tài khoản của quy tắc hạch toán', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
     input: defaultsBody, output: defaultsBody,
     expose: { http: { method: 'PUT', path: '/api/v1/posting/defaults' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'posting_defaults', objectId: () => 'defaults' },
     handler: async (ctx, b) => {
       const trx = ctx.data.tx;
+      // [2026-11-15 Nguyễn Văn Thủy] chỉ tài khoản chi tiết, trong phạm vi của khoá (như màn Quy tắc hạch toán) (đóng góp)
+      const codes = Object.values(b).filter((x): x is string => Boolean(x));
+      const rows = codes.length ? await trx.selectFrom('accounts').select(['code', 'is_posting', 'is_active']).where('tenant_id', '=', ctx.tenant.id).where('code', 'in', codes).execute() : [];
+      const bad = Object.entries(b).filter(([, a]) => a).flatMap(([key, a]) => {
+        const row = rows.find((x) => x.code === a);
+        if (!row || !row.is_active || !row.is_posting) return [`${DEFAULT_KEYS[key]}: ${a} không phải tài khoản chi tiết đang dùng`];
+        return inRange(a!, RULE_KEYS[key]!.range) ? [] : [`${DEFAULT_KEYS[key]}: ${a} ngoài phạm vi ${RULE_KEYS[key]!.range.join(', ')}`];
+      });
+      if (bad.length) throw Errors.validation('Tài khoản của quy tắc không hợp lệ', bad);
       for (const [key, account] of Object.entries(b)) {
         if (!account) continue;
         await trx

@@ -255,18 +255,13 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
 
   // Mã số cha – con (khung nhìn 0102): thuế xét ô Gửi lên thuế, giá 0đ xét ô Biến thể; mã chỉ là số, không đọc chữ cuối mã.
   // [2026-11-12 Nguyễn Văn Thủy] luật 0111: gửi lên thuế suy theo mã (chỉ đuôi Z không gửi), mã con có tiền luôn sendTax = true (đóng góp)
-  it('lệch chuẩn 12–13: hàng Nội bộ 0đ (bill Z) chặn rõ; mã con thu tiền vẫn bán, gửi thuế theo mã; dòng chứng từ mang itemId', async () => {
+  // [2026-11-15 11:00 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1: bill Z nhận (kiểm ở nt-bh-019-pos-bill-z.test.ts), ở đây chỉ còn giá Nội bộ khác 0 (đóng góp)
+  it('lệch chuẩn 12–13: hàng Nội bộ gửi giá khác 0 bị từ chối; mã con thu tiền vẫn bán, gửi thuế theo mã; dòng chứng từ mang itemId', async () => {
     await sql`INSERT INTO products (tenant_id, sku, name, unit, tax_out_code, variant_code) VALUES
       (${tenantId}, '11005100103Z', 'Bình sữa quà tặng', 'Cái', 'R08', 'internal'),
       (${tenantId}, '11005100102', 'Bình sữa kẹp quà', 'Cái', 'R08', 'clip')`.execute(db);
     const docsBefore = await docCount('pos:%');
 
-    const z = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000c1', lines: [
-      { lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000 },
-      { lineId: 'l2', sku: '11005100103Z', unitName: 'Cái', unitQty: 1, clientUnitPrice: 0 },
-    ] }));
-    expect(z.statusCode, z.body).toBe(400);
-    expect(z.json().error.details).toMatchObject({ reason: 'POS_NOT_SUPPORTED_YET', billZ: ['11005100103Z'] });
     const price = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000c2', lines: [{ lineId: 'l1', sku: '11005100103Z', unitName: 'Cái', unitQty: 1, clientUnitPrice: 5_000 }], clientTotal: 5_000 }));
     expect(price.statusCode, price.body).toBe(409);
     expect(price.json().error.details.reason).toBe('POS_PRICE_CHANGED');

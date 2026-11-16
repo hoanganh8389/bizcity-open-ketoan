@@ -185,8 +185,8 @@ export function DocumentsPage() {
   return (
     <>
       <PageHeader
-        title="Định khoản tự động" code="ACC14" helpKey="chung-tu"
-        subtitle="Trạm điều khiển: chứng từ từ mọi nguồn lưu ở đây trước; lọc, tích chọn rồi định khoản vào sổ nhật ký chung theo lô"
+        title="Chứng từ chờ vào sổ" code="ACC14" helpKey="chung-tu"
+        subtitle="Cổng chờ chung: chứng từ nghiệp vụ đã duyệt từ mọi nguồn (máy POS, website, Mua hàng, Kho) dừng ở đây trước khi vào sổ — chờ định khoản, lỗi, đã ghi, đã đảo. Đơn đặt hàng không phát sinh kế toán nên không vào đây"
         actions={<>
           <button className="btn" disabled={!canPost} onClick={() => setPullOpen(true)} title="Kéo các phiếu đang chờ đẩy sang từ hệ thống kết nối"><CloudDownload size={15} /> Kéo chứng từ</button>
           <button className="btn" onClick={() => setConnOpen(true)}><Plug size={15} /> Kết nối</button>

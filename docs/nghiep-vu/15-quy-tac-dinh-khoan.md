@@ -1,5 +1,8 @@
 # 15. Định khoản theo loại chứng từ và chương trình có hạn mức
 
+> **Đã thay (15/11/2026)** bằng [24. Quy tắc hạch toán](24-quy-tac-hach-toan.md): bảng quy tắc định khoản có điều kiện đã bỏ. Tài liệu giữ để tra lịch sử.
+
+
 <!-- [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — bỏ màn Thiết kế hạch toán (ACC92): tài khoản khai một nơi là Tài khoản ngầm định (ACC41) (đóng góp) -->
 
 > Trạng thái (11/11/2026): tài khoản khai **một nơi** là **Tài khoản ngầm định (ACC41)**. Màn Thiết kế hạch toán (ACC92: đề xuất / duyệt quy tắc, chạy thử, sơ đồ, lịch sử) **đã bỏ** vì hai nơi khai báo gây rối.

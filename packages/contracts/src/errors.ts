@@ -58,6 +58,9 @@ export const ERROR_REASONS = {
   VERSION_STALE: 'Đã có phiên bản mới hơn bản gửi lên',
   VERSION_CONTENT_MISMATCH: 'Cùng docKey và version nhưng nội dung khác bản đã ghi sổ / chờ ghi (DOCUMENT §7.3)',
   DOC_NOT_DRAFT: 'Thao tác chỉ cho phiếu nháp; phiếu đã ghi sổ hoặc đang chờ huỷ',
+  // [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 (BIZCITY-ERRORS §4c): thiết lập nhanh — nạp gói mẫu
+  SETUP_NOT_EMPTY: 'Đơn vị đã có dữ liệu nghiệp vụ: chỉ nạp gói mẫu vào đơn vị trắng (hoặc đã từng chạy cùng gói)',
+  SETUP_RUNNING: 'Đang chạy một gói mẫu cho đơn vị này: chờ xong rồi chạy lại',
   DOC_CANCELLED: 'Phiếu đã huỷ',
   DOC_SOURCE_READONLY: 'Chứng từ nhận từ hệ thống khác: sửa ở nguồn rồi gửi lại',
   DOC_ALREADY_CONFIRMED: 'Đã xác nhận nhận tiền trước đó',

@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 170
+      "count": 166
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 312
+      "count": 316
     }
   ],
   "items": [
@@ -8996,8 +8996,8 @@
       "phase": "PHASE-036",
       "title": "B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -9011,8 +9011,8 @@
       "phase": "PHASE-036",
       "title": "B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); cai-preset.mjs gọi qua đây",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -9024,10 +9024,10 @@
     {
       "id": "S036-5",
       "phase": "PHASE-036",
-      "title": "B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md",
+      "title": "B3 — hộp thoại 4 bước modules/thiet-lap/ (TI15) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -9131,8 +9131,8 @@
       "phase": "PHASE-036",
       "title": "B6 — SEEDSDIR có tác dụng trên bản cài Docker: docker-compose.yml truyền biến vào api (+ db-migrate) và gắn thư mục danh mục của công ty (chỉ đọc); trống thì d…",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"

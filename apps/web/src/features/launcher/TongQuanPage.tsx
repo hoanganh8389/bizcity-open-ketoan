@@ -23,6 +23,8 @@ import { initialsOf } from '../../layout/UserMenu';
 import { useViec, viecOf } from '../../layout/rail/useViec';
 import { ViecRow } from '../../layout/rail/ViecPanel';
 import { sdkSlots } from '../../phan-he/sdk-modules';
+// [2026-11-14 03:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3: biểu ngữ đơn vị trắng (chỉ thêm, không đổi bố cục)
+import { DonViTrang } from './DonViTrang';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -236,6 +238,7 @@ export function TongQuanPage() {
         <div><b>Xin chào{name ? `, ${name}` : ''}</b><span>{user?.tenant.name}</span></div>
         <button type="button" className="btn btn-help" onClick={() => setHelp(true)}><HelpCircle size={16} /> Hướng dẫn</button>
       </div>
+      <DonViTrang />
       <div className="tq-grid">
         <div className="tq-col">
           <TruyCapNhanh />

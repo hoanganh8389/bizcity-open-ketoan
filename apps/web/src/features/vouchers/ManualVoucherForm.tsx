@@ -29,7 +29,7 @@ import { SignaturePanel, useSignatures } from './Signatures';
 import { parseAmount, showAmount } from './CashVoucherForm';
 import { C, L, VoucherModal, readOnlyReason, useVoucherSave } from '@/components/voucher/VoucherModal';
 import { useDimension } from '@/components/voucher/lookups';
-import { useUseReasons } from '@/lib/useReasons';
+import { LOAI_KE_TOAN } from './loaiPhieu';
 
 interface Account { code: string; name: string; trackPartner: boolean; isDebt?: boolean; normalSide: string; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean }
 interface Dimension { code: string; name: string; isActive: boolean }
@@ -117,7 +117,6 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
   onClose: () => void;
   onSaved: (docNo: string, docDate: string, addNew: boolean) => void;
 }) {
-  const useReasons = useUseReasons();
   const qc = useQueryClient();
   const meta = VOUCHER_META.manual;
   const p = existing?.payload ?? initial;
@@ -134,14 +133,12 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
   const departments = useDimension('department') as Dimension[];
   const contracts = useDimension('contract') as Dimension[];
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.code, a])), [accounts]);
-  const reasonList = reasons.filter((r) => (r.kind === 'receipt' || r.kind === 'payment') && (r.isActive || r.code === pv?.reasonCode));
-  // [2026-11-13 Nguyễn Văn Thủy] Loại (Tài khoản ngầm định nhóm Tổng hợp / Tài sản): chọn loại → điền TK còn trống, ô TK chỉ chọn trong lọc (đóng góp)
-  const adTypes = useQuery({ queryKey: ['account-default-types'], queryFn: () => api.get<{ code: string; group: string; name: string; isActive: boolean; columns: { key: string; filter: string[]; default: string }[] }[]>('/api/v1/account-default-types'), staleTime: 60_000 }).data ?? [];
-  const loaiList = adTypes.filter((t) => t.isActive && (t.group === 'Tổng hợp' || t.group === 'Tài sản, công cụ'));
+  // [2026-11-15 Nguyễn Văn Thủy] Loại phiếu kế toán (mẫu cố định trong code): chọn loại → điền TK còn trống, ô TK chỉ chọn trong lọc (đóng góp)
+  const loaiList = LOAI_KE_TOAN;
   const [loaiCode, setLoaiCode] = useState('');
   const loai = loaiList.find((t) => t.code === loaiCode);
-  const colOf = (key: string) => loai?.columns.find((c) => c.key === key);
-  const filterOf = (side: 'debit' | 'credit') => colOf(side === 'debit' ? 'debit_account' : 'credit_account')?.filter;
+  const defaultOf = (side: 'debit' | 'credit') => (side === 'debit' ? loai?.debit : loai?.credit) ?? '';
+  const filterOf = (side: 'debit' | 'credit') => (side === 'debit' ? loai?.debitFilter : loai?.creditFilter);
 
   const [h, setH] = useState({
     docNo: existing?.docNo ?? '',
@@ -219,13 +216,13 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
     });
   };
   /** Thêm chi tiết phiếu (lưới trên): dòng trống mang diễn giải, nhân viên của đầu phiếu. */
-  const addRow = () => { const r = blankRow({ description: h.description, employee: h.employeeCode, account: colOf('debit_account')?.default ?? '' }); setRows((xs) => [...xs, r]); setActiveKey(r.key); };
+  const addRow = () => { const r = blankRow({ description: h.description, employee: h.employeeCode, account: defaultOf('debit') }); setRows((xs) => [...xs, r]); setActiveKey(r.key); };
   const removeRow = (key: number | null) => key !== null && setRows((xs) => xs.filter((x) => x.key !== key));
   /** Thêm tài khoản đối ứng cho dòng đang chọn: số tiền còn thiếu, thông tin lấy theo dòng. */
   const addCounter = () => {
     if (!active) return setProblem('Chọn một dòng ở lưới trên trước');
     const left = needOf(active) - active.counters.reduce((s, c) => s + parseAmount(c.amount), 0);
-    const c: Counter = { ...base({ account: colOf(mainSide(active) === 'debit' ? 'credit_account' : 'debit_account')?.default ?? '', partner: active.partner, description: active.description, employee: active.employee, department: active.department, contract: active.contract, costItem: active.costItem }), amount: left > 0 ? money(left) : '' };
+    const c: Counter = { ...base({ account: defaultOf(mainSide(active) === 'debit' ? 'credit' : 'debit'), partner: active.partner, description: active.description, employee: active.employee, department: active.department, contract: active.contract, costItem: active.costItem }), amount: left > 0 ? money(left) : '' };
     setRow(active.key, { counters: [...active.counters, c] });
     setActiveCounter(c.key);
   };
@@ -353,14 +350,13 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
             <L c={1} r={3}>Diễn giải</L>
             <div className="vf-cell" style={{ gridColumn: '2 / 5', gridRow: 3 }}><input className="input" value={h.description} disabled={dis} onChange={(e) => set({ description: e.target.value })} /></div>
 
-            {/* [2026-11-10 11:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Lý do chỉ hiện khi bật lý do hạch toán (đóng góp) */}
-            {!useReasons && <><L c={2} r={1}>Loại</L>
+                        <L c={2} r={1}>Loại</L>
             <C c={2} r={1}>
-              <select className="select input" value={loaiCode} disabled={dis} title="Chọn loại để điền sẵn tài khoản và giới hạn tài khoản được chọn (khai ở Tài khoản ngầm định)"
+              <select className="select input" value={loaiCode} disabled={dis} title="Chọn loại để điền sẵn tài khoản và giới hạn tài khoản được chọn"
                 onChange={(e) => {
                   const code = e.target.value; setLoaiCode(code);
                   const t = loaiList.find((x) => x.code === code);
-                  const d = t?.columns.find((c) => c.key === 'debit_account')?.default ?? ''; const cr = t?.columns.find((c) => c.key === 'credit_account')?.default ?? '';
+                  const d = t?.debit ?? ''; const cr = t?.credit ?? '';
                   if (!t) return;
                   setRows((xs) => xs.map((r) => {
                     const main = mainSide(r) === 'debit' ? d : cr; const other = mainSide(r) === 'debit' ? cr : d;
@@ -370,9 +366,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
                 <option value="">(Tự khai)</option>
                 {loaiList.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
               </select>
-            </C></>}
-            {useReasons && <><L c={2} r={1}>Lý do</L>
-            <C c={2} r={1}><ListPicker items={reasonList.map((r) => ({ code: r.code, name: r.name }))} value={h.reasonCode} disabled={dis} onChange={(v) => set({ reasonCode: v })} /></C></>}
+            </C>
             <L c={2} r={2}>Nhân viên</L>
             <C c={2} r={2}><ListPicker items={employees.filter((e) => e.isActive || e.code === h.employeeCode)} value={h.employeeCode} disabled={dis} hideName onChange={(v) => set({ employeeCode: v })} /></C>
 

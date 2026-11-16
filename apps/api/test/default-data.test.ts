@@ -28,11 +28,6 @@ const sale = (key: string, sku: string) => ({
 
 beforeAll(async () => {
   ctx = await setupTenant();
-  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — tệp này kiểm nhóm hạch toán / lý do: bật công tắc lý do hạch toán (mặc định tắt) (đóng góp)
-  {
-    const on = await call(ctx, 'PUT', '/api/v1/settings/values/bizcity.posting.use_reasons', { value: 'on', validFrom: '2000-01-01', reason: 'Kiểm nhóm hạch toán / lý do' }, { 'idempotency-key': 'bat-ly-do-hach-toan' });
-    if (on.status !== 200) throw new Error(JSON.stringify(on.body));
-  }
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
   expect((await call(ctx, 'POST', '/api/v1/branches', { code: '26001', name: 'Cửa hàng Bảo Hà' })).status).toBe(201);
 });
@@ -79,7 +74,7 @@ describe('Dữ liệu gốc', () => {
     expect((await call(ctx, 'PATCH', '/api/v1/branches/26001', { departmentCode: 'KHONG-CO' })).status).toBe(400);
   });
 
-  it('bút toán bán hàng tự động mang bộ phận của cửa hàng; mặt hàng chưa có lấy bộ tài khoản theo tệp gốc', async () => {
+  it('bút toán bán hàng tự động mang bộ phận của cửa hàng; tài khoản theo Quy tắc hạch toán, không theo nhóm mặt hàng', async () => {
     const rr = await restore('reasons'); expect(rr.status, JSON.stringify(rr.body)).toBe(200);
     // Khôi phục lần hai: không còn gì khác tệp gốc thì không ghi, không đếm "cập nhật".
     expect((await restore('reasons')).body.data.updated).toBe(0);
@@ -97,11 +92,10 @@ describe('Dữ liệu gốc', () => {
     const lines = await sql<{ account_code: string; dep: string | null }>`
       SELECT l.account_code, l.dims->>'department' AS dep FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
        WHERE l.tenant_id = ${tenantId} AND e.doc_no = 'BAN-BH-01'`.execute(db);
-    // Lý do XBA (bán tại cửa hàng) chỉ định doanh thu 51111, thay tài khoản doanh thu của nhóm mặt hàng (công tắc lý do bật).
+    // [2026-11-15 Nguyễn Văn Thủy] doanh thu / giá vốn theo tài khoản của Quy tắc hạch toán, mọi mặt hàng như nhau (đóng góp)
     const rev = lines.rows.find((l) => l.account_code.startsWith('511'));
     expect(rev).toMatchObject({ account_code: '51111', dep: 'BH26001' });
-    // Mặt hàng chưa có trong danh mục: nhóm hạch toán lấy theo tệp gốc (hàng khuyến mại → giá vốn 6323), giá vốn mang bộ phận.
-    expect(lines.rows.find((l) => l.account_code.startsWith('632'))).toMatchObject({ account_code: '6323', dep: 'BH26001' });
+    expect(lines.rows.find((l) => l.account_code.startsWith('632'))).toMatchObject({ account_code: '6321', dep: 'BH26001' });
     // Bộ phận gắn mọi dòng của bút toán (cả dòng tiền, công nợ).
     expect(lines.rows.every((l) => l.dep === 'BH26001')).toBe(true);
     const acc = (await call(ctx, 'GET', '/api/v1/accounts')).body.data.find((a: { code: string }) => a.code === '64231');

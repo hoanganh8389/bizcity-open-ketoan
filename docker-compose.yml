@@ -60,6 +60,11 @@ services:
       # [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — có giá trị: job tạo / cập nhật vai trò chỉ đọc thống kê ketoan_monitor cho postgres-exporter.
       PG_EXPORTER_PASSWORD: ${PG_EXPORTER_PASSWORD:-}
       TZ: Asia/Ho_Chi_Minh
+      # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: SEEDS_DIR (.env, đường dẫn trên máy chủ) = bộ danh mục của công ty, gắn chỉ đọc; trống = db/seeds trong ảnh (bộ giả lập)
+      SEEDS_DIR: ${SEEDS_DIR:+/srv/bizcity-seeds}
+    # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: thư mục danh mục của công ty (chỉ đọc). Chưa đặt SEEDS_DIR thì gắn db/seeds của repo nhưng API không đọc (biến trống)
+    volumes:
+      - ${SEEDS_DIR:-./db/seeds}:/srv/bizcity-seeds:ro
 
   api:
     build:
@@ -116,8 +121,12 @@ services:
       TZ: Asia/Ho_Chi_Minh
       # Tệp dữ liệu nhẹ không nằm trong cơ sở dữ liệu (dữ liệu huấn luyện trợ lý JSONL + ảnh).
       DATA_DIR: /app/apps/api/data
+      # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: SEEDS_DIR (.env, đường dẫn trên máy chủ) = bộ danh mục của công ty, gắn chỉ đọc; trống = db/seeds trong ảnh (bộ giả lập)
+      SEEDS_DIR: ${SEEDS_DIR:+/srv/bizcity-seeds}
     volumes:
       - appdata:/app/apps/api/data
+      # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: bộ danh mục của công ty, chỉ đọc (xem db/seeds/README.md)
+      - ${SEEDS_DIR:-./db/seeds}:/srv/bizcity-seeds:ro
     healthcheck:
       # L1 sẵn sàng (R-DIAG-3): migration đủ, trigger bảo vệ sổ còn và bật, CSDL ghi được; lỗi → 503 → unhealthy.
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4100/api/v1/system/health/ready >/dev/null || exit 1"]

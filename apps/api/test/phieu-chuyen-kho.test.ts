@@ -74,12 +74,63 @@ describe('Phiếu chuyển kho KHO01', () => {
     expect(await lotStock('SHOP1', 'S1')).toEqual({ L1: 6, L2: 1 });
   });
 
-  it('sửa phiếu đã nhận: số xuất 8 → 5, số nhận giữ 5 (không vượt số xuất); hai đầu ghi lại', async () => {
-    const r = await call<{ data: T }>(ctx, 'PUT', `/api/v1/kho/transfers/${id}`, { docDate: D(5), fromBranchCode: 'KHO', toBranchCode: 'SHOP1', note: 'Bổ sung hàng', lines: [{ lineKey: 'a', sku: 'CK-SUA', name: 'Sữa chuyển kho', unit: 'Lon', qty: 5 }] });
+  // [2026-11-15 Nguyễn Văn Thủy] đã nhận thì không sửa thẳng: đề nghị điều chỉnh hai đầu, bên nhận xác nhận, duyệt mới ghi lại (đóng góp)
+  it('sửa phiếu đã nhận: không sửa thẳng; điều chỉnh hai đầu cần bên nhận xác nhận; duyệt thì số xuất 8 → 5, số nhận giữ 5', async () => {
+    const body = { docDate: D(5), fromBranchCode: 'KHO', toBranchCode: 'SHOP1', note: 'Bổ sung hàng', lines: [{ lineKey: 'a', sku: 'CK-SUA', name: 'Sữa chuyển kho', unit: 'Lon', qty: 5 }] };
+    expect((await call(ctx, 'PUT', `/api/v1/kho/transfers/${id}`, body)).status).toBe(409);
+    ok(await call(ctx, 'POST', `/api/v1/kho/transfers/${id}/adjust`, { reason: 'Xuất nhầm số lượng, đúng là 5 lon' }));
+    ok(await call(ctx, 'PUT', `/api/v1/kho/transfers/${id}`, body));
+    expect(await stock('KHO', 'KT-HH')).toBe(8); // sổ chưa đổi khi đang điều chỉnh
+    expect(await stock('SHOP1', 'S1')).toBe(7);
+    expect((await call(ctx, 'POST', `/api/v1/kho/transfers/${id}/adjust-approve`, {})).status).toBe(409); // chờ bên nhận xác nhận
+    ok(await call(ctx, 'POST', `/api/v1/kho/transfers/${id}/adjust-confirm`, {}));
+    const r = await call<{ data: T & { adjustments: { kind: string; changes: string[] }[] } }>(ctx, 'POST', `/api/v1/kho/transfers/${id}/adjust-approve`, {});
     ok(r);
     expect(r.body.data).toMatchObject({ status: 'received', totalQty: 5, totalReceived: 5 });
+    expect(r.body.data.adjustments[0]).toMatchObject({ kind: 'adjust' });
+    expect(r.body.data.adjustments[0]!.changes.join(' ')).toContain('8 → 5');
     expect(await stock('KHO', 'KT-HH')).toBe(11);
     expect(await stock('SHOP1', 'S1')).toBe(5);
+  });
+
+  it('nháp chưa trừ tồn, chưa nhận được; duyệt xuất mới trừ; đã duyệt xuất thì sửa phải qua điều chỉnh, đang điều chỉnh khoá nhận; huỷ điều chỉnh về bản cũ', async () => {
+    const r = await create({ mode: 'draft', docDate: D(7), fromBranchCode: 'KHO', toBranchCode: 'SHOP1', lines: [{ lineKey: 'a', sku: 'CK-SUA', name: 'Sữa chuyển kho', unit: 'Lon', qty: 2 }] });
+    ok(r);
+    const k = r.body.data.id;
+    expect(r.body.data).toMatchObject({ status: 'draft', ledger: { out: null, in: null } });
+    const before = await stock('KHO', 'KT-HH');
+    expect((await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/receive`, {})).status).toBe(409);
+    ok(await call(ctx, 'PUT', `/api/v1/kho/transfers/${k}`, { docDate: D(7), fromBranchCode: 'KHO', toBranchCode: 'SHOP1', lines: [{ lineKey: 'a', sku: 'CK-SUA', name: 'Sữa chuyển kho', unit: 'Lon', qty: 3 }] }));
+    expect(await stock('KHO', 'KT-HH')).toBe(before);
+    ok(await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/ship`, {}));
+    expect(await stock('KHO', 'KT-HH')).toBe(before - 3);
+    const edit = { docDate: D(7), fromBranchCode: 'KHO', toBranchCode: 'SHOP1', lines: [{ lineKey: 'a', sku: 'CK-SUA', name: 'Sữa chuyển kho', unit: 'Lon', qty: 1 }] };
+    expect((await call(ctx, 'PUT', `/api/v1/kho/transfers/${k}`, edit)).status).toBe(409);
+    ok(await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/adjust`, { reason: 'Shop chỉ cần 1 lon' }));
+    expect((await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/receive`, {})).status).toBe(409); // khoá nhận
+    ok(await call(ctx, 'PUT', `/api/v1/kho/transfers/${k}`, edit));
+    const c = await call<{ data: T }>(ctx, 'POST', `/api/v1/kho/transfers/${k}/adjust-cancel`, {});
+    ok(c);
+    expect(c.body.data.totalQty).toBe(3);
+    expect(await stock('KHO', 'KT-HH')).toBe(before - 3);
+    // Phiếu điện tử đã phát hành: duyệt điều chỉnh phải ghi số phiếu thay thế.
+    ok(await call(ctx, 'PUT', `/api/v1/kho/transfers/${k}/einvoice`, { no: '0000123', serial: '6K26NAB' }));
+    ok(await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/adjust`, { reason: 'Shop chỉ cần 1 lon' }));
+    ok(await call(ctx, 'PUT', `/api/v1/kho/transfers/${k}`, edit));
+    expect((await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/adjust-approve`, {})).status).toBe(400);
+    const a = await call<{ data: T & { einvoice: { no: string }; adjustments: { einvoiceOld: { no: string }; einvoiceNew: { no: string } }[] } }>(ctx, 'POST', `/api/v1/kho/transfers/${k}/adjust-approve`, { einvoiceReplacement: { no: '0000124', serial: '6K26NAB' } });
+    ok(a);
+    expect(a.body.data.einvoice.no).toBe('0000124');
+    expect(a.body.data.adjustments[0]).toMatchObject({ einvoiceOld: { no: '0000123' }, einvoiceNew: { no: '0000124' } });
+    expect(await stock('KHO', 'KT-HH')).toBe(before - 1);
+    // Nhận rồi sửa số nhận = biên bản chênh lệch: bắt buộc lý do, lưu lịch sử.
+    ok(await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/receive`, {}));
+    expect((await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/receive`, { lines: [{ lineKey: 'a', receivedQty: 0 }], note: '' })).status).toBe(400);
+    const d = await call<{ data: T & { adjustments: { kind: string }[] } }>(ctx, 'POST', `/api/v1/kho/transfers/${k}/receive`, { lines: [{ lineKey: 'a', receivedQty: 0 }], note: 'Hộp móp, trả lại kho' });
+    ok(d);
+    expect(d.body.data.adjustments.map((x) => x.kind)).toEqual(['adjust', 'chenh_lech']);
+    ok(await call(ctx, 'POST', `/api/v1/kho/transfers/${k}/cancel`, { reason: 'Dọn phép thử' }));
+    expect(await stock('KHO', 'KT-HH')).toBe(before);
   });
 
   it('bỏ xác nhận nhận → bên nhận trả lại; từ chối → bên chuyển được trả lại tồn', async () => {
@@ -120,7 +171,7 @@ describe('Phiếu chuyển kho KHO01', () => {
   it('danh sách lọc theo chi nhánh, trạng thái chờ nhận, tìm mã hàng', async () => {
     ok(await create({ docDate: D(9), fromBranchCode: 'KHO', toBranchCode: 'SHOP1', lines: [{ lineKey: 'a', sku: 'CK-SUA', qty: 1 }] }));
     const all = (await call<{ data: T[] }>(ctx, 'GET', `/api/v1/kho/transfers?from=${D(1)}&to=${D(31)}&branchCodes=SHOP1`)).body.data;
-    expect(all.map((x) => x.status)).toEqual(['shipped', 'cancelled', 'rejected']);
+    expect(all.map((x) => x.status)).toEqual(['shipped', 'cancelled', 'cancelled', 'rejected']); // phiếu 09/10, phiếu thử điều chỉnh 07/10 (đã huỷ), 0x/10
     const pending = (await call<{ data: T[] }>(ctx, 'GET', `/api/v1/kho/transfers?status=pending&search=ck-sua`)).body.data;
     expect(pending).toHaveLength(1);
   });

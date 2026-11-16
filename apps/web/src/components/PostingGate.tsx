@@ -114,17 +114,10 @@ function AdvisoryItems({ advisories }: { advisories: Advisory[] }) {
 }
 
 /** Dải cảnh báo ở màn lập / duyệt chứng từ. Không có nút chặn; lưu bình thường là "tiếp tục" và được ghi bằng chứng. */
-export function DocumentGateBanner({ advisories, subject = 'ngày chứng từ này' }: { advisories: Advisory[]; subject?: string }) {
-  const [open, setOpen] = useState(false);
-  if (!advisories.length) return null;
-  return (
-    <div className="cf-gate full" role="note">
-      <button type="button" className="cf-gate-head" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span className="badge badge-warn">Cảnh báo kiểm chuẩn</span> {advisories.length} điều cần biết cho {subject} — chỉ thông tin, vẫn lưu được. <span className="cf-link">{open ? 'Ẩn' : 'Xem'}</span>
-      </button>
-      {open && <><AdvisoryItems advisories={advisories} /><div className="muted">Lưu chứng từ khi còn cảnh báo thì hệ thống ghi lại: ai, lúc nào, cảnh báo nào (bằng chứng).</div></>}
-    </div>
-  );
+// [2026-11-15 Nguyễn Văn Thủy] bỏ dải "Cảnh báo kiểm chuẩn" trên chứng từ: chỉ là thông tin, chiếm chỗ, gây khó chịu khi lập phiếu.
+// Kiểm chuẩn vẫn chạy và ghi bằng chứng khi lưu; xem ở màn Kiểm chuẩn (HT06). Cảnh báo khi khoá kỳ (PeriodGateBox) giữ nguyên (đóng góp)
+export function DocumentGateBanner(_p: { advisories: Advisory[]; subject?: string }) {
+  return null;
 }
 
 /** Khối cảnh báo trước khoá kỳ + ô lý do khi người dùng đang khoá. */

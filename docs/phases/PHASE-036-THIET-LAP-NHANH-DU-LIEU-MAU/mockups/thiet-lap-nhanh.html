@@ -1,5 +1,6 @@
 <!doctype html>
 <!-- [2026-11-10 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — bản mẫu hộp thoại Thiết lập nhanh (TI09): 4 bước Bắt đầu → Công ty → Nạp gì → Đang nạp / Xong; biểu ngữ đơn vị trắng và Công ty mẫu; số liệu hư cấu -->
+<!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — mã màn TI09 → TI15 (§12) -->
 <!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
 <html lang="vi">
 <head>
@@ -143,7 +144,7 @@ h1{font-size:19px;margin:0 0 2px;text-wrap:balance}
 
 <div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
   <div class="dlg">
-    <div class="dlg-h"><h2 id="dlg-title">Thiết lập nhanh</h2><p>Mất khoảng 1 phút. Có thể đóng và mở lại ở Tiện ích → Thiết lập nhanh (TI09).</p></div>
+    <div class="dlg-h"><h2 id="dlg-title">Thiết lập nhanh</h2><p>Mất khoảng 1 phút. Có thể đóng và mở lại ở Tiện ích → Thiết lập nhanh (TI15).</p></div>
     <div class="steps" id="steps"></div>
     <div class="dlg-b" id="body"></div>
     <div class="dlg-f" id="foot"></div>
@@ -234,7 +235,7 @@ function step3() {
     <div class="prog">${list.map(([k, t, , n], i) => `<div class="pr ${i < done ? 'ok' : i === done ? 'run' : 'wait'}"><span class="s">${i < done ? '✓' : i === done ? '…' : '○'}</span><span>${t}</span><span class="n mono">${i < done ? n : ''}</span></div>`).join('')}</div>
     ${done === list.length ? doneView() : ''}`;
   if (done < list.length) { foot('Lỗi giữa chừng: phần đã nạp giữ nguyên, bấm Thử lại sẽ nạp tiếp mà không nhân đôi.', [['run', 'Đang nạp…', 'pri', true]]); }
-  else foot('Mở lại hộp thoại này ở Tiện ích → Thiết lập nhanh (TI09).', [['close', 'Đóng'], ['goto', 'Mở Tổng quan', 'pri']]);
+  else foot('Mở lại hộp thoại này ở Tiện ích → Thiết lập nhanh (TI15).', [['close', 'Đóng'], ['goto', 'Mở Tổng quan', 'pri']]);
 }
 function doneView() {
   if (st.mode === 'mine') return `<div class="checks"><span class="pill">Cấu hình xong</span><span class="pill">Danh mục chuẩn xong</span></div><p>Bước tiếp: nhập số dư đầu kỳ (ACC5) hoặc chứng từ mua hàng đầu tiên.</p>`;

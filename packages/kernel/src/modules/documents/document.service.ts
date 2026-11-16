@@ -870,6 +870,43 @@ export const documentService = {
     throw Errors.posting('Không xem trước được');
   },
 
+  // [2026-11-15 Nguyễn Văn Thủy] xem thử bút toán của một chứng từ CHƯA lưu (màn Quy tắc hạch toán, API cho hệ thống nguồn) (đóng góp)
+  /**
+   * Xem thử: chạy đúng đường định khoản của chứng từ gửi lên trong một giao dịch rồi HUỶ giao dịch — không lưu chứng từ, không
+   * ghi sổ, không cấp số. Trả các bút toán sẽ ghi; lỗi cấu hình (thiếu tài khoản, tài khoản tổng hợp…) trả về `error`.
+   */
+  async previewIngest(auth: AuthContext, doc: IngestDocument) {
+    class Rollback extends Error { constructor(readonly data: unknown) { super('rollback'); } }
+    const probe = { ...doc, docKey: `xem-thu:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`, version: 1 } as IngestDocument;
+    try {
+      await db.transaction().execute(async (trx) => {
+        const res = await postDocumentIn(trx, auth, probe, { post: true, force: true });
+        const ids = res.entryIds ?? [];
+        const lines = ids.length ? await trx.selectFrom('ledger_lines as l')
+          .innerJoin('ledger_entries as e', 'e.id', 'l.entry_id')
+          .innerJoin('branches as b', 'b.id', 'e.branch_id')
+          .innerJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 'l.tenant_id').onRef('a.code', '=', 'l.account_code'))
+          .select(['l.entry_id', 'l.line_no', 'l.pair_no', 'l.account_code', 'a.name as account_name', 'l.debit', 'l.credit', 'l.part', 'l.description', 'l.product_sku', 'e.doc_type', 'e.doc_no', 'b.code as branch_code'])
+          .where('l.entry_id', 'in', ids).orderBy('l.entry_id').orderBy('l.line_no').execute() : [];
+        throw new Rollback({
+          ok: true,
+          entries: ids.map((id) => {
+            const ls = lines.filter((l) => String(l.entry_id) === String(id));
+            return {
+              branchCode: ls[0]?.branch_code ?? null, docType: ls[0]?.doc_type ?? null, docNo: ls[0]?.doc_no ?? null,
+              lines: ls.map((l) => ({ pairNo: l.pair_no, accountCode: l.account_code, accountName: l.account_name, debit: toNumber(l.debit), credit: toNumber(l.credit), part: l.part, description: l.description, sku: l.product_sku })),
+            };
+          }).filter((e) => e.lines.length),
+        });
+      });
+    } catch (e) {
+      if (e instanceof Rollback) return e.data;
+      if (e instanceof AppError) return { ok: false, error: describe(e), code: e.code };
+      throw e;
+    }
+    throw Errors.posting('Không xem thử được');
+  },
+
   /** Nhật ký định khoản: của một chứng từ (eventId) hoặc theo khoảng ngày, loại chứng từ, hành động, chi nhánh. */
   async postingLog(auth: AuthContext, q: { eventId?: string; from?: string; to?: string; docType?: string; action?: string; branchCodes?: string[]; limit?: number }) {
     let query = db.selectFrom('posting_log as g')

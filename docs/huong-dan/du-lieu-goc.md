@@ -11,7 +11,7 @@ Mọi màn danh mục đều có nút **Quay về dữ liệu gốc** ở đầu
 | Bộ | Màn | Tệp | Số bản ghi gốc |
 |---|---|---|---|
 | Theo dõi chiều của tài khoản | ACC1 | `tai-khoan.csv` | hệ thống tài khoản |
-| Tài khoản ngầm định | ACC41 | `tai-khoan-ngam-dinh.jsonl` | 12 |
+| Quy tắc hạch toán | ACC41 | `tai-khoan-ngam-dinh.jsonl` | 12 |
 | Loại thuế | ACC43 | `loai-thue.jsonl` | 51 |
 | Danh mục khoản mục | ACC24 | `khoan-muc.jsonl` | 295 |
 | Danh mục bộ phận (phòng ban chức năng: Bán hàng, Mua hàng, Kế toán, Kho vận…) | ACC26 | `bo-phan.jsonl` | 10 |
@@ -84,3 +84,5 @@ Bấm **Quay về dữ liệu gốc** (đầu màn danh mục) hoặc **Quay v�
 3. Trước khi ghi, phần mềm **tự chụp** danh mục hiện tại của các bảng bị chạm (giữ 10 bản gần nhất). Số bản chụp hiện ở thông báo kết quả; người quản trị tải lại bằng `GET /api/v1/default-data/backups/:id`.
 
 **Bị chặn:** tệp gốc là **dữ liệu mẫu giả lập** (bản phát hành, xem `db/seeds/README.md`) mà đơn vị đã có bút toán — quay về sẽ ghi dữ liệu mẫu đè lên danh mục thật. Người quản trị máy chủ đặt biến `SEEDS_DIR` tới bộ danh mục của công ty rồi làm lại.
+
+**Đang đọc bộ nào** <!-- [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11 -->: đầu màn TI08 có dải báo. *Đang đọc bộ danh mục của công ty* = máy chủ đã đặt `SEEDS_DIR`. Dải vàng *Đang đọc bộ dữ liệu mẫu giả lập* = chưa đặt; các bộ có nhãn **giả lập** trong bảng là dữ liệu giả.

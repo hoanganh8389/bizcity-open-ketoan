@@ -38,6 +38,22 @@ const GROUPS: [string, string, PDoc['kind'][]][] = [
   ['all', 'Tất cả', []], ['order', 'Đơn đặt hàng', ['order']], ['receipt', 'Nhập mua', ['receipt']], ['return', 'Trả / đổi hàng', ['return', 'exchange']],
   ['money', 'Ứng trước / trả tiền', ['prepayment', 'payment']], ['gift', 'Quà tặng', ['gift_in', 'gift_out']], ['adjust', 'Chi phí / thưởng', ['cost', 'rebate']],
 ];
+// [2026-11-15 Nguyễn Văn Thủy] cột mặc định theo loại phiếu — chỉ cột có nghĩa với loại đó; cột khác bật ở nút "Cột" (đóng góp)
+const COT_MAC_DINH: Record<string, string[]> = {
+  all: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'total', 'checks'],
+  order: ['docDate', 'docNo', 'status', 'progress', 'partnerFull', 'branch', 'kho', 'total', 'checks'],
+  receipt: ['docDate', 'docNo', 'status', 'ledgerState', 'partnerFull', 'branch', 'ref', 'invoice', 'beforeTax', 'tax', 'total', 'due', 'debtLeft', 'checks'],
+  return: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'ref', 'total', 'checks'],
+  money: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'total', 'debtLeft'],
+  gift: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'kho', 'total'],
+  adjust: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'ref', 'total'],
+};
+/** Cột theo loại phiếu: cột mặc định đứng trước theo đúng thứ tự khai, cột khác ẩn (bật ở nút "Cột"). */
+function cotTheoLoai<T extends { key: string; hidden?: boolean }>(cols: T[], group: string): T[] {
+  const want = COT_MAC_DINH[group] ?? COT_MAC_DINH.all!;
+  const pos = (k: string) => { const i = want.indexOf(k); return i < 0 ? 999 : i; };
+  return [...cols].sort((a, b) => pos(a.key) - pos(b.key)).map((c) => ({ ...c, hidden: !want.includes(c.key) }));
+}
 /** Ngày giờ như màn chính sách: 10:44:18 24/10/2026. */
 // Trong hồ sơ NCC mọi phiếu cùng một NCC → ẩn các cột thông tin NCC cho rộng chỗ.
 const NCC_COLS = ['partner', 'partnerFull', 'partnerTax', 'partnerPhone', 'partnerAddress'];
@@ -229,6 +245,8 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   };
 
   const asOf = today();
+  const LEDGER_LABEL: Record<string, string> = { none: 'Không ghi sổ', not_sent: 'Chưa vào sổ', pending: 'Chờ định khoản', posted: 'Đã ghi sổ', error: 'Lỗi định khoản', cancelled: 'Đã đảo' };
+  const LEDGER_CLS: Record<string, string> = { not_sent: 'badge-gray', pending: 'badge-warn', posted: 'badge-ok', error: 'badge-bad', cancelled: 'badge-gray' };
   const columns: Column<StoredDoc>[] = [
     { key: 'docDate', header: 'Ngày', width: 90, value: (r) => dmy(r.docDate) },
     { key: 'docNo', header: 'Số phiếu', type: 'code', width: 110 },
@@ -257,7 +275,10 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
     { key: 'debtPaid', header: 'Đã trả / đã đối trừ', type: 'money', width: 120, sum: true, title: 'Phiếu trả tiền, ứng trước, trả hàng… đã đối trừ vào phiếu này', value: (r) => congNo(r, asOf)?.paid ?? null },
     { key: 'debtLeft', header: 'Còn lại', type: 'money', width: 110, sum: true, bold: true, value: (r) => congNo(r, asOf)?.left ?? null },
     { key: 'debtState', header: 'Tình trạng công nợ', width: 160, title: 'Phiếu chưa duyệt chưa ghi sổ nên chưa có công nợ', value: (r) => congNo(r, asOf)?.text ?? '', render: (r) => { const c = congNo(r, asOf); return c ? (c.cls ? <span className={`badge ${c.cls}`}>{c.text}</span> : <span className="muted">{c.text}</span>) : null; } },
-    { key: 'status', header: 'Trạng thái', width: 90, value: (r) => STATUS_LABEL[r.status] },
+    // [2026-11-15 Nguyễn Văn Thủy] tách trạng thái PHIẾU (nghiệp vụ) và trạng thái SỔ (kế toán); đơn đặt không ghi sổ (đóng góp)
+    { key: 'status', header: 'Phiếu', width: 90, title: 'Trạng thái phiếu ở phân hệ: nháp, chờ duyệt, đã duyệt, đã huỷ; "Đang điều chỉnh" = phiếu đã ghi sổ đang sửa (sổ còn theo bản cũ)', value: (r) => (r.adjust ? 'Đang điều chỉnh' : STATUS_LABEL[r.status]), render: (r) => (r.adjust ? <span className="badge badge-warn" title={`Lý do: ${r.adjust.reason}`}>Đang điều chỉnh</span> : <>{STATUS_LABEL[r.status]}</>) },
+    { key: 'ledgerState', header: 'Sổ', width: 120, title: 'Trạng thái vào sổ kế toán. Đơn đặt hàng không phát sinh kế toán nên không ghi sổ. Phiếu chưa duyệt chưa gửi vào cổng chờ', value: (r) => LEDGER_LABEL[r.ledger ?? 'not_sent'],
+      render: (r) => { const s = r.ledger ?? 'not_sent'; return s === 'none' ? <span className="muted">Không ghi sổ</span> : <Link to="/chung-tu" className={`badge ${LEDGER_CLS[s]}`} title="Mở cổng chờ vào sổ" onClick={(e) => e.stopPropagation()}>{LEDGER_LABEL[s]}</Link>; } },
     { key: 'progress', header: 'Đơn: đã nhận', width: 110, value: (r) => { if (r.kind !== 'order' || !data) return ''; const p = orderProgress(r, data.docs, undefined, data.units); const one = p.lines.length === 1 ? p.lines[0]! : null; return p.done ? 'Đủ' : p.buyDone ? 'Thiếu quà' : one ? `${one.received}/${one.ordered} ${one.unit}` : `${p.received}/${p.ordered} (ĐVT nhỏ nhất)`; } },
     { key: 'ledger', header: 'Chứng từ kế toán', width: 140, value: (r) => r.links.map((l) => l.docNo).join(', ') },
     { key: 'checks', header: 'Cần xử lý', width: 230, value: (r) => canXuLy(r).text, render: (r) => { const x = canXuLy(r); return x.text ? <span className={`badge ${x.cls}`} title={x.all}>{x.text}</span> : null; } },
@@ -325,8 +346,8 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
           <XemTheoMaHang docs={rows} data={data} mode={view} partnerName={names.partnerName} onOpen={(d) => setEditing(d)} locDong={ln.coLoc ? ln.loc : undefined}
             khoText={(d) => { const k = d.kind === 'order' ? khoOf(d.branchCode, d.deliveryWarehouse) : khoOf(d.branchCode, d.warehouseCode); return k; }} />
         ) : isLoading || !data ? <Loading /> : (
-          <DataGrid storageKey={embedded ? "mh-chung-tu-ncc" : report === 'bao-cao' ? 'mh-bao-cao-phieu' : "mh-chung-tu-v2"} exportName="chung-tu-mua-hang" rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => setEditing(r)}
-            rowClassName={(r) => dongChungTu(r.status)} columns={embedded ? columns.filter((c) => !NCC_COLS.includes(c.key)) : columns} footerLabel="Cộng" emptyText="Chưa có chứng từ — chọn “+ Thêm chứng từ…”" />
+          <DataGrid storageKey={embedded ? "mh-chung-tu-ncc" : report === 'bao-cao' ? 'mh-bao-cao-phieu' : `mh-ct-v4-${group}`} exportName="chung-tu-mua-hang" rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => setEditing(r)}
+            rowClassName={(r) => dongChungTu(r.status)} columns={embedded ? columns.filter((c) => !NCC_COLS.includes(c.key)) : report === 'bao-cao' ? columns : cotTheoLoai(columns, group)} footerLabel="Cộng" emptyText="Chưa có chứng từ — chọn “+ Thêm chứng từ…”" />
         )}
           </div>
         );

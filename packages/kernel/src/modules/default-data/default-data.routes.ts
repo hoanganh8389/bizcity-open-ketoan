@@ -21,8 +21,9 @@ import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
 import { Errors } from '@bizcity/platform/core/errors';
 import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
+import { SEEDS_CUSTOM } from '@bizcity/platform/db/paths';
 import { DATASETS, datasetOf, readSeed, seedCount } from './default-data.service.js';
-import { assertSameAsPreview, checkPreviewToken, digestOf, getBackup, guardSampleSeeds, issuePreviewToken, listBackups, setBackupResult, snapshotTables, tablesOf } from './default-data.safety.js';
+import { assertSameAsPreview, checkPreviewToken, digestOf, getBackup, guardSampleSeeds, isSampleDataset, issuePreviewToken, listBackups, setBackupResult, snapshotTables, tablesOf } from './default-data.safety.js';
 
 const tags = ['Dữ liệu gốc'];
 
@@ -37,10 +38,12 @@ export async function defaultDataRoutes(app: FastifyInstance): Promise<void> {
       const out = [];
       for (const d of DATASETS) {
         const desc = d.file.endsWith('.jsonl') ? readSeed(d.file).head._mo_ta : 'Hệ thống tài khoản: tên, tính chất, theo dõi chi tiết và các cờ tính chất của từng tài khoản.';
-        out.push({ key: d.key, title: d.title, file: d.file, screens: d.screens, description: desc, seedCount: seedCount(d.file), currentCount: await d.current(db, tenantId) });
+        // [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: synthetic = tệp gốc là bộ giả lập (_nguon: "gia-lap")
+        out.push({ key: d.key, title: d.title, file: d.file, screens: d.screens, description: desc, seedCount: seedCount(d.file), currentCount: await d.current(db, tenantId), synthetic: isSampleDataset(d.key) });
       }
       const items = readSeed('mat-hang-tai-khoan.jsonl').rows.length;
-      return ok({ datasets: out, seedItems: items });
+      // [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: seedsSource cho TI08 biết đang đọc bộ nào; không trả đường dẫn máy chủ
+      return ok({ datasets: out, seedItems: items, seedsSource: SEEDS_CUSTOM ? 'custom' : 'bundled' });
     },
   });
 

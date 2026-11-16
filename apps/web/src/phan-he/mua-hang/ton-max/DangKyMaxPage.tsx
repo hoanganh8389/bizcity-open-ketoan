@@ -18,7 +18,7 @@ import { monthStart, today } from '../du-lieu';
 import { ChonMatHang } from '../thanh-phan/ChonMatHang';
 import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
 import { fold, num, qtyFmt, stockApi, useHierarchy, type BranchNode, type MaxRequest } from './api';
-import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from './chung';
+import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo, HaiCachMax } from './chung';
 import { useThaoTac } from '@/lib/manHinh';
 
 const TONE: Record<MaxRequestStatus, string> = { draft: 'info', submitted: 'warn', approved: 'ok', cancelled: 'bad' };
@@ -49,8 +49,9 @@ export function DangKyMaxPage() {
   ];
   return (
     <>
-      <PageHeader title="Phiếu đăng ký tồn max" code="MH17" helpKey="mua-hang-dang-ky-max" subtitle="Shop đăng ký lại max (2 lần / tháng, gợi ý từ tốc độ bán); chi nhánh đăng ký max cho hàng mới chưa có mã. Duyệt = ghi tồn max" />
+      <PageHeader title="Phiếu đăng ký tồn max (shop)" code="MH17" helpKey="mua-hang-dang-ky-max" subtitle="Shop lập phiếu đề nghị max; kế toán mua hàng duyệt (duyệt = ghi tồn max). Hàng mới chưa có mã: chi nhánh đăng ký max cho từng shop" />
       <div className="card">
+        <HaiCachMax here="dang-ky" />
         <ChuaPhanCap branches={h.data?.branches} />
         <div className="tm-bar">
           <ChonChiNhanhCha value={parent} onChange={setParent} />

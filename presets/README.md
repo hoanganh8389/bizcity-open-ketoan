@@ -9,7 +9,7 @@ BIZCITY_PASSWORD='mật khẩu quản trị' node scripts/cai-preset.mjs thuong-
   --api http://localhost:8088 --tenant demo --email admin@ketoan.local
 ```
 
-Script chỉ gọi HTTP API: chứng từ mẫu vào sổ qua đúng một cửa `POST /documents`, chạy lại không trùng. Thêm `--dry-run` để xem trước, `--no-sample` để chỉ cấu hình.
+Máy chủ chạy gói (PHASE-036 · 00 §11) <!-- [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 -->: script chỉ xem trước (`GET /api/v1/setup/presets/<id>/plan`), bấm nạp (`POST /api/v1/setup/presets/<id>/apply`) rồi hỏi tiến độ. Mỗi bản ghi đi qua action Core; chứng từ mẫu vào sổ qua cửa nạp. Chỉ nạp vào đơn vị **trắng** (hoặc đã từng chạy cùng gói); chạy lại không trùng, không sửa danh mục đã có. Thêm `--dry-run` để xem trước, `--no-sample` để chỉ cấu hình.
 
 Thêm preset mới:
 1. Chép `thuong-mai-ban-le/`.

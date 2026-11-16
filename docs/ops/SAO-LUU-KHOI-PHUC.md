@@ -125,6 +125,7 @@ Sau khi lùi, bản cài ở trạng thái "HEAD tách" (detached); sửa xong n
 Nút *Quay về dữ liệu gốc* (màn TI08, nút ở đầu các màn danh mục) chép đè danh mục của đơn vị bằng các tệp trong thư mục dữ liệu gốc. Từ S030-53, `db/seeds` trên repo là **bộ giả lập** cho 11 danh mục định danh / tổ chức / mặt hàng. Bản cài thật chưa đặt `SEEDS_DIR` mà bấm nút này sẽ nạp đối tượng, nhân viên, ngân hàng, chi nhánh, kho, mặt hàng **giả** vào đơn vị thật.
 
 - Đặt `SEEDS_DIR` tới bộ danh mục của công ty, ngoài repo — cách làm ở `db/seeds/README.md`.
-- Biến phải tới được container `api`: `docker-compose.yml` hiện chưa chuyển `SEEDS_DIR` vào service `api`, nên ngoài dòng trong `.env` cần thêm biến môi trường và gắn thư mục vào container bằng tệp ghép `docker-compose.override.yml` (đề xuất).
+- Đặt trong `.env`; `docker-compose.yml` gắn thư mục chỉ đọc vào `api` và `db-migrate` (S036-11) <!-- [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: compose truyền SEEDS_DIR -->. Kiểm ở TI08: dải *Đang đọc bộ danh mục của công ty*.
+- `cap-nhat.sh` **dừng** trước khi kéo mã nếu `SEEDS_DIR` đặt mà thư mục không có (Docker sẽ tạo thư mục rỗng thay vào) hoặc thiếu tệp so với `db/seeds` của bản mới.
 - `cap-nhat.sh` cảnh báo ở bước "Sắp đổi gì" khi chưa đặt `SEEDS_DIR` mà `db/seeds` là bộ giả lập.
 - Luôn có bản sao lưu đã kiểm trước khi bấm nút này.

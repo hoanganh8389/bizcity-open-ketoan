@@ -3,12 +3,15 @@
  * THẺ HƯỚNG DẪN (HT17): mỗi thẻ là một trang hướng dẫn; màn / hộp thoại nào hiện thẻ nào thì gắn ở nút Hướng dẫn của màn đó.
  *   Trái: danh sách thẻ (tìm, + Thẻ mới, Chép tài liệu có sẵn). Phải: tiêu đề + trình soạn tự do + nơi đang gắn.
  *   Mở thẳng một thẻ: /he-thong/huong-dan?the=<id>.
+ *   [2026-11-15 Nguyễn Văn Thủy] Xuất JSON (mọi thẻ + ảnh trong nội dung + nơi gắn) → mang sang máy chủ khác → Nhập JSON: xem trước
+ *   thẻ nào thêm / ghi đè / không đổi và màn nào đổi thẻ, bấm Nhập thì ghi đè (đóng góp)
  */
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
+import { Modal } from '@/components/ui';
 import { helpHtml, type HelpCard } from '@/components/HelpDrawer';
 import { listGuides, getGuide } from '@/help/guides';
 import './huong-dan.css';
@@ -37,6 +40,42 @@ export function HuongDanPage() {
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); }
   };
 
+  // ---- Xuất / nhập gói JSON (mang thẻ sang máy chủ khác)
+  const fileIn = useRef<HTMLInputElement>(null);
+  const [pkg, setPkg] = useState<{ name: string; data: HelpPkg; preview: PkgPreview } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const exportJson = async () => {
+    setMsg(null);
+    try {
+      const data = await api.get<HelpPkg>('/api/v1/help/export');
+      const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `the-huong-dan-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click(); URL.revokeObjectURL(a.href);
+      setMsg({ ok: true, text: `Đã xuất ${data.cards.length} thẻ (kèm ảnh và nơi gắn). Mang tệp sang máy chủ khác → Nhập JSON.` });
+    } catch (e) { setMsg({ ok: false, text: errorText(e) }); }
+  };
+  const pickFile = async (f: File | undefined) => {
+    if (!f) return;
+    setMsg(null);
+    try {
+      const data = JSON.parse(await f.text()) as HelpPkg;
+      const preview = await api.post<PkgPreview>('/api/v1/help/package/preview', { package: data });
+      setPkg({ name: f.name, data, preview });
+    } catch (e) { setMsg({ ok: false, text: e instanceof SyntaxError ? 'Tệp không phải JSON hợp lệ' : errorText(e) }); } finally { if (fileIn.current) fileIn.current.value = ''; }
+  };
+  const doImport = async () => {
+    if (!pkg) return;
+    setBusy(true);
+    try {
+      const r = await api.post<{ added: number; updated: number; same: number; bound: number }>('/api/v1/help/package/import', { package: pkg.data });
+      setMsg({ ok: true, text: `Đã nhập: thêm ${r.added} thẻ, ghi đè ${r.updated} thẻ, ${r.same} thẻ không đổi, gắn lại ${r.bound} nơi.` });
+      setPkg(null);
+      await qc.invalidateQueries({ queryKey: ['help'] });
+    } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
+  };
+
   return (
     <>
       <PageHeader title="Thẻ hướng dẫn" code="HT17" helpKey="the-huong-dan" subtitle="Soạn hướng dẫn sử dụng; gắn thẻ vào từng màn / hộp thoại ở nút Hướng dẫn của màn đó" />
@@ -46,6 +85,11 @@ export function HuongDanPage() {
           <div className="row" style={{ gap: 6, marginBottom: 6 }}>
             <button className="btn btn-sm btn-primary" onClick={() => void add()}>+ Thẻ mới</button>
             <button className="btn btn-sm" onClick={() => void importAll()} title="Chép mọi tài liệu hướng dẫn có sẵn thành thẻ (đã chép thì bỏ qua) và gắn vào màn tương ứng">Chép tài liệu có sẵn</button>
+          </div>
+          <div className="row" style={{ gap: 6, marginBottom: 6 }}>
+            <button className="btn btn-sm" onClick={() => void exportJson()} title="Tải tệp JSON gồm mọi thẻ (nội dung, ảnh) và nơi gắn — mang sang máy chủ khác để nhập">Xuất JSON</button>
+            <button className="btn btn-sm" onClick={() => fileIn.current?.click()} title="Nhập tệp JSON đã xuất: xem trước rồi mới ghi đè">Nhập JSON</button>
+            <input ref={fileIn} type="file" accept="application/json,.json" hidden onChange={(e) => void pickFile(e.target.files?.[0])} />
           </div>
           <input className="input" placeholder="Tìm tiêu đề, màn đang gắn" value={find} onChange={(e) => setFind(e.target.value)} />
           <div className="hd-items">
@@ -60,8 +104,46 @@ export function HuongDanPage() {
         </div>
         <div className="card hd-edit">{sel ? <SoanThe key={sel} id={sel} onDeleted={() => pick('')} /> : <div className="muted" style={{ padding: 16 }}>Chọn một thẻ bên trái để xem, sửa.</div>}</div>
       </div>
+      {pkg && (
+        <Modal wide title={`Nhập thẻ hướng dẫn — ${pkg.name}`} onClose={() => setPkg(null)} footer={<>
+          <button className="btn btn-primary" disabled={busy || (!pkg.preview.counts.new && !pkg.preview.counts.update && !pkg.preview.counts.placesChanged)} onClick={() => void doImport()}>{busy ? 'Đang nhập…' : 'Nhập (ghi đè)'}</button>
+          <button className="btn" onClick={() => setPkg(null)}>Thoát</button>
+        </>}>
+          <div className="full">
+            <b>{pkg.data.cards.length} thẻ trong tệp</b>{pkg.data.exportedAt ? <span className="muted"> · xuất lúc {new Date(pkg.data.exportedAt).toLocaleString('vi-VN')}</span> : null}:
+            {' '}<span className="badge badge-ok">{pkg.preview.counts.new} thêm mới</span>{' '}
+            <span className="badge badge-warn">{pkg.preview.counts.update} ghi đè</span>{' '}
+            <span className="badge badge-gray">{pkg.preview.counts.same} không đổi</span>{' '}
+            <span className="badge badge-info">{pkg.preview.counts.placesChanged} nơi gắn đổi</span>
+            <div className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>Thẻ khớp theo mã nguồn → nơi đang gắn → tiêu đề. Thẻ khớp bị ghi đè tiêu đề và nội dung; thẻ ở máy chủ này mà không có trong tệp giữ nguyên.</div>
+          </div>
+          <div className="full" style={{ maxHeight: '60vh', overflow: 'auto' }}>
+            <table className="grid full">
+              <thead><tr><th>Thẻ trong tệp</th><th style={{ width: 120 }}>Làm gì</th><th>Ở máy chủ này</th><th>Nơi gắn (màn / hộp thoại)</th></tr></thead>
+              <tbody>{[...pkg.preview.rows].sort((x, y) => rank(x) - rank(y)).map((x, i) => (
+                <tr key={i}>
+                  <td>{x.title || <span className="muted">(không tiêu đề)</span>}</td>
+                  <td>{x.action === 'new' ? <span className="badge badge-ok">Thêm mới</span> : x.action === 'update' ? <span className="badge badge-warn" title={[x.titleChanged && 'đổi tiêu đề', x.bodyChanged && 'đổi nội dung'].filter(Boolean).join(', ')}>Ghi đè</span> : <span className="badge badge-gray">Không đổi</span>}</td>
+                  <td>{x.targetTitle ?? <span className="muted">—</span>}{x.action === 'update' && <small className="muted"> · {[x.titleChanged && 'đổi tiêu đề', x.bodyChanged && 'đổi nội dung'].filter(Boolean).join(', ')}</small>}</td>
+                  <td>{x.places.length ? x.places.map((p) => (
+                    <div key={p.key} title={p.key}>{p.label || p.key}{p.change ? <small className="text-warn"> · {p.before ? `đang gắn "${p.before}" → đổi` : 'gắn mới'}</small> : <small className="muted"> · giữ nguyên</small>}</div>
+                  )) : <span className="muted">chưa gắn</span>}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </Modal>
+      )}
     </>
   );
+}
+
+/** Xem trước: dòng có thay đổi lên đầu (thêm mới, ghi đè, đổi nơi gắn), không đổi xuống cuối. */
+const rank = (x: PkgPreview['rows'][number]) => (x.action === 'new' ? 0 : x.action === 'update' ? 1 : x.places.some((p) => p.change) ? 2 : 3);
+interface HelpPkg { kind: string; version: number; exportedAt?: string; cards: { title: string; format: string; body: string; sourceKey: string; places: { key: string; label: string }[] }[] }
+interface PkgPreview {
+  rows: { title: string; action: 'new' | 'update' | 'same'; targetId: string | null; targetTitle: string | null; titleChanged: boolean; bodyChanged: boolean; places: { key: string; label: string; before: string | null; change: boolean }[] }[];
+  counts: { new: number; update: number; same: number; placesChanged: number };
 }
 
 function SoanThe({ id, onDeleted }: { id: string; onDeleted: () => void }) {

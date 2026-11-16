@@ -1,15 +1,10 @@
-{"_bang": "tai-khoan-ngam-dinh", "_mo_ta": "Tài khoản dùng khi chứng từ, lý do, mặt hàng không chỉ định. ", "_cot": ["key", "account_code", "name"]}
-{"key": "cash", "account_code": "1111", "name": "TK tiền mặt mặc định"}
+{"_bang": "tai-khoan-ngam-dinh", "_mo_ta": "Tài khoản của Quy tắc hạch toán (ACC41): khung Nợ / Có cố định, mỗi khoá một tài khoản chi tiết trong phạm vi đầu số.", "_cot": ["key", "account_code", "name"]}
 {"key": "tax_output", "account_code": "33311", "name": "TK thuế đầu ra ngầm định"}
 {"key": "tax_input", "account_code": "1331", "name": "TK thuế đầu vào ngầm định"}
 {"key": "goods_in_transit", "account_code": "1579", "name": "TK hàng gửi đi bán"}
 {"key": "internal_receivable_goods", "account_code": "13681", "name": "TK phải thu nội bộ hàng"}
-{"key": "internal_payable_goods", "account_code": "33681", "name": "TK phải trả nội bộ hàng"}
 {"key": "internal_receivable", "account_code": "13681", "name": "TK phải thu nội bộ tiền"}
 {"key": "internal_payable", "account_code": "33681", "name": "TK phải trả nội bộ tiền"}
-{"key": "internal_cogs", "account_code": "6326", "name": "TK ghi nhận giá vốn nội bộ khi chuyển kho"}
-{"key": "commission_debit", "account_code": "6418", "name": "TK Nợ mặc định ghi nhận hoa hồng"}
-{"key": "commission_credit", "account_code": "33881", "name": "TK Có mặc định ghi nhận hoa hồng"}
 {"key": "cash_in_transit", "account_code": "11319", "name": "Tiền đang chuyển"}
 {"key": "promotion_expense", "account_code": "64184", "name": "Chi phí hàng khuyến mại, tặng khách"}
 {"key": "receivable", "account_code": "1311", "name": "Phải thu khách hàng"}
@@ -19,4 +14,8 @@
 {"key": "revenue", "account_code": "51111", "name": "Doanh thu bán hàng"}
 {"key": "sales_return", "account_code": "52131", "name": "Hàng bán bị trả lại"}
 {"key": "cogs", "account_code": "6321", "name": "Giá vốn hàng bán"}
+{"key": "gift_cogs", "account_code": "6321", "name": "Giá vốn hàng tặng kèm"}
+{"key": "internal_revenue", "account_code": "51116", "name": "Doanh thu bán hàng nội bộ"}
+{"key": "internal_cogs", "account_code": "6326", "name": "Giá vốn hàng bán nội bộ"}
 {"key": "inventory", "account_code": "1561", "name": "Kho hàng hoá"}
+{"key": "payment_discount_income", "account_code": "5152", "name": "Chiết khấu thanh toán được hưởng"}

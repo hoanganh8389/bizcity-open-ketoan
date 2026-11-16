@@ -8,10 +8,10 @@
 | Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 170 |
+| Chưa ai nhận | 166 |
 | Chờ đủ tín hiệu | 69 |
 | Hoãn | 3 |
-| Xong | 312 |
+| Xong | 316 |
 | **Tổng** | **589** |
 
 ## Theo phân hệ (R-FLOW-10)
@@ -25,7 +25,7 @@
 | chung-tu | 67 | 5 | 0 | 25 | 97 |
 | tong-hop | 31 | 8 | 1 | 27 | 67 |
 | thue | 14 | 2 | 1 | 10 | 27 |
-| he-thong | 144 | 23 | 2 | 61 | 230 |
+| he-thong | 148 | 23 | 2 | 57 | 230 |
 
 ## Đang làm (7)
 
@@ -76,7 +76,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | mua-hang · ban-hang | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | mua-hang · ban-hang | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (170)
+## Chưa ai nhận (166)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -242,14 +242,10 @@
 | [S035-6](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L15) | PHASE-035 | he-thong | B4 — SC-MODS-1 (chặn: phủ 100 % phan-he/ và mã màn menu.ts), SC-MODS-2 (việc có modules[]; baseline phase ≤ 0… | P0 | — |
 | [S035-7](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L16) | PHASE-035 | he-thong | B6 — docs/huong-dan/modules-muc-dat.md; nếp rà hằng tuần (00 §5) vào AGENTS.md + RULE-FLOW; in HT11 cùng HT10 | P1 | — |
 | [S035-8](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L17) | PHASE-035 | he-thong | B5 — thẻ Việc <phân hệ> hôm nay (kho, mua hàng, bán hàng, quỹ, công nợ, thuế, tài sản, danh mục): component c… | P1 | — |
-| [S036-3](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L12) | PHASE-036 | he-thong | B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan | P0 | — |
-| [S036-4](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L13) | PHASE-036 | he-thong | B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); c… | P0 | — |
-| [S036-5](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L14) | PHASE-036 | he-thong | B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md | P0 | — |
 | [S036-6](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L15) | PHASE-036 | he-thong | B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-l… | P0 | — |
 | [S036-7](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-036 | he-thong | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | — |
 | [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | — |
 | [S036-10](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L20) | PHASE-036 | he-thong | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
-| [S036-11](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L21) | PHASE-036 | he-thong | B6 — SEEDSDIR có tác dụng trên bản cài Docker: docker-compose.yml truyền biến vào api (+ db-migrate) và gắn t… | P0 | — |
 
 ## Chờ đủ tín hiệu (69)
 
@@ -333,6 +329,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | he-thong | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | chung-tu | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (312)
+## Xong (316)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

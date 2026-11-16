@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # [2026-11-13 08:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-9: kiểm bản sao lưu vừa tạo (hỏng thì dừng), in sắp đổi gì (commit, migration, db/seeds, SEEDS_DIR, bộ giả lập), hỏi xác nhận (--yes), lỗi thì in lệnh lùi
+# [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: SEEDS_DIR đặt mà thư mục không có / thiếu tệp so với db/seeds của bản mới → dừng trước khi kéo mã
 # =============================================================================
 # Cập nhật phần mềm trên máy chủ: sao lưu → kiểm bản sao lưu → xem sắp đổi gì → xác nhận → lấy code mới → dựng lại → kiểm tra.
 #
@@ -61,7 +62,24 @@ else
 fi
 SEEDS_DIR_VAL="$(grep -E '^SEEDS_DIR=.+' .env | tail -1 | cut -d= -f2- || true)"
 if [ -n "$SEEDS_DIR_VAL" ]; then
-  echo "   SEEDS_DIR trong .env: $SEEDS_DIR_VAL (dữ liệu gốc của công ty, ngoài repo)"
+  echo "   SEEDS_DIR trong .env: $SEEDS_DIR_VAL (dữ liệu gốc của công ty, ngoài repo; compose gắn chỉ đọc vào api / db-migrate)"
+  # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: thư mục phải có và đủ tệp so với db/seeds của bản mới — Docker không được tự tạo thư mục rỗng, không lấy bù tệp giả lập
+  if [ ! -d "$SEEDS_DIR_VAL" ]; then
+    echo "LỖI: SEEDS_DIR=$SEEDS_DIR_VAL không phải thư mục trên máy này — DỪNG, chưa đổi gì (Docker sẽ tạo thư mục rỗng thay vào)." >&2
+    exit 1
+  fi
+  THIEU=""
+  for f in $(git ls-tree -r --name-only '@{u}' db/seeds/ | grep -vE '(^|/)README\.md$' || true); do
+    rel="${f#db/seeds/}"
+    [ -f "$SEEDS_DIR_VAL/$rel" ] || THIEU="$THIEU $rel"
+  done
+  if [ -n "$THIEU" ]; then
+    echo "LỖI: thư mục SEEDS_DIR thiếu $(echo $THIEU | wc -w | tr -d ' ') tệp có trong db/seeds của bản mới:" >&2
+    printf '      %s\n' $THIEU >&2
+    echo "      Chép các tệp đó từ db/seeds (bản mới) rồi thay bằng dữ liệu của công ty nếu cần — DỪNG, chưa đổi gì." >&2
+    exit 1
+  fi
+  echo "   Thư mục SEEDS_DIR đủ tệp so với db/seeds của bản mới."
 else
   echo "   SEEDS_DIR trong .env: chưa đặt (dữ liệu gốc đọc từ db/seeds của repo)"
   # Bộ db/seeds của bản sắp lấy về có tệp giả lập (dòng đầu "_nguon": "gia-lap", S030-53) không?

@@ -44,13 +44,6 @@ function cashAccount(ctx: RuleContext, methodCode: string): string {
   return account;
 }
 
-/** Lý do có ghi sổ: không truyền mã, hoặc lý do đánh dấu không ghi sổ (postToLedger = false) → undefined. */
-function postingReason(ctx: RuleContext, code: string | undefined, docType: string) {
-  if (!code) return undefined;
-  const r = ctx.resolver.reason(code, docType);
-  return (r.flags as Record<string, unknown> | null)?.postToLedger === false ? undefined : r;
-}
-
 export function buildCashTransferParts(doc: CashTransferDocument, ctx: RuleContext): PostingPart[] {
   const { resolver } = ctx;
   const b = ctx.stock;
@@ -65,30 +58,11 @@ export function buildCashTransferParts(doc: CashTransferDocument, ctx: RuleConte
     return [{ lines: new EntryBuilder().add({ part: 'payment', debitAccount: to, creditAccount: from, amount, description: 'Chuyển tiền nội bộ chi nhánh' }).toLines() }];
   }
 
-  const sendReason = postingReason(ctx, doc.reasonCode, 'cash_transfer') ?? resolver.reason(undefined, 'cash_transfer');
-  const recvReason = postingReason(ctx, doc.toReasonCode, 'cash_transfer');
-  // Tài khoản nội bộ, tiền đang chuyển: so sánh bằng peekDefault, chỉ ghi "thiếu cấu hình" khi thật sự dùng.
-  const ir = () => resolver.defaultAccount('internal_receivable', 'tài khoản phải thu nội bộ');
-  const ip = () => resolver.defaultAccount('internal_payable', 'tài khoản phải trả nội bộ');
-  const transit = () => resolver.defaultAccount('cash_in_transit', 'tài khoản tiền đang chuyển giữa các chi nhánh');
-  const irCode = resolver.peekDefault('internal_receivable');
-  const ipCode = resolver.peekDefault('internal_payable');
-  // Công tắc lý do tắt: không đọc đối ứng trên lý do — tiền đang chuyển (cùng đơn vị) / phải thu – phải trả nội bộ.
-  const sendCounter = resolver.reasonCounter(sendReason);
-  const recvCounter = resolver.reasonCounter(recvReason);
-
-  // Cặp tài khoản trung gian: [Nợ ở nơi chuyển, Có ở nơi nhận].
-  let pair: [string, string];
-  if (recvCounter) {
-    if (recvCounter === irCode) pair = [ip(), recvCounter]; // trả nợ nội bộ
-    else if (recvCounter === ipCode) pair = [ir(), recvCounter]; // cấp tiền nội bộ
-    else if (recvCounter === (sendCounter ?? resolver.peekDefault('cash_in_transit'))) pair = [recvCounter, recvCounter];
-    else throw Errors.posting(`Lý do thu ${recvReason!.code} (tài khoản đối ứng ${recvCounter}) chưa dùng được cho chuyển tiền giữa chi nhánh: chưa có cách hạch toán phía chuyển — cần kế toán xác nhận`);
-  } else if (sendCounter && sendCounter === ipCode) pair = [sendCounter, ir()];
-  else if (sendCounter && sendCounter === irCode) pair = [sendCounter, ip()];
-  else if (sendCounter) pair = [sendCounter, sendCounter];
-  else if (b.sameAccountingUnit) pair = [transit(), transit()];
-  else pair = [ir(), ip()];
+  // [2026-11-15 Nguyễn Văn Thủy] TK trung gian theo Quy tắc hạch toán, lý do không đổi tài khoản (đóng góp)
+  // Cùng đơn vị hạch toán: qua tiền đang chuyển; khác đơn vị: phải thu nội bộ (nơi chuyển) / phải trả nội bộ (nơi nhận).
+  const pair: [string, string] = b.sameAccountingUnit
+    ? [resolver.defaultAccount('cash_in_transit', 'tài khoản tiền đang chuyển giữa các chi nhánh'), resolver.defaultAccount('cash_in_transit', 'tài khoản tiền đang chuyển giữa các chi nhánh')]
+    : [resolver.defaultAccount('internal_receivable', 'tài khoản phải thu nội bộ'), resolver.defaultAccount('internal_payable', 'tài khoản phải trả nội bộ')];
   resolver.assertComplete();
 
   const parts: PostingPart[] = [

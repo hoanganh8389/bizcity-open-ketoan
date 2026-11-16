@@ -7,7 +7,7 @@
 | Màn hình | BH10 *Phiếu bán hàng*, BH11 *Hàng bán trả lại* (nhập tay — bán buôn, bán nợ, bán ngoài quầy) |
 | Bộ phận yêu cầu | Kế toán bán hàng, bán buôn |
 | Ngày tạo | 13/11/2026 |
-| Trạng thái | Nháp — anh Hoàng chốt hướng 13/11: làm thành đợt riêng; kho lấy sổ open-ketoan làm gốc; đặt ở module mới |
+| Trạng thái | **Đã đóng 15/11/2026** (anh Hoàng chốt) — §6 dòng 3 chuyển sang việc chuyển kho shop; biên bản chờ bộ phận kế toán bán hàng thử |
 
 Chữ chốt thiết kế: [nghiep-vu/21](../../nghiep-vu/21-phieu-ban-nhap-tay.md).
 
@@ -62,13 +62,14 @@ Hiện BH10 / BH11 chạy bằng **dữ liệu giả** lưu ở trình duyệt �
 
 | # | Câu hỏi | Mặc định tạm |
 |---|---|---|
-| Q1 | Phát hành hoá đơn điện tử ngay từ phiếu nhập tay? | **Đợt sau**: đi cùng đường máy bán (bản sao sổ → website → plugin hoá đơn), cần sửa phía website. Đợt này ghi tay số hoá đơn đã xuất |
-| Q2 | Chặn vượt hạn mức nợ khách? | **Đợt 4** (Chính sách bán, `sale.credit_limit@1`); đợt này chỉ hiện công nợ hiện tại của khách |
-| Q3 | Đầu số | Bán `BH`, trả `TL` + năm tháng + 6 số, theo cửa hàng × loại × tháng |
-| Q4 | Người lập được tự duyệt phiếu của mình? | Được, nếu có quyền ghi chứng từ (như phiếu mua hàng) |
+| Q1 | Phát hành hoá đơn điện tử ngay từ phiếu nhập tay? | **Chốt mặc định 15/11 — đợt sau**: đi cùng đường máy bán (bản sao sổ → website → plugin hoá đơn), cần sửa phía website. Đợt này ghi tay số hoá đơn đã xuất |
+| Q2 | Chặn vượt hạn mức nợ khách? | **Chốt mặc định 15/11 — đợt sau**; hiện có báo cáo kiểm soát cảnh báo khách vượt hạn mức; (Chính sách bán, `sale.credit_limit@1`); đợt này chỉ hiện công nợ hiện tại của khách |
+| Q3 | Đầu số | **Chốt mặc định 15/11:** bán `BH`, trả `TL` + năm tháng + 6 số, theo cửa hàng × loại × tháng |
+| Q4 | Người lập được tự duyệt phiếu của mình? | **Chốt mặc định 15/11:** được, nếu có quyền ghi chứng từ (như phiếu mua hàng) |
 
 ## 7. Kết quả chạy
-Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàng. Bước 2 (giá theo cửa hàng, khuyến mại, cảnh báo tồn trên màn): chưa làm.
+<!-- [2026-11-15 01:40 PM Võ Hoàng] NGHIEM-THU — đóng NT-BH-015 (đóng góp) -->
+Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàng. Bước 2 (14/11): giá theo cửa hàng, cảnh báo tồn. Bước 3 (14/11): khuyến mại. Đóng (15/11): §5 dòng 8, 9; §6 dòng 4. Test `nt-bh-015` 10/10.
 
 | Mục | Mong đợi | Thực tế | Lệch | Ghi chú |
 |---|---|---|---|---|
@@ -78,9 +79,12 @@ Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàn
 | §5 dòng 5 | duyệt → sổ | đúng — chứng từ `sale` posted, phiếu 2 hộp 648.000: Nợ 131x 648.000, Nợ = Có | — | |
 | §5 dòng 6 | bỏ duyệt đảo, duyệt lại | đúng — số dư chứng từ về 0; sửa 3 hộp, duyệt lại phiên bản 2: Nợ 131x 972.000 | — | |
 | §5 dòng 7 | trả nối gốc, không quá số bán | đúng — `TL<yyMM>000001` mang `originalDocKey`; còn trả được 2; trả 3 → 400 "còn trả được 2"; bỏ duyệt phiếu bán còn phiếu trả → 400 | — | |
+| §5 dòng 8 | hoá đơn ghi tay lên bảng kê | đúng — phiếu có số `0001234`, ký hiệu `1C26TAA` → duyệt: sổ hoá đơn (`tax_invoices`, nguồn bảng kê bán ra) có đúng số, ký hiệu theo chứng từ | — | |
+| §5 dòng 9 | danh sách lọc, tìm | đúng — lọc cửa hàng `CN02` chỉ ra CN02; lọc trạng thái nháp / đã duyệt; tìm theo số hoá đơn ra đúng 1 phiếu, theo mã khách `KH001`; lọc kỳ + cửa hàng; cột cửa hàng cạnh số phiếu | — | |
 | §5 dòng 10 | báo phiếu thử cũ | màn hiện thông báo khi máy còn phiếu thử; bấm Đã hiểu thì bỏ | — | |
 | §6 dòng 1 (vượt tồn) | cảnh báo, không chặn | **bước 2**: dòng bán vượt tồn sổ của kho đã chọn hiện "tồn sổ còn X"; test `quote`: bán 3 trả 1 → tồn −2 | — | |
-| §6 dòng 3 (chưa chuyển kho) | cảnh báo | chưa làm (chờ quy trình chuyển shop, chữ chốt §1) | — | |
+| §6 dòng 3 (chưa chuyển kho) | cảnh báo | **chuyển sang việc chuyển kho shop sang sổ kế toán** (chữ chốt §1, quyết định kho gốc A) — cần biết shop nào đã chuyển, chưa có quy trình | ngoài phiếu | anh Hoàng chốt 15/11 |
+| §6 dòng 4 | kỳ khoá chặn | đúng — khoá kỳ 01/2026 (CN01, phiếu bán) → duyệt phiếu ngày 15/01/2026 bị từ chối (kỳ đã khoá), phiếu vẫn nháp | — | |
 | §6 dòng 2, 5 | thiếu thuế / mã lạ; phiếu đã duyệt | đúng — báo đủ lỗi một lần; sửa / xoá phiếu đã duyệt → 409 | — | |
 
 ## 8. Biên bản nghiệm thu
@@ -93,4 +97,5 @@ Bước 1 (13/11): lưu thật, số phiếu, duyệt / bỏ duyệt, trả hàn
 | 13/11/2026 | Tạo phiếu |
 | 14/11/2026 | Bước 2: giá theo cửa hàng, cảnh báo tồn; khuyến mại để bước sau |
 | 14/11/2026 | Bước 3: khuyến mại trên phiếu bán (§5 dòng 4) |
+| 15/11/2026 | Đóng phiếu: §5 dòng 8, 9; §6 dòng 4 có kết quả; §6 dòng 3 chuyển việc chuyển kho shop; Q1–Q4 theo mặc định |
 | 13/11/2026 | Ghi kết quả bước 1 (lưu thật, số, duyệt / bỏ duyệt, trả); §5 dòng 3–4, §6 dòng 1, 3 sang bước 2 |

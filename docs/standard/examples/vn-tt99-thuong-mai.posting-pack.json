@@ -16,7 +16,6 @@
     { "code": "11211", "parent": "1121", "name": "Tiền gửi ngân hàng — tài khoản chính", "track": ["cashflow"] }
   ],
   "postingDefaults": {
-    "cash": "1111",
     "receivable": "1311",
     "payable": "3312",
     "tax_output": "33311",

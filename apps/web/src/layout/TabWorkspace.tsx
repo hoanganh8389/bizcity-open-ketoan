@@ -122,6 +122,13 @@ export function TabWorkspace({ menu, strip }: { menu: MenuItem[]; strip?: ReactN
     }
   };
   const close = (pathname: string) => closeTabs((t) => t.pathname !== pathname);
+  // [2026-11-16 Nguyễn Văn Thủy] nơi khác (vd nút Thiết lập ở thanh trên) xin đóng một thẻ (đóng góp)
+  const closeRef = useRef(close); closeRef.current = close;
+  useEffect(() => {
+    const on = (e: Event) => closeRef.current(String((e as CustomEvent<string>).detail));
+    window.addEventListener('ws-close-tab', on);
+    return () => window.removeEventListener('ws-close-tab', on);
+  }, []);
 
   return (
     <div className="workspace">

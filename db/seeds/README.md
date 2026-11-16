@@ -38,10 +38,13 @@ Bản cài của một công ty dùng danh mục thật của mình:
 
 1. Chép **cả** thư mục `db/seeds/` (cả các danh mục chuẩn) ra ngoài repo, vd `/srv/bizcity/seeds`, rồi thay 11 tệp trên bằng dữ liệu của công ty (giữ đúng khuôn: dòng đầu `_bang`, `_mo_ta`, `_cot`).
    - Bản cài đang chạy trước S030-53: lấy lại bộ cũ từ commit ngay trước đợt này — `git archive <commit> db/seeds | tar -x -C /srv/bizcity`.
-2. Đặt biến môi trường `SEEDS_DIR=/srv/bizcity/seeds` cho máy chủ API (`packages/platform/src/db/paths.ts`).
+2. Đặt `SEEDS_DIR=/srv/bizcity/seeds` trong `.env` của bản cài. <!-- [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: SEEDS_DIR qua .env có tác dụng trên Docker -->
+   - Docker: `docker-compose.yml` gắn thư mục đó **chỉ đọc** vào `/srv/bizcity-seeds` của `api` và `db-migrate`, rồi đặt biến trong container. Chạy lại `docker compose up -d` sau khi đổi `.env`.
+   - Chạy ngoài Docker (`npm run dev`): đặt biến môi trường `SEEDS_DIR` cho tiến trình API (`packages/platform/src/db/paths.ts`).
+   - Màn TI08 hiện dải *Đang đọc bộ danh mục của công ty*; chưa đặt thì báo đang đọc bộ giả lập.
 3. *Quay về dữ liệu gốc* (TI08) và bộ định khoản mặt hàng chưa có trong danh mục khi đó đọc bộ của công ty.
 
-Khi `main` đổi danh mục chuẩn (thêm loại thuế, lý do…), chép các tệp chuẩn đó sang thư mục riêng.
+Khi `main` đổi danh mục chuẩn (thêm loại thuế, lý do…), chép các tệp chuẩn đó sang thư mục riêng. Phần mềm **không** lấy bù tệp thiếu từ `db/seeds` (lấy nhầm là nạp dữ liệu giả); `scripts/cap-nhat.sh` so thư mục với `db/seeds` của bản mới và **dừng** khi thiếu tệp, in danh sách để chép.
 
 Thứ tự quay về toàn bộ khai ở `DATASETS` (`src/modules/default-data/default-data.service.ts`).
 

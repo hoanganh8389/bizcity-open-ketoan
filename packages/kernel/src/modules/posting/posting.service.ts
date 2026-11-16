@@ -4,7 +4,6 @@
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/posting.service.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 // [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: luật manual_journal; lý do của bút toán = lý do dòng đầu khi chứng từ không ghi; tra đối tượng theo dòng
-// [2026-11-10 02:00 PM Nguyễn Văn Thủy] PHASE-026 — áp bảng quy tắc định khoản (rule-table.ts) lên bút toán luật dựng (đóng góp)
 /**
  * Điều phối định khoản một chứng từ gốc:
  *   1. Quyết định bộ sổ (nội bộ luôn có; thuế nếu có hoá đơn hợp lệ và không phải phiếu nội bộ;
@@ -30,7 +29,7 @@ import { buildPurchaseParts, buildPurchaseReturnParts } from './rules/purchase.r
 import { buildStockAdjustmentLines, buildTransferParts, type PostingPart } from './rules/stock.rule.js';
 import { buildCashTransferParts, buildPaymentParts } from './rules/cash.rule.js';
 import { buildManualJournalParts } from './rules/journal.rule.js';
-import { applyRuleTable, type RuleHit } from './rule-table.js';
+import { stripPairTags } from './pair-tags.js';
 import type { PostingConfig } from '../posting-config/posting-config.repository.js';
 
 // [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 (D004-10): danh sách đóng bảy cột E2 — khớp trigger guard_ledger_entry_mutation (0049); test db-rules / e2-header-audit so với CSDL
@@ -38,7 +37,8 @@ import type { PostingConfig } from '../posting-config/posting-config.repository.
 export const E2_COLUMNS = ['doc_no', 'invoice_no', 'reason_code', 'partner_id', 'description', 'content_hash', 'event_version'] as const;
 // [2026-11-09 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-14: cột mà CSDL cho đổi khi bút toán posted (trigger không ép) = E2_COLUMNS + hai cột tên chụp của 0087; trigger ledger_entries_header_audit ghi dấu vết cả chín. Ứng dụng chỉ ghi bảy cột đầu
 /** Cột của ledger_entries mà trigger bất biến KHÔNG ép khi bút toán posted (đổi được về kỹ thuật). partner_name / partner_attr_id (0087) có ghi chú "không đổi về sau" nhưng chưa được ép: chờ chủ S029-19 quyết (Q004-9). */
-export const E2_DB_COLUMNS = [...E2_COLUMNS, 'partner_name', 'partner_attr_id'] as const;
+// [2026-11-15 Nguyễn Văn Thủy] partner_uid (0138) đổi cùng partner_id, trigger dấu vết ghi (0142); branch_uid bị ép không đổi (đóng góp)
+export const E2_DB_COLUMNS = [...E2_COLUMNS, 'partner_name', 'partner_attr_id', 'partner_uid'] as const;
 /** So hai giá trị cột: null ngang null; bigint của pg là chuỗi còn giá trị nhập có thể là số. */
 const sameValue = (a: unknown, b: unknown): boolean => (a == null || b == null ? a == null && b == null : String(a) === String(b));
 
@@ -118,30 +118,6 @@ async function linePartners(trx: Db, tenantId: string, lines: { lineKey: string;
   return map;
 }
 
-/** Mã chương trình / chính sách trên các dòng của chứng từ (policyRef.key) — để nạp loại chương trình cho bảng quy tắc. */
-export function programKeysOf(doc: IngestDocument): string[] {
-  const lines = (doc as { lines?: { policyRef?: { key?: string } }[] }).lines ?? [];
-  return [...new Set(lines.map((l) => l.policyRef?.key).filter((k): k is string => Boolean(k)))];
-}
-
-/**
- * Áp bảng quy tắc định khoản lên các phần bút toán (đổi tài khoản, không đổi số tiền). Quy tắc ngang hàng → chặn định khoản.
- * Không có quy tắc nào → giữ nguyên (chỉ bỏ nhãn).
- */
-export function applyRulesToParts(parts: PostingPart[], cfg: PostingConfig, date: string): { parts: PostingPart[]; hits: (RuleHit & { part: string; partIndex: number })[] } {
-  const tracks = (code: string) => { const a = cfg.accounts.get(code); return Boolean(a && (a.track_partner || a.is_debt || a.normal_side === 'both')); };
-  const hits: (RuleHit & { part: string; partIndex: number })[] = [];
-  const errors: string[] = [];
-  const out = parts.map((p, i) => {
-    const r = applyRuleTable(p.lines, cfg.ruleTable, { date, book: 'internal', tracksPartner: tracks });
-    errors.push(...r.errors);
-    hits.push(...r.hits.map((h) => ({ ...h, partIndex: i })));
-    return { ...p, lines: r.lines };
-  });
-  if (errors.length) throw Errors.posting('Bảng quy tắc định khoản có quy tắc ngang hàng', [...new Set(errors)]);
-  return { parts: out, hits };
-}
-
 /** Lấy một id khỏi map theo khoá và bỏ id đó khỏi các map còn lại (một bút toán chỉ được giữ một lần). */
 function takeReuse(key: string, from: Map<string, string[]> | undefined, others: (Map<string, string[]> | undefined)[]): string | undefined {
   const list = from?.get(key);
@@ -159,12 +135,13 @@ export const postingService = {
 
     const skus = skusOf(doc);
     // Chính sách kế toán áp cho NGÀY HẠCH TOÁN của chứng từ (ADR-0009): định khoản lại chứng từ cũ không theo quy tắc mới.
-    const cfg = await postingConfigRepository.loadPostingConfig(trx, ctx.tenantId, skus, { asOf: doc.docDate.slice(0, 10), actor: ctx.actor, programKeys: programKeysOf(doc) });
+    const cfg = await postingConfigRepository.loadPostingConfig(trx, ctx.tenantId, skus, { asOf: doc.docDate.slice(0, 10), actor: ctx.actor });
     ctx.policyVersion = cfg.policyVersion;
     const resolver = new AccountResolver(cfg);
     const partners = doc.docType === 'manual_journal' ? await linePartners(trx, ctx.tenantId, doc.lines) : undefined;
-    // Bảng quy tắc định khoản (0096): cài đặt quyết tài khoản; ledgerService.post bên dưới vẫn kiểm Nợ = Có, tài khoản, đối tượng, kỳ khoá.
-    const parts = applyRulesToParts(rule(doc, { resolver, partnerId: ctx.partnerId, stock: ctx.stock, partners }).filter((p) => p.lines.length), cfg, doc.docDate.slice(0, 10)).parts;
+    // [2026-11-15 Nguyễn Văn Thủy] tài khoản do bộ định khoản tra theo Quy tắc hạch toán; không còn bảng quy tắc đè (đóng góp)
+    // ledgerService.post bên dưới vẫn kiểm Nợ = Có, tài khoản chi tiết, đối tượng, kỳ khoá.
+    const parts = rule(doc, { resolver, partnerId: ctx.partnerId, stock: ctx.stock, partners }).filter((p) => p.lines.length).map((p) => ({ ...p, lines: stripPairTags(p.lines) }));
     if (!parts.length) return []; // chứng từ 0 đồng: không có gì để ghi
     // Ghi mã lý do đã dùng (kể cả lý do mặc định) để sổ, bảng tổng hợp chứng từ tách được theo lý do.
     // Phiếu kế toán module lập không có lý do mặc định: chứng từ không ghi lý do thì lấy lý do của dòng đầu.

@@ -42,7 +42,7 @@ Cài mới (cai-nhanh.sh / docker compose up)
   └─ job db-migrate: migration → seed() → [BIZCITY_SAMPLE ≠ off và CSDL vừa khởi tạo]
         └─ tạo đơn vị "Công ty mẫu" (is_sample) → core.setup.apply(thuong-mai-ban-le)
 Đăng nhập
-  ├─ đơn vị đang dùng TRẮNG + quyền settings:write → mở hộp thoại Thiết lập nhanh (một lần; tắt được, mở lại ở menu TI09)
+  ├─ đơn vị đang dùng TRẮNG + quyền settings:write → mở hộp thoại Thiết lập nhanh (một lần; tắt được, mở lại ở menu TI15 — §12) <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — TI09 đã dùng (Hướng dẫn sử dụng) → TI15 -->
   │     ├─ "Xem công ty mẫu"            → chuyển sang đơn vị mẫu (tạo + nạp nếu chưa có) → Tổng quan có số
   │     └─ "Thiết lập công ty của tôi"  → nạp cấu hình + danh mục chuẩn vào đơn vị này (không nghiệp vụ mẫu)
   ├─ đơn vị mẫu → biểu ngữ "Dữ liệu mẫu · Bắt đầu với công ty của bạn"
@@ -51,7 +51,7 @@ Cài mới (cai-nhanh.sh / docker compose up)
 
 ## 4. Hộp thoại Thiết lập nhanh (UI / UX)
 
-Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-lap-nhanh.html). Dựng trên `Modal` của ui-kit (thêm `Steps` — thành phần chỉ báo bước, đề xuất vào ui-kit, R-KER-8: ≥ 2 màn dùng — hộp thoại này và nhập Excel). Màn ở module mới `modules/thiet-lap/` (ADR-0024), mã màn **TI09**.
+Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-lap-nhanh.html). Dựng trên `Modal` của ui-kit (thêm `Steps` — thành phần chỉ báo bước, đề xuất vào ui-kit, R-KER-8: ≥ 2 màn dùng — hộp thoại này và nhập Excel). Màn ở module mới `modules/thiet-lap/` (ADR-0024), mã màn **TI15** (§12). <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — TI09 → TI15 -->
 
 **Khi nào hiện:** đơn vị trắng (D036-1) **và** người dùng có `settings:write` **và** chưa bấm "Để sau" trong phiên. Người không có quyền thấy biểu ngữ "Đơn vị chưa có dữ liệu — nhờ chủ đơn vị thiết lập".
 
@@ -101,7 +101,7 @@ Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-l
 |---|---|---|---|
 | B1 | `tenantEmptiness()` + `core.setup.status`; biểu ngữ "Đơn vị chưa có dữ liệu" ở Tổng quan | Cài mới vào là được chỉ đường, không còn màn "—" | K1 |
 | B2 | `core.setup.plan` / `apply` chạy preset có sẵn ở máy chủ; `cai-preset.mjs` gọi qua đây | Một nút nạp 3 chứng từ mẫu → B01 / B02 có số | K1 |
-| B3 | Hộp thoại 4 bước (`modules/thiet-lap/`, TI09) + `Steps` ở ui-kit | Kế toán tự nạp không cần dòng lệnh | R1 |
+| B3 | Hộp thoại 4 bước (`modules/thiet-lap/`, TI15 — §12) + `Steps` ở ui-kit | Kế toán tự nạp không cần dòng lệnh | R1 |
 | B4 | Gói `thuong-mai-ban-le` 1.1 (preset 1.1.0: openings, vouchers, assets, close, returns) | 18 báo cáo đích có số, T036-1 | R2 |
 | B5 | Đơn vị mẫu riêng (`is_sample`, Q036-1) + tự nạp ở `db-migrate` (`BIZCITY_SAMPLE`) | Cài mới là có Công ty mẫu | K2 (migration, tạo đơn vị) |
 | B6 | TI08 an toàn (D036-9) + `cap-nhat.sh` kiểm sao lưu (D036-10) + `docs/ops/SAO-LUU-KHOI-PHUC.md` (D036-11) | Hết đường mất dữ liệu bằng một cú bấm | K1 |
@@ -138,3 +138,183 @@ B6 không phụ thuộc B1..B5 — làm song song được, và **nên làm sớ
 - `scripts/khoi-phuc-thu.sh <tệp>`: khôi phục vào CSDL tạm `ketoan_khoi_phuc_thu`, đếm dòng các bảng chính, kiểm Nợ = Có, rồi xoá CSDL tạm — **không chạm CSDL đang chạy**.
 - `scripts/cap-nhat.sh`: sao lưu → `sao-luu.sh --kiem` (hỏng thì **dừng**) → in "sắp đổi gì" (số commit, migration mới, tệp `db/seeds` đổi, `SEEDS_DIR` có đặt không, `db/seeds` là bộ giả lập) → hỏi xác nhận (`--yes` bỏ qua) → nâng cấp; lỗi thì in đúng lệnh lùi (`git checkout <commit cũ>` + lệnh khôi phục bản vừa sao).
 - `docs/ops/SAO-LUU-KHOI-PHUC.md`: lịch hằng đêm, giữ bao lâu, chép ra máy khác, kiểm bản sao lưu, khôi phục thử, khôi phục thật (ghi đè), những gì **không** nằm trong bản sao lưu (`.env`, `SEEDS_DIR`, tệp đính kèm).
+
+**S036-11 — `SEEDS_DIR` có tác dụng trên bản cài Docker** (hạ tầng, K1) <!-- [2026-11-14 01:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt S036-11: compose gắn thư mục danh mục của công ty chỉ đọc, biến trong container chỉ có khi .env đặt; cap-nhat dừng khi thư mục sai / thiếu tệp; TI08 báo bộ đang đọc -->
+
+- **Compose:** `SEEDS_DIR` trong `.env` là đường dẫn **trên máy chủ**. Service `api` và `db-migrate` gắn `${SEEDS_DIR:-./db/seeds}` vào `/srv/bizcity-seeds` **chỉ đọc**, và đặt biến trong container `SEEDS_DIR: ${SEEDS_DIR:+/srv/bizcity-seeds}` — trống thì biến trong container trống, API đọc `db/seeds` có sẵn trong ảnh như cũ (không đổi hành vi bản cài chưa đặt).
+- **`packages/platform/src/db/paths.ts`:** chuỗi rỗng coi như chưa đặt (`||` thay `??`) cho `DB_DIR`, `SEEDS_DIR`, `PACKS_DIR`.
+- **Thay cả thư mục, không trộn từng tệp:** thư mục của công ty phải là bản **đủ** (chép cả `db/seeds` rồi thay tệp thật). Không tự lấy tệp thiếu từ bộ giả lập — lấy nhầm là nạp dữ liệu giả vào đơn vị thật.
+- **`scripts/cap-nhat.sh`:** `SEEDS_DIR` đặt mà thư mục không có, hoặc thiếu tệp có trong `db/seeds` của bản mới → **dừng trước khi kéo mã**, in danh sách tệp thiếu. Docker không được tự tạo thư mục rỗng thay cho bộ danh mục.
+- **TI08:** `GET /api/v1/default-data` trả `seedsSource` (`bundled` | `custom`, không lộ đường dẫn máy chủ) và mỗi bộ `synthetic` (tệp có `_nguon: "gia-lap"`); màn TI08 hiện dải báo đang đọc bộ nào, bộ nào là giả lập.
+- **Kiểm:** `docker compose config` với `.env` có / không đặt `SEEDS_DIR`; test API cho `seedsSource` / `synthetic`; chạy thật trên stack dev với thư mục ngoài repo.
+
+## 10. Chữ chốt B1 — đơn vị trắng (2026-11-14) <!-- [2026-11-14 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B1 (S036-3): tenantEmptiness, core.setup.status, biểu ngữ Tổng quan -->
+
+**`tenantEmptiness(trx, tenantId, { lock })`** — `apps/api/src/modules/system/setup-status.ts` (Core, lớp P như `policy-insight.ts`; chỉ đọc, không đụng Kernel):
+
+- Trả `{ empty: boolean, kinds: string[] }`. `kinds` = các loại dữ liệu nghiệp vụ đã có (mỗi loại một `EXISTS … LIMIT 1`, không đếm hết bảng).
+- **Danh sách đóng** loại → bảng (thêm loại chứng từ mới thì thêm dòng ở đây và ở test):
+
+  | Loại | Bảng | Ghi chú |
+  |---|---|---|
+  | `ledger` | `ledger_entries` | bút toán |
+  | `event` | `accounting_events` | mọi trạng thái (pending / posted / error / cancelled) — gồm phiếu thu chi, số dư đầu kỳ, chứng từ cửa nạp |
+  | `intake` | `intake_inbox` | bể chờ đầu vào (chứng từ bị giữ) |
+  | `purchase` | `purchase_documents` | phiếu mua mọi trạng thái, kể cả nháp |
+  | `supplier_invoice` | `supplier_invoices` | hoá đơn NCC |
+  | `stock_transfer` | `stock_transfer_docs` | phiếu chuyển kho |
+  | `payment_request` | `payment_requests` | đề nghị thanh toán, kể cả nháp |
+  | `transfer_request` | `transfer_requests` | đề nghị chuyển hàng |
+  | `asset` | `assets` | tài sản (danh mục loại tài sản do `seed()` tạo **không** tính) |
+  | `tax_invoice` | `tax_invoices` | hoá đơn bán ra |
+  | `vat_return` | `vat_returns` | tờ khai GTGT |
+  | `cit_return` | `cit_returns` | tờ khai TNDN |
+
+- Danh mục (tài khoản, đối tượng, mặt hàng, chi nhánh…) **không** tính: `seed()` và *Quay về dữ liệu gốc* tạo chúng trên đơn vị mới.
+- `lock: true` → `pg_advisory_xact_lock` theo đơn vị (khoá `setup:<tenantId>`) trước khi đọc, giữ tới hết giao dịch. B2 (`core.setup.apply`) gọi với `lock: true` cùng giao dịch ghi, rồi trả `SETUP-NOT-EMPTY` (D036-1, T036-2). B1 chỉ dùng `lock: false`.
+
+**Action `core.setup.status`** — `GET /api/v1/setup/status`, chỉ đọc, `idempotency: 'none'`, quyền `catalog:read` (người dùng nào của đơn vị cũng cần biết đơn vị trắng), `mcp: true`, `ai: 'read'`:
+
+- Trả `{ empty, kinds, canSetup }`; `canSetup` = người gọi có `settings:write`.
+- Không trả số tiền, số dòng hay tên — chỉ loại.
+- Trường "đã nạp gói nào" (D036-7) thêm ở B2, khi có bảng `sample_runs`.
+
+**Biểu ngữ ở Tổng quan (`/`)** — thành phần mới `apps/web/src/features/launcher/DonViTrang.tsx`, chèn một dòng vào `TongQuanPage.tsx` (của Nguyễn Văn Thủy, chỉ thêm, không đổi bố cục):
+
+- `empty && canSetup`: *"Đơn vị chưa có chứng từ nào"*, kèm ba đường: nạp danh mục chuẩn (TI08), nhập số dư đầu kỳ, lập chứng từ đầu tiên. Thêm dòng *"Thiết lập nhanh (nạp công ty mẫu) sắp có"* cho tới B3.
+- `empty && !canSetup`: *"Đơn vị chưa có dữ liệu — nhờ chủ đơn vị thiết lập"*.
+- `!empty`: không hiện gì.
+- Gọi một lần khi mở Tổng quan, `staleTime` 60 giây.
+
+**Kiểm:** `apps/api/test/setup-status.test.ts` — đơn vị mới → trắng; mỗi loại trong danh sách làm đơn vị hết trắng (ít nhất: phiếu thu chi nháp / chứng từ cửa nạp, phiếu mua nháp, bể chờ); đơn vị khác không thấy (RLS); người không có `settings:write` → `canSetup: false`.
+
+## 11. Chữ chốt B2 — máy chủ chạy gói mẫu (2026-11-14) <!-- [2026-11-14 05:48 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B2 (S036-4): core.setup.presets / plan / apply / run, sample_runs, chạy nền gọi lại action Core, cai-preset.mjs thành vỏ mỏng -->
+
+**Đường duy nhất: gọi lại action Core trong tiến trình.** Bộ chạy (`apps/api/src/modules/system/setup-run.ts`) đọc `presets/<id>/` và gọi `runAction` với quyền **của người bấm** cho từng bản ghi:
+
+| Khối | Action |
+|---|---|
+| chế độ ghi sổ | `core.posting-modes.update` |
+| chi nhánh | `core.branch.create` |
+| đối tượng | `core.partner.upsert` |
+| mặt hàng | `core.catalog-product.save` (`new: true`, như đường `PUT /catalog/products/:sku?new=true` script cũ dùng) <!-- [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: mặt hàng đi core.catalog-product.save (khuôn tệp mẫu có taxOutCode / taxInCode như màn mặt hàng) thay core.product.upsert --> |
+| chứng từ | `core.document.submit` |
+
+Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định khoản, bằng chứng như khi gõ tay (STD-PRE-3, D036-6) — không SQL, không ghi thẳng bảng, không số tài khoản. Tiền lệ: `runModuleSeed` (`POST /api/v1/system/modules/:key/seed`).
+
+**Chạy lại không nhân đôi, không ghi đè:**
+
+- Danh mục chỉ **tạo khi chưa có**: tra mã trước, đã có thì *bỏ qua*, không sửa bản ghi người dùng đã chỉnh.
+- Chứng từ theo `docKey` `preset:<id>:…` + `version` → lần hai `unchanged`.
+- Chế độ ghi sổ chỉ đặt ở **lần chạy đầu** (đơn vị còn trắng lúc bắt đầu).
+- Idempotency-Key mỗi bước: `setup:<runId>:<bước>`.
+- Ngày `@today-N` thay theo ngày máy chủ (giờ Việt Nam).
+
+**Bảng `sample_runs`** (migration số kế tiếp, tệp `*_sample_runs.sql`):
+
+- Cột: đơn vị, `preset_id`, `preset_version`, `status` (`running` | `done` | `failed`), `steps jsonb` (mỗi khối: tổng, ghi, bỏ qua, lỗi, mã lỗi + requestId của mục lỗi đầu), `started_by`, `started_at`, `heartbeat_at`, `finished_at`.
+- Chỉ mục duy nhất một phần `(tenant_id) WHERE status = 'running'`: hai lệnh cùng lúc → lệnh sau `CONFLICT` (T036-3).
+- `running` mà `heartbeat_at` cũ hơn 5 phút (API khởi động lại giữa chừng) → đọc / bấm lại thì coi là `failed`, cho chạy lại.
+- RLS theo đơn vị, `COMMENT ON`; `ketoan_app`: SELECT, INSERT, UPDATE.
+
+**Ai được chạy:** đơn vị **trắng** (`tenantEmptiness(trx, id, { lock: true })`, §10), **hoặc** đã có một lần chạy của **cùng gói** (chạy tiếp sau lỗi / chạy lại). Ngoài ra → `CONFLICT` `details.reason = SETUP_NOT_EMPTY`, không ghi gì (D036-4, T036-2). Đang chạy → `SETUP_RUNNING`. Kiểm + ghi dòng `running` cùng một giao dịch có khoá; từng bước sau đó là giao dịch riêng của action.
+
+**Giao diện máy:**
+
+| Action / route | Đường | Quyền | Ghi chú |
+|---|---|---|---|
+| `core.setup.presets` | `GET /api/v1/setup/presets` | `catalog:read` | danh sách gói: id, phiên bản, tên, mô tả, khối |
+| `core.setup.plan` | `GET /api/v1/setup/presets/:id/plan` | `settings:write` | xem trước, không ghi: mỗi khối tổng / đã có / sẽ thêm; `allowed` + lý do; năng lực Core thiếu (STD-PRE-6) |
+| apply (route giữ) | `POST /api/v1/setup/presets/:id/apply` | `settings:write` | trả **202** `{ runId }` rồi chạy nền; `Idempotency-Key` bắt buộc; không mở cho AI |
+| `core.setup.run` | `GET /api/v1/setup/runs/:id` | `catalog:read` | tiến độ từng khối |
+| `core.setup.status` | `GET /api/v1/setup/status` | `catalog:read` | thêm `runs[]`: lần chạy gần nhất của mỗi gói |
+
+- **Vì sao apply là route giữ, không phải `defineAction`:** bộ chạy nền cần `AuthContext` của người bấm để gọi lại action con với đúng quyền. Handler action không có `AuthContext` (chỉ `ctx.actor`, `ctx.can`). Thêm năng lực đó vào runtime là việc Platform riêng (bậc 4).
+- Route vào danh sách đóng `tests/conformance/checks/authz/route-giu.json` (lớp `quyen`) kèm lý do `@bizcity-route`, như `/system/modules/:key/seed`. Mỗi bản ghi bên trong đã có bằng chứng của action con.
+
+**Thứ đi kèm:**
+
+- `PRESETS_DIR` ở `packages/platform/src/db/paths.ts` (mặc định `<gốc>/presets`).
+- `docker/api.Dockerfile` chép `presets/` vào ảnh.
+- Mã lý do `SETUP_NOT_EMPTY`, `SETUP_RUNNING` thêm vào `ERROR_REASONS` (`packages/contracts/src/errors.ts`) và bảng [BIZCITY-ERRORS §4c](../../contracts/BIZCITY-ERRORS-v1.md).
+- [BIZCITY-PRESET-v1](../../contracts/BIZCITY-PRESET-v1.md) 1.1.0: STD-PRE-3 thêm "máy chủ chạy qua action Core"; §1 đổi đường cài; changelog.
+
+**`scripts/cai-preset.mjs` thành vỏ mỏng:**
+
+- Đăng nhập → `plan` (in bảng) → `apply` → hỏi `run` mỗi giây tới khi xong → in kết quả từng khối.
+- `--dry-run` chỉ gọi `plan`. `--no-sample` giữ (chỉ khối cấu hình).
+- Mã thoát ≠ 0 khi `failed` / `SETUP_NOT_EMPTY`.
+
+**Kiểm:** `apps/api/test/setup-apply.test.ts`:
+
+- đơn vị trắng → `done`, có bút toán của chứng từ mẫu;
+- chạy lại → 0 ghi;
+- đơn vị có phiếu nháp → `SETUP_NOT_EMPTY`, không có `sample_runs`;
+- hai lệnh cùng lúc → một `SETUP_RUNNING`;
+- `plan` không ghi gì;
+- người không có `settings:write` → 403;
+- `running` cũ → coi là `failed`.
+
+`apps/api/test/preset.test.ts` chạy `cai-preset.mjs` vào máy chủ thật như cũ.
+
+
+## 12. Chữ chốt B3 — hộp thoại Thiết lập nhanh (2026-11-14) <!-- [2026-11-14 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B3 (S036-5): module thiet-lap TI15, lối vào ở biểu ngữ đơn vị trắng, chọn khối khi nạp, siết luật chạy tiếp, Steps ở ui-kit -->
+
+**Mã màn TI15.** TI09 đã là *Hướng dẫn sử dụng* (`GuidesPage.tsx`), TI14 là *Nhập dữ liệu từ Excel*. Các chỗ ghi TI09 ở trên đổi thành TI15.
+
+**Module `modules/thiet-lap/`** (ADR-0024, tạo bằng `npx bizcity module new thiet-lap --label "Thiết lập nhanh"`):
+
+- **Chỉ giao diện**, như `thu-vien`: phần máy chủ không action, không bảng, không migration.
+- Mọi việc đi qua API Core đã có: `core.setup.status`, `core.setup.presets`, `core.setup.plan`, `POST /api/v1/setup/presets/:id/apply`, `core.setup.run`, `GET` / `PUT /api/v1/tenant` (`core.tenant.update`).
+- Menu `/app/thiet-lap`, mã **TI15**, quyền `settings:write`. Màn chỉ dùng `@bizcity/ui-kit`.
+
+**Lối vào:** ở biểu ngữ *Đơn vị chưa có dữ liệu* (`apps/web/src/features/launcher/DonViTrang.tsx`, B1), **không** dùng slot `dashboard.widget`.
+
+- Lý do: Tổng quan vẽ khung thẻ có tiêu đề cho mọi widget, kể cả widget không có nội dung. Đơn vị đã có dữ liệu sẽ mang một thẻ rỗng mãi.
+- Khi module `thiet-lap` đang bật: nút chính *Thiết lập nhanh* (thay dòng "sắp có" của B1).
+- Người có `settings:write`, đơn vị trắng, chưa bấm *Để sau* trong phiên: hiện hộp nhắc một lần (*Bắt đầu* → TI15 · *Để sau*).
+- Module tắt: biểu ngữ như B1, không có nút.
+- Core chỉ biết đường dẫn của module, không import mã module.
+
+**Bốn bước** (thanh bước `Steps`, đi tới / lùi được tới khi bấm nạp):
+
+| Bước | Nội dung | Ghi chú |
+|---|---|---|
+| 1 Bắt đầu | Hai thẻ. **Thiết lập công ty của tôi** chọn sẵn. **Xem công ty mẫu** hiện mờ, ghi *"sắp có"* | Q036-1: dữ liệu mẫu ở đơn vị mẫu riêng (B5). B3 **không** nạp chứng từ mẫu vào đơn vị đang dùng |
+| 2 Công ty | Tên, MST, địa chỉ, điện thoại (điền sẵn từ `GET /api/v1/tenant`). Lưu bằng `core.tenant.update` khi bấm *Tiếp*; lỗi của máy chủ hiện ngay dưới ô. Chế độ kế toán (TT99) và phương pháp GTGT (khấu trừ) chỉ hiện, không chọn | Chưa có khoá cấu hình cho hai mục này; mỗi mục một lựa chọn |
+| 2 Công ty — ngành | Danh sách gói từ `core.setup.presets`. Ngành chưa có gói (Dịch vụ, Sản xuất, Xây dựng) hiện mờ *"sắp có"* | |
+| 3 Nạp gì | Từ `core.setup.plan`: mỗi khối một hàng (tên · tổng · đã có · sẽ thêm). **Cấu hình** luôn bật (khoá). **Danh mục mẫu** (chi nhánh, đối tượng, mặt hàng) tick được, mặc định tắt (Q036-5). **Chứng từ mẫu** không hiện ở đường "công ty của tôi". Dòng *Danh mục chuẩn* (hệ thống tài khoản…): "đã có từ lúc tạo đơn vị", kèm liên kết TI08 | `allowed = false` → hiện `reason`, khoá nút *Nạp dữ liệu* |
+| 4 Đang nạp → Xong | Gọi apply, rồi hỏi `core.setup.run` mỗi giây. Mỗi khối: chờ / đang chạy / xong (ghi, đã có) / lỗi (mã lỗi đầu + *Thử lại*). Xong: *Mở Tổng quan* và ba đường tiếp (số dư đầu kỳ, phiếu thu, TI08) | *Thử lại* = apply lại; phần đã có được bỏ qua |
+
+- Đóng giữa chừng không dừng việc nạp (máy chủ chạy nền). Mở lại TI15 mà `status.runs` còn lần `running` thì vào thẳng bước 4.
+- Lưới *"Báo cáo sẽ có số"* và dòng *Kiểm sổ* sau khi nạp làm ở B4 / B5. Đường "công ty của tôi" không có chứng từ nên báo cáo còn trống.
+
+**Đổi ở API (K1, `setup-run.ts`, `system.routes.ts`):**
+
+- `core.setup.plan` và apply nhận thêm `blocks`: danh sách khoá khối, cách nhau dấu phẩy (`branches,partners,products`).
+  - Khối `settings` luôn có. Khoá lạ → `VALIDATION`.
+  - Không gửi `blocks` → mọi khối, như B2.
+  - `sample=0` giữ nguyên nghĩa (chỉ `settings`).
+- Lần chạy chỉ ghi các khối đã chọn vào `steps`.
+- **Siết luật chạy tiếp.** Lỗ hổng của B2: trước đây chỉ cần "đã từng chạy cùng gói". Ví dụ: lần đầu chỉ nạp cấu hình → đơn vị nhập chứng từ thật → vẫn nạp được chứng từ mẫu.
+  - Luật mới: đơn vị **không trắng** chỉ chạy được khi các khối xin chạy **nằm trong** hợp các khối của những lần chạy trước của cùng gói.
+  - Ngoài trường hợp đó → `SETUP_NOT_EMPTY`, như cũ.
+  - Ca **T036-9**.
+
+**`Steps` ở `@bizcity/ui-kit`** (`packages/ui-kit/src/steps.tsx`, thành phần thuần như `LibraryPicker`):
+
+- `<Steps steps={['Bắt đầu', 'Công ty', 'Nạp gì', 'Xong']} current={i} />`: bước trước `current` là xong, bước `current` đang làm.
+- Vẽ bằng lớp CSS `.nx-steps` của thanh bước nhập Excel (TI14, `NhapExcelWizard.tsx`) → hai màn một kiểu, không thêm CSS (R-KER-8: hộp thoại này và TI14).
+- Chuyển `NhapExcelWizard.tsx` sang `<Steps>` là việc ghi cho người đóng góp; B3 **không** sửa tệp đó.
+- Thêm một dòng vào bảng [BIZCITY-EXTENSION §3b](../../contracts/BIZCITY-EXTENSION-v1.md).
+
+**Hướng dẫn:** `docs/huong-dan/thiet-lap-nhanh.md` (SC-DOC-6); sửa `docs/huong-dan/trang-chu.md` (nút mới ở biểu ngữ).
+
+**Kiểm:**
+
+- `setup-apply.test.ts` thêm:
+  - `blocks` chọn đúng khối, khoá lạ → 400;
+  - **T036-9**: chỉ nạp cấu hình → thêm chứng từ thật → xin khối chứng từ mẫu → `SETUP_NOT_EMPTY`; xin lại đúng khối đã chạy → được.
+- Test hợp đồng module (`modules/thiet-lap/test/`); `npx bizcity module check thiet-lap` ĐẠT.
+- Chạy thật trên giao diện, đơn vị trắng: đi hết bốn bước, có ảnh màn.
+- Phá thử luật chạy tiếp → test đỏ.

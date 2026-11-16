@@ -11,7 +11,7 @@
  * Chuyển kho (lý do mặc định: xuất chuyển kho) — mỗi chi nhánh một bút toán:
  *   Chi nhánh XUẤT (ghi ngay khi phiếu tạo):   Nợ TK hàng đang chuyển / Có TK kho
  *   Chi nhánh NHẬN (khi đã xác nhận nhận hàng): Nợ TK kho              / Có TK hàng đang chuyển
- *   TK hàng đang chuyển: lý do.counter_account → ngầm định "goods_in_transit" (1579) khi hai chi nhánh
+ *   TK hàng đang chuyển: "goods_in_transit" của Quy tắc hạch toán (1579) khi hai chi nhánh
  *   cùng đơn vị hạch toán; khác đơn vị hạch toán → ngầm định "internal_receivable_goods" (phải thu nội bộ hàng 13681; chưa đặt thì dùng phải thu nội bộ tiền).
  *   Đối tượng trên TK trung gian là chi nhánh bên kia, để đối chiếu từng cặp chi nhánh.
  *   Số dư TK hàng đang chuyển = hàng đã xuất mà nơi nhận chưa xác nhận.
@@ -19,9 +19,11 @@
  * Phiếu một đầu (leg — phiếu xuất nội bộ / phiếu nhận nội bộ của từng cửa hàng): chỉ một bút toán ở chi nhánh của phiếu,
  *   'out': Nợ TK hàng đang chuyển / Có TK kho;  'in': Nợ TK kho / Có TK hàng đang chuyển. Đối tượng = chi nhánh bên kia (nếu biết).
  *
- * Điều chỉnh kho (lý do mặc định theo chiều):
- *   Tăng (kiểm kê thừa…): Nợ TK kho          / Có TK đối ứng (3381 thừa chờ xử lý…)
- *   Giảm (kiểm kê thiếu…): Nợ TK đối ứng (1381 thiếu chờ xử lý, 632, 641…) / Có TK kho
+ * Điều chỉnh kho / xuất kho không bán:
+ *   Tăng (kiểm kê thừa…): Nợ TK kho          / Có TK đối ứng
+ *   Giảm (kiểm kê thiếu, hủy, dùng…): Nợ TK đối ứng / Có TK kho
+ *   TK đối ứng: Mục đích xuất của phiếu (purposeCode: hủy hàng hỏng 6328, dùng BP bán hàng 64128…);
+ *   không có mục đích → thừa chờ xử lý (3381) / thiếu chờ xử lý (1381) của Quy tắc hạch toán.
  */
 import type { StockAdjustmentDocument, TransferDocument, DocType } from '@ketoan/contracts';
 import type { DraftLine } from '../../ledger/ledger.types.js';
@@ -52,22 +54,15 @@ export interface PostingPart {
  */
 const valued = (b: EntryBuilder, pair: Parameters<EntryBuilder['add']>[0]) => { if (pair.amount) b.add(pair); };
 
-/** Tài khoản hàng tồn kho (15x trừ 157 hàng gửi đi / đang chuyển). */
-const isInventoryAccount = (code: string | null | undefined) => Boolean(code && code.startsWith('15') && !code.startsWith('157'));
-
 export function buildTransferParts(doc: TransferDocument, ctx: RuleContext): PostingPart[] {
   const { resolver } = ctx;
   const stock = ctx.stock;
   if (!stock) throw new Error('Thiếu ngữ cảnh chi nhánh của phiếu chuyển kho');
   if (!doc.leg && !stock.toBranchId) throw new Error('Thiếu chi nhánh nhận của phiếu chuyển kho');
   if (stock.toBranchId === stock.branchId) return []; // cùng chi nhánh: hàng không đổi chỗ trên sổ
-  const picked = resolver.reason(doc.reasonCode, 'transfer');
-  // Lý do lấy từ danh mục cũ có thể đặt đối ứng là chính tài khoản kho (1561): ghi Nợ 1561 / Có 1561 là vô nghĩa,
-  // nên bỏ qua đối ứng đó và dùng tài khoản trung gian ngầm định (1579 hàng đang chuyển / 13681 phải thu nội bộ).
-  const reason = isInventoryAccount(picked.counter_account) ? { ...picked, counter_account: null } : picked;
   const transit = stock.sameAccountingUnit
-    ? resolver.counterOr(reason, 'goods_in_transit', 'tài khoản hàng đang chuyển giữa các chi nhánh')
-    : resolver.counterOr(reason, 'internal_receivable_goods', 'tài khoản phải thu nội bộ hàng', 'internal_receivable');
+    ? resolver.counterOr(undefined, 'goods_in_transit', 'tài khoản hàng đang chuyển giữa các chi nhánh')
+    : resolver.counterOr(undefined, 'internal_receivable_goods', 'tài khoản phải thu nội bộ hàng', 'internal_receivable');
 
   if (doc.leg) {
     const b = new EntryBuilder();
@@ -109,12 +104,14 @@ export function buildStockAdjustmentLines(doc: StockAdjustmentDocument, ctx: Rul
   // Chiều của từng dòng: theo chứng từ, riêng 'mixed' theo dấu số lượng. Tài khoản đối ứng tra theo chiều (3381 / 1381…).
   const incOf = (qty: number) => (doc.direction === 'mixed' ? qty > 0 : doc.direction === 'increase');
   const counters = new Map<boolean, string>();
+  // [2026-11-15 Nguyễn Văn Thủy] TK đối ứng: Mục đích xuất của phiếu → không có thì thừa / thiếu chờ xử lý của quy tắc (đóng góp)
   const counterOf = (increase: boolean) => {
     if (!counters.has(increase)) {
-      const reason = resolver.reason(doc.reasonCode, `stock_adjustment:${increase ? 'increase' : 'decrease'}`);
-      counters.set(increase, increase
-        ? resolver.counterOr(reason, 'stock_surplus', 'tài khoản hàng thừa chờ xử lý')
-        : resolver.counterOr(reason, 'stock_shortage', 'tài khoản hàng thiếu chờ xử lý'));
+      counters.set(increase, doc.purposeCode
+        ? resolver.purposeAccount(doc.purposeCode, increase)
+        : increase
+          ? resolver.counterOr(undefined, 'stock_surplus', 'tài khoản hàng thừa chờ xử lý')
+          : resolver.counterOr(undefined, 'stock_shortage', 'tài khoản hàng thiếu chờ xử lý'));
     }
     return counters.get(increase)!;
   };

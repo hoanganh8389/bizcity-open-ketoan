@@ -29,7 +29,7 @@
     "bizcity_domain": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-DOMAIN-v1.md", "role": "accounting invariants — Domain Contract (layer 1/4)" },
     "bizcity_compliance": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-COMPLIANCE-v1.md", "role": "compliance control layer — matrix docs/standard/compliance-matrix.json" },
     "bizcity_errors": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-ERRORS-v1.md", "role": "error catalog of bizcity_api / bizcity_action / bizcity_mcp" },
-    "bizcity_preset": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-PRESET-v1.md", "schema": "docs/contracts/BIZCITY-PRESET-v1.schema.json" }
+    "bizcity_preset": { "version": "1.1.0", "doc": "docs/contracts/BIZCITY-PRESET-v1.md", "schema": "docs/contracts/BIZCITY-PRESET-v1.schema.json" }
   },
   "supreme": "Mục tiêu: SQL minh bạch, Accounting Core ổn định, cộng đồng tự do vibe-code phần mở rộng mà không làm mất tính toàn vẹn của dữ liệu kế toán. Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán. — Johnny Chu – Chu Hoàng Anh",
   "principles": [

@@ -101,16 +101,8 @@ dangKyManHinh({
   thaoTac: { xem: xem('cai-dat'), sua: { quyen: 'mua-hang:cai-dat-sua', nhan: 'Lưu cài đặt', loai: 'ghi', lenh: [L('PUT', '/api/v1/purchase/settings')], goc: 'settings:write' } }, // [2026-11-14 07:30 PM kiennt] PHAN-QUYEN — goc (đóng góp)
 });
 dangKyManHinh({
-  key: 'mua-hang.bien-the', ma: 'MH26', nhom, nhan: 'Biến thể mặt hàng', duongDan: '/mua-hang/bien-the',
+  key: 'mua-hang.bien-the', ma: 'MH26', nhom, nhan: 'Tách / gộp mã con khi đặt hàng', duongDan: '/mua-hang/bien-the',
   thaoTac: { xem: { ...xem('bien-the'), lenh: [L('GET', '/api/v1/purchase/variants')] }, sua: { quyen: 'mua-hang:bien-the-sua', nhan: 'Lưu đuôi mã tách riêng', loai: 'ghi', lenh: [L('PUT', '/api/v1/purchase/variants')] } },
-});
-dangKyManHinh({
-  key: 'mua-hang.dvt-thung', ma: 'MH27', nhom, nhan: 'ĐVT Thùng đặt hàng', duongDan: '/mua-hang/dvt-thung',
-  thaoTac: {
-    xem: { ...xem('dvt-thung'), lenh: [L('GET', '/api/v1/purchase/units/thung/empty-rows')] }, // [2026-11-14 07:30 PM kiennt] PHAN-QUYEN — Xem gác lệnh đọc riêng của màn (đóng góp)
-    sua: { quyen: 'mua-hang:dvt-thung-sua', nhan: 'Chạy thật / dọn dòng Thùng trống', loai: 'ghi',
-      lenh: [L('POST', '/api/v1/purchase/units/thung/apply'), L('POST', '/api/v1/purchase/units/thung/empty-rows/delete')] },
-  },
 });
 dangKyManHinh({
   key: 'mua-hang.khoi-dau', ma: 'MH20', nhom, nhan: 'Nhập dữ liệu khởi đầu', duongDan: '/mua-hang/khoi-dau',

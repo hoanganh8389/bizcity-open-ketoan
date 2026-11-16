@@ -22,6 +22,7 @@ Mọi file mẫu trong [`vi-du/`](vi-du/) được kiểm tự động mỗi l�
 | [11-thu-tien-khach.md](11-thu-tien-khach.md) | Thu tiền khách trả nợ, thu hộ chi nhánh khác `customer_payment` | `thu-tien-khach.json` |
 | [12-tra-tien-ncc.md](12-tra-tien-ncc.md) | Trả tiền nhà cung cấp, trả hộ chi nhánh khác `supplier_payment` | `tra-tien-ncc.json` |
 | [15-phieu-ke-toan-module.md](15-phieu-ke-toan-module.md) | Phiếu kế toán do **module** lập `manual_journal` (phân bổ, trích trước, chi phí lương): dòng chỉ có lý do loại journal + số tiền | `vi-du-module/phieu-ke-toan-phan-bo.json` (kiểm theo khuôn, không gửi thật: cần lý do journal, mặc định chờ duyệt) |
+| [17-quy-tac-hach-toan.md](17-quy-tac-hach-toan.md) | **Đọc quy tắc hạch toán** (mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu), mục đích xuất, **xem thử bút toán** một chứng từ trước khi gửi | |
 | [13-phieu-nhap-tay.md](13-phieu-nhap-tay.md) | **Đề xuất** — phiếu nhập tay trong phần mềm (bán, trả lại, mua, trả NCC, chuyển kho) `/api/v1/trade-documents` | `apps/web/src/phan-he/*/…/mau-*.json` |
 
 ## Năm điều phải nhớ
@@ -30,7 +31,7 @@ Mọi file mẫu trong [`vi-du/`](vi-du/) được kiểm tự động mỗi l�
 2. **Số tiền là số đã chốt ở nguồn**, đúng như trên hoá đơn. Phần mềm kế toán không tính lại thuế, chỉ kiểm tổng các dòng khớp tổng chứng từ (tới đồng lẻ).
 3. **`docKey` duy nhất và không bao giờ đổi** cho mỗi chứng từ. Gửi lại cùng `docKey` + cùng `version` là an toàn (không ghi trùng).
 4. **Sửa chứng từ = gửi lại cùng `docKey` với `version` lớn hơn.** Khi định khoản lại, phần mềm kế toán tự ghi số âm bút toán cũ rồi ghi bút toán mới.
-5. **Mọi mã** (chi nhánh, loại thuế, hình thức thanh toán, lý do) phải có sẵn trong danh mục bên kế toán. Thiếu mã thì chứng từ báo lỗi, kế toán bổ sung rồi định khoản lại ở màn **Định khoản tự động (ACC14)**.
+5. **Mọi mã** (chi nhánh, loại thuế, hình thức thanh toán, mục đích xuất) phải có sẵn trong danh mục bên kế toán. Thiếu mã thì chứng từ báo lỗi, kế toán bổ sung rồi định khoản lại ở màn **Định khoản tự động (ACC14)**.
 
 ## Gửi thử nhanh
 
