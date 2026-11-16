@@ -36,6 +36,7 @@ Tổ chức → Đối tượng → Tài khoản, ngân hàng → (song song) Ch
 - Nhân viên: Điện thoại + Di động gộp một ô Di động.
 - Loại kho (DM18): bỏ hai thẻ, màn chỉ còn danh sách; **Nghiệp vụ dùng loại kho** chuyển vào ngăn Hướng dẫn (vẫn sửa được). Hộp thoại mở ở chế độ xem. **TK kho** phải là tài khoản cấp cuối — tài khoản tổng hợp báo đỏ, khoá Ghi.
 - Mặt hàng (DM10): **In tem** gom vào một nút "In tem ▾" mở một bảng: phạm vi (mã đang chọn / mọi dòng đang hiện), mẫu tem (ô chọn), số tem mỗi mã, tổng số tem, nút In tem.
+- Nhóm hàng (DM11): kiểu **cây – chi tiết** — trái là cây nhóm (tìm, mở / thu), phải là nhóm đang chọn: đường dẫn bấm được, thẻ số liệu (mã ngắn, nhóm con, mặt hàng cả nhánh, sửa lần cuối), **cấu trúc mã hàng** (ngành · nhãn · nhóm · số thứ tự, tô ô của cấp đang xem), bảng nhóm con bấm để đi xuống; nút thêm theo cấp (ngành hàng → nhóm con → mặt hàng). Bỏ chế độ "Chỉ nhóm cấp N" và nút chọn cột.
 - Bảng giá: nút in bảng giá đổi tên "In bảng giá" (khỏi trùng nút In màn).
 
 ## Component
@@ -43,6 +44,7 @@ Tổ chức → Đối tượng → Tài khoản, ngân hàng → (song song) Ch
 - `CatalogToolbar`: thêm `left`, `phai`.
 - `HelpDrawer` / `PageHeader`: thêm `extra` / `helpExtra` (phần riêng của màn trong ngăn Hướng dẫn).
 - `PartnerPicker`: thêm `groupCode`.
+- `CayNhomHang`: chọn nhóm từ ngoài cây thì cây tự mở đường tới nhóm đó.
 - `PrintButton`: thêm `templateId` (in đúng mẫu đó, không hiện mũi tên chọn mẫu).
 - `SoDo.nhom` (`layout/so-do-nhom.ts`) + `NhomFlow` (`SoDoNhom.tsx`): sơ đồ theo nhóm chức năng.
 
