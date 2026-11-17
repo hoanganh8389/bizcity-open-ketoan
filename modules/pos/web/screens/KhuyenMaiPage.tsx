@@ -8,9 +8,11 @@
  */
 // [2026-11-14 01:20 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: màn Khuyến mại BH18 (đóng góp)
 // [2026-11-15 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-018: gộp BH12 vào BH18 thành một màn Chương trình khuyến mại (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: Thêm / Sửa lưu nháp → duyệt → phát hành; thẻ Nháp / chờ duyệt, Báo cáo khuyến mại; ngừng ghi nhật ký (đóng góp)
 import { useMemo, useState } from 'react';
 import { BranchPicker, DataGrid, ErrorBox, Field, Loading, Modal, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient, type GridColumn } from '@bizcity/ui-kit';
-import { Badge, vnd } from '../lib';
+import { Badge, M, vnd } from '../lib';
+import { DraftsTab, PromoReportTab, draftToForm } from './khuyen-mai/Drafts';
 import { HanMucForm } from './khuyen-mai/HanMucForm';
 import { HanMucList, HanMucReport } from './khuyen-mai/HanMucTab';
 import { QUOTA_KINDS, type Program } from './khuyen-mai/han-muc';
@@ -39,14 +41,16 @@ const cols: GridColumn<Row>[] = [
   { key: 'note', header: 'Tên / ghi chú', width: 260 },
 ];
 
-type Tab = 'km' | 'han-muc' | 'bao-cao';
+type Tab = 'km' | 'nhap' | 'han-muc' | 'bao-cao' | 'bao-cao-km';
 const TABS: [Tab, string, string][] = [
-  ['km', 'Khuyến mại', 'Giảm theo bậc, tổng đơn / mã giảm giá, quà theo tổng đơn, combo, món rẻ nhất, mua X tặng Y'],
+  ['km', 'Khuyến mại', 'Giảm theo bậc, tổng đơn / mã giảm giá, quà theo tổng đơn, combo, món rẻ nhất, mua X tặng Y — đã phát hành'],
+  ['nhap', 'Nháp / chờ duyệt', 'Khuyến mại mới / sửa chờ người có quyền Duyệt khuyến mại duyệt rồi mới phát hành (NT-BH-025)'],
   ['han-muc', 'Có hạn mức', 'Tặng hàng / giảm giá trên một mặt hàng, mỗi cửa hàng một số suất (trước là màn Chương trình bán BH12)'],
   ['bao-cao', 'Báo cáo hạn mức', 'Hạn mức, đã dùng, còn lại theo cửa hàng — tính từ các dòng đã bán'],
+  ['bao-cao-km', 'Báo cáo khuyến mại', 'Khuyến mại đã dùng theo chương trình × cửa hàng × kỳ: số đơn, tiền giảm, số quà, lượt / hạn mức; bấm xem đơn; Excel'],
 ];
 const tabFromUrl = (): Tab => {
-  try { const t = new URLSearchParams(window.location.search).get('the'); return t === 'han-muc' || t === 'bao-cao' ? t : 'km'; } catch { return 'km'; }
+  try { const t = new URLSearchParams(window.location.search).get('the'); return TABS.some(([k]) => k === t) ? (t as Tab) : 'km'; } catch { return 'km'; }
 };
 
 export function KhuyenMaiPage() {
@@ -61,7 +65,7 @@ export function KhuyenMaiPage() {
   const reg = useQuery({ queryKey: ['km', 'registry'], queryFn: () => api.get<{ items: RegPolicy[] }>('/api/v1/policy-registry') });
   const cur = useQuery({ queryKey: ['km', 'current'], queryFn: () => api.get<{ items: PolicyView[] }>('/api/v1/policies', { domain: 'sale' }) });
   const [pick, setPick] = useState<Row | null>(null);
-  const [form, setForm] = useState<{ f: Form; editing: boolean } | null>(null);
+  const [form, setForm] = useState<{ f: Form; editing: boolean; draftId?: string } | null>(null);
   const [chooseKind, setChooseKind] = useState(false);
   const [trial, setTrial] = useState<string[] | null>(null);
   const [stopOf, setStopOf] = useState<Row | null>(null);
@@ -107,7 +111,7 @@ export function KhuyenMaiPage() {
       return api.post('/api/v1/policies', {
         key: r.key, ruleContract: r.contract, params: stopParams(p.params!, from), effectiveFrom: from,
         ...(p.scope?.branchCodes?.length ? { scope: { branchCodes: p.scope.branchCodes } } : {}), reason: `${STOP_REASON} từ ${from}`,
-      });
+      }).then(() => api.post(`${M}/promo/stopped`, { key: r.key, from }));
     },
     onSuccess: (_x, v) => { setStopOf(null); setMsg(`Đã ngừng ${v.r.key} từ ${v.from}.`); void refresh(); },
   });
@@ -136,6 +140,12 @@ export function KhuyenMaiPage() {
         <DataGrid rows={rows} columns={cols} rowKey={(r) => r.key} storageKey="pos.khuyen-mai" onRowClick={setPick} onRowDoubleClick={(r) => writable && edit.mutate(r)}
           rowClassName={(r) => (r.key === pick?.key ? 'selected' : '')} emptyText="Chưa có khuyến mại — bấm Thêm" exportName="khuyen-mai" exportTitle="Khuyến mại" />
       )}
+      {tab === 'nhap' && <DraftsTab today={d0} onMsg={setMsg} onEdit={(d) => {
+        const f = draftToForm(d, d0);
+        if (!f) return setMsg('Loại khuyến mại này chưa sửa được ở màn');
+        setForm({ f, editing: d.publishedVersion !== null, draftId: d.id });
+      }} />}
+      {tab === 'bao-cao-km' && <PromoReportTab today={d0} />}
       {tab === 'han-muc' && <HanMucList onOpen={(p) => setQuotaForm({ program: p, mode: p.mode })} />}
       {tab === 'bao-cao' && <HanMucReport today={d0} />}
 
@@ -161,7 +171,8 @@ export function KhuyenMaiPage() {
         <HanMucForm key={quotaForm.program?.id ?? `new-${quotaForm.mode}`} program={quotaForm.program} mode={quotaForm.mode} today={d0} writable={quotaWritable}
           onClose={() => setQuotaForm(null)} onDone={(code) => { setQuotaForm(null); setMsg(`Đã lưu chương trình ${code}.`); void refresh(); }} />
       )}
-      {form && <KmForm initial={form.f} editing={form.editing} onClose={() => setForm(null)} onDone={(k) => { setForm(null); setMsg(`Đã phát hành ${k}.`); void refresh(); }} />}
+      {form && <KmForm initial={form.f} editing={form.editing} {...(form.draftId ? { draftId: form.draftId } : {})} onClose={() => setForm(null)}
+        onDone={(m) => { setForm(null); setMsg(m); setTab('nhap'); void refresh(); }} />}
       {stopOf && <StopDialog row={stopOf} pending={stop.isPending} error={stop.error ? errorText(stop.error) : ''} onClose={() => setStopOf(null)} onStop={(from) => stop.mutate({ r: stopOf, from })} />}
       {trial && <TrialDialog keys={trial} onClose={() => setTrial(null)} />}
     </div>
