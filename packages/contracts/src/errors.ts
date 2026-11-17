@@ -63,6 +63,8 @@ export const ERROR_REASONS = {
   SETUP_RUNNING: 'Đang chạy một gói mẫu cho đơn vị này: chờ xong rồi chạy lại',
   // [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7: đơn vị mẫu không gửi ra ngoài (T036-4)
   SAMPLE_TENANT: 'Công ty Mẫu (dữ liệu hư cấu) không gửi dữ liệu ra ngoài, không kết nối ứng dụng ngoài: đăng nhập đơn vị của bạn',
+  // [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: bản cài đã có Công ty Mẫu
+  SAMPLE_EXISTS: 'Bản cài đã có Công ty Mẫu — mở ở Thiết lập nhanh (TI15), không tạo thêm',
   DOC_CANCELLED: 'Phiếu đã huỷ',
   DOC_SOURCE_READONLY: 'Chứng từ nhận từ hệ thống khác: sửa ở nguồn rồi gửi lại',
   DOC_ALREADY_CONFIRMED: 'Đã xác nhận nhận tiền trước đó',

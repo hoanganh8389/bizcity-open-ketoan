@@ -109,13 +109,18 @@ export interface SeedOptions {
   adminPassword?: string;
   /** Đơn vị mẫu (tenants.is_sample): không sinh khoá API tích hợp. */
   isSample?: boolean;
+  // [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: tạo Công ty Mẫu theo yêu cầu — người bấm đăng nhập bằng chính email và mật khẩu của mình (chép băm, không sinh mật khẩu mới)
+  /** Email quản trị; trống = SEED_ADMIN_EMAIL / admin@ketoan.local. */
+  adminEmail?: string;
+  /** Băm mật khẩu có sẵn (chép từ người bấm); có thì không băm lại, không in mật khẩu. */
+  adminPasswordHash?: string;
 }
 export interface SeedResult { tenantId: string; tenantCode: string; adminEmail: string; adminPassword: string; generated: boolean }
 
 export async function seed(opts: SeedOptions = {}): Promise<SeedResult> {
   const tenantCode = opts.tenantCode ?? process.env.SEED_TENANT_CODE ?? 'demo';
   const tenantName = opts.tenantName ?? process.env.SEED_TENANT_NAME ?? 'Công ty Demo';
-  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@ketoan.local').toLowerCase();
+  const adminEmail = (opts.adminEmail ?? process.env.SEED_ADMIN_EMAIL ?? 'admin@ketoan.local').toLowerCase();
   const admin = opts.adminPassword ? { password: opts.adminPassword, generated: false } : initialAdminPassword();
   let tenantId = '';
 
@@ -133,7 +138,7 @@ export async function seed(opts: SeedOptions = {}): Promise<SeedResult> {
     // Người dùng quản trị
     const user = await trx.selectFrom('users').select('id').where('tenant_id', '=', tid).where('email', '=', adminEmail).executeTakeFirst();
     if (!user) {
-      await trx.insertInto('users').values({ tenant_id: tid, email: adminEmail, full_name: 'Quản trị', password_hash: await hashPassword(admin.password), role: 'owner' }).execute();
+      await trx.insertInto('users').values({ tenant_id: tid, email: adminEmail, full_name: 'Quản trị', password_hash: opts.adminPasswordHash ?? await hashPassword(admin.password), role: 'owner' }).execute();
       console.log(admin.generated
         ? `+ Người dùng ${adminEmail} — mật khẩu tự sinh (chỉ in lần này, lưu lại rồi đổi sau khi đăng nhập): ${admin.password}`
         : `+ Người dùng ${adminEmail} (mật khẩu lấy từ SEED_ADMIN_PASSWORD — hãy đổi sau khi đăng nhập)`);

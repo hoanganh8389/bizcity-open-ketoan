@@ -34,3 +34,5 @@ Máy chủ: `GET /api/v1/setup/status`, `GET /api/v1/setup/presets/:id/plan`, `P
 - Ở Công ty Mẫu, đầu trang luôn có **dải vàng** *"Bạn đang xem Công ty Mẫu — số liệu hư cấu"*. Bấm *Bắt đầu với công ty của bạn* để đăng xuất, rồi đăng nhập mã đơn vị của công ty.
 - Công ty Mẫu **không gửi được gì ra ngoài** và không kết nối ứng dụng ngoài — máy chủ từ chối (`SAMPLE_TENANT`).
 - Người quản trị bản cài tắt bằng `BIZCITY_SAMPLE=` (trống) trước lần cài đầu ([docs/ops/DEPLOY.md](../ops/DEPLOY.md)).
+- <!-- [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b --> **Bản cài đã chạy từ trước** chưa có Công ty Mẫu: nếu người quản trị bật `BIZCITY_SAMPLE_ON_DEMAND=1`, thẻ *Xem công ty mẫu* có nút **Tạo Công ty Mẫu** — tạo xong, đăng nhập bằng chính email và mật khẩu của bạn (dữ liệu nạp khoảng một phút).
+- **Xoá Công ty Mẫu** là việc của người quản trị máy chủ: `./scripts/xoa-cong-ty-mau.sh` (sao lưu trước, chỉ xoá được Công ty Mẫu) — [docs/ops/SAO-LUU-KHOI-PHUC.md](../ops/SAO-LUU-KHOI-PHUC.md) §10.
