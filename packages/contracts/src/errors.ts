@@ -164,6 +164,19 @@ export const ERROR_REASONS = {
   POS_PROMO_QUOTA: 'Chương trình khuyến mại hết lượt (số đơn) ở cửa hàng — không nhận đơn còn áp chương trình đó; items: [{ key, quota, used }]',
   PHIEU_BAN_PROMO_QUOTA: 'Phiếu bán nhập tay áp chương trình khuyến mại đã hết lượt ở cửa hàng (đếm chung với máy bán); items: [{ key, quota, used }]',
   POS_PROMO_DRAFT_STATE: 'Trạng thái bản nháp khuyến mại không cho thao tác này (sửa nháp đã duyệt / đã phát hành, mã đã có nháp đang mở); kèm status',
+  // [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-026 voucher 3 loại (BIZCITY-ERRORS 1.17.0-draft §4c, đóng góp)
+  VOUCHER_NOT_FOUND: 'Không có mã voucher (module voucher); kèm items: [{ code, reason, message }]',
+  VOUCHER_NOT_OWNER: 'Mã voucher không thuộc khách của đơn / phiếu (voucher gắn SĐT khách, chỉ khách đó dùng); kèm items',
+  VOUCHER_USED: 'Mã voucher đã dùng ở đơn / phiếu khác (dùng một lần); kèm items: [{ code, usedIn: { source, refCode, branch, date } }]',
+  VOUCHER_REVOKED: 'Mã voucher đã thu hồi (trả hàng đơn gốc, thu hồi tay) hoặc đợt phát đã ngừng; kèm items',
+  VOUCHER_EXPIRED: 'Mã voucher ngoài thời hạn dùng (chưa tới ngày / đã hết hạn); kèm items',
+  VOUCHER_MIN_ORDER: 'Đơn chưa đủ đơn tối thiểu của voucher (tổng sau khuyến mại, trước voucher); kèm items',
+  VOUCHER_NOT_APPLICABLE: 'Voucher lần mua sau sản phẩm / nhãn mà giỏ không có sản phẩm / nhãn áp dụng; kèm items',
+  VOUCHER_NO_ROOM: 'Đơn / phiếu không còn tiền phải trả để voucher trừ (tổng trừ không vượt số phải trả) — bỏ bớt voucher; kèm code',
+  VOUCHER_NEED_CUSTOMER: 'Đơn / phiếu dùng voucher mà chưa chọn khách (voucher luôn gắn khách)',
+  VOUCHER_UNAVAILABLE: 'Đơn / phiếu có mã voucher mà module voucher chưa bật hoặc người bán thiếu quyền voucher:use',
+  VOUCHER_PAYMENT_METHOD: 'Voucher hãng: hình thức thanh toán của đợt phát không có / ngừng dùng (kế toán khai tài khoản phải thu hãng ở hình thức); kèm method',
+  VOUCHER_CAMPAIGN_STATE: 'Thao tác sai trạng thái đợt phát / mã voucher (mã đợt đã có, đổi điều kiện đợt đã phát mã, phát mã đợt đã ngừng / hết hạn, thu hồi mã đã dùng); kèm status',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

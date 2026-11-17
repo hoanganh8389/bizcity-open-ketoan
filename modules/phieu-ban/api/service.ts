@@ -9,8 +9,10 @@
 import { randomUUID } from 'node:crypto';
 import { Errors, type ActionContext } from '@bizcity/module-sdk';
 import { computeDoc, docKeyOf, overReturn, returnableBySku, stockShortOf, toLedgerDoc, type Body, type DocInput, type Kind } from './domain/doc.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng (đóng góp)
+import { applyVouchers, stripVouchers, type QuotedVoucher, type VoucherBody } from './domain/voucher.js';
 import {
-  activeMethods, approvedReturnsOf, lockedStock, branchExists, catalogFor, getDoc, noTaken, partnerByCode, saleByNo, saveDoc, setStatus, takeNo, taxRates, toTradeDoc,
+  activeMethods, approvedReturnsOf, lockVoucher, voucherHeldByOther, lockedStock, branchExists, catalogFor, getDoc, noTaken, partnerByCode, saleByNo, saveDoc, setStatus, takeNo, taxRates, toTradeDoc,
   type DocRow, type Tx,
 } from './store.js';
 
@@ -95,7 +97,54 @@ export async function saveDraftIn(tx: Tx, ctx: ActionContext, kind: Kind, input:
   return toTradeDoc(await getDoc(tx, docId));
 }
 
-const asInput = (r: DocRow): DocInput => ({ docNo: r.doc_no, docDate: r.doc_date, branchCode: r.branch_code, ...(r.body as Body), warehouseCode: r.warehouse_code ?? undefined } as DocInput);
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: duyệt lại tính từ phiếu đã gỡ phần voucher; mã voucher của nháp đi lại vào đầu vào (đóng góp)
+const asInput = (r: DocRow): DocInput => {
+  const b = stripVouchers(r.body as VoucherBody);
+  return { docNo: r.doc_no, docDate: r.doc_date, branchCode: r.branch_code, ...(b as Body), ...(b.voucherCodes ? { vouchers: b.voucherCodes } : {}), warehouseCode: r.warehouse_code ?? undefined } as DocInput;
+};
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng lúc duyệt phiếu bán (đóng góp)
+type VoucherQuote = { vouchers: QuotedVoucher[]; problems: { code: string; reason: string; message: string }[] };
+/**
+ * Phiếu bán có mã voucher: khoá theo từng mã (pg_advisory_xact_lock(hashtext('voucher:'||mã)) — cùng khoá máy bán lấy khi nhận đơn) tới hết
+ * giao dịch duyệt; mã đang nằm ở phiếu bán khác đã duyệt → VOUCHER_USED; hỏi action đọc `voucher.order.quote` (của khách phiếu, chưa dùng,
+ * còn hạn, đơn tối thiểu, giỏ có sản phẩm / nhãn) rồi áp: TGS = chiết khấu trên dòng, hãng = dòng thanh toán. Module voucher đánh dấu đã
+ * dùng khi nhận phieu-ban.doc.recorded. Cửa sổ rủi ro: mã vừa dùng ở máy bán mà module voucher chưa nhận sự kiện đơn (outbox) thì quote
+ * chưa thấy — module voucher ghi "dùng trùng" vào nhật ký mã khi nhận sự kiện thứ hai.
+ */
+async function applyDocVouchers(ctx: ActionContext, r: DocRow, body: Body): Promise<Body> {
+  const codes = (body as VoucherBody).voucherCodes ?? [];
+  if (r.kind !== 'sale' || !codes.length) return body;
+  if (!body.partner?.code) throw Errors.validation('Phiếu dùng voucher phải chọn khách (voucher gắn SĐT khách, chỉ khách đó dùng)', { reason: 'VOUCHER_NEED_CUSTOMER', field: 'partner' });
+  const { held, rates, methods } = await ctx.data.module(async (tx) => {
+    for (const code of [...codes].sort()) await lockVoucher(tx, code);
+    return { held: await voucherHeldByOther(tx, codes, r.doc_id), rates: await taxRates(tx), methods: await activeMethods(tx) };
+  });
+  if (held.length) {
+    throw Errors.validation(held.map((h) => `Voucher ${h.code} đã dùng ở phiếu ${h.docNo} ngày ${h.docDate}`).join('; '),
+      { reason: 'VOUCHER_USED', field: 'vouchers', items: held.map((h) => ({ code: h.code, usedIn: { source: 'phieu-ban', refCode: h.docNo, date: h.docDate } })) });
+  }
+  let q: VoucherQuote;
+  try {
+    q = await ctx.actions.call<VoucherQuote>('voucher.order.quote', {
+      customer: body.partner.code, branch: r.branch_code, refId: r.doc_id, date: r.doc_date, orderTotal: body.totals.total, codes, issue: false,
+      items: body.lines.filter((l) => !l.isGift).map((l) => ({ sku: l.sku, qty: l.qty, amount: l.amountBeforeTax + l.taxAmount })),
+    });
+  } catch (e) {
+    throw Errors.validation(`Chưa dùng voucher được: ${(e as Error).message}`, { reason: 'VOUCHER_UNAVAILABLE', field: 'vouchers' });
+  }
+  if (q.problems.length) throw Errors.validation(q.problems.map((p) => p.message).join('; '), { reason: q.problems[0]!.reason, field: 'vouchers', items: q.problems });
+  const ordered = codes.map((c) => q.vouchers.find((v) => v.code === c)).filter((v): v is QuotedVoucher => Boolean(v));
+  const res = applyVouchers(body as VoucherBody, ordered, rates);
+  if ('problem' in res) throw Errors.validation(res.problem.message, { reason: res.problem.reason, field: 'vouchers', code: res.problem.code });
+  const bad = res.body.payments.find((p) => p.voucherCode && !methods.has(p.methodCode));
+  if (bad) {
+    throw Errors.validation(`Hình thức thanh toán ${bad.methodCode} của voucher hãng ${bad.voucherCode} không có / ngừng dùng — kế toán khai lại ở đợt phát`, { reason: 'VOUCHER_PAYMENT_METHOD', method: bad.methodCode });
+  }
+  const paid = res.body.payments.reduce((s, p) => s + p.amount, 0);
+  if (paid > res.body.totals.total) fail([`Tiền thu (${paid.toLocaleString('vi-VN')}) lớn hơn tổng phiếu sau voucher (${res.body.totals.total.toLocaleString('vi-VN')}) — giảm tiền thu`]);
+  return res.body as Body;
+}
 
 /** Duyệt: tính lại theo danh mục hiện tại, kiểm số còn trả (phiếu trả nối phiếu của module), nộp sổ phiên bản kế tiếp. */
 export async function approve(ctx: ActionContext, id: string) {
@@ -126,6 +175,7 @@ export async function approve(ctx: ActionContext, id: string) {
   });
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: chương trình khuyến mại có hạn mức lượt theo cửa hàng — hỏi lượt còn ở module pos (đóng góp)
   if (prepared.r.kind === 'sale') await checkPromoQuota(ctx, prepared.r.branch_code, prepared.body.lines, id);
+  const body = await applyDocVouchers(ctx, prepared.r, prepared.body);
   // Đã từng nộp rồi bỏ duyệt: chứng từ trong sổ phải đã huỷ xong (chế độ chờ duyệt: kế toán duyệt huỷ ở ACC14) mới nộp lại.
   if (prepared.r.ledger_version > 0) {
     const st = await ctx.ledger.get(docKeyOf(id));
@@ -133,13 +183,13 @@ export async function approve(ctx: ActionContext, id: string) {
   }
   const version = prepared.r.ledger_version + 1;
   const submitted = await ctx.ledger.submit(toLedgerDoc({
-    docId: id, kind: prepared.r.kind, branchCode: prepared.r.branch_code, docNo: prepared.r.doc_no, docDate: prepared.r.doc_date, body: prepared.body,
+    docId: id, kind: prepared.r.kind, branchCode: prepared.r.branch_code, docNo: prepared.r.doc_no, docDate: prepared.r.doc_date, body,
     version, originalDocId: prepared.original?.doc_id ?? null, catalog: prepared.catalog,
   }));
   return ctx.data.module(async (tx) => {
     await saveDoc(tx, {
       docId: id, tenantId: ctx.tenant.id, kind: prepared.r.kind, branchCode: prepared.r.branch_code, warehouseCode: prepared.r.warehouse_code, docNo: prepared.r.doc_no,
-      docDate: prepared.r.doc_date, partnerCode: prepared.body.partner?.code ?? null, originalDocId: prepared.original?.doc_id ?? null, body: prepared.body, actor: ctx.actor.id, insert: false,
+      docDate: prepared.r.doc_date, partnerCode: prepared.body.partner?.code ?? null, originalDocId: prepared.original?.doc_id ?? null, body, actor: ctx.actor.id, insert: false,
     });
     await setStatus(tx, id, { status: 'approved', ledgerVersion: version, ledgerStatus: submitted.status, actor: ctx.actor.id });
     return toTradeDoc(await getDoc(tx, id));
@@ -166,6 +216,13 @@ export async function unapprove(ctx: ActionContext, id: string, reason: string) 
   const res = await ctx.ledger.cancel(docKeyOf(id), reason);
   return ctx.data.module(async (tx) => {
     await setStatus(tx, id, { status: 'draft', ledgerStatus: res.cancelled ? 'cancelled' : res.requested ? 'cancel_requested' : r.ledger_status, actor: ctx.actor.id });
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: phiếu về nháp → gỡ phần voucher đã áp (giữ mã ở nháp); module voucher trả mã theo sự kiện (đóng góp)
+    if ((r.body as VoucherBody).vouchers?.length) {
+      await saveDoc(tx, {
+        docId: id, tenantId: ctx.tenant.id, kind: r.kind, branchCode: r.branch_code, warehouseCode: r.warehouse_code, docNo: r.doc_no, docDate: r.doc_date,
+        partnerCode: r.partner_code, originalDocId: r.original_doc_id, body: stripVouchers(r.body as VoucherBody) as Body, actor: ctx.actor.id, insert: false,
+      });
+    }
     return { ...toTradeDoc(await getDoc(tx, id)), reversed: res.reversed };
   }).then(async (doc) => {
     await ctx.events.emit('phieu-ban.doc.cancelled', { docId: id, docKey: docKeyOf(id), version: r.ledger_version, kind: r.kind, branchCode: r.branch_code },

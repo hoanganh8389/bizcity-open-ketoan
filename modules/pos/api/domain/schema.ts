@@ -68,6 +68,9 @@ export const orderDraftSchema = z.object({
   promotionsVersion: z.string().max(80),
   offlineCreatedAt: z.string().optional(),
   loyalty: z.object({ redeem: z.array(z.string()) }).optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: mã voucher TGS / hãng khách dùng (module voucher kiểm; máy chủ tính tiền trừ) (đóng góp)
+  /** Mã voucher (module voucher) khách dùng cho đơn — nhiều mã / đơn; trừ sau khuyến mại; tổng trừ ≤ số phải trả. */
+  vouchers: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
   policyRefs: z.array(z.object({ key: z.string(), version: z.number().int().min(0), hash: z.string().optional() })).optional(),
 }).passthrough();
 

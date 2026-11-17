@@ -242,6 +242,19 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POS_PROMO_QUOTA` | `VALIDATION_ERROR` | Máy bán gửi đơn áp chương trình khuyến mại đã hết lượt (số đơn) ở cửa hàng — đếm chung đơn máy bán + phiếu bán BH10 chưa trả lượt, khoá cửa hàng × chương trình; đơn mất mạng gửi bù vẫn nhận, đánh dấu `promoQuotaOffline`; kèm `items: [{ key, quota, used }]` | module `pos` (đề xuất, chưa gộp) |
 | `PHIEU_BAN_PROMO_QUOTA` | `VALIDATION_ERROR` | Duyệt phiếu bán nhập tay (BH10) áp chương trình khuyến mại đã hết lượt ở cửa hàng (hỏi action đọc `pos.promo.quota`); kèm `items: [{ key, quota, used }]` | module `phieu-ban` (đề xuất, chưa gộp) |
 | `POS_PROMO_DRAFT_STATE` | `CONFLICT` | Thao tác sai trạng thái bản nháp khuyến mại (sửa nháp đã duyệt / đã phát hành, lập nháp mới cho mã đang có nháp mở, duyệt nháp đã duyệt); kèm `status` | module `pos` (đề xuất, chưa gộp) |
+| **Voucher 3 loại** (1.17.0-draft) <!-- [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-026 voucher (đóng góp) --> | | | |
+| `VOUCHER_NOT_FOUND` | `VALIDATION_ERROR` | Không có mã voucher — máy bán (`pos.order.create`) / duyệt BH10 (`phieu-ban.doc.approve`) hỏi action đọc `voucher.order.quote`; kèm `items: [{ code, reason, message }]` | module `voucher` (pos, phieu-ban trả lại; đề xuất, chưa gộp) |
+| `VOUCHER_NOT_OWNER` | `VALIDATION_ERROR` | Mã không thuộc khách của đơn / phiếu (voucher gắn SĐT khách; SĐT khách lấy từ đơn và danh mục đối tượng); kèm `items` | module `voucher` (đề xuất, chưa gộp) |
+| `VOUCHER_USED` | `VALIDATION_ERROR` | Mã đã dùng (dùng một lần, phần dư mất) — câu lỗi nêu đơn / phiếu, ngày, cửa hàng; kèm `items: [{ code, usedIn: { source, refCode, branch, date } }]` | module `voucher` (đề xuất, chưa gộp) |
+| `VOUCHER_REVOKED` | `VALIDATION_ERROR` | Mã đã thu hồi (trả cả đơn gốc của voucher lần mua sau, thu hồi tay) hoặc đợt phát đã ngừng; kèm `items` | module `voucher` (đề xuất, chưa gộp) |
+| `VOUCHER_EXPIRED` | `VALIDATION_ERROR` | Ngày bán ngoài thời hạn của mã (trước ngày bắt đầu đợt / sau ngày hết hạn mã); kèm `items` | module `voucher` (đề xuất, chưa gộp) |
+| `VOUCHER_MIN_ORDER` | `VALIDATION_ERROR` | Tổng đơn (sau khuyến mại, trước voucher) dưới đơn tối thiểu của đợt; kèm `items` | module `voucher` (đề xuất, chưa gộp) |
+| `VOUCHER_NOT_APPLICABLE` | `VALIDATION_ERROR` | Voucher lần mua sau sản phẩm / nhãn mà giỏ không có sản phẩm / nhãn áp dụng; kèm `items` | module `voucher` (đề xuất, chưa gộp) |
+| `VOUCHER_NO_ROOM` | `VALIDATION_ERROR` | Đơn / phiếu đã trừ hết số phải trả, mã sau không còn gì để trừ (tổng trừ ≤ số phải trả); kèm `code` | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
+| `VOUCHER_NEED_CUSTOMER` | `VALIDATION_ERROR` | Đơn / phiếu có mã voucher mà chưa chọn khách | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
+| `VOUCHER_UNAVAILABLE` | `VALIDATION_ERROR` | Đơn / phiếu có mã voucher mà module voucher chưa bật / người bán thiếu quyền `voucher:use` | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
+| `VOUCHER_PAYMENT_METHOD` | `VALIDATION_ERROR` | Voucher hãng: hình thức thanh toán của đợt không có / ngừng dùng (tài khoản phải thu hãng khai ở hình thức, không ở module); kèm `method` | module `voucher`, `pos`, `phieu-ban` (đề xuất, chưa gộp) |
+| `VOUCHER_CAMPAIGN_STATE` | `CONFLICT` | Sai trạng thái đợt phát / mã: mã đợt đã có, đổi loại / người phát / mệnh giá / phạm vi khi đợt đã phát mã (ECP-13), phát mã đợt đã ngừng / hết hạn, thu hồi mã đã dùng; kèm `status` | module `voucher` (đề xuất, chưa gộp) |
 | **Máy bán bán đúng bảng giá** (1.13.0-draft) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) --> | | | |
 | `POS_MANUAL_DISCOUNT` | `VALIDATION_ERROR` | Dòng có giảm tay: thu ngân không giảm tay, chỉ giảm theo chương trình khuyến mại; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 | `POS_NO_PRICE` | `VALIDATION_ERROR` | Mã × ĐVT chưa có giá ở bảng giá cửa hàng (trừ quà, hàng Nội bộ, bill Z 0đ); kèm `items: [{ sku, unit }]` | module `pos` (đề xuất, chưa gộp) |
@@ -282,6 +295,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — 1.17.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.17.0-draft (2026-11-18, voucher 3 loại):** §4c thêm `VOUCHER_NOT_FOUND`, `VOUCHER_NOT_OWNER`, `VOUCHER_USED`, `VOUCHER_REVOKED`, `VOUCHER_EXPIRED`, `VOUCHER_MIN_ORDER`, `VOUCHER_NOT_APPLICABLE`, `VOUCHER_CAMPAIGN_STATE` (module voucher), `VOUCHER_NO_ROOM`, `VOUCHER_NEED_CUSTOMER`, `VOUCHER_UNAVAILABLE`, `VOUCHER_PAYMENT_METHOD` (module pos, phieu-ban, voucher) (phiếu NT-BH-026). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — 1.16.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.16.0-draft (2026-11-18, chương trình khuyến mại: duyệt, hạn mức lượt):** §4c thêm `POS_PROMO_QUOTA`, `POS_PROMO_DRAFT_STATE` (module pos), `PHIEU_BAN_PROMO_QUOTA` (module phieu-ban) (phiếu NT-BH-025). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — 1.15.0-draft (đóng góp, chờ chủ dự án duyệt) -->

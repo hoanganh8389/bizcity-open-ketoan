@@ -47,6 +47,9 @@ export const docInput = z.object({
   // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: phiếu bán sinh từ đơn đặt hàng nối số đơn (máy chủ tự gắn, màn không sửa được) (đóng góp)
   /** Đơn đặt hàng mà phiếu này giao (phiếu bán sinh từ nút Giao của đơn). Máy chủ giữ nguyên khi sửa phiếu nháp. */
   order: z.object({ id: z.string().trim().min(1).max(64), no: z.string().trim().max(32) }).optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: mã voucher TGS / hãng của khách (module voucher kiểm lúc duyệt) (đóng góp)
+  /** Mã voucher (module voucher) khách dùng — trừ lúc duyệt: TGS = chiết khấu trên dòng, hãng = dòng thanh toán. */
+  vouchers: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
 }).passthrough();
 export type PolicyRef = { key: string; version: number; line: 'gift' | 'discount' };
 export type DocInput = z.infer<typeof docInput>;
@@ -63,6 +66,10 @@ export type Body = {
   policyRefs?: { key: string; version: number; hash: string }[];
   /** Đơn đặt hàng phiếu này giao (NT-BH-023). */
   order?: { id: string; no: string };
+  /** Mã voucher khách dùng (NT-BH-026) — lưu ở nháp, áp lúc duyệt. */
+  voucherCodes?: string[];
+  /** Voucher đã áp lúc duyệt (NT-BH-026): số tiền thực trừ từng mã; module voucher đánh dấu đã dùng theo sự kiện phieu-ban.doc.recorded. */
+  vouchers?: { code: string; campaignId: string; campaignName: string; issuer: 'tgs' | 'brand'; kind: 'discount' | 'payment'; faceValue: number; amount: number; methodCode?: string }[];
 };
 
 /**
@@ -123,6 +130,7 @@ export function computeDoc(input: DocInput, ctx: {
     ...(input.note ? { note: input.note } : {}),
     ...(policyRefs.length ? { policyRefs } : {}),
     ...(input.order ? { order: { id: input.order.id, no: input.order.no } } : {}),
+    ...(input.vouchers?.length ? { voucherCodes: [...new Set(input.vouchers.map((c) => c.trim().toUpperCase()))] } : {}),
   };
   return { body, problems };
 }
@@ -180,7 +188,8 @@ export function toLedgerDoc(d: { docId: string; kind: Kind; branchCode: string; 
     }),
     // Bản chính sách đã áp: cửa nạp kiểm lại (IN-POL-001..004); phiếu có dòng chương trình có hạn mức (BH12) thì hạn mức tự trừ.
     ...(b.policyRefs?.length ? { policyRefs: b.policyRefs } : {}),
-    payments: b.payments,
+    // Dòng thanh toán voucher hãng (NT-BH-026) mang số mã ở `reference`; trường riêng của module không gửi vào sổ.
+    payments: b.payments.map(({ voucherCode: _v, ...p }: Body['payments'][number] & { voucherCode?: string }) => p),
     totals: b.totals,
   };
 }

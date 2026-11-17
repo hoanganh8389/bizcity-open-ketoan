@@ -176,8 +176,9 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
     branch: { code: branch.code, name: branch.name, taxCode: branch.taxCode },
     ...(opts.exchangeOrderId ? { exchangeOrderId: opts.exchangeOrderId } : {}),
   };
+  let orderFullyReturned = false;
   try {
-    await ctx.data.module(async (tx) => {
+    orderFullyReturned = await ctx.data.module(async (tx) => {
       await sql`
         INSERT INTO mod_pos.returns (tenant_id, return_id, order_id, branch_code, code, business_date, refund_method, refund_total, refund_net,
                                      refund_tax, reason, approved_by, approval_note, exchange_order_id, doc_key, doc_status, snapshot, draft, created_by, cashier_name)
@@ -191,7 +192,9 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
       }
       // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: trả cả đơn (mọi dòng bán đã trả hết) → trả lượt khuyến mại của đơn (đóng góp)
       const left = returnableLines(await soldLinesOf(tx, order), await returnedOf(tx, order.order_id));
-      if (left.filter((l) => !l.isGift).every((l) => l.returnableQty <= 0)) await releaseUses(tx, 'pos', order.order_id, 'return');
+      const full = left.filter((l) => !l.isGift).every((l) => l.returnableQty <= 0);
+      if (full) await releaseUses(tx, 'pos', order.order_id, 'return');
+      return full;
     });
   } catch (err) {
     if (isUniqueViolation(err)) throw Errors.conflict(`Mã phiếu trả ${code} hoặc phiếu ${draft.id} vừa được máy khác dùng — gửi lại`, { reason: 'POS_CODE_TAKEN', code });
@@ -201,6 +204,8 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
   await ctx.events.emit('pos.return.recorded', {
     returnId: draft.id, code, orderId: order.order_id, orderCode: order.code, branchCode: branch.code, docKey: doc.docKey,
     originalDocKey: order.doc_key, version: 1, cashier: { name: ctx.actor.name }, return: snapshot,
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: đơn gốc đã trả hết → module voucher thu hồi voucher lần mua sau chưa dùng (đóng góp)
+    orderFullyReturned,
   }, { subject: `pos.return:${draft.id}`, dedupeKey: `pos.return.recorded:${draft.id}` });
   return { snapshot, docKey: doc.docKey, refundTotal: computed.refundTotal, branchCode: branch.code, replayed: false };
 }
