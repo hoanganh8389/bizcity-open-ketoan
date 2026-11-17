@@ -141,25 +141,28 @@ interface CostRow {
 interface FlowDetail {
   purchaseQty: number; purchaseValue: number; returnQty: number; returnValue: number; adjInQty: number; adjInValue: number;
   tInQty: number; tInValue: number; tOutQty: number; saleQty: number; saleReturnQty: number; adjOutQty: number;
+  /** Chi phí mua hàng phân bổ vào mã (tăng giá vốn) / thưởng, chiết khấu nhãn hàng phân bổ (giảm giá vốn, số dương). */
+  costAlloc: number; rebateAlloc: number;
 }
-const emptyDetail = (): FlowDetail => ({ purchaseQty: 0, purchaseValue: 0, returnQty: 0, returnValue: 0, adjInQty: 0, adjInValue: 0, tInQty: 0, tInValue: 0, tOutQty: 0, saleQty: 0, saleReturnQty: 0, adjOutQty: 0 });
+const emptyDetail = (): FlowDetail => ({ purchaseQty: 0, purchaseValue: 0, returnQty: 0, returnValue: 0, adjInQty: 0, adjInValue: 0, tInQty: 0, tInValue: 0, tOutQty: 0, saleQty: 0, saleReturnQty: 0, adjOutQty: 0, costAlloc: 0, rebateAlloc: 0 });
 
 /** Tổng hợp hàng vào / ra trong tháng theo (nhóm, mặt hàng, loại, nhóm bên kia). */
 async function monthFlows(trx: Db, tenantId: string, p: Period) {
-  const res = await sql<{ grp: string; ikey: string; sku: string; kind: string; reason: string | null; priced: boolean; excl: boolean; cgrp: string | null; qty: string; amount: string; valued_qty: string; unvalued_qty: string }>`
+  const res = await sql<{ grp: string; ikey: string; sku: string; kind: string; reason: string | null; priced: boolean; excl: boolean; cgrp: string | null; qty: string; amount: string; valued_qty: string; unvalued_qty: string; alloc: string }>`
     SELECT COALESCE(b.accounting_unit_id, 0)::text AS grp, COALESCE(m.item_id, m.sku) AS ikey, MAX(m.sku) AS sku, m.kind, m.reason_code AS reason, m.priced_at_sale AS priced, m.exclude_cost AS excl,
            CASE WHEN m.counter_branch_id IS NULL THEN NULL ELSE COALESCE(cb.accounting_unit_id, 0)::text END AS cgrp,
            SUM(m.qty) AS qty,
            COALESCE(SUM(m.amount), 0) AS amount,
            SUM(CASE WHEN m.amount IS NULL THEN 0 ELSE m.qty END) AS valued_qty,
-           SUM(CASE WHEN m.amount IS NULL THEN m.qty ELSE 0 END) AS unvalued_qty
+           SUM(CASE WHEN m.amount IS NULL THEN m.qty ELSE 0 END) AS unvalued_qty,
+           COALESCE(SUM(CASE WHEN m.qty = 0 THEN m.amount ELSE 0 END), 0) AS alloc
       FROM inventory_movements m
       JOIN branches b ON b.id = m.branch_id
       LEFT JOIN branches cb ON cb.id = m.counter_branch_id
      WHERE m.tenant_id = ${tenantId}
        AND m.doc_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date
      GROUP BY 1, 2, 4, 5, 6, 7, 8`.execute(trx);
-  return res.rows.map((r) => ({ group: r.grp, ikey: r.ikey, sku: r.sku, kind: r.kind, reason: r.reason, pricedAtSale: r.priced, excludeCost: r.excl, counterGroup: r.cgrp, qty: Number(r.qty), amount: Number(r.amount), valuedQty: Number(r.valued_qty), unvaluedQty: Number(r.unvalued_qty) }));
+  return res.rows.map((r) => ({ group: r.grp, ikey: r.ikey, sku: r.sku, kind: r.kind, reason: r.reason, pricedAtSale: r.priced, excludeCost: r.excl, counterGroup: r.cgrp, qty: Number(r.qty), amount: Number(r.amount), valuedQty: Number(r.valued_qty), unvaluedQty: Number(r.unvalued_qty), alloc: Number(r.alloc) }));
 }
 
 /**
@@ -262,7 +265,8 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
         r.inQty += f.qty;
         r.inValue += f.amount;
         r.d.purchaseQty += f.qty;
-        r.d.purchaseValue += f.amount;
+        r.d.purchaseValue += f.amount - f.alloc;
+        r.d.costAlloc += f.alloc; // [2026-11-17 Nguyễn Văn Thủy] chi phí mua hàng phân bổ (vận chuyển…) tách cột riêng (đóng góp)
         break;
       case 'purchase_return': {
         if (!rules.returnAtOpening(f.reason)) {
@@ -270,7 +274,8 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
           r.inQty += f.qty;
           r.inValue += f.amount;
           r.d.returnQty += -f.qty;
-          r.d.returnValue += -f.amount;
+          r.d.returnValue += -(f.amount - f.alloc);
+          r.d.rebateAlloc += -f.alloc; // thưởng / chiết khấu nhãn hàng phân bổ theo mã, giảm giá vốn
           break;
         }
         const k = key(f.group, f.ikey);

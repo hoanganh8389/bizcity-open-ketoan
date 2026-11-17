@@ -139,7 +139,7 @@ export function CostingPage() {
         </div>
         {runs.isLoading ? <Loading /> : !runs.data?.length ? <Empty text={cn ? 'Chi nhánh này chưa có lần tính giá vốn trong khoảng ngày — chọn tháng rồi bấm Tính giá vốn' : 'Chưa có lần tính giá vốn trong khoảng ngày'} /> : (
           <DataGrid
-            storageKey="acc49-lan-tinh"
+            storageKey="acc49-lan-tinh-v2"
             rows={runs.data}
             rowKey={(x) => x.id}
             rowClassName={(x) => (x.id === curRun?.id ? 'selected' : '')}
@@ -147,15 +147,15 @@ export function CostingPage() {
             maxHeight="240px"
             columns={[
               { key: 'runAt', header: 'Ngày tính', value: (x) => new Date(x.runAt).toLocaleString('vi-VN') },
-              { key: 'centerCode', header: 'Chi nhánh', value: (x) => `${x.centerCode} - ${x.centerName}`, title: 'Điểm tính giá vốn trên Cơ cấu tổ chức' },
+              { key: 'centerCode', header: 'Phạm vi', value: (x) => `${x.centerCode} - ${x.centerName}`, title: 'Phạm vi tính trên Cơ cấu tổ chức (nút hoặc shop) — mọi shop bên dưới chung một giá vốn' },
               { key: 'period', header: 'Kỳ', value: (x) => `${x.period.slice(5)}/${x.period.slice(0, 4)}` },
-              { key: 'from', header: 'Chứng từ', value: (x) => `${x.from.slice(8)}/${x.from.slice(5, 7)}–${x.to.slice(8)}/${x.to.slice(5, 7)}`, title: 'Khoảng ngày chứng từ được cập nhật giá vốn' },
+              { key: 'from', header: 'Chứng từ', hidden: true, value: (x) => `${x.from.slice(8)}/${x.from.slice(5, 7)}–${x.to.slice(8)}/${x.to.slice(5, 7)}`, title: 'Khoảng ngày chứng từ được cập nhật giá vốn' },
               { key: 'items', header: 'Số mã', type: 'qty' },
-              { key: 'total', header: 'Giá vốn ghi sổ', type: 'money' },
-              { key: 'vouchers', header: 'Phiếu giá vốn', value: (x) => (Array.isArray(x.vouchers) ? x.vouchers.length : 0), title: 'Phiếu "Giá vốn hàng xuất" (một phiếu / shop / tháng)' },
-              { key: 'imported', header: 'Mã giá Excel', type: 'qty' },
+              { key: 'total', header: 'Giá vốn ghi sổ', type: 'money', title: 'Tổng giá vốn hàng xuất đã ghi sổ qua phiếu "Giá vốn hàng xuất" của các shop trong phạm vi' },
+              { key: 'vouchers', header: 'Phiếu giá vốn', hidden: true, value: (x) => (Array.isArray(x.vouchers) ? x.vouchers.length : 0), title: 'Phiếu "Giá vốn hàng xuất" (một phiếu / shop / tháng)' },
+              { key: 'imported', header: 'Mã nhập ĐGBQ đầu kỳ', type: 'qty', hidden: true, title: 'Số mã lấy ĐGBQ đầu kỳ từ tệp Excel' },
               { key: 'runBy', header: 'Người tính' },
-              { key: 'orgUid', header: 'Mốc cơ cấu', type: 'code', title: 'Định danh nút cơ cấu lúc tính (không đổi khi đổi mã, tên)' },
+              { key: 'orgUid', header: 'Mốc cơ cấu', type: 'code', hidden: true, title: 'Định danh nút cơ cấu lúc tính (không đổi khi đổi mã, tên)' },
             ]}
           />
         )}
@@ -169,37 +169,38 @@ export function CostingPage() {
             </div>
             {lines.isLoading ? <Loading /> : (
               <DataGrid
-                storageKey="acc49"
+                storageKey="acc49-v2"
                 rows={lineRows}
                 rowKey={(x) => x.sku}
                 columns={[
                   // [2026-11-17 Nguyễn Văn Thủy] đủ cột theo dòng chảy trong kỳ; rê chuột lên tiêu đề để xem giải thích (đóng góp)
+                  // [2026-11-17 Nguyễn Văn Thủy] gọn: 11 cột chính theo công thức đầu kỳ → nhập → xuất → cuối kỳ; chi tiết dòng chảy ẩn, bật ở Cột (đóng góp)
                   { key: 'sku', header: 'Mã hàng', type: 'code' },
                   { key: 'name', header: 'Tên hàng' },
                   { key: 'openingQty', header: 'SL', band: 'Tồn đầu', type: 'qty', sum: true, title: 'Số lượng tồn đầu tháng (tồn cuối tháng trước)' },
-                  { key: 'openingValue', header: '$', band: 'Tồn đầu', type: 'money', sum: true, title: 'Giá trị tồn đầu = SL tồn đầu × ĐGBQ đầu kỳ' },
-                  { key: 'dgDau', header: 'ĐGBQ đầu kỳ', type: 'money', value: (x) => dt(x, 'openingUnit'), render: (x) => dg(dt(x, 'openingUnit')), title: 'Đơn giá bình quân đầu tháng = Tồn đầu $ ÷ SL. Mã có giá nhập từ Excel thì lấy giá đó' },
-                  { key: 'muaQ', header: 'SL', band: 'Nhập mua', type: 'qty', sum: true, value: (x) => dt(x, 'purchaseQty'), title: 'Nhập mua từ nhà cung cấp trong tháng' },
-                  { key: 'muaV', header: '$', band: 'Nhập mua', type: 'money', sum: true, value: (x) => dt(x, 'purchaseValue'), title: 'Giá trị nhập mua (giá Net = đơn giá chưa VAT − chiết khấu)' },
-                  { key: 'dgKy', header: 'ĐGBQ trong kỳ', type: 'money', value: (x) => dt(x, 'periodUnit'), render: (x) => dg(dt(x, 'periodUnit')), title: 'Đơn giá bình quân của riêng phần nhập trong tháng = Nhập tính giá $ ÷ SL (mua, trả NCC, điều chỉnh, nhận từ chi nhánh khác)' },
-                  { key: 'traQ', header: 'SL', band: 'Xuất trả NCC', type: 'qty', sum: true, value: (x) => dt(x, 'returnQty'), title: 'Hàng mua trả lại nhà cung cấp' },
-                  { key: 'traV', header: '$', band: 'Xuất trả NCC', type: 'money', sum: true, value: (x) => dt(x, 'returnValue'), title: 'Giá trị trả NCC đưa vào công thức (trừ khỏi nhập trong kỳ)' },
-                  { key: 'dcQ', header: 'SL', band: 'Nhập điều chỉnh', type: 'qty', sum: true, value: (x) => dt(x, 'adjInQty'), hidden: true, title: 'Nhập điều chỉnh kho có tính vào giá vốn' },
-                  { key: 'dcV', header: '$', band: 'Nhập điều chỉnh', type: 'money', sum: true, value: (x) => dt(x, 'adjInValue'), hidden: true, title: 'Giá trị nhập điều chỉnh = SL × đơn giá trên phiếu' },
-                  { key: 'nnbQ', header: 'SL', band: 'Nhập nội bộ', type: 'qty', sum: true, value: (x) => dt(x, 'tInQty'), title: 'Nhận chuyển kho. Từ chi nhánh khác: tính vào giá theo giá vốn bên gửi; trong cùng chi nhánh: chỉ chuyển chỗ, không đổi giá' },
-                  { key: 'nnbV', header: '$', band: 'Nhập nội bộ', type: 'money', sum: true, value: (x) => dt(x, 'tInValue'), title: 'Giá trị nhận từ chi nhánh khác (theo giá vốn bên gửi)' },
-                  { key: 'xnbQ', header: 'SL', band: 'Xuất nội bộ', type: 'qty', sum: true, value: (x) => dt(x, 'tOutQty'), title: 'Chuyển kho đi (sang shop / chi nhánh khác)' },
-                  { key: 'xnbV', header: '$', band: 'Xuất nội bộ', type: 'money', sum: true, value: (x) => Math.round(dt(x, 'tOutQty') * x.unitCost), title: '= SL × ĐGBQ cuối kỳ' },
-                  { key: 'banQ', header: 'SL', band: 'Xuất bán', type: 'qty', sum: true, value: (x) => dt(x, 'saleQty'), title: 'Xuất bán (bán lẻ, bán buôn, hàng tặng kèm)' },
-                  { key: 'banV', header: '$', band: 'Xuất bán', type: 'money', sum: true, value: (x) => Math.round(dt(x, 'saleQty') * x.unitCost), title: 'Giá vốn hàng bán = SL × ĐGBQ cuối kỳ — ghi sổ qua phiếu "Giá vốn hàng xuất"' },
-                  { key: 'ntQ', header: 'SL', band: 'Nhập trả', type: 'qty', sum: true, value: (x) => dt(x, 'saleReturnQty'), title: 'Khách trả hàng (nhập lại kho)' },
-                  { key: 'xdcQ', header: 'Xuất điều chỉnh', type: 'qty', sum: true, value: (x) => dt(x, 'adjOutQty'), hidden: true, title: 'Xuất điều chỉnh / hủy / kiểm kê thiếu' },
+                  { key: 'openingValue', header: '$', band: 'Tồn đầu', type: 'money', sum: true, hidden: true, title: 'Giá trị tồn đầu = SL tồn đầu × ĐGBQ đầu kỳ' },
+                  { key: 'dgDau', header: 'ĐGBQ đầu kỳ', type: 'money', value: (x) => dt(x, 'openingUnit'), render: (x) => dg(dt(x, 'openingUnit')), title: 'Đơn giá bình quân đầu tháng = Tồn đầu $ ÷ SL. Mã có ĐGBQ đầu kỳ nhập từ Excel thì lấy giá đó' },
+                  { key: 'inQty', header: 'SL', band: 'Nhập trong kỳ', type: 'qty', sum: true, title: 'Số lượng nhập tính vào giá: nhập mua − trả NCC + nhập điều chỉnh + nhận từ chi nhánh khác' },
+                  { key: 'inValue', header: '$', band: 'Nhập trong kỳ', type: 'money', sum: true, title: 'Giá trị nhập tính vào giá = nhập mua (giá Net) + chi phí phân bổ − thưởng, chiết khấu phân bổ − trả NCC + điều chỉnh + nhận từ chi nhánh khác. Bật cột chi tiết ở nút Cột' },
+                  { key: 'outQty', header: 'Xuất', type: 'qty', sum: true, title: 'Số lượng xuất trong tháng (bán, chuyển sang chi nhánh khác, điều chỉnh) — tính giá vốn = SL × ĐGBQ cuối kỳ' },
                   { key: 'closingQty', header: 'SL', band: 'Tồn cuối', type: 'qty', sum: true, title: 'Số lượng tồn cuối tháng' },
-                  { key: 'closingValue', header: '$', band: 'Tồn cuối', type: 'money', sum: true, title: 'Giá trị tồn cuối = SL (trừ quà giá 0) × ĐGBQ cuối kỳ' },
-                  { key: 'unitCost', header: 'ĐGBQ cuối kỳ', type: 'money', bold: true, render: (x) => dg(x.unitCost), title: 'ĐGBQ cuối kỳ = (Tồn đầu $ + Nhập mua $ − Xuất trả NCC $ + Nhập điều chỉnh $ + Nhập từ chi nhánh khác $) ÷ (SL tương ứng). Dùng tính giá vốn hàng xuất trong tháng và làm ĐGBQ đầu kỳ tháng sau' },
-                  { key: 'giaCuoi', header: 'Giá nhập lần cuối', type: 'money', value: (x) => dt(x, 'lastPurchaseUnit'), render: (x) => dg(dt(x, 'lastPurchaseUnit')), title: 'Đơn giá Net của lần nhập mua gần nhất (tính tới hết tháng)' },
-                  { key: 'chenh', header: 'Chênh lệch', type: 'money', value: (x) => (dt(x, 'lastPurchaseUnit') ? round2(x.unitCost - dt(x, 'lastPurchaseUnit')) : 0), title: '= ĐGBQ cuối kỳ − Giá nhập lần cuối. Lệch lớn: soát lại phiếu nhập, giá trả NCC hoặc ĐGBQ đầu kỳ' },
-                  { key: 'costSource', header: 'Nguồn ĐGBQ đầu kỳ', value: (x) => (x.costSource === 'import' ? 'Nhập Excel' : 'Tồn cuối tháng trước'), title: 'ĐGBQ đầu kỳ lấy từ tệp Excel hay từ tồn cuối tháng trước' },
+                  { key: 'closingValue', header: '$', band: 'Tồn cuối', type: 'money', sum: true, title: 'Giá trị tồn cuối = SL × ĐGBQ cuối kỳ (quà giá 0 không mang giá trị)' },
+                  { key: 'unitCost', header: 'ĐGBQ cuối kỳ', type: 'money', bold: true, render: (x) => dg(x.unitCost), title: 'ĐGBQ cuối kỳ = (Tồn đầu $ + Nhập trong kỳ $) ÷ (Tồn đầu SL + Nhập trong kỳ SL). Dùng tính giá vốn hàng xuất trong tháng và làm ĐGBQ đầu kỳ tháng sau' },
+                  { key: 'chenh', header: 'Chênh lệch', type: 'money', value: (x) => (dt(x, 'lastPurchaseUnit') ? round2(x.unitCost - dt(x, 'lastPurchaseUnit')) : 0), title: '= ĐGBQ cuối kỳ − Giá nhập lần cuối. Lệch lớn: soát lại phiếu nhập, chi phí / thưởng phân bổ, trả NCC hoặc ĐGBQ đầu kỳ' },
+                  // chi tiết (ẩn sẵn)
+                  { key: 'muaQ', header: 'Nhập mua SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'purchaseQty'), title: 'Nhập mua từ nhà cung cấp' },
+                  { key: 'muaV', header: 'Nhập mua $', type: 'money', sum: true, hidden: true, value: (x) => dt(x, 'purchaseValue'), title: 'Giá Net = đơn giá chưa VAT − chiết khấu' },
+                  { key: 'cpPb', header: 'Chi phí phân bổ (+)', type: 'money', sum: true, hidden: true, value: (x) => dt(x, 'costAlloc'), title: 'Chi phí mua hàng phân bổ vào mã (vận chuyển, bốc xếp…) — TĂNG giá vốn' },
+                  { key: 'thPb', header: 'Thưởng, CK phân bổ (−)', type: 'money', sum: true, hidden: true, value: (x) => dt(x, 'rebateAlloc'), title: 'Thưởng doanh số / chiết khấu nhãn hàng phân bổ theo mã — GIẢM giá vốn' },
+                  { key: 'traQ', header: 'Trả NCC SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'returnQty'), title: 'Hàng mua trả lại nhà cung cấp' },
+                  { key: 'traV', header: 'Trả NCC $', type: 'money', sum: true, hidden: true, value: (x) => dt(x, 'returnValue'), title: 'Giá trị trả NCC trừ khỏi nhập trong kỳ' },
+                  { key: 'nnbQ', header: 'Nhập nội bộ SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'tInQty'), title: 'Nhận chuyển kho; từ chi nhánh khác tính giá theo bên gửi, cùng chi nhánh không đổi giá' },
+                  { key: 'xnbQ', header: 'Xuất nội bộ SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'tOutQty'), title: 'Chuyển kho đi' },
+                  { key: 'banQ', header: 'Xuất bán SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'saleQty'), title: 'Xuất bán (bán lẻ, bán buôn, tặng kèm)' },
+                  { key: 'ntQ', header: 'Nhập trả SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'saleReturnQty'), title: 'Khách trả hàng' },
+                  { key: 'dgKy', header: 'ĐGBQ trong kỳ', type: 'money', hidden: true, value: (x) => dt(x, 'periodUnit'), render: (x) => dg(dt(x, 'periodUnit')), title: 'Đơn giá bình quân của riêng phần nhập trong tháng = Nhập trong kỳ $ ÷ SL' },
+                  { key: 'giaCuoi', header: 'Giá nhập lần cuối', type: 'money', hidden: true, value: (x) => dt(x, 'lastPurchaseUnit'), render: (x) => dg(dt(x, 'lastPurchaseUnit')), title: 'Đơn giá Net của lần nhập mua gần nhất (tới hết tháng)' },
+                  { key: 'costSource', header: 'Nguồn ĐGBQ đầu kỳ', hidden: true, value: (x) => (x.costSource === 'import' ? 'Nhập Excel' : 'Tồn cuối tháng trước'), title: 'ĐGBQ đầu kỳ lấy từ tệp Excel hay tồn cuối tháng trước' },
                   { key: 'giftQty', header: 'Quà giá 0', type: 'qty', sum: true, hidden: true, title: 'Quà khuyến mại nhận kèm phiếu mua: nằm trong SL tồn nhưng không mang giá trị' },
                 ]}
               />
