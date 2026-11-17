@@ -147,7 +147,7 @@ describe('NT-HT-001 — quay về dữ liệu gốc (db/seeds/so-do-to-chuc*.jso
     expect(def).toMatchObject({ nodes: 16, assignments: 28 });
     await ok('POST', '/api/v1/org-units', { code: 'NGHICH', name: 'Nút thử', parentCode: 'PT' });
     await ok('PATCH', '/api/v1/branches/26001Premium', { orgUnitCode: 'NDH' });
-    const r = await ok('POST', '/api/v1/org-units/restore-defaults', { confirm: true });
+    const r = await ok('POST', '/api/v1/org-units/restore-defaults', { confirm: true, password: 'Thuy!@#' });
     expect(r.removed).toBeGreaterThanOrEqual(1);
     const tree = await ok('GET', '/api/v1/org-units/tree');
     expect(tree.nodes).toHaveLength(def.nodes);

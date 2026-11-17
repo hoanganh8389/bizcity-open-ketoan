@@ -150,6 +150,7 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
       <PageHeader title={meta.title} code={meta.code} subtitle={meta.subtitle} helpKey={meta.helpKey} />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: `dimensions.${kind}`, title: 'danh mục này', sel: sel ? { key: sel.code, label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
@@ -226,7 +227,7 @@ export function DimensionForm({ kind, value, parents, onClose, onSaved }: { kind
   const total = sched.filter((x) => x.status !== 'cancelled').reduce((t, x) => t + x.amount, 0);
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide={isContract} title={meta.form} onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !code || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Đóng</button></>}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !code || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       {isContract && <div className="field-title full">Thông tin chung hợp đồng</div>}
       {kind === 'cash_item' && (
         <Field label="Loại" full>

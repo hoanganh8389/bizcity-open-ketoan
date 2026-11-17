@@ -98,6 +98,11 @@ export function CayNhomHang({ list, selected, onSelect, checkable = false, picke
     for (let c = selected ? ix.parentOf(selected) : null; c; c = ix.parentOf(c)) s.add(c);
     setOpen(s);
   }, [list, ix, openLevel, selected]);
+  // [2026-11-16 kiennt] chọn nhóm từ ngoài cây (vd bấm nhóm con ở DM11): mở sẵn đường tới nhóm đó (đóng góp)
+  useEffect(() => {
+    if (!selected) return;
+    setOpen((o) => { const n = new Set(o); let doi = false; for (let c = ix.parentOf(selected); c; c = ix.parentOf(c)) if (!n.has(c)) { n.add(c); doi = true; } return doi ? n : o; });
+  }, [selected, ix]);
 
   const pickedSet = useMemo(() => new Set(picked), [picked]);
   // Nhóm "đang tích" = chính nó hoặc một nhóm cha của nó đã tích.

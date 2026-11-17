@@ -28,7 +28,7 @@ function writeDefault(screen: string, id: string) {
   try { window.localStorage.setItem(KEY(screen), id); } catch { /* trình duyệt chặn lưu: chỉ không nhớ mặc định */ }
 }
 
-export function PrintButton<T>({ screen, memoryKey, templates, getDocs, disabled, label = 'In', bare, small, title }: {
+export function PrintButton<T>({ screen, memoryKey, templates, getDocs, disabled, label = 'In', bare, small, title, templateId }: {
   screen: string;
   /** Khoá nhớ mẫu mặc định khi một màn có nhiều loại chứng từ (vd MH03:order); mặc định = mã màn. */
   memoryKey?: string;
@@ -41,6 +41,8 @@ export function PrintButton<T>({ screen, memoryKey, templates, getDocs, disabled
   /** Cỡ nhỏ (btn-sm) khi đứng cạnh các nút nhỏ trên thanh công cụ. */
   small?: boolean;
   title?: string;
+  /** [2026-11-16 kiennt] In đúng mẫu này, không hiện mũi tên chọn mẫu — nơi gọi tự có ô chọn mẫu (vd bảng In tem DM10) (đóng góp) */
+  templateId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [job, setJob] = useState<PrintJobSpec<T> | null>(null);
@@ -56,7 +58,7 @@ export function PrintButton<T>({ screen, memoryKey, templates, getDocs, disabled
   const resolved = resolveScreen(screen, templates, eff);
   const list = resolved.templates;
   const pick = (id: string | null | undefined) => list.find((x) => x.template.id === id);
-  const def = pick(resolved.defaultId) ?? pick(defId) ?? list[0];
+  const def = pick(templateId) ?? pick(resolved.defaultId) ?? pick(defId) ?? list[0];
 
   useEffect(() => {
     if (!open) return;
@@ -115,7 +117,7 @@ export function PrintButton<T>({ screen, memoryKey, templates, getDocs, disabled
       <button type="button" className={cls} disabled={disabled || busy} title={title ?? `In theo mẫu: ${def.template.name}`} onClick={() => void run(def)}>
         <Printer size={15} /> {label}
       </button>
-      {list.length > 1 && (
+      {list.length > 1 && !templateId && (
         <button type="button" className={`${cls ?? ''} pbtn-caret`} disabled={disabled || busy} title="Chọn mẫu in" onClick={() => setOpen((o) => !o)}>
           <ChevronDown size={14} />
         </button>

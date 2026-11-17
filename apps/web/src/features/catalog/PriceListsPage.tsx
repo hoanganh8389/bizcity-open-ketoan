@@ -55,6 +55,7 @@ export function PriceListsPage() {
       <PageHeader title="Bảng giá bán" code="DM14" subtitle="Bảng giá công ty và bảng giá chi nhánh, chi nhánh áp bảng giá nào; chọn một bảng giá để xem và sửa giá từng mặt hàng ở dưới" helpKey="bang-gia" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'price-lists', title: 'Bảng giá', sel: sel ? { key: sel.code, label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}

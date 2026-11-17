@@ -1,16 +1,17 @@
 /**
  * DM Tài khoản (ACC1) — hệ thống tài khoản, bố cục theo danh mục tài khoản phổ biến của phần mềm kế toán:
- *   Danh sách: Số tài khoản (cây: bấm ⊞ / ⊟ để mở / thu tài khoản con) · Tên · Tính chất · Tên tiếng Anh · Diễn giải · Trạng thái.
+ *   Danh sách: Số tài khoản (cây: bấm ⊞ / ⊟ để mở / thu tài khoản con) · Tên · Tính chất · Trạng thái (Tên tiếng Anh, Diễn giải ẩn mặc định).
  *   Tài khoản tổng hợp in đậm, ngừng sử dụng hiện mờ. Nút Cột bật thêm: TK tổng hợp, Cấp và các ô "theo dõi chi tiết".
- *   Thanh nút: Thêm · Sửa · Xoá · Nạp · Xuất (Excel đúng mẫu "DANH SÁCH HỆ THỐNG TÀI KHOẢN") · Nhân bản · Ngừng / dùng lại ·
- *   Mở rộng / Thu gọn · Nhập Excel. Ô tìm theo số (khớp phần đầu) hoặc tên; lọc trạng thái.
- *   Form: Số TK, Tên TK, TK tổng hợp, Tính chất, Diễn giải; Theo dõi chi tiết theo (tích = bắt buộc nhập khi hạch toán vào tài khoản);
+ *   Thanh nút: Thêm · Nạp · Xuất (Excel đúng mẫu "DANH SÁCH HỆ THỐNG TÀI KHOẢN") · In · Nhập Excel; bên trái ô tìm theo số
+ *   (khớp phần đầu) hoặc tên, Mở rộng / Thu gọn.
+ *   [2026-11-17 kiennt] bỏ Nhân bản; Ngừng / dùng lại thành ô Trạng thái trong form sửa (vẫn hỏi xác nhận khi Ghi) (đóng góp)
+ *   Form: Số TK, Tên TK, TK tổng hợp, Tính chất, Trạng thái (khi sửa), Diễn giải; Theo dõi chi tiết theo (tích = bắt buộc nhập khi hạch toán vào tài khoản);
  *   Tên tiếng Anh. Các cờ phân loại cũ không có tác dụng (TK FC, VAT, vay, luôn tăng, sổ cái, giá thành, công nợ nội bộ) không còn trên
  *   màn — dữ liệu vẫn giữ nguyên.
  * [2026-11-11 Nguyễn Văn Thủy] viết lại theo chuẩn danh mục phổ biến, đơn giản hoá (docs/cap-nhat-ux/08-dm-tai-khoan.md) (đóng góp)
  */
 import { useMemo, useRef, useState } from 'react';
-import { Ban, CheckCircle2, Copy, MinusSquare, PlusSquare } from 'lucide-react';
+import { MinusSquare, PlusSquare } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -97,15 +98,13 @@ export function AccountsPage() {
   const q = useQuery({ queryKey: ['accounts', 'all'], queryFn: () => api.get<Account[]>('/api/v1/accounts', { includeInactive: true }) });
   const refresh = () => void qc.invalidateQueries({ queryKey: ['accounts'] });
   const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/accounts/${code}`), onSuccess: () => { setSel(null); refresh(); } });
-  const doiTrangThai = useMutation({ mutationFn: (a: Account) => api.patch(`/api/v1/accounts/${a.code}`, { isActive: !a.isActive }), onSuccess: (_d, a) => { setSel({ ...a, isActive: !a.isActive }); refresh(); } });
   const remove = () => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá tài khoản ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); };
-  const ngung = () => {
-    if (!sel) return;
-    if (window.confirm(sel.isActive ? `Ngừng sử dụng tài khoản ${sel.code} - ${sel.name}? (không chọn được khi lập chứng từ mới, số liệu cũ giữ nguyên)` : `Dùng lại tài khoản ${sel.code} - ${sel.name}?`)) doiTrangThai.mutate(sel);
-  };
 
   const all = useMemo(() => [...(q.data ?? [])].sort((a, b) => a.code.localeCompare(b.code)), [q.data]);
   const filtering = Boolean(search.trim());
+  // [2026-11-17 kiennt] đang lọc ở ô lọc / phễu của bảng: mở hết cây để lọc trên mọi tài khoản, không chỉ nhánh đang mở (đóng góp)
+  const [locCot, setLocCot] = useState(false);
+  const moCay = filtering || locCot;
   const matched = useMemo(() => {
     const k = fold(search.trim());
     return all.filter((a) => !k || fold(a.code).startsWith(k) || fold(a.name).includes(k));
@@ -124,21 +123,21 @@ export function AccountsPage() {
     const hit = new Set(matched.map((a) => a.code));
     for (const a of matched) { let c: string | null = a.code; while (c && !keep.has(c)) { keep.add(c); c = byCode.get(c)?.parentCode ?? null; } }
     const rows: Account[] = [];
-    const walk = (list: Account[]) => { for (const a of list) { if (!keep.has(a.code)) continue; rows.push(a); if (filtering || open.has(a.code)) walk(children.get(a.code) ?? []); } };
+    const walk = (list: Account[]) => { for (const a of list) { if (!keep.has(a.code)) continue; rows.push(a); if (moCay || open.has(a.code)) walk(children.get(a.code) ?? []); } };
     walk(all.filter((a) => !a.parentCode || !byCode.has(a.parentCode)));
     return { rows, path: new Set([...keep].filter((c) => !hit.has(c))) };
-  }, [all, matched, children, open, filtering]);
+  }, [all, matched, children, open, moCay]);
   const toggle = (code: string) => setOpen((s) => { const n = new Set(s); if (n.has(code)) n.delete(code); else n.add(code); return n; });
 
   const columns: Column<Account>[] = [
     {
-      key: 'code', header: 'Số tài khoản', type: 'code', width: 140, noSort: true, noFilter: true, title: 'Bấm ⊞ để mở tài khoản con, ⊟ để thu lại',
+      key: 'code', header: 'Số tài khoản', type: 'code', width: 140, noSort: true, title: 'Bấm ⊞ để mở tài khoản con, ⊟ để thu lại',
       render: (a) => {
         const kids = children.get(a.code)?.length ?? 0;
-        const mo = filtering || open.has(a.code);
+        const mo = moCay || open.has(a.code);
         return (
           <span className="acc-tree" style={{ paddingLeft: (a.level - 1) * 14 }}>
-            {kids ? <button className="acc-caret" title={mo ? 'Thu gọn' : `Mở ${kids} tài khoản con`} disabled={filtering} onClick={(e) => { e.stopPropagation(); toggle(a.code); }}>{mo ? <MinusSquare size={13} /> : <PlusSquare size={13} />}</button> : <span className="acc-caret-gap" />}
+            {kids ? <button className="acc-caret" title={mo ? 'Thu gọn' : `Mở ${kids} tài khoản con`} disabled={moCay} onClick={(e) => { e.stopPropagation(); toggle(a.code); }}>{mo ? <MinusSquare size={13} /> : <PlusSquare size={13} />}</button> : <span className="acc-caret-gap" />}
             <span style={a.isPosting ? undefined : { fontWeight: 600 }}>{a.code}</span>
           </span>
         );
@@ -146,8 +145,8 @@ export function AccountsPage() {
     },
     { key: 'name', header: 'Tên tài khoản', width: 360, noSort: true, bold: (a) => !a.isPosting },
     { key: 'normalSide', header: 'Tính chất', width: 100, noSort: true, value: (a) => TINH_CHAT[a.normalSide] ?? a.normalSide, title: 'Dư Nợ / Dư Có: số dư thường ở bên đó. Lưỡng tính: số dư tách Nợ / Có theo từng đối tượng (131, 331…)' },
-    { key: 'nameEn', header: 'Tên tiếng Anh', width: 300, noSort: true },
-    { key: 'description', header: 'Diễn giải', width: 220, noSort: true },
+    { key: 'nameEn', header: 'Tên tiếng Anh', width: 300, noSort: true, hidden: true },
+    { key: 'description', header: 'Diễn giải', width: 220, noSort: true, hidden: true },
     { key: 'isActive', header: 'Trạng thái', width: 120, noSort: true, value: (a) => (a.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng') },
     // Bật thêm ở nút Cột.
     { key: 'parentCode', header: 'TK tổng hợp', type: 'code', width: 100, hidden: true },
@@ -160,6 +159,7 @@ export function AccountsPage() {
       <PageHeader title="Hệ thống tài khoản" code="ACC1" subtitle="Theo Thông tư 99/2025; tài khoản tổng hợp (có tài khoản con) in đậm, chỉ tài khoản chi tiết được ghi sổ" helpKey="tai-khoan" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'accounts', title: 'Hệ thống tài khoản', sel: sel ? { key: sel.code, label: sel.name } : null }}
           // [2026-11-16 kiennt] bảng dạng cây: giữ ô tìm (lọc cột chỉ thấy dòng đang mở), bỏ chọn trạng thái — lọc ở cột (đóng góp)
           left={
             <span className="row" style={{ gap: 6, alignItems: 'center' }}>
@@ -170,7 +170,7 @@ export function AccountsPage() {
           }
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
-          busy={del.isPending || doiTrangThai.isPending}
+          busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, normalSide: 'debit', parentCode: sel?.isActive ? sel.code : undefined })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={remove}
@@ -178,16 +178,15 @@ export function AccountsPage() {
           onExport={() => void xuatExcel(all)}
           extra={
             <>
-              {canWrite && <button className="btn btn-sm" disabled={!sel} title="Thêm tài khoản mới chép thông tin của tài khoản đang chọn (để trống số tài khoản)" onClick={() => sel && setEditing({ ...sel, code: '', isNew: true, isActive: true })}><Copy size={14} /> Nhân bản</button>}
-              {canWrite && <button className="btn btn-sm" disabled={!sel || doiTrangThai.isPending} title={sel?.isActive === false ? 'Dùng lại tài khoản đang ngừng' : 'Ngừng sử dụng: không chọn được khi lập chứng từ mới, số liệu cũ giữ nguyên'} onClick={ngung}>{sel?.isActive === false ? <><CheckCircle2 size={14} /> Dùng lại</> : <><Ban size={14} /> Ngừng sử dụng</>}</button>}
               {canWrite && <NutNhapExcel loai={nhapLoai('tai-khoan')!} />}
             </>
           }
         />
-        <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : doiTrangThai.error ? errorText(doiTrangThai.error) : null} />
+        <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
           <DataGrid
             storageKey="acc1-v4"
+            onFilterChange={setLocCot}
             exportRef={exportRef}
             rows={tree.rows}
             rowKey={(a) => a.code}
@@ -224,6 +223,7 @@ function AccountForm({ value, codes, onClose, onAddNext }: { value: Partial<Acco
   const save = useMutation({
     mutationFn: (warnAck?: CatalogWarnAck) => {
       const body: Record<string, unknown> = { name: v.name?.trim(), nameEn: v.nameEn?.trim() ?? '', description: v.description?.trim() ?? '', normalSide: v.normalSide, warnAck };
+      if (doiTT) body.isActive = v.isActive !== false;
       for (const [k] of THEO_DOI) body[k] = Boolean(v[k]);
       body.isDebt = Boolean(v.trackPartner);
       return isNew ? api.post('/api/v1/accounts', { ...body, code: v.code, parentCode: v.parentCode || undefined }) : api.patch(`/api/v1/accounts/${value.code}`, body);
@@ -234,15 +234,21 @@ function AccountForm({ value, codes, onClose, onAddNext }: { value: Partial<Acco
       if (themTiep.current) onAddNext(v.parentCode || undefined); else if (isNew) onClose(); else viewAgain[1]();
     },
   });
-  const ghi = (tiep: boolean) => { if (loiSo) return; themTiep.current = tiep; ack.request((a) => save.mutate(a)); };
+  // Đổi trạng thái (ngừng / dùng lại) trong form: hỏi xác nhận như nút Ngừng sử dụng trước đây.
+  const doiTT = !isNew && (v.isActive !== false) !== (value.isActive !== false);
+  const ghi = (tiep: boolean) => {
+    if (loiSo) return;
+    if (doiTT && !window.confirm(v.isActive === false ? `Ngừng sử dụng tài khoản ${value.code} - ${v.name ?? value.name}? (không chọn được khi lập chứng từ mới, số liệu cũ giữ nguyên)` : `Dùng lại tài khoản ${value.code} - ${v.name ?? value.name}?`)) return;
+    themTiep.current = tiep; ack.request((a) => save.mutate(a));
+  };
   return (
     <Modal viewAgain={viewAgain} viewFirst={!isNew}
       title={isNew ? 'Thêm tài khoản' : `Sửa tài khoản ${value.code}`}
       onClose={onClose}
       footer={<>
-        <button className="btn" onClick={onClose}>Huỷ</button>
         {isNew && <button className="btn" disabled={save.isPending || why.blocked} title="Ghi rồi mở form trống để thêm tài khoản tiếp (cùng tài khoản tổng hợp)" onClick={() => ghi(true)}>Ghi và thêm</button>}
         <button className="btn btn-primary" disabled={save.isPending || why.blocked} title="Ctrl + S" onClick={() => ghi(false)}>{ack.label}</button>
+        <button className="btn" onClick={onClose}>Thoát</button>
       </>}
     >
       <div className="tk-form">
@@ -256,6 +262,11 @@ function AccountForm({ value, codes, onClose, onAddNext }: { value: Partial<Acco
             <option value="debit">Dư Nợ</option><option value="credit">Dư Có</option><option value="both">Lưỡng tính</option>
           </select>
         </Field>
+        {!isNew && (
+          <Field label="Trạng thái" truong="isActive" tip="Ngừng sử dụng: không chọn được khi lập chứng từ mới, số liệu cũ giữ nguyên">
+            <label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Đang sử dụng</label>
+          </Field>
+        )}
         <Field label="Diễn giải" full truong="description"><textarea className="input" rows={2} value={v.description ?? ''} onChange={(e) => set({ description: e.target.value })} placeholder="Ghi chú cách dùng tài khoản (không ảnh hưởng ghi sổ)" /></Field>
       </div>
       <fieldset className="fgroup">

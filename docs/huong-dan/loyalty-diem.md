@@ -24,4 +24,4 @@ Menu trái → **Phần riêng** → **Điểm thành viên**. Cần quyền *Xe
 - **Khách**: 500 khách điểm còn nhiều nhất, kèm tích / đổi / hết hạn trong kỳ. Rê chuột vào tiêu đề cột để xem cách tính; nút xuất Excel ở góc bảng.
 
 ## Kế toán
-Điểm **không** hạch toán lúc tích. Chỉ khi khách đổi: quà là dòng quà 0đ trên chứng từ bán (giá vốn hàng tặng), voucher là tiền giảm trên dòng chứng từ bán. Tài khoản do kế toán đặt ở *Quy tắc hạch toán*.
+Điểm **không** hạch toán lúc tích. Chỉ khi khách đổi: quà là dòng quà 0đ trên chứng từ bán (giá vốn hàng tặng), voucher là tiền giảm trên dòng chứng từ bán. Tài khoản do kế toán đặt ở *Tài khoản ngầm định*.

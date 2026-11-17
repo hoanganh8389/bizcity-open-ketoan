@@ -65,7 +65,7 @@ export const GON_DEFS: GonDef[] = [
     the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), MUA('payment'), '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/han-muc', '/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/mua-hang/cai-dat'],
     sections: [
       { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('exchange'), MUA('rebate'), MUA('gift_in'), MUA('cost'), MUA('payment'), MUA('prepayment'), '/mua-hang/tong-hop'] },
-      { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/thue/hoa-don-co-quan-thue', '/mua-hang/doi-chieu'] },
+      { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/mua-hang/doi-chieu'] }, // [2026-11-17 Nguyễn Văn Thủy] tạm ẩn THUE01 Hoá đơn từ cơ quan thuế — đã có Hoá đơn đầu vào (đóng góp)
       { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop'] },
       // [2026-11-15 Nguyễn Văn Thủy] sổ kho / tồn kho theo mặt hàng đưa lên menu cho dễ thấy (đóng góp)
       { label: 'Sổ kho, tồn kho', paths: ['/mua-hang/so-kho', '/mua-hang/ton-kho'] },
@@ -89,7 +89,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Chính sách bán', paths: ['/app/pos/khuyen-mai', '/danh-muc/bang-gia'], soon: ['Hạn mức nợ khách'] },
       { label: 'Danh mục', paths: ['/danh-muc/khach-hang', '/danh-muc/mat-hang', '/cau-hinh/hinh-thuc-thanh-toan'] },
       // [2026-11-13 09:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: bỏ mục mờ "Định khoản bán hàng" — tài khoản bán hàng xem ở khối ④ của BH17, sửa ở ACC41 (đóng góp)
-      { label: 'Cài đặt', paths: ['/app/pos/cai-dat', '/cau-hinh/quy-tac-hach-toan'] },
+      { label: 'Cài đặt', paths: ['/app/pos/cai-dat'] }, // [2026-11-17 Nguyễn Văn Thủy] Tài khoản ngầm định chỉ ở Danh mục (đóng góp)
     ],
     reports: [
       { label: 'Bán hàng', paths: ['/ban-hang/bao-cao', '/ban-hang/tong-hop', '/cong-no/nhat-ky-ban-hang', '/ban-hang/lai-gop', '/ban-hang/thu-tien-ban-hang'] },

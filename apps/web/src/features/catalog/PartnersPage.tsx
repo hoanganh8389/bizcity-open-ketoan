@@ -133,6 +133,7 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
       <KpiDoiTuong kind={fixedKind} />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: fixedKind ? `partners.${fixedKind}` : 'partners', title: fixedKind === 'customer' ? 'Khách hàng' : fixedKind === 'supplier' ? 'Nhà cung cấp' : 'Đối tượng', sel: sel ? { key: sel.code, label: sel.name } : null }}
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}
@@ -574,6 +575,7 @@ export function PartnerGroupsPage() {
       <PageHeader title="Nhóm đối tượng" code="DM08" subtitle="Nhóm khách hàng, nhà cung cấp dùng để lọc và gom báo cáo theo nhóm" helpKey="doi-tuong" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'partner-groups', title: 'Nhóm khách hàng, nhà cung cấp', sel: sel ? { key: sel.code, label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
@@ -595,7 +597,7 @@ export function PartnerGroupsPage() {
               { key: 'parentCode', header: 'Nhóm cha', type: 'code', width: 100 },
               { key: 'kind', header: 'Dùng cho', width: 110, value: (g) => (g.kind === 'any' ? 'Mọi loại' : KIND[g.kind] ?? g.kind) },
               { key: 'partners', header: 'Số đối tượng', type: 'number', width: 100 },
-              { key: 'inactive', header: 'Ngừng dùng', type: 'check', width: 85, hidden: true, value: (g) => !g.isActive },
+              { key: 'active', header: 'Hoạt động', type: 'check', width: 85, value: (g) => g.isActive },
             ] satisfies Column<Group>[]} />
         )}
       </div>

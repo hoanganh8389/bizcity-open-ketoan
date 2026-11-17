@@ -74,8 +74,14 @@ function NhomCard({ b, s, so }: { b: SoDoNhomBuoc; s: GonResolvedSection; so: nu
 }
 
 /** Chuỗi nhóm làm lần lượt (mũi tên), cuối chuỗi rẽ ra các nhóm làm song song. Nhóm người dùng không mở được màn nào thì ẩn. */
-function NhomFlow({ nhom, sections }: { nhom: NonNullable<SoDo['nhom']>; sections: GonResolvedSection[] }) {
-  const pick = (list: SoDoNhomBuoc[]) => list.flatMap((b) => { const s = sections.find((x) => x.label === b.nhom); return s?.items.length ? [{ b, s }] : []; });
+function NhomFlow({ nhom, sections, canOpen }: { nhom: NonNullable<SoDo['nhom']>; sections: GonResolvedSection[]; canOpen: (path: string) => boolean }) {
+  // [2026-11-17 Nguyễn Văn Thủy] thẻ khai màn thẳng (items) — lọc theo quyền; không khai thì lấy theo mục menu cùng tên (đóng góp)
+  const pick = (list: SoDoNhomBuoc[]) => list.flatMap((b) => {
+    const s: GonResolvedSection | undefined = b.items
+      ? { label: b.nhom, items: b.items.filter((m) => canOpen(m.path)).map((m) => ({ key: m.path, label: m.label, path: m.path })) }
+      : sections.find((x) => x.label === b.nhom);
+    return s?.items.length ? [{ b, s }] : [];
+  });
   const chuoi = pick(nhom.chuoi);
   const nhanh = pick(nhom.nhanh);
   return (
@@ -111,7 +117,7 @@ export function SoDoNhom({ soDo, canOpen, extra, sections = [] }: { soDo: SoDo; 
     <>
       <div className="card sd-card">
         <div className="sd-title">{soDo.title}</div>
-        {soDo.nhom ? <NhomFlow nhom={soDo.nhom} sections={sections} /> : <div className={`sd-rows${two ? ' two' : ''}`} style={{ ['--sd-n' as string]: cols }}>
+        {soDo.nhom ? <NhomFlow nhom={soDo.nhom} sections={sections} canOpen={canOpen} /> : <div className={`sd-rows${two ? ' two' : ''}`} style={{ ['--sd-n' as string]: cols }}>
           {rows.map((r, i) => (
             <div key={i} className={`sd-row${i === 0 ? ' top' : ' bot'}`}>
               {!two && r.length > 1 && <i className="sd-line-h" style={{ left: `${50 / cols}%`, right: `${100 - ((r.length - 0.5) * 100) / cols}%` }} />}

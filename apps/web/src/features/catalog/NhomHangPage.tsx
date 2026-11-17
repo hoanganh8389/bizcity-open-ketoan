@@ -3,7 +3,7 @@
 //   với nút ngay tại chỗ (Sửa, + Thêm nhóm con); thêm / sửa mở hộp thoại, mã điền sẵn gợi ý; lưới có lọc theo cấp; không xoá (0116) (đóng góp)
 /**
  * NHÓM HÀNG (DM11) — một cây: cấp 1 → cấp 2 → cấp 3 (→ cấp 4, 5 chia nhỏ, không ghép mã hàng).
- *   Trái: cây. Phải: thẻ nhóm đang chọn + thẻ Nhóm con (lọc theo cấp) | Lịch sử.
+ *   Trái: cây (tìm, mở / thu). Phải: nhóm đang chọn — đường dẫn, số liệu, cấu trúc mã hàng, bảng nhóm con (bấm để đi xuống).
  *   Mã nhóm hàng ghép vào mã hàng: cấp 1 = 2 chữ số (không bắt đầu bằng 0), cấp 2 = 3 ký tự, cấp 3 = 1 ký tự.
  *   Không có xoá: bỏ tích Đang dùng để ngừng. Mã nội bộ của nhóm tự cấp, không hiện.
  */
@@ -11,8 +11,9 @@ import { useMemo, useState } from 'react';
 import { luuExcel } from '@/lib/excelChuan';
 import { ProductEditor } from './ProductsPage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileDown, Pencil, Plus, RefreshCw } from 'lucide-react';
+import { ChevronRight, FileDown, History, Pencil, Plus, Printer, RefreshCw } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
+import { ThungRacDanhMuc } from '@/components/ThungRacDanhMuc';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
@@ -38,141 +39,129 @@ function goiYMa(ix: NhomIndex, parent: string | null): string {
   return '';
 }
 
+// [2026-11-16 kiennt] DM11 thiết kế lại kiểu cây – chi tiết (như MISA / Odoo): trái là cây nhóm, phải là nhóm đang chọn —
+//   đường dẫn bấm được, thẻ số liệu, cấu trúc mã hàng (đoạn nào do cấp nào quyết), bảng nhóm con bấm để đi xuống (đóng góp)
 export function NhomHangPage() {
   const { can } = useAuth();
   const canWrite = can('catalog:write');
   const q = useNhomHang();
   const ix = useMemo(() => indexNhom(q.data), [q.data]);
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  const [tim, setTim] = useState('');
-  const [cap, setCap] = useState(0); // 0 = cây; 1..5 = danh sách phẳng một cấp
+  const [sel, setSel] = useState<string | null>(null); // null = gốc (mọi ngành hàng)
   const [form, setForm] = useState<null | { mode: 'add'; parent: string | null } | { mode: 'edit'; code: string }>(null);
   const [lichSu, setLichSu] = useState<NhomHang | null>(null);
-  const [vua, setVua] = useState<string | null>(null); // dòng vừa ghi: tô sáng
   const [themMH, setThemMH] = useState<string | null>(null); // nhóm cấp 3 đang thêm mặt hàng
-  // Cột phụ ẩn / hiện (nhớ theo trình duyệt): Tên nhóm hàng, Ghi chú, Người tạo, Người sửa.
-  const COT_PHU = [['full', 'Tên nhóm hàng'], ['note', 'Ghi chú'], ['tao', 'Người tạo'], ['sua', 'Người sửa']] as const;
-  const [cot, setCot] = useState<Record<string, boolean>>(() => { try { return { full: true, note: true, tao: false, sua: false, ...JSON.parse(localStorage.getItem('dm11-cot') ?? '{}') }; } catch { return { full: true, note: true, tao: false, sua: false }; } });
-  const doiCot = (k: string) => setCot((x) => { const n = { ...x, [k]: !x[k] }; try { localStorage.setItem('dm11-cot', JSON.stringify(n)); } catch { /* bỏ qua */ } return n; });
-  const [moCot, setMoCot] = useState(false);
 
   const thieuMa = (c: NhomHang) => Boolean(MA_NGAN_DAI[ix.level(c.code)]) && !c.skuCode;
   // Số mặt hàng cộng dồn cả nhánh con.
   const tongMH = useMemo(() => {
     const m = new Map<string, number>();
-    const of = (code: string): number => { if (m.has(code)) return m.get(code)!; m.set(code, 0); const n = (ix.byCode.get(code)?.products ?? 0) + (ix.kids.get(code) ?? []).reduce((s, k) => s + of(k.code), 0); m.set(code, n); return n; };
+    const of = (code: string): number => { if (m.has(code)) return m.get(code)!; m.set(code, 0); const n = (ix.byCode.get(code)?.products ?? 0) + (ix.kids.get(code) ?? []).reduce((t, k) => t + of(k.code), 0); m.set(code, n); return n; };
     for (const c of q.data ?? []) of(c.code);
     return m;
   }, [q.data, ix]);
-  const bo = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
-  // Đang tìm: giữ nhóm khớp + mọi nhóm cha của nó (mở sẵn).
-  const khop = useMemo(() => {
-    const t = bo(tim.trim());
-    if (!t) return null;
-    const keep = new Set<string>();
-    for (const c of q.data ?? []) if (bo(`${c.skuCode ?? ''} ${c.name} ${c.fullName ?? ''}`).includes(t)) for (let x: string | null = c.code; x; x = ix.parentOf(x)) keep.add(x);
-    return keep;
-  }, [tim, q.data, ix]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  type Dong = { c: NhomHang; depth: number; hasKids: boolean; isOpen: boolean };
-  const dong: Dong[] = [];
-  if (cap) {
-    for (const c of (q.data ?? []).filter((x) => ix.level(x.code) === cap && (!khop || khop.has(x.code))).sort((a, b) => ix.path(a.code).localeCompare(ix.path(b.code), 'vi'))) dong.push({ c, depth: 0, hasKids: false, isOpen: false });
-  } else {
-    const walk = (list: NhomHang[], depth: number) => {
-      for (const c of list) {
-        if (khop && !khop.has(c.code)) continue;
-        const kids = ix.kids.get(c.code) ?? [];
-        const isOpen = Boolean(khop) || open.has(c.code);
-        dong.push({ c, depth, hasKids: kids.length > 0, isOpen });
-        if (isOpen) walk(kids, depth + 1);
-      }
-    };
-    walk(ix.roots, 0);
-  }
-  const lat = (code: string) => setOpen((o) => { const n = new Set(o); if (n.has(code)) n.delete(code); else n.add(code); return n; });
-  const moHet = () => setOpen(new Set((q.data ?? []).filter((c) => (ix.kids.get(c.code) ?? []).length).map((c) => c.code)));
 
   const xuat = () => void luuExcel('nhom-hang.xlsx', [{ name: 'Nhóm hàng', plainBody: true, rows: [
     ['Nhóm cha', 'Mã nhóm hàng', 'Mã ngắn', 'Tên nhóm hàng', 'Cấp', 'Số mặt hàng', 'Đang dùng', 'Ghi chú', 'Người tạo', 'Lúc tạo', 'Người sửa', 'Lúc sửa'],
     ...(q.data ?? []).map((c) => [ix.path(ix.parentOf(c.code)), c.name, c.skuCode ?? '', c.fullName ?? '', ix.level(c.code), tongMH.get(c.code) ?? 0, c.isActive ? 'Có' : 'Không', c.note ?? '', c.createdBy ?? '', luc(c.createdAt), c.updatedBy ?? '', c.updatedBy ? luc(c.updatedAt) : '']),
   ] }]);
 
+  const g = sel ? ix.byCode.get(sel) ?? null : null;
+  const lv = g ? ix.level(g.code) : 0;
+  const con = g ? ix.kids.get(g.code) ?? [] : ix.roots;
+  const chain: NhomHang[] = [];
+  for (let c = sel; c; c = ix.parentOf(c)) { const n = ix.byCode.get(c); if (n) chain.unshift(n); }
+  // Nút thêm theo cấp: gốc → ngành hàng (cấp 1); cấp 1, 2 → nhóm con; cấp 3 → mặt hàng (mã tự sinh theo nhóm).
+  const themCon = !canWrite ? null
+    : lv === 3 ? { label: 'Thêm mặt hàng', title: `Thêm mặt hàng vào nhóm "${g!.name}" — mã tự sinh theo nhóm`, run: () => setThemMH(g!.code) }
+    : lv < 3 ? { label: lv === 0 ? 'Thêm ngành hàng' : 'Thêm nhóm con', title: lv === 0 ? 'Thêm nhóm cấp 1 (ngành hàng mới)' : `Thêm nhóm cấp ${lv + 1} dưới "${g!.name}"`, run: () => setForm({ mode: 'add', parent: sel }) }
+    : null;
+  // Cấu trúc mã hàng: ngành (cấp 1) · nhãn (cấp 2) · nhóm (cấp 3) · số thứ tự.
+  const doan = [1, 2, 3].map((l) => ({ l, ten: ['Ngành', 'Nhãn', 'Nhóm'][l - 1]!, ma: chain[l - 1]?.skuCode || '', dai: MA_NGAN_DAI[l]! }));
+
   return (
     <>
       <PageHeader title="Danh mục nhóm hàng" code="DM11" helpKey="nhom-hang" subtitle="Cây nhóm hàng — mã hàng ghép từ mã nhóm cấp 1, 2, 3" />
-      <div className="card">
-        <div className="nh-bar">
-          <input className="input" style={{ width: 260 }} placeholder="Tìm theo mã hoặc tên nhóm…" value={tim} onChange={(e) => setTim(e.target.value)} />
-          <select className="select input" style={{ width: 190 }} value={cap} onChange={(e) => setCap(Number(e.target.value))}>
-            <option value={0}>Xem dạng cây</option>
-            {[1, 2, 3, 4, 5].map((l) => <option key={l} value={l}>Chỉ nhóm cấp {l}</option>)}
-          </select>
-          {!cap && <button className="btn btn-sm" onClick={moHet}>Mở hết</button>}
-          {!cap && <button className="btn btn-sm" onClick={() => setOpen(new Set())}>Thu hết</button>}
-          <span style={{ flex: 1 }} />
-          <span style={{ position: 'relative' }}>
-            <button className="btn btn-sm" onClick={() => setMoCot((x) => !x)} title="Ẩn / hiện cột">Cột ▾</button>
-            {moCot && <div className="nh-cot" onMouseLeave={() => setMoCot(false)}>{COT_PHU.map(([k, l]) => <label key={k} className="checkbox"><input type="checkbox" checked={Boolean(cot[k])} onChange={() => doiCot(k)} /> {l}</label>)}</div>}
-          </span>
-          <button className="btn btn-sm" onClick={() => void q.refetch()}><RefreshCw size={14} /> Nạp</button>
-          <button className="btn btn-sm" onClick={xuat}><FileDown size={14} /> Xuất</button>
-          {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} />}
+      <div className="nh2">
+        <div className="card nh2-tree">
+          {q.isLoading ? <Loading /> : <CayNhomHang list={q.data} selected={sel} onSelect={setSel} height="calc(100vh - 250px)" openLevel={1} />}
         </div>
-        <div className="muted nh-rule">Mã ngắn — cấp 1: {QUY_TAC[1]} · cấp 2: {QUY_TAC[2]} · cấp 3: {QUY_TAC[3]}</div>
-        <ErrorBox error={q.error ? errorText(q.error) : null} />
-        {q.isLoading ? <Loading /> : (
-          <div className="nh-table-wrap">
-            <table className="nh-table">
-              <thead><tr>
-                <th style={{ width: 45 }} className="num">STT</th><th style={{ width: 80 }} title="Mã ngắn (mã ghép) — ghép vào mã hàng">Mã ngắn</th><th>Mã nhóm hàng</th>{cot.full && <th>Tên nhóm hàng</th>}<th style={{ width: 50 }}>Cấp</th>
-                <th style={{ width: 95 }} className="num" title="Số mặt hàng trong nhóm, cộng cả các nhóm con">Số mặt hàng</th><th style={{ width: 80 }}>Đang dùng</th>{cot.note && <th style={{ width: 180 }}>Ghi chú</th>}
-                {cot.tao && <th style={{ width: 160 }}>Người tạo</th>}{cot.sua && <th style={{ width: 160 }}>Người sửa</th>}<th style={{ width: 240 }} />
-              </tr></thead>
-              <tbody>
-                {/* [2026-11-12 Nguyễn Văn Thủy] thêm ngành mới: dòng mờ đầu cây thay cho nút xanh trên thanh (đóng góp) */}
-                {canWrite && !cap && !tim && (
-                  <tr className="nh-them" onClick={() => setForm({ mode: 'add', parent: null })}>
-                    <td colSpan={20}><Plus size={13} /> Thêm nhóm cấp 1 (ngành hàng mới)</td>
-                  </tr>
-                )}
-                {dong.map(({ c, depth, hasKids, isOpen }, stt) => (
-                  <tr key={c.code} className={`${c.isActive ? '' : 'muted'} ${vua === c.code ? 'nh-vua' : ''} ${hasKids ? 'nh-mo' : ''}`} onClick={(e) => { if (hasKids && !(e.target as HTMLElement).closest('button')) lat(c.code); }}>
-                    <td className="num muted">{stt + 1}</td>
-                    <td className="mono">{thieuMa(c) ? <span className="neg" title="Nhóm chưa có mã ngắn — bấm Sửa để nhập">chưa có</span> : c.skuCode}</td>
-                    <td>
-                      <span style={{ paddingLeft: depth * 20, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <span className="nh-tog">{hasKids ? (isOpen ? '▾' : '▸') : ''}</span>
-                        <span style={{ fontWeight: depth === 0 && !cap ? 600 : 400 }}>{c.name}</span>
-                        {cap > 0 && <span className="muted" style={{ fontSize: 12 }}>· {ix.path(ix.parentOf(c.code))}</span>}
-                      </span>
-                    </td>
-                    {cot.full && <td className="nh-full">{c.fullName}</td>}
-                    <td>{ix.level(c.code)}</td>
-                    <td className="num">{tongMH.get(c.code) || ''}</td>
-                    <td>{c.isActive ? 'Có' : <span className="neg">Ngừng</span>}</td>
-                    {cot.note && <td className="nh-note" title={c.note}>{c.note}</td>}
-                    {cot.tao && <td className="nh-ai">{c.createdBy}{c.createdAt ? <span>{luc(c.createdAt)}</span> : null}</td>}
-                    {cot.sua && <td className="nh-ai">{c.updatedBy}{c.updatedBy && c.updatedAt ? <span>{luc(c.updatedAt)}</span> : null}</td>}
-                    <td className="nh-act">
-                      {canWrite && <button className="btn btn-xs" onClick={() => setForm({ mode: 'edit', code: c.code })}><Pencil size={12} /> Sửa</button>}
-                      {canWrite && ix.level(c.code) === 3
-                        ? <button className="btn btn-xs btn-primary" onClick={() => setThemMH(c.code)} title={`Thêm mặt hàng vào nhóm "${c.name}" — mã tự sinh theo nhóm`}><Plus size={12} /> Mặt hàng</button>
-                        : canWrite && ix.level(c.code) < 3 && <button className="btn btn-xs" onClick={() => setForm({ mode: 'add', parent: c.code })} title={`Thêm nhóm cấp ${ix.level(c.code) + 1} dưới "${c.name}"`}><Plus size={12} /> Nhóm con</button>}
-                      <button className="btn btn-xs" onClick={() => setLichSu(c)}>Lịch sử</button>
-                    </td>
-                  </tr>
-                ))}
-                {!dong.length && <tr><td colSpan={11} className="muted" style={{ padding: 12 }}>{tim ? 'Không có nhóm khớp' : 'Chưa có nhóm hàng — bấm Thêm nhóm cấp 1'}</td></tr>}
-              </tbody>
-            </table>
+        <div className="card nh2-main">
+          <div className="catalog-toolbar canh-phai">
+            <nav className="nh2-crumb" aria-label="Đường dẫn nhóm">
+              <button type="button" className={!sel ? 'on' : ''} onClick={() => setSel(null)}>Nhóm hàng</button>
+              {chain.map((c) => <span key={c.code}><ChevronRight size={13} /><button type="button" className={c.code === sel ? 'on' : ''} onClick={() => setSel(c.code)}>{c.name}</button></span>)}
+            </nav>
+            <span className="spacer" />
+            {themCon && <button className="btn btn-sm btn-primary" title={themCon.title} onClick={themCon.run}><Plus size={14} /> {themCon.label}</button>}
+            <button className="btn btn-sm" onClick={() => void q.refetch()}><RefreshCw size={14} /> Nạp</button>
+            <button className="btn btn-sm" onClick={xuat}><FileDown size={14} /> Xuất</button>
+            <button className="btn btn-sm" onClick={() => window.print()} title="In màn hình đang xem"><Printer size={14} /> In</button>
+            {/* [2026-11-17 Nguyễn Văn Thủy] Thùng rác chung cho danh mục — xoá nhóm đang chọn (đóng góp) */}
+            <ThungRacDanhMuc catalog="item-classes.group" title="Nhóm hàng" sel={g ? { key: g.code, label: g.name } : null} onDone={() => setSel(null)} />
+            {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} />}
           </div>
-        )}
+          <ErrorBox error={q.error ? errorText(q.error) : null} />
+          {q.isLoading ? <Loading /> : (
+            <div className="nh2-body">
+              <div className="nh2-head">
+                {g ? <i className={`nh-cap c${Math.min(lv, 4)}`}>Cấp {lv}</i> : <i className="nh-cap c0">Gốc</i>}
+                <h2>{g ? g.name : 'Tất cả ngành hàng'}</h2>
+                {g && !g.isActive && <span className="badge badge-gray">Ngừng dùng</span>}
+                <span className="spacer" />
+                {g && canWrite && <button className="btn btn-sm" onClick={() => setForm({ mode: 'edit', code: g.code })}><Pencil size={13} /> Sửa</button>}
+                {g && <button className="btn btn-sm btn-ghost" onClick={() => setLichSu(g)}><History size={13} /> Lịch sử</button>}
+              </div>
+              {g?.fullName && g.fullName !== g.name && <div className="nh2-sub">Tên đầy đủ: {g.fullName}</div>}
+
+              <div className="nh2-stats">
+                {g && <div><small>Mã ngắn</small><b className="mono">{thieuMa(g) ? <span className="neg">chưa có</span> : g.skuCode || '—'}</b></div>}
+                <div><small>{g ? 'Nhóm con' : 'Ngành hàng'}</small><b>{con.length}</b></div>
+                <div><small>Mặt hàng{g && con.length ? ' (cả nhánh)' : ''}</small><b>{(g ? tongMH.get(g.code) ?? 0 : (q.data ?? []).reduce((t, c) => t + (c.products ?? 0), 0)).toLocaleString('vi-VN')}</b></div>
+                {g && <div><small>Sửa lần cuối</small><b className="nh2-ai">{g.updatedBy || g.createdBy || '—'}<span>{luc(g.updatedBy ? g.updatedAt : g.createdAt)}</span></b></div>}
+              </div>
+
+              <div className="nh2-ma" title="Mã hàng = mã ngắn cấp 1 + cấp 2 + cấp 3 + số thứ tự (cấp 4, 5 chỉ chia nhỏ, không ghép vào mã)">
+                <small>Mã hàng trong nhóm này</small>
+                <div className="nh2-seg">
+                  {doan.map((d) => (
+                    <span key={d.l} className={`${d.l === lv ? 'on' : ''} ${d.l > lv ? 'trong' : ''}`}>
+                      <b className="mono">{d.l <= lv ? d.ma || '?'.repeat(d.dai) : '·'.repeat(d.dai)}</b><small>{d.ten} · cấp {d.l}</small>
+                    </span>
+                  ))}
+                  <span className="trong"><b className="mono">###</b><small>Số thứ tự</small></span>
+                </div>
+                {lv >= 4 && <small className="muted">Cấp {lv} chỉ chia nhỏ để xem, lọc — không ghép vào mã hàng.</small>}
+              </div>
+
+              <div className="nh2-sec">
+                <b>{g ? `Nhóm con (${con.length})` : `Ngành hàng (${con.length})`}</b>
+                <span className="muted">Bấm một dòng để mở nhóm đó</span>
+              </div>
+              {con.length ? (
+                <table className="grid nh2-con">
+                  <thead><tr><th style={{ width: 90 }}>Mã ngắn</th><th>Tên nhóm</th><th style={{ width: 90 }} className="num">Nhóm con</th><th style={{ width: 100 }} className="num">Mặt hàng</th><th style={{ width: 110 }}>Trạng thái</th></tr></thead>
+                  <tbody>{con.map((c) => (
+                    <tr key={c.code} className={c.isActive ? '' : 'muted'} onClick={() => setSel(c.code)} title={`Mở nhóm ${c.name}`}>
+                      <td className="mono">{thieuMa(c) ? <span className="neg">chưa có</span> : c.skuCode}</td>
+                      <td><i className={`nh-cap c${Math.min(ix.level(c.code), 4)}`}>{ix.level(c.code)}</i> {c.name}</td>
+                      <td className="num">{(ix.kids.get(c.code) ?? []).length || ''}</td>
+                      <td className="num">{(tongMH.get(c.code) ?? 0).toLocaleString('vi-VN')}</td>
+                      <td>{c.isActive ? <span className="badge badge-ok">Đang dùng</span> : <span className="badge badge-gray">Ngừng</span>}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              ) : (
+                <div className="nh2-empty">
+                  {lv === 3 ? 'Nhóm cấp 3 là nhóm cuối ghép mã hàng — thêm mặt hàng vào nhóm này.' : g ? 'Nhóm chưa có nhóm con.' : 'Chưa có nhóm hàng.'}
+                  {themCon && <button className="btn btn-sm" onClick={themCon.run}><Plus size={13} /> {themCon.label}</button>}
+                </div>
+              )}
+              {g?.note && <div className="nh2-note"><small>Ghi chú</small>{g.note}</div>}
+            </div>
+          )}
+        </div>
       </div>
-      {form && <NhomForm ix={ix} list={q.data ?? []} form={form} onClose={() => setForm(null)} onSaved={(code, parent) => {
-        setForm(null); setVua(code);
-        if (parent) setOpen((o) => { const n = new Set(o); for (let x: string | null = parent; x; x = ix.parentOf(x)) n.add(x); return n; });
-      }} />}
+      {form && <NhomForm ix={ix} list={q.data ?? []} form={form} onClose={() => setForm(null)} onSaved={(code) => { setForm(null); setSel(code); }} />}
       {themMH && <ProductEditor sku={null} initial={{ groupCode: themMH }} onClose={() => setThemMH(null)} onSaved={() => void q.refetch()} />}
       {lichSu && <Modal title={`Lịch sử nhóm "${lichSu.name}"`} onClose={() => setLichSu(null)} footer={<button className="btn" onClick={() => setLichSu(null)}>Đóng</button>}><div className="full"><LichSuNhom code={lichSu.code} /></div></Modal>}
     </>
@@ -229,7 +218,7 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
   return (
     <>
       <Modal title={old ? `Sửa nhóm "${old.name}"` : parent ? `Thêm nhóm con của "${ix.byCode.get(parent)?.name}"` : 'Thêm nhóm cấp 1'} helpKey="nhom-hang" onClose={onClose}
-        footer={<>{err && <span className="neg" style={{ marginRight: 'auto', fontWeight: 600, fontSize: 13 }}>{err}</span>}<button className="btn btn-primary" disabled={save.isPending} onClick={ghi}>{save.isPending ? 'Đang ghi…' : 'Ghi'}</button><button className="btn" onClick={onClose}>Huỷ bỏ</button></>}>
+        footer={<>{err && <span className="neg" style={{ marginRight: 'auto', fontWeight: 600, fontSize: 13 }}>{err}</span>}<button className="btn btn-primary" disabled={save.isPending} onClick={ghi}>{save.isPending ? 'Đang ghi…' : 'Ghi'}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
         <Field label="Thuộc nhóm" full>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <div className="nh-chi-xem" style={{ flex: 1 }} title="Không sửa ở đây">{parent ? ix.path(parent) : 'Nhóm hàng (gốc)'}</div>

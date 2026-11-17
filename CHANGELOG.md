@@ -22,10 +22,52 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** tồn đầu của mọi cửa hàng phải có trong phần mềm kế toán trước khi dùng máy bán (không có tồn thì không bán được).
 
+### Mã màn ở mọi menu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** mã màn (MH11, DM10, ACC41…) hiện nhỏ cạnh tên ở hàng thẻ của nhóm (dưới thanh thẻ), menu điện thoại và bảng Thêm nhanh — cùng với menu xổ bên trái.
+
+### Hay dùng lên thanh trên; bỏ Tài khoản ngầm định khỏi Bán hàng <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** mục **Hay dùng** chuyển từ menu trái lên thanh trên (cạnh Tổng quan / Báo cáo): rê chuột xổ danh sách màn đã ghim + màn mở nhiều (12 mục), có "Hay dùng trang này" / "Bỏ ghim trang này". Menu trái chỉ còn Thêm nhanh và Phân hệ (điện thoại giữ như cũ).
+- **Đổi:** bỏ Tài khoản ngầm định khỏi menu Bán hàng (Cài đặt) và sơ đồ Bán hàng v2 — chỉ ở Danh mục.
+
+### Tạm ẩn menu Hoá đơn từ cơ quan thuế <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** tạm ẩn **THUE01 Hoá đơn từ cơ quan thuế** khỏi menu Thuế, menu Mua hàng (nhóm Hoá đơn đầu vào) và sơ đồ Mua hàng v2 — đã có Xử lý hoá đơn đầu vào (MH22). Màn vẫn mở được bằng đường dẫn `/thue/hoa-don-co-quan-thue`.
+
+### DM10 Quản lý mặt hàng: khung Nhóm hàng co giãn, thu gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** khung lọc Nhóm hàng bên trái kéo mép phải để giãn / co (160–700px), nút « thu gọn thành dải dọc "» Nhóm hàng" (tô màu khi đang lọc nhóm), bấm để mở lại; nhớ theo trình duyệt.
+
+### Mua hàng / Bán hàng: sơ đồ rút gọn v2 mặc định <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** vào Quy trình Mua hàng / Bán hàng mở **sơ đồ rút gọn v2** (thẻ theo bước như Danh mục: bước làm lần lượt, cuối rẽ ra việc làm song song; mỗi thẻ liệt kê màn, lọc theo quyền). Bán hàng bổ sung đủ: khai báo, giá & khuyến mại, bán hàng / máy POS / ca bán, thu tiền & công nợ, trả lại, doanh số, công nợ phải thu, thuế đầu ra. Luồng chi tiết vẫn mở bằng nút.
+- **Thêm:** Mua hàng giữ **sơ đồ rút gọn v1** (icon cũ) — nút "Sơ đồ rút gọn v1" / `?xem=rut-gon-v1`. `SoDoNhomBuoc.items` cho thẻ khai màn thẳng.
+
+### Danh mục: bỏ Luồng chi tiết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Bỏ:** trang Quy trình Danh mục không còn nút / màn **Luồng chi tiết** (gỡ `phan-he/danh-muc/QuyTrinhDanhMuc.tsx`); chỉ còn sơ đồ khai báo theo thứ tự. `?xem=chi-tiet` cũ về sơ đồ.
+
+### ACC41 Tài khoản ngầm định: chế độ Gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** màn ACC41 đổi tên "Quy tắc hạch toán" → **Tài khoản ngầm định** ở menu, sơ đồ, tiêu đề. ACC41 mở ở chế độ **Gọn**: chọn Loại chứng từ, tìm kiếm, bảng Loại · TK Nợ · TK Có · Sửa; Sửa mở hộp Tên cột · Lọc tài khoản (đầu số được chọn) · TK ngầm định. Nút **Chi tiết** chuyển sang màn khung Nợ / Có, nguồn tài khoản, xem thử bút toán như cũ (nhớ theo trình duyệt).
+
+### Quay về dữ liệu gốc phải nhập mật khẩu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** mọi nút **Quay về dữ liệu gốc** (từng danh mục, toàn bộ, sơ đồ / cơ cấu tổ chức) hỏi mật khẩu trước khi chạy thật; máy chủ kiểm (`RESTORE_DEFAULT_PASSWORD`, không đặt thì dùng `CATALOG_WIPE_PASSWORD`). Xem trước vẫn không cần mật khẩu. API `default-data/*/restore` và `org-units/restore-defaults` nhận thêm `password`.
+
+### Thùng rác chung cho danh mục: Xoá / Thùng rác / Xoá hết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** mọi màn danh mục (Biểu thuế, Đơn vị tính, Hình thức thanh toán, Tài khoản ngân hàng, Hệ thống tài khoản, Khoản mục chi phí, Mục thu/chi, Hợp đồng, Vụ việc, Công trình, Nhân viên, Nguồn vốn, Mục đích sử dụng, Nhóm CCDC, Khách hàng, NCC, Nhóm KH/NCC, Loại tài sản, Bảng giá, Mặt hàng, Nhóm hàng) có nút **Xoá** (vào thùng rác, lưu nguyên dòng kể cả item_id), **Thùng rác** (Khôi phục / Xoá vĩnh viễn từng dòng, Khôi phục hết, Xoá hết vĩnh viễn) và **Xoá hết** cả danh mục. Xoá hết / Xoá hết vĩnh viễn cần mật khẩu (`CATALOG_WIPE_PASSWORD`). Dòng đang được chứng từ / sổ dùng thì không xoá được, báo lại.
+- **Thêm:** mặt hàng khôi phục giữ đúng item_id (mở lại mã); xoá vĩnh viễn gỡ cả item_id, mã, phân loại nếu chưa có chứng từ dùng (có chứng từ thì giữ định danh ở trạng thái ngừng dùng).
+- **Nâng cấp cần làm:** migration `0146_thung_rac_danh_muc.sql` (bảng `catalog_trash`, cờ phiên `bizcity.catalog_purge` cho chốt bất biến mặt hàng). API `/api/v1/catalog-trash` (action `core.catalog-trash.trash` / `.restore` / `.purge`).
+
 ### Danh mục gọn: Quy trình theo nhóm, thanh nút chung, cột mặc định (UX đợt 15) <!-- [2026-11-16 kiennt] (đóng góp) -->
 
 - **Đổi:** trang Quy trình của Danh mục vẽ theo nhóm chức năng của menu (Tổ chức → Đối tượng → Tài khoản, ngân hàng → Chi phí · Mặt hàng · Tài sản · Thuế suất); Biểu thuế tách thành nhóm menu Thuế suất.
 - **Đổi:** các màn danh mục: nút chức năng lề phải, cao 28px, In cạnh Xuất, bỏ nút Sửa (bấm đúp mở chi tiết) và dòng "Đã nạp lúc"; bỏ thanh lọc trên, lọc ở từng cột; cột mặc định gọn ở DM04, DM12, DM13, DM15; "Trả về mặc định" lên đầu danh sách cột.
+- **Đổi:** Nhóm hàng (DM11): kiểu cây – chi tiết (cây bên trái; bên phải đường dẫn, số liệu, cấu trúc mã hàng, nhóm con bấm để đi xuống).
+- **Đổi:** Mặt hàng (DM10): In tem gom vào một bảng (phạm vi, mẫu tem, số tem); cột Nhóm hàng hiện tên nhóm cuối, cột mặc định gọn.
 - **Đổi:** Khách hàng / NCC: Thuộc đơn vị cha chỉ chọn trong cùng nhóm; Mobile + Telephone gộp ô Di động (Nhân viên cũng vậy). Loại kho: một danh sách, Nghiệp vụ dùng loại kho vào ngăn Hướng dẫn, hộp thoại mở ở chế độ xem, TK kho phải là tài khoản cấp cuối.
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không (không đổi API, không migration). Loại kho đang để TK tổng hợp (⚠) phải chọn lại TK chi tiết mới Ghi được.

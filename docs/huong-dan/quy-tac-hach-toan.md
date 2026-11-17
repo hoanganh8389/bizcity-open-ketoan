@@ -1,4 +1,4 @@
-# Quy tắc hạch toán
+# Tài khoản ngầm định
 
 Mỗi nghiệp vụ (bán hàng, mua hàng, chuyển kho…) ghi Nợ gì, Có gì, và tài khoản lấy từ đâu. Chứng từ từ cửa hàng, kho, mua hàng vào sổ theo đúng màn này.
 

@@ -40,6 +40,7 @@ export function UnitNamesPage() {
       <div className="card">
         {/* [2026-11-16 kiennt] bỏ thẻ Tất cả / Đang có mặt hàng dùng / Chưa dùng: luôn hiện tất cả, lọc ở cột Số mặt hàng dùng (đóng góp) */}
         <CatalogToolbar
+          trash={{ catalog: 'unit-names', title: 'Đơn vị tính', sel: sel ? { key: String(sel.id), label: sel.name } : null }}
           phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
