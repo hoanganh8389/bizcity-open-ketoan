@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
-import { returnValue } from '@bizcity/kernel/modules/inventory/costing.service';
+import { returnValue, returnValueCapped } from '@bizcity/kernel/modules/inventory/costing.service';
 import { env } from '@bizcity/platform/config/env';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
@@ -239,6 +239,9 @@ describe('Bán nội bộ theo giá bán (XCN) và giá vốn', () => {
     // Trả 3 hộp, tiền 170.000 (56.667 ≤ 62.500) → 3 × 62.500 = 187.500; điều chỉnh +5 / +1.000.000
     // (500.000 − 187.500 + 1.000.000) / (8 − 3 + 5) = 131.250
     expect(costs.body.data[0]).toMatchObject({ inQty: 2, inValue: 812500, unitCost: 131250, closingQty: 10 });
+    // Chênh lệch: tiền trên phiếu trả 170.000 − giá trị trừ 187.500 = −17.500 → Nợ TK chênh lệch (6321) / Có 1561 ở phiếu giá vốn tháng
+    expect(costs.body.data[0].detail).toMatchObject({ returnDiff: -17500 });
+    expect(await lines('cogs:CN01:2026-12')).toEqual(expect.arrayContaining(['CN01 6321 Nợ 17500', 'CN01 1561 Có 17500']));
   });
 
   it('sổ nội bộ: phiếu trả NCC lấy thành tiền − thuế trên phiếu', async () => {
@@ -254,6 +257,14 @@ describe('Bán nội bộ theo giá bán (XCN) và giá vốn', () => {
     } finally {
       env.BOOK_MODE = 'tax';
     }
+  });
+
+  it('sổ nội bộ: trả NCC theo phiếu có trần giá trị đang có; trả hết thì lấy hết giá trị', () => {
+    const r = { openingQty: 10, openingValue: 700000, inQty: 5, inValue: 400000 }; // đang có 15 / 1.100.000
+    expect(returnValueCapped(3, 200000, r)).toBe(200000); // tiền phiếu ≤ giá trị đang có → tiền phiếu
+    expect(returnValueCapped(3, 1500000, r)).toBe(1100000); // vượt → giá trị đang có
+    expect(returnValueCapped(15, 1000000, r)).toBe(1100000); // trả hết số đang có → hết giá trị
+    expect(returnValueCapped(2, 50000, { openingQty: 0, openingValue: 0, inQty: 0, inValue: 0 })).toBe(50000); // không có gì để so → tiền phiếu
   });
 
   it('năm trường hợp định giá hàng trả nhà cung cấp', () => {

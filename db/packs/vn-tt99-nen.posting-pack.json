@@ -36,6 +36,7 @@
     "tax_input": "1331",
     "promotion_expense": "64184",
     "payment_discount_income": "5152",
+    "purchase_return_diff": "6321",
     "internal_receivable": "13681",
     "internal_payable": "33681",
     "internal_receivable_goods": "13681",

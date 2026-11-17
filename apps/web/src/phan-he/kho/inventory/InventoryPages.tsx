@@ -204,6 +204,7 @@ export function CostingPage() {
                   // chi tiết (ẩn sẵn)
                   { key: 'traQ', header: 'Trả NCC SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'returnQty'), title: 'Hàng mua trả lại nhà cung cấp (nằm trong Nhập khác, số âm)' },
                   { key: 'traV', header: 'Trả NCC $', type: 'money', sum: true, hidden: true, value: (x) => dt(x, 'returnValue'), title: 'Giá trị trả nhà cung cấp trừ khỏi giá vốn' },
+                  { key: 'traCl', header: 'Chênh lệch trả NCC', type: 'money', sum: true, hidden: true, value: (x) => dt(x, 'returnDiff'), title: 'Tiền trên phiếu trả NCC − giá trị trừ khỏi giá vốn (trả vượt giá trị đang có, hoặc sổ thuế định giá theo tồn đầu). Ghi vào TK chênh lệch hàng trả NCC ở phiếu giá vốn tháng' },
                   { key: 'nnbQ', header: 'Nhập nội bộ SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'tInQty'), title: 'Nhận chuyển kho; từ chi nhánh khác tính giá theo bên gửi, cùng chi nhánh không đổi giá' },
                   { key: 'xnbQ', header: 'Xuất nội bộ SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'tOutQty'), title: 'Chuyển kho đi' },
                   { key: 'banQ', header: 'Xuất bán SL', type: 'qty', sum: true, hidden: true, value: (x) => dt(x, 'saleQty'), title: 'Xuất bán (bán lẻ, bán buôn, tặng kèm)' },
@@ -274,7 +275,7 @@ const GIA_NHAP: Record<CtOptions['price'], [string, string]> = {
   with_vat: ['Giá gồm VAT', 'Đơn giá đã trừ chiết khấu, CỘNG thuế GTGT (dùng khi không khấu trừ thuế đầu vào)'],
 };
 const TRA_NCC: Record<CtOptions['purchaseReturn'], [string, string]> = {
-  doc: ['Thành tiền − thuế trên phiếu', 'Trừ đúng thành tiền (chưa thuế) ghi trên phiếu trả. VD trả 10 cái, phiếu ghi 9.000đ/cái → trừ 90.000đ. Mặc định của sổ nội bộ'],
+  doc: ['Thành tiền − thuế trên phiếu', 'Trừ thành tiền (chưa thuế) ghi trên phiếu trả, không vượt giá trị đang có (tồn đầu + nhập); trả hết số đang có thì trừ hết giá trị. Phần chênh lệch ghi TK chênh lệch hàng trả NCC. Mặc định của sổ nội bộ'],
   opening: ['Định giá theo tồn đầu', 'Đơn giá trả ≤ đơn giá tồn đầu: SL × đơn giá tồn đầu; tiền trả ≤ giá trị tồn đầu: tiền trả; SL trả ≤ SL tồn đầu: giá trị tồn đầu; còn lại: giá trị tồn đầu + phần vượt × đơn giá trả. Mặc định của sổ thuế'],
 };
 const NHAN_CN: Record<CtOptions['transferIn'], [string, string]> = {

@@ -161,8 +161,10 @@ interface FlowDetail {
   tInQty: number; tInValue: number; tOutQty: number; saleQty: number; saleReturnQty: number; adjOutQty: number;
   /** Chi phí mua hàng phân bổ vào mã (tăng giá vốn) / thưởng, chiết khấu nhãn hàng phân bổ (giảm giá vốn, số dương). */
   costAlloc: number; rebateAlloc: number;
+  /** Chênh lệch hàng trả NCC = giá trị trên phiếu trả − giá trị trừ khỏi công thức (dương: phiếu trả lớn hơn). */
+  returnDiff: number;
 }
-const emptyDetail = (): FlowDetail => ({ purchaseQty: 0, purchaseValue: 0, returnQty: 0, returnValue: 0, adjInQty: 0, adjInValue: 0, tInQty: 0, tInValue: 0, tOutQty: 0, saleQty: 0, saleReturnQty: 0, adjOutQty: 0, costAlloc: 0, rebateAlloc: 0 });
+const emptyDetail = (): FlowDetail => ({ purchaseQty: 0, purchaseValue: 0, returnQty: 0, returnValue: 0, adjInQty: 0, adjInValue: 0, tInQty: 0, tInValue: 0, tOutQty: 0, saleQty: 0, saleReturnQty: 0, adjOutQty: 0, costAlloc: 0, rebateAlloc: 0, returnDiff: 0 });
 
 /** Tổng hợp hàng vào / ra trong tháng theo (nhóm, mặt hàng, loại, nhóm bên kia). */
 async function monthFlows(trx: Db, tenantId: string, p: Period) {
@@ -188,6 +190,18 @@ async function monthFlows(trx: Db, tenantId: string, p: Period) {
 /** Giá trị hàng trả nhà cung cấp đưa vào công thức đơn giá, định giá theo tồn đầu. */
 export const returnValue = returnValueAtOpening;
 
+/**
+ * [2026-11-17 Nguyễn Văn Thủy] Hàng trả NCC theo phiếu, có trần (sổ nội bộ): SL trả = SL tồn đầu + SL nhập → lấy hết giá trị đang có;
+ * khác: tiền trên phiếu ≤ giá trị đang có → tiền trên phiếu, lớn hơn → giá trị đang có. Không có hàng nào để so → tiền trên phiếu (đóng góp)
+ */
+export function returnValueCapped(qty: number, amount: number, r: { openingQty: number; openingValue: number; inQty: number; inValue: number }): number {
+  const availQ = (r.openingQty > 0 ? r.openingQty : 0) + r.inQty;
+  const availV = (r.openingQty > 0 ? r.openingValue : 0) + r.inValue;
+  if (availQ <= 0 || availV <= 0) return amount;
+  if (Math.abs(qty - availQ) < 1e-6) return Math.round(availV);
+  return amount <= availV ? amount : Math.round(availV);
+}
+
 /** Đơn giá đã nhập từ Excel của một tháng (theo khoá mặt hàng). */
 async function importedUnits(trx: Db, tenantId: string, p: Period): Promise<Map<string, number>> {
   const res = await sql<{ k: string; unit_cost: string }>`
@@ -202,12 +216,17 @@ async function importedUnits(trx: Db, tenantId: string, p: Period): Promise<Map<
  * `imports`: đơn giá nhập từ Excel theo KHOÁ mặt hàng (đã tra từ mã; thay toàn bộ giá đã nhập của tháng); bỏ trống thì giữ giá đã nhập trước đó.
  */
 /** Kết quả tính một tháng: đơn giá theo (nhóm, mã) + SL hàng tặng khách lấy từ phần quà giá 0 theo (chứng từ, mã). */
+/** Một dòng chênh lệch hàng trả NCC của một chi nhánh (dương: phiếu trả lớn hơn giá trị trừ khỏi công thức). */
+interface ReturnDiffLine { sku: string; amount: number }
+
 interface MonthResult {
   rows: Map<string, CostRow>;
   giftCovered: Map<string, number>;
   // [2026-11-10 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3 (S032-17, R-INV-4): khách trả hàng của lần bán tháng trước nhập lại theo đơn giá tháng bán gốc; không có gốc theo bình quân tồn đầu kỳ trả (Q032-5 tạm)
   /** Đơn giá hoàn của phiếu khách trả không cùng tháng bán gốc, theo (chứng từ trả, khoá mặt hàng). Cùng tháng thì không có — dùng đơn giá tháng. */
   returnUnits: Map<string, number>;
+  /** [2026-11-17] Chênh lệch hàng trả NCC theo (nhóm, mặt hàng): giá trị phiếu trả − giá trị trừ khỏi công thức. */
+  returnDiffs: Map<string, number>;
 }
 
 async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<string, number>, formula: CostFormula = formulaOf({})): Promise<MonthResult> {
@@ -275,16 +294,7 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
         if (formula.costAlloc) r.d.costAlloc += f.alloc; // [2026-11-17 Nguyễn Văn Thủy] chi phí mua hàng phân bổ (vận chuyển…) tách cột riêng (đóng góp)
         break;
       case 'purchase_return': {
-        const atOpening = formula.purchaseReturn === 'opening';
-        if (!atOpening) {
-          // Lý do trả khác: lấy đúng thành tiền − thuế trên phiếu.
-          r.inQty += f.qty;
-          r.inValue += goods(f) + (formula.rebateAlloc ? f.alloc : 0);
-          r.d.returnQty += -f.qty;
-          r.d.returnValue += -goods(f);
-          if (formula.rebateAlloc) r.d.rebateAlloc += -f.alloc; // thưởng / chiết khấu nhãn hàng phân bổ theo mã, giảm giá vốn
-          break;
-        }
+        // [2026-11-17 Nguyễn Văn Thủy] hàng trả NCC gom lại, định giá sau khi đủ tồn đầu + nhập trong kỳ (trần, chênh lệch) (đóng góp)
         const k = key(f.group, f.ikey);
         const cur = returns.get(k) ?? { qty: 0, amount: 0 };
         cur.qty += -f.qty;
@@ -323,13 +333,19 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
     }
   }
 
+  // Hàng trả NCC (số dương). Sổ thuế: định giá theo tồn đầu. Sổ nội bộ: thành tiền − thuế trên phiếu, không vượt giá trị đang có
+  // (tồn đầu + nhập trong kỳ); trả hết số đang có thì lấy hết giá trị. Chênh lệch = tiền trên phiếu − giá trị trừ, ghi ở phiếu giá vốn.
+  const returnDiffs = new Map<string, number>();
   for (const [k, ret] of returns) {
     const r = rows.get(k)!;
+    if (!ret.qty && !ret.amount) continue;
+    const rv = formula.purchaseReturn === 'opening' ? returnValue(ret.qty, ret.amount, r.openingQty, r.openingValue) : returnValueCapped(ret.qty, ret.amount, r);
     r.inQty -= ret.qty;
-    const rv = returnValue(ret.qty, ret.amount, r.openingQty, r.openingValue);
     r.inValue -= rv;
     r.d.returnQty += ret.qty;
     r.d.returnValue += rv;
+    const diff = Math.round(ret.amount - rv);
+    if (diff) { r.d.returnDiff += diff; returnDiffs.set(k, diff); }
   }
 
   // [2026-11-10 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3 (S032-17, R-INV-4): khách trả hàng của lần bán tháng trước nhập lại theo đơn giá tháng bán gốc; không có gốc theo bình quân tồn đầu kỳ trả (Q032-5 tạm)
@@ -453,7 +469,7 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
       }),
     }));
   for (let i = 0; i < values.length; i += 1000) await trx.insertInto('inventory_costs').values(values.slice(i, i + 1000)).execute();
-  return { rows, giftCovered, returnUnits };
+  return { rows, giftCovered, returnUnits, returnDiffs };
 }
 
 /** Các tháng còn thiếu (chưa tính) trước tháng p, kể từ tháng có phát sinh sớm nhất. */
@@ -614,12 +630,13 @@ export const costingService = {
       imports = new Map([...imports].map(([sku, unit]) => [ks.get(sku) ?? sku, unit]));
     }
     // Bước 1: đơn giá (một giao dịch, gồm các tháng trước còn thiếu).
-    const { units, giftCovered, returnUnits, months, items, imported } = await sameTx(trx, async (trx) => {
+    const { units, giftCovered, returnUnits, returnDiffs, months, items, imported } = await sameTx(trx, async (trx) => {
       const months = [...(await missingMonthsBefore(trx, auth.tenantId, p)), p];
       let rows = new Map<string, CostRow>();
       let giftCovered = new Map<string, number>();
       let returnUnits = new Map<string, number>();
-      for (const m of months) ({ rows, giftCovered, returnUnits } = await computeMonth(trx, auth.tenantId, m, m === p ? imports : undefined, formula));
+      let returnDiffs = new Map<string, number>();
+      for (const m of months) ({ rows, giftCovered, returnUnits, returnDiffs } = await computeMonth(trx, auth.tenantId, m, m === p ? imports : undefined, formula));
       const fixed = imports ?? (await importedUnits(trx, auth.tenantId, p));
       let imported: CostingResult['imported'] = null;
       if (fixed.size) {
@@ -627,7 +644,7 @@ export const costingService = {
         imported = { count: fixed.size, missing: missing.slice(0, 50), missingCount: missing.length };
       }
       if (imports) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: input.clearImport ? 'costing.import.clear' : 'costing.import', objectType: 'period', objectId: label(p), after: { skus: imports.size } });
-      return { units: new Map([...rows].map(([k, r]) => [k, r.unitCost])), giftCovered, returnUnits, months: months.map(label), items: rows.size, imported };
+      return { units: new Map([...rows].map(([k, r]) => [k, r.unitCost])), giftCovered, returnUnits, returnDiffs, months: months.map(label), items: rows.size, imported };
     });
 
     // Bước 2: ghi sổ giá vốn từng chi nhánh, mỗi chi nhánh một giao dịch.
@@ -648,6 +665,31 @@ export const costingService = {
     for (const r of slotBranches.rows) if (!byBranch.has(r.branch_id)) byBranch.set(r.branch_id, []);
     const branchInfo = new Map([...prior, ...slotBranches.rows].map((r) => [r.branch_id, { code: r.code, name: r.name }]));
     for (const m of movements) branchInfo.set(m.branchId, { code: m.branchCode, name: m.branchName });
+    // Chênh lệch hàng trả NCC: chia cho các chi nhánh có phiếu trả của mã đó theo tiền trên phiếu (chi nhánh cuối nhận phần lẻ).
+    const diffsByBranch = new Map<string, ReturnDiffLine[]>();
+    if (returnDiffs.size) {
+      const rr = await sql<{ branch_id: string; code: string; name: string; grp: string; ikey: string; sku: string; amount: string }>`
+        SELECT m.branch_id::text, b.code, b.name, COALESCE(b.accounting_unit_id, 0)::text AS grp, COALESCE(m.item_id, m.sku) AS ikey, MAX(m.sku) AS sku, SUM(-m.amount) AS amount
+          FROM inventory_movements m JOIN branches b ON b.id = m.branch_id
+         WHERE m.tenant_id = ${auth.tenantId} AND m.kind = 'purchase_return' AND m.qty <> 0
+           AND m.doc_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date
+         GROUP BY 1, 2, 3, 4, 5 ORDER BY 4, 5, 1`.execute(trx);
+      const byKey = new Map<string, typeof rr.rows>();
+      for (const x of rr.rows) byKey.set(key(x.grp, x.ikey), [...(byKey.get(key(x.grp, x.ikey)) ?? []), x]);
+      for (const [k, diff] of returnDiffs) {
+        const list = byKey.get(k) ?? [];
+        const sum = list.reduce((s, x) => s + Number(x.amount), 0);
+        let left = diff;
+        list.forEach((x, i) => {
+          const part = i === list.length - 1 ? left : sum ? Math.round((diff * Number(x.amount)) / sum) : 0;
+          left -= part;
+          if (!part) return;
+          branchInfo.set(x.branch_id, { code: x.code, name: x.name });
+          if (!byBranch.has(x.branch_id)) byBranch.set(x.branch_id, []);
+          diffsByBranch.set(x.branch_id, [...(diffsByBranch.get(x.branch_id) ?? []), { sku: x.sku, amount: part }]);
+        });
+      }
+    }
 
     // [2026-11-17 Nguyễn Văn Thủy] chọn chi nhánh trên Cơ cấu tổ chức: đơn giá vẫn tính chung một lượt (chuyển hàng giữa chi nhánh khớp giá),
     // chỉ ra phiếu giá vốn cho shop thuộc chi nhánh đã chọn (đóng góp)
@@ -660,7 +702,7 @@ export const costingService = {
     const branches: CostingResult['branches'] = [];
     for (const [branchId, list] of byBranch) {
       const info = branchInfo.get(branchId)!;
-      branches.push(await sameTx(trx, (trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, returnUnits, movements: list })));
+      branches.push(await sameTx(trx, (trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, returnUnits, movements: list, returnDiffs: diffsByBranch.get(branchId) ?? [] })));
     }
     branches.sort((a, b) => a.branchCode.localeCompare(b.branchCode));
     const runIds = await recordRuns(trx, auth, { p, from, to, costCenter: input.costCenter, branches, imported: imported?.count ?? 0, formula: formulaInfo });
@@ -786,12 +828,12 @@ export const costingRuns = {
 async function postBranch(
   trx: Db,
   auth: AuthContext,
-  a: { period: Period; from: string; to: string; branchId: string; branchCode: string; units: Map<string, number>; giftCovered: Map<string, number>; returnUnits: Map<string, number>; movements: CogsMovement[] },
+  a: { period: Period; from: string; to: string; branchId: string; branchCode: string; units: Map<string, number>; giftCovered: Map<string, number>; returnUnits: Map<string, number>; movements: CogsMovement[]; returnDiffs: ReturnDiffLine[] },
 ): Promise<CostingResult['branches'][number]> {
   // Khoá cũ là cogs:<internal|tax>:<chi nhánh>:<kỳ>; nay một sổ kế toán: cogs:<chi nhánh>:<kỳ>.
   const docKey = `cogs:${a.branchCode}:${label(a.period)}`;
   const existing = await eventStore.lock(trx, auth.tenantId, docKey);
-  const cfg = await postingConfigRepository.loadPostingConfig(trx, auth.tenantId, [...new Set(a.movements.map((m) => m.sku))], { asOf: lastDay(a.period), actor: auth.actor });
+  const cfg = await postingConfigRepository.loadPostingConfig(trx, auth.tenantId, [...new Set([...a.movements.map((m) => m.sku), ...a.returnDiffs.map((d) => d.sku)])], { asOf: lastDay(a.period), actor: auth.actor });
   const reversed = existing ? await eventStore.reverseActive(trx, auth, existing.id, cfg.accounts, 'Tính lại giá vốn') : 0;
   // Chứng từ giá vốn khoá cũ còn hiệu lực: đảo bút toán và huỷ, để không ghi trùng với chứng từ khoá mới.
   for (const legacyKey of ['internal', 'tax'].map((x) => `cogs:${x}:${a.branchCode}:${label(a.period)}`)) {
@@ -872,6 +914,14 @@ async function postBranch(
         break;
       }
     }
+  }
+  // [2026-11-17 Nguyễn Văn Thủy] chênh lệch hàng trả NCC: tồn kho trên sổ đã giảm theo tiền trên phiếu trả, đưa về đúng giá trị trừ khỏi công thức (đóng góp)
+  for (const d of a.returnDiffs) {
+    const acc = resolver.counterOr(undefined, 'purchase_return_diff', 'tài khoản chênh lệch hàng trả nhà cung cấp');
+    const inventory = resolver.groupForSku(d.sku).inventory_account;
+    const tags = { biz: 'purchase_return_diff', reason: null };
+    if (d.amount > 0) b.add({ tags, part: 'goods', productSku: d.sku, debitAccount: inventory, creditAccount: acc, amount: d.amount, description: 'Chênh lệch hàng trả nhà cung cấp (giá trả lớn hơn giá trị tính giá vốn)' });
+    else b.add({ tags, part: 'goods', productSku: d.sku, debitAccount: acc, creditAccount: inventory, amount: -d.amount, description: 'Chênh lệch hàng trả nhà cung cấp (giá trả nhỏ hơn giá trị tính giá vốn)' });
   }
   resolver.assertComplete();
 

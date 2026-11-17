@@ -7,7 +7,8 @@ Màn này chỉ để xem. Phần mềm tính giá vốn theo đúng công thứ
 | | Nội bộ | Thuế |
 |---|---|---|
 | Chứng từ | Mọi chứng từ | Chứng từ có số hoá đơn |
-| Hàng mua trả lại | Thành tiền − thuế trên phiếu | Định giá theo tồn đầu |
+| Hàng mua trả lại | Thành tiền − thuế trên phiếu, không vượt giá trị đang có | Định giá theo tồn đầu |
+| Chênh lệch (tiền phiếu − giá trị trừ) | Ghi TK chênh lệch hàng trả NCC | Ghi TK chênh lệch hàng trả NCC |
 | Xuất chi nhánh (bán cho chi nhánh khác theo giá bán) | Không có — chuyển kho theo giá vốn | Giá vốn ghi ngay = giá bán, trừ khỏi tử và mẫu |
 
 Mỗi bản cài là một sổ, chọn bằng biến môi trường `BOOK_MODE` (`internal` = nội bộ, `tax` = thuế). Khung có viền đậm là sổ đang chạy.

@@ -29,7 +29,7 @@ export const COST_FORMULAS: Record<CostBook, CostFormula> = {
     numerator: 'Giá trị (tồn đầu + nhập mua NCC + chi phí mua − chiết khấu, thưởng NCC + nhập điều chỉnh + nhận chi nhánh khác − hàng mua trả lại)',
     denominator: 'Số lượng (tồn đầu + nhập mua NCC + nhập điều chỉnh + nhận chi nhánh khác − hàng mua trả lại)',
     purchaseReturn: 'doc',
-    returnRule: 'Thành tiền trên phiếu trả − thuế.',
+    returnRule: 'Thành tiền trên phiếu trả − thuế, không vượt giá trị đang có (tồn đầu + nhập); trả hết số đang có thì lấy hết giá trị. Chênh lệch ghi TK chênh lệch hàng trả NCC.',
     adjustRule: 'Số lượng × đơn giá trên phiếu; số lượng 0 thì giá trị = tiền trên phiếu (điều chỉnh giá trị).',
   },
   tax: {
@@ -38,7 +38,7 @@ export const COST_FORMULAS: Record<CostBook, CostFormula> = {
     numerator: 'Giá trị (tồn đầu + nhập mua NCC + chi phí mua − chiết khấu, thưởng NCC + nhập điều chỉnh + nhận chi nhánh khác − hàng mua trả lại − xuất chi nhánh)',
     denominator: 'Số lượng (tồn đầu + nhập mua NCC + nhập điều chỉnh + nhận chi nhánh khác − hàng mua trả lại − xuất chi nhánh)',
     purchaseReturn: 'opening',
-    returnRule: 'Định giá theo tồn đầu (bảng bên dưới), không theo tiền trên phiếu.',
+    returnRule: 'Định giá theo tồn đầu, không theo tiền trên phiếu. Chênh lệch với tiền trên phiếu ghi TK chênh lệch hàng trả NCC.',
     adjustRule: 'Số lượng × đơn giá trên phiếu; số lượng 0 thì giá trị = tiền trên phiếu (điều chỉnh giá trị).',
   },
 };
@@ -50,7 +50,8 @@ export const COST_BASIS: CostBasisRow[] = [
   { item: 'Chiết khấu, thưởng nhà cung cấp theo mã', internal: 'Trừ khỏi giá trị', tax: 'Trừ khỏi giá trị' },
   { item: 'Nhận hàng từ chi nhánh khác', internal: 'Giá trên phiếu chuyển', tax: 'Giá trên phiếu chuyển' },
   { item: 'Nhập điều chỉnh kho', internal: 'Số lượng × đơn giá', tax: 'Số lượng × đơn giá' },
-  { item: 'Hàng mua trả lại', internal: 'Thành tiền − thuế trên phiếu', tax: 'Định giá theo tồn đầu' },
+  { item: 'Hàng mua trả lại', internal: 'Thành tiền − thuế trên phiếu, không vượt giá trị đang có', tax: 'Định giá theo tồn đầu' },
+  { item: 'Chênh lệch hàng trả (tiền phiếu − giá trị trừ)', internal: 'Ghi TK chênh lệch hàng trả NCC', tax: 'Ghi TK chênh lệch hàng trả NCC' },
   { item: 'Xuất chi nhánh (bán cho chi nhánh khác theo giá bán, có hoá đơn)', internal: 'Không có — chuyển chi nhánh là chuyển kho theo giá vốn', tax: 'Giá vốn ghi ngay = giá bán; trừ khỏi tử và mẫu' },
   { item: 'Quà khuyến mãi nhận kèm phiếu mua', internal: 'Không vào công thức (giá 0)', tax: 'Không vào công thức (giá 0)' },
 ];
