@@ -30,6 +30,16 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 - **Dữ liệu ngoài (POS / ERP / plugin) qua validation trước khi chạm sổ:** không tự tạo mặt hàng từ chứng từ; mã lạ → trạm tiền kiểm với `IN-ITEM-*`. Tạo / sửa danh mục chỉ qua `core.item.*`, `core.partner.*`.
 - Chi tiết: [RULE-ITEM](docs/rules/RULE-ITEM.md), [PHASE-024 · 10](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/10-DANH-MUC-CO-PHIEN-BAN.md) (bốn hạng thay đổi), [· 50](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/50-TUAN-THU.md).
 
+### Combo không phải mặt hàng (ADR-0035 — chấp nhận 2026-11-17, CANON §0.11) <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — luật R-COMBO cho agent -->
+
+- **`combo_id` ≠ `item_id`.** Không tạo mã hàng cho combo, cho tỷ lệ tặng (3+1, 12+1) hay cho quà kèm; quà là hàng thật thì dùng `item_id` của chính nó. Mã vạch của lốc / bộ → `combo_codes`.
+- **Cửa nạp luôn nhận dòng hàng thật**; màn hình được gộp thành một dòng combo, dữ liệu gửi đi thì không.
+- **Không viết `if (isGift) cost = 0` / `vat = 0`**, không suy giá vốn hay thuế từ loại phân kho. Hỏi chính sách có phiên bản; thiếu căn cứ thì để cổng nhắc.
+- **Mua và bán là hai sự việc**: nhập theo combo của nhà cung cấp không tự mở chương trình bán.
+- **Phân kho = `warehouses` đang có** (`uid`, `type_code`); không thêm bảng phân kho, không thêm chiều tồn thứ hai. Phân kho trống / `0` = phân kho chính của chi nhánh; không bắt người dùng tạo phân kho mới chạy được.
+- **Mã nhóm 8 (combo) đang chuyển hết sang combo**; không tạo mã nhóm 8 mới, không mở luồng mới dựa trên `SkuKind = 'combo'`.
+- Chi tiết: [RULE-COMBO](docs/rules/RULE-COMBO.md), [PHASE-037](docs/phases/PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/README.md), [`bizcity_combo@1`](docs/contracts/BIZCITY-COMBO-v1.md).
+
 ### Enterprise Continuity (ADR-0028 — chấp nhận về nguyên tắc 2026-11-05) <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — luật ECP cho agent -->
 
 - **ECP-13: không thay đổi phá huỷ lịch sử nghiệp vụ đã được tham chiếu.** Dữ liệu gốc đã dùng: ngừng dùng / gộp / phiên bản mới, **không** xoá, **không** ghi đè thuộc tính lịch sử (mã, tên pháp lý, MST, phân loại, cấu hình đã dùng). Ẩn nút Xoá không phải là thi hành — chặn ở CSDL, SDK, quyền, bộ kiểm.
