@@ -96,3 +96,60 @@ describe('Công ty mẫu (B5a)', () => {
     expect(normal.body.error?.details?.reason).not.toBe('SAMPLE_TENANT');
   });
 });
+
+// [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b (00 §15): tạo Công ty Mẫu theo yêu cầu — tắt 403; một đơn vị dù bấm trùng; đăng nhập bằng email / mật khẩu của người bấm
+describe('Tạo Công ty Mẫu theo yêu cầu (B5b)', () => {
+  const create = (key: string) => call(ctx, 'POST', '/api/v1/setup/sample-tenant', {}, { 'idempotency-key': key });
+
+  it('chưa bật BIZCITY_SAMPLE_ON_DEMAND → 403', async () => {
+    const old = process.env.BIZCITY_SAMPLE_ON_DEMAND;
+    process.env.BIZCITY_SAMPLE_ON_DEMAND = '';
+    try {
+      expect((await create('od-off-1')).status).toBe(403);
+      expect((await call(ctx, 'GET', '/api/v1/setup/status')).body.data.sampleOnDemand).toBe(false);
+    } finally { process.env.BIZCITY_SAMPLE_ON_DEMAND = old; }
+  });
+
+  it('bật, bản cài chưa có mẫu → hai lệnh cùng lúc chỉ tạo một; đăng nhập bằng email / mật khẩu người bấm; gói nạp xong; lần sau SAMPLE_EXISTS', async () => {
+    // CSDL test dùng chung: tạm gỡ cờ mẫu của đơn vị mẫu khác (ca trên tạo), trả lại sau
+    const others = (await sql<{ id: string }>`UPDATE tenants SET is_sample = false WHERE is_sample RETURNING id`.execute(db)).rows.map((r) => r.id);
+    const oldOn = process.env.BIZCITY_SAMPLE_ON_DEMAND;
+    const oldCode = process.env.SAMPLE_TENANT_CODE;
+    const odCode = `mau${Date.now().toString(36)}od`;
+    process.env.BIZCITY_SAMPLE_ON_DEMAND = '1';
+    process.env.SAMPLE_TENANT_CODE = odCode;
+    try {
+      expect((await call(ctx, 'GET', '/api/v1/setup/status')).body.data.sampleOnDemand).toBe(true);
+      const [a, b] = await Promise.all([create('od-1'), create('od-2')]);
+      expect([a.status, b.status].sort(), JSON.stringify([a.body, b.body])).toEqual([202, 409]);
+      const won = a.status === 202 ? a : b;
+      const lost = a.status === 202 ? b : a;
+      expect(lost.body.error.details.reason).toBe('SAMPLE_EXISTS');
+      expect(won.body.data.tenantCode).toBe(odCode);
+      const n = await sql<{ n: string }>`SELECT count(*) AS n FROM tenants WHERE code = ${odCode} AND is_sample`.execute(db);
+      expect(Number(n.rows[0]!.n)).toBe(1);
+
+      const login = await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { tenantCode: odCode, email: 'tester@ketoan.local', password: 'Test@123' } });
+      expect(login.statusCode, 'đăng nhập Công ty Mẫu bằng chính email / mật khẩu người bấm').toBe(200);
+      const mau = { ...ctx, token: login.json().data.token as string };
+      let run: { status: string; steps: { failed: number }[] } | undefined;
+      for (let i = 0; i < 1500; i++) {
+        run = (await call(mau, 'GET', `/api/v1/setup/runs/${won.body.data.runId}`)).body.data;
+        if (run?.status !== 'running') break;
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      expect(run?.status).toBe('done');
+      expect(run!.steps.every((s) => s.failed === 0)).toBe(true);
+      expect((await call(mau, 'GET', '/api/v1/setup/status')).body.data.isSample).toBe(true);
+
+      const again = await create('od-3');
+      expect(again.status).toBe(409);
+      expect(again.body.error.details.reason).toBe('SAMPLE_EXISTS');
+      expect((await call(ctx, 'GET', '/api/v1/setup/status')).body.data).toMatchObject({ sampleOnDemand: false, sampleTenantCode: expect.any(String) });
+    } finally {
+      process.env.BIZCITY_SAMPLE_ON_DEMAND = oldOn;
+      process.env.SAMPLE_TENANT_CODE = oldCode;
+      if (others.length) await sql`UPDATE tenants SET is_sample = true WHERE id = ANY(${others})`.execute(db);
+    }
+  }, 300_000);
+});

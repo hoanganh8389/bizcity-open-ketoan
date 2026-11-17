@@ -129,3 +129,7 @@ Nút *Quay về dữ liệu gốc* (màn TI08, nút ở đầu các màn danh m�
 - `cap-nhat.sh` **dừng** trước khi kéo mã nếu `SEEDS_DIR` đặt mà thư mục không có (Docker sẽ tạo thư mục rỗng thay vào) hoặc thiếu tệp so với `db/seeds` của bản mới.
 - `cap-nhat.sh` cảnh báo ở bước "Sắp đổi gì" khi chưa đặt `SEEDS_DIR` mà `db/seeds` là bộ giả lập.
 - Luôn có bản sao lưu đã kiểm trước khi bấm nút này.
+
+## 10. Xoá Công ty Mẫu <!-- [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b (ADR-0034) -->
+
+`./scripts/xoa-cong-ty-mau.sh [mã]` (mặc định `SAMPLE_TENANT_CODE` / `mau`) xoá **cả đơn vị** Công ty Mẫu — chỉ đơn vị `is_sample`; đơn vị thật bị từ chối, không xoá dòng nào. Script sao lưu trước (`sao-luu.sh`), hỏi câu xác nhận `XOA CONG TY MAU <mã>`, xoá trong một giao dịch (cơ chế E3 của RULE-LEDGER), ghi một dòng `backups/xoa-cong-ty-mau.log`. Lấy lại: khôi phục bản sao lưu vừa tạo (§6), hoặc bật `BIZCITY_SAMPLE_ON_DEMAND=1` rồi tạo lại ở Thiết lập nhanh (TI15).
