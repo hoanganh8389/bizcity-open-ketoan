@@ -54,9 +54,10 @@ const MAT_HANG: NhapLoai = {
     { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku', 'ma hang hoa, dich vu'], example: '100021099', note: 'Mã đã có → cập nhật; chưa có → thêm mới. Mã mới không có chữ ở đầu hoặc cuối. Mã biến thể: giữ nguyên mã cha (đã có hoặc có ở dòng khác trong tệp), thêm tối đa 2 chữ ở đầu hoặc cuối.' },
     { key: 'name', header: 'Tên hàng', required: 'moi', aliases: ['ten', 'ten vthh', 'ten hang hoa', 'ten san pham', 'ten hang hoa, dich vu'], example: 'Sữa bột mẫu 400g' },
     { key: 'unit', header: 'ĐVT', required: 'moi', aliases: ['don vi tinh', 'dvt chinh', 'don vi', 'don vi tinh chinh'], example: 'Hộp', note: 'Mặt hàng đã có: ĐVT không đổi qua Excel (đổi ở form mặt hàng).' },
-    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Mã hoặc đúng tên nhóm cấp 3 trong danh mục. Mã biến thể: bỏ trống, theo mã cha.' },
-    { key: 'vatRate', header: 'Thuế suất GTGT (%)', aliases: ['thue suat', 'thue gtgt', 'vat', 'thue suat gtgt'], example: '8', note: 'KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra khác — phải có ở danh mục Biểu thuế.' },
-    { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang theo doi'], note: 'Đang hoạt động / Ngừng hoạt động. Trống = giữ nguyên (mới: Đang hoạt động).' },
+    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Mã, đúng tên nhóm cấp 3, hoặc đường dẫn "Ngành / Nhãn / Nhóm" như tệp xuất. Mã biến thể: bỏ trống, theo mã cha.' },
+    // [2026-11-17 09:11 PM kiennt] NT-DM-003 E2, E3 — ghép cột "Thuế GTGT (%)" của tệp xuất DM10; mặt hàng mới bắt buộc (đóng góp)
+    { key: 'vatRate', header: 'Thuế suất GTGT (%)', required: 'moi', aliases: ['thue suat', 'thue gtgt', 'thue gtgt %', 'vat', 'thue suat gtgt'], example: '8', note: 'KCT, 0, 5, 8 (hoặc 8%), 10 hoặc mã thuế đầu ra khác — phải có ở danh mục Biểu thuế. Mặt hàng mới bắt buộc.' },
+    { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang theo doi'], note: 'Đang hoạt động (hoặc Chờ duyệt) / Ngừng hoạt động. Trống = giữ nguyên (mới: Đang hoạt động).' },
   ],
   run: async (rows, { dryRun }) => {
     const o = await api.post<{ created: number; updated: number; failed: number; rows: { row: number; sku: string; action: NhapDong['action']; errors: string[]; values: Record<string, string>; before?: Record<string, string> }[] }>(

@@ -19,13 +19,14 @@ describe('DM-09 nhập Excel mặt hàng', () => {
       const r = await call(ctx, 'PUT', `/api/v1/item-classes/group/${code}?new=1`, { name, parentCode, skuCode });
       expect(r.status, JSON.stringify(r.body)).toBeLessThan(300);
     }
-    const rows: Record<string, unknown>[] = Array.from({ length: 15 }, (_, i) => ({ row: i + 2, sku: `777015${String(i + 1).padStart(3, '0')}`, name: `Mặt hàng nhập ${i + 1}`, unit: 'Hộp', groupCode: 'IMP-G3', brandCode: i % 2 ? 'NH-IMP' : 'Nhãn nhập thử', isActive: 'Có' }));
+    // [2026-11-17 09:14 PM kiennt] NT-DM-003 E3 — mặt hàng mới bắt buộc thuế suất: dữ liệu mẫu ghi thuế 8% (đóng góp)
+    const rows: Record<string, unknown>[] = Array.from({ length: 15 }, (_, i) => ({ row: i + 2, sku: `777015${String(i + 1).padStart(3, '0')}`, name: `Mặt hàng nhập ${i + 1}`, unit: 'Hộp', groupCode: 'IMP-G3', brandCode: i % 2 ? 'NH-IMP' : 'Nhãn nhập thử', isActive: 'Có', vatRate: '8' }));
     rows.push(
-      { row: 17, sku: '777015101', name: '', unit: 'Hộp', groupCode: 'IMP-G3' },                       // thiếu tên
-      { row: 18, sku: '777015001', name: 'Trùng', unit: 'Hộp', groupCode: 'IMP-G3' },                  // trùng mã trong tệp
-      { row: 19, sku: '777015 102', name: 'Có dấu cách', unit: 'Hộp', groupCode: 'IMP-G3' },           // mã có khoảng trắng
-      { row: 20, sku: '777015104', name: 'Nhãn sai', unit: 'Hộp', groupCode: 'IMP-G3', brandCode: 'KHONG-CO' },
-      { row: 21, sku: '777015105', name: 'Theo dõi sai', unit: 'Hộp', groupCode: 'IMP-G3', isActive: 'hmm' },
+      { row: 17, sku: '777015101', name: '', unit: 'Hộp', groupCode: 'IMP-G3', vatRate: '8' },                       // thiếu tên
+      { row: 18, sku: '777015001', name: 'Trùng', unit: 'Hộp', groupCode: 'IMP-G3', vatRate: '8' },                  // trùng mã trong tệp
+      { row: 19, sku: '777015 102', name: 'Có dấu cách', unit: 'Hộp', groupCode: 'IMP-G3', vatRate: '8' },           // mã có khoảng trắng
+      { row: 20, sku: '777015104', name: 'Nhãn sai', unit: 'Hộp', groupCode: 'IMP-G3', brandCode: 'KHONG-CO', vatRate: '8' },
+      { row: 21, sku: '777015105', name: 'Theo dõi sai', unit: 'Hộp', groupCode: 'IMP-G3', isActive: 'hmm', vatRate: '8' },
     );
     const check = await call(ctx, 'POST', URL, { dryRun: true, rows });
     expect(check.status, JSON.stringify(check.body)).toBe(200);

@@ -125,7 +125,8 @@ export function ProductsPage() {
   const datTich = (skus: string[], on: boolean) => setTich((s) => { const n = new Set(s); for (const k of skus) { if (on) n.add(k); else n.delete(k); } return n; });
   const tichHet = viewRef.current.length > 0 && viewRef.current.every((p) => tich.has(p.sku));
   const cotTich: Column<Product> = {
-    key: '_tich', title: 'Tích chọn', width: 36, noFilter: true, noSort: true, value: () => '',
+    // [2026-11-17 09:13 PM kiennt] NT-DM-003 E4 — cột tích chỉ để thao tác, không xuất Excel (đóng góp)
+    key: '_tich', title: 'Tích chọn', width: 36, noFilter: true, noSort: true, noExport: true, value: () => '',
     header: <input type="checkbox" checked={tichHet} title="Tích / bỏ mọi mặt hàng đang hiện trên lưới" onClick={(e) => e.stopPropagation()} onChange={() => datTich(viewRef.current.map((p) => p.sku), !tichHet)} />,
     render: (p) => <input type="checkbox" checked={tich.has(p.sku)} onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} onChange={() => datTich([p.sku], !tich.has(p.sku))} />,
   };
