@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
+import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { AccountPicker, ItemPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
@@ -45,6 +46,10 @@ const SOURCE: Record<Source, { label: string; tip: string; link?: string }> = {
 const STATUS_BAD: Record<string, string> = { missing: 'Chưa đặt', unknown: 'Không có trong hệ thống tài khoản', summary: 'Là TK tổng hợp — chọn TK chi tiết' };
 const fmt = (n: number) => (n ? n.toLocaleString('vi-VN') : '');
 
+// [2026-11-17 10:45 AM kiennt] ACC41 — thứ tự bút toán của một nghiệp vụ: kho / giá vốn (số lượng, giá vốn tính cuối tháng) → doanh thu, giá trị → tiền (đóng góp)
+const thuTuNhom = (ten: string) => (/giá vốn|kho|hàng (vào|về|ra)|nhận quà|chi nhánh (xuất|nhận)/i.test(ten) ? 0 : /thu tiền|trả tiền|chiết khấu thanh toán|nơi (chuyển|nhận)/i.test(ten) ? 2 : 1);
+const xepNhom = <G extends { name: string }>(gs: G[]): G[] => gs.map((g, i) => ({ g, i })).sort((a, b) => thuTuNhom(a.g.name) - thuTuNhom(b.g.name) || a.i - b.i).map((x) => x.g);
+
 export function QuyTacHachToanPage() {
   const { can } = useAuth();
   const canWrite = can('settings:write');
@@ -68,16 +73,16 @@ export function QuyTacHachToanPage() {
   );
   if (!chiTiet) return (
     <>
-      <PageHeader title="Tài khoản ngầm định" code="ACC41" helpKey="quy-tac-hach-toan" />
+      {/* [2026-11-17 10:45 AM kiennt] ACC41 — nút Gọn / Chi tiết cùng một chỗ (góc phải tiêu đề) ở cả hai chế độ (đóng góp) */}
+      <PageHeader title="Tài khoản ngầm định" code="ACC41" helpKey="quy-tac-hach-toan" actions={nutXem} />
       <ErrorBox error={q.error ? errorText(q.error) : null} />
-      {q.isLoading || !data ? <Loading /> : <GonView data={data} canWrite={canWrite} nutXem={nutXem} />}
+      {q.isLoading || !data ? <Loading /> : <GonView data={data} canWrite={canWrite} />}
     </>
   );
 
   return (
     <>
-      <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" />
-      <div className="row" style={{ marginBottom: 8 }}>{nutXem}</div>
+      <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" actions={nutXem} />
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {missing.length > 0 && (
         <div className="alert alert-warn" style={{ marginBottom: 8 }} title="Chứng từ dùng tới tài khoản chưa đặt sẽ báo lỗi khi ghi sổ">
@@ -105,7 +110,7 @@ export function QuyTacHachToanPage() {
                     <th title="Tài khoản lấy từ nguồn nào">Lấy theo</th><th title="Tài khoản đang dùng">Tài khoản</th><th title="Khi nào có dòng này; trống = luôn có">Khi nào</th><th />
                   </tr></thead>
                   <tbody>
-                    {biz.groups.map((g) => [
+                    {xepNhom(biz.groups).map((g) => [
                       <tr key={g.name} className="qt-grp"><td colSpan={7} title="Nhóm dòng sổ">{g.name}</td></tr>,
                       ...g.lines.map((l, i) => {
                         const k = l.key ? keys.get(l.key) : undefined;
@@ -376,41 +381,36 @@ const NGUON_NGAN: Record<Source, string> = { rule: '', payment: 'theo HTTT', war
 const tkCua = (l: SLine, keys: Map<string, Key>) => (l.key ? keys.get(l.key)?.accountCode ?? '' : NGUON_NGAN[l.source]);
 const uniq = (a: string[]) => [...new Set(a.filter(Boolean))];
 
-/** CHẾ ĐỘ GỌN: Loại chứng từ · tìm · bảng Loại / TK Nợ / TK Có / Sửa (một dòng = một nhóm dòng sổ của nghiệp vụ). */
-function GonView({ data, canWrite, nutXem }: { data: Scheme; canWrite: boolean; nutXem: React.ReactNode }) {
-  const [loai, setLoai] = useState('');
-  const [tim, setTim] = useState('');
+/**
+ * CHẾ ĐỘ GỌN: bảng như các màn danh mục (lọc từng cột, sắp xếp, xuất Excel) — Loại chứng từ · Bút toán · TK Nợ · TK Có · Sửa;
+ * một dòng = một nhóm dòng sổ của nghiệp vụ, theo thứ tự kho / giá vốn → doanh thu → tiền.
+ * [2026-11-17 10:45 AM kiennt] ACC41 — bảng DataGrid thay bảng tay + ô chọn loại / ô tìm (đóng góp)
+ */
+interface GonRow { id: string; loai: string; nhom: string; title: string; no: string[]; co: string[]; sai: boolean; lines: SLine[]; sua: boolean }
+function GonView({ data, canWrite }: { data: Scheme; canWrite: boolean }) {
   const [sua, setSua] = useState<{ title: string; lines: SLine[] } | null>(null);
   const keys = useMemo(() => new Map(data.keys.map((k) => [k.key, k])), [data]);
-  const rows = data.businesses.filter((b) => !loai || b.code === loai).flatMap((b) => b.groups.map((g) => {
-    const no = uniq(g.lines.filter((l) => l.side === 'debit').map((l) => tkCua(l, keys)));
-    const co = uniq(g.lines.filter((l) => l.side === 'credit').map((l) => tkCua(l, keys)));
-    const sai = g.lines.some((l) => l.source === 'rule' && l.key && keys.get(l.key)?.status !== 'ok');
-    return { id: `${b.code}|${g.name}`, title: `${b.name} – ${g.name.replace(/\s*\(.*\)$/, '')}`, no, co, sai, lines: g.lines, sua: g.lines.some((l) => l.source === 'rule' && l.key) };
-  }));
-  const t = tim.trim().toLowerCase();
-  const view = t ? rows.filter((r) => `${r.title} ${r.no.join(' ')} ${r.co.join(' ')}`.toLowerCase().includes(t)) : rows;
+  const rows: GonRow[] = useMemo(() => data.businesses.flatMap((b) => xepNhom(b.groups).map((g) => {
+    const nhom = g.name.replace(/\s*\(.*\)$/, '');
+    return {
+      id: `${b.code}|${g.name}`, loai: b.name, nhom, title: `${b.name} – ${nhom}`,
+      no: uniq(g.lines.filter((l) => l.side === 'debit').map((l) => tkCua(l, keys))),
+      co: uniq(g.lines.filter((l) => l.side === 'credit').map((l) => tkCua(l, keys))),
+      sai: g.lines.some((l) => l.source === 'rule' && l.key && keys.get(l.key)?.status !== 'ok'),
+      lines: g.lines, sua: g.lines.some((l) => l.source === 'rule' && l.key),
+    };
+  })), [data, keys]);
+  const cols: Column<GonRow>[] = [
+    { key: 'loai', header: 'Loại chứng từ', width: 200 },
+    { key: 'nhom', header: 'Bút toán', width: 280, render: (r) => <span className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.nhom}</span> },
+    { key: 'no', header: 'TK Nợ', type: 'code', width: 200, value: (r) => r.no.join('; ') },
+    { key: 'co', header: 'TK Có', type: 'code', width: 200, value: (r) => r.co.join('; ') },
+    { key: 'sua', header: 'Chức năng', width: 90, noFilter: true, noSort: true, render: (r) => (r.sua && canWrite ? <a href="#" onClick={(e) => { e.preventDefault(); setSua(r); }}>Sửa</a> : null) },
+  ];
   return (
-    <div className="card" style={{ padding: 0 }}>
-      <div className="row" style={{ gap: 8, padding: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <label style={{ display: 'grid', gap: 2 }}><span style={{ fontSize: 12 }}>Loại chứng từ</span>
-          <select className="input" style={{ width: 260 }} value={loai} onChange={(e) => setLoai(e.target.value)}>
-            <option value="">Tất cả</option>{data.businesses.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
-          </select></label>
-        <input className="input" style={{ width: 260 }} placeholder="Tìm kiếm" value={tim} onChange={(e) => setTim(e.target.value)} />
-        <span style={{ marginLeft: 'auto' }}>{nutXem}</span>
-      </div>
-      <table className="grid full">
-        <thead><tr><th>Loại</th><th style={{ width: 200 }}>TK Nợ</th><th style={{ width: 200 }}>TK Có</th><th style={{ width: 90, textAlign: 'center' }}>Chức năng</th></tr></thead>
-        <tbody>{view.map((r) => (
-          <tr key={r.id} onDoubleClick={() => { if (r.sua && canWrite) setSua(r); }}>
-            <td className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.title}</td>
-            <td className="mono">{r.no.join('; ')}</td><td className="mono">{r.co.join('; ')}</td>
-            <td style={{ textAlign: 'center' }}>{r.sua && canWrite && <a href="#" onClick={(e) => { e.preventDefault(); setSua(r); }}>Sửa</a>}</td>
-          </tr>
-        ))}</tbody>
-      </table>
-      <div style={{ padding: '6px 10px' }}>Tổng số: <b>{view.length}</b></div>
+    <div className="card">
+      <DataGrid storageKey="acc41-gon" exportName="tai-khoan-ngam-dinh" rows={rows} rowKey={(r) => r.id} columns={cols}
+        onRowDoubleClick={(r) => { if (r.sua && canWrite) setSua(r); }} />
       {sua && <SuaGon title={sua.title} lines={sua.lines} keys={keys} onClose={() => setSua(null)} />}
     </div>
   );
