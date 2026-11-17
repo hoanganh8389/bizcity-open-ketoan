@@ -11,7 +11,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { ErrorBox, Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { HelpDrawer } from '@/components/HelpDrawer';
 import { ProductFullForm } from './ProductFullForm';
 import { pathOf, useClasses } from './ProductsPage';
 
@@ -34,9 +33,10 @@ const parseNum = (s: string): number | null => {
 export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: string; canWrite: boolean }) {
   const qc = useQueryClient();
   const [dirty, setDirty] = useState<Map<string, number | null>>(new Map());
+  // [2026-11-17 11:48 AM kiennt] DM14 — ô giá chỉ xem; bấm Sửa giá mới sửa, Ghi giá lưu rồi quay về xem (đóng góp)
+  const [dangSua, setDangSua] = useState(false);
   const [show, setShow] = useState<Show>('all');
   const [open, setOpen] = useState<string | null>(null);
-  const [help, setHelp] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useQuery({ queryKey: ['price-rows', code], queryFn: () => api.get<RowsResponse>(`/api/v1/catalog/price-lists/${encodeURIComponent(code)}/rows`) });
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
@@ -65,6 +65,7 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
     }),
     onSuccess: () => {
       setDirty(new Map());
+      setDangSua(false);
       void qc.invalidateQueries({ queryKey: ['price-rows', code] });
       void qc.invalidateQueries({ queryKey: ['price-lists'] });
       void qc.invalidateQueries({ queryKey: ['catalog-product'] });
@@ -91,12 +92,13 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 120 },
     { key: 'name', header: 'Tên hàng', width: 300 },
     { key: 'unit', header: 'ĐVT', width: 80 },
-    { key: 'ratio', header: 'Tỉ lệ', type: 'number', width: 70, showZero: true },
+    // [2026-11-17 11:44 AM kiennt] DM14 — cột Tỉ lệ đổi tên thành Quy đổi (đóng góp)
+    { key: 'ratio', header: 'Quy đổi', type: 'number', width: 80, showZero: true, title: 'Số đơn vị tính nhỏ nhất trong một đơn vị tính này' },
     { key: 'isDefault', header: 'Bán chính', type: 'check', width: 75 },
     ...(!isCompany ? [{ key: 'companyPrice', header: 'Giá công ty', type: 'money', width: 120 } as Column<Row>] : []),
     {
-      key: 'price', header: `Giá ${name}`, type: 'money', width: 140, value: (r) => priceOf(r),
-      render: (r) => canWrite ? (
+      key: 'price', header: 'Đơn giá', type: 'money', width: 140, value: (r) => priceOf(r),
+      render: (r) => canWrite && dangSua ? (
         <input className={`input num ${dirty.has(keyOf(r)) ? 'dirty' : ''}`} style={{ height: 22, width: '100%', background: dirty.has(keyOf(r)) ? 'var(--warn-50, #fff7e0)' : undefined, opacity: !isCompany && r.isMain ? 0.5 : 1 }}
           value={fmt(priceOf(r))} onChange={(e) => edit(r, parseNum(e.target.value))} onDoubleClick={(e) => e.stopPropagation()}
           title={!isCompany && r.isMain ? 'Hàng chính: cửa hàng chỉ bán theo giá công ty, giá chi nhánh không dùng' : undefined} />
@@ -107,34 +109,38 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
     { key: 'noSale', header: 'Không bán', type: 'check', width: 75, hidden: true },
     { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70, hidden: true },
   ];
-  const showBtn = (k: Show, label: string) => <button key={k} className={`btn btn-sm ${show === k ? 'btn-primary' : ''}`} onClick={() => setShow(k)}>{label}</button>;
 
   return (
     <div className="card" style={{ marginTop: 10 }}>
-      <div className="row" style={{ gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 6 }}>
-        <b>Giá theo mặt hàng — {name}</b>
-        <span className="muted" style={{ fontSize: 12 }}>{counts.skus.toLocaleString('vi-VN')} mã · {counts.priced.toLocaleString('vi-VN')}/{counts.all.toLocaleString('vi-VN')} ô đã có giá</span>
+      {/* [2026-11-17 11:39 AM kiennt] DM14 — hàng tiêu đề + nút dùng thanh nút danh mục (nút cao 28px, đệm như thanh phía trên) (đóng góp) */}
+      <div className="catalog-toolbar canh-phai" style={{ marginBottom: 6 }}>
+        {/* [2026-11-17 11:32 AM kiennt] DM14 — tiêu đề gọn, nút lọc thành một nhóm liền; bỏ nút Hướng dẫn thứ hai và dòng nhắc trên lưới (đã ở hướng dẫn) (đóng góp) */}
+        <b>{name}</b>
+        <span className="muted" style={{ fontSize: 12 }} title={`${counts.skus.toLocaleString('vi-VN')} mã hàng`}>{counts.priced.toLocaleString('vi-VN')}/{counts.all.toLocaleString('vi-VN')} ô có giá</span>
+        {/* [2026-11-17 11:54 AM kiennt] DM14 — lọc Tất cả / Đã có giá / Còn trống thành một ô chọn bên trái, tách khỏi nút chức năng (đóng góp) */}
+        <select className="select input" style={{ height: 28, width: 'auto', marginLeft: 8 }} value={show} onChange={(e) => setShow(e.target.value as Show)} title="Lọc dòng theo giá">
+          <option value="all">Tất cả</option><option value="priced">Đã có giá</option><option value="empty">Còn trống</option>
+          {dirty.size > 0 && <option value="dirty">Đang sửa ({dirty.size})</option>}
+        </select>
         <span className="spacer" style={{ flex: 1 }} />
-        {showBtn('all', 'Tất cả')}{showBtn('priced', 'Đã có giá')}{showBtn('empty', 'Còn trống')}{dirty.size > 0 && showBtn('dirty', `Đang sửa (${dirty.size})`)}
-        {canWrite && <button className="btn btn-sm" onClick={fillByRatio} title="Ô trống của mặt hàng đang hiện = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần">Điền theo tỉ lệ</button>}
+        {canWrite && dangSua && <button className="btn btn-sm" onClick={fillByRatio} title="Ô trống của mặt hàng đang hiện = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần">Điền theo tỉ lệ</button>}
         <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
-        {canWrite && dirty.size > 0 && <button className="btn btn-sm" onClick={() => setDirty(new Map())}>Bỏ sửa</button>}
-        {canWrite && <button className="btn btn-sm btn-primary" disabled={!dirty.size || save.isPending} onClick={() => save.mutate()}>Ghi giá{dirty.size ? ` (${dirty.size} ô)` : ''}</button>}
-        <button className="btn btn-sm btn-help" onClick={() => setHelp(true)}>? Hướng dẫn</button>
+        {canWrite && dangSua && <button className="btn btn-sm" onClick={() => { setDirty(new Map()); setDangSua(false); }} title="Bỏ các ô đang sửa, quay về xem">Bỏ sửa</button>}
+        {canWrite && (dangSua
+          ? <button className="btn btn-sm btn-primary" disabled={save.isPending} onClick={() => (dirty.size ? save.mutate() : setDangSua(false))}>Ghi giá{dirty.size ? ` (${dirty.size} ô)` : ''}</button>
+          : <button className="btn btn-sm btn-primary" onClick={() => { save.reset(); setDangSua(true); }}>Sửa giá</button>)}
       </div>
       <ErrorBox error={q.error ? errorText(q.error) : save.error ? errorText(save.error) : null} />
       {save.isSuccess && !dirty.size && <div className="alert alert-info" style={{ marginBottom: 6 }}>Đã ghi {save.data.saved} ô{save.data.removed ? `, bỏ giá ${save.data.removed} ô` : ''}. Cửa hàng nhận giá mới sau vài phút.</div>}
       {q.isLoading ? <Loading /> : (
         <DataGrid storageKey="dm14-gia-v1" exportName={`gia-${code}`} exportRef={exportRef} rows={rows} rowKey={keyOf} maxHeight="55vh"
           onRowDoubleClick={(r) => setOpen(r.sku)} rowClassName={(r) => (r.isActive ? '' : 'muted')} footerLabel={false}
-          note="sửa ô giá rồi bấm Ghi giá; bấm đúp dòng để mở mặt hàng"
           emptyText={show === 'all' ? 'Chưa có mặt hàng nào khai đơn vị tính.' : 'Không có dòng nào.'} columns={columns} />
       )}
       {open && (
         <ProductFullForm sku={open} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }}
           groupPath={groupPath} onClose={() => { setOpen(null); void qc.invalidateQueries({ queryKey: ['price-rows', code] }); }} />
       )}
-      {help && <HelpDrawer guideKey="bang-gia" onClose={() => setHelp(false)} />}
     </div>
   );
 }
