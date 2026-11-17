@@ -15,7 +15,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { idParamSchema, ok } from '@bizcity/platform/core/http';
-import { costingRuns, costingService } from './costing.service.js';
+import { costingFormulas, costingRuns, costingService } from './costing.service.js';
 import { sql } from 'kysely';
 import { db } from '@bizcity/platform/db/client';
 import { env } from '@bizcity/platform/config/env';
@@ -45,6 +45,11 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     },
   });
   // [2026-11-17 Nguyễn Văn Thủy] các lần tính giá vốn theo chi nhánh và bảng đơn giá của một lần (0148) (đóng góp)
+  r.get('/api/v1/inventory/costing-formulas', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Công thức giá vốn (bộ lựa chọn cách tính) của đơn vị' },
+    handler: async (req) => ok(await costingFormulas.list(authOf(req))),
+  });
   r.get('/api/v1/inventory/costing-runs', {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Các lần tính giá vốn (lọc chi nhánh, ngày tính)', querystring: z.object({ costCenter: z.string().max(60).optional(), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }) },
@@ -73,7 +78,25 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
 // Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
 const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 
+const formulaOptions = z.object({
+  price: z.enum(['net', 'before_discount', 'with_vat']).optional(),
+  costAlloc: z.boolean().optional(),
+  rebateAlloc: z.boolean().optional(),
+  purchaseReturn: z.enum(['reason', 'doc', 'opening']).optional(),
+  transferIn: z.enum(['doc', 'sender']).optional(),
+  adjustIn: z.boolean().optional(),
+});
+
 export const inventoryWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.inventory.costing-formula-save', title: 'Thêm / sửa công thức giá vốn (giá nhập, chi phí / thưởng phân bổ, trả NCC, nhận chi nhánh khác, nhập điều chỉnh)', tags,
+    permission: 'periods:lock', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string().trim().min(1).max(30).regex(/^[A-Za-z0-9_.-]+$/, 'Mã chỉ gồm chữ, số, _ . -'), name: z.string().trim().min(1).max(200), options: formulaOptions, isDefault: z.boolean().optional(), note: z.string().max(1000).optional() }),
+    output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/inventory/costing-formulas/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'costing_formula', objectId: (i) => i.code },
+    handler: (ctx, input) => costingFormulas.saveIn(ctx.data.tx as never, ctx.legacyAuth, input),
+  }),
   defineAction({
     id: 'core.inventory.costing-run', title: 'Tính giá vốn tháng (bình quân; mã có trong bảng giá nhập từ Excel thì dùng giá đó), ghi đè dòng giá vốn chờ của các phiếu', tags,
     permission: 'periods:lock', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
@@ -90,6 +113,8 @@ export const inventoryWriteActions: AnyActionDef[] = [
         costCenter: z.string().trim().max(60).optional(),
         /** [2026-11-17] Phạm vi chọn trên cây cơ cấu: nút bất kỳ (node) hoặc một shop (shop) — đặt làm điểm tính giá vốn rồi tính. */
         scope: z.object({ kind: z.enum(['node', 'shop']), code: z.string().trim().min(1).max(60) }).optional(),
+        /** [2026-11-17] Mã công thức giá vốn (danh mục costing_formulas); trống = công thức mặc định. */
+        formulaCode: z.string().trim().max(30).optional(),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/inventory/costing' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'inventory' },

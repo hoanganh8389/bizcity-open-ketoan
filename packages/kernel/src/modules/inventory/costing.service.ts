@@ -138,6 +138,24 @@ interface CostRow {
   /** ĐGBQ đầu kỳ nhập từ Excel. */
   importUnit?: number;
 }
+// [2026-11-17 Nguyễn Văn Thủy] CÔNG THỨC GIÁ VỐN TUỲ CHỌN (0151): mỗi lần tính chọn một bộ lựa chọn (đóng góp)
+export interface CostFormula {
+  /** Giá nhập: net = chưa VAT, đã trừ CK; before_discount = chưa VAT, chưa trừ CK; with_vat = gồm VAT, đã trừ CK. */
+  price: 'net' | 'before_discount' | 'with_vat';
+  /** Cộng chi phí mua hàng phân bổ. */
+  costAlloc: boolean;
+  /** Trừ thưởng / chiết khấu nhãn hàng phân bổ. */
+  rebateAlloc: boolean;
+  /** Hàng trả NCC: theo lý do (mặc định) / theo giá trị phiếu / định giá theo tồn đầu. */
+  purchaseReturn: 'reason' | 'doc' | 'opening';
+  /** Nhận từ chi nhánh khác: theo phiếu (không có giá thì giá vốn bên gửi) / luôn giá vốn bên gửi. */
+  transferIn: 'doc' | 'sender';
+  /** Nhập điều chỉnh tính vào giá (theo cờ lý do). */
+  adjustIn: boolean;
+}
+export const DEFAULT_FORMULA: CostFormula = { price: 'net', costAlloc: true, rebateAlloc: true, purchaseReturn: 'reason', transferIn: 'doc', adjustIn: true };
+export const formulaOf = (o: unknown): CostFormula => ({ ...DEFAULT_FORMULA, ...((o && typeof o === 'object' ? o : {}) as Partial<CostFormula>) });
+
 interface FlowDetail {
   purchaseQty: number; purchaseValue: number; returnQty: number; returnValue: number; adjInQty: number; adjInValue: number;
   tInQty: number; tInValue: number; tOutQty: number; saleQty: number; saleReturnQty: number; adjOutQty: number;
@@ -148,21 +166,23 @@ const emptyDetail = (): FlowDetail => ({ purchaseQty: 0, purchaseValue: 0, retur
 
 /** Tổng hợp hàng vào / ra trong tháng theo (nhóm, mặt hàng, loại, nhóm bên kia). */
 async function monthFlows(trx: Db, tenantId: string, p: Period) {
-  const res = await sql<{ grp: string; ikey: string; sku: string; kind: string; reason: string | null; priced: boolean; excl: boolean; cgrp: string | null; qty: string; amount: string; valued_qty: string; unvalued_qty: string; alloc: string }>`
+  const res = await sql<{ grp: string; ikey: string; sku: string; kind: string; reason: string | null; priced: boolean; excl: boolean; cgrp: string | null; qty: string; amount: string; valued_qty: string; unvalued_qty: string; alloc: string; tax: string; disc: string }>`
     SELECT COALESCE(b.accounting_unit_id, 0)::text AS grp, COALESCE(m.item_id, m.sku) AS ikey, MAX(m.sku) AS sku, m.kind, m.reason_code AS reason, m.priced_at_sale AS priced, m.exclude_cost AS excl,
            CASE WHEN m.counter_branch_id IS NULL THEN NULL ELSE COALESCE(cb.accounting_unit_id, 0)::text END AS cgrp,
            SUM(m.qty) AS qty,
            COALESCE(SUM(m.amount), 0) AS amount,
            SUM(CASE WHEN m.amount IS NULL THEN 0 ELSE m.qty END) AS valued_qty,
            SUM(CASE WHEN m.amount IS NULL THEN m.qty ELSE 0 END) AS unvalued_qty,
-           COALESCE(SUM(CASE WHEN m.qty = 0 THEN m.amount ELSE 0 END), 0) AS alloc
+           COALESCE(SUM(CASE WHEN m.qty = 0 THEN m.amount ELSE 0 END), 0) AS alloc,
+           COALESCE(SUM(CASE WHEN m.qty = 0 THEN 0 ELSE m.tax_amount END), 0) AS tax,
+           COALESCE(SUM(CASE WHEN m.qty = 0 THEN 0 ELSE m.discount_amount END), 0) AS disc
       FROM inventory_movements m
       JOIN branches b ON b.id = m.branch_id
       LEFT JOIN branches cb ON cb.id = m.counter_branch_id
      WHERE m.tenant_id = ${tenantId}
        AND m.doc_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date
      GROUP BY 1, 2, 4, 5, 6, 7, 8`.execute(trx);
-  return res.rows.map((r) => ({ group: r.grp, ikey: r.ikey, sku: r.sku, kind: r.kind, reason: r.reason, pricedAtSale: r.priced, excludeCost: r.excl, counterGroup: r.cgrp, qty: Number(r.qty), amount: Number(r.amount), valuedQty: Number(r.valued_qty), unvaluedQty: Number(r.unvalued_qty), alloc: Number(r.alloc) }));
+  return res.rows.map((r) => ({ group: r.grp, ikey: r.ikey, sku: r.sku, kind: r.kind, reason: r.reason, pricedAtSale: r.priced, excludeCost: r.excl, counterGroup: r.cgrp, qty: Number(r.qty), amount: Number(r.amount), valuedQty: Number(r.valued_qty), unvaluedQty: Number(r.unvalued_qty), alloc: Number(r.alloc), tax: Number(r.tax), disc: Number(r.disc) }));
 }
 
 /**
@@ -206,7 +226,7 @@ interface MonthResult {
   returnUnits: Map<string, number>;
 }
 
-async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<string, number>): Promise<MonthResult> {
+async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<string, number>, formula: CostFormula = DEFAULT_FORMULA): Promise<MonthResult> {
   const imported = imports ?? (await importedUnits(trx, tenantId, p));
   const prev = prevOf(p);
   const prevRows = await trx.selectFrom('inventory_costs').selectAll()
@@ -247,6 +267,9 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
   const pendingExternal: { group: string; ikey: string; sku: string; counterGroup: string; qty: number }[] = [];
   // Hàng trả nhà cung cấp: định giá theo tồn đầu sau khi gom đủ (số dương).
   const returns = new Map<string, { qty: number; amount: number }>();
+  // Giá trị một dòng mua / trả NCC theo công thức: phần hàng (bỏ phân bổ) + VAT / CK nếu chọn; phân bổ cộng / trừ theo công tắc.
+  const goods = (f: { amount: number; alloc: number; tax: number; disc: number }) =>
+    f.amount - f.alloc + (formula.price === 'with_vat' ? f.tax : 0) + (formula.price === 'before_discount' ? f.disc : 0);
   for (const f of flows) {
     const r = row(f.group, f.ikey, f.sku);
     r.closingQty += f.qty;
@@ -263,30 +286,32 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
         // Quà KM người tiêu dùng nhận kèm phiếu mua: vào tồn nhưng không vào đơn giá (không kéo giá vốn hàng bán xuống).
         if (f.excludeCost) { r.giftIn += f.qty; break; }
         r.inQty += f.qty;
-        r.inValue += f.amount;
+        r.inValue += goods(f) + (formula.costAlloc ? f.alloc : 0);
         r.d.purchaseQty += f.qty;
-        r.d.purchaseValue += f.amount - f.alloc;
-        r.d.costAlloc += f.alloc; // [2026-11-17 Nguyễn Văn Thủy] chi phí mua hàng phân bổ (vận chuyển…) tách cột riêng (đóng góp)
+        r.d.purchaseValue += goods(f);
+        if (formula.costAlloc) r.d.costAlloc += f.alloc; // [2026-11-17 Nguyễn Văn Thủy] chi phí mua hàng phân bổ (vận chuyển…) tách cột riêng (đóng góp)
         break;
       case 'purchase_return': {
-        if (!rules.returnAtOpening(f.reason)) {
+        const atOpening = formula.purchaseReturn === 'opening' ? true : formula.purchaseReturn === 'doc' ? false : rules.returnAtOpening(f.reason);
+        if (!atOpening) {
           // Lý do trả khác: lấy đúng thành tiền − thuế trên phiếu.
           r.inQty += f.qty;
-          r.inValue += f.amount;
+          r.inValue += goods(f) + (formula.rebateAlloc ? f.alloc : 0);
           r.d.returnQty += -f.qty;
-          r.d.returnValue += -(f.amount - f.alloc);
-          r.d.rebateAlloc += -f.alloc; // thưởng / chiết khấu nhãn hàng phân bổ theo mã, giảm giá vốn
+          r.d.returnValue += -goods(f);
+          if (formula.rebateAlloc) r.d.rebateAlloc += -f.alloc; // thưởng / chiết khấu nhãn hàng phân bổ theo mã, giảm giá vốn
           break;
         }
         const k = key(f.group, f.ikey);
         const cur = returns.get(k) ?? { qty: 0, amount: 0 };
         cur.qty += -f.qty;
-        cur.amount += -f.amount;
+        cur.amount += -goods(f);
+        if (f.alloc) { r.inValue += formula.rebateAlloc ? f.alloc : 0; if (formula.rebateAlloc) r.d.rebateAlloc += -f.alloc; }
         returns.set(k, cur);
         break;
       }
       case 'adjust_in':
-        if (rules.excluded(f.reason)) break;
+        if (!formula.adjustIn || rules.excluded(f.reason)) break;
         r.inQty += f.valuedQty;
         r.inValue += f.amount;
         r.d.adjInQty += f.valuedQty;
@@ -294,8 +319,10 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
         break;
       case 'transfer_in':
         r.d.tInQty += f.qty;
-        if (external) r.d.tInValue += f.amount;
-        if (external) {
+        if (external && formula.transferIn === 'sender') {
+          pendingExternal.push({ group: f.group, ikey: f.ikey, sku: f.sku, counterGroup: f.counterGroup!, qty: f.qty });
+        } else if (external) {
+          r.d.tInValue += f.amount;
           r.inQty += f.valuedQty;
           r.inValue += f.amount;
           if (f.unvaluedQty) pendingExternal.push({ group: f.group, ikey: f.ikey, sku: f.sku, counterGroup: f.counterGroup!, qty: f.unvaluedQty });
@@ -524,15 +551,22 @@ export const costingService = {
    * `imported`: bảng giá vốn tháng nhập từ Excel (thay toàn bộ giá đã nhập của tháng; mã trùng lấy giá khác 0 xuất hiện nhiều nhất).
    * `clearImport`: bỏ giá đã nhập, quay về tính bình quân cho mọi mã.
    */
-  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string } }): Promise<CostingResult> {
+  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string }; formulaCode?: string }): Promise<CostingResult> {
     return db.transaction().execute((trx) => costingService.runIn(trx, auth, input));
   },
 
   // [2026-11-03 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): đơn giá + ghi sổ giá vốn mọi chi nhánh trong một giao dịch (trước: 2+ giao dịch nối nhau — lỗi ở một chi nhánh
   // để lại đơn giá và các chi nhánh trước đã ghi)
-  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string } }): Promise<CostingResult> {
+  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string }; formulaCode?: string }): Promise<CostingResult> {
     const p = parsePeriod(input.period);
     // [2026-11-17 Nguyễn Văn Thủy] phạm vi chọn trên cây cơ cấu (nút bất kỳ hoặc một shop): đặt làm điểm tính giá vốn rồi tính (0149) (đóng góp)
+    // Công thức: theo mã chọn, không chọn thì công thức mặc định của đơn vị, chưa có thì mặc định trong mã.
+    const fr = (await sql<{ code: string; name: string; options: unknown }>`
+      SELECT code, name, options FROM costing_formulas WHERE tenant_id = ${auth.tenantId}
+         AND ${input.formulaCode ? sql`code = ${input.formulaCode}` : sql`is_default`} ORDER BY id LIMIT 1`.execute(trx)).rows[0];
+    if (input.formulaCode && !fr) throw Errors.validation(`Không có công thức giá vốn ${input.formulaCode}`);
+    const formula = formulaOf(fr?.options);
+    const formulaInfo = { code: fr?.code ?? '', name: fr?.name ?? 'Mặc định', formula };
     if (input.scope) {
       const r = await sql<{ code: string | null }>`SELECT bizcity_set_cost_scope(${auth.tenantId}, ${input.scope.kind}, ${input.scope.code}) AS code`.execute(trx);
       const code = r.rows[0]?.code;
@@ -577,7 +611,7 @@ export const costingService = {
       let rows = new Map<string, CostRow>();
       let giftCovered = new Map<string, number>();
       let returnUnits = new Map<string, number>();
-      for (const m of months) ({ rows, giftCovered, returnUnits } = await computeMonth(trx, auth.tenantId, m, m === p ? imports : undefined));
+      for (const m of months) ({ rows, giftCovered, returnUnits } = await computeMonth(trx, auth.tenantId, m, m === p ? imports : undefined, formula));
       const fixed = imports ?? (await importedUnits(trx, auth.tenantId, p));
       let imported: CostingResult['imported'] = null;
       if (fixed.size) {
@@ -621,7 +655,7 @@ export const costingService = {
       branches.push(await sameTx(trx, (trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, returnUnits, movements: list })));
     }
     branches.sort((a, b) => a.branchCode.localeCompare(b.branchCode));
-    const runIds = await recordRuns(trx, auth, { p, from, to, costCenter: input.costCenter, branches, imported: imported?.count ?? 0 });
+    const runIds = await recordRuns(trx, auth, { p, from, to, costCenter: input.costCenter, branches, imported: imported?.count ?? 0, formula: formulaInfo });
     return { runIds, period: label(p), monthsComputed: months, items, branches, total: fromCents(branches.reduce((s, b) => s + toCents(b.total) + toCents(b.filledTotal), 0)), imported };
   },
 
@@ -662,22 +696,26 @@ export const costingService = {
 
 // [2026-11-17 Nguyễn Văn Thủy] lưu LẦN TÍNH GIÁ VỐN theo chi nhánh (0148): mốc cơ cấu (id + uid của nút), kỳ, khoảng ngày, tổng, phiếu,
 // bảng đơn giá các mã của chi nhánh tại lần tính (đóng góp)
-async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: string; to: string; costCenter?: string; branches: CostingResult['branches']; imported: number }): Promise<string[]> {
+async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: string; to: string; costCenter?: string; branches: CostingResult['branches']; imported: number; formula: { code: string; name: string; formula: CostFormula } }): Promise<string[]> {
   const centers = (await sql<{ id: string; code: string; name: string; org_unit_id: string | null; org_uid: string | null }>`
     SELECT u.id::text, u.code, u.name, u.org_unit_id::text, COALESCE(o.uid, sb.uid) AS org_uid FROM accounting_units u LEFT JOIN org_units o ON o.id = u.org_unit_id LEFT JOIN branches sb ON sb.id = u.branch_id
      WHERE u.tenant_id = ${auth.tenantId}
        AND ${a.costCenter ? sql`u.code = ${a.costCenter}` : sql`EXISTS (SELECT 1 FROM inventory_costs c WHERE c.tenant_id = u.tenant_id AND c.cost_group = u.id AND c.year = ${a.p.year} AND c.month = ${a.p.month})`}`.execute(trx)).rows;
   const shop = new Map((await sql<{ code: string; unit: string | null }>`SELECT b.code, b.accounting_unit_id::text AS unit FROM branches b WHERE b.tenant_id = ${auth.tenantId}`.execute(trx)).rows.map((r) => [r.code, r.unit]));
+  // Shop chưa gắn cơ cấu / đơn vị hạch toán (nhóm 0): vẫn ghi một lần tính để lịch sử không trống.
+  if (!a.costCenter && (await sql`SELECT 1 FROM inventory_costs WHERE tenant_id = ${auth.tenantId} AND cost_group = 0 AND year = ${a.p.year} AND month = ${a.p.month} LIMIT 1`.execute(trx)).rows.length) {
+    centers.push({ id: '0', code: '', name: 'Chưa gắn cơ cấu', org_unit_id: null, org_uid: '' });
+  }
   const ids: string[] = [];
   for (const ct of centers) {
-    const mine = a.branches.filter((b) => shop.get(b.branchCode) === ct.id);
+    const mine = a.branches.filter((b) => (shop.get(b.branchCode) ?? '0') === ct.id);
     const total = fromCents(mine.reduce((s, b) => s + toCents(b.total) + toCents(b.filledTotal), 0));
     const items = Number((await sql<{ n: string }>`SELECT COUNT(*) AS n FROM inventory_costs WHERE tenant_id = ${auth.tenantId} AND cost_group = ${ct.id} AND year = ${a.p.year} AND month = ${a.p.month}`.execute(trx)).rows[0]!.n);
     const vouchers = mine.filter((b) => b.docNo).map((b) => ({ branchCode: b.branchCode, docNo: b.docNo, total: b.total + b.filledTotal }));
     const run = await sql<{ id: string }>`
-      INSERT INTO costing_runs (tenant_id, org_unit_id, org_uid, center_code, center_name, year, month, date_from, date_to, items, total, imported, vouchers, run_by)
+      INSERT INTO costing_runs (tenant_id, org_unit_id, org_uid, center_code, center_name, year, month, date_from, date_to, items, total, imported, vouchers, run_by, formula_code, formula_name, formula)
       VALUES (${auth.tenantId}, ${ct.org_unit_id}, ${ct.org_uid ?? ''}, ${ct.code}, ${ct.name}, ${a.p.year}, ${a.p.month}, ${a.from}::date, ${a.to}::date,
-              ${items}, ${total}, ${a.imported}, ${JSON.stringify(vouchers)}::jsonb, ${auth.actorName || auth.actor}) RETURNING id::text`.execute(trx);
+              ${items}, ${total}, ${a.imported}, ${JSON.stringify(vouchers)}::jsonb, ${auth.actorName || auth.actor}, ${a.formula.code}, ${a.formula.name}, ${JSON.stringify(a.formula.formula)}::jsonb) RETURNING id::text`.execute(trx);
     const runId = run.rows[0]!.id;
     await sql`INSERT INTO costing_run_lines (tenant_id, run_id, sku, item_id, opening_qty, opening_value, in_qty, in_value, unit_cost, out_qty, closing_qty, closing_value, gift_qty, cost_source, detail)
       SELECT tenant_id, ${runId}::bigint, sku, item_id, opening_qty, opening_value, in_qty, in_value, unit_cost, out_qty, closing_qty, closing_value, COALESCE(gift_qty, 0), cost_source, detail
@@ -687,16 +725,33 @@ async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: stri
   return ids;
 }
 
+export const costingFormulas = {
+  async list(auth: AuthContext) {
+    const rows = await sql<{ code: string; name: string; options: unknown; is_default: boolean; note: string; updated_by: string }>`
+      SELECT code, name, options, is_default, note, updated_by FROM costing_formulas WHERE tenant_id = ${auth.tenantId} ORDER BY is_default DESC, code`.execute(db);
+    return rows.rows.map((r) => ({ code: r.code, name: r.name, options: formulaOf(r.options), isDefault: r.is_default, note: r.note, updatedBy: r.updated_by }));
+  },
+  async saveIn(trx: Db, auth: AuthContext, i: { code: string; name: string; options: Partial<CostFormula>; isDefault?: boolean; note?: string }) {
+    const options = formulaOf(i.options);
+    if (i.isDefault) await sql`UPDATE costing_formulas SET is_default = false WHERE tenant_id = ${auth.tenantId} AND code <> ${i.code}`.execute(trx);
+    await sql`INSERT INTO costing_formulas (tenant_id, code, name, options, is_default, note, updated_by)
+      VALUES (${auth.tenantId}, ${i.code}, ${i.name}, ${JSON.stringify(options)}::jsonb, ${Boolean(i.isDefault)}, ${i.note ?? ''}, ${auth.actorName || auth.actor})
+      ON CONFLICT (tenant_id, code) DO UPDATE SET name = EXCLUDED.name, options = EXCLUDED.options, note = EXCLUDED.note, updated_by = EXCLUDED.updated_by, updated_at = now()
+        ${i.isDefault ? sql`, is_default = true` : sql``}`.execute(trx);
+    return { code: i.code, options };
+  },
+};
+
 export const costingRuns = {
   /** Các lần tính giá vốn của một chi nhánh (hoặc mọi chi nhánh), lọc theo ngày tính. */
   async list(auth: AuthContext, q: { costCenter?: string; from?: string; to?: string }) {
-    const rows = await sql<{ id: string; org_uid: string; center_code: string; center_name: string; year: number; month: number; date_from: string; date_to: string; items: number; total: string; imported: number; vouchers: unknown; run_by: string; run_at: Date }>`
-      SELECT id::text, org_uid, center_code, center_name, year, month, date_from::text, date_to::text, items, total, imported, vouchers, run_by, run_at FROM costing_runs
+    const rows = await sql<{ id: string; org_uid: string; center_code: string; center_name: string; year: number; month: number; date_from: string; date_to: string; items: number; total: string; imported: number; vouchers: unknown; run_by: string; run_at: Date; formula_code: string; formula_name: string; formula: unknown }>`
+      SELECT id::text, org_uid, center_code, center_name, year, month, date_from::text, date_to::text, items, total, imported, vouchers, run_by, run_at, formula_code, formula_name, formula FROM costing_runs
        WHERE tenant_id = ${auth.tenantId} ${q.costCenter ? sql`AND center_code = ${q.costCenter}` : sql``}
          ${q.from ? sql`AND run_at >= ${q.from}::date` : sql``} ${q.to ? sql`AND run_at < ${q.to}::date + 1` : sql``}
        ORDER BY run_at DESC LIMIT 500`.execute(db);
     return rows.rows.map((r) => ({ id: r.id, orgUid: r.org_uid, centerCode: r.center_code, centerName: r.center_name, period: `${r.year}-${String(r.month).padStart(2, '0')}`,
-      from: r.date_from, to: r.date_to, items: r.items, total: Number(r.total), imported: r.imported, vouchers: r.vouchers, runBy: r.run_by, runAt: new Date(r.run_at).toISOString() }));
+      from: r.date_from, to: r.date_to, items: r.items, total: Number(r.total), imported: r.imported, vouchers: r.vouchers, runBy: r.run_by, runAt: new Date(r.run_at).toISOString(), formulaCode: r.formula_code, formulaName: r.formula_name, formula: formulaOf(r.formula) }));
   },
   /** Bảng đơn giá các mã hàng của một lần tính. */
   async lines(auth: AuthContext, id: string) {

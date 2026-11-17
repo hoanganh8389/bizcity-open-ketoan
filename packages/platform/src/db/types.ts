@@ -1368,6 +1368,9 @@ export interface SalesLinesTable {
 
 export interface InventoryMovementsTable {
   id: Generated<string>;
+  /** Thuế GTGT / chiết khấu của dòng mua, trả NCC (0151). */
+  tax_amount: ColumnType<string, number | undefined, number>;
+  discount_amount: ColumnType<string, number | undefined, number>;
   /** MST tại ngày chứng từ (0121, trigger). */
   tax_id: ColumnType<string | null, string | null | undefined, string | null>;
   /** Định danh chi nhánh / shop cn_…, kho kho_… (0121, trigger). */

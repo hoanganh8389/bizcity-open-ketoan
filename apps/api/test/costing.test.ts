@@ -266,3 +266,19 @@ describe('Nhập ĐGBQ đầu kỳ từ Excel', () => {
     expect(await balance('1381', 'CN02')).toBe(76000);
   });
 });
+
+// [2026-11-17 Nguyễn Văn Thủy] công thức giá vốn tuỳ chọn (0151) (đóng góp)
+describe('Công thức giá vốn tuỳ chọn', () => {
+  it('lưu công thức, tính theo công thức đó, lịch sử ghi tên + lựa chọn; mã lạ báo lỗi', async () => {
+    const save = await call(ctx, 'PUT', '/api/v1/inventory/costing-formulas/KHONG-CP', { name: 'Bỏ chi phí phân bổ', options: { costAlloc: false, price: 'with_vat' } });
+    expect(save.status, JSON.stringify(save.body)).toBe(200);
+    const list = (await call(ctx, 'GET', '/api/v1/inventory/costing-formulas')).body.data;
+    expect(list.find((f: any) => f.code === 'KHONG-CP')).toMatchObject({ name: 'Bỏ chi phí phân bổ', options: { costAlloc: false, price: 'with_vat', rebateAlloc: true, purchaseReturn: 'reason' } });
+    const run = await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10', formulaCode: 'KHONG-CP' });
+    expect(run.status, JSON.stringify(run.body)).toBe(200);
+    const runs = (await call(ctx, 'GET', '/api/v1/inventory/costing-runs')).body.data;
+    expect(runs[0]).toMatchObject({ formulaCode: 'KHONG-CP', formulaName: 'Bỏ chi phí phân bổ', formula: { costAlloc: false, price: 'with_vat' } });
+    expect((await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10', formulaCode: 'KHONG-CO' })).status).toBe(400);
+    await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10' }); // về công thức mặc định
+  });
+});
