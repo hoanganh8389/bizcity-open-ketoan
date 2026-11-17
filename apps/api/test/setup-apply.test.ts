@@ -3,11 +3,17 @@
  * core.setup.presets / plan / run + POST /api/v1/setup/presets/:id/apply. Dữ liệu trong test là giả lập (presets/thuong-mai-ban-le).
  */
 import { afterAll, describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 const PRESET = 'thuong-mai-ban-le';
+// [2026-11-17 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6: đếm theo tệp gói (gói 1.1 ba tháng nghiệp vụ), không viết cứng số chứng từ
+const DOCS = (JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../presets/thuong-mai-ban-le/mau/chung-tu.json'), 'utf8')) as unknown[]).length;
+const SLOW = 300_000;
 const opened: TestCtx[] = [];
 async function fresh(): Promise<{ ctx: TestCtx; id: string }> {
   const ctx = await setupTenant();
@@ -19,7 +25,7 @@ afterAll(async () => { for (const c of opened) await c.app.close(); });
 
 const apply = (c: TestCtx, key = `ap-${Math.random()}`, q = '') => call(c, 'POST', `/api/v1/setup/presets/${PRESET}/apply${q}`, {}, { 'idempotency-key': key });
 async function waitRun(c: TestCtx, runId: string) {
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 1500; i++) {
     const r = await call(c, 'GET', `/api/v1/setup/runs/${runId}`);
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     if (r.body.data.status !== 'running') return r.body.data as { status: string; steps: { key: string; written: number; skipped: number; failed: number; firstError: unknown }[] };
@@ -52,7 +58,7 @@ describe('Máy chủ chạy gói mẫu (core.setup.*)', () => {
     const plan = await call(t.ctx, 'GET', `/api/v1/setup/presets/${PRESET}/plan`);
     expect(plan.status, JSON.stringify(plan.body)).toBe(200);
     expect(plan.body.data).toMatchObject({ allowed: true, empty: true, previousRun: null, missingCapabilities: [] });
-    expect(plan.body.data.blocks.find((b: { key: string }) => b.key === 'documents')).toMatchObject({ total: 3, existing: 0, toAdd: 3 });
+    expect(plan.body.data.blocks.find((b: { key: string }) => b.key === 'documents')).toMatchObject({ total: DOCS, existing: 0, toAdd: DOCS });
     expect(await counts(t.id)).toEqual(before);
     const nosample = await call(t.ctx, 'GET', `/api/v1/setup/presets/${PRESET}/plan?sample=0`);
     expect(nosample.body.data.blocks.map((b: { key: string }) => b.key)).toEqual(['settings']);
@@ -65,11 +71,12 @@ describe('Máy chủ chạy gói mẫu (core.setup.*)', () => {
     const run1 = await waitRun(t.ctx, a.body.data.runId);
     expect(run1.status).toBe('done');
     expect(run1.steps.every((s) => s.failed === 0), JSON.stringify(run1.steps)).toBe(true);
-    expect(run1.steps.find((s) => s.key === 'documents')).toMatchObject({ written: 3, skipped: 0 });
+    expect(run1.steps.find((s) => s.key === 'documents')).toMatchObject({ written: DOCS, skipped: 0 });
     const c1 = await counts(t.id);
     expect(c1.le).toBeGreaterThan(0);
     const posted = await sql<{ status: string }>`SELECT status FROM accounting_events WHERE tenant_id = ${t.id} AND doc_key LIKE ${'preset:' + PRESET + ':%'}`.execute(db);
-    expect(posted.rows.map((r) => r.status)).toEqual(['posted', 'posted', 'posted']);
+    expect(posted.rows.length).toBe(DOCS);
+    expect(posted.rows.every((r) => r.status === 'posted')).toBe(true);
 
     const same = await apply(t.ctx, 'k-1');
     expect(same.body.data).toMatchObject({ runId: a.body.data.runId, fresh: false });
@@ -86,7 +93,7 @@ describe('Máy chủ chạy gói mẫu (core.setup.*)', () => {
     const st = await call(t.ctx, 'GET', '/api/v1/setup/status');
     expect(st.body.data.empty).toBe(false);
     expect(st.body.data.runs).toMatchObject([{ presetId: PRESET, status: 'done' }]);
-  });
+  }, SLOW);
 
   it('T036-2: đơn vị có phiếu mua nháp → SETUP_NOT_EMPTY, không ghi gì', async () => {
     const t = await fresh();
@@ -111,7 +118,7 @@ describe('Máy chủ chạy gói mẫu (core.setup.*)', () => {
     expect(lost.body.error.details.reason).toBe('SETUP_RUNNING');
     expect((await waitRun(t.ctx, won.body.data.runId)).status).toBe('done');
     expect((await counts(t.id)).sr).toBe(1);
-  });
+  }, SLOW);
 
   it('người không có settings:write → 403 xem trước / nạp; vẫn đọc được danh sách gói', async () => {
     const t = await fresh();
@@ -140,7 +147,7 @@ describe('Máy chủ chạy gói mẫu (core.setup.*)', () => {
     expect((await waitRun(t.ctx, a.body.data.runId)).status).toBe('done');
     const row = await sql<{ status: string }>`SELECT status FROM sample_runs WHERE id = ${r.rows[0]!.id}`.execute(db);
     expect(row.rows[0]!.status).toBe('failed');
-  });
+  }, SLOW);
   // [2026-11-14 07:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 (00 §12): chọn khối; T036-9 siết luật chạy tiếp theo khối
   it('chọn khối: plan / apply chỉ chạy khối đã chọn (cấu hình luôn có); khối lạ → 400', async () => {
     const t = await fresh();
@@ -180,5 +187,19 @@ describe('Máy chủ chạy gói mẫu (core.setup.*)', () => {
     const run = await waitRun(t.ctx, again.body.data.runId);
     expect(run.status).toBe('done');
     expect(run.steps.reduce((n, s) => n + s.written, 0)).toBe(0);
+  });
+
+  // [2026-11-17 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6: ngoại lệ STD-PRE-7 — số hiệu tài khoản ở số dư đầu kỳ phải có trong đơn vị, là tài khoản chi tiết đang dùng
+  it('số dư đầu kỳ ghi tài khoản đơn vị không có / ngừng dùng → plan không cho chạy, nạp bị từ chối', async () => {
+    const t = await fresh();
+    await sql`UPDATE accounts SET is_active = false WHERE tenant_id = ${t.id} AND code = '41111'`.execute(db);
+    const plan = await call(t.ctx, 'GET', `/api/v1/setup/presets/${PRESET}/plan`);
+    expect(plan.body.data.allowed).toBe(false);
+    expect(plan.body.data.reason).toContain('41111');
+    const a = await apply(t.ctx);
+    expect(a.status).toBe(409);
+    expect((await counts(t.id)).sr).toBe(0);
+    const own = await call(t.ctx, 'GET', `/api/v1/setup/presets/${PRESET}/plan?blocks=branches,partners,products`);
+    expect(own.body.data.allowed, 'đường công ty của tôi không có số dư đầu kỳ').toBe(true);
   });
 });

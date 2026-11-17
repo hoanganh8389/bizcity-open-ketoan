@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bỏ tên tiếng Anh của tài khoản (phiếu NT-DM-001, D023-9) <!-- [2026-11-17 10:20 AM kiennt] NGHIEM-THU — NT-DM-001 (đóng góp) -->
+
+- **Bỏ:** cột `accounts.name_en` (migration `0147`): giá trị khác rỗng chép sang bảng mới `accounts_name_en_luu` (chỉ đọc) rồi xoá cột. ACC1 bỏ khung *Tên tài khoản theo ngôn ngữ*, cột lưới, cột Excel xuất / nhập (tệp cũ còn cột *Tên tiếng Anh* thì bỏ qua); dữ liệu mẫu `db/seeds/tai-khoan.csv` bỏ cột `name_en`.
+- **Đổi API (Kernel K1):** `GET /api/v1/accounts` không còn trường `nameEn`; tạo / sửa tài khoản gửi `nameEn` thì bị bỏ qua, không lỗi. Không đổi định khoản, không đụng sổ.
+
 ### Chặn bán quá tồn: máy bán chặn cứng, phiếu bán nhập tay theo công tắc (phiếu NT-BH-021) <!-- [2026-11-16 08:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 (đóng góp) -->
 
 - **Thêm:** module `pos` kiểm tồn khi nhận đơn bán / đơn đổi: cộng số xuất theo mã (quy ĐVT nhỏ nhất, gồm quà / bill Z), so với tồn cửa hàng (`bizcity_read.stock_on_hand`, mỗi shop một kho); thiếu → `VALIDATION_ERROR` lý do `POS_STOCK_SHORT` kèm `items: [{ sku, need, have }]`, không ghi đơn, không chứng từ. Khoá chi nhánh × mã tới hết giao dịch: hai máy cùng bán một mã chạy nối tiếp.

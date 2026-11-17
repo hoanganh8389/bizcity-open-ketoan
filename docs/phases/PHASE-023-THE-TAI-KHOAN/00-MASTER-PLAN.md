@@ -74,6 +74,7 @@ Tệp theo chế độ kế toán: `data/giai-nghia-tai-khoan/vn-tt99.json` (và
 | D023-3 | Nút "Vì sao?" là **một trường của `remedy`** (`why: { accountCode, section }`) — kiểm / lỗi nào liên quan tài khoản thì khai; web mở thẻ đúng mục | dùng lại `bizcity_remedy@1`, không thêm cơ chế |
 | D023-4 | Nội dung giải nghĩa phải `approved` (kế toán trưởng) mới hiện cho vai ngoài kế toán trưởng; bản `draft` chỉ kế toán trưởng thấy, có nhãn "nháp" | kiến thức nghiệp vụ không để nháp lộ ra người học |
 | D023-5 | Phủ khởi đầu: ~30 tài khoản hay dùng (111, 112, 131, 133, 138, 141, 152–156, 211, 214, 242, 331, 333, 334, 335, 338, 411, 421, 511, 515, 521, 632, 635, 641, 642, 711, 811, 911); mở rộng tới cấp 2 của gói nền trước khi bật SC-ACC-1 block | làm được ngay, có giá trị ngay |
+| D023-9 | **Bỏ tên tiếng Anh của tài khoản** (`accounts.name_en`, ô *Tên tài khoản theo ngôn ngữ* ở ACC1): cột chỉ để hiển thị, không dùng trong định khoản / báo cáo / bản in → xoá khỏi màn, API, dữ liệu mẫu và CSDL; giá trị cũ chép sang bảng lưu trước khi xoá. Chữ chốt ở [§9](#9-chữ-chốt-d023-9--bỏ-tên-tiếng-anh-của-tài-khoản) <!-- [2026-11-17 10:30 AM kiennt] PHASE-023 — đề xuất D023-9 (đóng góp) --> | **chờ chủ duyệt** — cột thừa làm form tài khoản rối; giữ dữ liệu cũ để không vi phạm ECP-13 |
 
 ## 7. Câu hỏi cần chủ chốt (Q023-*)
 
@@ -94,3 +95,48 @@ Tệp theo chế độ kế toán: `data/giai-nghia-tai-khoan/vn-tt99.json` (và
 | **W1** | Hợp đồng `bizcity_account_card@1`, tệp giải nghĩa 30 TK (nháp → duyệt), SC-ACC-1 (warn → block khi đủ), action `core.account.card` | T023-1, 2 |
 | **W2** | Thẻ ở ACC1, ô chọn, sổ chi tiết (hai cột dư), nút "Vì sao?" qua `remedy.why` ở 6 lỗi / kiểm liên quan tài khoản | T023-3, 4 |
 | **W3** | Chế độ học, trang Học với 3 bài theo vai trên tenant mẫu, gợi ý theo lỗi (nối 021) | T023-5 |
+
+## 9. Chữ chốt D023-9 — bỏ tên tiếng Anh của tài khoản
+<!-- [2026-11-17 10:30 AM kiennt] PHASE-023 — chữ chốt D023-9 (R-FLOW-2: đổi lược đồ), chờ chủ duyệt (đóng góp) -->
+
+**Trạng thái:** đề xuất, **chờ chủ duyệt**. Việc con S023-19, ca T023-8. Phiếu nghiệm thu [NT-DM-001](../../nghiem-thu/danh-muc/NT-DM-001-bo-ten-tieng-anh-tai-khoan.md).
+
+**Vấn đề.** Form tài khoản (ACC1) có khung *Tên tài khoản theo ngôn ngữ* (ô *Tên tiếng Anh*, cột `accounts.name_en`). Người dùng yêu cầu bỏ. Đọc mã trên `main` (17/11/2026):
+- **Hiển thị / nhập liệu:** form ACC1, cột ẩn "Tên tiếng Anh" trên lưới, cột Excel xuất / nhập (`apps/web/src/lib/nhapExcel.ts`).
+- **Lưu / trả qua API:** `packages/kernel/src/modules/accounts/` (`account.schemas`, `account.service`, `account.repository`), kiểu `packages/platform/src/db/types.ts`.
+- **Dữ liệu mẫu:** cột `name_en` của `db/seeds/tai-khoan.csv`, đọc ở `packages/kernel/src/db/seed.ts` và `default-data.service.ts` (khôi phục dữ liệu mặc định).
+- **Không dùng ở đâu khác:** định khoản, `AccountResolver`, báo cáo, BCTC, bản in, MCP đều không đọc; không có khung nhìn `bizcity_read` nào chứa cột này; plugin WordPress (cầu nối kế toán, POS) không đọc `nameEn`.
+
+**Lựa chọn.**
+
+| # | Cách | Chọn |
+|---|---|---|
+| A | Chỉ ẩn trên màn, giữ cột | không — cột vẫn sống trong API / Excel / dữ liệu mẫu, người sau lại hiện ra |
+| B | Xoá cột, chép giá trị cũ sang bảng lưu | **chọn** — gọn lược đồ, không mất dữ liệu đã nhập (ECP-13) |
+| C | Xoá cột không lưu | không — mất tên tiếng Anh đơn vị đã khai, không quay lui được |
+
+**Hình dạng.**
+1. Migration `0147_bo_ten_tieng_anh_tai_khoan.sql` (số lấy bằng `scripts/so-tiep-theo.mjs`):
+   ```sql
+   CREATE TABLE accounts_name_en_luu (
+     tenant_id bigint NOT NULL, code text NOT NULL, name_en text NOT NULL,
+     archived_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, code));
+   -- COMMENT ON TABLE / mọi cột (SC-DATA-3); RLS tenant_isolation + quyền ketoan_app chỉ SELECT (như 0041)
+   INSERT INTO accounts_name_en_luu (tenant_id, code, name_en)
+     SELECT tenant_id, code, name_en FROM accounts WHERE COALESCE(btrim(name_en), '') <> '';
+   ALTER TABLE accounts DROP COLUMN name_en;
+   ```
+2. **API:** bỏ `nameEn` khỏi `AccountDto` và schema nhập. Client cũ còn gửi `nameEn` thì zod bỏ qua (không lỗi). Thay đổi trả về là **bỏ trường**, nên ghi vào CHANGELOG.
+3. **Web ACC1:** bỏ khung *Tên tài khoản theo ngôn ngữ*, cột lưới, cột Excel. Tệp Excel cũ có cột "Tên tiếng Anh" thì bỏ qua cột đó.
+4. **Dữ liệu mẫu:** bỏ cột `name_en` khỏi `db/seeds/tai-khoan.csv`, `seed.ts`, `default-data.service.ts`.
+5. `schema-catalog.ts`: thêm bảng `accounts_name_en_luu`.
+
+**Ảnh hưởng.**
+- **Mức Kernel K1:** không đổi định khoản, không đụng `ledger_*`, không đổi bút toán đã ghi. Là đổi hợp đồng API nhỏ (bỏ một trường tuỳ chọn chỉ để hiển thị).
+- Ai đọc `nameEn` từ API sẽ nhận `undefined`. Trong repo và các plugin WP hiện không có chỗ nào đọc.
+- **Đường lui:** migration ngược khôi phục được từ bảng lưu: `ALTER TABLE accounts ADD COLUMN name_en text; UPDATE … FROM accounts_name_en_luu`.
+
+**Kiểm bằng gì.**
+- **Ca T023-8:** sau migration, `accounts` không còn cột; mọi tên tiếng Anh cũ có trong `accounts_name_en_luu`; ACC1 tạo / sửa / nhập Excel tài khoản vẫn chạy; gửi `nameEn` không lỗi.
+- **Lệnh kiểm:** `scripts/kiem-nang-cap.sh` (đổi bảng có dữ liệu), bốn lệnh kiểm bàn giao.
+

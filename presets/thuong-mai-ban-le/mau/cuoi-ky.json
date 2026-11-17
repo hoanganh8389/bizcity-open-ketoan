@@ -1,0 +1,48 @@
+[
+  {
+    "action": "core.inventory.costing-run",
+    "input": {
+      "period": "@period-2"
+    }
+  },
+  {
+    "action": "core.asset.depreciation",
+    "input": {
+      "period": "@period-2"
+    }
+  },
+  {
+    "action": "core.closing.run",
+    "input": {
+      "period": "@period-2",
+      "branchCodes": [
+        "MAU01",
+        "MAU02",
+        "MAU03"
+      ]
+    }
+  },
+  {
+    "action": "core.inventory.costing-run",
+    "input": {
+      "period": "@period-1"
+    }
+  },
+  {
+    "action": "core.asset.depreciation",
+    "input": {
+      "period": "@period-1"
+    }
+  },
+  {
+    "action": "core.closing.run",
+    "input": {
+      "period": "@period-1",
+      "branchCodes": [
+        "MAU01",
+        "MAU02",
+        "MAU03"
+      ]
+    }
+  }
+]

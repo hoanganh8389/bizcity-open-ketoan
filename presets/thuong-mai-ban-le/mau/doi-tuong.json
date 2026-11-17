@@ -1,5 +1,116 @@
 [
-  { "code": "MAU-NCC-01", "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một", "kind": "supplier", "address": "10 Đường Mẫu, TP Thử Nghiệm" },
-  { "code": "MAU-NCC-02", "name": "Công ty CP Phân Phối Mẫu Hai", "kind": "supplier", "address": "20 Đường Mẫu, TP Thử Nghiệm" },
-  { "code": "MAU-KH-01", "name": "Khách hàng Mẫu (doanh nghiệp)", "kind": "customer", "address": "30 Đường Mẫu, TP Thử Nghiệm" }
+  {
+    "code": "MAU-NCC-01",
+    "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một",
+    "kind": "supplier",
+    "address": "10 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-NCC-02",
+    "name": "Công ty CP Phân Phối Mẫu Hai",
+    "kind": "supplier",
+    "address": "11 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-NCC-03",
+    "name": "Công ty TNHH Thực Phẩm Mẫu Ba",
+    "kind": "supplier",
+    "address": "12 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-NCC-04",
+    "name": "Công ty CP Đồ Uống Mẫu Bốn",
+    "kind": "supplier",
+    "address": "13 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-NCC-05",
+    "name": "Công ty TNHH Gia Dụng Mẫu Năm",
+    "kind": "supplier",
+    "address": "14 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-NCC-06",
+    "name": "Hợp tác xã Nông Sản Mẫu Sáu",
+    "kind": "supplier",
+    "address": "15 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-01",
+    "name": "Khách buôn Mẫu An",
+    "kind": "customer",
+    "address": "30 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-02",
+    "name": "Khách buôn Mẫu Bình",
+    "kind": "customer",
+    "address": "31 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-03",
+    "name": "Khách buôn Mẫu Cường",
+    "kind": "customer",
+    "address": "32 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-04",
+    "name": "Khách buôn Mẫu Dung",
+    "kind": "customer",
+    "address": "33 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-05",
+    "name": "Khách buôn Mẫu Giang",
+    "kind": "customer",
+    "address": "34 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-06",
+    "name": "Khách buôn Mẫu Hà",
+    "kind": "customer",
+    "address": "35 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-07",
+    "name": "Khách buôn Mẫu Khánh",
+    "kind": "customer",
+    "address": "36 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-08",
+    "name": "Khách buôn Mẫu Lan",
+    "kind": "customer",
+    "address": "37 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-09",
+    "name": "Khách buôn Mẫu Minh",
+    "kind": "customer",
+    "address": "38 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-10",
+    "name": "Khách buôn Mẫu Nga",
+    "kind": "customer",
+    "address": "39 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-11",
+    "name": "Khách buôn Mẫu Phúc",
+    "kind": "customer",
+    "address": "40 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-KH-12",
+    "name": "Khách buôn Mẫu Quang",
+    "kind": "customer",
+    "address": "41 Đường Mẫu, TP Thử Nghiệm"
+  },
+  {
+    "code": "MAU-CSH",
+    "name": "Chủ sở hữu Công ty Mẫu",
+    "kind": "other",
+    "address": "1 Đường Mẫu, TP Thử Nghiệm"
+  }
 ]

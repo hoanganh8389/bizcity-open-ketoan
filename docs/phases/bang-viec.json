@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 165
+      "count": 164
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 316
+      "count": 317
     }
   ],
   "items": [
@@ -4447,6 +4447,27 @@
       "facet": "F5",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 29
+    },
+    {
+      "id": "S023-19",
+      "phase": "PHASE-023",
+      "title": "Bỏ tên tiếng Anh của tài khoản (D023-9, 00 §9): migration 0147 chép nameen sang accountsnameenluu rồi xoá cột; bỏ khỏi API, ACC1, Excel, dữ liệu mẫu — ca T023-8",
+      "priority": "P2",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, bỏ tên tiếng Anh tài khoản)",
+        "branch": "feat/nt-dm-001-bo-ten-tieng-anh-tai-khoan",
+        "state": "đang làm",
+        "since": "2026-11-17",
+        "dot": "PHASE-023 · S023-19 — bỏ tên tiếng Anh của tài khoản (D023-9): migration 0147 chép accounts.nameen …"
+      },
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
+      "line": 30
     },
     {
       "id": "S024-1",
@@ -9041,15 +9062,9 @@
       "phase": "PHASE-036",
       "title": "B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-le 1.1; SC-PRESET-1 kiểm khối mới",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
-        "branch": "feat/s036-6-goi-mau-ba-thang",
-        "state": "đang làm",
-        "since": "2026-11-16",
-        "dot": "PHASE-036 · S036-6 — B4 gói thuong-mai-ban-le 1.1 ba tháng nghiệp vụ: khối openings / assets / clos…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "modules": [
         "he-thong"
       ],
@@ -9062,9 +9077,15 @@
       "phase": "PHASE-036",
       "title": "B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE); chặn gửi ra ngoài ở đơn vị mẫu",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
+        "branch": "feat/s036-7-don-vi-mau",
+        "state": "đang làm",
+        "since": "2026-11-17",
+        "dot": "PHASE-036 · S036-7 — B5a đơn vị mẫu riêng: tenants.issample (migration 0148), seed() nhận tham số, …"
+      },
       "modules": [
         "he-thong"
       ],

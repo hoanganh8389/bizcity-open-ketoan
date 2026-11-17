@@ -49,7 +49,10 @@
         "branches": { "type": "string", "description": "Tệp JSON: mảng branchCreate (POST /api/v1/branches)" },
         "partners": { "type": "string", "description": "Tệp JSON: mảng { code, … } (PUT /api/v1/partners/:code)" },
         "products": { "type": "string", "description": "Tệp JSON: mảng { sku, … } (PUT /api/v1/catalog/products/:sku)" },
-        "documents": { "type": "string", "description": "Tệp JSON: mảng chứng từ bizcity_ledger_intake@1 (POST /api/v1/documents), docKey bắt đầu bằng preset:<id>:" }
+        "documents": { "type": "string", "description": "Tệp JSON: mảng chứng từ bizcity_ledger_intake@1 (POST /api/v1/documents), docKey bắt đầu bằng preset:<id>:" },
+        "openings": { "type": "string", "description": "1.2.0 — tệp JSON: mảng số dư đầu kỳ (core.opening-balance.create), mỗi mục có docNo; số hiệu tài khoản chỉ được ở đây và ở assets (STD-PRE-7)" },
+        "assets": { "type": "string", "description": "1.2.0 — tệp JSON: mảng thẻ tài sản (core.asset.create); không ghi tài khoản thì lấy theo loại tài sản" },
+        "close": { "type": "string", "description": "1.2.0 — tệp JSON: mảng { action, input }, action ∈ core.inventory.costing-run · core.asset.depreciation · core.closing.run; kỳ viết @period-N" }
       }
     }
   }

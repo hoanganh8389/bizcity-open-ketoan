@@ -1,0 +1,34 @@
+[
+  {
+    "code": "MAU-TS-01",
+    "name": "Tủ mát trưng bày mẫu",
+    "kind": "fixed_asset",
+    "categoryCode": "TS-KHAC",
+    "branchCode": "MAU01",
+    "unit": "Cái",
+    "quantity": 1,
+    "acquiredDate": "@m-15/01",
+    "startDate": "@m-15/01",
+    "originalCost": 60000000,
+    "usefulLifeMonths": 60,
+    "openingAccumulated": 12000000,
+    "openingAsOf": "@m-3/31",
+    "note": "Dữ liệu mẫu (hư cấu) của preset thuong-mai-ban-le"
+  },
+  {
+    "code": "MAU-TS-02",
+    "name": "Máy tính tiền mẫu",
+    "kind": "fixed_asset",
+    "categoryCode": "TS-KHAC",
+    "branchCode": "MAU02",
+    "unit": "Cái",
+    "quantity": 1,
+    "acquiredDate": "@m-9/01",
+    "startDate": "@m-9/01",
+    "originalCost": 36000000,
+    "usefulLifeMonths": 36,
+    "openingAccumulated": 6000000,
+    "openingAsOf": "@m-3/31",
+    "note": "Dữ liệu mẫu (hư cấu) của preset thuong-mai-ban-le"
+  }
+]

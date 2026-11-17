@@ -53,5 +53,6 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-KHO-002](kho/NT-KHO-002-kiem-ke-kho.md) | Kiểm kê kho theo lô / HSD: biên bản kiểm kê → xác minh → quyết định xử lý; chênh lệch vào 1381 / 3381, hàng kém phẩm chất sang kho cách ly, tất toán theo quyết định | Đã chốt |
 | [NT-KHO-003](kho/NT-KHO-003-chan-xuat-am.md) | Công tắc "Cho phép xuất quá số tồn" — chặn ở màn lập tay trong kế toán | Đã chốt |
 | [NT-QUY-001](quy/NT-QUY-001-dinh-kem-chung-tu-goc.md) | Đính kèm chứng từ gốc trên phiếu tiền, phiếu chuyển tiền, phiếu kho | Đã chốt |
+| [NT-DM-001](danh-muc/NT-DM-001-bo-ten-tieng-anh-tai-khoan.md) | Bỏ tên tiếng Anh của tài khoản (ACC1, API, Excel, dữ liệu mẫu, CSDL — chép giá trị cũ sang bảng lưu) | Nháp |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.

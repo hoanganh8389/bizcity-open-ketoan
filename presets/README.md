@@ -17,3 +17,9 @@ Thêm preset mới:
 3. Giữ dữ liệu **hư cấu**.
 4. `docKey` bắt đầu bằng `preset:<id>:`.
 5. Chạy `node tests/conformance/selfcheck.mjs` (SC-PRESET-1).
+
+## Gói `thuong-mai-ban-le` 1.1 <!-- [2026-11-17 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6 -->
+
+Ba tháng nghiệp vụ hư cấu tới hôm nay (PHASE-036 · 00 §13): số dư đầu kỳ (`mau/so-du.json` — chỗ duy nhất có số hiệu tài khoản, STD-PRE-7), 3 chi nhánh, 40 mặt hàng bốn mức thuế, mua – bán – trả hàng, thu tiền khách, trả tiền NCC, nộp tiền vào ngân hàng, chuyển kho, kiểm kê (`mau/chung-tu.json`), 2 tài sản cố định (`mau/tai-san.json`, tài khoản theo loại tài sản), giá vốn – khấu hao – kết chuyển hai tháng đã qua (`mau/cuoi-ky.json`). Tháng này để mở như doanh nghiệp đang giữa tháng.
+
+Ngày viết `@m-N/DD` / `@period-N` (BIZCITY-PRESET 1.2.0, STD-PRE-5). Kiểm đầu–cuối: `apps/api/test/preset-bao-cao.test.ts` (T036-1).
