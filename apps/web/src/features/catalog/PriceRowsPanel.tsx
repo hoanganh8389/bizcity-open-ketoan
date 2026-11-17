@@ -109,7 +109,8 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
 
   return (
     <div className="card" style={{ marginTop: 10 }}>
-      <div className="row" style={{ gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 6 }}>
+      {/* [2026-11-17 11:39 AM kiennt] DM14 — hàng tiêu đề + nút dùng thanh nút danh mục (nút cao 28px, đệm như thanh phía trên) (đóng góp) */}
+      <div className="catalog-toolbar canh-phai" style={{ marginBottom: 6 }}>
         {/* [2026-11-17 11:32 AM kiennt] DM14 — tiêu đề gọn, nút lọc thành một nhóm liền; bỏ nút Hướng dẫn thứ hai và dòng nhắc trên lưới (đã ở hướng dẫn) (đóng góp) */}
         <b>{name}</b>
         <span className="muted" style={{ fontSize: 12 }} title={`${counts.skus.toLocaleString('vi-VN')} mã hàng`}>{counts.priced.toLocaleString('vi-VN')}/{counts.all.toLocaleString('vi-VN')} ô có giá</span>
