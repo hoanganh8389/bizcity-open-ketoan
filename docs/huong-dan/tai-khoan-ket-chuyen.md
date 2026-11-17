@@ -20,12 +20,13 @@ Danh sách các bước kết chuyển cuối kỳ: doanh thu, chi phí sang **9
 
 ## Thêm, sửa
 
+- Phần mềm chạy lần lượt theo cột **Thứ tự kết chuyển**: bước sau thấy kết quả của bước trước.
 - **Thêm**: mở form *Thông tin bút toán kết chuyển*, nhập Thứ tự, Diễn giải, Tài khoản đi, Tài khoản đến, Kiểu kết chuyển (số dư cuối / số phát sinh), Loại kết chuyển, Áp dụng → **Ghi**.
-- **Sửa**: bấm đúp một dòng.
+- **Sửa**: bấm đúp một dòng, hoặc bấm **Sửa** ở cột Chức năng.
 - **Thôi dùng một bước**: sửa, bỏ tích **Áp dụng**.
 - Cần quyền **Sửa thứ tự / quy tắc kết chuyển** của màn Kết chuyển lãi/lỗ.
 
-Đơn vị chưa khai riêng thì dùng **bộ mặc định**. Lần sửa đầu tiên lưu thành bộ riêng của đơn vị. Mỗi lần lưu khác bộ đang dùng thêm một **phiên bản** (nút **Lịch sử phiên bản**: ai sửa, lúc nào, lý do). Các kỳ đã kết chuyển theo bộ cũ được đánh dấu **Cần kết chuyển lại** ở ACC6.
+Đơn vị chưa khai riêng thì dùng **bộ mặc định**. Lần sửa đầu tiên lưu thành bộ riêng của đơn vị. Mỗi lần lưu khác bộ đang dùng thêm một **phiên bản** (nút **Lịch sử phiên bản**: ai sửa, lúc nào, lý do). Các kỳ đã kết chuyển theo bộ cũ được đánh dấu **Cần kết chuyển lại** ở ACC6. Đơn vị đang dùng bộ mặc định hay phiên bản nào: xem ở nút **Lịch sử phiên bản** (chưa có phiên bản nào = đang dùng bộ mặc định).
 
 ## Phần mềm kiểm gì
 
@@ -34,4 +35,4 @@ Danh sách sai thì màn báo đỏ và ACC6 không kết chuyển được:
 - một bước đổ số vào tài khoản mà bước trước đã kết chuyển đi (số sẽ treo lại) — đặt bước đó chạy trước;
 - không có, hoặc có hơn một, bước 911 → 421 đang áp dụng.
 
-Cảnh báo vàng (vẫn kết chuyển được): doanh thu chọn bên Nợ, chi phí chọn bên Có, tích "số dư cuối" ở bước không phải 911.
+Cảnh báo vàng (vẫn kết chuyển được): **tài khoản doanh thu, chi phí chưa có bước kết chuyển** (phát sinh của các tài khoản này sẽ còn số dư sau kết chuyển — thêm bước cho đầu số đó, vd `622 → 154`, `627 → 154`), doanh thu chọn bên Nợ, chi phí chọn bên Có, tích "số dư cuối" ở bước không phải 911.

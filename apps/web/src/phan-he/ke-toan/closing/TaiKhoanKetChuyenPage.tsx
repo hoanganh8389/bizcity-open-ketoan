@@ -62,12 +62,6 @@ export function TaiKhoanKetChuyenPage() {
           onAdd={() => setEditing({ index: null })} onRefresh={() => q.refetch()} onExport={() => exportRef.current?.()}
           extra={<button className="btn btn-sm btn-ghost" onClick={() => setShowHistory((x) => !x)}>{showHistory ? 'Ẩn lịch sử phiên bản' : 'Lịch sử phiên bản'}</button>}
         />
-        <div className="muted" style={{ margin: '6px 0' }}>
-          Chạy lần lượt theo cột <b>Thứ tự</b>: bước sau thấy kết quả của bước trước. Bấm đúp một dòng để sửa; thôi dùng thì bỏ tích Áp dụng.
-          {q.data?.isDefault && ' Đang dùng bộ mặc định; thêm / sửa thì lưu thành bộ riêng của đơn vị.'}
-          {q.data && !q.data.isDefault && q.data.version !== null && ` Đang dùng phiên bản ${q.data.version}.`}
-          {' '}Sửa thì các kỳ đã kết chuyển theo bộ cũ được đánh dấu "Cần kết chuyển lại".
-        </div>
         {q.data?.errors.length ? <div className="alert alert-bad" style={{ marginBottom: 6 }}>Bút toán kết chuyển mẫu có lỗi, chưa kết chuyển được:<ul style={{ margin: '4px 0 0 18px' }}>{q.data.errors.map((e) => <li key={e}>{e}</li>)}</ul></div> : null}
         {q.data?.warnings.length ? <div className="alert alert-warn" style={{ marginBottom: 6 }}><ul style={{ margin: '0 0 0 18px' }}>{q.data.warnings.map((w) => <li key={w}>{w}</li>)}</ul></div> : null}
         <ErrorBox error={q.error ? errorText(q.error) : save.error && !editing ? errorText(save.error) : null} />
