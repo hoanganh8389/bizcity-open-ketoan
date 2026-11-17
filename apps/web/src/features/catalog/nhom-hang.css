@@ -91,7 +91,7 @@
 .nh2-ma { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2, #f4f6f9); }
 .nh2-seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .nh2-seg > span { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; padding: 6px 10px; border: 1px solid var(--line, #d9dee6); border-radius: 6px; background: var(--surface, #fff); }
-.nh2-seg > span b { font-size: 17px; letter-spacing: .08em; }
+.nh2-seg > span b { font-size: 15px; white-space: nowrap; } /* [2026-11-17 03:36 PM kiennt] DM11 — ô cấp hiện "mã - tên nhóm" (đóng góp) */
 .nh2-seg > span small { font-size: 11px; color: var(--ink-500, #6b7280); }
 .nh2-seg > span.on { border-color: var(--brand-600, #1f66a3); box-shadow: 0 0 0 2px var(--brand-100, #e3eef8); }
 .nh2-seg > span.on b { color: var(--brand-700, #18507f); }
@@ -105,3 +105,35 @@
 .nh2-empty { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px; border: 1px dashed var(--line, #d9dee6); border-radius: 8px; color: var(--ink-500, #6b7280); font-size: 13px; }
 .nh2-note { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 @media (max-width: 900px) { .nh2 { grid-template-columns: 1fr; } }
+
+/* [2026-11-17 04:26 PM kiennt] DM11 — ba cột Ngành → Nhãn → Nhóm + bảng mặt hàng (đóng góp) */
+.nh3 { display: flex; flex-direction: column; gap: 10px; }
+.nh3-title { font-size: 14px; }
+.nh3-tim { display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--line, #d9dee6); border-radius: 8px; background: var(--surface, #fff); color: var(--ink-500, #6b7280); }
+.nh3-tim input.input, .nh3-tim input.input:focus { border: 0; outline: 0; box-shadow: none; flex: 1; background: transparent; }
+.nh3-cots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.nh3-cot { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line, #e3e7ee); border-radius: 8px; background: var(--surface, #fff); }
+.nh3-cot > header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line, #e3e7ee); font-size: 13px; }
+.nh3-so { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-style: normal; font-size: 11px; font-weight: 700; color: #fff; }
+.nh3-so.l1 { background: #2f4a9e; } .nh3-so.l2 { background: #0d7a6c; } .nh3-so.l3 { background: #a05a00; }
+.nh3-ds { height: 300px; overflow-y: auto; padding: 4px; }
+.nh3-dong { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.nh3-dong:hover { background: var(--surface-2, #f4f6f9); }
+.nh3-dong.off { opacity: .55; }
+.nh3-cot.l1 .nh3-dong.on { background: #e6eaf7; } .nh3-cot.l2 .nh3-dong.on { background: #e1f2ef; } .nh3-cot.l3 .nh3-dong.on { background: #fdf0dc; }
+.nh3-dong.on .nh3-ten { font-weight: 600; }
+.nh3-ma { flex: none; width: 52px; padding: 1px 6px; border-radius: 4px; text-align: center; font-size: 11px; font-weight: 700; background: #e6eaf7; color: #2f4a9e; }
+.nh3-cot.l2 .nh3-ma { background: #e1f2ef; color: #0d6b5f; } .nh3-cot.l3 .nh3-ma { background: #fdf0dc; color: #8a5a00; }
+.nh3-ma.chua { background: #fff1d6; color: #a05a00; font-family: inherit; font-weight: 600; }
+.nh3-ten { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nh3-trung { flex: none; padding: 1px 6px; border-radius: 4px; font-size: 11px; background: #fde4e1; color: #b42318; }
+.nh3-sl { flex: none; font-size: 12px; color: var(--ink-500, #6b7280); }
+.nh3-nut { flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--ink-500, #6b7280); cursor: pointer; }
+.nh3-nut:hover { background: rgba(0, 0, 0, .06); color: var(--ink-900, #111); }
+.nh3-tich { flex: none; color: var(--brand-600, #1f66a3); }
+.nh3-trong { padding: 12px 8px; font-size: 12px; }
+.nh3-cot > footer { padding: 8px 12px; border-top: 1px solid var(--line, #e3e7ee); }
+.nh3-them { padding: 0; border: 0; background: none; color: var(--nav, #2457B3); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.nh3-them:disabled { color: var(--ink-400, #9aa1ad); cursor: default; }
+.nh3-mh { border-top: 1px solid var(--line, #e3e7ee); padding-top: 10px; }
+@media (max-width: 900px) { .nh3-cots { grid-template-columns: 1fr; } .nh3-ds { height: 220px; } }
