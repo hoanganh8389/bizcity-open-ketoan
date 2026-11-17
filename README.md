@@ -1,4 +1,5 @@
 # open-ketoan
+<!-- [2026-11-17 11:12 PM Johnny Chu - Chu Hoàng Anh] HOTFIX — đổi tên repository bizcity-open-ketoan thành open-ketoan (chủ dự án duyệt 2026-11-17); chỉ đổi tên, giữ nguyên nội dung -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
@@ -169,7 +170,7 @@ Chỉ cần **Docker** (Docker Desktop trên Windows / macOS, Docker Engine trê
 
 ```bash
 # 1. Lấy mã nguồn
-git clone https://github.com/hoanganh8389/bizcity-open-ketoan.git && cd bizcity-open-ketoan
+git clone https://github.com/hoanganh8389/open-ketoan.git && cd open-ketoan
 
 # 2. Cài và chạy (tự tạo .env với khoá bí mật ngẫu nhiên, build, chờ sẵn sàng)
 bash scripts/cai-nhanh.sh                  # chỉ ứng dụng kế toán

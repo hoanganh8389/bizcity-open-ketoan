@@ -33,7 +33,7 @@ Johnny Chu (Chu Hoàng Anh). See docs/CONG-BO-KIEN-TRUC.md.
 NOTE ON SCOPE
 
 The GPL-2.0+ license above applies ONLY to the code and documentation shipped
-in this repository (`bizcity-open-ketoan`). The following are NOT part of this
+in this repository (`open-ketoan`). The following are NOT part of this
 distribution and are provided by BizCity under separate terms:
 
   • Bizcity Cell hosted services (API keys, AI, OCR, RAG, orchestration)
@@ -62,7 +62,7 @@ CONTACT
 
 Maintainer:   Johnny Chu (Chu Hoàng Anh)
 Website:      https://bizcity.vn
-Repository:   https://github.com/hoanganh8389/bizcity-open-ketoan
+Repository:   https://github.com/hoanganh8389/open-ketoan
 
 ================================================================================
 
