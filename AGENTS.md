@@ -154,6 +154,16 @@ App ngoài Core chỉ **kể sự việc** qua cửa nạp; Kernel định kho�
 - Nghĩa của một mã chỉ lấy từ `npx bizcity explain`; mã không có trong danh mục thì nói thẳng, không đoán.
 - Cài skill vào dự án khác: `npx bizcity skills install --to <thư mục>`.
 
+## Thêm màn, menu, nút Thêm / Sửa / Xoá / Duyệt: bắt buộc đăng ký quyền <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — luật đăng ký quyền theo màn × thao tác cho agent -->
+
+Mọi màn / menu / nghiệp vụ CRUD mới đăng ký quyền **trong cùng PR** theo [docs/standard/DANG-KY-QUYEN.md](docs/standard/DANG-KY-QUYEN.md) (bảng hook H1–H12):
+
+1. Quyền khai ở `permissions[]` của manifest, tên `<module>:<chức-năng>-<xem|lap|sua|xoa|huy|duyet|bo-duyet|xuat>`, có `roles` mặc định và `risk`.
+2. Phân hệ cũ: `dangKyManHinh` (thao tác `xem` + một thao tác mỗi nút ghi), route gác bằng `requirePermission(quyenThaoTac(màn, thao tác))`, lệnh lõi dùng chung gác bằng `lenh`. Module mới: `permission` ở mỗi `defineAction` và mỗi mục menu / route web.
+3. Bản ghi có chi nhánh: lệnh `/…/:id` đăng ký `dangKyChiNhanhBanGhi`; danh sách / báo cáo nhận `branchCodes`. Không lấy chi nhánh từ header hay thân yêu cầu để cấp quyền.
+4. Giao diện ẩn nút bằng `useThaoTac` / `permission`; ẩn nút không thay được chặn ở máy chủ.
+5. `cd apps/api && npx vitest run test/phan-quyen` ĐẠT (gồm `phan-quyen-dang-ky.test.ts`: quyền chưa khai manifest, sai tiền tố, thiếu `xem`, `lenh` trỏ route không có → đỏ).
+
 ## Tạo module mới (Bizcity Framework Standard v1)
 
 Khi được yêu cầu "tạo module …": **không sửa Kernel, không sửa `packages/*`, không sửa module khác.** Chỉ tạo / sửa tệp trong `modules/<key>/` (ADR-0024: không còn tạo mới ở `apps/*/src/phan-he/`).
