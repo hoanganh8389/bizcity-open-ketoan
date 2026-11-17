@@ -354,12 +354,19 @@ export interface DiagnosticRunsTable {
   created_at: TimestampDefault;
 }
 
+// [2026-11-17 10:20 AM kiennt] NT-DM-001 — tên tiếng Anh tài khoản lưu lại khi bỏ cột accounts.name_en (0147, D023-9) (đóng góp)
+export interface AccountsNameEnLuuTable {
+  tenant_id: string;
+  code: string;
+  name_en: string;
+  archived_at: Generated<Date>;
+}
+
 export interface AccountsTable {
   id: Generated<string>;
   tenant_id: string;
   code: string;
   name: string;
-  name_en: string | null;
   /** Diễn giải (0101): ghi chú cách dùng, không ảnh hưởng ghi sổ. */
   description: Generated<string>;
   parent_code: string | null;
@@ -2009,6 +2016,7 @@ export interface Database {
   event_deliveries: EventDeliveriesTable;
   event_consumptions: EventConsumptionsTable;
   accounts: AccountsTable;
+  accounts_name_en_luu: AccountsNameEnLuuTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;
   period_lock_events: PeriodLockEventsTable;

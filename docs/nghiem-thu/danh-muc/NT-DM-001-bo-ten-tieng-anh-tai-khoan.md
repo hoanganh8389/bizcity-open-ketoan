@@ -7,7 +7,7 @@
 | Màn hình | ACC1 Hệ thống tài khoản |
 | Bộ phận yêu cầu | Phòng kế toán |
 | Ngày tạo | 17/11/2026 |
-| Trạng thái | Nháp — chờ chủ duyệt chữ chốt [D023-9](../../phases/PHASE-023-THE-TAI-KHOAN/00-MASTER-PLAN.md#9-chữ-chốt-d023-9--bỏ-tên-tiếng-anh-của-tài-khoản) |
+| Trạng thái | Chờ nghiệm thu — chữ chốt [D023-9](../../phases/PHASE-023-THE-TAI-KHOAN/00-MASTER-PLAN.md#9-chữ-chốt-d023-9--bỏ-tên-tiếng-anh-của-tài-khoản) đã vào `main` (PR #403) |
 
 ## 1. Mục đích quản trị
 Form tài khoản (ACC1) có khung **Tên tài khoản theo ngôn ngữ** (ô *Tên tiếng Anh*). Khung này chỉ để hiển thị: không dùng trong định khoản, báo cáo, BCTC hay bản in. Bỏ hẳn khung này cho form gọn.
@@ -62,12 +62,26 @@ Form tài khoản (ACC1) có khung **Tên tài khoản theo ngôn ngữ** (ô *T
 ## 7. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-dm-001-bo-ten-tieng-anh-tai-khoan.test.ts` (đề xuất, chưa có — viết ở nhánh code) |
+| Ngày chạy | 17/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-dm-001-bo-ten-tieng-anh-tai-khoan` |
+| Test tự động | `apps/api/test/nt-dm-001-bo-ten-tieng-anh-tai-khoan.test.ts` (4 ca) |
 
 | Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
 |---|---|---|---|---|
+| Cột `accounts.name_en` sau migration | không còn | không còn | 0 | CSDL tạm, áp 0001..0146 rồi 0147 |
+| `accounts_name_en_luu` | 1 dòng `1111` – `Cash in VND` (đã cắt khoảng trắng); dòng NULL / toàn khoảng trắng không chép | đúng | 0 | |
+| Chạy lại migration | không lỗi, không chép trùng | đúng | 0 | |
+| `GET /api/v1/accounts` | không có `nameEn` | không có | 0 | |
+| Tạo / sửa còn gửi `nameEn` | lưu được, bỏ qua `nameEn` | đúng | 0 | |
+
+**Lệnh kiểm (17/11/2026):**
+| Lệnh | Kết quả |
+|---|---|
+| `npm run typecheck` | ĐẠT |
+| `bash scripts/kiem-chuan.sh` | ĐẠT |
+| `scripts/kiem-nang-cap.sh origin/main` | ĐẠT: 0147 áp lên CSDL có dữ liệu mẫu của bản trước, lane diagnostics 0 không đạt. Script trên `main` không build `@bizcity/platform` / `@bizcity/kernel` cho bản trước nên API cũ không khởi động được; đã chạy bằng bản tạm thêm hai lệnh build đó (không sửa script trong repo) |
+| `node tests/conformance/selfcheck.mjs` | KHÔNG ĐẠT, giống `main`. So với `main` không thêm phát hiện nào |
+| `npm test` | 2196 đạt · 5 hỏng, đều không do nhánh này: `nt-bh-005` hỏng cả trên `main`; `db-rules` (bảng `catalog_trash` của 0146 chưa khai trong `schema-catalog`) và `mat-khau-mac-dinh` (3 tệp của người khác) là lỗi trên `main`; `nt-bh-003`, `nt-bh-012` chỉ hỏng khi chạy cả bộ |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -77,3 +91,4 @@ Form tài khoản (ACC1) có khung **Tên tài khoản theo ngôn ngữ** (ô *T
 | Ngày | Thay đổi |
 |---|---|
 | 17/11/2026 | Tạo phiếu (chờ chủ duyệt D023-9) |
+| 17/11/2026 | D023-9 vào `main` (PR #403); code + test, chờ nghiệm thu |

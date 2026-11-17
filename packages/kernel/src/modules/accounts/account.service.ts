@@ -57,7 +57,6 @@ export const accountService = {
       tenant_id: tenantId,
       code: input.code,
       name: input.name,
-      name_en: input.nameEn ?? null,
       description: input.description ?? '',
       parent_code: input.parentCode ?? null,
       level,
@@ -122,7 +121,6 @@ export const accountService = {
     if (!before) throw Errors.notFound(`tài khoản ${code}`);
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
-    if (input.nameEn !== undefined) patch.name_en = input.nameEn;
     if (input.description !== undefined) patch.description = input.description;
     if (input.normalSide !== undefined) patch.normal_side = input.normalSide;
     if (input.trackPartner !== undefined) patch.track_partner = input.trackPartner;
