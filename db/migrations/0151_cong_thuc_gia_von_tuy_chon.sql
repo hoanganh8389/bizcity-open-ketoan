@@ -8,7 +8,7 @@
 --   rebateAlloc    true: trừ thưởng / chiết khấu nhãn hàng phân bổ
 --   purchaseReturn 'reason' (theo lý do — mặc định) | 'doc' (theo giá trị phiếu trả) | 'opening' (định giá theo tồn đầu)
 --   transferIn     'doc' (theo giá trên phiếu, phiếu không có giá thì giá vốn bên gửi — mặc định) | 'sender' (luôn giá vốn bên gửi)
---   adjustIn       true: nhập điều chỉnh tính vào giá (theo cờ lý do)
+--   adjustIn       true: nhập điều chỉnh tính vào giá
 --   apply_from   'YYYY-MM': công thức áp dụng từ tháng này (tính tháng P dùng công thức có apply_from lớn nhất <= P); '' = không áp dụng.
 --                Đổi công thức cần mật khẩu, không áp vào tháng đã khoá sổ — giá vốn nhất quán cho lãi lỗ, kết chuyển, khoá sổ.
 -- costing_runs.formula_code / formula_name / formula  công thức đã dùng ở lần tính (chụp lại options lúc tính).
@@ -59,7 +59,8 @@ END $$;
 -- Công thức mặc định cho mọi đơn vị (đúng công thức giá vốn nội bộ).
 INSERT INTO costing_formulas (tenant_id, code, name, options, is_default, apply_from, updated_by)
 SELECT t.id, 'MD', 'Mặc định (giá Net)',
-       '{"price":"net","costAlloc":true,"rebateAlloc":true,"purchaseReturn":"reason","transferIn":"doc","adjustIn":true}'::jsonb, true, '2000-01', 'system'
+       '{"price":"net","costAlloc":true,"rebateAlloc":true,"purchaseReturn":"doc","transferIn":"doc","adjustIn":true}'::jsonb, true, '2000-01', 'system'
   FROM tenants t
 ON CONFLICT (tenant_id, code) DO NOTHING;
 UPDATE costing_formulas SET apply_from = '2000-01' WHERE code = 'MD' AND apply_from = '';
+UPDATE costing_formulas SET options = jsonb_set(options, '{purchaseReturn}', '"doc"') WHERE options->>'purchaseReturn' = 'reason';

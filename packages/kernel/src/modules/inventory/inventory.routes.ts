@@ -15,7 +15,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { idParamSchema, ok } from '@bizcity/platform/core/http';
-import { costingFormulas, costingRuns, costingService } from './costing.service.js';
+import { costingFormulas, costingRuns, costingService, formulaOf } from './costing.service.js';
 import { sql } from 'kysely';
 import { db } from '@bizcity/platform/db/client';
 import { env } from '@bizcity/platform/config/env';
@@ -82,7 +82,7 @@ const formulaOptions = z.object({
   price: z.enum(['net', 'before_discount', 'with_vat']).optional(),
   costAlloc: z.boolean().optional(),
   rebateAlloc: z.boolean().optional(),
-  purchaseReturn: z.enum(['reason', 'doc', 'opening']).optional(),
+  purchaseReturn: z.enum(['reason', 'doc', 'opening']).optional(), // 'reason' (cũ) = theo phiếu
   transferIn: z.enum(['doc', 'sender']).optional(),
   adjustIn: z.boolean().optional(),
 });
@@ -95,7 +95,7 @@ export const inventoryWriteActions: AnyActionDef[] = [
     output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/inventory/costing-formulas' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'costing_formula', objectId: (i) => i.applyFrom },
-    handler: (ctx, input) => costingFormulas.saveIn(ctx.data.tx as never, ctx.legacyAuth, input),
+    handler: (ctx, input) => costingFormulas.saveIn(ctx.data.tx as never, ctx.legacyAuth, { ...input, options: formulaOf(input.options) }),
   }),
   defineAction({
     id: 'core.inventory.costing-run', title: 'Tính giá vốn tháng (bình quân; mã có trong bảng giá nhập từ Excel thì dùng giá đó), ghi đè dòng giá vốn chờ của các phiếu', tags,

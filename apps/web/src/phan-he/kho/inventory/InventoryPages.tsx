@@ -263,21 +263,20 @@ const dt = (x: { detail?: Record<string, number> }, k: string) => Number(x.detai
 const dg = (v: number) => (v ? v.toLocaleString('vi-VN', { maximumFractionDigits: 4 }) : '');
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
-interface CtOptions { price: 'net' | 'before_discount' | 'with_vat'; costAlloc: boolean; rebateAlloc: boolean; purchaseReturn: 'reason' | 'doc' | 'opening'; transferIn: 'doc' | 'sender'; adjustIn: boolean }
+interface CtOptions { price: 'net' | 'before_discount' | 'with_vat'; costAlloc: boolean; rebateAlloc: boolean; purchaseReturn: 'doc' | 'opening'; transferIn: 'doc' | 'sender'; adjustIn: boolean }
 interface Formula { code: string; name: string; options: CtOptions; applyFrom: string; note: string; updatedBy?: string; updatedAt?: string }
 /** Công thức áp dụng cho tháng: "áp dụng từ" lớn nhất ≤ tháng. */
 const ctCuaThang = (ds: Formula[], thang: string) => ds.filter((f) => f.applyFrom && f.applyFrom <= thang).sort((x, y) => y.applyFrom.localeCompare(x.applyFrom))[0];
 const thangVn = (t: string) => (t && t > '2000-01' ? `${t.slice(5)}/${t.slice(0, 4)}` : 'đầu');
-const CT_MD: CtOptions = { price: 'net', costAlloc: true, rebateAlloc: true, purchaseReturn: 'reason', transferIn: 'doc', adjustIn: true };
+const CT_MD: CtOptions = { price: 'net', costAlloc: true, rebateAlloc: true, purchaseReturn: 'doc', transferIn: 'doc', adjustIn: true };
 const GIA_NHAP: Record<CtOptions['price'], [string, string]> = {
   net: ['Giá Net', 'Đơn giá chưa VAT, đã trừ chiết khấu trên phiếu (mặc định, đúng công thức giá vốn nội bộ)'],
   before_discount: ['Giá trước chiết khấu', 'Đơn giá chưa VAT, CHƯA trừ chiết khấu trên phiếu'],
   with_vat: ['Giá gồm VAT', 'Đơn giá đã trừ chiết khấu, CỘNG thuế GTGT (dùng khi không khấu trừ thuế đầu vào)'],
 };
 const TRA_NCC: Record<CtOptions['purchaseReturn'], [string, string]> = {
-  doc: ['Giá trên phiếu trả', 'Trừ đúng thành tiền ghi trên phiếu trả hàng. VD trả 10 cái, phiếu ghi 9.000đ/cái → trừ 90.000đ'],
+  doc: ['Giá trên phiếu trả (mặc định)', 'Trừ đúng thành tiền ghi trên phiếu trả hàng. VD trả 10 cái, phiếu ghi 9.000đ/cái → trừ 90.000đ'],
   opening: ['Giá vốn đầu tháng', 'Trừ theo giá vốn bình quân đầu tháng, bỏ qua giá trên phiếu. VD giá vốn đầu tháng 8.500đ/cái, trả 10 cái → trừ 85.000đ'],
-  reason: ['Tuỳ lý do trả (mặc định)', 'Mỗi lý do trả hàng đã cài sẵn lấy giá nào (Danh mục lý do): lý do đánh dấu "định giá theo tồn đầu" thì lấy giá vốn đầu tháng, còn lại lấy giá trên phiếu trả'],
 };
 const NHAN_CN: Record<CtOptions['transferIn'], [string, string]> = {
   doc: ['Theo giá trên phiếu', 'Phiếu chuyển có giá thì lấy giá đó; không có giá thì lấy giá vốn bên gửi (mặc định)'],
@@ -376,7 +375,7 @@ function XemCongThuc({ ds, period, onClose }: { ds: Formula[]; period: string; o
           <label className="checkbox" title="Thưởng doanh số / chiết khấu nhãn hàng phân bổ theo mã — làm GIẢM giá vốn"><input type="checkbox" disabled={ro} checked={o.rebateAlloc} onChange={(e) => set({ rebateAlloc: e.target.checked })} /> Trừ thưởng, CK phân bổ (−)</label>
         </div></div>
       {chon('purchaseReturn', TRA_NCC, 'Hàng trả nhà cung cấp trừ khỏi giá vốn theo', 'Khi trả hàng cho nhà cung cấp, số tiền trừ khỏi giá vốn lấy theo giá nào. Rê chuột lên từng lựa chọn xem ví dụ')}
-      <div className="field full"><label>Hàng nhập điều chỉnh kho (kiểm kê thừa…) <Hoi text="Hàng nhập thêm do điều chỉnh kho có được cộng vào khi tính giá vốn bình quân hay không. Lý do nào đã cài 'không tính giá vốn' thì luôn bỏ ra" /></label>
+      <div className="field full"><label>Hàng nhập điều chỉnh kho (kiểm kê thừa…) <Hoi text="Hàng nhập thêm do điều chỉnh kho có được cộng vào khi tính giá vốn bình quân hay không" /></label>
         <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
           <label className="checkbox" title="Cộng số lượng và giá trị hàng nhập điều chỉnh vào công thức bình quân"><input type="radio" disabled={ro} checked={o.adjustIn} onChange={() => set({ adjustIn: true })} /> Tính vào giá vốn</label>
           <label className="checkbox" title="Bỏ hàng nhập điều chỉnh ra khỏi công thức, giá vốn chỉ tính từ hàng mua"><input type="radio" disabled={ro} checked={!o.adjustIn} onChange={() => set({ adjustIn: false })} /> Không tính</label>

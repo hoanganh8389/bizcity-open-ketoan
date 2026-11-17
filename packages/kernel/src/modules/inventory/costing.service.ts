@@ -23,16 +23,11 @@
  *   - Tồn đầu = tồn cuối tháng trước của chính bảng này; tồn đầu số lượng ≤ 0 thì coi như không có.
  *   - Hàng xuất THEO GIÁ BÁN (bán nội bộ cho chi nhánh khác — lý do có cờ costAtSalePrice) bị trừ khỏi cả tử
  *     (theo giá bán) và mẫu (số lượng) trước khi chia; giá vốn của nó đã ghi sổ cùng phiếu bán.
- *   - [2026-11-05 09:30 PM Nguyễn Văn Thủy] PHASE-026 — công thức theo BOOK_MODE của bản cài (@ketoan/contracts, COST_FORMULAS). Bản NỘI BỘ: mọi lý do trả lấy thành tiền − thuế.
- *     Các dòng sau áp cho bản THUẾ:
- *   - Hàng trả nhà cung cấp mang lý do XTR1, XTR9 hoặc có cờ returnAtOpeningCost được định giá theo tồn đầu
- *     (đơn giá trả = tiền trả ÷ số lượng trả); lý do trả khác (XDC, XKK, XTT1, XTT2, XTR3, XTR4, XTRCN…) lấy
- *     thành tiền − thuế trên phiếu. Phiếu không ghi lý do dùng lý do mặc định của loại chứng từ:
- *       tiền trả 0 → 0;  đơn giá trả ≤ đơn giá tồn đầu → SL trả × đơn giá tồn đầu;
- *       tiền trả ≤ GT tồn đầu → tiền trả;  SL trả ≤ SL tồn đầu → GT tồn đầu;
- *       còn lại → GT tồn đầu + (SL trả − SL tồn đầu) × đơn giá trả.
+ *   - Hàng trả nhà cung cấp: theo thành tiền − thuế trên phiếu (mặc định) hoặc định giá theo giá vốn đầu tháng — chọn ở công thức giá vốn
+ *     (0151), không theo lý do (lý do chỉ là nhãn). Định giá theo đầu tháng: tiền trả 0 → 0; đơn giá trả ≤ đơn giá tồn đầu → SL × đơn giá tồn đầu;
+ *     tiền trả ≤ GT tồn đầu → tiền trả; SL trả ≤ SL tồn đầu → GT tồn đầu; còn lại → GT tồn đầu + (SL trả − SL tồn đầu) × đơn giá trả.
  *     Tồn kho trên sổ vẫn giảm theo tiền trên phiếu trả.
- *   - Nhập điều chỉnh tăng mang lý do có cờ excludeFromCost (ví dụ ĐGTTK) không tính vào tử, mẫu.
+ *   - Nhập điều chỉnh tăng: tính vào tử, mẫu hay không — chọn ở công thức giá vốn.
  *   - Quà KM người tiêu dùng nhận kèm phiếu mua (inventory_movements.exclude_cost) không tính vào tử, mẫu mà vào PHẦN TỒN QUÀ
  *     giá 0 của mã (inventory_costs.gift_qty, mang sang tháng sau). Dòng bán hàng tặng khách lấy từ phần quà trước (giá vốn 0),
  *     hết mới lấy hàng thường theo đơn giá. Quà KM người bán (chia giá) vẫn tính (SL tăng, tiền 0 → đơn giá giảm).
@@ -67,7 +62,7 @@
  * Tính lại: bút toán cũ được ghi số âm rồi ghi bút toán mới. Không cần xoá, ghi lại bút toán bán hàng.
  * Lần hàng xuất mà hệ thống nguồn đã gửi kèm giá vốn thì đã ghi sổ cùng chứng từ gốc, ở đây bỏ qua.
  */
-import { fromCents, returnsAtOpening, returnValueAtOpening, toCents, ULID_RE } from '@ketoan/contracts';
+import { fromCents, returnValueAtOpening, toCents, ULID_RE } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, type Db } from '@bizcity/platform/db/client';
 import { env } from '@bizcity/platform/config/env';
@@ -146,15 +141,18 @@ export interface CostFormula {
   costAlloc: boolean;
   /** Trừ thưởng / chiết khấu nhãn hàng phân bổ. */
   rebateAlloc: boolean;
-  /** Hàng trả NCC: theo lý do (mặc định) / theo giá trị phiếu / định giá theo tồn đầu. */
-  purchaseReturn: 'reason' | 'doc' | 'opening';
+  /** Hàng trả NCC: theo giá trị phiếu (mặc định) / định giá theo giá vốn đầu tháng. Không theo lý do (lý do chỉ là nhãn, 15/11/2026). */
+  purchaseReturn: 'doc' | 'opening';
   /** Nhận từ chi nhánh khác: theo phiếu (không có giá thì giá vốn bên gửi) / luôn giá vốn bên gửi. */
   transferIn: 'doc' | 'sender';
-  /** Nhập điều chỉnh tính vào giá (theo cờ lý do). */
+  /** Nhập điều chỉnh tính vào giá. */
   adjustIn: boolean;
 }
-export const DEFAULT_FORMULA: CostFormula = { price: 'net', costAlloc: true, rebateAlloc: true, purchaseReturn: 'reason', transferIn: 'doc', adjustIn: true };
-export const formulaOf = (o: unknown): CostFormula => ({ ...DEFAULT_FORMULA, ...((o && typeof o === 'object' ? o : {}) as Partial<CostFormula>) });
+export const DEFAULT_FORMULA: CostFormula = { price: 'net', costAlloc: true, rebateAlloc: true, purchaseReturn: 'doc', transferIn: 'doc', adjustIn: true };
+export const formulaOf = (o: unknown): CostFormula => {
+  const f = { ...DEFAULT_FORMULA, ...((o && typeof o === 'object' ? o : {}) as Partial<CostFormula>) };
+  return { ...f, purchaseReturn: f.purchaseReturn === 'opening' ? 'opening' : 'doc' }; // công thức cũ 'reason' → theo phiếu
+};
 
 interface FlowDetail {
   purchaseQty: number; purchaseValue: number; returnQty: number; returnValue: number; adjInQty: number; adjInValue: number;
@@ -183,22 +181,6 @@ async function monthFlows(trx: Db, tenantId: string, p: Period) {
        AND m.doc_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date
      GROUP BY 1, 2, 4, 5, 6, 7, 8`.execute(trx);
   return res.rows.map((r) => ({ group: r.grp, ikey: r.ikey, sku: r.sku, kind: r.kind, reason: r.reason, pricedAtSale: r.priced, excludeCost: r.excl, counterGroup: r.cgrp, qty: Number(r.qty), amount: Number(r.amount), valuedQty: Number(r.valued_qty), unvaluedQty: Number(r.unvalued_qty), alloc: Number(r.alloc), tax: Number(r.tax), disc: Number(r.disc) }));
-}
-
-/**
- * Cờ tính giá vốn trên lý do. Chứng từ không ghi lý do dùng lý do mặc định của loại chứng từ (flags.default).
- */
-async function costReasonRules(trx: Db, tenantId: string) {
-  const rows = await trx.selectFrom('posting_reasons').select(['code', 'flags']).where('tenant_id', '=', tenantId).execute();
-  const flag = (code: string | null, name: string, fallbackDefault: string) => {
-    const r = code ? rows.find((x) => x.code === code) : rows.find((x) => (x.flags as Record<string, unknown>)?.default === fallbackDefault);
-    return Boolean((r?.flags as Record<string, unknown> | undefined)?.[name]);
-  };
-  const defaultReturn = rows.find((x) => (x.flags as Record<string, unknown>)?.default === 'purchase_return')?.code ?? null;
-  return {
-    returnAtOpening: (code: string | null) => returnsAtOpening(env.BOOK_MODE, code ?? defaultReturn, flag(code, 'returnAtOpeningCost', 'purchase_return')),
-    excluded: (code: string | null) => flag(code, 'excludeFromCost', 'stock_adjustment:increase'),
-  };
 }
 
 /** Giá trị hàng trả nhà cung cấp đưa vào công thức đơn giá, định giá theo tồn đầu. */
@@ -262,7 +244,6 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
   }
 
   const flows = await monthFlows(trx, tenantId, p);
-  const rules = await costReasonRules(trx, tenantId);
   // Hàng nhận từ nhóm khác chưa có giá: định giá ở lượt 2 theo đơn giá nhóm gửi.
   const pendingExternal: { group: string; ikey: string; sku: string; counterGroup: string; qty: number }[] = [];
   // Hàng trả nhà cung cấp: định giá theo tồn đầu sau khi gom đủ (số dương).
@@ -292,7 +273,7 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
         if (formula.costAlloc) r.d.costAlloc += f.alloc; // [2026-11-17 Nguyễn Văn Thủy] chi phí mua hàng phân bổ (vận chuyển…) tách cột riêng (đóng góp)
         break;
       case 'purchase_return': {
-        const atOpening = formula.purchaseReturn === 'opening' ? true : formula.purchaseReturn === 'doc' ? false : rules.returnAtOpening(f.reason);
+        const atOpening = formula.purchaseReturn === 'opening';
         if (!atOpening) {
           // Lý do trả khác: lấy đúng thành tiền − thuế trên phiếu.
           r.inQty += f.qty;
@@ -311,7 +292,7 @@ async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<
         break;
       }
       case 'adjust_in':
-        if (!formula.adjustIn || rules.excluded(f.reason)) break;
+        if (!formula.adjustIn) break;
         r.inQty += f.valuedQty;
         r.inValue += f.amount;
         r.d.adjInQty += f.valuedQty;
