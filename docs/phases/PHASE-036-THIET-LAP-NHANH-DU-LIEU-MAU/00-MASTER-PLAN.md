@@ -430,3 +430,37 @@ Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định kho
   - `core.setup.status` của đơn vị mẫu: `isSample = true`.
 - Chạy thật trên giao diện: biểu ngữ vàng, thẻ *Xem công ty mẫu*.
 - Phá thử: bỏ chặn `external`; bỏ điều kiện "CSDL vừa khởi tạo" → test đỏ.
+
+
+## 15. Chữ chốt B5b — xoá Công ty Mẫu bằng script, tạo Công ty Mẫu theo yêu cầu (2026-11-17) <!-- [2026-11-17 09:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B5b (S036-7): chủ dự án chọn script vận hành (ADR-0034) + tạo theo yêu cầu khi BIZCITY_SAMPLE_ON_DEMAND; chuyển đơn vị không đăng nhập lại và chi phí lẻ để sau -->
+
+**Chủ dự án chọn 2026-11-17:** xoá bằng **script vận hành** ([ADR-0034](../../adr/ADR-0034-xoa-cong-ty-mau-bang-script-van-hanh.md)); đợt này làm thêm **tạo Công ty Mẫu cho bản cài cũ**. Chuyển đơn vị không đăng nhập lại (R3, lớp xác thực) và chi phí lẻ trong gói mẫu: để sau.
+
+**1. `scripts/xoa-cong-ty-mau.sh [mã]`** (mặc định `SAMPLE_TENANT_CODE` / `mau`):
+
+- In số chứng từ / bút toán / dòng thẻ kho của đơn vị; **dừng** nếu không phải `is_sample`.
+- Sao lưu (`scripts/sao-luu.sh`), gõ `XOA CONG TY MAU <mã>`.
+- Chạy `scripts/xoa-cong-ty-mau.sql` (`-v tenant=<mã>`) trong **một giao dịch**: `SET LOCAL session_replication_role = replica`; kiểm lại `is_sample` (sai → `RAISE`); xoá bốn bảng con theo cha, mọi bảng có `tenant_id` (mọi schema ứng dụng), rồi `tenants`; đếm lại — còn dòng → `RAISE`.
+- Ghi một dòng `backups/xoa-cong-ty-mau.log`.
+- `scripts/kiem-chuan.sh` và SC-KERNEL-4 thêm hai tệp vào danh sách được dùng `session_replication_role`.
+- RULE-LEDGER E3 ghi thêm (không ngoại lệ mới).
+
+**2. Tạo Công ty Mẫu theo yêu cầu** (bản cài đã có, chưa có đơn vị mẫu):
+
+- Bật bằng `BIZCITY_SAMPLE_ON_DEMAND=1` (mặc định tắt — bản cài nhiều công ty không bật; `cai-nhanh.sh` bật cho bản dùng thử). Khai ở `.env.example`, `DEPLOY.md`.
+- Route giữ `POST /api/v1/setup/sample-tenant` (quyền `settings:write`, `Idempotency-Key`; thân `{ presetId? }`, mặc định `thuong-mai-ban-le`):
+  - tắt → `FORBIDDEN`; đã có đơn vị mẫu → `CONFLICT` `SAMPLE_EXISTS` (mã lý do mới); mã `SAMPLE_TENANT_CODE` đã là đơn vị thật → `CONFLICT` `SETUP_NOT_EMPTY`;
+  - khoá `pg_advisory_xact_lock` toàn bản cài (`setup:sample-tenant`) — hai người bấm cùng lúc chỉ tạo một;
+  - tạo đơn vị bằng `seed()` với **email và băm mật khẩu của người bấm** (`seed` thêm `adminEmail`, `adminPasswordHash`) → người bấm đăng nhập Công ty Mẫu bằng chính email, mật khẩu của mình; không lộ mật khẩu, không sinh mật khẩu mới;
+  - trả **202** `{ tenantCode, runId }`, nạp gói chạy nền (bộ chạy B2).
+- `seed` của Kernel được **truyền vào** `setup-run.ts` từ gốc lắp ráp (`app.ts`: `useSeedTenant(seed)`) — lớp P không import Kernel (SC-LAYER-2).
+- `core.setup.status` thêm `sampleOnDemand` (bật, chưa có đơn vị mẫu, người gọi có `settings:write`).
+- TI15, thẻ *Xem công ty mẫu*: chưa có mẫu và `sampleOnDemand` → nút **Tạo Công ty Mẫu**; tạo xong → *Mở Công ty Mẫu* (ghi "đang nạp khoảng một phút").
+- Route vào `route-giu.json` (lớp `quyen`), lý do `@bizcity-route`.
+
+**Kiểm:**
+
+- `apps/api/test/xoa-cong-ty-mau.test.ts`: chạy `scripts/xoa-cong-ty-mau.sql` trên CSDL test — đơn vị mẫu đã nạp gói → 0 dòng còn lại ở mọi bảng có `tenant_id` và bốn bảng con; đơn vị thường → lỗi, không xoá dòng nào.
+- `cong-ty-mau.test.ts` thêm: tắt → 403; bật → 202, đăng nhập Công ty Mẫu bằng email / mật khẩu của người bấm; gọi lần hai → `SAMPLE_EXISTS`; hai lệnh cùng lúc → một đơn vị.
+- Chạy thật `xoa-cong-ty-mau.sh` trên stack dev (đơn vị mẫu), ghi kết quả ở PR.
+- Phá thử: bỏ kiểm `is_sample` trong SQL; bỏ kiểm biến bật → test đỏ.
