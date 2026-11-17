@@ -451,6 +451,8 @@ async function unvaluedMovements(trx: Db, tenantId: string, p: Period): Promise<
 }
 
 export interface CostingResult {
+  /** [2026-11-17] Lần tính giá vốn đã lưu (mỗi chi nhánh một lần). */
+  runIds?: string[];
   period: string;
   monthsComputed: string[];
   items: number;
@@ -470,13 +472,13 @@ export const costingService = {
    * `imported`: bảng giá vốn tháng nhập từ Excel (thay toàn bộ giá đã nhập của tháng; mã trùng lấy giá khác 0 xuất hiện nhiều nhất).
    * `clearImport`: bỏ giá đã nhập, quay về tính bình quân cho mọi mã.
    */
-  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string }): Promise<CostingResult> {
+  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string }): Promise<CostingResult> {
     return db.transaction().execute((trx) => costingService.runIn(trx, auth, input));
   },
 
   // [2026-11-03 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): đơn giá + ghi sổ giá vốn mọi chi nhánh trong một giao dịch (trước: 2+ giao dịch nối nhau — lỗi ở một chi nhánh
   // để lại đơn giá và các chi nhánh trước đã ghi)
-  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string }): Promise<CostingResult> {
+  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string }): Promise<CostingResult> {
     const p = parsePeriod(input.period);
     // Khoảng ngày chứng từ được cập nhật giá vốn: trong tháng đang tính (giá vốn là giá của tháng), mặc định cả tháng.
     const from = input.from ?? firstDay(p);
@@ -546,13 +548,22 @@ export const costingService = {
     const branchInfo = new Map([...prior, ...slotBranches.rows].map((r) => [r.branch_id, { code: r.code, name: r.name }]));
     for (const m of movements) branchInfo.set(m.branchId, { code: m.branchCode, name: m.branchName });
 
+    // [2026-11-17 Nguyễn Văn Thủy] chọn chi nhánh trên Cơ cấu tổ chức: đơn giá vẫn tính chung một lượt (chuyển hàng giữa chi nhánh khớp giá),
+    // chỉ ra phiếu giá vốn cho shop thuộc chi nhánh đã chọn (đóng góp)
+    if (input.costCenter) {
+      const keep = new Set((await sql<{ id: string }>`SELECT b.id::text FROM branches b JOIN accounting_units u ON u.id = b.accounting_unit_id
+        WHERE b.tenant_id = ${auth.tenantId} AND u.code = ${input.costCenter}`.execute(trx)).rows.map((r) => r.id));
+      if (!keep.size) throw Errors.validation(`Chi nhánh ${input.costCenter} chưa có shop nào trên Cơ cấu tổ chức`);
+      for (const id of [...byBranch.keys()]) if (!keep.has(String(id))) byBranch.delete(id);
+    }
     const branches: CostingResult['branches'] = [];
     for (const [branchId, list] of byBranch) {
       const info = branchInfo.get(branchId)!;
       branches.push(await sameTx(trx, (trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, returnUnits, movements: list })));
     }
     branches.sort((a, b) => a.branchCode.localeCompare(b.branchCode));
-    return { period: label(p), monthsComputed: months, items, branches, total: fromCents(branches.reduce((s, b) => s + toCents(b.total) + toCents(b.filledTotal), 0)), imported };
+    const runIds = await recordRuns(trx, auth, { p, from, to, costCenter: input.costCenter, branches, imported: imported?.count ?? 0 });
+    return { runIds, period: label(p), monthsComputed: months, items, branches, total: fromCents(branches.reduce((s, b) => s + toCents(b.total) + toCents(b.filledTotal), 0)), imported };
   },
 
   /** Bảng đơn giá vốn của một tháng. */
@@ -586,6 +597,55 @@ export const costingService = {
       giftQty: Number(r.gift_qty),
       costSource: r.cost_source as 'computed' | 'import',
     }));
+  },
+};
+
+// [2026-11-17 Nguyễn Văn Thủy] lưu LẦN TÍNH GIÁ VỐN theo chi nhánh (0148): mốc cơ cấu (id + uid của nút), kỳ, khoảng ngày, tổng, phiếu,
+// bảng đơn giá các mã của chi nhánh tại lần tính (đóng góp)
+async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: string; to: string; costCenter?: string; branches: CostingResult['branches']; imported: number }): Promise<string[]> {
+  const centers = (await sql<{ id: string; code: string; name: string; org_unit_id: string | null; org_uid: string | null }>`
+    SELECT u.id::text, u.code, u.name, u.org_unit_id::text, o.uid AS org_uid FROM accounting_units u LEFT JOIN org_units o ON o.id = u.org_unit_id
+     WHERE u.tenant_id = ${auth.tenantId}
+       AND ${a.costCenter ? sql`u.code = ${a.costCenter}` : sql`EXISTS (SELECT 1 FROM inventory_costs c WHERE c.tenant_id = u.tenant_id AND c.cost_group = u.id AND c.year = ${a.p.year} AND c.month = ${a.p.month})`}`.execute(trx)).rows;
+  const shop = new Map((await sql<{ code: string; unit: string | null }>`SELECT b.code, b.accounting_unit_id::text AS unit FROM branches b WHERE b.tenant_id = ${auth.tenantId}`.execute(trx)).rows.map((r) => [r.code, r.unit]));
+  const ids: string[] = [];
+  for (const ct of centers) {
+    const mine = a.branches.filter((b) => shop.get(b.branchCode) === ct.id);
+    const total = fromCents(mine.reduce((s, b) => s + toCents(b.total) + toCents(b.filledTotal), 0));
+    const items = Number((await sql<{ n: string }>`SELECT COUNT(*) AS n FROM inventory_costs WHERE tenant_id = ${auth.tenantId} AND cost_group = ${ct.id} AND year = ${a.p.year} AND month = ${a.p.month}`.execute(trx)).rows[0]!.n);
+    const vouchers = mine.filter((b) => b.docNo).map((b) => ({ branchCode: b.branchCode, docNo: b.docNo, total: b.total + b.filledTotal }));
+    const run = await sql<{ id: string }>`
+      INSERT INTO costing_runs (tenant_id, org_unit_id, org_uid, center_code, center_name, year, month, date_from, date_to, items, total, imported, vouchers, run_by)
+      VALUES (${auth.tenantId}, ${ct.org_unit_id}, ${ct.org_uid ?? ''}, ${ct.code}, ${ct.name}, ${a.p.year}, ${a.p.month}, ${a.from}::date, ${a.to}::date,
+              ${items}, ${total}, ${a.imported}, ${JSON.stringify(vouchers)}::jsonb, ${auth.actorName || auth.actor}) RETURNING id::text`.execute(trx);
+    const runId = run.rows[0]!.id;
+    await sql`INSERT INTO costing_run_lines (tenant_id, run_id, sku, item_id, opening_qty, opening_value, in_qty, in_value, unit_cost, out_qty, closing_qty, closing_value, gift_qty, cost_source)
+      SELECT tenant_id, ${runId}::bigint, sku, item_id, opening_qty, opening_value, in_qty, in_value, unit_cost, out_qty, closing_qty, closing_value, COALESCE(gift_qty, 0), cost_source
+        FROM inventory_costs WHERE tenant_id = ${auth.tenantId} AND cost_group = ${ct.id} AND year = ${a.p.year} AND month = ${a.p.month}`.execute(trx);
+    ids.push(runId);
+  }
+  return ids;
+}
+
+export const costingRuns = {
+  /** Các lần tính giá vốn của một chi nhánh (hoặc mọi chi nhánh), lọc theo ngày tính. */
+  async list(auth: AuthContext, q: { costCenter?: string; from?: string; to?: string }) {
+    const rows = await sql<{ id: string; org_uid: string; center_code: string; center_name: string; year: number; month: number; date_from: string; date_to: string; items: number; total: string; imported: number; vouchers: unknown; run_by: string; run_at: Date }>`
+      SELECT id::text, org_uid, center_code, center_name, year, month, date_from::text, date_to::text, items, total, imported, vouchers, run_by, run_at FROM costing_runs
+       WHERE tenant_id = ${auth.tenantId} ${q.costCenter ? sql`AND center_code = ${q.costCenter}` : sql``}
+         ${q.from ? sql`AND run_at >= ${q.from}::date` : sql``} ${q.to ? sql`AND run_at < ${q.to}::date + 1` : sql``}
+       ORDER BY run_at DESC LIMIT 500`.execute(db);
+    return rows.rows.map((r) => ({ id: r.id, orgUid: r.org_uid, centerCode: r.center_code, centerName: r.center_name, period: `${r.year}-${String(r.month).padStart(2, '0')}`,
+      from: r.date_from, to: r.date_to, items: r.items, total: Number(r.total), imported: r.imported, vouchers: r.vouchers, runBy: r.run_by, runAt: new Date(r.run_at).toISOString() }));
+  },
+  /** Bảng đơn giá các mã hàng của một lần tính. */
+  async lines(auth: AuthContext, id: string) {
+    const rows = await sql<{ sku: string; item_id: string | null; name: string | null; opening_qty: string; opening_value: string; in_qty: string; in_value: string; unit_cost: string; out_qty: string; closing_qty: string; closing_value: string; gift_qty: string; cost_source: string }>`
+      SELECT l.sku, l.item_id, p.name, l.opening_qty, l.opening_value, l.in_qty, l.in_value, l.unit_cost, l.out_qty, l.closing_qty, l.closing_value, l.gift_qty, l.cost_source
+        FROM costing_run_lines l LEFT JOIN products p ON p.tenant_id = l.tenant_id AND p.sku = l.sku
+       WHERE l.tenant_id = ${auth.tenantId} AND l.run_id = ${id}::bigint ORDER BY l.sku`.execute(db);
+    return rows.rows.map((r) => ({ sku: r.sku, itemId: r.item_id, name: r.name ?? '', openingQty: Number(r.opening_qty), openingValue: Number(r.opening_value), inQty: Number(r.in_qty), inValue: Number(r.in_value),
+      unitCost: Number(r.unit_cost), outQty: Number(r.out_qty), closingQty: Number(r.closing_qty), closingValue: Number(r.closing_value), giftQty: Number(r.gift_qty), costSource: r.cost_source }));
   },
 };
 

@@ -15,7 +15,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { idParamSchema, ok } from '@bizcity/platform/core/http';
-import { costingService } from './costing.service.js';
+import { costingRuns, costingService } from './costing.service.js';
 import { sql } from 'kysely';
 import { db } from '@bizcity/platform/db/client';
 import { env } from '@bizcity/platform/config/env';
@@ -31,6 +31,29 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Bảng đơn giá vốn của một tháng', querystring: z.object({ period, search: z.string().optional() }) },
     handler: async (req) => ok(await costingService.list(authOf(req), req.query)),
+  });
+  // [2026-11-17 Nguyễn Văn Thủy] chi nhánh tính giá vốn = điểm tính giá vốn trên Cơ cấu tổ chức (0147) và số shop bên dưới (đóng góp)
+  r.get('/api/v1/inventory/cost-centers', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Chi nhánh tính giá vốn (đơn vị hạch toán, sinh theo Cơ cấu tổ chức) và số shop' },
+    handler: async (req) => {
+      const rows = await sql<{ code: string; name: string; shops: string; org: boolean }>`
+        SELECT u.code, u.name, COUNT(b.id) AS shops, (u.org_unit_id IS NOT NULL) AS org
+          FROM accounting_units u LEFT JOIN branches b ON b.accounting_unit_id = u.id AND b.tenant_id = u.tenant_id
+         WHERE u.tenant_id = ${authOf(req).tenantId} GROUP BY u.id ORDER BY u.code`.execute(db);
+      return ok(rows.rows.map((r) => ({ code: r.code, name: r.name, shops: Number(r.shops), fromOrg: r.org })));
+    },
+  });
+  // [2026-11-17 Nguyễn Văn Thủy] các lần tính giá vốn theo chi nhánh và bảng đơn giá của một lần (0148) (đóng góp)
+  r.get('/api/v1/inventory/costing-runs', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Các lần tính giá vốn (lọc chi nhánh, ngày tính)', querystring: z.object({ costCenter: z.string().max(60).optional(), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }) },
+    handler: async (req) => ok(await costingRuns.list(authOf(req), req.query)),
+  });
+  r.get('/api/v1/inventory/costing-runs/:id/lines', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Bảng đơn giá các mã hàng của một lần tính giá vốn', params: z.object({ id: z.string().regex(/^[1-9][0-9]*$/) }) },
+    handler: async (req) => ok(await costingRuns.lines(authOf(req), req.params.id)),
   });
   // [2026-11-05 09:30 PM Nguyễn Văn Thủy] PHASE-026 — màn Công thức giá vốn ACC49A (đóng góp)
   r.get('/api/v1/inventory/costing/formula', {
@@ -63,6 +86,8 @@ export const inventoryWriteActions: AnyActionDef[] = [
         /** Chỉ cập nhật giá vốn cho chứng từ có ngày chứng từ trong khoảng này (trong tháng; mặc định cả tháng). */
         from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        /** [2026-11-17] Chỉ ra phiếu giá vốn cho shop thuộc chi nhánh này (mã đơn vị hạch toán / điểm tính giá vốn); trống = mọi chi nhánh. */
+        costCenter: z.string().trim().max(60).optional(),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/inventory/costing' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'inventory' },

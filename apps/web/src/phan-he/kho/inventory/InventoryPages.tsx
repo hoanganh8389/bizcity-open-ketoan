@@ -25,7 +25,7 @@ const thisMonth = () => new Date().toISOString().slice(0, 7);
 
 /* ------------------------------------------------------------------ ACC49 */
 interface CostRow { costGroup: string; costGroupName: string; sku: string; name: string; openingQty: number; openingValue: number; inQty: number; inValue: number; unitCost: number; outQty: number; closingQty: number; closingValue: number; giftQty?: number; costSource: 'computed' | 'import' }
-interface CostingResult { period: string; monthsComputed: string[]; items: number; branches: { branchCode: string; status: 'posted' | 'empty'; docNo?: string; total: number; filled: number; filledTotal: number }[]; total: number; imported: { count: number; missing: string[]; missingCount: number } | null }
+interface CostingResult { runIds?: string[]; period: string; monthsComputed: string[]; items: number; branches: { branchCode: string; status: 'posted' | 'empty'; docNo?: string; total: number; filled: number; filledTotal: number }[]; total: number; imported: { count: number; missing: string[]; missingCount: number } | null }
 
 /**
  * Ô giá vốn trong tệp Excel → số. Ô số giữ nguyên (đủ số lẻ); ô chữ nhận cả "434442.8361", "434,442.84", "434.442,84".
@@ -46,6 +46,8 @@ function parseCost(v: string | number | undefined): number | null {
 export function CostingPage() {
   const [nhom, setNhom] = useState('');
   const ln = useLocNhomHang(nhom);
+  // [2026-11-17 Nguyễn Văn Thủy] chọn chi nhánh (điểm tính giá vốn trên cơ cấu tổ chức) để xem; tính thì tính cả các chi nhánh một lượt (đóng góp)
+  const [cn, setCn] = useState('');
   const qc = useQueryClient();
   const [period, setPeriodState] = useState(thisMonth());
   const [search, setSearch] = useState('');
@@ -55,9 +57,18 @@ export function CostingPage() {
   const setPeriod = (m: string) => { setPeriodState(m); setRange({ from: `${m}-01`, to: monthEnd(m) }); };
   const wholeMonth = range.from === `${period}-01` && range.to === monthEnd(period);
   const costs = useQuery({ queryKey: ['inventory-costs', period, search], queryFn: () => api.get<CostRow[]>('/api/v1/inventory/costs', { period, search }) });
+  const centers = useQuery({ queryKey: ['inventory-cost-centers'], queryFn: () => api.get<{ code: string; name: string; shops: number; fromOrg: boolean }[]>('/api/v1/inventory/cost-centers') });
+  // [2026-11-17 Nguyễn Văn Thủy] chọn chi nhánh (cơ cấu) → các lần tính giá vốn (lọc ngày tính) → bấm một lần: bảng đơn giá các mã (đóng góp)
+  const [ngay, setNgay] = useState({ from: `${thisMonth().slice(0, 4)}-01-01`, to: new Date().toISOString().slice(0, 10) });
+  const runs = useQuery({ queryKey: ['inventory-costing-runs', cn, ngay.from, ngay.to], queryFn: () => api.get<CostRun[]>('/api/v1/inventory/costing-runs', { costCenter: cn || undefined, from: ngay.from, to: ngay.to }) });
+  const [runSel, setRunSel] = useState<string | null>(null);
+  const curRun = (runs.data ?? []).find((x) => x.id === runSel) ?? runs.data?.[0];
+  const lines = useQuery({ queryKey: ['inventory-costing-run-lines', curRun?.id], enabled: Boolean(curRun), queryFn: () => api.get<CostRow[]>(`/api/v1/inventory/costing-runs/${curRun!.id}/lines`) });
+  const tim = search.trim().toLowerCase();
+  const lineRows = ln.loc((lines.data ?? []).map((l) => ({ ...l, costGroup: curRun?.centerCode ?? '', costGroupName: curRun?.centerName ?? '' }))).filter((l) => !tim || `${l.sku} ${l.name}`.toLowerCase().includes(tim));
   const run = useMutation({
-    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...extra }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['inventory-costs'] }),
+    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...(cn ? { costCenter: cn } : {}), ...extra }),
+    onSuccess: (res) => { void qc.invalidateQueries({ queryKey: ['inventory-costs'] }); void qc.invalidateQueries({ queryKey: ['inventory-costing-runs'] }); setRunSel(res.runIds?.[0] ?? null); },
   });
   const hasImport = (costs.data ?? []).some((r) => r.costSource === 'import');
   const monthText = `${period.slice(5)}/${period.slice(0, 4)}`;
@@ -80,7 +91,7 @@ export function CostingPage() {
       <PageHeader
         title="Tính giá vốn"
         code="ACC49"
-        subtitle="Bình quân gia quyền theo tháng, chung cho các chi nhánh cùng đơn vị hạch toán; ghi sổ giá vốn hàng xuất"
+        subtitle="Bình quân gia quyền theo tháng, riêng từng chi nhánh trên cơ cấu tổ chức (chi nhánh cấp 2 gom mọi shop, kho bên dưới); ghi sổ giá vốn hàng xuất"
         helpKey="tinh-gia-von"
         actions={
           <>
@@ -93,66 +104,90 @@ export function CostingPage() {
               hint={<>Tệp cần cột <b>Mã hàng</b> và <b>Giá vốn</b> (Tên hàng để tham khảo). Mỗi mã một giá vốn cho mọi chi nhánh, hàng chính hay khuyến mãi như nhau; mã lặp nhiều dòng (tệp xuất từ thẻ kho) lấy giá khác 0 xuất hiện nhiều nhất. Bấm Ghi: thay toàn bộ giá đã nhập của tháng {monthText} rồi tính giá vốn và ghi phiếu giá vốn tháng của từng chi nhánh ngay.</>}
               onImport={importCosts}
             />
-            <PrintButton small screen="ACC49" templates={COST_TEMPLATES} disabled={!costs.data?.length} getDocs={() => (costs.data?.length ? [{ period, rows: costs.data }] : [])} />
+            <PrintButton small screen="ACC49" templates={COST_TEMPLATES} disabled={!lineRows.length} getDocs={() => (lineRows.length ? [{ period: curRun?.period ?? period, rows: lineRows }] : [])} />
             {hasImport && <button className="btn btn-sm" disabled={run.isPending} onClick={() => window.confirm(`Bỏ toàn bộ giá vốn đã nhập từ Excel của tháng ${monthText} và tính lại bình quân cho mọi mã?`) && run.mutate({ clearImport: true })}>Bỏ giá đã nhập</button>}
             <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate({})}>
-              {run.isPending ? 'Đang tính…' : `Tính giá vốn tháng ${monthText}${wholeMonth ? '' : ` (chứng từ ${range.from.slice(8)}–${range.to.slice(8)})`}`}
+              {run.isPending ? 'Đang tính…' : `Tính giá vốn tháng ${monthText}${cn ? ` · ${cn}` : ''}${wholeMonth ? '' : ` (chứng từ ${range.from.slice(8)}–${range.to.slice(8)})`}`}
             </button>
           </>
         }
       />
       <div className="card">
         <div className="filters">
-          <div className="field"><label>Tháng</label><input type="month" className="input w-md" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
-          <div className="field"><label>Mã hàng</label><input className="input w-md" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Lọc theo mã hàng" /></div>
-          <ChonNhomHang value={nhom} onChange={setNhom} />
+          <div className="field"><label title="Điểm tính giá vốn trên Cơ cấu tổ chức: mọi shop, kho bên dưới chi nhánh gom chung một giá vốn">Chi nhánh (cơ cấu)</label>
+            <select className="input w-md" value={cn} onChange={(e) => { setCn(e.target.value); setRunSel(null); }}>
+              <option value="">Tất cả chi nhánh</option>
+              {(centers.data ?? []).filter((c) => c.shops > 0).map((c) => <option key={c.code} value={c.code}>{c.code} - {c.name} ({c.shops} shop)</option>)}
+            </select></div>
+          <div className="field"><label title="Tháng sẽ tính khi bấm Tính giá vốn">Tháng tính</label><input type="month" className="input w-md" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
+          <div className="field"><label title="Lọc các lần tính theo ngày bấm tính">Ngày tính từ</label><input type="date" className="input" value={ngay.from} onChange={(e) => setNgay((x) => ({ ...x, from: e.target.value }))} /></div>
+          <div className="field"><label>đến</label><input type="date" className="input" value={ngay.to} onChange={(e) => setNgay((x) => ({ ...x, to: e.target.value }))} /></div>
         </div>
-        <div className="card-body" style={{ paddingTop: 8, paddingBottom: 8 }}>
-          <p className="muted" style={{ margin: 0 }}>
-            Đơn giá = (giá trị tồn đầu + nhập mua − trả nhà cung cấp + điều chỉnh tăng + nhận từ đơn vị khác) ÷ (số lượng tương ứng).
-            Phiếu bán, hoàn, chuyển kho, điều chỉnh <b>không mang giá vốn</b>: tính giá vốn (tự tính hay nhập Excel) sinh
-            <b>một phiếu "Giá vốn hàng xuất" cho mỗi chi nhánh</b> (ngày cuối tháng, số GV tháng/năm mã chi nhánh) liệt kê từng mã hàng
-            với số tiền = số lượng × đơn giá; tính lại thì phiếu cũ được đảo và ghi phiếu mới.
-            Giai đoạn chạy song song: bấm <b>Nhập giá vốn từ Excel</b> với bảng giá vốn tháng lấy từ phần mềm kế toán đang dùng — mã có trong tệp
-            dùng đúng giá đó (cột Nguồn giá: Nhập Excel), mã không có thì tính bình quân; tính lại tháng đó vẫn giữ giá đã nhập.
-            <b> Tính giá vốn trước, rồi mới kết chuyển lãi lỗ.</b>
-          </p>
-        </div>
-        <ErrorBox error={run.error ? errorText(run.error) : costs.error ? errorText(costs.error) : null} />
+        <ErrorBox error={run.error ? errorText(run.error) : runs.error ? errorText(runs.error) : null} />
         {run.data && (
-          <div className="card-body">
-            <div>
-              Đã tính tháng {run.data.monthsComputed.join(', ')} · {run.data.items} mặt hàng{run.data.imported ? ` · ${run.data.imported.count} mã theo giá nhập Excel` : ''} · giá vốn ghi sổ <b>{money(run.data.total)}</b>
-              {run.data.branches.length > 0 && <span className="muted"> ({run.data.branches.map((b) => `${b.branchCode}: ${money(b.total)}${b.docNo ? ` (${b.docNo})` : ''}`).join('; ')})</span>}
-            </div>
+          <div className="card-body muted" style={{ paddingTop: 4, paddingBottom: 4 }}>
+            Đã tính tháng {run.data.monthsComputed.join(', ')} · {run.data.items} mặt hàng{run.data.imported ? ` · ${run.data.imported.count} mã theo giá nhập Excel` : ''} · giá vốn ghi sổ <b>{money(run.data.total)}</b>
           </div>
         )}
-        {costs.isLoading ? <Loading /> : !costs.data?.length ? <Empty text="Tháng này chưa tính giá vốn" /> : (
+        <div className="card-body" style={{ paddingTop: 6, paddingBottom: 4 }}><b>Các lần tính giá vốn</b> <span className="muted">· bấm một lần để xem các mã hàng</span></div>
+        {runs.isLoading ? <Loading /> : !runs.data?.length ? <Empty text={cn ? 'Chi nhánh này chưa có lần tính giá vốn trong khoảng ngày — chọn tháng rồi bấm Tính giá vốn' : 'Chưa có lần tính giá vốn trong khoảng ngày'} /> : (
           <DataGrid
-            storageKey="acc49"
-            rows={ln.loc(costs.data)}
-            rowKey={(r) => `${r.costGroup}-${r.sku}`}
+            storageKey="acc49-lan-tinh"
+            rows={runs.data}
+            rowKey={(x) => x.id}
+            rowClassName={(x) => (x.id === curRun?.id ? 'selected' : '')}
+            onSelect={(x) => x && setRunSel(x.id)}
+            maxHeight="240px"
             columns={[
-              { key: 'costGroup', header: 'Đơn vị hạch toán', type: 'code' },
-              { key: 'sku', header: 'Mã hàng', type: 'code' },
-              { key: 'name', header: 'Tên hàng' },
-              { key: 'openingQty', header: 'Số lượng', band: 'Tồn đầu', type: 'qty', sum: true },
-              { key: 'openingValue', header: 'Giá trị', band: 'Tồn đầu', type: 'money', sum: true },
-              { key: 'inQty', header: 'Số lượng', band: 'Nhập tính giá', type: 'qty', sum: true },
-              { key: 'inValue', header: 'Giá trị', band: 'Nhập tính giá', type: 'money', sum: true },
-              { key: 'unitCost', header: 'Đơn giá vốn', type: 'money', render: (r) => r.unitCost.toLocaleString('vi-VN', { maximumFractionDigits: 4 }) },
-              { key: 'costSource', header: 'Nguồn giá', value: (r) => (r.costSource === 'import' ? 'Nhập Excel' : 'Tính bình quân') },
-              { key: 'outQty', header: 'Xuất', type: 'qty', sum: true },
-              { key: 'closingQty', header: 'Số lượng', band: 'Tồn cuối', type: 'qty', sum: true },
-              { key: 'closingValue', header: 'Giá trị', band: 'Tồn cuối', type: 'money', sum: true },
-              { key: 'giftQty', header: 'Trong đó: quà giá 0', band: 'Tồn cuối', type: 'qty', sum: true, title: 'Quà khuyến mại người tiêu dùng nhận kèm phiếu mua: nằm trong số lượng tồn nhưng không có giá trị (tặng khách lấy từ phần này trước, giá vốn 0)' },
+              { key: 'runAt', header: 'Ngày tính', value: (x) => new Date(x.runAt).toLocaleString('vi-VN') },
+              { key: 'centerCode', header: 'Chi nhánh', value: (x) => `${x.centerCode} - ${x.centerName}`, title: 'Điểm tính giá vốn trên Cơ cấu tổ chức' },
+              { key: 'period', header: 'Kỳ', value: (x) => `${x.period.slice(5)}/${x.period.slice(0, 4)}` },
+              { key: 'from', header: 'Chứng từ', value: (x) => `${x.from.slice(8)}/${x.from.slice(5, 7)}–${x.to.slice(8)}/${x.to.slice(5, 7)}`, title: 'Khoảng ngày chứng từ được cập nhật giá vốn' },
+              { key: 'items', header: 'Số mã', type: 'qty' },
+              { key: 'total', header: 'Giá vốn ghi sổ', type: 'money' },
+              { key: 'vouchers', header: 'Phiếu giá vốn', value: (x) => (Array.isArray(x.vouchers) ? x.vouchers.length : 0), title: 'Phiếu "Giá vốn hàng xuất" (một phiếu / shop / tháng)' },
+              { key: 'imported', header: 'Mã giá Excel', type: 'qty' },
+              { key: 'runBy', header: 'Người tính' },
+              { key: 'orgUid', header: 'Mốc cơ cấu', type: 'code', title: 'Định danh nút cơ cấu lúc tính (không đổi khi đổi mã, tên)' },
             ]}
           />
+        )}
+        {curRun && (
+          <>
+            <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <b>Bảng giá vốn · {curRun.centerCode} · tháng {curRun.period.slice(5)}/{curRun.period.slice(0, 4)} · tính lúc {new Date(curRun.runAt).toLocaleString('vi-VN')}</b>
+              <div className="field" style={{ margin: 0 }}><label>Mã hàng</label><input className="input w-md" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Lọc theo mã, tên hàng" /></div>
+              <ChonNhomHang value={nhom} onChange={setNhom} />
+            </div>
+            {lines.isLoading ? <Loading /> : (
+              <DataGrid
+                storageKey="acc49"
+                rows={lineRows}
+                rowKey={(x) => x.sku}
+                columns={[
+                  { key: 'sku', header: 'Mã hàng', type: 'code' },
+                  { key: 'name', header: 'Tên hàng' },
+                  { key: 'openingQty', header: 'Số lượng', band: 'Tồn đầu', type: 'qty', sum: true },
+                  { key: 'openingValue', header: 'Giá trị', band: 'Tồn đầu', type: 'money', sum: true },
+                  { key: 'inQty', header: 'Số lượng', band: 'Nhập tính giá', type: 'qty', sum: true },
+                  { key: 'inValue', header: 'Giá trị', band: 'Nhập tính giá', type: 'money', sum: true },
+                  { key: 'unitCost', header: 'Đơn giá vốn', type: 'money', render: (x) => x.unitCost.toLocaleString('vi-VN', { maximumFractionDigits: 4 }) },
+                  { key: 'costSource', header: 'Nguồn giá', value: (x) => (x.costSource === 'import' ? 'Nhập Excel' : 'Tính bình quân') },
+                  { key: 'outQty', header: 'Xuất', type: 'qty', sum: true },
+                  { key: 'closingQty', header: 'Số lượng', band: 'Tồn cuối', type: 'qty', sum: true },
+                  { key: 'closingValue', header: 'Giá trị', band: 'Tồn cuối', type: 'money', sum: true },
+                  { key: 'giftQty', header: 'Trong đó: quà giá 0', band: 'Tồn cuối', type: 'qty', sum: true, title: 'Quà khuyến mại nhận kèm phiếu mua: nằm trong số lượng tồn nhưng không mang giá trị' },
+                ]}
+              />
+            )}
+          </>
         )}
       </div>
     </>
   );
 }
+
+interface CostRun { id: string; orgUid: string; centerCode: string; centerName: string; period: string; from: string; to: string; items: number; total: number; imported: number; vouchers: unknown; runBy: string; runAt: string }
 
 /* ------------------------------------------------------------------ ACC83 */
 interface StockFigures { openingQty: number; openingValue: number; inQty: number; inValue: number; outQty: number; outValue: number; closingQty: number; closingValue: number; purchaseQty: number; purchaseValue: number; cogsQty: number; cogsValue: number; uncosted: number }

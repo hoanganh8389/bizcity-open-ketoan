@@ -133,7 +133,7 @@ export const COST_TEMPLATES: PrintTemplate<CostSheet>[] = [
       <LedgerForm ctx={ctx} d={{
         title: 'BẢNG TÍNH GIÁ VỐN HÀNG XUẤT', period: `Tháng ${s.period.slice(5, 7)} năm ${s.period.slice(0, 4)} — bình quân gia quyền cuối tháng`,
         signs: MAKER_SIGNS, total: 'Tổng cộng', rows: s.rows,
-        groupBy: { key: (r) => r.costGroup, label: (k, rs) => `Đơn vị hạch toán: ${k}${rs[0]?.costGroupName ? ` — ${rs[0].costGroupName}` : ''}`, subtotal: 'Cộng đơn vị' },
+        groupBy: { key: (r) => r.costGroup, label: (k, rs) => `Chi nhánh: ${k}${rs[0]?.costGroupName ? ` — ${rs[0].costGroupName}` : ''}`, subtotal: 'Cộng chi nhánh' },
         cols: [
           { key: 'stt', h: 'STT', w: 30, center: true, v: (_, i) => i + 1 },
           { key: 'sku', h: 'Mã hàng', w: 84, v: (r) => r.sku },

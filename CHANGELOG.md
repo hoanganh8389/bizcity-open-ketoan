@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Tính giá vốn theo chi nhánh trên Cơ cấu tổ chức; lưu từng lần tính <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** giá vốn bình quân gia quyền tháng tính **riêng từng chi nhánh cấp 2** trên Cơ cấu tổ chức (nơi mua hàng đại diện rồi phát xuống shop các tỉnh; cấp tỉnh chỉ lấy MST). Đơn vị hạch toán của shop **tự suy** theo cây: `org_units.is_cost_center` (mặc định nút cấp 2) sinh `accounting_units` (`org_unit_id`), shop lấy điểm tính giá vốn gần nhất phía trên; dời nút / đổi điểm tính thì tự gắn lại. Engine giá vốn, lãi gộp, chuyển kho cùng / khác đơn vị dùng luôn.
+- **Đổi:** ACC49 đổi tên **Tính giá vốn** (menu, sơ đồ). Màn theo trình tự: chọn **Chi nhánh (cơ cấu)** → **Các lần tính giá vốn** (lọc ngày tính) → bấm một lần: **bảng giá vốn các mã hàng** của lần đó. Bấm Tính khi đã chọn chi nhánh: đơn giá tính chung một lượt (chuyển hàng giữa chi nhánh khớp giá), chỉ ra phiếu "Giá vốn hàng xuất" cho shop của chi nhánh đó; giá vốn không lưu vào từng chứng từ.
+- **Thêm:** mỗi lần tính lưu `costing_runs` (mốc cơ cấu: id + uid nút, kỳ, khoảng ngày, số mã, tổng, phiếu, người tính) và `costing_run_lines` (bảng đơn giá lúc tính). API `GET /api/v1/inventory/cost-centers`, `/costing-runs`, `/costing-runs/:id/lines`; `POST /api/v1/inventory/costing` nhận `costCenter`.
+- **Nâng cấp cần làm:** migration `0147`, `0148`; tính lại giá vốn các tháng đã tính (giá cũ đang gom một rổ chung).
+
 ### Mã màn ở mọi menu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** mã màn (MH11, DM10, ACC41…) hiện nhỏ cạnh tên ở hàng thẻ của nhóm (dưới thanh thẻ), menu điện thoại và bảng Thêm nhanh — cùng với menu xổ bên trái.
