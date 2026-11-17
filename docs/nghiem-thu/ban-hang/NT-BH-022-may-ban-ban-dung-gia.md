@@ -55,9 +55,10 @@ Thu ngân chỉ bán theo giá của bảng giá cửa hàng và theo chương t
 ## 6. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-022-may-ban-ban-dung-gia.test.ts` (tạo khi code) |
+| Ngày chạy | 17/11/2026 (CSDL test `ketoan_test`) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — kết quả chạy NT-BH-022 (đóng góp) --> |
+| Bản code (commit) | nhánh `feat/nt-bh-022-gia-may-ban` (PR code) |
+| Test tự động | `apps/api/test/nt-bh-022-may-ban-ban-dung-gia.test.ts` **9/9** (đúng giá; khác giá / sai hệ số → POS_PRICE_CHANGED; giảm tay → POS_MANUAL_DISCOUNT; chưa có giá → POS_NO_PRICE; khuyến mại 10 % vẫn bán; hàng Nội bộ; đơn mất mạng + lọc BH13; đổi giá giữa ngày). Module `modules/pos/test/price.test.ts`. Test bán hàng cũ khai giá bằng `khaiGia` |
+| Máy bán React | bỏ nhập giảm tay (hai cột CK chỉ hiện giảm khuyến mại), mã chưa có giá không vào giỏ / không thanh toán; unit 708/708, e2e 49/49 |
 
 ## 7. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -67,3 +68,4 @@ Thu ngân chỉ bán theo giá của bảng giá cửa hàng và theo chương t
 | Ngày | Thay đổi |
 |---|---|
 | 17/11/2026 | Tạo phiếu, chốt (đợt 1: phần máy bán) |
+| 17/11/2026 | Code + test xong, ghi kết quả chạy |

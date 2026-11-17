@@ -146,6 +146,9 @@ export const ERROR_REASONS = {
   POS_GIFT_WITHOUT_POLICY: 'Dòng quà / dòng giảm theo chương trình không nêu chương trình (policyRef); items: [{ lineId, sku }]',
   // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (BIZCITY-ERRORS 1.12.0-draft §4c, đóng góp)
   POS_STOCK_SHORT: 'Bán quá tồn của cửa hàng (máy bán chặn cứng, cộng theo mã, ĐVT nhỏ nhất); items: [{ sku, need, have }]',
+  // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 máy bán bán đúng bảng giá (BIZCITY-ERRORS 1.13.0-draft §4c, đóng góp)
+  POS_MANUAL_DISCOUNT: 'Thu ngân không giảm tay (chỉ giảm theo chương trình khuyến mại); items: [{ lineId, sku }]',
+  POS_NO_PRICE: 'Mã × ĐVT chưa có giá ở bảng giá cửa hàng — báo kế toán khai giá; items: [{ sku, unit }]',
   PHIEU_BAN_STOCK_SHORT: 'Phiếu bán nhập tay xuất quá tồn của kho trên phiếu khi bật công tắc chặn (BH17); items: [{ sku, need, have }]',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;

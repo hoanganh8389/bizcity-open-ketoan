@@ -14,8 +14,8 @@ import { runModuleMigrations } from '@bizcity/platform/db/module-db';
 import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
-import { setupTenant, type TestCtx } from './helpers.js';
-import { nhapTon } from './pos-nhap-ton.js';
+import { call, setupTenant, type TestCtx } from './helpers.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
@@ -85,6 +85,8 @@ describe.skipIf(!HAS)('NT-BH-019 — máy bán POS: bill Z và khách mới đi 
       (${tenantId}, ${QUA}, 'Bình sữa quà tặng (không gửi thuế)', 'Cái', 'R08', 'internal')`.execute(db);
     // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
     await nhapTon(ctx, 'CN01', [[SKU, 1000, 'Lon'], [QUA, 1000, 'Cái']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (đóng góp)
+    await khaiGia(tenantId, [[SKU, 'Lon', 325_000]]);
   });
   afterAll(async () => {
     await app?.close();
@@ -152,10 +154,21 @@ describe.skipIf(!HAS)('NT-BH-019 — máy bán POS: bill Z và khách mới đi 
 
   it('kiểm 4: chuyển dòng 0đ của đơn đã xong sang bill Z — đơn phiên bản mới, bản sao website phát lại; sổ không đổi; dòng có tiền bị chặn', async () => {
     const ID3 = '0193a1b2-0000-7000-8000-000000019005';
-    // Dòng 0đ của mã CÓ gửi thuế (giảm tay 100%) ở bill chính — POS cũ cho chuyển sang bill Z để không lên hoá đơn.
-    const r = await post('/orders', order({ id: ID3, customer: { retail: true }, lines: [
+    // Dòng 0đ của mã CÓ gửi thuế ở bill chính — POS cũ cho chuyển sang bill Z để không lên hoá đơn.
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: thu ngân không giảm tay (Q6) → dòng 0đ trước tạo bằng giảm tay 100% nay là dòng
+    // quà của chương trình khuyến mại "mua 1 tặng 1" (cùng mã có gửi thuế), có căn cứ policyRef + policyRefs băm như NT-BH-003 (đóng góp)
+    const prog = await call(ctx, 'POST', '/api/v1/sale-programs', {
+      programKind: 'KM-CTY', validFrom: '2026-11-01', validTo: '2026-12-31', code: 'CT-019-TANG', name: 'Mua 1 tặng 1', mode: 'gift',
+      sku: SKU, buyQty: 1, giftSku: SKU, giftQty: 1, quotas: [{ branchCode: 'CN01', quotaQty: 10 }],
+    });
+    expect(prog.status, JSON.stringify(prog.body)).toBe(200);
+    const ev = await call(ctx, 'POST', '/api/v1/policies/evaluate', { docDate: '2026-11-15', branchCode: 'CN01', lines: [{ lineKey: 'l1', sku: SKU, qty: 1, price: 325_000 }] });
+    expect(ev.status, JSON.stringify(ev.body)).toBe(200);
+    expect(ev.body.data.gifts.map((g: { sku: string; qty: number }) => [g.sku, g.qty])).toEqual([[SKU, 1]]);
+    const policyRefs = ev.body.data.policyRefs.map(({ key, version, hash }: { key: string; version: number; hash: string }) => ({ key, version, hash }));
+    const r = await post('/orders', order({ id: ID3, customer: { retail: true }, policyRefs, lines: [
       { lineId: 'l1', sku: SKU, unitName: 'Lon', unitQty: 1, clientUnitPrice: 325_000 },
-      { lineId: 'l2', sku: SKU, unitName: 'Lon', unitQty: 1, clientUnitPrice: 325_000, manualDiscount: { kind: 'percent', value: 100 } },
+      { lineId: 'l2', sku: SKU, unitName: 'Lon', unitQty: 1, clientUnitPrice: 0, isGift: true, policyRef: { key: 'CT-019-TANG', version: policyRefs[0].version, line: 'gift' } },
     ] }));
     expect(r.statusCode, r.body).toBe(201);
     const o = r.json().data.order;

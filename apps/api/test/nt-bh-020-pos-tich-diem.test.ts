@@ -16,7 +16,7 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
-import { nhapTon } from './pos-nhap-ton.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 
 const POS = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const LOY = fileURLToPath(new URL('../../../modules/loyalty/', import.meta.url));
@@ -76,6 +76,8 @@ describe.skipIf(!HAS)('NT-BH-020 — sổ điểm thành viên: tích / hoàn th
     expect((await call('PUT', `/api/v1/products/${SKU}`, { taxOutCode: 'R08' })).statusCode).toBe(200);
     // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
     await nhapTon(ctx, 'CN01', [[SKU, 1000, 'Lon']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (đóng góp)
+    await khaiGia(tenantId, [[SKU, 'Lon', 325_000]]);
   });
   afterAll(async () => {
     await app?.close();

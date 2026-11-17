@@ -15,7 +15,7 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
-import { nhapTon } from './pos-nhap-ton.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 
 const POS = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const LOY = fileURLToPath(new URL('../../../modules/loyalty/', import.meta.url));
@@ -82,6 +82,8 @@ describe.skipIf(!HAS)('NT-BH-020 bước 2 — đổi điểm lấy voucher / qu
     expect((await call('POST', '/api/v1/m/loyalty/program', { branchCode: 'CN01', storeId: 2, program: PROGRAM })).statusCode).toBe(200);
     // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
     await nhapTon(ctx, 'CN01', [[SKU, 1000, 'Lon'], [QUA, 1000, 'Hộp']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (đóng góp)
+    await khaiGia(tenantId, [[SKU, 'Lon', 325_000]]);
     // Như bước 1: 325.000 (+32), 1.300.000 (+150), trả 650.000 (−75) → 107.
     expect((await sell(order(id(), { customer: { phone: PHONE, name: 'Chị Lan' } }))).statusCode).toBe(201);
     const o2 = id();

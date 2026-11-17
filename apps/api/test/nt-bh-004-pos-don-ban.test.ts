@@ -13,7 +13,7 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
-import { nhapTon } from './pos-nhap-ton.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 import { createHmac } from 'node:crypto';
 import { env } from '../src/config/env.js';
 
@@ -85,6 +85,8 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     }
     // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
     await nhapTon(ctx, 'CN01', [['SUA400', 1000, 'Hộp'], ['TA01', 1000, 'Gói']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (CHUATHUE để lệch chuẩn "chưa khai thuế" tới được bước kiểm thuế) (đóng góp)
+    await khaiGia(tenantId, [['SUA400', 'Hộp', 324_000], ['TA01', 'Gói', 215_000], ['CHUATHUE', 'Cái', 1000]]);
   });
   afterAll(async () => {
     await app?.close();
@@ -120,54 +122,58 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     expect(await byAccount(key)).toEqual({ '1111': [324_000, 0], '1311': [324_000, 324_000], '33311': [0, 24_000], '51111': [0, 300_000] });
   });
 
-  it('tình huống 2: giảm tay 10%, R08 + R10, TM 300.000 + CK 498.200, khách mới 0911222333 → HD2611000002', async () => {
+  // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: thu ngân không giảm tay (Q6) → bỏ giảm tay 10%, tính lại số (đóng góp)
+  // SUA400 2 × 324.000 = 648.000 (R08): trước thuế round(648.000 / 1,08) = 600.000, thuế 48.000.
+  // TA01 1 × 215.000 (R10): trước thuế round(215.000 / 1,1) = 195.455, thuế 19.545. Cộng 795.455 + 67.545 = 863.000 = TM 300.000 + CK 563.000.
+  it('tình huống 2: R08 + R10, TM 300.000 + CK 563.000, khách mới 0911222333 → HD2611000002', async () => {
     const r = await post('/orders', order({
       id: ID2,
       customer: { phone: '0911 222 333', name: 'Khách thử POS' },
       lines: [
-        { lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 2, clientUnitPrice: 324_000, manualDiscount: { kind: 'percent', value: 10 } },
+        { lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 2, clientUnitPrice: 324_000 },
         { lineId: 'l2', sku: 'TA01', unitName: 'Gói', unitQty: 1, clientUnitPrice: 215_000 },
       ],
-      payment: { mode: 'split', parts: [{ method: 'TM', amount: 300_000 }, { method: 'CK', amount: 498_200 }] },
-      clientTotal: 798_200,
+      payment: { mode: 'split', parts: [{ method: 'TM', amount: 300_000 }, { method: 'CK', amount: 563_000 }] },
+      clientTotal: 863_000,
     }));
     expect(r.statusCode, r.body).toBe(201);
     const o = r.json().data.order;
-    expect(o).toMatchObject({ code: 'HD2611000002', subtotal: 735_455, taxTotal: 62_745, total: 798_200 });
-    expect(o.lines.map((l: { amount: number; taxAmount: number }) => [l.amount, l.taxAmount])).toEqual([[540_000, 43_200], [195_455, 19_545]]);
+    expect(o).toMatchObject({ code: 'HD2611000002', subtotal: 795_455, taxTotal: 67_545, total: 863_000 });
+    expect(o.lines.map((l: { amount: number; taxAmount: number }) => [l.amount, l.taxAmount])).toEqual([[600_000, 48_000], [195_455, 19_545]]);
     expect(o.customer).toEqual({ id: '0911222333', name: 'Khách thử POS', phone: '0911222333' });
 
     const accounts = await byAccount(`pos:CN01:sale:${ID2}`);
-    expect(accounts['51111']).toEqual([0, 735_455]);
-    expect(accounts['33311']).toEqual([0, 62_745]);
+    expect(accounts['51111']).toEqual([0, 795_455]);
+    expect(accounts['33311']).toEqual([0, 67_545]);
     expect(accounts['1111']).toEqual([300_000, 0]);
-    expect(accounts['1311']).toEqual([798_200, 798_200]);
-    expect(accounts['11210005']).toEqual([498_200, 0]); // CK theo gói định khoản mặc định
+    expect(accounts['1311']).toEqual([863_000, 863_000]);
+    expect(accounts['11210005']).toEqual([563_000, 0]); // CK theo gói định khoản mặc định
     expect(Object.keys(accounts).sort()).toEqual(['1111', '11210005', '1311', '33311', '51111']);
 
     const partner = (await sql<{ name: string }>`SELECT name FROM partners WHERE tenant_id = ${tenantId} AND code = '0911222333'`.execute(db)).rows;
     expect(partner).toEqual([{ name: 'Khách thử POS' }]);
 
-    // Đơn giá chứng từ là giá chưa thuế TRƯỚC giảm: đơn giá × SL − giảm = thành tiền chưa thuế (không trừ chiết khấu hai lần).
+    // Đơn giá chứng từ là giá chưa thuế TRƯỚC giảm: đơn giá × SL − giảm = thành tiền chưa thuế (không trừ chiết khấu hai lần; đơn không giảm → giảm 0).
     const doc = (await sql<{ p: { lines: { unitPrice: number; unitQty: number; discount: number; amountBeforeTax: number }[] } }>`
       SELECT payload AS p FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ${`pos:CN01:sale:${ID2}`}`.execute(db)).rows[0]!.p;
-    expect(doc.lines.map((l) => [l.unitPrice, l.discount, l.amountBeforeTax])).toEqual([[300_000, 60_000, 540_000], [195_455, 0, 195_455]]);
+    expect(doc.lines.map((l) => [l.unitPrice, l.discount, l.amountBeforeTax])).toEqual([[300_000, 0, 600_000], [195_455, 0, 195_455]]);
     for (const l of doc.lines) expect(Math.abs(l.unitPrice * l.unitQty - l.discount - l.amountBeforeTax)).toBeLessThanOrEqual(l.unitQty);
     // Dòng đơn lưu định danh mặt hàng, mã chỉ là ảnh chụp.
     const lines = (await sql<{ sku: string; same: boolean; amount_before_tax: string }>`
       SELECT l.sku, l.item_id = p.item_id AS same, l.amount_before_tax FROM mod_pos.order_lines l
         JOIN products p ON p.tenant_id = l.tenant_id AND p.sku = l.sku
        WHERE l.tenant_id = ${tenantId} AND l.order_id = ${ID2} ORDER BY l.line_key`.execute(db)).rows;
-    expect(lines.map((l) => [l.sku, l.same, Number(l.amount_before_tax)])).toEqual([['SUA400', true, 540_000], ['TA01', true, 195_455]]);
+    expect(lines.map((l) => [l.sku, l.same, Number(l.amount_before_tax)])).toEqual([['SUA400', true, 600_000], ['TA01', true, 195_455]]);
   });
 
-  it('báo cáo: ngày 09/11 chi nhánh CN01 doanh thu 1.035.455, thuế 86.745; 1311 của khách 0911222333 về 0', async () => {
+  // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: tình huống 2 bỏ giảm tay → doanh thu 300.000 + 795.455, thuế 24.000 + 67.545 (đóng góp)
+  it('báo cáo: ngày 09/11 chi nhánh CN01 doanh thu 1.095.455, thuế 91.545; 1311 của khách 0911222333 về 0', async () => {
     const r = (await sql<{ rev: string; vat: string }>`
       SELECT SUM(CASE WHEN l.account_code = '51111' THEN l.credit - l.debit ELSE 0 END) AS rev,
              SUM(CASE WHEN l.account_code = '33311' THEN l.credit - l.debit ELSE 0 END) AS vat
         FROM accounting_events a JOIN ledger_entries e ON e.event_id = a.id JOIN ledger_lines l ON l.entry_id = e.id
        WHERE a.tenant_id = ${tenantId} AND a.doc_key LIKE 'pos:CN01:sale:%' AND e.status = 'posted'`.execute(db)).rows[0]!;
-    expect([Number(r.rev), Number(r.vat)]).toEqual([1_035_455, 86_745]);
+    expect([Number(r.rev), Number(r.vat)]).toEqual([1_095_455, 91_545]);
     const bal = (await sql<{ v: string | null }>`
       SELECT SUM(l.debit - l.credit) AS v FROM ledger_lines l JOIN partners p ON p.id = l.partner_id
        WHERE l.tenant_id = ${tenantId} AND p.code = '0911222333' AND l.account_code = '1311'`.execute(db)).rows[0]!;
@@ -203,7 +209,9 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
       ['tiền mặt thiếu', { payment: { mode: 'cash', cashGiven: 100_000 } }, 400, 'POS_CASH_INSUFFICIENT'],
       ['chia tiền lệch', { payment: { mode: 'split', parts: [{ method: 'TM', amount: 300_000 }] } }, 400, 'POS_SPLIT_MISMATCH'],
       ['tổng máy khác', { clientTotal: 323_999 }, 409, 'POS_PRICE_CHANGED'],
-      ['giảm tiền quá thành tiền', { lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'amount', value: 400_000 } }] }, 400, 'POS_DISCOUNT_TOO_LARGE'],
+      // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: thu ngân không giảm tay (Q6) → mọi giảm tay đều bị chặn, kể cả giảm hợp lệ trước đây (đóng góp)
+      ['giảm tiền quá thành tiền', { lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'amount', value: 400_000 } }] }, 400, 'POS_MANUAL_DISCOUNT'],
+      ['giảm tay 10%', { lines: [{ lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 1, clientUnitPrice: 324_000, manualDiscount: { kind: 'percent', value: 10 } }], clientTotal: 291_600 }, 400, 'POS_MANUAL_DISCOUNT'],
       // [2026-11-15 08:30 PM Võ Hoàng] POS-LOYALTY — NT-BH-020 bước 2: mã coupon là voucher đổi điểm (module loyalty kiểm); CTKM kiểu plugin vẫn chặn (đóng góp)
       ['có CTKM kiểu plugin', { promotionSelections: [{ kind: 'row', rowKey: 'KM1' }] }, 400, 'POS_NOT_SUPPORTED_YET'],
       // [2026-11-13 12:50 AM Võ Hoàng] POS-QR — trả QR nay được nhận (đơn chờ trả tiền, NT-BH-009): bỏ khỏi lệch chuẩn (đóng góp)
@@ -266,6 +274,8 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
       (${tenantId}, '11005100102', 'Bình sữa kẹp quà', 'Cái', 'R08', 'clip')`.execute(db);
     // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
     await nhapTon(ctx, 'CN01', [['11005100102', 10, 'Cái']], '2026-10-01', 'NHAP-TON-CN01-KEP');
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: mã con thu tiền phải có giá; hàng Nội bộ 0đ không cần giá (đóng góp)
+    await khaiGia(tenantId, [['11005100102', 'Cái', 54_000]]);
     const docsBefore = await docCount('pos:%');
 
     const price = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000c2', lines: [{ lineId: 'l1', sku: '11005100103Z', unitName: 'Cái', unitQty: 1, clientUnitPrice: 5_000 }], clientTotal: 5_000 }));

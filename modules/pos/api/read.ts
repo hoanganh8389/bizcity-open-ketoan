@@ -50,6 +50,16 @@ export async function catalogFor(tx: Tx, skus: readonly string[]): Promise<Map<s
   }]));
 }
 
+// [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: giá bảng giá cửa hàng theo mã × ĐVT để đối chiếu giá máy bán gửi (đóng góp)
+/** Giá bán (gồm thuế) và hệ số ĐVT của cửa hàng theo mã × ĐVT (`bizcity_read.branch_prices`, luật DM14). Khoá: priceKey(sku, unit). */
+export async function pricesFor(tx: Tx, branch: string, skus: readonly string[]): Promise<Map<string, { price: number | null; ratio: number }>> {
+  const list = [...new Set(skus)];
+  if (!list.length) return new Map();
+  const rows = (await sql<{ sku: string; unit: string; ratio: string | number; price: string | number | null }>`
+    SELECT sku, unit, ratio, price FROM bizcity_read.branch_prices WHERE branch_code = ${branch} AND sku IN (${sql.join(list)})`.execute(tx)).rows;
+  return new Map(rows.map((r) => [`${r.sku}|${r.unit.trim().toLowerCase()}`, { price: r.price === null ? null : Number(r.price), ratio: Number(r.ratio) }]));
+}
+
 export async function partnerByCode(tx: Tx, code: string): Promise<{ code: string; name: string; phone: string } | null> {
   const r = (await sql<{ code: string; name: string; phone: string | null; mobile: string | null }>`
     SELECT code, name, phone, mobile FROM bizcity_read.partners WHERE code = ${code} LIMIT 1`.execute(tx)).rows[0];
