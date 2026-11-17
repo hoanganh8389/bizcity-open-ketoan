@@ -104,7 +104,11 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
   // [2026-11-12 Nguyễn Văn Thủy] chỉ khai giá ĐVT bán chính (đã chọn ở thẻ Đơn vị tính), không gợi ý quy đổi (đóng góp)
   const all = sortUnits(units);
   const main = all.find((u) => u.isDefault) ?? all[0];
-  const sorted = main ? [main] : [];
+  // [2026-11-17 11:52 AM kiennt] DM10 — ĐVT bán chính luôn có cột (bắt buộc); ĐVT khác hiện nếu đã có giá hoặc thêm bằng "+ Thêm giá ĐVT khác" (đóng góp)
+  const [them, setThem] = useState<string[]>([]);
+  const coGia = (unit: string) => prices.some((p) => p.unit === unit && p.price !== null && p.price !== undefined);
+  const sorted = main ? all.filter((u) => u === main || coGia(u.unit) || them.includes(u.unit)) : [];
+  const conLai = all.filter((u) => !sorted.includes(u));
   const priceOf = (list: string, unit: string) => prices.find((p) => p.priceListCode === list && p.unit === unit)?.price;
   const rowPrices = (list: string) => sorted.map((u) => ({ unit: u.unit, price: priceOf(list, u.unit) }));
   const company = lists.find((l) => l.isCompany);
@@ -127,12 +131,12 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
       {/* Giá bán theo bảng giá */}
       <section className="blk blk-green">
         <header>
-          <div><b>Giá bán theo bảng giá</b><span>Giá đã gồm thuế, theo ĐVT bán chính{main ? ` (${main.unit})` : ''}. Đổi ĐVT bán chính ở thẻ Đơn vị tính.</span></div>
+          <div><b>Giá bán theo bảng giá</b><span>Giá đã gồm thuế. Bắt buộc giá ĐVT bán chính{main ? ` (${main.unit})` : ''} ở bảng giá công ty.</span></div>
         </header>
         {!sorted.length ? <div className="muted" style={{ padding: 8 }}>Khai ĐVT ở thẻ Đơn vị tính trước.</div> : !company ? <div className="muted" style={{ padding: 8 }}>Chưa có bảng giá công ty — khai ở màn Bảng giá bán.</div> : (
           <div style={{ overflowX: 'auto' }}>
             <table className="dvt-price">
-              <thead><tr><th>Bảng giá</th>{sorted.map((u) => <th key={u.unit} className="num">{u.unit}{u.ratio !== 1 && <small> ×{fmt(u.ratio)}</small>}</th>)}<th /></tr></thead>
+              <thead><tr><th>Bảng giá</th>{sorted.map((u) => <th key={u.unit} className="num" title={u === main ? 'ĐVT bán chính — bắt buộc có giá ở bảng giá công ty' : undefined}>{u.unit}{u === main && ' (*)'}{u.ratio !== 1 && <small> ×{fmt(u.ratio)}</small>}</th>)}<th /></tr></thead>
               <tbody>
                 {shown.map((code, row) => {
                   const l = listName.get(code);
@@ -166,6 +170,14 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+        {conLai.length > 0 && company && (
+          <div className="dvt-add">
+            <select className="select input" style={{ height: 30, width: 'auto' }} value="" onChange={(e) => { const u = e.target.value; if (u) setThem((x) => [...x, u]); }}>
+              <option value="">+ Thêm giá ĐVT khác…</option>
+              {conLai.map((u) => <option key={u.unit} value={u.unit}>{u.unit}{u.ratio !== 1 ? ` (×${fmt(u.ratio)})` : ''}</option>)}
+            </select>
           </div>
         )}
         {onlyCompany && company && sorted.length > 0 && <div className="muted" style={{ fontSize: 12, padding: '6px 0' }}>Hàng chính: chỉ khai giá bảng giá công ty.</div>}

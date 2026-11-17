@@ -63,12 +63,40 @@ async function enableMonitorRole(): Promise<void> {
   console.log(`Vai trò ketoan_monitor: ${exists ? 'đã cập nhật mật khẩu' : 'đã tạo'} (postgres-exporter dùng khi PG_EXPORTER_USER=ketoan_monitor)`);
 }
 
+/**
+ * Công ty mẫu (PHASE-036 · 00 §14): BIZCITY_SAMPLE = mã gói và CSDL vừa khởi tạo → tạo đơn vị SAMPLE_TENANT_CODE (mặc định "mau",
+ * is_sample) cùng tài khoản quản trị, nạp gói qua action Core. Lỗi ở đây không làm hỏng job cài (in cảnh báo; vào TI15 của đơn vị
+ * mẫu để chạy lại).
+ */
+async function sampleTenant(tenantsBefore: number, adminPassword: string): Promise<void> {
+  const { sampleDecision, createSampleTenant } = await import('../modules/system/setup-run.js');
+  const has = Number((await pool.query<{ n: string }>('SELECT count(*) AS n FROM tenants WHERE is_sample')).rows[0]!.n) > 0;
+  const d = sampleDecision(process.env.BIZCITY_SAMPLE, tenantsBefore, has);
+  if (!d.run) { if ((process.env.BIZCITY_SAMPLE ?? '').trim()) console.log(`Công ty mẫu: bỏ qua — ${d.why}`); return; }
+  // Đăng ký action Core (bộ chạy gói gọi lại action) bằng cách dựng app, không mở cổng.
+  const { buildApp } = await import('../app.js');
+  const app = await buildApp();
+  try {
+    await app.ready();
+    const code = (process.env.SAMPLE_TENANT_CODE ?? '').trim() || 'mau';
+    const r = await createSampleTenant({ presetId: process.env.BIZCITY_SAMPLE!.trim(), code, adminPassword }, seed);
+    for (const st of r.run?.steps ?? []) console.log(`  ${st.failed ? '✘' : '✔'} ${st.label}: ghi ${st.written}, đã có ${st.skipped}, lỗi ${st.failed}`);
+    console.log(`Công ty mẫu: đơn vị ${code} — ${r.run?.status ?? 'đã có'} (đăng nhập mã đơn vị ${code}, cùng tài khoản quản trị)`);
+  } catch (err) {
+    console.warn('Công ty mẫu: không nạp được —', err instanceof Error ? err.message : err, '(job cài vẫn xong; vào TI15 của đơn vị mẫu để chạy lại)');
+  } finally {
+    await app.close();
+  }
+}
+
 async function main(): Promise<void> {
   const applied = await runMigrations((m) => console.log(m));
   console.log(applied.length ? `Đã áp ${applied.length} migration.` : 'Cơ sở dữ liệu đã mới nhất.');
   await enableAppRole();
   await enableMonitorRole();
-  await seed();
+  // [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a, 00 §14): đếm đơn vị trước seed — 0 = CSDL vừa khởi tạo (điều kiện tạo Công ty mẫu)
+  const tenantsBefore = Number((await pool.query<{ n: string }>('SELECT count(*) AS n FROM tenants')).rows[0]!.n);
+  const main = await seed();
   // Phiếu mua hàng đã duyệt từ trước: chốt chiết khấu tự áp từ chính sách vào phiếu (một lần, chạy lại bỏ qua).
   const fz = await freezeApproved(db);
   if (fz.frozen || fz.skipped.length) console.log(`Mua hàng: chốt chiết khấu ${fz.frozen} phiếu đã duyệt${fz.skipped.length ? `; lệch tổng, bỏ qua: ${fz.skipped.join(', ')}` : ''}`);
@@ -80,6 +108,7 @@ async function main(): Promise<void> {
   }
   const changes = await syncBundled('setup');
   console.log(changes.length ? `Registry module: ${changes.map((c) => `${c.action} ${c.key}`).join(', ')}` : 'Registry module: đã khớp bản dựng');
+  await sampleTenant(tenantsBefore, main.adminPassword);
   await pool.end();
 }
 

@@ -14,7 +14,15 @@ export const COMING_INDUSTRIES = ['Dịch vụ', 'Sản xuất', 'Xây dựng'];
 
 export interface StepState { key: string; label: string; total: number; written: number; skipped: number; failed: number; status: string; firstError: { code: string; message: string; requestId: string } | null }
 export interface SetupRun { id: string; presetId: string; presetVersion: string; status: 'running' | 'done' | 'failed'; firstRun: boolean; steps: StepState[]; error: string | null; startedAt: string; finishedAt: string | null }
-export interface SetupStatus { empty: boolean; kinds: string[]; canSetup: boolean; runs: SetupRun[] }
+export interface SetupStatus { empty: boolean; kinds: string[]; canSetup: boolean; runs: SetupRun[]; isSample?: boolean; sampleTenantCode?: string | null }
+
+/** Thẻ "Xem công ty mẫu" (B5a): mở được khi bản cài có Công ty mẫu và người dùng không đang ở trong đó. */
+export function sampleCard(st: SetupStatus | null | undefined): { open: boolean; code: string | null; note: string } {
+  const code = st?.sampleTenantCode ?? null;
+  if (st?.isSample) return { open: false, code, note: 'Bạn đang ở Công ty Mẫu' };
+  if (!code) return { open: false, code: null, note: 'Bản cài này chưa có Công ty Mẫu (bật BIZCITY_SAMPLE khi cài mới)' };
+  return { open: true, code, note: `Đăng nhập mã đơn vị ${code}, cùng email và mật khẩu` };
+}
 export interface PresetInfo { id: string; version: string; title: string; description: string; blocks: { key: string; label: string; total: number }[] }
 export interface PlanBlock { key: string; label: string; total: number; existing: number; toAdd: number }
 export interface SetupPlan { presetId: string; presetVersion: string; title: string; allowed: boolean; reason: string | null; empty: boolean; previousRun: SetupRun | null; missingCapabilities: string[]; blocks: PlanBlock[] }

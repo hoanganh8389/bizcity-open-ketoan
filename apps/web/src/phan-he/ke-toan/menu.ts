@@ -138,6 +138,8 @@ export const keToanMenu: MenuItem[] = [
       sec('dm-tai-khoan', 'Tài khoản, hạch toán'),
       { key: 'tai-khoan', label: 'Hệ thống tài khoản', path: '/danh-muc/tai-khoan', code: 'ACC1' },
       { key: 'tk-ngam-dinh', label: 'Tài khoản ngầm định', path: '/cau-hinh/quy-tac-hach-toan', code: 'ACC41' },
+      // [2026-11-17 11:05 AM kiennt] ACC41A — Tài khoản kết chuyển ngay dưới Tài khoản ngầm định (đóng góp)
+      { key: 'tk-ket-chuyen', label: 'Tài khoản kết chuyển', path: '/cau-hinh/tai-khoan-ket-chuyen', code: 'ACC41A', permission: 'ke-toan:ket-chuyen-xem' },
       { key: 'loai-thue', label: 'Loại thuế', path: '/danh-muc/loai-thue', code: 'ACC43' },
       { key: 'hinh-thuc-tt', label: 'Hình thức thanh toán', path: '/cau-hinh/hinh-thuc-thanh-toan', code: 'DM05' },
       { key: 'ngan-hang', label: 'Tài khoản ngân hàng', path: '/danh-muc/ngan-hang', code: 'DM09' },

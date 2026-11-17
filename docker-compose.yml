@@ -54,6 +54,9 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@ketoan.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@123}
       SEED_API_KEY: ${SEED_API_KEY:-}
+      # [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a): Công ty Mẫu khi cài mới (BIZCITY_SAMPLE = mã gói; trống = tắt)
+      BIZCITY_SAMPLE: ${BIZCITY_SAMPLE:-}
+      SAMPLE_TENANT_CODE: ${SAMPLE_TENANT_CODE:-mau}
       # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 (AUDIT-2026-11-01): DB_APP_PASSWORD bắt buộc — job bật đăng nhập cho ketoan_app, API luôn dùng vai trò thường.
       # Job bật đăng nhập cho vai trò ketoan_app (migration 0032) — API dùng vai trò thường (R-SEC-6).
       DB_APP_PASSWORD: ${DB_APP_PASSWORD:?Đặt DB_APP_PASSWORD trong .env (≥ 16 ký tự chữ và số; bash scripts/cai-nhanh.sh tự sinh) — API chạy bằng vai trò ketoan_app (R-SEC-6)}

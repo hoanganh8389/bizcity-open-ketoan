@@ -5,6 +5,7 @@
 import { LapBctcPage } from './reports/LapBctcPage';
 import { Route } from 'react-router-dom';
 import { ClosingPage } from './closing/ClosingPage';
+import { TaiKhoanKetChuyenPage } from './closing/TaiKhoanKetChuyenPage';
 import { DashboardPage } from './dashboard/DashboardPage';
 import { DebtConfirmationPage } from './debts/DebtConfirmationPage';
 import { DebtItemsPage } from './debts/DebtItemsPage';
@@ -55,6 +56,8 @@ export const keToanRoutes = (
     <Route path="bao-cao/nhat-ky-mua-hang" element={<PurchaseJournalPage />} />
     <Route path="nghiep-vu/so-du-tai-khoan" element={<OpeningBalancesPage />} />
     <Route path="nghiep-vu/ket-chuyen" element={<ClosingPage />} />
+    {/* [2026-11-17 11:05 AM kiennt] ACC41A — Tài khoản kết chuyển (đóng góp) */}
+    <Route path="cau-hinh/tai-khoan-ket-chuyen" element={<TaiKhoanKetChuyenPage />} />
     <Route path="bao-cao/ket-qua-kinh-doanh" element={<IncomeStatementPage />} />
     <Route path="tong-hop/lap-bctc" element={<LapBctcPage />} />
     <Route path="bao-cao/can-doi-ke-toan" element={<BalanceSheetPage />} />
