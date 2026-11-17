@@ -52,11 +52,15 @@ const status = defineAction({
     + 'Danh mục không tính. `kinds` = các loại dữ liệu nghiệp vụ đã có (không trả số dòng, số tiền, tên). `canSetup` = người gọi có quyền settings:write.',
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
   input: z.object({}),
-  output: z.object({ empty: z.boolean(), kinds: z.array(z.enum(KINDS)), canSetup: z.boolean(), runs: z.array(runSchema) }),
+  // [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a): isSample (đơn vị đang dùng là Công ty mẫu), sampleTenantCode (mã đơn vị mẫu của bản cài — chỉ mã)
+  output: z.object({ empty: z.boolean(), kinds: z.array(z.enum(KINDS)), canSetup: z.boolean(), runs: z.array(runSchema), isSample: z.boolean(), sampleTenantCode: z.string().nullable() }),
   expose: { http: { method: 'GET', path: '/api/v1/setup/status' }, mcp: true, ai: 'read' },
   handler: async (ctx) => {
     const e = await tenantEmptiness(ctx.data.tx, ctx.tenant.id);
-    return { ...e, canSetup: ctx.can('settings:write'), runs: await latestRuns(ctx.data.tx, ctx.tenant.id) };
+    const me = await sql<{ is_sample: boolean }>`SELECT is_sample FROM tenants WHERE id = ${ctx.tenant.id}`.execute(ctx.data.tx);
+    // bảng tenants không theo RLS đơn vị: chỉ đọc mã của đơn vị mẫu (không tên, không số liệu) để chỉ đường đăng nhập
+    const sample = await sql<{ code: string }>`SELECT code FROM tenants WHERE is_sample ORDER BY id LIMIT 1`.execute(ctx.data.tx);
+    return { ...e, canSetup: ctx.can('settings:write'), runs: await latestRuns(ctx.data.tx, ctx.tenant.id), isSample: Boolean(me.rows[0]?.is_sample), sampleTenantCode: sample.rows[0]?.code ?? null };
   },
 });
 
