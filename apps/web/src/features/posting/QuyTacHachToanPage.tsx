@@ -6,13 +6,14 @@
  * Dữ liệu: GET /api/v1/posting/scheme; đổi TK: PUT /api/v1/posting/scheme/accounts/:key; mục đích: PUT /api/v1/posting/purposes/:code;
  * xem thử: POST /api/v1/posting/scheme/preview.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
+import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { AccountPicker, ItemPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
@@ -73,16 +74,18 @@ export function QuyTacHachToanPage() {
   );
   if (!chiTiet) return (
     <>
-      {/* [2026-11-17 10:45 AM kiennt] ACC41 — nút Gọn / Chi tiết cùng một chỗ (góc phải tiêu đề) ở cả hai chế độ (đóng góp) */}
-      <PageHeader title="Tài khoản ngầm định" code="ACC41" helpKey="quy-tac-hach-toan" actions={nutXem} />
+      {/* [2026-11-17 10:45 AM kiennt] ACC41 — nút Gọn / Chi tiết cùng một chỗ ở cả hai chế độ (đóng góp) */}
+      {/* [2026-11-17 10:50 AM kiennt] ACC41 — thanh nút như màn danh mục: Gọn / Chi tiết bên trái, Nạp · Xuất · In bên phải (đóng góp) */}
+      <PageHeader title="Tài khoản ngầm định" code="ACC41" helpKey="quy-tac-hach-toan" />
       <ErrorBox error={q.error ? errorText(q.error) : null} />
-      {q.isLoading || !data ? <Loading /> : <GonView data={data} canWrite={canWrite} />}
+      {q.isLoading || !data ? <Loading /> : <GonView data={data} canWrite={canWrite} nutXem={nutXem} onRefresh={() => q.refetch()} />}
     </>
   );
 
   return (
     <>
-      <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" actions={nutXem} />
+      <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" />
+      <div className="card" style={{ marginBottom: 8 }}><CatalogToolbar left={nutXem} canWrite={canWrite} hasSelection={false} onRefresh={() => q.refetch()} /></div>
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {missing.length > 0 && (
         <div className="alert alert-warn" style={{ marginBottom: 8 }} title="Chứng từ dùng tới tài khoản chưa đặt sẽ báo lỗi khi ghi sổ">
@@ -387,7 +390,8 @@ const uniq = (a: string[]) => [...new Set(a.filter(Boolean))];
  * [2026-11-17 10:45 AM kiennt] ACC41 — bảng DataGrid thay bảng tay + ô chọn loại / ô tìm (đóng góp)
  */
 interface GonRow { id: string; loai: string; nhom: string; title: string; no: string[]; co: string[]; sai: boolean; lines: SLine[]; sua: boolean }
-function GonView({ data, canWrite }: { data: Scheme; canWrite: boolean }) {
+function GonView({ data, canWrite, nutXem, onRefresh }: { data: Scheme; canWrite: boolean; nutXem: React.ReactNode; onRefresh: () => unknown }) {
+  const exportRef = useRef<(() => void) | null>(null);
   const [sua, setSua] = useState<{ title: string; lines: SLine[] } | null>(null);
   const keys = useMemo(() => new Map(data.keys.map((k) => [k.key, k])), [data]);
   const rows: GonRow[] = useMemo(() => data.businesses.flatMap((b) => xepNhom(b.groups).map((g) => {
@@ -409,7 +413,8 @@ function GonView({ data, canWrite }: { data: Scheme; canWrite: boolean }) {
   ];
   return (
     <div className="card">
-      <DataGrid storageKey="acc41-gon" exportName="tai-khoan-ngam-dinh" rows={rows} rowKey={(r) => r.id} columns={cols}
+      <CatalogToolbar left={nutXem} canWrite={canWrite} hasSelection={false} onRefresh={onRefresh} onExport={() => exportRef.current?.()} />
+      <DataGrid storageKey="acc41-gon" exportName="tai-khoan-ngam-dinh" exportRef={exportRef} rows={rows} rowKey={(r) => r.id} columns={cols}
         onRowDoubleClick={(r) => { if (r.sua && canWrite) setSua(r); }} />
       {sua && <SuaGon title={sua.title} lines={sua.lines} keys={keys} onClose={() => setSua(null)} />}
     </div>
