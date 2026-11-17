@@ -385,3 +385,48 @@ Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định kho
 - `setup-apply.test.ts`: số hiệu tài khoản không có trong đơn vị → `plan` `allowed = false`.
 - SC-PRESET-1: khối mới đúng khuôn, ngày theo tháng, không số tài khoản ngoài hai khối.
 - Phá thử: bỏ kiểm số hiệu tài khoản; chạy `close` khi chứng từ `unchanged` → test đỏ.
+
+
+## 14. Chữ chốt B5a — đơn vị mẫu riêng, cài mới tự nạp (2026-11-17) <!-- [2026-11-17 11:11 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt B5a (S036-7): tenants.is_sample, seed() nhận tham số, db-migrate tự tạo + nạp Công ty mẫu khi BIZCITY_SAMPLE, biểu ngữ, chặn gửi ra ngoài; B5b tách riêng -->
+
+**Hiện trạng:** đơn vị chỉ được tạo bằng `seed()` (job `db-migrate` / dòng lệnh); chưa có route tạo đơn vị, chưa có chuyển đơn vị — người dùng gõ **mã đơn vị** lúc đăng nhập. Người dùng thuộc từng đơn vị (`users.tenant_id`).
+
+**Tách B5 làm hai đợt.** B5a (đợt này) cho bản cài mới có Công ty mẫu và an toàn; B5b là phần đụng luật sổ và đăng nhập:
+
+| Đợt | Việc |
+|---|---|
+| **B5a** | `tenants.is_sample`; `seed()` nhận tham số; `db-migrate` tạo + nạp Công ty mẫu khi `BIZCITY_SAMPLE` và CSDL vừa khởi tạo; biểu ngữ vàng; thẻ *Xem công ty mẫu* ở TI15 chỉ cách đăng nhập; chặn gửi ra ngoài (T036-4) |
+| B5b (sau, chữ chốt riêng) | xoá đơn vị mẫu (Q036-4, dòng ngoại lệ ở RULE-LEDGER — R3); tạo Công ty mẫu theo yêu cầu cho bản cài đã có; chuyển đơn vị không đăng nhập lại; nạp danh mục chuẩn (TI08) trước gói để thêm lại chi phí lẻ theo lý do (§13) |
+
+**Migration `0148_tenant_is_sample.sql`** (K2): `tenants.is_sample boolean NOT NULL DEFAULT false` + `COMMENT ON`. Không đổi RLS (đơn vị mẫu là đơn vị bình thường, dữ liệu riêng). `schema-catalog.ts` thêm cột.
+
+**`seed(opts?)`** (`packages/kernel/src/db/seed.ts`, K2): nhận `{ tenantCode, tenantName, adminPassword, isSample }`; không truyền thì đọc biến môi trường như cũ (hành vi bản cài hiện tại không đổi). Trả `{ tenantId, adminEmail, adminPassword, generated }` để job dùng lại cùng mật khẩu cho đơn vị mẫu.
+
+**Job `db-migrate` (`apps/api/src/db/setup.ts`):**
+
+- Trước `seed()` đếm `tenants` — **0 dòng = CSDL vừa khởi tạo**.
+- Vừa khởi tạo **và** `BIZCITY_SAMPLE` = mã gói (vd `thuong-mai-ban-le`; trống / `off` = tắt) **và** chưa có đơn vị `is_sample` → `seed({ tenantCode: SAMPLE_TENANT_CODE (mặc định `mau`), tenantName: 'Công ty Mẫu (dữ liệu hư cấu)', adminPassword: <cùng mật khẩu quản trị>, isSample: true })` → chạy gói qua **đúng bộ chạy của B2** (`startRun` + `executeRun`) với quyền chủ đơn vị mẫu, chờ xong, in kết quả từng khối.
+- Nạp mẫu hỏng **không** làm hỏng job cài (in cảnh báo, `sample_runs` ghi `failed`; vào TI15 của đơn vị mẫu bấm chạy lại). Không bao giờ nạp vào đơn vị khác đơn vị `is_sample`.
+- Q036-2: `scripts/cai-nhanh.sh` đặt `BIZCITY_SAMPLE=thuong-mai-ban-le` (bản dùng thử); `.env.example` để trống kèm chú thích (ảnh phát hành cho khách mặc định tắt). `docker-compose.yml` chuyển `BIZCITY_SAMPLE`, `SAMPLE_TENANT_CODE` vào `db-migrate`. Khai ở `docs/ops/DEPLOY.md`.
+
+**Giao diện:**
+
+- `core.setup.status` trả thêm `isSample` (đơn vị đang dùng) và `sampleTenantCode` (mã đơn vị mẫu của bản cài nếu có — chỉ mã, không tên, không số liệu).
+- Đơn vị mẫu: **biểu ngữ vàng cố định đầu trang** *"Bạn đang xem Công ty Mẫu — số liệu hư cấu. Bắt đầu với công ty của bạn: đăng xuất, đăng nhập mã đơn vị của bạn."* — thành phần mới `apps/web/src/features/launcher/CongTyMau.tsx`, gắn một dòng ở `AppLayout.tsx`.
+- TI15 bước 1, thẻ *Xem công ty mẫu*: có `sampleTenantCode` → sáng, bấm **Mở Công ty mẫu** = đăng xuất và mở trang đăng nhập điền sẵn mã đơn vị mẫu (cùng email); không có → mờ *"bản cài này chưa có Công ty mẫu"*.
+
+**Chặn gửi ra ngoài ở đơn vị mẫu (T036-4)** — chặn ở máy chủ, không chỉ ẩn nút:
+
+- Runtime action (`packages/platform/src/core/actions.ts`): action có `sideEffects` chứa `external` trên đơn vị `is_sample` → `CONFLICT` `details.reason = SAMPLE_TENANT` trước khi chạy handler (gồm cả `dryRun`). Mã lý do mới ở `ERROR_REASONS` + BIZCITY-ERRORS §4c.
+- Kết nối ứng dụng ngoài (`core.app.install`, `core.app.enable`) trên đơn vị mẫu → cùng lỗi: không có app thì webhook không nhận sự kiện của đơn vị mẫu.
+
+**Kiểm:**
+
+- `apps/api/test/cong-ty-mau.test.ts`:
+  - `setup.ts` trên CSDL trống với `BIZCITY_SAMPLE` → có đơn vị `mau` `is_sample`, lần chạy gói `done`, đăng nhập được bằng cùng tài khoản quản trị;
+  - chạy job lần hai → không tạo thêm, không nạp lại;
+  - CSDL đã có đơn vị → không tạo đơn vị mẫu;
+  - **T036-4**: action `external` và `core.app.install` trên đơn vị mẫu → `SAMPLE_TENANT`; đơn vị thường không bị chặn;
+  - `core.setup.status` của đơn vị mẫu: `isSample = true`.
+- Chạy thật trên giao diện: biểu ngữ vàng, thẻ *Xem công ty mẫu*.
+- Phá thử: bỏ chặn `external`; bỏ điều kiện "CSDL vừa khởi tạo" → test đỏ.
