@@ -41,7 +41,7 @@ Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi 
 
 | Cột | Ghi chú |
 |---|---|
-| Mã hàng, Tên hàng, ĐVT, Tỉ lệ, Bán chính | Lấy từ khai báo mặt hàng (DM10). Thiếu ĐVT thì bấm đúp dòng để mở mặt hàng, thêm ĐVT. |
+| Mã hàng, Tên hàng, ĐVT, Quy đổi, Bán chính | Lấy từ khai báo mặt hàng (DM10). Thiếu ĐVT thì bấm đúp dòng để mở mặt hàng, thêm ĐVT. |
 | Giá công ty | Hiện khi đang xem bảng giá chi nhánh, để so. |
 | Giá <bảng giá> | **Gõ thẳng vào ô** để sửa. Ô đang sửa tô vàng. Xoá trắng ô = bỏ giá. |
 | Hàng chính | Ô giá chi nhánh của hàng chính tô mờ: cửa hàng chỉ bán hàng chính theo giá công ty, giá chi nhánh không dùng. |

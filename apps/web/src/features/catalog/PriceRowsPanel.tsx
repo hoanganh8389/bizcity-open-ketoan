@@ -89,7 +89,8 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 120 },
     { key: 'name', header: 'Tên hàng', width: 300 },
     { key: 'unit', header: 'ĐVT', width: 80 },
-    { key: 'ratio', header: 'Tỉ lệ', type: 'number', width: 70, showZero: true },
+    // [2026-11-17 11:44 AM kiennt] DM14 — cột Tỉ lệ đổi tên thành Quy đổi (đóng góp)
+    { key: 'ratio', header: 'Quy đổi', type: 'number', width: 80, showZero: true, title: 'Số đơn vị tính nhỏ nhất trong một đơn vị tính này' },
     { key: 'isDefault', header: 'Bán chính', type: 'check', width: 75 },
     ...(!isCompany ? [{ key: 'companyPrice', header: 'Giá công ty', type: 'money', width: 120 } as Column<Row>] : []),
     {
