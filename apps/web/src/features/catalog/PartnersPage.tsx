@@ -130,7 +130,8 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
   return (
     <>
       <PageHeader title={screen?.title ?? 'Đối tượng'} code={screen?.code ?? 'DM03'} subtitle={screen?.subtitle ?? 'Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ'} helpKey="doi-tuong" />
-      <KpiDoiTuong kind={fixedKind} />
+      {/* [2026-11-17 10:00 AM kiennt] DANH-MUC — Khách hàng (DM12), Nhà cung cấp (DM13) bỏ thẻ chỉ số nợ; Đối tượng (DM03) giữ nguyên (đóng góp) */}
+      {!fixedKind && <KpiDoiTuong />}
       <div className="card">
         <CatalogToolbar
           trash={{ catalog: fixedKind ? `partners.${fixedKind}` : 'partners', title: fixedKind === 'customer' ? 'Khách hàng' : fixedKind === 'supplier' ? 'Nhà cung cấp' : 'Đối tượng', sel: sel ? { key: sel.code, label: sel.name } : null }}
