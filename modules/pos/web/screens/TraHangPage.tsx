@@ -1,9 +1,14 @@
 /** BH14 Phiếu trả hàng máy POS (NT-BH-008 §5 dòng 5): phiếu trả nối đơn gốc, hình thức hoàn, lý do, người duyệt quá hạn; dưới: dòng trả. */
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024: cột Tình trạng / Kho nhận của dòng trả, cột Hàng lỗi của phiếu (đóng góp)
 import { useState } from 'react';
 import { DataGrid, ErrorBox, KpiCards, Loading, PageHeader, errorText, type GridColumn } from '@bizcity/ui-kit';
 import { Badge, DOC_STATUS, RangeLayout, SideInput, time, usePage, useRange } from '../lib';
 
-type Line = { lineId: string; sku: string; name?: string; qty?: number; unitQty?: number; refund?: number; refundTotal?: number };
+type Line = { lineId: string; sku: string; name?: string; qty?: number; unitQty?: number; refund?: number; refundTotal?: number; condition?: 'good' | 'bad'; warehouseCode?: string };
+/** Phiếu trước NT-BH-024 không có tình trạng: coi là nguyên vẹn, về kho bán. */
+const conditionText = (l: Line) => (l.condition === 'bad' ? 'Lỗi – hết hạn' : 'Nguyên vẹn');
+const warehouseText = (l: Line) => l.warehouseCode ?? 'Kho bán (mặc định)';
+const badText = (r: Row) => [...new Set(r.lines.filter((l) => l.condition === 'bad').map((l) => l.warehouseCode ?? ''))].filter(Boolean).join(', ');
 type Row = {
   id: string; code: string; orderCode: string; branchCode: string; createdAt: string; refundMethodName: string; refundTotal: number; refundNet: number;
   refundTax: number; reason: string; approvedBy: string; approvalNote: string; exchange: boolean; docStatus: string; cashier: string; lines: Line[];
@@ -20,6 +25,7 @@ const cols: GridColumn<Row>[] = [
   { key: 'refundTotal', header: 'Tiền hoàn', type: 'money', sum: true, width: 120 },
   { key: 'refundTax', header: 'Thuế giảm', type: 'money', sum: true, width: 100, hidden: true },
   { key: 'reason', header: 'Lý do', width: 200 },
+  { key: 'bad', header: 'Hàng lỗi → kho', width: 130, value: (r) => badText(r) },
   { key: 'approvedBy', header: 'Người duyệt (quá hạn)', width: 150, value: (r) => (r.approvedBy ? `${r.approvedBy}${r.approvalNote ? ` — ${r.approvalNote}` : ''}` : '') },
   { key: 'docStatus', header: 'Chứng từ sổ', width: 110, value: (r) => DOC_STATUS[r.docStatus]?.label ?? r.docStatus, render: (r) => <Badge map={DOC_STATUS} value={r.docStatus} /> },
 ];
@@ -29,6 +35,8 @@ const lineCols: GridColumn<Line>[] = [
   { key: 'name', header: 'Tên hàng', width: 260 },
   { key: 'qty', header: 'SL trả', type: 'qty', width: 70, value: (l) => l.qty ?? l.unitQty ?? 0 },
   { key: 'refund', header: 'Tiền hoàn', type: 'money', sum: true, width: 110, value: (l) => l.refund ?? l.refundTotal ?? 0 },
+  { key: 'condition', header: 'Tình trạng', width: 110, value: conditionText },
+  { key: 'warehouseCode', header: 'Kho nhận', type: 'code', width: 140, value: warehouseText },
 ];
 
 export function TraHangPage() {

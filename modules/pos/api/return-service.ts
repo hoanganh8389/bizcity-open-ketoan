@@ -3,11 +3,14 @@
  * `sale_return` nối đơn gốc (originalDocKey). Dùng chung cho POST /returns và phiếu trả của POST /exchanges.
  */
 import { Errors, sql, z, type ActionContext } from '@bizcity/module-sdk';
-import { codePeriod } from './domain/order.js';
-import { computeReturn, returnDeadline, returnDocKey, returnableLines, daysSince, toSaleReturnDocument, type ReturnedSoFar, type SoldLine } from './domain/returns.js';
+import { codePeriod, loyaltyGiftIndex } from './domain/order.js';
+import {
+  buyerTaxCodeOf, computeReturn, returnDeadline, returnDocKey, returnableLines, daysSince, taxInvoiceMessage, toSaleReturnDocument,
+  type ReturnedSoFar, type SoldLine,
+} from './domain/returns.js';
 import { takeCodes } from './codes.js';
 import { activePaymentMethods, catalogFor, resolveBranch, todayVn } from './read.js';
-import { returnDays } from './settings.js';
+import { returnBadWarehouses, returnDays } from './settings.js';
 import { isUniqueViolation, lockKey, raise } from './order-service.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
@@ -21,7 +24,11 @@ export const returnDraftSchema = z.object({
   orderId: z.string().trim().min(1).max(64),
   /** Chi nhánh nhận trả: module chưa đọc header X-Branch (D-MP-8) nên máy gửi ở thân. */
   branchCode: z.string().trim().min(1).max(32).optional(),
-  lines: z.array(z.object({ lineId: z.string().min(1).max(64), qty: z.number().gt(0, 'Số lượng trả phải lớn hơn 0') })).min(1, 'Chưa chọn hàng trả').max(500),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: mỗi dòng trả có tình trạng (mặc định nguyên vẹn) (đóng góp)
+  lines: z.array(z.object({
+    lineId: z.string().min(1).max(64), qty: z.number().gt(0, 'Số lượng trả phải lớn hơn 0'),
+    condition: z.enum(['good', 'bad'], { message: 'Tình trạng hàng trả: good (nguyên vẹn) hoặc bad (lỗi / hết hạn)' }).optional(),
+  })).min(1, 'Chưa chọn hàng trả').max(500),
   refundMethod: z.string().trim().min(1).max(32),
   reason: z.string().trim().min(1, 'Thiếu lý do trả hàng').max(500),
   note: z.string().max(1000).optional(),
@@ -47,7 +54,7 @@ export async function findOrder(tx: Tx, idOrCode: string, branch?: string): Prom
 
 /** Dòng bán của đơn: bản chụp đơn + dòng đơn đã lưu (mã thuế, định danh). Đơn trước khi có order_lines: mã thuế theo danh mục. */
 export async function soldLinesOf(tx: Tx, order: OrderRow): Promise<SoldLine[]> {
-  type SnapLine = { lineId: string; sku: string; name?: string; unitName: string; unitQty: number; unitRatio?: number; amount: number; taxAmount: number; taxRate: number; itemId?: string; isGift?: boolean; promotionId?: number };
+  type SnapLine = { lineId: string; sku: string; name?: string; unitName: string; unitQty: number; unitRatio?: number; amount: number; taxAmount: number; taxRate: number; itemId?: string; isGift?: boolean; giftKey?: string; promotionId?: number };
   // Dòng bill Z (NT-BH-019) nằm ở zBill của bản chụp nhưng vẫn là dòng của chứng từ bán: trả được như dòng quà.
   const snap = order.snapshot as { lines?: SnapLine[]; zBill?: { lines?: SnapLine[] } };
   const snapLines = [...(snap.lines ?? []), ...(snap.zBill?.lines ?? [])];
@@ -64,6 +71,8 @@ export async function soldLinesOf(tx: Tx, order: OrderRow): Promise<SoldLine[]> 
       taxCode: s?.tax_code ?? catalog.get(l.sku)?.taxCode ?? '', itemId: s?.item_id ?? l.itemId ?? null,
       // [2026-11-15 01:45 PM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 2: dòng bill Z là dòng quà trên chứng từ bán → trả cũng là dòng quà (đóng góp)
       isGift: l.isGift === true || zIds.has(l.lineId), ...(l.promotionId !== undefined ? { promotionId: l.promotionId } : {}),
+      // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q2: quà đổi điểm (giftKey lp:…) không trả được (đóng góp)
+      ...(loyaltyGiftIndex(l) !== null ? { loyaltyGift: true } : {}),
     };
   });
 }
@@ -76,15 +85,36 @@ export async function returnedOf(tx: Tx, orderId: string): Promise<Map<string, R
   return new Map(rows.map((r) => [r.line_key, { qty: Number(r.qty), refund: Number(r.refund), net: Number(r.net) }]));
 }
 
+/**
+ * Kho KTL nhận hàng lỗi của cửa hàng (NT-BH-024 Q3): kho khai ở khoá `bizcity.pos.return_bad_warehouses` phải thuộc cửa hàng, đang
+ * dùng và khác kho bán mặc định. Không dùng được → code null, issue nêu lý do (chưa khai thì issue trống).
+ */
+export async function badWarehouseOf(tx: Tx, map: ReadonlyMap<string, string>, branchCode: string): Promise<{ code: string | null; issue?: string }> {
+  const code = map.get(branchCode);
+  if (!code) return { code: null };
+  const w = (await sql<{ is_active: boolean | null; is_default: boolean | null }>`
+    SELECT is_active, is_default FROM bizcity_read.warehouses WHERE branch_code = ${branchCode} AND code = ${code}`.execute(tx)).rows[0];
+  if (!w) return { code: null, issue: `kho ${code} không thuộc cửa hàng` };
+  if (w.is_active === false) return { code: null, issue: `kho ${code} đã ngừng dùng` };
+  if (w.is_default) return { code: null, issue: `kho ${code} là kho bán mặc định` };
+  return { code };
+}
+
 /** Màn hoàn hàng: phần còn trả được, hạn, lý do không trả được ở cửa hàng này. */
-export async function returnableOf(tx: Tx, order: OrderRow, branchCode: string, days = RETURN_DAYS, today = todayVn()) {
+export async function returnableOf(tx: Tx, order: OrderRow, branchCode: string, days = RETURN_DAYS, today = todayVn(), badMap: ReadonlyMap<string, string> = new Map()) {
   const lines = returnableLines(await soldLinesOf(tx, order), await returnedOf(tx, order.order_id));
   const blockers: { code: string; message: string }[] = [];
   if (order.status !== 'completed') blockers.push({ code: 'NOT_COMPLETED', message: 'Đơn chưa hoàn tất / đã huỷ: không trả hàng' });
   if (order.branch_code !== branchCode) blockers.push({ code: 'OTHER_SHOP', message: `Đơn của chi nhánh ${order.branch_code}: đợt này chỉ trả ở cửa hàng đã bán` });
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024: cờ cho máy bán báo sớm — đơn có MST, kho hàng lỗi của cửa hàng (đóng góp)
+  const taxCode = buyerTaxCodeOf(order.snapshot);
+  if (taxCode) blockers.push({ code: 'TAX_INVOICE', message: taxInvoiceMessage(taxCode) });
+  const bad = await badWarehouseOf(tx, badMap, branchCode);
   return {
     order: order.snapshot, lines, warnings: [] as string[], deadline: returnDeadline(order.business_date, days),
     late: daysSince(order.business_date, today) > days, blockers, promoSkus: {} as Record<string, string[]>,
+    taxInvoice: taxCode ? { taxCode } : null,
+    badWarehouse: bad.code,
   };
 }
 
@@ -95,6 +125,8 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
   const exchange = opts.exchangeOrderId !== undefined;
   // Hạn trả lấy ở Cài đặt bán hàng (BH17, khoá bizcity.pos.return_days; mặc định 3 ngày).
   const days = await returnDays(ctx);
+  // Kho KTL nhận hàng lỗi theo cửa hàng (BH17, khoá bizcity.pos.return_bad_warehouses) — cài đặt đọc ngoài giao dịch của module.
+  const badMap = await returnBadWarehouses(ctx);
   const prepared = await ctx.data.module(async (tx) => {
     await lockKey(tx, `pos:return:${draft.id}`);
     const old = (await sql<{ snapshot: Record<string, unknown>; same: boolean; doc_key: string; refund_total: string; branch_code: string }>`
@@ -109,9 +141,11 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
     const lines = await soldLinesOf(tx, order);
     const done = await returnedOf(tx, order.order_id);
     const today = todayVn();
+    const bad = draft.lines.some((l) => l.condition === 'bad') ? await badWarehouseOf(tx, badMap, branch.code) : { code: null };
     const computed = computeReturn({
-      draft, order: { status: order.status, branchCode: order.branch_code, businessDate: order.business_date }, lines, done,
+      draft, order: { status: order.status, branchCode: order.branch_code, businessDate: order.business_date, buyerTaxCode: buyerTaxCodeOf(order.snapshot) }, lines, done,
       branchCode: branch.code, today, days, paymentMethods: await activePaymentMethods(tx), exchange,
+      badWarehouse: bad.code, ...(bad.issue ? { badWarehouseIssue: bad.issue } : {}),
     });
     if ('problem' in computed) raise(computed.problem);
     const code = (await takeCodes(tx, ctx.tenant.id, branch.code, 'return', codePeriod(today), 1))[0]!;
@@ -130,7 +164,11 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
   const submitted = await ctx.ledger.submit(doc);
   const snapshot = {
     id: draft.id, code, orderId: order.order_id, orderCode: order.code, createdAt: new Date().toISOString(), businessDate: today,
-    customer, lines: computed.lines.map((l) => ({ lineId: l.lineId, sku: l.sku, name: l.name, unitName: l.unitName, unitRatio: l.unitRatio, qty: l.qty, isGift: l.isGift, refund: l.refund })),
+    // NT-BH-024: tình trạng + kho nhận của từng dòng (BH14 hiện cột Tình trạng / Kho nhận; nguyên vẹn = kho bán mặc định).
+    customer, lines: computed.lines.map((l) => ({
+      lineId: l.lineId, sku: l.sku, name: l.name, unitName: l.unitName, unitRatio: l.unitRatio, qty: l.qty, isGift: l.isGift, refund: l.refund,
+      condition: l.condition, ...(l.warehouseCode ? { warehouseCode: l.warehouseCode } : {}),
+    })),
     refundTotal: computed.refundTotal, refundMethod: draft.refundMethod, reason: draft.reason, ...(draft.note ? { note: draft.note } : {}),
     flags: { promoReview: false, loyaltyReview: false }, warnings: [] as string[],
     ...(computed.late && draft.approval ? { approval: draft.approval } : {}),

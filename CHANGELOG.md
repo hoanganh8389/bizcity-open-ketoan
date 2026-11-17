@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Trả lại hàng bán đợt 2: chặn trả đơn có hoá đơn MST, không trả quà đổi điểm, hàng lỗi vào kho trả lại (phiếu NT-BH-024) <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 (đóng góp) -->
+
+- **Đổi:** module `pos` — trả / đổi tại máy bán đơn có người mua hoá đơn kèm MST (`invoiceBuyer.taxCode`, kể cả MST ghi sau khi bán) bị từ chối `POS_RETURN_TAX_INVOICE` (409): kế toán lập phiếu trả BH11 kèm hoá đơn điều chỉnh. `GET …/orders/:id/returnable` trả thêm `taxInvoice` (blockers có `TAX_INVOICE`) để máy bán báo sớm.
+- **Đổi:** dòng quà đổi bằng điểm (`giftKey` `lp:…`, NT-BH-020) không trả được — `POS_RETURN_LOYALTY_GIFT`; còn trả được đánh dấu `notReturnable: 'LOYALTY_GIFT'` (`returnableQty` 0); không tính vào "thu lại quà vượt suất".
+- **Thêm:** mỗi dòng trả có `condition: 'good' | 'bad'` (mặc định good). Nguyên vẹn → dòng `sale_return` không ghi kho (kho mặc định); lỗi / hết hạn → `warehouseCode` = kho loại KTL của cửa hàng khai ở khoá mới `bizcity.pos.return_bad_warehouses` (BH17, khuôn `"<cửa hàng>=<kho>"`); chưa khai / kho không dùng được → `POS_RETURN_NO_BAD_WAREHOUSE`. Cùng dòng hai tình trạng trên một phiếu → `POS_RETURN_CONDITION`. Phiếu trả lưu tình trạng / kho nhận; BH14 thêm cột Tình trạng, Kho nhận, Hàng lỗi → kho.
+- **Thêm:** `bizcity_errors@1` 1.15.0-draft: `POS_RETURN_TAX_INVOICE`, `POS_RETURN_LOYALTY_GIFT`, `POS_RETURN_NO_BAD_WAREHOUSE`, `POS_RETURN_CONDITION`.
+- **Thay đổi định khoản:** không đổi cách định khoản; hàng trả lỗi ghi vào tài khoản kho của loại KTL (theo DM18) thay vì kho bán.
+- **Nâng cấp cần làm:** khai kho loại KTL "Kho hàng trả lại" cho từng cửa hàng (DM18) rồi chọn ở BH17; máy bán cập nhật bản có chọn tình trạng (tgs_pos_react). Tỷ lệ trả tối đa (bán buôn) chưa giới hạn — chờ kế toán (K3).
+
 ### Đơn đặt hàng: báo giá có hạn → kiểm hạn mức → giữ hàng ở kho KCB → giao nhiều lần thành phiếu bán nháp (phiếu NT-BH-023) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023 (đóng góp) -->
 
 - **Thêm:** module `phieu-ban` (manifest 0.3.0, migration module `0002_don_dat_hang.sql`: bảng `orders`, `order_events`) — màn **BH20 Đơn đặt hàng** (`/app/phieu-ban/don-dat-hang`, hướng dẫn `docs/huong-dan/don-dat-hang.md`) và API `/api/v1/m/phieu-ban/orders…` (lập / sửa / gửi / duyệt / từ chối / giao / đóng / huỷ / lịch sử / nạp livestream). Số đơn `DH<yymm><6 số>` theo cửa hàng.

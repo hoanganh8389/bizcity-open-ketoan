@@ -44,9 +44,11 @@ Máy bán đã: bắt buộc bill gốc, hạn trả + duyệt quá hạn, thu l
 ## 5. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-024-tra-hang-dot-2.test.ts` (tạo khi code) |
+| Ngày chạy | 18/11/2026 <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024: điền kết quả chạy (đóng góp) --> |
+| Bản code (commit) | nhánh `feat/nt-bh-024-tra-hang-dot-2` trên `8389c1b8` (chưa commit lúc chạy; điền hash khi mở PR) |
+| Test tự động | `apps/api/test/nt-bh-024-tra-hang-dot-2.test.ts` — **8/8 ĐẠT** (Q1 MST trả + đổi, lệch chuẩn 1–4, Q2 quà đổi điểm, Q3 kho KTL, kho khai sai); `modules/pos/test/tra-hang-dot-2.test.ts` — 11/11 ĐẠT (hàm thuần); cả bộ `nt-bh-0*` 144/145 (hỏng 1 ca đã biết `nt-bh-005` "app tgs-wp", không liên quan) |
+| Máy bán (tgs_pos_react) | `src/api/returns-dot-2.test.ts` 4/4 ĐẠT (API giả); vitest 712/712, Playwright 49/49 |
+| Ghi chú | Hàng lỗi: dòng `sale_return` mang `warehouseCode` = kho KTL; tồn vào đúng kho (kiểm `bizcity_read.stock_on_hand.warehouse_code`). Cùng một dòng đơn chọn hai tình trạng trên một phiếu → `POS_RETURN_CONDITION` (phần lỗi lập phiếu riêng). Phiếu trả BH11 của kế toán không đổi (không qua module pos) |
 
 ## 6. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -56,3 +58,4 @@ Máy bán đã: bắt buộc bill gốc, hạn trả + duyệt quá hạn, thu l
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q4 |
+| 18/11/2026 | Code xong, điền §5 kết quả chạy |

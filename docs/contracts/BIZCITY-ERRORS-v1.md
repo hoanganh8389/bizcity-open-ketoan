@@ -233,6 +233,11 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `PHIEU_BAN_NO_HOLD_WAREHOUSE` | `VALIDATION_ERROR` | Cửa hàng chưa khai kho KCB (hàng chờ bán) giữ hàng cho đơn đặt hàng (`bizcity.phieu_ban.hold_warehouses`); kèm `branchCode` | module `phieu-ban` (đề xuất, chưa gộp) |
 | `PHIEU_BAN_OVER_REMAINING` | `VALIDATION_ERROR` | Giao đơn đặt hàng vượt số còn lại của dòng (kể cả hai người giao cùng lúc — khoá theo đơn); kèm `items: [{ lineKey, sku, qty, remaining }]` | module `phieu-ban` (đề xuất, chưa gộp) |
 | `PHIEU_BAN_ORDER_STATE` | `CONFLICT` | Trạng thái đơn đặt hàng không cho thao tác (huỷ đơn đã giao một phần → dùng Đóng đơn; gửi / giao / duyệt sai trạng thái); kèm `status` | module `phieu-ban` (đề xuất, chưa gộp) |
+| **Trả lại hàng bán đợt 2** (1.15.0-draft) <!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-024 trả lại hàng bán đợt 2 (đóng góp) --> | | | |
+| `POS_RETURN_TAX_INVOICE` | `CONFLICT` | Trả / đổi tại máy bán đơn có người mua hoá đơn kèm MST (`invoiceBuyer.taxCode`, coi là đã xuất hoá đơn): kế toán lập phiếu trả BH11 kèm hoá đơn điều chỉnh; kèm `taxCode` | module `pos` (đề xuất, chưa gộp) |
+| `POS_RETURN_LOYALTY_GIFT` | `VALIDATION_ERROR` | Dòng quà đổi bằng điểm (NT-BH-020, `giftKey` `lp:…`) không trả được; kèm `lineId`, `sku` | module `pos` (đề xuất, chưa gộp) |
+| `POS_RETURN_NO_BAD_WAREHOUSE` | `VALIDATION_ERROR` | Dòng trả `condition: 'bad'` mà cửa hàng chưa khai kho KTL (`bizcity.pos.return_bad_warehouses`, BH17) hoặc kho đã khai không thuộc cửa hàng / ngừng dùng / là kho bán; kèm `branchCode` | module `pos` (đề xuất, chưa gộp) |
+| `POS_RETURN_CONDITION` | `VALIDATION_ERROR` | Cùng một dòng đơn gửi hai tình trạng khác nhau trên một phiếu trả (một dòng phiếu = một kho nhận) — phần lỗi lập phiếu riêng; kèm `lineId` | module `pos` (đề xuất, chưa gộp) |
 | **Máy bán bán đúng bảng giá** (1.13.0-draft) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) --> | | | |
 | `POS_MANUAL_DISCOUNT` | `VALIDATION_ERROR` | Dòng có giảm tay: thu ngân không giảm tay, chỉ giảm theo chương trình khuyến mại; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 | `POS_NO_PRICE` | `VALIDATION_ERROR` | Mã × ĐVT chưa có giá ở bảng giá cửa hàng (trừ quà, hàng Nội bộ, bill Z 0đ); kèm `items: [{ sku, unit }]` | module `pos` (đề xuất, chưa gộp) |
@@ -273,6 +278,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — 1.15.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.15.0-draft (2026-11-18, trả lại hàng bán đợt 2):** §4c thêm `POS_RETURN_TAX_INVOICE`, `POS_RETURN_LOYALTY_GIFT`, `POS_RETURN_NO_BAD_WAREHOUSE`, `POS_RETURN_CONDITION` (module pos, phiếu NT-BH-024). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-17 01:10 PM Võ Hoàng] NGHIEM-THU — 1.14.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.14.0-draft (2026-11-17, đơn đặt hàng):** §4c thêm `PHIEU_BAN_ORDER_EXPIRED`, `PHIEU_BAN_NO_HOLD_WAREHOUSE`, `PHIEU_BAN_OVER_REMAINING`, `PHIEU_BAN_ORDER_STATE` (module phieu-ban, phiếu NT-BH-023). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — 1.13.0-draft (đóng góp, chờ chủ dự án duyệt) -->
