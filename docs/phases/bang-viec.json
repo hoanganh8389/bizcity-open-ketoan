@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 70
+      "count": 69
     },
     {
       "key": "paused",
@@ -9078,8 +9078,14 @@
       "title": "B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE); chặn gửi ra ngoài ở đơn vị mẫu",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
+        "branch": "feat/s036-7b-xoa-tao-mau",
+        "state": "đang làm",
+        "since": "2026-11-17",
+        "dot": "PHASE-036 · S036-7 · B5b — xoá Công ty Mẫu bằng scripts/xoa-cong-ty-mau.sh (E3, ADR-0034) + tạo Côn…"
+      },
       "modules": [
         "he-thong"
       ],
