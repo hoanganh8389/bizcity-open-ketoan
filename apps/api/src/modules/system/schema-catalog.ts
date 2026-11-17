@@ -173,6 +173,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
   // Danh mục
   accounts: { group: 'catalog', label: 'Hệ thống tài khoản', term: 'Tài khoản kế toán', module: 'accounts', purpose: 'Danh mục tài khoản (111, 131, 156, 511…), cấp cha con, bên số dư, có theo dõi đối tượng hay không.' },
+  // [2026-11-17 10:20 AM kiennt] NT-DM-001 — bảng lưu tên tiếng Anh tài khoản (0147, D023-9) (đóng góp)
+  accounts_name_en_luu: { group: 'catalog', label: 'Tên tiếng Anh tài khoản (lưu)', term: 'Tài khoản kế toán', module: 'accounts', purpose: 'Tên tiếng Anh đơn vị đã khai cho tài khoản, chép lại khi bỏ cột accounts.name_en (0147). Chỉ đọc, dùng khi cần khôi phục.' },
   partners: { group: 'catalog', label: 'Đối tượng', term: 'Đối tượng công nợ', module: 'partners', purpose: 'Khách hàng, nhà cung cấp, nhân viên, nội bộ, khác (cột kind = vai trò chính, also_kinds = vai trò thêm: vừa là NCC vừa là khách hàng) — để theo dõi công nợ từng đối tượng trên 131, 331…' },
   products: { group: 'catalog', label: 'Hàng hoá', module: 'catalog', purpose: 'Danh mục hàng chuẩn: định danh (item_id), mã hàng hiện hành (sku), tên, nhóm, barcode, ảnh, mô tả, cờ hàng chính / sữa < 24 tháng / không bán / xuất điều chỉnh, thuế, nhóm hạch toán; Biến thể (variant_code) và Gửi lên thuế (send_to_tax, căn cứ duy nhất tách khỏi thuế). Hệ thống bán hàng kéo về qua /api/v1/catalog/feed.' },
   unit_names: { group: 'catalog', label: 'Danh mục đơn vị tính', term: 'Tên ĐVT (Hộp, Lốc, Lốc_4, Thùng…)', module: 'catalog', purpose: 'Tên ĐVT dùng chung, không có tỉ lệ: có sẵn danh sách khởi tạo; khai ĐVT mới ở mặt hàng thì CSDL tự thêm (trigger). Tỉ lệ quy đổi ở product_units.' },

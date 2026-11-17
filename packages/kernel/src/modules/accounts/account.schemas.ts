@@ -18,7 +18,7 @@ const accountCode = z.string().trim().regex(/^[0-9A-Za-z]{3,20}$/, 'Số tài kh
 export const accountCreateSchema = z.object({
   code: accountCode,
   name: z.string().trim().min(1).max(255),
-  nameEn: z.string().trim().max(255).optional(),
+  // [2026-11-17 10:20 AM kiennt] NT-DM-001 — bỏ tên tiếng Anh (D023-9, 0147): client cũ còn gửi nameEn thì zod bỏ qua (đóng góp)
   // [2026-11-11 Nguyễn Văn Thủy] Diễn giải tài khoản (0101) (đóng góp)
   description: z.string().trim().max(1000).optional(),
   parentCode: accountCode.optional(),
@@ -73,7 +73,6 @@ export type AccountListQuery = z.infer<typeof accountListQuerySchema>;
 export interface AccountDto {
   code: string;
   name: string;
-  nameEn: string | null;
   description: string;
   parentCode: string | null;
   level: number;

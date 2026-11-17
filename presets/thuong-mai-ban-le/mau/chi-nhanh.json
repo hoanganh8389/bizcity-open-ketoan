@@ -1,3 +1,20 @@
 [
-  { "code": "MAU01", "name": "Cửa hàng Mẫu Số 1", "address": "1 Đường Mẫu, Phường Ví Dụ, TP Thử Nghiệm", "note": "Dữ liệu mẫu (hư cấu) của preset thuong-mai-ban-le" }
+  {
+    "code": "MAU01",
+    "name": "Cửa hàng Mẫu Số 1",
+    "address": "1 Đường Mẫu, Phường Ví Dụ, TP Thử Nghiệm",
+    "note": "Dữ liệu mẫu (hư cấu) của preset thuong-mai-ban-le"
+  },
+  {
+    "code": "MAU02",
+    "name": "Cửa hàng Mẫu Số 2",
+    "address": "2 Đường Mẫu, Phường Ví Dụ, TP Thử Nghiệm",
+    "note": "Dữ liệu mẫu (hư cấu) của preset thuong-mai-ban-le"
+  },
+  {
+    "code": "MAU03",
+    "name": "Kho Mẫu Trung Tâm",
+    "address": "3 Đường Mẫu, Phường Ví Dụ, TP Thử Nghiệm",
+    "note": "Dữ liệu mẫu (hư cấu) của preset thuong-mai-ban-le"
+  }
 ]

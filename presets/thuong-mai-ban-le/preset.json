@@ -1,22 +1,55 @@
 {
   "contract": "bizcity_preset@1",
   "id": "thuong-mai-ban-le",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Thương mại bán lẻ (cửa hàng, siêu thị mini)",
-  "description": "Cửa hàng mua hàng của nhà cung cấp, bán lẻ thu tiền mặt / chuyển khoản, hoá đơn GTGT 8%. Bật kế toán, quỹ, mua hàng, bán hàng, kho, thuế; chứng từ ghi sổ ngay. Dữ liệu mẫu hư cấu: một cửa hàng, hai nhà cung cấp, ba mặt hàng, một phiếu nhập mua và hai hoá đơn bán để thấy ngay sổ, kho, công nợ.",
-  "industries": ["thuong-mai", "ban-le"],
+  "description": "Cửa hàng mua hàng của nhà cung cấp, bán lẻ thu tiền mặt / chuyển khoản, bán buôn có hoá đơn. Bật kế toán, quỹ, mua hàng, bán hàng, kho, thuế, tài sản; chứng từ ghi sổ ngay. Dữ liệu mẫu hư cấu ba tháng tới hôm nay: số dư đầu kỳ, ba chi nhánh, 40 mặt hàng bốn mức thuế, mua – bán – trả hàng, thu chi, chuyển kho, kiểm kê, tài sản; giá vốn, khấu hao, kết chuyển do phần mềm tính — báo cáo tài chính, thuế, kho có số ngay.",
+  "industries": [
+    "thuong-mai",
+    "ban-le"
+  ],
   "regime": "vn-tt99",
-  "requires": { "standard": "^1.0", "capabilities": ["ledger.submit", "masterdata.write"] },
-  "modules": ["ke-toan", "quy", "mua-hang", "ban-hang", "kho", "thue"],
-  "postingPack": { "id": "bizcity.vn-tt99.thuong-mai", "file": "../../docs/standard/examples/vn-tt99-thuong-mai.posting-pack.json" },
+  "requires": {
+    "standard": "^1.0",
+    "capabilities": [
+      "ledger.submit",
+      "masterdata.write"
+    ]
+  },
+  "modules": [
+    "ke-toan",
+    "quy",
+    "mua-hang",
+    "ban-hang",
+    "kho",
+    "thue",
+    "tai-san"
+  ],
+  "postingPack": {
+    "id": "bizcity.vn-tt99.thuong-mai",
+    "file": "../../docs/standard/examples/vn-tt99-thuong-mai.posting-pack.json"
+  },
   "settings": {
-    "postingModes": { "sale": "auto", "sale_return": "auto", "purchase": "auto", "purchase_return": "auto", "customer_payment": "auto", "supplier_payment": "auto" }
+    "postingModes": {
+      "sale": "auto",
+      "sale_return": "auto",
+      "purchase": "auto",
+      "purchase_return": "auto",
+      "customer_payment": "auto",
+      "supplier_payment": "auto",
+      "cash_transfer": "auto",
+      "transfer": "auto",
+      "stock_adjustment": "auto"
+    }
   },
   "sample": {
     "fictional": true,
     "branches": "mau/chi-nhanh.json",
     "partners": "mau/doi-tuong.json",
     "products": "mau/mat-hang.json",
-    "documents": "mau/chung-tu.json"
+    "openings": "mau/so-du.json",
+    "documents": "mau/chung-tu.json",
+    "assets": "mau/tai-san.json",
+    "close": "mau/cuoi-ky.json"
   }
 }

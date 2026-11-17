@@ -4,7 +4,15 @@
  * có thật, dữ liệu mẫu hư cấu (fictional: true — repo công khai), phân hệ có thật, năng lực có trong bảng năng lực, chứng từ mẫu đúng
  * khuôn bizcity_ledger_intake@1 và docKey bắt đầu bằng preset:<id>: (để nhận ra, gỡ được). Phần chạy thật: apps/api/test/preset.test.ts.
  */
+// [2026-11-17 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6 (bizcity_preset@1 1.2.0): khối openings / assets / close, ngày @m-N/DD và @period-N, số tài khoản chỉ ở openings / assets, close chỉ gọi ba action cuối kỳ
 import path from 'node:path';
+
+/** Thay ngày tương đối bằng một ngày cố định để kiểm khuôn (STD-PRE-5). */
+const fixDates = (v) => JSON.parse(JSON.stringify(v).replace(/"@today(?:-\d+)?"/g, '"2026-01-15"').replace(/"@m-\d+\/\d{1,2}"/g, '"2026-01-15"').replace(/"@period-\d+"/g, '"2026-01"'));
+/** Trường mang số tài khoản (STD-PRE-7). */
+const ACCOUNT_KEY = /^(accountCode|[a-z]*Account)$/;
+const accountKeys = (v, out = []) => { if (Array.isArray(v)) v.forEach((x) => accountKeys(x, out)); else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { if (ACCOUNT_KEY.test(k)) out.push(k); accountKeys(x, out); } return out; };
+const CLOSE_ACTIONS = ['core.inventory.costing-run', 'core.asset.depreciation', 'core.closing.run'];
 
 const SCHEMA = 'docs/contracts/BIZCITY-PRESET-v1.schema.json';
 const INTAKE = 'docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json';
@@ -30,18 +38,24 @@ export default {
       if (p.postingPack?.file && !ctx.repo.exists(path.posix.normalize(path.posix.join(dir, p.postingPack.file)))) {
         findings.push(ctx.finding(f, null, `không thấy gói định khoản ${p.postingPack.file}`, `pack:${p.id}`));
       }
-      for (const kind of ['branches', 'partners', 'products', 'documents']) {
+      for (const kind of ['branches', 'partners', 'products', 'openings', 'documents', 'assets', 'close']) {
         const rel = p.sample?.[kind];
         if (!rel) continue;
         const file = path.posix.normalize(path.posix.join(dir, rel));
         if (!ctx.repo.exists(file)) { findings.push(ctx.finding(f, null, `không thấy tệp mẫu ${rel}`, `file:${p.id}:${kind}`)); continue; }
         const rows = ctx.repo.json(file);
         if (!Array.isArray(rows)) { findings.push(ctx.finding(file, null, 'tệp mẫu phải là mảng JSON', `array:${p.id}:${kind}`)); continue; }
+        if (kind !== 'openings' && kind !== 'assets') {
+          const keys = [...new Set(accountKeys(rows))];
+          if (keys.length) findings.push(ctx.finding(file, null, `số tài khoản (${keys.join(', ')}) chỉ được ở khối openings / assets (STD-PRE-7)`, `account:${p.id}:${kind}`));
+        }
+        if (kind === 'openings') rows.forEach((o, i) => { if (!o.docNo) findings.push(ctx.finding(file, null, `số dư ${i + 1}: thiếu docNo (khoá chạy lại)`, `opening:${p.id}:${i}`)); });
+        if (kind === 'close') rows.forEach((c, i) => { if (!CLOSE_ACTIONS.includes(c.action)) findings.push(ctx.finding(file, null, `cuối kỳ ${i + 1}: action ${c.action} — chỉ được ${CLOSE_ACTIONS.join(', ')}`, `close:${p.id}:${i}`)); });
         if (kind !== 'documents') continue;
         rows.forEach((d, i) => {
           if (!String(d.docKey ?? '').startsWith(`preset:${p.id}:`)) findings.push(ctx.finding(file, null, `chứng từ ${i + 1}: docKey phải bắt đầu bằng preset:${p.id}:`, `dockey:${p.id}:${i}`));
-          // @today / @today-N được thay lúc cài: kiểm khuôn với một ngày cố định.
-          const filled = JSON.parse(JSON.stringify(d).replace(/"@today(?:-\d+)?"/g, '"2026-01-15"'));
+          // ngày tương đối được thay lúc cài: kiểm khuôn với một ngày cố định.
+          const filled = fixDates(d);
           for (const e of ctx.validate(INTAKE, filled).slice(0, 3)) findings.push(ctx.finding(file, null, `chứng từ ${i + 1} ${e.path}: ${e.message}`, `intake:${p.id}:${i}:${e.path}`));
         });
       }

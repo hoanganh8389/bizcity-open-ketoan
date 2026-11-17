@@ -1,12 +1,12 @@
 /**
  * DM Tài khoản (ACC1) — hệ thống tài khoản, bố cục theo danh mục tài khoản phổ biến của phần mềm kế toán:
- *   Danh sách: Số tài khoản (cây: bấm ⊞ / ⊟ để mở / thu tài khoản con) · Tên · Tính chất · Trạng thái (Tên tiếng Anh, Diễn giải ẩn mặc định).
+ *   Danh sách: Số tài khoản (cây: bấm ⊞ / ⊟ để mở / thu tài khoản con) · Tên · Tính chất · Trạng thái (Diễn giải ẩn mặc định).
  *   Tài khoản tổng hợp in đậm, ngừng sử dụng hiện mờ. Nút Cột bật thêm: TK tổng hợp, Cấp và các ô "theo dõi chi tiết".
  *   Thanh nút: Thêm · Nạp · Xuất (Excel đúng mẫu "DANH SÁCH HỆ THỐNG TÀI KHOẢN") · In · Nhập Excel; bên trái ô tìm theo số
  *   (khớp phần đầu) hoặc tên, Mở rộng / Thu gọn.
  *   [2026-11-17 kiennt] bỏ Nhân bản; Ngừng / dùng lại thành ô Trạng thái trong form sửa (vẫn hỏi xác nhận khi Ghi) (đóng góp)
  *   Form: Số TK, Tên TK, TK tổng hợp, Tính chất, Trạng thái (khi sửa), Diễn giải; Theo dõi chi tiết theo (tích = bắt buộc nhập khi hạch toán vào tài khoản);
- *   Tên tiếng Anh. Các cờ phân loại cũ không có tác dụng (TK FC, VAT, vay, luôn tăng, sổ cái, giá thành, công nợ nội bộ) không còn trên
+ *   [2026-11-17 10:20 AM kiennt] NT-DM-001 — bỏ Tên tiếng Anh (D023-9, 0147) (đóng góp). Các cờ phân loại cũ không có tác dụng (TK FC, VAT, vay, luôn tăng, sổ cái, giá thành, công nợ nội bộ) không còn trên
  *   màn — dữ liệu vẫn giữ nguyên.
  * [2026-11-11 Nguyễn Văn Thủy] viết lại theo chuẩn danh mục phổ biến, đơn giản hoá (docs/cap-nhat-ux/08-dm-tai-khoan.md) (đóng góp)
  */
@@ -26,7 +26,7 @@ import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel 
 import type { CatalogWarnAck } from '@ketoan/contracts';
 
 export interface Account {
-  code: string; name: string; nameEn: string | null; description?: string; parentCode: string | null; level: number; normalSide: string; isPosting: boolean;
+  code: string; name: string; description?: string; parentCode: string | null; level: number; normalSide: string; isPosting: boolean;
   trackPartner: boolean; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean; trackEmployee: boolean; trackCase: boolean; trackProject: boolean;
   trackCapitalSource: boolean; trackCashItem: boolean; trackCashflow: boolean; trackProduct: boolean; isDebt: boolean;
   isActive: boolean;
@@ -59,18 +59,19 @@ async function xuatExcel(rows: Account[]) {
   const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('DANH SÁCH HỆ THỐNG TÀI KHOẢN');
-  ws.columns = [{ width: 6 }, { width: 21 }, { width: 40.5 }, { width: 16 }, { width: 40.5 }, { width: 27.5 }, { width: 19.4 }];
-  ws.mergeCells('A1:G1');
+  // [2026-11-17 10:20 AM kiennt] NT-DM-001 — bỏ cột Tên tiếng Anh (D023-9) (đóng góp)
+  ws.columns = [{ width: 6 }, { width: 21 }, { width: 40.5 }, { width: 16 }, { width: 40.5 }, { width: 19.4 }];
+  ws.mergeCells('A1:F1');
   ws.getCell('A1').value = 'DANH SÁCH HỆ THỐNG TÀI KHOẢN';
   ws.getCell('A1').font = { bold: true, size: 14 };
   ws.getCell('A1').alignment = { horizontal: 'center' };
-  ws.mergeCells('A2:G2');
+  ws.mergeCells('A2:F2');
   const head = ws.getRow(3);
-  head.values = ['STT', 'Số tài khoản', 'Tên tài khoản', 'Tính chất', 'Tên tiếng Anh', 'Diễn giải', 'Trạng thái'];
+  head.values = ['STT', 'Số tài khoản', 'Tên tài khoản', 'Tính chất', 'Diễn giải', 'Trạng thái'];
   const border = { top: { style: 'thin' as const }, left: { style: 'thin' as const }, bottom: { style: 'thin' as const }, right: { style: 'thin' as const } };
   head.eachCell((c) => { c.font = { bold: true }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD8D8D8' } }; c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; c.border = border; });
   rows.forEach((a, i) => {
-    const r = ws.addRow([i + 1, a.code, a.name, TINH_CHAT[a.normalSide] ?? a.normalSide, a.nameEn ?? '', a.description ?? '', a.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng']);
+    const r = ws.addRow([i + 1, a.code, a.name, TINH_CHAT[a.normalSide] ?? a.normalSide, a.description ?? '', a.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng']);
     r.eachCell({ includeEmpty: true }, (c) => { c.border = border; c.alignment = { vertical: 'top', wrapText: true }; });
     r.getCell(2).numFmt = '@';
     if (!a.isPosting) r.font = { bold: true };
@@ -145,7 +146,6 @@ export function AccountsPage() {
     },
     { key: 'name', header: 'Tên tài khoản', width: 360, noSort: true, bold: (a) => !a.isPosting },
     { key: 'normalSide', header: 'Tính chất', width: 100, noSort: true, value: (a) => TINH_CHAT[a.normalSide] ?? a.normalSide, title: 'Dư Nợ / Dư Có: số dư thường ở bên đó. Lưỡng tính: số dư tách Nợ / Có theo từng đối tượng (131, 331…)' },
-    { key: 'nameEn', header: 'Tên tiếng Anh', width: 300, noSort: true, hidden: true },
     { key: 'description', header: 'Diễn giải', width: 220, noSort: true, hidden: true },
     { key: 'isActive', header: 'Trạng thái', width: 120, noSort: true, value: (a) => (a.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng') },
     // Bật thêm ở nút Cột.
@@ -222,7 +222,7 @@ function AccountForm({ value, codes, onClose, onAddNext }: { value: Partial<Acco
   const themTiep = useRef(false);
   const save = useMutation({
     mutationFn: (warnAck?: CatalogWarnAck) => {
-      const body: Record<string, unknown> = { name: v.name?.trim(), nameEn: v.nameEn?.trim() ?? '', description: v.description?.trim() ?? '', normalSide: v.normalSide, warnAck };
+      const body: Record<string, unknown> = { name: v.name?.trim(), description: v.description?.trim() ?? '', normalSide: v.normalSide, warnAck };
       if (doiTT) body.isActive = v.isActive !== false;
       for (const [k] of THEO_DOI) body[k] = Boolean(v[k]);
       body.isDebt = Boolean(v.trackPartner);
@@ -275,10 +275,7 @@ function AccountForm({ value, codes, onClose, onAddNext }: { value: Partial<Acco
           {THEO_DOI.map(([k, l, t]) => <label key={k} className="checkbox" title={t}><input type="checkbox" checked={Boolean(v[k])} onChange={(e) => set({ [k]: e.target.checked } as Partial<Account>)} /> {l}</label>)}
         </div>
       </fieldset>
-      <fieldset className="fgroup">
-        <legend>Tên tài khoản theo ngôn ngữ</legend>
-        <Field label="Tên tiếng Anh" full truong="nameEn"><input className="input" value={v.nameEn ?? ''} onChange={(e) => set({ nameEn: e.target.value })} /></Field>
-      </fieldset>
+      {/* [2026-11-17 10:20 AM kiennt] NT-DM-001 — bỏ khung "Tên tài khoản theo ngôn ngữ" (D023-9) (đóng góp) */}
       <WhyPanel findings={why.findings} onFix={(p) => set(p as Partial<Account>)} />
       <WarnAckBox ack={ack} />
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
