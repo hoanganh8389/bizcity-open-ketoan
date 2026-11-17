@@ -62,7 +62,7 @@
  * Tính lại: bút toán cũ được ghi số âm rồi ghi bút toán mới. Không cần xoá, ghi lại bút toán bán hàng.
  * Lần hàng xuất mà hệ thống nguồn đã gửi kèm giá vốn thì đã ghi sổ cùng chứng từ gốc, ở đây bỏ qua.
  */
-import { fromCents, returnValueAtOpening, toCents, ULID_RE } from '@ketoan/contracts';
+import { COST_FORMULAS, fromCents, returnValueAtOpening, toCents, ULID_RE } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, type Db } from '@bizcity/platform/db/client';
 import { env } from '@bizcity/platform/config/env';
@@ -141,17 +141,19 @@ export interface CostFormula {
   costAlloc: boolean;
   /** Trừ thưởng / chiết khấu nhãn hàng phân bổ. */
   rebateAlloc: boolean;
-  /** Hàng trả NCC: theo giá trị phiếu (mặc định) / định giá theo giá vốn đầu tháng. Không theo lý do (lý do chỉ là nhãn, 15/11/2026). */
+  /** Hàng trả NCC: theo giá trị phiếu / định giá theo tồn đầu. Không theo lý do (lý do chỉ là nhãn). Mặc định theo sổ của bản cài (BOOK_MODE). */
   purchaseReturn: 'doc' | 'opening';
   /** Nhận từ chi nhánh khác: theo phiếu (không có giá thì giá vốn bên gửi) / luôn giá vốn bên gửi. */
   transferIn: 'doc' | 'sender';
   /** Nhập điều chỉnh tính vào giá. */
   adjustIn: boolean;
 }
-export const DEFAULT_FORMULA: CostFormula = { price: 'net', costAlloc: true, rebateAlloc: true, purchaseReturn: 'doc', transferIn: 'doc', adjustIn: true };
+const DEFAULT_FORMULA: Omit<CostFormula, 'purchaseReturn'> = { price: 'net', costAlloc: true, rebateAlloc: true, transferIn: 'doc', adjustIn: true };
+/** Lựa chọn của công thức; thiếu "hàng trả NCC" (hoặc kiểu cũ theo lý do) thì theo sổ của bản cài: nội bộ = theo phiếu, thuế = theo tồn đầu. */
 export const formulaOf = (o: unknown): CostFormula => {
   const f = { ...DEFAULT_FORMULA, ...((o && typeof o === 'object' ? o : {}) as Partial<CostFormula>) };
-  return { ...f, purchaseReturn: f.purchaseReturn === 'opening' ? 'opening' : 'doc' }; // công thức cũ 'reason' → theo phiếu
+  const pr = f.purchaseReturn as string;
+  return { ...f, purchaseReturn: pr === 'opening' || pr === 'doc' ? pr : COST_FORMULAS[env.BOOK_MODE].purchaseReturn };
 };
 
 interface FlowDetail {
@@ -208,7 +210,7 @@ interface MonthResult {
   returnUnits: Map<string, number>;
 }
 
-async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<string, number>, formula: CostFormula = DEFAULT_FORMULA): Promise<MonthResult> {
+async function computeMonth(trx: Db, tenantId: string, p: Period, imports?: Map<string, number>, formula: CostFormula = formulaOf({})): Promise<MonthResult> {
   const imported = imports ?? (await importedUnits(trx, tenantId, p));
   const prev = prevOf(p);
   const prevRows = await trx.selectFrom('inventory_costs').selectAll()

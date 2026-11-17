@@ -274,8 +274,8 @@ const GIA_NHAP: Record<CtOptions['price'], [string, string]> = {
   with_vat: ['Giá gồm VAT', 'Đơn giá đã trừ chiết khấu, CỘNG thuế GTGT (dùng khi không khấu trừ thuế đầu vào)'],
 };
 const TRA_NCC: Record<CtOptions['purchaseReturn'], [string, string]> = {
-  doc: ['Giá trên phiếu trả (mặc định)', 'Trừ đúng thành tiền ghi trên phiếu trả hàng. VD trả 10 cái, phiếu ghi 9.000đ/cái → trừ 90.000đ'],
-  opening: ['Giá vốn đầu tháng', 'Trừ theo giá vốn bình quân đầu tháng, bỏ qua giá trên phiếu. VD giá vốn đầu tháng 8.500đ/cái, trả 10 cái → trừ 85.000đ'],
+  doc: ['Thành tiền − thuế trên phiếu', 'Trừ đúng thành tiền (chưa thuế) ghi trên phiếu trả. VD trả 10 cái, phiếu ghi 9.000đ/cái → trừ 90.000đ. Mặc định của sổ nội bộ'],
+  opening: ['Định giá theo tồn đầu', 'Đơn giá trả ≤ đơn giá tồn đầu: SL × đơn giá tồn đầu; tiền trả ≤ giá trị tồn đầu: tiền trả; SL trả ≤ SL tồn đầu: giá trị tồn đầu; còn lại: giá trị tồn đầu + phần vượt × đơn giá trả. Mặc định của sổ thuế'],
 };
 const NHAN_CN: Record<CtOptions['transferIn'], [string, string]> = {
   doc: ['Theo giá trên phiếu', 'Phiếu chuyển có giá thì lấy giá đó; không có giá thì lấy giá vốn bên gửi (mặc định)'],

@@ -6,7 +6,8 @@
 --   price          'net' (chưa VAT, đã trừ CK — mặc định) | 'before_discount' (chưa VAT, chưa trừ CK) | 'with_vat' (gồm VAT, đã trừ CK)
 --   costAlloc      true: cộng chi phí mua hàng phân bổ (vận chuyển…)
 --   rebateAlloc    true: trừ thưởng / chiết khấu nhãn hàng phân bổ
---   purchaseReturn 'reason' (theo lý do — mặc định) | 'doc' (theo giá trị phiếu trả) | 'opening' (định giá theo tồn đầu)
+--   purchaseReturn 'doc' (thành tiền − thuế trên phiếu) | 'opening' (định giá theo tồn đầu); không theo lý do (lý do chỉ là nhãn).
+--                  Không ghi = theo sổ của bản cài (BOOK_MODE): nội bộ 'doc', thuế 'opening'.
 --   transferIn     'doc' (theo giá trên phiếu, phiếu không có giá thì giá vốn bên gửi — mặc định) | 'sender' (luôn giá vốn bên gửi)
 --   adjustIn       true: nhập điều chỉnh tính vào giá
 --   apply_from   'YYYY-MM': công thức áp dụng từ tháng này (tính tháng P dùng công thức có apply_from lớn nhất <= P); '' = không áp dụng.
@@ -59,8 +60,8 @@ END $$;
 -- Công thức mặc định cho mọi đơn vị (đúng công thức giá vốn nội bộ).
 INSERT INTO costing_formulas (tenant_id, code, name, options, is_default, apply_from, updated_by)
 SELECT t.id, 'MD', 'Mặc định (giá Net)',
-       '{"price":"net","costAlloc":true,"rebateAlloc":true,"purchaseReturn":"doc","transferIn":"doc","adjustIn":true}'::jsonb, true, '2000-01', 'system'
+       '{"price":"net","costAlloc":true,"rebateAlloc":true,"transferIn":"doc","adjustIn":true}'::jsonb, true, '2000-01', 'system'
   FROM tenants t
 ON CONFLICT (tenant_id, code) DO NOTHING;
 UPDATE costing_formulas SET apply_from = '2000-01' WHERE code = 'MD' AND apply_from = '';
-UPDATE costing_formulas SET options = jsonb_set(options, '{purchaseReturn}', '"doc"') WHERE options->>'purchaseReturn' = 'reason';
+UPDATE costing_formulas SET options = options - 'purchaseReturn' WHERE options->>'purchaseReturn' = 'reason' OR (code = 'MD' AND updated_by = 'system');

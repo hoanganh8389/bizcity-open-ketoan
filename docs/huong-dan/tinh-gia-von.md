@@ -68,8 +68,9 @@ Giá vốn BQ cuối kỳ = ─────────────────�
 - Tháng không nhập gì (mẫu số bằng 0) thì dùng đơn giá gần nhất của các tháng trước.
 - **Hàng bán nội bộ theo giá bán** (lý do XCN): giá vốn đã ghi ngay bằng giá bán, và bị **trừ khỏi cả tử và mẫu** của công thức trên.
 - **Hàng bán nội bộ theo giá bán, xuất tặng thưởng khách hàng** (lý do có đánh dấu "Xuất theo giá trị chứng từ", mặc định XCN, XTA1.4): như trên.
-- **Hàng trả nhà cung cấp:** bản nội bộ lấy thành tiền − thuế cho mọi lý do; phần dưới đây áp cho bản thuế, xem [Công thức giá vốn](cong-thuc-gia-von.md).
-- **Hàng trả nhà cung cấp với lý do XTR1, XTR9 hoặc có đánh dấu "định giá theo tồn đầu"** được định giá theo tồn đầu, không lấy thẳng tiền trên phiếu trả:
+- **Hàng trả nhà cung cấp** (không theo lý do — lý do chỉ là nhãn): **sổ nội bộ** lấy thành tiền − thuế trên phiếu; **sổ thuế** định giá theo tồn đầu, không lấy thẳng tiền trên phiếu trả. Xem [Công thức giá vốn](cong-thuc-gia-von.md).
+
+  Định giá theo tồn đầu:
 
   | Trường hợp | Giá trị đưa vào công thức |
   |---|---|
@@ -81,7 +82,6 @@ Giá vốn BQ cuối kỳ = ─────────────────�
 
   Tồn kho trên sổ vẫn giảm đúng số tiền ghi trên phiếu trả.
 
-- **Phiếu trả với lý do khác** (XDC, XKK, XTT1, XTT2, XTR3, XTR4, XTRCN…): lấy đúng **thành tiền − thuế** trên phiếu đưa vào công thức.
 - **Khách trả hàng** <!-- [2026-11-11 12:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3: khách trả hàng lấy đúng giá vốn lúc bán -->: phiếu trả ghi **chứng từ bán gốc** thì phần mềm hoàn giá vốn **đúng đơn giá đã dùng lúc bán**, không lấy đơn giá tháng trả.
   | Trường hợp | Giá vốn hoàn (Nợ TK kho / Có TK giá vốn) |
   |---|---|
@@ -90,10 +90,7 @@ Giá vốn BQ cuối kỳ = ─────────────────�
   | Phiếu trả không ghi chứng từ gốc (hoặc gốc đã huỷ) | số lượng trả × **đơn giá bình quân tồn đầu tháng trả** (mặc định tạm, kế toán trưởng có thể đổi sau) |
 
   Ví dụ: tháng 10 đơn giá 100.000, bán 30 cái. Tháng 11 nhập thêm 25 cái giá 120.000, khách trả 5 cái của đơn bán tháng 10: hoàn **500.000** (không phải 526.316 theo đơn giá tháng 11 cũ, hay 600.000 theo giá nhập gần nhất). Tính lại giá vốn tháng bán gốc sau đó thì tính lại cả tháng trả.
-- **Nhập điều chỉnh tăng** vào công thức theo giá trị trên phiếu (số lượng 0 thì là điều chỉnh giá trị); lý do có đánh dấu "không tính vào đơn giá bình quân" (ví dụ ĐGTTK) thì bỏ ra ngoài, chỉ tăng số lượng tồn.
-- Phiếu không ghi lý do dùng lý do mặc định của loại chứng từ.
-
-Các đánh dấu trên khai ở **Lý do – Tài khoản (ACC18)**, phần "Tính giá vốn" của từng lý do.
+- **Nhập điều chỉnh tăng** vào công thức theo giá trị trên phiếu (số lượng 0 thì là điều chỉnh giá trị). Muốn bỏ hẳn nhập điều chỉnh ra khỏi công thức: đổi công thức giá vốn (Không tính).
 
 ## Nhập giá vốn bình quân đầu kỳ từ Excel
 
