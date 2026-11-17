@@ -37,9 +37,10 @@ describe('Đơn vị trắng (core.setup.status)', () => {
   beforeAll(async () => { a = await fresh(); b = await fresh(); });
 
   it('đơn vị mới (chỉ danh mục của seed) → trắng; chủ đơn vị canSetup, người xem không', async () => {
-    expect(await status(a.ctx)).toEqual({ empty: true, kinds: [], canSetup: true, runs: [] });
+    // [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7: status thêm isSample, sampleTenantCode (CSDL test dùng chung: có thể đã có đơn vị mẫu)
+    expect(await status(a.ctx)).toMatchObject({ empty: true, kinds: [], canSetup: true, runs: [], isSample: false });
     const v = await viewerOf(a.ctx);
-    expect(await status(v)).toEqual({ empty: true, kinds: [], canSetup: false, runs: [] });
+    expect(await status(v)).toMatchObject({ empty: true, kinds: [], canSetup: false, runs: [], isSample: false });
   });
 
   it('nạp danh mục (Quay về dữ liệu gốc) vẫn trắng', async () => {

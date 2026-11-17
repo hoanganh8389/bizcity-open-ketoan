@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { db, type Db } from '@bizcity/platform/db/client';
 import { PRESETS_DIR } from '@bizcity/platform/db/paths';
 import { Errors } from '@bizcity/platform/core/errors';
-import type { AuthContext } from '@bizcity/platform/core/auth';
+import { rolePermissions, type AuthContext } from '@bizcity/platform/core/auth';
 import { defineAction, listActions, runAction, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { queryBool } from '@bizcity/platform/core/http';
 import { STANDARD } from '../../core/version.js';
@@ -367,3 +367,43 @@ export const setupRunActions: AnyActionDef[] = [
     handler: (ctx, input) => getRun(ctx.data.tx, ctx.tenant.id, input.id),
   }),
 ];
+
+// ── Công ty mẫu (B5a) ─────────────────────────────────────────────────────────────
+// [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a, 00 §14): job db-migrate tạo đơn vị mẫu (is_sample) cùng tài khoản quản trị rồi nạp gói bằng đúng bộ chạy của B2
+
+/** Job cài có tạo Công ty mẫu không: chỉ khi `BIZCITY_SAMPLE` là mã gói, CSDL vừa khởi tạo (trước seed chưa có đơn vị), chưa có đơn vị mẫu. */
+export function sampleDecision(preset: string | undefined, tenantsBefore: number, hasSample: boolean): { run: boolean; why: string } {
+  const p = (preset ?? '').trim();
+  if (!p || p === 'off') return { run: false, why: 'BIZCITY_SAMPLE trống / off' };
+  if (!ID_RE.test(p)) return { run: false, why: `BIZCITY_SAMPLE "${p}" không phải mã gói` };
+  if (tenantsBefore > 0) return { run: false, why: 'CSDL đã có đơn vị (chỉ tạo Công ty mẫu khi cài mới)' };
+  if (hasSample) return { run: false, why: 'đã có Công ty mẫu' };
+  return { run: true, why: '' };
+}
+
+/** Quyền chủ đơn vị của người quản trị đơn vị mẫu (gọi lại action Core như người bấm). */
+async function ownerAuth(tenantId: string, email: string): Promise<AuthContext> {
+  const u = await sql<{ id: string; full_name: string }>`SELECT id, full_name FROM users WHERE tenant_id = ${tenantId} AND email = ${email} AND role = 'owner'`.execute(db);
+  if (!u.rows[0]) throw Errors.notFound(`người quản trị ${email} của đơn vị mẫu`);
+  return { tenantId, actor: `user:${u.rows[0].id}`, actorName: u.rows[0].full_name, kind: 'user', role: 'owner', roles: ['owner'], permissions: rolePermissions('owner') };
+}
+
+/**
+ * Tạo Công ty mẫu (mã `code`, is_sample) cùng email quản trị và mật khẩu `adminPassword`, rồi nạp gói `presetId` (chờ xong).
+ * Mã đã có: là đơn vị mẫu thì trả lại (không nạp lần hai); đơn vị thường thì từ chối — không bao giờ nạp mẫu vào đơn vị thật.
+ */
+/** Hàm tạo đơn vị của Kernel (seed) — gốc lắp ráp truyền vào: lớp này không import Kernel (TARGET-LAYOUT §2). */
+export type SeedTenant = (o: { tenantCode: string; tenantName: string; adminPassword?: string; isSample: true }) => Promise<{ tenantId: string; adminEmail: string }>;
+
+export async function createSampleTenant(opts: { presetId: string; code: string; adminPassword?: string }, seedTenant: SeedTenant): Promise<{ created: boolean; tenantId: string; adminEmail: string | null; run: RunRow | null }> {
+  readPreset(opts.presetId);
+  const had = await sql<{ id: string; is_sample: boolean }>`SELECT id, is_sample FROM tenants WHERE code = ${opts.code}`.execute(db);
+  if (had.rows[0]) {
+    if (!had.rows[0].is_sample) throw Errors.conflict(`Mã đơn vị ${opts.code} đã là đơn vị thật — không tạo Công ty mẫu trùng mã`, { reason: 'SETUP_NOT_EMPTY' });
+    return { created: false, tenantId: String(had.rows[0].id), adminEmail: null, run: null };
+  }
+  const r = await seedTenant({ tenantCode: opts.code, tenantName: 'Công ty Mẫu (dữ liệu hư cấu)', adminPassword: opts.adminPassword, isSample: true });
+  const auth = await ownerAuth(r.tenantId, r.adminEmail);
+  const { run } = await startRun(auth, opts.presetId, `sample-tenant:${r.tenantId}`);
+  return { created: true, tenantId: r.tenantId, adminEmail: r.adminEmail, run: await executeRun(auth, run) };
+}

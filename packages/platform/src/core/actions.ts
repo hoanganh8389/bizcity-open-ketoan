@@ -31,7 +31,7 @@ import { asModuleRole } from '../db/module-db.js';
 import { sendNotification, type NotifyInput } from './notify.js';
 import { z } from 'zod';
 import { ERROR_CODES, docRefModule, type IngestResult, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentSignature, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
-import { db } from '../db/client.js';
+import { db, type Db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
 import { currentActionScope, runInActionScope, writeEvidence, type ActionScope, type EvidenceEntry, type EvidenceReceipt } from './audit.js';
@@ -391,6 +391,14 @@ export function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny>(def:
   });
 }
 
+// [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a, 00 §14, T036-4): đơn vị mẫu (tenants.is_sample) không gửi gì ra ngoài — chặn ở máy chủ, không chỉ ẩn nút
+/** Đơn vị mẫu → CONFLICT SAMPLE_TENANT. Dùng ở runtime (action sideEffects external) và ở việc kết nối app ngoài. */
+export async function assertNotSampleTenant(conn: Db, tenantId: string, what: string): Promise<void> {
+  if (!tenantId) return;
+  const r = await sql<{ is_sample: boolean }>`SELECT is_sample FROM tenants WHERE id = ${tenantId}`.execute(conn);
+  if (r.rows[0]?.is_sample) throw Errors.conflict(`Công ty Mẫu (dữ liệu hư cấu) không ${what} — đăng nhập đơn vị của bạn để làm việc này`, { reason: 'SAMPLE_TENANT' });
+}
+
 async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAny>(def: ActionDef<I, O>, rawInput: unknown, call: ActionCall): Promise<ActionResult<z.infer<O>>> {
   const auth = call.auth;
   if (def.permission !== 'public') {
@@ -402,6 +410,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   const input = def.input.parse(rawInput) as z.infer<I>; // ZodError → VALIDATION_ERROR (core/http.ts)
   const dryRun = call.dryRun === true;
   if (dryRun && !def.dryRun) throw Errors.validation(`Action ${def.id} không hỗ trợ chạy thử (dryRun)`);
+  if (def.sideEffects?.includes('external')) await assertNotSampleTenant(db, auth?.tenantId ?? '', 'gửi dữ liệu ra ngoài');
   const key = def.effect === 'write' && !dryRun ? call.idempotencyKey : undefined;
   if (key !== undefined && (key.length < 8 || key.length > 128)) throw Errors.validation('Idempotency-Key dài 8–128 ký tự');
   if (def.effect === 'write' && def.idempotency === 'required' && !dryRun && !key) {

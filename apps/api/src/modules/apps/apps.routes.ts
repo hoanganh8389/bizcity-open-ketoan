@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { authOf, requireAuthenticated, requirePermission, requireUser } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
 import { appsService } from './apps.service.js';
-import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
+import { assertNotSampleTenant, defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['App ngoài tiến trình'];
 const keyParam = z.object({ key: z.string().regex(/^[a-z][a-z0-9-]*$/, 'Khoá app sai khuôn') });
@@ -53,7 +53,8 @@ export const appsWriteActions: AnyActionDef[] = [
     input: keyParam, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/apps/:key/install', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'app', objectId: (i) => String(i.key) },
-    handler: (ctx, input) => appsService.installIn(ctx.data.tx, ctx.legacyAuth, input.key),
+    // [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (T036-4): đơn vị mẫu không kết nối app ngoài (không có app thì webhook không nhận sự kiện của đơn vị mẫu)
+    handler: async (ctx, input) => { await assertNotSampleTenant(ctx.data.tx, ctx.tenant.id, 'kết nối ứng dụng ngoài'); return appsService.installIn(ctx.data.tx, ctx.legacyAuth, input.key); },
   }),
   defineAction({
     id: 'core.app.enable', title: 'Bật lại kết nối app', tags,
@@ -61,7 +62,7 @@ export const appsWriteActions: AnyActionDef[] = [
     input: keyParam, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/apps/:key/enable' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'app', objectId: (i) => String(i.key) },
-    handler: (ctx, input) => appsService.setStatusIn(ctx.data.tx, ctx.legacyAuth, input.key, 'active'),
+    handler: async (ctx, input) => { await assertNotSampleTenant(ctx.data.tx, ctx.tenant.id, 'kết nối ứng dụng ngoài'); return appsService.setStatusIn(ctx.data.tx, ctx.legacyAuth, input.key, 'active'); },
   }),
   defineAction({
     id: 'core.app.disable', title: 'Tắt kết nối app: khoá bị từ chối, webhook ngừng; dữ liệu và bút toán giữ nguyên', tags,
