@@ -15,13 +15,15 @@ import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { useBranches } from '@/components/filters';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { CayDonVi } from '@/components/CayDonVi';
-import { useOrgTree } from '@/lib/orgUnits';
+import { useOrgTree, type OrgNode, type OrgTree } from '@/lib/orgUnits';
 import { PriceRowsPanel } from './PriceRowsPanel';
 import { PrintButton } from '@/components/print';
 import { PRICE_LIST_TEMPLATES, loadQuote } from './priceListPrint';
 
 interface PriceList { code: string; name: string; isCompany: boolean; isActive: boolean; note: string; branchCodes: string[]; pricedRows: number }
 type Editing = Partial<PriceList> & { isNew?: boolean };
+/** Nút ảo gom chi nhánh chưa gắn sơ đồ tổ chức vào cùng cây chọn chi nhánh. */
+const CHUA_GAN = '__chua_gan__';
 
 export function PriceListsPage() {
   const { can } = useAuth();
@@ -101,11 +103,23 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
   const picked = new Set(v.branchCodes ?? []);
   const toggle = (code: string) => set({ branchCodes: picked.has(code) ? [...picked].filter((c) => c !== code) : [...picked, code] });
   const t = text.trim().toLowerCase();
-  // [2026-11-17 11:37 AM kiennt] DM14 — chọn chi nhánh theo cây sơ đồ tổ chức (tích một nhóm = cả nhóm); chi nhánh chưa gắn sơ đồ tích ở danh sách dưới cây;
+  // [2026-11-17 11:37 AM kiennt] DM14 — chọn chi nhánh theo cây sơ đồ tổ chức (tích một nhóm = cả nhóm); chi nhánh chưa gắn sơ đồ ở nhánh "Chưa gắn sơ đồ tổ chức" của cây;
   // đơn vị chưa có sơ đồ tổ chức thì danh sách phẳng như cũ (đóng góp)
   const org = useOrgTree();
   const coCay = Boolean(org.data?.nodes.length);
-  const trongCay = useMemo(() => new Set((org.data?.branches ?? []).filter((b) => b.orgCode).map((b) => b.code)), [org.data]);
+  // [2026-11-17 02:20 PM kiennt] DM14 — một cây duy nhất: chi nhánh chưa gắn sơ đồ tổ chức gom vào nhánh "Chưa gắn sơ đồ tổ chức" ngay trong cây,
+  // bỏ danh sách phẳng thứ hai dưới cây (đóng góp)
+  const cayGop = useMemo((): OrgTree | undefined => {
+    const t0 = org.data;
+    if (!t0?.nodes.length) return t0;
+    const co = new Set(t0.nodes.map((n) => n.code));
+    const le = t0.branches.filter((b) => !b.orgCode || !co.has(b.orgCode));
+    if (!le.length) return t0;
+    const goc = Math.max(0, ...t0.nodes.filter((n) => !n.parentCode).map((n) => n.sortOrder)) + 1;
+    const nut: OrgNode = { code: CHUA_GAN, shortCode: '', name: 'Chưa gắn sơ đồ tổ chức', alias: '', note: '', kind: 'unit', parentCode: null, level: 1, path: 'Chưa gắn sơ đồ tổ chức',
+      sortOrder: goc, isActive: true, purchaseBranchCode: null, purchaseUnitCode: null, directBranches: le.length, totalBranches: le.length, activeBranches: le.filter((b) => b.isActive).length };
+    return { ...t0, nodes: [...t0.nodes, nut], branches: t0.branches.map((b) => (le.includes(b) ? { ...b, orgCode: CHUA_GAN } : b)), unassigned: 0 };
+  }, [org.data]);
   // [2026-11-17 11:43 AM kiennt] DM14 — chưa có sơ đồ tổ chức: cây theo phân cấp kho tổng → cửa hàng (MH15, GET /stock/hierarchy); lỗi / không quyền thì danh sách phẳng (đóng góp)
   const phanCap = useQuery({ queryKey: ['stock-hierarchy'], enabled: org.isSuccess && !coCay, retry: false, staleTime: 60_000,
     queryFn: () => api.get<{ branches: { code: string; name: string; level: string; parentCode: string | null; isActive: boolean }[] }>('/api/v1/stock/hierarchy') });
@@ -118,7 +132,7 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
     return con.length ? [...nhom, { key: '', label: 'Chưa xếp', items: con }] : nhom;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phanCap.data, v.branchCodes]);
-  const shown = branches.filter((b) => (b.isActive || picked.has(b.code)) && (!coCay || !trongCay.has(b.code)) && (!t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t)));
+  const shown = branches.filter((b) => (b.isActive || picked.has(b.code)) && (!t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t)));
   const chuyenSang = [...picked].filter((c) => owner.has(c));
 
   const viewAgain = useViewAgain();
@@ -147,18 +161,17 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
       <fieldset className="fgroup">
         <legend>Chi nhánh áp dụng ({picked.size}) <button type="button" className="btn btn-xs btn-help" data-view-ok onClick={() => setHelp(true)}>? Hướng dẫn</button></legend>
         <div className="full">
-          {coCay && <CayDonVi tree={org.data} showBranches checkable picked={[...picked]} onPick={(b) => set({ branchCodes: b })} height={300} openLevel={2} />}
+          {coCay && <CayDonVi tree={cayGop} showBranches checkable picked={[...picked]} onPick={(b) => set({ branchCodes: b })} height={300} openLevel={2} />}
           {!coCay && nhomPhanCap && <CayPhanCap nhom={nhomPhanCap} picked={picked} onChange={(codes) => set({ branchCodes: codes })} />}
-          {((!coCay && !nhomPhanCap) || (coCay && (shown.length > 0 || t))) && <>
-            {coCay && <div className="muted" style={{ fontSize: 12, margin: '8px 0 4px' }}>Chưa gắn sơ đồ tổ chức</div>}
-            {(!coCay || branches.length > 12) && (
+          {!coCay && !nhomPhanCap && <>
+            {branches.length > 12 && (
               <div className="row" style={{ gap: 8, marginBottom: 6 }}>
                 <input className="input" style={{ flex: 1 }} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tìm chi nhánh: mã, tên" />
                 <button type="button" className="btn btn-sm" onClick={() => set({ branchCodes: [...new Set([...picked, ...shown.map((b) => b.code)])] })}>Chọn hết đang hiện</button>
                 <button type="button" className="btn btn-sm" onClick={() => set({ branchCodes: [...picked].filter((c) => !shown.some((b) => b.code === c)) })}>Bỏ hết đang hiện</button>
               </div>
             )}
-            <div style={{ maxHeight: coCay ? 140 : 300, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 4, padding: 6, columns: 2 }}>
+            <div style={{ maxHeight: 300, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 4, padding: 6, columns: 2 }}>
               {shown.map((b) => (
                 <label key={b.code} className="checkbox" style={{ display: 'flex', gap: 6, padding: '2px 0', breakInside: 'avoid' }}>
                   <input type="checkbox" checked={picked.has(b.code)} onChange={() => toggle(b.code)} />
