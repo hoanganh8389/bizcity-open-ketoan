@@ -82,11 +82,9 @@ export interface CayNhomHangProps {
   openLevel?: number;
   /** Ẩn nhóm ngừng dùng (vẫn hiện nhóm đang chọn / đang tích). */
   hideInactive?: boolean;
-  /** Hiện mã ngắn sau tên nhóm ("Bỉm tã - 19"); nhóm chưa có mã ngắn để trống. */
-  showMa?: boolean;
 }
 
-export function CayNhomHang({ list, selected, onSelect, checkable = false, picked = [], onPick, height = 420, openLevel = 0, hideInactive = false, showMa = false }: CayNhomHangProps) {
+export function CayNhomHang({ list, selected, onSelect, checkable = false, picked = [], onPick, height = 420, openLevel = 0, hideInactive = false }: CayNhomHangProps) {
   const ix = useMemo(() => indexNhom(list), [list]);
   const [q, setQ] = useState('');
   const [open, setOpen] = useState<Set<string>>(new Set());
@@ -161,8 +159,7 @@ export function CayNhomHang({ list, selected, onSelect, checkable = false, picke
           <button type="button" className="cdv-tog" disabled={!ks.length} onClick={(e) => { e.stopPropagation(); flip(c.code); }}>{ks.length ? (o ? <ChevronDown size={13} /> : <ChevronRight size={13} />) : null}</button>
           {checkable && <input type="checkbox" className="cdv-check" checked={st === 'on'} ref={(el) => { if (el) el.indeterminate = st === 'some'; }} onChange={() => toggle(c.code)} onClick={(e) => e.stopPropagation()} />}
           <Folder size={13} className="cdv-ic" />
-          {/* [2026-11-17 03:34 PM kiennt] DM11 — cây hiện mã ngắn sau tên nhóm (tuỳ chọn showMa) (đóng góp) */}
-          <span className="cdv-name">{c.name}{showMa && c.skuCode ? <span className="muted"> - {c.skuCode}</span> : null}</span>
+          <span className="cdv-name">{c.name}</span>
         </div>
         {o && ks.map((k) => row(k, depth + 1))}
       </div>
