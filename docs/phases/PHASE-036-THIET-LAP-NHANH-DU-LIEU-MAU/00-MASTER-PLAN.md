@@ -82,6 +82,8 @@ Bản mẫu bấm thử được: [mockups/thiet-lap-nhanh.html](mockups/thiet-l
 
 **18 báo cáo đích** (mã màn): ACC8 B01 · ACC9 B02 · ACC13 B03 · ACC10 cân đối phát sinh · ACC88 sổ cái · ACC89 nhật ký chung · ACC38 công nợ · ACC67 tuổi nợ · ACC83 nhập xuất tồn · ACC82 thẻ kho · ACC80 sổ quỹ · BH02 bán hàng tổng hợp · BH05 lãi gộp · ACC66 tờ khai GTGT · ACC64 / ACC65 bảng kê mua vào / bán ra · ACC28 sổ tài sản · Tổng quan (`/`).
 
+<!-- [2026-11-17 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6: dò mã màn ở mã nguồn — ba mã trên ghi nhầm -->Sửa mã màn (dò ở mã nguồn, S036-6): sổ quỹ tiền mặt là **ACC55** (ACC80 là *bảng kê số dư tiền*), lãi gộp là **BH04** (BH05 là *thu tiền bán hàng*), sổ tài sản là **ACC29** (ACC28 là *tăng tài sản cố định*). T036-1 gọi cả mã đúng và ba màn ghi nhầm.
+
 **Ca nghiệm thu T036-1:** nạp gói trên CSDL test sạch → mỗi báo cáo đích **khác rỗng**; `scripts/doi-chieu-ke-toan.sql` ĐẠT (Nợ = Có, công nợ ↔ 131 / 331, hoá đơn ↔ 133, kho ↔ 156); chạy lại `apply` lần hai **không thêm dòng nào**. **Lương** ngoài phạm vi (chưa có phân hệ) — khi có thì thêm khối.
 
 ## 6. An toàn (gom đề bài 3)
@@ -358,6 +360,15 @@ Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định kho
 - Chứng từ: mua có hoá đơn (có NCC trả chậm), trả hàng NCC, bán lẻ + bán buôn (tiền mặt / chuyển khoản / công nợ), khách trả hàng, thu tiền khách, trả tiền NCC, nộp tiền vào ngân hàng (`cash_transfer`), chi phí lẻ theo lý do, chuyển kho, kiểm kê điều chỉnh.
 - Tài sản: 2 tài sản cố định + 1 CCDC, khấu hao ba kỳ.
 - **Không làm ở B4:** tờ khai GTGT nháp (action lưu `thue.vat-return.save` của phân hệ thuế đòi đủ số liệu tờ khai; màn tờ khai vẫn tính từ sổ nên vẫn có số), lương (chưa có phân hệ).
+
+**Điều chỉnh khi làm (2026-11-17)** <!-- [2026-11-17 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6: điều chỉnh theo dữ liệu thật của đơn vị mới -->:
+
+- **Bỏ chi phí lẻ theo lý do.** Đơn vị mới chỉ có 14 lý do mặc định, không có lý do chi phí (CPQL… chỉ có khi nạp danh mục chuẩn ở TI08). Gói tự tạo lý do thì phải ghi số tài khoản chi phí — ngoài ngoại lệ đã chọn. B02 vẫn có chi phí quản lý (khấu hao 6424). Khi đơn vị mẫu (B5) nạp danh mục chuẩn trước thì thêm lại.
+- **Số dư đầu kỳ chỉ tiền, tài sản, vốn góp** (1111, 11210005, 2118, 2141, 41111 kèm đối tượng chủ sở hữu). Hàng tồn vào bằng phiếu mua tháng đầu: số dư 156 không có số lượng trên thẻ kho sẽ lệch kho ↔ 156.
+- **Thẻ tài sản không ghi số tài khoản:** máy chủ lấy theo loại tài sản (`TS-KHAC`), như màn thẻ tài sản tự điền. Ngoại lệ STD-PRE-7 thực tế chỉ dùng ở số dư đầu kỳ. Bỏ CCDC (tài khoản 242 tổng hợp không phải tài khoản chi tiết).
+- **Cuối kỳ chỉ hai tháng đã qua.** Giá vốn và khấu hao Kernel ghi ngày cuối tháng; chạy cho tháng này là chứng từ ngày tương lai, báo cáo tới hôm nay lệch kho ↔ 156. Tháng này để mở như doanh nghiệp đang giữa tháng (dòng bán chưa định giá — chẩn đoán bỏ qua).
+- **Nhóm thuế 0 % dùng KCT** (đơn vị mới không có V00).
+- **Đối chiếu bằng mã chẩn đoán L3** (`LEDGER_BALANCED`, `DEBT_MATCH_LEDGER`, `VAT_INPUT_INVOICE_MATCH`, `INVENTORY_LEDGER_MISMATCH`, `LEDGER_ROUNDING`). `scripts/doi-chieu-ke-toan.sql` trên `main` đang hỏng cú pháp (dòng dấu PHASE-029 dính vào `\set t`) và mục 4 cộng `amount` thẻ kho — dòng xuất không lưu giá trị nên không so được; chạy bản sửa tay, ghi ở PR, việc sửa script là việc riêng.
 
 **Đổi ở `setup-run.ts`:** thêm `openings`, `assets`, `close` vào `BLOCK_KEYS` và `blocksOf`; ngày `@m-N/DD`, `@period-N`; kiểm số hiệu tài khoản ở `plan`; luật chạy tiếp theo khối (T036-9) giữ nguyên.
 
