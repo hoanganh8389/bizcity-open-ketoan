@@ -8,7 +8,7 @@ Dành cho **đơn vị mới**, chưa có chứng từ nào. Bốn bước, kho�
 
 ## Bốn bước
 
-1. **Bắt đầu.** Chọn **Thiết lập công ty của tôi**. *Xem công ty mẫu* (một đơn vị riêng có ba tháng nghiệp vụ hư cấu) sẽ có ở bản sau.
+1. **Bắt đầu.** Chọn **Thiết lập công ty của tôi**. *Xem công ty mẫu* <!-- [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 --> mở **Công ty Mẫu** — đơn vị riêng có ba tháng nghiệp vụ hư cấu, báo cáo có số: bấm *Mở Công ty Mẫu*, đăng nhập lại bằng cùng email và mật khẩu (mã đơn vị điền sẵn, thường là `mau`). Bản cài chưa có Công ty Mẫu thì thẻ này mờ.
 2. **Công ty.** Tên công ty, mã số thuế (10 chữ số; chi nhánh thêm `-xxx`), địa chỉ, điện thoại. Bấm *Tiếp* là lưu, như sửa ở màn Thông tin đơn vị. Chế độ kế toán (Thông tư 99) và phương pháp tính thuế GTGT (khấu trừ) chỉ có một lựa chọn. **Ngành**: chọn gói mẫu có trong bản cài (hiện có *Thương mại bán lẻ*); ngành ghi "sắp có" chưa chọn được.
 3. **Nạp gì.** Mỗi khối một hàng: tổng, đã có, sẽ thêm.
    - **Chế độ ghi sổ** luôn nạp, và chỉ nạp khi đơn vị còn trắng.
@@ -27,3 +27,10 @@ Dành cho **đơn vị mới**, chưa có chứng từ nào. Bốn bước, kho�
 | Nút *Thiết lập nhanh* không có | Không có quyền *Cấu hình*, hoặc module tắt ở đơn vị | Nhờ chủ đơn vị |
 
 Máy chủ: `GET /api/v1/setup/status`, `GET /api/v1/setup/presets/:id/plan`, `POST /api/v1/setup/presets/:id/apply`, `GET /api/v1/setup/runs/:id` ([BIZCITY-PRESET](../contracts/BIZCITY-PRESET-v1.md)).
+
+## Công ty Mẫu <!-- [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 -->
+
+- Bản dùng thử (`scripts/cai-nhanh.sh`) cài mới là có sẵn **Công ty Mẫu** (mã đơn vị `mau`): ba tháng mua – bán – thu chi – kho – tài sản hư cấu, giá vốn và kết chuyển hai tháng đã qua. Đăng nhập bằng cùng email và mật khẩu quản trị.
+- Ở Công ty Mẫu, đầu trang luôn có **dải vàng** *"Bạn đang xem Công ty Mẫu — số liệu hư cấu"*. Bấm *Bắt đầu với công ty của bạn* để đăng xuất, rồi đăng nhập mã đơn vị của công ty.
+- Công ty Mẫu **không gửi được gì ra ngoài** và không kết nối ứng dụng ngoài — máy chủ từ chối (`SAMPLE_TENANT`).
+- Người quản trị bản cài tắt bằng `BIZCITY_SAMPLE=` (trống) trước lần cài đầu ([docs/ops/DEPLOY.md](../ops/DEPLOY.md)).

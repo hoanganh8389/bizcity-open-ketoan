@@ -28,7 +28,8 @@ import { NhanHangNcc } from './NhanHangNcc';
 import '../mua-hang.css';
 
 type Tab = 'tong-quan' | 'hop-dong' | 'chiet-khau' | 'thuong' | 'mat-hang' | 'tong-hop' | 'bao-cao' | 'hoa-don' | 'tep' | 'nhat-ky';
-const TABS: [Tab, string][] = [['tong-quan', 'Tổng quan'], ['hop-dong', 'Hợp đồng & điều khoản'], ['chiet-khau', 'Chiết khấu & khuyến mại'], ['thuong', 'Thưởng'], ['mat-hang', 'Mặt hàng & giá mua'], ['tong-hop', 'Tổng hợp mua hàng'], ['bao-cao', 'Báo cáo mua hàng'], ['hoa-don', 'Hoá đơn NCC'], ['tep', 'Tệp đính kèm'], ['nhat-ky', 'Nhật ký']];
+// [2026-11-17 12:00 PM kiennt] MH01 — bỏ hai thẻ liên kết Tổng hợp mua hàng / Báo cáo mua hàng (LINK_TABS vẫn dùng cho số liệu ở Tổng quan) (đóng góp)
+const TABS: [Tab, string][] = [['tong-quan', 'Tổng quan'], ['hop-dong', 'Hợp đồng & điều khoản'], ['chiet-khau', 'Chiết khấu & khuyến mại'], ['thuong', 'Thưởng'], ['mat-hang', 'Mặt hàng & giá mua'], ['hoa-don', 'Hoá đơn NCC'], ['tep', 'Tệp đính kèm'], ['nhat-ky', 'Nhật ký']];
 const KINDS_OF: Partial<Record<Tab, PolicyKind[]>> = {
   'hop-dong': ['contract', 'credit_limit', 'payment_term', 'lot_tracking'],
   'chiet-khau': ['trade_discount', 'item_discount', 'qty_tier', 'payment_discount', 'promo_gift', 'gift_budget'],

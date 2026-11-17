@@ -17,7 +17,7 @@ Quyền: `settings:write` (chủ đơn vị, kế toán trưởng). Máy chủ g
 
 ## Luồng
 
-1. **Bắt đầu** — *Thiết lập công ty của tôi*. *Xem công ty mẫu* chờ đơn vị mẫu riêng (B5).
+1. **Bắt đầu** — *Thiết lập công ty của tôi*. *Xem công ty mẫu* (B5a): bản cài có Công ty Mẫu (`core.setup.status` → `sampleTenantCode`) thì bấm *Mở Công ty Mẫu* — module phát sự kiện `ketoan:open-sample` (`detail.code`), khung giao diện (`CongTyMau.tsx`) điền sẵn mã đơn vị ở trang đăng nhập, đăng xuất và tải lại. Module không chạm vé đăng nhập.
 2. **Công ty** — tên, MST, địa chỉ, điện thoại (lưu khi đổi); ngành = gói mẫu có trong bản cài.
 3. **Nạp gì** — cấu hình (luôn có) + danh mục mẫu tick được (mặc định tắt). Không có chứng từ mẫu.
 4. **Đang nạp → Xong** — hỏi tiến độ mỗi giây; lỗi thì *Thử lại* (phần đã có bỏ qua). Đóng giữa chừng không dừng việc nạp; mở lại thì vào thẳng bước này.
