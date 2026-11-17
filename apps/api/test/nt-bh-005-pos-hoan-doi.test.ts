@@ -14,7 +14,7 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
-import { nhapTon } from './pos-nhap-ton.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
@@ -32,14 +32,17 @@ const R2 = '0193a1b2-0000-7000-8000-00000000r002';
 const R3 = '0193a1b2-0000-7000-8000-00000000r003';
 const N3 = '0193a1b2-0000-7000-8000-00000000n003';
 
+// [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: thu ngân không giảm tay (Q6) → đơn mẫu bỏ giảm tay 10%, tính lại mọi số hoàn / đổi (đóng góp)
+// Đơn mẫu: SUA400 2 × 324.000 = 648.000 (R08: 600.000 + 48.000) + TA01 215.000 (R10: 195.455 + 19.545) = 863.000 = TM 300.000 + CK 563.000.
+// Trả 1 hộp: 648.000 × 1/2 = 324.000 → trước thuế round(324.000 / 1,08) = 300.000, thuế 24.000.
 const order = (id: string, over: Record<string, unknown> = {}) => ({
   id, branchCode: 'CN01', businessDate: YESTERDAY, shiftId: `ngay-${YESTERDAY}`, exportReasonCode: 'XBA', customer: { retail: true },
   lines: [
-    { lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 2, clientUnitPrice: 324_000, manualDiscount: { kind: 'percent', value: 10 } },
+    { lineId: 'l1', sku: 'SUA400', unitName: 'Hộp', unitQty: 2, clientUnitPrice: 324_000 },
     { lineId: 'l2', sku: 'TA01', unitName: 'Gói', unitQty: 1, clientUnitPrice: 215_000 },
   ],
-  promotionSelections: [], payment: { mode: 'split', parts: [{ method: 'TM', amount: 300_000 }, { method: 'CK', amount: 498_200 }] },
-  clientTotal: 798_200, coreVersion: '0.1.0', promotionsVersion: '', ...over,
+  promotionSelections: [], payment: { mode: 'split', parts: [{ method: 'TM', amount: 300_000 }, { method: 'CK', amount: 563_000 }] },
+  clientTotal: 863_000, coreVersion: '0.1.0', promotionsVersion: '', ...over,
 });
 
 describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ máy POS', () => {
@@ -80,8 +83,10 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     }
     // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
     await nhapTon(ctx, 'CN01', [['SUA400', 1000, 'Hộp'], ['TA01', 1000, 'Gói']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (đóng góp)
+    await khaiGia(tenantId, [['SUA400', 'Hộp', 324_000], ['TA01', 'Gói', 215_000]]);
     for (const id of [O2, O3]) {
-      const r = await post('/orders', order(id, id === O3 ? { payment: { mode: 'cash', cashGiven: 800_000 } } : {}));
+      const r = await post('/orders', order(id, id === O3 ? { payment: { mode: 'cash', cashGiven: 900_000 } } : {}));
       expect(r.statusCode, r.body).toBe(201);
     }
   });
@@ -99,25 +104,25 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     expect(r.statusCode, r.body).toBe(200);
     const d = r.json().data;
     expect(d).toMatchObject({ late: false, blockers: [] });
-    expect(d.lines.map((l: { lineId: string; returnableQty: number; lineTotal: number }) => [l.lineId, l.returnableQty, l.lineTotal])).toEqual([['l1', 2, 583_200], ['l2', 1, 215_000]]);
+    expect(d.lines.map((l: { lineId: string; returnableQty: number; lineTotal: number }) => [l.lineId, l.returnableQty, l.lineTotal])).toEqual([['l1', 2, 648_000], ['l2', 1, 215_000]]);
   });
 
-  it('tình huống 1: trả 1 hộp, TM 291.600 → TH…0001; Nợ 52131 270.000, Nợ 33311 21.600 / Có 1311; Nợ 1311 / Có 1111 291.600', async () => {
+  it('tình huống 1: trả 1 hộp, TM 324.000 → TH…0001; Nợ 52131 300.000, Nợ 33311 24.000 / Có 1311; Nợ 1311 / Có 1111 324.000', async () => {
     const r = await post('/returns', { id: R1, orderId: O2, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'TM', reason: 'Khách đổi ý' });
     expect(r.statusCode, r.body).toBe(201);
     const ret = r.json().data;
-    expect(ret).toMatchObject({ code: `TH${PERIOD}000001`, orderId: O2, refundTotal: 291_600, refundMethod: 'TM', businessDate: TODAY });
-    expect(ret.lines).toEqual([expect.objectContaining({ lineId: 'l1', qty: 1, refund: 291_600 })]);
+    expect(ret).toMatchObject({ code: `TH${PERIOD}000001`, orderId: O2, refundTotal: 324_000, refundMethod: 'TM', businessDate: TODAY });
+    expect(ret.lines).toEqual([expect.objectContaining({ lineId: 'l1', qty: 1, refund: 324_000 })]);
     const docKey = `pos:CN01:sale_return:${R1}`;
     const p = await payload(docKey) as { originalDocKey: string; totals: unknown; payments: unknown };
     expect(p.originalDocKey).toBe(`pos:CN01:sale:${O2}`);
-    expect(p.totals).toEqual({ beforeTax: 270_000, tax: 21_600, total: 291_600 });
-    expect(p.payments).toEqual([{ methodCode: 'TM', amount: 291_600 }]);
+    expect(p.totals).toEqual({ beforeTax: 300_000, tax: 24_000, total: 324_000 });
+    expect(p.payments).toEqual([{ methodCode: 'TM', amount: 324_000 }]);
     const a = await byAccount(docKey);
-    expect(a['52131']).toEqual([270_000, 0]);
-    expect(a['33311']).toEqual([21_600, 0]);
-    expect(a['1311']).toEqual([291_600, 291_600]);
-    expect(a['1111']).toEqual([0, 291_600]);
+    expect(a['52131']).toEqual([300_000, 0]);
+    expect(a['33311']).toEqual([24_000, 0]);
+    expect(a['1311']).toEqual([324_000, 324_000]);
+    expect(a['1111']).toEqual([0, 324_000]);
   });
 
   it('lệch chuẩn 1: gửi lại đúng phiếu (khoá gửi khác) → phiếu cũ, không thêm chứng từ', async () => {
@@ -131,12 +136,12 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
   it('tình huống 2: trả nốt hộp còn lại bằng CK → đúng phần còn lại; hết hàng SUA400 có thể trả', async () => {
     const r = await post('/returns', { id: R2, orderId: O2, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'CK', reason: 'Khách đổi ý' });
     expect(r.statusCode, r.body).toBe(201);
-    expect(r.json().data).toMatchObject({ code: `TH${PERIOD}000002`, refundTotal: 291_600 });
+    expect(r.json().data).toMatchObject({ code: `TH${PERIOD}000002`, refundTotal: 324_000 });
     const a = await byAccount(`pos:CN01:sale_return:${R2}`);
-    expect(a['52131']).toEqual([270_000, 0]);
-    expect(a['11210005']).toEqual([0, 291_600]);
+    expect(a['52131']).toEqual([300_000, 0]);
+    expect(a['11210005']).toEqual([0, 324_000]);
     const left = (await get(`/orders/${O2}/returnable?branch=CN01`)).json().data.lines;
-    expect(left.map((l: { lineId: string; returnableQty: number; refundedAmount: number }) => [l.lineId, l.returnableQty, l.refundedAmount])).toEqual([['l1', 0, 583_200], ['l2', 1, 0]]);
+    expect(left.map((l: { lineId: string; returnableQty: number; refundedAmount: number }) => [l.lineId, l.returnableQty, l.refundedAmount])).toEqual([['l1', 0, 648_000], ['l2', 1, 0]]);
   });
 
   it('lệch chuẩn 2–7: trả quá số, dòng lạ, khác chi nhánh của máy, hình thức sai, thiếu lý do → không phiếu, không chứng từ', async () => {
@@ -157,28 +162,28 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     expect(await docCount('pos:%:sale_return:%')).toBe(before);
   });
 
-  it('tình huống 3: đổi 1 hộp lấy 2 gói tã — sale_return không trả tiền + sale mới đối trừ 291.600, khách trả thêm TM 138.400', async () => {
+  it('tình huống 3: đổi 1 hộp lấy 2 gói tã — sale_return không trả tiền + sale mới đối trừ 324.000, khách trả thêm TM 106.000', async () => {
     const r = await post('/exchanges', {
       id: R3,
       return: { id: R3, orderId: O3, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'doi_tru', reason: 'Đổi hàng' },
       order: order(N3, {
         businessDate: TODAY, shiftId: `ngay-${TODAY}`, lines: [{ lineId: 'n1', sku: 'TA01', unitName: 'Gói', unitQty: 2, clientUnitPrice: 215_000 }],
-        payment: { mode: 'split', parts: [{ method: 'doi_tru', amount: 291_600 }, { method: 'TM', amount: 138_400 }] }, clientTotal: 430_000,
+        payment: { mode: 'split', parts: [{ method: 'doi_tru', amount: 324_000 }, { method: 'TM', amount: 106_000 }] }, clientTotal: 430_000,
       }),
     });
     expect(r.statusCode, r.body).toBe(201);
     const d = r.json().data;
-    expect(d.return).toMatchObject({ refundTotal: 291_600, refundMethod: 'doi_tru', exchangeOrderId: N3 });
+    expect(d.return).toMatchObject({ refundTotal: 324_000, refundMethod: 'doi_tru', exchangeOrderId: N3 });
     expect(d.order.order).toMatchObject({ id: N3, subtotal: 390_909, taxTotal: 39_091, total: 430_000 });
     const ret = await payload(`pos:CN01:sale_return:${R3}`) as { payments: unknown };
     expect(ret.payments).toEqual([]);
     const sale = await payload(`pos:CN01:sale:${N3}`) as { offsets: unknown; payments: unknown };
-    expect(sale.offsets).toEqual([{ docKey: `pos:CN01:sale_return:${R3}`, amount: 291_600 }]);
-    expect(sale.payments).toEqual([{ methodCode: 'TM', amount: 138_400 }]);
+    expect(sale.offsets).toEqual([{ docKey: `pos:CN01:sale_return:${R3}`, amount: 324_000 }]);
+    expect(sale.payments).toEqual([{ methodCode: 'TM', amount: 106_000 }]);
     const a = await byAccount(`pos:CN01:sale:${N3}`);
     expect(a['51111']).toEqual([0, 390_909]);
     expect(a['33311']).toEqual([0, 39_091]);
-    expect(a['1111']).toEqual([138_400, 0]);
+    expect(a['1111']).toEqual([106_000, 0]);
   });
 
   it('lệch chuẩn 8, 10: đổi sang hàng rẻ hơn → chặn, không phiếu trả, không đơn mới', async () => {
@@ -188,7 +193,7 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
       id, return: { id, orderId: O3, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'doi_tru', reason: 'Đổi hàng' },
       order: order('0193a1b2-0000-7000-8000-00000000n004', {
         businessDate: TODAY, lines: [{ lineId: 'n1', sku: 'TA01', unitName: 'Gói', unitQty: 1, clientUnitPrice: 215_000 }],
-        payment: { mode: 'split', parts: [{ method: 'doi_tru', amount: 291_600 }] }, clientTotal: 215_000,
+        payment: { mode: 'split', parts: [{ method: 'doi_tru', amount: 324_000 }] }, clientTotal: 215_000,
       }),
     });
     expect(r.statusCode, r.body).toBe(400);
@@ -202,16 +207,16 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     expect(r.json().error.details.reason).toBe('POS_CANCEL_COMPLETED');
   });
 
-  it('danh sách phiếu trả của chi nhánh: 3 phiếu, tổng hoàn 874.800', async () => {
+  it('danh sách phiếu trả của chi nhánh: 3 phiếu, tổng hoàn 972.000', async () => {
     const r = await get(`/returns?branch=CN01&from=${TODAY}&to=${TODAY}`);
     expect(r.statusCode, r.body).toBe(200);
     expect(r.json().data).toHaveLength(3);
-    expect(r.json().meta).toMatchObject({ page: 1, total: 3, sums: { refundTotal: 874_800 } });
+    expect(r.json().meta).toMatchObject({ page: 1, total: 3, sums: { refundTotal: 972_000 } });
   });
 
   it('khách hàng: đơn có SĐT tự thêm khách; tìm theo SĐT / tên không dấu, tra theo SĐT, đơn của khách', async () => {
     const id = '0193a1b2-0000-7000-8000-000000005009';
-    const o = await post('/orders', order(id, { customer: { phone: '0911 555 666', name: 'Nguyễn Thị Hoà' }, payment: { mode: 'cash', cashGiven: 800_000 } }));
+    const o = await post('/orders', order(id, { customer: { phone: '0911 555 666', name: 'Nguyễn Thị Hoà' }, payment: { mode: 'cash', cashGiven: 900_000 } }));
     expect(o.statusCode, o.body).toBe(201);
     const byPhone = await get('/customers?q=555666');
     expect(byPhone.statusCode, byPhone.body).toBe(200);
@@ -223,7 +228,7 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     const orders = await get('/customers/0911555666/orders');
     expect(orders.statusCode, orders.body).toBe(200);
     expect(orders.json().data.map((x: { id: string }) => x.id)).toEqual([id]);
-    expect(orders.json().meta).toMatchObject({ total: 1, sums: { total: 798_200 } });
+    expect(orders.json().meta).toMatchObject({ total: 1, sums: { total: 863_000 } });
   });
 
   it('bản sao WP: mỗi đơn / phiếu trả phát đúng một sự kiện outbox (pos.order.recorded / pos.return.recorded) mang bản chụp; gửi lại không phát thêm', async () => {
@@ -231,10 +236,10 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
       SELECT data FROM event_outbox WHERE tenant_id = ${tenantId} AND type = ${type} AND subject = ${subject}`.execute(db)).rows;
     const o = await ev('pos.order.recorded', `pos.order:${O2}`);
     expect(o).toHaveLength(1);
-    expect(o[0]!.data).toMatchObject({ orderId: O2, branchCode: 'CN01', docKey: `pos:CN01:sale:${O2}`, order: { id: O2, total: 798_200 } });
+    expect(o[0]!.data).toMatchObject({ orderId: O2, branchCode: 'CN01', docKey: `pos:CN01:sale:${O2}`, order: { id: O2, total: 863_000 } });
     const r = await ev('pos.return.recorded', `pos.return:${R1}`);
     expect(r).toHaveLength(1);
-    expect(r[0]!.data).toMatchObject({ returnId: R1, orderId: O2, originalDocKey: `pos:CN01:sale:${O2}`, return: { refundTotal: 291_600 } });
+    expect(r[0]!.data).toMatchObject({ returnId: R1, orderId: O2, originalDocKey: `pos:CN01:sale:${O2}`, return: { refundTotal: 324_000 } });
     expect(await ev('pos.order.recorded', `pos.order:${N3}`)).toHaveLength(1);
   });
 
@@ -244,13 +249,13 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     const queued = async (id: string) => (await sql<{ status: string }>`
       SELECT d.status FROM event_deliveries d JOIN event_outbox o ON o.id = d.event_id
        WHERE d.tenant_id = ${tenantId} AND d.consumer = 'tgs-wp.webhook' AND o.subject = ${`pos.order:${id}`}`.execute(db)).rows;
-    { const r9 = await post('/orders', order(O9, { payment: { mode: 'cash', cashGiven: 800_000 } })); expect(r9.statusCode, r9.body).toBe(201); }
+    { const r9 = await post('/orders', order(O9, { payment: { mode: 'cash', cashGiven: 900_000 } })); expect(r9.statusCode, r9.body).toBe(201); }
     expect(await queued(O9)).toHaveLength(0);
     const inst = await app.inject({ method: 'POST', url: '/api/v1/apps/tgs-wp/install', headers: { authorization: `Bearer ${ctx.token}` } });
     expect(inst.statusCode, inst.body).toBe(201);
     expect(inst.json().data).toMatchObject({ events: ['pos.order.recorded', 'pos.return.recorded', 'pos.order.cancelled'] });
     expect(inst.json().data.webhookSecret).toMatch(/^whsec_/);
-    expect((await post('/orders', order(O10, { payment: { mode: 'cash', cashGiven: 800_000 } }))).statusCode).toBe(201);
+    expect((await post('/orders', order(O10, { payment: { mode: 'cash', cashGiven: 900_000 } }))).statusCode).toBe(201);
     expect(await queued(O10)).toEqual([{ status: 'pending' }]);
   });
 

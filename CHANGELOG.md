@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Máy bán bán đúng bảng giá: không giảm tay, chưa có giá thì không bán (phiếu NT-BH-022) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) -->
+
+- **Đổi:** module `pos` đối chiếu giá dòng (gồm thuế, trước giảm) và hệ số ĐVT với `bizcity_read.branch_prices` của cửa hàng; lệch → `POS_PRICE_CHANGED` (`items: [{ sku, unit, price, ratio, clientPrice, clientRatio }]`); chưa có giá → `POS_NO_PRICE` (trừ quà, hàng Nội bộ, bill Z 0đ).
+- **Đổi:** thu ngân không giảm tay — dòng có `manualDiscount` → `POS_MANUAL_DISCOUNT`; giảm chỉ theo chương trình khuyến mại.
+- **Thêm:** đơn bán lúc mất mạng gửi bù giá cũ / chưa có giá vẫn nhận, mang `priceChangedOffline`; BH13 lọc chung "đơn mất mạng bị lệch (tồn / giá)".
+- **Thêm:** `bizcity_errors@1` 1.13.0-draft: `POS_MANUAL_DISCOUNT`, `POS_NO_PRICE`.
+- **Đổi:** test bán hàng cũ khai giá trước khi bán (`khaiGia` ở `apps/api/test/pos-nhap-ton.ts`); kịch bản giảm tay cũ tính lại hoặc đổi thành bị chặn.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** mọi mã bán ở máy bán phải có giá ở bảng giá cửa hàng / công ty (không có giá thì không bán được).
+
 ### Bỏ tên tiếng Anh của tài khoản (phiếu NT-DM-001, D023-9) <!-- [2026-11-17 10:20 AM kiennt] NGHIEM-THU — NT-DM-001 (đóng góp) -->
 
 - **Bỏ:** cột `accounts.name_en` (migration `0147`): giá trị khác rỗng chép sang bảng mới `accounts_name_en_luu` (chỉ đọc) rồi xoá cột. ACC1 bỏ khung *Tên tài khoản theo ngôn ngữ*, cột lưới, cột Excel xuất / nhập (tệp cũ còn cột *Tên tiếng Anh* thì bỏ qua); dữ liệu mẫu `db/seeds/tai-khoan.csv` bỏ cột `name_en`.

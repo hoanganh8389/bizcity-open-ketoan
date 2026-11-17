@@ -17,7 +17,7 @@ import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { loginWithWpTicket } from '../src/modules/auth/wp-sso.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
-import { nhapTon } from './pos-nhap-ton.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
@@ -65,6 +65,8 @@ describe.skipIf(!HAS)('NT-BH-008 — màn quản trị bán lẻ máy POS', () =
     // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
     await nhapTon(ctx, 'CN01', [['SUA330', 1000, 'Hộp'], ['SUA325', 1000, 'Hộp']]);
     await nhapTon(ctx, 'CN02', [['SUA330', 1000, 'Hộp']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (đóng góp)
+    await khaiGia(tenantId, [['SUA330', 'Hộp', 330_000], ['SUA325', 'Hộp', 325_000]]);
     // CN01 như NT-BH-007 §4.
     const open = await post('/shifts/open', { openingCash: 1_000_000, branchCode: 'CN01' });
     expect(open.statusCode, open.body).toBe(201);

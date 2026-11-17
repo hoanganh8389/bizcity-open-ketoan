@@ -12,6 +12,7 @@ type Row = {
   docKey: string; docStatus: string; cashier: string; shiftId: string; customerName: string; customerPhone: string;
   payments: { method: string; name: string; amount: number }[]; lines: Line[];
   stockShortOffline: { sku: string; need: number; have: number }[];
+  priceChangedOffline: { sku: string; unit: string; price: number | null; clientPrice: number }[];
 };
 
 const cols: GridColumn<Row>[] = [
@@ -27,8 +28,10 @@ const cols: GridColumn<Row>[] = [
   { key: 'docStatus', header: 'Chứng từ sổ', width: 110, value: (r) => DOC_STATUS[r.docStatus]?.label ?? r.docStatus, render: (r) => <Badge map={DOC_STATUS} value={r.docStatus} /> },
   { key: 'docKey', header: 'Mã chứng từ', type: 'code', width: 200, hidden: true },
   // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: đơn bán dự phòng lúc mất mạng gửi bù mà thiếu tồn (đóng góp)
-  { key: 'stockShortOffline', header: 'Quá tồn (mất mạng)', width: 150, value: (r) => r.stockShortOffline.length,
-    render: (r) => (r.stockShortOffline.length ? r.stockShortOffline.map((s) => `${s.sku}: cần ${s.need}, tồn ${s.have}`).join('; ') : '') },
+  { key: 'stockShortOffline', header: 'Lệch khi mất mạng (tồn / giá)', width: 190, value: (r) => r.stockShortOffline.length + r.priceChangedOffline.length,
+    render: (r) => [...r.stockShortOffline.map((s) => `${s.sku}: cần ${s.need}, tồn ${s.have}`),
+      // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: đơn mất mạng bán giá cũ / chưa có giá (đóng góp)
+      ...r.priceChangedOffline.map((p) => `${p.sku} (${p.unit}): bán ${p.clientPrice.toLocaleString('vi-VN')}, bảng giá ${p.price === null ? 'chưa có' : p.price.toLocaleString('vi-VN')}`)].join('; ') },
 ];
 
 const lineCols: GridColumn<Line>[] = [
@@ -56,7 +59,7 @@ export function DonBanPage() {
           <SideInput label="Thu ngân" value={r.draft.cashier ?? ''} onChange={(v) => r.setDraft({ ...r.draft, cashier: v })} />
           <label className="row" style={{ gap: 6 }}>
             <input type="checkbox" checked={r.draft.stockShort === '1'} onChange={(e) => r.setDraft({ ...r.draft, stockShort: e.target.checked ? '1' : '0' })} />
-            Chỉ đơn bán quá tồn khi mất mạng
+            Chỉ đơn mất mạng bị lệch (tồn / giá)
           </label>
         </>
       )}>
