@@ -6,7 +6,8 @@ import { Errors, sql, type ActionContext } from '@bizcity/module-sdk';
 import { codePeriod, computeOrder, couponCodes, parseCode, saleDocKey, toOrderSnapshot, toSaleDocument, type OrderProblem } from './domain/order.js';
 import type { OrderDraft } from './domain/schema.js';
 import { lastCode, takeCodes } from './codes.js';
-import { activePaymentMethods, catalogFor, partnerByCode, resolveBranch } from './read.js';
+import { activePaymentMethods, catalogFor, partnerByCode, pricesFor, resolveBranch } from './read.js';
+import { changedMessage, checkPrices, noPriceMessage, type PriceIssue } from './domain/price.js';
 import { posSettings } from './settings.js';
 import { openShiftOf } from './shifts.js';
 import { stockOf } from './catalog.js';
@@ -105,6 +106,15 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       throw Errors.conflict(`Chi nhánh ${branch.code} chưa mở ca — mở ca rồi mới bán (Cài đặt bán hàng)`, { reason: 'POS_SHIFT_REQUIRED', branchCode: branch.code });
     }
     const catalog = await catalogFor(tx, draft.lines.map((l) => l.sku));
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp): bán đúng bảng giá cửa hàng, không giảm tay, chưa có giá thì không bán.
+    // Đơn bán dự phòng lúc mất mạng gửi bù mà giá đã đổi / chưa có giá: hàng đã giao, tiền đã thu → nhận, đánh dấu cho kế toán xem.
+    const pc = checkPrices(draft.lines, catalog, await pricesFor(tx, branch.code, draft.lines.map((l) => l.sku)));
+    if (pc.manual.length) {
+      throw Errors.validation(`Thu ngân không giảm tay (chỉ giảm theo chương trình khuyến mại): ${pc.manual.map((m) => m.sku).join(', ')}`, { reason: 'POS_MANUAL_DISCOUNT', items: pc.manual });
+    }
+    const priceOffline: PriceIssue[] = draft.offlineCreatedAt ? [...pc.noPrice, ...pc.changed] : [];
+    if (!draft.offlineCreatedAt && pc.noPrice.length) throw Errors.validation(noPriceMessage(pc.noPrice, branch.code), { reason: 'POS_NO_PRICE', items: pc.noPrice });
+    if (!draft.offlineCreatedAt && pc.changed.length) throw Errors.conflict(changedMessage(pc.changed), { reason: 'POS_PRICE_CHANGED', items: pc.changed });
     const paymentMethods = await activePaymentMethods(tx);
     const partner = 'partnerId' in draft.customer ? await partnerByCode(tx, draft.customer.partnerId) : null;
     const base = { draft, catalog, paymentMethods, partner, ...(opts.exchange ? { exchange: opts.exchange } : {}) };
@@ -132,15 +142,16 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       if (!used) code = draft.reservedCode!;
     }
     code ??= (await takeCodes(tx, ctx.tenant.id, branch.code, 'sale', period, 1))[0]!;
-    return { kind: 'new', computed, branch, code, loyalty, stockShort } as const;
+    return { kind: 'new', computed, branch, code, loyalty, stockShort, priceOffline } as const;
   });
   if (prepared.kind === 'replay') return { order: prepared.snapshot, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: true };
 
-  const { computed, branch, code, loyalty, stockShort } = prepared;
+  const { computed, branch, code, loyalty, stockShort, priceOffline } = prepared;
   const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code });
   const submitted = await ctx.ledger.submit(doc);
   const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}) });
   if (stockShort.length) Object.assign(order, { stockShortOffline: stockShort });
+  if (priceOffline.length) Object.assign(order, { priceChangedOffline: priceOffline });
 
   try {
     await ctx.data.module(async (tx) => {

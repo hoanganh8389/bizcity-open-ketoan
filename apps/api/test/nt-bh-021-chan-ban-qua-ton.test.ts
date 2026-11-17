@@ -15,7 +15,7 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
-import { nhapTon } from './pos-nhap-ton.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 
 const POS = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const PB = fileURLToPath(new URL('../../../modules/phieu-ban/', import.meta.url));
@@ -67,6 +67,8 @@ describe.skipIf(!HAS)('NT-BH-021 — chặn bán quá tồn', () => {
     expect((await call(ctx, 'PUT', '/api/v1/settings/posting-modes', { ...modes, sale: 'auto', sale_return: 'auto' })).status).toBe(200);
     // §4: nhập 10 rồi máy bán bán 5 → tồn 5.
     await nhapTon(ctx, 'CN01', [[SKU, 10, 'Hộp'], [SKU2, 5, 'Hộp']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (đóng góp)
+    await khaiGia(tenantId, [[SKU, 'Hộp', 10_800], [SKU, 'Thùng', 64_800, 6], [SKU2, 'Hộp', 10_800]]);
     const r = await req('POST', '/api/v1/m/pos/orders', order([{ sku: SKU, qty: 5 }]));
     expect(r.statusCode, r.body).toBe(201);
     expect(await stock(SKU)).toBe(5);
