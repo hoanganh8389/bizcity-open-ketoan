@@ -2,7 +2,7 @@
  * Chặn bán quá tồn (phiếu NT-BH-021, chốt 16/11/2026). Thuần — không đọc CSDL.
  *
  * - Cộng số xuất theo mã, quy về ĐVT nhỏ nhất (SL × hệ số ĐVT); dòng quà / bill Z cũng tính (hàng vẫn ra khỏi kho).
- * - Mỗi cửa hàng một kho chứa toàn bộ hàng (Q5) → so với tồn cả chi nhánh.
+ * - So với tồn KHO MẶC ĐỊNH của cửa hàng (NT-BH-023 Q11, sửa Q5: trước là cả chi nhánh); chi nhánh chưa khai kho → cả chi nhánh.
  * - Mọi mã đều kiểm, kể cả mã không có dòng sổ (tồn 0) (Q8).
  */
 // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (đóng góp)

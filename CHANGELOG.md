@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Đơn đặt hàng: báo giá có hạn → kiểm hạn mức → giữ hàng ở kho KCB → giao nhiều lần thành phiếu bán nháp (phiếu NT-BH-023) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023 (đóng góp) -->
+
+- **Thêm:** module `phieu-ban` (manifest 0.3.0, migration module `0002_don_dat_hang.sql`: bảng `orders`, `order_events`) — màn **BH20 Đơn đặt hàng** (`/app/phieu-ban/don-dat-hang`, hướng dẫn `docs/huong-dan/don-dat-hang.md`) và API `/api/v1/m/phieu-ban/orders…` (lập / sửa / gửi / duyệt / từ chối / giao / đóng / huỷ / lịch sử / nạp livestream). Số đơn `DH<yymm><6 số>` theo cửa hàng.
+- **Thêm:** gửi đơn kiểm hạn mức nợ (`credit_limit` của khách: nợ hiện tại + đơn đang mở chưa giao + đơn này) và nợ quá hạn (quá `payment_term_days`, trống = 30 ngày) qua action đọc `accounting.debts.partner-balances` → vướng thì **Chờ duyệt** kèm lý do; quyền mới `phieu-ban:order-approve` (chủ đơn vị, kế toán trưởng), người lập không tự duyệt.
+- **Thêm:** giữ hàng = chứng từ `transfer` cùng chi nhánh (một chứng từ cả cặp, `amount` 0, docKey `phieu-ban:dh:<đơn>:<lần>`) từ kho bán sang kho KCB khai ở khoá mới `bizcity.phieu_ban.hold_warehouses` (thẻ Cài đặt của màn); sửa số lượng → chuyển bù; đóng / huỷ → chuyển phần còn giữ về kho bán.
+- **Thêm:** giao nhiều lần (khoá theo đơn, không vượt số còn lại) → phiếu bán BH10 **nháp** xuất từ kho KCB, nối số đơn (`order` trong phiếu); sửa / xoá phiếu nháp đó thì đơn cập nhật số đã giao. Đơn livestream: nhập tay hoặc dán bảng Excel, trùng SĐT + mã hàng trong 24 giờ → báo, gộp hoặc giữ riêng. Mọi thao tác ghi lịch sử người / lúc / cũ → mới.
+- **Đổi:** module `pos` kiểm tồn và hiện tồn theo **kho mặc định** của cửa hàng (NT-BH-023 Q11, sửa Q5 của NT-BH-021); chi nhánh chưa khai kho giữ như cũ (cả chi nhánh). Manifest `pos` đọc thêm `bizcity_read.warehouses`.
+- **Thêm:** `bizcity_errors@1` 1.14.0-draft: `PHIEU_BAN_ORDER_EXPIRED`, `PHIEU_BAN_NO_HOLD_WAREHOUSE`, `PHIEU_BAN_OVER_REMAINING`, `PHIEU_BAN_ORDER_STATE`.
+- **Thay đổi định khoản:** không (chuyển kho cùng tài khoản kho không phát sinh bút toán; doanh thu / giá vốn khi duyệt phiếu bán như BH10).
+- **Nâng cấp cần làm:** chạy migration module `phieu-ban`; khai kho loại KCB cho từng cửa hàng (DM18), tick KCB vào nghiệp vụ "Xuất bán" của Loại kho, chọn kho giữ hàng ở thẻ Cài đặt của BH20. Loại chứng từ chuyển kho đang "chờ duyệt" thì phiếu giữ hàng nằm ở ACC14 tới khi kế toán duyệt.
 ### Máy bán bán đúng bảng giá: không giảm tay, chưa có giá thì không bán (phiếu NT-BH-022) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) -->
 
 - **Đổi:** module `pos` đối chiếu giá dòng (gồm thuế, trước giảm) và hệ số ĐVT với `bizcity_read.branch_prices` của cửa hàng; lệch → `POS_PRICE_CHANGED` (`items: [{ sku, unit, price, ratio, clientPrice, clientRatio }]`); chưa có giá → `POS_NO_PRICE` (trừ quà, hàng Nội bộ, bill Z 0đ).

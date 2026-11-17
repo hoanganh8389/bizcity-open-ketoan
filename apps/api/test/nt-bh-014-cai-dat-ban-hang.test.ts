@@ -20,7 +20,7 @@ const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
 const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners',
-  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand'];
+  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 const TODAY = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 
 describe.skipIf(!HAS)('NT-BH-014 — phiếu kế toán chênh lệch két khi chốt ca', () => {

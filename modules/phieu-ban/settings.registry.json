@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_settings@1",
-  "note": "Khoá cấu hình của module phieu-ban (phiếu NT-BH-021). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key (màn BH17 Cài đặt bán hàng).",
+  "note": "Khoá cấu hình của module phieu-ban (phiếu NT-BH-021, NT-BH-023). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key (màn BH17 Cài đặt bán hàng).",
   "settings": [
     {
       "key": "bizcity.phieu_ban.block_negative_stock",
@@ -13,6 +13,21 @@
       "default": "false",
       "readBy": "modules/phieu-ban/api/service.ts (duyệt phiếu bán)",
       "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    },
+    {
+      "key": "bizcity.phieu_ban.hold_warehouses",
+      "class": "B",
+      "owner": "phieu-ban",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.phieu_ban.hold_warehouses",
+      "schema": "kho KCB (hàng chờ bán) giữ hàng cho đơn đặt hàng của từng cửa hàng (NT-BH-023 Q10): mảng \"<mã cửa hàng>=<mã kho>\"; cửa hàng chưa khai thì gửi đơn báo PHIEU_BAN_NO_HOLD_WAREHOUSE",
+      "valueType": "string[]",
+      "default": "[]",
+      "readBy": "modules/phieu-ban/api/order-service.ts (gửi / duyệt đơn đặt hàng)",
+      "writeBy": "thẻ Cài đặt của màn Đơn đặt hàng → PUT /api/v1/settings/values/:key",
       "permission": "settings:write",
       "audit": "có",
       "affectsPosting": false

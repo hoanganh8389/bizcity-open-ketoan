@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/m/pos/stock?skus=a,b&branch= — tồn của CHÍNH chi nhánh theo mã (mọi kho của chi nhánh, ĐVT nhỏ nhất; khung nhìn
+ * GET /api/v1/m/pos/stock?skus=a,b&branch= — tồn của CHÍNH chi nhánh theo mã (kho mặc định của cửa hàng — NT-BH-023 Q11, ĐVT nhỏ nhất; khung nhìn
  * stock_on_hand). Không có đường đọc tồn chi nhánh khác. Phạm vi chi nhánh của người dùng: khi Core thi hành (PHASE-028 W3) thì
  * module đọc phạm vi của phiên thay cho tham số (phiếu NT-BH-006, lệch chuẩn 3).
  */
