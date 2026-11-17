@@ -33,6 +33,8 @@ const parseNum = (s: string): number | null => {
 export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: string; canWrite: boolean }) {
   const qc = useQueryClient();
   const [dirty, setDirty] = useState<Map<string, number | null>>(new Map());
+  // [2026-11-17 11:48 AM kiennt] DM14 — ô giá chỉ xem; bấm Sửa giá mới sửa, Ghi giá lưu rồi quay về xem (đóng góp)
+  const [dangSua, setDangSua] = useState(false);
   const [show, setShow] = useState<Show>('all');
   const [open, setOpen] = useState<string | null>(null);
   const exportRef = useRef<(() => void) | null>(null);
@@ -63,6 +65,7 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
     }),
     onSuccess: () => {
       setDirty(new Map());
+      setDangSua(false);
       void qc.invalidateQueries({ queryKey: ['price-rows', code] });
       void qc.invalidateQueries({ queryKey: ['price-lists'] });
       void qc.invalidateQueries({ queryKey: ['catalog-product'] });
@@ -94,8 +97,8 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
     { key: 'isDefault', header: 'Bán chính', type: 'check', width: 75 },
     ...(!isCompany ? [{ key: 'companyPrice', header: 'Giá công ty', type: 'money', width: 120 } as Column<Row>] : []),
     {
-      key: 'price', header: `Giá ${name}`, type: 'money', width: 140, value: (r) => priceOf(r),
-      render: (r) => canWrite ? (
+      key: 'price', header: 'Đơn giá', type: 'money', width: 140, value: (r) => priceOf(r),
+      render: (r) => canWrite && dangSua ? (
         <input className={`input num ${dirty.has(keyOf(r)) ? 'dirty' : ''}`} style={{ height: 22, width: '100%', background: dirty.has(keyOf(r)) ? 'var(--warn-50, #fff7e0)' : undefined, opacity: !isCompany && r.isMain ? 0.5 : 1 }}
           value={fmt(priceOf(r))} onChange={(e) => edit(r, parseNum(e.target.value))} onDoubleClick={(e) => e.stopPropagation()}
           title={!isCompany && r.isMain ? 'Hàng chính: cửa hàng chỉ bán theo giá công ty, giá chi nhánh không dùng' : undefined} />
@@ -117,10 +120,12 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
         <span className="muted" style={{ fontSize: 12 }} title={`${counts.skus.toLocaleString('vi-VN')} mã hàng`}>{counts.priced.toLocaleString('vi-VN')}/{counts.all.toLocaleString('vi-VN')} ô có giá</span>
         <span className="spacer" style={{ flex: 1 }} />
         <span className="row" style={{ gap: 0 }}>{showBtn('all', 'Tất cả')}{showBtn('priced', 'Đã có giá')}{showBtn('empty', 'Còn trống')}{dirty.size > 0 && showBtn('dirty', `Đang sửa (${dirty.size})`)}</span>
-        {canWrite && <button className="btn btn-sm" onClick={fillByRatio} title="Ô trống của mặt hàng đang hiện = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần">Điền theo tỉ lệ</button>}
+        {canWrite && dangSua && <button className="btn btn-sm" onClick={fillByRatio} title="Ô trống của mặt hàng đang hiện = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần">Điền theo tỉ lệ</button>}
         <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
-        {canWrite && dirty.size > 0 && <button className="btn btn-sm" onClick={() => setDirty(new Map())}>Bỏ sửa</button>}
-        {canWrite && <button className="btn btn-sm btn-primary" disabled={!dirty.size || save.isPending} onClick={() => save.mutate()}>Ghi giá{dirty.size ? ` (${dirty.size} ô)` : ''}</button>}
+        {canWrite && dangSua && <button className="btn btn-sm" onClick={() => { setDirty(new Map()); setDangSua(false); }} title="Bỏ các ô đang sửa, quay về xem">Bỏ sửa</button>}
+        {canWrite && (dangSua
+          ? <button className="btn btn-sm btn-primary" disabled={save.isPending} onClick={() => (dirty.size ? save.mutate() : setDangSua(false))}>Ghi giá{dirty.size ? ` (${dirty.size} ô)` : ''}</button>
+          : <button className="btn btn-sm btn-primary" onClick={() => { save.reset(); setDangSua(true); }}>Sửa giá</button>)}
       </div>
       <ErrorBox error={q.error ? errorText(q.error) : save.error ? errorText(save.error) : null} />
       {save.isSuccess && !dirty.size && <div className="alert alert-info" style={{ marginBottom: 6 }}>Đã ghi {save.data.saved} ô{save.data.removed ? `, bỏ giá ${save.data.removed} ô` : ''}. Cửa hàng nhận giá mới sau vài phút.</div>}

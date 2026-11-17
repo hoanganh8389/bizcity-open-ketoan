@@ -43,12 +43,12 @@ Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi 
 |---|---|
 | Mã hàng, Tên hàng, ĐVT, Quy đổi, Bán chính | Lấy từ khai báo mặt hàng (DM10). Thiếu ĐVT thì bấm đúp dòng để mở mặt hàng, thêm ĐVT. |
 | Giá công ty | Hiện khi đang xem bảng giá chi nhánh, để so. |
-| Giá <bảng giá> | **Gõ thẳng vào ô** để sửa. Ô đang sửa tô vàng. Xoá trắng ô = bỏ giá. |
+| Đơn giá | Giá của bảng giá đang chọn. Bình thường chỉ xem; bấm **Sửa giá** thì ô mới nhập được. Ô đang sửa tô vàng. Xoá trắng ô = bỏ giá. |
 | Hàng chính | Ô giá chi nhánh của hàng chính tô mờ: cửa hàng chỉ bán hàng chính theo giá công ty, giá chi nhánh không dùng. |
 
 - Nút **Tất cả / Đã có giá / Còn trống / Đang sửa** lọc nhanh. Ô lọc trên đầu từng cột lọc theo mã, tên, ĐVT… như mọi lưới.
-- **Điền theo tỉ lệ**: với các mặt hàng đang hiện, ô trống = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần (vd Lon 450.000 → Thùng 24 = 10.800.000). Điền xong vẫn phải bấm Ghi giá.
-- Sửa ô giá xong bấm **Ghi giá (n ô)**, hoặc **Bỏ sửa** để huỷ. Cửa hàng nhận giá mới sau vài phút.
+- **Điền theo tỉ lệ** (chỉ hiện khi đang sửa giá): với các mặt hàng đang hiện, ô trống = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần (vd Lon 450.000 → Thùng 24 = 10.800.000). Điền xong vẫn phải bấm Ghi giá.
+- Bấm **Sửa giá** → nút đổi thành **Ghi giá**, ô Đơn giá nhập được. Sửa xong bấm **Ghi giá (n ô)** để lưu, hoặc **Bỏ sửa** để huỷ; xong cả hai đều quay về chỉ xem, nút trở lại **Sửa giá**. Cửa hàng nhận giá mới sau vài phút.
 - **Bấm đúp một dòng** để mở mặt hàng (DM10).
 - **Xuất Excel** để gửi duyệt giá / đối chiếu.
 - Giá cũng sửa được trong form mặt hàng (DM10 → thẻ ĐVT & giá bán), hai nơi là một dữ liệu.
