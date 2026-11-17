@@ -1,5 +1,282 @@
 [
-  { "sku": "MAU-SP-01", "name": "Nước suối mẫu 500ml", "unit": "Chai", "taxOutCode": "R08", "taxInCode": "V08" },
-  { "sku": "MAU-SP-02", "name": "Bánh quy mẫu 200g", "unit": "Gói", "taxOutCode": "R08", "taxInCode": "V08" },
-  { "sku": "MAU-SP-03", "name": "Mì gói mẫu 75g", "unit": "Gói", "taxOutCode": "R08", "taxInCode": "V08" }
+  {
+    "sku": "MAU-SP-01",
+    "name": "Gạo mẫu túi 5kg",
+    "unit": "Gói",
+    "taxOutCode": "KCT",
+    "taxInCode": "KCT"
+  },
+  {
+    "sku": "MAU-SP-02",
+    "name": "Rau củ mẫu đóng gói",
+    "unit": "Hộp",
+    "taxOutCode": "KCT",
+    "taxInCode": "KCT"
+  },
+  {
+    "sku": "MAU-SP-03",
+    "name": "Trái cây mẫu hộp 1kg",
+    "unit": "Vỉ",
+    "taxOutCode": "KCT",
+    "taxInCode": "KCT"
+  },
+  {
+    "sku": "MAU-SP-04",
+    "name": "Trứng gà mẫu vỉ 10",
+    "unit": "Khay",
+    "taxOutCode": "KCT",
+    "taxInCode": "KCT"
+  },
+  {
+    "sku": "MAU-SP-05",
+    "name": "Thịt heo mẫu khay 500g",
+    "unit": "Bình",
+    "taxOutCode": "KCT",
+    "taxInCode": "KCT"
+  },
+  {
+    "sku": "MAU-SP-06",
+    "name": "Nước sạch mẫu bình 20l",
+    "unit": "Chai",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-07",
+    "name": "Sữa tươi mẫu 1l",
+    "unit": "Lon",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-08",
+    "name": "Đường mẫu 1kg",
+    "unit": "Lốc",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-09",
+    "name": "Muối mẫu 500g",
+    "unit": "Cái",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-10",
+    "name": "Bột mì mẫu 1kg",
+    "unit": "Túi",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-11",
+    "name": "Dầu ăn mẫu 1l",
+    "unit": "Gói",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-12",
+    "name": "Nước mắm mẫu 500ml",
+    "unit": "Hộp",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-13",
+    "name": "Sách vở mẫu",
+    "unit": "Vỉ",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-14",
+    "name": "Thuốc bổ mẫu hộp",
+    "unit": "Khay",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-15",
+    "name": "Phân bón mẫu 5kg",
+    "unit": "Bình",
+    "taxOutCode": "R05",
+    "taxInCode": "V05"
+  },
+  {
+    "sku": "MAU-SP-16",
+    "name": "Nước suối mẫu 500ml",
+    "unit": "Chai",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-17",
+    "name": "Bánh quy mẫu 200g",
+    "unit": "Lon",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-18",
+    "name": "Mì gói mẫu 75g",
+    "unit": "Lốc",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-19",
+    "name": "Cà phê mẫu 500g",
+    "unit": "Cái",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-20",
+    "name": "Trà mẫu hộp 25 gói",
+    "unit": "Túi",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-21",
+    "name": "Nước ngọt mẫu lon",
+    "unit": "Gói",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-22",
+    "name": "Kẹo mẫu gói 100g",
+    "unit": "Hộp",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-23",
+    "name": "Snack mẫu 50g",
+    "unit": "Vỉ",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-24",
+    "name": "Bánh mì mẫu gói",
+    "unit": "Khay",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-25",
+    "name": "Sữa chua mẫu lốc 4",
+    "unit": "Bình",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-26",
+    "name": "Nước tăng lực mẫu chai",
+    "unit": "Chai",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-27",
+    "name": "Bia mẫu lon 330ml",
+    "unit": "Lon",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-28",
+    "name": "Xà phòng mẫu 400g",
+    "unit": "Lốc",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-29",
+    "name": "Nước rửa chén mẫu 750ml",
+    "unit": "Cái",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-30",
+    "name": "Giấy vệ sinh mẫu lốc 10",
+    "unit": "Túi",
+    "taxOutCode": "R08",
+    "taxInCode": "V08"
+  },
+  {
+    "sku": "MAU-SP-31",
+    "name": "Pin mẫu vỉ 4",
+    "unit": "Gói",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-32",
+    "name": "Bóng đèn mẫu 9W",
+    "unit": "Hộp",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-33",
+    "name": "Ổ cắm mẫu 3 lỗ",
+    "unit": "Vỉ",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-34",
+    "name": "Bàn chải mẫu",
+    "unit": "Khay",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-35",
+    "name": "Kem đánh răng mẫu 180g",
+    "unit": "Bình",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-36",
+    "name": "Dầu gội mẫu 650ml",
+    "unit": "Chai",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-37",
+    "name": "Khăn giấy mẫu hộp",
+    "unit": "Lon",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-38",
+    "name": "Hộp nhựa mẫu bộ 3",
+    "unit": "Lốc",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-39",
+    "name": "Ly thuỷ tinh mẫu bộ 6",
+    "unit": "Cái",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  },
+  {
+    "sku": "MAU-SP-40",
+    "name": "Chảo mẫu 26cm",
+    "unit": "Túi",
+    "taxOutCode": "R10",
+    "taxInCode": "V10"
+  }
 ]

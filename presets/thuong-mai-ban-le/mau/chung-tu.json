@@ -5,16 +5,723 @@
     "version": 1,
     "branchCode": "MAU01",
     "docNo": "MAU-NM-0001",
-    "docDate": "@today-2",
-    "description": "Nhập hàng mẫu đầu kỳ (hư cấu)",
-    "partner": { "code": "MAU-NCC-01", "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một" },
-    "invoice": { "no": "0000001", "serial": "C26MAU", "form": "1", "date": "@today-2", "status": "valid" },
+    "docDate": "@m-2/02",
+    "description": "Nhập hàng của Công ty TNHH Nhà Cung Cấp Mẫu Một (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-01",
+      "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một"
+    },
+    "invoice": {
+      "no": "0000001",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-2/02",
+      "status": "valid"
+    },
     "lines": [
-      { "lineKey": "1", "sku": "MAU-SP-01", "name": "Nước suối mẫu 500ml", "unit": "Chai", "qty": 100, "unitPrice": 4000, "amountBeforeTax": 400000, "taxCode": "V08", "taxAmount": 32000 },
-      { "lineKey": "2", "sku": "MAU-SP-02", "name": "Bánh quy mẫu 200g", "unit": "Gói", "qty": 50, "unitPrice": 10000, "amountBeforeTax": 500000, "taxCode": "V08", "taxAmount": 40000 }
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-02",
+        "name": "Rau củ mẫu đóng gói",
+        "unit": "Hộp",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-03",
+        "name": "Trái cây mẫu hộp 1kg",
+        "unit": "Vỉ",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-04",
+        "name": "Trứng gà mẫu vỉ 10",
+        "unit": "Khay",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-05",
+        "name": "Thịt heo mẫu khay 500g",
+        "unit": "Bình",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "6",
+        "sku": "MAU-SP-06",
+        "name": "Nước sạch mẫu bình 20l",
+        "unit": "Chai",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V05",
+        "taxAmount": 30000
+      },
+      {
+        "lineKey": "7",
+        "sku": "MAU-SP-07",
+        "name": "Sữa tươi mẫu 1l",
+        "unit": "Lon",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V05",
+        "taxAmount": 270000
+      }
     ],
     "payments": [],
-    "totals": { "beforeTax": 900000, "tax": 72000, "total": 972000 }
+    "totals": {
+      "beforeTax": 23400000,
+      "tax": 300000,
+      "total": 23700000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0002",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0002",
+    "docDate": "@m-2/02",
+    "description": "Nhập hàng của Công ty CP Phân Phối Mẫu Hai (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-02",
+      "name": "Công ty CP Phân Phối Mẫu Hai"
+    },
+    "invoice": {
+      "no": "0000002",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-2/02",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-08",
+        "name": "Đường mẫu 1kg",
+        "unit": "Lốc",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V05",
+        "taxAmount": 150000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-09",
+        "name": "Muối mẫu 500g",
+        "unit": "Cái",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V05",
+        "taxAmount": 30000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-10",
+        "name": "Bột mì mẫu 1kg",
+        "unit": "Túi",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V05",
+        "taxAmount": 270000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-11",
+        "name": "Dầu ăn mẫu 1l",
+        "unit": "Gói",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V05",
+        "taxAmount": 150000
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-12",
+        "name": "Nước mắm mẫu 500ml",
+        "unit": "Hộp",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V05",
+        "taxAmount": 30000
+      },
+      {
+        "lineKey": "6",
+        "sku": "MAU-SP-13",
+        "name": "Sách vở mẫu",
+        "unit": "Vỉ",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V05",
+        "taxAmount": 270000
+      },
+      {
+        "lineKey": "7",
+        "sku": "MAU-SP-14",
+        "name": "Thuốc bổ mẫu hộp",
+        "unit": "Khay",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V05",
+        "taxAmount": 150000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 22050000
+      }
+    ],
+    "totals": {
+      "beforeTax": 21000000,
+      "tax": 1050000,
+      "total": 22050000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0003",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0003",
+    "docDate": "@m-2/03",
+    "description": "Nhập hàng của Công ty TNHH Thực Phẩm Mẫu Ba (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-03",
+      "name": "Công ty TNHH Thực Phẩm Mẫu Ba"
+    },
+    "invoice": {
+      "no": "0000003",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-2/03",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-15",
+        "name": "Phân bón mẫu 5kg",
+        "unit": "Bình",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V05",
+        "taxAmount": 30000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-16",
+        "name": "Nước suối mẫu 500ml",
+        "unit": "Chai",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V08",
+        "taxAmount": 432000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-17",
+        "name": "Bánh quy mẫu 200g",
+        "unit": "Lon",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V08",
+        "taxAmount": 240000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V08",
+        "taxAmount": 48000
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-19",
+        "name": "Cà phê mẫu 500g",
+        "unit": "Cái",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V08",
+        "taxAmount": 432000
+      },
+      {
+        "lineKey": "6",
+        "sku": "MAU-SP-20",
+        "name": "Trà mẫu hộp 25 gói",
+        "unit": "Túi",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V08",
+        "taxAmount": 240000
+      },
+      {
+        "lineKey": "7",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V08",
+        "taxAmount": 48000
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 18600000,
+      "tax": 1470000,
+      "total": 20070000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0004",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0004",
+    "docDate": "@m-2/03",
+    "description": "Nhập hàng của Công ty CP Đồ Uống Mẫu Bốn (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-04",
+      "name": "Công ty CP Đồ Uống Mẫu Bốn"
+    },
+    "invoice": {
+      "no": "0000004",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-2/03",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-22",
+        "name": "Kẹo mẫu gói 100g",
+        "unit": "Hộp",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V08",
+        "taxAmount": 432000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-23",
+        "name": "Snack mẫu 50g",
+        "unit": "Vỉ",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V08",
+        "taxAmount": 240000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-24",
+        "name": "Bánh mì mẫu gói",
+        "unit": "Khay",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V08",
+        "taxAmount": 48000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V08",
+        "taxAmount": 432000
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-26",
+        "name": "Nước tăng lực mẫu chai",
+        "unit": "Chai",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V08",
+        "taxAmount": 240000
+      },
+      {
+        "lineKey": "6",
+        "sku": "MAU-SP-27",
+        "name": "Bia mẫu lon 330ml",
+        "unit": "Lon",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V08",
+        "taxAmount": 48000
+      },
+      {
+        "lineKey": "7",
+        "sku": "MAU-SP-28",
+        "name": "Xà phòng mẫu 400g",
+        "unit": "Lốc",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V08",
+        "taxAmount": 432000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 25272000
+      }
+    ],
+    "totals": {
+      "beforeTax": 23400000,
+      "tax": 1872000,
+      "total": 25272000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0005",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0005",
+    "docDate": "@m-2/04",
+    "description": "Nhập hàng của Công ty TNHH Gia Dụng Mẫu Năm (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-05",
+      "name": "Công ty TNHH Gia Dụng Mẫu Năm"
+    },
+    "invoice": {
+      "no": "0000005",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-2/04",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-29",
+        "name": "Nước rửa chén mẫu 750ml",
+        "unit": "Cái",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V08",
+        "taxAmount": 240000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V08",
+        "taxAmount": 48000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-31",
+        "name": "Pin mẫu vỉ 4",
+        "unit": "Gói",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V10",
+        "taxAmount": 540000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-32",
+        "name": "Bóng đèn mẫu 9W",
+        "unit": "Hộp",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V10",
+        "taxAmount": 300000
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-33",
+        "name": "Ổ cắm mẫu 3 lỗ",
+        "unit": "Vỉ",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V10",
+        "taxAmount": 60000
+      },
+      {
+        "lineKey": "6",
+        "sku": "MAU-SP-34",
+        "name": "Bàn chải mẫu",
+        "unit": "Khay",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V10",
+        "taxAmount": 540000
+      },
+      {
+        "lineKey": "7",
+        "sku": "MAU-SP-35",
+        "name": "Kem đánh răng mẫu 180g",
+        "unit": "Bình",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V10",
+        "taxAmount": 300000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 23028000
+      }
+    ],
+    "totals": {
+      "beforeTax": 21000000,
+      "tax": 2028000,
+      "total": 23028000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0006",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0006",
+    "docDate": "@m-2/04",
+    "description": "Nhập hàng của Hợp tác xã Nông Sản Mẫu Sáu (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-06",
+      "name": "Hợp tác xã Nông Sản Mẫu Sáu"
+    },
+    "invoice": {
+      "no": "0000006",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-2/04",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-36",
+        "name": "Dầu gội mẫu 650ml",
+        "unit": "Chai",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V10",
+        "taxAmount": 60000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-37",
+        "name": "Khăn giấy mẫu hộp",
+        "unit": "Lon",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V10",
+        "taxAmount": 540000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-38",
+        "name": "Hộp nhựa mẫu bộ 3",
+        "unit": "Lốc",
+        "qty": 120,
+        "unitPrice": 25000,
+        "amountBeforeTax": 3000000,
+        "taxCode": "V10",
+        "taxAmount": 300000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-39",
+        "name": "Ly thuỷ tinh mẫu bộ 6",
+        "unit": "Cái",
+        "qty": 120,
+        "unitPrice": 5000,
+        "amountBeforeTax": 600000,
+        "taxCode": "V10",
+        "taxAmount": 60000
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-40",
+        "name": "Chảo mẫu 26cm",
+        "unit": "Túi",
+        "qty": 120,
+        "unitPrice": 45000,
+        "amountBeforeTax": 5400000,
+        "taxCode": "V10",
+        "taxAmount": 540000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 16500000
+      }
+    ],
+    "totals": {
+      "beforeTax": 15000000,
+      "tax": 1500000,
+      "total": 16500000
+    }
+  },
+  {
+    "docType": "transfer",
+    "docKey": "preset:thuong-mai-ban-le:transfer:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "toBranchCode": "MAU02",
+    "docNo": "MAU-CK-0001",
+    "docDate": "@m-2/06",
+    "description": "Chuyển hàng cho Cửa hàng Mẫu Số 2 (hư cấu)",
+    "status": "received",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-05",
+        "name": "Thịt heo mẫu khay 500g",
+        "unit": "Bình",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-09",
+        "name": "Muối mẫu 500g",
+        "unit": "Cái",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-13",
+        "name": "Sách vở mẫu",
+        "unit": "Vỉ",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-17",
+        "name": "Bánh quy mẫu 200g",
+        "unit": "Lon",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "6",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "7",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "8",
+        "sku": "MAU-SP-29",
+        "name": "Nước rửa chén mẫu 750ml",
+        "unit": "Cái",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "9",
+        "sku": "MAU-SP-33",
+        "name": "Ổ cắm mẫu 3 lỗ",
+        "unit": "Vỉ",
+        "qty": 20,
+        "amount": 0
+      },
+      {
+        "lineKey": "10",
+        "sku": "MAU-SP-37",
+        "name": "Khăn giấy mẫu hộp",
+        "unit": "Lon",
+        "qty": 20,
+        "amount": 0
+      }
+    ],
+    "totals": {
+      "total": 0
+    }
   },
   {
     "docType": "sale",
@@ -22,13 +729,60 @@
     "version": 1,
     "branchCode": "MAU01",
     "docNo": "MAU-HD-0001",
-    "docDate": "@today-1",
-    "description": "Bán lẻ tại quầy (hư cấu)",
+    "docDate": "@m-2/08",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
     "lines": [
-      { "lineKey": "1", "sku": "MAU-SP-01", "name": "Nước suối mẫu 500ml", "unit": "Chai", "qty": 10, "unitPrice": 5000, "amountBeforeTax": 50000, "taxCode": "R08", "taxAmount": 4000 }
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-06",
+        "name": "Nước sạch mẫu bình 20l",
+        "unit": "Chai",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R05",
+        "taxAmount": 2600
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-13",
+        "name": "Sách vở mẫu",
+        "unit": "Vỉ",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R05",
+        "taxAmount": 23400
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-20",
+        "name": "Trà mẫu hộp 25 gói",
+        "unit": "Túi",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R08",
+        "taxAmount": 20800
+      }
     ],
-    "payments": [{ "methodCode": "TM", "amount": 54000 }],
-    "totals": { "beforeTax": 50000, "tax": 4000, "total": 54000 }
+    "payments": [],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 46800,
+      "total": 826800
+    },
+    "partner": {
+      "code": "MAU-KH-01",
+      "name": "Khách buôn Mẫu An"
+    },
+    "invoice": {
+      "no": "0000013",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-2/08",
+      "status": "valid"
+    }
   },
   {
     "docType": "sale",
@@ -36,14 +790,2496 @@
     "version": 1,
     "branchCode": "MAU01",
     "docNo": "MAU-HD-0002",
-    "docDate": "@today",
-    "description": "Bán cho doanh nghiệp, ghi công nợ (hư cấu)",
-    "partner": { "code": "MAU-KH-01", "name": "Khách hàng Mẫu (doanh nghiệp)" },
-    "invoice": { "no": "0000002", "serial": "C26MAU", "form": "1", "date": "@today", "status": "valid" },
+    "docDate": "@m-2/10",
+    "description": "Bán lẻ tại quầy (hư cấu)",
     "lines": [
-      { "lineKey": "1", "sku": "MAU-SP-02", "name": "Bánh quy mẫu 200g", "unit": "Gói", "qty": 20, "unitPrice": 15000, "amountBeforeTax": 300000, "taxCode": "R08", "taxAmount": 24000 }
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-11",
+        "name": "Dầu ăn mẫu 1l",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R05",
+        "taxAmount": 4875
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R08",
+        "taxAmount": 14040
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 312975
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 20475,
+      "total": 312975
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0003",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0003",
+    "docDate": "@m-2/12",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-05",
+        "name": "Thịt heo mẫu khay 500g",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 139620
+      }
+    ],
+    "totals": {
+      "beforeTax": 136500,
+      "tax": 3120,
+      "total": 139620
+    }
+  },
+  {
+    "docType": "customer_payment",
+    "docKey": "preset:thuong-mai-ban-le:customer_payment:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-PT-0001",
+    "docDate": "@m-2/13",
+    "description": "Thu tiền Khách buôn Mẫu An (hư cấu)",
+    "partner": {
+      "code": "MAU-KH-01",
+      "name": "Khách buôn Mẫu An"
+    },
+    "methodCode": "CK",
+    "lines": [
+      {
+        "lineKey": "1",
+        "amount": 826800,
+        "invoiceDocKey": "preset:thuong-mai-ban-le:sale:0001"
+      }
+    ],
+    "totals": {
+      "total": 826800
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0004",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0004",
+    "docDate": "@m-2/14",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R08",
+        "taxAmount": 4160
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-28",
+        "name": "Xà phòng mẫu 400g",
+        "unit": "Lốc",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R08",
+        "taxAmount": 37440
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-35",
+        "name": "Kem đánh răng mẫu 180g",
+        "unit": "Bình",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R10",
+        "taxAmount": 26000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 847600
+      }
+    ],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 67600,
+      "total": 847600
+    },
+    "partner": {
+      "code": "MAU-KH-02",
+      "name": "Khách buôn Mẫu Bình"
+    },
+    "invoice": {
+      "no": "0000014",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-2/14",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "purchase_return",
+    "docKey": "preset:thuong-mai-ban-le:purchase_return:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "originalDocKey": "preset:thuong-mai-ban-le:purchase:0001",
+    "docNo": "MAU-XT-0001",
+    "docDate": "@m-2/15",
+    "description": "Trả hàng lỗi cho nhà cung cấp (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-01",
+      "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 5,
+        "unitPrice": 45000,
+        "amountBeforeTax": 225000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      }
     ],
     "payments": [],
-    "totals": { "beforeTax": 300000, "tax": 24000, "total": 324000 }
+    "totals": {
+      "beforeTax": 225000,
+      "tax": 0,
+      "total": 225000
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0005",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0005",
+    "docDate": "@m-2/16",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-26",
+        "name": "Nước tăng lực mẫu chai",
+        "unit": "Chai",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R08",
+        "taxAmount": 7800
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-33",
+        "name": "Ổ cắm mẫu 3 lỗ",
+        "unit": "Vỉ",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R10",
+        "taxAmount": 1950
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-40",
+        "name": "Chảo mẫu 26cm",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R10",
+        "taxAmount": 17550
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 319800
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 27300,
+      "total": 319800
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0006",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0006",
+    "docDate": "@m-2/18",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-34",
+        "name": "Bàn chải mẫu",
+        "unit": "Khay",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R10",
+        "taxAmount": 17550
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-09",
+        "name": "Muối mẫu 500g",
+        "unit": "Cái",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R05",
+        "taxAmount": 975
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 234585
+      }
+    ],
+    "totals": {
+      "beforeTax": 214500,
+      "tax": 20085,
+      "total": 234585
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0007",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0007",
+    "docDate": "@m-2/20",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-36",
+        "name": "Dầu gội mẫu 650ml",
+        "unit": "Chai",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R10",
+        "taxAmount": 5200
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-03",
+        "name": "Trái cây mẫu hộp 1kg",
+        "unit": "Vỉ",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-10",
+        "name": "Bột mì mẫu 1kg",
+        "unit": "Túi",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R05",
+        "taxAmount": 23400
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 572000,
+      "tax": 28600,
+      "total": 600600
+    },
+    "partner": {
+      "code": "MAU-KH-03",
+      "name": "Khách buôn Mẫu Cường"
+    },
+    "invoice": {
+      "no": "0000015",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-2/20",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0008",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0008",
+    "docDate": "@m-2/22",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-08",
+        "name": "Đường mẫu 1kg",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R05",
+        "taxAmount": 4875
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-15",
+        "name": "Phân bón mẫu 5kg",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R05",
+        "taxAmount": 975
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 298350
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 5850,
+      "total": 298350
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0009",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0009",
+    "docDate": "@m-2/24",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-10",
+        "name": "Bột mì mẫu 1kg",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R05",
+        "taxAmount": 8775
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R08",
+        "taxAmount": 14040
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-38",
+        "name": "Hộp nhựa mẫu bộ 3",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R10",
+        "taxAmount": 9750
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 481065
+      }
+    ],
+    "totals": {
+      "beforeTax": 448500,
+      "tax": 32565,
+      "total": 481065
+    }
+  },
+  {
+    "docType": "customer_payment",
+    "docKey": "preset:thuong-mai-ban-le:customer_payment:0002",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-PT-0002",
+    "docDate": "@m-2/25",
+    "description": "Thu tiền Khách buôn Mẫu Cường (hư cấu)",
+    "partner": {
+      "code": "MAU-KH-03",
+      "name": "Khách buôn Mẫu Cường"
+    },
+    "methodCode": "TM",
+    "lines": [
+      {
+        "lineKey": "1",
+        "amount": 600600,
+        "invoiceDocKey": "preset:thuong-mai-ban-le:sale:0007"
+      }
+    ],
+    "totals": {
+      "total": 600600
+    }
+  },
+  {
+    "docType": "supplier_payment",
+    "docKey": "preset:thuong-mai-ban-le:supplier_payment:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-PC-0001",
+    "docDate": "@m-2/25",
+    "description": "Trả tiền Công ty TNHH Nhà Cung Cấp Mẫu Một (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-01",
+      "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một"
+    },
+    "methodCode": "CK",
+    "lines": [
+      {
+        "lineKey": "1",
+        "amount": 23700000,
+        "invoiceDocKey": "preset:thuong-mai-ban-le:purchase:0001"
+      }
+    ],
+    "totals": {
+      "total": 23700000
+    }
+  },
+  {
+    "docType": "supplier_payment",
+    "docKey": "preset:thuong-mai-ban-le:supplier_payment:0002",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-PC-0002",
+    "docDate": "@m-2/25",
+    "description": "Trả tiền Công ty TNHH Thực Phẩm Mẫu Ba (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-03",
+      "name": "Công ty TNHH Thực Phẩm Mẫu Ba"
+    },
+    "methodCode": "CK",
+    "lines": [
+      {
+        "lineKey": "1",
+        "amount": 20070000,
+        "invoiceDocKey": "preset:thuong-mai-ban-le:purchase:0003"
+      }
+    ],
+    "totals": {
+      "total": 20070000
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0010",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0010",
+    "docDate": "@m-2/26",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-11",
+        "name": "Dầu ăn mẫu 1l",
+        "unit": "Gói",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R05",
+        "taxAmount": 13000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R08",
+        "taxAmount": 4160
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R08",
+        "taxAmount": 37440
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 834600
+      }
+    ],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 54600,
+      "total": 834600
+    },
+    "partner": {
+      "code": "MAU-KH-04",
+      "name": "Khách buôn Mẫu Dung"
+    },
+    "invoice": {
+      "no": "0000016",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-2/26",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0011",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0011",
+    "docDate": "@m-2/28",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-16",
+        "name": "Nước suối mẫu 500ml",
+        "unit": "Chai",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R08",
+        "taxAmount": 14040
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-23",
+        "name": "Snack mẫu 50g",
+        "unit": "Vỉ",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R08",
+        "taxAmount": 7800
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 315900
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 23400,
+      "total": 315900
+    }
+  },
+  {
+    "docType": "cash_transfer",
+    "docKey": "preset:thuong-mai-ban-le:cash_transfer:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "toBranchCode": "MAU01",
+    "fromMethodCode": "TM",
+    "toMethodCode": "CK",
+    "docNo": "MAU-NT-0001",
+    "docDate": "@m-2/28",
+    "description": "Nộp tiền mặt vào tài khoản ngân hàng (hư cấu)",
+    "status": "received",
+    "totals": {
+      "total": 30000000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0007",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0007",
+    "docDate": "@m-1/03",
+    "description": "Nhập hàng của Công ty TNHH Nhà Cung Cấp Mẫu Một (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-01",
+      "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một"
+    },
+    "invoice": {
+      "no": "0000007",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-1/03",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 40,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1800000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-02",
+        "name": "Rau củ mẫu đóng gói",
+        "unit": "Hộp",
+        "qty": 40,
+        "unitPrice": 25000,
+        "amountBeforeTax": 1000000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-03",
+        "name": "Trái cây mẫu hộp 1kg",
+        "unit": "Vỉ",
+        "qty": 40,
+        "unitPrice": 5000,
+        "amountBeforeTax": 200000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-04",
+        "name": "Trứng gà mẫu vỉ 10",
+        "unit": "Khay",
+        "qty": 40,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1800000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 4800000,
+      "tax": 0,
+      "total": 4800000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0008",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0008",
+    "docDate": "@m-1/03",
+    "description": "Nhập hàng của Công ty TNHH Thực Phẩm Mẫu Ba (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-03",
+      "name": "Công ty TNHH Thực Phẩm Mẫu Ba"
+    },
+    "invoice": {
+      "no": "0000008",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-1/03",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-15",
+        "name": "Phân bón mẫu 5kg",
+        "unit": "Bình",
+        "qty": 40,
+        "unitPrice": 5000,
+        "amountBeforeTax": 200000,
+        "taxCode": "V05",
+        "taxAmount": 10000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-16",
+        "name": "Nước suối mẫu 500ml",
+        "unit": "Chai",
+        "qty": 40,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1800000,
+        "taxCode": "V08",
+        "taxAmount": 144000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-17",
+        "name": "Bánh quy mẫu 200g",
+        "unit": "Lon",
+        "qty": 40,
+        "unitPrice": 25000,
+        "amountBeforeTax": 1000000,
+        "taxCode": "V08",
+        "taxAmount": 80000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 40,
+        "unitPrice": 5000,
+        "amountBeforeTax": 200000,
+        "taxCode": "V08",
+        "taxAmount": 16000
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 3200000,
+      "tax": 250000,
+      "total": 3450000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0009",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0009",
+    "docDate": "@m-1/05",
+    "description": "Nhập hàng của Công ty CP Đồ Uống Mẫu Bốn (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-04",
+      "name": "Công ty CP Đồ Uống Mẫu Bốn"
+    },
+    "invoice": {
+      "no": "0000009",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-1/05",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-22",
+        "name": "Kẹo mẫu gói 100g",
+        "unit": "Hộp",
+        "qty": 40,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1800000,
+        "taxCode": "V08",
+        "taxAmount": 144000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-23",
+        "name": "Snack mẫu 50g",
+        "unit": "Vỉ",
+        "qty": 40,
+        "unitPrice": 25000,
+        "amountBeforeTax": 1000000,
+        "taxCode": "V08",
+        "taxAmount": 80000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-24",
+        "name": "Bánh mì mẫu gói",
+        "unit": "Khay",
+        "qty": 40,
+        "unitPrice": 5000,
+        "amountBeforeTax": 200000,
+        "taxCode": "V08",
+        "taxAmount": 16000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 40,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1800000,
+        "taxCode": "V08",
+        "taxAmount": 144000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 5184000
+      }
+    ],
+    "totals": {
+      "beforeTax": 4800000,
+      "tax": 384000,
+      "total": 5184000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0010",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0010",
+    "docDate": "@m-1/05",
+    "description": "Nhập hàng của Công ty CP Phân Phối Mẫu Hai (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-02",
+      "name": "Công ty CP Phân Phối Mẫu Hai"
+    },
+    "invoice": {
+      "no": "0000010",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-1/05",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-08",
+        "name": "Đường mẫu 1kg",
+        "unit": "Lốc",
+        "qty": 40,
+        "unitPrice": 25000,
+        "amountBeforeTax": 1000000,
+        "taxCode": "V05",
+        "taxAmount": 50000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-09",
+        "name": "Muối mẫu 500g",
+        "unit": "Cái",
+        "qty": 40,
+        "unitPrice": 5000,
+        "amountBeforeTax": 200000,
+        "taxCode": "V05",
+        "taxAmount": 10000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-10",
+        "name": "Bột mì mẫu 1kg",
+        "unit": "Túi",
+        "qty": 40,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1800000,
+        "taxCode": "V05",
+        "taxAmount": 90000
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-11",
+        "name": "Dầu ăn mẫu 1l",
+        "unit": "Gói",
+        "qty": 40,
+        "unitPrice": 25000,
+        "amountBeforeTax": 1000000,
+        "taxCode": "V05",
+        "taxAmount": 50000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 4200000
+      }
+    ],
+    "totals": {
+      "beforeTax": 4000000,
+      "tax": 200000,
+      "total": 4200000
+    }
+  },
+  {
+    "docType": "transfer",
+    "docKey": "preset:thuong-mai-ban-le:transfer:0002",
+    "version": 1,
+    "branchCode": "MAU01",
+    "toBranchCode": "MAU02",
+    "docNo": "MAU-CK-0002",
+    "docDate": "@m-1/08",
+    "description": "Chuyển hàng cho Cửa hàng Mẫu Số 2 (hư cấu)",
+    "status": "received",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-02",
+        "name": "Rau củ mẫu đóng gói",
+        "unit": "Hộp",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-06",
+        "name": "Nước sạch mẫu bình 20l",
+        "unit": "Chai",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-10",
+        "name": "Bột mì mẫu 1kg",
+        "unit": "Túi",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "4",
+        "sku": "MAU-SP-14",
+        "name": "Thuốc bổ mẫu hộp",
+        "unit": "Khay",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "5",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "6",
+        "sku": "MAU-SP-22",
+        "name": "Kẹo mẫu gói 100g",
+        "unit": "Hộp",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "7",
+        "sku": "MAU-SP-26",
+        "name": "Nước tăng lực mẫu chai",
+        "unit": "Chai",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "8",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "9",
+        "sku": "MAU-SP-34",
+        "name": "Bàn chải mẫu",
+        "unit": "Khay",
+        "qty": 15,
+        "amount": 0
+      },
+      {
+        "lineKey": "10",
+        "sku": "MAU-SP-38",
+        "name": "Hộp nhựa mẫu bộ 3",
+        "unit": "Lốc",
+        "qty": 15,
+        "amount": 0
+      }
+    ],
+    "totals": {
+      "total": 0
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0012",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0012",
+    "docDate": "@m-1/09",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-14",
+        "name": "Thuốc bổ mẫu hộp",
+        "unit": "Khay",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R05",
+        "taxAmount": 4875
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-29",
+        "name": "Nước rửa chén mẫu 750ml",
+        "unit": "Cái",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R08",
+        "taxAmount": 7800
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 383175
+      }
+    ],
+    "totals": {
+      "beforeTax": 370500,
+      "tax": 12675,
+      "total": 383175
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0013",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0013",
+    "docDate": "@m-1/11",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-26",
+        "name": "Nước tăng lực mẫu chai",
+        "unit": "Chai",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R08",
+        "taxAmount": 20800
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-33",
+        "name": "Ổ cắm mẫu 3 lỗ",
+        "unit": "Vỉ",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R10",
+        "taxAmount": 5200
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-40",
+        "name": "Chảo mẫu 26cm",
+        "unit": "Túi",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R10",
+        "taxAmount": 46800
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 72800,
+      "total": 852800
+    },
+    "partner": {
+      "code": "MAU-KH-05",
+      "name": "Khách buôn Mẫu Giang"
+    },
+    "invoice": {
+      "no": "0000017",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-1/11",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0014",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0014",
+    "docDate": "@m-1/13",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-31",
+        "name": "Pin mẫu vỉ 4",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R10",
+        "taxAmount": 17550
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-38",
+        "name": "Hộp nhựa mẫu bộ 3",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R10",
+        "taxAmount": 9750
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-05",
+        "name": "Thịt heo mẫu khay 500g",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 397800
+      }
+    ],
+    "totals": {
+      "beforeTax": 370500,
+      "tax": 27300,
+      "total": 397800
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0015",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0015",
+    "docDate": "@m-1/15",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-05",
+        "name": "Thịt heo mẫu khay 500g",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 139620
+      }
+    ],
+    "totals": {
+      "beforeTax": 136500,
+      "tax": 3120,
+      "total": 139620
+    }
+  },
+  {
+    "docType": "customer_payment",
+    "docKey": "preset:thuong-mai-ban-le:customer_payment:0003",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-PT-0003",
+    "docDate": "@m-1/16",
+    "description": "Thu tiền Khách buôn Mẫu Giang (hư cấu)",
+    "partner": {
+      "code": "MAU-KH-05",
+      "name": "Khách buôn Mẫu Giang"
+    },
+    "methodCode": "CK",
+    "lines": [
+      {
+        "lineKey": "1",
+        "amount": 852800,
+        "invoiceDocKey": "preset:thuong-mai-ban-le:sale:0013"
+      }
+    ],
+    "totals": {
+      "total": 852800
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0016",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0016",
+    "docDate": "@m-1/17",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-08",
+        "name": "Đường mẫu 1kg",
+        "unit": "Lốc",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R05",
+        "taxAmount": 13000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-15",
+        "name": "Phân bón mẫu 5kg",
+        "unit": "Bình",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R05",
+        "taxAmount": 2600
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 795600
+      }
+    ],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 15600,
+      "total": 795600
+    },
+    "partner": {
+      "code": "MAU-KH-06",
+      "name": "Khách buôn Mẫu Hà"
+    },
+    "invoice": {
+      "no": "0000018",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-1/17",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0017",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0017",
+    "docDate": "@m-1/19",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-06",
+        "name": "Nước sạch mẫu bình 20l",
+        "unit": "Chai",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R05",
+        "taxAmount": 975
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-13",
+        "name": "Sách vở mẫu",
+        "unit": "Vỉ",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R05",
+        "taxAmount": 8775
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-20",
+        "name": "Trà mẫu hộp 25 gói",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R08",
+        "taxAmount": 7800
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 310050
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 17550,
+      "total": 310050
+    }
+  },
+  {
+    "docType": "sale_return",
+    "docKey": "preset:thuong-mai-ban-le:sale_return:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "originalDocKey": "preset:thuong-mai-ban-le:sale:0001",
+    "docNo": "MAU-TL-0001",
+    "docDate": "@m-1/20",
+    "description": "Khách trả lại hàng (hư cấu)",
+    "partner": {
+      "code": "MAU-KH-01",
+      "name": "Khách buôn Mẫu An"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-06",
+        "name": "Nước sạch mẫu bình 20l",
+        "unit": "Chai",
+        "qty": 1,
+        "unitPrice": 6500,
+        "amountBeforeTax": 6500,
+        "taxCode": "R05",
+        "taxAmount": 325
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 6500,
+      "tax": 325,
+      "total": 6825
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0018",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0018",
+    "docDate": "@m-1/21",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-34",
+        "name": "Bàn chải mẫu",
+        "unit": "Khay",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R10",
+        "taxAmount": 17550
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-09",
+        "name": "Muối mẫu 500g",
+        "unit": "Cái",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R05",
+        "taxAmount": 975
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 234585
+      }
+    ],
+    "totals": {
+      "beforeTax": 214500,
+      "tax": 20085,
+      "total": 234585
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0019",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0019",
+    "docDate": "@m-1/23",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-16",
+        "name": "Nước suối mẫu 500ml",
+        "unit": "Chai",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R08",
+        "taxAmount": 37440
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-23",
+        "name": "Snack mẫu 50g",
+        "unit": "Vỉ",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R08",
+        "taxAmount": 20800
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R08",
+        "taxAmount": 4160
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 62400,
+      "total": 842400
+    },
+    "partner": {
+      "code": "MAU-KH-07",
+      "name": "Khách buôn Mẫu Khánh"
+    },
+    "invoice": {
+      "no": "0000019",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-1/23",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0020",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0020",
+    "docDate": "@m-1/25",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-28",
+        "name": "Xà phòng mẫu 400g",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R08",
+        "taxAmount": 14040
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-35",
+        "name": "Kem đánh răng mẫu 180g",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R10",
+        "taxAmount": 9750
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 317850
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 25350,
+      "total": 317850
+    }
+  },
+  {
+    "docType": "supplier_payment",
+    "docKey": "preset:thuong-mai-ban-le:supplier_payment:0003",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-PC-0003",
+    "docDate": "@m-1/25",
+    "description": "Trả tiền Công ty TNHH Nhà Cung Cấp Mẫu Một (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-01",
+      "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một"
+    },
+    "methodCode": "CK",
+    "lines": [
+      {
+        "lineKey": "1",
+        "amount": 4800000,
+        "invoiceDocKey": "preset:thuong-mai-ban-le:purchase:0007"
+      }
+    ],
+    "totals": {
+      "total": 4800000
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0021",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0021",
+    "docDate": "@m-1/27",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-10",
+        "name": "Bột mì mẫu 1kg",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R05",
+        "taxAmount": 8775
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R08",
+        "taxAmount": 14040
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-38",
+        "name": "Hộp nhựa mẫu bộ 3",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R10",
+        "taxAmount": 9750
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 481065
+      }
+    ],
+    "totals": {
+      "beforeTax": 448500,
+      "tax": 32565,
+      "total": 481065
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0022",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0022",
+    "docDate": "@m-1/28",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-31",
+        "name": "Pin mẫu vỉ 4",
+        "unit": "Gói",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R10",
+        "taxAmount": 46800
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-38",
+        "name": "Hộp nhựa mẫu bộ 3",
+        "unit": "Lốc",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R10",
+        "taxAmount": 26000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-05",
+        "name": "Thịt heo mẫu khay 500g",
+        "unit": "Bình",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 1060800
+      }
+    ],
+    "totals": {
+      "beforeTax": 988000,
+      "tax": 72800,
+      "total": 1060800
+    },
+    "partner": {
+      "code": "MAU-KH-08",
+      "name": "Khách buôn Mẫu Lan"
+    },
+    "invoice": {
+      "no": "0000020",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-1/28",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "stock_adjustment",
+    "docKey": "preset:thuong-mai-ban-le:stock_adjustment:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-DC-0001",
+    "docDate": "@m-1/28",
+    "description": "Kiểm kê cuối tháng: hàng thiếu (hư cấu)",
+    "direction": "decrease",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-03",
+        "name": "Trái cây mẫu hộp 1kg",
+        "unit": "Vỉ",
+        "qty": -2,
+        "amount": 0
+      }
+    ],
+    "totals": {
+      "total": 0
+    }
+  },
+  {
+    "docType": "cash_transfer",
+    "docKey": "preset:thuong-mai-ban-le:cash_transfer:0002",
+    "version": 1,
+    "branchCode": "MAU01",
+    "toBranchCode": "MAU01",
+    "fromMethodCode": "TM",
+    "toMethodCode": "CK",
+    "docNo": "MAU-NT-0002",
+    "docDate": "@m-1/28",
+    "description": "Nộp tiền mặt vào tài khoản ngân hàng (hư cấu)",
+    "status": "received",
+    "totals": {
+      "total": 30000000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0011",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0011",
+    "docDate": "@m-0/01",
+    "description": "Nhập hàng của Công ty TNHH Gia Dụng Mẫu Năm (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-05",
+      "name": "Công ty TNHH Gia Dụng Mẫu Năm"
+    },
+    "invoice": {
+      "no": "0000011",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-0/01",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-29",
+        "name": "Nước rửa chén mẫu 750ml",
+        "unit": "Cái",
+        "qty": 30,
+        "unitPrice": 25000,
+        "amountBeforeTax": 750000,
+        "taxCode": "V08",
+        "taxAmount": 60000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 30,
+        "unitPrice": 5000,
+        "amountBeforeTax": 150000,
+        "taxCode": "V08",
+        "taxAmount": 12000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-31",
+        "name": "Pin mẫu vỉ 4",
+        "unit": "Gói",
+        "qty": 30,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1350000,
+        "taxCode": "V10",
+        "taxAmount": 135000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 2457000
+      }
+    ],
+    "totals": {
+      "beforeTax": 2250000,
+      "tax": 207000,
+      "total": 2457000
+    }
+  },
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0012",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0012",
+    "docDate": "@m-0/01",
+    "description": "Nhập hàng của Hợp tác xã Nông Sản Mẫu Sáu (hư cấu)",
+    "partner": {
+      "code": "MAU-NCC-06",
+      "name": "Hợp tác xã Nông Sản Mẫu Sáu"
+    },
+    "invoice": {
+      "no": "0000012",
+      "serial": "C26MAU",
+      "form": "1",
+      "date": "@m-0/01",
+      "status": "valid"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-36",
+        "name": "Dầu gội mẫu 650ml",
+        "unit": "Chai",
+        "qty": 30,
+        "unitPrice": 5000,
+        "amountBeforeTax": 150000,
+        "taxCode": "V10",
+        "taxAmount": 15000
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-37",
+        "name": "Khăn giấy mẫu hộp",
+        "unit": "Lon",
+        "qty": 30,
+        "unitPrice": 45000,
+        "amountBeforeTax": 1350000,
+        "taxCode": "V10",
+        "taxAmount": 135000
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-38",
+        "name": "Hộp nhựa mẫu bộ 3",
+        "unit": "Lốc",
+        "qty": 30,
+        "unitPrice": 25000,
+        "amountBeforeTax": 750000,
+        "taxCode": "V10",
+        "taxAmount": 75000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 2475000
+      }
+    ],
+    "totals": {
+      "beforeTax": 2250000,
+      "tax": 225000,
+      "total": 2475000
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0023",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0023",
+    "docDate": "@m-0/02",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-36",
+        "name": "Dầu gội mẫu 650ml",
+        "unit": "Chai",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R10",
+        "taxAmount": 1950
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-03",
+        "name": "Trái cây mẫu hộp 1kg",
+        "unit": "Vỉ",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-10",
+        "name": "Bột mì mẫu 1kg",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R05",
+        "taxAmount": 8775
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 225225
+      }
+    ],
+    "totals": {
+      "beforeTax": 214500,
+      "tax": 10725,
+      "total": 225225
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0024",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0024",
+    "docDate": "@m-0/03",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-01",
+        "name": "Gạo mẫu túi 5kg",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-14",
+        "name": "Thuốc bổ mẫu hộp",
+        "unit": "Khay",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R05",
+        "taxAmount": 4875
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-29",
+        "name": "Nước rửa chén mẫu 750ml",
+        "unit": "Cái",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R08",
+        "taxAmount": 7800
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 383175
+      }
+    ],
+    "totals": {
+      "beforeTax": 370500,
+      "tax": 12675,
+      "total": 383175
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0025",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0025",
+    "docDate": "@m-0/04",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-06",
+        "name": "Nước sạch mẫu bình 20l",
+        "unit": "Chai",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R05",
+        "taxAmount": 2600
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-13",
+        "name": "Sách vở mẫu",
+        "unit": "Vỉ",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R05",
+        "taxAmount": 23400
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-20",
+        "name": "Trà mẫu hộp 25 gói",
+        "unit": "Túi",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R08",
+        "taxAmount": 20800
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 46800,
+      "total": 826800
+    },
+    "partner": {
+      "code": "MAU-KH-09",
+      "name": "Khách buôn Mẫu Minh"
+    },
+    "invoice": {
+      "no": "0000021",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-0/04",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0026",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0026",
+    "docDate": "@m-0/05",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-11",
+        "name": "Dầu ăn mẫu 1l",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R05",
+        "taxAmount": 4875
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-25",
+        "name": "Sữa chua mẫu lốc 4",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R08",
+        "taxAmount": 14040
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 312975
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 20475,
+      "total": 312975
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0027",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0027",
+    "docDate": "@m-0/06",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-30",
+        "name": "Giấy vệ sinh mẫu lốc 10",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-05",
+        "name": "Thịt heo mẫu khay 500g",
+        "unit": "Bình",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "KCT",
+        "taxAmount": 0
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-18",
+        "name": "Mì gói mẫu 75g",
+        "unit": "Lốc",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 139620
+      }
+    ],
+    "totals": {
+      "beforeTax": 136500,
+      "tax": 3120,
+      "total": 139620
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0028",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0028",
+    "docDate": "@m-0/07",
+    "description": "Bán buôn có hoá đơn (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 8,
+        "unitPrice": 6500,
+        "amountBeforeTax": 52000,
+        "taxCode": "R08",
+        "taxAmount": 4160
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-28",
+        "name": "Xà phòng mẫu 400g",
+        "unit": "Lốc",
+        "qty": 8,
+        "unitPrice": 58500,
+        "amountBeforeTax": 468000,
+        "taxCode": "R08",
+        "taxAmount": 37440
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-35",
+        "name": "Kem đánh răng mẫu 180g",
+        "unit": "Bình",
+        "qty": 8,
+        "unitPrice": 32500,
+        "amountBeforeTax": 260000,
+        "taxCode": "R10",
+        "taxAmount": 26000
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 847600
+      }
+    ],
+    "totals": {
+      "beforeTax": 780000,
+      "tax": 67600,
+      "total": 847600
+    },
+    "partner": {
+      "code": "MAU-KH-10",
+      "name": "Khách buôn Mẫu Nga"
+    },
+    "invoice": {
+      "no": "0000022",
+      "serial": "C26MBR",
+      "form": "1",
+      "date": "@m-0/07",
+      "status": "valid"
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0029",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0029",
+    "docDate": "@m-0/08",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-26",
+        "name": "Nước tăng lực mẫu chai",
+        "unit": "Chai",
+        "qty": 3,
+        "unitPrice": 32500,
+        "amountBeforeTax": 97500,
+        "taxCode": "R08",
+        "taxAmount": 7800
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-33",
+        "name": "Ổ cắm mẫu 3 lỗ",
+        "unit": "Vỉ",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R10",
+        "taxAmount": 1950
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-40",
+        "name": "Chảo mẫu 26cm",
+        "unit": "Túi",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R10",
+        "taxAmount": 17550
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 319800
+      }
+    ],
+    "totals": {
+      "beforeTax": 292500,
+      "tax": 27300,
+      "total": 319800
+    }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0030",
+    "version": 1,
+    "branchCode": "MAU02",
+    "docNo": "MAU-HD-0030",
+    "docDate": "@m-0/09",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-21",
+        "name": "Nước ngọt mẫu lon",
+        "unit": "Gói",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R08",
+        "taxAmount": 1560
+      },
+      {
+        "lineKey": "2",
+        "sku": "MAU-SP-34",
+        "name": "Bàn chải mẫu",
+        "unit": "Khay",
+        "qty": 3,
+        "unitPrice": 58500,
+        "amountBeforeTax": 175500,
+        "taxCode": "R10",
+        "taxAmount": 17550
+      },
+      {
+        "lineKey": "3",
+        "sku": "MAU-SP-09",
+        "name": "Muối mẫu 500g",
+        "unit": "Cái",
+        "qty": 3,
+        "unitPrice": 6500,
+        "amountBeforeTax": 19500,
+        "taxCode": "R05",
+        "taxAmount": 975
+      }
+    ],
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 234585
+      }
+    ],
+    "totals": {
+      "beforeTax": 214500,
+      "tax": 20085,
+      "total": 234585
+    }
+  },
+  {
+    "docType": "sale_return",
+    "docKey": "preset:thuong-mai-ban-le:sale_return:0002",
+    "version": 1,
+    "branchCode": "MAU01",
+    "originalDocKey": "preset:thuong-mai-ban-le:sale:0025",
+    "docNo": "MAU-TL-0002",
+    "docDate": "@m-0/09",
+    "description": "Khách trả lại hàng (hư cấu)",
+    "partner": {
+      "code": "MAU-KH-09",
+      "name": "Khách buôn Mẫu Minh"
+    },
+    "lines": [
+      {
+        "lineKey": "1",
+        "sku": "MAU-SP-06",
+        "name": "Nước sạch mẫu bình 20l",
+        "unit": "Chai",
+        "qty": 1,
+        "unitPrice": 6500,
+        "amountBeforeTax": 6500,
+        "taxCode": "R05",
+        "taxAmount": 325
+      }
+    ],
+    "payments": [],
+    "totals": {
+      "beforeTax": 6500,
+      "tax": 325,
+      "total": 6825
+    }
   }
 ]
