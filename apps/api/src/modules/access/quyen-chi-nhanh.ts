@@ -31,6 +31,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Role } from '@ketoan/contracts';
 import { ADMIN_ROLES, effectivePermissionsWithTenantRoles, impliedBy, impliersOf, requirePermission, type AuthContext, type Permission } from '@bizcity/platform/core/auth';
 import { matchPattern } from '@bizcity/platform/core/authz/engine';
+import { lanGanTheoChiNhanh, type LanGanChiNhanh } from '@bizcity/platform/core/authz/scope';
 import { extraAuthz } from '@bizcity/platform/core/security/role-assignments';
 import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
@@ -39,7 +40,8 @@ import { getSetting } from '@bizcity/platform/core/settings';
 import { kiemLenhManHinh, manHinhRoutes } from './man-hinh.js';
 
 const TODAY_VN = sql`(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`;
-interface Gan { code: string; scope_type: 'branch' | 'warehouse'; role: Role | null; tenant_role_id: string | null; base_role: Role | null; kind: string | null }
+// [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: khai triển lần gán (chi nhánh / kho / nút sơ đồ tổ chức) lấy từ Core — một nơi tính phạm vi
+type Gan = LanGanChiNhanh;
 
 // [2026-11-16 10:00 AM kiennt] NT-HT-003 — Chủ đơn vị theo MỌI vai trò toàn đơn vị (chính hoặc gán thêm ở HT12), không chỉ vai trò chính (đóng góp)
 /** Người dùng có vai trò quản trị đơn vị (Chủ đơn vị) — vai trò chính hoặc vai trò gán thêm toàn đơn vị còn hiệu lực. */
@@ -47,20 +49,10 @@ const laChuDonVi = (auth: AuthContext): boolean => [auth.role, ...(auth.roles ??
 
 const userIdOf = (auth: AuthContext) => (auth.kind === 'user' && auth.actor.startsWith('user:') ? auth.actor.slice(5) : null);
 
-/** Các lần gán theo chi nhánh / kho còn hiệu lực hôm nay của người dùng, quy về mã chi nhánh. */
-async function lanGanTheoChiNhanh(tenantId: string, userId: string): Promise<Gan[]> {
-  const { rows } = await sql<Gan>`
-    SELECT COALESCE(b.code, bw.code) AS code, a.scope_type, a.role, a.tenant_role_id::text, r.base_role, r.kind
-      FROM user_role_assignments a
-      LEFT JOIN tenant_roles r ON r.id = a.tenant_role_id AND r.tenant_id = a.tenant_id
-      LEFT JOIN branches b ON a.scope_type = 'branch' AND b.id = a.scope_id
-      LEFT JOIN warehouses w ON a.scope_type = 'warehouse' AND w.id = a.scope_id
-      LEFT JOIN branches bw ON bw.id = w.branch_id
-     WHERE a.tenant_id = ${tenantId} AND a.user_id = ${userId} AND a.revoked_at IS NULL AND a.scope_type IN ('branch', 'warehouse')
-       AND a.valid_from <= ${TODAY_VN} AND (a.valid_to IS NULL OR a.valid_to >= ${TODAY_VN})
-       AND (a.tenant_role_id IS NULL OR r.is_active)`.execute(db);
-  return rows.filter((r) => r.code);
-}
+/** Các lần gán theo chi nhánh / kho / nút sơ đồ tổ chức còn hiệu lực hôm nay của người dùng, quy về mã chi nhánh (Core). */
+const lanGanCuaNguoi = (tenantId: string, userId: string): Promise<Gan[]> => lanGanTheoChiNhanh(db, tenantId, userId);
+/** Lần gán CẤP QUYỀN tại chi nhánh: gán tại chi nhánh hoặc tại nút (vùng). Gán tại kho chỉ mở chi nhánh của kho vào phạm vi. */
+const capQuyenTai = (g: Gan): boolean => g.scope_type === 'branch' || g.scope_type === 'org_unit';
 
 export interface QuyenChiNhanh {
   /** null = mọi chi nhánh. */
@@ -84,7 +76,7 @@ export async function quyenTheoChiNhanh(auth: AuthContext): Promise<QuyenChiNhan
   const uid = userIdOf(auth);
   if (!uid || laChuDonVi(auth)) return KHONG;
   if (!(await batGioiHan(auth.tenantId))) return KHONG;
-  const gan = await lanGanTheoChiNhanh(auth.tenantId, uid);
+  const gan = await lanGanCuaNguoi(auth.tenantId, uid);
   if (!gan.length) return KHONG;
   const tenant = await extraAuthz(uid);
   const ids = [...new Set(gan.map((g) => g.tenant_role_id).filter((x): x is string => !!x))];
@@ -96,7 +88,7 @@ export async function quyenTheoChiNhanh(auth: AuthContext): Promise<QuyenChiNhan
   const camTheoChiNhanh: Record<string, string[]> = {};
   for (const code of [...new Set(gan.map((g) => g.code))]) {
     // Lần gán theo KHO chỉ mở chi nhánh của kho vào phạm vi; quyền theo kho do cửa nạp kiểm (S028-19) — không cộng thành quyền cả chi nhánh.
-    const tai = gan.filter((g) => g.code === code && g.scope_type === 'branch');
+    const tai = gan.filter((g) => g.code === code && capQuyenTai(g));
     const cam = [...new Set(rules.filter((x) => x.effect === 'deny' && tai.some((g) => g.tenant_role_id === x.tenant_role_id)).map((x) => x.permission))].sort();
     if (cam.length) camTheoChiNhanh[code] = cam;
     // Vai trò Hạn chế chỉ có Cấm: không mở chi nhánh vào phạm vi, không cộng quyền.
@@ -307,33 +299,31 @@ async function apChiNhanh(req: FastifyRequest, auth: AuthContext): Promise<strin
   return cam;
 }
 
-/** Bảng rà trước khi bật công tắc: ai có lần gán tại chi nhánh / kho (trừ vai trò Hạn chế), phạm vi sẽ thành gì. */
+/** Bảng rà trước khi bật công tắc: ai có lần gán tại chi nhánh / kho / vùng (trừ vai trò Hạn chế), phạm vi sẽ thành gì. */
+// [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: bảng rà dùng khai triển lần gán của Core; lần gán theo vùng hiện "tại vùng X (n cửa hàng)"
 async function raSoat(tenantId: string) {
-  const { rows } = await sql<{ user_id: string; email: string; full_name: string; role: string; code: string; scope_type: string; kind: string | null; vai_tro: string | null }>`
+  const gan = (await lanGanTheoChiNhanh(db, tenantId)).sort((a, b) => a.code.localeCompare(b.code));
+  const ids = [...new Set(gan.map((g) => g.user_id))];
+  const users = ids.length ? (await sql<{ user_id: string; email: string; full_name: string; role: string }>`
     SELECT u.id::text AS user_id, u.email, u.full_name,
-           CASE WHEN u.role = 'owner' OR EXISTS (SELECT 1 FROM user_role_assignments o WHERE o.tenant_id = a.tenant_id AND o.user_id = u.id
+           CASE WHEN u.role = 'owner' OR EXISTS (SELECT 1 FROM user_role_assignments o WHERE o.tenant_id = u.tenant_id AND o.user_id = u.id
              AND o.scope_type = 'tenant' AND o.role = 'owner' AND o.revoked_at IS NULL AND o.valid_from <= ${TODAY_VN} AND (o.valid_to IS NULL OR o.valid_to >= ${TODAY_VN}))
-             THEN 'owner' ELSE u.role END AS role,
-           COALESCE(b.code, bw.code) AS code, a.scope_type, r.kind, COALESCE(r.label, a.role) AS vai_tro
-      FROM user_role_assignments a
-      JOIN users u ON u.id = a.user_id AND u.tenant_id = a.tenant_id
-      LEFT JOIN tenant_roles r ON r.id = a.tenant_role_id AND r.tenant_id = a.tenant_id
-      LEFT JOIN branches b ON a.scope_type = 'branch' AND b.id = a.scope_id
-      LEFT JOIN warehouses w ON a.scope_type = 'warehouse' AND w.id = a.scope_id
-      LEFT JOIN branches bw ON bw.id = w.branch_id
-     WHERE a.tenant_id = ${tenantId} AND a.revoked_at IS NULL AND a.scope_type IN ('branch', 'warehouse')
-       AND a.valid_from <= ${TODAY_VN} AND (a.valid_to IS NULL OR a.valid_to >= ${TODAY_VN})
-       AND (a.tenant_role_id IS NULL OR r.is_active)
-     ORDER BY u.email, code`.execute(db);
+             THEN 'owner' ELSE u.role END AS role
+      FROM users u WHERE u.tenant_id = ${tenantId} AND u.id = ANY(${ids}::bigint[]) ORDER BY u.email`.execute(db)).rows : [];
   const TEN: Record<string, string> = { owner: 'Chủ đơn vị', chief_accountant: 'Kế toán trưởng', accountant: 'Kế toán', viewer: 'Người xem', developer: 'Nhà phát triển', auditor: 'Kiểm soát', staff: 'Nhân viên' }; // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — nhãn vai trò staff
   const by = new Map<string, { userId: string; email: string; fullName: string; role: string; branches: string[]; ganTai: string[]; camTai: string[] }>();
-  for (const x of rows) {
-    if (!x.code) continue;
-    const o = by.get(x.user_id) ?? by.set(x.user_id, { userId: x.user_id, email: x.email, fullName: x.full_name, role: x.role, branches: [], ganTai: [], camTai: [] }).get(x.user_id)!;
-    o.ganTai.push(`${TEN[x.vai_tro ?? ''] ?? x.vai_tro} tại ${x.scope_type === 'warehouse' ? 'kho của ' : ''}${x.code}`);
+  for (const u of users) by.set(u.user_id, { userId: u.user_id, email: u.email, fullName: u.full_name, role: u.role, branches: [], ganTai: [], camTai: [] });
+  const vung = new Map<string, number>();
+  for (const x of gan) {
+    const o = by.get(x.user_id);
+    if (!o) continue;
+    const ten = TEN[x.label ?? x.role ?? ''] ?? x.label ?? x.role;
+    if (x.scope_type === 'org_unit') { const k = `${x.user_id}|${ten}|${x.nut}`; vung.set(k, (vung.get(k) ?? 0) + 1); }
+    else o.ganTai.push(`${ten} tại ${x.scope_type === 'warehouse' ? 'kho của ' : ''}${x.code}`);
     if (x.kind === 'restriction') { if (!o.camTai.includes(x.code)) o.camTai.push(x.code); }
     else if (!o.branches.includes(x.code)) o.branches.push(x.code);
   }
+  for (const [k, n] of vung) { const [uid, ten, nut] = k.split('|'); by.get(uid!)!.ganTai.push(`${ten} tại vùng ${nut} (${n} cửa hàng)`); }
   // Chủ đơn vị không bị giới hạn; người chỉ có vai trò Hạn chế tại chi nhánh → mọi chi nhánh (null).
   return [...by.values()].map((o) => ({ ...o, branches: o.role === 'owner' || !o.branches.length ? null : o.branches.sort() }));
 }
@@ -358,6 +348,17 @@ export const quyenChiNhanh = fp(async (app: FastifyInstance) => {
     preHandler: requirePermission('users:write'),
     schema: { tags: ['Phân quyền'], summary: 'Vai trò gán thêm toàn đơn vị còn hiệu lực của từng người dùng (HT12 hiện cạnh vai trò chính)' },
     handler: async (req) => ok(await vaiTroThem(req.auth!.tenantId)),
+  });
+  // [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: danh sách nút sơ đồ tổ chức (id, mã, tên, số cửa hàng trong cây con) để HT12 gán vai trò theo vùng
+  app.get('/api/v1/quyen-chi-nhanh/vung', {
+    preHandler: requirePermission('users:write'),
+    schema: { tags: ['Phân quyền'], summary: 'Nút sơ đồ tổ chức gán được vai trò theo vùng: id, mã, tên, cấp, số cửa hàng thuộc nút và cây con' },
+    handler: async (req) => ok((await sql<{ id: string; code: string; name: string; level: number; path: string; is_active: boolean; cua_hang: number }>`
+      SELECT n.id::text, n.code, n.name, n.level, n.path, n.is_active,
+             (SELECT count(*)::int FROM org_units m JOIN branches b ON b.tenant_id = m.tenant_id AND b.org_unit_id = m.id
+               WHERE m.tenant_id = n.tenant_id AND (m.path = n.path OR left(m.path, length(n.path) + 1) = n.path || chr(92))) AS cua_hang
+        FROM org_units n WHERE n.tenant_id = ${req.auth!.tenantId} ORDER BY n.path`.execute(db)).rows
+      .map((n) => ({ id: n.id, code: n.code, name: n.name, level: n.level, path: n.path, isActive: n.is_active, branches: n.cua_hang }))),
   });
   app.get('/api/v1/quyen-chi-nhanh/ra-soat', {
     preHandler: requirePermission('users:write'),

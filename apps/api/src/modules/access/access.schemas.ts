@@ -38,8 +38,9 @@ export const roleAssignSchema = z.object({
   confirmPassword: z.string().min(1).max(200).optional().describe('Mật khẩu của người thao tác — bắt buộc khi vai trò có Cho quyền rủi ro cao'),
   // [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: phạm vi chi nhánh của lần gán (chỉ có tác dụng ở route gọi requireScope — cửa nạp chứng từ)
   // [2026-11-09 03:15 PM kiennt] PHASE-028 — S028-19 (giai đoạn 3.3): phạm vi KHO — gán theo một kho (tương đương tblUserKho của HTsoft); chỉ có tác dụng ở cửa nạp chứng từ có dòng hàng theo kho
-  scopeType: z.enum(['tenant', 'branch', 'warehouse']).default('tenant').describe('tenant: cả đơn vị (mặc định); branch: một chi nhánh; warehouse: một kho — chỉ có tác dụng ở route kiểm theo chi nhánh / kho (cửa nạp chứng từ)'),
-  scopeId: z.string().regex(/^\d+$/).optional().describe('id chi nhánh (branches.id) khi scopeType = branch; id kho (warehouses.id) khi scopeType = warehouse'),
+  // [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: phạm vi org_unit (nút sơ đồ tổ chức, gồm cây con)
+  scopeType: z.enum(['tenant', 'branch', 'warehouse', 'org_unit']).default('tenant').describe('tenant: cả đơn vị (mặc định); branch: một chi nhánh; warehouse: một kho; org_unit: một nút sơ đồ tổ chức (vùng) và cây con — phạm vi chi nhánh áp khi bật bizcity.authz.branch_scope'),
+  scopeId: z.string().regex(/^\d+$/).optional().describe('id chi nhánh (branches.id) khi scopeType = branch; id kho (warehouses.id) khi warehouse; id nút (org_units.id) khi org_unit'),
   validFrom: isoDate.optional().describe('Mặc định hôm nay (giờ Việt Nam)'),
   validTo: isoDate.optional().describe('Ngày cuối hiệu lực (gồm cả ngày này); bỏ trống = không hạn'),
   reason,

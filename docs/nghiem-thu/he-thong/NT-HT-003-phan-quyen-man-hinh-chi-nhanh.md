@@ -161,6 +161,7 @@ Người chốt: kiennt (bộ phận yêu cầu) theo đề xuất của phiếu
 | 14/11/2026 | Chốt mục 8: mượn quyền gốc rủi ro thấp; công tắc giới hạn chi nhánh (mặc định tắt); tệp ở `modules/access`; Hạn chế tại chi nhánh chỉ Cấm; gán tại kho mở chi nhánh của kho |
 | 17/11/2026 | GĐ3 (mục 13): chi nhánh tra từ bản ghi, phạm vi đọc, vai trò Nhân viên (`staff`), hook `dangKyChiNhanhBanGhi`, chuẩn [DANG-KY-QUYEN](../../standard/DANG-KY-QUYEN.md) <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — GĐ3 --> |
 | 17/11/2026 | Đề xuất GĐ4 (mục 14: module mới khai màn ở manifest, `branchOf` ở action) và GĐ5 (mục 15: phạm vi theo nút sơ đồ tổ chức, gộp tính phạm vi về Core); câu hỏi chốt mục 16 <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ4, GĐ5 --> |
+| 17/11/2026 | GĐ5 có mã trên nhánh `feat/phan-quyen-pham-vi-chi-nhanh`: migration 0150, khai triển lần gán nút → chi nhánh ở Core (`lanGanTheoChiNhanh` + tầng nạp bộ tính), API + HT12 gán theo vùng, route `GET /api/v1/quyen-chi-nhanh/vung`; `apps/api/test/phan-quyen-vung.test.ts` 9 / 9 <!-- [2026-11-17 05:10 PM khanhtd] NT-HT-003 — GĐ5 có mã --> |
 
 ## 13. GĐ3 — vá lỗ rà soát 17/11/2026 (chờ chốt trước khi mở PR code)
 <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — GĐ3: vá 9 lỗ ở biên bản rà soát 17/11; mục cần chủ dự án chốt (R-FLOW-2) -->
@@ -220,7 +221,7 @@ GĐ3 đã chạy trên nhánh ở máy (`feat/phan-quyen-pham-vi-chi-nhanh`, ch�
 
 **Kiểm bằng:** module thử khai 1 màn 5 thao tác → danh sách màn có màn đó; HT12 lưới có dòng; người chỉ Cho quyền lập thì lập được, xoá 403; action theo mã của chi nhánh ngoài phạm vi → 403; manifest khai quyền không có trong `permissions[]` → module không nạp (lỗi rõ tên quyền); action ghi không thuộc màn nào → cảnh báo.
 
-## 15. GĐ5 — phạm vi theo vùng (sơ đồ tổ chức) và gộp với bộ tính của Core (đề xuất, chờ chốt)
+## 15. GĐ5 — phạm vi theo vùng (sơ đồ tổ chức) và gộp với bộ tính của Core (có mã trên nhánh, chờ chốt)
 <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ5: gán vai trò tại nút sơ đồ tổ chức (cây con), dùng kiểu phạm vi org_unit sẵn có của bộ tính ADR-0027 -->
 
 **Vấn đề.** Quản lý vùng (Miền / Chi nhánh / Tỉnh trong sơ đồ tổ chức, NT-HT-001: 3 Miền, 12 Chi nhánh, 35 Tỉnh, 743 cửa hàng gắn nút) phải gán vai trò tại **từng** cửa hàng; mở cửa hàng mới phải gán thêm tay. Phạm vi chi nhánh lại tính ở hai nơi: `apps/api/src/modules/access/quyen-chi-nhanh.ts` (SQL riêng) và bộ tính `packages/platform/src/core/authz/` (`requireScope`, `allowedScope`).
@@ -241,7 +242,7 @@ GĐ3 đã chạy trên nhánh ở máy (`feat/phan-quyen-pham-vi-chi-nhanh`, ch�
 4. HT12 (Người dùng → Gán vai trò): phạm vi chọn được **Nút sơ đồ tổ chức** (cây DM16) cạnh Chi nhánh / Kho; bảng rà trước khi bật công tắc hiện "tại vùng X (n cửa hàng)".
 5. Hiệu năng: phạm vi một người vùng có thể hàng trăm cửa hàng — tính một lần mỗi yêu cầu, đệm theo `authz_version` như quyền hiện nay.
 
-**Tệp:** `db/migrations/0150_pham_vi_so_do_to_chuc.sql` (đề xuất, chưa có trong mã), `packages/platform/src/core/authz/store.ts`, `packages/platform/src/core/authz/scope.ts`, `packages/platform/src/core/security/role-assignments.ts`, `apps/api/src/modules/access/quyen-chi-nhanh.ts`, `apps/api/src/modules/access/role-assignment.service.ts`, `apps/api/src/modules/access/access.schemas.ts`, `modules/phan-quyen/web/**`, test mới trong `apps/api/test/`.
+**Tệp:** `db/migrations/0150_pham_vi_so_do_to_chuc.sql`, `packages/platform/src/core/authz/store.ts`, `packages/platform/src/core/authz/scope.ts`, `packages/platform/src/core/security/role-assignments.ts`, `apps/api/src/modules/access/quyen-chi-nhanh.ts`, `apps/api/src/modules/access/role-assignment.service.ts`, `apps/api/src/modules/access/access.schemas.ts`, `modules/phan-quyen/web/**`, test mới trong `apps/api/test/`.
 
 **Kiểm bằng:** gán "Quản lý cửa hàng" tại Miền Bắc → làm được ở mọi cửa hàng thuộc Miền Bắc và tỉnh con, 403 ở cửa hàng Miền Nam; báo cáo không lọc chỉ ra số Miền Bắc; chuyển một cửa hàng sang Miền Nam ở DM02 → quyền đổi ngay yêu cầu kế tiếp; xoá nút còn lần gán → chặn; `requireScope` ở cửa nạp cho kết quả giống lớp chi nhánh.
 

@@ -87,7 +87,7 @@ export const roleAssignmentService = {
     const user = await targetUser(trx, auth, userId);
     // [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: phạm vi chi nhánh — kiểm chi nhánh thuộc đơn vị; không thành quyền toàn đơn vị (extraAuthz chỉ đọc dòng tenant)
     const scopeType = input.scopeType ?? 'tenant';
-    if (scopeType === 'tenant' && input.scopeId) throw Errors.validation('scopeId chỉ dùng khi scopeType = branch / warehouse');
+    if (scopeType === 'tenant' && input.scopeId) throw Errors.validation('scopeId chỉ dùng khi scopeType = branch / warehouse / org_unit');
     if (scopeType === 'branch') {
       if (!input.scopeId) throw Errors.validation('scopeType = branch cần scopeId (id chi nhánh)');
       const b = await trx.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('id', '=', input.scopeId).executeTakeFirst();
@@ -99,6 +99,13 @@ export const roleAssignmentService = {
       const w = await trx.selectFrom('warehouses').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('id', '=', input.scopeId).executeTakeFirst();
       if (!w) throw Errors.notFound('kho');
       if (!w.is_active) throw Errors.conflict('Kho đang ngừng dùng — không gán vai trò theo kho này được');
+    }
+    // [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: phạm vi VÙNG = nút sơ đồ tổ chức (cây con): nút phải thuộc đơn vị và đang dùng
+    if (scopeType === 'org_unit') {
+      if (!input.scopeId) throw Errors.validation('scopeType = org_unit cần scopeId (id nút sơ đồ tổ chức)');
+      const n = (await sql<{ id: string; is_active: boolean }>`SELECT id::text, is_active FROM org_units WHERE tenant_id = ${auth.tenantId} AND id = ${input.scopeId}`.execute(trx)).rows[0];
+      if (!n) throw Errors.notFound('nút sơ đồ tổ chức');
+      if (!n.is_active) throw Errors.conflict('Nút sơ đồ tổ chức đang ngừng dùng — không gán vai trò theo vùng này được');
     }
     const scopeId = scopeType === 'tenant' ? null : input.scopeId!;
     let label: string;

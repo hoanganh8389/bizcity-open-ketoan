@@ -114,6 +114,7 @@ Module mới không import `apps/*`, nên **không gọi** `dangKyManHinh` / `da
 |---|---|
 | `apps/api/test/phan-quyen-dang-ky.test.ts` | Mỗi màn nghiệp vụ có `xem`; khoá màn `<module>.<màn>`; mỗi quyền thao tác đã khai ở manifest và cùng tiền tố module; mỗi `lenh` là route có thật |
 | `apps/api/test/phan-quyen-pham-vi-chi-nhanh.test.ts` | 25 ca phạm vi chi nhánh: nhân viên chỉ ở cửa hàng mình, quản lý chỉ xem chi nhánh mình, chi nhánh tra từ bản ghi |
+| `apps/api/test/phan-quyen-vung.test.ts` | 9 ca gán vai trò theo vùng (nút sơ đồ tổ chức): phạm vi cây con, lọc báo cáo, cửa hàng chuyển vùng, chặn xoá nút còn lần gán, cửa nạp |
 | `apps/api/test/phan-quyen-{quy,kho,…}.test.ts` | Ca riêng của từng phân hệ |
 
 ```bash
@@ -128,7 +129,7 @@ Thứ tự khi AI thêm một màn: manifest (H1) → đăng ký màn (H2 / H4 /
 |---|---|---|---|
 | 1. Nhân viên bán hàng | `staff` (Nhân viên) | 1 cửa hàng: vai trò "Thu ngân" (Cho `pos:sell`) | Bán, mở / đóng ca ở cửa hàng đó; không sổ, không báo cáo |
 | 2. Quản lý cửa hàng | `staff` hoặc `viewer` | 1 cửa hàng: "Quản lý cửa hàng" (Cho `pos:report`, `reports:read`…) | Báo cáo, đơn POS, kiểm kê **chỉ của cửa hàng đó** |
-| 3. Quản lý vùng | `staff` hoặc `viewer` | hôm nay: từng cửa hàng (một lần gán mỗi cửa hàng); GĐ5 (đề xuất, chờ chốt — NT-HT-003 §15): một lần gán tại nút sơ đồ tổ chức (Miền / Chi nhánh / Tỉnh), gồm cây con | Như cấp 2 cho mọi cửa hàng thuộc vùng |
+| 3. Quản lý vùng | `staff` hoặc `viewer` | một lần gán tại nút sơ đồ tổ chức (Miền / Chi nhánh / Tỉnh — HT12 phạm vi "Một vùng"), gồm cây con; cửa hàng chuyển vùng thì quyền đổi theo (GĐ5, NT-HT-003 §15) | Như cấp 2 cho mọi cửa hàng thuộc vùng |
 | 4. Kế toán / mua hàng | `accountant` | không gán theo chi nhánh | Toàn đơn vị theo nghiệp vụ |
 | 5. Kế toán trưởng / chủ | `chief_accountant` / `owner` | — | Toàn đơn vị; chủ đơn vị không bị giới hạn |
 
@@ -142,6 +143,6 @@ Máy chủ áp cho người có lần gán theo chi nhánh / kho:
 
 - Lệnh ghi không mang chi nhánh trong thân và không theo mã (vd một số lệnh danh mục): header `X-Chi-Nhanh` vẫn cộng quyền tại chi nhánh đó. Hướng sửa: lệnh ghi dữ liệu dùng chung không cộng quyền gán tại chi nhánh.
 - Module mới chưa có hook H2 / H7 (§5) — đề xuất GĐ4 (H13, H14), NT-HT-003 §14.
-- Phạm vi theo **vùng** chưa có: quản lý vùng gán từng cửa hàng — đề xuất GĐ5 (gán tại nút sơ đồ tổ chức), NT-HT-003 §15.
-- Gộp cơ chế chi nhánh của `quyen-chi-nhanh.ts` với bộ tính `requireScope` / `allowedScope` của Core (ADR-0027) — một nơi tính phạm vi: đề xuất GĐ5 bước 3, NT-HT-003 §15.
+- Phạm vi theo **vùng**: có ở GĐ5 (gán tại nút sơ đồ tổ chức, NT-HT-003 §15). Bước sau: tính quyền theo chi nhánh hẳn trong bộ tính.
+- Khai triển lần gán (chi nhánh / kho / vùng) → mã chi nhánh đã gộp về Core (`lanGanTheoChiNhanh`, tầng nạp bộ tính) ở GĐ5; còn lại: tính quyền cộng / Cấm theo chi nhánh vẫn ở `quyen-chi-nhanh.ts`.
 - POS: `pos:return` / `pos:cancel` đang `risk: low`; chưa có quyền giảm giá tay, sửa giá, xem giá vốn (module `pos` đang do NT-BH-025, NT-BH-026 giữ).
