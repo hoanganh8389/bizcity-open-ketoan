@@ -48,7 +48,7 @@ Chạy trên `main` `a319842a` + thay đổi của nhánh, CSDL `ketoan_test` (D
 
 | Kiểm | Kết quả |
 |---|---|
-| `phan-quyen-pham-vi-chi-nhanh.test.ts` | 21 / 21 (15 ca cũ, 9 ca từng đỏ nay xanh; 6 ca mới 16–21) |
+| `phan-quyen-pham-vi-chi-nhanh.test.ts` | 25 / 25 (15 ca cũ, 9 ca từng đỏ nay xanh; 10 ca mới 16–25, gồm H7 Mua hàng / Tài sản) |
 | `phan-quyen-dang-ky.test.ts` (bộ kiểm đăng ký quyền) | 4 / 4 |
 | `npm run typecheck` | sạch |
 | Cả bộ `npx vitest run` | 2240 đạt, 6 đỏ, 12 bỏ qua. Sau khi sửa kỳ vọng `vai-tro-don-vi-api.test.ts` (thêm `staff`): 37 / 37. Còn 5 đỏ, không do nhánh: NT-BH-005 (webhook tgs-wp), `db-rules.test.ts` (API cấu trúc dữ liệu), `mat-khau-mac-dinh.test.ts` (T027-SEC-4) đỏ cả trên `main` gốc; NT-BH-012, NT-BH-003-pos xanh khi chạy riêng trên nhánh, chỉ đỏ khi chạy chung cả bộ (bước `deliver()` của hàng đợi sự kiện) |

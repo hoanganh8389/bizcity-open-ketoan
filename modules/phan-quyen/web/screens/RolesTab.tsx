@@ -17,7 +17,7 @@ interface RoleRow { id: string; code: string; label: string; kind: 'job' | 'priv
 const KIND_TEXT: Record<RoleRow['kind'], string> = { job: 'Công việc', privilege: 'Đặc quyền', restriction: 'Hạn chế (chỉ Cấm)' };
 const BASE_ROLES: { value: string; label: string }[] = [
   { value: 'chief_accountant', label: 'Kế toán trưởng' }, { value: 'accountant', label: 'Kế toán' }, { value: 'viewer', label: 'Người xem' },
-  { value: 'developer', label: 'Nhà phát triển' }, { value: 'auditor', label: 'Kiểm soát' },
+  { value: 'developer', label: 'Nhà phát triển' }, { value: 'auditor', label: 'Kiểm soát' }, { value: 'staff', label: 'Nhân viên (chỉ theo chi nhánh)' }, // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — vai trò staff (Nhân viên, migration 0149)
 ];
 const CODE_RE = /^[a-z][a-z0-9_-]{1,39}$/;
 

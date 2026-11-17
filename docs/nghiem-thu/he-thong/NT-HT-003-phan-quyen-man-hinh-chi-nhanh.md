@@ -170,15 +170,15 @@ Biên bản: [REVIEW-2026-11-17-phan-quyen-chi-nhanh](../../audits/REVIEW-2026-1
 | # | Việc | Tệp |
 |---|---|---|
 | 1 | Chi nhánh của yêu cầu = thân ∪ chi nhánh của bản ghi (`docKey` trong thân / tham số, `/vouchers/:id`, phiếu kho theo mã); header chỉ dùng khi không có cả hai | `apps/api/src/modules/access/quyen-chi-nhanh.ts` |
-| 2 | Hook `dangKyChiNhanhBanGhi({ url, tra })` thay bảng viết cứng; Kho dùng hook | `apps/api/src/modules/access/quyen-chi-nhanh.ts` |
+| 2 | Hook `dangKyChiNhanhBanGhi({ url, tra })` thay bảng viết cứng (nhận mọi tham số đường dẫn); Kho, phiếu nhập tay, Mua hàng (phiếu mua, đăng ký tồn max), Tài sản (theo mã) đăng ký | `apps/api/src/modules/access/quyen-chi-nhanh.ts` |
 | 3 | Phạm vi đọc: tham số `branchCodes` / `branches` / `branchCode` bị ép về chọn ∩ phạm vi; lệnh đọc không lọc được → bỏ quyền đọc dữ liệu cho riêng yêu cầu | `apps/api/src/modules/access/quyen-chi-nhanh.ts` |
 | 4 | Danh sách kiểm kê nhận `branchCodes` | `apps/api/src/phan-he/kho/kiem-ke.ts` |
-| 5 | Vai trò chính **Nhân viên** (`staff` — chỉ `catalog:read`) | `packages/contracts/src/enums.ts`, `packages/platform/src/core/auth.ts`, `db/migrations/0149_vai_tro_nhan_vien.sql`, `apps/api/src/modules/access/access.schemas.ts`, `apps/api/src/modules/access/tenant-role.service.ts`, `modules/phan-quyen/web/screens/RolesTab.tsx`, `modules/phan-quyen/web/screens/UsersTab.tsx` (đề xuất, chưa có trong mã: PR code GĐ3) |
-| 6 | Bộ kiểm đăng ký quyền + 21 ca phạm vi chi nhánh | `apps/api/test/phan-quyen-dang-ky.test.ts`, `apps/api/test/phan-quyen-pham-vi-chi-nhanh.test.ts` (đề xuất, chưa có trong mã: PR code GĐ3) |
+| 5 | Vai trò chính **Nhân viên** (`staff` — chỉ `catalog:read`) | `packages/contracts/src/enums.ts`, `packages/platform/src/core/auth.ts`, `db/migrations/0149_vai_tro_nhan_vien.sql`, `apps/api/src/modules/access/access.schemas.ts`, `apps/api/src/modules/access/tenant-role.service.ts`, `modules/phan-quyen/web/screens/RolesTab.tsx`, `modules/phan-quyen/web/screens/UsersTab.tsx` |
+| 6 | Bộ kiểm đăng ký quyền + 25 ca phạm vi chi nhánh | `apps/api/test/phan-quyen-dang-ky.test.ts`, `apps/api/test/phan-quyen-pham-vi-chi-nhanh.test.ts` |
 
 Cần chốt (R-FLOW-2): (a) vai trò `staff` — đổi `packages/contracts` + migration 0149; (b) đổi hành vi khi công tắc bật: lệnh đọc không lọc được theo chi nhánh trả thiếu quyền thay vì số liệu toàn đơn vị; (c) sửa `packages/platform/src/core/auth.ts` (lớp P, PHASE-028).
 
-GĐ3 đã chạy trên nhánh ở máy (`feat/phan-quyen-pham-vi-chi-nhanh`, chưa đẩy): 21 / 21 ca phạm vi chi nhánh, 4 / 4 ca bộ kiểm đăng ký, cả bộ `npm test` không thêm ca đỏ (chi tiết ở biên bản). Thêm việc vào GĐ3: đăng ký tra chi nhánh của bản ghi (H7) cho lệnh theo mã của Mua hàng, Bán hàng, Tài sản; `AuthContext.branchScope` (phạm vi chi nhánh của yêu cầu, `null` = mọi chi nhánh) để GĐ4 dùng.
+GĐ3 đã chạy trên nhánh ở máy (`feat/phan-quyen-pham-vi-chi-nhanh`, chưa đẩy): 25 / 25 ca phạm vi chi nhánh, 4 / 4 ca bộ kiểm đăng ký, cả bộ `npm test` không thêm ca đỏ (chi tiết ở biên bản). Thêm việc vào GĐ3: đăng ký tra chi nhánh của bản ghi (H7) cho lệnh theo mã của Mua hàng, Bán hàng, Tài sản; `AuthContext.branchScope` (phạm vi chi nhánh của yêu cầu, `null` = mọi chi nhánh) để GĐ4 dùng.
 
 ## 14. GĐ4 — hook đăng ký quyền cho module mới (`modules/<key>`) (đề xuất, chờ chốt)
 <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ4: module mới khai màn × thao tác ở manifest và tra chi nhánh bản ghi ở action (bậc 4, chủ dự án chốt) -->

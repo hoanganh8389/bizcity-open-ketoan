@@ -112,8 +112,8 @@ Module mới không import `apps/*`, nên **không gọi** `dangKyManHinh` / `da
 
 | Test | Kiểm gì |
 |---|---|
-| `apps/api/test/phan-quyen-dang-ky.test.ts` | Mỗi màn nghiệp vụ có `xem`; khoá màn `<module>.<màn>`; mỗi quyền thao tác đã khai ở manifest và cùng tiền tố module; mỗi `lenh` là route có thật (đề xuất, chưa có trong mã: PR code GĐ3) |
-| `apps/api/test/phan-quyen-pham-vi-chi-nhanh.test.ts` | 21 ca phạm vi chi nhánh: nhân viên chỉ ở cửa hàng mình, quản lý chỉ xem chi nhánh mình, chi nhánh tra từ bản ghi (đề xuất, chưa có trong mã: PR code GĐ3) |
+| `apps/api/test/phan-quyen-dang-ky.test.ts` | Mỗi màn nghiệp vụ có `xem`; khoá màn `<module>.<màn>`; mỗi quyền thao tác đã khai ở manifest và cùng tiền tố module; mỗi `lenh` là route có thật |
+| `apps/api/test/phan-quyen-pham-vi-chi-nhanh.test.ts` | 25 ca phạm vi chi nhánh: nhân viên chỉ ở cửa hàng mình, quản lý chỉ xem chi nhánh mình, chi nhánh tra từ bản ghi |
 | `apps/api/test/phan-quyen-{quy,kho,…}.test.ts` | Ca riêng của từng phân hệ |
 
 ```bash

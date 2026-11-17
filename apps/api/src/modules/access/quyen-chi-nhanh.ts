@@ -13,12 +13,23 @@
  *   documents[]) → không có thì chi nhánh của phiếu theo mã (Kho) → không có thì chi nhánh đang làm việc (header X-Chi-Nhanh).
  *   Ngoài phạm vi → 403 BRANCH_OUT_OF_SCOPE. Trong phạm vi → cộng quyền tại chi nhánh đó vào phiên (rồi action / route kiểm như thường).
  * - GET /api/v1/quyen-chi-nhanh: phạm vi + quyền thêm theo từng chi nhánh — giao diện tính nút / menu theo chi nhánh đang làm việc.
+ *
+ * [2026-11-17 02:25 PM khanhtd] NT-HT-003 — vá lỗ rà soát 17/11 (docs/audits/REVIEW-2026-11-17-phan-quyen-chi-nhanh.md):
+ * - CHI NHÁNH TỪ BẢN GHI (AUTHZ-11): lệnh chạm chứng từ đã có (docKey trong thân / tham số, /vouchers/:id, phiếu kho theo mã, và mọi
+ *   lệnh phân hệ đăng ký bằng `dangKyChiNhanhBanGhi`) lấy chi nhánh của bản ghi trên máy chủ, HỢP với chi nhánh ghi trong thân (sửa phiếu:
+ *   kiểm cả chi nhánh cũ lẫn mới). Header X-Chi-Nhanh không bao giờ đè chi nhánh của bản ghi.
+ * - PHẠM VI ĐỌC: người bị giới hạn chi nhánh gọi lệnh ĐỌC (GET):
+ *     · lệnh có tham số lọc chi nhánh (`branchCodes` / `branches` / `branchCode` trong querystring) → máy chủ ép tham số = chi nhánh chọn ∩
+ *       phạm vi (không chọn = cả phạm vi, KHÔNG phải toàn đơn vị); chọn chi nhánh ngoài phạm vi → 403 BRANCH_OUT_OF_SCOPE;
+ *     · lệnh đọc theo mã bản ghi → chi nhánh của bản ghi phải trong phạm vi;
+ *     · lệnh không lọc được theo chi nhánh → bỏ quyền đọc dữ liệu (ledger:read, reports:read, documents:read và quyền xem chứng từ chúng kéo
+ *       theo) cho riêng yêu cầu đó — đóng mặc định, không trả số liệu toàn đơn vị.
  */
 import fp from 'fastify-plugin';
 import { sql } from 'kysely';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Role } from '@ketoan/contracts';
-import { ADMIN_ROLES, effectivePermissionsWithTenantRoles, impliersOf, requirePermission, type AuthContext, type Permission } from '@bizcity/platform/core/auth';
+import { ADMIN_ROLES, effectivePermissionsWithTenantRoles, impliedBy, impliersOf, requirePermission, type AuthContext, type Permission } from '@bizcity/platform/core/auth';
 import { matchPattern } from '@bizcity/platform/core/authz/engine';
 import { extraAuthz } from '@bizcity/platform/core/security/role-assignments';
 import { db } from '../../db/client.js';
@@ -123,24 +134,135 @@ function maTrongThan(body: unknown): string[] {
   return [...out];
 }
 
-/** Lệnh theo mã phiếu (bản thử: phân hệ Kho) → chi nhánh của phiếu. Bên nhận chuyển kho dùng chi nhánh nhận. */
-const THEO_MA: { re: RegExp; tra: (tenantId: string, id: string) => Promise<string | undefined> }[] = [
-  { re: /^\/api\/v1\/kho\/transfers\/:id\/(receive|unreceive)$/, tra: async (t, id) => (await sql<{ c: string }>`SELECT to_branch_code AS c FROM stock_transfer_docs WHERE tenant_id = ${t} AND id = ${id}`.execute(db)).rows[0]?.c },
-  { re: /^\/api\/v1\/kho\/transfers\/:id(\/(cancel|reject))?$/, tra: async (t, id) => (await sql<{ c: string }>`SELECT from_branch_code AS c FROM stock_transfer_docs WHERE tenant_id = ${t} AND id = ${id}`.execute(db)).rows[0]?.c },
-  { re: /^\/api\/v1\/kho\/kiem-ke\/:id(\/.*)?$/, tra: async (t, id) => (await sql<{ c: string }>`SELECT branch_code AS c FROM stock_counts WHERE tenant_id = ${t} AND id = ${id}`.execute(db)).rows[0]?.c },
-];
+// [2026-11-17 02:25 PM khanhtd] NT-HT-003 — HOOK `dangKyChiNhanhBanGhi`: phân hệ đăng ký cách tra chi nhánh của bản ghi cho lệnh theo mã (thay bảng THEO_MA viết cứng)
+/**
+ * Lệnh theo mã bản ghi → chi nhánh THẬT của bản ghi (đọc ở máy chủ, AUTHZ-11). Phân hệ có lệnh `/<...>/:id` sửa / huỷ / duyệt / đọc một
+ * bản ghi có chi nhánh thì PHẢI đăng ký ở index.ts của mình — không đăng ký thì người bị giới hạn chi nhánh có thể chạm bản ghi của chi
+ * nhánh khác bằng cách đổi chi nhánh trong thân / header:
+ *   dangKyChiNhanhBanGhi({ url: /^\/api\/v1\/kho\/kiem-ke\/:id(\/.*)?$/, tra: (tenantId, p) => …SELECT branch_code … WHERE id = p.id… });
+ * `url` khớp đường dẫn MẪU của Fastify (req.routeOptions.url); `p` là tham số đường dẫn (`:id`, `:code`…) dạng chuỗi — tự kiểm dạng
+ * (vd `soId(p.id)`) trước khi đưa vào SQL. Trả mã chi nhánh (hoặc nhiều mã); không thấy bản ghi → rỗng (lệnh tự báo không có).
+ */
+// [2026-11-17 04:10 PM khanhtd] NT-HT-003 — GĐ3: hook nhận mọi tham số đường dẫn (tài sản theo :code), không chỉ :id dạng số
+export interface ChiNhanhBanGhi { url: RegExp; tra: (tenantId: string, thamSo: Readonly<Record<string, string>>) => Promise<string | string[] | undefined> }
+const soBanGhi: ChiNhanhBanGhi[] = [];
+export function dangKyChiNhanhBanGhi(def: ChiNhanhBanGhi): void { soBanGhi.push(def); }
+/** Mã số dạng bigint của tham số đường dẫn, hoặc null khi không phải số (không đưa chuỗi lạ vào ::bigint). */
+export const soId = (v: string | undefined): string | null => (v && /^\d{1,18}$/.test(v) ? v : null);
 
-async function chiNhanhCuaYeuCau(req: FastifyRequest, auth: AuthContext): Promise<{ ma: string[]; nguon: 'than' | 'phieu' | 'dang-lam' | 'khong' }> {
-  const than = maTrongThan(req.body);
-  if (than.length) return { ma: than, nguon: 'than' };
-  const url = req.routeOptions?.url ?? '';
-  const id = (req.params as { id?: unknown } | undefined)?.id;
-  if (id !== undefined && /^\d+$/.test(String(id))) {
-    for (const r of THEO_MA) if (r.re.test(url)) { const c = await r.tra(auth.tenantId, String(id)); if (c) return { ma: [c], nguon: 'phieu' }; }
+/** Danh sách mã chi nhánh từ các dòng `{ c }` của truy vấn (bỏ dòng null). */
+export const motMa = (sqlRows: { c: string | null }[]): string[] => sqlRows.map((r) => r.c).filter((c): c is string => !!c);
+/** Tra theo một bảng của đơn vị có cột mã chi nhánh (mặc định `branch_code`) và khoá số `id` — phân hệ dùng lại khi đăng ký. */
+export const theoBang = (bang: string, cot = 'branch_code') =>
+  async (t: string, p: Readonly<Record<string, string>>) => {
+    const id = soId(p.id);
+    return id ? motMa((await sql<{ c: string }>`SELECT ${sql.ref(cot)} AS c FROM ${sql.table(bang)} WHERE tenant_id = ${t} AND id = ${id}`.execute(db)).rows) : [];
+  };
+// Phân hệ Kho (bản thử cũ, giữ nguyên ý): bên nhận chuyển kho dùng chi nhánh nhận.
+dangKyChiNhanhBanGhi({ url: /^\/api\/v1\/kho\/transfers\/:id\/(receive|unreceive)$/, tra: async (t, p) => { const id = soId(p.id); return id ? motMa((await sql<{ c: string }>`SELECT to_branch_code AS c FROM stock_transfer_docs WHERE tenant_id = ${t} AND id = ${id}`.execute(db)).rows) : []; } });
+dangKyChiNhanhBanGhi({ url: /^\/api\/v1\/kho\/transfers\/:id(\/(cancel|reject))?$/, tra: async (t, p) => { const id = soId(p.id); return id ? motMa((await sql<{ c: string }>`SELECT from_branch_code AS c FROM stock_transfer_docs WHERE tenant_id = ${t} AND id = ${id}`.execute(db)).rows) : []; } });
+dangKyChiNhanhBanGhi({ url: /^\/api\/v1\/kho\/kiem-ke\/:id(\/.*)?$/, tra: theoBang('stock_counts') });
+// Phiếu nhập tay của lõi (/vouchers/:id — sửa, duyệt, xem): mã = id của sự việc kế toán.
+dangKyChiNhanhBanGhi({ url: /^\/api\/v1\/vouchers\/:id(\/.*)?$/, tra: async (t, p) => { const id = soId(p.id); return id ? motMa((await sql<{ c: string }>`
+  SELECT b.code AS c FROM accounting_events e JOIN branches b ON b.id = e.branch_id WHERE e.tenant_id = ${t} AND e.id = ${id}`.execute(db)).rows) : []; } });
+
+/** docKey của yêu cầu: thân (docKey, documents[].docKey) và tham số :docKey — chứng từ đã có trong sổ thì lấy chi nhánh của nó. */
+function docKeysCuaYeuCau(req: FastifyRequest): string[] {
+  const out = new Set<string>();
+  const take = (o: unknown) => { const k = o && typeof o === 'object' ? (o as { docKey?: unknown }).docKey : undefined; if (typeof k === 'string' && k) out.add(k); };
+  take(req.body);
+  take(req.params);
+  const docs = req.body && typeof req.body === 'object' ? (req.body as { documents?: unknown }).documents : undefined;
+  if (Array.isArray(docs)) docs.forEach(take);
+  return [...out];
+}
+
+/** Chi nhánh của các bản ghi yêu cầu chạm tới (đọc ở máy chủ). Rỗng = yêu cầu không chạm bản ghi đã có. */
+async function chiNhanhBanGhi(req: FastifyRequest, tenantId: string): Promise<string[]> {
+  const out = new Set<string>();
+  const keys = docKeysCuaYeuCau(req);
+  if (keys.length) {
+    const { rows } = await sql<{ c: string }>`
+      SELECT DISTINCT b.code AS c FROM accounting_events e JOIN branches b ON b.id = e.branch_id
+       WHERE e.tenant_id = ${tenantId} AND e.doc_key = ANY(${keys}::text[])`.execute(db);
+    for (const c of motMa(rows)) out.add(c);
   }
+  const url = req.routeOptions?.url ?? '';
+  const raw = (req.params ?? {}) as Record<string, unknown>;
+  const thamSo = Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => [k, String(v)]));
+  if (Object.keys(thamSo).length) {
+    for (const r of soBanGhi) {
+      if (!r.url.test(url)) continue;
+      const c = await r.tra(tenantId, thamSo);
+      for (const x of Array.isArray(c) ? c : c ? [c] : []) out.add(x);
+    }
+  }
+  return [...out];
+}
+
+type Nguon = 'ban-ghi' | 'than' | 'dang-lam' | 'khong';
+/**
+ * Chi nhánh của yêu cầu = chi nhánh ghi trong thân ∪ chi nhánh của bản ghi đã có (cả hai phải được phép: sửa phiếu kiểm chi nhánh cũ
+ * lẫn mới). Chỉ khi không có cả hai mới dùng chi nhánh đang làm việc (header) — header không bao giờ đè bản ghi.
+ */
+async function chiNhanhCuaYeuCau(req: FastifyRequest, auth: AuthContext): Promise<{ ma: string[]; nguon: Nguon; dangLam: string }> {
   const h = req.headers['x-chi-nhanh'];
   const dangLam = typeof h === 'string' ? decodeURIComponent(h).trim() : '';
-  return dangLam ? { ma: [dangLam], nguon: 'dang-lam' } : { ma: [], nguon: 'khong' };
+  const than = maTrongThan(req.body);
+  const banGhi = await chiNhanhBanGhi(req, auth.tenantId);
+  if (banGhi.length) return { ma: [...new Set([...than, ...banGhi])], nguon: 'ban-ghi', dangLam };
+  if (than.length) return { ma: than, nguon: 'than', dangLam };
+  return dangLam ? { ma: [dangLam], nguon: 'dang-lam', dangLam } : { ma: [], nguon: 'khong', dangLam };
+}
+
+/* ───────────────────────────── phạm vi đọc ───────────────────────────── */
+
+/** Tên tham số lọc chi nhánh trong querystring: nhiều mã (cách nhau dấu phẩy) và một mã. Lệnh danh sách / báo cáo mới đặt đúng tên này. */
+export const THAM_SO_CHI_NHANH = { nhieu: ['branchCodes', 'branches'], mot: ['branchCode'] } as const;
+
+type ZodLike = { safeParse?: (v: unknown) => { success: boolean; data?: unknown }; shape?: Record<string, unknown>; _def?: { schema?: unknown; innerType?: unknown } };
+function shapeOf(s: unknown): Record<string, unknown> | null {
+  for (let x = s as ZodLike | undefined, i = 0; x && i < 5; i++) {
+    if (x.shape && typeof x.shape === 'object') return x.shape;
+    x = (x._def?.schema ?? x._def?.innerType) as ZodLike | undefined;
+  }
+  return null;
+}
+/** Tham số sau khi qua schema là mảng (transform tách dấu phẩy) hay chuỗi — ghi lại đúng dạng route đọc. */
+const dangMang = (t: unknown): boolean => { const r = (t as ZodLike).safeParse?.('A,B'); return !!r?.success && Array.isArray(r.data); };
+const tachMa = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : typeof v === 'string' ? v.split(',') : []).map((x) => x.trim()).filter(Boolean);
+
+/**
+ * Ép tham số lọc chi nhánh của lệnh đọc về phạm vi: chọn ∩ phạm vi; không chọn = cả phạm vi (lệnh chỉ nhận một mã: chi nhánh đang làm
+ * việc nếu trong phạm vi, không thì chi nhánh đầu của phạm vi). Chọn ngoài phạm vi → 403. Trả các chi nhánh lệnh sẽ đọc; null = lệnh
+ * không có tham số lọc chi nhánh.
+ */
+function locThamSoChiNhanh(req: FastifyRequest, phamVi: readonly string[], dangLam: string): string[] | null {
+  const shape = shapeOf((req.routeOptions?.schema as { querystring?: unknown } | undefined)?.querystring);
+  if (!shape) return null;
+  const nhieu = THAM_SO_CHI_NHANH.nhieu.find((k) => k in shape);
+  const mot = THAM_SO_CHI_NHANH.mot.find((k) => k in shape);
+  if (!nhieu && !mot) return null;
+  const query = (req.query ?? {}) as Record<string, unknown>;
+  const xin = [...new Set([...(nhieu ? tachMa(query[nhieu]) : []), ...(mot ? tachMa(query[mot]) : [])])];
+  const ngoai = xin.filter((c) => !phamVi.includes(c));
+  if (ngoai.length) throw Errors.forbidden(`Bạn chỉ xem được chi nhánh ${phamVi.join(', ')} — không xem được ${ngoai.join(', ')} (BRANCH_OUT_OF_SCOPE)`);
+  if (nhieu) {
+    const ds = xin.length ? xin : [...phamVi];
+    query[nhieu] = dangMang(shape[nhieu]) ? ds : ds.join(',');
+    if (mot) delete query[mot];
+    return ds;
+  }
+  const chon = xin[0] ?? (phamVi.includes(dangLam) ? dangLam : phamVi[0]!);
+  query[mot!] = chon;
+  return [chon];
+}
+
+/** Quyền đọc dữ liệu toàn đơn vị — bỏ khỏi yêu cầu đọc không lọc được theo chi nhánh của người bị giới hạn chi nhánh. */
+const QUYEN_DOC_DU_LIEU: readonly Permission[] = ['ledger:read', 'reports:read', 'documents:read'];
+function boQuyenDocDuLieu(auth: AuthContext): void {
+  const set = auth.permissions as Set<Permission>;
+  for (const g of QUYEN_DOC_DU_LIEU) { set.delete(g); for (const p of impliedBy(g)) set.delete(p as Permission); }
 }
 
 async function moc(req: FastifyRequest): Promise<void> {
@@ -155,13 +277,22 @@ async function apChiNhanh(req: FastifyRequest, auth: AuthContext): Promise<strin
   // Hai API phiên trả quyền GỐC (giao diện tự cộng / trừ theo chi nhánh đang làm việc) — không áp trước.
   if (req.routeOptions?.url === '/api/v1/quyen-chi-nhanh' || req.routeOptions?.url === '/api/v1/auth/me') return [];
   const q = await quyenTheoChiNhanh(auth);
+  // [2026-11-17 04:10 PM khanhtd] NT-HT-003 — GĐ3: ghi phạm vi chi nhánh vào ngữ cảnh xác thực (runtime action, action liệt kê đọc)
+  (auth as { branchScope?: readonly string[] | null }).branchScope = q.branches;
   if (!q.branches && !Object.keys(q.camTheoChiNhanh).length) return [];
-  const { ma, nguon } = await chiNhanhCuaYeuCau(req, auth);
+  const yc = await chiNhanhCuaYeuCau(req, auth);
+  let { ma } = yc;
+  const { nguon } = yc;
+  // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — phạm vi đọc: lệnh đọc không theo bản ghi → lọc theo tham số chi nhánh; không lọc được → bỏ quyền đọc dữ liệu
+  let khongLocDuoc = false;
+  if (q.branches && req.method === 'GET' && nguon !== 'ban-ghi') {
+    const loc = locThamSoChiNhanh(req, q.branches, yc.dangLam);
+    if (loc) ma = loc;
+    else { ma = []; khongLocDuoc = true; } // header không cấp quyền đọc cho lệnh trả dữ liệu mọi chi nhánh
+  }
   if (q.branches) {
     const ngoai = ma.filter((c) => !q.branches!.includes(c));
     if (ngoai.length) {
-      // Chi nhánh đang làm việc (header) ngoài phạm vi: lệnh đọc thì bỏ qua header (không cộng quyền), lệnh ghi thì chặn.
-      if (nguon === 'dang-lam' && req.method === 'GET') return [];
       throw Errors.forbidden(`Bạn không làm việc ở chi nhánh ${ngoai.join(', ')} — chỉ ở: ${q.branches.join(', ')} (BRANCH_OUT_OF_SCOPE)`);
     }
     // Cộng quyền tại chi nhánh của yêu cầu (một chi nhánh; lô nhiều chi nhánh thì chỉ cộng phần chung).
@@ -172,6 +303,7 @@ async function apChiNhanh(req: FastifyRequest, auth: AuthContext): Promise<strin
   // Cấm của vai trò gán tại chi nhánh của yêu cầu (lô nhiều chi nhánh: Cấm ở bất kỳ chi nhánh nào) — Cấm thắng, trừ cả quyền của vai trò chính.
   const cam = [...new Set(ma.flatMap((c) => q.camTheoChiNhanh[c] ?? []))];
   for (const p of [...auth.permissions]) if (biCam(cam, p)) (auth.permissions as Set<Permission>).delete(p);
+  if (khongLocDuoc) boQuyenDocDuLieu(auth);
   return cam;
 }
 
@@ -193,7 +325,7 @@ async function raSoat(tenantId: string) {
        AND a.valid_from <= ${TODAY_VN} AND (a.valid_to IS NULL OR a.valid_to >= ${TODAY_VN})
        AND (a.tenant_role_id IS NULL OR r.is_active)
      ORDER BY u.email, code`.execute(db);
-  const TEN: Record<string, string> = { owner: 'Chủ đơn vị', chief_accountant: 'Kế toán trưởng', accountant: 'Kế toán', viewer: 'Người xem', developer: 'Nhà phát triển', auditor: 'Kiểm soát' };
+  const TEN: Record<string, string> = { owner: 'Chủ đơn vị', chief_accountant: 'Kế toán trưởng', accountant: 'Kế toán', viewer: 'Người xem', developer: 'Nhà phát triển', auditor: 'Kiểm soát', staff: 'Nhân viên' }; // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — nhãn vai trò staff
   const by = new Map<string, { userId: string; email: string; fullName: string; role: string; branches: string[]; ganTai: string[]; camTai: string[] }>();
   for (const x of rows) {
     if (!x.code) continue;

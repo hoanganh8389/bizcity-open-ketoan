@@ -5,7 +5,8 @@
 import { z } from 'zod';
 
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: vai trò auditor
-const role = z.enum(['owner', 'chief_accountant', 'accountant', 'viewer', 'developer', 'auditor']);
+// [2026-11-17 02:25 PM khanhtd] NT-HT-003 — vai trò staff (Nhân viên, migration 0149)
+const role = z.enum(['owner', 'chief_accountant', 'accountant', 'viewer', 'developer', 'auditor', 'staff']);
 const password = z.string().min(8, 'Mật khẩu tối thiểu 8 ký tự').max(200);
 
 export const userCreateSchema = z.object({
@@ -54,7 +55,7 @@ export const tenantRoleCreateSchema = z.object({
   code: z.string().regex(/^[a-z][a-z0-9_-]{1,39}$/, 'Mã dạng chữ thường, số, _ hoặc -; 2–40 ký tự, bắt đầu bằng chữ'),
   label: z.string().trim().min(1).max(120),
   kind: z.enum(['job', 'privilege', 'restriction']),
-  baseRole: z.enum(['chief_accountant', 'accountant', 'viewer', 'developer', 'auditor']).optional().describe('Vai trò hệ thống làm nền (không owner); loại restriction không có nền'),
+  baseRole: z.enum(['chief_accountant', 'accountant', 'viewer', 'developer', 'auditor', 'staff']).optional().describe('Vai trò hệ thống làm nền (không owner); loại restriction không có nền'),
   reason,
 });
 export type TenantRoleCreate = z.infer<typeof tenantRoleCreateSchema>;

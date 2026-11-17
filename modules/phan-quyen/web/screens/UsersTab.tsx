@@ -21,6 +21,7 @@ interface Warehouse { id: string; code: string; name: string; branchCode: string
 const SYSTEM_ROLES: { value: string; label: string }[] = [
   { value: 'owner', label: 'Chủ đơn vị' }, { value: 'chief_accountant', label: 'Kế toán trưởng' }, { value: 'accountant', label: 'Kế toán' },
   { value: 'viewer', label: 'Người xem' }, { value: 'developer', label: 'Nhà phát triển' }, { value: 'auditor', label: 'Kiểm soát' },
+  { value: 'staff', label: 'Nhân viên (chỉ theo chi nhánh)' }, // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — vai trò staff (Nhân viên, migration 0149)
 ];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 

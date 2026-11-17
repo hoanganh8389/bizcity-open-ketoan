@@ -134,12 +134,15 @@ async function load(trx: Db, tenantId: string, id: string, forUpdate = false): P
 }
 export const getCount = async (trx: Db, tenantId: string, id: string) => view(await load(trx, tenantId, id));
 
-export async function listCounts(trx: Db, tenantId: string, q: { from?: string; to?: string; search?: string }) {
+// [2026-11-17 02:25 PM khanhtd] NT-HT-003 — lọc danh sách kiểm kê theo chi nhánh (branchCodes) để người bị giới hạn chi nhánh chỉ thấy biên bản chi nhánh mình
+export async function listCounts(trx: Db, tenantId: string, q: { from?: string; to?: string; search?: string; branchCodes?: string }) {
+  const cns = (q.branchCodes ?? '').split(',').map((x) => x.trim()).filter(Boolean);
   const s = q.search?.trim() ? `%${q.search.trim().toLowerCase()}%` : null;
   const rows = (await sql<Row>`
     SELECT ${COLS} FROM stock_counts WHERE tenant_id = ${tenantId}
        ${q.from ? sql`AND count_date >= ${q.from}::date` : sql``} ${q.to ? sql`AND count_date <= ${q.to}::date` : sql``}
        ${s ? sql`AND (lower(doc_no) LIKE ${s} OR lower(branch_code) LIKE ${s} OR lower(warehouse_code) LIKE ${s} OR lower(purpose) LIKE ${s})` : sql``}
+       ${cns.length ? sql`AND branch_code = ANY(${cns}::text[])` : sql``}
      ORDER BY count_date DESC, id DESC LIMIT 2000`.execute(trx)).rows;
   return rows.map((r) => { const v = view(r); return { ...v, lines: undefined, lineCount: r.lines.length }; });
 }
@@ -459,7 +462,7 @@ export async function stockCountRoutes(app: FastifyInstance): Promise<void> {
   const read = requirePermission(quyenThaoTac('kho.kiem-ke', 'xem')); // [2026-11-13 05:30 PM kiennt] PHAN-QUYEN — bản thử: xem theo thao tác màn KHO02 (đóng góp)
   r.get('/api/v1/kho/kiem-ke', {
     preHandler: read,
-    schema: { tags, summary: 'Danh sách biên bản kiểm kê', querystring: z.object({ from: day.optional(), to: day.optional(), search: z.string().max(100).optional() }) },
+    schema: { tags, summary: 'Danh sách biên bản kiểm kê', querystring: z.object({ from: day.optional(), to: day.optional(), search: z.string().max(100).optional(), branchCodes: z.string().max(2000).optional().describe('Mã chi nhánh, cách nhau dấu phẩy; bỏ trống = mọi chi nhánh được xem') }) },
     handler: async (req) => { const rows = await listCounts(db, authOf(req).tenantId, req.query); return ok(rows, { total: rows.length, page: 1, pageSize: rows.length }); },
   });
   r.get('/api/v1/kho/kiem-ke/so-ton', {
