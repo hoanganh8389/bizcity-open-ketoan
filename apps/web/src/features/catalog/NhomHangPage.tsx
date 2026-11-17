@@ -83,7 +83,7 @@ export function NhomHangPage() {
       <PageHeader title="Danh mục nhóm hàng" code="DM11" helpKey="nhom-hang" subtitle="Cây nhóm hàng — mã hàng ghép từ mã nhóm cấp 1, 2, 3" />
       <div className="nh2">
         <div className="card nh2-tree">
-          {q.isLoading ? <Loading /> : <CayNhomHang list={q.data} selected={sel} onSelect={setSel} height="calc(100vh - 250px)" openLevel={1} />}
+          {q.isLoading ? <Loading /> : <CayNhomHang list={q.data} selected={sel} onSelect={setSel} height="calc(100vh - 250px)" openLevel={1} showMa />}
         </div>
         <div className="card nh2-main">
           <div className="catalog-toolbar canh-phai">
@@ -113,22 +113,15 @@ export function NhomHangPage() {
               </div>
               {g?.fullName && g.fullName !== g.name && <div className="nh2-sub">Tên đầy đủ: {g.fullName}</div>}
 
-              <div className="nh2-stats">
-                {g && <div><small>Mã ngắn</small><b className="mono">{thieuMa(g) ? <span className="neg">chưa có</span> : g.skuCode || '—'}</b></div>}
-                <div><small>{g ? 'Nhóm con' : 'Ngành hàng'}</small><b>{con.length}</b></div>
-                <div><small>Mặt hàng{g && con.length ? ' (cả nhánh)' : ''}</small><b>{(g ? tongMH.get(g.code) ?? 0 : (q.data ?? []).reduce((t, c) => t + (c.products ?? 0), 0)).toLocaleString('vi-VN')}</b></div>
-                {g && <div><small>Sửa lần cuối</small><b className="nh2-ai">{g.updatedBy || g.createdBy || '—'}<span>{luc(g.updatedBy ? g.updatedAt : g.createdAt)}</span></b></div>}
-              </div>
-
               <div className="nh2-ma" title="Mã hàng = mã ngắn cấp 1 + cấp 2 + cấp 3 + số thứ tự (cấp 4, 5 chỉ chia nhỏ, không ghép vào mã)">
-                <small>Mã hàng trong nhóm này</small>
+                {/* [2026-11-17 03:34 PM kiennt] DM11 — bỏ thẻ số liệu và dòng "Mã hàng trong nhóm này"; ô cấp: nhãn cấp ở trên, dưới là "mã - tên nhóm", chưa có thì để trống (đóng góp) */}
                 <div className="nh2-seg">
                   {doan.map((d) => (
                     <span key={d.l} className={`${d.l === lv ? 'on' : ''} ${d.l > lv ? 'trong' : ''}`}>
-                      <b className="mono">{d.l <= lv ? d.ma || '?'.repeat(d.dai) : '·'.repeat(d.dai)}</b><small>{d.ten} · cấp {d.l}</small>
+                      <small>{d.ten} · cấp {d.l}</small><b>{d.l <= lv && d.ma ? `${d.ma} - ${chain[d.l - 1]!.name}` : '\u00a0'}</b>
                     </span>
                   ))}
-                  <span className="trong"><b className="mono">###</b><small>Số thứ tự</small></span>
+                  <span className="trong"><small>Số thứ tự</small><b className="mono">###</b></span>
                 </div>
                 {lv >= 4 && <small className="muted">Cấp {lv} chỉ chia nhỏ để xem, lọc — không ghép vào mã hàng.</small>}
               </div>

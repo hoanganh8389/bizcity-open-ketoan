@@ -91,7 +91,7 @@
 .nh2-ma { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2, #f4f6f9); }
 .nh2-seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .nh2-seg > span { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; padding: 6px 10px; border: 1px solid var(--line, #d9dee6); border-radius: 6px; background: var(--surface, #fff); }
-.nh2-seg > span b { font-size: 17px; letter-spacing: .08em; }
+.nh2-seg > span b { font-size: 15px; white-space: nowrap; } /* [2026-11-17 03:36 PM kiennt] DM11 — ô cấp hiện "mã - tên nhóm" (đóng góp) */
 .nh2-seg > span small { font-size: 11px; color: var(--ink-500, #6b7280); }
 .nh2-seg > span.on { border-color: var(--brand-600, #1f66a3); box-shadow: 0 0 0 2px var(--brand-100, #e3eef8); }
 .nh2-seg > span.on b { color: var(--brand-700, #18507f); }
