@@ -401,7 +401,8 @@ interface ViewLine {
   debitAccount: string; creditAccount: string; amount: number; description: string; costItem?: string | null; department?: string | null; contract?: string | null;
   mode?: ClosingRule['mode']; includeOpening?: boolean;
 }
-interface RulesData { rules: ClosingRule[]; isDefault: boolean; version: number | null; errors: string[]; warnings: string[] }
+// [2026-11-17 11:05 AM kiennt] ACC41A — dùng lại ở màn Tài khoản kết chuyển (đóng góp)
+export interface RulesData { rules: ClosingRule[]; isDefault: boolean; version: number | null; errors: string[]; warnings: string[] }
 
 interface SourceRow { entryId: string; eventId: string | null; entryNo: string; docNo: string; docType: string; postingDate: string; description: string; debit: number; credit: number }
 
@@ -465,7 +466,7 @@ const LOAI_LABEL: Record<ClosingRule['mode'], string> = {
   credit: 'Kết chuyển từ tài khoản CÓ sang tài khoản NỢ',
   balance: 'Chương trình tự xác định',
 };
-const LOAI_HINT: Record<ClosingRule['mode'], string> = {
+export const LOAI_HINT: Record<ClosingRule['mode'], string> = {
   debit: 'chuyển số phát sinh Nợ của tài khoản đi (chi phí, giảm trừ doanh thu): Nợ TK đến / Có TK đi',
   credit: 'chuyển số phát sinh Có của tài khoản đi (doanh thu, thu nhập): Nợ TK đi / Có TK đến',
   balance: 'dư bên nào chuyển bên đó (911, thu nhập / chi phí khác)',
@@ -543,7 +544,7 @@ function CatalogueList({ onClose }: { onClose: () => void }) {
 }
 
 /** Thông tin bút toán kết chuyển (frmClosingEntryCatalogue của HTsoft): Thông tin chung, Kiểu kết chuyển, Loại kết chuyển; Ghi / Đóng. */
-function CatalogueForm({ rules, index, saving, error, onClose, onSave }: {
+export function CatalogueForm({ rules, index, saving, error, onClose, onSave }: {
   rules: ClosingRule[]; index: number | null; saving: boolean; error: string | null; onClose: () => void; onSave: (rules: ClosingRule[], note: string) => void;
 }) {
   const isNew = index === null;
@@ -595,7 +596,7 @@ function CatalogueForm({ rules, index, saving, error, onClose, onSave }: {
 }
 
 /** Lịch sử phiên bản bộ bút toán kết chuyển mẫu: ai sửa, lúc nào, lý do; bấm một phiên bản để xem đủ danh sách. */
-function RuleHistory() {
+export function RuleHistory() {
   const q = useQuery({ queryKey: ['closing-rule-versions'], queryFn: () => api.get<RuleVersion[]>('/api/v1/closing/rules/versions') });
   const [open, setOpen] = useState<number | null>(null);
   if (q.isLoading) return <Loading />;
