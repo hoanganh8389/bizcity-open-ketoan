@@ -61,7 +61,9 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
       const row = coSan.get(`${sku}|${unit}`.toLowerCase());
       if (!row) { loi.push(`Dòng ${dong}: ${sku} / ${unit} không có trong bảng giá (mã hàng hoặc ĐVT chưa khai ở form mặt hàng)`); return; }
       if (g === '' || g === null || g === undefined) { giu++; return; }
-      const gia = typeof g === 'number' ? g : parseNum(String(g));
+      // [2026-11-17 09:19 PM kiennt] NT-DM-003 — ô giá dạng chữ: "580,000" / "580.000" / "1.250.000" (nhóm 3 số) là phân cách hàng nghìn, không phải phần thập phân (đóng góp)
+      const chu = String(g).replace(/\s/g, '');
+      const gia = typeof g === 'number' ? g : /^\d{1,3}([.,]\d{3})+$/.test(chu) ? Number(chu.replace(/[.,]/g, '')) : parseNum(chu);
       if (gia === null || !Number.isFinite(gia) || gia < 0) { loi.push(`Dòng ${dong}: ${sku} / ${unit} đơn giá "${String(g)}" không hợp lệ`); return; }
       if (gia === row.price) { giu++; return; }
       doi.push({ sku: row.sku, unit: row.unit, name: row.name, cu: row.price, moi: gia });
