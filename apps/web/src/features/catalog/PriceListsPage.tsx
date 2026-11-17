@@ -14,6 +14,8 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { useBranches } from '@/components/filters';
 import { HelpDrawer } from '@/components/HelpDrawer';
+import { CayDonVi } from '@/components/CayDonVi';
+import { useOrgTree } from '@/lib/orgUnits';
 import { PriceRowsPanel } from './PriceRowsPanel';
 import { PrintButton } from '@/components/print';
 import { PRICE_LIST_TEMPLATES, loadQuote } from './priceListPrint';
@@ -99,7 +101,13 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
   const picked = new Set(v.branchCodes ?? []);
   const toggle = (code: string) => set({ branchCodes: picked.has(code) ? [...picked].filter((c) => c !== code) : [...picked, code] });
   const t = text.trim().toLowerCase();
-  const shown = branches.filter((b) => (b.isActive || picked.has(b.code)) && (!t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t)));
+  // [2026-11-17 11:37 AM kiennt] DM14 — chọn chi nhánh theo cây sơ đồ tổ chức (tích một nhóm = cả nhóm); chi nhánh chưa gắn sơ đồ tích ở danh sách dưới cây;
+  // đơn vị chưa có sơ đồ tổ chức thì danh sách phẳng như cũ (đóng góp)
+  const org = useOrgTree();
+  const coCay = Boolean(org.data?.nodes.length);
+  const trongCay = useMemo(() => new Set((org.data?.branches ?? []).filter((b) => b.orgCode).map((b) => b.code)), [org.data]);
+  const shown = branches.filter((b) => (b.isActive || picked.has(b.code)) && (!coCay || !trongCay.has(b.code)) && (!t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t)));
+  const chuyenSang = [...picked].filter((c) => owner.has(c));
 
   const viewAgain = useViewAgain();
   const save = useMutation({
@@ -125,29 +133,33 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
         <Field label="Ghi chú" full><input className="input" value={v.note ?? ''} onChange={(e) => set({ note: e.target.value })} /></Field>
       </fieldset>
       <fieldset className="fgroup">
-        <legend>Chi nhánh áp dụng ({picked.size})</legend>
+        <legend>Chi nhánh áp dụng ({picked.size}) <button type="button" className="btn btn-xs btn-help" data-view-ok onClick={() => setHelp(true)}>? Hướng dẫn</button></legend>
         <div className="full">
-          <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
-            Chi nhánh ở danh mục Chi nhánh (DM02). Website cửa hàng có cùng mã chi nhánh sẽ bán theo bảng giá này; chi nhánh chưa gán bảng giá nào thì theo bảng giá công ty.{' '}
-            <button type="button" className="btn btn-xs btn-help" onClick={() => setHelp(true)}>? Hướng dẫn</button>
-          </div>
-          <div className="row" style={{ gap: 8, marginBottom: 6 }}>
-            <input className="input" style={{ flex: 1 }} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tìm chi nhánh: mã, tên" />
-            <button type="button" className="btn btn-sm" onClick={() => set({ branchCodes: [...new Set([...picked, ...shown.map((b) => b.code)])] })}>Chọn hết đang hiện</button>
-            <button type="button" className="btn btn-sm" onClick={() => set({ branchCodes: [...picked].filter((c) => !shown.some((b) => b.code === c)) })}>Bỏ hết đang hiện</button>
-          </div>
-          <div style={{ maxHeight: 300, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 4, padding: 6, columns: 2 }}>
-            {shown.map((b) => {
-              const other = owner.get(b.code);
-              return (
+          {coCay && <CayDonVi tree={org.data} showBranches checkable picked={[...picked]} onPick={(b) => set({ branchCodes: b })} height={300} openLevel={2} />}
+          {(!coCay || shown.length > 0 || t) && <>
+            {coCay && <div className="muted" style={{ fontSize: 12, margin: '8px 0 4px' }}>Chưa gắn sơ đồ tổ chức</div>}
+            {(!coCay || branches.length > 12) && (
+              <div className="row" style={{ gap: 8, marginBottom: 6 }}>
+                <input className="input" style={{ flex: 1 }} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tìm chi nhánh: mã, tên" />
+                <button type="button" className="btn btn-sm" onClick={() => set({ branchCodes: [...new Set([...picked, ...shown.map((b) => b.code)])] })}>Chọn hết đang hiện</button>
+                <button type="button" className="btn btn-sm" onClick={() => set({ branchCodes: [...picked].filter((c) => !shown.some((b) => b.code === c)) })}>Bỏ hết đang hiện</button>
+              </div>
+            )}
+            <div style={{ maxHeight: coCay ? 140 : 300, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 4, padding: 6, columns: 2 }}>
+              {shown.map((b) => (
                 <label key={b.code} className="checkbox" style={{ display: 'flex', gap: 6, padding: '2px 0', breakInside: 'avoid' }}>
                   <input type="checkbox" checked={picked.has(b.code)} onChange={() => toggle(b.code)} />
-                  <span><span className="mono">{b.code}</span> {b.name}{other && <span className="muted" style={{ fontSize: 12 }}> · đang ở {other.name}{picked.has(b.code) ? ' (sẽ chuyển sang đây)' : ''}</span>}</span>
+                  <span><span className="mono">{b.code}</span> {b.name}</span>
                 </label>
-              );
-            })}
-            {!shown.length && <div className="muted">Không có chi nhánh</div>}
-          </div>
+              ))}
+              {!shown.length && <div className="muted">Không có chi nhánh</div>}
+            </div>
+          </>}
+          {chuyenSang.length > 0 && (
+            <div className="muted" style={{ fontSize: 12, marginTop: 6 }} title="Mỗi chi nhánh một bảng giá: ghi xong các chi nhánh này rời bảng giá cũ">
+              Chuyển từ bảng giá khác sang đây: {chuyenSang.map((c) => `${c} (${owner.get(c)!.name})`).join(', ')}
+            </div>
+          )}
         </div>
       </fieldset>
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
