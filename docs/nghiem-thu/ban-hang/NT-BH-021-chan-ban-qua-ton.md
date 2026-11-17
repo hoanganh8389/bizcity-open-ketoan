@@ -113,3 +113,4 @@ Mỗi bước tính từ tồn 5 ở trên (bước 2 và bước 3 chạy riên
 | 16/11/2026 | **Chốt Q1–Q4**: máy bán chặn cứng; BH10 dùng công tắc kho; kiểm theo kho của máy bán / kho trên phiếu; chuyển kho tách sang Đơn đặt hàng. Thêm căn cứ quy trình kế toán và lệch chuẩn 7, 8 |
 | 16/11/2026 | **Chốt thêm Q5–Q8**: mỗi shop một kho; BH10 công tắc riêng của phiếu bán ở BH17 (thay công tắc chung của kho); BH10 tạm theo tồn hiện tại; chặn mọi mã |
 | 17/11/2026 | Code + test xong, ghi kết quả chạy |
+| 17/11/2026 | Sửa Q5 theo NT-BH-023 Q11 (anh Hoàng): cửa hàng có thêm kho KCB (giữ hàng cho đơn đặt hàng) nên máy bán chỉ kiểm tồn **kho mặc định** của cửa hàng, không cộng cả chi nhánh. Code làm cùng NT-BH-023 <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — sửa Q5 (đóng góp) --> |
