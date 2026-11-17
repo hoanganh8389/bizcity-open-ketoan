@@ -24,7 +24,7 @@ import { useAuth } from '@/lib/auth';
 import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { useBranches } from '@/components/filters';
-import { Empty, ErrorBox, Field, Loading, Modal, Money, Pager } from '@/components/ui';
+import { Empty, ErrorBox, Field, Loading, Modal, Money, Pager, useViewAgain } from '@/components/ui';
 import { DocumentDetail } from '../../../features/documents/DocumentDetail';
 import { AccountPicker } from '@/components/pickers';
 
@@ -536,7 +536,7 @@ function CatalogueList({ onClose }: { onClose: () => void }) {
         <CatalogueForm
           rules={rules} index={editing.index} saving={save.isPending} error={save.error ? errorText(save.error) : null}
           onClose={() => { setEditing(null); save.reset(); }}
-          onSave={(next, note) => save.mutate({ rules: next, note }, { onSuccess: () => setEditing(null) })}
+          onSave={(next, note, done) => save.mutate({ rules: next, note }, { onSuccess: done })}
         />
       )}
     </Modal>
@@ -544,10 +544,12 @@ function CatalogueList({ onClose }: { onClose: () => void }) {
 }
 
 /** Thông tin bút toán kết chuyển (frmClosingEntryCatalogue của HTsoft): Thông tin chung, Kiểu kết chuyển, Loại kết chuyển; Ghi / Đóng. */
+// [2026-11-17 11:23 AM kiennt] ACC41A — bản ghi đã có mở ở chế độ xem (Sửa mới sửa), ghi xong quay về xem; onSave nhận `done` gọi khi ghi xong (đóng góp)
 export function CatalogueForm({ rules, index, saving, error, onClose, onSave }: {
-  rules: ClosingRule[]; index: number | null; saving: boolean; error: string | null; onClose: () => void; onSave: (rules: ClosingRule[], note: string) => void;
+  rules: ClosingRule[]; index: number | null; saving: boolean; error: string | null; onClose: () => void; onSave: (rules: ClosingRule[], note: string, done: () => void) => void;
 }) {
   const isNew = index === null;
+  const viewAgain = useViewAgain();
   const closingStep = rules.find((x) => x.fromAccount.startsWith('911'));
   const nextSeq = Math.max(0, Math.min(Math.max(0, ...rules.filter((x) => !x.fromAccount.startsWith('911')).map((x) => x.seq)) + 1, closingStep ? closingStep.seq - 1 : 9999));
   const [r, setR] = useState<ClosingRule>(() => (index !== null ? rules[index]! : { seq: nextSeq, fromAccount: '', toAccount: '911', mode: 'debit', description: '', isActive: true, includeOpening: false }));
@@ -558,10 +560,10 @@ export function CatalogueForm({ rules, index, saving, error, onClose, onSave }: 
     if (!clean.description) return setProblem('Bạn chưa nhập Diễn giải');
     if (!clean.fromAccount || !clean.toAccount) return setProblem('Bạn chưa chọn Tài khoản đi / Tài khoản đến');
     if (clean.fromAccount === clean.toAccount) return setProblem('Tài khoản kết chuyển không được trùng nhau');
-    onSave(isNew ? [...rules, clean] : rules.map((x, j) => (j === index ? clean : x)), `${isNew ? 'Thêm' : 'Sửa'} ${clean.fromAccount} → ${clean.toAccount}`);
+    onSave(isNew ? [...rules, clean] : rules.map((x, j) => (j === index ? clean : x)), `${isNew ? 'Thêm' : 'Sửa'} ${clean.fromAccount} → ${clean.toAccount}`, isNew ? onClose : viewAgain[1]);
   };
   return (
-    <Modal title="Thông tin bút toán kết chuyển" onClose={onClose} footer={
+    <Modal viewFirst={!isNew} viewAgain={viewAgain} title="Thông tin bút toán kết chuyển" onClose={onClose} footer={
       <>
         <button className="btn btn-primary" disabled={saving} onClick={submit}>Ghi</button>
         <button className="btn" onClick={onClose}>Đóng</button>

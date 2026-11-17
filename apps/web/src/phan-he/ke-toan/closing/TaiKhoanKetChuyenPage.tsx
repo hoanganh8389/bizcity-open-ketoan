@@ -2,7 +2,7 @@
 /**
  * TÀI KHOẢN KẾT CHUYỂN (ACC41A) — bộ bút toán kết chuyển mẫu mà Kết chuyển lãi / lỗ (ACC6) chạy theo, bố cục như danh mục
  * tài khoản kết chuyển của MISA: Thứ tự kết chuyển · Mã kết chuyển · Kết chuyển từ · Kết chuyển đến · Bên kết chuyển · Loại kết
- * chuyển · Diễn giải · Trạng thái · Chức năng. Mã, Loại suy từ TK đi / đến (hệ thống không lưu riêng); Kết chuyển số dư cuối ẩn sẵn.
+ * chuyển · Diễn giải · Trạng thái. Mã, Loại suy từ TK đi / đến (hệ thống không lưu riêng); Kết chuyển số dư cuối ẩn sẵn.
  * Dữ liệu, kiểm tra, phiên bản: GET / PUT /api/v1/closing/rules (Kernel closing). Quyền sửa: thao tác "Sửa thứ tự / quy tắc
  * kết chuyển" của màn ACC6. Thêm / sửa dùng chung form với ACC6; thôi dùng một bước thì bỏ tích "Áp dụng".
  */
@@ -51,8 +51,8 @@ export function TaiKhoanKetChuyenPage() {
     { key: 'description', header: 'Diễn giải', width: 300, value: (x) => x.r.description },
     { key: 'includeOpening', header: 'Kết chuyển số dư cuối', type: 'check', width: 150, hidden: true, title: 'Cộng cả số dư đầu kỳ của tài khoản đi (bước 911 → 421)', value: (x) => x.r.includeOpening },
     { key: 'isActive', header: 'Trạng thái', width: 130, value: (x) => (x.r.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng') },
-    { key: 'sua', header: 'Chức năng', width: 90, noFilter: true, noSort: true, render: (x) => (editable ? <a href="#" onClick={(e) => { e.preventDefault(); setEditing({ index: x.index }); }}>Sửa</a> : null) },
   ];
+  // [2026-11-17 11:23 AM kiennt] ACC41A — bỏ cột Chức năng; bấm đúp mở chi tiết ở chế độ xem, bấm Sửa mới sửa (như các màn danh mục) (đóng góp)
   return (
     <>
       <PageHeader title="Tài khoản kết chuyển" code="ACC41A" subtitle="Các bước kết chuyển doanh thu, chi phí sang 911 và lãi lỗ sang 421 mà Kết chuyển lãi / lỗ (ACC6) chạy theo" helpKey="tai-khoan-ket-chuyen" />
@@ -78,7 +78,7 @@ export function TaiKhoanKetChuyenPage() {
         <CatalogueForm
           rules={rules} index={editing.index} saving={save.isPending} error={save.error ? errorText(save.error) : null}
           onClose={() => { setEditing(null); save.reset(); }}
-          onSave={(next, note) => save.mutate({ rules: next, note }, { onSuccess: () => setEditing(null) })}
+          onSave={(next, note, done) => save.mutate({ rules: next, note }, { onSuccess: done })}
         />
       )}
     </>
