@@ -1,6 +1,25 @@
 # Tính giá vốn (ACC49)
 
-Tính đơn giá vốn **bình quân gia quyền theo tháng** cho từng mặt hàng, rồi ghi sổ giá vốn của hàng đã xuất trong tháng.
+Tính **giá vốn bình quân** (bình quân gia quyền theo tháng) cho từng mặt hàng **trong một phạm vi trên Cơ cấu tổ chức**, rồi ghi sổ giá vốn của hàng đã xuất trong tháng.
+
+<!-- [2026-11-17 Nguyễn Văn Thủy] màn theo trình tự phạm vi → các lần tính → bảng giá vốn; nhập Excel là giá vốn bình quân đầu kỳ (đóng góp) -->
+## Dùng màn này
+
+1. **Phạm vi tính (cơ cấu)** → bấm **Chọn…**, bấm một nút trên cây (miền, chi nhánh, tỉnh) hoặc một shop. Mọi shop bên dưới dùng chung một giá vốn bình quân. Mặc định mỗi **chi nhánh cấp 2** (nơi mua hàng đại diện rồi phát xuống shop) là một phạm vi.
+2. Chọn **Tháng**, bấm **Tính giá vốn**. Mỗi lần bấm lưu một dòng ở **Các lần tính giá vốn** (lọc theo ngày tính), kèm mốc cơ cấu của phạm vi.
+3. Bấm một lần tính để xem **bảng giá vốn** các mã hàng của lần đó. Rê chuột lên tiêu đề cột để xem giải thích; cột chi tiết bật ở nút **Cột**.
+
+Mỗi shop trong một tháng chỉ có **một** giá vốn: chọn nút X rồi tính thì các phạm vi nhỏ hơn bên dưới X gộp vào X; chọn một shop thì shop đó tính riêng. Đổi phạm vi rồi tính lại thì phiếu giá vốn cũ được đảo, ghi phiếu mới.
+
+| Cột | Ý nghĩa |
+|---|---|
+| Tồn đầu (SL, $) · Giá vốn BQ đầu kỳ | Tồn cuối tháng trước; giá vốn bình quân đầu kỳ = Tồn đầu $ ÷ SL (hoặc giá nhập từ Excel) |
+| Nhập mua (SL, $) | Nhập từ nhà cung cấp theo giá Net (chưa VAT − chiết khấu trên phiếu) |
+| Chi phí (+) | Chi phí mua hàng phân bổ vào mã (vận chuyển, bốc xếp…) — tăng giá vốn |
+| Thưởng, CK (−) | Thưởng doanh số / chiết khấu nhãn hàng phân bổ theo mã — giảm giá vốn |
+| Nhập khác (SL, $) | Trả nhà cung cấp (âm), nhập điều chỉnh, nhận từ chi nhánh khác |
+| **Giá vốn BQ cuối kỳ** | (Tồn đầu $ + Nhập mua $ + Chi phí − Thưởng, CK + Nhập khác $) ÷ (Tồn đầu SL + Nhập mua SL + Nhập khác SL) |
+| Xuất · Tồn cuối (SL, $) | Giá vốn hàng xuất và tồn cuối = SL × Giá vốn BQ cuối kỳ |
 
 <!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — mục Kiến trúc tổng thể cho dev / kế toán / CEO; số tài khoản là ví dụ TT99 -->
 ## Kiến trúc tổng thể: giá vốn nằm ở đâu trong hệ thống
@@ -29,16 +48,16 @@ Bốn điều hệ thống phải giữ đồng thời: **Identity** (một hàn
 
 ## Cách tính
 
-Các chi nhánh cùng **đơn vị hạch toán** dùng chung một đơn giá cho mỗi mặt hàng trong tháng:
+Các shop cùng **phạm vi tính** (nút trên Cơ cấu tổ chức) dùng chung một giá vốn bình quân cho mỗi mặt hàng trong tháng:
 
 ```
-            Giá trị tồn đầu + nhập mua − trả nhà cung cấp + điều chỉnh tăng + nhận từ đơn vị khác
-Đơn giá = ───────────────────────────────────────────────────────────────────────────────────────
-            Số lượng tồn đầu + nhập mua − trả nhà cung cấp + điều chỉnh tăng + nhận từ đơn vị khác
+                       Giá trị tồn đầu + nhập mua + chi phí phân bổ − thưởng, CK phân bổ − trả NCC + điều chỉnh tăng + nhận từ chi nhánh khác
+Giá vốn BQ cuối kỳ = ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                       Số lượng tồn đầu + nhập mua − trả NCC + điều chỉnh tăng + nhận từ chi nhánh khác
 ```
 
 - **Tồn đầu** là tồn cuối tháng trước. Tháng trước chưa tính thì phần mềm tự tính lần lượt các tháng còn thiếu.
-- **Chuyển kho giữa hai cửa hàng cùng đơn vị** không làm đổi đơn giá (hàng chỉ đổi chỗ).
+- **Chuyển kho giữa hai shop cùng phạm vi** không làm đổi giá vốn (hàng chỉ đổi chỗ); nhận từ phạm vi khác thì tính vào giá theo giá vốn bên gửi.
 - Tháng không nhập gì (mẫu số bằng 0) thì dùng đơn giá gần nhất của các tháng trước.
 - **Hàng bán nội bộ theo giá bán** (lý do XCN): giá vốn đã ghi ngay bằng giá bán, và bị **trừ khỏi cả tử và mẫu** của công thức trên.
 - **Hàng bán nội bộ theo giá bán, xuất tặng thưởng khách hàng** (lý do có đánh dấu "Xuất theo giá trị chứng từ", mặc định XCN, XTA1.4): như trên.
@@ -69,18 +88,18 @@ Các chi nhánh cùng **đơn vị hạch toán** dùng chung một đơn giá c
 
 Các đánh dấu trên khai ở **Lý do – Tài khoản (ACC18)**, phần "Tính giá vốn" của từng lý do.
 
-## Nhập giá vốn tháng từ Excel (giai đoạn chạy song song)
+## Nhập giá vốn bình quân đầu kỳ từ Excel
 
-Khi phần mềm mới mới áp cho một số cửa hàng, dữ liệu nhập xuất chưa đủ để tự tính bình quân. Mỗi tháng kế toán lấy **bảng giá vốn tháng** từ phần mềm kế toán đang dùng rồi nhập vào đây:
+Dùng khi bắt đầu áp dụng (chưa có tồn đầu đủ giá trị) hoặc khi cần chốt lại giá đầu kỳ của một tháng:
 
-1. Chọn **Tháng**, bấm **Nhập giá vốn tháng … từ Excel**, chọn tệp `.xlsx` / `.xls` / `.csv`.
-2. Tệp cần cột **Mã hàng** (bắt buộc) và **Giá vốn**; **Tên hàng** chỉ để tham khảo. Dòng tiêu đề nằm trong 10 dòng đầu. Một mã lặp nhiều dòng (ví dụ xuất từ thẻ kho) thì lấy giá khác 0 xuất hiện nhiều nhất (dòng nhập / xuất nội bộ đôi khi mang giá khác).
-3. Bấm **Ghi**: phần mềm thay toàn bộ giá đã nhập của tháng đó, tính giá vốn và **ghi đè vào dòng giá vốn của mọi phiếu trong tháng** ngay.
+1. Chọn **Tháng**, bấm **Nhập giá vốn bình quân đầu kỳ … từ Excel**, chọn tệp `.xlsx` / `.xls` / `.csv`.
+2. Tệp cần cột **Mã hàng** (bắt buộc) và **Giá vốn bình quân đầu kỳ**; **Tên hàng** chỉ để tham khảo. Dòng tiêu đề nằm trong 10 dòng đầu. Một mã lặp nhiều dòng thì lấy giá khác 0 xuất hiện nhiều nhất.
+3. Bấm **Ghi**: giá trị tồn đầu = **SL tồn đầu × giá nhập**, rồi bình quân với chứng từ nhập trong tháng ra **giá vốn bình quân cuối kỳ** và ghi sổ ngay. Tháng sau tự lấy tiếp, không cần nhập lại.
 
-- Mỗi mã hàng **một giá vốn** cho mọi chi nhánh, hàng chính hay khuyến mãi như nhau; giữ đủ số lẻ (ví dụ 434442,8361), tiền giá vốn từng phiếu làm tròn đồng.
-- Mã **không có trong tệp** vẫn tính bình quân; phần mềm báo danh sách mã có xuất trong tháng mà thiếu trong tệp.
-- Ô **Cập nhật chứng từ từ ngày … đến ngày …** (trong tháng, mặc định cả tháng): chỉ ghi đè giá vốn cho chứng từ có ngày chứng từ trong khoảng đó, mọi loại chứng từ; chứng từ ngoài khoảng giữ nguyên số đang có. Hữu ích khi cửa hàng mới áp dụng giữa tháng.
-- Bảng đơn giá có cột **Nguồn giá** (Nhập Excel / Tính bình quân). Bấm tính lại tháng đó vẫn giữ giá đã nhập; muốn bỏ thì bấm **Bỏ giá đã nhập**.
+- Mỗi mã một giá cho mọi phạm vi; giữ đủ số lẻ, tiền giá vốn từng phiếu làm tròn đồng.
+- Mã không có tồn đầu và không nhập gì trong tháng thì lấy đúng giá nhập.
+- Mã **không có trong tệp** lấy tồn cuối tháng trước; phần mềm báo danh sách mã có xuất mà thiếu trong tệp.
+- Cột **Nguồn giá đầu kỳ** (bật ở Cột) cho biết mã lấy giá từ Excel hay tồn cuối tháng trước. Muốn bỏ giá đã nhập thì bấm **Bỏ giá đầu kỳ đã nhập**.
 
 ## Ghi sổ
 

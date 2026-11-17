@@ -142,7 +142,7 @@ export const COST_TEMPLATES: PrintTemplate<CostSheet>[] = [
           { key: 'tdv', h: 'Giá trị', group: 'Tồn đầu', w: 88, num: true, v: (r) => mb(r.openingValue), sum: (r) => r.openingValue },
           { key: 'nq', h: 'Số lượng', group: 'Nhập tính giá', w: 58, num: true, v: (r) => qty(r.inQty), sum: (r) => r.inQty },
           { key: 'nv', h: 'Giá trị', group: 'Nhập tính giá', w: 88, num: true, v: (r) => mb(r.inValue), sum: (r) => r.inValue },
-          { key: 'gia', h: 'Đơn giá vốn', w: 78, num: true, v: (r) => r.unitCost.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) },
+          { key: 'gia', h: 'Giá vốn bình quân', w: 78, num: true, v: (r) => r.unitCost.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) },
           { key: 'ng', h: 'Nguồn giá', w: 58, center: true, v: (r) => (r.costSource === 'import' ? 'Nhập Excel' : 'Bình quân') },
           { key: 'xq', h: 'SL xuất', w: 58, num: true, v: (r) => qty(r.outQty), sum: (r) => r.outQty },
           { key: 'tcq', h: 'Số lượng', group: 'Tồn cuối', w: 58, num: true, v: (r) => qty(r.closingQty), sum: (r) => r.closingQty },
