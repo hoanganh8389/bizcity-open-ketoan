@@ -18,7 +18,7 @@ const GROUPS = [['KCT', 'Không chịu thuế'], ['0', '0%'], ['5', '5%'], ['8',
 const COLUMNS: Column<TaxCode>[] = [
   { key: 'code', header: 'Mã thuế', type: 'code', width: 100 },
   { key: 'name', header: 'Tên thuế', width: 420 },
-  { key: 'rate', header: 'Thuế', type: 'number', width: 90, showZero: true, render: (t) => `${t.rate}%` },
+  { key: 'rate', header: 'Thuế suất', type: 'number', width: 90, showZero: true, render: (t) => `${t.rate}%` },
   { key: 'accountCode', header: 'Tài khoản', type: 'code', width: 100 },
   { key: 'direction', header: 'Chiều', width: 90, hidden: true, value: (t) => (t.direction === 'output' ? 'Đầu ra' : 'Đầu vào') },
   { key: 'reportGroup', header: 'Nhóm bảng kê', width: 120, hidden: true, value: (t) => GROUPS.find(([k]) => k === t.reportGroup)?.[1] ?? t.reportGroup },
@@ -93,7 +93,7 @@ export function TaxForm({ value, onClose, onSaved }: { value: Partial<TaxCode> &
       <Field label="Mã thuế (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} /></Field>
       <Field label="Tên thuế (*)" full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Chiều"><select className="select input" value={v.direction} onChange={(e) => set({ direction: e.target.value })}><option value="output">Đầu ra (bán)</option><option value="input">Đầu vào (mua)</option></select></Field>
-      <Field label="Thuế (%)"><input className="input" type="number" value={v.rate ?? 0} onChange={(e) => set({ rate: Number(e.target.value) })} /></Field>
+      <Field label="Thuế suất (%)"><input className="input" type="number" value={v.rate ?? 0} onChange={(e) => set({ rate: Number(e.target.value) })} /></Field>
       <Field label="Tài khoản"><AccountPicker postingOnly value={v.accountCode ?? ''} onChange={(accountCode) => set({ accountCode })} /></Field>
       <Field label="Nhóm trên bảng kê"><select className="select input" value={v.reportGroup} onChange={(e) => set({ reportGroup: e.target.value })}>{GROUPS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>
       {!value.isNew && <Field label="Trạng thái"><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Đang sử dụng</label></Field>}
