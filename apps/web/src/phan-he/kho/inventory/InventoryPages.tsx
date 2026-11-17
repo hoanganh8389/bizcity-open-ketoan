@@ -98,8 +98,21 @@ export function CostingPage() {
         code="ACC49"
         subtitle="Bình quân gia quyền theo tháng, riêng từng chi nhánh trên cơ cấu tổ chức (chi nhánh cấp 2 gom mọi shop, kho bên dưới); ghi sổ giá vốn hàng xuất"
         helpKey="tinh-gia-von"
-        actions={
-          <>
+      />
+      <div className="card">
+        {/* [2026-11-17 Nguyễn Văn Thủy] bố cục: ① phạm vi + tháng + nút tính ở một hàng; ② các lần tính (lọc ngày tính); ③ bảng giá vốn của lần chọn (đóng góp) */}
+        <div className="filters" style={{ alignItems: 'flex-end' }}>
+          <div className="field"><label title="Chọn nút bất kỳ trên Cơ cấu tổ chức (miền, chi nhánh, tỉnh) hoặc một shop: mọi shop bên dưới dùng chung một giá vốn bình quân">Phạm vi tính (cơ cấu)</label>
+            <div className="row" style={{ gap: 4 }}>
+              <input className="input w-md" readOnly value={scope ? scope.label : 'Tất cả'} placeholder="Bấm Chọn… trên cây cơ cấu" title={scope ? scope.label : 'Tất cả: xem mọi lần tính; bấm Tính thì tính theo các điểm tính giá vốn đang đặt'} onClick={() => setMoCay(true)} style={{ cursor: 'pointer' }} />
+              <button type="button" className="btn btn-sm" onClick={() => setMoCay(true)} title="Chọn trên cây cơ cấu">Chọn…</button>
+              {scope && <button type="button" className="btn btn-sm" title="Bỏ chọn — xem mọi lần tính" onClick={() => { setScope(null); setCn(''); setRunSel(null); }}>✕</button>}
+            </div></div>
+          <div className="field"><label title="Tháng cần tính giá vốn">Tháng</label><input type="month" className="input" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
+          <div className="field" style={{ flexDirection: 'row', gap: 6, display: 'flex' }}>
+            <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate({})}>
+              {run.isPending ? 'Đang tính…' : `Tính giá vốn${scope ? ` · ${scope.code}` : ''}${wholeMonth ? '' : ` (chứng từ ${range.from.slice(8)}–${range.to.slice(8)})`}`}
+            </button>
             <ExcelImport
               columns={[{ key: 'sku', header: 'Mã hàng' }, { key: 'name', header: 'Tên hàng' }, { key: 'unitCost', header: 'Giá vốn' }]}
               keyColumn="sku"
@@ -109,25 +122,8 @@ export function CostingPage() {
               hint={<>Tệp cần cột <b>Mã hàng</b> và <b>Giá vốn</b> (Tên hàng để tham khảo). Mỗi mã một giá vốn cho mọi chi nhánh, hàng chính hay khuyến mãi như nhau; mã lặp nhiều dòng (tệp xuất từ thẻ kho) lấy giá khác 0 xuất hiện nhiều nhất. Bấm Ghi: thay toàn bộ giá đã nhập của tháng {monthText} rồi tính giá vốn và ghi phiếu giá vốn tháng của từng chi nhánh ngay.</>}
               onImport={importCosts}
             />
-            <PrintButton small screen="ACC49" templates={COST_TEMPLATES} disabled={!lineRows.length} getDocs={() => (lineRows.length ? [{ period: curRun?.period ?? period, rows: lineRows }] : [])} />
             {hasImport && <button className="btn btn-sm" disabled={run.isPending} onClick={() => window.confirm(`Bỏ toàn bộ giá vốn đã nhập từ Excel của tháng ${monthText} và tính lại bình quân cho mọi mã?`) && run.mutate({ clearImport: true })}>Bỏ giá đã nhập</button>}
-            <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate({})}>
-              {run.isPending ? 'Đang tính…' : `Tính giá vốn tháng ${monthText}${scope ? ` · ${scope.code}` : ''}${wholeMonth ? '' : ` (chứng từ ${range.from.slice(8)}–${range.to.slice(8)})`}`}
-            </button>
-          </>
-        }
-      />
-      <div className="card">
-        <div className="filters">
-          <div className="field"><label title="Chọn nút bất kỳ trên Cơ cấu tổ chức (miền, chi nhánh, tỉnh) hoặc một shop: mọi shop bên dưới dùng chung một giá vốn bình quân">Phạm vi tính (cơ cấu)</label>
-            <div className="row" style={{ gap: 4 }}>
-              <input className="input w-md" readOnly value={scope ? scope.label : 'Tất cả (theo điểm tính đang đặt)'} onClick={() => setMoCay(true)} style={{ cursor: 'pointer' }} />
-              <button type="button" className="btn btn-sm" onClick={() => setMoCay(true)} title="Chọn trên cây cơ cấu">Chọn…</button>
-              {scope && <button type="button" className="btn btn-sm" title="Bỏ chọn — xem mọi lần tính" onClick={() => { setScope(null); setCn(''); setRunSel(null); }}>✕</button>}
-            </div></div>
-          <div className="field"><label title="Tháng sẽ tính khi bấm Tính giá vốn">Tháng tính</label><input type="month" className="input w-md" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
-          <div className="field"><label title="Lọc các lần tính theo ngày bấm tính">Ngày tính từ</label><input type="date" className="input" value={ngay.from} onChange={(e) => setNgay((x) => ({ ...x, from: e.target.value }))} /></div>
-          <div className="field"><label>đến</label><input type="date" className="input" value={ngay.to} onChange={(e) => setNgay((x) => ({ ...x, to: e.target.value }))} /></div>
+          </div>
         </div>
         <ErrorBox error={run.error ? errorText(run.error) : runs.error ? errorText(runs.error) : null} />
         {run.data && (
@@ -135,7 +131,12 @@ export function CostingPage() {
             Đã tính tháng {run.data.monthsComputed.join(', ')} · {run.data.items} mặt hàng{run.data.imported ? ` · ${run.data.imported.count} mã theo giá nhập Excel` : ''} · giá vốn ghi sổ <b>{money(run.data.total)}</b>
           </div>
         )}
-        <div className="card-body" style={{ paddingTop: 6, paddingBottom: 4 }}><b>Các lần tính giá vốn</b> <span className="muted">· bấm một lần để xem các mã hàng</span></div>
+        <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--line, #dfe4ec)' }}>
+          <b style={{ marginBottom: 6 }}>Các lần tính giá vốn</b>
+          <div className="field" style={{ margin: 0 }}><label title="Lọc theo ngày bấm tính">Ngày tính từ</label><input type="date" className="input" value={ngay.from} onChange={(e) => setNgay((x) => ({ ...x, from: e.target.value }))} /></div>
+          <div className="field" style={{ margin: 0 }}><label>đến</label><input type="date" className="input" value={ngay.to} onChange={(e) => setNgay((x) => ({ ...x, to: e.target.value }))} /></div>
+          <span className="muted" style={{ marginBottom: 6 }}>bấm một lần để xem các mã hàng</span>
+        </div>
         {runs.isLoading ? <Loading /> : !runs.data?.length ? <Empty text={cn ? 'Chi nhánh này chưa có lần tính giá vốn trong khoảng ngày — chọn tháng rồi bấm Tính giá vốn' : 'Chưa có lần tính giá vốn trong khoảng ngày'} /> : (
           <DataGrid
             storageKey="acc49-lan-tinh"
@@ -160,10 +161,11 @@ export function CostingPage() {
         )}
         {curRun && (
           <>
-            <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <b>Bảng giá vốn · {curRun.centerCode} · tháng {curRun.period.slice(5)}/{curRun.period.slice(0, 4)} · tính lúc {new Date(curRun.runAt).toLocaleString('vi-VN')}</b>
+            <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--line, #dfe4ec)' }}>
+              <b style={{ marginBottom: 6 }}>Bảng giá vốn · {curRun.centerCode} · tháng {curRun.period.slice(5)}/{curRun.period.slice(0, 4)} · tính lúc {new Date(curRun.runAt).toLocaleString('vi-VN')}</b>
               <div className="field" style={{ margin: 0 }}><label>Mã hàng</label><input className="input w-md" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Lọc theo mã, tên hàng" /></div>
               <ChonNhomHang value={nhom} onChange={setNhom} />
+              <PrintButton small screen="ACC49" templates={COST_TEMPLATES} disabled={!lineRows.length} getDocs={() => (lineRows.length ? [{ period: curRun?.period ?? period, rows: lineRows }] : [])} />
             </div>
             {lines.isLoading ? <Loading /> : (
               <DataGrid
