@@ -11,7 +11,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { ErrorBox, Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { HelpDrawer } from '@/components/HelpDrawer';
 import { ProductFullForm } from './ProductFullForm';
 import { pathOf, useClasses } from './ProductsPage';
 
@@ -36,7 +35,6 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
   const [dirty, setDirty] = useState<Map<string, number | null>>(new Map());
   const [show, setShow] = useState<Show>('all');
   const [open, setOpen] = useState<string | null>(null);
-  const [help, setHelp] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useQuery({ queryKey: ['price-rows', code], queryFn: () => api.get<RowsResponse>(`/api/v1/catalog/price-lists/${encodeURIComponent(code)}/rows`) });
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
@@ -112,29 +110,27 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
   return (
     <div className="card" style={{ marginTop: 10 }}>
       <div className="row" style={{ gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 6 }}>
-        <b>Giá theo mặt hàng — {name}</b>
-        <span className="muted" style={{ fontSize: 12 }}>{counts.skus.toLocaleString('vi-VN')} mã · {counts.priced.toLocaleString('vi-VN')}/{counts.all.toLocaleString('vi-VN')} ô đã có giá</span>
+        {/* [2026-11-17 11:32 AM kiennt] DM14 — tiêu đề gọn, nút lọc thành một nhóm liền; bỏ nút Hướng dẫn thứ hai và dòng nhắc trên lưới (đã ở hướng dẫn) (đóng góp) */}
+        <b>{name}</b>
+        <span className="muted" style={{ fontSize: 12 }} title={`${counts.skus.toLocaleString('vi-VN')} mã hàng`}>{counts.priced.toLocaleString('vi-VN')}/{counts.all.toLocaleString('vi-VN')} ô có giá</span>
         <span className="spacer" style={{ flex: 1 }} />
-        {showBtn('all', 'Tất cả')}{showBtn('priced', 'Đã có giá')}{showBtn('empty', 'Còn trống')}{dirty.size > 0 && showBtn('dirty', `Đang sửa (${dirty.size})`)}
+        <span className="row" style={{ gap: 0 }}>{showBtn('all', 'Tất cả')}{showBtn('priced', 'Đã có giá')}{showBtn('empty', 'Còn trống')}{dirty.size > 0 && showBtn('dirty', `Đang sửa (${dirty.size})`)}</span>
         {canWrite && <button className="btn btn-sm" onClick={fillByRatio} title="Ô trống của mặt hàng đang hiện = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần">Điền theo tỉ lệ</button>}
         <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
         {canWrite && dirty.size > 0 && <button className="btn btn-sm" onClick={() => setDirty(new Map())}>Bỏ sửa</button>}
         {canWrite && <button className="btn btn-sm btn-primary" disabled={!dirty.size || save.isPending} onClick={() => save.mutate()}>Ghi giá{dirty.size ? ` (${dirty.size} ô)` : ''}</button>}
-        <button className="btn btn-sm btn-help" onClick={() => setHelp(true)}>? Hướng dẫn</button>
       </div>
       <ErrorBox error={q.error ? errorText(q.error) : save.error ? errorText(save.error) : null} />
       {save.isSuccess && !dirty.size && <div className="alert alert-info" style={{ marginBottom: 6 }}>Đã ghi {save.data.saved} ô{save.data.removed ? `, bỏ giá ${save.data.removed} ô` : ''}. Cửa hàng nhận giá mới sau vài phút.</div>}
       {q.isLoading ? <Loading /> : (
         <DataGrid storageKey="dm14-gia-v1" exportName={`gia-${code}`} exportRef={exportRef} rows={rows} rowKey={keyOf} maxHeight="55vh"
           onRowDoubleClick={(r) => setOpen(r.sku)} rowClassName={(r) => (r.isActive ? '' : 'muted')} footerLabel={false}
-          note="sửa ô giá rồi bấm Ghi giá; bấm đúp dòng để mở mặt hàng"
           emptyText={show === 'all' ? 'Chưa có mặt hàng nào khai đơn vị tính.' : 'Không có dòng nào.'} columns={columns} />
       )}
       {open && (
         <ProductFullForm sku={open} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }}
           groupPath={groupPath} onClose={() => { setOpen(null); void qc.invalidateQueries({ queryKey: ['price-rows', code] }); }} />
       )}
-      {help && <HelpDrawer guideKey="bang-gia" onClose={() => setHelp(false)} />}
     </div>
   );
 }

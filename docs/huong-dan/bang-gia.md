@@ -10,7 +10,7 @@ Bảng giá  →  gán cho chi nhánh (DM02)  →  website cửa hàng có cùng
 
 - Mỗi website cửa hàng đã nối sẵn với **một mã chi nhánh** (cũng là mã chi nhánh trên chứng từ gửi sang kế toán). Gán bảng giá cho chi nhánh nào thì website của chi nhánh đó dùng bảng giá ấy.
 - Mỗi chi nhánh áp **một** bảng giá. Gán chi nhánh sang bảng giá mới thì nó tự rời bảng giá cũ (form có ghi "đang ở … (sẽ chuyển sang đây)").
-- Chi nhánh **chưa gán** bảng giá nào → dùng **bảng giá công ty**.
+- Chi nhánh **chưa gán** bảng giá nào → dùng **bảng giá công ty**. Lưới hiện các chi nhánh này ở cột *Chi nhánh áp dụng* của bảng giá công ty, kèm chữ **(chưa gán)**.
 - Chi nhánh chưa có ở DM02 thì không gán được: thêm chi nhánh ở DM02 trước, mã phải trùng mã website cửa hàng.
 
 ## Luật lấy giá khi bán
@@ -36,7 +36,8 @@ Cột **Số ô giá** = số ô đã khai giá ở bảng giá đó, để bi�
 
 ## Giá theo mặt hàng (phần dưới)
 
-Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi mặt hàng × đơn vị tính** của bảng giá đó, kể cả ô chưa khai giá.
+<!-- [2026-11-17 11:33 AM kiennt] DM14 — màn gọn: hướng dẫn trên lưới chuyển vào đây (đóng góp) -->
+Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi mặt hàng × đơn vị tính** của bảng giá đó, kể cả ô chưa khai giá. Chưa chọn bảng giá nào thì phần dưới hiện bảng giá công ty. Góc tiêu đề phần dưới ghi số ô đã có giá / tổng số ô (rê chuột để xem số mã hàng).
 
 | Cột | Ghi chú |
 |---|---|
@@ -47,6 +48,7 @@ Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi 
 
 - Nút **Tất cả / Đã có giá / Còn trống / Đang sửa** lọc nhanh. Ô lọc trên đầu từng cột lọc theo mã, tên, ĐVT… như mọi lưới.
 - **Điền theo tỉ lệ**: với các mặt hàng đang hiện, ô trống = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần (vd Lon 450.000 → Thùng 24 = 10.800.000). Điền xong vẫn phải bấm Ghi giá.
-- Sửa xong bấm **Ghi giá (n ô)**, hoặc **Bỏ sửa** để huỷ. Cửa hàng nhận giá mới sau vài phút.
+- Sửa ô giá xong bấm **Ghi giá (n ô)**, hoặc **Bỏ sửa** để huỷ. Cửa hàng nhận giá mới sau vài phút.
+- **Bấm đúp một dòng** để mở mặt hàng (DM10).
 - **Xuất Excel** để gửi duyệt giá / đối chiếu.
 - Giá cũng sửa được trong form mặt hàng (DM10 → thẻ ĐVT & giá bán), hai nơi là một dữ liệu.

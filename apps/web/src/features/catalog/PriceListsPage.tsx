@@ -35,6 +35,7 @@ export function PriceListsPage() {
     const has = new Set((q.data ?? []).flatMap((l) => l.branchCodes));
     return branches.filter((b) => b.isActive && !has.has(b.code));
   }, [q.data, branches]);
+  const shown = sel ?? (q.data ?? []).find((l) => l.isCompany && l.isActive) ?? q.data?.[0] ?? null;
   const del = useMutation({
     mutationFn: (code: string) => api.delete(`/api/v1/catalog/price-lists/${encodeURIComponent(code)}`),
     onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['price-lists'] }); },
@@ -44,7 +45,8 @@ export function PriceListsPage() {
     { key: 'code', header: 'Mã bảng giá', type: 'code', width: 130 },
     { key: 'name', header: 'Tên bảng giá', width: 260 },
     { key: 'isCompany', header: 'Bảng giá công ty', type: 'check', width: 110 },
-    { key: 'branches', header: 'Chi nhánh áp dụng', width: 420, value: (l) => (l.isCompany && !l.branchCodes.length ? '(chi nhánh chưa gán bảng giá)' : l.branchCodes.map((c) => `${c} ${branchName.get(c) ?? ''}`.trim()).join(', ')) },
+    // [2026-11-17 11:32 AM kiennt] DM14 — chi nhánh chưa gán bảng giá hiện luôn ở dòng bảng giá công ty, kèm "(chưa gán)", thay dòng chữ riêng dưới bảng (đóng góp)
+    { key: 'branches', header: 'Chi nhánh áp dụng', width: 420, value: (l) => [...l.branchCodes.map((c) => `${c} ${branchName.get(c) ?? ''}`.trim()), ...(l.isCompany ? unassigned.map((b) => `${b.code} (chưa gán)`) : [])].join(', ') },
     { key: 'pricedRows', header: 'Số ô giá', type: 'number', width: 90 },
     { key: 'note', header: 'Ghi chú', width: 200 },
     { key: 'isActive', header: 'Đang dùng', type: 'check', width: 80 },
@@ -52,7 +54,7 @@ export function PriceListsPage() {
 
   return (
     <>
-      <PageHeader title="Bảng giá bán" code="DM14" subtitle="Bảng giá công ty và bảng giá chi nhánh, chi nhánh áp bảng giá nào; chọn một bảng giá để xem và sửa giá từng mặt hàng ở dưới" helpKey="bang-gia" />
+      <PageHeader title="Bảng giá bán" code="DM14" subtitle="Bảng giá công ty, bảng giá chi nhánh và giá từng mặt hàng" helpKey="bang-gia" />
       <div className="card">
         <CatalogToolbar
           trash={{ catalog: 'price-lists', title: 'Bảng giá', sel: sel ? { key: sel.code, label: sel.name } : null }}
@@ -73,14 +75,9 @@ export function PriceListsPage() {
             onSelect={setSel} onRowDoubleClick={(l) => canWrite && setEditing(l)} rowClassName={(l) => (l.isActive ? '' : 'muted')} footerLabel={false}
             emptyText="Chưa có bảng giá. Thêm bảng giá công ty trước, rồi các bảng giá chi nhánh." columns={columns} />
         )}
-        {unassigned.length > 0 && (
-          <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-            {unassigned.length} chi nhánh chưa gán bảng giá → bán theo bảng giá công ty: {unassigned.slice(0, 30).map((b) => b.code).join(', ')}{unassigned.length > 30 ? '…' : ''}
-          </div>
-        )}
       </div>
-      {sel ? <PriceRowsPanel key={sel.code} code={sel.code} name={sel.name} canWrite={canWrite} />
-        : <div className="card muted" style={{ marginTop: 10 }}>Bấm chọn một bảng giá ở trên để xem / sửa giá từng mặt hàng.</div>}
+      {/* [2026-11-17 11:32 AM kiennt] DM14 — chưa chọn dòng nào thì hiện giá của bảng giá công ty (thay ô "Bấm chọn một bảng giá…") (đóng góp) */}
+      {shown && <PriceRowsPanel key={shown.code} code={shown.code} name={shown.name} canWrite={canWrite} />}
       {editing && <PriceListForm value={editing} lists={q.data ?? []} onClose={() => setEditing(null)} />}
     </>
   );
