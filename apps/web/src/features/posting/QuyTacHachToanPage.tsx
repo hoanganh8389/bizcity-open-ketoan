@@ -439,7 +439,8 @@ function SuaGon({ title, lines, keys, onClose }: { title: string; lines: SLine[]
   });
   return (
     <Modal wide viewFirst viewAgain={viewAgain} title="Tài khoản ngầm định" onClose={onClose} helpKey="quy-tac-hach-toan"
-      footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={!doi.length || m.isPending} onClick={() => m.mutate()}>Ghi</button></>}>
+      // [2026-11-17 11:28 AM kiennt] ACC41 — chân hộp thoại như các màn khác: Ghi và thoát · Ghi · Thoát (đóng góp)
+      footer={<><button className="btn btn-primary" disabled={!doi.length || m.isPending} onClick={() => m.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={m.error ? errorText(m.error) : null} />
       <div className="full">Loại chứng từ: <b>{title}</b></div>
       <table className="grid full">

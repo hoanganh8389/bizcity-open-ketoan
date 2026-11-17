@@ -565,8 +565,9 @@ export function CatalogueForm({ rules, index, saving, error, onClose, onSave }: 
   return (
     <Modal viewFirst={!isNew} viewAgain={viewAgain} title="Thông tin bút toán kết chuyển" onClose={onClose} footer={
       <>
+        {/* [2026-11-17 11:28 AM kiennt] ACC41A — chân hộp thoại như các màn khác: Ghi và thoát · Ghi · Thoát (đóng góp) */}
         <button className="btn btn-primary" disabled={saving} onClick={submit}>Ghi</button>
-        <button className="btn" onClick={onClose}>Đóng</button>
+        <button className="btn" onClick={onClose}>Thoát</button>
       </>
     }>
       <fieldset className="full" style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '8px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
