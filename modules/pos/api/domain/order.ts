@@ -7,7 +7,7 @@
  *   thành tiền = làm tròn(giá gồm thuế × SL − giảm tay), giảm % không làm tròn tiền giảm;
  *   chưa thuế  = làm tròn(thành tiền CHƯA làm tròn ÷ (1 + thuế suất));   thuế = thành tiền − chưa thuế.
  */
-import { roundMoney } from '@bizcity/module-sdk';
+import { allocate, roundMoney } from '@bizcity/module-sdk';
 import type { ManualDiscount, OrderDraft, OrderLineDraft } from './schema.js';
 
 /**
@@ -92,6 +92,8 @@ export type PricedLine = {
   item: CatalogItem & { taxCode: string; taxRate: number };
   unitRatio: number;
   money: LineMoney;
+  /** Tiền giảm của voucher đổi điểm chia vào dòng (gồm thuế, NT-BH-020 bước 2). */
+  voucherDiscount?: number;
 };
 
 /** Dòng bill Z (NT-BH-019): mã không gửi thuế, 0đ. Trên chứng từ bán là dòng quà; máy bán in sang bill Z theo sendTax. */
@@ -122,19 +124,54 @@ export type ComputeInput = {
   partner?: { code: string; name: string; phone: string } | null;
   /** Đơn mới của lần đổi hàng (NT-BH-005): phần `doi_tru` phải đúng bằng tiền hàng trả, đơn mới không rẻ hơn hàng trả. */
   exchange?: { credit: number; returnDocKey: string };
+  /**
+   * Đổi điểm / voucher (NT-BH-020 bước 2) — module loyalty đã báo giá (loyalty.redeem.quote). `gifts`: quà đổi điểm theo mã phần
+   * thưởng (dòng quà giftKey `lp:<mã>` phải khớp mã hàng, số lượng). `voucher`: tiền giảm cả đơn, chia vào dòng theo thành tiền.
+   * `lenient`: lần tính trước khi hỏi loyalty (chưa có báo giá) — nhận dòng quà `lp:`, chưa giảm voucher.
+   */
+  loyalty?: { gifts?: ReadonlyMap<string, { sku: string; quantity: number }>; voucher?: { code: string; amount: number }; lenient?: boolean };
 };
 
+/** Mã phần thưởng của dòng quà đổi điểm (giftKey `lp:<mã>`), không phải thì null. */
+export const loyaltyGiftIndex = (l: { isGift?: boolean; giftKey?: string }) => (l.isGift && l.giftKey?.startsWith('lp:') ? l.giftKey.slice(3) : null);
+
 const fail = (kind: OrderProblem['kind'], reason: string, message: string, details?: unknown): { problem: OrderProblem } => ({ problem: { kind, reason, message, details } });
+
+/** Mã voucher khách nhập (promotionSelections kind coupon), viết hoa, bỏ trùng. */
+export function couponCodes(draft: Pick<OrderDraft, 'promotionSelections'>): string[] {
+  const out = draft.promotionSelections
+    .map((x) => (x && typeof x === 'object' && (x as { kind?: unknown }).kind === 'coupon' ? String((x as { code?: unknown }).code ?? '').trim().toUpperCase() : ''))
+    .filter(Boolean);
+  return [...new Set(out)];
+}
 
 /** Những gì W1 chưa nhận (D-MP-7): chặn cả đơn, nói rõ, không ghi sai một phần. */
 export function unsupported(draft: OrderDraft): OrderProblem | null {
   const no = (what: string, details?: unknown): OrderProblem => ({ kind: 'validation', reason: 'POS_NOT_SUPPORTED_YET', message: `Máy chủ POS chưa nhận ${what} ở đợt này — dùng đường bán cũ cho đơn này`, details });
   // Khuyến mại theo luật riêng của máy (chọn quà / mã giảm giá kiểu plugin website) chưa nhận; khuyến mại do Core tính đi theo
   // dòng (policyRef + promoDiscount / dòng quà) — NT-BH-003.
-  if (draft.promotionSelections.length) return no('đơn có khuyến mại / mã giảm giá', { field: 'promotionSelections' });
-  if (draft.loyalty?.redeem.length) return no('đổi điểm thành viên', { field: 'loyalty' });
+  // NT-BH-020 bước 2: mã giảm giá chỉ nhận voucher đổi điểm (module loyalty kiểm), một mã mỗi đơn; đổi điểm nhận khi có khách.
+  const other = draft.promotionSelections.filter((x) => !(x && typeof x === 'object' && (x as { kind?: unknown }).kind === 'coupon'));
+  if (other.length) return no('đơn có khuyến mại kiểu plugin website', { field: 'promotionSelections' });
+  if (couponCodes(draft).length > 1) return { kind: 'validation', reason: 'POS_NOT_SUPPORTED_YET', message: 'Mỗi đơn dùng một voucher', details: { field: 'promotionSelections' } };
   if (draft.payment.mode === 'credit') return no('bán ghi nợ', { field: 'payment.mode' });
   return null;
+}
+
+/** Khách (D-MP-7): lẻ / theo mã / theo SĐT + tên (tự thêm vào danh mục khi nộp chứng từ). */
+function resolveCustomer(input: ComputeInput): { customer: OrderCustomer } | { problem: OrderProblem } {
+  const c = input.draft.customer;
+  if ('partnerId' in c) {
+    if (!input.partner) return fail('validation', 'POS_UNKNOWN_CUSTOMER', `Không có khách ${c.partnerId}`, { partnerId: c.partnerId });
+    return { customer: input.partner };
+  }
+  if ('phone' in c) {
+    const phone = normalizePhone(c.phone);
+    if (!/^0\d{9}$/.test(phone)) return fail('validation', 'POS_BAD_PHONE', 'SĐT khách phải có 10 số, bắt đầu bằng 0', { field: 'customer.phone' });
+    if (!c.name.trim()) return fail('validation', 'POS_MISSING_NAME', 'Thiếu tên khách', { field: 'customer.name' });
+    return { customer: { code: phone, name: c.name.trim(), phone } };
+  }
+  return { customer: null };
 }
 
 export function computeOrder(input: ComputeInput): ComputedOrder | { problem: OrderProblem } {
@@ -144,7 +181,8 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
 
   // [2026-11-12 10:35 PM Võ Hoàng] POS-KM — NT-BH-003 (đóng góp): quà 0đ / tiền giảm theo chương trình phải có căn cứ — chương trình nêu ở dòng và ở policyRefs (kèm băm).
   const refs = new Map((draft.policyRefs ?? []).filter((r) => r.hash).map((r) => [r.key, r]));
-  const noPolicy = draft.lines.filter((l) => (l.isGift || (l.promoDiscount ?? 0) > 0) && (!l.policyRef || !refs.has(l.policyRef.key) || refs.get(l.policyRef.key)!.version !== l.policyRef.version));
+  // Quà đổi điểm (giftKey lp:…, NT-BH-020) có căn cứ là phần thưởng module loyalty báo giá — kiểm riêng ở dưới, không cần chương trình Core.
+  const noPolicy = draft.lines.filter((l) => !loyaltyGiftIndex(l) && (l.isGift || (l.promoDiscount ?? 0) > 0) && (!l.policyRef || !refs.has(l.policyRef.key) || refs.get(l.policyRef.key)!.version !== l.policyRef.version));
   if (noPolicy.length) {
     return fail('validation', 'POS_GIFT_WITHOUT_POLICY', `Dòng quà / giảm theo chương trình thiếu căn cứ (chương trình + bản ở dòng và ở policyRefs kèm băm): ${noPolicy.map((l) => l.sku).join(', ')}`, noPolicy.map((l) => ({ lineId: l.lineId, sku: l.sku })));
   }
@@ -173,6 +211,37 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   if (missing.length) return fail('validation', 'POS_UNKNOWN_SKU', `Không có mã hàng trong danh mục kế toán: ${missing.join(', ')}`, missing.map((sku) => ({ sku })));
   if (untaxed.length) return fail('validation', 'POS_TAX_NOT_DECLARED', `Mã hàng chưa khai mã thuế đầu ra: ${untaxed.join(', ')}`, untaxed.map((sku) => ({ sku })));
 
+  // [2026-11-15 07:40 PM Võ Hoàng] POS-LOYALTY — NT-BH-020 bước 2: quà đổi điểm khớp báo giá; voucher chia vào dòng (đóng góp)
+  const loy = input.loyalty;
+  if (!loy?.lenient) {
+    const gifts = loy?.gifts ?? new Map<string, { sku: string; quantity: number }>();
+    const wrong = lines.filter((l) => {
+      const idx = loyaltyGiftIndex(l.draft);
+      if (!idx) return false;
+      const r = gifts.get(idx);
+      return !r || r.sku !== l.item.sku || r.quantity !== l.draft.unitQty * l.unitRatio;
+    });
+    const missing = [...gifts.entries()].filter(([idx]) => !lines.some((l) => loyaltyGiftIndex(l.draft) === idx));
+    if (wrong.length || missing.length) {
+      return fail('validation', 'POS_GIFT_WITHOUT_POLICY', `Quà đổi điểm không khớp phần thưởng đã chọn (mã hàng / số lượng): ${[...wrong.map((l) => l.item.sku), ...missing.map(([i]) => i)].join(', ')}`,
+        { field: 'lines', items: [...wrong.map((l) => ({ lineId: l.draft.lineId, sku: l.item.sku })), ...missing.map(([index]) => ({ index }))] });
+    }
+    const v = loy?.voucher;
+    if (v && v.amount > 0) {
+      const paid = lines.filter((l) => !l.draft.isGift && l.money.gross > 0);
+      const room = paid.reduce((t, l) => t + l.money.gross, 0);
+      if (!paid.length || v.amount > room) {
+        return fail('validation', 'POS_DISCOUNT_TOO_LARGE', `Voucher ${v.code} giảm ${v.amount} lớn hơn tiền hàng còn lại (${room})`, { field: 'promotionSelections' });
+      }
+      // Chia tiền giảm theo thành tiền dòng (sau các giảm khác), tổng đúng bằng tiền voucher (allocate — chia không lệch đồng).
+      const shares = allocate(v.amount, paid.map((l) => l.money.gross));
+      paid.forEach((l, i) => {
+        l.voucherDiscount = shares[i]!;
+        l.money = lineMoney(l.draft.clientUnitPrice, l.draft.unitQty, l.item.taxRate, l.draft.manualDiscount, (l.draft.promoDiscount ?? 0) + shares[i]!);
+      });
+    }
+  }
+
   // [2026-11-15 10:55 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1 (đóng góp): nhận bill Z thay vì chặn.
   // Bill Z (D-MP-12): dòng 0đ của mã không gửi thuế — POS đang chạy in thành phiếu riêng (xuất tặng, không lên hoá đơn). Ở đây
   // đơn vẫn là một chứng từ bán: dòng đó là dòng quà 0đ (isBillZ → isGift trên chứng từ, không doanh thu, không thuế; giá vốn
@@ -183,6 +252,12 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   const subtotal = lines.reduce((s, l) => s + l.money.net, 0);
   const taxTotal = lines.reduce((s, l) => s + l.money.tax, 0);
   const total = subtotal + taxTotal;
+  // Lần tính thử trước khi hỏi module loyalty (NT-BH-020): chỉ cần dòng, tổng, khách — chưa có voucher nên chưa so tổng / thanh toán.
+  if (input.loyalty?.lenient) {
+    const who = resolveCustomer(input);
+    if ('problem' in who) return who;
+    return { lines, subtotal, taxTotal, total, payments: [], offsets: [], change: 0, customer: who.customer, qrAmount: 0 };
+  }
   if (total !== draft.clientTotal) {
     return fail('conflict', 'POS_PRICE_CHANGED', `Tổng máy tính ${draft.clientTotal} khác tổng máy chủ tính ${total} — tải lại giỏ`, { clientTotal: draft.clientTotal, total });
   }
@@ -239,18 +314,9 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
     return fail('validation', 'POS_NOT_SUPPORTED_YET', 'Hình thức thanh toán chưa nhận ở đợt này');
   }
 
-  // Khách (D-MP-7): lẻ / theo mã / theo SĐT + tên (tự thêm vào danh mục khi nộp chứng từ).
-  let customer: OrderCustomer = null;
-  const c = draft.customer;
-  if ('partnerId' in c) {
-    if (!input.partner) return fail('validation', 'POS_UNKNOWN_CUSTOMER', `Không có khách ${c.partnerId}`, { partnerId: c.partnerId });
-    customer = input.partner;
-  } else if ('phone' in c) {
-    const phone = normalizePhone(c.phone);
-    if (!/^0\d{9}$/.test(phone)) return fail('validation', 'POS_BAD_PHONE', 'SĐT khách phải có 10 số, bắt đầu bằng 0', { field: 'customer.phone' });
-    if (!c.name.trim()) return fail('validation', 'POS_MISSING_NAME', 'Thiếu tên khách', { field: 'customer.name' });
-    customer = { code: phone, name: c.name.trim(), phone };
-  }
+  const who = resolveCustomer(input);
+  if ('problem' in who) return who;
+  const customer = who.customer;
 
   if (ex && p.mode !== 'split') return fail('validation', 'POS_SPLIT_MISMATCH', 'Đổi hàng phải có phần đối trừ đúng bằng tiền hàng trả', { credit: ex.credit });
   const offsets = ex && ex.credit > 0 ? [{ docKey: ex.returnDocKey, amount: ex.credit }] : [];
@@ -328,7 +394,17 @@ export function splitBillZ<L extends { sendTax: boolean; amount: number; taxAmou
 }
 
 /** Đơn trả cho máy (khuôn Order của hợp đồng /pos/*). */
-export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string }) {
+/**
+ * Điểm thành viên của đơn (khuôn OrderLoyalty máy bán in bill) + phần thưởng đã đổi (module loyalty đọc lại khi ghi sổ điểm) —
+ * NT-BH-020 bước 2. Có khi module loyalty đã báo giá cho đơn có khách.
+ */
+export type SnapshotLoyalty = {
+  earned: number; redeemed: number; balanceAfter: number; tierKey: string; tierName: string;
+  vouchers: { code: string; discountType: string; discountValue: number; maxDiscount: number; minOrderAmount: number; expiresAt: string | null }[];
+  rewards: unknown[];
+};
+
+export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string; loyalty?: SnapshotLoyalty; usedVouchers?: string[] }) {
   const { draft } = meta;
   const all = o.lines.map((l) => ({
       ...l.draft,
@@ -343,6 +419,7 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
       ...(l.item.itemId ? { itemId: l.item.itemId } : {}),
       // false = không lên hoá đơn thuế (máy bán và hoá đơn điện tử đọc cờ này).
       sendTax: l.item.sendTax,
+      ...(l.voucherDiscount ? { voucherDiscount: l.voucherDiscount } : {}),
     }));
   const bill = splitBillZ(all);
   const payment = draft.payment.mode === 'cash' ? { ...draft.payment, change: o.change } : draft.payment;
@@ -364,6 +441,8 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
     flags: { oversold: false, promoMismatch: false },
     ...(draft.saleSource ? { saleSource: draft.saleSource } : {}),
     promotions: [] as unknown[],
+    ...(meta.loyalty ? { loyalty: meta.loyalty } : {}),
+    ...(meta.usedVouchers?.length ? { usedVouchers: meta.usedVouchers } : {}),
     branch: { code: meta.branch.code, name: meta.branch.name, taxCode: meta.branch.taxCode },
     mirror: { status: 'pending' as const },
   };

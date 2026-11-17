@@ -3,12 +3,14 @@
  * cả handler trong một giao dịch, nên kiểm + cấp mã + nộp chứng từ sale + lưu đơn cùng thành công hoặc cùng huỷ.
  */
 import { Errors, sql, type ActionContext } from '@bizcity/module-sdk';
-import { codePeriod, computeOrder, parseCode, saleDocKey, toOrderSnapshot, toSaleDocument, type OrderProblem } from './domain/order.js';
+import { codePeriod, computeOrder, couponCodes, parseCode, saleDocKey, toOrderSnapshot, toSaleDocument, type OrderProblem } from './domain/order.js';
 import type { OrderDraft } from './domain/schema.js';
 import { lastCode, takeCodes } from './codes.js';
 import { activePaymentMethods, catalogFor, partnerByCode, resolveBranch } from './read.js';
 import { posSettings } from './settings.js';
 import { openShiftOf } from './shifts.js';
+import { stockOf } from './catalog.js';
+import { stockNeeds, stockShortages, stockShortMessage, type StockShort } from './domain/stock.js';
 
 export const EINVOICE_NONE = { required: false, lines: [] as unknown[], warnings: [] as string[] };
 
@@ -28,6 +30,60 @@ export const isUniqueViolation = (err: unknown) => (err as { code?: string } | n
 /** Khoá theo giao dịch (tự nhả lúc commit / huỷ): hai lần gửi cùng khoá chạy nối tiếp. */
 export async function lockKey(tx: Parameters<Parameters<ActionContext['data']['module']>[0]>[0], key: string): Promise<void> {
   await sql`SELECT pg_advisory_xact_lock(hashtext(${key}))`.execute(tx);
+}
+
+// [2026-11-15 07:50 PM Võ Hoàng] POS-LOYALTY — NT-BH-020 bước 2: hỏi module loyalty trước khi nhận đơn (đóng góp)
+type QuoteReward = { index: string; kind: 'gift' | 'voucher'; points: number; sku?: string; quantity?: number; voucher?: { code: string; discountType: string; discountValue: number; maxDiscount: number; minOrderAmount: number; expiresAt: string | null } };
+type Quote = { enabled: boolean; tierKey?: string; tierName?: string; balance?: number; rewards: QuoteReward[]; points: number; earned: number; voucher?: { code: string; amount: number }; problems: string[] };
+
+/**
+ * Đổi điểm / voucher / điểm đơn này (NT-BH-020 bước 2): hỏi action đọc `loyalty.redeem.quote` của module loyalty (gọi chéo theo mã,
+ * quyền của thu ngân). Đơn có đổi điểm hoặc voucher mà module chưa bật / báo lỗi → chặn, nói rõ. Đơn chỉ có khách: hỏi để in điểm
+ * trên bill, module chưa bật thì bỏ qua. `base`: đơn tính thử chưa có voucher (tổng để kiểm đơn tối thiểu, chia tiền giảm).
+ */
+async function quoteLoyalty(ctx: ActionContext, draft: OrderDraft, branchCode: string, base: ReturnType<typeof computeOrder>) {
+  if ('problem' in base) raise(base.problem);
+  const coupons = couponCodes(draft);
+  const redeem = draft.loyalty?.redeem ?? [];
+  const customer = base.customer?.code;
+  if (redeem.length && !customer) throw Errors.validation('Đổi điểm phải chọn khách thành viên', { field: 'loyalty' });
+  if (!customer && !coupons.length) return null;
+  const must = coupons.length > 0 || redeem.length > 0;
+  let q: Quote;
+  try {
+    q = await ctx.actions.call<Quote>('loyalty.redeem.quote', {
+      ...(customer ? { customer } : {}), branch: branchCode, orderId: draft.id, orderTotal: base.total, redeem,
+      items: base.lines.filter((l) => !l.draft.isGift).map((l) => ({ sku: l.item.sku, qty: l.draft.unitQty * l.unitRatio })),
+      ...(coupons[0] ? { voucher: coupons[0] } : {}),
+    });
+  } catch (e) {
+    if (!must) return null;
+    throw Errors.validation(`Chưa đổi điểm / dùng voucher được: ${(e as Error).message}`, { field: coupons.length ? 'promotionSelections' : 'loyalty' });
+  }
+  if (q.problems.length) throw Errors.validation(q.problems.join('; '), { field: coupons.length && !redeem.length ? 'promotionSelections' : 'loyalty' });
+  if (!q.enabled && !q.voucher) return null;
+  const gifts = new Map(q.rewards.filter((r) => r.kind === 'gift' && r.sku).map((r) => [r.index, { sku: r.sku!, quantity: r.quantity ?? 1 }]));
+  const issued = q.rewards.filter((r) => r.kind === 'voucher' && r.voucher).map((r) => r.voucher!);
+  return {
+    input: { gifts, ...(q.voucher ? { voucher: q.voucher } : {}) },
+    snapshot: q.enabled && customer
+      ? {
+          earned: q.earned, redeemed: q.points, balanceAfter: (q.balance ?? 0) - q.points + q.earned, tierKey: q.tierKey ?? '', tierName: q.tierName ?? '',
+          vouchers: issued.map((v) => ({ code: v.code, discountType: v.discountType, discountValue: v.discountValue, maxDiscount: v.maxDiscount, minOrderAmount: v.minOrderAmount, expiresAt: v.expiresAt })),
+          rewards: q.rewards,
+        }
+      : undefined,
+  };
+}
+
+/** Khoá chi nhánh × mã rồi so số xuất (ĐVT nhỏ nhất) với tồn cửa hàng. Trả danh sách mã thiếu (rỗng = đủ). */
+export async function checkStock(tx: Parameters<Parameters<ActionContext['data']['module']>[0]>[0], branchCode: string,
+  lines: readonly { sku: string; qty: number }[]): Promise<StockShort[]> {
+  const need = stockNeeds(lines);
+  const skus = [...need.keys()].sort();
+  for (const sku of skus) await lockKey(tx, `pos:stock:${branchCode}:${sku}`);
+  const have = new Map((await stockOf(tx, branchCode, skus)).map((x) => [x.sku, x.available]));
+  return stockShortages(need, have);
 }
 
 export type CreatedOrder = { order: Record<string, unknown>; nextReservedCodes: string[]; einvoiceReview: typeof EINVOICE_NONE; replayed: boolean };
@@ -51,8 +107,18 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     const catalog = await catalogFor(tx, draft.lines.map((l) => l.sku));
     const paymentMethods = await activePaymentMethods(tx);
     const partner = 'partnerId' in draft.customer ? await partnerByCode(tx, draft.customer.partnerId) : null;
-    const computed = computeOrder({ draft, catalog, paymentMethods, partner, ...(opts.exchange ? { exchange: opts.exchange } : {}) });
+    const base = { draft, catalog, paymentMethods, partner, ...(opts.exchange ? { exchange: opts.exchange } : {}) };
+    const loyalty = await quoteLoyalty(ctx, draft, branch.code, computeOrder({ ...base, loyalty: { lenient: true } }));
+    const computed = computeOrder({ ...base, ...(loyalty ? { loyalty: loyalty.input } : {}) });
     if ('problem' in computed) raise(computed.problem);
+
+    // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (đóng góp)
+    // Khoá theo chi nhánh × mã (thứ tự mã cố định, tránh khoá chéo) tới hết giao dịch: hai máy cùng bán một mã chạy nối tiếp,
+    // đơn sau thấy tồn đã trừ đơn trước. Đơn bán dự phòng lúc mất mạng gửi bù: hàng đã giao → nhận, đánh dấu cho kế toán xem.
+    const stockShort = await checkStock(tx, branch.code, computed.lines.map((l) => ({ sku: l.item.sku, qty: l.draft.unitQty * l.unitRatio })));
+    if (stockShort.length && !draft.offlineCreatedAt) {
+      throw Errors.validation(stockShortMessage(stockShort, branch.code), { reason: 'POS_STOCK_SHORT', items: stockShort });
+    }
 
     // Mã phiếu: dùng số máy đã được cấp trước (đúng khuôn, đã cấp, chưa dùng); không thì cấp số mới. Khoá theo số để hai máy
     // cùng dùng một số đã cấp không cùng qua bước "chưa dùng".
@@ -66,14 +132,15 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       if (!used) code = draft.reservedCode!;
     }
     code ??= (await takeCodes(tx, ctx.tenant.id, branch.code, 'sale', period, 1))[0]!;
-    return { kind: 'new', computed, branch, code } as const;
+    return { kind: 'new', computed, branch, code, loyalty, stockShort } as const;
   });
   if (prepared.kind === 'replay') return { order: prepared.snapshot, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: true };
 
-  const { computed, branch, code } = prepared;
+  const { computed, branch, code, loyalty, stockShort } = prepared;
   const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code });
   const submitted = await ctx.ledger.submit(doc);
-  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString() });
+  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}) });
+  if (stockShort.length) Object.assign(order, { stockShortOffline: stockShort });
 
   try {
     await ctx.data.module(async (tx) => {

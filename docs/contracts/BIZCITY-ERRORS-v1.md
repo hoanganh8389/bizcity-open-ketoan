@@ -224,6 +224,9 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POS_SHIFT_REQUIRED` | `CONFLICT` | Cài đặt bán hàng bắt buộc mở ca mà chi nhánh chưa có ca mở | module `pos` (đề xuất, chưa gộp) |
 | **Máy bán POS – khuyến mại** (1.11.0-draft) <!-- [2026-11-12 08:50 PM Võ Hoàng] POS-KM — mã khuyến mại của module pos (phiếu NT-BH-003, đóng góp) --> | | | |
 | `POS_GIFT_WITHOUT_POLICY` | `VALIDATION_ERROR` | Dòng quà tặng / dòng giảm giá theo chương trình mà không nêu chương trình (`policyRef`): quà 0đ phải có căn cứ; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
+| **Chặn bán quá tồn** (1.12.0-draft) <!-- [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (đóng góp) --> | | | |
+| `POS_STOCK_SHORT` | `VALIDATION_ERROR` | Máy bán bán quá tồn của cửa hàng (chặn cứng; cộng theo mã, quy ĐVT nhỏ nhất, gồm quà / bill Z); kèm `items: [{ sku, need, have }]` | module `pos` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_STOCK_SHORT` | `VALIDATION_ERROR` | Phiếu bán nhập tay (BH10) xuất quá tồn của kho trên phiếu khi bật công tắc `bizcity.phieu_ban.block_negative_stock`; kèm `items: [{ sku, need, have }]` | module `phieu-ban` (đề xuất, chưa gộp) |
 
 **Thứ tự làm:** (1) duyệt (2026-11-09); (2) S022-21: thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
 
@@ -261,6 +264,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — 1.12.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.12.0-draft (2026-11-16, chặn bán quá tồn):** §4c thêm `POS_STOCK_SHORT` (module pos), `PHIEU_BAN_STOCK_SHORT` (module phieu-ban) (phiếu NT-BH-021). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-12 08:50 PM Võ Hoàng] POS-KM — 1.11.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.11.0-draft (2026-11-12, module pos — khuyến mại):** §4c thêm `POS_GIFT_WITHOUT_POLICY` (phiếu NT-BH-003). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-12 11:55 PM Võ Hoàng] POS-QR — 1.10.0-draft (đóng góp, chờ chủ dự án duyệt) -->

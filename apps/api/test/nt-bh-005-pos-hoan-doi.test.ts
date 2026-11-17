@@ -14,11 +14,12 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
+import { nhapTon } from './pos-nhap-ton.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
-const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners'];
+const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand'];
 const vnDate = (offsetDays = 0) => new Date(Date.now() + 7 * 3600_000 + offsetDays * 86_400_000).toISOString().slice(0, 10);
 const TODAY = vnDate();
 const YESTERDAY = vnDate(-1);
@@ -77,6 +78,8 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
       const r = await app.inject({ method: 'PUT', url: `/api/v1/products/${sku}`, headers: { authorization: `Bearer ${ctx.token}`, 'idempotency-key': `nt-bh-005-${sku}-${Date.now()}` }, payload: { taxOutCode } });
       expect(r.statusCode, r.body).toBe(200);
     }
+    // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
+    await nhapTon(ctx, 'CN01', [['SUA400', 1000, 'Hộp'], ['TA01', 1000, 'Gói']]);
     for (const id of [O2, O3]) {
       const r = await post('/orders', order(id, id === O3 ? { payment: { mode: 'cash', cashGiven: 800_000 } } : {}));
       expect(r.statusCode, r.body).toBe(201);

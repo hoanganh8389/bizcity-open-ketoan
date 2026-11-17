@@ -1,20 +1,21 @@
 // [2026-11-13 Nguyễn Văn Thủy] Danh mục Loại kho (DM18) + nghiệp vụ dùng loại kho nào theo thứ tự ưu tiên (0128) (đóng góp)
 // [2026-11-13 Nguyễn Văn Thủy] gọn lại: bỏ cột Được bán / Thuộc sở hữu / Theo dõi hạn dùng / Theo dõi; Xoá vào Thùng rác (0133); nghiệp vụ hiện bằng chữ, sửa trong hộp thoại (đóng góp)
 /**
- * Hai phần:
+ * Màn là danh sách loại kho; phần Nghiệp vụ nằm trong ngăn Hướng dẫn của màn.
  *   - Loại kho: mã, tên, công dụng, đầu số TK kho, số kho. Thêm / Sửa / Xoá — Xoá chuyển vào Thùng rác (vẫn lưu trong CSDL);
  *     trong Thùng rác: Khôi phục hoặc Xoá vĩnh viễn. Chứng từ đã ghi với kho thuộc loại đó giữ nguyên.
  *   - Nghiệp vụ: mỗi nghiệp vụ một dòng chữ "Tự chọn: … · Dùng được thêm: …"; bấm Sửa để tích loại dùng được, chọn loại tự chọn.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
+import { ArchiveRestore, Trash2 } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
+import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid } from '@/components/DataGrid';
-import { AccountPicker } from '@/components/pickers';
+import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { AccountPicker, useAccountList } from '@/components/pickers';
 
 export interface WarehouseType { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; accountName?: string | null; accountPosting?: boolean; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
 export interface WarehouseOp { op: string; label: string; area: string; typeCodes: string[] }
@@ -31,7 +32,7 @@ export function WarehouseTypesPage() {
   const canWrite = can('catalog:write');
   const q = useWarehouseTypes();
   const trash = useTrash();
-  const [tab, setTab] = useState<'loai' | 'nv'>('loai');
+  const exportRef = useRef<(() => void) | null>(null);
   const [editing, setEditing] = useState<(Partial<WarehouseType> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<WarehouseType | null>(null);
   const [showTrash, setShowTrash] = useState(false);
@@ -42,42 +43,52 @@ export function WarehouseTypesPage() {
   });
   return (
     <>
-      <PageHeader title="Loại kho" code="DM18" subtitle="Mỗi kho thuộc một loại; chứng từ tự chọn kho theo loại của nghiệp vụ" helpKey="loai-kho" />
+      {/* [2026-11-16 kiennt] bỏ hai thẻ: màn chỉ còn danh sách loại kho; Nghiệp vụ dùng loại kho chuyển vào ngăn Hướng dẫn; nút theo bố cục danh mục (đóng góp) */}
+      <PageHeader title="Loại kho" code="DM18" subtitle="Mỗi kho thuộc một loại; chứng từ tự chọn kho theo loại của nghiệp vụ" helpKey="loai-kho"
+        helpExtra={q.data && (
+          <section className="help-extra">
+            <h3>Nghiệp vụ dùng loại kho</h3>
+            <p className="muted">Nghiệp vụ nào dùng loại kho nào; loại tự chọn được điền sẵn trên chứng từ. Bấm đúp một dòng để sửa.</p>
+            <NghiepVu types={types} ops={q.data.ops} canWrite={canWrite} />
+          </section>
+        )} />
       <div className="card">
-        <div className="tabs" style={{ padding: '6px 8px 0' }}>
-          <button className={`tab ${tab === 'loai' ? 'active' : ''}`} onClick={() => setTab('loai')}>Loại kho</button>
-          <button className={`tab ${tab === 'nv' ? 'active' : ''}`} onClick={() => setTab('nv')} title="Nghiệp vụ nào dùng loại kho nào; loại tự chọn được điền sẵn trên chứng từ">Nghiệp vụ dùng loại kho</button>
-        </div>
-        <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
-        {q.isLoading ? <Loading /> : tab === 'loai' ? (
-          <>
-            <div className="row" style={{ gap: 6, padding: '6px 8px', alignItems: 'center' }}>
-              <button className="btn btn-primary btn-sm" disabled={!canWrite} onClick={() => setEditing({ isNew: true })}>Thêm</button>
-              <button className="btn btn-sm" disabled={!canWrite || !sel} onClick={() => sel && setEditing(sel)}>Sửa</button>
+        <CatalogToolbar
+          phai
+          canWrite={canWrite}
+          hasSelection={Boolean(sel)}
+          onAdd={() => setEditing({ isNew: true })}
+          onEdit={() => sel && setEditing(sel)}
+          onRefresh={() => q.refetch()}
+          onExport={() => exportRef.current?.()}
+          extra={
+            <>
               <button className="btn btn-sm" disabled={!canWrite || !sel || del.isPending} title="Chuyển loại kho đang chọn vào Thùng rác — vẫn lưu trong dữ liệu, khôi phục được"
-                onClick={() => { if (sel && window.confirm(`Xoá loại kho ${sel.code} - ${sel.name}?\nLoại kho chuyển vào Thùng rác (vẫn lưu, khôi phục được). Chứng từ đã ghi giữ nguyên.`)) del.mutate(sel.code); }}>Xoá</button>
-              <span className="muted">{types.length} loại</span>
-              <button className="btn btn-sm btn-ghost" style={{ marginLeft: 'auto' }} onClick={() => setShowTrash(true)} title="Loại kho đã xoá: khôi phục hoặc xoá vĩnh viễn">
-                <Trash2 size={14} /> Thùng rác{trash.data?.length ? ` (${trash.data.length})` : ''}
+                onClick={() => { if (sel && window.confirm(`Xoá loại kho ${sel.code} - ${sel.name}?\nLoại kho chuyển vào Thùng rác (vẫn lưu, khôi phục được). Chứng từ đã ghi giữ nguyên.`)) del.mutate(sel.code); }}><Trash2 size={14} /> Xoá</button>
+              <button className="btn btn-sm" onClick={() => setShowTrash(true)} title="Loại kho đã xoá: khôi phục hoặc xoá vĩnh viễn">
+                <ArchiveRestore size={14} /> Thùng rác{trash.data?.length ? ` (${trash.data.length})` : ''}
               </button>
-            </div>
-            <DataGrid
-              storageKey="dm18-v2" exportName="loai-kho" rows={types} rowKey={(t) => t.code}
-              onSelect={setSel} onRowDoubleClick={(t) => canWrite && setEditing(t)} footerLabel={false}
-              columns={[
-                { key: 'code', header: 'Mã', type: 'code', width: 90 },
-                { key: 'name', header: 'Tên loại kho', width: 240 },
-                { key: 'purpose', header: 'Công dụng', width: 340 },
-                // [2026-11-13 Nguyễn Văn Thủy] TK kho của loại = TK ghi sổ của mọi bút toán vào kho thuộc loại; TK tổng hợp thì báo đỏ, đang dùng TK ngầm định (đóng góp)
-                { key: 'accountPrefix', header: 'TK kho', type: 'code', width: 110, title: 'Tài khoản kho của loại: mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này (ưu tiên hơn TK kho của Quy tắc hạch toán). Trống = theo Quy tắc hạch toán',
-                  render: (t) => !t.accountPrefix ? <span className="muted">ngầm định</span>
-                    : t.accountPosting ? <span className="mono" title={t.accountName ?? ''}>{t.accountPrefix}</span>
-                    : <span className="mono" style={{ color: 'var(--bad, #c62828)' }} title={`${t.accountPrefix} là tài khoản tổng hợp, không ghi sổ được — bút toán đang dùng TK kho của Quy tắc hạch toán. Sửa loại kho, chọn tài khoản chi tiết.`}>{t.accountPrefix} ⚠</span> },
-                { key: 'activeWarehouses', header: 'Số kho', type: 'number', width: 80, title: 'Số kho đang dùng thuộc loại này' },
-              ]}
-            />
-          </>
-        ) : <NghiepVu types={types} ops={q.data?.ops ?? []} canWrite={canWrite} />}
+            </>
+          }
+        />
+        <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
+        {q.isLoading ? <Loading /> : (
+          <DataGrid
+            storageKey="dm18-v2" exportName="loai-kho" exportRef={exportRef} rows={types} rowKey={(t) => t.code}
+            onSelect={setSel} onRowDoubleClick={(t) => canWrite && setEditing(t)} footerLabel={false}
+            columns={[
+              { key: 'code', header: 'Mã', type: 'code', width: 90 },
+              { key: 'name', header: 'Tên loại kho', width: 240 },
+              { key: 'purpose', header: 'Công dụng', width: 340 },
+              // [2026-11-13 Nguyễn Văn Thủy] TK kho của loại = TK ghi sổ của mọi bút toán vào kho thuộc loại; TK tổng hợp thì báo đỏ, đang dùng TK ngầm định (đóng góp)
+              { key: 'accountPrefix', header: 'TK kho', type: 'code', width: 110, title: 'Tài khoản kho của loại: mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này (ưu tiên hơn TK kho của Tài khoản ngầm định). Trống = theo Tài khoản ngầm định',
+                render: (t) => !t.accountPrefix ? <span className="muted">ngầm định</span>
+                  : t.accountPosting ? <span className="mono" title={t.accountName ?? ''}>{t.accountPrefix}</span>
+                  : <span className="mono" style={{ color: 'var(--bad, #c62828)' }} title={`${t.accountPrefix} là tài khoản tổng hợp, không ghi sổ được — bút toán đang dùng TK kho của Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết.`}>{t.accountPrefix} ⚠</span> },
+              { key: 'activeWarehouses', header: 'Số kho', type: 'number', width: 80, title: 'Số kho đang dùng thuộc loại này' },
+            ]}
+          />
+        )}
       </div>
       {editing && <LoaiKhoForm value={editing} onClose={() => setEditing(null)} />}
       {showTrash && <ThungRac rows={trash.data ?? []} loading={trash.isLoading} canWrite={canWrite} canPurge={can('settings:write')} onClose={() => setShowTrash(false)} />}
@@ -90,25 +101,35 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
   const qc = useQueryClient();
   const [v, setV] = useState(value);
   const set = (p: Partial<WarehouseType>) => setV((x) => ({ ...x, ...p }));
+  // [2026-11-16 kiennt] loại đã có mở ở chế độ xem (bấm Sửa mới sửa), ghi xong quay về xem — như các màn danh mục khác (đóng góp)
+  const viewAgain = useViewAgain();
+  // [2026-11-16 kiennt] TK kho phải là tài khoản cấp cuối (chi tiết, không có TK con) — cả khi gõ tay hoặc loại cũ đang để TK tổng hợp (đóng góp)
+  const accounts = useAccountList().data ?? [];
+  const tk = (v.accountPrefix ?? '').trim();
+  const tkLoi = !tk || !accounts.length ? ''
+    : !accounts.some((a) => a.code === tk) ? `Không có tài khoản ${tk} trong hệ thống tài khoản`
+    : !accounts.find((a) => a.code === tk)!.isPosting || accounts.some((a) => a.code !== tk && a.code.startsWith(tk)) ? `${tk} là tài khoản tổng hợp — chọn tài khoản chi tiết cấp cuối (vd ${accounts.find((a) => a.code !== tk && a.code.startsWith(tk) && a.isPosting)?.code ?? `${tk}1`})`
+    : '';
   const save = useMutation({
     // Các công tắc không còn hiện trên màn: giữ nguyên giá trị đang có; loại mới mặc định hàng của mình, bán được, theo dõi hạn dùng.
     mutationFn: () => api.put(`/api/v1/warehouse-types/${encodeURIComponent((v.code ?? '').trim().toUpperCase())}`, {
       name: v.name ?? '', purpose: v.purpose ?? '', canSell: value.isNew ? true : Boolean(value.canSell), owned: value.isNew ? true : value.owned !== false,
       trackExpiry: value.isNew ? true : Boolean(value.trackExpiry), accountPrefix: v.accountPrefix ?? '', isActive: true,
     }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['warehouse-types'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); onSaved?.((v.code ?? '').trim().toUpperCase()); onClose(); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['warehouse-types'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); onSaved?.((v.code ?? '').trim().toUpperCase()); if (value.isNew) onClose(); else viewAgain[1](); },
   });
   return (
-    <Modal title="Loại kho" onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+    <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title={value.isNew ? 'Thêm loại kho' : `Loại kho ${value.code} - ${value.name ?? ''}`} onClose={onClose}
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(tkLoi)} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label="Mã (*)" tip={value.isSystem ? 'Loại gốc — không đổi mã' : 'Chữ in hoa / số, 2–12 ký tự'}>
         <input className="input mono" maxLength={12} value={v.code ?? ''} disabled={!value.isNew} autoFocus onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })} />
       </Field>
       <Field label="Tên loại kho (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Công dụng" full><input className="input" value={v.purpose ?? ''} onChange={(e) => set({ purpose: e.target.value })} /></Field>
-      <Field label="TK kho" tip="Mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này, ưu tiên hơn TK kho của Quy tắc hạch toán. Chỉ chọn tài khoản chi tiết. Trống = theo Quy tắc hạch toán">
+      <Field label="TK kho" tip="Mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này, ưu tiên hơn TK kho của Tài khoản ngầm định. Chỉ chọn tài khoản chi tiết. Trống = theo Tài khoản ngầm định">
         <AccountPicker postingOnly value={v.accountPrefix ?? ''} placeholder="Trống = ngầm định" onChange={(c) => set({ accountPrefix: c })} />
       </Field>
+      {tkLoi && <div className="alert alert-bad full">{tkLoi}</div>}
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
   );

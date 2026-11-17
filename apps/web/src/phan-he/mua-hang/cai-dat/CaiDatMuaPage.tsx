@@ -115,7 +115,7 @@ export function CaiDatMuaPage() {
           </section>
           {/* [2026-11-15 Nguyễn Văn Thủy] tài khoản chỉ khai ở Quy tắc hạch toán; ở đây chỉ xem (đóng góp) */}
           <section className="blk blk-green">
-            <header><div><b>④ Tài khoản hạch toán</b><span>Theo <a href="/cau-hinh/quy-tac-hach-toan">Quy tắc hạch toán</a> (nghiệp vụ Mua hàng).</span></div></header>
+            <header><div><b>④ Tài khoản hạch toán</b><span>Theo <a href="/cau-hinh/quy-tac-hach-toan">Tài khoản ngầm định</a> (nghiệp vụ Mua hàng).</span></div></header>
             <div className="blk-body">
               <table className="mh-mini"><thead><tr><th>Khoản</th><th style={{ width: 120 }}>Đang dùng</th></tr></thead><tbody>
                 {Object.entries(ACC_LABEL).map(([k, l]) => <tr key={k}><td>{l}</td><td className="mono">{s.resolvedAccounts[k]}</td></tr>)}

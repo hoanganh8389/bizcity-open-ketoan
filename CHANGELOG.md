@@ -12,6 +12,79 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chặn bán quá tồn: máy bán chặn cứng, phiếu bán nhập tay theo công tắc (phiếu NT-BH-021) <!-- [2026-11-16 08:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 (đóng góp) -->
+
+- **Thêm:** module `pos` kiểm tồn khi nhận đơn bán / đơn đổi: cộng số xuất theo mã (quy ĐVT nhỏ nhất, gồm quà / bill Z), so với tồn cửa hàng (`bizcity_read.stock_on_hand`, mỗi shop một kho); thiếu → `VALIDATION_ERROR` lý do `POS_STOCK_SHORT` kèm `items: [{ sku, need, have }]`, không ghi đơn, không chứng từ. Khoá chi nhánh × mã tới hết giao dịch: hai máy cùng bán một mã chạy nối tiếp.
+- **Thêm:** đơn bán dự phòng lúc mất mạng (`offlineCreatedAt`) gửi bù mà thiếu tồn vẫn nhận (hàng đã giao), đơn mang `stockShortOffline`; BH13 Đơn bán máy POS có cột "Quá tồn (mất mạng)" và ô lọc (`GET /api/v1/m/pos/admin/orders?stockShort=1`).
+- **Thêm:** module `phieu-ban` (manifest 0.2.0) khoá cấu hình `bizcity.phieu_ban.block_negative_stock` (mặc định tắt = chỉ cảnh báo như trước), đổi ở BH17 Cài đặt bán hàng; bật thì duyệt phiếu bán xuất quá tồn của kho trên phiếu (tồn hiện tại) bị chặn `PHIEU_BAN_STOCK_SHORT`.
+- **Thêm:** `bizcity_errors@1` 1.12.0-draft: `POS_STOCK_SHORT`, `PHIEU_BAN_STOCK_SHORT`.
+- **Đổi:** test bán hàng cũ (NT-BH-003 … 020) nhập tồn trước khi bán (`apps/api/test/pos-nhap-ton.ts`).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** tồn đầu của mọi cửa hàng phải có trong phần mềm kế toán trước khi dùng máy bán (không có tồn thì không bán được).
+
+### Mã màn ở mọi menu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** mã màn (MH11, DM10, ACC41…) hiện nhỏ cạnh tên ở hàng thẻ của nhóm (dưới thanh thẻ), menu điện thoại và bảng Thêm nhanh — cùng với menu xổ bên trái.
+
+### Hay dùng lên thanh trên; bỏ Tài khoản ngầm định khỏi Bán hàng <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** mục **Hay dùng** chuyển từ menu trái lên thanh trên (cạnh Tổng quan / Báo cáo): rê chuột xổ danh sách màn đã ghim + màn mở nhiều (12 mục), có "Hay dùng trang này" / "Bỏ ghim trang này". Menu trái chỉ còn Thêm nhanh và Phân hệ (điện thoại giữ như cũ).
+- **Đổi:** bỏ Tài khoản ngầm định khỏi menu Bán hàng (Cài đặt) và sơ đồ Bán hàng v2 — chỉ ở Danh mục.
+
+### Tạm ẩn menu Hoá đơn từ cơ quan thuế <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** tạm ẩn **THUE01 Hoá đơn từ cơ quan thuế** khỏi menu Thuế, menu Mua hàng (nhóm Hoá đơn đầu vào) và sơ đồ Mua hàng v2 — đã có Xử lý hoá đơn đầu vào (MH22). Màn vẫn mở được bằng đường dẫn `/thue/hoa-don-co-quan-thue`.
+
+### DM10 Quản lý mặt hàng: khung Nhóm hàng co giãn, thu gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** khung lọc Nhóm hàng bên trái kéo mép phải để giãn / co (160–700px), nút « thu gọn thành dải dọc "» Nhóm hàng" (tô màu khi đang lọc nhóm), bấm để mở lại; nhớ theo trình duyệt.
+
+### Mua hàng / Bán hàng: sơ đồ rút gọn v2 mặc định <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** vào Quy trình Mua hàng / Bán hàng mở **sơ đồ rút gọn v2** (thẻ theo bước như Danh mục: bước làm lần lượt, cuối rẽ ra việc làm song song; mỗi thẻ liệt kê màn, lọc theo quyền). Bán hàng bổ sung đủ: khai báo, giá & khuyến mại, bán hàng / máy POS / ca bán, thu tiền & công nợ, trả lại, doanh số, công nợ phải thu, thuế đầu ra. Luồng chi tiết vẫn mở bằng nút.
+- **Thêm:** Mua hàng giữ **sơ đồ rút gọn v1** (icon cũ) — nút "Sơ đồ rút gọn v1" / `?xem=rut-gon-v1`. `SoDoNhomBuoc.items` cho thẻ khai màn thẳng.
+
+### Danh mục: bỏ Luồng chi tiết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Bỏ:** trang Quy trình Danh mục không còn nút / màn **Luồng chi tiết** (gỡ `phan-he/danh-muc/QuyTrinhDanhMuc.tsx`); chỉ còn sơ đồ khai báo theo thứ tự. `?xem=chi-tiet` cũ về sơ đồ.
+
+### ACC41 Tài khoản ngầm định: chế độ Gọn <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** màn ACC41 đổi tên "Quy tắc hạch toán" → **Tài khoản ngầm định** ở menu, sơ đồ, tiêu đề. ACC41 mở ở chế độ **Gọn**: chọn Loại chứng từ, tìm kiếm, bảng Loại · TK Nợ · TK Có · Sửa; Sửa mở hộp Tên cột · Lọc tài khoản (đầu số được chọn) · TK ngầm định. Nút **Chi tiết** chuyển sang màn khung Nợ / Có, nguồn tài khoản, xem thử bút toán như cũ (nhớ theo trình duyệt).
+
+### Quay về dữ liệu gốc phải nhập mật khẩu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** mọi nút **Quay về dữ liệu gốc** (từng danh mục, toàn bộ, sơ đồ / cơ cấu tổ chức) hỏi mật khẩu trước khi chạy thật; máy chủ kiểm (`RESTORE_DEFAULT_PASSWORD`, không đặt thì dùng `CATALOG_WIPE_PASSWORD`). Xem trước vẫn không cần mật khẩu. API `default-data/*/restore` và `org-units/restore-defaults` nhận thêm `password`.
+
+### Thùng rác chung cho danh mục: Xoá / Thùng rác / Xoá hết <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** mọi màn danh mục (Biểu thuế, Đơn vị tính, Hình thức thanh toán, Tài khoản ngân hàng, Hệ thống tài khoản, Khoản mục chi phí, Mục thu/chi, Hợp đồng, Vụ việc, Công trình, Nhân viên, Nguồn vốn, Mục đích sử dụng, Nhóm CCDC, Khách hàng, NCC, Nhóm KH/NCC, Loại tài sản, Bảng giá, Mặt hàng, Nhóm hàng) có nút **Xoá** (vào thùng rác, lưu nguyên dòng kể cả item_id), **Thùng rác** (Khôi phục / Xoá vĩnh viễn từng dòng, Khôi phục hết, Xoá hết vĩnh viễn) và **Xoá hết** cả danh mục. Xoá hết / Xoá hết vĩnh viễn cần mật khẩu (`CATALOG_WIPE_PASSWORD`). Dòng đang được chứng từ / sổ dùng thì không xoá được, báo lại.
+- **Thêm:** mặt hàng khôi phục giữ đúng item_id (mở lại mã); xoá vĩnh viễn gỡ cả item_id, mã, phân loại nếu chưa có chứng từ dùng (có chứng từ thì giữ định danh ở trạng thái ngừng dùng).
+- **Nâng cấp cần làm:** migration `0146_thung_rac_danh_muc.sql` (bảng `catalog_trash`, cờ phiên `bizcity.catalog_purge` cho chốt bất biến mặt hàng). API `/api/v1/catalog-trash` (action `core.catalog-trash.trash` / `.restore` / `.purge`).
+
+### Danh mục gọn: Quy trình theo nhóm, thanh nút chung, cột mặc định (UX đợt 15) <!-- [2026-11-16 kiennt] (đóng góp) -->
+
+- **Đổi:** trang Quy trình của Danh mục vẽ theo nhóm chức năng của menu (Tổ chức → Đối tượng → Tài khoản, ngân hàng → Chi phí · Mặt hàng · Tài sản · Thuế suất); Biểu thuế tách thành nhóm menu Thuế suất.
+- **Đổi:** các màn danh mục: nút chức năng lề phải, cao 28px, In cạnh Xuất, bỏ nút Sửa (bấm đúp mở chi tiết) và dòng "Đã nạp lúc"; bỏ thanh lọc trên, lọc ở từng cột; cột mặc định gọn ở DM04, DM12, DM13, DM15; "Trả về mặc định" lên đầu danh sách cột.
+- **Đổi:** Nhóm hàng (DM11): kiểu cây – chi tiết (cây bên trái; bên phải đường dẫn, số liệu, cấu trúc mã hàng, nhóm con bấm để đi xuống).
+- **Đổi:** Mặt hàng (DM10): In tem gom vào một bảng (phạm vi, mẫu tem, số tem); cột Nhóm hàng hiện tên nhóm cuối, cột mặc định gọn.
+- **Đổi:** Khách hàng / NCC: Thuộc đơn vị cha chỉ chọn trong cùng nhóm; Mobile + Telephone gộp ô Di động (Nhân viên cũng vậy). Loại kho: một danh sách, Nghiệp vụ dùng loại kho vào ngăn Hướng dẫn, hộp thoại mở ở chế độ xem, TK kho phải là tài khoản cấp cuối.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (không đổi API, không migration). Loại kho đang để TK tổng hợp (⚠) phải chọn lại TK chi tiết mới Ghi được.
+
+### Điểm thành viên: hết hạn hằng ngày, nạp số dư cũ, màn BH19 (phiếu NT-BH-020 bước 3) <!-- [2026-11-16 12:00 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 3 (đóng góp) -->
+
+- **Thêm:** module `loyalty` nghe `bizcity.clock.daily` — lô điểm quá hạn còn điểm ghi dòng hết hạn (mỗi lô một lần).
+- **Thêm:** `POST /api/v1/m/loyalty/opening` (quyền `catalog:write`) — nạp số dư điểm cũ từ website một lần theo khách: lô tích = tổng đã tích + dòng đổi = phần đã dùng (giữ đúng số dư và hạng); khách đã nạp bỏ qua; dòng sai trả lý do.
+- **Thêm:** `GET /api/v1/m/loyalty/report` và màn **BH19 Điểm thành viên** (Phần riêng, chỉ xem, quyền `loyalty:read`): phát sinh trong kỳ theo cửa hàng × loại, số dư theo hạng, danh sách khách; hướng dẫn `docs/huong-dan/loyalty-diem.md`.
+- **Thay đổi định khoản:** không — điểm không hạch toán lúc tích / hết hạn.
+
+### Máy bán POS: đổi điểm lấy quà / voucher, dùng voucher (phiếu NT-BH-020 bước 2) <!-- [2026-11-16 09:00 AM Võ Hoàng] LOYALTY — NT-BH-020 bước 2 (đóng góp) -->
+
+- **Thêm:** module `loyalty` (manifest 0.2.0) — bảng `vouchers` (migration module 0002), action đọc `loyalty.redeem.quote` (module `pos` gọi chéo), `GET /api/v1/m/loyalty/vouchers/:code`; khi nhận `pos.order.recorded`: trừ điểm đổi theo lô, phát voucher, đánh dấu voucher đã dùng.
+- **Đổi:** module `pos` nhận đơn có `loyalty.redeem` (đổi điểm, cần khách) và mã voucher đổi điểm trong `promotionSelections` (một mã / đơn); quà đổi điểm (`giftKey lp:…`) là dòng quà 0đ; tiền giảm voucher chia vào dòng theo thành tiền; đơn trả máy có `loyalty` (điểm tích / đổi / còn, voucher phát) và `usedVouchers`. Khuyến mại kiểu plugin website (chọn dòng, hạ số quà) vẫn chặn.
+- **Thay đổi định khoản:** không đổi luật — voucher là tiền giảm trên dòng chứng từ bán (doanh thu ghi sau giảm, như mọi khoản giảm dòng); quà đổi điểm là dòng quà 0đ (giá vốn hàng tặng).
+
 ### Không bật hộp "Từ chối đúng luật" vì số liệu phụ <!-- [2026-11-16 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Sửa:** màn Quy trình Bán hàng gọi số liệu máy POS (đơn chờ QR, ca chưa đóng) và thanh Việc cần làm gọi việc mua hàng / cảnh báo / hàng đợi: tài khoản không có quyền nguồn đó thì bỏ qua im lặng, không bật hộp Mã tra cứu FORBIDDEN. Thêm `api.getQuiet` cho lời gọi phụ.

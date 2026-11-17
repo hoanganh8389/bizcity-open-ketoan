@@ -11,7 +11,7 @@ import type { MenuItem } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { SoDoNhom } from './SoDoNhom';
-import { SO_DO } from '../../layout/so-do-nhom';
+import { SO_DO, SO_DO_V2 } from '../../layout/so-do-nhom';
 import { DANG_PHAT_TRIEN } from '../../layout/menu-gon';
 import { MODULES, isSection, moduleMenu } from '../../layout/menu';
 import { useAppMenu } from '../../layout/useAppMenu';
@@ -71,7 +71,10 @@ export function ModuleHomePage() {
 }
 
 /** Nhóm mở thẳng Luồng chi tiết khi vào trang Quy trình. */
-const FLOW_FIRST = ['mua-hang', 'ban-hang'];
+// [2026-11-17 Nguyễn Văn Thủy] Mua hàng / Bán hàng vào mở sơ đồ rút gọn V2; Luồng chi tiết là nút phụ (đóng góp)
+const FLOW_FIRST: string[] = [];
+/** Nhóm còn giữ sơ đồ rút gọn V1 để mở lại (?xem=rut-gon-v1). */
+const CO_V1 = ['mua-hang'];
 
 export function GroupHomePage() {
   const { key = '' } = useParams();
@@ -87,12 +90,14 @@ export function GroupHomePage() {
   // [2026-11-15 Nguyễn Văn Thủy] Mua hàng / Bán hàng: vào là mở Luồng chi tiết; sơ đồ rút gọn là nút phụ (?xem=rut-gon) (đóng góp)
   const flowFirst = Boolean(Flow) && FLOW_FIRST.includes(g.key);
   const xem = sp.get('xem') ?? (flowFirst ? 'chi-tiet' : null);
-  const soDo = SO_DO[g.key];
+  const soDo = xem === 'rut-gon-v1' ? SO_DO[g.key] : SO_DO_V2[g.key] ?? SO_DO[g.key];
+  const laV1 = xem === 'rut-gon-v1';
   const helpKey = Flow ? `${g.key}-quy-trinh` : 'trang-chu';
   const nutPhu = (
     <>
       {Flow && !flowFirst && <button type="button" onClick={() => setSp({ xem: 'chi-tiet' }, { replace: true })} title="Sơ đồ đầy đủ: từng bước phần mềm tự làm gì, việc cần làm"><Workflow size={16} /> Luồng chi tiết</button>}
       {flowFirst && xem !== 'chi-tiet' && <button type="button" onClick={() => setSp({}, { replace: true })} title="Sơ đồ đầy đủ: từng bước phần mềm tự làm gì, việc cần làm"><Workflow size={16} /> Luồng chi tiết</button>}
+      {CO_V1.includes(g.key) && SO_DO_V2[g.key] && <button type="button" onClick={() => setSp(laV1 ? {} : { xem: 'rut-gon-v1' }, { replace: true })} title={laV1 ? 'Sơ đồ thẻ theo bước (mặc định)' : 'Sơ đồ icon kiểu cũ'}><LayoutGrid size={16} /> {laV1 ? 'Sơ đồ rút gọn v2' : 'Sơ đồ rút gọn v1'}</button>}
       {g.module && <button type="button" onClick={() => setSp({ xem: 'tru-cot' }, { replace: true })} title="Nhóm này dựa vào trụ cột nào của Core và hôm nay đạt tới đâu"><Columns3 size={16} /> Trụ cột</button>}
       <button type="button" onClick={() => setHelp(true)}><HelpCircle size={16} /> Hướng dẫn</button>
     </>
@@ -115,7 +120,7 @@ export function GroupHomePage() {
         : soDo ? (
           // Sơ đồ bên trái, báo cáo hay dùng của nhóm bên phải (bố cục trang Quy trình phổ biến).
           <div className={`sd-layout${g.reports.length || soDo.reports?.length ? "" : " no-bc"}`}>
-            <div className="sd-main"><SoDoNhom soDo={soDo} canOpen={(p) => seen.has(p.split('?')[0]!)} extra={nutPhu} /></div>
+            <div className="sd-main"><SoDoNhom soDo={soDo} canOpen={(p) => seen.has(p.split('?')[0]!)} extra={nutPhu} sections={g.sections} /></div>
             {(soDo.reports?.length || g.reports.length > 0) && (
               <aside className="card sd-bc">
                 <b>Báo cáo</b>

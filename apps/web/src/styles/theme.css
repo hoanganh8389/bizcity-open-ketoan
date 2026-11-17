@@ -453,6 +453,7 @@ table.dgrid-table tbody tr:nth-child(even) td { background: #fcfdfe; }
   position: absolute; right: 0; top: 30px; z-index: 30; min-width: 240px; max-height: 360px; overflow: auto;
   display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: var(--surface); border-radius: 8px; box-shadow: var(--shadow-pop);
 }
+.dgrid-chooser-reset { position: sticky; top: -8px; z-index: 1; flex: none; align-self: stretch; margin: -8px -10px 4px; border-width: 0 0 1px; border-radius: 8px 8px 0 0; background: var(--surface); }
 @media print {
   .dgrid-tools, tr.dgrid-filter, .dgrid-resize { display: none !important; }
   table.dgrid-table { width: 100%; }
@@ -572,6 +573,28 @@ td .picker > .input, .modal-body .picker > .input { width: 100%; }
 
 /* Thanh nút màn danh mục và nhóm ô trong form */
 .catalog-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--line-soft); background: #fbfcfd; }
+/* Bố cục danh mục: phần chọn kiểu xem bên trái, nút chức năng lề phải, nút cao 28px. */
+.catalog-toolbar.canh-phai { align-items: center; }
+.catalog-toolbar.canh-phai .btn { height: 28px; }
+/* Nhóm nút chọn kiểu xem (Danh sách / Cây…, Cây / Sơ đồ… ở DM16) nằm bên trái thanh, không tự dạt sang phải. */
+.catalog-toolbar .cc-xem { margin-left: 0; display: inline-flex; gap: 4px; flex-wrap: wrap; }
+/* In tem (DM10): một nút mở bảng nhỏ chọn phạm vi, số tem, mẫu. */
+.in-tem { position: relative; display: inline-flex; }
+.in-tem-pop { position: absolute; z-index: 40; top: calc(100% + 4px); right: 0; width: 290px; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 20px rgba(15, 35, 60, .18); font-size: 13px; }
+.in-tem-pop[hidden] { display: none; }
+.in-tem-pop .radio { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.in-tem-so { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.in-tem-so .input { width: 72px; height: 28px; }
+.in-tem-so select.input { width: 160px; }
+.in-tem-foot .btn { height: 28px; }
+.in-tem-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+/* Phần riêng của màn trong ngăn Hướng dẫn (vd Nghiệp vụ dùng loại kho). */
+.help-extra { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); overflow-x: auto; }
+.help-extra h3 { margin: 0 0 4px; font-size: 14px; }
+.help-extra > p { margin: 0 0 6px; font-size: 12.5px; }
+.help-extra > div { padding: 0 !important; }
+/* Nút In đã nằm trên thanh công cụ danh mục (cạnh Xuất): ẩn nút In ở tiêu đề trang của thẻ đó. */
+.ws-panel:has(.catalog-toolbar.canh-phai) .page-header .nut-in-man { display: none; }
 .fgroup { grid-column: 1 / -1; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px 10px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
 .fgroup > legend { padding: 0 6px; font-weight: 600; font-size: 13px; color: var(--ink-700); }
 .fgroup .full { grid-column: 1 / -1; }
@@ -1755,6 +1778,9 @@ table.dgrid-table thead th { padding-top: 4px; padding-bottom: 4px; }
 .gon-fly-item > span { flex: 1; min-width: 0; }
 .gon-fly-item:hover { background: var(--brand-50); text-decoration: none; }
 .gon-fly-item.active { background: var(--brand-100); color: var(--brand-800); font-weight: 600; }
+.gon-fly-code { flex: none; font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--ink-500, #8a96a3); font-weight: 400; }
+/* [2026-11-17 kiennt] mã màn trong menu bay ra: nhỏ, nhạt (đóng góp) */
+.gon-fly .gon-fly-code { font-size: 10.5px; opacity: .7; }
 .gon-fly-item.disabled { color: var(--ink-400, #9aa7b4); cursor: default; }
 .gon-fly-item.disabled:hover { background: none; }
 .gon-fly-item .pin-btn { display: none; flex: none; align-items: center; padding: 2px; border: 0; border-radius: 3px; background: none; color: var(--ink-400, #9aa7b4); cursor: pointer; }
@@ -1818,6 +1844,42 @@ table.dgrid-table thead th { padding-top: 4px; padding-bottom: 4px; }
 .sd-links a, .sd-links button { display: inline-flex; align-items: center; gap: 7px; padding: 3px 0; border: 0; background: none; color: var(--ink, inherit); font: inherit; font-size: 13.5px; cursor: pointer; }
 .sd-links a:hover, .sd-links button:hover { color: var(--brand-800); text-decoration: none; }
 @media (max-width: 760px) { .sd-rows { --sd-n: 2 !important; } .sd-line-h, .sd-bus, .sd-rows.two .sd-node::after, .sd-rows.two .sd-node::before { display: none; } .sd-row + .sd-row { margin-top: 24px; } }
+/* Sơ đồ theo nhóm chức năng (Danh mục): thẻ nhóm nối mũi tên, cuối chuỗi rẽ ra các nhóm làm song song. */
+.sdn-wrap { container-type: inline-size; max-width: 1180px; margin: 24px auto 0; }
+/* --sdn-y: độ cao tâm hàng tiêu đề thẻ; mũi tên và nhánh rẽ nối ở độ cao này để các thẻ thẳng mép trên. */
+.sdn { --sdn-gap: 26px; --sdn-y: 24px; display: flex; align-items: flex-start; }
+.sdn-card { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--brand-600); border-radius: 8px; box-shadow: 0 2px 6px rgba(14, 42, 69, .08); }
+.sdn-card header { display: flex; align-items: flex-start; gap: 7px; padding: 10px 12px 4px; color: var(--brand-800); }
+.sdn-card header > svg { flex: none; margin-top: 3px; }
+.sdn-card header b { padding-top: 2px; font-size: 14px; line-height: 1.25; }
+.sdn-so { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-600); color: #fff; font-size: 12px; font-weight: 700; }
+.sdn-card p { margin: 0; padding: 0 12px 4px 41px; color: var(--ink-500, #667); font-size: 12px; line-height: 1.35; }
+.sdn-items { display: flex; flex-direction: column; padding: 4px 6px 8px; }
+.sdn-items a { display: flex; align-items: flex-start; gap: 4px; padding: 5px 6px; border-radius: 5px; color: var(--ink-900, inherit); font-size: 13px; line-height: 1.3; }
+.sdn-items a svg { flex: none; margin-top: 2px; color: var(--brand-600); }
+.sdn-items a:hover { background: var(--brand-50); color: var(--brand-800); text-decoration: none; }
+.sdn-arrow { position: relative; flex: 0 0 var(--sdn-gap); height: 0; margin-top: calc(var(--sdn-y) - 1px); border-top: 2px solid var(--brand-600); }
+.sdn-arrow::after { content: ''; position: absolute; right: -1px; top: -6px; border: 5px solid transparent; border-left: 7px solid var(--brand-600); border-right: 0; }
+.sdn-arrow.re::after { display: none; }
+.sdn-nhanh { flex: 1 1 0; min-width: 0; position: relative; display: flex; flex-direction: column; gap: 12px; }
+.sdn-nhanh.re { padding-left: 22px; }
+.sdn-song-song { position: absolute; left: 22px; bottom: 100%; padding-bottom: 3px; color: var(--ink-500, #667); font-size: 11.5px; font-style: italic; }
+.sdn-leaf { position: relative; display: flex; }
+.sdn-nhanh.re .sdn-leaf::before { content: ''; position: absolute; left: -22px; top: -6px; bottom: -6px; border-left: 2px solid var(--brand-600); }
+.sdn-nhanh.re .sdn-leaf:first-of-type::before { top: calc(var(--sdn-y) - 1px); }
+.sdn-nhanh.re .sdn-leaf:last-child::before { bottom: auto; height: calc(var(--sdn-y) + 7px); }
+.sdn-nhanh.re .sdn-leaf::after { content: ''; position: absolute; left: -22px; top: calc(var(--sdn-y) - 1px); width: 14px; border-top: 2px solid var(--brand-600); }
+.sdn-nhanh.re .sdn-leaf > .sdn-card::before { content: ''; position: absolute; left: -8px; top: calc(var(--sdn-y) - 6px); border: 5px solid transparent; border-left: 7px solid var(--brand-600); border-right: 0; }
+.sdn-leaf > .sdn-card { position: relative; }
+/* Khung hẹp: xếp dọc, mũi tên chỉ xuống, nhánh thành cột thẻ. */
+@container (max-width: 640px) {
+  .sdn { flex-direction: column; align-items: stretch; }
+  .sdn-arrow { flex: 0 0 22px; align-self: center; width: 0; height: auto; margin-top: 0; border-top: 0; border-left: 2px solid var(--brand-600); }
+  .sdn-arrow::after, .sdn-arrow.re::after { display: block; right: auto; top: auto; left: -6px; bottom: -1px; border: 5px solid transparent; border-top: 7px solid var(--brand-600); border-bottom: 0; }
+  .sdn-nhanh.re { padding-left: 0; padding-top: 18px; }
+  .sdn-song-song { left: 0; right: 0; top: 0; bottom: auto; text-align: center; }
+  .sdn-nhanh.re .sdn-leaf::before, .sdn-nhanh.re .sdn-leaf::after, .sdn-nhanh.re .sdn-leaf > .sdn-card::before { display: none; }
+}
 
 /* ---------------- Thanh mép phải: icon cố định, bảng mở khi cần ---------------- */
 :root { --rail-w: 44px; }
@@ -2054,3 +2116,12 @@ td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .mnav-group-head.cur { background: #c7dcf5; }
 .mnav-body .gd-hay { margin-bottom: 6px; }
 .mnav-item.top { justify-content: flex-start; margin-top: 6px; }
+
+/* [2026-11-17 kiennt] Hộp thoại đang xem: bấm vào ô khoá thì nhắc bấm Sửa, nút Sửa nháy (đóng góp) */
+.modal-nhac-sua { margin-right: auto; padding: 4px 10px; border-radius: 6px; background: #fff6d9; color: #7a5a00; font-size: 13px; }
+.modal-foot .btn.nhay { animation: nhay-sua .5s ease 2; }
+@keyframes nhay-sua { 50% { box-shadow: 0 0 0 4px var(--brand-100, #e3eef8); transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .modal-foot .btn.nhay { animation: none; } }
+/* [2026-11-17 kiennt] "Ghi và thoát" luôn đứng ngay trước nút Ghi (nút chính của form), dù chân form có phần bên trái (Theo dõi, Tạo bởi…) (đóng góp) */
+.modal-foot > .ghi-thoat { order: 1; }
+.modal-foot > .btn-primary:not(.ghi-thoat), .modal-foot > .btn-primary:not(.ghi-thoat) ~ * { order: 2; }

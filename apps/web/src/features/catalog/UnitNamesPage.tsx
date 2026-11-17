@@ -28,10 +28,9 @@ export function UnitNamesPage() {
   const canWrite = can('catalog:write');
   const [editing, setEditing] = useState<(Partial<UnitName> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<UnitName | null>(null);
-  const [scope, setScope] = useState<'all' | 'used' | 'unused'>('all');
   const exportRef = useRef<(() => void) | null>(null);
   const q = useUnitNames();
-  const rows = (q.data ?? []).filter((u) => scope === 'all' || (scope === 'used' ? u.products > 0 : u.products === 0));
+  const rows = q.data ?? [];
   const del = useMutation({ mutationFn: (id: string) => api.delete(`/api/v1/unit-names/${id}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['unit-names'] }); } });
 
   return (
@@ -39,13 +38,10 @@ export function UnitNamesPage() {
       <PageHeader title="Danh mục đơn vị tính" code="DM15" helpKey="danh-muc-dvt"
         subtitle="Tên ĐVT dùng chung (Hộp, Lốc, Lốc_4, Thùng…) — chỉ là tên, tỉ lệ quy đổi khai ở từng mặt hàng; khai ĐVT mới ở mặt hàng thì tự thêm vào đây" />
       <div className="card">
-        <div className="row" style={{ gap: 8, alignItems: 'center', padding: '6px 8px' }}>
-          <div className="tabs" style={{ margin: 0 }}>
-            {([['all', 'Tất cả'], ['used', 'Đang có mặt hàng dùng'], ['unused', 'Chưa dùng']] as const).map(([k, l]) => <button key={k} className={`tab ${scope === k ? 'active' : ''}`} onClick={() => setScope(k)}>{l}</button>)}
-          </div>
-          <span className="muted">{rows.length} đơn vị tính</span>
-        </div>
+        {/* [2026-11-16 kiennt] bỏ thẻ Tất cả / Đang có mặt hàng dùng / Chưa dùng: luôn hiện tất cả, lọc ở cột Số mặt hàng dùng (đóng góp) */}
         <CatalogToolbar
+          trash={{ catalog: 'unit-names', title: 'Đơn vị tính', sel: sel ? { key: String(sel.id), label: sel.name } : null }}
+          phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}
@@ -62,7 +58,7 @@ export function UnitNamesPage() {
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
           <DataGrid
-            storageKey="dm15"
+            storageKey="dm15-v2"
             exportName="don-vi-tinh"
             exportRef={exportRef}
             rows={rows}
@@ -75,12 +71,13 @@ export function UnitNamesPage() {
               { key: 'name', header: 'Đơn vị tính', width: 160, bold: true },
               { key: 'products', header: 'Số mặt hàng dùng', type: 'number', width: 120 },
               { key: 'isActive', header: 'Đang dùng', type: 'check', width: 80 },
-              { key: 'source', header: 'Nguồn', width: 190, value: (u) => SOURCE[u.source] },
-              { key: 'note', header: 'Ghi chú', width: 260 },
-              { key: 'createdBy', header: 'Người tạo', width: 170 },
-              { key: 'createdAt', header: 'Ngày tạo', width: 150, value: (u) => dt(u.createdAt) },
+              // [2026-11-16 kiennt] mặc định: ĐVT, Số mặt hàng dùng, Đang dùng, Người sửa, Ngày sửa, Ghi chú; Nguồn, Người tạo, Ngày tạo bật ở nút Cột (đóng góp)
               { key: 'updatedBy', header: 'Người sửa', width: 150 },
-              { key: 'updatedAt', header: 'Sửa lúc', width: 150, value: (u) => dt(u.updatedAt) },
+              { key: 'updatedAt', header: 'Ngày sửa', width: 150, value: (u) => dt(u.updatedAt) },
+              { key: 'note', header: 'Ghi chú', width: 260 },
+              { key: 'source', header: 'Nguồn', width: 190, hidden: true, value: (u) => SOURCE[u.source] },
+              { key: 'createdBy', header: 'Người tạo', width: 170, hidden: true },
+              { key: 'createdAt', header: 'Ngày tạo', width: 150, hidden: true, value: (u) => dt(u.createdAt) },
             ] satisfies Column<UnitName>[]}
           />
         )}

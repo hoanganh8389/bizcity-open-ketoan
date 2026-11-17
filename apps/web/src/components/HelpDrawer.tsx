@@ -5,7 +5,7 @@
  *   - Đổi thẻ: chọn thẻ khác trong danh sách. Thẻ mới: tạo thẻ trống gắn vào đây và mở trang soạn.
  *   - Sửa thẻ: mở trang Thẻ hướng dẫn (HT17) ở thẻ trình duyệt mới; quay lại tự tải nội dung mới.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { marked } from 'marked';
 import { getGuide } from '@/help/guides';
@@ -19,7 +19,8 @@ export const helpHtml = (c: { format: 'md' | 'html'; body?: string }) => (c.form
 const creating = new Set<string>(); // chống tạo trùng khi hiệu ứng chạy hai lần
 const titleOfMd = (md: string, key: string) => (md.match(/^#\s+(.+)$/m)?.[1] ?? key).trim();
 
-export function HelpDrawer({ guideKey, label, onClose }: { guideKey: string; label?: string; onClose: () => void }) {
+// [2026-11-16 kiennt] `extra`: phần riêng của màn hiện dưới thẻ hướng dẫn (vd bảng Nghiệp vụ dùng loại kho của DM18) (đóng góp)
+export function HelpDrawer({ guideKey, label, onClose, extra }: { guideKey: string; label?: string; onClose: () => void; extra?: ReactNode }) {
   const qc = useQueryClient();
   const place = useQuery({ queryKey: ['help', 'place', guideKey], queryFn: () => api.get<{ key: string; label: string; card: HelpCard | null }>('/api/v1/help/place', { key: guideKey }), refetchOnWindowFocus: true });
   const cards = useQuery({ queryKey: ['help', 'cards'], queryFn: () => api.get<HelpCard[]>('/api/v1/help/cards'), staleTime: 30_000 });
@@ -69,6 +70,7 @@ export function HelpDrawer({ guideKey, label, onClose }: { guideKey: string; lab
       {place.isLoading || busy ? <div className="muted">Đang tải…</div>
         : card ? <div className="doc help-doc" dangerouslySetInnerHTML={{ __html: html || '<p class="muted">Thẻ chưa có nội dung. Bấm Sửa thẻ để soạn.</p>' }} />
         : <div className="muted" style={{ padding: 8 }}>Màn này chưa có hướng dẫn. Chọn một thẻ có sẵn ở trên hoặc bấm <b>+ Thẻ mới</b>.</div>}
+      {extra}
       <div className="muted" style={{ fontSize: 11, marginTop: 12 }} title={guideKey}>Định danh: <span className="mono">{guideKey}</span></div>
     </Drawer>
   );

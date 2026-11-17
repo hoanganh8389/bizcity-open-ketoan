@@ -102,6 +102,8 @@ export interface DataGridProps<T> {
   viewRef?: { current: T[] };
   /** Lưới gọn trong form chi tiết: không thanh công cụ (số dòng, Xuất Excel, Cột), không hàng ô lọc, chữ và dòng nhỏ. */
   compact?: boolean;
+  /** [2026-11-17 kiennt] Báo khi ô lọc / phễu của bảng bật hoặc tắt — bảng dạng cây dùng để mở hết nhánh khi đang lọc (đóng góp) */
+  onFilterChange?: (active: boolean) => void;
 }
 
 type Display<T> = { kind: 'g'; key: string; label: ReactNode; count: number; level: number; open: boolean } | { kind: 'r'; r: T; i: number; level: number };
@@ -192,6 +194,9 @@ export function DataGrid<T>(p: DataGridProps<T>) {
   const chooserRef = useRef<HTMLDivElement>(null);
   /** Lọc nhanh theo giá trị: cột → tập chữ được giữ lại. */
   const [picks, setPicks] = useState<Record<string, Set<string>>>({});
+  const coLoc = Object.values(filters).some((v) => v.trim()) || Object.keys(picks).length > 0;
+  const onFilterChange = p.onFilterChange;
+  useEffect(() => { onFilterChange?.(coLoc); }, [coLoc, onFilterChange]);
   const [picker, setPicker] = useState<{ key: string; x: number; y: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const [groups, setGroups] = useState<string[]>([]);
@@ -437,10 +442,11 @@ export function DataGrid<T>(p: DataGridProps<T>) {
           <button className="btn btn-sm btn-ghost" onClick={() => setChooser((v) => !v)} title="Ẩn / hiện cột"><Columns3 size={14} /> Cột</button>
           {chooser && (
             <div className="dgrid-chooser-drop">
+              {/* [2026-11-16 kiennt] Trả về mặc định lên đầu, dính trên khi cuộn danh sách cột (đóng góp) */}
+              <button className="btn btn-sm dgrid-chooser-reset" onClick={() => setSaved({ widths: {}, hidden: [] })}>Trả về mặc định</button>
               {p.columns.map((c) => (
-                <label key={c.key} className="checkbox"><input type="checkbox" checked={!hiddenSet.has(c.key)} onChange={() => toggleCol(c)} /> {headerTitle(c)}{c.band ? <span className="muted"> ({c.band})</span> : null}</label>
+                <label key={c.key} className="checkbox"><input type="checkbox" checked={!hiddenSet.has(c.key)} onChange={() => toggleCol(c)} /> {typeof c.header === 'string' ? c.header : headerTitle(c)}{c.band ? <span className="muted"> ({c.band})</span> : null}</label>
               ))}
-              <button className="btn btn-sm" onClick={() => setSaved({ widths: {}, hidden: [] })}>Trả về mặc định</button>
             </div>
           )}
         </div>
@@ -602,7 +608,7 @@ export function DataGrid<T>(p: DataGridProps<T>) {
 }
 
 /** Hộp lọc nhanh: tích chọn các giá trị của cột (có ô tìm, chọn tất cả). */
-function ValuePicker({ x, y, values, selected, onApply, onClose }: { x: number; y: number; values: [string, number][]; selected?: Set<string>; onApply: (sel: Set<string> | null) => void; onClose: () => void }) {
+export function ValuePicker({ x, y, values, selected, onApply, onClose }: { x: number; y: number; values: [string, number][]; selected?: Set<string>; onApply: (sel: Set<string> | null) => void; onClose: () => void }) {
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Set<string>>(() => new Set(selected ?? values.map(([v]) => v)));
   const ref = useRef<HTMLDivElement>(null);

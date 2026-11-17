@@ -10,7 +10,7 @@
 | Màn hình | Máy bán POS React: khách → điểm, hạng; đổi điểm lấy quà / voucher; nhập mã voucher |
 | Bộ phận yêu cầu | Kế toán, kinh doanh (CRM) |
 | Ngày tạo | 15/11/2026 |
-| Trạng thái | Bước 1: Chờ nghiệm thu (kiểm 1, 3) · Bước 2, 3: Đã chốt, chưa làm |
+| Trạng thái | Chờ nghiệm thu (bước 1, 2, 3 — kiểm 1–6) |
 
 ## 1. Mục đích quản trị
 Phòng kế toán yêu cầu 4 việc: liên kết quản lý khách (CRM), **hạch toán / định khoản** điểm, quản lý quy đổi điểm ra quà, báo cáo đầy đủ. Hiện máy bán React hiện điểm / voucher bằng dữ liệu giả (không ghi sổ). Đợt này: sổ điểm thật — mỗi lần tích / đổi / hết hạn / điều chỉnh / hoàn là một dòng, lô điểm có hạn, đổi trừ lô cũ trước.
@@ -44,7 +44,7 @@ Thêm vào chính sách CN01: `DOIVC` (loại 6: 100 điểm đổi voucher gi�
 | Tình huống | Kết quả |
 |---|---|
 | Đơn 325.000 + đổi `DOIVC` | trừ 100 điểm: lô 1 hết 32, lô 2 trừ 68; tích +32 → số dư 39; voucher `TGS50-…` (mã in trên bill) còn hiệu lực 30 ngày |
-| Đơn sau 325.000 dùng voucher | khách trả 275.000; chứng từ bán ghi chiết khấu 50.000 (trước thuế 46.296, thuế 3.704); tích +27 (theo 275.000) → số dư 66; voucher chuyển "đã dùng" |
+| Đơn sau 325.000 dùng voucher | khách trả 275.000; chứng từ bán: dòng giảm 50.000 (trước thuế 46.296, thuế 3.704) → doanh thu 254.630, thuế 20.370; tích +27 (theo 275.000) → số dư 66; voucher chuyển "đã dùng" |
 | Dùng lại voucher đó | chặn: voucher đã dùng (ghi mã đơn đã dùng) |
 | Đơn 325.000 + đổi `DOIQUA` | dòng quà `100045001Z` 0đ (dòng quà trên chứng từ bán, bill Z vì không gửi thuế); trừ 50, tích +32 → số dư 48 |
 | Đổi khi không đủ điểm / sai hạng / khách lẻ | chặn trước khi lập đơn, nói rõ lý do |
@@ -92,6 +92,32 @@ Ghi chú:
 - Website: `tgs_pos` `TGS_POS_Loyalty_Push` đẩy mỗi giờ và sau khi lưu chính sách / cài đặt. Đọc chính sách qua REST `tgs-loyalty/v1/pos-program` có ký `TGS_POS_SSO_SECRET`; chưa khai khoá (máy thử) thì dựng thẳng bằng hàm của plugin.
 - Bộ kiểm: `module check loyalty` ĐẠT, typecheck 0 lỗi. Ba chỗ chia điểm (không phải tiền) gom về `floorDiv` để luật làm tròn tiền không báo nhầm.
 
+**Bước 2 — 16/11/2026, nhánh `feat/nt-bh-020-buoc-2`.** Test `apps/api/test/nt-bh-020-pos-doi-diem.test.ts` (6/6), `modules/loyalty/test/redeem.test.ts` (6/6), máy bán `loyaltyVoucher.test.ts` (3/3).
+
+| Tình huống | Mong đợi | Phần mềm (test + chạy thật Docker demo, khách `0909200001`) |
+|---|---|---|
+| đổi `DOIVC` | −100 (lô 1 hết 32, lô 2 −68), +32 → 39, voucher `TGS50-…` | test: đúng từng lô. Chạy thật `HD2611000031` → 39, voucher `TGS50-FEEBEE37` in trên đơn |
+| dùng voucher | trả 275.000; 254.630 + 20.370; +27 → 66; voucher đã dùng | test: chứng từ dòng `amountBeforeTax` 254.630, `discount` 46.296, thuế 20.370. Chạy thật `HD2611000032`: đã ghi sổ — Nợ 1111 275.000; Có 51111 254.630, 33311 20.370 → 66; voucher "used" ở `HD2611000032` |
+| dùng lại | chặn, nêu đơn đã dùng | "Voucher TGS50-FEEBEE37 đã dùng ở đơn HD2611000032" (400) |
+| đổi `DOIQUA` | dòng quà 0đ (bill Z), −50 +32 → 48 | test: dòng quà `isGift`, `zBill`; quà sai số lượng chặn. Chạy thật `HD2611000033` + `HD2611000033Z` → 48 |
+| không đủ điểm / khách lẻ | chặn, nêu lý do | "Không đủ điểm: cần 200, khách có 48 điểm dùng được"; khách lẻ: "Đổi điểm phải chọn khách thành viên" |
+
+Ghi chú:
+- Sổ cái ghi doanh thu **sau giảm** (Có 51111 254.630): tiền giảm 46.296 nằm ở trường `discount` của dòng chứng từ, như mọi khoản giảm dòng hiện nay — không tách dòng tài khoản chiết khấu riêng. Muốn tách 5211 thì là việc của luật định khoản Core.
+- Chạy thật bước 2 ở mức máy chủ (chính sách đổi điểm đẩy bằng khoá quản trị): website LocalWP lúc chạy bị dừng (502), phần website đẩy chính sách đã kiểm ở bước 1.
+- Bộ kiểm: `module check loyalty` / `pos` ĐẠT, typecheck 0 lỗi. Test NT-BH-004 sửa ca "có CTKM": mã coupon giờ là voucher đổi điểm, ca chặn đổi sang khuyến mại kiểu plugin (`row`).
+
+**Bước 3 — 16/11/2026, nhánh `feat/nt-bh-020-buoc-3`** (thiết kế `tgs_pos_react/docs/module-pos/70-TICH-DIEM.md` §5). Test `apps/api/test/nt-bh-020-pos-het-han.test.ts` (3/3), `modules/loyalty/test/opening.test.ts` (5/5).
+
+| Kiểm | Mong đợi | Phần mềm |
+|---|---|---|
+| 4 hết hạn | lô 100 hết hạn 10/11/2026, đã dùng 30 → ngày 16/11/2026 −70; chạy lại không thêm | test: nhịp `bizcity.clock.daily` 16/11 ghi −70, số dư 0; nhịp 17/11 không thêm; lô chưa hạn giữ nguyên |
+| số dư cũ | `0912345678` tích 6.000, dư 4.200 → lô +6.000 hạn 16/11/2027, đổi −1.800, hạng Vàng; nạp lại không thêm | test: đúng; dòng sai (dư > tổng) trả lý do. Chạy thật: website (`wp tgs-pos loyalty-opening` / tự chạy khi bật React) đẩy ví điểm → kế toán 4.200 điểm, tổng đã tích 6.000, Vàng, lô hạn 15/11/2027 (giờ Việt Nam 16/11); tài khoản không phải SĐT bỏ qua; lần hai "đã nạp trước đó" |
+| 5 báo cáo | phát sinh theo cửa hàng / loại khớp sổ; số dư theo hạng | test: kỳ 01/11/2025 – 17/11/2026 tích 6.100, đổi −1.830, hết hạn −70, số dư 4.200. Chạy thật màn BH19 kỳ 01–16/11: còn 4.248 (2 khách), CN01 tích 273 = 32 + 150 + 32 + 27 + 32, đổi −150, hoàn −75; Vàng 1 khách 4.200, Thành viên 1 khách 48 |
+| 6 dải vàng | máy bán không còn báo tích điểm / voucher là dữ liệu giả | chính sách, điểm khách, tra voucher, đổi điểm, dùng voucher đều đi module `loyalty` (bước 1, 2) |
+
+Bộ kiểm: `module check loyalty` ĐẠT, test hợp đồng module (GET không tham số trả 200) ĐẠT, typecheck 0 lỗi.
+
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
 |---|---|---|---|
@@ -104,3 +130,5 @@ Ghi chú:
 | 15/11/2026 | Chia ba bước, số liệu bước 1, cách làm |
 | 15/11/2026 | Bước 1 xong, ghi kết quả chạy; chuyển Chờ nghiệm thu |
 | 15/11/2026 | Số liệu và cách làm bước 2 |
+| 16/11/2026 | Bước 2 xong, ghi kết quả chạy; chuyển Chờ nghiệm thu |
+| 16/11/2026 | Bước 3 xong (hết hạn, số dư cũ, báo cáo BH19), ghi kết quả chạy |

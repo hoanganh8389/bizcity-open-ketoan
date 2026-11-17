@@ -15,11 +15,12 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
+import { nhapTon } from './pos-nhap-ton.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
-const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners'];
+const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand'];
 
 const ID1 = '0193a1b2-0000-7000-8000-000000019001';
 const ID2 = '0193a1b2-0000-7000-8000-000000019002';
@@ -82,6 +83,8 @@ describe.skipIf(!HAS)('NT-BH-019 — máy bán POS: bill Z và khách mới đi 
     // Quà mã không gửi thuế (Nội bộ, 0đ) — như dữ liệu mẫu của NT-BH-004.
     await sql`INSERT INTO products (tenant_id, sku, name, unit, tax_out_code, variant_code) VALUES
       (${tenantId}, ${QUA}, 'Bình sữa quà tặng (không gửi thuế)', 'Cái', 'R08', 'internal')`.execute(db);
+    // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
+    await nhapTon(ctx, 'CN01', [[SKU, 1000, 'Lon'], [QUA, 1000, 'Cái']]);
   });
   afterAll(async () => {
     await app?.close();

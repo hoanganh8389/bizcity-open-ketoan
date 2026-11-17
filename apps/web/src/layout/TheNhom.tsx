@@ -11,14 +11,14 @@ export function TheNhom({ group }: { group?: GonGroup }) {
   if (!group?.the.length) return null;
   const links = [
     { key: 'home', label: group.homeLabel ?? 'Tổng quan', path: group.home, title: `Trang chủ ${group.label}` },
-    ...group.the.map((m) => ({ key: m.key, label: m.label, path: m.path!, title: m.code ? `${m.label} (${m.code})` : m.label })),
+    ...group.the.map((m) => ({ key: m.key, label: m.label, path: m.path!, code: m.code, title: m.code ? `${m.label} (${m.code})` : m.label })),
   ];
   const reportPaths = group.reports.flatMap((s) => s.items);
   const best = Math.max(0, ...links.map((l) => matchHere(l.path, pathname, search)));
   const onReport = pathname === REPORT_PAGE || (best === 0 && reportPaths.some((m) => matchLen(m.path, pathname) > 0));
   return (
     <nav className="gon-the" aria-label={`Màn của nhóm ${group.label}`}>
-      {links.map((l) => <Link key={l.key} to={l.path} title={l.title} className={best > 0 && matchHere(l.path, pathname, search) === best ? 'active' : ''}>{l.label}</Link>)}
+      {links.map((l) => <Link key={l.key} to={l.path} title={l.title} className={best > 0 && matchHere(l.path, pathname, search) === best ? 'active' : ''}>{l.label}{'code' in l && l.code && <small className="gon-the-code">{l.code}</small>}</Link>)} {/* [2026-11-17 Nguyễn Văn Thủy] mã màn cạnh tên (đóng góp) */}
       {reportPaths.length > 0 && <Link to={`${REPORT_PAGE}?nhom=${group.key}`} title={`Các báo cáo của nhóm ${group.label}`} className={onReport ? 'active' : ''}>Báo cáo</Link>}
     </nav>
   );

@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -4447,6 +4447,27 @@
       "facet": "F5",
       "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
       "line": 29
+    },
+    {
+      "id": "S023-19",
+      "phase": "PHASE-023",
+      "title": "Bỏ tên tiếng Anh của tài khoản (D023-9, 00 §9): migration 0147 chép nameen sang accountsnameenluu rồi xoá cột; bỏ khỏi API, ACC1, Excel, dữ liệu mẫu — ca T023-8",
+      "priority": "P2",
+      "status": "blocked",
+      "column": "doing",
+      "claim": {
+        "who": "kiennt (phiên Claude, bỏ tên tiếng Anh tài khoản)",
+        "branch": "feat/nt-dm-001-bo-ten-tieng-anh-tai-khoan",
+        "state": "đang làm",
+        "since": "2026-11-17",
+        "dot": "PHASE-023 · S023-19 — bỏ tên tiếng Anh của tài khoản (D023-9): migration 0147 chép accounts.nameen …"
+      },
+      "modules": [
+        "danh-muc"
+      ],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md",
+      "line": 30
     },
     {
       "id": "S024-1",

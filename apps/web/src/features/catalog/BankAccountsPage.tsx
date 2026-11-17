@@ -1,5 +1,6 @@
 /**
- * Danh mục ngân hàng (DM09): Mã ngân hàng · Tên ngân hàng · Địa chỉ · Điện thoại · Chủ TK · Số TK · Người liên lạc · Ghi chú, cộng tài khoản kế toán 112 chi tiết.
+ * Danh mục ngân hàng (DM09): Mã ngân hàng · Tên ngân hàng · Số TK · Ghi chú · Tài khoản hạch toán 112 chi tiết (Địa chỉ, Điện thoại, Chủ TK, Người liên lạc ẩn mặc định).
+ * [2026-11-17 kiennt] "TK kế toán" → "Tài khoản hạch toán"; bốn cột liên hệ ẩn mặc định (đóng góp)
  * Hình thức thanh toán chuyển khoản trỏ về tài khoản ngân hàng; phiếu báo nợ / báo có hiện tên ngân hàng ở ô tài khoản tiền;
  * sổ tiền gửi (ACC56) lọc theo từng tài khoản ngân hàng.
  */
@@ -33,9 +34,11 @@ export function BankAccountsPage() {
   const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/bank-accounts/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['bank-accounts'] }); } });
   return (
     <>
-      <PageHeader title="Ngân hàng" code="DM09" subtitle="Tài khoản ngân hàng; mỗi tài khoản gắn một tài khoản kế toán 112 chi tiết" helpKey="hinh-thuc-thanh-toan" />
+      <PageHeader title="Ngân hàng" code="DM09" subtitle="Tài khoản ngân hàng; mỗi tài khoản gắn một tài khoản hạch toán 112 chi tiết" helpKey="hinh-thuc-thanh-toan" />
       <div className="card">
         <CatalogToolbar
+          trash={{ catalog: 'bank-accounts', title: 'Tài khoản ngân hàng', sel: sel ? { key: sel.code } : null }}
+          phai
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           busy={del.isPending}
@@ -52,18 +55,18 @@ export function BankAccountsPage() {
             columns={[
               { key: 'code', header: 'Mã ngân hàng', type: 'code', width: 120 },
               { key: 'bankName', header: 'Tên ngân hàng', width: 260 },
-              { key: 'bankAddress', header: 'Địa chỉ', width: 200 },
-              { key: 'bankPhone', header: 'Điện thoại', type: 'code', width: 110 },
-              { key: 'holder', header: 'Chủ TK', width: 200 },
+              { key: 'bankAddress', header: 'Địa chỉ', width: 200, hidden: true },
+              { key: 'bankPhone', header: 'Điện thoại', type: 'code', width: 110, hidden: true },
+              { key: 'holder', header: 'Chủ TK', width: 200, hidden: true },
               { key: 'accountNo', header: 'Số TK', type: 'code', width: 140 },
-              { key: 'contact', header: 'Người liên lạc', width: 140 },
+              { key: 'contact', header: 'Người liên lạc', width: 140, hidden: true },
               { key: 'note', header: 'Ghi chú', width: 200 },
-              { key: 'accountCode', header: 'TK kế toán', type: 'code', width: 110 },
-              { key: 'accountName', header: 'Tên TK kế toán', width: 200, hidden: true },
+              { key: 'accountCode', header: 'Tài khoản hạch toán', type: 'code', width: 140 },
+              { key: 'accountName', header: 'Tên tài khoản hạch toán', width: 200, hidden: true },
               { key: 'bankBranch', header: 'Chi nhánh ngân hàng', width: 150, hidden: true },
               { key: 'branchCode', header: 'Chi nhánh dùng', type: 'code', width: 110, hidden: true },
               { key: 'currency', header: 'Tiền tệ', type: 'code', width: 70, hidden: true },
-              { key: 'inactive', header: 'Ngừng dùng', type: 'check', width: 85, hidden: true, value: (b) => !b.isActive },
+              { key: 'active', header: 'Hoạt động', type: 'check', width: 85, value: (b) => b.isActive },
             ] satisfies Column<BankAccount>[]} />
         )}
       </div>
@@ -87,13 +90,13 @@ function BankForm({ value, onClose }: { value: Partial<BankAccount> & { isNew?: 
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['bank-accounts'] }); void qc.invalidateQueries({ queryKey: ['payment-methods'] }); if (value.isNew) onClose(); else viewAgain[1](); },
   });
   return (
-    <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title="Ngân hàng" onClose={onClose}
+    <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title={value.isNew ? 'Thêm tài khoản ngân hàng' : `Tài khoản ngân hàng ${value.code ?? ''}`} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.bankName || !v.accountNo || !v.accountCode} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label="Mã ngân hàng (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} placeholder="VCB-HN" autoFocus /></Field>
       <Field label="Điện thoại"><input className="input" value={v.bankPhone ?? ''} onChange={(e) => set({ bankPhone: e.target.value })} /></Field>
       <Field label="Tên ngân hàng (*)" full><input className="input" value={v.bankName ?? ''} onChange={(e) => set({ bankName: e.target.value })} placeholder="Vietcombank - CN Thành Công" /></Field>
       <Field label="Địa chỉ" full><input className="input" value={v.bankAddress ?? ''} onChange={(e) => set({ bankAddress: e.target.value })} /></Field>
-      <Field label="TK kế toán (*)" hint="112 chi tiết; mỗi tài khoản kế toán chỉ gắn một tài khoản ngân hàng đang dùng">
+      <Field label="Tài khoản hạch toán (*)" hint="112 chi tiết; mỗi tài khoản hạch toán chỉ gắn một tài khoản ngân hàng đang dùng">
         <AccountPicker postingOnly value={v.accountCode ?? ''} onChange={(accountCode) => set({ accountCode })} placeholder="112…" />
       </Field>
       <Field label="Chủ TK"><input className="input" value={v.holder ?? ''} onChange={(e) => set({ holder: e.target.value })} /></Field>

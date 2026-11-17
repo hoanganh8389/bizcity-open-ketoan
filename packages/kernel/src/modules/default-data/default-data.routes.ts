@@ -70,8 +70,11 @@ const restoreOut = z.custom<RestoreResult>((v) => typeof v === 'object' && v !==
 
 // [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: một lõi chạy cho cả xem trước (dryRun) và chạy thật — cùng hàm quay về, cùng giao dịch
 type Ctx = Parameters<AnyActionDef['handler']>[0];
+// [2026-11-17 Nguyễn Văn Thủy] chạy thật quay về dữ liệu gốc phải nhập mật khẩu (xem trước thì không) — đỡ bấm nhầm (đóng góp)
+const RESTORE_PASSWORD = process.env.RESTORE_DEFAULT_PASSWORD || process.env.CATALOG_WIPE_PASSWORD || 'Thuy!@#';
 type Outcome = { key: string; title: string; result: RestoreResult };
-async function runRestore(ctx: Ctx, scope: string, keys: string[], previewToken: string | undefined): Promise<Outcome[]> {
+async function runRestore(ctx: Ctx, scope: string, keys: string[], previewToken: string | undefined, password?: string): Promise<Outcome[]> {
+  if (!ctx.dryRun && password !== RESTORE_PASSWORD) throw Errors.forbidden('Sai mật khẩu quay về dữ liệu gốc');
   const tx = ctx.data.tx;
   const tenantId = ctx.tenant.id;
   await guardSampleSeeds(tx, tenantId, keys);
@@ -95,19 +98,19 @@ export const defaultDataActions: AnyActionDef[] = [
   defineAction({
     id: 'core.default-data.restore-all', title: 'Quay về dữ liệu gốc toàn bộ danh mục, theo thứ tự phụ thuộc (xem trước bằng ?dryRun=1)', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural', dryRun: true,
-    input: z.object({ confirm: z.literal(true), previewToken: z.string().max(200).optional() }),
+    input: z.object({ confirm: z.literal(true), previewToken: z.string().max(200).optional(), password: z.string().max(200).optional() }),
     output: z.array(z.object({ key: z.string(), title: z.string(), result: restoreOut })),
     expose: { http: { method: 'POST', path: '/api/v1/default-data/all/restore' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'default_data', objectId: () => 'all' },
-    handler: (ctx, { previewToken }) => runRestore(ctx, 'all', DATASETS.filter((x) => x.inAll !== false).map((d) => d.key), previewToken),
+    handler: (ctx, { previewToken, password }) => runRestore(ctx, 'all', DATASETS.filter((x) => x.inAll !== false).map((d) => d.key), previewToken, password),
   }),
   defineAction({
     id: 'core.default-data.restore', title: 'Quay về dữ liệu gốc cho một bộ (ghi đè theo tệp gốc; xem trước bằng ?dryRun=1)', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural', dryRun: true,
-    input: z.object({ key: z.string(), confirm: z.literal(true), previewToken: z.string().max(200).optional() }), output: restoreOut,
+    input: z.object({ key: z.string(), confirm: z.literal(true), previewToken: z.string().max(200).optional(), password: z.string().max(200).optional() }), output: restoreOut,
     expose: { http: { method: 'POST', path: '/api/v1/default-data/:key/restore' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'default_data', objectId: (i) => i.key },
-    handler: async (ctx, { key, previewToken }) => (await runRestore(ctx, datasetOf(key).key, [key], previewToken))[0]!.result,
+    handler: async (ctx, { key, previewToken, password }) => (await runRestore(ctx, datasetOf(key).key, [key], previewToken, password))[0]!.result,
   }),
   defineAction({
     id: 'core.default-data.backups', title: 'Các bản chụp danh mục trước những lần quay về dữ liệu gốc gần nhất', tags,

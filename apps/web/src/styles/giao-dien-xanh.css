@@ -550,3 +550,18 @@ html.gd-xanh.gd-sang .picker-opt.active .picker-code { color: var(--brand-700); 
 .gon-fly-item:hover .pin-btn, .gon-fly-item.pinned .pin-btn, .sidenav-items a:hover .pin-btn, .sidenav-items a.pinned .pin-btn { visibility: visible; }
 .gon-fly-item.disabled small { flex: none; white-space: nowrap; }
 .gon-fly { max-width: calc(100vw - 16px); }
+
+/* [2026-11-17 Nguyễn Văn Thủy] Hay dùng trên thanh trên: rê chuột xổ danh sách (đóng góp) */
+.hay-top { position: relative; display: inline-flex; }
+.hay-top-btn { background: none; border: 0; font: inherit; cursor: pointer; }
+.hay-top-btn.open { color: var(--base); }
+.hay-top-pop { position: fixed; z-index: 1000; min-width: 280px; max-width: 380px; padding: 6px; background: #fff; border: 1px solid var(--line, #dfe4ec); border-radius: 8px; box-shadow: 0 8px 24px rgba(15, 34, 61, .14); }
+.hay-top-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; color: inherit; text-decoration: none; font-size: 13px; }
+.hay-top-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hay-top-item small { color: var(--muted, #6b7686); font-size: 10.5px; }
+.hay-top-item:hover, .hay-top-item.active { background: var(--brand-50, #eef3fc); }
+.hay-top-trong { padding: 8px; color: var(--muted, #6b7686); font-size: 12.5px; }
+.hay-top-ghim { display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 4px; padding: 6px 8px; border: 0; border-top: 1px solid var(--line, #dfe4ec); background: none; font: inherit; font-size: 12.5px; color: var(--base); cursor: pointer; text-align: left; }
+
+/* [2026-11-17 Nguyễn Văn Thủy] mã màn nhỏ cạnh tên ở hàng thẻ của nhóm (đóng góp) */
+.gon-the-code { margin-left: 4px; font-size: 10px; color: var(--muted, #6b7686); font-family: var(--mono, ui-monospace, monospace); }

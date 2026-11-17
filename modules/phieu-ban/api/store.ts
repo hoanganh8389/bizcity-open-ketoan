@@ -117,6 +117,22 @@ export async function catalogFor(tx: Tx, skus: readonly string[]): Promise<Map<s
   return new Map(rows.map((r) => [r.sku, { sku: r.sku, name: r.name, unit: r.unit ?? '', taxCode: r.tax_out_code, itemId: r.item_id }]));
 }
 
+// [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn ở phiếu bán nhập tay (đóng góp)
+/**
+ * Khoá chi nhánh × mã (cùng khoá với máy bán: hai nguồn bán một mã chạy nối tiếp) rồi đọc tồn hiện tại theo mã ở kho trên phiếu
+ * (không ghi kho = cả chi nhánh). Tồn tại ngày phiếu cần bảng tồn theo ngày ở phần lõi — tạm dùng tồn hiện tại (Q7).
+ */
+export async function lockedStock(tx: Tx, branchCode: string, warehouseCode: string | null, skus: readonly string[]): Promise<Map<string, number>> {
+  const list = [...new Set(skus)].sort();
+  if (!list.length) return new Map();
+  for (const sku of list) await sql`SELECT pg_advisory_xact_lock(hashtext(${`pos:stock:${branchCode}:${sku}`}))`.execute(tx);
+  const rows = (await sql<{ sku: string; qty: string }>`
+    SELECT sku, SUM(qty)::text AS qty FROM bizcity_read.stock_on_hand
+     WHERE branch_code = ${branchCode} AND sku IN (${sql.join(list)}) ${warehouseCode ? sql`AND warehouse_code = ${warehouseCode}` : sql``}
+     GROUP BY sku`.execute(tx)).rows;
+  return new Map(rows.map((r) => [r.sku, Number(r.qty)]));
+}
+
 /** Thuế suất các mã thuế đầu ra đang dùng. */
 export async function taxRates(tx: Tx): Promise<Map<string, number>> {
   const rows = (await sql<{ code: string; rate: string | number }>`

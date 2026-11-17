@@ -5,20 +5,20 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 7 |
+| Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 165 |
 | Chờ đủ tín hiệu | 69 |
 | Hoãn | 3 |
 | Xong | 317 |
-| **Tổng** | **589** |
+| **Tổng** | **590** |
 
 ## Theo phân hệ (R-FLOW-10)
 
 | Phân hệ | Xong | Chờ đủ tín hiệu | Đang làm | Còn lại | Tổng |
 |---|---|---|---|---|---|
-| danh-muc | 18 | 16 | 2 | 38 | 74 |
+| danh-muc | 18 | 16 | 3 | 38 | 75 |
 | mua-hang | 52 | 6 | 1 | 28 | 87 |
 | kho | 44 | 23 | 3 | 75 | 145 |
 | ban-hang | 52 | 6 | 1 | 28 | 87 |
@@ -27,12 +27,13 @@
 | thue | 14 | 2 | 1 | 10 | 27 |
 | he-thong | 149 | 23 | 2 | 56 | 230 |
 
-## Đang làm (7)
+## Đang làm (8)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | he-thong | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
 | [S020-25](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L34) | PHASE-020 | thue · tong-hop | D020-11 (a)(b)(c): HT06 "Kiểm sổ" gọn — lượt kiểm lưu kết quả tự chẩn đoán cả sổ vào báo cáo (report.health, … | — | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-020-s020-25-kiem-so-gon` |
+| [S023-19](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-023 | danh-muc | Bỏ tên tiếng Anh của tài khoản (D023-9, 00 §9): migration 0147 chép nameen sang accountsnameenluu rồi xoá cột… | P2 | kiennt (phiên Claude, bỏ tên tiếng Anh tài khoản) · `feat/nt-dm-001-bo-ten-tieng-anh-tai-khoan` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | danh-muc · kho | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | danh-muc · kho | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | he-thong | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |

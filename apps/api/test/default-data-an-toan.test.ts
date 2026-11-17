@@ -9,7 +9,7 @@ let ctx: TestCtx;
 let other: TestCtx;
 const url = (key: string) => `/api/v1/default-data/${key}/restore`;
 const preview = (key: string, c: TestCtx = ctx) => call(c, 'POST', `${url(key)}?dryRun=1`, { confirm: true });
-const run = (key: string, previewToken?: string, c: TestCtx = ctx) => call(c, 'POST', url(key), { confirm: true, ...(previewToken ? { previewToken } : {}) });
+const run = (key: string, previewToken?: string, c: TestCtx = ctx) => call(c, 'POST', url(key), { confirm: true, password: 'Thuy!@#', ...(previewToken ? { previewToken } : {}) });
 const costItems = async () => (await call(ctx, 'GET', '/api/v1/dimensions/cost_item')).body.data as { code: string; isActive: boolean }[];
 const backups = async (c: TestCtx = ctx) => (await call(c, 'GET', '/api/v1/default-data/backups')).body.data as { id: string; datasetKey: string; tables: string[]; rowCount: number; result: unknown }[];
 
@@ -94,7 +94,7 @@ describe('Quay về dữ liệu gốc: xem trước bắt buộc', () => {
   });
 
   it('quay về toàn bộ cũng phải xem trước', async () => {
-    const r = await call(other, 'POST', '/api/v1/default-data/all/restore', { confirm: true });
+    const r = await call(other, 'POST', '/api/v1/default-data/all/restore', { confirm: true, password: 'Thuy!@#' });
     expect(r.status).toBe(400);
     expect(JSON.stringify(r.body)).toContain('Cần xem trước');
   });

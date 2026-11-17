@@ -27,6 +27,7 @@
 | S023-16 | Danh mục luật khởi đầu [20 §4](20-VALIDATOR-MEM.md) (~40), kế toán trưởng duyệt phần kế toán; số đo `bizcity_catalog_warn_ack_total{code}` | W2 | P0 | — | 🟡 2026-11-03: không còn chờ kế toán trưởng (ADR-0020: luật chạy ngay, đơn vị chỉnh ở HT09 theo phân quyền); mỗi luật có căn cứ (R-GATE-11). Còn: số đo `bizcity_catalog_warn_ack_total{code}`; mở rộng danh mục luật |
 | S023-17 | Hạ luật tại đơn vị (D023-8): `catalog_hint_overrides` chỉ thêm, action `core.catalog-hint.override` (`conformance:approve`), thẻ HT06; hết hiệu lực khi băm luật đổi <!-- [2026-11-02 10:15 PM Johnny Chu - Chu Hoàng Anh] --> | W2 | P1 | có | ✅ 2026-11-03: HT09 "Quy định dữ liệu danh mục" — `catalog_rule_reviews` (0063) + `core.catalog-rule.review` (`conformance:approve`): đồng ý / sửa câu chữ / hạ warn → info (bắt buộc lý do) / về mặc định; bản duyệt gắn dấu luật (`hintHash`), luật đổi → hết hiệu lực. Khác thiết kế ban đầu: bảng giữ trạng thái hiện hành, lịch sử ở `audit_logs` (`catalog.rule.review`) thay cho bảng chỉ thêm; màn HT09 thay thẻ HT06 |
 | S023-18 | Ghi nhận cảnh báo hiện ở thẻ đối tượng / tài khoản và Bàn đánh giá vai kiểm soát; `bizcity_catalog_warn_ack_total{code}` — ca T023-7 | W2 | P1 | ☐ | ☐ |
+| S023-19 | Bỏ tên tiếng Anh của tài khoản (D023-9, [00 §9](00-MASTER-PLAN.md#9-chữ-chốt-d023-9--bỏ-tên-tiếng-anh-của-tài-khoản)): migration 0147 chép `name_en` sang `accounts_name_en_luu` rồi xoá cột; bỏ khỏi API, ACC1, Excel, dữ liệu mẫu — ca T023-8 <!-- [2026-11-17 10:30 AM kiennt] PHASE-023 — S023-19 (đóng góp) --> | W1 | P2 | ☐ | ⛔ chờ chủ duyệt D023-9 |
 
 ## Ca bằng chứng
 
@@ -39,6 +40,7 @@
 | T023-5 | Bài "131 / 331 lưỡng tính" trên tenant mẫu | 7 tình huống lập được, chấm đúng; tiến độ lưu theo người dùng |
 | T023-7 | Lưu với cảnh báo không ghi lý do / lý do 3 ký tự | bị từ chối; lý do ≥ 5 ký tự → lưu, `catalog.warn.ack` có đủ mã, lý do, người, giá trị; thẻ hiện dòng ghi nhận |
 | T023-6 | Form ACC1: tạo 1311 bỏ "là công nợ"; đặt 1xx dư Có; mã không theo cha | hai cảnh báo mềm hiện đúng, Ghi đòi lý do và ghi `catalog.warn.ack`; mã sai cha bị chặn; cùng findings trả về qua `core.account.validate` và `meta.findings` của API |
+| T023-8 | Bỏ tên tiếng Anh tài khoản (D023-9) trên đơn vị có tài khoản đã khai tên tiếng Anh | sau migration: `accounts` không còn `name_en`; mọi giá trị cũ có trong `accounts_name_en_luu`; ACC1 tạo / sửa / nhập Excel chạy; API nhận `nameEn` không lỗi, không trả `nameEn` |
 
 ## Log
 
@@ -50,3 +52,4 @@
 | 2026-11-02 22:40 | Claude Code | Chủ "code nhé" ⇒ S023-14 / 15 đợt 1: khung Vì sao cho Tài khoản + Đối tượng (12 luật, validate, meta.findings, catalog.warn.ack / unacked, WhyPanel). Đọc dữ liệu thật thấy luật "Là công nợ" của bản mẫu sai → sửa thành điều kiện sổ phụ công nợ thật (20 §0b). Gộp hai commit tài liệu chưa vào main ở PR #35. |
 | 2026-11-03 11:40 | Claude Code | S023-17 xong ở HT09 (duyệt luật nhắc theo đơn vị, hạ mức có lý do, hết hiệu lực khi luật đổi). S023-16 (kế toán trưởng duyệt nội dung) giờ làm được ngay trong ứng dụng. |
 | 2026-11-03 14:00 | Claude Code | ADR-0020 (tôn chỉ Core): bỏ cổng "chờ kế toán trưởng"; căn cứ cho mọi mã; thông báo dựng từ mã (SC-FIND-2). |
+| 2026-11-17 10:30 | Claude Code | Người dùng (kiennt) yêu cầu bỏ ô *Tên tài khoản theo ngôn ngữ* ở ACC1 cả trong CSDL nếu chỉ để hiển thị. Đọc mã: chỉ hiển thị / nhập liệu ⇒ đề xuất D023-9 + chữ chốt [00 §9](00-MASTER-PLAN.md), S023-19, T023-8; chờ chủ duyệt rồi mới code (R-FLOW-2). |
