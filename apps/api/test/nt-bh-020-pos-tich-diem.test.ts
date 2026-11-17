@@ -16,11 +16,12 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
+import { nhapTon } from './pos-nhap-ton.js';
 
 const POS = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const LOY = fileURLToPath(new URL('../../../modules/loyalty/', import.meta.url));
 const HAS = existsSync(path.join(POS, 'bizcity.module.json')) && existsSync(path.join(LOY, 'bizcity.module.json'));
-const POS_READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners'];
+const POS_READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand'];
 // Chính sách mẫu NT-BH-020 §4 (CN01): TICH10K 1 điểm / 10.000đ hạn 365 ngày; THUONG1TR đơn từ 1.000.000đ +20; hạng ×1 / ×1,2 / ×1,5.
 
 const PROGRAM = {
@@ -73,6 +74,8 @@ describe.skipIf(!HAS)('NT-BH-020 — sổ điểm thành viên: tích / hoàn th
     const put = await call('PUT', '/api/v1/products', { products: [{ sku: SKU, name: 'Sữa bột Biomil Plus 1 400g', unit: 'Lon', taxOutCode: 'R08' }] });
     expect(put.statusCode, put.body).toBeLessThan(300);
     expect((await call('PUT', `/api/v1/products/${SKU}`, { taxOutCode: 'R08' })).statusCode).toBe(200);
+    // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
+    await nhapTon(ctx, 'CN01', [[SKU, 1000, 'Lon']]);
   });
   afterAll(async () => {
     await app?.close();

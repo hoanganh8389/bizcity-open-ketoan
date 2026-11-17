@@ -95,9 +95,12 @@ Mỗi bước tính từ tồn 5 ở trên (bước 2 và bước 3 chạy riên
 ## 8. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-021-chan-ban-qua-ton.test.ts` (tạo khi code) |
+| Ngày chạy | 16–17/11/2026 (CSDL test `ketoan_test`; chạy thật LocalWP shop2 + kế toán Docker) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — kết quả chạy NT-BH-021 (đóng góp) --> |
+| Bản code (commit) | nhánh `feat/nt-bh-021-chan-ban-qua-ton` (PR code) |
+| Test tự động | `apps/api/test/nt-bh-021-chan-ban-qua-ton.test.ts` **6/6**: §5 dòng 2–3, lệch chuẩn 1–3, 5 (hai máy 3 + 3 trên tồn 5 → một đơn, đơn kia `POS_STOCK_SHORT` tồn 2), 6 (đơn mất mạng nhận + lọc BH13), BH10 công tắc tắt / bật / sửa còn đủ. Module: `modules/pos/test/stock.test.ts`, `modules/phieu-ban/test/doc.test.ts`. Test bán hàng cũ NT-BH-003…020 nhập tồn trước khi bán (`apps/api/test/pos-nhap-ton.ts`) |
+| Chạy thật | máy bán React (shop2) bán / hoàn / chốt ca qua kế toán thật: 3/3 đạt (máy bán đã có hàng nhập tồn đầu) |
+| Bộ kiểm | `module check pos`, `module check phieu-ban` ĐẠT; typecheck ĐẠT; selfcheck không thêm phát hiện so với main |
+| Còn lại | Lệch chuẩn 4 (BH10 theo ngày phiếu) tạm theo tồn hiện tại (Q7). Bán lẻ để chế độ "chờ duyệt" thì đơn chưa duyệt chưa trừ sổ kho → kiểm tồn không thấy (mặc định bán lẻ ghi ngay) |
 
 ## 9. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -109,3 +112,4 @@ Mỗi bước tính từ tồn 5 ở trên (bước 2 và bước 3 chạy riên
 | 16/11/2026 | Tạo phiếu (nháp) |
 | 16/11/2026 | **Chốt Q1–Q4**: máy bán chặn cứng; BH10 dùng công tắc kho; kiểm theo kho của máy bán / kho trên phiếu; chuyển kho tách sang Đơn đặt hàng. Thêm căn cứ quy trình kế toán và lệch chuẩn 7, 8 |
 | 16/11/2026 | **Chốt thêm Q5–Q8**: mỗi shop một kho; BH10 công tắc riêng của phiếu bán ở BH17 (thay công tắc chung của kho); BH10 tạm theo tồn hiện tại; chặn mọi mã |
+| 17/11/2026 | Code + test xong, ghi kết quả chạy |

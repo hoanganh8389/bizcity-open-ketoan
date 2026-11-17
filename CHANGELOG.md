@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chặn bán quá tồn: máy bán chặn cứng, phiếu bán nhập tay theo công tắc (phiếu NT-BH-021) <!-- [2026-11-16 08:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 (đóng góp) -->
+
+- **Thêm:** module `pos` kiểm tồn khi nhận đơn bán / đơn đổi: cộng số xuất theo mã (quy ĐVT nhỏ nhất, gồm quà / bill Z), so với tồn cửa hàng (`bizcity_read.stock_on_hand`, mỗi shop một kho); thiếu → `VALIDATION_ERROR` lý do `POS_STOCK_SHORT` kèm `items: [{ sku, need, have }]`, không ghi đơn, không chứng từ. Khoá chi nhánh × mã tới hết giao dịch: hai máy cùng bán một mã chạy nối tiếp.
+- **Thêm:** đơn bán dự phòng lúc mất mạng (`offlineCreatedAt`) gửi bù mà thiếu tồn vẫn nhận (hàng đã giao), đơn mang `stockShortOffline`; BH13 Đơn bán máy POS có cột "Quá tồn (mất mạng)" và ô lọc (`GET /api/v1/m/pos/admin/orders?stockShort=1`).
+- **Thêm:** module `phieu-ban` (manifest 0.2.0) khoá cấu hình `bizcity.phieu_ban.block_negative_stock` (mặc định tắt = chỉ cảnh báo như trước), đổi ở BH17 Cài đặt bán hàng; bật thì duyệt phiếu bán xuất quá tồn của kho trên phiếu (tồn hiện tại) bị chặn `PHIEU_BAN_STOCK_SHORT`.
+- **Thêm:** `bizcity_errors@1` 1.12.0-draft: `POS_STOCK_SHORT`, `PHIEU_BAN_STOCK_SHORT`.
+- **Đổi:** test bán hàng cũ (NT-BH-003 … 020) nhập tồn trước khi bán (`apps/api/test/pos-nhap-ton.ts`).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** tồn đầu của mọi cửa hàng phải có trong phần mềm kế toán trước khi dùng máy bán (không có tồn thì không bán được).
+
 ### Mã màn ở mọi menu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** mã màn (MH11, DM10, ACC41…) hiện nhỏ cạnh tên ở hàng thẻ của nhóm (dưới thanh thẻ), menu điện thoại và bảng Thêm nhanh — cùng với menu xổ bên trái.

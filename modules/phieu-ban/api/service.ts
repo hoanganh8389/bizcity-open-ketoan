@@ -8,13 +8,17 @@
 // [2026-11-13 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: nghiệp vụ phiếu bán / trả nhập tay (đóng góp)
 import { randomUUID } from 'node:crypto';
 import { Errors, type ActionContext } from '@bizcity/module-sdk';
-import { computeDoc, docKeyOf, overReturn, returnableBySku, toLedgerDoc, type Body, type DocInput, type Kind } from './domain/doc.js';
+import { computeDoc, docKeyOf, overReturn, returnableBySku, stockShortOf, toLedgerDoc, type Body, type DocInput, type Kind } from './domain/doc.js';
 import {
-  activeMethods, approvedReturnsOf, branchExists, catalogFor, getDoc, noTaken, partnerByCode, saleByNo, saveDoc, setStatus, takeNo, taxRates, toTradeDoc,
+  activeMethods, approvedReturnsOf, lockedStock, branchExists, catalogFor, getDoc, noTaken, partnerByCode, saleByNo, saveDoc, setStatus, takeNo, taxRates, toTradeDoc,
   type DocRow, type Tx,
 } from './store.js';
 
 const fail = (problems: string[]): never => { throw Errors.validation(problems.join(' · '), { items: problems }); };
+
+// [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: công tắc riêng của phiếu bán (Q6), mặc định tắt = chỉ cảnh báo như trước
+export const BLOCK_NEGATIVE_STOCK = 'bizcity.phieu_ban.block_negative_stock';
+
 
 /** Kiểm + tính một phiếu (nháp hoặc lúc duyệt). Phiếu trả: nối phiếu bán gốc của module theo số (cùng cửa hàng) nếu có. */
 async function prepare(tx: Tx, kind: Kind, input: DocInput) {
@@ -57,6 +61,8 @@ const asInput = (r: DocRow): DocInput => ({ docNo: r.doc_no, docDate: r.doc_date
 
 /** Duyệt: tính lại theo danh mục hiện tại, kiểm số còn trả (phiếu trả nối phiếu của module), nộp sổ phiên bản kế tiếp. */
 export async function approve(ctx: ActionContext, id: string) {
+  // Cài đặt đọc ngoài giao dịch của module (vai trò module không đọc bảng cấu hình của Core).
+  const blockStock = (await ctx.settings.get<unknown>(BLOCK_NEGATIVE_STOCK)) === true;
   const prepared = await ctx.data.module(async (tx) => {
     const r = await getDoc(tx, id, true);
     if (r.status === 'approved') throw Errors.conflict('Phiếu đã duyệt');
@@ -67,6 +73,16 @@ export async function approve(ctx: ActionContext, id: string) {
       const done = (await approvedReturnsOf(tx, p.original.doc_id, r.doc_id)).flatMap((x) => x.body.lines);
       const over = overReturn(p.body.lines, returnableBySku(p.original.body.lines.filter((l) => !l.isGift), done));
       if (over.length) fail(over.map((x) => `Trả vượt số đã bán của phiếu ${p.original!.doc_no} — ${x}`));
+    }
+    if (r.kind === 'sale' && blockStock) {
+      // Phiếu đang sửa đã bỏ duyệt (chứng từ trong sổ đã huỷ) nên tồn đọc được không còn trừ chính nó.
+      const have = await lockedStock(tx, r.branch_code, r.warehouse_code, p.body.lines.map((l) => l.sku));
+      const short = stockShortOf(p.body.lines, have);
+      if (short.length) {
+        const where = r.warehouse_code || r.branch_code;
+        throw Errors.validation(`Bán quá tồn: ${short.map((s) => `${s.sku} cần ${s.need}, tồn ${s.have}`).join('; ')} ở ${where} — tắt công tắc "Chặn bán quá tồn ở phiếu bán nhập tay" ở BH17 nếu muốn chỉ cảnh báo`,
+          { reason: 'PHIEU_BAN_STOCK_SHORT', items: short });
+      }
     }
     return { r, ...p };
   });

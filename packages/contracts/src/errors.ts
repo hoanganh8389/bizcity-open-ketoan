@@ -142,6 +142,9 @@ export const ERROR_REASONS = {
   POS_SHIFT_REQUIRED: 'Chưa mở ca — Cài đặt bán hàng bắt buộc mở ca trước khi bán',
   // [2026-11-12 09:55 PM Võ Hoàng] POS-KM — mã khuyến mại của module pos (BIZCITY-ERRORS 1.11.0-draft §4c, phiếu NT-BH-003, đóng góp)
   POS_GIFT_WITHOUT_POLICY: 'Dòng quà / dòng giảm theo chương trình không nêu chương trình (policyRef); items: [{ lineId, sku }]',
+  // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (BIZCITY-ERRORS 1.12.0-draft §4c, đóng góp)
+  POS_STOCK_SHORT: 'Bán quá tồn của cửa hàng (máy bán chặn cứng, cộng theo mã, ĐVT nhỏ nhất); items: [{ sku, need, have }]',
+  PHIEU_BAN_STOCK_SHORT: 'Phiếu bán nhập tay xuất quá tồn của kho trên phiếu khi bật công tắc chặn (BH17); items: [{ sku, need, have }]',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

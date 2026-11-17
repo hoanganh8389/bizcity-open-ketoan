@@ -178,3 +178,14 @@ export function toLedgerDoc(d: { docId: string; kind: Kind; branchCode: string; 
     totals: b.totals,
   };
 }
+
+// [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn ở phiếu bán nhập tay (đóng góp)
+const r4s = (n: number) => Math.round(n * 10_000) / 10_000;
+
+/** Phiếu bán xuất quá tồn của kho trên phiếu (cộng theo mã, gồm quà). Rỗng = đủ. */
+export function stockShortOf(lines: readonly { sku: string; qty: number }[], have: ReadonlyMap<string, number>) {
+  const need = new Map<string, number>();
+  for (const l of lines) if (l.qty > 0) need.set(l.sku, r4s((need.get(l.sku) ?? 0) + l.qty));
+  return [...need.entries()].map(([sku, n]) => ({ sku, need: n, have: r4s(have.get(sku) ?? 0) })).filter((x) => x.need > x.have)
+    .sort((a, b) => a.sku.localeCompare(b.sku));
+}
