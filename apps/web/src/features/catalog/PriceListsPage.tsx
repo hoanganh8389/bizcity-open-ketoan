@@ -4,7 +4,7 @@
  * form mặt hàng (DM10, thẻ ĐVT & giá bán). Chi nhánh chưa gán bảng giá = theo bảng giá công ty.
  * Luật lấy giá khi bán: hàng chính chỉ lấy giá công ty; hàng thường ưu tiên giá bảng giá chi nhánh, thiếu mới lấy giá công ty.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -106,6 +106,18 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
   const org = useOrgTree();
   const coCay = Boolean(org.data?.nodes.length);
   const trongCay = useMemo(() => new Set((org.data?.branches ?? []).filter((b) => b.orgCode).map((b) => b.code)), [org.data]);
+  // [2026-11-17 11:43 AM kiennt] DM14 — chưa có sơ đồ tổ chức: cây theo phân cấp kho tổng → cửa hàng (MH15, GET /stock/hierarchy); lỗi / không quyền thì danh sách phẳng (đóng góp)
+  const phanCap = useQuery({ queryKey: ['stock-hierarchy'], enabled: org.isSuccess && !coCay, retry: false, staleTime: 60_000,
+    queryFn: () => api.get<{ branches: { code: string; name: string; level: string; parentCode: string | null; isActive: boolean }[] }>('/api/v1/stock/hierarchy') });
+  const nhomPhanCap = useMemo(() => {
+    const ds = (phanCap.data?.branches ?? []).filter((b) => b.isActive || picked.has(b.code));
+    if (!ds.some((b) => b.level === 'branch')) return null;
+    const nhom = ds.filter((b) => b.level === 'branch').map((p) => ({ key: p.code, label: `${p.code} ${p.name}`, items: [p, ...ds.filter((c) => c.level === 'shop' && c.parentCode === p.code)] }));
+    const xep = new Set(nhom.flatMap((g) => g.items.map((x) => x.code)));
+    const con = ds.filter((b) => !xep.has(b.code));
+    return con.length ? [...nhom, { key: '', label: 'Chưa xếp', items: con }] : nhom;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phanCap.data, v.branchCodes]);
   const shown = branches.filter((b) => (b.isActive || picked.has(b.code)) && (!coCay || !trongCay.has(b.code)) && (!t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t)));
   const chuyenSang = [...picked].filter((c) => owner.has(c));
 
@@ -136,7 +148,8 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
         <legend>Chi nhánh áp dụng ({picked.size}) <button type="button" className="btn btn-xs btn-help" data-view-ok onClick={() => setHelp(true)}>? Hướng dẫn</button></legend>
         <div className="full">
           {coCay && <CayDonVi tree={org.data} showBranches checkable picked={[...picked]} onPick={(b) => set({ branchCodes: b })} height={300} openLevel={2} />}
-          {(!coCay || shown.length > 0 || t) && <>
+          {!coCay && nhomPhanCap && <CayPhanCap nhom={nhomPhanCap} picked={picked} onChange={(codes) => set({ branchCodes: codes })} />}
+          {((!coCay && !nhomPhanCap) || (coCay && (shown.length > 0 || t))) && <>
             {coCay && <div className="muted" style={{ fontSize: 12, margin: '8px 0 4px' }}>Chưa gắn sơ đồ tổ chức</div>}
             {(!coCay || branches.length > 12) && (
               <div className="row" style={{ gap: 8, marginBottom: 6 }}>
@@ -167,3 +180,49 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
     </Modal>
   );
 }
+
+// [2026-11-17 11:43 AM kiennt] DM14 — cây chọn chi nhánh theo phân cấp kho tổng → cửa hàng: tích nhóm = chọn cả nhóm, ô gạch ngang = chọn một phần (đóng góp)
+type NhomCN = { key: string; label: string; items: { code: string; name: string }[] };
+function OTich({ state, onChange }: { state: 'on' | 'off' | 'some'; onChange: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (ref.current) ref.current.indeterminate = state === 'some'; }, [state]);
+  return <input ref={ref} type="checkbox" checked={state === 'on'} onChange={onChange} />;
+}
+function CayPhanCap({ nhom, picked, onChange }: { nhom: NhomCN[]; picked: Set<string>; onChange: (codes: string[]) => void }) {
+  const [dong, setDong] = useState<Set<string>>(new Set());
+  const trangThai = (g: NhomCN) => { const n = g.items.filter((x) => picked.has(x.code)).length; return n === 0 ? 'off' : n === g.items.length ? 'on' : 'some'; };
+  const tichNhom = (g: NhomCN) => {
+    const on = trangThai(g) !== 'on';
+    const s = new Set(picked);
+    for (const x of g.items) { if (on) s.add(x.code); else s.delete(x.code); }
+    onChange([...s]);
+  };
+  const tich = (code: string) => { const s = new Set(picked); if (s.has(code)) s.delete(code); else s.add(code); onChange([...s]); };
+  const tatCa = nhom.flatMap((g) => g.items);
+  const ttTatCa = tatCa.every((x) => picked.has(x.code)) ? 'on' : tatCa.some((x) => picked.has(x.code)) ? 'some' : 'off';
+  return (
+    <div style={{ maxHeight: 300, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 4, padding: 6 }}>
+      <label className="checkbox" style={{ display: 'flex', gap: 6, fontWeight: 600 }}>
+        <OTich state={ttTatCa} onChange={() => onChange(ttTatCa === 'on' ? [...picked].filter((c) => !tatCa.some((x) => x.code === c)) : [...new Set([...picked, ...tatCa.map((x) => x.code)])])} /> Tất cả chi nhánh
+      </label>
+      {nhom.map((g) => (
+        <div key={g.key || '_'} style={{ paddingLeft: 18 }}>
+          <div className="row" style={{ gap: 4, alignItems: 'center' }}>
+            <button type="button" className="btn btn-xs btn-ghost" style={{ width: 20, padding: 0 }} onClick={() => setDong((s) => { const n = new Set(s); if (n.has(g.key)) n.delete(g.key); else n.add(g.key); return n; })}>{dong.has(g.key) ? '▸' : '▾'}</button>
+            <label className="checkbox" style={{ display: 'flex', gap: 6, fontWeight: 600 }}><OTich state={trangThai(g)} onChange={() => tichNhom(g)} /> {g.label} <span className="muted" style={{ fontWeight: 400 }}>({g.items.filter((x) => picked.has(x.code)).length}/{g.items.length})</span></label>
+          </div>
+          {!dong.has(g.key) && (
+            <div style={{ paddingLeft: 42, columns: 2 }}>
+              {g.items.map((x) => (
+                <label key={x.code} className="checkbox" style={{ display: 'flex', gap: 6, padding: '2px 0', breakInside: 'avoid' }}>
+                  <input type="checkbox" checked={picked.has(x.code)} onChange={() => tich(x.code)} /> <span><span className="mono">{x.code}</span> {x.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
