@@ -48,7 +48,13 @@ const STATUS_BAD: Record<string, string> = { missing: 'Chưa đặt', unknown: '
 const fmt = (n: number) => (n ? n.toLocaleString('vi-VN') : '');
 
 // [2026-11-17 10:45 AM kiennt] ACC41 — thứ tự bút toán của một nghiệp vụ: kho / giá vốn (số lượng, giá vốn tính cuối tháng) → doanh thu, giá trị → tiền (đóng góp)
-const thuTuNhom = (ten: string) => (/giá vốn|kho|hàng (vào|về|ra)|nhận quà|chi nhánh (xuất|nhận)/i.test(ten) ? 0 : /thu tiền|trả tiền|chiết khấu thanh toán|nơi (chuyển|nhận)/i.test(ten) ? 2 : 1);
+// [2026-11-17 11:00 AM kiennt] ACC41 — sửa: so tên nhóm đã bỏ phần (…), nhận nhóm tiền trước, "kho" phải là một từ (trước: "khoản" bị nhận là kho) (đóng góp)
+const thuTuNhom = (tenDu: string) => {
+  const ten = tenDu.replace(/\s*\(.*\)$/, '').toLowerCase();
+  if (/thu tiền|trả tiền|chiết khấu thanh toán|nơi (chuyển|nhận)/.test(ten)) return 2;
+  if (/giá vốn|(^|\s)kho(\s|$)|nhận quà|chi nhánh (xuất|nhận)/.test(ten)) return 0;
+  return 1;
+};
 const xepNhom = <G extends { name: string }>(gs: G[]): G[] => gs.map((g, i) => ({ g, i })).sort((a, b) => thuTuNhom(a.g.name) - thuTuNhom(b.g.name) || a.i - b.i).map((x) => x.g);
 
 export function QuyTacHachToanPage() {
@@ -385,7 +391,7 @@ const tkCua = (l: SLine, keys: Map<string, Key>) => (l.key ? keys.get(l.key)?.ac
 const uniq = (a: string[]) => [...new Set(a.filter(Boolean))];
 
 /**
- * CHẾ ĐỘ GỌN: bảng như các màn danh mục (lọc từng cột, sắp xếp, xuất Excel) — Loại chứng từ · Bút toán · TK Nợ · TK Có · Sửa;
+ * CHẾ ĐỘ GỌN: bảng như các màn danh mục (lọc từng cột, sắp xếp, xuất Excel) — Loại (nghiệp vụ – bút toán) · TK Nợ · TK Có · Sửa;
  * một dòng = một nhóm dòng sổ của nghiệp vụ, theo thứ tự kho / giá vốn → doanh thu → tiền.
  * [2026-11-17 10:45 AM kiennt] ACC41 — bảng DataGrid thay bảng tay + ô chọn loại / ô tìm (đóng góp)
  */
@@ -405,8 +411,7 @@ function GonView({ data, canWrite, nutXem, onRefresh }: { data: Scheme; canWrite
     };
   })), [data, keys]);
   const cols: Column<GonRow>[] = [
-    { key: 'loai', header: 'Loại chứng từ', width: 200 },
-    { key: 'nhom', header: 'Bút toán', width: 280, render: (r) => <span className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.nhom}</span> },
+    { key: 'title', header: 'Loại', width: 420, render: (r) => <span className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.title}</span> },
     { key: 'no', header: 'TK Nợ', type: 'code', width: 200, value: (r) => r.no.join('; ') },
     { key: 'co', header: 'TK Có', type: 'code', width: 200, value: (r) => r.co.join('; ') },
     { key: 'sua', header: 'Chức năng', width: 90, noFilter: true, noSort: true, render: (r) => (r.sua && canWrite ? <a href="#" onClick={(e) => { e.preventDefault(); setSua(r); }}>Sửa</a> : null) },
