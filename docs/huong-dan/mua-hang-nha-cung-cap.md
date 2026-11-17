@@ -24,8 +24,6 @@ Mỗi NCC một dòng: STT, mã, tên, MST, **nợ phải trả** (theo sổ), *
 | Chiết khấu & khuyến mại | CK trên đơn, bậc số lượng, CKTT, mua X tặng Y, ngân sách quà |
 | Thưởng | Thưởng doanh số theo kỳ, chỉ tiêu nhãn, giai đoạn, chỉ tiêu cung ứng |
 | Mặt hàng & giá mua | NCC bán **mã nào, ĐVT nào, giá bao nhiêu**: **mã + tên hàng bên NCC** (để sau quét hoá đơn đỏ tự nhận ra mã của mình), ĐVT đặt hàng (Đặt theo ĐVT này), giá mua cố định (gồm / chưa thuế, hiệu lực), lần mua gần nhất, **ghi chú** (tự điền vào ghi chú dòng khi lập đơn đặt), người sửa lần cuối; dưới bảng: nút mở **Phân tích đặt hàng** lọc sẵn NCC |
-| Tổng hợp mua hàng ↗ | Mở màn **Tổng hợp mua hàng (MH11)** ở thẻ mới, lọc sẵn NCC này: mọi phiếu của NCC (mỗi phiếu một dòng, tiền, công nợ từng phiếu), lập / sửa / duyệt |
-| Báo cáo mua hàng ↗ | Mở **Báo cáo mua hàng (MH23)** ở thẻ mới, lọc sẵn NCC này: chi tiết từng dòng hàng |
 | Tệp đính kèm | Hợp đồng, CO, CQ, báo giá, hoá đơn, biên bản… (kéo thả, tối đa 15 MB / tệp). **Bấm tên tệp là xem ngay trên web** (PDF, ảnh, Excel từng sheet) — không phải tải về; nút ⬇ để tải |
 | Nhật ký | Ai tạo / sửa chính sách, gắn tệp, duyệt phiếu — lúc nào |
 
