@@ -27,6 +27,8 @@ const SOURCE_LABEL: Record<string, string> = { payment: 'theo hình thức thanh
 type Pair = { debit: string; credit: string };
 
 const SALE_TYPES: [string, string][] = [['sale', 'Phiếu bán hàng (đơn máy POS, BH10)'], ['sale_return', 'Phiếu trả hàng (BH11, BH14)']];
+// [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: công tắc chặn bán quá tồn của phiếu bán nhập tay (khoá của module phieu-ban, Q6) (đóng góp)
+const PB_BLOCK = 'bizcity.phieu_ban.block_negative_stock';
 const DEF_PAIR = { short: { debit: '1381', credit: '1111' }, over: { debit: '1111', credit: '3381' } };
 const REASON_NAME = { short: 'Thiếu tiền két chờ xử lý (máy bán POS)', over: 'Thừa tiền két chờ xử lý (máy bán POS)' };
 
@@ -47,6 +49,9 @@ export function CaiDatPage() {
   const modesQ = useQuery({ queryKey: ['posting-modes'], queryFn: () => api.get<Record<string, Mode>>('/api/v1/settings/posting-modes') });
   const reasonsQ = useQuery({ queryKey: ['reasons'], queryFn: () => api.get<Reason[]>('/api/v1/posting/reasons') });
   const typesQ = useQuery({ queryKey: ['posting-scheme'], queryFn: () => api.get<Scheme>('/api/v1/posting/scheme') });
+  const pbQ = useQuery({ queryKey: ['setting', PB_BLOCK], queryFn: () => api.get<{ value: unknown }>(`/api/v1/settings/values/${PB_BLOCK}`) });
+  const [pbBlock, setPbBlock] = useState(false);
+  useEffect(() => { if (pbQ.data) setPbBlock(pbQ.data.value === true); }, [pbQ.data]);
   const [v, setV] = useState<Values | null>(null);
   const [modes, setModes] = useState<Record<string, Mode>>({});
   const [pairs, setPairs] = useState<{ short: Pair; over: Pair }>(DEF_PAIR);
@@ -86,9 +91,11 @@ export function CaiDatPage() {
         if (v[k] !== q.data.values[k]) await api.put(`/api/v1/settings/values/${encodeURIComponent(q.data.keys[k])}`, { key: q.data.keys[k], value: v[k] });
       }
       if (modesQ.data && SALE_TYPES.some(([t]) => modes[t] !== modesQ.data![t])) await api.put('/api/v1/settings/posting-modes', { ...modesQ.data, ...modes });
+      if (pbQ.data && pbBlock !== (pbQ.data.value === true)) await api.put(`/api/v1/settings/values/${PB_BLOCK}`, { key: PB_BLOCK, value: pbBlock });
     },
     onSuccess: () => Promise.all([
       qc.invalidateQueries({ queryKey: ['pos-admin', 'settings'] }), qc.invalidateQueries({ queryKey: ['posting-modes'] }), qc.invalidateQueries({ queryKey: ['reasons'] }),
+      qc.invalidateQueries({ queryKey: ['setting', PB_BLOCK] }),
     ]),
   });
 
@@ -100,8 +107,9 @@ export function CaiDatPage() {
   };
   const changed = (q.data && (Object.keys(v) as (keyof Values)[]).some((k) => v[k] !== q.data!.values[k]))
     || (modesQ.data && SALE_TYPES.some(([t]) => modes[t] !== modesQ.data![t]))
-    || (v.cashDiffJournal && reasonsQ.data && (pairChanged('short') || pairChanged('over')));
-  const reset = () => { setV(q.data!.values); if (modesQ.data) setModes(modesQ.data); setErr({}); setPairs(savedPairs(q.data!.values)); };
+    || (v.cashDiffJournal && reasonsQ.data && (pairChanged('short') || pairChanged('over')))
+    || (pbQ.data && pbBlock !== (pbQ.data.value === true));
+  const reset = () => { setV(q.data!.values); if (modesQ.data) setModes(modesQ.data); if (pbQ.data) setPbBlock(pbQ.data.value === true); setErr({}); setPairs(savedPairs(q.data!.values)); };
   const ready = (code: string) => { const r = reasonOf(code); return r?.kind === 'journal' && r.isActive && r.debitAccount && r.creditAccount; };
   const saleBiz = (typesQ.data?.businesses ?? []).filter((b) => b.code === 'sale' || b.code === 'sale_return');
   const keyAcc = (k?: string) => typesQ.data?.keys.find((x) => x.key === k);
@@ -122,6 +130,9 @@ export function CaiDatPage() {
       <Block title="① Máy bán tại quầy" hint="Áp cho mọi cửa hàng của đơn vị.">
         <Field label="Hạn trả hàng không cần duyệt (ngày, tính từ ngày bán)" hint={err.returnDays ?? 'Quá hạn: máy bán đòi người duyệt (bộ phận kinh doanh). Mặc định 3 ngày.'}>
           <input className={`input${err.returnDays ? ' input-error' : ''}`} type="number" min={0} max={60} value={v.returnDays} disabled={!writable} onChange={(e) => days(e.target.value)} />
+        </Field>
+        <Field label="Bán quá tồn" hint="Máy bán luôn chặn: dòng hàng thiếu tồn báo đỏ, không thanh toán được (NT-BH-021). Đơn bán lúc mất mạng gửi bù vẫn nhận, lọc ở Đơn bán máy POS.">
+          <span>Luôn chặn</span>
         </Field>
         <Field label="Bắt buộc mở ca trước khi bán" hint="Chưa bật: máy bán vẫn nhận đơn khi chưa mở ca (ca theo ngày).">
           <input type="checkbox" checked={v.requireOpenShift} disabled={!writable} onChange={(e) => setV({ ...v, requireOpenShift: e.target.checked })} />

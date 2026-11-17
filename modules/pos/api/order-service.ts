@@ -9,6 +9,8 @@ import { lastCode, takeCodes } from './codes.js';
 import { activePaymentMethods, catalogFor, partnerByCode, resolveBranch } from './read.js';
 import { posSettings } from './settings.js';
 import { openShiftOf } from './shifts.js';
+import { stockOf } from './catalog.js';
+import { stockNeeds, stockShortages, stockShortMessage, type StockShort } from './domain/stock.js';
 
 export const EINVOICE_NONE = { required: false, lines: [] as unknown[], warnings: [] as string[] };
 
@@ -74,6 +76,16 @@ async function quoteLoyalty(ctx: ActionContext, draft: OrderDraft, branchCode: s
   };
 }
 
+/** Khoá chi nhánh × mã rồi so số xuất (ĐVT nhỏ nhất) với tồn cửa hàng. Trả danh sách mã thiếu (rỗng = đủ). */
+export async function checkStock(tx: Parameters<Parameters<ActionContext['data']['module']>[0]>[0], branchCode: string,
+  lines: readonly { sku: string; qty: number }[]): Promise<StockShort[]> {
+  const need = stockNeeds(lines);
+  const skus = [...need.keys()].sort();
+  for (const sku of skus) await lockKey(tx, `pos:stock:${branchCode}:${sku}`);
+  const have = new Map((await stockOf(tx, branchCode, skus)).map((x) => [x.sku, x.available]));
+  return stockShortages(need, have);
+}
+
 export type CreatedOrder = { order: Record<string, unknown>; nextReservedCodes: string[]; einvoiceReview: typeof EINVOICE_NONE; replayed: boolean };
 
 export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: { exchange?: { credit: number; returnDocKey: string } } = {}): Promise<CreatedOrder> {
@@ -100,6 +112,14 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     const computed = computeOrder({ ...base, ...(loyalty ? { loyalty: loyalty.input } : {}) });
     if ('problem' in computed) raise(computed.problem);
 
+    // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (đóng góp)
+    // Khoá theo chi nhánh × mã (thứ tự mã cố định, tránh khoá chéo) tới hết giao dịch: hai máy cùng bán một mã chạy nối tiếp,
+    // đơn sau thấy tồn đã trừ đơn trước. Đơn bán dự phòng lúc mất mạng gửi bù: hàng đã giao → nhận, đánh dấu cho kế toán xem.
+    const stockShort = await checkStock(tx, branch.code, computed.lines.map((l) => ({ sku: l.item.sku, qty: l.draft.unitQty * l.unitRatio })));
+    if (stockShort.length && !draft.offlineCreatedAt) {
+      throw Errors.validation(stockShortMessage(stockShort, branch.code), { reason: 'POS_STOCK_SHORT', items: stockShort });
+    }
+
     // Mã phiếu: dùng số máy đã được cấp trước (đúng khuôn, đã cấp, chưa dùng); không thì cấp số mới. Khoá theo số để hai máy
     // cùng dùng một số đã cấp không cùng qua bước "chưa dùng".
     const period = codePeriod(draft.businessDate);
@@ -112,14 +132,15 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       if (!used) code = draft.reservedCode!;
     }
     code ??= (await takeCodes(tx, ctx.tenant.id, branch.code, 'sale', period, 1))[0]!;
-    return { kind: 'new', computed, branch, code, loyalty } as const;
+    return { kind: 'new', computed, branch, code, loyalty, stockShort } as const;
   });
   if (prepared.kind === 'replay') return { order: prepared.snapshot, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: true };
 
-  const { computed, branch, code, loyalty } = prepared;
+  const { computed, branch, code, loyalty, stockShort } = prepared;
   const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code });
   const submitted = await ctx.ledger.submit(doc);
   const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}) });
+  if (stockShort.length) Object.assign(order, { stockShortOffline: stockShort });
 
   try {
     await ctx.data.module(async (tx) => {

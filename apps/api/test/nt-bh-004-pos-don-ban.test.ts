@@ -13,13 +13,14 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { setupTenant, type TestCtx } from './helpers.js';
+import { nhapTon } from './pos-nhap-ton.js';
 import { createHmac } from 'node:crypto';
 import { env } from '../src/config/env.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
-const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners'];
+const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand'];
 
 const ID1 = '0193a1b2-0000-7000-8000-000000000001';
 const ID2 = '0193a1b2-0000-7000-8000-000000000002';
@@ -82,6 +83,8 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
       const r = await app.inject({ method: 'PUT', url: `/api/v1/products/${sku}`, headers: { authorization: `Bearer ${ctx.token}`, 'idempotency-key': `nt-bh-004-${sku}-${Date.now()}` }, payload: { taxOutCode } });
       expect(r.statusCode, r.body).toBe(200);
     }
+    // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
+    await nhapTon(ctx, 'CN01', [['SUA400', 1000, 'Hộp'], ['TA01', 1000, 'Gói']]);
   });
   afterAll(async () => {
     await app?.close();
@@ -261,6 +264,8 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     await sql`INSERT INTO products (tenant_id, sku, name, unit, tax_out_code, variant_code) VALUES
       (${tenantId}, '11005100103Z', 'Bình sữa quà tặng', 'Cái', 'R08', 'internal'),
       (${tenantId}, '11005100102', 'Bình sữa kẹp quà', 'Cái', 'R08', 'clip')`.execute(db);
+    // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
+    await nhapTon(ctx, 'CN01', [['11005100102', 10, 'Cái']], '2026-10-01', 'NHAP-TON-CN01-KEP');
     const docsBefore = await docCount('pos:%');
 
     const price = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000c2', lines: [{ lineId: 'l1', sku: '11005100103Z', unitName: 'Cái', unitQty: 1, clientUnitPrice: 5_000 }], clientTotal: 5_000 }));

@@ -51,3 +51,13 @@ describe('số phiếu, trả hàng, chứng từ nộp sổ', () => {
     expect(JSON.stringify(doc)).not.toMatch(/"(debit|credit)Account"|1311|5111/);
   });
 });
+
+// [2026-11-16 06:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: phiếu bán nhập tay chặn bán quá tồn (đóng góp)
+describe('NT-BH-021 — stockShortOf', () => {
+  it('cộng theo mã gồm quà; thiếu mới báo; mã không có tồn = 0', async () => {
+    const { stockShortOf } = await import('../api/domain/doc.js');
+    expect(stockShortOf([{ sku: 'A', qty: 5 }, { sku: 'A', qty: 2 }], new Map([['A', 5]]))).toEqual([{ sku: 'A', need: 7, have: 5 }]);
+    expect(stockShortOf([{ sku: 'A', qty: 5 }], new Map([['A', 5]]))).toEqual([]);
+    expect(stockShortOf([{ sku: 'B', qty: 1 }], new Map())).toEqual([{ sku: 'B', need: 1, have: 0 }]);
+  });
+});

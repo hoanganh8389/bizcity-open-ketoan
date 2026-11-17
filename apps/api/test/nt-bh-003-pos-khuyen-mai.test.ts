@@ -12,6 +12,7 @@ import { dispatchOnce } from '../src/core/events.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { nhapTon } from './pos-nhap-ton.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
@@ -53,6 +54,8 @@ describe.skipIf(!HAS)('NT-BH-003 — khuyến mại ở máy bán theo Chương 
     };
     await save({ code: 'CT-SUA330', name: 'Mua 2 tặng 1', mode: 'gift', sku: 'SUA330', buyQty: 2, giftSku: 'QUA01', giftQty: 1, quotas: [{ branchCode: 'CN01', quotaQty: 10 }] });
     await save({ code: 'CT-SUA900', name: 'Giảm 10 %', mode: 'discount', sku: 'SUA900', discountPct: 10, quotas: [{ branchCode: 'CN01', quotaQty: 20 }] });
+    // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
+    await nhapTon(s.ctx, 'CN01', [['SUA330', 1000, 'Hộp'], ['SUA900', 1000, 'Hộp'], ['QUA01', 1000, 'Hộp']]);
   });
   afterAll(async () => {
     await s.app?.close();
