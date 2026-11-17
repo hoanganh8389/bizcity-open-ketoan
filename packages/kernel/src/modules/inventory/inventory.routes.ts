@@ -88,6 +88,8 @@ export const inventoryWriteActions: AnyActionDef[] = [
         to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         /** [2026-11-17] Chỉ ra phiếu giá vốn cho shop thuộc chi nhánh này (mã đơn vị hạch toán / điểm tính giá vốn); trống = mọi chi nhánh. */
         costCenter: z.string().trim().max(60).optional(),
+        /** [2026-11-17] Phạm vi chọn trên cây cơ cấu: nút bất kỳ (node) hoặc một shop (shop) — đặt làm điểm tính giá vốn rồi tính. */
+        scope: z.object({ kind: z.enum(['node', 'shop']), code: z.string().trim().min(1).max(60) }).optional(),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/inventory/costing' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'inventory' },

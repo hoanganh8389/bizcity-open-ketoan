@@ -12,13 +12,15 @@ import { defaultFrom, defaultTo, kyText, money, periodFrom } from '@/lib/format'
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
-import { Empty, ErrorBox, Loading } from '@/components/ui';
+import { Empty, ErrorBox, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { DocumentDetail } from '../../../features/documents/DocumentDetail';
 import { ItemPicker } from '@/components/pickers';
 import { ExcelImport, type ImportResult } from '@/components/ExcelImport';
 import { PrintButton } from '@/components/print';
+import { CayDonVi } from '@/components/CayDonVi';
+import { useOrgTree } from '@/lib/orgUnits';
 import { COST_TEMPLATES, ITEM_LEDGER_TEMPLATES, STOCK_TEMPLATES, type StockSheet } from './mauIn/khoHang';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
@@ -48,6 +50,10 @@ export function CostingPage() {
   const ln = useLocNhomHang(nhom);
   // [2026-11-17 Nguyễn Văn Thủy] chọn chi nhánh (điểm tính giá vốn trên cơ cấu tổ chức) để xem; tính thì tính cả các chi nhánh một lượt (đóng góp)
   const [cn, setCn] = useState('');
+  // [2026-11-17 Nguyễn Văn Thủy] phạm vi chọn trên cây cơ cấu: nút bất kỳ hoặc một shop (đóng góp)
+  const [scope, setScope] = useState<{ kind: 'node' | 'shop'; code: string; label: string } | null>(null);
+  const [moCay, setMoCay] = useState(false);
+  const orgTree = useOrgTree();
   const qc = useQueryClient();
   const [period, setPeriodState] = useState(thisMonth());
   const [search, setSearch] = useState('');
@@ -57,7 +63,6 @@ export function CostingPage() {
   const setPeriod = (m: string) => { setPeriodState(m); setRange({ from: `${m}-01`, to: monthEnd(m) }); };
   const wholeMonth = range.from === `${period}-01` && range.to === monthEnd(period);
   const costs = useQuery({ queryKey: ['inventory-costs', period, search], queryFn: () => api.get<CostRow[]>('/api/v1/inventory/costs', { period, search }) });
-  const centers = useQuery({ queryKey: ['inventory-cost-centers'], queryFn: () => api.get<{ code: string; name: string; shops: number; fromOrg: boolean }[]>('/api/v1/inventory/cost-centers') });
   // [2026-11-17 Nguyễn Văn Thủy] chọn chi nhánh (cơ cấu) → các lần tính giá vốn (lọc ngày tính) → bấm một lần: bảng đơn giá các mã (đóng góp)
   const [ngay, setNgay] = useState({ from: `${thisMonth().slice(0, 4)}-01-01`, to: new Date().toISOString().slice(0, 10) });
   const runs = useQuery({ queryKey: ['inventory-costing-runs', cn, ngay.from, ngay.to], queryFn: () => api.get<CostRun[]>('/api/v1/inventory/costing-runs', { costCenter: cn || undefined, from: ngay.from, to: ngay.to }) });
@@ -67,7 +72,7 @@ export function CostingPage() {
   const tim = search.trim().toLowerCase();
   const lineRows = ln.loc((lines.data ?? []).map((l) => ({ ...l, costGroup: curRun?.centerCode ?? '', costGroupName: curRun?.centerName ?? '' }))).filter((l) => !tim || `${l.sku} ${l.name}`.toLowerCase().includes(tim));
   const run = useMutation({
-    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...(cn ? { costCenter: cn } : {}), ...extra }),
+    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...(scope ? { scope: { kind: scope.kind, code: scope.code } } : {}), ...extra }),
     onSuccess: (res) => { void qc.invalidateQueries({ queryKey: ['inventory-costs'] }); void qc.invalidateQueries({ queryKey: ['inventory-costing-runs'] }); setRunSel(res.runIds?.[0] ?? null); },
   });
   const hasImport = (costs.data ?? []).some((r) => r.costSource === 'import');
@@ -107,18 +112,19 @@ export function CostingPage() {
             <PrintButton small screen="ACC49" templates={COST_TEMPLATES} disabled={!lineRows.length} getDocs={() => (lineRows.length ? [{ period: curRun?.period ?? period, rows: lineRows }] : [])} />
             {hasImport && <button className="btn btn-sm" disabled={run.isPending} onClick={() => window.confirm(`Bỏ toàn bộ giá vốn đã nhập từ Excel của tháng ${monthText} và tính lại bình quân cho mọi mã?`) && run.mutate({ clearImport: true })}>Bỏ giá đã nhập</button>}
             <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate({})}>
-              {run.isPending ? 'Đang tính…' : `Tính giá vốn tháng ${monthText}${cn ? ` · ${cn}` : ''}${wholeMonth ? '' : ` (chứng từ ${range.from.slice(8)}–${range.to.slice(8)})`}`}
+              {run.isPending ? 'Đang tính…' : `Tính giá vốn tháng ${monthText}${scope ? ` · ${scope.code}` : ''}${wholeMonth ? '' : ` (chứng từ ${range.from.slice(8)}–${range.to.slice(8)})`}`}
             </button>
           </>
         }
       />
       <div className="card">
         <div className="filters">
-          <div className="field"><label title="Điểm tính giá vốn trên Cơ cấu tổ chức: mọi shop, kho bên dưới chi nhánh gom chung một giá vốn">Chi nhánh (cơ cấu)</label>
-            <select className="input w-md" value={cn} onChange={(e) => { setCn(e.target.value); setRunSel(null); }}>
-              <option value="">Tất cả chi nhánh</option>
-              {(centers.data ?? []).filter((c) => c.shops > 0).map((c) => <option key={c.code} value={c.code}>{c.code} - {c.name} ({c.shops} shop)</option>)}
-            </select></div>
+          <div className="field"><label title="Chọn nút bất kỳ trên Cơ cấu tổ chức (miền, chi nhánh, tỉnh) hoặc một shop: mọi shop bên dưới dùng chung một giá vốn bình quân">Phạm vi tính (cơ cấu)</label>
+            <div className="row" style={{ gap: 4 }}>
+              <input className="input w-md" readOnly value={scope ? scope.label : 'Tất cả (theo điểm tính đang đặt)'} onClick={() => setMoCay(true)} style={{ cursor: 'pointer' }} />
+              <button type="button" className="btn btn-sm" onClick={() => setMoCay(true)} title="Chọn trên cây cơ cấu">Chọn…</button>
+              {scope && <button type="button" className="btn btn-sm" title="Bỏ chọn — xem mọi lần tính" onClick={() => { setScope(null); setCn(''); setRunSel(null); }}>✕</button>}
+            </div></div>
           <div className="field"><label title="Tháng sẽ tính khi bấm Tính giá vốn">Tháng tính</label><input type="month" className="input w-md" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
           <div className="field"><label title="Lọc các lần tính theo ngày bấm tính">Ngày tính từ</label><input type="date" className="input" value={ngay.from} onChange={(e) => setNgay((x) => ({ ...x, from: e.target.value }))} /></div>
           <div className="field"><label>đến</label><input type="date" className="input" value={ngay.to} onChange={(e) => setNgay((x) => ({ ...x, to: e.target.value }))} /></div>
@@ -181,6 +187,17 @@ export function CostingPage() {
               />
             )}
           </>
+        )}
+        {moCay && (
+          <Modal title="Chọn phạm vi tính giá vốn" onClose={() => setMoCay(false)} footer={<button className="btn" onClick={() => setMoCay(false)}>Thoát</button>}>
+            <div className="full muted" style={{ fontSize: 12.5 }}>Bấm một nút (miền, chi nhánh, tỉnh) hoặc một shop. Bấm Tính giá vốn: mọi shop bên dưới dùng chung một giá vốn bình quân từ lần tính đó.</div>
+            <div className="full">
+              <CayDonVi tree={orgTree.data} showBranches height={460} openLevel={2}
+                selected={scope?.kind === 'node' ? scope.code : null}
+                onSelect={(n) => { setScope({ kind: 'node', code: n.code, label: `${n.code} - ${n.name}` }); setCn(n.code); setRunSel(null); setMoCay(false); }}
+                onSelectBranch={(b) => { setScope({ kind: 'shop', code: b.code, label: `Shop ${b.code} - ${b.name}` }); setCn(b.code); setRunSel(null); setMoCay(false); }} />
+            </div>
+          </Modal>
         )}
       </div>
     </>

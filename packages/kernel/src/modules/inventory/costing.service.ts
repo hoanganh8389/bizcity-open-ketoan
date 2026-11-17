@@ -472,14 +472,21 @@ export const costingService = {
    * `imported`: bảng giá vốn tháng nhập từ Excel (thay toàn bộ giá đã nhập của tháng; mã trùng lấy giá khác 0 xuất hiện nhiều nhất).
    * `clearImport`: bỏ giá đã nhập, quay về tính bình quân cho mọi mã.
    */
-  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string }): Promise<CostingResult> {
+  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string } }): Promise<CostingResult> {
     return db.transaction().execute((trx) => costingService.runIn(trx, auth, input));
   },
 
   // [2026-11-03 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): đơn giá + ghi sổ giá vốn mọi chi nhánh trong một giao dịch (trước: 2+ giao dịch nối nhau — lỗi ở một chi nhánh
   // để lại đơn giá và các chi nhánh trước đã ghi)
-  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string }): Promise<CostingResult> {
+  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string } }): Promise<CostingResult> {
     const p = parsePeriod(input.period);
+    // [2026-11-17 Nguyễn Văn Thủy] phạm vi chọn trên cây cơ cấu (nút bất kỳ hoặc một shop): đặt làm điểm tính giá vốn rồi tính (0149) (đóng góp)
+    if (input.scope) {
+      const r = await sql<{ code: string | null }>`SELECT bizcity_set_cost_scope(${auth.tenantId}, ${input.scope.kind}, ${input.scope.code}) AS code`.execute(trx);
+      const code = r.rows[0]?.code;
+      if (!code) throw Errors.validation(`Không đặt được phạm vi tính giá vốn ${input.scope.code}`);
+      input = { ...input, costCenter: code };
+    }
     // Khoảng ngày chứng từ được cập nhật giá vốn: trong tháng đang tính (giá vốn là giá của tháng), mặc định cả tháng.
     const from = input.from ?? firstDay(p);
     const to = input.to ?? lastDay(p);
@@ -604,7 +611,7 @@ export const costingService = {
 // bảng đơn giá các mã của chi nhánh tại lần tính (đóng góp)
 async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: string; to: string; costCenter?: string; branches: CostingResult['branches']; imported: number }): Promise<string[]> {
   const centers = (await sql<{ id: string; code: string; name: string; org_unit_id: string | null; org_uid: string | null }>`
-    SELECT u.id::text, u.code, u.name, u.org_unit_id::text, o.uid AS org_uid FROM accounting_units u LEFT JOIN org_units o ON o.id = u.org_unit_id
+    SELECT u.id::text, u.code, u.name, u.org_unit_id::text, COALESCE(o.uid, sb.uid) AS org_uid FROM accounting_units u LEFT JOIN org_units o ON o.id = u.org_unit_id LEFT JOIN branches sb ON sb.id = u.branch_id
      WHERE u.tenant_id = ${auth.tenantId}
        AND ${a.costCenter ? sql`u.code = ${a.costCenter}` : sql`EXISTS (SELECT 1 FROM inventory_costs c WHERE c.tenant_id = u.tenant_id AND c.cost_group = u.id AND c.year = ${a.p.year} AND c.month = ${a.p.month})`}`.execute(trx)).rows;
   const shop = new Map((await sql<{ code: string; unit: string | null }>`SELECT b.code, b.accounting_unit_id::text AS unit FROM branches b WHERE b.tenant_id = ${auth.tenantId}`.execute(trx)).rows.map((r) => [r.code, r.unit]));

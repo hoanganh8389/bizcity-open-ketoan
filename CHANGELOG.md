@@ -17,7 +17,8 @@ Mỗi bản ghi đủ sáu mục:
 - **Đổi:** giá vốn bình quân gia quyền tháng tính **riêng từng chi nhánh cấp 2** trên Cơ cấu tổ chức (nơi mua hàng đại diện rồi phát xuống shop các tỉnh; cấp tỉnh chỉ lấy MST). Đơn vị hạch toán của shop **tự suy** theo cây: `org_units.is_cost_center` (mặc định nút cấp 2) sinh `accounting_units` (`org_unit_id`), shop lấy điểm tính giá vốn gần nhất phía trên; dời nút / đổi điểm tính thì tự gắn lại. Engine giá vốn, lãi gộp, chuyển kho cùng / khác đơn vị dùng luôn.
 - **Đổi:** ACC49 đổi tên **Tính giá vốn** (menu, sơ đồ). Màn theo trình tự: chọn **Chi nhánh (cơ cấu)** → **Các lần tính giá vốn** (lọc ngày tính) → bấm một lần: **bảng giá vốn các mã hàng** của lần đó. Bấm Tính khi đã chọn chi nhánh: đơn giá tính chung một lượt (chuyển hàng giữa chi nhánh khớp giá), chỉ ra phiếu "Giá vốn hàng xuất" cho shop của chi nhánh đó; giá vốn không lưu vào từng chứng từ.
 - **Thêm:** mỗi lần tính lưu `costing_runs` (mốc cơ cấu: id + uid nút, kỳ, khoảng ngày, số mã, tổng, phiếu, người tính) và `costing_run_lines` (bảng đơn giá lúc tính). API `GET /api/v1/inventory/cost-centers`, `/costing-runs`, `/costing-runs/:id/lines`; `POST /api/v1/inventory/costing` nhận `costCenter`.
-- **Nâng cấp cần làm:** migration `0147`, `0148`; tính lại giá vốn các tháng đã tính (giá cũ đang gom một rổ chung).
+- **Thêm:** **phạm vi tính chọn tuỳ ý trên cây cơ cấu** (nút Chọn… mở cây): bấm nút bất kỳ (miền, chi nhánh, tỉnh) hoặc một shop rồi Tính giá vốn — mọi shop bên dưới chung một giá bình quân (điểm tính giá vốn bên dưới bỏ), shop chọn riêng thì tính riêng (`branches.own_cost_center`). Mỗi shop một tháng chỉ một giá vốn (phân hoạch). Hàm `bizcity_set_cost_scope`; `POST /api/v1/inventory/costing` nhận `scope { kind: node|shop, code }`.
+- **Nâng cấp cần làm:** migration `0147`, `0148`, `0149`; tính lại giá vốn các tháng đã tính (giá cũ đang gom một rổ chung).
 
 ### Mã màn ở mọi menu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
