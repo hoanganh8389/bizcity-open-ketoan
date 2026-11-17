@@ -89,12 +89,12 @@ const formulaOptions = z.object({
 
 export const inventoryWriteActions: AnyActionDef[] = [
   defineAction({
-    id: 'core.inventory.costing-formula-save', title: 'Thêm / sửa công thức giá vốn (giá nhập, chi phí / thưởng phân bổ, trả NCC, nhận chi nhánh khác, nhập điều chỉnh)', tags,
+    id: 'core.inventory.costing-formula-save', title: 'Đổi công thức giá vốn áp dụng từ một tháng (cần mật khẩu, không áp vào tháng đã khoá sổ)', tags,
     permission: 'periods:lock', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ code: z.string().trim().min(1).max(30).regex(/^[A-Za-z0-9_.-]+$/, 'Mã chỉ gồm chữ, số, _ . -'), name: z.string().trim().min(1).max(200), options: formulaOptions, isDefault: z.boolean().optional(), note: z.string().max(1000).optional() }),
+    input: z.object({ name: z.string().trim().min(1).max(200), options: formulaOptions, applyFrom: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Tháng áp dụng dạng YYYY-MM'), password: z.string().max(200), note: z.string().max(1000).optional() }),
     output: anyOut,
-    expose: { http: { method: 'PUT', path: '/api/v1/inventory/costing-formulas/:code' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'costing_formula', objectId: (i) => i.code },
+    expose: { http: { method: 'POST', path: '/api/v1/inventory/costing-formulas' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'costing_formula', objectId: (i) => i.applyFrom },
     handler: (ctx, input) => costingFormulas.saveIn(ctx.data.tx as never, ctx.legacyAuth, input),
   }),
   defineAction({
@@ -113,8 +113,6 @@ export const inventoryWriteActions: AnyActionDef[] = [
         costCenter: z.string().trim().max(60).optional(),
         /** [2026-11-17] Phạm vi chọn trên cây cơ cấu: nút bất kỳ (node) hoặc một shop (shop) — đặt làm điểm tính giá vốn rồi tính. */
         scope: z.object({ kind: z.enum(['node', 'shop']), code: z.string().trim().min(1).max(60) }).optional(),
-        /** [2026-11-17] Mã công thức giá vốn (danh mục costing_formulas); trống = công thức mặc định. */
-        formulaCode: z.string().trim().max(30).optional(),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/inventory/costing' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'inventory' },

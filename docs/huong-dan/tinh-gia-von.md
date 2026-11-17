@@ -22,6 +22,13 @@ Mỗi shop trong một tháng chỉ có **một** giá vốn: chọn nút X rồ
 | Xuất · Tồn cuối (SL, $) | Giá vốn hàng xuất và tồn cuối = SL × Giá vốn BQ cuối kỳ |
 
 <!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — mục Kiến trúc tổng thể cho dev / kế toán / CEO; số tài khoản là ví dụ TT99 -->
+## Công thức giá vốn
+
+- Ô **Công thức** hiện công thức đang áp dụng cho tháng chọn. Bấm vào để xem công thức dạng phân số:
+  Giá vốn BQ cuối kỳ = (Giá trị tồn đầu kỳ + Giá trị nhập mua + Chi phí phân bổ − Thưởng, CK phân bổ − Trả NCC + Nhập điều chỉnh + Nhận từ chi nhánh khác) ÷ (SL tương ứng).
+- Công thức **cố định** để lãi lỗ, kết chuyển, khoá sổ nhất quán. Khi tính không phải chọn.
+- Cần đổi (ví dụ đầu năm tài chính): bấm **Đổi công thức…**, chọn các lựa chọn, **Áp dụng từ tháng** và mật khẩu. Tháng trước giữ công thức cũ; không áp vào tháng đã khoá sổ. Sau khi đổi, tính lại các tháng từ tháng áp dụng.
+
 ## Kiến trúc tổng thể: giá vốn nằm ở đâu trong hệ thống
 
 Trang này nói **cách tính** của màn ACC49. Để hiểu giá vốn nằm ở đâu trong cả hệ thống (ai tính, ai ghi sổ, khi nào được kết chuyển), đọc sơ đồ một trang ở [PHASE-032 · 10 Kiến trúc](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/10-KIEN-TRUC.md) hoặc mở bản vẽ [inventory-engine.html](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/mockups/inventory-engine.html):

@@ -56,11 +56,11 @@ export function CostingPage() {
   const orgTree = useOrgTree();
   // [2026-11-17 Nguyễn Văn Thủy] công thức giá vốn tuỳ chọn: chọn ở mỗi lần tính, sửa / thêm trong hộp thoại (đóng góp)
   const formulas = useQuery({ queryKey: ['costing-formulas'], queryFn: () => api.get<Formula[]>('/api/v1/inventory/costing-formulas') });
-  const [ctCode, setCtCode] = useState('');
-  const ct = (formulas.data ?? []).find((f) => f.code === ctCode) ?? (formulas.data ?? []).find((f) => f.isDefault) ?? formulas.data?.[0];
-  const [suaCt, setSuaCt] = useState<Formula | null>(null);
+  const [xemCt, setXemCt] = useState(false);
   const qc = useQueryClient();
   const [period, setPeriodState] = useState(thisMonth());
+  // [2026-11-17 Nguyễn Văn Thủy] công thức cố định: tháng đang tính dùng công thức có "áp dụng từ" gần nhất ≤ tháng; chỉ xem, đổi ở hộp Xem (mật khẩu) (đóng góp)
+  const ct = ctCuaThang(formulas.data ?? [], period);
   const [search, setSearch] = useState('');
   // Khoảng ngày chứng từ được cập nhật giá vốn (trong tháng đang tính), đổi tháng thì về cả tháng.
   const monthEnd = (m: string) => new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).toISOString().slice(0, 10);
@@ -77,7 +77,7 @@ export function CostingPage() {
   const tim = search.trim().toLowerCase();
   const lineRows = ln.loc((lines.data ?? []).map((l) => ({ ...l, costGroup: curRun?.centerCode ?? '', costGroupName: curRun?.centerName ?? '' }))).filter((l) => !tim || `${l.sku} ${l.name}`.toLowerCase().includes(tim));
   const run = useMutation({
-    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...(scope ? { scope: { kind: scope.kind, code: scope.code } } : {}), ...(ct ? { formulaCode: ct.code } : {}), ...extra }),
+    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...(scope ? { scope: { kind: scope.kind, code: scope.code } } : {}), ...extra }),
     onSuccess: (res) => { void qc.invalidateQueries({ queryKey: ['inventory-costs'] }); void qc.invalidateQueries({ queryKey: ['inventory-costing-runs'] }); setRunSel(res.runIds?.[0] ?? null); },
   });
   const hasImport = (costs.data ?? []).some((r) => r.costSource === 'import');
@@ -113,13 +113,10 @@ export function CostingPage() {
               <button type="button" className="btn btn-sm" onClick={() => setMoCay(true)} title="Chọn trên cây cơ cấu">Chọn…</button>
               {scope && <button type="button" className="btn btn-sm" title="Bỏ chọn — xem mọi lần tính" onClick={() => { setScope(null); setCn(''); setRunSel(null); }}>✕</button>}
             </div></div>
-          <div className="field"><label title="Cách tính giá vốn: giá nhập lấy theo gì, có cộng chi phí / trừ thưởng phân bổ không… Rê chuột lên ô để xem">Công thức</label>
-            <div className="row" style={{ gap: 4 }}>
-              <select className="input" style={{ width: 240 }} value={ct?.code ?? ''} title={ct ? moTaCt(ct.options) : ''} onChange={(e) => setCtCode(e.target.value)}>
-                {(formulas.data ?? []).map((f) => <option key={f.code} value={f.code}>{f.name}{f.isDefault ? ' (mặc định)' : ''}</option>)}
-              </select>
-              <button type="button" className="btn btn-sm" title="Sửa công thức đang chọn hoặc thêm công thức mới" onClick={() => setSuaCt(ct ?? { code: '', name: '', options: { ...CT_MD }, isDefault: false, note: '' })}>Sửa…</button>
-            </div></div>
+          <div className="field"><label title="Công thức giá vốn áp dụng cho tháng đang chọn — cố định, bấm để xem các lựa chọn">Công thức</label>
+            <button type="button" className="btn" style={{ minWidth: 200, justifyContent: 'flex-start' }} title={ct ? `${moTaCt(ct.options)}\nÁp dụng từ ${thangVn(ct.applyFrom)}` : ''} onClick={() => setXemCt(true)}>
+              {ct?.name ?? 'Mặc định (giá Net)'}
+            </button></div>
           <div className="field"><label title="Tháng cần tính giá vốn">Tháng</label><input type="month" className="input" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
           <div className="field" style={{ flexDirection: 'row', gap: 6, display: 'flex' }}>
             <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate({})}>
@@ -224,7 +221,7 @@ export function CostingPage() {
             {!curRun && !runs.isLoading && <div className="muted" style={{ padding: 24 }}>Chọn một lần tính bên trái để xem bảng giá vốn.</div>}
           </div>
         </div>
-        {suaCt && <SuaCongThuc f={suaCt} onClose={(code) => { setSuaCt(null); if (code) setCtCode(code); }} />}
+        {xemCt && <XemCongThuc ds={formulas.data ?? []} period={period} onClose={() => setXemCt(false)} />}
         {moCay && (
           <Modal title="Chọn phạm vi tính giá vốn" onClose={() => setMoCay(false)} footer={<button className="btn" onClick={() => setMoCay(false)}>Thoát</button>}>
             <div className="full muted" style={{ fontSize: 12.5 }}>Bấm một nút (miền, chi nhánh, tỉnh) hoặc một shop. Bấm Tính giá vốn: mọi shop bên dưới dùng chung một giá vốn bình quân từ lần tính đó.</div>
@@ -267,7 +264,10 @@ const dg = (v: number) => (v ? v.toLocaleString('vi-VN', { maximumFractionDigits
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
 interface CtOptions { price: 'net' | 'before_discount' | 'with_vat'; costAlloc: boolean; rebateAlloc: boolean; purchaseReturn: 'reason' | 'doc' | 'opening'; transferIn: 'doc' | 'sender'; adjustIn: boolean }
-interface Formula { code: string; name: string; options: CtOptions; isDefault: boolean; note: string }
+interface Formula { code: string; name: string; options: CtOptions; applyFrom: string; note: string; updatedBy?: string; updatedAt?: string }
+/** Công thức áp dụng cho tháng: "áp dụng từ" lớn nhất ≤ tháng. */
+const ctCuaThang = (ds: Formula[], thang: string) => ds.filter((f) => f.applyFrom && f.applyFrom <= thang).sort((x, y) => y.applyFrom.localeCompare(x.applyFrom))[0];
+const thangVn = (t: string) => (t && t > '2000-01' ? `${t.slice(5)}/${t.slice(0, 4)}` : 'đầu');
 const CT_MD: CtOptions = { price: 'net', costAlloc: true, rebateAlloc: true, purchaseReturn: 'reason', transferIn: 'doc', adjustIn: true };
 const GIA_NHAP: Record<CtOptions['price'], [string, string]> = {
   net: ['Giá Net', 'Đơn giá chưa VAT, đã trừ chiết khấu trên phiếu (mặc định, đúng công thức giá vốn nội bộ)'],
@@ -290,51 +290,108 @@ const moTaCt = (o?: Partial<CtOptions>) => {
     `trả NCC trừ theo ${TRA_NCC[f.purchaseReturn][0].replace(' (mặc định)', '').toLowerCase()}`, `nhận chi nhánh khác ${NHAN_CN[f.transferIn][0].toLowerCase()}`, f.adjustIn ? 'nhập điều chỉnh tính vào giá' : 'nhập điều chỉnh không tính vào giá'].join(' · ');
 };
 
-/** Sửa / thêm công thức giá vốn: từng lựa chọn có giải thích khi rê chuột. */
-function SuaCongThuc({ f, onClose }: { f: Formula; onClose: (code?: string) => void }) {
+/** [2026-11-17 Nguyễn Văn Thủy] Công thức giá vốn viết dạng phân số, các khoản đổi theo lựa chọn (đóng góp) */
+function CongThucPhanSo({ o }: { o: CtOptions }) {
+  const tu = ['Giá trị tồn đầu kỳ', `Giá trị nhập mua (${GIA_NHAP[o.price][0]})`, ...(o.costAlloc ? ['Chi phí mua phân bổ'] : []), ...(o.rebateAlloc ? ['− Thưởng, CK phân bổ'] : []),
+    '− Giá trị trả NCC', ...(o.adjustIn ? ['Giá trị nhập điều chỉnh'] : []), 'Giá trị nhận từ chi nhánh khác'];
+  const mau = ['SL tồn đầu kỳ', 'SL nhập mua', '− SL trả NCC', ...(o.adjustIn ? ['SL nhập điều chỉnh'] : []), 'SL nhận từ chi nhánh khác'];
+  const noi = (ds: string[]) => ds.map((x, i) => (i === 0 ? x : x.startsWith('−') ? ` ${x} ` : ` + ${x}`)).join('');
+  return (
+    <div className="ct-ps">
+      <div className="ct-ps-cong">
+        <span className="ct-ps-ten">Giá vốn BQ cuối kỳ =</span>
+        <span className="ct-ps-frac"><span className="ct-ps-tu">{noi(tu)}</span><span className="ct-ps-mau">{noi(mau)}</span></span>
+      </div>
+      <ul className="ct-ps-gc">
+        <li><b>Giá nhập mua</b>: {GIA_NHAP[o.price][1]}</li>
+        <li><b>Trả NCC</b> trừ theo {TRA_NCC[o.purchaseReturn][0].replace(' (mặc định)', '').toLowerCase()}: {TRA_NCC[o.purchaseReturn][1]}</li>
+        <li><b>Nhận từ chi nhánh khác</b> {NHAN_CN[o.transferIn][0].toLowerCase()}: {NHAN_CN[o.transferIn][1]}</li>
+        {!o.costAlloc && <li>Không cộng chi phí mua phân bổ.</li>}
+        {!o.rebateAlloc && <li>Không trừ thưởng, CK phân bổ.</li>}
+        <li><b>Giá vốn hàng xuất</b> = SL xuất × Giá vốn BQ cuối kỳ. Tồn cuối kỳ thành tồn đầu kỳ tháng sau.</li>
+      </ul>
+      <style>{`
+        .ct-ps { background: var(--subtle, #f4f6fa); border-radius: 6px; padding: 14px 16px; }
+        .ct-ps-cong { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 15px; }
+        .ct-ps-ten { font-weight: 600; white-space: nowrap; }
+        .ct-ps-frac { display: inline-flex; flex-direction: column; text-align: center; }
+        .ct-ps-tu { padding: 0 6px 4px; border-bottom: 1.5px solid currentColor; }
+        .ct-ps-mau { padding: 4px 6px 0; }
+        .ct-ps-gc { margin: 12px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--muted, #555); }
+        .ct-ps-gc li { margin: 2px 0; }
+      `}</style>
+    </div>
+  );
+}
+
+/**
+ * [2026-11-17 Nguyễn Văn Thủy] Xem công thức giá vốn (chỉ đọc). Đổi công thức: bấm "Đổi công thức…", chọn tháng áp dụng (tháng chưa khoá sổ)
+ * và mật khẩu — tháng trước giữ công thức cũ để lãi lỗ, kết chuyển, khoá sổ nhất quán (đóng góp)
+ */
+function XemCongThuc({ ds, period, onClose }: { ds: Formula[]; period: string; onClose: () => void }) {
   const qc = useQueryClient();
-  const [v, setV] = useState<Formula>({ ...f, options: { ...CT_MD, ...f.options } });
-  const isNew = !f.code;
+  const hienTai = ctCuaThang(ds, period);
+  const [doi, setDoi] = useState(false);
+  const [v, setV] = useState({ name: hienTai?.name ?? 'Mặc định (giá Net)', options: { ...CT_MD, ...(hienTai?.options ?? {}) }, applyFrom: period, password: '', note: '' });
   const o = v.options;
+  const ro = !doi;
   const set = (x: Partial<CtOptions>) => setV((s) => ({ ...s, options: { ...s.options, ...x } }));
   const save = useMutation({
-    mutationFn: () => api.put(`/api/v1/inventory/costing-formulas/${encodeURIComponent(v.code.trim())}`, { name: v.name.trim(), options: v.options, isDefault: v.isDefault, note: v.note }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['costing-formulas'] }); onClose(v.code.trim()); },
+    mutationFn: () => api.post('/api/v1/inventory/costing-formulas', { name: v.name.trim(), options: v.options, applyFrom: v.applyFrom, password: v.password, note: v.note }),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['costing-formulas'] }); onClose(); },
   });
   const chon = <K extends keyof CtOptions>(k: K, m: Record<string, [string, string]>, label: string, tip: string) => (
     <div className="field full"><label>{label} <Hoi text={tip} /></label>
       <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
         {Object.entries(m).map(([val, [ten, giai]]) => (
-          <label key={val} className="checkbox" title={giai}><input type="radio" checked={o[k] === val} onChange={() => set({ [k]: val } as Partial<CtOptions>)} /> {ten}</label>
+          <label key={val} className="checkbox" title={giai}><input type="radio" disabled={ro} checked={o[k] === val} onChange={() => set({ [k]: val } as Partial<CtOptions>)} /> {ten}</label>
         ))}
       </div></div>
   );
+  const lichSu = ds.filter((f) => f.applyFrom).sort((x, y) => y.applyFrom.localeCompare(x.applyFrom));
   return (
-    <Modal wide title={isNew ? 'Thêm công thức giá vốn' : `Công thức giá vốn: ${f.name}`} onClose={() => onClose()}
-      footer={<>
-        <button className="btn btn-primary" disabled={!v.code.trim() || !v.name.trim() || save.isPending} onClick={() => save.mutate()}>Ghi</button>
-        {!isNew && <button className="btn" title="Giữ công thức này, ghi các lựa chọn hiện tại thành một công thức mới" onClick={() => setV((s) => ({ ...s, code: '', name: `${s.name} (bản sao)`, isDefault: false }))}>Thành công thức mới</button>}
-        <button className="btn" onClick={() => onClose()}>Thoát</button>
+    <Modal wide title={doi ? 'Đổi công thức giá vốn' : `Công thức giá vốn tháng ${thangVn(period)}`} onClose={onClose}
+      footer={doi ? <>
+        <button className="btn btn-primary" disabled={!v.name.trim() || !v.applyFrom || !v.password || save.isPending} onClick={() => save.mutate()}>Ghi</button>
+        <button className="btn" onClick={() => { setDoi(false); save.reset(); }}>Huỷ đổi</button>
+      </> : <>
+        <button className="btn" title="Đổi công thức từ một tháng trở đi (tháng chưa khoá sổ), cần mật khẩu" onClick={() => setDoi(true)}>Đổi công thức…</button>
+        <button className="btn" onClick={onClose}>Đóng</button>
       </>}>
       <ErrorBox error={save.error ? errorText(save.error) : null} />
-      <div className="field"><label title="Mã ngắn, không dấu (vd MD, GOM-VAT)">Mã</label><input className="input" value={v.code} disabled={!isNew && v.code === f.code && Boolean(f.code)} onChange={(e) => setV((s) => ({ ...s, code: e.target.value.toUpperCase() }))} placeholder="VD: GOM-VAT" /></div>
-      <div className="field"><label>Tên công thức</label><input className="input" value={v.name} onChange={(e) => setV((s) => ({ ...s, name: e.target.value }))} placeholder="VD: Giá gồm VAT, không cộng chi phí" /></div>
+      {doi ? <>
+        <div className="field"><label>Tên công thức</label><input className="input" value={v.name} onChange={(e) => setV((s) => ({ ...s, name: e.target.value }))} /></div>
+        <div className="field"><label>Áp dụng từ tháng <Hoi text="Công thức mới dùng cho tháng này và các tháng sau; các tháng trước giữ công thức cũ. Không chọn được tháng đã khoá sổ" /></label>
+          <input type="month" className="input" value={v.applyFrom} onChange={(e) => setV((s) => ({ ...s, applyFrom: e.target.value }))} /></div>
+      </> : (
+        <div className="field full"><label>Đang áp dụng</label>
+          <div><b>{hienTai?.name ?? 'Mặc định (giá Net)'}</b> <span className="muted">· từ tháng {thangVn(hienTai?.applyFrom ?? '')}{hienTai?.updatedBy && hienTai.updatedBy !== 'system' ? ` · ${hienTai.updatedBy}` : ''}</span></div></div>
+      )}
+      {!doi && <div className="full"><CongThucPhanSo o={o} /></div>}
+      {doi && <>
       {chon('price', GIA_NHAP, 'Giá nhập lấy theo', 'Giá trị hàng nhập mua đưa vào công thức bình quân')}
-      <div className="field full"><label>Phân bổ <Hoi text="Bật / tắt từng khoản phân bổ vào giá vốn" /></label>
+      <div className="field full"><label>Phân bổ <Hoi text="Các khoản phân bổ vào giá vốn" /></label>
         <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
-          <label className="checkbox" title="Chi phí mua hàng (vận chuyển, bốc xếp…) phân bổ vào mã — làm TĂNG giá vốn"><input type="checkbox" checked={o.costAlloc} onChange={(e) => set({ costAlloc: e.target.checked })} /> Cộng chi phí phân bổ (+)</label>
-          <label className="checkbox" title="Thưởng doanh số / chiết khấu nhãn hàng phân bổ theo mã — làm GIẢM giá vốn"><input type="checkbox" checked={o.rebateAlloc} onChange={(e) => set({ rebateAlloc: e.target.checked })} /> Trừ thưởng, CK phân bổ (−)</label>
+          <label className="checkbox" title="Chi phí mua hàng (vận chuyển, bốc xếp…) phân bổ vào mã — làm TĂNG giá vốn"><input type="checkbox" disabled={ro} checked={o.costAlloc} onChange={(e) => set({ costAlloc: e.target.checked })} /> Cộng chi phí phân bổ (+)</label>
+          <label className="checkbox" title="Thưởng doanh số / chiết khấu nhãn hàng phân bổ theo mã — làm GIẢM giá vốn"><input type="checkbox" disabled={ro} checked={o.rebateAlloc} onChange={(e) => set({ rebateAlloc: e.target.checked })} /> Trừ thưởng, CK phân bổ (−)</label>
         </div></div>
       {chon('purchaseReturn', TRA_NCC, 'Hàng trả nhà cung cấp trừ khỏi giá vốn theo', 'Khi trả hàng cho nhà cung cấp, số tiền trừ khỏi giá vốn lấy theo giá nào. Rê chuột lên từng lựa chọn xem ví dụ')}
       <div className="field full"><label>Hàng nhập điều chỉnh kho (kiểm kê thừa…) <Hoi text="Hàng nhập thêm do điều chỉnh kho có được cộng vào khi tính giá vốn bình quân hay không. Lý do nào đã cài 'không tính giá vốn' thì luôn bỏ ra" /></label>
         <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
-          <label className="checkbox" title="Cộng số lượng và giá trị hàng nhập điều chỉnh vào công thức bình quân (mặc định)"><input type="radio" checked={o.adjustIn} onChange={() => set({ adjustIn: true })} /> Tính vào giá vốn</label>
-          <label className="checkbox" title="Bỏ hàng nhập điều chỉnh ra khỏi công thức, giá vốn chỉ tính từ hàng mua"><input type="radio" checked={!o.adjustIn} onChange={() => set({ adjustIn: false })} /> Không tính</label>
+          <label className="checkbox" title="Cộng số lượng và giá trị hàng nhập điều chỉnh vào công thức bình quân"><input type="radio" disabled={ro} checked={o.adjustIn} onChange={() => set({ adjustIn: true })} /> Tính vào giá vốn</label>
+          <label className="checkbox" title="Bỏ hàng nhập điều chỉnh ra khỏi công thức, giá vốn chỉ tính từ hàng mua"><input type="radio" disabled={ro} checked={!o.adjustIn} onChange={() => set({ adjustIn: false })} /> Không tính</label>
         </div></div>
       {chon('transferIn', NHAN_CN, 'Nhận từ chi nhánh khác', 'Giá trị hàng nhận chuyển kho từ phạm vi khác')}
-      <div className="field full"><label>Ghi chú</label><input className="input" value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></div>
-      <label className="checkbox full" title="Công thức tự chọn khi mở màn Tính giá vốn"><input type="checkbox" checked={v.isDefault} onChange={(e) => setV((s) => ({ ...s, isDefault: e.target.checked }))} /> Đặt làm công thức mặc định</label>
-      <div className="full muted" style={{ fontSize: 12.5 }}>Tóm tắt: {moTaCt(o)}</div>
+      <div className="full"><CongThucPhanSo o={o} /></div>
+        <div className="field full"><label>Ghi chú</label><input className="input" value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} placeholder="Lý do đổi công thức" /></div>
+        <div className="field"><label>Mật khẩu đổi công thức</label><input type="password" className="input" autoComplete="new-password" value={v.password} onChange={(e) => setV((s) => ({ ...s, password: e.target.value }))} /></div>
+      </>}
+      {!doi && lichSu.length > 1 && (
+        <div className="field full"><label>Các lần đổi công thức</label>
+          <table className="table" style={{ fontSize: 12.5 }}><tbody>
+            {lichSu.map((f) => <tr key={f.code} title={moTaCt(f.options)}><td style={{ width: 120 }}>Từ tháng {thangVn(f.applyFrom)}</td><td>{f.name}</td><td className="muted">{f.note}</td><td className="muted">{f.updatedBy !== 'system' ? f.updatedBy : ''}</td></tr>)}
+          </tbody></table></div>
+      )}
     </Modal>
   );
 }

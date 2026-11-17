@@ -551,22 +551,21 @@ export const costingService = {
    * `imported`: bảng giá vốn tháng nhập từ Excel (thay toàn bộ giá đã nhập của tháng; mã trùng lấy giá khác 0 xuất hiện nhiều nhất).
    * `clearImport`: bỏ giá đã nhập, quay về tính bình quân cho mọi mã.
    */
-  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string }; formulaCode?: string }): Promise<CostingResult> {
+  async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string } }): Promise<CostingResult> {
     return db.transaction().execute((trx) => costingService.runIn(trx, auth, input));
   },
 
   // [2026-11-03 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): đơn giá + ghi sổ giá vốn mọi chi nhánh trong một giao dịch (trước: 2+ giao dịch nối nhau — lỗi ở một chi nhánh
   // để lại đơn giá và các chi nhánh trước đã ghi)
-  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string }; formulaCode?: string }): Promise<CostingResult> {
+  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string } }): Promise<CostingResult> {
     const p = parsePeriod(input.period);
     // [2026-11-17 Nguyễn Văn Thủy] phạm vi chọn trên cây cơ cấu (nút bất kỳ hoặc một shop): đặt làm điểm tính giá vốn rồi tính (0149) (đóng góp)
-    // Công thức: theo mã chọn, không chọn thì công thức mặc định của đơn vị, chưa có thì mặc định trong mã.
+    // Công thức: không chọn khi tính — lấy công thức đang áp dụng cho tháng (apply_from lớn nhất <= tháng); chưa có thì mặc định trong mã.
     const fr = (await sql<{ code: string; name: string; options: unknown }>`
       SELECT code, name, options FROM costing_formulas WHERE tenant_id = ${auth.tenantId}
-         AND ${input.formulaCode ? sql`code = ${input.formulaCode}` : sql`is_default`} ORDER BY id LIMIT 1`.execute(trx)).rows[0];
-    if (input.formulaCode && !fr) throw Errors.validation(`Không có công thức giá vốn ${input.formulaCode}`);
+         AND apply_from <> '' AND apply_from <= ${input.period} ORDER BY apply_from DESC LIMIT 1`.execute(trx)).rows[0];
     const formula = formulaOf(fr?.options);
-    const formulaInfo = { code: fr?.code ?? '', name: fr?.name ?? 'Mặc định', formula };
+    const formulaInfo = { code: fr?.code ?? 'MD', name: fr?.name ?? 'Mặc định (giá Net)', formula };
     if (input.scope) {
       const r = await sql<{ code: string | null }>`SELECT bizcity_set_cost_scope(${auth.tenantId}, ${input.scope.kind}, ${input.scope.code}) AS code`.execute(trx);
       const code = r.rows[0]?.code;
@@ -727,18 +726,29 @@ async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: stri
 
 export const costingFormulas = {
   async list(auth: AuthContext) {
-    const rows = await sql<{ code: string; name: string; options: unknown; is_default: boolean; note: string; updated_by: string }>`
-      SELECT code, name, options, is_default, note, updated_by FROM costing_formulas WHERE tenant_id = ${auth.tenantId} ORDER BY is_default DESC, code`.execute(db);
-    return rows.rows.map((r) => ({ code: r.code, name: r.name, options: formulaOf(r.options), isDefault: r.is_default, note: r.note, updatedBy: r.updated_by }));
+    const rows = await sql<{ code: string; name: string; options: unknown; apply_from: string; note: string; updated_by: string; updated_at: Date }>`
+      SELECT code, name, options, apply_from, note, updated_by, updated_at FROM costing_formulas WHERE tenant_id = ${auth.tenantId}
+       ORDER BY apply_from DESC, code`.execute(db);
+    return rows.rows.map((r) => ({ code: r.code, name: r.name, options: formulaOf(r.options), applyFrom: r.apply_from, note: r.note, updatedBy: r.updated_by, updatedAt: new Date(r.updated_at).toISOString() }));
   },
-  async saveIn(trx: Db, auth: AuthContext, i: { code: string; name: string; options: Partial<CostFormula>; isDefault?: boolean; note?: string }) {
+  /**
+   * [2026-11-17 Nguyễn Văn Thủy] Đổi công thức giá vốn: công thức mới áp dụng TỪ một tháng trở đi (tháng trước giữ công thức cũ).
+   * Cần mật khẩu; không áp vào tháng đã khoá sổ (có khoá ở tháng đó hoặc sau). Cùng tháng áp dụng thì thay công thức cũ của tháng đó (đóng góp)
+   */
+  async saveIn(trx: Db, auth: AuthContext, i: { name: string; options: Partial<CostFormula>; applyFrom: string; password: string; note?: string }) {
+    if (i.password !== (process.env.COSTING_FORMULA_PASSWORD || process.env.RESTORE_DEFAULT_PASSWORD || process.env.CATALOG_WIPE_PASSWORD || 'Thuy!@#')) throw Errors.forbidden('Sai mật khẩu đổi công thức giá vốn');
+    const y = Number(i.applyFrom.slice(0, 4)), m = Number(i.applyFrom.slice(5, 7));
+    const locked = (await sql<{ y: number; m: number }>`
+      SELECT p.year AS y, p.month AS m FROM period_locks l JOIN fiscal_periods p ON p.id = l.period_id
+       WHERE l.tenant_id = ${auth.tenantId} AND (p.year * 12 + p.month) >= ${y * 12 + m} ORDER BY p.year DESC, p.month DESC LIMIT 1`.execute(trx)).rows[0];
+    if (locked) throw Errors.validation(`Tháng ${String(locked.m).padStart(2, '0')}/${locked.y} đã khoá sổ — chỉ áp dụng công thức mới từ tháng sau tháng khoá sổ cuối cùng`);
     const options = formulaOf(i.options);
-    if (i.isDefault) await sql`UPDATE costing_formulas SET is_default = false WHERE tenant_id = ${auth.tenantId} AND code <> ${i.code}`.execute(trx);
-    await sql`INSERT INTO costing_formulas (tenant_id, code, name, options, is_default, note, updated_by)
-      VALUES (${auth.tenantId}, ${i.code}, ${i.name}, ${JSON.stringify(options)}::jsonb, ${Boolean(i.isDefault)}, ${i.note ?? ''}, ${auth.actorName || auth.actor})
-      ON CONFLICT (tenant_id, code) DO UPDATE SET name = EXCLUDED.name, options = EXCLUDED.options, note = EXCLUDED.note, updated_by = EXCLUDED.updated_by, updated_at = now()
-        ${i.isDefault ? sql`, is_default = true` : sql``}`.execute(trx);
-    return { code: i.code, options };
+    const code = `CT${i.applyFrom.replace('-', '')}`;
+    await sql`UPDATE costing_formulas SET apply_from = '' WHERE tenant_id = ${auth.tenantId} AND apply_from = ${i.applyFrom} AND code <> ${code}`.execute(trx);
+    await sql`INSERT INTO costing_formulas (tenant_id, code, name, options, apply_from, note, updated_by)
+      VALUES (${auth.tenantId}, ${code}, ${i.name}, ${JSON.stringify(options)}::jsonb, ${i.applyFrom}, ${i.note ?? ''}, ${auth.actorName || auth.actor})
+      ON CONFLICT (tenant_id, code) DO UPDATE SET name = EXCLUDED.name, options = EXCLUDED.options, apply_from = EXCLUDED.apply_from, note = EXCLUDED.note, updated_by = EXCLUDED.updated_by, updated_at = now()`.execute(trx);
+    return { code, applyFrom: i.applyFrom, options };
   },
 };
 

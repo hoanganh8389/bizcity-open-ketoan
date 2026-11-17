@@ -268,17 +268,20 @@ describe('Nhập ĐGBQ đầu kỳ từ Excel', () => {
 });
 
 // [2026-11-17 Nguyễn Văn Thủy] công thức giá vốn tuỳ chọn (0151) (đóng góp)
-describe('Công thức giá vốn tuỳ chọn', () => {
-  it('lưu công thức, tính theo công thức đó, lịch sử ghi tên + lựa chọn; mã lạ báo lỗi', async () => {
-    const save = await call(ctx, 'PUT', '/api/v1/inventory/costing-formulas/KHONG-CP', { name: 'Bỏ chi phí phân bổ', options: { costAlloc: false, price: 'with_vat' } });
+describe('Công thức giá vốn cố định, đổi thì áp dụng từ một tháng', () => {
+  it('sai mật khẩu bị chặn; công thức mới áp từ tháng chọn, tháng trước giữ công thức cũ; lịch sử ghi công thức', async () => {
+    const body = { name: 'Gồm VAT, bỏ chi phí', options: { costAlloc: false, price: 'with_vat' }, applyFrom: '2026-10' };
+    expect((await call(ctx, 'POST', '/api/v1/inventory/costing-formulas', { ...body, password: 'sai' })).status).toBe(403);
+    const save = await call(ctx, 'POST', '/api/v1/inventory/costing-formulas', { ...body, password: 'Thuy!@#' });
     expect(save.status, JSON.stringify(save.body)).toBe(200);
     const list = (await call(ctx, 'GET', '/api/v1/inventory/costing-formulas')).body.data;
-    expect(list.find((f: any) => f.code === 'KHONG-CP')).toMatchObject({ name: 'Bỏ chi phí phân bổ', options: { costAlloc: false, price: 'with_vat', rebateAlloc: true, purchaseReturn: 'reason' } });
-    const run = await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10', formulaCode: 'KHONG-CP' });
-    expect(run.status, JSON.stringify(run.body)).toBe(200);
-    const runs = (await call(ctx, 'GET', '/api/v1/inventory/costing-runs')).body.data;
-    expect(runs[0]).toMatchObject({ formulaCode: 'KHONG-CP', formulaName: 'Bỏ chi phí phân bổ', formula: { costAlloc: false, price: 'with_vat' } });
-    expect((await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10', formulaCode: 'KHONG-CO' })).status).toBe(400);
-    await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10' }); // về công thức mặc định
+    expect(list.find((f: any) => f.applyFrom === '2026-10')).toMatchObject({ code: 'CT202610', name: 'Gồm VAT, bỏ chi phí', options: { costAlloc: false, price: 'with_vat', rebateAlloc: true } });
+    expect((await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10' })).status).toBe(200);
+    expect((await call(ctx, 'GET', '/api/v1/inventory/costing-runs')).body.data[0]).toMatchObject({ formulaCode: 'CT202610', formula: { costAlloc: false, price: 'with_vat' } });
+    expect((await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-09' })).status).toBe(200);
+    expect((await call(ctx, 'GET', '/api/v1/inventory/costing-runs')).body.data[0]).toMatchObject({ formulaCode: 'MD', formula: { price: 'net', costAlloc: true } });
+    // về công thức mặc định cho tháng 10
+    await call(ctx, 'POST', '/api/v1/inventory/costing-formulas', { name: 'Mặc định (giá Net)', options: {}, applyFrom: '2026-10', password: 'Thuy!@#' });
+    await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10' });
   });
 });
