@@ -44,6 +44,9 @@ export const docInput = z.object({
   note: z.string().trim().max(1000).optional(),
   /** Bản chính sách đã áp — đúng mảng `policyRefs` Core trả ở POST /api/v1/policies/evaluate. */
   policyRefs: z.array(z.object({ key: z.string().trim().min(1).max(64), version: z.number().int().min(1), hash: z.string().trim().min(1).max(128) })).max(50).optional(),
+  // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: phiếu bán sinh từ đơn đặt hàng nối số đơn (máy chủ tự gắn, màn không sửa được) (đóng góp)
+  /** Đơn đặt hàng mà phiếu này giao (phiếu bán sinh từ nút Giao của đơn). Máy chủ giữ nguyên khi sửa phiếu nháp. */
+  order: z.object({ id: z.string().trim().min(1).max(64), no: z.string().trim().max(32) }).optional(),
 }).passthrough();
 export type PolicyRef = { key: string; version: number; line: 'gift' | 'discount' };
 export type DocInput = z.infer<typeof docInput>;
@@ -58,6 +61,8 @@ export type Body = {
   originalDocNo?: string; dueDate?: string; lines: Line[]; payments: { methodCode: string; amount: number; reference?: string }[];
   totals: { beforeTax: number; tax: number; total: number }; note?: string;
   policyRefs?: { key: string; version: number; hash: string }[];
+  /** Đơn đặt hàng phiếu này giao (NT-BH-023). */
+  order?: { id: string; no: string };
 };
 
 /**
@@ -117,6 +122,7 @@ export function computeDoc(input: DocInput, ctx: {
     lines, payments, totals: { beforeTax, tax, total },
     ...(input.note ? { note: input.note } : {}),
     ...(policyRefs.length ? { policyRefs } : {}),
+    ...(input.order ? { order: { id: input.order.id, no: input.order.no } } : {}),
   };
   return { body, problems };
 }

@@ -21,7 +21,7 @@ import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 const POS = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const LOY = fileURLToPath(new URL('../../../modules/loyalty/', import.meta.url));
 const HAS = existsSync(path.join(POS, 'bizcity.module.json')) && existsSync(path.join(LOY, 'bizcity.module.json'));
-const POS_READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand'];
+const POS_READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 // Chính sách mẫu NT-BH-020 §4 (CN01): TICH10K 1 điểm / 10.000đ hạn 365 ngày; THUONG1TR đơn từ 1.000.000đ +20; hạng ×1 / ×1,2 / ×1,5.
 
 const PROGRAM = {

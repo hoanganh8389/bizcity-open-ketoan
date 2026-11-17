@@ -20,7 +20,7 @@ import { env } from '../src/config/env.js';
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
-const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand'];
+const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 
 const ID1 = '0193a1b2-0000-7000-8000-000000000001';
 const ID2 = '0193a1b2-0000-7000-8000-000000000002';

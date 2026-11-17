@@ -36,25 +36,39 @@ async function prepare(tx: Tx, kind: Kind, input: DocInput) {
 
 /** Lưu nháp: thêm (id trống) hoặc sửa phiếu nháp. Số trống → cấp theo cửa hàng; số gõ tay → không trùng trong cửa hàng + loại. */
 export async function saveDraft(ctx: ActionContext, kind: Kind, input: DocInput, id?: string) {
-  return ctx.data.module(async (tx) => {
-    const cur = id ? await getDoc(tx, id, true) : null;
-    if (cur && cur.kind !== kind) throw Errors.validation('Sai loại phiếu');
-    if (cur && cur.status !== 'draft') throw Errors.conflict('Phiếu đã duyệt — bỏ duyệt rồi mới sửa');
-    const { body, problems } = await prepare(tx, kind, input);
-    if (problems.length) fail(problems);
-    const sameBranch = cur && cur.branch_code === input.branchCode;
-    let docNo = input.docNo?.trim() || (sameBranch ? cur.doc_no : '');
-    if (docNo && await noTaken(tx, input.branchCode, kind, docNo, cur?.doc_id)) {
-      fail([`Số phiếu ${docNo} đã có ở chi nhánh ${input.branchCode} — để trống để phần mềm tự cấp số mới`]);
-    }
-    docNo ||= await takeNo(tx, ctx.tenant.id, input.branchCode, kind, input.docDate);
-    const docId = cur?.doc_id ?? randomUUID();
-    await saveDoc(tx, {
-      docId, tenantId: ctx.tenant.id, kind, branchCode: input.branchCode, warehouseCode: input.warehouseCode || null, docNo, docDate: input.docDate,
-      partnerCode: body.partner?.code ?? null, originalDocId: null, body, actor: ctx.actor.id, insert: !cur,
-    });
-    return toTradeDoc(await getDoc(tx, docId));
+  return ctx.data.module(async (tx) => saveDraftIn(tx, ctx, kind, input, id));
+}
+
+// [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: lưu nháp trong giao dịch module có sẵn (đơn đặt hàng sinh phiếu bán nháp khi giao) (đóng góp)
+/**
+ * Lưu nháp trong giao dịch module của người gọi. `order`: chỉ máy chủ gắn (nút Giao của đơn đặt hàng) — số đơn do màn gửi lên bị bỏ;
+ * sửa phiếu đã nối đơn thì giữ nối đơn và báo đơn số lượng mới của lần giao (onLinkedEdit).
+ */
+export async function saveDraftIn(tx: Tx, ctx: ActionContext, kind: Kind, input: DocInput, id?: string, opts: {
+  order?: { id: string; no: string };
+  onLinkedEdit?: (tx: Tx, doc: { docId: string; orderId: string; lines: { lineKey: string; sku: string; qty: number }[] }) => Promise<void>;
+} = {}) {
+  const cur = id ? await getDoc(tx, id, true) : null;
+  if (cur && cur.kind !== kind) throw Errors.validation('Sai loại phiếu');
+  if (cur && cur.status !== 'draft') throw Errors.conflict('Phiếu đã duyệt — bỏ duyệt rồi mới sửa');
+  const order = opts.order ?? cur?.body.order;
+  const { body, problems } = await prepare(tx, kind, { ...input, order });
+  if (problems.length) fail(problems);
+  if (cur && order && opts.onLinkedEdit) {
+    await opts.onLinkedEdit(tx, { docId: cur.doc_id, orderId: order.id, lines: body.lines.map((l) => ({ lineKey: l.lineKey, sku: l.sku, qty: l.qty })) });
+  }
+  const sameBranch = cur && cur.branch_code === input.branchCode;
+  let docNo = input.docNo?.trim() || (sameBranch ? cur.doc_no : '');
+  if (docNo && await noTaken(tx, input.branchCode, kind, docNo, cur?.doc_id)) {
+    fail([`Số phiếu ${docNo} đã có ở chi nhánh ${input.branchCode} — để trống để phần mềm tự cấp số mới`]);
+  }
+  docNo ||= await takeNo(tx, ctx.tenant.id, input.branchCode, kind, input.docDate);
+  const docId = cur?.doc_id ?? randomUUID();
+  await saveDoc(tx, {
+    docId, tenantId: ctx.tenant.id, kind, branchCode: input.branchCode, warehouseCode: input.warehouseCode || null, docNo, docDate: input.docDate,
+    partnerCode: body.partner?.code ?? null, originalDocId: null, body, actor: ctx.actor.id, insert: !cur,
   });
+  return toTradeDoc(await getDoc(tx, docId));
 }
 
 const asInput = (r: DocRow): DocInput => ({ docNo: r.doc_no, docDate: r.doc_date, branchCode: r.branch_code, ...(r.body as Body), warehouseCode: r.warehouse_code ?? undefined } as DocInput);

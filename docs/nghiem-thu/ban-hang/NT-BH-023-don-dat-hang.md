@@ -75,9 +75,10 @@
 ## 6. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-023-don-dat-hang.test.ts` (tạo khi code) |
+| Ngày chạy | 17/11/2026 (CSDL test `ketoan_test`) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — kết quả chạy NT-BH-023 (đóng góp) --> |
+| Bản code (commit) | nhánh `feat/nt-bh-023-don-dat-hang` (chưa commit lúc ghi) |
+| Test tự động | `apps/api/test/nt-bh-023-don-dat-hang.test.ts` — 13 ca §3 dòng 1–8, §4 lệch chuẩn 1–6: đạt; hàm thuần `modules/phieu-ban/test/order.test.ts` |
+| Ghi chú làm | Giữ hàng = một chứng từ `transfer` cùng chi nhánh cho cả cặp (kho bán → KCB), lõi nhận và chuyển tồn giữa hai kho, không bút toán (cùng tài khoản kho). Kho KCB của từng cửa hàng: khoá `bizcity.phieu_ban.hold_warehouses` chọn ở thẻ Cài đặt của màn BH20. Hạn thanh toán trống = 30 ngày. Phiếu bán nháp sinh từ đơn bị **bỏ duyệt** vẫn tính là đã giao (còn nháp nối đơn); **xoá** nháp mới trả lại số đã giao |
 
 ## 7. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -88,3 +89,4 @@
 |---|---|
 | 17/11/2026 | Tạo phiếu, chốt Q1–Q9 |
 | 17/11/2026 | Chốt thêm Q10–Q12: giữ hàng = chuyển KHH → KCB; máy bán kiểm tồn kho mặc định; nút chuyển kho để sau |
+| 17/11/2026 | Code + test xong, ghi kết quả chạy (màn BH20, hướng dẫn `docs/huong-dan/don-dat-hang.md`) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — code NT-BH-023 (đóng góp) --> |

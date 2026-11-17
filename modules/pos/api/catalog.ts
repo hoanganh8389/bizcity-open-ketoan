@@ -58,12 +58,28 @@ export async function productByCode(tx: Tx, branch: string, code: string): Promi
   return toProducts(await rows(tx, branch, { code: code.trim() }))[0] ?? null;
 }
 
-/** Tồn của chi nhánh theo mã (mọi kho của chi nhánh, ĐVT nhỏ nhất). Mã không có dòng sổ → 0. Chưa giữ chỗ (đơn QR chờ): held = 0. */
+// [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023 Q11 (sửa Q5 NT-BH-021): máy bán kiểm / hiện tồn theo kho mặc định của cửa hàng (đóng góp)
+/**
+ * Kho bán của cửa hàng = kho mặc định đang dùng (không có thì kho đang dùng duy nhất); trống = chi nhánh chưa khai kho → tính cả
+ * chi nhánh như trước. Hàng đã chuyển sang kho khác (vd kho KCB giữ cho đơn đặt hàng) không còn bán được ở máy bán.
+ */
+export async function saleWarehouseOf(tx: Tx, branch: string): Promise<string> {
+  const ws = (await sql<{ code: string; is_default: boolean | null; is_active: boolean | null }>`
+    SELECT code, is_default, is_active FROM bizcity_read.warehouses WHERE branch_code = ${branch} ORDER BY code`.execute(tx)).rows;
+  const active = ws.filter((w) => w.is_active !== false);
+  return (active.find((w) => w.is_default) ?? (active.length === 1 ? active[0] : undefined))?.code ?? '';
+}
+
+/** Điều kiện kho bán trên stock_on_hand: kho mặc định (gồm dòng thẻ kho cũ không ghi kho); chưa khai kho → không lọc. */
+export const saleWarehouseFilter = (wh: string) => (wh ? sql`AND coalesce(warehouse_code, '') IN (${wh}, '')` : sql``);
+
+/** Tồn bán được của chi nhánh theo mã (kho mặc định, ĐVT nhỏ nhất). Mã không có dòng sổ → 0. Chưa giữ chỗ (đơn QR chờ): held = 0. */
 export async function stockOf(tx: Tx, branch: string, skus: readonly string[]): Promise<{ sku: string; available: number; held: number }[]> {
   const list = [...new Set(skus.map((s) => s.trim()).filter(Boolean))];
   if (!list.length) return [];
+  const wh = await saleWarehouseOf(tx, branch);
   const r = await sql<{ sku: string; qty: string }>`
-    SELECT sku, SUM(qty) AS qty FROM bizcity_read.stock_on_hand WHERE branch_code = ${branch} AND sku IN (${sql.join(list)}) GROUP BY sku`.execute(tx);
+    SELECT sku, SUM(qty) AS qty FROM bizcity_read.stock_on_hand WHERE branch_code = ${branch} AND sku IN (${sql.join(list)}) ${saleWarehouseFilter(wh)} GROUP BY sku`.execute(tx);
   const got = new Map(r.rows.map((x) => [x.sku, Number(x.qty)]));
   return list.map((sku) => ({ sku, available: got.get(sku) ?? 0, held: 0 }));
 }

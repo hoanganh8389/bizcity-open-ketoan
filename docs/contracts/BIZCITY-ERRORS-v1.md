@@ -228,6 +228,11 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | **Chặn bán quá tồn** (1.12.0-draft) <!-- [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (đóng góp) --> | | | |
 | `POS_STOCK_SHORT` | `VALIDATION_ERROR` | Máy bán bán quá tồn của cửa hàng (chặn cứng; cộng theo mã, quy ĐVT nhỏ nhất, gồm quà / bill Z); kèm `items: [{ sku, need, have }]` | module `pos` (đề xuất, chưa gộp) |
 | `PHIEU_BAN_STOCK_SHORT` | `VALIDATION_ERROR` | Phiếu bán nhập tay (BH10) xuất quá tồn của kho trên phiếu khi bật công tắc `bizcity.phieu_ban.block_negative_stock`; kèm `items: [{ sku, need, have }]` | module `phieu-ban` (đề xuất, chưa gộp) |
+| **Đơn đặt hàng** (1.14.0-draft) <!-- [2026-11-17 01:10 PM Võ Hoàng] NGHIEM-THU — NT-BH-023 đơn đặt hàng (đóng góp) --> | | | |
+| `PHIEU_BAN_ORDER_EXPIRED` | `VALIDATION_ERROR` | Gửi đơn đặt hàng nháp (báo giá) đã quá hạn hiệu lực — gia hạn hoặc lập đơn mới; kèm `validUntil` | module `phieu-ban` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_NO_HOLD_WAREHOUSE` | `VALIDATION_ERROR` | Cửa hàng chưa khai kho KCB (hàng chờ bán) giữ hàng cho đơn đặt hàng (`bizcity.phieu_ban.hold_warehouses`); kèm `branchCode` | module `phieu-ban` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_OVER_REMAINING` | `VALIDATION_ERROR` | Giao đơn đặt hàng vượt số còn lại của dòng (kể cả hai người giao cùng lúc — khoá theo đơn); kèm `items: [{ lineKey, sku, qty, remaining }]` | module `phieu-ban` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_ORDER_STATE` | `CONFLICT` | Trạng thái đơn đặt hàng không cho thao tác (huỷ đơn đã giao một phần → dùng Đóng đơn; gửi / giao / duyệt sai trạng thái); kèm `status` | module `phieu-ban` (đề xuất, chưa gộp) |
 | **Máy bán bán đúng bảng giá** (1.13.0-draft) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) --> | | | |
 | `POS_MANUAL_DISCOUNT` | `VALIDATION_ERROR` | Dòng có giảm tay: thu ngân không giảm tay, chỉ giảm theo chương trình khuyến mại; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 | `POS_NO_PRICE` | `VALIDATION_ERROR` | Mã × ĐVT chưa có giá ở bảng giá cửa hàng (trừ quà, hàng Nội bộ, bill Z 0đ); kèm `items: [{ sku, unit }]` | module `pos` (đề xuất, chưa gộp) |
@@ -268,6 +273,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-17 01:10 PM Võ Hoàng] NGHIEM-THU — 1.14.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.14.0-draft (2026-11-17, đơn đặt hàng):** §4c thêm `PHIEU_BAN_ORDER_EXPIRED`, `PHIEU_BAN_NO_HOLD_WAREHOUSE`, `PHIEU_BAN_OVER_REMAINING`, `PHIEU_BAN_ORDER_STATE` (module phieu-ban, phiếu NT-BH-023). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — 1.13.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.13.0-draft (2026-11-17, máy bán bán đúng bảng giá):** §4c thêm `POS_MANUAL_DISCOUNT`, `POS_NO_PRICE` (phiếu NT-BH-022); `POS_PRICE_CHANGED` nay cũng dùng khi giá dòng khác bảng giá cửa hàng (`items: [{ sku, unit, price, ratio, clientPrice, clientRatio }]`). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — 1.12.0-draft (đóng góp, chờ chủ dự án duyệt) -->

@@ -21,7 +21,7 @@ const POS = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const PB = fileURLToPath(new URL('../../../modules/phieu-ban/', import.meta.url));
 const HAS = existsSync(path.join(POS, 'bizcity.module.json')) && existsSync(path.join(PB, 'bizcity.module.json'));
 const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners',
-  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand'];
+  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 const SKU = '11005100103';
 const SKU2 = 'TA02';
 const DAY = '2026-11-16';
