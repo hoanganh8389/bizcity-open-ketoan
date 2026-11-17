@@ -1,8 +1,8 @@
 // [2026-11-17 11:05 AM kiennt] ACC41A — màn Tài khoản kết chuyển: danh mục bút toán kết chuyển mẫu đứng riêng, ngay dưới Tài khoản ngầm định (đóng góp)
 /**
  * TÀI KHOẢN KẾT CHUYỂN (ACC41A) — bộ bút toán kết chuyển mẫu mà Kết chuyển lãi / lỗ (ACC6) chạy theo, bố cục như danh mục
- * tài khoản kết chuyển phổ biến: Thứ tự · Tên kết chuyển · Kết chuyển từ TK · Kết chuyển đến TK · Bên kết chuyển · Kết chuyển
- * số dư cuối · Trạng thái. Chỉ hiện trường hệ thống có (không có "Mã kết chuyển", "Loại kết chuyển" riêng).
+ * tài khoản kết chuyển của MISA: Thứ tự kết chuyển · Mã kết chuyển · Kết chuyển từ · Kết chuyển đến · Bên kết chuyển · Loại kết
+ * chuyển · Diễn giải · Trạng thái · Chức năng. Mã, Loại suy từ TK đi / đến (hệ thống không lưu riêng); Kết chuyển số dư cuối ẩn sẵn.
  * Dữ liệu, kiểm tra, phiên bản: GET / PUT /api/v1/closing/rules (Kernel closing). Quyền sửa: thao tác "Sửa thứ tự / quy tắc
  * kết chuyển" của màn ACC6. Thêm / sửa dùng chung form với ACC6; thôi dùng một bước thì bỏ tích "Áp dụng".
  */
@@ -22,6 +22,8 @@ import { CatalogueForm, LOAI_HINT, RuleHistory, type RulesData } from './Closing
 const BEN: Record<ClosingRule['mode'], string> = { debit: 'Nợ', credit: 'Có', balance: 'Hai bên' };
 
 type Row = { r: ClosingRule; index: number };
+/** Loại kết chuyển (như MISA): đến 154 = gom chi phí sản xuất; còn lại = xác định kết quả kinh doanh. */
+const loaiKetChuyen = (r: ClosingRule) => (r.toAccount.startsWith('154') ? 'Kết chuyển chi phí sản xuất' : 'Kết chuyển xác định kết quả kinh doanh');
 
 export function TaiKhoanKetChuyenPage() {
   const qc = useQueryClient();
@@ -38,14 +40,18 @@ export function TaiKhoanKetChuyenPage() {
     mutationFn: (v: { rules: ClosingRule[]; note: string }) => api.put('/api/v1/closing/rules', { rules: [...v.rules].sort((a, b) => a.seq - b.seq), note: v.note }),
     onSuccess: () => { for (const k of ['closing-rules', 'closing-rule-versions', 'closing-runs']) void qc.invalidateQueries({ queryKey: [k] }); },
   });
+  // [2026-11-17 11:10 AM kiennt] ACC41A — cột theo màn Tài khoản kết chuyển của MISA; Mã / Loại kết chuyển suy từ TK đi / đến (đóng góp)
   const cols: Column<Row>[] = [
-    { key: 'seq', header: 'Thứ tự', type: 'number', width: 70, showZero: true, title: 'Chạy từ nhỏ đến lớn; 911 → 421 luôn sau cùng', value: (x) => x.r.seq },
-    { key: 'description', header: 'Tên kết chuyển', width: 340, value: (x) => x.r.description },
-    { key: 'fromAccount', header: 'Kết chuyển từ TK', type: 'code', width: 130, title: 'Đầu số, gồm mọi tài khoản con', value: (x) => x.r.fromAccount },
-    { key: 'toAccount', header: 'Kết chuyển đến TK', type: 'code', width: 130, title: 'Tài khoản chi tiết', value: (x) => x.r.toAccount },
+    { key: 'seq', header: 'Thứ tự kết chuyển', type: 'number', width: 130, showZero: true, title: 'Chạy từ nhỏ đến lớn; 911 → 421 luôn sau cùng', value: (x) => x.r.seq },
+    { key: 'ma', header: 'Mã kết chuyển', type: 'code', width: 130, value: (x) => `${x.r.fromAccount}-${x.r.toAccount}` },
+    { key: 'fromAccount', header: 'Kết chuyển từ', type: 'code', width: 120, title: 'Đầu số, gồm mọi tài khoản con', value: (x) => x.r.fromAccount },
+    { key: 'toAccount', header: 'Kết chuyển đến', type: 'code', width: 120, title: 'Tài khoản chi tiết', value: (x) => x.r.toAccount },
     { key: 'mode', header: 'Bên kết chuyển', width: 120, value: (x) => BEN[x.r.mode], render: (x) => <span title={LOAI_HINT[x.r.mode]}>{BEN[x.r.mode]}</span> },
-    { key: 'includeOpening', header: 'Kết chuyển số dư cuối', type: 'check', width: 150, title: 'Cộng cả số dư đầu kỳ của tài khoản đi (bước 911 → 421)', value: (x) => x.r.includeOpening },
+    { key: 'loai', header: 'Loại kết chuyển', width: 230, value: (x) => loaiKetChuyen(x.r) },
+    { key: 'description', header: 'Diễn giải', width: 300, value: (x) => x.r.description },
+    { key: 'includeOpening', header: 'Kết chuyển số dư cuối', type: 'check', width: 150, hidden: true, title: 'Cộng cả số dư đầu kỳ của tài khoản đi (bước 911 → 421)', value: (x) => x.r.includeOpening },
     { key: 'isActive', header: 'Trạng thái', width: 130, value: (x) => (x.r.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng') },
+    { key: 'sua', header: 'Chức năng', width: 90, noFilter: true, noSort: true, render: (x) => (editable ? <a href="#" onClick={(e) => { e.preventDefault(); setEditing({ index: x.index }); }}>Sửa</a> : null) },
   ];
   return (
     <>

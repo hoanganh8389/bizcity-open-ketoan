@@ -7,13 +7,16 @@ Danh sách các bước kết chuyển cuối kỳ: doanh thu, chi phí sang **9
 
 | Cột | Nghĩa |
 |---|---|
-| **Thứ tự** | Chạy từ nhỏ đến lớn; bước sau thấy kết quả của bước trước (vd giảm trừ doanh thu về 511 trước, rồi 511 mới sang 911). Bước 911 → 421 luôn sau cùng. |
-| **Tên kết chuyển** | Diễn giải của bước, ghi lên dòng bút toán kết chuyển. |
-| **Kết chuyển từ TK** | Đầu số tài khoản đi, gồm mọi tài khoản con (vd `642` gồm 6421, 6422…). Chỉ được doanh thu, chi phí (loại 5–8), 154, 911. |
-| **Kết chuyển đến TK** | Tài khoản nhận, phải là tài khoản chi tiết. Chỉ được 154, 155, 5xx, 632x, 911, 421x. |
+| **Thứ tự kết chuyển** | Chạy từ nhỏ đến lớn; bước sau thấy kết quả của bước trước (vd giảm trừ doanh thu về 511 trước, rồi 511 mới sang 911). Bước 911 → 421 luôn sau cùng. |
+| **Mã kết chuyển** | Tài khoản đi – tài khoản đến, vd `642-911`. |
+| **Kết chuyển từ** | Đầu số tài khoản đi, gồm mọi tài khoản con (vd `642` gồm 6421, 6422…). Chỉ được doanh thu, chi phí (loại 5–8), 154, 911. |
+| **Kết chuyển đến** | Tài khoản nhận, phải là tài khoản chi tiết. Chỉ được 154, 155, 5xx, 632x, 911, 421x. |
 | **Bên kết chuyển** | **Nợ**: chuyển số phát sinh Nợ (chi phí, giảm trừ doanh thu) · **Có**: chuyển số phát sinh Có (doanh thu, thu nhập) · **Hai bên**: dư bên nào chuyển bên đó (911, thu nhập / chi phí khác). |
-| **Kết chuyển số dư cuối** | Tích: cộng cả số dư đầu kỳ của tài khoản đi. Chỉ dùng cho bước 911 → 421. Không tích: chỉ chuyển số phát sinh trong kỳ. |
+| **Loại kết chuyển** | Đến 154: *Kết chuyển chi phí sản xuất*; còn lại: *Kết chuyển xác định kết quả kinh doanh*. |
+| **Diễn giải** | Ghi lên dòng bút toán kết chuyển. |
 | **Trạng thái** | Đang sử dụng / Ngừng sử dụng. Bước ngừng sử dụng không chạy khi kết chuyển. |
+| **Chức năng** | **Sửa** mở form sửa. |
+| *Kết chuyển số dư cuối* (ẩn, bật ở nút **Cột**) | Tích: cộng cả số dư đầu kỳ của tài khoản đi — chỉ dùng cho bước 911 → 421. |
 
 ## Thêm, sửa
 
