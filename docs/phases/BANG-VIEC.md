@@ -5,11 +5,11 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
 | Chưa ai nhận | 195 |
-| Chờ đủ tín hiệu | 69 |
+| Chờ đủ tín hiệu | 70 |
 | Hoãn | 3 |
 | Xong | 320 |
 | **Tổng** | **625** |
@@ -18,7 +18,7 @@
 
 | Phân hệ | Xong | Chờ đủ tín hiệu | Đang làm | Còn lại | Tổng |
 |---|---|---|---|---|---|
-| danh-muc | 20 | 16 | 3 | 49 | 88 |
+| danh-muc | 20 | 17 | 2 | 49 | 88 |
 | mua-hang | 54 | 6 | 1 | 39 | 100 |
 | kho | 46 | 23 | 3 | 89 | 161 |
 | ban-hang | 54 | 6 | 1 | 43 | 104 |
@@ -27,13 +27,12 @@
 | thue | 14 | 2 | 1 | 11 | 28 |
 | he-thong | 150 | 23 | 2 | 58 | 233 |
 
-## Đang làm (8)
+## Đang làm (7)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | he-thong | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
 | [S020-25](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L34) | PHASE-020 | thue · tong-hop | D020-11 (a)(b)(c): HT06 "Kiểm sổ" gọn — lượt kiểm lưu kết quả tự chẩn đoán cả sổ vào báo cáo (report.health, … | — | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-020-s020-25-kiem-so-gon` |
-| [S023-19](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-023 | danh-muc | Bỏ tên tiếng Anh của tài khoản (D023-9, 00 §9): migration 0147 chép nameen sang accountsnameenluu rồi xoá cột… | P2 | kiennt (phiên Claude, bỏ tên tiếng Anh tài khoản) · `feat/nt-dm-001-bo-ten-tieng-anh-tai-khoan` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | danh-muc · kho | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | danh-muc · kho | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | he-thong | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
@@ -279,7 +278,7 @@
 | [S037-33](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L43) | PHASE-037 | he-thong | Cờ theo đơn vị (combocontractv1, comboinheritv1), chạy bóng, số đo costdiff, qtydiff, độ phủ truy vết | P0 | — |
 | [S037-35](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L42) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phân kho chính phankhoid = 0: mỗi chi nhánh đúng một phân kho chính đang dùng (isdefault), phân giải ở biên A… | P0 | — |
 
-## Chờ đủ tín hiệu (69)
+## Chờ đủ tín hiệu (70)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -309,6 +308,7 @@
 | [S023-14](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L25) | PHASE-023 | danh-muc | Action đọc core.<entity>.validate cho account, partner, reason, posting-group, payment-method, tax-code, ware… | P0 | — |
 | [S023-15](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L26) | PHASE-023 | danh-muc | Web <WhyPanel> + <SaveWithWarnings> (ghi nhận lý do → catalog.warn.ack); gắn 8 màn; nhập Excel cột "Vì sao" —… | P0 | — |
 | [S023-16](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-023 | danh-muc | Danh mục luật khởi đầu 20 §4 (~40), kế toán trưởng duyệt phần kế toán; số đo bizcitycatalogwarnacktotal{code} | P0 | — |
+| [S023-19](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-023 | danh-muc | Bỏ tên tiếng Anh của tài khoản (D023-9, 00 §9): migration 0147 chép nameen sang accountsnameenluu rồi xoá cột… | P2 | — |
 | [S024-4](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L15) | PHASE-024 | danh-muc · kho | Hợp đồng bizcityitemmaster@1 (docs/contracts/BIZCITY-ITEM-MASTER-v1.md + schema), packages/contracts/src/item… | P0 | — |
 | [S024-5](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L16) | PHASE-024 | danh-muc · kho | Migration: items, itemcodes (chỉ thêm), itemclassification (theo ngày), RLS; điền từ products (song song, pro… | P0 | — |
 | [S024-6](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L17) | PHASE-024 | danh-muc · kho | Item Resolver (kernel/masterdata/item-resolver.ts) + đệm theo phiên bản danh mục + span intake.item.resolve —… | P0 | — |
