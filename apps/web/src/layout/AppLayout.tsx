@@ -5,6 +5,8 @@
  * thanh menu trái theo nhóm việc và vùng làm việc nhiều thẻ.
  */
 import { useTenant } from '../features/system/TenantPage';
+// [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a): dải vàng Công ty Mẫu — tệp của Nguyễn Văn Thủy: chỉ thêm import + gắn sau dải môi trường
+import { CongTyMau } from '../features/launcher/CongTyMau';
 import { WindowDock } from './WindowDock';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -108,6 +110,7 @@ export function AppLayout() {
     return (
       <div className="shell no-nav embed">
         {envBanner}
+        <CongTyMau />
         <main className="page">
           <TabWorkspace menu={menu} />
           <div className="print-sign">
@@ -124,6 +127,7 @@ export function AppLayout() {
   return (
     <>
       {envBanner}
+      <CongTyMau />
       <header className="topbar">
         <button type="button" className="mnav-btn" onClick={() => setMobileNav(true)} aria-label="Mở menu"><Menu size={20} /></button>
         <Link to="/" className="brand">

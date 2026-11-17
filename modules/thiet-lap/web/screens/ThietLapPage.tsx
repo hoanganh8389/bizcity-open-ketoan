@@ -1,12 +1,13 @@
 /**
  * Thiết lập nhanh (TI15, PHASE-036 · 00 §12) — hộp thoại bốn bước cho đơn vị trắng: Bắt đầu → Công ty → Nạp gì → Đang nạp / Xong.
  * Chỉ giao diện: đọc / ghi qua API Core (core.setup.status / presets / plan / run, POST …/apply chạy nền, core.tenant.update).
- * "Xem công ty mẫu" chờ đơn vị mẫu riêng (B5, Q036-1) — B3 không nạp chứng từ mẫu vào đơn vị đang dùng.
+ * "Xem công ty mẫu" (B5a, 00 §14): mở Công ty Mẫu riêng của bản cài (is_sample) — đăng xuất, trang đăng nhập điền sẵn mã đơn vị mẫu.
+ * Không nạp chứng từ mẫu vào đơn vị đang dùng (Q036-1).
  */
 import { useEffect, useState, type ReactNode } from 'react';
 import { ErrorBox, Field, Loading, PageHeader, Steps, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import {
-  COMING_INDUSTRIES, STEPS, activeRun, blocksParam, ownCompanyRows, runOutcome, stepLine, taxCodeError, tenantChanged,
+  COMING_INDUSTRIES, STEPS, sampleCard, activeRun, blocksParam, ownCompanyRows, runOutcome, stepLine, taxCodeError, tenantChanged,
   type PresetInfo, type SetupPlan, type SetupRun, type SetupStatus, type TenantInfo,
 } from '../lib/thiet-lap';
 
@@ -84,6 +85,7 @@ export function ThietLapPage() {
   }
 
   const f = form ?? { name: '', taxCode: '', address: '', phone: '' };
+  const mau = sampleCard(st);
   const mstErr = taxCodeError(f.taxCode);
   const outcome = runOutcome(run.data);
 
@@ -98,9 +100,10 @@ export function ThietLapPage() {
           <div className="card-body">
             <p className="muted">Mất khoảng 1 phút. Đóng màn này giữa chừng không sao — mở lại ở menu Thiết lập nhanh (TI15).</p>
             <div className="row" style={{ alignItems: 'stretch', gap: 12, flexWrap: 'wrap' }}>
-              <div className="card card-body" style={{ flex: '1 1 300px', opacity: 0.6 }} title="Cần đơn vị mẫu riêng để không lẫn với dữ liệu của bạn — có ở bản sau (PHASE-036 B5)">
-                <b>Xem công ty mẫu</b> <span className="badge badge-gray">sắp có</span>
-                <p className="muted">Ba tháng nghiệp vụ hư cấu, báo cáo có số ngay — ở một đơn vị mẫu riêng, không đụng dữ liệu của bạn.</p>
+              <div className="card card-body" style={{ flex: '1 1 300px', opacity: mau.open ? 1 : 0.6 }} title={mau.note}>
+                <b>Xem công ty mẫu</b> {!mau.open && <span className="badge badge-gray">{mau.code ? 'đang xem' : 'chưa có'}</span>}
+                <p className="muted">Ba tháng nghiệp vụ hư cấu, báo cáo có số ngay — ở một đơn vị mẫu riêng, không đụng dữ liệu của bạn. {mau.note}.</p>
+                {mau.open && <div><button type="button" className="btn" onClick={() => moCongTyMau(mau.code!)}>Mở Công ty Mẫu</button></div>}
               </div>
               <label className="card card-body" style={{ flex: '1 1 300px', cursor: 'pointer', outline: '2px solid var(--brand-600)' }}>
                 <span className="row"><input type="radio" checked readOnly /> <b>Thiết lập công ty của tôi</b></span>
@@ -236,4 +239,9 @@ function Shell({ children }: { children: ReactNode }) {
 
 function Foot({ children }: { children: ReactNode }) {
   return <div className="row" style={{ justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>{children}</div>;
+}
+
+/** Mở Công ty Mẫu: xin khung giao diện (sự kiện ketoan:open-sample) điền sẵn mã đơn vị mẫu, đăng xuất và tải lại — module không chạm vé đăng nhập. */
+function moCongTyMau(code: string) {
+  window.dispatchEvent(new CustomEvent('ketoan:open-sample', { detail: { code } }));
 }

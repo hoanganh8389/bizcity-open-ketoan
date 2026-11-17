@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 69
+      "count": 70
     },
     {
       "key": "paused",
@@ -9078,14 +9078,8 @@
       "title": "B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE); chặn gửi ra ngoài ở đơn vị mẫu",
       "priority": "P1",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
-        "branch": "feat/s036-7-don-vi-mau",
-        "state": "đang làm",
-        "since": "2026-11-17",
-        "dot": "PHASE-036 · S036-7 — B5a đơn vị mẫu riêng: tenants.issample (migration 0148), seed() nhận tham số, …"
-      },
+      "column": "partial",
+      "claim": null,
       "modules": [
         "he-thong"
       ],
