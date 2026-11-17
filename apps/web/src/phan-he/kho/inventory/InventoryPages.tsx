@@ -211,7 +211,7 @@ export function CostingPage() {
           <Modal title="Chọn phạm vi tính giá vốn" onClose={() => setMoCay(false)} footer={<button className="btn" onClick={() => setMoCay(false)}>Thoát</button>}>
             <div className="full muted" style={{ fontSize: 12.5 }}>Bấm một nút (miền, chi nhánh, tỉnh) hoặc một shop. Bấm Tính giá vốn: mọi shop bên dưới dùng chung một giá vốn bình quân từ lần tính đó.</div>
             <div className="full">
-              <CayDonVi tree={orgTree.data} showBranches height={460} openLevel={2}
+              <CayDonVi tree={orgTree.data} showBranches hideActiveToggle height={460} openLevel={2}
                 selected={scope?.kind === 'node' ? scope.code : null}
                 onSelect={(n) => { setScope({ kind: 'node', code: n.code, label: `${n.code} - ${n.name}` }); setCn(n.code); setRunSel(null); setMoCay(false); }}
                 onSelectBranch={(b) => { setScope({ kind: 'shop', code: b.code, label: `Shop ${b.code} - ${b.name}` }); setCn(b.code); setRunSel(null); setMoCay(false); }} />

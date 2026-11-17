@@ -35,11 +35,13 @@ export interface CayDonViProps {
   height?: number | string;
   /** Mở sẵn tới cấp này (0 = chỉ gốc). */
   openLevel?: number;
+  /** [2026-11-17 Nguyễn Văn Thủy] ẩn ô "Đang dùng" (luôn chỉ hiện chi nhánh đang dùng) (đóng góp) */
+  hideActiveToggle?: boolean;
 }
 
 export function CayDonVi({
   tree, showBranches = false, showWarehouses = false, checkable = false, picked = [], pickedWarehouses = [], onPick,
-  selected, onSelect, onSelectBranch, nodeExtra, height = 420, openLevel = 1,
+  selected, onSelect, onSelectBranch, nodeExtra, height = 420, openLevel = 1, hideActiveToggle = false,
 }: CayDonViProps) {
   const ix = useMemo(() => indexOrg(tree), [tree]);
   const [q, setQ] = useState('');
@@ -171,7 +173,7 @@ export function CayDonVi({
       <div className="cdv-head">
         <input className="input" placeholder={showBranches ? 'Tìm mã, tên nút / chi nhánh / kho' : 'Tìm mã, tên nút'} value={q} onChange={(e) => setQ(e.target.value)} />
         {/* [2026-11-03 03:10 PM Nguyễn Văn Thủy] SDTC — ô ẩn chi nhánh ngừng chỉ có ở cây có chi nhánh (bộ lọc báo cáo), màn DM16 không có */}
-        {showBranches && <label className="checkbox" title="Ẩn chi nhánh đã ngừng (tắt theo dõi hoặc mã _OFF)"><input type="checkbox" checked={onlyActive} onChange={(e) => setOnlyActive(e.target.checked)} /> Đang dùng</label>}
+        {showBranches && !hideActiveToggle && <label className="checkbox" title="Ẩn chi nhánh đã ngừng (tắt theo dõi hoặc mã _OFF)"><input type="checkbox" checked={onlyActive} onChange={(e) => setOnlyActive(e.target.checked)} /> Đang dùng</label>}
       </div>
       {checkable && (
         <div className="cdv-tools">
