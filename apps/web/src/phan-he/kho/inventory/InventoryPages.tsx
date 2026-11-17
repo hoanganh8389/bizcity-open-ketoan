@@ -12,7 +12,7 @@ import { defaultFrom, defaultTo, kyText, money, periodFrom } from '@/lib/format'
 import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
-import { Empty, ErrorBox, Loading, Modal } from '@/components/ui';
+import { Empty, ErrorBox, Hoi, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { DocumentDetail } from '../../../features/documents/DocumentDetail';
@@ -275,9 +275,9 @@ const GIA_NHAP: Record<CtOptions['price'], [string, string]> = {
   with_vat: ['Giá gồm VAT', 'Đơn giá đã trừ chiết khấu, CỘNG thuế GTGT (dùng khi không khấu trừ thuế đầu vào)'],
 };
 const TRA_NCC: Record<CtOptions['purchaseReturn'], [string, string]> = {
-  reason: ['Theo lý do phiếu trả', 'Lý do có đánh dấu "định giá theo tồn đầu" thì định giá theo tồn đầu, còn lại theo giá trị phiếu (mặc định)'],
-  doc: ['Theo giá trị phiếu trả', 'Luôn lấy thành tiền trên phiếu trả nhà cung cấp'],
-  opening: ['Theo giá tồn đầu', 'Luôn định giá hàng trả theo giá vốn tồn đầu kỳ'],
+  doc: ['Giá trên phiếu trả', 'Trừ đúng thành tiền ghi trên phiếu trả hàng. VD trả 10 cái, phiếu ghi 9.000đ/cái → trừ 90.000đ'],
+  opening: ['Giá vốn đầu tháng', 'Trừ theo giá vốn bình quân đầu tháng, bỏ qua giá trên phiếu. VD giá vốn đầu tháng 8.500đ/cái, trả 10 cái → trừ 85.000đ'],
+  reason: ['Tuỳ lý do trả (mặc định)', 'Mỗi lý do trả hàng đã cài sẵn lấy giá nào (Danh mục lý do): lý do đánh dấu "định giá theo tồn đầu" thì lấy giá vốn đầu tháng, còn lại lấy giá trên phiếu trả'],
 };
 const NHAN_CN: Record<CtOptions['transferIn'], [string, string]> = {
   doc: ['Theo giá trên phiếu', 'Phiếu chuyển có giá thì lấy giá đó; không có giá thì lấy giá vốn bên gửi (mặc định)'],
@@ -287,7 +287,7 @@ const NHAN_CN: Record<CtOptions['transferIn'], [string, string]> = {
 const moTaCt = (o?: Partial<CtOptions>) => {
   const f = { ...CT_MD, ...(o ?? {}) };
   return [GIA_NHAP[f.price][0], f.costAlloc ? 'cộng chi phí phân bổ' : 'không cộng chi phí phân bổ', f.rebateAlloc ? 'trừ thưởng, CK phân bổ' : 'không trừ thưởng, CK',
-    `trả NCC ${TRA_NCC[f.purchaseReturn][0].toLowerCase()}`, `nhận chi nhánh khác ${NHAN_CN[f.transferIn][0].toLowerCase()}`, f.adjustIn ? 'có nhập điều chỉnh' : 'không tính nhập điều chỉnh'].join(' · ');
+    `trả NCC trừ theo ${TRA_NCC[f.purchaseReturn][0].replace(' (mặc định)', '').toLowerCase()}`, `nhận chi nhánh khác ${NHAN_CN[f.transferIn][0].toLowerCase()}`, f.adjustIn ? 'nhập điều chỉnh tính vào giá' : 'nhập điều chỉnh không tính vào giá'].join(' · ');
 };
 
 /** Sửa / thêm công thức giá vốn: từng lựa chọn có giải thích khi rê chuột. */
@@ -302,7 +302,7 @@ function SuaCongThuc({ f, onClose }: { f: Formula; onClose: (code?: string) => v
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['costing-formulas'] }); onClose(v.code.trim()); },
   });
   const chon = <K extends keyof CtOptions>(k: K, m: Record<string, [string, string]>, label: string, tip: string) => (
-    <div className="field full"><label title={tip}>{label}</label>
+    <div className="field full"><label>{label} <Hoi text={tip} /></label>
       <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
         {Object.entries(m).map(([val, [ten, giai]]) => (
           <label key={val} className="checkbox" title={giai}><input type="radio" checked={o[k] === val} onChange={() => set({ [k]: val } as Partial<CtOptions>)} /> {ten}</label>
@@ -320,13 +320,17 @@ function SuaCongThuc({ f, onClose }: { f: Formula; onClose: (code?: string) => v
       <div className="field"><label title="Mã ngắn, không dấu (vd MD, GOM-VAT)">Mã</label><input className="input" value={v.code} disabled={!isNew && v.code === f.code && Boolean(f.code)} onChange={(e) => setV((s) => ({ ...s, code: e.target.value.toUpperCase() }))} placeholder="VD: GOM-VAT" /></div>
       <div className="field"><label>Tên công thức</label><input className="input" value={v.name} onChange={(e) => setV((s) => ({ ...s, name: e.target.value }))} placeholder="VD: Giá gồm VAT, không cộng chi phí" /></div>
       {chon('price', GIA_NHAP, 'Giá nhập lấy theo', 'Giá trị hàng nhập mua đưa vào công thức bình quân')}
-      <div className="field full"><label title="Bật / tắt từng khoản phân bổ">Phân bổ</label>
+      <div className="field full"><label>Phân bổ <Hoi text="Bật / tắt từng khoản phân bổ vào giá vốn" /></label>
         <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
           <label className="checkbox" title="Chi phí mua hàng (vận chuyển, bốc xếp…) phân bổ vào mã — làm TĂNG giá vốn"><input type="checkbox" checked={o.costAlloc} onChange={(e) => set({ costAlloc: e.target.checked })} /> Cộng chi phí phân bổ (+)</label>
           <label className="checkbox" title="Thưởng doanh số / chiết khấu nhãn hàng phân bổ theo mã — làm GIẢM giá vốn"><input type="checkbox" checked={o.rebateAlloc} onChange={(e) => set({ rebateAlloc: e.target.checked })} /> Trừ thưởng, CK phân bổ (−)</label>
-          <label className="checkbox" title="Phiếu nhập điều chỉnh kho có tính vào giá (lý do đánh dấu không tính vẫn bỏ ra)"><input type="checkbox" checked={o.adjustIn} onChange={(e) => set({ adjustIn: e.target.checked })} /> Tính nhập điều chỉnh</label>
         </div></div>
-      {chon('purchaseReturn', TRA_NCC, 'Hàng trả nhà cung cấp', 'Giá trị hàng trả NCC trừ khỏi công thức')}
+      {chon('purchaseReturn', TRA_NCC, 'Hàng trả nhà cung cấp trừ khỏi giá vốn theo', 'Khi trả hàng cho nhà cung cấp, số tiền trừ khỏi giá vốn lấy theo giá nào. Rê chuột lên từng lựa chọn xem ví dụ')}
+      <div className="field full"><label>Hàng nhập điều chỉnh kho (kiểm kê thừa…) <Hoi text="Hàng nhập thêm do điều chỉnh kho có được cộng vào khi tính giá vốn bình quân hay không. Lý do nào đã cài 'không tính giá vốn' thì luôn bỏ ra" /></label>
+        <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
+          <label className="checkbox" title="Cộng số lượng và giá trị hàng nhập điều chỉnh vào công thức bình quân (mặc định)"><input type="radio" checked={o.adjustIn} onChange={() => set({ adjustIn: true })} /> Tính vào giá vốn</label>
+          <label className="checkbox" title="Bỏ hàng nhập điều chỉnh ra khỏi công thức, giá vốn chỉ tính từ hàng mua"><input type="radio" checked={!o.adjustIn} onChange={() => set({ adjustIn: false })} /> Không tính</label>
+        </div></div>
       {chon('transferIn', NHAN_CN, 'Nhận từ chi nhánh khác', 'Giá trị hàng nhận chuyển kho từ phạm vi khác')}
       <div className="field full"><label>Ghi chú</label><input className="input" value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></div>
       <label className="checkbox full" title="Công thức tự chọn khi mở màn Tính giá vốn"><input type="checkbox" checked={v.isDefault} onChange={(e) => setV((s) => ({ ...s, isDefault: e.target.checked }))} /> Đặt làm công thức mặc định</label>
