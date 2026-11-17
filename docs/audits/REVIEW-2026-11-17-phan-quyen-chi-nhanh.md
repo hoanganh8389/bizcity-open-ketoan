@@ -44,13 +44,15 @@ Chi tiết ở [NT-HT-003 §13](../nghiem-thu/he-thong/NT-HT-003-phan-quyen-man-
 
 ## 4. Kết quả sau vá
 
-Chạy trên `main` `a319842a` + thay đổi của nhánh, CSDL `ketoan_test` (Docker, Postgres 16, Node 22). Kết luận: **ĐẠT có điều kiện** — 9 / 9 lỗ đã đóng; còn chờ chốt §3.
+Chạy trên `main` `75c028b0` + nhánh `feat/phan-quyen-pham-vi-chi-nhanh` (GĐ3, GĐ5, GĐ4), CSDL `ketoan_test` (Docker, Postgres 16, Node 22). Kết luận: **ĐẠT có điều kiện** — 9 / 9 lỗ đã đóng; còn chờ chốt §3.
 
 | Kiểm | Kết quả |
 |---|---|
 | `phan-quyen-pham-vi-chi-nhanh.test.ts` | 25 / 25 (15 ca cũ, 9 ca từng đỏ nay xanh; 10 ca mới 16–25, gồm H7 Mua hàng / Tài sản) |
 | `phan-quyen-dang-ky.test.ts` (bộ kiểm đăng ký quyền) | 4 / 4 |
+| `phan-quyen-vung.test.ts` (GĐ5) | 9 / 9 |
+| `phan-quyen-module.test.ts` (GĐ4) | 6 / 6 |
 | `npm run typecheck` | sạch |
-| Cả bộ `npx vitest run` | 2240 đạt, 6 đỏ, 12 bỏ qua. Sau khi sửa kỳ vọng `vai-tro-don-vi-api.test.ts` (thêm `staff`): 37 / 37. Còn 5 đỏ, không do nhánh: NT-BH-005 (webhook tgs-wp), `db-rules.test.ts` (API cấu trúc dữ liệu), `mat-khau-mac-dinh.test.ts` (T027-SEC-4) đỏ cả trên `main` gốc; NT-BH-012, NT-BH-003-pos xanh khi chạy riêng trên nhánh, chỉ đỏ khi chạy chung cả bộ (bước `deliver()` của hàng đợi sự kiện) |
+| Cả bộ `npx vitest run` (292 tệp) | 2281 đạt, 5 đỏ, 12 bỏ qua — cả 15 tệp phân quyền xanh. 5 đỏ không do nhánh: NT-BH-005 (webhook tgs-wp), `db-rules.test.ts` (API cấu trúc dữ liệu), `mat-khau-mac-dinh.test.ts` (T027-SEC-4) đỏ cả trên `main` gốc; NT-BH-012, NT-BH-003-pos xanh khi chạy riêng trên nhánh, chỉ đỏ khi chạy chung cả bộ (bước `deliver()` của hàng đợi sự kiện) |
 | `bash scripts/kiem-chuan.sh` | ĐẠT |
-| `node tests/conformance/selfcheck.mjs` | KHÔNG ĐẠT như `main` (18 mục có sẵn). Nhánh không thêm phát hiện, trừ SC-SIG-1 +3: `db/migrations/0149_vai_tro_nhan_vien.sql`, `docs/standard/DANG-KY-QUYEN.md`, biên bản này — chờ dấu của chủ dự án |
+| `node tests/conformance/selfcheck.mjs` | KHÔNG ĐẠT như `main` (18 mục có sẵn). Nhánh không thêm phát hiện, trừ SC-SIG-1 +5: `db/migrations/0149_vai_tro_nhan_vien.sql`, `db/migrations/0150_pham_vi_so_do_to_chuc.sql`, `apps/api/src/modules/access/man-hinh-module.ts`, `docs/standard/DANG-KY-QUYEN.md`, biên bản này — tệp framework mới chờ dấu của chủ dự án |

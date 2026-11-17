@@ -162,6 +162,7 @@ Người chốt: kiennt (bộ phận yêu cầu) theo đề xuất của phiếu
 | 17/11/2026 | GĐ3 (mục 13): chi nhánh tra từ bản ghi, phạm vi đọc, vai trò Nhân viên (`staff`), hook `dangKyChiNhanhBanGhi`, chuẩn [DANG-KY-QUYEN](../../standard/DANG-KY-QUYEN.md) <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — GĐ3 --> |
 | 17/11/2026 | Đề xuất GĐ4 (mục 14: module mới khai màn ở manifest, `branchOf` ở action) và GĐ5 (mục 15: phạm vi theo nút sơ đồ tổ chức, gộp tính phạm vi về Core); câu hỏi chốt mục 16 <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ4, GĐ5 --> |
 | 17/11/2026 | GĐ5 có mã trên nhánh `feat/phan-quyen-pham-vi-chi-nhanh`: migration 0150, khai triển lần gán nút → chi nhánh ở Core (`lanGanTheoChiNhanh` + tầng nạp bộ tính), API + HT12 gán theo vùng, route `GET /api/v1/quyen-chi-nhanh/vung`; `apps/api/test/phan-quyen-vung.test.ts` 9 / 9 <!-- [2026-11-17 05:10 PM khanhtd] NT-HT-003 — GĐ5 có mã --> |
+| 17/11/2026 | GĐ4 có mã trên nhánh `feat/phan-quyen-pham-vi-chi-nhanh`: manifest `extensions.screens[]` (bizcity_module@1 1.6.0, kiểm ở `defineModule`), Core đăng ký màn module không kéo theo quyền Core, `defineAction({ branchOf })` + `ctx.branchScope` (BIZCITY-ACTION 1.6.0), khung module có màn mẫu; `apps/api/test/phan-quyen-module.test.ts` 6 / 6. Giao diện module dùng `useCan()` của `@bizcity/ui-kit` (không thêm `useThaoTac` vào SDK web) <!-- [2026-11-17 05:50 PM khanhtd] NT-HT-003 — GĐ4 có mã --> |
 
 ## 13. GĐ3 — vá lỗ rà soát 17/11/2026 (chờ chốt trước khi mở PR code)
 <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — GĐ3: vá 9 lỗ ở biên bản rà soát 17/11; mục cần chủ dự án chốt (R-FLOW-2) -->
@@ -181,7 +182,7 @@ Cần chốt (R-FLOW-2): (a) vai trò `staff` — đổi `packages/contracts` + 
 
 GĐ3 đã chạy trên nhánh ở máy (`feat/phan-quyen-pham-vi-chi-nhanh`, chưa đẩy): 25 / 25 ca phạm vi chi nhánh, 4 / 4 ca bộ kiểm đăng ký, cả bộ `npm test` không thêm ca đỏ (chi tiết ở biên bản). Thêm việc vào GĐ3: đăng ký tra chi nhánh của bản ghi (H7) cho lệnh theo mã của Mua hàng, Bán hàng, Tài sản; `AuthContext.branchScope` (phạm vi chi nhánh của yêu cầu, `null` = mọi chi nhánh) để GĐ4 dùng.
 
-## 14. GĐ4 — hook đăng ký quyền cho module mới (`modules/<key>`) (đề xuất, chờ chốt)
+## 14. GĐ4 — hook đăng ký quyền cho module mới (`modules/<key>`) (có mã trên nhánh, chờ chốt)
 <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ4: module mới khai màn × thao tác ở manifest và tra chi nhánh bản ghi ở action (bậc 4, chủ dự án chốt) -->
 
 **Vấn đề.** Module mới không import `apps/*` nên không gọi được `dangKyManHinh` (H2) và `dangKyChiNhanhBanGhi` (H7): màn của module không lên lưới HT12 theo màn, danh sách màn của `GET /api/v1/man-hinh` không có màn module, và lệnh theo mã của module chưa giới hạn được theo chi nhánh. Yêu cầu chủ dự án: "AI code một menu mới, tự nó register vào luôn; CRUD xoá sửa cũng thế".

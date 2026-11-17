@@ -2,7 +2,7 @@
 <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — chuẩn hoá đăng ký quyền theo màn × thao tác (bảng hook, luật CRUD, phạm vi chi nhánh, bộ kiểm) theo chỉ đạo "chuẩn hoá theo hướng register từng màn, có bảng danh sách hooks để AI code menu mới tự register" -->
 <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ4 (H13, H14 module mới), GĐ5 (gán tại nút sơ đồ tổ chức): đề xuất, chờ chốt mục 16 -->
 
-> **Trạng thái:** chốt thiết kế bằng PR tài liệu (R-FLOW-2); mã đi theo từng PR code GĐ3 → GĐ5 → GĐ4 (NT-HT-003 §16). Hook H7, H8, vai trò `staff`, bộ kiểm §6 có trong mã khi PR code GĐ3 merge; H13, H14 khi GĐ4 merge (đề xuất, chưa có trong mã). · **Phiếu:** [NT-HT-003](../nghiem-thu/he-thong/NT-HT-003-phan-quyen-man-hinh-chi-nhanh.md) · **Nền:** [ADR-0027](../adr/ADR-0027-core-authorization-plugin-role-editor.md) (mặc định cấm quyền module, Cho / Cấm, vai trò theo phạm vi) · **Biên bản rà:** [REVIEW-2026-11-17](../audits/REVIEW-2026-11-17-phan-quyen-chi-nhanh.md)
+> **Trạng thái:** chốt thiết kế bằng PR tài liệu (R-FLOW-2); mã đi theo từng PR code GĐ3 → GĐ5 → GĐ4 (NT-HT-003 §16). Hook H7, H8, vai trò `staff`, bộ kiểm §6 có trong mã khi PR code GĐ3 merge; H13, H14 khi PR code GĐ4 merge. · **Phiếu:** [NT-HT-003](../nghiem-thu/he-thong/NT-HT-003-phan-quyen-man-hinh-chi-nhanh.md) · **Nền:** [ADR-0027](../adr/ADR-0027-core-authorization-plugin-role-editor.md) (mặc định cấm quyền module, Cho / Cấm, vai trò theo phạm vi) · **Biên bản rà:** [REVIEW-2026-11-17](../audits/REVIEW-2026-11-17-phan-quyen-chi-nhanh.md)
 
 Người hay AI thêm **một màn, một menu, một nút, hay một nghiệp vụ Thêm / Sửa / Xoá / Duyệt** đều phải đăng ký quyền theo tài liệu này, trong **cùng PR** với mã nghiệp vụ. Không đăng ký thì quản trị viên không phân quyền được cho màn đó ở HT12, và bộ kiểm báo đỏ.
 
@@ -32,8 +32,8 @@ Người hay AI thêm **một màn, một menu, một nút, hay một nghiệp v
 | H10 | Quyền trong `*.workflow.yaml` | `modules/<key>/api/documents/` | Bước duyệt / bỏ duyệt của chứng từ module; `sod` tách người lập – người duyệt | Khi có duyệt |
 | H11 | `useThaoTac(key)`, `ganQuyenXem` | `apps/web/src/lib/manHinh.ts` | Ẩn nút / menu của phân hệ cũ theo quyền | Mỗi màn có nút |
 | H12 | `permission` của `WebMenuItem` / `WebRoute` | `modules/<key>/web/index.tsx` (`defineWebModule`) | Ẩn menu / màn của module mới | Mỗi mục menu |
-| H13 | `extensions.screens[]` trong manifest (đề xuất GĐ4, chưa có trong mã) | `modules/<key>/bizcity.module.json` — Core gọi H2 thay module lúc nạp | Màn / menu của module mới, đủ thao tác Xem · Thêm · Sửa · Xoá · Duyệt | Mỗi màn (GĐ4) |
-| H14 | `defineAction({ branchOf })` + `ctx.branchScope` (đề xuất GĐ4, chưa có trong mã) | `modules/<key>/api/actions/*.ts` — runtime action so chi nhánh của bản ghi với phạm vi | Action theo mã bản ghi có chi nhánh; action liệt kê lọc theo phạm vi | Mỗi action theo mã (GĐ4) |
+| H13 | `extensions.screens[]` trong manifest (GĐ4, bizcity_module@1 1.6.0) | `modules/<key>/bizcity.module.json` — Core gọi H2 thay module lúc nạp | Màn / menu của module mới, đủ thao tác Xem · Thêm · Sửa · Xoá · Duyệt | Mỗi màn (GĐ4) |
+| H14 | `defineAction({ branchOf })` + `ctx.branchScope` (GĐ4, BIZCITY-ACTION 1.6.0) | `modules/<key>/api/actions/*.ts` — runtime action so chi nhánh của bản ghi với phạm vi | Action theo mã bản ghi có chi nhánh; action liệt kê lọc theo phạm vi | Mỗi action theo mã (GĐ4) |
 
 ## 3. Thao tác chuẩn của một màn CRUD
 
@@ -100,13 +100,14 @@ dangKyChiNhanhBanGhi({ url: /^\/api\/v1\/kho\/de-nghi-xuat\/:id(\/.*)?$/,
 
 ## 5. Module mới (`modules/<key>/`)
 
-Module mới không import `apps/*`, nên **không gọi** `dangKyManHinh` / `dangKyChiNhanhBanGhi`. Thay vào đó:
+Module mới không import `apps/*`, nên **không gọi** `dangKyManHinh` / `dangKyChiNhanhBanGhi`. Thay vào đó (GĐ4, NT-HT-003 §14):
 
-- Khai quyền ở `permissions[]` (H1), tên đúng luật 4: lưới HT12 tự xếp dòng / cột theo đuôi tên.
-- Mỗi action khai `permission` đúng thao tác (H9); action ghi `idempotency: 'required'`.
-- Màn và lệnh theo mã bản ghi có chi nhánh: **GĐ4 (đề xuất, chờ chốt — NT-HT-003 §14)** thêm H13 (`extensions.screens[]`: Core tự đăng ký màn × thao tác) và H14 (`branchOf` ở action: so chi nhánh của bản ghi với phạm vi). Trong lúc chờ, ghi rõ trong README của module là lệnh theo mã chưa giới hạn được theo chi nhánh, và gửi chi nhánh trong thân lệnh ghi (`branchCode`) để lớp phân quyền kiểm được.
-- Danh sách / báo cáo nhận `branchCodes` (H8): lớp phân quyền tự ép về phạm vi, kể cả với action của module (tham số đi qua querystring).
-- Lệnh theo mã bản ghi có chi nhánh: **chưa có hook cho module** — đề xuất bậc 4 ([VERSIONING §5](VERSIONING.md)): manifest `screens[]` và `records[]` để Core tự gọi H2 / H7. Trong lúc chờ, ghi rõ trong README của module là lệnh theo mã chưa giới hạn được theo chi nhánh, và gửi chi nhánh trong thân lệnh ghi (`branchCode`) để lớp phân quyền kiểm được.
+- Khai quyền ở `permissions[]` (H1), tên đúng luật 4.
+- **Khai màn ở manifest `extensions.screens[]` (H13)**: mỗi màn có `xem` và một thao tác cho mỗi nút Thêm / Sửa / Xoá / Duyệt / Xuất. `defineModule` dừng nạp khi khai sai (quyền chưa khai, sai tiền tố, thiếu `xem`, đường dẫn ngoài `/app/<key>`). Core đăng ký màn vào sổ màn: HT12 có dòng phân quyền, danh sách màn có màn đó. Quyền màn module **không** được quyền Core kéo theo — chỉ vai trò khai trong `roles` hoặc được Cho mới có (mặc định cấm, ADR-0027).
+- Mỗi action khai `permission` đúng thao tác (H9); action ghi `idempotency: 'required'`. Action ghi không thuộc thao tác màn nào → cảnh báo lúc nạp module.
+- **Action theo mã bản ghi có chi nhánh khai `branchOf` (H14)**: đọc chi nhánh của bản ghi ở bảng module; runtime so với phạm vi người gọi trước handler.
+- Danh sách / báo cáo nhận `branchCodes` (H8) hoặc lọc theo `ctx.branchScope`.
+- Giao diện ẩn nút bằng `useCan()(quyền của thao tác)` của `@bizcity/ui-kit` (H12 cho menu / route).
 
 ## 6. Bộ kiểm
 
@@ -115,6 +116,7 @@ Module mới không import `apps/*`, nên **không gọi** `dangKyManHinh` / `da
 | `apps/api/test/phan-quyen-dang-ky.test.ts` | Mỗi màn nghiệp vụ có `xem`; khoá màn `<module>.<màn>`; mỗi quyền thao tác đã khai ở manifest và cùng tiền tố module; mỗi `lenh` là route có thật |
 | `apps/api/test/phan-quyen-pham-vi-chi-nhanh.test.ts` | 25 ca phạm vi chi nhánh: nhân viên chỉ ở cửa hàng mình, quản lý chỉ xem chi nhánh mình, chi nhánh tra từ bản ghi |
 | `apps/api/test/phan-quyen-vung.test.ts` | 9 ca gán vai trò theo vùng (nút sơ đồ tổ chức): phạm vi cây con, lọc báo cáo, cửa hàng chuyển vùng, chặn xoá nút còn lần gán, cửa nạp |
+| `apps/api/test/phan-quyen-module.test.ts` | Module mới: màn khai sai → `defineModule` dừng; màn lên sổ màn, gác đúng quyền module, quyền Core không kéo theo; `branchOf` chặn bản ghi ngoài phạm vi |
 | `apps/api/test/phan-quyen-{quy,kho,…}.test.ts` | Ca riêng của từng phân hệ |
 
 ```bash
@@ -142,7 +144,7 @@ Máy chủ áp cho người có lần gán theo chi nhánh / kho:
 ## 8. Chỗ còn hở (việc tiếp)
 
 - Lệnh ghi không mang chi nhánh trong thân và không theo mã (vd một số lệnh danh mục): header `X-Chi-Nhanh` vẫn cộng quyền tại chi nhánh đó. Hướng sửa: lệnh ghi dữ liệu dùng chung không cộng quyền gán tại chi nhánh.
-- Module mới chưa có hook H2 / H7 (§5) — đề xuất GĐ4 (H13, H14), NT-HT-003 §14.
+- Module mới: H13 / H14 có ở GĐ4 (NT-HT-003 §14); action ghi không thuộc màn nào mới chỉ cảnh báo lúc nạp (chặn từ bản phụ sau).
 - Phạm vi theo **vùng**: có ở GĐ5 (gán tại nút sơ đồ tổ chức, NT-HT-003 §15). Bước sau: tính quyền theo chi nhánh hẳn trong bộ tính.
 - Khai triển lần gán (chi nhánh / kho / vùng) → mã chi nhánh đã gộp về Core (`lanGanTheoChiNhanh`, tầng nạp bộ tính) ở GĐ5; còn lại: tính quyền cộng / Cấm theo chi nhánh vẫn ở `quyen-chi-nhanh.ts`.
 - POS: `pos:return` / `pos:cancel` đang `risk: low`; chưa có quyền giảm giá tay, sửa giá, xem giá vốn (module `pos` đang do NT-BH-025, NT-BH-026 giữ).

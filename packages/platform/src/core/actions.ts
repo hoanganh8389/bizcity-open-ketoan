@@ -64,6 +64,12 @@ export interface ActionContext {
   readonly dryRun: boolean;
   /** Người gọi có quyền này không (quyền phụ trong handler, vd duyệt cấp 2). */
   can(permission: Permission): boolean;
+  // [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4 (§14): phạm vi chi nhánh của người gọi cho action liệt kê / theo mã của module
+  /**
+   * Mã chi nhánh người gọi được làm việc (bật giới hạn theo chi nhánh, có lần gán tại chi nhánh / kho / vùng). `null` = mọi chi nhánh.
+   * Action liệt kê lọc theo danh sách này; action theo mã khai `branchOf` để Core so (không tự so trong handler).
+   */
+  readonly branchScope: readonly string[] | null;
   // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10 (ADR-0011 D4): ctx.data.module — đọc ghi bảng của module bằng vai trò mod_<key>_rw (không chạm bảng Kernel ở tầng CSDL)
   data: {
     tx: Transaction<Database>;
@@ -175,6 +181,13 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
   errors?: ErrorCode[];
   /** Đối tượng ghi vào bằng chứng (mặc định: thực thể trong id, mã = output.id). */
   evidence?: { objectType?: string; objectId?: (input: z.infer<I>, output: z.infer<O>) => string | undefined };
+  // [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4 (§14, H14): action theo mã bản ghi khai chi nhánh của bản ghi; runtime so với ctx.branchScope trước handler
+  /**
+   * Chi nhánh (mã) của bản ghi action chạm tới — đọc ở bảng của module (`ctx.data.module`), không lấy từ input do client gửi. Runtime gọi
+   * TRƯỚC handler, cùng giao dịch; người bị giới hạn chi nhánh mà bản ghi ở chi nhánh ngoài phạm vi → FORBIDDEN `BRANCH_OUT_OF_SCOPE`.
+   * Trả rỗng / null (không thấy bản ghi) thì để handler tự báo. Không khai = action không giới hạn theo chi nhánh của bản ghi.
+   */
+  branchOf?(ctx: ActionContext, input: z.infer<I>): Promise<string | readonly string[] | null | undefined>;
   handler(ctx: ActionContext, input: z.infer<I>): Promise<z.infer<O>>;
 }
 
@@ -464,6 +477,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         requestId: call.requestId,
         dryRun,
         can: (p) => !!auth?.permissions.has(p),
+        branchScope: auth?.branchScope ?? null, // [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: phạm vi chi nhánh do lớp phân quyền đặt
         data: {
           tx: trx,
           // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: tách ra asModuleRole (dùng chung với subscriber, hook)
@@ -559,6 +573,13 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           return auth;
         },
       };
+      // [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4 (H14): chi nhánh của bản ghi phải trong phạm vi của người gọi (chỉ khi người gọi bị giới hạn)
+      if (def.branchOf && ctx.branchScope) {
+        const got = await def.branchOf(ctx, input);
+        const ds = typeof got === 'string' ? [got] : [...(got ?? [])];
+        const ngoai = ds.filter((c) => !ctx.branchScope!.includes(c));
+        if (ngoai.length) throw Errors.forbidden(`Bạn không làm việc ở chi nhánh ${ngoai.join(', ')} — chỉ ở: ${ctx.branchScope.join(', ')} (BRANCH_OUT_OF_SCOPE)`);
+      }
       inHandler = true;
       const output = await (evidenceOn ? runInActionScope(scope, () => def.handler(ctx, input)) : def.handler(ctx, input));
       // STD-ACT-3: phản hồi đúng khuôn output — kiểm khi chạy test (CONF-RUN-3), không tốn ở bản chạy thật.

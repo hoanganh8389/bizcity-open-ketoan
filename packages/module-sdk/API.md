@@ -194,3 +194,12 @@ Phân hệ hiện có không viết lại một lần. Theo thứ tự:
 | Core hỏi "khách này còn dùng không" | `defineHook({ id: '<key>.…', module: '<key>', hook: 'masterdata.referenceCheck', handle: async (ctx, { kind, code }) => câu | null })`, khai ở `defineModule({ hooks })` và `extensions.hooks` |
 | Thông báo | `ctx.notify.send({ to: { permission: '<key>:…' }, title, link, dedupeKey })` (action, subscriber) |
 | Subscriber đọc / ghi bảng module | `ctx.module(tx => …)` (vai trò `mod_<key>_rw`), `ctx.settings.get`, `ctx.notify` |
+
+## Phân quyền theo màn và theo chi nhánh (NT-HT-003 GĐ4) <!-- [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: screens[], branchOf, ctx.branchScope -->
+
+| Việc | Cách |
+|---|---|
+| Màn × thao tác lên HT12 | manifest `extensions.screens[]`: `{ key: '<key>.<màn>', label, path, operations: { xem: { permission: '<key>:<màn>-xem', label: 'Xem', kind: 'xem' }, them: { …, kind: 'ghi' }, xoa: { …, kind: 'huy' } } }`; quyền khai ở `permissions[]`. `defineModule` báo lỗi khi khai sai (`screenErrors`) |
+| Bản ghi theo mã có chi nhánh | `defineAction({ …, branchOf: (ctx, input) => ctx.data.module(async (tx) => /* SELECT branch_code … WHERE id = input.id */) })` — runtime so với phạm vi người gọi trước handler |
+| Danh sách theo chi nhánh | đọc `ctx.branchScope` (`null` = mọi chi nhánh) để lọc, hoặc nhận tham số `branchCodes` (lớp phân quyền ép về phạm vi) |
+| Ẩn nút trên màn | `useCan()(permission)` của `@bizcity/ui-kit` với quyền của thao tác |
