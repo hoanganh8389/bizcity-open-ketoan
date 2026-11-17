@@ -200,28 +200,37 @@ function CayPhanCap({ nhom, picked, onChange }: { nhom: NhomCN[]; picked: Set<st
   const tich = (code: string) => { const s = new Set(picked); if (s.has(code)) s.delete(code); else s.add(code); onChange([...s]); };
   const tatCa = nhom.flatMap((g) => g.items);
   const ttTatCa = tatCa.every((x) => picked.has(x.code)) ? 'on' : tatCa.some((x) => picked.has(x.code)) ? 'some' : 'off';
+  // [2026-11-17 11:57 AM kiennt] DM14 — cây dễ nhìn: mỗi cấp một dòng, thụt lề + đường nối dọc, dòng nhóm có nền, kho tổng có nhãn (đóng góp)
+  const dong1: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, minHeight: 26 };
   return (
-    <div style={{ maxHeight: 300, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 4, padding: 6 }}>
-      <label className="checkbox" style={{ display: 'flex', gap: 6, fontWeight: 600 }}>
+    <div style={{ maxHeight: 320, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 4, padding: '4px 8px' }}>
+      <label className="checkbox" style={{ ...dong1, fontWeight: 600 }}>
         <OTich state={ttTatCa} onChange={() => onChange(ttTatCa === 'on' ? [...picked].filter((c) => !tatCa.some((x) => x.code === c)) : [...new Set([...picked, ...tatCa.map((x) => x.code)])])} /> Tất cả chi nhánh
       </label>
-      {nhom.map((g) => (
-        <div key={g.key || '_'} style={{ paddingLeft: 18 }}>
-          <div className="row" style={{ gap: 4, alignItems: 'center' }}>
-            <button type="button" className="btn btn-xs btn-ghost" style={{ width: 20, padding: 0 }} onClick={() => setDong((s) => { const n = new Set(s); if (n.has(g.key)) n.delete(g.key); else n.add(g.key); return n; })}>{dong.has(g.key) ? '▸' : '▾'}</button>
-            <label className="checkbox" style={{ display: 'flex', gap: 6, fontWeight: 600 }}><OTich state={trangThai(g)} onChange={() => tichNhom(g)} /> {g.label} <span className="muted" style={{ fontWeight: 400 }}>({g.items.filter((x) => picked.has(x.code)).length}/{g.items.length})</span></label>
-          </div>
-          {!dong.has(g.key) && (
-            <div style={{ paddingLeft: 42, columns: 2 }}>
-              {g.items.map((x) => (
-                <label key={x.code} className="checkbox" style={{ display: 'flex', gap: 6, padding: '2px 0', breakInside: 'avoid' }}>
-                  <input type="checkbox" checked={picked.has(x.code)} onChange={() => tich(x.code)} /> <span><span className="mono">{x.code}</span> {x.name}</span>
-                </label>
-              ))}
+      <div style={{ marginLeft: 7, paddingLeft: 12, borderLeft: '1px solid var(--line)' }}>
+        {nhom.map((g) => (
+          <div key={g.key || '_'}>
+            <div style={{ ...dong1, background: 'var(--surface-2, #f3f6fa)', borderRadius: 4, padding: '0 6px', margin: '2px 0' }}>
+              <button type="button" className="btn btn-xs btn-ghost" style={{ width: 18, height: 18, padding: 0, lineHeight: 1 }} title={dong.has(g.key) ? 'Mở nhóm' : 'Thu nhóm'}
+                onClick={() => setDong((s) => { const n = new Set(s); if (n.has(g.key)) n.delete(g.key); else n.add(g.key); return n; })}>{dong.has(g.key) ? '▸' : '▾'}</button>
+              <label className="checkbox" style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+                <OTich state={trangThai(g)} onChange={() => tichNhom(g)} /> {g.label}
+              </label>
+              <span className="muted" style={{ fontSize: 12 }}>{g.items.filter((x) => picked.has(x.code)).length}/{g.items.length}</span>
             </div>
-          )}
-        </div>
-      ))}
+            {!dong.has(g.key) && (
+              <div style={{ marginLeft: 15, paddingLeft: 14, borderLeft: '1px dashed var(--line)' }}>
+                {g.items.map((x) => (
+                  <label key={x.code} className="checkbox" style={dong1}>
+                    <input type="checkbox" checked={picked.has(x.code)} onChange={() => tich(x.code)} />
+                    <span><span className="mono">{x.code}</span> {x.name}{x.code === g.key && <span className="muted" style={{ fontSize: 12 }}> · kho tổng</span>}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
