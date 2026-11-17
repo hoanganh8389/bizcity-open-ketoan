@@ -5,7 +5,8 @@
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
-> **Phiên bản:** 1.4.0-draft · 2026-11-09 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
+> <!-- [2026-11-17 11:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a): 1.5.0-draft — STD-ACT-10 đơn vị mẫu không chạy action external -->
+> **Phiên bản:** 1.5.0-draft · 2026-11-17 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
 > **Vận chuyển HTTP:** [`bizcity_api@1`](BIZCITY-API-v1.md) · **Luật nền:** [R-API](../rules/RULE-API.md) · **Năng lực:** `actions.runtime`, `actions.idempotency`, `actions.dry-run`, `mcp.tools`
 
 ## 1. Mục đích
@@ -169,6 +170,7 @@ Thư viện `bizcity_library@1` ([BIZCITY-LIBRARY-v1](BIZCITY-LIBRARY-v1.md)) l�
 | STD-ACT-7 | 1 | Action có `dryRun: true` phải không gây hiệu ứng ngoài giao dịch (không gửi email, không gọi HTTP ngoài trong handler; việc đó làm ở subscriber) | CONF-RUN-9 |
 | STD-ACT-8 | 1 | Action chạm sổ khai `errors` gồm `PERIOD_LOCKED`, `POSTING_FAILED` | CONF-MAN-6 |
 | STD-ACT-9 | 0 | **Capability Contract**: action ghi khai `sideEffects` (chạm vào đâu; `ledger` = có thể sinh bút toán qua một cửa sổ cái); action đọc không có. Runtime công bố mỗi action ở `GET /system/capabilities` với input / output schema, quyền, `sideEffects`, idempotency, loại bằng chứng (`receipt` cho ghi) | `defineAction` từ chối khi nạp; `test/actions.test.ts` |
+| STD-ACT-10 <!-- [2026-11-17 11:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a, PHASE-036 · 00 §14, T036-4) --> | 0 | **Đơn vị mẫu không gửi ra ngoài**: action có `sideEffects` chứa `external` trên đơn vị `tenants.is_sample` bị runtime từ chối `CONFLICT` `details.reason = SAMPLE_TENANT` **trước handler** (kể cả `dryRun`); hàm dùng chung `assertNotSampleTenant(conn, tenantId, việc)` cho các đường gửi ra ngoài không khai `external` (kết nối app: `core.app.install` / `enable`). Chặn ở máy chủ, không chỉ ẩn nút | `packages/platform/src/core/actions.ts`; `apps/api/test/cong-ty-mau.test.ts` |
 
 ## 6. Phơi ra cho AI (MCP)
 
@@ -224,3 +226,4 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 | 1.2.0-draft | 2026-11-03 | Chốt `ctx.meta(key, value)` (§4.1), action theo lô `ctx.data.item` (§4.2), che bí mật và lược `input` lớn trong bằng chứng (§4.3), `expose.http.query` / `bodyLimit` và thân tuỳ chọn (§3.1). Đề xuất chờ chốt: nhật ký nghiệp vụ trong action (§4.4) |
 | 1.3.0-draft | 2026-11-03 | Chốt §4.4 phương án C: `writeAudit` trong action ghi vào `changes.notes.audit[]` của bằng chứng, trừ sổ `AUDIT_KEEP` (ba mục có chỗ đọc); phép kiểm SC-AUDIT-1 |
 | 1.4.0-draft | 2026-11-09 | Chốt §4.5 `ctx.libraries` (validate / require theo thư viện dùng chung, cấu hình đơn vị, bằng chứng `notes.libraries`, đếm sử dụng) — PHASE-030 S030-51a. Cộng tương thích: action không dùng thì không đổi. |
+| 1.5.0-draft <!-- [2026-11-17 11:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 --> | 2026-11-17 | STD-ACT-10: action `external` bị từ chối trên đơn vị mẫu (`SAMPLE_TENANT`), `assertNotSampleTenant` (PHASE-036 · 00 §14, T036-4) |
