@@ -12,6 +12,17 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chương trình khuyến mại: nháp → duyệt, cảnh báo trùng, hạn mức lượt theo cửa hàng, báo cáo khuyến mại đã dùng, chuyển chương trình cũ (phiếu NT-BH-025) <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025 (đóng góp) -->
+
+- **Thêm:** module `pos` (manifest 0.2.0, migration module `0007_promo_drafts_quotas.sql`: bảng `promo_drafts`, `promo_draft_log`, `promo_quotas`, `promo_uses`). Màn BH18 Thêm / Sửa khuyến mại 6 loại lưu **bản nháp** (`POST|PUT /api/v1/m/pos/promo/drafts…`), chưa áp ở máy bán; quyền mới `pos:promo-approve` (chủ đơn vị, kế toán trưởng) **Duyệt** → màn phát hành `POST /api/v1/policies` bằng quyền người duyệt → ghi bản đã phát hành; **Từ chối** kèm lý do; người lập không tự duyệt; nhật ký lập / sửa / gửi duyệt / duyệt / phát hành / từ chối / ngừng. Thẻ mới *Nháp / chờ duyệt*, *Báo cáo khuyến mại*.
+- **Thêm:** cảnh báo trùng khi lưu và khi duyệt (`GET …/promo/drafts/:id/overlaps`): khuyến mại đang áp (đọc `core.policy.list`) / chờ duyệt cùng mã hàng, cùng cửa hàng, giao thời gian — không chặn.
+- **Thêm:** hạn mức lượt (số đơn) theo cửa hàng cho 6 loại `sale.promo.*`, khai ở nháp, có hiệu lực khi duyệt. Máy bán nhận đơn khoá cửa hàng × chương trình (advisory lock) và đếm lượt chưa trả (đơn máy bán + phiếu bán BH10) — hết → `POS_PROMO_QUOTA`; đơn mất mạng gửi bù vẫn nhận, đánh dấu `promoQuotaOffline`. Trả cả đơn / huỷ đơn chờ thanh toán / bỏ duyệt phiếu bán → trả lượt. `GET …/promo/quota` cho máy bán báo trước khi thanh toán.
+- **Thêm:** module `phieu-ban` duyệt phiếu bán có chương trình hạn mức hỏi lượt còn qua `ctx.actions.call('pos.promo.quota')` — hết → `PHIEU_BAN_PROMO_QUOTA`; lượt của phiếu bán được module `pos` ghi khi nhận sự kiện `phieu-ban.doc.recorded` (bỏ duyệt: `phieu-ban.doc.cancelled` trả lượt).
+- **Thêm:** báo cáo khuyến mại đã dùng `GET …/promo/report`, `…/promo/report/orders` (chương trình × cửa hàng × kỳ: số đơn, tiền giảm, số quà, lượt / hạn mức; bấm xem đơn; Excel). Nhận nháp hàng loạt `POST …/promo/drafts/import` cho lệnh website `wp tgs-pos promo-migrate` (chuyển chương trình còn hiệu lực của plugin tgs_selling_policy thành nháp).
+- **Thêm:** `bizcity_errors@1` 1.16.0-draft: `POS_PROMO_QUOTA`, `PHIEU_BAN_PROMO_QUOTA`, `POS_PROMO_DRAFT_STATE`.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration module pos; gán quyền *Duyệt khuyến mại* cho người duyệt; máy bán cập nhật bản báo hết lượt (tgs_pos_react). Lượt dùng tính từ ngày cài bản (đơn cũ không đếm). Phiếu trả BH11 chưa trả lượt; giá trị quà theo giá vốn chưa có ở báo cáo.
+
 ### Trả lại hàng bán đợt 2: chặn trả đơn có hoá đơn MST, không trả quà đổi điểm, hàng lỗi vào kho trả lại (phiếu NT-BH-024) <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 (đóng góp) -->
 
 - **Đổi:** module `pos` — trả / đổi tại máy bán đơn có người mua hoá đơn kèm MST (`invoiceBuyer.taxCode`, kể cả MST ghi sau khi bán) bị từ chối `POS_RETURN_TAX_INVOICE` (409): kế toán lập phiếu trả BH11 kèm hoá đơn điều chỉnh. `GET …/orders/:id/returnable` trả thêm `taxInvoice` (blockers có `TAX_INVOICE`) để máy bán báo sớm.

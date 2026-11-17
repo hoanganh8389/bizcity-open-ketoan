@@ -20,6 +20,30 @@ const fail = (problems: string[]): never => { throw Errors.validation(problems.j
 export const BLOCK_NEGATIVE_STOCK = 'bizcity.phieu_ban.block_negative_stock';
 
 
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt khuyến mại dùng chung với máy bán (đóng góp)
+type QuotaState = { branch: string; items: { key: string; quota: number; used: number; left: number }[] };
+/**
+ * Phiếu bán có dòng mang chương trình khuyến mại: hỏi lượt còn ở cửa hàng qua action đọc `pos.promo.quota` của module pos (đếm chung
+ * đơn máy bán + phiếu bán đã duyệt; bỏ lượt của chính phiếu này khi duyệt lại). Hết lượt → PHIEU_BAN_PROMO_QUOTA. Module pos chưa bật
+ * (NOT_FOUND) → không có hạn mức, bỏ qua. Lượt của phiếu được module pos ghi khi nhận sự kiện phieu-ban.doc.recorded.
+ */
+async function checkPromoQuota(ctx: ActionContext, branch: string, lines: readonly { policyRef?: { key: string } }[], docId: string) {
+  const keys = [...new Set(lines.map((l) => l.policyRef?.key).filter((k): k is string => Boolean(k)))];
+  if (!keys.length) return;
+  let st: QuotaState;
+  try {
+    st = await ctx.actions.call<QuotaState>('pos.promo.quota', { branch, keys: keys.join(','), exclude: docId });
+  } catch (e) {
+    if ((e as { code?: string }).code === 'NOT_FOUND') return;
+    throw e;
+  }
+  const short = st.items.filter((x) => x.left <= 0).map(({ key, quota, used }) => ({ key, quota, used }));
+  if (short.length) {
+    throw Errors.validation(`Chương trình khuyến mại hết lượt ở ${branch}: ${short.map((s) => `${s.key} (đã dùng ${s.used}/${s.quota})`).join('; ')} — bỏ khuyến mại đó khỏi phiếu rồi duyệt lại`,
+      { reason: 'PHIEU_BAN_PROMO_QUOTA', items: short });
+  }
+}
+
 /** Kiểm + tính một phiếu (nháp hoặc lúc duyệt). Phiếu trả: nối phiếu bán gốc của module theo số (cùng cửa hàng) nếu có. */
 async function prepare(tx: Tx, kind: Kind, input: DocInput) {
   if (!(await branchExists(tx, input.branchCode))) fail([`Chi nhánh ${input.branchCode} không có / ngừng dùng`]);
@@ -100,6 +124,8 @@ export async function approve(ctx: ActionContext, id: string) {
     }
     return { r, ...p };
   });
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: chương trình khuyến mại có hạn mức lượt theo cửa hàng — hỏi lượt còn ở module pos (đóng góp)
+  if (prepared.r.kind === 'sale') await checkPromoQuota(ctx, prepared.r.branch_code, prepared.body.lines, id);
   // Đã từng nộp rồi bỏ duyệt: chứng từ trong sổ phải đã huỷ xong (chế độ chờ duyệt: kế toán duyệt huỷ ở ACC14) mới nộp lại.
   if (prepared.r.ledger_version > 0) {
     const st = await ctx.ledger.get(docKeyOf(id));

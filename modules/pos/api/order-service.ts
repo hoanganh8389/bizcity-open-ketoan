@@ -12,6 +12,9 @@ import { posSettings } from './settings.js';
 import { openShiftOf } from './shifts.js';
 import { stockOf } from './catalog.js';
 import { stockNeeds, stockShortages, stockShortMessage, type StockShort } from './domain/stock.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt khuyến mại theo cửa hàng (đóng góp)
+import { usesOf } from './domain/promo.js';
+import { checkQuota, quotaMessage, recordUses } from './promo.js';
 
 export const EINVOICE_NONE = { required: false, lines: [] as unknown[], warnings: [] as string[] };
 
@@ -130,6 +133,14 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       throw Errors.validation(stockShortMessage(stockShort, branch.code), { reason: 'POS_STOCK_SHORT', items: stockShort });
     }
 
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: chương trình có hạn mức lượt ở cửa hàng — khoá cửa hàng × chương trình rồi đếm lượt
+    // đã dùng (đơn máy bán + phiếu bán BH10 chưa trả lượt). Hết lượt → không nhận; đơn mất mạng gửi bù → nhận, đánh dấu (đóng góp).
+    const promoKeys = computed.lines.map((l) => l.draft.policyRef?.key).filter((k): k is string => Boolean(k));
+    const quotaShort = await checkQuota(tx, branch.code, promoKeys, draft.id);
+    if (quotaShort.length && !draft.offlineCreatedAt) {
+      throw Errors.validation(quotaMessage(quotaShort, branch.code), { reason: 'POS_PROMO_QUOTA', items: quotaShort });
+    }
+
     // Mã phiếu: dùng số máy đã được cấp trước (đúng khuôn, đã cấp, chưa dùng); không thì cấp số mới. Khoá theo số để hai máy
     // cùng dùng một số đã cấp không cùng qua bước "chưa dùng".
     const period = codePeriod(draft.businessDate);
@@ -142,16 +153,17 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       if (!used) code = draft.reservedCode!;
     }
     code ??= (await takeCodes(tx, ctx.tenant.id, branch.code, 'sale', period, 1))[0]!;
-    return { kind: 'new', computed, branch, code, loyalty, stockShort, priceOffline } as const;
+    return { kind: 'new', computed, branch, code, loyalty, stockShort, priceOffline, quotaShort } as const;
   });
   if (prepared.kind === 'replay') return { order: prepared.snapshot, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: true };
 
-  const { computed, branch, code, loyalty, stockShort, priceOffline } = prepared;
+  const { computed, branch, code, loyalty, stockShort, priceOffline, quotaShort } = prepared;
   const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code });
   const submitted = await ctx.ledger.submit(doc);
   const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}) });
   if (stockShort.length) Object.assign(order, { stockShortOffline: stockShort });
   if (priceOffline.length) Object.assign(order, { priceChangedOffline: priceOffline });
+  if (quotaShort.length) Object.assign(order, { promoQuotaOffline: quotaShort });
 
   try {
     await ctx.data.module(async (tx) => {
@@ -162,6 +174,9 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
                 ${computed.customer?.code ?? null}, ${computed.subtotal}, ${computed.taxTotal}, ${computed.total},
                 ${saleDocKey(branch.code, draft.id)}, ${submitted.status}, ${JSON.stringify(order)}::jsonb,
                 ${JSON.stringify(draft)}::jsonb, ${ctx.actor.id}, ${ctx.actor.name || null})`.execute(tx);
+      // Lượt dùng chương trình khuyến mại (NT-BH-025): một dòng mỗi chương trình của đơn, cùng giao dịch với đơn.
+      const uses = usesOf(computed.lines.map((l) => ({ policyRef: l.draft.policyRef, isGift: l.draft.isGift, qty: l.draft.unitQty, discount: l.draft.promoDiscount })));
+      await recordUses(tx, ctx.tenant.id, { source: 'pos', refId: draft.id, refCode: code, branch: branch.code, date: draft.businessDate, uses, offlineOver: quotaShort.map((q) => q.key) });
       // Dòng đơn lưu định danh mặt hàng (item_id, ADR-0017 / STD-DATA-6); mã và tên chỉ là ảnh chụp lúc bán.
       for (const l of computed.lines) {
         await sql`
