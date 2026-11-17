@@ -5,13 +5,13 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
 | Chưa ai nhận | 195 |
 | Chờ đủ tín hiệu | 70 |
 | Hoãn | 3 |
-| Xong | 319 |
+| Xong | 320 |
 | **Tổng** | **625** |
 
 ## Theo phân hệ (R-FLOW-10)
@@ -25,9 +25,9 @@
 | chung-tu | 67 | 5 | 0 | 26 | 98 |
 | tong-hop | 31 | 8 | 1 | 28 | 68 |
 | thue | 14 | 2 | 1 | 11 | 28 |
-| he-thong | 149 | 23 | 3 | 58 | 233 |
+| he-thong | 150 | 23 | 2 | 58 | 233 |
 
-## Đang làm (8)
+## Đang làm (7)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -38,7 +38,6 @@
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | he-thong | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | mua-hang · ban-hang | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | kho | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
-| [S036-7](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-036 | he-thong | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh) · `feat/s036-7b-xoa-tao-mau` |
 
 ## Chờ merge (0)
 
@@ -362,6 +361,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | he-thong | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | chung-tu | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (319)
+## Xong (320)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

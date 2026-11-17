@@ -59,6 +59,11 @@ export function ThietLapPage() {
     mutationFn: (f: Form) => api.put<TenantInfo>('/api/v1/tenant', { name: f.name.trim(), taxCode: f.taxCode.trim(), address: f.address.trim(), phone: f.phone.trim() }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['tenant'] }); setStep(2); },
   });
+  // B5b (00 §15): tạo Công ty Mẫu cho bản cài đã có — máy chủ tạo đơn vị, nạp gói chạy nền
+  const taoMau = useMutation({
+    mutationFn: () => api.post<{ tenantCode: string; runId: string }>('/api/v1/setup/sample-tenant', {}),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['setup', 'status'] }); },
+  });
   const apply = useMutation({
     mutationFn: () => api.post<{ runId: string; status: string; fresh: boolean }>(`/api/v1/setup/presets/${presetId}/apply?blocks=${encodeURIComponent(blocks)}`, {}),
     onSuccess: (r) => { setRunId(r.runId); setStep(3); void qc.invalidateQueries({ queryKey: ['setup', 'status'] }); },
@@ -103,7 +108,9 @@ export function ThietLapPage() {
               <div className="card card-body" style={{ flex: '1 1 300px', opacity: mau.open ? 1 : 0.6 }} title={mau.note}>
                 <b>Xem công ty mẫu</b> {!mau.open && <span className="badge badge-gray">{mau.code ? 'đang xem' : 'chưa có'}</span>}
                 <p className="muted">Ba tháng nghiệp vụ hư cấu, báo cáo có số ngay — ở một đơn vị mẫu riêng, không đụng dữ liệu của bạn. {mau.note}.</p>
-                {mau.open && <div><button type="button" className="btn" onClick={() => moCongTyMau(mau.code!)}>Mở Công ty Mẫu</button></div>}
+                {mau.open && <div><button type="button" className="btn" onClick={() => moCongTyMau(mau.code!)}>Mở Công ty Mẫu</button>{taoMau.isSuccess && <span className="muted"> — đang nạp dữ liệu mẫu, khoảng một phút</span>}</div>}
+                {mau.create && <div><button type="button" className="btn" disabled={taoMau.isPending} title={taoMau.isPending ? 'Đang tạo Công ty Mẫu' : undefined} onClick={() => taoMau.mutate()}>{taoMau.isPending ? 'Đang tạo…' : 'Tạo Công ty Mẫu'}</button></div>}
+                {taoMau.error && <ErrorBox error={errorText(taoMau.error)} />}
               </div>
               <label className="card card-body" style={{ flex: '1 1 300px', cursor: 'pointer', outline: '2px solid var(--brand-600)' }}>
                 <span className="row"><input type="radio" checked readOnly /> <b>Thiết lập công ty của tôi</b></span>

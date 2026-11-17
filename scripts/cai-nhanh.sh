@@ -39,6 +39,8 @@ if [ ! -f .env ]; then
   dat_bien DB_APP_PASSWORD "$(ngau_nhien 32)"
   # [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (Q036-2): bản dùng thử cài mới có Công ty Mẫu (đơn vị mau, dữ liệu hư cấu); ảnh phát hành cho khách mặc định tắt
   dat_bien BIZCITY_SAMPLE thuong-mai-ban-le
+  # [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: bản dùng thử cho tạo lại Công ty Mẫu ở TI15 (sau khi xoá bằng scripts/xoa-cong-ty-mau.sh)
+  dat_bien BIZCITY_SAMPLE_ON_DEMAND 1
   echo "✓ Tạo .env, JWT_SECRET và DB_APP_PASSWORD ngẫu nhiên; bật Công ty Mẫu (đăng nhập mã đơn vị mau)"
 else
   echo "• Đã có .env — giữ nguyên"

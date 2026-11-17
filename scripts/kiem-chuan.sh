@@ -54,8 +54,9 @@ check "$( {
     | grep -vE "^(apps/api/test/|scripts/kiem-chuan.sh)"
   grep -rnE "allow_ledger_purge" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
     | grep -vE "^(apps/api/test/(app-role|db-rules).test.ts|packages/kernel/src/modules/ledger/ledger.diagnostics.ts|scripts/kiem-chuan.sh)"
+  # [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b (ADR-0034): thêm scripts/xoa-cong-ty-mau.sh / .sql (E3, chỉ đơn vị is_sample)
   grep -rnE "session_replication_role" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
-    | grep -vE "^(scripts/xoa-chung-tu.sh|scripts/kiem-chuan.sh|apps/api/test/)"
+    | grep -vE "^(scripts/xoa-chung-tu.sh|scripts/xoa-cong-ty-mau.(sh|sql)|scripts/kiem-chuan.sh|apps/api/test/)"
 } )"
 
 rule "R-DB-3: số migration không trùng"
