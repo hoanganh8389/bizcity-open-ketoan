@@ -1,0 +1,48 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.voucher",
+  "key": "voucher",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Voucher",
+  "description": "Voucher (NT-BH-026): đợt phát tương đương tiền / lần mua sau sản phẩm – nhãn, TGS hoặc hãng phát; mã gắn SĐT khách, dùng một lần; máy bán / BH10 hỏi voucher.order.quote rồi trừ (TGS = chiết khấu, hãng = hình thức thanh toán); tự phát voucher lần mua sau; báo cáo. Không nộp chứng từ.",
+  "owners": ["@hoanganh8389"],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": ["data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.subscribe"]
+  },
+  "permissions": [
+    { "key": "voucher:read", "label": "Xem voucher: đợt phát, mã, tra cứu mã đã dùng ở đơn nào, báo cáo", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" },
+    { "key": "voucher:write", "label": "Lập / sửa / ngừng đợt phát voucher, sinh / nạp mã gắn khách, thu hồi mã", "roles": ["owner", "chief_accountant", "accountant"], "risk": "low" },
+    { "key": "voucher:use", "label": "Dùng voucher của khách khi bán (máy bán, BH10): xem voucher còn hạn của khách, kiểm mã — vé thu ngân cần quyền này", "roles": ["owner", "chief_accountant", "accountant"], "risk": "low" }
+  ],
+  "data": {
+    "schema": "mod_voucher",
+    "tables": ["campaigns", "codes", "code_log"],
+    "reads": ["bizcity_read.partners", "bizcity_read.products", "bizcity_read.payment_methods"]
+  },
+  "actions": [
+    "voucher.campaign.list",
+    "voucher.campaign.get",
+    "voucher.campaign.create",
+    "voucher.campaign.update",
+    "voucher.code.generate",
+    "voucher.code.import",
+    "voucher.code.list",
+    "voucher.code.get",
+    "voucher.code.revoke",
+    "voucher.customer.available",
+    "voucher.order.quote",
+    "voucher.report.get"
+  ],
+  "events": {
+    "subscribes": [
+      { "type": "pos.order.recorded", "version": 1 },
+      { "type": "pos.order.cancelled", "version": 1 },
+      { "type": "pos.return.recorded", "version": 1 },
+      { "type": "phieu-ban.doc.recorded", "version": 1 },
+      { "type": "phieu-ban.doc.cancelled", "version": 1 }
+    ]
+  },
+  "ui": { "icon": "Ticket", "color": "#be185d", "order": 32 }
+}

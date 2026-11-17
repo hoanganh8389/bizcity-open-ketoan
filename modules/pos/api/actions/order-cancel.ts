@@ -32,6 +32,8 @@ export default defineAction({
     const version = await ctx.data.module(async (tx) => {
       // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: huỷ đơn chờ thanh toán → trả lượt khuyến mại (đóng góp)
       await releaseUses(tx, 'pos', order.order_id, 'cancel');
+      // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: huỷ đơn chờ thanh toán → trả mã voucher đã dùng (module voucher trả theo sự kiện pos.order.cancelled) (đóng góp)
+      await sql`UPDATE mod_pos.voucher_uses SET released_at = now(), release_reason = 'cancel' WHERE order_id = ${order.order_id} AND released_at IS NULL`.execute(tx);
       return (await sql<{ version: number }>`UPDATE mod_pos.orders SET status = 'cancelled', cancelled_at = now(), cancel_reason = ${why}, snapshot = ${JSON.stringify(snapshot)}::jsonb,
                  version = version + 1 WHERE order_id = ${order.order_id} RETURNING version`.execute(tx)).rows[0]!.version;
     });

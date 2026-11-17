@@ -49,11 +49,26 @@
 ## 5. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-026-voucher.test.ts` (tạo khi code) |
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: kết quả chạy (đóng góp) -->
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-026-voucher` — commit "feat(voucher, pos, phieu-ban): voucher 3 loại (NT-BH-026)" |
+| Test tự động | `apps/api/test/nt-bh-026-voucher.test.ts` **10/10 đạt**; hàm thuần `modules/voucher/test/voucher.test.ts` 10/10, `modules/pos/test/voucher.test.ts` (module pos 86/86); `npx bizcity module check voucher` / `pos` / `phieu-ban` ĐẠT |
+
+| Mục §3 | Kết quả |
+|---|---|
+| Đợt "Abbott 50K" (hãng), nạp 100 mã, gắn SĐT | Đạt — nạp 100 mã (mã lặp / SĐT sai bị bỏ, báo theo dòng); tra mã: còn, gắn SĐT, hạn 30 ngày; máy bán thấy voucher còn hạn của khách |
+| Khách A dùng mã 50K cho đơn 30K | Đạt — trừ 30.000 thành dòng thanh toán hình thức `VC-ABBOTT` (sổ: Nợ tài khoản của hình thức chi tiết hãng 30.000; doanh thu 27.778 + thuế 2.222 đủ); mã "Đã dùng" ở đơn đó, ngày, cửa hàng, tiền trừ 30.000 |
+| Khách B đưa mã của khách A | Đạt — `VOUCHER_NOT_OWNER` |
+| Dùng lại mã đã dùng | Đạt — `VOUCHER_USED`, câu lỗi nêu số đơn đã dùng |
+| Đợt TGS 20K | Đạt — chiết khấu chia vào dòng: đơn 100.000 → doanh thu 74.074 + thuế 5.926 (không voucher 92.593 + 7.407); đơn tối thiểu; hai voucher một đơn (TGS trước, hãng sau, phần dư mất); BH10 duyệt cũng trừ là chiết khấu |
+| Mua 2 lon Biomil (đủ điều kiện "lần mua sau") | Đạt — đơn trả `issuedVouchers` (mã 30K, hạn, SĐT) để in bill; mã có ở màn Voucher; lần sau giỏ không có Biomil → `VOUCHER_NOT_APPLICABLE`; giỏ có Biomil → chỉ trừ ở dòng Biomil |
+| Trả hàng đơn đã phát voucher chưa dùng | Đạt — trả cả đơn gốc → mã thu hồi (lý do nêu đơn gốc); dùng mã đó → `VOUCHER_REVOKED` |
+| Lệch chuẩn: hai máy cùng mã | Đạt — một đơn nhận, đơn kia `VOUCHER_USED` (khoá theo mã + mã đang dùng duy nhất ở `mod_pos.voucher_uses`) |
+
+Giới hạn: máy bán ↔ BH10 cùng một mã trong vài giây trước khi module voucher nhận sự kiện (outbox) thì cả hai qua — nhật ký mã ghi "dùng trùng". Trả một phần đơn gốc chưa thu hồi voucher lần mua sau. Màn BH10 (giao diện lõi `apps/web`) chưa có ô nhập mã voucher — API phiếu bán đã nhận `vouchers`.
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q9 |
+| 18/11/2026 | Code xong: module `voucher` (BH21), máy bán + BH10 trừ voucher, voucher lần mua sau tự phát / thu hồi, báo cáo; điền §5 |
