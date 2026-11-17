@@ -18,6 +18,7 @@ import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
 import { GroupTree } from './GroupTree';
 import { ProductFullForm } from './ProductFullForm';
+import { SuaThueHangLoat } from './SuaThueHangLoat';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: cột Biến thể cạnh mã, lọc theo biến thể, Loại hàng (đóng góp)
 import { PrintButton, resolveScreen, useEffectivePrintSettings } from '@/components/print';
 import { PRODUCT_LABEL_TEMPLATES, loadLabelItems, type LabelItem } from './productPrint';
@@ -116,6 +117,7 @@ export function ProductsPage() {
   }, [q.data]);
   const isChild = (p: Product) => fam.parent.get(p.sku) !== p.sku;
   const [bulk, setBulk] = useState(false);
+  const [suaThue, setSuaThue] = useState(false);
   const columns: Column<Product>[] = [
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
@@ -182,6 +184,7 @@ export function ProductsPage() {
             extra={
               <>
                 <NutNhapExcel loai={nhapLoai('mat-hang')!} disabled={!canWrite} />
+                {canWrite && <button className="btn btn-sm" onClick={() => setSuaThue(true)} title="Đổi thuế suất GTGT cho mặt hàng đang chọn hoặc mọi mặt hàng đang hiện trên lưới">Sửa thuế GTGT</button>}
                 <NutInTem sel={sel} viewCount={() => viewRef.current.length} scope={labelScope} setScope={setLabelScope} copies={labelCopies} setCopies={setLabelCopies} getDocs={labelDocs} />
               </>
             }
@@ -208,6 +211,7 @@ export function ProductsPage() {
           {Number(q.data?.meta?.total ?? 0) > TRANG_MAT_HANG && <Pager page={page} pageSize={TRANG_MAT_HANG} total={Number(q.data?.meta?.total)} onPage={setPage} />}
         </div>
       </div>
+      {suaThue && <SuaThueHangLoat sel={sel} view={() => viewRef.current} onClose={() => setSuaThue(false)} />}
       {editing && <ProductFullForm sku={editing.isNew ? null : editing.sku ?? null} initial={editing.isNew ? { groupCode: editing.groupCode ?? null } : undefined} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={() => setEditing(null)} />}
     </>
   );
