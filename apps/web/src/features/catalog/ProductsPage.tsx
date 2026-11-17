@@ -18,7 +18,7 @@ import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
 import { GroupTree } from './GroupTree';
 import { ProductFullForm } from './ProductFullForm';
-import { SuaThueHangLoat } from './SuaThueHangLoat';
+import { ThanhSuaThue, type KetQuaSuaThue } from './SuaThueHangLoat';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: cột Biến thể cạnh mã, lọc theo biến thể, Loại hàng (đóng góp)
 import { PrintButton, resolveScreen, useEffectivePrintSettings } from '@/components/print';
 import { PRODUCT_LABEL_TEMPLATES, loadLabelItems, type LabelItem } from './productPrint';
@@ -117,7 +117,18 @@ export function ProductsPage() {
   }, [q.data]);
   const isChild = (p: Product) => fam.parent.get(p.sku) !== p.sku;
   const [bulk, setBulk] = useState(false);
+  // [2026-11-17 05:37 PM kiennt] DM10 — chế độ sửa thuế GTGT: lưới thêm cột tích, tích mặt hàng cần sửa, chọn thuế, Ghi xong ẩn (đóng góp)
   const [suaThue, setSuaThue] = useState(false);
+  const [tich, setTich] = useState<Set<string>>(new Set());
+  const [kqThue, setKqThue] = useState<KetQuaSuaThue | null>(null);
+  const thoatSuaThue = () => { setSuaThue(false); setTich(new Set()); };
+  const datTich = (skus: string[], on: boolean) => setTich((s) => { const n = new Set(s); for (const k of skus) { if (on) n.add(k); else n.delete(k); } return n; });
+  const tichHet = viewRef.current.length > 0 && viewRef.current.every((p) => tich.has(p.sku));
+  const cotTich: Column<Product> = {
+    key: '_tich', title: 'Tích chọn', width: 36, noFilter: true, noSort: true, value: () => '',
+    header: <input type="checkbox" checked={tichHet} title="Tích / bỏ mọi mặt hàng đang hiện trên lưới" onClick={(e) => e.stopPropagation()} onChange={() => datTich(viewRef.current.map((p) => p.sku), !tichHet)} />,
+    render: (p) => <input type="checkbox" checked={tich.has(p.sku)} onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} onChange={() => datTich([p.sku], !tich.has(p.sku))} />,
+  };
   const columns: Column<Product>[] = [
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
@@ -184,13 +195,21 @@ export function ProductsPage() {
             extra={
               <>
                 <NutNhapExcel loai={nhapLoai('mat-hang')!} disabled={!canWrite} />
-                {canWrite && <button className="btn btn-sm" onClick={() => setSuaThue(true)} title="Đổi thuế suất GTGT cho mặt hàng đang chọn hoặc mọi mặt hàng đang hiện trên lưới">Sửa thuế GTGT</button>}
+                {canWrite && <button className={`btn btn-sm${suaThue ? ' btn-primary' : ''}`} onClick={() => { if (suaThue) thoatSuaThue(); else { setKqThue(null); setSuaThue(true); } }} title={suaThue ? 'Thoát chế độ sửa thuế' : 'Tích các mặt hàng trên lưới rồi đổi thuế suất GTGT một lần'}>Sửa thuế GTGT</button>}
                 <NutInTem sel={sel} viewCount={() => viewRef.current.length} scope={labelScope} setScope={setLabelScope} copies={labelCopies} setCopies={setLabelCopies} getDocs={labelDocs} />
               </>
             }
           />
           <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
           <AutoCreatedBanner />
+          {suaThue && <ThanhSuaThue rows={fam.rows.filter((p) => tich.has(p.sku))} onBoTich={() => setTich(new Set())} onThoat={thoatSuaThue} onXong={(kq) => { setKqThue(kq); thoatSuaThue(); }} />}
+          {kqThue && (
+            <div className={`alert ${kqThue.loi.length ? 'alert-warn' : 'alert-info'}`} style={{ marginBottom: 6 }}>
+              Đã đổi thuế suất {kqThue.nhan} cho {(kqThue.tong - kqThue.loi.length).toLocaleString('vi-VN')}/{kqThue.tong.toLocaleString('vi-VN')} mặt hàng{kqThue.loi.length ? `, lỗi ${kqThue.loi.length}:` : '.'}
+              <button type="button" className="btn btn-xs btn-ghost" style={{ marginLeft: 8 }} onClick={() => setKqThue(null)}>Đóng</button>
+              {kqThue.loi.length > 0 && <ul style={{ maxHeight: 140, overflowY: 'auto', margin: '4px 0 0 18px', fontSize: 12 }}>{kqThue.loi.map((l) => <li key={l}>{l}</li>)}</ul>}
+            </div>
+          )}
           {q.isLoading ? <Loading /> : (
             <DataGrid
               storageKey="dm10-v4"
@@ -205,13 +224,12 @@ export function ProductsPage() {
               rowClassName={(p) => (p.isActive ? '' : 'muted')}
               footerLabel={false}
               emptyText="Chưa có mặt hàng. Bấm Quay về dữ liệu gốc để nạp danh mục mặt hàng chuẩn của công ty; mặt hàng mới cũng tự thêm khi chứng từ mang mã hàng mới hoặc hệ thống bán hàng đồng bộ qua API."
-              columns={columns}
+              columns={suaThue ? [cotTich, ...columns] : columns}
             />
           )}
           {Number(q.data?.meta?.total ?? 0) > TRANG_MAT_HANG && <Pager page={page} pageSize={TRANG_MAT_HANG} total={Number(q.data?.meta?.total)} onPage={setPage} />}
         </div>
       </div>
-      {suaThue && <SuaThueHangLoat sel={sel} view={() => viewRef.current} onClose={() => setSuaThue(false)} />}
       {editing && <ProductFullForm sku={editing.isNew ? null : editing.sku ?? null} initial={editing.isNew ? { groupCode: editing.groupCode ?? null } : undefined} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={() => setEditing(null)} />}
     </>
   );

@@ -1,14 +1,14 @@
-// [2026-11-17 05:09 PM kiennt] DM10 — sửa thuế suất GTGT hàng loạt: mặt hàng đang chọn hoặc mọi mặt hàng đang hiện trên lưới (đóng góp)
+// [2026-11-17 kiennt] DM10 — sửa thuế suất GTGT hàng loạt (đóng góp)
+// [2026-11-17 05:37 PM kiennt] DM10 — đổi sang chế độ trên lưới: bấm Sửa thuế GTGT thì lưới thêm cột tích, tích mặt hàng cần sửa, chọn thuế, Ghi xong ẩn cột (đóng góp)
 /**
- * SỬA THUẾ GTGT HÀNG LOẠT (DM10). Chọn phạm vi (mặt hàng đang chọn / các dòng đang hiện trên lưới sau khi lọc nhóm, lọc cột),
- * chọn thuế suất đầu ra từ Biểu thuế; mã thuế đầu vào tự theo cặp chuẩn (R10 ↔ V10…) như form mặt hàng.
+ * THANH SỬA THUẾ GTGT HÀNG LOẠT (DM10) — hiện trên lưới khi bật chế độ "Sửa thuế GTGT"; lưới thêm cột tích để chọn mặt hàng.
+ * Chọn thuế suất đầu ra từ Biểu thuế; mã thuế đầu vào tự theo cặp chuẩn (R10 ↔ V10…) như form mặt hàng.
  * Ghi từng mặt hàng qua PUT /api/v1/products/:sku chỉ với taxOutCode / taxInCode (ô khác giữ nguyên, có nhật ký từng mã).
  * Mặt hàng đã đúng thuế này thì bỏ qua.
  */
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
-import { Field, Modal } from '@/components/ui';
 
 interface TaxCode { code: string; name: string; direction: string; isActive: boolean; rate?: number }
 interface Dong { sku: string; name: string; taxOutCode: string | null; taxInCode: string | null }
@@ -24,13 +24,13 @@ const VAT_RATES = [
 /** Số yêu cầu ghi chạy song song. */
 const SONG_SONG = 4;
 
-export function SuaThueHangLoat({ sel, view, onClose }: { sel: Dong | null; view: () => Dong[]; onClose: () => void }) {
+export interface KetQuaSuaThue { tong: number; loi: string[]; nhan: string }
+
+export function ThanhSuaThue({ rows, onBoTich, onXong, onThoat }: { rows: Dong[]; onBoTich: () => void; onXong: (kq: KetQuaSuaThue) => void; onThoat: () => void }) {
   const qc = useQueryClient();
   const taxes = useQuery({ queryKey: ['tax-codes'], queryFn: () => api.get<TaxCode[]>('/api/v1/tax-codes'), staleTime: 60_000 }).data ?? [];
-  const [dangHien] = useState(() => view());
-  const [phamVi, setPhamVi] = useState<'sel' | 'view'>(sel && dangHien.length <= 1 ? 'sel' : 'view');
   const [ma, setMa] = useState('');
-  const [chay, setChay] = useState<{ xong: number; tong: number; loi: string[]; done: boolean } | null>(null);
+  const [chay, setChay] = useState<{ xong: number; tong: number } | null>(null);
 
   const outTaxes = useMemo(() => {
     const std = VAT_RATES.map((r) => r.out);
@@ -44,65 +44,50 @@ export function SuaThueHangLoat({ sel, view, onClose }: { sel: Dong | null; view
     const std = VAT_RATES.find((r) => r.out === code) ?? VAT_RATES.find((r) => r.key !== 'kct' && Number(r.key) === Number(t?.rate));
     return std && taxes.some((x) => x.code === std.in && x.direction === 'input') ? std.in : null;
   };
-
-  const ds = phamVi === 'sel' ? (sel ? [sel] : []) : dangHien;
-  const canDoi = ma ? ds.filter((p) => p.taxOutCode !== ma || p.taxInCode !== maVao(ma)) : [];
+  const canDoi = ma ? rows.filter((p) => p.taxOutCode !== ma || p.taxInCode !== maVao(ma)) : [];
 
   const ghi = async () => {
     const list = canDoi;
     if (list.length > 200 && !window.confirm(`Đổi thuế suất của ${list.length.toLocaleString('vi-VN')} mặt hàng?`)) return;
     const body = { taxOutCode: ma, taxInCode: maVao(ma) };
-    const st = { xong: 0, tong: list.length, loi: [] as string[], done: false };
-    setChay({ ...st });
-    let i = 0;
+    const loi: string[] = [];
+    let xong = 0, i = 0;
+    setChay({ xong, tong: list.length });
     const tho = async () => {
       while (i < list.length) {
         const p = list[i++]!;
-        try { await api.put(`/api/v1/products/${encodeURIComponent(p.sku)}`, body); } catch (e) { st.loi.push(`${p.sku}: ${errorText(e)}`); }
-        st.xong++;
-        setChay({ ...st, loi: [...st.loi] });
+        try { await api.put(`/api/v1/products/${encodeURIComponent(p.sku)}`, body); } catch (e) { loi.push(`${p.sku}: ${errorText(e)}`); }
+        setChay({ xong: ++xong, tong: list.length });
       }
     };
     await Promise.all(Array.from({ length: Math.min(SONG_SONG, list.length) }, tho));
-    setChay({ ...st, loi: [...st.loi], done: true });
     void qc.invalidateQueries({ queryKey: ['products'] });
+    const t = taxes.find((x) => x.code === ma);
+    onXong({ tong: list.length, loi, nhan: t ? nhan(t) : ma });
   };
 
-  const dangChay = Boolean(chay && !chay.done);
-  const lyDoChan = !ma ? 'Chọn thuế suất GTGT' : !ds.length ? 'Chưa chọn mặt hàng nào' : !canDoi.length ? 'Các mặt hàng đã đúng thuế suất này' : '';
+  const dangChay = Boolean(chay);
+  const lyDoChan = !rows.length ? 'Tích các mặt hàng cần sửa ở cột đầu lưới' : !ma ? 'Chọn thuế suất GTGT mới' : !canDoi.length ? 'Các mặt hàng đã tích đã đúng thuế suất này' : '';
   return (
-    <Modal title="Sửa thuế GTGT hàng loạt" onClose={() => !dangChay && onClose()}
-      footer={<>
-        {!chay?.done && <button className="btn btn-primary" disabled={Boolean(lyDoChan) || dangChay} title={lyDoChan || undefined} onClick={() => void ghi()}>{dangChay ? `Đang ghi ${chay!.xong}/${chay!.tong}…` : `Ghi ${canDoi.length.toLocaleString('vi-VN')} mặt hàng`}</button>}
-        <button className="btn" disabled={dangChay} title={dangChay ? 'Đang ghi — chờ xong rồi đóng' : undefined} onClick={onClose}>Thoát</button>
-      </>}>
-      <Field label="Áp dụng cho" full>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label className="checkbox"><input type="radio" checked={phamVi === 'sel'} disabled={!sel || Boolean(chay)} onChange={() => setPhamVi('sel')} />
-            {sel ? <>Mặt hàng đang chọn: <b className="mono">{sel.sku}</b> {sel.name}</> : <span className="muted">Mặt hàng đang chọn (chưa chọn dòng nào)</span>}</label>
-          <label className="checkbox"><input type="radio" checked={phamVi === 'view'} disabled={!dangHien.length || Boolean(chay)} onChange={() => setPhamVi('view')} />
-            <b>{dangHien.length.toLocaleString('vi-VN')}</b>&nbsp;mặt hàng đang hiện trên lưới (theo nhóm hàng và lọc cột đang đặt)</label>
-        </div>
-      </Field>
-      <Field label="Thuế suất GTGT mới (*)" full>
-        <select className="select input" value={ma} disabled={Boolean(chay)} onChange={(e) => setMa(e.target.value)}>
-          <option value="">— chọn —</option>
-          {outTaxes.map((t) => <option key={t.code} value={t.code}>{nhan(t)}</option>)}
-        </select>
-      </Field>
-      {ma && !chay && (
-        <div className="full muted" style={{ fontSize: 12 }}>
-          Sẽ đổi <b>{canDoi.length.toLocaleString('vi-VN')}</b> mặt hàng{ds.length - canDoi.length ? `, bỏ qua ${(ds.length - canDoi.length).toLocaleString('vi-VN')} mặt hàng đã đúng thuế này` : ''}.
-          Thuế đầu vào: {maVao(ma) ?? '(để trống — Biểu thuế chưa có mã đầu vào tương ứng)'}.
-        </div>
+    <div className="alert alert-info" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+      <b>Sửa thuế GTGT:</b>
+      <span>đã tích <b>{rows.length.toLocaleString('vi-VN')}</b> mặt hàng</span>
+      {rows.length > 0 && !dangChay && <button type="button" className="btn btn-xs btn-ghost" onClick={onBoTich}>Bỏ tích hết</button>}
+      <select className="select input" style={{ height: 28, width: 'auto', minWidth: 220 }} value={ma} disabled={dangChay} onChange={(e) => setMa(e.target.value)} title="Thuế suất GTGT bán ra mới">
+        <option value="">— chọn thuế suất mới —</option>
+        {outTaxes.map((t) => <option key={t.code} value={t.code}>{nhan(t)}</option>)}
+      </select>
+      {ma && rows.length > 0 && !dangChay && (
+        <span className="muted" style={{ fontSize: 12 }}>
+          sẽ đổi {canDoi.length.toLocaleString('vi-VN')}{rows.length - canDoi.length ? `, bỏ qua ${(rows.length - canDoi.length).toLocaleString('vi-VN')} đã đúng` : ''} · thuế vào {maVao(ma) ?? '(trống)'}
+        </span>
       )}
-      {chay && (
-        <div className="full" style={{ fontSize: 13 }}>
-          {chay.done ? <div className={chay.loi.length ? 'alert alert-warn' : 'alert alert-info'}>Đã ghi {(chay.tong - chay.loi.length).toLocaleString('vi-VN')}/{chay.tong.toLocaleString('vi-VN')} mặt hàng{chay.loi.length ? `, lỗi ${chay.loi.length}` : ''}.</div>
-            : <progress max={chay.tong} value={chay.xong} style={{ width: '100%' }} />}
-          {chay.loi.length > 0 && <ul style={{ maxHeight: 160, overflowY: 'auto', margin: '6px 0 0 18px', fontSize: 12 }}>{chay.loi.map((l) => <li key={l}>{l}</li>)}</ul>}
-        </div>
-      )}
-    </Modal>
+      {dangChay && <progress max={chay!.tong} value={chay!.xong} style={{ width: 160 }} />}
+      <span style={{ flex: 1 }} />
+      <button type="button" className="btn btn-sm btn-primary" disabled={Boolean(lyDoChan) || dangChay} title={lyDoChan || undefined} onClick={() => void ghi()}>
+        {dangChay ? `Đang ghi ${chay!.xong}/${chay!.tong}…` : `Ghi${canDoi.length ? ` (${canDoi.length.toLocaleString('vi-VN')})` : ''}`}
+      </button>
+      <button type="button" className="btn btn-sm" disabled={dangChay} title={dangChay ? 'Đang ghi — chờ xong' : 'Thoát chế độ sửa thuế, không ghi'} onClick={onThoat}>Huỷ</button>
+    </div>
   );
 }
