@@ -4,6 +4,7 @@
  * Hình thức thanh toán chuyển khoản trỏ về tài khoản ngân hàng; phiếu báo nợ / báo có hiện tên ngân hàng ở ô tài khoản tiền;
  * sổ tiền gửi (ACC56) lọc theo từng tài khoản ngân hàng.
  */
+import { useMaTrung } from '@/lib/maTrung';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
@@ -89,10 +90,12 @@ function BankForm({ value, onClose }: { value: Partial<BankAccount> & { isNew?: 
     }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['bank-accounts'] }); void qc.invalidateQueries({ queryKey: ['payment-methods'] }); if (value.isNew) onClose(); else viewAgain[1](); },
   });
+  // [2026-11-17 07:29 PM kiennt] NT-DM-002 L01 — thêm mới trùng mã (cả mã trong thùng rác) thì báo, khoá Ghi; trước đây PUT ghi đè bản ghi cũ (đóng góp)
+  const maTrung = useMaTrung({ isNew: value.isNew, code: v.code, list: useBankAccounts(Boolean(value.isNew)).data?.map((b) => ({ code: b.code, name: b.bankName })), catalog: 'bank-accounts' });
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title={value.isNew ? 'Thêm tài khoản ngân hàng' : `Tài khoản ngân hàng ${value.code ?? ''}`} onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.bankName || !v.accountNo || !v.accountCode} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Mã ngân hàng (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} placeholder="VCB-HN" autoFocus /></Field>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.bankName || !v.accountNo || !v.accountCode || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      <Field label="Mã ngân hàng (*)" error={maTrung || null}><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} placeholder="VCB-HN" autoFocus /></Field>
       <Field label="Điện thoại"><input className="input" value={v.bankPhone ?? ''} onChange={(e) => set({ bankPhone: e.target.value })} /></Field>
       <Field label="Tên ngân hàng (*)" full><input className="input" value={v.bankName ?? ''} onChange={(e) => set({ bankName: e.target.value })} placeholder="Vietcombank - CN Thành Công" /></Field>
       <Field label="Địa chỉ" full><input className="input" value={v.bankAddress ?? ''} onChange={(e) => set({ bankAddress: e.target.value })} /></Field>
