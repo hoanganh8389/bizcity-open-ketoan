@@ -128,7 +128,7 @@ export function CostingPage() {
         <ErrorBox error={run.error ? errorText(run.error) : runs.error ? errorText(runs.error) : null} />
         {run.data && (
           <div className="card-body muted" style={{ paddingTop: 4, paddingBottom: 4 }}>
-            Đã tính tháng {run.data.monthsComputed.join(', ')} · {run.data.items} mặt hàng{run.data.imported ? ` · ${run.data.imported.count} mã theo giá nhập Excel` : ''} · giá vốn ghi sổ <b>{money(run.data.total)}</b>
+            Đã tính tháng {run.data.monthsComputed.join(', ')} · {run.data.items} mặt hàng{run.data.imported ? ` · ${run.data.imported.count} mã theo giá nhập Excel` : ''}
           </div>
         )}
         <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--line, #dfe4ec)' }}>
@@ -139,7 +139,7 @@ export function CostingPage() {
         </div>
         {runs.isLoading ? <Loading /> : !runs.data?.length ? <Empty text={cn ? 'Chi nhánh này chưa có lần tính giá vốn trong khoảng ngày — chọn tháng rồi bấm Tính giá vốn' : 'Chưa có lần tính giá vốn trong khoảng ngày'} /> : (
           <DataGrid
-            storageKey="acc49-lan-tinh-v2"
+            storageKey="acc49-lan-tinh-v3"
             rows={runs.data}
             rowKey={(x) => x.id}
             rowClassName={(x) => (x.id === curRun?.id ? 'selected' : '')}
@@ -151,7 +151,7 @@ export function CostingPage() {
               { key: 'period', header: 'Kỳ', value: (x) => `${x.period.slice(5)}/${x.period.slice(0, 4)}` },
               { key: 'from', header: 'Chứng từ', hidden: true, value: (x) => `${x.from.slice(8)}/${x.from.slice(5, 7)}–${x.to.slice(8)}/${x.to.slice(5, 7)}`, title: 'Khoảng ngày chứng từ được cập nhật giá vốn' },
               { key: 'items', header: 'Số mã', type: 'qty' },
-              { key: 'total', header: 'Giá vốn ghi sổ', type: 'money', title: 'Tổng giá vốn hàng xuất đã ghi sổ qua phiếu "Giá vốn hàng xuất" của các shop trong phạm vi' },
+              { key: 'total', header: 'Giá vốn ghi sổ', type: 'money', hidden: true, title: 'Tổng giá vốn hàng xuất đã ghi sổ qua phiếu "Giá vốn hàng xuất" của các shop trong phạm vi' },
               { key: 'vouchers', header: 'Phiếu giá vốn', hidden: true, value: (x) => (Array.isArray(x.vouchers) ? x.vouchers.length : 0), title: 'Phiếu "Giá vốn hàng xuất" (một phiếu / shop / tháng)' },
               { key: 'imported', header: 'Mã nhập giá đầu kỳ', type: 'qty', hidden: true, title: 'Số mã lấy giá vốn bình quân đầu kỳ từ tệp Excel' },
               { key: 'runBy', header: 'Người tính' },
