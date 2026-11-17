@@ -218,6 +218,21 @@ describe('Tính lại khi đơn giá đổi', () => {
 // [2026-11-17 Nguyễn Văn Thủy] nhập Excel = ĐGBQ ĐẦU KỲ: tồn đầu × giá nhập, bình quân với chứng từ trong kỳ ra ĐGBQ cuối kỳ (đóng góp)
 // Tháng 10: tồn đầu 10, nhập trong kỳ 20 = 1.580.000 → ĐGBQ cuối kỳ = (10 × giá nhập + 1.580.000) / 30.
 describe('Nhập ĐGBQ đầu kỳ từ Excel', () => {
+  it('kiểm tra tệp (không ghi): mã lạ, giá không phải số, giá âm, mã lặp báo lỗi từng dòng', async () => {
+    const res = await call(ctx, 'POST', '/api/v1/inventory/costing/import-check', { period: '2026-10', rows: [
+      { row: 2, sku: 'SUA01', unitCost: '70000' }, { row: 3, sku: 'KHONG-CO', unitCost: '1' }, { row: 4, sku: 'SUA01', unitCost: '1' },
+      { row: 5, sku: '', unitCost: 'abc' }, { row: 6, sku: 'SUA01', unitCost: -5 },
+    ] });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const r = res.body.data.rows;
+    expect(r[0]).toMatchObject({ row: 2, sku: 'SUA01', errors: [] });
+    expect(r[0].action).not.toBe('error');
+    expect(r[1].errors[0]).toContain('không có trong danh mục');
+    expect(r[2].errors).toContain('Mã lặp — lấy dòng đầu');
+    expect(r[3].errors).toEqual(['Thiếu mã hàng', 'Giá vốn không phải số']);
+    expect(r[4].errors).toContain('Giá vốn âm');
+    expect(res.body.data).toMatchObject({ failed: 4 });
+  });
   const run = (body: object) => call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10', ...body });
   it('mã có trong tệp: tồn đầu theo giá nhập rồi bình quân với chứng từ trong kỳ; mã trùng lấy giá khác 0', async () => {
     const res = await run({ imported: [{ sku: 'SUA01', unitCost: 0, name: 'Sữa bột 900g' }, { sku: 'SUA01', unitCost: 80000.5 }, { sku: 'KHAC01', unitCost: 1000 }] });

@@ -17,7 +17,8 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { DocumentDetail } from '../../../features/documents/DocumentDetail';
 import { ItemPicker } from '@/components/pickers';
-import { ExcelImport, type ImportResult } from '@/components/ExcelImport';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import type { NhapKetQua, NhapLoai } from '@/lib/nhapExcel';
 import { PrintButton } from '@/components/print';
 import { CayDonVi } from '@/components/CayDonVi';
 import { useOrgTree } from '@/lib/orgUnits';
@@ -82,19 +83,25 @@ export function CostingPage() {
   });
   const hasImport = (costs.data ?? []).some((r) => r.costSource === 'import');
   const monthText = `${period.slice(5)}/${period.slice(0, 4)}`;
-  /** Nhập bảng giá vốn tháng từ Excel (Mã hàng, Tên hàng, Giá vốn) rồi tính giá vốn tháng đang chọn ngay. */
-  const importCosts = async (rows: Record<string, string>[]): Promise<ImportResult> => {
-    const items = rows.flatMap((r) => {
-      const unitCost = parseCost(r.unitCost as string | number | undefined);
-      return unitCost === null || unitCost < 0 ? [] : [{ sku: String(r.sku).trim(), unitCost, name: r.name ? String(r.name) : undefined }];
-    });
-    const res = await run.mutateAsync({ imported: items });
-    const missing = res.imported?.missing ?? [];
-    return {
-      updated: res.imported?.count ?? 0,
-      skipped: rows.length - items.length,
-      errors: missing.length ? [`${res.imported!.missingCount} mã hàng có xuất trong tháng nhưng không có giá vốn bình quân đầu kỳ trong tệp — dùng tồn cuối tháng trước: ${missing.join(', ')}${res.imported!.missingCount > missing.length ? '…' : ''}`] : [],
-    };
+  // [2026-11-17 Nguyễn Văn Thủy] Nhập giá vốn BQ đầu kỳ bằng trình nhập Excel 4 bước dùng chung: tải mẫu → ghép cột → kiểm tra (máy chủ, chưa ghi) → nhập + tính (đóng góp)
+  const loaiGiaDauKy: NhapLoai = {
+    id: 'gia-von-dau-ky', nhom: 'Số dư', title: `Giá vốn bình quân đầu kỳ ${monthText}`, keyField: 'sku', modes: false,
+    desc: 'Mã hàng và giá vốn bình quân đầu tháng; nhập xong tính giá vốn tháng ngay',
+    listPath: '/nghiep-vu/tinh-gia-von', invalidate: ['inventory-costs', 'inventory-costing-runs', 'inventory-costing-run-lines'],
+    fields: [
+      { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'sku'], example: '100021001', note: 'Mã phải có trong danh mục mặt hàng. Mã lặp nhiều dòng: lấy dòng đầu. Tệp mới thay toàn bộ giá đầu kỳ đã nhập của tháng.' },
+      { key: 'name', header: 'Tên hàng', aliases: ['ten', 'ten vthh', 'ten hang hoa'], example: 'Sữa bột mẫu 400g', note: 'Để tham khảo, không cập nhật danh mục.' },
+      { key: 'unitCost', header: 'Giá vốn bình quân đầu kỳ', required: true, aliases: ['gia von', 'gia von binh quan', 'gia von bq', 'gia von bq dau ky', 'gia von binh quan dau ky', 'gia von bqgq', 'don gia von', 'don gia von bq', 'dgbq', 'dgbq dau ky', 'don gia', 'gia von dau ky', 'gia dau ky', 'unit cost'], example: '185000', note: 'Giá vốn bình quân 1 ĐVT nhỏ nhất (chưa VAT) đầu tháng. Tồn đầu × giá này = giá trị tồn đầu.' },
+    ],
+    run: async (rows, { dryRun }) => {
+      const out = rows.map((r) => ({ row: Number(r._row), sku: (r.sku ?? '').trim(), name: r.name, unitCost: r.unitCost ?? null }));
+      const res = await api.post<Omit<NhapKetQua, 'rows'> & { rows: (Omit<NhapKetQua['rows'][number], 'key'> & { sku: string })[] }>('/api/v1/inventory/costing/import-check', { period, rows: out.map((r) => ({ ...r, unitCost: r.unitCost === null ? null : String(parseCost(r.unitCost) ?? r.unitCost) })) });
+      const check: NhapKetQua = { ...res, rows: res.rows.map((x) => ({ ...x, key: x.sku })) };
+      if (dryRun) return check;
+      const ok = check.rows.filter((x) => x.action !== 'error').map((x) => ({ sku: x.key, unitCost: Number(x.values.unitCost), name: x.values.name || undefined }));
+      if (ok.length) await run.mutateAsync({ imported: ok });
+      return check;
+    },
   };
   return (
     <>
@@ -122,15 +129,7 @@ export function CostingPage() {
             <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate({})}>
               {run.isPending ? 'Đang tính…' : `Tính giá vốn${scope ? ` · ${scope.code}` : ''}${wholeMonth ? '' : ` (chứng từ ${range.from.slice(8)}–${range.to.slice(8)})`}`}
             </button>
-            <ExcelImport
-              columns={[{ key: 'sku', header: 'Mã hàng' }, { key: 'name', header: 'Tên hàng' }, { key: 'unitCost', header: 'Giá vốn bình quân đầu kỳ' }]}
-              keyColumn="sku"
-              raw
-              disabled={run.isPending}
-              buttonLabel={`Nhập giá vốn bình quân đầu kỳ ${monthText} từ Excel`}
-              hint={<>Tệp cần cột <b>Mã hàng</b> và <b>Giá vốn bình quân đầu kỳ</b> (giá vốn bình quân đầu tháng {monthText}; Tên hàng để tham khảo). Hệ thống lấy <b>tồn đầu × giá vốn bình quân đầu kỳ</b> làm giá trị tồn đầu, rồi bình quân với chứng từ nhập trong tháng ra <b>giá vốn bình quân cuối kỳ</b> — tháng sau tự lấy tiếp, không cần nhập lại. Mỗi mã một giá cho mọi chi nhánh; mã lặp nhiều dòng lấy giá khác 0 xuất hiện nhiều nhất. Bấm Ghi: tính giá vốn tháng {monthText} ngay.</>}
-              onImport={importCosts}
-            />
+            <NutNhapExcel loai={loaiGiaDauKy} disabled={run.isPending} label={`Nhập giá vốn bình quân đầu kỳ ${monthText} từ Excel`} />
             {hasImport && <button className="btn btn-sm" disabled={run.isPending} onClick={() => window.confirm(`Bỏ giá vốn bình quân đầu kỳ đã nhập từ Excel của tháng ${monthText}? Tồn đầu quay về tồn cuối tháng trước rồi tính lại.`) && run.mutate({ clearImport: true })} title="Bỏ giá vốn bình quân đầu kỳ đã nhập — tồn đầu lấy theo tồn cuối tháng trước">Bỏ giá đầu kỳ đã nhập</button>}
           </div>
         </div>

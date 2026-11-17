@@ -15,7 +15,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { idParamSchema, ok } from '@bizcity/platform/core/http';
-import { costingFormulas, costingRuns, costingService, formulaOf } from './costing.service.js';
+import { checkCostImport, costingFormulas, costingRuns, costingService, formulaOf } from './costing.service.js';
 import { sql } from 'kysely';
 import { db } from '@bizcity/platform/db/client';
 import { env } from '@bizcity/platform/config/env';
@@ -49,6 +49,12 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Công thức giá vốn (bộ lựa chọn cách tính) của đơn vị' },
     handler: async (req) => ok(await costingFormulas.list(authOf(req))),
+  });
+  // [2026-11-17 Nguyễn Văn Thủy] kiểm tra tệp giá vốn bình quân đầu kỳ trước khi nhập (không ghi) (đóng góp)
+  r.post('/api/v1/inventory/costing/import-check', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Kiểm tra tệp giá vốn bình quân đầu kỳ (không ghi)', body: z.object({ period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), rows: z.array(z.object({ row: z.number().int(), sku: z.string().max(200).optional(), name: z.string().max(500).optional(), unitCost: z.union([z.string().max(60), z.number()]).nullable().optional() })).max(100000) }) },
+    handler: async (req) => ok(await checkCostImport(authOf(req), req.body.period, req.body.rows)),
   });
   r.get('/api/v1/inventory/costing-runs', {
     preHandler: requirePermission('reports:read'),

@@ -526,6 +526,32 @@ export interface CostingResult {
 /** Một dòng bảng giá vốn nhập từ Excel. */
 export interface CostImportRow { sku: string; unitCost: number; name?: string }
 
+/**
+ * [2026-11-17 Nguyễn Văn Thủy] Kiểm tra tệp giá vốn bình quân đầu kỳ (không ghi): từng dòng — mã có trong danh mục, giá là số ≥ 0;
+ * mã lặp nhiều dòng thì dòng sau báo lặp (lấy dòng đầu); mã đã có giá nhập của tháng → "Cập nhật", chưa có → "Thêm mới" (đóng góp)
+ */
+export async function checkCostImport(auth: AuthContext, period: string, rows: { row: number; sku?: string; name?: string; unitCost?: string | number | null }[]) {
+  const p = parsePeriod(period);
+  const skus = [...new Set(rows.map((r) => String(r.sku ?? '').trim()).filter(Boolean))];
+  const known = new Set(skus.length ? (await sql<{ sku: string }>`SELECT sku FROM products WHERE tenant_id = ${auth.tenantId} AND sku = ANY(${skus}::text[])`.execute(db)).rows.map((r) => r.sku) : []);
+  const had = new Set((await sql<{ sku: string }>`SELECT DISTINCT sku FROM inventory_costs WHERE tenant_id = ${auth.tenantId} AND year = ${p.year} AND month = ${p.month} AND cost_source = 'import'`.execute(db)).rows.map((r) => r.sku));
+  const seen = new Set<string>();
+  const out = rows.map((r) => {
+    const sku = String(r.sku ?? '').trim();
+    const raw = r.unitCost;
+    const n = typeof raw === 'number' ? raw : raw === null || raw === undefined || String(raw).trim() === '' ? NaN : Number(String(raw).replace(/\s/g, ''));
+    const errors: string[] = [];
+    if (!sku) errors.push('Thiếu mã hàng');
+    else if (!known.has(sku)) errors.push(`Mã ${sku} không có trong danh mục mặt hàng`);
+    if (!Number.isFinite(n)) errors.push('Giá vốn không phải số');
+    else if (n < 0) errors.push('Giá vốn âm');
+    if (sku && seen.has(sku)) errors.push('Mã lặp — lấy dòng đầu');
+    if (sku) seen.add(sku);
+    return { row: r.row, sku, action: (errors.length ? 'error' : had.has(sku) ? 'update' : 'create') as 'create' | 'update' | 'error', errors, values: { sku, name: r.name ?? '', unitCost: Number.isFinite(n) ? String(n) : String(raw ?? '') } };
+  });
+  return { created: out.filter((x) => x.action === 'create').length, updated: out.filter((x) => x.action === 'update').length, failed: out.filter((x) => x.action === 'error').length, rows: out };
+}
+
 export const costingService = {
   /**
    * Tính giá vốn một tháng và ghi sổ giá vốn hàng xuất.
