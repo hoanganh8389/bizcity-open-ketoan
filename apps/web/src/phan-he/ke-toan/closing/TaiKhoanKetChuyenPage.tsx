@@ -42,7 +42,7 @@ export function TaiKhoanKetChuyenPage() {
   });
   // [2026-11-17 11:10 AM kiennt] ACC41A — cột theo màn Tài khoản kết chuyển của MISA; Mã / Loại kết chuyển suy từ TK đi / đến (đóng góp)
   const cols: Column<Row>[] = [
-    { key: 'seq', header: 'Thứ tự kết chuyển', type: 'number', width: 130, showZero: true, title: 'Chạy từ nhỏ đến lớn; 911 → 421 luôn sau cùng', value: (x) => x.r.seq },
+    { key: 'seq', header: 'Thứ tự kết chuyển', width: 130, title: 'Chạy từ nhỏ đến lớn; 911 → 421 luôn sau cùng', value: (x) => x.r.seq, render: (x) => String(x.r.seq) }, // căn trái như MISA; giá trị số nên vẫn sắp theo số
     { key: 'ma', header: 'Mã kết chuyển', type: 'code', width: 130, value: (x) => `${x.r.fromAccount}-${x.r.toAccount}` },
     { key: 'fromAccount', header: 'Kết chuyển từ', type: 'code', width: 120, title: 'Đầu số, gồm mọi tài khoản con', value: (x) => x.r.fromAccount },
     { key: 'toAccount', header: 'Kết chuyển đến', type: 'code', width: 120, title: 'Tài khoản chi tiết', value: (x) => x.r.toAccount },
