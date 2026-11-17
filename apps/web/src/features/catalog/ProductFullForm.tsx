@@ -596,7 +596,7 @@ function NccTamBang({ rows, setRows, units, mainUnit, vatLabel, vatPct }: { rows
           <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 160 }} title="Giá mua theo ĐVT, chưa thuế — nhập ô này thì ô gồm thuế tự tính">Giá mua chưa thuế</th><th className="num" style={{ width: 90 }} title={`Thuế suất GTGT đầu vào đã chọn ở bước Thông tin chung${vatLabel ? ` (${vatLabel})` : ''} — đổi ở bước 1`}>Thuế %</th><th className="num" style={{ width: 160 }} title={`Giá mua theo ĐVT, gồm thuế${vatPct ? ` ${vatPct}%` : ''} — NCC báo giá gồm thuế thì nhập ô này`}>Giá mua gồm thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 50 }} /></tr></thead>
           <tbody>{rows.map((r, i) => (
             <tr key={i}>
-              <td><PartnerPicker value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
+              <td>{/* [2026-11-17 07:33 PM kiennt] NT-DM-002 L07 — chỉ gợi ý NCC đang giao dịch (đóng góp) */}<PartnerPicker activeOnly value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
               <td><select className="select input" value={r.unit} onChange={(e) => set(i, { unit: e.target.value })}>{units.map((u) => <option key={u} value={u}>{u}</option>)}</select></td>
               <td><NumInput value={net(r)} onChange={(n) => set(i, { price: n, incVat: false })} /></td>
               {/* [2026-11-15 Nguyễn Văn Thủy] hiện thuế suất đã chọn ở đầu để thấy giá gồm thuế tính theo bao nhiêu % (đóng góp) */}

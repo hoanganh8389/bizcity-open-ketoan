@@ -29,19 +29,41 @@ const tags = ['Thùng rác danh mục'];
 const WIPE_PASSWORD = process.env.CATALOG_WIPE_PASSWORD || 'Thuy!@#';
 
 interface Child { table: string; col: string; parentCol: string }
-interface Cat { label: string; table: string; key: string; name: string; scopeCol?: string; children?: Child[]; product?: boolean }
+// [2026-11-17 07:30 PM kiennt] NT-DM-002 L02, L03 — trước khi xoá: còn mục con (cột cha cùng bảng) hoặc đang được danh mục khác trỏ tới
+//   (không có khoá ngoại nên trước đây xoá lọt) thì bỏ qua dòng đó, báo lý do; dòng khác vẫn xoá (đóng góp)
+/** Một chỗ trỏ tới mục sắp xoá: bảng.cột = giá trị (mặc định = khoá của mục; val: lấy cột khác của mục, vd tên ĐVT). */
+interface Ref { table: string; cols: string[]; label: string; show: string; val?: string; onlyScope?: string }
+interface Cat { label: string; table: string; key: string; name: string; scopeCol?: string; children?: Child[]; product?: boolean; parentCol?: string; refs?: Ref[]; /** Khoá là mã nội bộ (không hiện cho người dùng): báo theo tên. */ hienTen?: boolean }
 
 const CATS: Record<string, Cat> = {
-  'tax-codes': { label: 'Biểu thuế', table: 'tax_codes', key: 'code', name: 'name' },
-  'unit-names': { label: 'Đơn vị tính', table: 'unit_names', key: 'id', name: 'name' },
+  'tax-codes': { label: 'Biểu thuế', table: 'tax_codes', key: 'code', name: 'name', refs: [{ table: 'products', cols: ['tax_out_code', 'tax_in_code'], label: 'mặt hàng', show: 'sku' }] },
+  'unit-names': { label: 'Đơn vị tính', table: 'unit_names', key: 'id', name: 'name', refs: [{ table: 'product_units', cols: ['unit'], label: 'mặt hàng', show: 'sku', val: 'name' }] },
   'payment-methods': { label: 'Hình thức thanh toán', table: 'payment_methods', key: 'code', name: 'name' },
-  'bank-accounts': { label: 'Tài khoản ngân hàng', table: 'bank_accounts', key: 'code', name: 'bank_name' },
-  accounts: { label: 'Hệ thống tài khoản', table: 'accounts', key: 'code', name: 'name' },
-  dimensions: { label: 'Danh mục', table: 'dimensions', key: 'code', name: 'name', scopeCol: 'kind' },
+  'bank-accounts': { label: 'Tài khoản ngân hàng', table: 'bank_accounts', key: 'code', name: 'bank_name', refs: [{ table: 'payment_methods', cols: ['bank_account_code'], label: 'hình thức thanh toán', show: 'code' }] },
+  accounts: {
+    label: 'Hệ thống tài khoản', table: 'accounts', key: 'code', name: 'name', parentCol: 'parent_code',
+    refs: [
+      { table: 'tax_codes', cols: ['account_code'], label: 'biểu thuế', show: 'code' },
+      { table: 'bank_accounts', cols: ['account_code'], label: 'tài khoản ngân hàng', show: 'code' },
+      { table: 'payment_methods', cols: ['account_code'], label: 'hình thức thanh toán', show: 'code' },
+      { table: 'posting_defaults', cols: ['account_code'], label: 'tài khoản ngầm định', show: 'account_code' },
+      { table: 'product_posting_groups', cols: ['inventory_account', 'cogs_account', 'revenue_account', 'discount_account', 'sales_return_account'], label: 'nhóm hạch toán', show: 'code' },
+      { table: 'warehouse_types', cols: ['account_prefix'], label: 'loại kho', show: 'code' },
+    ],
+  },
+  dimensions: { label: 'Danh mục', table: 'dimensions', key: 'code', name: 'name', scopeCol: 'kind', parentCol: 'parent_code' },
   partners: { label: 'Đối tượng', table: 'partners', key: 'code', name: 'name', scopeCol: 'kind' },
-  'partner-groups': { label: 'Nhóm khách hàng, nhà cung cấp', table: 'partner_groups', key: 'code', name: 'name' },
+  'partner-groups': { label: 'Nhóm khách hàng, nhà cung cấp', table: 'partner_groups', key: 'code', name: 'name', parentCol: 'parent_code', refs: [{ table: 'partners', cols: ['group_code'], label: 'đối tượng', show: 'code' }] },
   'asset-categories': { label: 'Loại tài sản', table: 'asset_categories', key: 'code', name: 'name' },
-  'item-classes': { label: 'Nhóm hàng', table: 'item_classes', key: 'code', name: 'name', scopeCol: 'kind' },
+  'item-classes': {
+    label: 'Nhóm hàng', table: 'item_classes', key: 'code', name: 'name', scopeCol: 'kind', parentCol: 'parent_code', hienTen: true,
+    refs: [
+      { table: 'products', cols: ['group_code'], label: 'mặt hàng', show: 'sku', onlyScope: 'group' },
+      { table: 'products', cols: ['brand_code'], label: 'mặt hàng', show: 'sku', onlyScope: 'brand' },
+      { table: 'products', cols: ['industry_code'], label: 'mặt hàng', show: 'sku', onlyScope: 'industry' },
+      { table: 'products', cols: ['type_code'], label: 'mặt hàng', show: 'sku', onlyScope: 'type' },
+    ],
+  },
   'price-lists': { label: 'Bảng giá', table: 'price_lists', key: 'code', name: 'name', children: [{ table: 'product_prices', col: 'price_list_code', parentCol: 'code' }] },
   products: {
     label: 'Mặt hàng', table: 'products', key: 'sku', name: 'name', product: true,
@@ -71,6 +93,26 @@ function reason(e: unknown): string {
   return err.message ?? String(e);
 }
 
+/** Lý do không được xoá dòng này (còn mục con / đang được trỏ tới), hoặc null. Mục con tính cùng phạm vi (vd cùng loại nhóm hàng). */
+async function chanXoa(trx: Db, tenantId: string, cat: Cat, scope: string | undefined, row: Row): Promise<string | null> {
+  const key = String(row[cat.key]);
+  const nam = (ds: { k: string }[]) => ds.slice(0, 5).map((x) => x.k).join(', ') + (ds.length > 5 ? '…' : '');
+  if (cat.parentCol) {
+    const con = (await sql<{ k: string }>`SELECT x.${c(cat.hienTen ? cat.name : cat.key)}::text AS k FROM ${t(cat.table)} x WHERE x.tenant_id = ${tenantId} AND x.${c(cat.parentCol)} = ${key}
+      ${cat.scopeCol ? sql`AND x.${c(cat.scopeCol)} = ${row[cat.scopeCol] as string}` : sql``} ORDER BY 1 LIMIT 6`.execute(trx)).rows;
+    if (con.length) return `còn mục con (${nam(con)}) — xoá hoặc chuyển mục con trước`;
+  }
+  for (const r of cat.refs ?? []) {
+    if (r.onlyScope && r.onlyScope !== (scope ?? row[cat.scopeCol ?? ''])) continue;
+    const v = String(row[r.val ?? cat.key] ?? '');
+    if (!v) continue;
+    const dung = (await sql<{ k: string }>`SELECT DISTINCT x.${c(r.show)}::text AS k FROM ${t(r.table)} x WHERE x.tenant_id = ${tenantId}
+      AND (${sql.join(r.cols.map((col) => sql`x.${c(col)} = ${v}`), sql` OR `)}) ORDER BY 1 LIMIT 6`.execute(trx)).rows;
+    if (dung.length) return `đang được dùng ở ${r.label} (${nam(dung)}) — không xoá được, chỉ ngừng dùng`;
+  }
+  return null;
+}
+
 async function inSavepoint<T>(trx: Db, fn: () => Promise<T>): Promise<{ ok: true; v: T } | { ok: false; e: unknown }> {
   await sql`SAVEPOINT ct`.execute(trx);
   try { const v = await fn(); await sql`RELEASE SAVEPOINT ct`.execute(trx); return { ok: true, v }; }
@@ -96,21 +138,30 @@ async function trashRows(trx: Db, tenantId: string, actor: string, i: { catalog:
     ${i.all ? sql`` : sql`AND x.${c(cat.key)}::text = ANY(${i.keys!})`}`.execute(trx)).rows.map((r) => r.j);
   const skipped: { key: string; reason: string }[] = [];
   let done = 0;
-  for (const row of rows) {
-    const key = String(row[cat.key]);
-    const label = String(row[cat.name] ?? '');
-    const r = await inSavepoint(trx, async () => {
-      const payload: Record<string, Row[]> = { [cat.table]: [row] };
-      for (const ch of cat.children ?? []) {
-        const kids = (await sql<{ j: Row }>`SELECT to_jsonb(x) AS j FROM ${t(ch.table)} x WHERE x.tenant_id = ${tenantId} AND x.${c(ch.col)} = ${row[ch.parentCol] as string}`.execute(trx)).rows.map((x) => x.j);
-        if (kids.length) payload[ch.table] = kids;
-        await sql`DELETE FROM ${t(ch.table)} WHERE tenant_id = ${tenantId} AND ${c(ch.col)} = ${row[ch.parentCol] as string}`.execute(trx);
-      }
-      await sql`DELETE FROM ${t(cat.table)} WHERE id = ${row.id as string}`.execute(trx);
-      if (cat.product) await sql`INSERT INTO catalog_tombstones (tenant_id, entity, key) VALUES (${tenantId}, 'product', ${key})`.execute(trx);
-      await sql`INSERT INTO catalog_trash (tenant_id, catalog, row_key, label, payload, deleted_by) VALUES (${tenantId}, ${i.catalog}, ${key}, ${label}, ${JSON.stringify(payload)}::jsonb, ${actor})`.execute(trx);
-    });
-    if (r.ok) done++; else skipped.push({ key, reason: reason(r.e) });
+  // Xoá nhiều dòng một lượt: mỗi vòng xoá các dòng không bị chặn; dòng còn mục con chờ vòng sau (mục con có thể nằm cùng lượt xoá).
+  let cho = rows;
+  for (let vong = 0; cho.length && vong < 50; vong++) {
+    const lai: { row: Row; ly: string }[] = [];
+    for (const row of cho) {
+      const key = String(row[cat.key]);
+      const label = String(row[cat.name] ?? '');
+      const ly = await chanXoa(trx, tenantId, cat, scope, row);
+      if (ly) { lai.push({ row, ly }); continue; }
+      const r = await inSavepoint(trx, async () => {
+        const payload: Record<string, Row[]> = { [cat.table]: [row] };
+        for (const ch of cat.children ?? []) {
+          const kids = (await sql<{ j: Row }>`SELECT to_jsonb(x) AS j FROM ${t(ch.table)} x WHERE x.tenant_id = ${tenantId} AND x.${c(ch.col)} = ${row[ch.parentCol] as string}`.execute(trx)).rows.map((x) => x.j);
+          if (kids.length) payload[ch.table] = kids;
+          await sql`DELETE FROM ${t(ch.table)} WHERE tenant_id = ${tenantId} AND ${c(ch.col)} = ${row[ch.parentCol] as string}`.execute(trx);
+        }
+        await sql`DELETE FROM ${t(cat.table)} WHERE id = ${row.id as string}`.execute(trx);
+        if (cat.product) await sql`INSERT INTO catalog_tombstones (tenant_id, entity, key) VALUES (${tenantId}, 'product', ${key})`.execute(trx);
+        await sql`INSERT INTO catalog_trash (tenant_id, catalog, row_key, label, payload, deleted_by) VALUES (${tenantId}, ${i.catalog}, ${key}, ${label}, ${JSON.stringify(payload)}::jsonb, ${actor})`.execute(trx);
+      });
+      if (r.ok) done++; else skipped.push({ key, reason: reason(r.e) });
+    }
+    if (lai.length === cho.length) { for (const x of lai) skipped.push({ key: cat.hienTen ? String(x.row[cat.name] ?? x.row[cat.key]) : `${String(x.row[cat.key])} ${String(x.row[cat.name] ?? '')}`.trim(), reason: x.ly }); break; }
+    cho = lai.map((x) => x.row);
   }
   await writeAudit(trx, { tenantId, actor, action: i.all ? 'catalog.trash_all' : 'catalog.trash', objectType: i.catalog, objectId: i.all ? '*' : (i.keys ?? []).join(',').slice(0, 200), after: { done, skipped: skipped.length } });
   return { done, skipped };

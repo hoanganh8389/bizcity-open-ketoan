@@ -4,6 +4,7 @@
  * form mặt hàng (DM10, thẻ ĐVT & giá bán). Chi nhánh chưa gán bảng giá = theo bảng giá công ty.
  * Luật lấy giá khi bán: hàng chính chỉ lấy giá công ty; hàng thường ưu tiên giá bảng giá chi nhánh, thiếu mới lấy giá công ty.
  */
+import { useMaTrung } from '@/lib/maTrung';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
@@ -135,6 +136,8 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
   const shown = branches.filter((b) => (b.isActive || picked.has(b.code)) && (!t || b.code.toLowerCase().includes(t) || b.name.toLowerCase().includes(t)));
   const chuyenSang = [...picked].filter((c) => owner.has(c));
 
+  // [2026-11-17 07:29 PM kiennt] NT-DM-002 L01 — thêm mới trùng mã (cả mã trong thùng rác) thì báo, khoá Ghi; trước đây PUT ghi đè bản ghi cũ (đóng góp)
+  const maTrung = useMaTrung({ isNew: value.isNew, code: v.code, list: lists, catalog: 'price-lists' });
   const viewAgain = useViewAgain();
   const save = useMutation({
     mutationFn: async () => {
@@ -147,10 +150,10 @@ function PriceListForm({ value, lists, onClose }: { value: Editing; lists: Price
 
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide title="Bảng giá bán" onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <fieldset className="fgroup">
         <legend>Bảng giá</legend>
-        <Field label="Mã bảng giá (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
+        <Field label="Mã bảng giá (*)" error={maTrung || null}><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
         <Field label="Tên bảng giá (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
         <Field label=" " hint="Chỉ một bảng giá công ty; tích ở đây thì bảng giá công ty cũ thành bảng giá thường">
           <label className="checkbox"><input type="checkbox" checked={v.isCompany ?? false} onChange={(e) => set({ isCompany: e.target.checked })} /> Bảng giá công ty</label>
