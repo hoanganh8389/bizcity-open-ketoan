@@ -47,7 +47,7 @@ Màn Chương trình khuyến mại (8 loại) lưu là **phát hành ngay** và
 | | |
 |---|---|
 | Ngày chạy | 18/11/2026 |
-| Bản code (commit) | nhánh `feat/nt-bh-025-ctkm` (chưa commit, trên `9345faba`) |
+| Bản code (commit) | `38dd857f` (nhánh `feat/nt-bh-025-ctkm`) |
 | Test tự động | `apps/api/test/nt-bh-025-ctkm-duyet-han-muc.test.ts` — 6/6 ĐẠT; `modules/pos/test/promo.test.ts` — 8/8 ĐẠT; máy bán `tgs_pos_react/src/features/checkout/promoQuota.test.ts` — 3/3 ĐẠT; `tgs_pos/tests/test-promo-migrate.php` ĐẠT |
 | Bộ kiểm | `npx bizcity module check pos` / `phieu-ban` ĐẠT; `npm test -w @ketoan/api -- nt-bh-0` ĐẠT trừ lỗi đã biết `nt-bh-005` "app tgs-wp" |
 
