@@ -5,6 +5,7 @@
  */
 import { Errors, defineAction, z } from '@bizcity/module-sdk';
 import { normalizePhone } from '../domain/order.js';
+import { buyerTaxCodeOf, taxInvoiceMessage } from '../domain/returns.js';
 import { orderDraftSchema } from '../domain/schema.js';
 import { createOrder } from '../order-service.js';
 import { createReturn, findOrder, returnDraftSchema } from '../return-service.js';
@@ -22,6 +23,9 @@ export default defineAction({
   handler: async (ctx, input) => {
     // Đối trừ chỉ ghép được khi phiếu trả và đơn mới cùng khách (công nợ cùng đối tượng): khách đơn mới = khách đơn gốc.
     const original = await ctx.data.module(async (tx) => findOrder(tx, input.return.orderId));
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 §3 dòng 2: đổi hàng đơn có MST chặn như trả, báo trước mọi kiểm khác (đóng góp)
+    const taxCode = buyerTaxCodeOf(original.snapshot);
+    if (taxCode) throw Errors.conflict(taxInvoiceMessage(taxCode), { reason: 'POS_RETURN_TAX_INVOICE', taxCode });
     const origCustomer = (original.snapshot as { customer?: { id?: string } }).customer?.id ?? '';
     const c = input.order.customer;
     const newCustomer = 'partnerId' in c ? c.partnerId : 'phone' in c ? normalizePhone(c.phone) : '';

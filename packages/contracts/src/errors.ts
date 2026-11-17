@@ -155,6 +155,11 @@ export const ERROR_REASONS = {
   PHIEU_BAN_NO_HOLD_WAREHOUSE: 'Cửa hàng chưa có kho KCB (hàng chờ bán) để giữ hàng cho đơn đặt hàng; kèm branchCode',
   PHIEU_BAN_OVER_REMAINING: 'Giao đơn đặt hàng vượt số còn lại của dòng; items: [{ lineKey, sku, qty, remaining }]',
   PHIEU_BAN_ORDER_STATE: 'Trạng thái đơn đặt hàng không cho thao tác này (vd huỷ đơn đã giao một phần, giao đơn chưa gửi); kèm status',
+  // [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-024 trả lại hàng bán đợt 2 (BIZCITY-ERRORS 1.15.0-draft §4c, đóng góp)
+  POS_RETURN_TAX_INVOICE: 'Đơn có người mua hoá đơn kèm MST (coi là đã xuất hoá đơn): máy bán không trả / đổi — kế toán lập phiếu trả BH11 kèm hoá đơn điều chỉnh; kèm taxCode',
+  POS_RETURN_LOYALTY_GIFT: 'Dòng quà đổi bằng điểm (giftKey lp:…) không trả được; kèm lineId, sku',
+  POS_RETURN_NO_BAD_WAREHOUSE: 'Trả hàng lỗi / hết hạn mà cửa hàng chưa khai kho KTL (hàng trả lại) ở BH17 hoặc kho đã khai không dùng được; kèm branchCode',
+  POS_RETURN_CONDITION: 'Cùng một dòng đơn gửi hai tình trạng (nguyên vẹn / lỗi) trên một phiếu trả — phần lỗi lập phiếu riêng; kèm lineId',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

@@ -9,14 +9,22 @@
  * Khoá của module ghi qua đường chung PUT /api/v1/settings/values/:key (quyền settings:write; có phiên bản, ai đổi, lúc nào).
  */
 // [2026-11-13 08:45 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: BH17 gom 4 khối cài đặt bán hàng (đóng góp)
-import { useEffect, useState, type ReactNode } from 'react';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: chọn kho KTL nhận hàng trả lỗi / hết hạn của từng cửa hàng (đóng góp)
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorBox, Field, Loading, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { M } from '../lib';
 
 type Values = {
   returnDays: number; requireOpenShift: boolean; shiftScope: 'branch' | 'device'; cashDiffAlert: number;
   cashDiffJournal: boolean; cashShortReason: string; cashOverReason: string;
+  /** NT-BH-024: "<mã cửa hàng>=<mã kho KTL>" (khoá bizcity.pos.return_bad_warehouses). */
+  returnBadWarehouses: string[];
 };
+type Wh = { code: string; name: string; branchCode: string; branchName: string; isActive: boolean; isDefault?: boolean; typeCode: string };
+/** So giá trị cài đặt (mảng so theo nội dung). */
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const toMap = (list: readonly string[]) => Object.fromEntries(list.map((x) => [x.slice(0, x.indexOf('=')), x.slice(x.indexOf('=') + 1)]));
+const fromMap = (m: Record<string, string>) => Object.entries(m).filter(([, w]) => w).sort(([a], [b]) => a.localeCompare(b)).map(([b, w]) => `${b}=${w}`);
 type Resp = { values: Values; keys: Record<keyof Values, string> };
 type Mode = 'auto' | 'approve';
 type Reason = { code: string; name: string; kind: string; debitAccount: string | null; creditAccount: string | null; isActive: boolean };
@@ -50,6 +58,12 @@ export function CaiDatPage() {
   const reasonsQ = useQuery({ queryKey: ['reasons'], queryFn: () => api.get<Reason[]>('/api/v1/posting/reasons') });
   const typesQ = useQuery({ queryKey: ['posting-scheme'], queryFn: () => api.get<Scheme>('/api/v1/posting/scheme') });
   const pbQ = useQuery({ queryKey: ['setting', PB_BLOCK], queryFn: () => api.get<{ value: unknown }>(`/api/v1/settings/values/${PB_BLOCK}`) });
+  const whsQ = useQuery({ queryKey: ['warehouses'], queryFn: () => api.get<Wh[]>('/api/v1/warehouses') });
+  const branches = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const w of whsQ.data ?? []) m.set(w.branchCode, w.branchName);
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [whsQ.data]);
   const [pbBlock, setPbBlock] = useState(false);
   useEffect(() => { if (pbQ.data) setPbBlock(pbQ.data.value === true); }, [pbQ.data]);
   const [v, setV] = useState<Values | null>(null);
@@ -88,7 +102,7 @@ export function CaiDatPage() {
         }
       }
       for (const k of Object.keys(v) as (keyof Values)[]) {
-        if (v[k] !== q.data.values[k]) await api.put(`/api/v1/settings/values/${encodeURIComponent(q.data.keys[k])}`, { key: q.data.keys[k], value: v[k] });
+        if (!same(v[k], q.data.values[k])) await api.put(`/api/v1/settings/values/${encodeURIComponent(q.data.keys[k])}`, { key: q.data.keys[k], value: v[k] });
       }
       if (modesQ.data && SALE_TYPES.some(([t]) => modes[t] !== modesQ.data![t])) await api.put('/api/v1/settings/posting-modes', { ...modesQ.data, ...modes });
       if (pbQ.data && pbBlock !== (pbQ.data.value === true)) await api.put(`/api/v1/settings/values/${PB_BLOCK}`, { key: PB_BLOCK, value: pbBlock });
@@ -105,7 +119,7 @@ export function CaiDatPage() {
     setErr((e) => ({ ...e, returnDays: Number.isInteger(n) && n >= 0 && n <= 60 ? undefined : 'Từ 0 đến 60 ngày' }));
     setV({ ...v, returnDays: Number.isInteger(n) ? n : v.returnDays });
   };
-  const changed = (q.data && (Object.keys(v) as (keyof Values)[]).some((k) => v[k] !== q.data!.values[k]))
+  const changed = (q.data && (Object.keys(v) as (keyof Values)[]).some((k) => !same(v[k], q.data!.values[k])))
     || (modesQ.data && SALE_TYPES.some(([t]) => modes[t] !== modesQ.data![t]))
     || (v.cashDiffJournal && reasonsQ.data && (pairChanged('short') || pairChanged('over')))
     || (pbQ.data && pbBlock !== (pbQ.data.value === true));
@@ -145,6 +159,26 @@ export function CaiDatPage() {
         </Field>
         <Field label="Ngưỡng chênh lệch két cần chú ý (đồng)" hint="Sổ ca bán tô đỏ ca có chênh lệch từ ngưỡng này trở lên; 0 = mọi chênh lệch.">
           <input className="input" type="number" min={0} value={v.cashDiffAlert} disabled={!writable} onChange={(e) => setV({ ...v, cashDiffAlert: Math.max(0, Math.round(Number(e.target.value) || 0)) })} />
+        </Field>
+        <Field label="Kho nhận hàng khách trả bị lỗi / hết hạn" hint={'Thu ngân chọn "Lỗi – hết hạn" ở hộp hoàn / đổi hàng thì hàng vào kho loại KTL "Kho hàng trả lại" của cửa hàng; "Nguyên vẹn" về kho bán. Cửa hàng chưa chọn kho thì máy bán không nhận trả hàng lỗi. Chưa có kho KTL: khai ở Danh mục kho (DM18).'}>
+          {whsQ.error ? <ErrorBox error={errorText(whsQ.error)} /> : !whsQ.data ? <Loading /> : (
+            <table className="grid">
+              <thead><tr><th>Cửa hàng</th><th>Kho KTL nhận hàng lỗi</th></tr></thead>
+              <tbody>{branches.map(([code, name]) => {
+                const map = toMap(v.returnBadWarehouses);
+                const opts = whsQ.data.filter((w) => w.branchCode === code && w.isActive && (w.typeCode === 'KTL' || w.code === map[code]));
+                return (
+                  <tr key={code}><td>{code} — {name}</td><td>
+                    <select className="input" value={map[code] ?? ''} disabled={!writable} title={writable ? '' : 'Cần quyền settings:write'}
+                      onChange={(e) => setV({ ...v, returnBadWarehouses: fromMap({ ...map, [code]: e.target.value }) })}>
+                      <option value="">{opts.length ? '— chưa chọn —' : '— cửa hàng chưa có kho loại KTL —'}</option>
+                      {opts.map((w) => <option key={w.code} value={w.code}>{w.code} — {w.name}{w.typeCode !== 'KTL' ? ` (loại ${w.typeCode})` : ''}</option>)}
+                    </select>
+                  </td></tr>
+                );
+              })}</tbody>
+            </table>
+          )}
         </Field>
       </Block>
 

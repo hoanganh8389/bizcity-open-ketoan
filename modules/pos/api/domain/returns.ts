@@ -32,6 +32,9 @@ export type SoldLine = {
   itemId: string | null;
   isGift: boolean;
   promotionId?: number;
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q2: dòng quà đổi điểm (giftKey `lp:…`) không trả được (đóng góp)
+  /** Dòng quà đổi bằng điểm (NT-BH-020, giftKey `lp:…`): không trả được, không tính vào quà vượt suất. */
+  loyaltyGift?: boolean;
 };
 
 /** Phần đã trả của một dòng ở các phiếu trước. */
@@ -51,6 +54,9 @@ export type ReturnableLine = {
   /** Khách đã trả cho dòng (sau giảm, gồm thuế). */
   lineTotal: number;
   refundedAmount: number;
+  /** Quà đổi điểm: returnableQty = 0, notReturnable = 'LOYALTY_GIFT' (NT-BH-024). */
+  loyaltyGift?: boolean;
+  notReturnable?: 'LOYALTY_GIFT';
 };
 
 export function returnableLines(lines: readonly SoldLine[], done: ReadonlyMap<string, ReturnedSoFar>): ReturnableLine[] {
@@ -59,8 +65,9 @@ export function returnableLines(lines: readonly SoldLine[], done: ReadonlyMap<st
     return {
       lineId: l.lineId, sku: l.sku, name: l.name, unitName: l.unitName, unitRatio: l.unitRatio, isGift: l.isGift,
       ...(l.promotionId !== undefined ? { promotionId: l.promotionId } : {}),
-      soldQty: l.soldQty, returnedQty: d.qty, returnableQty: Math.max(0, l.soldQty - d.qty),
+      soldQty: l.soldQty, returnedQty: d.qty, returnableQty: l.loyaltyGift ? 0 : Math.max(0, l.soldQty - d.qty),
       lineTotal: l.net + l.tax, refundedAmount: d.refund,
+      ...(l.loyaltyGift ? { loyaltyGift: true, notReturnable: 'LOYALTY_GIFT' as const } : {}),
     };
   });
 }
@@ -96,14 +103,15 @@ export function returnDeadline(businessDate: string, days: number): string {
  */
 export function requiredGiftReturns(lines: readonly ReturnableLine[], qty: ReadonlyMap<string, number>, promoSkus: (id: number) => readonly string[] | null): Map<string, number> {
   const out = new Map<string, number>();
-  const ids = [...new Set(lines.filter((l) => l.isGift && l.promotionId !== undefined).map((l) => l.promotionId!))];
+  // NT-BH-024 Q2: quà đổi điểm không phải quà chương trình — không thu lại, không tính suất.
+  const ids = [...new Set(lines.filter((l) => l.isGift && !l.loyaltyGift && l.promotionId !== undefined).map((l) => l.promotionId!))];
   for (const id of ids) {
     const skus = promoSkus(id);
     const mains = lines.filter((l) => !l.isGift && (!skus || skus.length === 0 || skus.includes(l.sku)));
     const sold = mains.reduce((t, l) => t + l.soldQty, 0);
     if (sold <= 0) continue;
     const kept = mains.reduce((t, l) => t + l.soldQty - l.returnedQty - (qty.get(l.lineId) ?? 0), 0);
-    const gifts = lines.filter((l) => l.isGift && l.promotionId === id);
+    const gifts = lines.filter((l) => l.isGift && !l.loyaltyGift && l.promotionId === id);
     const entitled = Math.floor((gifts.reduce((t, l) => t + l.soldQty, 0) * Math.max(0, kept)) / sold);
     let excess = gifts.reduce((t, l) => t + l.soldQty - l.returnedQty - (qty.get(l.lineId) ?? 0), 0) - entitled;
     for (const g of gifts) {
@@ -117,9 +125,38 @@ export function requiredGiftReturns(lines: readonly ReturnableLine[], qty: Reado
 }
 
 
+/** Tình trạng hàng trả (NT-BH-024 Q3): nguyên vẹn → kho bán (kho mặc định); lỗi / hết hạn → kho KTL của cửa hàng. */
+export type ReturnCondition = 'good' | 'bad';
+
+/** Mã số thuế người mua hoá đơn của đơn (bản chụp `invoiceBuyer.taxCode`, NT-BH-010); trống → ''. */
+export function buyerTaxCodeOf(snapshot: unknown): string {
+  const t = (snapshot as { invoiceBuyer?: { taxCode?: unknown } } | null)?.invoiceBuyer?.taxCode;
+  return typeof t === 'string' ? t.trim() : '';
+}
+
+/** Câu báo đơn có hoá đơn MST: máy bán không trả / đổi, kế toán lập phiếu trả BH11 kèm hoá đơn điều chỉnh (NT-BH-024 Q1). */
+export const taxInvoiceMessage = (taxCode: string) =>
+  `Đơn đã xuất hoá đơn cho MST ${taxCode} — máy bán không trả / đổi; kế toán lập phiếu trả BH11 kèm hoá đơn điều chỉnh`;
+
+/** Khoá `bizcity.pos.return_bad_warehouses`: mảng "<mã cửa hàng>=<mã kho>" (như kho KCB của NT-BH-023) → Map cửa hàng → kho. */
+export function parseWarehouseMap(v: unknown): Map<string, string> {
+  const m = new Map<string, string>();
+  if (!Array.isArray(v)) return m;
+  for (const x of v) {
+    if (typeof x !== 'string') continue;
+    const i = x.indexOf('=');
+    if (i <= 0) continue;
+    const b = x.slice(0, i).trim();
+    const w = x.slice(i + 1).trim();
+    if (b && w) m.set(b, w);
+  }
+  return m;
+}
+
 export type ReturnInput = {
-  draft: { id: string; lines: readonly { lineId: string; qty: number }[]; refundMethod: string; reason: string; approval?: { by: string; note: string } };
-  order: { status: string; branchCode: string; businessDate: string };
+  draft: { id: string; lines: readonly { lineId: string; qty: number; condition?: ReturnCondition }[]; refundMethod: string; reason: string; approval?: { by: string; note: string } };
+  /** buyerTaxCode: MST người mua hoá đơn của đơn lúc trả (khác rỗng → chặn, NT-BH-024 Q1). */
+  order: { status: string; branchCode: string; businessDate: string; buyerTaxCode?: string };
   lines: readonly SoldLine[];
   done: ReadonlyMap<string, ReturnedSoFar>;
   branchCode: string;
@@ -128,9 +165,19 @@ export type ReturnInput = {
   paymentMethods: readonly PaymentMethodRow[];
   /** Đổi hàng: tiền hoàn thành đối trừ, không trả tiền. */
   exchange: boolean;
+  /**
+   * Kho KTL nhận hàng lỗi của cửa hàng (đã kiểm thuộc cửa hàng, đang dùng); null = chưa khai / không dùng được. `badWarehouseIssue`:
+   * vì sao kho đã khai không dùng được (ghép vào câu báo).
+   */
+  badWarehouse?: string | null;
+  badWarehouseIssue?: string;
 };
 
-export type ComputedReturnLine = SoldLine & { qty: number; refund: number; refundNet: number; refundTax: number };
+export type ComputedReturnLine = SoldLine & {
+  qty: number; refund: number; refundNet: number; refundTax: number;
+  /** NT-BH-024: tình trạng; hàng lỗi mang kho KTL nhận (nguyên vẹn: không ghi kho → kho mặc định). */
+  condition: ReturnCondition; warehouseCode?: string;
+};
 export type ComputedReturn = {
   lines: ComputedReturnLine[];
   refundTotal: number;
@@ -150,6 +197,9 @@ export function computeReturn(input: ReturnInput): ComputedReturn | { problem: O
   if (order.branchCode !== input.branchCode) {
     return fail('conflict', 'POS_RETURN_OTHER_SHOP', `Đơn của chi nhánh ${order.branchCode}: đợt này chỉ trả ở cửa hàng đã bán`, { orderBranch: order.branchCode });
   }
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q1: đơn có người mua hoá đơn kèm MST coi là đã xuất hoá đơn → máy bán không trả / đổi (đóng góp)
+  const taxCode = order.buyerTaxCode?.trim() ?? '';
+  if (taxCode) return fail('conflict', 'POS_RETURN_TAX_INVOICE', taxInvoiceMessage(taxCode), { taxCode });
   if (!draft.reason.trim()) return fail('validation', 'POS_RETURN_REASON', 'Thiếu lý do trả hàng');
 
   // Hình thức trả: tiền mặt / chuyển khoản; đổi hàng thì đối trừ.
@@ -175,15 +225,31 @@ export function computeReturn(input: ReturnInput): ComputedReturn | { problem: O
   const avail = returnableLines(lines, done);
   const availById = new Map(avail.map((l) => [l.lineId, l]));
   const qty = new Map<string, number>();
-  for (const x of draft.lines) qty.set(x.lineId, (qty.get(x.lineId) ?? 0) + x.qty);
+  const cond = new Map<string, ReturnCondition>();
+  for (const x of draft.lines) {
+    qty.set(x.lineId, (qty.get(x.lineId) ?? 0) + x.qty);
+    const c = x.condition ?? 'good';
+    const was = cond.get(x.lineId);
+    // Một dòng đơn = một dòng phiếu trả (một kho nhận): hai tình trạng cho cùng dòng thì phần lỗi lập phiếu riêng.
+    if (was && was !== c) return fail('validation', 'POS_RETURN_CONDITION', `Dòng ${x.lineId}: một phiếu trả chỉ một tình trạng cho mỗi dòng — phần lỗi lập phiếu trả riêng`, { lineId: x.lineId });
+    cond.set(x.lineId, c);
+  }
   for (const [lineId, q] of qty) {
     const a = availById.get(lineId);
     if (!a) return fail('validation', 'POS_RETURN_QTY', `Dòng ${lineId} không có trong đơn`, { lineId });
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q2: quà đổi bằng điểm không trả được (đóng góp)
+    if (a.loyaltyGift) return fail('validation', 'POS_RETURN_LOYALTY_GIFT', `Dòng ${a.sku}: quà đổi bằng điểm không trả được`, { lineId, sku: a.sku });
     if (q > a.returnableQty) return fail('validation', 'POS_RETURN_QTY', `Dòng ${a.sku}: còn trả được ${a.returnableQty}, xin trả ${q}`, { lineId, returnableQty: a.returnableQty });
   }
   const needGifts = requiredGiftReturns(avail, qty, () => null);
   const missing = [...needGifts].filter(([id, need]) => (qty.get(id) ?? 0) < need).map(([lineId, need]) => ({ lineId, qty: need }));
   if (missing.length) return fail('validation', 'POS_GIFT_REQUIRED', 'Trả hàng chính thì phải trả kèm quà vượt suất', { gifts: missing });
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: hàng lỗi / hết hạn vào kho KTL của cửa hàng; chưa khai → không trả (đóng góp)
+  if ([...cond.values()].includes('bad') && !input.badWarehouse) {
+    return fail('validation', 'POS_RETURN_NO_BAD_WAREHOUSE',
+      `Cửa hàng ${input.branchCode} chưa có kho hàng trả lại (loại KTL) cho hàng lỗi / hết hạn — kế toán khai kho ở Danh mục kho (DM18) rồi chọn ở Cài đặt bán hàng (BH17)${input.badWarehouseIssue ? ` (${input.badWarehouseIssue})` : ''}`,
+      { branchCode: input.branchCode });
+  }
 
   const out: ComputedReturnLine[] = [];
   for (const [lineId, q] of qty) {
@@ -191,7 +257,8 @@ export function computeReturn(input: ReturnInput): ComputedReturn | { problem: O
     const d = done.get(lineId) ?? { qty: 0, refund: 0, net: 0 };
     const refund = refundFor(availById.get(lineId)!, q);
     const { net, tax } = splitRefund(l, d, q, refund);
-    out.push({ ...l, qty: q, refund, refundNet: net, refundTax: tax });
+    const condition = cond.get(lineId) ?? 'good';
+    out.push({ ...l, qty: q, refund, refundNet: net, refundTax: tax, condition, ...(condition === 'bad' && input.badWarehouse ? { warehouseCode: input.badWarehouse } : {}) });
   }
   const net = out.reduce((t, l) => t + l.refundNet, 0);
   const tax = out.reduce((t, l) => t + l.refundTax, 0);
@@ -233,6 +300,8 @@ export function toSaleReturnDocument(r: ComputedReturn, meta: {
       taxAmount: l.refundTax,
       // NT-BH-019 bước 2: dòng quà trả lại mang cờ quà như lúc bán — giá vốn đảo cùng luật hàng khuyến mãi.
       ...(l.isGift ? { isGift: true } : {}),
+      // NT-BH-024 Q3: hàng lỗi vào kho KTL (TK kho theo loại kho DM18); nguyên vẹn không ghi kho → kho mặc định của chi nhánh.
+      ...(l.warehouseCode ? { warehouseCode: l.warehouseCode } : {}),
     })),
     payments: r.methodCode && r.refundTotal > 0 ? [{ methodCode: r.methodCode, amount: r.refundTotal }] : [],
     totals: { beforeTax: r.net, tax: r.tax, total: r.refundTotal },

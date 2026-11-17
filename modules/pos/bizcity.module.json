@@ -153,6 +153,7 @@
     "bizcity.pos.cash_diff_alert",
     "bizcity.pos.cash_diff_journal",
     "bizcity.pos.cash_short_reason",
-    "bizcity.pos.cash_over_reason"
+    "bizcity.pos.cash_over_reason",
+    "bizcity.pos.return_bad_warehouses"
   ]
 }
