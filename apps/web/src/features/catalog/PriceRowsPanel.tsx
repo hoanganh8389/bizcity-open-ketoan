@@ -109,7 +109,6 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
     { key: 'noSale', header: 'Không bán', type: 'check', width: 75, hidden: true },
     { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70, hidden: true },
   ];
-  const showBtn = (k: Show, label: string) => <button key={k} className={`btn btn-sm ${show === k ? 'btn-primary' : ''}`} onClick={() => setShow(k)}>{label}</button>;
 
   return (
     <div className="card" style={{ marginTop: 10 }}>
@@ -118,8 +117,12 @@ export function PriceRowsPanel({ code, name, canWrite }: { code: string; name: s
         {/* [2026-11-17 11:32 AM kiennt] DM14 — tiêu đề gọn, nút lọc thành một nhóm liền; bỏ nút Hướng dẫn thứ hai và dòng nhắc trên lưới (đã ở hướng dẫn) (đóng góp) */}
         <b>{name}</b>
         <span className="muted" style={{ fontSize: 12 }} title={`${counts.skus.toLocaleString('vi-VN')} mã hàng`}>{counts.priced.toLocaleString('vi-VN')}/{counts.all.toLocaleString('vi-VN')} ô có giá</span>
+        {/* [2026-11-17 11:54 AM kiennt] DM14 — lọc Tất cả / Đã có giá / Còn trống thành một ô chọn bên trái, tách khỏi nút chức năng (đóng góp) */}
+        <select className="select input" style={{ height: 28, width: 'auto', marginLeft: 8 }} value={show} onChange={(e) => setShow(e.target.value as Show)} title="Lọc dòng theo giá">
+          <option value="all">Tất cả</option><option value="priced">Đã có giá</option><option value="empty">Còn trống</option>
+          {dirty.size > 0 && <option value="dirty">Đang sửa ({dirty.size})</option>}
+        </select>
         <span className="spacer" style={{ flex: 1 }} />
-        <span className="row" style={{ gap: 0 }}>{showBtn('all', 'Tất cả')}{showBtn('priced', 'Đã có giá')}{showBtn('empty', 'Còn trống')}{dirty.size > 0 && showBtn('dirty', `Đang sửa (${dirty.size})`)}</span>
         {canWrite && dangSua && <button className="btn btn-sm" onClick={fillByRatio} title="Ô trống của mặt hàng đang hiện = giá ĐVT đã có ÷ tỉ lệ × tỉ lệ cần">Điền theo tỉ lệ</button>}
         <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
         {canWrite && dangSua && <button className="btn btn-sm" onClick={() => { setDirty(new Map()); setDangSua(false); }} title="Bỏ các ô đang sửa, quay về xem">Bỏ sửa</button>}
