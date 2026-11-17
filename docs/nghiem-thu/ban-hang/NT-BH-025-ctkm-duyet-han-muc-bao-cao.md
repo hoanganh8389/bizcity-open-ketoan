@@ -43,13 +43,28 @@ Màn Chương trình khuyến mại (8 loại) lưu là **phát hành ngay** và
 | Q7 | Chương trình cũ | **Công cụ chuyển một lần** → bản nháp → duyệt |
 
 ## 5. Kết quả chạy
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025 kết quả chạy (đóng góp) -->
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-025-ctkm-duyet-han-muc.test.ts` (tạo khi code) |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | `38dd857f` (nhánh `feat/nt-bh-025-ctkm`) |
+| Test tự động | `apps/api/test/nt-bh-025-ctkm-duyet-han-muc.test.ts` — 6/6 ĐẠT; `modules/pos/test/promo.test.ts` — 8/8 ĐẠT; máy bán `tgs_pos_react/src/features/checkout/promoQuota.test.ts` — 3/3 ĐẠT; `tgs_pos/tests/test-promo-migrate.php` ĐẠT |
+| Bộ kiểm | `npx bizcity module check pos` / `phieu-ban` ĐẠT; `npm test -w @ketoan/api -- nt-bh-0` ĐẠT trừ lỗi đã biết `nt-bh-005` "app tgs-wp" |
+
+| Mục §3 | Kết quả | Test |
+|---|---|---|
+| Lập "Giảm 10 % SUA330" | Nháp (chờ duyệt), `GET /api/v1/policies` chưa có — máy bán chưa áp | §3 dòng 1–3 |
+| Kế toán trưởng duyệt | Phát hành bản 1, có ở sổ chính sách; nhật ký `create, submit, approve, publish`, người duyệt = KTT | §3 dòng 1–3 |
+| Người lập tự duyệt | 403 (màn: nút Duyệt chỉ hiện với quyền `pos:promo-approve`, máy chủ chặn người lập) | §3 dòng 1–3 |
+| "Giảm 5 % SUA330" cùng CN01, trùng thời gian | Lưu được; cảnh báo trùng "Giảm 10 % SUA330 (KM10-SUA330; CN01; …)"; khác cửa hàng → không cảnh báo; từ chối → sửa gửi lại | §3 dòng 4 |
+| Bậc, hạn mức CN01 = 2 | Đơn 1, 2 nhận; đơn 3 `POS_PROMO_QUOTA`; phiếu bán BH10 `PHIEU_BAN_PROMO_QUOTA`; trả cả đơn 1 → còn 1 lượt; phiếu bán duyệt được và tính chung; bỏ duyệt trả lượt; hai máy cùng lượt cuối → một nhận; đơn mất mạng gửi bù nhận + `promoQuotaOffline` | §3 dòng 5, lệch chuẩn |
+| Báo cáo CN01 trong kỳ | Dòng KM-BAC: 3 đơn, tiền giảm 270.000, 2 đơn đã trả lượt, lượt 3 / hạn mức 2, 1 vượt khi mất mạng; xem đơn 5 dòng | §3 dòng 6 |
+| Chuyển chương trình cũ | `POST …/promo/drafts/import` tạo nháp; chạy lại bỏ qua "đã chuyển lần trước"; lệnh website `wp tgs-pos promo-migrate [--dry-run]` in loại không chuyển được | §3 dòng 7 |
+
+Giới hạn còn lại: phiếu trả BH11 chưa trả lượt; báo cáo chưa có giá trị quà theo giá vốn; lượt tính từ ngày cài bản (đơn cũ không đếm); lượt của phiếu bán ghi qua sự kiện (sau commit) — cửa sổ rất nhỏ giữa duyệt phiếu và lúc giao sự kiện.
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q7 |
+| 18/11/2026 | Code xong, điền §5 |

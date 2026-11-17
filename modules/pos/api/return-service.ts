@@ -12,6 +12,7 @@ import { takeCodes } from './codes.js';
 import { activePaymentMethods, catalogFor, resolveBranch, todayVn } from './read.js';
 import { returnBadWarehouses, returnDays } from './settings.js';
 import { isUniqueViolation, lockKey, raise } from './order-service.js';
+import { releaseUses } from './promo.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 
@@ -188,6 +189,9 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
           INSERT INTO mod_pos.return_lines (tenant_id, return_id, order_id, line_key, item_id, sku, unit_qty, refund, refund_net, refund_tax)
           VALUES (${ctx.tenant.id}, ${draft.id}, ${order.order_id}, ${l.lineId}, ${l.itemId}, ${l.sku}, ${l.qty}, ${l.refund}, ${l.refundNet}, ${l.refundTax})`.execute(tx);
       }
+      // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: trả cả đơn (mọi dòng bán đã trả hết) → trả lượt khuyến mại của đơn (đóng góp)
+      const left = returnableLines(await soldLinesOf(tx, order), await returnedOf(tx, order.order_id));
+      if (left.filter((l) => !l.isGift).every((l) => l.returnableQty <= 0)) await releaseUses(tx, 'pos', order.order_id, 'return');
     });
   } catch (err) {
     if (isUniqueViolation(err)) throw Errors.conflict(`Mã phiếu trả ${code} hoặc phiếu ${draft.id} vừa được máy khác dùng — gửi lại`, { reason: 'POS_CODE_TAKEN', code });

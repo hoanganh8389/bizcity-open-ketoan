@@ -6,6 +6,7 @@
 import { Errors, defineAction, sql, z } from '@bizcity/module-sdk';
 import { findOrder } from '../return-service.js';
 import { lockKey } from '../order-service.js';
+import { releaseUses } from '../promo.js';
 
 export default defineAction({
   id: 'pos.order.cancel', title: 'Huỷ đơn máy POS đang chờ thanh toán', tags: ['Máy bán POS'],
@@ -28,8 +29,12 @@ export default defineAction({
     const why = reason?.trim() || 'Huỷ đơn chờ thanh toán từ máy bán';
     await ctx.ledger.cancel(order.doc_key, why);
     const snapshot = { ...order.snapshot, status: 'cancelled' };
-    const version = await ctx.data.module(async (tx) => (await sql<{ version: number }>`UPDATE mod_pos.orders SET status = 'cancelled', cancelled_at = now(), cancel_reason = ${why}, snapshot = ${JSON.stringify(snapshot)}::jsonb,
-                 version = version + 1 WHERE order_id = ${order.order_id} RETURNING version`.execute(tx)).rows[0]!.version);
+    const version = await ctx.data.module(async (tx) => {
+      // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: huỷ đơn chờ thanh toán → trả lượt khuyến mại (đóng góp)
+      await releaseUses(tx, 'pos', order.order_id, 'cancel');
+      return (await sql<{ version: number }>`UPDATE mod_pos.orders SET status = 'cancelled', cancelled_at = now(), cancel_reason = ${why}, snapshot = ${JSON.stringify(snapshot)}::jsonb,
+                 version = version + 1 WHERE order_id = ${order.order_id} RETURNING version`.execute(tx)).rows[0]!.version;
+    });
     ctx.evidence.note('pos.order.cancel', { code: order.code, docKey: order.doc_key, reason: why });
     await ctx.events.emit('pos.order.cancelled', { orderId: order.order_id, code: order.code, branchCode: order.branch_code, docKey: order.doc_key, reason: why, version, order: snapshot }, {
       subject: `pos.order:${order.order_id}`, dedupeKey: `pos.order.cancelled:${order.order_id}`,

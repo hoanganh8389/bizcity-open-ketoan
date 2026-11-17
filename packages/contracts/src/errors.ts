@@ -160,6 +160,10 @@ export const ERROR_REASONS = {
   POS_RETURN_LOYALTY_GIFT: 'Dòng quà đổi bằng điểm (giftKey lp:…) không trả được; kèm lineId, sku',
   POS_RETURN_NO_BAD_WAREHOUSE: 'Trả hàng lỗi / hết hạn mà cửa hàng chưa khai kho KTL (hàng trả lại) ở BH17 hoặc kho đã khai không dùng được; kèm branchCode',
   POS_RETURN_CONDITION: 'Cùng một dòng đơn gửi hai tình trạng (nguyên vẹn / lỗi) trên một phiếu trả — phần lỗi lập phiếu riêng; kèm lineId',
+  // [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-025 CTKM duyệt, hạn mức lượt (BIZCITY-ERRORS 1.16.0-draft §4c, đóng góp)
+  POS_PROMO_QUOTA: 'Chương trình khuyến mại hết lượt (số đơn) ở cửa hàng — không nhận đơn còn áp chương trình đó; items: [{ key, quota, used }]',
+  PHIEU_BAN_PROMO_QUOTA: 'Phiếu bán nhập tay áp chương trình khuyến mại đã hết lượt ở cửa hàng (đếm chung với máy bán); items: [{ key, quota, used }]',
+  POS_PROMO_DRAFT_STATE: 'Trạng thái bản nháp khuyến mại không cho thao tác này (sửa nháp đã duyệt / đã phát hành, mã đã có nháp đang mở); kèm status',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 
