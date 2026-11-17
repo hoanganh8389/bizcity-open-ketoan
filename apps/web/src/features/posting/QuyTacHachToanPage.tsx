@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
-import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
+import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { AccountPicker, ItemPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
 
@@ -414,13 +414,13 @@ function GonView({ data, canWrite, nutXem, onRefresh }: { data: Scheme; canWrite
     { key: 'title', header: 'Loại', width: 420, render: (r) => <span className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.title}</span> },
     { key: 'no', header: 'TK Nợ', type: 'code', width: 200, value: (r) => r.no.join('; ') },
     { key: 'co', header: 'TK Có', type: 'code', width: 200, value: (r) => r.co.join('; ') },
-    { key: 'sua', header: 'Chức năng', width: 90, noFilter: true, noSort: true, render: (r) => (r.sua && canWrite ? <a href="#" onClick={(e) => { e.preventDefault(); setSua(r); }}>Sửa</a> : null) },
   ];
   return (
     <div className="card">
       <CatalogToolbar left={nutXem} canWrite={canWrite} hasSelection={false} onRefresh={onRefresh} onExport={() => exportRef.current?.()} />
       <DataGrid storageKey="acc41-gon" exportName="tai-khoan-ngam-dinh" exportRef={exportRef} rows={rows} rowKey={(r) => r.id} columns={cols}
-        onRowDoubleClick={(r) => { if (r.sua && canWrite) setSua(r); }} />
+        onRowDoubleClick={(r) => { if (canWrite) setSua(r); }} />
+      {/* [2026-11-17 11:23 AM kiennt] ACC41 — bỏ cột Chức năng; bấm đúp mở chi tiết ở chế độ xem, bấm Sửa mới sửa (như các màn danh mục) (đóng góp) */}
       {sua && <SuaGon title={sua.title} lines={sua.lines} keys={keys} onClose={() => setSua(null)} />}
     </div>
   );
@@ -432,13 +432,15 @@ function SuaGon({ title, lines, keys, onClose }: { title: string; lines: SLine[]
   const dong = lines.filter((l, i) => !l.key || lines.findIndex((x) => x.key === l.key && x.side === l.side) === i);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries(dong.filter((l) => l.source === 'rule' && l.key).map((l) => [l.key!, keys.get(l.key!)?.accountCode ?? ''])));
   const doi = Object.entries(v).filter(([k, a]) => a && a !== (keys.get(k)?.accountCode ?? ''));
+  const viewAgain = useViewAgain();
   const m = useMutation({
     mutationFn: async () => { for (const [k, a] of doi) await api.put(`/api/v1/posting/scheme/accounts/${encodeURIComponent(k)}`, { accountCode: a }); },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['posting-scheme'] }); onClose(); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['posting-scheme'] }); viewAgain[1](); },
   });
   return (
-    <Modal wide title="Sửa tài khoản ngầm định" onClose={onClose} helpKey="quy-tac-hach-toan"
-      footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={!doi.length || m.isPending} onClick={() => m.mutate()}>Ghi</button></>}>
+    <Modal wide viewFirst viewAgain={viewAgain} title="Tài khoản ngầm định" onClose={onClose} helpKey="quy-tac-hach-toan"
+      // [2026-11-17 11:28 AM kiennt] ACC41 — chân hộp thoại như các màn khác: Ghi và thoát · Ghi · Thoát (đóng góp)
+      footer={<><button className="btn btn-primary" disabled={!doi.length || m.isPending} onClick={() => m.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={m.error ? errorText(m.error) : null} />
       <div className="full">Loại chứng từ: <b>{title}</b></div>
       <table className="grid full">
