@@ -24,6 +24,7 @@ Mỗi bản ghi đủ sáu mục:
 - **Đổi:** bảng giá vốn gọn 11 cột chính (Mã · Tên · Tồn đầu SL · ĐGBQ đầu kỳ · Nhập trong kỳ SL, $ · Xuất · Tồn cuối SL, $ · ĐGBQ cuối kỳ · Chênh lệch); chi tiết dòng chảy ẩn sẵn, bật ở nút Cột. Bảng các lần tính còn Ngày tính · Phạm vi · Kỳ · Số mã · Giá vốn ghi sổ · Người tính.
 - **Đổi:** bảng giá vốn hiện đủ thành phần cộng ra giá vốn cuối kỳ: Tồn đầu (SL, $) · Giá vốn BQ đầu kỳ · Nhập mua (SL, $) · **Chi phí (+)** · **Thưởng, CK (−)** · Nhập khác (SL, $: trả NCC, điều chỉnh, nhận từ chi nhánh khác) · **Giá vốn BQ cuối kỳ** · Xuất · Tồn cuối (SL, $); chữ "ĐGBQ" / "đơn giá" đổi thành **giá vốn bình quân** trên toàn màn, mẫu in và hướng dẫn `docs/huong-dan/tinh-gia-von.md` (thêm phần Dùng màn này, bảng ý nghĩa cột, nhập giá vốn bình quân đầu kỳ).
 - **Đổi:** bảng các lần tính bỏ cột Giá vốn ghi sổ (bật lại ở Cột nếu cần), dòng thông báo sau khi tính không ghi số tiền.
+- **Đổi:** các lần tính thành khung **Lịch sử tính** bên trái (gom theo ngày, mỗi lần một thẻ: giờ · phạm vi · kỳ · số mã · người tính; lọc ngày tính ở đầu khung), bảng giá vốn của lần đang chọn bên phải.
 - **Nâng cấp cần làm:** migration `0147`, `0148`, `0149`, `0150`; tính lại giá vốn các tháng đã tính (giá cũ đang gom một rổ chung).
 
 ### Mã màn ở mọi menu <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->

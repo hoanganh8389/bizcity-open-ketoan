@@ -131,37 +131,38 @@ export function CostingPage() {
             Đã tính tháng {run.data.monthsComputed.join(', ')} · {run.data.items} mặt hàng{run.data.imported ? ` · ${run.data.imported.count} mã theo giá nhập Excel` : ''}
           </div>
         )}
-        <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--line, #dfe4ec)' }}>
-          <b style={{ marginBottom: 6 }}>Các lần tính giá vốn</b>
-          <div className="field" style={{ margin: 0 }}><label title="Lọc theo ngày bấm tính">Ngày tính từ</label><input type="date" className="input" value={ngay.from} onChange={(e) => setNgay((x) => ({ ...x, from: e.target.value }))} /></div>
-          <div className="field" style={{ margin: 0 }}><label>đến</label><input type="date" className="input" value={ngay.to} onChange={(e) => setNgay((x) => ({ ...x, to: e.target.value }))} /></div>
-          <span className="muted" style={{ marginBottom: 6 }}>bấm một lần để xem các mã hàng</span>
-        </div>
-        {runs.isLoading ? <Loading /> : !runs.data?.length ? <Empty text={cn ? 'Chi nhánh này chưa có lần tính giá vốn trong khoảng ngày — chọn tháng rồi bấm Tính giá vốn' : 'Chưa có lần tính giá vốn trong khoảng ngày'} /> : (
-          <DataGrid
-            storageKey="acc49-lan-tinh-v3"
-            rows={runs.data}
-            rowKey={(x) => x.id}
-            rowClassName={(x) => (x.id === curRun?.id ? 'selected' : '')}
-            onSelect={(x) => x && setRunSel(x.id)}
-            maxHeight="240px"
-            columns={[
-              { key: 'runAt', header: 'Ngày tính', value: (x) => new Date(x.runAt).toLocaleString('vi-VN') },
-              { key: 'centerCode', header: 'Phạm vi', value: (x) => `${x.centerCode} - ${x.centerName}`, title: 'Phạm vi tính trên Cơ cấu tổ chức (nút hoặc shop) — mọi shop bên dưới chung một giá vốn' },
-              { key: 'period', header: 'Kỳ', value: (x) => `${x.period.slice(5)}/${x.period.slice(0, 4)}` },
-              { key: 'from', header: 'Chứng từ', hidden: true, value: (x) => `${x.from.slice(8)}/${x.from.slice(5, 7)}–${x.to.slice(8)}/${x.to.slice(5, 7)}`, title: 'Khoảng ngày chứng từ được cập nhật giá vốn' },
-              { key: 'items', header: 'Số mã', type: 'qty' },
-              { key: 'total', header: 'Giá vốn ghi sổ', type: 'money', hidden: true, title: 'Tổng giá vốn hàng xuất đã ghi sổ qua phiếu "Giá vốn hàng xuất" của các shop trong phạm vi' },
-              { key: 'vouchers', header: 'Phiếu giá vốn', hidden: true, value: (x) => (Array.isArray(x.vouchers) ? x.vouchers.length : 0), title: 'Phiếu "Giá vốn hàng xuất" (một phiếu / shop / tháng)' },
-              { key: 'imported', header: 'Mã nhập giá đầu kỳ', type: 'qty', hidden: true, title: 'Số mã lấy giá vốn bình quân đầu kỳ từ tệp Excel' },
-              { key: 'runBy', header: 'Người tính' },
-              { key: 'orgUid', header: 'Mốc cơ cấu', type: 'code', hidden: true, title: 'Định danh nút cơ cấu lúc tính (không đổi khi đổi mã, tên)' },
-            ]}
-          />
-        )}
+        {/* [2026-11-17 Nguyễn Văn Thủy] LỊCH SỬ TÍNH bên trái (gom theo ngày, mỗi lần một thẻ), bảng giá vốn lần đang chọn bên phải (đóng góp) */}
+        <div className="gv-wrap">
+          <aside className="gv-ls">
+            <div className="gv-ls-head"><b>Lịch sử tính</b></div>
+            <div className="gv-ls-loc">
+              <input type="date" className="input" value={ngay.from} title="Ngày tính từ" onChange={(e) => setNgay((x) => ({ ...x, from: e.target.value }))} />
+              <span>–</span>
+              <input type="date" className="input" value={ngay.to} title="Ngày tính đến" onChange={(e) => setNgay((x) => ({ ...x, to: e.target.value }))} />
+            </div>
+            <div className="gv-ls-list">
+              {runs.isLoading ? <Loading /> : !runs.data?.length ? <div className="muted" style={{ padding: 12, fontSize: 12.5 }}>{cn ? 'Phạm vi này chưa có lần tính trong khoảng ngày — chọn tháng rồi bấm Tính giá vốn.' : 'Chưa có lần tính trong khoảng ngày.'}</div>
+                : [...new Map(runs.data.map((x) => [new Date(x.runAt).toLocaleDateString('vi-VN'), runs.data!.filter((y) => new Date(y.runAt).toLocaleDateString('vi-VN') === new Date(x.runAt).toLocaleDateString('vi-VN'))])).entries()].map(([ngayTinh, ds]) => (
+                  <div key={ngayTinh}>
+                    <div className="gv-ls-ngay">{ngayTinh}</div>
+                    {ds.map((x) => (
+                      <button key={x.id} type="button" className={`gv-ls-item${x.id === curRun?.id ? ' on' : ''}`} onClick={() => setRunSel(x.id)}
+                        title={`Tính lúc ${new Date(x.runAt).toLocaleString('vi-VN')} · ${x.centerCode} - ${x.centerName} · kỳ ${x.period.slice(5)}/${x.period.slice(0, 4)} · ${x.items} mã · ${x.runBy}`}>
+                        <span className="gv-ls-gio">{new Date(x.runAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="gv-ls-nd">
+                          <b>{x.centerCode} - {x.centerName}</b>
+                          <small>Kỳ {x.period.slice(5)}/{x.period.slice(0, 4)} · {x.items} mã · {x.runBy}</small>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+            </div>
+          </aside>
+          <div className="gv-main">
         {curRun && (
           <>
-            <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 12, alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--line, #dfe4ec)' }}>
+            <div className="card-body row" style={{ paddingTop: 10, paddingBottom: 4, gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <b style={{ marginBottom: 6 }}>Bảng giá vốn · {curRun.centerCode} · tháng {curRun.period.slice(5)}/{curRun.period.slice(0, 4)} · tính lúc {new Date(curRun.runAt).toLocaleString('vi-VN')}</b>
               <div className="field" style={{ margin: 0 }}><label>Mã hàng</label><input className="input w-md" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Lọc theo mã, tên hàng" /></div>
               <ChonNhomHang value={nhom} onChange={setNhom} />
@@ -207,6 +208,9 @@ export function CostingPage() {
             )}
           </>
         )}
+            {!curRun && !runs.isLoading && <div className="muted" style={{ padding: 24 }}>Chọn một lần tính bên trái để xem bảng giá vốn.</div>}
+          </div>
+        </div>
         {moCay && (
           <Modal title="Chọn phạm vi tính giá vốn" onClose={() => setMoCay(false)} footer={<button className="btn" onClick={() => setMoCay(false)}>Thoát</button>}>
             <div className="full muted" style={{ fontSize: 12.5 }}>Bấm một nút (miền, chi nhánh, tỉnh) hoặc một shop. Bấm Tính giá vốn: mọi shop bên dưới dùng chung một giá vốn bình quân từ lần tính đó.</div>
@@ -219,6 +223,25 @@ export function CostingPage() {
           </Modal>
         )}
       </div>
+
+      <style>{`
+        .gv-wrap { display: grid; grid-template-columns: 260px minmax(0, 1fr); border-top: 1px solid var(--line, #dfe4ec); }
+        .gv-ls { border-right: 1px solid var(--line, #dfe4ec); display: flex; flex-direction: column; min-height: 420px; }
+        .gv-ls-head { padding: 10px 12px 4px; }
+        .gv-ls-loc { display: flex; align-items: center; gap: 4px; padding: 0 12px 8px; }
+        .gv-ls-loc .input { width: 100%; min-width: 0; padding: 4px 6px; font-size: 12.5px; }
+        .gv-ls-list { overflow: auto; max-height: 560px; padding-bottom: 8px; }
+        .gv-ls-ngay { position: sticky; top: 0; background: var(--subtle, #f4f6fa); padding: 4px 12px; font-size: 11.5px; font-weight: 600; color: var(--muted, #6b7686); }
+        .gv-ls-item { display: flex; gap: 10px; width: 100%; text-align: left; padding: 8px 12px; border: 0; border-left: 3px solid transparent; background: none; cursor: pointer; font: inherit; }
+        .gv-ls-item:hover { background: var(--hover, #eef3fc); }
+        .gv-ls-item.on { background: var(--brand-50, #e8f0fe); border-left-color: var(--nav, #2457B3); }
+        .gv-ls-gio { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--nav, #2457B3); flex: none; }
+        .gv-ls-nd { display: flex; flex-direction: column; min-width: 0; }
+        .gv-ls-nd b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .gv-ls-nd small { color: var(--muted, #6b7686); font-size: 11.5px; }
+        .gv-main { min-width: 0; }
+        @media (max-width: 900px) { .gv-wrap { grid-template-columns: 1fr; } .gv-ls { border-right: 0; min-height: 0; } .gv-ls-list { max-height: 220px; } }
+      `}</style>
     </>
   );
 }
