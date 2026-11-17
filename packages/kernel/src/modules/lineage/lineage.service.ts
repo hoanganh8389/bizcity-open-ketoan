@@ -268,7 +268,7 @@ export async function explainCost(trx: Db, tenantId: string, sku: string, period
   const prevM = month === 1 ? 12 : month - 1;
   const prev = await trx.selectFrom('inventory_costs').select('unit_cost').where('tenant_id', '=', tenantId)
     .where(key.itemId ? sql<boolean>`(item_id = ${key.itemId} OR (item_id IS NULL AND sku = ${sku}))` : sql<boolean>`sku = ${sku}`)
-    .where('year', '=', prevY).where('month', '=', prevM).where(sql<boolean>`cost_group::text = ${groupId}`).executeTakeFirst();
+    .where('year', '=', prevY).where('month', '=', prevM).where(sql<boolean>`cost_group::text = ${groupId}`).orderBy('wh_type').executeTakeFirst();
   const previous = prev ? { period: ymLabel(prevY, prevM), unitCost: num(prev.unit_cost) } : null;
   const changePct = previous && previous.unitCost > 0 ? ((row.unitCost - previous.unitCost) / previous.unitCost) * 100 : null;
 

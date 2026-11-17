@@ -1566,6 +1566,8 @@ export interface InventoryCostsTable {
   cost_source: Generated<string>;
   /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
   item_id: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Loại kho tính giá vốn riêng (0153); rỗng = tính chung. */
+  wh_type: Generated<string>;
 }
 
 /** View (migration 0053): thanh toán của chứng từ bán / trả lại đã ghi sổ, đọc từ payload. Chỉ đọc. */

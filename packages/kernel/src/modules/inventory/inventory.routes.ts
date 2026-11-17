@@ -119,6 +119,8 @@ export const inventoryWriteActions: AnyActionDef[] = [
         costCenter: z.string().trim().max(60).optional(),
         /** [2026-11-17] Phạm vi chọn trên cây cơ cấu: nút bất kỳ (node) hoặc một shop (shop) — đặt làm điểm tính giá vốn rồi tính. */
         scope: z.object({ kind: z.enum(['node', 'shop']), code: z.string().trim().min(1).max(60) }).optional(),
+        /** [2026-11-17] Loại kho tính giá vốn riêng (bỏ chọn ở ô Loại kho tính chung); trống = mọi loại kho tính chung. */
+        separateTypes: z.array(z.string().trim().min(1).max(12)).max(50).optional(),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/inventory/costing' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'inventory' },

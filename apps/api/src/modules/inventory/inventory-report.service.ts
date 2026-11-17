@@ -60,10 +60,16 @@ export function valuedMovements(a: { tenantId: string; to: string; branchIds: st
       LEFT JOIN items it ON it.item_id = m.item_id
       LEFT JOIN (SELECT DISTINCT ON (item_id) item_id, code FROM item_codes WHERE tenant_id = ${a.tenantId} AND kind = 'sku'
                   ORDER BY item_id, (valid_to IS NULL) DESC, valid_from DESC) cc ON cc.item_id = it.root_item_id
-      LEFT JOIN inventory_costs c
-        ON c.tenant_id = m.tenant_id AND ((m.item_id IS NOT NULL AND c.item_id = m.item_id) OR (m.item_id IS NULL AND c.sku = m.sku))
-       AND c.year = EXTRACT(YEAR FROM m.doc_date)::int AND c.month = EXTRACT(MONTH FROM m.doc_date)::int
-       AND c.cost_group = CASE WHEN m.kind = 'transfer_in' AND cb.id IS NOT NULL THEN COALESCE(cb.accounting_unit_id, 0) ELSE COALESCE(b.accounting_unit_id, 0) END
+      -- [2026-11-17 Nguyễn Văn Thủy] giá vốn tách theo loại kho (0153): ưu tiên dòng giá của loại kho, không có thì dòng tính chung (đóng góp)
+      LEFT JOIN LATERAL (
+        SELECT c0.unit_cost FROM inventory_costs c0
+         WHERE c0.tenant_id = m.tenant_id AND ((m.item_id IS NOT NULL AND c0.item_id = m.item_id) OR (m.item_id IS NULL AND c0.sku = m.sku))
+           AND c0.year = EXTRACT(YEAR FROM m.doc_date)::int AND c0.month = EXTRACT(MONTH FROM m.doc_date)::int
+           AND c0.cost_group = CASE WHEN m.kind = 'transfer_in' AND cb.id IS NOT NULL THEN COALESCE(cb.accounting_unit_id, 0) ELSE COALESCE(b.accounting_unit_id, 0) END
+           AND c0.wh_type IN ('', COALESCE(CASE WHEN m.kind = 'transfer_in' THEN (SELECT w2.type_code FROM inventory_movements m2 JOIN warehouses w2 ON w2.tenant_id = m2.tenant_id AND w2.code = m2.warehouse_code
+                                                 WHERE m2.tenant_id = m.tenant_id AND m2.event_id = m.event_id AND m2.line_no = m.line_no AND m2.kind = 'transfer_out' LIMIT 1) END,
+                          (SELECT w1.type_code FROM warehouses w1 WHERE w1.tenant_id = m.tenant_id AND w1.code = m.warehouse_code), ''))
+         ORDER BY c0.wh_type DESC LIMIT 1) c ON true
      WHERE m.tenant_id = ${a.tenantId} AND m.doc_date <= ${a.to}::date
        ${a.branchIds ? sql`AND m.branch_id = ANY(${a.branchIds}::bigint[])` : sql``}
        ${a.wh ? sql`AND (m.warehouse_code = ANY(${a.wh.codes}::text[]) OR (m.warehouse_code = '' AND m.branch_id = ANY(${a.wh.defaultBranchIds}::bigint[])))` : sql``}

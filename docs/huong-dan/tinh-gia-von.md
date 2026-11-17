@@ -8,11 +8,13 @@ Tính **giá vốn bình quân gia quyền theo tháng** cho từng mặt hàng,
 
 1. **Phạm vi tính (cơ cấu)** → bấm **Chọn…**, chọn một nút trên cây (vùng, chi nhánh, tỉnh) hoặc một shop. Mọi shop bên dưới nút đó **dồn chung** tồn đầu, nhập, chi phí, thưởng… để ra **một giá vốn bình quân cho mỗi mã**. Thường chọn **chi nhánh cấp 2** (chi nhánh đại diện nhập mua rồi chuyển xuống shop nằm trong cùng nút).
 2. **Công thức**: công thức đang áp dụng cho tháng, chỉ xem (bấm vào thấy dạng phân số). Xem mục *Công thức* bên dưới.
-3. Chọn **Tháng**, bấm **Tính giá vốn**. Mỗi lần tính lưu một thẻ ở **Lịch sử tính** (bên trái): giờ tính, phạm vi, kỳ, số mã, người tính, công thức đã dùng.
-4. Bấm một thẻ để xem **bảng giá vốn** của lần đó (bên phải). Rê chuột lên tiêu đề cột để xem giải thích; cột chi tiết bật ở nút **Cột**.
+3. **Loại kho tính chung**: mặc định **tất cả** loại kho tính chung một giá cho mỗi mã. **Bỏ chọn** loại kho nào (ví dụ kho khuyến mãi) thì hàng ở loại kho đó **tính giá vốn riêng** (mỗi mã một giá riêng cho loại kho đó). Tách hàng bằng **mã riêng** hay bằng **kho riêng** đều được, hoặc kết hợp cả hai.
+4. Chọn **Tháng**, bấm **Tính giá vốn**. Mỗi lần tính lưu một thẻ ở **Lịch sử tính** (bên trái): giờ tính, phạm vi, kỳ, số mã, người tính, công thức đã dùng, loại kho tính riêng (nếu có).
+5. Bấm một thẻ để xem **bảng giá vốn** của lần đó (bên phải). Rê chuột lên tiêu đề cột để xem giải thích; cột chi tiết bật ở nút **Cột**.
 
 | Cột | Ý nghĩa |
 |---|---|
+| Loại kho | Chung = tính chung; có mã loại kho = dòng giá vốn riêng của loại kho đó |
 | Tồn đầu (SL, $) · Giá vốn BQ đầu kỳ | Tồn cuối tháng trước; giá vốn BQ đầu kỳ = Tồn đầu $ ÷ SL (hoặc giá nhập từ Excel) |
 | Nhập mua (SL, $) | Nhập từ nhà cung cấp theo **giá Net** (chưa VAT − chiết khấu trên phiếu) |
 | Chi phí (+) | Chi phí mua hàng phân bổ vào mã (vận chuyển, bốc xếp…) — tăng giá vốn |
@@ -37,6 +39,7 @@ Giá vốn BQ cuối kỳ = ─────────────────�
 ## Từng nghiệp vụ
 
 - **Tồn đầu** = tồn cuối tháng trước. Tháng trước chưa tính thì phần mềm tự tính lần lượt các tháng còn thiếu.
+- **Chuyển sang loại kho tính riêng** (ví dụ kho hàng → kho khuyến mãi, cùng chi nhánh): hàng mang **giá vốn bên gửi** sang, vào công thức của loại kho nhận; bút toán qua hàng đang chuyển (về 0).
 - **Chuyển kho trong cùng phạm vi** (chi nhánh đại diện → shop, shop ↔ shop): hàng chỉ đổi chỗ, không đổi giá vốn, không vào công thức. **Nhận từ phạm vi khác**: vào công thức theo giá trên phiếu chuyển; phiếu không có giá thì theo giá vốn bên gửi.
 - **Chi phí mua hàng** (phiếu Chi phí mua hàng) và **thưởng, chiết khấu sau mua** (Giảm giá hàng mua, Tính thưởng cuối kỳ): đã chia đến từng mã theo các phiếu nhập được gắn; cộng / trừ vào giá trị của đúng mã đó, không đổi số lượng. Chỉ đưa vào đây chiết khấu theo hàng mua; khoản hỗ trợ quảng cáo, trưng bày lập phiếu riêng.
 - **Hàng trả nhà cung cấp**:

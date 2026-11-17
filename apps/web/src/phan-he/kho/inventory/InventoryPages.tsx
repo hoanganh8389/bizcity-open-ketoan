@@ -27,7 +27,7 @@ import { COST_TEMPLATES, ITEM_LEDGER_TEMPLATES, STOCK_TEMPLATES, type StockSheet
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
 /* ------------------------------------------------------------------ ACC49 */
-interface CostRow { detail?: Record<string, number>; costGroup: string; costGroupName: string; sku: string; name: string; openingQty: number; openingValue: number; inQty: number; inValue: number; unitCost: number; outQty: number; closingQty: number; closingValue: number; giftQty?: number; costSource: 'computed' | 'import' }
+interface CostRow { detail?: Record<string, number>; costGroup: string; costGroupName: string; sku: string; name: string; openingQty: number; openingValue: number; inQty: number; inValue: number; unitCost: number; outQty: number; closingQty: number; closingValue: number; giftQty?: number; costSource: 'computed' | 'import'; whType?: string }
 interface CostingResult { runIds?: string[]; period: string; monthsComputed: string[]; items: number; branches: { branchCode: string; status: 'posted' | 'empty'; docNo?: string; total: number; filled: number; filledTotal: number }[]; total: number; imported: { count: number; missing: string[]; missingCount: number } | null }
 
 /**
@@ -62,6 +62,11 @@ export function CostingPage() {
   const [period, setPeriodState] = useState(thisMonth());
   // [2026-11-17 Nguyễn Văn Thủy] công thức cố định: tháng đang tính dùng công thức có "áp dụng từ" gần nhất ≤ tháng; chỉ xem, đổi ở hộp Xem (mật khẩu) (đóng góp)
   const ct = ctCuaThang(formulas.data ?? [], period);
+  // [2026-11-17 Nguyễn Văn Thủy] Loại kho tính chung (mặc định tất cả); bỏ chọn loại nào thì loại đó tính giá vốn riêng (mã × loại kho) (đóng góp)
+  const loaiKho = useQuery({ queryKey: ['warehouse-types'], queryFn: () => api.get<{ types: { code: string; name: string; isActive: boolean }[] }>('/api/v1/warehouse-types'), staleTime: 60_000 });
+  const [rieng, setRieng] = useState<string[]>([]);
+  const [moLoaiKho, setMoLoaiKho] = useState(false);
+  const tenLoai = (c: string) => loaiKho.data?.types.find((t) => t.code === c)?.name ?? c;
   const [search, setSearch] = useState('');
   // Khoảng ngày chứng từ được cập nhật giá vốn (trong tháng đang tính), đổi tháng thì về cả tháng.
   const monthEnd = (m: string) => new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).toISOString().slice(0, 10);
@@ -78,7 +83,7 @@ export function CostingPage() {
   const tim = search.trim().toLowerCase();
   const lineRows = ln.loc((lines.data ?? []).map((l) => ({ ...l, costGroup: curRun?.centerCode ?? '', costGroupName: curRun?.centerName ?? '' }))).filter((l) => !tim || `${l.sku} ${l.name}`.toLowerCase().includes(tim));
   const run = useMutation({
-    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...(scope ? { scope: { kind: scope.kind, code: scope.code } } : {}), ...extra }),
+    mutationFn: (extra: { imported?: { sku: string; unitCost: number; name?: string }[]; clearImport?: boolean } = {}) => api.post<CostingResult>('/api/v1/inventory/costing', { period, ...range, ...(scope ? { scope: { kind: scope.kind, code: scope.code } } : {}), ...(rieng.length ? { separateTypes: rieng } : {}), ...extra }),
     onSuccess: (res) => { void qc.invalidateQueries({ queryKey: ['inventory-costs'] }); void qc.invalidateQueries({ queryKey: ['inventory-costing-runs'] }); setRunSel(res.runIds?.[0] ?? null); },
   });
   const hasImport = (costs.data ?? []).some((r) => r.costSource === 'import');
@@ -124,6 +129,27 @@ export function CostingPage() {
             <button type="button" className="btn" style={{ minWidth: 200, justifyContent: 'flex-start' }} title={ct ? `${moTaCt(ct.options)}\nÁp dụng từ ${thangVn(ct.applyFrom)}` : ''} onClick={() => setXemCt(true)}>
               {ct?.name ?? 'Mặc định (giá Net)'}
             </button></div>
+          <div className="field" style={{ position: 'relative' }}><label title="Loại kho có hàng tính chung một giá vốn. Bỏ chọn loại nào thì hàng ở loại kho đó tính giá vốn riêng (mỗi mã một giá riêng cho loại kho đó). Mặc định: tất cả tính chung">Loại kho tính chung</label>
+            <button type="button" className="btn" style={{ minWidth: 170, justifyContent: 'flex-start' }} onClick={() => setMoLoaiKho((x) => !x)}
+              title={rieng.length ? `Tính riêng: ${rieng.map((c) => `${c} - ${tenLoai(c)}`).join(', ')}` : 'Mọi loại kho tính chung'}>
+              {rieng.length ? `Tất cả, trừ ${rieng.join(', ')}` : 'Tất cả loại kho'} ▾
+            </button>
+            {moLoaiKho && (
+              <div className="card" style={{ position: 'absolute', zIndex: 30, top: '100%', left: 0, minWidth: 280, padding: 10, boxShadow: '0 6px 18px rgba(0,0,0,.15)' }}>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Bỏ chọn loại kho muốn tính giá vốn riêng</div>
+                {(loaiKho.data?.types ?? []).filter((t) => t.isActive).map((t) => (
+                  <label key={t.code} className="checkbox" style={{ display: 'flex', gap: 6, padding: '2px 0' }}>
+                    <input type="checkbox" checked={!rieng.includes(t.code)} onChange={(e) => setRieng((r) => (e.target.checked ? r.filter((x) => x !== t.code) : [...r, t.code].sort()))} />
+                    <span><b className="mono">{t.code}</b> {t.name}</span>
+                  </label>
+                ))}
+                <div className="row" style={{ gap: 6, marginTop: 8 }}>
+                  <button type="button" className="btn btn-sm" onClick={() => setRieng([])}>Chọn tất cả</button>
+                  <button type="button" className="btn btn-sm btn-primary" onClick={() => setMoLoaiKho(false)}>Xong</button>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="field"><label title="Tháng cần tính giá vốn">Tháng</label><input type="month" className="input" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
           <div className="field" style={{ flexDirection: 'row', gap: 6, display: 'flex' }}>
             <button className="btn btn-primary" disabled={run.isPending} onClick={() => run.mutate({})}>
@@ -161,6 +187,7 @@ export function CostingPage() {
                           <b>{x.centerCode ? `${x.centerCode} - ` : ''}{x.centerName}</b>
                           <small>Kỳ {x.period.slice(5)}/{x.period.slice(0, 4)} · {x.items} mã · {x.runBy}</small>
                           <small className="gv-ls-ct" title={moTaCt(x.formula)}>{x.formulaName || 'Mặc định'}</small>
+                          {x.separateTypes?.length ? <small title="Loại kho tính giá vốn riêng ở lần tính này">Tính riêng: {x.separateTypes.join(', ')}</small> : null}
                         </span>
                       </button>
                     ))}
@@ -179,15 +206,16 @@ export function CostingPage() {
             </div>
             {lines.isLoading ? <Loading /> : (
               <DataGrid
-                storageKey="acc49-v3"
+                storageKey="acc49-v4"
                 rows={lineRows}
-                rowKey={(x) => x.sku}
+                rowKey={(x) => `${x.sku}|${x.whType ?? ''}`}
                 columns={[
                   // [2026-11-17 Nguyễn Văn Thủy] đủ cột theo dòng chảy trong kỳ; rê chuột lên tiêu đề để xem giải thích (đóng góp)
                   // [2026-11-17 Nguyễn Văn Thủy] đủ thành phần cộng ra Giá vốn bình quân cuối kỳ: Tồn đầu + Nhập mua + Chi phí phân bổ − Thưởng, CK + Nhập khác;
                   // chi tiết khác ẩn sẵn, bật ở Cột. Rê chuột lên tiêu đề xem giải thích (đóng góp)
                   { key: 'sku', header: 'Mã hàng', type: 'code' },
                   { key: 'name', header: 'Tên hàng' },
+                  { key: 'whType', header: 'Loại kho', value: (x) => x.whType || 'Chung', title: 'Chung = mọi loại kho tính chung một giá. Có mã loại kho = hàng ở loại kho đó tính giá vốn riêng (bỏ chọn ở ô Loại kho tính chung)' },
                   { key: 'openingQty', header: 'SL', band: 'Tồn đầu', type: 'qty', sum: true, title: 'Số lượng tồn đầu tháng (= tồn cuối tháng trước)' },
                   { key: 'openingValue', header: '$', band: 'Tồn đầu', type: 'money', sum: true, title: 'Giá trị tồn đầu = SL tồn đầu × Giá vốn bình quân đầu kỳ' },
                   { key: 'dgDau', header: 'Giá vốn BQ đầu kỳ', type: 'money', value: (x) => dt(x, 'openingUnit'), render: (x) => dg(dt(x, 'openingUnit')), title: 'Giá vốn bình quân đầu kỳ = Tồn đầu $ ÷ SL tồn đầu (= giá vốn bình quân cuối kỳ tháng trước). Mã có giá nhập từ Excel thì lấy giá đó' },
@@ -395,7 +423,7 @@ function XemCongThuc({ ds, period, onClose }: { ds: Formula[]; period: string; o
   );
 }
 
-interface CostRun { formulaCode?: string; formulaName?: string; formula?: Partial<CtOptions>; id: string; orgUid: string; centerCode: string; centerName: string; period: string; from: string; to: string; items: number; total: number; imported: number; vouchers: unknown; runBy: string; runAt: string }
+interface CostRun { separateTypes?: string[]; formulaCode?: string; formulaName?: string; formula?: Partial<CtOptions>; id: string; orgUid: string; centerCode: string; centerName: string; period: string; from: string; to: string; items: number; total: number; imported: number; vouchers: unknown; runBy: string; runAt: string }
 
 /* ------------------------------------------------------------------ ACC83 */
 interface StockFigures { openingQty: number; openingValue: number; inQty: number; inValue: number; outQty: number; outValue: number; closingQty: number; closingValue: number; purchaseQty: number; purchaseValue: number; cogsQty: number; cogsValue: number; uncosted: number }
