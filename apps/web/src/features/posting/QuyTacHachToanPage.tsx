@@ -432,12 +432,13 @@ function SuaGon({ title, lines, keys, onClose }: { title: string; lines: SLine[]
       <ErrorBox error={m.error ? errorText(m.error) : null} />
       <div className="full">Loại chứng từ: <b>{title}</b></div>
       <table className="grid full">
-        <thead><tr><th style={{ width: 260 }}>Tên cột</th><th>Lọc tài khoản</th><th style={{ width: 300 }}>TK ngầm định</th></tr></thead>
+        {/* [2026-11-17 10:55 AM kiennt] ACC41 — Tên cột rút gọn TK Nợ / TK Có như màn tài khoản ngầm định phổ biến; dòng sổ để ở chú thích (đóng góp) */}
+        <thead><tr><th style={{ width: 120 }}>Tên cột</th><th>Lọc tài khoản</th><th style={{ width: 300 }}>TK ngầm định</th></tr></thead>
         <tbody>{dong.map((l, i) => {
           const k = l.key ? keys.get(l.key) : undefined;
           return (
             <tr key={i}>
-              <td>{l.side === 'debit' ? 'TK Nợ' : 'TK Có'} – {l.role}</td>
+              <td title={l.role}>{l.side === 'debit' ? 'TK Nợ' : 'TK Có'}</td>
               <td className="mono">{l.source === 'rule' ? k?.range.join('; ') : <span className="muted">theo {SOURCE[l.source].label.toLowerCase()}</span>}</td>
               <td>{l.source === 'rule' && l.key ? <AccountPicker postingOnly prefixes={k?.range} value={v[l.key] ?? ''} onChange={(a) => setV((o) => ({ ...o, [l.key!]: a }))} />
                 : <span className="mono">{k?.accountCode ?? ''}</span>}</td>
