@@ -167,7 +167,6 @@ export async function seed(): Promise<void> {
           track_contract: flag(a.track_contract),
           track_employee: flag(a.track_employee),
           track_cashflow: flag(a.track_cashflow),
-          name_en: a.name_en || null,
           is_foreign_currency: flag(a.is_foreign_currency),
           track_product: flag(a.track_product),
           track_internal_debt: flag(a.track_internal_debt),

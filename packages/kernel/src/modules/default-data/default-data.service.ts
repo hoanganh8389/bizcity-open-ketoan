@@ -503,7 +503,7 @@ async function restoreAccountTracking(trx: Db, tenantId: string): Promise<Restor
   for (const r of lines) {
     const code = col(r, 'code');
     const posting = col(r, 'is_posting') === '1';
-    const patch: Record<string, unknown> = { name: col(r, 'name'), name_en: col(r, 'name_en') || null, normal_side: col(r, 'normal_side') || 'debit' };
+    const patch: Record<string, unknown> = { name: col(r, 'name'), normal_side: col(r, 'normal_side') || 'debit' };
     for (const k of ACCOUNT_FLAGS) patch[k] = col(r, k) === '1';
     if (posting && /^64[12]/.test(code)) patch.track_cost_item = true;
     if (/^[5-8]/.test(code)) patch.track_department = true;

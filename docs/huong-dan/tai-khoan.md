@@ -6,13 +6,13 @@ Danh mục tài khoản theo **Thông tư 99/2025/TT-BTC** (áp dụng từ năm
 
 Thanh nút: **Thêm** (Ctrl+N) · **Sửa** (Ctrl+E, hoặc bấm đúp một dòng) · **Xoá** (Ctrl+Delete) · **Nạp** (F5) · **Xuất** Excel · **Nhân bản** · **Ngừng sử dụng / Dùng lại** · **Nhập Excel**.
 
-Danh sách dạng cây, các cột: **Số tài khoản · Tên tài khoản · Tính chất · Tên tiếng Anh · Diễn giải · Trạng thái**.
+Danh sách dạng cây, các cột: **Số tài khoản · Tên tài khoản · Tính chất · Diễn giải · Trạng thái**.
 
 - Bấm ⊞ trước số tài khoản để mở tài khoản con, ⊟ để thu lại; nút **Mở rộng** / **Thu gọn** mở hoặc thu cả cây.
 - Tài khoản tổng hợp (có tài khoản con) in đậm; tài khoản ngừng sử dụng hiện mờ.
 - Ô tìm: gõ số tài khoản (khớp phần đầu, ví dụ `111` ra 111, 1111, 1112…) hoặc một phần tên (không phân biệt hoa thường, có dấu hay không dấu). Lọc **Trạng thái**. Đang tìm thì hiện tài khoản khớp kèm tài khoản cha (cha không khớp hiện chữ nhạt).
 - Nút **Cột** bật thêm: TK tổng hợp, Cấp và các ô "theo dõi chi tiết theo" (Đối tượng, Nhân viên, Khoản mục chi phí…).
-- **Xuất**: tệp `Danh_sach_he_thong_tai_khoan.xlsx` — tiêu đề "DANH SÁCH HỆ THỐNG TÀI KHOẢN", cột STT, Số tài khoản, Tên tài khoản, Tính chất, Tên tiếng Anh, Diễn giải, Trạng thái. Sửa tệp này rồi **Nhập Excel** lại được (số đã có thì cập nhật, số mới thì thêm).
+- **Xuất**: tệp `Danh_sach_he_thong_tai_khoan.xlsx` — tiêu đề "DANH SÁCH HỆ THỐNG TÀI KHOẢN", cột STT, Số tài khoản, Tên tài khoản, Tính chất, Diễn giải, Trạng thái. Sửa tệp này rồi **Nhập Excel** lại được (số đã có thì cập nhật, số mới thì thêm). Tệp cũ còn cột *Tên tiếng Anh* thì cột đó được bỏ qua.
 - **Nhân bản**: mở form thêm mới chép thông tin tài khoản đang chọn, chỉ cần gõ số tài khoản mới.
 - **Ngừng sử dụng**: không chọn được tài khoản khi lập chứng từ mới; số liệu cũ giữ nguyên. Bấm **Dùng lại** để bật lại.
 
@@ -20,7 +20,7 @@ Danh sách dạng cây, các cột: **Số tài khoản · Tên tài khoản · 
 
 - **Số tài khoản (\*)**, **Tên tài khoản (\*)**, **Tài khoản tổng hợp** (trống = cấp 1), **Tính chất (\*)**: Dư Nợ / Dư Có / Lưỡng tính, **Diễn giải** (ghi chú cách dùng, không ảnh hưởng ghi sổ).
 - **Theo dõi chi tiết theo**: Đối tượng, Nhân viên, Khoản mục chi phí, Bộ phận, Hợp đồng, Vụ việc, Dự án, Nguồn vốn, Mục thu / chi, Mặt hàng. Tích = khi hạch toán vào tài khoản này bắt buộc nhập thông tin đó trên dòng chứng từ.
-- **Tên tài khoản theo ngôn ngữ**: Tên tiếng Anh.
+<!-- [2026-11-17 10:20 AM kiennt] NT-DM-001 — bỏ Tên tiếng Anh của tài khoản (D023-9); giá trị cũ lưu ở bảng accounts_name_en_luu (đóng góp) -->
 - Bấm **Ghi** mà còn thiếu ô bắt buộc, hoặc số tài khoản trùng / không bắt đầu bằng số tài khoản tổng hợp: ô đó viền đỏ, có dòng báo ngay dưới ô. Thêm mới có nút **Ghi và thêm** để thêm tiếp tài khoản cùng tài khoản tổng hợp.
 
 ### Ô tích nào có tác dụng
