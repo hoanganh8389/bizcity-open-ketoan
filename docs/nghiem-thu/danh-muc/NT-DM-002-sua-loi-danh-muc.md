@@ -8,7 +8,7 @@
 | Màn hình | DM18, DM08, DM04, DM09, DM05, DM14, ACC1, DM11, ACC43, DM10 |
 | Bộ phận yêu cầu | Phòng kế toán |
 | Ngày tạo | 17/11/2026 |
-| Trạng thái | Đã chốt (kiennt, 17/11/2026) |
+| Trạng thái | Chờ nghiệm thu |
 
 ## 1. Mục đích quản trị
 Danh mục là gốc của mọi chứng từ. Đợt kiểm thử 17/11 (DB trắng, nhập tay toàn bộ, 271 ca) phát hiện các lỗi làm **mất dữ liệu danh mục không báo** (thêm trùng mã ghi đè), **để lại dữ liệu hỏng** (xoá cha còn con, xoá mục đang được dùng) . Phiếu này sửa các lỗi mức Cao và Trung bình ngoài lõi.
@@ -57,9 +57,24 @@ Như mục 2.
 ## 7. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | apps/api/test/nt-dm-002-sua-loi-danh-muc.test.ts |
+<!-- [2026-11-17 07:54 PM kiennt] NGHIEM-THU — ghi kết quả chạy (đóng góp) -->
+| Ngày chạy | 17/11/2026 |
+| Bản code (commit) | 12f5de2f, 1309b639 (nhánh feat/nt-dm-002-sua-loi-danh-muc) |
+| Test tự động | apps/api/test/nt-dm-002-sua-loi-danh-muc.test.ts — 6/6 đạt |
+
+| Mục | Mong đợi | Phần mềm | Chênh | Giải thích |
+|---|---|---|---|---|
+| Thêm trùng mã DM18 HH, DM08 KH-LE, DM04 NV001, DM09 VCB, DM05 TM, DM14 BGCG | Báo đã có, khoá Ghi | Báo "Mã … đã có: <tên>", Ghi khoá | 0 | Test lại trên màn hình |
+| Thêm mã KM đang ở thùng rác (DM18) | Báo đang ở thùng rác | "Mã KM đang nằm trong Thùng rác…" | 0 | |
+| ACC1 xoá 156 | Không xoá, báo còn TK con | "còn mục con (1561)" | 0 | |
+| DM11 xoá ngành Sữa bột | Không xoá | "Sữa bột: còn mục con (Vinamilk)" | 0 | |
+| ACC43 xoá R08 / DM09 xoá TCB | Không xoá, báo đang dùng | "đang được dùng ở mặt hàng (110011001)" / "… hình thức thanh toán (CK)" | 0 | |
+| ACC1 xoá 811 (không vướng) | Vào thùng rác | Đã chuyển 1 dòng, khôi phục được | 0 | |
+| DM08 ô Nhóm cha của NCC-SUA | Không có NCC-SUA-NK | Không có | 0 | API cũng trả 400 (test tự động) |
+| DM05, DM10 gợi ý NCC | Không có NCC002 (ngừng) | Chỉ NCC001 | 0 | |
+| 4 lệnh kiểm | Đạt | selfcheck: không thêm phát hiện mới so với main; kiem-chuan ĐẠT; typecheck ĐẠT; npm test 2263 đạt / 5 lỗi | — | 5 lỗi có sẵn: db-rules (catalog_trash chưa mô tả), mat-khau-mac-dinh (mật khẩu thùng rác viết cứng), nt-bh-005 — lỗi y hệt trên origin/main; nt-bh-003, nt-bh-012 chạy riêng đạt (chập chờn khi chạy cả bộ) |
+
+Tệp kiểm thử: ~/Documents/kiem-thu-danh-muc/Test-case-danh-muc-2026-11-17.xlsx (sheet "Test lại sau sửa"): 262/271 đạt sau sửa; còn lại là L04, L05 (lõi), L08, L09 (mức thấp) chưa sửa.
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |

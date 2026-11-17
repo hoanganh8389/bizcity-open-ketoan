@@ -453,6 +453,14 @@ export const partnerWriteActions: AnyActionDef[] = [
       const b = reqBody;
       if (b.parentCode === code) throw Errors.validation('Nhóm cha không được là chính nó');
       if (b.parentCode) await assertGroups(trx, auth.tenantId, [b.parentCode]);
+      // [2026-11-17 07:29 PM kiennt] NT-DM-002 L06 — nhóm cha mới không được nằm trong nhánh con của chính nhóm này (chống vòng cha – con) (đóng góp)
+      if (b.parentCode) {
+        const ds = await trx.selectFrom('partner_groups').select(['code', 'parent_code']).where('tenant_id', '=', auth.tenantId).execute();
+        const chaCua = new Map(ds.map((g) => [g.code, g.parent_code]));
+        for (let c: string | null | undefined = b.parentCode, n = 0; c && n < 1000; c = chaCua.get(c), n++) {
+          if (c === code) throw Errors.validation(`Nhóm ${b.parentCode} đang là nhóm con (hoặc cháu) của ${code} — không đặt làm nhóm cha được`);
+        }
+      }
       const values = { name: b.name, parent_code: b.parentCode || null, kind: b.kind, note: b.note, is_active: b.isActive };
       await sameTx(trx, async (trx) => {
         await trx.insertInto('partner_groups').values({ tenant_id: auth.tenantId, code, ...values }).onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet(values)).execute();
