@@ -149,3 +149,19 @@ export async function partnerByCode(tx: Tx, code: string): Promise<{ code: strin
     SELECT code, name, tax_code FROM bizcity_read.partners WHERE code = ${code} LIMIT 1`.execute(tx)).rows[0];
   return r ? { code: r.code, name: r.name, taxCode: r.tax_code } : null;
 }
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: khoá theo mã voucher, mã đang nằm ở phiếu bán khác đã duyệt (đóng góp)
+/** Khoá theo mã voucher trong giao dịch — cùng khoá máy bán (module pos) và module voucher dùng: hashtext('voucher:'||mã). */
+export async function lockVoucher(tx: Tx, code: string): Promise<void> {
+  await sql`SELECT pg_advisory_xact_lock(hashtext(${`voucher:${code}`}))`.execute(tx);
+}
+
+/** Mã voucher đã áp ở phiếu bán KHÁC đang duyệt (body.vouchers) — gồm phiếu module voucher chưa nhận sự kiện. */
+export async function voucherHeldByOther(tx: Tx, codes: readonly string[], exceptId: string): Promise<{ code: string; docNo: string; docDate: string }[]> {
+  if (!codes.length) return [];
+  return (await sql<{ code: string; doc_no: string; doc_date: string }>`
+    SELECT v->>'code' AS code, d.doc_no, d.doc_date::text AS doc_date
+      FROM mod_phieu_ban.docs d, jsonb_array_elements(COALESCE(d.body->'vouchers', '[]'::jsonb)) v
+     WHERE d.kind = 'sale' AND d.status = 'approved' AND d.doc_id <> ${exceptId}::uuid AND v->>'code' IN (${sql.join([...codes])})`.execute(tx)).rows
+    .map((r) => ({ code: r.code, docNo: r.doc_no, docDate: r.doc_date }));
+}

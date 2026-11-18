@@ -3,15 +3,18 @@
  * `sale_return` nối đơn gốc (originalDocKey). Dùng chung cho POST /returns và phiếu trả của POST /exchanges.
  */
 import { Errors, sql, z, type ActionContext } from '@bizcity/module-sdk';
-import { codePeriod, loyaltyGiftIndex } from './domain/order.js';
+import { loyaltyGiftIndex } from './domain/order.js';
 import {
   buyerTaxCodeOf, computeReturn, returnDeadline, returnDocKey, returnableLines, daysSince, taxInvoiceMessage, toSaleReturnDocument,
   type ReturnedSoFar, type SoldLine,
 } from './domain/returns.js';
-import { takeCodes } from './codes.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: phiếu hoàn theo dạng của cửa hàng ({shop}.B{5 số} hoặc TH…) (đóng góp)
+import { issueCodes } from './codes.js';
+import { schemeOf } from './domain/codes.js';
 import { activePaymentMethods, catalogFor, resolveBranch, todayVn } from './read.js';
 import { returnBadWarehouses, returnDays } from './settings.js';
 import { isUniqueViolation, lockKey, raise } from './order-service.js';
+import { releaseUses } from './promo.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 
@@ -148,7 +151,8 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
       badWarehouse: bad.code, ...(bad.issue ? { badWarehouseIssue: bad.issue } : {}),
     });
     if ('problem' in computed) raise(computed.problem);
-    const code = (await takeCodes(tx, ctx.tenant.id, branch.code, 'return', codePeriod(today), 1))[0]!;
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): phiếu hoàn {shop}.B{5 số} mặc định, mã chi nhánh lạ giữ TH (đóng góp)
+    const code = (await issueCodes(tx, ctx.tenant.id, branch.code, 'return', today, 1, schemeOf(branch.code)))[0]!;
     return { kind: 'new', order, branch, computed, code, today } as const;
   });
   if (prepared.kind === 'replay') {
@@ -175,8 +179,9 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
     branch: { code: branch.code, name: branch.name, taxCode: branch.taxCode },
     ...(opts.exchangeOrderId ? { exchangeOrderId: opts.exchangeOrderId } : {}),
   };
+  let orderFullyReturned = false;
   try {
-    await ctx.data.module(async (tx) => {
+    orderFullyReturned = await ctx.data.module(async (tx) => {
       await sql`
         INSERT INTO mod_pos.returns (tenant_id, return_id, order_id, branch_code, code, business_date, refund_method, refund_total, refund_net,
                                      refund_tax, reason, approved_by, approval_note, exchange_order_id, doc_key, doc_status, snapshot, draft, created_by, cashier_name)
@@ -188,6 +193,11 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
           INSERT INTO mod_pos.return_lines (tenant_id, return_id, order_id, line_key, item_id, sku, unit_qty, refund, refund_net, refund_tax)
           VALUES (${ctx.tenant.id}, ${draft.id}, ${order.order_id}, ${l.lineId}, ${l.itemId}, ${l.sku}, ${l.qty}, ${l.refund}, ${l.refundNet}, ${l.refundTax})`.execute(tx);
       }
+      // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: trả cả đơn (mọi dòng bán đã trả hết) → trả lượt khuyến mại của đơn (đóng góp)
+      const left = returnableLines(await soldLinesOf(tx, order), await returnedOf(tx, order.order_id));
+      const full = left.filter((l) => !l.isGift).every((l) => l.returnableQty <= 0);
+      if (full) await releaseUses(tx, 'pos', order.order_id, 'return');
+      return full;
     });
   } catch (err) {
     if (isUniqueViolation(err)) throw Errors.conflict(`Mã phiếu trả ${code} hoặc phiếu ${draft.id} vừa được máy khác dùng — gửi lại`, { reason: 'POS_CODE_TAKEN', code });
@@ -197,6 +207,8 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
   await ctx.events.emit('pos.return.recorded', {
     returnId: draft.id, code, orderId: order.order_id, orderCode: order.code, branchCode: branch.code, docKey: doc.docKey,
     originalDocKey: order.doc_key, version: 1, cashier: { name: ctx.actor.name }, return: snapshot,
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: đơn gốc đã trả hết → module voucher thu hồi voucher lần mua sau chưa dùng (đóng góp)
+    orderFullyReturned,
   }, { subject: `pos.return:${draft.id}`, dedupeKey: `pos.return.recorded:${draft.id}` });
   return { snapshot, docKey: doc.docKey, refundTotal: computed.refundTotal, branchCode: branch.code, replayed: false };
 }

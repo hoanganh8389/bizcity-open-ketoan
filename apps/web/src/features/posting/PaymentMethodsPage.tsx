@@ -3,6 +3,7 @@
  * Lưới: Mã · Tên · HTTT qua ngân hàng · Tài khoản hạch toán · Tài khoản ngân hàng · Đối tượng nhận hộ · Ghi công nợ (Thứ tự ẩn).
  * [2026-11-17 kiennt] bỏ Tỉ lệ chiết khấu khỏi lưới và form và Ghi chú / Mô tả khỏi lưới và form (giá trị cũ giữ nguyên khi ghi); "Tài khoản tiền" → "Tài khoản hạch toán" (đóng góp)
  */
+import { useMaTrung } from '@/lib/maTrung';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
@@ -11,6 +12,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { AccountPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 import { useBankAccounts } from '../catalog/BankAccountsPage';
 
@@ -36,10 +39,14 @@ export function PaymentMethodsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá hình thức ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={canWrite && <NutNhapExcel loai={nhapLoai('hinh-thuc-thanh-toan')!} />}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
@@ -84,10 +91,12 @@ function MethodForm({ value, onClose }: { value: Partial<Method> & { isNew?: boo
     mutationFn: () => api.put(`/api/v1/posting/payment-methods/${encodeURIComponent(v.code ?? '')}`, { name: v.name, accountCode: v.accountCode, bankAccountCode: v.bankAccountCode || null, isReceivable: Boolean(v.isReceivable), isActive: v.isActive !== false, note: value.note ?? '', sortOrder: v.sortOrder ?? null, discountRate: value.discountRate ?? null, partnerCode: v.partnerCode || null }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['payment-methods'] }); if (value.isNew) onClose(); else viewAgain[1](); },
   });
+  // [2026-11-17 07:29 PM kiennt] NT-DM-002 L01 — thêm mới trùng mã (cả mã trong thùng rác) thì báo, khoá Ghi; trước đây PUT ghi đè bản ghi cũ (đóng góp)
+  const maTrung = useMaTrung({ isNew: value.isNew, code: v.code, list: useQuery({ queryKey: ['payment-methods'], queryFn: () => api.get<Method[]>('/api/v1/posting/payment-methods'), enabled: Boolean(value.isNew) }).data, catalog: 'payment-methods' });
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title="Thông tin hình thức thanh toán" onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Mã (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      <Field label="Mã (*)" error={maTrung || null}><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
       <Field label="Tên (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Thứ tự"><input className="input num" value={v.sortOrder ?? ''} onChange={(e) => set({ sortOrder: e.target.value === '' ? null : Number(e.target.value.replace(/\D/g, '')) })} /></Field>
       <Field label="Ngân hàng" hint="Chuyển khoản, QR, quẹt thẻ: chọn tài khoản ngân hàng nhận tiền, tài khoản kế toán tự lấy theo">
@@ -100,7 +109,8 @@ function MethodForm({ value, onClose }: { value: Partial<Method> & { isNew?: boo
         </Field>
       )}
       <Field label="Đối tượng nhận hộ" hint="Tiền vào tài khoản của công ty, cửa hàng không cầm tiền (QR, quẹt thẻ): tài khoản hạch toán là phải thu nội bộ 13681, chi tiết theo đối tượng này">
-        <PartnerPicker value={v.partnerCode ?? ''} onChange={(partnerCode) => set({ partnerCode: partnerCode || null })} placeholder="Không (tiền về chính đơn vị)" />
+        {/* [2026-11-17 07:29 PM kiennt] NT-DM-002 L07 — chỉ gợi ý đối tượng đang dùng (giá trị đang chọn vẫn hiện tên) (đóng góp) */}
+        <PartnerPicker activeOnly value={v.partnerCode ?? ''} onChange={(partnerCode) => set({ partnerCode: partnerCode || null })} placeholder="Không (tiền về chính đơn vị)" />
       </Field>
       <Field label="Tài khoản hạch toán"><AccountPicker postingOnly value={v.accountCode ?? ''} disabled={Boolean(v.bankAccountCode) && !v.partnerCode && !transit} onChange={(accountCode) => set({ accountCode })} /></Field>
       <Field label="Tuỳ chọn">

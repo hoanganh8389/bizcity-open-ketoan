@@ -63,6 +63,8 @@ export const ERROR_REASONS = {
   SETUP_RUNNING: 'Đang chạy một gói mẫu cho đơn vị này: chờ xong rồi chạy lại',
   // [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7: đơn vị mẫu không gửi ra ngoài (T036-4)
   SAMPLE_TENANT: 'Công ty Mẫu (dữ liệu hư cấu) không gửi dữ liệu ra ngoài, không kết nối ứng dụng ngoài: đăng nhập đơn vị của bạn',
+  // [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: bản cài đã có Công ty Mẫu
+  SAMPLE_EXISTS: 'Bản cài đã có Công ty Mẫu — mở ở Thiết lập nhanh (TI15), không tạo thêm',
   DOC_CANCELLED: 'Phiếu đã huỷ',
   DOC_SOURCE_READONLY: 'Chứng từ nhận từ hệ thống khác: sửa ở nguồn rồi gửi lại',
   DOC_ALREADY_CONFIRMED: 'Đã xác nhận nhận tiền trước đó',
@@ -160,6 +162,26 @@ export const ERROR_REASONS = {
   POS_RETURN_LOYALTY_GIFT: 'Dòng quà đổi bằng điểm (giftKey lp:…) không trả được; kèm lineId, sku',
   POS_RETURN_NO_BAD_WAREHOUSE: 'Trả hàng lỗi / hết hạn mà cửa hàng chưa khai kho KTL (hàng trả lại) ở BH17 hoặc kho đã khai không dùng được; kèm branchCode',
   POS_RETURN_CONDITION: 'Cùng một dòng đơn gửi hai tình trạng (nguyên vẹn / lỗi) trên một phiếu trả — phần lỗi lập phiếu riêng; kèm lineId',
+  // [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-025 CTKM duyệt, hạn mức lượt (BIZCITY-ERRORS 1.16.0-draft §4c, đóng góp)
+  POS_PROMO_QUOTA: 'Chương trình khuyến mại hết lượt (số đơn) ở cửa hàng — không nhận đơn còn áp chương trình đó; items: [{ key, quota, used }]',
+  PHIEU_BAN_PROMO_QUOTA: 'Phiếu bán nhập tay áp chương trình khuyến mại đã hết lượt ở cửa hàng (đếm chung với máy bán); items: [{ key, quota, used }]',
+  POS_PROMO_DRAFT_STATE: 'Trạng thái bản nháp khuyến mại không cho thao tác này (sửa nháp đã duyệt / đã phát hành, mã đã có nháp đang mở); kèm status',
+  // [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-026 voucher 3 loại (BIZCITY-ERRORS 1.17.0-draft §4c, đóng góp)
+  VOUCHER_NOT_FOUND: 'Không có mã voucher (module voucher); kèm items: [{ code, reason, message }]',
+  VOUCHER_NOT_OWNER: 'Mã voucher không thuộc khách của đơn / phiếu (voucher gắn SĐT khách, chỉ khách đó dùng); kèm items',
+  VOUCHER_USED: 'Mã voucher đã dùng ở đơn / phiếu khác (dùng một lần); kèm items: [{ code, usedIn: { source, refCode, branch, date } }]',
+  VOUCHER_REVOKED: 'Mã voucher đã thu hồi (trả hàng đơn gốc, thu hồi tay) hoặc đợt phát đã ngừng; kèm items',
+  VOUCHER_EXPIRED: 'Mã voucher ngoài thời hạn dùng (chưa tới ngày / đã hết hạn); kèm items',
+  VOUCHER_MIN_ORDER: 'Đơn chưa đủ đơn tối thiểu của voucher (tổng sau khuyến mại, trước voucher); kèm items',
+  VOUCHER_NOT_APPLICABLE: 'Voucher lần mua sau sản phẩm / nhãn mà giỏ không có sản phẩm / nhãn áp dụng; kèm items',
+  VOUCHER_NO_ROOM: 'Đơn / phiếu không còn tiền phải trả để voucher trừ (tổng trừ không vượt số phải trả) — bỏ bớt voucher; kèm code',
+  VOUCHER_NEED_CUSTOMER: 'Đơn / phiếu dùng voucher mà chưa chọn khách (voucher luôn gắn khách)',
+  VOUCHER_UNAVAILABLE: 'Đơn / phiếu có mã voucher mà module voucher chưa bật hoặc người bán thiếu quyền voucher:use',
+  VOUCHER_PAYMENT_METHOD: 'Voucher hãng: hình thức thanh toán của đợt phát không có / ngừng dùng (kế toán khai tài khoản phải thu hãng ở hình thức); kèm method',
+  VOUCHER_CAMPAIGN_STATE: 'Thao tác sai trạng thái đợt phát / mã voucher (mã đợt đã có, đổi điều kiện đợt đã phát mã, phát mã đợt đã ngừng / hết hạn, thu hồi mã đã dùng); kèm status',
+  // [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-028 quà trừ kho khuyến mại (BIZCITY-ERRORS 1.18.0-draft §4c, đóng góp)
+  POS_GIFT_WAREHOUSE: 'Đơn / phiếu bán có dòng quà mà kho quà khai cho cửa hàng (bizcity.pos.gift_warehouses, BH17) không dùng được: không thuộc cửa hàng, ngừng dùng, không phải kho khuyến mại KKM, trùng kho bán; kèm branchCode',
+  POS_GIFT_STOCK_SHORT: 'Máy bán: hết quà ở kho quà (KKM) của cửa hàng — hết quà thì không tặng; hàng bán vẫn kiểm riêng ở kho bán; items: [{ sku, need, have, warehouse, gift }]',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

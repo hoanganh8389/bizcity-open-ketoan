@@ -83,3 +83,32 @@ export async function stockOf(tx: Tx, branch: string, skus: readonly string[]): 
   const got = new Map(r.rows.map((x) => [x.sku, Number(x.qty)]));
   return list.map((sku) => ({ sku, available: got.get(sku) ?? 0, held: 0 }));
 }
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: tồn theo mặt hàng × kho — quà ở kho quà KKM, hàng bán ở kho bán, không cộng chung (đóng góp)
+/** Tồn của một kho phụ (kho quà KKM): đúng mã kho, không gồm dòng thẻ kho cũ không ghi kho (dòng đó thuộc kho bán). */
+export async function stockAtWarehouse(tx: Tx, branch: string, warehouse: string, skus: readonly string[]): Promise<{ sku: string; available: number; held: number }[]> {
+  const list = [...new Set(skus.map((s) => s.trim()).filter(Boolean))];
+  if (!list.length) return [];
+  const r = await sql<{ sku: string; qty: string }>`
+    SELECT sku, SUM(qty) AS qty FROM bizcity_read.stock_on_hand
+     WHERE branch_code = ${branch} AND sku IN (${sql.join(list)}) AND warehouse_code = ${warehouse} GROUP BY sku`.execute(tx);
+  const got = new Map(r.rows.map((x) => [x.sku, Number(x.qty)]));
+  return list.map((sku) => ({ sku, available: got.get(sku) ?? 0, held: 0 }));
+}
+
+/**
+ * Kho bán / kho quà của cửa hàng (NT-BH-028). Kho quà = kho khai ở khoá bizcity.pos.gift_warehouses, phải thuộc cửa hàng, đang dùng,
+ * là kho khuyến mại (loại KKM ⇔ is_promo) và khác kho bán. Chưa khai → gift null (quà trừ kho bán như cũ). Khai sai → gift null + issue.
+ */
+export async function warehousesFor(tx: Tx, branch: string, giftMap: ReadonlyMap<string, string>): Promise<{ sale: string; gift: string | null; issue?: string }> {
+  const sale = await saleWarehouseOf(tx, branch);
+  const code = giftMap.get(branch);
+  if (!code) return { sale, gift: null };
+  const w = (await sql<{ is_active: boolean | null; is_promo: boolean | null }>`
+    SELECT is_active, is_promo FROM bizcity_read.warehouses WHERE branch_code = ${branch} AND code = ${code}`.execute(tx)).rows[0];
+  if (!w) return { sale, gift: null, issue: `kho ${code} không thuộc cửa hàng ${branch}` };
+  if (w.is_active === false) return { sale, gift: null, issue: `kho ${code} đã ngừng dùng` };
+  if (w.is_promo !== true) return { sale, gift: null, issue: `kho ${code} không phải kho khuyến mại (loại KKM)` };
+  if (code === sale) return { sale, gift: null, issue: `kho ${code} là kho bán` };
+  return { sale, gift: code };
+}

@@ -121,6 +121,21 @@
       "permission": "settings:write",
       "audit": "có",
       "affectsPosting": true
+    },
+    {
+      "key": "bizcity.pos.gift_warehouses",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.pos.gift_warehouses",
+      "schema": "kho quà loại KKM (kho hàng khuyến mại) của từng cửa hàng (NT-BH-028 Q1): mảng \"<mã cửa hàng>=<mã kho>\"; dòng quà (isGift) của máy bán và phiếu bán BH10 trừ tồn ở kho này, dòng bán trừ kho bán; kiểm tồn theo mặt hàng × kho. Cửa hàng chưa khai: quà trừ kho bán như cũ. Kho khai phải thuộc cửa hàng, đang dùng, là kho khuyến mại (KKM) — sai thì đơn có quà báo POS_GIFT_WAREHOUSE. Không đổi thuế / bill Z (vẫn theo mã)",
+      "valueType": "string[]",
+      "default": "[]",
+      "readBy": "modules/pos/api/settings.ts (đơn bán, bootstrap, action đọc pos.gift-warehouse.get cho phieu-ban)",
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": true
     }
   ]
 }

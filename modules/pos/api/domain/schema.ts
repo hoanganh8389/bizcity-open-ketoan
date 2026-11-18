@@ -31,6 +31,8 @@ export const orderLineDraftSchema = z.object({
   policyRef: z.object({ key: z.string().trim().min(1).max(64), version: z.number().int().min(1), line: z.enum(['gift', 'discount']).optional() }).optional(),
   /** Tiền giảm theo chương trình (gồm thuế) của cả dòng — đúng `discounts[].amount` Core trả. */
   promoDiscount: vnd.min(0, 'Tiền giảm không được âm').optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: kho của dòng máy đọc từ bootstrap (quà → kho quà) — chỉ để máy hiển thị; máy chủ quyết theo cài đặt (đóng góp)
+  warehouseCode: z.string().trim().max(64).optional(),
 }).passthrough();
 
 export const paymentDraftSchema = z.discriminatedUnion('mode', [
@@ -68,6 +70,9 @@ export const orderDraftSchema = z.object({
   promotionsVersion: z.string().max(80),
   offlineCreatedAt: z.string().optional(),
   loyalty: z.object({ redeem: z.array(z.string()) }).optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: mã voucher TGS / hãng khách dùng (module voucher kiểm; máy chủ tính tiền trừ) (đóng góp)
+  /** Mã voucher (module voucher) khách dùng cho đơn — nhiều mã / đơn; trừ sau khuyến mại; tổng trừ ≤ số phải trả. */
+  vouchers: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
   policyRefs: z.array(z.object({ key: z.string(), version: z.number().int().min(0), hash: z.string().optional() })).optional(),
 }).passthrough();
 

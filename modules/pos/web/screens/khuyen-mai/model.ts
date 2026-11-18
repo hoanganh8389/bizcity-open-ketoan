@@ -36,6 +36,11 @@ export type Form = {
   comboMode: 'comboPrice' | 'discountPct' | 'discountAmount'; comboValue: string; maxCombos: string;
   buyQty: string; freeQty: string; repeat: boolean;
   buy: { sku: string; qty: string }; get: { sku: string; qty: string }; maxGiftQty: string;
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt theo cửa hàng khai ở nháp (đóng góp)
+  /** Số lượt (đơn) mỗi cửa hàng; trống = không giới hạn. */
+  quotaPerBranch: string;
+  /** Lượt riêng từng cửa hàng: "CN01=2, CN02=5". */
+  quotaBranches: string;
 };
 
 export function emptyForm(kind: PromoKind, today: string): Form {
@@ -45,6 +50,7 @@ export function emptyForm(kind: PromoKind, today: string): Form {
     skus: '', basis: 'qty', tiers: [{ min: '', mode: 'pct', value: '' }], orderTiers: [{ minOrder: '', mode: 'pct', value: '', maxDiscount: '' }],
     giftTiers: [{ minOrder: '', gifts: '' }], items: [{ sku: '', qty: '1' }], comboMode: 'comboPrice', comboValue: '', maxCombos: '',
     buyQty: '2', freeQty: '1', repeat: true, buy: { sku: '', qty: '1' }, get: { sku: '', qty: '1' }, maxGiftQty: '',
+    quotaPerBranch: '', quotaBranches: '',
   };
 }
 
@@ -214,3 +220,40 @@ export function statusOf(x: { validFrom?: string | null; validTo?: string | null
   if (x.validFrom && x.validFrom > today) return 'upcoming';
   return 'running';
 }
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt theo cửa hàng ↔ ô của form (đóng góp)
+export type Quota = { perBranch?: number; branches?: Record<string, number> };
+
+/** Ô hạn mức → `quota` của bản nháp (null = không giới hạn). Lỗi rõ theo ô. */
+export function toQuota(f: Pick<Form, 'quotaPerBranch' | 'quotaBranches'>): { quota: Quota | null; problems: string[] } {
+  const problems: string[] = [];
+  const q: Quota = {};
+  if (f.quotaPerBranch.trim()) {
+    const n = num(f.quotaPerBranch);
+    if (n === undefined || Number.isNaN(n) || n < 0 || !Number.isInteger(n)) problems.push('Hạn mức lượt mỗi cửa hàng: số nguyên ≥ 0');
+    else q.perBranch = n;
+  }
+  for (const part of String(f.quotaBranches ?? '').split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean)) {
+    const m = /^([A-Za-z0-9._-]+)\s*[=:]\s*(\d+)$/.exec(part);
+    if (!m) { problems.push(`Hạn mức riêng "${part}": ghi dạng CN01=2`); continue; }
+    (q.branches ??= {})[m[1]!] = Number(m[2]);
+  }
+  return { quota: q.perBranch === undefined && !q.branches ? null : q, problems };
+}
+
+/** `quota` của bản nháp → ô của form. */
+export function fromQuota(q: Quota | null | undefined): Pick<Form, 'quotaPerBranch' | 'quotaBranches'> {
+  return {
+    quotaPerBranch: q?.perBranch === undefined ? '' : String(q.perBranch),
+    quotaBranches: Object.entries(q?.branches ?? {}).map(([b, n]) => `${b}=${n}`).join(', '),
+  };
+}
+
+export type DraftStatus = 'draft' | 'pending' | 'approved' | 'published' | 'rejected';
+export const DRAFT_STATUS_LABEL: Record<DraftStatus, { label: string; tone: string }> = {
+  draft: { label: 'Nháp', tone: 'gray' }, pending: { label: 'Chờ duyệt', tone: 'warn' }, approved: { label: 'Đã duyệt, chưa phát hành', tone: 'info' },
+  published: { label: 'Đã phát hành', tone: 'ok' }, rejected: { label: 'Từ chối', tone: 'bad' },
+};
+export const LOG_LABEL: Record<string, string> = {
+  create: 'Lập', update: 'Sửa', submit: 'Gửi duyệt', approve: 'Duyệt', publish: 'Phát hành', reject: 'Từ chối', stop: 'Ngừng', import: 'Chuyển từ website',
+};

@@ -1,11 +1,16 @@
 /**
  * Hộp khai báo / sửa một khuyến mại (BH18, NT-BH-016): ô chung (mã, áp từ ngày, cửa hàng, thời gian chiến dịch, điều kiện, ưu tiên, áp riêng, trần
  * NĐ81) + phần riêng của từng loại. Phát hành = POST /api/v1/policies (Core kiểm lại nội dung, lỗi hiện nguyên câu của Core).
+ * 18/11 (NT-BH-025): Lưu = BẢN NHÁP ở module pos (chưa áp); người có quyền Duyệt khuyến mại duyệt rồi mới phát hành. Khai hạn mức lượt theo
+ * cửa hàng. Lưu xong hiện cảnh báo chương trình trùng (cùng mã hàng, cùng cửa hàng, giao thời gian) — chỉ cảnh báo.
  */
 // [2026-11-14 01:10 AM Võ Hoàng] NGHIEM-THU — NT-BH-016: form khuyến mại 6 loại (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: lưu nháp + gửi duyệt, hạn mức lượt, cảnh báo trùng (đóng góp)
 import { useState, type ReactNode } from 'react';
 import { BranchCheckList, ErrorBox, Field, Modal, errorText, useApi, useMutation } from '@bizcity/ui-kit';
-import { KIND_INFO, toParams, type Form, type TierMode } from './model';
+import { M } from '../../lib';
+import { OverlapList, type Overlap } from './Drafts';
+import { KIND_INFO, toParams, toQuota, type Form, type TierMode } from './model';
 
 const THU = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 const Row = ({ children }: { children: ReactNode }) => <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>{children}</div>;
@@ -13,18 +18,39 @@ const Box = ({ title, children }: { title: string; children: ReactNode }) => (
   <fieldset style={{ border: '1px solid var(--line, #ddd)', borderRadius: 6, padding: '8px 10px', display: 'grid', gap: 8 }}><legend style={{ padding: '0 4px' }}><b>{title}</b></legend>{children}</fieldset>
 );
 
-export function KmForm({ initial, editing, onClose, onDone }: { initial: Form; editing: boolean; onClose: () => void; onDone: (key: string) => void }) {
+export function KmForm({ initial, editing, draftId, onClose, onDone }: { initial: Form; editing: boolean; draftId?: string; onClose: () => void; onDone: (msg: string) => void }) {
   const api = useApi();
   const [f, setF] = useState<Form>(initial);
+  const [warn, setWarn] = useState<{ msg: string; overlaps: Overlap[] } | null>(null);
   const set = (p: Partial<Form>) => setF((x) => ({ ...x, ...p }));
-  const { params, problems } = toParams(f);
+  const tp = toParams(f);
+  const { params } = tp;
+  const q = toQuota(f);
+  const problems = [...tp.problems, ...q.problems];
   const publish = useMutation({
-    mutationFn: () => api.post('/api/v1/policies', {
-      key: f.key.trim(), ruleContract: KIND_INFO[f.kind].contract, params, effectiveFrom: f.effectiveFrom,
-      ...(f.branchCodes.length ? { scope: { branchCodes: f.branchCodes } } : {}), ...(f.reason.trim() ? { reason: f.reason.trim() } : {}),
-    }),
-    onSuccess: () => onDone(f.key.trim()),
+    mutationFn: (submit: boolean) => {
+      const body = {
+        key: f.key.trim(), ruleContract: KIND_INFO[f.kind].contract, params, effectiveFrom: f.effectiveFrom, branchCodes: f.branchCodes,
+        ...(f.reason.trim() ? { reason: f.reason.trim() } : {}), quota: q.quota, submit,
+      };
+      return draftId ? api.put<{ overlaps: Overlap[] }>(`${M}/promo/drafts/${draftId}`, body) : api.post<{ overlaps: Overlap[] }>(`${M}/promo/drafts`, body);
+    },
+    onSuccess: (r, submit) => {
+      const msg = `Đã lưu nháp ${f.key.trim()}${submit ? ', đã gửi duyệt' : ''} — chưa áp ở máy bán cho tới khi được duyệt.`;
+      if (r.overlaps.length) setWarn({ msg, overlaps: r.overlaps });
+      else onDone(msg);
+    },
   });
+  if (warn) {
+    return (
+      <Modal title={`Đã lưu ${f.key.trim()} — có chương trình trùng`} onClose={() => onDone(warn.msg)} footer={<button type="button" className="btn btn-primary" onClick={() => onDone(warn.msg)}>Đã hiểu</button>}>
+        <div style={{ gridColumn: '1 / -1', display: 'grid', gap: 8 }}>
+          <span>{warn.msg}</span>
+          <OverlapList overlaps={warn.overlaps} />
+        </div>
+      </Modal>
+    );
+  }
   const inp = (v: string, on: (s: string) => void, w = 110, ph = '') => <input className="input" style={{ width: w }} value={v} placeholder={ph} onChange={(e) => on(e.target.value)} />;
   const rows = <T,>(arr: T[], render: (x: T, i: number) => ReactNode, add: () => void, del: (i: number) => void) => (
     <>
@@ -37,13 +63,14 @@ export function KmForm({ initial, editing, onClose, onDone }: { initial: Form; e
     <Modal wide title={`${editing ? 'Sửa' : 'Thêm'} khuyến mại — ${KIND_INFO[f.kind].label}`} onClose={onClose} footer={(
       <div className="row" style={{ gap: 8, alignItems: 'center' }}>
         {problems.length > 0 && <span className="muted" style={{ maxWidth: 520 }}>{problems.join(' · ')}</span>}
-        <button type="button" className="btn btn-primary" disabled={problems.length > 0 || publish.isPending} title={problems.join('; ')} onClick={() => publish.mutate()}>Phát hành</button>
+        <button type="button" className="btn" disabled={problems.length > 0 || publish.isPending} title={problems.join('; ')} onClick={() => publish.mutate(false)}>Lưu nháp</button>
+        <button type="button" className="btn btn-primary" disabled={problems.length > 0 || publish.isPending} title={problems.join('; ')} onClick={() => publish.mutate(true)}>Lưu và gửi duyệt</button>
         <button type="button" className="btn" onClick={onClose}>Đóng</button>
       </div>
     )}>
       {/* Thân hộp rộng là lưới 4 cột: khối form trải hết bề ngang. */}
       <div style={{ display: 'grid', gap: 10, gridColumn: '1 / -1' }}>
-        <p className="muted" style={{ margin: 0 }}>{KIND_INFO[f.kind].hint}. Phát hành xong máy bán áp từ ngày áp dụng; {editing ? 'bản cũ tự kết thúc hôm trước, chứng từ đã bán giữ bản cũ.' : 'muốn đổi về sau thì Sửa (bản mới), không xoá.'}</p>
+        <p className="muted" style={{ margin: 0 }}>{KIND_INFO[f.kind].hint}. Lưu là bản nháp — người có quyền Duyệt khuyến mại (không phải người lập) duyệt thì mới phát hành; máy bán áp từ ngày áp dụng; {editing ? 'bản cũ tự kết thúc hôm trước, chứng từ đã bán giữ bản cũ.' : 'muốn đổi về sau thì Sửa (bản mới), không xoá.'}</p>
         <Row>
           <Field label="Mã khuyến mại (*)" hint="vd KM-TET-2026; trùng mã = sửa khuyến mại đó"><input className="input" value={f.key} disabled={editing} onChange={(e) => set({ key: e.target.value })} /></Field>
           <Field label="Áp dụng từ ngày (*)"><input className="input" type="date" value={f.effectiveFrom} onChange={(e) => set({ effectiveFrom: e.target.value })} /></Field>
@@ -117,6 +144,11 @@ export function KmForm({ initial, editing, onClose, onDone }: { initial: Form; e
               <label><input type="checkbox" checked={f.noCap} onChange={(e) => set({ noCap: e.target.checked })} /> miễn trần (người khai chịu trách nhiệm — ghi lý do ở ô ghi chú)</label></Row>
           </Box>
         )}
+        <Box title="Hạn mức lượt theo cửa hàng (không bắt buộc)">
+          <Row>Mỗi cửa hàng tối đa {inp(f.quotaPerBranch, (v) => set({ quotaPerBranch: v }), 90, 'không giới hạn')} đơn áp chương trình
+            · riêng {inp(f.quotaBranches, (v) => set({ quotaBranches: v }), 220, 'CN01=2, CN02=5')}</Row>
+          <span className="muted">Hết lượt: máy bán báo trước khi thanh toán và không nhận đơn còn áp chương trình này; phiếu bán BH10 không duyệt được. Trả cả đơn → trả lại lượt.</span>
+        </Box>
         {publish.error && <ErrorBox error={errorText(publish.error)} />}
       </div>
     </Modal>

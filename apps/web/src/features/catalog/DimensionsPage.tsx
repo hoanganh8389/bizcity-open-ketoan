@@ -5,6 +5,7 @@
  * Cột lưới, nhãn form theo từng danh mục (META). Mã đã dùng không xoá được: bỏ tích "Theo dõi" để ngừng.
  * Hợp đồng có thêm: loại, hợp đồng gốc, khách hàng, nhân viên, ngày ký / kết thúc, giá trị, thuế nộp thay chủ nhà, lịch thanh toán.
  */
+import { useMaTrung } from '@/lib/maTrung';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
@@ -16,6 +17,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { ListPicker, PartnerPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
 import { ChonSoDoToChuc } from '@/components/CayDonVi';
@@ -156,10 +159,14 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true, extra: isContract ? { type: 'rent' } : {} })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={remove}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={canWrite && kind === 'employee' && <NutNhapExcel loai={nhapLoai('nhan-vien')!} />}
           left={(q.data ?? []).some((r) => !r.isActive) && (
             <label className="checkbox" style={{ marginLeft: 8, fontSize: 13 }}><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Hiện cả mục đã ẩn ({(q.data ?? []).filter((r) => !r.isActive).length})</label>
           )}
@@ -207,6 +214,8 @@ export function DimensionForm({ kind, value, parents, onClose, onSaved }: { kind
   const setExtra = (p: Extra) => setV((x) => ({ ...x, extra: { ...x.extra, ...p } }));
   const employees = useQuery({ queryKey: ['dimensions', 'employee'], queryFn: () => api.get<Row[]>('/api/v1/dimensions/employee'), enabled: kind === 'contract', staleTime: 60_000 }).data ?? [];
   const branches = useBranches().data ?? [];
+  // [2026-11-17 07:29 PM kiennt] NT-DM-002 L01 — thêm mới trùng mã (cả mã trong thùng rác) thì báo, khoá Ghi; trước đây PUT ghi đè bản ghi cũ (đóng góp)
+  const maTrung = useMaTrung({ isNew: value.isNew, code: value.isNew ? (v.code ?? '') : '', list: useQuery({ queryKey: ['dimensions', kind], queryFn: () => api.get<Row[]>(`/api/v1/dimensions/${kind}`), enabled: Boolean(value.isNew) }).data, catalog: `dimensions.${kind}` });
   const departments = useQuery({ queryKey: ['dimensions', 'department'], queryFn: () => api.get<Row[]>('/api/v1/dimensions/department'), enabled: kind === 'employee', staleTime: 60_000 }).data ?? [];
   const schedQ = useQuery({ queryKey: ['contract-schedules', value.code], queryFn: () => api.get<Schedule[]>(`/api/v1/contracts/${encodeURIComponent(value.code!)}/schedules`), enabled: isContract && !value.isNew });
   const [sched, setSched] = useState<Schedule[]>([]);
@@ -227,7 +236,7 @@ export function DimensionForm({ kind, value, parents, onClose, onSaved }: { kind
   const total = sched.filter((x) => x.status !== 'cancelled').reduce((t, x) => t + x.amount, 0);
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} wide={isContract} title={meta.form} onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !code || !v.name?.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !code || !v.name?.trim() || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       {isContract && <div className="field-title full">Thông tin chung hợp đồng</div>}
       {kind === 'cash_item' && (
         <Field label="Loại" full>
@@ -236,7 +245,7 @@ export function DimensionForm({ kind, value, parents, onClose, onSaved }: { kind
           </div>
         </Field>
       )}
-      <Field label="Mã (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
+      <Field label="Mã (*)" error={maTrung || null}><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} autoFocus /></Field>
       <Field label="Tên" full={!isContract}><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label={kind === 'cash_item' ? 'Diễn giải' : kind === 'cost_item' || kind === 'department' ? 'Chi chú' : 'Ghi chú'} full={!isContract}><input className="input" value={v.note ?? ''} onChange={(e) => set({ note: e.target.value })} /></Field>
       {isContract && (

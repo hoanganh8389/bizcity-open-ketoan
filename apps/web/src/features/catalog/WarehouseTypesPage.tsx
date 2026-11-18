@@ -8,6 +8,7 @@
  */
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMaTrung } from '@/lib/maTrung';
 import { ArchiveRestore, Trash2 } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -15,6 +16,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { AccountPicker, useAccountList } from '@/components/pickers';
 
 export interface WarehouseType { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; accountName?: string | null; accountPosting?: boolean; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
@@ -58,11 +61,15 @@ export function WarehouseTypesPage() {
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           onAdd={() => setEditing({ isNew: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isSystem: false })}
           onEdit={() => sel && setEditing(sel)}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
           extra={
             <>
+              {canWrite && <NutNhapExcel loai={nhapLoai('loai-kho')!} />}
               <button className="btn btn-sm" disabled={!canWrite || !sel || del.isPending} title="Chuyển loại kho đang chọn vào Thùng rác — vẫn lưu trong dữ liệu, khôi phục được"
                 onClick={() => { if (sel && window.confirm(`Xoá loại kho ${sel.code} - ${sel.name}?\nLoại kho chuyển vào Thùng rác (vẫn lưu, khôi phục được). Chứng từ đã ghi giữ nguyên.`)) del.mutate(sel.code); }}><Trash2 size={14} /> Xoá</button>
               <button className="btn btn-sm" onClick={() => setShowTrash(true)} title="Loại kho đã xoá: khôi phục hoặc xoá vĩnh viễn">
@@ -110,6 +117,8 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
     : !accounts.some((a) => a.code === tk) ? `Không có tài khoản ${tk} trong hệ thống tài khoản`
     : !accounts.find((a) => a.code === tk)!.isPosting || accounts.some((a) => a.code !== tk && a.code.startsWith(tk)) ? `${tk} là tài khoản tổng hợp — chọn tài khoản chi tiết cấp cuối (vd ${accounts.find((a) => a.code !== tk && a.code.startsWith(tk) && a.isPosting)?.code ?? `${tk}1`})`
     : '';
+  // [2026-11-17 07:27 PM kiennt] NT-DM-002 L01 — thêm mới trùng mã (cả mã trong thùng rác) thì báo, khoá Ghi; trước đây PUT ghi đè loại kho cũ (đóng góp)
+  const maTrung = useMaTrung({ isNew: value.isNew, code: v.code, list: useWarehouseTypes().data?.types, trash: (useTrash().data ?? []).map((x) => ({ code: x.code, name: x.name })) });
   const save = useMutation({
     // Các công tắc không còn hiện trên màn: giữ nguyên giá trị đang có; loại mới mặc định hàng của mình, bán được, theo dõi hạn dùng.
     mutationFn: () => api.put(`/api/v1/warehouse-types/${encodeURIComponent((v.code ?? '').trim().toUpperCase())}`, {
@@ -120,8 +129,8 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
   });
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title={value.isNew ? 'Thêm loại kho' : `Loại kho ${value.code} - ${value.name ?? ''}`} onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(tkLoi)} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Mã (*)" tip={value.isSystem ? 'Loại gốc — không đổi mã' : 'Chữ in hoa / số, 2–12 ký tự'}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(tkLoi) || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      <Field label="Mã (*)" tip={value.isSystem ? 'Loại gốc — không đổi mã' : 'Chữ in hoa / số, 2–12 ký tự'} error={maTrung || null}>
         <input className="input mono" maxLength={12} value={v.code ?? ''} disabled={!value.isNew} autoFocus onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })} />
       </Field>
       <Field label="Tên loại kho (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>

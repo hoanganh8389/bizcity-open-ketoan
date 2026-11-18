@@ -64,5 +64,7 @@ describe('Thiết lập nhanh — Công ty Mẫu (B5a)', () => {
     expect(sampleCard({ ...base, sampleTenantCode: null }).open).toBe(false);
     expect(sampleCard({ ...base, isSample: true, sampleTenantCode: 'mau' }).open).toBe(false);
     expect(sampleCard(undefined).open).toBe(false);
+    expect(sampleCard({ ...base, sampleTenantCode: null, sampleOnDemand: true })).toMatchObject({ open: false, create: true });
+    expect(sampleCard({ ...base, sampleTenantCode: 'mau', sampleOnDemand: true }).create).toBe(false);
   });
 });

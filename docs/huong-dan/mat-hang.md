@@ -99,6 +99,7 @@ Phép thử tự động: `apps/api/test/sinh-ma-hang.test.ts`, `apps/api/test/s
 - Thanh nút: Thêm · Sửa (bấm đúp) · Xoá · Nạp · Xuất · Tìm nhanh (mã, tên, ghi chú) · lọc nhóm hạch toán, trạng thái.
 - Chỉ **xoá** được mặt hàng chưa có nhập xuất. Mặt hàng đã dùng thì bỏ tích "Đang theo dõi".
 - Chứng từ mang mã hàng chưa có thì mặt hàng tự thêm (cột **Nguồn** = "Tự thêm từ chứng từ"). Mã tự thêm chưa khai ĐVT thì **chưa xuống cửa hàng**; khai ĐVT là cửa hàng thấy.
+- **Sửa thuế GTGT** (hàng loạt) <!-- [2026-11-17 05:12 PM kiennt] DM10 — sửa thuế GTGT hàng loạt (đóng góp) -->: bấm nút **Sửa thuế GTGT** — lưới thêm **cột tích** ở đầu và thanh sửa thuế phía trên. Tích các mặt hàng cần sửa (ô tích ở tiêu đề = mọi mặt hàng đang hiện; lọc trước bằng cây nhóm hàng, ô lọc từng cột), chọn thuế suất mới → **Ghi**. Ghi xong cột tích tự ẩn và báo số mặt hàng đã đổi; **Huỷ** để thoát không ghi. Mã thuế mua vào tự theo cặp chuẩn (8% → R08 / V08, KCT → KCT / V13K). Mặt hàng đã đúng thuế này được bỏ qua; mặt hàng nào lỗi thì liệt kê sau khi ghi. Mỗi mặt hàng có dòng trong **Lịch sử**. Phiếu đã lập không đổi — thuế mới áp cho phiếu lập sau.
 
 ## Nhóm hàng (DM11)
 

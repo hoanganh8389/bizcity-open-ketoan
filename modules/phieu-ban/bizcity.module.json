@@ -3,7 +3,7 @@
   "id": "bizcity.phieu-ban",
   "key": "phieu-ban",
   "kind": "module",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "label": "Phiếu bán nhập tay",
   "description": "Phiếu bán / trả hàng do kế toán lập (BH10, BH11 — bán buôn, bán nợ, bán ngoài quầy): nháp → duyệt nộp sổ qua cửa nạp (sale / sale_return) → bỏ duyệt đảo bút toán. Số phiếu theo cửa hàng, không trùng (phiếu NT-BH-015). Đơn đặt hàng NT-BH-023: giữ hàng ở kho KCB, giao thành phiếu bán nháp.",
   "owners": ["@hoanganh8389"],

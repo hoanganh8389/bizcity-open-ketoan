@@ -34,3 +34,8 @@ Ví dụ: Khách trả hàng tự chọn Kho hàng trả lại, dùng được t
 ## Kho
 
 Ở Danh mục kho, mỗi kho chọn **Loại kho**. Nút **Tạo nhanh bộ kho**: chọn chi nhánh, tích các loại cần → tạo các kho một lần (mã = mã chi nhánh + loại); loại chi nhánh đã có kho thì bỏ qua.
+
+## Nhập Excel
+<!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
+
+Nút **Nhập Excel** nhận tệp Xuất của màn này (mã, tên, công dụng, tài khoản hạch toán). Loại mới bán được, hàng của mình, theo dõi hạn dùng như khi thêm trên form. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).

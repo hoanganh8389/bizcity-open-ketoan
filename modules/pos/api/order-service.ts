@@ -3,15 +3,22 @@
  * cả handler trong một giao dịch, nên kiểm + cấp mã + nộp chứng từ sale + lưu đơn cùng thành công hoặc cùng huỷ.
  */
 import { Errors, sql, type ActionContext } from '@bizcity/module-sdk';
-import { codePeriod, computeOrder, couponCodes, parseCode, saleDocKey, toOrderSnapshot, toSaleDocument, type OrderProblem } from './domain/order.js';
+import { computeOrder, couponCodes, lineWarehouse, saleDocKey, toOrderSnapshot, toSaleDocument, type LineWarehouses, type OrderProblem } from './domain/order.js';
 import type { OrderDraft } from './domain/schema.js';
-import { lastCode, takeCodes } from './codes.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: số bill theo dạng của cửa hàng (shop / HD) (đóng góp)
+import { issueCodes, wasIssued } from './codes.js';
+import { schemeOf } from './domain/codes.js';
 import { activePaymentMethods, catalogFor, partnerByCode, pricesFor, resolveBranch } from './read.js';
 import { changedMessage, checkPrices, noPriceMessage, type PriceIssue } from './domain/price.js';
-import { posSettings } from './settings.js';
+import { giftWarehouses, posSettings } from './settings.js';
 import { openShiftOf } from './shifts.js';
-import { stockOf } from './catalog.js';
+import { stockAtWarehouse, stockOf, warehousesFor } from './catalog.js';
 import { stockNeeds, stockShortages, stockShortMessage, type StockShort } from './domain/stock.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt khuyến mại theo cửa hàng (đóng góp)
+import { usesOf } from './domain/promo.js';
+import { checkQuota, quotaMessage, recordUses } from './promo.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng, voucher lần mua sau tự phát (đóng góp)
+import type { QuotedVoucher } from './domain/voucher.js';
 
 export const EINVOICE_NONE = { required: false, lines: [] as unknown[], warnings: [] as string[] };
 
@@ -77,20 +84,83 @@ async function quoteLoyalty(ctx: ActionContext, draft: OrderDraft, branchCode: s
   };
 }
 
-/** Khoá chi nhánh × mã rồi so số xuất (ĐVT nhỏ nhất) với tồn cửa hàng. Trả danh sách mã thiếu (rỗng = đủ). */
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: hỏi module voucher trước khi nhận đơn có voucher / có khách (đóng góp)
+type VoucherProblem = { code: string; reason: string; message: string };
+type VoucherQuote = { vouchers: QuotedVoucher[]; problems: VoucherProblem[]; issue: Record<string, unknown>[] };
+
+/**
+ * Voucher TGS / hãng (NT-BH-026). Đơn có mã: khoá theo từng mã (pg_advisory_xact_lock(hashtext('voucher:'||mã)), thứ tự cố định — cùng khoá
+ * phiếu bán BH10 lấy lúc duyệt) tới hết giao dịch, rồi
+ * 1. mã đang dùng ở đơn máy bán khác (mod_pos.voucher_uses chưa trả — gồm đơn module voucher chưa nhận sự kiện) → VOUCHER_USED;
+ * 2. hỏi action đọc `voucher.order.quote` của module voucher: của khách này, chưa dùng, còn hạn, đơn tối thiểu, giỏ có sản phẩm / nhãn.
+ * Đơn có khách (không mất mạng): hỏi luôn voucher lần mua sau tự phát (mã định theo đơn — in trên bill; module voucher thêm mã khi nhận
+ * pos.order.recorded). Module voucher chưa bật / thu ngân thiếu quyền voucher:use: đơn có mã → VOUCHER_UNAVAILABLE; đơn không mã → bỏ qua.
+ * Cửa sổ rủi ro: mã vừa dùng ở phiếu bán BH10 mà module voucher chưa nhận sự kiện duyệt (outbox) thì quote chưa thấy — module voucher ghi
+ * "dùng trùng" vào nhật ký mã khi nhận sự kiện thứ hai (giữ lần đầu) để kế toán xử lý.
+ */
+async function quoteVouchers(ctx: ActionContext, tx: Parameters<Parameters<ActionContext['data']['module']>[0]>[0], draft: OrderDraft, branchCode: string,
+  base: ReturnType<typeof computeOrder>): Promise<{ vouchers: QuotedVoucher[]; issue: Record<string, unknown>[] }> {
+  if ('problem' in base) raise(base.problem);
+  const codes = [...new Set((draft.vouchers ?? []).map((c) => c.trim().toUpperCase()))];
+  const customer = base.customer;
+  if (codes.length && !customer) throw Errors.validation('Đơn dùng voucher phải chọn khách (voucher gắn SĐT khách, chỉ khách đó dùng)', { reason: 'VOUCHER_NEED_CUSTOMER', field: 'customer' });
+  if (!customer) return { vouchers: [], issue: [] };
+  for (const code of [...codes].sort()) await lockKey(tx, `voucher:${code}`);
+  if (codes.length) {
+    const held = (await sql<{ code: string; order_code: string; business_date: string; branch_code: string }>`
+      SELECT code, order_code, business_date::text AS business_date, branch_code FROM mod_pos.voucher_uses
+       WHERE code IN (${sql.join(codes)}) AND released_at IS NULL AND order_id <> ${draft.id}`.execute(tx)).rows;
+    if (held.length) {
+      throw Errors.validation(held.map((h) => `Voucher ${h.code} đã dùng ở đơn ${h.order_code} ngày ${h.business_date} (${h.branch_code})`).join('; '),
+        { reason: 'VOUCHER_USED', field: 'vouchers', items: held.map((h) => ({ code: h.code, usedIn: { source: 'pos', refCode: h.order_code, branch: h.branch_code, date: h.business_date } })) });
+    }
+  }
+  let q: VoucherQuote;
+  try {
+    q = await ctx.actions.call<VoucherQuote>('voucher.order.quote', {
+      customer: customer.code, ...(customer.phone ? { phone: customer.phone } : {}), branch: branchCode, refId: draft.id, date: draft.businessDate,
+      orderTotal: base.total, codes, issue: !draft.offlineCreatedAt,
+      items: base.lines.filter((l) => !l.draft.isGift).map((l) => ({ sku: l.item.sku, qty: l.draft.unitQty * l.unitRatio, amount: l.money.gross })),
+    });
+  } catch (e) {
+    if (!codes.length) return { vouchers: [], issue: [] };
+    throw Errors.validation(`Chưa dùng voucher được: ${(e as Error).message}`, { reason: 'VOUCHER_UNAVAILABLE', field: 'vouchers' });
+  }
+  if (q.problems.length) {
+    throw Errors.validation(q.problems.map((p) => p.message).join('; '), { reason: q.problems[0]!.reason, field: 'vouchers', items: q.problems });
+  }
+  return { vouchers: codes.map((c) => q.vouchers.find((v) => v.code === c)).filter((v): v is QuotedVoucher => Boolean(v)), issue: q.issue };
+}
+
+/**
+ * Khoá chi nhánh × mã rồi so số xuất (ĐVT nhỏ nhất) với tồn cửa hàng. Trả danh sách mã thiếu (rỗng = đủ).
+ * NT-BH-028: dòng có `warehouse` (dòng quà khi cửa hàng khai kho quà) kiểm tồn của đúng kho đó, không cộng chung với kho bán; khoá vẫn
+ * theo chi nhánh × mã (gồm mọi kho của mã — chặt hơn, cùng khoá phiếu bán BH10 lấy).
+ */
 export async function checkStock(tx: Parameters<Parameters<ActionContext['data']['module']>[0]>[0], branchCode: string,
-  lines: readonly { sku: string; qty: number }[]): Promise<StockShort[]> {
-  const need = stockNeeds(lines);
-  const skus = [...need.keys()].sort();
+  lines: readonly { sku: string; qty: number; warehouse?: string }[]): Promise<StockShort[]> {
+  const skus = [...new Set(lines.map((l) => l.sku))].sort();
   for (const sku of skus) await lockKey(tx, `pos:stock:${branchCode}:${sku}`);
-  const have = new Map((await stockOf(tx, branchCode, skus)).map((x) => [x.sku, x.available]));
-  return stockShortages(need, have);
+  const sale = lines.filter((l) => !l.warehouse);
+  const need = stockNeeds(sale);
+  const have = new Map((await stockOf(tx, branchCode, [...need.keys()])).map((x) => [x.sku, x.available]));
+  const out = stockShortages(need, have);
+  const byWh = new Map<string, { sku: string; qty: number }[]>();
+  for (const l of lines) if (l.warehouse) byWh.set(l.warehouse, [...(byWh.get(l.warehouse) ?? []), l]);
+  for (const [wh, ls] of [...byWh].sort(([a], [b]) => a.localeCompare(b))) {
+    const n = stockNeeds(ls);
+    const h = new Map((await stockAtWarehouse(tx, branchCode, wh, [...n.keys()])).map((x) => [x.sku, x.available]));
+    out.push(...stockShortages(n, h).map((x) => ({ ...x, warehouse: wh, gift: true })));
+  }
+  return out;
 }
 
 export type CreatedOrder = { order: Record<string, unknown>; nextReservedCodes: string[]; einvoiceReview: typeof EINVOICE_NONE; replayed: boolean };
 
 export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: { exchange?: { credit: number; returnDocKey: string } } = {}): Promise<CreatedOrder> {
   const { requireOpenShift } = await posSettings(ctx);
+  // Cài đặt đọc ngoài giao dịch của module: kho quà theo cửa hàng (NT-BH-028).
+  const giftMap = await giftWarehouses(ctx);
   const prepared = await ctx.data.module(async (tx) => {
     await lockKey(tx, `pos:order:${draft.id}`);
     const old = (await sql<{ snapshot: Record<string, unknown>; same: boolean }>`
@@ -118,40 +188,63 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     const paymentMethods = await activePaymentMethods(tx);
     const partner = 'partnerId' in draft.customer ? await partnerByCode(tx, draft.customer.partnerId) : null;
     const base = { draft, catalog, paymentMethods, partner, ...(opts.exchange ? { exchange: opts.exchange } : {}) };
-    const loyalty = await quoteLoyalty(ctx, draft, branch.code, computeOrder({ ...base, loyalty: { lenient: true } }));
-    const computed = computeOrder({ ...base, ...(loyalty ? { loyalty: loyalty.input } : {}) });
+    const lenient = computeOrder({ ...base, loyalty: { lenient: true } });
+    const loyalty = await quoteLoyalty(ctx, draft, branch.code, lenient);
+    const vq = await quoteVouchers(ctx, tx, draft, branch.code, lenient);
+    const computed = computeOrder({ ...base, ...(loyalty ? { loyalty: loyalty.input } : {}), vouchers: vq.vouchers });
     if ('problem' in computed) raise(computed.problem);
 
     // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (đóng góp)
     // Khoá theo chi nhánh × mã (thứ tự mã cố định, tránh khoá chéo) tới hết giao dịch: hai máy cùng bán một mã chạy nối tiếp,
     // đơn sau thấy tồn đã trừ đơn trước. Đơn bán dự phòng lúc mất mạng gửi bù: hàng đã giao → nhận, đánh dấu cho kế toán xem.
-    const stockShort = await checkStock(tx, branch.code, computed.lines.map((l) => ({ sku: l.item.sku, qty: l.draft.unitQty * l.unitRatio })));
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: cửa hàng khai kho quà (KKM) → dòng quà trừ / kiểm tồn ở kho quà, dòng bán ở kho bán (đóng góp)
+    const whs = await warehousesFor(tx, branch.code, giftMap);
+    const hasGift = computed.lines.some((l) => l.draft.isGift);
+    if (whs.issue && hasGift) {
+      throw Errors.validation(`Kho quà của cửa hàng ${branch.code} không dùng được: ${whs.issue} — kế toán chọn lại kho khuyến mại (KKM) ở Cài đặt bán hàng (BH17)`,
+        { reason: 'POS_GIFT_WAREHOUSE', branchCode: branch.code });
+    }
+    const warehouses: LineWarehouses | undefined = whs.gift ? { sale: whs.sale, gift: whs.gift } : undefined;
+    const stockShort = await checkStock(tx, branch.code, computed.lines.map((l) => ({
+      sku: l.item.sku, qty: l.draft.unitQty * l.unitRatio, ...(warehouses && l.draft.isGift ? { warehouse: lineWarehouse(l.draft, warehouses) } : {}),
+    })));
     if (stockShort.length && !draft.offlineCreatedAt) {
-      throw Errors.validation(stockShortMessage(stockShort, branch.code), { reason: 'POS_STOCK_SHORT', items: stockShort });
+      const giftOnly = stockShort.every((x) => x.gift);
+      throw Errors.validation(stockShortMessage(stockShort, branch.code), { reason: giftOnly ? 'POS_GIFT_STOCK_SHORT' : 'POS_STOCK_SHORT', items: stockShort });
+    }
+
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: chương trình có hạn mức lượt ở cửa hàng — khoá cửa hàng × chương trình rồi đếm lượt
+    // đã dùng (đơn máy bán + phiếu bán BH10 chưa trả lượt). Hết lượt → không nhận; đơn mất mạng gửi bù → nhận, đánh dấu (đóng góp).
+    const promoKeys = computed.lines.map((l) => l.draft.policyRef?.key).filter((k): k is string => Boolean(k));
+    const quotaShort = await checkQuota(tx, branch.code, promoKeys, draft.id);
+    if (quotaShort.length && !draft.offlineCreatedAt) {
+      throw Errors.validation(quotaMessage(quotaShort, branch.code), { reason: 'POS_PROMO_QUOTA', items: quotaShort });
     }
 
     // Mã phiếu: dùng số máy đã được cấp trước (đúng khuôn, đã cấp, chưa dùng); không thì cấp số mới. Khoá theo số để hai máy
     // cùng dùng một số đã cấp không cùng qua bước "chưa dùng".
-    const period = codePeriod(draft.businessDate);
+    // NT-BH-027: dạng shop ({shop}BT…, liên tục) mặc định; mã chi nhánh không dựng được mã 12 ký tự thì HD theo tháng như cũ.
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): dạng shop mặc định, bỏ khoá bật / tắt (đóng góp)
+    const scheme = schemeOf(branch.code);
     let code: string | undefined;
-    const reservedNo = draft.reservedCode ? parseCode('sale', period, draft.reservedCode) : null;
-    if (reservedNo !== null && reservedNo <= (await lastCode(tx, branch.code, 'sale', period))) {
+    if (draft.reservedCode && await wasIssued(tx, branch.code, 'sale', draft.businessDate, draft.reservedCode, scheme)) {
       await lockKey(tx, `pos:code:${branch.code}:${draft.reservedCode!}`);
       const used = (await sql<{ n: number }>`
         SELECT 1 AS n FROM mod_pos.orders WHERE branch_code = ${branch.code} AND code = ${draft.reservedCode!}`.execute(tx)).rows.length > 0;
       if (!used) code = draft.reservedCode!;
     }
-    code ??= (await takeCodes(tx, ctx.tenant.id, branch.code, 'sale', period, 1))[0]!;
-    return { kind: 'new', computed, branch, code, loyalty, stockShort, priceOffline } as const;
+    code ??= (await issueCodes(tx, ctx.tenant.id, branch.code, 'sale', draft.businessDate, 1, scheme))[0]!;
+    return { kind: 'new', computed, branch, code, loyalty, stockShort, priceOffline, quotaShort, issuedVouchers: vq.issue, warehouses } as const;
   });
   if (prepared.kind === 'replay') return { order: prepared.snapshot, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: true };
 
-  const { computed, branch, code, loyalty, stockShort, priceOffline } = prepared;
-  const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code });
+  const { computed, branch, code, loyalty, stockShort, priceOffline, quotaShort, issuedVouchers, warehouses } = prepared;
+  const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code, ...(warehouses ? { warehouses } : {}) });
   const submitted = await ctx.ledger.submit(doc);
-  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}) });
+  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}), issuedVouchers, ...(warehouses ? { warehouses } : {}) });
   if (stockShort.length) Object.assign(order, { stockShortOffline: stockShort });
   if (priceOffline.length) Object.assign(order, { priceChangedOffline: priceOffline });
+  if (quotaShort.length) Object.assign(order, { promoQuotaOffline: quotaShort });
 
   try {
     await ctx.data.module(async (tx) => {
@@ -162,6 +255,14 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
                 ${computed.customer?.code ?? null}, ${computed.subtotal}, ${computed.taxTotal}, ${computed.total},
                 ${saleDocKey(branch.code, draft.id)}, ${submitted.status}, ${JSON.stringify(order)}::jsonb,
                 ${JSON.stringify(draft)}::jsonb, ${ctx.actor.id}, ${ctx.actor.name || null})`.execute(tx);
+      // Lượt dùng chương trình khuyến mại (NT-BH-025): một dòng mỗi chương trình của đơn, cùng giao dịch với đơn.
+      const uses = usesOf(computed.lines.map((l) => ({ policyRef: l.draft.policyRef, isGift: l.draft.isGift, qty: l.draft.unitQty, discount: l.draft.promoDiscount })));
+      await recordUses(tx, ctx.tenant.id, { source: 'pos', refId: draft.id, refCode: code, branch: branch.code, date: draft.businessDate, uses, offlineOver: quotaShort.map((q) => q.key) });
+      // Voucher TGS / hãng (NT-BH-026): mã đang dùng duy nhất (chỉ mục voucher_uses_live) — cùng giao dịch với đơn, còn giữ khoá theo mã.
+      for (const v of computed.voucherUses) {
+        await sql`INSERT INTO mod_pos.voucher_uses (tenant_id, code, order_id, order_code, branch_code, business_date, kind, method_code, amount, face_value, campaign_id)
+          VALUES (${ctx.tenant.id}, ${v.code}, ${draft.id}, ${code}, ${branch.code}, ${draft.businessDate}, ${v.kind}, ${v.methodCode ?? null}, ${v.amount}, ${v.faceValue}, ${v.campaignId})`.execute(tx);
+      }
       // Dòng đơn lưu định danh mặt hàng (item_id, ADR-0017 / STD-DATA-6); mã và tên chỉ là ảnh chụp lúc bán.
       for (const l of computed.lines) {
         await sql`
@@ -173,6 +274,10 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       }
     });
   } catch (err) {
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: chốt chặn cuối — mã voucher đang dùng ở đơn khác (đóng góp)
+    if (isUniqueViolation(err) && (err as { constraint?: string }).constraint === 'voucher_uses_live') {
+      throw Errors.validation('Voucher vừa được dùng ở đơn khác — bỏ voucher đó rồi gửi lại', { reason: 'VOUCHER_USED', field: 'vouchers' });
+    }
     if (isUniqueViolation(err)) throw Errors.conflict(`Mã phiếu ${code} hoặc đơn ${draft.id} vừa được máy khác dùng — gửi lại đơn`, { reason: 'POS_CODE_TAKEN', code });
     throw err;
   }
