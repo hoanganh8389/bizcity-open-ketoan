@@ -1,5 +1,6 @@
 # NT-DM-004 · Nhập Excel danh mục đơn vị tính (DM15)
 <!-- [2026-11-18 09:18 AM kiennt] NGHIEM-THU — tạo phiếu theo yêu cầu người dùng: DM15 nhập được từ Excel như các danh mục khác (đóng góp) -->
+<!-- [2026-11-18 09:45 AM kiennt] NGHIEM-THU — ô trống cột Đang dùng theo tệp Xuất (đóng góp) -->
 
 | | |
 |---|---|
@@ -23,7 +24,7 @@ Không cần. Đơn vị tính không phụ thuộc danh mục nào.
 | Cột | **Đơn vị tính** (bắt buộc — khoá dòng), **Đang dùng** (Có / Không), **Ghi chú**. Tệp mẫu có 3 cột này. Các cột khác của tệp Xuất (Số mặt hàng dùng, Người sửa, Ngày sửa, Nguồn…) bỏ qua |
 | Khoá | Tên ĐVT, **không phân biệt hoa thường** và bỏ khoảng trắng thừa ("hộp" = "Hộp"). Đã có → cập nhật; chưa có → thêm mới (nguồn "Thêm tay") |
 | Cập nhật | Chỉ đổi Ghi chú và Đang dùng. **Không đổi tên** qua Excel (tên là khoá; đổi tên làm ở form) |
-| Ô trống | Đang dùng trống: mới = Có, đã có = giữ nguyên. Ghi chú trống: mới = trống, đã có = giữ nguyên |
+| Ô trống | **Đang dùng**: tệp Xuất ghi `x` = đang dùng, ô trống = ngừng dùng → cột Đang dùng có ô nào được điền thì ô trống = **Không** (nạp tệp xuất của máy khác giữ đúng trạng thái). Cả cột trống / không có cột: mới = Có, đã có = giữ nguyên. **Ghi chú** trống: mới = trống, đã có = giữ nguyên |
 | Kiểm tra | Như form: tên tối đa 32 ký tự, chỉ gồm chữ, số, khoảng trắng và `_ - . / ( ) + ×`; trùng tên trong tệp; Đang dùng ghi Có / Không (nhận cả x, 1, 0, Đang dùng, Ngừng dùng) |
 | Chế độ | Thêm mới / Cập nhật / Cả hai như các loại nhập khác |
 | API | Dùng sẵn `GET/POST/PATCH /api/v1/unit-names` — không sửa API, không migration, không đụng lõi |
@@ -40,7 +41,7 @@ Tệp Xuất của DM15 có: Lon, Thùng, Hộp (ghi chú "Hộp giấy"), Gói,
 | Nhập lại nguyên tệp vừa xuất | 0 lỗi, 0 thêm mới, mọi dòng "cập nhật" nhưng không đổi gì; xuất lại giống hệt |
 | Tệp có thêm dòng "Lốc_4", ghi chú "lốc 4 hộp 110ml" | Thêm mới Lốc_4, Đang dùng = Có, đúng ghi chú |
 | Sửa ghi chú Lon, đổi Chai thành Đang dùng = Có | Chỉ hai ô đó đổi |
-| Nạp tệp xuất của máy khác vào DM15 trống | Đủ các ĐVT, đúng Đang dùng, ghi chú |
+| Nạp tệp xuất của máy khác vào DM15 trống | Đủ các ĐVT, đúng Đang dùng (ĐVT ngừng dùng — ô trống — vẫn là ngừng dùng), ghi chú |
 | Khai mặt hàng (DM10) sau khi nhập | ĐVT vừa nhập có trong gợi ý; ĐVT Đang dùng = Không thì không gợi ý |
 
 ## 6. Trường hợp lệch chuẩn
@@ -68,3 +69,4 @@ Tệp Xuất của DM15 có: Lon, Thùng, Hộp (ghi chú "Hộp giấy"), Gói,
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo và chốt: khoá theo tên ĐVT, không đổi tên qua Excel |
+| 18/11/2026 | Sửa quy tắc ô trống cột Đang dùng theo tệp Xuất (x / trống) — người dùng chọn khi test (tệp xuất ghi ô trống cho ngừng dùng) |
