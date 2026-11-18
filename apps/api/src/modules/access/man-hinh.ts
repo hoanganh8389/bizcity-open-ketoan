@@ -39,7 +39,8 @@ export interface LenhGac { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; 
  * không thay được; HT12 nhắc "cần kèm" quyền này.
  */
 export interface ThaoTac { quyen: string; nhan: string; loai: LoaiThaoTac; lenh?: LenhGac[]; goc?: Permission }
-export interface ManHinh { key: string; ma: string; nhom: string; nhan: string; duongDan: string; thaoTac: Record<string, ThaoTac> }
+// [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: khongKeoTheo — màn của module mới (modules/<key>) không mượn kéo theo từ quyền Core (giữ mặc định cấm của quyền module, ADR-0027 D-AUTH-03)
+export interface ManHinh { key: string; ma: string; nhom: string; nhan: string; duongDan: string; thaoTac: Record<string, ThaoTac>; khongKeoTheo?: boolean }
 
 const OP: Record<LoaiThaoTac, DocumentOp> = { xem: 'read', ghi: 'create', huy: 'cancel', xuat: 'export' };
 const soDangKy = new Map<string, ManHinh>();
@@ -50,7 +51,7 @@ export function dangKyManHinh(def: ManHinh): void {
   const cur = soDangKy.get(def.key);
   if (cur && cur.ma !== def.ma) throw new Error(`Màn ${def.key} đã đăng ký với mã ${cur.ma}`);
   for (const [tt, t] of Object.entries(def.thaoTac)) {
-    registerDocumentType(khoaGia(def.key, tt), { [OP[t.loai]]: t.quyen });
+    if (!def.khongKeoTheo) registerDocumentType(khoaGia(def.key, tt), { [OP[t.loai]]: t.quyen });
     for (const l of t.lenh ?? []) {
       const k = `${l.method} ${l.url}`;
       soLenh.set(k, [...(soLenh.get(k) ?? []), { man: def.key, tt, docType: l.docType, capNhat: l.capNhat }]);
@@ -131,6 +132,7 @@ export async function kiemLenhManHinh(req: FastifyRequest, auth: AuthContext, ca
 export function quyenThaoTac(man: string, tt: string): Permission {
   const t = soDangKy.get(man)?.thaoTac[tt];
   if (!t) throw new Error(`Màn ${man} chưa đăng ký thao tác ${tt}`);
+  if (soDangKy.get(man)!.khongKeoTheo) return t.quyen as Permission; // màn module mới: đúng quyền module, không rơi về quyền Core
   return documentPermissionOf(khoaGia(man, tt), OP[t.loai]);
 }
 

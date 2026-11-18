@@ -44,6 +44,7 @@ Mọi màn danh mục có nút **Nhập Excel** và nhận đúng tệp **Xuất
 - **Biểu thuế**: thiếu cột *Chiều* thì suy theo tài khoản (133… đầu vào, 333… đầu ra); thiếu *Nhóm bảng kê* thì theo thuế suất.
 - **Nhóm khách hàng / NCC**: nhóm cha có thể ở dòng khác trong tệp — phần mềm ghi cha trước con, chặn vòng nhóm cha.
 - **Tài khoản ngân hàng**: mỗi tài khoản kế toán chỉ gắn một tài khoản ngân hàng.
+- **Cơ cấu tổ chức (DM16)** <!-- [2026-11-18 02:30 PM kiennt] NT-DM-007 — nhập Excel DM16 bằng trình nhập chung, 4 loại (đóng góp) -->: tệp Xuất 4 sheet; nút **Nhập Excel ▾** chọn Cơ cấu → Phòng ban → Cửa hàng → Kho, nhập lần lượt — mỗi loại tự chọn đúng sheet. Cửa hàng ghi phòng ban chưa có thì tự tạo phòng ban đó.
 - **Bảng giá**: tệp danh sách bảng giá (mã, tên, chi nhánh áp dụng…). Giá từng mặt hàng nhập ở lưới giá của bảng giá.
 - **Tài khoản ngầm định** (tệp chế độ Gọn: Loại · TK Nợ · TK Có): chỉ đặt các ô ngầm định sửa được; không thêm / xoá loại. Tài khoản lấy theo hình thức thanh toán / loại kho / thuế sửa ở màn đó. Một ô dùng ở nhiều loại thì đổi ở mọi loại.
 - **Tài khoản kết chuyển**: khoá dòng là cặp *từ → đến*; bước không có trong tệp giữ nguyên; cả bộ lưu một lần thành phiên bản mới. Bộ còn bước trỏ tới tài khoản chưa có thì không lưu được — khai đủ tài khoản ở Hệ thống tài khoản trước.

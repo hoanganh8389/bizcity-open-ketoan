@@ -15,6 +15,7 @@ import { DOC_REF_RE } from '@ketoan/contracts';
 import type { AnyActionDef } from '@bizcity/platform/core/actions';
 import type { SubscriberDef } from '@bizcity/platform/core/events';
 import type { ModuleManifestLike } from './manifest.js';
+import { screenErrors } from './manifest.js';
 
 // ── Khai báo ────────────────────────────────────────────────────────────────────────────────────────────────────────────
 export { defineAction } from '@bizcity/platform/core/actions';
@@ -54,7 +55,9 @@ export function docRef(type: string, id: string | number): string {
 }
 
 // ── Module ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-export type { ModuleManifestLike } from './manifest.js';
+export type { ModuleManifestLike, ModuleScreen, ModuleScreenOperation, ModuleScreenKind } from './manifest.js';
+// [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: kiểm khai màn × thao tác (dùng ở defineModule và bộ kiểm module)
+export { moduleScreens, screenErrors } from './manifest.js';
 
 export interface ModuleDef {
   manifest: ModuleManifestLike;
@@ -87,6 +90,8 @@ export function defineModule(def: { manifest: ModuleManifestLike; actions?: AnyA
     if (!s.id.startsWith(`${m.key}.`)) bad.push(`subscriber ${s.id} phải bắt đầu "${m.key}."`);
   }
   for (const h of def.hooks ?? []) if (h.module !== m.key) bad.push(`hook ${h.id}: module "${h.module}" ≠ "${m.key}"`);
+  // [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: màn khai sai (quyền chưa khai, sai tiền tố, thiếu xem) → không nạp module
+  bad.push(...screenErrors(m));
   if (bad.length) throw new Error(`Module ${m.id ?? m.key}: ${bad.join('; ')}`);
   return Object.freeze({ manifest: m, actions: def.actions ?? [], subscribers: def.subscribers ?? [], hooks: def.hooks ?? [] });
 }

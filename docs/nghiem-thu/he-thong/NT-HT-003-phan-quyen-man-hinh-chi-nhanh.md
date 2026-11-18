@@ -7,7 +7,7 @@
 | Màn hình | HT12 Phân quyền (Sửa vai trò, Người dùng) · nút Chi nhánh làm việc (Alt+B), HT04 · nút Thêm / Sửa / Xoá / Duyệt… trên 62 màn |
 | Bộ phận yêu cầu | Quản trị, phòng kế toán; yêu cầu của chủ dự án: "mỗi phân hệ tự đăng ký menu + quyền thêm / sửa / xoá vào bộ quản lý vai trò như WordPress, không phân quyền cứng trong code" |
 | Ngày tạo | 13/11/2026 · viết lại 14/11/2026 |
-| Trạng thái | Đã chốt thiết kế 14/11/2026 (mục 8) — đang làm GĐ1 |
+| Trạng thái | Đã chốt thiết kế 14/11/2026 (mục 8) — đang làm GĐ1 · GĐ3–GĐ5 chờ chốt (mục 16) <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — trạng thái GĐ3–GĐ5 --> |
 | Liên quan | ADR-0027 / PHASE-028 (sổ quyền, vai trò của đơn vị, Cho / Cấm, kéo theo `registerDocumentType`) · NT-HT-002 (cửa hàng ↔ site) |
 | Người duyệt thiết kế | Johnny Chu – Chu Hoàng Anh (người phụ trách PHASE-028) |
 
@@ -119,7 +119,7 @@ Không sửa `packages/*`.
 | 5 | Thao tác chỉ có ở giao diện (Duyệt phiếu bán — máy chủ chưa có lệnh) | Chỉ ẩn nút; ghi rõ ở mục 7 |
 
 ## 7. Ngoài phạm vi (phiếu sau)
-- **Lọc báo cáo / danh sách theo chi nhánh** (người một chi nhánh vẫn xem số liệu chi nhánh khác nếu tự chọn ở bộ lọc).
+- ~~**Lọc báo cáo / danh sách theo chi nhánh**~~ — làm ở GĐ3 (mục 13), sau rà soát 17/11/2026. <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — GĐ3: chuyển mục lọc theo chi nhánh từ ngoài phạm vi vào mục 13 -->
 - Quyền Xem của các màn chỉ đọc qua lệnh dùng chung (Nhà cung cấp, Chính sách mua, Cài đặt mua, Công thức đặt hàng, Nhập dữ liệu khởi đầu, Thẻ / Biến động / Loại tài sản, Người nộp thuế, Đối trừ công nợ): cần tách lệnh đọc riêng.
 - Duyệt phiếu bán / trả lại (chưa có lệnh ở máy chủ); nút Nhập Excel chưa ẩn theo Cấm tại chi nhánh.
 - Phạm vi theo **kho** cho thủ kho (gán tại kho hôm nay chỉ mở chi nhánh của kho).
@@ -159,3 +159,106 @@ Người chốt: kiennt (bộ phận yêu cầu) theo đề xuất của phiếu
 | 13/11/2026 | Tạo nháp "giới hạn nơi làm việc theo lần gán tại chi nhánh" (công tắc mặc định tắt, mã ở `modules/access`) |
 | 14/11/2026 | Viết lại theo bản thử: sổ đăng ký màn × thao tác (yêu cầu chủ dự án), gác lệnh + mượn quyền gốc rủi ro thấp, quyền theo chi nhánh, Hạn chế theo chi nhánh, HT12 lưới theo màn; câu hỏi chốt mục 8 |
 | 14/11/2026 | Chốt mục 8: mượn quyền gốc rủi ro thấp; công tắc giới hạn chi nhánh (mặc định tắt); tệp ở `modules/access`; Hạn chế tại chi nhánh chỉ Cấm; gán tại kho mở chi nhánh của kho |
+| 17/11/2026 | GĐ3 (mục 13): chi nhánh tra từ bản ghi, phạm vi đọc, vai trò Nhân viên (`staff`), hook `dangKyChiNhanhBanGhi`, chuẩn [DANG-KY-QUYEN](../../standard/DANG-KY-QUYEN.md) <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — GĐ3 --> |
+| 17/11/2026 | Đề xuất GĐ4 (mục 14: module mới khai màn ở manifest, `branchOf` ở action) và GĐ5 (mục 15: phạm vi theo nút sơ đồ tổ chức, gộp tính phạm vi về Core); câu hỏi chốt mục 16 <!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ4, GĐ5 --> |
+| 17/11/2026 | GĐ5 có mã trên nhánh `feat/phan-quyen-pham-vi-chi-nhanh`: migration 0150, khai triển lần gán nút → chi nhánh ở Core (`lanGanTheoChiNhanh` + tầng nạp bộ tính), API + HT12 gán theo vùng, route `GET /api/v1/quyen-chi-nhanh/vung`; `apps/api/test/phan-quyen-vung.test.ts` 9 / 9 <!-- [2026-11-17 05:10 PM khanhtd] NT-HT-003 — GĐ5 có mã --> |
+| 17/11/2026 | GĐ4 có mã trên nhánh `feat/phan-quyen-pham-vi-chi-nhanh`: manifest `extensions.screens[]` (bizcity_module@1 1.6.0, kiểm ở `defineModule`), Core đăng ký màn module không kéo theo quyền Core, `defineAction({ branchOf })` + `ctx.branchScope` (BIZCITY-ACTION 1.6.0), khung module có màn mẫu; `apps/api/test/phan-quyen-module.test.ts` 6 / 6. Giao diện module dùng `useCan()` của `@bizcity/ui-kit` (không thêm `useThaoTac` vào SDK web) <!-- [2026-11-17 05:50 PM khanhtd] NT-HT-003 — GĐ4 có mã --> |
+
+## 13. GĐ3 — vá lỗ rà soát 17/11/2026 (chờ chốt trước khi mở PR code)
+<!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — GĐ3: vá 9 lỗ ở biên bản rà soát 17/11; mục cần chủ dự án chốt (R-FLOW-2) -->
+
+Biên bản: [REVIEW-2026-11-17-phan-quyen-chi-nhanh](../../audits/REVIEW-2026-11-17-phan-quyen-chi-nhanh.md). Chuẩn cho người / AI thêm màn: [DANG-KY-QUYEN](../../standard/DANG-KY-QUYEN.md).
+
+| # | Việc | Tệp |
+|---|---|---|
+| 1 | Chi nhánh của yêu cầu = thân ∪ chi nhánh của bản ghi (`docKey` trong thân / tham số, `/vouchers/:id`, phiếu kho theo mã); header chỉ dùng khi không có cả hai | `apps/api/src/modules/access/quyen-chi-nhanh.ts` |
+| 2 | Hook `dangKyChiNhanhBanGhi({ url, tra })` thay bảng viết cứng (nhận mọi tham số đường dẫn); Kho, phiếu nhập tay, Mua hàng (phiếu mua, đăng ký tồn max), Tài sản (theo mã) đăng ký | `apps/api/src/modules/access/quyen-chi-nhanh.ts` |
+| 3 | Phạm vi đọc: tham số `branchCodes` / `branches` / `branchCode` bị ép về chọn ∩ phạm vi; lệnh đọc không lọc được → bỏ quyền đọc dữ liệu cho riêng yêu cầu | `apps/api/src/modules/access/quyen-chi-nhanh.ts` |
+| 4 | Danh sách kiểm kê nhận `branchCodes` | `apps/api/src/phan-he/kho/kiem-ke.ts` |
+| 5 | Vai trò chính **Nhân viên** (`staff` — chỉ `catalog:read`) | `packages/contracts/src/enums.ts`, `packages/platform/src/core/auth.ts`, `db/migrations/0149_vai_tro_nhan_vien.sql`, `apps/api/src/modules/access/access.schemas.ts`, `apps/api/src/modules/access/tenant-role.service.ts`, `modules/phan-quyen/web/screens/RolesTab.tsx`, `modules/phan-quyen/web/screens/UsersTab.tsx` |
+| 6 | Bộ kiểm đăng ký quyền + 25 ca phạm vi chi nhánh | `apps/api/test/phan-quyen-dang-ky.test.ts`, `apps/api/test/phan-quyen-pham-vi-chi-nhanh.test.ts` |
+
+Cần chốt (R-FLOW-2): (a) vai trò `staff` — đổi `packages/contracts` + migration 0149; (b) đổi hành vi khi công tắc bật: lệnh đọc không lọc được theo chi nhánh trả thiếu quyền thay vì số liệu toàn đơn vị; (c) sửa `packages/platform/src/core/auth.ts` (lớp P, PHASE-028).
+
+GĐ3 đã chạy trên nhánh ở máy (`feat/phan-quyen-pham-vi-chi-nhanh`, chưa đẩy): 25 / 25 ca phạm vi chi nhánh, 4 / 4 ca bộ kiểm đăng ký, cả bộ `npm test` không thêm ca đỏ (chi tiết ở biên bản). Thêm việc vào GĐ3: đăng ký tra chi nhánh của bản ghi (H7) cho lệnh theo mã của Mua hàng, Bán hàng, Tài sản; `AuthContext.branchScope` (phạm vi chi nhánh của yêu cầu, `null` = mọi chi nhánh) để GĐ4 dùng.
+
+## 14. GĐ4 — hook đăng ký quyền cho module mới (`modules/<key>`) (có mã trên nhánh, chờ chốt)
+<!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ4: module mới khai màn × thao tác ở manifest và tra chi nhánh bản ghi ở action (bậc 4, chủ dự án chốt) -->
+
+**Vấn đề.** Module mới không import `apps/*` nên không gọi được `dangKyManHinh` (H2) và `dangKyChiNhanhBanGhi` (H7): màn của module không lên lưới HT12 theo màn, danh sách màn của `GET /api/v1/man-hinh` không có màn module, và lệnh theo mã của module chưa giới hạn được theo chi nhánh. Yêu cầu chủ dự án: "AI code một menu mới, tự nó register vào luôn; CRUD xoá sửa cũng thế".
+
+**Thiết kế đề xuất** — chỉ thêm, không đổi gì đã có (hợp đồng `bizcity_module@1` tăng bản phụ theo [VERSIONING](../../standard/VERSIONING.md)):
+
+1. **Manifest `extensions.screens[]`** (khai báo, AI viết cùng `extensions.menu`):
+
+   ```json
+   "screens": [{
+     "key": "voucher.dot-phat", "code": "VC01", "group": "Bán hàng", "label": "Đợt phát voucher", "path": "/app/voucher/dot-phat",
+     "operations": {
+       "xem":   { "permission": "voucher:dot-phat-xem",   "label": "Xem",   "kind": "xem" },
+       "them":  { "permission": "voucher:dot-phat-lap",   "label": "Thêm",  "kind": "ghi" },
+       "sua":   { "permission": "voucher:dot-phat-sua",   "label": "Sửa",   "kind": "ghi" },
+       "xoa":   { "permission": "voucher:dot-phat-xoa",   "label": "Xoá",   "kind": "huy" },
+       "duyet": { "permission": "voucher:dot-phat-duyet", "label": "Duyệt", "kind": "ghi" }
+     }
+   }]
+   ```
+
+   Core nạp module → kiểm (quyền có trong `permissions[]`, cùng tiền tố `<key>:`; khoá màn dạng `<key>.<màn>`; có `xem`) → gọi `dangKyManHinh` thay module. `kind` như `loai` của H2 (xem / ghi / huy / xuat). Không có `lenh`: action của module đã gác bằng `permission` riêng.
+2. **Bộ kiểm chéo action ↔ màn**: mỗi action `effect: 'write'` của module phải có `permission` là quyền của một thao tác màn (không thì màn có nút mà HT12 không phân quyền được). Mức: **cảnh báo** bản này, **chặn** từ bản phụ kế tiếp.
+3. **`defineAction({ …, branchOf })`** — tra chi nhánh của bản ghi trong action:
+
+   ```ts
+   defineAction({ id: 'voucher.batch.cancel', permission: 'voucher:dot-phat-xoa', effect: 'write', …,
+     branchOf: async (ctx, input) => ctx.data.module(async (tx) => /* SELECT branch_code FROM mod_voucher.batches WHERE id = input.id */),
+     handler: … });
+   ```
+
+   Runtime action (`packages/platform/src/core/actions.ts`) gọi `branchOf` **trước** handler, trong cùng giao dịch; chi nhánh trả về phải nằm trong `ctx.branchScope` (`null` = mọi chi nhánh), không thì `FORBIDDEN` kèm `BRANCH_OUT_OF_SCOPE`. Action liệt kê đọc `ctx.branchScope` để lọc (hoặc nhận tham số `branchCodes` — lớp phân quyền đã ép, GĐ3).
+4. **SDK + giao diện module**: `@bizcity/module-sdk` có kiểu màn, `branchOf` của action, `branchScope` của ngữ cảnh action; `@bizcity/module-sdk/web` có `useThaoTac(key)` như phân hệ cũ (đọc danh sách màn + quyền của người dùng).
+5. **Khung module** (`npx bizcity module new`) sinh sẵn một màn mẫu đủ Xem / Thêm / Sửa / Xoá, quyền tương ứng, `branchOf` ở action theo mã.
+
+**Tệp:** `docs/contracts/BIZCITY-MODULE-v1.md`, `docs/contracts/BIZCITY-MODULE-v1.schema.json`, `docs/contracts/BIZCITY-EXTENSION-v1.md`, `docs/contracts/BIZCITY-ACTION-v1.md`, `packages/module-sdk/src/manifest.ts`, `packages/module-sdk/src/index.ts`, `packages/module-sdk/src/web.ts`, `packages/module-sdk/API.md`, `packages/platform/src/core/actions.ts`, nạp màn module ở lớp phân quyền (tệp mới trong `apps/api/src/modules/access/`), khung `templates/starter-module/**`, test mới trong `apps/api/test/`.
+
+**Kiểm bằng:** module thử khai 1 màn 5 thao tác → danh sách màn có màn đó; HT12 lưới có dòng; người chỉ Cho quyền lập thì lập được, xoá 403; action theo mã của chi nhánh ngoài phạm vi → 403; manifest khai quyền không có trong `permissions[]` → module không nạp (lỗi rõ tên quyền); action ghi không thuộc màn nào → cảnh báo.
+
+## 15. GĐ5 — phạm vi theo vùng (sơ đồ tổ chức) và gộp với bộ tính của Core (có mã trên nhánh, chờ chốt)
+<!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — GĐ5: gán vai trò tại nút sơ đồ tổ chức (cây con), dùng kiểu phạm vi org_unit sẵn có của bộ tính ADR-0027 -->
+
+**Vấn đề.** Quản lý vùng (Miền / Chi nhánh / Tỉnh trong sơ đồ tổ chức, NT-HT-001: 3 Miền, 12 Chi nhánh, 35 Tỉnh, 743 cửa hàng gắn nút) phải gán vai trò tại **từng** cửa hàng; mở cửa hàng mới phải gán thêm tay. Phạm vi chi nhánh lại tính ở hai nơi: `apps/api/src/modules/access/quyen-chi-nhanh.ts` (SQL riêng) và bộ tính `packages/platform/src/core/authz/` (`requireScope`, `allowedScope`).
+
+**"Vùng" là gì — ba lựa chọn:**
+
+| | Lựa chọn | Được | Mất |
+|---|---|---|---|
+| **A (đề xuất)** | **Nút sơ đồ tổ chức** (`org_units`, DM16) — gán tại nút = mọi chi nhánh có `branches.org_unit_id` thuộc nút đó hoặc cây con | Dữ liệu đã có và đang dùng thật (NT-HT-001); bộ tính đã có kiểu phạm vi `org_unit` + `subtree` (`packages/platform/src/core/authz/types.ts`); chuyển cửa hàng sang vùng khác ở DM02 thì quyền tự theo | Phải giữ sơ đồ tổ chức đúng; xoá nút còn lần gán phải chặn |
+| B | Cây chi nhánh (`branches.parent_id`) | Không cần bảng khác | NT-HT-001 đã bỏ cách phân cấp theo chi nhánh cha (đoán theo mã, sai thực tế) |
+| C | Nhóm chi nhánh riêng (bảng mới) | Tự do nhóm chéo cây | Thêm một danh mục phải giữ song song với sơ đồ tổ chức |
+
+**Thiết kế đề xuất (A):**
+
+1. Migration 0150: `user_role_assignments.scope_type` thêm `org_unit` (`scope_id` = `org_units.id`, cùng đơn vị); `COMMENT ON`. Xoá / ngừng nút còn lần gán hiệu lực → chặn, báo tên người được gán (ECP-13).
+2. Nghĩa: vai trò gán tại nút N có hiệu lực ở mọi chi nhánh thuộc N **và cây con** (theo `org_units.path`), tính **tại thời điểm yêu cầu** — cửa hàng chuyển vùng thì quyền đổi theo; lịch sử chuyển nằm ở `org_link_versions`.
+3. **Gộp tính phạm vi về Core**: `packages/platform/src/core/authz/store.ts` nạp lần gán `org_unit` (kèm path); thêm một hàm Core trả phạm vi chi nhánh của người dùng (mọi chi nhánh, hoặc danh sách mã + quyền thêm / Cấm theo từng chi nhánh) từ một truy vấn gộp lần gán chi nhánh / kho / nút. Lớp chi nhánh (`quyen-chi-nhanh.ts`) bỏ SQL riêng, gọi hàm này; `requireScope` / `allowedScope` dùng cùng nguồn. Bước sau (phiếu khác): tính quyền theo chi nhánh hẳn trong bộ tính.
+4. HT12 (Người dùng → Gán vai trò): phạm vi chọn được **Nút sơ đồ tổ chức** (cây DM16) cạnh Chi nhánh / Kho; bảng rà trước khi bật công tắc hiện "tại vùng X (n cửa hàng)".
+5. Hiệu năng: phạm vi một người vùng có thể hàng trăm cửa hàng — tính một lần mỗi yêu cầu, đệm theo `authz_version` như quyền hiện nay.
+
+**Tệp:** `db/migrations/0150_pham_vi_so_do_to_chuc.sql`, `packages/platform/src/core/authz/store.ts`, `packages/platform/src/core/authz/scope.ts`, `packages/platform/src/core/security/role-assignments.ts`, `apps/api/src/modules/access/quyen-chi-nhanh.ts`, `apps/api/src/modules/access/role-assignment.service.ts`, `apps/api/src/modules/access/access.schemas.ts`, `modules/phan-quyen/web/**`, test mới trong `apps/api/test/`.
+
+**Kiểm bằng:** gán "Quản lý cửa hàng" tại Miền Bắc → làm được ở mọi cửa hàng thuộc Miền Bắc và tỉnh con, 403 ở cửa hàng Miền Nam; báo cáo không lọc chỉ ra số Miền Bắc; chuyển một cửa hàng sang Miền Nam ở DM02 → quyền đổi ngay yêu cầu kế tiếp; xoá nút còn lần gán → chặn; `requireScope` ở cửa nạp cho kết quả giống lớp chi nhánh.
+
+## 16. Câu hỏi cần chốt cho GĐ3–GĐ5
+<!-- [2026-11-17 03:30 PM khanhtd] NT-HT-003 — câu hỏi chốt GĐ3–GĐ5 (R-FLOW-2), mặc định tạm theo đề xuất -->
+
+| # | Câu hỏi | Đề xuất (mặc định tạm) |
+|---|---|---|
+| 1 | Thêm vai trò hệ thống `staff` (Nhân viên, chỉ `catalog:read`) — đổi `packages/contracts` + migration 0149 | **Có** |
+| 2 | Bật giới hạn chi nhánh: lệnh đọc không lọc được theo chi nhánh trả thiếu quyền thay vì số liệu toàn đơn vị | **Có** (đóng mặc định; màn nào cần thì thêm tham số `branchCodes`) |
+| 3 | GĐ4: màn của module khai ở manifest `extensions.screens[]` (không phải hàm trong mã) | **Có** — khai báo, bộ kiểm đọc được không cần chạy mã |
+| 4 | GĐ4: tra chi nhánh bản ghi bằng `branchOf` của action, chạy trong runtime action | **Có** — module đọc bảng của mình, Core chỉ so phạm vi |
+| 5 | GĐ4: action ghi không thuộc thao tác màn nào | **Cảnh báo** bản này, **chặn** bản phụ sau |
+| 6 | GĐ5: "vùng" = nút sơ đồ tổ chức, gồm cây con | **A** (bảng §15) |
+| 7 | GĐ5: chuyển cửa hàng sang vùng khác → quyền đổi ngay (không chốt theo ngày gán) | **Có** |
+| 8 | Thứ tự PR code | GĐ3 → GĐ5 → GĐ4 (GĐ4 dùng `branchScope` của GĐ3; GĐ5 sửa cùng tệp lớp phân quyền nên đi trước) |
+
+Người chốt: chủ dự án (Johnny Chu – Chu Hoàng Anh) duyệt PR tài liệu này; câu nào đổi thì sửa bảng trước khi merge. Sau khi merge, PR code từng giai đoạn theo §16 câu 8, mỗi PR một nhánh ngắn (R-FLOW-4).

@@ -39,6 +39,9 @@ export interface NhapLoai {
   fields: NhapTruong[];
   /** Cho chọn Thêm mới / Cập nhật / Cả hai (mặc định có). */
   modes?: boolean;
+  // [2026-11-18 02:00 PM kiennt] NT-DM-007 — tệp nhiều sheet: tự chọn sheet trùng tên này (đóng góp)
+  /** Tên sheet tự chọn khi tệp có sheet trùng tên (không phân biệt hoa thường, dấu). */
+  sheet?: string;
   /** Danh sách để xem sau khi nhập. */
   listPath: string;
   /** Khoá dữ liệu cần tải lại sau khi ghi. */
@@ -241,8 +244,6 @@ const NHOM_HANG: NhapLoai = {
     const tree = new Map<string, { name: string; parent: string | null; sku: string; full: string }>(ds.map((c) => [c.code, { name: c.name, parent: c.parentCode, sku: c.skuCode ?? '', full: c.fullName ?? '' }]));
     const pathOf = (code: string | null): string => { const out: string[] = []; for (let c = code, n = 0; c && n < 50; c = tree.get(c)?.parent ?? null, n++) out.unshift(tree.get(c)?.name ?? ''); return out.join(' / '); };
     const kidsOf = (parent: string | null) => [...tree.entries()].filter(([, v]) => (v.parent ?? null) === parent);
-    /** Ngành hàng (cấp 1) chứa nhóm — gốc cây. */
-    const gocOf = (code: string): string => { let c = code; for (let p = tree.get(c)?.parent ?? null, n = 0; p && n < 50; p = tree.get(p)?.parent ?? null, n++) c = p; return c; };
     const findParent = (v: string): string | { err: string } => {
       const k = low(v);
       const byPath = [...tree.keys()].filter((c) => low(pathOf(c)) === k);
@@ -267,8 +268,8 @@ const NHOM_HANG: NhapLoai = {
       // Nhóm đang có cùng cha + cùng mã nhóm hàng → cập nhật.
       const same = errors.length ? undefined : kidsOf(parent).find(([, v]) => low(v.name) === low(name));
       const code = same ? same[0] : `moi:${row}`;
-      // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng chỉ không trùng trong cùng cây (cùng ngành hàng cấp 1); khác ngành được trùng.
-      if (!same && name && [...tree.entries()].some(([c, v]) => low(v.name) === low(name) && (parent ? gocOf(c) === gocOf(parent) : !v.parent))) errors.push(parent ? `Mã nhóm hàng "${name}" đã dùng cho nhóm khác cùng ngành "${tree.get(gocOf(parent))?.name ?? ''}" — đặt mã khác` : `Mã nhóm hàng "${name}" đã dùng cho ngành hàng khác — đặt mã khác`);
+      // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng không trùng nhóm cùng cha, không trùng tên nhóm cha; khác cha thì được trùng.
+      if (!same && name && parent && low(tree.get(parent)?.name ?? '') === low(name)) errors.push(`Mã nhóm hàng "${name}" trùng tên nhóm cha — đặt mã khác`);
       const before = have.get(code);
       const sku = (r.skuCode ?? '').trim().toUpperCase();
       if (sku && !/^[0-9A-Z]+$/.test(sku)) errors.push('Mã ngắn chỉ gồm chữ và số');

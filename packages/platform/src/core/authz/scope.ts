@@ -9,6 +9,8 @@
  * Thư viện này chưa gắn vào route nào: lần gán có phạm vi chưa cấp gì cho tới khi một route gọi nó (AUTHZ-16) — W5 gắn vào luồng chuyển kho.
  */
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { sql } from 'kysely';
+import type { Role } from '@ketoan/contracts';
 import { db, type Db } from '../../db/client.js';
 import { Errors } from '../errors.js';
 import { type AuthContext, type Permission } from '../auth.js';
@@ -90,4 +92,42 @@ export function restrictToScope(allowed: AuthzScopeResult, requested: { branchId
   if (allowed.all) return { all: !requested.branchIds && !requested.warehouseIds, branchIds: [...(requested.branchIds ?? [])], warehouseIds: [...(requested.warehouseIds ?? [])] };
   const pick = (want: readonly string[] | undefined, have: readonly string[]): string[] => (want ? have.filter((x) => want.includes(x)) : [...have]);
   return { all: false, branchIds: pick(requested.branchIds, allowed.branchIds), warehouseIds: pick(requested.warehouseIds, allowed.warehouseIds) };
+}
+
+// [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5 (§15 bước 3): MỘT nơi khai triển lần gán theo chi nhánh / kho / nút sơ đồ tổ chức → mã chi nhánh (lớp chi nhánh, bảng rà dùng chung)
+/** Một lần gán có phạm vi, quy về một mã chi nhánh (nút sơ đồ tổ chức → mỗi chi nhánh thuộc nút và cây con một dòng). */
+export interface LanGanChiNhanh {
+  user_id: string; code: string; scope_type: 'branch' | 'warehouse' | 'org_unit';
+  role: Role | null; tenant_role_id: string | null; base_role: Role | null; kind: string | null; label: string | null;
+  /** Mã nút sơ đồ tổ chức khi scope_type = org_unit (để hiện "tại vùng X"). */
+  nut: string | null;
+}
+
+/**
+ * Lần gán theo chi nhánh / kho / nút sơ đồ tổ chức còn hiệu lực hôm nay (giờ Việt Nam) của một người (hoặc cả đơn vị khi không truyền
+ * `userId`), mỗi dòng một mã chi nhánh. Lần gán kho → chi nhánh của kho; lần gán nút → mọi chi nhánh có `org_unit_id` thuộc nút và cây con
+ * (theo `org_units.path`), tính tại thời điểm gọi. Vai trò của đơn vị đã tắt bị bỏ.
+ */
+export async function lanGanTheoChiNhanh(conn: Db, tenantId: string, userId?: string): Promise<LanGanChiNhanh[]> {
+  const { rows } = await sql<LanGanChiNhanh>`
+    WITH a AS (
+      SELECT a.user_id::text AS user_id, a.scope_type, a.scope_id, a.role, a.tenant_role_id::text AS tenant_role_id, r.base_role, r.kind, r.label
+        FROM user_role_assignments a LEFT JOIN tenant_roles r ON r.id = a.tenant_role_id AND r.tenant_id = a.tenant_id
+       WHERE a.tenant_id = ${tenantId} ${userId ? sql`AND a.user_id = ${userId}` : sql``}
+         AND a.revoked_at IS NULL AND a.scope_type IN ('branch', 'warehouse', 'org_unit')
+         AND a.valid_from <= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+         AND (a.valid_to IS NULL OR a.valid_to >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)
+         AND (a.tenant_role_id IS NULL OR r.is_active))
+    SELECT a.user_id, b.code, a.scope_type, a.role, a.tenant_role_id, a.base_role, a.kind, a.label, NULL::text AS nut
+      FROM a JOIN branches b ON a.scope_type = 'branch' AND b.tenant_id = ${tenantId} AND b.id = a.scope_id
+    UNION ALL
+    SELECT a.user_id, b.code, a.scope_type, a.role, a.tenant_role_id, a.base_role, a.kind, a.label, NULL::text
+      FROM a JOIN warehouses w ON a.scope_type = 'warehouse' AND w.tenant_id = ${tenantId} AND w.id = a.scope_id
+             JOIN branches b ON b.tenant_id = ${tenantId} AND b.id = w.branch_id
+    UNION ALL
+    SELECT a.user_id, b.code, a.scope_type, a.role, a.tenant_role_id, a.base_role, a.kind, a.label, n.code
+      FROM a JOIN org_units n ON a.scope_type = 'org_unit' AND n.tenant_id = ${tenantId} AND n.id = a.scope_id
+             JOIN org_units m ON m.tenant_id = ${tenantId} AND (m.path = n.path OR left(m.path, length(n.path) + 1) = n.path || chr(92))
+             JOIN branches b ON b.tenant_id = ${tenantId} AND b.org_unit_id = m.id`.execute(conn);
+  return rows;
 }

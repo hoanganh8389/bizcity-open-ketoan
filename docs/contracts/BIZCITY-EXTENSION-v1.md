@@ -28,6 +28,7 @@ Liệt kê **đóng** các chỗ module được cắm vào Core: giao diện, A
 | Điểm | Khai ở | Nhận gì | Ví dụ |
 |---|---|---|---|
 | `menu` | manifest `extensions.menu` | mục menu + màn (`path` dưới `/app/<key>/…`) | "Hợp đồng", "Lịch thu tiền" |
+| `screens` <!-- [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4 --> | manifest `extensions.screens[]` (bizcity_module@1 1.6.0) | màn × thao tác (Xem · Thêm · Sửa · Xoá · Duyệt · Xuất), mỗi thao tác một quyền `<key>:…` — Core đăng ký vào sổ màn, HT12 phân quyền theo màn; nút ẩn bằng `useCan()` của `@bizcity/ui-kit` | "Đợt phát voucher": xem / lap / sua / xoa / duyet |
 | `launcher` | manifest `ui` | ô trên lưới ứng dụng | biểu tượng, màu |
 | Slot `partner.detail.tab` | `extensions.slots` | `{ partnerCode }` | tab "Hợp đồng" trong hồ sơ khách hàng |
 | Slot `product.detail.tab` | | `{ sku }` | |

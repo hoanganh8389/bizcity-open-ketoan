@@ -15,5 +15,13 @@
   ],
   "data": { "schema": "mod_mau_module", "tables": ["records"], "reads": [] },
   "actions": ["mau-module.record.create", "mau-module.record.list"],
+  "extensions": {
+    "screens": [
+      { "key": "mau-module.ban-ghi", "code": "MAU01", "label": "Bản ghi", "path": "/app/mau-module",
+        "operations": {
+          "xem": { "permission": "mau-module:read", "label": "Xem", "kind": "xem" },
+          "them": { "permission": "mau-module:write", "label": "Thêm", "kind": "ghi" } } }
+    ]
+  },
   "ui": { "icon": "Puzzle", "color": "#475569", "order": 60 }
 }

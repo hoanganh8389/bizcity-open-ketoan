@@ -125,6 +125,9 @@ export const ROLES = {
   // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: vai trò auditor (Q022-1) = chỉ xem + Bàn đánh giá (review:read).
   /** Kiểm soát / ban kiểm soát: chỉ xem như viewer + Bàn đánh giá (review:read). Không ghi, không cấu hình. */
   AUDITOR: 'auditor',
+  // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — vai trò staff (Nhân viên): không quyền đọc toàn đơn vị; quyền nghiệp vụ chỉ đến từ lần gán tại chi nhánh / kho (chờ chủ dự án chốt, migration 0149)
+  /** Nhân viên (thu ngân, bán hàng, thủ kho cửa hàng): chỉ xem danh mục. Mọi quyền nghiệp vụ do vai trò gán TẠI chi nhánh / kho (bật `bizcity.authz.branch_scope`). */
+  STAFF: 'staff',
 } as const;
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
@@ -135,4 +138,5 @@ export const ROLE_LABELS: Record<Role, string> = {
   viewer: 'Chỉ xem',
   developer: 'Nhà phát triển',
   auditor: 'Kiểm soát (ban kiểm soát)',
+  staff: 'Nhân viên (theo chi nhánh)', // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — nhãn vai trò staff
 };

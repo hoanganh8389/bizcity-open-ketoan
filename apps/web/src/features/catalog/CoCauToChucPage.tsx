@@ -28,7 +28,9 @@ import type { Branch } from './BranchesPage';
 import { useWarehouses, type Warehouse } from './WarehousesPage';
 import { LoaiKhoForm, useWarehouseTypes } from './WarehouseTypesPage';
 import type { DimRow } from './DimensionsPage';
-import { DanhSachLoai, NhapCoCau, xuatCoCau, type KieuDs } from './CoCauExcel';
+import { DanhSachLoai, xuatCoCau, type KieuDs } from './CoCauExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 import './co-cau.css';
 
 export type Loai = 'company' | 'unit' | 'branch' | 'warehouse' | 'department' | 'none';
@@ -113,7 +115,6 @@ export function CoCauToChucPage() {
   const listExport = useRef<(() => void) | null>(null);
   /** back: các nút đã đi qua (bấm đúp dòng bên trong) để Quay lại. */
   const [form, setForm] = useState<{ key: string | null; parentKey: string | null; back?: string[]; copy?: string } | null>(null);
-  const [imp, setImp] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const restore = useMutation({
@@ -143,7 +144,8 @@ export function CoCauToChucPage() {
           <button className="btn btn-sm" onClick={cc.refetch}><RefreshCw size={14} /> Nạp</button>
           <button className="btn btn-sm" title="Tệp 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — sửa rồi Nhập Excel lại được" onClick={() => void xuatCoCau(cc)}><FileDown size={14} /> Xuất</button>
           <button className="btn btn-sm" onClick={() => window.print()} title="In màn hình đang xem"><Printer size={14} /> In</button>
-          {canWrite && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
+          {/* [2026-11-18 02:00 PM kiennt] NT-DM-007 — Nhập Excel ▾: 4 loại qua trình nhập chung, theo thứ tự Cơ cấu → Phòng ban → Cửa hàng → Kho (đóng góp) */}
+          {canWrite && <NhapCoCauMenu />}
           <span className="spacer" />
           <span className="cc-xem">
             {([['table', 'Cây'], ['chart', 'Sơ đồ'], ['org', 'Cơ cấu'], ['branch', 'Cửa hàng'], ['warehouse', 'Kho'], ['department', 'Phòng ban'], ['all', 'Tất cả']] as const).map(([k, t]) => (
@@ -173,7 +175,6 @@ export function CoCauToChucPage() {
         onGo={(key) => { setSel(key); setForm((x) => ({ key, parentKey: null, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] })); }}
         onBack={form.back?.length ? () => { const back = [...form.back!]; const key = back.pop()!; setSel(key); setForm({ key, parentKey: null, back }); } : undefined}
         onAdd={(parentKey) => setForm((x) => ({ key: null, parentKey, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] }))} />}
-      {imp && <NhapCoCau cc={cc} onClose={() => setImp(false)} onDone={(text) => { setImp(false); setMsg({ ok: true, text }); }} />}
     </>
   );
 }
@@ -580,5 +581,28 @@ function LichSuNut({ node }: { node: CNode }) {
         ))}</tbody>
       </table>
     </div>
+  );
+}
+
+/** Nút Nhập Excel ▾ của DM16: chọn một trong 4 loại; tệp Xuất 4 sheet dùng thẳng (trình nhập tự chọn đúng sheet). */
+function NhapCoCauMenu() {
+  const [mo, setMo] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!mo) return;
+    const dong = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setMo(false); };
+    document.addEventListener('mousedown', dong);
+    return () => document.removeEventListener('mousedown', dong);
+  }, [mo]);
+  return (
+    <span ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+      <button className="btn btn-sm" onClick={() => setMo((x) => !x)} title="Nhập từ tệp Excel (tệp Xuất 4 sheet dùng được) — nhập lần lượt Cơ cấu → Phòng ban → Cửa hàng → Kho"><FileUp size={14} /> Nhập Excel ▾</button>
+      {mo && (
+        <div className="card" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 30, padding: 8, display: 'grid', gap: 6, minWidth: 200, boxShadow: '0 4px 14px rgba(0,0,0,.15)' }}>
+          <div className="muted" style={{ fontSize: 12 }}>Nhập lần lượt theo thứ tự:</div>
+          {([['co-cau', '1. Cơ cấu'], ['phong-ban', '2. Phòng ban'], ['cua-hang', '3. Cửa hàng'], ['kho-co-cau', '4. Kho']] as const).map(([id, nhan]) => <NutNhapExcel key={id} loai={nhapLoai(id)!} label={nhan} />)}
+        </div>
+      )}
+    </span>
   );
 }

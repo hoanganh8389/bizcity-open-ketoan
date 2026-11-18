@@ -286,7 +286,9 @@ describe('Ma trận quyền × vai trò và "Xem như"', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const m = res.body.data;
     expect(m.permissions.map((p: any) => p.key)).toEqual(expect.arrayContaining(['catalog:write', 'users:write', 'periods:lock']));
-    expect(m.roles.filter((r: any) => r.system).map((r: any) => r.code).sort()).toEqual(['accountant', 'auditor', 'chief_accountant', 'developer', 'owner', 'viewer']);
+    // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — thêm vai trò hệ thống staff (Nhân viên, migration 0149)
+    expect(m.roles.filter((r: any) => r.system).map((r: any) => r.code).sort()).toEqual(['accountant', 'auditor', 'chief_accountant', 'developer', 'owner', 'staff', 'viewer']);
+    expect(m.cells['system:staff'].allow).toEqual(['catalog:read']);
     expect(m.cells['system:owner'].allow).toContain('users:write');
     expect(m.cells['system:viewer'].allow).toContain('catalog:read');
     expect(m.cells['system:viewer'].allow).not.toContain('documents:write');

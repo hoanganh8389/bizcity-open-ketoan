@@ -1,18 +1,13 @@
 // [2026-11-13 Nguyễn Văn Thủy] Cơ cấu tổ chức kiểu Excel: danh sách theo loại (lọc từng cột), xuất / nhập Excel cùng một mẫu 4 sheet (đóng góp)
 /**
  * Danh sách theo loại — Cơ cấu · Cửa hàng · Kho · Phòng ban · Tất cả: lưới có hàng lọc từng cột, sắp xếp, chọn cột, xuất Excel.
- * Xuất Excel: 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban. Sửa trong Excel rồi Nhập lại đúng tệp đó:
- *   dòng có mã chưa có → thêm; có mã → so từng ô, đổi thì sửa, không đổi thì bỏ qua; cột không có trong tệp → giữ nguyên.
- *   Xem trước (thêm / sửa / lỗi) rồi mới ghi; có lỗi thì không ghi gì. Ghi lần lượt: cơ cấu (cha trước con) → cửa hàng → kho → phòng ban.
+ * Xuất Excel: 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban (Phòng ban có cả phòng ban riêng của cửa hàng).
+ *   [2026-11-18 02:00 PM kiennt] NT-DM-007 — nhập lại bằng trình nhập chung, 4 loại (lib/nhapExcelDanhMuc.ts: co-cau, phong-ban, cua-hang, kho-co-cau),
+ *   mỗi loại tự chọn đúng sheet; bỏ trình nhập riêng 4 sheet (một dòng lỗi là không ghi gì) (đóng góp)
  */
-import { useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { errorText } from '@/lib/api';
-import { Field, Loading, Modal } from '@/components/ui';
+import { useMemo } from 'react';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { plain } from '@/components/pickers';
-import { invalidateOrg } from '@/lib/orgUnits';
-import { formOf, ghiChu, loaiNhan, luuNut, mstOf, off, type CC, type CNode, type F, type Loai } from './CoCauToChucPage';
+import { ghiChu, loaiNhan, mstOf, off, type CC, type CNode, type Loai } from './CoCauToChucPage';
 
 export type KieuDs = 'all' | 'org' | 'branch' | 'warehouse' | 'department';
 const yes = (b: boolean) => (b ? 'x' : '');
@@ -110,7 +105,8 @@ export async function xuatCoCau(cc: CC) {
     org: all.filter((n) => n.org).sort(byDepth).map((n) => [n.loai === 'company' ? 'Công ty' : 'Cơ cấu', n.code, n.name, parentCode(cc, n), n.org!.taxId ?? '', n.org!.note, yes(n.isActive)]),
     branch: all.filter((n) => n.branch).sort(byDepth).map((n) => { const b = n.branch!; return [b.code, b.name, parentCode(cc, n), b.taxCode, b.departmentCode ?? '', b.companyName, b.address ?? '', b.phone, b.note, yes(b.isActive)]; }),
     warehouse: all.filter((n) => n.warehouse).sort((a, b) => a.code.localeCompare(b.code)).map((n) => { const w = n.warehouse!; return [w.code, w.name, w.branchCode, w.typeCode ?? '', yes(w.isDefault), w.address, w.note, yes(w.isActive)]; }),
-    department: all.filter((n) => n.dept).sort(byDepth).map((n) => [n.code, n.name, parentCode(cc, n), n.dept!.note, yes(n.isActive)]),
+    // [2026-11-18 02:00 PM kiennt] NT-DM-007 — xuất MỌI phòng ban, kể cả phòng ban riêng của cửa hàng (không lên cây) — cột Phòng ban của sheet Cửa hàng trỏ tới chúng, thiếu thì tệp không nhập lại được (đóng góp)
+    department: [...cc.departments].sort((a, b) => a.code.localeCompare(b.code)).map((d) => { const o = String(d.extra?.orgUnitCode ?? ''); return [d.code, d.name, o && cc.byKey.has(`o:${o}`) ? o : '', d.note, yes(d.isActive)]; }),
   };
   const wb = XLSX.utils.book_new();
   for (const k of Object.keys(SHEETS) as SheetKey[]) {
@@ -119,171 +115,4 @@ export async function xuatCoCau(cc: CC) {
     XLSX.utils.book_append_sheet(wb, ws, SHEETS[k].name);
   }
   XLSX.writeFile(wb, 'co-cau-to-chuc.xlsx');
-}
-
-/* ------------------------------------------------------------------ nhập Excel */
-
-interface PlanRow { sheet: string; row: number; code: string; loai: Exclude<Loai, 'none'>; kind: 'new' | 'edit' | 'same' | 'error'; message: string; f?: F; node?: CNode | null; start?: F | null }
-const H = (s: unknown) => plain(String(s ?? '')).replace(/[^a-z0-9]+/g, ' ').trim();
-const truthy = (v: string) => !['', '0', 'khong', 'no', 'false', 'ngung'].includes(H(v));
-const KEYS: (keyof F)[] = ['loai', 'parentKey', 'code', 'name', 'note', 'isActive', 'taxId', 'address', 'phone', 'companyName', 'departmentCode', 'typeCode', 'isDefault'];
-
-function lapKeHoach(cc: CC, wb: { SheetNames: string[]; Sheets: Record<string, unknown> }, toJson: (ws: unknown) => Record<string, unknown>[]): PlanRow[] {
-  const plan: PlanRow[] = [];
-  const sheetRows = (k: SheetKey) => {
-    const n = wb.SheetNames.find((s) => H(s) === H(SHEETS[k].name));
-    return n ? toJson(wb.Sheets[n]) : null;
-  };
-  // Mã có trong tệp (để nút cha khai cùng tệp được chấp nhận).
-  const inFile: Record<'org' | 'branch', Set<string>> = { org: new Set(), branch: new Set() };
-  const parsed: { k: SheetKey; rows: { i: number; get: (name: string) => string | undefined }[] }[] = [];
-  for (const k of Object.keys(SHEETS) as SheetKey[]) {
-    const rows = sheetRows(k);
-    if (!rows) continue;
-    const list = rows.map((r, i) => {
-      const m = new Map(Object.entries(r).map(([key, v]) => [H(key), String(v ?? '').trim()]));
-      return { i: i + 2, get: (name: string) => (m.has(H(name)) ? m.get(H(name))! : undefined) };
-    });
-    parsed.push({ k, rows: list });
-    if (k === 'org' || k === 'branch') for (const r of list) { const c = r.get(k === 'branch' ? 'Mã' : 'Mã'); if (c) inFile[k].add(c); }
-  }
-  const orgOk = (c: string) => cc.byKey.has(`o:${c}`) || inFile.org.has(c);
-  const branchOk = (c: string) => cc.byKey.has(`b:${c}`) || inFile.branch.has(c);
-  for (const { k, rows } of parsed) {
-    const sheet = SHEETS[k].name;
-    for (const r of rows) {
-      const code = (k === 'warehouse' ? r.get('Mã kho') : r.get('Mã')) ?? '';
-      if (!code && !Object.values(SHEETS[k].head).some((h) => r.get(h))) continue;
-      const loai: Exclude<Loai, 'none'> = k === 'org' ? (H(r.get('Loại')) === 'cong ty' ? 'company' : 'unit') : k;
-      const key = `${k === 'org' ? 'o' : k === 'branch' ? 'b' : k === 'warehouse' ? 'w' : 'd'}:${code}`;
-      const node = cc.byKey.get(key) ?? null;
-      const err = (message: string) => plan.push({ sheet, row: r.i, code, loai, kind: 'error', message });
-      if (!code) { err('Thiếu mã'); continue; }
-      const start = node ? formOf(node, null, cc) : null;
-      const f: F = { ...(start ?? formOf(null, null, cc)), loai, code };
-      const put = <K extends keyof F>(field: K, v: string | undefined, conv: (s: string) => F[K]) => { if (v !== undefined) f[field] = conv(v); };
-      put('name', r.get(k === 'warehouse' ? 'Tên kho' : 'Tên'), (s) => s);
-      put('isActive', r.get('Theo dõi'), truthy);
-      if (k === 'org') {
-        const p = r.get('Thuộc (mã)');
-        if (p !== undefined) { if (p && !orgOk(p)) { err(`Không có cơ cấu cha ${p}`); continue; } f.parentKey = p ? `o:${p}` : null; }
-        put('taxId', r.get('MST'), (s) => s); put('note', r.get('Mô tả'), (s) => s);
-        if (f.taxId && !/^[0-9]{10}(-[0-9]{3})?$/.test(f.taxId)) { err('MST gồm 10 số hoặc 10 số-3 số'); continue; }
-      } else if (k === 'branch') {
-        const p = r.get('Thuộc cơ cấu (mã)');
-        if (p !== undefined) { if (p && !orgOk(p)) { err(`Không có cơ cấu ${p}`); continue; } f.parentKey = p ? `o:${p}` : null; }
-        put('taxId', r.get('MST'), (s) => s); put('departmentCode', r.get('Phòng ban'), (s) => s); put('companyName', r.get('Tên công ty in'), (s) => s);
-        put('address', r.get('Địa chỉ'), (s) => s); put('phone', r.get('Điện thoại'), (s) => s); put('note', r.get('Ghi chú'), (s) => s);
-        if (f.departmentCode && !cc.departments.some((d) => d.code === f.departmentCode)) { err(`Không có phòng ban ${f.departmentCode}`); continue; }
-      } else if (k === 'warehouse') {
-        const p = r.get('Cửa hàng (mã)');
-        if (p !== undefined) { if (!p || !branchOk(p)) { err(p ? `Không có cửa hàng ${p}` : 'Thiếu cửa hàng'); continue; } f.parentKey = `b:${p}`; }
-        if (!f.parentKey) { err('Thiếu cửa hàng'); continue; }
-        put('typeCode', r.get('Loại kho'), (s) => s.toUpperCase() || 'KHH'); put('isDefault', r.get('Kho mặc định'), truthy);
-        put('address', r.get('Địa chỉ'), (s) => s); put('note', r.get('Ghi chú'), (s) => s);
-        if (code.length > 12) { err('Mã kho tối đa 12 ký tự'); continue; }
-      } else {
-        const p = r.get('Thuộc cơ cấu (mã)');
-        if (p !== undefined) { if (p && !orgOk(p)) { err(`Không có cơ cấu ${p}`); continue; } f.parentKey = p ? `o:${p}` : null; }
-        put('note', r.get('Ghi chú'), (s) => s);
-      }
-      if (!f.name.trim()) { err('Thiếu tên'); continue; }
-      if (!node) { plan.push({ sheet, row: r.i, code, loai, kind: 'new', message: 'Thêm mới', f, node, start }); continue; }
-      const diff = KEYS.filter((x) => x !== 'loai' || (f.loai !== 'company' && f.loai !== 'unit') ? JSON.stringify(f[x]) !== JSON.stringify(start![x]) : f.loai !== start!.loai);
-      plan.push({ sheet, row: r.i, code, loai, kind: diff.length ? 'edit' : 'same', message: diff.length ? `Sửa: ${diff.length} ô` : 'Không đổi', f, node, start });
-    }
-  }
-  return plan;
-}
-
-/** Thứ tự ghi: cơ cấu cha trước con → cửa hàng → kho → phòng ban. */
-function thuTu(plan: PlanRow[]): PlanRow[] {
-  const work = plan.filter((p) => p.kind === 'new' || p.kind === 'edit');
-  const org = work.filter((p) => p.loai === 'company' || p.loai === 'unit');
-  const done = new Set<string>(), out: PlanRow[] = [];
-  const codes = new Set(org.map((p) => p.code));
-  for (let pass = 0; pass < 20 && out.length < org.length; pass++) {
-    for (const p of org) {
-      if (done.has(p.code)) continue;
-      const parent = p.f!.parentKey?.slice(2);
-      if (parent && codes.has(parent) && !done.has(parent) && parent !== p.code) continue;
-      out.push(p); done.add(p.code);
-    }
-  }
-  for (const p of org) if (!done.has(p.code)) out.push(p);
-  for (const l of ['branch', 'warehouse', 'department'] as const) out.push(...work.filter((p) => p.loai === l));
-  return out;
-}
-
-export function NhapCoCau({ cc, onClose, onDone }: { cc: CC; onClose: () => void; onDone: (text: string) => void }) {
-  const qc = useQueryClient();
-  const [plan, setPlan] = useState<PlanRow[] | null>(null);
-  const [err, setErr] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [prog, setProg] = useState<{ done: number; total: number; fails: string[] } | null>(null);
-  const [only, setOnly] = useState<'change' | 'all'>('change');
-  const stop = useRef(false);
-  const read = async (file: File) => {
-    setErr(''); setPlan(null); setProg(null);
-    const XLSX = await import('xlsx');
-    const wb = XLSX.read(await file.arrayBuffer());
-    const p = lapKeHoach(cc, wb as never, (ws) => XLSX.utils.sheet_to_json<Record<string, unknown>>(ws as never, { defval: '' }));
-    if (!p.length) { setErr('Không đọc được sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — dùng tệp từ nút Xuất làm mẫu.'); return; }
-    setPlan(p);
-  };
-  const errors = plan?.filter((p) => p.kind === 'error') ?? [];
-  const work = plan ? thuTu(plan) : [];
-  const run = async () => {
-    setBusy(true); stop.current = false;
-    const fails: string[] = [];
-    let done = 0;
-    setProg({ done, total: work.length, fails });
-    for (const p of work) {
-      if (stop.current) break;
-      try { await luuNut(cc, p.f!, p.node ?? null, p.start ?? null, null); }
-      catch (e) { fails.push(`${p.sheet} dòng ${p.row} (${p.code}): ${errorText(e)}`); }
-      done++;
-      setProg({ done, total: work.length, fails: [...fails] });
-    }
-    invalidateOrg(qc);
-    for (const k of [['warehouses'], ['dimensions', 'department'], ['co-cau-history']]) void qc.invalidateQueries({ queryKey: k });
-    setBusy(false);
-    if (!fails.length) onDone(`Đã nhập: ${work.filter((p) => p.kind === 'new').length} dòng thêm, ${work.filter((p) => p.kind === 'edit').length} dòng sửa.`);
-  };
-  const shown = (plan ?? []).filter((p) => only === 'all' || p.kind !== 'same');
-  const count = (k: PlanRow['kind']) => plan?.filter((p) => p.kind === k).length ?? 0;
-  return (
-    <Modal wide title="Nhập cơ cấu tổ chức từ Excel" onClose={() => { stop.current = true; onClose(); }} helpKey="so-do-to-chuc"
-      footer={<><button className="btn btn-primary" disabled={!plan || errors.length > 0 || !work.length || busy} onClick={() => void run()}>Ghi</button><button className="btn" onClick={() => { stop.current = true; onClose(); }}>Thoát</button></>}>
-      <div className="full" style={{ fontSize: 13 }}>
-        Dùng tệp từ nút <b>Xuất</b> làm mẫu (4 sheet: <b>Cơ cấu</b>, <b>Cửa hàng</b>, <b>Kho</b>, <b>Phòng ban</b>). Mã chưa có → thêm; mã đã có → sửa các ô khác đi;
-        cột bỏ khỏi tệp → giữ nguyên. Có lỗi thì không ghi gì.
-      </div>
-      <Field label="Tệp Excel" full><input type="file" accept=".xlsx,.xls" onChange={(e) => { const f = e.target.files?.[0]; if (f) void read(f); }} /></Field>
-      {err && <div className="alert alert-bad full">{err}</div>}
-      {plan && (
-        <div className="full" style={{ fontSize: 13 }}>
-          <div className={`alert ${errors.length ? 'alert-bad' : 'alert-ok'}`}>
-            {errors.length ? `${errors.length} dòng lỗi — sửa tệp rồi chọn lại.` : `Xem trước: ${count('new')} dòng thêm, ${count('edit')} dòng sửa, ${count('same')} dòng không đổi. Bấm Ghi để lưu.`}
-          </div>
-          {prog && <div className={`alert ${prog.fails.length ? 'alert-bad' : 'alert-ok'}`}>Đã ghi {prog.done}/{prog.total}{busy ? '…' : ''}{prog.fails.length ? ` · ${prog.fails.length} dòng không ghi được` : ''}
-            {prog.fails.slice(0, 20).map((x, i) => <div key={i}>{x}</div>)}</div>}
-          {busy && <Loading />}
-          <div className="row" style={{ gap: 12, margin: '4px 0' }}>
-            <label className="checkbox"><input type="radio" checked={only === 'change'} onChange={() => setOnly('change')} /> Chỉ dòng thêm / sửa / lỗi</label>
-            <label className="checkbox"><input type="radio" checked={only === 'all'} onChange={() => setOnly('all')} /> Tất cả</label>
-          </div>
-          <div className="table-wrap" style={{ maxHeight: 360 }}>
-            <table className="grid">
-              <thead><tr><th>Sheet</th><th>Dòng</th><th>Mã</th><th>Tên</th><th>Kết quả</th></tr></thead>
-              <tbody>{shown.slice(0, 500).map((p, i) => (
-                <tr key={i}><td>{p.sheet}</td><td>{p.row}</td><td className="mono">{p.code}</td><td>{p.f?.name ?? ''}</td>
-                  <td className={p.kind === 'error' ? 'text-bad' : p.kind === 'same' ? 'muted' : ''}>{p.message}</td></tr>
-              ))}</tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </Modal>
-  );
 }
