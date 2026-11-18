@@ -120,10 +120,12 @@ const businessDocOut = z.object({
   docRef: z.string(), module: z.string(), docType: z.string(), docNo: z.string(), docDate: z.string().nullable(), branchCode: z.string(),
   partnerRef: z.string(), partnerName: z.string(), title: z.string(), total: z.number(), statusRaw: z.string(), status: z.enum(STATUS), version: z.number(),
   meta: z.record(z.string(), z.unknown()), createdBy: z.string(), createdAt: z.string(), updatedAt: z.string(),
+  approvedBy: z.string(), approvedAt: z.string().nullable(),
 });
 type BusinessDocRow = {
   doc_ref: string; module: string; doc_type: string; doc_no: string; doc_date: string | null; branch_code: string; partner_ref: string; title: string;
   total: string; status_raw: string; status: (typeof STATUS)[number]; version: number; meta: unknown; created_by: string; created_at: unknown; updated_at: unknown;
+  approved_by: string; approved_at: unknown;
 };
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
 const toBusinessDoc = (r: BusinessDocRow, names: Map<string, string>) => ({
@@ -131,6 +133,7 @@ const toBusinessDoc = (r: BusinessDocRow, names: Map<string, string>) => ({
   partnerName: names.get(r.partner_ref) ?? '',
   title: r.title, total: Number(r.total), statusRaw: r.status_raw, status: r.status, version: r.version, meta: (r.meta ?? {}) as Record<string, unknown>,
   createdBy: r.created_by, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at),
+  approvedBy: r.approved_by ?? '', approvedAt: r.approved_at ? iso(r.approved_at) : null,
 });
 /** Tên đối tượng theo mã (partner_ref là mã đối tượng hoặc dt_…). */
 async function partnerNames(tx: Db, tenantId: string, refs: string[]): Promise<Map<string, string>> {
@@ -143,7 +146,7 @@ async function partnerNames(tx: Db, tenantId: string, refs: string[]): Promise<M
   return m;
 }
 const BD_COLS = ['doc_ref', 'module', 'doc_type', 'doc_no', sql<string>`doc_date::text`.as('doc_date'), 'branch_code', 'partner_ref', 'title', 'total', 'status_raw', 'status',
-  'version', 'meta', 'created_by', 'created_at', 'updated_at'] as const;
+  'version', 'meta', 'created_by', 'created_at', 'updated_at', 'approved_by', 'approved_at'] as const;
 
 const businessDocList = defineAction({
   id: 'core.business-document.list', title: 'Sổ chứng từ chung', tags,
@@ -174,6 +177,26 @@ const businessDocList = defineAction({
   },
 });
 
+/** Tên dễ đọc cho phía bên kia của mỗi liên kết: chứng từ (loại + số), chính sách (mã + tên), lô (mã hàng · lô · HSD), sự việc kế toán (số), kỳ hợp đồng. */
+async function labelLinks(tx: Db, tenantId: string, self: string, links: Awaited<ReturnType<typeof documents.links>>) {
+  const other = (l: (typeof links)[number]) => (l.from === self ? l.to : l.from);
+  const refs = [...new Set(links.map(other))];
+  const idsOf = (prefix: string) => refs.filter((r) => r.startsWith(prefix)).map((r) => r.slice(prefix.length)).filter((x) => /^\d+$/.test(x));
+  const label = new Map<string, string>();
+  const docs = await tx.selectFrom('business_documents').select(['doc_ref', 'title', 'doc_no']).where('tenant_id', '=', tenantId).where('doc_ref', 'in', refs.length ? refs : ['-']).execute();
+  for (const d of docs) label.set(d.doc_ref, `${d.title} ${d.doc_no}`.trim());
+  const pol = idsOf('mua-hang.policy:');
+  if (pol.length) for (const p of (await sql<{ id: string; code: string; name: string }>`SELECT id::text, code, name FROM purchase_policies WHERE tenant_id = ${tenantId} AND id = ANY(${pol}::bigint[])`.execute(tx)).rows) label.set(`mua-hang.policy:${p.id}`, `Chính sách ${p.code} — ${p.name}`);
+  const lots = idsOf('kho.lot:');
+  if (lots.length) for (const x of (await sql<{ id: string; sku: string; lot_no: string; exp: string | null }>`SELECT id::text, sku, lot_no, exp_date::text AS exp FROM item_lots WHERE tenant_id = ${tenantId} AND id = ANY(${lots}::bigint[])`.execute(tx)).rows) label.set(`kho.lot:${x.id}`, `Lô ${x.lot_no} · ${x.sku}${x.exp ? ` · HSD ${x.exp}` : ''}`);
+  const sch = idsOf('hop-dong.schedule:');
+  if (sch.length) for (const x of (await sql<{ id: string; contract_code: string; seq: number }>`SELECT id::text, contract_code, seq FROM contract_schedules WHERE tenant_id = ${tenantId} AND id = ANY(${sch}::bigint[])`.execute(tx)).rows) label.set(`hop-dong.schedule:${x.id}`, `Hợp đồng ${x.contract_code} — kỳ ${x.seq}`);
+  const keys = refs.filter((r) => r.startsWith('ledger.event:')).map((r) => r.slice('ledger.event:'.length));
+  if (keys.length) for (const e of (await sql<{ doc_key: string; doc_no: string | null; doc_type: string }>`SELECT doc_key, doc_no, doc_type FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ANY(${keys}::text[])`.execute(tx)).rows) label.set(`ledger.event:${e.doc_key}`, `Chứng từ kế toán ${e.doc_no ?? e.doc_key} (${e.doc_type})`);
+  const docSet = new Set(docs.map((d) => d.doc_ref));
+  return links.map((l) => ({ ...l, label: label.get(other(l)) ?? other(l), openable: docSet.has(other(l)) }));
+}
+
 const businessDocGet = defineAction({
   id: 'core.business-document.get', title: 'Một chứng từ (sổ chứng từ chung)', tags,
   description: 'Đầu phiếu của chứng từ (docRef) kèm các phiên bản, chứng từ liên quan (lập từ, sự việc kế toán sinh ra…) và tệp đính kèm.',
@@ -181,7 +204,8 @@ const businessDocGet = defineAction({
   input: z.object({ docRef: docRefSchema }),
   output: z.object({
     document: businessDocOut, versions: z.array(versionOut),
-    links: z.array(z.object({ from: z.string(), to: z.string(), role: z.enum(DOC_LINK_ROLES), createdBy: z.string(), createdAt: z.string() })),
+    links: z.array(z.object({ from: z.string(), to: z.string(), role: z.enum(DOC_LINK_ROLES), createdBy: z.string(), createdAt: z.string(),
+      label: z.string().describe('Tên dễ đọc của chứng từ / đối tượng phía bên kia'), openable: z.boolean().describe('Có trong sổ chứng từ chung (mở được)') })),
     files: z.array(attachmentOut),
   }),
   expose: { http: { method: 'GET', path: '/api/v1/business-documents/detail' }, mcp: false, ai: 'read' },
@@ -192,7 +216,7 @@ const businessDocGet = defineAction({
     return {
       document: toBusinessDoc(r as unknown as BusinessDocRow, await partnerNames(tx, ctx.tenant.id, [(r as unknown as BusinessDocRow).partner_ref])),
       versions: await documents.versions(tx, ctx.tenant.id, q.docRef),
-      links: await documents.links(tx, ctx.tenant.id, q.docRef),
+      links: await labelLinks(tx, ctx.tenant.id, q.docRef, await documents.links(tx, ctx.tenant.id, q.docRef)),
       files: await documents.attachments(tx, ctx.tenant.id, q.docRef),
     };
   },

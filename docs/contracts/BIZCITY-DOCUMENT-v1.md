@@ -27,7 +27,7 @@ Chứng từ nghiệp vụ **không** sinh bút toán. Chỉ khi chuyển sang t
 
 - **`docRef`** = `<key>.<loại>:<id>`, vd `hop-dong.contract:42`. Ổn định, dùng làm `docKey` khi nộp sổ (thêm hậu tố nếu một chứng từ sinh nhiều sự việc: `hop-dong.installment:118:payment`).
 - **Số chứng từ** (`docNo`) cấp bằng `ctx.documents.nextNumber(series)` (dãy `document_sequences` hiện có, theo đơn vị + năm). Module không tự đếm, không ghi `document_sequences` (đang vi phạm ở `mua-hang/store.ts:266`, `quy/payment-requests/payment-request.routes.ts:49`).
-- **Liên kết** giữa chứng từ: `ctx.documents.link(from, to, role)` với `role` ∈ `source` (lập từ), `reverses`, `replaces`, `settles` (thanh toán cho), `attachesTo`, `ledger` (sự việc kế toán sinh ra). Bảng chung `document_links` (Platform).
+- **Liên kết** giữa chứng từ: `ctx.documents.link(from, to, role)` với `role` ∈ `source` (lập từ), `reverses`, `replaces`, `settles` (thanh toán cho), `attachesTo`, `ledger` (sự việc kế toán sinh ra), `applies` (áp chính sách / chương trình, 0162), `uses` (dùng lô hàng, 0162). Bảng chung `document_links` (Platform).
 
 ## 4. Cột chuẩn của bảng đầu phiếu
 

@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ chứng từ chung: người duyệt + liên kết áp chính sách, dùng lô, trả kỳ hợp đồng (0162) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** `business_documents.approved_by / approved_at` (phiếu mua: người duyệt; đề nghị thanh toán: cấp cuối); vai liên kết `applies` (áp chính sách / chương trình — từ vết tính, chương trình trên dòng, phiếu thưởng) và `uses` (dùng lô — số lô + HSD trên dòng khớp `item_lots`); đề nghị thanh toán `settles` kỳ hợp đồng, `ledger` phiếu chi đã lập. Không bảng mới (tham khảo đầu phiếu `local_ledger` của website: người duyệt, chính sách, hợp đồng, lô).
+- **Đổi:** HT18 — cột Người duyệt; chứng từ liên quan hiện tên dễ đọc (loại + số, mã + tên chính sách, lô · mã hàng · HSD, số chứng từ kế toán).
+
 ### Gom bảng về lõi, đợt 4: bộ đếm, hàng đợi sự kiện, nhật ký vận hành — bỏ 5 bảng (0161) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Luật mới:** lịch sử / lượt chạy (thứ "đã xảy ra, để xem lại", không cần cùng giao dịch với sổ) ghi **nhật ký JSONL** qua `packages/platform/src/core/run-log.ts` (`DATA_DIR/nhat-ky/<luồng>/<đơn vị>/<yyyy-mm>.jsonl`), **không tạo bảng**. Bảng chỉ cho thứ phải cùng giao dịch: chứng từ, sổ, chống gửi trùng, hàng đợi sự kiện, bằng chứng có chuỗi băm.

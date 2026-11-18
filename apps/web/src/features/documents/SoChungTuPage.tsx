@@ -22,11 +22,12 @@ type Tab = Status | 'all';
 interface Doc {
   docRef: string; module: string; docType: string; docNo: string; docDate: string | null; branchCode: string; partnerRef: string; partnerName: string;
   title: string; total: number; statusRaw: string; status: Status; version: number; meta: Record<string, unknown>; createdBy: string; createdAt: string; updatedAt: string;
+  approvedBy: string; approvedAt: string | null;
 }
 interface Detail {
   document: Doc;
   versions: { version: number; contentHash: string; createdBy: string; createdAt: string }[];
-  links: { from: string; to: string; role: string; createdBy: string; createdAt: string }[];
+  links: { from: string; to: string; role: string; createdBy: string; createdAt: string; label: string; openable: boolean }[];
   files: { id: string; fileName: string; kind: string; sizeBytes: number; createdBy: string; createdAt: string }[];
 }
 
@@ -39,10 +40,11 @@ const TYPES: [string, string][] = [
 /** Tên tiếng Việt của thông tin thêm (meta). */
 const META_TEXT: Record<string, string> = {
   invoiceNo: 'Số hoá đơn', invoiceDate: 'Ngày hoá đơn', dueDate: 'Hạn thanh toán', totalBeforeTax: 'Tiền hàng', totalTax: 'Tiền thuế', demo: 'Dữ liệu mẫu',
-  fromWarehouse: 'Kho xuất', toBranch: 'Chi nhánh nhận', toWarehouse: 'Kho nhận', receivedDate: 'Ngày nhận', reason: 'Lý do', method: 'Hình thức', rejectedReason: 'Lý do trả lại',
+  fromWarehouse: 'Kho xuất', toBranch: 'Chi nhánh nhận', toWarehouse: 'Kho nhận', receivedDate: 'Ngày nhận', receivedBy: 'Người nhận', reason: 'Lý do', method: 'Hình thức', rejectedReason: 'Lý do trả lại',
+  approved1By: 'Duyệt cấp 1',
 };
 const metaText = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : v === true ? 'Có' : String(v));
-const ROLE_TEXT: Record<string, string> = { source: 'Lập từ', ledger: 'Sự việc kế toán', reverses: 'Đảo', replaces: 'Thay thế', settles: 'Thanh toán cho', attachesTo: 'Đính vào' };
+const ROLE_TEXT: Record<string, string> = { source: 'Lập từ', ledger: 'Sự việc kế toán', reverses: 'Đảo', replaces: 'Thay thế', settles: 'Thanh toán cho', attachesTo: 'Đính vào', applies: 'Áp chính sách / chương trình', uses: 'Dùng lô hàng' };
 
 /** Chiều liên kết nhìn từ chứng từ đang xem: đi ra (lập từ X) hay đi vào (X lập từ phiếu này). */
 function linkText(l: Detail['links'][number], self: string) {
@@ -69,6 +71,7 @@ function ChiTiet({ docRef, onClose, onOpen }: { docRef: string; onClose: () => v
             <div>Đối tượng: <b>{d.partnerRef || '—'}</b>{d.partnerName ? ` ${d.partnerName}` : ''}</div>
             <div>Tổng tiền: <b>{d.total.toLocaleString('vi-VN')}</b></div>
             <div title="Người lập, thời gian lập; cập nhật gần nhất">Lập: <b>{d.createdBy || '—'}</b> lúc {dateTime(d.createdAt)} · Cập nhật {dateTime(d.updatedAt)}</div>
+            <div title="Người duyệt cấp cuối, thời điểm duyệt">Duyệt: <b>{d.approvedBy || '—'}</b>{d.approvedAt ? ` lúc ${dateTime(d.approvedAt)}` : ''}</div>
             {Object.entries(d.meta).map(([k, v]) => <div key={k} title="Thông tin thêm của chứng từ">{META_TEXT[k] ?? k}: <b>{metaText(v)}</b></div>)}
           </div>
 
@@ -86,7 +89,7 @@ function ChiTiet({ docRef, onClose, onOpen }: { docRef: string; onClose: () => v
                   const t = linkText(l, d.docRef);
                   const other = l.from === d.docRef ? l.to : l.from;
                   return <tr key={`${l.from}|${l.to}|${l.role}`}><td>{t.text}</td>
-                    <td className="mono">{other.startsWith('ledger.event:') ? t.other : <button className="link" onClick={() => onOpen(other)} title="Mở chứng từ này">{t.other}</button>}</td>
+                    <td title={other}>{l.openable ? <button className="link" onClick={() => onOpen(other)} title="Mở chứng từ này">{l.label}</button> : l.label}</td>
                     <td>{dateTime(l.createdAt)}</td></tr>;
                 })}</tbody></table>
             )}
@@ -136,6 +139,7 @@ export function SoChungTuPage() {
     { key: 'status', header: 'Trạng thái', title: 'Trạng thái chuẩn (trong ngoặc: trạng thái riêng của phân hệ)', value: (r) => STATUS_TEXT[r.status],
       render: (r) => <span className={STATUS_CLASS[r.status]} title={r.statusRaw}>{STATUS_TEXT[r.status]}</span> },
     { key: 'createdBy', header: 'Người lập', title: 'Người lập chứng từ' },
+    { key: 'approvedBy', header: 'Người duyệt', title: 'Người duyệt cấp cuối (trống = chưa duyệt / không có bước duyệt)' },
     { key: 'updatedAt', header: 'Cập nhật', title: 'Thời điểm cập nhật gần nhất', value: (r) => dateTime(r.updatedAt) },
   ];
 

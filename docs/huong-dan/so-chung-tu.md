@@ -19,7 +19,8 @@ Mỗi phân hệ có trạng thái riêng; sổ quy về 5 nhóm để theo dõi
 Bấm vào dòng:
 
 - **Phiên bản**: mỗi lần **nội dung** đổi (số lượng, giá, hàng, ngày…) lưu một bản, có người lưu và băm nội dung. Đổi trạng thái (trình, duyệt) không tạo bản mới.
-- **Chứng từ liên quan**: phiếu này **lập từ** chứng từ nào (phiếu nhập lập từ đơn đặt), chứng từ nào **được lập** từ nó, và **sự việc kế toán** nó đã sinh (mã chứng từ kế toán). Bấm tên chứng từ để mở.
+- **Chứng từ liên quan**: phiếu này **lập từ** chứng từ nào (phiếu nhập lập từ đơn đặt), chứng từ nào **được lập** từ nó (phiếu thưởng, chi phí…), **sự việc kế toán** nó đã sinh, **chính sách / chương trình** đã áp (mã + tên), **lô hàng** đã dùng (số lô, HSD), kỳ **hợp đồng** được thanh toán. Bấm tên chứng từ để mở.
+- **Duyệt**: người duyệt cấp cuối và lúc duyệt (cột Người duyệt ở danh sách); chuyển kho không có bước duyệt nên để trống.
 - **Đính kèm**: tệp đã đính vào chứng từ.
 
 ## Ghi chú

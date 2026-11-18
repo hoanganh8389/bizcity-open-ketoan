@@ -67,4 +67,25 @@ describe('Sổ chứng từ chung (0156)', () => {
     expect(det.body.data.versions).toHaveLength(1);
     expect(det.body.data.links).toEqual([expect.objectContaining({ role: 'source', to: `mua-hang.document:${order}` })]);
   });
+
+  // [2026-11-18 Nguyễn Văn Thủy] 0162: người duyệt, liên kết áp chính sách / dùng lô, tên dễ đọc (đóng góp)
+  it('người duyệt; phiếu áp chính sách (vết tính, chương trình trên dòng) và dùng lô → liên kết applies / uses, có tên dễ đọc', async () => {
+    const pol = (await sql<{ id: string }>`INSERT INTO purchase_policies (tenant_id, code, kind, name) VALUES (${t}, 'CS-SCT', 'target_rebate', 'Thưởng doanh số thử') RETURNING id`.execute(db)).rows[0]!.id;
+    const lot = (await sql<{ id: string }>`INSERT INTO item_lots (tenant_id, sku, item_key, lot_no, exp_date) VALUES (${t}, 'SKU-SCT', 'SKU-SCT', 'L001', '2027-05-01') RETURNING id`.execute(db)).rows[0]!.id;
+    const id = await purchase('receipt', 'draft', 'PN-SCT-5');
+    const ref = `mua-hang.document:${id}`;
+    expect(await doc(ref)).toMatchObject({ approved_by: '', approved_at: null });
+    await sql`UPDATE purchase_documents SET status = 'approved', approved_by = 'Kế toán A', approved_at = now(),
+      data = ${JSON.stringify({ policyTrace: [{ policy: 'Trên phiếu' }], lines: [{ sku: 'SKU-SCT', qty: 1, lotNo: 'L001', expDate: '2027-05-01', program: 'CS-SCT' }] })}::jsonb
+      WHERE id = ${id}`.execute(db);
+    expect(await doc(ref)).toMatchObject({ status: 'approved', approved_by: 'Kế toán A' });
+    const links = await db.selectFrom('document_links').select(['to_ref', 'role']).where('tenant_id', '=', t).where('from_ref', '=', ref).orderBy('role').execute();
+    expect(links).toEqual([{ to_ref: `mua-hang.policy:${pol}`, role: 'applies' }, { to_ref: `kho.lot:${lot}`, role: 'uses' }]);
+    const det = await call<{ data: { document: { approvedBy: string }; links: { role: string; label: string; openable: boolean }[] } }>(ctx, 'GET', `/api/v1/business-documents/detail?docRef=${ref}`);
+    expect(det.body.data.document.approvedBy).toBe('Kế toán A');
+    expect(det.body.data.links.map((l) => [l.role, l.label, l.openable]).sort()).toEqual([
+      ['applies', 'Chính sách CS-SCT — Thưởng doanh số thử', false],
+      ['uses', 'Lô L001 · SKU-SCT · HSD 2027-05-01', false],
+    ]);
+  });
 });

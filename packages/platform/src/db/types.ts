@@ -1786,6 +1786,9 @@ export interface BusinessDocumentsTable {
   created_by: Generated<string>;
   created_at: TimestampDefault;
   updated_at: TimestampDefault;
+  /** 0162: người duyệt cấp cuối, lúc duyệt. */
+  approved_by: Generated<string>;
+  approved_at: Timestamp | null;
 }
 
 /** 0045 (documents.links): tham chiếu giữa chứng từ. */
