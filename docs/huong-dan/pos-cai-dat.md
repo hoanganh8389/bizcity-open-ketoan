@@ -12,6 +12,9 @@ Một chỗ cho mọi cài đặt bán lẻ. Mở: **Bán hàng → Cài đặt 
 | Bắt buộc mở ca trước khi bán | Chưa bật: máy bán vẫn nhận đơn khi chưa mở ca |
 | Ca bán | Một ca chung cho cả chi nhánh (đợt này chỉ áp dụng cách này) |
 | Ngưỡng chênh lệch két | Sổ ca bán tô đỏ ca có chênh lệch từ ngưỡng này; 0 = mọi chênh lệch |
+| Kho nhận hàng khách trả bị lỗi / hết hạn | Kho loại KTL của từng cửa hàng (NT-BH-024) |
+| Kho quà (hàng khuyến mại cùng mã hàng bán) <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028 (đóng góp) --> | Chọn kho loại **KKM** "Kho hàng khuyến mại" của từng cửa hàng (khoá `bizcity.pos.gift_warehouses`, dạng `CN01=KHO01-KM`). Dòng quà của máy bán và phiếu bán BH10 trừ tồn ở kho này, hàng bán trừ kho bán; tồn hai kho không cộng chung — hết quà ở kho KM thì máy bán báo *Hết quà* (không tặng), kho bán hết thì không bán được dù kho KM còn. Chưa chọn: quà trừ kho bán như cũ. Thuế, bill Z, giá vốn không đổi (vẫn theo mã). Chưa có kho KKM: khai ở Danh mục kho (DM18), loại *Kho hàng khuyến mại* |
+| Số bill theo dạng shop <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (đóng góp) --> | Điền **số cuối đã phát ở POS website** của từng shop: phiếu bán (vd `12345` hoặc `08022BT12345`) và phiếu hoàn (vd `268`) — khoá `bizcity.pos.shop_codes`, dạng `08022=12345/268`. Shop có số: bill máy bán = mã shop + `BT` + 5 số, chạy liên tục (không đặt lại theo ngày / tháng; quá 99999 sang `BU00001`…), bill Z = mã bill + `Z`, phiếu hoàn = mã shop + `.B` + 5 số. Để trống: giữ dạng `HD` / `TH` + năm tháng như cũ. Mã cửa hàng phải là mã shop của website (≤ 5 chữ / số). Đặt số thấp hơn số đã cấp không làm số chạy lùi / trùng |
 
 ## ② Ghi sổ chứng từ bán
 

@@ -11,10 +11,16 @@ Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem 
 - **Chi nhánh**: tích một hay nhiều cửa hàng; để trống = mọi cửa hàng.
 - Bấm **Tìm kiếm** để áp. **Lưu bộ tham số** để lần sau chọn lại một lần bấm.
 
-- Ô riêng: **Mã phiếu / khách** (mã HD…, số điện thoại, tên khách) và **Thu ngân**.
+- Ô riêng: **Mã phiếu / khách** (mã HD… hoặc mã dạng shop `08022BT12346`, số điện thoại, tên khách) và **Thu ngân**.
 
 ## Đọc màn
 - **Thẻ chỉ số** tính trên cả kết quả lọc: Số đơn, Doanh thu, Đã hoàn (tiền trả lại khách của các đơn này), Thuần = Doanh thu − Đã hoàn.
 - **Bấm một lần** vào đơn: nửa dưới hiện dòng hàng (mã, tên, ĐVT, số lượng, đơn giá, thành tiền, thuế).
 - Cột **Chứng từ sổ**: trạng thái chứng từ bán lúc máy gửi (Đã ghi sổ / Chờ duyệt…). Chứng từ chờ duyệt xử lý ở màn Chứng từ kế toán.
 - Lọc / sắp xếp / ẩn cột ngay trên tiêu đề cột; **Xuất Excel** theo định dạng chuẩn.
+
+## Số bill
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: số bill theo dạng shop (đóng góp) -->
+- Shop đã khai số kế thừa ở *Cài đặt bán hàng (BH17)*: số bill = mã shop + `BT` + 5 số, nối tiếp số cuối của POS website, chạy liên tục qua ngày / tháng. Bill Z = số bill + `Z`. Đơn huỷ giữ số, trạng thái *Đã huỷ*.
+- Shop chưa khai: `HD` + năm tháng + 6 số như cũ. Đơn mã `HD…` đã phát hành vẫn tra cứu, trả hàng được.
+- Máy bán xin trước dải số để bán khi mất mạng nên có thể **hở số**. Xem số hở ở **Tổng quan bán lẻ (BH16) → Số bill bị thiếu**: chọn cửa hàng × ngày, mỗi dải số thiếu kèm lý do (*máy … xin lúc … chưa dùng*; dải đã quá hạn ghi thêm *dải hết hạn*).

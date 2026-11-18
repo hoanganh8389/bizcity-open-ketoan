@@ -5,9 +5,11 @@
 import { defineAction, z } from '@bizcity/module-sdk';
 import { paymentKind } from '../domain/order.js';
 import { activePaymentMethods, resolveBranch, todayVn } from '../read.js';
-import { posSettings } from '../settings.js';
+import { giftWarehouses, posSettings, shopCodes } from '../settings.js';
 import { openShiftOf } from '../shifts.js';
-import { catalogVersionOf } from '../catalog.js';
+import { catalogVersionOf, warehousesFor } from '../catalog.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 dạng số bill, NT-BH-028 kho bán / kho quà của cửa hàng cho máy bán (đóng góp)
+import { schemeOf } from '../domain/codes.js';
 
 const codeName = z.object({ code: z.string(), name: z.string() });
 
@@ -32,15 +34,21 @@ export default defineAction({
     coreVersion: z.string(),
     catalogVersion: z.string(),
     promotionsVersion: z.string(),
+    /** NT-BH-028: kho bán / kho quà (KKM) của cửa hàng; gift null = chưa khai (quà trừ kho bán) hoặc khai sai (giftIssue). */
+    warehouses: z.object({ sale: z.string(), gift: z.string().nullable(), giftIssue: z.string().nullable() }),
+    /** NT-BH-027: dạng số bill — shop = {mã shop}BT{5 số} liên tục, phiếu hoàn {mã shop}.B{5 số}; legacy = HD / TH theo tháng. */
+    codeFormat: z.enum(['shop', 'legacy']),
   }),
   expose: { http: { method: 'GET', path: '/bootstrap' }, mcp: false, ai: 'read' },
   handler: async (ctx, input) => {
     const settings = await posSettings(ctx);
+    const [shops, giftMap] = await Promise.all([shopCodes(ctx), giftWarehouses(ctx)]);
     return ctx.data.module(async (tx) => {
     const branch = await resolveBranch(tx, input.branch);
     const methods = await activePaymentMethods(tx);
     const day = todayVn();
     const shift = await openShiftOf(tx, branch.code);
+    const wh = await warehousesFor(tx, branch.code, giftMap);
     return {
       branch,
       user: { id: ctx.actor.id, name: ctx.actor.name, roles: [] },
@@ -60,6 +68,8 @@ export default defineAction({
       coreVersion: '',
       catalogVersion: await catalogVersionOf(tx, branch.code),
       promotionsVersion: '',
+      warehouses: { sale: wh.sale, gift: wh.gift, giftIssue: wh.issue ?? null },
+      codeFormat: schemeOf(shops, branch.code).mode,
     };
     });
   },

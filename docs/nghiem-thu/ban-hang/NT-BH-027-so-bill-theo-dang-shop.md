@@ -41,13 +41,30 @@ Máy bán React lấy số từ module `pos`: `HD` + năm tháng + 6 số (`HD26
 | Q4 | Phiếu hoàn | Theo dạng POS cũ của shop |
 
 ## 5. Kết quả chạy
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — kết quả chạy (đóng góp) -->
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-027-so-bill.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-027-029-quay` |
+| Test tự động | `apps/api/test/nt-bh-027-so-bill.test.ts` (9/9), `modules/pos/test/codes.test.ts` (5/5) |
+
+**Cách bật:** *Cài đặt bán hàng (BH17) → ① → Số bill theo dạng shop*: điền số cuối đã phát ở POS website cho từng shop (khoá `bizcity.pos.shop_codes`, dạng `08022=12345/268` hoặc `08022=08022BT12345/08022.B00268`). Shop chưa điền giữ `HD` / `TH` theo tháng. Mã cửa hàng (chi nhánh kế toán) phải trùng mã shop website (`tgs_site_code`, ≤ 5 chữ / số). Số kế thừa chỉ nâng sàn bộ đếm, không hạ.
+
+| Mục | Mong đợi | Phần mềm (test) |
+|---|---|---|
+| Shop 08022, số cuối 08022BT12345 | đơn đầu 08022BT12346, sau 12347 | đạt: `08022BT12346`, `08022BT12347` |
+| Qua ngày / qua tháng | chạy tiếp | đạt: đơn ngày tháng trước → `08022BT12349` |
+| Bill Z | mã cha + Z | đạt: đơn có quà không gửi thuế `08022BT12348` → bill Z `08022BT12348Z` (số theo thứ tự đơn trong test) |
+| Huỷ đơn 12347 | giữ số, "Đã huỷ", đơn kế 12348 | đạt: đơn QR `08022BT12347` huỷ → tra cứu thấy `cancelled`; đơn kế `08022BT12348` |
+| Máy xin 12350–12359, dùng 3 | số thiếu 12353–12359, lý do "máy … xin chưa dùng" | đạt: `GET /reports/missing-codes` 7 số, một dải, lý do `máy MAY-01 xin lúc … chưa dùng`; đơn kế `08022BT12360` |
+| Phiếu hoàn đầu | `08022.B` + (số cuối + 1) | đạt: số cuối 268 → `08022.B00269` |
+| Số 99999 | đơn kế `…BU00001` | đạt: `08023BT99999` → `08023BU00001` |
+| Mã cũ HD / TH | tra cứu, trả hàng được | đạt: đơn `HD…` trước khi bật tra cứu được, trả → `08022.B00270`; cửa hàng chưa khai vẫn `HD…` / `TH…` |
+
+Ghi chú: báo cáo số thiếu ở BH16 (khối *Số bill bị thiếu*); máy bán gửi `deviceId` khi xin dải để lý do nêu đúng máy (không gửi thì nêu người xin). Hạn dải giữ nhịp cuối tháng như cũ (dải quá hạn ghi thêm "dải hết hạn").
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q4 |
+| 18/11/2026 | Code module pos + test; điền kết quả chạy, cách bật |

@@ -7,6 +7,8 @@
 // [2026-11-13 08:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: khoá chênh lệch két (lập phiếu, lý do thiếu / thừa) (đóng góp)
 import type { ActionContext } from '@bizcity/module-sdk';
 import { parseWarehouseMap } from './domain/returns.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 số bill dạng shop (số kế thừa), NT-BH-028 kho quà KKM theo cửa hàng (đóng góp)
+import { parseShopCodes, shopCodesList, type ShopStart } from './domain/codes.js';
 
 export const POS_SETTING_KEYS = {
   returnDays: 'bizcity.pos.return_days',
@@ -18,6 +20,10 @@ export const POS_SETTING_KEYS = {
   cashOverReason: 'bizcity.pos.cash_over_reason',
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: kho KTL nhận hàng trả lỗi / hết hạn của từng cửa hàng (đóng góp)
   returnBadWarehouses: 'bizcity.pos.return_bad_warehouses',
+  /** NT-BH-027: cửa hàng dùng số bill dạng shop + số kế thừa ("<shop>=<số bán cuối>[/<số hoàn cuối>]"); chưa khai → HD / TH. */
+  shopCodes: 'bizcity.pos.shop_codes',
+  /** NT-BH-028: kho quà (loại KKM) của từng cửa hàng ("<cửa hàng>=<mã kho>"); chưa khai → quà trừ kho bán như cũ. */
+  giftWarehouses: 'bizcity.pos.gift_warehouses',
 } as const;
 
 /** Mặc định khi đọc lỗi / giá trị lạ (trùng mặc định của registry). */
@@ -25,6 +31,8 @@ export const POS_SETTING_DEFAULTS = {
   returnDays: 3, requireOpenShift: false, shiftScope: 'branch' as 'branch' | 'device', cashDiffAlert: 0,
   cashDiffJournal: true, cashShortReason: 'POS-THIEU-KET', cashOverReason: 'POS-THUA-KET',
   returnBadWarehouses: [] as string[],
+  shopCodes: [] as string[],
+  giftWarehouses: [] as string[],
 };
 
 export type PosSettings = typeof POS_SETTING_DEFAULTS;
@@ -37,7 +45,7 @@ const code = (v: unknown, d: string) => (typeof v === 'string' && /^\S{1,32}$/.t
 const int = (v: unknown, d: number, lo: number, hi: number) => (Number.isInteger(v) && (v as number) >= lo && (v as number) <= hi ? (v as number) : d);
 
 export async function posSettings(ctx: Pick<ActionContext, 'settings'>): Promise<PosSettings> {
-  const [r, o, s, c, j, sr, or, bw] = await Promise.all([
+  const [r, o, s, c, j, sr, or, bw, sc, gw] = await Promise.all([
     ctx.settings.get<unknown>(POS_SETTING_KEYS.returnDays),
     ctx.settings.get<unknown>(POS_SETTING_KEYS.requireOpenShift),
     ctx.settings.get<unknown>(POS_SETTING_KEYS.shiftScope),
@@ -46,6 +54,8 @@ export async function posSettings(ctx: Pick<ActionContext, 'settings'>): Promise
     ctx.settings.get<unknown>(POS_SETTING_KEYS.cashShortReason),
     ctx.settings.get<unknown>(POS_SETTING_KEYS.cashOverReason),
     ctx.settings.get<unknown>(POS_SETTING_KEYS.returnBadWarehouses),
+    ctx.settings.get<unknown>(POS_SETTING_KEYS.shopCodes),
+    ctx.settings.get<unknown>(POS_SETTING_KEYS.giftWarehouses),
   ]);
   return {
     returnDays: int(r, POS_SETTING_DEFAULTS.returnDays, 0, 60),
@@ -56,6 +66,8 @@ export async function posSettings(ctx: Pick<ActionContext, 'settings'>): Promise
     cashShortReason: code(sr, POS_SETTING_DEFAULTS.cashShortReason),
     cashOverReason: code(or, POS_SETTING_DEFAULTS.cashOverReason),
     returnBadWarehouses: whList(bw),
+    shopCodes: shopCodesList(parseShopCodes(sc)),
+    giftWarehouses: whList(gw),
   };
 }
 
@@ -67,4 +79,14 @@ export async function returnBadWarehouses(ctx: Pick<ActionContext, 'settings'>):
 /** Hạn trả hàng không cần duyệt (ngày, theo ngày bán). */
 export async function returnDays(ctx: Pick<ActionContext, 'settings'>): Promise<number> {
   return int(await ctx.settings.get<unknown>(POS_SETTING_KEYS.returnDays), POS_SETTING_DEFAULTS.returnDays, 0, 60);
+}
+
+/** Số kế thừa theo shop (NT-BH-027): cửa hàng có trong Map dùng số bill dạng shop. Đọc ngoài giao dịch của module. */
+export async function shopCodes(ctx: Pick<ActionContext, 'settings'>): Promise<Map<string, ShopStart>> {
+  return parseShopCodes(await ctx.settings.get<unknown>(POS_SETTING_KEYS.shopCodes));
+}
+
+/** Kho quà KKM theo cửa hàng (NT-BH-028): Map mã cửa hàng → mã kho; cửa hàng chưa khai thì không có. */
+export async function giftWarehouses(ctx: Pick<ActionContext, 'settings'>): Promise<Map<string, string>> {
+  return parseWarehouseMap(await ctx.settings.get<unknown>(POS_SETTING_KEYS.giftWarehouses));
 }

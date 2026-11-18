@@ -76,7 +76,8 @@
       "promo_draft_log",
       "promo_quotas",
       "promo_uses",
-      "voucher_uses"
+      "voucher_uses",
+      "code_reservations"
     ],
     "reads": [
       "bizcity_read.branches",
@@ -135,7 +136,10 @@
     "pos.promo.stop-log",
     "pos.promo.quota",
     "pos.promo.report",
-    "pos.promo.report-orders"
+    "pos.promo.report-orders",
+    "pos.report.missing-codes",
+    "pos.gift-warehouse.get",
+    "pos.customer.check"
   ],
   "ledger": {
     "submits": [
@@ -192,6 +196,8 @@
     "bizcity.pos.cash_diff_journal",
     "bizcity.pos.cash_short_reason",
     "bizcity.pos.cash_over_reason",
-    "bizcity.pos.return_bad_warehouses"
+    "bizcity.pos.return_bad_warehouses",
+    "bizcity.pos.shop_codes",
+    "bizcity.pos.gift_warehouses"
   ]
 }
