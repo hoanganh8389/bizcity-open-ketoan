@@ -140,6 +140,8 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, kind: fixedKind ?? sel?.kind ?? 'customer', isActive: true, groupCode: sel?.groupCode ?? null })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', taxCode: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá đối tượng ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
@@ -594,6 +596,8 @@ export function PartnerGroupsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, kind: 'any', isActive: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', partners: 0, isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá nhóm ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => groups.refetch()}
