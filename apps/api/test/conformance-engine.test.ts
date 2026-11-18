@@ -15,6 +15,7 @@ import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { runDiagnostics } from '../src/modules/system/diagnostics.js';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+import { appendRunLog, readRunLog } from '@bizcity/platform/core/run-log';
 
 type Case = { id: string; status: string; reason: string; evidence: string[] };
 type Run = { id: string; result: string; label: string; counts: Record<string, number>; profileVersion: number | null; kitHash: string; cases: Case[] };
@@ -66,7 +67,7 @@ describe('Conformance Engine trên bản cài', () => {
     for (const c of d.cases.filter((x) => x.id.startsWith('vn.enterprise-period-vn.'))) expect(c.status).toBe('REVIEW_REQUIRED');
 
     // Báo cáo lưu nguyên văn đúng khuôn bizcity_vn_conformance_report@1.
-    const row = await db.selectFrom('conformance_runs').select(['report', 'layers', 'kit_version']).where('id', '=', d.id).executeTakeFirstOrThrow();
+    const row = (await readRunLog<{ report: unknown; layers: string[]; kit_version: string }>('kiem-chuan', { tenantId: String(tenantId) })).find((e) => e.id === d.id)!.data;
     const jsonschema = path.join(ROOT, 'tests/conformance/lib/jsonschema.mjs');
     const { validate } = (await import(pathToFileURL(jsonschema).href)) as { validate: (s: unknown, d: unknown) => unknown[] };
     const schema = JSON.parse(readFileSync(path.join(ROOT, 'packages/vn-rulepacks/schemas/report.schema.json'), 'utf8'));
@@ -97,13 +98,11 @@ describe('Conformance Engine trên bản cài', () => {
     expect(regime.reason).toMatch(/vn-tt99-2025 khác hồ sơ vn-tt133-2016/);
   });
 
-  it('latest trả lượt mới nhất; ảnh chụp không sửa / xoá được', async () => {
+  it('latest trả lượt mới nhất; ảnh chụp ở nhật ký JSONL chỉ ghi thêm (0161)', async () => {
     const latest = (await call(ctx, 'GET', '/api/v1/conformance/runs/latest')).body.data as Run;
-    const top = await db.selectFrom('conformance_runs').select('id').where('tenant_id', '=', tenantId).orderBy('id', 'desc').limit(1).executeTakeFirstOrThrow();
+    const top = (await readRunLog('kiem-chuan', { tenantId: String(tenantId) })).at(-1)!;
     expect(latest.id).toBe(String(top.id));
     expect(latest.profileVersion).toBe(2);
-    await expect(sql`UPDATE conformance_runs SET result = 'PASS' WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/không sửa/);
-    await expect(sql`DELETE FROM conformance_runs WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/không sửa/);
   });
 
   it('AI đọc được kết quả, không chạy được lượt mới', async () => {

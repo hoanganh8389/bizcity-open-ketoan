@@ -13,6 +13,7 @@
 import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
 import type { ValidateResult } from './types.js';
+import { appendRunLog, readRunLog } from '../run-log.js';
 
 export const FLUSH_AFTER_MS = 30_000;
 export const FLUSH_AT_ROWS = 200;
@@ -77,13 +78,10 @@ export async function flushLibraryUsage(db: Db): Promise<{ rows: number; error?:
   if (!buffer.size) return { rows: 0 };
   const rows = [...buffer.values()];
   buffer.clear();
+  // [2026-11-18 Nguyễn Văn Thủy] số đếm ghi nhật ký JSONL luồng "thu-vien" (0161, bỏ bảng library_usage_daily); đọc thì cộng dồn (đóng góp)
+  void db;
   try {
-    const values = sql.join(rows.map((r) => sql`(${r.tenantId}::bigint, ${r.day}::date, ${r.libraryId}, ${r.version}, ${r.source}, ${r.itemCode}, ${r.outcome}, ${r.findingCode}, ${r.count}::bigint)`));
-    await sql`
-      INSERT INTO library_usage_daily (tenant_id, day, library_id, version, source, item_code, outcome, finding_code, count)
-      VALUES ${values}
-      ON CONFLICT (tenant_id, day, library_id, version, source, item_code, outcome, finding_code)
-      DO UPDATE SET count = library_usage_daily.count + EXCLUDED.count, updated_at = now()`.execute(db);
+    for (const { tenantId, ...r } of rows) await appendRunLog<UsageData>(USAGE_STREAM, tenantId, r);
     return { rows: rows.length };
   } catch (e) {
     return { rows: 0, error: (e as Error).message };
@@ -108,37 +106,54 @@ export interface UsageReport {
   unknown: { libraryId: string; source: string; count: number }[];
 }
 
-const n = (v: unknown): number => Number(v ?? 0);
 
 /** Số liệu bảng đánh giá trong khoảng ngày (đã lọc theo đơn vị bằng RLS + điều kiện tenant_id). */
 export async function libraryUsage(db: Db, tenantId: string | number, q: UsageQuery): Promise<UsageReport> {
-  const where = sql`tenant_id = ${String(tenantId)}::bigint AND day BETWEEN ${q.from}::date AND ${q.to}::date
-    ${q.library ? sql`AND library_id = ${q.library}` : sql``} ${q.source ? sql`AND source = ${q.source}` : sql``}`;
-  const sum = (o: UsageOutcome) => sql`COALESCE(SUM(count) FILTER (WHERE outcome = ${o}), 0)`;
-  const [byLib, bySrc, top, unk] = await Promise.all([
-    sql<{ library_id: string; pass: string; warn: string; block: string }>`
-      SELECT library_id, ${sum('pass')} AS pass, ${sum('warn')} AS warn, ${sum('block')} AS block
-      FROM library_usage_daily WHERE ${where} GROUP BY library_id ORDER BY library_id`.execute(db),
-    sql<{ source: string; library_id: string; pass: string; warn: string; block: string; deprecated: string }>`
-      SELECT source, library_id, ${sum('pass')} AS pass, ${sum('warn')} AS warn, ${sum('block')} AS block,
-             COALESCE(SUM(count) FILTER (WHERE finding_code = 'LIB-DEPRECATED-001'), 0) AS deprecated
-      FROM library_usage_daily WHERE ${where} GROUP BY source, library_id ORDER BY source, library_id`.execute(db),
-    sql<{ finding_code: string; library_id: string; outcome: UsageOutcome; count: string }>`
-      SELECT finding_code, library_id, outcome, SUM(count) AS count
-      FROM library_usage_daily WHERE ${where} AND finding_code <> '' GROUP BY finding_code, library_id, outcome
-      ORDER BY SUM(count) DESC, finding_code LIMIT 10`.execute(db),
-    sql<{ library_id: string; source: string; count: string }>`
-      SELECT library_id, source, SUM(count) AS count
-      FROM library_usage_daily WHERE ${where} AND item_code = '?' GROUP BY library_id, source
-      ORDER BY SUM(count) DESC LIMIT 10`.execute(db),
-  ]);
-  const byLibrary = byLib.rows.map((r) => ({ libraryId: r.library_id, pass: n(r.pass), warn: n(r.warn), block: n(r.block) }));
+  void db;
+  type Acc = { pass: number; warn: number; block: number; deprecated: number };
+  const SEP = '\u0001';
+  const lib = new Map<string, Acc>();
+  const src = new Map<string, Acc>();
+  const top = new Map<string, number>();
+  const unk = new Map<string, number>();
+  const add = (m: Map<string, Acc>, k: string, r: UsageData) => {
+    const x = m.get(k) ?? { pass: 0, warn: 0, block: 0, deprecated: 0 };
+    x[r.outcome] += r.count;
+    if (r.findingCode === 'LIB-DEPRECATED-001') x.deprecated += r.count;
+    m.set(k, x);
+  };
+  const bump = (m: Map<string, number>, k: string, c: number) => m.set(k, (m.get(k) ?? 0) + c);
+  for (const r of await libraryUsageRows(tenantId, q)) {
+    add(lib, r.libraryId, r);
+    add(src, [r.source, r.libraryId].join(SEP), r);
+    if (r.findingCode) bump(top, [r.findingCode, r.libraryId, r.outcome].join(SEP), r.count);
+    if (r.itemCode === '?') bump(unk, [r.libraryId, r.source].join(SEP), r.count);
+  }
+  const byKey = <V>(m: Map<string, V>) => [...m.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const byLibrary = byKey(lib).map(([k, v]) => ({ libraryId: k, pass: v.pass, warn: v.warn, block: v.block }));
   return {
     from: q.from, to: q.to,
     total: byLibrary.reduce((a, r) => ({ pass: a.pass + r.pass, warn: a.warn + r.warn, block: a.block + r.block }), { pass: 0, warn: 0, block: 0 }),
     byLibrary,
-    bySource: bySrc.rows.map((r) => ({ source: r.source, libraryId: r.library_id, pass: n(r.pass), warn: n(r.warn), block: n(r.block), deprecated: n(r.deprecated) })),
-    topFindings: top.rows.map((r) => ({ code: r.finding_code, libraryId: r.library_id, outcome: r.outcome, count: n(r.count) })),
-    unknown: unk.rows.map((r) => ({ libraryId: r.library_id, source: r.source, count: n(r.count) })),
+    bySource: byKey(src).map(([k, v]) => { const [source, libraryId] = k.split(SEP) as [string, string]; return { source, libraryId, pass: v.pass, warn: v.warn, block: v.block, deprecated: v.deprecated }; }),
+    topFindings: [...top.entries()].map(([k, count]) => { const [code, libraryId, outcome] = k.split(SEP) as [string, string, UsageOutcome]; return { code, libraryId, outcome, count }; })
+      .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code)).slice(0, 10),
+    unknown: [...unk.entries()].map(([k, count]) => { const [libraryId, source] = k.split(SEP) as [string, string]; return { libraryId, source, count }; })
+      .sort((a, b) => b.count - a.count).slice(0, 10),
   };
+}
+
+const USAGE_STREAM = 'thu-vien';
+type UsageData = Omit<Row, 'tenantId'>;
+/** Số đếm (đã cộng theo khoá ngày × thư viện × bản × nguồn × mã × kết quả × mã phát hiện) của đơn vị trong khoảng ngày. */
+export async function libraryUsageRows(tenantId: string | number, q: UsageQuery): Promise<UsageData[]> {
+  const sum = new Map<string, UsageData>();
+  for (const e of await readRunLog<UsageData>(USAGE_STREAM, { tenantId: String(tenantId) })) {
+    const r = e.data;
+    if (r.day < q.from || r.day > q.to || (q.library && r.libraryId !== q.library) || (q.source && r.source !== q.source)) continue;
+    const k = [r.day, r.libraryId, r.version, r.source, r.itemCode, r.outcome, r.findingCode].join('\u0001');
+    const cur = sum.get(k);
+    if (cur) cur.count += r.count; else sum.set(k, { ...r });
+  }
+  return [...sum.values()];
 }

@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+import { readDiagnosticRuns } from '@bizcity/platform/system/diagnostics';
 
 let ctx: TestCtx;
 let tenantId: string;
@@ -53,9 +54,12 @@ describe('Tự chẩn đoán', () => {
     expect(byCode(res.body.data.checks, 'LEDGER_BALANCED')).toMatchObject({ level: 'empty', examined: 0 });
   });
 
-  it('diagnostic_runs chỉ thêm: không sửa được dòng đã ghi', async () => {
-    const run = await db.selectFrom('diagnostic_runs').select('id').where('tenant_id', '=', tenantId).executeTakeFirstOrThrow();
-    await expect(sql`UPDATE diagnostic_runs SET error_count = 99 WHERE id = ${run.id}`.execute(db)).rejects.toThrow(/chỉ được thêm/);
+  it('lượt tự chẩn đoán ghi nhật ký JSONL chỉ thêm (0161): xem lại được theo id', async () => {
+    const run = (await readDiagnosticRuns(String(tenantId))).at(-1)!;
+    expect(run.layer).toMatch(/^L[13]$/);
+    const one = await call(ctx, 'GET', `/api/v1/system/diagnostics/runs/${run.id}`);
+    expect(one.status).toBe(200);
+    expect(one.body.data.id).toBe(run.id);
   });
 
   it('capabilities: bảng năng lực Standard + mã chẩn đoán đã đăng ký; cần đăng nhập', async () => {

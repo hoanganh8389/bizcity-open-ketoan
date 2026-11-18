@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Gom bảng về lõi, đợt 4: bộ đếm, hàng đợi sự kiện, nhật ký vận hành — bỏ 5 bảng (0161) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Luật mới:** lịch sử / lượt chạy (thứ "đã xảy ra, để xem lại", không cần cùng giao dịch với sổ) ghi **nhật ký JSONL** qua `packages/platform/src/core/run-log.ts` (`DATA_DIR/nhat-ky/<luồng>/<đơn vị>/<yyyy-mm>.jsonl`), **không tạo bảng**. Bảng chỉ cho thứ phải cùng giao dịch: chứng từ, sổ, chống gửi trùng, hàng đợi sự kiện, bằng chứng có chuỗi băm.
+- **Đổi:** `diagnostic_runs` → JSONL `chan-doan` (giữ 4 tháng); `conformance_runs` → JSONL `kiem-chuan`; `library_usage_daily` → JSONL `thu-vien` (đọc thì cộng dồn). API, màn, số đo giữ nguyên. Job `db-migrate` gắn ổ `appdata` và tự ghi dòng cũ ra JSONL sau khi áp migration.
+- **Đổi:** `ledger_entry_sequences` → bộ đếm chung `document_sequences` (loại `ledger:entry`, giữ đúng số); `event_consumptions` → cột `event_deliveries.consumed_at` (dấu đã xử lý trên chính dòng giao đang khoá; phát lại thì xoá dấu).
+- **Giữ:** `audit_logs` (chuỗi băm), `posting_log`, `event_outbox`, `action_requests`, `period_lock_events` — cần cùng giao dịch hoặc bị tra ở mỗi lần nạp chứng từ.
+
 ### Gom bảng về lõi, đợt 3: bỏ catalog_tombstones, default_data_backups (0160) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** `catalog_trash` thành chỗ chung giữ mọi "dòng đã bỏ đi": dấu xoá cho luồng danh mục (`tombstone.<loại>`, kèm `replacedByItemId` khi đổi / gộp mã — luồng `catalog/feed` trả như cũ) và ảnh chụp trước khi quay về dữ liệu gốc (`backup.default-data`, giữ 10 bản; API `/api/v1/default-data/backups` như cũ).

@@ -317,14 +317,8 @@ export interface EventDeliveriesTable {
   next_at: TimestampDefault;
   last_error: string | null;
   done_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
-}
-
-/** (consumer, event_id) đã xử lý — chống thực thi trùng (migration 0039). */
-export interface EventConsumptionsTable {
-  tenant_id: string;
-  consumer: string;
-  event_id: string;
-  processed_at: TimestampDefault;
+  /** 0161: thời điểm subscriber đã xử lý (dấu chống xử lý lặp, thay event_consumptions). */
+  consumed_at: Timestamp | null;
 }
 
 /** Token xác nhận trước khi ghi qua MCP (migration 0037, bizcity_mcp@1 STD-MCP-4). */
@@ -337,20 +331,6 @@ export interface McpConfirmTokensTable {
   expires_at: ColumnType<Date, Date | string, Date | string>;
   used_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
   idempotency_key: string | null;
-  created_at: TimestampDefault;
-}
-
-/** Kết quả tự chẩn đoán, chỉ thêm (migration 0034, R-DIAG-5). */
-export interface DiagnosticRunsTable {
-  id: Generated<string>;
-  tenant_id: string;
-  layer: 'L1' | 'L3';
-  trigger: Generated<'manual' | 'period-lock' | 'schedule' | 'release'>;
-  scope: JsonDefault<Record<string, unknown>>;
-  summary: Json<Record<string, number>>;
-  checks: Json<unknown[]>;
-  error_count: Generated<number>;
-  actor: string;
   created_at: TimestampDefault;
 }
 
@@ -1041,22 +1021,6 @@ export interface AccountingProfilesTable {
   created_at: TimestampDefault;
 }
 
-/** Lượt Kiểm chuẩn của đơn vị (migration 0055, ADR-0012). Chỉ thêm. */
-export interface ConformanceRunsTable {
-  id: Generated<string>;
-  tenant_id: string;
-  as_of: ColumnType<string, string, string>;
-  layers: string[];
-  profile_version: number | null;
-  kit_version: string | null;
-  kit_hash: string;
-  result: 'PASS' | 'FAIL' | 'REVIEW_REQUIRED';
-  counts: Json<unknown>;
-  report: Json<unknown>;
-  actor: string;
-  created_at: TimestampDefault;
-}
-
 /** Lượt duyệt / thu hồi rulepack tại bản cài (migration 0056, ADR-0016). Chỉ thêm. */
 export interface RulepackApprovalsTable {
   id: Generated<string>;
@@ -1561,12 +1525,6 @@ export interface SalesPaymentsTable {
   amount: Numeric;
 }
 
-export interface LedgerEntrySequencesTable {
-  tenant_id: string;
-  year: number;
-  last_no: Generated<number>;
-}
-
 export interface DimensionsTable {
   id: Generated<string>;
   tenant_id: string;
@@ -1988,12 +1946,10 @@ export interface Database {
   warehouse_types: WarehouseTypesTable;
   warehouse_type_ops: WarehouseTypeOpsTable;
   audit_logs: AuditLogsTable;
-  diagnostic_runs: DiagnosticRunsTable;
   action_requests: ActionRequestsTable;
   mcp_confirm_tokens: McpConfirmTokensTable;
   event_outbox: EventOutboxTable;
   event_deliveries: EventDeliveriesTable;
-  event_consumptions: EventConsumptionsTable;
   accounts: AccountsTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;
@@ -2017,7 +1973,6 @@ export interface Database {
   ledger_entries: LedgerEntriesTable;
   posting_policy_versions: PostingPolicyVersionsTable;
   accounting_profiles: AccountingProfilesTable;
-  conformance_runs: ConformanceRunsTable;
   rulepack_approvals: RulepackApprovalsTable;
   notifications: NotificationsTable;
   notification_reads: NotificationReadsTable;
@@ -2068,7 +2023,6 @@ export interface Database {
   cit_returns: CitReturnsTable;
   taxpayer_profiles: TaxpayerProfilesTable;
   long_term_balances: LongTermBalancesTable;
-  ledger_entry_sequences: LedgerEntrySequencesTable;
   document_sequences: DocumentSequencesTable;
   business_documents: BusinessDocumentsTable;
   catalog_trash: CatalogTrashTable;

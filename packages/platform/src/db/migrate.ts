@@ -21,6 +21,7 @@ import pg from 'pg';
 import { env } from '../config/env.js';
 import { pool } from './client.js';
 import { MIGRATIONS_DIR } from './paths.js';
+import { appendRunLog } from '../core/run-log.js';
 
 /**
  * Các file GỐC: cấu trúc nền (23/10/2026) gộp từ 67 migration lịch sử, chia theo mảng (nền tảng, danh mục, cấu hình định
@@ -105,6 +106,14 @@ export async function runMigrations(log: (msg: string) => void = console.log): P
         await client.query('ROLLBACK');
         throw new Error(`Migration ${file} lỗi: ${(err as Error).message}`);
       }
+    }
+    // [2026-11-18 Nguyễn Văn Thủy] 0161: dòng nhật ký cũ (tự chẩn đoán, Kiểm chuẩn, số đếm thư viện) ra JSONL rồi bỏ bảng tạm (đóng góp)
+    const exp = await client.query<{ t: string | null }>(`SELECT to_regclass('_run_log_export')::text AS t`);
+    if (exp.rows[0]?.t) {
+      const rows = (await client.query<{ stream: string; tenant_id: string; at: Date; data: unknown }>('SELECT stream, tenant_id::text, at, data FROM _run_log_export ORDER BY at')).rows;
+      for (const r of rows) await appendRunLog(r.stream, r.tenant_id, r.data, new Date(r.at));
+      await client.query('DROP TABLE _run_log_export');
+      if (rows.length) log(`→ Ghi ${rows.length} dòng nhật ký cũ ra JSONL (DATA_DIR/nhat-ky)`);
     }
     await client.query('SELECT pg_advisory_unlock(727001)');
     return applied;

@@ -2118,16 +2118,6 @@
         "migration": "0156_so_chung_tu_chung.sql"
       },
       {
-        "name": "conformance_runs_guard",
-        "table": "conformance_runs",
-        "migration": "0055_kiem_chuan.sql"
-      },
-      {
-        "name": "diagnostic_runs_no_update",
-        "table": "diagnostic_runs",
-        "migration": "0034_chan_doan.sql"
-      },
-      {
         "name": "dimensions_uid",
         "table": "dimensions",
         "migration": "0130_dinh_danh_phong_ban.sql"

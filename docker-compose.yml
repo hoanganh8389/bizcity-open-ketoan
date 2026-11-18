@@ -46,6 +46,8 @@ services:
       db:
         condition: service_healthy
     environment:
+      # [2026-11-18 Nguyễn Văn Thủy] 0161: job ghi dòng nhật ký cũ ra JSONL (DATA_DIR/nhat-ky) — cùng ổ appdata với API
+      DATA_DIR: /app/apps/api/data
       NODE_ENV: production
       DATABASE_URL: postgres://ketoan:${DB_PASSWORD:-ketoan}@db:5432/ketoan
       JWT_SECRET: ${JWT_SECRET:?Đặt JWT_SECRET trong .env}
@@ -67,6 +69,7 @@ services:
       SEEDS_DIR: ${SEEDS_DIR:+/srv/bizcity-seeds}
     # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: thư mục danh mục của công ty (chỉ đọc). Chưa đặt SEEDS_DIR thì gắn db/seeds của repo nhưng API không đọc (biến trống)
     volumes:
+      - appdata:/app/apps/api/data
       - ${SEEDS_DIR:-./db/seeds}:/srv/bizcity-seeds:ro
 
   api:

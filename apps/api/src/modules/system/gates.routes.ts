@@ -30,6 +30,7 @@ import { ok } from '../../core/http.js';
 import { db } from '../../db/client.js';
 import { listDiagnostics, type DiagResult } from './diagnostics.js';
 import { libraryRuleFindings } from '@bizcity/platform/core/libraries/index';
+import { readDiagnosticRuns } from '@bizcity/platform/system/diagnostics';
 
 export type GateKey = 'A' | 'B' | 'guard' | 'L' | 'diag' | 'C' | 'lock' | 'trigger' | 'ci';
 
@@ -186,8 +187,7 @@ export async function gatesRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requireAuthenticated(),
     schema: { tags: ['Hệ thống'], summary: 'Mọi mã kiểm của Core theo cổng (A · B · Commit Guard · L · chẩn đoán L1/L3/L5 · trigger CSDL · bộ kiểm CI; giữ chỗ C · khoá kỳ), mỗi mã có trụ cột, test, mức — cho thẻ Cổng & bộ kiểm ở HT10; chỉ đọc' },
     handler: async (req) => {
-      const run = await db.selectFrom('diagnostic_runs').select(['id', 'layer', 'trigger', 'checks', 'created_at'])
-        .where('tenant_id', '=', authOf(req).tenantId).orderBy('id', 'desc').limit(1).executeTakeFirst();
+      const run = (await readDiagnosticRuns(authOf(req).tenantId)).at(-1);
       const results = new Map<string, DiagResult>();
       for (const c of (Array.isArray(run?.checks) ? run.checks : []) as DiagResult[]) if (c?.code) results.set(c.code, c);
       const ci = loadBuildScoreboard();
@@ -200,7 +200,7 @@ export async function gatesRoutes(app: FastifyInstance): Promise<void> {
       });
       return ok({
         contract: 'bizcity_gates@1',
-        lastRun: run ? { id: run.id, layer: run.layer, trigger: run.trigger, at: run.created_at } : null,
+        lastRun: run ? { id: run.id, layer: run.layer, trigger: run.trigger, at: run.at } : null,
         ciRun: ci?.run ?? null,
         groups,
       });

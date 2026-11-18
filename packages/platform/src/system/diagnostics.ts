@@ -29,6 +29,7 @@ import { pendingMigrations } from '../db/migrate.js';
 import { SCREENS, STOP_THE_LINE_STEP } from '@ketoan/contracts';
 // [2026-11-09 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-1 (S032-27): tự chẩn đoán L3 lúc 01:00 mỗi đêm, khuôn subscriber như core.conformance-nightly
 import { defineSubscriber } from '../core/events.js';
+import { appendRunLog, pruneRunLog, readRunLog } from '../core/run-log.js';
 
 /** L1 sẵn sàng · L3 toàn vẹn sổ · L5 tuân thủ cấu hình (Conformance Engine, ADR-0012) — RULE-SELF-DIAGNOSTICS §1. */
 export type DiagLayer = 'L1' | 'L3' | 'L5';
@@ -244,17 +245,17 @@ function isoWeek(s: string): { week: string; monday: number } {
 }
 
 /**
- * Kết quả từng tuần (PHASE-032 B4a). Chỉ đọc diagnostic_runs: lượt L3 cả sổ (không khoảng ngày, không chi nhánh — lượt đêm
+ * Kết quả từng tuần (PHASE-032 B4a). Chỉ đọc nhật ký tự chẩn đoán (JSONL chan-doan, 0161): lượt L3 cả sổ (không khoảng ngày, không chi nhánh — lượt đêm
  * core.diagnostics-nightly và Kiểm lại tất cả). Kết quả lát = lượt cuối của lát; việc mới / đã đóng so với lượt cuối lát trước;
  * "có từ" = lượt đầu tiên của chuỗi lượt liên tục còn báo mã đó. Lượt giữ 90 ngày (R-DIAG-5): xem được khoảng 12 tuần gần nhất;
  * bản lưu tuần lâu dài là bước B4b.
  */
 export async function weeklyDiagnostics(tenantId: string, opts: { weeks?: number; db?: Kysely<Database> } = {}): Promise<WeekResult[]> {
   const conn = opts.db ?? db;
-  const rows = await conn.selectFrom('diagnostic_runs').select(['id', 'checks', 'created_at'])
-    .where('tenant_id', '=', tenantId).where('layer', '=', 'L3')
-    .where(sql<boolean>`coalesce(scope->>'from', '') = '' AND coalesce(scope->>'to', '') = '' AND coalesce(scope->>'branchCode', '') = ''`)
-    .orderBy('created_at').orderBy('id').execute();
+  void conn;
+  const rows = (await readDiagnosticRuns(tenantId))
+    .filter((r) => r.layer === 'L3' && !r.scope?.from && !r.scope?.to && !r.scope?.branchCode)
+    .map((r) => ({ id: r.id, checks: r.checks, created_at: r.at }));
   type Bad = Map<string, DiagResult>;
   const since = new Map<string, string>();
   const slices = new Map<string, { week: string; period: string; from: string; to: string; runs: number; days: Set<string>; last: DiagResult[]; lastAt: string; lastBad: Bad; prevBad: Bad | null; since: Map<string, string> }>();
@@ -305,25 +306,31 @@ export async function weeklyDiagnostics(tenantId: string, opts: { weeks?: number
   return out.reverse().slice(0, opts.weeks ?? 12);
 }
 
-/** Lưu một lượt vào diagnostic_runs (chỉ thêm, R-DIAG-5). */
+// [2026-11-18 Nguyễn Văn Thủy] lượt tự chẩn đoán ghi nhật ký JSONL luồng "chan-doan" (0161, bỏ bảng diagnostic_runs) (đóng góp)
+export interface DiagnosticRun {
+  id: string; at: string; tenantId: string; layer: 'L1' | 'L3'; trigger: string;
+  scope: { from?: string; to?: string; branchCode?: string } & Record<string, unknown>; summary: Record<string, number>; checks: DiagResult[]; errorCount: number; actor: string;
+}
+type DiagRunData = Omit<DiagnosticRun, 'id' | 'at' | 'tenantId'>;
+/** Giữ 90 ngày (R-DIAG-5): giữ 4 tháng lịch gần nhất. */
+const DIAG_STREAM = 'chan-doan';
+const DIAG_KEEP_MONTHS = 4;
+
+/** Lưu một lượt (chỉ thêm, R-DIAG-5) vào nhật ký JSONL. */
 export async function saveDiagnosticRun(report: DiagReport, meta: { tenantId: string; actor: string; trigger: 'manual' | 'period-lock' | 'schedule' | 'release' }): Promise<string> {
-  // L5 lưu ở conformance_runs (ảnh chụp báo cáo Kiểm chuẩn), không ở diagnostic_runs (CHECK layer IN ('L1','L3'), migration 0034).
-  if (report.layer === 'L5') throw new Error('Lượt L5 lưu ở conformance_runs, không ở diagnostic_runs');
-  const row = await db
-    .insertInto('diagnostic_runs')
-    .values({
-      tenant_id: meta.tenantId,
-      layer: report.layer as 'L1' | 'L3',
-      trigger: meta.trigger,
-      scope: JSON.stringify(report.scope),
-      summary: JSON.stringify(report.summary),
-      checks: JSON.stringify(report.checks),
-      error_count: report.summary.error,
-      actor: meta.actor,
-    })
-    .returning('id')
-    .executeTakeFirstOrThrow();
-  return row.id;
+  // L5 lưu ở lượt Kiểm chuẩn, không ở lượt tự chẩn đoán.
+  if (report.layer === 'L5') throw new Error('Lượt L5 lưu ở lượt Kiểm chuẩn, không ở lượt tự chẩn đoán');
+  const e = await appendRunLog<DiagRunData>(DIAG_STREAM, meta.tenantId, {
+    layer: report.layer as 'L1' | 'L3', trigger: meta.trigger, scope: report.scope as DiagRunData['scope'], summary: report.summary as unknown as Record<string, number>,
+    checks: report.checks, errorCount: report.summary.error, actor: meta.actor,
+  });
+  void pruneRunLog(DIAG_STREAM, DIAG_KEEP_MONTHS).catch(() => undefined);
+  return e.id;
+}
+
+/** Các lượt tự chẩn đoán, cũ → mới; bỏ tenantId = mọi đơn vị (số đo). */
+export async function readDiagnosticRuns(tenantId?: string): Promise<DiagnosticRun[]> {
+  return (await readRunLog<DiagRunData>(DIAG_STREAM, tenantId === undefined ? {} : { tenantId })).map((e) => ({ id: e.id, at: e.at, tenantId: e.tenantId, ...e.data }));
 }
 
 /**
