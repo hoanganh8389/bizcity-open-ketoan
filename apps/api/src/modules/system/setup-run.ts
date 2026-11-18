@@ -393,7 +393,44 @@ async function ownerAuth(tenantId: string, email: string): Promise<AuthContext> 
  * Mã đã có: là đơn vị mẫu thì trả lại (không nạp lần hai); đơn vị thường thì từ chối — không bao giờ nạp mẫu vào đơn vị thật.
  */
 /** Hàm tạo đơn vị của Kernel (seed) — gốc lắp ráp truyền vào: lớp này không import Kernel (TARGET-LAYOUT §2). */
-export type SeedTenant = (o: { tenantCode: string; tenantName: string; adminPassword?: string; isSample: true }) => Promise<{ tenantId: string; adminEmail: string }>;
+export type SeedTenant = (o: { tenantCode: string; tenantName: string; adminPassword?: string; adminEmail?: string; adminPasswordHash?: string; isSample: true }) => Promise<{ tenantId: string; adminEmail: string }>;
+
+// [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b (00 §15): seed của Kernel do gốc lắp ráp (app.ts) truyền vào — lớp P không import Kernel (SC-LAYER-2)
+let seedTenantFn: SeedTenant | null = null;
+export function useSeedTenant(fn: SeedTenant): void { seedTenantFn = fn; }
+
+/** Tạo Công ty Mẫu theo yêu cầu có bật không (BIZCITY_SAMPLE_ON_DEMAND=1 — bản cài nhiều công ty để tắt). */
+export const sampleOnDemandEnabled = (): boolean => (process.env.BIZCITY_SAMPLE_ON_DEMAND ?? '').trim() === '1';
+export const sampleTenantCode = (): string => (process.env.SAMPLE_TENANT_CODE ?? '').trim() || 'mau';
+
+/**
+ * Tạo Công ty Mẫu cho bản cài đã có (00 §15): người bấm (settings:write) → đơn vị mẫu mới cùng email + băm mật khẩu của họ, lần chạy
+ * gói ghi `running` (bộ chạy nền do route gọi). Khoá phiên `setup:sample-tenant` toàn bản cài: hai người bấm cùng lúc chỉ tạo một.
+ */
+export async function createSampleTenantOnDemand(auth: AuthContext, presetId: string): Promise<{ tenantCode: string; auth: AuthContext; run: RunRow }> {
+  if (!sampleOnDemandEnabled()) throw Errors.forbidden('Bản cài chưa bật tạo Công ty Mẫu theo yêu cầu (BIZCITY_SAMPLE_ON_DEMAND=1)');
+  if (!seedTenantFn) throw Errors.notReady('Chưa nối seed của Kernel (useSeedTenant)');
+  readPreset(presetId);
+  const userId = auth.actor.startsWith('user:') ? auth.actor.slice(5) : '';
+  if (!userId) throw Errors.forbidden('Chỉ người dùng đăng nhập (không phải khoá API) tạo được Công ty Mẫu');
+  const code = sampleTenantCode();
+  return db.connection().execute(async (conn) => {
+    await sql`SELECT pg_advisory_lock(hashtext('setup:sample-tenant'))`.execute(conn);
+    try {
+      const had = await sql<{ code: string; is_sample: boolean }>`SELECT code, is_sample FROM tenants WHERE is_sample OR code = ${code}`.execute(conn);
+      if (had.rows.some((r) => r.is_sample)) throw Errors.conflict('Bản cài đã có Công ty Mẫu — mở ở Thiết lập nhanh (TI15)', { reason: 'SAMPLE_EXISTS' });
+      if (had.rows[0]) throw Errors.conflict(`Mã đơn vị ${code} đã là đơn vị thật — đặt SAMPLE_TENANT_CODE khác`, { reason: 'SETUP_NOT_EMPTY' });
+      const me = await sql<{ email: string; password_hash: string }>`SELECT email, password_hash FROM users WHERE id = ${userId} AND tenant_id = ${auth.tenantId}`.execute(conn);
+      if (!me.rows[0]) throw Errors.notFound('người dùng đang đăng nhập');
+      const r = await seedTenantFn!({ tenantCode: code, tenantName: 'Công ty Mẫu (dữ liệu hư cấu)', adminEmail: me.rows[0].email, adminPasswordHash: me.rows[0].password_hash, isSample: true });
+      const owner = await ownerAuth(r.tenantId, r.adminEmail);
+      const { run } = await startRun(owner, presetId, `sample-tenant:${r.tenantId}`);
+      return { tenantCode: code, auth: owner, run };
+    } finally {
+      await sql`SELECT pg_advisory_unlock(hashtext('setup:sample-tenant'))`.execute(conn);
+    }
+  });
+}
 
 export async function createSampleTenant(opts: { presetId: string; code: string; adminPassword?: string }, seedTenant: SeedTenant): Promise<{ created: boolean; tenantId: string; adminEmail: string | null; run: RunRow | null }> {
   readPreset(opts.presetId);

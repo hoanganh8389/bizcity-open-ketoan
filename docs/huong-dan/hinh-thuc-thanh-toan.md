@@ -25,3 +25,8 @@ Khai từng tài khoản ngân hàng của đơn vị: ngân hàng, chi nhánh n
 - Chi tiền gửi, thu tiền gửi: ô tài khoản tiền hiện tên ngân hàng và số tài khoản.
 - **Tiền gửi ngân hàng (ACC56)**: chọn ô "Tài khoản ngân hàng" để xem sổ của một tài khoản.
 - Không xoá: bỏ "Đang dùng" để ngừng.
+
+## Nhập Excel
+<!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
+
+Cả hai màn Hình thức thanh toán và Ngân hàng (DM09) có nút **Nhập Excel** nhận tệp Xuất của màn đó. Tài khoản hạch toán phải là tài khoản chi tiết; mỗi tài khoản kế toán chỉ gắn một tài khoản ngân hàng; hình thức thanh toán ghi mã tài khoản ngân hàng đã có. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).

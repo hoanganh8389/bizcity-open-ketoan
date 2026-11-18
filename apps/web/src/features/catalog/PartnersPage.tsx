@@ -8,7 +8,8 @@
  * Đối tượng tự tạo khi chứng từ gửi kèm thông tin khách, hoặc đồng bộ qua API (PUT /api/v1/partners);
  * chứng từ gửi sang không ghi đè thông tin kế toán bổ sung.
  */
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useMaTrung } from '@/lib/maTrung';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText, ALL_ROWS } from '@/lib/api';
 import { money } from '@/lib/format';
@@ -139,6 +140,8 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, kind: fixedKind ?? sel?.kind ?? 'customer', isActive: true, groupCode: sel?.groupCode ?? null })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', taxCode: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá đối tượng ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
@@ -569,6 +572,17 @@ export function PartnerGroupsPage() {
     mutationFn: (g: Partial<Group>) => api.put(`/api/v1/partner-groups/${encodeURIComponent(g.code ?? '')}`, { name: g.name ?? '', parentCode: g.parentCode || undefined, kind: g.kind ?? 'any', note: g.note ?? '', isActive: g.isActive ?? true }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['partner-groups'] }); if (editing?.isNew) setEditing(null); else viewAgain[1](); },
   });
+  // [2026-11-17 07:28 PM kiennt] NT-DM-002 L01 — thêm nhóm trùng mã (cả mã trong thùng rác) thì báo, khoá Ghi (trước đây PUT ghi đè nhóm cũ);
+  //   L06 — ô Nhóm cha bỏ các nhóm con, cháu của nhóm đang sửa (chống vòng cha – con) (đóng góp)
+  const maTrung = useMaTrung({ isNew: editing?.isNew, code: editing?.code, list: groups.data, catalog: 'partner-groups' });
+  const nhanhCon = useMemo(() => {
+    const s = new Set<string>();
+    const ma = editing?.code;
+    if (!ma || editing?.isNew) return s;
+    const ds = groups.data ?? [];
+    for (let them = true; them;) { them = false; for (const g of ds) if (g.parentCode && (g.parentCode === ma || s.has(g.parentCode)) && !s.has(g.code)) { s.add(g.code); them = true; } }
+    return s;
+  }, [groups.data, editing?.code, editing?.isNew]);
   const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/partner-groups/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['partner-groups'] }); } });
   const e = editing;
   return (
@@ -582,10 +596,14 @@ export function PartnerGroupsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, kind: 'any', isActive: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', partners: 0, isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá nhóm ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => groups.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={canWrite && <NutNhapExcel loai={nhapLoai('nhom-doi-tuong')!} />}
         />
         <ErrorBox error={groups.error ? errorText(groups.error) : del.error ? errorText(del.error) : null} />
         {groups.isLoading ? <Loading /> : (
@@ -604,8 +622,8 @@ export function PartnerGroupsPage() {
       </div>
       {e && (
         <Modal viewAgain={viewAgain} viewFirst={!e.isNew} title="Nhóm khách hàng" onClose={() => setEditing(null)}
-          footer={<><button className="btn btn-primary" disabled={save.isPending || !e.code || !e.name} onClick={() => save.mutate(e)}>Ghi</button><button className="btn" onClick={() => setEditing(null)}>Thoát</button></>}>
-          <Field label="Mã nhóm (*)"><input className="input mono" value={e.code ?? ''} disabled={!e.isNew} onChange={(ev) => setEditing({ ...e, code: ev.target.value.trim() })} autoFocus /></Field>
+          footer={<><button className="btn btn-primary" disabled={save.isPending || !e.code || !e.name || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate(e)}>Ghi</button><button className="btn" onClick={() => setEditing(null)}>Thoát</button></>}>
+          <Field label="Mã nhóm (*)" error={maTrung || null}><input className="input mono" value={e.code ?? ''} disabled={!e.isNew} onChange={(ev) => setEditing({ ...e, code: ev.target.value.trim() })} autoFocus /></Field>
           <Field label="Nhóm khách hàng (*)"><input className="input" value={e.name ?? ''} onChange={(ev) => setEditing({ ...e, name: ev.target.value })} /></Field>
           <Field label="Mô tả" full><input className="input" value={e.note ?? ''} onChange={(ev) => setEditing({ ...e, note: ev.target.value })} /></Field>
           <Field label="Dùng cho">
@@ -613,7 +631,7 @@ export function PartnerGroupsPage() {
               <option value="any">Mọi loại</option>{Object.entries(KIND).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
           </Field>
-          <Field label="Nhóm cha"><ListPicker items={(groups.data ?? []).filter((g) => g.code !== e.code).map((g) => ({ code: g.code, name: g.name }))} value={e.parentCode ?? ''} onChange={(parentCode) => setEditing({ ...e, parentCode: parentCode || null })} placeholder="Không có" /></Field>
+          <Field label="Nhóm cha"><ListPicker items={(groups.data ?? []).filter((g) => g.code !== e.code && !nhanhCon.has(g.code)).map((g) => ({ code: g.code, name: g.name }))} value={e.parentCode ?? ''} onChange={(parentCode) => setEditing({ ...e, parentCode: parentCode || null })} placeholder="Không có" /></Field>
           <Field label=" "><label className="checkbox"><input type="checkbox" checked={e.isActive ?? true} onChange={(ev) => setEditing({ ...e, isActive: ev.target.checked })} /> Đang dùng</label></Field>
           {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
         </Modal>

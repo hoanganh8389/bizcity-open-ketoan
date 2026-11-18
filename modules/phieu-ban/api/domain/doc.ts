@@ -47,6 +47,9 @@ export const docInput = z.object({
   // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: phiếu bán sinh từ đơn đặt hàng nối số đơn (máy chủ tự gắn, màn không sửa được) (đóng góp)
   /** Đơn đặt hàng mà phiếu này giao (phiếu bán sinh từ nút Giao của đơn). Máy chủ giữ nguyên khi sửa phiếu nháp. */
   order: z.object({ id: z.string().trim().min(1).max(64), no: z.string().trim().max(32) }).optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: mã voucher TGS / hãng của khách (module voucher kiểm lúc duyệt) (đóng góp)
+  /** Mã voucher (module voucher) khách dùng — trừ lúc duyệt: TGS = chiết khấu trên dòng, hãng = dòng thanh toán. */
+  vouchers: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
 }).passthrough();
 export type PolicyRef = { key: string; version: number; line: 'gift' | 'discount' };
 export type DocInput = z.infer<typeof docInput>;
@@ -55,6 +58,8 @@ export type CatalogItem = { sku: string; name: string; unit: string; taxCode: st
 export type Line = {
   lineKey: string; sku: string; name: string; unit: string; qty: number; unitPrice: number; discount: number;
   amountBeforeTax: number; taxCode: string; taxAmount: number; isGift: boolean; policyRef?: PolicyRef;
+  /** NT-BH-028: kho riêng của dòng — dòng quà ở kho quà (KKM) của cửa hàng; trống = kho của phiếu. */
+  warehouseCode?: string;
 };
 export type Body = {
   warehouseCode?: string; partner?: { code: string; name: string; taxCode?: string }; invoice?: { no: string; serial?: string; date: string };
@@ -63,6 +68,10 @@ export type Body = {
   policyRefs?: { key: string; version: number; hash: string }[];
   /** Đơn đặt hàng phiếu này giao (NT-BH-023). */
   order?: { id: string; no: string };
+  /** Mã voucher khách dùng (NT-BH-026) — lưu ở nháp, áp lúc duyệt. */
+  voucherCodes?: string[];
+  /** Voucher đã áp lúc duyệt (NT-BH-026): số tiền thực trừ từng mã; module voucher đánh dấu đã dùng theo sự kiện phieu-ban.doc.recorded. */
+  vouchers?: { code: string; campaignId: string; campaignName: string; issuer: 'tgs' | 'brand'; kind: 'discount' | 'payment'; faceValue: number; amount: number; methodCode?: string }[];
 };
 
 /**
@@ -123,6 +132,7 @@ export function computeDoc(input: DocInput, ctx: {
     ...(input.note ? { note: input.note } : {}),
     ...(policyRefs.length ? { policyRefs } : {}),
     ...(input.order ? { order: { id: input.order.id, no: input.order.no } } : {}),
+    ...(input.vouchers?.length ? { voucherCodes: [...new Set(input.vouchers.map((c) => c.trim().toUpperCase()))] } : {}),
   };
   return { body, problems };
 }
@@ -174,13 +184,14 @@ export function toLedgerDoc(d: { docId: string; kind: Kind; branchCode: string; 
       return {
         lineKey: l.lineKey, sku: l.sku, ...(itemId ? { itemId } : {}), name: l.name, unit: l.unit, qty: l.qty,
         unitPrice: l.unitPrice, amountBeforeTax: l.amountBeforeTax, discount: l.discount, taxCode: l.taxCode, taxAmount: l.taxAmount,
-        ...(b.warehouseCode ? { warehouseCode: b.warehouseCode } : {}), ...(l.isGift ? { isGift: true } : {}),
+        ...(l.warehouseCode || b.warehouseCode ? { warehouseCode: l.warehouseCode || b.warehouseCode } : {}), ...(l.isGift ? { isGift: true } : {}),
         ...(l.policyRef ? { policyRef: l.policyRef } : {}),
       };
     }),
     // Bản chính sách đã áp: cửa nạp kiểm lại (IN-POL-001..004); phiếu có dòng chương trình có hạn mức (BH12) thì hạn mức tự trừ.
     ...(b.policyRefs?.length ? { policyRefs: b.policyRefs } : {}),
-    payments: b.payments,
+    // Dòng thanh toán voucher hãng (NT-BH-026) mang số mã ở `reference`; trường riêng của module không gửi vào sổ.
+    payments: b.payments.map(({ voucherCode: _v, ...p }: Body['payments'][number] & { voucherCode?: string }) => p),
     totals: b.totals,
   };
 }
@@ -194,4 +205,23 @@ export function stockShortOf(lines: readonly { sku: string; qty: number }[], hav
   for (const l of lines) if (l.qty > 0) need.set(l.sku, r4s((need.get(l.sku) ?? 0) + l.qty));
   return [...need.entries()].map(([sku, n]) => ({ sku, need: n, have: r4s(have.get(sku) ?? 0) })).filter((x) => x.need > x.have)
     .sort((a, b) => a.sku.localeCompare(b.sku));
+}
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: dòng quà của phiếu bán tự vào kho quà (KKM) của cửa hàng; không đổi thuế / giá vốn (đóng góp)
+/**
+ * Gán kho quà cho dòng quà (`isGift`) của phiếu bán; dòng bán giữ kho của phiếu. `gift` null (cửa hàng chưa khai kho quà) → bỏ kho riêng
+ * của mọi dòng (như cũ: mọi dòng ở kho của phiếu). Chỉ là phân kho trừ tồn (R-COMBO) — thuế, giá vốn không suy từ kho.
+ */
+export function withGiftWarehouse<B extends Pick<Body, 'lines'>>(body: B, gift: string | null): B {
+  return { ...body, lines: body.lines.map(({ warehouseCode: _w, ...l }) => (gift && l.isGift ? { ...l, warehouseCode: gift } : l)) };
+}
+
+/** Thiếu tồn theo mặt hàng × kho: dòng có kho riêng (quà) so tồn kho đó, không cộng chung với kho của phiếu. */
+export function stockShortByWarehouse(lines: readonly Pick<Line, 'sku' | 'qty' | 'warehouseCode'>[], have: ReadonlyMap<string, ReadonlyMap<string, number>>, headWarehouse: string) {
+  const groups = new Map<string, { sku: string; qty: number }[]>();
+  for (const l of lines) {
+    const wh = l.warehouseCode || headWarehouse;
+    groups.set(wh, [...(groups.get(wh) ?? []), l]);
+  }
+  return [...groups].flatMap(([wh, ls]) => stockShortOf(ls, have.get(wh) ?? new Map()).map((x) => ({ ...x, warehouse: wh, ...(wh !== headWarehouse ? { gift: true } : {}) })));
 }

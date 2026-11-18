@@ -55,7 +55,7 @@ import { policyActions } from './policy.routes.js';
 // [2026-11-14 03:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-3: đơn vị trắng (core.setup.status)
 import { setupActions } from './setup-status.js';
 // [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: máy chủ chạy gói mẫu (core.setup.presets / plan / run + route nạp)
-import { executeRun, setupRunActions, parseBlocks, startRun } from './setup-run.js';
+import { createSampleTenantOnDemand, executeRun, setupRunActions, parseBlocks, startRun } from './setup-run.js';
 import { zodToJson } from '../../core/json-schema.js';
 
 // [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
@@ -285,6 +285,21 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, policyActions); // PHASE-031 W3a
   mountActions(app, setupActions); // PHASE-036 S036-3
   mountActions(app, setupRunActions); // PHASE-036 S036-4
+
+  // [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b (00 §15): tạo Công ty Mẫu cho bản cài đã có — đơn vị mẫu cùng email / băm mật khẩu người bấm, nạp gói chạy nền
+  // @bizcity-route: tạo đơn vị mẫu (seed của Kernel) rồi nạp gói chạy nền bằng AuthContext chủ đơn vị mẫu — mỗi bản ghi có bằng chứng của action con
+  app.post('/api/v1/setup/sample-tenant', {
+    preHandler: requirePermission('settings:write'),
+    schema: { tags: ['Thiết lập'], summary: 'Tạo Công ty Mẫu (dữ liệu hư cấu) cho bản cài đã có; nạp gói chạy nền (BIZCITY_SAMPLE_ON_DEMAND=1)', body: z.object({ presetId: z.string().regex(/^[a-z0-9][a-z0-9-]*$/).max(64).default('thuong-mai-ban-le') }).default({}) },
+    handler: async (req, reply) => {
+      const key = req.headers['idempotency-key'];
+      if (!(Array.isArray(key) ? key[0] : key)?.trim()) throw Errors.validation('Thiếu Idempotency-Key');
+      const { tenantCode, auth, run } = await createSampleTenantOnDemand(authOf(req), (req.body as { presetId: string }).presetId);
+      setImmediate(() => { void executeRun(auth, run); });
+      void reply.code(202);
+      return ok({ tenantCode, runId: run.id });
+    },
+  });
 
   // [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 (00 §11): nạp gói mẫu — kiểm (đơn vị trắng / đã chạy cùng gói, có khoá) + ghi lần chạy, trả 202 runId, chạy nền
   // @bizcity-route: nạp gói mẫu chạy nền, gọi lại action Core (chi nhánh, đối tượng, mặt hàng, chứng từ) với quyền người bấm — mỗi bản ghi có bằng chứng của action con

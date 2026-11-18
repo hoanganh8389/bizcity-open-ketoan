@@ -1,3 +1,4 @@
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mã phiếu máy bán mặc định dạng shop (CN01BT…, CN01.B…) (đóng góp)
 // [2026-11-15 04:05 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1: tích / hoàn điểm theo đơn máy bán, chính sách website đẩy sang (đóng góp)
 /**
  * NT-BH-020 bước 1 — sổ điểm thành viên (module loyalty): website đẩy chính sách, máy bán gửi đơn / phiếu trả vào module pos,
@@ -106,7 +107,7 @@ describe.skipIf(!HAS)('NT-BH-020 — sổ điểm thành viên: tích / hoàn th
     expect(p.lots).toEqual([expect.objectContaining({ points: 32, remaining: 32 })]);
     expect(Date.parse(p.lots[0].expiresAt) - Date.parse(p.lots[0].earnedAt)).toBe(365 * 86_400_000);
     await deliver();
-    expect(await rows()).toEqual([['earn', 32, 'HD2611000001']]);
+    expect(await rows()).toEqual([['earn', 32, 'CN01BT10000']]);
   });
 
   it('kiểm 1: cùng khách mua 1.300.000 → +150 (130 + thưởng 20), số dư 182', async () => {
@@ -123,7 +124,7 @@ describe.skipIf(!HAS)('NT-BH-020 — sổ điểm thành viên: tích / hoàn th
     const p = await points();
     expect(p.balance).toBe(107);
     expect(p.lots.map((l: { points: number; remaining: number }) => [l.points, l.remaining])).toEqual([[32, 32], [150, 75]]);
-    expect(await rows()).toEqual([['earn', 32, 'HD2611000001'], ['earn', 150, 'HD2611000002'], ['reverse', -75, r.json().data.code]]);
+    expect(await rows()).toEqual([['earn', 32, 'CN01BT10000'], ['earn', 150, 'CN01BT10001'], ['reverse', -75, r.json().data.code]]);
   });
 
   it('khách lẻ không tích; sổ chỉ thêm (không sửa / xoá dòng cũ)', async () => {

@@ -169,6 +169,23 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 | Lõi (Kernel, sổ, hợp đồng) | chặt chẽ, không nới theo bước | một cửa ghi sổ, Nợ = Có, sổ chỉ thêm, chặn hẹp khi khoá kỳ |
 | Cách dùng (màn, lời, mặc định) | dễ, đi từng bước nhỏ | khoá thử hôm nay, việc hôm nay, gợi ý không chặn, mặc định tạm có ghi rõ |
 
+<!-- [2026-11-17 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — §0.11 hàng tặng: giá 0 không phải giá vốn 0; ba công tắc định giá · ghi tồn · lên thuế là chính sách có phiên bản theo nguồn quà (chủ dự án 2026-11-17: "đưa vào canon vì nó quan trọng, để anh em dev tuân thủ") -->
+### 0.11 Hàng tặng: giá bán 0 không phải giá vốn 0 — ba công tắc là chính sách, không phải cờ (chủ dự án 2026-11-17; [ADR-0035](adr/ADR-0035-combo-identity-phan-kho-nguon-qua.md), luật [R-COMBO](rules/RULE-COMBO.md))
+
+> **Một dòng "tặng" không tự quyết định cách hạch toán.** Hàng tặng có định giá không, có nằm trong tồn kho của công ty không, có lên thuế không — ba câu đó trả lời bằng **chính sách có phiên bản theo nguồn quà**, không bằng cờ `isGift`, giá dòng bằng 0, hay loại phân kho.
+
+1. **Combo không phải mặt hàng.** Quà là hàng thật thì mang `item_id` của chính nó; combo chỉ nói các dòng đi cùng nhau theo thoả thuận nào, lần nào (R-COMBO-1).
+2. **Năm nguồn quà, một danh sách đóng:** *Hàng nhà cung cấp tặng kèm mua* · *Quà nhà cung cấp cho người tiêu dùng* · *Quà nhà cung cấp gửi giữ hộ* · *Quà công ty tự đặt* · *Chưa rõ nguồn*. Nguồn là thuộc tính của dòng nhận, không phải nhóm vĩnh viễn của mặt hàng.
+3. **Ba công tắc cho mỗi nguồn** — *định giá* · *ghi tồn của công ty* · *lên thuế* — nằm trong Rule Contract `core.combo.gift_treatment@1`; mỗi công tắc có **căn cứ** và **ngày hiệu lực**; đổi = bản mới, kỳ đã khoá không tính lại. Kết quả áp cho từng dòng được **lưu lên dòng** kèm bản và băm.
+4. **Đầu vào ≠ đầu ra.** Nhà cung cấp tặng công ty và công ty tặng khách là hai sự việc; mặt bán có thể *áp dụng theo* điều kiện thương mại của mặt mua nhưng **không kế thừa** cách tính giá trị và thuế (R-COMBO-7).
+5. **Mặc định cho phép, bắt lại lúc khoá sổ.** Thiếu căn cứ thì nhắc, không chặn bán hàng (R-GATE-9); dòng chưa có quyết định sở hữu / giá trị / thuế thành điều kiện khoá sổ `CT-COMBO-006`. Không bao giờ tự gán giá vốn 0 hay giá tính thuế 0 để "cho qua".
+
+| Cấm trong mã | Thay bằng |
+|---|---|
+| `if (isGift) cost = 0`, `if (typeCode === 'KKM') vat = 0` | hỏi `core.combo.gift_treatment@1` tại ngày chứng từ |
+| tạo mã hàng cho combo, cho tỷ lệ tặng | `combo_id` + `combo_codes` |
+| cờ "không tính giá / không lên thuế" trên kho hay mặt hàng | công tắc trong chính sách có phiên bản |
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -216,6 +233,7 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 | R-CONT <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity --> | [rules/RULE-CONTINUITY.md](rules/RULE-CONTINUITY.md) | 0 (R-CONT-0), 1 (R-CONT-1..9) | **Đề xuất 2026-11-03** ([ADR-0021](adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md), PHASE-025): không đứt chuỗi; lineage giá vốn chỉ thêm; phương pháp tính giá là chính sách có phiên bản; trả / huỷ hoàn đúng giá vốn gốc; sổ chi tiết = sổ cái; khoá kỳ đòi Gate C sạch; kết quả do engine tính |
 | R-GATE | [rules/RULE-GATE.md](rules/RULE-GATE.md) | 1 | **Chấp nhận 2026-11-02** ([ADR-0019](adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)): hai cổng — Gate A danh mục (nháp), Gate B nghiệp vụ (bể chờ, R-INTAKE); không chặn im lặng; một thư viện mã; mức nào hậu quả đó, không lan <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE --> | SC-FIND-1 (sẽ có), test bể / nháp |
 | R-FLOW | [rules/RULE-FLOW.md](rules/RULE-FLOW.md) | 1 | **R-FLOW-9 (2026-11-09): chia nhỏ để chốt, mỗi master plan có bảng bước thắng nhỏ (§0.10).** **Chủ dự án đồng ý 2026-11-03:** nhận việc theo thứ tự giữ chỗ vào `main` → chốt thiết kế dùng chung bằng tài liệu → code. Một phạm vi một người ([CLAIMS](phases/CLAIMS.md)); nhánh ngắn; gộp `main` và bộ kiểm xanh trước khi đẩy <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW --> **`main` là nguồn sự thật duy nhất của tài liệu** (R-FLOW-7, 2026-11-03). | SC-FLOW-1; `scripts/nhan-viec.mjs kiem`; Bước 0 AGENTS.md |
+| R-COMBO <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — R-COMBO dòng danh mục luật (ADR-0035) --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) | 1 (R-COMBO-1..10) | **Chấp nhận 2026-11-17, chưa có mã** (CANON §0.11) ([ADR-0035](adr/ADR-0035-combo-identity-phan-kho-nguon-qua.md), PHASE-037): **combo là thoả thuận thương mại có phiên bản, không phải mặt hàng** — `combo_id` ≠ `item_id`, quà là hàng thật thì mang `item_id` thật; bản đã phát hành không sửa; tách / lắp / chuyển phân kho bảo toàn lượng theo `item_id` · lô; mỗi dòng quà truy được về dòng nhận gốc; chỉ Kernel ghi sổ; **giá 0 / `isGift` / loại phân kho không tự quyết định giá vốn hay thuế**; một combo hai mặt mua / bán, kế thừa đầu vào phải phát hành; `phankho_id` = `warehouses.uid`; năm nguồn quà; hết combo thì bán rời | SC-COMBO-1..3, `IN-COMBO-*`, `CT-COMBO-*` (sẽ có) |
 
 ## 4. Hợp đồng (contracts)
 
@@ -246,6 +264,7 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 | `bizcity_findings@1` <!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — thư viện phát hiện hai cổng (ADR-0019) --> | [contracts/BIZCITY-FINDINGS-v1.md](contracts/BIZCITY-FINDINGS-v1.md) | **Đề xuất** — một thư viện mã cho hai cổng kiểm chuẩn: mức, bước, vì sao, cách sửa, luật gốc; `core.findings.explain` cho người / dev / AI | `packages/contracts/src/findings.ts`; check SC-FIND-1 |
 | `bizcity_errors@1` | [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) | Chấp nhận — danh mục mã lỗi, thông báo, gợi ý (R-ERR) | `packages/contracts/src/errors.ts`; kiểm SC-ERR-1 |
 | `bizcity_preset@1` | [contracts/BIZCITY-PRESET-v1.md](contracts/BIZCITY-PRESET-v1.md) | Chấp nhận — gói cài nhanh theo ngành, dữ liệu mẫu hư cấu | `presets/`, `scripts/cai-preset.mjs`; kiểm SC-PRESET-1 |
+| `bizcity_combo@1` <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — hợp đồng Combo (ADR-0035) --> | [contracts/BIZCITY-COMBO-v1.md](contracts/BIZCITY-COMBO-v1.md) | **Đề xuất** 0.2.0-draft (ADR-0035 chấp nhận), **chưa có mã** — combo hai mặt mua / bán có phiên bản trên Policy Registry, lần thực hiện, năm nguồn quà, ba công tắc định giá · ghi tồn · lên thuế, gợi ý combo cho máy bán (ADR-0035, R-COMBO) | (đề xuất) gói contracts tệp `combo.ts`; `packages/kernel/src/modules/masterdata/` |
 | ~~`bizcity_workflow@1`~~ | [workflows/README.md](workflows/README.md) | Gộp vào `bizcity_document@1` §5 (năng lực `documents.workflow`) | — |
 
 Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`. **Đề xuất** = chuẩn đích, code đang chuyển dần (xem [framework/05-LO-TRINH.md](framework/05-LO-TRINH.md)).
@@ -292,8 +311,12 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Thêm loại dữ liệu gốc (Core hoặc module), đổi cách xoá / ngừng dùng / gộp một danh mục <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §5 dòng R-ECP --> | [standard/DU-LIEU-GOC.md](standard/DU-LIEU-GOC.md) §3 (đủ sáu thao tác); nguyên tắc ECP bị đụng ở [rules/RULE-ENTERPRISE-CONTINUITY.md](rules/RULE-ENTERPRISE-CONTINUITY.md) §1 |
 | Đổi mức đạt một trụ cột / tiêu chí | [standard/NEN-MONG-DOANH-NGHIEP.md](standard/NEN-MONG-DOANH-NGHIEP.md) hoặc `standard/tru-cot.json`, kèm tín hiệu chạy được (R-ECP-SCORE) |
 | Gỡ được cạnh import ngược chiều lớp | `--update-baseline`; mốc đồ thị mới `node scripts/do-thi-phu-thuoc.mjs` khi xong một Phase (SC-LAYER-2) |
+| Thêm / sửa mã đụng combo, khuyến mại có quà, nguồn quà, phân kho khuyến mại / giữ hộ, cách tính giá vốn – thuế của hàng tặng <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — §5 dòng R-COMBO --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) (luật + mã kiểm), [contracts/BIZCITY-COMBO-v1.md](contracts/BIZCITY-COMBO-v1.md); không tạo mã hàng cho combo, không suy giá vốn / thuế từ `isGift` |
 
 ## 6. Nhật ký thay đổi CANON
+
+<!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — CANON v1.7 (R-COMBO, bizcity_combo@1) -->
+- **v1.7 (2026-11-17):** Thêm luật **R-COMBO** ([rules/RULE-COMBO.md](rules/RULE-COMBO.md)) và hợp đồng `bizcity_combo@1` (đề xuất, [ADR-0035](adr/ADR-0035-combo-identity-phan-kho-nguon-qua.md), PHASE-037): combo không phải mặt hàng; sáu định danh không trộn (`item_id` · `combo_id` · `combo_version` · `combo_instance_id` · `phankho_id` · lô + dòng nguồn + phân bổ); tách kế toán khỏi thuế cho hàng tặng. Thêm **§0.11** hàng tặng: ba công tắc định giá · ghi tồn · lên thuế là chính sách có phiên bản theo nguồn quà. Nguồn: chủ dự án 2026-11-17.
 
 <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON — nhật ký v1.6 (§0.10, LEAN-8, R-FLOW-9) -->
 - **v1.6 (2026-11-09):** Thêm §0.10 **Chia nhỏ để chốt — lõi chặt chẽ, cách dùng dễ**, LEAN-8 *Small Wins* và luật R-FLOW-9 (mỗi master plan có bảng bước thắng nhỏ). Nguồn: chủ dự án 2026-11-09.

@@ -3,7 +3,7 @@
   "id": "bizcity.pos",
   "key": "pos",
   "kind": "module",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "label": "Máy bán POS",
   "description": "Phía máy chủ của máy bán POS (hợp đồng /pos/*): khởi động màn bán, cấp số phiếu, nhận đơn bán tại quầy và nộp chứng từ sale vào sổ qua cửa nạp (kế hoạch module POS).",
   "owners": [
@@ -22,7 +22,8 @@
       "ledger.cancel",
       "events.outbox",
       "settings.registry",
-      "actions.call"
+      "actions.call",
+      "events.subscribe"
     ]
   },
   "permissions": [
@@ -51,6 +52,15 @@
         "viewer"
       ],
       "risk": "low"
+    },
+    {
+      "key": "pos:promo-approve",
+      "label": "Duyệt / từ chối chương trình khuyến mại (BH18) — người lập không tự duyệt; duyệt xong màn phát hành vào sổ chính sách",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "high"
     }
   ],
   "data": {
@@ -61,7 +71,13 @@
       "returns",
       "return_lines",
       "code_counters",
-      "shifts"
+      "shifts",
+      "promo_drafts",
+      "promo_draft_log",
+      "promo_quotas",
+      "promo_uses",
+      "voucher_uses",
+      "code_reservations"
     ],
     "reads": [
       "bizcity_read.branches",
@@ -107,7 +123,23 @@
     "pos.order.qr-renew",
     "pos.order.invoice-buyer",
     "pos.order.move-to-z",
-    "pos.stock.all"
+    "pos.stock.all",
+    "pos.promo.draft.list",
+    "pos.promo.draft.get",
+    "pos.promo.draft.create",
+    "pos.promo.draft.update",
+    "pos.promo.draft.overlaps",
+    "pos.promo.draft.approve",
+    "pos.promo.draft.published",
+    "pos.promo.draft.reject",
+    "pos.promo.draft.import",
+    "pos.promo.stop-log",
+    "pos.promo.quota",
+    "pos.promo.report",
+    "pos.promo.report-orders",
+    "pos.report.missing-codes",
+    "pos.gift-warehouse.get",
+    "pos.customer.check"
   ],
   "ledger": {
     "submits": [
@@ -144,6 +176,16 @@
         "type": "pos.order.cancelled",
         "version": 1
       }
+    ],
+    "subscribes": [
+      {
+        "type": "phieu-ban.doc.recorded",
+        "version": 1
+      },
+      {
+        "type": "phieu-ban.doc.cancelled",
+        "version": 1
+      }
     ]
   },
   "settings": [
@@ -154,6 +196,7 @@
     "bizcity.pos.cash_diff_journal",
     "bizcity.pos.cash_short_reason",
     "bizcity.pos.cash_over_reason",
-    "bizcity.pos.return_bad_warehouses"
+    "bizcity.pos.return_bad_warehouses",
+    "bizcity.pos.gift_warehouses"
   ]
 }

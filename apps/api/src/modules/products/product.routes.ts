@@ -549,9 +549,15 @@ export const productWriteActions: AnyActionDef[] = [
         const changed = !old || (old.sku_code ?? '') !== (b.skuCode ?? old.sku_code ?? '') || (old.parent_code ?? null) !== (b.parentCode || null);
         // [2026-11-12 Nguyễn Văn Thủy] nhóm (hoặc nhóm con bên dưới) đã có mặt hàng: không đổi mã ngắn, không chuyển nhóm — mã hàng đã ghép theo (đóng góp)
         // [2026-11-12 Nguyễn Văn Thủy] mã nhóm hàng không trùng nhóm khác trong hệ thống (thêm mới / đổi tên) (đóng góp)
+        // [2026-11-18 03:10 PM kiennt] NT-DM-009 — không trùng nhóm cùng cha, không trùng tên nhóm cha (sửa: cả nhóm con trực tiếp); khác cha thì được trùng.
         if (!old || old.name.trim().toLowerCase() !== b.name.trim().toLowerCase()) {
-          const trung = all.find((x) => x.code !== c && x.name.replace(/\s+/g, ' ').trim().toLowerCase() === b.name.replace(/\s+/g, ' ').trim().toLowerCase());
-          if (trung) throw Errors.conflict(`Mã nhóm hàng "${b.name}" đã dùng cho nhóm khác — đặt mã khác`);
+          const nn = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+          const ten = nn(b.name);
+          const cha = b.parentCode || null;
+          const anhEm = all.find((x) => x.code !== c && (x.parent_code ?? null) === cha && nn(x.name) === ten);
+          if (anhEm) throw Errors.conflict(`Mã nhóm hàng "${b.name}" đã dùng cho nhóm cùng cấp${cha ? ` trong "${by.get(cha)?.name}"` : ''} — đặt mã khác`);
+          if (cha && nn(by.get(cha)?.name ?? '') === ten) throw Errors.conflict(`Mã nhóm hàng "${b.name}" trùng tên nhóm cha — đặt mã khác`);
+          if (old && all.some((x) => x.parent_code === c && nn(x.name) === ten)) throw Errors.conflict(`Mã nhóm hàng "${b.name}" trùng tên một nhóm con — đặt mã khác`);
         }
         const doiMaCo = Boolean(old?.sku_code) && b.skuCode !== undefined && old!.sku_code !== b.skuCode;
         const doiCha = Boolean(old) && (old!.parent_code ?? null) !== (b.parentCode || null);

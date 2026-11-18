@@ -36,6 +36,10 @@ import { contractSchedulePaidSubscriber } from './modules/dimensions/contract-sc
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): bản thật cho cổng của Platform
 import { provideCorePorts } from '@bizcity/platform/core/ports';
 import { usedDimensionCodes } from './kernel/public.js';
+// [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: gốc lắp ráp nối seed của Kernel cho bộ chạy Công ty Mẫu (lớp P không import Kernel)
+import { seed as kernelSeed } from './kernel/public.js';
+import { useSeedTenant } from './modules/system/setup-run.js';
+useSeedTenant(kernelSeed);
 import { loginWithWpTicket } from './modules/auth/wp-sso.js';
 import { primaryConnection } from './modules/connections/connection.service.js';
 import { lookupTaxCode } from './modules/partners/tra-mst.js';

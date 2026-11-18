@@ -44,6 +44,7 @@ Image API chép `db/migrations`, `db/seeds`, `db/packs` vào `/app/db` (`apps/ap
 | `PRESETS_DIR` | `<gốc repo>/presets` (Docker: `/app/presets`) | gói mẫu theo ngành (`bizcity_preset@1`) cho máy chủ chạy — Thiết lập nhanh, `scripts/cai-preset.mjs` (PHASE-036 · 00 §11) <!-- [2026-11-14 06:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4 --> |
 | `BIZCITY_SAMPLE` | trống (tắt); `scripts/cai-nhanh.sh` đặt `thuong-mai-ban-le` | job `db-migrate`: cài **mới** (CSDL chưa có đơn vị) thì tạo Công ty Mẫu và nạp gói này (PHASE-036 · 00 §14) <!-- [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 --> |
 | `SAMPLE_TENANT_CODE` | `mau` | mã đơn vị của Công ty Mẫu (`tenants.is_sample`, cùng tài khoản quản trị; không gửi được ra ngoài) |
+| `BIZCITY_SAMPLE_ON_DEMAND` | trống (tắt); `scripts/cai-nhanh.sh` đặt `1` | API: chủ đơn vị tạo Công ty Mẫu ở Thiết lập nhanh (TI15) khi bản cài chưa có (`POST /api/v1/setup/sample-tenant`, PHASE-036 · 00 §15) — bản cài nhiều công ty để trống. Xoá: `scripts/xoa-cong-ty-mau.sh` (ADR-0034) <!-- [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b --> |
 | `VN_RULEPACKS_DIR` <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine: gói @bizcity/vn-rulepacks trong image. --> | gói `packages/vn-rulepacks` (image chép nguyên thư mục) | kho rulepack + nguồn pháp lý cho Kiểm chuẩn (ADR-0012); chỉ đặt khi dùng kho khác |
 | `BIZCITY_GIT_SHA` | trống | mã commit ghi vào báo cáo Kiểm chuẩn; đặt lúc build image (`--build-arg` → `ENV`) |
 

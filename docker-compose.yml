@@ -121,6 +121,9 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@ketoan.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@123}
       SEED_API_KEY: ${SEED_API_KEY:-}
+      # [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: API tạo Công ty Mẫu theo yêu cầu (POST /api/v1/setup/sample-tenant) khi BIZCITY_SAMPLE_ON_DEMAND=1
+      BIZCITY_SAMPLE_ON_DEMAND: ${BIZCITY_SAMPLE_ON_DEMAND:-}
+      SAMPLE_TENANT_CODE: ${SAMPLE_TENANT_CODE:-mau}
       TZ: Asia/Ho_Chi_Minh
       # Tệp dữ liệu nhẹ không nằm trong cơ sở dữ liệu (dữ liệu huấn luyện trợ lý JSONL + ảnh).
       DATA_DIR: /app/apps/api/data

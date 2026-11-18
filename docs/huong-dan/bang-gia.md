@@ -52,3 +52,18 @@ Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi 
 - **Bấm đúp một dòng** để mở mặt hàng (DM10).
 - **Xuất Excel** để gửi duyệt giá / đối chiếu.
 - Giá cũng sửa được trong form mặt hàng (DM10 → thẻ ĐVT & giá bán), hai nơi là một dữ liệu.
+
+## Nhập giá từ Excel
+<!-- [2026-11-17 09:13 PM kiennt] NT-DM-003 — nhập giá bán từ Excel ở lưới giá (đóng góp) -->
+
+1. Bấm dòng bảng giá → ở lưới giá bên dưới bấm **Xuất Excel** để lấy tệp (cột Mã hàng, Tên hàng, ĐVT, Quy đổi, …, **Đơn giá**).
+2. Sửa cột **Đơn giá** trên Excel (thêm giá cho ô còn trống, đổi giá ô đã có). Có thể xoá bớt dòng không đổi.
+3. Bấm **Nhập Excel**, chọn tệp → xem trước: số ô thêm giá, đổi giá, không đổi; dòng lỗi (mã hàng / ĐVT không có trong bảng giá, đơn giá không phải số) bị bỏ qua.
+4. Bấm **Ghi** — như bấm Ghi giá. Ô Đơn giá để trống thì giữ nguyên giá đang có (muốn bỏ giá: Sửa giá trên lưới, xoá ô).
+
+Mặt hàng thêm bằng Nhập Excel ở danh mục mặt hàng chưa có giá: khai giá ở đây (lọc **Còn trống**) hoặc nhập Excel như trên.
+
+## Nhập danh sách bảng giá từ Excel
+<!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
+
+Danh sách bảng giá (phần trên) có nút **Nhập Excel** nhận tệp Xuất: mã, tên, bảng giá công ty, chi nhánh áp dụng (mã chi nhánh cách nhau dấu phẩy), ghi chú, đang dùng. Giá từng mặt hàng nhập ở lưới giá (mục *Nhập giá từ Excel*).

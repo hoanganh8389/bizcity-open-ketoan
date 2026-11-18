@@ -89,6 +89,8 @@ Lọc danh sách theo nhóm, loại (khách hàng / nhà cung cấp…), trạng
 - Thêm nhóm, nhóm con (chọn nhóm cha). "Dùng cho" chỉ để gợi ý: khi sửa đối tượng loại Khách hàng, ô Nhóm chỉ hiện nhóm dành cho khách hàng hoặc mọi loại.
 - Không xoá nhóm đã dùng: bỏ chọn "Đang dùng".
 
+**Nhập Excel** <!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->: nút ở màn Nhóm đối tượng nhận tệp Xuất (mã nhóm, tên, ghi chú, nhóm cha, dùng cho, hoạt động). Nhóm cha có thể ở dòng khác trong tệp — phần mềm ghi cha trước con, chặn vòng nhóm cha. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).
+
 ## Xem công nợ
 
 **Sổ chi tiết công nợ (ACC40)** hoặc **Sổ chi tiết tài khoản**, tài khoản 131 / 331, nhập mã đối tượng.

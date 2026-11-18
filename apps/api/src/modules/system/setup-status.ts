@@ -11,7 +11,7 @@ import { z } from 'zod';
 import type { Db } from '@bizcity/platform/db/client';
 import { defineAction, type AnyActionDef } from '@bizcity/platform/core/actions';
 // [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: status trả thêm runs[] (lần chạy gói mẫu gần nhất mỗi gói)
-import { latestRuns, runSchema } from './setup-run.js';
+import { latestRuns, runSchema, sampleOnDemandEnabled } from './setup-run.js';
 
 /** Loại dữ liệu nghiệp vụ → bảng. Danh sách đóng (PHASE-036 · 00 §10). */
 export const EMPTINESS_PROBES = [
@@ -53,14 +53,16 @@ const status = defineAction({
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
   input: z.object({}),
   // [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a): isSample (đơn vị đang dùng là Công ty mẫu), sampleTenantCode (mã đơn vị mẫu của bản cài — chỉ mã)
-  output: z.object({ empty: z.boolean(), kinds: z.array(z.enum(KINDS)), canSetup: z.boolean(), runs: z.array(runSchema), isSample: z.boolean(), sampleTenantCode: z.string().nullable() }),
+  output: z.object({ empty: z.boolean(), kinds: z.array(z.enum(KINDS)), canSetup: z.boolean(), runs: z.array(runSchema), isSample: z.boolean(), sampleTenantCode: z.string().nullable(), sampleOnDemand: z.boolean() }),
   expose: { http: { method: 'GET', path: '/api/v1/setup/status' }, mcp: true, ai: 'read' },
   handler: async (ctx) => {
     const e = await tenantEmptiness(ctx.data.tx, ctx.tenant.id);
     const me = await sql<{ is_sample: boolean }>`SELECT is_sample FROM tenants WHERE id = ${ctx.tenant.id}`.execute(ctx.data.tx);
     // bảng tenants không theo RLS đơn vị: chỉ đọc mã của đơn vị mẫu (không tên, không số liệu) để chỉ đường đăng nhập
     const sample = await sql<{ code: string }>`SELECT code FROM tenants WHERE is_sample ORDER BY id LIMIT 1`.execute(ctx.data.tx);
-    return { ...e, canSetup: ctx.can('settings:write'), runs: await latestRuns(ctx.data.tx, ctx.tenant.id), isSample: Boolean(me.rows[0]?.is_sample), sampleTenantCode: sample.rows[0]?.code ?? null };
+    return { ...e, canSetup: ctx.can('settings:write'), runs: await latestRuns(ctx.data.tx, ctx.tenant.id), isSample: Boolean(me.rows[0]?.is_sample), sampleTenantCode: sample.rows[0]?.code ?? null,
+      // [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: nút Tạo Công ty Mẫu (bật, chưa có, người gọi có settings:write)
+      sampleOnDemand: sampleOnDemandEnabled() && !sample.rows[0] && ctx.can('settings:write') };
   },
 });
 

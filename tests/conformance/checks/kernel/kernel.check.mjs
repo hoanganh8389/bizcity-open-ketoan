@@ -66,7 +66,8 @@ export const checks = [
         // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-8): cờ đã gỡ khỏi trigger (0086), nhóm E4 bỏ. Chỉ còn tên cờ ở: hai ca phá thử (app-role, db-rules) chứng minh nó vô tác dụng, chẩn đoán LEDGER_TRIGGERS dò trigger còn cờ, và kiem-chuan.sh
         allow_ledger_purge: /^(apps\/api\/test\/(app-role|db-rules)\.test\.ts|packages\/kernel\/src\/modules\/ledger\/ledger\.diagnostics\.ts|scripts\/kiem-chuan\.sh)$/,
         // test được nhắc tên cờ để chứng minh vai trò ứng dụng KHÔNG đặt được (app-role.test.ts)
-        session_replication_role: /^(scripts\/xoa-chung-tu\.sh|scripts\/kiem-chuan\.sh|apps\/api\/test\/)/,
+        // [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b (ADR-0034): xoá Công ty Mẫu cùng cơ chế E3 (chỉ đơn vị is_sample)
+        session_replication_role: /^(scripts\/xoa-chung-tu\.sh|scripts\/xoa-cong-ty-mau\.(sh|sql)|scripts\/kiem-chuan\.sh|apps\/api\/test\/)/,
       };
       const findings = [];
       for (const [flag, ok] of Object.entries(allow)) {
