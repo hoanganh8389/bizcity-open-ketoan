@@ -53,6 +53,12 @@ import phieuBanPromoUse from './subscribers/phieu-ban-promo-use.js';
 import reportMissingCodes from './actions/report-missing-codes.js';
 import giftWarehouseGet from './actions/gift-warehouse-get.js';
 import customerCheck from './actions/customer-check.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030: yêu cầu trả quá hạn — gửi, xem, duyệt, từ chối, danh sách quản trị (đóng góp)
+import returnApprovalCreate from './actions/return-approval-create.js';
+import returnApprovalGet from './actions/return-approval-get.js';
+import returnApprovalApprove from './actions/return-approval-approve.js';
+import returnApprovalReject from './actions/return-approval-reject.js';
+import adminReturnApprovals from './actions/admin-return-approvals.js';
 
 export default defineModule({
   manifest,
@@ -65,6 +71,7 @@ export default defineModule({
     orderQrConfirm, orderQrRenew, orderInvoiceBuyer, orderMoveToZ, stockAll,
     promoDraftList, promoDraftGet, promoDraftCreate, promoDraftUpdate, promoDraftOverlaps, promoDraftApprove, promoDraftPublished, promoDraftReject, promoDraftImport, promoStopLog, promoQuota, promoReport, promoReportOrders,
     reportMissingCodes, giftWarehouseGet, customerCheck,
+    returnApprovalCreate, returnApprovalGet, returnApprovalApprove, returnApprovalReject, adminReturnApprovals,
   ],
   subscribers: [phieuBanPromoUse],
 });
