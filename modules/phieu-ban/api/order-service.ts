@@ -648,11 +648,14 @@ export async function setShipmentStatus(ctx: ActionContext, id: string, shipment
       const from = r.hold_warehouse_code ?? r.warehouse_code;
       docs = [toHoldDoc({ orderId: r.order_id, orderNo: r.order_no, seq: ++seq, branchCode: r.branch_code, docDate: date, from, to: shipWh, moves, release: false, kind: 'ship' })];
     } else if (input.status === 'returned') {
+      // Đơn còn mở: hàng về KCB, giữ lại cho đơn. Đơn đã đóng (phiếu của chuyến bị xoá sau khi đóng tay): hàng về kho bán, không giữ.
+      const keep = r.status === 'open';
       if (sh.status === 'shipping' && shipWh) {
-        const to = r.hold_warehouse_code ?? r.warehouse_code;
+        const to = keep ? r.hold_warehouse_code ?? r.warehouse_code : r.warehouse_code;
         docs = [toHoldDoc({ orderId: r.order_id, orderNo: r.order_no, seq: ++seq, branchCode: r.branch_code, docDate: date, from: shipWh, to, moves, release: true, kind: 'back' })];
       }
-      lines = shipmentReturned(r.body.lines, sh.lines);
+      lines = keep ? shipmentReturned(r.body.lines, sh.lines)
+        : shipmentReturned(r.body.lines, sh.lines).map((l, i) => ({ ...l, held: r.body.lines[i]!.held }));
       body = { ...r.body, lines };
     } else {
       // Đã giao: phiếu bán nháp xuất từ KHG.
