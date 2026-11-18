@@ -154,4 +154,37 @@ const BIEU_THUE = danhMuc<Thue>({
   },
 });
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE];
+/* ------------------------------------------------------------------ DM18 Loại kho */
+interface LoaiKho { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; isActive: boolean }
+const LOAI_KHO = danhMuc<LoaiKho>({
+  id: 'loai-kho', title: 'Loại kho', desc: 'Mã, tên loại kho, công dụng, tài khoản hạch toán', listPath: '/danh-muc/loai-kho', invalidate: ['warehouse-types', 'warehouses'],
+  tenMa: 'Mã loại kho', chuanMa: (s) => chu(s).toUpperCase(), maSai: (m) => (/^[A-Z][A-Z0-9_]{1,11}$/.test(m) ? '' : 'Mã loại kho: chữ in hoa / số, 2–12 ký tự, bắt đầu bằng chữ'),
+  fields: [
+    { key: 'code', header: 'Mã', required: true, aliases: ['ma loai kho'], example: 'KM', note: 'Chữ in hoa / số, 2–12 ký tự. Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên loại kho', required: 'moi', aliases: ['ten', 'ten loai'], example: 'Kho khuyến mại' },
+    { key: 'purpose', header: 'Công dụng', aliases: ['cong dung', 'mo ta'], example: 'Hàng tặng kèm' },
+    { key: 'accountPrefix', header: 'Tài khoản hạch toán', aliases: ['tai khoan', 'tk kho'], example: '1567', note: 'Tài khoản chi tiết đã có. Trống: mới = dùng TK kho ngầm định; đã có = giữ nguyên.' },
+  ],
+  tai: async () => (await api.get<{ types: LoaiKho[] }>('/api/v1/warehouse-types')).types, maCua: (t) => t.code,
+  rac: async () => { try { return new Set((await api.get<{ code: string }[]>('/api/v1/warehouse-types/trash')).map((x) => x.code.toLowerCase())); } catch { return new Set(); } },
+  chuan: async () => ({ tk: await taiKhoanChiTiet() }),
+  xemTruoc: (t) => ({ name: t.name, purpose: t.purpose, accountPrefix: t.accountPrefix }),
+  kiem: (r, ma, before, { them }) => {
+    const { tk } = them as { tk: Set<string> };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Loại kho mới phải có tên');
+    if (name.length > 80) errors.push('Tên loại kho tối đa 80 ký tự');
+    const acc = chu(r.accountPrefix) || before?.accountPrefix || '';
+    if (chu(r.accountPrefix) && !tk.has(acc)) errors.push(`Tài khoản ${acc} không có hoặc là tài khoản tổng hợp`);
+    if (errors.length) return { errors };
+    return {
+      errors, ghi: () => api.put(`/api/v1/warehouse-types/${encodeURIComponent(ma)}`, {
+        name, purpose: chu(r.purpose) || before?.purpose || '', canSell: before ? before.canSell : true, owned: before ? before.owned : true,
+        trackExpiry: before ? before.trackExpiry : true, accountPrefix: acc, isActive: true,
+      }),
+    };
+  },
+});
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO];
