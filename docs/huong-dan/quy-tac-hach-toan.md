@@ -48,3 +48,8 @@ Nguồn chưa khai tài khoản thì dùng **tài khoản dự phòng** ghi cạ
 ## Xem thử bút toán
 
 Chọn chi nhánh, mã hàng, tiền hàng, loại thuế, số thu ngay / trả lại (hoặc mục đích, với phiếu kho), bấm **Xem thử**. Màn hiện bút toán sẽ ghi và báo **Cân** khi Nợ = Có. Không lưu gì, không ghi sổ.
+
+## Nhập Excel
+<!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
+
+Chế độ **Gọn** có nút **Nhập Excel** nhận tệp Xuất (Loại · TK Nợ · TK Có): đặt các tài khoản ngầm định sửa được của từng loại. Không thêm / xoá loại; tài khoản lấy theo nguồn khác (chữ *theo HTTT*, *theo loại kho*…) sửa ở màn nguồn. Dòng có nhiều ô ngầm định cùng bên: ghi các tài khoản theo thứ tự như tệp Xuất (một tài khoản = đặt cho mọi ô bên đó). Một ô dùng ở nhiều loại thì đổi ở mọi loại.

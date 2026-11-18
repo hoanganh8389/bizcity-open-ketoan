@@ -16,6 +16,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { AccountPicker, useAccountList } from '@/components/pickers';
 
 export interface WarehouseType { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; accountName?: string | null; accountPosting?: boolean; isSystem: boolean; isActive: boolean; sortOrder: number; warehouses: number; activeWarehouses: number }
@@ -62,8 +64,10 @@ export function WarehouseTypesPage() {
           onEdit={() => sel && setEditing(sel)}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
           extra={
             <>
+              {canWrite && <NutNhapExcel loai={nhapLoai('loai-kho')!} />}
               <button className="btn btn-sm" disabled={!canWrite || !sel || del.isPending} title="Chuyển loại kho đang chọn vào Thùng rác — vẫn lưu trong dữ liệu, khôi phục được"
                 onClick={() => { if (sel && window.confirm(`Xoá loại kho ${sel.code} - ${sel.name}?\nLoại kho chuyển vào Thùng rác (vẫn lưu, khôi phục được). Chứng từ đã ghi giữ nguyên.`)) del.mutate(sel.code); }}><Trash2 size={14} /> Xoá</button>
               <button className="btn btn-sm" onClick={() => setShowTrash(true)} title="Loại kho đã xoá: khôi phục hoặc xoá vĩnh viễn">

@@ -62,3 +62,8 @@ Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi 
 4. Bấm **Ghi** — như bấm Ghi giá. Ô Đơn giá để trống thì giữ nguyên giá đang có (muốn bỏ giá: Sửa giá trên lưới, xoá ô).
 
 Mặt hàng thêm bằng Nhập Excel ở danh mục mặt hàng chưa có giá: khai giá ở đây (lọc **Còn trống**) hoặc nhập Excel như trên.
+
+## Nhập danh sách bảng giá từ Excel
+<!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
+
+Danh sách bảng giá (phần trên) có nút **Nhập Excel** nhận tệp Xuất: mã, tên, bảng giá công ty, chi nhánh áp dụng (mã chi nhánh cách nhau dấu phẩy), ghi chú, đang dùng. Giá từng mặt hàng nhập ở lưới giá (mục *Nhập giá từ Excel*).
