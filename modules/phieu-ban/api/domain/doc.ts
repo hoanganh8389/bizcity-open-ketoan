@@ -58,6 +58,8 @@ export type CatalogItem = { sku: string; name: string; unit: string; taxCode: st
 export type Line = {
   lineKey: string; sku: string; name: string; unit: string; qty: number; unitPrice: number; discount: number;
   amountBeforeTax: number; taxCode: string; taxAmount: number; isGift: boolean; policyRef?: PolicyRef;
+  /** NT-BH-028: kho riêng của dòng — dòng quà ở kho quà (KKM) của cửa hàng; trống = kho của phiếu. */
+  warehouseCode?: string;
 };
 export type Body = {
   warehouseCode?: string; partner?: { code: string; name: string; taxCode?: string }; invoice?: { no: string; serial?: string; date: string };
@@ -182,7 +184,7 @@ export function toLedgerDoc(d: { docId: string; kind: Kind; branchCode: string; 
       return {
         lineKey: l.lineKey, sku: l.sku, ...(itemId ? { itemId } : {}), name: l.name, unit: l.unit, qty: l.qty,
         unitPrice: l.unitPrice, amountBeforeTax: l.amountBeforeTax, discount: l.discount, taxCode: l.taxCode, taxAmount: l.taxAmount,
-        ...(b.warehouseCode ? { warehouseCode: b.warehouseCode } : {}), ...(l.isGift ? { isGift: true } : {}),
+        ...(l.warehouseCode || b.warehouseCode ? { warehouseCode: l.warehouseCode || b.warehouseCode } : {}), ...(l.isGift ? { isGift: true } : {}),
         ...(l.policyRef ? { policyRef: l.policyRef } : {}),
       };
     }),
@@ -203,4 +205,23 @@ export function stockShortOf(lines: readonly { sku: string; qty: number }[], hav
   for (const l of lines) if (l.qty > 0) need.set(l.sku, r4s((need.get(l.sku) ?? 0) + l.qty));
   return [...need.entries()].map(([sku, n]) => ({ sku, need: n, have: r4s(have.get(sku) ?? 0) })).filter((x) => x.need > x.have)
     .sort((a, b) => a.sku.localeCompare(b.sku));
+}
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: dòng quà của phiếu bán tự vào kho quà (KKM) của cửa hàng; không đổi thuế / giá vốn (đóng góp)
+/**
+ * Gán kho quà cho dòng quà (`isGift`) của phiếu bán; dòng bán giữ kho của phiếu. `gift` null (cửa hàng chưa khai kho quà) → bỏ kho riêng
+ * của mọi dòng (như cũ: mọi dòng ở kho của phiếu). Chỉ là phân kho trừ tồn (R-COMBO) — thuế, giá vốn không suy từ kho.
+ */
+export function withGiftWarehouse<B extends Pick<Body, 'lines'>>(body: B, gift: string | null): B {
+  return { ...body, lines: body.lines.map(({ warehouseCode: _w, ...l }) => (gift && l.isGift ? { ...l, warehouseCode: gift } : l)) };
+}
+
+/** Thiếu tồn theo mặt hàng × kho: dòng có kho riêng (quà) so tồn kho đó, không cộng chung với kho của phiếu. */
+export function stockShortByWarehouse(lines: readonly Pick<Line, 'sku' | 'qty' | 'warehouseCode'>[], have: ReadonlyMap<string, ReadonlyMap<string, number>>, headWarehouse: string) {
+  const groups = new Map<string, { sku: string; qty: number }[]>();
+  for (const l of lines) {
+    const wh = l.warehouseCode || headWarehouse;
+    groups.set(wh, [...(groups.get(wh) ?? []), l]);
+  }
+  return [...groups].flatMap(([wh, ls]) => stockShortOf(ls, have.get(wh) ?? new Map()).map((x) => ({ ...x, warehouse: wh, ...(wh !== headWarehouse ? { gift: true } : {}) })));
 }

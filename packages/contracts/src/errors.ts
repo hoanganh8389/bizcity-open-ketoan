@@ -179,6 +179,9 @@ export const ERROR_REASONS = {
   VOUCHER_UNAVAILABLE: 'Đơn / phiếu có mã voucher mà module voucher chưa bật hoặc người bán thiếu quyền voucher:use',
   VOUCHER_PAYMENT_METHOD: 'Voucher hãng: hình thức thanh toán của đợt phát không có / ngừng dùng (kế toán khai tài khoản phải thu hãng ở hình thức); kèm method',
   VOUCHER_CAMPAIGN_STATE: 'Thao tác sai trạng thái đợt phát / mã voucher (mã đợt đã có, đổi điều kiện đợt đã phát mã, phát mã đợt đã ngừng / hết hạn, thu hồi mã đã dùng); kèm status',
+  // [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-028 quà trừ kho khuyến mại (BIZCITY-ERRORS 1.18.0-draft §4c, đóng góp)
+  POS_GIFT_WAREHOUSE: 'Đơn / phiếu bán có dòng quà mà kho quà khai cho cửa hàng (bizcity.pos.gift_warehouses, BH17) không dùng được: không thuộc cửa hàng, ngừng dùng, không phải kho khuyến mại KKM, trùng kho bán; kèm branchCode',
+  POS_GIFT_STOCK_SHORT: 'Máy bán: hết quà ở kho quà (KKM) của cửa hàng — hết quà thì không tặng; hàng bán vẫn kiểm riêng ở kho bán; items: [{ sku, need, have, warehouse, gift }]',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

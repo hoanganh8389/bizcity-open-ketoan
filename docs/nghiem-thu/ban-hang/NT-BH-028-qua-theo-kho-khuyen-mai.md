@@ -39,13 +39,27 @@
 | Q3 | POS cũ | Không sửa; chỉ React + kế toán |
 
 ## 5. Kết quả chạy
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — kết quả chạy (đóng góp) -->
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-028-qua-kho-km.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-027-029-quay` |
+| Test tự động | `apps/api/test/nt-bh-028-qua-kho-km.test.ts` (6/6) |
+
+**Cách bật:** khai kho loại **KKM** cho cửa hàng ở Danh mục kho (DM18), rồi *Cài đặt bán hàng (BH17) → ① → Kho quà* chọn kho đó (khoá `bizcity.pos.gift_warehouses`, dạng `CN01=KHO01-KM`). Kho phải thuộc cửa hàng, đang dùng, là KKM, khác kho bán — sai thì đơn / phiếu có quà báo `POS_GIFT_WAREHOUSE`.
+
+| Mục | Mong đợi | Phần mềm (test) |
+|---|---|---|
+| Mua 2 tặng 1 SUA330 | dòng bán trừ KHO01, quà trừ KHO01-KM | đạt: chứng từ bán `l1.warehouseCode = KHO01`, `g1 = KHO01-KM` (isGift); tồn KHO01 10 → 8, KM 3 → 2; đơn trả máy mang kho từng dòng; `GET /stock?scope=gift` = 2 |
+| KM 0, kho bán 10 | quà báo hết, hàng bán vẫn bán | đạt: đơn có quà → `POS_GIFT_STOCK_SHORT` (items kho KM, "Hết quà"); đơn không quà → nhận |
+| Kho bán 0, KM 3 | không bán được, quà không thay hàng bán | đạt: `POS_STOCK_SHORT` SUA900 cần 2 tồn 0 |
+| BH10 có dòng quà | quà tự vào kho KM | đạt: nháp dòng quà mang `KHO01-KM`; duyệt → chứng từ `L1 = KHO01`, `G1 = KHO01-KM` |
+| Chưa khai kho quà | như cũ | đạt: CN02 không gửi kho ở dòng, trừ chung |
+
+Ghi chú: thuế, bill Z, giá vốn không đổi (vẫn theo mã — R-COMBO, chờ `core.combo.gift_treatment@1`). Hàng quà khách trả nguyên vẹn về kho bán (luật kho DM18: `sale_return_in` chỉ nhận KHH / KTL). Khoá tồn vẫn theo chi nhánh × mã (bao mọi kho, cùng khoá BH10).
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q3 |
+| 18/11/2026 | Code module pos, phieu-ban + test; điền kết quả chạy, cách bật |

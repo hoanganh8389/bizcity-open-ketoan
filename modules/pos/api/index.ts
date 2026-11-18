@@ -49,6 +49,10 @@ import promoQuota from './actions/promo-quota.js';
 import promoReport from './actions/promo-report.js';
 import promoReportOrders from './actions/promo-report-orders.js';
 import phieuBanPromoUse from './subscribers/phieu-ban-promo-use.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 số bill thiếu, NT-BH-028 kho quà, NT-BH-029 kiểm khách mới (đóng góp)
+import reportMissingCodes from './actions/report-missing-codes.js';
+import giftWarehouseGet from './actions/gift-warehouse-get.js';
+import customerCheck from './actions/customer-check.js';
 
 export default defineModule({
   manifest,
@@ -60,6 +64,7 @@ export default defineModule({
     adminOrders, adminReturns, adminShifts, adminDashboard, adminSettings, adminShiftJournal,
     orderQrConfirm, orderQrRenew, orderInvoiceBuyer, orderMoveToZ, stockAll,
     promoDraftList, promoDraftGet, promoDraftCreate, promoDraftUpdate, promoDraftOverlaps, promoDraftApprove, promoDraftPublished, promoDraftReject, promoDraftImport, promoStopLog, promoQuota, promoReport, promoReportOrders,
+    reportMissingCodes, giftWarehouseGet, customerCheck,
   ],
   subscribers: [phieuBanPromoUse],
 });
