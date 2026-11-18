@@ -46,6 +46,8 @@ export function BankAccountsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true, currency: 'VND' })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', accountNo: '', accountCode: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá ${sel.code} - ${sel.bankName}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
