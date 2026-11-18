@@ -46,13 +46,28 @@
 | Q4 | Copy đơn | Đơn → đơn và hoá đơn lẻ → đơn; giá + CTKM tính lại |
 
 ## 5. Kết quả chạy
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032 §5: kết quả chạy test tự động (đóng góp) -->
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-032-giao-hang.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-032-giao-hang` (commit ghi ở PR) |
+| Test tự động | `apps/api/test/nt-bh-032-giao-hang.test.ts` — 9/9 ĐẠT; hàm thuần `modules/phieu-ban/test/order.test.ts` (chuyến giao, thông tin giao) ĐẠT |
+
+| Mục §3 | Kết quả | Test |
+|---|---|---|
+| 1. Khai người nhận, địa chỉ, phí ship 30.000, GHN, COD 1.000.000 | ĐẠT — lưu ở đơn (cột riêng), trả ở `shipping`, in trên phiếu báo giá, ghi lịch sử khi sửa | §3 dòng 1 |
+| 2. "Đi giao" chuyến 1 (5 hộp) | ĐẠT — chứng từ `transfer` KCB → KHG (`DH…-S<n>`, đã ghi sổ); KCB −5, KHG +5; không có phiếu bán / doanh thu; chuyến Đang giao, nhật ký người + lúc | §3 dòng 2 |
+| 3. "Đã giao" | ĐẠT — phiếu BH10 nháp xuất từ KHG: 5 hộp + dòng `SHIP` phí ship 30.000 (mã dịch vụ BH17) + thanh toán `COD-GHN` 1.000.000; duyệt → doanh thu 1.680.000, phải thu GHN 1.000.000 (TK theo hình thức, đối tượng GHN), phải thu khách 680.000, KHG về 0 (giá vốn ở bước tính giá vốn của Kernel) | §3 dòng 3 |
+| 4. Chuyến 2 "Hoàn" | ĐẠT — `transfer` KHG → KCB (`DH…-H<n>`); đơn vẫn mở, hàng giữ lại cho đơn; còn chuyến chưa xong thì không đóng / huỷ đơn; Chờ lấy → Hoàn không sinh chứng từ | §3 dòng 4 |
+| 5. Cửa hàng chưa có kho KHG | ĐẠT — 400 `PHIEU_BAN_NO_SHIP_WAREHOUSE` "… khai kho KHG ở danh mục kho …", không lập chuyến | §3 dòng 5 |
+| 6. Copy đơn đặt hàng cũ (giá đổi) | ĐẠT — đơn nháp mới, giá cửa hàng hôm nay 350.000 (cũ 330.000), khuyến mại bậc tính lại (giảm 10%), "Copy từ DH…"; copy phiếu BH10 đã duyệt cũng đạt (bỏ dòng phí ship) | §3 dòng 6 |
+| 7. Copy từ hoá đơn máy bán | ĐẠT — đơn mới cùng khách (mã khách của đơn máy bán), cùng hàng / SL, giá tính lại; mã không có → `PHIEU_BAN_COPY_SOURCE` | §3 dòng 7 |
+| 8. Người không có quyền cập nhật giao | ĐẠT — vai trò xem: 403 khi lập chuyến và đổi trạng thái | §3 dòng 8 |
+
+Ghi chú khi chạy thật: kế toán khai trước kho loại KHG cho cửa hàng (tick "Xuất bán" ở DM18), mặt hàng dịch vụ phí ship, hình thức thanh toán "COD — <hãng>" (tài khoản phải thu + đối tượng hãng), rồi chọn ở BH17 khối ⑤. Huỷ / đóng đơn còn chuyến Chờ lấy / Đang giao: **chặn** (409 `PHIEU_BAN_ORDER_STATE`, `cause: shipping`) — cập nhật Đã giao hoặc Hoàn trước. "Giao" cũ giữ thành **Giao tại quầy** (phiếu bán nháp xuất thẳng từ KCB). Lõi chưa có mặt hàng dịch vụ không theo dõi tồn: dòng phí ship sinh dòng kho số lượng 1 giá vốn 0 ở KHG (đề xuất Core).
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q4 |
+| 18/11/2026 | Code xong (nhánh `feat/nt-bh-032-giao-hang`): thông tin giao, chuyến giao qua kho KHG, phí ship, COD, copy đơn (đơn / BH10 / máy bán); §5 ghi kết quả 8/8 ĐẠT |

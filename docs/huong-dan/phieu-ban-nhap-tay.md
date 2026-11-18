@@ -48,6 +48,7 @@ Dùng cho bán buôn, bán nợ, bán ngoài quầy — những phiếu kế to�
 - Tồn kho lấy theo sổ kế toán. Cửa hàng chưa chuyển kho sang phần mềm kế toán thì số tồn có thể khác tồn thực tế.
 - Phiếu thử lập trên máy trước đây (dữ liệu giả) không chuyển sang sổ: màn báo một lần, bấm *Đã hiểu* để ẩn.
 - Đơn giá điền theo bảng giá của cửa hàng; bán vượt tồn sổ hiện "tồn sổ còn X".
+- Phiếu sinh từ **chuyến giao** của Đơn đặt hàng (NT-BH-032, ghi "Giao theo đơn đặt hàng DH… — chuyến N"): xuất từ kho KHG, có dòng **phí ship** (mã dịch vụ khai ở BH17) và dòng thanh toán **"COD — hãng"** (phải thu hãng). Không đổi số lượng hàng được; khách không nhận thì xoá phiếu nháp rồi bấm *Hoàn* ở chuyến giao. Dòng phí ship không kiểm tồn khi bật chặn bán quá tồn. <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032 (đóng góp) -->
 - Chưa có: phát hành hoá đơn điện tử từ phiếu — làm ở đợt sau.
 
 ## Phiếu trả BH11 và lượt khuyến mại có hạn mức (NT-BH-030)

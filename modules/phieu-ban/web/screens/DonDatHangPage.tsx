@@ -5,7 +5,10 @@
  *      thì báo hoặc gộp / giữ riêng theo lựa chọn.
  *   ③ Cài đặt — kho KCB (hàng chờ bán) giữ hàng của từng cửa hàng: khoá bizcity.phieu_ban.hold_warehouses, ghi qua đường cấu hình
  *      chung PUT /api/v1/settings/values/:key (quyền settings:write); danh sách kho đọc GET /api/v1/warehouses (lọc loại KCB).
+ *   NT-BH-032: nút "Copy từ hoá đơn" ở thẻ ① — nhập mã đơn máy bán / số phiếu BH10 đã duyệt / số đơn đặt hàng → đơn nháp mới (giá +
+ *   khuyến mại tính lại). Kho KHG, mã phí ship, hình thức COD của giao hàng chọn ở BH17 Cài đặt bán hàng.
  */
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: copy từ hoá đơn bán lẻ / đơn đặt hàng (đóng góp)
 // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: màn Đơn đặt hàng (đóng góp)
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -34,6 +37,12 @@ function ListTab() {
   const [source, setSource] = useState('');
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Order | 'new' | null>(null);
+  const [copy, setCopy] = useState<{ from: 'pos' | 'sale' | 'order'; no: string; branchCode: string } | null>(null);
+  const qc = useQueryClient();
+  const doCopy = useMutation({
+    mutationFn: () => api.post<Order>(`${M}/orders/copy`, { from: copy!.from, no: copy!.no.trim(), ...(copy!.branchCode ? { branchCode: copy!.branchCode } : {}) }),
+    onSuccess: (o) => { setCopy(null); void qc.invalidateQueries({ queryKey: ['phieu-ban', 'orders'] }); setOpen(o); },
+  });
   const q = useQuery({ queryKey: ['phieu-ban', 'orders', status, source, search],
     queryFn: () => api.getPage<Order[]>(`${M}/orders`, { status, source, search, pageSize: 500 }) });
   return (
@@ -48,7 +57,23 @@ function ListTab() {
         </select>
         <input className="input" style={{ width: 240 }} placeholder="Số đơn, khách, SĐT, ghi chú" value={search} onChange={(e) => setSearch(e.target.value)} />
         <button className="btn btn-primary" disabled={!can('phieu-ban:write')} title={can('phieu-ban:write') ? 'Lập đơn nháp (báo giá)' : 'Cần quyền phieu-ban:write'} onClick={() => setOpen('new')}>+ Lập đơn</button>
+        <button className="btn" disabled={!can('phieu-ban:write')} title={can('phieu-ban:write') ? 'Khách mua lại: lập đơn mới từ hoá đơn máy bán / phiếu BH10 đã duyệt / đơn đặt hàng cũ' : 'Cần quyền phieu-ban:write'}
+          onClick={() => setCopy({ from: 'pos', no: '', branchCode: '' })}>Copy từ hoá đơn</button>
       </div>
+      {copy && (
+        <div className="card card-body row" style={{ gap: 8, marginBottom: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <Field label="Nguồn">
+            <select className="input" value={copy.from} onChange={(e) => setCopy({ ...copy, from: e.target.value as typeof copy.from })}>
+              <option value="pos">Đơn máy bán (mã đơn)</option><option value="sale">Phiếu bán BH10 đã duyệt</option><option value="order">Đơn đặt hàng</option>
+            </select>
+          </Field>
+          <Field label="Mã / số gốc"><input className="input" value={copy.no} placeholder="vd CN02BT10005" onChange={(e) => setCopy({ ...copy, no: e.target.value })} /></Field>
+          <Field label="Cửa hàng" hint={copy.from === 'sale' ? 'Bắt buộc với phiếu BH10' : 'Khi mã có ở nhiều cửa hàng'}><BranchPicker value={copy.branchCode} onChange={(v) => setCopy({ ...copy, branchCode: v })} /></Field>
+          <button className="btn btn-primary" disabled={!copy.no.trim() || doCopy.isPending} title="Đơn nháp mới cùng khách, hàng, số lượng; giá + khuyến mại tính theo hôm nay" onClick={() => doCopy.mutate()}>Lập đơn</button>
+          <button className="btn" onClick={() => { setCopy(null); doCopy.reset(); }}>Thôi</button>
+          {doCopy.error && <ErrorBox error={errorText(doCopy.error)} />}
+        </div>
+      )}
       {q.isLoading ? <Loading /> : q.error ? <ErrorBox error={errorText(q.error)} /> : (
         <DataGrid rows={q.data?.data ?? []} columns={cols} rowKey={(o) => o.id} storageKey="phieu-ban.don-dat-hang" onRowDoubleClick={setOpen} onRowClick={setOpen}
           emptyText="Chưa có đơn đặt hàng" maxHeight="64vh" exportName="don-dat-hang" exportTitle="Đơn đặt hàng" />
@@ -128,6 +153,7 @@ function SettingsTab() {
       <div><b>Kho giữ hàng cho đơn đặt hàng</b><div className="muted">
         Đơn Đã gửi được giữ hàng bằng phiếu chuyển kho từ kho bán sang kho loại KCB "Kho hàng chờ bán" của cửa hàng; giao hàng xuất từ kho này.
         Chưa có kho KCB thì khai ở Danh mục kho (DM18), và tick KCB vào nghiệp vụ "Xuất bán" của Loại kho.
+        Giao hàng (NT-BH-032): kho KHG "Kho hàng gửi bán", mã dịch vụ phí ship, hình thức thanh toán COD theo hãng chọn ở Cài đặt bán hàng (BH17).
       </div></div>
       <table className="grid">
         <thead><tr><th>Cửa hàng</th><th>Kho KCB giữ hàng</th></tr></thead>
@@ -155,7 +181,7 @@ export function DonDatHangPage() {
   const T = (k: typeof tab, label: string) => <button className={`btn btn-xs${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)}>{label}</button>;
   return (
     <div>
-      <PageHeader title="Đơn đặt hàng" code="BH20" subtitle="Báo giá có hạn → gửi (kiểm hạn mức, nợ quá hạn) → giữ hàng ở kho KCB → giao nhiều lần thành phiếu bán nháp (BH10)." />
+      <PageHeader title="Đơn đặt hàng" code="BH20" subtitle="Báo giá có hạn → gửi (kiểm hạn mức, nợ quá hạn) → giữ hàng ở kho KCB → chuyến giao: Đang giao (kho KHG) → Đã giao (phiếu bán nháp BH10, phí ship, COD) | Hoàn." />
       <div className="row" style={{ gap: 6, marginBottom: 8 }}>{T('list', 'Đơn đặt hàng')}{T('import', 'Nạp đơn livestream')}{T('settings', 'Cài đặt')}</div>
       {tab === 'list' ? <ListTab /> : tab === 'import' ? <ImportTab /> : <SettingsTab />}
     </div>

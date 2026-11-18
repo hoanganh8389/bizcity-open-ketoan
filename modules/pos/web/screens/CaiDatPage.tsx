@@ -6,6 +6,7 @@
  *   ③ Chênh lệch két: bật lập phiếu kế toán khi chốt ca lệch; hai lý do loại journal (Nợ / Có) — tạo / sửa qua
  *      PUT /api/v1/posting/reasons/:code của Core; module chỉ giữ mã lý do.
  *   ④ Tài khoản hạch toán bán hàng: loại nhóm "Bán hàng" của ACC41 (chỉ đọc), nút Sửa ở ACC41.
+ *   ⑤ Giao hàng đơn đặt hàng (NT-BH-032): kho KHG, mã phí ship, COD theo hãng — khoá của module phieu-ban (GiaoHangCaiDat).
  * Khoá của module ghi qua đường chung PUT /api/v1/settings/values/:key (quyền settings:write; có phiên bản, ai đổi, lúc nào).
  */
 // [2026-11-13 08:45 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: BH17 gom 4 khối cài đặt bán hàng (đóng góp)
@@ -16,6 +17,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorBox, Field, Loading, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { M } from '../lib';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: khối ⑤ Giao hàng đơn đặt hàng (đóng góp)
+import { GiaoHangCaiDat } from './GiaoHangCaiDat';
 
 type Values = {
   returnDays: number; requireOpenShift: boolean; shiftScope: 'branch' | 'device'; cashDiffAlert: number;
@@ -267,6 +270,10 @@ export function CaiDatPage() {
           </table>
         )}
         <div><a className="btn" href="/cau-hinh/quy-tac-hach-toan">Sửa ở Quy tắc hạch toán (ACC41)</a></div>
+      </Block>
+
+      <Block title="⑤ Giao hàng đơn đặt hàng" hint="Chuyến giao của đơn đặt hàng (BH20) ghi sổ hai bước qua kho KHG: Đang giao chuyển kho, Đã giao sinh phiếu bán có phí ship + thanh toán COD. Ghi riêng bằng nút của khối này.">
+        <GiaoHangCaiDat />
       </Block>
 
       {save.error && <ErrorBox error={errorText(save.error)} />}

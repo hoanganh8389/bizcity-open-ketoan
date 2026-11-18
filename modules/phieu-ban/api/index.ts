@@ -27,6 +27,11 @@ import orderClose from './actions/order-close.js';
 import orderCancel from './actions/order-cancel.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: số liệu phiếu theo kênh cho báo cáo bán theo kênh (đóng góp)
 import channelSummary from './actions/channel-summary.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: chuyến giao, copy đơn (đóng góp)
+import shipmentCreate from './actions/shipment-create.js';
+import shipmentStatus from './actions/shipment-status.js';
+import orderCopy from './actions/order-copy.js';
 
 export default defineModule({ manifest, actions: [docList, docGet, docCreate, docUpdate, docDelete, docApprove, docUnapprove, docReturnable, quoteGet,
-  orderList, orderGet, orderHistory, orderSettings, orderCreate, orderUpdate, orderImport, orderSend, orderApprove, orderReject, orderDeliver, orderClose, orderCancel, channelSummary], subscribers: [] });
+  orderList, orderGet, orderHistory, orderSettings, orderCreate, orderUpdate, orderImport, orderSend, orderApprove, orderReject, orderDeliver, orderClose, orderCancel, channelSummary,
+  shipmentCreate, shipmentStatus, orderCopy], subscribers: [] });
