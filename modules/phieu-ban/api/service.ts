@@ -185,11 +185,15 @@ export async function approve(ctx: ActionContext, id: string) {
     const p0 = await prepare(tx, r.kind, asInput(r));
     if (p0.problems.length) fail(p0.problems);
     const p = { ...p0, body: withGiftWarehouse(p0.body, r.branch_code === head.branch_code ? giftWh : null) };
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q4: phiếu trả này trả hết hàng bán (không kể quà) của phiếu gốc → báo module pos trả lượt khuyến mại (đóng góp)
+    let originalFullyReturned = false;
     if (r.kind === 'sale_return' && p.original) {
       if (p.original.status !== 'approved') fail([`Phiếu bán gốc ${p.original.doc_no} chưa duyệt`]);
       const done = (await approvedReturnsOf(tx, p.original.doc_id, r.doc_id)).flatMap((x) => x.body.lines);
-      const over = overReturn(p.body.lines, returnableBySku(p.original.body.lines.filter((l) => !l.isGift), done));
+      const sold = p.original.body.lines.filter((l) => !l.isGift);
+      const over = overReturn(p.body.lines, returnableBySku(sold, done));
       if (over.length) fail(over.map((x) => `Trả vượt số đã bán của phiếu ${p.original!.doc_no} — ${x}`));
+      originalFullyReturned = [...returnableBySku(sold, [...done, ...p.body.lines].filter((l) => !l.isGift)).values()].every((q) => q <= 1e-9);
     }
     if (r.kind === 'sale' && blockStock) {
       // Phiếu đang sửa đã bỏ duyệt (chứng từ trong sổ đã huỷ) nên tồn đọc được không còn trừ chính nó.
@@ -205,7 +209,7 @@ export async function approve(ctx: ActionContext, id: string) {
           { reason: 'PHIEU_BAN_STOCK_SHORT', items: short });
       }
     }
-    return { r, ...p };
+    return { r, ...p, originalFullyReturned };
   });
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: chương trình khuyến mại có hạn mức lượt theo cửa hàng — hỏi lượt còn ở module pos (đóng góp)
   if (prepared.r.kind === 'sale') await checkPromoQuota(ctx, prepared.r.branch_code, prepared.body.lines, id);
@@ -230,7 +234,9 @@ export async function approve(ctx: ActionContext, id: string) {
   }).then(async (doc) => {
     await ctx.events.emit('phieu-ban.doc.recorded', {
       docId: id, docKey: docKeyOf(id), version, kind: prepared.r.kind, branchCode: prepared.r.branch_code, cashier: { name: ctx.actor.name },
-      doc, ...(prepared.original ? { originalDocKey: docKeyOf(prepared.original.doc_id) } : {}),
+      doc, ...(prepared.original ? {
+        originalDocKey: docKeyOf(prepared.original.doc_id), originalDocId: prepared.original.doc_id, originalFullyReturned: prepared.originalFullyReturned,
+      } : {}),
     }, { subject: `phieu-ban.doc:${id}`, dedupeKey: `phieu-ban.doc.recorded:${id}:${version}` });
     return doc;
   });
@@ -259,7 +265,11 @@ export async function unapprove(ctx: ActionContext, id: string, reason: string) 
     }
     return { ...toTradeDoc(await getDoc(tx, id)), reversed: res.reversed };
   }).then(async (doc) => {
-    await ctx.events.emit('phieu-ban.doc.cancelled', { docId: id, docKey: docKeyOf(id), version: r.ledger_version, kind: r.kind, branchCode: r.branch_code },
+    // NT-BH-030 Q4: phiếu trả bỏ duyệt mang phiếu gốc — module pos lấy lại lượt khuyến mại đã trả theo phiếu trả này.
+    await ctx.events.emit('phieu-ban.doc.cancelled', {
+      docId: id, docKey: docKeyOf(id), version: r.ledger_version, kind: r.kind, branchCode: r.branch_code,
+      ...(r.kind === 'sale_return' && r.original_doc_id ? { originalDocId: r.original_doc_id } : {}),
+    },
       { subject: `phieu-ban.doc:${id}`, dedupeKey: `phieu-ban.doc.cancelled:${id}:${r.ledger_version}` });
     return doc;
   });

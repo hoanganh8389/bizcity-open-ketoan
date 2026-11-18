@@ -172,15 +172,24 @@ describe.skipIf(!HAS)('NT-BH-024 — trả lại hàng bán đợt 2', () => {
     expect(r.json().error.details.reason).toBe('POS_RETURN_CONDITION');
   });
 
-  it('lệch chuẩn 4: đơn quá hạn có dòng lỗi → cần duyệt như cũ; có người duyệt thì hàng lỗi vào kho KTL', async () => {
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q2: quá hạn đi yêu cầu trả quá hạn + kế toán trưởng duyệt (thay người duyệt gõ tay) (đóng góp)
+  it('lệch chuẩn 4: đơn quá hạn có dòng lỗi → cần duyệt như cũ; có yêu cầu đã duyệt thì hàng lỗi vào kho KTL', async () => {
     await setting(DAYS_KEY, 0);
     try {
       const late = await ret(B, [{ lineId: 'l1', qty: 1, condition: 'bad' }]);
       expect(late.statusCode, late.body).toBe(400);
       expect(late.json().error.details.reason).toBe('POS_RETURN_EXPIRED');
-      const ok = await ret(B, [{ lineId: 'l1', qty: 1, condition: 'bad' }], { approval: { by: 'Quản lý CN01', note: 'Hàng lỗi nhà sản xuất' } });
+      expect((await call(ctx, 'POST', '/api/v1/users', { email: 'ktt024@ketoan.local', fullName: 'Kế toán trưởng', role: 'chief_accountant', password: 'Pass@12345' })).status).toBe(201);
+      const login = await ctx.app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { tenantCode: ctx.tenantCode, email: 'ktt024@ketoan.local', password: 'Pass@12345' } });
+      const apId = uuid('a');
+      const ap = await post('/return-approvals', { id: apId, orderId: B, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1, condition: 'bad' }], refundMethod: 'TM', reason: 'Hàng lỗi nhà sản xuất' });
+      expect(ap.statusCode, ap.body).toBe(201);
+      const okAp = await app.inject({ method: 'POST', url: `${M}/return-approvals/${apId}/approve`, payload: {},
+        headers: { authorization: `Bearer ${login.json().data.token}`, 'idempotency-key': `nt-bh-024-ap-${Date.now()}` } });
+      expect(okAp.statusCode, okAp.body).toBe(200);
+      const ok = await ret(B, [{ lineId: 'l1', qty: 1, condition: 'bad' }], { approvalId: apId });
       expect(ok.statusCode, ok.body).toBe(201);
-      expect(ok.json().data).toMatchObject({ approval: { by: 'Quản lý CN01' }, lines: [{ lineId: 'l1', condition: 'bad', warehouseCode: 'CN01-KTL' }] });
+      expect(ok.json().data).toMatchObject({ approval: { id: apId, by: 'Kế toán trưởng' }, lines: [{ lineId: 'l1', condition: 'bad', warehouseCode: 'CN01-KTL' }] });
       expect(await stockAt('SUA400', 'CN01-KTL')).toBe(1);
     } finally {
       await setting(DAYS_KEY, 3);

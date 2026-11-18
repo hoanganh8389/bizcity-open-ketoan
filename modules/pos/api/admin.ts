@@ -62,16 +62,17 @@ export async function adminReturns(tx: Tx, f: Range & Page & { q?: string }) {
   const rows = (await sql<{
     return_id: string; code: string; order_code: string; order_id: string; branch_code: string; business_date: string; created_at: Date; refund_method: string;
     refund_total: string; refund_net: string; refund_tax: string; reason: string; approved_by: string | null; approval_note: string | null;
-    exchange_order_id: string | null; doc_status: string; cashier_name: string | null; snapshot: { lines?: unknown[] };
+    exchange_order_id: string | null; doc_status: string; cashier_name: string | null; snapshot: { lines?: unknown[] }; order_branch_code: string;
   }>`
-    SELECT r.return_id, r.code, o.code AS order_code, r.order_id, r.branch_code, r.business_date::text AS business_date, r.created_at, r.refund_method,
+    SELECT r.return_id, r.code, o.code AS order_code, r.order_id, r.branch_code, o.branch_code AS order_branch_code, r.business_date::text AS business_date, r.created_at, r.refund_method,
            r.refund_total, r.refund_net, r.refund_tax, r.reason, r.approved_by, r.approval_note, r.exchange_order_id, r.doc_status, r.cashier_name, r.snapshot
       FROM mod_pos.returns r JOIN mod_pos.orders o ON o.order_id = r.order_id WHERE ${where}
      ORDER BY r.created_at DESC, r.id DESC LIMIT ${f.pageSize} OFFSET ${(f.page - 1) * f.pageSize}`.execute(tx)).rows;
   const { methodNames } = await methodsOf(tx);
   return {
     items: rows.map((r) => ({
-      id: r.return_id, code: r.code, orderId: r.order_id, orderCode: r.order_code, branchCode: r.branch_code, businessDate: r.business_date,
+      // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q1: cửa hàng bán của đơn gốc (trả ở cửa hàng khác cùng MST) (đóng góp)
+      id: r.return_id, code: r.code, orderId: r.order_id, orderCode: r.order_code, branchCode: r.branch_code, orderBranchCode: r.order_branch_code, businessDate: r.business_date,
       createdAt: r.created_at.toISOString(), refundMethod: r.refund_method, refundMethodName: methodNames[r.refund_method] ?? r.refund_method,
       refundTotal: Number(r.refund_total), refundNet: Number(r.refund_net), refundTax: Number(r.refund_tax), reason: r.reason,
       approvedBy: r.approved_by ?? '', approvalNote: r.approval_note ?? '', exchange: r.exchange_order_id !== null, docStatus: r.doc_status,

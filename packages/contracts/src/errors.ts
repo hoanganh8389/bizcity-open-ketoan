@@ -125,8 +125,9 @@ export const ERROR_REASONS = {
   POS_CODE_TAKEN: 'Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại)',
   // [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — họ mã POS_* đợt W2 — hoàn / đổi / huỷ (BIZCITY-ERRORS 1.8.0-draft §4c, phiếu NT-BH-005, đóng góp)
   POS_RETURN_QTY: 'Trả quá số còn trả được của dòng, hoặc dòng không có trong đơn gốc',
-  POS_RETURN_EXPIRED: 'Quá hạn trả (tham số, hiện 3 ngày theo ngày bán) mà thiếu người duyệt / lý do duyệt; kèm deadline',
-  POS_RETURN_OTHER_SHOP: 'Đơn gốc của chi nhánh khác: đợt này chỉ trả ở cửa hàng đã bán',
+  // [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-030: quá hạn cần yêu cầu trả quá hạn đã duyệt (approvalId); khác cửa hàng chỉ chặn khi khác / chưa khai MST chi nhánh (BIZCITY-ERRORS 1.19.0-draft, đóng góp)
+  POS_RETURN_EXPIRED: 'Quá hạn trả (hạn của cửa hàng nhận, mặc định 3 ngày theo ngày bán) mà không kèm yêu cầu trả quá hạn đã duyệt (approvalId); kèm deadline',
+  POS_RETURN_OTHER_SHOP: 'Đơn gốc của cửa hàng khác mà hai cửa hàng khác MST chi nhánh hoặc chưa khai MST; kèm orderBranch, cause (TAX_CODE_DIFFERENT / TAX_CODE_MISSING)',
   POS_ORDER_NOT_RETURNABLE: 'Đơn gốc chưa hoàn tất / đã huỷ: không trả hàng',
   POS_RETURN_REASON: 'Thiếu lý do trả hàng',
   POS_REFUND_METHOD: 'Hình thức trả tiền khách không phải tiền mặt / chuyển khoản (đối trừ chỉ trong đổi hàng)',
@@ -182,6 +183,9 @@ export const ERROR_REASONS = {
   // [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-028 quà trừ kho khuyến mại (BIZCITY-ERRORS 1.18.0-draft §4c, đóng góp)
   POS_GIFT_WAREHOUSE: 'Đơn / phiếu bán có dòng quà mà kho quà khai cho cửa hàng (bizcity.pos.gift_warehouses, BH17) không dùng được: không thuộc cửa hàng, ngừng dùng, không phải kho khuyến mại KKM, trùng kho bán; kèm branchCode',
   POS_GIFT_STOCK_SHORT: 'Máy bán: hết quà ở kho quà (KKM) của cửa hàng — hết quà thì không tặng; hàng bán vẫn kiểm riêng ở kho bán; items: [{ sku, need, have, warehouse, gift }]',
+  // [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-030 trả hàng đợt 3: yêu cầu trả quá hạn (BIZCITY-ERRORS 1.19.0-draft §4c, đóng góp)
+  POS_RETURN_APPROVAL_STATE: 'Yêu cầu trả quá hạn không ở trạng thái cho thao tác này: chưa duyệt, bị từ chối (kèm rejectReason), đã dùng, đơn còn trong hạn, đã có yêu cầu đang mở; kèm status, approvalId',
+  POS_RETURN_APPROVAL_MISMATCH: 'Phiếu trả quá hạn khác nội dung yêu cầu đã duyệt (khác đơn, cửa hàng nhận, dòng, số lượng, tình trạng); kèm approvalId, approved',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

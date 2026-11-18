@@ -205,8 +205,8 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POS_CODE_TAKEN` | `CONFLICT` | Mã phiếu / id đơn vừa được máy khác dùng đồng thời (gửi lại) | module `pos` (đề xuất, chưa gộp) |
 | **Máy bán POS – hoàn / đổi / huỷ** (1.8.0-draft) <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — họ mã POS_* đợt W2 (phiếu NT-BH-005, đóng góp) --> | | | |
 | `POS_RETURN_QTY` | `VALIDATION_ERROR` | Trả quá số còn trả được của dòng, hoặc dòng không có trong đơn gốc | module `pos` (đề xuất, chưa gộp) |
-| `POS_RETURN_EXPIRED` | `VALIDATION_ERROR` | Quá hạn trả (tham số, hiện 3 ngày theo ngày bán) mà thiếu người duyệt / lý do duyệt; kèm `deadline` | module `pos` (đề xuất, chưa gộp) |
-| `POS_RETURN_OTHER_SHOP` | `CONFLICT` | Đơn gốc của chi nhánh khác: đợt này chỉ trả ở cửa hàng đã bán | module `pos` (đề xuất, chưa gộp) |
+| `POS_RETURN_EXPIRED` | `VALIDATION_ERROR` | Quá hạn trả (hạn của cửa hàng nhận: `bizcity.pos.return_days`, riêng shop `bizcity.pos.return_days_by_shop`) mà không kèm yêu cầu trả quá hạn đã duyệt (`approvalId`, 1.19.0-draft; trước đó: thiếu người duyệt / lý do gõ tay); kèm `deadline` | module `pos` (đề xuất, chưa gộp) |
+| `POS_RETURN_OTHER_SHOP` | `CONFLICT` | Đơn gốc của cửa hàng khác mà hai cửa hàng khác MST chi nhánh hoặc một bên chưa khai MST (1.19.0-draft: cùng MST thì trả được); kèm `orderBranch`, `cause` (`TAX_CODE_DIFFERENT` / `TAX_CODE_MISSING`) | module `pos` (đề xuất, chưa gộp) |
 | `POS_ORDER_NOT_RETURNABLE` | `CONFLICT` | Đơn gốc chưa hoàn tất / đã huỷ: không trả hàng | module `pos` (đề xuất, chưa gộp) |
 | `POS_RETURN_REASON` | `VALIDATION_ERROR` | Thiếu lý do trả hàng | module `pos` (đề xuất, chưa gộp) |
 | `POS_REFUND_METHOD` | `VALIDATION_ERROR` | Hình thức trả tiền khách không phải tiền mặt / chuyển khoản (đối trừ chỉ trong đổi hàng) | module `pos` (đề xuất, chưa gộp) |
@@ -259,6 +259,9 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | **Quà trừ kho khuyến mại** (1.18.0-draft) <!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-028 quà trừ kho khuyến mại (đóng góp) --> | | | |
 | `POS_GIFT_WAREHOUSE` | `VALIDATION_ERROR` | Đơn máy bán / phiếu bán BH10 có dòng quà mà kho quà khai cho cửa hàng (`bizcity.pos.gift_warehouses`, BH17) không dùng được — không thuộc cửa hàng, ngừng dùng, không phải kho khuyến mại (KKM), trùng kho bán; kèm `branchCode`. Cửa hàng chưa khai kho quà: không lỗi, quà trừ kho bán như cũ | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
 | `POS_GIFT_STOCK_SHORT` | `VALIDATION_ERROR` | Máy bán: dòng quà thiếu tồn ở kho quà của cửa hàng (hết quà thì không tặng; tồn kho bán cùng mã không dùng thay); hàng bán thiếu ở kho bán vẫn là `POS_STOCK_SHORT`; kèm `items: [{ sku, need, have, warehouse, gift }]` | module `pos` (đề xuất, chưa gộp) |
+| **Trả lại hàng bán đợt 3** (1.19.0-draft) <!-- [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-030 trả hàng đợt 3; đổi nghĩa POS_RETURN_EXPIRED, POS_RETURN_OTHER_SHOP ở trên (đóng góp) --> | | | |
+| `POS_RETURN_APPROVAL_STATE` | `CONFLICT` | Yêu cầu trả quá hạn không ở trạng thái cho thao tác: lập phiếu theo yêu cầu chưa duyệt / bị từ chối (kèm `rejectReason`) / đã dùng; duyệt / từ chối yêu cầu không còn chờ; gửi yêu cầu cho đơn còn trong hạn (`status: 'not_late'`) hoặc đơn đã có yêu cầu đang mở; kèm `status`, `approvalId` | module `pos` (đề xuất, chưa gộp) |
+| `POS_RETURN_APPROVAL_MISMATCH` | `VALIDATION_ERROR` | Phiếu trả quá hạn khác nội dung yêu cầu đã duyệt (khác đơn, cửa hàng nhận, dòng, số lượng, tình trạng); kèm `approvalId`, `approved` (dòng đã duyệt) | module `pos` (đề xuất, chưa gộp) |
 | **Máy bán bán đúng bảng giá** (1.13.0-draft) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) --> | | | |
 | `POS_MANUAL_DISCOUNT` | `VALIDATION_ERROR` | Dòng có giảm tay: thu ngân không giảm tay, chỉ giảm theo chương trình khuyến mại; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 | `POS_NO_PRICE` | `VALIDATION_ERROR` | Mã × ĐVT chưa có giá ở bảng giá cửa hàng (trừ quà, hàng Nội bộ, bill Z 0đ); kèm `items: [{ sku, unit }]` | module `pos` (đề xuất, chưa gộp) |
@@ -299,6 +302,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — 1.19.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.19.0-draft (2026-11-18, trả hàng đợt 3):** §4c thêm `POS_RETURN_APPROVAL_STATE`, `POS_RETURN_APPROVAL_MISMATCH`; đổi nghĩa `POS_RETURN_EXPIRED` (quá hạn cần yêu cầu trả quá hạn đã duyệt, bỏ người duyệt gõ tay) và `POS_RETURN_OTHER_SHOP` (chỉ chặn khi khác / chưa khai MST chi nhánh, kèm `cause`) (module pos, phiếu NT-BH-030). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — 1.18.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.18.0-draft (2026-11-18, quà trừ kho khuyến mại):** §4c thêm `POS_GIFT_WAREHOUSE` (module pos, phieu-ban), `POS_GIFT_STOCK_SHORT` (module pos) (phiếu NT-BH-028). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — 1.17.0-draft (đóng góp, chờ chủ dự án duyệt) -->

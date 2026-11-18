@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_settings@1",
-  "note": "Khoá cấu hình của module pos (Cài đặt bán hàng BH17, phiếu NT-BH-008 §7; chênh lệch két NT-BH-014; kho hàng trả lỗi NT-BH-024). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key.",
+  "note": "Khoá cấu hình của module pos (Cài đặt bán hàng BH17, phiếu NT-BH-008 §7; chênh lệch két NT-BH-014; kho hàng trả lỗi NT-BH-024; hạn trả riêng từng shop NT-BH-030). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key.",
   "settings": [
     {
       "key": "bizcity.pos.return_days",
@@ -136,6 +136,21 @@
       "permission": "settings:write",
       "audit": "có",
       "affectsPosting": true
+    },
+    {
+      "key": "bizcity.pos.return_days_by_shop",
+      "class": "B",
+      "owner": "pos",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.pos.return_days_by_shop",
+      "schema": "hạn trả hàng không cần duyệt riêng của từng cửa hàng (NT-BH-030 Q3): mảng \"<mã cửa hàng>=<số ngày 0–60>\"; cửa hàng chưa khai lấy bizcity.pos.return_days của công ty; hạn tính theo cửa hàng nhận trả",
+      "valueType": "string[]",
+      "default": "[]",
+      "readBy": "modules/pos/api/settings.ts (phiếu trả / đổi hàng, yêu cầu trả quá hạn, còn trả được, bootstrap)",
+      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
     }
   ]
 }
