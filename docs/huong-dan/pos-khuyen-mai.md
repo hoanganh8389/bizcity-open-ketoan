@@ -101,6 +101,10 @@ Khai ở nháp (ô *Hạn mức lượt theo cửa hàng*), có hiệu lực khi
 - **Trả cả đơn** (máy bán), huỷ đơn chờ thanh toán, bỏ duyệt phiếu bán → trả lại lượt. Trả một phần không trả lượt; phiếu trả BH11 chưa trả lượt.
 - Hai máy cùng bán lượt cuối: một đơn được, đơn kia bị từ chối. Đơn bán lúc mất mạng gửi bù khi đã hết lượt: vẫn nhận (hàng đã giao), đánh dấu *Vượt khi mất mạng* ở báo cáo.
 
+## Quà cùng mã hàng bán: trừ tồn ở kho khuyến mại
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028 (đóng góp) -->
+Quà là chính mặt hàng đang bán (vd mua 2 tặng 1 cùng mã) không cần mã con: chọn **kho quà** (loại KKM) của từng cửa hàng ở *Cài đặt bán hàng (BH17)*. Máy bán và phiếu bán BH10 trừ dòng quà ở kho quà, dòng bán ở kho bán; hộp chọn quà ở máy bán hiện tồn kho quà (không cộng số đang bán). Kho quà hết thì không tặng; kho bán hết thì không bán dù kho quà còn. Cửa hàng chưa chọn kho quà: như cũ (quà trừ kho bán). Thuế / hoá đơn / bill Z vẫn theo mã hàng (chờ chính sách quà của lõi).
+
 ## Báo cáo khuyến mại
 
 Thẻ **Báo cáo khuyến mại** (quyền xem quản trị bán lẻ): chọn kỳ, cửa hàng, mã → **Xem**. Mỗi dòng một chương trình × cửa hàng: số đơn áp, tiền giảm, số quà, đơn đã trả lượt, lượt đang dùng / hạn mức / còn. Bấm một dòng để xem danh sách đơn máy bán / phiếu bán đã áp. Nút xuất Excel ở góc bảng. Số liệu tính từ ngày cài bản này.

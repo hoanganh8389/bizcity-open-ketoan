@@ -256,6 +256,9 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `VOUCHER_UNAVAILABLE` | `VALIDATION_ERROR` | Đơn / phiếu có mã voucher mà module voucher chưa bật / người bán thiếu quyền `voucher:use` | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
 | `VOUCHER_PAYMENT_METHOD` | `VALIDATION_ERROR` | Voucher hãng: hình thức thanh toán của đợt không có / ngừng dùng (tài khoản phải thu hãng khai ở hình thức, không ở module); kèm `method` | module `voucher`, `pos`, `phieu-ban` (đề xuất, chưa gộp) |
 | `VOUCHER_CAMPAIGN_STATE` | `CONFLICT` | Sai trạng thái đợt phát / mã: mã đợt đã có, đổi loại / người phát / mệnh giá / phạm vi khi đợt đã phát mã (ECP-13), phát mã đợt đã ngừng / hết hạn, thu hồi mã đã dùng; kèm `status` | module `voucher` (đề xuất, chưa gộp) |
+| **Quà trừ kho khuyến mại** (1.18.0-draft) <!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — NT-BH-028 quà trừ kho khuyến mại (đóng góp) --> | | | |
+| `POS_GIFT_WAREHOUSE` | `VALIDATION_ERROR` | Đơn máy bán / phiếu bán BH10 có dòng quà mà kho quà khai cho cửa hàng (`bizcity.pos.gift_warehouses`, BH17) không dùng được — không thuộc cửa hàng, ngừng dùng, không phải kho khuyến mại (KKM), trùng kho bán; kèm `branchCode`. Cửa hàng chưa khai kho quà: không lỗi, quà trừ kho bán như cũ | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
+| `POS_GIFT_STOCK_SHORT` | `VALIDATION_ERROR` | Máy bán: dòng quà thiếu tồn ở kho quà của cửa hàng (hết quà thì không tặng; tồn kho bán cùng mã không dùng thay); hàng bán thiếu ở kho bán vẫn là `POS_STOCK_SHORT`; kèm `items: [{ sku, need, have, warehouse, gift }]` | module `pos` (đề xuất, chưa gộp) |
 | **Máy bán bán đúng bảng giá** (1.13.0-draft) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) --> | | | |
 | `POS_MANUAL_DISCOUNT` | `VALIDATION_ERROR` | Dòng có giảm tay: thu ngân không giảm tay, chỉ giảm theo chương trình khuyến mại; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 | `POS_NO_PRICE` | `VALIDATION_ERROR` | Mã × ĐVT chưa có giá ở bảng giá cửa hàng (trừ quà, hàng Nội bộ, bill Z 0đ); kèm `items: [{ sku, unit }]` | module `pos` (đề xuất, chưa gộp) |
@@ -296,6 +299,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — 1.18.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.18.0-draft (2026-11-18, quà trừ kho khuyến mại):** §4c thêm `POS_GIFT_WAREHOUSE` (module pos, phieu-ban), `POS_GIFT_STOCK_SHORT` (module pos) (phiếu NT-BH-028). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — 1.17.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.17.0-draft (2026-11-18, voucher 3 loại):** §4c thêm `VOUCHER_NOT_FOUND`, `VOUCHER_NOT_OWNER`, `VOUCHER_USED`, `VOUCHER_REVOKED`, `VOUCHER_EXPIRED`, `VOUCHER_MIN_ORDER`, `VOUCHER_NOT_APPLICABLE`, `VOUCHER_CAMPAIGN_STATE` (module voucher), `VOUCHER_NO_ROOM`, `VOUCHER_NEED_CUSTOMER`, `VOUCHER_UNAVAILABLE`, `VOUCHER_PAYMENT_METHOD` (module pos, phieu-ban, voucher) (phiếu NT-BH-026). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 03:00 PM Võ Hoàng] NGHIEM-THU — 1.16.0-draft (đóng góp, chờ chủ dự án duyệt) -->

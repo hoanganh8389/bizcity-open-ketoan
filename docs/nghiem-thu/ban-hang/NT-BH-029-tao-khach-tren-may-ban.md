@@ -27,13 +27,25 @@
 | Q1 | Tạo khách riêng | Đi module thật; trùng SĐT thì báo, mở khách cũ |
 
 ## 4. Kết quả chạy
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — kết quả chạy (đóng góp) -->
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-029-tao-khach.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-027-029-quay` |
+| Test tự động | `apps/api/test/nt-bh-029-tao-khach.test.ts` (3/3) |
+
+Action mới `pos.customer.check` (`GET /api/v1/m/pos/customers/check?phone&name`): kiểm SĐT (10 số, bắt đầu 0; +84 tự đổi), tên bắt buộc, tra danh mục đối tượng theo SĐT.
+
+| Mục | Mong đợi | Phần mềm (test) |
+|---|---|---|
+| Tạo "Chị Lan" SĐT mới | có trong danh mục, chọn được ngay, đơn sau gắn đúng khách | **đạt một phần**: trả `new` + khách (mã = SĐT) để máy chọn ngay; đơn đầu gắn đúng khách và khách **vào danh mục đối tượng cùng đơn đó** (cửa nạp tạo theo `partner`). Chưa có đơn thì chưa có trong danh mục (xem dưới) |
+| Tạo lại cùng SĐT | không trùng; báo, mở khách cũ | đạt: `exists` + "SĐT … đã thuộc khách Anh Cũ (…) — không tạo mới, mở khách này"; dạng +84 cũng nhận ra; danh mục giữ một đối tượng |
+| SĐT sai dạng | báo lỗi, không tạo | đạt: `POS_BAD_PHONE` (`field: phone`); thiếu tên `POS_MISSING_NAME` |
+
+**Phần dừng vì thiếu năng lực lõi:** module không ghi được danh mục đối tượng khi chưa có chứng từ — `ctx.actions.call` chỉ gọi action đọc (`callAction` từ chối action ghi), nên không gọi được `core.partner.create`; không có loại chứng từ nào chỉ mang đối tượng. Theo chỉ đạo, dùng đúng đường khách kèm đơn (NT-BH-019 Q1). Đề xuất bậc 4: cho module gọi `core.partner.create` / `upsert` (năng lực `masterdata.write` từ module, quyền của người gọi) — khi có thì action này tạo luôn, máy bán không đổi.
 
 ## 5. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1 |
+| 18/11/2026 | Code module pos + test; điền kết quả chạy; ghi phần chờ năng lực lõi (tạo khách khi chưa có đơn) |
