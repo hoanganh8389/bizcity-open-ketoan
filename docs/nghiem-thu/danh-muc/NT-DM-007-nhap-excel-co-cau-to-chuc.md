@@ -7,7 +7,7 @@
 | Màn hình | DM16 Cơ cấu tổ chức; trang Nhập Excel chung |
 | Bộ phận yêu cầu | Phòng kế toán |
 | Ngày tạo | 18/11/2026 |
-| Trạng thái | Đã chốt (kiennt, 18/11/2026) |
+| Trạng thái | Chờ nghiệm thu |
 
 ## 1. Hiện trạng và lỗi
 - DM16 dùng trình nhập riêng (một hộp chọn tệp 4 sheet), **khác** mọi màn danh mục khác (trình nhập chung 4 bước: chọn tệp → ghép cột → kiểm tra → kết quả; có tệp mẫu, tệp lỗi).
@@ -50,9 +50,13 @@ Tệp: `apps/web/src/lib/nhapExcelDanhMuc.ts` (4 loại nhập), `apps/web/src/c
 ## 5. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | Trên màn hình (tệp thật của người dùng + khứ hồi); 4 lệnh kiểm |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-dm-007-nhap-excel-co-cau` |
+| Test trên màn hình | **9/9 ĐẠT** — DB tạm (bản sao DB thật), API riêng, web dev nhánh này. Nút Nhập Excel ▾ có 4 mục theo thứ tự. Tệp thật `co-cau-to-chuc.xlsx` của người dùng nhập lần lượt: Cơ cấu 53, Phòng ban 69, Cửa hàng 763 (tự tạo 763 phòng ban riêng), Kho 863 — mỗi loại tự chọn đúng sheet, 0 lỗi. Xuất lại: Cơ cấu / Cửa hàng / Kho khớp tệp gốc, Phòng ban 832 (69 + 763 phòng ban riêng). Nhập lại nguyên tệp xuất 4 loại: 0 thêm mới, xuất lại không đổi ô nào. Sửa tên 1 cơ cấu, địa chỉ 1 cửa hàng, thêm 1 kho: đổi đúng 3 chỗ. Dòng sai (cơ cấu cha không có, MST sai, cơ cấu của cửa hàng không có, cửa hàng của kho không có, loại kho lạ): báo đúng từng dòng |
+| selfcheck | Không có lỗi mới so với main |
+| kiem-chuan | ĐẠT |
+| typecheck | ĐẠT |
+| npm test | 2291 đạt / 5 lỗi — cùng 5 test như NT-DM-004..006, không do phiếu này (chỉ sửa web; mã API giống main): db-rules, mat-khau-mac-dinh, nt-bh-005 lỗi sẵn trên main; nt-bh-003, nt-bh-012 đạt khi chạy riêng |
 
 ## 6. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -62,3 +66,4 @@ Tệp: `apps/web/src/lib/nhapExcelDanhMuc.ts` (4 loại nhập), `apps/web/src/c
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo và chốt — người dùng chọn: trình nhập chung; phòng ban của cửa hàng chưa có thì tự tạo |
+| 18/11/2026 | Code xong, test trên màn hình 9/9 (cả tệp thật của người dùng), chuyển Chờ nghiệm thu |

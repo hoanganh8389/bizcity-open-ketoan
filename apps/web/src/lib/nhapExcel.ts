@@ -39,6 +39,9 @@ export interface NhapLoai {
   fields: NhapTruong[];
   /** Cho chọn Thêm mới / Cập nhật / Cả hai (mặc định có). */
   modes?: boolean;
+  // [2026-11-18 02:00 PM kiennt] NT-DM-007 — tệp nhiều sheet: tự chọn sheet trùng tên này (đóng góp)
+  /** Tên sheet tự chọn khi tệp có sheet trùng tên (không phân biệt hoa thường, dấu). */
+  sheet?: string;
   /** Danh sách để xem sau khi nhập. */
   listPath: string;
   /** Khoá dữ liệu cần tải lại sau khi ghi. */
