@@ -1,6 +1,6 @@
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: test thuần mã phiếu dạng shop, số kế thừa, số thiếu (đóng góp)
 import { describe, expect, it } from 'vitest';
-import { missingCodes, missingRanges, parseShopCodes, schemeOf, shopReturnCode, shopReturnSeq, shopSaleCode, shopSaleSeq } from '../api/domain/codes.js';
+import { SHOP_LAST_MAX, isWebsiteLast, missingCodes, missingRanges, schemeOf, shopFloor, shopReturnCode, shopReturnSeq, shopSaleCode, shopSaleSeq } from '../api/domain/codes.js';
 
 describe('mã phiếu dạng shop (luật chế độ bt của POS website)', () => {
   it('phiếu bán {shop}BT{5 số}, tràn 99999 sang BU, đọc ngược đúng bộ đếm', () => {
@@ -25,11 +25,17 @@ describe('mã phiếu dạng shop (luật chế độ bt của POS website)', ()
     expect(shopReturnSeq('08022', '08022.B00269')).toBe(269);
     expect(shopReturnSeq('08022', 'TH2611000001')).toBeNull();
   });
-  it('khoá số kế thừa: số đếm hoặc mã đầy đủ; dưới 9999 coi như 9999; dòng sai / mã shop dài bỏ qua', () => {
-    const m = parseShopCodes(['08022=08022BT12345/08022.B00268', 'CN01=12', 'CN001X=500', 'X=abc', 'Y', 7]);
-    expect([...m]).toEqual([['08022', { sale: 12_345, ret: 268 }], ['CN01', { sale: 9_999, ret: 0 }]]);
-    expect(schemeOf(m, '08022')).toEqual({ mode: 'shop', shop: '08022', start: { sale: 12_345, ret: 268 } });
-    expect(schemeOf(m, 'CN02')).toEqual({ mode: 'legacy' });
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): dạng shop mặc định, mã chi nhánh lạ giữ HD / TH; số cuối website (đóng góp)
+  it('dạng shop mặc định; mã chi nhánh không dựng được mã 12 ký tự (không phải 1–5 chữ hoa / số) giữ HD / TH', () => {
+    expect(schemeOf('08022')).toEqual({ mode: 'shop', shop: '08022' });
+    expect(schemeOf('CN01')).toEqual({ mode: 'shop', shop: 'CN01' });
+    for (const b of ['CN-NA', 'CN001X', 'cn01', '']) expect(schemeOf(b)).toEqual({ mode: 'legacy' });
+  });
+  it('sàn mặc định: bán 9999 (số đầu 10000), hoàn 0 (số đầu 00001); số cuối website: số nguyên 1…99 999 999', () => {
+    expect(shopFloor('sale')).toBe(9_999);
+    expect(shopFloor('return')).toBe(0);
+    for (const n of [1, 12_345, SHOP_LAST_MAX]) expect(isWebsiteLast(n)).toBe(true);
+    for (const n of [0, -1, 1.5, SHOP_LAST_MAX + 1, Number.NaN, '12345', null, undefined]) expect(isWebsiteLast(n)).toBe(false);
   });
 });
 

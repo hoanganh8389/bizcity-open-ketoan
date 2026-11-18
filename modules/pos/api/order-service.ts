@@ -10,7 +10,7 @@ import { issueCodes, wasIssued } from './codes.js';
 import { schemeOf } from './domain/codes.js';
 import { activePaymentMethods, catalogFor, partnerByCode, pricesFor, resolveBranch } from './read.js';
 import { changedMessage, checkPrices, noPriceMessage, type PriceIssue } from './domain/price.js';
-import { giftWarehouses, posSettings, shopCodes } from './settings.js';
+import { giftWarehouses, posSettings } from './settings.js';
 import { openShiftOf } from './shifts.js';
 import { stockAtWarehouse, stockOf, warehousesFor } from './catalog.js';
 import { stockNeeds, stockShortages, stockShortMessage, type StockShort } from './domain/stock.js';
@@ -159,8 +159,8 @@ export type CreatedOrder = { order: Record<string, unknown>; nextReservedCodes: 
 
 export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: { exchange?: { credit: number; returnDocKey: string } } = {}): Promise<CreatedOrder> {
   const { requireOpenShift } = await posSettings(ctx);
-  // Cài đặt đọc ngoài giao dịch của module: dạng số bill theo cửa hàng (NT-BH-027), kho quà theo cửa hàng (NT-BH-028).
-  const [shops, giftMap] = await Promise.all([shopCodes(ctx), giftWarehouses(ctx)]);
+  // Cài đặt đọc ngoài giao dịch của module: kho quà theo cửa hàng (NT-BH-028).
+  const giftMap = await giftWarehouses(ctx);
   const prepared = await ctx.data.module(async (tx) => {
     await lockKey(tx, `pos:order:${draft.id}`);
     const old = (await sql<{ snapshot: Record<string, unknown>; same: boolean }>`
@@ -223,8 +223,9 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
 
     // Mã phiếu: dùng số máy đã được cấp trước (đúng khuôn, đã cấp, chưa dùng); không thì cấp số mới. Khoá theo số để hai máy
     // cùng dùng một số đã cấp không cùng qua bước "chưa dùng".
-    // NT-BH-027: dạng shop ({shop}BT…, liên tục) khi cửa hàng đã khai số kế thừa; không thì HD theo tháng như cũ.
-    const scheme = schemeOf(shops, branch.code);
+    // NT-BH-027: dạng shop ({shop}BT…, liên tục) mặc định; mã chi nhánh không dựng được mã 12 ký tự thì HD theo tháng như cũ.
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): dạng shop mặc định, bỏ khoá bật / tắt (đóng góp)
+    const scheme = schemeOf(branch.code);
     let code: string | undefined;
     if (draft.reservedCode && await wasIssued(tx, branch.code, 'sale', draft.businessDate, draft.reservedCode, scheme)) {
       await lockKey(tx, `pos:code:${branch.code}:${draft.reservedCode!}`);

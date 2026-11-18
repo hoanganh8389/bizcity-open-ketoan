@@ -1,14 +1,16 @@
 /**
  * Cấp số phiếu của máy bán (mod_pos.code_counters), tăng một chiều (nhảy số chấp nhận, Q20).
  * - Dạng cũ (HD / TH): chi nhánh × loại × tháng.
- * - Dạng shop (NT-BH-027, cửa hàng đã khai số kế thừa ở khoá bizcity.pos.shop_codes): một bộ đếm mỗi shop × loại, không đặt lại
- *   (kỳ cố định SHOP); số kế thừa nâng sàn của bộ đếm (không bao giờ hạ — không trùng mã đã phát).
+ * - Dạng shop (NT-BH-027, MẶC ĐỊNH từ 18/11/2026): một bộ đếm mỗi shop × loại, không đặt lại (kỳ cố định SHOP); sàn mặc định
+ *   bán 9 999 / hoàn 0. Số cuối website báo lên (máy bán gửi kèm bootstrap / xin dải) chỉ NÂNG bộ đếm (raiseShopCounters) — không
+ *   bao giờ hạ, không trùng mã đã phát. Mã chi nhánh không dựng được mã 12 ký tự giữ HD / TH theo tháng.
  * Dải số máy xin trước được ghi lại (mod_pos.code_reservations) để báo cáo "Số bill bị thiếu".
  */
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: bộ đếm dạng shop liên tục + ghi dải số đã cấp cho máy (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): sàn mặc định, nâng bộ đếm theo số cuối website báo (đóng góp)
 import { sql, type ActionContext } from '@bizcity/module-sdk';
 import { codePeriod, formatCode, parseCode } from './domain/order.js';
-import { SHOP_PERIOD, shopReturnCode, shopReturnSeq, shopSaleCode, shopSaleSeq, type CodeScheme } from './domain/codes.js';
+import { SHOP_PERIOD, isWebsiteLast, shopFloor, shopReturnCode, shopReturnSeq, shopSaleCode, shopSaleSeq, type CodeScheme, type WebsiteLast } from './domain/codes.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 type Kind = 'sale' | 'return';
@@ -32,10 +34,10 @@ export async function lastCode(tx: Tx, branchCode: string, kind: Kind, period: s
   return r ? Number(r.last_no) : 0;
 }
 
-/** Cấp `count` mã theo dạng của cửa hàng (dạng shop: sàn = số kế thừa; dạng cũ: theo tháng của ngày bán). */
+/** Cấp `count` mã theo dạng của cửa hàng (dạng shop: liên tục, sàn mặc định bán 9 999 / hoàn 0; dạng cũ: theo tháng của ngày bán). */
 export async function issueCodes(tx: Tx, tenantId: string, branchCode: string, kind: Kind, businessDate: string, count: number, scheme: CodeScheme): Promise<string[]> {
   if (scheme.mode === 'legacy') return takeCodes(tx, tenantId, branchCode, kind, codePeriod(businessDate), count);
-  const floor = kind === 'sale' ? scheme.start.sale : scheme.start.ret;
+  const floor = shopFloor(kind);
   const r = (await sql<{ last_no: number }>`
     INSERT INTO mod_pos.code_counters (tenant_id, branch_code, kind, period, last_no)
     VALUES (${tenantId}, ${branchCode}, ${kind}, ${SHOP_PERIOD}, ${floor + count})
@@ -45,6 +47,28 @@ export async function issueCodes(tx: Tx, tenantId: string, branchCode: string, k
   const last = Number(r.last_no);
   const fmt = kind === 'sale' ? shopSaleCode : shopReturnCode;
   return Array.from({ length: count }, (_, i) => fmt(scheme.shop, last - count + 1 + i));
+}
+
+/**
+ * Nâng bộ đếm dạng shop lên ít nhất số cuối website báo (bán / hoàn) — KHÔNG bao giờ hạ. Một câu upsert (khoá dòng bộ đếm tới hết giao
+ * dịch của module): hai máy cùng báo chạy nối tiếp, cấp số sau đó luôn > số đã nâng. Cửa hàng dạng cũ (HD / TH) hay số không hợp lệ
+ * (không phải số nguyên 1…SHOP_LAST_MAX) → bỏ qua. Trả số cuối của bộ đếm sau khi nâng (loại không báo thì không có).
+ */
+export async function raiseShopCounters(tx: Tx, tenantId: string, branchCode: string, scheme: CodeScheme, last: WebsiteLast): Promise<WebsiteLast> {
+  if (scheme.mode !== 'shop') return {};
+  const out: WebsiteLast = {};
+  for (const [kind, n] of [['sale', last.sale], ['return', last.ret]] as const) {
+    if (!isWebsiteLast(n)) continue;
+    const r = (await sql<{ last_no: number }>`
+      INSERT INTO mod_pos.code_counters (tenant_id, branch_code, kind, period, last_no)
+      VALUES (${tenantId}, ${branchCode}, ${kind}, ${SHOP_PERIOD}, ${Math.max(n, shopFloor(kind))})
+      ON CONFLICT (tenant_id, branch_code, kind, period)
+      DO UPDATE SET last_no = GREATEST(mod_pos.code_counters.last_no, EXCLUDED.last_no), updated_at = now()
+      RETURNING last_no`.execute(tx)).rows[0]!;
+    if (kind === 'sale') out.sale = Number(r.last_no);
+    else out.ret = Number(r.last_no);
+  }
+  return out;
 }
 
 /**

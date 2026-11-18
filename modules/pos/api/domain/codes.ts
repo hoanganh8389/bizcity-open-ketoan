@@ -8,10 +8,13 @@
  *   bill Z      mã phiếu cha + "Z" (không tiêu số của bộ đếm) — toOrderSnapshot đã làm.
  *   phiếu hoàn  {mã shop}.B{5 số}   từ 00001, không chia dải (vượt 99 999 thì số tự dài ra).
  *
- * Mã shop = mã chi nhánh bên kế toán (= tgs_site_code của website), tối đa 5 ký tự chữ / số → mã bán tối đa 12 ký tự (đồng bộ ngược
- * phần mềm cũ). Shop chưa khai số kế thừa (khoá bizcity.pos.shop_codes) giữ dạng HD / TH theo tháng như cũ (formatCode / parseCode).
+ * Mã shop = mã chi nhánh bên kế toán (= tgs_site_code của website). MẶC ĐỊNH mọi cửa hàng dùng dạng shop (chốt 18/11/2026, bỏ khoá
+ * bật / tắt); chỉ mã chi nhánh không dựng được mã 12 ký tự (không phải 1–5 chữ hoa / số, vd "CN-NA") giữ dạng HD / TH theo tháng như
+ * cũ (formatCode / parseCode). Số bắt đầu: website tự báo số cuối của bộ đếm "bt" (trang vỏ React → máy bán gửi kèm bootstrap / xin dải)
+ * — module chỉ NÂNG bộ đếm lên ≥ số đó, không bao giờ hạ (codes.ts raiseShopCounters). Shop chưa có số: bán từ 10000, hoàn từ 00001.
  */
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: số bill theo dạng shop (mã shop + BT + 5 số, liên tục), phiếu hoàn {shop}.B{5 số} (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mặc định dạng shop, bỏ bật / tắt, website tự báo số cuối (đóng góp)
 
 export const SHOP_SALE_MARKER = 'BT';
 export const SHOP_RETURN_MARKER = 'B';
@@ -66,53 +69,23 @@ export function shopReturnSeq(shop: string, code: string): number | null {
   return m && Number(m[1]) > 0 ? Number(m[1]) : null;
 }
 
-/** Số kế thừa của một shop: số cuối đã phát hành ở website (bán / hoàn). */
-export type ShopStart = { sale: number; ret: number };
+/** Số cuối website báo lên (bộ đếm "bt" của shop): số nguyên dương, tối đa 99 999 999 (≈ 1 000 dải chữ — dư cho mọi shop). */
+export const SHOP_LAST_MAX = 99_999_999;
+/** Số cuối do website báo cho từng loại phiếu; thiếu = không báo (chỉ dùng sàn mặc định). */
+export type WebsiteLast = { sale?: number | undefined; ret?: number | undefined };
 
-/**
- * Một vế số kế thừa: số đếm ("12345") hoặc mã đầy đủ của dãy ("08022BT12345", "08022BU00001", "08022.B00268"). Trống → 0.
- * Sai → null.
- */
-function startNo(shop: string, kind: 'sale' | 'return', raw: string): number | null {
-  const v = raw.trim().toUpperCase();
-  if (!v) return 0;
-  if (/^\d{1,9}$/.test(v)) return Number(v);
-  return kind === 'sale' ? shopSaleSeq(shop, v) : shopReturnSeq(shop, v);
-}
+/** Sàn mặc định của bộ đếm dạng shop: bán 9 999 (số đầu 10000), hoàn 0 (số đầu 00001). */
+export const shopFloor = (kind: 'sale' | 'return') => (kind === 'sale' ? SHOP_SALE_FIRST - 1 : 0);
 
-/**
- * Khoá `bizcity.pos.shop_codes` (BH17): mảng "<mã cửa hàng>=<số bán cuối>[/<số hoàn cuối>]", vd "08022=12345/268" hay
- * "08022=08022BT12345/08022.B00268". Cửa hàng có dòng hợp lệ → dạng shop; không có → HD / TH như cũ. Mã cửa hàng phải là mã shop dùng
- * được (≤ 5 chữ / số). Số bán dưới 9 999 coi như 9 999 (số đầu = 10000). Dòng sai bị bỏ (BH17 hiện để sửa).
- */
-export function parseShopCodes(v: unknown): Map<string, ShopStart> {
-  const m = new Map<string, ShopStart>();
-  if (!Array.isArray(v)) return m;
-  for (const x of v) {
-    if (typeof x !== 'string') continue;
-    const i = x.indexOf('=');
-    if (i <= 0) continue;
-    const shop = x.slice(0, i).trim();
-    if (!isShopCode(shop)) continue;
-    const [s = '', r = ''] = x.slice(i + 1).split('/');
-    const sale = startNo(shop, 'sale', s);
-    const ret = startNo(shop, 'return', r);
-    if (sale === null || ret === null) continue;
-    m.set(shop, { sale: Math.max(sale, SHOP_SALE_FIRST - 1), ret });
-  }
-  return m;
-}
+/** Số cuối website báo có dùng được không: số nguyên 1…SHOP_LAST_MAX. */
+export const isWebsiteLast = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= SHOP_LAST_MAX;
 
-/** Giá trị chuẩn hoá của khoá (BH17 hiện lại): "<shop>=<số bán>/<số hoàn>", xếp theo shop. */
-export const shopCodesList = (m: ReadonlyMap<string, ShopStart>) =>
-  [...m].sort(([a], [b]) => a.localeCompare(b)).map(([b, s]) => `${b}=${s.sale}/${s.ret}`);
+/** Dạng mã của một cửa hàng: legacy = HD / TH theo tháng (mã chi nhánh không dựng được mã 12 ký tự); shop = mã shop + BT / .B, liên tục. */
+export type CodeScheme = { mode: 'legacy' } | { mode: 'shop'; shop: string };
 
-/** Dạng mã của một cửa hàng: legacy = HD / TH theo tháng; shop = mã shop + BT / .B, liên tục. */
-export type CodeScheme = { mode: 'legacy' } | { mode: 'shop'; shop: string; start: ShopStart };
-
-export function schemeOf(map: ReadonlyMap<string, ShopStart>, branchCode: string): CodeScheme {
-  const start = map.get(branchCode);
-  return start ? { mode: 'shop', shop: branchCode, start } : { mode: 'legacy' };
+/** Mặc định dạng shop; mã chi nhánh không phải 1–5 chữ hoa / số (vd CN-NA, CHINHANH01) → HD / TH. */
+export function schemeOf(branchCode: string): CodeScheme {
+  return isShopCode(branchCode) ? { mode: 'shop', shop: branchCode } : { mode: 'legacy' };
 }
 
 /** Bộ đếm của dạng shop nằm ở code_counters với kỳ cố định này (không theo tháng). */

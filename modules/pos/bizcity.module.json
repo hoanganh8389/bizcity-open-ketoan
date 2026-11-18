@@ -197,7 +197,6 @@
     "bizcity.pos.cash_short_reason",
     "bizcity.pos.cash_over_reason",
     "bizcity.pos.return_bad_warehouses",
-    "bizcity.pos.shop_codes",
     "bizcity.pos.gift_warehouses"
   ]
 }

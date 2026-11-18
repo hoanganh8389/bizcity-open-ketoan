@@ -11,6 +11,7 @@
 // [2026-11-13 08:45 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: BH17 gom 4 khối cài đặt bán hàng (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: chọn kho KTL nhận hàng trả lỗi / hết hạn của từng cửa hàng (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 số bill dạng shop (số kế thừa), NT-BH-028 kho quà KKM của từng cửa hàng (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): bỏ mục "Số bill theo dạng shop" — dạng shop mặc định, website tự báo số cuối (đóng góp)
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorBox, Field, Loading, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { M } from '../lib';
@@ -20,8 +21,6 @@ type Values = {
   cashDiffJournal: boolean; cashShortReason: string; cashOverReason: string;
   /** NT-BH-024: "<mã cửa hàng>=<mã kho KTL>" (khoá bizcity.pos.return_bad_warehouses). */
   returnBadWarehouses: string[];
-  /** NT-BH-027: "<mã shop>=<số bán cuối>/<số hoàn cuối>" (khoá bizcity.pos.shop_codes) — cửa hàng có dòng dùng số bill dạng shop. */
-  shopCodes: string[];
   /** NT-BH-028: "<mã cửa hàng>=<mã kho KKM>" (khoá bizcity.pos.gift_warehouses). */
   giftWarehouses: string[];
 };
@@ -200,24 +199,6 @@ export function CaiDatPage() {
                       {opts.map((w) => <option key={w.code} value={w.code}>{w.code} — {w.name}{w.typeCode !== 'KKM' ? ` (loại ${w.typeCode})` : ''}</option>)}
                     </select>
                   </td></tr>
-                );
-              })}</tbody>
-            </table>
-          )}
-        </Field>
-        <Field label="Số bill theo dạng shop (số kế thừa từ POS website)" hint={'Điền số cuối đã phát ở POS website của shop: phiếu bán (vd 12345 hoặc 08022BT12345) / phiếu hoàn (vd 268). Shop có số: bill = mã shop + BT + 5 số chạy liên tục (không đặt lại theo ngày / tháng; quá 99999 sang BU…), phiếu hoàn = mã shop + .B + 5 số. Để trống: giữ HD / TH theo tháng. Mã cửa hàng phải ≤ 5 chữ / số (= mã shop website). Số đặt thấp hơn số đã cấp không làm số chạy lùi.'}>
-          {!whsQ.data ? <Loading /> : (
-            <table className="grid">
-              <thead><tr><th>Cửa hàng</th><th>Số bán cuối</th><th>Số hoàn cuối</th></tr></thead>
-              <tbody>{branches.map(([code, name]) => {
-                const map = toMap(v.shopCodes);
-                const [sale = '', ret = ''] = (map[code] ?? '').split('/');
-                const set = (sv: string, rv: string) => setV({ ...v, shopCodes: fromMap({ ...map, [code]: sv.trim() || rv.trim() ? `${sv.trim()}/${rv.trim()}` : '' }) });
-                const ok = /^[A-Z0-9]{1,5}$/.test(code);
-                return (
-                  <tr key={code}><td>{code} — {name}{!ok && <span className="muted"> (mã &gt; 5 ký tự: không dùng được dạng shop)</span>}</td>
-                    <td><input className="input" style={{ width: 140 }} value={sale} placeholder="giữ HD…" disabled={!writable || !ok} onChange={(e) => set(e.target.value, ret)} /></td>
-                    <td><input className="input" style={{ width: 120 }} value={ret} placeholder="0" disabled={!writable || !ok} onChange={(e) => set(sale, e.target.value)} /></td></tr>
                 );
               })}</tbody>
             </table>

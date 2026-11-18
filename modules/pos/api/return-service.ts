@@ -12,7 +12,7 @@ import {
 import { issueCodes } from './codes.js';
 import { schemeOf } from './domain/codes.js';
 import { activePaymentMethods, catalogFor, resolveBranch, todayVn } from './read.js';
-import { returnBadWarehouses, returnDays, shopCodes } from './settings.js';
+import { returnBadWarehouses, returnDays } from './settings.js';
 import { isUniqueViolation, lockKey, raise } from './order-service.js';
 import { releaseUses } from './promo.js';
 
@@ -130,7 +130,6 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
   const days = await returnDays(ctx);
   // Kho KTL nhận hàng lỗi theo cửa hàng (BH17, khoá bizcity.pos.return_bad_warehouses) — cài đặt đọc ngoài giao dịch của module.
   const badMap = await returnBadWarehouses(ctx);
-  const shops = await shopCodes(ctx);
   const prepared = await ctx.data.module(async (tx) => {
     await lockKey(tx, `pos:return:${draft.id}`);
     const old = (await sql<{ snapshot: Record<string, unknown>; same: boolean; doc_key: string; refund_total: string; branch_code: string }>`
@@ -152,7 +151,8 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
       badWarehouse: bad.code, ...(bad.issue ? { badWarehouseIssue: bad.issue } : {}),
     });
     if ('problem' in computed) raise(computed.problem);
-    const code = (await issueCodes(tx, ctx.tenant.id, branch.code, 'return', today, 1, schemeOf(shops, branch.code)))[0]!;
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): phiếu hoàn {shop}.B{5 số} mặc định, mã chi nhánh lạ giữ TH (đóng góp)
+    const code = (await issueCodes(tx, ctx.tenant.id, branch.code, 'return', today, 1, schemeOf(branch.code)))[0]!;
     return { kind: 'new', order, branch, computed, code, today } as const;
   });
   if (prepared.kind === 'replay') {

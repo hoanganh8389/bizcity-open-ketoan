@@ -21,6 +21,10 @@ Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem 
 
 ## Số bill
 <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: số bill theo dạng shop (đóng góp) -->
-- Shop đã khai số kế thừa ở *Cài đặt bán hàng (BH17)*: số bill = mã shop + `BT` + 5 số, nối tiếp số cuối của POS website, chạy liên tục qua ngày / tháng. Bill Z = số bill + `Z`. Đơn huỷ giữ số, trạng thái *Đã huỷ*.
-- Shop chưa khai: `HD` + năm tháng + 6 số như cũ. Đơn mã `HD…` đã phát hành vẫn tra cứu, trả hàng được.
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mặc định dạng shop, bỏ bật / tắt, website tự báo số cuối (đóng góp) -->
+- **Mặc định mọi cửa hàng**: số bill = mã shop + `BT` + 5 số (vd `08022BT12346`), chạy liên tục qua ngày / tháng (quá 99999 sang `BU00001`…). Không có công tắc bật / tắt.
+- **Số bắt đầu do website tự báo**: khi mở máy bán, trang POS website báo số cuối đã phát của shop (bán và hoàn) — số bill đầu trên máy bán nối tiếp ngay sau. Shop mới (website chưa có số): bill đầu `…BT10000`. Không phải điền tay ở đâu.
+- Bill Z = số bill + `Z`. Đơn huỷ giữ số, trạng thái *Đã huỷ*.
+- Cửa hàng có mã chi nhánh không dựng được mã 12 ký tự (có ký tự không phải chữ / số hoặc dài quá 5 ký tự, vd `CN-NA`): giữ `HD` + năm tháng + 6 số như cũ.
+- Đơn mã `HD…` đã phát hành trước đây vẫn tra cứu, trả hàng được.
 - Máy bán xin trước dải số để bán khi mất mạng nên có thể **hở số**. Xem số hở ở **Tổng quan bán lẻ (BH16) → Số bill bị thiếu**: chọn cửa hàng × ngày, mỗi dải số thiếu kèm lý do (*máy … xin lúc … chưa dùng*; dải đã quá hạn ghi thêm *dải hết hạn*).

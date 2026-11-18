@@ -1,8 +1,10 @@
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — test tích hợp phiếu NT-BH-027 số bill theo dạng shop (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mặc định dạng shop, bỏ bật / tắt, website tự báo số cuối (đóng góp)
 /**
- * NT-BH-027 — số bill máy bán theo dạng của shop (chốt 18/11/2026): {mã shop}BT{5 số} liên tục từ số kế thừa (khoá
- * bizcity.pos.shop_codes), bill Z = mã cha + Z, huỷ giữ số, phiếu hoàn {mã shop}.B{5 số}, tràn 99999 sang BU, báo cáo số bill bị thiếu.
- * Cửa hàng chưa khai số kế thừa giữ HD / TH như cũ; mã HD cũ vẫn tra cứu, trả hàng được. Gọi HTTP như máy bán vào module pos.
+ * NT-BH-027 — số bill máy bán theo dạng của shop (chốt 18/11/2026): MẶC ĐỊNH {mã shop}BT{5 số} liên tục, bill Z = mã cha + Z, huỷ giữ
+ * số, phiếu hoàn {mã shop}.B{5 số}, tràn 99999 sang BU, báo cáo số bill bị thiếu. Số bắt đầu: website báo số cuối (máy bán gửi
+ * lastSale / lastReturn kèm bootstrap / xin dải) — module chỉ nâng bộ đếm; shop mới bán từ 10000, hoàn từ 00001. Mã chi nhánh không
+ * dựng được mã 12 ký tự (CN-NA) giữ HD / TH; mã HD cũ vẫn tra cứu, trả hàng được. Gọi HTTP như máy bán vào module pos.
  * Số theo docs/nghiem-thu/ban-hang/NT-BH-027-so-bill-theo-dang-shop.md §3.
  */
 import { existsSync } from 'node:fs';
@@ -23,12 +25,13 @@ const HAS = existsSync(path.join(POS, 'bizcity.module.json'));
 const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners',
   'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 const M = '/api/v1/m/pos';
-const KEY = 'bizcity.pos.shop_codes';
 const vnDate = (offsetDays = 0) => new Date(Date.now() + 7 * 3600_000 + offsetDays * 86_400_000).toISOString().slice(0, 10);
 const TODAY = vnDate();
 /** Ngày cuối tháng trước (qua tháng: số không về 10000). */
 const LAST_MONTH = new Date(Date.UTC(Number(TODAY.slice(0, 4)), Number(TODAY.slice(5, 7)) - 1, 0)).toISOString().slice(0, 10);
 const SHOP = '08022';
+/** Mã chi nhánh có gạch nối, không dựng được mã 12 ký tự → giữ HD / TH. */
+const LEGACY = 'CN-NA';
 const SKU = 'SUA027';
 const QUA = 'QUA027Z';
 
@@ -51,10 +54,6 @@ describe.skipIf(!HAS)('NT-BH-027 — số bill theo dạng shop', () => {
   });
   const post = (url: string, payload: unknown) => req('POST', `${M}${url}`, payload);
   const get = (url: string) => req('GET', `${M}${url}`);
-  const setting = async (value: unknown) => {
-    const r = await req('PUT', `/api/v1/settings/values/${KEY}`, { key: KEY, value });
-    expect(r.statusCode, r.body).toBeLessThan(300);
-  };
   const sell = async (body: Record<string, unknown>) => {
     const r = await post('/orders', body);
     expect(r.statusCode, r.body).toBe(201);
@@ -68,18 +67,18 @@ describe.skipIf(!HAS)('NT-BH-027 — số bill theo dạng shop', () => {
     await runModuleMigrations('pos', path.join(POS, 'migrations'), { reads: READS });
     await db.transaction().execute(async (trx) => { await sql`SET LOCAL ROLE NONE`.execute(trx); await syncBundled('test:nt-bh-027', trx as never); });
     app = await buildApp();
-    for (const code of [SHOP, '08023']) expect((await call(ctx, 'POST', '/api/v1/branches', { code, name: `Shop ${code}` })).status).toBe(201);
+    for (const code of [SHOP, '08023', LEGACY]) expect((await call(ctx, 'POST', '/api/v1/branches', { code, name: `Shop ${code}` })).status).toBe(201);
     expect((await call(ctx, 'PUT', '/api/v1/products', { products: [{ sku: SKU, name: 'Sữa 330', unit: 'Hộp' }] })).status).toBeLessThan(300);
     expect((await call(ctx, 'PUT', `/api/v1/products/${SKU}`, { taxOutCode: 'R08' })).status).toBe(200);
     // Quà mã không gửi thuế (Nội bộ, 0đ) → đơn có quà tách bill Z (như NT-BH-019).
     await sql`INSERT INTO products (tenant_id, sku, name, unit, tax_out_code, variant_code) VALUES (${tenantId}, ${QUA}, 'Quà không gửi thuế', 'Cái', 'R08', 'internal')`.execute(db);
-    for (const b of [SHOP, '08023', 'CN01']) await nhapTon(ctx, b, [[SKU, 1000, 'Hộp'], [QUA, 100, 'Cái']]);
+    for (const b of [SHOP, '08023', 'CN01', LEGACY]) await nhapTon(ctx, b, [[SKU, 1000, 'Hộp'], [QUA, 100, 'Cái']]);
     await khaiGia(tenantId, [[SKU, 'Hộp', 330_000]]);
-    // Đơn bán trước khi shop chuyển dạng: mã HD như cũ.
-    const old = await sell(order(HD_ID));
-    expect(old.code).toMatch(/^HD\d{4}000001$/);
-    // Số cuối ở website: bán 08022BT12345, hoàn 08022.B00268; shop 08023 sắp tràn dải.
-    await setting([`${SHOP}=${SHOP}BT12345/${SHOP}.B00268`, '08023=99998']);
+    // Đơn bán trước khi đổi sang dạng shop (mã HD đã phát hành): dựng bằng một đơn rồi đặt lại mã HD như dạng cũ đã cấp.
+    await sell(order(HD_ID));
+    const hd = `HD${TODAY.slice(2, 4)}${TODAY.slice(5, 7)}000001`;
+    await sql`UPDATE mod_pos.orders SET code = ${hd}, snapshot = jsonb_set(snapshot, '{code}', to_jsonb(${hd}::text))
+      WHERE tenant_id = ${tenantId} AND order_id = ${HD_ID}`.execute(db);
   });
   afterAll(async () => {
     await app?.close();
@@ -88,9 +87,13 @@ describe.skipIf(!HAS)('NT-BH-027 — số bill theo dạng shop', () => {
 
   const ids = { a: uuid(), b: uuid(), z: uuid(), m: uuid() };
 
-  it('§3 dòng 1: shop 08022, số cuối website 08022BT12345 → đơn đầu 08022BT12346, đơn sau 08022BT12347', async () => {
-    const boot = await get(`/bootstrap?branch=${SHOP}`);
+  it('§3 dòng 1: shop 08022, website báo số cuối 08022BT12345 → đơn đầu 08022BT12346, đơn sau 08022BT12347', async () => {
+    // Trang vỏ React đưa số cuối bộ đếm "bt" của website (bán 12345, hoàn 268); máy bán gửi kèm bootstrap.
+    const boot = await get(`/bootstrap?branch=${SHOP}&lastSale=12345&lastReturn=268`);
+    expect(boot.statusCode, boot.body).toBe(200);
     expect(boot.json().data.codeFormat).toBe('shop');
+    // Gọi lại bootstrap (cùng số) không đổi gì.
+    expect((await get(`/bootstrap?branch=${SHOP}&lastSale=12345&lastReturn=268`)).statusCode).toBe(200);
     expect((await sell(order(ids.a))).code).toBe(`${SHOP}BT12346`);
     // Đơn sau: QR chờ tiền (để huỷ ở dòng 4).
     const b = await sell(order(ids.b, { payment: { mode: 'qr' } }));
@@ -157,22 +160,51 @@ describe.skipIf(!HAS)('NT-BH-027 — số bill theo dạng shop', () => {
   });
 
   it('§3 dòng 7: số 99999 → đơn kế 08023BU00001', async () => {
+    expect((await get('/bootstrap?branch=08023&lastSale=99998')).statusCode).toBe(200);
     expect((await sell(order(uuid(), { branchCode: '08023' }))).code).toBe('08023BT99999');
     expect((await sell(order(uuid(), { branchCode: '08023' }))).code).toBe('08023BU00001');
   });
 
-  it('cửa hàng chưa khai số kế thừa: giữ HD / TH theo tháng như cũ', async () => {
+  it('shop mới (website chưa có số): bán từ CN01BT10000, hoàn từ CN01.B00001', async () => {
     const boot = await get('/bootstrap?branch=CN01');
-    expect(boot.json().data.codeFormat).toBe('legacy');
+    expect(boot.json().data.codeFormat).toBe('shop');
     const o = await sell(order(uuid(), { branchCode: 'CN01' }));
-    expect(o.code).toMatch(/^HD\d{4}000001$/);
+    expect(o.code).toBe('CN01BT10000');
+    expect((await sell(order(uuid(), { branchCode: 'CN01' }))).code).toBe('CN01BT10001');
     const r = await post('/returns', { id: uuid('r'), orderId: o.id, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'TM', reason: 'Khách trả hàng' });
+    expect(r.statusCode, r.body).toBe(201);
+    expect(r.json().data.code).toBe('CN01.B00001');
+  });
+
+  it('mã chi nhánh không dựng được mã 12 ký tự (CN-NA): giữ HD / TH theo tháng như cũ; số website báo bỏ qua', async () => {
+    const boot = await get(`/bootstrap?branch=${LEGACY}&lastSale=5000`);
+    expect(boot.statusCode, boot.body).toBe(200);
+    expect(boot.json().data.codeFormat).toBe('legacy');
+    const o = await sell(order(uuid(), { branchCode: LEGACY }));
+    expect(o.code).toMatch(/^HD\d{4}000001$/);
+    const r = await post('/returns', { id: uuid('r'), orderId: o.id, branchCode: LEGACY, lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'TM', reason: 'Khách trả hàng' });
     expect(r.statusCode, r.body).toBe(201);
     expect(r.json().data.code).toMatch(/^TH\d{4}000001$/);
   });
 
-  it('số kế thừa chỉ nâng sàn bộ đếm: đặt thấp hơn số đã cấp không làm số chạy lùi / trùng', async () => {
-    await setting([`${SHOP}=12000/1`, '08023=99998']);
+  it('số website báo chỉ NÂNG bộ đếm: thấp hơn số đã cấp không làm số chạy lùi / trùng; cao hơn thì nối sau (xin dải)', async () => {
+    expect((await get(`/bootstrap?branch=${SHOP}&lastSale=12000&lastReturn=1`)).statusCode).toBe(200);
     expect((await sell(order(uuid()))).code).toBe(`${SHOP}BT12361`);
+    const r = await post('/sequences/reserve', { kind: 'sale', count: 2, branchCode: SHOP, deviceId: 'MAY-02', lastSale: 12400 });
+    expect(r.statusCode, r.body).toBe(200);
+    expect(r.json().data.codes).toEqual([`${SHOP}BT12401`, `${SHOP}BT12402`]);
+    const t = await post('/sequences/reserve', { kind: 'return', count: 1, branchCode: SHOP, lastReturn: 300 });
+    expect(t.json().data.codes).toEqual([`${SHOP}.B00301`]);
+  });
+
+  it('số website báo phải là số nguyên dương trong giới hạn: sai → VALIDATION_ERROR, bộ đếm không đổi', async () => {
+    for (const q of ['lastSale=0', 'lastSale=-5', 'lastSale=abc', 'lastSale=12.5', 'lastReturn=100000000']) {
+      const b = await get(`/bootstrap?branch=${SHOP}&${q}`);
+      expect(b.statusCode, q).toBe(400);
+      expect(b.json().error.code).toBe('VALIDATION_ERROR');
+    }
+    const r = await post('/sequences/reserve', { kind: 'sale', count: 1, branchCode: SHOP, lastSale: 100_000_000 });
+    expect(r.statusCode).toBe(400);
+    expect((await sell(order(uuid()))).code).toBe(`${SHOP}BT12403`);
   });
 });

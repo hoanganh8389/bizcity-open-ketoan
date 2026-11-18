@@ -123,21 +123,6 @@
       "affectsPosting": true
     },
     {
-      "key": "bizcity.pos.shop_codes",
-      "class": "B",
-      "owner": "pos",
-      "scopes": ["tenant"],
-      "storage": "tenants.settings.pos.shop_codes",
-      "schema": "số bill dạng shop (NT-BH-027): mảng \"<mã cửa hàng>=<số bán cuối>[/<số hoàn cuối>]\" — số cuối đã phát ở POS website (số đếm hoặc mã đầy đủ, vd 08022=12345/268 hay 08022=08022BT12345/08022.B00268). Cửa hàng có dòng: phiếu bán {mã shop}BT{5 số} liên tục (tràn 99999 sang BU…), phiếu hoàn {mã shop}.B{5 số}; số kế thừa chỉ nâng sàn bộ đếm, không hạ. Cửa hàng chưa khai: HD / TH theo tháng như cũ. Mã cửa hàng phải ≤ 5 chữ / số",
-      "valueType": "string[]",
-      "default": "[]",
-      "readBy": "modules/pos/api/settings.ts (cấp số phiếu bán / hoàn, xin trước dải số)",
-      "writeBy": "màn BH17 Cài đặt bán hàng → PUT /api/v1/settings/values/:key",
-      "permission": "settings:write",
-      "audit": "có",
-      "affectsPosting": false
-    },
-    {
       "key": "bizcity.pos.gift_warehouses",
       "class": "B",
       "owner": "pos",

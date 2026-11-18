@@ -20,6 +20,7 @@ Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem 
 
 ## Số phiếu hoàn
 <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: phiếu hoàn theo dạng shop (đóng góp) -->
-Shop đã khai số kế thừa ở *Cài đặt bán hàng (BH17)*: phiếu hoàn = mã shop + `.B` + 5 số, nối tiếp số hoàn cuối của POS website (vd số cuối `268` → phiếu đầu `08022.B00269`), liên tục, không đặt lại. Shop chưa khai: `TH` + năm tháng + 6 số như cũ. Đơn gốc mã cũ `HD…` vẫn trả được.
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mặc định dạng shop, website tự báo số cuối (đóng góp) -->
+Mặc định mọi cửa hàng: phiếu hoàn = mã shop + `.B` + 5 số, nối tiếp số hoàn cuối mà POS website tự báo khi mở máy bán (vd số cuối `268` → phiếu đầu `08022.B00269`), liên tục, không đặt lại. Shop mới (website chưa có số): phiếu đầu `….B00001`. Cửa hàng có mã chi nhánh không dựng được mã 12 ký tự (vd `CN-NA`): `TH` + năm tháng + 6 số như cũ. Đơn gốc mã cũ `HD…` vẫn trả được.
 
 Hàng quà nguyên vẹn khách trả về kho bán (luật kho: kho KKM không nhận hàng khách trả), hàng lỗi vào kho KTL.
