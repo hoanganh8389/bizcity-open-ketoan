@@ -285,4 +285,55 @@ const NHAN_VIEN = danhMuc<NhanVien>({
   },
 });
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN];
+/* ------------------------------------------------------------------ DM09 Tài khoản ngân hàng */
+interface NganHang { code: string; bankName: string; bankBranch: string; accountNo: string; holder: string; accountCode: string; branchCode: string | null; currency: string; note: string; isActive: boolean; bankAddress: string; bankPhone: string; contact: string }
+const NH_CHU = ['bankName', 'bankBranch', 'accountNo', 'holder', 'note', 'bankAddress', 'bankPhone', 'contact'] as const;
+const TK_NGAN_HANG = danhMuc<NganHang>({
+  id: 'tk-ngan-hang', title: 'Tài khoản ngân hàng', desc: 'Mã, tên ngân hàng, số TK, tài khoản hạch toán, chủ TK, chi nhánh, tiền tệ, hoạt động', listPath: '/danh-muc/ngan-hang', invalidate: ['bank-accounts'],
+  tenMa: 'Mã ngân hàng',
+  fields: [
+    { key: 'code', header: 'Mã ngân hàng', required: true, aliases: ['ma', 'ma tk ngan hang'], example: 'TCB01', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'bankName', header: 'Tên ngân hàng', required: 'moi', aliases: ['ngan hang', 'ten'], example: 'Techcombank' },
+    { key: 'accountNo', header: 'Số TK', required: 'moi', aliases: ['so tai khoan'], example: '19031234567890' },
+    { key: 'accountCode', header: 'Tài khoản hạch toán', required: 'moi', aliases: ['tai khoan', 'tk hach toan'], example: '1121', note: 'Tài khoản chi tiết đã có (112…).' },
+    { key: 'note', header: 'Ghi chú', aliases: ['mo ta'] },
+    TT_TRUONG('Hoạt động'),
+    { key: 'bankAddress', header: 'Địa chỉ', aliases: ['dia chi ngan hang'] },
+    { key: 'bankPhone', header: 'Điện thoại', aliases: ['dien thoai ngan hang'] },
+    { key: 'holder', header: 'Chủ TK', aliases: ['chu tai khoan'] },
+    { key: 'contact', header: 'Người liên lạc', aliases: ['lien he'] },
+    { key: 'bankBranch', header: 'Chi nhánh ngân hàng', aliases: ['chi nhanh nh'] },
+    { key: 'branchCode', header: 'Chi nhánh dùng', aliases: ['ma chi nhanh'], note: 'Mã chi nhánh đã có (Cơ cấu tổ chức).' },
+    { key: 'currency', header: 'Tiền tệ', aliases: ['loai tien'], example: 'VND', note: '3 chữ. Trống: mới = VND.' },
+  ],
+  tai: () => api.get<NganHang[]>('/api/v1/bank-accounts'), maCua: (b) => b.code, rac: () => thungRac('bank-accounts'),
+  chuan: async (rows, have) => {
+    const [tk, cn] = await Promise.all([taiKhoanChiTiet(), chiNhanh()]);
+    // Mỗi tài khoản kế toán chỉ gắn một tài khoản ngân hàng (như máy chủ): gom theo tài khoản sau khi áp tệp.
+    const tkCua = new Map<string, string>([...have.values()].map((b) => [b.code.toLowerCase(), b.accountCode]));
+    for (const r of rows) { const m = chu(r.code).toLowerCase(); if (m && chu(r.accountCode)) tkCua.set(m, chu(r.accountCode)); }
+    return { tk, cn, tkCua, cotTT: coCot(rows, 'isActive') };
+  },
+  xemTruoc: (b) => ({ ...Object.fromEntries(NH_CHU.map((k) => [k, b[k]])), accountCode: b.accountCode, branchCode: b.branchCode ?? '', currency: b.currency, isActive: b.isActive ? 'x' : '' }),
+  kiem: (r, ma, before, { them }) => {
+    const { tk, cn, tkCua, cotTT } = them as { tk: Set<string>; cn: Set<string>; tkCua: Map<string, string>; cotTT: boolean };
+    const errors: string[] = [];
+    const v = Object.fromEntries(NH_CHU.map((k) => [k, chu(r[k]) || (before?.[k] ?? '')])) as Record<(typeof NH_CHU)[number], string>;
+    if (!v.bankName) errors.push('Thiếu tên ngân hàng');
+    if (!v.accountNo) errors.push('Thiếu số tài khoản');
+    const acc = chu(r.accountCode) || before?.accountCode || '';
+    if (!acc) errors.push('Thiếu tài khoản hạch toán'); else if (chu(r.accountCode) && !tk.has(acc)) errors.push(`Tài khoản ${acc} không có hoặc là tài khoản tổng hợp`);
+    const trung = acc ? [...tkCua].find(([m, a]) => a === acc && m !== ma.toLowerCase())?.[0] : undefined;
+    if (trung) errors.push(`Tài khoản ${acc} đã gắn với tài khoản ngân hàng ${trung.toUpperCase()} — mỗi tài khoản kế toán chỉ gắn một tài khoản ngân hàng`);
+    const br = chu(r.branchCode).toUpperCase() || before?.branchCode || '';
+    if (chu(r.branchCode) && !cn.has(br)) errors.push(`Chi nhánh ${br} chưa có`);
+    const cur = (chu(r.currency) || before?.currency || 'VND').toUpperCase();
+    if (!/^[A-Z]{3}$/.test(cur)) errors.push(`Tiền tệ "${r.currency}" phải 3 chữ (VND, USD…)`);
+    const tt = tich(r.isActive, cotTT);
+    if (tt === null) errors.push(loiTich('Hoạt động', r.isActive));
+    if (errors.length) return { errors };
+    return { errors, ghi: () => api.put(`/api/v1/bank-accounts/${encodeURIComponent(ma)}`, { ...v, accountCode: acc, branchCode: br || undefined, currency: cur, isActive: tt ?? before?.isActive ?? true }) };
+  },
+});
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG];
