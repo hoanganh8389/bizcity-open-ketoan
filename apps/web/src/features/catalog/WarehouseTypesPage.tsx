@@ -61,6 +61,8 @@ export function WarehouseTypesPage() {
           canWrite={canWrite}
           hasSelection={Boolean(sel)}
           onAdd={() => setEditing({ isNew: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isSystem: false })}
           onEdit={() => sel && setEditing(sel)}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}

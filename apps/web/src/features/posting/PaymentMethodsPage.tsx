@@ -39,6 +39,8 @@ export function PaymentMethodsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá hình thức ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}

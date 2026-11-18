@@ -70,6 +70,8 @@ export function PriceListsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true, branchCodes: [] })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isCompany: false, branchCodes: [], pricedRows: 0, isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Xoá bảng giá ${sel.code} - ${sel.name}? Giá đã khai ở bảng giá này bị xoá theo.`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}

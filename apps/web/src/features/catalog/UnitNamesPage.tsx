@@ -48,6 +48,8 @@ export function UnitNamesPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, id: undefined, name: '', products: 0, isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => {
             if (!sel) return;
