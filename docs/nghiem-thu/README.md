@@ -61,5 +61,6 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-DM-006](danh-muc/NT-DM-006-nhan-ban-va-thanh-nut.md) | Nút Nhân bản ở các màn danh mục (trừ DM10); thanh nút: nút chức năng bên trái, kiểu xem / lọc bên phải | Chờ nghiệm thu |
 | [NT-DM-007](danh-muc/NT-DM-007-nhap-excel-co-cau-to-chuc.md) | DM16 Cơ cấu tổ chức: nhập Excel bằng trình nhập chung (Cơ cấu / Phòng ban / Cửa hàng / Kho), tệp Xuất có cả phòng ban riêng của cửa hàng | Đã chốt |
 | [NT-DM-008](danh-muc/NT-DM-008-nhap-gia-ban-trinh-nhap-chung.md) | DM14 Bảng giá: nhập giá bán ở lưới giá bằng trình nhập chung (tệp mẫu, ghép cột, kiểm tra, tệp lỗi) | Đã chốt |
+| [NT-DM-009](danh-muc/NT-DM-009-ma-nhom-trung-khac-nganh.md) | DM11: mã nhóm hàng chỉ không trùng trong cùng ngành, khác ngành được trùng (form thêm / sửa, API, nhập Excel) | Chờ nghiệm thu |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.
