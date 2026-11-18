@@ -430,4 +430,72 @@ const BANG_GIA = danhMuc<BangGia>({
   },
 });
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA];
+/* ------------------------------------------------------------------ ACC41 Tài khoản ngầm định (tệp Xuất chế độ Gọn: Loại · TK Nợ · TK Có) */
+type Nguon = 'rule' | 'payment' | 'warehouse' | 'tax' | 'purpose';
+interface SLine { side: 'debit' | 'credit'; source: Nguon; key?: string }
+interface Khoa { key: string; label: string; range: string[]; accountCode: string | null }
+interface SoDo { businesses: { name: string; groups: { name: string; lines: SLine[] }[] }[]; keys: Khoa[] }
+/** Như màn ACC41 (chế độ Gọn): ô TK của dòng sổ lấy từ nguồn khác hiện chữ "theo …". */
+const NGUON_NGAN: Record<Nguon, string> = { rule: '', payment: 'theo HTTT', warehouse: 'theo loại kho', tax: 'theo loại thuế', purpose: 'theo mục đích' };
+const tachTk = (s: string) => [...new Set(s.split(/[;,]/).map((x) => x.trim()).filter(Boolean))];
+const TK_NGAM_DINH: NhapLoai = {
+  id: 'tai-khoan-ngam-dinh', nhom: 'Danh mục', title: 'Tài khoản ngầm định', desc: 'Loại (nghiệp vụ – bút toán), TK Nợ, TK Có — đặt tài khoản ngầm định sửa được; không thêm / xoá loại', keyField: 'loai',
+  listPath: '/cau-hinh/quy-tac-hach-toan', invalidate: ['posting-scheme'], modes: false,
+  fields: [
+    { key: 'loai', header: 'Loại', required: true, aliases: ['nghiep vu', 'loai chung tu'], example: 'Bán hàng – Doanh thu', note: 'Đúng tên ở cột Loại trên màn (tệp Xuất chế độ Gọn).' },
+    { key: 'no', header: 'TK Nợ', aliases: ['tai khoan no', 'no'], example: '131', note: 'Nhiều tài khoản cách nhau dấu chấm phẩy, theo thứ tự như tệp Xuất (dòng có nhiều ô ngầm định); một tài khoản thì đặt cho mọi ô của bên đó. Chữ "theo HTTT / loại kho / loại thuế / mục đích" là tài khoản lấy từ màn khác — giữ nguyên, sửa ở màn đó. Trống = giữ nguyên.' },
+    { key: 'co', header: 'TK Có', aliases: ['tai khoan co', 'co'], example: '5111', note: 'Như TK Nợ.' },
+  ],
+  run: async (rows, { dryRun }) => {
+    const [sd, tk] = await Promise.all([api.get<SoDo>('/api/v1/posting/scheme'), taiKhoanChiTiet()]);
+    const keys = new Map(sd.keys.map((k) => [k.key, k]));
+    const dongMan = new Map<string, SLine[][]>();
+    for (const b of sd.businesses) for (const g of b.groups) {
+      const t = kd(`${b.name} – ${g.name.replace(/\s*\(.*\)$/, '')}`);
+      dongMan.set(t, [...(dongMan.get(t) ?? []), g.lines]);
+    }
+    const datKhoa = new Map<string, { tk: string; row: number }>();
+    const pre = rows.map((r) => {
+      const row = Number(r._row);
+      const loai = chu(r.loai);
+      const errors: string[] = [];
+      const doi: [string, string][] = [];
+      const nhom = dongMan.get(kd(loai));
+      if (!loai) errors.push('Thiếu cột Loại');
+      else if (!nhom) errors.push(`Loại "${loai}" không có trên màn Tài khoản ngầm định`);
+      else for (const lines of nhom) for (const [side, cot, ten] of [['debit', 'no', 'TK Nợ'], ['credit', 'co', 'TK Có']] as const) {
+        if (!chu(r[cot])) continue;
+        const ben = lines.filter((l) => l.side === side);
+        const sua = [...new Set(ben.filter((l) => l.source === 'rule' && l.key).map((l) => l.key!))];
+        const coDinh = new Set(ben.filter((l) => !(l.source === 'rule' && l.key)).map((l) => (l.key ? keys.get(l.key)?.accountCode ?? '' : NGUON_NGAN[l.source])).filter(Boolean));
+        const hienTai = [...new Set(sua.map((k) => keys.get(k)?.accountCode ?? '').filter(Boolean))];
+        const moi = tachTk(chu(r[cot])).filter((x) => !coDinh.has(x));
+        if (!moi.length || (moi.length === hienTai.length && moi.every((x) => hienTai.includes(x)))) continue; // không đổi
+        if (!sua.length) { errors.push(`${ten}: tài khoản dòng này lấy từ màn khác (hình thức thanh toán, loại kho, thuế…), không sửa ở đây`); continue; }
+        // Ghép như tệp Xuất: các ô ngầm định theo thứ tự xuất hiện; một tài khoản thì đặt cho mọi ô của bên đó.
+        if (moi.length !== sua.length && moi.length !== 1) { errors.push(`${ten}: dòng có ${sua.length} ô ngầm định mà tệp ghi ${moi.length} tài khoản (${moi.join('; ')}) — ghi ${sua.length} tài khoản theo thứ tự như tệp Xuất, hoặc sửa trên màn`); continue; }
+        sua.forEach((kk, i) => {
+          const k = keys.get(kk)!; const a = moi.length === 1 ? moi[0]! : moi[i]!;
+          if (!tk.has(a)) errors.push(`${ten}: tài khoản ${a} không có hoặc là tài khoản tổng hợp`);
+          else if (k.range.length && !k.range.some((p) => a.startsWith(p))) errors.push(`${ten}: tài khoản ${a} ngoài khoảng cho phép của ô "${k.label}" (${k.range.join('; ')})`);
+          else doi.push([k.key, a]);
+        });
+      }
+      return { row, loai, errors, doi, values: { ...r } as Record<string, string | undefined> };
+    });
+    // Một ô ngầm định dùng ở nhiều loại: các dòng phải ghi cùng tài khoản.
+    for (const p of pre) for (const [k, a] of p.doi) { const o = datKhoa.get(k); if (!o) datKhoa.set(k, { tk: a, row: p.row }); else if (o.tk !== a) p.errors.push(`Ô ngầm định "${keys.get(k)?.label ?? k}" đã đặt ${o.tk} ở dòng ${o.row} — dòng này ghi ${a}`); }
+    const out: NhapDong[] = [];
+    const daGhi = new Set<string>();
+    for (const p of pre) {
+      if (p.errors.length || dryRun) { out.push({ row: p.row, key: p.loai, action: p.errors.length ? 'error' : 'update', errors: p.errors, values: p.values }); continue; }
+      try {
+        for (const [k, a] of p.doi) if (!daGhi.has(k)) { await api.put(`/api/v1/posting/scheme/accounts/${encodeURIComponent(k)}`, { accountCode: a }); daGhi.add(k); }
+        out.push({ row: p.row, key: p.loai, action: 'update', errors: [], values: p.values });
+      } catch (e) { out.push({ row: p.row, key: p.loai, action: 'error', errors: [loiCua(e)], values: p.values }); }
+    }
+    return ketQua(out);
+  },
+};
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH];
