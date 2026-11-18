@@ -228,7 +228,18 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
     onError: (e) => setErr(errorText(e)),
   });
   const nn = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
-  const trungTen = ten.trim() && (!old || nn(old.name) !== nn(ten)) ? list.find((x) => x.code !== old?.code && nn(x.name) === nn(ten)) : undefined;
+  // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng chỉ không trùng trong cùng cây (cùng ngành hàng cấp 1); khác ngành được trùng.
+  // Thêm ngành hàng (cấp 1): không trùng ngành hàng khác.
+  const cungCay = (() => {
+    const gia = (k: string) => !ix.parentOf(k) && /^nhóm hàng$/i.test(ix.byCode.get(k)?.name.trim() ?? ''); // gốc "Nhóm hàng" không phải ngành
+    const chuoi: string[] = [];
+    for (let p = parent, n = 0; p && n < 50; p = ix.parentOf(p), n++) chuoi.unshift(p);
+    if (chuoi[0] && gia(chuoi[0])) chuoi.shift();
+    const nganh = chuoi[0];
+    if (!nganh) return (parent ? ix.kids.get(parent) ?? [] : ix.roots).filter((x) => !gia(x.code)); // thêm ngành hàng: so với các ngành khác
+    return [...ix.subtree(nganh)].map((k) => ix.byCode.get(k)!).filter(Boolean);
+  })();
+  const trungTen = ten.trim() && (!old || nn(old.name) !== nn(ten)) ? cungCay.find((x) => x.code !== old?.code && nn(x.name) === nn(ten)) : undefined;
   const loiTen = trungTen ? `Mã nhóm hàng đã dùng cho nhóm "${ix.path(trungTen.code)}" — đặt mã khác` : '';
   const ghi = () => { const e = !ten.trim() ? 'Nhập mã nhóm hàng' : loiTen || loiMa || (!full.trim() ? 'Nhập tên nhóm hàng' : ''); setErr(e); if (!e) save.mutate(); };
 

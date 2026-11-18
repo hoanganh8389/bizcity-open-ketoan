@@ -35,6 +35,17 @@ describe('Nhóm hàng (DM11)', () => {
     await ok(put('N2', { name: 'Nhãn thử (đổi tên)', parentCode: 'N1', skuCode: '006' }, false));
   });
 
+  // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng (tên ngắn) không trùng trong cùng ngành; khác ngành được trùng.
+  it('mã nhóm hàng trùng trong cùng ngành bị chặn; khác ngành thì được', async () => {
+    const cungNganh = await put('N3C', { name: 'nhóm  THỬ', parentCode: 'N2B', skuCode: '2' });
+    expect(cungNganh.status).toBe(409);
+    expect(JSON.stringify(cungNganh.body)).toContain('Ngành thử');
+    await ok(put('X2', { name: 'Nhóm thử', parentCode: 'X1', skuCode: '001' }));
+    const nganhTrung = await put('N9', { name: 'Ngành thử', skuCode: '15' });
+    expect(nganhTrung.status).toBe(409);
+    await ok(put('N9', { name: 'Nhãn thử B', skuCode: '15' })); // ngành mới trùng tên nhãn của ngành khác: được
+  });
+
   it('không chuyển nhóm vào nhánh con của chính nó', async () => {
     const r = await put('N1', { name: 'Ngành thử', parentCode: 'N3', skuCode: '13' }, false);
     expect(r.status).toBe(400);
