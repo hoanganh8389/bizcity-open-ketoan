@@ -7,7 +7,7 @@
 | Màn hình | DM14 Bảng giá — lưới giá của một bảng giá (phần dưới) |
 | Bộ phận yêu cầu | Phòng kế toán |
 | Ngày tạo | 18/11/2026 |
-| Trạng thái | Đã chốt (kiennt, 18/11/2026) |
+| Trạng thái | Chờ nghiệm thu |
 
 ## 1. Hiện trạng
 Nút **Nhập Excel** ở lưới giá (NT-DM-003) mở một hộp xem trước tự viết: chọn tệp là đọc ngay sheet đầu, không có bước ghép cột, không có tệp mẫu, không tải được tệp lỗi, không chọn sheet — **khác** trình nhập chung 4 bước của mọi màn danh mục (NT-DM-004..007).
@@ -38,9 +38,13 @@ Tệp: `apps/web/src/lib/nhapExcelDanhMuc.ts` (loại nhập giá theo bảng gi
 ## 4. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | Trên màn hình (khứ hồi); 4 lệnh kiểm |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-dm-007-nhap-excel-co-cau` |
+| Test trên màn hình | **6/6 ĐẠT** — DB tạm, web dev nhánh này, bảng giá công ty: nút Nhập Excel ở lưới giá mở trình nhập chung 4 bước (có Tải tệp mẫu); Xuất Excel lưới giá → nhập lại nguyên tệp: 0 lỗi, 0 thêm mới, xuất lại không đổi; điền giá "580,000" (chữ) và 25.000 cho 2 ô trống, để trống 1 ô: 2 thêm mới, lưới đổi đúng 2 ô, 580,000 hiểu 580.000; đổi 1 giá: 1 cập nhật; dòng sai (mã không có, ĐVT không có, giá "abc", trùng dòng): báo 4 dòng |
+| selfcheck | Không có lỗi mới so với main |
+| kiem-chuan | ĐẠT |
+| typecheck | ĐẠT |
+| npm test | 2290 đạt / 6 lỗi — không do phiếu này (chỉ sửa web; mã API giống main): db-rules, mat-khau-mac-dinh, nt-bh-005 lỗi sẵn trên main; nt-bh-003, nt-bh-012, nhom-hang đạt khi chạy riêng (lỗi theo thứ tự chạy cả bộ). preset.test có lần lỗi khi máy quá tải (chạy 42 phút), chạy riêng đạt |
 
 ## 5. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -50,3 +54,4 @@ Tệp: `apps/web/src/lib/nhapExcelDanhMuc.ts` (loại nhập giá theo bảng gi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo và chốt; người dùng chọn gộp chung nhánh / PR với NT-DM-007 |
+| 18/11/2026 | Code xong, test trên màn hình 6/6, chuyển Chờ nghiệm thu |
