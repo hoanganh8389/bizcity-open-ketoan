@@ -386,4 +386,48 @@ const HINH_THUC_TT = danhMuc<Httt>({
   },
 });
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT];
+/* ------------------------------------------------------------------ DM14 Bảng giá (danh sách bảng giá) */
+interface BangGia { code: string; name: string; isCompany: boolean; isActive: boolean; note: string; branchCodes: string[] }
+/** "OC02 Ớt Chuông Cầu Giấy, CN01 (chưa gán)" → ["OC02"]; mục "(chưa gán)" là chi nhánh tự theo bảng giá công ty, bỏ qua. */
+const maChiNhanhCua = (s: string) => s.split(/[,;\n]/).map((x) => x.trim()).filter((x) => x && !/\(chưa gán\)\s*$/i.test(x)).map((x) => (x.split(/\s+/)[0] ?? '').toUpperCase());
+const BANG_GIA = danhMuc<BangGia>({
+  id: 'bang-gia', title: 'Bảng giá (danh sách)', desc: 'Mã, tên bảng giá, bảng giá công ty, chi nhánh áp dụng, ghi chú, đang dùng — giá từng mặt hàng nhập ở lưới giá', listPath: '/danh-muc/bang-gia', invalidate: ['price-lists'],
+  tenMa: 'Mã bảng giá',
+  fields: [
+    { key: 'code', header: 'Mã bảng giá', required: true, aliases: ['ma'], example: 'BGCG', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên bảng giá', required: 'moi', aliases: ['ten'], example: 'Bảng giá Cầu Giấy' },
+    { key: 'isCompany', header: 'Bảng giá công ty', aliases: ['cong ty'], note: 'x = bảng giá công ty. Như tệp Xuất: cột có ô nào được điền thì ô trống = Không.' },
+    { key: 'branches', header: 'Chi nhánh áp dụng', aliases: ['chi nhanh', 'ma chi nhanh'], example: 'OC02', note: 'Mã chi nhánh cách nhau dấu phẩy (chữ sau mã bỏ qua; mục "(chưa gán)" bỏ qua). Cột có ô nào được điền thì ô trống = không gán chi nhánh. Chi nhánh đang ở bảng giá khác thì chuyển sang.' },
+    { key: 'note', header: 'Ghi chú', aliases: ['mo ta'] },
+    TT_TRUONG('Đang dùng'),
+  ],
+  tai: () => api.get<BangGia[]>('/api/v1/catalog/price-lists'), maCua: (l) => l.code, rac: () => thungRac('price-lists'),
+  chuan: async (rows) => {
+    const dem = new Map<string, number[]>();
+    for (const r of rows) for (const c of maChiNhanhCua(chu(r.branches))) dem.set(c, [...(dem.get(c) ?? []), Number(r._row)]);
+    return { cn: await chiNhanh(), dem, cotCN: coCot(rows, 'branches'), cotCT: coCot(rows, 'isCompany'), cotTT: coCot(rows, 'isActive') };
+  },
+  xemTruoc: (l) => ({ name: l.name, isCompany: l.isCompany ? 'x' : '', branches: l.branchCodes.join(', '), note: l.note, isActive: l.isActive ? 'x' : '' }),
+  kiem: (r, ma, before, { them }) => {
+    const { cn, dem, cotCN, cotCT, cotTT } = them as { cn: Set<string>; dem: Map<string, number[]>; cotCN: boolean; cotCT: boolean; cotTT: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Bảng giá mới phải có tên');
+    const ds = maChiNhanhCua(chu(r.branches));
+    for (const c of ds) {
+      if (!cn.has(c)) errors.push(`Chi nhánh ${c} chưa có`);
+      const o = dem.get(c) ?? []; if (o.length > 1) errors.push(`Chi nhánh ${c} ghi ở nhiều bảng giá trong tệp (dòng ${o.join(', ')})`);
+    }
+    const ct = tich(r.isCompany, cotCT); if (ct === null) errors.push(loiTich('Bảng giá công ty', r.isCompany));
+    const tt = tich(r.isActive, cotTT); if (tt === null) errors.push(loiTich('Đang dùng', r.isActive));
+    if (errors.length) return { errors };
+    return {
+      errors, ghi: async () => {
+        await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(ma)}`, { name, isCompany: ct ?? before?.isCompany ?? false, isActive: tt ?? before?.isActive ?? true, note: chu(r.note) || before?.note || '' });
+        if (cotCN) await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(ma)}/branches`, { branchCodes: [...new Set(ds)] });
+      },
+    };
+  },
+});
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA];
