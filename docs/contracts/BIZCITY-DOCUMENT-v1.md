@@ -52,7 +52,8 @@ Mỗi loại chứng từ có máy trạng thái khai báo. Trạng thái riêng
 | `draft` | đang soạn, bị trả lại | được | không |
 | `pending` | chờ duyệt (một hoặc nhiều cấp) | không (rút về `draft` để sửa) | không |
 | `approved` | đã duyệt, có hiệu lực | chỉ qua "điều chỉnh" → `version` mới | **có thể** (theo `ledger[].on`) |
-| `done` | đã hoàn tất (đã chi, đã thanh lý…) | không | có thể |
+| `in_progress` | đang thực hiện (đơn nhập dở, hàng đi đường, hợp đồng / chính sách đang hiệu lực) — 0166 | chỉ qua "điều chỉnh" | có thể |
+| `done` | đã hoàn tất (đã nhập đủ, đã nhận, đã chi, đã thanh lý, đã ghi sổ…) | không | có thể |
 | `cancelled` | đã huỷ | không | huỷ sự việc đã nộp → bút toán đảo |
 
 ```yaml

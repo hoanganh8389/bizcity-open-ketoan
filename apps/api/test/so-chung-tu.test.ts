@@ -57,7 +57,7 @@ describe('Sổ chứng từ chung (0156)', () => {
   it('API: lọc theo trạng thái, đếm theo nhóm; chi tiết kèm phiên bản + liên kết', async () => {
     const order = await purchase('order', 'approved', 'DDH-SCT-4');
     const rec = await purchase('receipt', 'draft', 'PN-SCT-4', [order]);
-    const list = await call<{ data: { items: { docRef: string; status: string }[]; counts: Record<string, number> } }>(ctx, 'GET', '/api/v1/business-documents?status=draft&docType=purchase.&q=SCT-4');
+    const list = await call<{ data: { items: { docRef: string; status: string }[]; counts: Record<string, number> } }>(ctx, 'GET', '/api/v1/business-documents?status=draft&q=SCT-4');
     expect(list.status).toBe(200);
     expect(list.body.data.items.map((i) => i.docRef)).toEqual([`mua-hang.document:${rec}`]);
     expect(list.body.data.counts).toMatchObject({ draft: 1, approved: 1 });
@@ -78,14 +78,61 @@ describe('Sổ chứng từ chung (0156)', () => {
     await sql`UPDATE purchase_documents SET status = 'approved', approved_by = 'Kế toán A', approved_at = now(),
       data = ${JSON.stringify({ policyTrace: [{ policy: 'Trên phiếu' }], lines: [{ sku: 'SKU-SCT', qty: 1, lotNo: 'L001', expDate: '2027-05-01', program: 'CS-SCT' }] })}::jsonb
       WHERE id = ${id}`.execute(db);
-    expect(await doc(ref)).toMatchObject({ status: 'approved', approved_by: 'Kế toán A' });
+    expect(await doc(ref)).toMatchObject({ status: 'done', approved_by: 'Kế toán A' }); // 0166: phiếu nhập đã duyệt = hoàn tất
     const links = await db.selectFrom('document_links').select(['to_ref', 'role']).where('tenant_id', '=', t).where('from_ref', '=', ref).orderBy('role').execute();
     expect(links).toEqual([{ to_ref: `mua-hang.policy:${pol}`, role: 'applies' }, { to_ref: `kho.lot:${lot}`, role: 'uses' }]);
     const det = await call<{ data: { document: { approvedBy: string }; links: { role: string; label: string; openable: boolean }[] } }>(ctx, 'GET', `/api/v1/business-documents/detail?docRef=${ref}`);
     expect(det.body.data.document.approvedBy).toBe('Kế toán A');
     expect(det.body.data.links.map((l) => [l.role, l.label, l.openable]).sort()).toEqual([
-      ['applies', 'Chính sách CS-SCT — Thưởng doanh số thử', false],
+      ['applies', 'Chính sách CS-SCT — Thưởng doanh số thử', true], // 0166: chính sách đã vào sổ chứng từ, mở được
       ['uses', 'Lô L001 · SKU-SCT · HSD 2027-05-01', false],
     ]);
+  });
+});
+
+// [2026-11-19 Nguyễn Văn Thủy] 0166: tên loại theo chứng từ là gì, vòng đời Thực hiện / Hoàn tất, chính sách giá vào sổ (đóng góp)
+describe('Loại chứng từ và vòng đời (0166)', () => {
+  const lines = (x: [string, number][]) => JSON.stringify({ lines: x.map(([sku, qty]) => ({ sku, qty })) });
+  it('tên loại: nhập / nhận tặng = inventory.receipt, trả NCC / xuất tặng = inventory.issue, trả tiền = finance.payment; đã duyệt = hoàn tất', async () => {
+    const got: Record<string, unknown> = {};
+    for (const k of ['receipt', 'gift_in', 'return', 'gift_out', 'payment', 'cost']) {
+      const id = await purchase(k, 'approved', `LT-${k}`);
+      const d = await doc(`mua-hang.document:${id}`);
+      got[k] = [d.doc_type, d.status, (d.meta as { kind?: string }).kind];
+    }
+    expect(got).toEqual({
+      receipt: ['inventory.receipt', 'done', 'receipt'], gift_in: ['inventory.receipt', 'done', 'gift_in'],
+      return: ['inventory.issue', 'done', 'return'], gift_out: ['inventory.issue', 'done', 'gift_out'],
+      payment: ['finance.payment', 'done', 'payment'], cost: ['purchase.cost', 'done', 'cost'],
+    });
+  });
+
+  it('đơn đặt: chưa nhập = đã duyệt; nhập một phần = đang thực hiện; nhập đủ = hoàn tất; huỷ phiếu nhập thì lùi lại', async () => {
+    const order = await purchase('order', 'approved', 'DDH-VD-1');
+    await sql`UPDATE purchase_documents SET data = ${lines([['A', 10], ['B', 5]])}::jsonb WHERE id = ${order}`.execute(db);
+    const ref = `mua-hang.document:${order}`;
+    expect((await doc(ref)).status).toBe('approved');
+    const v0 = (await doc(ref)).version;
+    const r1 = await purchase('receipt', 'draft', 'PN-VD-1', [order]);
+    await sql`UPDATE purchase_documents SET data = ${lines([['A', 10]])}::jsonb WHERE id = ${r1}`.execute(db);
+    expect((await doc(ref)).status).toBe('approved'); // phiếu nhập nháp chưa tính
+    await sql`UPDATE purchase_documents SET status = 'approved' WHERE id = ${r1}`.execute(db);
+    expect((await doc(ref)).status).toBe('in_progress');
+    const r2 = await purchase('receipt', 'draft', 'PN-VD-2', [order]);
+    await sql`UPDATE purchase_documents SET data = ${lines([['B', 5]])}::jsonb, status = 'approved' WHERE id = ${r2}`.execute(db);
+    expect((await doc(ref)).status).toBe('done');
+    await sql`UPDATE purchase_documents SET status = 'cancelled' WHERE id = ${r2}`.execute(db);
+    expect((await doc(ref)).status).toBe('in_progress');
+    expect((await doc(ref)).version).toBe(v0); // tiến độ không phải đổi nội dung
+  });
+
+  it('chính sách giá vào sổ: pricing.policy đang áp = đang thực hiện; ngừng = huỷ; xoá = huỷ, giữ dòng', async () => {
+    const id = (await sql<{ id: string }>`INSERT INTO purchase_policies (tenant_id, code, kind, name, scope) VALUES (${t}, 'CS-VD', 'target_rebate', 'Thưởng thử', ${JSON.stringify({ partnerCode: 'NCC-A' })}::jsonb) RETURNING id`.execute(db)).rows[0]!.id;
+    const ref = `mua-hang.policy:${id}`;
+    expect(await doc(ref)).toMatchObject({ module: 'mua-hang', doc_type: 'pricing.policy', doc_no: 'CS-VD', partner_ref: 'NCC-A', status: 'in_progress', status_raw: 'published' });
+    await sql`UPDATE purchase_policies SET is_active = false WHERE id = ${id}`.execute(db);
+    expect(await doc(ref)).toMatchObject({ status: 'cancelled', status_raw: 'inactive' });
+    await sql`DELETE FROM purchase_policies WHERE id = ${id}`.execute(db);
+    expect(await doc(ref)).toMatchObject({ status: 'cancelled', status_raw: 'retired' });
   });
 });

@@ -115,7 +115,7 @@ const signatureList = defineAction({
   handler: async (ctx, q) => ({ docRef: q.docRef, currentVersion: await documents.currentVersion(ctx.data.tx, ctx.tenant.id, q.docRef), signatures: await documents.signatures(ctx.data.tx, ctx.tenant.id, q.docRef) }),
 });
 
-const STATUS = ['draft', 'pending', 'approved', 'done', 'cancelled'] as const;
+const STATUS = ['draft', 'pending', 'approved', 'in_progress', 'done', 'cancelled'] as const;
 const businessDocOut = z.object({
   docRef: z.string(), module: z.string(), docType: z.string(), docNo: z.string(), docDate: z.string().nullable(), branchCode: z.string(),
   partnerRef: z.string(), partnerName: z.string(), title: z.string(), total: z.number(), statusRaw: z.string(), status: z.enum(STATUS), version: z.number(),
@@ -153,7 +153,7 @@ const businessDocList = defineAction({
   description: 'Mọi chứng từ nghiệp vụ (đơn đặt, phiếu nhập, chuyển kho, đề nghị thanh toán…) ở một chỗ, theo trạng thái chuẩn draft / pending / approved / done / cancelled. Mới → cũ.',
   permission: 'documents:read', effect: 'read', idempotency: 'none',
   input: z.object({
-    docType: z.string().max(60).optional().describe('Loại chứng từ, vd purchase.order; hoặc tiền tố purchase.'),
+    docType: z.string().max(60).optional().describe('Loại chứng từ, vd purchase.order, inventory.receipt, pricing.policy; hoặc tiền tố inventory.'),
     status: z.enum(STATUS).optional(), branchCode: z.string().max(60).optional(),
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     q: z.string().max(100).optional().describe('Tìm theo số chứng từ hoặc đối tượng'),

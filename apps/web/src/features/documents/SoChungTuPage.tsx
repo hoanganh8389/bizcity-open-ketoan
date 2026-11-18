@@ -17,7 +17,7 @@ import { FormTabs } from '@/components/FormBlocks';
 import { Empty, ErrorBox, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 
-type Status = 'draft' | 'pending' | 'approved' | 'done' | 'cancelled';
+type Status = 'draft' | 'pending' | 'approved' | 'in_progress' | 'done' | 'cancelled';
 type Tab = Status | 'all';
 interface Doc {
   docRef: string; module: string; docType: string; docNo: string; docDate: string | null; branchCode: string; partnerRef: string; partnerName: string;
@@ -31,17 +31,20 @@ interface Detail {
   files: { id: string; fileName: string; kind: string; sizeBytes: number; createdBy: string; createdAt: string }[];
 }
 
-const STATUS_TEXT: Record<Status, string> = { draft: 'Nháp', pending: 'Chờ duyệt', approved: 'Đã duyệt', done: 'Hoàn tất', cancelled: 'Đã huỷ' };
-const STATUS_CLASS: Record<Status, string> = { draft: 'muted', pending: 'text-warn', approved: 'text-ok', done: 'text-ok', cancelled: 'text-bad' };
+const STATUS_TEXT: Record<Status, string> = { draft: 'Nháp', pending: 'Chờ duyệt', approved: 'Đã duyệt', in_progress: 'Đang thực hiện', done: 'Hoàn tất', cancelled: 'Đã huỷ' };
+const STATUS_CLASS: Record<Status, string> = { draft: 'muted', pending: 'text-warn', approved: 'text-ok', in_progress: 'text-warn', done: 'text-ok', cancelled: 'text-bad' };
 const TYPES: [string, string][] = [
-  ['', 'Mọi loại'], ['purchase.', 'Mua hàng (mọi loại)'], ['purchase.order', 'Đơn đặt hàng'], ['purchase.receipt', 'Phiếu nhập mua'],
-  ['purchase.return', 'Trả hàng NCC'], ['contract.', 'Hợp đồng'], ['inventory.transfer', 'Chuyển kho'], ['finance.payment_request', 'Đề nghị thanh toán'],
+  // [2026-11-19 Nguyễn Văn Thủy] loại <nghiệp vụ>.<loại> theo chứng từ là gì (0166) (đóng góp)
+  ['', 'Mọi loại'], ['purchase.', 'Mua hàng (mọi loại)'], ['purchase.contract', 'Hợp đồng mua hàng'], ['purchase.order', 'Đơn đặt hàng'],
+  ['pricing.policy', 'Chính sách mua hàng'], ['inventory.', 'Kho (mọi loại)'], ['inventory.receipt', 'Phiếu nhập kho'], ['inventory.issue', 'Phiếu xuất (trả NCC, xuất tặng)'],
+  ['inventory.transfer', 'Chuyển kho'], ['finance.', 'Tiền (mọi loại)'], ['finance.payment', 'Thanh toán NCC'], ['finance.payment_request', 'Đề nghị thanh toán'],
+  ['contract.', 'Hợp đồng khác (thuê, dịch vụ…)'],
 ];
 /** Tên tiếng Việt của thông tin thêm (meta). */
 const META_TEXT: Record<string, string> = {
   invoiceNo: 'Số hoá đơn', invoiceDate: 'Ngày hoá đơn', dueDate: 'Hạn thanh toán', totalBeforeTax: 'Tiền hàng', totalTax: 'Tiền thuế', demo: 'Dữ liệu mẫu',
   fromWarehouse: 'Kho xuất', toBranch: 'Chi nhánh nhận', toWarehouse: 'Kho nhận', receivedDate: 'Ngày nhận', receivedBy: 'Người nhận', reason: 'Lý do', method: 'Hình thức', rejectedReason: 'Lý do trả lại',
-  approved1By: 'Duyệt cấp 1',
+  approved1By: 'Duyệt cấp 1', kind: 'Loại phiếu mua', name: 'Tên', programKind: 'Loại chương trình', validFrom: 'Áp từ', validTo: 'Áp đến', contractCode: 'Hợp đồng',
 };
 const metaText = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : v === true ? 'Có' : String(v));
 const ROLE_TEXT: Record<string, string> = { source: 'Lập từ', ledger: 'Sự việc kế toán', reverses: 'Đảo', replaces: 'Thay thế', settles: 'Thanh toán cho', attachesTo: 'Đính vào', applies: 'Áp chính sách / chương trình', uses: 'Dùng lô hàng' };
@@ -163,7 +166,7 @@ export function SoChungTuPage() {
       >
         <div className="card">
           <FormTabs<Tab>
-            tabs={[['all', `Tất cả (${all})`], ['draft', tabText('draft')], ['pending', tabText('pending')], ['approved', tabText('approved')], ['done', tabText('done')], ['cancelled', tabText('cancelled')]]}
+            tabs={[['all', `Tất cả (${all})`], ['draft', tabText('draft')], ['pending', tabText('pending')], ['approved', tabText('approved')], ['in_progress', tabText('in_progress')], ['done', tabText('done')], ['cancelled', tabText('cancelled')]]}
             value={tab} onChange={setTab}
           />
           <ErrorBox error={q.error ? errorText(q.error) : null} />

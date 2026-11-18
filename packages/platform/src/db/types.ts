@@ -1782,7 +1782,7 @@ export interface BusinessDocumentsTable {
   title: Generated<string>;
   total: Generated<string>;
   status_raw: string;
-  status: 'draft' | 'pending' | 'approved' | 'done' | 'cancelled';
+  status: 'draft' | 'pending' | 'approved' | 'in_progress' | 'done' | 'cancelled';
   version: Generated<number>;
   meta: Generated<Json<Record<string, unknown>>>;
   created_by: Generated<string>;

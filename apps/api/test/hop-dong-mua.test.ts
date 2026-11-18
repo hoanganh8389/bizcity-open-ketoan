@@ -35,8 +35,8 @@ describe('Hợp đồng mua hàng (Danh mục hợp đồng)', () => {
 
   it('sổ chứng từ: hợp đồng là một chứng từ; phiếu nhập thuộc hợp đồng có liên kết áp hợp đồng', async () => {
     const d = await db.selectFrom('business_documents').selectAll().where('tenant_id', '=', tid).where('doc_ref', '=', `hop-dong.contract:${HD}`).executeTakeFirstOrThrow();
-    expect(d).toMatchObject({ module: 'hop-dong', doc_type: 'contract.goods_supplier', title: 'Hợp đồng mua hàng', partner_ref: 'NC100227', status: 'approved' });
-    const links = await db.selectFrom('document_links').select('from_ref').where('tenant_id', '=', tid).where('to_ref', '=', `hop-dong.contract:${HD}`).where('role', '=', 'applies').execute();
+    expect(d).toMatchObject({ module: 'hop-dong', doc_type: 'purchase.contract', title: 'Hợp đồng mua hàng', partner_ref: 'NC100227', status: 'in_progress' });
+    const links = await db.selectFrom('document_links').select('from_ref').where('tenant_id', '=', tid).where('to_ref', '=', `hop-dong.contract:${HD}`).where('role', '=', 'applies').where('from_ref', 'like', 'mua-hang.document:%').execute(); // 0166: chính sách của hợp đồng cũng liên kết applies
     expect(links.length).toBe(2);
     const det = await call<{ data: { links: { label: string; openable: boolean }[] } }>(t, 'GET', `/api/v1/business-documents/detail?docRef=${encodeURIComponent(links[0]!.from_ref)}`);
     expect(det.body.data.links.find((l) => l.label.includes(HD))).toMatchObject({ openable: true });

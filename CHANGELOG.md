@@ -12,6 +12,14 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ chứng từ chung: tên loại theo chứng từ, vòng đời Thực hiện / Hoàn tất, chính sách giá vào sổ (0166) <!-- [2026-11-19 Nguyễn Văn Thủy] (đóng góp) -->
+- **Đổi** `doc_type` thành `<nghiệp vụ>.<loại>` theo chứng từ là gì: `purchase.contract`, `purchase.order`, `inventory.receipt` (nhập mua, nhận tặng), `inventory.issue` (trả NCC, xuất tặng), `inventory.exchange`, `finance.payment`, `pricing.policy`; hợp đồng khác giữ `contract.<loại>`. Phân hệ sinh ra ở cột `module`, loại phiếu mua ở `meta.kind`.
+- **Thêm** nhóm trạng thái `in_progress` (Đang thực hiện): đơn đặt nhập dở, chuyển kho đang đi đường, hợp đồng / chính sách đang hiệu lực. Đơn đặt nhập đủ mọi mã, phiếu nhập / xuất đã duyệt, chuyển kho đã nhận = `done`. Tiến độ đơn đặt tính lại mỗi khi phiếu nhập lập từ đơn đổi.
+- **Thêm** chính sách mua vào sổ chứng từ (`mua-hang.policy:<id>`, `pricing.policy`; ngừng / xoá = huỷ, giữ dòng); số bản lấy từ phân hệ, trigger không ghi thêm bản.
+- **Thêm** tài liệu quy chuẩn và cách đưa chứng từ mới vào sổ: [docs/nghiep-vu/26](docs/nghiep-vu/26-so-chung-tu-quy-chuan.md) (việc tiếp theo: phần bán).
+- **Đổi** TI10 Cấu trúc dữ liệu xếp nhóm theo Document Kernel → chứng từ phân hệ → sự kiện kế toán; MH13 thêm hợp đồng là gốc, sổ chứng từ chung, bước 1b Hợp đồng mua, lớp bảng Sổ chứng từ chung.
+- Không đổi `accounting_events`, sổ, kho.
+
 ### Hợp đồng mua xuyên suốt + nhãn hàng theo cây nhóm hàng (0165, trước là 0163) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
 
 Theo quy trình mua hàng của kế toán: khai báo → **ký hợp đồng** → giá mua, chính sách theo hợp đồng → đơn đặt kế thừa hợp đồng → nhập kho → hoá đơn → công nợ theo hợp đồng → thanh toán → quyết toán, thanh lý. Không bảng mới.
