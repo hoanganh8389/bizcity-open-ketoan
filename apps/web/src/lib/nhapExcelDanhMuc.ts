@@ -336,4 +336,54 @@ const TK_NGAN_HANG = danhMuc<NganHang>({
   },
 });
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG];
+/* ------------------------------------------------------------------ DM05 Hình thức thanh toán */
+interface Httt { code: string; name: string; accountCode: string; bankAccountCode: string | null; isReceivable: boolean; isActive: boolean; note: string; sortOrder: number | null; discountRate: number | null; partnerCode: string | null }
+const HINH_THUC_TT = danhMuc<Httt>({
+  id: 'hinh-thuc-thanh-toan', title: 'Hình thức thanh toán', desc: 'Mã, tên, tài khoản hạch toán, tài khoản ngân hàng, đối tượng nhận hộ, ghi công nợ, hoạt động', listPath: '/cau-hinh/hinh-thuc-thanh-toan', invalidate: ['payment-methods'],
+  tenMa: 'Mã hình thức',
+  fields: [
+    { key: 'code', header: 'Mã', required: true, aliases: ['ma httt', 'ma hinh thuc'], example: 'CK', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên', required: 'moi', aliases: ['ten httt', 'ten hinh thuc'], example: 'Chuyển khoản' },
+    { key: 'accountCode', header: 'Tài khoản hạch toán', required: 'moi', aliases: ['tai khoan', 'tk'], example: '1121', note: 'Tài khoản chi tiết đã có.' },
+    { key: 'bankAccountCode', header: 'Tài khoản ngân hàng', aliases: ['ma ngan hang', 'tk ngan hang'], example: 'TCB01', note: 'Mã ở danh mục Tài khoản ngân hàng.' },
+    { key: 'partnerCode', header: 'Đối tượng nhận hộ', aliases: ['doi tuong', 'ma doi tuong'], note: 'Mã đối tượng đã có.' },
+    { key: 'isReceivable', header: 'Ghi công nợ', aliases: ['cong no'], example: '', note: 'x / Có = ghi công nợ. Như tệp Xuất: cột có ô nào được điền thì ô trống = Không.' },
+    TT_TRUONG('Hoạt động'),
+    { key: 'sortOrder', header: 'Thứ tự', aliases: ['stt hien thi'], note: 'Số nguyên. Cột ẩn trên lưới.' },
+  ],
+  tai: () => api.get<Httt[]>('/api/v1/posting/payment-methods'), maCua: (m) => m.code, rac: () => thungRac('payment-methods'),
+  chuan: async (rows) => {
+    const [tk, nh] = await Promise.all([taiKhoanChiTiet(), api.get<{ code: string }[]>('/api/v1/bank-accounts')]);
+    const maDT = [...new Set(rows.map((r) => chu(r.partnerCode)).filter(Boolean))];
+    const co = new Set<string>();
+    for (const m of maDT) { const ds = await api.get<{ code: string }[]>('/api/v1/partners', { search: m, status: 'all', pageSize: 20 }); if (ds.some((p) => p.code.toLowerCase() === m.toLowerCase())) co.add(m.toLowerCase()); }
+    return { tk, nh: new Set(nh.map((b) => b.code.toLowerCase())), dt: co, cotTT: coCot(rows, 'isActive'), cotCN: coCot(rows, 'isReceivable') };
+  },
+  xemTruoc: (m) => ({ name: m.name, accountCode: m.accountCode, bankAccountCode: m.bankAccountCode ?? '', partnerCode: m.partnerCode ?? '', isReceivable: m.isReceivable ? 'x' : '', isActive: m.isActive ? 'x' : '', sortOrder: m.sortOrder == null ? '' : String(m.sortOrder) }),
+  kiem: (r, ma, before, { them }) => {
+    const { tk, nh, dt, cotTT, cotCN } = them as { tk: Set<string>; nh: Set<string>; dt: Set<string>; cotTT: boolean; cotCN: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Thiếu tên hình thức');
+    const acc = chu(r.accountCode) || before?.accountCode || '';
+    if (!acc) errors.push('Thiếu tài khoản hạch toán'); else if (chu(r.accountCode) && !tk.has(acc)) errors.push(`Tài khoản ${acc} không có hoặc là tài khoản tổng hợp`);
+    const bank = chu(r.bankAccountCode) || before?.bankAccountCode || '';
+    if (chu(r.bankAccountCode) && !nh.has(bank.toLowerCase())) errors.push(`Tài khoản ngân hàng ${bank} chưa có`);
+    const p = chu(r.partnerCode) || before?.partnerCode || '';
+    if (chu(r.partnerCode) && !dt.has(p.toLowerCase())) errors.push(`Đối tượng ${p} chưa có`);
+    const so = chu(r.sortOrder);
+    const sortOrder = so ? Number(so) : before?.sortOrder ?? null;
+    if (so && !Number.isInteger(sortOrder)) errors.push(`Thứ tự "${so}" phải là số nguyên`);
+    const cn = tich(r.isReceivable, cotCN); if (cn === null) errors.push(loiTich('Ghi công nợ', r.isReceivable));
+    const tt = tich(r.isActive, cotTT); if (tt === null) errors.push(loiTich('Hoạt động', r.isActive));
+    if (errors.length) return { errors };
+    return {
+      errors, ghi: () => api.put(`/api/v1/posting/payment-methods/${encodeURIComponent(ma)}`, {
+        name, accountCode: acc, bankAccountCode: bank || null, isReceivable: cn ?? before?.isReceivable ?? false, isActive: tt ?? before?.isActive ?? true,
+        note: before?.note ?? '', sortOrder, discountRate: before?.discountRate ?? null, partnerCode: p || null,
+      }),
+    };
+  },
+});
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT];
