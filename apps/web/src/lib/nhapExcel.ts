@@ -395,6 +395,66 @@ const TAI_KHOAN: NhapLoai = {
   },
 };
 
+// [2026-11-18 09:40 AM kiennt] NT-DM-004 — nhập Excel danh mục đơn vị tính (DM15): khoá theo tên, không đổi tên qua Excel (đóng góp)
+/* ------------------------------------------------------------------ Đơn vị tính (DM15) */
+interface DvtRow { id: string; name: string; note: string; isActive: boolean }
+const TEN_DVT_RE = /^[\p{L}\p{N} _.\-/()+×]+$/u;
+const gonTen = (s: string | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
+const DON_VI_TINH: NhapLoai = {
+  id: 'don-vi-tinh', nhom: 'Danh mục', title: 'Đơn vị tính', desc: 'Tên đơn vị tính (Hộp, Lốc_4, Thùng…), đang dùng, ghi chú — tỉ lệ quy đổi khai ở từng mặt hàng', keyField: 'name',
+  listPath: '/danh-muc/don-vi-tinh', invalidate: ['unit-names'],
+  fields: [
+    { key: 'name', header: 'Đơn vị tính', required: true, aliases: ['dvt', 'don vi', 'ten dvt', 'ten don vi tinh'], example: 'Lốc_4', note: 'Đã có (không phân biệt hoa thường) → cập nhật Đang dùng, Ghi chú; chưa có → thêm mới. Không đổi tên qua Excel. Tối đa 32 ký tự: chữ, số, khoảng trắng và _ - . / ( ) + ×' },
+    { key: 'isActive', header: 'Đang dùng', aliases: ['trang thai', 'dang su dung', 'hoat dong'], example: 'Có', note: 'Có / Không (hoặc x, 1, 0, Đang dùng, Ngừng dùng). Như tệp Xuất: cột có ô nào được điền thì ô trống = Không. Cả cột trống: mới = Có; đã có = giữ nguyên.' },
+    { key: 'note', header: 'Ghi chú', aliases: ['ghi chu', 'mo ta', 'dien giai'], example: 'lốc 4 hộp 110ml', note: 'Trống: mới = trống; đã có = giữ nguyên.' },
+  ],
+  run: async (rows, { dryRun, mode }) => {
+    const [ds, rac] = await Promise.all([
+      api.get<DvtRow[]>('/api/v1/unit-names'),
+      api.getQuiet<{ key: string; label: string }[]>('/api/v1/catalog-trash', { catalog: 'unit-names' }).then((r) => r.data ?? []).catch(() => []),
+    ]);
+    const have = new Map(ds.map((u) => [u.name.toLowerCase(), u]));
+    const trongRac = new Set(rac.map((x) => x.label.toLowerCase()));
+    const seen = new Map<string, number>();
+    const out: NhapDong[] = [];
+    // Tệp Xuất ghi "x" = đang dùng, ô trống = ngừng dùng: cột Đang dùng có ô nào được điền thì ô trống là Không.
+    const coCotDung = rows.some((r) => (r.isActive ?? '').trim());
+    for (const r of rows) {
+      const row = Number(r._row);
+      const name = gonTen(r.name);
+      const k = name.toLowerCase();
+      const before = have.get(k);
+      const errors: string[] = [];
+      if (!name) errors.push('Thiếu tên đơn vị tính');
+      else if (name.length > 32) errors.push('Tên đơn vị tính tối đa 32 ký tự');
+      else if (!TEN_DVT_RE.test(name)) errors.push('Tên đơn vị tính chỉ gồm chữ, số, khoảng trắng và _ - . / ( ) + ×');
+      if (name && seen.has(k)) errors.push(`Trùng đơn vị tính với dòng ${seen.get(k)} trong tệp`); else if (name) seen.set(k, row);
+      if (mode === 'create' && before) errors.push(`Đơn vị tính "${before.name}" đã có — chọn "Cập nhật" nếu muốn sửa`);
+      if (mode === 'update' && !before) errors.push(`Đơn vị tính "${name}" chưa có`);
+      if (name && !before && trongRac.has(k)) errors.push(`Đơn vị tính "${name}" đang nằm trong Thùng rác — khôi phục ở Thùng rác của DM15 hoặc xoá vĩnh viễn rồi nhập lại`);
+      const tt = khongDauNho(r.isActive ?? '');
+      const isActive = !tt ? (coCotDung ? false : undefined) : /^(co|x|1|true|yes|dang dung|dang su dung)$/.test(tt) ? true : /^(khong|0|false|no|ngung dung|ngung su dung)$/.test(tt) ? false : null;
+      if (isActive === null) errors.push(`Đang dùng "${r.isActive}" ghi Có / Không`);
+      const note = (r.note ?? '').trim();
+      if (note.length > 300) errors.push('Ghi chú tối đa 300 ký tự');
+      const beforeView = before ? { name: before.name, isActive: before.isActive ? 'Có' : 'Không', note: before.note } : undefined;
+      const values = { ...r, name: before?.name ?? name } as Record<string, string | undefined>;
+      if (errors.length || dryRun) { out.push({ row, key: name, action: errors.length ? 'error' : before ? 'update' : 'create', errors, values, before: beforeView }); continue; }
+      try {
+        if (before) {
+          const body = { ...(isActive !== undefined ? { isActive } : {}), ...(note ? { note } : {}) };
+          if (Object.keys(body).length) await api.patch(`/api/v1/unit-names/${before.id}`, body);
+        } else {
+          const moi = await api.post<DvtRow>('/api/v1/unit-names', { name, note, isActive: isActive ?? true });
+          have.set(k, moi);
+        }
+        out.push({ row, key: name, action: before ? 'update' : 'create', errors: [], values, before: beforeView });
+      } catch (e) { out.push({ row, key: name, action: 'error', errors: [e instanceof Error ? e.message : String(e)], values }); }
+    }
+    const n = (a: NhapDong['action']) => out.filter((x) => x.action === a).length;
+    return { created: n('create'), updated: n('update'), failed: n('error'), rows: out };
+  },
+};
 
 /* ------------------------------------------------------------------ Số dư tài khoản đầu kỳ (cả công nợ theo đối tượng) */
 /** Số tiền trong ô Excel: "1.000.000", "1,000,000", "1000000,5", "1 000 000" đều đọc được; trống = 0; sai = NaN. */
@@ -677,7 +737,7 @@ const phieuTien = (docType: LoaiPhieu): NhapLoai => {
   };
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, CHI_NHANH, KHO, TAI_KHOAN, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, DON_VI_TINH, CHI_NHANH, KHO, TAI_KHOAN, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
 /** Loại nhập của một loại phiếu tiền / phiếu kế toán (nút Nhập Excel ở danh sách phiếu). */
 export const nhapPhieu = (docType: string) => NHAP_LOAI.find((l) => l.id === PHIEU[docType as LoaiPhieu]?.id);
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);

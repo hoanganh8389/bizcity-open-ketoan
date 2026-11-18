@@ -8,7 +8,7 @@
 | Màn hình | DM15 Danh mục đơn vị tính; trang Nhập Excel chung (Hệ thống) |
 | Bộ phận yêu cầu | Phòng kế toán |
 | Ngày tạo | 18/11/2026 |
-| Trạng thái | Đã chốt (kiennt, 18/11/2026) |
+| Trạng thái | Chờ nghiệm thu |
 
 ## 1. Mục đích quản trị
 Khi dựng đơn vị mới, lấy danh mục đơn vị tính từ một máy chủ đã có dữ liệu: **Xuất** ở máy cũ → **Nhập Excel** ở máy mới, như ACC1, DM12, DM13, DM16, DM11, DM10. Hiện DM15 chỉ xuất được, phải gõ tay từng ĐVT.
@@ -57,9 +57,13 @@ Tệp Xuất của DM15 có: Lon, Thùng, Hộp (ghi chú "Hộp giấy"), Gói,
 ## 7. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | Trên màn hình (khứ hồi xuất → nhập); 4 lệnh kiểm |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-dm-004-nhap-excel-dvt` (trên main fb188a8c) |
+| Test trên màn hình | 11/11 ĐẠT — DB tạm (bản sao, API riêng), web dev nhánh này: thêm tay 5 ĐVT; có nút Nhập Excel; Xuất; nhập lại nguyên tệp (0 lỗi, xuất lại không đổi); sửa tệp + thêm Lốc_4 (đổi đúng 2 ô + 1 dòng); "  hộp  " cập nhật Hộp, ô trống giữ nguyên; 5 dòng sai báo đúng; Chỉ thêm mới báo "đã có"; tên trong Thùng rác báo đúng; ô trống cột Đang dùng = Không (Chai về ngừng dùng); xoá hết rồi nạp tệp xuất (5 thêm mới, xuất lại khớp tệp gốc) |
+| selfcheck | Không có lỗi mới so với main (SC-UI-1: nút ẩn khi không có quyền, không khoá) |
+| kiem-chuan | ĐẠT |
+| typecheck | ĐẠT |
+| npm test | 2270 đạt / 5 lỗi — không do phiếu này (chỉ sửa web): db-rules, mat-khau-mac-dinh, nt-bh-005 lỗi sẵn trên main; nt-bh-003, nt-bh-012 đạt khi chạy riêng (lỗi theo thứ tự chạy cả bộ) |
 
 ## 8. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -70,3 +74,4 @@ Tệp Xuất của DM15 có: Lon, Thùng, Hộp (ghi chú "Hộp giấy"), Gói,
 |---|---|
 | 18/11/2026 | Tạo và chốt: khoá theo tên ĐVT, không đổi tên qua Excel |
 | 18/11/2026 | Sửa quy tắc ô trống cột Đang dùng theo tệp Xuất (x / trống) — người dùng chọn khi test (tệp xuất ghi ô trống cho ngừng dùng) |
+| 18/11/2026 | Code xong, test trên màn hình 11/11, chuyển Chờ nghiệm thu |
