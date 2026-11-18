@@ -36,3 +36,8 @@ Danh sách sai thì màn báo đỏ và ACC6 không kết chuyển được:
 - không có, hoặc có hơn một, bước 911 → 421 đang áp dụng.
 
 Cảnh báo vàng (vẫn kết chuyển được): **tài khoản doanh thu, chi phí chưa có bước kết chuyển** (phát sinh của các tài khoản này sẽ còn số dư sau kết chuyển — thêm bước cho đầu số đó, vd `622 → 154`, `627 → 154`), doanh thu chọn bên Nợ, chi phí chọn bên Có, tích "số dư cuối" ở bước không phải 911.
+
+## Nhập Excel
+<!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
+
+Nút **Nhập Excel** nhận tệp Xuất của màn này. Khoá dòng là cặp *Kết chuyển từ → Kết chuyển đến*: có rồi thì cập nhật thứ tự, bên, diễn giải, trạng thái; chưa có thì thêm bước. Bước không có trong tệp giữ nguyên. Cả bộ lưu một lần (phiên bản mới, ghi chú *Nhập Excel*). Bộ còn bước trỏ tới tài khoản chưa có thì không lưu được — khai đủ tài khoản ở Hệ thống tài khoản trước.

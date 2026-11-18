@@ -498,4 +498,71 @@ const TK_NGAM_DINH: NhapLoai = {
   },
 };
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH];
+/* ------------------------------------------------------------------ ACC41A Tài khoản kết chuyển (cả bộ ghi một lần) */
+interface BuocKC { seq: number; fromAccount: string; toAccount: string; mode: 'debit' | 'credit' | 'balance'; description: string; isActive: boolean; includeOpening: boolean }
+const BEN_KC: Record<string, BuocKC['mode']> = { no: 'debit', debit: 'debit', co: 'credit', credit: 'credit', 'hai ben': 'balance', balance: 'balance' };
+const BEN_TEN: Record<BuocKC['mode'], string> = { debit: 'Nợ', credit: 'Có', balance: 'Hai bên' };
+const TK_KET_CHUYEN: NhapLoai = {
+  id: 'tai-khoan-ket-chuyen', nhom: 'Danh mục', title: 'Tài khoản kết chuyển', desc: 'Thứ tự, kết chuyển từ, kết chuyển đến, bên kết chuyển, diễn giải, trạng thái — khoá dòng là cặp từ → đến; cả bộ ghi một lần (phiên bản mới)', keyField: 'fromAccount',
+  listPath: '/cau-hinh/tai-khoan-ket-chuyen', invalidate: ['closing-rules', 'closing-rule-versions'],
+  fields: [
+    { key: 'fromAccount', header: 'Kết chuyển từ', required: true, aliases: ['tk di', 'tu tai khoan'], example: '511', note: 'Đầu số tài khoản nguồn (gồm mọi tài khoản con).' },
+    { key: 'toAccount', header: 'Kết chuyển đến', required: true, aliases: ['tk den', 'den tai khoan'], example: '911', note: 'Tài khoản chi tiết.' },
+    { key: 'seq', header: 'Thứ tự kết chuyển', required: 'moi', aliases: ['thu tu', 'stt'], example: '10', note: 'Số 0–9999, chạy từ nhỏ đến lớn.' },
+    { key: 'mode', header: 'Bên kết chuyển', required: 'moi', aliases: ['ben'], example: 'Có', note: 'Nợ / Có / Hai bên.' },
+    { key: 'description', header: 'Diễn giải', aliases: ['dien giai', 'mo ta'] },
+    { key: 'includeOpening', header: 'Kết chuyển số dư cuối', aliases: ['so du cuoi'], note: 'x = cộng cả số dư đầu kỳ (bước 911 → 421). Cột ẩn. Cột có ô nào được điền thì ô trống = Không.' },
+    { key: 'isActive', header: 'Trạng thái', aliases: ['hoat dong', 'ap dung'], example: 'Đang sử dụng', note: 'Đang sử dụng / Ngừng sử dụng (hoặc x / Không). Trống: mới = đang sử dụng, đã có = giữ nguyên.' },
+  ],
+  run: async (rows, { dryRun, mode }) => {
+    const [kc, tkCt, tatCa] = await Promise.all([
+      api.get<{ rules: BuocKC[] }>('/api/v1/closing/rules'), taiKhoanChiTiet(),
+      api.get<{ code: string }[]>('/api/v1/accounts', { includeInactive: true }),
+    ]);
+    const maKC = (b: { fromAccount: string; toAccount: string }) => `${b.fromAccount}-${b.toAccount}`;
+    const bo = new Map(kc.rules.map((b) => [maKC(b), { ...b }]));
+    const cotSD = coCot(rows, 'includeOpening');
+    const seen = new Map<string, number>();
+    const pre = rows.map((r) => {
+      const row = Number(r._row);
+      const from = chu(r.fromAccount); const to = chu(r.toAccount);
+      const ma = `${from}-${to}`;
+      const before = bo.get(ma);
+      const errors: string[] = [];
+      if (!/^[0-9A-Za-z]{3,20}$/.test(from)) errors.push('Kết chuyển từ: đầu số 3–20 chữ / số');
+      if (!/^[0-9A-Za-z]{3,20}$/.test(to)) errors.push('Kết chuyển đến: số tài khoản 3–20 chữ / số');
+      if (seen.has(ma)) errors.push(`Trùng bước ${from} → ${to} với dòng ${seen.get(ma)}`); else seen.set(ma, row);
+      if (mode === 'create' && before) errors.push(`Bước ${from} → ${to} đã có — chọn "Cập nhật" nếu muốn sửa`);
+      if (mode === 'update' && !before) errors.push(`Bước ${from} → ${to} chưa có`);
+      const s = chu(r.seq); const seq = s ? Number(s) : before?.seq;
+      if (seq === undefined) errors.push('Bước mới phải có thứ tự'); else if (!Number.isInteger(seq) || seq < 0 || seq > 9999) errors.push(`Thứ tự "${s}" phải là số nguyên 0–9999`);
+      const b = kd(chu(r.mode)); const md = b ? BEN_KC[b] : before?.mode;
+      if (b && !md) errors.push(`Bên kết chuyển "${r.mode}" ghi Nợ / Có / Hai bên`); else if (!md) errors.push('Bước mới phải có bên kết chuyển');
+      const t = kd(chu(r.isActive));
+      const act = !t ? before?.isActive ?? true : /^(dang su dung|co|x|1|true|ap dung)$/.test(t) ? true : /^(ngung su dung|khong|0|false)$/.test(t) ? false : null;
+      if (act === null) errors.push(`Trạng thái "${r.isActive}" ghi Đang sử dụng / Ngừng sử dụng`);
+      const so = tich(r.includeOpening, cotSD); if (so === null) errors.push(loiTich('Kết chuyển số dư cuối', r.includeOpening));
+      const desc = chu(r.description) || before?.description || '';
+      if (desc.length > 255) errors.push('Diễn giải tối đa 255 ký tự');
+      const moi: BuocKC | null = errors.length ? null : { seq: seq!, fromAccount: from, toAccount: to, mode: md!, description: desc, isActive: act as boolean, includeOpening: so ?? before?.includeOpening ?? false };
+      return { row, ma, before, errors, moi, values: { ...r } as Record<string, string | undefined> };
+    });
+    for (const p of pre) if (p.moi) bo.set(p.ma, p.moi);
+    // Kiểm cả bộ như máy chủ (mọi bước, kể cả bước ngừng — lỗi L04 chưa sửa): đầu số đi phải có tài khoản, tài khoản đến phải là TK chi tiết.
+    const loiBo: string[] = [];
+    for (const b of bo.values()) {
+      if (!tatCa.some((a) => a.code.startsWith(b.fromAccount))) loiBo.push(`${b.fromAccount} → ${b.toAccount}: không có tài khoản nào bắt đầu bằng ${b.fromAccount}`);
+      if (!tkCt.has(b.toAccount)) loiBo.push(`${b.fromAccount} → ${b.toAccount}: tài khoản đến ${b.toAccount} không có hoặc là tài khoản tổng hợp`);
+    }
+    const ok = pre.filter((p) => !p.errors.length);
+    if (loiBo.length) for (const p of ok) p.errors.push(`Bộ kết chuyển còn bước lỗi nên không lưu được (L04 — khai đủ tài khoản ở Hệ thống tài khoản trước): ${loiBo.slice(0, 4).join('; ')}${loiBo.length > 4 ? `; … (${loiBo.length} lỗi)` : ''}`);
+    const view = (b?: BuocKC) => (b ? { seq: String(b.seq), mode: BEN_TEN[b.mode], description: b.description, isActive: b.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng', includeOpening: b.includeOpening ? 'x' : '' } : undefined);
+    if (!dryRun && ok.length && !loiBo.length) {
+      try { await api.put('/api/v1/closing/rules', { rules: [...bo.values()].sort((a, b) => a.seq - b.seq), note: 'Nhập Excel' }); }
+      catch (e) { for (const p of ok) p.errors.push(loiCua(e)); }
+    }
+    return ketQua(pre.map((p) => ({ row: p.row, key: p.ma, action: p.errors.length ? 'error' : p.before ? 'update' : 'create', errors: p.errors, values: p.values, before: view(p.before) })));
+  },
+};
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH, TK_KET_CHUYEN];

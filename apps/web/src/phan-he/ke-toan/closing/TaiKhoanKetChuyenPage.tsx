@@ -14,6 +14,8 @@ import { useAuth } from '@/lib/auth';
 import { useThaoTac } from '@/lib/manHinh';
 import { PageHeader } from '@/components/PageHeader';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading } from '@/components/ui';
 import { CatalogueForm, LOAI_HINT, RuleHistory, type RulesData } from './ClosingPage';
@@ -60,7 +62,8 @@ export function TaiKhoanKetChuyenPage() {
         <CatalogToolbar
           phai canWrite={editable} hasSelection={false} busy={save.isPending}
           onAdd={() => setEditing({ index: null })} onRefresh={() => q.refetch()} onExport={() => exportRef.current?.()}
-          extra={<button className="btn btn-sm btn-ghost" onClick={() => setShowHistory((x) => !x)}>{showHistory ? 'Ẩn lịch sử phiên bản' : 'Lịch sử phiên bản'}</button>}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={<>{editable && <NutNhapExcel loai={nhapLoai('tai-khoan-ket-chuyen')!} />}<button className="btn btn-sm btn-ghost" onClick={() => setShowHistory((x) => !x)}>{showHistory ? 'Ẩn lịch sử phiên bản' : 'Lịch sử phiên bản'}</button></>}
         />
         {q.data?.errors.length ? <div className="alert alert-bad" style={{ marginBottom: 6 }}>Bút toán kết chuyển mẫu có lỗi, chưa kết chuyển được:<ul style={{ margin: '4px 0 0 18px' }}>{q.data.errors.map((e) => <li key={e}>{e}</li>)}</ul></div> : null}
         {q.data?.warnings.length ? <div className="alert alert-warn" style={{ marginBottom: 6 }}><ul style={{ margin: '0 0 0 18px' }}>{q.data.warnings.map((w) => <li key={w}>{w}</li>)}</ul></div> : null}
