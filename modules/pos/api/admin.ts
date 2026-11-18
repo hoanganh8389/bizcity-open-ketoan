@@ -5,6 +5,9 @@
 import { sql, type ActionContext } from '@bizcity/module-sdk';
 import { dashboard, orderPayments, type OrderSnap, type ReturnSnap } from './domain/shifts.js';
 import { methodsOf, summaryOf, type ShiftRow } from './shifts.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: BH13 lọc / hiện kênh bán (đóng góp)
+import { orderChannelSql } from './channels.js';
+import { channelKey } from './domain/channels.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 
@@ -15,11 +18,12 @@ const inBranches = (col: string, list: string[]) => (list.length ? sql`AND ${sql
 export type Range = { from: string; to: string; branches: string[] };
 export type Page = { page: number; pageSize: number };
 
-export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status?: string; cashier?: string; stockShort?: boolean }) {
+export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status?: string; cashier?: string; stockShort?: boolean; saleSource?: string; channelNames?: Record<string, string> }) {
   const q = f.q?.trim();
   const where = sql`o.business_date BETWEEN ${f.from} AND ${f.to} ${inBranches('o.branch_code', f.branches)}
     ${f.status ? sql`AND o.status = ${f.status}` : sql``}
     ${f.cashier ? sql`AND o.cashier_name ILIKE ${`%${f.cashier.trim()}%`}` : sql``}
+    ${f.saleSource ? sql`AND ${orderChannelSql('o.snapshot')} = ${channelKey(f.saleSource)}` : sql``}
     ${f.stockShort ? sql`AND (o.snapshot ? 'stockShortOffline' OR o.snapshot ? 'priceChangedOffline')` : sql``}
     ${q ? sql`AND (o.code ILIKE ${`%${q}%`} OR o.snapshot->'customer'->>'phone' ILIKE ${`%${q}%`} OR o.snapshot->'customer'->>'name' ILIKE ${`%${q}%`})` : sql``}`;
   const agg = (await sql<{ n: string; total: string | null; returned: string | null }>`
@@ -39,10 +43,13 @@ export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status
   const returned = Number(agg.returned ?? 0);
   return {
     items: rows.map((r) => {
-      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[]; zBill?: { lines?: unknown[] }; stockShortOffline?: unknown[]; priceChangedOffline?: unknown[] };
+      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[]; zBill?: { lines?: unknown[] }; stockShortOffline?: unknown[]; priceChangedOffline?: unknown[]; saleSourceName?: string };
+      const saleSource = channelKey(snap.saleSource);
       return {
         id: r.order_id, code: r.code, branchCode: r.branch_code, businessDate: r.business_date, createdAt: r.created_at.toISOString(), status: r.status,
         total: Number(r.total), taxTotal: Number(r.tax_total), docKey: r.doc_key, docStatus: r.doc_status, cashier: r.cashier_name ?? '',
+        // Kênh lưu trên đơn: tên lúc bán (đơn cũ vẫn hiện tên khi kênh đã ngừng); đơn không có tên → tên trong danh mục.
+        saleSource, saleSourceName: snap.saleSourceName ?? f.channelNames?.[saleSource] ?? saleSource,
         shiftId: r.draft?.shiftId ?? '', customerName: snap.customer?.name ?? '', customerPhone: snap.customer?.phone ?? '',
         payments: orderPayments(snap, cashCode).map((p) => ({ ...p, name: methodNames[p.method] ?? p.method })), lines: [...(snap.lines ?? []), ...(snap.zBill?.lines ?? [])],
         stockShortOffline: snap.stockShortOffline ?? [],

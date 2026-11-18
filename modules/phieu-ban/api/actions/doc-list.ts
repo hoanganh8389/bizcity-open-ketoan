@@ -1,4 +1,4 @@
-/** GET /api/v1/m/phieu-ban/docs?docType&from&to&branchCodes&status&search&page&pageSize — danh sách phiếu (mới nhất trước), meta.total. */
+/** GET /api/v1/m/phieu-ban/docs?docType&from&to&branchCodes&status&search&saleChannel&page&pageSize — danh sách phiếu (mới nhất trước), meta.total. */
 // [2026-11-13 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: action phiếu bán / trả nhập tay (đóng góp)
 import { defineAction, z } from '@bizcity/module-sdk';
 import { KINDS } from '../domain/doc.js';
@@ -13,13 +13,15 @@ export default defineAction({
     docType: z.enum(KINDS).default('sale'), from: day.optional().or(z.literal('').transform(() => undefined)), to: day.optional().or(z.literal('').transform(() => undefined)),
     branchCodes: z.string().trim().max(2000).optional(), status: z.enum(['draft', 'approved']).optional().or(z.literal('').transform(() => undefined)),
     search: z.string().trim().max(100).optional(),
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: lọc theo mã kênh bán (phiếu không chọn kênh = kênh mặc định GAN_SHOP) (đóng góp)
+    saleChannel: z.string().trim().max(32).optional(),
     page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(500).default(50),
   }),
   output: z.array(z.record(z.unknown())),
   expose: { http: { method: 'GET', path: '/docs' }, mcp: true, ai: 'read' },
   handler: async (ctx, i) => ctx.data.module(async (tx) => {
     const branches = (i.branchCodes ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-    const r = await listDocs(tx, { kind: i.docType, from: i.from, to: i.to, branches, status: i.status, search: i.search, page: i.page, pageSize: i.pageSize });
+    const r = await listDocs(tx, { kind: i.docType, from: i.from, to: i.to, branches, status: i.status, search: i.search, page: i.page, pageSize: i.pageSize, channel: i.saleChannel || undefined });
     ctx.meta('total', r.total);
     ctx.meta('page', i.page);
     ctx.meta('pageSize', i.pageSize);

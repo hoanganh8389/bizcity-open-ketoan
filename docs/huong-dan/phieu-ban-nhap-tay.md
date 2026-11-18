@@ -13,6 +13,13 @@ Dùng cho bán buôn, bán nợ, bán ngoài quầy — những phiếu kế to�
 6. Đã xuất hoá đơn ở phần mềm hoá đơn: ghi **Số hoá đơn**, **Ký hiệu** để phiếu lên bảng kê bán ra.
 7. **Ghi** → phiếu nháp, sửa / xoá được.
 
+## Kênh bán của phiếu (NT-BH-031)
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh bán trên phiếu bán nhập tay (đóng góp) -->
+- Phiếu mang **kênh bán** (vd *Livestream CT*) chọn từ danh mục [Kênh bán hàng](pos-kenh-ban.md) của module Máy bán POS: chỉ kênh đang dùng; kênh lạ / đã ngừng → báo lỗi `POS_SALE_SOURCE`. Phiếu đang mang một kênh đã ngừng vẫn sửa / duyệt được với kênh đó.
+- Không chọn kênh = tính vào *Gần shop* khi lọc và báo cáo.
+- Danh sách phiếu lọc theo kênh (tham số `saleChannel` = mã kênh). Phiếu đã duyệt cộng vào báo cáo **Bán hàng theo kênh**; phiếu trả tính vào kênh của phiếu bán gốc.
+- Ô chọn kênh trên khung màn BH10 đang chờ sửa khung giao diện phiếu hàng; hiện kênh gửi qua API phiếu bán (`saleChannel`).
+
 ## Khuyến mại trên phiếu bán
 <!-- [2026-11-14 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 §5 dòng 4: khuyến mại trên phiếu bán nhập tay (đóng góp) -->
 
