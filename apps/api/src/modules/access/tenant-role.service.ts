@@ -26,7 +26,8 @@ import type { Role } from '@ketoan/contracts';
 import type { TenantRoleCreate, TenantRoleUpdate, TenantRuleAdd } from './access.schemas.js';
 import { accessRepository } from './access.repository.js';
 
-const ROLES_SYSTEM = ['owner', 'chief_accountant', 'accountant', 'viewer', 'developer', 'auditor'] as const;
+// [2026-11-17 02:25 PM khanhtd] NT-HT-003 — vai trò staff (Nhân viên, migration 0149)
+const ROLES_SYSTEM = ['owner', 'chief_accountant', 'accountant', 'viewer', 'developer', 'auditor', 'staff'] as const;
 
 export interface TenantRoleRow { id: string; code: string; label: string; kind: 'job' | 'privilege' | 'restriction'; base_role: Role | null; is_active: boolean; version: number }
 

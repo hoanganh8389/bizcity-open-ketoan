@@ -13,6 +13,13 @@ Dùng cho bán buôn, bán nợ, bán ngoài quầy — những phiếu kế to�
 6. Đã xuất hoá đơn ở phần mềm hoá đơn: ghi **Số hoá đơn**, **Ký hiệu** để phiếu lên bảng kê bán ra.
 7. **Ghi** → phiếu nháp, sửa / xoá được.
 
+## Kênh bán của phiếu (NT-BH-031)
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh bán trên phiếu bán nhập tay (đóng góp) -->
+- Phiếu mang **kênh bán** (vd *Livestream CT*) chọn từ danh mục [Kênh bán hàng](pos-kenh-ban.md) của module Máy bán POS: chỉ kênh đang dùng; kênh lạ / đã ngừng → báo lỗi `POS_SALE_SOURCE`. Phiếu đang mang một kênh đã ngừng vẫn sửa / duyệt được với kênh đó.
+- Không chọn kênh = tính vào *Gần shop* khi lọc và báo cáo.
+- Danh sách phiếu lọc theo kênh (tham số `saleChannel` = mã kênh). Phiếu đã duyệt cộng vào báo cáo **Bán hàng theo kênh**; phiếu trả tính vào kênh của phiếu bán gốc.
+- Ô chọn kênh trên khung màn BH10 đang chờ sửa khung giao diện phiếu hàng; hiện kênh gửi qua API phiếu bán (`saleChannel`).
+
 ## Khuyến mại trên phiếu bán
 <!-- [2026-11-14 11:55 PM Võ Hoàng] NGHIEM-THU — NT-BH-015 §5 dòng 4: khuyến mại trên phiếu bán nhập tay (đóng góp) -->
 
@@ -42,3 +49,7 @@ Dùng cho bán buôn, bán nợ, bán ngoài quầy — những phiếu kế to�
 - Phiếu thử lập trên máy trước đây (dữ liệu giả) không chuyển sang sổ: màn báo một lần, bấm *Đã hiểu* để ẩn.
 - Đơn giá điền theo bảng giá của cửa hàng; bán vượt tồn sổ hiện "tồn sổ còn X".
 - Chưa có: phát hành hoá đơn điện tử từ phiếu — làm ở đợt sau.
+
+## Phiếu trả BH11 và lượt khuyến mại có hạn mức (NT-BH-030)
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q4: BH11 trả cả phiếu bán gốc thì trả lượt khuyến mại (đóng góp) -->
+Phiếu trả hàng BH11 nối phiếu bán gốc (ô *Số phiếu bán gốc*) mà **trả hết hàng bán** của phiếu gốc (cộng cả các phiếu trả đã duyệt trước, không kể dòng quà) thì khi duyệt, lượt khuyến mại có hạn mức theo cửa hàng mà phiếu gốc đã dùng được **trả lại** — như máy bán trả cả đơn. Trả một phần thì không trả lượt. Bỏ duyệt phiếu trả đó thì lượt tính lại cho phiếu gốc. Xem lượt ở *Chương trình khuyến mại* (BH18) → *Báo cáo khuyến mại*: đơn đã trả lượt ghi lý do `return`.

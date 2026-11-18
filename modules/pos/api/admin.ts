@@ -5,6 +5,9 @@
 import { sql, type ActionContext } from '@bizcity/module-sdk';
 import { dashboard, orderPayments, type OrderSnap, type ReturnSnap } from './domain/shifts.js';
 import { methodsOf, summaryOf, type ShiftRow } from './shifts.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: BH13 lọc / hiện kênh bán (đóng góp)
+import { orderChannelSql } from './channels.js';
+import { channelKey } from './domain/channels.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 
@@ -15,11 +18,12 @@ const inBranches = (col: string, list: string[]) => (list.length ? sql`AND ${sql
 export type Range = { from: string; to: string; branches: string[] };
 export type Page = { page: number; pageSize: number };
 
-export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status?: string; cashier?: string; stockShort?: boolean }) {
+export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status?: string; cashier?: string; stockShort?: boolean; saleSource?: string; channelNames?: Record<string, string> }) {
   const q = f.q?.trim();
   const where = sql`o.business_date BETWEEN ${f.from} AND ${f.to} ${inBranches('o.branch_code', f.branches)}
     ${f.status ? sql`AND o.status = ${f.status}` : sql``}
     ${f.cashier ? sql`AND o.cashier_name ILIKE ${`%${f.cashier.trim()}%`}` : sql``}
+    ${f.saleSource ? sql`AND ${orderChannelSql('o.snapshot')} = ${channelKey(f.saleSource)}` : sql``}
     ${f.stockShort ? sql`AND (o.snapshot ? 'stockShortOffline' OR o.snapshot ? 'priceChangedOffline')` : sql``}
     ${q ? sql`AND (o.code ILIKE ${`%${q}%`} OR o.snapshot->'customer'->>'phone' ILIKE ${`%${q}%`} OR o.snapshot->'customer'->>'name' ILIKE ${`%${q}%`})` : sql``}`;
   const agg = (await sql<{ n: string; total: string | null; returned: string | null }>`
@@ -39,10 +43,13 @@ export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status
   const returned = Number(agg.returned ?? 0);
   return {
     items: rows.map((r) => {
-      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[]; zBill?: { lines?: unknown[] }; stockShortOffline?: unknown[]; priceChangedOffline?: unknown[] };
+      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[]; zBill?: { lines?: unknown[] }; stockShortOffline?: unknown[]; priceChangedOffline?: unknown[]; saleSourceName?: string };
+      const saleSource = channelKey(snap.saleSource);
       return {
         id: r.order_id, code: r.code, branchCode: r.branch_code, businessDate: r.business_date, createdAt: r.created_at.toISOString(), status: r.status,
         total: Number(r.total), taxTotal: Number(r.tax_total), docKey: r.doc_key, docStatus: r.doc_status, cashier: r.cashier_name ?? '',
+        // Kênh lưu trên đơn: tên lúc bán (đơn cũ vẫn hiện tên khi kênh đã ngừng); đơn không có tên → tên trong danh mục.
+        saleSource, saleSourceName: snap.saleSourceName ?? f.channelNames?.[saleSource] ?? saleSource,
         shiftId: r.draft?.shiftId ?? '', customerName: snap.customer?.name ?? '', customerPhone: snap.customer?.phone ?? '',
         payments: orderPayments(snap, cashCode).map((p) => ({ ...p, name: methodNames[p.method] ?? p.method })), lines: [...(snap.lines ?? []), ...(snap.zBill?.lines ?? [])],
         stockShortOffline: snap.stockShortOffline ?? [],
@@ -62,16 +69,17 @@ export async function adminReturns(tx: Tx, f: Range & Page & { q?: string }) {
   const rows = (await sql<{
     return_id: string; code: string; order_code: string; order_id: string; branch_code: string; business_date: string; created_at: Date; refund_method: string;
     refund_total: string; refund_net: string; refund_tax: string; reason: string; approved_by: string | null; approval_note: string | null;
-    exchange_order_id: string | null; doc_status: string; cashier_name: string | null; snapshot: { lines?: unknown[] };
+    exchange_order_id: string | null; doc_status: string; cashier_name: string | null; snapshot: { lines?: unknown[] }; order_branch_code: string;
   }>`
-    SELECT r.return_id, r.code, o.code AS order_code, r.order_id, r.branch_code, r.business_date::text AS business_date, r.created_at, r.refund_method,
+    SELECT r.return_id, r.code, o.code AS order_code, r.order_id, r.branch_code, o.branch_code AS order_branch_code, r.business_date::text AS business_date, r.created_at, r.refund_method,
            r.refund_total, r.refund_net, r.refund_tax, r.reason, r.approved_by, r.approval_note, r.exchange_order_id, r.doc_status, r.cashier_name, r.snapshot
       FROM mod_pos.returns r JOIN mod_pos.orders o ON o.order_id = r.order_id WHERE ${where}
      ORDER BY r.created_at DESC, r.id DESC LIMIT ${f.pageSize} OFFSET ${(f.page - 1) * f.pageSize}`.execute(tx)).rows;
   const { methodNames } = await methodsOf(tx);
   return {
     items: rows.map((r) => ({
-      id: r.return_id, code: r.code, orderId: r.order_id, orderCode: r.order_code, branchCode: r.branch_code, businessDate: r.business_date,
+      // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q1: cửa hàng bán của đơn gốc (trả ở cửa hàng khác cùng MST) (đóng góp)
+      id: r.return_id, code: r.code, orderId: r.order_id, orderCode: r.order_code, branchCode: r.branch_code, orderBranchCode: r.order_branch_code, businessDate: r.business_date,
       createdAt: r.created_at.toISOString(), refundMethod: r.refund_method, refundMethodName: methodNames[r.refund_method] ?? r.refund_method,
       refundTotal: Number(r.refund_total), refundNet: Number(r.refund_net), refundTax: Number(r.refund_tax), reason: r.reason,
       approvedBy: r.approved_by ?? '', approvalNote: r.approval_note ?? '', exchange: r.exchange_order_id !== null, docStatus: r.doc_status,

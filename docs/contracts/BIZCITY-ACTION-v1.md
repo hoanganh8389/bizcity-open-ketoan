@@ -6,7 +6,8 @@
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
 > <!-- [2026-11-17 11:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a): 1.5.0-draft — STD-ACT-10 đơn vị mẫu không chạy action external -->
-> **Phiên bản:** 1.5.0-draft · 2026-11-17 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
+> <!-- [2026-11-17 05:50 PM khanhtd] NT-HT-003 — GĐ4: 1.6.0-draft branchOf, ctx.branchScope -->
+> **Phiên bản:** 1.6.0-draft · 2026-11-17 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
 > **Vận chuyển HTTP:** [`bizcity_api@1`](BIZCITY-API-v1.md) · **Luật nền:** [R-API](../rules/RULE-API.md) · **Năng lực:** `actions.runtime`, `actions.idempotency`, `actions.dry-run`, `mcp.tools`
 
 ## 1. Mục đích
@@ -80,6 +81,7 @@ export default defineAction({
 | 4 | Kiểm `input` bằng zod (trường lạ bị loại) | `VALIDATION_ERROR` |
 | 5 | Idempotency: tra `(tenant_id, action_id, idempotency_key)` → đã có thì trả **đúng** phản hồi cũ; cùng khoá khác nội dung → lỗi | `IDEMPOTENCY_CONFLICT` |
 | 6 | Mở giao dịch `ctx.data.tx` (đặt `bizcity.tenant_id`) | |
+| 6a | Chi nhánh của bản ghi (`branchOf(ctx, input)`, khi action khai và người gọi bị giới hạn chi nhánh — `ctx.branchScope` khác `null`): mọi mã trả về phải trong `ctx.branchScope` <!-- [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: 1.6.0-draft branchOf, ctx.branchScope --> | `FORBIDDEN` (`BRANCH_OUT_OF_SCOPE`) |
 | 7 | `handler(ctx, input)` | `Errors.*` của handler |
 | 8 | Ghi bằng chứng (Evidence) trong cùng giao dịch, kể cả khi handler ném lỗi nghiệp vụ (ghi ở giao dịch riêng) | |
 | 9 | Ghi sự kiện vào outbox (cùng giao dịch); lưu phản hồi cho idempotency | |
@@ -227,3 +229,4 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 | 1.3.0-draft | 2026-11-03 | Chốt §4.4 phương án C: `writeAudit` trong action ghi vào `changes.notes.audit[]` của bằng chứng, trừ sổ `AUDIT_KEEP` (ba mục có chỗ đọc); phép kiểm SC-AUDIT-1 |
 | 1.4.0-draft | 2026-11-09 | Chốt §4.5 `ctx.libraries` (validate / require theo thư viện dùng chung, cấu hình đơn vị, bằng chứng `notes.libraries`, đếm sử dụng) — PHASE-030 S030-51a. Cộng tương thích: action không dùng thì không đổi. |
 | 1.5.0-draft <!-- [2026-11-17 11:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 --> | 2026-11-17 | STD-ACT-10: action `external` bị từ chối trên đơn vị mẫu (`SAMPLE_TENANT`), `assertNotSampleTenant` (PHASE-036 · 00 §14, T036-4) |
+| 1.6.0-draft <!-- [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4 --> | 2026-11-17 | `branchOf(ctx, input)` (tuỳ chọn): chi nhánh của bản ghi action chạm tới, đọc ở bảng module; runtime so với `ctx.branchScope` (phạm vi chi nhánh của người gọi, `null` = mọi chi nhánh) trước handler — NT-HT-003 GĐ4, chuẩn DANG-KY-QUYEN H14 |

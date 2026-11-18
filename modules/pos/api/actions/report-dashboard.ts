@@ -3,11 +3,12 @@
  * hàng, thuần; theo hình thức, nguồn bán, giờ; mặt hàng bán chạy (phiếu NT-BH-007). Khuyến mại: chưa có ở module (byPromotion rỗng).
  */
 import { defineAction, z } from '@bizcity/module-sdk';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: tên nguồn bán theo danh mục Kênh bán hàng (đóng góp)
+import { channelNames } from '../channels.js';
 import { resolveBranch, todayVn } from '../read.js';
 import { salesDashboard } from '../shifts.js';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const SALE_SOURCES: Record<string, string> = { tai_quay: 'Tại quầy' };
 
 export default defineAction({
   id: 'pos.report.dashboard', title: 'Tổng quan bán hàng máy POS của chi nhánh', tags: ['Máy bán POS'],
@@ -18,6 +19,6 @@ export default defineAction({
   expose: { http: { method: 'GET', path: '/reports/dashboard' }, mcp: false, ai: 'read' },
   handler: async (ctx, { from, to, branch }) => ctx.data.module(async (tx) => {
     const f = from ?? todayVn();
-    return salesDashboard(tx, (await resolveBranch(tx, branch || undefined)).code, f, to ?? f, SALE_SOURCES);
+    return salesDashboard(tx, (await resolveBranch(tx, branch || undefined)).code, f, to ?? f, await channelNames(tx, ctx.tenant.id));
   }),
 });

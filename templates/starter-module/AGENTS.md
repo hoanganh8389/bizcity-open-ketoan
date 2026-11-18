@@ -16,15 +16,15 @@ Bạn đang làm trong **một module** của Bizcity Core. Phạm vi sửa: **c
 
 | Tệp | Việc |
 |---|---|
-| `bizcity.module.json` | Manifest — viết / sửa **trước** code. `key` = tên thư mục; mọi action, quyền, bảng, sự kiện, docType phải khai ở đây |
+| `bizcity.module.json` | Manifest — viết / sửa **trước** code. `key` = tên thư mục; mọi action, quyền, bảng, sự kiện, docType phải khai ở đây. Mỗi màn có nút Thêm / Sửa / Xoá / Duyệt khai ở `extensions.screens[]` (thao tác `xem` bắt buộc, mỗi nút một quyền) — HT12 tự có dòng phân quyền cho màn <!-- [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: screens[] trong khung module --> |
 | `migrations/NNNN_*.sql` | Bảng trong schema `mod_mau_module`; mỗi bảng có `tenant_id`, RLS (`ENABLE` + `FORCE` + policy `bizcity_tenant_visible`), `COMMENT ON` mọi cột. Không chạm bảng Core |
-| `api/actions/*.ts` | Một action một tệp (`defineAction`): id `mau-module.<thực thể>.<động từ>`, quyền `mau-module:<việc>`, action ghi có `idempotency: 'required'` |
+| `api/actions/*.ts` | Một action một tệp (`defineAction`): id `mau-module.<thực thể>.<động từ>`, quyền `mau-module:<chức-năng>-<việc>`, việc là xem, lap, sua, xoa, duyet, xuat (mỗi thao tác Thêm / Sửa / Xoá / Duyệt một quyền, khai ở `permissions[]` kèm `roles`, `risk` — [DANG-KY-QUYEN](../../docs/standard/DANG-KY-QUYEN.md) §5), action ghi có `idempotency: 'required'`; action theo mã bản ghi có chi nhánh khai `branchOf` (Core so với phạm vi chi nhánh của người gọi), action liệt kê lọc theo `ctx.branchScope` |
 | `api/documents/<loại>.workflow.yaml` | Trạng thái duyệt của chứng từ module: `loadWorkflow(new URL('./documents/x.workflow.yaml', import.meta.url))`, `wf.plan(verb, { status, createdBy, levelsRequired }, { id: ctx.actor.id, can: ctx.can })`; quyền trong YAML là `mau-module:<việc>`. `npm run build` tự chép YAML sang `dist/` |
 | `settings.registry.json` | Khoá cấu hình của module (khai cả ở `settings` của manifest): `owner` = mã module, `storage: tenants.settings.…`, `scopes: [tenant]`; đọc `ctx.settings.get` |
 | `api/hooks/*.ts` | `defineHook` — vd `masterdata.referenceCheck`: Core hỏi trước khi xoá khách / mặt hàng |
 | `api/subscribers/*.ts` | `defineSubscriber`: id `mau-module.<việc>`, `module: 'mau-module'`; lịch chạy = nghe `bizcity.clock.daily`, không `setInterval` |
 | `api/index.ts` | `export default defineModule({ manifest, actions, subscribers })` |
-| `web/index.tsx` | `export default defineWebModule({ key, label, menu, routes })` — đường dẫn dưới `/app/mau-module/` |
+| `web/index.tsx` | `export default defineWebModule({ key, label, menu, routes })` — đường dẫn dưới `/app/mau-module/`; mỗi mục menu / route khai `permission` (quyền `xem` của màn) |
 | `web/screens/*.tsx` | Màn — chỉ import `@bizcity/ui-kit`, `react`. Gọi API `/api/v1/m/mau-module/…` bằng `useApi()` |
 | `README.md` | Nghiệp vụ, luồng, sự kiện (STD-MOD-7) |
 

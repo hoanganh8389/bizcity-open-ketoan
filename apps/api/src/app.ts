@@ -70,6 +70,7 @@ import { APP_MANIFESTS } from './ung-dung/index.js';
 import { registerDocumentNumberer } from './core/documents.js';
 import { registerCollector } from './core/metrics.js';
 import { quyenChiNhanh } from './modules/access/quyen-chi-nhanh.js';
+import { dangKyManHinhModule } from './modules/access/man-hinh-module.js'; // [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4: màn của module mới
 
 
 
@@ -226,6 +227,8 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   for (const m of sdkLoaded) {
     const def = await importSdkModule(m);
     registerModulePermissions(m.key, m.manifest.permissions ?? []);
+    // [2026-11-17 05:30 PM khanhtd] NT-HT-003 — GĐ4 (H13): màn × thao tác khai ở manifest → sổ màn (HT12, GET /api/v1/man-hinh); action ghi ngoài màn → cảnh báo
+    for (const w of dangKyManHinhModule(m.key, String(m.manifest.label ?? m.key), m.manifest, def.actions)) app.log.warn({ module: m.key }, w);
     // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G2): khoá cấu hình của module (ctx.settings.get)
     registerModuleSettings(m.key, sdkModuleSettings(m), (m.manifest.settings as string[] | undefined) ?? []);
     await app.register(async (scope) => {

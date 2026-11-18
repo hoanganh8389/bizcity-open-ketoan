@@ -17,10 +17,13 @@ interface TenantRole { id: string; code: string; label: string; isActive: boolea
 interface Branch { id: string; code: string; name: string; isActive: boolean }
 // [2026-11-09 03:20 PM kiennt] PHASE-028 — S028-19: gán vai trò theo một kho (cửa nạp chứng từ có dòng hàng kiểm theo kho)
 interface Warehouse { id: string; code: string; name: string; branchCode: string; isActive: boolean }
+// [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: gán vai trò theo vùng (nút sơ đồ tổ chức, gồm cây con)
+interface Vung { id: string; code: string; name: string; level: number; isActive: boolean; branches: number }
 
 const SYSTEM_ROLES: { value: string; label: string }[] = [
   { value: 'owner', label: 'Chủ đơn vị' }, { value: 'chief_accountant', label: 'Kế toán trưởng' }, { value: 'accountant', label: 'Kế toán' },
   { value: 'viewer', label: 'Người xem' }, { value: 'developer', label: 'Nhà phát triển' }, { value: 'auditor', label: 'Kiểm soát' },
+  { value: 'staff', label: 'Nhân viên (chỉ theo chi nhánh)' }, // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — vai trò staff (Nhân viên, migration 0149)
 ];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -35,7 +38,8 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
   const [role, setRole] = useState('viewer');
   const [tenantRoleId, setTenantRoleId] = useState('');
   const [validTo, setValidTo] = useState('');
-  const [scopeType, setScopeType] = useState<'tenant' | 'branch' | 'warehouse'>('tenant');
+  const [scopeType, setScopeType] = useState<'tenant' | 'branch' | 'warehouse' | 'org_unit'>('tenant');
+  const [vungId, setVungId] = useState('');
   const [branchId, setBranchId] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
 
@@ -46,6 +50,8 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
   const labels = new Map((matrix.data?.permissions ?? []).map((p) => [p.key, p] as const));
   const branches = useQuery({ queryKey: ['phan-quyen', 'branches'], queryFn: () => api.get<Branch[]>('/api/v1/branches') });
   const warehouses = useQuery({ queryKey: ['phan-quyen', 'warehouses'], queryFn: () => api.get<Warehouse[]>('/api/v1/warehouses') });
+  const vung = useQuery({ queryKey: ['phan-quyen', 'vung'], queryFn: () => api.get<Vung[]>('/api/v1/quyen-chi-nhanh/vung') });
+  const vungName = (id: string | null): string => { const v = vung.data?.find((x) => String(x.id) === String(id)); return v ? `vùng ${v.code} · ${v.name} (${v.branches} cửa hàng)` : `vùng ${id}`; };
   const warehouseName = (id: string | null): string => { const w = warehouses.data?.find((x) => String(x.id) === String(id)); return w ? `kho ${w.code} · ${w.name}` : `kho ${id}`; };
   const branchName = (id: string | null): string => { const b = branches.data?.find((x) => String(x.id) === String(id)); return b ? `${b.code} · ${b.name}` : `chi nhánh ${id}`; };
   const effective = useQuery({ queryKey: ['phan-quyen', 'effective', userId], queryFn: () => api.get<Effective>(`/api/v1/users/${userId}/effective-permissions`), enabled: !!userId });
@@ -60,8 +66,8 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
   const activeTenantRoles = (roles.data ?? []).filter((r) => r.isActive);
   const roleName = (a: Assignment): string => a.role ?? roles.data?.find((r) => r.id === a.tenantRoleId)?.label ?? `vai trò đơn vị ${a.tenantRoleId}`;
 
-  const closeAssign = () => { setAssigning(false); setValidTo(''); setScopeType('tenant'); setBranchId(''); setWarehouseId(''); };
-  const assignValid = (mode === 'system' ? !!role : !!tenantRoleId) && (!validTo || DATE_RE.test(validTo)) && (scopeType === 'tenant' || (scopeType === 'branch' ? !!branchId : !!warehouseId));
+  const closeAssign = () => { setAssigning(false); setValidTo(''); setScopeType('tenant'); setBranchId(''); setWarehouseId(''); setVungId(''); };
+  const assignValid = (mode === 'system' ? !!role : !!tenantRoleId) && (!validTo || DATE_RE.test(validTo)) && (scopeType === 'tenant' || (scopeType === 'branch' ? !!branchId : scopeType === 'org_unit' ? !!vungId : !!warehouseId));
 
   return (
     <>
@@ -110,7 +116,7 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
                       {history.data.assignments.map((a) => (
                         <tr key={a.id} style={{ opacity: a.active ? 1 : 0.6 }}>
                           <td>{roleName(a)}{a.tenantRoleId ? <> <span className="badge badge-info">đơn vị</span></> : null}</td>
-                          <td>{a.scopeType === 'branch' ? branchName(a.scopeId) : a.scopeType === 'warehouse' ? warehouseName(a.scopeId) : a.scopeType === 'tenant' ? 'Cả đơn vị' : a.scopeType}</td>
+                          <td>{a.scopeType === 'branch' ? branchName(a.scopeId) : a.scopeType === 'warehouse' ? warehouseName(a.scopeId) : a.scopeType === 'org_unit' ? vungName(a.scopeId) : a.scopeType === 'tenant' ? 'Cả đơn vị' : a.scopeType}</td>
                           <td>{a.validFrom}</td><td>{a.validTo ?? '—'}</td><td>{a.reason}</td>
                           <td>{a.revokedAt ? <span className="badge">Đã thu hồi{a.revokeReason ? `: ${a.revokeReason}` : ''}</span> : a.active ? <span className="badge badge-ok">Đang hiệu lực</span> : <span className="badge badge-warn">Chưa / hết hiệu lực</span>}</td>
                           <td>{!a.revokedAt ? <button type="button" className="btn btn-xs" onClick={() => setRevoking(a)}>Thu hồi</button> : null}</td>
@@ -130,7 +136,7 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
           onSubmit={async (v) => {
             await api.post(`/api/v1/users/${userId}/roles`, {
               ...(mode === 'system' ? { role } : { tenantRoleId }),
-              ...(scopeType === 'branch' ? { scopeType, scopeId: branchId } : scopeType === 'warehouse' ? { scopeType, scopeId: warehouseId } : {}),
+              ...(scopeType === 'branch' ? { scopeType, scopeId: branchId } : scopeType === 'warehouse' ? { scopeType, scopeId: warehouseId } : scopeType === 'org_unit' ? { scopeType, scopeId: vungId } : {}),
               ...(validTo ? { validTo } : {}), ...v,
             });
             await refresh();
@@ -151,11 +157,12 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
               </select>
             </Field>
           )}
-          <Field label="Phạm vi" hint={scopeType === 'branch' ? 'Chỉ có tác dụng khi nộp chứng từ của chi nhánh này (cửa nạp); không thành quyền ở chỗ khác' : scopeType === 'warehouse' ? 'Chỉ có tác dụng khi nộp chứng từ có dòng hàng của kho này (bán, mua, trả, chuyển kho — kho xuất, điều chỉnh); phiếu không có hàng không được' : undefined}>
-            <select className="select" value={scopeType} onChange={(e) => setScopeType(e.target.value as 'tenant' | 'branch' | 'warehouse')}>
+          <Field label="Phạm vi" hint={scopeType === 'branch' ? 'Chỉ có tác dụng khi nộp chứng từ của chi nhánh này (cửa nạp); không thành quyền ở chỗ khác' : scopeType === 'warehouse' ? 'Chỉ có tác dụng khi nộp chứng từ có dòng hàng của kho này (bán, mua, trả, chuyển kho — kho xuất, điều chỉnh); phiếu không có hàng không được' : scopeType === 'org_unit' ? 'Vai trò có hiệu lực ở mọi cửa hàng thuộc nút này và các nút con (sơ đồ tổ chức DM16); cửa hàng chuyển vùng thì quyền đổi theo. Cần bật giới hạn theo chi nhánh' : undefined}>
+            <select className="select" value={scopeType} onChange={(e) => setScopeType(e.target.value as 'tenant' | 'branch' | 'warehouse' | 'org_unit')}>
               <option value="tenant">Cả đơn vị</option>
               <option value="branch">Một chi nhánh</option>
               <option value="warehouse">Một kho</option>
+              <option value="org_unit">Một vùng (nút sơ đồ tổ chức)</option>
             </select>
           </Field>
           {scopeType === 'warehouse' ? (
@@ -163,6 +170,14 @@ export function UsersTab({ initialUserId = null }: { initialUserId?: string | nu
               <select className="select" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
                 <option value="">— chọn —</option>
                 {(warehouses.data ?? []).filter((w) => w.isActive).map((w) => <option key={w.id} value={String(w.id)}>{w.code} · {w.name} ({w.branchCode})</option>)}
+              </select>
+            </Field>
+          ) : null}
+          {scopeType === 'org_unit' ? (
+            <Field label="Vùng">
+              <select className="select" value={vungId} onChange={(e) => setVungId(e.target.value)}>
+                <option value="">— chọn —</option>
+                {(vung.data ?? []).filter((v) => v.isActive).map((v) => <option key={v.id} value={String(v.id)}>{'  '.repeat(Math.max(0, v.level - 1))}{v.code} · {v.name} ({v.branches} cửa hàng)</option>)}
               </select>
             </Field>
           ) : null}

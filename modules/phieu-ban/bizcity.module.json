@@ -43,7 +43,8 @@
     "phieu-ban.order.reject",
     "phieu-ban.order.deliver",
     "phieu-ban.order.close",
-    "phieu-ban.order.cancel"
+    "phieu-ban.order.cancel",
+    "phieu-ban.channel.summary"
   ],
   "ledger": {
     "submits": [

@@ -19,6 +19,8 @@ import { usesOf } from './domain/promo.js';
 import { checkQuota, quotaMessage, recordUses } from './promo.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng, voucher lần mua sau tự phát (đóng góp)
 import type { QuotedVoucher } from './domain/voucher.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh bán của đơn theo danh mục Kênh bán hàng (đóng góp)
+import { resolveSaleSource } from './channels.js';
 
 export const EINVOICE_NONE = { required: false, lines: [] as unknown[], warnings: [] as string[] };
 
@@ -175,6 +177,8 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
     if (requireOpenShift && !draft.offlineCreatedAt && !(await openShiftOf(tx, branch.code))) {
       throw Errors.conflict(`Chi nhánh ${branch.code} chưa mở ca — mở ca rồi mới bán (Cài đặt bán hàng)`, { reason: 'POS_SHIFT_REQUIRED', branchCode: branch.code });
     }
+    // NT-BH-031: mã kênh (máy bán cũ gửi tên) phải có trong danh mục và đang dùng; không gửi → kênh mặc định (Gần shop).
+    const saleSource = await resolveSaleSource(tx, ctx.tenant.id, draft.saleSource, Boolean(draft.offlineCreatedAt));
     const catalog = await catalogFor(tx, draft.lines.map((l) => l.sku));
     // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp): bán đúng bảng giá cửa hàng, không giảm tay, chưa có giá thì không bán.
     // Đơn bán dự phòng lúc mất mạng gửi bù mà giá đã đổi / chưa có giá: hàng đã giao, tiền đã thu → nhận, đánh dấu cho kế toán xem.
@@ -234,14 +238,14 @@ export async function createOrder(ctx: ActionContext, draft: OrderDraft, opts: {
       if (!used) code = draft.reservedCode!;
     }
     code ??= (await issueCodes(tx, ctx.tenant.id, branch.code, 'sale', draft.businessDate, 1, scheme))[0]!;
-    return { kind: 'new', computed, branch, code, loyalty, stockShort, priceOffline, quotaShort, issuedVouchers: vq.issue, warehouses } as const;
+    return { kind: 'new', computed, branch, code, loyalty, stockShort, priceOffline, quotaShort, issuedVouchers: vq.issue, warehouses, saleSource } as const;
   });
   if (prepared.kind === 'replay') return { order: prepared.snapshot, nextReservedCodes: [], einvoiceReview: EINVOICE_NONE, replayed: true };
 
-  const { computed, branch, code, loyalty, stockShort, priceOffline, quotaShort, issuedVouchers, warehouses } = prepared;
+  const { computed, branch, code, loyalty, stockShort, priceOffline, quotaShort, issuedVouchers, warehouses, saleSource } = prepared;
   const doc = toSaleDocument(computed, { draft, branchCode: branch.code, code, ...(warehouses ? { warehouses } : {}) });
   const submitted = await ctx.ledger.submit(doc);
-  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}), issuedVouchers, ...(warehouses ? { warehouses } : {}) });
+  const order = toOrderSnapshot(computed, { draft, code, branch, createdAt: new Date().toISOString(), ...(loyalty?.snapshot ? { loyalty: loyalty.snapshot } : {}), ...(loyalty?.input.voucher ? { usedVouchers: [loyalty.input.voucher.code] } : {}), issuedVouchers, ...(warehouses ? { warehouses } : {}), saleSource });
   if (stockShort.length) Object.assign(order, { stockShortOffline: stockShort });
   if (priceOffline.length) Object.assign(order, { priceChangedOffline: priceOffline });
   if (quotaShort.length) Object.assign(order, { promoQuotaOffline: quotaShort });

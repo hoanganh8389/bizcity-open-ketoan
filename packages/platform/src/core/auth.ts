@@ -204,6 +204,8 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   developer: [...VIEWER_PERMISSIONS, 'devtools:read'],
   // Kiểm soát / ban kiểm soát (Q022-1): xem như viewer + Bàn đánh giá; không ghi, không cấu hình.
   auditor: [...VIEWER_PERMISSIONS, 'review:read'],
+  // [2026-11-17 02:25 PM khanhtd] NT-HT-003 — Nhân viên: chỉ danh mục; không ledger:read / reports:read / documents:read toàn đơn vị — quyền bán, kho, báo cáo do vai trò gán tại chi nhánh
+  staff: ['catalog:read'],
 };
 
 /** Phạm vi của khoá API → quyền tương ứng. */
@@ -242,6 +244,12 @@ export interface AuthContext {
   permissions: ReadonlySet<Permission>;
   /** Khoá của app ngoài tiến trình (kind 'apikey'): khoá app. Cửa nạp buộc docKey `<app>:…`, bằng chứng ghi via `app:<app>`. */
   app?: string;
+  // [2026-11-17 04:10 PM khanhtd] NT-HT-003 — GĐ3: phạm vi chi nhánh của yêu cầu (lớp chi nhánh ghi khi bật bizcity.authz.branch_scope); GĐ4 runtime action đọc
+  /**
+   * Mã chi nhánh người gọi được làm việc ở yêu cầu này. `undefined` / `null` = mọi chi nhánh (chủ đơn vị, khoá API, không gán theo chi
+   * nhánh, công tắc tắt). Do lớp phân quyền theo chi nhánh đặt sau khi xác thực; code nghiệp vụ chỉ đọc để lọc / so, không tự đặt.
+   */
+  branchScope?: readonly string[] | null;
 }
 
 declare module 'fastify' {

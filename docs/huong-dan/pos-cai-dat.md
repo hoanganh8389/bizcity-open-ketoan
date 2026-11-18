@@ -8,7 +8,8 @@ Một chỗ cho mọi cài đặt bán lẻ. Mở: **Bán hàng → Cài đặt 
 
 | Ô | Ý nghĩa |
 |---|---|
-| Hạn trả hàng không cần duyệt | Số ngày (0–60) tính từ ngày bán. Quá hạn thì máy bán đòi người duyệt. Mặc định 3 |
+| Hạn trả hàng không cần duyệt | Số ngày (0–60) tính từ ngày bán, áp cho cả công ty. Mặc định 3. Quá hạn thì máy bán **gửi yêu cầu trả quá hạn**, người có quyền *Duyệt trả quá hạn* (mặc định kế toán trưởng, chủ đơn vị) duyệt / từ chối ở BH14 thẻ *Yêu cầu trả quá hạn* (NT-BH-030) |
+| Hạn trả riêng của cửa hàng <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q3 (đóng góp) --> | Bảng từng cửa hàng: gõ số ngày riêng (0–60), để trống = theo hạn công ty (khoá `bizcity.pos.return_days_by_shop`, dạng `CN02=7`). Hạn tính theo **cửa hàng nhận trả** — khách mua ở CN01 mang trả ở CN02 thì lấy hạn của CN02 |
 | Bắt buộc mở ca trước khi bán | Chưa bật: máy bán vẫn nhận đơn khi chưa mở ca |
 | Ca bán | Một ca chung cho cả chi nhánh (đợt này chỉ áp dụng cách này) |
 | Ngưỡng chênh lệch két | Sổ ca bán tô đỏ ca có chênh lệch từ ngưỡng này; 0 = mọi chênh lệch |

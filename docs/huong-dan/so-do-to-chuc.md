@@ -42,9 +42,11 @@ Cấp tự tính theo cây (gốc = cấp 0), không gõ tay.
 - Cuối hộp thoại: **Bên trong** (đếm cơ cấu, cửa hàng, kho, phòng ban) và **Lịch sử thay đổi** (thời gian, người làm, việc, ô nào đổi từ gì sang gì).
 - **Sơ đồ**: khối công ty / cơ cấu, mỗi khối ghi số cửa hàng, kho, phòng ban bên trong; bấm khối mở hộp thoại của nút đó.
 - **Chưa xếp vào cơ cấu**: cửa hàng chưa gắn cơ cấu, phòng ban chưa đặt chỗ — mở từng dòng, Sửa ô Thuộc.
-- **Xuất**: tệp 4 sheet *Cơ cấu*, *Cửa hàng*, *Kho*, *Phòng ban* — cũng là mẫu để nhập.
-- **Nhập Excel**: sửa tệp vừa xuất (thêm dòng mới, đổi tên, đổi Thuộc…) rồi nhập lại. Mã chưa có → thêm; mã đã có → chỉ sửa ô khác đi;
-  bỏ cột nào khỏi tệp thì cột đó giữ nguyên. Xem trước số dòng thêm / sửa / lỗi rồi mới bấm Ghi; có lỗi thì không ghi gì.
+- **Xuất**: tệp 4 sheet *Cơ cấu*, *Cửa hàng*, *Kho*, *Phòng ban* (sheet Phòng ban có cả phòng ban riêng của từng cửa hàng) — cũng là mẫu để nhập.
+- **Nhập Excel ▾** <!-- [2026-11-18 02:30 PM kiennt] NT-DM-007 — nhập Excel DM16 bằng trình nhập chung, 4 loại (đóng góp) -->: chọn **1. Cơ cấu**, **2. Phòng ban**, **3. Cửa hàng**, **4. Kho** — mỗi mục mở trình nhập chung như các màn khác
+  (chọn tệp → ghép cột → kiểm tra → kết quả; dòng lỗi bỏ qua, dòng đúng vẫn ghi; tải tệp lỗi). Tệp 4 sheet từ nút Xuất dùng thẳng: trình nhập tự chọn đúng sheet.
+  Nhập **lần lượt theo thứ tự** trên (cửa hàng cần cơ cấu, kho cần cửa hàng). Mã chưa có → thêm; mã đã có → cập nhật; ô trống giữ nguyên.
+  Cửa hàng ghi mã phòng ban chưa có (tệp xuất từ bản cũ không kèm phòng ban riêng) thì phần mềm tự tạo phòng ban đó, tên "Phòng ban + tên cửa hàng".
 - Trong hộp thoại, mở một mục ở danh sách "Thuộc …" để đi sâu; nút **Quay lại** ở chân hộp thoại lùi về mục vừa xem.
 - **Quay về dữ liệu gốc** như trước.
 
@@ -84,7 +86,7 @@ Mỗi **chi nhánh / cửa hàng** gắn vào một nút, thường là nút c�
 | **Sửa** | Sửa tên, mô tả rồi bấm **Ghi**. **Hoãn** để bỏ. |
 | **Xoá** | Chỉ xoá được nút **không còn nút con** và **không còn chi nhánh nào gắn vào**. Còn thì phần mềm báo tên chi nhánh / nút con, chuyển đi trước rồi xoá. |
 | **Nạp** | Tải lại cây. |
-| **Xuất / Nhập Excel** | Tệp 2 sheet: **Nút** (Mã, Tên, Mã cha, Mô tả) và **Gắn chi nhánh** (Mã chi nhánh, Mã nút). Phần mềm kiểm từng dòng, cho xem trước, có lỗi thì không ghi gì. |
+| **Xuất / Nhập Excel** | Tệp 4 sheet Cơ cấu / Phòng ban / Cửa hàng / Kho; nhập bằng **Nhập Excel ▾** từng loại theo thứ tự (xem phần trên). |
 | **Quay về dữ liệu gốc** | Đặt lại cây và việc gắn chi nhánh đúng như tệp gốc (`db/seeds`). Nút bạn tự thêm mà không còn chi nhánh thì xoá. Dùng khi đã sửa lộn xộn. |
 
 Shop đổi đuôi mã (lên Plus / Premium, đóng thành _OFF) vẫn khớp được: cùng 5 số đầu là cùng một shop.

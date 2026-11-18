@@ -23,7 +23,7 @@ import {
   addEvent, branchPrices, getOrder, insertOrder, listOrders, livestreamByPhone, lockedWarehouseStock, openOrdersOf, orderEvents, partnerTerms,
   takeOrderNo, toOrder, updateOrder, warehousesOf, writeOf, type OrderFilter, type OrderRow,
 } from './order-store.js';
-import { giftWarehouseOf, saveDraftIn } from './service.js';
+import { giftWarehouseOf, saveDraftIn, withChannel } from './service.js';
 import { activeMethods, branchExists, catalogFor, deleteDoc, getDoc, partnerByCode, taxRates, type Tx } from './store.js';
 
 export const HOLD_WAREHOUSES = 'bizcity.phieu_ban.hold_warehouses';
@@ -439,7 +439,9 @@ async function syncLinkedEdit(tx: Tx, ctx: ActionContext, d: { docId: string; or
 }
 
 /** Lưu phiếu bán / trả nháp (action doc.create / doc.update): phiếu nối đơn thì báo đơn số lượng mới của lần giao. */
-export async function saveSaleDraft(ctx: ActionContext, kind: Kind, input: DocInput, id?: string) {
+export async function saveSaleDraft(ctx: ActionContext, kind: Kind, input0: DocInput, id?: string) {
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh bán chọn từ danh mục của module pos (đóng góp)
+  const input = await withChannel(ctx, input0, id);
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: dòng quà của phiếu bán tự vào kho quà (KKM) của cửa hàng — hỏi module pos ngoài giao dịch (đóng góp)
   const giftWarehouse = await giftWarehouseOf(ctx, kind, input.branchCode, input.lines);
   return ctx.data.module(async (tx) => saveDraftIn(tx, ctx, kind, input, id, { onLinkedEdit: (t, d) => syncLinkedEdit(t, ctx, d), giftWarehouse }));

@@ -126,6 +126,7 @@ Module **không** viết số tài khoản, **không** tạo bút toán, **khôn
 | Nhóm Lõi tách code | [REUSE-MAP.md](REUSE-MAP.md) → [TARGET-LAYOUT.md](TARGET-LAYOUT.md) → [PHASES.md](PHASES.md) |
 | Người làm Cell / Zalo Brain | [CELL-MCP.md](CELL-MCP.md) → [Action](../contracts/BIZCITY-ACTION-v1.md) → [Evidence](../contracts/BIZCITY-EVIDENCE-v1.md) |
 | Người duyệt phát hành | [VERSIONING.md](VERSIONING.md) → [bizcity-standard.json](bizcity-standard.json) |
+| Người / AI thêm màn, menu, nút Thêm / Sửa / Xoá / Duyệt <!-- [2026-11-17 02:25 PM khanhtd] NT-HT-003 — dẫn chiếu chuẩn đăng ký quyền --> | [DANG-KY-QUYEN.md](DANG-KY-QUYEN.md) (bảng hook H1–H12, luật CRUD, phạm vi chi nhánh, bộ kiểm) |
 
 ## 7. Trạng thái
 

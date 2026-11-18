@@ -8,7 +8,9 @@
  *   thuế = tiền hoàn − chưa thuế.
  * Luật (họp phòng kế toán 04/11/2026, G1 / G2): hạn trả là tham số (3 ngày theo ngày bán), quá hạn phải có người duyệt;
  * trả hàng chính thì quà vượt suất phải trả theo; đổi hàng phải bằng hoặc cao hơn giá trị hàng trả.
+ * NT-BH-030: trả ở cửa hàng khác cùng MST chi nhánh (Q1); quá hạn phải có yêu cầu trả quá hạn đã duyệt (Q2); hạn trả riêng từng shop (Q3).
  */
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030: trả khác shop cùng MST, quá hạn theo yêu cầu đã duyệt, hạn trả theo shop (đóng góp)
 import { roundMoney } from '@bizcity/module-sdk';
 import { isOffsetMethod, paymentKind, type OrderProblem, type PaymentMethodRow } from './order.js';
 
@@ -153,15 +155,79 @@ export function parseWarehouseMap(v: unknown): Map<string, string> {
   return m;
 }
 
+/**
+ * Trả ở cửa hàng khác (NT-BH-030 Q1): cùng cửa hàng → được; khác cửa hàng thì cả hai phải khai MST chi nhánh và trùng MST.
+ * Không được → problem POS_RETURN_OTHER_SHOP kèm cause TAX_CODE_MISSING (chưa khai) / TAX_CODE_DIFFERENT (khác MST).
+ */
+export function otherShopProblem(orderBranch: string, orderTax: string | undefined, hereBranch: string, hereTax: string | undefined): OrderProblem | null {
+  if (orderBranch === hereBranch) return null;
+  const a = (orderTax ?? '').trim();
+  const b = (hereTax ?? '').trim();
+  const missing = [...(a ? [] : [orderBranch]), ...(b ? [] : [hereBranch])];
+  if (missing.length) {
+    return { kind: 'conflict', reason: 'POS_RETURN_OTHER_SHOP',
+      message: `Đơn của cửa hàng ${orderBranch}: chưa khai MST chi nhánh ${missing.join(', ')} ở Danh mục chi nhánh — chỉ trả khác cửa hàng khi hai cửa hàng cùng mã số thuế`,
+      details: { orderBranch, cause: 'TAX_CODE_MISSING', branches: missing } };
+  }
+  if (a !== b) {
+    return { kind: 'conflict', reason: 'POS_RETURN_OTHER_SHOP',
+      message: `Đơn của cửa hàng ${orderBranch} khác mã số thuế với cửa hàng ${hereBranch} — mang về trả ở cửa hàng cùng MST`,
+      details: { orderBranch, cause: 'TAX_CODE_DIFFERENT' } };
+  }
+  return null;
+}
+
+/** Khoá `bizcity.pos.return_days_by_shop`: mảng "<mã cửa hàng>=<số ngày 0–60>" → Map cửa hàng → số ngày; phần tử sai khuôn bỏ qua. */
+export function parseDaysMap(v: unknown): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const [b, d] of parseWarehouseMap(v)) {
+    if (/^\d{1,2}$/.test(d) && Number(d) <= 60) m.set(b, Number(d));
+  }
+  return m;
+}
+
+/** Hạn trả của cửa hàng: khai riêng thì lấy riêng, không thì mặc định công ty. */
+export const daysOf = (policy: { days: number; byShop: ReadonlyMap<string, number> }, branchCode: string) => policy.byShop.get(branchCode) ?? policy.days;
+
+type ReqLine = { lineId: string; qty: number; condition?: ReturnCondition };
+/** Dòng phiếu trả khớp đúng dòng của yêu cầu đã duyệt (mỗi dòng: SL, tình trạng; không thừa, không thiếu) — NT-BH-030 Q2. */
+export function sameReturnLines(approved: readonly ReqLine[], draft: readonly ReqLine[]): boolean {
+  const norm = (ls: readonly ReqLine[]) => {
+    const m = new Map<string, { qty: number; condition: ReturnCondition }>();
+    for (const l of ls) {
+      const c = l.condition ?? 'good';
+      const k = `${l.lineId}|${c}`;
+      m.set(k, { qty: (m.get(k)?.qty ?? 0) + l.qty, condition: c });
+    }
+    return m;
+  };
+  const a = norm(approved);
+  const b = norm(draft);
+  if (a.size !== b.size) return false;
+  for (const [k, v] of a) {
+    const w = b.get(k);
+    if (!w || Math.abs(w.qty - v.qty) > 1e-9) return false;
+  }
+  return true;
+}
+
 export type ReturnInput = {
-  draft: { id: string; lines: readonly { lineId: string; qty: number; condition?: ReturnCondition }[]; refundMethod: string; reason: string; approval?: { by: string; note: string } };
-  /** buyerTaxCode: MST người mua hoá đơn của đơn lúc trả (khác rỗng → chặn, NT-BH-024 Q1). */
-  order: { status: string; branchCode: string; businessDate: string; buyerTaxCode?: string };
+  draft: { id: string; lines: readonly { lineId: string; qty: number; condition?: ReturnCondition }[]; refundMethod: string; reason: string };
+  /**
+   * buyerTaxCode: MST người mua hoá đơn của đơn lúc trả (khác rỗng → chặn, NT-BH-024 Q1). branchTaxCode: MST chi nhánh đã bán (danh mục
+   * chi nhánh) — trả ở cửa hàng khác chỉ khi hai cửa hàng cùng MST (NT-BH-030 Q1).
+   */
+  order: { status: string; branchCode: string; businessDate: string; buyerTaxCode?: string; branchTaxCode?: string };
   lines: readonly SoldLine[];
   done: ReadonlyMap<string, ReturnedSoFar>;
   branchCode: string;
+  /** MST chi nhánh nhận trả (NT-BH-030 Q1). */
+  branchTaxCode?: string;
   today: string;
+  /** Hạn trả không cần duyệt của cửa hàng nhận (NT-BH-030 Q3: mặc định công ty, khai riêng từng shop). */
   days: number;
+  /** Quá hạn đã có yêu cầu trả quá hạn được duyệt và khớp nội dung (máy chủ đã kiểm, NT-BH-030 Q2). */
+  approved?: boolean;
   paymentMethods: readonly PaymentMethodRow[];
   /** Đổi hàng: tiền hoàn thành đối trừ, không trả tiền. */
   exchange: boolean;
@@ -194,9 +260,8 @@ const fail = (kind: OrderProblem['kind'], reason: string, message: string, detai
 export function computeReturn(input: ReturnInput): ComputedReturn | { problem: OrderProblem } {
   const { draft, order, lines, done } = input;
   if (order.status !== 'completed') return fail('conflict', 'POS_ORDER_NOT_RETURNABLE', 'Chỉ trả hàng của đơn đã hoàn tất');
-  if (order.branchCode !== input.branchCode) {
-    return fail('conflict', 'POS_RETURN_OTHER_SHOP', `Đơn của chi nhánh ${order.branchCode}: đợt này chỉ trả ở cửa hàng đã bán`, { orderBranch: order.branchCode });
-  }
+  const other = otherShopProblem(order.branchCode, order.branchTaxCode, input.branchCode, input.branchTaxCode);
+  if (other) return { problem: other };
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q1: đơn có người mua hoá đơn kèm MST coi là đã xuất hoá đơn → máy bán không trả / đổi (đóng góp)
   const taxCode = order.buyerTaxCode?.trim() ?? '';
   if (taxCode) return fail('conflict', 'POS_RETURN_TAX_INVOICE', taxInvoiceMessage(taxCode), { taxCode });
@@ -217,8 +282,8 @@ export function computeReturn(input: ReturnInput): ComputedReturn | { problem: O
 
   const deadline = returnDeadline(order.businessDate, input.days);
   const late = daysSince(order.businessDate, input.today) > input.days;
-  if (late && !(draft.approval?.by.trim() && draft.approval.note.trim())) {
-    return fail('validation', 'POS_RETURN_EXPIRED', `Quá hạn trả (hạn cuối ${deadline}): cần người duyệt và lý do duyệt`, { deadline });
+  if (late && !input.approved) {
+    return fail('validation', 'POS_RETURN_EXPIRED', `Quá hạn trả (hạn cuối ${deadline}): gửi yêu cầu trả quá hạn, chờ kế toán trưởng duyệt rồi mới lập phiếu`, { deadline });
   }
 
   const byId = new Map(lines.map((l) => [l.lineId, l]));
