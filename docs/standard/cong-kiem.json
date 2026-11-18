@@ -107,22 +107,26 @@
       "match": [
         "ACC-*",
         "PART-*",
-        "IN-MD-*"
+        "IN-MD-*",
+        "UNIT-*",
+        "BANK-*",
+        "BR-*"
       ],
       "pillars": [
         "0"
       ],
-      "note": "dữ liệu gốc: tài khoản, đối tượng"
+      "note": "dữ liệu gốc: tài khoản, đối tượng, ĐVT, ngân hàng, chi nhánh"
     },
     {
       "match": [
         "ITEM-*",
-        "IN-ITEM-*"
+        "IN-ITEM-*",
+        "GRP-*"
       ],
       "pillars": [
         "II"
       ],
-      "note": "định danh mặt hàng"
+      "note": "định danh mặt hàng, nhóm hàng"
     },
     {
       "match": "IN-POL-*",
