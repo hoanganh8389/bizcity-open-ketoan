@@ -490,7 +490,7 @@ export const productWriteActions: AnyActionDef[] = [
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
       const { sku } = input;
-      // Xoá kèm đơn vị tính, giá và báo hệ thống bán hàng xoá theo (catalog_tombstones).
+      // Xoá kèm đơn vị tính, giá và báo hệ thống bán hàng xoá theo (dấu xoá ở catalog_trash, 0160).
       await sameTx(trx, (trx) => deleteProduct(trx, auth.tenantId, auth.actor, sku));
       return { sku };
     },

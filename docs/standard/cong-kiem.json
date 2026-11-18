@@ -335,6 +335,7 @@
         "ledger_*",
         "accounting_event*",
         "document_versions_*",
+        "business_documents_*",
         "event_outbox_*",
         "posting_log_*"
       ],
@@ -534,7 +535,8 @@
         "apps/api/test/diagnostics.test.ts"
       ],
       "DEBT_MATCH_LEDGER": [
-        "apps/api/test/phase022-checks.test.ts"
+        "apps/api/test/phase022-checks.test.ts",
+        "apps/api/test/preset-bao-cao.test.ts"
       ],
       "DEPRECIATION_OPEN": [
         "apps/api/test/phase022-checks.test.ts"
@@ -564,7 +566,8 @@
         "apps/api/test/intake-score.test.ts"
       ],
       "INVENTORY_LEDGER_MISMATCH": [
-        "apps/api/test/inventory-reconcile.test.ts"
+        "apps/api/test/inventory-reconcile.test.ts",
+        "apps/api/test/preset-bao-cao.test.ts"
       ],
       "INVENTORY_NEGATIVE": [
         "apps/api/test/conformance-gate.test.ts",
@@ -583,7 +586,8 @@
         "apps/api/test/conformance-engine.test.ts",
         "apps/api/test/conformance-gate.test.ts",
         "apps/api/test/diagnostics.test.ts",
-        "apps/api/test/gates.test.ts"
+        "apps/api/test/gates.test.ts",
+        "apps/api/test/preset-bao-cao.test.ts"
       ],
       "LEDGER_BALANCES_DAILY": [
         "apps/api/test/diagnostics.test.ts"
@@ -600,7 +604,8 @@
         "apps/api/test/diagnostics.test.ts"
       ],
       "LEDGER_ROUNDING": [
-        "apps/api/test/doi-chieu-tu-dong.test.ts"
+        "apps/api/test/doi-chieu-tu-dong.test.ts",
+        "apps/api/test/preset-bao-cao.test.ts"
       ],
       "LEDGER_SELF_APPROVED": [
         "apps/api/test/sod-ghi-dau.test.ts"
@@ -638,7 +643,8 @@
         "apps/api/test/doi-chieu-tu-dong.test.ts"
       ],
       "VAT_INPUT_INVOICE_MATCH": [
-        "apps/api/test/doi-chieu-tu-dong.test.ts"
+        "apps/api/test/doi-chieu-tu-dong.test.ts",
+        "apps/api/test/preset-bao-cao.test.ts"
       ],
       "VAT_INPUT_NONCASH": [
         "apps/api/test/vat-einvoice.test.ts"
@@ -812,7 +818,6 @@
       ],
       "ITEM-HINT-001": [
         "apps/api/test/bien-the-dinh-danh.test.ts",
-        "apps/api/test/dinh-khoan-phan-loai-theo-ngay.test.ts",
         "apps/api/test/item-draft.test.ts",
         "apps/api/test/item-id-so-kho.test.ts",
         "apps/api/test/item-master.test.ts",
@@ -2073,6 +2078,11 @@
         "migration": "0043_doc_so_cai.sql"
       },
       {
+        "name": "branches_cost_unit",
+        "table": "branches",
+        "migration": "0149_don_vi_gia_von_theo_co_cau.sql"
+      },
+      {
         "name": "branches_entity_attrs_sync",
         "table": "branches",
         "migration": "0087_thuoc_tinh_thuc_the.sql"
@@ -2101,6 +2111,11 @@
         "name": "branches_versions",
         "table": "branches",
         "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
+        "name": "business_documents_sync",
+        "table": "purchase_documents",
+        "migration": "0156_so_chung_tu_chung.sql"
       },
       {
         "name": "conformance_runs_guard",
@@ -2268,6 +2283,21 @@
         "migration": "0130_dinh_danh_phong_ban.sql"
       },
       {
+        "name": "ledger_lines_entry_accounts_del",
+        "table": "ledger_lines",
+        "migration": "0134_but_toan_gop_tai_khoan.sql"
+      },
+      {
+        "name": "ledger_lines_entry_accounts_ins",
+        "table": "ledger_lines",
+        "migration": "0134_but_toan_gop_tai_khoan.sql"
+      },
+      {
+        "name": "ledger_lines_entry_accounts_upd",
+        "table": "ledger_lines",
+        "migration": "0134_but_toan_gop_tai_khoan.sql"
+      },
+      {
         "name": "ledger_lines_item_id",
         "table": "ledger_lines",
         "migration": "0066_item_id_so_kho.sql"
@@ -2326,6 +2356,11 @@
         "name": "library_settings_no_truncate",
         "table": "library_settings",
         "migration": "0088_cau_hinh_thu_vien.sql"
+      },
+      {
+        "name": "org_units_cost_units",
+        "table": "org_units",
+        "migration": "0149_don_vi_gia_von_theo_co_cau.sql"
       },
       {
         "name": "org_units_uid_guard",
@@ -2463,11 +2498,6 @@
         "migration": "0093_gui_len_thue.sql"
       },
       {
-        "name": "purchase_attachments_frozen",
-        "table": "purchase_attachments",
-        "migration": "0046_dinh_kem_mua_hang.sql"
-      },
-      {
         "name": "purchase_documents_item_id",
         "table": "purchase_documents",
         "migration": "0070_item_id_phu_kin.sql"
@@ -2476,16 +2506,6 @@
         "name": "purchase_documents_partner_uid",
         "table": "purchase_documents",
         "migration": "0132_doi_tuong_cha_con.sql"
-      },
-      {
-        "name": "purchase_policy_versions_guard",
-        "table": "purchase_policy_versions",
-        "migration": "0079_so_dang_ky_chinh_sach.sql"
-      },
-      {
-        "name": "purchase_policy_versions_no_truncate",
-        "table": "purchase_policy_versions",
-        "migration": "0079_so_dang_ky_chinh_sach.sql"
       },
       {
         "name": "rulepack_approvals_guard",

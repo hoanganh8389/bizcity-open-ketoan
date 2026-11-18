@@ -141,6 +141,11 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   sales_lines: { group: 'sales', label: 'Dòng hàng bán (bảng ảo)', term: 'Chi tiết bán hàng', module: 'reports', purpose: 'Bảng ảo (view): dòng hàng của phiếu bán / trả lại, đọc thẳng từ payload phiên bản đã định khoản. Không lưu trùng dữ liệu.' },
   sales_payments: { group: 'sales', label: 'Tiền thu bán hàng (bảng ảo)', term: 'Thanh toán theo hình thức', module: 'reports', purpose: 'Bảng ảo (view): tiền thu / trả khách của phiếu bán, hoàn — kèm phiếu, phiếu thanh toán khách hàng trỏ về phiếu (invoiceDocKey), phần đối trừ đổi trả (DOITRU).' },
   posted_event_payloads: { group: 'events', label: 'Nội dung phiếu đã định khoản (bảng ảo)', module: 'documents', purpose: 'Bảng ảo (view): payload đúng phiên bản đã định khoản của mỗi sự kiện chưa huỷ; nguồn của sales_lines, sales_payments.' },
+  // [2026-11-18 Nguyễn Văn Thủy] bảng giá vốn theo cơ cấu (0150–0153) và thùng rác chung (0146, 0157, 0160) (đóng góp)
+  costing_runs: { group: 'sales', label: 'Lần tính giá vốn', term: 'Lịch sử tính giá vốn', module: 'inventory', purpose: 'Mỗi lần bấm tính giá vốn của một chi nhánh trên Cơ cấu tổ chức: kỳ, khoảng ngày, mốc cơ cấu, công thức dùng, loại kho tính riêng, người chạy.' },
+  costing_run_lines: { group: 'sales', label: 'Đơn giá của một lần tính giá vốn', module: 'inventory', purpose: 'Bảng đơn giá từng mã hàng (theo loại kho tính riêng nếu có) tại một lần tính giá vốn — để xem lại đúng số đã tính.' },
+  costing_formulas: { group: 'rules', label: 'Công thức giá vốn', term: 'Công thức tính giá xuất kho', module: 'inventory', purpose: 'Công thức người dùng đặt: giá nhập, chi phí / thưởng phân bổ, hàng trả NCC, hàng tặng… tính vào hay không, theo hiệu lực.' },
+  catalog_trash: { group: 'catalog', label: 'Thùng rác danh mục', term: 'Dòng đã bỏ đi', module: 'catalog', purpose: 'Chỗ chung giữ dòng đã bỏ: mục danh mục đã xoá (khôi phục được), dấu xoá cho hệ thống bán hàng (tombstone.<loại>), ảnh chụp trước khi quay về dữ liệu gốc (backup.default-data), bản lưu cột bỏ đi (accounts.name_en).' },
   inventory_costs: { group: 'sales', label: 'Giá vốn bình quân tháng', term: 'Tính giá xuất kho', module: 'inventory', purpose: 'Mỗi (nhóm tính giá = đơn vị hạch toán, mặt hàng, tháng) một dòng: tồn đầu, nhập tính giá, đơn giá bình quân, xuất, tồn cuối. Tính lại được từ hàng vào / ra kho.' },
 
   // ⑦ Tài sản, tờ khai, báo cáo năm
@@ -177,7 +182,6 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   price_lists: { group: 'catalog', label: 'Bảng giá bán', module: 'catalog', purpose: 'Bảng giá: đúng một bảng giá công ty (is_company) + các bảng giá chi nhánh / kênh.' },
   price_list_branches: { group: 'catalog', label: 'Chi nhánh áp bảng giá', module: 'catalog', purpose: 'Chi nhánh nào áp bảng giá nào (mỗi chi nhánh một bảng giá); chưa gán = bảng giá công ty.' },
   product_prices: { group: 'catalog', label: 'Giá bán theo ĐVT', module: 'catalog', purpose: 'Giá (đã gồm thuế) theo bảng giá × mặt hàng × đơn vị tính; trống = chưa khai giá.' },
-  catalog_tombstones: { group: 'catalog', label: 'Mục danh mục hàng đã xoá', module: 'catalog', purpose: 'Dấu xoá (mặt hàng, ĐVT, dòng giá, bảng giá) để hệ thống bán hàng kéo thay đổi biết mà xoá theo.' },
   tax_codes: { group: 'catalog', label: 'Loại thuế', term: 'Thuế suất GTGT', module: 'tax-codes', purpose: 'Thuế suất, tài khoản thuế, nhóm trên bảng kê.' },
   payment_methods: { group: 'catalog', label: 'Hình thức thanh toán', module: 'posting-config', purpose: 'Tiền mặt, chuyển khoản, thẻ, QR… và tài khoản tiền tương ứng (111, 112, 113).' },
   dimensions: { group: 'catalog', label: 'Chiều phân tích', term: 'Khoản mục, bộ phận', module: 'dimensions', purpose: 'Các chiều gắn thêm vào dòng sổ (cột dims) để phân tích chi phí mà không phải sửa bảng.' },
@@ -192,7 +196,6 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // [2026-11-08 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: đổi số migration 0087 → 0088 khi gộp main (0087 thuộc PHASE-029 S029-19 — so-tiep-theo kiem)
   library_settings: { group: 'platform', label: 'Cấu hình thư viện của đơn vị', term: 'Thư viện', module: 'system', purpose: 'Mỗi lần đơn vị đổi cấu hình một thư viện là một phiên bản mới (chỉ thêm): bật / tắt thư viện tuỳ chọn, đọc theo ngày, mức luật đã hạ, giá trị ghi đè có ngày hiệu lực. Không đổi thư viện gốc (PHASE-030 · 26 §7.1).' },
   // [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a
-  default_data_backups: { group: 'platform', label: 'Bản chụp danh mục trước khi quay về dữ liệu gốc', term: 'Dữ liệu gốc', module: 'system', purpose: 'Mỗi lần Quay về dữ liệu gốc chạy thật, chụp các dòng của đơn vị ở những bảng danh mục bộ đó chạm tới (JSON, cùng giao dịch) để lấy lại khi quay về nhầm; giữ 10 bản gần nhất (PHASE-036 · 00 §9).' },
   // [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4
   sample_runs: { group: 'platform', label: 'Lần chạy gói mẫu theo ngành', term: 'Thiết lập nhanh', module: 'system', purpose: 'Mỗi lần máy chủ nạp một gói mẫu (bizcity_preset@1) cho đơn vị: trạng thái, tiến độ từng khối, nhịp sống; một đơn vị một lần chạy đang chạy. Bản ghi danh mục / chứng từ do action Core ghi (PHASE-036 · 00 §11).' },
   library_change_requests: { group: 'platform', label: 'Phiếu đề xuất cập nhật thư viện', term: 'Thư viện', module: 'system', purpose: 'Đơn vị đề xuất Nhóm Lõi thêm mục, sửa giá trị, căn cứ, báo sai, ngừng dùng; trạng thái gửi → nhận → đã vào bản / từ chối, người gửi rút được. Không xoá, không sửa nội dung.' },

@@ -53,12 +53,31 @@ export function discoverCi(r) {
   return [...out.values()].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
 }
 
+// [2026-11-18 Nguyễn Văn Thủy] đọc migration theo thứ tự: DROP TABLE / DROP TRIGGER ở migration sau gỡ trigger khỏi danh sách
+// (bảng đã gom về lõi thì không còn trigger để LEDGER_TRIGGERS đòi); tạo lại thì giữ migration đầu tiên như cũ (đóng góp)
+const DROP_TABLE_RE = /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?((?:\w+\.)?\w+(?:\s*,\s*(?:\w+\.)?\w+)*)/gi;
+const DROP_TRG_RE = /DROP\s+TRIGGER\s+(?:IF\s+EXISTS\s+)?(\w+)\s+ON\s+(?:(\w+)\.)?(\w+)/gi;
+const tableName = (schema, table) => (!schema || schema === 'public' ? table : `${schema}.${table}`);
 export function discoverTriggers(r) {
   const out = new Map();
+  const first = new Map();
   for (const f of r.files({ under: ['db/migrations'], ext: ['.sql'] }).sort()) {
-    for (const m of (r.read(f) ?? '').matchAll(TRG_RE)) {
-      if (out.has(m[1])) continue;
-      out.set(m[1], { name: m[1], table: !m[2] || m[2] === 'public' ? m[3] : `${m[2]}.${m[3]}`, migration: f.replace(/^db\/migrations\//, '') });
+    const sqlText = (r.read(f) ?? '').replace(/--[^\n]*/g, '');
+    const events = [
+      ...[...sqlText.matchAll(TRG_RE)].map((m) => ({ at: m.index, kind: 'create', name: m[1], table: tableName(m[2], m[3]) })),
+      ...[...sqlText.matchAll(DROP_TRG_RE)].map((m) => ({ at: m.index, kind: 'drop-trigger', name: m[1], table: tableName(m[2], m[3]) })),
+      ...[...sqlText.matchAll(DROP_TABLE_RE)].flatMap((m) => m[1].split(',').map((t) => ({ at: m.index, kind: 'drop-table', table: t.trim().replace(/^public\./, '') }))),
+    ].sort((a, b) => a.at - b.at);
+    for (const e of events) {
+      if (e.kind === 'create') {
+        if (out.has(e.name)) continue;
+        if (!first.has(e.name)) first.set(e.name, f.replace(/^db\/migrations\//, ''));
+        out.set(e.name, { name: e.name, table: e.table, migration: first.get(e.name) });
+      } else if (e.kind === 'drop-trigger') {
+        if (out.get(e.name)?.table === e.table) out.delete(e.name);
+      } else {
+        for (const [n, t] of out) if (t.table === e.table) out.delete(n);
+      }
     }
   }
   return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));

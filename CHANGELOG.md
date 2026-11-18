@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Gom bảng về lõi, đợt 3: bỏ catalog_tombstones, default_data_backups (0160) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** `catalog_trash` thành chỗ chung giữ mọi "dòng đã bỏ đi": dấu xoá cho luồng danh mục (`tombstone.<loại>`, kèm `replacedByItemId` khi đổi / gộp mã — luồng `catalog/feed` trả như cũ) và ảnh chụp trước khi quay về dữ liệu gốc (`backup.default-data`, giữ 10 bản; API `/api/v1/default-data/backups` như cũ).
+- **Sửa:** hàm `bizcity_reset_catalog_sample` (0124) còn ghi / xoá `item_class_history` đã bỏ ở 0157 → nay ghi lịch sử vào `document_versions`, không xoá lịch sử.
+
 ### Gom bảng về lõi, đợt 2: bỏ purchase_policy_versions, payment_request_settings (0158, 0159) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** nội dung từng bản chính sách mua về `document_versions` (`mua-hang.policy:<id>`, băm giữ nguyên); ngày áp, lý do, người phát hành đọc từ phong bì `policy_registry` (đã kiểm khớp 57/57 bản trước khi bỏ bảng).

@@ -900,16 +900,6 @@ export interface ProductPricesTable {
   item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
-export interface CatalogTombstonesTable {
-  id: Generated<string>;
-  tenant_id: string;
-  entity: 'product' | 'unit' | 'price' | 'price_list' | 'group';
-  key: string;
-  deleted_at: TimestampDefault;
-  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: định danh thay thế khi mã bị bỏ vì đổi / gộp, 0068 (đóng góp)
-  replaced_by_item_id: string | null;
-}
-
 export interface ItemClassesTable {
   id: Generated<string>;
   tenant_id: string;
@@ -1806,6 +1796,18 @@ export interface DocumentVersionsTable {
   created_at: TimestampDefault;
 }
 
+/** 0146 + 0157/0160: thùng rác danh mục — dòng đã xoá (khôi phục được), dấu xoá cho luồng danh mục (tombstone.<loại>), ảnh chụp trước khi nạp dữ liệu gốc (backup.default-data), bản lưu cột bỏ đi. */
+export interface CatalogTrashTable {
+  id: Generated<string>;
+  tenant_id: string;
+  catalog: string;
+  row_key: string;
+  label: string;
+  payload: Json<unknown>;
+  deleted_by: string;
+  deleted_at: TimestampDefault;
+}
+
 /** 0156: sổ chứng từ chung — đầu phiếu mọi chứng từ nghiệp vụ, đồng bộ bằng trigger từ bảng nguồn (không ghi tay). */
 export interface BusinessDocumentsTable {
   id: Generated<string>;
@@ -2049,7 +2051,6 @@ export interface Database {
   price_lists: PriceListsTable;
   price_list_branches: PriceListBranchesTable;
   product_prices: ProductPricesTable;
-  catalog_tombstones: CatalogTombstonesTable;
   tax_info_patches: TaxInfoPatchesTable;
   cash_transfer_confirmations: CashTransferConfirmationsTable;
   tax_invoice_lines: TaxInvoiceLinesTable;
@@ -2070,6 +2071,7 @@ export interface Database {
   ledger_entry_sequences: LedgerEntrySequencesTable;
   document_sequences: DocumentSequencesTable;
   business_documents: BusinessDocumentsTable;
+  catalog_trash: CatalogTrashTable;
   document_versions: DocumentVersionsTable;
   document_links: DocumentLinksTable;
   document_attachments: DocumentAttachmentsTable;

@@ -11,7 +11,7 @@
  * Luật dữ liệu:
  *   - Mỗi mặt hàng có đúng MỘT đơn vị tỉ lệ 1 (đơn vị nhỏ nhất) và tối đa một đơn vị bán chính.
  *   - Đổi đơn vị tính / giá của mặt hàng thì chạm products.updated_at → luồng mặt hàng mang theo trọn bộ đơn vị tính.
- *   - Xoá (mặt hàng, dòng giá, bảng giá) ghi catalog_tombstones để hệ thống bán hàng xoá theo.
+ *   - Xoá (mặt hàng, dòng giá, bảng giá) ghi dấu xoá vào catalog_trash (catalog 'tombstone.<loại>', 0160) để hệ thống bán hàng xoá theo.
  */
 import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
@@ -116,9 +116,17 @@ export function checkUnits(units: UnitInput[]): string | null {
   return null;
 }
 
-async function tombstone(trx: Db, tenantId: string, entity: 'product' | 'unit' | 'price' | 'price_list' | 'group', keys: string[]) {
+// [2026-11-18 Nguyễn Văn Thủy] dấu xoá danh mục ở catalog_trash (0160, bỏ catalog_tombstones) (đóng góp)
+type TombEntity = 'product' | 'unit' | 'price' | 'price_list' | 'group';
+async function tombstone(trx: Db, tenantId: string, entity: TombEntity, keys: string[], replacedByItemId?: string) {
   if (!keys.length) return;
-  await trx.insertInto('catalog_tombstones').values(keys.map((key) => ({ tenant_id: tenantId, entity, key }))).execute();
+  await addTombstones(trx, tenantId, entity, keys, replacedByItemId);
+}
+/** Ghi dấu xoá (luồng danh mục báo hệ thống bán hàng xoá theo); đổi / gộp mã kèm định danh mặt hàng thay thế. */
+export async function addTombstones(trx: Db, tenantId: string, entity: TombEntity, keys: string[], replacedByItemId?: string): Promise<void> {
+  if (!keys.length) return;
+  const payload = JSON.stringify(replacedByItemId ? { replacedByItemId } : {});
+  await trx.insertInto('catalog_trash').values(keys.map((key) => ({ tenant_id: tenantId, catalog: `tombstone.${entity}`, row_key: key, label: key, payload, deleted_by: 'system' }))).execute();
 }
 
 // ----------------------------------------------------------------------------------------------- họ mã (mã cha – mã con)
@@ -443,7 +451,8 @@ export async function feedMeta(trx: Db, tenantId: string, since?: string) {
     trx.selectFrom('item_classes').select(['code', 'name', 'parent_code', 'sku_code', 'is_active', 'updated_at']).where('tenant_id', '=', tenantId).where('kind', '=', 'group').orderBy('code').execute(),
     listPriceLists(trx, tenantId),
     trx.selectFrom('price_list_branches').select(['branch_code', 'price_list_code']).where('tenant_id', '=', tenantId).execute(),
-    trx.selectFrom('catalog_tombstones').select(['entity', 'key', 'deleted_at', 'replaced_by_item_id']).where('tenant_id', '=', tenantId).where('deleted_at', '>', new Date(at)).orderBy('deleted_at').execute(),
+    trx.selectFrom('catalog_trash').select(['catalog', 'row_key', 'deleted_at', 'payload']).where('tenant_id', '=', tenantId).where('catalog', 'like', 'tombstone.%')
+      .where('deleted_at', '>', new Date(at)).orderBy('deleted_at').execute(),
   ]);
   return {
     serverTime: new Date().toISOString(),
@@ -451,7 +460,8 @@ export async function feedMeta(trx: Db, tenantId: string, since?: string) {
     priceLists: lists.map(({ branchCodes: _b, pricedRows: _n, ...l }) => l),
     branches: branches.map((b) => ({ branchCode: b.branch_code, priceListCode: b.price_list_code })),
     // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: mã bị bỏ vì đổi / gộp trỏ tới định danh thay thế (đóng góp)
-    tombstones: tomb.map((t) => ({ entity: t.entity, key: t.key, deletedAt: t.deleted_at, replacedByItemId: t.replaced_by_item_id })),
+    tombstones: tomb.map((t) => ({ entity: t.catalog.slice('tombstone.'.length), key: t.row_key, deletedAt: t.deleted_at,
+      replacedByItemId: ((t.payload ?? {}) as { replacedByItemId?: string }).replacedByItemId ?? null })),
   };
 }
 

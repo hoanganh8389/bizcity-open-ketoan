@@ -329,11 +329,21 @@ let triggerCache: string[] | null = null;
 /** `<bảng>.<trigger>` khai trong db/migrations (CREATE TRIGGER … ON …) — cùng cách đọc với DG-DB-2; bảng ngoài public ghi `schema.bảng`. */
 async function declaredTriggers(): Promise<string[]> {
   if (triggerCache) return triggerCache;
+  // [2026-11-18 Nguyễn Văn Thủy] đọc theo thứ tự: DROP TABLE / DROP TRIGGER ở migration sau gỡ trigger (bảng đã gom về lõi) — như gates.lib.mjs (đóng góp)
   const out = new Set<string>();
+  const tbl = (schema: string | undefined, table: string) => (!schema || schema === 'public' ? table : `${schema}.${table}`);
   for (const f of (await readdir(MIGRATIONS_DIR)).filter((x) => x.endsWith('.sql')).sort()) {
-    const text = await readFile(path.join(MIGRATIONS_DIR, f), 'utf8');
-    for (const m of text.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:CONSTRAINT\s+)?TRIGGER\s+(\w+)[\s\S]*?\bON\s+(?:(\w+)\.)?(\w+)/gi)) {
-      out.add(`${!m[2] || m[2] === 'public' ? m[3] : `${m[2]}.${m[3]}`}.${m[1]}`);
+    const text = (await readFile(path.join(MIGRATIONS_DIR, f), 'utf8')).replace(/--[^\n]*/g, '');
+    const events = [
+      ...[...text.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:CONSTRAINT\s+)?TRIGGER\s+(\w+)[\s\S]*?\bON\s+(?:(\w+)\.)?(\w+)/gi)].map((m) => ({ at: m.index ?? 0, op: 'add', key: `${tbl(m[2], m[3]!)}.${m[1]}` })),
+      ...[...text.matchAll(/DROP\s+TRIGGER\s+(?:IF\s+EXISTS\s+)?(\w+)\s+ON\s+(?:(\w+)\.)?(\w+)/gi)].map((m) => ({ at: m.index ?? 0, op: 'drop', key: `${tbl(m[2], m[3]!)}.${m[1]}` })),
+      ...[...text.matchAll(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?((?:\w+\.)?\w+(?:\s*,\s*(?:\w+\.)?\w+)*)/gi)]
+        .flatMap((m) => m[1]!.split(',').map((t) => ({ at: m.index ?? 0, op: 'table', key: `${t.trim().replace(/^public\./, '')}.` }))),
+    ].sort((a, b) => a.at - b.at);
+    for (const e of events) {
+      if (e.op === 'add') out.add(e.key);
+      else if (e.op === 'drop') out.delete(e.key);
+      else for (const k of [...out]) if (k.startsWith(e.key) && !k.slice(e.key.length).includes('.')) out.delete(k);
     }
   }
   return (triggerCache = [...out]);
