@@ -10,6 +10,7 @@ import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
 import { theoMa } from './ma-hien-hanh.js';
+import { checkContractItems } from './pham-vi-hop-dong.js';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const supplierProductSchema = z.object({
@@ -27,21 +28,24 @@ export const supplierProductSchema = z.object({
   validTo: day.nullable().optional().transform((x) => x || null),
   note: z.string().max(300).default(''),
   isActive: z.boolean().default(true),
+  /** Thuộc hợp đồng mua (0163); không gửi = giữ như cũ (dòng mới: không theo hợp đồng). */
+  contractCode: z.string().trim().max(64).optional(),
 }).refine((x) => !x.validFrom || !x.validTo || x.validTo >= x.validFrom, { message: 'Ngày "Đến" phải từ ngày "Hiệu lực từ" trở đi', path: ['validTo'] })
   .refine((x) => !x.isDefaultUnit || Boolean(x.partnerCode), { message: '"Đặt theo ĐVT này" chỉ dùng cho dòng có nhà cung cấp (giá chung không có ĐVT giao)', path: ['isDefaultUnit'] });
 export type SupplierProductInput = z.infer<typeof supplierProductSchema>;
 
 const iso = (v: unknown) => (v ? String(v instanceof Date ? v.toISOString() : v).slice(0, 10) : undefined);
-type Row = { id: string; partner_code: string | null; sku: string; unit: string; is_default_unit: boolean; ncc_sku: string; ncc_name?: string; price: string | null; price_includes_vat: boolean; warn_pct: string; valid_from: unknown; valid_to: unknown; note: string; is_active: boolean; created_by: string; updated_by: string; created_at: unknown; updated_at: unknown };
+type Row = { id: string; partner_code: string | null; sku: string; unit: string; is_default_unit: boolean; ncc_sku: string; ncc_name?: string; price: string | null; price_includes_vat: boolean; warn_pct: string; valid_from: unknown; valid_to: unknown; note: string; is_active: boolean; contract_code?: string; created_by: string; updated_by: string; created_at: unknown; updated_at: unknown };
 const toItem = (r: Row): SupplierProduct => ({
   id: String(r.id), partnerCode: r.partner_code, sku: r.sku, unit: r.unit, isDefaultUnit: r.is_default_unit, nccSku: r.ncc_sku, nccName: r.ncc_name ?? '', price: r.price === null ? null : toNumber(r.price),
-  priceIncludesVat: r.price_includes_vat, warnPct: toNumber(r.warn_pct), validFrom: iso(r.valid_from), validTo: iso(r.valid_to), note: r.note, isActive: r.is_active,
+  priceIncludesVat: r.price_includes_vat, warnPct: toNumber(r.warn_pct), validFrom: iso(r.valid_from), validTo: iso(r.valid_to), note: r.note, isActive: r.is_active, contractCode: r.contract_code ?? '',
   createdBy: r.created_by, updatedBy: r.updated_by, createdAt: new Date(r.created_at as string).toISOString(), updatedAt: new Date(r.updated_at as string).toISOString(),
 });
 
 /** Dòng mặt hàng & giá mua: theo NCC (kèm giá chung nếu withGeneral), theo mã, hoặc theo danh sách mã. */
-export async function listSupplierProducts(trx: Db, tenantId: string, f: { partnerCode?: string; sku?: string; skus?: string[]; withGeneral?: boolean; all?: boolean } = {}): Promise<SupplierProduct[]> {
+export async function listSupplierProducts(trx: Db, tenantId: string, f: { partnerCode?: string; sku?: string; skus?: string[]; withGeneral?: boolean; all?: boolean; contractCode?: string } = {}): Promise<SupplierProduct[]> {
   let q = trx.selectFrom('supplier_products').selectAll().where('tenant_id', '=', tenantId);
+  if (f.contractCode) q = q.where('contract_code', '=', f.contractCode);
   if (!f.all) q = q.where('is_active', '=', true);
   if (f.partnerCode) q = f.withGeneral ? q.where((eb) => eb.or([eb('partner_code', '=', f.partnerCode!), eb('partner_code', 'is', null)])) : q.where('partner_code', '=', f.partnerCode);
   if (f.sku) q = q.where('sku', '=', f.sku);
@@ -54,10 +58,10 @@ export async function listSupplierProducts(trx: Db, tenantId: string, f: { partn
 // [2026-11-12 Nguyễn Văn Thủy] lịch sử thay đổi giá NCC theo mã: trả từng thay đổi (trước → sau) để ghi nhật ký (đóng góp)
 export type SupplierChange = { sku: string; partnerCode: string | null; text: string };
 const dmyOf = (d?: string | null) => (d ? d.split('-').reverse().join('/') : '');
-const descOf = (x: { unit: string; price?: number | null; priceIncludesVat: boolean; validFrom?: string | null; validTo?: string | null; nccSku?: string; nccName?: string; note?: string; isActive?: boolean }) => [
+const descOf = (x: { contractCode?: string; unit: string; price?: number | null; priceIncludesVat: boolean; validFrom?: string | null; validTo?: string | null; nccSku?: string; nccName?: string; note?: string; isActive?: boolean }) => [
   x.unit, x.price !== null && x.price !== undefined ? `${x.price.toLocaleString('vi-VN')}đ (${x.priceIncludesVat ? 'gồm' : 'chưa'} thuế)` : 'chưa có giá',
   x.validFrom || x.validTo ? `hiệu lực ${dmyOf(x.validFrom) || '…'} → ${dmyOf(x.validTo) || '…'}` : '',
-  x.nccSku ? `mã NCC ${x.nccSku}` : '', x.nccName ? `tên NCC ${x.nccName}` : '', x.note ? `ghi chú: ${x.note}` : '', x.isActive === false ? 'ngừng áp' : '',
+  x.contractCode ? `hợp đồng ${x.contractCode}` : '', x.nccSku ? `mã NCC ${x.nccSku}` : '', x.nccName ? `tên NCC ${x.nccName}` : '', x.note ? `ghi chú: ${x.note}` : '', x.isActive === false ? 'ngừng áp' : '',
 ].filter(Boolean).join(', ');
 export async function saveSupplierProducts(trx: Db, tenantId: string, actor: string, items: SupplierProductInput[], isDemo = false): Promise<{ added: number; updated: number; changes: SupplierChange[] }> {
   // Hai dòng cùng NCC × mã × ĐVT × hiệu lực trong một lần lưu: báo ngay (không âm thầm ghi đè nhau).
@@ -67,6 +71,8 @@ export async function saveSupplierProducts(trx: Db, tenantId: string, actor: str
     if (seen.has(k)) throw Errors.validation(`Dòng ${seen.get(k)! + 1} và dòng ${i + 1} trùng nhau: ${it.partnerCode || 'giá chung'} · ${it.sku} · ${it.unit}${it.validFrom ? ` · từ ${it.validFrom}` : ''}`);
     seen.set(k, i);
   });
+  // Dòng giá thuộc hợp đồng: mã phải thuộc hàng hoá của hợp đồng.
+  for (const c of new Set(items.map((i) => i.contractCode ?? '').filter(Boolean))) await checkContractItems(trx, tenantId, c, items.filter((i) => i.contractCode === c).map((i) => i.sku), 'Giá mua theo hợp đồng');
   const skus = [...new Set(items.map((i) => i.sku))];
   const units = await unitsOf(trx, tenantId, skus);
   let added = 0, updated = 0;
@@ -76,7 +82,7 @@ export async function saveSupplierProducts(trx: Db, tenantId: string, actor: str
     if (!us?.length) throw Errors.validation(`Mã ${it.sku} chưa có trong danh mục mặt hàng`);
     const u = us.find((x) => x.unit.toLowerCase() === it.unit.toLowerCase());
     if (!u) throw Errors.validation(`Mã ${it.sku} không có ĐVT "${it.unit}" — chọn một trong: ${us.map((x) => x.unit).join(', ')} (khai thêm ĐVT ở Danh mục mặt hàng)`);
-    const values = { partner_code: it.partnerCode, sku: it.sku, unit: u.unit, is_default_unit: it.isDefaultUnit, ncc_sku: it.nccSku, ncc_name: it.nccName, price: it.price === null ? null : String(it.price), price_includes_vat: it.priceIncludesVat, warn_pct: String(it.warnPct), valid_from: it.validFrom, valid_to: it.validTo, note: it.note, is_active: it.isActive, updated_by: actor, updated_at: new Date() };
+    const values = { partner_code: it.partnerCode, sku: it.sku, unit: u.unit, is_default_unit: it.isDefaultUnit, ncc_sku: it.nccSku, ncc_name: it.nccName, price: it.price === null ? null : String(it.price), price_includes_vat: it.priceIncludesVat, warn_pct: String(it.warnPct), valid_from: it.validFrom, valid_to: it.validTo, note: it.note, is_active: it.isActive, contract_code: it.contractCode ?? '', updated_by: actor, updated_at: new Date() };
     // Một NCC chỉ một ĐVT đặt hàng mặc định cho mỗi mã.
     if (it.isDefaultUnit && it.partnerCode) await trx.updateTable('supplier_products').set({ is_default_unit: false }).where('tenant_id', '=', tenantId).where('partner_code', '=', it.partnerCode).where('sku', '=', it.sku).where('unit', '<>', u.unit).execute();
     const existing = it.id ? { id: it.id } : await trx.selectFrom('supplier_products').select('id').where('tenant_id', '=', tenantId).where('sku', '=', it.sku).where('unit', '=', u.unit)
@@ -84,6 +90,7 @@ export async function saveSupplierProducts(trx: Db, tenantId: string, actor: str
       // Có ngày hiệu lực: đúng dòng hiệu lực đó (đổi giá theo đợt = thêm dòng); không ghi ngày: cập nhật dòng mới nhất cùng NCC × mã × ĐVT.
       .$if(Boolean(it.validFrom), (q) => q.where('valid_from', '=', it.validFrom!)).orderBy(sql`valid_from DESC NULLS LAST`).limit(1).executeTakeFirst();
     if (existing && !it.validFrom) delete (values as Partial<typeof values>).valid_from;
+    if (existing && it.contractCode === undefined) delete (values as Partial<typeof values>).contract_code;
     const after = descOf({ ...it, unit: u.unit });
     if (existing) {
       const old = await trx.selectFrom('supplier_products').selectAll().where('tenant_id', '=', tenantId).where('id', '=', existing.id).executeTakeFirst();

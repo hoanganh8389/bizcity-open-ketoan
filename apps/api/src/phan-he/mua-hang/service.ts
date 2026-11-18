@@ -17,6 +17,7 @@ import { analyze, isOutsideOrder, loadCtx, withBrands, type Analysis } from './a
 import { postPurchase, refReceipts, spreadOverMany } from './posting.js';
 import { logEvents, type LogRow } from './log.js';
 import { dependentsOf, docInputSchema, FREEZE_KINDS, freezeOf, getDoc, listDocs, listDocsFor, nextDocNo, withUserLabels, withDebtStatus, withLedgerStatus, rowValues, ADJUST_KINDS, type AdjustInfo, type DocInput, type StoredDoc } from './store.js';
+import { checkContract } from './hop-dong.js';
 import { resolveWarehouse } from '../../modules/warehouses/default-warehouse.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
@@ -102,6 +103,23 @@ export const purchaseService = {
       if (cur && LOCKED.has(cur.status)) throw Errors.conflict(cur.status === 'approved' ? 'Phiếu đã duyệt: bỏ duyệt rồi mới sửa được' : 'Phiếu đã huỷ');
       if (cur && cur.kind !== input.kind) throw Errors.validation('Không đổi được loại chứng từ');
       const doc = toPDoc(input, id ?? 'new');
+      // [2026-11-18 Nguyễn Văn Thủy] hợp đồng: trống mà phiếu gắn phiếu thuộc hợp đồng (nhập từ đơn, trả / chi phí / trả tiền theo phiếu nhập) thì kế thừa; có thì kiểm (đóng góp)
+      // [2026-11-19 Nguyễn Văn Thủy] mọi phiếu thuộc hợp đồng đều mang số hợp đồng: phiếu gắn chứng từ của NHIỀU hợp đồng thì tách phiếu
+      // (công nợ theo hợp đồng không chia được một khoản cho hai hợp đồng); phiếu thưởng lấy hợp đồng của chính sách (đóng góp)
+      if (doc.refIds?.length) {
+        const refs = docs.filter((d) => doc.refIds!.includes(d.id));
+        const codes = [...new Set(refs.map((d) => d.contractCode ?? ''))];
+        if (codes.length > 1) throw Errors.validation(`Phiếu gắn chứng từ của nhiều hợp đồng khác nhau (${codes.map((c) => c || 'không theo hợp đồng').join(', ')}) — lập mỗi hợp đồng một phiếu để công nợ theo hợp đồng đúng`);
+        const ref = codes[0] ?? '';
+        if (!doc.contractCode && ref) doc.contractCode = ref;
+        else if (ref && doc.contractCode && doc.contractCode !== ref) throw Errors.validation(`Chứng từ gắn kèm thuộc hợp đồng ${ref}, phiếu đang chọn hợp đồng ${doc.contractCode} — chọn lại cho khớp`);
+      }
+      if (!doc.contractCode && doc.kind === 'rebate' && doc.rebate?.policyCode) {
+        const pol = await trx.selectFrom('purchase_policies').select('scope').where('tenant_id', '=', auth.tenantId).where('code', '=', doc.rebate.policyCode).executeTakeFirst();
+        const hd = (pol?.scope as { contractCode?: string } | undefined)?.contractCode;
+        if (hd) doc.contractCode = hd;
+      }
+      if (doc.contractCode) await checkContract(trx, auth.tenantId, doc.contractCode, doc.partnerCode, cur?.contractCode === doc.contractCode);
       // Phiếu hàng (trừ đơn đặt): mọi dòng thuộc một phân kho của chi nhánh — trống thì kho mặc định, sai chi nhánh thì báo lỗi.
       if (STOCK_KINDS.includes(doc.kind)) doc.warehouseCode = (await resolveWarehouse(trx, auth.tenantId, doc.branchCode, doc.warehouseCode)) || undefined;
       else delete doc.warehouseCode;

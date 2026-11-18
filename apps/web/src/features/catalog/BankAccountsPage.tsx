@@ -9,6 +9,7 @@ import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { NutQuyTac } from '@/components/QuyTacDanhMuc';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
@@ -37,7 +38,7 @@ export function BankAccountsPage() {
   const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/bank-accounts/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['bank-accounts'] }); } });
   return (
     <>
-      <PageHeader title="Ngân hàng" code="DM09" subtitle="Tài khoản ngân hàng; mỗi tài khoản gắn một tài khoản hạch toán 112 chi tiết" helpKey="hinh-thuc-thanh-toan" />
+      <PageHeader actions={<NutQuyTac entity="bank" logEntity="bank-accounts" ten="tài khoản ngân hàng" />} title="Ngân hàng" code="DM09" subtitle="Tài khoản ngân hàng; mỗi tài khoản gắn một tài khoản hạch toán 112 chi tiết" helpKey="hinh-thuc-thanh-toan" />
       <div className="card">
         <CatalogToolbar
           trash={{ catalog: 'bank-accounts', title: 'Tài khoản ngân hàng', sel: sel ? { key: sel.code } : null }}

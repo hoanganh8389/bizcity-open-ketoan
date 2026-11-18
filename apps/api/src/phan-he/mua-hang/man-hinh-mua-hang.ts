@@ -96,6 +96,15 @@ dangKyManHinh({
     huy: { quyen: 'mua-hang:chinh-sach-xoa', nhan: 'Xoá', loai: 'huy', lenh: [L('DELETE', '/api/v1/purchase/policies/:id')] },
   },
 });
+// [2026-11-18 Nguyễn Văn Thủy] Hợp đồng mua hàng (MH29) + Công nợ theo hợp đồng (MH30) (đóng góp)
+dangKyManHinh({
+  key: 'mua-hang.hop-dong', ma: 'MH29', nhom, nhan: 'Hợp đồng mua hàng', duongDan: '/mua-hang/hop-dong',
+  thaoTac: { xem: xem('hop-dong'), sua: { quyen: 'mua-hang:hop-dong-sua', nhan: 'Thêm / sửa / thanh lý', loai: 'ghi', lenh: [L('PUT', '/api/v1/purchase/contracts')] } },
+});
+dangKyManHinh({
+  key: 'mua-hang.cong-no-hop-dong', ma: 'MH30', nhom, nhan: 'Công nợ theo hợp đồng', duongDan: '/mua-hang/cong-no-hop-dong',
+  thaoTac: { xem: { quyen: 'mua-hang:hop-dong-xem', nhan: 'Xem', loai: 'xem' } },
+});
 dangKyManHinh({
   key: 'mua-hang.cai-dat', ma: 'MH12', nhom, nhan: 'Cài đặt mua hàng', duongDan: '/mua-hang/cai-dat',
   thaoTac: { xem: xem('cai-dat'), sua: { quyen: 'mua-hang:cai-dat-sua', nhan: 'Lưu cài đặt', loai: 'ghi', lenh: [L('PUT', '/api/v1/purchase/settings')], goc: 'settings:write' } }, // [2026-11-14 07:30 PM kiennt] PHAN-QUYEN — goc (đóng góp)

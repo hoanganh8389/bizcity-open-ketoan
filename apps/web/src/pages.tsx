@@ -9,6 +9,7 @@ import { ConformancePage } from './features/system/ConformancePage';
 import { AccountingProfilePage } from './features/system/AccountingProfilePage';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 Quy định dữ liệu danh mục
 import { CatalogRulesPage } from './features/system/CatalogRulesPage';
+import { NhatKyKiemPage } from './features/system/NhatKyKiemPage';
 // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — HT10 Trụ cột & mức đạt
 import { PillarsPage } from './features/system/PillarsPage';
 import { PolicyPage } from './features/policy/PolicyPage'; // PHASE-031 W4b
@@ -138,6 +139,8 @@ export const pageRoutes = (
     <Route path="he-thong/kiem-chuan" element={<ConformancePage />} />
     <Route path="he-thong/ho-so-ke-toan" element={<AccountingProfilePage />} />
     <Route path="he-thong/quy-dinh-danh-muc" element={<CatalogRulesPage />} />
+    {/* [2026-11-19 Nguyễn Văn Thủy] HT19 nhật ký kiểm khai báo (đóng góp) */}
+    <Route path="he-thong/nhat-ky-kiem" element={<NhatKyKiemPage />} />
     <Route path="he-thong/huong-dan" element={<HuongDanPage />} />
     <Route path="he-thong/tru-cot" element={<PillarsPage />} />
     <Route path="he-thong/chinh-sach" element={<PolicyPage />} />

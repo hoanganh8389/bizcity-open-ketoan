@@ -30,30 +30,36 @@ const L = {
 // lần lượt, cuối rẽ ra các việc làm song song; mỗi thẻ liệt kê màn bấm thẳng vào. Mua hàng còn giữ V1 (SO_DO, ?xem=rut-gon-v1) (đóng góp)
 const ban = { khach: { label: 'Khách hàng', path: '/danh-muc/khach-hang' }, mh: { label: 'Mặt hàng', path: '/danh-muc/mat-hang' } };
 export const SO_DO_V2: Record<string, SoDo> = {
+  // [2026-11-18 Nguyễn Văn Thủy] theo quy trình mua hàng của kế toán: khai báo → ký hợp đồng (giá, chính sách) → kế hoạch → đặt & nhận →
+  // hoá đơn, công nợ, thanh toán → trả hàng / quyết toán / thanh lý (đóng góp)
   'mua-hang': {
     title: 'Nghiệp vụ mua hàng — làm theo thứ tự',
     rows: [],
     nhom: {
       chuoi: [
-        { nhom: 'Khai báo', icon: 'Settings', ghiChu: 'Nhà cung cấp, chính sách, mặt hàng', items: [
-          { label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap' }, { label: 'Chính sách mua hàng', path: '/mua-hang/chinh-sach' },
-          { label: 'Quản lý mặt hàng', path: '/danh-muc/mat-hang' }, { label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat' }] },
+        { nhom: 'Khai báo', icon: 'Settings', ghiChu: 'Nhà cung cấp, mặt hàng', items: [
+          { label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap' }, { label: 'Quản lý mặt hàng', path: '/danh-muc/mat-hang' },
+          { label: 'Nhóm hàng', path: '/danh-muc/phan-loai-hang' }, { label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat' }] },
+        // [2026-11-19 Nguyễn Văn Thủy] bước ký hợp đồng chỉ có hợp đồng (giá + chính sách khai trong từng hợp đồng); màn chính sách chung ở "Báo cáo" / lối tắt (đóng góp)
+        { nhom: 'Ký hợp đồng', icon: 'FileSignature', ghiChu: 'Từng NCC: hợp đồng, giá mua, chính sách', items: [
+          { label: 'Hợp đồng mua hàng', path: '/mua-hang/hop-dong' }] },
         { nhom: 'Kế hoạch đặt hàng', icon: 'Gauge', ghiChu: 'Tồn max, số cần mua', items: [
           { label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max' }, { label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max' },
           { label: 'Công thức đặt hàng', path: '/mua-hang/cong-thuc' }, { label: 'Phân tích đặt hàng', path: '/mua-hang/dat-hang' }] },
-        { nhom: 'Đặt & nhận hàng', icon: 'PackageCheck', ghiChu: 'Đơn đặt, nhập kho, chuyển shop', items: [
+        { nhom: 'Đặt & nhận hàng', icon: 'PackageCheck', ghiChu: 'Đơn đặt theo hợp đồng, nhập kho', items: [
           { label: 'Đơn mua hàng', path: mua('order') }, { label: 'Mua hàng (nhập kho)', path: mua('receipt') },
           { label: 'Nhận / xuất quà tặng', path: mua('gift_in') }, { label: 'Chi phí mua hàng', path: mua('cost') },
           { label: 'Chuyển hàng xuống shop', path: '/mua-hang/chuyen-shop' }] },
-        { nhom: 'Hoá đơn & thanh toán', icon: 'Banknote', ghiChu: 'Hoá đơn đầu vào, trả tiền NCC', items: [
-          { label: 'Xử lý hoá đơn đầu vào', path: '/mua-hang/hoa-don-ncc' },
-          { label: 'Tình hình thực hiện đơn mua hàng', path: '/mua-hang/doi-chieu' }, { label: 'Trả tiền nhà cung cấp', path: mua('payment') },
-          { label: 'Ứng trước nhà cung cấp', path: mua('prepayment') }, { label: 'Hạn mức & công nợ đến hạn', path: '/mua-hang/han-muc' }] },
+        { nhom: 'Hoá đơn, công nợ, thanh toán', icon: 'Banknote', ghiChu: 'Hoá đơn đầu vào, công nợ, trả tiền', items: [
+          { label: 'Xử lý hoá đơn đầu vào', path: '/mua-hang/hoa-don-ncc' }, { label: 'Tình hình thực hiện đơn mua hàng', path: '/mua-hang/doi-chieu' },
+          { label: 'Hạn mức & công nợ đến hạn', path: '/mua-hang/han-muc' }, { label: 'Công nợ theo hợp đồng', path: '/mua-hang/cong-no-hop-dong' },
+          { label: 'Trả tiền nhà cung cấp', path: mua('payment') }, { label: 'Ứng trước nhà cung cấp', path: mua('prepayment') }] },
       ],
       nhanh: [
-        { nhom: 'Trả lại, giảm giá', icon: 'RotateCcw', items: [
+        { nhom: 'Trả hàng, quyết toán, thanh lý', icon: 'RotateCcw', items: [
           { label: 'Trả lại hàng mua', path: mua('return') }, { label: 'Đổi hàng nhà cung cấp', path: mua('exchange') },
-          { label: 'Giảm giá hàng mua', path: mua('rebate') }, { label: 'Tính thưởng cuối kỳ', path: '/mua-hang/thuong' }] },
+          { label: 'Giảm giá hàng mua', path: mua('rebate') }, { label: 'Tính thưởng cuối kỳ', path: '/mua-hang/thuong' },
+          { label: 'Thanh lý hợp đồng', path: '/mua-hang/hop-dong' }] },
         { nhom: 'Giá vốn, lô hàng', icon: 'Calculator', items: [
           { label: 'Phân bổ & giá vốn thực tế', path: '/mua-hang/phan-bo' }, { label: 'Lô & hạn dùng', path: '/mua-hang/lo-han' },
           { label: 'Quà tặng', path: '/mua-hang/qua-tang' }] },
@@ -174,7 +180,7 @@ export const SO_DO: Record<string, SoDo> = {
       { label: 'Tổng hợp mua hàng theo mặt hàng', path: '/mua-hang/tong-hop-mat-hang' }, { label: 'Tổng hợp công nợ phải trả nhà cung cấp', path: '/bao-cao/cong-no-phai-tra' },
       { label: 'Biên bản đối chiếu và xác nhận công nợ phải trả', path: '/cong-no/doi-chieu' },
     ],
-    links: [{ label: 'Nhà cung cấp', icon: 'Truck', path: '/mua-hang/nha-cung-cap' }, L.vthh, { label: 'Chính sách mua', icon: 'Tags', path: '/mua-hang/chinh-sach' }, { label: 'Công thức đặt hàng', icon: 'Sigma', path: '/mua-hang/cong-thuc' }, { label: 'Cài đặt mua hàng', icon: 'Settings', path: '/mua-hang/cai-dat' }],
+    links: [{ label: 'Nhà cung cấp', icon: 'Truck', path: '/mua-hang/nha-cung-cap' }, L.vthh, { label: 'Hợp đồng mua', icon: 'FileSignature', path: '/mua-hang/hop-dong' }, { label: 'Chính sách mua', icon: 'Tags', path: '/mua-hang/chinh-sach' }, { label: 'Công thức đặt hàng', icon: 'Sigma', path: '/mua-hang/cong-thuc' }, { label: 'Cài đặt mua hàng', icon: 'Settings', path: '/mua-hang/cai-dat' }],
   },
   'ban-hang': {
     title: 'Nghiệp vụ bán hàng',

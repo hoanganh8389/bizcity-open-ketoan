@@ -245,8 +245,11 @@ export const inventoryReportService = {
 
   // [2026-11-11 Nguyễn Văn Thủy] ô chọn hàng có cột Tồn (theo chi nhánh đang làm việc nếu gửi lên) (đóng góp)
   /** Mặt hàng để chọn ở ô "Mã hàng" (tìm theo mã hoặc tên, tối đa `limit` dòng): mã, tên, ĐVT, thuế; `stock` = tồn hiện tại (ĐVT nhỏ nhất) cộng mọi kho, hoặc của chi nhánh `branchCode`. */
-  async items(auth: AuthContext, q: { search?: string; limit?: number; branchCode?: string }) {
+  // [2026-11-19 Nguyễn Văn Thủy] đã chọn nhãn hàng (nhóm cấp 2) thì chỉ tìm / chọn được mặt hàng thuộc nhãn đó (đóng góp)
+  async items(auth: AuthContext, q: { search?: string; limit?: number; branchCode?: string; brands?: string; skus?: string }) {
     const like = `%${(q.search ?? '').trim().toLowerCase()}%`;
+    const brands = (q.brands ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+    const onlySkus = (q.skus ?? '').split(',').map((x) => x.trim()).filter(Boolean);
     const branch = q.branchCode?.trim() || undefined;
     const res = await sql<{ sku: string; name: string; unit: string; taxOutCode: string | null; taxInCode: string | null; stock: string | null }>`
       WITH pick AS (
@@ -256,6 +259,8 @@ export const inventoryReportService = {
           SELECT DISTINCT sku, name, unit, NULL::text, NULL::text FROM inventory_movements WHERE tenant_id = ${auth.tenantId}
         ) x
          WHERE sku <> '' AND (lower(sku) LIKE ${like} OR lower(name) LIKE ${like})
+           ${brands.length ? sql`AND sku IN (SELECT p.sku FROM products p WHERE p.tenant_id = ${auth.tenantId} AND p.brand_code = ANY(${brands}::text[]))` : sql``}
+           ${onlySkus.length ? sql`AND sku = ANY(${onlySkus}::text[])` : sql``}
          GROUP BY sku ORDER BY sku LIMIT ${q.limit ?? 50})
       SELECT p.*, (SELECT SUM(m.qty) FROM inventory_movements m
                     ${branch ? sql`JOIN branches b ON b.id = m.branch_id AND b.code = ${branch}` : sql``}

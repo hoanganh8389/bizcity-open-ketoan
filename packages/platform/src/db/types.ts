@@ -751,6 +751,8 @@ export interface SupplierProductsTable {
   updated_at: TimestampDefault;
   /** Tên hàng bên NCC. */
   ncc_name: Generated<string>;
+  /** 0163: thuộc hợp đồng mua (mã Danh mục hợp đồng), rỗng = không theo hợp đồng. */
+  contract_code: Generated<string>;
 }
 
 /** Tồn max / min theo chi nhánh – kho – mã (0020). */

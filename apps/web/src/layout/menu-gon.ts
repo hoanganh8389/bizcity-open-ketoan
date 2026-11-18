@@ -62,7 +62,7 @@ export const GON_DEFS: GonDef[] = [
   {
     key: 'mua-hang', label: 'Mua hàng', icon: 'ShoppingBag', description: 'Đơn mua hàng, mua hàng, trả lại, giảm giá, hóa đơn đầu vào', color: '#e8710a', module: 'mua-hang', homeLabel: 'Quy trình',
     // [2026-11-15 Nguyễn Văn Thủy] menu đủ theo sơ đồ Quy trình: chứng từ → hoá đơn đầu vào → tồn max, đặt hàng → công nợ, thưởng, giá vốn → danh mục, cài đặt (đóng góp)
-    the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), MUA('payment'), '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/han-muc', '/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/mua-hang/cai-dat'],
+    the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), MUA('payment'), '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/han-muc', '/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/mua-hang/cong-no-hop-dong', '/mua-hang/cai-dat'],
     sections: [
       { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('exchange'), MUA('rebate'), MUA('gift_in'), MUA('cost'), MUA('payment'), MUA('prepayment'), '/mua-hang/tong-hop'] },
       { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/mua-hang/doi-chieu'] }, // [2026-11-17 Nguyễn Văn Thủy] tạm ẩn THUE01 Hoá đơn từ cơ quan thuế — đã có Hoá đơn đầu vào (đóng góp)
@@ -70,11 +70,11 @@ export const GON_DEFS: GonDef[] = [
       // [2026-11-15 Nguyễn Văn Thủy] sổ kho / tồn kho theo mặt hàng đưa lên menu cho dễ thấy (đóng góp)
       { label: 'Sổ kho, tồn kho', paths: ['/mua-hang/so-kho', '/mua-hang/ton-kho'] },
       { label: 'Công nợ, thưởng, giá vốn', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky'] },
-      { label: 'Danh mục, cài đặt', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/chinh-sach', '/danh-muc/mat-hang', '/mua-hang/cai-dat'] },
+      { label: 'Danh mục, cài đặt', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/danh-muc/mat-hang', '/mua-hang/cai-dat'] },
     ],
     reports: [
       { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/chi-tiet-chinh-sach', '/mua-hang/so-kho', '/mua-hang/ton-kho'] },
-      { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no', '/cong-no/doi-chieu'] },
+      { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/mua-hang/cong-no-hop-dong', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no', '/cong-no/doi-chieu'] },
     ],
   },
   {
@@ -188,7 +188,7 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Đơn vị', paths: ['/cau-hinh/don-vi', '/cau-hinh/mau-in', '/cau-hinh/bao-cao-chung-tu', '/cau-hinh/khoi-anh'] },
       { label: 'Người dùng', paths: ['/cau-hinh/nguoi-dung', '/app/phan-quyen/vai-tro', '/cau-hinh/khoa-api'] },
       // [2026-11-15 Nguyễn Văn Thủy] MH26 tách / gộp mã con chuyển từ Mua hàng sang Thiết lập (người quản trị đặt một lần) (đóng góp)
-      { label: 'Cấu hình', paths: ['/he-thong/cau-hinh', '/he-thong/chinh-sach', '/he-thong/quy-dinh-danh-muc', '/mua-hang/bien-the', '/tien-ich/nhap-excel', '/tien-ich/du-lieu-goc', '/tien-ich/add-in', '/app/thu-vien/kho', '/addins/spreadsheet-ai', '/addins/tro-ly'] },
+      { label: 'Cấu hình', paths: ['/he-thong/cau-hinh', '/he-thong/chinh-sach', '/he-thong/quy-dinh-danh-muc', '/he-thong/nhat-ky-kiem', '/mua-hang/bien-the', '/tien-ich/nhap-excel', '/tien-ich/du-lieu-goc', '/tien-ich/add-in', '/app/thu-vien/kho', '/addins/spreadsheet-ai', '/addins/tro-ly'] },
       { label: 'Kiểm tra dữ liệu', paths: ['/he-thong/kiem-chuan', '/he-thong/ho-so-ke-toan', '/he-thong/ban-danh-gia', '/he-thong/tru-cot', '/he-thong/so-chung-tu', '/bao-cao/kiem-tra-chung-tu', '/tien-ich/ct-mat-lien-ket', '/tien-ich/ct-lech-than-chi-tiet', '/tien-ich/ct-lech-phieu-goc', '/so-cai/but-toan', '/so-cai/sua-dau-but-toan', '/nghiep-vu/but-toan-mau', '/nghiep-vu/but-toan-lap'] },
       { label: 'Tài liệu', paths: ['/tien-ich/huong-dan', '/yeu-cau/tai-chinh-ke-toan', '/tien-ich/kien-truc', '/tien-ich/can-cu', '/mua-hang/hieu-nghiep-vu', '/mua-hang/tong-quan', '/mua-hang/csdl'] },
       { label: 'API', paths: ['/tich-hop/thu-api', '/tich-hop/huong-dan', '/tich-hop/nguon-du-lieu'] },

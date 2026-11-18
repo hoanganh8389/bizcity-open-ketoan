@@ -10,6 +10,8 @@ import { api } from '@/lib/api';
 import { PERIOD_PRESETS, presetOf, rememberPeriod } from '@/lib/format';
 import { useFilterPanel } from './filterPanel';
 import { PanelBranchList } from './ReportPanel';
+import { CayDonVi } from './CayDonVi';
+import { useOrgTree } from '@/lib/orgUnits';
 
 /**
  * Khoảng ngày kèm ô "Kỳ" chọn nhanh (tháng này, tháng trước, quý, năm…).
@@ -101,8 +103,11 @@ export function BranchPicker({ value, onChange, placeholder = 'Gõ mã hoặc t�
 // [2026-11-11 Nguyễn Văn Thủy] thêm nhanh chi nhánh ngay ở ô chọn (đóng góp)
 const BranchForm = lazy(() => import('@/features/catalog/BranchesPage').then((m) => ({ default: m.BranchForm })));
 
-export function BranchMultiSelect({ value, onChange, label, branches }: { value: string; onChange: (v: string) => void; label: string; branches: BranchOption[] }) {
+// [2026-11-19 Nguyễn Văn Thủy] thẻ "Cây": tích nút cơ cấu tổ chức = chọn mọi chi nhánh (shop) bên dưới; không tới kho (đóng góp)
+export function BranchMultiSelect({ value, onChange, label, branches, emptyText = 'Tất cả chi nhánh' }: { value: string; onChange: (v: string) => void; label: string; branches: BranchOption[]; /** Chữ khi chưa chọn chi nhánh nào. */ emptyText?: string }) {
   const [open, setOpen] = useState(false);
+  const [view, setView] = useState<'cay' | 'ds'>('cay');
+  const tree = useOrgTree();
   const [text, setText] = useState('');
   const box = useRef<HTMLDivElement>(null);
   const picked = useMemo(() => (value ? value.split(',') : []), [value]);
@@ -119,7 +124,7 @@ export function BranchMultiSelect({ value, onChange, label, branches }: { value:
   const toggle = (code: string) => onChange((picked.includes(code) ? picked.filter((c) => c !== code) : [...picked, code]).join(','));
   const q = text.trim().toLowerCase();
   const shown = branches.filter((b) => !q || b.code.toLowerCase().includes(q) || b.name.toLowerCase().includes(q));
-  const summary = picked.length === 0 ? 'Tất cả chi nhánh' : picked.length === 1 ? `${picked[0]} — ${branches.find((b) => b.code === picked[0])?.name ?? ''}` : `${picked.length} chi nhánh: ${picked.join(', ')}`;
+  const summary = picked.length === 0 ? emptyText : picked.length === 1 ? `${picked[0]} — ${branches.find((b) => b.code === picked[0])?.name ?? ''}` : `${picked.length} chi nhánh: ${picked.join(', ')}`;
 
   return (
     <div className="field multi" ref={box}>
@@ -128,7 +133,15 @@ export function BranchMultiSelect({ value, onChange, label, branches }: { value:
         <span>{summary}</span><ChevronDown size={14} />
       </button>
       {open && (
-        <div className="multi-drop" role="listbox" aria-multiselectable="true">
+        <div className={`multi-drop${view === 'cay' ? ' multi-tree' : ''}`} role="listbox" aria-multiselectable="true">
+          <div className="tabs" style={{ margin: 0, padding: '4px 8px 0' }}>
+            <button type="button" className={`tab ${view === 'cay' ? 'active' : ''}`} onClick={() => setView('cay')} title="Tích một vùng / chi nhánh trong cơ cấu tổ chức = chọn mọi shop bên dưới">Cây</button>
+            <button type="button" className={`tab ${view === 'ds' ? 'active' : ''}`} onClick={() => setView('ds')}>Danh sách</button>
+          </div>
+          {view === 'cay' ? <div style={{ padding: 8 }}>
+            <CayDonVi tree={tree.data} showBranches checkable picked={picked} onPick={(b) => onChange(b.join(','))} height={340} openLevel={2} />
+            <div className="row" style={{ gap: 6, marginTop: 6, justifyContent: 'flex-end' }}><button type="button" className="btn btn-sm" onClick={() => onChange('')}>{emptyText}</button><button type="button" className="btn btn-sm btn-primary" onClick={() => setOpen(false)}>Xong</button></div>
+          </div> : <>
           <div className="multi-tools">
             <input className="input" placeholder="Tìm mã hoặc tên…" value={text} onChange={(e) => setText(e.target.value)} autoFocus />
             <button type="button" className="btn btn-sm" onClick={() => onChange('')}>Tất cả</button>
@@ -143,7 +156,8 @@ export function BranchMultiSelect({ value, onChange, label, branches }: { value:
             ))}
             {shown.length === 0 && <div className="muted" style={{ padding: 8 }}>Không thấy chi nhánh nào</div>}
           </div>
-          <div className="multi-foot">{picked.length === 0 ? 'Chưa đánh dấu chi nhánh nào = xem tất cả' : `Đang chọn ${picked.length} chi nhánh`}</div>
+          <div className="multi-foot">{picked.length === 0 ? `Chưa đánh dấu chi nhánh nào = ${emptyText.toLowerCase()}` : `Đang chọn ${picked.length} chi nhánh`}</div>
+          </>}
         </div>
       )}
     </div>

@@ -120,7 +120,9 @@ async function ingest(trx: Db, auth: AuthContext, raw: Record<string, unknown>, 
   return { docKey: doc.docKey, docNo: e.doc_no, eventId: e.id, role };
 }
 
-async function voucher(trx: Db, auth: AuthContext, input: Record<string, unknown>, role: string): Promise<Link> {
+async function voucher(trx: Db, auth: AuthContext, input: Record<string, unknown>, role: string, contract?: string): Promise<Link> {
+  // Phiếu thuộc hợp đồng: mọi dòng phiếu chi / phiếu kế toán mang mã hợp đồng (công nợ theo hợp đồng).
+  if (contract && Array.isArray(input.lines)) input = { ...input, lines: (input.lines as Record<string, unknown>[]).map((l) => (l.contract ? l : { ...l, contract })) };
   const created = await voucherService.createIn(trx, auth, voucherInputSchema.parse(await withDepartment(trx, auth.tenantId, input)));
   return { docKey: created.docKey, docNo: created.docNo, eventId: String(created.id), role };
 }
@@ -184,7 +186,7 @@ async function payVoucher(trx: Db, auth: AuthContext, d: PDoc, A: Accounts, amou
     purpose: deposit || (rest > 0.5 && !settle.length) ? 'deposit_paid' : undefined,
     lines: [...byAccount].map(([debitAccount, amt]) => ({ debitAccount, creditAccount: money, amount: Math.round(amt), description: deposit ? 'Ứng trước nhà cung cấp' : 'Trả tiền nhà cung cấp' })),
     settle: settle.length ? settle.map(({ debtItemId, amount: a }) => ({ debtItemId, amount: Math.round(a) })) : undefined,
-  }, role);
+  }, role, d.contractCode);
 }
 
 /** Đối trừ hai nhóm khoản công nợ (ứng trước ↔ hoá đơn, hàng trả ↔ hàng nhận). */
@@ -231,6 +233,7 @@ export const refReceipts = (d: PDoc, docs: PDoc[]) => docs.filter((x) => x.kind 
 const base = (d: PDoc, partner: Awaited<ReturnType<typeof partnerInfo>>, key: string, version: number) => ({
   docKey: key, version, branchCode: d.branchCode, docNo: d.docNo, docDate: d.docDate, description: d.note || d.reason || '', partner,
   sourceSystem: 'erp', sourceRef: { type: 'purchase_document', id: d.id, label: d.docNo },
+  ...(d.contractCode ? { contract: d.contractCode } : {}),
 });
 
 /** Ghi sổ một chứng từ mua hàng đã qua kiểm tra. Trả về các chứng từ kế toán đã sinh. */
@@ -323,7 +326,7 @@ export async function postPurchase(trx: Db, auth: AuthContext, d: StoredDoc, cal
           docType: 'manual', branchCode: d.branchCode, docDate: d.docDate, description: `Chiết khấu thanh toán được hưởng — ${d.docNo}`, partnerCode: d.partnerCode, reference: d.docNo, purpose: 'ap_decrease',
           lines: [{ debitAccount: it.account_code, creditAccount: A.finIncome, amount: d.ckttAmount, description: 'Chiết khấu thanh toán trả đúng hạn' }],
           settle: [{ debtItemId: String(it.id), amount: Math.min(d.ckttAmount, left(it)) }],
-        }, 'Chiết khấu thanh toán'));
+        }, 'Chiết khấu thanh toán', d.contractCode));
       }
       break;
     }

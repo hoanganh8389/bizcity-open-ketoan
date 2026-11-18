@@ -13,6 +13,8 @@ export const muaHangMenu: MenuItem[] = [
     children: [
       // [2026-11-11 Nguyễn Văn Thủy] trả lại MH01: nơi cấu hình chính sách, giá, hạn mức theo từng NCC (đóng góp)
       { key: 'mh-ncc', label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap', code: 'MH01' },
+      // [2026-11-18 Nguyễn Văn Thủy] hợp đồng mua: gốc của giá, chính sách, đơn đặt (0163) (đóng góp)
+      { key: 'mh-hop-dong', label: 'Hợp đồng mua hàng', path: '/mua-hang/hop-dong', code: 'MH29' },
       { key: 'mh-tong-hop', label: 'Tổng hợp mua hàng', path: '/mua-hang/tong-hop', code: 'MH11' },
       // [2026-11-11 Nguyễn Văn Thủy] lối vào theo loại chứng từ (cùng màn MH11, lọc sẵn loại) (đóng góp)
       { key: 'mh-don-mua', label: 'Đơn mua hàng', path: '/mua-hang/tong-hop?loai=order', code: 'MH11' },
@@ -73,6 +75,7 @@ export const muaHangMenu: MenuItem[] = [
       { key: 'mh-nk-mua-hang', label: 'Sổ nhật ký mua hàng', path: '/bao-cao/nhat-ky-mua-hang', code: 'ACC77' },
       { key: 'mh-thue-vao', label: 'Báo cáo thuế vào', path: '/thue/bang-ke-mua-vao', code: 'ACC64' },
       { key: 'mh-cong-no', label: 'Sổ tổng hợp công nợ phát sinh', path: '/bao-cao/cong-no', code: 'ACC38' },
+      { key: 'mh-cong-no-hop-dong', label: 'Công nợ theo hợp đồng', path: '/mua-hang/cong-no-hop-dong', code: 'MH30' },
       { key: 'mh-nxt', label: 'BC nhập xuất tồn hàng hoá', path: '/bao-cao/nhap-xuat-ton', code: 'ACC83' },
     ],
   },

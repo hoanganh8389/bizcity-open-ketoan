@@ -3,15 +3,15 @@
  * Đi từ NCC: ô Nhà cung cấp đứng đầu; mã tự đặt "<mã NCC>-<loại>" (ví dụ NC100227-HANMUC), tên tự đặt theo NCC + nội dung.
  * Mở từ hồ sơ NCC thì NCC khoá sẵn và chỉ chọn các loại thuộc thẻ đang mở.
  */
-import { useEffect, useState } from 'react';
-import { POLICY_LABEL, STACK_KINDS, canRepeat, giftItemsOf, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { useEffect, useRef, useState } from 'react';
+import { POLICY_LABEL, STACK_KINDS, canRepeat, giftItemsOf, isRepeat, scopeBranches, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { Field, Hoi, Modal, useViewAgain } from '@/components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
-import { BranchPicker } from '@/components/filters';
+import { BranchMultiSelect, BranchPicker, useBranches } from '@/components/filters';
 import { ItemPicker, PartnerPicker } from '@/components/pickers';
 import { CODE_PREFIX, KIND_HINT, RuleEditor, TEMPLATES, defaultRule, ruleText } from './quyTac';
-import { monthStart, purchaseApi, today, useBrands, useNames, useSupplierBrands } from '../du-lieu';
+import { contractFor, monthStart, purchaseApi, today, useBrands, useNames, useSupplierBrands } from '../du-lieu';
 import { BrandInput } from '../chung';
 import { LichSu } from '../thanh-phan/LichSu';
 import { PhienBan } from './PhienBan';
@@ -32,15 +32,16 @@ function toGiftTable(v: Policy): Policy {
   return { ...v, scope: { ...v.scope, sku: undefined }, rule: { splitIntoCost: Boolean(v.rule.splitIntoCost), items: giftItemsOf(v) } };
 }
 
-export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose, onSaved }: { value: Policy; all: Policy[]; kinds?: PolicyKind[]; lockPartner?: boolean; onClose: () => void; onSaved: (code: string, stay?: boolean) => void }) {
+export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, lockContract, onClose, onSaved }: { value: Policy; all: Policy[]; kinds?: PolicyKind[]; lockPartner?: boolean; /** Mở từ khung hợp đồng: hợp đồng khoá sẵn (kể cả "không theo hợp đồng"). */ lockContract?: boolean; onClose: () => void; onSaved: (code: string, stay?: boolean) => void }) {
   const isNew = value.id.startsWith('new-');
   const tt = useThaoTac('mua-hang.chinh-sach'); // [2026-11-13 08:00 PM kiennt] NT-HT-003 — nút Ghi theo thao tác "them" / "sua" của màn MH04 (đóng góp)
   const names = useNames();
   const brands = useBrands(all);
-  const scopeTag = (x: Policy) => [x.scope.brandCode && `nhãn ${x.scope.brandCode}`, x.scope.sku && `mã ${x.scope.sku}`, x.scope.branchCode && names.branchName(x.scope.branchCode)].filter(Boolean).join(', ');
+  const branchList = useBranches().data ?? [];
+  const scopeTag = (x: Policy) => [x.scope.brandCode && `nhãn ${x.scope.brandCode}`, x.scope.sku && `mã ${x.scope.sku}`, scopeBranches(x.scope).length === 1 ? names.branchName(scopeBranches(x.scope)[0]!) : scopeBranches(x.scope).length ? `${scopeBranches(x.scope).length} chi nhánh` : ''].filter(Boolean).join(', ');
   const autoCode = (x: Policy) => {
     const head = x.scope.partnerCode ? `${x.scope.partnerCode}-${CODE_PREFIX[x.kind]}` : `${CODE_PREFIX[x.kind]}-${(x.scope.brandCode || x.scope.sku || 'CHUNG').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(-10)}`;
-    const base = x.scope.partnerCode && (x.scope.sku || x.scope.branchCode) ? `${head}-${(x.scope.sku ?? x.scope.branchCode ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(-10)}` : head;
+    const base = x.scope.partnerCode && (x.scope.sku || scopeBranches(x.scope).length === 1) ? `${head}-${(x.scope.sku ?? scopeBranches(x.scope)[0] ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(-10)}` : head;
     const used = new Set(all.filter((o) => o.id !== x.id).map((o) => o.code));
     let c = base; for (let n = 2; used.has(c); n++) c = `${base}-${n}`;
     return c;
@@ -58,6 +59,27 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
   useEffect(() => { if (!touched.name) setP((x) => ({ ...x, name: autoName(x) })); }, [names.partnerName(p.scope.partnerCode ?? '')]); // eslint-disable-line react-hooks/exhaustive-deps
   const upd = (next: Policy) => setP({ ...next, code: touched.code ? next.code : autoCode(next), name: touched.name ? next.name : autoName(next) });
   const viewAgain = useViewAgain();
+  // [2026-11-18 Nguyễn Văn Thủy] hợp đồng của NCC (0163) + nhãn của mã đang chọn (đóng góp)
+  const contracts = useQuery({ queryKey: ['mua-hang', 'contracts', p.scope.partnerCode ?? ''], enabled: Boolean(p.scope.partnerCode), queryFn: () => purchaseApi.contracts(p.scope.partnerCode), staleTime: 60_000 }).data ?? [];
+  const skuBrand = useQuery({ queryKey: ['mua-hang', 'lookup', p.scope.sku ?? ''], enabled: Boolean(p.scope.sku), staleTime: 60_000, queryFn: () => purchaseApi.lookupProducts([p.scope.sku!]) }).data?.[0]?.brandCode ?? '';
+  // [2026-11-18 Nguyễn Văn Thủy] chính sách mới của NCC đang có hợp đồng hiệu lực: tự chọn hợp đồng đó (bỏ chọn được) (đóng góp)
+  const hdTouched = useRef(false);
+  useEffect(() => {
+    if (!isNew || lockContract || hdTouched.current || p.scope.contractCode || !contracts.length) return;
+    const c = contractFor(contracts, today(), scopeBranches(p.scope)[0] ?? '');
+    if (c) upd({ ...p, scope: { ...p.scope, contractCode: c.code } });
+  }, [contracts]); // eslint-disable-line react-hooks/exhaustive-deps
+  // [2026-11-19 Nguyễn Văn Thủy] đã chọn nhãn hàng (nhóm cấp 2) thì chỉ tìm / chọn được mặt hàng thuộc nhãn đó (đóng góp)
+  /** Nhãn giới hạn mã hàng: nhãn của chính sách, không có thì nhãn ghi trong hợp đồng của chính sách. */
+  const hdBrands = contracts.find((c) => c.code === p.scope.contractCode)?.brandCodes ?? [];
+  /** Hợp đồng ghi mã: chỉ chọn các mã đó (khoanh vùng theo hàng hoá của hợp đồng). */
+  const limitSkus = contracts.find((c) => c.code === p.scope.contractCode)?.skus ?? [];
+  const limitBrands = p.scope.brandCode ? [p.scope.brandCode] : contracts.find((c) => c.code === p.scope.contractCode)?.brandCodes ?? [];
+  const pickSku = (c: string) => {
+    if (!c) { setScope('sku', ''); return; }
+    // Chọn mã: nhãn tự theo mã (danh mục mặt hàng) — không phải tìm nhãn bằng tay.
+    void purchaseApi.lookupProducts([c]).then((r) => upd({ ...p, scope: { ...p.scope, sku: c, brandCode: r[0]?.brandCode || p.scope.brandCode } })).catch(() => setScope('sku', c));
+  };
   const programKinds = useQuery({ queryKey: ['program-kinds'], queryFn: () => api.get<{ code: string; name: string; side: string; isActive: boolean }[]>('/api/v1/program-kinds'), staleTime: 60_000 });
   // Sửa chính sách đã có rồi Ghi: ở lại hộp thoại, quay về chế độ xem (stay = bên gọi chỉ nạp lại, không đóng).
   const save = async () => {
@@ -80,6 +102,14 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
       <Field label={REBATE_KINDS.includes(p.kind) ? 'Ký với nhà cung cấp (trống = mọi NCC)' : 'Nhà cung cấp (trống = áp cho mọi NCC)'} full>
         {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
       </Field>
+      {p.scope.partnerCode && lockContract && <Field full label="Thuộc hợp đồng"><div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}>{p.scope.contractCode ? <b className="mono">{p.scope.contractCode}</b> : 'Không theo hợp đồng'}</div></Field>}
+      {p.scope.partnerCode && !lockContract && <Field full label="Thuộc hợp đồng" tip="Chính sách ghi trong hợp đồng mua nào (để xem cùng hợp đồng, đối chiếu, thanh lý). Trống = chính sách chung của NCC. Cách áp vào phiếu không đổi">
+        <select className="select input" value={p.scope.contractCode ?? ''} onChange={(e) => { hdTouched.current = true; const c = contracts.find((x) => x.code === e.target.value); upd({ ...p, scope: { ...p.scope, contractCode: e.target.value || undefined }, ...(c && isNew ? { validFrom: c.startDate ?? p.validFrom, validTo: c.endDate ?? p.validTo } : {}) }); }}>
+          <option value="">— không theo hợp đồng —</option>
+          {contracts.filter((c) => c.status !== 'liquidated' || c.code === p.scope.contractCode).map((c) => <option key={c.code} value={c.code}>{c.code} · {c.statusText}</option>)}
+        </select>
+        {isNew && p.scope.contractCode && !hdTouched.current && <div className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>Tự chọn hợp đồng đang hiệu lực của NCC — chương trình ngoài hợp đồng thì chọn "không theo hợp đồng"</div>}
+      </Field>}
       <Field label="Loại chính sách" full>
         <select className="select input" value={p.kind} onChange={(e) => { const k = e.target.value as PolicyKind; upd({ ...p, kind: k, rule: TEMPLATES[k]?.[0]?.rule ? { ...TEMPLATES[k][0]!.rule } : defaultRule(k) }); }}>{kinds.map((k) => <option key={k} value={k}>{POLICY_LABEL[k]}</option>)}</select>
         <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{KIND_HINT[p.kind]}</div>
@@ -91,29 +121,29 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
           <span className="muted"> Đơn vị con có chính sách riêng cùng loại thì chính sách riêng được ưu tiên.</span></span>
       </label>}
       {REBATE_KINDS.includes(p.kind) && <CacBenThuong p={p} onChange={(rule) => upd({ ...p, rule })} />}
-      {p.kind !== 'item_discount' && p.kind !== 'promo_gift' && <Field label="Mã hàng (trống = mọi mã)"><ItemPicker value={p.scope.sku ?? ''} onChange={(c) => setScope('sku', c)} /></Field>}
-      <Field label="Chi nhánh (trống = mọi chi nhánh)"><BranchPicker value={p.scope.branchCode ?? ''} onChange={(c) => setScope('branchCode', c)} activeOnly /></Field>
+      {p.kind !== 'item_discount' && p.kind !== 'promo_gift' && <Field label="Mã hàng (trống = mọi mã)"><ItemPicker brands={limitBrands} skus={limitSkus} value={p.scope.sku ?? ''} onChange={pickSku} />{p.scope.sku && <div className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>Nhãn của mã: {skuBrand ? `${brands.find((b) => b.code === skuBrand)?.name ?? skuBrand} (${skuBrand})` : 'chưa có nhãn ở danh mục mặt hàng'}</div>}</Field>}
+      <BranchMultiSelect label="Chi nhánh áp dụng" emptyText="Mọi chi nhánh" branches={branchList} value={scopeBranches(p.scope).join(',')} onChange={(v) => upd({ ...p, scope: { ...p.scope, branchCode: undefined, branchCodes: v ? v.split(',') : undefined } })} />
       {<Field label="Nhãn hàng (trống = mọi nhãn của NCC)">
-        <BrandInput value={p.scope.brandCode ?? ''} brands={brands} prefer={nccBrands} onChange={(b) => setScope('brandCode', b)} />
+        <BrandInput value={p.scope.brandCode ?? ''} brands={hdBrands.length ? brands.filter((b) => hdBrands.includes(b.code)) : brands} prefer={nccBrands} onChange={(b) => upd({ ...p, scope: { ...p.scope, brandCode: b || undefined, ...(b && p.scope.sku && skuBrand && skuBrand !== b ? { sku: undefined } : {}) } })} />
         <div className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>Áp cho các dòng hàng có nhãn này (nhãn theo danh mục mặt hàng){p.scope.partnerCode && nccBrands.length ? ` · NCC đang bán: ${nccBrands.slice(0, 4).map((b) => b.name).join(', ')}` : ''}</div>
       </Field>}
       <div className="full" style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
         <b style={{ fontSize: 13 }}>Nội dung</b>
         {templates.length > 0 && <div className="mh-templates"><span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>Mẫu nhanh:</span>{templates.map((t) => <button key={t.label} type="button" onClick={() => upd({ ...p, rule: { ...t.rule, ...(p.rule.apply ? { apply: p.rule.apply } : {}), ...partiesOf(p.rule) } })}>{t.label}</button>)}</div>}
-        <div style={{ marginTop: 6 }}><RuleEditor kind={p.kind} rule={p.rule as Record<string, any>} onChange={(rule) => upd({ ...p, rule: { ...rule, ...partiesOf(p.rule) } })} /></div>
+        <div style={{ marginTop: 6 }}><RuleEditor brands={limitBrands} skus={limitSkus} kind={p.kind} rule={p.rule as Record<string, any>} onChange={(rule) => upd({ ...p, rule: { ...rule, ...partiesOf(p.rule) } })} /></div>
         <div className="alert alert-ok" style={{ fontSize: 12.5, marginTop: 6 }}>Phần mềm sẽ hiểu là: <b>{ruleText(p)}</b> — áp cho {p.scope.partnerCode ? names.partnerName(p.scope.partnerCode) : 'mọi nhà cung cấp'}{scopeTag(p) ? `, ${scopeTag(p)}` : ''}.</div>
       </div>
       {STACK_KINDS.includes(p.kind) && p.kind !== 'promo_gift' && <CachAp p={p} onChange={(rule) => upd({ ...p, rule })} />}
-      <Field label="Mã (tự đặt, sửa được)"><input className="input mono" value={p.code} onChange={(e) => { setTouched({ ...touched, code: true }); setP({ ...p, code: e.target.value.trim() }); }} /></Field>
-      <Field label="Tên (tự đặt, sửa được)"><input className="input" value={p.name} onChange={(e) => { setTouched({ ...touched, name: true }); setP({ ...p, name: e.target.value }); }} /></Field>
+      <Field label="Mã chính sách" tip="Tự đặt theo NCC + loại; sửa được"><input className="input mono" value={p.code} onChange={(e) => { setTouched({ ...touched, code: true }); setP({ ...p, code: e.target.value.trim() }); }} /></Field>
+      <Field label="Tên chính sách" tip="Tự đặt theo NCC + nội dung; sửa được"><input className="input" value={p.name} onChange={(e) => { setTouched({ ...touched, name: true }); setP({ ...p, name: e.target.value }); }} /></Field>
       <Field label="Hiệu lực từ"><input className="input" type="date" value={p.validFrom ?? ''} onChange={(e) => setP({ ...p, validFrom: e.target.value || undefined })} /></Field>
       <Field label="Đến (trống = không thời hạn)"><input className="input" type="date" value={p.validTo ?? ''} onChange={(e) => setP({ ...p, validTo: e.target.value || undefined })} /></Field>
       <Field label="Ưu tiên (2 chính sách cùng phạm vi, hoặc 2 chương trình áp riêng: số lớn thắng)"><input className="input num" value={p.priority ?? 0} onChange={(e) => setP({ ...p, priority: Number(e.target.value) || 0 })} /></Field>
       {/* [2026-11-10 05:00 PM Nguyễn Văn Thủy] PHASE-026 — loại chương trình (đóng góp) */}
-      <Field label="Loại chương trình"><select className="select input" value={(p as Policy & { programKind?: string | null }).programKind ?? ''} onChange={(e) => setP({ ...p, programKind: e.target.value || null } as Policy)}>
+      {!lockContract && <Field label="Loại chương trình"><select className="select input" value={(p as Policy & { programKind?: string | null }).programKind ?? ''} onChange={(e) => setP({ ...p, programKind: e.target.value || null } as Policy)}>
         <option value="">— không —</option>
         {(programKinds.data ?? []).filter((k) => k.side !== 'sale' && k.isActive).map((k) => <option key={k.code} value={k.code}>{k.code} — {k.name}</option>)}
-      </select></Field>
+      </select></Field>}
       <Field label="Trạng thái"><select className="select input" value={p.isActive ? '1' : '0'} onChange={(e) => setP({ ...p, isActive: e.target.value === '1' })}><option value="1">Đang áp</option><option value="0">Tắt</option></select></Field>
       {!isNew && <Field label="Nội dung đổi thì áp cho chứng từ từ ngày (phiếu trước ngày này giữ bản cũ)"><input className="input" type="date" value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} /></Field>}
       {!isNew && <Field label={`Lý do đổi${effectiveFrom && effectiveFrom < today() ? ' (bắt buộc khi áp lùi về trước hôm nay)' : ''}`}><input className="input" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>}

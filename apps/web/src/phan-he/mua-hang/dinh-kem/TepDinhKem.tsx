@@ -13,7 +13,8 @@ import { XemTep, canPreview } from './XemTep';
 const size = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const toBase64 = (f: File) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] ?? ''); r.onerror = rej; r.readAsDataURL(f); });
 
-export function TepDinhKem({ ownerType, ownerId, defaultKind = 'khac', compact }: { ownerType: OwnerType; ownerId: string; defaultKind?: string; compact?: boolean }) {
+// [2026-11-19 Nguyễn Văn Thủy] simple: chỉ kéo thả / chọn tệp, không chọn loại (bản scan hợp đồng) (đóng góp)
+export function TepDinhKem({ ownerType, ownerId, defaultKind = 'khac', compact, simple }: { ownerType: OwnerType; ownerId: string; defaultKind?: string; compact?: boolean; /** Bỏ ô chọn loại tệp và cột Loại — mọi tệp gửi là loại mặc định. */ simple?: boolean }) {
   const q = useQuery({ queryKey: ['mua-hang', 'att', ownerType, ownerId], queryFn: () => purchaseApi.attachments(ownerType, ownerId), enabled: Boolean(ownerId) && !ownerId.startsWith('new-') });
   const [kind, setKind] = useState(defaultKind);
   const [busy, setBusy] = useState(false);
@@ -38,17 +39,17 @@ export function TepDinhKem({ ownerType, ownerId, defaultKind = 'khac', compact }
       <div className={`mh-drop ${drag ? 'on' : ''}`} onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); void upload(e.dataTransfer.files); }}>
         <Upload size={18} />
         <span>{busy ? 'Đang gửi…' : 'Kéo thả tệp vào đây hoặc'}</span>
-        <select className="select input" style={{ width: 170, height: 28 }} value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(kinds).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+        {!simple && <select className="select input" style={{ width: 170, height: 28 }} value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(kinds).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>}
         <button type="button" className="btn btn-sm" disabled={busy} onClick={() => input.current?.click()}>Chọn tệp…</button>
         <input ref={input} type="file" multiple hidden onChange={(e) => e.target.files && void upload(e.target.files)} />
       </div>
       {err && <div className="alert alert-bad" style={{ marginTop: 6 }}>{err}</div>}
       <table className="mh-mini" style={{ marginTop: 6 }}>
-        {!compact && <thead><tr><th>Loại</th><th>Tệp</th><th className="num">Dung lượng</th><th>Người gửi</th><th>Thời gian</th><th /></tr></thead>}
+        {!compact && <thead><tr>{!simple && <th>Loại</th>}<th>Tệp</th><th className="num">Dung lượng</th><th>Người gửi</th><th>Thời gian</th><th /></tr></thead>}
         <tbody>
           {(q.data?.files ?? []).map((f) => (
             <tr key={f.id}>
-              <td><span className="badge badge-info">{f.kindLabel}</span></td>
+              {!simple && <td><span className="badge badge-info">{f.kindLabel}</span></td>}
               <td style={{ whiteSpace: 'nowrap' }}><button type="button" data-view-ok className="btn btn-xs btn-ghost" onClick={() => (canPreview(f) ? setPreview(f) : void purchaseApi.openAttachment(f))} title={canPreview(f) ? 'Xem nhanh trên web' : 'Tải về'}>{canPreview(f) ? <Eye size={12} /> : <Paperclip size={12} />} {f.fileName}</button>
                 <button type="button" data-view-ok className="btn btn-xs btn-ghost" title="Tải về" onClick={() => void purchaseApi.openAttachment(f)}><Download size={12} /></button></td>
               {!compact && <><td className="num">{size(f.size)}</td><td>{f.uploadedBy}</td><td>{new Date(f.createdAt).toLocaleString('vi-VN', { hour12: false })}</td></>}

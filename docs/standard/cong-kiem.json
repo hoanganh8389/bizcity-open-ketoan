@@ -498,9 +498,31 @@
         "IN-VAT-001",
         "ITEM-BLOCK-001",
         "ITEM-BLOCK-002",
+        "ITEM-BLOCK-003",
+        "ITEM-BLOCK-004",
+        "ITEM-BLOCK-005",
+        "ITEM-BLOCK-006",
+        "ITEM-BLOCK-007",
+        "ITEM-BLOCK-008",
+        "ITEM-BLOCK-009",
+        "ITEM-BLOCK-010",
+        "ITEM-BLOCK-011",
+        "ITEM-BLOCK-013",
+        "ITEM-BLOCK-014",
+        "ITEM-BLOCK-015",
+        "ITEM-BLOCK-016",
+        "ITEM-BLOCK-017",
+        "ITEM-BLOCK-018",
+        "ITEM-BLOCK-019",
+        "ITEM-BLOCK-020",
+        "ITEM-BLOCK-021",
+        "ITEM-BLOCK-022",
+        "ITEM-BLOCK-023",
         "ITEM-HINT-001",
         "ITEM-HINT-002",
         "ITEM-HINT-003",
+        "ITEM-HINT-004",
+        "ITEM-HINT-005",
         "LIB-DEPRECATED-001",
         "LIB-EFFECTIVE-001",
         "LIB-REMOVED-001",
@@ -508,6 +530,14 @@
         "LIB-UNKNOWN-001",
         "LIB-UNVERIFIED-001",
         "LIB-VALUE-001",
+        "PART-BLOCK-001",
+        "PART-BLOCK-002",
+        "PART-BLOCK-003",
+        "PART-BLOCK-004",
+        "PART-BLOCK-005",
+        "PART-BLOCK-006",
+        "PART-BLOCK-007",
+        "PART-BLOCK-008",
         "PART-HINT-001",
         "PART-HINT-002",
         "PART-HINT-003",
@@ -815,6 +845,24 @@
         "apps/api/test/item-draft.test.ts",
         "apps/api/test/item-master.test.ts",
         "apps/api/test/quy-dinh-danh-muc.test.ts"
+      ],
+      "ITEM-BLOCK-003": [
+        "apps/api/test/quy-tac-mat-hang.test.ts"
+      ],
+      "ITEM-BLOCK-004": [
+        "apps/api/test/quy-tac-mat-hang.test.ts"
+      ],
+      "ITEM-BLOCK-005": [
+        "apps/api/test/quy-tac-mat-hang.test.ts"
+      ],
+      "ITEM-BLOCK-006": [
+        "apps/api/test/quy-tac-mat-hang.test.ts"
+      ],
+      "ITEM-BLOCK-009": [
+        "apps/api/test/quy-tac-mat-hang.test.ts"
+      ],
+      "ITEM-BLOCK-015": [
+        "apps/api/test/quy-tac-mat-hang.test.ts"
       ],
       "ITEM-HINT-001": [
         "apps/api/test/bien-the-dinh-danh.test.ts",
@@ -2178,6 +2226,11 @@
         "migration": "0121_mst_phien_ban_theo_ngay.sql"
       },
       {
+        "name": "item_classes_mirror",
+        "table": "item_classes",
+        "migration": "0163_hop_dong_mua_xuyen_suot.sql"
+      },
+      {
         "name": "item_classification_guard",
         "table": "item_classification",
         "migration": "0065_mat_hang_dinh_danh.sql"
@@ -2436,6 +2489,11 @@
         "name": "products_autoadd_unit_name",
         "table": "products",
         "migration": "0014_danh_muc_dvt.sql"
+      },
+      {
+        "name": "products_class_from_group",
+        "table": "products",
+        "migration": "0163_hop_dong_mua_xuyen_suot.sql"
       },
       {
         "name": "products_created_by",

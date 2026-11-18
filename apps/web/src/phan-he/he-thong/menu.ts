@@ -26,6 +26,8 @@ export const heThongMenu: MenuItem[] = [
       { key: 'ban-danh-gia', label: 'Bàn làm việc kế toán', path: '/he-thong/ban-danh-gia', code: 'HT08', permission: 'review:read' },
       // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: kế toán trưởng duyệt luật nhắc, tắt / bật tự thêm mặt hàng từ chứng từ (người có catalog:read xem được)
       { key: 'quy-dinh-danh-muc', label: 'Quy định dữ liệu danh mục', path: '/he-thong/quy-dinh-danh-muc', code: 'HT09', permission: 'catalog:read' },
+      // [2026-11-19 Nguyễn Văn Thủy] HT19 nhật ký kiểm khai báo: mỗi lần lưu — đạt / bị chặn, mã lỗi, mã tra cứu (đóng góp)
+      { key: 'nhat-ky-kiem', label: 'Nhật ký kiểm khai báo', path: '/he-thong/nhat-ky-kiem', code: 'HT19', permission: 'catalog:read' },
       // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — HT10: bảng trụ cột × mức đạt của Core (ai đăng nhập cũng xem được — kim chỉ nam chung)
       { key: 'tru-cot', label: 'Trụ cột & mức đạt', path: '/he-thong/tru-cot', code: 'HT10' },
       // [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: HT13 Cấu hình hệ thống, bản chỉ đọc (ai đăng nhập cũng xem được; khoá bí mật không hiện giá trị)

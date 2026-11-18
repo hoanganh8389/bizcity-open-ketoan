@@ -30,6 +30,8 @@ import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
 import { skuInfo } from '@bizcity/mua-hang-domain';
 import { flashSaved, savedNote, useCatalogWhy, useWarnAck } from '@/components/WhyPanel';
+import { KetQuaKiem } from '@/components/KetQuaKiem';
+import { boKiemForm, ghiLoiForm } from '@/lib/kiemForm';
 import type { CatalogWarnAck } from '@ketoan/contracts';
 
 type ClassKind = 'brand' | 'industry' | 'group' | 'type';
@@ -84,6 +86,15 @@ const parseNum = (s: string): number | null => {
 };
 
 /** startTab / startEditing: mở thẳng một thẻ ở chế độ sửa (ví dụ "+ĐVT" trên phiếu mua mở thẻ ĐVT). */
+// [2026-11-19 Nguyễn Văn Thủy] câu báo của form → mã trong bộ quy tắc mặt hàng (docs/nghiep-vu/25): form và máy chủ thống kê chung một bộ mã (đóng góp)
+const MA_FORM: [RegExp, string][] = [
+  [/Mã mới hay Mã biến thể/, 'ITEM-BLOCK-021'], [/mã cha|Mã cha|biến thể/, 'ITEM-BLOCK-008'], [/nhóm hàng|Nhóm hàng/, 'ITEM-BLOCK-010'],
+  [/Chưa có mã hàng|Chưa nhập mã hàng/, 'ITEM-BLOCK-019'], [/chỉ gồm chữ số và chữ cái/, 'ITEM-BLOCK-020'], [/chữ ở đầu|chữ ở cuối/, 'ITEM-BLOCK-007'],
+  [/Chưa nhập tên/, 'ITEM-BLOCK-003'], [/Tên hàng tối đa/, 'ITEM-BLOCK-004'], [/Tên hàng trùng/, 'ITEM-BLOCK-005'], [/thuế suất/, 'ITEM-HINT-004'],
+  [/đơn vị tính nhỏ nhất|Chưa khai đơn vị tính/, 'ITEM-BLOCK-001'], [/Tối đa 10 đơn vị tính/, 'ITEM-BLOCK-017'], [/chưa chọn nhà cung cấp/, 'ITEM-BLOCK-022'], [/giá bán/, 'ITEM-BLOCK-023'],
+];
+const maLoiForm = (msg: string) => MA_FORM.find(([re]) => re.test(msg))?.[1] ?? 'ITEM-FORM';
+
 export function ProductFullForm({ sku, initial, classes, groupPath, onClose, startTab, startEditing, onSaved }: {
   sku: string | null; // null = thêm mới
   initial?: Partial<FullProduct>;
@@ -118,6 +129,32 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const [errMsg, setErrMsg] = useState('');
   const [taxDetail, setTaxDetail] = useState(false);
   const set = (p: Partial<FullProduct>) => setV((x) => ({ ...x, ...p }));
+  // [2026-11-19 Nguyễn Văn Thủy] tự lưu nháp (docs/nghiep-vu/25 §3.3): đang thêm mới thì mọi thay đổi giữ ở trình duyệt; thoát hỏi lưu nháp
+  // lên máy chủ (đủ mã + tên → mặt hàng Nháp, hiện ở DM10 cột Tình trạng); lần thêm sau còn bản dở thì mời mở lại (đóng góp)
+  const NHAP_KEY = 'ketoan:nhap-mat-hang';
+  const [banDo, setBanDo] = useState<{ v: FullProduct; at: string; kind: '' | 'new' | 'variant' } | null>(() => {
+    if (!isNew || initial?.sku) return null;
+    try { const x = localStorage.getItem(NHAP_KEY); return x ? JSON.parse(x) : null; } catch { return null; }
+  });
+  const daGo = isNew && Boolean(v.name.trim() || (v.sku.trim() && !skuAuto) || v.groupCode || v.units.some((u) => u.unit.trim()));
+  useEffect(() => {
+    if (!isNew || banDo || !daGo) return;
+    const t = setTimeout(() => { try { localStorage.setItem(NHAP_KEY, JSON.stringify({ v, at: new Date().toISOString(), kind })); } catch { /* trình duyệt chặn lưu */ } }, 600);
+    return () => clearTimeout(t);
+  }, [v, kind, daGo, banDo]); // eslint-disable-line react-hooks/exhaustive-deps
+  const boNhap = () => { try { localStorage.removeItem(NHAP_KEY); } catch { /* bỏ qua */ } };
+  const dong = async () => {
+    if (isNew && daGo && !banDo && v.sku.trim() && v.name.trim() && window.confirm('Mặt hàng chưa ghi xong. Lưu thành NHÁP để làm tiếp (hiện ở danh sách với cột Tình trạng "Thiếu…")?\nBấm Huỷ: giữ bản đang nhập trên máy này, lần Thêm sau mở lại được.')) {
+      try {
+        const units = v.units.filter((u) => u.unit.trim()).map((u) => ({ unit: u.unit.trim(), ratio: Number(u.ratio), isDefault: u.isDefault, isPurchaseDefault: Boolean(u.isPurchaseDefault) }));
+        const { sku: _s, unit: _u, units: _us, prices: _ps, variantCode: _vc, sendToTax: _st, ...rest } = v;
+        await api.put(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}?new=1`, { ...rest, ...(units.length ? { units } : {}) });
+        boNhap();
+        void qc.invalidateQueries({ queryKey: ['products'] });
+      } catch (e) { window.alert(`Chưa lưu nháp lên máy chủ được (bản đang nhập vẫn giữ trên máy này):\n${errorText(e)}`); }
+    }
+    onClose();
+  };
 
   const loaded = useQuery({ queryKey: ['catalog-product', sku], queryFn: () => api.get<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku!)}`), enabled: !isNew });
   const lists = useQuery({ queryKey: ['price-lists'], queryFn: () => api.get<PriceList[]>('/api/v1/catalog/price-lists'), staleTime: 60_000 }).data ?? [];
@@ -197,9 +234,11 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
    * cấp 1, mã nhãn = mã nhóm cấp 2); mặt hàng mới thì mã hàng tự sinh (ngành + nhãn + nhóm + số thứ tự). Mã SKU của nhóm
    * chưa khai thì máy chủ tự suy từ mã đang có / tự cấp số kế tiếp.
    */
-  const fromGroup = (r: Pick<SkuPreview, 'industryCode' | 'brandCode'>) => ({
-    ...(classes.industry.some((c) => c.code === r.industryCode) ? { industryCode: r.industryCode } : {}),
-    ...(classes.brand.some((c) => c.code === r.brandCode) ? { brandCode: r.brandCode } : {}),
+  // [2026-11-18 Nguyễn Văn Thủy] chỉ nhận ngành / nhãn cùng mã VÀ cùng tên nút cây (mã nút trùng mã ngành / nhãn cũ khác tên thì không gán nhầm) (đóng góp)
+  const cungTen = (a?: string, b?: string) => (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase();
+  const fromGroup = (r: Pick<SkuPreview, 'industryCode' | 'brandCode'> & { segments?: SkuPreview['segments'] }) => ({
+    ...(classes.industry.some((c) => c.code === r.industryCode && (!r.segments || cungTen(c.name, r.segments.find((x) => x.level === 1)?.name))) ? { industryCode: r.industryCode } : {}),
+    ...(classes.brand.some((c) => c.code === r.brandCode && (!r.segments || cungTen(c.name, r.segments.find((x) => x.level === 2)?.name))) ? { brandCode: r.brandCode } : {}),
   });
   /** Mã thường (9 ký tự) của một mã — bỏ chữ đuôi nếu có. */
   /**
@@ -245,7 +284,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const viewAgain = useViewAgain();
   // Cổng danh mục (PHASE-024 S024-28): còn lỗi chặn → lưu NHÁP (chưa dùng được trên chứng từ); cảnh báo mềm → ghi lý do.
   const baseUnit = v.units.find((u) => Number(u.ratio) === 1 && u.unit.trim())?.unit.trim() ?? v.unit;
-  const why = useCatalogWhy('/api/v1/products/validate', { sku: v.sku.trim(), unit: baseUnit || null, postingGroupCode: v.postingGroupCode || null }, Boolean(v.sku.trim()));
+  const why = useCatalogWhy('/api/v1/products/validate', { sku: v.sku.trim(), unit: baseUnit || null, postingGroupCode: v.postingGroupCode || null, taxOutCode: v.taxOutCode || null, barcode: v.barcode ?? '' }, Boolean(v.sku.trim()));
   const ack = useWarnAck(why.findings);
   const blockCount = why.findings.filter((f) => f.level === 'block').length;
   const save = useMutation({
@@ -265,6 +304,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       })();
     },
     onSuccess: () => {
+      if (isNew) boNhap();
       flashSaved(savedNote(why.findings, { draft: blockCount > 0 }));
       void qc.invalidateQueries({ queryKey: ['products'] });
       void qc.invalidateQueries({ queryKey: ['catalog-product'] });
@@ -316,14 +356,20 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   // [2026-11-16 Nguyễn Văn Thủy] bước đã từng tới thì bấm qua lại tự do (quay lại xem rồi nhảy thẳng về bước đang làm); bước chưa tới thì khoá (đóng góp)
   const [reached, setReached] = useState<string[]>(['info']);
   const reachedIdx = Math.max(stepIdx, ...STEPS.map((x, i) => (reached.includes(x.k) ? i : 0)));
+  // [2026-11-19 Nguyễn Văn Thủy] lỗi bước bị form chặn → ghi nhật ký kiểm; máy tắt kiểm form thì cho qua (trừ chưa chọn loại mã) để máy chủ tự kiểm (đóng góp)
+  const loiBuoc = (k: string) => {
+    const e = stepErr(k);
+    if (e) ghiLoiForm('catalog/products', [e], { key: v.sku.trim(), code: maLoiForm(e) });
+    return e && boKiemForm() && !(k === 'info' && isNew && !kind) ? '' : e;
+  };
   const next = () => {
-    const e = stepErr(tab); setErrMsg(e);
+    const e = loiBuoc(tab); setErrMsg(e);
     if (!e) { const k = STEPS[stepIdx + 1]!.k; setReached((r) => (r.includes(k) ? r : [...r, k])); setTab(k); }
   };
   const goStep = (i: number) => {
     if (i > reachedIdx) return; // bước chưa từng tới: đi bằng Tiếp tục
     // nhảy tới bước sau: các bước ở giữa phải còn hợp lệ, lỗi thì dừng ở bước lỗi
-    for (let j = stepIdx; j < i; j++) { const e = stepErr(STEPS[j]!.k); if (e) { setErrMsg(e); setTab(STEPS[j]!.k); return; } }
+    for (let j = stepIdx; j < i; j++) { const e = loiBuoc(STEPS[j]!.k); if (e) { setErrMsg(e); setTab(STEPS[j]!.k); return; } }
     setErrMsg(''); setTab(STEPS[i]!.k);
   };
   const companyList = lists.find((l) => l.isCompany);
@@ -343,19 +389,19 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   if (!isNew && loaded.isLoading) return <Modal key="dang-tai" wide title="Mặt hàng" onClose={onClose} footer={null}><Loading /></Modal>;
 
   return (<>
-    <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} helpKey="mat-hang" onClose={onClose}
+    <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} helpKey="mat-hang" onClose={() => void dong()}
       footer={isNew ? (
         <>
-          {errMsg ? <span className="neg" style={{ marginRight: 'auto', fontSize: 13, fontWeight: 600 }}>{errMsg}</span>
+          {errMsg ? <span className="neg" style={{ marginRight: 'auto', fontSize: 13, fontWeight: 600 }}>{errMsg} <span className="mono" style={{ fontWeight: 400, fontSize: 11.5 }}>({maLoiForm(errMsg)})</span></span>
             : <span className="muted" style={{ marginRight: 'auto', fontSize: 12.5 }}>Bước {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx]!.t}</span>}
           {stepIdx > 0 && <button className="btn" onClick={() => { setErrMsg(''); setTab(STEPS[stepIdx - 1]!.k); }}>‹ Quay lại</button>}
           {tab !== 'review' && <button className="btn btn-primary" onClick={next}>Tiếp tục ›</button>}
           {tab === 'review' && <button className="btn btn-primary" disabled={save.isPending} onClick={() => {
-            const bad = ['info', 'units', 'mua', 'status'].find((k) => stepErr(k)); const e = bad ? stepErr(bad) : ''; setErrMsg(e);
+            const bad = ['info', 'units', 'mua', 'status'].find((k) => loiBuoc(k)); const e = bad ? stepErr(bad) : ''; setErrMsg(e);
             if (bad) { setTab(bad); return; }
             ack.request((a) => save.mutate(a));
           }}>{save.isPending ? 'Đang ghi…' : 'Ghi mặt hàng'}</button>}
-          <button className="btn" onClick={onClose}>Huỷ bỏ</button>
+          <button className="btn" onClick={() => void dong()}>Huỷ bỏ</button>
         </>
       ) : <>
         <button className="btn btn-primary" disabled={save.isPending}
@@ -363,12 +409,21 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             // [2026-11-12 Nguyễn Văn Thủy] bấm Ghi luôn được; thiếu gì báo rõ ở đầu form (đóng góp)
             const loi = !v.sku.trim() ? 'Chưa nhập mã hàng.' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.' : !v.name.trim() ? 'Chưa nhập tên hàng.' : tenDai ? 'Tên hàng tối đa 50 ký tự.' : v.units.filter((u) => u.unit.trim()).length > 10 ? 'Tối đa 10 đơn vị tính.'
               : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !baseUnit ? 'Chưa khai đơn vị tính: gõ tên ĐVT nhỏ nhất (vd Hộp, Lon, Cái) ở thẻ Đơn vị tính.' : giaThieu;
+            if (loi) ghiLoiForm('catalog/products', [loi], { key: v.sku.trim(), code: maLoiForm(loi) });
+            if (loi && boKiemForm()) { setErrMsg(''); ack.request((a) => save.mutate(a)); return; }
             setErrMsg(loi);
             if (loi) { setTab(loi === giaThieu ? 'prices' : !baseUnit && v.sku.trim() && v.name.trim() && !sameName && !skuLetters ? 'units' : 'info'); return; }
             ack.request((a) => save.mutate(a));
           }}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
-      {errMsg && <div className="alert alert-bad full" style={{ marginBottom: 8 }}>{errMsg}</div>}
+      {errMsg && <div className="alert alert-bad full" style={{ marginBottom: 8 }}>{errMsg} <span className="mono" style={{ fontSize: 11.5 }}>({maLoiForm(errMsg)})</span></div>}
+      {/* [2026-11-19 Nguyễn Văn Thủy] lỗi máy chủ theo bộ quy tắc: N chưa đạt, ✗ / ✓, mã tra cứu + Chép (docs/nghiep-vu/25) (đóng góp) */}
+      <KetQuaKiem error={save.error} entity="item" />
+      {banDo && <div className="alert alert-info full" style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span>Có mặt hàng đang nhập dở lúc {new Date(banDo.at).toLocaleString('vi-VN', { hour12: false })}{banDo.v.name ? <>: <b>{banDo.v.name}</b></> : null}{banDo.v.sku ? <span className="mono"> ({banDo.v.sku})</span> : null}.</span>
+        <button type="button" className="btn btn-sm btn-primary" onClick={() => { setV(banDo.v); setKind(banDo.kind || 'new'); setSkuAuto(false); setBanDo(null); }}>Mở lại</button>
+        <button type="button" className="btn btn-sm" onClick={() => { boNhap(); setBanDo(null); }}>Bỏ, nhập mới</button>
+      </div>}
       <i className="sp-form-mark" hidden />
       {isNew ? (
         <div className="full nx-steps them-mh-steps">
@@ -398,7 +453,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               {parentErr && <div className="alert alert-bad" style={{ marginTop: 6 }}>{parentErr}</div>}
             </Field>
           )}
-          {(kind !== 'variant' || v.groupCode) && <Field label={isNew ? 'Nhóm hàng (*)' : 'Nhóm hàng'} full tip={lockedGroup ? 'Theo mã cha, không đổi được' : 'Chọn nhóm là xong: mã hàng tự sinh theo nhóm'} hint={isNew && !v.groupCode ? 'Chọn nhóm hàng cấp 3 trước — mã hàng tự sinh theo nhóm, các ô khác hiện ra sau khi chọn' : undefined}>
+          {(kind !== 'variant' || v.groupCode) && <Field truong="groupCode" label={isNew ? 'Nhóm hàng (*)' : 'Nhóm hàng'} full tip={lockedGroup ? 'Theo mã cha, không đổi được' : 'Chọn nhóm là xong: mã hàng tự sinh theo nhóm'} hint={isNew && !v.groupCode ? 'Chọn nhóm hàng cấp 3 trước — mã hàng tự sinh theo nhóm, các ô khác hiện ra sau khi chọn' : undefined}>
             {lockedGroup
               ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }} title="Mã biến thể luôn cùng nhóm với mã cha">{v.groupCode ? groupPath(v.groupCode) : <span className="muted">Theo mã cha</span>}</div>
               : <ChonNhomCay classes={classes.group} value={v.groupCode} label={v.groupCode ? groupPath(v.groupCode) : ''} onChange={pickGroup} defaultOpen={isNew && !v.groupCode} />}
@@ -407,7 +462,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           {(!isNew || v.groupCode) && <>
           {/* [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — rà form mặt hàng (đóng góp): Nhóm → Mã → Tên lên đầu; thêm mới = mã cha toàn số, không chọn mã cha;
               tên không trùng (báo ngay); Biến thể không cho đổi sang Nội bộ khi đã có nhập xuất. */}
-          <Field label="Mã hàng (*)" hint={skuErr || (skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : undefined)}>
+          <Field truong="sku" label="Mã hàng (*)" hint={skuErr || (skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : undefined)}>
             <div className="row" style={{ gap: 4 }}>
               {kind === 'variant' && isNew && v.parentSku ? <MaBienThe parent={v.parentSku} sku={v.sku} onChange={(x) => set({ sku: x, ...(!v.name.trim() || v.name === tenBienThe(v.sku) ? { name: tenBienThe(x) } : {}) })} /> : <input className="input mono" value={v.sku} placeholder={isNew ? (kind === 'variant' ? 'Mã cha + chữ ở đầu hoặc cuối' : 'Chọn nhóm hàng là tự sinh — gõ tay được') : ''} onChange={(e) => { set({ sku: e.target.value.trim().toUpperCase() }); setSkuAuto(false); }} style={{ flex: 1 }} />}
               {isNew && kind === 'new' && <button type="button" className="btn btn-sm" onClick={() => void genSku(v.groupCode, true)} title="Lấy mã kế tiếp theo nhóm hàng đã chọn (thay mã đang có)">Sinh mã</button>}
@@ -416,7 +471,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             {skuBad && <div className="neg" style={{ fontSize: 12.5, marginTop: 4, fontWeight: 600 }}>{skuBad}</div>}
             {isNew && kind === 'new' && !skuLetters && <MaHangGiaiThich sku={v.sku} hint={skuHint} auto={skuAuto} isNew={isNew} />}
           </Field>
-          <Field label="Tên hàng (*)" full tip="Không được trùng tên mặt hàng khác. Mã con: ghi phần phân biệt">
+          <Field truong="name" label="Tên hàng (*)" full tip="Không được trùng tên mặt hàng khác. Mã con: ghi phần phân biệt">
             <input className="input" value={v.name} maxLength={255} placeholder={kind === 'variant' && parentData.data ? `Mã cha: ${parentData.data.name}` : undefined} onChange={(e) => set({ name: e.target.value })} />
             {/* [2026-11-12 Nguyễn Văn Thủy] tên hàng tối đa 50 ký tự, có bộ đếm (đóng góp) */}
             <div className={tenDai ? 'neg' : 'muted'} style={{ fontSize: 12, marginTop: 3, fontWeight: tenDai ? 600 : 400 }}>{v.name.trim().length}/50 ký tự{tenDai ? ' — vượt quá, rút gọn tên' : ''}</div>
@@ -425,10 +480,10 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ khai báo cha – con (ô Mã hàng cha, nút Thêm sản phẩm con): phần mềm tự gom theo mã (0112) (đóng góp) */}
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Biến thể và Gửi lên thuế: hệ thống tự suy theo mã, đuôi Z = không gửi thuế (0111) (đóng góp) */}
           {/* [2026-11-12 Nguyễn Văn Thủy] bỏ ô Loại hàng: đã có Nhóm hàng, bớt khai báo; giá trị cũ giữ nguyên (đóng góp) */}
-          <Field label="Barcode" tip="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
+          <Field truong="barcode" label="Barcode" tip="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
           {/* [2026-11-12 Nguyễn Văn Thủy] thẻ Thông tin tối giản: nhóm, mã, tên, barcode, xuất xứ, ảnh, mô tả; ngành / nhãn tự theo nhóm (đóng góp) */}
           {/* [2026-11-12 Nguyễn Văn Thủy] một ô Thuế suất GTGT (%) — đặt cặp mã thuế ra / vào chuẩn; bỏ thẻ Kế toán (đóng góp) */}
-          <Field label="Thuế suất GTGT (%)">
+          <Field truong="taxOutCode" label="Thuế suất GTGT (%)">
             <div className="row" style={{ gap: 4 }}>
             <select className="select input" style={{ flex: 1 }} value={v.taxOutCode ?? ''} onChange={(e) => pickTax(e.target.value)} title="Thuế đầu ra lấy từ danh mục Biểu thuế">
               <option value="">(chưa khai)</option>
@@ -481,7 +536,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       )}
 
       {v.isDraft && <div className="alert alert-warn full"><b>Chờ duyệt</b> — mặt hàng chưa hoạt động, chưa dùng được trên chứng từ (cửa nạp giữ chứng từ ở Trạm kiểm tra với mã IN-ITEM-009). Sửa các lỗi chặn bên dưới, Ghi → tự kích hoạt.</div>}
-      {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
+
     </Modal>
   </>);
 }
@@ -596,7 +651,7 @@ function NccTamBang({ rows, setRows, units, mainUnit, vatLabel, vatPct }: { rows
           <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 160 }} title="Giá mua theo ĐVT, chưa thuế — nhập ô này thì ô gồm thuế tự tính">Giá mua chưa thuế</th><th className="num" style={{ width: 90 }} title={`Thuế suất GTGT đầu vào đã chọn ở bước Thông tin chung${vatLabel ? ` (${vatLabel})` : ''} — đổi ở bước 1`}>Thuế %</th><th className="num" style={{ width: 160 }} title={`Giá mua theo ĐVT, gồm thuế${vatPct ? ` ${vatPct}%` : ''} — NCC báo giá gồm thuế thì nhập ô này`}>Giá mua gồm thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 50 }} /></tr></thead>
           <tbody>{rows.map((r, i) => (
             <tr key={i}>
-              <td>{/* [2026-11-17 07:33 PM kiennt] NT-DM-002 L07 — chỉ gợi ý NCC đang giao dịch (đóng góp) */}<PartnerPicker activeOnly value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
+              <td>{/* [2026-11-17 07:33 PM kiennt] NT-DM-002 L07 — chỉ gợi ý NCC đang giao dịch (đóng góp) */}<PartnerPicker activeOnly kind="supplier" value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST nhà cung cấp" addKind="supplier" /></td>
               <td><select className="select input" value={r.unit} onChange={(e) => set(i, { unit: e.target.value })}>{units.map((u) => <option key={u} value={u}>{u}</option>)}</select></td>
               <td><NumInput value={net(r)} onChange={(n) => set(i, { price: n, incVat: false })} /></td>
               {/* [2026-11-15 Nguyễn Văn Thủy] hiện thuế suất đã chọn ở đầu để thấy giá gồm thuế tính theo bao nhiêu % (đóng góp) */}

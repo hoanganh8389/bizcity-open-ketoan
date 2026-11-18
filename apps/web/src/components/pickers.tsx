@@ -280,7 +280,8 @@ interface PartnerRow { code: string; name: string; taxCode?: string | null; addr
  * `addKind`: cho thêm nhanh ngay tại chỗ (nút +, F9) — dùng trên form chứng từ; danh sách xổ dạng bảng Mã · Tên · MST · Địa chỉ · Điện thoại.
  */
 // [2026-11-16 kiennt] groupCode: chỉ liệt kê đối tượng thuộc nhóm đó (ô Thuộc đơn vị cha) (đóng góp)
-export function PartnerPicker({ activeOnly, addKind, groupCode, ...p }: BaseProps & { activeOnly?: boolean; addKind?: 'customer' | 'supplier'; groupCode?: string }) {
+// [2026-11-18 Nguyễn Văn Thủy] kind: chỉ đối tượng có vai trò này (vd mua hàng chỉ chọn nhà cung cấp) (đóng góp)
+export function PartnerPicker({ activeOnly, addKind, groupCode, kind, ...p }: BaseProps & { activeOnly?: boolean; addKind?: 'customer' | 'supplier'; groupCode?: string; kind?: 'customer' | 'supplier' }) {
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
   const [adding, setAdding] = useState<string | null>(null);
@@ -288,7 +289,7 @@ export function PartnerPicker({ activeOnly, addKind, groupCode, ...p }: BaseProp
   const qc = useQueryClient();
   useEffect(() => { const t = setTimeout(() => setDebounced(q), 250); return () => clearTimeout(t); }, [q]);
   // activeOnly: chỉ đối tượng đang theo dõi (dùng khi lập phiếu); báo cáo thì tra cả đối tượng đã khoá.
-  const list = useQuery({ queryKey: ['partners', 'picker', debounced, activeOnly, groupCode], queryFn: () => api.get<PartnerRow[]>('/api/v1/partners', { search: debounced, pageSize: 30, status: activeOnly ? 'active' : 'all', groupCode: groupCode || undefined }), staleTime: 60_000 });
+  const list = useQuery({ queryKey: ['partners', 'picker', debounced, activeOnly, groupCode, kind], queryFn: () => api.get<PartnerRow[]>('/api/v1/partners', { search: debounced, pageSize: 30, status: activeOnly ? 'active' : 'all', groupCode: groupCode || undefined, kind }), staleTime: 60_000 });
   const current = useQuery({
     queryKey: ['partners', 'picker-name', p.value],
     enabled: Boolean(p.value) && !p.multiple,
@@ -335,14 +336,18 @@ interface ItemRow { sku: string; name: string; unit: string; stock?: number | nu
  * Danh sách xổ dạng bảng Mã · Tên · ĐVT · Tồn (tồn của chi nhánh đang làm việc, chưa chọn thì cộng mọi chi nhánh).
  * `canAdd`: thêm mặt hàng ngay tại chỗ (nút +, F9) — dùng trên dòng chứng từ.
  */
-export function ItemPicker({ canAdd, only, ...p }: BaseProps & { canAdd?: boolean; only?: (sku: string) => boolean }) {
+// [2026-11-19 Nguyễn Văn Thủy] đã chọn nhãn hàng (nhóm cấp 2) thì chỉ tìm / chọn được mặt hàng thuộc nhãn đó (đóng góp)
+// [2026-11-19 Nguyễn Văn Thủy] khoanh vùng theo hàng hoá của hợp đồng + nút điền nhanh các mã đã khai (đóng góp)
+export function ItemPicker({ canAdd, only, brands, skus, ...p }: BaseProps & { canAdd?: boolean; only?: (sku: string) => boolean; /** Chỉ mặt hàng thuộc các nhãn này (trống = mọi nhãn). */ brands?: string[]; /** Chỉ các mã này (vd hàng hoá của hợp đồng; trống = không khoanh). */ skus?: string[] }) {
+  const brandKey = (brands ?? []).filter(Boolean).join(',');
+  const skuKey = (skus ?? []).filter(Boolean).join(',');
   const [q, setQ] = useState('');
   const [debounced, setDebounced] = useState('');
   const [adding, setAdding] = useState<string | null>(null);
   const { can } = useAuth();
   useEffect(() => { const t = setTimeout(() => setDebounced(q), 250); return () => clearTimeout(t); }, [q]);
   const branchCode = workBranch.get() || undefined;
-  const list = useQuery({ queryKey: ['inventory-items', debounced, branchCode], queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: debounced, limit: 50, branchCode }), staleTime: 60_000 });
+  const list = useQuery({ queryKey: ['inventory-items', debounced, branchCode, brandKey, skuKey], queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: debounced, limit: 50, branchCode, brands: brandKey || undefined, skus: skuKey || undefined }), staleTime: 60_000 });
   const current = useQuery({ queryKey: ['inventory-items', 'name', p.value], enabled: Boolean(p.value), queryFn: () => api.get<ItemRow[]>('/api/v1/inventory/items', { search: p.value, limit: 5 }), staleTime: 5 * 60_000 });
   const options = useMemo(() => (list.data ?? []).filter((x) => !only || only(x.sku)).map<PickOption>((x) => ({ code: x.sku, name: x.name, hint: x.unit || undefined, cells: [x.unit, x.stock ?? null] })), [list.data]);
   return (
@@ -353,7 +358,7 @@ export function ItemPicker({ canAdd, only, ...p }: BaseProps & { canAdd?: boolea
         nameOf={(c) => current.data?.find((x) => x.sku === c)?.name ?? list.data?.find((x) => x.sku === c)?.name}
         onSearch={setQ}
         loading={list.isFetching}
-        emptyText="Không có mặt hàng khớp"
+        emptyText={skuKey ? 'Không có mã khớp trong hàng hoá của hợp đồng' : brandKey ? 'Không có mặt hàng khớp thuộc nhãn đã chọn' : 'Không có mặt hàng khớp'}
         columns={[{ label: 'ĐVT', width: 70 }, { label: branchCode ? `Tồn (${branchCode})` : 'Tồn', width: 90, num: true }]}
         nameWidth={300}
         onAdd={canAdd && can('catalog:write') ? (t) => setAdding(t) : undefined}

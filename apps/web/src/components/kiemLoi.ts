@@ -141,4 +141,4 @@ export function ganLoiMayChu(root: HTMLElement, cau: string[], fields: { path: s
 
 /** Sự kiện phát khi máy chủ từ chối một lần ghi (lib/api.ts); hộp thoại trên cùng nghe để gắn lỗi vào ô. */
 export const SU_KIEN_LOI = 'ketoan:api-loi';
-export interface LoiMayChu { message: string; details: string[]; fields: { path: string; message: string }[] }
+export interface LoiMayChu { message: string; details: string[]; fields: { path: string; message: string }[]; /** [2026-11-19 Nguyễn Văn Thủy] mã lỗi + mã tra cứu để chép báo lỗi (đóng góp) */ code?: string; requestId?: string }

@@ -37,6 +37,8 @@ import { inferSkuCodes, nextSku, SKU_RULE } from './sku-rule.js';
 import { importProducts } from './catalog-import.js';
 import { itemHints } from '../products/item.hints.js';
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
+import { ghiKiem } from '@bizcity/platform/core/nhat-ky-kiem';
+import type { CatalogFinding } from '@ketoan/contracts';
 
 const tags = ['Danh mục: Hàng hoá chuẩn'];
 const code = z.string().trim().max(64);
@@ -227,8 +229,12 @@ export const catalogMoreWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: saveProduct áp cổng danh mục (nháp / kích hoạt); trả khung Vì sao + ghi nhận cảnh báo mềm.
       // [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — gộp main: gate / findings / held trả qua ctx.meta (action không còn tự dựng phản hồi)
+      // [2026-11-19 Nguyễn Văn Thủy] mỗi lần lưu ghi nhật ký kiểm (JSONL): đạt / chặn, mã quy tắc chưa đạt, mã tra cứu (đóng góp)
+      const pick = (f: CatalogFinding) => ({ code: f.code, level: f.level, title: f.title, ...(f.field ? { field: f.field } : {}) });
+      // Lượt bị từ chối: bộ xử lý lỗi chung ghi (mọi danh mục); ở đây ghi lượt đạt / lưu nháp.
       const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new, checkName: true, by: auth.actorName }))!;
-      const findings = await itemHints(trx, auth.tenantId, { sku: input.sku, unit: product.unit, postingGroupCode: product.postingGroupCode });
+      const findings = await itemHints(trx, auth.tenantId, { sku: input.sku, unit: product.unit, postingGroupCode: product.postingGroupCode, taxOutCode: product.taxOutCode ?? null, barcode: product.barcode ?? '' });
+      await ghiKiem(auth.tenantId, { entity: 'catalog/products', key: input.sku, action: input.new ? 'create' : 'update', ok: true, draft: Boolean(product.isDraft), failed: findings.map(pick), user: auth.actorName ?? auth.actor, requestId: ctx.requestId });
       await recordWarnAck(trx, auth, 'product', input.sku, findings, warnAck);
       Object.assign(ctx.meta, { gate: 'A', findings, ...(product.isDraft ? { held: { kind: 'draft', id: input.sku } } : {}) });
       return product;

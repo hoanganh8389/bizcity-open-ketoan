@@ -32,7 +32,11 @@ const n = (v: unknown) => { const t = String(v ?? '').replace(/\./g, '').replace
 const clean = (i: ItemDiscount): ItemDiscount => ({ sku: i.sku.trim(), ...(i.pct ? { pct: i.pct } : {}), ...(i.amount ? { amount: i.amount } : {}), ...(i.unit?.trim() ? { unit: i.unit.trim() } : {}), ...(i.minQty ? { minQty: i.minQty } : {}), ...(i.note?.trim() ? { note: i.note.trim() } : {}) });
 const PAGE = 200;
 
-export function BangChietKhauMa({ items, onChange, prefer }: { items: ItemDiscount[]; onChange: (items: ItemDiscount[]) => void; prefer?: { brandCode: string; skus: number }[] }) {
+// [2026-11-19 Nguyễn Văn Thủy] khoanh vùng theo hàng hoá của hợp đồng + nút điền nhanh các mã đã khai (đóng góp)
+export function BangChietKhauMa({ items, onChange: onChange0, prefer, brands, onlySkus }: { items: ItemDiscount[]; onChange: (items: ItemDiscount[]) => void; prefer?: { brandCode: string; skus: number }[]; brands?: string[]; /** Chỉ các mã này (hàng hoá của hợp đồng). */ onlySkus?: string[] }) {
+  /** Hợp đồng ghi mã: mã ngoài hợp đồng (dán / nhập Excel) bị bỏ, báo lại. */
+  const onChange = (list: ItemDiscount[]) => { if (!onlySkus?.length) return onChange0(list); const bad = [...new Set(list.filter((i) => i.sku && !onlySkus.includes(i.sku)).map((i) => i.sku))]; if (bad.length) window.alert(`Bỏ qua ${bad.length} mã không thuộc hàng hoá của hợp đồng: ${bad.slice(0, 10).join(', ')}`); onChange0(list.filter((i) => !i.sku || onlySkus.includes(i.sku))); };
+  const thieuMa = (onlySkus ?? []).filter((s) => !items.some((i) => i.sku === s));
   const [find, setFind] = useState('');
   const [limit, setLimit] = useState(PAGE);
   const [paste, setPaste] = useState(false);
@@ -69,6 +73,7 @@ export function BangChietKhauMa({ items, onChange, prefer }: { items: ItemDiscou
   return (
     <div className="full ckma">
       <div className="ckma-bar">
+        {thieuMa.length > 0 && <button type="button" className="btn btn-sm btn-primary" title="Thêm vào bảng mọi mã đã khai ở bước Hàng hoá theo hợp đồng mà bảng chưa có — gõ % / tiền sau" onClick={() => onChange([...items.filter((i) => i.sku), ...thieuMa.map((s) => ({ sku: s }))])}><Plus size={13} /> Điền {thieuMa.length} mã của hợp đồng</button>}
         <button type="button" className="btn btn-sm btn-primary" onClick={() => setPick('')}><Plus size={13} /> Thêm từ danh mục…</button>
         <input className="input" style={{ width: 220 }} placeholder="Lọc dòng trong bảng: mã / tên" value={find} onChange={(e) => { setFind(e.target.value); setLimit(PAGE); }} />
         <span className="ckma-count"><b>{items.length.toLocaleString('vi-VN')}</b> dòng{find ? ` · đang lọc ${rows.length.toLocaleString('vi-VN')}` : ''}</span>
@@ -122,7 +127,7 @@ export function BangChietKhauMa({ items, onChange, prefer }: { items: ItemDiscou
       {pick !== null && (() => {
         const v = n(val), isPct = val.trim().endsWith('%') || (v !== undefined && v <= 100);
         const make = (sku: string) => clean({ sku, ...(v ? (isPct ? { pct: v } : { amount: v }) : {}) });
-        return <ChonMatHang title="Thêm mã vào bảng chiết khấu — bấm vào dòng để thêm" initial={pick} prefer={prefer}
+        return <ChonMatHang brands={brands} skus={onlySkus} title="Thêm mã vào bảng chiết khấu — bấm vào dòng để thêm" initial={pick} prefer={prefer}
           existing={new Map(items.map((i) => [i.sku, 'đã có']))} onClose={() => { setPick(null); setFind(''); }}
           onPick={(p) => onChange([...items.filter((i) => i.sku), make(p.sku)])}
           onPickAll={(ps) => onChange([...items.filter((i) => i.sku), ...ps.map((p) => make(p.sku))])}

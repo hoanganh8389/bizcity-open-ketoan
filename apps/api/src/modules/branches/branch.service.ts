@@ -12,12 +12,13 @@ import { sql } from 'kysely';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đổi nút sơ đồ tổ chức ở DM02 thì tính lại phân cấp chi nhánh (đóng góp)
 import { syncBranchLevels } from '../org-units/org-unit.service.js';
 import type { OrgTables } from '../org-units/org-unit.schemas.js';
+import { quyTac } from '@bizcity/platform/core/quy-tac';
 
 /** Mã bộ phận gắn cho chi nhánh phải có trong danh mục Bộ phận. */
 async function departmentOf(trx: Db, tenantId: string, code: string | null | undefined): Promise<string | null> {
   if (!code) return null;
   const d = await trx.selectFrom('dimensions').select('code').where('tenant_id', '=', tenantId).where('kind', '=', 'department').where('code', '=', code).executeTakeFirst();
-  if (!d) throw Errors.validation(`Bộ phận ${code} không có trong danh mục Bộ phận`);
+  if (!d) throw quyTac('BR-BLOCK-001', { code });
   return d.code;
 }
 
@@ -65,9 +66,9 @@ export const branchService = {
       const before = await branchRepository.findByCode(trx, auth.tenantId, code);
       if (!before) throw Errors.notFound(`chi nhánh ${code}`);
       const used = await trx.selectFrom('bizcity_read.ledger_entries').select('id').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(1).executeTakeFirst();
-      if (used) throw Errors.conflict(`Chi nhánh ${code} đã có chứng từ: bỏ tích "Theo dõi" để ngừng dùng`);
+      if (used) throw quyTac('BR-BLOCK-002', { code, detail: 'đã có chứng từ, không xoá được' }, 'conflict');
       const wh = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(3).execute();
-      if (wh.length) throw Errors.conflict(`Chi nhánh ${code} còn kho (${wh.map((w) => w.code).join(', ')}…): xoá hoặc chuyển kho ở Danh mục kho (DM12) trước`);
+      if (wh.length) throw quyTac('BR-BLOCK-002', { code, detail: `còn kho ${wh.map((w) => w.code).join(', ')}…` }, 'conflict');
       // Còn dữ liệu khác trỏ tới (chứng từ chờ, thẻ tài sản…) thì khoá ngoại chặn và báo đang dùng.
       await trx.deleteFrom('branches').where('id', '=', before.id).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'branch.delete', objectType: 'branch', objectId: code, before });
@@ -101,7 +102,7 @@ export const branchService = {
       }
       let finalCode = code;
       if (input.newCode && input.newCode !== code) {
-        if (await branchRepository.findByCode(trx, auth.tenantId, input.newCode)) throw Errors.conflict(`Mã chi nhánh ${input.newCode} đã có`);
+        if (await branchRepository.findByCode(trx, auth.tenantId, input.newCode)) throw quyTac('BR-BLOCK-003', { code: input.newCode }, 'conflict');
         patch.code = input.newCode;
         finalCode = input.newCode;
       }
@@ -110,8 +111,8 @@ export const branchService = {
         let orgId: string | null = null;
         if (input.orgUnitCode) {
           const o = await trx.withTables<OrgTables>().selectFrom('org_units').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('code', '=', input.orgUnitCode).executeTakeFirst();
-          if (!o) throw Errors.validation(`Không có nút sơ đồ tổ chức ${input.orgUnitCode}`);
-          if (!o.is_active) throw Errors.validation(`Nút ${input.orgUnitCode} đã ngừng dùng`);
+          if (!o) throw quyTac('BR-BLOCK-004', { code: input.orgUnitCode, detail: 'không có trong cơ cấu tổ chức' });
+          if (!o.is_active) throw quyTac('BR-BLOCK-004', { code: input.orgUnitCode, detail: 'đã ngừng dùng' });
           orgId = String(o.id);
         }
         patch.org_unit_id = orgId;

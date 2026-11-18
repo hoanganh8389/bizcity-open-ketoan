@@ -12,6 +12,7 @@ import { ZodError, z } from 'zod';
 import { ERROR_CATALOG, ERROR_CODES, type ApiSuccess, type ErrorCode, type ErrorReason, type PageMeta } from '@ketoan/contracts';
 import { AppError, classifyLedgerTriggerError, withRemedy } from './errors.js';
 import { currentTraceId } from './tracing.js';
+import { ghiKiem } from './nhat-ky-kiem.js';
 
 /** Phản hồi thành công. */
 export function ok<T>(data: T, meta?: ApiSuccess<T>['meta']): ApiSuccess<T> {
@@ -62,11 +63,29 @@ export function registerErrorHandler(app: FastifyInstance): void {
       else req.log.info({ errCode: code, status }, message);
       // traceId (ADR-0010): tra trace trong Tempo, log trong Loki; chỉ có khi truy vết bật.
       const traceId = currentTraceId();
+      // [2026-11-19 Nguyễn Văn Thủy] mọi lần GHI bị từ chối (400 / 404 / 409 / 422) của người đã đăng nhập → nhật ký kiểm khai báo (HT19), mọi danh mục / chứng từ
+      // dùng chung: đối tượng theo đường dẫn, mã quy tắc (details.findings) hoặc mã lỗi, mã tra cứu (docs/nghiep-vu/25 §3.5) (đóng góp)
+      if (req.method !== 'GET' && req.auth && [400, 404, 409, 422].includes(status)) {
+        const url = req.routeOptions?.url ?? req.url;
+        const parts = url.replace(/^\/api\/v\d+\//, '').split('/').filter((x) => x && !x.startsWith(':'));
+        const params = (req.params ?? {}) as Record<string, unknown>;
+        const fs = (details as { findings?: { code: string; level?: string; title?: string; field?: string }[] } | undefined)?.findings;
+        void ghiKiem(req.auth.tenantId, {
+          entity: parts.join('/') || url, key: Object.values(params).map(String).join('/'), action: req.method === 'POST' ? 'create' : req.method === 'DELETE' ? 'delete' : 'update', ok: false,
+          failed: Array.isArray(fs) && fs.length ? fs.map((f) => ({ code: f.code, level: f.level ?? 'block', title: f.title ?? '', ...(f.field ? { field: f.field } : {}) })) : [{ code, level: 'block', title: message }],
+          user: req.auth.actorName || req.auth.actor, requestId: String(req.id), source: 'server', method: req.method, path: req.url.split('?')[0], status, message,
+        });
+      }
       return reply.status(status).send({ ok: false, error: { code, message, requestId: String(req.id), ...(traceId ? { traceId } : {}), ...(details === undefined ? {} : { details }), ...extra } });
     };
     const withReason = (reason: ErrorReason, extra?: Record<string, unknown>) => ({ reason, ...extra });
 
-    if (err instanceof AppError) return send(err.code, err.message, err.details, err.httpStatus, err.intake === undefined ? undefined : { intake: err.intake });
+    // [2026-11-19 Nguyễn Văn Thủy] lỗi quy tắc (details.findings có field) → error.fields để giao diện tô đỏ đúng ô (docs/nghiep-vu/25) (đóng góp)
+    if (err instanceof AppError) {
+      const fs = (err.details as { findings?: { field?: string; title?: string; code?: string }[] } | undefined)?.findings;
+      const fields = Array.isArray(fs) ? fs.filter((f) => f.field).map((f) => ({ path: f.field!, message: `${f.title ?? ''} (${f.code ?? ''})` })) : [];
+      return send(err.code, err.message, err.details, err.httpStatus, { ...(err.intake === undefined ? {} : { intake: err.intake }), ...(fields.length ? { fields } : {}) });
+    }
     // [2026-11-11 Nguyễn Văn Thủy] thêm error.fields [{ path, message }] (đường dẫn trường) để giao diện tô đỏ đúng ô; details giữ nguyên khuôn (đóng góp)
     if (err instanceof ZodError) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, err.issues.map(issueText), undefined, { fields: err.issues.map(issueField) });
     // Lỗi kiểm tra dữ liệu của fastify-type-provider-zod

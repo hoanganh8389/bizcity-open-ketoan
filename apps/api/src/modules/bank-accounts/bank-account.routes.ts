@@ -15,6 +15,7 @@ import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+import { quyTac } from '@bizcity/platform/core/quy-tac';
 
 const tags = ['Danh mục: Tài khoản ngân hàng'];
 
@@ -75,16 +76,16 @@ export const bankAccountWriteActions: AnyActionDef[] = [
       const { code } = input;
       const b = reqBody;
       const acc = await trx.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', auth.tenantId).where('code', '=', b.accountCode).executeTakeFirst();
-      if (!acc) throw Errors.validation(`Tài khoản ${b.accountCode} chưa có trong danh mục tài khoản`);
-      if (!acc.is_posting) throw Errors.validation(`Tài khoản ${b.accountCode} là tài khoản tổng hợp; chọn tài khoản 112 chi tiết`);
-      if (!b.accountCode.startsWith('112')) throw Errors.validation('Tài khoản ngân hàng phải gắn tài khoản 112 (tiền gửi ngân hàng)');
+      if (!acc) throw quyTac('BANK-BLOCK-001', { detail: `tài khoản ${b.accountCode} chưa có trong danh mục tài khoản` });
+      if (!acc.is_posting) throw quyTac('BANK-BLOCK-001', { detail: `tài khoản ${b.accountCode} là tài khoản tổng hợp; chọn tài khoản 112 chi tiết` });
+      if (!b.accountCode.startsWith('112')) throw quyTac('BANK-BLOCK-001', { detail: 'phải gắn tài khoản 112 (tiền gửi ngân hàng)' });
       if (b.isActive) {
         const other = await trx.selectFrom('bank_accounts').select('code').where('tenant_id', '=', auth.tenantId).where('account_code', '=', b.accountCode).where('is_active', '=', true).where('code', '<>', code).executeTakeFirst();
-        if (other) throw Errors.validation(`Tài khoản ${b.accountCode} đã gắn với tài khoản ngân hàng ${other.code}; mỗi tài khoản kế toán chỉ gắn một tài khoản ngân hàng`);
+        if (other) throw quyTac('BANK-BLOCK-001', { detail: `tài khoản ${b.accountCode} đã gắn với tài khoản ngân hàng ${other.code}; mỗi tài khoản kế toán chỉ gắn một tài khoản ngân hàng` });
       }
       if (b.branchCode) {
         const br = await trx.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', b.branchCode).executeTakeFirst();
-        if (!br) throw Errors.validation(`Chi nhánh ${b.branchCode} chưa khai báo`);
+        if (!br) throw quyTac('BANK-BLOCK-002', { branch: b.branchCode });
       }
       const values = {
         bank_name: b.bankName, bank_branch: b.bankBranch, account_no: b.accountNo, holder: b.holder, account_code: b.accountCode,
@@ -114,7 +115,7 @@ export const bankAccountWriteActions: AnyActionDef[] = [
         const before = await trx.selectFrom('bank_accounts').selectAll().where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
         if (!before) throw Errors.notFound(`tài khoản ngân hàng ${code}`);
         const used = await trx.selectFrom('payment_methods').select('code').where('tenant_id', '=', auth.tenantId).where('bank_account_code', '=', code).limit(1).executeTakeFirst();
-        if (used) throw Errors.conflict(`Tài khoản ngân hàng ${code} đang gắn hình thức thanh toán ${used.code}: bỏ tích "Đang dùng" để ngừng`);
+        if (used) throw quyTac('BANK-BLOCK-003', { code, method: used.code }, 'conflict');
         await trx.deleteFrom('bank_accounts').where('id', '=', before.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'bank_account.delete', objectType: 'bank_account', objectId: code, before });
       });

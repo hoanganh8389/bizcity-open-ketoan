@@ -35,7 +35,7 @@ const STATUS_TEXT: Record<Status, string> = { draft: 'Nháp', pending: 'Chờ du
 const STATUS_CLASS: Record<Status, string> = { draft: 'muted', pending: 'text-warn', approved: 'text-ok', done: 'text-ok', cancelled: 'text-bad' };
 const TYPES: [string, string][] = [
   ['', 'Mọi loại'], ['purchase.', 'Mua hàng (mọi loại)'], ['purchase.order', 'Đơn đặt hàng'], ['purchase.receipt', 'Phiếu nhập mua'],
-  ['purchase.return', 'Trả hàng NCC'], ['inventory.transfer', 'Chuyển kho'], ['finance.payment_request', 'Đề nghị thanh toán'],
+  ['purchase.return', 'Trả hàng NCC'], ['contract.', 'Hợp đồng'], ['inventory.transfer', 'Chuyển kho'], ['finance.payment_request', 'Đề nghị thanh toán'],
 ];
 /** Tên tiếng Việt của thông tin thêm (meta). */
 const META_TEXT: Record<string, string> = {

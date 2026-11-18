@@ -23,6 +23,9 @@ export function registerItemsActivatedHook(fn: ItemsActivatedHook): void {
 
 export interface ItemDraft {
   sku: string;
+  /** [2026-11-19 Nguyễn Văn Thủy] thuế suất bán ra, mã vạch — không gửi (undefined) = không kiểm (đóng góp) */
+  taxOutCode?: string | null;
+  barcode?: string | null;
   unit?: string | null;
   postingGroupCode?: string | null;
   /** Đơn vị tính gốc TRƯỚC lần sửa này (để nhắc ITEM-HINT-003); không gửi = không so. */
@@ -48,6 +51,8 @@ export async function itemHints(db: Db, tenantId: string, d: ItemDraft): Promise
   if (from && to && from !== to && (await hasMovements(db, tenantId, d.sku))) {
     out.push(catalogFinding('ITEM-HINT-003', { sku: d.sku, from, to }, { field: 'unit' }));
   }
+  if (d.taxOutCode !== undefined && !d.taxOutCode) out.push(catalogFinding('ITEM-HINT-004', { sku: d.sku }, { field: 'taxOutCode' }));
+  if (d.barcode !== undefined && !(d.barcode ?? '').trim()) out.push(catalogFinding('ITEM-HINT-005', { sku: d.sku }, { field: 'barcode' }));
   // [2026-11-12 Nguyễn Văn Thủy] bỏ nhắc / chặn nhóm hạch toán: mặt hàng không khai nhóm hạch toán nữa (tài khoản theo ACC41) (đóng góp)
   return reviewFindings(db, tenantId, out); // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị
 }
