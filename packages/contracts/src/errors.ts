@@ -186,6 +186,9 @@ export const ERROR_REASONS = {
   // [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-030 trả hàng đợt 3: yêu cầu trả quá hạn (BIZCITY-ERRORS 1.19.0-draft §4c, đóng góp)
   POS_RETURN_APPROVAL_STATE: 'Yêu cầu trả quá hạn không ở trạng thái cho thao tác này: chưa duyệt, bị từ chối (kèm rejectReason), đã dùng, đơn còn trong hạn, đã có yêu cầu đang mở; kèm status, approvalId',
   POS_RETURN_APPROVAL_MISMATCH: 'Phiếu trả quá hạn khác nội dung yêu cầu đã duyệt (khác đơn, cửa hàng nhận, dòng, số lượng, tình trạng); kèm approvalId, approved',
+  // [2026-11-18 11:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-031 kênh bán hàng (BIZCITY-ERRORS 1.20.0-draft §4c, đóng góp)
+  POS_SALE_SOURCE: 'Đơn máy bán / phiếu bán BH10 mang mã kênh bán không có trong danh mục Kênh bán hàng hoặc kênh đã ngừng dùng; kèm saleSource, cause (unknown / inactive)',
+  POS_SALE_SOURCE_EXISTS: 'Thêm / sửa kênh bán hàng trùng mã hoặc tên kênh đã có (kênh đã ngừng thì dùng lại, không thêm mới); kèm field',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

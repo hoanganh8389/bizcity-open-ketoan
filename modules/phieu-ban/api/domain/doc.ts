@@ -50,6 +50,9 @@ export const docInput = z.object({
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: mã voucher TGS / hãng của khách (module voucher kiểm lúc duyệt) (đóng góp)
   /** Mã voucher (module voucher) khách dùng — trừ lúc duyệt: TGS = chiết khấu trên dòng, hãng = dòng thanh toán. */
   vouchers: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh bán của phiếu (danh mục Kênh bán hàng của module pos) (đóng góp)
+  /** Mã kênh bán (hoặc tên) — máy chủ kiểm với danh mục của module pos (action pos.channel.list), lưu mã + tên. Trống = kênh mặc định. */
+  saleChannel: z.string().trim().max(100).optional(),
 }).passthrough();
 export type PolicyRef = { key: string; version: number; line: 'gift' | 'discount' };
 export type DocInput = z.infer<typeof docInput>;
@@ -72,7 +75,20 @@ export type Body = {
   voucherCodes?: string[];
   /** Voucher đã áp lúc duyệt (NT-BH-026): số tiền thực trừ từng mã; module voucher đánh dấu đã dùng theo sự kiện phieu-ban.doc.recorded. */
   vouchers?: { code: string; campaignId: string; campaignName: string; issuer: 'tgs' | 'brand'; kind: 'discount' | 'payment'; faceValue: number; amount: number; methodCode?: string }[];
+  /** Kênh bán (NT-BH-031): mã + tên kênh lúc lập (danh mục Kênh bán hàng của module pos). Trống = kênh mặc định (Gần shop). */
+  saleChannel?: string;
+  saleChannelName?: string;
 };
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh mặc định của phiếu không mang kênh — trùng kênh mặc định của module pos (đóng góp)
+/** Mã kênh mặc định (module pos: "Gần shop") — phiếu cũ / phiếu không chọn kênh tính vào kênh này khi lọc và báo cáo. */
+export const DEFAULT_CHANNEL = 'GAN_SHOP';
+export type ChannelItem = { code: string; name: string; active: boolean };
+const fold = (s: string) => s.normalize('NFC').trim().toLowerCase().replace(/\s+/g, ' ');
+/** Kênh theo mã (không phân biệt hoa thường) hoặc tên; không có → null. */
+export function findChannel(list: readonly ChannelItem[], input: string): ChannelItem | null {
+  return list.find((c) => c.code === input.trim().toUpperCase()) ?? list.find((c) => fold(c.name) === fold(input)) ?? null;
+}
 
 /**
  * Tính lại phiếu ở máy chủ. Tên / ĐVT / mã thuế lấy theo danh mục khi dòng để trống; tiền dòng = SL × đơn giá − chiết khấu (làm tròn
@@ -133,6 +149,8 @@ export function computeDoc(input: DocInput, ctx: {
     ...(policyRefs.length ? { policyRefs } : {}),
     ...(input.order ? { order: { id: input.order.id, no: input.order.no } } : {}),
     ...(input.vouchers?.length ? { voucherCodes: [...new Set(input.vouchers.map((c) => c.trim().toUpperCase()))] } : {}),
+    // NT-BH-031: kênh đã kiểm ở máy chủ (service.withChannel) — tên đi kèm mã; duyệt lại giữ nguyên kênh của nháp.
+    ...(input.saleChannel ? { saleChannel: input.saleChannel, ...((input as { saleChannelName?: string }).saleChannelName ? { saleChannelName: (input as { saleChannelName?: string }).saleChannelName } : {}) } : {}),
   };
   return { body, problems };
 }

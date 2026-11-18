@@ -12,6 +12,7 @@ Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem 
 - Bấm **Tìm kiếm** để áp. **Lưu bộ tham số** để lần sau chọn lại một lần bấm.
 
 - Ô riêng: **Mã phiếu / khách** (mã HD… hoặc mã dạng shop `08022BT12346`, số điện thoại, tên khách) và **Thu ngân**.
+- **Kênh bán**: chọn một kênh của danh mục [Kênh bán hàng](pos-kenh-ban.md) (kênh đã ngừng ghi *(ngừng)*); đơn không mang kênh tính là *Gần shop*. Cột **Kênh** hiện tên kênh lúc bán. <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: lọc / cột kênh bán (đóng góp) -->
 
 ## Đọc màn
 - **Thẻ chỉ số** tính trên cả kết quả lọc: Số đơn, Doanh thu, Đã hoàn (tiền trả lại khách của các đơn này), Thuần = Doanh thu − Đã hoàn.

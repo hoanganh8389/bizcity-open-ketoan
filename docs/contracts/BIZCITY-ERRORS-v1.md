@@ -262,6 +262,9 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | **Trả lại hàng bán đợt 3** (1.19.0-draft) <!-- [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-030 trả hàng đợt 3; đổi nghĩa POS_RETURN_EXPIRED, POS_RETURN_OTHER_SHOP ở trên (đóng góp) --> | | | |
 | `POS_RETURN_APPROVAL_STATE` | `CONFLICT` | Yêu cầu trả quá hạn không ở trạng thái cho thao tác: lập phiếu theo yêu cầu chưa duyệt / bị từ chối (kèm `rejectReason`) / đã dùng; duyệt / từ chối yêu cầu không còn chờ; gửi yêu cầu cho đơn còn trong hạn (`status: 'not_late'`) hoặc đơn đã có yêu cầu đang mở; kèm `status`, `approvalId` | module `pos` (đề xuất, chưa gộp) |
 | `POS_RETURN_APPROVAL_MISMATCH` | `VALIDATION_ERROR` | Phiếu trả quá hạn khác nội dung yêu cầu đã duyệt (khác đơn, cửa hàng nhận, dòng, số lượng, tình trạng); kèm `approvalId`, `approved` (dòng đã duyệt) | module `pos` (đề xuất, chưa gộp) |
+| **Kênh bán hàng** (1.20.0-draft) <!-- [2026-11-18 11:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-031 kênh bán hàng (đóng góp) --> | | | |
+| `POS_SALE_SOURCE` | `VALIDATION_ERROR` | Đơn máy bán / phiếu bán BH10 mang kênh bán (mã, hoặc tên với máy bán cũ) không có trong danh mục Kênh bán hàng hoặc kênh đã ngừng dùng; kèm `saleSource`, `cause` (`unknown` / `inactive`). Đơn không gửi kênh → kênh mặc định (Gần shop), không lỗi; đơn bán lúc mất mạng gửi bù → nhận | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
+| `POS_SALE_SOURCE_EXISTS` | `CONFLICT` | Thêm / sửa kênh bán hàng trùng mã hoặc tên kênh đã có (kênh đã ngừng thì Dùng lại); kèm `field` | module `pos` (đề xuất, chưa gộp) |
 | **Máy bán bán đúng bảng giá** (1.13.0-draft) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) --> | | | |
 | `POS_MANUAL_DISCOUNT` | `VALIDATION_ERROR` | Dòng có giảm tay: thu ngân không giảm tay, chỉ giảm theo chương trình khuyến mại; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 | `POS_NO_PRICE` | `VALIDATION_ERROR` | Mã × ĐVT chưa có giá ở bảng giá cửa hàng (trừ quà, hàng Nội bộ, bill Z 0đ); kèm `items: [{ sku, unit }]` | module `pos` (đề xuất, chưa gộp) |
@@ -302,6 +305,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-18 11:00 PM Võ Hoàng] NGHIEM-THU — 1.20.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.20.0-draft (2026-11-18, kênh bán hàng):** §4c thêm `POS_SALE_SOURCE` (module pos, phieu-ban), `POS_SALE_SOURCE_EXISTS` (module pos) (phiếu NT-BH-031). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — 1.19.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.19.0-draft (2026-11-18, trả hàng đợt 3):** §4c thêm `POS_RETURN_APPROVAL_STATE`, `POS_RETURN_APPROVAL_MISMATCH`; đổi nghĩa `POS_RETURN_EXPIRED` (quá hạn cần yêu cầu trả quá hạn đã duyệt, bỏ người duyệt gõ tay) và `POS_RETURN_OTHER_SHOP` (chỉ chặn khi khác / chưa khai MST chi nhánh, kèm `cause`) (module pos, phiếu NT-BH-030). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 10:00 AM Võ Hoàng] NGHIEM-THU — 1.18.0-draft (đóng góp, chờ chủ dự án duyệt) -->

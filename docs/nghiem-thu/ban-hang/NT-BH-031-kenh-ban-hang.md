@@ -42,13 +42,25 @@
 | Q4 | Giá theo kênh | Để sau, cần lõi bảng giá |
 
 ## 5. Kết quả chạy
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kết quả chạy (đóng góp) -->
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-031-kenh-ban.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 18/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-031-kenh-ban` (open-ketoan); `tgs_pos` main (máy bán React + bản sao website); `tgs_accounting_bridge` main (quyền SSO) |
+| Test tự động | `apps/api/test/nt-bh-031-kenh-ban.test.ts` — 7 / 7 ĐẠT (đủ 7 dòng §3, gồm 403); `modules/pos/test/channels.test.ts` — 8 ĐẠT; máy bán React `src/api/promotions.test.ts`, `checkout.test.ts`, `orderRows.test.ts` |
+
+| Dòng §3 | Kết quả |
+|---|---|
+| 1. Mở màn lần đầu | ĐẠT — `GET /api/v1/m/pos/channels` trả 14 kênh đúng thứ tự (Gần shop, Giới thiệu, Hotline, Khác = offline); bootstrap máy bán trả cùng danh sách |
+| 2. Thêm "TMĐT-TikTok Shop" online | ĐẠT — thêm (kế toán viên), bootstrap lần sau có kênh mới ở cuối, đơn mang mã `TMDT_TIKTOK`; trùng mã / tên → `POS_SALE_SOURCE_EXISTS` |
+| 3. Ngừng dùng "Hotline" | ĐẠT — bootstrap không còn Hotline; BH13 lọc Hotline vẫn ra đơn cũ, cột Kênh "Hotline"; dùng lại được |
+| 4. Mã kênh lạ / đã ngừng | ĐẠT — 400 `POS_SALE_SOURCE` (`cause` unknown / inactive) kèm câu rõ; không gửi → Gần shop; máy cũ gửi tên "Zalo" → nhận `ZALO`; đơn mất mạng gửi bù kênh đã ngừng vẫn nhận |
+| 5. BH10 kênh "Livestream CT" | ĐẠT ở API — phiếu lưu `saleChannel` + `saleChannelName`, duyệt giữ kênh, `GET /docs?saleChannel=` lọc được; kênh lạ → `POS_SALE_SOURCE`. Ô chọn kênh trên khung màn BH10 (`apps/web`, ngoài phạm vi giữ chỗ) — việc tiếp |
+| 6. Báo cáo bán theo kênh | ĐẠT — `GET /api/v1/m/pos/reports/channels`: kênh × cửa hàng, số đơn, doanh thu, khuyến mại, trả hàng, thực thu, tổng online / offline; gồm đơn máy bán + phiếu BH10 đã duyệt; lọc `branchCodes`; Excel ở thẻ "Bán hàng theo kênh" |
+| 7. Không có `pos:kenh-ban-lap` thêm kênh | ĐẠT — người xem 403 (thêm, sửa); kế toán viên ngừng dùng 403 (`pos:kenh-ban-xoa` chỉ chủ đơn vị, kế toán trưởng) |
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q4 |
+| 18/11/2026 | Code xong (module pos, phieu-ban, máy bán React, bản sao website, quyền SSO); điền §5 |

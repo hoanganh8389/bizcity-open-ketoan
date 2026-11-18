@@ -70,6 +70,35 @@
         "chief_accountant"
       ],
       "risk": "high"
+    },
+    {
+      "key": "pos:kenh-ban-lap",
+      "label": "Kênh bán hàng — thêm kênh (NT-BH-031)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "pos:kenh-ban-sua",
+      "label": "Kênh bán hàng — sửa tên / loại online-offline / thứ tự, dùng lại kênh đã ngừng (NT-BH-031)",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "pos:kenh-ban-xoa",
+      "label": "Kênh bán hàng — ngừng dùng kênh (thay cho xoá: kênh đã dùng không xoá, ECP-13; NT-BH-031)",
+      "roles": [
+        "owner",
+        "chief_accountant"
+      ],
+      "risk": "low"
     }
   ],
   "data": {
@@ -88,7 +117,8 @@
       "voucher_uses",
       "code_reservations",
       "return_approvals",
-      "return_approval_log"
+      "return_approval_log",
+      "sale_channels"
     ],
     "reads": [
       "bizcity_read.branches",
@@ -155,7 +185,13 @@
     "pos.return.approval.get",
     "pos.return.approval.approve",
     "pos.return.approval.reject",
-    "pos.admin.return-approvals"
+    "pos.admin.return-approvals",
+    "pos.channel.list",
+    "pos.channel.create",
+    "pos.channel.update",
+    "pos.channel.stop",
+    "pos.channel.resume",
+    "pos.report.channels"
   ],
   "ledger": {
     "submits": [
