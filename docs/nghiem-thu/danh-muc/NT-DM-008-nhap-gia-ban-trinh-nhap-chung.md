@@ -44,7 +44,7 @@ Tệp: `apps/web/src/lib/nhapExcelDanhMuc.ts` (loại nhập giá theo bảng gi
 | selfcheck | Không có lỗi mới so với main |
 | kiem-chuan | ĐẠT |
 | typecheck | ĐẠT |
-| npm test | 2290 đạt / 6 lỗi — không do phiếu này (chỉ sửa web; mã API giống main): db-rules, mat-khau-mac-dinh, nt-bh-005 lỗi sẵn trên main; nt-bh-003, nt-bh-012, nhom-hang đạt khi chạy riêng (lỗi theo thứ tự chạy cả bộ). preset.test có lần lỗi khi máy quá tải (chạy 42 phút), chạy riêng đạt |
+| npm test | 2291 đạt / 5 lỗi — cùng 5 test như NT-DM-004..006, không do phiếu này (chỉ sửa web; mã API giống main): db-rules, mat-khau-mac-dinh, nt-bh-005 lỗi sẵn trên main; nt-bh-003, nt-bh-012 đạt khi chạy riêng |
 
 ## 5. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
