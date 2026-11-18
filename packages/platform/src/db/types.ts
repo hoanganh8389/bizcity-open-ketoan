@@ -1718,13 +1718,6 @@ export interface PaymentRequestsTable {
   updated_at: TimestampDefault;
 }
 
-export interface PaymentRequestSettingsTable {
-  tenant_id: string;
-  second_level_from: ColumnType<string | null, number | string | null | undefined, number | string | null>;
-  updated_by: Generated<string>;
-  updated_at: TimestampDefault;
-}
-
 export interface ReferenceDocumentsTable {
   id: Generated<string>;
   tenant_id: string;
@@ -2103,7 +2096,6 @@ export interface Database {
   unit_names: UnitNamesTable;
   help_cards: HelpCardsTable;
   help_places: HelpPlacesTable;
-  payment_request_settings: PaymentRequestSettingsTable;
   debt_allocations: DebtAllocationsTable;
   voucher_recurrences: VoucherRecurrencesTable;
   voucher_recurrence_runs: VoucherRecurrenceRunsTable;

@@ -174,7 +174,7 @@ export interface Policy {
   /** Mã các đơn vị con (mọi cấp) của scope.partnerCode — máy chủ điền khi scope.withChildren; không lưu. */
   familyCodes?: string[];
   // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): bản chính sách (sổ đăng ký 0079); engine chọn bản theo ngày chứng từ
-  /** Bản đang mang nội dung trên (purchase_policy_versions / policy_registry) và băm nội dung. */
+  /** Bản đang mang nội dung trên (document_versions mua-hang.policy:<id> / policy_registry) và băm nội dung. */
   version?: number;
   contentHash?: string;
   /** Mọi bản, cũ trước — máy chủ điền khi đọc; engine đổi nội dung về bản của ngày chứng từ (policyAt). */

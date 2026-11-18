@@ -455,6 +455,8 @@ export async function partnerDescendants(trx: Db, tenantId: string, code: string
 
 /** Định danh ổn định của chính sách mua hàng trong sổ đăng ký (policy_registry.policy_id). */
 export const purchasePolicyRef = (id: string) => `mua-hang:purchase_policies:${id}`;
+/** Nội dung các bản của chính sách ở document_versions (0158). */
+export const policyDocRef = (id: string) => `mua-hang.policy:${id}`;
 
 /** Nội dung một bản — cùng khoá với ảnh chụp nạp ngược của 0079, để so "có đổi không" bằng contentHash trên cả hai. */
 export function policySnapshot(p: PolicyInput): PolicySnapshot {
@@ -466,10 +468,13 @@ export function policySnapshot(p: PolicyInput): PolicySnapshot {
 
 type VersionRow = { policy_id: string; version: number; effective_from: string | null; content_hash: string; snapshot: PolicySnapshot };
 async function policyVersionsByPolicy(trx: Db, tenantId: string, policyId?: string): Promise<Map<string, PolicyVersion[]>> {
+  // [2026-11-18 Nguyễn Văn Thủy] nội dung bản ở document_versions chung, ngày áp ở phong bì policy_registry (0158, bỏ purchase_policy_versions) (đóng góp)
   const r = await sql<VersionRow>`
-    SELECT policy_id::text AS policy_id, version, effective_from::text AS effective_from, content_hash, snapshot
-    FROM purchase_policy_versions WHERE tenant_id = ${tenantId} ${policyId ? sql`AND policy_id = ${policyId}` : sql``}
-    ORDER BY policy_id, version`.execute(trx);
+    SELECT substr(v.doc_ref, length('mua-hang.policy:') + 1) AS policy_id, v.version, g.effective_from::text AS effective_from, v.content_hash, v.snapshot
+    FROM document_versions v
+    LEFT JOIN policy_registry g ON g.tenant_id = v.tenant_id AND g.policy_id = 'mua-hang:purchase_policies:' || substr(v.doc_ref, length('mua-hang.policy:') + 1) AND g.version = v.version
+    WHERE v.tenant_id = ${tenantId} AND ${policyId ? sql`v.doc_ref = ${policyDocRef(policyId)}` : sql`v.doc_ref LIKE 'mua-hang.policy:%'`}
+    ORDER BY v.doc_ref, v.version`.execute(trx);
   const out = new Map<string, PolicyVersion[]>();
   for (const v of r.rows) {
     const list = out.get(v.policy_id) ?? [];
@@ -505,10 +510,9 @@ async function recordPolicyVersion(trx: Db, tenantId: string, actor: string, id:
   if (effectiveFrom && effectiveFrom < today && (!reason || reason.length < 3)) throw Errors.validation(`Chính sách ${p.code}: áp cho chứng từ từ ${effectiveFrom} (trước hôm nay) — cần lý do (≥ 3 ký tự)`);
   await registerPolicyVersion(trx, {
     tenantId, ownerModule: 'mua-hang', policyKey: p.code, policyId: purchasePolicyRef(id), version, ruleContract: `purchase.${p.kind}@1`,
-    scope: { ...snap.scope }, effectiveFrom, store: 'module', storeRef: `purchase_policy_versions:${id}@${version}`, content: snap, hash, actor, reason,
+    scope: { ...snap.scope }, effectiveFrom, store: 'module', storeRef: `document_versions:${policyDocRef(id)}@${version}`, content: snap, hash, actor, reason,
   });
-  await sql`INSERT INTO purchase_policy_versions (tenant_id, policy_id, version, effective_from, snapshot, content_hash, reason, created_by)
-    VALUES (${tenantId}, ${id}, ${version}, ${effectiveFrom}::date, ${JSON.stringify(snap)}::jsonb, ${hash}, ${reason}, ${actor})`.execute(trx);
+  await trx.insertInto('document_versions').values({ tenant_id: tenantId, doc_ref: policyDocRef(id), version, snapshot: JSON.stringify(snap), content_hash: hash, created_by: actor }).execute();
   await sql`UPDATE purchase_policies SET version = ${version}, content_hash = ${hash} WHERE tenant_id = ${tenantId} AND id = ${id}`.execute(trx);
 }
 export interface PolicyVersionOpts { effectiveFrom?: string | null; reason?: string | null }
@@ -528,7 +532,7 @@ export async function deletePolicy(trx: Db, tenantId: string, id: string): Promi
     ])).limit(5).execute();
   if (used.length) throw Errors.conflict(`Chính sách ${p.code} đã áp vào phiếu ${used.map((u) => u.doc_no).join(', ')}${used.length === 5 ? '…' : ''} — không xoá được (phiếu cũ cần tra lại cách tính). Bỏ tích "Áp dụng" để ngừng.`);
   await trx.deleteFrom('purchase_policies').where('tenant_id', '=', tenantId).where('id', '=', id).execute();
-  await retirePolicy(trx, tenantId, purchasePolicyRef(id)); // các bản giữ trong sổ đăng ký + purchase_policy_versions (PHASE-031 W1)
+  await retirePolicy(trx, tenantId, purchasePolicyRef(id)); // các bản giữ trong sổ đăng ký + document_versions (PHASE-031 W1, 0158)
   return p;
 }
 

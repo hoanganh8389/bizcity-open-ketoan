@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Gom bảng về lõi, đợt 2: bỏ purchase_policy_versions, payment_request_settings (0158, 0159) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** nội dung từng bản chính sách mua về `document_versions` (`mua-hang.policy:<id>`, băm giữ nguyên); ngày áp, lý do, người phát hành đọc từ phong bì `policy_registry` (đã kiểm khớp 57/57 bản trước khi bỏ bảng).
+- **Đổi:** ngưỡng cần duyệt cấp 2 của yêu cầu thanh toán thành khoá cấu hình `bizcity.payment.approval_thresholds` trên `setting_values` (có phiên bản, ngày hiệu lực); API `/api/v1/payment-request-settings` giữ nguyên.
+- **Giữ:** `posting_policy_versions` — chính sách kế toán tra theo ngày hiệu lực ở mỗi lần định khoản, cần cột ngày thật.
+
 ### Gom bảng về lõi, đợt 1: bỏ 4 bảng riêng (0157) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** `item_class_history` → `document_versions` (`danh-muc.item_class:<loại>:<mã>`); `closing_rule_versions` → `document_versions` (`ket-chuyen.rules:mau`); `accounts_name_en_luu` → `catalog_trash` (`accounts.name_en`). Chuyển đủ dòng rồi mới bỏ bảng (thiếu thì migration dừng). API lịch sử nhóm hàng, lịch sử kết chuyển mẫu giữ nguyên khuôn trả về.

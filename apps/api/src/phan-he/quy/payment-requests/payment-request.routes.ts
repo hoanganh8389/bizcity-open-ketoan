@@ -21,6 +21,7 @@ import { z } from 'zod';
 import { fromCents, toCents, voucherInputSchema } from '@ketoan/contracts';
 import { toNumber, type Db } from '../../../db/client.js';
 import { Errors } from '../../../core/errors.js';
+import { getSetting, setSetting } from '@bizcity/platform/core/settings';
 import { idSchema } from '../../../core/http.js';
 import { defineAction, mountActions, type ActionContext, type ActionDef, type ActionSideEffect, type AnyActionDef } from '../../../core/actions.js';
 import { loadWorkflow, type WorkflowStep } from '../../../core/workflow.js';
@@ -98,9 +99,16 @@ async function resolve(trx: Db, tenantId: string, b: Body, selfId?: string) {
   };
 }
 
+// [2026-11-18 Nguyễn Văn Thủy] ngưỡng duyệt cấp 2 ở kho cấu hình chung setting_values (0159, bỏ payment_request_settings) (đóng góp)
+const THRESHOLD_KEY = 'bizcity.payment.approval_thresholds';
+/** Ngưỡng cần cấp duyệt thứ hai (đ); null = mọi yêu cầu một cấp. */
+async function secondLevelFrom(trx: Db, tenantId: string): Promise<number | null> {
+  const v = Number((await getSetting(trx, tenantId, THRESHOLD_KEY)).value ?? 0);
+  return v > 0 ? v : null;
+}
 async function levelsFor(trx: Db, tenantId: string, amount: number): Promise<1 | 2> {
-  const s = await trx.selectFrom('payment_request_settings').select('second_level_from').where('tenant_id', '=', tenantId).executeTakeFirst();
-  return s?.second_level_from && amount >= toNumber(s.second_level_from) ? 2 : 1;
+  const s = await secondLevelFrom(trx, tenantId);
+  return s !== null && amount >= s ? 2 : 1;
 }
 
 async function load(trx: Db, tenantId: string, id: string, lock = false) {
@@ -289,8 +297,7 @@ export const paymentRequestActions: AnyActionDef[] = [
     input: z.object({}), output: z.object({ secondLevelFrom: z.number().nullable() }),
     expose: { http: { method: 'GET', path: '/api/v1/payment-request-settings' }, mcp: true, ai: 'read' },
     handler: async (ctx) => {
-      const s = await ctx.data.tx.selectFrom('payment_request_settings').select('second_level_from').where('tenant_id', '=', ctx.tenant.id).executeTakeFirst();
-      return { secondLevelFrom: s?.second_level_from ? toNumber(s.second_level_from) : null };
+      return { secondLevelFrom: await secondLevelFrom(ctx.data.tx, ctx.tenant.id) };
     },
   }),
   defineAction({
@@ -298,10 +305,10 @@ export const paymentRequestActions: AnyActionDef[] = [
     input: z.object({ secondLevelFrom: z.number().positive().nullable().describe('null = mọi yêu cầu chỉ một cấp duyệt') }),
     output: z.object({ secondLevelFrom: z.number().nullable() }),
     expose: { http: { method: 'PUT', path: '/api/v1/payment-request-settings' }, ai: 'deny' },
-    evidence: { objectType: 'payment_request_settings' },
+    evidence: { objectType: 'setting_values' },
     handler: async (ctx, input) => {
-      const values = { second_level_from: input.secondLevelFrom, updated_by: ctx.actor.name, updated_at: new Date() };
-      await ctx.data.tx.insertInto('payment_request_settings').values({ tenant_id: ctx.tenant.id, ...values }).onConflict((oc) => oc.column('tenant_id').doUpdateSet(values)).execute();
+      await setSetting(ctx.data.tx, { tenantId: ctx.tenant.id, actor: ctx.legacyAuth.actor, can: (p) => ctx.can(p as never) }, THRESHOLD_KEY,
+        { value: Math.round(input.secondLevelFrom ?? 0) });
       return input;
     },
   }),
