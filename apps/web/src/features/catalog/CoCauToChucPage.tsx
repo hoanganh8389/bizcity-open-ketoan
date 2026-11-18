@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Building2, ChevronDown, ChevronRight, FileDown, FileUp, Filter, FolderOpen, Network, Plus, Printer, RefreshCw, RotateCcw, Store, Users, Warehouse as WarehouseIcon } from 'lucide-react';
+import { ArrowLeft, Building2, Copy, ChevronDown, ChevronRight, FileDown, FileUp, Filter, FolderOpen, Network, Plus, Printer, RefreshCw, RotateCcw, Store, Users, Warehouse as WarehouseIcon } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
@@ -112,7 +112,7 @@ export function CoCauToChucPage() {
   const [showOff, setShowOff] = useState(false);
   const listExport = useRef<(() => void) | null>(null);
   /** back: các nút đã đi qua (bấm đúp dòng bên trong) để Quay lại. */
-  const [form, setForm] = useState<{ key: string | null; parentKey: string | null; back?: string[] } | null>(null);
+  const [form, setForm] = useState<{ key: string | null; parentKey: string | null; back?: string[]; copy?: string } | null>(null);
   const [imp, setImp] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -136,18 +136,20 @@ export function CoCauToChucPage() {
       <PageHeader title="Cơ cấu tổ chức" code="DM16" helpKey="so-do-to-chuc"
         actions={can('settings:write') && <button className="btn" disabled={restore.isPending} title="Đặt lại cây và việc gắn cửa hàng theo tệp gốc" onClick={() => restore.mutate()}><RotateCcw size={16} /> Quay về dữ liệu gốc</button>} />
       <div className="card">
+        {/* [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút chức năng bên trái, chọn kiểu xem sang phải; nút Nhân bản (đóng góp) */}
         <div className="catalog-toolbar canh-phai">
+          {canWrite && <button className="btn btn-sm btn-primary" title="Thêm vào dưới dòng đang chọn (chưa chọn: thêm công ty mới)" onClick={() => { setMsg(null); setForm({ key: null, parentKey: addParent }); }}><Plus size={14} /> Thêm</button>}
+          {canWrite && <button className="btn btn-sm" disabled={!sel || !cc.byKey.get(sel) || cc.byKey.get(sel)!.loai === 'none'} title={sel ? 'Nhân bản: thêm nút mới cùng cha, chép thông tin nút đang chọn (mã để trống)' : 'Chọn một dòng để nhân bản'} onClick={() => { const n = sel ? cc.byKey.get(sel) : null; if (n) { setMsg(null); setForm({ key: null, parentKey: n.parentKey === NONE_KEY ? null : n.parentKey, copy: n.key }); } }}><Copy size={14} /> Nhân bản</button>}
+          <button className="btn btn-sm" onClick={cc.refetch}><RefreshCw size={14} /> Nạp</button>
+          <button className="btn btn-sm" title="Tệp 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — sửa rồi Nhập Excel lại được" onClick={() => void xuatCoCau(cc)}><FileDown size={14} /> Xuất</button>
+          <button className="btn btn-sm" onClick={() => window.print()} title="In màn hình đang xem"><Printer size={14} /> In</button>
+          {canWrite && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
+          <span className="spacer" />
           <span className="cc-xem">
             {([['table', 'Cây'], ['chart', 'Sơ đồ'], ['org', 'Cơ cấu'], ['branch', 'Cửa hàng'], ['warehouse', 'Kho'], ['department', 'Phòng ban'], ['all', 'Tất cả']] as const).map(([k, t]) => (
               <button key={k} className={`btn btn-sm${view === k ? ' btn-primary' : ''}`} title={k === 'table' || k === 'chart' ? undefined : `Danh sách ${t.toLowerCase()} dạng bảng: lọc từng cột, sắp xếp, xuất Excel`} onClick={() => setView(k)}>{t}</button>
             ))}
           </span>
-          <span className="spacer" />
-          {canWrite && <button className="btn btn-sm btn-primary" title="Thêm vào dưới dòng đang chọn (chưa chọn: thêm công ty mới)" onClick={() => { setMsg(null); setForm({ key: null, parentKey: addParent }); }}><Plus size={14} /> Thêm</button>}
-          <button className="btn btn-sm" onClick={cc.refetch}><RefreshCw size={14} /> Nạp</button>
-          <button className="btn btn-sm" title="Tệp 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — sửa rồi Nhập Excel lại được" onClick={() => void xuatCoCau(cc)}><FileDown size={14} /> Xuất</button>
-          <button className="btn btn-sm" onClick={() => window.print()} title="In màn hình đang xem"><Printer size={14} /> In</button>
-          {canWrite && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
         </div>
         {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 12px 8px' }}>{msg.text}</div>}
         <ErrorBox error={cc.error ? errorText(cc.error) : null} />
@@ -167,7 +169,7 @@ export function CoCauToChucPage() {
             )}
         </div>
       </div>
-      {form && <NutForm key={form.key ?? `new:${form.parentKey}`} cc={cc} nodeKey={form.key} parentKey={form.parentKey} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }}
+      {form && <NutForm key={form.key ?? `new:${form.parentKey}:${form.copy ?? ''}`} cc={cc} nodeKey={form.key} parentKey={form.parentKey} copyKey={form.copy} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }}
         onGo={(key) => { setSel(key); setForm((x) => ({ key, parentKey: null, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] })); }}
         onBack={form.back?.length ? () => { const back = [...form.back!]; const key = back.pop()!; setSel(key); setForm({ key, parentKey: null, back }); } : undefined}
         onAdd={(parentKey) => setForm((x) => ({ key: null, parentKey, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] }))} />}
@@ -353,11 +355,13 @@ export function formOf(n: CNode | null, parentKey: string | null, cc: CC): F {
   return f;
 }
 
-function NutForm({ cc, nodeKey, parentKey, canWrite, onClose, onSaved, onGo, onAdd, onBack }: { cc: CC; nodeKey: string | null; parentKey: string | null; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void; /** Lùi về nút vừa xem. */ onBack?: () => void }) {
+function NutForm({ cc, nodeKey, parentKey, copyKey, canWrite, onClose, onSaved, onGo, onAdd, onBack }: { cc: CC; nodeKey: string | null; parentKey: string | null; /** Nhân bản: chép thông tin nút này (mã để trống). */ copyKey?: string; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void; /** Lùi về nút vừa xem. */ onBack?: () => void }) {
   const qc = useQueryClient();
   const node = nodeKey ? cc.byKey.get(nodeKey) ?? null : null;
   const isNew = !node;
-  const start = useMemo(() => formOf(node, parentKey, cc), [nodeKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nhân bản: lấy thông tin nút gốc, mã để trống, kho không là kho mặc định (đóng góp)
+  const goc = !node && copyKey ? cc.byKey.get(copyKey) ?? null : null;
+  const start = useMemo(() => (goc ? { ...formOf(goc, parentKey, cc), code: '', isDefault: false } : formOf(node, parentKey, cc)), [nodeKey, copyKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [f, setF] = useState<F>(start);
   useEffect(() => setF(start), [start]);
   const set = (p: Partial<F>) => setF((x) => ({ ...x, ...p }));
