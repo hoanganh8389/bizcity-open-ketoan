@@ -17,3 +17,8 @@ Lưới gồm: Mã thuế, Tên thuế, Thuế, Tài khoản. Nút "Cột" bật
 ## Căn cứ pháp lý
 
 Luật Thuế GTGT 48/2024/QH15; thuế suất 8%: Nghị quyết 204/2025/QH15 và Nghị định 174/2025/NĐ-CP, áp dụng đến hết 31/12/2026. Xem thêm màn **Căn cứ pháp lý** (TI11), trang *Hoá đơn và thuế GTGT*.
+
+## Nhập Excel
+<!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
+
+Nút **Nhập Excel** nhận tệp Xuất của màn này (mã thuế, tên, thuế suất, tài khoản, hoạt động; cột ẩn *Chiều*, *Nhóm bảng kê*). Thiếu cột Chiều: suy theo tài khoản (133… đầu vào, 333… đầu ra). Xem [Nhập dữ liệu từ Excel](nhap-excel.md).

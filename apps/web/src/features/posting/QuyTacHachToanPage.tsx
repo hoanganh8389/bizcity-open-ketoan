@@ -14,6 +14,8 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { AccountPicker, ItemPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
@@ -417,7 +419,9 @@ function GonView({ data, canWrite, nutXem, onRefresh }: { data: Scheme; canWrite
   ];
   return (
     <div className="card">
-      <CatalogToolbar left={nutXem} canWrite={canWrite} hasSelection={false} onRefresh={onRefresh} onExport={() => exportRef.current?.()} />
+      {/* [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp) */}
+      <CatalogToolbar left={nutXem} canWrite={canWrite} hasSelection={false} onRefresh={onRefresh} onExport={() => exportRef.current?.()}
+        extra={canWrite && <NutNhapExcel loai={nhapLoai('tai-khoan-ngam-dinh')!} />} />
       <DataGrid storageKey="acc41-gon" exportName="tai-khoan-ngam-dinh" exportRef={exportRef} rows={rows} rowKey={(r) => r.id} columns={cols}
         onRowDoubleClick={(r) => { if (canWrite) setSua(r); }} />
       {/* [2026-11-17 11:23 AM kiennt] ACC41 — bỏ cột Chức năng; bấm đúp mở chi tiết ở chế độ xem, bấm Sửa mới sửa (như các màn danh mục) (đóng góp) */}

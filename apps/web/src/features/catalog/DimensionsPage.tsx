@@ -17,6 +17,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { ListPicker, PartnerPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
 import { ChonSoDoToChuc } from '@/components/CayDonVi';
@@ -161,6 +163,8 @@ export function DimensionsPage({ kind }: { kind: DimensionKind }) {
           onDelete={remove}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={canWrite && kind === 'employee' && <NutNhapExcel loai={nhapLoai('nhan-vien')!} />}
           left={(q.data ?? []).some((r) => !r.isActive) && (
             <label className="checkbox" style={{ marginLeft: 8, fontSize: 13 }}><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Hiện cả mục đã ẩn ({(q.data ?? []).filter((r) => !r.isActive).length})</label>
           )}
