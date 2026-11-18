@@ -7,7 +7,9 @@
  */
 // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn (đóng góp)
 
-export type StockShort = { sku: string; need: number; have: number };
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: kiểm tồn theo mặt hàng × kho — quà ở kho quà KKM, không cộng chung với kho bán (đóng góp)
+/** `warehouse` / `gift`: chỉ có khi cửa hàng khai kho quà (NT-BH-028) — dòng thiếu ở kho quà mang gift = true. */
+export type StockShort = { sku: string; need: number; have: number; warehouse?: string; gift?: boolean };
 
 /** Làm tròn 4 chữ số như sổ kho (tránh 0.1 + 0.2). */
 const r4 = (n: number) => Math.round(n * 10_000) / 10_000;
@@ -32,5 +34,11 @@ export function stockShortages(need: ReadonlyMap<string, number>, have: Readonly
 
 /** Câu báo lỗi: "11005100103 cần 7, tồn 5 ở CN01". */
 export function stockShortMessage(short: readonly StockShort[], where: string): string {
-  return `Bán quá tồn: ${short.map((s) => `${s.sku} cần ${s.need}, tồn ${s.have}`).join('; ')} ở ${where}`;
+  const sale = short.filter((s) => !s.gift);
+  const gift = short.filter((s) => s.gift);
+  const text = (xs: readonly StockShort[]) => xs.map((s) => `${s.sku} cần ${s.need}, tồn ${s.have}${s.warehouse ? ` (kho ${s.warehouse})` : ''}`).join('; ');
+  return [
+    ...(sale.length ? [`Bán quá tồn: ${text(sale)} ở ${where}`] : []),
+    ...(gift.length ? [`Hết quà ở kho quà: ${text(gift)} ở ${where} — bỏ dòng quà (hết quà thì không tặng)`] : []),
+  ].join('. ');
 }

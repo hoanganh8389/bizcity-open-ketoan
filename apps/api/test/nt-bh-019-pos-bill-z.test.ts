@@ -1,3 +1,4 @@
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mã phiếu máy bán mặc định dạng shop (CN01BT…, CN01.B…) (đóng góp)
 // [2026-11-15 11:05 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1: bill Z nhận trên chứng từ bán dạng dòng quà, khách mới đi kèm đơn (đóng góp)
 /**
  * NT-BH-019 bước 1 — máy bán POS: hàng 0đ không gửi thuế (bill Z) và khách mới tại quầy đi kèm đơn. Gọi HTTP như máy bán vào
@@ -97,12 +98,12 @@ describe.skipIf(!HAS)('NT-BH-019 — máy bán POS: bill Z và khách mới đi 
     const r = await post('/orders', order());
     expect(r.statusCode, r.body).toBe(201);
     const o = r.json().data.order;
-    expect(o).toMatchObject({ code: 'HD2611000001', status: 'completed', subtotal: 300_926, taxTotal: 24_074, total: 325_000 });
+    expect(o).toMatchObject({ code: 'CN01BT10000', status: 'completed', subtotal: 300_926, taxTotal: 24_074, total: 325_000 });
     expect(o.payment).toMatchObject({ mode: 'cash', cashGiven: 500_000, change: 175_000 });
     expect(o.customer).toEqual({ id: '0901234567', name: 'Chị Lan', phone: '0901234567' });
-    // Đơn trả máy: bill chính có lon sữa; quà tách sang bill Z HD2611000001Z (in riêng, bản sao website zsale / zexport).
+    // Đơn trả máy: bill chính có lon sữa; quà tách sang bill Z CN01BT10000Z (in riêng, bản sao website zsale / zexport).
     expect(o.lines.map((l: { sku: string; sendTax: boolean; amount: number; taxAmount: number }) => [l.sku, l.sendTax, l.amount, l.taxAmount])).toEqual([[SKU, true, 300_926, 24_074]]);
-    expect(o.zBill).toEqual({ code: 'HD2611000001Z', lines: [expect.objectContaining({ lineId: 'l2', sku: QUA, sendTax: false, amount: 0, taxAmount: 0 })] });
+    expect(o.zBill).toEqual({ code: 'CN01BT10000Z', lines: [expect.objectContaining({ lineId: 'l2', sku: QUA, sendTax: false, amount: 0, taxAmount: 0 })] });
 
     const key = `pos:CN01:sale:${ID1}`;
     const doc = await payload(key);

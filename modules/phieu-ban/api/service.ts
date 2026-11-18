@@ -8,7 +8,7 @@
 // [2026-11-13 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: nghiệp vụ phiếu bán / trả nhập tay (đóng góp)
 import { randomUUID } from 'node:crypto';
 import { Errors, type ActionContext } from '@bizcity/module-sdk';
-import { computeDoc, docKeyOf, overReturn, returnableBySku, stockShortOf, toLedgerDoc, type Body, type DocInput, type Kind } from './domain/doc.js';
+import { computeDoc, docKeyOf, overReturn, returnableBySku, stockShortByWarehouse, stockShortOf, toLedgerDoc, withGiftWarehouse, type Body, type DocInput, type Kind } from './domain/doc.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng (đóng góp)
 import { applyVouchers, stripVouchers, type QuotedVoucher, type VoucherBody } from './domain/voucher.js';
 import {
@@ -46,6 +46,29 @@ async function checkPromoQuota(ctx: ActionContext, branch: string, lines: readon
   }
 }
 
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: dòng quà của phiếu bán tự vào kho quà (KKM) của cửa hàng — khoá bizcity.pos.gift_warehouses dùng chung với máy bán (đóng góp)
+type GiftWarehouse = { branch: string; saleWarehouse: string; giftWarehouse: string | null; issue: string | null };
+/**
+ * Kho quà của cửa hàng cho phiếu bán có dòng quà: hỏi action đọc `pos.gift-warehouse.get` của module pos (khoá cài đặt thuộc module pos;
+ * ctx.settings.get của module này chỉ đọc khoá bizcity.phieu_ban.*). Module pos chưa bật (NOT_FOUND) / cửa hàng chưa khai → null (như cũ:
+ * quà ở kho của phiếu). Khai sai (không thuộc cửa hàng, ngừng dùng, không phải KKM) → POS_GIFT_WAREHOUSE. Gọi NGOÀI ctx.data.module.
+ */
+export async function giftWarehouseOf(ctx: ActionContext, kind: Kind, branch: string, lines: readonly { isGift?: boolean }[]): Promise<string | null> {
+  if (kind !== 'sale' || !lines.some((l) => l.isGift)) return null;
+  let g: GiftWarehouse;
+  try {
+    g = await ctx.actions.call<GiftWarehouse>('pos.gift-warehouse.get', { branch });
+  } catch (e) {
+    if ((e as { code?: string }).code === 'NOT_FOUND') return null;
+    throw e;
+  }
+  if (g.issue) {
+    throw Errors.validation(`Kho quà của cửa hàng ${branch} không dùng được: ${g.issue} — kế toán chọn lại kho khuyến mại (KKM) ở Cài đặt bán hàng (BH17)`,
+      { reason: 'POS_GIFT_WAREHOUSE', branchCode: branch });
+  }
+  return g.giftWarehouse;
+}
+
 /** Kiểm + tính một phiếu (nháp hoặc lúc duyệt). Phiếu trả: nối phiếu bán gốc của module theo số (cùng cửa hàng) nếu có. */
 async function prepare(tx: Tx, kind: Kind, input: DocInput) {
   if (!(await branchExists(tx, input.branchCode))) fail([`Chi nhánh ${input.branchCode} không có / ngừng dùng`]);
@@ -62,7 +85,8 @@ async function prepare(tx: Tx, kind: Kind, input: DocInput) {
 
 /** Lưu nháp: thêm (id trống) hoặc sửa phiếu nháp. Số trống → cấp theo cửa hàng; số gõ tay → không trùng trong cửa hàng + loại. */
 export async function saveDraft(ctx: ActionContext, kind: Kind, input: DocInput, id?: string) {
-  return ctx.data.module(async (tx) => saveDraftIn(tx, ctx, kind, input, id));
+  const giftWarehouse = await giftWarehouseOf(ctx, kind, input.branchCode, input.lines);
+  return ctx.data.module(async (tx) => saveDraftIn(tx, ctx, kind, input, id, { giftWarehouse }));
 }
 
 // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: lưu nháp trong giao dịch module có sẵn (đơn đặt hàng sinh phiếu bán nháp khi giao) (đóng góp)
@@ -72,14 +96,17 @@ export async function saveDraft(ctx: ActionContext, kind: Kind, input: DocInput,
  */
 export async function saveDraftIn(tx: Tx, ctx: ActionContext, kind: Kind, input: DocInput, id?: string, opts: {
   order?: { id: string; no: string };
+  /** NT-BH-028: kho quà của cửa hàng (đã hỏi module pos) — dòng quà tự vào kho này; không có thì gán lúc duyệt. */
+  giftWarehouse?: string | null;
   onLinkedEdit?: (tx: Tx, doc: { docId: string; orderId: string; lines: { lineKey: string; sku: string; qty: number }[] }) => Promise<void>;
 } = {}) {
   const cur = id ? await getDoc(tx, id, true) : null;
   if (cur && cur.kind !== kind) throw Errors.validation('Sai loại phiếu');
   if (cur && cur.status !== 'draft') throw Errors.conflict('Phiếu đã duyệt — bỏ duyệt rồi mới sửa');
   const order = opts.order ?? cur?.body.order;
-  const { body, problems } = await prepare(tx, kind, { ...input, order });
-  if (problems.length) fail(problems);
+  const prepared = await prepare(tx, kind, { ...input, order });
+  if (prepared.problems.length) fail(prepared.problems);
+  const body = withGiftWarehouse(prepared.body, opts.giftWarehouse ?? null);
   if (cur && order && opts.onLinkedEdit) {
     await opts.onLinkedEdit(tx, { docId: cur.doc_id, orderId: order.id, lines: body.lines.map((l) => ({ lineKey: l.lineKey, sku: l.sku, qty: l.qty })) });
   }
@@ -150,11 +177,14 @@ async function applyDocVouchers(ctx: ActionContext, r: DocRow, body: Body): Prom
 export async function approve(ctx: ActionContext, id: string) {
   // Cài đặt đọc ngoài giao dịch của module (vai trò module không đọc bảng cấu hình của Core).
   const blockStock = (await ctx.settings.get<unknown>(BLOCK_NEGATIVE_STOCK)) === true;
+  const head = await ctx.data.module(async (tx) => getDoc(tx, id));
+  const giftWh = await giftWarehouseOf(ctx, head.kind, head.branch_code, head.body.lines);
   const prepared = await ctx.data.module(async (tx) => {
     const r = await getDoc(tx, id, true);
     if (r.status === 'approved') throw Errors.conflict('Phiếu đã duyệt');
-    const p = await prepare(tx, r.kind, asInput(r));
-    if (p.problems.length) fail(p.problems);
+    const p0 = await prepare(tx, r.kind, asInput(r));
+    if (p0.problems.length) fail(p0.problems);
+    const p = { ...p0, body: withGiftWarehouse(p0.body, r.branch_code === head.branch_code ? giftWh : null) };
     if (r.kind === 'sale_return' && p.original) {
       if (p.original.status !== 'approved') fail([`Phiếu bán gốc ${p.original.doc_no} chưa duyệt`]);
       const done = (await approvedReturnsOf(tx, p.original.doc_id, r.doc_id)).flatMap((x) => x.body.lines);
@@ -163,8 +193,12 @@ export async function approve(ctx: ActionContext, id: string) {
     }
     if (r.kind === 'sale' && blockStock) {
       // Phiếu đang sửa đã bỏ duyệt (chứng từ trong sổ đã huỷ) nên tồn đọc được không còn trừ chính nó.
-      const have = await lockedStock(tx, r.branch_code, r.warehouse_code, p.body.lines.map((l) => l.sku));
-      const short = stockShortOf(p.body.lines, have);
+      const have = await lockedStock(tx, r.branch_code, r.warehouse_code, p.body.lines.filter((l) => !l.warehouseCode).map((l) => l.sku));
+      // NT-BH-028: dòng quà ở kho quà kiểm tồn kho quà, không cộng chung với kho của phiếu.
+      const giftLines = p.body.lines.filter((l) => l.warehouseCode);
+      const short = giftLines.length && giftWh
+        ? stockShortByWarehouse(p.body.lines, new Map([[r.warehouse_code ?? '', have], [giftWh, await lockedStock(tx, r.branch_code, giftWh, giftLines.map((l) => l.sku))]]), r.warehouse_code ?? '')
+        : stockShortOf(p.body.lines, have);
       if (short.length) {
         const where = r.warehouse_code || r.branch_code;
         throw Errors.validation(`Bán quá tồn: ${short.map((s) => `${s.sku} cần ${s.need}, tồn ${s.have}`).join('; ')} ở ${where} — tắt công tắc "Chặn bán quá tồn ở phiếu bán nhập tay" ở BH17 nếu muốn chỉ cảnh báo`,

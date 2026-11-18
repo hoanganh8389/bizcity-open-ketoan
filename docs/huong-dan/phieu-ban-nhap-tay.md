@@ -23,6 +23,7 @@ Dùng cho bán buôn, bán nợ, bán ngoài quầy — những phiếu kế to�
 - Tiền giảm Core tính **gồm thuế**; phiếu ghi chiết khấu **trước thuế** = tiền giảm ÷ (1 + thuế suất), làm tròn đồng — tổng phiếu có thể lệch vài đồng so với máy bán.
 - Chiết khấu của dòng mang chương trình không sửa tay được; muốn giảm thêm thì lập dòng riêng hoặc bỏ chương trình.
 - Phiếu có quà / giảm theo chương trình có hạn mức (BH12): hạn mức cửa hàng tự trừ khi phiếu vào sổ.
+- Cửa hàng đã chọn **kho quà** (loại KKM) ở *Cài đặt bán hàng (BH17)*: dòng quà tự vào kho quà, dòng bán theo kho xuất của phiếu — quà cùng mã hàng bán vẫn tách tồn hai kho. Bật *Chặn bán quá tồn* thì quà kiểm tồn kho quà, hàng bán kiểm tồn kho xuất, không cộng chung. Kho quà khai sai (không phải KKM, khác cửa hàng, ngừng dùng) → báo khi lưu / duyệt. <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028 (đóng góp) -->
 
 ## Duyệt, bỏ duyệt
 

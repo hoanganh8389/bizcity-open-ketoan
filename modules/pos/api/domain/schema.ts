@@ -31,6 +31,8 @@ export const orderLineDraftSchema = z.object({
   policyRef: z.object({ key: z.string().trim().min(1).max(64), version: z.number().int().min(1), line: z.enum(['gift', 'discount']).optional() }).optional(),
   /** Tiền giảm theo chương trình (gồm thuế) của cả dòng — đúng `discounts[].amount` Core trả. */
   promoDiscount: vnd.min(0, 'Tiền giảm không được âm').optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: kho của dòng máy đọc từ bootstrap (quà → kho quà) — chỉ để máy hiển thị; máy chủ quyết theo cài đặt (đóng góp)
+  warehouseCode: z.string().trim().max(64).optional(),
 }).passthrough();
 
 export const paymentDraftSchema = z.discriminatedUnion('mode', [

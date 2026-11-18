@@ -3,12 +3,14 @@
  * `sale_return` nối đơn gốc (originalDocKey). Dùng chung cho POST /returns và phiếu trả của POST /exchanges.
  */
 import { Errors, sql, z, type ActionContext } from '@bizcity/module-sdk';
-import { codePeriod, loyaltyGiftIndex } from './domain/order.js';
+import { loyaltyGiftIndex } from './domain/order.js';
 import {
   buyerTaxCodeOf, computeReturn, returnDeadline, returnDocKey, returnableLines, daysSince, taxInvoiceMessage, toSaleReturnDocument,
   type ReturnedSoFar, type SoldLine,
 } from './domain/returns.js';
-import { takeCodes } from './codes.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: phiếu hoàn theo dạng của cửa hàng ({shop}.B{5 số} hoặc TH…) (đóng góp)
+import { issueCodes } from './codes.js';
+import { schemeOf } from './domain/codes.js';
 import { activePaymentMethods, catalogFor, resolveBranch, todayVn } from './read.js';
 import { returnBadWarehouses, returnDays } from './settings.js';
 import { isUniqueViolation, lockKey, raise } from './order-service.js';
@@ -149,7 +151,8 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
       badWarehouse: bad.code, ...(bad.issue ? { badWarehouseIssue: bad.issue } : {}),
     });
     if ('problem' in computed) raise(computed.problem);
-    const code = (await takeCodes(tx, ctx.tenant.id, branch.code, 'return', codePeriod(today), 1))[0]!;
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): phiếu hoàn {shop}.B{5 số} mặc định, mã chi nhánh lạ giữ TH (đóng góp)
+    const code = (await issueCodes(tx, ctx.tenant.id, branch.code, 'return', today, 1, schemeOf(branch.code)))[0]!;
     return { kind: 'new', order, branch, computed, code, today } as const;
   });
   if (prepared.kind === 'replay') {
