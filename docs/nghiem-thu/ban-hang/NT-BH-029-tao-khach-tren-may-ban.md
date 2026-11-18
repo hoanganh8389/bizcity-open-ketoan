@@ -31,7 +31,7 @@
 |---|---|
 | Ngày chạy | |
 | Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-029-tao-khach.test.ts` (tạo khi code) |
+| Test tự động | `apps/api/test/nt-bh-029-tao-khach.test.ts` (chưa tách — tạo khi code) |
 
 ## 5. Lịch sử thay đổi
 | Ngày | Thay đổi |

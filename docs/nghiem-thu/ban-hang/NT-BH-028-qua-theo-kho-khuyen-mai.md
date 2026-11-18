@@ -43,7 +43,7 @@
 |---|---|
 | Ngày chạy | |
 | Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-028-qua-kho-km.test.ts` (tạo khi code) |
+| Test tự động | `apps/api/test/nt-bh-028-qua-kho-km.test.ts` (chưa tách — tạo khi code) |
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |

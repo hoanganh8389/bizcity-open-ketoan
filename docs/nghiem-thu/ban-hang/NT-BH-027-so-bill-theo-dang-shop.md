@@ -45,7 +45,7 @@ Máy bán React lấy số từ module `pos`: `HD` + năm tháng + 6 số (`HD26
 |---|---|
 | Ngày chạy | |
 | Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-027-so-bill.test.ts` (tạo khi code) |
+| Test tự động | `apps/api/test/nt-bh-027-so-bill.test.ts` (chưa tách — tạo khi code) |
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
