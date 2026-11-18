@@ -12,6 +12,8 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { AccountPicker } from '@/components/pickers';
 import { useBranches, BranchPicker } from '@/components/filters';
@@ -48,6 +50,8 @@ export function BankAccountsPage() {
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá ${sel.code} - ${sel.bankName}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={canWrite && <NutNhapExcel loai={nhapLoai('tk-ngan-hang')!} />}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (

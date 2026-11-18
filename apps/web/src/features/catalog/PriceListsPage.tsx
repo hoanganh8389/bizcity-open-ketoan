@@ -13,6 +13,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { useBranches } from '@/components/filters';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { CayDonVi } from '@/components/CayDonVi';
@@ -72,7 +74,8 @@ export function PriceListsPage() {
           onDelete={() => { if (sel && window.confirm(`Xoá bảng giá ${sel.code} - ${sel.name}? Giá đã khai ở bảng giá này bị xoá theo.`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
-          extra={<><PrintButton screen="DM14" label="In bảng giá" templates={PRICE_LIST_TEMPLATES} disabled={!sel} title="In bảng giá đang chọn (mọi mặt hàng có giá) — mũi tên để chọn mẫu báo giá" getDocs={async () => (sel ? [await loadQuote(qc, sel)] : [])} /></>}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={<>{canWrite && <NutNhapExcel loai={nhapLoai('bang-gia')!} />}<PrintButton screen="DM14" label="In bảng giá" templates={PRICE_LIST_TEMPLATES} disabled={!sel} title="In bảng giá đang chọn (mọi mặt hàng có giá) — mũi tên để chọn mẫu báo giá" getDocs={async () => (sel ? [await loadQuote(qc, sel)] : [])} /></>}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
