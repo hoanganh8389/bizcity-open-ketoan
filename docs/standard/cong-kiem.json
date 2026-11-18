@@ -2128,7 +2128,7 @@
       {
         "name": "branches_cost_unit",
         "table": "branches",
-        "migration": "0149_don_vi_gia_von_theo_co_cau.sql"
+        "migration": "0151_don_vi_gia_von_theo_co_cau.sql"
       },
       {
         "name": "branches_entity_attrs_sync",
@@ -2144,6 +2144,11 @@
         "name": "branches_identity_guard",
         "table": "branches",
         "migration": "0085_ma_thuc_the.sql"
+      },
+      {
+        "name": "branches_org_unit_authz_version",
+        "table": "branches",
+        "migration": "0150_pham_vi_so_do_to_chuc.sql"
       },
       {
         "name": "branches_own_department",
@@ -2163,7 +2168,7 @@
       {
         "name": "business_documents_sync",
         "table": "purchase_documents",
-        "migration": "0156_so_chung_tu_chung.sql"
+        "migration": "0158_so_chung_tu_chung.sql"
       },
       {
         "name": "dimensions_uid",
@@ -2228,7 +2233,7 @@
       {
         "name": "item_classes_mirror",
         "table": "item_classes",
-        "migration": "0163_hop_dong_mua_xuyen_suot.sql"
+        "migration": "0165_hop_dong_mua_xuyen_suot.sql"
       },
       {
         "name": "item_classification_guard",
@@ -2401,9 +2406,19 @@
         "migration": "0088_cau_hinh_thu_vien.sql"
       },
       {
+        "name": "org_units_assignment_guard",
+        "table": "org_units",
+        "migration": "0150_pham_vi_so_do_to_chuc.sql"
+      },
+      {
         "name": "org_units_cost_units",
         "table": "org_units",
-        "migration": "0149_don_vi_gia_von_theo_co_cau.sql"
+        "migration": "0151_don_vi_gia_von_theo_co_cau.sql"
+      },
+      {
+        "name": "org_units_path_authz_version",
+        "table": "org_units",
+        "migration": "0150_pham_vi_so_do_to_chuc.sql"
       },
       {
         "name": "org_units_uid_guard",
@@ -2493,7 +2508,7 @@
       {
         "name": "products_class_from_group",
         "table": "products",
-        "migration": "0163_hop_dong_mua_xuyen_suot.sql"
+        "migration": "0165_hop_dong_mua_xuyen_suot.sql"
       },
       {
         "name": "products_created_by",
