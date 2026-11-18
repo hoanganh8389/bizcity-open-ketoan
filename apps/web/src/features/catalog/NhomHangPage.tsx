@@ -228,19 +228,18 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
     onError: (e) => setErr(errorText(e)),
   });
   const nn = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
-  // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng chỉ không trùng trong cùng cây (cùng ngành hàng cấp 1); khác ngành được trùng.
-  // Thêm ngành hàng (cấp 1): không trùng ngành hàng khác.
-  const cungCay = (() => {
-    const gia = (k: string) => !ix.parentOf(k) && /^nhóm hàng$/i.test(ix.byCode.get(k)?.name.trim() ?? ''); // gốc "Nhóm hàng" không phải ngành
-    const chuoi: string[] = [];
-    for (let p = parent, n = 0; p && n < 50; p = ix.parentOf(p), n++) chuoi.unshift(p);
-    if (chuoi[0] && gia(chuoi[0])) chuoi.shift();
-    const nganh = chuoi[0];
-    if (!nganh) return (parent ? ix.kids.get(parent) ?? [] : ix.roots).filter((x) => !gia(x.code)); // thêm ngành hàng: so với các ngành khác
-    return [...ix.subtree(nganh)].map((k) => ix.byCode.get(k)!).filter(Boolean);
+  // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng không trùng nhóm cùng cha, không trùng tên nhóm cha (sửa: cả nhóm con trực tiếp);
+  // khác cha thì được trùng, kể cả trong cùng ngành.
+  const trungTen = (() => {
+    if (!ten.trim() || (old && nn(old.name) === nn(ten))) return undefined;
+    const anhEm = (parent ? ix.kids.get(parent) ?? [] : ix.roots).find((x) => x.code !== old?.code && nn(x.name) === nn(ten));
+    if (anhEm) return { x: anhEm, la: 'nhóm cùng cấp' };
+    const cha = parent ? ix.byCode.get(parent) : undefined;
+    if (cha && nn(cha.name) === nn(ten)) return { x: cha, la: 'nhóm cha' };
+    const con = old ? (ix.kids.get(old.code) ?? []).find((x) => nn(x.name) === nn(ten)) : undefined;
+    return con ? { x: con, la: 'nhóm con' } : undefined;
   })();
-  const trungTen = ten.trim() && (!old || nn(old.name) !== nn(ten)) ? cungCay.find((x) => x.code !== old?.code && nn(x.name) === nn(ten)) : undefined;
-  const loiTen = trungTen ? `Mã nhóm hàng đã dùng cho nhóm "${ix.path(trungTen.code)}" — đặt mã khác` : '';
+  const loiTen = trungTen ? `Mã nhóm hàng trùng ${trungTen.la} "${ix.path(trungTen.x.code)}" — đặt mã khác` : '';
   const ghi = () => { const e = !ten.trim() ? 'Nhập mã nhóm hàng' : loiTen || loiMa || (!full.trim() ? 'Nhập tên nhóm hàng' : ''); setErr(e); if (!e) save.mutate(); };
 
   return (
