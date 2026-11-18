@@ -57,5 +57,6 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-DM-002](danh-muc/NT-DM-002-sua-loi-danh-muc.md) | Sửa lỗi danh mục mức cao, trung bình: thêm trùng mã ghi đè, xoá cha còn con / mục đang dùng, vòng nhóm cha, gợi ý NCC ngừng | Chờ nghiệm thu |
 | [NT-DM-003](danh-muc/NT-DM-003-nhap-xuat-excel.md) | Xuất Excel dùng được để nhập lại (tiêu đề cột, đường dẫn nhóm hàng, thuế suất bắt buộc khi nhập mặt hàng mới); nhập giá bán từ Excel ở DM14 | Đã chốt |
 | [NT-DM-004](danh-muc/NT-DM-004-nhap-excel-don-vi-tinh.md) | Nhập Excel danh mục đơn vị tính (DM15): khứ hồi xuất → nhập, khoá theo tên ĐVT | Đã chốt |
+| [NT-DM-005](danh-muc/NT-DM-005-nhap-excel-cac-danh-muc.md) | Nhập Excel cho các màn danh mục còn thiếu: ACC43, DM18, DM08, DM04, DM09, DM05, DM14 (danh sách bảng giá), ACC41, ACC41A | Đã chốt |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.
