@@ -6,6 +6,8 @@
  * Thêm loại mới: viết một NhapLoai rồi thêm vào NHAP_LOAI (trang TI14 và nút "Nhập Excel" ở danh sách dùng chung danh sách này).
  */
 import { api } from './api';
+// [2026-11-18 10:40 AM kiennt] NT-DM-005 — các danh mục nhỏ ở tệp riêng (đóng góp)
+import { NHAP_DANH_MUC } from './nhapExcelDanhMuc';
 
 export interface NhapTruong {
   key: string;
@@ -737,7 +739,7 @@ const phieuTien = (docType: LoaiPhieu): NhapLoai => {
   };
 };
 
-export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, DON_VI_TINH, CHI_NHANH, KHO, TAI_KHOAN, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
+export const NHAP_LOAI: NhapLoai[] = [doiTuong('customer'), doiTuong('supplier'), MAT_HANG, NHOM_HANG, DON_VI_TINH, CHI_NHANH, KHO, TAI_KHOAN, ...NHAP_DANH_MUC, SO_DU, TON_KHO, TON_MAX, ...(['receipt', 'payment', 'bank_receipt', 'bank_payment', 'manual'] as const).map(phieuTien)];
 /** Loại nhập của một loại phiếu tiền / phiếu kế toán (nút Nhập Excel ở danh sách phiếu). */
 export const nhapPhieu = (docType: string) => NHAP_LOAI.find((l) => l.id === PHIEU[docType as LoaiPhieu]?.id);
 export const nhapLoai = (id: string) => NHAP_LOAI.find((l) => l.id === id);
