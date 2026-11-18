@@ -11,6 +11,8 @@ type Row = {
   id: string; code: string; branchCode: string; businessDate: string; createdAt: string; status: string; total: number; taxTotal: number;
   docKey: string; docStatus: string; cashier: string; shiftId: string; customerName: string; customerPhone: string;
   payments: { method: string; name: string; amount: number }[]; lines: Line[];
+  stockShortOffline: { sku: string; need: number; have: number }[];
+  priceChangedOffline: { sku: string; unit: string; price: number | null; clientPrice: number }[];
 };
 
 const cols: GridColumn<Row>[] = [
@@ -25,6 +27,11 @@ const cols: GridColumn<Row>[] = [
   { key: 'status', header: 'Trạng thái', width: 110, value: (r) => ORDER_STATUS[r.status]?.label ?? r.status, render: (r) => <Badge map={ORDER_STATUS} value={r.status} /> },
   { key: 'docStatus', header: 'Chứng từ sổ', width: 110, value: (r) => DOC_STATUS[r.docStatus]?.label ?? r.docStatus, render: (r) => <Badge map={DOC_STATUS} value={r.docStatus} /> },
   { key: 'docKey', header: 'Mã chứng từ', type: 'code', width: 200, hidden: true },
+  // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: đơn bán dự phòng lúc mất mạng gửi bù mà thiếu tồn (đóng góp)
+  { key: 'stockShortOffline', header: 'Lệch khi mất mạng (tồn / giá)', width: 190, value: (r) => r.stockShortOffline.length + r.priceChangedOffline.length,
+    render: (r) => [...r.stockShortOffline.map((s) => `${s.sku}: cần ${s.need}, tồn ${s.have}`),
+      // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: đơn mất mạng bán giá cũ / chưa có giá (đóng góp)
+      ...r.priceChangedOffline.map((p) => `${p.sku} (${p.unit}): bán ${p.clientPrice.toLocaleString('vi-VN')}, bảng giá ${p.price === null ? 'chưa có' : p.price.toLocaleString('vi-VN')}`)].join('; ') },
 ];
 
 const lineCols: GridColumn<Line>[] = [
@@ -39,7 +46,7 @@ const lineCols: GridColumn<Line>[] = [
 ];
 
 export function DonBanPage() {
-  const r = useRange({ q: '', cashier: '' });
+  const r = useRange({ q: '', cashier: '', stockShort: '0' });
   const [pick, setPick] = useState<Row | null>(null);
   const q = usePage<Row[]>('orders', '/admin/orders', { ...r.applied, pageSize: 500 });
   const sums = q.data?.meta?.sums ?? {};
@@ -50,6 +57,10 @@ export function DonBanPage() {
         <>
           <SideInput label="Mã phiếu / khách" value={r.draft.q ?? ''} onChange={(v) => r.setDraft({ ...r.draft, q: v })} placeholder="HD…, SĐT, tên khách" />
           <SideInput label="Thu ngân" value={r.draft.cashier ?? ''} onChange={(v) => r.setDraft({ ...r.draft, cashier: v })} />
+          <label className="row" style={{ gap: 6 }}>
+            <input type="checkbox" checked={r.draft.stockShort === '1'} onChange={(e) => r.setDraft({ ...r.draft, stockShort: e.target.checked ? '1' : '0' })} />
+            Chỉ đơn mất mạng bị lệch (tồn / giá)
+          </label>
         </>
       )}>
         <KpiCards items={[

@@ -73,7 +73,7 @@ export const inventoryMovementRepository = {
       counterBranchId: string | null = null,
     ) => {
       if (!l.sku) return;
-      // [2026-11-17 Nguyễn Văn Thủy] thuế, chiết khấu của dòng mua / trả NCC (cùng dấu amount) cho công thức giá vốn tuỳ chọn (0151) (đóng góp)
+      // [2026-11-17 Nguyễn Văn Thủy] thuế, chiết khấu của dòng mua / trả NCC (cùng dấu amount) cho công thức giá vốn tuỳ chọn (0153) (đóng góp)
       const sg = (kind === 'purchase' || kind === 'purchase_return') && amount ? Math.sign(amount) : 0;
       rows.push({ ...base, branch_id: branchId, line_no: i + 1, kind, sku: l.sku, name: l.name, unit: l.unit, warehouse_code: l.warehouseCode ?? '', qty, amount, counter_branch_id: counterBranchId, is_gift: Boolean(l.isGift), exclude_cost: Boolean(l.excludeFromCost), priced_at_sale: false,
         tax_amount: sg * Math.abs(Number(l.taxAmount ?? 0)), discount_amount: sg * Math.abs(Number(l.discount ?? 0)) });

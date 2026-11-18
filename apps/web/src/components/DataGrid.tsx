@@ -58,6 +58,9 @@ export interface Column<T> {
   showZero?: boolean;
   /** Lớp CSS của cột — gắn cho ô tiêu đề, ô dữ liệu và ô dòng tổng (tô màu cả cột). */
   className?: string;
+  // [2026-11-17 09:10 PM kiennt] NT-DM-003 E4 — cột chỉ để thao tác trên màn (vd ô tích chọn) không đưa vào tệp xuất (đóng góp)
+  /** Không đưa cột này vào tệp Xuất Excel. */
+  noExport?: boolean;
 }
 
 export type RowKind = 'data' | 'group' | 'subtotal';
@@ -167,8 +170,10 @@ function textOf<T>(c: Column<T>, r: T): string {
   return String(v);
 }
 
+// [2026-11-17 09:10 PM kiennt] NT-DM-003 E1 — tên cột là chữ thì dùng chính tên cột (tiêu đề tệp xuất, nhãn nhóm); title chỉ là chú thích khi rê chuột,
+//   chỉ thay khi tên cột không phải chữ. Trước đây title đứng trước → tệp xuất mang câu giải thích dài, Nhập Excel không ghép được cột (đóng góp)
 function headerTitle<T>(c: Column<T>): string {
-  return c.title ?? (typeof c.header === 'string' ? c.header : c.key);
+  return typeof c.header === 'string' && c.header.trim() ? c.header : (c.title ?? c.key);
 }
 
 function compare(a: string | number | null | undefined, b: string | number | null | undefined, numeric: boolean): number {
@@ -372,6 +377,7 @@ export function DataGrid<T>(p: DataGridProps<T>) {
   // Xuất Excel đúng những gì đang thấy: cột đang hiện, dòng sau lọc / sắp xếp, dòng tổng.
   // [2026-11-11 Nguyễn Văn Thủy] xuất qua lib/excelChuan: kẻ ô, tiêu đề cột nền xám (hai tầng gộp ô), số có phân cách, dòng tổng đậm (đóng góp)
   const exportExcel = async () => {
+    const xcols = cols.filter((c) => !c.noExport);
     const { luuExcel } = await import('@/lib/excelChuan');
     const cellValue = (c: Column<T>, r: T): string | number => {
       const v = valueOf(c, r);
@@ -390,7 +396,7 @@ export function DataGrid<T>(p: DataGridProps<T>) {
     if (bands) {
       // Tiêu đề hai tầng: dòng nhóm (gộp ngang theo nhóm), dòng tên cột; cột không nhóm gộp dọc hai dòng.
       const r0 = aoa.length;
-      aoa.push(cols.map((c) => c.band ?? headerTitle(c)), cols.map((c) => headerTitle(c)));
+      aoa.push(xcols.map((c) => c.band ?? headerTitle(c)), xcols.map((c) => headerTitle(c)));
       headerRows.push(r0, r0 + 1);
       let ci = 0;
       for (const b of bandCells) {
@@ -398,10 +404,10 @@ export function DataGrid<T>(p: DataGridProps<T>) {
         else merges.push([r0, ci, r0 + 1, ci]);
         ci += b.span;
       }
-    } else { headerRows.push(aoa.length); aoa.push(cols.map((c) => headerTitle(c))); }
-    for (const { r } of view) aoa.push(cols.map((c) => cellValue(c, r)));
+    } else { headerRows.push(aoa.length); aoa.push(xcols.map((c) => headerTitle(c))); }
+    for (const { r } of view) aoa.push(xcols.map((c) => cellValue(c, r)));
     if (showFooter) {
-      aoa.push(cols.map((c, i) => {
+      aoa.push(xcols.map((c, i) => {
         if (c.footerValue) return c.footerValue(dataRows);
         if (c.sum) return dataRows.reduce((t, r) => t + Math.round(Number(valueOf(c, r) ?? 0) * 100), 0) / 100;
         if (typeof c.footer === 'string' || typeof c.footer === 'number') return c.footer;
@@ -409,8 +415,8 @@ export function DataGrid<T>(p: DataGridProps<T>) {
       }));
     }
     const numFmt: Record<number, string> = {};
-    cols.forEach((c, ci) => { if (c.type === 'qty') numFmt[ci] = '#,##0.###;(#,##0.###)'; else if (c.type === 'price') numFmt[ci] = '#,##0.####;(#,##0.####)'; });
-    const widths = cols.map((c) => Math.min(60, Math.max(8, Math.round((saved.widths[c.key] ?? c.width ?? (isNumeric(c.type) ? 110 : 140)) / 7))));
+    xcols.forEach((c, ci) => { if (c.type === 'qty') numFmt[ci] = '#,##0.###;(#,##0.###)'; else if (c.type === 'price') numFmt[ci] = '#,##0.####;(#,##0.####)'; });
+    const widths = xcols.map((c) => Math.min(60, Math.max(8, Math.round((saved.widths[c.key] ?? c.width ?? (isNumeric(c.type) ? 110 : 140)) / 7))));
     const stamp = new Date().toISOString().slice(0, 10);
     await luuExcel(`${p.exportName ?? p.storageKey ?? 'bang'}-${stamp}.xlsx`, [{ name: (title || 'Bang').slice(0, 31), rows: aoa, headerRows, merges, numFmt, widths, plainBody: true }]);
   };

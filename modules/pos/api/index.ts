@@ -34,6 +34,21 @@ import shiftCurrent from './actions/shift-current.js';
 import shiftOpen from './actions/shift-open.js';
 import stockAll from './actions/stock-all.js';
 import stockGet from './actions/stock-get.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: nháp / duyệt / hạn mức / báo cáo khuyến mại (đóng góp)
+import promoDraftList from './actions/promo-draft-list.js';
+import promoDraftGet from './actions/promo-draft-get.js';
+import promoDraftCreate from './actions/promo-draft-create.js';
+import promoDraftUpdate from './actions/promo-draft-update.js';
+import promoDraftOverlaps from './actions/promo-draft-overlaps.js';
+import promoDraftApprove from './actions/promo-draft-approve.js';
+import promoDraftPublished from './actions/promo-draft-published.js';
+import promoDraftReject from './actions/promo-draft-reject.js';
+import promoDraftImport from './actions/promo-draft-import.js';
+import promoStopLog from './actions/promo-stop-log.js';
+import promoQuota from './actions/promo-quota.js';
+import promoReport from './actions/promo-report.js';
+import promoReportOrders from './actions/promo-report-orders.js';
+import phieuBanPromoUse from './subscribers/phieu-ban-promo-use.js';
 
 export default defineModule({
   manifest,
@@ -44,6 +59,7 @@ export default defineModule({
     shiftCurrent, shiftOpen, shiftClose, reportOrders, reportDashboard,
     adminOrders, adminReturns, adminShifts, adminDashboard, adminSettings, adminShiftJournal,
     orderQrConfirm, orderQrRenew, orderInvoiceBuyer, orderMoveToZ, stockAll,
+    promoDraftList, promoDraftGet, promoDraftCreate, promoDraftUpdate, promoDraftOverlaps, promoDraftApprove, promoDraftPublished, promoDraftReject, promoDraftImport, promoStopLog, promoQuota, promoReport, promoReportOrders,
   ],
-  subscribers: [],
+  subscribers: [phieuBanPromoUse],
 });

@@ -3,22 +3,23 @@
   "id": "bizcity.phieu-ban",
   "key": "phieu-ban",
   "kind": "module",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "label": "Phiếu bán nhập tay",
-  "description": "Phiếu bán / trả hàng do kế toán lập (BH10, BH11 — bán buôn, bán nợ, bán ngoài quầy): nháp → duyệt nộp sổ qua cửa nạp (sale / sale_return) → bỏ duyệt đảo bút toán. Số phiếu theo cửa hàng, không trùng (phiếu NT-BH-015).",
+  "description": "Phiếu bán / trả hàng do kế toán lập (BH10, BH11 — bán buôn, bán nợ, bán ngoài quầy): nháp → duyệt nộp sổ qua cửa nạp (sale / sale_return) → bỏ duyệt đảo bút toán. Số phiếu theo cửa hàng, không trùng (phiếu NT-BH-015). Đơn đặt hàng NT-BH-023: giữ hàng ở kho KCB, giao thành phiếu bán nháp.",
   "owners": ["@hoanganh8389"],
   "standard": "^1.0",
   "requires": {
-    "capabilities": ["ledger.submit", "ledger.cancel", "data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.outbox"]
+    "capabilities": ["ledger.submit", "ledger.cancel", "data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.outbox", "settings.registry", "actions.call"]
   },
   "permissions": [
     { "key": "phieu-ban:read", "label": "Xem phiếu bán / trả hàng nhập tay", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" },
-    { "key": "phieu-ban:write", "label": "Lập, sửa, duyệt, bỏ duyệt phiếu bán / trả hàng nhập tay", "roles": ["owner", "chief_accountant", "accountant"], "risk": "low" }
+    { "key": "phieu-ban:write", "label": "Lập, sửa, duyệt, bỏ duyệt phiếu bán / trả hàng nhập tay", "roles": ["owner", "chief_accountant", "accountant"], "risk": "low" },
+    { "key": "phieu-ban:order-approve", "label": "Duyệt / từ chối đơn đặt hàng chờ duyệt (vượt hạn mức nợ, nợ quá hạn)", "roles": ["owner", "chief_accountant"], "risk": "high" }
   ],
   "data": {
     "schema": "mod_phieu_ban",
-    "tables": ["docs", "code_counters"],
-    "reads": ["bizcity_read.branches", "bizcity_read.products", "bizcity_read.tax_codes", "bizcity_read.payment_methods", "bizcity_read.partners", "bizcity_read.branch_prices", "bizcity_read.stock_on_hand"]
+    "tables": ["docs", "code_counters", "orders", "order_events"],
+    "reads": ["bizcity_read.branches", "bizcity_read.products", "bizcity_read.tax_codes", "bizcity_read.payment_methods", "bizcity_read.partners", "bizcity_read.branch_prices", "bizcity_read.stock_on_hand", "bizcity_read.warehouses"]
   },
   "actions": [
     "phieu-ban.doc.list",
@@ -29,12 +30,26 @@
     "phieu-ban.doc.approve",
     "phieu-ban.doc.unapprove",
     "phieu-ban.doc.returnable",
-    "phieu-ban.quote.get"
+    "phieu-ban.quote.get",
+    "phieu-ban.order.list",
+    "phieu-ban.order.get",
+    "phieu-ban.order.history",
+    "phieu-ban.order.settings",
+    "phieu-ban.order.create",
+    "phieu-ban.order.update",
+    "phieu-ban.order.import",
+    "phieu-ban.order.send",
+    "phieu-ban.order.approve",
+    "phieu-ban.order.reject",
+    "phieu-ban.order.deliver",
+    "phieu-ban.order.close",
+    "phieu-ban.order.cancel"
   ],
   "ledger": {
     "submits": [
       { "docType": "sale", "contract": "bizcity_ledger_intake@1" },
-      { "docType": "sale_return", "contract": "bizcity_ledger_intake@1" }
+      { "docType": "sale_return", "contract": "bizcity_ledger_intake@1" },
+      { "docType": "transfer", "contract": "bizcity_ledger_intake@1" }
     ]
   },
   "events": {
@@ -43,5 +58,6 @@
       { "type": "phieu-ban.doc.cancelled", "version": 1 }
     ]
   },
-  "ui": { "icon": "FileText", "color": "#0e7490", "order": 31 }
+  "ui": { "icon": "FileText", "color": "#0e7490", "order": 31 },
+  "settings": ["bizcity.phieu_ban.block_negative_stock", "bizcity.phieu_ban.hold_warehouses"]
 }

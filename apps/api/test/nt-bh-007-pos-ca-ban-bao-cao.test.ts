@@ -15,12 +15,13 @@ import { buildApp } from '../src/app.js';
 import { syncBundled } from '../src/core/module-lifecycle.js';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { khaiGia, nhapTon } from './pos-nhap-ton.js';
 
 const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
 const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners',
-  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand'];
+  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 const TODAY = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 const A = '0193a1b2-0000-7000-8000-000000007001';
 const B = '0193a1b2-0000-7000-8000-000000007002';
@@ -50,6 +51,10 @@ describe.skipIf(!HAS)('NT-BH-007 — ca bán và báo cáo của máy bán POS',
     app = await buildApp();
     expect((await call(ctx, 'PUT', '/api/v1/products', { products: [{ sku: 'SUA330', name: 'Sữa 330', unit: 'Hộp' }, { sku: 'SUA325', name: 'Sữa 325', unit: 'Hộp' }] })).status).toBeLessThan(300);
     for (const sku of ['SUA330', 'SUA325']) expect((await call(ctx, 'PUT', `/api/v1/products/${sku}`, { taxOutCode: 'R08' })).status).toBe(200);
+    // [2026-11-16 07:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: máy bán chặn bán quá tồn → nhập tồn trước khi bán (đóng góp)
+    await nhapTon(ctx, 'CN01', [['SUA330', 1000, 'Hộp'], ['SUA325', 1000, 'Hộp']]);
+    // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: máy bán chỉ bán đúng bảng giá → khai giá bằng đúng giá máy gửi (đóng góp)
+    await khaiGia(tenantId, [['SUA330', 'Hộp', 330_000], ['SUA325', 'Hộp', 325_000]]);
   });
   afterAll(async () => {
     await app?.close();

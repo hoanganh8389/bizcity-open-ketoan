@@ -24,7 +24,8 @@ export type ShowValues = Partial<Record<Exclude<keyof ImportRow, 'row'>, string>
 export interface RowResult { row: number; sku: string; action: 'create' | 'update' | 'error'; errors: string[]; values: ShowValues; before?: ShowValues }
 
 const CLASS = [['groupCode', 'group', 'Nhóm hàng'], ['industryCode', 'industry', 'Ngành hàng'], ['brandCode', 'brand', 'Nhãn hàng'], ['typeCode', 'type', 'Loại hàng']] as const;
-const YES = new Set(['có', 'co', 'x', '1', 'true', 'yes', 'đang theo dõi', 'theo dõi', 'đang hoạt động', 'hoạt động']);
+// [2026-11-17 09:11 PM kiennt] NT-DM-003 E2 — nhận "Chờ duyệt" (cột Trạng thái của tệp xuất DM10: đang hoạt động, còn nháp) (đóng góp)
+const YES = new Set(['có', 'co', 'x', '1', 'true', 'yes', 'đang theo dõi', 'theo dõi', 'đang hoạt động', 'hoạt động', 'chờ duyệt', 'cho duyet']);
 const NO = new Set(['không', 'khong', '0', 'false', 'no', 'ngừng', 'ngung', 'ngừng hoạt động', 'ngừng theo dõi']);
 // [2026-11-12 Nguyễn Văn Thủy] cột Thuế suất GTGT (%) như form: KCT / 0 / 5 / 8 / 10 → cặp mã thuế ra / vào (đóng góp)
 const VAT: Record<string, [string, string]> = { kct: ['KCT', 'V13K'], '0': ['R00', 'V00'], '5': ['R05', 'V05'], '8': ['R08', 'V08'], '10': ['R10', 'V10'] };
@@ -52,6 +53,18 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
   // Tra mã phân loại: đúng mã, hoặc đúng tên (không phân biệt hoa thường) nếu tên chỉ ứng với một mã.
   const findClass = (kind: string, v: string): string | null => {
     const list = classes.filter((c) => c.kind === kind);
+    // [2026-11-17 09:11 PM kiennt] NT-DM-003 E2 — đường dẫn tên các cấp "Sữa bột / Vinamilk / Sữa bột trẻ em" (cột Nhóm hàng của tệp xuất DM10):
+    //   đi từ nhóm gốc xuống theo tên từng cấp; sai một cấp thì không thấy (đóng góp)
+    if (v.includes(' / ')) {
+      const segs = v.split(' / ').map((x) => low(x)).filter(Boolean);
+      let cha: string | null = null; let hit: string | null = null;
+      for (const seg of segs) {
+        const con = list.filter((c) => (c.parent_code ?? null) === cha && low(c.name) === seg);
+        if (con.length !== 1) { hit = null; break; }
+        hit = con[0]!.code; cha = hit;
+      }
+      if (hit) return hit;
+    }
     const byCode = list.find((c) => c.code === v) ?? list.find((c) => low(c.code) === low(v));
     if (byCode) return byCode.code;
     const byName = list.filter((c) => low(c.name) === low(v));
@@ -125,6 +138,8 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
       else if (!taxes.some((t) => t.code === pair[0] && t.direction === 'output' && t.is_active)) errors.push(`Mã thuế ${pair[0]} chưa khai (hoặc đang ngừng) ở danh mục Biểu thuế`);
       else { input.taxOutCode = pair[0]; if (pair[1] && taxSet.has(pair[1])) input.taxInCode = pair[1]; }
     }
+    // [2026-11-17 09:11 PM kiennt] NT-DM-003 E3 — mặt hàng mới (mã chính) bắt buộc thuế suất GTGT như form; mã biến thể theo mã cha (đóng góp)
+    if (sku && isNew && !ps && !input.taxOutCode && !r.taxOutCode?.trim() && !vr) errors.push('Mặt hàng mới phải có Thuế suất GTGT (KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra)');
     const pg = r.postingGroupCode?.trim();
     if (pg) { if (groupSet.has(pg)) input.postingGroupCode = pg; else errors.push(`Nhóm hạch toán "${pg}" chưa có`); }
     for (const [key, label] of [['taxOutCode', 'Mã VAT ra'], ['taxInCode', 'Mã VAT vào']] as const) {

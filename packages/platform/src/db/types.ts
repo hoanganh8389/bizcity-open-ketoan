@@ -354,12 +354,19 @@ export interface DiagnosticRunsTable {
   created_at: TimestampDefault;
 }
 
+// [2026-11-17 10:20 AM kiennt] NT-DM-001 — tên tiếng Anh tài khoản lưu lại khi bỏ cột accounts.name_en (0147, D023-9) (đóng góp)
+export interface AccountsNameEnLuuTable {
+  tenant_id: string;
+  code: string;
+  name_en: string;
+  archived_at: Generated<Date>;
+}
+
 export interface AccountsTable {
   id: Generated<string>;
   tenant_id: string;
   code: string;
   name: string;
-  name_en: string | null;
   /** Diễn giải (0101): ghi chú cách dùng, không ảnh hưởng ghi sổ. */
   description: Generated<string>;
   parent_code: string | null;
@@ -1368,7 +1375,7 @@ export interface SalesLinesTable {
 
 export interface InventoryMovementsTable {
   id: Generated<string>;
-  /** Thuế GTGT / chiết khấu của dòng mua, trả NCC (0151). */
+  /** Thuế GTGT / chiết khấu của dòng mua, trả NCC (0153). */
   tax_amount: ColumnType<string, number | undefined, number>;
   discount_amount: ColumnType<string, number | undefined, number>;
   /** MST tại ngày chứng từ (0121, trigger). */
@@ -1566,7 +1573,7 @@ export interface InventoryCostsTable {
   cost_source: Generated<string>;
   /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
   item_id: ColumnType<string | null, string | null | undefined, string | null>;
-  /** Loại kho tính giá vốn riêng (0153); rỗng = tính chung. */
+  /** Loại kho tính giá vốn riêng (0155); rỗng = tính chung. */
   wh_type: Generated<string>;
 }
 
@@ -2014,6 +2021,7 @@ export interface Database {
   event_deliveries: EventDeliveriesTable;
   event_consumptions: EventConsumptionsTable;
   accounts: AccountsTable;
+  accounts_name_en_luu: AccountsNameEnLuuTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;
   period_lock_events: PeriodLockEventsTable;

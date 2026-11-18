@@ -1,7 +1,7 @@
 /** Logic thuần của hộp thoại Thiết lập nhanh (TI15): chọn khối, hàng hiện ở bước Nạp gì, trạng thái từng khối, kết quả lần chạy, MST. */
 import { describe, expect, it } from 'vitest';
 import { stepState } from '@bizcity/ui-kit';
-import { activeRun, blocksParam, ownCompanyRows, runOutcome, stepLine, taxCodeError, tenantChanged, type SetupRun, type StepState } from '../web/lib/thiet-lap';
+import { activeRun, blocksParam, sampleCard, ownCompanyRows, runOutcome, stepLine, taxCodeError, tenantChanged, type SetupRun, type StepState } from '../web/lib/thiet-lap';
 
 const step = (x: Partial<StepState>): StepState => ({ key: 'branches', label: 'Chi nhánh', total: 3, written: 0, skipped: 0, failed: 0, status: 'waiting', firstError: null, ...x });
 const run = (x: Partial<SetupRun>): SetupRun => ({ id: '1', presetId: 'thuong-mai-ban-le', presetVersion: '1.0.0', status: 'done', firstRun: true, steps: [], error: null, startedAt: '', finishedAt: null, ...x });
@@ -54,5 +54,17 @@ describe('Thiết lập nhanh — công ty', () => {
     const a = { name: 'Công ty A', taxCode: '', address: '', phone: '' };
     expect(tenantChanged(a, { ...a, name: ' Công ty A ' })).toBe(false);
     expect(tenantChanged(a, { ...a, phone: '0900' })).toBe(true);
+  });
+});
+
+describe('Thiết lập nhanh — Công ty Mẫu (B5a)', () => {
+  it('thẻ Xem công ty mẫu: mở khi bản cài có đơn vị mẫu và người dùng không ở trong đó', () => {
+    const base = { empty: true, kinds: [], canSetup: true, runs: [] };
+    expect(sampleCard({ ...base, sampleTenantCode: 'mau' })).toMatchObject({ open: true, code: 'mau' });
+    expect(sampleCard({ ...base, sampleTenantCode: null }).open).toBe(false);
+    expect(sampleCard({ ...base, isSample: true, sampleTenantCode: 'mau' }).open).toBe(false);
+    expect(sampleCard(undefined).open).toBe(false);
+    expect(sampleCard({ ...base, sampleTenantCode: null, sampleOnDemand: true })).toMatchObject({ open: false, create: true });
+    expect(sampleCard({ ...base, sampleTenantCode: 'mau', sampleOnDemand: true }).create).toBe(false);
   });
 });

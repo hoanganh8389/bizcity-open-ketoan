@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { db, type Db } from '@bizcity/platform/db/client';
 import { PRESETS_DIR } from '@bizcity/platform/db/paths';
 import { Errors } from '@bizcity/platform/core/errors';
-import type { AuthContext } from '@bizcity/platform/core/auth';
+import { rolePermissions, type AuthContext } from '@bizcity/platform/core/auth';
 import { defineAction, listActions, runAction, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { queryBool } from '@bizcity/platform/core/http';
 import { STANDARD } from '../../core/version.js';
@@ -32,7 +32,7 @@ interface PresetFile {
   contract: string; id: string; version: string; title: string; description: string;
   requires?: { capabilities?: string[] };
   settings?: { postingModes?: Record<string, string> };
-  sample?: { fictional?: boolean; branches?: string; partners?: string; products?: string; documents?: string };
+  sample?: { fictional?: boolean; branches?: string; partners?: string; products?: string; openings?: string; documents?: string; assets?: string; close?: string };
 }
 
 export function readPreset(id: string): PresetFile {
@@ -54,22 +54,48 @@ export function listPresets(): PresetFile[] {
 
 const readSample = <T>(id: string, rel: string | undefined): T[] => (rel ? JSON.parse(fs.readFileSync(path.join(PRESETS_DIR, id, rel), 'utf8')) as T[] : []);
 
-/** "@today" / "@today-N" → YYYY-MM-DD theo giờ Việt Nam của máy chủ (STD-PRE-5). */
+// [2026-11-16 09:03 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6 (00 §13): ngày theo tháng @m-N/DD (quá cuối tháng → cuối tháng, sau hôm nay → hôm nay), kỳ @period-N
+/**
+ * Ngày tương đối → YYYY-MM-DD theo giờ Việt Nam của máy chủ (STD-PRE-5):
+ *   @today, @today-N   hôm nay, N ngày trước
+ *   @m-N/DD            ngày DD của tháng (hiện tại − N); DD quá số ngày của tháng → ngày cuối tháng; ra sau hôm nay → hôm nay
+ *   @period-N          kỳ YYYY-MM của tháng (hiện tại − N)
+ */
 export function fillDates<T>(v: T, now = new Date()): T {
+  const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+  const [ty, tm] = [Number(today.slice(0, 4)), Number(today.slice(5, 7))];
   const day = (n: number) => {
-    const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
     const d = new Date(`${today}T00:00:00Z`);
     d.setUTCDate(d.getUTCDate() - n);
     return d.toISOString().slice(0, 10);
   };
-  const walk = (x: unknown): unknown => typeof x === 'string' ? x.replace(/^@today(?:-(\d+))?$/, (_m, n) => day(Number(n ?? 0)))
+  /** Tháng (hiện tại − n) → [năm, tháng 1..12]. */
+  const month = (n: number): [number, number] => { const k = ty * 12 + (tm - 1) - n; return [Math.floor(k / 12), (k % 12) + 1]; };
+  const ofMonth = (n: number, dd: number) => {
+    const [y, m] = month(n);
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const iso = `${y}-${String(m).padStart(2, '0')}-${String(Math.min(Math.max(dd, 1), last)).padStart(2, '0')}`;
+    return iso > today ? today : iso;
+  };
+  const period = (n: number) => { const [y, m] = month(n); return `${y}-${String(m).padStart(2, '0')}`; };
+  const one = (x: string) => {
+    let m = /^@today(?:-(\d+))?$/.exec(x);
+    if (m) return day(Number(m[1] ?? 0));
+    m = /^@m-(\d+)\/(\d{1,2})$/.exec(x);
+    if (m) return ofMonth(Number(m[1]), Number(m[2]));
+    m = /^@period-(\d+)$/.exec(x);
+    if (m) return period(Number(m[1]));
+    return x;
+  };
+  const walk = (x: unknown): unknown => typeof x === 'string' ? one(x)
     : Array.isArray(x) ? x.map(walk) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).map(([k, y]) => [k, walk(y)])) : x;
   return walk(v) as T;
 }
 
 // ── Khối ──────────────────────────────────────────────────────────────────────────
 // [2026-11-14 07:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-5 (00 §12): chọn khối khi xem trước / nạp; settings luôn có; khoá lạ → VALIDATION
-export const BLOCK_KEYS = ['settings', 'branches', 'partners', 'products', 'documents'] as const;
+// [2026-11-16 09:03 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6: thêm openings / assets / close (thứ tự chạy cố định)
+export const BLOCK_KEYS = ['settings', 'branches', 'partners', 'products', 'openings', 'documents', 'assets', 'close'] as const;
 export type BlockKey = (typeof BLOCK_KEYS)[number];
 
 /** `blocks` của query (`branches,partners`) → tập khối; trống = mọi khối (null). Khối cấu hình luôn có. */
@@ -95,20 +121,64 @@ function blocksOf(p: PresetFile, opts: { sample?: boolean; now?: Date; only?: Se
   out.push({ key: 'branches', label: 'Chi nhánh', items: readSample<Record<string, unknown>>(p.id, p.sample.branches).map((b) => ({ key: String(b.code), action: 'core.branch.create', input: b })) });
   out.push({ key: 'partners', label: 'Đối tượng', items: readSample<Record<string, unknown>>(p.id, p.sample.partners).map((x) => ({ key: String(x.code), action: 'core.partner.upsert', input: x })) });
   out.push({ key: 'products', label: 'Mặt hàng', items: readSample<Record<string, unknown>>(p.id, p.sample.products).map((x) => ({ key: String(x.sku), action: 'core.catalog-product.save', input: { ...x, new: true } })) });
+  if (p.sample.openings) out.push({ key: 'openings', label: 'Số dư đầu kỳ', items: fillDates(readSample<Record<string, unknown>>(p.id, p.sample.openings), now).map((o) => ({ key: `manual:opening:${String(o.docNo)}`, action: 'core.opening-balance.create', input: o })) });
   out.push({ key: 'documents', label: 'Chứng từ', items: fillDates(readSample<Record<string, unknown>>(p.id, p.sample.documents), now).map((d) => ({ key: String(d.docKey), action: 'core.document.submit', input: { document: d } })) });
+  if (p.sample.assets) out.push({ key: 'assets', label: 'Tài sản', items: fillDates(readSample<Record<string, unknown>>(p.id, p.sample.assets), now).map((a) => ({ key: String(a.code), action: 'core.asset.create', input: a })) });
+  if (p.sample.close) {
+    out.push({
+      key: 'close', label: 'Cuối kỳ (giá vốn, khấu hao, kết chuyển)',
+      items: fillDates(readSample<{ action: string; input: Record<string, unknown> }>(p.id, p.sample.close), now).map((c) => {
+        if (!CLOSE_ACTIONS.includes(c.action)) throw Errors.validation(`Gói ${p.id}: khối close chỉ gọi ${CLOSE_ACTIONS.join(', ')} — không gọi ${c.action}`);
+        return { key: `${c.action}:${String(c.input.period ?? '')}`, action: c.action, input: c.input };
+      }),
+    });
+  }
   return out;
+}
+
+/** Khối close chỉ bấm việc cuối kỳ của Kernel — gói không tự tính giá vốn, khấu hao, kết chuyển (STD-PRE-7, câu 3). */
+const CLOSE_ACTIONS = ['core.inventory.costing-run', 'core.asset.depreciation', 'core.closing.run'];
+
+// [2026-11-16 09:03 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6 (00 §13, ngoại lệ STD-PRE-7): số hiệu tài khoản chỉ ở số dư đầu kỳ / thẻ tài sản — kiểm có trong hệ thống tài khoản của đơn vị, là tài khoản chi tiết
+const ASSET_ACCOUNT_FIELDS = ['assetAccount', 'depreciationAccount', 'expenseAccount'] as const;
+/** Số hiệu tài khoản gói ghi (khối openings, assets). */
+function accountCodesOf(blocks: Block[]): string[] {
+  const out = new Set<string>();
+  for (const b of blocks) for (const it of b.items) {
+    if (b.key === 'openings') for (const l of (it.input.lines as { accountCode?: string }[] | undefined) ?? []) if (l.accountCode) out.add(l.accountCode);
+    if (b.key === 'assets') for (const k of ASSET_ACCOUNT_FIELDS) if (typeof it.input[k] === 'string') out.add(it.input[k] as string);
+  }
+  return [...out].sort();
+}
+/** Số hiệu không có / không phải tài khoản chi tiết đang dùng của đơn vị. */
+async function missingAccounts(trx: Db, tenantId: string, codes: string[]): Promise<string[]> {
+  if (!codes.length) return [];
+  const r = await sql<{ code: string }>`SELECT code FROM accounts WHERE tenant_id = ${tenantId} AND code = ANY(${codes}) AND is_posting AND is_active`.execute(trx);
+  const ok = new Set(r.rows.map((x) => x.code));
+  return codes.filter((c) => !ok.has(c));
+}
+/** Thẻ tài sản không ghi tài khoản → lấy theo loại tài sản của đơn vị (như màn thẻ tài sản tự điền). */
+async function withCategoryAccounts(trx: Db, tenantId: string, input: Record<string, unknown>): Promise<Record<string, unknown>> {
+  if (input.depreciationAccount && input.expenseAccount) return input;
+  const r = await sql<{ asset_account: string | null; depreciation_account: string; expense_account: string }>`SELECT asset_account, depreciation_account, expense_account FROM asset_categories WHERE tenant_id = ${tenantId} AND code = ${String(input.categoryCode ?? '')}`.execute(trx);
+  const c = r.rows[0];
+  if (!c) throw Errors.validation(`Tài sản ${String(input.code)}: không thấy loại tài sản ${String(input.categoryCode ?? '(trống)')} để lấy tài khoản`);
+  return { assetAccount: c.asset_account ?? undefined, depreciationAccount: c.depreciation_account, expenseAccount: c.expense_account, ...input };
 }
 
 /** Mã đã có trong đơn vị theo từng khối (danh mục theo mã, chứng từ theo docKey). Cấu hình: luôn "chưa có". */
 async function existingKeys(trx: Db, tenantId: string, b: Block): Promise<Set<string>> {
   const keys = b.items.map((i) => i.key);
-  if (!keys.length || b.key === 'settings') return new Set();
+  if (!keys.length || b.key === 'settings' || b.key === 'close') return new Set();
   const q = {
     branches: sql<{ k: string }>`SELECT code AS k FROM branches WHERE tenant_id = ${tenantId} AND code = ANY(${keys})`,
     partners: sql<{ k: string }>`SELECT code AS k FROM partners WHERE tenant_id = ${tenantId} AND code = ANY(${keys})`,
     products: sql<{ k: string }>`SELECT sku AS k FROM products WHERE tenant_id = ${tenantId} AND sku = ANY(${keys})`,
     documents: sql<{ k: string }>`SELECT doc_key AS k FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ANY(${keys})`,
-  }[b.key];
+    openings: sql<{ k: string }>`SELECT doc_key AS k FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ANY(${keys})`,
+    assets: sql<{ k: string }>`SELECT code AS k FROM assets WHERE tenant_id = ${tenantId} AND code = ANY(${keys})`,
+  }[b.key as Exclude<BlockKey, 'settings' | 'close'>];
+  if (!q) return new Set();
   return new Set((await q.execute(trx)).rows.map((r) => r.k));
 }
 
@@ -174,7 +244,9 @@ export async function planPreset(trx: Db, tenantId: string, id: string, opts: { 
     const have = b.key === 'settings' ? (emptiness.empty ? 0 : b.items.length) : (await existingKeys(trx, tenantId, b)).size;
     counted.push({ key: b.key, label: b.label, total: b.items.length, existing: have, toAdd: b.items.length - have });
   }
+  const missingAcc = await missingAccounts(trx, tenantId, accountCodesOf(blocks));
   const reason = missingCapabilities.length ? `Core chưa có năng lực: ${missingCapabilities.join(', ')}`
+    : missingAcc.length ? `Hệ thống tài khoản của đơn vị thiếu (hoặc không phải tài khoản chi tiết đang dùng): ${missingAcc.join(', ')} — gói ghi các số này ở số dư đầu kỳ / thẻ tài sản`
     : !emptiness.empty && !previousRun ? 'Đơn vị đã có dữ liệu nghiệp vụ — chỉ nạp gói mẫu vào đơn vị trắng (hoặc đơn vị mẫu riêng)'
       : !emptiness.empty && newKeys.length ? `Đơn vị đã có dữ liệu nghiệp vụ — chỉ chạy lại các khối đã nạp trước đây; khối mới (${blocks.filter((b) => newKeys.includes(b.key)).map((b) => b.label).join(', ')}) chỉ nạp vào đơn vị trắng`
         : null;
@@ -226,11 +298,14 @@ export async function executeRun(auth: AuthContext, run: RunRow): Promise<RunRow
       st.status = 'running';
       await save(steps);
       const have = await existingKeys(db, tenantId, b);
+      // [2026-11-16 09:03 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-6: cuối kỳ chỉ chạy khi lần chạy này ghi được chứng từ mẫu mới (chạy lại toàn unchanged → bỏ qua)
+      const docsWritten = steps.find((x) => x.key === 'documents')?.written ?? 0;
       for (const [n, it] of b.items.entries()) {
-        if ((b.key === 'settings' && !run.firstRun) || (b.key !== 'documents' && have.has(it.key))) { st.skipped++; continue; }
+        if ((b.key === 'settings' && !run.firstRun) || (b.key === 'close' && docsWritten === 0) || (b.key !== 'documents' && have.has(it.key))) { st.skipped++; continue; }
         const requestId = `setup:${run.id}:${b.key}:${n}`;
         try {
-          const res = await runAction(actionDef(it.action), it.input, { auth, requestId, idempotencyKey: requestId });
+          const input = b.key === 'assets' ? await withCategoryAccounts(db, tenantId, it.input) : it.input;
+          const res = await runAction(actionDef(it.action), input, { auth, requestId, idempotencyKey: requestId });
           const status = (res.data as { status?: string } | undefined)?.status;
           if (status === 'unchanged') st.skipped++;
           else if (status === 'error') { st.failed++; st.firstError ??= { code: 'POSTING_FAILED', message: `Chứng từ ${it.key} lỗi định khoản`, requestId }; }
@@ -292,3 +367,80 @@ export const setupRunActions: AnyActionDef[] = [
     handler: (ctx, input) => getRun(ctx.data.tx, ctx.tenant.id, input.id),
   }),
 ];
+
+// ── Công ty mẫu (B5a) ─────────────────────────────────────────────────────────────
+// [2026-11-17 11:21 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a, 00 §14): job db-migrate tạo đơn vị mẫu (is_sample) cùng tài khoản quản trị rồi nạp gói bằng đúng bộ chạy của B2
+
+/** Job cài có tạo Công ty mẫu không: chỉ khi `BIZCITY_SAMPLE` là mã gói, CSDL vừa khởi tạo (trước seed chưa có đơn vị), chưa có đơn vị mẫu. */
+export function sampleDecision(preset: string | undefined, tenantsBefore: number, hasSample: boolean): { run: boolean; why: string } {
+  const p = (preset ?? '').trim();
+  if (!p || p === 'off') return { run: false, why: 'BIZCITY_SAMPLE trống / off' };
+  if (!ID_RE.test(p)) return { run: false, why: `BIZCITY_SAMPLE "${p}" không phải mã gói` };
+  if (tenantsBefore > 0) return { run: false, why: 'CSDL đã có đơn vị (chỉ tạo Công ty mẫu khi cài mới)' };
+  if (hasSample) return { run: false, why: 'đã có Công ty mẫu' };
+  return { run: true, why: '' };
+}
+
+/** Quyền chủ đơn vị của người quản trị đơn vị mẫu (gọi lại action Core như người bấm). */
+async function ownerAuth(tenantId: string, email: string): Promise<AuthContext> {
+  const u = await sql<{ id: string; full_name: string }>`SELECT id, full_name FROM users WHERE tenant_id = ${tenantId} AND email = ${email} AND role = 'owner'`.execute(db);
+  if (!u.rows[0]) throw Errors.notFound(`người quản trị ${email} của đơn vị mẫu`);
+  return { tenantId, actor: `user:${u.rows[0].id}`, actorName: u.rows[0].full_name, kind: 'user', role: 'owner', roles: ['owner'], permissions: rolePermissions('owner') };
+}
+
+/**
+ * Tạo Công ty mẫu (mã `code`, is_sample) cùng email quản trị và mật khẩu `adminPassword`, rồi nạp gói `presetId` (chờ xong).
+ * Mã đã có: là đơn vị mẫu thì trả lại (không nạp lần hai); đơn vị thường thì từ chối — không bao giờ nạp mẫu vào đơn vị thật.
+ */
+/** Hàm tạo đơn vị của Kernel (seed) — gốc lắp ráp truyền vào: lớp này không import Kernel (TARGET-LAYOUT §2). */
+export type SeedTenant = (o: { tenantCode: string; tenantName: string; adminPassword?: string; adminEmail?: string; adminPasswordHash?: string; isSample: true }) => Promise<{ tenantId: string; adminEmail: string }>;
+
+// [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b (00 §15): seed của Kernel do gốc lắp ráp (app.ts) truyền vào — lớp P không import Kernel (SC-LAYER-2)
+let seedTenantFn: SeedTenant | null = null;
+export function useSeedTenant(fn: SeedTenant): void { seedTenantFn = fn; }
+
+/** Tạo Công ty Mẫu theo yêu cầu có bật không (BIZCITY_SAMPLE_ON_DEMAND=1 — bản cài nhiều công ty để tắt). */
+export const sampleOnDemandEnabled = (): boolean => (process.env.BIZCITY_SAMPLE_ON_DEMAND ?? '').trim() === '1';
+export const sampleTenantCode = (): string => (process.env.SAMPLE_TENANT_CODE ?? '').trim() || 'mau';
+
+/**
+ * Tạo Công ty Mẫu cho bản cài đã có (00 §15): người bấm (settings:write) → đơn vị mẫu mới cùng email + băm mật khẩu của họ, lần chạy
+ * gói ghi `running` (bộ chạy nền do route gọi). Khoá phiên `setup:sample-tenant` toàn bản cài: hai người bấm cùng lúc chỉ tạo một.
+ */
+export async function createSampleTenantOnDemand(auth: AuthContext, presetId: string): Promise<{ tenantCode: string; auth: AuthContext; run: RunRow }> {
+  if (!sampleOnDemandEnabled()) throw Errors.forbidden('Bản cài chưa bật tạo Công ty Mẫu theo yêu cầu (BIZCITY_SAMPLE_ON_DEMAND=1)');
+  if (!seedTenantFn) throw Errors.notReady('Chưa nối seed của Kernel (useSeedTenant)');
+  readPreset(presetId);
+  const userId = auth.actor.startsWith('user:') ? auth.actor.slice(5) : '';
+  if (!userId) throw Errors.forbidden('Chỉ người dùng đăng nhập (không phải khoá API) tạo được Công ty Mẫu');
+  const code = sampleTenantCode();
+  return db.connection().execute(async (conn) => {
+    await sql`SELECT pg_advisory_lock(hashtext('setup:sample-tenant'))`.execute(conn);
+    try {
+      const had = await sql<{ code: string; is_sample: boolean }>`SELECT code, is_sample FROM tenants WHERE is_sample OR code = ${code}`.execute(conn);
+      if (had.rows.some((r) => r.is_sample)) throw Errors.conflict('Bản cài đã có Công ty Mẫu — mở ở Thiết lập nhanh (TI15)', { reason: 'SAMPLE_EXISTS' });
+      if (had.rows[0]) throw Errors.conflict(`Mã đơn vị ${code} đã là đơn vị thật — đặt SAMPLE_TENANT_CODE khác`, { reason: 'SETUP_NOT_EMPTY' });
+      const me = await sql<{ email: string; password_hash: string }>`SELECT email, password_hash FROM users WHERE id = ${userId} AND tenant_id = ${auth.tenantId}`.execute(conn);
+      if (!me.rows[0]) throw Errors.notFound('người dùng đang đăng nhập');
+      const r = await seedTenantFn!({ tenantCode: code, tenantName: 'Công ty Mẫu (dữ liệu hư cấu)', adminEmail: me.rows[0].email, adminPasswordHash: me.rows[0].password_hash, isSample: true });
+      const owner = await ownerAuth(r.tenantId, r.adminEmail);
+      const { run } = await startRun(owner, presetId, `sample-tenant:${r.tenantId}`);
+      return { tenantCode: code, auth: owner, run };
+    } finally {
+      await sql`SELECT pg_advisory_unlock(hashtext('setup:sample-tenant'))`.execute(conn);
+    }
+  });
+}
+
+export async function createSampleTenant(opts: { presetId: string; code: string; adminPassword?: string }, seedTenant: SeedTenant): Promise<{ created: boolean; tenantId: string; adminEmail: string | null; run: RunRow | null }> {
+  readPreset(opts.presetId);
+  const had = await sql<{ id: string; is_sample: boolean }>`SELECT id, is_sample FROM tenants WHERE code = ${opts.code}`.execute(db);
+  if (had.rows[0]) {
+    if (!had.rows[0].is_sample) throw Errors.conflict(`Mã đơn vị ${opts.code} đã là đơn vị thật — không tạo Công ty mẫu trùng mã`, { reason: 'SETUP_NOT_EMPTY' });
+    return { created: false, tenantId: String(had.rows[0].id), adminEmail: null, run: null };
+  }
+  const r = await seedTenant({ tenantCode: opts.code, tenantName: 'Công ty Mẫu (dữ liệu hư cấu)', adminPassword: opts.adminPassword, isSample: true });
+  const auth = await ownerAuth(r.tenantId, r.adminEmail);
+  const { run } = await startRun(auth, opts.presetId, `sample-tenant:${r.tenantId}`);
+  return { created: true, tenantId: r.tenantId, adminEmail: r.adminEmail, run: await executeRun(auth, run) };
+}

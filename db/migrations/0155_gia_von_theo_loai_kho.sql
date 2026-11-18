@@ -5,7 +5,7 @@
 --   costing_run_lines.wh_type   như trên, cho bảng giá vốn của một lần tính
 --   costing_runs.separate_types loại kho tính riêng ở lần tính
 ALTER TABLE inventory_costs ADD COLUMN IF NOT EXISTS wh_type text NOT NULL DEFAULT '';
-COMMENT ON COLUMN inventory_costs.wh_type IS 'Loại kho tính giá vốn riêng (0153); rỗng = tính chung.';
+COMMENT ON COLUMN inventory_costs.wh_type IS 'Loại kho tính giá vốn riêng (0155); rỗng = tính chung.';
 ALTER TABLE inventory_costs DROP CONSTRAINT IF EXISTS inventory_costs_key;
 DROP INDEX IF EXISTS inventory_costs_key;
 ALTER TABLE inventory_costs ADD CONSTRAINT inventory_costs_key UNIQUE (tenant_id, cost_group, year, month, sku, wh_type);

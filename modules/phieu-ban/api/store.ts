@@ -117,6 +117,22 @@ export async function catalogFor(tx: Tx, skus: readonly string[]): Promise<Map<s
   return new Map(rows.map((r) => [r.sku, { sku: r.sku, name: r.name, unit: r.unit ?? '', taxCode: r.tax_out_code, itemId: r.item_id }]));
 }
 
+// [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn ở phiếu bán nhập tay (đóng góp)
+/**
+ * Khoá chi nhánh × mã (cùng khoá với máy bán: hai nguồn bán một mã chạy nối tiếp) rồi đọc tồn hiện tại theo mã ở kho trên phiếu
+ * (không ghi kho = cả chi nhánh). Tồn tại ngày phiếu cần bảng tồn theo ngày ở phần lõi — tạm dùng tồn hiện tại (Q7).
+ */
+export async function lockedStock(tx: Tx, branchCode: string, warehouseCode: string | null, skus: readonly string[]): Promise<Map<string, number>> {
+  const list = [...new Set(skus)].sort();
+  if (!list.length) return new Map();
+  for (const sku of list) await sql`SELECT pg_advisory_xact_lock(hashtext(${`pos:stock:${branchCode}:${sku}`}))`.execute(tx);
+  const rows = (await sql<{ sku: string; qty: string }>`
+    SELECT sku, SUM(qty)::text AS qty FROM bizcity_read.stock_on_hand
+     WHERE branch_code = ${branchCode} AND sku IN (${sql.join(list)}) ${warehouseCode ? sql`AND warehouse_code = ${warehouseCode}` : sql``}
+     GROUP BY sku`.execute(tx)).rows;
+  return new Map(rows.map((r) => [r.sku, Number(r.qty)]));
+}
+
 /** Thuế suất các mã thuế đầu ra đang dùng. */
 export async function taxRates(tx: Tx): Promise<Map<string, number>> {
   const rows = (await sql<{ code: string; rate: string | number }>`
@@ -132,4 +148,20 @@ export async function partnerByCode(tx: Tx, code: string): Promise<{ code: strin
   const r = (await sql<{ code: string; name: string; tax_code: string | null }>`
     SELECT code, name, tax_code FROM bizcity_read.partners WHERE code = ${code} LIMIT 1`.execute(tx)).rows[0];
   return r ? { code: r.code, name: r.name, taxCode: r.tax_code } : null;
+}
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: khoá theo mã voucher, mã đang nằm ở phiếu bán khác đã duyệt (đóng góp)
+/** Khoá theo mã voucher trong giao dịch — cùng khoá máy bán (module pos) và module voucher dùng: hashtext('voucher:'||mã). */
+export async function lockVoucher(tx: Tx, code: string): Promise<void> {
+  await sql`SELECT pg_advisory_xact_lock(hashtext(${`voucher:${code}`}))`.execute(tx);
+}
+
+/** Mã voucher đã áp ở phiếu bán KHÁC đang duyệt (body.vouchers) — gồm phiếu module voucher chưa nhận sự kiện. */
+export async function voucherHeldByOther(tx: Tx, codes: readonly string[], exceptId: string): Promise<{ code: string; docNo: string; docDate: string }[]> {
+  if (!codes.length) return [];
+  return (await sql<{ code: string; doc_no: string; doc_date: string }>`
+    SELECT v->>'code' AS code, d.doc_no, d.doc_date::text AS doc_date
+      FROM mod_phieu_ban.docs d, jsonb_array_elements(COALESCE(d.body->'vouchers', '[]'::jsonb)) v
+     WHERE d.kind = 'sale' AND d.status = 'approved' AND d.doc_id <> ${exceptId}::uuid AND v->>'code' IN (${sql.join([...codes])})`.execute(tx)).rows
+    .map((r) => ({ code: r.code, docNo: r.doc_no, docDate: r.doc_date }));
 }

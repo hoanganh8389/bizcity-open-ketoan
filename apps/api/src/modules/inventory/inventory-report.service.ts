@@ -60,7 +60,7 @@ export function valuedMovements(a: { tenantId: string; to: string; branchIds: st
       LEFT JOIN items it ON it.item_id = m.item_id
       LEFT JOIN (SELECT DISTINCT ON (item_id) item_id, code FROM item_codes WHERE tenant_id = ${a.tenantId} AND kind = 'sku'
                   ORDER BY item_id, (valid_to IS NULL) DESC, valid_from DESC) cc ON cc.item_id = it.root_item_id
-      -- [2026-11-17 Nguyễn Văn Thủy] giá vốn tách theo loại kho (0153): ưu tiên dòng giá của loại kho, không có thì dòng tính chung (đóng góp)
+      -- [2026-11-17 Nguyễn Văn Thủy] giá vốn tách theo loại kho (0155): ưu tiên dòng giá của loại kho, không có thì dòng tính chung (đóng góp)
       LEFT JOIN LATERAL (
         SELECT c0.unit_cost FROM inventory_costs c0
          WHERE c0.tenant_id = m.tenant_id AND ((m.item_id IS NOT NULL AND c0.item_id = m.item_id) OR (m.item_id IS NULL AND c0.sku = m.sku))

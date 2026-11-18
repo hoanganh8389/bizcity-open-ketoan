@@ -54,9 +54,10 @@ const MAT_HANG: NhapLoai = {
     { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku', 'ma hang hoa, dich vu'], example: '100021099', note: 'Mã đã có → cập nhật; chưa có → thêm mới. Mã mới không có chữ ở đầu hoặc cuối. Mã biến thể: giữ nguyên mã cha (đã có hoặc có ở dòng khác trong tệp), thêm tối đa 2 chữ ở đầu hoặc cuối.' },
     { key: 'name', header: 'Tên hàng', required: 'moi', aliases: ['ten', 'ten vthh', 'ten hang hoa', 'ten san pham', 'ten hang hoa, dich vu'], example: 'Sữa bột mẫu 400g' },
     { key: 'unit', header: 'ĐVT', required: 'moi', aliases: ['don vi tinh', 'dvt chinh', 'don vi', 'don vi tinh chinh'], example: 'Hộp', note: 'Mặt hàng đã có: ĐVT không đổi qua Excel (đổi ở form mặt hàng).' },
-    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Mã hoặc đúng tên nhóm cấp 3 trong danh mục. Mã biến thể: bỏ trống, theo mã cha.' },
-    { key: 'vatRate', header: 'Thuế suất GTGT (%)', aliases: ['thue suat', 'thue gtgt', 'vat', 'thue suat gtgt'], example: '8', note: 'KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra khác — phải có ở danh mục Biểu thuế.' },
-    { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang theo doi'], note: 'Đang hoạt động / Ngừng hoạt động. Trống = giữ nguyên (mới: Đang hoạt động).' },
+    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Mã, đúng tên nhóm cấp 3, hoặc đường dẫn "Ngành / Nhãn / Nhóm" như tệp xuất. Mã biến thể: bỏ trống, theo mã cha.' },
+    // [2026-11-17 09:11 PM kiennt] NT-DM-003 E2, E3 — ghép cột "Thuế GTGT (%)" của tệp xuất DM10; mặt hàng mới bắt buộc (đóng góp)
+    { key: 'vatRate', header: 'Thuế suất GTGT (%)', required: 'moi', aliases: ['thue suat', 'thue gtgt', 'thue gtgt %', 'vat', 'thue suat gtgt'], example: '8', note: 'KCT, 0, 5, 8 (hoặc 8%), 10 hoặc mã thuế đầu ra khác — phải có ở danh mục Biểu thuế. Mặt hàng mới bắt buộc.' },
+    { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang theo doi'], note: 'Đang hoạt động (hoặc Chờ duyệt) / Ngừng hoạt động. Trống = giữ nguyên (mới: Đang hoạt động).' },
   ],
   run: async (rows, { dryRun }) => {
     const o = await api.post<{ created: number; updated: number; failed: number; rows: { row: number; sku: string; action: NhapDong['action']; errors: string[]; values: Record<string, string>; before?: Record<string, string> }[] }>(
@@ -318,18 +319,18 @@ const NHOM_HANG: NhapLoai = {
 
 
 /* ------------------------------------------------------------------ Hệ thống tài khoản (cùng bộ cột với tệp Xuất ở ACC1: sửa xong nhập lại được) */
-interface TkRow { code: string; name: string; nameEn: string | null; description?: string; parentCode: string | null; normalSide: string; isActive: boolean }
+interface TkRow { code: string; name: string; description?: string; parentCode: string | null; normalSide: string; isActive: boolean }
 const TINH_CHAT_DOC: Record<string, string> = { 'du no': 'debit', 'no': 'debit', 'du co': 'credit', 'co': 'credit', 'luong tinh': 'both', 'debit': 'debit', 'credit': 'credit', 'both': 'both' };
 const khongDauNho = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
 const TAI_KHOAN: NhapLoai = {
-  id: 'tai-khoan', nhom: 'Danh mục', title: 'Hệ thống tài khoản', desc: 'Số tài khoản, tên, tài khoản tổng hợp, tính chất (Dư Nợ / Dư Có / Lưỡng tính), tên tiếng Anh, diễn giải, trạng thái', keyField: 'code',
+  id: 'tai-khoan', nhom: 'Danh mục', title: 'Hệ thống tài khoản', desc: 'Số tài khoản, tên, tài khoản tổng hợp, tính chất (Dư Nợ / Dư Có / Lưỡng tính), diễn giải, trạng thái', keyField: 'code',
   listPath: '/danh-muc/tai-khoan', invalidate: ['accounts'],
   fields: [
     { key: 'code', header: 'Số tài khoản', required: true, aliases: ['so tk', 'tai khoan', 'ma tai khoan', 'so hieu tai khoan'], example: '13111', note: 'Đã có → cập nhật; chưa có → thêm mới. 3–20 chữ / số.' },
     { key: 'name', header: 'Tên tài khoản', required: 'moi', aliases: ['ten', 'ten tk'], example: 'Phải thu khách hàng bán lẻ' },
     { key: 'parentCode', header: 'Tài khoản tổng hợp', aliases: ['tk tong hop', 'tai khoan me', 'tk me', 'tk cap tren'], example: '131', note: 'Chỉ dùng khi thêm mới. Trống: lấy theo số tài khoản (13111 → 1311 hoặc 131 nếu có). Số tài khoản con bắt đầu bằng số tài khoản tổng hợp.' },
     { key: 'normalSide', header: 'Tính chất', aliases: ['tinh chat tai khoan', 'so du'], example: 'Lưỡng tính', note: 'Dư Nợ / Dư Có / Lưỡng tính. Trống: mới = theo tài khoản tổng hợp; đã có = giữ nguyên.' },
-    { key: 'nameEn', header: 'Tên tiếng Anh', aliases: ['ten tieng anh', 'ten en', 'english name'] },
+    // [2026-11-17 10:20 AM kiennt] NT-DM-001 — bỏ cột Tên tiếng Anh (D023-9): tệp cũ còn cột này thì bỏ qua (đóng góp)
     { key: 'description', header: 'Diễn giải', aliases: ['ghi chu', 'mo ta'] },
     { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang su dung'], note: 'Đang sử dụng / Ngừng sử dụng (hoặc Có / Không). Trống = giữ nguyên (mới: đang sử dụng).' },
   ],
@@ -371,10 +372,10 @@ const TAI_KHOAN: NhapLoai = {
     const order = [...pre].sort((a, b) => a.code.length - b.code.length || a.code.localeCompare(b.code));
     const ghiDuoc = new Set(ds.map((a) => a.code));
     for (const p of order) {
-      const beforeView = p.before ? { name: p.before.name, nameEn: p.before.nameEn ?? '', description: p.before.description ?? '', normalSide: ({ debit: 'Dư Nợ', credit: 'Dư Có', both: 'Lưỡng tính' } as Record<string, string>)[p.before.normalSide] ?? '', isActive: p.before.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng' } : undefined;
+      const beforeView = p.before ? { name: p.before.name, description: p.before.description ?? '', normalSide: ({ debit: 'Dư Nợ', credit: 'Dư Có', both: 'Lưỡng tính' } as Record<string, string>)[p.before.normalSide] ?? '', isActive: p.before.isActive ? 'Đang sử dụng' : 'Ngừng sử dụng' } : undefined;
       if (p.errors.length || dryRun) { out.push({ row: p.row, key: p.code, action: p.errors.length ? 'error' : p.before ? 'update' : 'create', errors: p.errors, values: p.values, before: beforeView }); continue; }
       if (!p.before && p.parent && !ghiDuoc.has(p.parent)) { out.push({ row: p.row, key: p.code, action: 'error', errors: [`Tài khoản tổng hợp ${p.parent} chưa ghi được (dòng của nó lỗi)`], values: p.values }); continue; }
-      const opt = { ...(p.side ? { normalSide: p.side } : {}), ...((p.values.nameEn ?? '').trim() ? { nameEn: p.values.nameEn!.trim() } : {}), ...((p.values.description ?? '').trim() ? { description: p.values.description!.trim() } : {}) };
+      const opt = { ...(p.side ? { normalSide: p.side } : {}), ...((p.values.description ?? '').trim() ? { description: p.values.description!.trim() } : {}) };
       try {
         if (p.before) await api.patch(`/api/v1/accounts/${encodeURIComponent(p.code)}`, { ...(p.name ? { name: p.name } : {}), ...opt, ...(p.isActive !== undefined ? { isActive: p.isActive } : {}) });
         else {

@@ -7,7 +7,7 @@
     "bizcity_module": { "version": "1.5.0-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
     "bizcity_data": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-DATA-v1.md" },
     "bizcity_document": { "version": "1.4.0-draft", "doc": "docs/contracts/BIZCITY-DOCUMENT-v1.md" },
-    "bizcity_action": { "version": "1.4.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
+    "bizcity_action": { "version": "1.5.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
     "bizcity_event": { "version": "1.3.0-draft", "doc": "docs/contracts/BIZCITY-EVENT-v1.md" },
     "bizcity_evidence": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-EVIDENCE-v1.md" },
     "bizcity_extension": { "version": "1.4.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
@@ -29,7 +29,7 @@
     "bizcity_domain": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-DOMAIN-v1.md", "role": "accounting invariants — Domain Contract (layer 1/4)" },
     "bizcity_compliance": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-COMPLIANCE-v1.md", "role": "compliance control layer — matrix docs/standard/compliance-matrix.json" },
     "bizcity_errors": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-ERRORS-v1.md", "role": "error catalog of bizcity_api / bizcity_action / bizcity_mcp" },
-    "bizcity_preset": { "version": "1.1.0", "doc": "docs/contracts/BIZCITY-PRESET-v1.md", "schema": "docs/contracts/BIZCITY-PRESET-v1.schema.json" }
+    "bizcity_preset": { "version": "1.2.0", "doc": "docs/contracts/BIZCITY-PRESET-v1.md", "schema": "docs/contracts/BIZCITY-PRESET-v1.schema.json" }
   },
   "supreme": "Mục tiêu: SQL minh bạch, Accounting Core ổn định, cộng đồng tự do vibe-code phần mở rộng mà không làm mất tính toàn vẹn của dữ liệu kế toán. Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán. — Johnny Chu – Chu Hoàng Anh",
   "principles": [

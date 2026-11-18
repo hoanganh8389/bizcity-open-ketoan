@@ -6,9 +6,9 @@
 -- bizcity_set_cost_scope(tenant, 'node' | 'shop', mã) đặt phạm vi rồi gắn lại đơn vị hạch toán, trả mã đơn vị.
 
 ALTER TABLE branches ADD COLUMN IF NOT EXISTS own_cost_center boolean NOT NULL DEFAULT false;
-COMMENT ON COLUMN branches.own_cost_center IS 'Shop tính giá vốn riêng (0149), không gom theo nút cơ cấu phía trên.';
+COMMENT ON COLUMN branches.own_cost_center IS 'Shop tính giá vốn riêng (0151), không gom theo nút cơ cấu phía trên.';
 ALTER TABLE accounting_units ADD COLUMN IF NOT EXISTS branch_id bigint;
-COMMENT ON COLUMN accounting_units.branch_id IS 'Shop tính giá vốn riêng sinh ra đơn vị này (0149).';
+COMMENT ON COLUMN accounting_units.branch_id IS 'Shop tính giá vốn riêng sinh ra đơn vị này (0151).';
 
 -- Đơn vị hạch toán của shop tính riêng (tạo nếu chưa có).
 CREATE OR REPLACE FUNCTION bizcity_shop_unit(p_tenant bigint, p_branch bigint, p_code text, p_name text) RETURNS bigint LANGUAGE plpgsql AS $$

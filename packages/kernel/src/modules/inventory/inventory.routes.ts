@@ -32,7 +32,7 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Bảng đơn giá vốn của một tháng', querystring: z.object({ period, search: z.string().optional() }) },
     handler: async (req) => ok(await costingService.list(authOf(req), req.query)),
   });
-  // [2026-11-17 Nguyễn Văn Thủy] chi nhánh tính giá vốn = điểm tính giá vốn trên Cơ cấu tổ chức (0147) và số shop bên dưới (đóng góp)
+  // [2026-11-17 Nguyễn Văn Thủy] chi nhánh tính giá vốn = điểm tính giá vốn trên Cơ cấu tổ chức (0149) và số shop bên dưới (đóng góp)
   r.get('/api/v1/inventory/cost-centers', {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Chi nhánh tính giá vốn (đơn vị hạch toán, sinh theo Cơ cấu tổ chức) và số shop' },
@@ -44,7 +44,7 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows.rows.map((r) => ({ code: r.code, name: r.name, shops: Number(r.shops), fromOrg: r.org })));
     },
   });
-  // [2026-11-17 Nguyễn Văn Thủy] các lần tính giá vốn theo chi nhánh và bảng đơn giá của một lần (0148) (đóng góp)
+  // [2026-11-17 Nguyễn Văn Thủy] các lần tính giá vốn theo chi nhánh và bảng đơn giá của một lần (0150) (đóng góp)
   r.get('/api/v1/inventory/costing-formulas', {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Công thức giá vốn (bộ lựa chọn cách tính) của đơn vị' },

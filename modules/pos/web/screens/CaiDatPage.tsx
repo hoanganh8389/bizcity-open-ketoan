@@ -9,14 +9,22 @@
  * Khoá của module ghi qua đường chung PUT /api/v1/settings/values/:key (quyền settings:write; có phiên bản, ai đổi, lúc nào).
  */
 // [2026-11-13 08:45 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: BH17 gom 4 khối cài đặt bán hàng (đóng góp)
-import { useEffect, useState, type ReactNode } from 'react';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: chọn kho KTL nhận hàng trả lỗi / hết hạn của từng cửa hàng (đóng góp)
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorBox, Field, Loading, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { M } from '../lib';
 
 type Values = {
   returnDays: number; requireOpenShift: boolean; shiftScope: 'branch' | 'device'; cashDiffAlert: number;
   cashDiffJournal: boolean; cashShortReason: string; cashOverReason: string;
+  /** NT-BH-024: "<mã cửa hàng>=<mã kho KTL>" (khoá bizcity.pos.return_bad_warehouses). */
+  returnBadWarehouses: string[];
 };
+type Wh = { code: string; name: string; branchCode: string; branchName: string; isActive: boolean; isDefault?: boolean; typeCode: string };
+/** So giá trị cài đặt (mảng so theo nội dung). */
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const toMap = (list: readonly string[]) => Object.fromEntries(list.map((x) => [x.slice(0, x.indexOf('=')), x.slice(x.indexOf('=') + 1)]));
+const fromMap = (m: Record<string, string>) => Object.entries(m).filter(([, w]) => w).sort(([a], [b]) => a.localeCompare(b)).map(([b, w]) => `${b}=${w}`);
 type Resp = { values: Values; keys: Record<keyof Values, string> };
 type Mode = 'auto' | 'approve';
 type Reason = { code: string; name: string; kind: string; debitAccount: string | null; creditAccount: string | null; isActive: boolean };
@@ -27,6 +35,8 @@ const SOURCE_LABEL: Record<string, string> = { payment: 'theo hình thức thanh
 type Pair = { debit: string; credit: string };
 
 const SALE_TYPES: [string, string][] = [['sale', 'Phiếu bán hàng (đơn máy POS, BH10)'], ['sale_return', 'Phiếu trả hàng (BH11, BH14)']];
+// [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: công tắc chặn bán quá tồn của phiếu bán nhập tay (khoá của module phieu-ban, Q6) (đóng góp)
+const PB_BLOCK = 'bizcity.phieu_ban.block_negative_stock';
 const DEF_PAIR = { short: { debit: '1381', credit: '1111' }, over: { debit: '1111', credit: '3381' } };
 const REASON_NAME = { short: 'Thiếu tiền két chờ xử lý (máy bán POS)', over: 'Thừa tiền két chờ xử lý (máy bán POS)' };
 
@@ -47,6 +57,15 @@ export function CaiDatPage() {
   const modesQ = useQuery({ queryKey: ['posting-modes'], queryFn: () => api.get<Record<string, Mode>>('/api/v1/settings/posting-modes') });
   const reasonsQ = useQuery({ queryKey: ['reasons'], queryFn: () => api.get<Reason[]>('/api/v1/posting/reasons') });
   const typesQ = useQuery({ queryKey: ['posting-scheme'], queryFn: () => api.get<Scheme>('/api/v1/posting/scheme') });
+  const pbQ = useQuery({ queryKey: ['setting', PB_BLOCK], queryFn: () => api.get<{ value: unknown }>(`/api/v1/settings/values/${PB_BLOCK}`) });
+  const whsQ = useQuery({ queryKey: ['warehouses'], queryFn: () => api.get<Wh[]>('/api/v1/warehouses') });
+  const branches = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const w of whsQ.data ?? []) m.set(w.branchCode, w.branchName);
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [whsQ.data]);
+  const [pbBlock, setPbBlock] = useState(false);
+  useEffect(() => { if (pbQ.data) setPbBlock(pbQ.data.value === true); }, [pbQ.data]);
   const [v, setV] = useState<Values | null>(null);
   const [modes, setModes] = useState<Record<string, Mode>>({});
   const [pairs, setPairs] = useState<{ short: Pair; over: Pair }>(DEF_PAIR);
@@ -83,12 +102,14 @@ export function CaiDatPage() {
         }
       }
       for (const k of Object.keys(v) as (keyof Values)[]) {
-        if (v[k] !== q.data.values[k]) await api.put(`/api/v1/settings/values/${encodeURIComponent(q.data.keys[k])}`, { key: q.data.keys[k], value: v[k] });
+        if (!same(v[k], q.data.values[k])) await api.put(`/api/v1/settings/values/${encodeURIComponent(q.data.keys[k])}`, { key: q.data.keys[k], value: v[k] });
       }
       if (modesQ.data && SALE_TYPES.some(([t]) => modes[t] !== modesQ.data![t])) await api.put('/api/v1/settings/posting-modes', { ...modesQ.data, ...modes });
+      if (pbQ.data && pbBlock !== (pbQ.data.value === true)) await api.put(`/api/v1/settings/values/${PB_BLOCK}`, { key: PB_BLOCK, value: pbBlock });
     },
     onSuccess: () => Promise.all([
       qc.invalidateQueries({ queryKey: ['pos-admin', 'settings'] }), qc.invalidateQueries({ queryKey: ['posting-modes'] }), qc.invalidateQueries({ queryKey: ['reasons'] }),
+      qc.invalidateQueries({ queryKey: ['setting', PB_BLOCK] }),
     ]),
   });
 
@@ -98,10 +119,11 @@ export function CaiDatPage() {
     setErr((e) => ({ ...e, returnDays: Number.isInteger(n) && n >= 0 && n <= 60 ? undefined : 'Từ 0 đến 60 ngày' }));
     setV({ ...v, returnDays: Number.isInteger(n) ? n : v.returnDays });
   };
-  const changed = (q.data && (Object.keys(v) as (keyof Values)[]).some((k) => v[k] !== q.data!.values[k]))
+  const changed = (q.data && (Object.keys(v) as (keyof Values)[]).some((k) => !same(v[k], q.data!.values[k])))
     || (modesQ.data && SALE_TYPES.some(([t]) => modes[t] !== modesQ.data![t]))
-    || (v.cashDiffJournal && reasonsQ.data && (pairChanged('short') || pairChanged('over')));
-  const reset = () => { setV(q.data!.values); if (modesQ.data) setModes(modesQ.data); setErr({}); setPairs(savedPairs(q.data!.values)); };
+    || (v.cashDiffJournal && reasonsQ.data && (pairChanged('short') || pairChanged('over')))
+    || (pbQ.data && pbBlock !== (pbQ.data.value === true));
+  const reset = () => { setV(q.data!.values); if (modesQ.data) setModes(modesQ.data); if (pbQ.data) setPbBlock(pbQ.data.value === true); setErr({}); setPairs(savedPairs(q.data!.values)); };
   const ready = (code: string) => { const r = reasonOf(code); return r?.kind === 'journal' && r.isActive && r.debitAccount && r.creditAccount; };
   const saleBiz = (typesQ.data?.businesses ?? []).filter((b) => b.code === 'sale' || b.code === 'sale_return');
   const keyAcc = (k?: string) => typesQ.data?.keys.find((x) => x.key === k);
@@ -123,6 +145,9 @@ export function CaiDatPage() {
         <Field label="Hạn trả hàng không cần duyệt (ngày, tính từ ngày bán)" hint={err.returnDays ?? 'Quá hạn: máy bán đòi người duyệt (bộ phận kinh doanh). Mặc định 3 ngày.'}>
           <input className={`input${err.returnDays ? ' input-error' : ''}`} type="number" min={0} max={60} value={v.returnDays} disabled={!writable} onChange={(e) => days(e.target.value)} />
         </Field>
+        <Field label="Bán quá tồn" hint="Máy bán luôn chặn: dòng hàng thiếu tồn báo đỏ, không thanh toán được (NT-BH-021). Đơn bán lúc mất mạng gửi bù vẫn nhận, lọc ở Đơn bán máy POS.">
+          <span>Luôn chặn</span>
+        </Field>
         <Field label="Bắt buộc mở ca trước khi bán" hint="Chưa bật: máy bán vẫn nhận đơn khi chưa mở ca (ca theo ngày).">
           <input type="checkbox" checked={v.requireOpenShift} disabled={!writable} onChange={(e) => setV({ ...v, requireOpenShift: e.target.checked })} />
         </Field>
@@ -134,6 +159,26 @@ export function CaiDatPage() {
         </Field>
         <Field label="Ngưỡng chênh lệch két cần chú ý (đồng)" hint="Sổ ca bán tô đỏ ca có chênh lệch từ ngưỡng này trở lên; 0 = mọi chênh lệch.">
           <input className="input" type="number" min={0} value={v.cashDiffAlert} disabled={!writable} onChange={(e) => setV({ ...v, cashDiffAlert: Math.max(0, Math.round(Number(e.target.value) || 0)) })} />
+        </Field>
+        <Field label="Kho nhận hàng khách trả bị lỗi / hết hạn" hint={'Thu ngân chọn "Lỗi – hết hạn" ở hộp hoàn / đổi hàng thì hàng vào kho loại KTL "Kho hàng trả lại" của cửa hàng; "Nguyên vẹn" về kho bán. Cửa hàng chưa chọn kho thì máy bán không nhận trả hàng lỗi. Chưa có kho KTL: khai ở Danh mục kho (DM18).'}>
+          {whsQ.error ? <ErrorBox error={errorText(whsQ.error)} /> : !whsQ.data ? <Loading /> : (
+            <table className="grid">
+              <thead><tr><th>Cửa hàng</th><th>Kho KTL nhận hàng lỗi</th></tr></thead>
+              <tbody>{branches.map(([code, name]) => {
+                const map = toMap(v.returnBadWarehouses);
+                const opts = whsQ.data.filter((w) => w.branchCode === code && w.isActive && (w.typeCode === 'KTL' || w.code === map[code]));
+                return (
+                  <tr key={code}><td>{code} — {name}</td><td>
+                    <select className="input" value={map[code] ?? ''} disabled={!writable} title={writable ? '' : 'Cần quyền settings:write'}
+                      onChange={(e) => setV({ ...v, returnBadWarehouses: fromMap({ ...map, [code]: e.target.value }) })}>
+                      <option value="">{opts.length ? '— chưa chọn —' : '— cửa hàng chưa có kho loại KTL —'}</option>
+                      {opts.map((w) => <option key={w.code} value={w.code}>{w.code} — {w.name}{w.typeCode !== 'KTL' ? ` (loại ${w.typeCode})` : ''}</option>)}
+                    </select>
+                  </td></tr>
+                );
+              })}</tbody>
+            </table>
+          )}
         </Field>
       </Block>
 

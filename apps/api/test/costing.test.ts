@@ -282,7 +282,7 @@ describe('Nhập ĐGBQ đầu kỳ từ Excel', () => {
   });
 });
 
-// [2026-11-17 Nguyễn Văn Thủy] công thức giá vốn tuỳ chọn (0151) (đóng góp)
+// [2026-11-17 Nguyễn Văn Thủy] công thức giá vốn tuỳ chọn (0153) (đóng góp)
 describe('Công thức giá vốn cố định, đổi thì áp dụng từ một tháng', () => {
   it('sai mật khẩu bị chặn; công thức mới áp từ tháng chọn, tháng trước giữ công thức cũ; lịch sử ghi công thức', async () => {
     const body = { name: 'Gồm VAT, bỏ chi phí', options: { costAlloc: false, price: 'with_vat' }, applyFrom: '2026-10' };

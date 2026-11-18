@@ -15,11 +15,12 @@ const inBranches = (col: string, list: string[]) => (list.length ? sql`AND ${sql
 export type Range = { from: string; to: string; branches: string[] };
 export type Page = { page: number; pageSize: number };
 
-export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status?: string; cashier?: string }) {
+export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status?: string; cashier?: string; stockShort?: boolean }) {
   const q = f.q?.trim();
   const where = sql`o.business_date BETWEEN ${f.from} AND ${f.to} ${inBranches('o.branch_code', f.branches)}
     ${f.status ? sql`AND o.status = ${f.status}` : sql``}
     ${f.cashier ? sql`AND o.cashier_name ILIKE ${`%${f.cashier.trim()}%`}` : sql``}
+    ${f.stockShort ? sql`AND (o.snapshot ? 'stockShortOffline' OR o.snapshot ? 'priceChangedOffline')` : sql``}
     ${q ? sql`AND (o.code ILIKE ${`%${q}%`} OR o.snapshot->'customer'->>'phone' ILIKE ${`%${q}%`} OR o.snapshot->'customer'->>'name' ILIKE ${`%${q}%`})` : sql``}`;
   const agg = (await sql<{ n: string; total: string | null; returned: string | null }>`
     SELECT count(*) AS n, sum(o.total) FILTER (WHERE o.status = 'completed') AS total,
@@ -38,12 +39,14 @@ export async function adminOrders(tx: Tx, f: Range & Page & { q?: string; status
   const returned = Number(agg.returned ?? 0);
   return {
     items: rows.map((r) => {
-      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[]; zBill?: { lines?: unknown[] } };
+      const snap = r.snapshot as OrderSnap & { customer?: { name?: string; phone?: string }; lines?: unknown[]; zBill?: { lines?: unknown[] }; stockShortOffline?: unknown[]; priceChangedOffline?: unknown[] };
       return {
         id: r.order_id, code: r.code, branchCode: r.branch_code, businessDate: r.business_date, createdAt: r.created_at.toISOString(), status: r.status,
         total: Number(r.total), taxTotal: Number(r.tax_total), docKey: r.doc_key, docStatus: r.doc_status, cashier: r.cashier_name ?? '',
         shiftId: r.draft?.shiftId ?? '', customerName: snap.customer?.name ?? '', customerPhone: snap.customer?.phone ?? '',
         payments: orderPayments(snap, cashCode).map((p) => ({ ...p, name: methodNames[p.method] ?? p.method })), lines: [...(snap.lines ?? []), ...(snap.zBill?.lines ?? [])],
+        stockShortOffline: snap.stockShortOffline ?? [],
+        priceChangedOffline: snap.priceChangedOffline ?? [],
       };
     }),
     meta: { page: f.page, pageSize: f.pageSize, total: Number(agg.n), sums: { orders: Number(agg.n), total, returned, net: total - returned } },

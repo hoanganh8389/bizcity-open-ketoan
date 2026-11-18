@@ -1,0 +1,31 @@
+[
+  {
+    "branchCode": "MAU01",
+    "docDate": "@m-3/31",
+    "docNo": "MAU-SD-0001",
+    "description": "Số dư đầu kỳ Công ty Mẫu (hư cấu)",
+    "lines": [
+      {
+        "accountCode": "1111",
+        "debit": 200000000
+      },
+      {
+        "accountCode": "11210005",
+        "debit": 800000000
+      },
+      {
+        "accountCode": "2118",
+        "debit": 96000000
+      },
+      {
+        "accountCode": "2141",
+        "credit": 18000000
+      },
+      {
+        "accountCode": "41111",
+        "partnerCode": "MAU-CSH",
+        "credit": 1078000000
+      }
+    ]
+  }
+]

@@ -6,13 +6,15 @@
  * Dữ liệu: GET /api/v1/posting/scheme; đổi TK: PUT /api/v1/posting/scheme/accounts/:key; mục đích: PUT /api/v1/posting/purposes/:code;
  * xem thử: POST /api/v1/posting/scheme/preview.
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
+import { DataGrid, type Column } from '@/components/DataGrid';
+import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { AccountPicker, ItemPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
 
@@ -45,6 +47,16 @@ const SOURCE: Record<Source, { label: string; tip: string; link?: string }> = {
 const STATUS_BAD: Record<string, string> = { missing: 'Chưa đặt', unknown: 'Không có trong hệ thống tài khoản', summary: 'Là TK tổng hợp — chọn TK chi tiết' };
 const fmt = (n: number) => (n ? n.toLocaleString('vi-VN') : '');
 
+// [2026-11-17 10:45 AM kiennt] ACC41 — thứ tự bút toán của một nghiệp vụ: kho / giá vốn (số lượng, giá vốn tính cuối tháng) → doanh thu, giá trị → tiền (đóng góp)
+// [2026-11-17 11:00 AM kiennt] ACC41 — sửa: so tên nhóm đã bỏ phần (…), nhận nhóm tiền trước, "kho" phải là một từ (trước: "khoản" bị nhận là kho) (đóng góp)
+const thuTuNhom = (tenDu: string) => {
+  const ten = tenDu.replace(/\s*\(.*\)$/, '').toLowerCase();
+  if (/thu tiền|trả tiền|chiết khấu thanh toán|nơi (chuyển|nhận)/.test(ten)) return 2;
+  if (/giá vốn|(^|\s)kho(\s|$)|nhận quà|chi nhánh (xuất|nhận)/.test(ten)) return 0;
+  return 1;
+};
+const xepNhom = <G extends { name: string }>(gs: G[]): G[] => gs.map((g, i) => ({ g, i })).sort((a, b) => thuTuNhom(a.g.name) - thuTuNhom(b.g.name) || a.i - b.i).map((x) => x.g);
+
 export function QuyTacHachToanPage() {
   const { can } = useAuth();
   const canWrite = can('settings:write');
@@ -68,16 +80,18 @@ export function QuyTacHachToanPage() {
   );
   if (!chiTiet) return (
     <>
+      {/* [2026-11-17 10:45 AM kiennt] ACC41 — nút Gọn / Chi tiết cùng một chỗ ở cả hai chế độ (đóng góp) */}
+      {/* [2026-11-17 10:50 AM kiennt] ACC41 — thanh nút như màn danh mục: Gọn / Chi tiết bên trái, Nạp · Xuất · In bên phải (đóng góp) */}
       <PageHeader title="Tài khoản ngầm định" code="ACC41" helpKey="quy-tac-hach-toan" />
       <ErrorBox error={q.error ? errorText(q.error) : null} />
-      {q.isLoading || !data ? <Loading /> : <GonView data={data} canWrite={canWrite} nutXem={nutXem} />}
+      {q.isLoading || !data ? <Loading /> : <GonView data={data} canWrite={canWrite} nutXem={nutXem} onRefresh={() => q.refetch()} />}
     </>
   );
 
   return (
     <>
       <PageHeader title="Tài khoản ngầm định" code="ACC41" subtitle="Mỗi nghiệp vụ ghi Nợ gì, Có gì, tài khoản lấy từ đâu" helpKey="quy-tac-hach-toan" />
-      <div className="row" style={{ marginBottom: 8 }}>{nutXem}</div>
+      <div className="card" style={{ marginBottom: 8 }}><CatalogToolbar left={nutXem} canWrite={canWrite} hasSelection={false} onRefresh={() => q.refetch()} /></div>
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {missing.length > 0 && (
         <div className="alert alert-warn" style={{ marginBottom: 8 }} title="Chứng từ dùng tới tài khoản chưa đặt sẽ báo lỗi khi ghi sổ">
@@ -105,7 +119,7 @@ export function QuyTacHachToanPage() {
                     <th title="Tài khoản lấy từ nguồn nào">Lấy theo</th><th title="Tài khoản đang dùng">Tài khoản</th><th title="Khi nào có dòng này; trống = luôn có">Khi nào</th><th />
                   </tr></thead>
                   <tbody>
-                    {biz.groups.map((g) => [
+                    {xepNhom(biz.groups).map((g) => [
                       <tr key={g.name} className="qt-grp"><td colSpan={7} title="Nhóm dòng sổ">{g.name}</td></tr>,
                       ...g.lines.map((l, i) => {
                         const k = l.key ? keys.get(l.key) : undefined;
@@ -376,41 +390,37 @@ const NGUON_NGAN: Record<Source, string> = { rule: '', payment: 'theo HTTT', war
 const tkCua = (l: SLine, keys: Map<string, Key>) => (l.key ? keys.get(l.key)?.accountCode ?? '' : NGUON_NGAN[l.source]);
 const uniq = (a: string[]) => [...new Set(a.filter(Boolean))];
 
-/** CHẾ ĐỘ GỌN: Loại chứng từ · tìm · bảng Loại / TK Nợ / TK Có / Sửa (một dòng = một nhóm dòng sổ của nghiệp vụ). */
-function GonView({ data, canWrite, nutXem }: { data: Scheme; canWrite: boolean; nutXem: React.ReactNode }) {
-  const [loai, setLoai] = useState('');
-  const [tim, setTim] = useState('');
+/**
+ * CHẾ ĐỘ GỌN: bảng như các màn danh mục (lọc từng cột, sắp xếp, xuất Excel) — Loại (nghiệp vụ – bút toán) · TK Nợ · TK Có · Sửa;
+ * một dòng = một nhóm dòng sổ của nghiệp vụ, theo thứ tự kho / giá vốn → doanh thu → tiền.
+ * [2026-11-17 10:45 AM kiennt] ACC41 — bảng DataGrid thay bảng tay + ô chọn loại / ô tìm (đóng góp)
+ */
+interface GonRow { id: string; loai: string; nhom: string; title: string; no: string[]; co: string[]; sai: boolean; lines: SLine[]; sua: boolean }
+function GonView({ data, canWrite, nutXem, onRefresh }: { data: Scheme; canWrite: boolean; nutXem: React.ReactNode; onRefresh: () => unknown }) {
+  const exportRef = useRef<(() => void) | null>(null);
   const [sua, setSua] = useState<{ title: string; lines: SLine[] } | null>(null);
   const keys = useMemo(() => new Map(data.keys.map((k) => [k.key, k])), [data]);
-  const rows = data.businesses.filter((b) => !loai || b.code === loai).flatMap((b) => b.groups.map((g) => {
-    const no = uniq(g.lines.filter((l) => l.side === 'debit').map((l) => tkCua(l, keys)));
-    const co = uniq(g.lines.filter((l) => l.side === 'credit').map((l) => tkCua(l, keys)));
-    const sai = g.lines.some((l) => l.source === 'rule' && l.key && keys.get(l.key)?.status !== 'ok');
-    return { id: `${b.code}|${g.name}`, title: `${b.name} – ${g.name.replace(/\s*\(.*\)$/, '')}`, no, co, sai, lines: g.lines, sua: g.lines.some((l) => l.source === 'rule' && l.key) };
-  }));
-  const t = tim.trim().toLowerCase();
-  const view = t ? rows.filter((r) => `${r.title} ${r.no.join(' ')} ${r.co.join(' ')}`.toLowerCase().includes(t)) : rows;
+  const rows: GonRow[] = useMemo(() => data.businesses.flatMap((b) => xepNhom(b.groups).map((g) => {
+    const nhom = g.name.replace(/\s*\(.*\)$/, '');
+    return {
+      id: `${b.code}|${g.name}`, loai: b.name, nhom, title: `${b.name} – ${nhom}`,
+      no: uniq(g.lines.filter((l) => l.side === 'debit').map((l) => tkCua(l, keys))),
+      co: uniq(g.lines.filter((l) => l.side === 'credit').map((l) => tkCua(l, keys))),
+      sai: g.lines.some((l) => l.source === 'rule' && l.key && keys.get(l.key)?.status !== 'ok'),
+      lines: g.lines, sua: g.lines.some((l) => l.source === 'rule' && l.key),
+    };
+  })), [data, keys]);
+  const cols: Column<GonRow>[] = [
+    { key: 'title', header: 'Loại', width: 420, render: (r) => <span className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.title}</span> },
+    { key: 'no', header: 'TK Nợ', type: 'code', width: 200, value: (r) => r.no.join('; ') },
+    { key: 'co', header: 'TK Có', type: 'code', width: 200, value: (r) => r.co.join('; ') },
+  ];
   return (
-    <div className="card" style={{ padding: 0 }}>
-      <div className="row" style={{ gap: 8, padding: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <label style={{ display: 'grid', gap: 2 }}><span style={{ fontSize: 12 }}>Loại chứng từ</span>
-          <select className="input" style={{ width: 260 }} value={loai} onChange={(e) => setLoai(e.target.value)}>
-            <option value="">Tất cả</option>{data.businesses.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
-          </select></label>
-        <input className="input" style={{ width: 260 }} placeholder="Tìm kiếm" value={tim} onChange={(e) => setTim(e.target.value)} />
-        <span style={{ marginLeft: 'auto' }}>{nutXem}</span>
-      </div>
-      <table className="grid full">
-        <thead><tr><th>Loại</th><th style={{ width: 200 }}>TK Nợ</th><th style={{ width: 200 }}>TK Có</th><th style={{ width: 90, textAlign: 'center' }}>Chức năng</th></tr></thead>
-        <tbody>{view.map((r) => (
-          <tr key={r.id} onDoubleClick={() => { if (r.sua && canWrite) setSua(r); }}>
-            <td className={r.sai ? 'text-danger' : ''} title={r.sai ? 'Có tài khoản chưa đặt / chưa đúng' : undefined}>{r.title}</td>
-            <td className="mono">{r.no.join('; ')}</td><td className="mono">{r.co.join('; ')}</td>
-            <td style={{ textAlign: 'center' }}>{r.sua && canWrite && <a href="#" onClick={(e) => { e.preventDefault(); setSua(r); }}>Sửa</a>}</td>
-          </tr>
-        ))}</tbody>
-      </table>
-      <div style={{ padding: '6px 10px' }}>Tổng số: <b>{view.length}</b></div>
+    <div className="card">
+      <CatalogToolbar left={nutXem} canWrite={canWrite} hasSelection={false} onRefresh={onRefresh} onExport={() => exportRef.current?.()} />
+      <DataGrid storageKey="acc41-gon" exportName="tai-khoan-ngam-dinh" exportRef={exportRef} rows={rows} rowKey={(r) => r.id} columns={cols}
+        onRowDoubleClick={(r) => { if (canWrite) setSua(r); }} />
+      {/* [2026-11-17 11:23 AM kiennt] ACC41 — bỏ cột Chức năng; bấm đúp mở chi tiết ở chế độ xem, bấm Sửa mới sửa (như các màn danh mục) (đóng góp) */}
       {sua && <SuaGon title={sua.title} lines={sua.lines} keys={keys} onClose={() => setSua(null)} />}
     </div>
   );
@@ -422,22 +432,25 @@ function SuaGon({ title, lines, keys, onClose }: { title: string; lines: SLine[]
   const dong = lines.filter((l, i) => !l.key || lines.findIndex((x) => x.key === l.key && x.side === l.side) === i);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries(dong.filter((l) => l.source === 'rule' && l.key).map((l) => [l.key!, keys.get(l.key!)?.accountCode ?? ''])));
   const doi = Object.entries(v).filter(([k, a]) => a && a !== (keys.get(k)?.accountCode ?? ''));
+  const viewAgain = useViewAgain();
   const m = useMutation({
     mutationFn: async () => { for (const [k, a] of doi) await api.put(`/api/v1/posting/scheme/accounts/${encodeURIComponent(k)}`, { accountCode: a }); },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['posting-scheme'] }); onClose(); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['posting-scheme'] }); viewAgain[1](); },
   });
   return (
-    <Modal wide title="Sửa tài khoản ngầm định" onClose={onClose} helpKey="quy-tac-hach-toan"
-      footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={!doi.length || m.isPending} onClick={() => m.mutate()}>Ghi</button></>}>
+    <Modal wide viewFirst viewAgain={viewAgain} title="Tài khoản ngầm định" onClose={onClose} helpKey="quy-tac-hach-toan"
+      // [2026-11-17 11:28 AM kiennt] ACC41 — chân hộp thoại như các màn khác: Ghi và thoát · Ghi · Thoát (đóng góp)
+      footer={<><button className="btn btn-primary" disabled={!doi.length || m.isPending} onClick={() => m.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={m.error ? errorText(m.error) : null} />
       <div className="full">Loại chứng từ: <b>{title}</b></div>
       <table className="grid full">
-        <thead><tr><th style={{ width: 260 }}>Tên cột</th><th>Lọc tài khoản</th><th style={{ width: 300 }}>TK ngầm định</th></tr></thead>
+        {/* [2026-11-17 10:55 AM kiennt] ACC41 — Tên cột rút gọn TK Nợ / TK Có như màn tài khoản ngầm định phổ biến; dòng sổ để ở chú thích (đóng góp) */}
+        <thead><tr><th style={{ width: 120 }}>Tên cột</th><th>Lọc tài khoản</th><th style={{ width: 300 }}>TK ngầm định</th></tr></thead>
         <tbody>{dong.map((l, i) => {
           const k = l.key ? keys.get(l.key) : undefined;
           return (
             <tr key={i}>
-              <td>{l.side === 'debit' ? 'TK Nợ' : 'TK Có'} – {l.role}</td>
+              <td title={l.role}>{l.side === 'debit' ? 'TK Nợ' : 'TK Có'}</td>
               <td className="mono">{l.source === 'rule' ? k?.range.join('; ') : <span className="muted">theo {SOURCE[l.source].label.toLowerCase()}</span>}</td>
               <td>{l.source === 'rule' && l.key ? <AccountPicker postingOnly prefixes={k?.range} value={v[l.key] ?? ''} onChange={(a) => setV((o) => ({ ...o, [l.key!]: a }))} />
                 : <span className="mono">{k?.accountCode ?? ''}</span>}</td>

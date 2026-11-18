@@ -389,7 +389,7 @@ async function unitCosts(trx: Db, tenantId: string, unit: string, date: string, 
   const rows = (await sql<{ sku: string; unit_cost: string }>`
     SELECT DISTINCT ON (sku) sku, unit_cost::text FROM inventory_costs WHERE tenant_id = ${tenantId} AND cost_group = ${unit}::bigint AND year = ${y} AND month = ${m} AND sku = ANY(${skus}::text[])
        AND wh_type IN ('', COALESCE((SELECT type_code FROM warehouses WHERE tenant_id = ${tenantId} AND code = ${warehouseCode}), ''))
-     ORDER BY sku, wh_type DESC`.execute(trx)).rows; // [2026-11-17 Nguyễn Văn Thủy] loại kho tính giá riêng (0153) (đóng góp)
+     ORDER BY sku, wh_type DESC`.execute(trx)).rows; // [2026-11-17 Nguyễn Văn Thủy] loại kho tính giá riêng (0155) (đóng góp)
   const map = new Map(rows.map((x) => [x.sku, toNumber(x.unit_cost)]));
   const missing = skus.filter((s) => !map.has(s));
   if (missing.length) throw Errors.conflict(`Tính giá vốn tháng ${String(m).padStart(2, '0')}/${y} trước (chưa có đơn giá bình quân của ${missing.slice(0, 10).join(', ')}${missing.length > 10 ? '…' : ''}) — số tiền tất toán phải bằng số đã ghi 1381 / 3381`);

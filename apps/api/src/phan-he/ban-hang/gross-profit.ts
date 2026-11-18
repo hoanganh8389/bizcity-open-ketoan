@@ -50,7 +50,7 @@ export async function grossProfitRoutes(app: FastifyInstance): Promise<void> {
                COUNT(*) AS lines
           ${FROM}
           -- [2026-11-05 02:00 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: giá vốn theo định danh, mã cũ vẫn ra (đóng góp)
-          -- [2026-11-17 Nguyễn Văn Thủy] loại kho tính giá riêng (0153): theo kho trên dòng thẻ kho của phiếu (đóng góp)
+          -- [2026-11-17 Nguyễn Văn Thủy] loại kho tính giá riêng (0155): theo kho trên dòng thẻ kho của phiếu (đóng góp)
           LEFT JOIN LATERAL (
             SELECT c0.unit_cost FROM inventory_costs c0
              WHERE c0.tenant_id = l.tenant_id AND c0.item_id = bizcity_item_at(l.tenant_id, l.sku, l.doc_date)

@@ -30,6 +30,9 @@ Kế hoạch: `tgs_pos_react/docs/module-pos/` (repo của nhóm POS TGS — quy
 - mã không gửi thuế mà thu tiền → bán như dòng thường, đơn trả máy ghi `sendTax = false` (không lên hoá đơn điện tử);
 - mọi dòng chứng từ mang `itemId` của mặt hàng.
 
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng trên đơn máy bán (đóng góp) -->
+**Voucher TGS / hãng (NT-BH-026).** Đơn gửi `vouchers: [mã]` (module `voucher`). Máy chủ khoá theo mã (`hashtext('voucher:'||mã)`), kiểm mã đang dùng ở đơn khác (`mod_pos.voucher_uses`, migration `0008`, mã đang dùng duy nhất), hỏi `voucher.order.quote` (ctx.actions.call) rồi trừ sau khuyến mại: TGS = chiết khấu chia vào dòng (`voucherDiscount`), hãng = dòng thanh toán theo hình thức của đợt (khách trả phần còn lại: `cashGiven` / các phần chia tiền / QR theo số còn phải trả). Đơn trả máy mang `voucherUses`, và `issuedVouchers` (voucher lần mua sau tự phát — in trên bill). Huỷ đơn chờ thanh toán trả mã; `pos.return.recorded` mang `orderFullyReturned` (module voucher thu hồi voucher lần mua sau chưa dùng).
+
 ## Chạy
 
 ```bash

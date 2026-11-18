@@ -36,6 +36,22 @@ Ghi (nháp) ──► Duyệt ──► ctx.ledger.submit(sale | sale_return, do
 
 Khuôn dữ liệu: `TradeDoc` ([docs/api/13-phieu-nhap-tay.md](../../docs/api/13-phieu-nhap-tay.md)). Màn ở khung giao diện (`apps/web/src/components/phieu-hang`) gọi qua `apps/web/src/lib/tradeDocs.ts`.
 
+## Đơn đặt hàng (NT-BH-023) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: đơn đặt hàng (đóng góp) -->
+
+```text
+Nháp (báo giá, hạn hiệu lực) ──Gửi──► hạn mức / nợ quá hạn (accounting.debts.partner-balances) ──vướng──► Chờ duyệt ──Duyệt──┐
+                                              └──không──► Đã gửi: ctx.ledger.submit(transfer kho bán → KCB) ◄───────────────┘
+Đã gửi ──Giao (≤ còn lại, khoá theo đơn)──► phiếu bán nháp (docs, body.order) xuất từ KCB ──giao đủ──► Đã đóng
+       ──Đóng / Huỷ (chưa giao)──► transfer KCB → kho bán
+```
+
+- Bảng `orders` (dòng có `delivered`, `held`; các lần giao), `order_events` (lịch sử cũ → mới). Số `DH` + yyMM + 6 số theo cửa hàng (bộ đếm `code_counters`, kind `order`).
+- Kho KCB theo cửa hàng: khoá `bizcity.phieu_ban.hold_warehouses` (`["CN01=KHO-KCB"]`), sửa ở thẻ Cài đặt của màn BH20.
+- Chứng từ giữ hàng: `transfer` cùng chi nhánh, một chứng từ cả cặp, `amount` 0, docKey `phieu-ban:dh:<đơn>:<lần>` — mỗi lần giữ / trả một chứng từ mới.
+- Xoá phiếu bán nháp sinh từ đơn → trả lại số đã giao; sửa số lượng → đơn ghi lại (không vượt số còn lại).
+- Quyền `phieu-ban:order-approve` (chủ đơn vị, kế toán trưởng) duyệt / từ chối; người lập không tự duyệt.
+- API: `GET /orders`, `GET /orders/:id`, `GET /orders/:id/history`, `GET /order-settings`, `POST /orders`, `PUT /orders/:id`, `POST /orders/import`, `POST /orders/:id/{send,approve,reject,deliver,close,cancel}`.
+
 ## Chưa làm (đợt sau)
 
 - Khuyến mại / chương trình bán (`core.policy.evaluate`) trên màn nhập. (Giá theo cửa hàng + cảnh báo tồn: đã có từ 14/11 — `GET /api/v1/m/phieu-ban/quote`.)

@@ -10,9 +10,9 @@
 -- Shop chưa gắn vào cây thì giữ đơn vị hạch toán khai tay như cũ.
 
 ALTER TABLE org_units ADD COLUMN IF NOT EXISTS is_cost_center boolean NOT NULL DEFAULT false;
-COMMENT ON COLUMN org_units.is_cost_center IS 'Điểm tính giá vốn (0147): shop bên dưới gom chung một giá vốn bình quân tháng. Mặc định nút cấp 2.';
+COMMENT ON COLUMN org_units.is_cost_center IS 'Điểm tính giá vốn (0149): shop bên dưới gom chung một giá vốn bình quân tháng. Mặc định nút cấp 2.';
 ALTER TABLE accounting_units ADD COLUMN IF NOT EXISTS org_unit_id bigint;
-COMMENT ON COLUMN accounting_units.org_unit_id IS 'Nút cơ cấu sinh ra đơn vị này (điểm tính giá vốn, 0147); trống = khai tay.';
+COMMENT ON COLUMN accounting_units.org_unit_id IS 'Nút cơ cấu sinh ra đơn vị này (điểm tính giá vốn, 0149); trống = khai tay.';
 
 UPDATE org_units SET is_cost_center = true WHERE level = 2 AND NOT is_cost_center;
 

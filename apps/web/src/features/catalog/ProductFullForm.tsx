@@ -310,6 +310,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       : !v.name.trim() ? 'Chưa nhập tên hàng.' : tenDai ? 'Tên hàng tối đa 50 ký tự.' : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !v.taxOutCode ? 'Chọn thuế suất GTGT.' : '';
     if (k === 'units') return !baseUnit ? 'Chưa khai đơn vị tính nhỏ nhất (vd Hộp, Lon, Cái).' : v.units.filter((u) => u.unit.trim()).length > 10 ? 'Tối đa 10 đơn vị tính.' : '';
     if (k === 'mua') return nccRows.some((r) => !r.partnerCode) ? 'Còn dòng chưa chọn nhà cung cấp (chọn hoặc bỏ dòng đó).' : '';
+    if (k === 'status') return giaThieu;
     return '';
   };
   // [2026-11-16 Nguyễn Văn Thủy] bước đã từng tới thì bấm qua lại tự do (quay lại xem rồi nhảy thẳng về bước đang làm); bước chưa tới thì khoá (đóng góp)
@@ -328,6 +329,8 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
   const companyList = lists.find((l) => l.isCompany);
   const mainUnit = v.units.find((u) => u.isDefault)?.unit ?? baseUnit;
   const companyPrice = companyList ? v.prices.find((pr) => pr.priceListCode === companyList.code && pr.unit === mainUnit)?.price : undefined;
+  // [2026-11-17 11:52 AM kiennt] DM10 — giá ĐVT bán chính ở bảng giá công ty là bắt buộc (trừ hàng Không bán) (đóng góp)
+  const giaThieu = companyList && mainUnit && !v.noSale && !(companyPrice && companyPrice > 0) ? `Chưa nhập giá bán ${mainUnit} (ĐVT bán chính) ở ${companyList.name} — bắt buộc.` : '';
   const pick = (k: ClassKind) => classes[k].filter((c) => (c.isActive && (k !== 'group' || (depth.get(c.code) ?? 0) >= 3)) || c.code === v[`${k}Code` as const]).map((c) => ({ code: c.code, name: k === 'group' ? groupPath(c.code) : c.name }));
   const tabBtn = (k: typeof tab, label: string) => <button key={k} role="tab" className={`tab ${tab === k ? 'active' : ''}`} onClick={() => setTab(k)}>{label}</button>;
   const flag = (k: 'isMain' | 'isUnder24m' | 'noSale' | 'exportAdjust' | 'isActive', label: string, hint: string) => (
@@ -348,7 +351,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           {stepIdx > 0 && <button className="btn" onClick={() => { setErrMsg(''); setTab(STEPS[stepIdx - 1]!.k); }}>‹ Quay lại</button>}
           {tab !== 'review' && <button className="btn btn-primary" onClick={next}>Tiếp tục ›</button>}
           {tab === 'review' && <button className="btn btn-primary" disabled={save.isPending} onClick={() => {
-            const bad = ['info', 'units', 'mua'].find((k) => stepErr(k)); const e = bad ? stepErr(bad) : ''; setErrMsg(e);
+            const bad = ['info', 'units', 'mua', 'status'].find((k) => stepErr(k)); const e = bad ? stepErr(bad) : ''; setErrMsg(e);
             if (bad) { setTab(bad); return; }
             ack.request((a) => save.mutate(a));
           }}>{save.isPending ? 'Đang ghi…' : 'Ghi mặt hàng'}</button>}
@@ -359,9 +362,9 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           onClick={() => {
             // [2026-11-12 Nguyễn Văn Thủy] bấm Ghi luôn được; thiếu gì báo rõ ở đầu form (đóng góp)
             const loi = !v.sku.trim() ? 'Chưa nhập mã hàng.' : skuLetters ? 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.' : !v.name.trim() ? 'Chưa nhập tên hàng.' : tenDai ? 'Tên hàng tối đa 50 ký tự.' : v.units.filter((u) => u.unit.trim()).length > 10 ? 'Tối đa 10 đơn vị tính.'
-              : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !baseUnit ? 'Chưa khai đơn vị tính: gõ tên ĐVT nhỏ nhất (vd Hộp, Lon, Cái) ở thẻ Đơn vị tính.' : '';
+              : sameName ? `Tên hàng trùng với mã ${sameName.sku}.` : !baseUnit ? 'Chưa khai đơn vị tính: gõ tên ĐVT nhỏ nhất (vd Hộp, Lon, Cái) ở thẻ Đơn vị tính.' : giaThieu;
             setErrMsg(loi);
-            if (loi) { setTab(!baseUnit && v.sku.trim() && v.name.trim() && !sameName && !skuLetters ? 'units' : 'info'); return; }
+            if (loi) { setTab(loi === giaThieu ? 'prices' : !baseUnit && v.sku.trim() && v.name.trim() && !sameName && !skuLetters ? 'units' : 'info'); return; }
             ack.request((a) => save.mutate(a));
           }}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
@@ -458,7 +461,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
           onAdd={(u) => set({ units: [...v.units, u] })}
           onRemove={(i) => setV((x) => ({ ...x, units: x.units.filter((_, j) => j !== i), prices: x.prices.filter((p) => p.unit !== x.units[i]!.unit) }))} />
       )}
-      {isNew && tab === 'status' && <div className="full muted" style={{ fontSize: 12.5, margin: '2px 0 6px' }}>Không bắt buộc: tích các trạng thái cần, khai giá bán (khai sau ở thẻ Giá bán cũng được).</div>}
+      {isNew && tab === 'status' && <div className="full muted" style={{ fontSize: 12.5, margin: '2px 0 6px' }}>Tích các trạng thái cần. Giá bán ĐVT bán chính ở bảng giá công ty là bắt buộc (trừ hàng Không bán).</div>}
       {(tab === 'prices' || (isNew && tab === 'status')) && <GiaBan units={v.units} prices={v.prices} lists={lists} shown={shownLists} setShown={setShownLists} setPrice={setPrice} onlyCompany={v.isMain} />}
 
       {isNew && tab === 'mua' && <NccTamBang rows={nccRows} setRows={setNccRows} units={v.units.map((u) => u.unit.trim()).filter(Boolean)} mainUnit={v.units.find((u) => u.isPurchaseDefault)?.unit ?? v.units.find((u) => u.isDefault)?.unit ?? baseUnit} vatLabel={vatRate?.label ?? ''} vatPct={vatRate?.rate ?? 0} />}
@@ -593,7 +596,7 @@ function NccTamBang({ rows, setRows, units, mainUnit, vatLabel, vatPct }: { rows
           <thead><tr><th>Nhà cung cấp (*)</th><th style={{ width: 130 }}>ĐVT</th><th className="num" style={{ width: 160 }} title="Giá mua theo ĐVT, chưa thuế — nhập ô này thì ô gồm thuế tự tính">Giá mua chưa thuế</th><th className="num" style={{ width: 90 }} title={`Thuế suất GTGT đầu vào đã chọn ở bước Thông tin chung${vatLabel ? ` (${vatLabel})` : ''} — đổi ở bước 1`}>Thuế %</th><th className="num" style={{ width: 160 }} title={`Giá mua theo ĐVT, gồm thuế${vatPct ? ` ${vatPct}%` : ''} — NCC báo giá gồm thuế thì nhập ô này`}>Giá mua gồm thuế</th><th style={{ width: 150 }}>Hiệu lực từ</th><th style={{ width: 50 }} /></tr></thead>
           <tbody>{rows.map((r, i) => (
             <tr key={i}>
-              <td><PartnerPicker value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
+              <td>{/* [2026-11-17 07:33 PM kiennt] NT-DM-002 L07 — chỉ gợi ý NCC đang giao dịch (đóng góp) */}<PartnerPicker activeOnly value={r.partnerCode} onChange={(c) => set(i, { partnerCode: c })} placeholder="Gõ mã, tên hoặc MST" addKind="supplier" /></td>
               <td><select className="select input" value={r.unit} onChange={(e) => set(i, { unit: e.target.value })}>{units.map((u) => <option key={u} value={u}>{u}</option>)}</select></td>
               <td><NumInput value={net(r)} onChange={(n) => set(i, { price: n, incVat: false })} /></td>
               {/* [2026-11-15 Nguyễn Văn Thủy] hiện thuế suất đã chọn ở đầu để thấy giá gồm thuế tính theo bao nhiêu % (đóng góp) */}

@@ -16,8 +16,8 @@
 
 ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS tax_amount numeric NOT NULL DEFAULT 0;
 ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS discount_amount numeric NOT NULL DEFAULT 0;
-COMMENT ON COLUMN inventory_movements.tax_amount IS 'Thuế GTGT của dòng, cùng dấu amount (0151).';
-COMMENT ON COLUMN inventory_movements.discount_amount IS 'Chiết khấu của dòng (đã trừ trong amount), cùng dấu amount (0151).';
+COMMENT ON COLUMN inventory_movements.tax_amount IS 'Thuế GTGT của dòng, cùng dấu amount (0153).';
+COMMENT ON COLUMN inventory_movements.discount_amount IS 'Chiết khấu của dòng (đã trừ trong amount), cùng dấu amount (0153).';
 
 UPDATE inventory_movements m
    SET tax_amount = sign(m.amount) * abs(COALESCE((e.payload->'lines'->(m.line_no - 1)->>'taxAmount')::numeric, 0)),
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS costing_formulas (
   updated_at  timestamptz NOT NULL DEFAULT now(),
   UNIQUE (tenant_id, code)
 );
-COMMENT ON TABLE costing_formulas IS 'Công thức giá vốn người dùng đặt (0151): giá nhập, chi phí / thưởng phân bổ, hàng trả NCC, nhận chi nhánh khác, nhập điều chỉnh.';
+COMMENT ON TABLE costing_formulas IS 'Công thức giá vốn người dùng đặt (0153): giá nhập, chi phí / thưởng phân bổ, hàng trả NCC, nhận chi nhánh khác, nhập điều chỉnh.';
 ALTER TABLE costing_formulas ADD COLUMN IF NOT EXISTS apply_from text NOT NULL DEFAULT '';
 ALTER TABLE costing_formulas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE costing_formulas FORCE ROW LEVEL SECURITY;

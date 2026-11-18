@@ -44,6 +44,12 @@ export const docInput = z.object({
   note: z.string().trim().max(1000).optional(),
   /** Bản chính sách đã áp — đúng mảng `policyRefs` Core trả ở POST /api/v1/policies/evaluate. */
   policyRefs: z.array(z.object({ key: z.string().trim().min(1).max(64), version: z.number().int().min(1), hash: z.string().trim().min(1).max(128) })).max(50).optional(),
+  // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: phiếu bán sinh từ đơn đặt hàng nối số đơn (máy chủ tự gắn, màn không sửa được) (đóng góp)
+  /** Đơn đặt hàng mà phiếu này giao (phiếu bán sinh từ nút Giao của đơn). Máy chủ giữ nguyên khi sửa phiếu nháp. */
+  order: z.object({ id: z.string().trim().min(1).max(64), no: z.string().trim().max(32) }).optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: mã voucher TGS / hãng của khách (module voucher kiểm lúc duyệt) (đóng góp)
+  /** Mã voucher (module voucher) khách dùng — trừ lúc duyệt: TGS = chiết khấu trên dòng, hãng = dòng thanh toán. */
+  vouchers: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
 }).passthrough();
 export type PolicyRef = { key: string; version: number; line: 'gift' | 'discount' };
 export type DocInput = z.infer<typeof docInput>;
@@ -58,6 +64,12 @@ export type Body = {
   originalDocNo?: string; dueDate?: string; lines: Line[]; payments: { methodCode: string; amount: number; reference?: string }[];
   totals: { beforeTax: number; tax: number; total: number }; note?: string;
   policyRefs?: { key: string; version: number; hash: string }[];
+  /** Đơn đặt hàng phiếu này giao (NT-BH-023). */
+  order?: { id: string; no: string };
+  /** Mã voucher khách dùng (NT-BH-026) — lưu ở nháp, áp lúc duyệt. */
+  voucherCodes?: string[];
+  /** Voucher đã áp lúc duyệt (NT-BH-026): số tiền thực trừ từng mã; module voucher đánh dấu đã dùng theo sự kiện phieu-ban.doc.recorded. */
+  vouchers?: { code: string; campaignId: string; campaignName: string; issuer: 'tgs' | 'brand'; kind: 'discount' | 'payment'; faceValue: number; amount: number; methodCode?: string }[];
 };
 
 /**
@@ -117,6 +129,8 @@ export function computeDoc(input: DocInput, ctx: {
     lines, payments, totals: { beforeTax, tax, total },
     ...(input.note ? { note: input.note } : {}),
     ...(policyRefs.length ? { policyRefs } : {}),
+    ...(input.order ? { order: { id: input.order.id, no: input.order.no } } : {}),
+    ...(input.vouchers?.length ? { voucherCodes: [...new Set(input.vouchers.map((c) => c.trim().toUpperCase()))] } : {}),
   };
   return { body, problems };
 }
@@ -174,7 +188,19 @@ export function toLedgerDoc(d: { docId: string; kind: Kind; branchCode: string; 
     }),
     // Bản chính sách đã áp: cửa nạp kiểm lại (IN-POL-001..004); phiếu có dòng chương trình có hạn mức (BH12) thì hạn mức tự trừ.
     ...(b.policyRefs?.length ? { policyRefs: b.policyRefs } : {}),
-    payments: b.payments,
+    // Dòng thanh toán voucher hãng (NT-BH-026) mang số mã ở `reference`; trường riêng của module không gửi vào sổ.
+    payments: b.payments.map(({ voucherCode: _v, ...p }: Body['payments'][number] & { voucherCode?: string }) => p),
     totals: b.totals,
   };
+}
+
+// [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn ở phiếu bán nhập tay (đóng góp)
+const r4s = (n: number) => Math.round(n * 10_000) / 10_000;
+
+/** Phiếu bán xuất quá tồn của kho trên phiếu (cộng theo mã, gồm quà). Rỗng = đủ. */
+export function stockShortOf(lines: readonly { sku: string; qty: number }[], have: ReadonlyMap<string, number>) {
+  const need = new Map<string, number>();
+  for (const l of lines) if (l.qty > 0) need.set(l.sku, r4s((need.get(l.sku) ?? 0) + l.qty));
+  return [...need.entries()].map(([sku, n]) => ({ sku, need: n, have: r4s(have.get(sku) ?? 0) })).filter((x) => x.need > x.have)
+    .sort((a, b) => a.sku.localeCompare(b.sku));
 }

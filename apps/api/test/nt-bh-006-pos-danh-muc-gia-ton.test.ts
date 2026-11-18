@@ -19,7 +19,7 @@ const DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
 const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
 const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners',
-  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand'];
+  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 const vnDate = (offsetDays = 0) => new Date(Date.now() + 7 * 3600_000 + offsetDays * 86_400_000).toISOString().slice(0, 10);
 
 type Unit = { unit: string; ratio: number; price: number | null; isDefault: boolean };

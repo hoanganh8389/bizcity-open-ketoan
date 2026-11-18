@@ -24,7 +24,7 @@
  *   - Hàng xuất THEO GIÁ BÁN (bán nội bộ cho chi nhánh khác — lý do có cờ costAtSalePrice) bị trừ khỏi cả tử
  *     (theo giá bán) và mẫu (số lượng) trước khi chia; giá vốn của nó đã ghi sổ cùng phiếu bán.
  *   - Hàng trả nhà cung cấp: theo thành tiền − thuế trên phiếu (mặc định) hoặc định giá theo giá vốn đầu tháng — chọn ở công thức giá vốn
- *     (0151), không theo lý do (lý do chỉ là nhãn). Định giá theo đầu tháng: tiền trả 0 → 0; đơn giá trả ≤ đơn giá tồn đầu → SL × đơn giá tồn đầu;
+ *     (0153), không theo lý do (lý do chỉ là nhãn). Định giá theo đầu tháng: tiền trả 0 → 0; đơn giá trả ≤ đơn giá tồn đầu → SL × đơn giá tồn đầu;
  *     tiền trả ≤ GT tồn đầu → tiền trả; SL trả ≤ SL tồn đầu → GT tồn đầu; còn lại → GT tồn đầu + (SL trả − SL tồn đầu) × đơn giá trả.
  *     Tồn kho trên sổ vẫn giảm theo tiền trên phiếu trả.
  *   - Nhập điều chỉnh tăng: tính vào tử, mẫu hay không — chọn ở công thức giá vốn.
@@ -91,7 +91,7 @@ export function parsePeriod(s: string): Period {
 
 /** Khoá dòng giá vốn: (nhóm tính giá, khoá mặt hàng). Khoá mặt hàng = item_id; dòng chưa có item_id → mã ([2026-11-04 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — G2). */
 const key = (group: string, ikey: string) => `${group}|${ikey}`;
-// [2026-11-17 Nguyễn Văn Thủy] GIÁ VỐN TÁCH THEO LOẠI KHO (0153): loại kho bỏ chọn "tính chung" thì nhóm tính giá = đơn vị hạch toán + "~" + mã
+// [2026-11-17 Nguyễn Văn Thủy] GIÁ VỐN TÁCH THEO LOẠI KHO (0155): loại kho bỏ chọn "tính chung" thì nhóm tính giá = đơn vị hạch toán + "~" + mã
 // loại kho. Nhóm tính giá trong code là chuỗi "<đơn vị>" hoặc "<đơn vị>~<loại kho>"; lưu inventory_costs.cost_group + wh_type (đóng góp)
 const baseGroup = (g: string | null) => (g ?? '').split('~')[0]!;
 const typeOfGroup = (g: string) => g.split('~')[1] ?? '';
@@ -147,12 +147,12 @@ interface CostRow {
   giftOpening: number;
   giftIn: number;
   giftOut: number;
-  /** [2026-11-17 Nguyễn Văn Thủy] dòng chảy trong kỳ theo loại (0150) (đóng góp) */
+  /** [2026-11-17 Nguyễn Văn Thủy] dòng chảy trong kỳ theo loại (0152) (đóng góp) */
   d: FlowDetail;
   /** ĐGBQ đầu kỳ nhập từ Excel. */
   importUnit?: number;
 }
-// [2026-11-17 Nguyễn Văn Thủy] CÔNG THỨC GIÁ VỐN TUỲ CHỌN (0151): mỗi lần tính chọn một bộ lựa chọn (đóng góp)
+// [2026-11-17 Nguyễn Văn Thủy] CÔNG THỨC GIÁ VỐN TUỲ CHỌN (0153): mỗi lần tính chọn một bộ lựa chọn (đóng góp)
 export interface CostFormula {
   /** Giá nhập: net = chưa VAT, đã trừ CK; before_discount = chưa VAT, chưa trừ CK; with_vat = gồm VAT, đã trừ CK. */
   price: 'net' | 'before_discount' | 'with_vat';
@@ -609,7 +609,7 @@ export const costingService = {
   // để lại đơn giá và các chi nhánh trước đã ghi)
   async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string; costCenter?: string; scope?: { kind: 'node' | 'shop'; code: string }; separateTypes?: string[] }): Promise<CostingResult> {
     const p = parsePeriod(input.period);
-    // [2026-11-17 Nguyễn Văn Thủy] phạm vi chọn trên cây cơ cấu (nút bất kỳ hoặc một shop): đặt làm điểm tính giá vốn rồi tính (0149) (đóng góp)
+    // [2026-11-17 Nguyễn Văn Thủy] phạm vi chọn trên cây cơ cấu (nút bất kỳ hoặc một shop): đặt làm điểm tính giá vốn rồi tính (0151) (đóng góp)
     // Công thức: không chọn khi tính — lấy công thức đang áp dụng cho tháng (apply_from lớn nhất <= tháng); chưa có thì mặc định trong mã.
     const fr = (await sql<{ code: string; name: string; options: unknown }>`
       SELECT code, name, options FROM costing_formulas WHERE tenant_id = ${auth.tenantId}
@@ -773,7 +773,7 @@ export const costingService = {
   },
 };
 
-// [2026-11-17 Nguyễn Văn Thủy] lưu LẦN TÍNH GIÁ VỐN theo chi nhánh (0148): mốc cơ cấu (id + uid của nút), kỳ, khoảng ngày, tổng, phiếu,
+// [2026-11-17 Nguyễn Văn Thủy] lưu LẦN TÍNH GIÁ VỐN theo chi nhánh (0150): mốc cơ cấu (id + uid của nút), kỳ, khoảng ngày, tổng, phiếu,
 // bảng đơn giá các mã của chi nhánh tại lần tính (đóng góp)
 async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: string; to: string; costCenter?: string; branches: CostingResult['branches']; imported: number; formula: { code: string; name: string; formula: CostFormula }; separateTypes: string[] }): Promise<string[]> {
   const centers = (await sql<{ id: string; code: string; name: string; org_unit_id: string | null; org_uid: string | null }>`

@@ -1,4 +1,4 @@
-// [2026-11-17 Nguyễn Văn Thủy] Giá vốn tách theo loại kho (0153): mặc định tính chung; bỏ chọn loại kho thì loại đó tính giá riêng (đóng góp)
+// [2026-11-17 Nguyễn Văn Thủy] Giá vốn tách theo loại kho (0155): mặc định tính chung; bỏ chọn loại kho thì loại đó tính giá riêng (đóng góp)
 /**
  * CN01 có kho hàng K1 (KHH) và kho khuyến mãi K1KM (KKM).
  *   09/2026  nhập 10 hộp × 50.000 vào K1; nhập 5 hộp quà 0 đồng vào K1KM; bán 4 từ K1, 2 từ K1KM

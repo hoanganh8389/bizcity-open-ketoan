@@ -10,5 +10,5 @@
 -- cost_source = 'import': ĐGBQ đầu kỳ lấy theo tệp Excel (đơn giá cuối kỳ vẫn bình quân với chứng từ trong tháng).
 
 ALTER TABLE inventory_costs ADD COLUMN IF NOT EXISTS detail jsonb NOT NULL DEFAULT '{}'::jsonb;
-COMMENT ON COLUMN inventory_costs.detail IS 'Chi tiết dòng chảy trong kỳ và ĐGBQ đầu kỳ / trong kỳ / giá nhập lần cuối (0150).';
+COMMENT ON COLUMN inventory_costs.detail IS 'Chi tiết dòng chảy trong kỳ và ĐGBQ đầu kỳ / trong kỳ / giá nhập lần cuối (0152).';
 ALTER TABLE costing_run_lines ADD COLUMN IF NOT EXISTS detail jsonb NOT NULL DEFAULT '{}'::jsonb;

@@ -9,6 +9,8 @@
  */
 import { allocate, roundMoney } from '@bizcity/module-sdk';
 import type { ManualDiscount, OrderDraft, OrderLineDraft } from './schema.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS (chiết khấu) / hãng (dòng thanh toán) trên đơn (đóng góp)
+import { planDiscounts, planPayments, type QuotedVoucher, type VoucherUse } from './voucher.js';
 
 /**
  * Mặt hàng đọc từ bizcity_read.products. `variant` (ô Biến thể) chỉ dùng cho giá 0đ của hàng Nội bộ; `sendTax` (ô Gửi lên thuế)
@@ -92,7 +94,7 @@ export type PricedLine = {
   item: CatalogItem & { taxCode: string; taxRate: number };
   unitRatio: number;
   money: LineMoney;
-  /** Tiền giảm của voucher đổi điểm chia vào dòng (gồm thuế, NT-BH-020 bước 2). */
+  /** Tiền giảm của voucher đổi điểm (NT-BH-020 bước 2) + voucher TGS (NT-BH-026) chia vào dòng (gồm thuế). */
   voucherDiscount?: number;
 };
 
@@ -114,6 +116,8 @@ export type ComputedOrder = {
   qrAmount: number;
   change: number;
   customer: OrderCustomer;
+  /** Voucher TGS / hãng đã trừ (NT-BH-026): số tiền thực trừ từng mã (≤ mệnh giá, phần dư mất). */
+  voucherUses: VoucherUse[];
 };
 
 export type ComputeInput = {
@@ -130,6 +134,8 @@ export type ComputeInput = {
    * `lenient`: lần tính trước khi hỏi loyalty (chưa có báo giá) — nhận dòng quà `lp:`, chưa giảm voucher.
    */
   loyalty?: { gifts?: ReadonlyMap<string, { sku: string; quantity: number }>; voucher?: { code: string; amount: number }; lenient?: boolean };
+  /** Voucher TGS / hãng module voucher đã kiểm (voucher.order.quote) — NT-BH-026. Chưa áp ở lần tính thử (`loyalty.lenient`). */
+  vouchers?: readonly QuotedVoucher[];
 };
 
 /** Mã phần thưởng của dòng quà đổi điểm (giftKey `lp:<mã>`), không phải thì null. */
@@ -242,6 +248,22 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
     }
   }
 
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS = chiết khấu chia vào dòng sau khuyến mại / voucher đổi điểm (đóng góp)
+  const vouchers = input.loyalty?.lenient ? [] : input.vouchers ?? [];
+  const asLines = () => lines.map((l) => ({ sku: l.item.sku, gross: l.money.gross, paid: !l.draft.isGift && l.money.gross > 0 }));
+  let voucherUses: VoucherUse[] = [];
+  if (vouchers.length) {
+    const d = planDiscounts(asLines(), vouchers);
+    if ('problem' in d) return fail('validation', 'VOUCHER_NO_ROOM', d.problem.message, { field: 'vouchers', code: d.problem.code });
+    lines.forEach((l, i) => {
+      const s = d.shares[i] ?? 0;
+      if (s <= 0) return;
+      l.voucherDiscount = (l.voucherDiscount ?? 0) + s;
+      l.money = lineMoney(l.draft.clientUnitPrice, l.draft.unitQty, l.item.taxRate, l.draft.manualDiscount, (l.draft.promoDiscount ?? 0) + l.voucherDiscount);
+    });
+    voucherUses = d.uses;
+  }
+
   // [2026-11-15 10:55 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1 (đóng góp): nhận bill Z thay vì chặn.
   // Bill Z (D-MP-12): dòng 0đ của mã không gửi thuế — POS đang chạy in thành phiếu riêng (xuất tặng, không lên hoá đơn). Ở đây
   // đơn vẫn là một chứng từ bán: dòng đó là dòng quà 0đ (isBillZ → isGift trên chứng từ, không doanh thu, không thuế; giá vốn
@@ -256,7 +278,7 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   if (input.loyalty?.lenient) {
     const who = resolveCustomer(input);
     if ('problem' in who) return who;
-    return { lines, subtotal, taxTotal, total, payments: [], offsets: [], change: 0, customer: who.customer, qrAmount: 0 };
+    return { lines, subtotal, taxTotal, total, payments: [], offsets: [], change: 0, customer: who.customer, qrAmount: 0, voucherUses: [] };
   }
   if (total !== draft.clientTotal) {
     return fail('conflict', 'POS_PRICE_CHANGED', `Tổng máy tính ${draft.clientTotal} khác tổng máy chủ tính ${total} — tải lại giỏ`, { clientTotal: draft.clientTotal, total });
@@ -270,6 +292,17 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
 
   // Thanh toán (D-MP-7): tiền mặt, hoặc chia tiền không có QR / ghi nợ; đối trừ chỉ trong đổi hàng.
   const active = new Map(paymentMethods.map((m) => [m.code, m]));
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher hãng = dòng thanh toán theo hình thức kế toán khai; khách trả phần còn lại (đóng góp)
+  const pp = planPayments(asLines(), total, vouchers);
+  if ('problem' in pp) return fail('validation', 'VOUCHER_NO_ROOM', pp.problem.message, { field: 'vouchers', code: pp.problem.code });
+  const badMethod = pp.uses.find((u) => !active.has(u.methodCode!));
+  if (badMethod) {
+    return fail('validation', 'VOUCHER_PAYMENT_METHOD', `Hình thức thanh toán ${badMethod.methodCode} của voucher hãng ${badMethod.code} không có / ngừng dùng — kế toán khai lại ở đợt phát`,
+      { method: badMethod.methodCode, code: badMethod.code });
+  }
+  voucherUses = [...voucherUses, ...pp.uses];
+  const voucherPays = pp.uses.map((u) => ({ methodCode: u.methodCode!, amount: u.amount }));
+  const due = total - voucherPays.reduce((t, x) => t + x.amount, 0);
   let payments: ComputedOrder['payments'];
   let offsetPaid = 0;
   let change = 0;
@@ -278,9 +311,9 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
   if (p.mode === 'cash') {
     const cash = paymentMethods.find((m) => paymentKind(m.code) === 'cash');
     if (!cash) return fail('validation', 'POS_NO_CASH_METHOD', 'Danh mục hình thức thanh toán chưa có tiền mặt (TM)');
-    if (p.cashGiven < total) return fail('validation', 'POS_CASH_INSUFFICIENT', `Khách đưa ${p.cashGiven}, còn thiếu ${total - p.cashGiven}`, { total, cashGiven: p.cashGiven });
-    payments = total > 0 ? [{ methodCode: cash.code, amount: total }] : [];
-    change = p.cashGiven - total;
+    if (p.cashGiven < due) return fail('validation', 'POS_CASH_INSUFFICIENT', `Khách đưa ${p.cashGiven}, còn thiếu ${due - p.cashGiven}`, { total, due, cashGiven: p.cashGiven });
+    payments = [...voucherPays, ...(due > 0 ? [{ methodCode: cash.code, amount: due }] : [])];
+    change = p.cashGiven - due;
   } else if (p.mode === 'split') {
     const seen = new Set<string>();
     for (const part of p.parts) {
@@ -290,7 +323,7 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
         continue;
       }
       if (!active.has(part.method)) return fail('validation', 'POS_UNKNOWN_METHOD', `Hình thức thanh toán ${part.method} không có trong danh mục`, { method: part.method });
-      if (seen.has(part.method)) return fail('validation', 'POS_DUPLICATE_METHOD', `Hình thức ${part.method} lặp lại`, { method: part.method });
+      if (seen.has(part.method) || voucherPays.some((v) => v.methodCode === part.method)) return fail('validation', 'POS_DUPLICATE_METHOD', `Hình thức ${part.method} lặp lại`, { method: part.method });
       seen.add(part.method);
       const kind = paymentKind(part.method);
       if (kind === 'qr') { qrAmount += part.amount; continue; }
@@ -299,17 +332,17 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
       }
     }
     const paid = p.parts.reduce((s, x) => s + x.amount, 0);
-    if (paid !== total) return fail('validation', 'POS_SPLIT_MISMATCH', `Các phần cộng ${paid}, tổng đơn ${total} (chênh ${paid - total})`, { total, paid });
+    if (paid !== due) return fail('validation', 'POS_SPLIT_MISMATCH', `Các phần cộng ${paid}, ${due === total ? 'tổng đơn' : 'còn phải trả sau voucher'} ${due} (chênh ${paid - due})`, { total, due, paid });
     if (ex && offsetPaid !== ex.credit) {
       return fail('validation', 'POS_SPLIT_MISMATCH', `Phần đối trừ ${offsetPaid} phải đúng bằng tiền hàng trả ${ex.credit}`, { credit: ex.credit, offset: offsetPaid });
     }
-    payments = p.parts.filter((x) => !isOffsetMethod(x.method)).map((x) => ({ methodCode: x.method, amount: x.amount }));
+    payments = [...voucherPays, ...p.parts.filter((x) => !isOffsetMethod(x.method)).map((x) => ({ methodCode: x.method, amount: x.amount }))];
   } else if (p.mode === 'qr') {
     // Trả hết bằng QR chuyển khoản (NT-BH-009): ghi sổ theo hình thức QR của danh mục; đơn chờ trả tiền.
     const qr = paymentMethods.find((m) => paymentKind(m.code) === 'qr');
     if (!qr) return fail('validation', 'POS_UNKNOWN_METHOD', 'Danh mục hình thức thanh toán chưa có QR chuyển khoản', { method: 'QR' });
-    payments = total > 0 ? [{ methodCode: qr.code, amount: total }] : [];
-    qrAmount = total;
+    payments = [...voucherPays, ...(due > 0 ? [{ methodCode: qr.code, amount: due }] : [])];
+    qrAmount = due;
   } else {
     return fail('validation', 'POS_NOT_SUPPORTED_YET', 'Hình thức thanh toán chưa nhận ở đợt này');
   }
@@ -320,7 +353,7 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
 
   if (ex && p.mode !== 'split') return fail('validation', 'POS_SPLIT_MISMATCH', 'Đổi hàng phải có phần đối trừ đúng bằng tiền hàng trả', { credit: ex.credit });
   const offsets = ex && ex.credit > 0 ? [{ docKey: ex.returnDocKey, amount: ex.credit }] : [];
-  return { lines, subtotal, taxTotal, total, payments, offsets, change, customer, qrAmount };
+  return { lines, subtotal, taxTotal, total, payments, offsets, change, customer, qrAmount, voucherUses };
 }
 
 // ── Đầu ra ────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -404,7 +437,7 @@ export type SnapshotLoyalty = {
   rewards: unknown[];
 };
 
-export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string; loyalty?: SnapshotLoyalty; usedVouchers?: string[] }) {
+export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string; loyalty?: SnapshotLoyalty; usedVouchers?: string[]; issuedVouchers?: unknown[] }) {
   const { draft } = meta;
   const all = o.lines.map((l) => ({
       ...l.draft,
@@ -443,6 +476,9 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
     promotions: [] as unknown[],
     ...(meta.loyalty ? { loyalty: meta.loyalty } : {}),
     ...(meta.usedVouchers?.length ? { usedVouchers: meta.usedVouchers } : {}),
+    // NT-BH-026: voucher TGS / hãng đã trừ (module voucher đánh dấu đã dùng khi nhận sự kiện) và voucher lần mua sau tự phát (in trên bill).
+    ...(o.voucherUses.length ? { voucherUses: o.voucherUses } : {}),
+    ...(meta.issuedVouchers?.length ? { issuedVouchers: meta.issuedVouchers } : {}),
     branch: { code: meta.branch.code, name: meta.branch.name, taxCode: meta.branch.taxCode },
     mirror: { status: 'pending' as const },
   };

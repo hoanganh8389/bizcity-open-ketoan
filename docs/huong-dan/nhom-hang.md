@@ -25,21 +25,25 @@ Mã hàng = mã ngắn cấp 1 + mã ngắn cấp 2 + mã ngắn cấp 3 + số 
 Thêm mặt hàng mới chỉ cần chọn nhóm cấp 3, phần mềm tự sinh mã.
 
 ## Màn hình
+<!-- [2026-11-17 04:28 PM kiennt] DM11 — màn ba cột Ngành → Nhãn → Nhóm và bảng mặt hàng (đóng góp) -->
 
-Một bảng dạng cây. Mỗi dòng: Mã ngắn, Mã nhóm hàng, Tên nhóm hàng, Cấp, **Số mặt hàng** (cộng cả nhóm con), Đang dùng, Người tạo, Người sửa (kèm thời gian). Nhóm cấp 1–3 chưa có mã ngắn hiện chữ đỏ *chưa có*.
+Ba cột nối tiếp: **1 Ngành hàng** (cấp 1) → **2 Nhãn hàng** (cấp 2) → **3 Nhóm hàng** (cấp 3). Bấm một ngành thì cột Nhãn hiện các nhãn của ngành đó; bấm một nhãn thì cột Nhóm hiện các nhóm của nhãn.
 
-- Bấm vào dòng để mở / thu nhóm con. Nút **Cột** ẩn / hiện Tên nhóm hàng, Ghi chú, Người tạo, Người sửa. **Mở hết / Thu hết** ở trên cùng.
-- Ô **Tìm**: gõ mã hoặc tên; bảng chỉ còn nhóm khớp và đường đi tới nó.
-- Ô **Xem dạng cây / Chỉ nhóm cấp 1…5**: xem riêng toàn bộ nhóm một cấp.
+Mỗi dòng: **mã ngắn** (ô màu đầu dòng), tên, **số mặt hàng** (cộng cả nhóm con), dấu ✓ ở dòng đang chọn.
+- *chưa mã*: nhóm cấp 1–3 chưa có mã ngắn — mặt hàng thuộc nhóm này chưa sinh được mã.
+- *trùng mã*: cùng mã ngắn với một nhóm khác cùng cấp — cần sửa để mã hàng không trùng đầu.
 
-## Thao tác — nút ngay trên từng dòng
+Ô **Tìm kiếm** (trên ba cột): gõ tên hoặc mã ngắn; mỗi cột chỉ còn nhóm khớp và nhóm cha của nó.
 
-- **Sửa**: đổi mã nhóm hàng, tên nhóm hàng, ghi chú, Đang dùng; mã ngắn chỉ đổi được khi nhóm chưa có mặt hàng. Nhóm đã tạo không chuyển sang nhóm khác.
-- **+ Mặt hàng** (chỉ ở nhóm cấp 3): mở form thêm mặt hàng, nhóm điền sẵn, mã tự sinh.
-- **+ Nhóm con** (cấp 1, 2): thêm nhóm cấp dưới. Mã ngắn điền sẵn mã kế tiếp, tên nhóm hàng tự ghép; nhập mã nhóm hàng rồi **Ghi**.
-- **Lịch sử**: ai thêm / sửa, lúc nào, đổi gì.
-- **＋ Thêm nhóm cấp 1** (dòng đầu bảng, khi xem dạng cây): thêm ngành mới.
-- Không có xoá: muốn ngừng thì **Sửa**, bỏ tích **Đang dùng**.
+Bảng **Mặt hàng** bên dưới: mặt hàng của nhánh đang chọn (gồm cả nhóm con), ô chọn trạng thái (Tất cả / Đang dùng / Ngừng dùng / Nháp). Bấm đúp một dòng để mở mặt hàng.
+
+## Thao tác
+
+- **Sửa nhóm**: bấm đúp dòng nhóm, hoặc nút bút chì ở dòng đang chọn. Đổi mã nhóm hàng, tên, ghi chú, Đang dùng; mã ngắn chỉ đổi được khi nhóm chưa có mặt hàng.
+- **Lịch sử**: nút đồng hồ ở dòng đang chọn — ai thêm / sửa, lúc nào, đổi gì.
+- **+ Thêm ngành hàng / + Tạo nhãn mới trong ngành này / + Tạo nhóm mới trong nhãn này** (cuối mỗi cột): thêm nhóm vào cấp đó. Mã ngắn điền sẵn mã kế tiếp.
+- **Thêm mặt hàng** (trên cùng): mở form mặt hàng, nhóm điền sẵn theo nhóm đang chọn, mã tự sinh.
+- **Xoá / Thùng rác**: xoá nhóm đang chọn vào thùng rác, khôi phục được. Muốn ngừng mà không xoá thì **Sửa**, bỏ tích **Đang dùng**.
 
 ## Phần mềm tự chặn
 

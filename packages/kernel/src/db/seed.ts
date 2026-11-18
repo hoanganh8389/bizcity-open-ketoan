@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { db, closeDb } from '@bizcity/platform/db/client';
 import { runMigrations } from '@bizcity/platform/db/migrate';
 import { randomBytes } from 'node:crypto';
+import { sql } from 'kysely';
 import { generateApiKey, hashApiKey, hashPassword } from '@bizcity/platform/core/security/password';
 import { PACKS_DIR, SEEDS_DIR } from '@bizcity/platform/db/paths';
 import { installPack, parsePack } from '../modules/posting-config/pack.js';
@@ -100,11 +101,28 @@ export function initialAdminPassword(env: NodeJS.ProcessEnv = process.env): { pa
   return { password: `Bc${randomBytes(9).toString('base64url')}#7`, generated: true };
 }
 
-export async function seed(): Promise<void> {
-  const tenantCode = process.env.SEED_TENANT_CODE ?? 'demo';
-  const tenantName = process.env.SEED_TENANT_NAME ?? 'Công ty Demo';
-  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@ketoan.local').toLowerCase();
-  const admin = initialAdminPassword();
+// [2026-11-17 11:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 (B5a, 00 §14): seed nhận tham số (tạo Công ty mẫu is_sample cùng tài khoản quản trị); không truyền = đọc biến môi trường như cũ
+export interface SeedOptions {
+  tenantCode?: string;
+  tenantName?: string;
+  /** Mật khẩu quản trị cho người dùng tạo mới (Công ty mẫu dùng lại mật khẩu của đơn vị chính); trống = SEED_ADMIN_PASSWORD / tự sinh. */
+  adminPassword?: string;
+  /** Đơn vị mẫu (tenants.is_sample): không sinh khoá API tích hợp. */
+  isSample?: boolean;
+  // [2026-11-17 09:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-7 B5b: tạo Công ty Mẫu theo yêu cầu — người bấm đăng nhập bằng chính email và mật khẩu của mình (chép băm, không sinh mật khẩu mới)
+  /** Email quản trị; trống = SEED_ADMIN_EMAIL / admin@ketoan.local. */
+  adminEmail?: string;
+  /** Băm mật khẩu có sẵn (chép từ người bấm); có thì không băm lại, không in mật khẩu. */
+  adminPasswordHash?: string;
+}
+export interface SeedResult { tenantId: string; tenantCode: string; adminEmail: string; adminPassword: string; generated: boolean }
+
+export async function seed(opts: SeedOptions = {}): Promise<SeedResult> {
+  const tenantCode = opts.tenantCode ?? process.env.SEED_TENANT_CODE ?? 'demo';
+  const tenantName = opts.tenantName ?? process.env.SEED_TENANT_NAME ?? 'Công ty Demo';
+  const adminEmail = (opts.adminEmail ?? process.env.SEED_ADMIN_EMAIL ?? 'admin@ketoan.local').toLowerCase();
+  const admin = opts.adminPassword ? { password: opts.adminPassword, generated: false } : initialAdminPassword();
+  let tenantId = '';
 
   await db.transaction().execute(async (trx) => {
     // Đơn vị
@@ -114,18 +132,20 @@ export async function seed(): Promise<void> {
       console.log(`+ Đơn vị ${tenantCode}`);
     }
     const tid = tenant.id;
+    tenantId = String(tid);
+    if (opts.isSample) await sql`UPDATE tenants SET is_sample = true WHERE id = ${tid}`.execute(trx);
 
     // Người dùng quản trị
     const user = await trx.selectFrom('users').select('id').where('tenant_id', '=', tid).where('email', '=', adminEmail).executeTakeFirst();
     if (!user) {
-      await trx.insertInto('users').values({ tenant_id: tid, email: adminEmail, full_name: 'Quản trị', password_hash: await hashPassword(admin.password), role: 'owner' }).execute();
+      await trx.insertInto('users').values({ tenant_id: tid, email: adminEmail, full_name: 'Quản trị', password_hash: opts.adminPasswordHash ?? await hashPassword(admin.password), role: 'owner' }).execute();
       console.log(admin.generated
         ? `+ Người dùng ${adminEmail} — mật khẩu tự sinh (chỉ in lần này, lưu lại rồi đổi sau khi đăng nhập): ${admin.password}`
         : `+ Người dùng ${adminEmail} (mật khẩu lấy từ SEED_ADMIN_PASSWORD — hãy đổi sau khi đăng nhập)`);
     }
 
-    // Khoá API tích hợp
-    const fixedKey = process.env.SEED_API_KEY;
+    // Khoá API tích hợp (đơn vị mẫu: không — không tích hợp, không gửi ra ngoài)
+    const fixedKey = opts.isSample ? undefined : process.env.SEED_API_KEY;
     const hasKey = await trx.selectFrom('api_keys').select('id').where('tenant_id', '=', tid).where('revoked_at', 'is', null).executeTakeFirst();
     if (fixedKey) {
       await trx
@@ -133,7 +153,7 @@ export async function seed(): Promise<void> {
         .values({ tenant_id: tid, name: 'Tích hợp hệ thống bán hàng', key_prefix: fixedKey.slice(0, 10), key_hash: hashApiKey(fixedKey), scopes: ['documents:write', 'reports:read', 'catalog:write'] })
         .onConflict((oc) => oc.column('key_hash').doNothing())
         .execute();
-    } else if (!hasKey) {
+    } else if (!hasKey && !opts.isSample) {
       const k = generateApiKey();
       await trx.insertInto('api_keys').values({ tenant_id: tid, name: 'Tích hợp hệ thống bán hàng', key_prefix: k.prefix, key_hash: k.hash, scopes: ['documents:write', 'reports:read', 'catalog:write'] }).execute();
       console.log(`+ Khoá API (chỉ hiện một lần): ${k.key}`);
@@ -167,7 +187,6 @@ export async function seed(): Promise<void> {
           track_contract: flag(a.track_contract),
           track_employee: flag(a.track_employee),
           track_cashflow: flag(a.track_cashflow),
-          name_en: a.name_en || null,
           is_foreign_currency: flag(a.is_foreign_currency),
           track_product: flag(a.track_product),
           track_internal_debt: flag(a.track_internal_debt),
@@ -206,6 +225,7 @@ export async function seed(): Promise<void> {
     await trx.insertInto('branches').values({ tenant_id: tid, code: 'CN01', name: 'Chi nhánh 01' }).onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
     console.log(`✓ Đã khởi tạo dữ liệu cho đơn vị ${tenantCode} (${accounts.length} tài khoản)`);
   });
+  return { tenantId, tenantCode, adminEmail, adminPassword: admin.password, generated: admin.generated };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

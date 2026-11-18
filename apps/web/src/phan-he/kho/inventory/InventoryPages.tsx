@@ -286,7 +286,7 @@ export function CostingPage() {
   );
 }
 
-/** Lấy một số trong chi tiết dòng chảy (0150); dòng tính trước khi có chi tiết thì 0. */
+/** Lấy một số trong chi tiết dòng chảy (0152); dòng tính trước khi có chi tiết thì 0. */
 const dt = (x: { detail?: Record<string, number> }, k: string) => Number(x.detail?.[k] ?? 0) || 0;
 const dg = (v: number) => (v ? v.toLocaleString('vi-VN', { maximumFractionDigits: 4 }) : '');
 const round2 = (v: number) => Math.round(v * 100) / 100;

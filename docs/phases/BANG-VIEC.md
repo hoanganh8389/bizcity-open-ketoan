@@ -5,29 +5,29 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 7 |
 | Chờ merge | 0 |
-| Bị chặn | 28 |
-| Chưa ai nhận | 165 |
-| Chờ đủ tín hiệu | 69 |
+| Bị chặn | 30 |
+| Chưa ai nhận | 195 |
+| Chờ đủ tín hiệu | 70 |
 | Hoãn | 3 |
-| Xong | 316 |
-| **Tổng** | **589** |
+| Xong | 320 |
+| **Tổng** | **625** |
 
 ## Theo phân hệ (R-FLOW-10)
 
 | Phân hệ | Xong | Chờ đủ tín hiệu | Đang làm | Còn lại | Tổng |
 |---|---|---|---|---|---|
-| danh-muc | 18 | 16 | 2 | 38 | 74 |
-| mua-hang | 52 | 6 | 1 | 28 | 87 |
-| kho | 44 | 23 | 3 | 75 | 145 |
-| ban-hang | 52 | 6 | 1 | 28 | 87 |
-| chung-tu | 67 | 5 | 0 | 25 | 97 |
-| tong-hop | 31 | 8 | 1 | 27 | 67 |
-| thue | 14 | 2 | 1 | 10 | 27 |
-| he-thong | 148 | 23 | 3 | 56 | 230 |
+| danh-muc | 20 | 17 | 2 | 49 | 88 |
+| mua-hang | 54 | 6 | 1 | 39 | 100 |
+| kho | 46 | 23 | 3 | 89 | 161 |
+| ban-hang | 54 | 6 | 1 | 43 | 104 |
+| chung-tu | 67 | 5 | 0 | 26 | 98 |
+| tong-hop | 31 | 8 | 1 | 28 | 68 |
+| thue | 14 | 2 | 1 | 11 | 28 |
+| he-thong | 150 | 23 | 2 | 58 | 233 |
 
-## Đang làm (8)
+## Đang làm (7)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -38,13 +38,12 @@
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | he-thong | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | mua-hang · ban-hang | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | kho | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
-| [S036-6](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L15) | PHASE-036 | he-thong | B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-l… | P0 | hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh) · `feat/s036-6-goi-mau-ba-thang` |
 
 ## Chờ merge (0)
 
 —
 
-## Bị chặn (28)
+## Bị chặn (30)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -76,8 +75,10 @@
 | [S031-3](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L12) | PHASE-031 | mua-hang · ban-hang | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | P0 | — |
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | mua-hang · ban-hang | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | mua-hang · ban-hang | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
+| [S037-16](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L25) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phân bổ nguồn (receiptorigin hoặc gộp valuationlayersources), thứ tự lấy nguồn khi xuất, ánh xạ dòng nguồn bề… | P0 | — |
+| [S037-34](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L44) | PHASE-037 | thue | Hướng dẫn (docs/huong-dan/), cập nhật docs/nghiep-vu/11, docs/core/03; đưa văn bản về khuyến mại vào danh mục… | P1 | — |
 
-## Chưa ai nhận (165)
+## Chưa ai nhận (195)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -243,11 +244,41 @@
 | [S035-6](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L15) | PHASE-035 | he-thong | B4 — SC-MODS-1 (chặn: phủ 100 % phan-he/ và mã màn menu.ts), SC-MODS-2 (việc có modules[]; baseline phase ≤ 0… | P0 | — |
 | [S035-7](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L16) | PHASE-035 | he-thong | B6 — docs/huong-dan/modules-muc-dat.md; nếp rà hằng tuần (00 §5) vào AGENTS.md + RULE-FLOW; in HT11 cùng HT10 | P1 | — |
 | [S035-8](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L17) | PHASE-035 | he-thong | B5 — thẻ Việc <phân hệ> hôm nay (kho, mua hàng, bán hàng, quỹ, công nợ, thuế, tài sản, danh mục): component c… | P1 | — |
-| [S036-7](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-036 | he-thong | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | — |
 | [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | — |
 | [S036-10](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L20) | PHASE-036 | he-thong | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
+| [S037-3](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L12) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Rà mã cũ thành bảng tác động: excludecost, giftqty, "lấy quà giá 0 trước", lineType, mã nhóm 8, sale.promo.co… | P0 | — |
+| [S037-4](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L13) | PHASE-037 | danh-muc | Khuôn bizcitycombo@1 (zod, kiểu, JSON Schema), ca mẫu hợp lệ / không hợp lệ | P0 | — |
+| [S037-5](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L14) | PHASE-037 | danh-muc | Sổ combo trên Policy Registry: core.combo.definition@1, bảng combo, combocodes, RLS, trigger bản đã phát hành… | P0 | — |
+| [S037-6](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L15) | PHASE-037 | danh-muc | Màn Combo (hai thẻ Mua · Bán, dòng thời gian phiên bản, không nút tạo mặt hàng); phân giải mã combo / mã vạch… | P0 | — |
+| [S037-7](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L16) | PHASE-037 | mua-hang | Năm nguồn quà ở khuôn chung; ánh xạ lineType (giftseller · giftconsumer) → commercialRole + giftSource, dữ li… | P0 | — |
+| [S037-8](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L17) | PHASE-037 | mua-hang | Chính sách core.combo.gifttreatment@1 (định giá · ghi tồn · lên thuế) + màn Nguồn quà & cách xử lý | P0 | — |
+| [S037-9](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L18) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Mở rộng khuôn chứng từ: comboInstances[], comboInstanceId, comboLineRef, commercialRole, giftSource, receiptS… | P0 | — |
+| [S037-10](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L19) | PHASE-037 | mua-hang | Rule Contract purchase.promogift@1 (spec, vectors) cho mặt mua | P0 | — |
+| [S037-11](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L20) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phiếu nhận / đơn mua theo combo: chọn combo ra dòng hàng thật, lưu lần thực hiện cùng giao dịch chứng từ; 3+1… | P0 | — |
+| [S037-12](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L21) | PHASE-037 | chung-tu | Mã kiểm IN-COMBO-001..011 ở cửa nạp + thư viện mã (căn cứ, cách sửa, màn sửa); mức theo R-GATE-9 | P0 | — |
+| [S037-13](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L22) | PHASE-037 | kho | Thẻ Nguồn combo ở Hành trình mặt hàng (chỉ đọc) | P1 | — |
+| [S037-14](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L23) | PHASE-037 | kho | Quà giữ hộ: nhập vào phân kho KNB, không vào tồn của công ty; phiếu phát hộ / hoàn trả; bán bị giữ IN-COMBO-0… | P0 | — |
+| [S037-15](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L24) | PHASE-037 | kho | Tách bộ (core.combo.unbundle), chuyển phân kho giữ nguồn, đổi mục đích dùng (core.combo.repurpose) có căn cứ | P0 | — |
+| [S037-17](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L26) | PHASE-037 | kho | Chạy song song đường cũ (excludecost / giftqty) và đường nguồn; báo cáo lệch theo (mặt hàng, tháng) | P0 | — |
+| [S037-18](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L27) | PHASE-037 | ban-hang | core.combo.suggest + GET /combos/suggest; máy bán và phiếu bán BH10 gõ mã hàng thấy combo 3, 5, 12… | P0 | — |
+| [S037-19](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L28) | PHASE-037 | ban-hang | Mặt bán doclap: giải ra dòng hàng thật có comboInstanceId; itemId cho sale.promo.combo@1; bán kèm tặng ≠ tặng… | P0 | — |
+| [S037-20](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L29) | PHASE-037 | ban-hang | Hạn mức mặt bán; hết combo bán rời (IN-COMBO-009), nhả giữ chỗ; không chứng từ phá combo | P0 | — |
+| [S037-21](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L30) | PHASE-037 | ban-hang | Mặt bán apdungtheo / tudieuchinh: inheritsFrom, kiểm khớp lúc phát hành, lời nhắc khi bản nguồn đổi | P0 | — |
+| [S037-22](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L31) | PHASE-037 | ban-hang | Hạn mức theo nguồn quà (tính từ sổ), khoá khi ghi, IN-COMBO-008, CT-COMBO-005; hành vi ngoại tuyến | P0 | — |
+| [S037-23](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L32) | PHASE-037 | ban-hang | Bộ ca K1..K12 thành dữ liệu dùng chung cho Core và máy bán; phá thử; chạy bóng một kỳ | P0 | — |
+| [S037-24](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L33) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Truy vết một mạch core.combo.trace: hoá đơn NCC → phiếu nhận → combo → mặt hàng → lô → phân kho → giá vốn → b… | P1 | — |
+| [S037-25](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L34) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Báo cáo: nhập theo combo của nhà cung cấp; kho quà theo mặt hàng × nguồn × phân kho; đã nhận – đã phát; bán t… | P1 | — |
+| [S037-26](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L35) | PHASE-037 | tong-hop | Điều kiện khoá sổ CT-COMBO-006 (combo còn dòng chưa quyết định sở hữu / giá trị / thuế) vào sổ điều kiện khoá… | P0 | — |
+| [S037-27](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L36) | PHASE-037 | kho | Phép đối soát CT-COMBO-001..004 (bảo toàn lượng, độ phủ nguồn, tồn theo phân kho, giá trị phân bổ đầu vào) | P0 | — |
+| [S037-28](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L37) | PHASE-037 | he-thong | Đa đơn vị (RLS), đồng thời, gửi lại, tải: 10.000 bộ / 100.000 dòng / nhiều chi nhánh | P0 | — |
+| [S037-29](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L38) | PHASE-037 | ban-hang | Trả hàng theo combo: khách trả cả bộ / một phần, trả nhà cung cấp phần quà; về đúng nguồn, lô, phân bổ gốc | P0 | — |
+| [S037-30](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L39) | PHASE-037 | he-thong | Phép kiểm tĩnh SC-COMBO-1..3 + ca tự kiểm | P0 | — |
+| [S037-31](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L40) | PHASE-037 | kho | Chuyển từ excludecost / giftqty: ngày hiệu lực theo đơn vị, không tính lại kỳ đã khoá, dòng không truy được g… | P0 | — |
+| [S037-32](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L41) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Chuyển hết mã nhóm 8 sang combo (D037-14, 00 §10): liệt kê, bảng thành phần (Thủy), tạo combo + combocodes, c… | P0 | — |
+| [S037-33](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L43) | PHASE-037 | he-thong | Cờ theo đơn vị (combocontractv1, comboinheritv1), chạy bóng, số đo costdiff, qtydiff, độ phủ truy vết | P0 | — |
+| [S037-35](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L42) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phân kho chính phankhoid = 0: mỗi chi nhánh đúng một phân kho chính đang dùng (isdefault), phân giải ở biên A… | P0 | — |
 
-## Chờ đủ tín hiệu (69)
+## Chờ đủ tín hiệu (70)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -277,6 +308,7 @@
 | [S023-14](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L25) | PHASE-023 | danh-muc | Action đọc core.<entity>.validate cho account, partner, reason, posting-group, payment-method, tax-code, ware… | P0 | — |
 | [S023-15](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L26) | PHASE-023 | danh-muc | Web <WhyPanel> + <SaveWithWarnings> (ghi nhận lý do → catalog.warn.ack); gắn 8 màn; nhập Excel cột "Vì sao" —… | P0 | — |
 | [S023-16](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-023 | danh-muc | Danh mục luật khởi đầu 20 §4 (~40), kế toán trưởng duyệt phần kế toán; số đo bizcitycatalogwarnacktotal{code} | P0 | — |
+| [S023-19](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-023 | danh-muc | Bỏ tên tiếng Anh của tài khoản (D023-9, 00 §9): migration 0147 chép nameen sang accountsnameenluu rồi xoá cột… | P2 | — |
 | [S024-4](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L15) | PHASE-024 | danh-muc · kho | Hợp đồng bizcityitemmaster@1 (docs/contracts/BIZCITY-ITEM-MASTER-v1.md + schema), packages/contracts/src/item… | P0 | — |
 | [S024-5](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L16) | PHASE-024 | danh-muc · kho | Migration: items, itemcodes (chỉ thêm), itemclassification (theo ngày), RLS; điền từ products (song song, pro… | P0 | — |
 | [S024-6](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L17) | PHASE-024 | danh-muc · kho | Item Resolver (kernel/masterdata/item-resolver.ts) + đệm theo phiên bản danh mục + span intake.item.resolve —… | P0 | — |
@@ -329,6 +361,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | he-thong | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | chung-tu | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (316)
+## Xong (320)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

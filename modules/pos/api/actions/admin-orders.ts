@@ -1,4 +1,4 @@
-/** GET /api/v1/m/pos/admin/orders?from&to&branches&q&status&cashier&page&pageSize — BH13 Đơn bán máy POS: đơn của nhiều chi nhánh (rỗng = mọi chi nhánh), mới nhất trước; meta.sums: orders, total, returned, net của cả kết quả lọc (NT-BH-008). */
+/** GET /api/v1/m/pos/admin/orders?from&to&branches&q&status&cashier&stockShort&page&pageSize — BH13 Đơn bán máy POS: đơn của nhiều chi nhánh (rỗng = mọi chi nhánh), mới nhất trước; meta.sums: orders, total, returned, net của cả kết quả lọc (NT-BH-008). stockShort=1: chỉ đơn bán quá tồn khi mất mạng (NT-BH-021). */
 import { defineAction, z } from '@bizcity/module-sdk';
 import { adminOrders, branchList } from '../admin.js';
 import { todayVn } from '../read.js';
@@ -11,7 +11,7 @@ export default defineAction({
   id: 'pos.admin.orders', title: 'Đơn bán máy POS (quản trị, nhiều chi nhánh)', tags: ['Quản trị bán lẻ'],
   permission: 'pos:report', effect: 'read', idempotency: 'none',
   errors: ['VALIDATION_ERROR'],
-  input: z.object({ ...range, ...page, q: z.string().max(100).optional(), status: z.enum(['completed', 'awaiting_payment', 'cancelled']).optional(), cashier: z.string().max(100).optional() }),
+  input: z.object({ ...range, ...page, q: z.string().max(100).optional(), status: z.enum(['completed', 'awaiting_payment', 'cancelled']).optional(), cashier: z.string().max(100).optional(), stockShort: z.coerce.number().int().min(0).max(1).optional().transform((v) => v === 1) }),
   output: z.array(z.record(z.unknown())),
   expose: { http: { method: 'GET', path: '/admin/orders' }, mcp: false, ai: 'read' },
   handler: async (ctx, i) => ctx.data.module(async (tx) => {

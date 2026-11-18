@@ -8,6 +8,7 @@
  */
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMaTrung } from '@/lib/maTrung';
 import { ArchiveRestore, Trash2 } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -81,7 +82,7 @@ export function WarehouseTypesPage() {
               { key: 'name', header: 'Tên loại kho', width: 240 },
               { key: 'purpose', header: 'Công dụng', width: 340 },
               // [2026-11-13 Nguyễn Văn Thủy] TK kho của loại = TK ghi sổ của mọi bút toán vào kho thuộc loại; TK tổng hợp thì báo đỏ, đang dùng TK ngầm định (đóng góp)
-              { key: 'accountPrefix', header: 'TK kho', type: 'code', width: 110, title: 'Tài khoản kho của loại: mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này (ưu tiên hơn TK kho của Tài khoản ngầm định). Trống = theo Tài khoản ngầm định',
+              { key: 'accountPrefix', header: 'Tài khoản hạch toán', type: 'code', width: 150, title: 'Tài khoản kho của loại: mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này (ưu tiên hơn TK kho của Tài khoản ngầm định). Trống = theo Tài khoản ngầm định',
                 render: (t) => !t.accountPrefix ? <span className="muted">ngầm định</span>
                   : t.accountPosting ? <span className="mono" title={t.accountName ?? ''}>{t.accountPrefix}</span>
                   : <span className="mono" style={{ color: 'var(--bad, #c62828)' }} title={`${t.accountPrefix} là tài khoản tổng hợp, không ghi sổ được — bút toán đang dùng TK kho của Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết.`}>{t.accountPrefix} ⚠</span> },
@@ -110,6 +111,8 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
     : !accounts.some((a) => a.code === tk) ? `Không có tài khoản ${tk} trong hệ thống tài khoản`
     : !accounts.find((a) => a.code === tk)!.isPosting || accounts.some((a) => a.code !== tk && a.code.startsWith(tk)) ? `${tk} là tài khoản tổng hợp — chọn tài khoản chi tiết cấp cuối (vd ${accounts.find((a) => a.code !== tk && a.code.startsWith(tk) && a.isPosting)?.code ?? `${tk}1`})`
     : '';
+  // [2026-11-17 07:27 PM kiennt] NT-DM-002 L01 — thêm mới trùng mã (cả mã trong thùng rác) thì báo, khoá Ghi; trước đây PUT ghi đè loại kho cũ (đóng góp)
+  const maTrung = useMaTrung({ isNew: value.isNew, code: v.code, list: useWarehouseTypes().data?.types, trash: (useTrash().data ?? []).map((x) => ({ code: x.code, name: x.name })) });
   const save = useMutation({
     // Các công tắc không còn hiện trên màn: giữ nguyên giá trị đang có; loại mới mặc định hàng của mình, bán được, theo dõi hạn dùng.
     mutationFn: () => api.put(`/api/v1/warehouse-types/${encodeURIComponent((v.code ?? '').trim().toUpperCase())}`, {
@@ -120,13 +123,13 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
   });
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title={value.isNew ? 'Thêm loại kho' : `Loại kho ${value.code} - ${value.name ?? ''}`} onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(tkLoi)} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Mã (*)" tip={value.isSystem ? 'Loại gốc — không đổi mã' : 'Chữ in hoa / số, 2–12 ký tự'}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(tkLoi) || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      <Field label="Mã (*)" tip={value.isSystem ? 'Loại gốc — không đổi mã' : 'Chữ in hoa / số, 2–12 ký tự'} error={maTrung || null}>
         <input className="input mono" maxLength={12} value={v.code ?? ''} disabled={!value.isNew} autoFocus onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })} />
       </Field>
       <Field label="Tên loại kho (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Công dụng" full><input className="input" value={v.purpose ?? ''} onChange={(e) => set({ purpose: e.target.value })} /></Field>
-      <Field label="TK kho" tip="Mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này, ưu tiên hơn TK kho của Tài khoản ngầm định. Chỉ chọn tài khoản chi tiết. Trống = theo Tài khoản ngầm định">
+      <Field label="Tài khoản hạch toán" tip="Mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này, ưu tiên hơn TK kho của Tài khoản ngầm định. Chỉ chọn tài khoản chi tiết. Trống = theo Tài khoản ngầm định">
         <AccountPicker postingOnly value={v.accountPrefix ?? ''} placeholder="Trống = ngầm định" onChange={(c) => set({ accountPrefix: c })} />
       </Field>
       {tkLoi && <div className="alert alert-bad full">{tkLoi}</div>}
