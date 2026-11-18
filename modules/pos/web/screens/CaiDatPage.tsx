@@ -10,6 +10,8 @@
  */
 // [2026-11-13 08:45 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: BH17 gom 4 khối cài đặt bán hàng (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: chọn kho KTL nhận hàng trả lỗi / hết hạn của từng cửa hàng (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 số bill dạng shop (số kế thừa), NT-BH-028 kho quà KKM của từng cửa hàng (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): bỏ mục "Số bill theo dạng shop" — dạng shop mặc định, website tự báo số cuối (đóng góp)
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorBox, Field, Loading, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { M } from '../lib';
@@ -19,6 +21,8 @@ type Values = {
   cashDiffJournal: boolean; cashShortReason: string; cashOverReason: string;
   /** NT-BH-024: "<mã cửa hàng>=<mã kho KTL>" (khoá bizcity.pos.return_bad_warehouses). */
   returnBadWarehouses: string[];
+  /** NT-BH-028: "<mã cửa hàng>=<mã kho KKM>" (khoá bizcity.pos.gift_warehouses). */
+  giftWarehouses: string[];
 };
 type Wh = { code: string; name: string; branchCode: string; branchName: string; isActive: boolean; isDefault?: boolean; typeCode: string };
 /** So giá trị cài đặt (mảng so theo nội dung). */
@@ -173,6 +177,26 @@ export function CaiDatPage() {
                       onChange={(e) => setV({ ...v, returnBadWarehouses: fromMap({ ...map, [code]: e.target.value }) })}>
                       <option value="">{opts.length ? '— chưa chọn —' : '— cửa hàng chưa có kho loại KTL —'}</option>
                       {opts.map((w) => <option key={w.code} value={w.code}>{w.code} — {w.name}{w.typeCode !== 'KTL' ? ` (loại ${w.typeCode})` : ''}</option>)}
+                    </select>
+                  </td></tr>
+                );
+              })}</tbody>
+            </table>
+          )}
+        </Field>
+        <Field label="Kho quà (hàng khuyến mại cùng mã hàng bán)" hint={'Dòng quà của máy bán và phiếu bán BH10 trừ tồn ở kho loại KKM "Kho hàng khuyến mại" của cửa hàng; hàng bán trừ kho bán; tồn hai kho không cộng chung (hết quà thì không tặng). Chưa chọn: quà trừ kho bán như cũ. Thuế / bill Z không đổi. Chưa có kho KKM: khai ở Danh mục kho (DM18).'}>
+          {whsQ.error ? <ErrorBox error={errorText(whsQ.error)} /> : !whsQ.data ? <Loading /> : (
+            <table className="grid">
+              <thead><tr><th>Cửa hàng</th><th>Kho quà (KKM)</th></tr></thead>
+              <tbody>{branches.map(([code, name]) => {
+                const map = toMap(v.giftWarehouses);
+                const opts = whsQ.data.filter((w) => w.branchCode === code && w.isActive && (w.typeCode === 'KKM' || w.code === map[code]));
+                return (
+                  <tr key={code}><td>{code} — {name}</td><td>
+                    <select className="input" value={map[code] ?? ''} disabled={!writable} title={writable ? '' : 'Cần quyền settings:write'}
+                      onChange={(e) => setV({ ...v, giftWarehouses: fromMap({ ...map, [code]: e.target.value }) })}>
+                      <option value="">{opts.length ? '— chưa chọn (quà trừ kho bán) —' : '— cửa hàng chưa có kho loại KKM —'}</option>
+                      {opts.map((w) => <option key={w.code} value={w.code}>{w.code} — {w.name}{w.typeCode !== 'KKM' ? ` (loại ${w.typeCode})` : ''}</option>)}
                     </select>
                   </td></tr>
                 );

@@ -12,6 +12,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
+import { nhapLoai } from '@/lib/nhapExcel';
 
 export interface UnitName { id: string; name: string; note: string; source: 'seed' | 'auto' | 'manual'; isActive: boolean; products: number; createdBy: string; updatedBy: string; createdAt: string; updatedAt: string }
 const SOURCE: Record<UnitName['source'], string> = { seed: 'Khởi tạo', auto: 'Tự thêm khi khai mặt hàng', manual: 'Thêm tay' };
@@ -46,6 +48,8 @@ export function UnitNamesPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, id: undefined, name: '', products: 0, isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => {
             if (!sel) return;
@@ -54,6 +58,8 @@ export function UnitNamesPage() {
           }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 09:40 AM kiennt] NT-DM-004 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={canWrite && <NutNhapExcel loai={nhapLoai('don-vi-tinh')!} />}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (

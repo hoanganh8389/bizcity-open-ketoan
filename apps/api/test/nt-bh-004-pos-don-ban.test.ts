@@ -1,3 +1,4 @@
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mã phiếu máy bán mặc định dạng shop (CN01BT…, CN01.B…) (đóng góp)
 /**
  * NT-BH-004 — đơn bán tại quầy từ máy bán POS (kế hoạch module POS đợt W1): gọi HTTP như máy bán vào module pos, đối chiếu chứng từ + bút
  * toán trong sổ với phiếu docs/nghiem-thu/ban-hang/NT-BH-004-pos-don-ban-tai-quay.md. Chưa có module → bỏ qua.
@@ -106,11 +107,11 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     expect(b.openShift.id).toMatch(/^ngay-\d{4}-\d{2}-\d{2}$/);
   });
 
-  it('tình huống 1: khách lẻ, tiền mặt → HD2611000001, 300.000 + 24.000, thối 176.000; Nợ 1311 / Có 51111, 33311; Nợ 1111 / Có 1311', async () => {
+  it('tình huống 1: khách lẻ, tiền mặt → CN01BT10000, 300.000 + 24.000, thối 176.000; Nợ 1311 / Có 51111, 33311; Nợ 1111 / Có 1311', async () => {
     const r = await post('/orders', order());
     expect(r.statusCode, r.body).toBe(201);
     const o = r.json().data.order;
-    expect(o).toMatchObject({ id: ID1, code: 'HD2611000001', status: 'completed', businessDate: '2026-11-09', subtotal: 300_000, taxTotal: 24_000, total: 324_000 });
+    expect(o).toMatchObject({ id: ID1, code: 'CN01BT10000', status: 'completed', businessDate: '2026-11-09', subtotal: 300_000, taxTotal: 24_000, total: 324_000 });
     expect(o.payment).toMatchObject({ mode: 'cash', cashGiven: 500_000, change: 176_000 });
     expect(o.customer).toEqual({ id: '', name: 'Khách lẻ', phone: '' });
     expect(o.lines[0]).toMatchObject({ sku: 'SUA400', amount: 300_000, taxAmount: 24_000, taxRate: 8 });
@@ -118,14 +119,14 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     const key = `pos:CN01:sale:${ID1}`;
     const ev = (await sql<{ doc_type: string; doc_no: string; doc_date: string; status: string }>`
       SELECT doc_type, doc_no, to_char(doc_date, 'YYYY-MM-DD') AS doc_date, status FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ${key}`.execute(db)).rows;
-    expect(ev).toEqual([{ doc_type: 'sale', doc_no: 'HD2611000001', doc_date: '2026-11-09', status: 'posted' }]);
+    expect(ev).toEqual([{ doc_type: 'sale', doc_no: 'CN01BT10000', doc_date: '2026-11-09', status: 'posted' }]);
     expect(await byAccount(key)).toEqual({ '1111': [324_000, 0], '1311': [324_000, 324_000], '33311': [0, 24_000], '51111': [0, 300_000] });
   });
 
   // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: thu ngân không giảm tay (Q6) → bỏ giảm tay 10%, tính lại số (đóng góp)
   // SUA400 2 × 324.000 = 648.000 (R08): trước thuế round(648.000 / 1,08) = 600.000, thuế 48.000.
   // TA01 1 × 215.000 (R10): trước thuế round(215.000 / 1,1) = 195.455, thuế 19.545. Cộng 795.455 + 67.545 = 863.000 = TM 300.000 + CK 563.000.
-  it('tình huống 2: R08 + R10, TM 300.000 + CK 563.000, khách mới 0911222333 → HD2611000002', async () => {
+  it('tình huống 2: R08 + R10, TM 300.000 + CK 563.000, khách mới 0911222333 → CN01BT10001', async () => {
     const r = await post('/orders', order({
       id: ID2,
       customer: { phone: '0911 222 333', name: 'Khách thử POS' },
@@ -138,7 +139,7 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     }));
     expect(r.statusCode, r.body).toBe(201);
     const o = r.json().data.order;
-    expect(o).toMatchObject({ code: 'HD2611000002', subtotal: 795_455, taxTotal: 67_545, total: 863_000 });
+    expect(o).toMatchObject({ code: 'CN01BT10001', subtotal: 795_455, taxTotal: 67_545, total: 863_000 });
     expect(o.lines.map((l: { amount: number; taxAmount: number }) => [l.amount, l.taxAmount])).toEqual([[600_000, 48_000], [195_455, 19_545]]);
     expect(o.customer).toEqual({ id: '0911222333', name: 'Khách thử POS', phone: '0911222333' });
 
@@ -184,14 +185,14 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     const before = await docCount('pos:CN01:sale:%');
     const r = await post('/orders', order());
     expect(r.statusCode, r.body).toBe(201);
-    expect(r.json().data.order.code).toBe('HD2611000001');
+    expect(r.json().data.order.code).toBe('CN01BT10000');
     expect(await docCount('pos:CN01:sale:%')).toBe(before);
     expect(await orderCount()).toBe(2);
     const again = await get(`/orders/${ID1}`);
-    expect(again.json().data).toMatchObject({ code: 'HD2611000001', total: 324_000 });
+    expect(again.json().data).toMatchObject({ code: 'CN01BT10000', total: 324_000 });
     // Tra theo mã phiếu kèm chi nhánh (mã phiếu chỉ duy nhất trong một chi nhánh).
-    expect((await get('/orders/HD2611000001?branch=CN01')).json().data).toMatchObject({ id: ID1 });
-    expect((await get('/orders/HD2611000001?branch=CN99')).statusCode).toBe(404);
+    expect((await get('/orders/CN01BT10000?branch=CN01')).json().data).toMatchObject({ id: ID1 });
+    expect((await get('/orders/CN01BT10000?branch=CN99')).statusCode).toBe(404);
   });
 
   it('lệch chuẩn 1b: cùng id đơn mà nội dung khác → 409 POS_ORDER_ID_REUSED, không trả nhầm đơn cũ, không thêm chứng từ', async () => {
@@ -233,7 +234,7 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
     const id = '0193a1b2-0000-7000-8000-0000000000aa';
     const r = await post('/orders', order({ id, businessDate: '2026-10-31', offlineCreatedAt: '2026-10-31T20:00:00+07:00' }));
     expect(r.statusCode, r.body).toBe(201);
-    expect(r.json().data.order.code).toBe('HD2610000001');
+    expect(r.json().data.order.code).toBe('CN01BT10002');
     const d = (await sql<{ d: string }>`SELECT to_char(doc_date, 'YYYY-MM-DD') AS d FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ${`pos:CN01:sale:${id}`}`.execute(db)).rows[0]!;
     expect(d.d).toBe('2026-10-31');
   });
@@ -241,11 +242,11 @@ describe.skipIf(!HAS)('NT-BH-004 — đơn bán tại quầy từ máy POS vào 
   it('cấp trước số phiếu: dải tiếp nối, đơn dùng đúng số đã cấp; số chưa cấp thì không nhận mà cấp số mới', async () => {
     const r = await post('/sequences/reserve', { kind: 'sale', count: 2, branchCode: 'CN01', businessDate: '2026-11-09' });
     expect(r.statusCode, r.body).toBe(200);
-    expect(r.json().data.codes).toEqual(['HD2611000003', 'HD2611000004']);
-    const used = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000b1', reservedCode: 'HD2611000004' }));
-    expect(used.json().data.order.code).toBe('HD2611000004');
-    const fake = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000b2', reservedCode: 'HD2611000099' }));
-    expect(fake.json().data.order.code).toBe('HD2611000005');
+    expect(r.json().data.codes).toEqual(['CN01BT10003', 'CN01BT10004']);
+    const used = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000b1', reservedCode: 'CN01BT10004' }));
+    expect(used.json().data.order.code).toBe('CN01BT10004');
+    const fake = await post('/orders', order({ id: '0193a1b2-0000-7000-8000-0000000000b2', reservedCode: 'CN01BT10099' }));
+    expect(fake.json().data.order.code).toBe('CN01BT10005');
   });
 
   it('lệch chuẩn 11: lỗi lúc ghi sổ (kỳ đã khoá) → không lưu đơn, máy gửi lại được', async () => {

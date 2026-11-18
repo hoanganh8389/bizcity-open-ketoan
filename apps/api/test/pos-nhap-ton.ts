@@ -8,9 +8,11 @@ import { expect } from 'vitest';
 import { db } from '../src/db/client.js';
 import { call, type TestCtx } from './helpers.js';
 
-export async function nhapTon(ctx: TestCtx, branchCode: string, items: readonly (readonly [sku: string, qty: number, unit?: string])[], docDate = '2026-10-01', key = `NHAP-TON-${branchCode}`) {
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: nhập tồn vào một kho cụ thể (kho quà KKM) — tham số warehouseCode, trống = kho mặc định (đóng góp)
+export async function nhapTon(ctx: TestCtx, branchCode: string, items: readonly (readonly [sku: string, qty: number, unit?: string])[], docDate = '2026-10-01', key = `NHAP-TON-${branchCode}`, warehouseCode?: string) {
   const lines = items.map(([sku, qty, unit], i) => ({
     lineKey: `l${i + 1}`, sku, name: sku, unit: unit ?? 'Cái', qty, amountBeforeTax: qty * 1000, taxCode: 'V08', taxAmount: qty * 80,
+    ...(warehouseCode ? { warehouseCode } : {}),
   }));
   const beforeTax = lines.reduce((s, l) => s + l.amountBeforeTax, 0);
   const tax = lines.reduce((s, l) => s + l.taxAmount, 0);

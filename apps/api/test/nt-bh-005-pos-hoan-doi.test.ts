@@ -1,3 +1,4 @@
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mã phiếu máy bán mặc định dạng shop (CN01BT…, CN01.B…) (đóng góp)
 /**
  * NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ máy bán POS (kế hoạch module POS đợt W2): gọi HTTP như máy bán vào module pos,
  * đối chiếu phiếu trả, chứng từ sale_return / sale + bút toán trong sổ với phiếu docs/nghiem-thu/ban-hang/NT-BH-005-pos-hoan-doi-huy.md.
@@ -111,7 +112,7 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     const r = await post('/returns', { id: R1, orderId: O2, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'TM', reason: 'Khách đổi ý' });
     expect(r.statusCode, r.body).toBe(201);
     const ret = r.json().data;
-    expect(ret).toMatchObject({ code: `TH${PERIOD}000001`, orderId: O2, refundTotal: 324_000, refundMethod: 'TM', businessDate: TODAY });
+    expect(ret).toMatchObject({ code: 'CN01.B00001', orderId: O2, refundTotal: 324_000, refundMethod: 'TM', businessDate: TODAY });
     expect(ret.lines).toEqual([expect.objectContaining({ lineId: 'l1', qty: 1, refund: 324_000 })]);
     const docKey = `pos:CN01:sale_return:${R1}`;
     const p = await payload(docKey) as { originalDocKey: string; totals: unknown; payments: unknown };
@@ -129,14 +130,14 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     const before = await docCount('pos:CN01:sale_return:%');
     const r = await post('/returns', { id: R1, orderId: O2, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'TM', reason: 'Khách đổi ý' });
     expect(r.statusCode, r.body).toBe(201);
-    expect(r.json().data.code).toBe(`TH${PERIOD}000001`);
+    expect(r.json().data.code).toBe('CN01.B00001');
     expect(await docCount('pos:CN01:sale_return:%')).toBe(before);
   });
 
   it('tình huống 2: trả nốt hộp còn lại bằng CK → đúng phần còn lại; hết hàng SUA400 có thể trả', async () => {
     const r = await post('/returns', { id: R2, orderId: O2, branchCode: 'CN01', lines: [{ lineId: 'l1', qty: 1 }], refundMethod: 'CK', reason: 'Khách đổi ý' });
     expect(r.statusCode, r.body).toBe(201);
-    expect(r.json().data).toMatchObject({ code: `TH${PERIOD}000002`, refundTotal: 324_000 });
+    expect(r.json().data).toMatchObject({ code: 'CN01.B00002', refundTotal: 324_000 });
     const a = await byAccount(`pos:CN01:sale_return:${R2}`);
     expect(a['52131']).toEqual([300_000, 0]);
     expect(a['11210005']).toEqual([0, 324_000]);

@@ -11,7 +11,7 @@ import { useMemo, useState } from 'react';
 import { luuExcel } from '@/lib/excelChuan';
 import { ProductEditor } from './ProductsPage';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, FileDown, History, Pencil, Plus, Search } from 'lucide-react';
+import { Check, Copy, FileDown, History, Pencil, Plus, Search } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { ThungRacDanhMuc } from '@/components/ThungRacDanhMuc';
 import { useAuth } from '@/lib/auth';
@@ -52,7 +52,7 @@ export function NhomHangPage() {
   const q = useNhomHang();
   const ix = useMemo(() => indexNhom(q.data), [q.data]);
   const [sel, setSel] = useState<string | null>(null); // null = gốc (mọi ngành hàng)
-  const [form, setForm] = useState<null | { mode: 'add'; parent: string | null } | { mode: 'edit'; code: string }>(null);
+  const [form, setForm] = useState<null | { mode: 'add'; parent: string | null; copy?: string } | { mode: 'edit'; code: string }>(null);
   const [lichSu, setLichSu] = useState<NhomHang | null>(null);
   const [themMH, setThemMH] = useState<{ group: string | null } | null>(null); // đang thêm mặt hàng vào nhánh này
 
@@ -111,14 +111,16 @@ export function NhomHangPage() {
     <>
       <PageHeader title="Danh mục nhóm hàng" code="DM11" helpKey="nhom-hang" subtitle="Ngành → Nhãn → Nhóm — mã hàng ghép từ mã ngắn ba cấp" />
       <div className="card nh3">
+        {/* [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút chức năng bên trái, tiêu đề khung sang phải; nút Nhân bản nhóm đang chọn (đóng góp) */}
         <div className="catalog-toolbar canh-phai">
-          <b className="nh3-title">Duyệt theo Ngành → Nhãn → Nhóm</b>
-          <span className="spacer" />
+          {canWrite && <button className="btn btn-sm" disabled={!chain.length} title={chain.length ? `Nhân bản nhóm "${chain[chain.length - 1]!.name}": thêm nhóm mới cùng cấp, chép tên, ghi chú (mã ngắn gợi ý mới)` : 'Chọn một nhóm để nhân bản'} onClick={() => { const c = chain[chain.length - 1]; if (c) setForm({ mode: 'add', parent: ix.parentOf(c.code), copy: c.code }); }}><Copy size={14} /> Nhân bản</button>}
           {canWrite && <NutNhapExcel loai={nhapLoai('nhom-hang')!} />}
           <button className="btn btn-sm" onClick={xuat}><FileDown size={14} /> Xuất</button>
           {/* [2026-11-17 Nguyễn Văn Thủy] Thùng rác chung cho danh mục — xoá nhóm đang chọn (đóng góp) */}
           <ThungRacDanhMuc catalog="item-classes.group" title="Nhóm hàng" sel={chain.length ? { key: chain[chain.length - 1]!.code, label: chain[chain.length - 1]!.name } : null} onDone={() => chonNhom(null)} />
           {canWrite && <button className="btn btn-sm btn-primary" onClick={() => setThemMH({ group: sel })} title={sel ? `Thêm mặt hàng vào "${ix.path(sel)}" — mã tự sinh theo nhóm` : 'Thêm mặt hàng'}><Plus size={14} /> Thêm mặt hàng</button>}
+          <span className="spacer" />
+          <b className="nh3-title">Duyệt theo Ngành → Nhãn → Nhóm</b>
         </div>
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         <div className="nh3-tim"><Search size={14} /><input className="input" value={tim} onChange={(e) => setTim(e.target.value)} placeholder="Tìm kiếm…" /></div>
@@ -157,12 +159,12 @@ export function NhomHangPage() {
         )}
         <div className="nh3-mh">
           <div className="catalog-toolbar canh-phai">
-            <b>Mặt hàng <span className="muted">({tongDong.toLocaleString('vi-VN')})</span></b>
-            {chain.length > 0 && <span className="muted" style={{ fontSize: 12 }}>{ix.path(sel)}</span>}
-            <span className="spacer" />
             <select className="select input" style={{ height: 28, width: 'auto' }} value={trangThai} onChange={(e) => { setTrangThai(e.target.value as typeof trangThai); setTrang(1); }}>
               <option value="all">Tất cả trạng thái</option><option value="active">Đang dùng</option><option value="inactive">Ngừng dùng</option><option value="draft">Nháp</option>
             </select>
+            <span className="spacer" />
+            {chain.length > 0 && <span className="muted" style={{ fontSize: 12 }}>{ix.path(sel)}</span>}
+            <b>Mặt hàng <span className="muted">({tongDong.toLocaleString('vi-VN')})</span></b>
           </div>
           <ErrorBox error={mh.error ? errorText(mh.error) : null} />
           {mh.isLoading ? <Loading /> : (
@@ -181,16 +183,19 @@ export function NhomHangPage() {
 }
 
 /** Hộp thoại thêm / sửa nhóm: thuộc nhóm, mã (điền sẵn gợi ý), tên, đang dùng. */
-function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: NhomHang[]; form: { mode: 'add'; parent: string | null } | { mode: 'edit'; code: string }; onClose: () => void; onSaved: (code: string, parent: string | null) => void }) {
+function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: NhomHang[]; form: { mode: 'add'; parent: string | null; copy?: string } | { mode: 'edit'; code: string }; onClose: () => void; onSaved: (code: string, parent: string | null) => void }) {
   const qc = useQueryClient();
   const old = form.mode === 'edit' ? ix.byCode.get(form.code)! : null;
   const [parent, setParent] = useState<string | null>(form.mode === 'add' ? form.parent : ix.parentOf(form.code));
   // Nhóm cũ chưa có mã ngắn: điền sẵn mã gợi ý (nhập lần đầu không làm đổi mã hàng đã có).
   const [ma, setMa] = useState(form.mode === 'add' ? goiYMa(ix, form.parent) : old?.skuCode || (old ? goiYMa(ix, ix.parentOf(old.code)) : ''));
-  const [ghiChu, setGhiChu] = useState(old?.note ?? '');
+  // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nhân bản: chép tên, ghi chú của nhóm gốc; mã ngắn gợi ý mới (đóng góp)
+  const goc = form.mode === 'add' && form.copy ? ix.byCode.get(form.copy) ?? null : null;
+  const [ghiChu, setGhiChu] = useState(old?.note ?? goc?.note ?? '');
   const tenDu = (p: string | null, t: string) => [p ? ix.byCode.get(p)?.fullName || ix.path(p).split(' / ').join(' ') : '', t.trim()].filter(Boolean).join(' ');
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: điền sẵn cả 3 ô (mã nhóm, mã ngắn, tên đầy đủ) — sửa lại cho đúng rồi Ghi (đóng góp)
-  const goiYTen = form.mode === 'add' ? `Nhóm mới ${1000 + Math.floor(Math.random() * 9000)}` : '';
+  // nhân bản: tên nhóm phải khác (mã nhóm hàng không trùng) — điền "… (bản sao)" để sửa lại
+  const goiYTen = form.mode === 'add' ? (goc ? `${goc.name} (bản sao)` : `Nhóm mới ${1000 + Math.floor(Math.random() * 9000)}`) : '';
   const [ten, setTen] = useState(old?.name ?? goiYTen);
   const [full, setFull] = useState(old?.fullName || (old ? tenDu(ix.parentOf(old.code), old.name) : tenDu(form.mode === 'add' ? form.parent : null, goiYTen)));
   const [fullTay, setFullTay] = useState(Boolean(old)); // sửa tay rồi thì thôi tự điền
@@ -223,8 +228,18 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
     onError: (e) => setErr(errorText(e)),
   });
   const nn = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
-  const trungTen = ten.trim() && (!old || nn(old.name) !== nn(ten)) ? list.find((x) => x.code !== old?.code && nn(x.name) === nn(ten)) : undefined;
-  const loiTen = trungTen ? `Mã nhóm hàng đã dùng cho nhóm "${ix.path(trungTen.code)}" — đặt mã khác` : '';
+  // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng không trùng nhóm cùng cha, không trùng tên nhóm cha (sửa: cả nhóm con trực tiếp);
+  // khác cha thì được trùng, kể cả trong cùng ngành.
+  const trungTen = (() => {
+    if (!ten.trim() || (old && nn(old.name) === nn(ten))) return undefined;
+    const anhEm = (parent ? ix.kids.get(parent) ?? [] : ix.roots).find((x) => x.code !== old?.code && nn(x.name) === nn(ten));
+    if (anhEm) return { x: anhEm, la: 'nhóm cùng cấp' };
+    const cha = parent ? ix.byCode.get(parent) : undefined;
+    if (cha && nn(cha.name) === nn(ten)) return { x: cha, la: 'nhóm cha' };
+    const con = old ? (ix.kids.get(old.code) ?? []).find((x) => nn(x.name) === nn(ten)) : undefined;
+    return con ? { x: con, la: 'nhóm con' } : undefined;
+  })();
+  const loiTen = trungTen ? `Mã nhóm hàng trùng ${trungTen.la} "${ix.path(trungTen.x.code)}" — đặt mã khác` : '';
   const ghi = () => { const e = !ten.trim() ? 'Nhập mã nhóm hàng' : loiTen || loiMa || (!full.trim() ? 'Nhập tên nhóm hàng' : ''); setErr(e); if (!e) save.mutate(); };
 
   return (

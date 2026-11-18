@@ -172,6 +172,8 @@ export function AccountsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, normalSide: 'debit', parentCode: sel?.isActive ? sel.code : undefined })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={remove}
           onRefresh={() => q.refetch()}

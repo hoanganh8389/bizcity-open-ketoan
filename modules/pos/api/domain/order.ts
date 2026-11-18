@@ -358,12 +358,25 @@ export function computeOrder(input: ComputeInput): ComputedOrder | { problem: Or
 
 // ── Đầu ra ────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: phân kho của dòng — quà (isGift) ở kho quà KKM, hàng bán ở kho bán; không đổi thuế / giá vốn (đóng góp)
+/** Kho bán / kho quà của cửa hàng khi đã khai kho quà (NT-BH-028); không khai → không gửi kho ở dòng (như cũ). */
+export type LineWarehouses = { sale: string; gift: string };
+
+/**
+ * Kho của một dòng: dòng quà (`isGift` máy gửi — quà theo chương trình / đổi điểm) ở kho quà, dòng còn lại ở kho bán. Chỉ là phân kho
+ * trừ tồn (R-COMBO: phân kho = warehouses có sẵn); thuế, bill Z, giá vốn không suy từ kho — vẫn theo mã / chính sách.
+ */
+export function lineWarehouse(l: { isGift?: boolean }, wh: LineWarehouses | undefined): string | undefined {
+  if (!wh) return undefined;
+  return l.isGift ? wh.gift : wh.sale || undefined;
+}
+
 export function saleDocKey(branchCode: string, orderId: string): string {
   return `pos:${branchCode}:sale:${orderId}`;
 }
 
 /** Chứng từ sale (bizcity_ledger_intake@1). Không số tài khoản, không reasonCode (mặc định của loại). */
-export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; branchCode: string; code: string }) {
+export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; branchCode: string; code: string; warehouses?: LineWarehouses }) {
   const { draft } = meta;
   return {
     docType: 'sale',
@@ -395,6 +408,7 @@ export function toSaleDocument(o: ComputedOrder, meta: { draft: OrderDraft; bran
       taxCode: l.item.taxCode,
       taxAmount: l.money.tax,
       ...(l.draft.isGift || isBillZLine(l) ? { isGift: true } : {}),
+      ...(lineWarehouse(l.draft, meta.warehouses) ? { warehouseCode: lineWarehouse(l.draft, meta.warehouses) } : {}),
       ...(l.draft.policyRef ? { policyRef: { key: l.draft.policyRef.key, version: l.draft.policyRef.version, line: l.draft.policyRef.line ?? (l.draft.isGift ? 'gift' : 'discount') } } : {}),
       ...(l.draft.note ? { note: l.draft.note } : {}),
     })),
@@ -437,7 +451,7 @@ export type SnapshotLoyalty = {
   rewards: unknown[];
 };
 
-export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string; loyalty?: SnapshotLoyalty; usedVouchers?: string[]; issuedVouchers?: unknown[] }) {
+export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string; loyalty?: SnapshotLoyalty; usedVouchers?: string[]; issuedVouchers?: unknown[]; warehouses?: LineWarehouses }) {
   const { draft } = meta;
   const all = o.lines.map((l) => ({
       ...l.draft,
@@ -453,6 +467,9 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
       // false = không lên hoá đơn thuế (máy bán và hoá đơn điện tử đọc cờ này).
       sendTax: l.item.sendTax,
       ...(l.voucherDiscount ? { voucherDiscount: l.voucherDiscount } : {}),
+      // NT-BH-028: kho của dòng — bản sao đơn về website ghi phân kho theo trường này. Trả hàng nguyên vẹn vẫn về kho bán (luật kho: khách trả nhận KHH / KTL, không nhận KKM).
+      // Máy có thể gửi warehouseCode ở dòng (đọc từ bootstrap) — máy chủ quyết theo cài đặt; chưa khai kho quà thì bỏ (undefined).
+      warehouseCode: lineWarehouse(l.draft, meta.warehouses),
     }));
   const bill = splitBillZ(all);
   const payment = draft.payment.mode === 'cash' ? { ...draft.payment, change: o.change } : draft.payment;

@@ -12,6 +12,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
+import { nhapLoai } from '@/lib/nhapExcel';
+import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { AccountPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 import { useBankAccounts } from '../catalog/BankAccountsPage';
 
@@ -37,10 +39,14 @@ export function PaymentMethodsPage() {
           hasSelection={Boolean(sel)}
           busy={del.isPending}
           onAdd={() => setEditing({ isNew: true, isActive: true })}
+          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
+          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isActive: true })}
           onEdit={() => sel && setEditing(sel)}
           onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá hình thức ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
           onRefresh={() => q.refetch()}
           onExport={() => exportRef.current?.()}
+          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
+          extra={canWrite && <NutNhapExcel loai={nhapLoai('hinh-thuc-thanh-toan')!} />}
         />
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (

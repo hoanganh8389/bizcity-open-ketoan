@@ -49,7 +49,7 @@ Bảng **Mặt hàng** bên dưới: mặt hàng của nhánh đang chọn (gồ
 
 - Mã ngắn phải **đúng số ký tự** của cấp (gợi ý luôn hiện dưới ô, sai thì báo đỏ). Hai nhóm cùng cha không trùng mã ngắn.
 - **Nhóm (hoặc nhóm con bên dưới) đã có mặt hàng: không đổi mã ngắn, không chuyển nhóm** — mã hàng đã ghép theo.
-- Mã nhóm hàng không được trùng nhóm khác trong hệ thống.
+- Mã nhóm hàng không được trùng **nhóm cùng cha** (kể cả hai ngành hàng với nhau) và không trùng **tên nhóm cha** của nó (không phân biệt hoa thường, dấu cách thừa). Khác cha thì được trùng, kể cả trong cùng ngành: vd "Bỉm tã" vừa là ngành hàng vừa là nhãn dưới ngành ĐỒ UỐNG; hai nhãn khác nhau của cùng ngành đều có nhóm "Sữa nước". Sửa tên nhóm cũng không được trùng tên nhóm con trực tiếp. <!-- [2026-11-18 03:10 PM kiennt] NT-DM-009 — trùng mã nhóm hàng: chặn cùng cha và trùng tên cha. -->
 - Không chuyển một nhóm vào nhánh con của chính nó.
 
 ## Nhập Excel
@@ -57,5 +57,6 @@ Bảng **Mặt hàng** bên dưới: mặt hàng của nhánh đang chọn (gồ
 Tệp mẫu có các cột: **Nhóm cha** (đường dẫn, vd `BỈM/ TÃ / Aiwibi`, trống = cấp 1), **Mã nhóm hàng**, **Mã ngắn**, **Tên nhóm hàng** (trống = tự ghép), **Đang dùng**.
 
 - Cùng nhóm cha + cùng mã nhóm hàng với nhóm đang có → cập nhật; khác → thêm mới.
+- Tên nhóm cha trùng ở nhiều nhánh thì ghi **đường dẫn đầy đủ** (vd `ĐỒ UỐNG / Bỉm tã`).
 - Nhóm cha ở dòng trên trong cùng tệp cũng được (phần mềm ghi cha trước).
 - Bước Kiểm tra báo từng dòng sai (mã ngắn sai độ dài, trùng, nhóm cha chưa có, nhóm đã có mặt hàng mà đổi mã ngắn…); chỉ ghi dòng đúng.
