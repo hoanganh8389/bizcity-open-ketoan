@@ -240,4 +240,49 @@ const NHOM_DOI_TUONG = danhMuc<NhomDT>({
   },
 });
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG];
+/* ------------------------------------------------------------------ DM04 Nhân viên */
+interface NhanVien { code: string; name: string; parentCode: string | null; note: string; isActive: boolean; extra: Record<string, unknown> }
+const NV_EXTRA = ['position', 'email', 'branchCode', 'mobile', 'address', 'group', 'departmentCode'] as const;
+const NHAN_VIEN = danhMuc<NhanVien>({
+  id: 'nhan-vien', title: 'Nhân viên', desc: 'Mã, tên, chức vụ, email, chi nhánh làm việc, di động, địa chỉ, nhóm, phòng ban, theo dõi', listPath: '/danh-muc/nhan-vien', invalidate: ['dimensions'],
+  tenMa: 'Mã NV', maSai: (m) => (m.length > 64 ? 'Mã NV tối đa 64 ký tự' : ''),
+  fields: [
+    { key: 'code', header: 'Mã NV', required: true, aliases: ['ma nhan vien', 'ma'], example: 'NV001', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên NV', required: 'moi', aliases: ['ten nhan vien', 'ho ten', 'ten'], example: 'Nguyễn Văn A' },
+    { key: 'position', header: 'Chức vụ', aliases: ['chuc danh'] },
+    { key: 'email', header: 'Email', aliases: ['thu dien tu'] },
+    { key: 'branchCode', header: 'Chi nhánh làm việc', aliases: ['chi nhanh', 'ma chi nhanh'], example: 'OC01', note: 'Mã chi nhánh đã có (Cơ cấu tổ chức).' },
+    { key: 'mobile', header: 'Di động', aliases: ['dien thoai', 'so dien thoai'] },
+    { key: 'address', header: 'Địa chỉ', aliases: ['dia chi'] },
+    TT_TRUONG('Theo dõi'),
+    { key: 'group', header: 'Nhóm NV', aliases: ['nhom nhan vien', 'nhom'] },
+    { key: 'note', header: 'Ghi chú', aliases: ['mo ta'] },
+    { key: 'departmentCode', header: 'Mã phòng ban', aliases: ['phong ban', 'ma bo phan'], note: 'Mã phòng ban đã có.' },
+  ],
+  tai: () => api.get<NhanVien[]>('/api/v1/dimensions/employee'), maCua: (n) => n.code, rac: () => thungRac('dimensions.employee'),
+  chuan: async (rows) => {
+    const [cn, pb] = await Promise.all([chiNhanh(), api.get<{ code: string }[]>('/api/v1/dimensions/department')]);
+    return { cn, pb: new Set(pb.map((x) => x.code.toLowerCase())), cotTT: coCot(rows, 'isActive') };
+  },
+  xemTruoc: (n) => ({ name: n.name, note: n.note, isActive: n.isActive ? 'x' : '', ...Object.fromEntries(NV_EXTRA.map((k) => [k, String(n.extra?.[k] ?? '')])) }),
+  kiem: (r, ma, before, { them }) => {
+    const { cn, pb, cotTT } = them as { cn: Set<string>; pb: Set<string>; cotTT: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Nhân viên mới phải có tên');
+    const br = chu(r.branchCode).toUpperCase();
+    if (br && !cn.has(br)) errors.push(`Chi nhánh ${br} chưa có`);
+    const dep = chu(r.departmentCode);
+    if (dep && !pb.has(dep.toLowerCase())) errors.push(`Phòng ban ${dep} chưa có`);
+    const em = chu(r.email);
+    if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) errors.push(`Email "${em}" không đúng dạng`);
+    const tt = tich(r.isActive, cotTT);
+    if (tt === null) errors.push(loiTich('Theo dõi', r.isActive));
+    if (errors.length) return { errors };
+    const extra: Record<string, unknown> = { ...(before?.extra ?? {}) };
+    for (const k of NV_EXTRA) { const v = k === 'branchCode' ? br : chu(r[k]); if (v) extra[k] = v; }
+    return { errors, ghi: () => api.put(`/api/v1/dimensions/employee/${encodeURIComponent(ma)}`, { name, parentCode: before?.parentCode || undefined, note: chu(r.note) || before?.note || '', isActive: tt ?? before?.isActive ?? true, extra }) };
+  },
+});
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN];
