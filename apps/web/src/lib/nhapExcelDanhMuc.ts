@@ -49,6 +49,8 @@ async function chiNhanh(): Promise<Set<string>> {
 interface KiemDong { errors: string[]; ghi?: () => Promise<unknown> }
 interface DanhMuc<T> {
   id: string; title: string; desc: string; listPath: string; invalidate: string[]; fields: NhapTruong[];
+  /** Sheet tự chọn khi tệp có nhiều sheet (vd tệp Xuất 4 sheet của DM16). */
+  sheet?: string;
   /** Tên mã trong câu báo, vd "Mã thuế". */
   tenMa: string;
   /** Chuẩn hoá mã (in hoa…); trả '' nếu ô trống. */
@@ -66,7 +68,7 @@ interface DanhMuc<T> {
 }
 function danhMuc<T>(d: DanhMuc<T>): NhapLoai {
   return {
-    id: d.id, nhom: 'Danh mục', title: d.title, desc: d.desc, keyField: d.fields[0]!.key, listPath: d.listPath, invalidate: d.invalidate, fields: d.fields,
+    id: d.id, nhom: 'Danh mục', title: d.title, desc: d.desc, keyField: d.fields[0]!.key, listPath: d.listPath, invalidate: d.invalidate, fields: d.fields, sheet: d.sheet,
     run: async (rows, { dryRun, mode }: { dryRun: boolean; mode: NhapCheDo }) => {
       const [ds, rac] = await Promise.all([d.tai(), d.rac ? d.rac() : Promise.resolve(new Set<string>())]);
       const have = new Map(ds.map((t) => [d.maCua(t).toLowerCase(), t]));
@@ -565,4 +567,180 @@ const TK_KET_CHUYEN: NhapLoai = {
   },
 };
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH, TK_KET_CHUYEN];
+// [2026-11-18 02:00 PM kiennt] NT-DM-007 — DM16 Cơ cấu tổ chức: 4 loại nhập (Cơ cấu, Phòng ban, Cửa hàng, Kho) theo đúng 4 sheet của nút Xuất (đóng góp)
+/* ------------------------------------------------------------------ DM16 Cơ cấu tổ chức (4 sheet: Cơ cấu · Phòng ban · Cửa hàng · Kho) */
+interface CoCauNut { code: string; name: string; kind?: 'company' | 'unit'; parentCode: string | null; note: string; taxId?: string; isActive: boolean }
+interface PhongBan { code: string; name: string; parentCode: string | null; note: string; isActive: boolean; extra?: Record<string, unknown> }
+interface CuaHang { code: string; name: string; orgUnitCode: string | null; departmentCode: string | null; taxCode: string; companyName: string; address: string | null; phone: string; note: string; isActive: boolean }
+interface KhoDM16 { code: string; branchCode: string; name: string; address: string; note: string; isActive: boolean; isDefault: boolean; typeCode: string | null }
+const MST_DUNG = /^[0-9]{10}(-[0-9]{3})?$/;
+const cayCoCau = async () => (await api.get<{ nodes: CoCauNut[] }>('/api/v1/org-units/tree')).nodes;
+const THU_TU_DM16 = ' — DM16 nhập theo thứ tự Cơ cấu → Phòng ban → Cửa hàng → Kho.';
+
+const CO_CAU = danhMuc<CoCauNut>({
+  id: 'co-cau', title: 'Cơ cấu tổ chức — Cơ cấu', desc: 'Công ty và các cấp cơ cấu: mã, tên, thuộc (mã), MST, mô tả, theo dõi' + THU_TU_DM16, listPath: '/danh-muc/so-do-to-chuc', invalidate: ['org-tree', 'org-units', 'purchase-units'],
+  sheet: 'Cơ cấu', tenMa: 'Mã cơ cấu',
+  fields: [
+    { key: 'code', header: 'Mã', required: true, aliases: ['ma co cau', 'ma don vi'], example: 'BAC', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'kind', header: 'Loại', aliases: ['loai nut'], example: 'Cơ cấu', note: 'Công ty / Cơ cấu. Trống: mới = Cơ cấu (không có cấp trên thì là Công ty); đã có = giữ nguyên.' },
+    { key: 'name', header: 'Tên', required: 'moi', aliases: ['ten co cau', 'ten don vi'], example: 'Miền Bắc' },
+    { key: 'parentCode', header: 'Thuộc (mã)', aliases: ['thuoc', 'ma cap tren', 'thuoc co cau'], example: 'CTY', note: 'Mã cơ cấu cấp trên đã có hoặc có trong tệp (ghi cấp trên trước). Trống: mới = gốc; đã có = giữ nguyên.' },
+    { key: 'taxId', header: 'MST', aliases: ['ma so thue'], note: '10 số hoặc 10 số-3 số.' },
+    { key: 'note', header: 'Mô tả', aliases: ['ghi chu', 'dien giai'] },
+    TT_TRUONG('Theo dõi'),
+  ],
+  tai: cayCoCau, maCua: (n) => n.code,
+  chuan: async (rows, have) => ({ cha: new Map<string, string>([...[...have.values()].map((n) => [n.code.toLowerCase(), (n.parentCode ?? '').toLowerCase()] as [string, string]), ...rows.filter((r) => chu(r.code) && chu(r.parentCode)).map((r) => [chu(r.code).toLowerCase(), chu(r.parentCode).toLowerCase()] as [string, string])]), trongTep: new Set(rows.map((r) => chu(r.code).toLowerCase()).filter(Boolean)), cotTT: coCot(rows, 'isActive') }),
+  xemTruoc: (n) => ({ kind: n.kind === 'company' ? 'Công ty' : 'Cơ cấu', name: n.name, parentCode: n.parentCode ?? '', taxId: n.taxId ?? '', note: n.note, isActive: n.isActive ? 'x' : '' }),
+  kiem: (r, ma, before, { have, them }) => {
+    const { cha, trongTep, cotTT } = them as { cha: Map<string, string>; trongTep: Set<string>; cotTT: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Cơ cấu mới phải có tên');
+    const p = chu(r.parentCode) || before?.parentCode || '';
+    if (p) {
+      if (p.toLowerCase() === ma.toLowerCase()) errors.push('Cơ cấu cấp trên không được là chính nó');
+      else if (!have.has(p.toLowerCase()) && !trongTep.has(p.toLowerCase())) errors.push(`Cơ cấu cấp trên ${p} chưa có`);
+      else { let x = p.toLowerCase(); const qua = new Set<string>(); while (x && !qua.has(x)) { if (x === ma.toLowerCase()) { errors.push(`Cơ cấu ${p} đang là cấp dưới của ${ma} — vòng cơ cấu cha`); break; } qua.add(x); x = cha.get(x) ?? ''; } }
+    }
+    const l = kd(chu(r.kind));
+    const kind: 'company' | 'unit' | undefined = !l ? before?.kind ?? (p ? 'unit' : 'company') : /^cong ty|company$/.test(l) ? 'company' : /^(co cau|don vi|unit)/.test(l) ? 'unit' : undefined;
+    if (l && !kind) errors.push(`Loại "${r.kind}" ghi Công ty / Cơ cấu`);
+    const taxId = chu(r.taxId) || before?.taxId || '';
+    if (chu(r.taxId) && !MST_DUNG.test(taxId)) errors.push('MST gồm 10 số hoặc 10 số-3 số');
+    const tt = tich(r.isActive, cotTT); if (tt === null) errors.push(loiTich('Theo dõi', r.isActive));
+    if (errors.length) return { errors };
+    const note = chu(r.note) || before?.note || '';
+    const body = { kind, name, note, taxId, validFrom: null };
+    return {
+      errors, ghi: async () => {
+        if (before) {
+          const moved = (before.parentCode ?? '') !== p;
+          return api.patch(`/api/v1/org-units/${encodeURIComponent(before.code)}`, { ...body, isActive: tt ?? before.isActive, ...(moved ? { parentCode: p || null } : {}) });
+        }
+        await api.post('/api/v1/org-units', { ...body, code: ma, parentCode: p || null });
+        if (tt === false) await api.patch(`/api/v1/org-units/${encodeURIComponent(ma)}`, { ...body, isActive: false });
+      },
+    };
+  },
+  thuTu: (ds, have) => {
+    const cha = new Map<string, string>([...have.values()].map((n) => [n.code.toLowerCase(), (n.parentCode ?? '').toLowerCase()]));
+    for (const x of ds) if (chu(x.r.parentCode)) cha.set(x.ma.toLowerCase(), chu(x.r.parentCode).toLowerCase());
+    const sau = (m: string) => { let n = 0; let x = cha.get(m.toLowerCase()) ?? ''; const qua = new Set<string>(); while (x && !qua.has(x) && n < 50) { qua.add(x); n++; x = cha.get(x) ?? ''; } return n; };
+    return [...ds].sort((a, b) => sau(a.ma) - sau(b.ma));
+  },
+});
+
+const coCauCo = async () => new Set((await cayCoCau()).map((n) => n.code.toLowerCase()));
+
+const PHONG_BAN = danhMuc<PhongBan>({
+  id: 'phong-ban', title: 'Cơ cấu tổ chức — Phòng ban', desc: 'Phòng ban (kể cả phòng ban riêng của cửa hàng): mã, tên, thuộc cơ cấu, ghi chú, theo dõi' + THU_TU_DM16, listPath: '/danh-muc/so-do-to-chuc', invalidate: ['dimensions'],
+  sheet: 'Phòng ban', tenMa: 'Mã phòng ban',
+  fields: [
+    { key: 'code', header: 'Mã', required: true, aliases: ['ma phong ban', 'ma bo phan'], example: 'KT', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên', required: 'moi', aliases: ['ten phong ban', 'ten bo phan'], example: 'Phòng kế toán' },
+    { key: 'orgUnitCode', header: 'Thuộc cơ cấu (mã)', aliases: ['thuoc co cau', 'co cau'], note: 'Mã cơ cấu đã có (nhập sheet Cơ cấu trước).' },
+    { key: 'note', header: 'Ghi chú', aliases: ['mo ta'] },
+    TT_TRUONG('Theo dõi'),
+  ],
+  tai: () => api.get<PhongBan[]>('/api/v1/dimensions/department'), maCua: (d) => d.code, rac: () => thungRac('dimensions.department'),
+  chuan: async (rows) => ({ cc: await coCauCo(), cotTT: coCot(rows, 'isActive') }),
+  xemTruoc: (d) => ({ name: d.name, orgUnitCode: String(d.extra?.orgUnitCode ?? ''), note: d.note, isActive: d.isActive ? 'x' : '' }),
+  kiem: (r, ma, before, { them }) => {
+    const { cc, cotTT } = them as { cc: Set<string>; cotTT: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Phòng ban mới phải có tên');
+    const o = chu(r.orgUnitCode) || String(before?.extra?.orgUnitCode ?? '');
+    if (chu(r.orgUnitCode) && !cc.has(o.toLowerCase())) errors.push(`Cơ cấu ${o} chưa có — nhập sheet Cơ cấu trước`);
+    const tt = tich(r.isActive, cotTT); if (tt === null) errors.push(loiTich('Theo dõi', r.isActive));
+    if (errors.length) return { errors };
+    return { errors, ghi: () => api.put(`/api/v1/dimensions/department/${encodeURIComponent(ma)}`, { name, parentCode: before?.parentCode || undefined, note: chu(r.note) || before?.note || '', isActive: tt ?? before?.isActive ?? true, extra: { ...(before?.extra ?? {}), orgUnitCode: o } }) };
+  },
+});
+
+const CUA_HANG = danhMuc<CuaHang>({
+  id: 'cua-hang', title: 'Cơ cấu tổ chức — Cửa hàng', desc: 'Cửa hàng / chi nhánh: mã, tên, thuộc cơ cấu, MST, phòng ban, tên công ty in, địa chỉ, điện thoại, ghi chú, theo dõi' + THU_TU_DM16, listPath: '/danh-muc/so-do-to-chuc', invalidate: ['branches', 'org-tree', 'dimensions'],
+  sheet: 'Cửa hàng', tenMa: 'Mã cửa hàng',
+  fields: [
+    { key: 'code', header: 'Mã', required: true, aliases: ['ma cua hang', 'ma chi nhanh'], example: 'OC01', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên', required: 'moi', aliases: ['ten cua hang', 'ten chi nhanh'], example: 'Ớt Chuông Láng' },
+    { key: 'orgUnitCode', header: 'Thuộc cơ cấu (mã)', aliases: ['thuoc co cau', 'co cau'], note: 'Mã cơ cấu đã có (nhập sheet Cơ cấu trước).' },
+    { key: 'taxCode', header: 'MST', aliases: ['ma so thue'] },
+    { key: 'departmentCode', header: 'Phòng ban', aliases: ['ma phong ban', 'bo phan'], note: 'Mã phòng ban. Chưa có thì tự tạo phòng ban đó (tên "Phòng ban " + tên cửa hàng, cùng cơ cấu).' },
+    { key: 'companyName', header: 'Tên công ty in', aliases: ['ten cong ty'] },
+    { key: 'address', header: 'Địa chỉ', aliases: ['dia chi'] },
+    { key: 'phone', header: 'Điện thoại', aliases: ['so dien thoai'] },
+    { key: 'note', header: 'Ghi chú', aliases: ['mo ta'] },
+    TT_TRUONG('Theo dõi'),
+  ],
+  tai: () => api.get<CuaHang[]>('/api/v1/branches'), maCua: (b) => b.code,
+  chuan: async (rows) => {
+    const [cc, pb] = await Promise.all([coCauCo(), api.get<{ code: string }[]>('/api/v1/dimensions/department')]);
+    return { cc, pb: new Set(pb.map((d) => d.code.toLowerCase())), taoPB: new Set<string>(), cotTT: coCot(rows, 'isActive') };
+  },
+  xemTruoc: (b) => ({ name: b.name, orgUnitCode: b.orgUnitCode ?? '', taxCode: b.taxCode, departmentCode: b.departmentCode ?? '', companyName: b.companyName, address: b.address ?? '', phone: b.phone, note: b.note, isActive: b.isActive ? 'x' : '' }),
+  kiem: (r, ma, before, { them }) => {
+    const { cc, pb, taoPB, cotTT } = them as { cc: Set<string>; pb: Set<string>; taoPB: Set<string>; cotTT: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Cửa hàng mới phải có tên');
+    const o = chu(r.orgUnitCode) || before?.orgUnitCode || '';
+    if (chu(r.orgUnitCode) && !cc.has(o.toLowerCase())) errors.push(`Cơ cấu ${o} chưa có — nhập sheet Cơ cấu trước`);
+    const dep = chu(r.departmentCode) || before?.departmentCode || '';
+    const tt = tich(r.isActive, cotTT); if (tt === null) errors.push(loiTich('Theo dõi', r.isActive));
+    if (errors.length) return { errors };
+    const v = { name, note: chu(r.note) || before?.note || '', taxCode: chu(r.taxCode) || before?.taxCode || '', address: chu(r.address) || before?.address || '', phone: chu(r.phone) || before?.phone || '', companyName: chu(r.companyName) || before?.companyName || '' };
+    return {
+      errors, ghi: async () => {
+        // Phòng ban riêng của cửa hàng chưa có (tệp xuất từ máy cũ không kèm): tạo trước rồi gắn (người dùng chốt NT-DM-007).
+        if (dep && !pb.has(dep.toLowerCase()) && !taoPB.has(dep.toLowerCase())) {
+          await api.put(`/api/v1/dimensions/department/${encodeURIComponent(dep)}`, { name: `Phòng ban ${name}`, note: '', isActive: true, extra: { orgUnitCode: o } });
+          taoPB.add(dep.toLowerCase());
+        }
+        if (before) return api.patch(`/api/v1/branches/${encodeURIComponent(before.code)}`, { ...v, isActive: tt ?? before.isActive, departmentCode: dep || null, ...(o !== (before.orgUnitCode ?? '') ? { orgUnitCode: o || null, validFrom: null } : {}) });
+        await api.post('/api/v1/branches', { ...v, code: ma });
+        const them2 = { ...(o ? { orgUnitCode: o } : {}), ...(dep ? { departmentCode: dep } : {}), ...(tt === false ? { isActive: false } : {}) };
+        if (Object.keys(them2).length) await api.patch(`/api/v1/branches/${encodeURIComponent(ma)}`, them2);
+      },
+    };
+  },
+});
+
+const KHO_CO_CAU = danhMuc<KhoDM16>({
+  id: 'kho-co-cau', title: 'Cơ cấu tổ chức — Kho', desc: 'Kho của cửa hàng: mã kho, tên, cửa hàng, loại kho, kho mặc định, địa chỉ, ghi chú, theo dõi' + THU_TU_DM16, listPath: '/danh-muc/so-do-to-chuc', invalidate: ['warehouses', 'warehouse-types'],
+  sheet: 'Kho', tenMa: 'Mã kho', maSai: (m) => (m.length > 12 ? 'Mã kho tối đa 12 ký tự' : ''),
+  fields: [
+    { key: 'code', header: 'Mã kho', required: true, aliases: ['ma'], example: 'OC01-HH', note: 'Tối đa 12 ký tự. Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên kho', required: 'moi', aliases: ['ten'], example: 'Kho hàng Láng' },
+    { key: 'branchCode', header: 'Cửa hàng (mã)', required: 'moi', aliases: ['cua hang', 'ma cua hang', 'chi nhanh', 'ma chi nhanh'], example: 'OC01', note: 'Mã cửa hàng đã có (nhập sheet Cửa hàng trước).' },
+    { key: 'typeCode', header: 'Loại kho', aliases: ['ma loai kho'], example: 'KHH', note: 'Mã loại kho đã có (DM18). Trống: mới = KHH.' },
+    { key: 'isDefault', header: 'Kho mặc định', aliases: ['mac dinh'], note: 'x = kho mặc định của cửa hàng.' },
+    { key: 'address', header: 'Địa chỉ', aliases: ['dia chi'] },
+    { key: 'note', header: 'Ghi chú', aliases: ['mo ta'] },
+    TT_TRUONG('Theo dõi'),
+  ],
+  tai: () => api.get<KhoDM16[]>('/api/v1/warehouses'), maCua: (w) => w.code,
+  chuan: async (rows) => {
+    const [ch, lk] = await Promise.all([api.get<{ code: string }[]>('/api/v1/branches'), api.get<{ types: { code: string }[] }>('/api/v1/warehouse-types')]);
+    return { ch: new Set(ch.map((b) => b.code.toLowerCase())), lk: new Set(lk.types.map((t) => t.code.toUpperCase())), cotTT: coCot(rows, 'isActive'), cotMD: coCot(rows, 'isDefault') };
+  },
+  xemTruoc: (w) => ({ name: w.name, branchCode: w.branchCode, typeCode: w.typeCode ?? '', isDefault: w.isDefault ? 'x' : '', address: w.address, note: w.note, isActive: w.isActive ? 'x' : '' }),
+  kiem: (r, ma, before, { them }) => {
+    const { ch, lk, cotTT, cotMD } = them as { ch: Set<string>; lk: Set<string>; cotTT: boolean; cotMD: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Kho mới phải có tên');
+    const br = chu(r.branchCode) || before?.branchCode || '';
+    if (!br) errors.push('Thiếu cửa hàng của kho'); else if (chu(r.branchCode) && !ch.has(br.toLowerCase())) errors.push(`Cửa hàng ${br} chưa có — nhập sheet Cửa hàng trước`);
+    const type = (chu(r.typeCode) || before?.typeCode || 'KHH').toUpperCase();
+    if (!lk.has(type)) errors.push(`Loại kho ${type} chưa có (DM18)`);
+    const md = tich(r.isDefault, cotMD); if (md === null) errors.push(loiTich('Kho mặc định', r.isDefault));
+    const tt = tich(r.isActive, cotTT); if (tt === null) errors.push(loiTich('Theo dõi', r.isActive));
+    if (errors.length) return { errors };
+    const body = { branchCode: br, name, note: chu(r.note) || before?.note || '', address: chu(r.address) || before?.address || '', isActive: tt ?? before?.isActive ?? true, isDefault: md ?? before?.isDefault ?? false, typeCode: type };
+    return { errors, ghi: () => (before ? api.patch(`/api/v1/warehouses/${encodeURIComponent(before.code)}`, body) : api.post('/api/v1/warehouses', { ...body, code: ma })) };
+  },
+});
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH, TK_KET_CHUYEN, CO_CAU, PHONG_BAN, CUA_HANG, KHO_CO_CAU];
