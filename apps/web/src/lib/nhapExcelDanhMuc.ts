@@ -743,4 +743,58 @@ const KHO_CO_CAU = danhMuc<KhoDM16>({
   },
 });
 
+// [2026-11-18 03:30 PM kiennt] NT-DM-008 — DM14 nhập giá bán ở lưới giá bằng trình nhập chung (trước: hộp xem trước tự viết) (đóng góp)
+/* ------------------------------------------------------------------ DM14 giá bán theo một bảng giá (lưới giá) */
+interface DongGia { sku: string; name: string; unit: string; price: number | null }
+/** Ô đơn giá: "580000", "580.000", "580,000", "1.250.000" (nhóm 3 số = phân cách hàng nghìn, NT-DM-003); trống = undefined (giữ nguyên); sai = null. */
+function docDonGia(v: string | undefined): number | null | undefined {
+  const s = (v ?? '').replace(/\s/g, '').replace(/đ$/i, '');
+  if (!s) return undefined;
+  const n = /^\d{1,3}([.,]\d{3})+$/.test(s) ? Number(s.replace(/[.,]/g, '')) : Number(s.replace(',', '.'));
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+const tienVN = (n: number | null | undefined) => (n === null || n === undefined ? '' : n.toLocaleString('vi-VN'));
+/** Loại nhập giá cho MỘT bảng giá — mở từ nút Nhập Excel của lưới giá (không có ở trang Nhập Excel chung vì cần chọn bảng giá). */
+export function nhapGiaBan(code: string, ten: string): NhapLoai {
+  return {
+    id: `gia-ban-${code}`, nhom: 'Danh mục', title: `Giá bán — ${ten}`, desc: 'Mã hàng, ĐVT, đơn giá của bảng giá này — tệp Xuất Excel của lưới giá dùng thẳng', keyField: 'sku',
+    listPath: '/danh-muc/bang-gia', invalidate: ['price-rows', 'price-lists', 'catalog-product'], modes: false,
+    fields: [
+      { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma san pham', 'sku'], example: '110011001', note: 'Mã hàng + ĐVT phải có trong lưới giá (mặt hàng đã khai ĐVT đó).' },
+      { key: 'name', header: 'Tên hàng', aliases: ['ten', 'ten vthh'], note: 'Chỉ để đối chiếu, không ghi.' },
+      { key: 'unit', header: 'ĐVT', required: true, aliases: ['don vi tinh', 'don vi'], example: 'Lon' },
+      { key: 'price', header: 'Đơn giá', aliases: ['gia', 'gia ban', 'don gia ban'], example: '25000', note: 'Giá đã gồm thuế. "580000", "580.000", "580,000" đều được. Ô trống: giữ nguyên giá đang có.' },
+    ],
+    run: async (rows, { dryRun }) => {
+      const ds = (await api.get<{ rows: DongGia[] }>(`/api/v1/catalog/price-lists/${encodeURIComponent(code)}/rows`)).rows;
+      const have = new Map(ds.map((r) => [`${r.sku}|${r.unit}`.toLowerCase(), r]));
+      const seen = new Map<string, number>();
+      const pre = rows.map((r) => {
+        const row = Number(r._row);
+        const sku = chu(r.sku); const unit = chu(r.unit); const k = `${sku}|${unit}`.toLowerCase();
+        const before = have.get(k);
+        const errors: string[] = [];
+        if (!sku) errors.push('Thiếu mã hàng'); if (!unit) errors.push('Thiếu ĐVT');
+        if (sku && unit && !before) errors.push(`${sku} / ${unit} không có trong bảng giá (mã hàng hoặc ĐVT chưa khai ở form mặt hàng)`);
+        if (sku && unit && seen.has(k)) errors.push(`Trùng ${sku} / ${unit} với dòng ${seen.get(k)} trong tệp`); else if (sku && unit) seen.set(k, row);
+        const gia = docDonGia(r.price);
+        if (gia === null) errors.push(`Đơn giá "${r.price}" không hợp lệ (số ≥ 0)`);
+        const doi = !errors.length && gia !== undefined && gia !== before!.price;
+        return { row, k: `${sku} / ${unit}`, before, errors, gia, doi, values: { ...r, sku: before?.sku ?? sku, unit: before?.unit ?? unit, name: before?.name ?? r.name } as Record<string, string | undefined> };
+      });
+      const ghi = pre.filter((p) => p.doi);
+      const loiGhi = new Map<number, string>();
+      if (!dryRun) for (let i = 0; i < ghi.length; i += 500) {
+        const lo = ghi.slice(i, i + 500);
+        try { await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(code)}/prices`, { rows: lo.map((p) => ({ sku: p.before!.sku, unit: p.before!.unit, price: p.gia })) }); }
+        catch (e) { for (const p of lo) loiGhi.set(p.row, loiCua(e)); }
+      }
+      return ketQua(pre.map((p) => {
+        const errors = loiGhi.has(p.row) ? [loiGhi.get(p.row)!] : p.errors;
+        return { row: p.row, key: p.k, action: errors.length ? 'error' : p.before?.price === null && p.doi ? 'create' : 'update', errors, values: p.values, before: p.before ? { price: tienVN(p.before.price) } : undefined };
+      }));
+    },
+  };
+}
+
 export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH, TK_KET_CHUYEN, CO_CAU, PHONG_BAN, CUA_HANG, KHO_CO_CAU];
