@@ -42,3 +42,7 @@ Dùng cho bán buôn, bán nợ, bán ngoài quầy — những phiếu kế to�
 - Phiếu thử lập trên máy trước đây (dữ liệu giả) không chuyển sang sổ: màn báo một lần, bấm *Đã hiểu* để ẩn.
 - Đơn giá điền theo bảng giá của cửa hàng; bán vượt tồn sổ hiện "tồn sổ còn X".
 - Chưa có: phát hành hoá đơn điện tử từ phiếu — làm ở đợt sau.
+
+## Phiếu trả BH11 và lượt khuyến mại có hạn mức (NT-BH-030)
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q4: BH11 trả cả phiếu bán gốc thì trả lượt khuyến mại (đóng góp) -->
+Phiếu trả hàng BH11 nối phiếu bán gốc (ô *Số phiếu bán gốc*) mà **trả hết hàng bán** của phiếu gốc (cộng cả các phiếu trả đã duyệt trước, không kể dòng quà) thì khi duyệt, lượt khuyến mại có hạn mức theo cửa hàng mà phiếu gốc đã dùng được **trả lại** — như máy bán trả cả đơn. Trả một phần thì không trả lượt. Bỏ duyệt phiếu trả đó thì lượt tính lại cho phiếu gốc. Xem lượt ở *Chương trình khuyến mại* (BH18) → *Báo cáo khuyến mại*: đơn đã trả lượt ghi lý do `return`.

@@ -249,6 +249,13 @@ export async function releaseUses(tx: Tx, source: 'pos' | 'phieu-ban', refId: st
     WHERE source = ${source} AND ref_id = ${refId} AND released_at IS NULL`.execute(tx);
 }
 
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q4: bỏ duyệt phiếu trả BH11 đã trả lượt → lấy lại lượt của phiếu bán gốc (đóng góp)
+/** Lấy lại lượt đã trả vì trả hàng (release_reason = 'return') của một đơn / phiếu — phiếu trả bị bỏ duyệt. */
+export async function restoreReturnedUses(tx: Tx, source: 'pos' | 'phieu-ban', refId: string) {
+  await sql`UPDATE mod_pos.promo_uses SET released_at = NULL, release_reason = NULL
+    WHERE source = ${source} AND ref_id = ${refId} AND release_reason = 'return'`.execute(tx);
+}
+
 // ── Báo cáo ────────────────────────────────────────────────────────────────────────────────────────────────────────────
 /** Theo chương trình × cửa hàng × kỳ: số đơn áp, đơn đã trả lượt, tiền giảm, số quà (đơn còn tính); lượt đang dùng / hạn mức (mọi kỳ). */
 export async function promoReport(tx: Tx, f: { from: string; to: string; branches: string[]; key?: string }) {
