@@ -187,4 +187,57 @@ const LOAI_KHO = danhMuc<LoaiKho>({
   },
 });
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO];
+/* ------------------------------------------------------------------ DM08 Nhóm khách hàng, nhà cung cấp */
+interface NhomDT { code: string; name: string; parentCode: string | null; kind: string; note: string; isActive: boolean }
+const DUNG_CHO: Record<string, string> = { 'moi loai': 'any', any: 'any', 'khach hang': 'customer', customer: 'customer', 'nha cung cap': 'supplier', supplier: 'supplier', 'nhan vien': 'employee', employee: 'employee', 'noi bo': 'internal', internal: 'internal', khac: 'other', other: 'other' };
+const DUNG_CHO_TEN: Record<string, string> = { any: 'Mọi loại', customer: 'Khách hàng', supplier: 'Nhà cung cấp', employee: 'Nhân viên', internal: 'Nội bộ', other: 'Khác' };
+const chaTrongTep = (rows: Dong[], have: Map<string, NhomDT>) => {
+  const cha = new Map<string, string>([...have.values()].map((g) => [g.code.toLowerCase(), (g.parentCode ?? '').toLowerCase()]));
+  for (const r of rows) { const m = chu(r.code).toLowerCase(); const p = chu(r.parentCode).toLowerCase(); if (m && p) cha.set(m, p); }
+  return cha;
+};
+const NHOM_DOI_TUONG = danhMuc<NhomDT>({
+  id: 'nhom-doi-tuong', title: 'Nhóm khách hàng, nhà cung cấp', desc: 'Mã nhóm, tên, ghi chú, nhóm cha, dùng cho, hoạt động', listPath: '/danh-muc/nhom-doi-tuong', invalidate: ['partner-groups'],
+  tenMa: 'Mã nhóm',
+  fields: [
+    { key: 'code', header: 'Mã nhóm KH', required: true, aliases: ['ma nhom', 'ma nhom ncc', 'ma nhom doi tuong'], example: 'KH-LE', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
+    { key: 'name', header: 'Tên nhóm KH', required: 'moi', aliases: ['ten nhom', 'ten nhom ncc', 'ten'], example: 'Khách lẻ' },
+    { key: 'note', header: 'Ghi chú', aliases: ['mo ta', 'dien giai'] },
+    { key: 'parentCode', header: 'Nhóm cha', aliases: ['ma nhom cha', 'thuoc nhom'], example: '', note: 'Mã nhóm cha đã có hoặc có trong tệp (nhóm cha được ghi trước). Trống: mới = nhóm gốc; đã có = giữ nguyên.' },
+    { key: 'kind', header: 'Dùng cho', aliases: ['loai', 'loai doi tuong'], example: 'Khách hàng', note: 'Mọi loại / Khách hàng / Nhà cung cấp / Nhân viên / Nội bộ / Khác. Trống: mới = Mọi loại.' },
+    TT_TRUONG('Hoạt động'),
+  ],
+  tai: () => api.get<NhomDT[]>('/api/v1/partner-groups'), maCua: (g) => g.code, rac: () => thungRac('partner-groups'),
+  chuan: async (rows, have) => ({ cha: chaTrongTep(rows, have), trongTep: new Set(rows.map((r) => chu(r.code).toLowerCase()).filter(Boolean)), cotTT: coCot(rows, 'isActive') }),
+  xemTruoc: (g) => ({ name: g.name, note: g.note, parentCode: g.parentCode ?? '', kind: DUNG_CHO_TEN[g.kind] ?? g.kind, isActive: g.isActive ? 'x' : '' }),
+  kiem: (r, ma, before, { have, them }) => {
+    const { cha, trongTep, cotTT } = them as { cha: Map<string, string>; trongTep: Set<string>; cotTT: boolean };
+    const errors: string[] = [];
+    const name = chu(r.name) || before?.name || '';
+    if (!name) errors.push('Nhóm mới phải có tên');
+    const p = chu(r.parentCode) || before?.parentCode || '';
+    if (p) {
+      if (p.toLowerCase() === ma.toLowerCase()) errors.push('Nhóm cha không được là chính nó');
+      else if (!have.has(p.toLowerCase()) && !trongTep.has(p.toLowerCase())) errors.push(`Nhóm cha ${p} chưa có`);
+      else { // vòng cha: đi lên từ nhóm cha, gặp lại chính nó là vòng
+        let x = p.toLowerCase(); const qua = new Set<string>();
+        while (x && !qua.has(x)) { if (x === ma.toLowerCase()) { errors.push(`Nhóm cha ${p} đang là nhóm con (hoặc cháu) của ${ma} — vòng nhóm cha`); break; } qua.add(x); x = cha.get(x) ?? ''; }
+      }
+    }
+    const k = kd(chu(r.kind));
+    const kind = !k ? before?.kind ?? 'any' : DUNG_CHO[k];
+    if (!kind) errors.push(`Dùng cho "${r.kind}" ghi Mọi loại / Khách hàng / Nhà cung cấp / Nhân viên / Nội bộ / Khác`);
+    const tt = tich(r.isActive, cotTT);
+    if (tt === null) errors.push(loiTich('Hoạt động', r.isActive));
+    if (errors.length) return { errors };
+    return { errors, ghi: () => api.put(`/api/v1/partner-groups/${encodeURIComponent(ma)}`, { name, parentCode: p || undefined, kind, note: chu(r.note) || before?.note || '', isActive: tt ?? before?.isActive ?? true }) };
+  },
+  thuTu: (ds, have) => {
+    const cha = new Map<string, string>([...have.values()].map((g) => [g.code.toLowerCase(), (g.parentCode ?? '').toLowerCase()]));
+    for (const x of ds) if (chu(x.r.parentCode)) cha.set(x.ma.toLowerCase(), chu(x.r.parentCode).toLowerCase());
+    const sau = (m: string) => { let n = 0; let x = cha.get(m.toLowerCase()) ?? ''; const qua = new Set<string>(); while (x && !qua.has(x) && n < 50) { qua.add(x); n++; x = cha.get(x) ?? ''; } return n; };
+    return [...ds].sort((a, b) => sau(a.ma) - sau(b.ma));
+  },
+});
+
+export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG];
