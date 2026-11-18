@@ -35,15 +35,27 @@ describe('Nhóm hàng (DM11)', () => {
     await ok(put('N2', { name: 'Nhãn thử (đổi tên)', parentCode: 'N1', skuCode: '006' }, false));
   });
 
-  // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng (tên ngắn) không trùng trong cùng ngành; khác ngành được trùng.
-  it('mã nhóm hàng trùng trong cùng ngành bị chặn; khác ngành thì được', async () => {
-    const cungNganh = await put('N3C', { name: 'nhóm  THỬ', parentCode: 'N2B', skuCode: '2' });
-    expect(cungNganh.status).toBe(409);
-    expect(JSON.stringify(cungNganh.body)).toContain('Ngành thử');
+  // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng không trùng nhóm cùng cha, không trùng tên nhóm cha; khác cha thì được trùng (kể cả cùng ngành).
+  it('mã nhóm hàng trùng nhóm cùng cha / trùng tên cha bị chặn; khác cha thì được', async () => {
+    // Cùng cha N1 đã có "Nhãn thử B".
+    const anhEm = await put('N2D', { name: 'nhãn  THỬ b', parentCode: 'N1', skuCode: '008' });
+    expect(anhEm.status).toBe(409);
+    expect(JSON.stringify(anhEm.body)).toContain('cùng cấp');
+    // Trùng tên nhóm cha.
+    const trungCha = await put('N3C', { name: 'Nhãn thử B', parentCode: 'N2B', skuCode: '2' });
+    expect(trungCha.status).toBe(409);
+    expect(JSON.stringify(trungCha.body)).toContain('nhóm cha');
+    // Cùng ngành N1, khác cha: N3 "Nhóm thử" ở N2 → thêm "Nhóm thử" ở N2B được.
+    await ok(put('N3D', { name: 'Nhóm thử', parentCode: 'N2B', skuCode: '3' }));
+    // Khác ngành cũng được.
     await ok(put('X2', { name: 'Nhóm thử', parentCode: 'X1', skuCode: '001' }));
+    // Hai ngành hàng (cùng gốc) không trùng.
     const nganhTrung = await put('N9', { name: 'Ngành thử', skuCode: '15' });
     expect(nganhTrung.status).toBe(409);
-    await ok(put('N9', { name: 'Nhãn thử B', skuCode: '15' })); // ngành mới trùng tên nhãn của ngành khác: được
+    // Sửa tên nhóm cha thành tên nhóm con trực tiếp: chặn.
+    const trungCon = await put('X1', { name: 'nhóm thử', skuCode: '14' }, false);
+    expect(trungCon.status).toBe(409);
+    expect(JSON.stringify(trungCon.body)).toContain('nhóm con');
   });
 
   it('không chuyển nhóm vào nhánh con của chính nó', async () => {
