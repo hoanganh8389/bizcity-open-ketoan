@@ -56,5 +56,6 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-DM-001](danh-muc/NT-DM-001-bo-ten-tieng-anh-tai-khoan.md) | Bỏ tên tiếng Anh của tài khoản (ACC1, API, Excel, dữ liệu mẫu, CSDL — chép giá trị cũ sang bảng lưu) | Nháp |
 | [NT-DM-002](danh-muc/NT-DM-002-sua-loi-danh-muc.md) | Sửa lỗi danh mục mức cao, trung bình: thêm trùng mã ghi đè, xoá cha còn con / mục đang dùng, vòng nhóm cha, gợi ý NCC ngừng | Chờ nghiệm thu |
 | [NT-DM-003](danh-muc/NT-DM-003-nhap-xuat-excel.md) | Xuất Excel dùng được để nhập lại (tiêu đề cột, đường dẫn nhóm hàng, thuế suất bắt buộc khi nhập mặt hàng mới); nhập giá bán từ Excel ở DM14 | Đã chốt |
+| [NT-DM-004](danh-muc/NT-DM-004-nhap-excel-don-vi-tinh.md) | Nhập Excel danh mục đơn vị tính (DM15): khứ hồi xuất → nhập, khoá theo tên ĐVT | Đã chốt |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.
