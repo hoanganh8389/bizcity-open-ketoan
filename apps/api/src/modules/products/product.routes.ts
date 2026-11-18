@@ -30,12 +30,21 @@ import { ok, pageMeta, pageQuerySchema, queryBool } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): chỉ đọc danh sách tài khoản để đối chiếu — đọc bảng, không import Kernel
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
+import { contentHash } from '@bizcity/platform/core/documents';
 import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
 import { applyItemGate, applyItemGateBulk, itemHints } from './item.hints.js';
 
 const warnAck = z.object({ reason: z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500), codes: z.array(z.string().max(32)).max(50).default([]) });
 import { deleteProduct } from '../catalog/catalog.service.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+
+/** Lịch sử một mã phân loại hàng: document_versions doc_ref danh-muc.item_class:<loại>:<mã> (0157). Mỗi lần sửa một bản, luôn thêm. */
+const itemClassRef = (kind: string, code: string) => `danh-muc.item_class:${kind}:${code}`;
+async function saveItemClassVersion(trx: Db, tenantId: string, ref: string, snapshot: { action: string; changes: string }, actor: string): Promise<void> {
+  const last = await trx.selectFrom('document_versions').select((eb) => eb.fn.max('version').as('v')).where('tenant_id', '=', tenantId).where('doc_ref', '=', ref).executeTakeFirst();
+  await trx.insertInto('document_versions').values({ tenant_id: tenantId, doc_ref: ref, version: Number(last?.v ?? 0) + 1, snapshot: JSON.stringify(snapshot),
+    content_hash: contentHash({ ...snapshot, at: new Date().toISOString() }), created_by: actor }).execute();
+}
 
 const tags = ['Danh mục: Mặt hàng'];
 export const ITEM_CLASS_KINDS = ['brand', 'industry', 'group', 'type'] as const;
@@ -206,9 +215,10 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Lịch sử thêm / sửa mã phân loại', params: z.object({ kind: z.enum(ITEM_CLASS_KINDS), code: z.string() }) },
     handler: async (req) => {
-      const rows = await db.selectFrom('item_class_history').select(['at', 'by_user', 'action', 'changes']).where('tenant_id', '=', authOf(req).tenantId)
-        .where('kind', '=', req.params.kind).where('code', '=', req.params.code).orderBy('at', 'desc').limit(500).execute();
-      return ok(rows.map((x) => ({ at: x.at, by: x.by_user, action: x.action, changes: x.changes })));
+      // [2026-11-18 Nguyễn Văn Thủy] lịch sử ở document_versions chung (0157, bỏ item_class_history) (đóng góp)
+      const rows = await db.selectFrom('document_versions').select(['created_at', 'created_by', 'snapshot']).where('tenant_id', '=', authOf(req).tenantId)
+        .where('doc_ref', '=', itemClassRef(req.params.kind, req.params.code)).orderBy('version', 'desc').limit(500).execute();
+      return ok(rows.map((x) => { const s = x.snapshot as { action?: string; changes?: string }; return { at: x.created_at, by: x.created_by, action: s.action ?? '', changes: s.changes ?? '' }; }));
     },
   });
 
@@ -603,7 +613,7 @@ export const productWriteActions: AnyActionDef[] = [
       }
       await sameTx(trx, async (trx) => {
         await trx.insertInto('item_classes').values({ tenant_id: auth.tenantId, kind, code: c, ...values, created_by: auth.actorName || auth.actor, created_at: new Date() }).onConflict((oc) => oc.columns(['tenant_id', 'kind', 'code']).doUpdateSet(values)).execute();
-        if (diff.length) await trx.insertInto('item_class_history').values({ tenant_id: auth.tenantId, kind, code: c, by_user: auth.actorName || auth.actor, action: old ? 'update' : 'create', changes: diff.join('\n') }).execute();
+        if (diff.length) await saveItemClassVersion(trx, auth.tenantId, itemClassRef(kind, c), { action: old ? 'update' : 'create', changes: diff.join('\n') }, auth.actorName || auth.actor);
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'item_class.save', objectType: `item_class:${kind}`, objectId: c, after: b });
       });
       return { code: c };

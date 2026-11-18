@@ -80,7 +80,7 @@ describe('Danh mục đơn vị tính', () => {
     const r = await call(t, 'GET', '/api/v1/purchase/db-schema');
     expect(r.status).toBe(200);
     const tables = r.body.data.tables as { name: string; layer: string; rows: number; columns: { name: string; comment: string | null }[]; indexes: { name: string }[]; triggers: { fn: string; note: string }[] }[];
-    expect(tables.filter((x) => x.layer === 'module').map((x) => x.name)).toEqual(['purchase_documents', 'purchase_policies', 'supplier_products', 'supplier_invoices', 'supplier_invoice_lines', 'supplier_item_aliases', 'purchase_attachments', 'stock_levels', 'stock_sku_settings', 'stock_max_requests', 'order_formulas', 'transfer_requests']);
+    expect(tables.filter((x) => x.layer === 'module').map((x) => x.name)).toEqual(['purchase_documents', 'purchase_policies', 'supplier_products', 'supplier_invoices', 'supplier_invoice_lines', 'supplier_item_aliases', 'stock_levels', 'stock_sku_settings', 'stock_max_requests', 'order_formulas', 'transfer_requests']);
     const sp = tables.find((x) => x.name === 'supplier_products')!;
     expect(sp.columns.find((c) => c.name === 'unit')?.comment).toMatch(/quy đổi theo tỉ lệ/);
     expect(sp.indexes.map((i) => i.name)).toContain('supplier_products_uniq');

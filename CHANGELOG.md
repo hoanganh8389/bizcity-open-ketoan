@@ -12,6 +12,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Gom bảng về lõi, đợt 1: bỏ 4 bảng riêng (0157) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Đổi:** `item_class_history` → `document_versions` (`danh-muc.item_class:<loại>:<mã>`); `closing_rule_versions` → `document_versions` (`ket-chuyen.rules:mau`); `accounts_name_en_luu` → `catalog_trash` (`accounts.name_en`). Chuyển đủ dòng rồi mới bỏ bảng (thiếu thì migration dừng). API lịch sử nhóm hàng, lịch sử kết chuyển mẫu giữ nguyên khuôn trả về.
+- **Bỏ:** `purchase_attachments` — tệp đã ở `document_attachments` từ 0046 (kiểm `legacy_ref` từng dòng trước khi bỏ).
+
 ### Sổ chứng từ chung: một đầu phiếu cho mọi chứng từ nghiệp vụ (HT18) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Thêm:** bảng `business_documents` (0156) — Document Kernel: định danh (`doc_ref`), loại chuẩn (`purchase.order`, `purchase.receipt`, `inventory.transfer`, `finance.payment_request`…), số, ngày, chi nhánh, đối tượng, tổng tiền, trạng thái riêng + **nhóm chuẩn** (draft / pending / approved / done / cancelled), phiên bản, `meta` JSON. Một bảng mới duy nhất; dòng chi tiết vẫn ở bảng phân hệ, sự việc kế toán vẫn ở `accounting_events` (không đổi).

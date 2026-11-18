@@ -9,9 +9,9 @@ import type { Db } from '../../db/client.js';
 import { COLUMN_NOTES, SCHEMA_TABLES, TRIGGER_NOTES } from '../../modules/system/schema-catalog.js';
 
 export const DB_LAYERS: { layer: 'module' | 'catalog' | 'core'; label: string; tables: string[] }[] = [
-  { layer: 'module', label: 'Bảng riêng của phân hệ Mua hàng', tables: ['purchase_documents', 'purchase_policies', 'supplier_products', 'supplier_invoices', 'supplier_invoice_lines', 'supplier_item_aliases', 'purchase_attachments', 'stock_levels', 'stock_sku_settings', 'stock_max_requests', 'order_formulas', 'transfer_requests'] },
+  { layer: 'module', label: 'Bảng riêng của phân hệ Mua hàng', tables: ['purchase_documents', 'purchase_policies', 'supplier_products', 'supplier_invoices', 'supplier_invoice_lines', 'supplier_item_aliases', 'stock_levels', 'stock_sku_settings', 'stock_max_requests', 'order_formulas', 'transfer_requests'] },
   { layer: 'catalog', label: 'Danh mục dùng chung (đọc khi lập phiếu)', tables: ['partners', 'partner_groups', 'products', 'product_units', 'unit_names', 'branches', 'warehouses', 'tax_codes'] },
-  { layer: 'core', label: 'Sổ lõi kế toán (ghi khi duyệt phiếu)', tables: ['accounting_events', 'ledger_entries', 'ledger_lines', 'debt_items', 'debt_allocations', 'inventory_movements', 'inventory_costs', 'document_sequences'] },
+  { layer: 'core', label: 'Sổ lõi kế toán (ghi khi duyệt phiếu)', tables: ['accounting_events', 'ledger_entries', 'ledger_lines', 'debt_items', 'debt_allocations', 'inventory_movements', 'inventory_costs', 'document_sequences', 'business_documents', 'document_attachments'] },
 ];
 
 export interface DbColumn { name: string; type: string; nullable: boolean; default: string | null; comment: string | null }

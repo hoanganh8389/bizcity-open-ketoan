@@ -355,13 +355,6 @@ export interface DiagnosticRunsTable {
 }
 
 // [2026-11-17 10:20 AM kiennt] NT-DM-001 — tên tiếng Anh tài khoản lưu lại khi bỏ cột accounts.name_en (0147, D023-9) (đóng góp)
-export interface AccountsNameEnLuuTable {
-  tenant_id: string;
-  code: string;
-  name_en: string;
-  archived_at: Generated<Date>;
-}
-
 export interface AccountsTable {
   id: Generated<string>;
   tenant_id: string;
@@ -973,17 +966,6 @@ export interface StockPurposesTable {
   sort_order: Generated<number>;
   updated_by: Generated<string>;
   updated_at: TimestampDefault;
-}
-
-export interface ItemClassHistoryTable {
-  id: Generated<string>;
-  tenant_id: string;
-  kind: string;
-  code: string;
-  at: TimestampDefault;
-  by_user: Generated<string>;
-  action: string;
-  changes: Generated<string>;
 }
 
 export interface PostingReasonsTable {
@@ -1705,21 +1687,6 @@ export interface PurchasePoliciesTable {
   updated_at: TimestampDefault;
 }
 
-export interface PurchaseAttachmentsTable {
-  id: Generated<string>;
-  tenant_id: string;
-  owner_type: string;
-  owner_id: string;
-  kind: Generated<string>;
-  file_name: string;
-  mime: Generated<string>;
-  size: Generated<string>;
-  path: string;
-  note: Generated<string>;
-  uploaded_by: Generated<string>;
-  created_at: TimestampDefault;
-}
-
 export interface PaymentRequestsTable {
   id: Generated<string>;
   tenant_id: string;
@@ -1825,16 +1792,6 @@ export interface ClosingRulesTable {
   description: Generated<string>;
   is_active: Generated<boolean>;
   include_opening: Generated<boolean>;
-}
-
-export interface ClosingRuleVersionsTable {
-  tenant_id: string;
-  version: number;
-  rules: Json<unknown>;
-  note: Generated<string>;
-  created_by: string;
-  created_by_name: Generated<string>;
-  created_at: TimestampDefault;
 }
 
 export interface DocumentSequencesTable {
@@ -2043,7 +2000,6 @@ export interface Database {
   event_deliveries: EventDeliveriesTable;
   event_consumptions: EventConsumptionsTable;
   accounts: AccountsTable;
-  accounts_name_en_luu: AccountsNameEnLuuTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;
   period_lock_events: PeriodLockEventsTable;
@@ -2093,7 +2049,6 @@ export interface Database {
   tax_invoices: TaxInvoicesTable;
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;
-  item_class_history: ItemClassHistoryTable;
   stock_purposes: StockPurposesTable;
   tax_id_versions: TaxIdVersionsTable;
   org_link_versions: OrgLinkVersionsTable;
@@ -2126,7 +2081,6 @@ export interface Database {
   document_links: DocumentLinksTable;
   document_attachments: DocumentAttachmentsTable;
   closing_rules: ClosingRulesTable;
-  closing_rule_versions: ClosingRuleVersionsTable;
   dimensions: DimensionsTable;
   contract_schedules: ContractSchedulesTable;
   voucher_templates: VoucherTemplatesTable;
@@ -2135,7 +2089,6 @@ export interface Database {
   payment_requests: PaymentRequestsTable;
   purchase_documents: PurchaseDocumentsTable;
   purchase_policies: PurchasePoliciesTable;
-  purchase_attachments: PurchaseAttachmentsTable;
   supplier_products: SupplierProductsTable;
   supplier_invoices: SupplierInvoicesTable;
   supplier_invoice_lines: SupplierInvoiceLinesTable;
