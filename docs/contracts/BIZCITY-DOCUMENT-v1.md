@@ -177,6 +177,7 @@ Cửa nạp so băm nội dung (`content_hash`) của bản gửi với bản đ
 | `payment_requests.status` 7 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, submitted(pending), approved1(pending), approved(approved), rejected(draft), paid(done), cancelled` |
 | `purchase_documents.status` 4 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, pending_approval(pending), approved(approved), cancelled`; chuyển `submit, approve, override, unapprove, cancel` |
 | `document_signatures` (gắn `event_id`) | **đã** thêm cột `doc_ref` (migration 0048, 2026-11-01): ký được mọi chứng từ; mỗi dòng gắn đúng một trong `event_id` / `doc_ref`; phiếu kế toán giữ 4 vai cũ |
+| (mới) sổ chứng từ chung | **đã** có `business_documents` (migration 0156, 2026-11-18): đầu phiếu mọi chứng từ nghiệp vụ, `status` = nhóm chuẩn §5, `status_raw` = trạng thái riêng, `meta` JSON; trigger đồng bộ từ `purchase_documents`, `stock_transfer_docs`, `payment_requests` kèm `document_versions` (nội dung đổi) và `document_links` (`source`, `ledger`). Đọc: `GET /api/v1/business-documents[/detail]`, màn HT18 |
 | `reference_documents` (`open/used/closed`) | một loại chứng từ của module Thuế dùng `document_links` |
 | `purchase_attachments` | **đã** chuyển sang `document_attachments` (migration 0046, 2026-11-01): docRef `mua-hang.<loại chủ>:<mã>` (partner, document, policy, invoice), tệp cũ giữ chỗ (`storage_root = dinh-kem`), băm ở lần tải đầu, `legacy_ref` đối chiếu; bảng cũ khoá thêm / sửa |
 

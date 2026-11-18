@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ chứng từ chung: một đầu phiếu cho mọi chứng từ nghiệp vụ (HT18) <!-- [2026-11-18 Nguyễn Văn Thủy] (đóng góp) -->
+
+- **Thêm:** bảng `business_documents` (0156) — Document Kernel: định danh (`doc_ref`), loại chuẩn (`purchase.order`, `purchase.receipt`, `inventory.transfer`, `finance.payment_request`…), số, ngày, chi nhánh, đối tượng, tổng tiền, trạng thái riêng + **nhóm chuẩn** (draft / pending / approved / done / cancelled), phiên bản, `meta` JSON. Một bảng mới duy nhất; dòng chi tiết vẫn ở bảng phân hệ, sự việc kế toán vẫn ở `accounting_events` (không đổi).
+- **Thêm:** trigger đồng bộ từ `purchase_documents`, `stock_transfer_docs`, `payment_requests` — mọi đường ghi đều vào sổ. Nội dung đổi (bỏ qua trạng thái, người duyệt, mốc giờ) → ảnh chụp `document_versions`; phiếu lập từ phiếu khác (`ref_ids`, `source_ref`) → `document_links` vai `source`; sự việc kế toán đã sinh → vai `ledger`. Hai bảng chung có từ 0045 nhưng chưa ai ghi nay đã dùng. Nạp sẵn chứng từ đang có.
+- **Thêm:** API `GET /api/v1/business-documents` (lọc loại / tiền tố loại, trạng thái chuẩn, chi nhánh, ngày, số / đối tượng; đếm theo nhóm) và `/detail?docRef=` (đầu phiếu + phiên bản + liên kết + đính kèm); màn **HT18 Sổ chứng từ** + thẻ hướng dẫn.
+
 ### Tính giá vốn theo chi nhánh trên Cơ cấu tổ chức; lưu từng lần tính <!-- [2026-11-17 Nguyễn Văn Thủy] (đóng góp) -->
 
 - **Đổi:** giá vốn bình quân gia quyền tháng tính **riêng từng chi nhánh cấp 2** trên Cơ cấu tổ chức (nơi mua hàng đại diện rồi phát xuống shop các tỉnh; cấp tỉnh chỉ lấy MST). Đơn vị hạch toán của shop **tự suy** theo cây: `org_units.is_cost_center` (mặc định nút cấp 2) sinh `accounting_units` (`org_unit_id`), shop lấy điểm tính giá vốn gần nhất phía trên; dời nút / đổi điểm tính thì tự gắn lại. Engine giá vốn, lãi gộp, chuyển kho cùng / khác đơn vị dùng luôn.

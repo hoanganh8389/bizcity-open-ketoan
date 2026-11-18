@@ -31,6 +31,8 @@ export const heThongMenu: MenuItem[] = [
       // [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: HT13 Cấu hình hệ thống, bản chỉ đọc (ai đăng nhập cũng xem được; khoá bí mật không hiện giá trị)
       // [2026-11-09 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b: HT15 Chính sách (quyền catalog:read; Core, không phải module nghiệp vụ — D031-11)
       { key: 'chinh-sach', label: 'Chính sách', path: '/he-thong/chinh-sach', code: 'HT15', permission: 'catalog:read' },
+      // [2026-11-18 Nguyễn Văn Thủy] HT18 sổ chứng từ chung: mọi chứng từ nghiệp vụ theo trạng thái chuẩn (0156) (đóng góp)
+      { key: 'so-chung-tu', label: 'Sổ chứng từ', path: '/he-thong/so-chung-tu', code: 'HT18', permission: 'documents:read' },
       { key: 'cau-hinh-he-thong', label: 'Cấu hình hệ thống', path: '/he-thong/cau-hinh', code: 'HT13' },
       // [2026-11-12 Nguyễn Văn Thủy] HT17 thẻ hướng dẫn sử dụng (đóng góp)
       { key: 'the-huong-dan', label: 'Thẻ hướng dẫn', path: '/he-thong/huong-dan', code: 'HT17' },

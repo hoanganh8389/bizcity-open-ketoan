@@ -1856,6 +1856,28 @@ export interface DocumentVersionsTable {
   created_at: TimestampDefault;
 }
 
+/** 0156: sổ chứng từ chung — đầu phiếu mọi chứng từ nghiệp vụ, đồng bộ bằng trigger từ bảng nguồn (không ghi tay). */
+export interface BusinessDocumentsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  doc_ref: string;
+  module: string;
+  doc_type: string;
+  doc_no: Generated<string>;
+  doc_date: string | null;
+  branch_code: Generated<string>;
+  partner_ref: Generated<string>;
+  title: Generated<string>;
+  total: Generated<string>;
+  status_raw: string;
+  status: 'draft' | 'pending' | 'approved' | 'done' | 'cancelled';
+  version: Generated<number>;
+  meta: Generated<Json<Record<string, unknown>>>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
 /** 0045 (documents.links): tham chiếu giữa chứng từ. */
 export interface DocumentLinksTable {
   id: Generated<string>;
@@ -2099,6 +2121,7 @@ export interface Database {
   long_term_balances: LongTermBalancesTable;
   ledger_entry_sequences: LedgerEntrySequencesTable;
   document_sequences: DocumentSequencesTable;
+  business_documents: BusinessDocumentsTable;
   document_versions: DocumentVersionsTable;
   document_links: DocumentLinksTable;
   document_attachments: DocumentAttachmentsTable;

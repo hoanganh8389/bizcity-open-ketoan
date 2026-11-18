@@ -28,6 +28,7 @@ import { ImageBlocksPage } from './features/system/ImageBlocksPage';
 import { DocumentsPage } from './features/documents/DocumentsPage';
 import { IntakeScorePage } from './features/documents/IntakeScorePage';
 import { CashTransfersPage } from './features/documents/CashTransfersPage';
+import { SoChungTuPage } from './features/documents/SoChungTuPage'; // [2026-11-18 Nguyễn Văn Thủy] HT18 sổ chứng từ chung (đóng góp)
 import { EntriesPage } from './features/ledger/EntriesPage';
 import { SuaDauButToanPage } from './phan-he/ke-toan/ledger/SuaDauButToanPage'; // [2026-11-10 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16
 import { AccountingVouchersPage } from './features/ledger/AccountingVouchersPage';
@@ -140,6 +141,7 @@ export const pageRoutes = (
     <Route path="he-thong/huong-dan" element={<HuongDanPage />} />
     <Route path="he-thong/tru-cot" element={<PillarsPage />} />
     <Route path="he-thong/chinh-sach" element={<PolicyPage />} />
+    <Route path="he-thong/so-chung-tu" element={<SoChungTuPage />} />
     <Route path="he-thong/cau-hinh" element={<ConfigCenterPage />} />
     <Route path="he-thong/ban-danh-gia" element={<ReviewBoardPage />} />
     <Route path="danh-muc/phan-loai-hang" element={<NhomHangPage />} />
