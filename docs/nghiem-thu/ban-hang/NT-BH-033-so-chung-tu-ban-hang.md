@@ -7,7 +7,7 @@
 | Màn hình | HT18 Sổ chứng từ (lõi) — chỉ thấy thêm loại chứng từ bán |
 | Mục được giao | Bán hàng: phần bán của sổ chứng từ chung, theo `docs/nghiep-vu/26-so-chung-tu-quy-chuan.md` §6 |
 | Ngày tạo | 19/11/2026 |
-| Trạng thái | **Đã chốt 19/11/2026** (Võ Hoàng) — **code khi lõi sửa xong quyền ghi sổ chứng từ chung (xem §5)** |
+| Trạng thái | **Đã chốt 19/11/2026** (Võ Hoàng) |
 | Căn cứ | Doc 26 (migration 0158–0166, Thủy); `tong-hop-bang-erp-19-11-2026` mục 5–6 |
 
 ## 1. Hiện trạng
@@ -49,10 +49,14 @@ Không đưa đợt này: yêu cầu trả quá hạn, nháp khuyến mại, chu
 |---|---|---|
 | Q1 | Loại của đơn máy bán | `sales.order` (theo tài liệu tổng hợp 19/11) |
 | Q2 | Thời điểm | Chốt phiếu ngay; code khi lõi sửa xong quyền ghi |
+| Q3 | Ai sửa quyền ở lõi | Anh Hoàng 19/11: **chủ động sửa luôn** trong đợt này (§5) |
 
-## 5. Phụ thuộc lõi (chưa làm được)
-- Vai trò CSDL của module gọi được `bizcity_doc_put` nhưng **không có quyền ghi** `business_documents`, hàm không chạy quyền chủ → trigger của module báo "permission denied" (đã kiểm trên CSDL thử 19/11). Cần lõi sửa (Thủy).
-- Màn HT18 (`SoChungTuPage.tsx`) và `so-chung-tu.test.ts` là tệp lõi: thêm tên loại chứng từ bán ở đó do Thủy làm hoặc giữ chỗ chung.
+## 5. Sửa lõi kèm theo (Q3 — thiết kế)
+<!-- [2026-11-19 Võ Hoàng] NGHIEM-THU — Q3: sửa quyền sổ chứng từ chung trong đợt NT-BH-033 (đóng góp) -->
+- **Vấn đề (kiểm 19/11 trên CSDL thử):** lúc chạy, module dùng vai trò `mod_<key>_rw`; vai trò này gọi được `bizcity_doc_put` nhưng không có quyền INSERT / UPDATE `business_documents`, `document_versions`, `document_links`; hàm chạy quyền người gọi → trigger của module báo "permission denied" và huỷ cả giao dịch lưu đơn.
+- **Sửa (migration lõi `0167`):** `bizcity_doc_put`, `bizcity_doc_link` (và hàm ghi phiên bản / liên kết đi kèm nếu có) đặt `SECURITY DEFINER`, ghim `search_path` (`pg_catalog, public`), chủ hàm là vai trò lõi đang có quyền ghi. **Kiểm đơn vị trong hàm:** `p_tenant` phải bằng đơn vị của phiên (`current_setting('app.tenant_id')` — theo cách RLS lõi đang dùng); sai → báo lỗi. Không cấp quyền ghi bảng lõi cho vai trò module. Không đổi chữ ký hàm, không đổi dữ liệu.
+- **Màn HT18:** thêm tên loại `sales.order`, `sales.invoice`, `sales.return`, `pricing.voucher`, `pricing.loyalty` vào `SoChungTuPage.tsx` (`TYPES`) và tên liên kết ở `doc-ref.routes.ts`; ca kiểm ở `so-chung-tu.test.ts`; cập nhật bảng "Đang có trong sổ" ở doc 26 §3.
+- **Kiểm:** module ghi được sổ qua hàm; gọi hàm với tenant khác phiên → lỗi; luồng cũ (mua, kho, tiền) vẫn đạt `so-chung-tu.test.ts`.
 
 ## 6. Kết quả chạy
 | | |
@@ -65,3 +69,4 @@ Không đưa đợt này: yêu cầu trả quá hạn, nháp khuyến mại, chu
 | Ngày | Thay đổi |
 |---|---|
 | 19/11/2026 | Tạo phiếu, chốt Q1–Q2 |
+| 19/11/2026 | Q3: tự sửa quyền lõi (0167) trong đợt này; mở rộng giữ chỗ |
