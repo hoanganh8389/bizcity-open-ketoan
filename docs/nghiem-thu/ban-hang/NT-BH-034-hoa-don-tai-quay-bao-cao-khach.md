@@ -8,7 +8,7 @@
 | Mục được giao | Bán hàng: yêu cầu ERP tab Banhang-CTKM POS-002d/e (hoá đơn điện tử tại quầy), Report e (báo cáo khách chi tiết), Report g (quyết toán quà theo khách) |
 | Ngày tạo | 19/11/2026 |
 | Trạng thái | **Đã chốt 19/11/2026** (Võ Hoàng) |
-| Căn cứ | Luồng POS cũ (`tgs_pos/assets/js/pos-payment.js` `openPaidReceiptWithViettelReview`, `openItemReviewModal`, `proceedItemReview`, `_sendTaxAndPrintBills`; `pos-tax-lookup.js`; khối "Khách xuất hoá đơn" `templates/front/pos-layout-tailwind.php`); NT-BH-010 (người mua trên đơn, `pos.order.invoice-buyer`) |
+| Căn cứ | Luồng POS cũ (`tgs_pos/assets/js/pos-payment.js` `openPaidReceiptWithViettelReview`, `openItemReviewModal`, `proceedItemReview`, `_sendTaxAndPrintBills`; `pos-tax-lookup.js`; khối "Khách xuất hoá đơn" trong `tgs_pos/templates/front/pos-layout-tailwind.php` (plugin website, ngoài repo này)); NT-BH-010 (người mua trên đơn, `pos.order.invoice-buyer`) |
 
 ## 1. Hiện trạng
 **POS cũ:** thanh toán xong, màn **"Khách xuất hoá đơn"** tự mở (shop có plugin Viettel), điền sẵn khách của đơn → thu ngân nhập / tra MST → **"Gửi thuế & in bill"**: in bill ngay, phát hành Viettel chạy ngầm, tự gửi email PDF, báo Zalo kế toán. Khách không lấy hoá đơn → vẫn một hoá đơn "Bán cho người tiêu dùng" (không có hoá đơn gộp cuối ngày). "Hủy gửi thuế" (Esc) → in bill, đơn chờ ở màn Gửi thuế để gửi sau.
