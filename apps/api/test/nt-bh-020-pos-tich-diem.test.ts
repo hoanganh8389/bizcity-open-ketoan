@@ -1,3 +1,4 @@
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — test dùng ngày tương đối (hạn trả NT-BH-030) (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mã phiếu máy bán mặc định dạng shop (CN01BT…, CN01.B…) (đóng góp)
 // [2026-11-15 04:05 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 1: tích / hoàn điểm theo đơn máy bán, chính sách website đẩy sang (đóng góp)
 /**
@@ -45,8 +46,10 @@ const O2 = '0193a1b2-0000-7000-8000-000000020002';
 const O3 = '0193a1b2-0000-7000-8000-000000020003';
 const R1 = '0193a1b2-0000-7000-8000-000000020101';
 
+const vnDate = (offset = 0) => new Date(Date.now() + 7 * 3600_000 + offset * 86_400_000).toISOString().slice(0, 10);
+const TODAY = vnDate();
 const order = (id: string, qty: number, customer: Record<string, unknown>) => ({
-  id, branchCode: 'CN01', businessDate: '2026-11-15', shiftId: 'ngay-2026-11-15', exportReasonCode: 'XBA', customer,
+  id, branchCode: 'CN01', businessDate: TODAY, shiftId: `ngay-${TODAY}`, exportReasonCode: 'XBA', customer,
   lines: [{ lineId: 'l1', sku: SKU, unitName: 'Lon', unitQty: qty, clientUnitPrice: 325_000 }],
   promotionSelections: [], payment: { mode: 'cash', cashGiven: 325_000 * qty }, clientTotal: 325_000 * qty, coreVersion: '0.1.0', promotionsVersion: '',
 });

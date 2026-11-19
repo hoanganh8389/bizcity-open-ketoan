@@ -1,3 +1,4 @@
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — test dùng ngày tương đối (hạn trả NT-BH-030) (đóng góp)
 // [2026-11-13 11:10 AM Võ Hoàng] POS-KM2 — phiếu NT-BH-012 (PHASE-031 · 00 §18): khuyến mại mở rộng trọn vòng — điều kiện, ưu tiên / áp riêng, trần NĐ81, cửa nạp, trả hàng trả hạn mức (đóng góp)
 /**
  * Số liệu theo phiếu §4: A 100.000, B 200.000, C 50.000, D 30.000; giỏ 5 A + 1 B + 2 C + 1 D (830.000). Ngày chứng từ 19/06/2026 (thứ Sáu).
@@ -113,7 +114,8 @@ describe('NT-BH-012 — khuyến mại mở rộng tính ở Core', () => {
 });
 
 describe('NT-BH-012 §5 dòng 10 — khách trả hàng trả hạn mức chương trình bán BH12', () => {
-  const deliver = () => dispatchOnce({ consumers: ['ban-hang.sale-program-usage'], limit: 100 });
+  // Giao việc chỉ của đơn vị thử (tenantId): chạy cả bộ, hàng đợi chung có việc của đơn vị khác chiếm hết lượt `limit` → chập chờn.
+  const deliver = () => dispatchOnce({ tenantId, consumers: ['ban-hang.sale-program-usage'], limit: 100 });
   const used = async () => {
     const list = (await call<{ data: { code: string; quotas: { branchCode: string; usedQty: number }[] }[] }>(ctx, 'GET', '/api/v1/sale-programs?search=CT-TRA')).body.data;
     return list.find((x) => x.code === 'CT-TRA')!.quotas.find((q) => q.branchCode === 'CN01')!.usedQty;

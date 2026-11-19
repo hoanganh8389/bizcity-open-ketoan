@@ -1,3 +1,4 @@
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — test dùng ngày tương đối (hạn trả NT-BH-030) (đóng góp)
 // [2026-11-12 10:05 PM Võ Hoàng] POS-KM — phiếu NT-BH-003 phần Core (PHASE-031 · 00 §17 mục 2–4): BH12 → evaluate → phiếu bán có policyRef → hạn mức tự trừ / trả (đóng góp)
 /**
  * Số liệu theo phiếu NT-BH-003 §4: SUA330 330.000 / hộp, SUA900 900.000 / hộp, QUA01 quà.
@@ -14,14 +15,16 @@ import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId = '';
-const today = new Date().toISOString().slice(0, 10);
+// Hôm nay theo giờ Việt Nam (không lấy ngày UTC: 00:00–07:00 giờ VN ngày UTC còn là hôm qua).
+const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
 const addDays = (d: string, n: number) => new Date(new Date(`${d}T00:00:00Z`).getTime() + n * 86400000).toISOString().slice(0, 10);
 
 type Program = { id: string; code: string; version: number; quotas: { branchCode: string; usedQty: number; remaining: number }[] };
 const programs: Record<string, Program> = {};
 
 const evaluate = (lines: unknown[], branchCode?: string) => call(ctx, 'POST', '/api/v1/policies/evaluate', { docDate: today, ...(branchCode ? { branchCode } : {}), lines });
-const deliver = () => dispatchOnce({ consumers: ['ban-hang.sale-program-usage'], limit: 100 });
+// Giao việc chỉ của đơn vị thử (tenantId): chạy cả bộ, hàng đợi chung có việc của đơn vị khác chiếm hết lượt `limit` → chập chờn.
+const deliver = () => dispatchOnce({ tenantId, consumers: ['ban-hang.sale-program-usage'], limit: 100 });
 const quota = async (code: string, branch = 'CN01') => {
   const list = (await call<{ data: Program[] }>(ctx, 'GET', `/api/v1/sale-programs?search=${code}`)).body.data;
   return list.find((p) => p.code === code)!.quotas.find((q) => q.branchCode === branch);

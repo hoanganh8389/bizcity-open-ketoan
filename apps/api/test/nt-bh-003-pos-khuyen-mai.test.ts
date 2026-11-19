@@ -1,3 +1,4 @@
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — test dùng ngày tương đối (hạn trả NT-BH-030) (đóng góp)
 /** NT-BH-003 — khuyến mại ở máy bán POS theo Chương trình bán (BH12): Core tính → module pos nhận dòng quà / giảm có căn cứ → phiếu bán → hạn mức. */
 // [2026-11-12 10:50 PM Võ Hoàng] POS-KM — test tích hợp phiếu NT-BH-003 phần module pos (PHASE-031 · 00 §17 mục 6) (đóng góp)
 import { existsSync } from 'node:fs';
@@ -94,7 +95,8 @@ describe.skipIf(!HAS)('NT-BH-003 — khuyến mại ở máy bán theo Chương 
     expect(ev.payload.lines.find((l) => l.lineKey === 'g1')).toMatchObject({ isGift: true, policyRef: { key: 'CT-SUA330', version: 1, line: 'gift' } });
     expect(ev.policy_check?.refs.every((x) => x.ok), JSON.stringify(ev.policy_check)).toBe(true);
 
-    await dispatchOnce({ consumers: ['ban-hang.sale-program-usage'], limit: 100 });
+    // Giao việc chỉ của đơn vị thử (tenantId): chạy cả bộ, hàng đợi chung có việc của đơn vị khác chiếm hết lượt `limit` → chập chờn.
+    await dispatchOnce({ tenantId: s.tenantId, consumers: ['ban-hang.sale-program-usage'], limit: 100 });
     expect(await used('CT-SUA330')).toBe(2);
     expect(await used('CT-SUA900')).toBe(1);
   });
