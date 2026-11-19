@@ -265,6 +265,12 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | **Kênh bán hàng** (1.20.0-draft) <!-- [2026-11-18 11:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-031 kênh bán hàng (đóng góp) --> | | | |
 | `POS_SALE_SOURCE` | `VALIDATION_ERROR` | Đơn máy bán / phiếu bán BH10 mang kênh bán (mã, hoặc tên với máy bán cũ) không có trong danh mục Kênh bán hàng hoặc kênh đã ngừng dùng; kèm `saleSource`, `cause` (`unknown` / `inactive`). Đơn không gửi kênh → kênh mặc định (Gần shop), không lỗi; đơn bán lúc mất mạng gửi bù → nhận | module `pos`, `phieu-ban` (đề xuất, chưa gộp) |
 | `POS_SALE_SOURCE_EXISTS` | `CONFLICT` | Thêm / sửa kênh bán hàng trùng mã hoặc tên kênh đã có (kênh đã ngừng thì Dùng lại); kèm `field` | module `pos` (đề xuất, chưa gộp) |
+| **Giao hàng đơn đặt hàng, copy đơn** (1.21.0-draft) <!-- [2026-11-18 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-032 giao hàng đơn đặt hàng + copy đơn (đóng góp) --> | | | |
+| `PHIEU_BAN_NO_SHIP_WAREHOUSE` | `VALIDATION_ERROR` | Lập chuyến giao / đi giao mà cửa hàng chưa khai kho KHG "Kho hàng gửi bán" (`bizcity.phieu_ban.ship_warehouses`, BH17) hoặc kho khai không thuộc cửa hàng / ngừng dùng / trùng kho bán, kho giữ hàng; kèm `branchCode` | module `phieu-ban` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_NO_SHIP_FEE_ITEM` | `VALIDATION_ERROR` | Chuyến giao có phí ship thu khách mà chưa khai mã dịch vụ phí ship (`bizcity.phieu_ban.ship_fee_sku`, BH17) hoặc mã không có / ngừng / không bán; kèm `fee` hoặc `sku` | module `phieu-ban` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_NO_COD_METHOD` | `VALIDATION_ERROR` | Chuyến giao có tiền COD mà hãng chưa có hình thức thanh toán "COD — <hãng>" (`bizcity.phieu_ban.cod_methods`, BH17; tài khoản phải thu hãng khai ở hình thức, không ở module); kèm `carrier` | module `phieu-ban` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_SHIPMENT_STATE` | `CONFLICT` | Đổi trạng thái chuyến giao sai bước (Chờ lấy → Đang giao / Hoàn; Đang giao → Đã giao / Hoàn; Đã giao, Hoàn là cuối) hoặc sửa số lượng hàng của phiếu bán sinh từ chuyến; kèm `status` | module `phieu-ban` (đề xuất, chưa gộp) |
+| `PHIEU_BAN_COPY_SOURCE` | `VALIDATION_ERROR` | Copy đơn: không có đơn đặt hàng / phiếu bán BH10 / đơn máy bán gốc, phiếu BH10 chưa duyệt, đơn máy bán chưa hoàn tất / đã huỷ, số đơn có ở nhiều cửa hàng, không còn dòng hàng; kèm `status` khi có | module `phieu-ban` (đề xuất, chưa gộp) |
 | **Máy bán bán đúng bảng giá** (1.13.0-draft) <!-- [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022 (đóng góp) --> | | | |
 | `POS_MANUAL_DISCOUNT` | `VALIDATION_ERROR` | Dòng có giảm tay: thu ngân không giảm tay, chỉ giảm theo chương trình khuyến mại; kèm `items: [{ lineId, sku }]` | module `pos` (đề xuất, chưa gộp) |
 | `POS_NO_PRICE` | `VALIDATION_ERROR` | Mã × ĐVT chưa có giá ở bảng giá cửa hàng (trừ quà, hàng Nội bộ, bill Z 0đ); kèm `items: [{ sku, unit }]` | module `pos` (đề xuất, chưa gộp) |
@@ -305,6 +311,8 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 ## 7. Changelog
 
 <!-- [2026-11-11 03:30 PM Võ Hoàng] POS-W2 — 1.8.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+<!-- [2026-11-18 11:30 PM Võ Hoàng] NGHIEM-THU — 1.21.0-draft (đóng góp, chờ chủ dự án duyệt) -->
+- **1.21.0-draft (2026-11-18, giao hàng đơn đặt hàng, copy đơn):** §4c thêm `PHIEU_BAN_NO_SHIP_WAREHOUSE`, `PHIEU_BAN_NO_SHIP_FEE_ITEM`, `PHIEU_BAN_NO_COD_METHOD`, `PHIEU_BAN_SHIPMENT_STATE`, `PHIEU_BAN_COPY_SOURCE` (module phieu-ban, phiếu NT-BH-032). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 11:00 PM Võ Hoàng] NGHIEM-THU — 1.20.0-draft (đóng góp, chờ chủ dự án duyệt) -->
 - **1.20.0-draft (2026-11-18, kênh bán hàng):** §4c thêm `POS_SALE_SOURCE` (module pos, phieu-ban), `POS_SALE_SOURCE_EXISTS` (module pos) (phiếu NT-BH-031). Không thêm `code`, không đổi HTTP.
 <!-- [2026-11-18 10:00 PM Võ Hoàng] NGHIEM-THU — 1.19.0-draft (đóng góp, chờ chủ dự án duyệt) -->

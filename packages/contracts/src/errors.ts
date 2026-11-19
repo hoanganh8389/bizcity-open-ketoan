@@ -189,6 +189,12 @@ export const ERROR_REASONS = {
   // [2026-11-18 11:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-031 kênh bán hàng (BIZCITY-ERRORS 1.20.0-draft §4c, đóng góp)
   POS_SALE_SOURCE: 'Đơn máy bán / phiếu bán BH10 mang mã kênh bán không có trong danh mục Kênh bán hàng hoặc kênh đã ngừng dùng; kèm saleSource, cause (unknown / inactive)',
   POS_SALE_SOURCE_EXISTS: 'Thêm / sửa kênh bán hàng trùng mã hoặc tên kênh đã có (kênh đã ngừng thì dùng lại, không thêm mới); kèm field',
+  // [2026-11-18 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-032 giao hàng đơn đặt hàng + copy đơn (BIZCITY-ERRORS 1.21.0-draft §4c, đóng góp)
+  PHIEU_BAN_NO_SHIP_WAREHOUSE: 'Cửa hàng chưa khai kho KHG (hàng gửi bán) nhận hàng đang giao của đơn đặt hàng (bizcity.phieu_ban.ship_warehouses, BH17) hoặc kho khai không dùng được; kèm branchCode',
+  PHIEU_BAN_NO_SHIP_FEE_ITEM: 'Chuyến giao có phí ship mà chưa khai mã dịch vụ phí ship (bizcity.phieu_ban.ship_fee_sku, BH17) hoặc mã không có / ngừng / không bán; kèm fee hoặc sku',
+  PHIEU_BAN_NO_COD_METHOD: 'Chuyến giao có tiền COD mà hãng chưa có hình thức thanh toán "COD — <hãng>" (bizcity.phieu_ban.cod_methods, BH17); kèm carrier',
+  PHIEU_BAN_SHIPMENT_STATE: 'Trạng thái chuyến giao không cho thao tác (sai bước Chờ lấy → Đang giao → Đã giao | Hoàn; sửa số lượng phiếu bán của chuyến); kèm status',
+  PHIEU_BAN_COPY_SOURCE: 'Copy đơn: không có đơn / phiếu / đơn máy bán gốc, phiếu BH10 chưa duyệt, đơn máy bán chưa hoàn tất, không có dòng hàng; kèm status khi có',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

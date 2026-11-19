@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_settings@1",
-  "note": "Khoá cấu hình của module phieu-ban (phiếu NT-BH-021, NT-BH-023). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key (màn BH17 Cài đặt bán hàng).",
+  "note": "Khoá cấu hình của module phieu-ban (phiếu NT-BH-021, NT-BH-023, NT-BH-032). Gộp vào registry lúc nạp module (registerModuleSettings); đọc ctx.settings.get, ghi PUT /api/v1/settings/values/:key (màn BH17 Cài đặt bán hàng).",
   "settings": [
     {
       "key": "bizcity.phieu_ban.block_negative_stock",
@@ -28,6 +28,51 @@
       "default": "[]",
       "readBy": "modules/phieu-ban/api/order-service.ts (gửi / duyệt đơn đặt hàng)",
       "writeBy": "thẻ Cài đặt của màn Đơn đặt hàng → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    },
+    {
+      "key": "bizcity.phieu_ban.ship_warehouses",
+      "class": "B",
+      "owner": "phieu-ban",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.phieu_ban.ship_warehouses",
+      "schema": "kho KHG (hàng gửi bán) nhận hàng đang giao của đơn đặt hàng theo cửa hàng (NT-BH-032 Q2): mảng \"<mã cửa hàng>=<mã kho>\"; cửa hàng chưa khai thì lập chuyến / đi giao báo PHIEU_BAN_NO_SHIP_WAREHOUSE",
+      "valueType": "string[]",
+      "default": "[]",
+      "readBy": "modules/phieu-ban/api/order-service.ts (lập chuyến giao, Đang giao)",
+      "writeBy": "màn BH17 Cài đặt bán hàng (khối Giao hàng đơn đặt hàng) → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    },
+    {
+      "key": "bizcity.phieu_ban.ship_fee_sku",
+      "class": "B",
+      "owner": "phieu-ban",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.phieu_ban.ship_fee_sku",
+      "schema": "mã dịch vụ (danh mục mặt hàng) của dòng \"Phí ship thu khách\" trên phiếu bán của chuyến giao (NT-BH-032 Q3); trống mà chuyến có phí ship → PHIEU_BAN_NO_SHIP_FEE_ITEM",
+      "valueType": "string",
+      "default": "\"\"",
+      "readBy": "modules/phieu-ban/api/order-service.ts (chuyến Đã giao)",
+      "writeBy": "màn BH17 Cài đặt bán hàng (khối Giao hàng đơn đặt hàng) → PUT /api/v1/settings/values/:key",
+      "permission": "settings:write",
+      "audit": "có",
+      "affectsPosting": false
+    },
+    {
+      "key": "bizcity.phieu_ban.cod_methods",
+      "class": "B",
+      "owner": "phieu-ban",
+      "scopes": ["tenant"],
+      "storage": "tenants.settings.phieu_ban.cod_methods",
+      "schema": "hình thức thanh toán \"COD — <hãng>\" (phải thu hãng, tài khoản + đối tượng khai ở hình thức) theo hãng vận chuyển (NT-BH-032 Q3): mảng \"<mã hãng>=<mã hình thức>\", hãng tự giao là SELF; chuyến có COD mà hãng chưa khai → PHIEU_BAN_NO_COD_METHOD",
+      "valueType": "string[]",
+      "default": "[]",
+      "readBy": "modules/phieu-ban/api/order-service.ts (chuyến Đã giao)",
+      "writeBy": "màn BH17 Cài đặt bán hàng (khối Giao hàng đơn đặt hàng) → PUT /api/v1/settings/values/:key",
       "permission": "settings:write",
       "audit": "có",
       "affectsPosting": false

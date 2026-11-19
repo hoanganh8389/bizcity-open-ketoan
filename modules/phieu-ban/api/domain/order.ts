@@ -15,6 +15,44 @@ export type OrderSource = (typeof ORDER_SOURCES)[number];
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
 const optDate = date.optional().or(z.literal('').transform(() => undefined));
 
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: thông tin giao, chuyến giao (đóng góp)
+/** Mã hãng "tự giao" (nhân viên cửa hàng giao). */
+export const SELF_CARRIER = 'SELF';
+const money = z.number().finite().min(0).max(1e12);
+export const shippingInput = z.object({
+  receiver: z.string().trim().max(255).optional(),
+  phone: z.string().trim().max(32).optional(),
+  address: z.string().trim().max(500).optional(),
+  /** Phí ship thu khách (gồm thuế) — thành một dòng dịch vụ trên phiếu bán của chuyến giao. */
+  fee: money.optional(),
+  /** Hãng vận chuyển: SELF (tự giao) hoặc mã hãng (vd GHN) — chọn hình thức thanh toán "COD — <hãng>" theo cài đặt. */
+  carrier: z.string().trim().max(32).optional(),
+  trackingNo: z.string().trim().max(64).optional(),
+  /** Tiền thu hộ (COD) hãng thu của khách. */
+  cod: money.optional(),
+});
+export type ShippingInput = z.infer<typeof shippingInput>;
+export type Shipping = { receiver?: string; phone?: string; address?: string; fee: number; carrier?: string; trackingNo?: string; cod: number };
+
+/** Chuẩn hoá thông tin giao (tiền làm tròn đồng, hãng viết hoa, bỏ ô trống); không khai gì → null. */
+export function normShipping(s: ShippingInput | undefined | null): Shipping | null {
+  if (!s) return null;
+  const t = (x?: string) => (x && x.trim() ? x.trim() : undefined);
+  const out: Shipping = {
+    ...(t(s.receiver) ? { receiver: t(s.receiver) } : {}), ...(t(s.phone) ? { phone: t(s.phone) } : {}), ...(t(s.address) ? { address: t(s.address) } : {}),
+    fee: roundMoney(s.fee ?? 0), ...(t(s.carrier) ? { carrier: t(s.carrier)!.toUpperCase() } : {}), ...(t(s.trackingNo) ? { trackingNo: t(s.trackingNo) } : {}),
+    cod: roundMoney(s.cod ?? 0),
+  };
+  return Object.keys(out).length > 2 || out.fee > 0 || out.cod > 0 ? out : null;
+}
+
+export const SHIPMENT_STATUSES = ['waiting', 'shipping', 'delivered', 'returned'] as const;
+export type ShipmentStatus = (typeof SHIPMENT_STATUSES)[number];
+export const SHIPMENT_LABEL: Record<ShipmentStatus, string> = { waiting: 'Chờ lấy hàng', shipping: 'Đang giao', delivered: 'Đã giao', returned: 'Hoàn' };
+/** Đổi trạng thái chuyến giao được phép: Chờ lấy → Đang giao | Hoàn (huỷ chuyến trước khi lấy); Đang giao → Đã giao | Hoàn. */
+export const SHIPMENT_NEXT: Record<ShipmentStatus, readonly ShipmentStatus[]> = { waiting: ['shipping', 'returned'], shipping: ['delivered', 'returned'], delivered: [], returned: [] };
+export type ShipLine = { lineKey: string; sku: string; name: string; unit: string; qty: number };
+
 export const orderInput = z.object({
   orderDate: date,
   branchCode: z.string().trim().min(1, 'Chưa chọn cửa hàng').max(32),
@@ -29,11 +67,16 @@ export const orderInput = z.object({
   lines: z.array(lineInput).min(1, 'Đơn chưa có dòng hàng').max(500),
   note: z.string().trim().max(1000).optional(),
   policyRefs: z.array(z.object({ key: z.string().trim().min(1).max(64), version: z.number().int().min(1), hash: z.string().trim().min(1).max(128) })).max(50).optional(),
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032 Q1: thông tin giao trên đơn đặt hàng (đóng góp)
+  /** Thông tin giao (NT-BH-032): người nhận, SĐT, địa chỉ, phí ship thu khách, hãng (SELF = tự giao), mã vận đơn, tiền COD. */
+  shipping: shippingInput.optional(),
 });
 export type OrderInput = z.infer<typeof orderInput>;
 
-export type OrderLine = Line & { delivered: number; held: number };
-export type Delivery = { docId: string; docNo: string; at: string; by: string; lines: { lineKey: string; sku: string; qty: number }[]; returned?: boolean };
+/** delivered = đã giao (phiếu bán đã sinh); held = đang giữ ở KCB cho phần còn lại; shipping = đang trên chuyến giao chưa xong (NT-BH-032). */
+export type OrderLine = Line & { delivered: number; held: number; shipping?: number };
+/** Một lần giao sinh phiếu bán; `shipmentId` = phiếu bán của chuyến giao (NT-BH-032, xuất từ kho KHG). */
+export type Delivery = { docId: string; docNo: string; at: string; by: string; lines: { lineKey: string; sku: string; qty: number }[]; returned?: boolean; shipmentId?: string };
 export type OrderBody = {
   partner?: { code: string; name: string; taxCode?: string };
   customer?: { name?: string; phone?: string };
@@ -43,6 +86,8 @@ export type OrderBody = {
   policyRefs?: { key: string; version: number; hash: string }[];
   deliveries: Delivery[];
   rejection?: { by: string; at: string; note: string };
+  /** NT-BH-032: đơn copy từ đơn / hoá đơn khác (loại + số gốc). */
+  copiedFrom?: { kind: 'order' | 'sale' | 'pos'; no: string };
 };
 
 export const r4 = (n: number) => Math.round(n * 10_000) / 10_000;
@@ -56,8 +101,12 @@ export function formatOrderNo(period: string, n: number): string {
 /** Số điện thoại chỉ giữ chữ số (lọc trùng không lệ thuộc cách gõ). */
 export const normPhone = (s: string | undefined | null) => (s ?? '').replace(/\D+/g, '');
 
-export const remainingOf = (l: Pick<OrderLine, 'qty' | 'delivered'>) => r4(Math.max(0, l.qty - l.delivered));
-export const fullyDelivered = (lines: readonly OrderLine[]) => lines.every((l) => remainingOf(l) <= 0);
+/** Còn giao / đi giao được = SL − đã giao − đang trên chuyến giao (NT-BH-032). Cũng là số phải giữ ở KCB. */
+export const remainingOf = (l: Pick<OrderLine, 'qty' | 'delivered'> & { shipping?: number }) => r4(Math.max(0, l.qty - l.delivered - (l.shipping ?? 0)));
+/** Giao đủ: mọi dòng đã giao hết (chuyến đang đi chưa tính). */
+export const fullyDelivered = (lines: readonly OrderLine[]) => lines.every((l) => r4(l.qty - l.delivered) <= 0);
+/** Còn chuyến giao chưa xong (Chờ lấy / Đang giao). */
+export const anyShipping = (lines: readonly OrderLine[]) => lines.some((l) => (l.shipping ?? 0) > 0);
 export const anyDelivered = (lines: readonly OrderLine[]) => lines.some((l) => l.delivered > 0);
 
 /** Đơn quá hạn hiệu lực (so ngày, không giờ). */
@@ -73,11 +122,15 @@ export function mergeProgress(old: readonly OrderLine[], next: readonly Line[]):
   const lines = next.map((l) => {
     const o = prev.get(l.lineKey);
     if (o && o.sku !== l.sku && o.delivered > 0) problems.push(`Dòng ${l.lineKey}: đã giao ${o.sku} — không đổi mã hàng`);
-    if (o && l.qty < o.delivered) problems.push(`Dòng ${l.lineKey} (${l.sku}): số lượng ${l.qty} nhỏ hơn số đã giao ${o.delivered}`);
-    return { ...l, delivered: o?.delivered ?? 0, held: o && o.sku === l.sku ? o.held : 0 };
+    if (o && o.sku !== l.sku && (o.shipping ?? 0) > 0) problems.push(`Dòng ${l.lineKey}: ${o.sku} đang trên chuyến giao — không đổi mã hàng`);
+    if (o && l.qty < r4(o.delivered + (o.shipping ?? 0))) {
+      problems.push(`Dòng ${l.lineKey} (${l.sku}): số lượng ${l.qty} nhỏ hơn số đã giao${o.shipping ? ' / đang giao' : ''} ${r4(o.delivered + (o.shipping ?? 0))}`);
+    }
+    return { ...l, delivered: o?.delivered ?? 0, held: o && o.sku === l.sku ? o.held : 0, ...(o?.shipping ? { shipping: o.shipping } : {}) };
   });
   const keep = new Set(next.map((l) => l.lineKey));
   const removed = old.filter((l) => !keep.has(l.lineKey) || next.find((n) => n.lineKey === l.lineKey)!.sku !== l.sku);
+  for (const l of removed) if ((l.shipping ?? 0) > 0 && !keep.has(l.lineKey)) problems.push(`Dòng ${l.lineKey} (${l.sku}) đang trên chuyến giao — không bỏ được`);
   for (const l of removed) if (l.delivered > 0 && !keep.has(l.lineKey)) problems.push(`Dòng ${l.lineKey} (${l.sku}) đã giao ${l.delivered} — không bỏ được, giảm số lượng về số đã giao`);
   return { lines, removed: removed.filter((l) => l.held > 0), problems };
 }
@@ -173,7 +226,7 @@ export function deliveryLines(lines: readonly OrderLine[], delivered: readonly {
 
 /** Giá trị chưa giao của đơn (sau thuế, theo tỷ lệ số còn lại) — cộng vào nợ khi kiểm hạn mức. */
 export function undeliveredValue(body: Pick<OrderBody, 'lines'>): number {
-  return roundMoney(body.lines.reduce((s, l) => s + (l.qty > 0 ? (l.amountBeforeTax + l.taxAmount) * remainingOf(l) / l.qty : 0), 0));
+  return roundMoney(body.lines.reduce((s, l) => s + (l.qty > 0 ? (l.amountBeforeTax + l.taxAmount) * Math.max(0, l.qty - l.delivered) / l.qty : 0), 0));
 }
 
 /** Nợ của khách từ báo cáo công nợ theo đối tượng (mọi tài khoản theo dõi đối tượng): nợ = Σ(dư Nợ − dư Có); phát sinh Nợ trong kỳ. */
@@ -255,8 +308,12 @@ export const holdDocKey = (orderId: string, seq: number) => `phieu-ban:dh:${orde
  * Chứng từ chuyển kho giữ / trả hàng (một chứng từ cho cả cặp, cùng chi nhánh: toBranchCode = branchCode, dòng ghi kho xuất +
  * kho nhận). amount 0: Kernel định giá theo giá vốn; cùng tài khoản kho thì không phát sinh bút toán, chỉ thẻ kho đổi kho.
  */
-export function toHoldDoc(d: { orderId: string; orderNo: string; seq: number; branchCode: string; docDate: string; from: string; to: string; moves: readonly Move[]; release: boolean }) {
+export function toHoldDoc(d: { orderId: string; orderNo: string; seq: number; branchCode: string; docDate: string; from: string; to: string; moves: readonly Move[]; release: boolean;
+  /** NT-BH-032: ship = đi giao (KCB → KHG), back = hàng hoàn (KHG → KCB); trống = giữ / trả hàng giữ như cũ. */
+  kind?: 'ship' | 'back' }) {
   const keys = new Set<string>();
+  const tag = d.kind === 'ship' ? 'S' : d.kind === 'back' ? 'H' : d.release ? 'T' : 'G';
+  const what = d.kind === 'ship' ? 'Đi giao' : d.kind === 'back' ? 'Hàng hoàn (khách không nhận)' : d.release ? 'Trả hàng giữ' : 'Giữ hàng';
   return {
     docType: 'transfer',
     docKey: holdDocKey(d.orderId, d.seq),
@@ -264,9 +321,9 @@ export function toHoldDoc(d: { orderId: string; orderNo: string; seq: number; br
     branchCode: d.branchCode,
     toBranchCode: d.branchCode,
     status: 'received',
-    docNo: `${d.orderNo}-${d.release ? 'T' : 'G'}${d.seq}`,
+    docNo: `${d.orderNo}-${tag}${d.seq}`,
     docDate: d.docDate,
-    description: `${d.release ? 'Trả hàng giữ' : 'Giữ hàng'} cho đơn đặt hàng ${d.orderNo}: ${d.from} → ${d.to}`,
+    description: `${what} cho đơn đặt hàng ${d.orderNo}: ${d.from} → ${d.to}`,
     sourceRef: { type: 'phieu-ban.order', id: d.orderId, label: d.orderNo },
     lines: d.moves.filter((m) => m.qty > 0).map((m, i) => {
       let k = m.lineKey;
@@ -276,4 +333,55 @@ export function toHoldDoc(d: { orderId: string; orderNo: string; seq: number; br
     }),
     totals: { total: 0 },
   };
+}
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: chuyến giao — giữ chỗ số lượng, giao xong, hoàn (đóng góp)
+/**
+ * Lập chuyến giao: mỗi dòng ≤ số còn lại (SL − đã giao − đang trên chuyến khác). Dòng: shipping tăng, held giảm (hàng vẫn ở KCB tới khi
+ * Đang giao). Trả `ship` (dòng chuyến) hoặc `over` / `problems`.
+ */
+export function reserveShipment(lines: readonly OrderLine[], req: readonly { lineKey: string; qty: number }[]) {
+  const a = applyDelivery(lines, req);
+  const byKey = new Map(lines.map((l) => [l.lineKey, l]));
+  const want = new Map(a.delivered.map((d) => [d.lineKey, d.qty]));
+  const next = lines.map((l) => {
+    const q = want.get(l.lineKey) ?? 0;
+    return q ? { ...l, shipping: r4((l.shipping ?? 0) + q), held: r4(Math.max(0, l.held - q)) } : { ...l };
+  });
+  const ship: ShipLine[] = a.delivered.map((d) => { const l = byKey.get(d.lineKey)!; return { lineKey: d.lineKey, sku: l.sku, name: l.name, unit: l.unit, qty: d.qty }; });
+  return { lines: next, ship, over: a.over, problems: a.problems };
+}
+
+const sumByKey = (xs: readonly { lineKey: string; qty: number }[]) => {
+  const q = new Map<string, number>();
+  for (const s of xs) q.set(s.lineKey, r4((q.get(s.lineKey) ?? 0) + s.qty));
+  return q;
+};
+
+/** Chuyến giao xong (Đã giao): đang giao → đã giao. `undo` (xoá phiếu bán nháp của chuyến): ngược lại, hàng vẫn ở KHG. */
+export function shipmentDelivered(lines: readonly OrderLine[], ship: readonly { lineKey: string; qty: number }[], undo = false) {
+  const q = sumByKey(ship);
+  const k = undo ? -1 : 1;
+  return lines.map((l) => {
+    const n = q.get(l.lineKey) ?? 0;
+    if (!n) return { ...l };
+    return { ...l, delivered: r4(Math.max(0, l.delivered + k * n)), shipping: r4(Math.max(0, (l.shipping ?? 0) - k * n)) };
+  });
+}
+
+/** Chuyến hoàn (khách không nhận / huỷ trước khi lấy): đang giao → giữ lại ở KCB cho đơn (đơn vẫn mở phần chưa giao). */
+export function shipmentReturned(lines: readonly OrderLine[], ship: readonly { lineKey: string; qty: number }[]) {
+  const q = sumByKey(ship);
+  return lines.map((l) => {
+    const n = q.get(l.lineKey) ?? 0;
+    return n ? { ...l, shipping: r4(Math.max(0, (l.shipping ?? 0) - n)), held: r4(l.held + n) } : { ...l };
+  });
+}
+
+/** Phí ship thu khách (gồm thuế) → đơn giá trước thuế của dòng dịch vụ (làm tròn đồng). */
+export const feeBeforeTax = (fee: number, ratePct: number) => roundMoney(fee / (1 + ratePct / 100));
+
+/** Khoá cấu hình ánh xạ "<hãng>=<mã hình thức thanh toán>" (cùng khuôn với kho giữ hàng); mã hãng viết hoa. */
+export function parseCarrierMap(v: unknown): Map<string, string> {
+  return new Map([...parseHoldMap(v)].map(([k, x]) => [k.toUpperCase(), x]));
 }

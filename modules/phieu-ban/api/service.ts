@@ -21,6 +21,8 @@ const fail = (problems: string[]): never => { throw Errors.validation(problems.j
 
 // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: công tắc riêng của phiếu bán (Q6), mặc định tắt = chỉ cảnh báo như trước
 export const BLOCK_NEGATIVE_STOCK = 'bizcity.phieu_ban.block_negative_stock';
+/** Khoá mã dịch vụ phí ship (NT-BH-032) — trùng hằng của order-service (không import vòng). */
+const SHIP_FEE_SKU = 'bizcity.phieu_ban.ship_fee_sku';
 
 
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt khuyến mại dùng chung với máy bán (đóng góp)
@@ -205,6 +207,8 @@ async function applyDocVouchers(ctx: ActionContext, r: DocRow, body: Body): Prom
 export async function approve(ctx: ActionContext, id: string) {
   // Cài đặt đọc ngoài giao dịch của module (vai trò module không đọc bảng cấu hình của Core).
   const blockStock = (await ctx.settings.get<unknown>(BLOCK_NEGATIVE_STOCK)) === true;
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: dòng phí ship (mã dịch vụ khai ở BH17) không kiểm tồn — Core chưa có loại mặt hàng dịch vụ (đóng góp)
+  const feeSku = blockStock ? String((await ctx.settings.get<unknown>(SHIP_FEE_SKU)) ?? '').trim() : '';
   const head = await ctx.data.module(async (tx) => getDoc(tx, id));
   const giftWh = await giftWarehouseOf(ctx, head.kind, head.branch_code, head.body.lines);
   const prepared = await ctx.data.module(async (tx) => {
@@ -225,12 +229,13 @@ export async function approve(ctx: ActionContext, id: string) {
     }
     if (r.kind === 'sale' && blockStock) {
       // Phiếu đang sửa đã bỏ duyệt (chứng từ trong sổ đã huỷ) nên tồn đọc được không còn trừ chính nó.
-      const have = await lockedStock(tx, r.branch_code, r.warehouse_code, p.body.lines.filter((l) => !l.warehouseCode).map((l) => l.sku));
+      const goods = p.body.lines.filter((l) => !feeSku || l.sku !== feeSku);
+      const have = await lockedStock(tx, r.branch_code, r.warehouse_code, goods.filter((l) => !l.warehouseCode).map((l) => l.sku));
       // NT-BH-028: dòng quà ở kho quà kiểm tồn kho quà, không cộng chung với kho của phiếu.
-      const giftLines = p.body.lines.filter((l) => l.warehouseCode);
+      const giftLines = goods.filter((l) => l.warehouseCode);
       const short = giftLines.length && giftWh
-        ? stockShortByWarehouse(p.body.lines, new Map([[r.warehouse_code ?? '', have], [giftWh, await lockedStock(tx, r.branch_code, giftWh, giftLines.map((l) => l.sku))]]), r.warehouse_code ?? '')
-        : stockShortOf(p.body.lines, have);
+        ? stockShortByWarehouse(goods, new Map([[r.warehouse_code ?? '', have], [giftWh, await lockedStock(tx, r.branch_code, giftWh, giftLines.map((l) => l.sku))]]), r.warehouse_code ?? '')
+        : stockShortOf(goods, have);
       if (short.length) {
         const where = r.warehouse_code || r.branch_code;
         throw Errors.validation(`Bán quá tồn: ${short.map((s) => `${s.sku} cần ${s.need}, tồn ${s.have}`).join('; ')} ở ${where} — tắt công tắc "Chặn bán quá tồn ở phiếu bán nhập tay" ở BH17 nếu muốn chỉ cảnh báo`,

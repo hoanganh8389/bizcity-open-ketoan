@@ -52,6 +52,22 @@ Nháp (báo giá, hạn hiệu lực) ──Gửi──► hạn mức / nợ qu
 - Quyền `phieu-ban:order-approve` (chủ đơn vị, kế toán trưởng) duyệt / từ chối; người lập không tự duyệt.
 - API: `GET /orders`, `GET /orders/:id`, `GET /orders/:id/history`, `GET /order-settings`, `POST /orders`, `PUT /orders/:id`, `POST /orders/import`, `POST /orders/:id/{send,approve,reject,deliver,close,cancel}`.
 
+## Giao hàng + copy đơn (NT-BH-032) <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: chuyến giao qua kho KHG, phí ship, COD, copy đơn (đóng góp) -->
+
+```text
+Đã gửi ──Lập chuyến (≤ còn lại)──► Chờ lấy (shipping += SL, hàng còn ở KCB)
+   Chờ lấy ──Đi giao──► Đang giao: ctx.ledger.submit(transfer KCB → KHG, docNo DH…-S<n>)            (chưa doanh thu)
+   Đang giao ──Đã giao──► phiếu bán nháp xuất từ KHG: dòng hàng + dòng SHIP (ship_fee_sku) + payment COD (cod_methods[hãng])
+   Đang giao ──Hoàn────► transfer KHG → KCB (DH…-H<n>), hàng giữ lại cho đơn;  Chờ lấy ──Hoàn──► chỉ trả chỗ
+```
+
+- Bảng `order_shipments` (chuyến: trạng thái, hãng, mã vận đơn, phí ship, COD, kho KHG, dòng, phiếu bán, nhật ký); cột thông tin giao + `copied_from` ở `orders`. Dòng đơn thêm `shipping` (đang trên chuyến chưa xong): còn lại = SL − đã giao − đang giao.
+- Khoá: `bizcity.phieu_ban.ship_warehouses` (`["CN01=KHO-KHG"]`), `bizcity.phieu_ban.ship_fee_sku`, `bizcity.phieu_ban.cod_methods` (`["GHN=COD-GHN"]`) — khai ở BH17 (module pos, khối ⑤). Thiếu → `PHIEU_BAN_NO_SHIP_WAREHOUSE` / `PHIEU_BAN_NO_SHIP_FEE_ITEM` / `PHIEU_BAN_NO_COD_METHOD`.
+- Đóng / huỷ đơn còn chuyến chưa xong → chặn (`PHIEU_BAN_ORDER_STATE`, `cause: shipping`). Phiếu bán của chuyến không đổi số lượng hàng (`PHIEU_BAN_SHIPMENT_STATE`); xoá phiếu nháp → chuyến về Đang giao.
+- Copy: `POST /orders/copy` (`from` = `order` / `sale` / `pos`). Đơn máy bán đọc qua action `pos.order.lines` của module pos (`ctx.actions.call`). Giá cửa hàng hôm nay; khuyến mại `core.policy.evaluate` (không gọi được → không áp, `meta.promoSkipped`).
+- Quyền `phieu-ban:giao-hang-lap` (lập chuyến), `phieu-ban:giao-hang-sua` (đổi trạng thái chuyến); copy dùng `phieu-ban:write`.
+- API: `POST /orders/:id/shipments`, `POST /orders/:id/shipments/:shipmentId/status`, `POST /orders/copy`; `GET /order-settings` kèm `ship`.
+
 ## Chưa làm (đợt sau)
 
 - Khuyến mại / chương trình bán (`core.policy.evaluate`) trên màn nhập. (Giá theo cửa hàng + cảnh báo tồn: đã có từ 14/11 — `GET /api/v1/m/phieu-ban/quote`.)
