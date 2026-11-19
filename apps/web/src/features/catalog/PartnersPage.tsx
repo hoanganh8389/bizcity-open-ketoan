@@ -93,7 +93,8 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
     { key: 'code', header: `Mã ${abbr}`, type: 'code', width: 120, render: (p) => (p.kind === 'supplier' || p.alsoKinds?.includes('supplier')
       ? <Link to={`/mua-hang/nha-cung-cap/${encodeURIComponent(p.code)}`} onClick={(e) => e.stopPropagation()} title="Mở hồ sơ nhà cung cấp: hợp đồng, mặt hàng và giá mua">{p.code}</Link> : p.code) },
     { key: 'name', header: `Tên ${abbr}`, width: 240 },
-    { key: 'parentCode', header: 'Thuộc đơn vị cha', width: 200, title: 'Đơn vị mẹ của chi nhánh / đơn vị con; trống = đơn vị độc lập', value: (p) => (p.parentCode ? `${p.parentCode} - ${p.parentName ?? ''}` : '') },
+    // [2026-11-19 10:28 AM khanhtd] DM12/DM13 — đơn vị cha chưa có tên thì chỉ hiện mã, không thừa " - "
+    { key: 'parentCode', header: 'Thuộc đơn vị cha', width: 200, title: 'Đơn vị mẹ của chi nhánh / đơn vị con; trống = đơn vị độc lập', value: (p) => [p.parentCode, p.parentName?.trim()].filter(Boolean).join(' - ') },
     { key: 'childCount', header: 'Số đơn vị con', type: 'number', width: 90, title: 'Số chi nhánh / đơn vị con trực tiếp', hidden: true },
     // [2026-11-11 Nguyễn Văn Thủy] cột Chức năng: lập chứng từ cho đối tượng ngay từ danh sách (đóng góp)
     { key: 'chuc-nang', header: 'Chức năng', width: 120, hidden: true, noFilter: true, noSort: true, value: () => '', render: (p) => {
