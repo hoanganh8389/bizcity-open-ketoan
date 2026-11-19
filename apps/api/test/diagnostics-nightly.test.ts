@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
 import { dispatchOnce, tickClock } from '../src/core/events.js';
 import { setupTenant, type TestCtx } from './helpers.js';
+import { readDiagnosticRuns } from '@bizcity/platform/system/diagnostics';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -30,7 +31,7 @@ describe('Tự chẩn đoán mỗi đêm', () => {
     }
     const delivered = await db.selectFrom('event_deliveries').select('status').where('tenant_id', '=', tenantId).where('consumer', '=', 'core.diagnostics-nightly').execute();
     expect(delivered.map((x) => x.status)).toEqual(['done']);
-    const runs = await db.selectFrom('diagnostic_runs').select(['layer', 'trigger', 'actor', 'checks']).where('tenant_id', '=', tenantId).where('trigger', '=', 'schedule').execute();
+    const runs = (await readDiagnosticRuns(String(tenantId))).filter((r) => r.trigger === 'schedule');
     expect(runs).toHaveLength(1);
     expect(runs[0]).toMatchObject({ layer: 'L3', trigger: 'schedule', actor: 'system:nightly' });
     const checks = runs[0]!.checks as { code: string }[];

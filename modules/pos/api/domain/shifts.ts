@@ -5,6 +5,8 @@
  */
 import { roundMoney } from '@bizcity/module-sdk';
 import { isOffsetMethod, paymentKind } from './order.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: đơn không mang kênh / "tai_quay" gộp vào kênh mặc định (Gần shop) (đóng góp)
+import { channelKey } from './channels.js';
 
 export type OrderSnap = {
   code: string; status: string; total: number; createdAt: string; saleSource?: string;
@@ -72,8 +74,8 @@ export function dashboard(input: {
   let taxTotal = 0;
   for (const o of done) {
     for (const p of orderPayments(o, input.cashCode)) addTo(pay, p.method, p.amount);
-    const s = src.get(o.saleSource ?? 'tai_quay') ?? { orders: 0, total: 0 };
-    src.set(o.saleSource ?? 'tai_quay', { orders: s.orders + 1, total: s.total + o.total });
+    const s = src.get(channelKey(o.saleSource)) ?? { orders: 0, total: 0 };
+    src.set(channelKey(o.saleSource), { orders: s.orders + 1, total: s.total + o.total });
     const h = vnHour(o.createdAt);
     const hh = hours.get(h) ?? { orders: 0, total: 0 };
     hours.set(h, { orders: hh.orders + 1, total: hh.total + o.total });

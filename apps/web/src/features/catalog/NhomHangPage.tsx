@@ -15,6 +15,7 @@ import { Check, Copy, FileDown, History, Pencil, Plus, Search } from 'lucide-rea
 import { api, errorText } from '@/lib/api';
 import { ThungRacDanhMuc } from '@/components/ThungRacDanhMuc';
 import { useAuth } from '@/lib/auth';
+import { NutQuyTac } from '@/components/QuyTacDanhMuc';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, Pager } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -110,7 +111,7 @@ export function NhomHangPage() {
 
   return (
     <>
-      <PageHeader title="Danh mục nhóm hàng" code="DM11" helpKey="nhom-hang" subtitle="Ngành → Nhãn → Nhóm — mã hàng ghép từ mã ngắn ba cấp" />
+      <PageHeader actions={<NutQuyTac entity="group" logEntity="item-classes" ten="nhóm hàng / phân loại" />} title="Danh mục nhóm hàng" code="DM11" helpKey="nhom-hang" subtitle="Ngành → Nhãn → Nhóm — mã hàng ghép từ mã ngắn ba cấp" />
       <div className="card nh3">
         {/* [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút chức năng bên trái, tiêu đề khung sang phải; nút Nhân bản nhóm đang chọn (đóng góp) */}
         <div className="catalog-toolbar canh-phai">

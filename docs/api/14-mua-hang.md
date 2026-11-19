@@ -193,6 +193,19 @@ Mật khẩu nạp dữ liệu đặt bằng biến môi trường `PURCHASE_SEE
 
 Giá áp cho dòng phiếu (`priceFor`): dòng của đúng NCC thắng giá chung; đúng ĐVT thắng; còn hiệu lực; hiệu lực mới nhất. Dòng phiếu ĐVT khác thì quy đổi theo tỉ lệ (chỉ khi cả hai ĐVT có ở mặt hàng). Ghi sổ kho quy SL về ĐVT nhỏ nhất. Hai loại chính sách cũ `purchase_price`, `supplier_item` đã chuyển vào bảng này và bỏ.
 
+### Hợp đồng mua hàng (MH29, MH30 — migration 0163)
+
+Hợp đồng mua = một dòng Danh mục hợp đồng (`dimensions` kind `contract`, `extra.type = goods_supplier`), mã = số hợp đồng. Giá / chính sách / chứng từ gắn bằng `supplier_products.contract_code`, `purchase_policies.scope.contractCode`, `purchase_documents.data.contractCode`.
+
+| Phương thức | Đường dẫn | Mô tả | Quyền |
+|---|---|---|---|
+| GET | `/api/v1/purchase/contracts?partnerCode&asOf` | Hợp đồng mua: trạng thái (`status` draft / active / liquidated, `statusText` có "Hết hạn"), chi nhánh, nhãn, mã, số giá / chính sách / chứng từ, `purchased`, `debt` (dư Có 331 theo hợp đồng) | `documents:read` |
+| GET | `/api/v1/purchase/contracts/detail?code` | Một hợp đồng + `items`, `prices`, `policies`, `documents` thuộc hợp đồng | `documents:read` |
+| PUT | `/api/v1/purchase/contracts` | `{ code, isNew, contract: { partnerCode, name, signedDate, startDate, endDate, status, branchCodes, brandCodes, skus, value, paymentTermDays, note } }`. Trùng số (mới) → 409; số đang là hợp đồng loại khác → 409; NCC không có / hiệu lực ngược / số có dấu cách → 400 | `mua-hang:hop-dong-sua` |
+| GET | `/api/v1/purchase/contract-debts?from&to&partnerCode&contractCode&detail` | Công nợ TK 331 theo hợp đồng: `rows` (đầu kỳ / phát sinh / cuối kỳ Nợ – Có), `lines` khi `detail=1` (số dư luỹ kế) | `documents:read` |
+
+Chứng từ: `contractCode` trong khuôn gửi lên; trống mà `refIds` trỏ phiếu thuộc hợp đồng thì kế thừa; phải là hợp đồng mua của đúng NCC, chưa thanh lý (phiếu cũ giữ nguyên). Duyệt → chứng từ kế toán mang `contract` → mọi dòng sổ `dims.contract`.
+
 ## Nhà cung cấp, đặt hàng, đính kèm (đợt "đi từ nhà cung cấp")
 
 | Phương thức | Đường dẫn | Việc | Quyền |

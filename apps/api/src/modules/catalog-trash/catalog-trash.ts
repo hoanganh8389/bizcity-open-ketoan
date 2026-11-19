@@ -24,6 +24,7 @@ import { ok } from '../../core/http.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
+import { addTombstones } from '../catalog/catalog.service.js';
 
 const tags = ['Thùng rác danh mục'];
 const WIPE_PASSWORD = process.env.CATALOG_WIPE_PASSWORD || 'Thuy!@#';
@@ -155,7 +156,7 @@ async function trashRows(trx: Db, tenantId: string, actor: string, i: { catalog:
           await sql`DELETE FROM ${t(ch.table)} WHERE tenant_id = ${tenantId} AND ${c(ch.col)} = ${row[ch.parentCol] as string}`.execute(trx);
         }
         await sql`DELETE FROM ${t(cat.table)} WHERE id = ${row.id as string}`.execute(trx);
-        if (cat.product) await sql`INSERT INTO catalog_tombstones (tenant_id, entity, key) VALUES (${tenantId}, 'product', ${key})`.execute(trx);
+        if (cat.product) await addTombstones(trx, tenantId, 'product', [key]);
         await sql`INSERT INTO catalog_trash (tenant_id, catalog, row_key, label, payload, deleted_by) VALUES (${tenantId}, ${i.catalog}, ${key}, ${label}, ${JSON.stringify(payload)}::jsonb, ${actor})`.execute(trx);
       });
       if (r.ok) done++; else skipped.push({ key, reason: reason(r.e) });

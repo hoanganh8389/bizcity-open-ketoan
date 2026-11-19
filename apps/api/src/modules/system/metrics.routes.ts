@@ -14,6 +14,7 @@ import type { Database } from '../../db/types.js';
 import { env } from '../../config/env.js';
 import { Errors } from '../../core/errors.js';
 import { COLLECTOR_TIMEOUT_MS, collect, metrics, registerCollector, renderMetrics } from '../../core/metrics.js';
+import { readDiagnosticRuns } from '@bizcity/platform/system/diagnostics';
 
 const DIAG_OUTCOMES = ['pass', 'empty', 'info', 'warn', 'error'] as const;
 
@@ -26,19 +27,26 @@ function collectDiagnostics(): Promise<void> {
 }
 
 async function collectDiagnosticsIn(tx: Transaction<Database>): Promise<void> {
-  const rows = await sql<{ layer: string; errors: number } & Record<(typeof DIAG_OUTCOMES)[number], number>>`
-    SELECT layer, sum(error_count)::int AS errors,
-           sum(COALESCE((summary->>'pass')::int, 0))::int AS pass, sum(COALESCE((summary->>'empty')::int, 0))::int AS empty,
-           sum(COALESCE((summary->>'info')::int, 0))::int AS info, sum(COALESCE((summary->>'warn')::int, 0))::int AS warn,
-           sum(COALESCE((summary->>'error')::int, 0))::int AS error
-      FROM (SELECT DISTINCT ON (tenant_id, layer) tenant_id, layer, error_count, summary FROM diagnostic_runs ORDER BY tenant_id, layer, id DESC) x
-     GROUP BY layer`.execute(tx);
-  const got = new Map(rows.rows.map((r) => [r.layer, r]));
-  const times = await sql<{ layer: string; last_run: number | null; last_ok: number | null }>`
-    SELECT layer, extract(epoch FROM max(created_at))::float AS last_run,
-           extract(epoch FROM max(created_at) FILTER (WHERE error_count = 0))::float AS last_ok
-      FROM diagnostic_runs GROUP BY layer`.execute(tx);
-  const at = new Map(times.rows.map((r) => [r.layer, r]));
+  // [2026-11-18 Nguyễn Văn Thủy] lượt tự chẩn đoán đọc từ nhật ký JSONL (0161) (đóng góp)
+  void tx;
+  const runs = await readDiagnosticRuns();
+  const lastOf = new Map<string, (typeof runs)[number]>();
+  for (const r of runs) lastOf.set(`${r.tenantId}|${r.layer}`, r);
+  const got = new Map<string, { errors: number } & Record<(typeof DIAG_OUTCOMES)[number], number>>();
+  for (const r of lastOf.values()) {
+    const g = got.get(r.layer) ?? { errors: 0, pass: 0, empty: 0, info: 0, warn: 0, error: 0 };
+    g.errors += Number(r.errorCount) || 0;
+    for (const k of DIAG_OUTCOMES) g[k] += Number(r.summary?.[k] ?? 0) || 0;
+    got.set(r.layer, g);
+  }
+  const at = new Map<string, { last_run: number | null; last_ok: number | null }>();
+  for (const r of runs) {
+    const t = Date.parse(r.at) / 1000;
+    const cur = at.get(r.layer) ?? { last_run: null, last_ok: null };
+    if (cur.last_run === null || t > cur.last_run) cur.last_run = t;
+    if (Number(r.errorCount) === 0 && (cur.last_ok === null || t > cur.last_ok)) cur.last_ok = t;
+    at.set(r.layer, cur);
+  }
   for (const layer of ['L1', 'L3']) {
     const r = got.get(layer);
     metrics.diagnosticsErrors.set({ layer }, r?.errors ?? 0);

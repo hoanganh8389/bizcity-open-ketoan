@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
 import { runDiagnostics } from '../src/modules/system/diagnostics.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { appendRunLog, readRunLog } from '@bizcity/platform/core/run-log';
 
 type Case = { id: string; status: string; reason: string; evidence: string[]; layer: string | null };
 type Run = { result: string; cases: Case[]; report?: unknown };
@@ -36,7 +37,7 @@ const closing = (period: string) => call(ctx, 'POST', '/api/v1/closing/run', { p
 const conformance = async () => {
   const r = await call<{ data: Run & { id: string } }>(ctx, 'POST', '/api/v1/conformance/runs', { asOf: '2026-11-02' });
   expect(r.status, JSON.stringify(r.body)).toBe(201);
-  const row = await db.selectFrom('conformance_runs').select(['report', 'layers']).where('id', '=', r.body.data.id).executeTakeFirstOrThrow();
+  const row = (await readRunLog<{ report: unknown; layers: string[] }>('kiem-chuan', { tenantId: String(tenantId) })).find((e) => e.id === r.body.data.id)!.data;
   return { ...r.body.data, layers: row.layers, report: row.report as { layer_results: Record<string, string>; result: string; cases: Case[] } };
 };
 

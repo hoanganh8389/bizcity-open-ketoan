@@ -2,18 +2,22 @@
 
 Màn này chỉ để xem. Phần mềm tính giá vốn theo đúng công thức đang hiện, không chỉnh công thức trên màn hình.
 
-## Hai dữ liệu, hai công thức
+## Hai sổ, hai công thức
 
 | | Nội bộ | Thuế |
 |---|---|---|
 | Chứng từ | Mọi chứng từ | Chứng từ có số hoá đơn |
-| Hàng trả nhà cung cấp | Mọi lý do: thành tiền − thuế | XTR1, XTR9 theo tồn đầu; lý do khác: thành tiền − thuế |
+| Hàng mua trả lại | Thành tiền − thuế trên phiếu, không vượt giá trị đang có | Định giá theo tồn đầu |
+| Chênh lệch (tiền phiếu − giá trị trừ) | Ghi TK chênh lệch hàng trả NCC | Ghi TK chênh lệch hàng trả NCC |
+| Xuất chi nhánh (bán cho chi nhánh khác theo giá bán) | Không có — chuyển kho theo giá vốn | Giá vốn ghi ngay = giá bán, trừ khỏi tử và mẫu |
 
-Mỗi bản cài chạy một công thức, chọn bằng biến môi trường `BOOK_MODE` (`internal` hoặc `tax`). Khung có viền đậm là bản cài đang chạy.
+Mỗi bản cài là một sổ, chọn bằng biến môi trường `BOOK_MODE` (`internal` = nội bộ, `tax` = thuế). Khung có viền đậm là sổ đang chạy.
 
-Cùng một phiếu có thể có giá vốn khác nhau ở hai bản. Điều này là đúng, vì hai bên giữ dữ liệu và công thức khác nhau.
+Căn cứ tính theo **nghiệp vụ**, không theo lý do trên phiếu (lý do chỉ là nhãn). Bảng "Căn cứ tính theo nghiệp vụ" trên màn liệt kê đủ.
 
-## Định giá theo tồn đầu (bản thuế)
+Cùng một phiếu có thể có giá vốn khác nhau ở hai sổ. Điều này là đúng, vì hai bên giữ dữ liệu và công thức khác nhau.
+
+## Định giá theo tồn đầu (sổ thuế)
 
 | Trường hợp | Giá trị trừ khỏi công thức |
 |---|---|

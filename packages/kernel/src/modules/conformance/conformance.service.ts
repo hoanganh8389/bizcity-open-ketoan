@@ -11,7 +11,7 @@
  *                         2. tự chẩn đoán L1 + L3 + L5 của đơn vị (READ ONLY, cùng mã với lane DG-*); lớp Doanh nghiệp
  *                            dùng kiểm L3 trạng thái theo kỳ (TAX_INPUT_NO_INVOICE, EVENT_PENDING_AGE, INVENTORY_NEGATIVE, PERIOD_CLOSE_OPEN)
  *                         3. engine.evaluate(runtimeOnly): chỉ bằng chứng có được trên bản cài; SC-* / test là bằng chứng build
- *                         4. lưu ảnh chụp vào conformance_runs (bảng duy nhất được ghi)
+ *                         4. lưu ảnh chụp vào nhật ký JSONL kiem-chuan (0161; trước là bảng duy nhất được ghi)
  *
  * Không sửa sổ, không đổi cấu hình, không chặn gì, không tự chạy giá vốn / kết chuyển / khoá kỳ: kết luận để người dùng quyết định
  * (R-VNC-10). Báo cáo có layer_results: mỗi lớp trả lời một câu hỏi riêng.
@@ -30,6 +30,7 @@ import { defineSubscriber } from '@bizcity/platform/core/events';
 import { BUILD_VERSION } from '@bizcity/platform/core/version';
 import { profileAt } from '../posting-config/profile.js';
 import { approvalsOf } from './conformance.approvals.js';
+import { appendRunLog, readRunLog, type RunLogEntry } from '@bizcity/platform/core/run-log';
 
 export const LAYERS = ['module', 'configuration', 'enterprise'] as const;
 const STATUSES = ['PASS', 'FAIL', 'ERROR', 'NOT_APPLICABLE', 'NOT_TESTED', 'REVIEW_REQUIRED'] as const;
@@ -60,7 +61,7 @@ export interface ConformanceRunRow {
   created_at: Date;
 }
 
-/** Chạy một lượt cho đơn vị và lưu ảnh chụp. `trx` = giao dịch ghi của action (chỉ dùng để thêm dòng conformance_runs). */
+/** Chạy một lượt cho đơn vị và lưu ảnh chụp vào nhật ký JSONL luồng "kiem-chuan" (0161, bỏ bảng conformance_runs). */
 export async function runConformance(trx: Db, tenantId: string, a: { asOf: string; actor: string }): Promise<ConformanceRunRow> {
   const { kit, hash } = loadKit();
   const prof = await profileAt(trx, tenantId, a.asOf);
@@ -93,28 +94,36 @@ export async function runConformance(trx: Db, tenantId: string, a: { asOf: strin
   });
   const counts = Object.fromEntries(STATUSES.map((s) => [s, evaluation.cases.filter((c) => c.status === s).length]));
 
-  const row = await trx.insertInto('conformance_runs').values({
-    tenant_id: tenantId, as_of: a.asOf, layers: [...LAYERS], profile_version: prof?.version ?? null, kit_version: kit.version, kit_hash: hash,
-    result: report.result, counts: JSON.stringify(counts), report: JSON.stringify(report), actor: a.actor,
-  }).returning(['id', 'as_of', 'result', 'counts', 'profile_version', 'kit_version', 'kit_hash', 'report', 'actor', 'created_at']).executeTakeFirstOrThrow();
-  return row as unknown as ConformanceRunRow;
+  // [2026-11-18 Nguyễn Văn Thủy] ảnh chụp lượt Kiểm chuẩn ở nhật ký JSONL (0161) (đóng góp)
+  const e = await appendRunLog<RunData>(RUN_STREAM, tenantId, {
+    as_of: a.asOf, layers: [...LAYERS], profile_version: prof?.version ?? null, kit_version: kit.version, kit_hash: hash,
+    result: report.result as ConformanceRunRow['result'], counts, report: report as unknown as Record<string, unknown>, actor: a.actor,
+  });
+  return toRow(e);
+}
+
+const RUN_STREAM = 'kiem-chuan';
+type RunData = Omit<ConformanceRunRow, 'id' | 'created_at'> & { layers: string[] };
+const toRow = (e: RunLogEntry<RunData>): ConformanceRunRow => ({ ...e.data, id: e.id, created_at: new Date(e.at) });
+/** Các lượt của đơn vị, mới → cũ. */
+async function runsOf(tenantId: string): Promise<ConformanceRunRow[]> {
+  return (await readRunLog<RunData>(RUN_STREAM, { tenantId })).map(toRow).reverse();
 }
 
 export async function latestRun(db: Db, tenantId: string): Promise<ConformanceRunRow | null> {
-  const row = await db.selectFrom('conformance_runs')
-    .select(['id', 'as_of', 'result', 'counts', 'profile_version', 'kit_version', 'kit_hash', 'report', 'actor', 'created_at'])
-    .where('tenant_id', '=', tenantId).orderBy('id', 'desc').limit(1).executeTakeFirst();
-  return (row as unknown as ConformanceRunRow | undefined) ?? null;
+  void db;
+  return (await runsOf(tenantId))[0] ?? null;
 }
 
 export interface ConformanceRunSummary { id: string; as_of: string; result: 'PASS' | 'FAIL' | 'REVIEW_REQUIRED'; counts: Record<string, number>; layer_results: Record<string, string>; actor: string; created_at: Date }
 
 /** Các lượt gần đây của đơn vị, mới trước (xu hướng ở màn Kiểm chuẩn). Không trả báo cáo đầy đủ. */
 export async function listRuns(db: Db, tenantId: string, limit = 12): Promise<ConformanceRunSummary[]> {
-  const rows = await db.selectFrom('conformance_runs')
-    .select(['id', 'as_of', 'result', 'counts', 'actor', 'created_at', sql<Record<string, string> | null>`report -> 'layer_results'`.as('layer_results')])
-    .where('tenant_id', '=', tenantId).orderBy('id', 'desc').limit(limit).execute();
-  return rows as unknown as ConformanceRunSummary[];
+  void db;
+  return (await runsOf(tenantId)).slice(0, limit).map((r) => ({
+    id: r.id, as_of: r.as_of, result: r.result, counts: r.counts, actor: r.actor, created_at: r.created_at,
+    layer_results: ((r.report as { layer_results?: Record<string, string> }).layer_results ?? {}),
+  }));
 }
 
 /** Lịch đêm (R-DIAG-3): mỗi đơn vị đang dùng một lượt Kiểm chuẩn / ngày, ngày đánh giá = ngày của đồng hồ (giờ VN). Chỉ thêm ảnh chụp. */

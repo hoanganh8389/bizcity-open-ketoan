@@ -46,7 +46,7 @@ const acceptSchema = z.string().trim().max(500).optional()
 
 /**
  * R-DIAG-4: chạy tự chẩn đoán L3 trên kỳ (và chi nhánh) trước khi khoá; có mục error thì chặn, trừ khi người khoá ghi lý do chấp nhận.
- * Lượt chẩn đoán luôn được lưu (diagnostic_runs, trigger period-lock) làm bằng chứng. Trả nhãn ghi vào period_lock_events.reason.
+ * Lượt chẩn đoán luôn được lưu (nhật ký JSONL chan-doan, trigger period-lock) làm bằng chứng. Trả nhãn ghi vào period_lock_events.reason.
  */
 async function guardLock(auth: AuthContext, year: number, month: number, branchId: string | null, accept: string | undefined): Promise<string | null> {
   const report = await runDiagnostics({ tenantId: auth.tenantId, from: `${ym(year, month)}-01`, to: lastDay(year, month), branchId: branchId ?? undefined }, { layer: 'L3' });

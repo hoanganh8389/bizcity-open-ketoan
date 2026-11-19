@@ -21,6 +21,7 @@ import pg from 'pg';
 import { env } from '../config/env.js';
 import { pool } from './client.js';
 import { MIGRATIONS_DIR } from './paths.js';
+import { appendRunLog } from '../core/run-log.js';
 
 /**
  * Các file GỐC: cấu trúc nền (23/10/2026) gộp từ 67 migration lịch sử, chia theo mảng (nền tảng, danh mục, cấu hình định
@@ -43,6 +44,22 @@ const RENAMED: Readonly<Record<string, string>> = {
   // 2026-11-08: 0080 bị trùng giữa PHASE-031 W2a (0080_kiem_chinh_sach_su_viec) và gói K3 — K3 merge sau nên đổi số.
   '0081_nguoi_tao_su_viec_bat_buoc.sql': '0080_nguoi_tao_su_viec_bat_buoc.sql',
   '0082_khoa_ky_o_csdl.sql': '0081_khoa_ky_o_csdl.sql',
+  // 2026-11-19: main có 0149_vai_tro_nhan_vien, 0150_pham_vi_so_do_to_chuc — nhánh giá vốn / sổ chứng từ / hợp đồng mua (chưa lên server) lùi 2 số.
+  '0151_don_vi_gia_von_theo_co_cau.sql': '0149_don_vi_gia_von_theo_co_cau.sql',
+  '0152_lan_tinh_gia_von.sql': '0150_lan_tinh_gia_von.sql',
+  '0153_pham_vi_gia_von_tuy_chon.sql': '0151_pham_vi_gia_von_tuy_chon.sql',
+  '0154_gia_von_chi_tiet_dau_ky.sql': '0152_gia_von_chi_tiet_dau_ky.sql',
+  '0155_cong_thuc_gia_von_tuy_chon.sql': '0153_cong_thuc_gia_von_tuy_chon.sql',
+  '0156_chenh_lech_tra_ncc.sql': '0154_chenh_lech_tra_ncc.sql',
+  '0157_gia_von_theo_loai_kho.sql': '0155_gia_von_theo_loai_kho.sql',
+  '0158_so_chung_tu_chung.sql': '0156_so_chung_tu_chung.sql',
+  '0159_gom_bang_vao_loi.sql': '0157_gom_bang_vao_loi.sql',
+  '0160_phien_ban_chinh_sach_mua_chung.sql': '0158_phien_ban_chinh_sach_mua_chung.sql',
+  '0161_nguong_duyet_tt_vao_cau_hinh.sql': '0159_nguong_duyet_tt_vao_cau_hinh.sql',
+  '0162_dau_xoa_va_sao_luu_vao_thung_rac.sql': '0160_dau_xoa_va_sao_luu_vao_thung_rac.sql',
+  '0163_bo_bang_van_hanh.sql': '0161_bo_bang_van_hanh.sql',
+  '0164_so_chung_tu_duyet_lien_ket.sql': '0162_so_chung_tu_duyet_lien_ket.sql',
+  '0165_hop_dong_mua_xuyen_suot.sql': '0163_hop_dong_mua_xuyen_suot.sql',
 };
 
 /** Ghi nhận tên mới cho file đã đổi tên mà tên cũ đã áp. Trả danh sách vừa ghi nhận. */
@@ -105,6 +122,14 @@ export async function runMigrations(log: (msg: string) => void = console.log): P
         await client.query('ROLLBACK');
         throw new Error(`Migration ${file} lỗi: ${(err as Error).message}`);
       }
+    }
+    // [2026-11-18 Nguyễn Văn Thủy] 0161: dòng nhật ký cũ (tự chẩn đoán, Kiểm chuẩn, số đếm thư viện) ra JSONL rồi bỏ bảng tạm (đóng góp)
+    const exp = await client.query<{ t: string | null }>(`SELECT to_regclass('_run_log_export')::text AS t`);
+    if (exp.rows[0]?.t) {
+      const rows = (await client.query<{ stream: string; tenant_id: string; at: Date; data: unknown }>('SELECT stream, tenant_id::text, at, data FROM _run_log_export ORDER BY at')).rows;
+      for (const r of rows) await appendRunLog(r.stream, r.tenant_id, r.data, new Date(r.at));
+      await client.query('DROP TABLE _run_log_export');
+      if (rows.length) log(`→ Ghi ${rows.length} dòng nhật ký cũ ra JSONL (DATA_DIR/nhat-ky)`);
     }
     await client.query('SELECT pg_advisory_unlock(727001)');
     return applied;

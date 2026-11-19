@@ -8,7 +8,8 @@ Một chỗ cho mọi cài đặt bán lẻ. Mở: **Bán hàng → Cài đặt 
 
 | Ô | Ý nghĩa |
 |---|---|
-| Hạn trả hàng không cần duyệt | Số ngày (0–60) tính từ ngày bán. Quá hạn thì máy bán đòi người duyệt. Mặc định 3 |
+| Hạn trả hàng không cần duyệt | Số ngày (0–60) tính từ ngày bán, áp cho cả công ty. Mặc định 3. Quá hạn thì máy bán **gửi yêu cầu trả quá hạn**, người có quyền *Duyệt trả quá hạn* (mặc định kế toán trưởng, chủ đơn vị) duyệt / từ chối ở BH14 thẻ *Yêu cầu trả quá hạn* (NT-BH-030) |
+| Hạn trả riêng của cửa hàng <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q3 (đóng góp) --> | Bảng từng cửa hàng: gõ số ngày riêng (0–60), để trống = theo hạn công ty (khoá `bizcity.pos.return_days_by_shop`, dạng `CN02=7`). Hạn tính theo **cửa hàng nhận trả** — khách mua ở CN01 mang trả ở CN02 thì lấy hạn của CN02 |
 | Bắt buộc mở ca trước khi bán | Chưa bật: máy bán vẫn nhận đơn khi chưa mở ca |
 | Ca bán | Một ca chung cho cả chi nhánh (đợt này chỉ áp dụng cách này) |
 | Ngưỡng chênh lệch két | Sổ ca bán tô đỏ ca có chênh lệch từ ngưỡng này; 0 = mọi chênh lệch |
@@ -31,5 +32,14 @@ Phiếu bán hàng và phiếu trả hàng: **Ghi ngay** (lên sổ khi máy bá
 ## ④ Tài khoản hạch toán bán hàng
 
 Danh sách loại chứng từ nhóm *Bán hàng* của Tài khoản ngầm định (ACC41) với TK Nợ / TK Có đang dùng. Chỉ xem; bấm **Sửa ở ACC41** để đổi.
+
+## ⑤ Giao hàng đơn đặt hàng
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: khối cài đặt giao hàng (đóng góp) -->
+
+Cho chuyến giao của Đơn đặt hàng (BH20, [hướng dẫn](don-dat-hang.md)) — khoá của module phiếu bán, ghi bằng nút **Ghi cài đặt giao hàng** của khối:
+
+- **Kho hàng đang giao (KHG)** của từng cửa hàng: kho loại KHG "Kho hàng gửi bán". Chuyến *Đang giao* chuyển hàng KCB → KHG (chưa doanh thu), *Đã giao* bán từ KHG, *Hoàn* chuyển KHG → KCB. Chưa có kho KHG: khai ở Danh mục kho (DM18) và tick KHG vào nghiệp vụ "Xuất bán" của Loại kho. Chưa chọn thì không lập chuyến giao được.
+- **Mã dịch vụ phí ship thu khách**: mặt hàng (dịch vụ) thành dòng phí ship trên phiếu bán của chuyến. Chưa khai mà chuyến có phí ship thì không ghi *Đã giao* được.
+- **Hình thức thanh toán "COD — hãng"**: mỗi hãng (mã hãng như trên đơn, tự giao = `SELF`) một hình thức thanh toán — khai trước ở danh mục hình thức thanh toán với tài khoản phải thu hãng và đối tượng là hãng. Tiền COD của chuyến thành dòng thanh toán theo hình thức này (phải thu hãng); hãng chuyển tiền thì đối trừ như công nợ thường.
 
 Bấm **Ghi**: giá trị mới có hiệu lực từ hôm nay; lịch sử ai đổi, lúc nào lưu ở *Thiết lập → Cấu hình hệ thống*. **Bỏ sửa** để trả lại giá trị đang áp.

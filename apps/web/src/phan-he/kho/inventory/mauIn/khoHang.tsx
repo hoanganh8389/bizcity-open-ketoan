@@ -133,7 +133,7 @@ export const COST_TEMPLATES: PrintTemplate<CostSheet>[] = [
       <LedgerForm ctx={ctx} d={{
         title: 'BẢNG TÍNH GIÁ VỐN HÀNG XUẤT', period: `Tháng ${s.period.slice(5, 7)} năm ${s.period.slice(0, 4)} — bình quân gia quyền cuối tháng`,
         signs: MAKER_SIGNS, total: 'Tổng cộng', rows: s.rows,
-        groupBy: { key: (r) => r.costGroup, label: (k, rs) => `Đơn vị hạch toán: ${k}${rs[0]?.costGroupName ? ` — ${rs[0].costGroupName}` : ''}`, subtotal: 'Cộng đơn vị' },
+        groupBy: { key: (r) => r.costGroup, label: (k, rs) => `Chi nhánh: ${k}${rs[0]?.costGroupName ? ` — ${rs[0].costGroupName}` : ''}`, subtotal: 'Cộng chi nhánh' },
         cols: [
           { key: 'stt', h: 'STT', w: 30, center: true, v: (_, i) => i + 1 },
           { key: 'sku', h: 'Mã hàng', w: 84, v: (r) => r.sku },
@@ -142,7 +142,7 @@ export const COST_TEMPLATES: PrintTemplate<CostSheet>[] = [
           { key: 'tdv', h: 'Giá trị', group: 'Tồn đầu', w: 88, num: true, v: (r) => mb(r.openingValue), sum: (r) => r.openingValue },
           { key: 'nq', h: 'Số lượng', group: 'Nhập tính giá', w: 58, num: true, v: (r) => qty(r.inQty), sum: (r) => r.inQty },
           { key: 'nv', h: 'Giá trị', group: 'Nhập tính giá', w: 88, num: true, v: (r) => mb(r.inValue), sum: (r) => r.inValue },
-          { key: 'gia', h: 'Đơn giá vốn', w: 78, num: true, v: (r) => r.unitCost.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) },
+          { key: 'gia', h: 'Giá vốn bình quân', w: 78, num: true, v: (r) => r.unitCost.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) },
           { key: 'ng', h: 'Nguồn giá', w: 58, center: true, v: (r) => (r.costSource === 'import' ? 'Nhập Excel' : 'Bình quân') },
           { key: 'xq', h: 'SL xuất', w: 58, num: true, v: (r) => qty(r.outQty), sum: (r) => r.outQty },
           { key: 'tcq', h: 'Số lượng', group: 'Tồn cuối', w: 58, num: true, v: (r) => qty(r.closingQty), sum: (r) => r.closingQty },

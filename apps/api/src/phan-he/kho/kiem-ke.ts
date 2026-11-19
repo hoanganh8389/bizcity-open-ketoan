@@ -387,10 +387,12 @@ export async function verifyCount(trx: Db, auth: AuthContext, id: string, input:
 }
 
 /** Đơn giá bình quân tháng của từng mã (nhóm tính giá = đơn vị hạch toán của chi nhánh); thiếu mã nào thì báo. */
-async function unitCosts(trx: Db, tenantId: string, unit: string, date: string, skus: string[]) {
+async function unitCosts(trx: Db, tenantId: string, unit: string, date: string, skus: string[], warehouseCode = '') {
   const [y, m] = date.split('-').map(Number) as [number, number];
   const rows = (await sql<{ sku: string; unit_cost: string }>`
-    SELECT sku, unit_cost::text FROM inventory_costs WHERE tenant_id = ${tenantId} AND cost_group = ${unit}::bigint AND year = ${y} AND month = ${m} AND sku = ANY(${skus}::text[])`.execute(trx)).rows;
+    SELECT DISTINCT ON (sku) sku, unit_cost::text FROM inventory_costs WHERE tenant_id = ${tenantId} AND cost_group = ${unit}::bigint AND year = ${y} AND month = ${m} AND sku = ANY(${skus}::text[])
+       AND wh_type IN ('', COALESCE((SELECT type_code FROM warehouses WHERE tenant_id = ${tenantId} AND code = ${warehouseCode}), ''))
+     ORDER BY sku, wh_type DESC`.execute(trx)).rows; // [2026-11-17 Nguyễn Văn Thủy] loại kho tính giá riêng (0155) (đóng góp)
   const map = new Map(rows.map((x) => [x.sku, toNumber(x.unit_cost)]));
   const missing = skus.filter((s) => !map.has(s));
   if (missing.length) throw Errors.conflict(`Tính giá vốn tháng ${String(m).padStart(2, '0')}/${y} trước (chưa có đơn giá bình quân của ${missing.slice(0, 10).join(', ')}${missing.length > 10 ? '…' : ''}) — số tiền tất toán phải bằng số đã ghi 1381 / 3381`);
@@ -416,7 +418,7 @@ export async function decideCount(trx: Db, auth: AuthContext, id: string, input:
   const byLine = new Map(r.lines.map((l) => [l.lineKey, l]));
   const valued = causes.filter((c) => c.cause === 'compensate' || c.cause === 'expense' || c.cause === 'owned');
   await assertOpen(trx, auth.tenantId, r.branch_code, d.decisionDate, ['manual_journal', 'stock_adjustment']);
-  const costs = valued.length ? await unitCosts(trx, auth.tenantId, b.unit, r.count_date, [...new Set(valued.map((c) => byLine.get(c.lineKey)!.sku))]) : new Map<string, number>();
+  const costs = valued.length ? await unitCosts(trx, auth.tenantId, b.unit, r.count_date, [...new Set(valued.map((c) => byLine.get(c.lineKey)!.sku))], r.warehouse_code) : new Map<string, number>();
   const lines = valued.map((c, i) => {
     const l = byLine.get(c.lineKey)!;
     const amount = Math.round(c.qty * (costs.get(l.sku) ?? 0));

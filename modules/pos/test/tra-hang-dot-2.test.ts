@@ -81,7 +81,8 @@ describe('NT-BH-024 Q3 — tình trạng hàng trả, kho nhận', () => {
   it('lệch chuẩn 4: quá hạn có người duyệt + dòng lỗi → duyệt như cũ, kho theo tình trạng', () => {
     const late = input({ badWarehouse: 'CN01-KTL', today: '2026-11-25' }, { lines: [{ lineId: 'l1', qty: 1, condition: 'bad' }] });
     expect(problem(computeReturn(late))).toMatchObject({ reason: 'POS_RETURN_EXPIRED' });
-    const r = computeReturn({ ...late, draft: { ...late.draft, approval: { by: 'QL Hà', note: 'Hàng lỗi NSX' } } });
+    // NT-BH-030 Q2: yêu cầu trả quá hạn đã duyệt (máy chủ kiểm) thay người duyệt gõ tay.
+    const r = computeReturn({ ...late, approved: true });
     if ('problem' in r) throw new Error(r.problem.message);
     expect(r.late).toBe(true);
     expect(r.lines[0]).toMatchObject({ condition: 'bad', warehouseCode: 'CN01-KTL' });

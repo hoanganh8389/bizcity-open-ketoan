@@ -67,6 +67,12 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
   const partners = await q.orderBy('code').execute();
   const orderUnits = await unitsForOrders(trx, tenantId, ctx.docs);
   const month = asOf.slice(0, 7);
+  // Hợp đồng mua đang hiệu lực mới nhất của mỗi NCC (Danh mục hợp đồng, 0163).
+  const contractOf = new Map<string, { code: string; endDate: string | null }>();
+  for (const c of (await sql<{ code: string; partner: string; end_date: string | null }>`
+      SELECT code, extra->>'partnerCode' AS partner, NULLIF(extra->>'endDate', '') AS end_date FROM dimensions
+       WHERE tenant_id = ${tenantId} AND kind = 'contract' AND extra->>'type' = 'goods_supplier' AND COALESCE(extra->>'status', 'active') = 'active'
+       ORDER BY COALESCE(NULLIF(extra->>'endDate', ''), '9999-12-31') DESC, code`.execute(trx)).rows) if (c.partner && !contractOf.has(c.partner)) contractOf.set(c.partner, { code: c.code, endDate: c.end_date });
   return partners.map((p) => {
     const pols = ctx.policies.filter((x) => x.scope.partnerCode === p.code && x.isActive);
     const docs = ctx.docs.filter((d) => d.partnerCode === p.code && d.status !== 'cancelled');
@@ -83,7 +89,7 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
     const pending = pendOf([p.code]);
     const used = pooled ? pooled.reduce((s, c) => s + toNumber(debtOf.get(c)?.debt ?? 0), 0) + pendOf(pooled) : debt + pending;
     const termPol = pols.find((x) => x.kind === 'payment_term');
-    const contract = pols.filter((x) => x.kind === 'contract').sort((a, b) => (b.validTo ?? '9999').localeCompare(a.validTo ?? '9999'))[0];
+    const contract = contractOf.get(p.code);
     const receipts = docs.filter((x) => x.kind === 'receipt' && x.status === 'approved');
     return {
       // NCC là doanh nghiệp: tên / địa chỉ chính thức (trên hoá đơn) = khối công ty, chưa có thì lấy tên / địa chỉ chung.
@@ -92,7 +98,7 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
       debt, advance: Math.round(toNumber(debtOf.get(p.code)?.advance ?? 0)), overdue: dueBy.get(p.code)?.overdue ?? 0, dueSoon: dueBy.get(p.code)?.dueSoon ?? 0, creditLimit: limit, creditUsed: Math.round(used), creditPolicy: lim?.code,
       parentCode: treeOf.get(p.code)?.parent ?? null, rootCode: treeOf.get(p.code)?.root ?? p.code, ...(pooled ? { creditPool: lim!.scope.partnerCode } : {}),
       term: termPol ? termText(termFromRule(termPol.rule)) : p.payment_term_days ? `${p.payment_term_days} ngày (danh mục đối tượng)` : '',
-      policies: pols.length, items: Math.max(itemsOf.get(p.code) ?? 0, new Set(docs.flatMap((x) => (x.kind === 'receipt' || x.kind === 'order' ? x.lines.map((l) => l.sku) : []))).size), contractTo: contract?.validTo, contractNo: contract ? String(contract.rule.no ?? '') : undefined,
+      policies: pols.length, items: Math.max(itemsOf.get(p.code) ?? 0, new Set(docs.flatMap((x) => (x.kind === 'receipt' || x.kind === 'order' ? x.lines.map((l) => l.sku) : []))).size), contractTo: contract?.endDate ?? undefined, contractNo: contract?.code,
       lastReceipt: receipts.map((x) => x.docDate).sort().pop(), monthPurchase: receipts.filter((x) => x.docDate.startsWith(month)).reduce((s, x) => s + x.totals.beforeTax, 0),
       documents: docs.length, attachments: attOf.get(p.code) ?? 0, openOrders: openOrders.length,
     };
@@ -139,11 +145,11 @@ export async function supplierBrandList(trx: Db, tenantId: string, code: string)
 
 export const ATTACHMENT_KINDS: Record<string, string> = { hop_dong: 'Hợp đồng / phụ lục', co: 'CO (xuất xứ)', cq: 'CQ (chất lượng)', bao_gia: 'Báo giá', hoa_don: 'Hoá đơn (ảnh / PDF)', hoa_don_xml: 'Hoá đơn XML gốc', chung_tu_10: 'Chứng từ số 10', chung_tu_11: 'Chứng từ số 11', bien_ban: 'Biên bản', khac: 'Khác' };
 /** Đính kèm đi qua đính kèm chung (documents.attachments, 0046): chứng từ mua-hang.<loại chủ>:<mã chủ>. */
-const docRefOf = (ownerType: string, ownerId: string) => `mua-hang.${ownerType}:${ownerId.trim().replace(/\s+/g, '_').slice(0, 200)}`;
+const docRefOf = (ownerType: string, ownerId: string) => `${ownerType === 'contract' ? 'hop-dong' : 'mua-hang'}.${ownerType}:${ownerId.trim().replace(/\s+/g, '_').slice(0, 200)}`;
 /** Tệp phải thuộc Mua hàng — API này không đọc / gỡ tệp của module khác. */
 async function ownAttachment(trx: Db, tenantId: string, id: string) {
   const r = await trx.selectFrom('document_attachments').select(['id', 'doc_ref']).where('tenant_id', '=', tenantId).where('id', '=', id).executeTakeFirst();
-  if (!r || !r.doc_ref.startsWith('mua-hang.')) throw Errors.notFound('tệp đính kèm');
+  if (!r || !(r.doc_ref.startsWith('mua-hang.') || r.doc_ref.startsWith('hop-dong.contract:'))) throw Errors.notFound('tệp đính kèm');
 }
 
 export async function listAttachments(trx: Db, tenantId: string, ownerType: string, ownerId: string) {
@@ -151,7 +157,7 @@ export async function listAttachments(trx: Db, tenantId: string, ownerType: stri
   return files.reverse().map((a) => ({ id: a.id, kind: a.kind, kindLabel: ATTACHMENT_KINDS[a.kind] ?? a.kind, fileName: a.fileName, mime: a.contentType, size: a.sizeBytes, note: a.note, uploadedBy: a.createdBy, createdAt: a.createdAt }));
 }
 
-export async function addAttachment(trx: Db, tenantId: string, actor: string, a: { ownerType: 'partner' | 'document' | 'policy' | 'invoice'; ownerId: string; kind: string; fileName: string; mime: string; dataBase64: string; note?: string }) {
+export async function addAttachment(trx: Db, tenantId: string, actor: string, a: { ownerType: 'partner' | 'document' | 'policy' | 'invoice' | 'contract'; ownerId: string; kind: string; fileName: string; mime: string; dataBase64: string; note?: string }) {
   const out = await documents.attach(trx, tenantId, docRefOf(a.ownerType, a.ownerId), { fileName: a.fileName.slice(0, 200), contentType: a.mime || 'application/octet-stream', data: Buffer.from(a.dataBase64, 'base64') },
     { kind: ATTACHMENT_KINDS[a.kind] ? a.kind : 'khac', note: a.note }, actor);
   return { id: out.id };

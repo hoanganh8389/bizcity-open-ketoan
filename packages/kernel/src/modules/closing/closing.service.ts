@@ -25,7 +25,7 @@
  * Kiểm soát:
  *   - Bộ quy tắc được kiểm tra khi lưu và khi chạy (validateRules): chỉ kết chuyển từ loại 5–8, 154, 911; đích chỉ là
  *     154, 155, 5xx, 632x, 911, 421x; bước đổ vào nguồn của bước khác phải chạy trước; đúng một bước 911 → 421x chạy sau cùng.
- *   - Mỗi lần lưu bộ quy tắc khác bộ đang dùng thêm một phiên bản (closing_rule_versions); chứng từ kết chuyển chụp
+ *   - Mỗi lần lưu bộ quy tắc khác bộ đang dùng thêm một phiên bản (document_versions doc_ref ket-chuyen.rules:mau, 0157; trước là closing_rule_versions); chứng từ kết chuyển chụp
  *     lại bộ quy tắc, số phiên bản, dấu vân tay số liệu nguồn (sources) để truy vết và phát hiện kết chuyển lỗi thời.
  *   - Kết chuyển tuần tự: tháng trước (cùng năm) còn số doanh thu, chi phí chưa kết chuyển thì không kết chuyển tháng sau.
  *   - Sau khi ghi: 911 phải hết số dư (không thì huỷ cả lần chạy); loại 5–8 còn số dư thì báo (residuals).
@@ -248,13 +248,16 @@ async function retireLegacy(trx: Db, auth: AuthContext, keys: string[], accounts
   }
 }
 
+/** Phiên bản bộ kết chuyển mẫu của đơn vị trên document_versions (0157). */
+const RULES_REF = 'ket-chuyen.rules:mau';
+
 interface RuleSet { rules: ClosingRule[]; isDefault: boolean; version: number | null; hash: string }
 
 async function loadRuleSet(trx: Db, tenantId: string): Promise<RuleSet> {
   const rows = await trx.selectFrom('closing_rules').selectAll().where('tenant_id', '=', tenantId).execute();
   if (!rows.length) return { rules: DEFAULT_CLOSING_RULES, isDefault: true, version: 0, hash: hashRules(DEFAULT_CLOSING_RULES) };
   const rules = orderRules(rows.map((r) => ({ seq: r.seq, fromAccount: r.from_account, toAccount: r.to_account, mode: r.mode as ClosingMode, description: r.description, isActive: r.is_active, includeOpening: r.include_opening })));
-  const v = await trx.selectFrom('closing_rule_versions').select((eb) => eb.fn.max('version').as('v')).where('tenant_id', '=', tenantId).executeTakeFirst();
+  const v = await trx.selectFrom('document_versions').select((eb) => eb.fn.max('version').as('v')).where('tenant_id', '=', tenantId).where('doc_ref', '=', RULES_REF).executeTakeFirst();
   return { rules, isDefault: false, version: v?.v ?? null, hash: hashRules(rules) };
 }
 
@@ -627,14 +630,18 @@ export const closingService = {
     await trx.deleteFrom('closing_rules').where('tenant_id', '=', auth.tenantId).execute();
     await trx.insertInto('closing_rules').values(ordered.map((r) => ({ tenant_id: auth.tenantId, seq: r.seq, from_account: r.fromAccount, to_account: r.toAccount, mode: r.mode, description: r.description, is_active: r.isActive, include_opening: r.includeOpening }))).execute();
     const version = (before.version ?? 0) + 1;
-    await trx.insertInto('closing_rule_versions').values({ tenant_id: auth.tenantId, version, rules: JSON.stringify(ordered), note, created_by: auth.actor, created_by_name: auth.actorName }).execute();
+    // [2026-11-18 Nguyễn Văn Thủy] phiên bản ở document_versions chung (0157, bỏ closing_rule_versions) (đóng góp)
+    await trx.insertInto('document_versions').values({ tenant_id: auth.tenantId, doc_ref: RULES_REF, version, snapshot: JSON.stringify({ rules: ordered, note, createdByName: auth.actorName }), content_hash: hash, created_by: auth.actor }).execute();
     return { before: { version: before.version, isDefault: before.isDefault, rules: before.rules }, after: { version, rules: ordered, note } };
   },
 
   /** Lịch sử phiên bản bộ bút toán kết chuyển mẫu, mới nhất trước. */
   async listRuleVersions(auth: AuthContext) {
-    const rows = await db.selectFrom('closing_rule_versions').selectAll().where('tenant_id', '=', auth.tenantId).orderBy('version', 'desc').execute();
-    return rows.map((r) => ({ version: r.version, rules: r.rules as ClosingRule[], note: r.note, createdBy: r.created_by_name || r.created_by, createdAt: r.created_at }));
+    const rows = await db.selectFrom('document_versions').select(['version', 'snapshot', 'created_by', 'created_at']).where('tenant_id', '=', auth.tenantId).where('doc_ref', '=', RULES_REF).orderBy('version', 'desc').execute();
+    return rows.map((r) => {
+      const s = r.snapshot as { rules?: ClosingRule[]; note?: string; createdByName?: string };
+      return { version: r.version, rules: s.rules ?? [], note: s.note ?? '', createdBy: s.createdByName || r.created_by, createdAt: r.created_at };
+    });
   },
 
   /** Xem trước: các bút toán sẽ sinh, lãi lỗ, tháng trước chưa kết chuyển, số còn lại, kết chuyển cũ đã lỗi thời. Không ghi gì. */

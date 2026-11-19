@@ -21,7 +21,8 @@ import { PERMISSIONS, type AuthContext, type Permission } from './auth.js';
 import { Errors } from './errors.js';
 import { currentActionScope } from './audit.js';
 
-export const STATUS_GROUPS = ['draft', 'pending', 'approved', 'done', 'cancelled'] as const;
+// [2026-11-19 Nguyễn Văn Thủy] thêm in_progress (đang thực hiện) theo vòng đời Nháp → Trình → Duyệt → Thực hiện → Hoàn tất (0166) (đóng góp)
+export const STATUS_GROUPS = ['draft', 'pending', 'approved', 'in_progress', 'done', 'cancelled'] as const;
 export type StatusGroup = (typeof STATUS_GROUPS)[number];
 
 const stateName = z.string().regex(/^[a-z][a-z0-9_]*$/, 'tên trạng thái: chữ thường, số, gạch dưới');
@@ -126,7 +127,7 @@ function semanticErrors(s: WorkflowSpec): string[] {
       for (const st of Object.keys(t.permission)) if (!t.from.includes(st)) out.push(`${at}.permission: "${st}" không thuộc from`);
     }
     // R-WF-3: chỉ chuyển sang đã duyệt / hoàn tất / huỷ, hoặc rút khỏi đã duyệt / hoàn tất, mới chạm sổ.
-    const touches = ['approved', 'done', 'cancelled'].includes(groupOf(t.to) ?? '') || t.from.every((st) => ['approved', 'done'].includes(groupOf(st) ?? ''));
+    const touches = ['approved', 'in_progress', 'done', 'cancelled'].includes(groupOf(t.to) ?? '') || t.from.every((st) => ['approved', 'in_progress', 'done'].includes(groupOf(st) ?? ''));
     if (t.ledger && !touches) out.push(`${at}: ledger chỉ dùng cho chuyển sang nhóm approved / done / cancelled hoặc rút khỏi approved / done (R-WF-3)`);
     if (t.sod && t.owner) out.push(`${at}: sod (người chuyển khác người lập) và owner (chỉ người lập) loại trừ nhau`);
   }

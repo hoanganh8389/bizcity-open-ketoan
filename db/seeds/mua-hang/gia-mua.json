@@ -9,7 +9,8 @@
     "priceIncludesVat": false,
     "warnPct": 2,
     "validFrom": "2026-01-01",
-    "note": "Giá theo thùng 48 hộp (≈ 5.389,81 / hộp)"
+    "note": "Giá theo thùng 48 hộp (≈ 5.389,81 / hộp)",
+    "contractCode": "01/2026/HĐMB-TGS-VC"
   },
   {
     "partnerCode": "NC100227",
@@ -21,7 +22,8 @@
     "priceIncludesVat": false,
     "warnPct": 2,
     "validFrom": "2026-01-01",
-    "note": ""
+    "note": "",
+    "contractCode": "01/2026/HĐMB-TGS-VC"
   },
   {
     "partnerCode": "NC100227",
@@ -33,7 +35,8 @@
     "priceIncludesVat": false,
     "warnPct": 2,
     "validFrom": "2026-01-01",
-    "note": ""
+    "note": "",
+    "contractCode": "01/2026/HĐMB-TGS-VC"
   },
   {
     "partnerCode": "NCC-TRUNGHAU",

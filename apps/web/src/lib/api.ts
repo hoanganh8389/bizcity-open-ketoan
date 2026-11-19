@@ -31,7 +31,7 @@ function failure(res: Response, method: string, path: string, code: string, mess
     const list = Array.isArray(details) ? details.map((d) => (typeof d === 'string' ? d : (d as { message?: string })?.message ?? '')).filter(Boolean) : [];
     const ef = (error as unknown as { fields?: unknown } | null | undefined)?.fields;
     const fields = Array.isArray(ef) ? (ef as { path: string; message: string }[]) : [];
-    window.dispatchEvent(new CustomEvent<LoiMayChu>(SU_KIEN_LOI, { detail: { message, details: list, fields } }));
+    window.dispatchEvent(new CustomEvent<LoiMayChu>(SU_KIEN_LOI, { detail: { message, details: list, fields, code, requestId: ma.requestId } }));
   }
   return new ApiError(code, message, res.status, details, { requestId: ma.requestId, traceId: ma.traceId });
 }

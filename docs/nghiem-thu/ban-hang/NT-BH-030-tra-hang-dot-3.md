@@ -47,11 +47,14 @@
 ## 5. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-030-tra-hang-dot-3.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 18/11/2026 <!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030: điền kết quả chạy (đóng góp) --> |
+| Bản code (commit) | nhánh `feat/nt-bh-030-tra-hang-dot-3` trên `3a04e8ca` (chạy trước khi commit; hash ở PR) |
+| Test tự động | `apps/api/test/nt-bh-030-tra-hang-dot-3.test.ts` — **7/7 ĐẠT** (§3 dòng 1 CN01 → CN02 cùng MST: phiếu ở CN02 nối đơn CN01, tồn CN02 tăng, két CN02 chi; dòng 2 CN03 khác MST / CN04 chưa khai; dòng 3 trong hạn; dòng 4 CN02 hạn riêng 7 ngày; dòng 5–8 gửi yêu cầu, chưa duyệt chặn, người gửi / kế toán viên không duyệt được, KTT duyệt → lập đúng nội dung, nhật ký; dòng 7 từ chối kèm lý do; dòng 9 BH11 trả cả phiếu còn 1 lượt, trả một phần không trả lượt, bỏ duyệt lấy lại lượt); `modules/pos/test/tra-hang-dot-3.test.ts` (hàm thuần) — module pos 98/98; cả bộ `nt-bh-0*` 185/188 (3 ca đã biết: `nt-bh-005` "app tgs-wp"; `nt-bh-003`, `nt-bh-012` chập chờn — chạy riêng 9/9, 7/7) |
+| Máy bán (tgs_pos/react) | `src/api/returns-dot-3.test.ts` 4/4, `src/features/returns/ReturnDialog.test.tsx` 2/2 (API giả); vitest 737/737 |
+| Ghi chú | Cửa nạp lõi nhận `sale_return` của CN02 có `originalDocKey` trỏ chứng từ bán của CN01 (thử thật trong test, `posted`). Hạn trả tính theo cửa hàng nhận. Mỗi đơn × cửa hàng chỉ một yêu cầu trả quá hạn đang mở; mỗi yêu cầu dùng cho một phiếu trả. Đổi hàng quá hạn: phiếu trả của lần đổi gửi `approvalId` như trả |
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 18/11/2026 | Tạo phiếu, chốt Q1–Q4 |
+| 18/11/2026 | Code xong, điền §5 kết quả chạy |

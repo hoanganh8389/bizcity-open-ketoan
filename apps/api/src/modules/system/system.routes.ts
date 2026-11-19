@@ -57,6 +57,7 @@ import { setupActions } from './setup-status.js';
 // [2026-11-14 05:53 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-4: máy chủ chạy gói mẫu (core.setup.presets / plan / run + route nạp)
 import { createSampleTenantOnDemand, executeRun, setupRunActions, parseBlocks, startRun } from './setup-run.js';
 import { zodToJson } from '../../core/json-schema.js';
+import { readDiagnosticRuns } from '@bizcity/platform/system/diagnostics';
 
 // [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
 const tenantDto = (t: { code: string; name: string; tax_code: string | null; address: string | null; phone: string | null; settings: unknown }) => ({
@@ -138,7 +139,7 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('reports:read'),
     schema: {
       tags: ['Hệ thống'],
-      summary: 'Tự chẩn đoán: toàn vẹn sổ của đơn vị (L3) hoặc sẵn sàng (L1); lưu kết quả vào diagnostic_runs',
+      summary: 'Tự chẩn đoán: toàn vẹn sổ của đơn vị (L3) hoặc sẵn sàng (L1); lưu kết quả vào nhật ký tự chẩn đoán',
       description: 'Chỉ đọc (giao dịch READ ONLY). Mỗi kiểm: code, level (pass | empty | info | warn | error), examined, count, sample (khoá chứng từ / số bút toán). Mã kiểm: docs/ops/DIAGNOSTICS.md §2.',
       querystring: z.object({
         from: date.optional().describe('Từ ngày hạch toán; trống = từ đầu sổ'),
@@ -172,11 +173,8 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
       querystring: z.object({ limit: z.coerce.number().int().min(1).max(200).default(30) }),
     },
     handler: async (req) => {
-      const rows = await db.selectFrom('diagnostic_runs')
-        .select(['id', 'layer', 'trigger', 'scope', 'summary', 'error_count', 'actor', 'created_at'])
-        .where('tenant_id', '=', authOf(req).tenantId)
-        .orderBy('id', 'desc').limit(req.query.limit).execute();
-      return ok(rows.map((x) => ({ id: x.id, layer: x.layer, trigger: x.trigger, scope: x.scope, summary: x.summary, errorCount: x.error_count, actor: x.actor, at: x.created_at })));
+      const rows = (await readDiagnosticRuns(authOf(req).tenantId)).reverse().slice(0, req.query.limit);
+      return ok(rows.map((x) => ({ id: x.id, layer: x.layer, trigger: x.trigger, scope: x.scope, summary: x.summary, errorCount: x.errorCount, actor: x.actor, at: x.at })));
     },
   });
 
@@ -184,9 +182,9 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('reports:read'),
     schema: { tags: ['Hệ thống'], summary: 'Một lượt tự chẩn đoán, kèm kết quả từng kiểm', params: z.object({ id: z.string().regex(/^\d+$/) }) },
     handler: async (req) => {
-      const x = await db.selectFrom('diagnostic_runs').selectAll().where('tenant_id', '=', authOf(req).tenantId).where('id', '=', req.params.id).executeTakeFirst();
+      const x = (await readDiagnosticRuns(authOf(req).tenantId)).find((r) => r.id === req.params.id);
       if (!x) throw Errors.notFound('lượt chẩn đoán');
-      return ok({ id: x.id, layer: x.layer, trigger: x.trigger, scope: x.scope, summary: x.summary, checks: x.checks, errorCount: x.error_count, actor: x.actor, at: x.created_at });
+      return ok({ id: x.id, layer: x.layer, trigger: x.trigger, scope: x.scope, summary: x.summary, checks: x.checks, errorCount: x.errorCount, actor: x.actor, at: x.at });
     },
   });
 

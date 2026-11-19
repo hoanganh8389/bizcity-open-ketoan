@@ -69,13 +69,13 @@ describe('Đính kèm Mua hàng trên đính kèm chung', () => {
     const row = await db.selectFrom('document_attachments').select(['archived_at', 'archived_by']).where('id', '=', up.body.data.id).executeTakeFirstOrThrow();
     expect(row.archived_at).not.toBeNull();
 
-    const other = await call(ctx, 'POST', '/api/v1/document-attachments', { docRef: 'hop-dong.contract:9', fileName: 'x.txt', dataBase64: Buffer.from('x').toString('base64') });
+    const other = await call(ctx, 'POST', '/api/v1/document-attachments', { docRef: 'kho.transfer:9', fileName: 'x.txt', dataBase64: Buffer.from('x').toString('base64') });
     expect(other.status, JSON.stringify(other.body)).toBe(201);
     expect((await download(other.body.data.id)).statusCode).toBe(404);
     expect((await call(ctx, 'DELETE', `/api/v1/purchase/attachments/${other.body.data.id}`)).status).toBe(404);
   });
 
-  it('bảng cũ purchase_attachments khoá thêm / sửa', async () => {
-    await expect(sql`INSERT INTO purchase_attachments (tenant_id, owner_type, owner_id, file_name, path) VALUES (${tenantId}, 'partner', 'X', 'x', 'x')`.execute(db)).rejects.toThrow(/đã chuyển sang document_attachments/);
+  it('bảng cũ purchase_attachments đã bỏ (0157) — đính kèm chỉ còn ở document_attachments', async () => {
+    expect((await sql<{ t: string | null }>`SELECT to_regclass('purchase_attachments')::text AS t`.execute(db)).rows[0]!.t).toBeNull();
   });
 });

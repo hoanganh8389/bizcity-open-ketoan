@@ -14,6 +14,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api, errorText, ALL_ROWS } from '@/lib/api';
 import { money } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+import { NutQuyTac } from '@/components/QuyTacDanhMuc';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { useThemTuDiaChi } from '@/lib/themNhanh';
@@ -130,7 +131,7 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
 
   return (
     <>
-      <PageHeader title={screen?.title ?? 'Đối tượng'} code={screen?.code ?? 'DM03'} subtitle={screen?.subtitle ?? 'Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ'} helpKey="doi-tuong" />
+      <PageHeader actions={<NutQuyTac entity="partner" logEntity="partners" ten="đối tượng (khách hàng, nhà cung cấp, nhân viên)" />} title={screen?.title ?? 'Đối tượng'} code={screen?.code ?? 'DM03'} subtitle={screen?.subtitle ?? 'Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ'} helpKey="doi-tuong" />
       {/* [2026-11-17 10:00 AM kiennt] DANH-MUC — Khách hàng (DM12), Nhà cung cấp (DM13) bỏ thẻ chỉ số nợ; Đối tượng (DM03) giữ nguyên (đóng góp) */}
       {!fixedKind && <KpiDoiTuong />}
       <div className="card">
@@ -234,6 +235,11 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
   const kind = v.kind ?? 'customer';
   const noun = NOUN[kind] ?? 'đối tượng';
   const choices = groups.filter((g) => (g.isActive && (g.kind === 'any' || g.kind === kind)) || g.code === v.groupCode);
+  // [2026-11-19 08:49 AM khanhtd] ô Đơn vị cha: tìm trong nhóm cha của nhóm đang chọn; vai trò theo ô tích (tích cả hai = không lọc vai trò)
+  const parentGroupCode = v.groupCode ? (groups.find((g) => g.code === v.groupCode)?.parentCode || v.groupCode) : null;
+  const laNcc = kind === 'supplier' || (v.alsoKinds ?? []).includes('supplier');
+  const laKh = kind === 'customer' || (v.alsoKinds ?? []).includes('customer');
+  const parentKind: 'customer' | 'supplier' | undefined = laNcc && laKh ? undefined : laNcc ? 'supplier' : laKh ? 'customer' : undefined;
   const txt = (k: keyof Partner, label: string, full = false, mono = false, onBlur?: (val: string) => void) => (
     <Field label={label} full={full}><input className={`input ${mono ? 'mono' : ''}`} value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Partner>)} onBlur={onBlur ? (e) => onBlur(e.target.value.trim()) : undefined} /></Field>
   );
@@ -259,7 +265,7 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
     set({ kind: k, groupCode });
     void fetchCode(groupCode, k);
   };
-  // Đơn vị cha chỉ chọn trong cùng nhóm: đổi nhóm thì bỏ đơn vị cha đang chọn.
+  // Đơn vị cha chọn trong nhóm cha của nhóm đang chọn: đổi nhóm thì bỏ đơn vị cha đang chọn.
   const changeGroup = (groupCode: string | null) => {
     const boCha = Boolean(v.parentCode) && groupCode !== v.groupCode;
     set({ groupCode, ...(boCha ? { parentCode: null, parentName: null } : {}) });
@@ -271,8 +277,9 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
     setSuggest(null);
     if (!parentCode) { if (isNew) void fetchCode(v.groupCode, kind, true, null); return; }
     const par = (await api.get<Partner[]>('/api/v1/partners', { search: parentCode, status: 'all', pageSize: 20 }).catch(() => [])).find((p) => p.code === parentCode);
-    if (par) set({ parentName: par.name, ...(isNew ? { kind: par.kind, alsoKinds: par.alsoKinds, groupCode: v.groupCode || par.groupCode } : {}) });
-    if (isNew) void fetchCode(v.groupCode || par?.groupCode, par?.kind ?? kind, true, parentCode);
+    // [2026-11-19 08:49 AM khanhtd] vai trò giữ theo ô tích của người dùng (danh sách cha đã lọc theo vai trò), không chép vai trò của cha
+    if (par) set({ parentName: par.name, ...(isNew ? { groupCode: v.groupCode || par.groupCode } : {}) });
+    if (isNew) void fetchCode(v.groupCode || par?.groupCode, kind, true, parentCode);
   };
   /** MST chi nhánh (10 số-3 số) mà đã có đơn vị mang MST gốc: gợi ý gắn làm đơn vị con. */
   const [suggest, setSuggest] = useState<Partner | null>(null);
@@ -389,7 +396,8 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
         })()}
         {!isNew && <span className="muted">Sửa {noun} {v.code}</span>}
       </div>
-      <ODonViCha value={v.parentCode} self={v.code} isNew={isNew} groupCode={v.groupCode} onChange={(c) => void changeParent(c)} />
+      {/* [2026-11-19 08:49 AM khanhtd] đơn vị cha: đối tượng thuộc nhóm cha của nhóm đang chọn (nhóm không có cha thì cùng nhóm), lọc theo vai trò đã tích */}
+      <ODonViCha value={v.parentCode} self={v.code} isNew={isNew} groupCode={parentGroupCode} kind={parentKind} onChange={(c) => void changeParent(c)} />
       {suggest && <div className="alert full" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <span>MST <b className="mono">{v.taxCode}</b> là MST chi nhánh của <b>{suggest.code} - {suggest.name}</b> (MST {suggest.taxCode}). Gắn {noun} này làm đơn vị con?</span>
         <button type="button" className="btn btn-sm btn-primary" onClick={() => void changeParent(suggest.code)}>Gắn làm đơn vị con</button>
@@ -587,7 +595,7 @@ export function PartnerGroupsPage() {
   const e = editing;
   return (
     <>
-      <PageHeader title="Nhóm đối tượng" code="DM08" subtitle="Nhóm khách hàng, nhà cung cấp dùng để lọc và gom báo cáo theo nhóm" helpKey="doi-tuong" />
+      <PageHeader actions={<NutQuyTac entity="partner" logEntity="partner-groups" ten="nhóm đối tượng" />} title="Nhóm đối tượng" code="DM08" subtitle="Nhóm khách hàng, nhà cung cấp dùng để lọc và gom báo cáo theo nhóm" helpKey="doi-tuong" />
       <div className="card">
         <CatalogToolbar
           trash={{ catalog: 'partner-groups', title: 'Nhóm khách hàng, nhà cung cấp', sel: sel ? { key: sel.code, label: sel.name } : null }}

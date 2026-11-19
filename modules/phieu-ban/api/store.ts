@@ -3,8 +3,8 @@
  * Chạy trong ctx.data.module (RLS lọc theo đơn vị). Không chạm bảng của Core.
  */
 // [2026-11-13 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: kho dữ liệu phiếu bán / trả nhập tay (đóng góp)
-import { Errors, sql, type ActionContext } from '@bizcity/module-sdk';
-import { formatNo, periodOf, type Body, type CatalogItem, type Kind } from './domain/doc.js';
+import { Errors, roundMoney, sql, type ActionContext } from '@bizcity/module-sdk';
+import { DEFAULT_CHANNEL, formatNo, periodOf, type Body, type CatalogItem, type Kind } from './domain/doc.js';
 
 export type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 
@@ -34,13 +34,16 @@ export async function getDoc(tx: Tx, id: string, lock = false): Promise<DocRow> 
   return r;
 }
 
-export type ListFilter = { kind: Kind; from?: string; to?: string; branches: string[]; status?: string; search?: string; page: number; pageSize: number };
+export type ListFilter = { kind: Kind; from?: string; to?: string; branches: string[]; status?: string; search?: string; page: number; pageSize: number; channel?: string };
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: mã kênh của phiếu (phiếu không chọn kênh = kênh mặc định) (đóng góp)
+const channelOf = (body: string) => sql`coalesce(nullif(${sql.ref(body)}->>'saleChannel', ''), ${DEFAULT_CHANNEL})`;
 export async function listDocs(tx: Tx, f: ListFilter): Promise<{ rows: DocRow[]; total: number }> {
   const q = f.search?.trim();
   const where = sql`kind = ${f.kind}
     ${f.from ? sql`AND doc_date >= ${f.from}::date` : sql``} ${f.to ? sql`AND doc_date <= ${f.to}::date` : sql``}
     ${f.branches.length ? sql`AND branch_code IN (${sql.join(f.branches)})` : sql``}
     ${f.status ? sql`AND status = ${f.status}` : sql``}
+    ${f.channel ? sql`AND ${channelOf('body')} = ${f.channel.trim().toUpperCase()}` : sql``}
     ${q ? sql`AND (doc_no ILIKE ${`%${q}%`} OR coalesce(partner_code, '') ILIKE ${`%${q}%`} OR body->'partner'->>'name' ILIKE ${`%${q}%`}
               OR body->'invoice'->>'no' ILIKE ${`%${q}%`} OR coalesce(body->>'note', '') ILIKE ${`%${q}%`})` : sql``}`;
   const total = Number((await sql<{ n: string }>`SELECT count(*) AS n FROM mod_phieu_ban.docs WHERE ${where}`.execute(tx)).rows[0]!.n);
@@ -164,4 +167,28 @@ export async function voucherHeldByOther(tx: Tx, codes: readonly string[], excep
       FROM mod_phieu_ban.docs d, jsonb_array_elements(COALESCE(d.body->'vouchers', '[]'::jsonb)) v
      WHERE d.kind = 'sale' AND d.status = 'approved' AND d.doc_id <> ${exceptId}::uuid AND v->>'code' IN (${sql.join([...codes])})`.execute(tx)).rows
     .map((r) => ({ code: r.code, docNo: r.doc_no, docDate: r.doc_date }));
+}
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: số liệu phiếu bán / trả đã duyệt theo kênh × cửa hàng cho báo cáo bán theo kênh của module pos (đóng góp)
+export type ChannelFact = { channel: string; branchCode: string; orders: number; revenue: number; discount: number; returns: number };
+/**
+ * Phiếu ĐÃ DUYỆT trong khoảng ngày: phiếu bán → 1 phiếu, doanh thu = tổng thanh toán, khuyến mại = tiền giảm dòng mang chương trình + voucher TGS
+ * (quy gồm thuế theo tỉ lệ thuế của dòng); phiếu trả → trả hàng = tổng phiếu, kênh theo phiếu bán gốc (nối) / chính phiếu / mặc định.
+ */
+export async function channelFacts(tx: Tx, f: { from: string; to: string; branches: string[] }): Promise<ChannelFact[]> {
+  const rows = (await sql<{ kind: Kind; branch_code: string; channel: string; total: string; body: Body }>`
+    SELECT d.kind, d.branch_code, coalesce(nullif(o.body->>'saleChannel', ''), nullif(d.body->>'saleChannel', ''), ${DEFAULT_CHANNEL}) AS channel, d.total, d.body
+      FROM mod_phieu_ban.docs d LEFT JOIN mod_phieu_ban.docs o ON o.doc_id = d.original_doc_id
+     WHERE d.status = 'approved' AND d.doc_date BETWEEN ${f.from}::date AND ${f.to}::date
+       ${f.branches.length ? sql`AND d.branch_code IN (${sql.join(f.branches)})` : sql``}`.execute(tx)).rows;
+  return rows.map((r) => {
+    if (r.kind === 'sale_return') return { channel: r.channel, branchCode: r.branch_code, orders: 0, revenue: 0, discount: 0, returns: Number(r.total) };
+    const discount = r.body.lines.reduce((s, l) => {
+      const v = (l as { voucherDiscount?: number }).voucherDiscount ?? 0;
+      const part = (l.policyRef ? l.discount - v : 0) + v;
+      const rate = l.amountBeforeTax > 0 ? l.taxAmount / l.amountBeforeTax : 0;
+      return s + part * (1 + rate);
+    }, 0);
+    return { channel: r.channel, branchCode: r.branch_code, orders: 1, revenue: Number(r.total), discount: roundMoney(discount), returns: 0 };
+  });
 }

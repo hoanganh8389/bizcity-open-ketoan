@@ -12,6 +12,10 @@ import { catalogVersionOf, warehousesFor } from '../catalog.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): website tự báo số cuối, bootstrap nâng bộ đếm dạng shop (đóng góp)
 import { SHOP_LAST_MAX, schemeOf } from '../domain/codes.js';
 import { raiseShopCounters } from '../codes.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030: hạn trả theo cửa hàng, trả khác cửa hàng cùng MST (đóng góp)
+import { daysOf, parseDaysMap } from '../domain/returns.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: nguồn bán lấy từ danh mục Kênh bán hàng (đang dùng, đúng thứ tự) thay danh sách viết cứng (đóng góp)
+import { listChannels } from '../channels.js';
 
 const codeName = z.object({ code: z.string(), name: z.string() });
 
@@ -34,7 +38,8 @@ export default defineAction({
     menu: z.array(z.string()),
     paymentMethods: z.array(z.object({ code: z.string(), name: z.string(), kind: z.string(), accountingCode: z.string() })),
     exportReasons: z.array(codeName),
-    saleSources: z.array(codeName),
+    /** NT-BH-031: kênh bán đang dùng của danh mục Kênh bán hàng, theo thứ tự (mục đầu = mặc định trên máy). Máy gửi `code` trong đơn. */
+    saleSources: z.array(codeName.extend({ kind: z.enum(['online', 'offline']) })),
     minTotal: z.number(),
     returnPolicy: z.object({ days: z.number(), crossShop: z.enum(['same_shop', 'same_tax_code']) }),
     openShift: z.object({ id: z.string(), openedAt: z.string() }).nullable(),
@@ -74,10 +79,10 @@ export default defineAction({
         .map((m) => ({ code: m.code, name: m.name, kind: paymentKind(m.code), accountingCode: m.code }))
         .filter((m) => m.kind !== 'credit' && m.kind !== 'offset'),
       exportReasons: [{ code: 'XBA', name: 'Xuất bán' }],
-      saleSources: [{ code: 'tai_quay', name: 'Tại quầy' }],
+      saleSources: (await listChannels(tx, ctx.tenant.id, true)).map((c) => ({ code: c.code, name: c.name, kind: c.kind })),
       minTotal: 0,
-      // Hạn trả là tham số (họp kế toán 04/11: 3 ngày); W2 trả ở cửa hàng đã bán (trả khác cửa hàng cùng MST chờ chốt R2).
-      returnPolicy: { days: settings.returnDays, crossShop: 'same_shop' as const },
+      // Hạn trả là tham số (họp kế toán 04/11: 3 ngày). NT-BH-030: hạn riêng của cửa hàng (nếu khai), trả khác cửa hàng cùng MST chi nhánh.
+      returnPolicy: { days: daysOf({ days: settings.returnDays, byShop: parseDaysMap(settings.returnDaysByShop) }, branch.code), crossShop: 'same_tax_code' as const },
       openShift: shift ? { id: shift.shift_id, openedAt: shift.opened_at.toISOString() } : settings.requireOpenShift ? null : { id: `ngay-${day}`, openedAt: `${day}T00:00:00+07:00` },
       requireOpenShift: settings.requireOpenShift,
       reservedCodes: { sale: [] },

@@ -451,7 +451,7 @@ export type SnapshotLoyalty = {
   rewards: unknown[];
 };
 
-export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string; loyalty?: SnapshotLoyalty; usedVouchers?: string[]; issuedVouchers?: unknown[]; warehouses?: LineWarehouses }) {
+export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; code: string; branch: BranchRow; createdAt: string; loyalty?: SnapshotLoyalty; usedVouchers?: string[]; issuedVouchers?: unknown[]; warehouses?: LineWarehouses; saleSource?: { code: string; name: string; offlineRaw?: string } }) {
   const { draft } = meta;
   const all = o.lines.map((l) => ({
       ...l.draft,
@@ -489,7 +489,10 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
     total: o.total,
     payment,
     flags: { oversold: false, promoMismatch: false },
-    ...(draft.saleSource ? { saleSource: draft.saleSource } : {}),
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: mã + tên kênh theo danh mục (máy cũ gửi tên → lưu mã); bản sao website ghi tên kênh (đóng góp)
+    ...(meta.saleSource
+      ? { saleSource: meta.saleSource.code, saleSourceName: meta.saleSource.name, ...(meta.saleSource.offlineRaw !== undefined ? { saleSourceOffline: meta.saleSource.offlineRaw } : {}) }
+      : draft.saleSource ? { saleSource: draft.saleSource } : {}),
     promotions: [] as unknown[],
     ...(meta.loyalty ? { loyalty: meta.loyalty } : {}),
     ...(meta.usedVouchers?.length ? { usedVouchers: meta.usedVouchers } : {}),

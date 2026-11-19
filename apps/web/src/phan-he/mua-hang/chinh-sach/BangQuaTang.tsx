@@ -36,7 +36,10 @@ export function giftSentence(it: GiftItem, units: Units): string {
   return `${head} · ${rep}${it.apply === 'exclusive' ? ' · áp riêng' : ''}`;
 }
 
-export function BangQuaTang({ items, onChange }: { items: GiftItem[]; onChange: (items: GiftItem[]) => void }) {
+// [2026-11-19 Nguyễn Văn Thủy] khoanh vùng theo hàng hoá của hợp đồng + nút điền nhanh các mã đã khai (đóng góp)
+export function BangQuaTang({ items, onChange: onChange0, brands, onlySkus }: { items: GiftItem[]; onChange: (items: GiftItem[]) => void; /** Hàng mua chỉ thuộc các nhãn này; hàng tặng thì không giới hạn. */ brands?: string[]; /** Hàng mua chỉ các mã này (hàng hoá của hợp đồng); hàng tặng không khoanh. */ onlySkus?: string[] }) {
+  const onChange = (list: GiftItem[]) => { if (!onlySkus?.length) return onChange0(list); const bad = [...new Set(list.filter((i) => i.sku && !onlySkus.includes(i.sku)).map((i) => i.sku))]; if (bad.length) window.alert(`Bỏ qua ${bad.length} mã mua không thuộc hàng hoá của hợp đồng: ${bad.slice(0, 10).join(', ')}`); onChange0(list.filter((i) => !i.sku || onlySkus.includes(i.sku))); };
+  const thieuMa = (onlySkus ?? []).filter((s) => !items.some((i) => i.sku === s));
   const [find, setFind] = useState('');
   const [limit, setLimit] = useState(PAGE);
   const [pick, setPick] = useState(false);
@@ -78,6 +81,7 @@ export function BangQuaTang({ items, onChange }: { items: GiftItem[]; onChange: 
     <div className="full ckma">
       <div className="ckma-bar">
         <button type="button" className="btn btn-sm btn-primary" onClick={() => onChange([...items, blank()])}><Plus size={13} /> Thêm dòng</button>
+        {thieuMa.length > 0 && <button type="button" className="btn btn-sm btn-primary" title="Thêm một dòng cho mỗi mã của hợp đồng chưa có trong bảng — gõ SL mua / SL tặng sau" onClick={() => onChange([...items, ...thieuMa.map((s) => ({ ...blank(), sku: s }))])}>Điền {thieuMa.length} mã của hợp đồng</button>}
         <button type="button" className="btn btn-sm" onClick={() => setPick(true)}>Thêm nhiều mã từ danh mục…</button>
         <input className="input" style={{ width: 200 }} placeholder="Lọc dòng: mã / tên / ghi chú" value={find} onChange={(e) => { setFind(e.target.value); setLimit(PAGE); }} />
         <span className="ckma-count"><b>{vn(items.length)}</b> dòng{find ? ` · đang lọc ${vn(rows.length)}` : ''}</span>
@@ -99,7 +103,7 @@ export function BangQuaTang({ items, onChange }: { items: GiftItem[]; onChange: 
               return (
                 <tr key={idx} className={bad ? 'mh-row-bad' : ''} title={bad}>
                   <td>{k + 1}</td>
-                  <td><ItemPicker value={it.sku} onChange={(c) => void pickBuy(idx, c)} /></td>
+                  <td><ItemPicker brands={brands} skus={onlySkus} value={it.sku} onChange={(c) => void pickBuy(idx, c)} /></td>
                   <td><input className="input num" value={it.buyQty || ''} onChange={(e) => set(idx, { buyQty: Number(e.target.value.replace(',', '.')) || 0 })} /></td>
                   <td>{unitSel(it.sku, it.buyUnit, (u) => set(idx, { buyUnit: u }), 'ĐVT trên phiếu')}</td>
                   <td><ItemPicker value={it.giftSku ?? ''} onChange={(c) => void pickGift(idx, c)} /></td>
@@ -123,7 +127,7 @@ export function BangQuaTang({ items, onChange }: { items: GiftItem[]; onChange: 
         <b> ☑ Cộng dồn</b>: đủ mấy lần tặng mấy lần; bỏ tích = chỉ tặng một lần. <b>☑ Áp riêng</b>: mã nhận dòng này thì không nhận chương trình khác.
         Một mã nhiều dòng (vd mua 1 Thùng tặng 2 Lon, mua 5 Thùng tặng 1 bình) thì các dòng áp đồng thời — muốn chỉ lấy dòng lợi nhất thì tích Áp riêng.
       </div>
-      {pick && <ChonMatHang title="Thêm mã vào bảng mua – tặng — bấm vào dòng để thêm" initial="" existing={new Map(items.map((i) => [i.sku, 'đã có']))} onClose={() => setPick(false)}
+      {pick && <ChonMatHang brands={brands} skus={onlySkus} title="Thêm mã vào bảng mua – tặng — bấm vào dòng để thêm" initial="" existing={new Map(items.map((i) => [i.sku, 'đã có']))} onClose={() => setPick(false)}
         onPick={(p) => { onChange([...items, { ...blank(), sku: p.sku }]); }}
         onPickAll={(ps) => onChange([...items, ...ps.map((p) => ({ ...blank(), sku: p.sku }))])} />}
       {excel && <NhapExcelChung<K, GiftItem> s={NHAP} onClose={() => setExcel(false)} onAdd={(list) => { setExcel(false); onChange([...items.filter((i) => i.sku), ...list]); }} />}

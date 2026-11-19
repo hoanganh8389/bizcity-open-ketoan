@@ -9,6 +9,7 @@
  *   Cài đặt    GET/PUT /api/v1/purchase/settings · Dữ liệu mẫu POST /api/v1/purchase/demo/{seed,clear}
  *   NCC        GET /api/v1/purchase/suppliers · GET /…/suppliers/:code (hồ sơ)
  *   Đính kèm   GET/POST /api/v1/purchase/attachments · GET /…/attachments/:id/file · DELETE /…/attachments/:id
+ *   Hợp đồng   GET /api/v1/purchase/contracts · GET /…/contracts/detail?code= · PUT /…/contracts?code= · GET /…/contract-debts (0163)
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -33,6 +34,9 @@ import { deletePolicy, listDocs, listPolicies, policyInputSchema, policyVersions
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 // [2026-11-13 08:00 PM kiennt] NT-HT-003 — chứng từ mua hàng gác theo thao tác màn MH11 (xem / them / sua / gửi duyệt / duyệt / bỏ duyệt / huỷ), báo cáo theo xem của màn; documents:read / write kéo theo (đóng góp)
 import { quyenThaoTac } from '../../modules/access/man-hinh.js';
+import { contractDebts, contractDetail, contractInput, listContracts, saveContract } from './hop-dong.js';
+import { writeAudit } from '../../core/audit.js';
+import { today } from './reports.js';
 import './man-hinh-mua-hang.js'; // đăng ký màn Mua hàng trước khi lệnh đọc quyền
 
 const tags = ['Mua hàng'];
@@ -45,7 +49,7 @@ const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(d
 const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
 
 // [2026-11-03 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 (SC-ACT-1): chủ của tệp đính kèm — dùng ở GET và action
-const attachmentOwner = z.object({ ownerType: z.enum(['partner', 'document', 'policy', 'invoice']), ownerId: z.string().min(1) });
+const attachmentOwner = z.object({ ownerType: z.enum(['partner', 'document', 'policy', 'invoice', 'contract']), ownerId: z.string().min(1) });
 
 export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -110,16 +114,27 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/purchase/allocations/:id', { preHandler: read, schema: { tags, summary: 'Phân bổ phiếu chi phí vào phiếu nhập', params: idParamSchema, querystring: z.object({ basis: z.enum(['value', 'qty']).optional() }) },
     handler: async (req) => ok(costAllocation(await ctxOf(authOf(req).tenantId), req.params.id, req.query.basis)) });
   r.get('/api/v1/purchase/real-cost/:id', { preHandler: read, schema: { tags, summary: 'Giá vốn thực tế từng mã của phiếu nhập', params: idParamSchema }, handler: async (req) => ok(await realCost(db, authOf(req).tenantId, await ctxOf(authOf(req).tenantId), req.params.id)) });
-  r.get('/api/v1/purchase/logs', { preHandler: read, schema: { tags, summary: 'Nhật ký mua hàng (JSONL)', querystring: z.object({ event: z.string().optional(), from: z.string().optional(), to: z.string().optional(), docNo: z.string().optional(), partnerCode: z.string().optional(), sku: z.string().optional() }) },
+  r.get('/api/v1/purchase/logs', { preHandler: read, schema: { tags, summary: 'Nhật ký mua hàng (JSONL)', querystring: z.object({ event: z.string().optional(), from: z.string().optional(), to: z.string().optional(), docNo: z.string().optional(), partnerCode: z.string().optional(), sku: z.string().optional(), contractCode: z.string().optional().describe('Nhật ký một hợp đồng: ghi hợp đồng, giá mua, chính sách thuộc hợp đồng') }) },
     handler: async (req) => {
       const q = req.query;
       // docNo: số phiếu / mã chính sách (lịch sử một phiếu, một chính sách); partnerCode: mọi việc của một NCC.
-      const rows = (await readLog(authOf(req).tenantId, q)).filter((r) => (!q.docNo || r.docNo === q.docNo) && (!q.partnerCode || (r.data as { partnerCode?: string })?.partnerCode === q.partnerCode)
+      // [2026-11-19 Nguyễn Văn Thủy] contractCode: mọi việc của một hợp đồng (đóng góp)
+      const ofContract = (r: { docNo: string; event: string; data: Record<string, unknown> }) => { const d = r.data as { contractCode?: string; contractCodes?: string[]; scope?: { contractCode?: string } };
+        return ((r.event === 'contract_saved' || (r.event === 'attachment_added' && (r.data as { ownerType?: string }).ownerType === 'contract')) && r.docNo === q.contractCode) || d.contractCode === q.contractCode || d.scope?.contractCode === q.contractCode || (d.contractCodes ?? []).includes(q.contractCode!); };
+      const rows = (await readLog(authOf(req).tenantId, q)).filter((r) => (!q.contractCode || ofContract(r)) && (!q.docNo || r.docNo === q.docNo) && (!q.partnerCode || (r.data as { partnerCode?: string })?.partnerCode === q.partnerCode)
         // sku: lịch sử giá NCC của một mã (bản ghi cũ không có skus thì dò theo dòng tóm tắt).
         && (!q.sku || ((r.data as { skus?: string[] }).skus ?? ((r.data as { rows?: string[] }).rows ?? []).map((x) => String(x).split(' ')[0])).includes(q.sku)));
       return ok(rows);
     } });
   // Mặt hàng & giá mua của NCC (một nơi: hồ sơ NCC và form mặt hàng cùng dùng).
+  // [2026-11-18 Nguyễn Văn Thủy] Hợp đồng mua hàng (0163): danh sách, chi tiết (giá, chính sách, chứng từ), công nợ theo hợp đồng (đóng góp)
+  r.get('/api/v1/purchase/contracts', { preHandler: read, schema: { tags, summary: 'Hợp đồng mua hàng (Danh mục hợp đồng loại NCC hàng hoá): trạng thái, số giá / chính sách / chứng từ thuộc hợp đồng, đã mua, nợ còn lại', querystring: z.object({ partnerCode: z.string().max(64).optional(), asOf: day.optional() }) },
+    handler: async (req) => { const a = authOf(req); const ctx = await ctxOf(a.tenantId); return ok(await listContracts(db, a.tenantId, { partnerCode: req.query.partnerCode, asOf: req.query.asOf ?? today(), docs: ctx.docs, policies: ctx.policies })); } });
+  r.get('/api/v1/purchase/contracts/detail', { preHandler: read, schema: { tags, summary: 'Một hợp đồng mua + bảng giá mua, chính sách, chứng từ thuộc hợp đồng', querystring: z.object({ code: z.string().min(1).max(64) }) },
+    handler: async (req) => { const a = authOf(req); const ctx = await ctxOf(a.tenantId); return ok(await contractDetail(db, a.tenantId, req.query.code, { asOf: today(), docs: ctx.docs, policies: ctx.policies })); } });
+  r.get('/api/v1/purchase/contract-debts', { preHandler: read, schema: { tags, summary: 'Công nợ phải trả theo hợp đồng (sổ TK 331 có mã hợp đồng): tổng hợp đầu kỳ / phát sinh / cuối kỳ; chi tiết từng bút toán, số dư luỹ kế', querystring: z.object({ from: day, to: day, partnerCode: z.string().max(64).optional(), contractCode: z.string().max(64).optional(), detail: z.coerce.boolean().default(false) }) },
+    handler: async (req) => ok(await contractDebts(db, authOf(req).tenantId, req.query)) });
+
   r.get('/api/v1/purchase/supplier-products', { preHandler: read, schema: { tags, summary: 'Mặt hàng & giá mua: theo NCC (kèm giá chung nếu withGeneral=1) hoặc theo mã; units=1 trả kèm ĐVT các mã', querystring: z.object({ partnerCode: z.string().optional(), sku: z.string().optional(), withGeneral: z.coerce.boolean().optional(), all: z.coerce.boolean().optional() }) },
     handler: async (req) => {
       const a = authOf(req);
@@ -273,7 +288,7 @@ export const routesTsWriteActions: AnyActionDef[] = [
       const a = ctx.legacyAuth;
       const out = await sameTx(trx, (trx) => saveSupplierProducts(trx, a.tenantId, a.actorName, input.rows));
       const partners = [...new Set(input.rows.map((r) => r.partnerCode ?? ''))];
-      await logEvents(a.tenantId, partners.map((pc) => ({ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: pc || undefined, added: out.added, updated: out.updated, skus: [...new Set(input.rows.filter((r) => (r.partnerCode ?? '') === pc).map((r) => r.sku))], rows: input.rows.filter((r) => (r.partnerCode ?? '') === pc).slice(0, 30).map((r) => `${r.sku} ${r.unit}${r.price !== null && r.price !== undefined ? ` ${r.price.toLocaleString('vi-VN')}đ` : ''}${r.isActive ? '' : ' (bỏ)'}`), changes: out.changes.filter((c) => (c.partnerCode ?? '') === pc).slice(0, 100) } })));
+      await logEvents(a.tenantId, partners.map((pc) => ({ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: pc || undefined, added: out.added, updated: out.updated, skus: [...new Set(input.rows.filter((r) => (r.partnerCode ?? '') === pc).map((r) => r.sku))], rows: input.rows.filter((r) => (r.partnerCode ?? '') === pc).slice(0, 30).map((r) => `${r.sku} ${r.unit}${r.price !== null && r.price !== undefined ? ` ${r.price.toLocaleString('vi-VN')}đ` : ''}${r.isActive ? '' : ' (bỏ)'}`), changes: out.changes.filter((c) => (c.partnerCode ?? '') === pc).slice(0, 100), contractCodes: [...new Set(input.rows.filter((r) => (r.partnerCode ?? '') === pc).map((r) => r.contractCode ?? '').filter(Boolean))] } })));
       return { added: out.added, updated: out.updated };
     },
   }),
@@ -319,6 +334,25 @@ export const routesTsWriteActions: AnyActionDef[] = [
       const separate = await saveVariantSeparate(trx, a.tenantId, input.separate);
       await logEvents(a.tenantId, [{ event: 'variants_saved', docNo: '', user: a.actorName, data: { before, after: separate } }]);
       return { separate };
+    },
+  }),
+  // [2026-11-18 Nguyễn Văn Thủy] ghi hợp đồng mua vào Danh mục hợp đồng (0163) (đóng góp)
+  defineAction({
+    id: 'mua-hang.purchase.contract-save', title: 'Thêm / sửa hợp đồng mua hàng (Danh mục hợp đồng, loại NCC hàng hoá); sửa = bản mới ở Sổ chứng từ', tags,
+    get permission() { return quyenThaoTac('mua-hang.hop-dong', 'sua'); }, effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string().trim().min(1).max(64), isNew: z.boolean().default(false), contract: contractInput }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/purchase/contracts' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'contract', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const a = ctx.legacyAuth;
+      const out = await sameTx(trx, async (trx) => {
+        const r = await saveContract(trx, a.tenantId, a.actorName, input.code, input.isNew, input.contract);
+        await writeAudit(trx, { tenantId: a.tenantId, actor: a.actor, action: 'dimension.save', objectType: 'dimension:contract', objectId: input.code, before: r.before, after: r.after });
+        return r;
+      });
+      await logEvents(a.tenantId, [{ event: 'contract_saved', docNo: input.code, user: a.actorName, data: { partnerCode: input.contract.partnerCode, contractCode: input.code, isNew: input.isNew, changes: out.changes, before: out.before, after: out.after } }]);
+      return { code: out.code };
     },
   }),
 ];

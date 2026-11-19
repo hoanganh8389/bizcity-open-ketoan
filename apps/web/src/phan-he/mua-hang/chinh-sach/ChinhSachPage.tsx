@@ -8,6 +8,7 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { POLICY_LABEL, STACK_KINDS, canRepeat, giftFlags, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { scopeBranches } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -65,9 +66,10 @@ export function ChinhSachPage() {
     { key: 'partnerTax', header: 'MST NCC', type: 'code', width: 110, value: (r) => (r.scope.partnerCode ? names.partner(r.scope.partnerCode)?.taxCode ?? '' : '') },
     { key: 'partnerPhone', header: 'SĐT NCC', type: 'code', width: 110, value: (r) => (r.scope.partnerCode ? names.partner(r.scope.partnerCode)?.phone ?? '' : '') },
     { key: 'partnerAddress', header: 'Địa chỉ NCC', width: 220, value: (r) => (r.scope.partnerCode ? names.partner(r.scope.partnerCode)?.address ?? '' : ''), render: (r) => <span title={r.scope.partnerCode ? names.partner(r.scope.partnerCode)?.address ?? '' : ''}>{r.scope.partnerCode ? names.partner(r.scope.partnerCode)?.address : ''}</span> },
+    { key: 'contract', header: 'Hợp đồng', type: 'code', width: 150, title: 'Chính sách ghi trong hợp đồng mua nào (MH29); trống = chính sách ngoài hợp đồng', value: (r) => r.scope.contractCode ?? '', render: (r) => r.scope.contractCode ? <Link to={`/mua-hang/hop-dong`} title="Mở danh sách hợp đồng mua">{r.scope.contractCode}</Link> : <span className="muted">ngoài HĐ</span> },
     { key: 'kind', header: 'Loại chính sách', width: 170, value: (r) => POLICY_LABEL[r.kind] },
     { key: 'content', header: 'Nội dung', width: 360, value: (r) => ruleText(r) },
-    { key: 'scope', header: 'Phạm vi khác', width: 150, value: (r) => [r.scope.brandCode && `Nhãn ${r.scope.brandCode}`, r.scope.sku && `Mã ${r.scope.sku}`, r.scope.branchCode && names.branchName(r.scope.branchCode)].filter(Boolean).join(' · ') },
+    { key: 'scope', header: 'Phạm vi khác', width: 150, value: (r) => [r.scope.brandCode && `Nhãn ${r.scope.brandCode}`, r.scope.sku && `Mã ${r.scope.sku}`, (scopeBranches(r.scope).length === 1 ? names.branchName(scopeBranches(r.scope)[0]!) : scopeBranches(r.scope).length ? `${scopeBranches(r.scope).length} chi nhánh: ${scopeBranches(r.scope).join(', ')}` : '')].filter(Boolean).join(' · ') },
     { key: 'validFrom', header: 'Hiệu lực từ', width: 90, value: (r) => dmy(r.validFrom) },
     { key: 'validTo', header: 'Đến', width: 90, value: (r) => dmy(r.validTo) },
     { key: 'state', header: 'Trạng thái', width: 110, render: (r) => <span className={`badge ${r.state === 'Đang áp' ? 'badge-ok' : r.state === 'Hết hiệu lực' ? 'badge-warn' : 'badge-gray'}`}>{r.state}</span>, value: (r) => r.state },

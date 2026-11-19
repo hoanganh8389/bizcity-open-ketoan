@@ -8,6 +8,7 @@
 // [2026-11-13 11:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-015: nghiệp vụ phiếu bán / trả nhập tay (đóng góp)
 import { randomUUID } from 'node:crypto';
 import { Errors, type ActionContext } from '@bizcity/module-sdk';
+import { findChannel, type ChannelItem } from './domain/doc.js';
 import { computeDoc, docKeyOf, overReturn, returnableBySku, stockShortByWarehouse, stockShortOf, toLedgerDoc, withGiftWarehouse, type Body, type DocInput, type Kind } from './domain/doc.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng (đóng góp)
 import { applyVouchers, stripVouchers, type QuotedVoucher, type VoucherBody } from './domain/voucher.js';
@@ -20,6 +21,8 @@ const fail = (problems: string[]): never => { throw Errors.validation(problems.j
 
 // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021: công tắc riêng của phiếu bán (Q6), mặc định tắt = chỉ cảnh báo như trước
 export const BLOCK_NEGATIVE_STOCK = 'bizcity.phieu_ban.block_negative_stock';
+/** Khoá mã dịch vụ phí ship (NT-BH-032) — trùng hằng của order-service (không import vòng). */
+const SHIP_FEE_SKU = 'bizcity.phieu_ban.ship_fee_sku';
 
 
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt khuyến mại dùng chung với máy bán (đóng góp)
@@ -69,6 +72,32 @@ export async function giftWarehouseOf(ctx: ActionContext, kind: Kind, branch: st
   return g.giftWarehouse;
 }
 
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh bán của phiếu chọn từ danh mục Kênh bán hàng của module pos (đóng góp)
+/**
+ * Kênh bán trên phiếu: hỏi action đọc `pos.channel.list` của module pos (chủ danh mục; module này không đọc bảng của pos) — gọi NGOÀI
+ * ctx.data.module. Nhận mã hoặc tên; kênh phải có và đang dùng (giữ nguyên kênh phiếu đang mang dù kênh đã ngừng). Sai → POS_SALE_SOURCE.
+ * Trống → không ghi kênh (lọc / báo cáo tính vào kênh mặc định). Trả đầu vào đã thay mã + tên chuẩn.
+ */
+export async function withChannel(ctx: ActionContext, input: DocInput, id?: string): Promise<DocInput> {
+  const { saleChannelName: _n, ...rest } = input as DocInput & { saleChannelName?: string };
+  const raw = (input.saleChannel ?? '').trim();
+  if (!raw) return { ...rest, saleChannel: undefined } as DocInput;
+  let list: ChannelItem[];
+  try {
+    list = (await ctx.actions.call<{ items: ChannelItem[] }>('pos.channel.list', {})).items;
+  } catch (e) {
+    if ((e as { code?: string }).code !== 'NOT_FOUND') throw e;
+    throw Errors.validation('Chưa chọn kênh được: module Máy bán POS (chủ danh mục Kênh bán hàng) chưa bật — để trống ô Kênh', { reason: 'POS_SALE_SOURCE', field: 'saleChannel', saleSource: raw });
+  }
+  const c = findChannel(list, raw);
+  const kept = c && id ? (await ctx.data.module(async (tx) => getDoc(tx, id))).body.saleChannel === c.code : false;
+  if (!c || (!c.active && !kept)) {
+    throw Errors.validation(c ? `Kênh bán "${c.name}" đã ngừng dùng — chọn kênh khác` : `Không có kênh bán "${raw}" trong danh mục Kênh bán hàng`,
+      { reason: 'POS_SALE_SOURCE', field: 'saleChannel', saleSource: raw, cause: c ? 'inactive' : 'unknown' });
+  }
+  return { ...rest, saleChannel: c.code, saleChannelName: c.name } as DocInput;
+}
+
 /** Kiểm + tính một phiếu (nháp hoặc lúc duyệt). Phiếu trả: nối phiếu bán gốc của module theo số (cùng cửa hàng) nếu có. */
 async function prepare(tx: Tx, kind: Kind, input: DocInput) {
   if (!(await branchExists(tx, input.branchCode))) fail([`Chi nhánh ${input.branchCode} không có / ngừng dùng`]);
@@ -84,7 +113,8 @@ async function prepare(tx: Tx, kind: Kind, input: DocInput) {
 }
 
 /** Lưu nháp: thêm (id trống) hoặc sửa phiếu nháp. Số trống → cấp theo cửa hàng; số gõ tay → không trùng trong cửa hàng + loại. */
-export async function saveDraft(ctx: ActionContext, kind: Kind, input: DocInput, id?: string) {
+export async function saveDraft(ctx: ActionContext, kind: Kind, input0: DocInput, id?: string) {
+  const input = await withChannel(ctx, input0, id);
   const giftWarehouse = await giftWarehouseOf(ctx, kind, input.branchCode, input.lines);
   return ctx.data.module(async (tx) => saveDraftIn(tx, ctx, kind, input, id, { giftWarehouse }));
 }
@@ -177,6 +207,8 @@ async function applyDocVouchers(ctx: ActionContext, r: DocRow, body: Body): Prom
 export async function approve(ctx: ActionContext, id: string) {
   // Cài đặt đọc ngoài giao dịch của module (vai trò module không đọc bảng cấu hình của Core).
   const blockStock = (await ctx.settings.get<unknown>(BLOCK_NEGATIVE_STOCK)) === true;
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: dòng phí ship (mã dịch vụ khai ở BH17) không kiểm tồn — Core chưa có loại mặt hàng dịch vụ (đóng góp)
+  const feeSku = blockStock ? String((await ctx.settings.get<unknown>(SHIP_FEE_SKU)) ?? '').trim() : '';
   const head = await ctx.data.module(async (tx) => getDoc(tx, id));
   const giftWh = await giftWarehouseOf(ctx, head.kind, head.branch_code, head.body.lines);
   const prepared = await ctx.data.module(async (tx) => {
@@ -185,27 +217,32 @@ export async function approve(ctx: ActionContext, id: string) {
     const p0 = await prepare(tx, r.kind, asInput(r));
     if (p0.problems.length) fail(p0.problems);
     const p = { ...p0, body: withGiftWarehouse(p0.body, r.branch_code === head.branch_code ? giftWh : null) };
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q4: phiếu trả này trả hết hàng bán (không kể quà) của phiếu gốc → báo module pos trả lượt khuyến mại (đóng góp)
+    let originalFullyReturned = false;
     if (r.kind === 'sale_return' && p.original) {
       if (p.original.status !== 'approved') fail([`Phiếu bán gốc ${p.original.doc_no} chưa duyệt`]);
       const done = (await approvedReturnsOf(tx, p.original.doc_id, r.doc_id)).flatMap((x) => x.body.lines);
-      const over = overReturn(p.body.lines, returnableBySku(p.original.body.lines.filter((l) => !l.isGift), done));
+      const sold = p.original.body.lines.filter((l) => !l.isGift);
+      const over = overReturn(p.body.lines, returnableBySku(sold, done));
       if (over.length) fail(over.map((x) => `Trả vượt số đã bán của phiếu ${p.original!.doc_no} — ${x}`));
+      originalFullyReturned = [...returnableBySku(sold, [...done, ...p.body.lines].filter((l) => !l.isGift)).values()].every((q) => q <= 1e-9);
     }
     if (r.kind === 'sale' && blockStock) {
       // Phiếu đang sửa đã bỏ duyệt (chứng từ trong sổ đã huỷ) nên tồn đọc được không còn trừ chính nó.
-      const have = await lockedStock(tx, r.branch_code, r.warehouse_code, p.body.lines.filter((l) => !l.warehouseCode).map((l) => l.sku));
+      const goods = p.body.lines.filter((l) => !feeSku || l.sku !== feeSku);
+      const have = await lockedStock(tx, r.branch_code, r.warehouse_code, goods.filter((l) => !l.warehouseCode).map((l) => l.sku));
       // NT-BH-028: dòng quà ở kho quà kiểm tồn kho quà, không cộng chung với kho của phiếu.
-      const giftLines = p.body.lines.filter((l) => l.warehouseCode);
+      const giftLines = goods.filter((l) => l.warehouseCode);
       const short = giftLines.length && giftWh
-        ? stockShortByWarehouse(p.body.lines, new Map([[r.warehouse_code ?? '', have], [giftWh, await lockedStock(tx, r.branch_code, giftWh, giftLines.map((l) => l.sku))]]), r.warehouse_code ?? '')
-        : stockShortOf(p.body.lines, have);
+        ? stockShortByWarehouse(goods, new Map([[r.warehouse_code ?? '', have], [giftWh, await lockedStock(tx, r.branch_code, giftWh, giftLines.map((l) => l.sku))]]), r.warehouse_code ?? '')
+        : stockShortOf(goods, have);
       if (short.length) {
         const where = r.warehouse_code || r.branch_code;
         throw Errors.validation(`Bán quá tồn: ${short.map((s) => `${s.sku} cần ${s.need}, tồn ${s.have}`).join('; ')} ở ${where} — tắt công tắc "Chặn bán quá tồn ở phiếu bán nhập tay" ở BH17 nếu muốn chỉ cảnh báo`,
           { reason: 'PHIEU_BAN_STOCK_SHORT', items: short });
       }
     }
-    return { r, ...p };
+    return { r, ...p, originalFullyReturned };
   });
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: chương trình khuyến mại có hạn mức lượt theo cửa hàng — hỏi lượt còn ở module pos (đóng góp)
   if (prepared.r.kind === 'sale') await checkPromoQuota(ctx, prepared.r.branch_code, prepared.body.lines, id);
@@ -230,7 +267,9 @@ export async function approve(ctx: ActionContext, id: string) {
   }).then(async (doc) => {
     await ctx.events.emit('phieu-ban.doc.recorded', {
       docId: id, docKey: docKeyOf(id), version, kind: prepared.r.kind, branchCode: prepared.r.branch_code, cashier: { name: ctx.actor.name },
-      doc, ...(prepared.original ? { originalDocKey: docKeyOf(prepared.original.doc_id) } : {}),
+      doc, ...(prepared.original ? {
+        originalDocKey: docKeyOf(prepared.original.doc_id), originalDocId: prepared.original.doc_id, originalFullyReturned: prepared.originalFullyReturned,
+      } : {}),
     }, { subject: `phieu-ban.doc:${id}`, dedupeKey: `phieu-ban.doc.recorded:${id}:${version}` });
     return doc;
   });
@@ -259,7 +298,11 @@ export async function unapprove(ctx: ActionContext, id: string, reason: string) 
     }
     return { ...toTradeDoc(await getDoc(tx, id)), reversed: res.reversed };
   }).then(async (doc) => {
-    await ctx.events.emit('phieu-ban.doc.cancelled', { docId: id, docKey: docKeyOf(id), version: r.ledger_version, kind: r.kind, branchCode: r.branch_code },
+    // NT-BH-030 Q4: phiếu trả bỏ duyệt mang phiếu gốc — module pos lấy lại lượt khuyến mại đã trả theo phiếu trả này.
+    await ctx.events.emit('phieu-ban.doc.cancelled', {
+      docId: id, docKey: docKeyOf(id), version: r.ledger_version, kind: r.kind, branchCode: r.branch_code,
+      ...(r.kind === 'sale_return' && r.original_doc_id ? { originalDocId: r.original_doc_id } : {}),
+    },
       { subject: `phieu-ban.doc:${id}`, dedupeKey: `phieu-ban.doc.cancelled:${id}:${r.ledger_version}` });
     return doc;
   });

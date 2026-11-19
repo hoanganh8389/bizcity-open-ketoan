@@ -9,6 +9,7 @@ import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { runDiagnostics, type DiagLayer } from '../src/modules/system/diagnostics.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { appendRunLog, readRunLog } from '@bizcity/platform/core/run-log';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -121,8 +122,8 @@ describe('Khấu hao, lịch kiểm chuẩn', () => {
 
   it('CONFORMANCE_STALE: lượt gần nhất quá 2 ngày ⇒ cảnh báo; chạy kiểm chuẩn ⇒ hết; đơn vị mới chưa có lượt thì không báo', async () => {
     expect(await diag('CONFORMANCE_STALE', {}, 'L3')).toMatchObject({ level: 'pass', count: 0 });
-    await sql`INSERT INTO conformance_runs (tenant_id, as_of, layers, kit_hash, result, counts, report, actor, created_at)
-              VALUES (${tenantId}, current_date - 3, ARRAY['module'], 'sha256:test', 'REVIEW_REQUIRED', '{}'::jsonb, '{}'::jsonb, 'system:nightly', now() - interval '3 days')`.execute(db);
+    await appendRunLog('kiem-chuan', String(tenantId), { as_of: '2000-01-01', layers: ['module'], kit_hash: 'sha256:test', result: 'REVIEW_REQUIRED', counts: {}, report: {}, actor: 'system:nightly' },
+      new Date(Date.now() - 3 * 86_400_000));
     expect(await diag('CONFORMANCE_STALE', {}, 'L3')).toMatchObject({ level: 'warn', count: 1 });
     expect((await call(ctx, 'POST', '/api/v1/conformance/runs', {})).status).toBe(201);
     expect(await diag('CONFORMANCE_STALE', {}, 'L3')).toMatchObject({ count: 0 });

@@ -291,3 +291,24 @@
 tr.mh-ncc-con td { font-weight: 400 !important; color: #5b6573; background: #fafbfd; }
 tr.mh-cong-nhom td { background: #eef4fd !important; color: #1d3f78; font-weight: 700; border-bottom: 1px solid #c9d8f0; }
 tr.mh-me td { font-weight: 600; }
+
+/* [2026-11-19 Nguyễn Văn Thủy] Trang hợp đồng mua: menu bước bên trái + nội dung; giá mua và chính sách cạnh nhau (đóng góp) */
+.hd-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.hd-title { font-size: 16px; font-weight: 700; color: var(--brand-800); }
+.hd-page { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 12px; align-items: start; }
+.hd-nav { display: flex; flex-direction: column; gap: 2px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; position: sticky; top: 8px; }
+.hd-step { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 0; border-radius: 6px; background: none; text-align: left; font: inherit; font-size: 13.5px; color: inherit; cursor: pointer; }
+.hd-step:hover:not(:disabled) { background: var(--brand-50); }
+.hd-step.active { background: var(--brand-50); color: var(--brand-800); font-weight: 600; }
+.hd-step:disabled { opacity: .5; cursor: not-allowed; }
+.hd-so { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--brand-600); color: var(--brand-600); font-size: 12px; font-weight: 700; }
+.hd-step.active .hd-so { background: var(--brand-600); color: #fff; }
+.hd-so.xong { background: #16a34a; border-color: #16a34a; color: #fff; }
+.hd-body { padding: 14px 16px; min-height: 320px; }
+.hd-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; }
+.hd-grid .full { grid-column: 1 / -1; }
+.hd-gia-cs { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.hd-box { min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.hd-box > .mh-h4 { margin-top: 0; }
+@media (max-width: 1800px) { .hd-gia-cs { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .hd-page { grid-template-columns: minmax(0, 1fr); } .hd-nav { position: static; flex-direction: row; flex-wrap: wrap; } .hd-grid { grid-template-columns: minmax(0, 1fr); } }

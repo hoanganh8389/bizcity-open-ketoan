@@ -26,6 +26,7 @@
 .db-l-module { color: #1f66a3; }
 .db-l-catalog { color: #2f855a; }
 .db-l-core { color: #9a5b13; }
+.db-l-doc { color: #6b46c1; }
 .db-l-file { color: var(--ink-500); }
 .db-legend { display: flex; gap: 16px; font-size: 12px; margin-top: 6px; flex-wrap: wrap; }
 .db-legend span::before { content: '■ '; }

@@ -74,6 +74,8 @@ export const RULE_KEYS: Record<string, RuleKey> = {
   stock_shortage: { label: 'Hàng thiếu chờ xử lý', range: ['138', '632', '811'], suggest: '1381', help: 'Phiếu giảm kho không ghi mục đích (kiểm kê thiếu).' },
   // [2026-11-15 Nguyễn Văn Thủy] chiết khấu thanh toán được hưởng khi trả NCC đúng hạn (đóng góp)
   payment_discount_income: { label: 'Chiết khấu thanh toán được hưởng', range: ['515'], suggest: '5152', help: 'Trả nhà cung cấp đúng hạn được giảm (CKTT): Nợ phải trả NCC / Có tài khoản này.' },
+  // [2026-11-17 Nguyễn Văn Thủy] chênh lệch giữa tiền trên phiếu trả NCC và giá trị trừ khỏi giá vốn (đóng góp)
+  purchase_return_diff: { label: 'Chênh lệch hàng trả nhà cung cấp', range: ['632', '711', '811'], suggest: '6321', help: 'Tiền trên phiếu trả NCC khác giá trị trừ khỏi công thức giá vốn (vượt giá trị đang có, hoặc sổ thuế định giá theo tồn đầu). Ghi ở phiếu giá vốn cuối tháng.' },
   promotion_expense: { label: 'Chi phí hàng khuyến mại (mua hàng)', range: ['641', '642'], suggest: '64184', help: 'Hàng khuyến mại nhận từ NCC ghi chi phí ở màn mua hàng.' },
 };
 
@@ -161,6 +163,12 @@ export const SCHEME: SchemeBusiness[] = [
         { side: 'debit', role: 'Giảm phải trả NCC', amount: 'total', source: 'rule', key: 'payable' },
         { side: 'credit', role: 'Hàng xuất trả', amount: 'goods', source: 'warehouse', key: 'inventory' },
         { side: 'credit', role: 'Giảm thuế đầu vào', amount: 'tax', source: 'tax', key: 'tax_input' },
+      ] },
+      { name: 'Chênh lệch khi tính giá vốn (cuối tháng)', lines: [
+        { side: 'debit', role: 'Hàng (phiếu trả lớn hơn giá trị tính giá vốn)', amount: 'cost', source: 'warehouse', key: 'inventory', when: 'Phiếu trả lớn hơn' },
+        { side: 'credit', role: 'Chênh lệch hàng trả NCC', amount: 'cost', source: 'rule', key: 'purchase_return_diff', when: 'Phiếu trả lớn hơn' },
+        { side: 'debit', role: 'Chênh lệch hàng trả NCC', amount: 'cost', source: 'rule', key: 'purchase_return_diff', when: 'Phiếu trả nhỏ hơn' },
+        { side: 'credit', role: 'Hàng (phiếu trả nhỏ hơn giá trị tính giá vốn)', amount: 'cost', source: 'warehouse', key: 'inventory', when: 'Phiếu trả nhỏ hơn' },
       ] },
     ],
   },

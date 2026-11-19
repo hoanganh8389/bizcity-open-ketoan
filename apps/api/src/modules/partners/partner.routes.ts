@@ -43,6 +43,7 @@ import { partnerHints } from './partner.hints.js';
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
 import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+import { quyTac } from '@bizcity/platform/core/quy-tac';
 
 const warnAck = z.object({ reason: z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500), codes: z.array(z.string().max(32)).max(50).default([]) });
 
@@ -98,7 +99,7 @@ async function assertGroups(trx: Db, tenantId: string, codes: (string | null | u
   if (!unique.length) return;
   const rows = await trx.selectFrom('partner_groups').select('code').where('tenant_id', '=', tenantId).where('code', 'in', unique).execute();
   const missing = unique.filter((c) => !rows.some((r) => r.code === c));
-  if (missing.length) throw Errors.validation(`Nhóm đối tượng chưa có trong danh mục: ${missing.join(', ')}`);
+  if (missing.length) throw quyTac('PART-BLOCK-001', { codes: missing.join(', ') });
 }
 
 /**
@@ -115,7 +116,7 @@ async function assertTaxCodeFree(trx: Db, tenantId: string, code: string, taxCod
   // Cùng một nhà cung cấp / khách hàng mẹ (cha – con, 0132): một pháp nhân nhiều điểm giao dịch dùng chung MST được.
   let dup: (typeof dups)[number] | undefined;
   for (const d of dups) if (!familyUid || !(await sameFamily(trx, familyUid, d.uid))) { dup = d; break; }
-  if (dup) throw Errors.conflict(`Mã số thuế ${t} đã có ở ${KIND_TEXT[dup.kind] ?? dup.kind} ${dup.code} - ${dup.name || '(chưa có tên)'}. Mỗi mã số thuế chỉ dùng cho một đối tượng.`);
+  if (dup) throw quyTac('PART-BLOCK-002', { taxCode: t, kind: KIND_TEXT[dup.kind] ?? dup.kind, other: dup.code, name: dup.name || '(chưa có tên)' }, 'conflict');
 }
 
 export async function partnerRoutes(app: FastifyInstance): Promise<void> {
@@ -292,7 +293,7 @@ export const partnerWriteActions: AnyActionDef[] = [
         // Hai người tạo cùng mã một lúc: người sau phải thấy mã đã có (upsert bên dưới không được ghi đè).
         await sql`SELECT pg_advisory_xact_lock(hashtext(${`partner:${auth.tenantId}:${code}`}))`.execute(trx);
         const existing = await partnerRepository.findByCode(trx, auth.tenantId, code);
-        if (existing) throw Errors.conflict(`Mã ${code} đã có: ${existing.name || '(chưa có tên)'} (${KIND_TEXT[existing.kind] ?? existing.kind}). Bấm "Lấy mã mới" hoặc nhập mã khác.`);
+        if (existing) throw quyTac('PART-BLOCK-003', { code, name: existing.name || '(chưa có tên)', kind: KIND_TEXT[existing.kind] ?? existing.kind }, 'conflict');
         await assertGroups(trx, auth.tenantId, [info.groupCode]);
         const parentUid = await checkParent(trx, auth.tenantId, code, info.parentCode, null);
         await assertTaxCodeFree(trx, auth.tenantId, code, rest.taxCode, null, parentUid);
@@ -400,10 +401,10 @@ export const partnerWriteActions: AnyActionDef[] = [
         const before = await partnerRepository.findByCode(trx, auth.tenantId, input.code);
         if (!before) throw Errors.notFound(`đối tượng ${input.code}`);
         const used = await trx.selectFrom('bizcity_read.ledger_lines').select('id').where('tenant_id', '=', auth.tenantId).where('partner_id', '=', before.id).limit(1).executeTakeFirst();
-        if (used) throw Errors.conflict(`Đối tượng ${before.code} đã có trên sổ: bỏ tích "Theo dõi" để khoá`);
+        if (used) throw quyTac('PART-BLOCK-004', { code: before.code }, 'conflict');
         // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G3): module còn dùng đối tượng (masterdata.referenceCheck) → không xoá
         const refs = await referenceChecks(trx, auth.tenantId, { kind: 'partner', code: before.code });
-        if (refs.length) throw Errors.conflict(`Đối tượng ${before.code} đang dùng ở ${refs.join('; ')}: bỏ tích "Theo dõi" để khoá`);
+        if (refs.length) throw quyTac('PART-BLOCK-005', { code: before.code, refs: refs.join('; ') }, 'conflict');
         // Còn chứng từ, công nợ, hợp đồng… trỏ tới thì khoá ngoại chặn (báo trùng / đang dùng).
         await trx.deleteFrom('partners').where('id', '=', before.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.delete', objectType: 'partner', objectId: before.code, before });
@@ -426,7 +427,7 @@ export const partnerWriteActions: AnyActionDef[] = [
         if (!before) throw Errors.notFound(`nhóm ${code}`);
         const used = await trx.selectFrom('partners').select('code').where('tenant_id', '=', auth.tenantId).where('group_code', '=', code).limit(1).executeTakeFirst()
           ?? await trx.selectFrom('partner_groups').select('code').where('tenant_id', '=', auth.tenantId).where('parent_code', '=', code).limit(1).executeTakeFirst();
-        if (used) throw Errors.conflict(`Nhóm ${code} đang dùng (${used.code}): bỏ tích "Đang dùng" để ngừng`);
+        if (used) throw quyTac('PART-BLOCK-006', { code, used: used.code }, 'conflict');
         await trx.deleteFrom('partner_groups').where('id', '=', before.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner_group.delete', objectType: 'partner_group', objectId: code, before });
       });
@@ -451,14 +452,14 @@ export const partnerWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       const { code } = input;
       const b = reqBody;
-      if (b.parentCode === code) throw Errors.validation('Nhóm cha không được là chính nó');
+      if (b.parentCode === code) throw quyTac('PART-BLOCK-007', { detail: 'nhóm cha không được là chính nó' });
       if (b.parentCode) await assertGroups(trx, auth.tenantId, [b.parentCode]);
       // [2026-11-17 07:29 PM kiennt] NT-DM-002 L06 — nhóm cha mới không được nằm trong nhánh con của chính nhóm này (chống vòng cha – con) (đóng góp)
       if (b.parentCode) {
         const ds = await trx.selectFrom('partner_groups').select(['code', 'parent_code']).where('tenant_id', '=', auth.tenantId).execute();
         const chaCua = new Map(ds.map((g) => [g.code, g.parent_code]));
         for (let c: string | null | undefined = b.parentCode, n = 0; c && n < 1000; c = chaCua.get(c), n++) {
-          if (c === code) throw Errors.validation(`Nhóm ${b.parentCode} đang là nhóm con (hoặc cháu) của ${code} — không đặt làm nhóm cha được`);
+          if (c === code) throw quyTac('PART-BLOCK-007', { detail: `nhóm ${b.parentCode} đang là nhóm con (hoặc cháu) của ${code} — không đặt làm nhóm cha được` });
         }
       }
       const values = { name: b.name, parent_code: b.parentCode || null, kind: b.kind, note: b.note, is_active: b.isActive };

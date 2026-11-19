@@ -48,78 +48,85 @@ interface Stage { node: Node; config: Node[]; side: Node[] }
 const L = (kind: string) => `/mua-hang/tong-hop?loai=${kind}`;
 const N = (kind: string) => `/mua-hang/tong-hop?moi=${kind}`;
 
+// [2026-11-18 Nguyễn Văn Thủy] sắp theo quy trình mua hàng của kế toán: khai báo → hợp đồng (giá, chính sách) → nhu cầu → đơn đặt → nhận hàng
+// → hoá đơn & công nợ → thanh toán → trả hàng / quyết toán / thanh lý (đóng góp)
 const STAGES: Stage[] = [
   {
-    // [2026-11-15 Nguyễn Văn Thủy] tồn max có hai tác nhân: shop đăng ký, kế toán mua hàng duyệt hoặc sửa thẳng (đóng góp)
-    node: { label: 'Tồn max', code: 'MH16', icon: 'Gauge', color: '#5b6cff', path: '/mua-hang/ton-max',
-      auto: [<><b>Shop</b> gửi phiếu đăng ký (2 lần / tháng, hoặc từ máy POS) → <b>kế toán mua hàng</b> duyệt → max có hiệu lực</>,
-        <><b>Kế toán mua hàng</b> sửa thẳng max ở bảng Tồn max (hàng mới, điều chỉnh gấp)</>, 'Lệch nhỏ (≤ % cài ở Công thức) thì tự duyệt'] },
+    node: { label: '1. Khai báo NCC, mặt hàng', code: 'MH01', icon: 'Building2', color: '#5b6cff', path: '/mua-hang/nha-cung-cap',
+      auto: ['Kiểm tra trùng mã số thuế', 'Mặt hàng: mã, ĐVT, lô / hạn dùng, thuế suất — nhãn, ngành tự theo nhóm hàng'] },
     config: [
-      { label: 'Cơ cấu tổ chức', code: 'DM16', icon: 'Network', color: '#64748b', path: '/danh-muc/so-do-to-chuc', hint: 'Chi nhánh mua hàng cho mọi shop bên dưới, hàng về kho chi nhánh rồi chia xuống shop' },
+      { label: 'Danh mục mặt hàng', code: 'DM10', icon: 'Package', color: '#64748b', path: '/danh-muc/mat-hang', hint: 'Mã, ĐVT, thuế; mã con (quà, mã Z…) gắn mã cha' },
+      { label: 'Nhóm hàng', code: 'DM11', icon: 'FolderTree', color: '#64748b', path: '/danh-muc/phan-loai-hang', hint: 'Ngành → nhãn → nhóm; chọn nhóm là mã hàng tự sinh' },
+      { label: 'Cơ cấu tổ chức', code: 'DM16', icon: 'Network', color: '#64748b', path: '/danh-muc/so-do-to-chuc', hint: 'Chi nhánh mua cho các shop bên dưới' },
+    ],
+    side: [],
+  },
+  {
+    node: { label: '2. Ký hợp đồng mua', code: 'MH29', icon: 'FileSignature', color: '#0f766e', path: '/mua-hang/hop-dong', newPath: '/mua-hang/hop-dong',
+      auto: ['Một hợp đồng gom: bảng giá mua, chiết khấu, thưởng, quà, hạn mức, hạn thanh toán', 'Có hiệu lực từ – đến; sửa sau khi ký = phụ lục (giữ từng bản)', 'Lưu bản scan hợp đồng'] },
+    config: [
+      { label: 'Giá mua của NCC', code: 'MH01', icon: 'Tags', color: '#64748b', path: '/mua-hang/nha-cung-cap', hint: 'Mở hợp đồng › Mặt hàng & giá' },
+      { label: 'Chính sách mua hàng', code: 'MH04', icon: 'BadgePercent', color: '#64748b', path: '/mua-hang/chinh-sach', hint: 'Mở hợp đồng › Chiết khấu, Thưởng, Hạn mức; MH04 xem tổng hợp' },
+    ],
+    side: [],
+  },
+  {
+    node: { label: '3. Xác định nhu cầu', code: 'MH02', icon: 'ScanSearch', color: '#2f80ed', path: '/mua-hang/dat-hang', auto: [] },
+    config: [
+      { label: 'Tồn max', code: 'MH16', icon: 'Gauge', color: '#64748b', path: '/mua-hang/ton-max', hint: 'Shop đăng ký, kế toán mua hàng duyệt / sửa' },
       { label: 'Phiếu đăng ký tồn max', code: 'MH17', icon: 'FilePen', color: '#64748b', path: '/mua-hang/dang-ky-max', hint: 'Shop lập, kế toán mua hàng duyệt' },
-    ],
-    side: [],
-  },
-  {
-    node: { label: 'Phân tích đặt hàng', code: 'MH02', icon: 'ScanSearch', color: '#2f80ed', path: '/mua-hang/dat-hang',
-      auto: [] },
-    config: [
       { label: 'Công thức đặt hàng', code: 'MH18', icon: 'Sigma', color: '#64748b', path: '/mua-hang/cong-thuc', hint: 'Số ngày bán, shop tính vào, kho chuẩn' },
-      { label: 'Mặt hàng & phân cha – con', code: 'DM10', icon: 'Package', color: '#64748b', path: '/danh-muc/mat-hang', hint: 'Gắn mã con (quà, kẹp quà, mã Z…) vào mã cha để mua không bị thừa' },
     ],
     side: [],
   },
   {
-    node: { label: 'Đơn đặt hàng', icon: 'ClipboardList', color: '#0ea5e9', path: L('order'), newPath: N('order'), kinds: ['order'], todo: ['orders'], print: ['order'],
-      auto: ['Khuyến mại, chiết khấu đang chạy được áp sẵn vào đơn', 'Giá lấy theo bảng giá của NCC', 'Báo trước nếu đơn làm vượt hạn mức công nợ'] },
-    config: [
-      { label: 'Nhà cung cấp & bảng giá', code: 'MH01', icon: 'Building2', color: '#64748b', path: '/mua-hang/nha-cung-cap', hint: 'Hợp đồng, hạn trả, hạn mức, giá mua' },
-      { label: 'Chính sách & khuyến mại', code: 'MH04', icon: 'BadgePercent', color: '#64748b', path: '/mua-hang/chinh-sach', hint: 'Chiết khấu, mua X tặng Y, bậc số lượng' },
-    ],
+    node: { label: '4. Đơn đặt hàng', icon: 'ClipboardList', color: '#0ea5e9', path: L('order'), newPath: N('order'), kinds: ['order'], todo: ['orders'], print: ['order'],
+      auto: ['Chọn NCC là tự lấy hợp đồng đang hiệu lực: giá, chiết khấu, kỳ hạn theo hợp đồng', 'Giá lệch hợp đồng: báo ngay, lệch nhiều cần cấp trên duyệt', 'Báo trước nếu vượt hạn mức công nợ'] },
+    config: [],
     side: [
-      { label: 'Ứng trước NCC', icon: 'HandCoins', color: '#9b51e0', path: L('prepayment'), newPath: N('prepayment'), kinds: ['prepayment'], printText: ['Phiếu chi', 'Ủy nhiệm chi'], hint: 'Tự đối trừ khi hàng về' },
+      { label: 'Ứng trước NCC', icon: 'HandCoins', color: '#9b51e0', path: L('prepayment'), newPath: N('prepayment'), kinds: ['prepayment'], printText: ['Phiếu chi', 'Ủy nhiệm chi'], hint: 'Đặt cọc, trả trước — tự đối trừ khi hàng về' },
     ],
   },
   {
-    node: { label: 'Nhập kho khi NCC giao', icon: 'PackageCheck', color: '#27ae60', path: L('receipt'), newPath: N('receipt'), kinds: ['receipt'], print: ['receipt'],
-      auto: ['Chọn đơn là có sẵn phần hàng còn chờ giao — hoặc lập từ hoá đơn NCC đã nhập (MH22)', 'Hàng tặng, hạn thanh toán được điền sẵn', 'Nhắc khi giá lệch, trùng số hoá đơn, hàng sắp hết hạn, lệch hoá đơn NCC'] },
+    node: { label: '5. Nhận hàng, nhập kho', icon: 'PackageCheck', color: '#27ae60', path: L('receipt'), newPath: N('receipt'), kinds: ['receipt'], print: ['receipt'],
+      auto: ['Lập từ đơn: có sẵn phần hàng còn chờ giao, số hợp đồng, số đơn', 'Ghi số lô, hạn dùng; không nhập vượt đơn', 'Hàng tặng, hạn thanh toán điền sẵn'] },
     config: [
-      { label: 'Cài đặt mua hàng', code: 'MH12', icon: 'Settings', color: '#64748b', path: '/mua-hang/cai-dat', hint: 'Ngưỡng cảnh báo, duyệt, số ngày nhắc' },
+      { label: 'Cài đặt mua hàng', code: 'MH12', icon: 'Settings', color: '#64748b', path: '/mua-hang/cai-dat', hint: 'Ngưỡng lệch giá, bắt buộc theo đơn' },
     ],
     side: [
-      { label: 'Chuyển hàng xuống shop', code: 'MH19', icon: 'Store', color: '#16a085', path: '/mua-hang/chuyen-shop', hint: 'Từ kho chi nhánh về shop theo tồn max' },
-      { label: 'Quà tặng', code: 'MH09', icon: 'Gift', color: '#e05a8c', path: L('gift_in'), newPath: N('gift_in'), kinds: ['gift_in', 'gift_out'], todo: ['gifts'], printText: ['Phiếu nhập quà', 'Phiếu xuất kho 02-VT'], hint: 'Nhận quà không hoá đơn, xuất tặng' },
-      { label: 'Chi phí mua hàng', icon: 'Truck', color: '#2d9cdb', path: L('cost'), newPath: N('cost'), kinds: ['cost'], todo: ['costs'], print: ['cost'], hint: 'Vận chuyển, bốc xếp → vào giá vốn' },
       { label: 'Lô & hạn dùng', code: 'MH08', icon: 'CalendarClock', color: '#b7791f', path: '/mua-hang/lo-han', todo: ['expired', 'near'], hint: 'Tồn theo lô, nhắc cận date' },
+      { label: 'Quà tặng', code: 'MH09', icon: 'Gift', color: '#e05a8c', path: L('gift_in'), newPath: N('gift_in'), kinds: ['gift_in', 'gift_out'], todo: ['gifts'], printText: ['Phiếu nhập quà', 'Phiếu xuất kho 02-VT'], hint: 'Nhận quà không hoá đơn, xuất tặng' },
+      { label: 'Chuyển hàng xuống shop', code: 'MH19', icon: 'Store', color: '#16a085', path: '/mua-hang/chuyen-shop', hint: 'Từ kho chi nhánh về shop theo tồn max' },
     ],
   },
   {
-    node: { label: 'Hoá đơn đầu vào & đối chiếu', code: 'MH22', icon: 'FileCheck2', color: '#0f766e', path: '/mua-hang/hoa-don-ncc', todo: ['inv_unmatched', 'inv_no_receipt'],
-      auto: ['Nhập Excel / quét hoá đơn NCC, phần mềm tự nhận mã hàng', 'So từng dòng với phiếu nhập: số lượng, giá, thuế, tổng tiền', 'Hoá đơn chưa có phiếu nhập thì lập phiếu nhập từ hoá đơn'] },
+    node: { label: '6. Hoá đơn mua & công nợ', code: 'MH22', icon: 'FileCheck2', color: '#8e44ad', path: '/mua-hang/hoa-don-ncc', todo: ['inv_unmatched', 'inv_no_receipt', 'overdue', 'due', 'soon'],
+      auto: ['Đối chiếu hợp đồng, đơn đặt với hoá đơn và phiếu nhập', 'Ghi nhận công nợ tự động, hạn trả theo hợp đồng', 'Công nợ theo từng hợp đồng'] },
     config: [],
     side: [
-      { label: 'Đối chiếu đơn đặt ↔ phiếu nhập', code: 'MH21', icon: 'GitCompareArrows', color: '#d35400', path: '/mua-hang/doi-chieu', todo: ['outside'], hint: 'Giao thiếu, thừa, lệch giá; phiếu nhập ngoài đơn' },
-      { label: 'Trả lại / đổi hàng', icon: 'RotateCcw', color: '#eb5757', path: L('return'), newPath: N('return'), kinds: ['return', 'exchange'], print: ['return', 'exchange'], hint: 'Hàng sai, hỏng, cận date — gắn phiếu gốc' },
+      { label: 'Chi phí mua hàng', icon: 'Truck', color: '#2d9cdb', path: L('cost'), newPath: N('cost'), kinds: ['cost'], todo: ['costs'], print: ['cost'], hint: 'Vận chuyển, bốc xếp → phân bổ vào giá vốn' },
+      { label: 'Đối chiếu đơn ↔ phiếu nhập', code: 'MH21', icon: 'GitCompareArrows', color: '#d35400', path: '/mua-hang/doi-chieu', todo: ['outside'], hint: 'Giao thiếu, thừa, lệch giá' },
+      { label: 'Công nợ & hạn trả', code: 'MH05', icon: 'ShieldCheck', color: '#8e44ad', path: '/mua-hang/han-muc', hint: 'Hạn mức, khoản đến hạn, quá hạn' },
+      { label: 'Công nợ theo hợp đồng', code: 'MH30', icon: 'BookOpenCheck', color: '#0f766e', path: '/mua-hang/cong-no-hop-dong', hint: 'Sổ tổng hợp / chi tiết theo hợp đồng' },
     ],
   },
   {
-    node: { label: 'Công nợ & hạn trả', code: 'MH05', icon: 'ShieldCheck', color: '#8e44ad', path: '/mua-hang/han-muc', todo: ['overdue', 'due', 'soon'],
-      auto: ['Hạn trả tính sẵn theo điều khoản của NCC', 'Nhắc các khoản đến hạn, quá hạn', 'Vượt hạn mức thì cần người có quyền duyệt'] },
-    config: [],
-    side: [
-      { label: 'Chiết khấu sau mua', icon: 'BadgePercent', color: '#d4a017', path: L('rebate'), newPath: N('rebate'), kinds: ['rebate'], print: ['rebate'], hint: 'NCC giảm thêm, hỗ trợ' },
-      { label: 'Thưởng cuối kỳ', code: 'MH06', icon: 'Award', color: '#c0392b', path: '/mua-hang/thuong', todo: ['rebates'], hint: 'Doanh số, chỉ tiêu, giai đoạn' },
-    ],
-  },
-  {
-    node: { label: 'Trả tiền NCC', icon: 'Banknote', color: '#f2994a', path: L('payment'), newPath: N('payment'), kinds: ['payment'], printText: ['Phiếu chi 02-TT', 'Ủy nhiệm chi (chuyển khoản)'],
-      auto: ['Gợi ý khoản nên trả trước', 'Trả đúng hạn được hưởng chiết khấu thanh toán', 'Tiền đã ứng trước được trừ vào nợ'] },
+    node: { label: '7. Thanh toán', icon: 'Banknote', color: '#f2994a', path: L('payment'), newPath: N('payment'), kinds: ['payment'], printText: ['Phiếu chi 02-TT', 'Ủy nhiệm chi (chuyển khoản)'],
+      auto: ['Chỉ trả khoản đã khớp hợp đồng, hoá đơn, đơn đặt', 'Trả đúng hạn được chiết khấu thanh toán', 'Tiền ứng trước được trừ vào nợ'] },
     config: [
-      { label: 'Mẫu in chứng từ', code: 'HT05', icon: 'Printer', color: '#64748b', path: '/cau-hinh/mau-in', hint: 'Chọn mẫu mặc định, khổ giấy, chữ ký cho mọi phiếu mua hàng' },
+      { label: 'Mẫu in chứng từ', code: 'HT05', icon: 'Printer', color: '#64748b', path: '/cau-hinh/mau-in', hint: 'Mẫu mặc định, khổ giấy, chữ ký' },
     ],
+    side: [],
+  },
+  {
+    node: { label: '8. Trả hàng, quyết toán, thanh lý', code: 'MH06', icon: 'Award', color: '#c0392b', path: '/mua-hang/thuong', todo: ['rebates'],
+      auto: ['Thưởng, chiết khấu tự tính theo số mua thực tế', 'Trả hàng tham chiếu phiếu nhập gốc', 'Thanh lý hợp đồng khi hết hiệu lực'] },
+    config: [],
     side: [
+      { label: 'Trả lại / đổi hàng', icon: 'RotateCcw', color: '#eb5757', path: L('return'), newPath: N('return'), kinds: ['return', 'exchange'], print: ['return', 'exchange'], hint: 'Gắn phiếu nhập gốc' },
+      { label: 'Chiết khấu sau mua', icon: 'BadgePercent', color: '#d4a017', path: L('rebate'), newPath: N('rebate'), kinds: ['rebate'], print: ['rebate'], hint: 'NCC giảm thêm, hỗ trợ' },
       { label: 'Phân bổ & giá vốn thực tế', code: 'MH07', icon: 'Calculator', color: '#34495e', path: '/mua-hang/phan-bo', hint: 'Chi phí, thưởng, quà → giá từng mã' },
-      { label: 'Nhật ký mua hàng', code: 'MH10', icon: 'History', color: '#64748b', path: '/mua-hang/nhat-ky', hint: 'Cảnh báo, ngoại lệ đã duyệt, lần tính thưởng' },
+      { label: 'Thanh lý hợp đồng', code: 'MH29', icon: 'FileX2', color: '#64748b', path: '/mua-hang/hop-dong', hint: 'Mở hợp đồng → Trạng thái "Đã thanh lý"' },
     ],
   },
 ];
@@ -175,12 +182,12 @@ export function QuyTrinhMuaHang() {
   ));
   const NewBtn = ({ n }: { n: Node }) => n.newPath ? <button type="button" className="mf-new" onClick={(e) => { e.stopPropagation(); navigate(n.newPath!); }}><Icons.Plus size={13} /> Lập mới</button> : null;
 
-  const stages = STAGES.map((st, i) => (i === 1 ? { ...st, node: { ...st.node, auto: orderAuto } } : st));
+  const stages = STAGES.map((st, i) => (i === 2 ? { ...st, node: { ...st.node, auto: orderAuto } } : st));
   return (
     <LuongChiTiet
-      title="Luồng mua hàng — đi từ tồn max đến trả tiền nhà cung cấp"
+      title="Quy trình mua hàng — từ khai báo, ký hợp đồng đến thanh toán và thanh lý"
       stages={stages}
-      column={(i) => (i === 1 ? 'minmax(230px, 1.9fr)' : 'minmax(132px, 1fr)')}
+      column={(i) => (i === 2 ? 'minmax(220px, 1.7fr)' : 'minmax(128px, 1fr)')}
       badge={(n) => count((n as Node).kinds)}
       extra={(n, place) => <><PrintLine n={n as Node} short={place !== 'stage'} />{alerts((n as Node).todo)}<NewBtn n={n as Node} /></>}
       todo={{ items, loading: q.isLoading, fetching: q.isFetching, error: q.isError, retry: () => void q.refetch(), money: vnd }}

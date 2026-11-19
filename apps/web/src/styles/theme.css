@@ -157,6 +157,21 @@ table.grid tfoot td { position: sticky; bottom: 0; background: #f1f5f9; font-wei
 .badge-ok { background: var(--ok-bg); color: var(--ok); }
 .badge-warn { background: var(--warn-bg); color: var(--warn); }
 .badge-bad { background: var(--bad-bg); color: var(--bad); }
+/* [2026-11-19 Nguyễn Văn Thủy] Kết quả kiểm (KetQuaKiem): dải "N chưa đạt", danh sách ✗ / ✓, mã tra cứu + Chép (đóng góp) */
+.ctl { background: var(--surface-2, #f6f8fb); border: 1px solid var(--line-soft); border-radius: 6px; padding: 8px 10px; }
+.ctl-dl { display: grid; grid-template-columns: 110px 1fr; gap: 2px 10px; margin: 0; font-size: 12.5px; }
+.ctl-dl dt { color: var(--ink-500); }
+.ctl-dl dd { margin: 0; word-break: break-all; }
+.kqk { display: block; padding: 8px 10px; margin-bottom: 8px; }
+.kqk-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kqk-tog { background: none; border: 0; padding: 0; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font: inherit; }
+.kqk-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; }
+.kqk-list li { display: flex; gap: 6px; align-items: baseline; }
+.kqk-ic { width: 14px; text-align: center; font-weight: 700; }
+.kqk-x .kqk-ic { color: var(--bad); }
+.kqk-ok { color: var(--ink-500); }
+.kqk-ok .kqk-ic { color: var(--ok, #1a7f37); }
+.kqk-code { font-size: 11px; min-width: 104px; color: var(--ink-500); }
 .badge-info { background: var(--info-bg); color: var(--brand-700); }
 .badge-gray { background: var(--line-soft); color: var(--ink-500); }
 
@@ -256,6 +271,7 @@ table.grid tfoot td { position: sticky; bottom: 0; background: #f1f5f9; font-wei
 .multi-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; cursor: pointer; background-image: none; }
 .multi-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .multi-drop { position: absolute; top: 100%; left: 0; margin-top: 4px; width: 360px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow-pop); z-index: 40; }
+.multi-drop.multi-tree { width: 520px; max-width: 90vw; }
 .multi-tools { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--line-soft); flex-wrap: wrap; }
 .multi-tools .input { flex: 1; min-width: 140px; height: 28px; }
 .multi-list { max-height: 280px; overflow: auto; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
@@ -1871,6 +1887,17 @@ table.dgrid-table thead th { padding-top: 4px; padding-bottom: 4px; }
 .sdn-nhanh.re .sdn-leaf::after { content: ''; position: absolute; left: -22px; top: calc(var(--sdn-y) - 1px); width: 14px; border-top: 2px solid var(--brand-600); }
 .sdn-nhanh.re .sdn-leaf > .sdn-card::before { content: ''; position: absolute; left: -8px; top: calc(var(--sdn-y) - 6px); border: 5px solid transparent; border-left: 7px solid var(--brand-600); border-right: 0; }
 .sdn-leaf > .sdn-card { position: relative; }
+/* Nhiều bước nối tiếp (từ 6 cột): số + biểu tượng một hàng, tên bước xuống hàng riêng, khoảng cách hẹp. */
+.sdn.dense { --sdn-gap: 16px; --sdn-y: 20px; }
+.sdn.dense .sdn-card header { flex-wrap: wrap; gap: 5px 6px; padding: 8px 9px 2px; }
+.sdn.dense .sdn-card header b { flex: 1 0 100%; padding-top: 0; font-size: 13.5px; }
+.sdn.dense .sdn-card p { padding: 0 9px 4px; font-size: 11.5px; }
+.sdn.dense .sdn-items { padding: 2px 3px 6px; }
+.sdn.dense .sdn-items a { padding: 4px 5px; font-size: 12.5px; }
+.sdn.dense .sdn-nhanh.re { padding-left: 16px; }
+.sdn.dense .sdn-nhanh.re .sdn-leaf::before, .sdn.dense .sdn-nhanh.re .sdn-leaf::after { left: -16px; }
+.sdn.dense .sdn-nhanh.re .sdn-leaf::after { width: 9px; }
+.sdn.dense .sdn-song-song { left: 16px; }
 /* Khung hẹp: xếp dọc, mũi tên chỉ xuống, nhánh thành cột thẻ. */
 @container (max-width: 640px) {
   .sdn { flex-direction: column; align-items: stretch; }
@@ -2090,6 +2117,7 @@ button.tk-avatar:hover, button.tk-avatar[aria-expanded="true"] { box-shadow: 0 0
 .modal-foot .btn:disabled, .mh-sheet-foot .btn:disabled { pointer-events: none; }
 td.o-loi { background: color-mix(in srgb, var(--bad) 8%, transparent); }
 .modal-loi { margin-right: auto; color: var(--bad); font-size: 13px; cursor: pointer; align-self: center; }
+.modal-tra-cuu { cursor: default; font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
 
 /* [2026-11-11 Nguyễn Văn Thủy] Form tài khoản ACC1 (đóng góp) */
 .tk-form { display: grid; grid-template-columns: 200px 1fr; gap: 6px 14px; margin-bottom: 8px; }

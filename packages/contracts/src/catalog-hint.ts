@@ -3,6 +3,9 @@
 // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: luật nhắc mặt hàng ITEM-* (thiếu ĐVT, thiếu nhóm hạch toán) — còn ✘ thì mặt hàng lưu NHÁP (ADR-0019)
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27: thêm `fix` (cách sửa) cho mức warn / block — khuôn chung bizcity_findings@1
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-13 / 14: bizcity_catalog_hint@1 — danh mục luật nhắc · hướng dẫn · cảnh báo mềm · chặn cho form danh mục (D023-6..8)
+import { QT_DOI_TUONG } from './quy-tac/doi-tuong.js';
+import { QT_TO_CHUC_NGAN_HANG } from './quy-tac/to-chuc-ngan-hang.js';
+import { QT_NHOM_HANG } from './quy-tac/nhom-hang.js';
 import { basisOf } from './legal-basis.js';
 
 /**
@@ -25,7 +28,8 @@ import { basisOf } from './legal-basis.js';
  */
 
 export type CatalogHintLevel = 'info' | 'guide' | 'warn' | 'block';
-export type CatalogEntity = 'account' | 'partner' | 'item';
+// [2026-11-19 Nguyễn Văn Thủy] thêm unit (ĐVT), bank (TK ngân hàng), branch (chi nhánh); quy tắc từng danh mục ở src/quy-tac/*.ts (đóng góp)
+export type CatalogEntity = 'account' | 'partner' | 'item' | 'unit' | 'bank' | 'branch' | 'group';
 
 export interface CatalogHintDef {
   id: string;
@@ -42,6 +46,10 @@ export interface CatalogHintDef {
   /** Thẻ học thêm: số tài khoản (thẻ tài khoản, PHASE-023) hoặc mã màn. */
   learn?: string;
   status: 'draft' | 'approved';
+  /** [2026-11-19 Nguyễn Văn Thủy] Câu khi ĐÃ QUA (danh sách ✓ / ✗ ở form, cột Tình trạng), vd "Có tên mặt hàng" (đóng góp) */
+  okText?: string;
+  /** Ô trên form (Field truong=…) để tô đỏ. */
+  field?: string;
 }
 
 /** Một phát hiện cho một bản khai báo cụ thể (đã thay biến). */
@@ -75,7 +83,7 @@ export interface CatalogWarnAck {
 }
 export const WARN_ACK_MIN_REASON = 5;
 
-export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
+const BASE_HINTS: Record<string, CatalogHintDef> = {
   // ── Tài khoản (ACC1) ────────────────────────────────────────────────────────────────────────────────
   'ACC-HINT-001': {
     id: 'ACC-HINT-001', entity: 'account', level: 'info', status: 'draft', rule: 'R-MD-8', learn: '{parent}',
@@ -125,13 +133,13 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
   },
   // ── Mặt hàng (DM, PHASE-024 S024-28): còn ✘ → lưu NHÁP, chưa dùng được trên chứng từ (Gate B giữ với IN-ITEM-009) ──
   'ITEM-BLOCK-001': {
-    id: 'ITEM-BLOCK-001', entity: 'item', level: 'block', status: 'draft', rule: 'R-GATE-3',
+    id: 'ITEM-BLOCK-001', entity: 'item', level: 'block', status: 'draft', rule: 'R-GATE-3', okText: 'Có đơn vị tính gốc (nhỏ nhất)', field: 'units',
     title: 'Mặt hàng {sku} chưa có đơn vị tính gốc.',
     why: 'Sổ kho đếm theo đơn vị tính gốc (đơn vị nhỏ nhất); không có thì không quy đổi được số lượng nhập / xuất, tồn kho và giá vốn sai.',
     fix: 'Nhập đơn vị tính gốc (vd hộp, cái, kg). Mặt hàng được lưu nháp tới khi có, rồi tự kích hoạt.',
   },
   'ITEM-BLOCK-002': {
-    id: 'ITEM-BLOCK-002', entity: 'item', level: 'block', status: 'draft', rule: 'R-ITEM-4',
+    id: 'ITEM-BLOCK-002', entity: 'item', level: 'block', status: 'draft', rule: 'R-ITEM-4', okText: 'Có nhóm hạch toán (hoặc nhóm mặc định của đơn vị)',
     title: 'Mặt hàng {sku} chưa có nhóm hạch toán và đơn vị chưa có nhóm mặc định.',
     why: 'Nhóm hạch toán quyết định tài khoản kho, giá vốn, doanh thu; không có nhóm thì không định khoản được chứng từ có mặt hàng này.',
     fix: 'Chọn nhóm hạch toán cho mặt hàng, hoặc khai một nhóm mặc định ở Cấu hình hạch toán.',
@@ -155,6 +163,139 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
     title: 'Mặt hàng {sku} đã có nhập xuất theo đơn vị tính "{from}" — đổi sang "{to}".',
     why: 'Sổ kho và giá vốn đã đếm theo "{from}". Đổi đơn vị tính gốc của cùng một định danh làm số lượng tồn cũ và mới không cộng được với nhau, đơn giá bình quân lẫn hai quy cách. Nếu đây là quy cách khác (hộp ↔ thùng, 400g ↔ 900g) thì đó là một biến thể kinh tế khác, cần một mặt hàng riêng.',
     fix: 'Quy cách khác: giữ đơn vị cũ, tạo mặt hàng mới (mã mới, chọn mã cha là {sku}) và dùng quy đổi đơn vị nếu cần. Chỉ sửa tên đơn vị (cùng quy cách, vd "hop" → "Hộp"): lưu và ghi lý do.',
+  },
+  // ── [2026-11-19 Nguyễn Văn Thủy] Bộ quy tắc khai báo mặt hàng (docs/nghiep-vu/25): mỗi kiểm có mã, ô, câu báo, cách sửa (đóng góp) ──
+  'ITEM-BLOCK-003': {
+    id: 'ITEM-BLOCK-003', entity: 'item', level: 'block', status: 'approved', rule: 'R-GATE-3', okText: 'Có tên mặt hàng', field: 'name',
+    title: 'Chưa nhập tên mặt hàng.',
+    why: 'Tên in trên hoá đơn, phiếu nhập, bill; quầy và kho tìm hàng theo tên. Không có tên thì không chọn đúng hàng.',
+    fix: 'Nhập tên mặt hàng (tối đa 50 ký tự). Mặt hàng được giữ nháp tới khi có tên.',
+  },
+  'ITEM-BLOCK-004': {
+    id: 'ITEM-BLOCK-004', entity: 'item', level: 'block', status: 'approved', okText: 'Tên không quá 50 ký tự', field: 'name',
+    title: 'Tên mặt hàng dài quá {max} ký tự (đang {len}).',
+    why: 'Tên dài bị cắt trên bill, tem giá và hoá đơn điện tử, người đọc không phân biệt được hàng.',
+    fix: 'Rút gọn tên còn tối đa {max} ký tự; thông tin thêm ghi ở Mô tả.',
+  },
+  'ITEM-BLOCK-005': {
+    id: 'ITEM-BLOCK-005', entity: 'item', level: 'block', status: 'approved', okText: 'Tên không trùng mặt hàng khác', field: 'name',
+    title: 'Tên "{name}" đã dùng cho mặt hàng {other}.',
+    why: 'Hai mặt hàng cùng tên làm quầy và kho chọn nhầm, tồn kho và giá vốn ghi sai mã.',
+    fix: 'Đặt tên khác (thêm quy cách, dung tích…), hoặc mở mặt hàng {other} để dùng lại.',
+  },
+  'ITEM-BLOCK-006': {
+    id: 'ITEM-BLOCK-006', entity: 'item', level: 'block', status: 'approved', okText: 'Mã hàng chưa ai dùng', field: 'sku',
+    title: 'Mã hàng {sku} đã có.',
+    why: 'Mỗi mã hàng chỉ thuộc một mặt hàng; dùng lại mã làm lẫn tồn kho và lịch sử của hai mặt hàng.',
+    fix: 'Bấm sinh mã lại theo nhóm hàng, hoặc gõ mã khác.',
+  },
+  'ITEM-BLOCK-007': {
+    id: 'ITEM-BLOCK-007', entity: 'item', level: 'block', status: 'approved', okText: 'Mã chính đúng khuôn (không chữ ở đầu / cuối)', field: 'sku',
+    title: 'Mã hàng {sku} không được có chữ ở đầu hoặc cuối.',
+    why: 'Chữ ở đầu / cuối mã dành cho mã biến thể (mã cha + chữ). Mã chính có chữ làm hệ thống hiểu nhầm là biến thể.',
+    fix: 'Bỏ chữ ở đầu / cuối mã; muốn tạo biến thể thì chọn "Mã biến thể" và chọn mã cha.',
+  },
+  'ITEM-BLOCK-008': {
+    id: 'ITEM-BLOCK-008', entity: 'item', level: 'block', status: 'approved', okText: 'Mã biến thể có mã cha hợp lệ', field: 'sku',
+    title: 'Mã biến thể {sku}: {detail}.',
+    why: 'Mã biến thể là mã cha thêm tối đa 2 chữ; mã cha phải khai trước để biến thể lấy nhóm, nhãn, đơn vị tính theo.',
+    fix: 'Khai mã cha trước, hoặc sửa mã biến thể chỉ thêm tối đa 2 chữ quanh mã cha.',
+  },
+  'ITEM-BLOCK-009': {
+    id: 'ITEM-BLOCK-009', entity: 'item', level: 'block', status: 'approved', okText: 'Nhóm / ngành / nhãn có trong danh mục', field: 'groupCode',
+    title: '{label} {code} chưa có trong danh mục.',
+    why: 'Phân loại quyết định báo cáo theo nhóm, nhãn và chính sách mua / bán; mã phân loại không có thì mặt hàng không lên đúng báo cáo.',
+    fix: 'Chọn lại trong danh sách, hoặc khai {label} ở Danh mục nhóm hàng trước.',
+  },
+  'ITEM-BLOCK-011': {
+    id: 'ITEM-BLOCK-011', entity: 'item', level: 'block', status: 'approved', okText: 'Giá bán theo bảng giá và đơn vị tính đã khai', field: 'prices',
+    title: 'Giá bán: {detail}.',
+    why: 'Giá gắn với một bảng giá và một đơn vị tính của mặt hàng; bảng giá hoặc đơn vị không có thì quầy không lấy được giá.',
+    fix: 'Chọn bảng giá có sẵn và đơn vị tính đã khai ở thẻ Đơn vị tính.',
+  },
+  'ITEM-BLOCK-013': {
+    id: 'ITEM-BLOCK-013', entity: 'item', level: 'block', status: 'approved', okText: 'Chưa có nhập xuất (xoá được)',
+    title: 'Mặt hàng {sku} đã có nhập xuất, không xoá được.',
+    why: 'Sổ kho, giá vốn và chứng từ đã ghi theo mặt hàng này; xoá làm mất lịch sử và sai số liệu.',
+    fix: 'Bỏ tích "Theo dõi" để ngừng dùng mặt hàng.',
+  },
+  'ITEM-BLOCK-014': {
+    id: 'ITEM-BLOCK-014', entity: 'item', level: 'block', status: 'approved', rule: 'R-GATE-3', okText: 'Đúng một đơn vị tính tỉ lệ 1', field: 'units',
+    title: 'Đơn vị tính: {detail}.',
+    why: 'Sổ kho đếm theo đúng một đơn vị nhỏ nhất (tỉ lệ 1); các đơn vị khác quy về đơn vị này.',
+    fix: 'Ở thẻ Đơn vị tính, để đúng một dòng tỉ lệ 1 (vd Hộp = 1, Thùng = 48).',
+  },
+  'ITEM-BLOCK-015': {
+    id: 'ITEM-BLOCK-015', entity: 'item', level: 'block', status: 'approved', okText: 'Tên đơn vị tính không trống, không trùng', field: 'units',
+    title: 'Đơn vị tính: {detail}.',
+    why: 'Phiếu chọn đơn vị theo tên; tên trống hoặc trùng thì không biết đang nhập theo đơn vị nào.',
+    fix: 'Đặt tên cho mọi dòng đơn vị tính, mỗi tên một lần.',
+  },
+  'ITEM-BLOCK-016': {
+    id: 'ITEM-BLOCK-016', entity: 'item', level: 'block', status: 'approved', okText: 'Tỉ lệ đơn vị tính lớn hơn 0', field: 'units',
+    title: 'Tỉ lệ của đơn vị "{unit}" phải lớn hơn 0.',
+    why: 'Tỉ lệ dùng để quy số lượng về đơn vị nhỏ nhất; bằng 0 hoặc âm làm tồn kho sai.',
+    fix: 'Nhập số đơn vị nhỏ nhất trong một {unit} (vd 1 Thùng = 48 Hộp thì ghi 48).',
+  },
+  'ITEM-BLOCK-017': {
+    id: 'ITEM-BLOCK-017', entity: 'item', level: 'block', status: 'approved', okText: 'Không quá 10 đơn vị tính', field: 'units',
+    title: 'Mặt hàng có quá {max} đơn vị tính (đang {count}).',
+    why: 'Quy định mỗi mặt hàng tối đa {max} đơn vị tính để quầy, kho chọn không nhầm.',
+    fix: 'Bỏ bớt đơn vị tính không dùng.',
+  },
+  'ITEM-BLOCK-018': {
+    id: 'ITEM-BLOCK-018', entity: 'item', level: 'block', status: 'approved', okText: 'Một đơn vị bán chính, một đơn vị mua mặc định', field: 'units',
+    title: 'Đơn vị tính: {detail}.',
+    why: 'Phiếu bán / phiếu mua tự điền đơn vị theo đơn vị chính / mặc định; có hai thì không biết lấy đơn vị nào.',
+    fix: 'Chỉ tích một đơn vị bán chính và một đơn vị mua mặc định.',
+  },
+  // [2026-11-19 Nguyễn Văn Thủy] điều kiện form thêm / sửa mặt hàng đang tự kiểm — cùng bộ mã để thống kê chung (đóng góp)
+  'ITEM-BLOCK-010': {
+    id: 'ITEM-BLOCK-010', entity: 'item', level: 'block', status: 'approved', okText: 'Nhóm hàng chọn tới cấp 3', field: 'groupCode',
+    title: 'Nhóm hàng phải chọn tới cấp 3 (ngành → nhãn → nhóm).',
+    why: 'Mã hàng tự sinh ghép mã ngành, nhãn, nhóm; chưa tới cấp 3 thì không sinh được mã và báo cáo theo nhóm không đúng.',
+    fix: 'Chọn nhóm hàng ở cấp cuối (nhóm sản phẩm).',
+  },
+  'ITEM-BLOCK-019': {
+    id: 'ITEM-BLOCK-019', entity: 'item', level: 'block', status: 'approved', okText: 'Có mã hàng', field: 'sku',
+    title: 'Chưa có mã hàng.',
+    why: 'Mã hàng là khoá của mặt hàng trên mọi chứng từ, sổ kho, máy bán.',
+    fix: 'Chọn nhóm hàng là mã tự sinh, hoặc gõ mã.',
+  },
+  'ITEM-BLOCK-020': {
+    id: 'ITEM-BLOCK-020', entity: 'item', level: 'block', status: 'approved', okText: 'Mã hàng chỉ gồm chữ số, chữ cái', field: 'sku',
+    title: 'Mã hàng chỉ gồm chữ số và chữ cái, không dấu cách.',
+    why: 'Mã có dấu cách / ký tự lạ làm máy quét, nhập Excel, máy bán không tìm đúng hàng.',
+    fix: 'Bỏ dấu cách và ký tự đặc biệt khỏi mã.',
+  },
+  'ITEM-BLOCK-021': {
+    id: 'ITEM-BLOCK-021', entity: 'item', level: 'block', status: 'approved', okText: 'Đã chọn loại mã (mã mới / mã biến thể)', field: 'kind',
+    title: 'Chưa chọn tạo Mã mới hay Mã biến thể.',
+    why: 'Mã mới sinh theo nhóm hàng; mã biến thể đi theo mã cha (nhóm, đơn vị tính theo mã cha) — hai cách khai khác nhau.',
+    fix: 'Bấm "Mã mới" hoặc "Mã biến thể" ở bước đầu.',
+  },
+  'ITEM-BLOCK-022': {
+    id: 'ITEM-BLOCK-022', entity: 'item', level: 'block', status: 'approved', okText: 'Mọi dòng giá mua có nhà cung cấp', field: 'nccRows',
+    title: 'Còn dòng giá mua chưa chọn nhà cung cấp.',
+    why: 'Giá mua khai theo từng nhà cung cấp; dòng không có NCC thì đơn đặt không biết lấy giá của ai.',
+    fix: 'Chọn nhà cung cấp cho dòng đó, hoặc bỏ dòng.',
+  },
+  'ITEM-BLOCK-023': {
+    id: 'ITEM-BLOCK-023', entity: 'item', level: 'block', status: 'approved', okText: 'Có giá bán ĐVT chính ở bảng giá công ty', field: 'prices',
+    title: 'Chưa nhập giá bán {unit} (ĐVT bán chính) ở {list}.',
+    why: 'Máy bán và phiếu bán lấy giá theo bảng giá công ty; chưa có giá thì quầy không bán được (trừ hàng tích "Không bán").',
+    fix: 'Nhập giá ở thẻ Bán hàng & giá, hoặc tích "Không bán" nếu hàng không bán.',
+  },
+  'ITEM-HINT-004': {
+    id: 'ITEM-HINT-004', entity: 'item', level: 'warn', status: 'approved', okText: 'Đã chọn thuế suất GTGT', field: 'taxOutCode',
+    title: 'Mặt hàng {sku} chưa chọn thuế suất GTGT.',
+    why: 'Hoá đơn bán ra và phiếu nhập lấy thuế suất theo mặt hàng; chưa chọn thì phiếu tính thuế 0% và kê khai thuế sai.',
+    fix: 'Chọn thuế suất ở ô Thuế suất GTGT; hàng không chịu thuế thì chọn KCT, hoặc ghi lý do khi lưu.',
+  },
+  'ITEM-HINT-005': {
+    id: 'ITEM-HINT-005', entity: 'item', level: 'info', status: 'approved', okText: 'Có mã vạch', field: 'barcode',
+    title: 'Mặt hàng {sku} chưa có mã vạch.',
+    why: 'Quầy bán quét mã vạch để chọn hàng; chưa có thì thu ngân phải gõ tìm tay.',
   },
   // ── Đối tượng (DM03) ───────────────────────────────────────────────────────────────────────────────
   'PART-HINT-001': {
@@ -181,6 +322,9 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
     fix: 'Sửa MST: 10 số, hoặc 10 số - 3 số cho đơn vị phụ thuộc, hoặc 12 số (cá nhân).',
   },
 };
+
+/** Mọi quy tắc: chung (trên) + mỗi danh mục một tệp ở src/quy-tac/ (docs/nghiep-vu/25). */
+export const CATALOG_HINTS: Record<string, CatalogHintDef> = { ...BASE_HINTS, ...QT_DOI_TUONG, ...QT_TO_CHUC_NGAN_HANG, ...QT_NHOM_HANG };
 
 /** Phát hiện từ một luật, thay biến {x} trong title / why / learn. */
 export function catalogFinding(code: string, vars: Record<string, string | number> = {}, extra: Partial<CatalogFinding> = {}): CatalogFinding {
@@ -211,6 +355,31 @@ export const CATALOG_HINT_EXAMPLES: Record<string, Record<string, string>> = {
   'ACC-BLOCK-001': { parent: '131' },
   'ITEM-BLOCK-001': { sku: 'SUA01' },
   'ITEM-BLOCK-002': { sku: 'SUA01' },
+  'ITEM-BLOCK-004': { max: '50', len: '62' },
+  'ITEM-BLOCK-005': { name: 'Sữa tươi TH 110ml', other: '100021001' },
+  'ITEM-BLOCK-006': { sku: '100021001' },
+  'ITEM-BLOCK-007': { sku: '100021001A' },
+  'ITEM-BLOCK-008': { sku: '100021001AB', detail: 'chưa có mã cha 100021001' },
+  'ITEM-BLOCK-009': { label: 'Nhóm hàng', code: '1001' },
+  'ITEM-BLOCK-011': { detail: 'bảng giá BG02 chưa có' },
+  'ITEM-BLOCK-013': { sku: 'SUA01' },
+  'ITEM-BLOCK-014': { detail: 'chưa có đơn vị tỉ lệ 1 (đơn vị nhỏ nhất)' },
+  'ITEM-BLOCK-015': { detail: 'đơn vị "Hộp" bị trùng' },
+  'ITEM-BLOCK-016': { unit: 'Thùng' },
+  'ITEM-BLOCK-017': { max: '10', count: '12' },
+  'ITEM-BLOCK-018': { detail: 'có 2 đơn vị bán chính' },
+  'ITEM-BLOCK-023': { unit: 'Hộp', list: 'Bảng giá công ty' },
+  'ITEM-HINT-004': { sku: 'SUA01' },
+  'ITEM-HINT-005': { sku: 'SUA01' },
+  'PART-BLOCK-001': { codes: 'NHOM-X' }, 'PART-BLOCK-002': { taxCode: '0101234567', kind: 'nhà cung cấp', other: 'NCC001', name: 'Công ty An Bình' },
+  'PART-BLOCK-003': { code: 'NCC001', name: 'Công ty An Bình', kind: 'nhà cung cấp' }, 'PART-BLOCK-004': { code: 'NCC001' }, 'PART-BLOCK-005': { code: 'NCC001', refs: 'hợp đồng 01/2026' },
+  'PART-BLOCK-006': { code: 'NHOM1', used: 'NCC001' }, 'PART-BLOCK-007': { detail: 'nhóm NHOM2 đang là nhóm con của NHOM1' }, 'PART-BLOCK-008': { detail: 'đơn vị cha NCC009 chưa có trong danh mục' },
+  'UNIT-BLOCK-001': { name: 'Hộp' }, 'UNIT-BLOCK-002': { name: 'Hộp', count: '12', action: 'xoá' },
+  'BANK-BLOCK-001': { detail: 'tài khoản 112 là tài khoản tổng hợp; chọn tài khoản 112 chi tiết' }, 'BANK-BLOCK-002': { branch: 'CN09' }, 'BANK-BLOCK-003': { code: 'VCB01', method: 'CK' },
+  'GRP-BLOCK-001': { detail: 'Nhãn hàng TH chưa có trong danh mục' }, 'GRP-BLOCK-002': { codes: 'HH2' }, 'GRP-BLOCK-003': { detail: 'V10 không phải loại thuế đầu ra' },
+  'GRP-BLOCK-004': { detail: 'nhãn TH đang gắn cho mặt hàng 130181002' }, 'GRP-BLOCK-005': { detail: 'nhóm đã tạo không chuyển sang nhóm khác' }, 'GRP-BLOCK-006': { detail: 'mã 13 đã dùng cho nhóm "Sữa nước" cùng cấp' },
+  'GRP-BLOCK-007': { sku: '130181002' }, 'GRP-BLOCK-008': { detail: 'cấp 2 phải đúng 3 ký tự (đang 2)' },
+  'BR-BLOCK-001': { code: 'BH' }, 'BR-BLOCK-002': { code: 'CN01', detail: 'đã có chứng từ' }, 'BR-BLOCK-003': { code: 'CN01' }, 'BR-BLOCK-004': { code: 'MB', detail: 'đã ngừng dùng' },
   'ITEM-HINT-001': { sku: 'SUA01', group: 'HH' },
   'ITEM-HINT-002': { docNo: 'HD0001', count: '2', items: 'SUA02 (thiếu đơn vị tính; ghi theo nhóm mặc định HH) · QUA05 (ghi theo nhóm mặc định HH)' },
   'PART-HINT-002': { code: 'NCC-AN' },

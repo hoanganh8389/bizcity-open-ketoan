@@ -14,6 +14,8 @@ Nhà cung cấp hay khách hàng lớn thường có **đơn vị mẹ** và nhi
 
 - **Thêm chi nhánh**: chọn đơn vị mẹ trên danh sách → **+ Thêm đơn vị con** (hoặc mở hồ sơ đơn vị mẹ → mục *Đơn vị con* → **Thêm đơn vị con**). Mã tự cấp **mã cha-001**, **-002**…; MST chi nhánh dạng *MST mẹ-005* thì mã lấy đúng đuôi *-005*.
 - Ô **Thuộc đơn vị cha** ở đầu hồ sơ: chọn / bỏ đơn vị mẹ. Đơn vị cũ (mã có từ trước) gắn vào mẹ được, giữ nguyên mã.
+  - Chọn **Thuộc nhóm** trước: ô liệt kê đối tượng nằm trong **nhóm cha** của nhóm đó (vd nhóm *NCC-CN – chi nhánh của NCC* thì liệt kê đối tượng trong nhóm cha của nó).
+  - Theo vai trò đã tích: **Nhà cung cấp** → chỉ nhà cung cấp; **Khách hàng** → chỉ khách hàng; tích **cả hai** → cả hai.
 - Gõ MST chi nhánh mà đã có đơn vị mang MST mẹ: phần mềm hỏi **Gắn làm đơn vị con?**
 - Trong một nhóm mẹ – con được dùng chung MST; đơn vị ngoài nhóm trùng MST thì bị chặn.
 - Không chọn chính mình, không vòng lặp; đơn vị con mang mã của mẹ thì không chuyển sang mẹ khác — lập đơn vị mới dưới mẹ mới, ngừng dùng mã cũ.
