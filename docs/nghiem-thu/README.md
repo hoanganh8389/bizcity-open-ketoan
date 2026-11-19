@@ -63,5 +63,6 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-DM-008](danh-muc/NT-DM-008-nhap-gia-ban-trinh-nhap-chung.md) | DM14 Bảng giá: nhập giá bán ở lưới giá bằng trình nhập chung (tệp mẫu, ghép cột, kiểm tra, tệp lỗi) | Chờ nghiệm thu |
 | [NT-DM-009](danh-muc/NT-DM-009-ma-nhom-trung-khac-nganh.md) | DM11: mã nhóm hàng không trùng nhóm cùng cha và tên nhóm cha; khác cha được trùng (form thêm / sửa, API, nhập Excel) | Chờ nghiệm thu |
 | [NT-DM-010](danh-muc/NT-DM-010-nhan-o-nhom-hang.md) | DM11: đổi tên ô — Tên ngành, Mã hoá, Mô tả (không bắt buộc); form + Excel + hướng dẫn | Đã chốt |
+| [NT-DM-011](danh-muc/NT-DM-011-mst-doi-tuong-theo-ngay-hieu-luc.md) | DM12 / DM13: đổi MST, tên, địa chỉ theo ngày hiệu lực (lùi ngày khi đối tác báo trễ); mục Lịch sử MST; rà hoá đơn lệch MST ở HT08 | Chờ duyệt |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.
