@@ -47,12 +47,15 @@ Hệ quả có lợi: hết lỗi chọn nhầm chiều (phiếu bán dùng mã 
 | Phiếu bán, hàng bán trả lại | 33311 | `tax_output` (có sẵn) |
 
 - Thuế TSCĐ **tự nhận** theo tài khoản Nợ của dòng hàng (Q chốt 19/11): kế toán không phải chọn mã riêng (thay V054, V104, V00C…).
-- Tài khoản thuế đã ghi được **lưu vào dòng hoá đơn thuế**; bảng kê đọc tài khoản đã ghi (hết lệch bảng kê ↔ sổ cái khi đổi cấu hình — lỗi đang có trên main).
+- Phiếu thu / chi / kế toán (không có loại chứng từ mua / bán): dòng **Có TK 5… hoặc 7…** → thuế đầu ra (33311); còn lại → thuế đầu vào (1331, hoặc 1332 nếu Nợ TSCĐ).
+- Chứng từ ghi lùi ngày rơi vào bản chính sách hạch toán cũ (chụp trước khi có 6 loại): 6 loại cố định vẫn dùng được (lấy từ cấu hình đang dùng — loại thuế không thuộc chính sách riêng của đơn vị).
+- *Chưa làm trong đợt này:* lưu tài khoản thuế đã ghi vào dòng hoá đơn thuế. Bảng kê đọc TK của mã cũ, loại cố định thì đọc TK ở ACC41 hiện tại → TSCĐ (1332) trên bảng kê vẫn hiện 1331; đổi khoá ở ACC41 thì cột TK kỳ cũ đổi theo (lỗi đang có trên main). Làm ở phiếu sau.
 
 ## 4. Mặt hàng: một loại thuế
 
-- DM10: ô **Thuế suất GTGT** chọn 1 trong 6 loại; dùng cho cả bán và mua. Bỏ cặp *Mã VAT ra / Mã VAT vào* (dữ liệu chuyển: mục 5).
-- Nhập Excel mặt hàng: cột **Thuế suất GTGT** (KCT, 0, 5, 8, 10, KKKN; nhận cả "8%", "10%"); tệp cũ có cột *Mã VAT ra* vẫn nhập được (quy đổi theo mục 5).
+- DM10: ô **Thuế suất GTGT** chọn 1 trong 6 loại; dùng cho cả bán và mua. Cột *Mã VAT ra / Mã VAT vào* trong CSDL giữ, luôn ghi **cùng một loại** (migration chuyển dữ liệu: mục 5).
+- Sửa thuế hàng loạt (DM10): chọn 1 trong 6 loại, ghi cùng một loại cho bán và mua.
+- Nhập Excel mặt hàng: cột **Thuế suất GTGT** (KCT, 0, 5, 8, 10, KKKN; nhận cả "8%", "10%"); mã cũ có loại tương ứng tự đổi (R10 → 10); mã cũ chưa xác định (R05B, V20…) **báo lỗi rõ**, không tự quy đổi (Q chốt 19/11).
 - Cờ "không chịu thuế" của mặt hàng suy từ loại thuế KCT.
 
 ## 5. Dữ liệu cũ
@@ -70,14 +73,15 @@ Hệ quả có lợi: hết lỗi chọn nhầm chiều (phiếu bán dùng mã 
 | 10 | R10, R10A, R10C, V10, V101, V103, V104, V10C, V11A, V13A, V14A |
 | KKKN | KKKN |
 
-- Cổng nhận chứng từ (POS, cầu nối website, nhập Excel) **tự đổi** mã cũ sang loại mới trước khi lưu; chứng từ mới chỉ mang 6 loại.
+- Cổng nhận chứng từ (POS, cầu nối website) **không đổi** mã: chứng từ mang R08 vẫn lưu R08 và ghi sổ như trước (cùng bút toán Có 33311). Lý do: máy bán / website chưa sửa, đổi ở cửa nạp làm lệch đối chiếu với nguồn. Đổi phía POS / website ở phiếu phối hợp sau.
+- Mã cũ 8% (R08, V08…) cũng hết hiệu lực cùng loại 8 (sau 31/12/2026).
 - **Cần kế toán xác nhận trước khi quy đổi** (mục 8): R05B, R08B, R10B, V05B, V05S (tên ghi 5% / 8% / 10% "người dùng tự nhập" nhưng thuế suất khai 0) · V071 (thuế suất 7%) · V20 (TK 13888 — thuế đầu vào kỳ sau) · V13K (dữ liệu gốc nhóm 0, dữ liệu đang chạy nhóm KCT).
 
 ## 6. Báo cáo
 
 | Báo cáo | Sau khi sửa |
 |---|---|
-| Bảng kê bán ra / mua vào | Xếp mục theo **nhóm** của loại thuế (như cũ); cột TK đọc **tài khoản đã ghi** trên dòng hoá đơn |
+| Bảng kê bán ra / mua vào | Xếp mục theo **nhóm** của loại thuế (như cũ); loại cố định khớp cả mua và bán; cột TK: TK của mã cũ, loại cố định đọc TK ở ACC41 (xem giới hạn mục 3) |
 | Tờ khai 01/GTGT | Như cũ: mua / bán theo loại chứng từ, chỉ tiêu theo nhóm + thuế suất |
 
 ## 7. Thứ dùng chung bị đụng — cần chữ chốt (R-FLOW-2)
@@ -85,10 +89,10 @@ Hệ quả có lợi: hết lỗi chọn nhầm chiều (phiếu bán dùng mã 
 | Đụng | Việc | Ghi chú |
 |---|---|---|
 | Lõi ghi sổ `packages/kernel/src/modules/posting/` | TK thuế theo loại chứng từ + quy tắc TSCĐ; bỏ kiểm chiều của mã; kiểm hiệu lực loại thuế | Tệp lõi — người phụ trách lõi duyệt |
-| Lõi hoá đơn thuế, loại thuế (`tax-invoices`, `tax-codes`) | Lưu TK thuế đã ghi trên dòng; khoá thêm / sửa / xoá loại thuế qua API; quy đổi mã cũ ở cửa nạp | Tệp lõi |
-| Lược đồ (migration mới) | Loại thuế: hiệu lực, căn cứ, cờ mã cũ + mã thay thế; dòng hoá đơn thuế: TK thuế; mặt hàng: một loại thuế | Số migration lấy bằng `scripts/so-tiep-theo.mjs` |
+| Lõi loại thuế, phiếu, cấu hình hạch toán (`tax-codes`, `vouchers`, `posting-config`) | Khoá thêm / sửa / xoá loại thuế qua API; phiếu thu / chi / kế toán suy chiều thuế; cài gói định khoản xong áp lại 6 loại; bản chính sách cũ bổ sung 6 loại | Tệp lõi |
+| Lược đồ (migration 0169) | Loại thuế: chiều `both`, hiệu lực, căn cứ, cờ mã cũ + mã thay thế; mặt hàng: một loại thuế | |
 | Quy tắc hạch toán (ACC41) | Khoá mới `tax_input_fixed_asset` (1332) | |
-| Dữ liệu gốc `db/seeds/loai-thue.jsonl` | 6 loại + 51 mã cũ đánh dấu | |
+| Dữ liệu gốc `db/seeds/loai-thue.jsonl`, gói nền `db/packs/vn-tt99-nen.posting-pack.json` | 6 loại + 51 mã cũ đánh dấu; gói nền chỉ thêm khoá `tax_input_fixed_asset` (giữ đúng hợp đồng gói định khoản v1, không đổi schema) | |
 
 Ngoài lõi: màn ACC43, DM10 (tệp trong phạm vi PHASE-026 — phối hợp người giữ), các ô chọn thuế trên phiếu, Mua hàng (bảng thuế suất viết cứng `TAX_RATE` — việc N030-2 của PHASE-030), máy bán POS, cầu nối website.
 
@@ -118,9 +122,11 @@ Ngoài lõi: màn ACC43, DM10 (tệp trong phạm vi PHASE-026 — phối hợp 
 | 4 | Phiếu mua hàng hoá 10.000.000đ, loại 10 | Nợ 1331: 1.000.000 |
 | 5 | Phiếu mua TSCĐ (Nợ 2112) 100.000.000đ, loại 10 | Nợ **1332**: 10.000.000 |
 | 6 | Phiếu ngày 05/01/2027 dùng loại 8 | Không ghi sổ: "Thuế suất 8% hết hiệu lực từ 01/01/2027…" |
-| 7 | Máy bán POS gửi đơn mang mã R08 | Chứng từ lưu loại 8, ghi sổ Có 33311 |
+| 7 | Máy bán POS gửi đơn mang mã R08 | Chứng từ lưu R08 (mã cũ), ghi sổ Có 33311 như trước |
 | 8 | Xem bảng kê kỳ cũ (đã ghi với V05 / 1331) | Không đổi |
-| 9 | Đổi khoá `tax_input` ở ACC41 sang TK khác rồi xem bảng kê kỳ cũ | Cột TK vẫn là TK đã ghi |
+| 9 | Phiếu thu bán phế liệu (Nợ 1111 / Có 5158) loại 10 | Thuế đầu ra Có 33311 |
+| 10 | Nhập Excel mặt hàng thuế "R10" / "V20" | R10 → loại 10 (bán = mua); V20 báo lỗi "chưa xác định được loại thuế" |
+| 11 | Gọi API thêm / sửa / xoá loại thuế | Bị chặn (403): "do phần mềm cấu hình sẵn theo quy định nhà nước" |
 
 **Bút toán:** đổi đúng như bảng mục 3; các phần khác của bút toán không đổi.
 
@@ -136,9 +142,9 @@ Phương án B trước đó (chọn theo thuế suất, tự lấy mã đúng c
 ## 12. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | |
+| Ngày chạy | 19/11/2026 (máy dev, CSDL test) |
+| Bản code (commit) | nhánh `feat/nt-dm-012-loai-thue-co-dinh` (chưa đẩy) |
+| Test | `apps/api/test/nt-dm-012-loai-thue-co-dinh.test.ts` 8/8 — bước 1, 3, 4, 5, 6 (mô phỏng hết hiệu lực), 7, 9, 10, 11 |
 
 ## 13. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -148,4 +154,5 @@ Phương án B trước đó (chọn theo thuế suất, tự lấy mã đúng c
 | Ngày | Thay đổi |
 |---|---|
 | 19/11/2026 | Tạo phiếu theo phương án B (chọn theo thuế suất, tự lấy mã đúng chiều) |
+| 19/11/2026 | Đổi sang loại thuế cố định theo quy định; code xong ở máy: cổng nhận giữ mã cũ (không quy đổi), mã cũ chưa xác định báo lỗi khi nhập Excel; chưa lưu TK thuế trên dòng hoá đơn (mục 3) |
 | 19/11/2026 | **Viết lại** theo quyết định người dùng: danh mục cố định theo quy định nhà nước, bỏ Chiều, bỏ Tài khoản (TK thuế theo ACC41 + tự nhận TSCĐ 1332), chứng từ cũ giữ nguyên |
