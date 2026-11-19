@@ -235,6 +235,11 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
   const kind = v.kind ?? 'customer';
   const noun = NOUN[kind] ?? 'đối tượng';
   const choices = groups.filter((g) => (g.isActive && (g.kind === 'any' || g.kind === kind)) || g.code === v.groupCode);
+  // [2026-11-19 08:49 AM khanhtd] ô Đơn vị cha: tìm trong nhóm cha của nhóm đang chọn; vai trò theo ô tích (tích cả hai = không lọc vai trò)
+  const parentGroupCode = v.groupCode ? (groups.find((g) => g.code === v.groupCode)?.parentCode || v.groupCode) : null;
+  const laNcc = kind === 'supplier' || (v.alsoKinds ?? []).includes('supplier');
+  const laKh = kind === 'customer' || (v.alsoKinds ?? []).includes('customer');
+  const parentKind: 'customer' | 'supplier' | undefined = laNcc && laKh ? undefined : laNcc ? 'supplier' : laKh ? 'customer' : undefined;
   const txt = (k: keyof Partner, label: string, full = false, mono = false, onBlur?: (val: string) => void) => (
     <Field label={label} full={full}><input className={`input ${mono ? 'mono' : ''}`} value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Partner>)} onBlur={onBlur ? (e) => onBlur(e.target.value.trim()) : undefined} /></Field>
   );
@@ -260,7 +265,7 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
     set({ kind: k, groupCode });
     void fetchCode(groupCode, k);
   };
-  // Đơn vị cha chỉ chọn trong cùng nhóm: đổi nhóm thì bỏ đơn vị cha đang chọn.
+  // Đơn vị cha chọn trong nhóm cha của nhóm đang chọn: đổi nhóm thì bỏ đơn vị cha đang chọn.
   const changeGroup = (groupCode: string | null) => {
     const boCha = Boolean(v.parentCode) && groupCode !== v.groupCode;
     set({ groupCode, ...(boCha ? { parentCode: null, parentName: null } : {}) });
@@ -272,8 +277,9 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
     setSuggest(null);
     if (!parentCode) { if (isNew) void fetchCode(v.groupCode, kind, true, null); return; }
     const par = (await api.get<Partner[]>('/api/v1/partners', { search: parentCode, status: 'all', pageSize: 20 }).catch(() => [])).find((p) => p.code === parentCode);
-    if (par) set({ parentName: par.name, ...(isNew ? { kind: par.kind, alsoKinds: par.alsoKinds, groupCode: v.groupCode || par.groupCode } : {}) });
-    if (isNew) void fetchCode(v.groupCode || par?.groupCode, par?.kind ?? kind, true, parentCode);
+    // [2026-11-19 08:49 AM khanhtd] vai trò giữ theo ô tích của người dùng (danh sách cha đã lọc theo vai trò), không chép vai trò của cha
+    if (par) set({ parentName: par.name, ...(isNew ? { groupCode: v.groupCode || par.groupCode } : {}) });
+    if (isNew) void fetchCode(v.groupCode || par?.groupCode, kind, true, parentCode);
   };
   /** MST chi nhánh (10 số-3 số) mà đã có đơn vị mang MST gốc: gợi ý gắn làm đơn vị con. */
   const [suggest, setSuggest] = useState<Partner | null>(null);
@@ -390,7 +396,8 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
         })()}
         {!isNew && <span className="muted">Sửa {noun} {v.code}</span>}
       </div>
-      <ODonViCha value={v.parentCode} self={v.code} isNew={isNew} groupCode={v.groupCode} onChange={(c) => void changeParent(c)} />
+      {/* [2026-11-19 08:49 AM khanhtd] đơn vị cha: đối tượng thuộc nhóm cha của nhóm đang chọn (nhóm không có cha thì cùng nhóm), lọc theo vai trò đã tích */}
+      <ODonViCha value={v.parentCode} self={v.code} isNew={isNew} groupCode={parentGroupCode} kind={parentKind} onChange={(c) => void changeParent(c)} />
       {suggest && <div className="alert full" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <span>MST <b className="mono">{v.taxCode}</b> là MST chi nhánh của <b>{suggest.code} - {suggest.name}</b> (MST {suggest.taxCode}). Gắn {noun} này làm đơn vị con?</span>
         <button type="button" className="btn btn-sm btn-primary" onClick={() => void changeParent(suggest.code)}>Gắn làm đơn vị con</button>
