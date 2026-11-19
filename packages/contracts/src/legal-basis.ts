@@ -57,6 +57,7 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'GRP-BLOCK-001': ['NOI-BO'], 'GRP-BLOCK-002': ['TT99'], 'GRP-BLOCK-003': ['LGTGT'], 'GRP-BLOCK-004': ['NOI-BO'], 'GRP-BLOCK-005': ['NOI-BO'], 'GRP-BLOCK-006': ['NOI-BO'], 'GRP-BLOCK-007': ['NOI-BO'], 'GRP-BLOCK-008': ['NOI-BO'],
   'BR-BLOCK-001': ['NOI-BO'], 'BR-BLOCK-002': ['LKT'], 'BR-BLOCK-003': ['NOI-BO'], 'BR-BLOCK-004': ['NOI-BO'],
   'PART-HINT-001': ['ND123', 'LGTGT'],
+  'PART-HINT-005': ['ND123', 'LGTGT'], // [2026-11-19 11:52 AM khanhtd] NT-DM-011
   'PART-HINT-002': ['ND123', 'LGTGT'],
   'PART-HINT-003': ['NOI-BO'],
   'PART-HINT-004': ['LQLT'],

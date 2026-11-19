@@ -1,4 +1,5 @@
 // @bizcity-layer M data/masterdata
+// [2026-11-19 11:45 AM khanhtd] NT-DM-011 — validFrom (ngày hiệu lực khi đổi tên / MST / địa chỉ, biến phiên ketoan.valid_from — 0168); GET /partners/:code/attributes; kiểm trùng MST theo mọi phiên bản
 // [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14 / 15: POST /api/v1/partners/validate; tạo / sửa trả meta.findings, ghi nhận cảnh báo mềm (warnAck)
 /**
@@ -37,6 +38,8 @@ import { partnerRepository, toPartnerDto, type PartnerAccountingInfo } from './p
 import { suggestPartnerCode } from './partner-code.js';
 import { importPartners, PARTNER_IMPORT_KEYS } from './partner-import.js';
 import { checkParent, nextChildCode, sameFamily } from './partner-family.js';
+import { assertValidFrom, countInvoicesKeepingOldTax, partnerAttributeRoutes } from './partner-attributes.js';
+import { catalogFinding } from '@ketoan/contracts';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): adapter tra MST qua cổng
 import { corePort } from '@bizcity/platform/core/ports';
 import { partnerHints } from './partner.hints.js';
@@ -91,7 +94,9 @@ function split<T extends Record<string, unknown>>(b: T) {
 }
 const partnerBody = partnerInputSchema.omit({ code: true }).extend({ kind: z.enum(KINDS).default('customer'), ...accountingInfo });
 /** Tạo / sửa một đối tượng từ màn hình: thêm ghi nhận cảnh báo mềm. Đồng bộ hàng loạt không có trường này. */
-const partnerFormBody = partnerBody.extend({ warnAck: warnAck.optional() });
+const validFrom = z.string().regex(/^\d{4}-\d{2}-\d{2}$/,'Ngày dạng YYYY-MM-DD').optional()
+  .describe('Ngày hiệu lực khi đổi tên / MST / địa chỉ của đối tượng đã có (≤ hôm nay, sau phiên bản đang dùng); trống = từ hôm nay (NT-DM-011)');
+const partnerFormBody = partnerBody.extend({ warnAck: warnAck.optional(), validFrom });
 
 /** Kiểm nhóm có trong danh mục. */
 async function assertGroups(trx: Db, tenantId: string, codes: (string | null | undefined)[]) {
@@ -117,10 +122,17 @@ async function assertTaxCodeFree(trx: Db, tenantId: string, code: string, taxCod
   let dup: (typeof dups)[number] | undefined;
   for (const d of dups) if (!familyUid || !(await sameFamily(trx, familyUid, d.uid))) { dup = d; break; }
   if (dup) throw quyTac('PART-BLOCK-002', { taxCode: t, kind: KIND_TEXT[dup.kind] ?? dup.kind, other: dup.code, name: dup.name || '(chưa có tên)' }, 'conflict');
+  // MST cũ (phiên bản đã đóng) của đối tượng khác cũng không gán được cho đối tượng này (NT-DM-011).
+  const old = await trx.selectFrom('entity_attributes as a').innerJoin('partners as p', (j) => j.onRef('p.id', '=', 'a.entity_id').onRef('p.tenant_id', '=', 'a.tenant_id'))
+    .select(['p.code', 'p.name', 'p.kind', 'p.uid']).where('a.tenant_id', '=', tenantId).where('a.entity_type', '=', 'partner').where('a.tax_code', '=', t).where('p.code', '<>', code).execute();
+  for (const d of old) if (!familyUid || !(await sameFamily(trx, familyUid, d.uid))) {
+    throw quyTac('PART-BLOCK-002', { taxCode: t, kind: KIND_TEXT[d.kind] ?? d.kind, other: d.code, name: `${d.name || '(chưa có tên)'} — MST cũ` }, 'conflict');
+  }
 }
 
 export async function partnerRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
+  await partnerAttributeRoutes(app);
 
   r.get('/api/v1/partners', {
     preHandler: requirePermission('catalog:read'),
@@ -270,7 +282,7 @@ export const partnerWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'core.partner.validate', title: 'Khung Vì sao: kiểm thử một bản khai báo đối tượng (chỉ đọc)', tags,
     permission: 'catalog:read', effect: 'read', idempotency: 'none',
-    input: z.object({ code: z.string().trim().min(1).max(64), name: z.string().trim().max(255).optional(), kind: z.enum(KINDS).optional(), alsoKinds: z.array(z.enum(['customer', 'supplier'])).max(2).optional(), taxCode: z.string().trim().max(32).nullish() }), output: anyOut,
+    input: z.object({ code: z.string().trim().min(1).max(64), name: z.string().trim().max(255).optional(), kind: z.enum(KINDS).optional(), alsoKinds: z.array(z.enum(['customer', 'supplier'])).max(2).optional(), taxCode: z.string().trim().max(32).nullish(), validFrom }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/partners/validate' }, mcp: false, ai: 'read' },
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
@@ -286,7 +298,7 @@ export const partnerWriteActions: AnyActionDef[] = [
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
-      const { code, warnAck: ack, ...body } = input;
+      const { code, warnAck: ack, validFrom: _vf, ...body } = input; // thêm mới: phiên bản đầu như 0087, không có ngày hiệu lực
       const { info, rest } = split(body);
       let findings: Awaited<ReturnType<typeof partnerHints>> = [];
       await sameTx(trx, async (trx) => {
@@ -317,7 +329,7 @@ export const partnerWriteActions: AnyActionDef[] = [
       const { code: _code, ...reqBody } = input;
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
-      const { warnAck: ack, ...body } = reqBody;
+      const { warnAck: ack, validFrom: vf, ...body } = reqBody;
       const { info, rest } = split(body);
       let findings: Awaited<ReturnType<typeof partnerHints>> = [];
       await sameTx(trx, async (trx) => {
@@ -326,10 +338,16 @@ export const partnerWriteActions: AnyActionDef[] = [
         const isNew = !before;
         const parentUid = info.parentCode === undefined ? before?.parent_uid ?? null : await checkParent(trx, auth.tenantId, input.code, info.parentCode, before ?? null);
         await assertTaxCodeFree(trx, auth.tenantId, input.code, rest.taxCode, before?.tax_code, parentUid ?? before?.uid ?? null);
+        // NT-DM-011: đổi tên / MST / địa chỉ của đối tượng đã có từ ngày đã chọn (0168). Đếm hoá đơn còn MST cũ TRƯỚC khi ghi.
+        if (!isNew && vf) await assertValidFrom(trx, auth.tenantId, input.code, vf);
+        const keepOld = !isNew && vf ? await countInvoicesKeepingOldTax(trx, auth.tenantId, input.code, rest.taxCode, vf) : { count: 0, oldTaxCode: '' };
+        if (!isNew && vf) await sql`SELECT set_config('ketoan.valid_from', ${vf}, true)`.execute(trx);
         await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code: input.code } as PartnerInput, info.kind);
+        if (!isNew && vf) await sql`SELECT set_config('ketoan.valid_from', '', true)`.execute(trx);
         await partnerRepository.updateAccountingInfo(trx, auth.tenantId, input.code, info);
         if (isNew) await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).execute();
         findings = await partnerHints(trx, auth.tenantId, { code: input.code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
+        if (keepOld.count) findings.push(catalogFinding('PART-HINT-005', { count: keepOld.count, code: input.code, from: vf!.split('-').reverse().join('/'), old: keepOld.oldTaxCode }, { field: 'taxCode' }));
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.upsert', objectType: 'partner', objectId: input.code, before: before ? toPartnerDto(before) : undefined, after: reqBody });
         await recordWarnAck(trx, auth, 'partner', input.code, findings, ack);
       });

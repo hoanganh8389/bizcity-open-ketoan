@@ -28,4 +28,26 @@ export const checks = [
           WHERE x.base <> 1 OR x.pd > 1
           ORDER BY t.code, x.sku LIMIT 200`,
   }),
+  // [2026-11-19 12:15 PM khanhtd] NT-DM-011 — DG-MD-3: bản lane của PARTNER_TAX_MISMATCH (apps/api/src/modules/partners/partner-attributes.ts, R-DIAG-9)
+  sqlCheck({
+    id: 'DG-MD-3', code: 'PARTNER_TAX_MISMATCH',
+    title: 'Hoá đơn của đối tượng đã đổi MST mang đúng MST hiệu lực tại ngày hoá đơn',
+    rules: ['R-REV-6'], conf: [], tier: 2, enforce: 'info', weight: 1,
+    count: `SELECT count(*)::int AS n FROM tax_invoices WHERE status = 'valid' AND partner_id IS NOT NULL`,
+    sql: `WITH c AS (SELECT a.tenant_id, a.entity_id FROM entity_attributes a
+                      WHERE a.entity_type = 'partner' AND regexp_replace(coalesce(a.tax_code, ''), '[^0-9]', '', 'g') <> ''
+                      GROUP BY a.tenant_id, a.entity_id
+                     HAVING count(DISTINCT regexp_replace(a.tax_code, '[^0-9]', '', 'g')) > 1)
+          SELECT t.code AS tenant, p.code || ':' || i.invoice_no || ':' || to_char(i.invoice_date, 'DD/MM/YYYY') AS key,
+                 json_build_object('on_invoice', i.buyer_tax_code,
+                                   'at_date', (bizcity_entity_attr_at(i.tenant_id, 'partner', i.partner_id, i.invoice_date)).tax_code) AS detail
+            FROM tax_invoices i
+            JOIN c ON c.tenant_id = i.tenant_id AND c.entity_id = i.partner_id
+            JOIN partners p ON p.id = i.partner_id
+            JOIN tenants t ON t.id = i.tenant_id
+           WHERE i.status = 'valid' AND regexp_replace(i.buyer_tax_code, '[^0-9]', '', 'g') <> ''
+             AND regexp_replace(i.buyer_tax_code, '[^0-9]', '', 'g')
+                 <> regexp_replace(coalesce((bizcity_entity_attr_at(i.tenant_id, 'partner', i.partner_id, i.invoice_date)).tax_code, ''), '[^0-9]', '', 'g')
+           ORDER BY t.code, i.invoice_date, p.code LIMIT 200`,
+  }),
 ];
