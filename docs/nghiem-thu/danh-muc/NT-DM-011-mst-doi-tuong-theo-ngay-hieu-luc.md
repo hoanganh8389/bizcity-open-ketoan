@@ -68,6 +68,10 @@ v_from := COALESCE(v_req, GREATEST(CURRENT_DATE, bản_đang_mở.valid_from + 1
 - Đổi MST, tên hoặc địa chỉ của đối tượng **đã có** → hiện ô **Hiệu lực từ ngày** (mặc định hôm nay, không chọn ngày sau hôm nay, không trước phiên bản đang dùng) kèm câu: *"Chứng từ đã lập không bị sửa; hoá đơn từ ngày này còn mang MST cũ sẽ được liệt kê để rà."*
 - Mục mới **Lịch sử MST, tên, địa chỉ** trong hồ sơ (cạnh *Đơn vị con*, *Lịch sử thay đổi*): mỗi phiên bản một dòng — từ ngày, đến ngày, MST, tên, địa chỉ, người đổi, **số hoá đơn lệch** (bấm để xem danh sách).
 - Thêm mới: không có ô ngày (bản đầu như 0087).
+- **Một lần Ghi = một phiên bản = một ngày hiệu lực** cho cả MST, tên, địa chỉ <!-- [2026-11-19 11:25 AM khanhtd] NT-DM-011 — người dùng chốt: đổi cùng lúc thì chung ngày; khác ngày thì tự ghi nhiều lần --> (người dùng chốt 19/11/2026):
+  - đổi cùng lúc (vd MST + tên + địa chỉ cùng từ 01/10) → sửa cả ba ô, Ghi một lần;
+  - đổi ở các ngày khác nhau → Ghi nhiều lần, mỗi lần một ngày; phiên bản sau mang lại các giá trị không đổi của phiên bản trước.
+  - **Ghi theo thứ tự ngày** (0087 chỉ thêm, phiên bản sau phải sau phiên bản đang dùng): vd MST đổi 01/10, địa chỉ đổi 15/10 → ghi MST (01/10) trước rồi mới ghi địa chỉ (15/10). Ghi địa chỉ 15/10 trước thì sau đó không thêm được MST từ 01/10 — màn hình báo lỗi kèm ngày của phiên bản đang dùng.
 
 ### 3.4 Rà soát — phép kiểm HT08
 
