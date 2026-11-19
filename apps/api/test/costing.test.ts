@@ -215,22 +215,39 @@ describe('Tính lại khi đơn giá đổi', () => {
   });
 });
 
-describe('Giá vốn tháng nhập từ Excel (chạy song song với phần mềm đang dùng)', () => {
+// [2026-11-17 Nguyễn Văn Thủy] nhập Excel = ĐGBQ ĐẦU KỲ: tồn đầu × giá nhập, bình quân với chứng từ trong kỳ ra ĐGBQ cuối kỳ (đóng góp)
+// Tháng 10: tồn đầu 10, nhập trong kỳ 20 = 1.580.000 → ĐGBQ cuối kỳ = (10 × giá nhập + 1.580.000) / 30.
+describe('Nhập ĐGBQ đầu kỳ từ Excel', () => {
+  it('kiểm tra tệp (không ghi): mã lạ, giá không phải số, giá âm, mã lặp báo lỗi từng dòng', async () => {
+    const res = await call(ctx, 'POST', '/api/v1/inventory/costing/import-check', { period: '2026-10', rows: [
+      { row: 2, sku: 'SUA01', unitCost: '70000' }, { row: 3, sku: 'KHONG-CO', unitCost: '1' }, { row: 4, sku: 'SUA01', unitCost: '1' },
+      { row: 5, sku: '', unitCost: 'abc' }, { row: 6, sku: 'SUA01', unitCost: -5 },
+    ] });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const r = res.body.data.rows;
+    expect(r[0]).toMatchObject({ row: 2, sku: 'SUA01', errors: [] });
+    expect(r[0].action).not.toBe('error');
+    expect(r[1].errors[0]).toContain('không có trong danh mục');
+    expect(r[2].errors).toContain('Mã lặp — lấy dòng đầu');
+    expect(r[3].errors).toEqual(['Thiếu mã hàng', 'Giá vốn không phải số']);
+    expect(r[4].errors).toContain('Giá vốn âm');
+    expect(res.body.data).toMatchObject({ failed: 4 });
+  });
   const run = (body: object) => call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10', ...body });
-  it('mã có trong tệp dùng đúng giá đó cho mọi chi nhánh (phiếu giá vốn tháng); mã trùng lấy giá khác 0', async () => {
+  it('mã có trong tệp: tồn đầu theo giá nhập rồi bình quân với chứng từ trong kỳ; mã trùng lấy giá khác 0', async () => {
     const res = await run({ imported: [{ sku: 'SUA01', unitCost: 0, name: 'Sữa bột 900g' }, { sku: 'SUA01', unitCost: 80000.5 }, { sku: 'KHAC01', unitCost: 1000 }] });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.imported).toEqual({ count: 2, missing: [], missingCount: 0 });
-    expect(await balance('6321', 'CN01')).toBe(160001); // 2 × 80.000,5
-    expect(await balance('6321', 'CN02')).toBe(240002); // 3 × 80.000,5 (làm tròn theo từng phiếu)
+    expect(await balance('6321', 'CN01')).toBe(158667); // 2 × (800.005 + 1.580.000) / 30 = 2 × 79.333,5
+    expect(await balance('6321', 'CN02')).toBeCloseTo(238001, -1); // 3 × 79.333,5 (làm tròn theo từng phiếu)
     const costs = (await call(ctx, 'GET', '/api/v1/inventory/costs?period=2026-10')).body.data;
-    expect(costs.find((c: any) => c.sku === 'SUA01')).toMatchObject({ unitCost: 80000.5, costSource: 'import' });
+    expect(costs.find((c: any) => c.sku === 'SUA01')).toMatchObject({ unitCost: 79333.5, costSource: 'import', openingValue: 800005, detail: expect.objectContaining({ importUnit: 80000.5, openingUnit: 80000.5 }) });
     expect(costs.find((c: any) => c.sku === 'KHAC01')).toMatchObject({ unitCost: 1000, costSource: 'import', outQty: 0 });
   });
 
-  it('tính lại không kèm tệp: giữ giá đã nhập', async () => {
+  it('tính lại không kèm tệp: giữ ĐGBQ đầu kỳ đã nhập', async () => {
     await run({});
-    expect(await balance('6321', 'CN01')).toBe(160001);
+    expect(await balance('6321', 'CN01')).toBe(158667);
   });
 
   it('tệp thiếu mã có xuất trong tháng: báo danh sách, mã đó tính bình quân', async () => {
@@ -250,17 +267,36 @@ describe('Giá vốn tháng nhập từ Excel (chạy song song với phần m�
     const rows = [0, 625000, 434442.8361, 434442.8361, 434442.8361, 625000].map((unitCost) => ({ sku: 'SUA01', unitCost }));
     await run({ imported: rows });
     const costs = (await call(ctx, 'GET', '/api/v1/inventory/costs?period=2026-10')).body.data;
-    expect(costs.find((c: any) => c.sku === 'SUA01')).toMatchObject({ unitCost: 434442.8361, costSource: 'import' });
-    expect(await balance('6321', 'CN01')).toBe(868886); // 2 × 434.442,8361
+    expect(costs.find((c: any) => c.sku === 'SUA01')).toMatchObject({ unitCost: 197480.9333, costSource: 'import' }); // (4.344.428 + 1.580.000) / 30
+    expect(await balance('6321', 'CN01')).toBe(394962);
     await run({ clearImport: true });
   });
   it('phiếu giá vốn luôn tính cả tháng (khoảng ngày trong tháng vẫn nhận nhưng không chia phiếu); khoảng ngoài tháng báo lỗi', async () => {
     const res = await run({ imported: [{ sku: 'SUA01', unitCost: 90000 }], from: '2026-10-10', to: '2026-10-31' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(await balance('6321', 'CN01')).toBe(180000); // 2 × 90.000 — cả tháng
-    expect(await balance('1381', 'CN02')).toBe(90000);
+    expect(await balance('6321', 'CN01')).toBe(165333); // 2 × (900.000 + 1.580.000) / 30 — cả tháng
+    expect(await balance('1381', 'CN02')).toBe(82667);
     expect((await run({ from: '2026-09-25', to: '2026-10-31' })).status).toBe(400);
     await run({ clearImport: true });
     expect(await balance('1381', 'CN02')).toBe(76000);
+  });
+});
+
+// [2026-11-17 Nguyễn Văn Thủy] công thức giá vốn tuỳ chọn (0153) (đóng góp)
+describe('Công thức giá vốn cố định, đổi thì áp dụng từ một tháng', () => {
+  it('sai mật khẩu bị chặn; công thức mới áp từ tháng chọn, tháng trước giữ công thức cũ; lịch sử ghi công thức', async () => {
+    const body = { name: 'Gồm VAT, bỏ chi phí', options: { costAlloc: false, price: 'with_vat' }, applyFrom: '2026-10' };
+    expect((await call(ctx, 'POST', '/api/v1/inventory/costing-formulas', { ...body, password: 'sai' })).status).toBe(403);
+    const save = await call(ctx, 'POST', '/api/v1/inventory/costing-formulas', { ...body, password: 'Thuy!@#' });
+    expect(save.status, JSON.stringify(save.body)).toBe(200);
+    const list = (await call(ctx, 'GET', '/api/v1/inventory/costing-formulas')).body.data;
+    expect(list.find((f: any) => f.applyFrom === '2026-10')).toMatchObject({ code: 'CT202610', name: 'Gồm VAT, bỏ chi phí', options: { costAlloc: false, price: 'with_vat', rebateAlloc: true } });
+    expect((await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10' })).status).toBe(200);
+    expect((await call(ctx, 'GET', '/api/v1/inventory/costing-runs')).body.data[0]).toMatchObject({ formulaCode: 'CT202610', formula: { costAlloc: false, price: 'with_vat' } });
+    expect((await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-09' })).status).toBe(200);
+    expect((await call(ctx, 'GET', '/api/v1/inventory/costing-runs')).body.data[0]).toMatchObject({ formulaCode: 'MD', formula: { price: 'net', costAlloc: true } });
+    // về công thức mặc định cho tháng 10
+    await call(ctx, 'POST', '/api/v1/inventory/costing-formulas', { name: 'Mặc định (giá Net)', options: {}, applyFrom: '2026-10', password: 'Thuy!@#' });
+    await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-10' });
   });
 });

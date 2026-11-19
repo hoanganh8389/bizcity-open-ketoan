@@ -21,6 +21,7 @@ import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import { db, type Db } from '../../db/client.js';
 import { sameTx, type ActionTx, defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
+import { quyTac } from '@bizcity/platform/core/quy-tac';
 
 const tags = ['Danh mục: Đơn vị tính'];
 const NAME_RE = /^[\p{L}\p{N} _.\-/()+×]+$/u;
@@ -49,7 +50,7 @@ async function assertFree(trx: Db, tenantId: string, name: string, exceptId?: st
   let q = trx.selectFrom('unit_names').select(['id', 'name']).where('tenant_id', '=', tenantId).where(sql`lower(name)`, '=', name.toLowerCase());
   if (exceptId) q = q.where('id', '<>', exceptId);
   const dup = await q.executeTakeFirst();
-  if (dup) throw Errors.conflict(`Đơn vị tính "${dup.name}" đã có trong danh mục`);
+  if (dup) throw quyTac('UNIT-BLOCK-001', { name: dup.name }, 'conflict');
 }
 
 export const unitNameService = {
@@ -83,7 +84,7 @@ export const unitNameService = {
       if (input.name !== undefined && input.name !== before.name) {
         await assertFree(trx, auth.tenantId, input.name, id);
         const n = (await usage(trx, auth.tenantId, before.name)).get(before.name.toLowerCase()) ?? 0;
-        if (n) throw Errors.conflict(`"${before.name}" đang dùng ở ${n} mặt hàng — không đổi tên được (phiếu đã ghi theo tên này). Thêm tên mới rồi khai lại ở mặt hàng, hoặc bỏ tích "Đang dùng" để ẩn.`);
+        if (n) throw quyTac('UNIT-BLOCK-002', { name: before.name, count: n, action: 'đổi tên' }, 'conflict');
       }
       const patch: Record<string, unknown> = { updated_at: new Date(), updated_by: auth.actorName };
       if (input.name !== undefined) patch.name = input.name;
@@ -104,7 +105,7 @@ export const unitNameService = {
       const before = await one(trx, auth.tenantId, id);
       if (!before) throw Errors.notFound(`đơn vị tính #${id}`);
       const n = (await usage(trx, auth.tenantId, before.name)).get(before.name.toLowerCase()) ?? 0;
-      if (n) throw Errors.conflict(`"${before.name}" đang dùng ở ${n} mặt hàng — không xoá được. Bỏ tích "Đang dùng" để ẩn khỏi gợi ý.`);
+      if (n) throw quyTac('UNIT-BLOCK-002', { name: before.name, count: n, action: 'xoá' }, 'conflict');
       await trx.deleteFrom('unit_names').where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'unit_name.delete', objectType: 'unit_name', objectId: before.name, before });
       return { id };

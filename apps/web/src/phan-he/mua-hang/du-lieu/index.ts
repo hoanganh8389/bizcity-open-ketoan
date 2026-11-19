@@ -150,14 +150,38 @@ export const purchaseApi = {
   supplierProducts: (q: { partnerCode?: string; sku?: string; withGeneral?: boolean; all?: boolean }) => api.get<{ rows: SupplierProduct[]; units: Record<string, ProductUnit[]> }>(`${P}/supplier-products`, q),
   /** Giá vốn theo ĐVT nhỏ nhất: bình quân tháng gần nhất + tạm tính theo tồn hiện tại. */
   productCost: (sku: string) => api.get<{ monthly: { period: string; unitCost: number } | null; current: { qty: number; value: number; unitCost: number } | null }>(`${P}/product-cost/${encodeURIComponent(sku)}`),
+  contracts: (partnerCode?: string) => api.get<ContractRow[]>(`${P}/contracts`, partnerCode ? { partnerCode } : {}),
+  contract: (code: string) => api.get<ContractDetail>(`${P}/contracts/detail`, { code }),
+  saveContract: (code: string, isNew: boolean, contract: ContractInput) => api.put<{ code: string }>(`${P}/contracts`, { code, isNew, contract }),
+  contractDebts: (q: { from: string; to: string; partnerCode?: string; contractCode?: string; detail?: boolean }) => api.get<{ rows: ContractDebtRow[]; lines: ContractDebtLine[] }>(`${P}/contract-debts`, { ...q, detail: q.detail ? 1 : undefined }),
   units: (skus: string[]) => api.get<Record<string, ProductUnit[]>>(`${P}/units`, { skus: skus.join(',') }),
   saveSupplierProducts: (rows: Partial<SupplierProduct>[]) => api.post<{ added: number; updated: number }>(`${P}/supplier-products`, { rows }),
-  history: (q: { docNo?: string; partnerCode?: string; event?: string; sku?: string }) => api.get<LogRow[]>(`${P}/logs`, q),
+  history: (q: { docNo?: string; partnerCode?: string; event?: string; sku?: string; contractCode?: string }) => api.get<LogRow[]>(`${P}/logs`, q),
   openAttachment: (a: Attachment) => api.download(`${P}/attachments/${a.id}/file`, {}, a.fileName),
   attachmentBlob: (a: Attachment) => api.blob(`${P}/attachments/${a.id}/file`),
 };
 
-export type OwnerType = 'partner' | 'document' | 'policy' | 'invoice';
+export type OwnerType = 'partner' | 'document' | 'policy' | 'invoice' | 'contract';
+
+// [2026-11-18 Nguyễn Văn Thủy] Hợp đồng mua hàng (Danh mục hợp đồng, 0163) (đóng góp)
+export type ContractStatus = 'draft' | 'active' | 'liquidated';
+export const CONTRACT_STATUS_LABEL: Record<ContractStatus, string> = { draft: 'Nháp', active: 'Đang hiệu lực', liquidated: 'Đã thanh lý' };
+export interface ContractRow {
+  code: string; name: string; partnerCode: string; partnerName: string; signedDate: string | null; startDate: string | null; endDate: string | null;
+  status: ContractStatus; statusText: string; branchCodes: string[]; brandCodes: string[]; skus: string[]; value: number | null; paymentTermDays: number | null;
+  note: string; createdBy: string; createdAt: string | null; updatedAt: string | null; updatedBy: string; prices: number; policies: number; documents: number; debt: number; purchased: number; pricedItems: number;
+  signerSeller: string; signerBuyer: string; deliveryPlace: string; freightBy: string; returnTerms: string;
+  penaltyPct: number | null; lateInterestPct: number | null; liquidatedDate: string | null; liquidationNote: string;
+}
+export type ContractInput = Pick<ContractRow, 'name' | 'partnerCode' | 'status' | 'branchCodes' | 'brandCodes' | 'skus' | 'note' | 'signerSeller' | 'signerBuyer' | 'deliveryPlace' | 'returnTerms' | 'liquidationNote'> & {
+  signedDate?: string | null; startDate?: string | null; endDate?: string | null; value?: number | null; paymentTermDays?: number | null;
+  freightBy: '' | 'seller' | 'buyer'; penaltyPct?: number | null; lateInterestPct?: number | null; liquidatedDate?: string | null;
+};
+export interface ContractDetail { contract: ContractRow; items: { sku: string; name: string; brandCode: string }[]; prices: (SupplierProduct & { name: string })[]; policies: Policy[]; documents: StoredDoc[] }
+export interface ContractDebtRow { contractCode: string; contractName: string; partnerCode: string; partnerName: string; openDebit: number; openCredit: number; debit: number; credit: number; closeDebit: number; closeCredit: number }
+export interface ContractDebtLine { contractCode: string; contractName: string; partnerCode: string; partnerName: string; date: string; docNo: string; docType: string; description: string; account: string; debit: number; credit: number; balance: number }
+/** Hợp đồng gợi ý cho phiếu: đang hiệu lực ở ngày phiếu, áp cho chi nhánh của phiếu (không chọn chi nhánh = mọi chi nhánh). */
+export const contractFor = (list: ContractRow[], date: string, branch: string) => list.find((c) => c.status === 'active' && (!c.startDate || c.startDate <= date) && (!c.endDate || c.endDate >= date) && (!c.branchCodes.length || c.branchCodes.includes(branch)));
 export interface Attachment { id: string; kind: string; kindLabel: string; fileName: string; mime: string; size: number; note: string; uploadedBy: string; createdAt: string }
 export interface SupplierRow {
   createdBy?: string; createdAt?: string | null;

@@ -11,6 +11,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { NutQuyTac } from '@/components/QuyTacDanhMuc';
 import { PageHeader } from '@/components/PageHeader';
 import { CanhBao, ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -67,7 +68,7 @@ export function BranchesPage() {
 
   return (
     <>
-      <PageHeader title="Chi nhánh" code="DM02" subtitle="Cửa hàng, kho, văn phòng — mọi bút toán gắn một chi nhánh" helpKey="chi-nhanh" />
+      <PageHeader actions={<NutQuyTac entity="branch" logEntity="branches" ten="chi nhánh" />} title="Chi nhánh" code="DM02" subtitle="Cửa hàng, kho, văn phòng — mọi bút toán gắn một chi nhánh" helpKey="chi-nhanh" />
       <div className="card">
         <CatalogToolbar
           canWrite={canWrite}

@@ -8,6 +8,7 @@ import { sql } from 'kysely';
 import { documentNumbers } from '../../kernel/public.js';
 import { z } from 'zod';
 import { unitsOf } from './gia-mua.js';
+import { checkContractItems } from './pham-vi-hop-dong.js';
 import { PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind, type PolicySnapshot, type PolicyVersion } from '@bizcity/mua-hang-domain';
 import { contentHash } from '@bizcity/platform/core/documents';
 import { listPolicyVersions, registerPolicyVersion, retirePolicy } from '@bizcity/platform/core/policies';
@@ -98,11 +99,13 @@ export const docInputSchema = z.object({
   deliveryDate: day.optional(),
   deliveryWarehouse: z.string().trim().max(64).optional(),
   warehouseCode: z.string().trim().max(64).optional(),
+  /** Thuộc hợp đồng mua (mã Danh mục hợp đồng) (0163). */
+  contractCode: z.string().trim().max(64).optional(),
 });
 export type DocInput = z.infer<typeof docInputSchema>;
 
 /** Phần lưu ở cột data (jsonb). */
-const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments'] as const;
+const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode'] as const;
 
 type Row = Awaited<ReturnType<typeof selectDocs>>[number];
 function selectDocs(trx: Db, tenantId: string) {
@@ -256,7 +259,7 @@ export function toDoc(r: Row): StoredDoc {
     invoice: r.invoice_no ? { no: r.invoice_no, serial: r.invoice_serial || undefined, date: String(r.invoice_date ?? r.doc_date).slice(0, 10), total: d.invoiceTotal } : undefined,
     orderDiscount: d.orderDiscount, term: d.term, cktt: d.cktt, lines: d.lines ?? [], schedule: d.schedule, amount: d.amount, method: d.method, moneyAccount: d.moneyAccount || undefined, ckttAmount: d.ckttAmount,
     taxCode: d.taxCode, costType: d.costType, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
-    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies,
+    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies, contractCode: d.contractCode || undefined,
     revision: r.revision, links: (r.links ?? []) as StoredDoc['links'],
     totals: { beforeTax: toNumber(r.total_before_tax), tax: toNumber(r.total_tax), total: toNumber(r.total) },
     dueDate: r.due_date ? String(r.due_date).slice(0, 10) : undefined,
@@ -348,7 +351,7 @@ export function rowValues(doc: PDoc & { invoiceTotal?: number }, calc: { beforeT
 
 /* ------------------------------------------------------------------ chính sách */
 
-export const POLICY_KINDS: PolicyKind[] = ['trade_discount', 'item_discount', 'qty_tier', 'payment_discount', 'promo_gift', 'period_rebate', 'target_rebate', 'stage_rebate', 'credit_limit', 'payment_term', 'supply_target', 'lot_tracking', 'gift_budget', 'contract'];
+export const POLICY_KINDS: PolicyKind[] = ['trade_discount', 'item_discount', 'qty_tier', 'payment_discount', 'promo_gift', 'period_rebate', 'target_rebate', 'stage_rebate', 'credit_limit', 'payment_term', 'supply_target', 'lot_tracking', 'gift_budget'];
 const num = z.number().finite().min(0);
 const pct = z.number().finite().min(0).max(100);
 // [2026-11-13 Nguyễn Văn Thủy] thưởng theo cha – con: tính doanh số trên cả nhóm, bên trả thưởng, chi nhánh mình nhận (đóng góp)
@@ -390,13 +393,12 @@ export const RULE_SCHEMAS: Record<PolicyKind, z.ZodTypeAny> = {
   supply_target: z.object({ period: z.string().regex(/^\d{4}-\d{2}$/), branches: z.record(num) }),
   lot_tracking: z.object({ required: z.boolean().default(true) }),
   gift_budget: z.object({ program: z.string().trim().min(1), amount: z.number().positive() }),
-  contract: z.object({ no: z.string().trim().min(1).max(64), signedOn: day.optional(), note: z.string().trim().max(500).optional() }),
 };
 export const policyInputSchema = z.object({
   code: z.string().trim().min(1).max(64),
   kind: z.enum(POLICY_KINDS as [PolicyKind, ...PolicyKind[]]),
   name: z.string().trim().min(1).max(255),
-  scope: z.object({ partnerCode: z.string().optional(), brandCode: z.string().optional(), sku: z.string().optional(), branchCode: z.string().optional(), withChildren: z.boolean().optional() }).default({}),
+  scope: z.object({ partnerCode: z.string().optional(), brandCode: z.string().optional(), sku: z.string().optional(), branchCode: z.string().optional(), branchCodes: z.array(z.string().min(1).max(64)).max(2000).optional(), withChildren: z.boolean().optional(), contractCode: z.string().trim().max(64).optional() }).default({}),
   validFrom: day.optional().nullable(),
   validTo: day.optional().nullable(),
   priority: z.number().int().default(0),
@@ -455,6 +457,8 @@ export async function partnerDescendants(trx: Db, tenantId: string, code: string
 
 /** Định danh ổn định của chính sách mua hàng trong sổ đăng ký (policy_registry.policy_id). */
 export const purchasePolicyRef = (id: string) => `mua-hang:purchase_policies:${id}`;
+/** Nội dung các bản của chính sách ở document_versions (0158). */
+export const policyDocRef = (id: string) => `mua-hang.policy:${id}`;
 
 /** Nội dung một bản — cùng khoá với ảnh chụp nạp ngược của 0079, để so "có đổi không" bằng contentHash trên cả hai. */
 export function policySnapshot(p: PolicyInput): PolicySnapshot {
@@ -466,10 +470,13 @@ export function policySnapshot(p: PolicyInput): PolicySnapshot {
 
 type VersionRow = { policy_id: string; version: number; effective_from: string | null; content_hash: string; snapshot: PolicySnapshot };
 async function policyVersionsByPolicy(trx: Db, tenantId: string, policyId?: string): Promise<Map<string, PolicyVersion[]>> {
+  // [2026-11-18 Nguyễn Văn Thủy] nội dung bản ở document_versions chung, ngày áp ở phong bì policy_registry (0158, bỏ purchase_policy_versions) (đóng góp)
   const r = await sql<VersionRow>`
-    SELECT policy_id::text AS policy_id, version, effective_from::text AS effective_from, content_hash, snapshot
-    FROM purchase_policy_versions WHERE tenant_id = ${tenantId} ${policyId ? sql`AND policy_id = ${policyId}` : sql``}
-    ORDER BY policy_id, version`.execute(trx);
+    SELECT substr(v.doc_ref, length('mua-hang.policy:') + 1) AS policy_id, v.version, g.effective_from::text AS effective_from, v.content_hash, v.snapshot
+    FROM document_versions v
+    LEFT JOIN policy_registry g ON g.tenant_id = v.tenant_id AND g.policy_id = 'mua-hang:purchase_policies:' || substr(v.doc_ref, length('mua-hang.policy:') + 1) AND g.version = v.version
+    WHERE v.tenant_id = ${tenantId} AND ${policyId ? sql`v.doc_ref = ${policyDocRef(policyId)}` : sql`v.doc_ref LIKE 'mua-hang.policy:%'`}
+    ORDER BY v.doc_ref, v.version`.execute(trx);
   const out = new Map<string, PolicyVersion[]>();
   for (const v of r.rows) {
     const list = out.get(v.policy_id) ?? [];
@@ -505,10 +512,9 @@ async function recordPolicyVersion(trx: Db, tenantId: string, actor: string, id:
   if (effectiveFrom && effectiveFrom < today && (!reason || reason.length < 3)) throw Errors.validation(`Chính sách ${p.code}: áp cho chứng từ từ ${effectiveFrom} (trước hôm nay) — cần lý do (≥ 3 ký tự)`);
   await registerPolicyVersion(trx, {
     tenantId, ownerModule: 'mua-hang', policyKey: p.code, policyId: purchasePolicyRef(id), version, ruleContract: `purchase.${p.kind}@1`,
-    scope: { ...snap.scope }, effectiveFrom, store: 'module', storeRef: `purchase_policy_versions:${id}@${version}`, content: snap, hash, actor, reason,
+    scope: { ...snap.scope }, effectiveFrom, store: 'module', storeRef: `document_versions:${policyDocRef(id)}@${version}`, content: snap, hash, actor, reason,
   });
-  await sql`INSERT INTO purchase_policy_versions (tenant_id, policy_id, version, effective_from, snapshot, content_hash, reason, created_by)
-    VALUES (${tenantId}, ${id}, ${version}, ${effectiveFrom}::date, ${JSON.stringify(snap)}::jsonb, ${hash}, ${reason}, ${actor})`.execute(trx);
+  await trx.insertInto('document_versions').values({ tenant_id: tenantId, doc_ref: policyDocRef(id), version, snapshot: JSON.stringify(snap), content_hash: hash, created_by: actor }).execute();
   await sql`UPDATE purchase_policies SET version = ${version}, content_hash = ${hash} WHERE tenant_id = ${tenantId} AND id = ${id}`.execute(trx);
 }
 export interface PolicyVersionOpts { effectiveFrom?: string | null; reason?: string | null }
@@ -528,7 +534,7 @@ export async function deletePolicy(trx: Db, tenantId: string, id: string): Promi
     ])).limit(5).execute();
   if (used.length) throw Errors.conflict(`Chính sách ${p.code} đã áp vào phiếu ${used.map((u) => u.doc_no).join(', ')}${used.length === 5 ? '…' : ''} — không xoá được (phiếu cũ cần tra lại cách tính). Bỏ tích "Áp dụng" để ngừng.`);
   await trx.deleteFrom('purchase_policies').where('tenant_id', '=', tenantId).where('id', '=', id).execute();
-  await retirePolicy(trx, tenantId, purchasePolicyRef(id)); // các bản giữ trong sổ đăng ký + purchase_policy_versions (PHASE-031 W1)
+  await retirePolicy(trx, tenantId, purchasePolicyRef(id)); // các bản giữ trong sổ đăng ký + document_versions (PHASE-031 W1, 0158)
   return p;
 }
 
@@ -568,8 +574,13 @@ export async function savePolicy(trx: Db, tenantId: string, actor: string, input
 
 async function savePolicyRow(trx: Db, tenantId: string, actor: string, input: PolicyInput, id: string | undefined, isDemo: boolean): Promise<{ id: string; p: PolicyInput }> {
   const p = await withGiftRatios(trx, tenantId, input);
+  // Chính sách thuộc hợp đồng: mã ở phạm vi và mã hàng MUA trong bảng (chiết khấu theo mã, mua – tặng) phải thuộc hàng hoá của hợp đồng; hàng tặng không khoanh.
+  if (p.scope.contractCode) {
+    const items = Array.isArray((p.rule as { items?: unknown }).items) ? ((p.rule as { items: { sku?: string }[] }).items) : [];
+    await checkContractItems(trx, tenantId, p.scope.contractCode, [p.scope.sku ?? '', ...items.map((i) => i.sku ?? '')], 'Chính sách theo hợp đồng');
+  }
   const values = {
-    code: p.code, kind: p.kind, name: p.name, scope: JSON.stringify(Object.fromEntries(Object.entries(p.scope).filter(([, x]) => x))),
+    code: p.code, kind: p.kind, name: p.name, scope: JSON.stringify(Object.fromEntries(Object.entries(p.scope).filter(([, x]) => x && !(Array.isArray(x) && !x.length)))),
     valid_from: p.validFrom ?? null, valid_to: p.validTo ?? null, priority: p.priority, rule: JSON.stringify(p.rule), is_active: p.isActive, updated_by: actor, updated_at: new Date(),
   };
   const dup = await trx.selectFrom('purchase_policies').select('id').where('tenant_id', '=', tenantId).where('code', '=', p.code).executeTakeFirst();

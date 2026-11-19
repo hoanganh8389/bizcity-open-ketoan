@@ -49,10 +49,16 @@ export async function grossProfitRoutes(app: FastifyInstance): Promise<void> {
                COUNT(*) FILTER (WHERE l.cost IS NULL AND ic2.unit_cost IS NULL AND l.qty <> 0) AS uncosted,
                COUNT(*) AS lines
           ${FROM}
-          LEFT JOIN inventory_costs ic2
-            ON ic2.tenant_id = l.tenant_id AND ic2.item_id = bizcity_item_at(l.tenant_id, l.sku, l.doc_date)  -- [2026-11-05 02:00 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: giá vốn theo định danh, mã cũ vẫn ra (đóng góp)
-           AND ic2.year = EXTRACT(YEAR FROM l.doc_date)::int AND ic2.month = EXTRACT(MONTH FROM l.doc_date)::int
-           AND ic2.cost_group = COALESCE(br.accounting_unit_id, 0)
+          -- [2026-11-05 02:00 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: giá vốn theo định danh, mã cũ vẫn ra (đóng góp)
+          -- [2026-11-17 Nguyễn Văn Thủy] loại kho tính giá riêng (0155): theo kho trên dòng thẻ kho của phiếu (đóng góp)
+          LEFT JOIN LATERAL (
+            SELECT c0.unit_cost FROM inventory_costs c0
+             WHERE c0.tenant_id = l.tenant_id AND c0.item_id = bizcity_item_at(l.tenant_id, l.sku, l.doc_date)
+               AND c0.year = EXTRACT(YEAR FROM l.doc_date)::int AND c0.month = EXTRACT(MONTH FROM l.doc_date)::int
+               AND c0.cost_group = COALESCE(br.accounting_unit_id, 0)
+               AND c0.wh_type IN ('', COALESCE((SELECT w1.type_code FROM inventory_movements m1 JOIN warehouses w1 ON w1.tenant_id = m1.tenant_id AND w1.code = m1.warehouse_code
+                                                 WHERE m1.tenant_id = l.tenant_id AND m1.event_id = l.event_id AND m1.line_no = l.line_no LIMIT 1), ''))
+             ORDER BY c0.wh_type DESC LIMIT 1) ic2 ON true
           ${g.join ?? sql``}
          WHERE ${where(f)}
          GROUP BY 1

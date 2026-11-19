@@ -118,6 +118,8 @@ export interface PDoc {
   basis?: 'value' | 'qty';
   /** Thưởng: chính sách + kỳ đã tính (chặn tính trùng). */
   rebate?: { policyCode: string; period: string; base: number; rate: number; detail: string[] };
+  /** [2026-11-18 Nguyễn Văn Thủy] Thuộc hợp đồng mua (mã trong Danh mục hợp đồng): đơn đặt chọn / tự gợi ý, phiếu lập từ đơn kế thừa; bút toán mang mã hợp đồng (đóng góp). */
+  contractCode?: string;
   /** Chi phí / thưởng: phần phân bổ theo mã hàng (máy chủ tính lúc lưu). */
   allocation?: { sku: string; name?: string; amount: number }[];
   refIds?: string[];
@@ -154,9 +156,13 @@ export interface Product { sku: string; name: string; unit: string; brandCode: s
 export interface Partner { code: string; name: string; taxCode?: string; group?: string; address?: string; openingDebt?: number }
 
 export type PolicyKind = 'trade_discount' | 'item_discount' | 'qty_tier' | 'payment_discount' | 'promo_gift' | 'period_rebate' | 'target_rebate' | 'stage_rebate'
-  | 'credit_limit' | 'payment_term' | 'supply_target' | 'lot_tracking' | 'gift_budget' | 'contract';
+  | 'credit_limit' | 'payment_term' | 'supply_target' | 'lot_tracking' | 'gift_budget';
 // [2026-11-13 Nguyễn Văn Thủy] withChildren: chính sách khai ở đơn vị mẹ áp cho mọi đơn vị con (cha – con 0132) (đóng góp)
-export interface Scope { partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string; withChildren?: boolean }
+// [2026-11-18 Nguyễn Văn Thủy] contractCode: chính sách thuộc hợp đồng mua (Danh mục hợp đồng) — chỉ để gom, không đổi cách áp (đóng góp)
+// [2026-11-19 Nguyễn Văn Thủy] branchCodes: chính sách áp cho nhiều chi nhánh (chọn theo cây cơ cấu); branchCode một chi nhánh giữ cho dữ liệu cũ (đóng góp)
+export interface Scope { partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string; branchCodes?: string[]; withChildren?: boolean; contractCode?: string }
+/** Các chi nhánh áp chính sách (trống = mọi chi nhánh): branchCodes, không có thì branchCode cũ. */
+export const scopeBranches = (s: Pick<Scope, 'branchCode' | 'branchCodes'>): string[] => (s.branchCodes?.length ? s.branchCodes : s.branchCode ? [s.branchCode] : []);
 export interface Policy {
   /** Người tạo / sửa và thời điểm (máy chủ điền khi đọc). */
   createdBy?: string; createdAt?: string; updatedBy?: string; updatedAt?: string;
@@ -174,7 +180,7 @@ export interface Policy {
   /** Mã các đơn vị con (mọi cấp) của scope.partnerCode — máy chủ điền khi scope.withChildren; không lưu. */
   familyCodes?: string[];
   // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): bản chính sách (sổ đăng ký 0079); engine chọn bản theo ngày chứng từ
-  /** Bản đang mang nội dung trên (purchase_policy_versions / policy_registry) và băm nội dung. */
+  /** Bản đang mang nội dung trên (document_versions mua-hang.policy:<id> / policy_registry) và băm nội dung. */
   version?: number;
   contentHash?: string;
   /** Mọi bản, cũ trước — máy chủ điền khi đọc; engine đổi nội dung về bản của ngày chứng từ (policyAt). */
@@ -211,7 +217,6 @@ export const POLICY_LABEL: Record<PolicyKind, string> = {
   supply_target: 'Chỉ tiêu cung ứng theo chi nhánh',
   lot_tracking: 'Theo dõi lô / hạn dùng',
   gift_budget: 'Ngân sách quà tặng theo chương trình',
-  contract: 'Hợp đồng mua bán',
 };
 /** Khuôn rule từng loại (giao diện hiện gợi ý, máy chủ kiểm bằng zod). */
 export const RULE_HINT: Record<PolicyKind, string> = {
@@ -228,7 +233,6 @@ export const RULE_HINT: Record<PolicyKind, string> = {
   supply_target: '{ "period": "2026-10", "branches": { "CN-ND": 600000000, "CN-PT": 700000000 } }',
   lot_tracking: '{ "required": true }',
   gift_budget: '{ "program": "TGS-TRI-AN", "amount": 10000000 }',
-  contract: '{ "no": "01/2026/HĐMB", "signedOn": "2026-01-05", "note": "" }',
 };
 
 /** Chính sách còn áp cho phiếu: bỏ các chính sách người dùng đã bỏ tích trên phiếu (doc.skipPolicies). */
@@ -411,7 +415,7 @@ export function policyApplies(p: Policy, ctx: { date: string; partnerCode?: stri
   if (p.validTo && ctx.date > p.validTo) return false;
   const s = p.scope;
   return (!s.partnerCode || s.partnerCode === ctx.partnerCode || Boolean(s.withChildren && ctx.partnerCode && p.familyCodes?.includes(ctx.partnerCode))) && (!s.brandCode || s.brandCode === ctx.brandCode)
-    && (!s.sku || s.sku === ctx.sku) && (!s.branchCode || s.branchCode === ctx.branchCode);
+    && (!s.sku || s.sku === ctx.sku) && (!scopeBranches(s).length || scopeBranches(s).includes(ctx.branchCode ?? ''));
 }
 /**
  * Độ hẹp phạm vi để chọn chính sách: số ô phạm vi đã khai (không tính withChildren), cộng nửa điểm khi khai đúng NCC của phiếu
@@ -419,7 +423,7 @@ export function policyApplies(p: Policy, ctx: { date: string; partnerCode?: stri
  */
 export function scopeRank(p: Pick<Policy, 'scope'>, partnerCode?: string): number {
   const s = p.scope;
-  return [s.partnerCode, s.brandCode, s.sku, s.branchCode].filter(Boolean).length + (s.partnerCode && s.partnerCode === partnerCode ? 0.5 : 0);
+  return [s.partnerCode, s.brandCode, s.sku, scopeBranches(s).length ? 'cn' : ''].filter(Boolean).length + (s.partnerCode && s.partnerCode === partnerCode ? 0.5 : 0);
 }
 /** Chính sách khớp nhất (phạm vi hẹp hơn, ưu tiên cao hơn đứng trước). */
 export function findPolicy(policies: Policy[], kind: PolicyKind, ctx: Parameters<typeof policyApplies>[1]): Policy | undefined {
@@ -845,7 +849,7 @@ export function checkDoc(doc: PDoc, calc: DocCalc, c: CheckCtx): Check[] {
   }
   for (const l of doc.lines.filter((x) => x.lineType === 'buy' && x.sku && !c.products.find((p) => p.sku === x.sku)?.isGiftItem)) {
     // Giá mua: so giá cố định (chính sách) và lần mua gần nhất.
-    const fixed = priceFor(c.prices ?? [], { date: doc.docDate, partnerCode: doc.partnerCode, sku: l.sku, unit: l.unit }, c.units?.[l.sku] ?? []);
+    const fixed = priceFor(c.prices ?? [], { date: doc.docDate, partnerCode: doc.partnerCode, sku: l.sku, unit: l.unit, contractCode: doc.contractCode }, c.units?.[l.sku] ?? []);
     const warnPct = c.priceWarnPct ?? 2;
     const rate = TAX_RATE[l.taxCode] ?? 0;
     /** Quy giá về cùng loại với phiếu (gồm / chưa VAT) rồi mới so. */
@@ -853,7 +857,7 @@ export function checkDoc(doc: PDoc, calc: DocCalc, c: CheckCtx): Check[] {
     if (fixed) {
       const fp = sameBasis(fixed.price, Boolean(fixed.row.priceIncludesVat));
       const diff = fp ? ((l.price - fp) / fp) * 100 : 0;
-      if (Math.abs(diff) > warnPct) out.push({ level: Math.abs(diff) > warnPct * 2 ? 'error' : 'warn', code: 'price_fixed', lineKey: l.lineKey, text: `${l.sku}: đơn giá ${l.price.toLocaleString('vi-VN')} lệch ${diff > 0 ? '+' : ''}${diff.toFixed(1)}% so với giá cố định ${fp.toLocaleString('vi-VN')} / ${l.unit}${fixed.row.partnerCode ? '' : ' (giá chung)'}` });
+      if (Math.abs(diff) > warnPct) out.push({ level: Math.abs(diff) > warnPct * 2 ? 'error' : 'warn', code: 'price_fixed', lineKey: l.lineKey, text: `${l.sku}: đơn giá ${l.price.toLocaleString('vi-VN')} lệch ${diff > 0 ? '+' : ''}${diff.toFixed(1)}% so với ${fixed.row.contractCode ? `giá hợp đồng ${fixed.row.contractCode}` : 'giá cố định'} ${fp.toLocaleString('vi-VN')} / ${l.unit}${fixed.row.partnerCode ? '' : ' (giá chung)'}${fixed.row.contractCode && Math.abs(diff) > warnPct * 2 ? ' — cần cấp trên duyệt' : ''}` });
     }
     const last = c.priceHistory(l.sku)[0];
     if (last) {

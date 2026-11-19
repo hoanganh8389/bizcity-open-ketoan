@@ -6,7 +6,7 @@
  *   1. Xem trước bắt buộc: chạy action quay về ở chế độ chạy thử (?dryRun=1) → kết quả thật rồi huỷ, kèm previewToken
  *      (HMAC theo đơn vị, người, phạm vi, số thêm / sửa / xoá / khoá; sống 15 phút). Chạy thật phải gửi lại mã đó;
  *      kết quả thật khác lúc xem trước (danh mục đã đổi ở giữa) → CONFLICT, huỷ cả giao dịch.
- *   2. Ảnh chụp: trước khi ghi, chụp các dòng của đơn vị ở những bảng bộ đó chạm tới vào default_data_backups (0137),
+ *   2. Ảnh chụp: trước khi ghi, chụp các dòng của đơn vị ở những bảng bộ đó chạm tới vào catalog_trash (catalog 'backup.default-data', 0160; trước là default_data_backups),
  *      cùng giao dịch; giữ 10 bản gần nhất.
  *   3. Bộ giả lập trên đơn vị thật: tệp gốc có "_nguon": "gia-lap" (S030-53) mà đơn vị đã có bút toán → từ chối, chỉ cách
  *      đặt SEEDS_DIR tới danh mục của công ty. Bộ làm sạch catalog_sample KHÔNG chặn theo bút toán (thiết kế để chạy trên đơn vị
@@ -105,38 +105,43 @@ export function assertSameAsPreview(previewDigest: string, outcomes: Outcome[]):
 
 // ── Ảnh chụp danh mục ─────────────────────────────────────────────────────────────
 const KEEP = 10;
+const BACKUP = 'backup.default-data';
+const BACKUP_COLS = `id, row_key AS dataset_key, ARRAY(SELECT jsonb_array_elements_text(payload->'tables')) AS tables, (payload->>'rowCount')::int AS row_count,
+  deleted_by AS created_by, deleted_at AS created_at, NULLIF(payload->'result', 'null'::jsonb) AS result`;
 
 export async function snapshotTables(trx: Db, tenantId: string, datasetKey: string, actor: string, tables: string[]): Promise<{ id: string; rowCount: number }> {
   for (const t of tables) if (!KNOWN.has(t)) throw new Error(`default-data: bảng ${t} không nằm trong danh sách chụp`);
   const parts = tables.map((t) => sql`${t}::text, COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM ${sql.table(t)} x WHERE x.tenant_id = ${tenantId}), '[]'::jsonb)`);
+  // [2026-11-18 Nguyễn Văn Thủy] ảnh chụp ở catalog_trash (0160, bỏ default_data_backups) (đóng góp)
   const r = await sql<{ id: string; row_count: number }>`
-    INSERT INTO default_data_backups (tenant_id, dataset_key, tables, row_count, snapshot, created_by)
-    SELECT ${tenantId}, ${datasetKey}, ${sql.val(tables)}::text[],
-           (SELECT COALESCE(sum(jsonb_array_length(e.value)), 0)::int FROM jsonb_each(s.snap) e), s.snap, ${actor}
+    INSERT INTO catalog_trash (tenant_id, catalog, row_key, label, payload, deleted_by)
+    SELECT ${tenantId}, ${BACKUP}, ${datasetKey}, ${datasetKey},
+           jsonb_build_object('tables', to_jsonb(${sql.val(tables)}::text[]), 'rowCount', c.n, 'snapshot', s.snap, 'result', NULL), ${actor}
       FROM (SELECT jsonb_build_object(${sql.join(parts)}) AS snap) s
-    RETURNING id, row_count`.execute(trx);
+      CROSS JOIN LATERAL (SELECT COALESCE(sum(jsonb_array_length(e.value)), 0)::int AS n FROM jsonb_each(s.snap) e) c
+    RETURNING id, (payload->>'rowCount')::int AS row_count`.execute(trx);
   const row = r.rows[0]!;
-  await sql`DELETE FROM default_data_backups WHERE tenant_id = ${tenantId}
-              AND id NOT IN (SELECT id FROM default_data_backups WHERE tenant_id = ${tenantId} ORDER BY id DESC LIMIT ${KEEP})`.execute(trx);
+  await sql`DELETE FROM catalog_trash WHERE tenant_id = ${tenantId} AND catalog = ${BACKUP}
+              AND id NOT IN (SELECT id FROM catalog_trash WHERE tenant_id = ${tenantId} AND catalog = ${BACKUP} ORDER BY id DESC LIMIT ${KEEP})`.execute(trx);
   return { id: String(row.id), rowCount: row.row_count };
 }
 
 export async function setBackupResult(trx: Db, tenantId: string, id: string, outcomes: Outcome[]): Promise<void> {
-  await sql`UPDATE default_data_backups SET result = ${JSON.stringify(outcomes)}::jsonb WHERE tenant_id = ${tenantId} AND id = ${id}`.execute(trx);
+  await sql`UPDATE catalog_trash SET payload = jsonb_set(payload, '{result}', ${JSON.stringify(outcomes)}::jsonb) WHERE tenant_id = ${tenantId} AND catalog = ${BACKUP} AND id = ${id}`.execute(trx);
 }
 
 export interface BackupInfo { id: string; datasetKey: string; tables: string[]; rowCount: number; createdBy: string; createdAt: string; result: Outcome[] | null }
 
 export async function listBackups(trx: Db, tenantId: string): Promise<BackupInfo[]> {
   const r = await sql<{ id: string; dataset_key: string; tables: string[]; row_count: number; created_by: string; created_at: Date; result: Outcome[] | null }>`
-    SELECT id, dataset_key, tables, row_count, created_by, created_at, result FROM default_data_backups WHERE tenant_id = ${tenantId} ORDER BY id DESC`.execute(trx);
+    SELECT ${sql.raw(BACKUP_COLS)} FROM catalog_trash WHERE tenant_id = ${tenantId} AND catalog = ${BACKUP} ORDER BY id DESC`.execute(trx);
   return r.rows.map((x) => ({ id: String(x.id), datasetKey: x.dataset_key, tables: x.tables, rowCount: x.row_count, createdBy: x.created_by, createdAt: new Date(x.created_at).toISOString(), result: x.result }));
 }
 
 export async function getBackup(trx: Db, tenantId: string, id: string): Promise<BackupInfo & { snapshot: Record<string, unknown[]> }> {
   if (!/^\d{1,18}$/.test(id)) throw Errors.notFound(`bản sao lưu ${id}`);
   const r = await sql<{ id: string; dataset_key: string; tables: string[]; row_count: number; created_by: string; created_at: Date; result: Outcome[] | null; snapshot: Record<string, unknown[]> }>`
-    SELECT * FROM default_data_backups WHERE tenant_id = ${tenantId} AND id = ${id}`.execute(trx);
+    SELECT ${sql.raw(BACKUP_COLS)}, payload->'snapshot' AS snapshot FROM catalog_trash WHERE tenant_id = ${tenantId} AND catalog = ${BACKUP} AND id = ${id}`.execute(trx);
   const x = r.rows[0];
   if (!x) throw Errors.notFound(`bản sao lưu ${id}`);
   return { id: String(x.id), datasetKey: x.dataset_key, tables: x.tables, rowCount: x.row_count, createdBy: x.created_by, createdAt: new Date(x.created_at).toISOString(), result: x.result, snapshot: x.snapshot };

@@ -175,6 +175,7 @@ export const postingService = {
     const enrich = (lines: (typeof parts)[number]['lines'], branchId: string) => lines.map((l) => {
       const dims: Record<string, unknown> = { ...(l.dims ?? {}) };
       if (doc.employee?.code) dims.employee = doc.employee.code; // nhân viên phụ trách: mọi dòng, để báo cáo công nợ, doanh thu theo nhân viên
+      if (doc.contract && !dims.contract) dims.contract = doc.contract; // hợp đồng: mọi dòng, để công nợ / chi phí theo hợp đồng (0163)
       const dep = depOf.get(branchId);
       if (dep && !dims.department) dims.department = dep;
       if (costItem && !dims.costItem) dims.costItem = costItem;

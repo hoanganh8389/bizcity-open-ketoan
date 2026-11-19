@@ -33,20 +33,21 @@ import { NccInfo } from '../thanh-phan/NccInfo';
 import { PrintButton } from '@/components/print';
 import { layPhieuIn, mauInCua } from './mauIn';
 import { useThaoTac } from '@/lib/manHinh';
+import { HopDongMuaPage, hopDongMoiPath } from '../hop-dong/HopDongPage';
 
 const GROUPS: [string, string, PDoc['kind'][]][] = [
-  ['all', 'Tất cả', []], ['order', 'Đơn đặt hàng', ['order']], ['receipt', 'Nhập mua', ['receipt']], ['return', 'Trả / đổi hàng', ['return', 'exchange']],
+  ['all', 'Tất cả', []], ['hop-dong', 'Hợp đồng', []], ['order', 'Đơn đặt hàng', ['order']], ['receipt', 'Nhập mua', ['receipt']], ['return', 'Trả / đổi hàng', ['return', 'exchange']],
   ['money', 'Ứng trước / trả tiền', ['prepayment', 'payment']], ['gift', 'Quà tặng', ['gift_in', 'gift_out']], ['adjust', 'Chi phí / thưởng', ['cost', 'rebate']],
 ];
 // [2026-11-15 Nguyễn Văn Thủy] cột mặc định theo loại phiếu — chỉ cột có nghĩa với loại đó; cột khác bật ở nút "Cột" (đóng góp)
 const COT_MAC_DINH: Record<string, string[]> = {
-  all: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'total', 'checks'],
-  order: ['docDate', 'docNo', 'status', 'progress', 'partnerFull', 'branch', 'kho', 'total', 'checks'],
-  receipt: ['docDate', 'docNo', 'status', 'ledgerState', 'partnerFull', 'branch', 'ref', 'invoice', 'beforeTax', 'tax', 'total', 'due', 'debtLeft', 'checks'],
-  return: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'ref', 'total', 'checks'],
-  money: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'total', 'debtLeft'],
-  gift: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'kho', 'total'],
-  adjust: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'branch', 'ref', 'total'],
+  all: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'checks'],
+  order: ['docDate', 'docNo', 'status', 'progress', 'partnerFull', 'contract', 'branch', 'kho', 'total', 'checks'],
+  receipt: ['docDate', 'docNo', 'status', 'ledgerState', 'partnerFull', 'contract', 'branch', 'ref', 'invoice', 'beforeTax', 'tax', 'total', 'due', 'debtLeft', 'checks'],
+  return: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'ref', 'total', 'checks'],
+  money: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'debtLeft'],
+  gift: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'kho', 'total'],
+  adjust: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'ref', 'total'],
 };
 /** Cột theo loại phiếu: cột mặc định đứng trước theo đúng thứ tự khai, cột khác ẩn (bật ở nút "Cột"). */
 function cotTheoLoai<T extends { key: string; hidden?: boolean }>(cols: T[], group: string): T[] {
@@ -225,7 +226,9 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
     // NCC theo liên kết vừa bấm (?ncc=) — thẻ đang mở sẵn thì ô lọc NCC cũng đổi theo.
     const ncc = params.get('ncc');
     if (ncc) setPartner(ncc);
-    setEditing(newDoc(k, ncc ?? undefined));
+    // [2026-11-18 Nguyễn Văn Thủy] ?hd=<số hợp đồng>: lập phiếu theo hợp đồng (từ màn Hợp đồng mua hàng) (đóng góp)
+    const hd = params.get('hd');
+    setEditing({ ...newDoc(k, ncc ?? undefined), ...(hd ? { contractCode: hd } : {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params, navKey]);
 
@@ -258,6 +261,7 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
     { key: 'partnerAddress', header: 'Địa chỉ NCC', width: 260, value: (r) => names.partner(r.partnerCode)?.address ?? '', render: (r) => <span title={names.partner(r.partnerCode)?.address ?? ''}>{names.partner(r.partnerCode)?.address}</span> },
     { key: 'branch', header: 'Chi nhánh', width: 170, title: 'Mã · tên chi nhánh (có chi nhánh trùng tên, vd chi nhánh mẫu CN-PT và chi nhánh thật 08000 cùng tên CN Phú Thọ)', value: (r) => `${r.branchCode} · ${names.branchName(r.branchCode)}` },
     { key: 'kho', header: 'Phân kho', width: 130, title: 'Mã phân kho của phiếu hàng (chưa ghi kho = kho mặc định của chi nhánh; "mặc định" = chi nhánh chưa khai kho); đơn đặt: kho giao', value: (r) => { const k = r.kind === 'order' ? khoOf(r.branchCode, r.deliveryWarehouse) : GOODS_KINDS.includes(r.kind) ? khoOf(r.branchCode, r.warehouseCode) : ''; return k || (GOODS_KINDS.includes(r.kind) ? 'mặc định' : ''); } },
+    { key: 'contract', header: 'Hợp đồng', type: 'code', width: 150, title: 'Số hợp đồng mua của phiếu (MH29) — bút toán, công nợ mang số này', value: (r) => r.contractCode ?? '' },
     { key: 'ref', header: 'Theo đơn / phiếu', width: 120, title: 'Chứng từ gốc (đơn đặt của phiếu nhập…); phiếu nhập không theo đơn ghi "Nhập ngoài đơn"', value: (r) => (nhapNgoaiDon(r) ? 'Nhập ngoài đơn' : (r.refIds ?? []).map((x) => data?.docs.find((d) => d.id === x)?.docNo ?? '').filter(Boolean).join(', ')),
       render: (r) => (nhapNgoaiDon(r) ? <span className="badge badge-warn" title={r.outsideOrder?.reason ? `Lý do: ${r.outsideOrder.reason}${r.outsideOrder.by ? `
 Duyệt: ${r.outsideOrder.by}` : ''}${r.outsideOrder.reviewedBy ? `
@@ -308,7 +312,9 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
         const searchBox = <input className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm: số phiếu, NCC, MST, SĐT, địa chỉ, số HĐ, ghi chú" />;
         const body = (
           <div className={embedded ? '' : 'card'}>
-        {view !== 'nhom' && <div className="tabs" style={{ marginBottom: 0 }}>{GROUPS.map(([k, l]) => <button key={k} className={`tab ${group === k ? 'active' : ''}`} onClick={() => setGroup(k)}>{l}</button>)}</div>}
+        {view !== 'nhom' && <div className="tabs" style={{ marginBottom: 0 }}>{GROUPS.filter(([k]) => k !== 'hop-dong' || (!embedded && report !== 'bao-cao')).map(([k, l]) => <button key={k} className={`tab ${group === k ? 'active' : ''}`} onClick={() => setGroup(k)}>{l}</button>)}</div>}
+            {/* [2026-11-19 Nguyễn Văn Thủy] thẻ Hợp đồng: danh sách hợp đồng mua (MH29) ngay trong MH11 — không ghi sổ (đóng góp) */}
+            {group === 'hop-dong' && !embedded ? <HopDongMuaPage embedded partner={partner} /> : <>
             {/* Nhúng trong hồ sơ NCC (chỗ hẹp): bộ lọc gọn trên một hàng thay cho bảng lọc bên trái. */}
             {embedded && <div className="filters" style={{ paddingBottom: 0 }}>
               <input className="input" type="date" style={{ width: 140 }} value={from} onChange={(e) => setFrom(e.target.value)} title="Từ ngày" />
@@ -324,8 +330,8 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
               {onlyErr && <button className="btn btn-sm" onClick={() => setOnlyErr(false)} title="Bỏ lọc">Chỉ phiếu còn lỗi ✕</button>}
             </div>}
         <div className="row" style={{ gap: 6, padding: '6px 12px', flexWrap: 'wrap' }}>
-          {report !== 'bao-cao' && tt.them && <select className="select input" style={{ width: 180, height: 28 }} value="" onChange={(e) => e.target.value && setEditing(newDoc(e.target.value as PDoc['kind']))}>
-            <option value="">+ Thêm chứng từ…</option>{NEW_KINDS.map((k) => <option key={k} value={k}>{k === 'rebate' ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[k]}</option>)}
+          {report !== 'bao-cao' && tt.them && <select className="select input" style={{ width: 180, height: 28 }} value="" onChange={(e) => { const k = e.target.value; if (!k) return; if (k === 'hop-dong') { navigate(hopDongMoiPath(partner || undefined)); return; } setEditing(newDoc(k as PDoc['kind'])); }}>
+            <option value="">+ Thêm chứng từ…</option>{!embedded && <option value="hop-dong">Hợp đồng mua hàng</option>}{NEW_KINDS.map((k) => <option key={k} value={k}>{k === 'rebate' ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[k]}</option>)}
           </select>}
           <button className="btn btn-sm" disabled={!sel} onClick={() => sel && setEditing(sel)}>{sel?.status === 'approved' ? 'Xem' : 'Mở / sửa'}</button>
           {/* In phiếu đang chọn; mẫu theo loại phiếu (đơn đặt, nhập kho, trả hàng, phiếu chi…), số liệu nạp lại từ máy chủ. */}
@@ -346,9 +352,10 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
           <XemTheoMaHang docs={rows} data={data} mode={view} partnerName={names.partnerName} onOpen={(d) => setEditing(d)} locDong={ln.coLoc ? ln.loc : undefined}
             khoText={(d) => { const k = d.kind === 'order' ? khoOf(d.branchCode, d.deliveryWarehouse) : khoOf(d.branchCode, d.warehouseCode); return k; }} />
         ) : isLoading || !data ? <Loading /> : (
-          <DataGrid storageKey={embedded ? "mh-chung-tu-ncc" : report === 'bao-cao' ? 'mh-bao-cao-phieu' : `mh-ct-v4-${group}`} exportName="chung-tu-mua-hang" rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => setEditing(r)}
+          <DataGrid storageKey={embedded ? "mh-chung-tu-ncc" : report === 'bao-cao' ? 'mh-bao-cao-phieu' : `mh-ct-v5-${group}`} exportName="chung-tu-mua-hang" rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => setEditing(r)}
             rowClassName={(r) => dongChungTu(r.status)} columns={embedded ? columns.filter((c) => !NCC_COLS.includes(c.key)) : report === 'bao-cao' ? columns : cotTheoLoai(columns, group)} footerLabel="Cộng" emptyText="Chưa có chứng từ — chọn “+ Thêm chứng từ…”" />
         )}
+            </>}
           </div>
         );
         if (embedded) return body;

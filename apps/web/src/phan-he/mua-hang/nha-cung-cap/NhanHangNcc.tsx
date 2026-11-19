@@ -10,7 +10,7 @@ export function NhanHangNcc({ code }: { code: string }) {
   return (
     <div className="mh-brand-row" title="Nhãn lấy theo danh mục mặt hàng — muốn đổi nhãn của một mã thì sửa ở Danh mục mặt hàng">
       Nhãn hàng đang bán: {brands.length ? brands.slice(0, 8).map((b) => <span key={b.brandCode} className="mh-brand-chip">{b.name} · {b.skus} mã</span>)
-        : <span className="muted">chưa có — khai mặt hàng NCC bán (thẻ Mặt hàng & giá mua) hoặc nhập phiếu</span>}
+        : <span className="muted">chưa có — khai mặt hàng NCC bán (thẻ Hợp đồng & giá) hoặc nhập phiếu</span>}
       {brands.length > 8 && <span className="muted"> +{brands.length - 8} nhãn</span>}
       <span className="muted" style={{ fontSize: 11.5 }}> · theo <Link to="/danh-muc/mat-hang">danh mục mặt hàng</Link>, phiếu tự lấy nhãn theo từng dòng</span>
     </div>

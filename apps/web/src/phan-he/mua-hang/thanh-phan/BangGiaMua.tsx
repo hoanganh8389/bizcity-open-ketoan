@@ -42,7 +42,9 @@ const SPEC: ['sku' | 'unit' | 'price' | 'vat' | 'nccSku' | 'nccName' | 'from' | 
 ];
 const isoOf = (s: string) => { const m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})/.exec(s.trim()); return m ? `${m[3]}-${m[2]!.padStart(2, '0')}-${m[1]!.padStart(2, '0')}` : /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : undefined; };
 
-export function BangGiaMua({ partnerCode, sku, skuName, data, onChanged }: { partnerCode?: string; sku?: string; skuName?: string; data: MhData; onChanged?: () => void }) {
+// [2026-11-18 Nguyễn Văn Thủy] contractCode: chỉ dòng giá của hợp đồng đó ('' = không theo hợp đồng); dòng thêm mới thuộc hợp đồng đó (đóng góp)
+export function BangGiaMua({ partnerCode, sku, skuName, data, onChanged, contractCode, brands, skus: maHd }: { partnerCode?: string; sku?: string; skuName?: string; data: MhData; onChanged?: () => void; contractCode?: string; /** Chỉ thêm mã thuộc các nhãn này (hợp đồng có ghi nhãn). */ brands?: string[]; /** Chỉ thêm các mã này (hàng hoá của hợp đồng). */ skus?: string[] }) {
+  const theoHd = contractCode !== undefined;
   const byPartner = Boolean(partnerCode);
   const names = useNames();
   const q = useQuery({ queryKey: ['mua-hang', 'supplier-products', partnerCode ?? '', sku ?? ''], queryFn: () => purchaseApi.supplierProducts(byPartner ? { partnerCode, withGeneral: true } : { sku }) });
@@ -59,14 +61,16 @@ export function BangGiaMua({ partnerCode, sku, skuName, data, onChanged }: { par
   const closeProduct = async () => { const sku = productSku; setProductSku(null); if (sku) { const u = await purchaseApi.units([sku]); setUnits((x) => ({ ...x, ...u })); } };
   const [pick, setPick] = useState(false);
   const nccBrands = useSupplierBrands(partnerCode);
+  // [2026-11-18 Nguyễn Văn Thủy] dòng giá thuộc hợp đồng mua nào (0163) (đóng góp)
+  const hds = useQuery({ queryKey: ['mua-hang', 'contracts', partnerCode ?? ''], enabled: byPartner && !theoHd, staleTime: 60_000, queryFn: () => purchaseApi.contracts(partnerCode) }).data ?? [];
   const [paste, setPaste] = useState(false);
   const [excel, setExcel] = useState(false);
   const hist = useMemo(() => (byPartner ? supplierItemsOf(partnerCode!, q.data?.rows ?? [], data.docs) : []), [byPartner, partnerCode, q.data, data.docs]);
   useEffect(() => {
     if (!q.data) return;
     setUnits((u) => ({ ...u, ...q.data.units }));
-    const declared: Row[] = q.data.rows.filter((r) => (byPartner ? r.partnerCode === partnerCode : r.partnerCode)).map((r) => ({ ...r, key: r.id ?? k() }));
-    const fromHist: Row[] = hist.filter((h) => !h.declared).map((h) => ({ key: k(), partnerCode, sku: h.sku, unit: h.lastUnit ?? h.unit ?? '', price: null, priceIncludesVat: false, warnPct: 2, isActive: true, fromHistory: true, lastText: h.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${donGia(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }));
+    const declared: Row[] = q.data.rows.filter((r) => (byPartner ? r.partnerCode === partnerCode : r.partnerCode) && (!theoHd || (r.contractCode ?? '') === contractCode)).map((r) => ({ ...r, key: r.id ?? k() }));
+    const fromHist: Row[] = (contractCode ? [] : hist).filter((h) => !h.declared).map((h) => ({ key: k(), partnerCode, sku: h.sku, unit: h.lastUnit ?? h.unit ?? '', price: null, priceIncludesVat: false, warnPct: 2, isActive: true, fromHistory: true, lastText: h.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${donGia(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }));
     setRows([...declared.map((r) => { const h = hist.find((x) => x.sku === r.sku); return { ...r, lastText: h?.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${donGia(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }; }), ...fromHist]);
     // Mã đã mua nhưng chưa khai giá: tải ĐVT luôn (bấm "Khai" là chọn được ĐVT, không hiện nhầm "Khai ĐVT").
     const miss = fromHist.map((r) => r.sku).filter((x) => x && !q.data.units[x]);
@@ -75,8 +79,24 @@ export function BangGiaMua({ partnerCode, sku, skuName, data, onChanged }: { par
   const loadUnits = async (skus: string[]) => { const miss = skus.filter((s) => s && !units[s]); if (miss.length) { const u = await purchaseApi.units(miss); setUnits((x) => ({ ...x, ...u })); return { ...units, ...u }; } return units; };
   const set = (key: string, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...p, dirty: true } : r)));
   const addRows = async (list: { sku: string; unit?: string; price?: number | null; priceIncludesVat?: boolean; nccSku?: string; nccName?: string; validFrom?: string; note?: string }[]) => {
+    // Hợp đồng có ghi mã: dán / nhập Excel mã ngoài hợp đồng thì bỏ qua, báo lại.
+    if (maHd?.length && list.length) {
+      const bad = list.filter((x) => !maHd.includes(x.sku));
+      if (bad.length) setMsg({ ok: false, text: `Bỏ qua ${bad.length} mã không thuộc hàng hoá của hợp đồng: ${[...new Set(bad.map((x) => x.sku))].slice(0, 10).join(', ')} — thêm ở bước "Hàng hoá theo hợp đồng" hoặc khai ở thẻ "Không theo hợp đồng" của NCC` });
+      list = list.filter((x) => maHd.includes(x.sku));
+      if (!list.length) return;
+    } else
+    // Hợp đồng có ghi nhãn: dán / nhập Excel mã khác nhãn thì bỏ qua, báo lại (chọn từ danh mục đã chỉ hiện mã đúng nhãn).
+    if (brands?.length && list.length) {
+      const info = await purchaseApi.lookupProducts([...new Set(list.map((x) => x.sku))]);
+      const ok = new Set(info.filter((i) => brands.includes(i.brandCode ?? '')).map((i) => i.sku));
+      const bad = list.filter((x) => !ok.has(x.sku));
+      if (bad.length) setMsg({ ok: false, text: `Bỏ qua ${bad.length} mã không thuộc nhãn của hợp đồng: ${[...new Set(bad.map((x) => x.sku))].slice(0, 10).join(', ')}` });
+      list = list.filter((x) => ok.has(x.sku));
+      if (!list.length) return;
+    }
     const u = await loadUnits(list.map((x) => x.sku));
-    setRows((rs) => [...list.map((x) => ({ key: k(), partnerCode: byPartner ? partnerCode : null, sku: x.sku, unit: x.unit || defaultUnitFor(u[x.sku] ?? [], [], partnerCode ?? '', x.sku), price: x.price ?? null, priceIncludesVat: x.priceIncludesVat ?? false, warnPct: 2, nccSku: x.nccSku ?? '', nccName: x.nccName ?? '', validFrom: x.validFrom, note: x.note ?? '', isActive: true, dirty: true })), ...rs]);
+    setRows((rs) => [...list.map((x) => ({ key: k(), partnerCode: byPartner ? partnerCode : null, sku: x.sku, unit: x.unit || defaultUnitFor(u[x.sku] ?? [], [], partnerCode ?? '', x.sku), price: x.price ?? null, priceIncludesVat: x.priceIncludesVat ?? false, warnPct: 2, nccSku: x.nccSku ?? '', nccName: x.nccName ?? '', validFrom: x.validFrom, note: x.note ?? '', isActive: true, dirty: true, ...(theoHd ? { contractCode } : {}) })), ...rs]);
   };
   const dirty = rows.filter((r) => r.dirty);
   const removeRow = async (r: Row) => {
@@ -110,7 +130,7 @@ Trong khoảng chồng, đơn / phiếu lấy dòng có "Hiệu lực từ" mu�
     if (!byPartner && list.some((x) => !x.partnerCode)) { setMsg({ ok: false, text: 'Chọn nhà cung cấp cho mọi dòng (giá chung của sản phẩm khai ở khối "Giá mua tham khảo")' }); return; }
     setBusy(true); setMsg(null);
     try {
-      const r = await purchaseApi.saveSupplierProducts(list.map((x) => ({ id: x.id, partnerCode: x.partnerCode || null, sku: x.sku, unit: x.unit, isDefaultUnit: Boolean(x.isDefaultUnit), nccSku: x.nccSku ?? '', nccName: x.nccName ?? '', price: x.price ?? null, priceIncludesVat: x.priceIncludesVat, warnPct: x.warnPct, validFrom: x.validFrom || undefined, validTo: x.validTo || undefined, note: x.note ?? '', isActive: x.isActive })));
+      const r = await purchaseApi.saveSupplierProducts(list.map((x) => ({ id: x.id, partnerCode: x.partnerCode || null, sku: x.sku, unit: x.unit, isDefaultUnit: Boolean(x.isDefaultUnit), nccSku: x.nccSku ?? '', nccName: x.nccName ?? '', price: x.price ?? null, priceIncludesVat: x.priceIncludesVat, warnPct: x.warnPct, validFrom: x.validFrom || undefined, validTo: x.validTo || undefined, note: x.note ?? '', isActive: x.isActive, contractCode: x.contractCode ?? '' })));
       setMsg({ ok: true, text: `Đã lưu: thêm ${r.added}, cập nhật ${r.updated} dòng.` });
       await q.refetch(); onChanged?.(); setEdit(false);
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
@@ -166,12 +186,16 @@ Trong khoảng chồng, đơn / phiếu lấy dòng có "Hiệu lực từ" mu�
     const price = us.length ? roundPrice((h.lastPrice / (ratioOf(us, h.lastUnit) || 1)) * (ratioOf(us, r.unit) || 1)) : h.lastPrice;
     return { ...r, price, priceIncludesVat: Boolean(h.lastIncludesVat), fromHistory: false, dirty: true };
   }));
+  // Hợp đồng có ghi mã: điền một lần mọi mã đã khai ở bước "Hàng hoá" mà bảng giá chưa có dòng.
+  const thieuMa = theoHd && maHd?.length ? maHd.filter((s) => !active.some((r) => r.sku === s)) : [];
+  const dienMaHd = () => { setEdit(true); void addRows(thieuMa.map((s) => ({ sku: s }))); };
   const visible = active.filter((r) => !find || `${r.sku} ${r.nccSku ?? ''} ${r.nccName ?? ''} ${r.partnerCode ?? ''} ${cat.data?.find((c) => c.sku === r.sku)?.name ?? ''}`.toLowerCase().includes(find.toLowerCase()));
   return (
     <div>
       <div className="row" style={{ gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
         {active.length > 8 && <input className="input" style={{ width: 200 }} placeholder="Tìm mã / tên / mã NCC" value={find} onChange={(e) => setFind(e.target.value)} />}
         {active.length > 8 && <span className="muted" style={{ fontSize: 12 }}>{visible.length} / {active.length}</span>}
+        {thieuMa.length > 0 && <button className="btn btn-sm btn-primary" title="Thêm vào bảng mọi mã đã khai ở bước Hàng hoá theo hợp đồng mà chưa có dòng giá — gõ giá rồi Lưu" onClick={dienMaHd}><Plus size={13} /> Điền {thieuMa.length} mã của hợp đồng</button>}
         {!edit ? <button className="btn btn-sm btn-primary" onClick={() => setEdit(true)}><Pencil size={13} /> Sửa bảng</button> : byPartner ? <>
           <button className="btn btn-sm btn-primary" onClick={() => setPick(true)}><Plus size={13} /> Thêm mã từ danh mục…</button>
           <button className="btn btn-sm" onClick={() => setPaste(true)}>Dán nhiều mã…</button>
@@ -186,7 +210,7 @@ Trong khoảng chồng, đơn / phiếu lấy dòng có "Hiệu lực từ" mu�
       {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ marginBottom: 8 }}>{msg.text}</div>}
       <fieldset disabled={!edit} className={edit ? '' : 'view-plain'} title={edit ? undefined : 'Bấm đúp hoặc nút "Sửa bảng" để sửa'} onDoubleClick={() => !edit && setEdit(true)} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><div className="scroll-box" style={{ maxHeight: 480 }}>
         <table className="mh-mini" style={{ minWidth: 1050 }}>
-          <thead><tr><th>STT</th>{byPartner ? <><th>Mã</th><th>Tên hàng</th></> : <th>Nhà cung cấp</th>}<th>ĐVT</th><th>Mã bên NCC</th><th title="Tên NCC ghi trên báo giá / hoá đơn — dùng nhận diện hoá đơn đầu vào">Tên hàng bên NCC</th><th title="Thuế suất GTGT đầu vào của mặt hàng (khai ở Danh mục mặt hàng)">Thuế</th><th className="num" title="Giá mua theo ĐVT của dòng, chưa thuế GTGT">Giá chưa thuế</th><th className="num" title="Giá mua theo ĐVT của dòng, gồm thuế GTGT — tự quy đổi từ giá chưa thuế và ngược lại">Giá gồm thuế</th><th>Hiệu lực từ</th><th>Đến</th>{byPartner && <th>Lần mua gần nhất</th>}<th title="Ghi chú mặt hàng của NCC — tự điền vào ghi chú dòng khi lập đơn đặt">Ghi chú</th><th>Sửa lần cuối</th><th /></tr></thead>
+          <thead><tr><th>STT</th>{byPartner ? <><th>Mã</th><th>Tên hàng</th></> : <th>Nhà cung cấp</th>}<th>ĐVT</th><th>Mã bên NCC</th><th title="Tên NCC ghi trên báo giá / hoá đơn — dùng nhận diện hoá đơn đầu vào">Tên hàng bên NCC</th><th title="Thuế suất GTGT đầu vào của mặt hàng (khai ở Danh mục mặt hàng)">Thuế</th><th className="num" title="Giá mua theo ĐVT của dòng, chưa thuế GTGT">Giá chưa thuế</th><th className="num" title="Giá mua theo ĐVT của dòng, gồm thuế GTGT — tự quy đổi từ giá chưa thuế và ngược lại">Giá gồm thuế</th><th>Hiệu lực từ</th><th>Đến</th>{byPartner && !theoHd && <th title="Giá ghi trong hợp đồng mua nào (đơn theo hợp đồng lấy giá này trước). Trống = giá chung của NCC">Thuộc hợp đồng</th>}{byPartner && <th>Lần mua gần nhất</th>}<th title="Ghi chú mặt hàng của NCC — tự điền vào ghi chú dòng khi lập đơn đặt">Ghi chú</th><th title="Người tạo dòng giá · thời gian tạo">Người tạo</th><th>Sửa lần cuối</th><th /></tr></thead>
           <tbody>
             {visible.map((r, i) => (
               <tr key={r.key} className={r.dirty ? 'mh-row-pick' : r.fromHistory || !r.isActive ? 'muted' : ''}>
@@ -205,19 +229,21 @@ Trong khoảng chồng, đơn / phiếu lấy dòng có "Hiệu lực từ" mu�
                     {v === null && d && <div className="muted" style={{ fontSize: 11, marginTop: 2, whiteSpace: 'nowrap' }} title={`Giá tham khảo — lập đơn tự lấy số này (${d.label}). Chưa phải giá đã khai cho NCC`}>≈ {donGia(d.value)} <i>({d.label})</i></div>}</td>); })}
                 <td><input className="input" type="date" style={{ width: 128 }} value={r.validFrom ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { validFrom: e.target.value || undefined })} /></td>
                 <td><input className="input" type="date" style={{ width: 128 }} value={r.validTo ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { validTo: e.target.value || undefined })} /></td>
+                {byPartner && !theoHd && <td><select className="select input" style={{ width: 150 }} value={r.contractCode ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { contractCode: e.target.value })}><option value="">—</option>{hds.filter((c) => c.status !== 'liquidated' || c.code === r.contractCode).map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}{r.contractCode && !hds.some((c) => c.code === r.contractCode) && <option value={r.contractCode}>{r.contractCode}</option>}</select></td>}
                 {byPartner && <td style={{ fontSize: 11.5 }}>{r.lastText || <span className="muted">chưa mua</span>}</td>}
                 <td><input className="input" style={{ width: 160 }} value={r.note ?? ''} placeholder="vd giao thứ 3" disabled={r.fromHistory} onChange={(e) => set(r.key, { note: e.target.value })} /></td>
+                <td style={{ fontSize: 11 }}>{r.createdBy ? `${r.createdBy} · ${new Date(r.createdAt!).toLocaleString('vi-VN', { hour12: false })}` : ''}</td>
                 <td style={{ fontSize: 11 }}>{r.updatedBy ? `${r.updatedBy} · ${new Date(r.updatedAt!).toLocaleString('vi-VN', { hour12: false })}` : r.dirty ? <span className="mh-warn">chưa lưu</span> : ''}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>{!edit ? (r.isActive ? null : <span className="muted" style={{ fontSize: 11 }}>ngừng áp</span>) : r.fromHistory ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}><span className="muted" style={{ fontSize: 11 }}>đã mua, chưa khai giá</span><button className="btn btn-xs btn-primary" title="Mã này NCC đã bán (có phiếu) nhưng chưa có dòng giá: bấm để mở ô giá, gõ giá rồi Lưu" onClick={() => set(r.key, { fromHistory: false })}>Khai giá</button></span> : (r.id ? null : <button className="btn btn-xs" title="Bỏ dòng chưa lưu này" onClick={() => void removeRow(r)}>Bỏ</button>)}</td>
               </tr>
             ))}
-            {!visible.length && <tr><td colSpan={16} className="muted">{q.isLoading ? 'Đang tải…' : byPartner ? 'NCC chưa có mặt hàng — thêm mã, dán nhiều mã hoặc nhập Excel.' : `Chưa NCC nào khai bán ${skuName ?? 'mã này'} — bấm "+ Thêm NCC / giá".`}</td></tr>}
+            {!visible.length && <tr><td colSpan={18} className="muted">{q.isLoading ? 'Đang tải…' : byPartner ? 'NCC chưa có mặt hàng — thêm mã, dán nhiều mã hoặc nhập Excel.' : `Chưa NCC nào khai bán ${skuName ?? 'mã này'} — bấm "+ Thêm NCC / giá".`}</td></tr>}
           </tbody>
         </table>
       </div></fieldset>
       {productSku && <ProductEditor sku={productSku} startTab="units" startEditing onClose={() => void closeProduct()} />}
       {paste && <DanMa onClose={() => setPaste(false)} onAdd={(list) => { setPaste(false); void addRows(list); }} />}
-      {pick && <ChonMatHang title="Thêm mã NCC bán — bấm vào dòng để thêm" prefer={nccBrands} repeat existing={new Map(active.map((r) => [r.sku, 'đã có · bấm để thêm dòng (đợt giá / ĐVT khác)']))}
+      {pick && <ChonMatHang brands={brands} skus={maHd} title="Thêm mã NCC bán — bấm vào dòng để thêm" prefer={nccBrands} repeat existing={new Map(active.map((r) => [r.sku, 'đã có · bấm để thêm dòng (đợt giá / ĐVT khác)']))}
         onPick={(p) => void addRows([{ sku: p.sku }])} onPickAll={(ps) => void addRows(ps.map((p) => ({ sku: p.sku })))} onClose={() => setPick(false)} />}
       {excel && <NhapExcel partnerName={names.partnerName(partnerCode ?? '')} onClose={() => setExcel(false)} onAdd={(list) => { setExcel(false); void addRows(list); }} />}
     </div>

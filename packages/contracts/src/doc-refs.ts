@@ -14,7 +14,8 @@ export const docRefSchema = z.string().regex(DOC_REF_RE, 'docRef dạng <module>
 export type DocRef = string;
 
 /** Vai trò liên kết from → to (bizcity_document@1 §3). */
-export const DOC_LINK_ROLES = ['source', 'reverses', 'replaces', 'settles', 'attachesTo', 'ledger'] as const;
+// [2026-11-18 Nguyễn Văn Thủy] applies = áp chính sách / chương trình, uses = dùng lô hàng (0162) (đóng góp)
+export const DOC_LINK_ROLES = ['source', 'reverses', 'replaces', 'settles', 'attachesTo', 'ledger', 'applies', 'uses'] as const;
 export type DocLinkRole = (typeof DOC_LINK_ROLES)[number];
 
 /** Mã module của docRef: phần trước dấu chấm đầu. */

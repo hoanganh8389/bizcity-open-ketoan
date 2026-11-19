@@ -436,7 +436,7 @@ describe('Hệ ngoài', () => {
     expect((await merge('XC-W1N', 'XC-W2')).status).toBe(200);
     const r2 = await call(ctx, 'GET', '/api/v1/items/resolve?code=wc-101&kind=external:woocommerce');
     expect(r2.body.data).toMatchObject({ itemId: w2, sku: 'XC-W2' });
-    const tomb = (await sql<{ key: string; replaced_by_item_id: string }>`SELECT key, replaced_by_item_id FROM catalog_tombstones WHERE tenant_id = ${tenantId} AND key IN ('XC-W1', 'XC-W1N') ORDER BY key`.execute(db)).rows;
+    const tomb = (await sql<{ key: string; replaced_by_item_id: string }>`SELECT row_key AS key, payload->>'replacedByItemId' AS replaced_by_item_id FROM catalog_trash WHERE tenant_id = ${tenantId} AND catalog = 'tombstone.product' AND row_key IN ('XC-W1', 'XC-W1N') ORDER BY row_key`.execute(db)).rows;
     expect(tomb).toEqual([{ key: 'XC-W1', replaced_by_item_id: w1 }, { key: 'XC-W1N', replaced_by_item_id: w2 }]);
   });
 });

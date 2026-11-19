@@ -10,9 +10,9 @@
  *   emitEvent(trx, …)     ghi event_outbox + một event_deliveries cho mỗi subscriber đang đăng ký loại đó — CÙNG giao dịch
  *                          với dữ liệu: giao dịch huỷ thì không có sự kiện (R-OUTBOX-1). Phản hồi trả sau commit (R-OUTBOX-2).
  *   dispatchOnce()        đọc việc giao đến hạn; mỗi việc một giao dịch: khoá dòng giao (SKIP LOCKED) → chèn (consumer, event_id)
- *                          vào event_consumptions → handler (cùng giao dịch) → đánh dấu done. Lỗi: huỷ cả giao dịch, ghi lần thử
+ *                          dấu consumed_at trên dòng giao (0161, trước là event_consumptions) → handler (cùng giao dịch) → đánh dấu done. Lỗi: huỷ cả giao dịch, ghi lần thử
  *                          ở giao dịch riêng, hẹn lại giãn nhịp luỹ thừa; quá số lần → dead (R-OUTBOX-3).
- *                          Giao lại một sự kiện đã xử lý → khoá trùng ở event_consumptions → bỏ qua (R-OUTBOX-4, AP-6).
+ *                          Giao lại một sự kiện đã xử lý → consumed_at đã có → bỏ qua (R-OUTBOX-4, AP-6).
  *                          Thứ tự: trong cùng (đơn vị, subject), consumer nhận theo seq; khác subject có thể song song (R-OUTBOX-5).
  *   tickClock()           bizcity.clock.hourly / bizcity.clock.daily (01:00 giờ VN) cho từng đơn vị, chỉ khi có subscriber; khoá
  *                          chống trùng theo giờ / ngày nên nhiều tiến trình cùng chạy vẫn phát một lần (STD-EVT-6).
@@ -231,20 +231,20 @@ async function deliverInTenant(d: { consumer: string; event_id: string; tenant_i
     let attempts = 0;
     try {
       const r = await db.transaction().execute(async (trx) => {
-        const locked = await sql<{ attempts: number }>`
-          SELECT attempts FROM event_deliveries WHERE consumer = ${d.consumer} AND event_id = ${d.event_id}::uuid AND status = 'pending'
+        const locked = await sql<{ attempts: number; consumed: boolean }>`
+          SELECT attempts, consumed_at IS NOT NULL AS consumed FROM event_deliveries WHERE consumer = ${d.consumer} AND event_id = ${d.event_id}::uuid AND status = 'pending'
              FOR UPDATE SKIP LOCKED`.execute(trx);
         if (!locked.rows[0]) return 'skip' as const; // tiến trình khác đang giao / đã giao
         attempts = locked.rows[0].attempts;
-        // Module của subscriber đang tắt ở đơn vị (tenant_modules): không xử lý, ghi skipped. Không ghi event_consumptions nên
+        // Module của subscriber đang tắt ở đơn vị (tenant_modules): không xử lý, ghi skipped. Không đặt consumed_at nên
         // bật lại rồi phát lại (core.events.replay) vẫn xử lý được.
         if ((await disabledModules(d.tenant_id, trx)).has(def.module)) {
           await trx.updateTable('event_deliveries').set({ status: 'skipped', attempts: attempts + 1, done_at: new Date(), last_error: null })
             .where('consumer', '=', d.consumer).where('event_id', '=', d.event_id).execute();
           return 'skipped' as const;
         }
-        const fresh = await trx.insertInto('event_consumptions').values({ tenant_id: d.tenant_id, consumer: d.consumer, event_id: d.event_id })
-          .onConflict((oc) => oc.columns(['consumer', 'event_id']).doNothing()).returning('event_id').executeTakeFirst();
+        // [2026-11-18 Nguyễn Văn Thủy] dấu đã xử lý = consumed_at trên chính dòng giao đang khoá (0161, bỏ event_consumptions) (đóng góp)
+        const fresh = !locked.rows[0].consumed;
         if (fresh) {
           const row = await trx.selectFrom('event_outbox').selectAll().where('id', '=', d.event_id).executeTakeFirstOrThrow();
           const evt = envelope(row as unknown as OutboxRow);
@@ -261,7 +261,7 @@ async function deliverInTenant(d: { consumer: string; event_id: string; tenant_i
           };
           await withRequestContext({ requestId: `evt-${evt.id}`, tenantId: evt.tenantId, correlationId: evt.correlationId ?? evt.id }, () => def.handle(ctx, evt));
         }
-        await trx.updateTable('event_deliveries').set({ status: 'done', attempts: attempts + 1, done_at: new Date(), last_error: null })
+        await trx.updateTable('event_deliveries').set({ status: 'done', attempts: attempts + 1, done_at: new Date(), last_error: null, ...(fresh ? { consumed_at: new Date() } : {}) })
           .where('consumer', '=', d.consumer).where('event_id', '=', d.event_id).execute();
         return fresh ? 'done' as const : 'duplicate' as const;
       });
@@ -332,7 +332,7 @@ export async function tickClock(now = new Date(), opts: { tenantIds?: string[] }
   });
 }
 
-/** Phát lại cho một consumer: xoá dấu đã xử lý, đặt lại việc giao (tạo nếu chưa có). Trả số sự kiện được giao lại. */
+/** Phát lại cho một consumer: đặt lại việc giao, xoá dấu đã xử lý consumed_at (tạo nếu chưa có). Trả số sự kiện được giao lại. */
 export async function replayEvents(trx: Db, a: { tenantId: string; consumer: string; from: string; to?: string; type?: string; subject?: string }): Promise<number> {
   const def = registry.get(a.consumer);
   if (!def) throw new Error(`Không có subscriber ${a.consumer}`);
@@ -342,9 +342,8 @@ export async function replayEvents(trx: Db, a: { tenantId: string; consumer: str
   if (a.subject) q = q.where('subject', '=', a.subject);
   const ids = (await q.execute()).map((r) => r.id);
   if (!ids.length) return 0;
-  await trx.deleteFrom('event_consumptions').where('consumer', '=', a.consumer).where('event_id', 'in', ids).execute();
   await trx.insertInto('event_deliveries').values(ids.map((id) => ({ tenant_id: a.tenantId, consumer: a.consumer, event_id: id })))
-    .onConflict((oc) => oc.columns(['consumer', 'event_id']).doUpdateSet({ status: 'pending', attempts: 0, next_at: new Date(), last_error: null, done_at: null }))
+    .onConflict((oc) => oc.columns(['consumer', 'event_id']).doUpdateSet({ status: 'pending', attempts: 0, next_at: new Date(), last_error: null, done_at: null, consumed_at: null }))
     .execute();
   return ids.length;
 }

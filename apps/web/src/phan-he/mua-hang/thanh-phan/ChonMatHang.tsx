@@ -16,7 +16,12 @@ import { BrandInput } from '../chung';
 
 export type CatalogItem = { sku: string; name: string; unit: string; brandCode: string | null; taxInCode?: string | null };
 
-export function ChonMatHang({ title = 'Thêm mặt hàng — bấm vào dòng để thêm', initial = '', existing, repeat, onPick, onPickAll, footer, prefer, onClose }: {
+// [2026-11-19 Nguyễn Văn Thủy] đã chọn nhãn hàng (nhóm cấp 2) thì chỉ tìm / chọn được mặt hàng thuộc nhãn đó (đóng góp)
+export function ChonMatHang({ title = 'Thêm mặt hàng — bấm vào dòng để thêm', initial = '', existing, repeat, onPick, onPickAll, footer, prefer, onClose, brands: only, skus }: {
+  /** Chỉ mặt hàng thuộc các nhãn này (trống = mọi nhãn). */
+  brands?: string[];
+  /** Chỉ các mã này — hàng hoá của hợp đồng (trống = không khoanh). */
+  skus?: string[];
   title?: string;
   initial?: string;
   /** Mã đã có trong bảng → chữ hiện ở cột cuối. */
@@ -30,15 +35,18 @@ export function ChonMatHang({ title = 'Thêm mặt hàng — bấm vào dòng đ
   prefer?: { brandCode: string; skus: number }[];
   onClose: () => void;
 }) {
-  const brands = useBrands();
+  const all = useBrands();
+  const onlyKey = (only ?? []).filter(Boolean).join(',');
+  const skuKey = (skus ?? []).filter(Boolean).join(',');
+  const brands = onlyKey ? all.filter((b) => onlyKey.split(',').includes(b.code)) : all;
   const [text, setText] = useState(initial);
   const [brand, setBrand] = useState('');
   const [size, setSize] = useState(100);
   const [hi, setHi] = useState(0);
   const [added, setAdded] = useState(0);
-  const enabled = text.trim().length >= 2 || Boolean(brand);
-  const q = useQuery({ queryKey: ['catalog', 'pick-products', text.trim(), brand, size], enabled, staleTime: 30_000,
-    queryFn: async () => (await api.getPage<CatalogItem[]>('/api/v1/products', { search: text.trim() || undefined, brand: brand || undefined, status: 'active', pageSize: size })).data });
+  const enabled = text.trim().length >= 2 || Boolean(brand) || Boolean(onlyKey) || Boolean(skuKey);
+  const q = useQuery({ queryKey: ['catalog', 'pick-products', text.trim(), brand, size, onlyKey, skuKey], enabled, staleTime: 30_000,
+    queryFn: async () => (await api.getPage<CatalogItem[]>('/api/v1/products', { search: text.trim() || undefined, brand: brand || undefined, brands: !brand && onlyKey ? onlyKey : undefined, skus: skuKey || undefined, status: 'active', pageSize: size })).data });
   // Mã đúng tuyệt đối (gõ / quét) lên đầu để Enter là thêm đúng mã đó.
   const list = [...(q.data ?? [])].sort((a, b) => Number(b.sku.toLowerCase() === text.trim().toLowerCase()) - Number(a.sku.toLowerCase() === text.trim().toLowerCase()));
   const can = (p: CatalogItem) => repeat || !existing.has(p.sku);
@@ -50,7 +58,7 @@ export function ChonMatHang({ title = 'Thêm mặt hàng — bấm vào dòng đ
     const t = text.trim();
     if (!t) return;
     let p = list.find((x) => x.sku.toLowerCase() === t.toLowerCase());
-    if (!p && (q.isFetching || !q.data)) p = (await api.getPage<CatalogItem[]>('/api/v1/products', { search: t, status: 'active', pageSize: 5 }).catch(() => ({ data: [] as CatalogItem[] }))).data.find((x) => x.sku.toLowerCase() === t.toLowerCase());
+    if (!p && (q.isFetching || !q.data)) p = (await api.getPage<CatalogItem[]>('/api/v1/products', { search: t, brands: onlyKey || undefined, skus: skuKey || undefined, status: 'active', pageSize: 5 }).catch(() => ({ data: [] as CatalogItem[] }))).data.find((x) => x.sku.toLowerCase() === t.toLowerCase());
     const target = p ?? list[hi];
     if (!target || !can(target)) return;
     pick(target);
@@ -72,7 +80,7 @@ export function ChonMatHang({ title = 'Thêm mặt hàng — bấm vào dòng đ
             else if (e.key === 'Enter') { e.preventDefault(); void enter(); }
           }} />
         <span style={{ width: 260 }}><BrandInput value={brand} brands={brands} prefer={prefer} onChange={(b) => { setBrand(b); setSize(100); setHi(0); }} /></span>
-        <span className="muted" style={{ fontSize: 12 }}>{!enabled ? 'Gõ ít nhất 2 ký tự hoặc chọn nhãn hàng' : q.isFetching ? 'Đang tìm…' : `${list.length} mã${list.length >= size ? '+' : ''} · ↑ ↓ chọn, Enter thêm`}</span>
+        <span className="muted" style={{ fontSize: 12 }}>{skuKey ? `Chỉ ${skus!.length} mã của hợp đồng · ` : onlyKey ? `Chỉ mặt hàng của nhãn ${brands.map((b) => b.name).join(', ')} · ` : ''}{!enabled ? 'Gõ ít nhất 2 ký tự hoặc chọn nhãn hàng' : q.isFetching ? 'Đang tìm…' : `${list.length} mã${list.length >= size ? '+' : ''} · ↑ ↓ chọn, Enter thêm`}</span>
       </div>
       <div className="full ckma-scroll" style={{ maxHeight: 420, marginTop: 8 }}>
         <table className="mh-mini ckma-pick" data-no-nav>

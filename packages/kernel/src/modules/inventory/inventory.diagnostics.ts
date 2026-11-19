@@ -37,9 +37,13 @@ const ledgerVsStock = (s: DiagScope) => {
                  GROUP BY 1, 2),
          mv AS (SELECT m.branch_id, m.sku, sum(coalesce(m.amount, round(m.qty * c.unit_cost))) AS v, bool_or(m.amount IS NULL AND c.unit_cost IS NULL) AS uncosted
                   FROM inventory_movements m JOIN branches b ON b.id = m.branch_id LEFT JOIN branches cb ON cb.id = m.counter_branch_id
-                  LEFT JOIN inventory_costs c ON c.tenant_id = m.tenant_id AND c.sku = m.sku
-                   AND c.year = EXTRACT(YEAR FROM m.doc_date)::int AND c.month = EXTRACT(MONTH FROM m.doc_date)::int
-                   AND c.cost_group = CASE WHEN m.kind = 'transfer_in' AND cb.id IS NOT NULL THEN coalesce(cb.accounting_unit_id, 0) ELSE coalesce(b.accounting_unit_id, 0) END
+                  LEFT JOIN LATERAL (SELECT c0.unit_cost FROM inventory_costs c0 WHERE c0.tenant_id = m.tenant_id AND c0.sku = m.sku
+                   AND c0.year = EXTRACT(YEAR FROM m.doc_date)::int AND c0.month = EXTRACT(MONTH FROM m.doc_date)::int
+                   AND c0.cost_group = CASE WHEN m.kind = 'transfer_in' AND cb.id IS NOT NULL THEN coalesce(cb.accounting_unit_id, 0) ELSE coalesce(b.accounting_unit_id, 0) END
+                   AND c0.wh_type IN ('', COALESCE(CASE WHEN m.kind = 'transfer_in' THEN (SELECT w2.type_code FROM inventory_movements m2 JOIN warehouses w2 ON w2.tenant_id = m2.tenant_id AND w2.code = m2.warehouse_code
+                                                 WHERE m2.tenant_id = m.tenant_id AND m2.event_id = m.event_id AND m2.line_no = m.line_no AND m2.kind = 'transfer_out' LIMIT 1) END,
+                          (SELECT w1.type_code FROM warehouses w1 WHERE w1.tenant_id = m.tenant_id AND w1.code = m.warehouse_code), ''))
+                   ORDER BY c0.wh_type DESC LIMIT 1) c ON true
                  WHERE m.tenant_id = ${s.tenantId} AND m.doc_date <= ${to} ${branchCond(s, 'm')}
                  GROUP BY 1, 2)
     SELECT coalesce(gl.branch_id, mv.branch_id) AS branch_id, coalesce(gl.sku, mv.sku) AS sku, coalesce(gl.v, 0) AS gv, coalesce(mv.v, 0) AS sv,

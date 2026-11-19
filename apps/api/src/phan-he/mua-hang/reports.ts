@@ -12,6 +12,7 @@ import { sql } from 'kysely';
 import {
   AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
+  scopeBranches,
 } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
@@ -214,7 +215,7 @@ export async function rebatePreview(trx: Db, tenantId: string, ctx: Ctx, p: Poli
   // [2026-11-13 Nguyễn Văn Thủy] ký với công ty mẹ, tính trên cả nhóm: cộng phiếu của NCC ký và mọi đơn vị con (đóng góp)
   const partners = p.scope.partnerCode ? (p.rule.family ? await partnerFamily(trx, tenantId, p.scope.partnerCode) : [p.scope.partnerCode]) : null;
   const match = (d: StoredDoc) => d.status === 'approved' && d.docDate >= from && d.docDate <= to && (d.kind === 'receipt' || d.kind === 'return')
-    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!partners || partners.includes(d.partnerCode)) && (!p.scope.branchCode || d.branchCode === p.scope.branchCode);
+    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!partners || partners.includes(d.partnerCode)) && (!scopeBranches(p.scope).length || scopeBranches(p.scope).includes(d.branchCode));
   // Thưởng theo nhãn: chỉ cộng các dòng thuộc nhãn (nhãn của mặt hàng; phiếu cũ chưa ghi nhãn dòng thì theo nhãn phiếu).
   const inBrand = (l: { brandCode?: string }, d: StoredDoc) => !p.scope.brandCode || (l.brandCode ?? d.brandCode) === p.scope.brandCode;
   const byDay: Record<number, number> = {};
@@ -262,7 +263,7 @@ export async function rebatePreview(trx: Db, tenantId: string, ctx: Ctx, p: Poli
   const parties = {
     signedWith: p.scope.partnerCode ?? null, family: Boolean(p.rule.family && p.scope.partnerCode), members: partners ?? [],
     payer: String(p.rule.payer ?? '') || p.scope.partnerCode || null,
-    receiver: String(p.rule.receiver ?? '') || p.scope.branchCode || branches[0]?.code || null,
+    receiver: String(p.rule.receiver ?? '') || scopeBranches(p.scope)[0] || branches[0]?.code || null,
   };
   return { policy: p.code, kind: p.kind, period, from, to, docsTotal, base: r.base, rate: r.rate, amount: r.amount, detail: r.detail, byDay, allocation, byPartner: top(byPartner), byBranch: branches, parties, existing: existing ? { id: existing.id, docNo: existing.docNo } : null };
 }

@@ -17,12 +17,15 @@ export const NO_PARTNER_ID = '0';
 export type LedgerLinkType = 'reversal' | 'return' | 'adjustment' | 'gift' | 'replacement';
 
 export const ledgerRepository = {
-  /** Cấp số bút toán tiếp theo (khoá dòng bộ đếm tới hết giao dịch → liền mạch, không trùng). */
+  /**
+   * Cấp số bút toán tiếp theo (khoá dòng bộ đếm tới hết giao dịch → liền mạch, không trùng).
+   * [2026-11-18 Nguyễn Văn Thủy] bộ đếm chung document_sequences, loại 'ledger:entry' (0161, bỏ ledger_entry_sequences) (đóng góp)
+   */
   async nextEntryNo(db: Db, tenantId: string, year: number): Promise<number> {
     const row = await db
-      .insertInto('ledger_entry_sequences')
-      .values({ tenant_id: tenantId, year, last_no: 1 })
-      .onConflict((oc) => oc.columns(['tenant_id', 'year']).doUpdateSet({ last_no: sql`ledger_entry_sequences.last_no + 1` }))
+      .insertInto('document_sequences')
+      .values({ tenant_id: tenantId, doc_type: 'ledger:entry', year, last_no: 1 })
+      .onConflict((oc) => oc.columns(['tenant_id', 'doc_type', 'year']).doUpdateSet({ last_no: sql`document_sequences.last_no + 1` }))
       .returning('last_no')
       .executeTakeFirstOrThrow();
     return row.last_no;

@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
 import { dispatchOnce, tickClock } from '../src/core/events.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { appendRunLog, readRunLog } from '@bizcity/platform/core/run-log';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -139,7 +140,7 @@ describe('Lịch đêm', () => {
       const d = await db.selectFrom('event_deliveries').select('status').where('tenant_id', '=', tenantId).where('consumer', '=', 'core.conformance-nightly').execute();
       if (d.length && d.every((x) => x.status !== 'pending')) break;
     }
-    const runs = await db.selectFrom('conformance_runs').select(['as_of', 'actor', 'layers']).where('tenant_id', '=', tenantId).where('actor', '=', 'system:nightly').execute();
+    const runs = (await readRunLog<{ as_of: string; actor: string; layers: string[] }>('kiem-chuan', { tenantId: String(tenantId) })).map((e) => e.data).filter((r) => r.actor === 'system:nightly');
     expect(runs).toHaveLength(1);
     expect(runs[0]).toMatchObject({ actor: 'system:nightly', layers: ['module', 'configuration', 'enterprise'] });
     expect(new Date(runs[0]!.as_of).toISOString().slice(0, 10)).toBe('2027-01-15');

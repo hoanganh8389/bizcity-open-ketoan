@@ -27,6 +27,8 @@ export interface SupplierProduct {
   validTo?: string;
   note?: string;
   isActive: boolean;
+  /** Thuộc hợp đồng mua (mã trong Danh mục hợp đồng); trống = không theo hợp đồng. */
+  contractCode?: string;
   createdBy?: string; updatedBy?: string; createdAt?: string; updatedAt?: string;
 }
 
@@ -50,9 +52,11 @@ export function defaultUnitFor(units: ProductUnit[], rows: SupplierProduct[], pa
 }
 
 /** Giá mua cố định áp cho (NCC, mã, ĐVT, ngày). Trả dòng giá + giá đã quy về đúng ĐVT hỏi. */
-export function priceFor(rows: SupplierProduct[], ctx: { date: string; partnerCode?: string; sku: string; unit?: string }, units: ProductUnit[] = []): { row: SupplierProduct; price: number } | undefined {
-  const cand = rows.filter((r) => r.sku === ctx.sku && r.price !== null && r.price !== undefined && live(r, ctx.date) && (!r.partnerCode || r.partnerCode === ctx.partnerCode));
-  const rank = (r: SupplierProduct) => (r.partnerCode ? 2 : 0) + (!ctx.unit || same(r.unit, ctx.unit) ? 1 : 0);
+export function priceFor(rows: SupplierProduct[], ctx: { date: string; partnerCode?: string; sku: string; unit?: string; contractCode?: string }, units: ProductUnit[] = []): { row: SupplierProduct; price: number } | undefined {
+  // [2026-11-18 Nguyễn Văn Thủy] phiếu thuộc hợp đồng: giá của đúng hợp đồng đó trước; giá thuộc hợp đồng khác không dùng (đóng góp)
+  const cand = rows.filter((r) => r.sku === ctx.sku && r.price !== null && r.price !== undefined && live(r, ctx.date) && (!r.partnerCode || r.partnerCode === ctx.partnerCode)
+    && (!ctx.contractCode || !r.contractCode || r.contractCode === ctx.contractCode));
+  const rank = (r: SupplierProduct) => (ctx.contractCode && r.contractCode === ctx.contractCode ? 4 : 0) + (r.partnerCode ? 2 : 0) + (!ctx.unit || same(r.unit, ctx.unit) ? 1 : 0);
   // Giá như chính sách: chỉ dòng còn hiệu lực ở NGÀY CHỨNG TỪ (không "Từ" = luôn có, không "Đến" = vô hạn). Nhiều dòng cùng hiệu
   // lực (chồng ngày) → dòng có "Hiệu lực từ" muộn nhất; cùng ngày bắt đầu → dòng khai sau cùng.
   const later = (a: SupplierProduct, b: SupplierProduct) => (b.validFrom ?? '').localeCompare(a.validFrom ?? '') || (Number(b.id) || 0) - (Number(a.id) || 0);

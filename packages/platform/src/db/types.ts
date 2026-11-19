@@ -317,14 +317,8 @@ export interface EventDeliveriesTable {
   next_at: TimestampDefault;
   last_error: string | null;
   done_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
-}
-
-/** (consumer, event_id) đã xử lý — chống thực thi trùng (migration 0039). */
-export interface EventConsumptionsTable {
-  tenant_id: string;
-  consumer: string;
-  event_id: string;
-  processed_at: TimestampDefault;
+  /** 0161: thời điểm subscriber đã xử lý (dấu chống xử lý lặp, thay event_consumptions). */
+  consumed_at: Timestamp | null;
 }
 
 /** Token xác nhận trước khi ghi qua MCP (migration 0037, bizcity_mcp@1 STD-MCP-4). */
@@ -340,28 +334,7 @@ export interface McpConfirmTokensTable {
   created_at: TimestampDefault;
 }
 
-/** Kết quả tự chẩn đoán, chỉ thêm (migration 0034, R-DIAG-5). */
-export interface DiagnosticRunsTable {
-  id: Generated<string>;
-  tenant_id: string;
-  layer: 'L1' | 'L3';
-  trigger: Generated<'manual' | 'period-lock' | 'schedule' | 'release'>;
-  scope: JsonDefault<Record<string, unknown>>;
-  summary: Json<Record<string, number>>;
-  checks: Json<unknown[]>;
-  error_count: Generated<number>;
-  actor: string;
-  created_at: TimestampDefault;
-}
-
 // [2026-11-17 10:20 AM kiennt] NT-DM-001 — tên tiếng Anh tài khoản lưu lại khi bỏ cột accounts.name_en (0147, D023-9) (đóng góp)
-export interface AccountsNameEnLuuTable {
-  tenant_id: string;
-  code: string;
-  name_en: string;
-  archived_at: Generated<Date>;
-}
-
 export interface AccountsTable {
   id: Generated<string>;
   tenant_id: string;
@@ -778,6 +751,8 @@ export interface SupplierProductsTable {
   updated_at: TimestampDefault;
   /** Tên hàng bên NCC. */
   ncc_name: Generated<string>;
+  /** 0163: thuộc hợp đồng mua (mã Danh mục hợp đồng), rỗng = không theo hợp đồng. */
+  contract_code: Generated<string>;
 }
 
 /** Tồn max / min theo chi nhánh – kho – mã (0020). */
@@ -907,16 +882,6 @@ export interface ProductPricesTable {
   item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
-export interface CatalogTombstonesTable {
-  id: Generated<string>;
-  tenant_id: string;
-  entity: 'product' | 'unit' | 'price' | 'price_list' | 'group';
-  key: string;
-  deleted_at: TimestampDefault;
-  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: định danh thay thế khi mã bị bỏ vì đổi / gộp, 0068 (đóng góp)
-  replaced_by_item_id: string | null;
-}
-
 export interface ItemClassesTable {
   id: Generated<string>;
   tenant_id: string;
@@ -973,17 +938,6 @@ export interface StockPurposesTable {
   sort_order: Generated<number>;
   updated_by: Generated<string>;
   updated_at: TimestampDefault;
-}
-
-export interface ItemClassHistoryTable {
-  id: Generated<string>;
-  tenant_id: string;
-  kind: string;
-  code: string;
-  at: TimestampDefault;
-  by_user: Generated<string>;
-  action: string;
-  changes: Generated<string>;
 }
 
 export interface PostingReasonsTable {
@@ -1066,22 +1020,6 @@ export interface AccountingProfilesTable {
   entity_type: 'enterprise' | 'sme' | 'micro' | 'household';
   note: string;
   created_by: string;
-  created_at: TimestampDefault;
-}
-
-/** Lượt Kiểm chuẩn của đơn vị (migration 0055, ADR-0012). Chỉ thêm. */
-export interface ConformanceRunsTable {
-  id: Generated<string>;
-  tenant_id: string;
-  as_of: ColumnType<string, string, string>;
-  layers: string[];
-  profile_version: number | null;
-  kit_version: string | null;
-  kit_hash: string;
-  result: 'PASS' | 'FAIL' | 'REVIEW_REQUIRED';
-  counts: Json<unknown>;
-  report: Json<unknown>;
-  actor: string;
   created_at: TimestampDefault;
 }
 
@@ -1375,6 +1313,9 @@ export interface SalesLinesTable {
 
 export interface InventoryMovementsTable {
   id: Generated<string>;
+  /** Thuế GTGT / chiết khấu của dòng mua, trả NCC (0153). */
+  tax_amount: ColumnType<string, number | undefined, number>;
+  discount_amount: ColumnType<string, number | undefined, number>;
   /** MST tại ngày chứng từ (0121, trigger). */
   tax_id: ColumnType<string | null, string | null | undefined, string | null>;
   /** Định danh chi nhánh / shop cn_…, kho kho_… (0121, trigger). */
@@ -1570,6 +1511,8 @@ export interface InventoryCostsTable {
   cost_source: Generated<string>;
   /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
   item_id: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Loại kho tính giá vốn riêng (0155); rỗng = tính chung. */
+  wh_type: Generated<string>;
 }
 
 /** View (migration 0053): thanh toán của chứng từ bán / trả lại đã ghi sổ, đọc từ payload. Chỉ đọc. */
@@ -1582,12 +1525,6 @@ export interface SalesPaymentsTable {
   sign: number;
   method_code: string;
   amount: Numeric;
-}
-
-export interface LedgerEntrySequencesTable {
-  tenant_id: string;
-  year: number;
-  last_no: Generated<number>;
 }
 
 export interface DimensionsTable {
@@ -1700,21 +1637,6 @@ export interface PurchasePoliciesTable {
   updated_at: TimestampDefault;
 }
 
-export interface PurchaseAttachmentsTable {
-  id: Generated<string>;
-  tenant_id: string;
-  owner_type: string;
-  owner_id: string;
-  kind: Generated<string>;
-  file_name: string;
-  mime: Generated<string>;
-  size: Generated<string>;
-  path: string;
-  note: Generated<string>;
-  uploaded_by: Generated<string>;
-  created_at: TimestampDefault;
-}
-
 export interface PaymentRequestsTable {
   id: Generated<string>;
   tenant_id: string;
@@ -1743,13 +1665,6 @@ export interface PaymentRequestsTable {
   rejected_reason: Generated<string>;
   paid_event_id: string | null;
   created_at: TimestampDefault;
-  updated_at: TimestampDefault;
-}
-
-export interface PaymentRequestSettingsTable {
-  tenant_id: string;
-  second_level_from: ColumnType<string | null, number | string | null | undefined, number | string | null>;
-  updated_by: Generated<string>;
   updated_at: TimestampDefault;
 }
 
@@ -1822,16 +1737,6 @@ export interface ClosingRulesTable {
   include_opening: Generated<boolean>;
 }
 
-export interface ClosingRuleVersionsTable {
-  tenant_id: string;
-  version: number;
-  rules: Json<unknown>;
-  note: Generated<string>;
-  created_by: string;
-  created_by_name: Generated<string>;
-  created_at: TimestampDefault;
-}
-
 export interface DocumentSequencesTable {
   tenant_id: string;
   doc_type: string;
@@ -1849,6 +1754,43 @@ export interface DocumentVersionsTable {
   content_hash: string;
   created_by: Generated<string>;
   created_at: TimestampDefault;
+}
+
+/** 0146 + 0157/0160: thùng rác danh mục — dòng đã xoá (khôi phục được), dấu xoá cho luồng danh mục (tombstone.<loại>), ảnh chụp trước khi nạp dữ liệu gốc (backup.default-data), bản lưu cột bỏ đi. */
+export interface CatalogTrashTable {
+  id: Generated<string>;
+  tenant_id: string;
+  catalog: string;
+  row_key: string;
+  label: string;
+  payload: Json<unknown>;
+  deleted_by: string;
+  deleted_at: TimestampDefault;
+}
+
+/** 0156: sổ chứng từ chung — đầu phiếu mọi chứng từ nghiệp vụ, đồng bộ bằng trigger từ bảng nguồn (không ghi tay). */
+export interface BusinessDocumentsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  doc_ref: string;
+  module: string;
+  doc_type: string;
+  doc_no: Generated<string>;
+  doc_date: string | null;
+  branch_code: Generated<string>;
+  partner_ref: Generated<string>;
+  title: Generated<string>;
+  total: Generated<string>;
+  status_raw: string;
+  status: 'draft' | 'pending' | 'approved' | 'in_progress' | 'done' | 'cancelled';
+  version: Generated<number>;
+  meta: Generated<Json<Record<string, unknown>>>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+  /** 0162: người duyệt cấp cuối, lúc duyệt. */
+  approved_by: Generated<string>;
+  approved_at: Timestamp | null;
 }
 
 /** 0045 (documents.links): tham chiếu giữa chứng từ. */
@@ -2009,14 +1951,11 @@ export interface Database {
   warehouse_types: WarehouseTypesTable;
   warehouse_type_ops: WarehouseTypeOpsTable;
   audit_logs: AuditLogsTable;
-  diagnostic_runs: DiagnosticRunsTable;
   action_requests: ActionRequestsTable;
   mcp_confirm_tokens: McpConfirmTokensTable;
   event_outbox: EventOutboxTable;
   event_deliveries: EventDeliveriesTable;
-  event_consumptions: EventConsumptionsTable;
   accounts: AccountsTable;
-  accounts_name_en_luu: AccountsNameEnLuuTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;
   period_lock_events: PeriodLockEventsTable;
@@ -2039,7 +1978,6 @@ export interface Database {
   ledger_entries: LedgerEntriesTable;
   posting_policy_versions: PostingPolicyVersionsTable;
   accounting_profiles: AccountingProfilesTable;
-  conformance_runs: ConformanceRunsTable;
   rulepack_approvals: RulepackApprovalsTable;
   notifications: NotificationsTable;
   notification_reads: NotificationReadsTable;
@@ -2066,7 +2004,6 @@ export interface Database {
   tax_invoices: TaxInvoicesTable;
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;
-  item_class_history: ItemClassHistoryTable;
   stock_purposes: StockPurposesTable;
   tax_id_versions: TaxIdVersionsTable;
   org_link_versions: OrgLinkVersionsTable;
@@ -2074,7 +2011,6 @@ export interface Database {
   price_lists: PriceListsTable;
   price_list_branches: PriceListBranchesTable;
   product_prices: ProductPricesTable;
-  catalog_tombstones: CatalogTombstonesTable;
   tax_info_patches: TaxInfoPatchesTable;
   cash_transfer_confirmations: CashTransferConfirmationsTable;
   tax_invoice_lines: TaxInvoiceLinesTable;
@@ -2092,13 +2028,13 @@ export interface Database {
   cit_returns: CitReturnsTable;
   taxpayer_profiles: TaxpayerProfilesTable;
   long_term_balances: LongTermBalancesTable;
-  ledger_entry_sequences: LedgerEntrySequencesTable;
   document_sequences: DocumentSequencesTable;
+  business_documents: BusinessDocumentsTable;
+  catalog_trash: CatalogTrashTable;
   document_versions: DocumentVersionsTable;
   document_links: DocumentLinksTable;
   document_attachments: DocumentAttachmentsTable;
   closing_rules: ClosingRulesTable;
-  closing_rule_versions: ClosingRuleVersionsTable;
   dimensions: DimensionsTable;
   contract_schedules: ContractSchedulesTable;
   voucher_templates: VoucherTemplatesTable;
@@ -2107,7 +2043,6 @@ export interface Database {
   payment_requests: PaymentRequestsTable;
   purchase_documents: PurchaseDocumentsTable;
   purchase_policies: PurchasePoliciesTable;
-  purchase_attachments: PurchaseAttachmentsTable;
   supplier_products: SupplierProductsTable;
   supplier_invoices: SupplierInvoicesTable;
   supplier_invoice_lines: SupplierInvoiceLinesTable;
@@ -2122,7 +2057,6 @@ export interface Database {
   unit_names: UnitNamesTable;
   help_cards: HelpCardsTable;
   help_places: HelpPlacesTable;
-  payment_request_settings: PaymentRequestSettingsTable;
   debt_allocations: DebtAllocationsTable;
   voucher_recurrences: VoucherRecurrencesTable;
   voucher_recurrence_runs: VoucherRecurrenceRunsTable;

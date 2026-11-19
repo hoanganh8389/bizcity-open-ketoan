@@ -14,6 +14,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api, errorText, ALL_ROWS } from '@/lib/api';
 import { money } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+import { NutQuyTac } from '@/components/QuyTacDanhMuc';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { useThemTuDiaChi } from '@/lib/themNhanh';
@@ -130,7 +131,7 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
 
   return (
     <>
-      <PageHeader title={screen?.title ?? 'Đối tượng'} code={screen?.code ?? 'DM03'} subtitle={screen?.subtitle ?? 'Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ'} helpKey="doi-tuong" />
+      <PageHeader actions={<NutQuyTac entity="partner" logEntity="partners" ten="đối tượng (khách hàng, nhà cung cấp, nhân viên)" />} title={screen?.title ?? 'Đối tượng'} code={screen?.code ?? 'DM03'} subtitle={screen?.subtitle ?? 'Khách hàng, nhà cung cấp, nhân viên, đơn vị nội bộ'} helpKey="doi-tuong" />
       {/* [2026-11-17 10:00 AM kiennt] DANH-MUC — Khách hàng (DM12), Nhà cung cấp (DM13) bỏ thẻ chỉ số nợ; Đối tượng (DM03) giữ nguyên (đóng góp) */}
       {!fixedKind && <KpiDoiTuong />}
       <div className="card">
@@ -587,7 +588,7 @@ export function PartnerGroupsPage() {
   const e = editing;
   return (
     <>
-      <PageHeader title="Nhóm đối tượng" code="DM08" subtitle="Nhóm khách hàng, nhà cung cấp dùng để lọc và gom báo cáo theo nhóm" helpKey="doi-tuong" />
+      <PageHeader actions={<NutQuyTac entity="partner" logEntity="partner-groups" ten="nhóm đối tượng" />} title="Nhóm đối tượng" code="DM08" subtitle="Nhóm khách hàng, nhà cung cấp dùng để lọc và gom báo cáo theo nhóm" helpKey="doi-tuong" />
       <div className="card">
         <CatalogToolbar
           trash={{ catalog: 'partner-groups', title: 'Nhóm khách hàng, nhà cung cấp', sel: sel ? { key: sel.code, label: sel.name } : null }}

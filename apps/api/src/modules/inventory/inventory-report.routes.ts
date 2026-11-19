@@ -59,7 +59,7 @@ export async function inventoryReportRoutes(app: FastifyInstance): Promise<void>
 
   r.get('/api/v1/inventory/items', {
     preHandler: requirePermission('reports:read'),
-    schema: { tags, summary: 'Danh sách mặt hàng để chọn', querystring: z.object({ search: z.string().optional(), limit: z.coerce.number().int().min(1).max(200).default(50), branchCode: z.string().optional() }) },
+    schema: { tags, summary: 'Danh sách mặt hàng để chọn', querystring: z.object({ search: z.string().optional(), limit: z.coerce.number().int().min(1).max(200).default(50), branchCode: z.string().optional(), brands: z.string().max(4000).optional().describe('Chỉ mặt hàng thuộc các nhãn này (mã nhãn, phẩy ngăn cách)'), skus: z.string().max(40000).optional().describe('Chỉ các mã này (phẩy ngăn cách)') }) },
     handler: async (req) => ok(await inventoryReportService.items(authOf(req), req.query)),
   });
 

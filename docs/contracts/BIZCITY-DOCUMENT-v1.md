@@ -27,7 +27,7 @@ Chứng từ nghiệp vụ **không** sinh bút toán. Chỉ khi chuyển sang t
 
 - **`docRef`** = `<key>.<loại>:<id>`, vd `hop-dong.contract:42`. Ổn định, dùng làm `docKey` khi nộp sổ (thêm hậu tố nếu một chứng từ sinh nhiều sự việc: `hop-dong.installment:118:payment`).
 - **Số chứng từ** (`docNo`) cấp bằng `ctx.documents.nextNumber(series)` (dãy `document_sequences` hiện có, theo đơn vị + năm). Module không tự đếm, không ghi `document_sequences` (đang vi phạm ở `mua-hang/store.ts:266`, `quy/payment-requests/payment-request.routes.ts:49`).
-- **Liên kết** giữa chứng từ: `ctx.documents.link(from, to, role)` với `role` ∈ `source` (lập từ), `reverses`, `replaces`, `settles` (thanh toán cho), `attachesTo`, `ledger` (sự việc kế toán sinh ra). Bảng chung `document_links` (Platform).
+- **Liên kết** giữa chứng từ: `ctx.documents.link(from, to, role)` với `role` ∈ `source` (lập từ), `reverses`, `replaces`, `settles` (thanh toán cho), `attachesTo`, `ledger` (sự việc kế toán sinh ra), `applies` (áp chính sách / chương trình, 0162), `uses` (dùng lô hàng, 0162). Bảng chung `document_links` (Platform).
 
 ## 4. Cột chuẩn của bảng đầu phiếu
 
@@ -52,7 +52,8 @@ Mỗi loại chứng từ có máy trạng thái khai báo. Trạng thái riêng
 | `draft` | đang soạn, bị trả lại | được | không |
 | `pending` | chờ duyệt (một hoặc nhiều cấp) | không (rút về `draft` để sửa) | không |
 | `approved` | đã duyệt, có hiệu lực | chỉ qua "điều chỉnh" → `version` mới | **có thể** (theo `ledger[].on`) |
-| `done` | đã hoàn tất (đã chi, đã thanh lý…) | không | có thể |
+| `in_progress` | đang thực hiện (đơn nhập dở, hàng đi đường, hợp đồng / chính sách đang hiệu lực) — 0166 | chỉ qua "điều chỉnh" | có thể |
+| `done` | đã hoàn tất (đã nhập đủ, đã nhận, đã chi, đã thanh lý, đã ghi sổ…) | không | có thể |
 | `cancelled` | đã huỷ | không | huỷ sự việc đã nộp → bút toán đảo |
 
 ```yaml
@@ -177,6 +178,7 @@ Cửa nạp so băm nội dung (`content_hash`) của bản gửi với bản đ
 | `payment_requests.status` 7 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, submitted(pending), approved1(pending), approved(approved), rejected(draft), paid(done), cancelled` |
 | `purchase_documents.status` 4 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, pending_approval(pending), approved(approved), cancelled`; chuyển `submit, approve, override, unapprove, cancel` |
 | `document_signatures` (gắn `event_id`) | **đã** thêm cột `doc_ref` (migration 0048, 2026-11-01): ký được mọi chứng từ; mỗi dòng gắn đúng một trong `event_id` / `doc_ref`; phiếu kế toán giữ 4 vai cũ |
+| (mới) sổ chứng từ chung | **đã** có `business_documents` (migration 0156, 2026-11-18): đầu phiếu mọi chứng từ nghiệp vụ, `status` = nhóm chuẩn §5, `status_raw` = trạng thái riêng, `meta` JSON; trigger đồng bộ từ `purchase_documents`, `stock_transfer_docs`, `payment_requests` kèm `document_versions` (nội dung đổi) và `document_links` (`source`, `ledger`). Đọc: `GET /api/v1/business-documents[/detail]`, màn HT18 |
 | `reference_documents` (`open/used/closed`) | một loại chứng từ của module Thuế dùng `document_links` |
 | `purchase_attachments` | **đã** chuyển sang `document_attachments` (migration 0046, 2026-11-01): docRef `mua-hang.<loại chủ>:<mã>` (partner, document, policy, invoice), tệp cũ giữ chỗ (`storage_root = dinh-kem`), băm ở lần tải đầu, `legacy_ref` đối chiếu; bảng cũ khoá thêm / sửa |
 

@@ -86,7 +86,8 @@ function NhomFlow({ nhom, sections, canOpen }: { nhom: NonNullable<SoDo['nhom']>
   const nhanh = pick(nhom.nhanh);
   return (
     <div className="sdn-wrap">
-      <div className="sdn">
+      {/* [2026-11-18 Nguyễn Văn Thủy] từ 5 bước nối tiếp: thẻ gọn (tên bước một hàng riêng) để không ép chữ (đóng góp) */}
+      <div className={`sdn${chuoi.length + (nhanh.length ? 1 : 0) >= 6 ? ' dense' : ''}`}>
         {chuoi.map(({ b, s }, i) => (
           <Fragment key={b.nhom}>
             <NhomCard b={b} s={s} so={i + 1} />

@@ -1,110 +1,108 @@
 # Tính giá vốn (ACC49)
 
-Tính đơn giá vốn **bình quân gia quyền theo tháng** cho từng mặt hàng, rồi ghi sổ giá vốn của hàng đã xuất trong tháng.
+<!-- [2026-11-17 Nguyễn Văn Thủy] viết lại theo cách tính và cách ghi sổ hiện tại (đóng góp) -->
 
-<!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — mục Kiến trúc tổng thể cho dev / kế toán / CEO; số tài khoản là ví dụ TT99 -->
-## Kiến trúc tổng thể: giá vốn nằm ở đâu trong hệ thống
+Tính **giá vốn bình quân gia quyền theo tháng** cho từng mặt hàng, trong một phạm vi trên Cơ cấu tổ chức, rồi ghi **một phiếu giá vốn tháng** cho từng shop / chi nhánh.
 
-Trang này nói **cách tính** của màn ACC49. Để hiểu giá vốn nằm ở đâu trong cả hệ thống (ai tính, ai ghi sổ, khi nào được kết chuyển), đọc sơ đồ một trang ở [PHASE-032 · 10 Kiến trúc](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/10-KIEN-TRUC.md) hoặc mở bản vẽ [inventory-engine.html](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/mockups/inventory-engine.html):
+## Dùng màn này
 
-```text
-Master Data & Policy Registry  (item_id bất biến · SKU có phiên bản · phương pháp tính giá có phiên bản)
-        ↓
-Mua hàng · Kho · Bán hàng      (kể sự việc, không ghi sổ)
-        ↓
-Cửa nạp → cổng kiểm chuẩn       (định danh, lô, dòng gốc, chính sách)
-        ↓
-Inventory Engine  ──►  Accounting Kernel
-(số lượng · lô · lớp giá vốn ·  (nơi duy nhất ghi sổ cái; tra tài khoản
- phân bổ; KHÔNG ghi sổ)          theo lý do → nhóm hạch toán tại ngày)
-        ↓
-Cost Settlement → Period Closing (giá vốn kỳ chốt rồi mới kết chuyển 632 → 911, khoá sổ)
-        ↓
-Báo cáo & truy vết              (lãi gộp theo item_id; bút toán → phân bổ → lớp → phiếu nhập)
-```
+1. **Phạm vi tính (cơ cấu)** → bấm **Chọn…**, chọn một nút trên cây (vùng, chi nhánh, tỉnh) hoặc một shop. Mọi shop bên dưới nút đó **dồn chung** tồn đầu, nhập, chi phí, thưởng… để ra **một giá vốn bình quân cho mỗi mã**. Thường chọn **chi nhánh cấp 2** (chi nhánh đại diện nhập mua rồi chuyển xuống shop nằm trong cùng nút).
+2. **Công thức**: công thức đang áp dụng cho tháng, chỉ xem (bấm vào thấy dạng phân số). Xem mục *Công thức* bên dưới.
+3. **Loại kho tính chung**: mặc định **tất cả** loại kho tính chung một giá cho mỗi mã. **Bỏ chọn** loại kho nào (ví dụ kho khuyến mãi) thì hàng ở loại kho đó **tính giá vốn riêng** (mỗi mã một giá riêng cho loại kho đó). Tách hàng bằng **mã riêng** hay bằng **kho riêng** đều được, hoặc kết hợp cả hai.
+4. Chọn **Tháng**, bấm **Tính giá vốn**. Mỗi lần tính lưu một thẻ ở **Lịch sử tính** (bên trái): giờ tính, phạm vi, kỳ, số mã, người tính, công thức đã dùng, loại kho tính riêng (nếu có).
+5. Bấm một thẻ để xem **bảng giá vốn** của lần đó (bên phải). Rê chuột lên tiêu đề cột để xem giải thích; cột chi tiết bật ở nút **Cột**.
 
-Bốn điều hệ thống phải giữ đồng thời: **Identity** (một hàng một `item_id`), **Inventory** (ở đâu, lô nào, còn bao nhiêu), **Cost** (giá gốc, phân bổ, điều chỉnh), **Accounting** (đúng tài khoản, đối chiếu, kết chuyển, khoá kỳ). Hôm nay Kernel tính **bình quân gia quyền tháng** như mô tả dưới đây; mô hình lớp giá vốn + phân bổ, lô ở Kernel, FIFO và cổng *giá vốn chốt trước kết chuyển* là việc của PHASE-032 (đề xuất, chưa có mã).
+| Cột | Ý nghĩa |
+|---|---|
+| Loại kho | Chung = tính chung; có mã loại kho = dòng giá vốn riêng của loại kho đó |
+| Tồn đầu (SL, $) · Giá vốn BQ đầu kỳ | Tồn cuối tháng trước; giá vốn BQ đầu kỳ = Tồn đầu $ ÷ SL (hoặc giá nhập từ Excel) |
+| Nhập mua (SL, $) | Nhập từ nhà cung cấp theo **giá Net** (chưa VAT − chiết khấu trên phiếu) |
+| Chi phí (+) | Chi phí mua hàng phân bổ vào mã (vận chuyển, bốc xếp…) — tăng giá vốn |
+| Thưởng, CK (−) | Thưởng / chiết khấu theo hàng mua phân bổ vào mã — giảm giá vốn |
+| Nhập khác (SL, $) | Trả nhà cung cấp (âm), nhập điều chỉnh, nhận từ phạm vi khác |
+| **Giá vốn BQ cuối kỳ** | Tổng giá trị ÷ tổng số lượng của các cột trên |
+| Xuất · Tồn cuối (SL, $) | Giá vốn hàng xuất và tồn cuối = SL × Giá vốn BQ cuối kỳ |
+| Chênh lệch trả NCC (ẩn sẵn) | Tiền trên phiếu trả NCC − giá trị trừ khỏi giá vốn |
 
-> **Mã hàng ≠ mã tài khoản.** Các số 156, 632, 1579, 1381… trong trang này là **ví dụ theo gói nền TT99**; luật định khoản tra tài khoản theo *lý do → nhóm hạch toán → chế độ kế toán tại ngày*, không viết cứng và không gắn tài khoản vào mặt hàng ([PHASE-032 · 20](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/20-MA-HANG-VA-MA-TAI-KHOAN.md), R-ITEM-10).
-
-## Cách tính
-
-Các chi nhánh cùng **đơn vị hạch toán** dùng chung một đơn giá cho mỗi mặt hàng trong tháng:
+## Công thức
 
 ```
-            Giá trị tồn đầu + nhập mua − trả nhà cung cấp + điều chỉnh tăng + nhận từ đơn vị khác
-Đơn giá = ───────────────────────────────────────────────────────────────────────────────────────
-            Số lượng tồn đầu + nhập mua − trả nhà cung cấp + điều chỉnh tăng + nhận từ đơn vị khác
+                     Giá trị tồn đầu + nhập mua + chi phí phân bổ − thưởng, CK phân bổ − trả NCC + nhập điều chỉnh + nhận từ phạm vi khác
+Giá vốn BQ cuối kỳ = ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                     SL tồn đầu + nhập mua − trả NCC + nhập điều chỉnh + nhận từ phạm vi khác
 ```
 
-- **Tồn đầu** là tồn cuối tháng trước. Tháng trước chưa tính thì phần mềm tự tính lần lượt các tháng còn thiếu.
-- **Chuyển kho giữa hai cửa hàng cùng đơn vị** không làm đổi đơn giá (hàng chỉ đổi chỗ).
-- Tháng không nhập gì (mẫu số bằng 0) thì dùng đơn giá gần nhất của các tháng trước.
-- **Hàng bán nội bộ theo giá bán** (lý do XCN): giá vốn đã ghi ngay bằng giá bán, và bị **trừ khỏi cả tử và mẫu** của công thức trên.
-- **Hàng bán nội bộ theo giá bán, xuất tặng thưởng khách hàng** (lý do có đánh dấu "Xuất theo giá trị chứng từ", mặc định XCN, XTA1.4): như trên.
-- **Hàng trả nhà cung cấp:** bản nội bộ lấy thành tiền − thuế cho mọi lý do; phần dưới đây áp cho bản thuế, xem [Công thức giá vốn](cong-thuc-gia-von.md).
-- **Hàng trả nhà cung cấp với lý do XTR1, XTR9 hoặc có đánh dấu "định giá theo tồn đầu"** được định giá theo tồn đầu, không lấy thẳng tiền trên phiếu trả:
+- Hai sổ, chọn theo bản cài (`BOOK_MODE`): **nội bộ** (mọi chứng từ) và **thuế** (chứng từ có số hoá đơn). Khác nhau ở hàng trả NCC và xuất chi nhánh — xem màn **Công thức giá vốn (ACC49A)**.
+- Căn cứ tính theo **nghiệp vụ**, không theo lý do trên phiếu (lý do chỉ là nhãn).
+- Công thức **cố định**. Cần đổi (ví dụ đầu năm tài chính): bấm ô Công thức → **Đổi công thức…** → chọn lựa chọn, **Áp dụng từ tháng**, mật khẩu. Tháng trước giữ công thức cũ; không áp vào tháng đã khoá sổ. Đổi xong tính lại các tháng từ tháng áp dụng.
 
-  | Trường hợp | Giá trị đưa vào công thức |
+## Từng nghiệp vụ
+
+- **Tồn đầu** = tồn cuối tháng trước. Tháng trước chưa tính thì phần mềm tự tính lần lượt các tháng còn thiếu.
+- **Chuyển sang loại kho tính riêng** (ví dụ kho hàng → kho khuyến mãi, cùng chi nhánh): hàng mang **giá vốn bên gửi** sang, vào công thức của loại kho nhận; bút toán qua hàng đang chuyển (về 0).
+- **Chuyển kho trong cùng phạm vi** (chi nhánh đại diện → shop, shop ↔ shop): hàng chỉ đổi chỗ, không đổi giá vốn, không vào công thức. **Nhận từ phạm vi khác**: vào công thức theo giá trên phiếu chuyển; phiếu không có giá thì theo giá vốn bên gửi.
+- **Chi phí mua hàng** (phiếu Chi phí mua hàng) và **thưởng, chiết khấu sau mua** (Giảm giá hàng mua, Tính thưởng cuối kỳ): đã chia đến từng mã theo các phiếu nhập được gắn; cộng / trừ vào giá trị của đúng mã đó, không đổi số lượng. Chỉ đưa vào đây chiết khấu theo hàng mua; khoản hỗ trợ quảng cáo, trưng bày lập phiếu riêng.
+- **Hàng trả nhà cung cấp**:
+  - Sổ nội bộ: thành tiền − thuế trên phiếu, **không vượt giá trị đang có** (tồn đầu + nhập trong kỳ); trả hết số đang có thì lấy hết giá trị đang có.
+  - Sổ thuế: **định giá theo tồn đầu**:
+
+  | Trường hợp | Giá trị trừ khỏi công thức |
   |---|---|
   | Tiền trả bằng 0 | 0 |
-  | Đơn giá trả ≤ đơn giá tồn đầu | Số lượng trả × đơn giá tồn đầu |
+  | Đơn giá trả ≤ đơn giá tồn đầu | SL trả × đơn giá tồn đầu |
   | Tiền trả ≤ giá trị tồn đầu | Tiền trả |
-  | Số lượng trả ≤ số lượng tồn đầu | Giá trị tồn đầu |
-  | Còn lại | Giá trị tồn đầu + (số lượng trả − số lượng tồn đầu) × đơn giá trả |
+  | SL trả ≤ SL tồn đầu | Giá trị tồn đầu |
+  | Còn lại | Giá trị tồn đầu + (SL trả − SL tồn đầu) × đơn giá trả |
 
-  Tồn kho trên sổ vẫn giảm đúng số tiền ghi trên phiếu trả.
+  Phần **chênh lệch** = tiền trên phiếu trả − giá trị trừ khỏi công thức, ghi ở phiếu giá vốn tháng (xem *Ghi sổ*), để tồn kho trên sổ khớp bảng giá vốn.
+- **Nhập điều chỉnh tăng**: SL × đơn giá trên phiếu (SL 0 thì là điều chỉnh giá trị).
+- **Xuất chi nhánh theo giá bán** (sổ thuế; phiếu bán ghi lý do bán nội bộ): giá vốn ghi ngay bằng giá bán, trừ khỏi cả tử và mẫu.
+- **Quà khuyến mãi nhận kèm phiếu mua**: vào tồn với giá 0, không vào công thức.
+- **Khách trả hàng**: hoàn đúng giá vốn lúc bán.
 
-- **Phiếu trả với lý do khác** (XDC, XKK, XTT1, XTT2, XTR3, XTR4, XTRCN…): lấy đúng **thành tiền − thuế** trên phiếu đưa vào công thức.
-- **Khách trả hàng** <!-- [2026-11-11 12:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B3: khách trả hàng lấy đúng giá vốn lúc bán -->: phiếu trả ghi **chứng từ bán gốc** thì phần mềm hoàn giá vốn **đúng đơn giá đã dùng lúc bán**, không lấy đơn giá tháng trả.
-  | Trường hợp | Giá vốn hoàn (Nợ TK kho / Có TK giá vốn) |
+  | Trường hợp | Giá vốn hoàn |
   |---|---|
-  | Bán và trả cùng tháng | số lượng trả × đơn giá tháng (cũng là đơn giá lúc bán) |
-  | Bán tháng trước, trả tháng này | số lượng trả × **đơn giá tháng bán gốc**. Hàng trả vào công thức đơn giá tháng này như một dòng nhập, nên giá trị tồn cuối khớp số dư tài khoản kho |
-  | Phiếu trả không ghi chứng từ gốc (hoặc gốc đã huỷ) | số lượng trả × **đơn giá bình quân tồn đầu tháng trả** (mặc định tạm, kế toán trưởng có thể đổi sau) |
+  | Bán và trả cùng tháng | SL trả × giá vốn tháng |
+  | Bán tháng trước, trả tháng này | SL trả × **giá vốn tháng bán gốc** |
+  | Phiếu trả không ghi phiếu bán gốc | SL trả × giá vốn bình quân tồn đầu tháng trả |
 
-  Ví dụ: tháng 10 đơn giá 100.000, bán 30 cái. Tháng 11 nhập thêm 25 cái giá 120.000, khách trả 5 cái của đơn bán tháng 10: hoàn **500.000** (không phải 526.316 theo đơn giá tháng 11 cũ, hay 600.000 theo giá nhập gần nhất). Tính lại giá vốn tháng bán gốc sau đó thì tính lại cả tháng trả.
-- **Nhập điều chỉnh tăng** vào công thức theo giá trị trên phiếu (số lượng 0 thì là điều chỉnh giá trị); lý do có đánh dấu "không tính vào đơn giá bình quân" (ví dụ ĐGTTK) thì bỏ ra ngoài, chỉ tăng số lượng tồn.
-- Phiếu không ghi lý do dùng lý do mặc định của loại chứng từ.
+- Tháng không nhập gì (mẫu số bằng 0): dùng giá vốn gần nhất của các tháng trước.
 
-Các đánh dấu trên khai ở **Lý do – Tài khoản (ACC18)**, phần "Tính giá vốn" của từng lý do.
+## Nhập giá vốn bình quân đầu kỳ từ Excel
 
-## Nhập giá vốn tháng từ Excel (giai đoạn chạy song song)
+Dùng khi bắt đầu áp dụng (chưa có tồn đầu đủ giá trị) hoặc khi cần chốt lại giá đầu kỳ của một tháng. Bấm **Nhập giá vốn bình quân đầu kỳ … từ Excel**, làm 4 bước:
 
-Khi phần mềm mới mới áp cho một số cửa hàng, dữ liệu nhập xuất chưa đủ để tự tính bình quân. Mỗi tháng kế toán lấy **bảng giá vốn tháng** từ phần mềm kế toán đang dùng rồi nhập vào đây:
+1. **Chọn tệp nguồn** — kéo thả tệp, hoặc **Tải tệp mẫu** (Mã hàng, Tên hàng, Giá vốn bình quân đầu kỳ + sheet Hướng dẫn).
+2. **Ghép dữ liệu** — tự ghép cột theo tên.
+3. **Kiểm tra dữ liệu** — kiểm từng dòng, **chưa ghi**: mã không có trong danh mục, giá không phải số / âm, mã lặp (lấy dòng đầu). **Tải tệp lỗi** để sửa rồi nạp lại.
+4. **Kết quả nhập** — nhập các dòng hợp lệ rồi tính giá vốn tháng ngay.
 
-1. Chọn **Tháng**, bấm **Nhập giá vốn tháng … từ Excel**, chọn tệp `.xlsx` / `.xls` / `.csv`.
-2. Tệp cần cột **Mã hàng** (bắt buộc) và **Giá vốn**; **Tên hàng** chỉ để tham khảo. Dòng tiêu đề nằm trong 10 dòng đầu. Một mã lặp nhiều dòng (ví dụ xuất từ thẻ kho) thì lấy giá khác 0 xuất hiện nhiều nhất (dòng nhập / xuất nội bộ đôi khi mang giá khác).
-3. Bấm **Ghi**: phần mềm thay toàn bộ giá đã nhập của tháng đó, tính giá vốn và **ghi đè vào dòng giá vốn của mọi phiếu trong tháng** ngay.
-
-- Mỗi mã hàng **một giá vốn** cho mọi chi nhánh, hàng chính hay khuyến mãi như nhau; giữ đủ số lẻ (ví dụ 434442,8361), tiền giá vốn từng phiếu làm tròn đồng.
-- Mã **không có trong tệp** vẫn tính bình quân; phần mềm báo danh sách mã có xuất trong tháng mà thiếu trong tệp.
-- Ô **Cập nhật chứng từ từ ngày … đến ngày …** (trong tháng, mặc định cả tháng): chỉ ghi đè giá vốn cho chứng từ có ngày chứng từ trong khoảng đó, mọi loại chứng từ; chứng từ ngoài khoảng giữ nguyên số đang có. Hữu ích khi cửa hàng mới áp dụng giữa tháng.
-- Bảng đơn giá có cột **Nguồn giá** (Nhập Excel / Tính bình quân). Bấm tính lại tháng đó vẫn giữ giá đã nhập; muốn bỏ thì bấm **Bỏ giá đã nhập**.
+- Giá trị tồn đầu = SL tồn đầu × giá nhập, rồi bình quân với nhập trong tháng. Tháng sau tự lấy tiếp.
+- Tệp mới **thay toàn bộ** giá đầu kỳ đã nhập của tháng. Mã không có trong tệp lấy tồn cuối tháng trước.
+- Bỏ giá đã nhập: **Bỏ giá đầu kỳ đã nhập**. Cột **Nguồn giá đầu kỳ** (bật ở Cột) cho biết mã lấy giá từ Excel hay tồn cuối tháng trước.
 
 ## Ghi sổ
 
-Phiếu **chưa có giá vốn** (bán hàng, khách trả, chuyển kho đi / đến, điều chỉnh tăng / giảm, xuất điều chỉnh) khi định khoản đã có sẵn **dòng giá vốn 0 đồng cho từng mặt hàng** ngay trong bút toán của phiếu. Tính giá vốn **ghi đè số tiền** = số lượng × đơn giá vừa tính (làm tròn đồng, theo từng phiếu, từng mặt hàng) lên chính các dòng đó:
+Phiếu bán, khách trả, chuyển kho, điều chỉnh **không mang giá vốn** (trong tháng chỉ có số lượng). Tính giá vốn ghi **một phiếu "Giá vốn hàng xuất"** cho từng shop / chi nhánh, số `GV MM/YYYY <mã>`, ngày cuối tháng, **chi tiết theo từng mã hàng**:
 
 | Nghiệp vụ | Nợ | Có |
 |---|---|---|
-| Bán hàng | 632 Giá vốn (hàng tặng có thể vào 641) | 156 Hàng hoá |
-| Khách trả hàng | 156 | 632 |
-| Chuyển kho đi | 1579 Hàng đang chuyển (khác đơn vị: 13681) | 156 |
-| Chuyển kho đến | 156 | 1579 (13681) |
-| Kiểm kê thiếu | 1381 Thiếu chờ xử lý | 156 |
-| Kiểm kê thừa | 156 | 3381 Thừa chờ xử lý |
+| Bán hàng | Giá vốn (hàng tặng: TK giá vốn hàng tặng) | Kho |
+| Khách trả hàng | Kho | Giá vốn |
+| Chuyển kho đi | Hàng đang chuyển (khác đơn vị hạch toán: phải thu nội bộ hàng) | Kho |
+| Chuyển kho đến | Kho | Hàng đang chuyển (phải thu nội bộ hàng) |
+| Xuất / nhập điều chỉnh | TK theo mục đích xuất (không có: thiếu / thừa chờ xử lý) | Kho (ngược lại khi nhập) |
+| Chênh lệch trả NCC | Kho / Chênh lệch hàng trả NCC (phiếu trả lớn hơn) | ngược lại khi phiếu trả nhỏ hơn |
 
-Phiếu định khoản **trước khi** có dòng giá vốn sẵn (dữ liệu cũ) thì giá vốn vẫn ghi vào một chứng từ **"Giá vốn hàng xuất"** của từng chi nhánh, ngày cuối tháng. Định khoản lại các phiếu đó thì chúng có dòng giá vốn sẵn như phiếu mới.
+Tài khoản lấy từ **Quy tắc hạch toán (ACC41)** và loại kho, không viết cứng. Tính lại: phiếu giá vốn cũ được **đảo** (ghi số âm) rồi ghi phiếu mới.
 
 ## Lưu ý
 
-- **Tính giá vốn trước, rồi mới kết chuyển lãi lỗ.** Đã kết chuyển rồi mới tính giá vốn thì phải kết chuyển lại.
-- Bấm tính lại bao nhiêu lần cũng được (ví dụ khi có thêm phiếu muộn): số tiền dòng giá vốn **được ghi đè**, không sinh bút toán ghi số âm (riêng chứng từ "Giá vốn hàng xuất" của dữ liệu cũ vẫn ghi số âm rồi ghi lại).
-- Phiếu đổi phiên bản và được định khoản lại thì dòng giá vốn trở về 0, cần bấm tính giá vốn lại.
+- Thứ tự cuối tháng: **tính giá vốn → xem lãi lỗ → kết chuyển → khoá sổ**. Tính lại giá vốn sau khi đã kết chuyển thì phải kết chuyển lại.
+- Tính lại bao nhiêu lần cũng được (ví dụ có phiếu muộn).
 - Kỳ đã khoá sổ thì không tính lại được.
-- Hàng xuất mà hệ thống bán hàng đã gửi kèm giá vốn thì giá vốn được ghi cùng bút toán của chứng từ, không tính lại ở đây.
+- Hàng xuất mà hệ thống nguồn đã gửi kèm giá vốn (bán nội bộ theo giá bán) thì giá vốn ghi cùng phiếu đó, không tính lại ở đây.
 
 ## Căn cứ pháp lý
 
-Chuẩn mực kế toán số 02 — Hàng tồn kho (phương pháp bình quân gia quyền); Thông tư 99/2025/TT-BTC, hướng dẫn tài khoản 156, 632. Xem thêm màn **Căn cứ pháp lý** (TI11), trang *Hàng tồn kho và giá vốn*.
+Chuẩn mực kế toán số 02 — Hàng tồn kho (giá gốc gồm chi phí mua, trừ chiết khấu thương mại; phương pháp bình quân gia quyền, áp dụng nhất quán); Thông tư 99/2025/TT-BTC, tài khoản 156, 632.

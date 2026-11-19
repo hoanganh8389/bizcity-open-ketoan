@@ -10,7 +10,9 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useThemTuDiaChi } from '@/lib/themNhanh';
+import { NutQuyTac } from '@/components/QuyTacDanhMuc';
 import { PageHeader } from '@/components/PageHeader';
+import { TinhTrang, useQuyTac } from '@/components/KetQuaKiem';
 import { ErrorBox, Field, Loading, Modal, Pager } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
@@ -25,7 +27,6 @@ import { PRODUCT_LABEL_TEMPLATES, loadLabelItems, type LabelItem } from './produ
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: dải báo cáo mặt hàng tự thêm, kích hoạt hàng loạt mặt hàng nháp
 import { AutoCreatedBanner, BulkActivateModal } from './autoCreate';
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: nút Hành trình (truy vết vòng đời) cho mặt hàng đang chọn
-import { Link } from 'react-router-dom';
 
 export type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 interface ItemClass { code: string; name: string; parentCode: string | null; isActive: boolean; products: number; skuCode?: string }
@@ -130,11 +131,14 @@ export function ProductsPage() {
     header: <input type="checkbox" checked={tichHet} title="Tích / bỏ mọi mặt hàng đang hiện trên lưới" onClick={(e) => e.stopPropagation()} onChange={() => datTich(viewRef.current.map((p) => p.sku), !tichHet)} />,
     render: (p) => <input type="checkbox" checked={tich.has(p.sku)} onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} onChange={() => datTich([p.sku], !tich.has(p.sku))} />,
   };
+  const quyTac = useQuyTac('item').data ?? [];
   const columns: Column<Product>[] = [
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
     { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
+    // [2026-11-19 Nguyễn Văn Thủy] Tình trạng theo bộ quy tắc: Đủ / Thiếu N, rê chuột thấy quy tắc chưa đạt ✗ và đã qua ✓ (docs/nghiep-vu/25) (đóng góp)
+    { key: 'tinhTrang', header: 'Tình trạng', width: 95, hidden: true, title: 'Theo bộ quy tắc khai báo mặt hàng: Đủ / Thiếu N (rê chuột xem quy tắc chưa đạt và đã qua; mã lỗi tra ở HT19)', value: (p) => ((p.draftCodes ?? []).length ? `Thiếu ${(p.draftCodes ?? []).length}` : 'Đủ'), render: (p) => <TinhTrang codes={p.draftCodes ?? []} rules={quyTac} draft={p.isDraft} /> },
     // [2026-11-16 kiennt] dễ nhìn: Nhóm hàng hiện tên nhóm cuối (rê chuột xem đường dẫn; lọc vẫn theo cả đường dẫn); cột tạo ẩn, "Lúc" → "Ngày" (đóng góp)
     { key: 'groupCode', header: 'Nhóm hàng', width: 200, value: (p) => groupPath(p.groupCode), render: (p) => { const full = groupPath(p.groupCode); return <span title={full}>{full.split(' / ').pop()}</span>; } },
     { key: 'unit', header: 'ĐVT', width: 70 },
@@ -165,7 +169,8 @@ export function ProductsPage() {
   };
   return (
     <>
-      <PageHeader title="Quản lý mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang" />
+      <PageHeader title="Quản lý mặt hàng" code="DM10" subtitle="Danh mục hàng chuẩn: thông tin, đơn vị tính + tỉ lệ quy đổi, giá bán bảng giá công ty / chi nhánh, trạng thái bán — hệ thống bán hàng kéo về" helpKey="mat-hang"
+        actions={<NutQuyTac entity="item" logEntity="catalog/products" ten="mặt hàng" />} />
       {/* [2026-11-17 Nguyễn Văn Thủy] khung Nhóm hàng kéo giãn được (mép phải) và thu gọn / mở; nhớ theo trình duyệt (đóng góp) */}
       <div className="acc17" style={{ gridTemplateColumns: `${treeOpen ? treeW : 28}px minmax(0, 1fr)` }}>
         {treeOpen ? (
@@ -213,7 +218,7 @@ export function ProductsPage() {
           )}
           {q.isLoading ? <Loading /> : (
             <DataGrid
-              storageKey="dm10-v4"
+              storageKey="dm10-v5"
               exportName="mat-hang"
               groupable
               exportRef={exportRef}

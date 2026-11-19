@@ -88,7 +88,7 @@ export function DatHangPage() {
         // Họ mã: số của dòng đã cộng dồn mọi mã con — chi tiết từng mã để người mua biết hàng tặng / kẹp quà còn bao nhiêu.
         <span className="tm-fam" title="Số của dòng đã cộng dồn cả họ mã (mã chính + mã con có đuôi)">{r.members.map((m) => (
           <span key={m.sku} className="tm-fam-row"><b className="mono">{m.sku}</b> {m.kind}: {factsText(m, banDays)}</span>))}</span>)}</span> },
-    { key: 'price', header: 'Đơn giá chưa VAT', title: 'Giá mua chưa thuế theo ĐVT nhỏ nhất: giá đã khai của NCC (hồ sơ NCC → Mặt hàng & giá mua), chưa khai thì lấy lần nhập gần nhất', type: 'price', width: 92 },
+    { key: 'price', header: 'Đơn giá chưa VAT', title: 'Giá mua chưa thuế theo ĐVT nhỏ nhất: giá đã khai của NCC (Hồ sơ NCC → Hợp đồng & giá → Mặt hàng & giá), chưa khai thì lấy lần nhập gần nhất', type: 'price', width: 92 },
     { key: 'promo', header: 'CTKM', title: 'Chương trình khuyến mại / chiết khấu của NCC đang áp cho mã này (rê chuột lên ô xem đủ)', width: 80, render: (r) => (r.promo ? <span title={r.promo} style={{ fontSize: 11.5 }}>{r.promo}</span> : '-') },
     { key: 'baseUnit', header: 'ĐVT', width: 56, title: 'ĐVT nhỏ nhất (tỉ lệ 1) — các cột số lượng của màn này đều theo ĐVT này; cột Quy cách cho biết 1 thùng bao nhiêu' },
     { key: 'need', header: 'SL cần nhập', type: 'qty', width: 92, showZero: true, className: 'tm-need', bold: true, title: 'Số lượng cần nhập tháng này (theo công thức), theo ĐVT nhỏ nhất',
@@ -125,7 +125,7 @@ export function DatHangPage() {
       } },
     { key: 'pack', header: 'Quy cách', title: 'Số ĐVT nhỏ nhất trong 1 thùng / lốc — SL đặt gợi ý làm tròn theo quy cách này', width: 72, value: (r) => r.pack ?? 0, render: (r) => (r.pack ? `${r.pack}/${r.packUnit}` : r.baseUnit) },
     { key: 'partnerCode', header: 'NCC', title: 'Nhà cung cấp của mã: NCC lần nhập gần nhất; chưa nhập lần nào thì NCC có bảng giá đang hiệu lực', type: 'code', width: 100, hidden: true },
-    { key: 'partnerSource', header: 'NCC chọn theo', width: 110, title: 'Mã có lần nhập → NCC lần nhập gần nhất; chưa nhập lần nào → NCC có bảng giá đang hiệu lực mới nhất (hồ sơ NCC → Mặt hàng & giá mua)', value: (r) => (r.partnerSource === 'lan_nhap' ? 'lần nhập gần nhất' : r.partnerSource === 'bang_gia' ? 'bảng giá NCC' : 'chưa rõ') + (r.nccCount > 1 ? ` · ${r.nccCount} NCC` : ''),
+    { key: 'partnerSource', header: 'NCC chọn theo', width: 110, title: 'Mã có lần nhập → NCC lần nhập gần nhất; chưa nhập lần nào → NCC có bảng giá đang hiệu lực mới nhất (Hồ sơ NCC → Hợp đồng & giá → Mặt hàng & giá)', value: (r) => (r.partnerSource === 'lan_nhap' ? 'lần nhập gần nhất' : r.partnerSource === 'bang_gia' ? 'bảng giá NCC' : 'chưa rõ') + (r.nccCount > 1 ? ` · ${r.nccCount} NCC` : ''),
       render: (r) => <span style={{ fontSize: 11.5 }} className={r.partnerSource ? '' : 'mh-bad'} title={r.nccCount > 1 ? `Có ${r.nccCount} NCC khai bán mã này — đang chọn ${r.partnerCode}` : undefined}>{r.partnerSource === 'lan_nhap' ? 'lần nhập gần nhất' : r.partnerSource === 'bang_gia' ? 'bảng giá NCC' : 'chưa rõ'}{r.nccCount > 1 ? <b> · {r.nccCount} NCC</b> : null}</span> },
     { key: 'brandName', header: 'Nhãn', title: 'Nhãn hàng của mã (Danh mục mặt hàng)', width: 110, hidden: true },
     { key: 'nccNote', header: 'Ghi chú NCC', title: 'Ghi chú khai ở mặt hàng của NCC — tự chép vào dòng đơn đặt', width: 140, hidden: true },
@@ -134,7 +134,7 @@ export function DatHangPage() {
   const makeOrders = async () => {
     const byNcc = new Map<string, AnalysisRow[]>();
     for (const r of chosen) byNcc.set(r.partnerCode, [...(byNcc.get(r.partnerCode) ?? []), r]);
-    if (byNcc.has('')) { setMsg({ ok: false, text: `${byNcc.get('')!.length} mã chưa rõ NCC (chưa nhập lần nào, chưa khai NCC bán mã này) — khai ở hồ sơ NCC → Mặt hàng & giá mua, hoặc bỏ chọn.` }); return; }
+    if (byNcc.has('')) { setMsg({ ok: false, text: `${byNcc.get('')!.length} mã chưa rõ NCC (chưa nhập lần nào, chưa khai NCC bán mã này) — khai ở Hồ sơ NCC → Hợp đồng & giá → Mặt hàng & giá, hoặc bỏ chọn.` }); return; }
     setBusy(true); setMsg(null);
     try {
       const made: { id: string; docNo: string; ncc: string; n: number }[] = [];
@@ -188,7 +188,7 @@ export function DatHangPage() {
           <div className="tm-grid"><DataGrid rows={rows} columns={cols} rowKey={(r) => r._key} storageKey="phan-tich-dat-hang" exportRef={exportRef} exportName={`phan-tich-dat-hang-${parent}-${today()}`}
             exportTitle={`Phân tích đặt hàng ${q.data?.parent.name ?? parent} ngày ${today()}`}
             rowKind={(r) => (r._group ? 'group' : 'data')}
-            groupLabel={(r) => <span className="tm-group-label"><span className="brand">{r.brandName || 'Chưa có nhãn'}</span><span className="ncc">{r.partnerCode ? `${r.partnerCode} - ${r.partnerName || names.partnerName(r.partnerCode)}` : 'Chưa rõ nhà cung cấp'}</span>{!r.partnerCode && <span className="muted" style={{ fontSize: 11.5, fontWeight: 400, marginLeft: 10 }}>— mã chưa nhập lần nào và chưa NCC nào khai bán: vào hồ sơ NCC → thẻ Mặt hàng & giá mua → Thêm mã (hoặc Nhập dữ liệu khởi đầu MH20, thẻ giá mua)</span>}{r.partnerCode && <NccNo s={supOf.get(r.partnerCode)} />}</span>}
+            groupLabel={(r) => <span className="tm-group-label"><span className="brand">{r.brandName || 'Chưa có nhãn'}</span><span className="ncc">{r.partnerCode ? `${r.partnerCode} - ${r.partnerName || names.partnerName(r.partnerCode)}` : 'Chưa rõ nhà cung cấp'}</span>{!r.partnerCode && <span className="muted" style={{ fontSize: 11.5, fontWeight: 400, marginLeft: 10 }}>— mã chưa nhập lần nào và chưa NCC nào khai bán: vào hồ sơ NCC → thẻ Hợp đồng & giá → Mặt hàng & giá → Thêm mã (hoặc Nhập dữ liệu khởi đầu MH20, thẻ giá mua)</span>}{r.partnerCode && <NccNo s={supOf.get(r.partnerCode)} />}</span>}
             emptyText={!parent ? 'Chọn chi nhánh.' : search.trim() ? 'Không thấy mã khớp: mã chưa có tồn max, tồn, bán hay đơn đặt ở chi nhánh này.' : quick === 'need' ? 'Không có mã nào cần nhập theo công thức hiện tại.' : 'Không có mã nào.'} /></div>
         )}
       </div>

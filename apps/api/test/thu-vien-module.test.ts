@@ -13,6 +13,7 @@ import { flushLibraryUsage, getLibrary, resetLibraryUsage, saveLibraryConfig } f
 import { resetModuleLibraryDecls } from '@bizcity/platform/core/libraries/context';
 import { moduleVerdict } from '../src/modules/system/libraries.routes.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { libraryUsageRows } from '@bizcity/platform/core/libraries/usage';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let ctx: TestCtx;
@@ -35,7 +36,7 @@ const act = (id: string, f: (c: any) => Promise<unknown>, effect: 'read' | 'writ
 const run = (def: any, opts: { dryRun?: boolean } = {}) => runAction(def, {}, { auth: auth(), requestId: `ml-${Math.random()}`, dryRun: opts.dryRun } as any);
 const usageRows = async (source: string) => {
   await flushLibraryUsage(db);
-  return (await sql`SELECT library_id, count FROM library_usage_daily WHERE tenant_id = ${tenantId}::bigint AND source = ${source}`.execute(db)).rows as { library_id: string; count: string }[];
+  return (await libraryUsageRows(tenantId, { ...{ from: '2000-01-01', to: '2100-12-31' }, source })).map((r) => ({ library_id: r.libraryId, count: String(r.count) }));
 };
 
 beforeAll(async () => {

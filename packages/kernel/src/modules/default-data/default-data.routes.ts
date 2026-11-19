@@ -10,7 +10,7 @@
  *   POST /api/v1/default-data/all/restore { confirm: true }    quay về toàn bộ theo thứ tự phụ thuộc
  * Ghi: action core.default-data.{restore,restore-all} (W6, SC-ACT-1).
  * [2026-11-13 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-8a: xem trước bắt buộc — gọi ?dryRun=1 lấy meta.previewToken, chạy thật gửi { confirm: true, previewToken };
- *   chạy thật chụp danh mục vào default_data_backups trước khi ghi (meta.backupId); bộ giả lập trên đơn vị có bút toán bị chặn.
+ *   chạy thật chụp danh mục vào catalog_trash (backup.default-data, 0160) trước khi ghi (meta.backupId); bộ giả lập trên đơn vị có bút toán bị chặn.
  *   GET /api/v1/default-data/backups, GET /api/v1/default-data/backups/:id   các bản chụp gần nhất (10) / tải một bản
  */
 import type { FastifyInstance } from 'fastify';

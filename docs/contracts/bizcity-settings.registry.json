@@ -311,14 +311,16 @@
       "scopes": [
         "tenant"
       ],
-      "storage": "bảng payment_request_settings",
-      "schema": "ngưỡng cần duyệt cấp 2",
-      "default": "theo seed",
-      "readBy": "phan-he/quy/payment-requests",
-      "writeBy": "API yêu cầu thanh toán",
+      "storage": "setting_values",
+      "schema": "số tiền (đ) từ đó yêu cầu thanh toán cần cấp duyệt thứ hai; 0 = mọi yêu cầu một cấp",
+      "default": "0",
+      "readBy": "levelsFor (apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts)",
+      "writeBy": "quy.payment-request-settings.update (PUT /api/v1/payment-request-settings) · core.settings.set",
       "permission": "settings:write",
       "audit": "có",
-      "affectsPosting": false
+      "affectsPosting": false,
+      "valueType": "integer[0..999999999999]",
+      "note": "0159 (2026-11-18): chuyển từ bảng payment_request_settings sang setting_values (có phiên bản, ngày hiệu lực)."
     },
     {
       "key": "bizcity.connector.connections",

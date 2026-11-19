@@ -12,6 +12,7 @@
 import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
+import { quyTac } from '@bizcity/platform/core/quy-tac';
 
 /** Mã của đối tượng và mọi cấp con bên dưới (đệ quy). */
 export async function familyCodes(db: Db, tenantId: string, code: string): Promise<string[]> {
@@ -66,21 +67,21 @@ export async function checkParent(db: Db, tenantId: string, code: string, parent
   if (pc === null) {
     if (before?.parent_uid) {
       const old = await db.selectFrom('partners').select('code').where('uid', '=', before.parent_uid).executeTakeFirst();
-      if (old && code.startsWith(`${old.code}-`)) throw Errors.validation(`${code} là đơn vị con của ${old.code} theo mã — không bỏ cha được. Muốn tách riêng thì lập đối tượng mới, ngừng dùng ${code}.`);
+      if (old && code.startsWith(`${old.code}-`)) throw quyTac('PART-BLOCK-008', { detail: `${code} là đơn vị con của ${old.code} theo mã — không bỏ cha được. Muốn tách riêng thì lập đối tượng mới, ngừng dùng ${code}.` });
     }
     return null;
   }
-  if (pc === code) throw Errors.validation('Không chọn chính đối tượng này làm đơn vị cha');
+  if (pc === code) throw quyTac('PART-BLOCK-008', { detail: 'Không chọn chính đối tượng này làm đơn vị cha' });
   const parent = await db.selectFrom('partners').select(['uid', 'code', 'name']).where('tenant_id', '=', tenantId).where('code', '=', pc).executeTakeFirst();
-  if (!parent) throw Errors.validation(`Đơn vị cha ${pc} chưa có trong danh mục`);
-  if (!before && !code.startsWith(`${parent.code}-`)) throw Errors.validation(`Mã đơn vị con phải bắt đầu bằng "${parent.code}-" (vd ${parent.code}-001) — bấm "Lấy mã" để máy cấp`);
+  if (!parent) throw quyTac('PART-BLOCK-008', { detail: `Đơn vị cha ${pc} chưa có trong danh mục` });
+  if (!before && !code.startsWith(`${parent.code}-`)) throw quyTac('PART-BLOCK-008', { detail: `Mã đơn vị con phải bắt đầu bằng "${parent.code}-" (vd ${parent.code}-001) — bấm "Lấy mã" để máy cấp` });
   if (before?.parent_uid && before.parent_uid !== parent.uid) {
     const old = await db.selectFrom('partners').select('code').where('uid', '=', before.parent_uid).executeTakeFirst();
-    if (old && code.startsWith(`${old.code}-`)) throw Errors.validation(`${code} là đơn vị con của ${old.code} theo mã — không chuyển sang ${parent.code} được. Lập đơn vị mới dưới ${parent.code}, ngừng dùng ${code}.`);
+    if (old && code.startsWith(`${old.code}-`)) throw quyTac('PART-BLOCK-008', { detail: `${code} là đơn vị con của ${old.code} theo mã — không chuyển sang ${parent.code} được. Lập đơn vị mới dưới ${parent.code}, ngừng dùng ${code}.` });
   }
   if (before) {
     const down = await familyCodes(db, tenantId, code);
-    if (down.includes(parent.code)) throw Errors.validation(`${parent.code} đang là đơn vị con của ${code} — không chọn làm đơn vị cha được`);
+    if (down.includes(parent.code)) throw quyTac('PART-BLOCK-008', { detail: `${parent.code} đang là đơn vị con của ${code} — không chọn làm đơn vị cha được` });
   }
   return parent.uid;
 }
