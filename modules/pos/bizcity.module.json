@@ -137,6 +137,7 @@
     "pos.order.create",
     "pos.order.get",
     "pos.order.lookup",
+    "pos.order.lines",
     "pos.order.cancel",
     "pos.order.returnable",
     "pos.return.create",

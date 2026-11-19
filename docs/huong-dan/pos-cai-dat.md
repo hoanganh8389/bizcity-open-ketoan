@@ -33,4 +33,13 @@ Phiếu bán hàng và phiếu trả hàng: **Ghi ngay** (lên sổ khi máy bá
 
 Danh sách loại chứng từ nhóm *Bán hàng* của Tài khoản ngầm định (ACC41) với TK Nợ / TK Có đang dùng. Chỉ xem; bấm **Sửa ở ACC41** để đổi.
 
+## ⑤ Giao hàng đơn đặt hàng
+<!-- [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: khối cài đặt giao hàng (đóng góp) -->
+
+Cho chuyến giao của Đơn đặt hàng (BH20, [hướng dẫn](don-dat-hang.md)) — khoá của module phiếu bán, ghi bằng nút **Ghi cài đặt giao hàng** của khối:
+
+- **Kho hàng đang giao (KHG)** của từng cửa hàng: kho loại KHG "Kho hàng gửi bán". Chuyến *Đang giao* chuyển hàng KCB → KHG (chưa doanh thu), *Đã giao* bán từ KHG, *Hoàn* chuyển KHG → KCB. Chưa có kho KHG: khai ở Danh mục kho (DM18) và tick KHG vào nghiệp vụ "Xuất bán" của Loại kho. Chưa chọn thì không lập chuyến giao được.
+- **Mã dịch vụ phí ship thu khách**: mặt hàng (dịch vụ) thành dòng phí ship trên phiếu bán của chuyến. Chưa khai mà chuyến có phí ship thì không ghi *Đã giao* được.
+- **Hình thức thanh toán "COD — hãng"**: mỗi hãng (mã hãng như trên đơn, tự giao = `SELF`) một hình thức thanh toán — khai trước ở danh mục hình thức thanh toán với tài khoản phải thu hãng và đối tượng là hãng. Tiền COD của chuyến thành dòng thanh toán theo hình thức này (phải thu hãng); hãng chuyển tiền thì đối trừ như công nợ thường.
+
 Bấm **Ghi**: giá trị mới có hiệu lực từ hôm nay; lịch sử ai đổi, lúc nào lưu ở *Thiết lập → Cấu hình hệ thống*. **Bỏ sửa** để trả lại giá trị đang áp.

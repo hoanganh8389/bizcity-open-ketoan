@@ -66,6 +66,8 @@ import channelUpdate from './actions/channel-update.js';
 import channelStop from './actions/channel-stop.js';
 import channelResume from './actions/channel-resume.js';
 import reportChannels from './actions/report-channels.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: dòng đơn máy bán cho copy đơn của phieu-ban (đóng góp)
+import orderLines from './actions/order-lines.js';
 
 export default defineModule({
   manifest,
@@ -79,7 +81,7 @@ export default defineModule({
     promoDraftList, promoDraftGet, promoDraftCreate, promoDraftUpdate, promoDraftOverlaps, promoDraftApprove, promoDraftPublished, promoDraftReject, promoDraftImport, promoStopLog, promoQuota, promoReport, promoReportOrders,
     reportMissingCodes, giftWarehouseGet, customerCheck,
     returnApprovalCreate, returnApprovalGet, returnApprovalApprove, returnApprovalReject, adminReturnApprovals,
-    channelList, channelCreate, channelUpdate, channelStop, channelResume, reportChannels,
+    channelList, channelCreate, channelUpdate, channelStop, channelResume, reportChannels, orderLines,
   ],
   subscribers: [phieuBanPromoUse],
 });

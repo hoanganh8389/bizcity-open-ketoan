@@ -9,24 +9,41 @@
  *           giao đủ → Đã đóng; bấm Đóng → trả phần còn giữ về kho bán; Huỷ chỉ khi chưa giao gì.
  *   Phiếu bán nháp sinh từ đơn bị xoá → trả lại số đã giao (hàng vẫn ở KCB nên giữ lại cho đơn; đơn đã đóng tay thì chuyển về kho bán).
  *   Lịch sử: mọi lần lập / sửa / gửi / duyệt / từ chối / giữ / giao / đóng / huỷ ghi order_events (người, lúc, cũ → mới).
+ *
+ * NT-BH-032 (chốt 18/11/2026) — giao hàng hai bước qua kho KHG "Kho hàng gửi bán" (cấu hình bizcity.phieu_ban.ship_warehouses):
+ *   Chuyến giao: Chờ lấy hàng (giữ chỗ số lượng, hàng còn ở KCB) ──Đi giao──► Đang giao (chuyển kho KCB → KHG, chưa doanh thu)
+ *     ──Đã giao──► phiếu bán BH10 NHÁP xuất từ KHG (+ dòng phí ship = mã dịch vụ bizcity.phieu_ban.ship_fee_sku, + thanh toán COD theo
+ *                  hình thức bizcity.phieu_ban.cod_methods của hãng) — kế toán duyệt → doanh thu + giá vốn + phải thu hãng
+ *     ──Hoàn────► chuyển kho KHG → KCB, hàng giữ lại cho đơn (đơn vẫn mở). Chờ lấy → Hoàn: chỉ trả chỗ, không chứng từ.
+ *   Đóng / huỷ đơn còn chuyến Chờ lấy / Đang giao → chặn (PHIEU_BAN_ORDER_STATE): cập nhật Đã giao / Hoàn trước.
+ *   "Giao" cũ (deliverOrder) giữ nguyên = giao tại quầy (khách nhận ngay): phiếu bán nháp xuất thẳng từ KCB.
+ *   Copy đơn: đơn → đơn mới nháp; phiếu BH10 đã duyệt / đơn máy bán (action đọc pos.order.lines) → đơn mới; giá + khuyến mại tính lại.
  */
 // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-023: nghiệp vụ đơn đặt hàng (đóng góp)
 import { randomUUID } from 'node:crypto';
-import { Errors, type ActionContext } from '@bizcity/module-sdk';
+import { Errors, roundMoney, type ActionContext } from '@bizcity/module-sdk';
 import { computeDoc, type DocInput, type Kind } from './domain/doc.js';
 import {
-  anyDelivered, applyDelivery, creditReasons, debtOf, deliveryLines, diffOrder, duplicatesOf, expired, fullyDelivered, mergeProgress, normPhone,
-  parseHoldMap, r4, rebalanceHolds, returnDelivery, toHoldDoc, undeliveredValue,
-  type Change, type Move, type OrderBody, type OrderInput, type OrderLine, type OrderStatus, type Short,
+  anyDelivered, anyShipping, applyDelivery, creditReasons, debtOf, deliveryLines, diffOrder, duplicatesOf, expired, feeBeforeTax, fullyDelivered, mergeProgress,
+  normPhone, normShipping, parseCarrierMap, parseHoldMap, r4, rebalanceHolds, reserveShipment, returnDelivery, shipmentDelivered, shipmentReturned, toHoldDoc,
+  undeliveredValue, SELF_CARRIER, SHIPMENT_LABEL, SHIPMENT_NEXT,
+  type Change, type Move, type OrderBody, type OrderInput, type OrderLine, type OrderStatus, type Shipping, type ShipmentStatus, type Short,
 } from './domain/order.js';
 import {
-  addEvent, branchPrices, getOrder, insertOrder, listOrders, livestreamByPhone, lockedWarehouseStock, openOrdersOf, orderEvents, partnerTerms,
-  takeOrderNo, toOrder, updateOrder, warehousesOf, writeOf, type OrderFilter, type OrderRow,
+  addEvent, branchPriceRatios, branchPrices, getOrder, getShipment, insertOrder, insertShipment, listOrders, livestreamByPhone, lockedWarehouseStock, openOrdersOf,
+  orderByNo, orderEvents, partnerByPhone, partnerTerms, shipmentByDoc, shipmentsOf, shippingOf, takeOrderNo, toOrder, toShipment, updateOrder, updateShipment,
+  warehousesOf, writeOf, type OrderFilter, type OrderRow, type ShipLog,
 } from './order-store.js';
 import { giftWarehouseOf, saveDraftIn, withChannel } from './service.js';
-import { activeMethods, branchExists, catalogFor, deleteDoc, getDoc, partnerByCode, taxRates, type Tx } from './store.js';
+import { activeMethods, branchExists, catalogFor, deleteDoc, getDoc, partnerByCode, saleByNo, taxRates, type Tx } from './store.js';
 
 export const HOLD_WAREHOUSES = 'bizcity.phieu_ban.hold_warehouses';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: khoá cấu hình giao hàng (chọn ở BH17) (đóng góp)
+export const SHIP_WAREHOUSES = 'bizcity.phieu_ban.ship_warehouses';
+export const SHIP_FEE_SKU = 'bizcity.phieu_ban.ship_fee_sku';
+export const COD_METHODS = 'bizcity.phieu_ban.cod_methods';
+/** Khoá dòng phí ship trên phiếu bán của chuyến giao. */
+export const SHIP_LINE_KEY = 'SHIP';
 export const APPROVE_PERMISSION = 'phieu-ban:order-approve';
 
 const fail = (problems: string[]): never => { throw Errors.validation(problems.join(' · '), { items: problems }); };
@@ -62,14 +79,15 @@ async function prepareOrder(tx: Tx, input: OrderInput) {
   if (problems.length) fail(problems);
   const customer = input.customer?.name || phone ? { ...(input.customer?.name ? { name: input.customer.name } : {}), ...(phone ? { phone } : {}) } : undefined;
   return {
-    warehouseCode, phone, partnerCode: c.body.partner?.code ?? null, lines: c.body.lines,
+    warehouseCode, phone, partnerCode: c.body.partner?.code ?? null, lines: c.body.lines, shipping: normShipping(input.shipping),
     head: { partner: c.body.partner, customer, totals: c.body.totals, note: c.body.note, policyRefs: c.body.policyRefs },
   };
 }
 
-const bodyOf = (p: Awaited<ReturnType<typeof prepareOrder>>, lines: OrderLine[], deliveries: OrderBody['deliveries']): OrderBody => ({
+const bodyOf = (p: Awaited<ReturnType<typeof prepareOrder>>, lines: OrderLine[], deliveries: OrderBody['deliveries'], copiedFrom?: OrderBody['copiedFrom']): OrderBody => ({
   ...(p.head.partner ? { partner: p.head.partner } : {}), ...(p.head.customer ? { customer: p.head.customer } : {}),
   lines, totals: p.head.totals, ...(p.head.note ? { note: p.head.note } : {}), ...(p.head.policyRefs?.length ? { policyRefs: p.head.policyRefs } : {}), deliveries,
+  ...(copiedFrom ? { copiedFrom } : {}),
 });
 
 const headOf = (r: { partner_code: string | null; valid_until: string | null; warehouse_code: string; branch_code: string; order_date: string; phone: string | null; body: OrderBody }) => ({
@@ -138,7 +156,8 @@ export async function listOrdersOf(ctx: ActionContext, f: OrderFilter) {
 }
 
 export async function orderDetail(ctx: ActionContext, id: string) {
-  return ctx.data.module(async (tx) => toOrder(await getOrder(tx, id)));
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: chi tiết đơn kèm các chuyến giao (đóng góp)
+  return ctx.data.module(async (tx) => ({ ...toOrder(await getOrder(tx, id)), shipments: (await shipmentsOf(tx, id)).map(toShipment) }));
 }
 
 export async function orderHistory(ctx: ActionContext, id: string) {
@@ -151,12 +170,13 @@ export async function orderHistory(ctx: ActionContext, id: string) {
 /** Cấu hình kho giữ hàng + kho của các cửa hàng (cho thẻ Cài đặt của màn). */
 export async function holdSettings(ctx: ActionContext) {
   const map = await holdMapOf(ctx);
-  return { key: HOLD_WAREHOUSES, holdWarehouses: Object.fromEntries(map) };
+  // NT-BH-032: kèm cấu hình giao hàng (kho KHG, mã phí ship, hình thức COD theo hãng — chọn ở BH17).
+  return { key: HOLD_WAREHOUSES, holdWarehouses: Object.fromEntries(map), ship: await shipSettings(ctx) };
 }
 
 // ------------------------------------------------------------------ lập / sửa / gộp
 
-export type DupMode = { onDuplicate: 'ask' | 'keep' | 'merge'; mergeInto?: string };
+export type DupMode = { onDuplicate: 'ask' | 'keep' | 'merge'; mergeInto?: string; copiedFrom?: OrderBody['copiedFrom'] };
 
 /** Lập đơn nháp. Đơn livestream cùng SĐT + cùng mã trong 24 giờ: ask → trả `duplicates` (không lập); keep → lập riêng; merge → gộp vào đơn cũ. */
 export async function createOrder(ctx: ActionContext, input: OrderInput, dup: DupMode = { onDuplicate: 'ask' }) {
@@ -172,9 +192,10 @@ export async function createOrder(ctx: ActionContext, input: OrderInput, dup: Du
     const lines: OrderLine[] = p.lines.map((l) => ({ ...l, delivered: 0, held: 0 }));
     await insertOrder(tx, id, ctx.tenant.id, no, {
       branchCode: input.branchCode, warehouseCode: p.warehouseCode, orderDate: input.orderDate, validUntil: input.validUntil ?? null, status: 'draft',
-      source: input.source, partnerCode: p.partnerCode, phone: p.phone, body: bodyOf(p, lines, []), actor: ctx.actor.id,
+      source: input.source, partnerCode: p.partnerCode, phone: p.phone, body: bodyOf(p, lines, [], dup.copiedFrom), actor: ctx.actor.id,
+      shipping: p.shipping, copiedFrom: dup.copiedFrom ? `${dup.copiedFrom.kind}:${dup.copiedFrom.no}` : null,
     });
-    await ev(tx, ctx, id, 'create', [], input.source === 'livestream' ? 'Đơn livestream' : null);
+    await ev(tx, ctx, id, dup.copiedFrom ? 'copy' : 'create', [], dup.copiedFrom ? `Copy từ ${dup.copiedFrom.no}` : input.source === 'livestream' ? 'Đơn livestream' : null);
     return { kind: 'created' as const, order: toOrder(await getOrder(tx, id)) };
   });
   if (r.kind === 'dup') return { created: false, duplicates: r.duplicates };
@@ -200,7 +221,7 @@ async function mergeInto(ctx: ActionContext, targetId: string, add: OrderInput) 
   const input: OrderInput = {
     orderDate: t.order_date, branchCode: t.branch_code, warehouseCode: t.warehouse_code, validUntil: t.valid_until ?? undefined, source: t.source,
     ...(t.partner_code ? { partner: { code: t.partner_code } } : {}), ...(t.body.customer ? { customer: t.body.customer } : {}),
-    lines: lines as OrderInput['lines'], note: t.body.note, policyRefs: t.body.policyRefs,
+    lines: lines as OrderInput['lines'], note: t.body.note, policyRefs: t.body.policyRefs, shipping: shippingOf(t) ?? undefined,
   };
   return updateOrderFlow(ctx, targetId, input, 'merge');
 }
@@ -233,14 +254,22 @@ export async function updateOrderFlow(ctx: ActionContext, id: string, input: Ord
       ({ docs, seq } = holdDocsOf(cur, holdWh, rb, seq));
       extra.push(...moveChanges(rb.hold, 'held+'), ...moveChanges(rb.release, 'held-'));
     }
-    const body = bodyOf(p, lines, cur.body.deliveries);
+    const body = bodyOf(p, lines, cur.body.deliveries, cur.body.copiedFrom);
     const status: OrderStatus = cur.status === 'pending' ? 'draft' : cur.status;
     await updateOrder(tx, id, {
       branchCode: input.branchCode, warehouseCode: p.warehouseCode, orderDate: input.orderDate, validUntil: input.validUntil ?? null, status, source: cur.source,
       partnerCode: p.partnerCode, phone: p.phone, body, holdSeq: seq, ...(status !== cur.status ? { pendingReasons: null } : {}), actor: ctx.actor.id,
+      shipping: p.shipping,
     });
     const changes = diffOrder({ head: headOf(cur), lines: cur.body.lines }, { head: headOf({ ...cur, partner_code: p.partnerCode, valid_until: input.validUntil ?? null,
       warehouse_code: p.warehouseCode, branch_code: input.branchCode, order_date: input.orderDate, phone: p.phone, body }), lines });
+    // NT-BH-032: thông tin giao đổi → ghi lịch sử từng ô.
+    const before = shippingOf(cur);
+    for (const f of ['receiver', 'phone', 'address', 'fee', 'carrier', 'trackingNo', 'cod'] as const) {
+      const x = before?.[f] ?? (f === 'fee' || f === 'cod' ? 0 : null);
+      const y = p.shipping?.[f] ?? (f === 'fee' || f === 'cod' ? 0 : null);
+      if (x !== y) changes.push({ field: `shipping ${f}`, from: x, to: y });
+    }
     await ev(tx, ctx, id, action, [...changes, ...extra], status !== cur.status ? 'Sửa đơn chờ duyệt — đơn về Nháp, gửi lại để kiểm hạn mức' : null);
     return { docs, short };
   });
@@ -336,6 +365,10 @@ export async function rejectOrder(ctx: ActionContext, id: string, note: string) 
 
 // ------------------------------------------------------------------ giao / đóng / huỷ
 
+const shippingOpen = (r: Pick<OrderRow, 'order_no' | 'status'>) => Errors.conflict(
+  `Đơn ${r.order_no} còn chuyến giao Chờ lấy hàng / Đang giao — cập nhật chuyến Đã giao hoặc Hoàn trước khi đóng / huỷ đơn`,
+  { reason: 'PHIEU_BAN_ORDER_STATE', status: r.status, cause: 'shipping' });
+
 /** Giao một lần: số ≤ còn lại (khoá theo đơn) → phiếu bán BH10 nháp xuất từ kho KCB, nối số đơn; giao đủ → Đã đóng. */
 export async function deliverOrder(ctx: ActionContext, id: string, input: { docDate?: string; lines: { lineKey: string; qty: number }[] }) {
   return ctx.data.module(async (tx) => {
@@ -370,6 +403,8 @@ export async function closeOrder(ctx: ActionContext, id: string, note: string) {
   const plan = await ctx.data.module(async (tx) => {
     const r = await getOrder(tx, id, true);
     if (r.status !== 'open') throw stateError(r, 'chỉ đóng đơn đã gửi');
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: còn chuyến giao chưa xong (hàng ở KCB chờ lấy / ở KHG) → chặn (đóng góp)
+    if (anyShipping(r.body.lines)) throw shippingOpen(r);
     return endHolding(tx, ctx, r, 'closed', note);
   });
   await submitHolds(ctx, plan.docs);
@@ -381,6 +416,7 @@ export async function cancelOrder(ctx: ActionContext, id: string, note: string) 
   const plan = await ctx.data.module(async (tx) => {
     const r = await getOrder(tx, id, true);
     if (!['draft', 'pending', 'open'].includes(r.status)) throw stateError(r, 'không huỷ được');
+    if (anyShipping(r.body.lines)) throw shippingOpen(r);
     if (anyDelivered(r.body.lines) || r.body.deliveries.some((d) => !d.returned)) {
       throw Errors.conflict(`Đơn ${r.order_no} đã giao một phần — không huỷ được; dùng Đóng đơn (phần đã giao giữ nguyên)`, { reason: 'PHIEU_BAN_ORDER_STATE', status: r.status });
     }
@@ -416,6 +452,8 @@ async function syncLinkedEdit(tx: Tx, ctx: ActionContext, d: { docId: string; or
   const idx = r.body.deliveries.findIndex((x) => x.docId === d.docId && !x.returned);
   if (idx < 0) return;
   const old = r.body.deliveries[idx]!;
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: dòng phí ship không phải hàng của đơn; phiếu của chuyến giao không đổi số lượng hàng (đóng góp)
+  d = { ...d, lines: d.lines.filter((l) => l.lineKey !== SHIP_LINE_KEY) };
   const sum = (ls: readonly { lineKey: string; qty: number }[]) => { const m = new Map<string, number>(); for (const l of ls) m.set(l.lineKey, r4((m.get(l.lineKey) ?? 0) + l.qty)); return m; };
   const a = sum(old.lines);
   const b = sum(d.lines);
@@ -424,6 +462,10 @@ async function syncLinkedEdit(tx: Tx, ctx: ActionContext, d: { docId: string; or
   if (bad.length) fail([`Phiếu giao theo đơn chỉ gồm mặt hàng của đơn: ${bad.join('; ')}`]);
   const same = a.size === b.size && [...a].every(([k, q]) => b.get(k) === q);
   if (same) return;
+  if (old.shipmentId) {
+    throw Errors.conflict(`Phiếu ${old.docNo} là phiếu của chuyến giao (hàng đã giao từ kho KHG) — không đổi số lượng hàng; khách không nhận thì xoá phiếu nháp rồi cập nhật chuyến Hoàn`,
+      { reason: 'PHIEU_BAN_SHIPMENT_STATE', status: 'delivered' });
+  }
   const reopenable = r.status === 'open' || (r.status === 'closed' && r.close_reason === 'delivered');
   if (!reopenable) throw stateError(r, 'không đổi số lượng phiếu giao; xoá phiếu nháp để trả hàng về kho bán');
   const back = returnDelivery(r.body.lines, old.lines, true);
@@ -459,6 +501,21 @@ export async function deleteSaleDraft(ctx: ActionContext, docId: string) {
     const idx = r.body.deliveries.findIndex((x) => x.docId === docId && !x.returned);
     if (idx < 0) return { docs: [] as HoldDoc[] };
     const del = r.body.deliveries[idx]!;
+    // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: xoá phiếu nháp của chuyến giao → chuyến về Đang giao (hàng vẫn ở KHG), đơn mở lại nếu đã đóng vì giao đủ (đóng góp)
+    if (del.shipmentId) {
+      const sh = await shipmentByDoc(tx, docId);
+      const lines = shipmentDelivered(r.body.lines, del.lines, true);
+      const deliveries = r.body.deliveries.map((x, i) => (i === idx ? { ...x, returned: true } : x));
+      const reopen = r.status === 'closed' && r.close_reason === 'delivered';
+      await updateOrder(tx, r.order_id, { ...writeOf(r, ctx.actor.id), status: reopen ? 'open' : r.status, body: { ...r.body, lines, deliveries }, ...(reopen ? { closeReason: null } : {}) });
+      if (sh) {
+        const log: ShipLog[] = [...sh.log, { at: new Date().toISOString(), by: ctx.actor.id, byName: ctx.actor.name, from: 'delivered', to: 'shipping', note: `Xoá phiếu bán nháp ${d.doc_no}` }];
+        await updateShipment(tx, sh.shipment_id, { status: 'shipping', carrier: sh.carrier_code, trackingNo: sh.tracking_no, shipWarehouse: sh.ship_warehouse_code, saleDocId: null, saleDocNo: null, log, actor: ctx.actor.id });
+      }
+      await ev(tx, ctx, r.order_id, 'delivery_returned', del.lines.map((l) => ({ field: `delivered ${l.sku}`, from: l.qty, to: 0 })),
+        `Xoá phiếu bán nháp ${d.doc_no} của chuyến giao ${sh ? sh.seq : ''} — chuyến về Đang giao, hàng vẫn ở kho KHG`);
+      return { docs: [] as HoldDoc[] };
+    }
     const keep = r.status === 'open' || (r.status === 'closed' && r.close_reason === 'delivered');
     const back = returnDelivery(r.body.lines, del.lines, keep);
     const deliveries = r.body.deliveries.map((x, i) => (i === idx ? { ...x, returned: true } : x));
@@ -490,4 +547,298 @@ export async function importOrders(ctx: ActionContext, rows: OrderInput[], dup: 
   };
 }
 
+// ------------------------------------------------------------------ chuyến giao (NT-BH-032)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: chuyến giao hai bước qua kho KHG, phí ship, COD (đóng góp)
 
+/** Cấu hình giao hàng (đọc ngoài giao dịch của module — vai trò module không đọc bảng cấu hình của Core). */
+async function shipConfigOf(ctx: ActionContext) {
+  const [wh, fee, cod] = await Promise.all([ctx.settings.get<unknown>(SHIP_WAREHOUSES), ctx.settings.get<unknown>(SHIP_FEE_SKU), ctx.settings.get<unknown>(COD_METHODS)]);
+  return { warehouses: parseHoldMap(wh), feeSku: typeof fee === 'string' ? fee.trim() : '', cod: parseCarrierMap(cod) };
+}
+type ShipConfig = Awaited<ReturnType<typeof shipConfigOf>>;
+
+/** Kho KHG (hàng gửi bán) của cửa hàng. Chưa khai / khai sai → PHIEU_BAN_NO_SHIP_WAREHOUSE (không đi giao được). */
+async function shipWarehouseOf(tx: Tx, r: Pick<OrderRow, 'branch_code' | 'warehouse_code' | 'hold_warehouse_code'>, cfg: ShipConfig): Promise<string> {
+  const code = cfg.warehouses.get(r.branch_code);
+  const wh = await warehousesOf(tx, r.branch_code);
+  if (!code || !wh.active.some((w) => w.code === code) || code === r.warehouse_code || code === r.hold_warehouse_code) {
+    throw Errors.validation(`Cửa hàng ${r.branch_code} chưa có kho loại KHG (hàng gửi bán) để đi giao — khai kho KHG ở danh mục kho (DM18) rồi chọn ở Cài đặt bán hàng (BH17)${code ? ` (kho ${code} không dùng được: không thuộc cửa hàng, đã ngừng hoặc trùng kho bán / kho giữ hàng)` : ''}`,
+      { reason: 'PHIEU_BAN_NO_SHIP_WAREHOUSE', branchCode: r.branch_code });
+  }
+  return code;
+}
+
+/** Cấu hình kho KHG, mã phí ship, hình thức COD theo hãng (cho màn). */
+export async function shipSettings(ctx: ActionContext) {
+  const c = await shipConfigOf(ctx);
+  return { keys: { shipWarehouses: SHIP_WAREHOUSES, shipFeeSku: SHIP_FEE_SKU, codMethods: COD_METHODS }, shipWarehouses: Object.fromEntries(c.warehouses), shipFeeSku: c.feeSku || null, codMethods: Object.fromEntries(c.cod) };
+}
+
+const shipLog = (ctx: ActionContext, from: ShipmentStatus | null, to: ShipmentStatus, note?: string | null, docNo?: string): ShipLog => ({
+  at: new Date().toISOString(), by: ctx.actor.id, byName: ctx.actor.name, from, to, ...(note ? { note } : {}), ...(docNo ? { docNo } : {}),
+});
+const overError = (no: string, over: { lineKey: string; sku: string; qty: number; remaining: number }[]) =>
+  Errors.validation(`Giao vượt số còn lại của đơn ${no}: ${over.map((o) => `${o.sku} giao ${o.qty}, còn ${o.remaining}`).join('; ')}`, { reason: 'PHIEU_BAN_OVER_REMAINING', items: over });
+
+export type ShipmentInput = { lines: { lineKey: string; qty: number }[]; carrier?: string; trackingNo?: string; fee?: number; cod?: number; note?: string };
+
+/**
+ * Lập chuyến giao (Chờ lấy hàng): mỗi dòng ≤ số còn lại (khoá theo đơn). Hãng / mã vận đơn / phí ship / COD mặc định theo thông tin giao
+ * của đơn — phí và COD chỉ mặc định cho chuyến đầu chưa hoàn (chuyến sau 0 trừ khi nhập). Cửa hàng chưa khai kho KHG → không lập được.
+ */
+export async function createShipment(ctx: ActionContext, id: string, input: ShipmentInput) {
+  const cfg = await shipConfigOf(ctx);
+  const sid = randomUUID();
+  await ctx.data.module(async (tx) => {
+    const r = await getOrder(tx, id, true);
+    if (r.status !== 'open') throw stateError(r, 'chỉ giao đơn đã gửi / đã duyệt');
+    if (!r.partner_code) fail([`Đơn ${r.order_no} chưa có mã khách — sửa đơn chọn khách trước khi giao`]);
+    await shipWarehouseOf(tx, r, cfg);
+    const a = reserveShipment(r.body.lines, input.lines);
+    if (a.problems.length) fail(a.problems);
+    if (a.over.length) throw overError(r.order_no, a.over);
+    const all = await shipmentsOf(tx, id);
+    const info = shippingOf(r);
+    const firstLive = !all.some((x) => x.status !== 'returned');
+    const carrier = (input.carrier?.trim() || info?.carrier || SELF_CARRIER).toUpperCase();
+    const fee = roundMoney(input.fee ?? (firstLive ? info?.fee ?? 0 : 0));
+    const cod = roundMoney(input.cod ?? (firstLive ? info?.cod ?? 0 : 0));
+    const seq = all.reduce((m, x) => Math.max(m, x.seq), 0) + 1;
+    await insertShipment(tx, {
+      id: sid, tenantId: ctx.tenant.id, orderId: id, seq, carrier, trackingNo: input.trackingNo?.trim() || (firstLive ? info?.trackingNo ?? null : null), fee, cod,
+      lines: a.ship, log: [shipLog(ctx, null, 'waiting', input.note)], actor: ctx.actor.id,
+    });
+    await updateOrder(tx, id, { ...writeOf(r, ctx.actor.id), body: { ...r.body, lines: a.lines } });
+    await ev(tx, ctx, id, 'ship_create', a.ship.map((l) => ({ field: `shipping ${l.sku}`, from: null, to: l.qty })), `Chuyến ${seq} — ${SHIPMENT_LABEL.waiting}${input.note ? `: ${input.note}` : ''}`);
+  });
+  ctx.meta('shipmentId', sid);
+  return orderDetail(ctx, id);
+}
+
+/**
+ * Đổi trạng thái chuyến (người dùng cập nhật tay — chưa nối API hãng):
+ *   Chờ lấy → Đang giao: chứng từ chuyển kho KCB → KHG (chưa doanh thu).
+ *   Đang giao → Đã giao: phiếu bán BH10 nháp xuất từ KHG — dòng hàng như đơn + dòng phí ship + thanh toán COD theo hãng.
+ *   Đang giao → Hoàn: chứng từ chuyển kho KHG → KCB, hàng giữ lại cho đơn. Chờ lấy → Hoàn: trả chỗ, không chứng từ.
+ */
+export async function setShipmentStatus(ctx: ActionContext, id: string, shipmentId: string, input: { status: ShipmentStatus; note?: string; trackingNo?: string; carrier?: string; docDate?: string }) {
+  const cfg = await shipConfigOf(ctx);
+  const plan = await ctx.data.module(async (tx) => {
+    const r = await getOrder(tx, id, true);
+    const sh = await getShipment(tx, id, shipmentId);
+    if (!SHIPMENT_NEXT[sh.status].includes(input.status)) {
+      throw Errors.conflict(`Chuyến ${sh.seq} của đơn ${r.order_no} đang "${SHIPMENT_LABEL[sh.status]}" — không chuyển sang "${SHIPMENT_LABEL[input.status]}"`,
+        { reason: 'PHIEU_BAN_SHIPMENT_STATE', status: sh.status, to: input.status });
+    }
+    const carrier = (input.carrier?.trim() || sh.carrier_code || SELF_CARRIER).toUpperCase();
+    const trackingNo = input.trackingNo?.trim() || sh.tracking_no;
+    const moves: Move[] = sh.lines.map((l) => ({ lineKey: l.lineKey, sku: l.sku, name: l.name, unit: l.unit, qty: l.qty }));
+    const date = vnToday();
+    let docs: HoldDoc[] = [];
+    let seq = r.hold_seq;
+    let shipWh = sh.ship_warehouse_code;
+    let sale: { id: string; docNo: string } | null = null;
+    let lines = r.body.lines;
+    let body: OrderBody = r.body;
+    let status: OrderStatus = r.status;
+    let closeReason: string | null | undefined;
+    if (input.status === 'shipping') {
+      if (r.status !== 'open') throw stateError(r, 'chỉ đi giao đơn đang mở');
+      shipWh = await shipWarehouseOf(tx, r, cfg);
+      const from = r.hold_warehouse_code ?? r.warehouse_code;
+      docs = [toHoldDoc({ orderId: r.order_id, orderNo: r.order_no, seq: ++seq, branchCode: r.branch_code, docDate: date, from, to: shipWh, moves, release: false, kind: 'ship' })];
+    } else if (input.status === 'returned') {
+      // Đơn còn mở: hàng về KCB, giữ lại cho đơn. Đơn đã đóng (phiếu của chuyến bị xoá sau khi đóng tay): hàng về kho bán, không giữ.
+      const keep = r.status === 'open';
+      if (sh.status === 'shipping' && shipWh) {
+        const to = keep ? r.hold_warehouse_code ?? r.warehouse_code : r.warehouse_code;
+        docs = [toHoldDoc({ orderId: r.order_id, orderNo: r.order_no, seq: ++seq, branchCode: r.branch_code, docDate: date, from: shipWh, to, moves, release: true, kind: 'back' })];
+      }
+      lines = keep ? shipmentReturned(r.body.lines, sh.lines)
+        : shipmentReturned(r.body.lines, sh.lines).map((l, i) => ({ ...l, held: r.body.lines[i]!.held }));
+      body = { ...r.body, lines };
+    } else {
+      // Đã giao: phiếu bán nháp xuất từ KHG.
+      if (!r.partner_code) fail([`Đơn ${r.order_no} chưa có mã khách — sửa đơn chọn khách trước khi ghi Đã giao`]);
+      const fee = Number(sh.ship_fee);
+      const cod = Number(sh.cod_amount);
+      const extra: DocInput['lines'] = [];
+      if (fee > 0) {
+        if (!cfg.feeSku) {
+          throw Errors.validation('Chuyến có phí ship mà chưa khai mã dịch vụ "Phí ship thu khách" — kế toán khai ở Cài đặt bán hàng (BH17)', { reason: 'PHIEU_BAN_NO_SHIP_FEE_ITEM', fee });
+        }
+        const item = (await catalogFor(tx, [cfg.feeSku])).get(cfg.feeSku);
+        if (!item) {
+          throw Errors.validation(`Mã dịch vụ phí ship ${cfg.feeSku} (BH17) không có trong danh mục / đã ngừng / không bán — khai lại ở Cài đặt bán hàng`, { reason: 'PHIEU_BAN_NO_SHIP_FEE_ITEM', sku: cfg.feeSku });
+        }
+        const rate = item.taxCode ? (await taxRates(tx)).get(item.taxCode) ?? 0 : 0;
+        extra.push({ lineKey: SHIP_LINE_KEY, sku: cfg.feeSku, name: item.name || 'Phí ship', qty: 1, unitPrice: feeBeforeTax(fee, rate) } as DocInput['lines'][number]);
+      }
+      const payments: NonNullable<DocInput['payments']> = [];
+      if (cod > 0) {
+        const method = cfg.cod.get(carrier);
+        if (!method) {
+          throw Errors.validation(`Chưa khai hình thức thanh toán "COD — ${carrier}" — kế toán khai hình thức (phải thu hãng) rồi chọn ở Cài đặt bán hàng (BH17)`, { reason: 'PHIEU_BAN_NO_COD_METHOD', carrier });
+        }
+        payments.push({ methodCode: method, amount: cod, reference: `COD ${carrier}${trackingNo ? ` ${trackingNo}` : ''}` });
+      }
+      const before = new Map(r.body.lines.map((l) => [l.lineKey, l.delivered]));
+      const used = new Set(r.body.lines.filter((l) => sh.lines.some((x) => x.lineKey === l.lineKey)).map((l) => l.policyRef?.key).filter(Boolean));
+      const doc = await saveDraftIn(tx, ctx, 'sale', {
+        docDate: input.docDate || date, branchCode: r.branch_code, warehouseCode: shipWh ?? undefined, partner: { code: r.partner_code! },
+        lines: [...deliveryLines(r.body.lines, sh.lines, before), ...extra], payments,
+        note: `Giao theo đơn đặt hàng ${r.order_no} — chuyến ${sh.seq}${carrier !== SELF_CARRIER ? ` (${carrier}${trackingNo ? ` ${trackingNo}` : ''})` : ''}`,
+        ...(r.body.policyRefs?.some((p) => used.has(p.key)) ? { policyRefs: r.body.policyRefs.filter((p) => used.has(p.key)) } : {}),
+      } as DocInput, undefined, { order: { id: r.order_id, no: r.order_no } });
+      sale = { id: doc.id, docNo: doc.docNo };
+      lines = shipmentDelivered(r.body.lines, sh.lines);
+      const done = fullyDelivered(lines);
+      body = { ...r.body, lines, deliveries: [...r.body.deliveries, { docId: doc.id, docNo: doc.docNo, at: new Date().toISOString(), by: ctx.actor.name, lines: sh.lines.map((l) => ({ lineKey: l.lineKey, sku: l.sku, qty: l.qty })), shipmentId }] };
+      if (done) { status = 'closed'; closeReason = 'delivered'; }
+    }
+    await updateShipment(tx, shipmentId, {
+      status: input.status, carrier, trackingNo, shipWarehouse: shipWh, saleDocId: sale?.id ?? sh.sale_doc_id, saleDocNo: sale?.docNo ?? sh.sale_doc_no,
+      log: [...sh.log, shipLog(ctx, sh.status, input.status, input.note, sale?.docNo ?? docs[0]?.docNo)], actor: ctx.actor.id,
+    });
+    await updateOrder(tx, id, { ...writeOf(r, ctx.actor.id), status, body, holdSeq: seq, ...(closeReason !== undefined ? { closeReason } : {}) });
+    const what = docs[0] ? ` — chứng từ chuyển kho ${docs[0].docNo}` : sale ? ` — phiếu bán nháp ${sale.docNo}` : '';
+    await ev(tx, ctx, id, 'ship_status', [{ field: `shipment ${sh.seq}`, from: sh.status, to: input.status }], `Chuyến ${sh.seq}: ${SHIPMENT_LABEL[sh.status]} → ${SHIPMENT_LABEL[input.status]}${what}${input.note ? ` · ${input.note}` : ''}`);
+    if (status === 'closed' && r.status !== 'closed') await ev(tx, ctx, id, 'close', [{ field: 'status', from: r.status, to: 'closed' }], 'Giao đủ');
+    return { docs, sale };
+  });
+  await submitHolds(ctx, plan.docs);
+  if (plan.sale) ctx.meta('saleDoc', plan.sale);
+  return orderDetail(ctx, id);
+}
+
+// ------------------------------------------------------------------ copy đơn (NT-BH-032 Q4)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: copy đơn → đơn, hoá đơn lẻ (BH10 đã duyệt / đơn máy bán) → đơn; giá + khuyến mại tính lại (đóng góp)
+
+export type CopyInput = { from: 'order' | 'sale' | 'pos'; id?: string; no?: string; branchCode?: string; orderDate?: string; validUntil?: string };
+type PosLines = { code: string; branchCode: string; status: string; customerCode: string | null; lines: { lineKey: string; sku: string; unitQty: number; ratio: number; isGift: boolean }[] };
+type Evaluated = {
+  applied: { policyRef: { key: string; version: number; hash: string } }[];
+  gifts: { sku: string; qty: number; policyRef: { key: string; version: number; line: 'gift' } }[];
+  discounts: { lineKey: string; amount: number; policyRef: { key: string; version: number; line: 'discount' } }[];
+};
+
+const copyFail = (message: string, extra: Record<string, unknown> = {}) => Errors.validation(message, { reason: 'PHIEU_BAN_COPY_SOURCE', ...extra });
+
+/**
+ * Lập đơn nháp mới từ đơn đặt hàng / phiếu bán BH10 đã duyệt / đơn máy bán: copy mặt hàng (bỏ quà và giảm theo chương trình cũ), số lượng,
+ * khách, thông tin giao (đơn → đơn; bỏ mã vận đơn); đơn giá để trống = giá cửa hàng hôm nay; khuyến mại Core tính lại theo ngày lập mới
+ * (core.policy.evaluate — áp mọi chương trình đủ điều kiện như nút Áp khuyến mại). Đơn mới ghi "Copy từ <số gốc>".
+ */
+export async function copyOrder(ctx: ActionContext, input: CopyInput) {
+  if (!input.id && !input.no) throw copyFail('Chọn đơn / nhập số phiếu gốc để copy');
+  if (input.from === 'sale' && !input.id && !input.branchCode) throw copyFail('Copy từ phiếu bán BH10: chọn cửa hàng của phiếu');
+  const today = input.orderDate || vnToday();
+  const cfg = input.from === 'sale' ? await shipConfigOf(ctx) : null;
+  const pos = input.from === 'pos' ? await posLinesOf(ctx, input) : null;
+  const src = await ctx.data.module(async (tx) => {
+    if (input.from === 'order') {
+      const o = input.id ? await getOrder(tx, input.id) : input.no ? await orderByNo(tx, input.no, input.branchCode) : null;
+      if (!o) throw copyFail(`Không có đơn đặt hàng ${input.no ?? input.id ?? ''}`);
+      const ship = shippingOf(o);
+      return {
+        no: o.order_no, branchCode: o.branch_code, warehouseCode: o.warehouse_code, partnerCode: o.partner_code, customer: o.body.customer,
+        lines: o.body.lines.filter((l) => !(l.isGift && l.policyRef)).map((l) => ({ sku: l.sku, qty: l.qty, isGift: l.isGift && !l.policyRef })),
+        shipping: ship ? { ...ship, trackingNo: undefined } : undefined, note: o.body.note,
+      };
+    }
+    if (input.from === 'sale') {
+      const d = input.id ? await getDoc(tx, input.id) : input.no && input.branchCode ? await saleByNo(tx, input.branchCode, input.no) : null;
+      if (!d || d.kind !== 'sale') throw copyFail(`Không có phiếu bán ${input.no ?? input.id ?? ''} ở cửa hàng ${input.branchCode ?? ''}`);
+      if (d.status !== 'approved') throw copyFail(`Phiếu bán ${d.doc_no} chưa duyệt — chỉ copy hoá đơn đã duyệt`, { status: d.status });
+      return {
+        no: d.doc_no, branchCode: d.branch_code, warehouseCode: undefined as string | undefined, partnerCode: d.partner_code, customer: undefined,
+        lines: d.body.lines.filter((l) => !(l.isGift && l.policyRef) && l.lineKey !== SHIP_LINE_KEY && l.sku !== cfg?.feeSku).map((l) => ({ sku: l.sku, qty: l.qty, isGift: l.isGift })),
+        shipping: undefined, note: undefined,
+      };
+    }
+    const p = pos!;
+    if (p.status !== 'completed') throw copyFail(`Đơn máy bán ${p.code} chưa hoàn tất / đã huỷ — không copy`, { status: p.status });
+    const raw = p.customerCode ?? '';
+    const partnerCode = raw ? (await partnerByCode(tx, raw))?.code ?? await partnerByPhone(tx, normPhone(raw)) : null;
+    return {
+      no: p.code, branchCode: p.branchCode, warehouseCode: undefined as string | undefined, partnerCode,
+      customer: !partnerCode && normPhone(raw) ? { phone: normPhone(raw) } : undefined,
+      lines: p.lines.filter((l) => !l.isGift).map((l) => ({ sku: l.sku, qty: r4(l.unitQty * (l.ratio || 1)), isGift: false })),
+      shipping: undefined, note: undefined,
+    };
+  });
+  if (!src.lines.length) throw copyFail(`${src.no} không có dòng hàng để copy`);
+  const branchCode = input.branchCode && input.from === 'order' ? input.branchCode : src.branchCode;
+  // Gộp theo mã (hoá đơn lẻ có thể nhiều dòng cùng mã / khác ĐVT) — đơn đặt hàng ghi theo ĐVT mặc định.
+  const merged = new Map<string, { sku: string; qty: number; isGift: boolean }>();
+  for (const l of src.lines) {
+    const k = `${l.sku}|${l.isGift ? 'g' : ''}`;
+    const m = merged.get(k);
+    merged.set(k, m ? { ...m, qty: r4(m.qty + l.qty) } : { ...l });
+  }
+  const lines = [...merged.values()].map((l, i) => ({ lineKey: `L${i + 1}`, sku: l.sku, qty: l.qty, ...(l.isGift ? { isGift: true } : {}) }));
+  const promo = await promoFor(ctx, branchCode, today, lines.filter((l) => !l.isGift));
+  const all = [...lines.map((l) => {
+    const d = promo.discounts.get(l.lineKey);
+    return d ? { ...l, discount: d.discount, policyRef: d.ref } : l;
+  }), ...promo.gifts.map((g, i) => ({ lineKey: `G${i + 1}`, sku: g.sku, qty: g.qty, isGift: true, policyRef: g.policyRef }))];
+  const orderInput: OrderInput = {
+    orderDate: today, validUntil: input.validUntil, branchCode, ...(src.warehouseCode ? { warehouseCode: src.warehouseCode } : {}), source: 'manual',
+    ...(src.partnerCode ? { partner: { code: src.partnerCode } } : {}), ...(src.customer ? { customer: src.customer } : {}),
+    lines: all as OrderInput['lines'], note: [`Copy từ ${src.no}`, src.note].filter(Boolean).join(' · '),
+    ...(promo.policyRefs.length ? { policyRefs: promo.policyRefs } : {}), ...(src.shipping ? { shipping: src.shipping } : {}),
+  };
+  if (promo.skipped) ctx.meta('promoSkipped', promo.skipped);
+  const r = await createOrder(ctx, orderInput, { onDuplicate: 'keep', copiedFrom: { kind: input.from, no: src.no } });
+  return r.order!;
+}
+
+/** Dòng đơn máy bán theo mã (module pos — action đọc pos.order.lines; module không đọc bảng của nhau). Gọi NGOÀI ctx.data.module. */
+async function posLinesOf(ctx: ActionContext, input: CopyInput): Promise<PosLines> {
+  if (!input.no) throw copyFail('Copy từ đơn máy bán: nhập mã đơn');
+  try {
+    const r = await ctx.actions.call<PosLines | null>('pos.order.lines', { code: input.no, ...(input.branchCode ? { branch: input.branchCode } : {}) });
+    if (!r) throw copyFail('Copy từ đơn máy bán: nhập mã đơn');
+    return r;
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    if (code === 'NOT_FOUND') throw copyFail(`Không có đơn máy bán ${input.no}${input.branchCode ? ` ở cửa hàng ${input.branchCode}` : ''} (hoặc module Máy bán POS chưa bật)`);
+    throw e;
+  }
+}
+
+/**
+ * Khuyến mại tính lại theo ngày lập mới: hỏi Core (core.policy.evaluate, như nút Áp khuyến mại của BH10) bằng giá cửa hàng hôm nay (đơn
+ * giá trước thuế như đơn sẽ tính × (1 + thuế suất), quy theo đơn vị nhỏ nhất). Tiền giảm gồm thuế → chiết khấu trước thuế của dòng; quà →
+ * dòng quà 0đ. Core không trả lời (thiếu quyền, chưa có chính sách) → không áp, báo `promoSkipped`.
+ */
+async function promoFor(ctx: ActionContext, branch: string, date: string, lines: { lineKey: string; sku: string; qty: number }[]) {
+  const none = { discounts: new Map<string, { discount: number; ref: { key: string; version: number; line: 'discount' } }>(), gifts: [] as Evaluated['gifts'], policyRefs: [] as { key: string; version: number; hash: string }[] };
+  if (!lines.length) return { ...none, skipped: null as string | null };
+  const info = await ctx.data.module(async (tx) => ({
+    prices: await branchPriceRatios(tx, branch, lines.map((l) => l.sku)), catalog: await catalogFor(tx, lines.map((l) => l.sku)), rates: await taxRates(tx),
+  }));
+  const rateOf = (sku: string) => info.rates.get(info.catalog.get(sku)?.taxCode ?? '') ?? 0;
+  const evalLines = lines.filter((l) => info.prices.has(l.sku)).map((l) => {
+    const p = info.prices.get(l.sku)!;
+    return { lineKey: l.lineKey, sku: l.sku, qty: r4(l.qty * p.ratio), price: p.price * (1 + rateOf(l.sku) / 100) / p.ratio };
+  });
+  if (!evalLines.length) return { ...none, skipped: null };
+  let ev: Evaluated;
+  try {
+    ev = await ctx.actions.call<Evaluated>('core.policy.evaluate', { docDate: date, branchCode: branch, lines: evalLines });
+  } catch (e) {
+    return { ...none, skipped: `Chưa tính được khuyến mại: ${(e as Error).message}` };
+  }
+  const discounts = new Map<string, { discount: number; ref: { key: string; version: number; line: 'discount' } }>();
+  for (const d of ev.discounts ?? []) {
+    const sku = lines.find((l) => l.lineKey === d.lineKey)?.sku ?? '';
+    const cur = discounts.get(d.lineKey);
+    const add = roundMoney(d.amount / (1 + rateOf(sku) / 100));
+    discounts.set(d.lineKey, { discount: roundMoney((cur?.discount ?? 0) + add), ref: cur?.ref ?? d.policyRef });
+  }
+  const gifts = ev.gifts ?? [];
+  const used = new Set([...[...discounts.values()].map((d) => d.ref.key), ...gifts.map((g) => g.policyRef.key)]);
+  const policyRefs = (ev.applied ?? []).map((a) => a.policyRef).filter((p) => used.has(p.key)).map((p) => ({ key: p.key, version: p.version, hash: p.hash }));
+  return { discounts, gifts, policyRefs, skipped: null };
+}
