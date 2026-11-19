@@ -460,7 +460,13 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
                 ...(f.shortName && (overwrite || !v.shortName) ? { shortName: f.shortName } : {}),
                 ...(!v.name && f.name ? { name: f.name } : {}),
                 ...(f.representative && !v.contactName ? { contactName: f.representative } : {}),
-              })} />
+              })}
+              // [2026-11-19 10:43 AM khanhtd] DM12 — đổi MST: xoá thông tin đã điền theo MST cũ (ô đã sửa tay thì giữ)
+              // [2026-11-19 11:05 AM khanhtd] DM12 — thêm mới: xoá hết khối công ty kể cả ô sửa tay; sửa đối tượng đã có: không xoá (đổi MST theo ngày hiệu lực)
+              onClear={isNew ? (p) => set({
+                companyName: '', companyAddress: '', shortName: '', contactName: '',
+                ...(p.name && v.name === p.name ? { name: '' } : {}),
+              }) : undefined} />
             {txt('companyName', 'Tên công ty', true)}
             {txt('shortName', 'Tên viết tắt')}
             {txt('alias', 'Alias')}
@@ -545,7 +551,13 @@ function NccFields({ v, set, txt, choices, isNew, codeHint, noun, changeGroup, f
           ...(f.address && (overwrite || !v.address) ? { address: f.address } : {}),
           ...(f.shortName && (overwrite || !v.shortName) ? { shortName: f.shortName } : {}),
           ...(f.representative && !v.contactName ? { contactName: f.representative, position: v.position || 'Người đại diện theo pháp luật' } : {}),
-        })} />
+        })}
+        // [2026-11-19 10:43 AM khanhtd] DM13 — đổi MST: xoá thông tin đã điền theo MST cũ (ô đã sửa tay thì giữ)
+        // [2026-11-19 11:05 AM khanhtd] DM13 — thêm mới: xoá hết tên / tên viết tắt / địa chỉ / người đại diện kể cả ô sửa tay; sửa NCC đã có: không xoá
+        onClear={isNew ? () => set({
+          name: '', address: '', shortName: '', contactName: '',
+          ...(v.position === 'Người đại diện theo pháp luật' ? { position: '' } : {}),
+        }) : undefined} />
       <Field label="Tên nhà cung cấp (tên công ty trên hoá đơn) (*)" full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} autoFocus={!isNew} /></Field>
       {txt('shortName', 'Tên viết tắt')}
       {txt('address', 'Địa chỉ (theo đăng ký kinh doanh / hoá đơn)', true)}
