@@ -254,7 +254,8 @@ describe.skipIf(!HAS)('NT-BH-005 — hoàn hàng, đổi hàng, huỷ đơn từ
     expect(await queued(O9)).toHaveLength(0);
     const inst = await app.inject({ method: 'POST', url: '/api/v1/apps/tgs-wp/install', headers: { authorization: `Bearer ${ctx.token}` } });
     expect(inst.statusCode, inst.body).toBe(201);
-    expect(inst.json().data).toMatchObject({ events: ['pos.order.recorded', 'pos.return.recorded', 'pos.order.cancelled'] });
+    // [2026-11-19 Võ Hoàng] NGHIEM-THU — app tgs-wp nhận thêm sự kiện phiếu bán / trả kế toán lập (NT-BH-017, 14/11): test cập nhật đủ 5 loại (đóng góp)
+    expect(inst.json().data).toMatchObject({ events: ['pos.order.recorded', 'pos.return.recorded', 'pos.order.cancelled', 'phieu-ban.doc.recorded', 'phieu-ban.doc.cancelled'] });
     expect(inst.json().data.webhookSecret).toMatch(/^whsec_/);
     expect((await post('/orders', order(O10, { payment: { mode: 'cash', cashGiven: 900_000 } }))).statusCode).toBe(201);
     expect(await queued(O10)).toEqual([{ status: 'pending' }]);
