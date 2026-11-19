@@ -32,7 +32,7 @@ Tổ chức → Đối tượng → Tài khoản, ngân hàng → (song song) Ch
 
 **Form**
 
-- Khách hàng / NCC: ô **Thuộc đơn vị cha** chỉ chọn đối tượng cùng nhóm ở ô Thuộc nhóm (chưa chọn nhóm thì khoá; đổi nhóm thì bỏ cha). Mobile + Telephone gộp một ô **Di động** (ghi cả hai trường). Bỏ nút "+ Thêm đơn vị con" trên thanh nút (thêm trong hồ sơ đơn vị cha).
+- Khách hàng / NCC: ô **Thuộc đơn vị cha** chọn đối tượng thuộc **nhóm cha** của nhóm ở ô Thuộc nhóm (nhóm không có nhóm cha thì chọn trong cùng nhóm), lọc theo vai trò đã tích: Nhà cung cấp → chỉ NCC, Khách hàng → chỉ khách hàng, tích cả hai → cả hai (chưa chọn nhóm thì khoá; đổi nhóm thì bỏ cha). Mobile + Telephone gộp một ô **Di động** (ghi cả hai trường). Bỏ nút "+ Thêm đơn vị con" trên thanh nút (thêm trong hồ sơ đơn vị cha).
 - Nhân viên: Điện thoại + Di động gộp một ô Di động.
 - Loại kho (DM18): bỏ hai thẻ, màn chỉ còn danh sách; **Nghiệp vụ dùng loại kho** chuyển vào ngăn Hướng dẫn (vẫn sửa được). Hộp thoại mở ở chế độ xem. **TK kho** phải là tài khoản cấp cuối — tài khoản tổng hợp báo đỏ, khoá Ghi.
 - Mặt hàng (DM10): **In tem** gom vào một nút "In tem ▾" mở một bảng: phạm vi (mã đang chọn / mọi dòng đang hiện), mẫu tem (ô chọn), số tem mỗi mã, tổng số tem, nút In tem.
