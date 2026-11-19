@@ -1,4 +1,5 @@
 // @bizcity-layer M data/masterdata
+// [2026-11-19 11:50 AM khanhtd] NT-DM-011 — PART-HINT-005: đổi MST với ngày hiệu lực đã qua mà còn hoá đơn mang MST cũ từ ngày đó
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14 / 15: khung "Vì sao" cho form đối tượng — nhà cung cấp cần MST, MST sai định dạng, trùng tên với đối tượng khác (bizcity_catalog_hint@1)
 /**
  * Đánh giá một bản khai báo đối tượng trước khi lưu — chỉ đọc. Trùng MST đã CHẶN ở route (assertTaxCodeFree, 409); ở đây chỉ
@@ -8,6 +9,7 @@ import { catalogFinding, type CatalogFinding } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
 import { reviewFindings } from '@bizcity/platform/core/catalog-warn';
+import { countInvoicesKeepingOldTax } from './partner-attributes.js';
 
 export interface PartnerDraft {
   code: string;
@@ -15,6 +17,8 @@ export interface PartnerDraft {
   kind?: string;
   alsoKinds?: string[];
   taxCode?: string | null;
+  /** Ngày hiệu lực khi đổi MST của đối tượng đã có (YYYY-MM-DD, NT-DM-011). */
+  validFrom?: string | null;
 }
 
 /** MST Việt Nam: 10 số (doanh nghiệp) hoặc 10 số - 3 số (đơn vị phụ thuộc); 12 số (CCCD cá nhân, từ 2025). */
@@ -35,5 +39,7 @@ export async function partnerHints(db: Db, tenantId: string, d: PartnerDraft): P
       .where(sql<boolean>`lower(trim(name)) = lower(${name})`).limit(1).executeTakeFirst();
     if (same) out.push(catalogFinding('PART-HINT-003', { other: same.code, name }, { field: 'name' }));
   }
+  const keep = await countInvoicesKeepingOldTax(db, tenantId, d.code, tax, d.validFrom);
+  if (keep.count) out.push(catalogFinding('PART-HINT-005', { count: keep.count, code: d.code, from: d.validFrom!.split('-').reverse().join('/'), old: keep.oldTaxCode }, { field: 'taxCode' }));
   return reviewFindings(db, tenantId, out); // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị
 }

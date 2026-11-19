@@ -149,6 +149,55 @@ export function DonViCon({ code, onOpen, onAdd }: { code: string; onOpen?: (code
   );
 }
 
+// [2026-11-19 12:25 PM khanhtd] NT-DM-011 — mục Lịch sử MST, tên, địa chỉ: phiên bản theo ngày hiệu lực (entity_attributes) + hoá đơn mang MST khác MST hiệu lực tại ngày hoá đơn
+interface AttrVersion { version: number; validFrom: string; validTo: string | null; name: string; taxCode: string; address: string; note: string; mismatched: number }
+interface AttrMismatch { invoiceDate: string; invoiceSerial: string; invoiceNo: string; docNo: string; direction: string; taxCodeOnInvoice: string; taxCodeAtDate: string }
+/** Các phiên bản tên / MST / địa chỉ (mới trước) và hoá đơn lệch MST — chỉ đọc. */
+export function LichSuThuocTinh({ code }: { code: string }) {
+  const q = useQuery({ queryKey: ['partners', 'attributes', code], queryFn: () => api.get<{ versions: AttrVersion[]; mismatches: AttrMismatch[] }>(`/api/v1/partners/${encodeURIComponent(code)}/attributes`), enabled: Boolean(code) });
+  const [xem, setXem] = useState<AttrVersion | null>(null);
+  const vn = (d: string | null) => (d ? d.split('-').reverse().join('/') : '');
+  const versions = q.data?.versions ?? [];
+  const lech = (q.data?.mismatches ?? []).filter((m) => xem && m.invoiceDate >= xem.validFrom && (!xem.validTo || m.invoiceDate < xem.validTo));
+  return (
+    <fieldset className="fgroup full" data-view-ok>
+      <legend>Lịch sử MST, tên, địa chỉ <Hoi text={'Mỗi lần đổi MST, tên hoặc địa chỉ là một phiên bản có ngày hiệu lực. Chứng từ đọc tên / MST theo ngày chứng từ. '
+        + 'Cột "Hoá đơn lệch": hoá đơn trong khoảng hiệu lực của phiên bản mà vẫn mang MST khác — rà với đối tác, không sửa hoá đơn đã nhận.'} /></legend>
+      {q.isLoading ? <Loading /> : q.error ? <ErrorBox error={errorText(q.error)} /> : !versions.length ? <div className="muted full" style={{ fontSize: 13 }}>Chưa có phiên bản.</div> : (
+        <div className="full">
+          <div className="table-wrap" style={{ maxHeight: 220 }}>
+            <table className="grid">
+              <thead><tr>
+                <th style={{ width: 60 }} title="Số phiên bản">Bản</th><th style={{ width: 100 }} title="Hiệu lực từ ngày">Từ ngày</th><th style={{ width: 100 }} title="Hết hiệu lực từ ngày (trống = đang dùng)">Đến ngày</th>
+                <th style={{ width: 130 }}>MST</th><th>Tên</th><th>Địa chỉ</th><th style={{ width: 90 }} title="Hoá đơn trong khoảng hiệu lực mang MST khác — bấm để xem">Hoá đơn lệch</th>
+              </tr></thead>
+              <tbody>{versions.map((r) => (
+                <tr key={r.version} className={r.validTo ? 'muted' : ''} title={r.note || undefined}>
+                  <td className="num">{r.version}</td><td className="mono">{r.validFrom <= '1970-01-01' ? 'ban đầu' : vn(r.validFrom)}</td><td className="mono">{r.validTo ? vn(r.validTo) : 'đang dùng'}</td>
+                  <td className="mono">{r.taxCode}</td><td>{r.name}</td><td>{r.address}</td>
+                  <td className="num">{r.mismatched ? <button type="button" className="btn btn-xs" style={{ color: 'var(--bad, #dc2626)' }} onClick={() => setXem(xem?.version === r.version ? null : r)}>⚠ {r.mismatched}</button> : ''}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+          {xem && (
+            <div className="table-wrap" style={{ maxHeight: 200, marginTop: 6 }}>
+              <div style={{ fontSize: 12.5, margin: '2px 0 4px' }}>Hoá đơn từ {vn(xem.validFrom)}{xem.validTo ? ` đến trước ${vn(xem.validTo)}` : ''} mang MST khác <b className="mono">{xem.taxCode}</b>:</div>
+              <table className="grid">
+                <thead><tr><th style={{ width: 100 }}>Ngày hoá đơn</th><th style={{ width: 90 }}>Ký hiệu</th><th style={{ width: 100 }}>Số hoá đơn</th><th>Số chứng từ</th><th style={{ width: 70 }}>Chiều</th><th style={{ width: 130 }}>MST trên hoá đơn</th></tr></thead>
+                <tbody>{lech.map((m, i) => (
+                  <tr key={i}><td className="mono">{vn(m.invoiceDate)}</td><td className="mono">{m.invoiceSerial}</td><td className="mono">{m.invoiceNo}</td><td className="mono">{m.docNo}</td>
+                    <td>{m.direction === 'input' ? 'Mua vào' : 'Bán ra'}</td><td className="mono" style={{ color: 'var(--bad, #dc2626)' }}>{m.taxCodeOnInvoice}</td></tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
 interface HistoryLine { at: string; by: string; action: string; changes: string[] }
 /** Lịch sử thay đổi của đối tượng: ai, lúc nào, đổi ô nào từ gì sang gì. */
 export function LichSuDoiTuong({ code }: { code: string }) {

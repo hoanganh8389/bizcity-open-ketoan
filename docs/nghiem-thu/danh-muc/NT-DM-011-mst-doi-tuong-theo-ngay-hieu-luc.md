@@ -7,7 +7,7 @@
 | Màn hình | DM12 Khách hàng, DM13 Nhà cung cấp — hộp Sửa; HT08 Bàn làm việc kế toán (thẻ Việc hôm nay) |
 | Bộ phận yêu cầu | Phòng kế toán |
 | Ngày tạo | 19/11/2026 |
-| Trạng thái | **Chờ duyệt** — người dùng (khanhtd) đồng ý hướng; phần đổi hành vi 0087 (D029-19-5) chờ chủ dự án duyệt |
+| Trạng thái | **Đã làm, chờ nghiệm thu** <!-- [2026-11-19 12:35 PM khanhtd] NT-DM-011 — đã làm theo phiếu --> — người dùng (khanhtd) đồng ý triển khai 19/11/2026; D029-19-5 vẫn chờ chủ dự án duyệt |
 
 ## 1. Vấn đề
 
@@ -59,7 +59,7 @@ v_from := COALESCE(v_req, GREATEST(CURRENT_DATE, bản_đang_mở.valid_from + 1
 | Đổi | Hình dạng |
 |---|---|
 | `PUT /api/v1/partners/:code` (`core.partner.save`) | thêm `validFrom?: 'YYYY-MM-DD'` (≤ hôm nay). Có thì `set_config('ketoan.valid_from', validFrom, true)` trong cùng giao dịch trước khi ghi — như `branch.service.ts`. Chỉ có tác dụng khi tên / MST / địa chỉ đổi |
-| `GET /api/v1/partners/:code/attributes` (đề xuất, chưa có trong mã; chỉ đọc, `catalog:read`) | `{ versions: [{ version, validFrom, validTo, name, taxCode, address, createdBy, createdAt, note, mismatched }], mismatches: [{ invoiceDate, docNo, invoiceSerial, invoiceNo, direction, taxCodeOnInvoice, taxCodeAtDate }] }` — `mismatched` = số hoá đơn trong khoảng hiệu lực của bản đó mang MST khác |
+| `GET /api/v1/partners/:code/attributes` (mới, chỉ đọc, `catalog:read`) | `{ versions: [{ version, validFrom, validTo, name, taxCode, address, createdBy, createdAt, note, mismatched }], mismatches: [{ invoiceDate, docNo, invoiceSerial, invoiceNo, direction, taxCodeOnInvoice, taxCodeAtDate }] }` — `mismatched` = số hoá đơn trong khoảng hiệu lực của bản đó mang MST khác |
 | Kiểm trùng MST (`assertTaxCodeFree`, `GET /partners/lookup?taxCode=`) và tìm kiếm danh sách | xét cả MST ở **mọi phiên bản** của đối tượng khác (MST cũ của NCC A không được gán cho NCC B mới) |
 | Cảnh báo khi ghi (khung "Vì sao") | mã mới **`PART-HINT-005`** (warn): *"Có {count} hoá đơn của {code} từ {from} vẫn mang MST cũ {old}."* — chỉ khi `validFrom` < hôm nay và có hoá đơn lệch; lưu được, ghi lý do như các cảnh báo khác |
 
@@ -104,14 +104,14 @@ v_from := COALESCE(v_req, GREATEST(CURRENT_DATE, bản_đang_mở.valid_from + 1
 | Đồng bộ / nhập Excel đổi MST | Như cũ: hiệu lực từ hôm nay |
 | Hoá đơn, dòng sổ đã ghi | Không đổi một byte |
 
-Test (đề xuất, chưa có): `apps/api/test/mst-doi-tuong-theo-ngay.test.ts` (đỏ trước khi sửa); `entity-attributes.test.ts` (T029-EA-*) vẫn đạt.
+Test: `apps/api/test/mst-doi-tuong-theo-ngay.test.ts` (đỏ trước khi sửa); `entity-attributes.test.ts` (T029-EA-*) vẫn đạt.
 
 ## 6. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | |
+| Ngày chạy | 19/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-dm-011-mst-theo-ngay` |
+| Test | `mst-doi-tuong-theo-ngay.test.ts` 7/7 (bỏ 0168 thì 4 đỏ: phiên bản mới vẫn từ hôm nay); 12 tệp test đối tượng / tên theo ngày 75/75; lane `DG-MD-3` chạy trên CSDL test |
 
 ## 7. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -121,3 +121,4 @@ Test (đề xuất, chưa có): `apps/api/test/mst-doi-tuong-theo-ngay.test.ts` 
 | Ngày | Thay đổi |
 |---|---|
 | 19/11/2026 | Tạo phiếu, chốt thiết kế theo hướng người dùng đồng ý; phần đổi 0087 chờ chủ dự án duyệt (D029-19-5) |
+| 19/11/2026 | Làm theo phiếu: migration 0168, `validFrom` ở `PUT /partners/:code` + `/validate`, `GET /partners/:code/attributes`, kiểm trùng MST cũ, `PART-HINT-005`, `PARTNER_TAX_MISMATCH` + `DG-MD-3`, ô Hiệu lực từ ngày + mục Lịch sử MST, hướng dẫn |

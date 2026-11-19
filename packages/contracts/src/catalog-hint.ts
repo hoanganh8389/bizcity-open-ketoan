@@ -321,6 +321,13 @@ const BASE_HINTS: Record<string, CatalogHintDef> = {
     why: 'MST sai định dạng không tra được với cơ quan thuế; hoá đơn điện tử mang MST đúng sẽ không khớp với đối tượng này.',
     fix: 'Sửa MST: 10 số, hoặc 10 số - 3 số cho đơn vị phụ thuộc, hoặc 12 số (cá nhân).',
   },
+  // [2026-11-19 11:52 AM khanhtd] NT-DM-011 — đổi MST theo ngày hiệu lực đã qua mà còn hoá đơn mang MST cũ
+  'PART-HINT-005': {
+    id: 'PART-HINT-005', entity: 'partner', level: 'warn', status: 'draft',
+    title: 'Có {count} hoá đơn của {code} từ ngày {from} vẫn mang MST cũ {old}.',
+    why: 'MST mới có hiệu lực từ ngày đã chọn, nhưng các hoá đơn này lập từ ngày đó vẫn ghi MST cũ. Hoá đơn đã nhận không bị sửa; chúng sẽ hiện ở Bàn làm việc kế toán (HT08, PARTNER_TAX_MISMATCH) để rà với đối tác.',
+    fix: 'Kiểm lại ngày hiệu lực với đối tác. Nếu đúng: ghi lý do khi lưu, rồi yêu cầu đối tác lập hoá đơn điều chỉnh / thay thế cho hoá đơn lập sai MST (NĐ 123/2020).',
+  },
 };
 
 /** Mọi quy tắc: chung (trên) + mỗi danh mục một tệp ở src/quy-tac/ (docs/nghiep-vu/25). */
@@ -385,6 +392,7 @@ export const CATALOG_HINT_EXAMPLES: Record<string, Record<string, string>> = {
   'PART-HINT-002': { code: 'NCC-AN' },
   'PART-HINT-003': { other: 'KH001', name: 'Công ty TNHH An Bình' },
   'PART-HINT-004': { taxCode: '01234' },
+  'PART-HINT-005': { count: '3', code: 'NCC-AN', from: '01/10/2026', old: '0101234567' },
 };
 
 /** Biến {x} một luật dùng (title / why / fix / learn) — câu chữ đơn vị sửa lại chỉ được dùng các biến này. */

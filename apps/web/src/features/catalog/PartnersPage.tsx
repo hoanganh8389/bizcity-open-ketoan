@@ -33,7 +33,7 @@ import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel 
 // [2026-11-11 10:48 AM kiennt] HT03 — ô mã số thuế có tra cứu tách ra components/TaxCodeField (dùng chung với Thông tin đơn vị)
 import { TaxCodeField } from '@/components/TaxCodeField';
 import type { CatalogWarnAck } from '@ketoan/contracts';
-import { CayDoiTuong, DonViCon, LichSuDoiTuong, ODonViCha } from './DoiTuongChaCon';
+import { CayDoiTuong, DonViCon, LichSuDoiTuong, LichSuThuocTinh, ODonViCha } from './DoiTuongChaCon';
 import { ArrowLeft } from 'lucide-react';
 
 interface Partner {
@@ -206,6 +206,8 @@ function PartnerEditorBody({ value, ...rest }: { value: Partial<Partner> & { isN
     onBack={back.length ? () => { setCur(back[back.length - 1]!); setBack((b) => b.slice(0, -1)); } : undefined} />;
 }
 
+/** Hôm nay theo giờ máy (YYYY-MM-DD) — giới hạn ô Hiệu lực từ ngày. */
+const homNay = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 const todayText = () => new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
@@ -225,6 +227,9 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
     return x.kind === 'supplier' ? { ...x, name: x.companyName || x.name, address: x.companyAddress || x.address } : x;
   });
   const [isNew, setIsNew] = useState(Boolean(value.isNew));
+  // [2026-11-19 12:20 PM khanhtd] NT-DM-011 — đổi tên / MST / địa chỉ của đối tượng đã có: chọn ngày hiệu lực (≤ hôm nay; trống = hôm nay)
+  const [goc] = useState(() => ({ name: (v.name ?? '').trim(), taxCode: (v.taxCode ?? '').trim(), address: (v.address ?? '').trim() }));
+  const [validFrom, setValidFrom] = useState('');
   const [codeTouched, setCodeTouched] = useState(Boolean(value.code));
   const [codeHint, setCodeHint] = useState('');
   const [invalid, setInvalid] = useState<string[]>([]);
@@ -323,13 +328,15 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
 
   const viewAgain = useViewAgain();
   // Khung Vì sao (PHASE-023): nhà cung cấp cần MST, MST sai định dạng, trùng tên — cảnh báo mềm, lưu phải ghi lý do.
-  const why = useCatalogWhy('/api/v1/partners/validate', { code: (v.code ?? '').trim(), name: v.name ?? '', kind, alsoKinds: (v.alsoKinds ?? []).filter((k) => k === 'customer' || k === 'supplier'), taxCode: v.taxCode?.trim() || null }, Boolean(v.code?.trim()));
+  const doiThuocTinh = !isNew && ((v.name ?? '').trim() !== goc.name || (v.taxCode ?? '').trim() !== goc.taxCode || (v.address ?? '').trim() !== goc.address);
+  const vf = doiThuocTinh && validFrom ? validFrom : undefined;
+  const why = useCatalogWhy('/api/v1/partners/validate', { code: (v.code ?? '').trim(), name: v.name ?? '', kind, alsoKinds: (v.alsoKinds ?? []).filter((k) => k === 'customer' || k === 'supplier'), taxCode: v.taxCode?.trim() || null, validFrom: vf }, Boolean(v.code?.trim()));
   const ack = useWarnAck(why.findings);
   const save = useMutation({
     mutationFn: (warnAck?: CatalogWarnAck) => {
       const code = (v.code ?? '').trim();
       const body = {
-        warnAck,
+        warnAck, validFrom: vf,
         name: v.name ?? '', kind, taxCode: v.taxCode?.trim() || undefined, address: v.address || undefined, email: v.email?.trim() || undefined, phone: v.phone?.trim() || undefined,
         groupCode: v.groupCode || null, isActive: v.isActive ?? true, paymentTermDays: v.paymentTermDays ?? null, creditLimit: v.creditLimit ?? null, note: v.note ?? '',
         contactName: v.contactName ?? '', bankAccountNo: v.bankAccountNo ?? '', bankAccountHolder: v.bankAccountHolder ?? '', bankName: v.bankName ?? '', maxOpenDocs: v.maxOpenDocs ?? null,
@@ -399,6 +406,11 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
       </div>
       {/* [2026-11-19 08:49 AM khanhtd] đơn vị cha: đối tượng thuộc nhóm cha của nhóm đang chọn (nhóm không có cha thì cùng nhóm), lọc theo vai trò đã tích */}
       <ODonViCha value={v.parentCode} self={v.code} isNew={isNew} groupCode={parentGroupCode} kind={parentKind} onChange={(c) => void changeParent(c)} />
+      {doiThuocTinh && <div className="alert full" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span>Đang đổi <b>{[(v.taxCode ?? '').trim() !== goc.taxCode && 'MST', (v.name ?? '').trim() !== goc.name && 'tên', (v.address ?? '').trim() !== goc.address && 'địa chỉ'].filter(Boolean).join(', ')}</b>. Hiệu lực từ ngày</span>
+        <input type="date" className="input" style={{ width: 160 }} value={validFrom} max={homNay()} onChange={(e) => setValidFrom(e.target.value)} title="Trống = từ hôm nay. Không chọn ngày sau hôm nay; phải sau ngày bắt đầu của phiên bản đang dùng" />
+        <span className="muted" style={{ fontSize: 12 }}>Trống = từ hôm nay. Chứng từ đã lập không bị sửa; hoá đơn từ ngày này còn mang MST cũ được liệt kê để rà (mục Lịch sử MST, Bàn làm việc kế toán). Nhiều thay đổi ở các ngày khác nhau: ghi từng lần, ngày cũ trước.</span>
+      </div>}
       {suggest && <div className="alert full" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <span>MST <b className="mono">{v.taxCode}</b> là MST chi nhánh của <b>{suggest.code} - {suggest.name}</b> (MST {suggest.taxCode}). Gắn {noun} này làm đơn vị con?</span>
         <button type="button" className="btn btn-sm btn-primary" onClick={() => void changeParent(suggest.code)}>Gắn làm đơn vị con</button>
@@ -415,6 +427,7 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
       </div>}
       {!isNew && (kind === 'supplier' || tab === 'family') && <>
         <DonViCon code={v.code ?? ''} onOpen={onSwitch ? (c) => void openCode(c) : undefined} onAdd={onSwitch ? () => onSwitch(childOf(v)) : undefined} />
+        <LichSuThuocTinh code={v.code ?? ''} />
         <LichSuDoiTuong code={v.code ?? ''} />
       </>}
       {kind !== 'supplier' && slotTabs.filter((s) => tab === `mod:${s.module}`).map((s) => <s.component key={s.module} code={v.code ?? ''} name={v.name ?? ''} />)}
