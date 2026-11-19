@@ -67,7 +67,8 @@ export function NhomHangPage() {
   }, [q.data, ix]);
 
   const xuat = () => void luuExcel('nhom-hang.xlsx', [{ name: 'Nhóm hàng', plainBody: true, rows: [
-    ['Nhóm cha', 'Mã nhóm hàng', 'Mã ngắn', 'Tên nhóm hàng', 'Cấp', 'Số mặt hàng', 'Đang dùng', 'Ghi chú', 'Người tạo', 'Lúc tạo', 'Người sửa', 'Lúc sửa'],
+    // [2026-11-18 05:10 PM kiennt] NT-DM-010 — đổi tên ô: Tên ngành (name), Mã hoá (skuCode), Mô tả (fullName, không bắt buộc, không tự ghép) (đóng góp)
+    ['Nhóm cha', 'Tên ngành', 'Mã hoá', 'Mô tả', 'Cấp', 'Số mặt hàng', 'Đang dùng', 'Ghi chú', 'Người tạo', 'Lúc tạo', 'Người sửa', 'Lúc sửa'],
     ...(q.data ?? []).map((c) => [ix.path(ix.parentOf(c.code)), c.name, c.skuCode ?? '', c.fullName ?? '', ix.level(c.code), tongMH.get(c.code) ?? 0, c.isActive ? 'Có' : 'Không', c.note ?? '', c.createdBy ?? '', luc(c.createdAt), c.updatedBy ?? '', c.updatedBy ? luc(c.updatedAt) : '']),
   ] }]);
 
@@ -193,13 +194,12 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
   // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nhân bản: chép tên, ghi chú của nhóm gốc; mã ngắn gợi ý mới (đóng góp)
   const goc = form.mode === 'add' && form.copy ? ix.byCode.get(form.copy) ?? null : null;
   const [ghiChu, setGhiChu] = useState(old?.note ?? goc?.note ?? '');
-  const tenDu = (p: string | null, t: string) => [p ? ix.byCode.get(p)?.fullName || ix.path(p).split(' / ').join(' ') : '', t.trim()].filter(Boolean).join(' ');
   // [2026-11-12 Nguyễn Văn Thủy] thêm mới: điền sẵn cả 3 ô (mã nhóm, mã ngắn, tên đầy đủ) — sửa lại cho đúng rồi Ghi (đóng góp)
   // nhân bản: tên nhóm phải khác (mã nhóm hàng không trùng) — điền "… (bản sao)" để sửa lại
   const goiYTen = form.mode === 'add' ? (goc ? `${goc.name} (bản sao)` : `Nhóm mới ${1000 + Math.floor(Math.random() * 9000)}`) : '';
   const [ten, setTen] = useState(old?.name ?? goiYTen);
-  const [full, setFull] = useState(old?.fullName || (old ? tenDu(ix.parentOf(old.code), old.name) : tenDu(form.mode === 'add' ? form.parent : null, goiYTen)));
-  const [fullTay, setFullTay] = useState(Boolean(old)); // sửa tay rồi thì thôi tự điền
+  // [2026-11-18 05:10 PM kiennt] NT-DM-010 — đổi tên ô: Tên ngành (name), Mã hoá (skuCode), Mô tả (fullName, không bắt buộc, không tự ghép) (đóng góp)
+  const [full, setFull] = useState(old?.fullName ?? goc?.fullName ?? '');
   const [dung, setDung] = useState(old?.isActive ?? true);
   const [moving, setMoving] = useState(false);
   const [err, setErr] = useState('');
@@ -212,8 +212,8 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
 
   const loiMa = (() => {
     if (!len || khoa) return '';
-    if (!ma) return `Nhập mã ngắn cấp ${lv}: ${QUY_TAC[lv]}`;
-    if (lv === 1 ? !/^[1-9][0-9]$/.test(ma) : !/^[A-Z0-9]+$/.test(ma) || ma.length !== len) return `Mã ngắn cấp ${lv} phải là ${QUY_TAC[lv]} (đang "${ma}")`;
+    if (!ma) return `Nhập mã hoá cấp ${lv}: ${QUY_TAC[lv]}`;
+    if (lv === 1 ? !/^[1-9][0-9]$/.test(ma) : !/^[A-Z0-9]+$/.test(ma) || ma.length !== len) return `Mã hoá cấp ${lv} phải là ${QUY_TAC[lv]} (đang "${ma}")`;
     const sib = (parent ? ix.kids.get(parent) ?? [] : ix.roots).find((c) => c.code !== old?.code && c.skuCode === ma);
     return sib ? `Mã ${ma} đã dùng cho nhóm "${sib.name}" cùng cấp` : '';
   })();
@@ -240,8 +240,8 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
     const con = old ? (ix.kids.get(old.code) ?? []).find((x) => nn(x.name) === nn(ten)) : undefined;
     return con ? { x: con, la: 'nhóm con' } : undefined;
   })();
-  const loiTen = trungTen ? `Mã nhóm hàng trùng ${trungTen.la} "${ix.path(trungTen.x.code)}" — đặt mã khác` : '';
-  const ghi = () => { const e = !ten.trim() ? 'Nhập mã nhóm hàng' : loiTen || loiMa || (!full.trim() ? 'Nhập tên nhóm hàng' : ''); setErr(e); if (!e) save.mutate(); };
+  const loiTen = trungTen ? `Tên ngành trùng ${trungTen.la} "${ix.path(trungTen.x.code)}" — đặt tên khác` : '';
+  const ghi = () => { const e = !ten.trim() ? 'Nhập tên ngành' : loiTen || loiMa; setErr(e); if (!e) save.mutate(); };
 
   return (
     <>
@@ -253,28 +253,28 @@ function NhomForm({ ix, list, form, onClose, onSaved }: { ix: NhomIndex; list: N
             <span className="badge">Cấp {lv}</span>
           </div>
         </Field>
-        <Field label="Mã nhóm hàng (*)" tip="Tên ngắn hiện trên cây, vd Bỉm/ Tã quần trẻ em">
-          <input className="input" value={ten} autoFocus onFocus={(e) => e.target.select()} onChange={(e) => { setTen(e.target.value); setErr(''); if (!fullTay) setFull(tenDu(parent, e.target.value)); }} />
+        <Field label="Tên ngành (*)" tip="Tên hiện trên cây, vd Bỉm/ Tã quần trẻ em — không trùng nhóm cùng cấp, nhóm cha">
+          <input className="input" value={ten} autoFocus onFocus={(e) => e.target.select()} onChange={(e) => { setTen(e.target.value); setErr(''); }} />
           {loiTen && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>{loiTen}</div>}
         </Field>
-        <Field label={len ? 'Mã ngắn (mã ghép) (*)' : 'Mã ngắn (mã ghép)'}>
+        <Field label={len ? 'Mã hoá (*)' : 'Mã hoá'} tip="Đoạn mã ghép vào mã hàng">
           {(!len || khoa) ? <div className="nh-chi-xem mono">{ma || '—'}</div> : <input className="input mono" value={ma} maxLength={len || 1} placeholder={len ? QUY_TAC[lv] : ''}
             onChange={(e) => { setMa(e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase()); setErr(''); }} />}
           {khoa
-            ? <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>🔒 Đã có {soMH} mặt hàng — giữ nguyên mã ngắn</div>
+            ? <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>🔒 Đã có {soMH} mặt hàng — giữ nguyên mã hoá</div>
             : loiMa
             ? <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>{loiMa}</div>
             : <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{len ? `Cấp ${lv}: ${QUY_TAC[lv]}` : 'Cấp 4 trở đi không ghép vào mã hàng'}</div>}
         </Field>
-        <Field label="Tên nhóm hàng (*)" full tip="Tên đầy đủ — tự ghép theo nhóm cha, sửa được">
-          <input className="input" value={full} onChange={(e) => { setFull(e.target.value); setFullTay(true); setErr(''); }} onKeyDown={(e) => { if (e.key === 'Enter') ghi(); }} />
+        <Field label="Mô tả" full tip="Không bắt buộc">
+          <input className="input" value={full} onChange={(e) => { setFull(e.target.value); setErr(''); }} onKeyDown={(e) => { if (e.key === 'Enter') ghi(); }} />
         </Field>
         <Field label="Ghi chú" full><textarea className="input" rows={2} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} /></Field>
         <Field label=" "><label className="checkbox"><input type="checkbox" checked={dung} onChange={(e) => setDung(e.target.checked)} /> Đang dùng</label></Field>
       </Modal>
       {moving && old && (
         <ChuyenNhom list={list} self={old.code} current={parent} onClose={() => setMoving(false)}
-          onPick={(p) => { if (ix.level(p) !== ix.level(parent)) setMa(goiYMa(ix, p)); setParent(p); if (!fullTay) setFull(tenDu(p, ten)); setMoving(false); }} />
+          onPick={(p) => { if (ix.level(p) !== ix.level(parent)) setMa(goiYMa(ix, p)); setParent(p); setMoving(false); }} />
       )}
     </>
   );
