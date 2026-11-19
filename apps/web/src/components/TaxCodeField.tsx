@@ -16,8 +16,10 @@ export type TaxFill = { taxCode: string; name: string; shortName: string; addres
  * dữ liệu Cục Thuế) → điền tên trên hoá đơn, địa chỉ đăng ký, tên viết tắt, người đại diện. Bấm nút = ghi đè các ô đó theo kết quả;
  * tự tra khi rời ô (thêm mới, chưa có tên) = chỉ điền ô đang trống. Báo trạng thái ngừng hoạt động và MST đã có ở đối tượng khác.
  */
-export function TaxCodeField({ value, onChange, onFill, autoWhenEmpty, onBlurCheck, excludeCode, label = 'Mã số thuế — nhập rồi bấm Lấy thông tin', full = true, disabled = false, showExisting = true }: {
+// [2026-11-19 10:43 AM khanhtd] DM12/DM13 — onClear: đổi MST sau khi đã tra thì báo form xoá thông tin đã điền theo MST cũ; "không tìm thấy" báo màu đỏ
+export function TaxCodeField({ value, onChange, onFill, onClear, autoWhenEmpty, onBlurCheck, excludeCode, label = 'Mã số thuế — nhập rồi bấm Lấy thông tin', full = true, disabled = false, showExisting = true }: {
   value: string; onChange: (v: string) => void; onFill: (f: TaxFill, overwrite: boolean) => void; autoWhenEmpty: boolean; onBlurCheck?: (v: string) => void; excludeCode?: string;
+  /** Gõ MST khác MST vừa tra: nhận lại bộ thông tin đã điền lần trước để form xoá (ô người dùng đã sửa thì giữ). Không truyền = giữ nguyên như cũ. */ onClear?: (prev: TaxFill) => void;
   /** Nhãn ô; mặc định như form đối tượng. */ label?: string; full?: boolean;
   /** Chỉ xem: không gõ, không tra. */ disabled?: boolean;
   /** Báo "MST đã có ở đối tượng khác" (form đối tượng: có; Thông tin đơn vị: không — MST của chính công ty có thể trùng một đối tượng). */ showExisting?: boolean;
@@ -29,6 +31,8 @@ export function TaxCodeField({ value, onChange, onFill, autoWhenEmpty, onBlurChe
   /** Lượt tra đang chạy theo MST: rời ô tự tra rồi bấm Lấy thông tin ngay → chờ lượt đó (không gửi thêm — VietQR giới hạn lượt tra), xong thì điền đè. */
   const inflight = useRef<{ mst: string; p: Promise<TaxLookup> } | null>(null);
   const seq = useRef(0);
+  /** Bộ thông tin vừa điền theo kết quả tra (để xoá khi đổi sang MST khác). */
+  const filled = useRef<TaxFill | null>(null);
   const run = async (overwrite: boolean) => {
     const mst = value.trim();
     if (!mst) { setErr('Nhập mã số thuế trước'); return; }
@@ -39,7 +43,11 @@ export function TaxCodeField({ value, onChange, onFill, autoWhenEmpty, onBlurChe
       const r = await inflight.current.p;
       if (my !== seq.current) return;
       setRes(r);
-      if (r.company) onFill({ taxCode: r.company.taxCode, name: r.company.name, shortName: r.company.shortName, address: r.company.address, representative: r.company.representative }, overwrite);
+      if (r.company) {
+        const f = { taxCode: r.company.taxCode, name: r.company.name, shortName: r.company.shortName, address: r.company.address, representative: r.company.representative };
+        filled.current = f;
+        onFill(f, overwrite);
+      }
     } catch (e) { if (my === seq.current) { setRes(null); setErr(errorText(e)); } } finally {
       if (inflight.current?.mst === mst) inflight.current = null;
       if (my === seq.current) setBusy(false);
@@ -51,7 +59,12 @@ export function TaxCodeField({ value, onChange, onFill, autoWhenEmpty, onBlurChe
     <Field label={label} full={full}>
       <div className="row" style={{ gap: 6 }}>
         <input className="input mono" style={{ flex: 1 }} value={value} disabled={disabled} placeholder="vd 0104076740 — tự điền tên, địa chỉ theo Cục Thuế"
-          onChange={(e) => { onChange(e.target.value); setRes(null); setErr(''); }}
+          onChange={(e) => {
+            const val = e.target.value;
+            onChange(val); setRes(null); setErr('');
+            const prev = filled.current;
+            if (prev && onClear && val.trim() !== prev.taxCode.trim()) { filled.current = null; last.current = ''; onClear(prev); }
+          }}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void run(true); } }}
           onBlur={(e) => {
             const val = e.target.value.trim();
@@ -63,7 +76,7 @@ export function TaxCodeField({ value, onChange, onFill, autoWhenEmpty, onBlurChe
         </button>
       </div>
       {err && <span style={{ fontSize: 12, color: 'var(--bad, #dc2626)' }}>{err}</span>}
-      {res && !c && <span className="muted" style={{ fontSize: 12 }}>Không tìm thấy doanh nghiệp có mã số thuế này — kiểm tra lại MST hoặc nhập tay.</span>}
+      {res && !c && <span style={{ fontSize: 12, color: 'var(--bad, #dc2626)' }}>⚠ Không tìm thấy doanh nghiệp có mã số thuế này — kiểm tra lại MST hoặc nhập tay.</span>}
       {c && (
         <span style={{ fontSize: 12, color: c.active === false ? 'var(--bad, #dc2626)' : 'var(--ok, #15803d)' }}>
           {c.active === false ? '⚠ ' : '✓ '}{c.name}{c.status ? ` — ${c.status}` : ''}{c.active === false ? ' (kiểm tra trước khi giao dịch)' : ''}
