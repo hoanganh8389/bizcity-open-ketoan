@@ -1,109 +1,70 @@
 /**
- * Loại thuế (ACC43): mã thuế, tên, thuế suất, tài khoản thuế; thêm chiều (đầu ra / đầu vào) và nhóm trên bảng kê.
- * Thanh nút Thêm · Sửa · Xoá · Nạp · Xuất; bấm đúp dòng để sửa.
+ * Loại thuế (ACC43).
  */
+// [2026-11-19 kiennt] NT-DM-012 — màn chỉ xem: loại thuế GTGT cố định theo quy định nhà nước (KCT, 0, 5, 8, 10, KKKN), dùng chung mua / bán,
+// TK thuế theo Quy tắc hạch toán (ACC41). Bỏ Thêm / Sửa / Xoá / Nhập Excel; mã cũ (V…, R…) chỉ xem, kèm loại thay thế (đóng góp)
 import { useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorText } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
+import { ErrorBox, Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { CatalogToolbar } from '@/components/CatalogToolbar';
-import { nhapLoai } from '@/lib/nhapExcel';
-import { NutNhapExcel } from '@/components/NhapExcelWizard';
-import { AccountPicker } from '@/components/pickers';
+import { errorText } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { ghiChuHieuLuc, loaiDangDung, nhanLoai, type LoaiThue } from '@/lib/thueGtgt';
 
-interface TaxCode { code: string; name: string; rate: number; direction: string; accountCode: string | null; reportGroup: string; isActive: boolean }
-const GROUPS = [['KCT', 'Không chịu thuế'], ['0', '0%'], ['5', '5%'], ['8', '8%'], ['10', '10%'], ['KKK', 'Không kê khai']];
+const NHOM: Record<string, string> = { KCT: 'Không chịu thuế', '0': '0%', '5': '5%', '8': '8%', '10': '10%', KKK: 'Không kê khai' };
 
-const COLUMNS: Column<TaxCode>[] = [
-  { key: 'code', header: 'Mã thuế', type: 'code', width: 100 },
-  { key: 'name', header: 'Tên thuế', width: 420 },
+const COT_DANG_DUNG: Column<LoaiThue>[] = [
+  { key: 'code', header: 'Mã', type: 'code', width: 80 },
+  { key: 'name', header: 'Loại thuế', width: 300 },
+  { key: 'rate', header: 'Thuế suất', width: 110, value: (t) => nhanLoai(t) },
+  { key: 'reportGroup', header: 'Nhóm bảng kê / tờ khai', width: 160, value: (t) => NHOM[t.reportGroup] ?? t.reportGroup },
+  { key: 'hieuLuc', header: 'Hiệu lực', width: 140, value: (t) => ghiChuHieuLuc(t) || 'Không giới hạn' },
+  { key: 'legalBasis', header: 'Căn cứ', width: 360, value: (t) => t.legalBasis ?? '' },
+];
+const COT_MA_CU: Column<LoaiThue>[] = [
+  { key: 'code', header: 'Mã cũ', type: 'code', width: 90 },
+  { key: 'name', header: 'Tên', width: 380 },
   { key: 'rate', header: 'Thuế suất', type: 'number', width: 90, showZero: true, render: (t) => `${t.rate}%` },
-  { key: 'accountCode', header: 'Tài khoản', type: 'code', width: 100 },
-  { key: 'direction', header: 'Chiều', width: 90, hidden: true, value: (t) => (t.direction === 'output' ? 'Đầu ra' : 'Đầu vào') },
-  { key: 'reportGroup', header: 'Nhóm bảng kê', width: 120, hidden: true, value: (t) => GROUPS.find(([k]) => k === t.reportGroup)?.[1] ?? t.reportGroup },
-  { key: 'active', header: 'Hoạt động', type: 'check', width: 85, value: (t) => t.isActive },
+  { key: 'direction', header: 'Chiều cũ', width: 90, value: (t) => (t.direction === 'output' ? 'Đầu ra' : 'Đầu vào') },
+  { key: 'accountCode', header: 'TK cũ', type: 'code', width: 80 },
+  { key: 'replacedBy', header: 'Thay bằng', width: 120, value: (t) => t.replacedBy ?? 'chưa xác định' },
 ];
 
 export function TaxCodesPage() {
-  const { can } = useAuth();
-  const qc = useQueryClient();
-  const canWrite = can('catalog:write');
-  const [editing, setEditing] = useState<(Partial<TaxCode> & { isNew?: boolean }) | null>(null);
-  const [sel, setSel] = useState<TaxCode | null>(null);
+  const q = useQuery({ queryKey: ['tax-codes'], queryFn: () => api.get<LoaiThue[]>('/api/v1/tax-codes') });
+  const [maCu, setMaCu] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
-  const q = useQuery({ queryKey: ['tax-codes'], queryFn: () => api.get<TaxCode[]>('/api/v1/tax-codes') });
-  const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/tax-codes/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['tax-codes'] }); } });
-
+  const ds = q.data ?? [];
+  const rows = maCu ? ds.filter((t) => t.isLegacy) : loaiDangDung(ds);
   return (
     <>
-      <PageHeader title="Loại thuế" code="ACC43" subtitle="Mã loại thuế dùng trên dòng hàng của chứng từ (taxCode)" helpKey="loai-thue" />
+      <PageHeader title="Loại thuế" code="ACC43" subtitle="Loại thuế GTGT theo quy định nhà nước — dùng chung cho mua và bán" helpKey="loai-thue" />
       <div className="card">
-        <CatalogToolbar
-          trash={{ catalog: 'tax-codes', title: 'Biểu thuế', sel: sel ? { key: sel.code, label: sel.name } : null }}
-          phai
-          canWrite={canWrite}
-          hasSelection={Boolean(sel)}
-          busy={del.isPending}
-          onAdd={() => setEditing({ isNew: true, direction: 'output', reportGroup: '8', rate: 8, accountCode: '33311' })}
-          // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút Nhân bản (đóng góp)
-          onCopy={() => sel && setEditing({ ...sel, code: '', isNew: true, isActive: true })}
-          onEdit={() => sel && setEditing(sel)}
-          onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá loại thuế ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
-          onRefresh={() => q.refetch()}
-          onExport={() => exportRef.current?.()}
-          // [2026-11-18 10:40 AM kiennt] NT-DM-005 — nút Nhập Excel (khứ hồi với tệp Xuất) (đóng góp)
-          extra={canWrite && <NutNhapExcel loai={nhapLoai('bieu-thue')!} />}
-        />
-        <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
+        <div className="alert alert-info" style={{ marginBottom: 8 }}>
+          Danh mục do phần mềm cấu hình sẵn theo quy định (Luật Thuế GTGT, nghị quyết giảm thuế) — <b>không thêm, sửa, xoá</b>; thuế suất thay đổi
+          được cập nhật trong bản phần mềm mới. Một loại dùng cho cả phiếu mua và phiếu bán; tiền thuế ghi vào tài khoản ở <b>Quy tắc hạch toán (ACC41)</b>:
+          mua hàng hoá, dịch vụ 1331 · mua tài sản cố định 1332 · bán ra 33311.
+        </div>
+        <div className="row" style={{ gap: 12, alignItems: 'center', marginBottom: 6 }}>
+          <label className="checkbox"><input type="checkbox" checked={maCu} onChange={(e) => setMaCu(e.target.checked)} /> Xem mã cũ (trước khi cố định — chỉ để đọc chứng từ đã ghi)</label>
+          <span style={{ flex: 1 }} />
+          <button type="button" className="btn btn-sm" onClick={() => q.refetch()}>Nạp</button>
+          <button type="button" className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất</button>
+        </div>
+        <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : (
           <DataGrid
-            storageKey="acc43-v2"
-            exportName="loai-thue"
-            groupable
+            storageKey={maCu ? 'acc43-ma-cu' : 'acc43-v3'}
+            exportName={maCu ? 'loai-thue-ma-cu' : 'loai-thue'}
             exportRef={exportRef}
-            rows={q.data ?? []}
+            rows={rows}
             rowKey={(t) => t.code}
-            onSelect={setSel}
-            onRowDoubleClick={(t) => canWrite && setEditing(t)}
-            rowClassName={(t) => (t.isActive ? '' : 'muted')}
             footerLabel={false}
-            columns={COLUMNS}
+            columns={maCu ? COT_MA_CU : COT_DANG_DUNG}
           />
         )}
       </div>
-      {editing && <TaxForm value={editing} onClose={() => setEditing(null)} />}
     </>
-  );
-}
-
-// [2026-11-12 Nguyễn Văn Thủy] dùng lại ở form mặt hàng (nút + cạnh ô Thuế suất GTGT); onSaved trả mã vừa thêm (đóng góp)
-export const NEW_OUTPUT_TAX: Partial<TaxCode> & { isNew?: boolean } = { isNew: true, direction: 'output', reportGroup: '8', rate: 8, accountCode: '33311' };
-export function TaxForm({ value, onClose, onSaved }: { value: Partial<TaxCode> & { isNew?: boolean }; onClose: () => void; onSaved?: (code: string, rate: number) => void }) {
-  const qc = useQueryClient();
-  const [v, setV] = useState(value);
-  const set = (p: Partial<TaxCode>) => setV((x) => ({ ...x, ...p }));
-  const viewAgain = useViewAgain();
-  const save = useMutation({
-    mutationFn: () => {
-      const body = { name: v.name, rate: Number(v.rate), direction: v.direction, accountCode: v.accountCode || undefined, reportGroup: v.reportGroup };
-      return value.isNew ? api.post('/api/v1/tax-codes', { ...body, code: v.code }) : api.patch(`/api/v1/tax-codes/${value.code}`, { ...body, isActive: v.isActive });
-    },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['tax-codes'] }); if (value.isNew) { onSaved?.(v.code!, Number(v.rate)); onClose(); } else viewAgain[1](); },
-  });
-  return (
-    <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title="Loại thuế" onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Mã thuế (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} /></Field>
-      <Field label="Tên thuế (*)" full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
-      <Field label="Chiều"><select className="select input" value={v.direction} onChange={(e) => set({ direction: e.target.value })}><option value="output">Đầu ra (bán)</option><option value="input">Đầu vào (mua)</option></select></Field>
-      <Field label="Thuế suất (%)"><input className="input" type="number" value={v.rate ?? 0} onChange={(e) => set({ rate: Number(e.target.value) })} /></Field>
-      <Field label="Tài khoản"><AccountPicker postingOnly value={v.accountCode ?? ''} onChange={(accountCode) => set({ accountCode })} /></Field>
-      <Field label="Nhóm trên bảng kê"><select className="select input" value={v.reportGroup} onChange={(e) => set({ reportGroup: e.target.value })}>{GROUPS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>
-      {!value.isNew && <Field label="Trạng thái"><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Đang sử dụng</label></Field>}
-      {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
-    </Modal>
   );
 }

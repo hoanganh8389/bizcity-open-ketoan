@@ -20,6 +20,7 @@
  *   SEED_ADMIN_PASSWORD mật khẩu quản trị   (bỏ trống = tự sinh và in một lần khi tạo người quản trị; nhớ đổi sau khi đăng nhập)
  *   SEED_API_KEY       khoá API cố định cho tích hợp (bỏ trống = sinh ngẫu nhiên và in ra)
  */
+import { apDungLoaiThueCoDinh } from '../modules/tax-codes/loai-thue-co-dinh.js';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -206,6 +207,8 @@ export async function seed(opts: SeedOptions = {}): Promise<SeedResult> {
     const installed = await installPack(trx, tid, base, { actor: 'seed', baseline: true });
     const added = installed.items.filter((i) => i.action === 'add').length;
     if (added) console.log(`+ Gói định khoản ${base.id}@${base.version}: thêm ${added} mục`);
+    // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định (hiệu lực, căn cứ), đánh dấu mã cũ, khoá TK thuế TSCĐ (đóng góp)
+    await apDungLoaiThueCoDinh(trx, tid);
 
     const accountCodes = new Set(accounts.map((a) => a.code));
     for (const c of ASSET_CATEGORIES) {

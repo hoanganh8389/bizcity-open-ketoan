@@ -327,7 +327,8 @@ export function giftMatches(p: Policy, sku: string, ls: PLine[]): GiftMatch[] {
 }
 
 /** Thuế suất GTGT theo mã: đầu vào V… (V13K = không chịu thuế — hàng KCT mua vào; KKKN = không kê khai, quà không hoá đơn), đầu ra R… / KCT. */
-export const TAX_RATE: Record<string, number> = { V00: 0, V05: 5, V08: 8, V10: 10, V13K: 0, KKKN: 0, KCT: 0, R00K: 0, R00: 0, R05: 5, R08: 8, R10: 10 };
+// [2026-11-19 kiennt] NT-DM-012 — thêm 6 loại thuế cố định (KCT, 0, 5, 8, 10, KKKN dùng chung mua / bán); mã cũ giữ cho chứng từ cũ (đóng góp)
+export const TAX_RATE: Record<string, number> = { '0': 0, '5': 5, '8': 8, '10': 10, V00: 0, V05: 5, V08: 8, V10: 10, V13K: 0, KKKN: 0, KCT: 0, R00K: 0, R00: 0, R05: 5, R08: 8, R10: 10 };
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
 
 /* ------------------------------------------------------------------ ngày */

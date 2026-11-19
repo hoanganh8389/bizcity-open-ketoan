@@ -20,6 +20,9 @@ import type { PostingReason, ProductPostingGroup } from '@bizcity/platform/db/ty
 import { Errors } from '@bizcity/platform/core/errors';
 import type { PostingConfig, TaxCodeConfig } from '../posting-config/posting-config.repository.js';
 
+/** TK tài sản cố định / XDCB dở dang (thuế đầu vào ghi 1332): 211, 213, 217, 241. NT-DM-012. */
+export const isFixedAssetAccount = (account: string): boolean => /^(211|213|217|241)/.test(account);
+
 export class AccountResolver {
   private readonly missing = new Set<string>();
   private defaultGroupCache: ProductPostingGroup | undefined;
@@ -110,17 +113,38 @@ export class AccountResolver {
     return t;
   }
 
-  outputTaxAccount(code: string): string {
+  // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định (chiều 'both', không khai TK): TK theo Quy tắc hạch toán; mua TSCĐ → 1332;
+  // kiểm hiệu lực thuế suất theo ngày chứng từ (vd 8% đến hết 31/12/2026). Mã cũ (V…, R…) ghi sổ như trước (đóng góp)
+  /** Loại thuế phải còn hiệu lực ở ngày chứng từ (không truyền ngày thì không kiểm). */
+  private checkTaxDate(code: string, date?: string): void {
+    const t = this.cfg.taxCodes.get(code);
+    if (!t || !date) return;
+    const vn = (d: string) => d.split('-').reverse().join('/');
+    if (t.validTo && date > t.validTo) this.missing.add(`Loại thuế ${code} (${t.name}) hết hiệu lực sau ngày ${vn(t.validTo)} — chứng từ ngày ${vn(date)} phải chọn lại loại thuế`);
+    if (t.validFrom && date < t.validFrom) this.missing.add(`Loại thuế ${code} (${t.name}) chỉ có hiệu lực từ ngày ${vn(t.validFrom)}`);
+  }
+
+  outputTaxAccount(code: string, date?: string): string {
+    this.checkTaxDate(code, date);
     return this.taxCode(code).accountCode ?? this.fromDefault('tax_output', 'tài khoản thuế GTGT đầu ra');
   }
 
-  /** Tài khoản thuế đầu vào. Có tiền thuế mà mã là thuế ĐẦU RA (R08…) thì báo thiếu cấu hình: mua vào phải dùng mã V… (1331). */
-  inputTaxAccount(code: string, taxAmount = 0): string {
+  /**
+   * Tài khoản thuế đầu vào. Có tiền thuế mà mã là thuế ĐẦU RA (mã cũ R08…) thì báo thiếu cấu hình.
+   * goodsAccount: TK Nợ của dòng hàng — tài sản cố định (211, 213, 217, 241) thì thuế vào khoá tax_input_fixed_asset (1332 theo
+   * TT 99/2025/TT-BTC); đơn vị chưa đặt khoá đó thì dùng TK thuế đầu vào. Loại thuế có khai TK riêng (mã cũ) thì dùng TK đó.
+   */
+  inputTaxAccount(code: string, taxAmount = 0, opts: { date?: string; goodsAccount?: string | null } = {}): string {
     const t = this.taxCode(code);
+    this.checkTaxDate(code, opts.date);
     if (taxAmount && t.direction === 'output' && this.cfg.taxCodes.has(code)) {
-      this.missing.add(`Loại thuế ${code} là thuế GTGT đầu ra — phiếu mua / trả NCC phải dùng mã thuế đầu vào (V05, V08, V10…)`);
+      this.missing.add(`Loại thuế ${code} là thuế GTGT đầu ra — phiếu mua / trả NCC phải dùng loại thuế dùng chung (KCT, 0, 5, 8, 10, KKKN)`);
     }
-    return t.accountCode ?? this.fromDefault('tax_input', 'tài khoản thuế GTGT đầu vào');
+    if (t.accountCode) return t.accountCode;
+    if (opts.goodsAccount && isFixedAssetAccount(opts.goodsAccount) && this.cfg.defaults.get('tax_input_fixed_asset')) {
+      return this.fromDefault('tax_input_fixed_asset', 'tài khoản thuế GTGT đầu vào của TSCĐ');
+    }
+    return this.fromDefault('tax_input', 'tài khoản thuế GTGT đầu vào');
   }
 
   /** Tài khoản của quy tắc theo khoá, chỉ để so sánh (thiếu thì undefined, không ghi vào danh sách thiếu cấu hình). */

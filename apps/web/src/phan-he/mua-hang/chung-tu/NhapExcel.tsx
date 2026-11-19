@@ -18,6 +18,7 @@ import { purchaseApi, today, vnd, type MhData } from '../du-lieu';
 import { ExcelGuide, type GuideColumn } from '../thanh-phan/ExcelGuide';
 import { NccInfo } from '../thanh-phan/NccInfo';
 import { useHierarchy } from '../ton-max/api';
+import { thueMacDinh } from '@/lib/tradeDocs';
 
 const COLS: GuideColumn[] = [
   { name: 'Mã hàng', required: true, aliases: 'Mã SP, SKU', example: '130181002', note: 'Mã hàng trong danh mục (mã chưa có báo vàng)' },
@@ -83,7 +84,7 @@ export function NhapExcel({ data, partnerCode = '', onClose, onDone }: { data: M
   const noBranch = rows.some((r) => !r.branchCode) && !branch;
   const docs: PDoc[] = res ? docsFromImport(rows.filter((r) => !r.error), {
     kind, date: today(), partnerCode: partner, branchCode: branch, priceIncludesVat: incVat, policies: data.policies,
-    taxOf: (sku) => cat.get(sku)?.taxInCode ?? 'V08', nameOf: (sku) => cat.get(sku),
+    taxOf: (sku) => cat.get(sku)?.taxInCode ?? thueMacDinh(), nameOf: (sku) => cat.get(sku),
   }) : [];
   const create = async () => {
     setBusy(true); setErr('');

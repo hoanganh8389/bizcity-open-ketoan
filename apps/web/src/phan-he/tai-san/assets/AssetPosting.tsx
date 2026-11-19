@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { AccountPicker, PartnerPicker } from '@/components/pickers';
+import { ChonThue } from '@/lib/thueGtgt';
 
 type Line = { debitAccount: string; creditAccount: string; amount: string; description: string; partnerCode: string; taxCode: string; taxAmount: string; costItem?: string; department?: string; contract?: string };
 interface Suggestion { asset: { code: string; name: string; kind: string; branchCode: string; currentCost: number; accumulated: number; remaining: number; lastPeriod: string | null }; lines: (Omit<Line, 'amount' | 'partnerCode' | 'taxCode' | 'taxAmount'> & { amount: number })[]; warnings: string[] }
@@ -76,7 +77,7 @@ export function PostingDialog({ code, kind, onClose }: { code: string; kind: 'in
                 <td style={{ minWidth: 120 }}><AccountPicker postingOnly value={l.creditAccount} onChange={(creditAccount) => setLine(i, { creditAccount })} placeholder="331, 112, 241…" /></td>
                 <td><input className="input num" style={{ width: 130 }} inputMode="numeric" value={l.amount} onChange={(e) => setLine(i, { amount: e.target.value })} onBlur={() => setLine(i, { amount: money(parseMoney(l.amount) ?? 0) })} /></td>
                 <td style={{ whiteSpace: 'nowrap' }}>
-                  <input className="input mono" style={{ width: 60 }} value={l.taxCode} placeholder="R10" onChange={(e) => setLine(i, { taxCode: e.target.value.trim().toUpperCase() })} />{' '}
+                  <ChonThue value={l.taxCode} trong ngay={docDate} style={{ width: 130 }} onChange={(c) => setLine(i, { taxCode: c })} />{' '}
                   {l.taxCode && <input className="input num" style={{ width: 100 }} value={l.taxAmount} onChange={(e) => setLine(i, { taxAmount: e.target.value })} />}
                 </td>
                 <td style={{ minWidth: 150 }}><PartnerPicker activeOnly value={l.partnerCode} onChange={(partnerCode) => setLine(i, { partnerCode })} placeholder="Như phiếu" /></td>
@@ -95,7 +96,7 @@ export function PostingDialog({ code, kind, onClose }: { code: string; kind: 'in
             </>
           )}
         </div>
-        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Dòng có mã thuế (R10, R08… thuế đầu ra; V10… thuế đầu vào): "Số tiền" là tiền chưa thuế, phần thuế ghi vào tài khoản thuế của loại thuế.</div>
+        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Dòng có loại thuế: "Số tiền" là tiền chưa thuế; phần thuế ghi theo Quy tắc hạch toán — mua tài sản cố định (Nợ 211/213/217/241) vào 1332, bán (Có 5…/7…) vào 33311.</div>
       </div>
       {kind === 'decrease' && (
         <Field label="Thẻ tài sản">

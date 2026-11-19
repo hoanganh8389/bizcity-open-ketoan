@@ -1,5 +1,6 @@
 // @bizcity-layer K kernel/intake
 // [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-25 (ADR-0014 D3; PHASE-022 ý "một nguồn luật"): L4 thuế GTGT / hoá đơn / hồ sơ kế toán — IN-VAT-001, IN-INV-001, IN-INV-002, IN-CFG-001, mức warn, dùng hàm kiểm theo một chứng từ của tax.findings.ts
+// [2026-11-19 kiennt] NT-DM-012 — IN-VAT-001 kiểm cả loại thuế cố định (chiều both) (đóng góp)
 /**
  * Cảnh báo lúc nhập (mức warn, không chặn cửa nạp) cho bốn điểm mà tự chẩn đoán cũng quét theo kỳ — cùng luật, hai thời điểm:
  *   IN-VAT-001  dòng bán ra dùng loại thuế có thuế suất giảm ngoài khoảng ngày giảm  (VAT_REDUCED_RATE; số liệu từ rulepack)
@@ -27,7 +28,7 @@ export async function taxFindings(trx: Db, tenantId: string, doc: IngestDocument
     if (outsideReducedWindow(doc.docDate, w)) {
       const codes = [...new Set(lines.filter((l) => l.taxCode && Number(l.amountBeforeTax) !== 0).map((l) => l.taxCode!))];
       if (codes.length) {
-        const rates = await trx.selectFrom('tax_codes').select(['code', 'rate']).where('tenant_id', '=', tenantId).where('direction', '=', 'output').where('code', 'in', codes).execute();
+        const rates = await trx.selectFrom('tax_codes').select(['code', 'rate']).where('tenant_id', '=', tenantId).where('direction', 'in', ['output', 'both']).where('code', 'in', codes).execute();
         const reduced = new Set(rates.filter((r) => Number(r.rate) === w.rate).map((r) => r.code));
         const at = lines.findIndex((l) => l.taxCode && Number(l.amountBeforeTax) !== 0 && reduced.has(l.taxCode));
         if (at >= 0) out.push(intakeFinding('IN-VAT-001', `lines[${at}].taxCode`, { got: lines[at]!.taxCode, expected: `thuế suất ${w.rate}% chỉ áp từ ${w.from} đến ${w.to}` }));

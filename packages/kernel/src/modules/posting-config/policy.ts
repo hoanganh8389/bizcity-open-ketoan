@@ -30,7 +30,8 @@ export interface PolicyRaw {
   reasons: PostingReason[];
   groups: ProductPostingGroup[];
   paymentMethods: PaymentMethod[];
-  taxCodes: { code: string; name: string; rate: string; direction: string; account_code: string | null; report_group: string }[];
+  // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định: hiệu lực, mã cũ (đóng góp) — bản chụp cũ không có valid_from / valid_to / is_legacy
+  taxCodes: { code: string; name: string; rate: string; direction: string; account_code: string | null; report_group: string; valid_from?: string | null; valid_to?: string | null; is_legacy?: boolean }[];
   defaults: { key: string; account_code: string }[];
   bankAccounts: { code: string; account_code: string }[];
 }

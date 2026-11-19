@@ -50,6 +50,8 @@ import { ChonChungTu, OChonChungTu } from '../thanh-phan/ChonChungTu';
 import { HoaDonModal } from '../hoa-don/HoaDonModal';
 import type { InvoiceRow } from '../hoa-don/api';
 import { layPhieuIn, mauInCua } from './mauIn';
+import { ChonThue } from '@/lib/thueGtgt';
+import { thueMacDinh } from '@/lib/tradeDocs';
 
 /** Loại phiếu sửa sau duyệt bằng bản điều chỉnh (khớp ADJUST_KINDS phía máy chủ). */
 const ADJUST_KINDS: string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out', 'cost', 'rebate'];
@@ -234,7 +236,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       const i = x.lines.findIndex((l) => l.lineKey === key);
       const k = newKey();
       setSelKey(k); setDirty(true);
-      return { ...x, lines: [...x.lines.slice(0, i + 1), { lineKey: k, sku: '', name: '', unit: '', qty: 1, price: 0, taxCode: 'V08', lineType: 'buy' }, ...x.lines.slice(i + 1)] };
+      return { ...x, lines: [...x.lines.slice(0, i + 1), { lineKey: k, sku: '', name: '', unit: '', qty: 1, price: 0, taxCode: thueMacDinh(v.docDate), lineType: 'buy' }, ...x.lines.slice(i + 1)] };
     }),
     del: (key: string) => { setV((x) => ({ ...x, lines: x.lines.filter((l) => l.lineKey !== key) })); setDirty(true); },
   };
@@ -275,7 +277,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       setExtra((x) => ({ prices: [...x.prices.filter((r) => r.sku !== sku), ...sp.rows], units: { ...x.units, ...sp.units } }));
       const us = sp.units[sku] ?? [];
       const unit = (wantUnit && us.find((u) => u.unit.toLowerCase() === wantUnit.toLowerCase())?.unit) || defaultUnitFor(us, sp.rows, v.partnerCode, sku, p.unit);
-      const taxCode = p.taxInCode ?? 'V08';
+      const taxCode = p.taxInCode ?? thueMacDinh(v.docDate);
       const line = v.lines.find((l) => l.lineKey === key);
       const isBuy = (lt ?? line?.lineType) === 'buy';
       const fixed = priceFor(sp.rows, { date: v.docDate, partnerCode: v.partnerCode || undefined, sku, unit }, us);
@@ -297,10 +299,10 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const importLines = async (rows: DongNhap[]) => {
     setExcelLines(false);
     // Giá trong tệp ghi rõ gồm / chưa thuế khác loại giá của phiếu → quy đổi theo thuế suất mua vào của mặt hàng.
-    const tax = new Map((rows.some((r) => r.priceIncludesVat !== undefined) ? await purchaseApi.lookupProducts([...new Set(rows.map((r) => r.sku))]) : []).map((p) => [p.sku, p.taxInCode ?? 'V08']));
-    rows = rows.map((r) => (r.price !== undefined && r.priceIncludesVat !== undefined && r.priceIncludesVat !== v.priceIncludesVat ? { ...r, price: toDocBasis(r.price, r.priceIncludesVat, tax.get(r.sku) ?? 'V08') } : r));
+    const tax = new Map((rows.some((r) => r.priceIncludesVat !== undefined) ? await purchaseApi.lookupProducts([...new Set(rows.map((r) => r.sku))]) : []).map((p) => [p.sku, p.taxInCode ?? thueMacDinh(v.docDate)]));
+    rows = rows.map((r) => (r.price !== undefined && r.priceIncludesVat !== undefined && r.priceIncludesVat !== v.priceIncludesVat ? { ...r, price: toDocBasis(r.price, r.priceIncludesVat, tax.get(r.sku) ?? thueMacDinh(v.docDate)) } : r));
     const made = rows.map((r) => ({ key: newKey(), r, type: (isGiftDoc || r.gift ? 'gift_consumer' : 'buy') as LineType }));
-    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), ...made.map(({ key, r, type }) => ({ lineKey: key, sku: r.sku, name: '', unit: r.unit ?? '', qty: r.qty, price: r.price ?? 0, taxCode: 'V08', lineType: type, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }))] }));
+    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), ...made.map(({ key, r, type }) => ({ lineKey: key, sku: r.sku, name: '', unit: r.unit ?? '', qty: r.qty, price: r.price ?? 0, taxCode: thueMacDinh(v.docDate), lineType: type, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }))] }));
     setDirty(true); setTab('hang');
     for (let i = 0; i < made.length; i += 8) {
       await Promise.all(made.slice(i, i + 8).map(async ({ key, r, type }) => {
@@ -342,7 +344,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     const same = v.lines.find((l) => l.sku === p.sku && l.lineType === type && !l.autoGift && (v.kind !== 'exchange' || (l.dir ?? 'in') === 'in'));
     if (same) { setLine(same.lineKey, { qty: same.qty + 1 }); setSelKey(same.lineKey); return; }
     const key = newKey();
-    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), { lineKey: key, sku: p.sku, name: p.name, unit: p.unit, qty: 1, price: 0, taxCode: p.taxInCode ?? 'V08', lineType: type, brandCode: p.brandCode ?? undefined, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }] }));
+    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), { lineKey: key, sku: p.sku, name: p.name, unit: p.unit, qty: 1, price: 0, taxCode: p.taxInCode ?? thueMacDinh(v.docDate), lineType: type, brandCode: p.brandCode ?? undefined, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }] }));
     setDirty(true); setSelKey(key);
     void pickSku(key, p.sku, type);
   };
@@ -877,7 +879,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                     {!isGiftDoc && v.partnerCode && (v.kind === 'order' || v.kind === 'receipt' || v.kind === 'return') && <button className="btn btn-sm" onClick={() => setFill(true)} title="Danh sách mặt hàng NCC này bán: tích chọn, điền số lượng (gợi ý min–max / lần trước), giá tự lấy">Điền mặt hàng của NCC</button>}
                     {!isGiftDoc && lastOfPartner && linesBlank && <button className="btn btn-sm" onClick={() => copyLines(lastOfPartner)} title="Chép mã hàng, số lượng, đơn giá, thuế suất — sửa lại cho đúng lần này">Chép từ phiếu {lastOfPartner.docNo} ({dmy(lastOfPartner.docDate)})</button>}
                     {!isGiftDoc && <button className="btn btn-sm" onClick={() => setPickGoods({ text: '', lineType: 'gift_consumer' })} title="Quà NCC tặng thêm ngoài chương trình. Quà theo chương trình phần mềm tự thêm">+ Quà ngoài chương trình</button>}
-                    {isOrder && <button className="btn btn-sm" onClick={() => { const k = newKey(); set({ lines: [...v.lines, { lineKey: k, sku: '', name: '', unit: '', qty: 0, price: 0, taxCode: 'V08', lineType: 'buy', newItem: true }] }); setSelKey(k); }} title="Hàng NCC mới chào, chưa có mã trong danh mục: ghi tên, mã bên NCC, ĐVT, quy cách. Hàng về thì gắn mã ở phiếu nhập">+ Hàng mới chưa có mã</button>}
+                    {isOrder && <button className="btn btn-sm" onClick={() => { const k = newKey(); set({ lines: [...v.lines, { lineKey: k, sku: '', name: '', unit: '', qty: 0, price: 0, taxCode: thueMacDinh(v.docDate), lineType: 'buy', newItem: true }] }); setSelKey(k); }} title="Hàng NCC mới chào, chưa có mã trong danh mục: ghi tên, mã bên NCC, ĐVT, quy cách. Hàng về thì gắn mã ở phiếu nhập">+ Hàng mới chưa có mã</button>}
                     <span className="lines-bar-sep" />
                     <button className="btn btn-sm" onClick={() => setExcelLines(true)} title="Nhập dòng hàng từ tệp Excel: có hướng dẫn cột, file mẫu, xem trước (mã / ĐVT sai báo đỏ)">Nhập Excel</button>
                     <button className="btn btn-sm" disabled={!v.lines.some((l) => l.sku)} onClick={() => void xuatDongHang(`${v.docNo || KIND_LABEL[v.kind]}-hang-hoa.xlsx`, calc.lines, priceLabel, showKho ? v.warehouseCode || defaultWh : '')} title="Xuất dòng hàng ra Excel — đúng bộ cột của mẫu nhập, sửa xong nhập lại được">Xuất Excel</button>
@@ -969,7 +971,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                             <td><NumInput style={{ width: 90 }} decimals={0} value={l.lineType === 'buy' && (l.discountAmt !== undefined || l.lineDiscount) ? l.lineDiscount : null} disabled={l.lineType !== 'buy'} placeholder="tự"
                               title={`Chiết khấu dòng bằng tiền, tối đa ${fmt(l.gross)} (tiền hàng của dòng). Gõ tiền thì CK % tự tính lại`}
                               onChange={(n) => setLine(l.lineKey, { discountAmt: n === null ? undefined : Math.min(l.gross, n), discountPct: undefined })} /></td>
-                            <td><select className="select input" style={{ width: 92 }} value={l.taxCode} title="Thuế suất GTGT đầu vào — tự lấy theo danh mục mặt hàng" onChange={(e) => setLine(l.lineKey, { taxCode: e.target.value })}>{Object.entries(TAX_LABEL).map(([k, t]) => <option key={k} value={k}>{t}</option>)}{!TAX_LABEL[l.taxCode] && <option value={l.taxCode}>{l.taxCode}</option>}</select></td>
+                            <td><ChonThue value={l.taxCode} ngay={v.docDate} style={{ width: 92 }} title="Thuế suất GTGT — tự lấy theo danh mục mặt hàng (loại thuế cố định, dùng chung mua / bán)" onChange={(c) => setLine(l.lineKey, { taxCode: c })} /></td>
                             <td className="num">{l.lineType === 'buy' ? fmt(l.beforeTax) : <span className="muted">tặng</span>}</td>
                             <td className="num">{fmt(l.tax)}</td>
                             <td className="num"><b>{l.lineType === 'buy' ? fmt(l.beforeTax + l.tax) : ''}</b></td>

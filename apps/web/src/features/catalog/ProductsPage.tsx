@@ -143,7 +143,7 @@ export function ProductsPage() {
     { key: 'groupCode', header: 'Nhóm hàng', width: 200, value: (p) => groupPath(p.groupCode), render: (p) => { const full = groupPath(p.groupCode); return <span title={full}>{full.split(' / ').pop()}</span>; } },
     { key: 'unit', header: 'ĐVT', width: 70 },
     // [2026-11-12 Nguyễn Văn Thủy] một cột Thuế GTGT (%) thay Mã VAT ra / vào, TTĐB (đóng góp)
-    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Thuế suất GTGT bán ra', value: (p) => ({ KCT: 'KCT', R00K: 'KCT', R00: '0%', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
+    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Loại thuế GTGT (dùng chung bán và mua — NT-DM-012)', value: (p) => ({ KCT: 'KCT', '0': '0%', '5': '5%', '8': '8%', '10': '10%', KKKN: 'KKKN', R00K: 'KCT', R00: '0%', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
     // [2026-11-12 Nguyễn Văn Thủy] Trạng thái sản phẩm thay ô Theo dõi: Đang hoạt động / Chờ duyệt / Ngừng hoạt động (đóng góp)
     // [2026-11-12 Nguyễn Văn Thủy] truy vết: người tạo, lúc tạo (0114) (đóng góp)

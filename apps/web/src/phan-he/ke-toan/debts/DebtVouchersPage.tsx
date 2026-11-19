@@ -20,6 +20,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Plus } from 'lucide-react';
 import { VOUCHER_PURPOSES, type VoucherInput, type VoucherPurpose, type VoucherType } from '@ketoan/contracts';
 import { api, errorText, ALL_ROWS } from '@/lib/api';
+import { ChonThue } from '@/lib/thueGtgt';
 import { defaultFrom, money, today } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
@@ -224,9 +225,7 @@ function DebtVoucherForm({ mode, onClose, onSaved }: { mode: Mode; onClose: () =
       {def.tax && (
         <>
           <Field label="Thuế GTGT">
-            <select className="select input" value={v.taxCode} onChange={(e) => pickTax(e.target.value)}>
-              <option value="">Không có thuế</option>{taxCodes.filter((t) => t.isActive && t.direction === def.tax).map((t) => <option key={t.code} value={t.code}>{t.code} — {t.name}</option>)}
-            </select>
+            <ChonThue value={v.taxCode} trong ngay={v.docDate} onChange={(c) => pickTax(c)} />
           </Field>
           <Field label="Tiền thuế"><input className="input num" inputMode="numeric" disabled={!v.taxCode} value={v.taxAmount} onChange={(e) => set({ taxAmount: e.target.value })} onBlur={() => set({ taxAmount: taxAmount ? money(taxAmount) : '' })} /></Field>
           <Field label="Ký hiệu hoá đơn"><input className="input mono" disabled={!v.taxCode} value={v.invoiceSerial} onChange={(e) => set({ invoiceSerial: e.target.value })} /></Field>

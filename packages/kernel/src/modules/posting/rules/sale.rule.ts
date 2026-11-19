@@ -130,7 +130,7 @@ function buildSaleGoods(doc: SaleDocument, ctx: RuleContext, reason: ReturnType<
       part: 'tax',
       productSku: line.sku,
       debitAccount: counter,
-      creditAccount: resolver.outputTaxAccount(line.taxCode),
+      creditAccount: resolver.outputTaxAccount(line.taxCode, doc.docDate),
       amount: line.taxAmount,
       debitPartnerId: partnerId,
       taxCode: line.taxCode,

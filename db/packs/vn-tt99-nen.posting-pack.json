@@ -51,7 +51,8 @@
     "sales_return": "52131",
     "cogs": "6321",
     "gift_cogs": "6321",
-    "inventory": "1561"
+    "inventory": "1561",
+    "tax_input_fixed_asset": "1332"
   },
   "reasons": [
     {

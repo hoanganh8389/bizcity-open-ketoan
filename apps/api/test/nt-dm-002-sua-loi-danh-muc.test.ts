@@ -2,7 +2,7 @@
 /**
  * NT-DM-002 — sửa lỗi danh mục đợt kiểm thử 17/11/2026.
  *   L02: xoá tài khoản / nhóm hàng còn mục con → bỏ qua, báo "còn mục con"; xoá cha + con cùng lượt → xoá được cả hai.
- *   L03: xoá loại thuế mặt hàng đang dùng, ngân hàng HTTT đang dùng, nhóm đối tượng đang có đối tượng → bỏ qua, báo "đang được dùng".
+ *   L03: loại thuế không xoá được (danh mục cố định — NT-DM-012); ngân hàng HTTT đang dùng, nhóm đối tượng đang có đối tượng → bỏ qua, báo "đang được dùng".
  *   Mục không vướng vẫn vào thùng rác như cũ.
  *   L06: đặt nhóm cha của nhóm đối tượng là nhóm con / cháu của chính nó → 400.
  */
@@ -45,12 +45,11 @@ describe('NT-DM-002 — thùng rác danh mục và nhóm đối tượng', () =>
     expect(a.skipped[0]!.reason).toMatch(/còn mục con \(Nhãn thử\)/);
   });
 
-  it('L03: loại thuế đang được mặt hàng dùng không xoá được', async () => {
-    const p = await call(ctx, 'PUT', '/api/v1/products/NTDM2SP1', { name: 'Mặt hàng thử NT-DM-002', unit: 'Hộp', taxOutCode: 'R08' });
-    expect(p.status, JSON.stringify(p.body)).toBeLessThan(300);
-    const a = await xoa('tax-codes', ['R08']);
-    expect(a.done).toBe(0);
-    expect(a.skipped[0]!.reason).toMatch(/đang được dùng ở mặt hàng \(NTDM2SP1\)/);
+  // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định theo quy định: không còn thùng rác (không xoá được bất kể đang dùng hay không) (đóng góp)
+  it('L03: loại thuế không xoá được — danh mục cố định, không có thùng rác (NT-DM-012)', async () => {
+    const r = await call(ctx, 'POST', '/api/v1/catalog-trash/trash', { catalog: 'tax-codes', keys: ['R08'] });
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('chưa có thùng rác');
   });
 
   it('L03: ngân hàng đang được hình thức thanh toán dùng không xoá được; ngân hàng không ai dùng vẫn xoá', async () => {
