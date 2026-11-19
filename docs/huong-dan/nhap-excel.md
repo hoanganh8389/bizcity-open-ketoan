@@ -25,7 +25,7 @@ Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàn
 - **Phiếu thu / chi / thu tiền gửi / chi tiền gửi / phiếu kế toán**: các dòng cùng *Số chứng từ* là một phiếu nhiều dòng; để trống số thì mỗi dòng một phiếu, tự cấp số. Bước kiểm tra **ghi sổ thử rồi huỷ** nên báo đúng mọi lỗi (khoản mục, bộ phận, đối tượng bắt buộc, kỳ khoá…).
   Phiếu nhập vào ở trạng thái **Chờ duyệt** (chữ cam, chưa có bút toán). Ở danh sách phiếu: tích các phiếu rồi bấm **Ghi sổ** để ghi hàng loạt; phiếu nào lỗi báo riêng.
 - **Nhóm hàng**: mỗi dòng một nhóm; cột *Nhóm cha* ghi mã (hoặc đúng tên) nhóm có sẵn hay ở dòng khác trong tệp — thứ tự dòng không quan trọng, phần mềm ghi cha trước con.
-  Mã ngắn theo cấp: cấp 1 đủ 2 ký tự, cấp 2 đủ 3, cấp 3 đủ 1; không trùng nhóm cùng cha. Dòng cha lỗi thì các nhóm con của nó cũng chưa ghi.
+  Mã hoá theo cấp: cấp 1 đủ 2 ký tự, cấp 2 đủ 3, cấp 3 đủ 1; không trùng nhóm cùng cha. Dòng cha lỗi thì các nhóm con của nó cũng chưa ghi.
 - **Tồn kho đầu kỳ (số lượng)**: mỗi dòng Kho × Mã hàng × Số lượng tồn (ĐVT nhỏ nhất), cả tệp một ngày. Phần mềm so với tồn trên sổ của kho đó: kết quả hiện *tồn trên sổ → tồn theo tệp*; mỗi kho có chênh lệch thành một phiếu điều chỉnh kho, ghi sổ ngay.
   Mã không có trong tệp giữ nguyên tồn. Nhập lại cả tệp không sinh thêm chênh lệch. Giá trị tồn (tiền) nhập qua số dư tài khoản 156.
 - **Tồn max**: Kho × Mã hàng × Tồn max — dùng tính chuyển hàng về shop và đề xuất đặt mua (xem ở Tồn max).

@@ -227,13 +227,14 @@ interface NhomRow { code: string; name: string; parentCode: string | null; isAct
 /** Độ dài mã ngắn theo cấp (giống DM11): cấp 1 = 2 chữ số, cấp 2 = 3, cấp 3 = 1 ký tự; cấp sâu hơn không ghép vào mã hàng. */
 const MA_NGAN: Record<number, number> = { 1: 2, 2: 3, 3: 1 };
 const NHOM_HANG: NhapLoai = {
-  id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: nhóm cha, mã nhóm hàng, mã ngắn, tên nhóm hàng', keyField: 'name',
+  id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: nhóm cha, tên ngành, mã hoá, mô tả', keyField: 'name',
   listPath: '/danh-muc/phan-loai-hang', invalidate: ['item-classes'], modes: false,
   fields: [
-    { key: 'parentCode', header: 'Nhóm cha', aliases: ['ma nhom cha', 'thuoc nhom', 'nhom tren', 'thuoc', 'duong dan nhom cha'], example: 'BỈM/ TÃ / Aiwibi', note: 'Đường dẫn nhóm cha (cấp 1 / cấp 2 …) hoặc đúng mã nhóm hàng của nhóm cha. Trống = nhóm cấp 1. Nhóm cha có ở dòng trên trong tệp cũng được.' },
-    { key: 'name', header: 'Mã nhóm hàng', required: true, aliases: ['ma nhom', 'ten', 'ten nhom', 'nhom hang'], example: 'Bỉm/ Tã quần trẻ em', note: 'Tên ngắn hiện trên cây. Cùng nhóm cha + cùng mã nhóm hàng với nhóm đang có → cập nhật nhóm đó.' },
-    { key: 'skuCode', header: 'Mã ngắn', aliases: ['ma ngan', 'ma ghep', 'ma ngan (ma ghep)', 'ma sku'], example: '3', note: 'Ghép vào mã hàng: cấp 1 = 2 chữ số không bắt đầu bằng 0; cấp 2 = 3 ký tự; cấp 3 = 1 ký tự (chữ hoặc số). Nhóm đã có mặt hàng: không đổi được.' },
-    { key: 'fullName', header: 'Tên nhóm hàng', aliases: ['ten nhom hang', 'ten day du', 'mhlten'], note: 'Tên đầy đủ. Trống = tự ghép tên nhóm cha + mã nhóm hàng.' },
+    { key: 'parentCode', header: 'Nhóm cha', aliases: ['ma nhom cha', 'thuoc nhom', 'nhom tren', 'thuoc', 'duong dan nhom cha'], example: 'BỈM/ TÃ / Aiwibi', note: 'Đường dẫn nhóm cha (cấp 1 / cấp 2 …) hoặc đúng tên ngành của nhóm cha. Trống = nhóm cấp 1. Nhóm cha có ở dòng trên trong tệp cũng được.' },
+    // [2026-11-18 05:10 PM kiennt] NT-DM-010 — đổi tên ô: Tên ngành (name), Mã hoá (skuCode), Mô tả (fullName, không bắt buộc, không tự ghép) (đóng góp)
+    { key: 'name', header: 'Tên ngành', required: true, aliases: ['ma nhom hang', 'ma nhom', 'ten', 'ten nhom', 'nhom hang'], example: 'Bỉm/ Tã quần trẻ em', note: 'Tên hiện trên cây. Cùng nhóm cha + cùng tên ngành với nhóm đang có → cập nhật nhóm đó.' },
+    { key: 'skuCode', header: 'Mã hoá', aliases: ['ma hoa', 'ma ngan', 'ma ghep', 'ma ngan (ma ghep)', 'ma sku'], example: '3', note: 'Ghép vào mã hàng: cấp 1 = 2 chữ số không bắt đầu bằng 0; cấp 2 = 3 ký tự; cấp 3 = 1 ký tự (chữ hoặc số). Nhóm đã có mặt hàng: không đổi được.' },
+    { key: 'fullName', header: 'Mô tả', aliases: ['mo ta', 'ten nhom hang', 'ten day du', 'mhlten'], note: 'Không bắt buộc. Trống: nhóm mới để trống, nhóm đã có giữ nguyên.' },
     { key: 'isActive', header: 'Đang dùng', aliases: ['theo doi', 'trang thai'], note: 'Có / Không. Trống = giữ nguyên (mới: Có).' },
   ],
   run: async (rows, { dryRun }) => {
@@ -261,7 +262,7 @@ const NHOM_HANG: NhapLoai = {
       const row = Number(r._row);
       const errors: string[] = [];
       const name = (r.name ?? '').trim();
-      if (!name) errors.push('Thiếu mã nhóm hàng');
+      if (!name) errors.push('Thiếu tên ngành');
       let parent: string | null = null;
       const pv = (r.parentCode ?? '').trim();
       if (pv) { const p = findParent(pv); if (typeof p === 'string') parent = p; else errors.push(p.err); }
@@ -269,14 +270,14 @@ const NHOM_HANG: NhapLoai = {
       const same = errors.length ? undefined : kidsOf(parent).find(([, v]) => low(v.name) === low(name));
       const code = same ? same[0] : `moi:${row}`;
       // [2026-11-18 03:10 PM kiennt] NT-DM-009 — mã nhóm hàng không trùng nhóm cùng cha, không trùng tên nhóm cha; khác cha thì được trùng.
-      if (!same && name && parent && low(tree.get(parent)?.name ?? '') === low(name)) errors.push(`Mã nhóm hàng "${name}" trùng tên nhóm cha — đặt mã khác`);
+      if (!same && name && parent && low(tree.get(parent)?.name ?? '') === low(name)) errors.push(`Tên ngành "${name}" trùng tên nhóm cha — đặt tên khác`);
       const before = have.get(code);
       const sku = (r.skuCode ?? '').trim().toUpperCase();
-      if (sku && !/^[0-9A-Z]+$/.test(sku)) errors.push('Mã ngắn chỉ gồm chữ và số');
-      if (before && sku && sku !== (before.skuCode ?? '') && subProducts(code) > 0) errors.push(`Nhóm đã có mặt hàng — không đổi mã ngắn (${before.skuCode || 'trống'} → ${sku})`);
+      if (sku && !/^[0-9A-Z]+$/.test(sku)) errors.push('Mã hoá chỉ gồm chữ và số');
+      if (before && sku && sku !== (before.skuCode ?? '') && subProducts(code) > 0) errors.push(`Nhóm đã có mặt hàng — không đổi mã hoá (${before.skuCode || 'trống'} → ${sku})`);
       const isActive = yn(r.isActive);
       if (isActive === null) errors.push('Cột Đang dùng ghi Có / Không');
-      const full = (r.fullName ?? '').trim() || before?.fullName || [parent ? tree.get(parent)?.full || pathOf(parent).split(' / ').join(' ') : '', name].filter(Boolean).join(' ');
+      const full = (r.fullName ?? '').trim() || before?.fullName || '';
       if (!errors.length) tree.set(code, { name, parent, sku: sku || before?.skuCode || '', full });
       return { row, code, before, errors, name, parent, sku, full, isActive, values: { ...r, name, parentCode: parent ? pathOf(parent) : '', fullName: full } as Record<string, string> };
     });
@@ -287,11 +288,11 @@ const NHOM_HANG: NhapLoai = {
       const lv = levelOf(p.code);
       const sku = tree.get(p.code)!.sku;
       const len = MA_NGAN[lv];
-      if (len && !sku) p.errors.push(`Nhóm cấp ${lv} phải có mã ngắn (${len} ký tự)`);
-      else if (len && lv === 1 && !/^[1-9][0-9]$/.test(sku)) p.errors.push(`Nhóm cấp 1: mã ngắn là 2 chữ số, không bắt đầu bằng 0 (đang "${sku}")`);
-      else if (len && sku.length !== len) p.errors.push(`Nhóm cấp ${lv}: mã ngắn phải đúng ${len} ký tự (đang "${sku}")`);
+      if (len && !sku) p.errors.push(`Nhóm cấp ${lv} phải có mã hoá (${len} ký tự)`);
+      else if (len && lv === 1 && !/^[1-9][0-9]$/.test(sku)) p.errors.push(`Nhóm cấp 1: mã hoá là 2 chữ số, không bắt đầu bằng 0 (đang "${sku}")`);
+      else if (len && sku.length !== len) p.errors.push(`Nhóm cấp ${lv}: mã hoá phải đúng ${len} ký tự (đang "${sku}")`);
       const sib = sku ? kidsOf(p.parent).find(([c, v]) => c !== p.code && v.sku === sku) : undefined;
-      if (sib) p.errors.push(`Mã ngắn ${sku} đã dùng cho nhóm "${sib[1].name}" cùng cấp`);
+      if (sib) p.errors.push(`Mã hoá ${sku} đã dùng cho nhóm "${sib[1].name}" cùng cấp`);
     }
     // Nhóm cha ở dòng lỗi (nhóm mới) → nhóm con cũng không ghi được.
     for (let doi = true; doi;) {
