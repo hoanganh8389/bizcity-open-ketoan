@@ -39,12 +39,20 @@ const TYPES: [string, string][] = [
   ['pricing.policy', 'Chính sách mua hàng'], ['inventory.', 'Kho (mọi loại)'], ['inventory.receipt', 'Phiếu nhập kho'], ['inventory.issue', 'Phiếu xuất (trả NCC, xuất tặng)'],
   ['inventory.transfer', 'Chuyển kho'], ['finance.', 'Tiền (mọi loại)'], ['finance.payment', 'Thanh toán NCC'], ['finance.payment_request', 'Đề nghị thanh toán'],
   ['contract.', 'Hợp đồng khác (thuê, dịch vụ…)'],
+  // [2026-11-19 10:45 AM Võ Hoàng] NT-BH-033 — loại chứng từ bán: đơn máy bán / đơn đặt hàng bán, phiếu bán, phiếu trả, voucher, tích điểm
+  ['sales.', 'Bán hàng (mọi loại)'], ['sales.order', 'Đơn bán (máy bán, đơn đặt hàng)'], ['sales.invoice', 'Phiếu bán hàng'], ['sales.return', 'Phiếu trả hàng bán'],
+  ['pricing.voucher', 'Chiến dịch voucher'], ['pricing.loyalty', 'Chương trình tích điểm'],
 ];
 /** Tên tiếng Việt của thông tin thêm (meta). */
 const META_TEXT: Record<string, string> = {
   invoiceNo: 'Số hoá đơn', invoiceDate: 'Ngày hoá đơn', dueDate: 'Hạn thanh toán', totalBeforeTax: 'Tiền hàng', totalTax: 'Tiền thuế', demo: 'Dữ liệu mẫu',
   fromWarehouse: 'Kho xuất', toBranch: 'Chi nhánh nhận', toWarehouse: 'Kho nhận', receivedDate: 'Ngày nhận', receivedBy: 'Người nhận', reason: 'Lý do', method: 'Hình thức', rejectedReason: 'Lý do trả lại',
   approved1By: 'Duyệt cấp 1', kind: 'Loại phiếu mua', name: 'Tên', programKind: 'Loại chương trình', validFrom: 'Áp từ', validTo: 'Áp đến', contractCode: 'Hợp đồng',
+  // [2026-11-19 10:45 AM Võ Hoàng] NT-BH-033 — thông tin thêm của chứng từ bán
+  docKey: 'Mã chứng từ kế toán', docStatus: 'Trạng thái ghi sổ', cashier: 'Thu ngân', subtotal: 'Tiền hàng', taxTotal: 'Tiền thuế', cancelReason: 'Lý do huỷ',
+  refundMethod: 'Hình thức hoàn tiền', refundNet: 'Hoàn chưa thuế', refundTax: 'Thuế hoàn', exchange: 'Đổi hàng', source: 'Nguồn đơn', warehouse: 'Kho',
+  validUntil: 'Hiệu lực đến', phone: 'Điện thoại', closeReason: 'Lý do đóng', copiedFrom: 'Copy từ', tracking: 'Mã vận đơn', ledgerStatus: 'Trạng thái sổ',
+  ledgerVersion: 'Lần ghi sổ', order: 'Đơn đặt hàng', voucherKind: 'Loại voucher', issuer: 'Bên phát', faceValue: 'Mệnh giá', issueMode: 'Cách phát', storeId: 'Mã cửa hàng web',
 };
 const metaText = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : v === true ? 'Có' : String(v));
 const ROLE_TEXT: Record<string, string> = { source: 'Lập từ', ledger: 'Sự việc kế toán', reverses: 'Đảo', replaces: 'Thay thế', settles: 'Thanh toán cho', attachesTo: 'Đính vào', applies: 'Áp chính sách / chương trình', uses: 'Dùng lô hàng' };

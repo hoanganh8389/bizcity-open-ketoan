@@ -177,6 +177,12 @@ const businessDocList = defineAction({
   },
 });
 
+// [2026-11-19 10:46 AM Võ Hoàng] NT-BH-033 — tên loại của định danh chứng từ bán (pos / phieu-ban / voucher / loyalty)
+const SALES_REF_TEXT: [string, string][] = [
+  ['pos.order:', 'Đơn bán máy POS'], ['pos.return:', 'Phiếu trả hàng máy POS'], ['phieu-ban.order:', 'Đơn đặt hàng bán'],
+  ['phieu-ban.doc:', 'Phiếu bán / trả hàng'], ['voucher.campaign:', 'Chiến dịch voucher'], ['loyalty.program:', 'Chương trình tích điểm'],
+];
+
 /** Tên dễ đọc cho phía bên kia của mỗi liên kết: chứng từ (loại + số), chính sách (mã + tên), lô (mã hàng · lô · HSD), sự việc kế toán (số), kỳ hợp đồng. */
 async function labelLinks(tx: Db, tenantId: string, self: string, links: Awaited<ReturnType<typeof documents.links>>) {
   const other = (l: (typeof links)[number]) => (l.from === self ? l.to : l.from);
@@ -193,6 +199,12 @@ async function labelLinks(tx: Db, tenantId: string, self: string, links: Awaited
   if (sch.length) for (const x of (await sql<{ id: string; contract_code: string; seq: number }>`SELECT id::text, contract_code, seq FROM contract_schedules WHERE tenant_id = ${tenantId} AND id = ANY(${sch}::bigint[])`.execute(tx)).rows) label.set(`hop-dong.schedule:${x.id}`, `Hợp đồng ${x.contract_code} — kỳ ${x.seq}`);
   const keys = refs.filter((r) => r.startsWith('ledger.event:')).map((r) => r.slice('ledger.event:'.length));
   if (keys.length) for (const e of (await sql<{ doc_key: string; doc_no: string | null; doc_type: string }>`SELECT doc_key, doc_no, doc_type FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ANY(${keys}::text[])`.execute(tx)).rows) label.set(`ledger.event:${e.doc_key}`, `Chứng từ kế toán ${e.doc_no ?? e.doc_key} (${e.doc_type})`);
+  // [2026-11-19 10:46 AM Võ Hoàng] NT-BH-033 — chứng từ bán chưa có trong sổ (module chưa cài / chưa nạp): tên loại + mã thay cho định danh thô
+  for (const r of refs) {
+    if (label.has(r)) continue;
+    const name = SALES_REF_TEXT.find(([p]) => r.startsWith(p));
+    if (name) label.set(r, `${name[1]} ${r.slice(name[0].length)}`);
+  }
   const docSet = new Set(docs.map((d) => d.doc_ref));
   return links.map((l) => ({ ...l, label: label.get(other(l)) ?? other(l), openable: docSet.has(other(l)) }));
 }

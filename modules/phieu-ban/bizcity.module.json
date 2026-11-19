@@ -3,13 +3,13 @@
   "id": "bizcity.phieu-ban",
   "key": "phieu-ban",
   "kind": "module",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "label": "Phiếu bán nhập tay",
   "description": "Phiếu bán / trả hàng do kế toán lập (BH10, BH11): nháp → duyệt nộp sổ (sale / sale_return) → bỏ duyệt đảo bút toán (NT-BH-015). Đơn đặt hàng BH20 (NT-BH-023): giữ hàng ở KCB; chuyến giao qua kho KHG, phí ship, COD, copy đơn (NT-BH-032).",
   "owners": ["@hoanganh8389"],
   "standard": "^1.0",
   "requires": {
-    "capabilities": ["ledger.submit", "ledger.cancel", "data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.outbox", "settings.registry", "actions.call"]
+    "capabilities": ["ledger.submit", "ledger.cancel", "data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.outbox", "settings.registry", "actions.call", "documents.versions", "documents.links"]
   },
   "permissions": [
     { "key": "phieu-ban:read", "label": "Xem phiếu bán / trả hàng nhập tay", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" },

@@ -41,7 +41,7 @@ Dạng `<nghiệp vụ>.<loại>`, đặt theo **chứng từ đó là gì**, kh
 | `inventory.*` | mọi phiếu làm đổi tồn: `receipt` nhập, `issue` xuất, `transfer` chuyển kho, `exchange` đổi hàng |
 | `finance.*` | tiền: `payment` trả tiền, `payment_request` đề nghị thanh toán |
 | `pricing.*` | chính sách giá, chương trình |
-| `sales.*` | bán hàng (chưa đưa vào, xem §6) |
+| `sales.*` | bán hàng: `order` đơn bán / đơn đặt hàng bán, `invoice` phiếu bán, `return` phiếu trả (NT-BH-033) |
 | `contract.*` | hợp đồng không thuộc mua hàng (thuê, dịch vụ, tín dụng) |
 
 Đang có trong sổ:
@@ -53,6 +53,13 @@ Dạng `<nghiệp vụ>.<loại>`, đặt theo **chứng từ đó là gì**, kh
 | `mua-hang.document:<id>` | `purchase_documents` | `purchase.order` · `inventory.receipt` (nhập mua, nhận tặng) · `inventory.issue` (trả NCC, xuất tặng) · `inventory.exchange` · `purchase.cost` · `purchase.rebate` · `purchase.prepayment` · `finance.payment` |
 | `kho.transfer:<id>` | `stock_transfer_docs` | `inventory.transfer` |
 | `quy.payment_request:<id>` | `payment_requests` | `finance.payment_request` |
+<!-- [2026-11-19 10:48 AM Võ Hoàng] NT-BH-033 — chứng từ bán đã vào sổ (trigger trong migration module, quyền ghi qua 0167) -->
+| `pos.order:<order_id>` | `mod_pos.orders` | `sales.order` |
+| `pos.return:<return_id>` | `mod_pos.returns` | `sales.return` |
+| `phieu-ban.order:<order_id>` | `mod_phieu_ban.orders` | `sales.order` |
+| `phieu-ban.doc:<doc_id>` | `mod_phieu_ban.docs` | `sales.invoice` (kind sale) · `sales.return` (kind sale_return) |
+| `voucher.campaign:<campaign_id>` | `mod_voucher.campaigns` | `pricing.voucher` |
+| `loyalty.program:<chi nhánh>:<bản>` | `mod_loyalty.programs` | `pricing.loyalty` |
 
 Hai loại phiếu cùng một `doc_type` (vd nhập mua và nhận tặng) phân biệt bằng `title` và `meta.kind`.
 
@@ -137,9 +144,14 @@ bash scripts/kiem-chuan.sh      # phải ĐẠT (trùng số migration là chặ
 
 Ghi một dòng `CHANGELOG.md`, cập nhật bảng "Đang có trong sổ" ở §3 tài liệu này.
 
-## 6. Việc tiếp theo: bán hàng
+## 6. Bán hàng
 
-Chưa có trong sổ. Đề xuất `doc_type`. Trước khi làm phải xem cấu trúc bảng và trạng thái thật của từng bảng.
+<!-- [2026-11-19 10:48 AM Võ Hoàng] NT-BH-033 — §6: đã làm phần bán (trừ chương trình bán BH12), sửa quyền lõi 0167 -->
+**Đã làm (NT-BH-033, 19/11/2026)** — phiếu [NT-BH-033](../nghiem-thu/ban-hang/NT-BH-033-so-chung-tu-ban-hang.md): đơn máy bán, phiếu trả máy bán, đơn đặt hàng BH20, phiếu bán BH10 / trả BH11, chiến dịch voucher, chương trình tích điểm (bảng §3). Ánh xạ trạng thái, liên kết: xem phiếu §2. **Chưa làm:** chương trình bán / khuyến mại BH12 (`sale_programs`, bảng lõi) và liên kết `applies` từ đơn / phiếu tới chương trình — làm khi `sale_programs` vào sổ.
+
+**Quyền ghi từ module (migration lõi 0167).** Lúc phục vụ, module chạy bằng vai trò `mod_<key>_rw`, không có quyền trên `business_documents` / `document_versions` / `document_links`. `bizcity_doc_put` và `bizcity_doc_link` chạy `SECURITY DEFINER` (`search_path` ghim) nên trigger của module ghi được qua hai hàm này; hàm kiểm `p_tenant` = `bizcity.tenant_id` của phiên (phiên chưa gắn đơn vị — migration, nạp dữ liệu cũ — thì cho qua, như RLS). Trigger trong migration module gọi `public.bizcity_doc_put` / `public.bizcity_doc_link` (ghi rõ schema), viết hàm ghi nhận cả dòng (`doc_put_<loai>(r <bảng>)`) để nạp dữ liệu cũ bằng `SELECT` thay cho `UPDATE … SET id = id`.
+
+Bảng đề xuất ban đầu (giữ để đối chiếu):
 
 | Chứng từ | Bảng nguồn | `doc_type` đề xuất | Ghi sổ kế toán |
 |---|---|---|---|
@@ -158,5 +170,5 @@ Ràng buộc:
 ## 7. Tài liệu liên quan
 
 - [BIZCITY-DOCUMENT-v1](../contracts/BIZCITY-DOCUMENT-v1.md): chuẩn chứng từ (§5 nhóm trạng thái).
-- Migration `0158` (sổ chứng từ chung), `0164` (người duyệt, liên kết), `0165` (hợp đồng mua), `0166` (tên loại, vòng đời, chính sách giá).
+- Migration `0158` (sổ chứng từ chung), `0164` (người duyệt, liên kết), `0165` (hợp đồng mua), `0166` (tên loại, vòng đời, chính sách giá), `0167` (module ghi sổ qua hàm SECURITY DEFINER, kiểm đơn vị — NT-BH-033).
 - [25. Quy tắc và mã lỗi khai báo](25-quy-tac-ma-loi-khai-bao.md): mã lỗi cho form / API.

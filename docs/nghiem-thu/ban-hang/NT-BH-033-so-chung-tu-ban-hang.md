@@ -61,12 +61,18 @@ Không đưa đợt này: yêu cầu trả quá hạn, nháp khuyến mại, chu
 ## 6. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-033-so-chung-tu-ban.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 19/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-033-so-chung-tu-ban` (commit đầu tiên của nhánh) |
+| Test tự động | `apps/api/test/nt-bh-033-so-chung-tu-ban.test.ts` — 7/7 đạt (đủ 7 dòng §3); `apps/api/test/so-chung-tu.test.ts` — 11/11 đạt (8 ca cũ mua / kho / tiền / chính sách + 3 ca quyền 0167) |
+| Migration | lõi `0167_so_chung_tu_quyen_module.sql`; module `pos/0012_so_chung_tu.sql`, `phieu-ban/0004_so_chung_tu.sql`, `voucher/0002_so_chung_tu.sql`, `loyalty/0003_so_chung_tu.sql` (chạy lại nhiều lần được) |
+| Quyền (CSDL thử) | Trước 0167: `mod_pos_rw` gọi `bizcity_doc_put` → `permission denied for table document_versions`. Sau: ghi được (đầu phiếu, phiên bản, liên kết); `p_tenant` khác `bizcity.tenant_id` của phiên → lỗi 42501; INSERT thẳng `business_documents` vẫn `permission denied` |
+| §3 từng dòng | 1 đạt (`pos.order` done v1 + ledger) · 2 đạt (in_progress → done, v1) · 3 đạt (`sales.return` + source + ledger, HT18 tên liên kết) · 4 đạt (draft v1 → sửa v2 → approved → in_progress → done, v2) · 5 đạt (`sales.invoice` source → đơn; duyệt → done + ledger) · 6 đạt (voucher in_progress → cancelled; tích điểm bản mới in_progress, bản cũ done) · 7 đạt (mọi dòng nguồn mọi đơn vị có trong sổ; nạp lại không thêm phiên bản) |
+| Khác thiết kế §5 | Biến phiên RLS lõi thật là `bizcity.tenant_id` (0041), không phải `app.tenant_id` — hàm kiểm dùng biến này; phiên chưa gắn đơn vị (migration, nạp dữ liệu cũ, việc nền) thì cho qua như RLS. `search_path` ghim `pg_catalog, public, pg_temp` (pg_temp đặt cuối để người gọi không chen bảng tạm). Phiếu trả máy bán `doc_status = pending` (chờ duyệt ACC14) → `pending` |
+| Chưa làm | Liên kết `applies` tới chương trình bán BH12 — chờ `sale_programs` vào sổ (doc 26 §6) |
 
 ## 7. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 19/11/2026 | Tạo phiếu, chốt Q1–Q2 |
 | 19/11/2026 | Q3: tự sửa quyền lõi (0167) trong đợt này; mở rộng giữ chỗ |
+| 19/11/2026 | Code xong: 0167 + trigger 4 module + HT18; §6 điền kết quả chạy (Võ Hoàng) |
