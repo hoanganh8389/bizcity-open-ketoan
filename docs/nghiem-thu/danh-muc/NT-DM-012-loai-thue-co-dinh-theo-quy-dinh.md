@@ -74,7 +74,7 @@ Hệ quả có lợi: hết lỗi chọn nhầm chiều (phiếu bán dùng mã 
 | KKKN | KKKN |
 
 - Cổng nhận chứng từ (POS, cầu nối website) **không đổi** mã: chứng từ mang R08 vẫn lưu R08 và ghi sổ như trước (cùng bút toán Có 33311). Lý do: máy bán / website chưa sửa, đổi ở cửa nạp làm lệch đối chiếu với nguồn. Đổi phía POS / website ở phiếu phối hợp sau.
-- Mã cũ 8% (R08, V08…) cũng hết hiệu lực cùng loại 8 (sau 31/12/2026).
+- Mã cũ 8% (R08, V08…) **không** bị chặn theo hiệu lực: sau 31/12/2026 chứng từ POS / website mang R08 vẫn ghi sổ, phép kiểm VAT_REDUCED_RATE cảnh báo (như trước) — không để mất doanh thu. Chỉ loại cố định 8 chọn trên phiếu bị chặn.
 - **Cần kế toán xác nhận trước khi quy đổi** (mục 8): R05B, R08B, R10B, V05B, V05S (tên ghi 5% / 8% / 10% "người dùng tự nhập" nhưng thuế suất khai 0) · V071 (thuế suất 7%) · V20 (TK 13888 — thuế đầu vào kỳ sau) · V13K (dữ liệu gốc nhóm 0, dữ liệu đang chạy nhóm KCT).
 
 ## 6. Báo cáo
