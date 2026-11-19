@@ -29,10 +29,18 @@ function seriesOf(code: string): { key: string; prefix: string; digits: string }
   return { key: `${prefix}|${digits.length}|${digits[0]}`, prefix, digits };
 }
 
-/** Mã kế tiếp của dãy đông nhất trong danh sách; không có mã nào có đuôi số thì null. */
+/**
+ * Mã kế tiếp của dãy đông nhất trong danh sách; không có mã nào có đuôi số thì null.
+ * Mã đơn vị con dạng `<mã có trong danh sách>-NNN` (KH000001-003) không phải một dãy: bỏ qua, không thì khách hàng mới
+ * không chọn cha lại nhận mã như chi nhánh của KH000001.
+ */
+// [2026-11-19 10:18 AM khanhtd] DM12/DM13 — dãy mã bỏ mã đơn vị con "mã cha-NNN": chưa chọn cha thì ra KH000002, không ra KH000001-004
 export function nextCodeFrom(codes: string[]): { code: string; series: string; count: number } | null {
   const map = new Map<string, Series>();
+  const all = new Set(codes.map((c) => c.trim()));
   for (const c of codes) {
+    const child = /^(.+)-\d+$/.exec(c.trim());
+    if (child && all.has(child[1]!)) continue;
     const s = seriesOf(c.trim());
     if (!s) continue;
     const n = BigInt(s.digits);
@@ -59,13 +67,14 @@ export async function suggestPartnerCode(db: Db, tenantId: string, q: { groupCod
   const kind = q.kind || 'customer';
   let basis: NextCodeBasis = 'default';
   let found: ReturnType<typeof nextCodeFrom> = null;
+  // [2026-11-19 10:18 AM khanhtd] DM12/DM13 — mã mới không cha: chỉ nối dãy của đơn vị độc lập / đơn vị mẹ (bỏ đơn vị con có parent_uid)
   if (q.groupCode) {
-    const rows = await db.selectFrom('partners').select('code').where('tenant_id', '=', tenantId).where('group_code', '=', q.groupCode).execute();
+    const rows = await db.selectFrom('partners').select('code').where('tenant_id', '=', tenantId).where('group_code', '=', q.groupCode).where('parent_uid', 'is', null).execute();
     found = nextCodeFrom(rows.map((r) => r.code));
     if (found) basis = 'group';
   }
   if (!found) {
-    const rows = await db.selectFrom('partners').select('code').where('tenant_id', '=', tenantId).where('kind', '=', kind).execute();
+    const rows = await db.selectFrom('partners').select('code').where('tenant_id', '=', tenantId).where('kind', '=', kind).where('parent_uid', 'is', null).execute();
     found = nextCodeFrom(rows.map((r) => r.code));
     if (found) basis = 'kind';
   }
