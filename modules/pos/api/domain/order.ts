@@ -9,6 +9,7 @@
  */
 import { allocate, roundMoney } from '@bizcity/module-sdk';
 import type { ManualDiscount, OrderDraft, OrderLineDraft } from './schema.js';
+import { customerInvoiceInfoOf } from './schema.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS (chiết khấu) / hãng (dòng thanh toán) trên đơn (đóng góp)
 import { planDiscounts, planPayments, type QuotedVoucher, type VoucherUse } from './voucher.js';
 
@@ -481,7 +482,8 @@ export function toOrderSnapshot(o: ComputedOrder, meta: { draft: OrderDraft; cod
     ...(o.qrAmount > 0 ? { qr: { amount: o.qrAmount, status: 'waiting' as const, expiresAt: new Date(Date.parse(meta.createdAt) + QR_HOLD_MS).toISOString() } } : {}),
     businessDate: draft.businessDate,
     createdAt: meta.createdAt,
-    customer: o.customer ? { id: o.customer.code, name: o.customer.name, phone: o.customer.phone } : { id: '', name: 'Khách lẻ', phone: '' },
+    // NT-BH-034: MST / email / địa chỉ / tên công ty thu ngân sửa tại chỗ — có thì lưu kèm để màn hoá đơn điền sẵn.
+    customer: o.customer ? { id: o.customer.code, name: o.customer.name, phone: o.customer.phone, ...customerInvoiceInfoOf(draft.customer) } : { id: '', name: 'Khách lẻ', phone: '' },
     lines: bill.main,
     ...(bill.z.length ? { zBill: { code: `${meta.code}Z`, lines: bill.z } } : {}),
     subtotal: o.subtotal,

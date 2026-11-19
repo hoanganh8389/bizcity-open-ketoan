@@ -192,3 +192,44 @@ export async function channelFacts(tx: Tx, f: { from: string; to: string; branch
     return { channel: r.channel, branchCode: r.branch_code, orders: 1, revenue: Number(r.total), discount: roundMoney(discount), returns: 0 };
   });
 }
+
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: phiếu bán / trả đã duyệt theo khách cho báo cáo khách hàng của module pos (đóng góp)
+export type CustomerDocLine = { sku: string; name: string; unit: string; qty: number; unitPrice: number; discount: number; amount: number; isGift: boolean; promo: string | null };
+export type CustomerDoc = {
+  id: string; kind: Kind; docNo: string; docDate: string; branchCode: string; partnerCode: string; partnerName: string; channel: string; originalDocNo: string | null;
+  total: number; goods: number; discount: number; lines: CustomerDocLine[]; vouchers: { code: string; campaignName: string; issuer: string; amount: number }[];
+};
+
+/**
+ * Phiếu bán / trả ĐÃ DUYỆT trong khoảng ngày (theo ngày phiếu), lọc cửa hàng / khách. Tiền đều gồm thuế: đơn giá, chiết khấu dòng quy ra gồm
+ * thuế theo thuế suất của dòng; `goods` = tiền hàng trước giảm (dòng không phải quà), `discount` = goods − thực trả của dòng hàng.
+ */
+export async function customerDocs(tx: Tx, f: { from: string; to: string; branches: string[]; partnerCode?: string }): Promise<CustomerDoc[]> {
+  const rows = (await sql<{ doc_id: string; kind: Kind; doc_no: string; doc_date: string; branch_code: string; partner_code: string | null; channel: string; original_no: string | null; total: string; body: Body }>`
+    SELECT d.doc_id::text, d.kind, d.doc_no, d.doc_date::text, d.branch_code, d.partner_code, o.doc_no AS original_no, d.total, d.body,
+           coalesce(nullif(o.body->>'saleChannel', ''), nullif(d.body->>'saleChannel', ''), ${DEFAULT_CHANNEL}) AS channel
+      FROM mod_phieu_ban.docs d LEFT JOIN mod_phieu_ban.docs o ON o.doc_id = d.original_doc_id
+     WHERE d.status = 'approved' AND d.doc_date BETWEEN ${f.from}::date AND ${f.to}::date
+       ${f.branches.length ? sql`AND d.branch_code IN (${sql.join(f.branches)})` : sql``}
+       ${f.partnerCode !== undefined ? sql`AND coalesce(d.partner_code, '') = ${f.partnerCode}` : sql``}
+     ORDER BY d.doc_date, d.doc_no`.execute(tx)).rows;
+  return rows.map((r) => {
+    let goods = 0;
+    let paid = 0;
+    const lines = r.body.lines.map((l) => {
+      const rate = l.amountBeforeTax > 0 ? l.taxAmount / l.amountBeforeTax : 0;
+      const amount = roundMoney(l.amountBeforeTax + l.taxAmount);
+      const gross = roundMoney(l.qty * l.unitPrice * (1 + rate));
+      if (!l.isGift) { goods += gross; paid += amount; }
+      return {
+        sku: l.sku, name: l.name, unit: l.unit, qty: l.qty, unitPrice: roundMoney(l.unitPrice * (1 + rate)), discount: roundMoney(l.discount * (1 + rate)),
+        amount, isGift: Boolean(l.isGift), promo: l.policyRef?.key ?? null,
+      };
+    });
+    const vouchers = (r.body.vouchers ?? []).map((v) => ({ code: v.code, campaignName: v.campaignName, issuer: v.issuer, amount: Number(v.amount) }));
+    return {
+      id: r.doc_id, kind: r.kind, docNo: r.doc_no, docDate: r.doc_date, branchCode: r.branch_code, partnerCode: r.partner_code ?? '', partnerName: r.body.partner?.name ?? '',
+      channel: r.channel, originalDocNo: r.original_no, total: Number(r.total), goods: roundMoney(goods), discount: roundMoney(Math.max(0, goods - paid)), lines, vouchers,
+    };
+  });
+}

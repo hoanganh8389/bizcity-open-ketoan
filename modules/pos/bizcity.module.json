@@ -194,7 +194,9 @@
     "pos.channel.update",
     "pos.channel.stop",
     "pos.channel.resume",
-    "pos.report.channels"
+    "pos.report.channels",
+    "pos.report.customers",
+    "pos.report.customer-detail"
   ],
   "ledger": {
     "submits": [

@@ -56,7 +56,8 @@
     "loyalty.redeem.quote",
     "loyalty.voucher.get",
     "loyalty.opening.import",
-    "loyalty.report.get"
+    "loyalty.report.get",
+    "loyalty.order.points"
   ],
   "events": {
     "subscribes": [

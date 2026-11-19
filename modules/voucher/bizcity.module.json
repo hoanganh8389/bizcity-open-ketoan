@@ -33,7 +33,8 @@
     "voucher.code.revoke",
     "voucher.customer.available",
     "voucher.order.quote",
-    "voucher.report.get"
+    "voucher.report.get",
+    "voucher.usage.list"
   ],
   "events": {
     "subscribes": [

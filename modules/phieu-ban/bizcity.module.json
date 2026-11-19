@@ -47,6 +47,7 @@
     "phieu-ban.order.close",
     "phieu-ban.order.cancel",
     "phieu-ban.channel.summary",
+    "phieu-ban.customer.docs",
     "phieu-ban.shipment.create",
     "phieu-ban.shipment.status",
     "phieu-ban.order.copy"

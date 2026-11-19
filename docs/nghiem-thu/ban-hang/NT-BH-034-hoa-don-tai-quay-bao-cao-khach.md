@@ -54,14 +54,32 @@
 | Q2 | Báo cáo khách | Làm ở kế toán, cùng đợt |
 
 ## 5. Kết quả chạy
+<!-- [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: kết quả chạy (đóng góp) -->
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test tự động | `apps/api/test/nt-bh-034-hoa-don-bao-cao-khach.test.ts` (chưa tách — tạo khi code) |
+| Ngày chạy | 19/11/2026 |
+| Bản code (commit) | nhánh `feat/nt-bh-034-hoa-don-tai-quay` (open-ketoan); `tgs_pos` main commit `2524334` (máy bán React + trang vỏ WP) |
+| Test tự động | `apps/api/test/nt-bh-034-hoa-don-bao-cao-khach.test.ts` — 5 / 5 ĐẠT (phần máy chủ §3); `modules/pos/test/hoa-don-bao-cao-khach.test.ts` — 7 ĐẠT; máy bán React (repo tgs_pos, mock MSW): react/packages/pos-core/src/einvoice.test.ts (luật người mua, phân loại dòng), react/src/features/einvoice/EinvoiceDialog.test.tsx (tự mở màn, tra MST, luật bắt buộc, in trước + phát hành ngầm, email, Zalo, huỷ gửi thuế, dưới 24 tháng, sửa MST bị từ chối) |
+
+| Dòng §3 | Kết quả |
+|---|---|
+| Thanh toán đơn ở shop có Viettel | ĐẠT (test React + mock) — trang vỏ WP báo `einvoice` khi có plugin Viettel; đơn hoàn tất tự mở màn "Khách xuất hoá đơn", điền sẵn khách của đơn (gồm MST / email / địa chỉ / tên công ty thu ngân sửa ở ô khách; máy chủ lưu ở `customer` của đơn — test máy chủ) |
+| Nhập MST doanh nghiệp, bấm Tra cứu | ĐẠT (test React + mock AJAX `tgs_pos_lookup_tax_code`) — tự điền + khoá Tên công ty, Địa chỉ; ngừng hoạt động → cảnh báo; 12 số không tra. Chưa thử trên website thật |
+| MST có nhưng thiếu địa chỉ / tên là "Khách lẻ" | ĐẠT — máy bán báo đỏ đúng ô, không gửi (test React); máy chủ 400 `POS_INVOICE_BUYER` `field: address` / `name` (test máy chủ) |
+| Khách cá nhân nhập CCCD 12 số + email | ĐẠT — máy chủ nhận (test máy chủ); máy bán phát hành được (test React + mock) |
+| CCCD 12 số không có email | ĐẠT — máy bán báo bắt buộc email; máy chủ 400 `field: email` |
+| "Gửi thuế & in bill" | ĐẠT (test React + mock) — bill in ngay, màn đóng; phát hành ngầm `tgs_viettel_send_from_sale` (gửi lại khi dở dang); xong gửi email PDF `tgs_viettel_pos_send_invoice_email` (email trống bỏ qua); báo Zalo `tgs_pos_sale_bill_zalo_notify` |
+| Đơn có quà kèm sữa dưới 24 tháng | ĐẠT (test pos-core) — quà gắn hàng dưới 24 tháng và quà cấp đơn khi đơn có hàng dưới 24 tháng: bỏ + khoá; dòng 0đ khác bật / tắt; dòng có tiền luôn gửi; hàng chính dưới 24 tháng bấm 2 lần (test React) |
+| "Hủy gửi thuế" | ĐẠT (test React + mock) — bill in, không phát hành, Zalo "hoãn"; đơn gửi sau ở Đơn hàng → Hoá đơn điện tử |
+| Viettel báo sai MST | ĐẠT (test React + mock) — mở lại form kèm câu báo, sửa MST, phát hành lại |
+| Báo cáo khách 01–19/11, CN01 + CN02 | ĐẠT (test máy chủ, kỳ = ngày chạy) — mỗi khách × cửa hàng: đơn, tiền hàng, giảm, thực trả, trả hàng, voucher (module voucher), điểm (module loyalty), quà SL + giá trị theo giá bán; gồm phiếu BH10; từng lần mua có mặt hàng, đơn giá, SL, voucher, điểm, quà |
+| Người không có `pos:report` | ĐẠT — 403 ở `reports/customers` và `reports/customer-detail` |
+
+Ghi chú: giá trị quà theo giá vốn chưa có (module không đọc sổ kho) — báo cáo ghi giá trị theo giá bán hiện hành của cửa hàng. Máy chủ nhận người mua có MST mà thiếu tên khi có tên công ty (máy bán cũ / hợp đồng NT-BH-010); máy bán React vẫn bắt tên như POS cũ.
 
 ## 6. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 19/11/2026 | Tạo phiếu, chốt Q1–Q4 (bản QR) |
 | 19/11/2026 | Anh Hoàng: bỏ QR và trang công khai; hoá đơn tại quầy làm y POS cũ (đối chiếu luồng cũ, 10 chỗ React còn thiếu) |
+| 19/11/2026 | Code xong (module pos, phieu-ban, voucher, loyalty; máy bán React + trang vỏ WP); điền §5 |
