@@ -3,7 +3,7 @@
   "id": "bizcity.loyalty",
   "key": "loyalty",
   "kind": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "label": "Điểm thành viên",
   "description": "Sổ điểm thành viên (NT-BH-020): chính sách do website đẩy sang; tích / hoàn theo đơn máy bán; đổi quà / voucher; hết hạn lô hằng ngày; nạp số dư cũ; báo cáo BH19. Không nộp chứng từ — điểm chỉ hạch toán lúc đổi (trên chứng từ bán).",
   "owners": [
@@ -19,7 +19,9 @@
       "actions.idempotency",
       "evidence.receipt",
       "events.subscribe",
-      "events.clock"
+      "events.clock",
+      "documents.versions",
+      "documents.links"
     ]
   },
   "permissions": [

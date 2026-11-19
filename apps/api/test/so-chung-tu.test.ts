@@ -1,10 +1,17 @@
 // [2026-11-18 Nguyễn Văn Thủy] Sổ chứng từ chung business_documents (0156): đồng bộ đầu phiếu, phiên bản, liên kết từ bảng nguồn (đóng góp)
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { runModuleMigrations } from '@bizcity/platform/db/module-db';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
+const POS_DIR = fileURLToPath(new URL('../../../modules/pos/', import.meta.url));
+const POS_READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners',
+  'bizcity_read.branch_prices', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 let t: string;
 
 const doc = (ref: string) => db.selectFrom('business_documents').selectAll().where('tenant_id', '=', t).where('doc_ref', '=', ref).executeTakeFirstOrThrow();
@@ -134,5 +141,52 @@ describe('Loại chứng từ và vòng đời (0166)', () => {
     expect(await doc(ref)).toMatchObject({ status: 'cancelled', status_raw: 'inactive' });
     await sql`DELETE FROM purchase_policies WHERE id = ${id}`.execute(db);
     expect(await doc(ref)).toMatchObject({ status: 'cancelled', status_raw: 'retired' });
+  });
+});
+
+// [2026-11-19 10:43 AM Võ Hoàng] NT-BH-033 — 0167: vai trò module (mod_pos_rw) ghi sổ chứng từ qua bizcity_doc_put / bizcity_doc_link; tenant khác phiên bị chặn; không có quyền bảng lõi
+describe.skipIf(!existsSync(POS_DIR))('Ghi sổ chứng từ từ vai trò module (0167)', () => {
+  /** Chạy fn trong giao dịch đã gắn đơn vị (như API) bằng vai trò mod_pos_rw (như ctx.data.module); luôn ROLLBACK. */
+  const asPosRw = async (tenant: string, fn: (tx: typeof db) => Promise<unknown>) => {
+    let out: unknown;
+    let err: unknown;
+    await db.transaction().execute(async (trx) => {
+      await sql`SELECT set_config('bizcity.tenant_id', ${tenant}, true)`.execute(trx);
+      await sql`SET LOCAL ROLE mod_pos_rw`.execute(trx);
+      try { out = await fn(trx as unknown as typeof db); } catch (e) { err = e; }
+      throw new Error('rollback');
+    }).catch((e: Error) => { if (e.message !== 'rollback') throw e; });
+    if (err) throw err;
+    return out;
+  };
+  const put = (tx: typeof db, tenant: string, ref: string) => sql`SELECT public.bizcity_doc_put(${tenant}::bigint, ${ref}, 'pos', 'sales.order', 'HD-0167',
+    current_date, 'CN01', '', 'Đơn bán máy POS', 0, 'completed', 'done', '{"a":1}'::jsonb, '{}'::jsonb, 'user:1', NULL, NULL, '', NULL)`.execute(tx);
+
+  beforeAll(async () => {
+    await runModuleMigrations('pos', path.join(POS_DIR, 'migrations'), { reads: POS_READS });
+  });
+
+  it('mod_pos_rw, đúng đơn vị của phiên → ghi được đầu phiếu, phiên bản, liên kết', async () => {
+    const got = await asPosRw(t, async (tx) => {
+      await put(tx, t, 'pos.order:probe-0167');
+      await sql`SELECT public.bizcity_doc_link(${t}::bigint, 'pos.order:probe-0167', 'ledger.event:pos:CN01:sale:probe-0167', 'ledger', 'user:1')`.execute(tx);
+      await sql`RESET ROLE`.execute(tx);
+      const d = (await sql<{ doc_type: string; version: number }>`SELECT doc_type, version FROM business_documents WHERE tenant_id = ${t} AND doc_ref = 'pos.order:probe-0167'`.execute(tx)).rows;
+      const l = (await sql<{ role: string }>`SELECT role FROM document_links WHERE tenant_id = ${t} AND from_ref = 'pos.order:probe-0167'`.execute(tx)).rows;
+      return { d, l };
+    });
+    expect(got).toEqual({ d: [{ doc_type: 'sales.order', version: 1 }], l: [{ role: 'ledger' }] });
+  });
+
+  it('mod_pos_rw ghi chứng từ của đơn vị khác phiên → lỗi 42501 (hàm và liên kết)', async () => {
+    const other = String((await sql<{ id: string }>`SELECT id FROM tenants WHERE id <> ${t} ORDER BY id LIMIT 1`.execute(db)).rows[0]!.id);
+    await expect(asPosRw(t, (tx) => put(tx, other, 'pos.order:probe-0167-x'))).rejects.toMatchObject({ code: '42501', message: expect.stringContaining('không ghi chứng từ của đơn vị') });
+    await expect(asPosRw(t, (tx) => sql`SELECT public.bizcity_doc_link(${other}::bigint, 'pos.order:a', 'pos.order:b', 'source', 'x')`.execute(tx)))
+      .rejects.toMatchObject({ code: '42501' });
+  });
+
+  it('vai trò module vẫn không có quyền ghi thẳng bảng lõi (chỉ qua hàm)', async () => {
+    await expect(asPosRw(t, (tx) => sql`INSERT INTO business_documents (tenant_id, doc_ref, module, doc_type, status_raw, status) VALUES (${t}, 'pos.order:direct', 'pos', 'sales.order', 'x', 'done')`.execute(tx)))
+      .rejects.toMatchObject({ code: '42501', message: expect.stringContaining('permission denied') });
   });
 });
