@@ -460,6 +460,14 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
                 ...(f.shortName && (overwrite || !v.shortName) ? { shortName: f.shortName } : {}),
                 ...(!v.name && f.name ? { name: f.name } : {}),
                 ...(f.representative && !v.contactName ? { contactName: f.representative } : {}),
+              })}
+              // [2026-11-19 10:43 AM khanhtd] DM12 — đổi MST: xoá thông tin đã điền theo MST cũ (ô đã sửa tay thì giữ)
+              onClear={(p) => set({
+                ...(p.name && v.companyName === p.name ? { companyName: '' } : {}),
+                ...(p.address && v.companyAddress === p.address ? { companyAddress: '' } : {}),
+                ...(p.shortName && v.shortName === p.shortName ? { shortName: '' } : {}),
+                ...(p.name && v.name === p.name ? { name: '' } : {}),
+                ...(p.representative && v.contactName === p.representative ? { contactName: '' } : {}),
               })} />
             {txt('companyName', 'Tên công ty', true)}
             {txt('shortName', 'Tên viết tắt')}
@@ -545,6 +553,14 @@ function NccFields({ v, set, txt, choices, isNew, codeHint, noun, changeGroup, f
           ...(f.address && (overwrite || !v.address) ? { address: f.address } : {}),
           ...(f.shortName && (overwrite || !v.shortName) ? { shortName: f.shortName } : {}),
           ...(f.representative && !v.contactName ? { contactName: f.representative, position: v.position || 'Người đại diện theo pháp luật' } : {}),
+        })}
+        // [2026-11-19 10:43 AM khanhtd] DM13 — đổi MST: xoá thông tin đã điền theo MST cũ (ô đã sửa tay thì giữ)
+        onClear={(p) => set({
+          ...(p.name && v.name === p.name ? { name: '' } : {}),
+          ...(p.address && v.address === p.address ? { address: '' } : {}),
+          ...(p.shortName && v.shortName === p.shortName ? { shortName: '' } : {}),
+          ...(p.representative && v.contactName === p.representative
+            ? { contactName: '', ...(v.position === 'Người đại diện theo pháp luật' ? { position: '' } : {}) } : {}),
         })} />
       <Field label="Tên nhà cung cấp (tên công ty trên hoá đơn) (*)" full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} autoFocus={!isNew} /></Field>
       {txt('shortName', 'Tên viết tắt')}
