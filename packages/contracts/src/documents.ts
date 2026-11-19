@@ -133,6 +133,9 @@ const baseDocument = {
    * để xem công nợ, doanh thu theo nhân viên. Mã chưa có thì tự thêm vào danh mục Nhân viên.
    */
   employee: z.object({ code: z.string().trim().min(1).max(64), name: z.string().trim().max(255).default('') }).optional(),
+  // [2026-11-18 Nguyễn Văn Thủy] chứng từ theo hợp đồng (0163) (đóng góp)
+  /** Mã hợp đồng (Danh mục hợp đồng): ghi vào mọi dòng sổ của chứng từ (dims.contract) để xem công nợ theo hợp đồng. */
+  contract: z.string().trim().max(64).optional(),
   invoice: invoiceInputSchema.optional(),
   /** Hạn thanh toán của khoản công nợ chứng từ sinh ra (bán nợ, mua nợ); trống = ngày chứng từ + hạn thanh toán của đối tượng. */
   dueDate: isoDate.optional(),

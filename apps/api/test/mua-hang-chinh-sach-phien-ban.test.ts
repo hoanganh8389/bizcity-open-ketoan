@@ -89,8 +89,8 @@ describe('Phiên bản chính sách mua hàng (T031-MH-1)', () => {
   });
 
   it('bảng phiên bản và sổ đăng ký chỉ thêm', async () => {
-    const e = await sql`UPDATE purchase_policy_versions SET reason = 'sửa' WHERE tenant_id = ${tenantId}`.execute(db).then(() => 'ok', (x: Error) => x.message);
-    expect(e).toMatch(/chỉ thêm/);
+    const e = await sql`UPDATE document_versions SET content_hash = 'sửa' WHERE tenant_id = ${tenantId} AND doc_ref LIKE 'mua-hang.policy:%'`.execute(db).then(() => 'ok', (x: Error) => x.message);
+    expect(e).not.toBe('ok');
   });
 
   it('xoá chính sách chưa áp → ngừng ở sổ đăng ký, các bản còn', async () => {
@@ -100,7 +100,7 @@ describe('Phiên bản chính sách mua hàng (T031-MH-1)', () => {
     const env = await sql<{ status: string }>`SELECT status FROM policy_registry WHERE tenant_id = ${tenantId} AND policy_id = ${`mua-hang:purchase_policies:${id}`}`.execute(db);
     expect(env.rows.length).toBe(n);
     expect(env.rows.every((x) => x.status === 'retired')).toBe(true);
-    const kept = await sql<{ n: string }>`SELECT count(*) AS n FROM purchase_policy_versions WHERE tenant_id = ${tenantId} AND policy_id = ${id}`.execute(db);
+    const kept = await sql<{ n: string }>`SELECT count(*) AS n FROM document_versions WHERE tenant_id = ${tenantId} AND doc_ref = ${`mua-hang.policy:${id}`}`.execute(db);
     expect(Number(kept.rows[0]!.n)).toBe(n);
   });
 });

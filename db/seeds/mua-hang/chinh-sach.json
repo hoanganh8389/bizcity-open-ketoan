@@ -426,27 +426,12 @@
     }
   },
   {
-    "code": "NC100227-HD",
-    "kind": "contract",
-    "name": "Vinh Châu: hợp đồng mua bán 2026",
-    "scope": {
-      "partnerCode": "NC100227"
-    },
-    "isActive": true,
-    "validFrom": "2026-01-01",
-    "rule": {
-      "no": "01/2026/HĐMB-TGS-VC",
-      "signedOn": "2026-01-05",
-      "note": "Phân phối sữa TH khu vực Nghệ An"
-    },
-    "validTo": "2026-12-31"
-  },
-  {
     "code": "NC100227-HANMUC",
     "kind": "credit_limit",
     "name": "Vinh Châu: hạn mức công nợ 600 triệu",
     "scope": {
-      "partnerCode": "NC100227"
+      "partnerCode": "NC100227",
+      "contractCode": "01/2026/HĐMB-TGS-VC"
     },
     "isActive": true,
     "validFrom": "2026-01-01",
@@ -460,7 +445,8 @@
     "kind": "payment_term",
     "name": "Vinh Châu: 10 ngày làm việc từ ngày nhận đủ hàng và hồ sơ",
     "scope": {
-      "partnerCode": "NC100227"
+      "partnerCode": "NC100227",
+      "contractCode": "01/2026/HĐMB-TGS-VC"
     },
     "isActive": true,
     "validFrom": "2026-01-01",
@@ -576,7 +562,8 @@
     "kind": "item_discount",
     "name": "Vinh Châu: chiết khấu theo mã hàng tháng 11 (bảng nhiều mã)",
     "scope": {
-      "partnerCode": "NC100227"
+      "partnerCode": "NC100227",
+      "contractCode": "01/2026/HĐMB-TGS-VC"
     },
     "validFrom": "2026-11-01",
     "validTo": "2026-11-30",

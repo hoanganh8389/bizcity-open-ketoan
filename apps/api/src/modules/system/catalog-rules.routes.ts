@@ -24,6 +24,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
+import { docKiem, ghiKiem } from '@bizcity/platform/core/nhat-ky-kiem';
 import { defineAction, mountActions } from '../../core/actions.js';
 import { settingsValuesRoutes } from './settings-values.routes.js';
 // [2026-11-06 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: tổng quan cấu hình cho màn HT13
@@ -43,7 +44,7 @@ function ruleView(code: string, row: ReviewRow | undefined) {
   const r = stale ? undefined : row;
   const preview: CatalogFinding = applyRuleReview(catalogFinding(code, CATALOG_HINT_EXAMPLES[code] ?? {}), r);
   return {
-    code, entity: d.entity, level: d.level, effectiveLevel: preview.level, rule: d.rule ?? null,
+    code, entity: d.entity, level: d.level, effectiveLevel: preview.level, rule: d.rule ?? null, okText: d.okText ?? null, field: d.field ?? null,
     // ADR-0020: không có trạng thái "chờ duyệt" — luật chạy ngay; đơn vị chỉ có thể đã sửa câu chữ / đã hạ mức
     status: r && r.lowered && d.level === 'warn' ? 'lowered' as const : r && (r.title || r.why || r.fix) ? 'edited' as const : 'default' as const,
     edited: Boolean(r && (r.title || r.why || r.fix)),
@@ -63,7 +64,7 @@ const ruleOut = z.custom<ReturnType<typeof ruleView>>((v) => typeof v === 'objec
 const listRules = defineAction({
   id: 'core.catalog-rules.list', title: 'Luật nhắc của khung Vì sao và trạng thái duyệt tại đơn vị', tags,
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
-  input: z.object({ entity: z.enum(['account', 'partner', 'item']).optional() }),
+  input: z.object({ entity: z.enum(['account', 'partner', 'item', 'unit', 'bank', 'branch', 'group']).optional() }),
   output: z.object({ items: z.array(ruleOut), total: z.number(), customized: z.number() }),
   expose: { http: { method: 'GET', path: '/api/v1/catalog-rules' }, mcp: false, ai: 'deny' },
   handler: async (ctx, input) => {
@@ -166,6 +167,28 @@ export async function catalogRulesRoutes(app: FastifyInstance): Promise<void> {
   // [2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1: đường đọc / ghi cấu hình chung đăng ký cùng tệp cấu hình HT09 (system.routes.ts / loi.ts đang thuộc dòng giữ chỗ khác — 30 §5)
   await settingsValuesRoutes(app);
   await settingsOverviewRoutes(app);
+  // [2026-11-19 Nguyễn Văn Thủy] lỗi form tự chặn (chưa gửi máy chủ) cũng vào nhật ký kiểm — đếm lỗi hay gặp (đóng góp)
+  app.post('/api/v1/validation-log/form', {
+    schema: { tags, summary: 'Ghi một lần form tự chặn (thiếu ô, sai dữ liệu) vào nhật ký kiểm khai báo — người đã đăng nhập',
+      body: z.object({ entity: z.string().trim().min(1).max(200), key: z.string().max(200).default(''), screen: z.string().max(300).optional(),
+        failed: z.array(z.object({ code: z.string().max(40).default('FORM-CHAN'), title: z.string().max(500) })).min(1).max(20) }) },
+    handler: async (req) => {
+      const a = authOf(req);
+      const b = req.body as { entity: string; key: string; screen?: string; failed: { code: string; title: string }[] };
+      await ghiKiem(a.tenantId, { entity: b.entity, key: b.key, action: 'form', ok: false, source: 'form', screen: b.screen, failed: b.failed.map((f) => ({ code: f.code, level: 'block', title: f.title })), user: a.actorName || a.actor, requestId: String(req.id) });
+      return ok({ logged: true });
+    },
+  });
+  // [2026-11-19 Nguyễn Văn Thủy] nhật ký kiểm khai báo (JSONL, docs/nghiep-vu/25 §3.5) (đóng góp)
+  app.get('/api/v1/validation-log', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Nhật ký kiểm khai báo: mỗi lần lưu danh mục / chứng từ — đạt hay bị chặn, mã quy tắc chưa đạt, mã tra cứu',
+      querystring: z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), entity: z.string().max(1000).optional(), code: z.string().max(40).optional(), key: z.string().max(200).optional(), user: z.string().max(200).optional(), onlyFailed: z.coerce.boolean().optional(), limit: z.coerce.number().int().min(1).max(5000).default(1000) }) },
+    handler: async (req) => {
+      const q = req.query as { from?: string; entity?: string; code?: string; key?: string; user?: string; onlyFailed?: boolean; limit: number };
+      return ok(await docKiem(authOf(req).tenantId, { since: q.from ? new Date(`${q.from}T00:00:00+07:00`) : undefined, entity: q.entity, code: q.code, key: q.key, user: q.user, onlyFailed: q.onlyFailed, limit: q.limit }));
+    },
+  });
   app.get('/api/v1/settings/item-auto-create', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Chế độ tự thêm mặt hàng từ chứng từ (on / off) và lần đổi gần nhất' },

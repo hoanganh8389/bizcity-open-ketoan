@@ -8,6 +8,7 @@ import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { NutQuyTac } from '@/components/QuyTacDanhMuc';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -37,7 +38,7 @@ export function UnitNamesPage() {
 
   return (
     <>
-      <PageHeader title="Danh mục đơn vị tính" code="DM15" helpKey="danh-muc-dvt"
+      <PageHeader actions={<NutQuyTac entity="unit" logEntity="unit-names" ten="đơn vị tính" />} title="Danh mục đơn vị tính" code="DM15" helpKey="danh-muc-dvt"
         subtitle="Tên ĐVT dùng chung (Hộp, Lốc, Lốc_4, Thùng…) — chỉ là tên, tỉ lệ quy đổi khai ở từng mặt hàng; khai ĐVT mới ở mặt hàng thì tự thêm vào đây" />
       <div className="card">
         {/* [2026-11-16 kiennt] bỏ thẻ Tất cả / Đang có mặt hàng dùng / Chưa dùng: luôn hiện tất cả, lọc ở cột Số mặt hàng dùng (đóng góp) */}

@@ -23,6 +23,7 @@ import { checkToolPassword } from '@bizcity/platform/core/security/tool-password
 import { loadSettings, resolveAccounts, saveSettings } from './analysis.js';
 import { purchaseService } from './service.js';
 import { policyInputSchema, savePolicy } from './store.js';
+import { contractInput, saveContract } from './hop-dong.js';
 import { logEvents } from './log.js';
 import { saveSupplierProducts, supplierProductSchema } from './gia-mua.js';
 
@@ -77,6 +78,13 @@ export async function seedDemo(auth: AuthContext, opts: { reset?: boolean } = {}
   for (const p of master.partners.filter((x) => x.openingDebt)) {
     const branch = docs.find((d) => d.partnerCode === p.code)?.branchCode ?? master.branches[0]!.code;
     await voucherService.createOpening(auth, { branchCode: branch, docDate: '2026-09-30', description: `Số dư đầu kỳ phải trả ${p.name} (dữ liệu mẫu)`, balancingAccount: balancing, lines: [{ accountCode: A.payable, partnerCode: p.code, debit: 0, credit: p.openingDebt! }] });
+  }
+  // [2026-11-18 Nguyễn Văn Thủy] 2c. Hợp đồng mua Vinh Châu (Danh mục hợp đồng, 0163): giá, chính sách, đơn / phiếu nhập mẫu của NCC thuộc hợp đồng (đóng góp)
+  {
+    const code = '01/2026/HĐMB-TGS-VC';
+    const had = await db.selectFrom('dimensions').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'contract').where('code', '=', code).executeTakeFirst();
+    if (!had && master.partners.some((x) => x.code === 'NC100227')) await db.transaction().execute((trx) => saveContract(trx, auth.tenantId, auth.actorName, code, true, contractInput.parse({
+      name: 'Vinh Châu: hợp đồng mua bán 2026', partnerCode: 'NC100227', signedDate: '2026-01-05', startDate: '2026-01-01', endDate: '2026-12-31', status: 'active', note: 'Phân phối sữa TH khu vực Nghệ An' })));
   }
   // 3. Chính sách. Mã đã có (người dùng tự tạo, ví dụ NC100227-HANMUC) thì GIỮ chính sách đang có, bỏ qua mẫu; lỗi từng chính
   // sách ghi vào báo cáo, không dừng cả lượt nạp.

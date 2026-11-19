@@ -18,7 +18,7 @@ import { gridNav } from '@/lib/gridNav';
 import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { refOf } from '@ketoan/contracts';
 import {
-  COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, orderProgress, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termText,
+  COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, orderProgress, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termFromRule, termText,
   type LineType, type PDoc, type PLine, type ProductUnit, type PromoRow, type SupplierProduct,
   type Check, type TraceItem,
 } from '@bizcity/mua-hang-domain';
@@ -29,7 +29,7 @@ import { roundPrice } from '@/lib/format';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { BranchPicker } from '@/components/filters';
 import { ItemPicker, ListPicker, PartnerPicker, useAccountList } from '@/components/pickers';
-import { GOODS_KINDS, KIND_LABEL, P, STATUS_LABEL, TAX_LABEL, lastUsed, today, purchaseApi, useBrands, useNames, useSupplierBrands, vnd, type Analysis, type MhData, type StoredDoc } from '../du-lieu';
+import { GOODS_KINDS, KIND_LABEL, P, STATUS_LABEL, TAX_LABEL, contractFor, lastUsed, today, purchaseApi, useBrands, useNames, useSupplierBrands, vnd, type Analysis, type MhData, type StoredDoc } from '../du-lieu';
 import { CheckList, UsageBar, dmy, statusBadge } from '../chung';
 import { ChonMatHang, type CatalogItem } from '../thanh-phan/ChonMatHang';
 import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
@@ -85,6 +85,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const [payDate, setPayDate] = useState('');
   const [help, setHelp] = useState(false);
   const [fill, setFill] = useState(false);
+  const [fillHd, setFillHd] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pickGoods, setPickGoods] = useState<{ text: string; lineType: LineType } | null>(null);
   const [promoOpen, setPromoOpen] = useState(false);
@@ -155,6 +156,15 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     }) })); // phân tích lại với ĐVT mới
   };
   const isGoods = GOODS_KINDS.includes(v.kind);
+  // [2026-11-18 Nguyễn Văn Thủy] hợp đồng mua (0163): chọn NCC → tự gợi ý hợp đồng đang hiệu lực (mọi phiếu mới chưa gắn chứng từ, trừ xuất quà — 19/11 thêm ứng trước, trả tiền, chi phí, thưởng, trả hàng); phiếu lập từ phiếu khác kế thừa (đóng góp)
+  const hdTouched = useRef(false);
+  const hds = useQuery({ queryKey: ['mua-hang', 'contracts', v.partnerCode], enabled: Boolean(v.partnerCode) && v.kind !== 'gift_out', staleTime: 60_000, queryFn: () => purchaseApi.contracts(v.partnerCode) }).data ?? [];
+  const hd = hds.find((c) => c.code === v.contractCode);
+  useEffect(() => {
+    if (readOnly || hdTouched.current || v.contractCode || !v.id.startsWith('new-') || v.kind === 'gift_out' || v.refIds?.length) return;
+    const c = contractFor(hds, v.docDate, v.branchCode);
+    if (c) setV((x) => ({ ...x, contractCode: c.code }));
+  }, [hds, v.branchCode, v.docDate]); // eslint-disable-line react-hooks/exhaustive-deps
   const isGiftDoc = v.kind === 'gift_in' || v.kind === 'gift_out';
   // Ngày nghỉ lễ (MH12): hạn "N ngày làm việc" bỏ cả ngày lễ — trùng với hạn máy chủ tính (tab Hạn trả tiền, hạn lưu vào phiếu).
   const settings = useQuery({ queryKey: ['mua-hang', 'settings'], queryFn: () => api.get<{ holidays: string[]; }>(`${P}/settings`), staleTime: 300_000 });
@@ -360,7 +370,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const toDocBasis = (price: number, inc: boolean, taxCode: string) => { const r = TAX_RATE[taxCode] ?? 0; return inc === v.priceIncludesVat ? price : inc ? roundPrice(price / (1 + r / 100)) : roundPrice(price * (1 + r / 100)); };
   /** Gợi ý giá dưới ô đơn giá: giá cố định (theo ĐVT) và lần nhập gần nhất, bấm để dùng. */
   /**
-   * Dòng chữ dưới ô đơn giá — so với GIÁ MUA ĐÃ THOẢ THUẬN với NCC (giá cố định khai ở Mặt hàng & giá mua), không có thì so với
+   * Dòng chữ dưới ô đơn giá — so với GIÁ MUA ĐÃ THOẢ THUẬN với NCC (giá cố định khai ở Hợp đồng & giá → Mặt hàng & giá), không có thì so với
    * LẦN NHẬP GẦN NHẤT: "✓ đúng giá NCC" · "cao hơn giá NCC 3,2% (380.000) — bấm để dùng" · chưa nhập giá: "Dùng giá NCC 380.000".
    * Mục đích: hoá đơn ghi sai giá / NCC tăng giá là thấy ngay khi nhập, trước khi duyệt.
    */
@@ -436,7 +446,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     // (trước đây chỉ chép dòng hàng mua → mất dòng quà, đơn 3 mặt hàng thành phiếu nhập 2).
     if (d.kind === 'order' && v.kind === 'receipt') {
       const r = receiptFromOrder(d, data.docs, v.docDate || today(), data.units);
-      set({ priceIncludesVat: r.priceIncludesVat, refIds: [d.id], lines: r.lines, ...(r.warehouseCode && !v.warehouseCode ? { warehouseCode: r.warehouseCode } : {}) });
+      set({ priceIncludesVat: r.priceIncludesVat, refIds: [d.id], lines: r.lines, ...(r.warehouseCode && !v.warehouseCode ? { warehouseCode: r.warehouseCode } : {}), ...(d.contractCode ? { contractCode: d.contractCode } : {}) });
       return;
     }
     // Chép làm mẫu: hàng mua + hàng tặng (giữ loại dòng); phiếu đổi hàng chỉ chép hàng mua làm dòng trả đi.
@@ -445,7 +455,8 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   };
   /** Chọn NCC → nhớ cho phiếu sau. Nhãn không chọn ở phiếu: lấy theo mặt hàng từng dòng. */
   const pickPartner = (c: string) => {
-    set({ partnerCode: c });
+    hdTouched.current = false;
+    set({ partnerCode: c, contractCode: undefined });
     if (c) lastUsed.set({ partnerCode: c });
   };
 
@@ -683,6 +694,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             { key: 'note', header: 'Ghi chú', width: 200, value: (d) => d.note ?? '' },
           ]} />}
         {fill && <DienMatHang doc={v} data={data} onClose={() => setFill(false)} onAdd={(ls) => { setFill(false); set({ lines: [...v.lines.filter((l) => l.sku), ...ls] }); setTab('hang'); }} />}
+        {fillHd && hd && <DienMatHang doc={v} data={data} theoHopDong={{ code: hd.code, skus: hd.skus }} onClose={() => setFillHd(false)} onAdd={(ls) => { setFillHd(false); set({ lines: [...v.lines.filter((l) => l.sku), ...ls] }); setTab('hang'); }} />}
         <div className={`mh-sheet-body ${readOnly ? 'view-plain' : ''}`} ref={kl.body} {...kl.bodyProps}>
           {/* Thẻ Hàng hoá: khung trái không cuộn cả khối — bảng hàng chiếm phần còn lại và tự cuộn (thanh cuộn ngang luôn thấy, đầu phiếu đứng yên). */}
           <div className={`mh-main ${tab === 'hang' ? 'mh-main-hang' : ''}`}>
@@ -710,6 +722,21 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   <PartnerPicker value={v.partnerCode} onChange={pickPartner} activeOnly addKind="supplier" disabled={readOnly} />
                   {v.partnerCode && <span className="muted" style={{ fontSize: 11, display: 'flex', gap: 6, alignItems: 'center' }}><NccInfo code={v.partnerCode} showName={false} />{names.partner(v.partnerCode)?.taxCode ? `MST ${names.partner(v.partnerCode)?.taxCode}` : 'Xem thông tin NCC'}{names.partner(v.partnerCode)?.address ? ` · ${names.partner(v.partnerCode)?.address}` : ''}</span>}
                 </div>
+                {v.kind !== 'gift_out' && v.partnerCode && (
+                  <div className="field span2"><label title="Hợp đồng mua ký với NCC: giá, chiết khấu, hạn thanh toán lấy theo hợp đồng; bút toán, công nợ mang số hợp đồng (xem Công nợ theo hợp đồng MH30). Đơn / phiếu mới tự gợi ý hợp đồng đang hiệu lực; phiếu lập từ đơn theo hợp đồng của đơn">Hợp đồng</label>
+                    <select className="select input" value={v.contractCode ?? ''} onChange={(e) => { hdTouched.current = true; set({ contractCode: e.target.value || undefined }); }}>
+                      <option value="">{hds.length ? '— không theo hợp đồng —' : 'NCC chưa có hợp đồng mua'}</option>
+                      {hds.filter((c) => c.status === 'active' || c.code === v.contractCode).map((c) => <option key={c.code} value={c.code}>{c.code} · {c.statusText}{c.endDate ? ` · đến ${dmy(c.endDate)}` : ''}</option>)}
+                      {v.contractCode && !hd && <option value={v.contractCode}>{v.contractCode}</option>}
+                    </select>
+                    {hd && (() => { const t = data.policies.find((x) => x.kind === 'payment_term' && x.isActive && x.scope.contractCode === hd.code); return <span className="muted" style={{ fontSize: 11, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      Hạn thanh toán: <b>{t ? termText(termFromRule(t.rule)) : 'theo điều khoản chung của NCC'}</b>
+                      {!readOnly && (v.kind === 'order' || v.kind === 'receipt') && <button type="button" className="btn btn-xs btn-primary" title="Chọn mặt hàng của hợp đồng, giá lấy theo hợp đồng" onClick={() => setFillHd(true)}>Lấy từ hợp đồng</button>}
+                    </span>; })()}
+                    {hd && hd.statusText !== 'Đang hiệu lực' && !readOnly && <span className="mh-warn" style={{ fontSize: 11 }}>Hợp đồng {hd.statusText.toLowerCase()}{hd.endDate ? ` (đến ${dmy(hd.endDate)})` : ''}</span>}
+                    {hd && hd.branchCodes.length > 0 && v.branchCode && !hd.branchCodes.includes(v.branchCode) && !readOnly && <span className="mh-warn" style={{ fontSize: 11 }}>Hợp đồng không áp cho chi nhánh {v.branchCode}</span>}
+                  </div>
+                )}
                 {(v.kind === 'receipt' || v.kind === 'prepayment') && (
                   <div className="field span2"><label>Theo đơn đặt hàng</label>
                     <OChonChungTu disabled={readOnly} count={orders.length} onOpen={() => setChon('don')} onClear={() => set({ refIds: [] })}

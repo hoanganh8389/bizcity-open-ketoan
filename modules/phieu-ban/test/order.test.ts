@@ -118,3 +118,38 @@ describe('lịch sử, trùng livestream, chứng từ giữ hàng', () => {
     expect(JSON.stringify(doc)).not.toMatch(/"(debit|credit)Account"|156|1561/);
   });
 });
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: chuyến giao, thông tin giao, phí ship (đóng góp)
+describe('chuyến giao (NT-BH-032)', () => {
+  it('lập chuyến ≤ còn lại (trừ cả phần đang giao); giao xong / hoàn đổi đúng đã giao, đang giao, đang giữ', async () => {
+    const d = await import('../api/domain/order.js');
+    const a = d.reserveShipment([line({ held: 10 })], [{ lineKey: 'L1', qty: 5 }]);
+    expect(a.over).toEqual([]);
+    expect(a.lines[0]).toMatchObject({ delivered: 0, shipping: 5, held: 5 });
+    expect(a.ship).toEqual([{ lineKey: 'L1', sku: 'SUA330', name: 'Sữa 330', unit: 'Hộp', qty: 5 }]);
+    expect(d.reserveShipment(a.lines, [{ lineKey: 'L1', qty: 6 }]).over).toEqual([{ lineKey: 'L1', sku: 'SUA330', qty: 6, remaining: 5 }]);
+    expect(d.remainingOf(a.lines[0]!)).toBe(5);
+    expect(d.fullyDelivered(a.lines)).toBe(false);
+    const done = d.shipmentDelivered(a.lines, a.ship);
+    expect(done[0]).toMatchObject({ delivered: 5, shipping: 0, held: 5 });
+    expect(d.shipmentDelivered(done, a.ship, true)[0]).toMatchObject({ delivered: 0, shipping: 5 });
+    expect(d.shipmentReturned(a.lines, a.ship)[0]).toMatchObject({ delivered: 0, shipping: 0, held: 10 });
+    expect(d.anyShipping(a.lines)).toBe(true);
+    // Đang giao vẫn tính là chưa giao khi kiểm hạn mức.
+    expect(d.undeliveredValue({ lines: a.lines })).toBe(3_300_000);
+    // Cân giữ hàng không giữ thêm cho phần đang giao.
+    expect(d.rebalanceHolds(a.lines, new Map([['SUA330', 100]])).hold).toEqual([]);
+  });
+
+  it('thông tin giao chuẩn hoá; phí ship gồm thuế → đơn giá trước thuế; ánh xạ hãng viết hoa; chứng từ đi giao / hoàn', async () => {
+    const d = await import('../api/domain/order.js');
+    expect(d.normShipping({ receiver: ' Lan ', carrier: 'ghn', fee: 30_000.4, cod: 0 })).toEqual({ receiver: 'Lan', carrier: 'GHN', fee: 30_000, cod: 0 });
+    expect(d.normShipping({ receiver: '', fee: 0 })).toBeNull();
+    expect(d.feeBeforeTax(32_400, 8)).toBe(30_000);
+    expect(d.parseCarrierMap(['ghn=COD-GHN', 'SELF=TM'])).toEqual(new Map([['GHN', 'COD-GHN'], ['SELF', 'TM']]));
+    const mv = [{ lineKey: 'L1', sku: 'SUA330', name: 'Sữa', unit: 'Hộp', qty: 5 }];
+    const go = d.toHoldDoc({ orderId: 'o', orderNo: 'DH2611000001', seq: 3, branchCode: 'CN01', docDate: '2026-11-18', from: 'KCB', to: 'KHG', moves: mv, release: false, kind: 'ship' });
+    expect(go).toMatchObject({ docType: 'transfer', docNo: 'DH2611000001-S3', toBranchCode: 'CN01', lines: [{ warehouseCode: 'KCB', toWarehouseCode: 'KHG', qty: 5, amount: 0 }] });
+    expect(d.toHoldDoc({ orderId: 'o', orderNo: 'DH1', seq: 4, branchCode: 'CN01', docDate: '2026-11-18', from: 'KHG', to: 'KCB', moves: mv, release: true, kind: 'back' }).docNo).toBe('DH1-H4');
+  });
+});

@@ -41,6 +41,8 @@ type MovementRow = {
   is_gift: boolean;
   exclude_cost: boolean;
   priced_at_sale: boolean;
+  tax_amount?: number;
+  discount_amount?: number;
 };
 
 const abs = Math.abs;
@@ -63,7 +65,7 @@ export const inventoryMovementRepository = {
     const rows: MovementRow[] = [];
     const push = (
       i: number,
-      l: { sku: string; name: string; unit: string; warehouseCode?: string; isGift?: boolean; excludeFromCost?: boolean },
+      l: { sku: string; name: string; unit: string; warehouseCode?: string; isGift?: boolean; excludeFromCost?: boolean; taxAmount?: number; discount?: number },
       branchId: string,
       kind: string,
       qty: number,
@@ -71,7 +73,10 @@ export const inventoryMovementRepository = {
       counterBranchId: string | null = null,
     ) => {
       if (!l.sku) return;
-      rows.push({ ...base, branch_id: branchId, line_no: i + 1, kind, sku: l.sku, name: l.name, unit: l.unit, warehouse_code: l.warehouseCode ?? '', qty, amount, counter_branch_id: counterBranchId, is_gift: Boolean(l.isGift), exclude_cost: Boolean(l.excludeFromCost), priced_at_sale: false });
+      // [2026-11-17 Nguyễn Văn Thủy] thuế, chiết khấu của dòng mua / trả NCC (cùng dấu amount) cho công thức giá vốn tuỳ chọn (0153) (đóng góp)
+      const sg = (kind === 'purchase' || kind === 'purchase_return') && amount ? Math.sign(amount) : 0;
+      rows.push({ ...base, branch_id: branchId, line_no: i + 1, kind, sku: l.sku, name: l.name, unit: l.unit, warehouse_code: l.warehouseCode ?? '', qty, amount, counter_branch_id: counterBranchId, is_gift: Boolean(l.isGift), exclude_cost: Boolean(l.excludeFromCost), priced_at_sale: false,
+        tax_amount: sg * Math.abs(Number(l.taxAmount ?? 0)), discount_amount: sg * Math.abs(Number(l.discount ?? 0)) });
     };
 
     switch (doc.docType) {

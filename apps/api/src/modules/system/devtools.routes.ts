@@ -30,6 +30,7 @@ import { errorKind } from '@bizcity/platform/core/errors';
 import { eventStatus } from '@bizcity/platform/core/events';
 import { DASHBOARDS, getJson, grafanaTraceLink, LIMITS, listAlerts, LOGQL, logWindow, moduleErrorsQuery, ping, probeLevel, PROMQL, queryLogMetric, queryLogs, queryProm, searchSpans, searchTraces, takeQuota, traceSearchQuery, windowRange, type SourceState } from './devtools.sources.js';
 import { groupModuleErrors, moduleErrorLines, ownsTrace, parseTempoTrace, summarize, viewTrace } from './devtools.trace.js';
+import { readDiagnosticRuns } from '@bizcity/platform/system/diagnostics';
 
 const TRACE_ID = z.string().trim().toLowerCase().regex(/^[0-9a-f]{32}$/, 'traceId gồm 32 ký tự hex');
 /** Khuôn mã yêu cầu R-OBS-1 (app.ts genReqId / X-Request-Id hợp lệ): không có ngoặc kép, khoảng trắng, dấu ngoặc nhọn. */
@@ -316,9 +317,8 @@ const summaryAction = defineAction({
       oldestPendingAt: ev.map((c) => c.oldestPendingAt).filter((x): x is string => Boolean(x)).sort()[0] ?? null,
       deadConsumers: ev.filter((c) => c.dead > 0).map((c) => c.consumer),
     };
-    const diag = await ctx.data.tx.selectFrom('diagnostic_runs').select(['created_at', 'layer', 'error_count'])
-      .where('tenant_id', '=', tenant).where('layer', '=', 'L3').orderBy('created_at', 'desc').limit(1).executeTakeFirst();
-    const diagnostics = diag ? { at: new Date(diag.created_at).toISOString(), layer: diag.layer, errorCount: Number(diag.error_count) } : null;
+    const diag = (await readDiagnosticRuns(String(tenant))).filter((r) => r.layer === 'L3').at(-1);
+    const diagnostics = diag ? { at: diag.at, layer: diag.layer, errorCount: Number(diag.errorCount) } : null;
 
     // Câu kết luận (U1) — luật cố định, nặng trước nhẹ sau.
     const label = input.window === '1h' ? '1 giờ qua' : '24 giờ qua';

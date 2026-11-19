@@ -66,7 +66,8 @@ describe('NT-BH-005 — phiếu trả', () => {
     expect(reason(input({ done: new Map([['l1', { qty: 2, refund: 583_200, net: 540_000 }]]) }))).toBe('POS_RETURN_QTY');
     expect(reason(input({}, { lines: [{ lineId: 'zz', qty: 1 }] }))).toBe('POS_RETURN_QTY');
     expect(reason(input({ today: '2026-11-13' }))).toBe('POS_RETURN_EXPIRED');
-    expect(reason(input({ today: '2026-11-13' }, { approval: { by: 'Phòng kinh doanh – chị A', note: 'Lỗi nhà sản xuất' } }))).toBe('ok');
+    // NT-BH-030 Q2: quá hạn chỉ qua khi máy chủ đã kiểm yêu cầu trả quá hạn được duyệt (approved), không còn gõ tên người duyệt.
+    expect(reason(input({ today: '2026-11-13', approved: true }))).toBe('ok');
     expect(reason(input({ branchCode: 'CN02' }))).toBe('POS_RETURN_OTHER_SHOP');
     expect(reason(input({ order: { status: 'cancelled', branchCode: 'CN01', businessDate: '2026-11-09' } }))).toBe('POS_ORDER_NOT_RETURNABLE');
     expect(reason(input({}, { refundMethod: 'QR' }))).toBe('POS_REFUND_METHOD');

@@ -194,7 +194,7 @@ describe('API: hồ sơ NCC, đính kèm, đổi mã, đề xuất đặt hàng'
     expect(prof.credit.limit).toBe(600000000);
   });
   it('chính sách lưu người tạo + thời gian; sửa ghi nhật ký có giá trị trước', async () => {
-    const r = await call(t, 'POST', '/api/v1/purchase/policies', { code: 'NCC-TRUNGHAU-HD', kind: 'contract', name: 'Hợp đồng Trung Hậu', scope: { partnerCode: 'NCC-TRUNGHAU' }, rule: { no: '07/2026/HĐMB', signedOn: '2026-01-02' }, validFrom: '2026-01-01', validTo: '2026-12-31' });
+    const r = await call(t, 'POST', '/api/v1/purchase/policies', { code: 'NCC-TRUNGHAU-HD', kind: 'lot_tracking', name: 'Trung Hậu: theo dõi lô', scope: { partnerCode: 'NCC-TRUNGHAU' }, rule: { required: true }, validFrom: '2026-01-01', validTo: '2026-12-31' });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     const p = ((await call(t, 'GET', '/api/v1/purchase/policies')).body.data as { code: string; createdBy: string; createdAt: string }[]).find((x) => x.code === 'NCC-TRUNGHAU-HD')!;
     expect(p.createdBy).toBeTruthy();

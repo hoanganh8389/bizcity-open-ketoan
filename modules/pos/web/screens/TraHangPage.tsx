@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { DataGrid, ErrorBox, KpiCards, Loading, PageHeader, errorText, type GridColumn } from '@bizcity/ui-kit';
 import { Badge, DOC_STATUS, RangeLayout, SideInput, time, usePage, useRange } from '../lib';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030: thẻ Yêu cầu trả quá hạn (duyệt / từ chối); cột cửa hàng bán của đơn gốc (trả khác shop cùng MST) (đóng góp)
+import { YeuCauTraQuaHan } from './YeuCauTraQuaHan';
 
 type Line = { lineId: string; sku: string; name?: string; qty?: number; unitQty?: number; refund?: number; refundTotal?: number; condition?: 'good' | 'bad'; warehouseCode?: string };
 /** Phiếu trước NT-BH-024 không có tình trạng: coi là nguyên vẹn, về kho bán. */
@@ -12,6 +14,7 @@ const badText = (r: Row) => [...new Set(r.lines.filter((l) => l.condition === 'b
 type Row = {
   id: string; code: string; orderCode: string; branchCode: string; createdAt: string; refundMethodName: string; refundTotal: number; refundNet: number;
   refundTax: number; reason: string; approvedBy: string; approvalNote: string; exchange: boolean; docStatus: string; cashier: string; lines: Line[];
+  orderBranchCode?: string;
 };
 
 const cols: GridColumn<Row>[] = [
@@ -19,6 +22,7 @@ const cols: GridColumn<Row>[] = [
   { key: 'createdAt', header: 'Ngày giờ', width: 110, value: (r) => r.createdAt, render: (r) => time(r.createdAt) },
   { key: 'orderCode', header: 'Đơn gốc', type: 'code', width: 130 },
   { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90 },
+  { key: 'orderBranchCode', header: 'Cửa hàng bán', type: 'code', width: 100, value: (r) => r.orderBranchCode ?? r.branchCode },
   { key: 'cashier', header: 'Thu ngân', width: 120 },
   { key: 'kind', header: 'Loại', width: 90, value: (r) => (r.exchange ? 'Đổi hàng' : 'Trả hàng') },
   { key: 'refundMethodName', header: 'Hoàn bằng', width: 110 },
@@ -40,13 +44,26 @@ const lineCols: GridColumn<Line>[] = [
 ];
 
 export function TraHangPage() {
+  const [tab, setTab] = useState<'returns' | 'approvals'>('returns');
+  return (
+    <div>
+      <PageHeader title="Phiếu trả hàng máy POS" code="BH14" subtitle="Phiếu trả / đổi hàng tại quầy, nối về đơn gốc (trả được ở cửa hàng cùng MST). Phiếu lập ở máy bán; quá hạn thì máy bán gửi yêu cầu, duyệt ở thẻ Yêu cầu trả quá hạn." />
+      <div className="tabs" role="tablist" style={{ margin: '8px 0' }}>
+        <button type="button" role="tab" className={`tab ${tab === 'returns' ? 'active' : ''}`} onClick={() => setTab('returns')}>Phiếu trả</button>
+        <button type="button" role="tab" className={`tab ${tab === 'approvals' ? 'active' : ''}`} onClick={() => setTab('approvals')}>Yêu cầu trả quá hạn</button>
+      </div>
+      {tab === 'returns' ? <PhieuTra /> : <YeuCauTraQuaHan />}
+    </div>
+  );
+}
+
+function PhieuTra() {
   const r = useRange({ q: '' });
   const [pick, setPick] = useState<Row | null>(null);
   const q = usePage<Row[]>('returns', '/admin/returns', { ...r.applied, pageSize: 500 });
   const sums = q.data?.meta?.sums ?? {};
   return (
     <div>
-      <PageHeader title="Phiếu trả hàng máy POS" code="BH14" subtitle="Phiếu trả / đổi hàng tại quầy, nối về đơn gốc. Phiếu lập ở máy bán, màn này chỉ xem." />
       <RangeLayout r={r} id="pos-tra-hang" more={<SideInput label="Mã phiếu / đơn gốc" value={r.draft.q ?? ''} onChange={(v) => r.setDraft({ ...r.draft, q: v })} placeholder="TH…, HD…" />}>
         <KpiCards items={[{ key: 'n', label: 'Số phiếu trả', value: sums.returns }, { key: 't', label: 'Tiền hoàn', value: sums.refundTotal, tone: 'warn' }]} />
         {q.isLoading ? <Loading /> : q.error ? <ErrorBox error={errorText(q.error)} /> : (

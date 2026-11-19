@@ -28,11 +28,17 @@ import { DangKyMaxPage } from './ton-max/DangKyMaxPage';
 import { CongThucPage } from './ton-max/CongThucPage';
 import { ChuyenShopPage } from './ton-max/ChuyenShopPage';
 import { HoaDonNccPage } from './hoa-don/HoaDonNccPage';
+import { HopDongChiTietPage } from './hop-dong/HopDongPage';
+import { CongNoHopDongPage } from './hop-dong/CongNoHopDongPage';
 
 export const muaHangRoutes = (
   <>
     <Route path="mua-hang/nha-cung-cap" element={<NhaCungCapPage />} />
     <Route path="mua-hang/nha-cung-cap/:code" element={<HoSoNccPage />} />
+    {/* [2026-11-19 Nguyễn Văn Thủy] Hợp đồng mua hàng = thẻ "Hợp đồng" của MH11 Chứng từ mua hàng (đóng góp) */}
+    <Route path="mua-hang/hop-dong" element={<Navigate to="/mua-hang/tong-hop?loai=hop-dong" replace />} />
+    <Route path="mua-hang/hop-dong/chi-tiet" element={<HopDongChiTietPage />} />
+    <Route path="mua-hang/cong-no-hop-dong" element={<CongNoHopDongPage />} />
     <Route path="mua-hang/dat-hang" element={<DatHangPage />} />
     <Route path="mua-hang/ton-max" element={<TonMaxPage />} />
     <Route path="mua-hang/dang-ky-max" element={<DangKyMaxPage />} />

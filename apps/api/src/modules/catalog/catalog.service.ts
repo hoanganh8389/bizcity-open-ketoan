@@ -11,7 +11,7 @@
  * Luật dữ liệu:
  *   - Mỗi mặt hàng có đúng MỘT đơn vị tỉ lệ 1 (đơn vị nhỏ nhất) và tối đa một đơn vị bán chính.
  *   - Đổi đơn vị tính / giá của mặt hàng thì chạm products.updated_at → luồng mặt hàng mang theo trọn bộ đơn vị tính.
- *   - Xoá (mặt hàng, dòng giá, bảng giá) ghi catalog_tombstones để hệ thống bán hàng xoá theo.
+ *   - Xoá (mặt hàng, dòng giá, bảng giá) ghi dấu xoá vào catalog_trash (catalog 'tombstone.<loại>', 0160) để hệ thống bán hàng xoá theo.
  */
 import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
@@ -19,6 +19,7 @@ import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
 import { applyItemGate } from '../products/item.hints.js';
+import { CATALOG_HINTS, catalogFinding, type CatalogFinding } from '@ketoan/contracts';
 import { parentFromSku } from './sku-rule.js';
 
 // ----------------------------------------------------------------------------------------------- kiểu dữ liệu
@@ -97,28 +98,54 @@ function productPatch(b: ProductInput): Record<string, unknown> {
 export const MAX_DVT = 10;
 /** Tên hàng tối đa 50 ký tự (quy định đặt tên mặt hàng). */
 export const MAX_TEN_HANG = 50;
-export function checkUnits(units: UnitInput[]): string | null {
-  if (!units.length) return 'Mặt hàng phải có ít nhất một đơn vị tính (đơn vị nhỏ nhất, tỉ lệ 1)';
+// [2026-11-19 Nguyễn Văn Thủy] quy tắc đơn vị tính có mã (ITEM-BLOCK-014…018, docs/nghiep-vu/25); checkUnits giữ câu chữ cho nơi gọi cũ (đóng góp)
+export function unitRule(units: UnitInput[]): { code: string; vars: Record<string, string | number> } | null {
+  if (!units.length) return { code: 'ITEM-BLOCK-014', vars: { detail: 'chưa có đơn vị tính nào (cần đơn vị nhỏ nhất, tỉ lệ 1)' } };
   // [2026-11-12 Nguyễn Văn Thủy] mỗi mặt hàng tối đa 10 đơn vị tính (đóng góp)
-  if (units.length > MAX_DVT) return `Mỗi mặt hàng tối đa ${MAX_DVT} đơn vị tính (đang ${units.length})`;
+  if (units.length > MAX_DVT) return { code: 'ITEM-BLOCK-017', vars: { max: MAX_DVT, count: units.length } };
   const names = new Set<string>();
   for (const u of units) {
     const n = u.unit.trim().toLowerCase();
-    if (!n) return 'Tên đơn vị tính không được để trống';
-    if (names.has(n)) return `Đơn vị tính "${u.unit}" bị trùng`;
+    if (!n) return { code: 'ITEM-BLOCK-015', vars: { detail: 'tên đơn vị tính không được để trống' } };
+    if (names.has(n)) return { code: 'ITEM-BLOCK-015', vars: { detail: `đơn vị "${u.unit}" bị trùng` } };
     names.add(n);
-    if (!(u.ratio > 0)) return `Tỉ lệ của đơn vị "${u.unit}" phải lớn hơn 0`;
+    if (!(u.ratio > 0)) return { code: 'ITEM-BLOCK-016', vars: { unit: u.unit } };
   }
   const base = units.filter((u) => Number(u.ratio) === 1);
-  if (base.length !== 1) return base.length ? `Chỉ được một đơn vị tỉ lệ 1 (đang có: ${base.map((u) => u.unit).join(', ')})` : 'Phải có một đơn vị tỉ lệ 1 (đơn vị nhỏ nhất)';
-  if (units.filter((u) => u.isDefault).length > 1) return 'Chỉ được một đơn vị bán chính';
-  if (units.filter((u) => u.isPurchaseDefault).length > 1) return 'Chỉ được một đơn vị mua mặc định';
+  if (base.length !== 1) return { code: 'ITEM-BLOCK-014', vars: { detail: base.length ? `chỉ được một đơn vị tỉ lệ 1 (đang có: ${base.map((u) => u.unit).join(', ')})` : 'chưa có đơn vị tỉ lệ 1 (đơn vị nhỏ nhất)' } };
+  if (units.filter((u) => u.isDefault).length > 1) return { code: 'ITEM-BLOCK-018', vars: { detail: 'chỉ được một đơn vị bán chính' } };
+  if (units.filter((u) => u.isPurchaseDefault).length > 1) return { code: 'ITEM-BLOCK-018', vars: { detail: 'chỉ được một đơn vị mua mặc định' } };
   return null;
 }
+export function checkUnits(units: UnitInput[]): string | null {
+  const r = unitRule(units);
+  return r ? catalogFinding(r.code, r.vars).title : null;
+}
 
-async function tombstone(trx: Db, tenantId: string, entity: 'product' | 'unit' | 'price' | 'price_list' | 'group', keys: string[]) {
+/** Phát hiện có ô (field) theo khai báo quy tắc — để giao diện tô đỏ đúng ô. */
+const ruleFinding = (code: string, vars: Record<string, string | number> = {}): CatalogFinding => catalogFinding(code, vars, CATALOG_HINTS[code]?.field ? { field: CATALOG_HINTS[code]!.field } : {});
+/** Mã quy tắc trả 409 (trùng với dữ liệu đã có) thay vì 400. */
+const CONFLICT_RULES = new Set(['ITEM-BLOCK-005', 'ITEM-BLOCK-006', 'ITEM-BLOCK-013']);
+/**
+ * Dừng lưu với MỌI điều chưa đạt (không dừng ở lỗi đầu): message liệt kê câu + mã, details.findings cho giao diện
+ * (danh sách ✓ / ✗, tô đỏ ô), nhật ký kiểm ghi từ details.findings.
+ */
+export function ruleError(findings: CatalogFinding[]) {
+  const msg = findings.length === 1 ? `${findings[0]!.title} (${findings[0]!.code})` : `${findings.length} điều chưa đạt: ${findings.map((f) => `${f.title} (${f.code})`).join(' · ')}`;
+  return findings.some((f) => CONFLICT_RULES.has(f.code)) ? Errors.conflict(msg, { findings }) : Errors.validation(msg, { findings });
+}
+
+// [2026-11-18 Nguyễn Văn Thủy] dấu xoá danh mục ở catalog_trash (0160, bỏ catalog_tombstones) (đóng góp)
+type TombEntity = 'product' | 'unit' | 'price' | 'price_list' | 'group';
+async function tombstone(trx: Db, tenantId: string, entity: TombEntity, keys: string[], replacedByItemId?: string) {
   if (!keys.length) return;
-  await trx.insertInto('catalog_tombstones').values(keys.map((key) => ({ tenant_id: tenantId, entity, key }))).execute();
+  await addTombstones(trx, tenantId, entity, keys, replacedByItemId);
+}
+/** Ghi dấu xoá (luồng danh mục báo hệ thống bán hàng xoá theo); đổi / gộp mã kèm định danh mặt hàng thay thế. */
+export async function addTombstones(trx: Db, tenantId: string, entity: TombEntity, keys: string[], replacedByItemId?: string): Promise<void> {
+  if (!keys.length) return;
+  const payload = JSON.stringify(replacedByItemId ? { replacedByItemId } : {});
+  await trx.insertInto('catalog_trash').values(keys.map((key) => ({ tenant_id: tenantId, catalog: `tombstone.${entity}`, row_key: key, label: key, payload, deleted_by: 'system' }))).execute();
 }
 
 // ----------------------------------------------------------------------------------------------- họ mã (mã cha – mã con)
@@ -190,28 +217,31 @@ export async function sameNameProduct(trx: Db, tenantId: string, name: string, e
  */
 export async function saveProduct(trx: Db, tenantId: string, actor: string, sku: string, b: ProductInput, opts: { isNew?: boolean; source?: string; quiet?: boolean; checkName?: boolean; by?: string } = {}) {
   const exists = await trx.selectFrom('products').select(['id', 'name']).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
-  if (opts.isNew && exists) throw Errors.conflict(`Mã hàng ${sku} đã có`);
+  // [2026-11-19 Nguyễn Văn Thủy] kiểm hết một lượt, gom mọi điều chưa đạt (mã quy tắc + ô) rồi mới báo (docs/nghiep-vu/25) (đóng góp)
+  const loi: CatalogFinding[] = [];
+  if (opts.isNew && exists) loi.push(ruleFinding('ITEM-BLOCK-006', { sku }));
+  if (opts.checkName && ((!exists && !(b.name ?? '').trim()) || (b.name !== undefined && !b.name.trim()))) loi.push(ruleFinding('ITEM-BLOCK-003'));
   // [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng (đóng góp): kiểm khi thêm mới hoặc đổi tên, qua màn / Excel / thêm sản phẩm con.
   // Dữ liệu cũ đã trùng tên vẫn sửa được các ô khác (không đổi tên thì không kiểm). Nạp từ hệ thống bán hàng không kiểm.
   if (b.name !== undefined && (!exists || normName(exists.name) !== normName(b.name)) && b.name.trim().length > MAX_TEN_HANG) {
-    throw Errors.validation(`Tên hàng tối đa ${MAX_TEN_HANG} ký tự (đang ${b.name.trim().length})`);
+    loi.push(ruleFinding('ITEM-BLOCK-004', { max: MAX_TEN_HANG, len: b.name.trim().length }));
   }
   if (opts.checkName && b.name !== undefined && (!exists || normName(exists.name) !== normName(b.name))) {
     const same = await sameNameProduct(trx, tenantId, b.name, sku);
-    if (same) throw Errors.conflict(`Tên "${same.name}" đã dùng cho mã ${same.sku}${same.isActive ? '' : ' (đã ngừng theo dõi)'}. Đặt tên khác để quầy, kho không chọn nhầm`);
+    if (same) loi.push(ruleFinding('ITEM-BLOCK-005', { name: same.name, other: `${same.sku}${same.isActive ? '' : ' (đã ngừng theo dõi)'}` }));
   }
   if (b.units) {
     // Tên ĐVT theo đúng cách viết trong danh mục ĐVT ("hộp" → "Hộp"); tên mới giữ nguyên, CSDL tự thêm vào danh mục.
     const known = new Map((await trx.selectFrom('unit_names').select('name').where('tenant_id', '=', tenantId).execute()).map((r) => [r.name.toLowerCase(), r.name]));
     b = { ...b, units: b.units.map((u) => { const n = u.unit.replace(/\s+/g, ' ').trim(); return { ...u, unit: known.get(n.toLowerCase()) ?? n }; }) };
     if (b.prices) b = { ...b, prices: b.prices.map((pr) => ({ ...pr, unit: b.units!.find((u) => u.unit.toLowerCase() === pr.unit.trim().toLowerCase())?.unit ?? pr.unit })) };
-    const err = checkUnits(b.units!);
-    if (err) throw Errors.validation(err);
+    const ur = unitRule(b.units!);
+    if (ur) loi.push(ruleFinding(ur.code, ur.vars));
   }
   for (const [kind, v] of [['group', b.groupCode], ['industry', b.industryCode], ['brand', b.brandCode], ['type', b.typeCode]] as const) {
     if (!v) continue;
     const found = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', tenantId).where('kind', '=', kind).where('code', '=', v).executeTakeFirst();
-    if (!found) throw Errors.validation(`Mã phân loại ${v} chưa có trong danh mục`);
+    if (!found) loi.push(ruleFinding('ITEM-BLOCK-009', { label: ({ group: 'Nhóm hàng', industry: 'Ngành hàng', brand: 'Nhãn hàng', type: 'Loại hàng' } as const)[kind], code: v }));
   }
   // [2026-11-12 Nguyễn Văn Thủy] mã cha suy theo mã (trigger 0112), không nhận từ người dùng; mã con tạo mới kế thừa ĐVT của mã cha (đóng góp)
   b = { ...b, parentSku: undefined };
@@ -220,17 +250,25 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   const parentRow = ps ? await trx.selectFrom('products').select(['sku', 'group_code', 'industry_code', 'brand_code', 'parent_sku']).where('tenant_id', '=', tenantId).where('sku', '=', ps).executeTakeFirst() : undefined;
   // Luật mã chỉ áp cho mặt hàng theo cây nhóm hàng (form / Excel luôn gửi nhóm); đường đồng bộ khác không có nhóm thì giữ mã nguồn.
   if (opts.isNew && (b.groupCode || parentRow)) {
-    if (ps && !parentRow) throw Errors.validation(`Mã cha ${ps} chưa có — khai mã cha trước rồi mới thêm mã biến thể ${sku}`);
-    if (ps && sku.length - ps.length > 2) throw Errors.validation(`Mã biến thể ${sku}: chỉ thêm tối đa 2 chữ quanh mã cha ${ps}`);
-    if (!ps && (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku)))) {
-      throw Errors.validation(`Mã hàng ${sku} không được có chữ ở đầu hoặc cuối. Muốn tạo mã biến thể thì chọn "Mã biến thể" và chọn mã cha`);
+    if (ps && !parentRow) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chưa có mã cha ${ps} — khai mã cha trước` }));
+    if (ps && sku.length - ps.length > 2) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chỉ thêm tối đa 2 chữ quanh mã cha ${ps}` }));
+    if (!ps && (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku)))) loi.push(ruleFinding('ITEM-BLOCK-007', { sku }));
+  }
+  // Giá bán: bảng giá phải có, ĐVT của giá phải có trong bộ ĐVT gửi lên (hoặc đang lưu) — kiểm trước khi ghi.
+  if (b.prices?.length) {
+    const lists = new Set((await trx.selectFrom('price_lists').select('code').where('tenant_id', '=', tenantId).execute()).map((l) => l.code));
+    const unitSet = new Set(b.units ? b.units.map((u) => u.unit.trim()) : (await trx.selectFrom('product_units').select('unit').where('tenant_id', '=', tenantId).where('sku', '=', sku).execute()).map((u) => u.unit));
+    for (const pr of b.prices) {
+      if (!lists.has(pr.priceListCode)) { loi.push(ruleFinding('ITEM-BLOCK-011', { detail: `bảng giá ${pr.priceListCode} chưa có` })); break; }
+      if (!unitSet.has(pr.unit)) { loi.push(ruleFinding('ITEM-BLOCK-011', { detail: `đơn vị "${pr.unit}" chưa có trong đơn vị tính của mặt hàng` })); break; }
     }
   }
+  if (loi.length) throw ruleError(loi);
   if (parentRow) b = { ...b, groupCode: parentRow.group_code, industryCode: parentRow.industry_code, brandCode: parentRow.brand_code };
   if (!exists && parentRow) {
     b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, parentRow.sku)) };
-    const err = b.units ? checkUnits(b.units) : null;
-    if (err) throw Errors.validation(err);
+    const ur = b.units ? unitRule(b.units) : null;
+    if (ur) throw ruleError([ruleFinding(ur.code, ur.vars)]);
   }
   const now = new Date();
   const patch: Record<string, unknown> = { ...productPatch(b), updated_at: now, updated_by: opts.by || actor };
@@ -270,8 +308,8 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     const lists = new Set((await trx.selectFrom('price_lists').select('code').where('tenant_id', '=', tenantId).execute()).map((l) => l.code));
     const units = new Set((await trx.selectFrom('product_units').select('unit').where('tenant_id', '=', tenantId).where('sku', '=', sku).execute()).map((u) => u.unit));
     for (const pr of b.prices) {
-      if (!lists.has(pr.priceListCode)) throw Errors.validation(`Bảng giá ${pr.priceListCode} chưa có`);
-      if (!units.has(pr.unit)) throw Errors.validation(`Đơn vị "${pr.unit}" chưa có trong đơn vị tính của mặt hàng`);
+      if (!lists.has(pr.priceListCode)) throw ruleError([ruleFinding('ITEM-BLOCK-011', { detail: `bảng giá ${pr.priceListCode} chưa có` })]);
+      if (!units.has(pr.unit)) throw ruleError([ruleFinding('ITEM-BLOCK-011', { detail: `đơn vị "${pr.unit}" chưa có trong đơn vị tính của mặt hàng` })]);
     }
     for (const pr of b.prices) {
       const where = (q: any) => q.where('tenant_id', '=', tenantId).where('price_list_code', '=', pr.priceListCode).where('sku', '=', sku).where('unit', '=', pr.unit);
@@ -307,7 +345,7 @@ export async function deleteProduct(trx: Db, tenantId: string, actor: string, sk
   const before = await trx.selectFrom('products').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (!before) throw Errors.notFound(`mặt hàng ${sku}`);
   const used = await trx.selectFrom('inventory_movements').select('sku').where('tenant_id', '=', tenantId).where('sku', '=', sku).limit(1).executeTakeFirst();
-  if (used) throw Errors.conflict(`Mặt hàng ${sku} đã có nhập xuất: bỏ tích "Theo dõi" để ngừng`);
+  if (used) throw ruleError([ruleFinding('ITEM-BLOCK-013', { sku })]);
   await trx.deleteFrom('product_prices').where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
   await trx.deleteFrom('product_units').where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
   await trx.deleteFrom('products').where('id', '=', before.id).execute();
@@ -443,7 +481,8 @@ export async function feedMeta(trx: Db, tenantId: string, since?: string) {
     trx.selectFrom('item_classes').select(['code', 'name', 'parent_code', 'sku_code', 'is_active', 'updated_at']).where('tenant_id', '=', tenantId).where('kind', '=', 'group').orderBy('code').execute(),
     listPriceLists(trx, tenantId),
     trx.selectFrom('price_list_branches').select(['branch_code', 'price_list_code']).where('tenant_id', '=', tenantId).execute(),
-    trx.selectFrom('catalog_tombstones').select(['entity', 'key', 'deleted_at', 'replaced_by_item_id']).where('tenant_id', '=', tenantId).where('deleted_at', '>', new Date(at)).orderBy('deleted_at').execute(),
+    trx.selectFrom('catalog_trash').select(['catalog', 'row_key', 'deleted_at', 'payload']).where('tenant_id', '=', tenantId).where('catalog', 'like', 'tombstone.%')
+      .where('deleted_at', '>', new Date(at)).orderBy('deleted_at').execute(),
   ]);
   return {
     serverTime: new Date().toISOString(),
@@ -451,7 +490,8 @@ export async function feedMeta(trx: Db, tenantId: string, since?: string) {
     priceLists: lists.map(({ branchCodes: _b, pricedRows: _n, ...l }) => l),
     branches: branches.map((b) => ({ branchCode: b.branch_code, priceListCode: b.price_list_code })),
     // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: mã bị bỏ vì đổi / gộp trỏ tới định danh thay thế (đóng góp)
-    tombstones: tomb.map((t) => ({ entity: t.entity, key: t.key, deletedAt: t.deleted_at, replacedByItemId: t.replaced_by_item_id })),
+    tombstones: tomb.map((t) => ({ entity: t.catalog.slice('tombstone.'.length), key: t.row_key, deletedAt: t.deleted_at,
+      replacedByItemId: ((t.payload ?? {}) as { replacedByItemId?: string }).replacedByItemId ?? null })),
   };
 }
 

@@ -1,11 +1,12 @@
 // [2026-11-05 09:30 PM Nguyễn Văn Thủy] PHASE-026 — màn Công thức giá vốn: công thức của bản cài đang chạy, so hai dữ liệu, tính thử (đóng góp)
 /**
- * CÔNG THỨC GIÁ VỐN (ACC49A). Chỉ đọc: BOOK_MODE của bản cài chọn công thức, không chọn trên màn hình.
- * Công thức đọc từ @ketoan/contracts, cùng nguồn với lúc tính giá vốn.
+ * CÔNG THỨC GIÁ VỐN (ACC49A). Chỉ đọc: BOOK_MODE của bản cài chọn sổ (nội bộ / thuế), không chọn trên màn hình.
+ * Công thức đọc từ @ketoan/contracts, cùng nguồn với lúc tính giá vốn. Căn cứ tính theo nghiệp vụ, không theo lý do
+ * (lý do chỉ là nhãn) — [2026-11-17 Nguyễn Văn Thủy] (đóng góp)
  */
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { COST_FORMULAS, returnValueAtOpening, type CostBook, type CostFormula } from '@ketoan/contracts';
+import { COST_BASIS, COST_FORMULAS, returnValueAtOpening, type CostBook, type CostFormula } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
@@ -29,15 +30,14 @@ function FormulaCard({ f, active }: { f: CostFormula; active: boolean }) {
   );
 }
 
-function ReasonTable({ title, f }: { title: string; f: CostFormula['inReasons'] }) {
+/** Căn cứ tính của từng nghiệp vụ ở hai sổ; cột của sổ đang chạy tô đậm. */
+function CanCu({ book }: { book: CostBook }) {
+  const on = (b: CostBook) => (b === book ? { fontWeight: 600 } : { color: 'var(--muted, #6b7686)' });
   return (
-    <div>
-      <h4 style={{ margin: '8px 0 4px' }}>{title}</h4>
-      <table className="grid">
-        <thead><tr><th style={{ width: 90 }} title="Mã lý do trên phiếu">Lý do</th><th>Tên</th><th title="Số liệu đưa vào công thức">Căn cứ tính</th></tr></thead>
-        <tbody>{f.map((r) => <tr key={r.code}><td className="mono">{r.code}</td><td>{r.name}</td><td>{r.basis}</td></tr>)}</tbody>
-      </table>
-    </div>
+    <table className="grid">
+      <thead><tr><th>Nghiệp vụ</th><th style={on('internal')}>Nội bộ</th><th style={on('tax')}>Thuế</th></tr></thead>
+      <tbody>{COST_BASIS.map((r) => <tr key={r.item}><td>{r.item}</td><td style={on('internal')}>{r.internal}</td><td style={on('tax')}>{r.tax}</td></tr>)}</tbody>
+    </table>
   );
 }
 
@@ -68,8 +68,8 @@ function TinhThu() {
       <table className="grid">
         <thead><tr><th>Công thức</th><th className="num" title="Giá trị trừ khỏi tử số của công thức">Giá trị trừ</th><th className="num" title="(Giá trị tồn đầu − giá trị trừ) ÷ (số lượng tồn đầu − số lượng trả)">Đơn giá còn lại</th></tr></thead>
         <tbody>
-          {row('Nội bộ', noiBo, 'Mọi lý do: thành tiền − thuế')}
-          {row('Thuế (XTR1, XTR9)', thue, 'Đơn giá trả ≤ đơn giá tồn đầu: theo đơn giá tồn đầu. Tiền trả ≤ giá trị tồn đầu: theo tiền trả. Số lượng trả ≤ tồn đầu: giá trị tồn đầu. Còn lại: giá trị tồn đầu + phần vượt × đơn giá trả.')}
+          {row('Nội bộ', noiBo, 'Thành tiền − thuế trên phiếu trả')}
+          {row('Thuế', thue, 'Đơn giá trả ≤ đơn giá tồn đầu: theo đơn giá tồn đầu. Tiền trả ≤ giá trị tồn đầu: theo tiền trả. Số lượng trả ≤ tồn đầu: giá trị tồn đầu. Còn lại: giá trị tồn đầu + phần vượt × đơn giá trả.')}
         </tbody>
       </table>
     </div>
@@ -81,7 +81,6 @@ export function CongThucGiaVonPage() {
   if (info.isLoading) return <Loading />;
   if (info.error) return <ErrorBox error={errorText(info.error)} />;
   const d = info.data!;
-  const active = COST_FORMULAS[d.book];
   return (
     <div>
       <PageHeader title="Công thức giá vốn" code="ACC49A" subtitle="Bình quân gia quyền theo tháng, theo từng mã hàng, từng chi nhánh" helpKey="cong-thuc-gia-von" />
@@ -95,11 +94,8 @@ export function CongThucGiaVonPage() {
       </div>
       <div style={{ marginBottom: 12 }}><TinhThu /></div>
       <div className="card card-body">
-        <h3 style={{ marginTop: 0 }}>Danh sách lý do · {active.label}</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12 }}>
-          <ReasonTable title="Phiếu nhập" f={active.inReasons} />
-          <ReasonTable title="Phiếu hàng mua trả lại" f={active.returnReasons} />
-        </div>
+        <h3 style={{ marginTop: 0 }}>Căn cứ tính theo nghiệp vụ</h3>
+        <CanCu book={d.book} />
       </div>
     </div>
   );

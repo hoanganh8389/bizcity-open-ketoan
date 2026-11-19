@@ -1644,7 +1644,8 @@
         "lineType": "gift_seller"
       }
     ],
-    "note": "VC1 — Vinh Châu: đơn đặt sữa TH (dòng giá 0 = hàng tặng chia giá, như file phiếu nhập NK1426042221)"
+    "note": "VC1 — Vinh Châu: đơn đặt sữa TH (dòng giá 0 = hàng tặng chia giá, như file phiếu nhập NK1426042221)",
+    "contractCode": "01/2026/HĐMB-TGS-VC"
   },
   {
     "partnerCode": "NC100227",
@@ -1716,6 +1717,7 @@
         "expDate": "2026-12-30"
       }
     ],
-    "note": "VC2 — nhận hàng lần 1 theo đơn DH2610061 (sữa chua Việt Quất mới giao 576/1152, Nha đam chưa giao); nhận đủ hồ sơ 22/10 → hạn 10 ngày làm việc"
+    "note": "VC2 — nhận hàng lần 1 theo đơn DH2610061 (sữa chua Việt Quất mới giao 576/1152, Nha đam chưa giao); nhận đủ hồ sơ 22/10 → hạn 10 ngày làm việc",
+    "contractCode": "01/2026/HĐMB-TGS-VC"
   }
 ]

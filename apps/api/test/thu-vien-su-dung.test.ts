@@ -1,7 +1,7 @@
 // [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 (B2, PHASE-030 · 26 §8–§9): test theo dõi sử dụng thư viện — đếm theo thư viện / nguồn / kết quả, mã lạ, không lưu giá trị nhập, cô lập đơn vị, gom theo lượt
 /**
  * - core.library.validate đếm một lượt / giá trị; core.library.usage ghi nốt bộ nhớ rồi trả số liệu bảng đánh giá.
- * - Cột chỉ có mã: giá trị người nhập (số tiền, mã lạ) không xuất hiện trong library_usage_daily (R-SEC-10).
+ * - Cột chỉ có mã: giá trị người nhập (số tiền, mã lạ) không xuất hiện trong nhật ký số đếm thư viện (R-SEC-10).
  * - Nguồn lạ thành "api"; đơn vị khác không thấy số của nhau; gom theo lượt (30 giây / 200 dòng), không hẹn giờ.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -9,6 +9,8 @@ import { sql } from 'kysely';
 import { closeDb, db } from '../src/db/client.js';
 import { outcomeOf, normalizeSource, pendingUsageRows, recordLibraryUsage, resetLibraryUsage, shouldFlush, validateInLibrary } from '@bizcity/platform/core/libraries/index';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { readRunLog } from '@bizcity/platform/core/run-log';
+import { libraryUsageRows } from '@bizcity/platform/core/libraries/usage';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 describe('Bộ đếm thuần', () => {
@@ -68,19 +70,19 @@ describe('Theo dõi sử dụng qua API', () => {
     expect(d.topFindings.map((f: any) => f.code).sort()).toEqual(['LIB-UNKNOWN-001', 'LIB-VALUE-001']);
     expect(d.unknown).toEqual([{ libraryId: 'vn.tham-so-phap-ly', source: 'ket-noi/pos', count: 1 }]);
 
-    // Không lưu giá trị nhập: số tiền và mã lạ không nằm trong bảng.
-    const dump = await sql<{ t: string }>`SELECT string_agg(row_to_json(u)::text, ' ') AS t FROM library_usage_daily u WHERE tenant_id = ${await tid(a)}::bigint`.execute(db);
-    expect(dump.rows[0]!.t).not.toContain('1777777');
-    expect(dump.rows[0]!.t).not.toContain('MA_LA_9876543');
-    expect(dump.rows[0]!.t).toContain('LUONG_CO_SO');
+    // Không lưu giá trị nhập: số tiền và mã lạ không nằm trong nhật ký (JSONL thu-vien, 0161).
+    const dump = JSON.stringify(await readRunLog('thu-vien', { tenantId: String(await tid(a)) }));
+    expect(dump).not.toContain('1777777');
+    expect(dump).not.toContain('MA_LA_9876543');
+    expect(dump).toContain('LUONG_CO_SO');
   });
 
   it('cộng dồn khi ghi lại cùng khoá; lọc theo thư viện / nguồn', async () => {
     await check(a, { input: { code: 'BHXH_NLD', value: 8 }, at: '2026-03-01', source: 'modules/luong' });
     const u = (await call(a, 'GET', '/api/v1/libraries/usage?library=vn.tham-so-phap-ly&source=modules/luong')).body.data;
     expect(u.byLibrary).toEqual([{ libraryId: 'vn.tham-so-phap-ly', pass: 3, warn: 1, block: 0 }]);
-    const rows = await sql<{ count: string }>`SELECT count FROM library_usage_daily WHERE tenant_id = ${await tid(a)}::bigint AND item_code = 'BHXH_NLD' AND source = 'modules/luong'`.execute(db);
-    expect(rows.rows.map((r) => Number(r.count))).toEqual([3]); // một dòng, cộng dồn
+    const rows = (await libraryUsageRows(String(await tid(a)), { ...{ from: '2000-01-01', to: '2100-12-31' }, source: 'modules/luong' })).filter((r) => r.itemCode === 'BHXH_NLD');
+    expect(rows.map((r) => r.count)).toEqual([3]); // một dòng, cộng dồn
   });
 
   it('đơn vị khác không thấy số của nhau; khoảng ngày sai bị từ chối', async () => {

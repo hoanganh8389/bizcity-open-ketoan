@@ -8,6 +8,7 @@ import type { AuthContext } from '../src/core/auth.js';
 import { preflight } from '../src/kernel/public.js';
 import { db } from '../src/db/client.js';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+import { libraryUsageRows } from '@bizcity/platform/core/libraries/usage';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let ctx: TestCtx;
@@ -21,7 +22,7 @@ const pre = (raw: unknown, post = false) => withRequestContext({ requestId: `lb-
 const door = (raw: unknown) => ctx.app.inject({ method: 'POST', url: '/api/v1/documents', payload: raw as never, headers: { authorization: `Bearer ${ctx.token}` } });
 const usage = async (source: string) => {
   await flushLibraryUsage(db);
-  return (await sql<{ library_id: string; item_code: string; outcome: string; count: string }>`SELECT library_id, item_code, outcome, count FROM library_usage_daily WHERE tenant_id = ${tenantId}::bigint AND source = ${source}`.execute(db)).rows;
+  return (await libraryUsageRows(tenantId, { ...{ from: '2000-01-01', to: '2100-12-31' }, source })).map((r) => ({ library_id: r.libraryId, item_code: r.itemCode, outcome: r.outcome, count: String(r.count) }));
 };
 const lib = (id: string) => getLibrary(id)!;
 

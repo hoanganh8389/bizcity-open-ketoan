@@ -8,6 +8,7 @@
 import { sql } from 'kysely';
 import { SCREENS } from '@ketoan/contracts';
 import { type DiagCheck } from '@bizcity/platform/system/diagnostics';
+import { readRunLog } from '@bizcity/platform/core/run-log';
 
 export const CONFORMANCE_DIAGNOSTICS: DiagCheck[] = [
   {
@@ -24,11 +25,10 @@ export const CONFORMANCE_DIAGNOSTICS: DiagCheck[] = [
     fix: 'Lịch đêm không chạy thì bảng điểm cũ, lỗi theo thời gian (hoá đơn chờ, sự việc treo, cuối kỳ) không được phát hiện. Mẫu: ngày lượt gần nhất.',
     async run(trx, s) {
       if (!s.tenantId) return { examined: 0, count: 0, sample: [] };
-      const r = await sql<{ last: Date | null; young: boolean }>`
-        SELECT (SELECT max(created_at) FROM conformance_runs WHERE tenant_id = ${s.tenantId}) AS last,
-               (SELECT created_at > now() - interval '2 days' FROM tenants WHERE id = ${s.tenantId}) AS young`.execute(trx);
+      const r = await sql<{ young: boolean }>`SELECT created_at > now() - interval '2 days' AS young FROM tenants WHERE id = ${s.tenantId}`.execute(trx);
       const row = r.rows[0];
-      const last = row?.last ? new Date(row.last) : null;
+      const run = (await readRunLog('kiem-chuan', { tenantId: s.tenantId })).at(-1);
+      const last = run ? new Date(run.at) : null;
       const stale = last ? last.getTime() < Date.now() - 2 * 86_400_000 : !row?.young;
       return { examined: 1, count: stale ? 1 : 0, sample: stale ? [last ? `lượt gần nhất ${last.toISOString().slice(0, 10)}` : 'chưa có lượt nào'] : [] };
     },

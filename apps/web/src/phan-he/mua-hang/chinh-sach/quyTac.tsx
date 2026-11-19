@@ -46,7 +46,6 @@ function ruleTextCore(p: Pick<Policy, 'kind' | 'rule'> & { scope?: Policy['scope
     case 'supply_target': return Object.entries(r.branches ?? {}).map(([k, v]) => `${branchName(k)} ${tr(v as number)}`).join(' · ');
     case 'lot_tracking': return r.required === false ? 'Không bắt buộc số lô' : 'Bắt buộc nhập số lô + hạn dùng khi nhập hàng; cảnh báo cận date 30-15-7 ngày';
     case 'gift_budget': return `Chương trình ${r.program}: ngân sách ${Number(r.amount ?? 0).toLocaleString('vi-VN')}đ`;
-    case 'contract': return `Hợp đồng số ${r.no ?? ''}${r.signedOn ? ` ký ngày ${String(r.signedOn).split('-').reverse().join('/')}` : ''}${r.note ? ` — ${r.note}` : ''}`;
   }
 }
 
@@ -58,7 +57,6 @@ export function defaultRule(k: PolicyKind): R {
     target_rebate: { period: 'month', target: 500_000_000, tiers: [{ fromPct: 100, pct: 2 }] }, stage_rebate: { mode: 'stage', stages: [{ from: 1, to: 10, min: 100_000_000, pct: 1 }] },
     credit_limit: { limit: 500_000_000, warnPct: 90, branches: {} }, payment_term: { basis: 'receipt_date', days: 10, workingDays: true, dayType: 'working' },
     supply_target: { period: new Date().toISOString().slice(0, 7), branches: {} }, lot_tracking: { required: true }, gift_budget: { program: '', amount: 10_000_000 },
-    contract: { no: '', signedOn: undefined, note: '' },
   } as Record<PolicyKind, R>)[k];
 }
 
@@ -94,7 +92,7 @@ function BranchAmounts({ value, onChange }: { value: Record<string, number>; onC
     ]} />;
 }
 
-export function RuleEditor({ kind, rule, onChange }: { kind: PolicyKind; rule: R; onChange: (r: R) => void }) {
+export function RuleEditor({ kind, rule, onChange, brands, skus }: { kind: PolicyKind; rule: R; onChange: (r: R) => void; /** Chỉ chọn mã thuộc các nhãn này (chính sách theo nhãn / hợp đồng theo nhãn). */ brands?: string[]; /** Chỉ các mã này (hàng hoá của hợp đồng). */ skus?: string[] }) {
   const set = (p: R) => onChange({ ...rule, ...p });
   switch (kind) {
     case 'trade_discount': return <>
@@ -102,7 +100,7 @@ export function RuleEditor({ kind, rule, onChange }: { kind: PolicyKind; rule: R
       {rule.amount !== undefined ? <Row label="Số tiền trên tổng đơn"><Num money width={140} value={rule.amount} onChange={(n) => onChange({ ...rule, amount: n })} suffix="đ" /></Row> : <Row label="Tỷ lệ"><Num width={70} value={rule.pct} onChange={(n) => onChange({ ...rule, pct: n })} suffix="%" /></Row>}
       <Row label="Áp khi tổng đơn từ"><Num money width={140} value={rule.minOrder} onChange={(n) => onChange({ ...rule, minOrder: n || undefined })} suffix="đ" /><span className="muted" style={{ fontSize: 12, marginLeft: 6 }}>{rule.amount !== undefined ? 'trống = tiền hàng phải lớn hơn số chiết khấu (không bao giờ làm số phải trả âm)' : 'trống = mọi đơn'}; chưa đủ thì không tự áp, chỉ gợi ý mua thêm</span></Row>
     </>;
-    case 'item_discount': return <BangChietKhauMa items={(rule.items ?? []) as ItemDiscount[]} onChange={(items) => set({ items })} />;
+    case 'item_discount': return <BangChietKhauMa brands={brands} onlySkus={skus} items={(rule.items ?? []) as ItemDiscount[]} onChange={(items) => set({ items })} />;
     case 'payment_discount': return <Row label="Tỷ lệ nếu trả đúng hạn"><Num width={70} value={rule.pct} onChange={(n) => set({ pct: n })} suffix="%" /></Row>;
     case 'qty_tier': return <><div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Mua từ số lượng nào thì được chiết khấu bao nhiêu % (áp cho cả dòng):</div>
       <Rows rows={rule.tiers ?? []} empty={{ from: 0, pct: 0 }} onChange={(tiers) => set({ tiers })} cols={[
@@ -110,7 +108,7 @@ export function RuleEditor({ kind, rule, onChange }: { kind: PolicyKind; rule: R
         { head: 'Chiết khấu', cell: (r, s) => <Num width={60} value={r.pct} onChange={(n) => s({ pct: n })} suffix="%" /> },
       ]} /></>;
     case 'promo_gift': return <>
-      <BangQuaTang items={(rule.items ?? []) as GiftItem[]} onChange={(items) => set({ items })} />
+      <BangQuaTang brands={brands} onlySkus={skus} items={(rule.items ?? []) as GiftItem[]} onChange={(items) => set({ items })} />
       <Row label="Loại khuyến mại"><select className="select input" style={{ width: 300 }} value={rule.splitIntoCost ? '1' : '0'} onChange={(e) => set({ splitIntoCost: e.target.value === '1' })}><option value="1">KM cho người bán — chia vào giá (giá vốn giảm)</option><option value="0">KM cho người tiêu dùng — không chia giá (vào sổ quà)</option></select></Row>
     </>;
     case 'period_rebate': return <>
@@ -152,12 +150,6 @@ export function RuleEditor({ kind, rule, onChange }: { kind: PolicyKind; rule: R
       <Row label="Mã chương trình quà"><input className="input mono" style={{ width: 200 }} value={rule.program ?? ''} placeholder="Ví dụ TGS-TRI-AN" onChange={(e) => set({ program: e.target.value.trim() })} /></Row>
       <Row label="Ngân sách"><Num money width={150} value={rule.amount} onChange={(n) => set({ amount: n })} suffix="đ" /></Row>
     </>;
-    case 'contract': return <>
-      <Row label="Số hợp đồng / phụ lục"><input className="input mono" style={{ width: 220 }} value={rule.no ?? ''} placeholder="Ví dụ 05/2026/HĐMB-VC" onChange={(e) => set({ no: e.target.value })} /></Row>
-      <Row label="Ngày ký"><input className="input" type="date" value={rule.signedOn ?? ''} onChange={(e) => set({ signedOn: e.target.value || undefined })} /></Row>
-      <Row label="Ghi chú"><input className="input" style={{ width: 360 }} value={rule.note ?? ''} placeholder="Phạm vi hàng hoá, điều kiện giao, hồ sơ hợp lệ…" onChange={(e) => set({ note: e.target.value })} /></Row>
-      <div className="muted" style={{ fontSize: 12 }}>Hiệu lực hợp đồng = ô Hiệu lực từ / Đến bên dưới. File scan gắn ở thẻ Tệp đính kèm của hồ sơ NCC.</div>
-    </>;
     case 'lot_tracking': return <Row label="Số lô, hạn dùng"><select className="select input" style={{ width: 260 }} value={rule.required === false ? '0' : '1'} onChange={(e) => set({ required: e.target.value === '1' })}><option value="1">Bắt buộc khi nhập (không có thì không duyệt được)</option><option value="0">Không bắt buộc</option></select></Row>;
   }
 }
@@ -176,7 +168,6 @@ export const KIND_HINT: Record<PolicyKind, string> = {
   payment_term: 'Cách tính hạn thanh toán: bao nhiêu ngày, ngày làm việc hay ngày lịch, tính từ ngày nào.',
   supply_target: 'Chỉ tiêu nhập hàng của từng chi nhánh trong tháng — theo dõi ở màn Hạn mức.',
   lot_tracking: 'Bắt buộc nhập số lô, hạn dùng khi nhập hàng; cảnh báo hàng cận date.',
-  contract: 'Số hợp đồng / phụ lục, ngày ký, hiệu lực — file scan gắn ở hồ sơ NCC; nhắc khi hợp đồng sắp hết hạn.',
   gift_budget: 'Giới hạn tổng giá trị quà xuất tặng của một chương trình — vượt thì cảnh báo.',
 };
 
@@ -203,13 +194,12 @@ export const TEMPLATES: Record<PolicyKind, { label: string; rule: R }[]> = {
   supply_target: [],
   lot_tracking: [{ label: 'Bắt buộc lô + hạn dùng', rule: { required: true } }],
   gift_budget: [{ label: 'Tri ân 10 triệu', rule: { program: 'TGS-TRI-AN', amount: 10_000_000 } }],
-  contract: [],
 };
 
 /** Tiền tố mã chính sách tự cấp. */
 export const CODE_PREFIX: Record<PolicyKind, string> = {
   trade_discount: 'CK', item_discount: 'CKMA', qty_tier: 'BAC', payment_discount: 'CKTT', promo_gift: 'KM', period_rebate: 'THUONG', target_rebate: 'CHITIEU', stage_rebate: 'GIAIDOAN',
-  credit_limit: 'HANMUC', payment_term: 'HANTT', supply_target: 'CUNGUNG', lot_tracking: 'LO', gift_budget: 'QUA', contract: 'HD',
+  credit_limit: 'HANMUC', payment_term: 'HANTT', supply_target: 'CUNGUNG', lot_tracking: 'LO', gift_budget: 'QUA',
 };
 
 /** Điều khoản thanh toán: đủ các kiểu trong hợp đồng thực tế (mốc tính, kiểu ngày, ngày trả cố định, trước ngày N hàng tháng). */

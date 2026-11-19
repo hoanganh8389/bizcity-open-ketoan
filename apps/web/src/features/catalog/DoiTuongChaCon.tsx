@@ -99,7 +99,10 @@ export function CayDoiTuong<T extends PartnerNode>({ rows, selected, onSelect, o
 }
 
 /** Ô Đơn vị cha trong hồ sơ: chọn công ty mẹ; thêm mới thì mã tự thành mã cha-00x. */
-export function ODonViCha({ value, onChange, self, isNew, disabled, groupCode }: { value: string | null | undefined; onChange: (code: string | null) => void; self?: string; isNew: boolean; disabled?: boolean; /** Chỉ chọn đơn vị cha trong nhóm này; chưa chọn nhóm thì khoá ô. */ groupCode?: string | null }) {
+// [2026-11-19 08:49 AM khanhtd] ô Đơn vị cha liệt kê đối tượng thuộc NHÓM CHA của nhóm đang chọn, lọc theo vai trò đã tích (kind trống = cả khách hàng lẫn NCC)
+export function ODonViCha({ value, onChange, self, isNew, disabled, groupCode, kind }: { value: string | null | undefined; onChange: (code: string | null) => void; self?: string; isNew: boolean; disabled?: boolean;
+  /** Nhóm để tìm đơn vị cha (form truyền nhóm cha của nhóm đang chọn); trống thì khoá ô. */ groupCode?: string | null;
+  /** Chỉ đối tượng có vai trò này; trống = mọi vai trò (tích cả khách hàng và nhà cung cấp). */ kind?: 'customer' | 'supplier' }) {
   const chuaNhom = !groupCode && !value;
   return (
     <div className="field full">
@@ -107,7 +110,7 @@ export function ODonViCha({ value, onChange, self, isNew, disabled, groupCode }:
         + 'Phiếu, hoá đơn vẫn ghi vào đúng đơn vị này; đơn vị cha dùng để cộng gộp doanh số, công nợ và tính thưởng cho cả nhóm.'
         + (isNew ? ' Chọn cha thì mã tự thành "mã cha-001", "-002"…' : '')} /></label>
       <div className="row" style={{ gap: 6 }}>
-        <div style={{ flex: 1 }}><PartnerPicker groupCode={groupCode ?? undefined} value={value ?? ''} onChange={(c) => onChange(c && c !== self ? c : null)} disabled={disabled || chuaNhom} placeholder={chuaNhom ? 'Chọn "Thuộc nhóm" trước — chỉ chọn đơn vị cha trong cùng nhóm' : 'Không có — là đơn vị độc lập / đơn vị mẹ'} /></div>
+        <div style={{ flex: 1 }}><PartnerPicker groupCode={groupCode ?? undefined} kind={kind} value={value ?? ''} onChange={(c) => onChange(c && c !== self ? c : null)} disabled={disabled || chuaNhom} placeholder={chuaNhom ? 'Chọn "Thuộc nhóm" trước — đơn vị cha chọn trong nhóm cha của nhóm đó' : 'Không có — là đơn vị độc lập / đơn vị mẹ'} /></div>
         {value && !disabled && <button type="button" className="btn btn-sm" title="Bỏ đơn vị cha" onClick={() => onChange(null)}>Bỏ</button>}
       </div>
     </div>

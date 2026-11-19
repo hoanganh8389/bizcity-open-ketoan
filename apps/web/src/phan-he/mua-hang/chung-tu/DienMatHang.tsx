@@ -2,7 +2,7 @@
  * ĐIỀN MẶT HÀNG CỦA NCC vào đơn đặt / phiếu nhập: NCC quản lý danh mục mã hàng → mở hộp này là có sẵn mọi mã của NCC
  * (đã khai + đã từng mua), kèm gợi ý:
  *   - số lượng: SL cần nhập theo Phân tích đặt hàng (công thức chi nhánh cha, MH02) → không có thì để trống, bấm "Điền SL lần trước";
- *   - ĐVT: chọn trong ĐVT của mặt hàng, mặc định = ĐVT NCC hay giao (Mặt hàng & giá mua) → ĐVT mua mặc định của mặt hàng;
+ *   - ĐVT: chọn trong ĐVT của mặt hàng, mặc định = ĐVT NCC hay giao (Hợp đồng & giá → Mặt hàng & giá) → ĐVT mua mặc định của mặt hàng;
  *   - đơn giá: giá mua cố định (của NCC, không có thì giá chung) đúng ĐVT, quy đổi theo tỉ lệ nếu khai ĐVT khác → không có thì
  *     đơn giá lần gần nhất (quy về loại giá của phiếu và ĐVT đang chọn).
  * Tích chọn / sửa số rồi "Thêm vào phiếu" — dòng SL 0 bỏ qua. Không tự động thì vẫn gõ tay từng dòng hoặc Nhập Excel.
@@ -18,10 +18,17 @@ import { useNeedOf } from '../ton-max/api';
 
 const dmy = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
 
-export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: MhData; onClose: () => void; onAdd: (lines: PLine[]) => void }) {
+// [2026-11-19 Nguyễn Văn Thủy] theoHopDong: chỉ mã của hợp đồng (mã ghi trong hợp đồng + mã có giá thuộc hợp đồng), giá theo hợp đồng (đóng góp)
+export function DienMatHang({ doc, data, onClose, onAdd, theoHopDong }: { doc: PDoc; data: MhData; onClose: () => void; onAdd: (lines: PLine[]) => void; /** Lấy từ hợp đồng: số hợp đồng + danh sách mã ghi trong hợp đồng. */ theoHopDong?: { code: string; skus: string[] } }) {
   const sp = useQuery({ queryKey: ['mua-hang', 'supplier-products', doc.partnerCode, 'general'], queryFn: () => purchaseApi.supplierProducts({ partnerCode: doc.partnerCode, withGeneral: true }) });
   const prices = sp.data?.rows ?? [];
-  const items = useMemo(() => supplierItemsOf(doc.partnerCode, sp.data?.rows ?? [], data.docs.filter((d) => d.id !== doc.id)), [doc.partnerCode, doc.id, data, sp.data]);
+  const items = useMemo(() => {
+    const all = supplierItemsOf(doc.partnerCode, sp.data?.rows ?? [], data.docs.filter((d) => d.id !== doc.id));
+    if (!theoHopDong) return all;
+    const hd = new Set([...theoHopDong.skus, ...(sp.data?.rows ?? []).filter((r) => r.contractCode === theoHopDong.code).map((r) => r.sku)]);
+    const have = new Set(all.map((x) => x.sku));
+    return [...all.filter((x) => hd.has(x.sku)), ...[...hd].filter((s) => !have.has(s)).map((s) => ({ sku: s, unit: '', declared: true }) as (typeof all)[number])];
+  }, [doc.partnerCode, doc.id, data, sp.data, theoHopDong]);
   const uq = useQuery({ queryKey: ['mua-hang', 'units', items.map((x) => x.sku).join(',')], queryFn: () => purchaseApi.units(items.map((x) => x.sku)), enabled: items.length > 0 });
   const unitsOf = (sku: string) => uq.data?.[sku] ?? sp.data?.units[sku] ?? [];
   const [unitPick, setUnitPick] = useState<Record<string, string>>({});
@@ -45,12 +52,12 @@ export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: Mh
     const tax = c?.taxInCode ?? 'V08';
     const us = unitsOf(x.sku);
     const unit = unitPick[x.sku] ?? defaultUnitFor(us, prices, doc.partnerCode, x.sku, x.unit || c?.unit || '');
-    const f = priceFor(prices, { date: doc.docDate, partnerCode: doc.partnerCode, sku: x.sku, unit }, us);
+    const f = priceFor(prices, { date: doc.docDate, partnerCode: doc.partnerCode, sku: x.sku, unit, contractCode: theoHopDong?.code ?? doc.contractCode }, us);
     // Giá lần trước quy về ĐVT đang chọn (lần trước mua Thùng, giờ đặt Lốc → chia theo tỉ lệ).
     const last = x.lastPrice ? roundPrice((x.lastPrice / ratioOf(us, x.lastUnit)) * ratioOf(us, unit)) : 0;
     const suggestedPrice = f ? basis(f.price, f.row.priceIncludesVat, tax) : last ? basis(last, Boolean(x.lastIncludesVat), tax) : 0;
     const s = need.rows.get(x.sku);
-    return { ...x, name: c?.name ?? x.name ?? x.sku, unit, tax, us, priceSource: f ? (f.row.partnerCode ? `giá NCC / ${f.row.unit}` : `giá chung / ${f.row.unit}`) : x.lastPrice ? `lần ${x.lastDocNo}` : '', suggestedPrice, suggest: s && s.suggest > 0 ? Math.ceil(s.suggest / ratioOf(us, unit)) : undefined, lastQtyU: x.lastQty ? Math.ceil((x.lastQty * ratioOf(us, x.lastUnit)) / ratioOf(us, unit)) : undefined, reason: s ? `cần nhập ${s.need} (${s.parts.map((p) => `${p.signed < 0 ? '−' : '+'}${Math.abs(p.signed)} ${p.label}`).join(' ')})` : undefined, inCatalog: Boolean(c) };
+    return { ...x, name: c?.name ?? x.name ?? x.sku, unit, tax, us, priceSource: f ? (f.row.contractCode ? `giá hợp đồng / ${f.row.unit}` : f.row.partnerCode ? `giá NCC / ${f.row.unit}` : `giá chung / ${f.row.unit}`) : x.lastPrice ? `lần ${x.lastDocNo}` : '', suggestedPrice, suggest: s && s.suggest > 0 ? Math.ceil(s.suggest / ratioOf(us, unit)) : undefined, lastQtyU: x.lastQty ? Math.ceil((x.lastQty * ratioOf(us, x.lastUnit)) / ratioOf(us, unit)) : undefined, reason: s ? `cần nhập ${s.need} (${s.parts.map((p) => `${p.signed < 0 ? '−' : '+'}${Math.abs(p.signed)} ${p.label}`).join(' ')})` : undefined, inCatalog: Boolean(c) };
   });
   const q = (sku: string, suggest?: number) => qty[sku] ?? suggest ?? 0;
   const chosen = rows.filter((r) => (pick[r.sku] ?? q(r.sku, r.suggest) > 0) && q(r.sku, r.suggest) > 0);
@@ -58,10 +65,10 @@ export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: Mh
     onAdd(chosen.map((r, i) => ({ lineKey: `F${Date.now().toString(36)}${i}`, sku: r.sku, name: r.name, unit: r.unit, qty: q(r.sku, r.suggest), price: price[r.sku] ?? r.suggestedPrice, taxCode: r.tax, lineType: 'buy' })));
   };
   return (
-    <Modal wide title={`Điền mặt hàng của NCC vào ${doc.kind === 'order' ? 'đơn đặt hàng' : 'phiếu'}`} onClose={onClose}
+    <Modal wide title={theoHopDong ? `Lấy mặt hàng từ hợp đồng ${theoHopDong.code}` : `Điền mặt hàng của NCC vào ${doc.kind === 'order' ? 'đơn đặt hàng' : 'phiếu'}`} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={!chosen.length} onClick={add}>Thêm {chosen.length} dòng vào phiếu</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       {!items.length ? (
-        <div className="full empty">NCC này chưa có danh mục mặt hàng và chưa mua lần nào. Khai ở <Link to={`/mua-hang/nha-cung-cap/${encodeURIComponent(doc.partnerCode)}?the=mat-hang`}>Hồ sơ NCC → Mặt hàng & giá mua</Link> (chọn nhiều mã hoặc nhập Excel), hoặc gõ tay từng dòng / Nhập Excel.</div>
+        <div className="full empty">{theoHopDong ? `Hợp đồng ${theoHopDong.code} chưa ghi mặt hàng và chưa có giá mua — mở hợp đồng › bước 2 / bước 4. ` : ''}NCC này chưa có danh mục mặt hàng và chưa mua lần nào. Khai ở <Link to={`/mua-hang/nha-cung-cap/${encodeURIComponent(doc.partnerCode)}?the=mat-hang`}>Hồ sơ NCC → Hợp đồng & giá</Link> (chọn nhiều mã hoặc nhập Excel), hoặc gõ tay từng dòng / Nhập Excel.</div>
       ) : <>
         <div className="full row" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <input className="input" style={{ width: 240 }} placeholder="Tìm mã, tên, mã bên NCC" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -91,7 +98,7 @@ export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: Mh
             </tbody>
           </table>
         </div>
-        <div className="full muted" style={{ fontSize: 12, marginTop: 6 }}>Dòng có số lượng &gt; 0 được chọn sẵn. Chiết khấu, hàng tặng, hạn trả phần mềm tự áp theo chính sách của NCC sau khi thêm. Thêm mã vào danh mục NCC: Hồ sơ NCC → Mặt hàng & giá mua.</div>
+        <div className="full muted" style={{ fontSize: 12, marginTop: 6 }}>Dòng có số lượng &gt; 0 được chọn sẵn. Chiết khấu, hàng tặng, hạn trả phần mềm tự áp theo chính sách của NCC sau khi thêm. Thêm mã vào danh mục NCC: Hồ sơ NCC → Hợp đồng & giá → Mặt hàng & giá.</div>
       </>}
     </Modal>
   );

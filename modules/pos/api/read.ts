@@ -70,3 +70,18 @@ export async function partnerByCode(tx: Tx, code: string): Promise<{ code: strin
 export function todayVn(now = Date.now()): string {
   return new Date(now + 7 * 3600_000).toISOString().slice(0, 10);
 }
+
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q1: MST chi nhánh (danh mục chi nhánh) để trả khác cửa hàng cùng MST (đóng góp)
+/** MST chi nhánh theo mã (kể cả chi nhánh đã ngừng — đơn cũ vẫn trả được ở cửa hàng cùng MST); không có / chưa khai → ''. */
+export async function branchTaxCodeOf(tx: Tx, code: string): Promise<string> {
+  const r = (await sql<{ tax_code: string | null }>`SELECT tax_code FROM bizcity_read.branches WHERE code = ${code} LIMIT 1`.execute(tx)).rows[0];
+  return (r?.tax_code ?? '').trim();
+}
+
+/** Các cửa hàng cùng MST với cửa hàng `code` (gồm chính nó); cửa hàng chưa khai MST → chỉ chính nó. */
+export async function sameTaxBranches(tx: Tx, code: string): Promise<string[]> {
+  const tax = await branchTaxCodeOf(tx, code);
+  if (!tax) return [code];
+  const rows = (await sql<{ code: string }>`SELECT code FROM bizcity_read.branches WHERE btrim(tax_code) = ${tax} ORDER BY code`.execute(tx)).rows;
+  return [...new Set([code, ...rows.map((r) => r.code)])];
+}

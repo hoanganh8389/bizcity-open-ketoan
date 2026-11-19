@@ -3,13 +3,13 @@
  * nửa dưới), thẻ chỉ số của cả kết quả lọc. Chỉ xem — đơn lập ở máy bán.
  */
 import { useState } from 'react';
-import { DataGrid, ErrorBox, KpiCards, Loading, PageHeader, errorText, type GridColumn } from '@bizcity/ui-kit';
-import { Badge, DOC_STATUS, ORDER_STATUS, RangeLayout, SideInput, time, usePage, useRange, vnd } from '../lib';
+import { DataGrid, ErrorBox, KpiCards, Loading, PageHeader, errorText, useApi, useQuery, type GridColumn } from '@bizcity/ui-kit';
+import { Badge, DOC_STATUS, M, ORDER_STATUS, RangeLayout, SideInput, time, usePage, useRange, vnd } from '../lib';
 
 type Line = { lineId: string; sku: string; name: string; unitName: string; unitQty: number; unitPrice: number; amount: number; taxAmount: number; taxRate: number | null };
 type Row = {
   id: string; code: string; branchCode: string; businessDate: string; createdAt: string; status: string; total: number; taxTotal: number;
-  docKey: string; docStatus: string; cashier: string; shiftId: string; customerName: string; customerPhone: string;
+  docKey: string; docStatus: string; cashier: string; shiftId: string; customerName: string; customerPhone: string; saleSource: string; saleSourceName: string;
   payments: { method: string; name: string; amount: number }[]; lines: Line[];
   stockShortOffline: { sku: string; need: number; have: number }[];
   priceChangedOffline: { sku: string; unit: string; price: number | null; clientPrice: number }[];
@@ -20,6 +20,8 @@ const cols: GridColumn<Row>[] = [
   { key: 'createdAt', header: 'Ngày giờ', width: 110, value: (r) => r.createdAt, render: (r) => time(r.createdAt) },
   { key: 'branchCode', header: 'Chi nhánh', type: 'code', width: 90 },
   { key: 'cashier', header: 'Thu ngân', width: 130 },
+  // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: kênh bán của đơn (tên lúc bán) (đóng góp)
+  { key: 'saleSourceName', header: 'Kênh', width: 120 },
   { key: 'customerName', header: 'Khách', width: 160, render: (r) => (r.customerPhone ? `${r.customerName} · ${r.customerPhone}` : r.customerName) },
   { key: 'payments', header: 'Hình thức', width: 170, value: (r) => r.payments.map((p) => p.name).join(', '), render: (r) => r.payments.map((p) => `${p.name} ${vnd(p.amount)}`).join(' · ') },
   { key: 'total', header: 'Tổng tiền', type: 'money', sum: true, width: 120 },
@@ -46,7 +48,9 @@ const lineCols: GridColumn<Line>[] = [
 ];
 
 export function DonBanPage() {
-  const r = useRange({ q: '', cashier: '', stockShort: '0' });
+  const r = useRange({ q: '', cashier: '', stockShort: '0', saleSource: '' });
+  const api = useApi();
+  const channels = useQuery({ queryKey: ['pos-kenh-ban'], queryFn: () => api.get<{ items: { code: string; name: string; active: boolean }[] }>(`${M}/channels`) });
   const [pick, setPick] = useState<Row | null>(null);
   const q = usePage<Row[]>('orders', '/admin/orders', { ...r.applied, pageSize: 500 });
   const sums = q.data?.meta?.sums ?? {};
@@ -57,6 +61,13 @@ export function DonBanPage() {
         <>
           <SideInput label="Mã phiếu / khách" value={r.draft.q ?? ''} onChange={(v) => r.setDraft({ ...r.draft, q: v })} placeholder="HD…, SĐT, tên khách" />
           <SideInput label="Thu ngân" value={r.draft.cashier ?? ''} onChange={(v) => r.setDraft({ ...r.draft, cashier: v })} />
+          <label className="rp-field">
+            <span>Kênh bán</span>
+            <select className="input" value={r.draft.saleSource ?? ''} onChange={(e) => r.setDraft({ ...r.draft, saleSource: e.target.value })}>
+              <option value="">Tất cả</option>
+              {(channels.data?.items ?? []).map((c) => <option key={c.code} value={c.code}>{c.active ? c.name : `${c.name} (ngừng)`}</option>)}
+            </select>
+          </label>
           <label className="row" style={{ gap: 6 }}>
             <input type="checkbox" checked={r.draft.stockShort === '1'} onChange={(e) => r.setDraft({ ...r.draft, stockShort: e.target.checked ? '1' : '0' })} />
             Chỉ đơn mất mạng bị lệch (tồn / giá)

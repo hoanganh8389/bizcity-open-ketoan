@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { POLICY_LABEL, termFromRule, termText, type ItemDiscount, type Policy, type PolicyKind, giftItemsOf } from '@bizcity/mua-hang-domain';
+import { scopeBranches, POLICY_LABEL, termFromRule, termText, type ItemDiscount, type Policy, type PolicyKind, giftItemsOf } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -55,7 +55,6 @@ export function detailsOf(p: Policy): Detail[] {
     case 'supply_target': return Object.entries((r.branches ?? {}) as Record<string, number>).map(([b, v]) => ({ branch: b, cond: `chỉ tiêu cung ứng ${r.period ?? ''}`, benefit: `${vn(v)}đ`, value: v, valueUnit: 'đ' }));
     case 'payment_term': return [{ cond: 'hạn thanh toán', benefit: termText(termFromRule(r)), value: r.days || undefined, valueUnit: r.days ? 'ngày' : undefined }];
     case 'gift_budget': return [{ cond: `chương trình ${r.program ?? ''}`, benefit: `ngân sách quà ${vn(r.amount)}đ`, value: r.amount, valueUnit: 'đ' }];
-    case 'contract': return [{ cond: `hợp đồng số ${r.no ?? ''}`, benefit: r.signedOn ? `ký ngày ${dmy(r.signedOn)}` : '', note: r.note }];
     case 'lot_tracking': return [{ cond: 'khi nhập hàng', benefit: r.required === false ? 'không bắt buộc số lô' : 'bắt buộc số lô + hạn dùng' }];
     default: return [{ cond: '', benefit: JSON.stringify(r) }];
   }
@@ -77,7 +76,7 @@ export function ChiTietChinhSachPage() {
       .sort((a, b) => Number(!a.scope.partnerCode) - Number(!b.scope.partnerCode) || (a.scope.partnerCode ?? '').localeCompare(b.scope.partnerCode ?? '') || ALL_KINDS.indexOf(a.kind) - ALL_KINDS.indexOf(b.kind) || a.code.localeCompare(b.code));
     for (const p of list) {
       const ds = detailsOf(p);
-      ds.forEach((d, i) => out.push({ ...d, sku: d.sku ?? p.scope.sku, branch: d.branch ?? p.scope.branchCode, key: `${p.id}-${i}`, stt: ++stt, line: i + 1, lines: ds.length, p, state: stateOf(p) }));
+      ds.forEach((d, i) => out.push({ ...d, sku: d.sku ?? p.scope.sku, branch: d.branch ?? (scopeBranches(p.scope).join(', ') || undefined), key: `${p.id}-${i}`, stt: ++stt, line: i + 1, lines: ds.length, p, state: stateOf(p) }));
     }
     return out;
   }, [data, kind, partner, state]); // eslint-disable-line react-hooks/exhaustive-deps

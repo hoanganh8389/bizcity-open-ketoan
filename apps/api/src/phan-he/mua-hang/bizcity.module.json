@@ -489,6 +489,28 @@
       "risk": "low"
     },
     {
+      "key": "mua-hang:hop-dong-xem",
+      "label": "Xem hợp đồng mua hàng và công nợ theo hợp đồng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer",
+        "auditor"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "mua-hang:hop-dong-sua",
+      "label": "Thêm / sửa / thanh lý hợp đồng mua hàng",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    },
+    {
       "key": "mua-hang:cai-dat-sua",
       "label": "Lưu cài đặt mua hàng (còn cần quyền cấu hình)",
       "roles": [
@@ -572,6 +594,7 @@
     "mua-hang.purchase.policy-delete",
     "mua-hang.purchase.supplier-products",
     "mua-hang.purchase.supplier-product-delete",
+    "mua-hang.purchase.contract-save",
     "mua-hang.purchase.settings",
     "mua-hang.purchase.variants",
     "mua-hang.invoice.create",
@@ -603,7 +626,8 @@
     "mua-hang.purchase.documents-unapprove",
     "mua-hang.purchase.documents-adjust",
     "mua-hang.purchase.documents-adjust-cancel",
-    "mua-hang.invoice.scan", "mua-hang.invoice.ingest-xml",
+    "mua-hang.invoice.scan",
+    "mua-hang.invoice.ingest-xml",
     "mua-hang.sku-info.lookup",
     "mua-hang.transfer-request.done",
     "mua-hang.transfer-request.cancel",

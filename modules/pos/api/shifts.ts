@@ -8,6 +8,9 @@ import { paymentKind } from './domain/order.js';
 import { dashboard, shiftNumbers, type OrderSnap, type ReturnSnap } from './domain/shifts.js';
 import { lockKey } from './order-service.js';
 import { activePaymentMethods } from './read.js';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-031: lọc đơn theo kênh của danh mục (đơn không mang kênh = kênh mặc định) (đóng góp)
+import { orderChannelSql } from './channels.js';
+import { channelKey } from './domain/channels.js';
 
 type Tx = Parameters<Parameters<ActionContext['data']['module']>[0]>[0];
 export type ShiftRow = {
@@ -105,7 +108,7 @@ export async function listOrders(tx: Tx, branch: string, f: OrderFilter) {
   const q = f.q?.trim();
   const where = sql`branch_code = ${branch} AND business_date BETWEEN ${f.from} AND ${f.to}
     ${f.status ? sql`AND status = ${f.status}` : sql``}
-    ${f.saleSource ? sql`AND coalesce(snapshot->>'saleSource', 'tai_quay') = ${f.saleSource}` : sql``}
+    ${f.saleSource ? sql`AND ${orderChannelSql('snapshot')} = ${channelKey(f.saleSource)}` : sql``}
     ${q ? sql`AND (code ILIKE ${`%${q}%`} OR snapshot->'customer'->>'phone' ILIKE ${`%${q}%`} OR snapshot->'customer'->>'name' ILIKE ${`%${q}%`})` : sql``}`;
   const agg = (await sql<{ n: string; total: string | null; returned: string | null }>`
     SELECT count(*) AS n, sum(total) FILTER (WHERE status = 'completed') AS total,

@@ -16,6 +16,7 @@ import { isItemId, ITEM_CODE_KIND_RE } from '@ketoan/contracts';
 import { applyItemGate } from '../products/item.hints.js';
 // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: core.item.add-child, khoá đổi mã có đuôi (đóng góp)
 import { guardMerge } from './san-pham-con.js';
+import { addTombstones } from './catalog.service.js';
 
 const tags = ['Mặt hàng'];
 const refShape = { itemId: z.string().trim().max(26).optional(), sku: z.string().trim().max(160).optional() };
@@ -65,7 +66,7 @@ const renameCode = defineAction({
     await setSession(tx, ctx.legacyAuth.actor, i.reason);
     const n = await tx.updateTable('products').set({ sku: i.newSku, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', cur.sku).executeTakeFirst();
     if (!Number(n.numUpdatedRows)) throw Errors.notFound(`mặt hàng ${cur.sku} trong danh mục`);
-    await sql`INSERT INTO catalog_tombstones (tenant_id, entity, key, replaced_by_item_id) VALUES (${tenantId}, 'product', ${cur.sku}, ${cur.itemId})`.execute(tx);
+    await addTombstones(tx, tenantId, 'product', [cur.sku], cur.itemId);
     const out = { itemId: cur.itemId, fromSku: cur.sku, toSku: i.newSku, validFrom: await openFrom(tx, cur.itemId), reason: i.reason };
     ctx.evidence.note('result', out);
     return out;
@@ -204,7 +205,7 @@ const merge = defineAction({
     await setSession(tx, ctx.legacyAuth.actor, i.reason);
     const res = (await sql<{ r: { fromSku: string | null; toSku: string; droppedConfig: number; mergedAt: string } }>`
       SELECT bizcity_item_merge(${tenantId}::bigint, ${p.fromItemId}, ${p.toItemId}, ${ctx.legacyAuth.actor}, ${i.reason}) AS r`.execute(tx)).rows[0]!.r;
-    await sql`INSERT INTO catalog_tombstones (tenant_id, entity, key, replaced_by_item_id) VALUES (${tenantId}, 'product', ${p.fromSku}, ${p.toItemId})`.execute(tx);
+    if (p.fromSku) await addTombstones(tx, tenantId, 'product', [p.fromSku], p.toItemId);
     const out = { fromItemId: p.fromItemId, toItemId: p.toItemId, fromSku: p.fromSku, toSku: res.toSku, mergedAt: res.mergedAt, droppedConfig: Number(res.droppedConfig), reason: i.reason };
     ctx.evidence.note('result', out);
     return out;

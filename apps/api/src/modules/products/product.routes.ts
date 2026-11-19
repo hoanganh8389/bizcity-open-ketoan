@@ -30,12 +30,22 @@ import { ok, pageMeta, pageQuerySchema, queryBool } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): chỉ đọc danh sách tài khoản để đối chiếu — đọc bảng, không import Kernel
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
+import { contentHash } from '@bizcity/platform/core/documents';
 import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
 import { applyItemGate, applyItemGateBulk, itemHints } from './item.hints.js';
 
 const warnAck = z.object({ reason: z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500), codes: z.array(z.string().max(32)).max(50).default([]) });
 import { deleteProduct } from '../catalog/catalog.service.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+import { quyTac } from '@bizcity/platform/core/quy-tac';
+
+/** Lịch sử một mã phân loại hàng: document_versions doc_ref danh-muc.item_class:<loại>:<mã> (0157). Mỗi lần sửa một bản, luôn thêm. */
+const itemClassRef = (kind: string, code: string) => `danh-muc.item_class:${kind}:${code}`;
+async function saveItemClassVersion(trx: Db, tenantId: string, ref: string, snapshot: { action: string; changes: string }, actor: string): Promise<void> {
+  const last = await trx.selectFrom('document_versions').select((eb) => eb.fn.max('version').as('v')).where('tenant_id', '=', tenantId).where('doc_ref', '=', ref).executeTakeFirst();
+  await trx.insertInto('document_versions').values({ tenant_id: tenantId, doc_ref: ref, version: Number(last?.v ?? 0) + 1, snapshot: JSON.stringify(snapshot),
+    content_hash: contentHash({ ...snapshot, at: new Date().toISOString() }), created_by: actor }).execute();
+}
 
 const tags = ['Danh mục: Mặt hàng'];
 export const ITEM_CLASS_KINDS = ['brand', 'industry', 'group', 'type'] as const;
@@ -139,6 +149,8 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       querystring: pageQuerySchema.extend({
         search: z.string().trim().optional(),
         brand: z.string().optional(), industry: z.string().optional(), group: z.string().optional(), type: z.string().optional(),
+        brands: z.string().max(4000).optional().describe('Chỉ mặt hàng thuộc một trong các nhãn này (mã nhãn, phẩy ngăn cách)'),
+        skus: z.string().max(40000).optional().describe('Chỉ các mã này (phẩy ngăn cách) — vd hàng hoá của hợp đồng mua'),
         postingGroup: z.string().optional().describe('Mã nhóm hạch toán; "-" = chưa gán'),
         createdFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Chỉ mặt hàng tạo từ ngày này (giờ Việt Nam)'),
         status: z.enum(['all', 'active', 'inactive', 'draft']).default('all').describe('active = đang dùng, KHÔNG gồm nháp (ô chọn của phiếu); draft = chỉ nháp'),
@@ -166,6 +178,10 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
               UNION SELECT c.code FROM item_classes c JOIN t ON c.parent_code = t.code WHERE c.tenant_id = ${auth.tenantId} AND c.kind = 'group') SELECT code FROM t)`);
         else q = q.where(COLUMN[k], '=', v);
       }
+      // [2026-11-19 Nguyễn Văn Thủy] đã chọn nhãn hàng (nhóm cấp 2) thì chỉ tìm / chọn được mặt hàng thuộc nhãn đó (đóng góp)
+      { const bs = (f.brands ?? '').split(',').map((x) => x.trim()).filter(Boolean); if (bs.length) q = q.where('brand_code', 'in', bs); }
+      // [2026-11-19 Nguyễn Văn Thủy] khoanh theo danh sách mã (hàng hoá của hợp đồng mua) (đóng góp)
+      { const ss = (f.skus ?? '').split(',').map((x) => x.trim()).filter(Boolean); if (ss.length) q = q.where('sku', 'in', ss); }
       if (f.postingGroup) q = f.postingGroup === '-' ? q.where('posting_group_code', 'is', null) : q.where('posting_group_code', '=', f.postingGroup);
       if (f.status === 'draft') q = q.where('is_draft', '=', true);
       else if (f.status === 'active') q = q.where('is_active', '=', true).where('is_draft', '=', false);
@@ -206,9 +222,10 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Lịch sử thêm / sửa mã phân loại', params: z.object({ kind: z.enum(ITEM_CLASS_KINDS), code: z.string() }) },
     handler: async (req) => {
-      const rows = await db.selectFrom('item_class_history').select(['at', 'by_user', 'action', 'changes']).where('tenant_id', '=', authOf(req).tenantId)
-        .where('kind', '=', req.params.kind).where('code', '=', req.params.code).orderBy('at', 'desc').limit(500).execute();
-      return ok(rows.map((x) => ({ at: x.at, by: x.by_user, action: x.action, changes: x.changes })));
+      // [2026-11-18 Nguyễn Văn Thủy] lịch sử ở document_versions chung (0157, bỏ item_class_history) (đóng góp)
+      const rows = await db.selectFrom('document_versions').select(['created_at', 'created_by', 'snapshot']).where('tenant_id', '=', authOf(req).tenantId)
+        .where('doc_ref', '=', itemClassRef(req.params.kind, req.params.code)).orderBy('version', 'desc').limit(500).execute();
+      return ok(rows.map((x) => { const s = x.snapshot as { action?: string; changes?: string }; return { at: x.created_at, by: x.created_by, action: s.action ?? '', changes: s.changes ?? '' }; }));
     },
   });
 
@@ -346,7 +363,7 @@ export const productWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'core.product.validate', title: 'Khung Vì sao: kiểm thử một bản khai báo mặt hàng (chỉ đọc)', tags,
     permission: 'catalog:read', effect: 'read', idempotency: 'none',
-    input: z.object({ sku: z.string().trim().min(1).max(64), unit: z.string().trim().max(32).nullish(), postingGroupCode: code.nullish() }), output: anyOut,
+    input: z.object({ sku: z.string().trim().min(1).max(64), unit: z.string().trim().max(32).nullish(), postingGroupCode: code.nullish(), taxOutCode: z.string().max(32).nullish(), barcode: z.string().max(500).nullish() }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/products/validate' }, mcp: false, ai: 'read' },
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
@@ -380,12 +397,12 @@ export const productWriteActions: AnyActionDef[] = [
           const v = b[`${k}Code` as const];
           if (v) {
             const found = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', k).where('code', '=', v).executeTakeFirst();
-            if (!found) throw Errors.validation(`${LABEL[k]} ${v} chưa có trong danh mục`);
+            if (!found) throw quyTac('GRP-BLOCK-001', { detail: `${LABEL[k]} ${v} chưa có trong danh mục` });
           }
         }
         if (b.postingGroupCode) {
           const g = await trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', auth.tenantId).where('code', '=', b.postingGroupCode).executeTakeFirst();
-          if (!g) throw Errors.validation(`Nhóm hạch toán ${b.postingGroupCode} chưa có`);
+          if (!g) throw quyTac('GRP-BLOCK-002', { codes: String(b.postingGroupCode) });
         }
         const patch: Record<string, unknown> = { updated_at: new Date() };
         if (b.name !== undefined) patch.name = b.name;
@@ -400,7 +417,7 @@ export const productWriteActions: AnyActionDef[] = [
           if (v === undefined) continue;
           if (v) {
             const t = await trx.selectFrom('tax_codes').select('direction').where('tenant_id', '=', auth.tenantId).where('code', '=', v).executeTakeFirst();
-            if (!t || t.direction !== dir) throw Errors.validation(`Loại thuế ${v} không có (cần loại thuế ${dir === 'output' ? 'đầu ra' : 'đầu vào'})`);
+            if (!t || t.direction !== dir) throw quyTac('GRP-BLOCK-003', { detail: `Loại thuế ${v} không có (cần loại thuế ${dir === 'output' ? 'đầu ra' : 'đầu vào'})` });
           }
           patch[col] = v || null;
         }
@@ -440,7 +457,7 @@ export const productWriteActions: AnyActionDef[] = [
         await ensureClasses(trx, auth.tenantId, products.flatMap((p) => ITEM_CLASS_KINDS.map((k) => ({ kind: k, code: p[`${k}Code` as const] ?? '', name: p[`${k}Name` as const] }))));
         const groups = new Set((await trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', auth.tenantId).execute()).map((g) => g.code));
         const badGroups = [...new Set(products.map((p) => p.postingGroupCode).filter((g): g is string => Boolean(g) && !groups.has(g!)))];
-        if (badGroups.length) throw Errors.validation(`Nhóm hạch toán chưa có: ${badGroups.join(', ')}`);
+        if (badGroups.length) throw quyTac('GRP-BLOCK-002', { codes: String(badGroups.join(', ')) });
         for (const p of products) {
           await trx
             .insertInto('products')
@@ -480,7 +497,7 @@ export const productWriteActions: AnyActionDef[] = [
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
       const { sku } = input;
-      // Xoá kèm đơn vị tính, giá và báo hệ thống bán hàng xoá theo (catalog_tombstones).
+      // Xoá kèm đơn vị tính, giá và báo hệ thống bán hàng xoá theo (dấu xoá ở catalog_trash, 0160).
       await sameTx(trx, (trx) => deleteProduct(trx, auth.tenantId, auth.actor, sku));
       return { sku };
     },
@@ -496,14 +513,14 @@ export const productWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       const { kind, code: c } = input;
       // [2026-11-12 Nguyễn Văn Thủy] danh mục không xoá: ngừng dùng thay cho xoá (đóng góp)
-      if (kind === 'group') throw Errors.conflict(`Nhóm hàng không xoá được — bấm Sửa, bỏ tích "Đang dùng" để ngừng`);
+      if (kind === 'group') throw quyTac('GRP-BLOCK-004', { detail: `Nhóm hàng không xoá được — bấm Sửa, bỏ tích "Đang dùng" để ngừng` }, 'conflict');
       await sameTx(trx, async (trx) => {
         const before = await trx.selectFrom('item_classes').selectAll().where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
         if (!before) throw Errors.notFound(`${LABEL[kind]} ${c}`);
         const child = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('parent_code', '=', c).limit(1).executeTakeFirst();
-        if (child) throw Errors.conflict(`${LABEL[kind]} ${c} có mã con (${child.code}): xoá mã con trước`);
+        if (child) throw quyTac('GRP-BLOCK-004', { detail: `${LABEL[kind]} ${c} có mã con (${child.code}): xoá mã con trước` }, 'conflict');
         const used = await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where(COLUMN[kind], '=', c).limit(1).executeTakeFirst();
-        if (used) throw Errors.conflict(`${LABEL[kind]} ${c} đang gắn cho mặt hàng ${used.sku}: bỏ tích "Đang dùng" để ngừng`);
+        if (used) throw quyTac('GRP-BLOCK-004', { detail: `${LABEL[kind]} ${c} đang gắn cho mặt hàng ${used.sku}: bỏ tích "Đang dùng" để ngừng` }, 'conflict');
         await trx.deleteFrom('item_classes').where('id', '=', before.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'item_class.delete', objectType: `item_class:${kind}`, objectId: c, before });
       });
@@ -522,19 +539,19 @@ export const productWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       const { kind, code: c } = input;
       const b = reqBody;
-      if (b.parentCode === c) throw Errors.validation(`${LABEL[kind]} cha không được là chính nó`);
+      if (b.parentCode === c) throw quyTac('GRP-BLOCK-005', { detail: `${LABEL[kind]} cha không được là chính nó` });
       // Thêm mới mà trùng mã: báo lỗi — không ghi đè (đổi tên, đổi cha) mã đang dùng.
       if (input.new) {
         const dup = await trx.selectFrom('item_classes').select(['name', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
-        if (dup) throw Errors.conflict(`Mã ${LABEL[kind].toLowerCase()} ${c} đã có: "${dup.name}"${dup.parent_code ? ` (thuộc ${dup.parent_code})` : ''} — chọn mã khác`);
+        if (dup) throw quyTac('GRP-BLOCK-006', { detail: `mã ${LABEL[kind].toLowerCase()} ${c} đã có: "${dup.name}"${dup.parent_code ? ` (thuộc ${dup.parent_code})` : ''}` }, 'conflict');
       }
       if (b.parentCode) {
         const p = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
-        if (!p) throw Errors.validation(`${LABEL[kind]} cha ${b.parentCode} chưa có`);
+        if (!p) throw quyTac('GRP-BLOCK-005', { detail: `${LABEL[kind]} cha ${b.parentCode} chưa có` });
         // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — chặn chuyển nhóm vào nhánh con của chính nó; chặn trùng mã ngắn giữa các nhóm cùng cha (đóng góp)
         const all = await trx.selectFrom('item_classes').select(['code', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).execute();
         const up = new Map(all.map((x) => [x.code, x.parent_code]));
-        for (let x: string | null | undefined = b.parentCode, n = 0; x && n < 50; x = up.get(x), n++) if (x === c) throw Errors.validation(`${LABEL[kind]} ${c} không chuyển vào nhóm con của chính nó (${b.parentCode})`);
+        for (let x: string | null | undefined = b.parentCode, n = 0; x && n < 50; x = up.get(x), n++) if (x === c) throw quyTac('GRP-BLOCK-005', { detail: `${LABEL[kind]} ${c} không chuyển vào nhóm con của chính nó (${b.parentCode})` });
       }
       const old = await trx.selectFrom('item_classes').select(['name', 'parent_code', 'is_active', 'sku_code', 'full_name', 'note']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
       // [2026-11-12 Nguyễn Văn Thủy] mã nhóm hàng (đoạn ghép vào mã hàng): đủ độ dài theo cấp, chữ hoặc số, cấp 1 không bắt đầu bằng 0 (đóng góp)
@@ -555,26 +572,26 @@ export const productWriteActions: AnyActionDef[] = [
           const ten = nn(b.name);
           const cha = b.parentCode || null;
           const anhEm = all.find((x) => x.code !== c && (x.parent_code ?? null) === cha && nn(x.name) === ten);
-          if (anhEm) throw Errors.conflict(`Mã nhóm hàng "${b.name}" đã dùng cho nhóm cùng cấp${cha ? ` trong "${by.get(cha)?.name}"` : ''} — đặt mã khác`);
-          if (cha && nn(by.get(cha)?.name ?? '') === ten) throw Errors.conflict(`Mã nhóm hàng "${b.name}" trùng tên nhóm cha — đặt mã khác`);
-          if (old && all.some((x) => x.parent_code === c && nn(x.name) === ten)) throw Errors.conflict(`Mã nhóm hàng "${b.name}" trùng tên một nhóm con — đặt mã khác`);
+          if (anhEm) throw quyTac('GRP-BLOCK-006', { detail: `mã nhóm hàng "${b.name}" đã dùng cho nhóm cùng cấp${cha ? ` trong "${by.get(cha)?.name}"` : ''}` }, 'conflict');
+          if (cha && nn(by.get(cha)?.name ?? '') === ten) throw quyTac('GRP-BLOCK-006', { detail: `Mã nhóm hàng "${b.name}" trùng tên nhóm cha — đặt mã khác` }, 'conflict');
+          if (old && all.some((x) => x.parent_code === c && nn(x.name) === ten)) throw quyTac('GRP-BLOCK-006', { detail: `Mã nhóm hàng "${b.name}" trùng tên một nhóm con — đặt mã khác` }, 'conflict');
         }
         const doiMaCo = Boolean(old?.sku_code) && b.skuCode !== undefined && old!.sku_code !== b.skuCode;
         const doiCha = Boolean(old) && (old!.parent_code ?? null) !== (b.parentCode || null);
         // [2026-11-12 Nguyễn Văn Thủy] nhóm đã tạo không chuyển sang nhóm cha khác (đóng góp)
-        if (doiCha) throw Errors.validation('Nhóm đã tạo không chuyển sang nhóm khác');
+        if (doiCha) throw quyTac('GRP-BLOCK-005', { detail: 'Nhóm đã tạo không chuyển sang nhóm khác' });
         if (old && doiMaCo) {
           const sub = new Set([c]);
           for (let grew = true; grew;) { grew = false; for (const x of all) if (x.parent_code && sub.has(x.parent_code) && !sub.has(x.code)) { sub.add(x.code); grew = true; } }
           const used = await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('group_code', 'in', [...sub]).limit(1).executeTakeFirst();
-          if (used) throw Errors.conflict(`Nhóm đã có mặt hàng (vd ${used.sku}): giữ nguyên mã ngắn và nhóm cha`);
+          if (used) throw quyTac('GRP-BLOCK-007', { sku: String(used.sku) }, 'conflict');
         }
         if (len && changed) {
           const v = (b.skuCode ?? old?.sku_code ?? '').toUpperCase();
-          if (!v) throw Errors.validation(`Nhập mã nhóm hàng cấp ${lv} (${len} ký tự)`);
-          if (!/^[A-Z0-9]+$/.test(v)) throw Errors.validation('Mã nhóm hàng chỉ gồm chữ và số');
-          if (v.length !== len) throw Errors.validation(`Mã nhóm hàng cấp ${lv} phải đúng ${len} ký tự (đang ${v.length})`);
-          if (lv === 1 && !/^[1-9][0-9]$/.test(v)) throw Errors.validation('Mã nhóm hàng cấp 1 chỉ gồm 2 chữ số, không bắt đầu bằng 0');
+          if (!v) throw quyTac('GRP-BLOCK-008', { detail: `Nhập mã nhóm hàng cấp ${lv} (${len} ký tự)` });
+          if (!/^[A-Z0-9]+$/.test(v)) throw quyTac('GRP-BLOCK-008', { detail: 'Mã nhóm hàng chỉ gồm chữ và số' });
+          if (v.length !== len) throw quyTac('GRP-BLOCK-008', { detail: `Mã nhóm hàng cấp ${lv} phải đúng ${len} ký tự (đang ${v.length})` });
+          if (lv === 1 && !/^[1-9][0-9]$/.test(v)) throw quyTac('GRP-BLOCK-008', { detail: 'Mã nhóm hàng cấp 1 chỉ gồm 2 chữ số, không bắt đầu bằng 0' });
           b.skuCode = v;
         }
         if (!len) b.skuCode = '';
@@ -585,7 +602,7 @@ export const productWriteActions: AnyActionDef[] = [
           let dupQ = trx.selectFrom('item_classes').select(['code', 'name']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('sku_code', '=', b.skuCode).where('code', '<>', c);
           dupQ = b.parentCode ? dupQ.where('parent_code', '=', b.parentCode) : dupQ.where('parent_code', 'is', null);
           const dup = await dupQ.executeTakeFirst();
-          if (dup) throw Errors.conflict(`Mã nhóm hàng ${b.skuCode} đã dùng cho nhóm "${dup.name}" cùng cấp — chọn mã khác`);
+          if (dup) throw quyTac('GRP-BLOCK-006', { detail: `Mã nhóm hàng ${b.skuCode} đã dùng cho nhóm "${dup.name}" cùng cấp — chọn mã khác` }, 'conflict');
         }
       }
       const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), updated_by: auth.actorName || auth.actor, ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}), ...(b.fullName !== undefined ? { full_name: b.fullName } : {}), ...(b.note !== undefined ? { note: b.note } : {}) };
@@ -603,7 +620,7 @@ export const productWriteActions: AnyActionDef[] = [
       }
       await sameTx(trx, async (trx) => {
         await trx.insertInto('item_classes').values({ tenant_id: auth.tenantId, kind, code: c, ...values, created_by: auth.actorName || auth.actor, created_at: new Date() }).onConflict((oc) => oc.columns(['tenant_id', 'kind', 'code']).doUpdateSet(values)).execute();
-        if (diff.length) await trx.insertInto('item_class_history').values({ tenant_id: auth.tenantId, kind, code: c, by_user: auth.actorName || auth.actor, action: old ? 'update' : 'create', changes: diff.join('\n') }).execute();
+        if (diff.length) await saveItemClassVersion(trx, auth.tenantId, itemClassRef(kind, c), { action: old ? 'update' : 'create', changes: diff.join('\n') }, auth.actorName || auth.actor);
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'item_class.save', objectType: `item_class:${kind}`, objectId: c, after: b });
       });
       return { code: c };
@@ -641,7 +658,7 @@ const activateDrafts = defineAction({
     if (!drafts.length) return { activated: [], stillDraft: [], inboxRechecked: { checked: 0, cleared: 0 } };
     if (input.postingGroupCode) {
       const g = await tx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', auth.tenantId).where('code', '=', input.postingGroupCode).executeTakeFirst();
-      if (!g) throw Errors.validation(`Nhóm hạch toán ${input.postingGroupCode} chưa có`);
+      if (!g) throw quyTac('GRP-BLOCK-002', { codes: String(input.postingGroupCode) });
       await tx.updateTable('products').set({ posting_group_code: input.postingGroupCode }).where('tenant_id', '=', auth.tenantId).where('sku', 'in', drafts).where('posting_group_code', 'is', null).execute();
     }
     if (input.unit) await tx.updateTable('products').set({ unit: input.unit }).where('tenant_id', '=', auth.tenantId).where('sku', 'in', drafts).where('unit', '=', '').execute();

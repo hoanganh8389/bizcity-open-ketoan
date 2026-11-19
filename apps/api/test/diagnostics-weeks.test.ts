@@ -10,6 +10,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { appendRunLog, readRunLog } from '@bizcity/platform/core/run-log';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -18,16 +19,15 @@ const chk = (code: string, level: string, count = 0) => ({ code, level, title: `
 beforeAll(async () => {
   ctx = await setupTenant();
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
-  const run = (at: string, checks: unknown[], scope: Record<string, string> = {}) => ({
-    tenant_id: tenantId, layer: 'L3' as const, trigger: 'schedule' as const, scope: JSON.stringify(scope), summary: JSON.stringify({}), checks: JSON.stringify(checks),
-    error_count: (checks as { level: string }[]).filter((c) => c.level === 'error').length, actor: 'system:nightly', created_at: new Date(at),
-  });
-  await db.insertInto('diagnostic_runs').values([
-    run('2026-10-28T03:00:00Z', [chk('A', 'pass'), chk('B', 'warn', 2), chk('C', 'empty')]),
-    run('2026-11-01T03:00:00Z', [chk('A', 'error', 1), chk('B', 'warn', 1), chk('C', 'empty')]),
-    run('2026-11-02T03:00:00Z', [chk('Z', 'error', 9)], { from: '2026-10-01', to: '2026-10-31' }), // lượt khoá kỳ có khoảng ngày: không tính
-    run('2026-11-04T03:00:00Z', [chk('A', 'pass'), chk('B', 'warn', 1), chk('D', 'warn', 3)]),
-  ]).execute();
+  // Lượt tự chẩn đoán ở nhật ký JSONL luồng chan-doan (0161)
+  const run = (at: string, checks: unknown[], scope: Record<string, string> = {}) => appendRunLog('chan-doan', String(tenantId), {
+    layer: 'L3', trigger: 'schedule', scope, summary: {}, checks,
+    errorCount: (checks as { level: string }[]).filter((c) => c.level === 'error').length, actor: 'system:nightly',
+  }, new Date(at));
+  await run('2026-10-28T03:00:00Z', [chk('A', 'pass'), chk('B', 'warn', 2), chk('C', 'empty')]);
+  await run('2026-11-01T03:00:00Z', [chk('A', 'error', 1), chk('B', 'warn', 1), chk('C', 'empty')]);
+  await run('2026-11-02T03:00:00Z', [chk('Z', 'error', 9)], { from: '2026-10-01', to: '2026-10-31' }); // lượt khoá kỳ có khoảng ngày: không tính
+  await run('2026-11-04T03:00:00Z', [chk('A', 'pass'), chk('B', 'warn', 1), chk('D', 'warn', 3)]);
 });
 afterAll(async () => {
   await ctx?.app.close();

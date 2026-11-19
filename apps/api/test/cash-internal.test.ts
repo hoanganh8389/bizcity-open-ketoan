@@ -5,9 +5,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
-import { returnValue } from '@bizcity/kernel/modules/inventory/costing.service';
+import { returnValue, returnValueCapped } from '@bizcity/kernel/modules/inventory/costing.service';
 import { env } from '@bizcity/platform/config/env';
-import { returnsAtOpening } from '@ketoan/contracts';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
@@ -228,40 +227,44 @@ describe('Bán nội bộ theo giá bán (XCN) và giá vốn', () => {
     expect(costs.body.data[0]).toMatchObject({ openingQty: 8, openingValue: 500000, inQty: -2, inValue: -125000, unitCost: 62500, closingQty: 6 });
   });
 
-  it('lý do trả khác lấy thành tiền − thuế trên phiếu; nhập điều chỉnh có cờ loại trừ không vào đơn giá', async () => {
-    expect((await call(ctx, 'PUT', '/api/v1/posting/reasons/XTR3', { name: 'Xuất trả hàng chiến lược', kind: 'out', counterAccount: '3312' })).status).toBe(200);
-    expect((await call(ctx, 'PUT', '/api/v1/posting/reasons/DGTTK', { name: 'Điều chỉnh giá trị tồn kho', kind: 'in', counterAccount: '3381', flags: { excludeFromCost: true } })).status).toBe(200);
-    const reasons = (await call(ctx, 'GET', '/api/v1/posting/reasons')).body.data;
-    expect(reasons.find((x: { code: string }) => x.code === 'XTR1').flags).toMatchObject({ returnAtOpeningCost: true });
-    // Tháng 12 thêm: trả 1 hộp lý do XTR3 với tiền 50.000 (lấy đúng 50.000, không định giá theo tồn đầu);
-    // nhập điều chỉnh 5 hộp lý do DGTTK 1.000.000 (không vào công thức, chỉ tăng số lượng tồn).
-    await post({ docType: 'purchase_return', docKey: 'TN-12B', branchCode: 'CN01', docNo: 'TN-12B', docDate: '2026-12-03', reasonCode: 'XTR3', partner: { code: 'NCC01' },
+  it('sổ thuế: mọi phiếu trả NCC định giá theo tồn đầu, không theo lý do; nhập điều chỉnh vào công thức', async () => {
+    // Tháng 12 thêm: trả 1 hộp với tiền 50.000; nhập điều chỉnh 5 hộp 1.000.000.
+    await post({ docType: 'purchase_return', docKey: 'TN-12B', branchCode: 'CN01', docNo: 'TN-12B', docDate: '2026-12-03', partner: { code: 'NCC01' },
       lines: [{ lineKey: '1', sku: 'SUA02', qty: 1, amountBeforeTax: 50000, taxCode: 'V08', taxAmount: 0 }], totals: { beforeTax: 50000, tax: 0, total: 50000 } });
-    await post({ docType: 'stock_adjustment', docKey: 'DC-12', branchCode: 'CN01', docNo: 'DC-12', docDate: '2026-12-04', reasonCode: 'DGTTK', direction: 'increase',
+    await post({ docType: 'stock_adjustment', docKey: 'DC-12', branchCode: 'CN01', docNo: 'DC-12', docDate: '2026-12-04', direction: 'increase',
       lines: [{ lineKey: 'l1', sku: 'SUA02', qty: 5, amount: 1000000 }], totals: { total: 1000000 } });
     const r = await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-12' });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const costs = await call(ctx, 'GET', '/api/v1/inventory/costs?period=2026-12&search=SUA02');
-    // (500.000 − 125.000 − 50.000) / (8 − 2 − 1) = 65.000
-    expect(costs.body.data[0]).toMatchObject({ inQty: -3, inValue: -175000, unitCost: 65000, closingQty: 10 });
+    // Trả 3 hộp, tiền 170.000 (56.667 ≤ 62.500) → 3 × 62.500 = 187.500; điều chỉnh +5 / +1.000.000
+    // (500.000 − 187.500 + 1.000.000) / (8 − 3 + 5) = 131.250
+    expect(costs.body.data[0]).toMatchObject({ inQty: 2, inValue: 812500, unitCost: 131250, closingQty: 10 });
+    // Chênh lệch: tiền trên phiếu trả 170.000 − giá trị trừ 187.500 = −17.500 → Nợ TK chênh lệch (6321) / Có 1561 ở phiếu giá vốn tháng
+    expect(costs.body.data[0].detail).toMatchObject({ returnDiff: -17500 });
+    expect(await lines('cogs:CN01:2026-12')).toEqual(expect.arrayContaining(['CN01 6321 Nợ 17500', 'CN01 1561 Có 17500']));
   });
 
-  it('bản nội bộ: mọi lý do trả lấy thành tiền − thuế, kể cả XTR1', async () => {
+  it('sổ nội bộ: phiếu trả NCC lấy thành tiền − thuế trên phiếu', async () => {
     env.BOOK_MODE = 'internal';
     try {
-      expect(returnsAtOpening('internal', 'XTR1', true)).toBe(false);
-      expect(returnsAtOpening('tax', 'XTR9', false)).toBe(true);
-      expect(returnsAtOpening('tax', 'XTR3', false)).toBe(false);
       const r = await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-12' });
       expect(r.status, JSON.stringify(r.body)).toBe(200);
       const costs = await call(ctx, 'GET', '/api/v1/inventory/costs?period=2026-12&search=SUA02');
-      expect(costs.body.data[0]).toMatchObject({ openingValue: 500000, inValue: -170000 }); // TN-12 120.000 + XTR3 50.000
+      expect(costs.body.data[0]).toMatchObject({ openingValue: 500000, inValue: 830000 }); // − (120.000 + 50.000) + 1.000.000
       const f = await call(ctx, 'GET', '/api/v1/inventory/costing/formula');
       expect(f.body.data.book).toBe('internal');
       expect(f.body.data.branches).toBeGreaterThan(0);
     } finally {
       env.BOOK_MODE = 'tax';
     }
+  });
+
+  it('sổ nội bộ: trả NCC theo phiếu có trần giá trị đang có; trả hết thì lấy hết giá trị', () => {
+    const r = { openingQty: 10, openingValue: 700000, inQty: 5, inValue: 400000 }; // đang có 15 / 1.100.000
+    expect(returnValueCapped(3, 200000, r)).toBe(200000); // tiền phiếu ≤ giá trị đang có → tiền phiếu
+    expect(returnValueCapped(3, 1500000, r)).toBe(1100000); // vượt → giá trị đang có
+    expect(returnValueCapped(15, 1000000, r)).toBe(1100000); // trả hết số đang có → hết giá trị
+    expect(returnValueCapped(2, 50000, { openingQty: 0, openingValue: 0, inQty: 0, inValue: 0 })).toBe(50000); // không có gì để so → tiền phiếu
   });
 
   it('năm trường hợp định giá hàng trả nhà cung cấp', () => {

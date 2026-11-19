@@ -19,13 +19,15 @@ Mỗi NCC một dòng: STT, mã, tên, MST, **nợ phải trả** (theo sổ), *
 
 | Thẻ | Nội dung |
 |---|---|
-| Tổng quan | Đơn đặt đang chờ giao (đã nhận / đặt, nút **Lập phiếu nhập**), thanh hạn mức, mua theo tháng, khoản phải trả đang mở theo hạn |
-| Hợp đồng & điều khoản | Hợp đồng (số, ngày ký, hiệu lực), **hạn mức công nợ**, **điều khoản thanh toán**, theo dõi lô |
-| Chiết khấu & khuyến mại | CK trên đơn, bậc số lượng, CKTT, mua X tặng Y, ngân sách quà |
-| Thưởng | Thưởng doanh số theo kỳ, chỉ tiêu nhãn, giai đoạn, chỉ tiêu cung ứng |
-| Mặt hàng & giá mua | NCC bán **mã nào, ĐVT nào, giá bao nhiêu**: **mã + tên hàng bên NCC** (để sau quét hoá đơn đỏ tự nhận ra mã của mình), ĐVT đặt hàng (Đặt theo ĐVT này), giá mua cố định (gồm / chưa thuế, hiệu lực), lần mua gần nhất, **ghi chú** (tự điền vào ghi chú dòng khi lập đơn đặt), người sửa lần cuối; dưới bảng: nút mở **Phân tích đặt hàng** lọc sẵn NCC |
-| Tệp đính kèm | Hợp đồng, CO, CQ, báo giá, hoá đơn, biên bản… (kéo thả, tối đa 15 MB / tệp). **Bấm tên tệp là xem ngay trên web** (PDF, ảnh, Excel từng sheet) — không phải tải về; nút ⬇ để tải |
-| Nhật ký | Ai tạo / sửa chính sách, gắn tệp, duyệt phiếu — lúc nào |
+| Tổng quan | Đơn đặt đang chờ giao (nút **Lập phiếu nhập**), hạn mức, mua theo tháng, khoản phải trả đang mở |
+| Hợp đồng | Hợp đồng mua của NCC: hiệu lực, **Giá mua / Chính sách: Đã khai – Chưa khai**, trạng thái, còn phải trả; dòng nhắc bước tiếp. **Thêm hợp đồng** / bấm đúp mở trang hợp đồng |
+| Không theo hợp đồng | Giá mua + chính sách của NCC chưa ký hợp đồng (hoặc chương trình ngoài hợp đồng), không gắn số hợp đồng |
+| Hoá đơn NCC | Hoá đơn đầu vào của NCC (MH22) |
+| Tệp & nhật ký | Tệp của NCC và nhật ký thao tác |
+
+Bốn ô số đầu hồ sơ: hợp đồng đang hiệu lực · công nợ phải trả · giá mua đã khai · chính sách đã khai.
+
+Khai giá, chiết khấu, thưởng **chỉ một đường**: Hồ sơ NCC → Hợp đồng → mở hợp đồng → bước 4 (NCC chưa có hợp đồng: thẻ "Không theo hợp đồng"). MH04 Chính sách mua hàng là màn xem tổng hợp mọi chính sách (có cột Hợp đồng); MH29 là danh sách mọi hợp đồng.
 
 **Mỗi thứ khai một nơi:**
 

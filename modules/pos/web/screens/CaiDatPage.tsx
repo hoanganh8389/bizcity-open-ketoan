@@ -6,15 +6,19 @@
  *   ③ Chênh lệch két: bật lập phiếu kế toán khi chốt ca lệch; hai lý do loại journal (Nợ / Có) — tạo / sửa qua
  *      PUT /api/v1/posting/reasons/:code của Core; module chỉ giữ mã lý do.
  *   ④ Tài khoản hạch toán bán hàng: loại nhóm "Bán hàng" của ACC41 (chỉ đọc), nút Sửa ở ACC41.
+ *   ⑤ Giao hàng đơn đặt hàng (NT-BH-032): kho KHG, mã phí ship, COD theo hãng — khoá của module phieu-ban (GiaoHangCaiDat).
  * Khoá của module ghi qua đường chung PUT /api/v1/settings/values/:key (quyền settings:write; có phiên bản, ai đổi, lúc nào).
  */
 // [2026-11-13 08:45 PM Võ Hoàng] NGHIEM-THU — NT-BH-014: BH17 gom 4 khối cài đặt bán hàng (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-024 Q3: chọn kho KTL nhận hàng trả lỗi / hết hạn của từng cửa hàng (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 số bill dạng shop (số kế thừa), NT-BH-028 kho quà KKM của từng cửa hàng (đóng góp)
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030 Q3: hạn trả riêng từng cửa hàng; quá hạn → yêu cầu trả quá hạn duyệt ở BH14 (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): bỏ mục "Số bill theo dạng shop" — dạng shop mặc định, website tự báo số cuối (đóng góp)
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorBox, Field, Loading, PageHeader, errorText, useApi, useCan, useMutation, useQuery, useQueryClient } from '@bizcity/ui-kit';
 import { M } from '../lib';
+// [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: khối ⑤ Giao hàng đơn đặt hàng (đóng góp)
+import { GiaoHangCaiDat } from './GiaoHangCaiDat';
 
 type Values = {
   returnDays: number; requireOpenShift: boolean; shiftScope: 'branch' | 'device'; cashDiffAlert: number;
@@ -23,6 +27,8 @@ type Values = {
   returnBadWarehouses: string[];
   /** NT-BH-028: "<mã cửa hàng>=<mã kho KKM>" (khoá bizcity.pos.gift_warehouses). */
   giftWarehouses: string[];
+  /** NT-BH-030 Q3: "<mã cửa hàng>=<số ngày>" hạn trả riêng (khoá bizcity.pos.return_days_by_shop). */
+  returnDaysByShop: string[];
 };
 type Wh = { code: string; name: string; branchCode: string; branchName: string; isActive: boolean; isDefault?: boolean; typeCode: string };
 /** So giá trị cài đặt (mảng so theo nội dung). */
@@ -146,8 +152,28 @@ export function CaiDatPage() {
       <PageHeader title="Cài đặt bán hàng" code="BH17" subtitle="Một chỗ cho cài đặt bán lẻ: máy bán tại quầy, cách ghi sổ chứng từ bán, chênh lệch két, tài khoản hạch toán. Đổi có hiệu lực từ hôm nay, lưu lịch sử ai đổi lúc nào." />
 
       <Block title="① Máy bán tại quầy" hint="Áp cho mọi cửa hàng của đơn vị.">
-        <Field label="Hạn trả hàng không cần duyệt (ngày, tính từ ngày bán)" hint={err.returnDays ?? 'Quá hạn: máy bán đòi người duyệt (bộ phận kinh doanh). Mặc định 3 ngày.'}>
+        <Field label="Hạn trả hàng không cần duyệt (ngày, tính từ ngày bán)" hint={err.returnDays ?? 'Áp cho cả công ty; cửa hàng nào khác thì khai riêng ở bảng dưới. Quá hạn: máy bán gửi yêu cầu trả quá hạn, người có quyền "Duyệt trả quá hạn" (kế toán trưởng) duyệt ở BH14. Mặc định 3 ngày.'}>
           <input className={`input${err.returnDays ? ' input-error' : ''}`} type="number" min={0} max={60} value={v.returnDays} disabled={!writable} onChange={(e) => days(e.target.value)} />
+        </Field>
+        <Field label="Hạn trả riêng của cửa hàng" hint="Để trống = theo hạn công ty. Hạn tính theo cửa hàng nhận trả (trả được ở cửa hàng khác cùng MST chi nhánh).">
+          {whsQ.error ? <ErrorBox error={errorText(whsQ.error)} /> : !whsQ.data ? <Loading /> : (
+            <table className="grid">
+              <thead><tr><th>Cửa hàng</th><th>Số ngày (0–60)</th></tr></thead>
+              <tbody>{branches.map(([code, name]) => {
+                const map = toMap(v.returnDaysByShop);
+                return (
+                  <tr key={code}><td>{code} — {name}</td><td>
+                    <input className="input" type="number" min={0} max={60} style={{ width: 90 }} value={map[code] ?? ''} placeholder={String(v.returnDays)} disabled={!writable}
+                      onChange={(e) => {
+                        const n = e.target.value.trim();
+                        const ok = n === '' || (Number.isInteger(Number(n)) && Number(n) >= 0 && Number(n) <= 60);
+                        if (ok) setV({ ...v, returnDaysByShop: fromMap({ ...map, [code]: n === '' ? '' : String(Number(n)) }) });
+                      }} />
+                  </td></tr>
+                );
+              })}</tbody>
+            </table>
+          )}
         </Field>
         <Field label="Bán quá tồn" hint="Máy bán luôn chặn: dòng hàng thiếu tồn báo đỏ, không thanh toán được (NT-BH-021). Đơn bán lúc mất mạng gửi bù vẫn nhận, lọc ở Đơn bán máy POS.">
           <span>Luôn chặn</span>
@@ -244,6 +270,10 @@ export function CaiDatPage() {
           </table>
         )}
         <div><a className="btn" href="/cau-hinh/quy-tac-hach-toan">Sửa ở Quy tắc hạch toán (ACC41)</a></div>
+      </Block>
+
+      <Block title="⑤ Giao hàng đơn đặt hàng" hint="Chuyến giao của đơn đặt hàng (BH20) ghi sổ hai bước qua kho KHG: Đang giao chuyển kho, Đã giao sinh phiếu bán có phí ship + thanh toán COD. Ghi riêng bằng nút của khối này.">
+        <GiaoHangCaiDat />
       </Block>
 
       {save.error && <ErrorBox error={errorText(save.error)} />}

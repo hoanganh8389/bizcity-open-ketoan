@@ -14,13 +14,13 @@ import '../mua-hang.css';
 import './csdl.css';
 
 interface DbColumn { name: string; type: string; nullable: boolean; default: string | null; comment: string | null }
-interface DbTable { name: string; layer: 'module' | 'catalog' | 'core'; label: string; purpose: string; comment: string | null; rows: number; columns: DbColumn[]; indexes: { name: string; def: string }[]; triggers: { name: string; timing: string; events: string; fn: string; note: string }[] }
+interface DbTable { name: string; layer: 'module' | 'catalog' | 'document' | 'core'; label: string; purpose: string; comment: string | null; rows: number; columns: DbColumn[]; indexes: { name: string; def: string }[]; triggers: { name: string; timing: string; events: string; fn: string; note: string }[] }
 interface Schema { layers: { layer: string; label: string; tables: string[] }[]; tables: DbTable[]; migrations: string[] }
 interface Scenario { th: number; title: string; how: string; expected?: string; result?: string; ok?: boolean }
 
 type Tab = 'tom-tat' | 'tong-quan' | 'vi-du' | 'quy-trinh' | 'dvt' | 'bang' | 'json' | 'tinh-huong' | 'mo-rong';
 const TABS: [Tab, string][] = [['tom-tat', '① Tóm tắt 1 phút'], ['tong-quan', '② Sơ đồ & nguyên tắc'], ['vi-du', '③ Ví dụ một phiếu'], ['quy-trinh', '④ Quy trình từng bước'], ['dvt', '⑤ ĐVT & tồn kho'], ['bang', '⑥ Bảng & cột'], ['json', '⑦ JSON'], ['tinh-huong', '⑧ 25 tình huống'], ['mo-rong', '⑨ Mở rộng & tối ưu']];
-const LAYER_CLS: Record<string, string> = { module: 'db-l-module', catalog: 'db-l-catalog', core: 'db-l-core' };
+const LAYER_CLS: Record<string, string> = { module: 'db-l-module', catalog: 'db-l-catalog', document: 'db-l-doc', core: 'db-l-core' };
 
 export function CsdlPage() {
   const [tab, setTab] = useState<Tab>('tom-tat');
@@ -53,14 +53,20 @@ const Panel = ({ title, children }: { title: ReactNode; children: ReactNode }) =
 
 /* ------------------------------------------------------------------ ① Tóm tắt 1 phút (mở đầu thuyết trình) */
 
+// [2026-11-19 Nguyễn Văn Thủy] thêm hợp đồng là gốc + sổ chứng từ chung; duyệt mới vào sổ kế toán (0165, 0166) (đóng góp)
 const IDEAS: { n: string; title: string; text: string; tables: string[]; cls: string }[] = [
+  { n: '0', title: 'Hợp đồng là gốc, đi từng bước', text: 'Mỗi NCC: hợp đồng → giá mua, chính sách (chỉ chọn hàng của hợp đồng) → đơn đặt → phiếu nhập → hoá đơn → ghi sổ → thanh toán → thanh lý. Mọi phiếu mang số hợp đồng; công nợ theo hợp đồng đọc thẳng từ sổ.', tables: ['dimensions', 'supplier_products', 'purchase_policies', 'purchase_documents'], cls: 'blk-green' },
   { n: '1', title: 'Khai báo một nơi', text: 'NCC, mặt hàng, ĐVT, giá mua — mỗi thứ khai đúng một chỗ, chỗ khác chỉ chọn. Không khai trùng, không lệch số.', tables: ['partners', 'products', 'product_units', 'unit_names', 'supplier_products'], cls: 'blk-blue' },
   { n: '2', title: 'Mọi phiếu mua — một bảng', text: '10 loại phiếu (đơn đặt, nhập, trả, quà, chi phí, thưởng, ứng trước, trả tiền…) chung một bảng: cột để lọc, JSON cho dòng hàng.', tables: ['purchase_documents'], cls: 'blk-green' },
   { n: '3', title: 'Chính sách là dữ liệu', text: '15 loại điều kiện mua (CK đơn, CK theo bảng nhiều mã, KM, thưởng, hạn mức, hạn trả…) chung một bảng. Một chính sách chứa được cả nghìn mã (nhập Excel). Thêm loại mới không cần thêm bảng.', tables: ['purchase_policies'], cls: 'blk-purple' },
   { n: '5', title: 'Hoá đơn NCC giữ nguyên cách NCC ghi', text: 'Hoá đơn NCC lưu riêng, dòng đúng như NCC ghi (mã / tên / ĐVT của họ). Phần mềm nhận diện mã bên mình và HỌC mỗi lần người dùng chọn mã. Phiếu nhập cùng số hoá đơn được đối soát từng dòng.', tables: ['supplier_invoices', 'supplier_invoice_lines', 'supplier_item_aliases'], cls: 'blk-blue' },
-  { n: '4', title: 'Duyệt = ghi sổ lõi', text: 'Không có sổ riêng cho mua hàng. Duyệt phiếu là ghi bút toán, công nợ, kho của sổ kế toán chung — báo cáo tự có số.', tables: ['accounting_events', 'ledger_lines', 'debt_items', 'inventory_movements'], cls: 'blk-orange' },
+  { n: '4', title: 'Duyệt = ghi sổ lõi', text: 'Không có sổ riêng cho mua hàng. Chỉ khi duyệt phiếu mới vào sự kiện kế toán: bút toán, công nợ, kho của sổ kế toán chung — báo cáo tự có số. Hợp đồng, đơn đặt, chính sách không vào đây.', tables: ['accounting_events', 'ledger_lines', 'debt_items', 'inventory_movements'], cls: 'blk-orange' },
+  { n: '6', title: 'Sổ chứng từ chung', text: 'Mọi chứng từ (hợp đồng, chính sách, đơn đặt, phiếu nhập…) có một dòng đầu phiếu, tự ghi bằng trigger: loại, trạng thái Nháp → Duyệt → Đang thực hiện → Hoàn tất, phiên bản, liên kết (lập từ, áp chính sách, thuộc hợp đồng, dùng lô, ghi sổ), tệp đính kèm.', tables: ['business_documents', 'document_versions', 'document_links', 'document_attachments'], cls: 'blk-purple' },
 ];
 const TERMS: [string, string, string][] = [
+  ['Hợp đồng mua hàng — danh mục hợp đồng, loại NCC hàng hoá (số HĐ, NCC, hàng hoá, kỳ thanh toán, tệp scan, thanh lý)', 'dimensions, contract_schedules', 'MH11 → thẻ Hợp đồng · MH29 Hợp đồng mua hàng'],
+  ['Giá mua / chính sách / phiếu thuộc hợp đồng nào', 'supplier_products.contract_code, purchase_policies.scope, purchase_documents.data', 'Bước 3–4 của hợp đồng · cột Hợp đồng ở MH11'],
+  ['Sổ chứng từ chung: đầu phiếu, trạng thái, phiên bản, liên kết', 'business_documents, document_versions, document_links', 'HT18 Sổ chứng từ'],
   ['Nhà cung cấp, nhóm NCC', 'partners, partner_groups', 'MH01 Nhà cung cấp · DM08 Nhóm NCC'],
   ['Mặt hàng + cây Ngành → Nhãn → Nhóm (nhãn khai MỘT chỗ ở đây)', 'products (industry_code, brand_code, group_code), item_classes', 'DM10 Danh mục mặt hàng · DM11 Nhóm hàng (cây)'],
   ['Mã hàng: mã ngắn nhóm cấp 1 + 2 + 3 + số thứ tự 3 số; mã biến thể = mã cha + tối đa 2 chữ ở đầu / cuối', 'products.sku · products.parent_sku · item_classes.sku_code (mã ngắn của nhóm)', 'Quản lý mặt hàng → Thêm → Mã mới (chọn nhóm cấp 3) / Mã biến thể (chọn mã cha)'],
@@ -69,7 +75,7 @@ const TERMS: [string, string, string][] = [
   ['Tên ĐVT (Hộp, Lốc_4, Thùng…)', 'unit_names', 'DM15 Danh mục đơn vị tính'],
   ['ĐVT của mặt hàng + tỉ lệ quy đổi', 'product_units', 'DM10 → thẻ Đơn vị tính'],
   ['Giá mua riêng của sản phẩm', 'supplier_products (NCC trống)', 'DM10 → thẻ Mua hàng'],
-  ['Giá mua theo từng NCC, mã bên NCC', 'supplier_products', 'Hồ sơ NCC → Mặt hàng & giá mua'],
+  ['Giá mua theo từng NCC, mã bên NCC', 'supplier_products', 'Hồ sơ NCC → Hợp đồng & giá → Mặt hàng & giá'],
   ['Chính sách: CK, KM, thưởng, hạn mức, hạn trả', 'purchase_policies', 'MH04 Chính sách · Hồ sơ NCC'],
   ['Sơ đồ tổ chức → chi nhánh cấp 2 (kho mã xx000 nhận hàng) → cửa hàng: tính từ cây', 'org_units, branches.org_unit_id → branches.level, branches.parent_id · warehouses', 'DM16 Sơ đồ tổ chức'],
   ['Tồn max / min theo chi nhánh – kho – mã', 'stock_levels', 'MH16 Tồn max · DM10 → thẻ Mua hàng'],
@@ -78,13 +84,13 @@ const TERMS: [string, string, string][] = [
   ['Công thức đặt hàng của chi nhánh cha', 'order_formulas', 'MH18 Công thức đặt hàng'],
   ['Đề nghị chuyển hàng kho → shop', 'transfer_requests', 'MH19 Chuyển hàng xuống shop · API cho kho / POS'],
   ['Nhập dữ liệu khởi đầu từ Excel: giá mua NCC, cân tồn (phiếu điều chỉnh kho +/−), tồn max', 'supplier_products · accounting_events + inventory_movements (stock_adjustment) · stock_levels', 'MH20 Nhập dữ liệu khởi đầu'],
-  ['Mã + tên hàng bên NCC, ghi chú mặt hàng NCC', 'supplier_products.ncc_sku, ncc_name, note', 'Hồ sơ NCC → Mặt hàng & giá mua'],
+  ['Mã + tên hàng bên NCC, ghi chú mặt hàng NCC', 'supplier_products.ncc_sku, ncc_name, note', 'Hồ sơ NCC → Hợp đồng & giá → Mặt hàng & giá'],
   ['Chiết khấu riêng từng mã (bảng nghìn mã, nhập Excel)', 'purchase_policies (kind item_discount)', 'Hồ sơ NCC → Chiết khấu & khuyến mại'],
   ['Đơn đặt, phiếu nhập, trả hàng, trả tiền…', 'purchase_documents', 'MH11 Tổng hợp mua hàng (chứng từ mua hàng)'],
   ['Hoá đơn đầu vào của NCC (đầu hoá đơn: mẫu số, ký hiệu, số, ngày, MST, tổng tiền)', 'supplier_invoices', 'MH22 Hoá đơn NCC · Hồ sơ NCC → thẻ Hoá đơn NCC'],
   ['Dòng hoá đơn theo cách NCC ghi + mã / ĐVT bên mình đã nhận diện', 'supplier_invoice_lines', 'MH22 → mở hoá đơn → thẻ Hàng hoá'],
   ['Nhận diện mã hàng NCC (dữ liệu học: NCC ghi gì → mã nào bên mình)', 'supplier_item_aliases', 'MH22 → Bảng nhận diện mã'],
-  ['Hợp đồng, CO, CQ, báo giá, ảnh / PDF / XML hoá đơn (tệp)', 'purchase_attachments', 'Hồ sơ NCC / phiếu / hoá đơn NCC → Tệp đính kèm'],
+  ['Hợp đồng, CO, CQ, báo giá, ảnh / PDF / XML hoá đơn (tệp)', 'document_attachments', 'Hồ sơ NCC / phiếu / hoá đơn NCC → Tệp đính kèm'],
   ['Bút toán Nợ / Có', 'accounting_events, ledger_lines', 'Sổ cái, báo cáo kế toán'],
   ['Công nợ phải trả NCC, hạn trả', 'debt_items, debt_allocations', 'MH05 Hạn mức & công nợ'],
   ['Kho (theo ĐVT nhỏ nhất), lô, hạn dùng', 'inventory_movements', 'Nhập xuất tồn, MH08 Lô & hạn'],
@@ -224,7 +230,7 @@ function Diagram({ onOpen }: { onOpen: (n: string) => void }) {
     { n: 'supplier_products', x: 330, y: 30, w: 220, l: 'module', sub: 'NCC × mã × ĐVT → giá' },
     { n: 'purchase_policies', x: 580, y: 30, w: 220, l: 'module', sub: '15 loại (rule jsonb)' },
     { n: 'purchase_documents', x: 400, y: 200, l: 'module', sub: '10 loại phiếu (data jsonb)' },
-    { n: 'purchase_attachments', x: 400, y: 340, l: 'module', sub: 'Hợp đồng, CO, CQ… (đường dẫn)' },
+    { n: 'document_attachments', x: 400, y: 340, l: 'module', sub: 'Hợp đồng, CO, CQ… (đường dẫn)' },
     { n: 'JSONL nhật ký', x: 400, y: 470, l: 'file', sub: 'ổ dữ liệu ERP, theo tháng', file: true },
     { n: 'accounting_events', x: 900, y: 30, l: 'core', sub: 'Chứng từ kế toán (bản duyệt)' },
     { n: 'ledger_lines', x: 900, y: 150, l: 'core', sub: 'Bút toán Nợ / Có (chỉ thêm)' },
@@ -278,7 +284,10 @@ const STEPS: { title: string; screen: string; reads: string[]; writes: string[];
   { title: '1. Khai báo danh mục', screen: 'DM13 / form NCC · DM08 Nhóm NCC · DM10 Mặt hàng (thẻ ĐVT) · DM15 Danh mục ĐVT', reads: ['unit_names'], writes: ['partners', 'partner_groups', 'products', 'product_units', 'unit_names'],
     auto: ['Chọn nhóm sản phẩm (cây ngành → nhãn → nhóm) → tự sinh mã hàng (ngành 2 + nhãn 3 + nhóm 1 + số 3; quà Q + 3 + 1 + 4; đuôi K/M/Q/T/Z…) và tự điền ngành, nhãn; đoạn mã của nhóm chưa khai thì suy từ mã đang có', 'Đối tượng chọn vai trò Nhà cung cấp / Khách hàng (tích một hoặc cả hai — also_kinds); NCC dùng một bộ tên / MST / địa chỉ chính thức như trên hoá đơn', 'Tên ĐVT mới khai ở mặt hàng → CSDL tự thêm vào unit_names (trigger, mọi đường ghi)', 'Gõ "hộp" → lưu thành "Hộp" theo đúng danh mục', 'ĐVT tỉ lệ 1 tự thành ĐVT của mặt hàng (products.unit)'],
     rules: ['Mỗi mặt hàng đúng một ĐVT tỉ lệ 1, không trùng tên (kể cả khác hoa thường), tỉ lệ > 0', 'Tối đa một ĐVT bán chính, một ĐVT mua mặc định', 'Tên ĐVT đang dùng không đổi tên / không xoá (phiếu cũ ghi theo tên)'] },
-  { title: '2. Giá mua: riêng của sản phẩm + theo từng NCC', screen: 'Mặt hàng → thẻ "Mua hàng" (giá mua riêng của sản phẩm = dòng NCC trống) · Hồ sơ NCC → thẻ "Mặt hàng & giá mua" (giá từng NCC)', reads: ['product_units', 'purchase_documents'], writes: ['supplier_products'],
+  { title: '1b. Hợp đồng mua (gốc của giá, chính sách, phiếu)', screen: 'MH11 → thẻ Hợp đồng → Thêm hợp đồng (từng bước: thông tin → NCC → hàng hoá → giá & chính sách → tệp, thanh lý và nhật ký)', reads: ['partners', 'products'], writes: ['dimensions', 'contract_schedules', 'supplier_products', 'purchase_policies', 'document_attachments'],
+    auto: ['Hợp đồng vào sổ chứng từ chung (purchase.contract, đang thực hiện → thanh lý = hoàn tất)', 'Nút điền nhanh các mã đã khai trong hợp đồng vào bảng giá / chính sách', 'Nhân bản hợp đồng', 'Mỗi lần lưu ghi nhật ký JSONL kèm trường đổi (cũ → mới)'],
+    rules: ['Giá, chính sách của hợp đồng chỉ chọn mã đã khai (không khai mã thì theo nhãn; trống = không giới hạn)', 'Phiếu lẫn hai hợp đồng bị chặn; phiếu lập từ phiếu khác kế thừa số hợp đồng'] },
+  { title: '2. Giá mua: riêng của sản phẩm + theo từng NCC', screen: 'Mặt hàng → thẻ "Mua hàng" (giá mua riêng của sản phẩm = dòng NCC trống) · Hồ sơ NCC → thẻ "Hợp đồng & giá" → Mặt hàng & giá (giá từng NCC)', reads: ['product_units', 'purchase_documents'], writes: ['supplier_products'],
     auto: ['"Khai N mã đã mua" lấy mã từ lịch sử đơn / phiếu của NCC', 'Nhập Excel: hướng dẫn cột → xem trước (mã / ĐVT sai báo đỏ) → đưa vào bảng'],
     rules: ['ĐVT phải có ở product_units của mã', 'Một dòng / NCC × mã × ĐVT × ngày hiệu lực (chỉ mục duy nhất); trùng trong một lần lưu báo ngay', 'Đến ngày ≥ Từ ngày; "Đặt theo ĐVT này" chỉ dòng có NCC', 'Đổi giá theo đợt = thêm dòng hiệu lực mới'] },
   { title: '3. Chính sách của NCC', screen: 'Hồ sơ NCC → Hợp đồng & điều khoản · Chiết khấu & KM · Thưởng', reads: ['partners'], writes: ['purchase_policies'],
@@ -296,7 +305,7 @@ const STEPS: { title: string; screen: string; reads: string[]; writes: string[];
   { title: '5. Nhập kho (từ đơn hoặc độc lập)', screen: 'Chứng từ → Phiếu nhập kho / Lập phiếu nhập từ đơn / Nhập Excel', reads: ['purchase_documents', 'product_units'], writes: ['purchase_documents'],
     auto: ['Chép phần CÒN LẠI của đơn (giao nhiều lần), hàng tặng theo tỷ lệ', 'Giao một phần là bình thường (thông tin), nhận thừa / lệch giá thì cảnh báo — so theo ĐVT nhỏ nhất', 'Đổi mã K/M/Q/T so với đơn → phải duyệt'],
     rules: ['ref_ids nối phiếu với đơn; số hoá đơn + ký hiệu + MST duy nhất (chỉ mục)'] },
-  { title: '5b. Hoá đơn NCC → nhận diện mã → đối soát phiếu nhập', screen: 'MH22 Hoá đơn đầu vào của NCC (Nhập Excel · Quét ảnh / PDF qua AI · Thêm tay) · Hồ sơ NCC → thẻ Hoá đơn NCC · Phiếu nhập → khung Kiểm tra', reads: ['supplier_item_aliases', 'supplier_products', 'products', 'product_units', 'purchase_documents', 'purchase_policies'], writes: ['supplier_invoices', 'supplier_invoice_lines', 'supplier_item_aliases', 'purchase_attachments'],
+  { title: '5b. Hoá đơn NCC → nhận diện mã → đối soát phiếu nhập', screen: 'MH22 Hoá đơn đầu vào của NCC (Nhập Excel · Quét ảnh / PDF qua AI · Thêm tay) · Hồ sơ NCC → thẻ Hoá đơn NCC · Phiếu nhập → khung Kiểm tra', reads: ['supplier_item_aliases', 'supplier_products', 'products', 'product_units', 'purchase_documents', 'purchase_policies'], writes: ['supplier_invoices', 'supplier_invoice_lines', 'supplier_item_aliases', 'document_attachments'],
     auto: ['Đọc hoá đơn (Excel gom theo ký hiệu + số; AI trả khuôn chung) → chuẩn hoá: giá gồm thuế quy về chưa thuế, dòng giá 0 = hàng tặng, tự cộng tổng nếu thiếu', 'Nhận diện mã theo thứ tự tin cậy: đã học (supplier_item_aliases, theo mã NCC rồi theo tên) → khai mặt hàng NCC (supplier_products.ncc_sku / ncc_name) → NCC ghi đúng mã mình → chỉ GỢI Ý (giống tên, cùng quy cách 400g / 800g, mặt hàng NCC có bán được cộng điểm)', 'Người dùng chọn mã cho dòng chưa nhận diện → lưu là HỌC (ghi / cộng số lần gặp ở supplier_item_aliases)', 'ĐVT bên mình = ĐVT đã khai trùng tên ĐVT NCC ghi, không có thì ĐVT mua mặc định', 'Phiếu nhập có số hoá đơn trùng hoá đơn đã lưu → đối soát từng mã: SL quy ĐVT nhỏ nhất, giá chưa thuế sau CK, thuế suất, tổng thanh toán (cộng mọi phiếu cùng hoá đơn)', '"Lập phiếu nhập từ hoá đơn" → phiếu nhập điền sẵn dòng, giá, thuế, số / ngày hoá đơn'],
     rules: ['Một hoá đơn còn hiệu lực / NCC × ký hiệu × số (bỏ số 0 đầu) — chỉ mục duy nhất', 'Mã / ĐVT bên mình phải có trong danh mục; dòng chưa nhận diện vẫn lưu được (chọn sau)', 'Hoá đơn chỉ huỷ (bắt buộc lý do), không xoá; huỷ xong số được dùng lại', 'Lệch hoá đơn là cảnh báo (inv_diff), không chặn duyệt phiếu nhập', 'Xoá một cách ghi đã học: nhật ký JSONL ghi đủ nội dung'] },
   { title: '6. Phân tích mỗi lần sửa phiếu', screen: 'Bảng "Trợ lý mua hàng" cạnh form', reads: ['purchase_policies', 'supplier_products', 'product_units', 'debt_items', 'purchase_documents'], writes: [],
