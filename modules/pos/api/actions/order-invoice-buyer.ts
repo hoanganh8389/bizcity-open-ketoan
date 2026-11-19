@@ -2,8 +2,11 @@
  * POST /api/v1/m/pos/orders/:id/invoice-buyer — người mua trên hoá đơn điện tử + dòng quà dưới 24 tháng không đưa lên hoá đơn
  * (NT-BH-010). Lưu ở đơn (một nguồn), đi theo bản sao sổ sang website (meta phiếu bán `invoice_buyer`); plugin hoá đơn ở website
  * phát hành. Gửi lại cùng nội dung → trả đơn, không đổi gì. Chỉ đơn đã hoàn tất.
+ * NT-BH-034: mã số thuế / căn cước 10, 12, 13 số; luật bắt buộc như POS cũ (domain/invoice-buyer.ts) — sai → POS_INVOICE_BUYER kèm field.
  */
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: nhận CCCD 12 số, kiểm tên / địa chỉ / email người mua như POS cũ (đóng góp)
 import { Errors, defineAction, z } from '@bizcity/module-sdk';
+import { TAX_CODE_MESSAGE, TAX_CODE_RE, invoiceBuyerProblem } from '../domain/invoice-buyer.js';
 import { lockKey } from '../order-service.js';
 import { emitOrderChange, saveOrderChange, type OrderChange } from '../order-update.js';
 import { findOrder } from '../return-service.js';
@@ -12,7 +15,7 @@ const canon = (v: unknown): string => JSON.stringify(v, (_k, x) => (x && typeof 
 const text = (max: number) => z.string().trim().max(max).optional();
 const buyer = z.object({
   name: text(200), companyName: text(300), address: text(500), phone: text(20), email: z.string().trim().email('Email không đúng khuôn').max(200).optional().or(z.literal('')),
-  taxCode: z.string().trim().regex(/^\d{10}(-?\d{3})?$/, 'Mã số thuế phải 10 hoặc 13 số').optional().or(z.literal('')),
+  taxCode: z.string().trim().regex(TAX_CODE_RE, TAX_CODE_MESSAGE).optional().or(z.literal('')),
   excludedSkus: z.array(z.string().trim().min(1).max(64)).max(200).optional(),
   under24Confirmed: z.boolean().optional(),
 });
@@ -34,6 +37,8 @@ export default defineAction({
     if (fresh.status === 'cancelled') throw Errors.conflict(`Đơn ${fresh.code} đã huỷ — không lập hoá đơn`, { reason: 'POS_ORDER_CANCELLED', code: fresh.code });
     if (fresh.status !== 'completed') throw Errors.conflict(`Đơn ${fresh.code} chưa hoàn tất (chờ trả tiền) — lập hoá đơn sau khi thu tiền`, { code: fresh.code });
     const parsed = buyer.parse(input);
+    const problem = invoiceBuyerProblem(parsed);
+    if (problem) throw Errors.validation(problem.message, { reason: 'POS_INVOICE_BUYER', field: problem.field, code: fresh.code });
     const value = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined && v !== ''));
     const prev = (fresh.snapshot as { invoiceBuyer?: unknown }).invoiceBuyer;
     // jsonb tự xếp lại thứ tự khoá: so theo dạng chuẩn (khoá sắp xếp), không so chuỗi JSON thô.

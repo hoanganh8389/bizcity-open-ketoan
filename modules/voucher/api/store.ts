@@ -324,3 +324,20 @@ export async function report(tx: Tx, f: { from?: string; to?: string; issuer?: s
 }
 
 export { displayStatus };
+
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: voucher đã dùng theo đơn / phiếu cho báo cáo khách hàng của module pos (đóng góp)
+/** Mã đã dùng có ngày dùng trong khoảng (đơn máy bán / phiếu bán BH10), lọc cửa hàng dùng. */
+export async function usedCodes(tx: Tx, f: { from: string; to: string; branches: string[] }) {
+  return (await sql<{ code: string; campaign_id: string; campaign_name: string; issuer: string; used_source: string; used_ref_id: string; used_ref_code: string | null;
+    used_branch: string | null; used_on: string; used_amount: string | null; partner_code: string | null; phone: string }>`
+    SELECT c.code, c.campaign_id::text, k.name AS campaign_name, k.issuer, c.used_source, c.used_ref_id, c.used_ref_code, c.used_branch, c.used_on::text,
+           c.used_amount, c.partner_code, c.phone
+      FROM mod_voucher.codes c JOIN mod_voucher.campaigns k ON k.campaign_id = c.campaign_id
+     WHERE c.status = 'used' AND c.used_ref_id IS NOT NULL AND c.used_on BETWEEN ${f.from}::date AND ${f.to}::date
+       ${f.branches.length ? sql`AND c.used_branch IN (${sql.join(f.branches)})` : sql``}
+     ORDER BY c.used_on, c.code`.execute(tx)).rows
+    .map((r) => ({
+      code: r.code, campaignId: r.campaign_id, campaignName: r.campaign_name, issuer: r.issuer, source: r.used_source, refId: r.used_ref_id, refCode: r.used_ref_code ?? '',
+      branchCode: r.used_branch ?? '', usedOn: r.used_on, amount: r.used_amount === null ? 0 : Number(r.used_amount), partnerCode: r.partner_code ?? '', phone: r.phone,
+    }));
+}

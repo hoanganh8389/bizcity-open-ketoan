@@ -195,6 +195,8 @@ export const ERROR_REASONS = {
   PHIEU_BAN_NO_COD_METHOD: 'Chuyến giao có tiền COD mà hãng chưa có hình thức thanh toán "COD — <hãng>" (bizcity.phieu_ban.cod_methods, BH17); kèm carrier',
   PHIEU_BAN_SHIPMENT_STATE: 'Trạng thái chuyến giao không cho thao tác (sai bước Chờ lấy → Đang giao → Đã giao | Hoàn; sửa số lượng phiếu bán của chuyến); kèm status',
   PHIEU_BAN_COPY_SOURCE: 'Copy đơn: không có đơn / phiếu / đơn máy bán gốc, phiếu BH10 chưa duyệt, đơn máy bán chưa hoàn tất, không có dòng hàng; kèm status khi có',
+  // [2026-11-19 03:30 PM Võ Hoàng] NGHIEM-THU — NT-BH-034 người mua hoá đơn tại quầy (BIZCITY-ERRORS 1.22.0-draft §4c, đóng góp)
+  POS_INVOICE_BUYER: 'Người mua hoá đơn điện tử của đơn máy bán thiếu / sai (luật như POS cũ): có MST thì tên người mua không phải "Khách lẻ" và phải có địa chỉ; CCCD 12 số phải có email; email phải đúng định dạng; kèm field (name / address / email / taxCode)',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 

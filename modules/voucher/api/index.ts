@@ -14,12 +14,14 @@ import codeRevoke from './actions/code-revoke.js';
 import customerVouchers from './actions/customer-vouchers.js';
 import orderQuote from './actions/order-quote.js';
 import reportGet from './actions/report.js';
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: voucher đã dùng cho báo cáo khách hàng (đóng góp)
+import usageList from './actions/usage-list.js';
 import phieuBanDoc from './subscribers/phieu-ban-doc.js';
 import posOrder from './subscribers/pos-order.js';
 import posReturn from './subscribers/pos-return.js';
 
 export default defineModule({
   manifest,
-  actions: [campaignList, campaignGet, campaignCreate, campaignUpdate, codeGenerate, codeImport, codeList, codeGet, codeRevoke, customerVouchers, orderQuote, reportGet],
+  actions: [campaignList, campaignGet, campaignCreate, campaignUpdate, codeGenerate, codeImport, codeList, codeGet, codeRevoke, customerVouchers, orderQuote, reportGet, usageList],
   subscribers: [posOrder, posReturn, phieuBanDoc],
 });
