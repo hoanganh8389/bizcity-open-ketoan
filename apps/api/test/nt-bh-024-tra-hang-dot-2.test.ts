@@ -200,7 +200,7 @@ describe.skipIf(!HAS)('NT-BH-024 — trả lại hàng bán đợt 2', () => {
     const C = uuid();
     await sell(order(C));
     expect((await ret(C, [{ lineId: 'l2', qty: 1 }], { id: uuid('d') })).statusCode).toBe(201); // trước khi có MST: trả bình thường
-    const ib = await post(`/orders/${C}/invoice-buyer`, { companyName: 'Công ty TNHH Mẫu', taxCode: MST });
+    const ib = await post(`/orders/${C}/invoice-buyer`, { companyName: 'Công ty TNHH Mẫu', address: '1 Phố Mẫu', taxCode: MST });
     expect(ib.statusCode, ib.body).toBe(200);
     const r = await get(`/orders/${C}/returnable?branch=CN01`);
     expect(r.json().data.taxInvoice).toEqual({ taxCode: MST });
