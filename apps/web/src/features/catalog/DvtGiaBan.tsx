@@ -133,7 +133,7 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
         <header>
           <div><b>Giá bán theo bảng giá</b><span>Giá đã gồm thuế. Bắt buộc giá ĐVT bán chính{main ? ` (${main.unit})` : ''} ở bảng giá công ty.</span></div>
         </header>
-        {!sorted.length ? <div className="muted" style={{ padding: 8 }}>Khai ĐVT ở thẻ Đơn vị tính trước.</div> : !company ? <div className="muted" style={{ padding: 8 }}>Chưa có bảng giá công ty — khai ở màn Bảng giá bán.</div> : (
+        {!sorted.length ? <div className="muted" style={{ padding: 8 }}>Khai ĐVT ở thẻ Đơn vị tính trước.</div> : !company ? <TaoBangGiaCongTy lists={lists} onDone={(c) => setShown((x) => [...new Set([c, ...x])])} /> : (
           <div style={{ overflowX: 'auto' }}>
             <table className="dvt-price">
               <thead><tr><th>Bảng giá</th>{sorted.map((u) => <th key={u.unit} className="num" title={u === main ? 'ĐVT bán chính — bắt buộc có giá ở bảng giá công ty' : undefined}>{u.unit}{u === main && ' (*)'}{u.ratio !== 1 && <small> ×{fmt(u.ratio)}</small>}</th>)}<th /></tr></thead>
@@ -193,6 +193,76 @@ export function GiaBan({ units, prices, lists, shown: shownAll, setShown, setPri
         )}
       </section>
       {adding && <ThemBangGia onClose={() => setAdding(false)} onDone={(code) => { setAdding(false); setShown((x) => [...x, code]); }} />}
+    </div>
+  );
+}
+
+// [2026-11-19 03:10 PM khanhtd] DM10 — tạo nhanh bảng giá công ty ngay ở bước Bán hàng & giá (không phải sang màn Bảng giá bán rồi quay lại)
+/**
+ * Đơn vị chưa có bảng giá công ty: tạo mới (tên + mã, mặc định "Bảng giá công ty" / BGCTY) hoặc chọn một bảng giá
+ * đang dùng làm bảng giá công ty. Ghi xong, dòng giá công ty hiện ngay để nhập giá ĐVT bán chính; dữ liệu form giữ nguyên.
+ * Bảng giá công ty áp cho mọi chi nhánh chưa gán bảng giá riêng nên không cần chọn chi nhánh ở đây.
+ */
+function TaoBangGiaCongTy({ lists, onDone }: { lists: PriceListLite[]; onDone: (code: string) => void }) {
+  const qc = useQueryClient();
+  const active = lists.filter((l) => l.isActive);
+  const [mode, setMode] = useState<'new' | 'pick'>('new');
+  const [name, setName] = useState('Bảng giá công ty');
+  const [code, setCode] = useState('BGCTY');
+  const [pick, setPick] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const c = code.trim();
+  const trung = mode === 'new' && c !== '' && lists.some((l) => l.code.toLowerCase() === c.toLowerCase());
+  const save = async () => {
+    setErr('');
+    let target: string;
+    let body: { name: string; note?: string };
+    if (mode === 'new') {
+      if (!name.trim()) { setErr('Nhập tên bảng giá.'); return; }
+      if (!c) { setErr('Nhập mã bảng giá.'); return; }
+      if (trung) { setErr(`Mã ${c} đã có — đổi mã khác hoặc chọn "Dùng bảng giá đang có".`); return; }
+      target = c; body = { name: name.trim() };
+    } else {
+      if (!pick) { setErr('Chọn một bảng giá.'); return; }
+      // Lấy bản đầy đủ để giữ tên, ghi chú khi đổi thành bảng giá công ty (PUT ghi đè cả bản ghi).
+      const all = await api.get<{ code: string; name: string; note?: string }[]>('/api/v1/catalog/price-lists').catch(() => []);
+      const cur = all.find((l) => l.code === pick);
+      target = pick; body = { name: cur?.name ?? lists.find((l) => l.code === pick)?.name ?? pick, note: cur?.note ?? '' };
+    }
+    setBusy(true);
+    try {
+      await api.put(`/api/v1/catalog/price-lists/${encodeURIComponent(target)}`, { ...body, isCompany: true, isActive: true, note: body.note ?? '' });
+      await qc.invalidateQueries({ queryKey: ['price-lists'] });
+      onDone(target);
+    } catch (e) { setErr(errorText(e)); setBusy(false); }
+  };
+  return (
+    <div style={{ padding: 8, display: 'grid', gap: 8 }}>
+      <div className="alert alert-warn" style={{ margin: 0 }}>Đơn vị chưa có <b>bảng giá công ty</b>. Tạo ngay ở đây để nhập giá bán — không cần rời màn này.</div>
+      {active.length > 0 && (
+        <div className="row" style={{ gap: 16 }}>
+          <label className="checkbox"><input type="radio" name="bgct-mode" checked={mode === 'new'} onChange={() => setMode('new')} /> Tạo bảng giá công ty mới</label>
+          <label className="checkbox"><input type="radio" name="bgct-mode" checked={mode === 'pick'} onChange={() => setMode('pick')} /> Dùng bảng giá đang có làm bảng giá công ty</label>
+        </div>
+      )}
+      <div className="row" style={{ gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        {mode === 'new' ? <>
+          <label style={{ display: 'grid', gap: 2 }}><small className="muted">Tên bảng giá (*)</small><input className="input" style={{ width: 240 }} value={name} maxLength={200} onChange={(e) => setName(e.target.value)} /></label>
+          <label style={{ display: 'grid', gap: 2 }}><small className="muted">Mã (*)</small><input className={`input mono ${trung ? 'invalid' : ''}`} style={{ width: 140 }} value={code} maxLength={64} onChange={(e) => setCode(e.target.value)} /></label>
+        </> : (
+          <label style={{ display: 'grid', gap: 2 }}><small className="muted">Bảng giá</small>
+            <select className="select input" style={{ width: 280 }} value={pick} onChange={(e) => setPick(e.target.value)}>
+              <option value="">— chọn —</option>
+              {active.map((l) => <option key={l.code} value={l.code}>{l.code} · {l.name}{l.branchCodes.length ? ` (${l.branchCodes.length} chi nhánh)` : ''}</option>)}
+            </select>
+          </label>
+        )}
+        <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void save()}>{busy ? 'Đang ghi…' : mode === 'new' ? 'Tạo bảng giá công ty' : 'Đặt làm bảng giá công ty'}</button>
+      </div>
+      {trung && <small className="mh-bad">Mã {c} đã có.</small>}
+      {err && <div className="alert alert-bad" style={{ margin: 0 }}>{err}</div>}
+      <small className="muted">Bảng giá công ty áp cho mọi chi nhánh chưa gán bảng giá riêng. Sửa tên, gán chi nhánh sau ở màn Bảng giá bán.</small>
     </div>
   );
 }
