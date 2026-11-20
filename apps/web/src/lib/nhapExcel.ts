@@ -53,13 +53,20 @@ const rowsOut = (rows: Record<string, string>[]) => rows.map(({ _row, ...r }) =>
 
 /* ------------------------------------------------------------------ Mặt hàng */
 const MAT_HANG: NhapLoai = {
-  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, nhóm hàng, thuế suất GTGT, trạng thái', keyField: 'sku',
+  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, ngành / nhãn / nhóm hàng, barcode, thuế suất GTGT, trạng thái', keyField: 'sku',
   listPath: '/danh-muc/mat-hang', invalidate: ['products', 'inventory-items'], modes: false,
   fields: [
     { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku', 'ma hang hoa, dich vu'], example: '100021099', note: 'Mã đã có → cập nhật; chưa có → thêm mới. Mã mới không có chữ ở đầu hoặc cuối. Mã biến thể: giữ nguyên mã cha (đã có hoặc có ở dòng khác trong tệp), thêm tối đa 2 chữ ở đầu hoặc cuối.' },
     { key: 'name', header: 'Tên hàng', required: 'moi', aliases: ['ten', 'ten vthh', 'ten hang hoa', 'ten san pham', 'ten hang hoa, dich vu'], example: 'Sữa bột mẫu 400g' },
     { key: 'unit', header: 'ĐVT', required: 'moi', aliases: ['don vi tinh', 'dvt chinh', 'don vi', 'don vi tinh chinh'], example: 'Hộp', note: 'Mặt hàng đã có: ĐVT không đổi qua Excel (đổi ở form mặt hàng).' },
-    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Mã, đúng tên nhóm cấp 3, hoặc đường dẫn "Ngành / Nhãn / Nhóm" như tệp xuất. Mã biến thể: bỏ trống, theo mã cha.' },
+    // [2026-11-20 kiennt] NT-DM-014 — ghép nhóm hàng theo cây: Ngành / Nhãn / Nhóm (tên, mã hoặc mã hoá như tệp Xuất DM11); nhãn tra dưới ngành, nhóm dưới nhãn (đóng góp)
+    { key: 'industrySku', header: 'Mã ngành', aliases: ['ma hoa nganh'], note: 'Mã hoá ngành (2 số, như tệp Xuất DM11). Dùng cùng / thay cột Ngành hàng.' },
+    { key: 'industryCode', header: 'Ngành hàng', aliases: ['nganh', 'ten nganh', 'nganh hang'], note: 'Tên ngành (cấp 1). Có Ngành thì Nhãn / Nhóm chỉ tra trong ngành đó.' },
+    { key: 'brandSku', header: 'Mã nhãn', aliases: ['ma hoa nhan'], note: 'Mã hoá nhãn (3 ký tự).' },
+    { key: 'brandCode', header: 'Nhãn hàng', aliases: ['nhan', 'ten nhan', 'nhan hang'], note: 'Tên nhãn (cấp 2). Có Nhãn thì Nhóm chỉ tra dưới nhãn đó; nhãn không có dưới ngành → lỗi.' },
+    { key: 'groupSku', header: 'Mã nhóm', aliases: ['ma hoa nhom'], note: 'Mã hoá nhóm (1 ký tự), tra dưới nhãn của dòng.' },
+    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'ten nhom', 'nhom vthh', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Tên nhóm cấp 3 (dưới nhãn của dòng), hoặc đường dẫn "Ngành / Nhãn / Nhóm" như tệp xuất DM10. Nhóm không có dưới nhãn / ngành đã ghi → lỗi, không tự gán sang nhóm khác. Mã biến thể theo nhóm của mã cha.' },
+    { key: 'barcode', header: 'Barcode', aliases: ['ma vach', 'ma barcode', 'ean'], note: 'Trống = giữ nguyên.' },
     // [2026-11-17 09:11 PM kiennt] NT-DM-003 E2, E3 — ghép cột "Thuế GTGT (%)" của tệp xuất DM10; mặt hàng mới bắt buộc (đóng góp)
     { key: 'vatRate', header: 'Thuế suất GTGT (%)', required: 'moi', aliases: ['thue suat', 'thue gtgt', 'thue gtgt %', 'vat', 'thue suat gtgt'], example: '8', note: 'KCT, 0, 5, 8 (hoặc 8%), 10 hoặc mã thuế đầu ra khác — phải có ở danh mục Biểu thuế. Mặt hàng mới bắt buộc.' },
     { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang theo doi'], note: 'Đang hoạt động (hoặc Chờ duyệt) / Ngừng hoạt động. Trống = giữ nguyên (mới: Đang hoạt động).' },

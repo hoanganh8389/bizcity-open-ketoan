@@ -19,6 +19,7 @@ Một cách nhập cho mọi loại: **Khách hàng, Nhà cung cấp, Mặt hàn
 - Dòng cập nhật: ô trống **giữ nguyên** giá trị đang có.
 - Khách hàng / NCC thêm mới để trống mã: phần mềm tự cấp mã nối dãy của nhóm.
 - Mã số thuế không được trùng đối tượng khác. Mặt hàng đã có không đổi ĐVT qua Excel.
+- **Mặt hàng — nhóm hàng** <!-- [2026-11-20 kiennt] NT-DM-014 (đóng góp) -->: ghi theo cây **Ngành → Nhãn → Nhóm** (cột Ngành hàng / Nhãn hàng / Nhóm hàng — tên hoặc mã; hoặc Mã ngành / Mã nhãn / Mã nhóm — mã hoá như tệp Xuất DM11), hoặc chỉ cột Nhóm hàng ghi đường dẫn `Ngành / Nhãn / Nhóm`. Nhãn tra dưới ngành, nhóm tra dưới nhãn của dòng; không có → báo lỗi, không tự gán nhóm khác. Mã hàng mới 9 số phải khớp đoạn mã của nhóm. Cột **Barcode** trống = giữ nguyên.
 - **Số dư tài khoản đầu kỳ**: mỗi dòng một tài khoản (và đối tượng với 131, 331…), ghi Dư Nợ hoặc Dư Có; mỗi chi nhánh thành một phiếu số dư.
   Tổng Dư Nợ phải bằng tổng Dư Có của chi nhánh (hoặc ghi cột *TK cân đối*). Tài khoản doanh thu, chi phí (loại 5–8, 911) không có số dư — lãi lỗ luỹ kế ghi 4212 / 4211.
   Chi nhánh đã có phiếu số dư thì sửa phiếu đó (ACC15) hoặc huỷ trước khi nhập lại. Phiếu của chi nhánh còn dòng lỗi thì cả phiếu chưa ghi.

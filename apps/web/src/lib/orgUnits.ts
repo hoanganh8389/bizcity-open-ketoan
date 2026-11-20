@@ -12,6 +12,8 @@ export interface OrgNode {
   code: string; shortCode: string; name: string; alias: string; note: string; taxId?: string;
   /** Loại nút: company = công ty, unit = đơn vị cơ cấu (0131). */
   kind?: 'company' | 'unit';
+  /** Chỉ để thống kê; mã điểm hoạt động (có kho, ghi chứng từ) của nút (0171). */
+  statsOnly?: boolean; branchCode?: string | null;
   parentCode: string | null; level: number; path: string; sortOrder: number; isActive: boolean;
   purchaseBranchCode: string | null; purchaseUnitCode: string | null;
   directBranches: number; totalBranches: number; activeBranches: number;

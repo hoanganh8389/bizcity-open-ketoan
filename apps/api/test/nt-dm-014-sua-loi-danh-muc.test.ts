@@ -52,4 +52,27 @@ describe('NT-DM-014 L1 — nhóm hàng theo ngành / nhãn', () => {
     const r = await nhap([dong({ sku: '981116001', groupCode: 'N14A1' })]);
     expect(r.errors.join(' ')).toContain('không khớp đoạn mã của nhóm Nhóm A1 thử 14 (98 · 111 · 1) — mã phải bắt đầu bằng 981111');
   });
+
+  it('ghi tên ngành / nhãn / nhóm (như tệp Xuất DM11) → đúng nhóm; nhãn không có dưới ngành → lỗi', async () => {
+    const ok = await nhap([dong({ sku: '981111002', industryCode: 'Sữa bột thử 14', brandCode: 'Nhãn A thử 14', groupCode: 'Nhóm A1 thử 14' })]);
+    expect(ok.errors).toEqual([]);
+    expect(ok.values.groupCode).toContain('N14A1');
+    const sai = await nhap([dong({ sku: '981111003', industryCode: 'Sữa bột thử 14', brandCode: 'Nhãn không có', groupCode: 'Nhóm A1 thử 14' })]);
+    expect(sai.errors.join(' ')).toContain('Nhãn hàng "Nhãn không có" không có dưới ngành Sữa bột thử 14');
+  });
+
+  it('mã hoá từng cấp (Mã ngành 98 · Mã nhãn 222 · Mã nhóm 6) → nhóm "26" dưới nhãn B; Mã nhóm 1 dưới nhãn B → lỗi', async () => {
+    const ok = await nhap([dong({ sku: '982226002', industrySku: '98', brandSku: '222', groupSku: '6' })]);
+    expect(ok.errors).toEqual([]);
+    expect(ok.values.groupCode).toContain('26');
+    const sai = await nhap([dong({ sku: '982226003', industrySku: '98', brandSku: '222', groupSku: '1' })]);
+    expect(sai.errors.join(' ')).toContain('không có dưới nhãn Nhãn B thử 14');
+  });
+
+  it('cột Barcode: hiện ở bước kiểm tra, ghi vào mặt hàng', async () => {
+    const r = await nhap([dong({ sku: '981111004', groupCode: 'N14A1', barcode: '8934673123456' })]);
+    expect(r.errors).toEqual([]);
+    expect(r.values.barcode).toBe('8934673123456');
+  });
 });
+

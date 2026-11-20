@@ -37,6 +37,8 @@ export interface Branch {
   code: string; name: string; accountingUnitCode: string | null; departmentCode: string | null; address: string | null; externalRef: string | null; isActive: boolean;
   note: string; companyName: string; taxCode: string; phone: string; fax: string;
   orgUnitCode: string | null; orgPath: string; validFrom?: string;
+  /** Chỉ để thống kê (0171). */
+  statsOnly?: boolean;
 }
 
 export function BranchesPage() {
