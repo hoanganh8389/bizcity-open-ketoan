@@ -1,7 +1,7 @@
 // [2026-11-05 11:50 PM Nguyễn Văn Thủy] MENU — menu trái gọn: nhóm theo việc, bấm mới bung danh sách màn (đóng góp)
 /**
  * Thanh menu bên trái: mỗi nhóm một dòng có biểu tượng. [2026-11-20 Nguyễn Văn Thủy] Bấm tên nhóm là vào thẳng màn làm việc chính
- * của nhóm (trang chủ nhóm: Bàn làm việc / Quy trình); mũi tên › cuối dòng mới bung danh sách mọi màn sang bên phải (đóng góp).
+ * của nhóm (trang chủ nhóm: Bàn làm việc / Quy trình); rê chuột vào nhóm (hoặc bấm mũi tên ›) thì bung danh sách mọi màn sang phải (đóng góp).
  *  - Báo cáo không nằm trong danh sách này, mỗi nhóm có một dòng Báo cáo dẫn tới trang Báo cáo chung.
  *  - Rê vào một màn có nút ghim; mã màn hiện ở chú thích, vẫn gõ mã tìm được bằng Ctrl + K.
  *  - Thu gọn (Ctrl + B) chỉ còn biểu tượng, bấm biểu tượng vẫn bung danh sách.
@@ -66,6 +66,19 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
     if (over > 0) setOpen((o) => (o ? { ...o, top: Math.max(8, o.top - over) } : o));
   }, [open?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // [2026-11-20 Nguyễn Văn Thủy] rê chuột vào nhóm là bung danh sách màn (chờ 150ms cho khỏi bung khi lướt qua), rời khỏi nhóm và
+  // danh sách 250ms thì đóng; bấm tên nhóm vẫn vào thẳng màn làm việc chính (đóng góp)
+  const hen = useRef<number>();
+  const huyHen = () => { if (hen.current) window.clearTimeout(hen.current); };
+  useEffect(() => huyHen, []);
+  const reVao = (g: GonGroup, el: HTMLElement) => {
+    huyHen();
+    hen.current = window.setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      setOpen((o) => (o?.key === g.key ? o : { key: g.key, top: r.top, left: r.right + 4 }));
+    }, open ? 60 : 150);
+  };
+  const reRa = () => { huyHen(); hen.current = window.setTimeout(() => setOpen(null), 250); };
   const toggle = (g: GonGroup, e: React.MouseEvent<HTMLElement>) => {
     const r = (e.currentTarget.closest('.gon-row') ?? e.currentTarget).getBoundingClientRect();
     setOpen((o) => (o?.key === g.key ? null : { key: g.key, top: r.top, left: r.right + 4 }));
@@ -80,9 +93,9 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
         {nhomHien(groups).map((g) => {
           const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
           return (
-            <button key={g.key} type="button" className={`gon-row${isActive ? ' active' : ''}${open?.key === g.key ? ' open' : ''}`} title={`${g.label} — bấm để vào ${g.homeLabel ?? 'Tổng quan'}`} onClick={() => { setOpen(null); onChoose(g.key); navigate(g.home); }}>
+            <button key={g.key} type="button" className={`gon-row${isActive ? ' active' : ''}${open?.key === g.key ? ' open' : ''}`} title={`${g.label} — bấm để vào ${g.homeLabel ?? 'Tổng quan'}, rê chuột để xem mọi màn`} onClick={() => { huyHen(); setOpen(null); onChoose(g.key); navigate(g.home); }} onMouseEnter={(e) => reVao(g, e.currentTarget)} onMouseLeave={reRa}>
               <GonIcon name={g.icon} size={17} /><span>{g.label}</span>
-              <span role="button" tabIndex={-1} className="gon-arrow" title="Xem mọi màn của nhóm" aria-expanded={open?.key === g.key} onClick={(e) => { e.stopPropagation(); toggle(g, e); }}><ChevronRight size={14} /></span>
+              <span role="button" tabIndex={-1} className="gon-arrow" title="Xem mọi màn của nhóm" aria-expanded={open?.key === g.key} onClick={(e) => { e.stopPropagation(); huyHen(); toggle(g, e); }}><ChevronRight size={14} /></span>
             </button>
           );
         })}
@@ -94,7 +107,7 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
       {!collapsed && onResizeStart && <div className="sidenav-resize" onMouseDown={onResizeStart} title="Kéo để đổi bề rộng menu" />}
       {/* Gắn thẳng vào body để không bị bảng, cột lọc của màn bên dưới đè lên. */}
       {open && openGroup && createPortal(
-        <div ref={fly} className={`gon-fly cot-${columnsOf(openGroup)}`} style={{ top: open.top, left: open.left }}>
+        <div ref={fly} className={`gon-fly cot-${columnsOf(openGroup)}`} style={{ top: open.top, left: open.left }} onMouseEnter={huyHen} onMouseLeave={reRa}>
           <div className="gon-fly-body">
             <Link className="gon-fly-item" to={openGroup.home} onClick={() => onChoose(openGroup.key)}><span>{openGroup.homeLabel ?? 'Tổng quan'}</span></Link>
             {openGroup.sections.map((s, i) => (
