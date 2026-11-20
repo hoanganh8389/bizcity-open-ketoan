@@ -39,7 +39,7 @@ import { WarehousesPage } from './features/catalog/WarehousesPage';
 import { WarehouseTypesPage } from './features/catalog/WarehouseTypesPage';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — màn Sơ đồ tổ chức (DM16)
 // [2026-11-13 Nguyễn Văn Thủy] DM16 thành màn Cơ cấu tổ chức hợp nhất (công ty, cơ cấu, cửa hàng, kho, phòng ban) (đóng góp)
-import { CoCauToChucPage } from './features/catalog/CoCauToChucPage';
+import { CoCauToChucPage } from './features/catalog/co-cau/CoCauToChucPage';
 import { UnitNamesPage } from './features/catalog/UnitNamesPage';
 import { PartnerGroupsPage, PartnersPage } from './features/catalog/PartnersPage';
 import { BankAccountsPage } from './features/catalog/BankAccountsPage';

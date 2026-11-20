@@ -4,8 +4,8 @@
  * Cột "Đường dẫn" chỉ để đọc (nhập lại không dùng). Thuộc (mã) = mã đơn vị cha / đơn vị chứa.
  * Nhập lại: lib/nhapExcelDanhMuc.ts (co-cau = Đơn vị, kho-co-cau = Phân kho, phong-ban = Bộ phận), mỗi loại tự chọn đúng sheet.
  */
-import type { CC } from './CoCauToChucPage';
-import { duongTen, ngung, tenCap } from './CoCauToChucPage';
+import type { CC } from './du-lieu';
+import { duongTen, ngung, tenCap } from './du-lieu';
 
 const co = (b: boolean) => (b ? 'Có' : 'Không');
 

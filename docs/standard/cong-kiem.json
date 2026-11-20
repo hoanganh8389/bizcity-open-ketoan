@@ -325,7 +325,7 @@
         "branches_*",
         "dimensions_stamp_actor",
         "dimensions_dept_*",
-        "zz_unit_uids",
+        "*_unit_ids",
         "partners_*",
         "warehouses_*",
         "*_unit_name",
@@ -2122,6 +2122,11 @@
         "migration": "0049_khoa_dau_but_toan.sql"
       },
       {
+        "name": "accounting_events_unit_ids",
+        "table": "accounting_events",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
         "name": "accounting_profiles_guard",
         "table": "accounting_profiles",
         "migration": "0054_ho_so_ke_toan.sql"
@@ -2207,6 +2212,16 @@
         "migration": "0173_co_cau_mot_bang.sql"
       },
       {
+        "name": "cost_norms_unit_ids",
+        "table": "cost_norms",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
+        "name": "debt_items_unit_ids",
+        "table": "debt_items",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
         "name": "dimensions_dept_moved",
         "table": "dimensions",
         "migration": "0173_co_cau_mot_bang.sql"
@@ -2275,6 +2290,11 @@
         "name": "inventory_movements_item_id",
         "table": "inventory_movements",
         "migration": "0066_item_id_so_kho.sql"
+      },
+      {
+        "name": "inventory_movements_unit_ids",
+        "table": "inventory_movements",
+        "migration": "0173_co_cau_mot_bang.sql"
       },
       {
         "name": "inventory_movements_wh_tax",
@@ -2507,6 +2527,11 @@
         "migration": "0132_doi_tuong_cha_con.sql"
       },
       {
+        "name": "payment_requests_unit_ids",
+        "table": "payment_requests",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
         "name": "policy_registry_guard",
         "table": "policy_registry",
         "migration": "0079_so_dang_ky_chinh_sach.sql"
@@ -2622,6 +2647,16 @@
         "migration": "0132_doi_tuong_cha_con.sql"
       },
       {
+        "name": "purchase_documents_unit_ids",
+        "table": "purchase_documents",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
+        "name": "reference_documents_unit_ids",
+        "table": "reference_documents",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
         "name": "rulepack_approvals_guard",
         "table": "rulepack_approvals",
         "migration": "0056_duyet_rulepack.sql"
@@ -2647,6 +2682,11 @@
         "migration": "0074_gia_tri_cau_hinh.sql"
       },
       {
+        "name": "stock_counts_unit_ids",
+        "table": "stock_counts",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
         "name": "stock_levels_item_id",
         "table": "stock_levels",
         "migration": "0068_xuong_ca_dinh_danh.sql"
@@ -2657,9 +2697,19 @@
         "migration": "0070_item_id_phu_kin.sql"
       },
       {
+        "name": "stock_max_requests_unit_ids",
+        "table": "stock_max_requests",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
         "name": "stock_sku_settings_item_id",
         "table": "stock_sku_settings",
         "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "stock_transfer_docs_unit_ids",
+        "table": "stock_transfer_docs",
+        "migration": "0173_co_cau_mot_bang.sql"
       },
       {
         "name": "supplier_invoice_lines_item_id",
@@ -2680,6 +2730,11 @@
         "name": "tax_invoice_lines_item_id",
         "table": "tax_invoice_lines",
         "migration": "0068_xuong_ca_dinh_danh.sql"
+      },
+      {
+        "name": "tax_invoices_unit_ids",
+        "table": "tax_invoices",
+        "migration": "0173_co_cau_mot_bang.sql"
       },
       {
         "name": "tenant_role_rules_authz_version",
@@ -2725,6 +2780,11 @@
         "name": "transfer_requests_item_id",
         "table": "transfer_requests",
         "migration": "0070_item_id_phu_kin.sql"
+      },
+      {
+        "name": "transfer_requests_unit_ids",
+        "table": "transfer_requests",
+        "migration": "0173_co_cau_mot_bang.sql"
       },
       {
         "name": "user_role_assignments_authz_version",
@@ -2775,11 +2835,6 @@
         "name": "warehouses_versions",
         "table": "warehouses",
         "migration": "0121_mst_phien_ban_theo_ngay.sql"
-      },
-      {
-        "name": "zz_unit_uids",
-        "table": "FUNCTION",
-        "migration": "0173_co_cau_mot_bang.sql"
       }
     ]
   }
