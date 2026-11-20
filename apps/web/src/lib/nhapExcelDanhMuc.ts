@@ -720,6 +720,9 @@ export function nhapGiaBan(code: string, ten: string): NhapLoai {
       { key: 'unit', header: 'ĐVT', required: true, aliases: ['don vi tinh', 'don vi'], example: 'Lon' },
       { key: 'price', header: 'Đơn giá', aliases: ['gia', 'gia ban', 'don gia ban'], example: '25000', note: 'Giá đã gồm thuế. "580000", "580.000", "580,000" đều được. Ô trống: giữ nguyên giá đang có.' },
     ],
+    // [2026-11-20 kiennt] NT-DM-017 — tệp mẫu liệt kê sẵn mọi mặt hàng / ĐVT của bảng giá (giá đang có điền sẵn, chưa có để trống) để điền luôn (đóng góp)
+    mau: async () => (await api.get<{ rows: DongGia[] }>(`/api/v1/catalog/price-lists/${encodeURIComponent(code)}/rows`)).rows
+      .map((r) => [r.sku, r.name, r.unit, r.price === null || r.price === undefined ? '' : String(r.price)]),
     run: async (rows, { dryRun }) => {
       const ds = (await api.get<{ rows: DongGia[] }>(`/api/v1/catalog/price-lists/${encodeURIComponent(code)}/rows`)).rows;
       const have = new Map(ds.map((r) => [`${r.sku}|${r.unit}`.toLowerCase(), r]));

@@ -42,6 +42,9 @@ export interface NhapLoai {
   // [2026-11-18 02:00 PM kiennt] NT-DM-007 — tệp nhiều sheet: tự chọn sheet trùng tên này (đóng góp)
   /** Tên sheet tự chọn khi tệp có sheet trùng tên (không phân biệt hoa thường, dấu). */
   sheet?: string;
+  // [2026-11-20 kiennt] NT-DM-017 — tệp mẫu có sẵn dữ liệu (vd mẫu nhập giá liệt kê sẵn mọi mặt hàng / ĐVT của bảng giá) (đóng góp)
+  /** Dòng dữ liệu điền sẵn vào tệp mẫu (mỗi dòng theo thứ tự `fields`), thay dòng ví dụ. */
+  mau?: () => Promise<string[][]>;
   /** Danh sách để xem sau khi nhập. */
   listPath: string;
   /** Khoá dữ liệu cần tải lại sau khi ghi. */
