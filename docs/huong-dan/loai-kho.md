@@ -4,7 +4,7 @@ Mỗi kho thuộc **một loại**. Loại quyết định kho được dùng ch
 
 ## Loại kho
 
-Bảng gồm: Mã · Tên loại kho · Công dụng · TK kho · Được bán · Thuộc sở hữu · Theo dõi hạn dùng · Hoạt động · Số kho đang dùng. <!-- [2026-11-20 kiennt] NT-DM-014 — thêm 4 cột thuộc tính; loại giữ hộ khoá TK (đóng góp) -->
+Bảng gồm: Mã · Tên loại kho · Công dụng · TK kho · Số kho đang dùng. <!-- [2026-11-20 kiennt] NT-DM-014 — loại giữ hộ khoá TK; nhập Excel nhận cột Số kho (đóng góp) -->
 
 Có sẵn 12 loại gốc (KHH hàng kinh doanh, KKM khuyến mại, KHG gửi bán, KTL trả lại, KCL cách ly, KLO lỗi, KHHAN cận hạn, KHHSD hết hạn, KDC điều chuyển, KNB nhận giữ hộ, KCB chờ bán, KCC chờ chứng từ).
 
@@ -39,4 +39,4 @@ Ví dụ: Khách trả hàng tự chọn Kho hàng trả lại, dùng được t
 ## Nhập Excel
 <!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
 
-Nút **Nhập Excel** nhận tệp Xuất của màn này, đủ cột: mã, tên, công dụng, tài khoản hạch toán, **Được bán**, **Thuộc sở hữu**, **Theo dõi hạn dùng**, **Hoạt động** (Có / Không; trống: loại mới = Có, loại đã có = giữ nguyên) và **Số kho** (chỉ xem, bỏ qua). Không thuộc sở hữu thì không được bán và không có TK kho — dòng sai báo lỗi, không ghi. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).
+Nút **Nhập Excel** nhận tệp Xuất của màn này (mã, tên, công dụng, tài khoản hạch toán; cột **Số kho** chỉ xem, bỏ qua). Loại mới bán được, hàng của mình, theo dõi hạn dùng như khi thêm trên form. Loại hàng nhận giữ hộ (KNB) không có TK kho — dòng ghi TK cho loại này báo lỗi, không ghi. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).

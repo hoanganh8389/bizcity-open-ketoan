@@ -94,11 +94,6 @@ export function WarehouseTypesPage() {
                   : !t.accountPrefix ? <span className="muted">ngầm định</span>
                   : t.accountPosting ? <span className="mono" title={t.accountName ?? ''}>{t.accountPrefix}</span>
                   : <span className="mono" style={{ color: 'var(--bad, #c62828)' }} title={`${t.accountPrefix} là tài khoản tổng hợp, không ghi sổ được — bút toán đang dùng TK kho của Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết.`}>{t.accountPrefix} ⚠</span> },
-              // [2026-11-20 kiennt] NT-DM-014 L3 — 4 cột thuộc tính (hiện sẵn, tắt được ở nút Cột; tệp Xuất lấy cột đang hiện) để Xuất / Nhập Excel cùng bộ cột (đóng góp)
-              { key: 'canSell', header: 'Được bán', width: 90, value: (t) => (t.canSell ? 'Có' : 'Không') },
-              { key: 'owned', header: 'Thuộc sở hữu', width: 110, value: (t) => (t.owned !== false ? 'Có' : 'Không') },
-              { key: 'trackExpiry', header: 'Theo dõi hạn dùng', width: 130, value: (t) => (t.trackExpiry ? 'Có' : 'Không') },
-              { key: 'isActive', header: 'Hoạt động', width: 90, value: (t) => (t.isActive ? 'Có' : 'Không') },
               { key: 'activeWarehouses', header: 'Số kho', type: 'number', width: 80, title: 'Số kho đang dùng thuộc loại này' },
             ]}
           />

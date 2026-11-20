@@ -38,8 +38,9 @@ Dòng 33 của bảng theo dõi chưa có nội dung (cột hiện trạng trố
 **Hiện tượng.** Tệp hợp lệ (tệp Xuất của màn) có cột mà bước nhập không nhận / không hiện.
 
 **Sau khi sửa.**
-- Xuất và Nhập cùng bộ cột: Mã · Tên loại kho · Công dụng · Tài khoản hạch toán · **Được bán** · **Thuộc sở hữu** · **Theo dõi hạn dùng** · **Hoạt động** (4 cột này hiện sẵn trên lưới, tắt được ở nút Cột; tệp Xuất lấy các cột đang hiện) · **Số kho** (chỉ xem — có trong tệp, bước nhập nhận cột nhưng bỏ qua).
-- Kiểm như máy chủ: không thuộc sở hữu thì không được bán và không có TK kho.
+- Nhập Excel nhận cột **Số kho** của tệp Xuất (chỉ xem, bỏ qua khi ghi) — tệp Xuất nhập lại được, không còn cột thừa.
+- Không thêm lại các cột Được bán / Thuộc sở hữu / Theo dõi hạn dùng / Hoạt động: đã bỏ có chủ ý từ 13/11 (thuộc tính hệ thống, form không sửa).
+- Dòng ghi TK cho loại hàng nhận giữ hộ → lỗi ở bước kiểm (như L2).
 
 ## Phạm vi
 
@@ -57,9 +58,8 @@ Chồng phạm vi PHASE-026 · mã số cha – con (Nguyễn Văn Thủy) ở `
 | 4 | Mã hàng mới 9 số, 6 số đầu khác đoạn mã của nhóm | Lỗi "không khớp đoạn mã của nhóm" |
 | 5 | Sửa loại kho KNB | Ô Tài khoản khoá, có ghi chú; Ghi được |
 | 6 | KNB đang lỡ có TK 1569 | Cảnh báo + nút Bỏ TK; bỏ rồi Ghi được |
-| 7 | Xuất Excel Loại kho rồi nhập lại tệp đó | Đủ 9 cột được nhận (Số kho: chỉ xem), không lỗi, không đổi gì |
-| 8 | Nhập dòng Thuộc sở hữu = Không, Được bán = Có | Lỗi "không thuộc sở hữu thì không được bán" |
-| 9 | Nhập dòng Thuộc sở hữu = Không, có Tài khoản | Lỗi "không thuộc sở hữu không ghi sổ kho — để trống TK" |
+| 7 | Xuất Excel Loại kho rồi nhập lại tệp đó | Mọi cột được nhận (Số kho: chỉ xem), không lỗi, không đổi gì |
+| 8 | Nhập dòng KNB có Tài khoản | Lỗi "hàng nhận giữ hộ — để trống Tài khoản hạch toán" |
 
 ## Kết quả chạy
 | | |
@@ -76,4 +76,5 @@ Chồng phạm vi PHASE-026 · mã số cha – con (Nguyễn Văn Thủy) ở `
 | Ngày | Thay đổi |
 |---|---|
 | 20/11/2026 | Tạo, gộp dòng 32, 34, 35 của bảng theo dõi kiểm thử |
-| 20/11/2026 | Code xong ở máy: 4 cột loại kho hiện sẵn (tệp Xuất lấy cột đang hiện); ràng buộc nhóm theo ngành / nhãn khi chúng thuộc cây nhóm |
+| 20/11/2026 | Code xong ở máy: ràng buộc nhóm theo ngành / nhãn khi chúng thuộc cây nhóm |
+| 20/11/2026 | Bỏ 4 cột thuộc tính loại kho đã thêm (người dùng: logic màn trước đã đúng); L3 chỉ nhận cột Số kho |
