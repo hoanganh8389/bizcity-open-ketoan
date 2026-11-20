@@ -34,31 +34,23 @@ import { nhapLoai } from '@/lib/nhapExcel';
 import './co-cau.css';
 
 export type Loai = 'company' | 'unit' | 'branch' | 'warehouse' | 'department' | 'none';
-// [2026-11-20 Nguyễn Văn Thủy] cơ cấu linh hoạt: Công ty (cấp 0) → Chi nhánh cấp N → Cửa hàng; bộ phận thay phòng ban (0171) (đóng góp)
-export const LOAI_TEN: Record<Loai, string> = { company: 'Công ty', unit: 'Chi nhánh', branch: 'Cửa hàng', warehouse: 'Kho', department: 'Bộ phận', none: '' };
+export const LOAI_TEN: Record<Loai, string> = { company: 'Công ty', unit: 'Cơ cấu', branch: 'Cửa hàng', warehouse: 'Kho', department: 'Phòng ban', none: '' };
 export const LOAI_ICON: Record<Loai, ReactNode> = {
   company: <Building2 size={14} />, unit: <Network size={14} />, branch: <Store size={14} />, warehouse: <WarehouseIcon size={14} />, department: <Users size={14} />, none: <FolderOpen size={14} />,
 };
 /** Loại cha hợp lệ của từng loại. */
-const CHA: Record<Exclude<Loai, 'none'>, Loai[]> = { company: ['company', 'unit'], unit: ['company', 'unit'], branch: ['company', 'unit'], warehouse: ['branch', 'company', 'unit'], department: ['company', 'unit', 'branch'] };
-/** Nút đặt được kho / ghi chứng từ: cửa hàng, hoặc công ty / chi nhánh có điểm hoạt động. */
-export const coHoatDong = (n: CNode) => n.loai === 'branch' || Boolean(n.ownBranch);
+const CHA: Record<Exclude<Loai, 'none'>, Loai[]> = { company: ['company', 'unit'], unit: ['company', 'unit'], branch: ['company', 'unit'], warehouse: ['branch'], department: ['company', 'unit'] };
 
 export interface CNode {
   key: string; loai: Loai; code: string; name: string; parentKey: string | null; isActive: boolean;
   /** Cấp trên cây (gốc = 0). */
   depth: number;
   org?: OrgNode; branch?: Branch; warehouse?: Warehouse; dept?: DimRow;
-  /** Điểm hoạt động của công ty / chi nhánh (có kho, ghi chứng từ) — 0171. */
-  ownBranch?: Branch;
-  /** MST hiệu lực: của nút, trống thì theo nút trên; from = nút đặt MST. */
-  mst?: { value: string; from: string | null };
 }
 
 export const NONE_KEY = 'x:none';
 export const homNay = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
-export const loaiNhan = (n: CNode) => (n.loai === 'unit' ? `Chi nhánh cấp ${n.depth}` : n.loai === 'company' ? 'Công ty (cấp 0)' : LOAI_TEN[n.loai]);
-const thongKe = (n: CNode) => Boolean(n.org?.statsOnly ?? n.branch?.statsOnly);
+export const loaiNhan = (n: CNode) => (n.loai === 'unit' ? `Cơ cấu cấp ${n.depth}` : LOAI_TEN[n.loai]);
 export const off = (n: { code: string; isActive: boolean }) => !n.isActive || /_OFF$/i.test(n.code);
 const MST_OK = /^[0-9]{10}(-[0-9]{3})?$/;
 
@@ -71,29 +63,18 @@ export function useCoCau() {
   const data = useMemo(() => {
     const nodes: CNode[] = [];
     const orgCodes = new Set((org.data?.nodes ?? []).map((n) => n.code));
-    const branchByCode = new Map((branches.data ?? []).map((b) => [b.code, b]));
-    /** mã chi nhánh là điểm hoạt động → khoá nút công ty / chi nhánh */
-    const ownOf = new Map<string, string>();
-    for (const n of org.data?.nodes ?? []) {
-      const own = n.branchCode ? branchByCode.get(n.branchCode) : undefined;
-      if (own) ownOf.set(own.code, `o:${n.code}`);
-      nodes.push({ key: `o:${n.code}`, loai: n.kind === 'company' || (!n.kind && !n.parentCode) ? 'company' : 'unit', code: n.code, name: n.name, parentKey: n.parentCode ? `o:${n.parentCode}` : null, isActive: n.isActive, depth: 0, org: n, ownBranch: own });
-    }
-    const pointKey = (branchCode: string) => ownOf.get(branchCode) ?? `b:${branchCode}`;
+    for (const n of org.data?.nodes ?? []) nodes.push({ key: `o:${n.code}`, loai: n.kind === 'company' || (!n.kind && !n.parentCode) ? 'company' : 'unit', code: n.code, name: n.name, parentKey: n.parentCode ? `o:${n.parentCode}` : null, isActive: n.isActive, depth: 0, org: n });
     const shopDept = new Set<string>();
     for (const b of branches.data ?? []) {
-      if (b.departmentCode) shopDept.add(b.departmentCode);
-      if (ownOf.has(b.code)) continue; // điểm hoạt động hiện chung dòng với nút của nó
       nodes.push({ key: `b:${b.code}`, loai: 'branch', code: b.code, name: b.name, parentKey: b.orgUnitCode && orgCodes.has(b.orgUnitCode) ? `o:${b.orgUnitCode}` : NONE_KEY, isActive: b.isActive, depth: 0, branch: b });
+      if (b.departmentCode) shopDept.add(b.departmentCode);
     }
-    for (const w of whs.data ?? []) nodes.push({ key: `w:${w.code}`, loai: 'warehouse', code: w.code, name: w.name, parentKey: pointKey(w.branchCode), isActive: w.isActive, depth: 0, warehouse: w });
+    for (const w of whs.data ?? []) nodes.push({ key: `w:${w.code}`, loai: 'warehouse', code: w.code, name: w.name, parentKey: `b:${w.branchCode}`, isActive: w.isActive, depth: 0, warehouse: w });
     // Phòng ban riêng của cửa hàng không thành dòng (là ô "Phòng ban" của cửa hàng); chỉ phòng ban chung lên cây.
     for (const d of deps.data ?? []) {
       if (shopDept.has(d.code) || (d.parentCode && shopDept.has(d.parentCode))) continue;
       const o = d.extra?.orgUnitCode;
-      const bc = typeof d.extra?.branchCode === 'string' ? d.extra.branchCode : '';
-      const pk = bc && branchByCode.has(bc) ? pointKey(bc) : o && orgCodes.has(o) ? `o:${o}` : NONE_KEY;
-      nodes.push({ key: `d:${d.code}`, loai: 'department', code: d.code, name: d.name, parentKey: pk, isActive: d.isActive, depth: 0, dept: d });
+      nodes.push({ key: `d:${d.code}`, loai: 'department', code: d.code, name: d.name, parentKey: o && orgCodes.has(o) ? `o:${o}` : NONE_KEY, isActive: d.isActive, depth: 0, dept: d });
     }
     const byKey = new Map(nodes.map((n) => [n.key, n]));
     for (const n of nodes) if (n.parentKey && n.parentKey !== NONE_KEY && !byKey.has(n.parentKey)) n.parentKey = NONE_KEY;
@@ -109,18 +90,9 @@ export function useCoCau() {
     }
     const setDepth = (list: CNode[], d: number) => { for (const n of list) { n.depth = d; setDepth(kids.get(n.key) ?? [], d + 1); } };
     setDepth(roots, 0);
-    // MST hiệu lực: của nút, trống thì lấy theo nút trên (cấp cha tự áp xuống cấp con).
-    const setMst = (list: CNode[], up: { value: string; from: string | null }) => {
-      for (const n of list) {
-        const own = mstOf(n);
-        n.mst = own ? { value: own, from: null } : up;
-        setMst(kids.get(n.key) ?? [], own ? { value: own, from: n.name } : up);
-      }
-    };
-    setMst(roots, { value: '', from: null });
     const pathOf = (n: CNode): CNode[] => { const out: CNode[] = []; const seen = new Set<string>(); for (let x: CNode | undefined = n; x && !seen.has(x.key); x = x.parentKey ? byKey.get(x.parentKey) : undefined) { seen.add(x.key); out.unshift(x); } return out; };
     const under = (key: string): CNode[] => { const out: CNode[] = []; const stack = [...(kids.get(key) ?? [])]; while (stack.length) { const x = stack.pop()!; out.push(x); stack.push(...(kids.get(x.key) ?? [])); } return out; };
-    return { nodes, byKey, kids, roots, pathOf, under, pointKey, allBranches: branches.data ?? [] };
+    return { nodes, byKey, kids, roots, pathOf, under };
   }, [org.data, branches.data, whs.data, deps.data]);
   return {
     ...data, orgTree: org.data, departments: deps.data ?? [],
@@ -138,28 +110,22 @@ export function CoCauToChucPage() {
   const cc = useCoCau();
   const [sel, setSel] = useState<string | null>(null);
   // [2026-11-13 Nguyễn Văn Thủy] kiểu xem: cây, sơ đồ, hoặc danh sách kiểu Excel theo loại (đóng góp)
-  const [view, setView] = useState<'buoc' | 'table' | 'chart' | KieuDs>('buoc');
+  const [view, setView] = useState<'table' | 'chart' | KieuDs>('table');
   const [showOff, setShowOff] = useState(false);
   const listExport = useRef<(() => void) | null>(null);
   /** back: các nút đã đi qua (bấm đúp dòng bên trong) để Quay lại. */
-  const [form, setForm] = useState<{ key: string | null; parentKey: string | null; back?: string[]; copy?: string; loai?: F['loai'] } | null>(null);
+  const [form, setForm] = useState<{ key: string | null; parentKey: string | null; back?: string[]; copy?: string } | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  // [2026-11-20 Nguyễn Văn Thủy] Quay về dữ liệu gốc = xoá trắng cơ cấu để khai lại từ bước 1 (0171) (đóng góp)
   const restore = useMutation({
     mutationFn: async () => {
-      if (!window.confirm('Quay về dữ liệu gốc: XOÁ TRẮNG cơ cấu tổ chức?\n\n- Xoá mọi công ty, chi nhánh các cấp, bộ phận chưa dùng.\n- Xoá cửa hàng, kho chưa có chứng từ.\n- Cửa hàng, kho đã có chứng từ giữ lại, chuyển về "Chưa xếp vào cơ cấu" để xếp lại.\n- Gán vai trò theo chi nhánh / vùng bị thu hồi.\n\nKhông hoàn tác được.')) return null;
-      const password = window.prompt('Nhập mật khẩu để xoá trắng cơ cấu tổ chức:'); // [2026-11-17 Nguyễn Văn Thủy] đỡ bấm nhầm (đóng góp)
+      const info = await api.get<{ nodes: number; assignments: number }>('/api/v1/org-units/defaults');
+      if (!window.confirm(`Quay về dữ liệu gốc cơ cấu tổ chức?\n\nTệp gốc: ${info.nodes} nút, ${info.assignments} cửa hàng gắn nút.`)) return null;
+      const password = window.prompt('Nhập mật khẩu để quay về dữ liệu gốc cơ cấu tổ chức:'); // [2026-11-17 Nguyễn Văn Thủy] đỡ bấm nhầm (đóng góp)
       if (!password) return null;
-      return api.post<{ orgUnits: number; branchesDeleted: number; branchesKept: number; warehousesDeleted: number; departmentsDeleted: number; assignmentsRevoked: number }>('/api/v1/org-units/wipe', { confirm: true, password });
+      return api.post<{ created: number; updated: number; assigned: number }>('/api/v1/org-units/restore-defaults', { confirm: true, password });
     },
-    onSuccess: (r) => {
-      if (!r) return;
-      invalidateOrg(qc);
-      for (const k of [['branches'], ['warehouses'], ['dimensions', 'department']]) void qc.invalidateQueries({ queryKey: k });
-      setView('buoc');
-      setMsg({ ok: true, text: `Đã xoá trắng: ${r.orgUnits} nút, ${r.branchesDeleted} cửa hàng, ${r.warehousesDeleted} kho, ${r.departmentsDeleted} bộ phận${r.assignmentsRevoked ? `, thu hồi ${r.assignmentsRevoked} lần gán vai trò` : ''}. Giữ ${r.branchesKept} cửa hàng đã có chứng từ (ở "Chưa xếp vào cơ cấu"). Bắt đầu lại từ Bước 1.` });
-    },
+    onSuccess: (r) => { if (r) { invalidateOrg(qc); setMsg({ ok: true, text: `Đã quay về dữ liệu gốc: ${r.created + r.updated} nút, gắn ${r.assigned} cửa hàng.` }); } },
     onError: (e) => setMsg({ ok: false, text: errorText(e) }),
   });
 
@@ -169,7 +135,7 @@ export function CoCauToChucPage() {
     <>
       {/* [2026-11-17 kiennt] như các màn danh mục: Quay về dữ liệu gốc ở tiêu đề; thanh nút — kiểu xem bên trái, nút chức năng lề phải (đóng góp) */}
       <PageHeader title="Cơ cấu tổ chức" code="DM16" helpKey="so-do-to-chuc"
-        actions={can('settings:write') && <button className="btn" disabled={restore.isPending} title="Xoá trắng cơ cấu để khai lại từ đầu (cửa hàng, kho đã có chứng từ được giữ lại)" onClick={() => restore.mutate()}><RotateCcw size={16} /> Quay về dữ liệu gốc</button>} />
+        actions={can('settings:write') && <button className="btn" disabled={restore.isPending} title="Đặt lại cây và việc gắn cửa hàng theo tệp gốc" onClick={() => restore.mutate()}><RotateCcw size={16} /> Quay về dữ liệu gốc</button>} />
       <div className="card">
         {/* [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút chức năng bên trái, chọn kiểu xem sang phải; nút Nhân bản (đóng góp) */}
         <div className="catalog-toolbar canh-phai">
@@ -182,17 +148,15 @@ export function CoCauToChucPage() {
           {canWrite && <NhapCoCauMenu />}
           <span className="spacer" />
           <span className="cc-xem">
-            {([['buoc', 'Từng bước'], ['table', 'Cây'], ['chart', 'Sơ đồ'], ['org', 'Cơ cấu'], ['branch', 'Cửa hàng'], ['warehouse', 'Kho'], ['department', 'Bộ phận'], ['all', 'Tất cả']] as const).map(([k, t]) => (
-              <button key={k} className={`btn btn-sm${view === k ? ' btn-primary' : ''}`} title={k === 'buoc' ? 'Khai báo lần lượt: công ty → chi nhánh các cấp → cửa hàng → kho, bộ phận' : k === 'table' || k === 'chart' ? undefined : `Danh sách ${t.toLowerCase()} dạng bảng: lọc từng cột, sắp xếp, xuất Excel`} onClick={() => setView(k)}>{t}</button>
+            {([['table', 'Cây'], ['chart', 'Sơ đồ'], ['org', 'Cơ cấu'], ['branch', 'Cửa hàng'], ['warehouse', 'Kho'], ['department', 'Phòng ban'], ['all', 'Tất cả']] as const).map(([k, t]) => (
+              <button key={k} className={`btn btn-sm${view === k ? ' btn-primary' : ''}`} title={k === 'table' || k === 'chart' ? undefined : `Danh sách ${t.toLowerCase()} dạng bảng: lọc từng cột, sắp xếp, xuất Excel`} onClick={() => setView(k)}>{t}</button>
             ))}
           </span>
         </div>
         {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 12px 8px' }}>{msg.text}</div>}
         <ErrorBox error={cc.error ? errorText(cc.error) : null} />
         <div style={{ padding: '0 12px 12px' }}>
-          {cc.loading ? <Loading /> : view === 'buoc'
-            ? <TungBuoc cc={cc} canWrite={canWrite} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} onAdd={(loai, parentKey) => { setMsg(null); setForm({ key: null, parentKey, loai }); }} onChart={() => setView('chart')} />
-            : view === 'table'
+          {cc.loading ? <Loading /> : view === 'table'
             ? <BangCoCau cc={cc} selected={sel} onSelect={setSel} onOpen={(n) => n.loai !== 'none' && setForm({ key: n.key, parentKey: n.parentKey })} showOff={showOff} setShowOff={setShowOff} />
             : view === 'chart' ? <SoDoCoCau cc={cc} selected={sel} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} />
             : (
@@ -207,7 +171,7 @@ export function CoCauToChucPage() {
             )}
         </div>
       </div>
-      {form && <NutForm key={form.key ?? `new:${form.parentKey}:${form.copy ?? ''}:${form.loai ?? ''}`} cc={cc} nodeKey={form.key} parentKey={form.parentKey} copyKey={form.copy} loai={form.loai} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }}
+      {form && <NutForm key={form.key ?? `new:${form.parentKey}:${form.copy ?? ''}`} cc={cc} nodeKey={form.key} parentKey={form.parentKey} copyKey={form.copy} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }}
         onGo={(key) => { setSel(key); setForm((x) => ({ key, parentKey: null, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] })); }}
         onBack={form.back?.length ? () => { const back = [...form.back!]; const key = back.pop()!; setSel(key); setForm({ key, parentKey: null, back }); } : undefined}
         onAdd={(parentKey) => setForm((x) => ({ key: null, parentKey, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] }))} />}
@@ -215,11 +179,10 @@ export function CoCauToChucPage() {
   );
 }
 
-export const mstOf = (n: CNode) => n.org?.taxId || n.ownBranch?.taxCode || n.branch?.taxCode || (n.warehouse ? n.warehouse.taxId ?? '' : '');
+export const mstOf = (n: CNode) => n.org?.taxId ?? n.branch?.taxCode ?? (n.warehouse ? n.warehouse.taxId ?? '' : '');
 export function ghiChu(n: CNode, cc: CC): string {
-  if (n.org) return [n.ownBranch ? `Có hoạt động (điểm ${n.ownBranch.code})` : '', n.org.statsOnly ? 'Chỉ để thống kê' : '', n.org.note].filter(Boolean).join(' · ');
-  if (n.branch?.statsOnly) return ['Chỉ để thống kê', n.branch.departmentCode ? `Bộ phận ${n.branch.departmentCode}` : ''].filter(Boolean).join(' · ');
-  if (n.branch) return n.branch.departmentCode ? `Bộ phận ${n.branch.departmentCode}` : '';
+  if (n.org) return n.org.note;
+  if (n.branch) return n.branch.departmentCode ? `Phòng ban ${n.branch.departmentCode}` : '';
   if (n.warehouse) { const t = n.warehouse.typeName || n.warehouse.typeCode; return [t, n.warehouse.isDefault ? 'kho mặc định' : ''].filter(Boolean).join(' · '); }
   if (n.dept) return n.dept.note;
   void cc;
@@ -238,7 +201,7 @@ function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc
   const [show, setShow] = useState({ warehouse: true });
   const visible = (n: CNode) => (n.loai !== 'warehouse' || show.warehouse) && (showOff || !off(n));
   const COT: [string, (n: CNode) => string][] = [
-    ['code', (n) => n.code], ['name', (n) => n.name], ['loai', (n) => loaiNhan(n)], ['mst', (n) => n.mst?.value ?? mstOf(n)], ['note', (n) => ghiChu(n, cc)],
+    ['code', (n) => n.code], ['name', (n) => n.name], ['loai', (n) => loaiNhan(n)], ['mst', (n) => mstOf(n)], ['note', (n) => ghiChu(n, cc)],
     ['active', (n) => (n.loai === 'none' ? '' : off(n) ? 'Ngừng' : 'Đang dùng')],
   ];
   const hit = useMemo(() => {
@@ -285,7 +248,7 @@ function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc
           </td>
           <td className="cc-name">{n.name}{kids.length > 0 && !o && <span className="cc-count" title="Số dòng bên trong">{kids.length}</span>}</td>
           <td>{loaiNhan(n)}</td>
-          <td className="mono">{n.mst?.from ? <span className="muted" title={`Theo ${n.mst.from} (cấp trên)`}>{n.mst.value}</span> : n.mst?.value ?? mstOf(n)}</td>
+          <td className="mono">{mstOf(n)}</td>
           <td className="muted">{ghiChu(n, cc)}</td>
           <td style={{ textAlign: 'center' }}>{n.loai !== 'none' && <input type="checkbox" readOnly checked={!off(n)} tabIndex={-1} />}</td>
         </tr>,
@@ -299,7 +262,7 @@ function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc
       <div className="cc-filter">
         <label className="checkbox"><input type="checkbox" checked={show.warehouse} onChange={(e) => setShow((s) => ({ ...s, warehouse: e.target.checked }))} /> Hiện kho</label>
         <label className="checkbox"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện đã ngừng</label>
-        <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set(cc.nodes.filter((n) => n.org).map((n) => n.key)))}>Mở hết các cấp</button>
+        <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set(cc.nodes.filter((n) => n.org).map((n) => n.key)))}>Mở hết cơ cấu</button>
         <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set())}>Thu gọn</button>
         {hit && <button type="button" className="btn btn-sm btn-ghost" onClick={() => { setLoc({}); setPicks({}); }}>Bỏ lọc</button>}
         <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Bấm một dòng: mở / đóng nhánh · bấm đúp: xem / sửa</span>
@@ -307,8 +270,8 @@ function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc
       <div className="table-wrap cc-table">
         <table className="grid">
           <thead><tr>
-            <th style={{ width: 300 }} title="Mã của nút">Mã{pheu('code')}</th><th title="Tên">Tên{pheu('name')}</th><th style={{ width: 130 }} title="Công ty (cấp 0), chi nhánh (cấp tính theo cây), cửa hàng, kho, bộ phận">Loại{pheu('loai')}</th>
-            <th style={{ width: 140 }} title="Mã số thuế: chữ đậm = đặt ở nút; chữ mờ = lấy theo cấp trên">MST{pheu('mst')}</th><th style={{ width: 220 }} title="Có hoạt động, chỉ để thống kê, mô tả; cửa hàng: bộ phận; kho: loại kho">Ghi chú{pheu('note')}</th><th style={{ width: 90 }} title="Đang dùng">Theo dõi{pheu('active')}</th>
+            <th style={{ width: 300 }} title="Mã của nút">Mã{pheu('code')}</th><th title="Tên">Tên{pheu('name')}</th><th style={{ width: 130 }} title="Công ty, cơ cấu (cấp tính theo cây), cửa hàng, kho, phòng ban">Loại{pheu('loai')}</th>
+            <th style={{ width: 140 }} title="Mã số thuế đặt ở nút; trống = theo nút trên">MST{pheu('mst')}</th><th style={{ width: 220 }} title="Mô tả; cửa hàng: phòng ban; kho: loại kho">Ghi chú{pheu('note')}</th><th style={{ width: 90 }} title="Đang dùng">Theo dõi{pheu('active')}</th>
           </tr>
           <tr className="dgrid-filter">
             {COT.map(([k]) => <th key={k}><input size={1} value={loc[k] ?? ''} onChange={(e) => setLoc((x) => ({ ...x, [k]: e.target.value }))} placeholder="🔍" /></th>)}
@@ -378,30 +341,28 @@ export interface F {
   taxId: string; validFrom: string;
   /** cửa hàng */ address: string; phone: string; companyName: string; departmentCode: string;
   /** kho */ typeCode: string; isDefault: boolean;
-  /** công ty / chi nhánh: có điểm hoạt động (kho, chứng từ) — mã điểm, trống = tạo mới cùng mã nút */ active: boolean; pointCode: string;
-  /** chỉ để thống kê: không hiện khi tìm / chọn chi nhánh */ statsOnly: boolean;
 }
 export function formOf(n: CNode | null, parentKey: string | null, cc: CC): F {
-  const base: F = { loai: 'unit', parentKey, code: '', name: '', note: '', isActive: true, taxId: '', validFrom: homNay(), address: '', phone: '', companyName: '', departmentCode: '', typeCode: 'KHH', isDefault: false, active: false, pointCode: '', statsOnly: false };
+  const base: F = { loai: 'unit', parentKey, code: '', name: '', note: '', isActive: true, taxId: '', validFrom: homNay(), address: '', phone: '', companyName: '', departmentCode: '', typeCode: 'KHH', isDefault: false };
   if (!n) {
     const p = parentKey ? cc.byKey.get(parentKey) : null;
     return { ...base, loai: !p ? 'company' : p.loai === 'branch' ? 'warehouse' : 'unit' };
   }
   const f: F = { ...base, loai: n.loai as F['loai'], parentKey: n.parentKey === NONE_KEY ? null : n.parentKey, code: n.code, name: n.name, isActive: n.isActive };
-  if (n.org) return { ...f, note: n.org.note, taxId: n.org.taxId ?? '', active: Boolean(n.ownBranch), pointCode: n.ownBranch?.code ?? '', statsOnly: Boolean(n.org.statsOnly) };
-  if (n.branch) return { ...f, statsOnly: Boolean(n.branch.statsOnly), isActive: n.branch.isActive, note: n.branch.note, taxId: n.branch.taxCode, address: n.branch.address ?? '', phone: n.branch.phone, companyName: n.branch.companyName, departmentCode: n.branch.departmentCode ?? '' };
+  if (n.org) return { ...f, note: n.org.note, taxId: n.org.taxId ?? '' };
+  if (n.branch) return { ...f, isActive: n.branch.isActive, note: n.branch.note, taxId: n.branch.taxCode, address: n.branch.address ?? '', phone: n.branch.phone, companyName: n.branch.companyName, departmentCode: n.branch.departmentCode ?? '' };
   if (n.warehouse) return { ...f, note: n.warehouse.note, address: n.warehouse.address, typeCode: n.warehouse.typeCode || 'KHH', isDefault: n.warehouse.isDefault };
   if (n.dept) return { ...f, note: n.dept.note };
   return f;
 }
 
-function NutForm({ cc, nodeKey, parentKey, copyKey, loai: loaiDat, canWrite, onClose, onSaved, onGo, onAdd, onBack }: { cc: CC; nodeKey: string | null; parentKey: string | null; /** Nhân bản: chép thông tin nút này (mã để trống). */ copyKey?: string; /** Thêm theo bước: loại đặt sẵn. */ loai?: F['loai']; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void; /** Lùi về nút vừa xem. */ onBack?: () => void }) {
+function NutForm({ cc, nodeKey, parentKey, copyKey, canWrite, onClose, onSaved, onGo, onAdd, onBack }: { cc: CC; nodeKey: string | null; parentKey: string | null; /** Nhân bản: chép thông tin nút này (mã để trống). */ copyKey?: string; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void; /** Lùi về nút vừa xem. */ onBack?: () => void }) {
   const qc = useQueryClient();
   const node = nodeKey ? cc.byKey.get(nodeKey) ?? null : null;
   const isNew = !node;
   // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nhân bản: lấy thông tin nút gốc, mã để trống, kho không là kho mặc định (đóng góp)
   const goc = !node && copyKey ? cc.byKey.get(copyKey) ?? null : null;
-  const start = useMemo(() => (goc ? { ...formOf(goc, parentKey, cc), code: '', isDefault: false, active: false, pointCode: '' } : { ...formOf(node, parentKey, cc), ...(!node && loaiDat ? { loai: loaiDat } : {}) }), [nodeKey, copyKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const start = useMemo(() => (goc ? { ...formOf(goc, parentKey, cc), code: '', isDefault: false } : formOf(node, parentKey, cc)), [nodeKey, copyKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [f, setF] = useState<F>(start);
   useEffect(() => setF(start), [start]);
   const set = (p: Partial<F>) => setF((x) => ({ ...x, ...p }));
@@ -409,11 +370,9 @@ function NutForm({ cc, nodeKey, parentKey, copyKey, loai: loaiDat, canWrite, onC
   const needParent = f.loai === 'warehouse';
   const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive || t.code === f.typeCode);
   const [themLoai, setThemLoai] = useState<string | null>(null);
-  // Kho: đặt dưới cửa hàng hoặc công ty / chi nhánh có điểm hoạt động (mã của ô Thuộc = mã điểm). Bộ phận: dưới công ty, chi nhánh, cửa hàng.
-  const parents = useMemo(() => cc.nodes.filter((n) => CHA[f.loai].includes(n.loai) && n.key !== nodeKey && !(nodeKey && cc.pathOf(n).some((x) => x.key === nodeKey)) && (f.loai !== 'warehouse' || coHoatDong(n)))
-    .map((n) => ({ code: f.loai === 'warehouse' && n.ownBranch ? n.ownBranch.code : n.loai === 'branch' && f.loai === 'department' ? `#${n.code}` : n.code, name: `${n.name} (${loaiNhan(n).toLowerCase()})` })), [cc, f.loai, nodeKey]);
-  const keyOf = (code: string) => (!code ? null : needParent ? cc.pointKey(code) : code.startsWith('#') ? `b:${code.slice(1)}` : `o:${code}`);
-  const codeOfKey = (k: string | null) => { const n = k ? cc.byKey.get(k) : null; return !n ? '' : f.loai === 'warehouse' ? (n.ownBranch?.code ?? n.branch?.code ?? '') : n.loai === 'branch' ? `#${n.code}` : n.code; };
+  const parents = useMemo(() => cc.nodes.filter((n) => CHA[f.loai].includes(n.loai) && n.key !== nodeKey && !(nodeKey && cc.pathOf(n).some((x) => x.key === nodeKey)))
+    .map((n) => ({ code: n.code, name: `${n.name}${n.loai === 'unit' ? ` (cơ cấu cấp ${n.depth})` : n.loai === 'company' ? ' (công ty)' : ''}` })), [cc, f.loai, nodeKey]);
+  const keyOf = (code: string) => (code ? `${needParent ? 'b' : 'o'}:${code}` : null);
   const parent = f.parentKey ? cc.byKey.get(f.parentKey) : null;
   const parentOk = !f.parentKey || CHA[f.loai].includes(parent?.loai ?? 'none');
   const changedPlace = !isNew && (f.parentKey !== start.parentKey || ((f.loai === 'company' || f.loai === 'unit') && f.taxId !== start.taxId));
@@ -434,18 +393,11 @@ function NutForm({ cc, nodeKey, parentKey, copyKey, loai: loaiDat, canWrite, onC
   const inside = node ? cc.under(node.key).filter((x) => !off(x)) : [];
   const insideText = (['unit', 'company', 'branch', 'warehouse', 'department'] as Loai[]).map((l) => [l, inside.filter((x) => x.loai === l).length] as const).filter(([, c]) => c).map(([l, c]) => `${c} ${LOAI_TEN[l].toLowerCase()}`).join(' · ');
   const title = `${isNew ? 'Thêm' : ''} ${isNew ? LOAI_TEN[f.loai].toLowerCase() : LOAI_TEN[f.loai]}${node ? ` ${node.code}` : ''}`.trim();
-  const ok = f.name.trim() && f.code.trim() && parentOk && !taxBad && (!needParent || (parent && coHoatDong(parent)));
-  const laNut = f.loai === 'company' || f.loai === 'unit';
-  /** Chi nhánh làm được điểm hoạt động: chưa là điểm của nút khác (cửa hàng bên dưới nút này lên trước). */
-  const diemCo = useMemo(() => {
-    const taken = new Set(cc.nodes.filter((n) => n.ownBranch && n.key !== nodeKey).map((n) => n.ownBranch!.code));
-    const mine = new Set(node ? cc.under(node.key).filter((x) => x.branch).map((x) => x.code) : []);
-    return cc.allBranches.filter((b) => !taken.has(b.code)).sort((a, b) => Number(mine.has(b.code)) * -1 + Number(mine.has(a.code)) || a.code.localeCompare(b.code)).map((b) => ({ code: b.code, name: `${b.name}${mine.has(b.code) ? ' (đang thuộc nút này)' : ''}` }));
-  }, [cc, nodeKey, node]);
+  const ok = f.name.trim() && f.code.trim() && parentOk && !taxBad && (!needParent || parent?.branch);
   return (
     <Modal wide viewAgain={viewAgain} viewFirst={!isNew} title={title.charAt(0).toUpperCase() + title.slice(1)} onClose={onClose} helpKey="so-do-to-chuc"
       footer={<>{onBack && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Lùi về nút vừa xem" onClick={onBack}><ArrowLeft size={14} /> Quay lại</button>}{canWrite && <button className="btn btn-primary" disabled={!ok || save.isPending} onClick={() => save.mutate()}>Ghi</button>}<button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Loại (*)" full tip="Công ty (cấp 0): đơn vị pháp lý, có MST. Chi nhánh: cấp quản lý bên dưới (miền, chi nhánh mua hàng, tỉnh…), cấp tính theo cây. Cửa hàng: điểm bán. Kho: thuộc cửa hàng hoặc công ty / chi nhánh có hoạt động. Bộ phận: phòng ban, tổ, nhóm…">
+      <Field label="Loại (*)" full tip="Công ty: đơn vị pháp lý có MST. Cơ cấu: cấp quản lý (miền, chi nhánh, tỉnh…). Cửa hàng: điểm bán / chi nhánh hạch toán. Kho: thuộc một cửa hàng. Phòng ban: phòng ban chung">
         <div className="cc-loai-pick">
           {(['company', 'unit', 'branch', 'warehouse', 'department'] as const).map((l) => (
             <label key={l} className={`cc-loai-opt${f.loai === l ? ' on' : ''}${!isNew && f.loai !== l && !((l === 'company' || l === 'unit') && (f.loai === 'company' || f.loai === 'unit')) ? ' dis' : ''}`}>
@@ -460,8 +412,8 @@ function NutForm({ cc, nodeKey, parentKey, copyKey, loai: loaiDat, canWrite, onC
           ))}
         </div>
       </Field>
-      <Field label={needParent ? 'Thuộc (*)' : 'Thuộc'} full tip={needParent ? 'Kho nằm ở cửa hàng, hoặc công ty / chi nhánh đã tích Có hoạt động' : 'Cấp trên trên cây. Trống = công ty riêng (gốc)'}>
-        <ListPicker items={parents} value={codeOfKey(f.parentKey)} onChange={(c) => set({ parentKey: keyOf(c) })} placeholder={needParent ? 'Chọn nơi đặt kho' : 'Không (gốc riêng)'} />
+      <Field label={needParent ? 'Thuộc cửa hàng (*)' : 'Thuộc'} full tip={needParent ? 'Kho nằm trong cửa hàng nào' : 'Nút cha trên cây. Trống = gốc riêng (công ty cha độc lập)'}>
+        <ListPicker items={parents} value={parent?.code ?? ''} onChange={(c) => set({ parentKey: keyOf(c) })} placeholder={needParent ? 'Chọn cửa hàng' : 'Không (gốc riêng)'} />
         {!parentOk && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>{LOAI_TEN[f.loai]} không đặt dưới {parent ? LOAI_TEN[parent.loai].toLowerCase() : 'nút này'} — chọn lại Thuộc</div>}
       </Field>
       <Field label={f.loai === 'warehouse' ? 'Mã kho (*)' : 'Mã (*)'} tip={f.loai === 'branch' ? 'Khớp mã cửa hàng của hệ thống bán hàng. Đổi mã (lên Plus / Premium, đóng _OFF): chứng từ, sổ sách, kho giữ nguyên' : undefined}>
@@ -469,19 +421,6 @@ function NutForm({ cc, nodeKey, parentKey, copyKey, loai: loaiDat, canWrite, onC
       </Field>
       {txt('name', 'Tên (*)')}
 
-      {(laNut || f.loai === 'branch') && (
-        <Field label=" " full>
-          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-            {laNut && <label className="checkbox"><input type="checkbox" checked={f.active} onChange={(e) => set({ active: e.target.checked })} /> Có hoạt động (có kho, ghi chứng từ)<Hoi text="Tích khi cấp này tự mua hàng, có kho, có kế toán… Hệ thống gắn một điểm hoạt động (chi nhánh ghi sổ) cho cấp này; kho và chứng từ ghi theo điểm đó. Không tích = cấp chỉ để gom các cấp dưới." /></label>}
-            <label className="checkbox"><input type="checkbox" checked={f.statsOnly} onChange={(e) => set({ statsOnly: e.target.checked })} /> Chỉ để thống kê<Hoi text="Không hiện ở ô tìm / chọn chi nhánh khi lập chứng từ; vẫn dùng để gom báo cáo." /></label>
-          </div>
-        </Field>
-      )}
-      {laNut && f.active && (
-        <Field label="Điểm hoạt động" full tip="Chi nhánh ghi sổ của cấp này (vd kho tổng 08000 của CN Phú Thọ). Để trống = tạo mới cùng mã, cùng tên với cấp này">
-          <ListPicker items={diemCo} value={f.pointCode} onChange={(c) => set({ pointCode: c })} placeholder={`Tạo mới cùng mã ${f.code || '…'}`} />
-        </Field>
-      )}
       {(f.loai === 'company' || f.loai === 'unit' || f.loai === 'branch') && (
         // [2026-11-13 Nguyễn Văn Thủy] ô MST có tra cứu như form nhà cung cấp: Lấy thông tin → hiện tên, địa chỉ, tình trạng theo Cục Thuế, điền sẵn, sửa lại được (đóng góp)
         <>
@@ -504,7 +443,7 @@ function NutForm({ cc, nodeKey, parentKey, copyKey, loai: loaiDat, canWrite, onC
       {f.loai === 'branch' && (
         <>
           {!isNew && (
-            <Field label="Bộ phận" tip="Chứng từ của cửa hàng tự mang bộ phận này. Cửa hàng mới tự có bộ phận riêng (BH + số mã)">
+            <Field label="Phòng ban" tip="Chứng từ của cửa hàng tự mang phòng ban này. Cửa hàng mới tự có phòng ban riêng (BH + số mã)">
               <ListPicker value={f.departmentCode} onChange={(c) => set({ departmentCode: c })} items={cc.departments.filter((d) => d.isActive || d.code === f.departmentCode).map((d) => ({ code: d.code, name: d.name }))} />
             </Field>
           )}
@@ -524,7 +463,6 @@ function NutForm({ cc, nodeKey, parentKey, copyKey, loai: loaiDat, canWrite, onC
           {txt('address', 'Địa chỉ', { full: true })}
         </>
       )}
-      {laNut && !isNew && !f.taxId && parent?.mst?.value && <div className="muted full" style={{ fontSize: 12.5, marginTop: -4 }}>MST để trống: dùng {parent.mst.value} theo {parent.mst.from ?? parent.name}.</div>}
       {txt('note', f.loai === 'company' || f.loai === 'unit' ? 'Mô tả' : 'Ghi chú', { full: true })}
       {!isNew && <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isActive} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>}
       {node && node.loai !== 'department' && <BenTrong cc={cc} node={node} text={insideText} onGo={onGo} onAdd={canWrite ? () => onAdd(node.key) : undefined} />}
@@ -544,24 +482,13 @@ export async function luuNut(cc: CC, f: F, node: CNode | null, start: F | null, 
   const code = f.code.trim(), name = f.name.trim();
   const moved = !isNew && f.parentKey !== (start?.parentKey ?? null);
   if (f.loai === 'company' || f.loai === 'unit') {
-    const body = { kind: f.loai, name, note: f.note, taxId: f.taxId.trim(), validFrom, statsOnly: f.statsOnly };
-    const me = isNew ? code : node.code;
+    const body = { kind: f.loai, name, note: f.note, taxId: f.taxId.trim(), validFrom };
     if (isNew) await api.post('/api/v1/org-units', { ...body, code, parentCode: orgOf(f.parentKey) });
     else await api.patch(`/api/v1/org-units/${encodeURIComponent(node.code)}`, { ...body, isActive: f.isActive, ...(moved ? { parentCode: orgOf(f.parentKey) } : {}) });
-    // [2026-11-20 Nguyễn Văn Thủy] điểm hoạt động: chọn chi nhánh có sẵn, hoặc tạo mới cùng mã nút; bỏ tích thì gỡ (0171) (đóng góp)
-    const cur = node?.ownBranch?.code ?? '';
-    if (f.active) {
-      const pc = f.pointCode.trim() || me;
-      if (!cc.allBranches.some((b) => b.code === pc)) await api.post('/api/v1/branches', { code: pc, name, taxCode: '' });
-      if (pc !== cur) {
-        await api.patch(`/api/v1/branches/${encodeURIComponent(pc)}`, { orgUnitCode: me });
-        await api.patch(`/api/v1/org-units/${encodeURIComponent(me)}`, { branchCode: pc });
-      }
-    } else if (cur) await api.patch(`/api/v1/org-units/${encodeURIComponent(me)}`, { branchCode: null });
-    return `o:${me}`;
+    return `o:${isNew ? code : node.code}`;
   }
   if (f.loai === 'branch') {
-    const body = { name, note: f.note, taxCode: f.taxId.trim(), address: f.address, phone: f.phone, companyName: f.companyName, statsOnly: f.statsOnly };
+    const body = { name, note: f.note, taxCode: f.taxId.trim(), address: f.address, phone: f.phone, companyName: f.companyName };
     if (isNew) {
       await api.post('/api/v1/branches', { ...body, code });
       const extra = { ...(f.parentKey ? { orgUnitCode: orgOf(f.parentKey) } : {}), ...(f.departmentCode ? { departmentCode: f.departmentCode } : {}), ...(f.isActive ? {} : { isActive: false }) };
@@ -576,15 +503,13 @@ export async function luuNut(cc: CC, f: F, node: CNode | null, start: F | null, 
     return `b:${code || node.code}`;
   }
   if (f.loai === 'warehouse') {
-    const pn = f.parentKey ? cc.byKey.get(f.parentKey) : null;
-    const branchCode = pn ? (pn.ownBranch?.code ?? pn.branch?.code ?? '') : '';
+    const branchCode = f.parentKey ? (cc.byKey.get(f.parentKey)?.branch?.code ?? f.parentKey.replace(/^b:/, '')) : '';
     const body = { branchCode, name, note: f.note, address: f.address, isActive: f.isActive, isDefault: f.isDefault, typeCode: f.typeCode || 'KHH' };
     if (isNew) await api.post('/api/v1/warehouses', { ...body, code });
     else await api.patch(`/api/v1/warehouses/${encodeURIComponent(node.code)}`, body);
     return `w:${isNew ? code : node.code}`;
   }
-  const pd = f.parentKey ? cc.byKey.get(f.parentKey) : null;
-  const extra = { ...(node?.dept?.extra ?? {}), orgUnitCode: pd?.org?.code ?? '', branchCode: pd?.branch?.code ?? '' };
+  const extra = { ...(node?.dept?.extra ?? {}), orgUnitCode: orgOf(f.parentKey) ?? '' };
   await api.put(`/api/v1/dimensions/department/${encodeURIComponent(isNew ? code : node.code)}`, { name, parentCode: node?.dept?.parentCode || undefined, note: f.note, isActive: f.isActive, extra });
   return `d:${isNew ? code : node.code}`;
 }
@@ -679,112 +604,5 @@ function NhapCoCauMenu() {
         </div>
       )}
     </span>
-  );
-}
-
-/* ------------------------------------------------------------------ khai báo từng bước */
-
-// [2026-11-20 Nguyễn Văn Thủy] khai báo từng bước: công ty → chi nhánh cấp 1, 2, 3… → cửa hàng → kho, bộ phận; mỗi bước có gợi ý (0171) (đóng góp)
-const GOI_Y_CAP: Record<number, { ten: string; vd: string; text: string }> = {
-  0: { ten: 'Công ty', vd: 'Công ty CP Đầu tư Thế Giới Sữa', text: 'Đơn vị pháp lý: mã, tên, MST. Có nhiều công ty thì thêm từng công ty. Công ty tự mua hàng, có kho, kế toán thì tích "Có hoạt động", rồi khai kho, bộ phận ở bước Kho & bộ phận.' },
-  1: { ten: 'Chi nhánh cấp 1', vd: 'Miền Bắc, Miền Trung, Miền Nam', text: 'Thường là vùng / miền để gom số liệu. Không dùng thì bỏ qua bước này, khai thẳng cấp sau vào công ty. Cấp chỉ để gom thì tích "Chỉ để thống kê".' },
-  2: { ten: 'Chi nhánh cấp 2', vd: 'CN Hà Nội, CN Phú Thọ', text: 'Thường là chi nhánh mua hàng: có MST riêng, kho tổng, phòng kế toán → tích "Có hoạt động". MST để trống thì tự dùng MST của cấp trên.' },
-  3: { ten: 'Chi nhánh cấp 3', vd: 'Hà Nội, Hưng Yên, Phú Thọ', text: 'Thường là tỉnh / khu vực, gom các cửa hàng. Tỉnh có kho riêng thì tích "Có hoạt động".' },
-};
-const goiY = (d: number) => GOI_Y_CAP[d] ?? { ten: `Chi nhánh cấp ${d}`, vd: '', text: 'Cấp sâu hơn khi cần chia nhỏ thêm. Cấp nào cũng có thể có kho, bộ phận, MST riêng.' };
-
-function TungBuoc({ cc, canWrite, onOpen, onAdd, onChart }: { cc: CC; canWrite: boolean; onOpen: (n: CNode) => void; onAdd: (loai: F['loai'], parentKey: string | null) => void; onChart: () => void }) {
-  const org = cc.nodes.filter((n) => n.org && !off(n));
-  const maxDepth = org.reduce((m, n) => Math.max(m, n.depth), 0);
-  const buocCap = Array.from({ length: maxDepth + 2 }, (_, d) => d); // thêm một cấp trống để khai cấp mới
-  const steps: { key: string; nhan: string }[] = [...buocCap.map((d) => ({ key: `cap${d}`, nhan: goiY(d).ten })), { key: 'shop', nhan: 'Cửa hàng' }, { key: 'kho', nhan: 'Kho & bộ phận' }];
-  const [buoc, setBuoc] = useState(steps[0]!.key);
-  const idx = Math.max(0, steps.findIndex((s) => s.key === buoc));
-  const cur = steps[idx]!;
-  const dem = (k: string) => (k === 'shop' ? cc.nodes.filter((n) => n.loai === 'branch' && !off(n)).length : k === 'kho' ? cc.nodes.filter((n) => (n.loai === 'warehouse' || n.loai === 'department') && !off(n)).length : org.filter((n) => `cap${n.depth}` === k).length);
-  const cha = (n: CNode) => (n.parentKey && n.parentKey !== NONE_KEY ? cc.byKey.get(n.parentKey) ?? null : null);
-  const bang = (rows: CNode[], cot: 'cap' | 'shop' | 'kho') => (
-    <div className="table-wrap" style={{ maxHeight: 460 }}>
-      <table className="grid">
-        <thead><tr>
-          <th style={{ width: 130 }} title="Mã">Mã</th><th title="Tên">Tên</th><th style={{ width: 220 }} title="Cấp trên trực tiếp">Thuộc</th>
-          {cot === 'kho' && <th style={{ width: 110 }} title="Kho hay bộ phận">Loại</th>}
-          <th style={{ width: 130 }} title="Mã số thuế; chữ mờ = lấy theo cấp trên">MST</th>
-          {cot === 'cap' && <th style={{ width: 150 }} title="Có hoạt động = có kho, ghi chứng từ (mã điểm hoạt động)">Có hoạt động</th>}
-          {cot !== 'kho' && <th style={{ width: 90 }} title="Không hiện khi tìm / chọn chi nhánh lập chứng từ">Chỉ thống kê</th>}
-          {cot !== 'kho' && <th style={{ width: 140 }} title="Số mục ngay bên dưới">Bên dưới</th>}
-        </tr></thead>
-        <tbody>
-          {rows.map((n) => {
-            const p = cha(n);
-            const kids = (cc.kids.get(n.key) ?? []).filter((x) => !off(x));
-            const kt = (['unit', 'branch', 'warehouse', 'department'] as Loai[]).map((l) => [l, kids.filter((x) => x.loai === l).length] as const).filter(([, c]) => c).map(([l, c]) => `${c} ${LOAI_TEN[l].toLowerCase()}`).join(', ');
-            return (
-              <tr key={n.key} className="cc-tr" title="Bấm đúp để xem / sửa" onDoubleClick={() => onOpen(n)}>
-                <td className="mono">{n.code}</td><td>{n.name}</td><td className="muted">{p ? p.name : n.org && !n.parentKey ? '— (gốc)' : 'Chưa xếp'}</td>
-                {cot === 'kho' && <td>{LOAI_TEN[n.loai]}</td>}
-                <td className="mono">{n.mst?.from ? <span className="muted" title={`Theo ${n.mst.from}`}>{n.mst.value}</span> : n.mst?.value}</td>
-                {cot === 'cap' && <td>{n.ownBranch ? <span title="Điểm hoạt động">✓ {n.ownBranch.code}</span> : <span className="muted">—</span>}</td>}
-                {cot !== 'kho' && <td style={{ textAlign: 'center' }}>{thongKe(n) ? '✓' : ''}</td>}
-                {cot !== 'kho' && <td className="muted" style={{ fontSize: 12 }}>{kt}</td>}
-              </tr>
-            );
-          })}
-          {!rows.length && <tr><td colSpan={8} className="muted" style={{ textAlign: 'center', padding: 14 }}>Chưa có — bấm nút Thêm ở trên{cur.key.startsWith('cap') && cur.key !== 'cap0' ? ', hoặc bỏ qua bước này nếu không dùng cấp này' : ''}.</td></tr>}
-        </tbody>
-      </table>
-    </div>
-  );
-  let body: ReactNode;
-  if (cur.key.startsWith('cap')) {
-    const d = Number(cur.key.slice(3));
-    const g = goiY(d);
-    const rows = org.filter((n) => n.depth === d);
-    const chaCo = org.filter((n) => n.depth === d - 1);
-    body = (
-      <>
-        <div className="alert alert-info" style={{ marginBottom: 8 }}><b>{g.ten}{g.vd ? ` — ví dụ: ${g.vd}` : ''}.</b> {g.text}</div>
-        {canWrite && (
-          <div className="row" style={{ gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-            {d === 0 ? <button className="btn btn-sm btn-primary" onClick={() => onAdd('company', null)}><Plus size={14} /> Thêm công ty</button>
-              : chaCo.length ? chaCo.map((c) => <button key={c.key} className="btn btn-sm" title={`Thêm ${g.ten.toLowerCase()} dưới ${c.name}`} onClick={() => onAdd('unit', c.key)}><Plus size={14} /> Thêm vào {c.name}</button>)
-              : <span className="muted">Khai cấp trên trước (bước {d}).</span>}
-          </div>
-        )}
-        {bang(rows, 'cap')}
-      </>
-    );
-  } else if (cur.key === 'shop') {
-    const rows = cc.nodes.filter((n) => n.loai === 'branch' && !off(n));
-    body = (
-      <>
-        <div className="alert alert-info" style={{ marginBottom: 8 }}><b>Cửa hàng — điểm bán.</b> Mã khớp hệ thống bán hàng; đặt dưới cấp gần nhất (thường là tỉnh). Cửa hàng mới tự có bộ phận riêng; kho của cửa hàng khai ở bước sau. Cửa hàng ở "Chưa xếp" là cửa hàng đã có chứng từ, bấm đúp để xếp lại vào cây.</div>
-        {canWrite && <div className="row" style={{ gap: 6, marginBottom: 8 }}><button className="btn btn-sm btn-primary" onClick={() => onAdd('branch', null)}><Plus size={14} /> Thêm cửa hàng</button><span className="muted" style={{ fontSize: 12 }}>Chọn "Thuộc" trong hộp thoại.</span></div>}
-        {bang(rows, 'shop')}
-      </>
-    );
-  } else {
-    const rows = cc.nodes.filter((n) => (n.loai === 'warehouse' || n.loai === 'department') && !off(n));
-    body = (
-      <>
-        <div className="alert alert-info" style={{ marginBottom: 8 }}><b>Kho & bộ phận.</b> Kho đặt ở cửa hàng, hoặc công ty / chi nhánh đã tích "Có hoạt động". Bộ phận (phòng ban, tổ, nhóm…) đặt ở cấp nào cũng được.</div>
-        {canWrite && <div className="row" style={{ gap: 6, marginBottom: 8 }}><button className="btn btn-sm btn-primary" onClick={() => onAdd('warehouse', null)}><Plus size={14} /> Thêm kho</button><button className="btn btn-sm" onClick={() => onAdd('department', null)}><Plus size={14} /> Thêm bộ phận</button></div>}
-        {bang(rows, 'kho')}
-      </>
-    );
-  }
-  return (
-    <div className="cc-buoc">
-      <div className="tabs" style={{ flexWrap: 'wrap', marginBottom: 8 }}>
-        {steps.map((s, i) => <button key={s.key} className={`tab ${s.key === cur.key ? 'active' : ''}`} onClick={() => setBuoc(s.key)}>Bước {i + 1}. {s.nhan} <span className="muted">({dem(s.key)})</span></button>)}
-        <button className="tab" title="Xem toàn bộ cây dạng sơ đồ" onClick={onChart}>Xem sơ đồ</button>
-      </div>
-      {body}
-      <div className="row" style={{ gap: 6, marginTop: 8 }}>
-        <button className="btn btn-sm" disabled={idx === 0} onClick={() => setBuoc(steps[idx - 1]!.key)}>← Bước trước</button>
-        <button className="btn btn-sm" disabled={idx === steps.length - 1} onClick={() => setBuoc(steps[idx + 1]!.key)}>Bước sau →</button>
-        <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Bấm đúp một dòng để xem / sửa · cấp nào không dùng thì bỏ qua</span>
-      </div>
-    </div>
   );
 }

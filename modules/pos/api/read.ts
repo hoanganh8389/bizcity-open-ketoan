@@ -63,7 +63,8 @@ export async function pricesFor(tx: Tx, branch: string, skus: readonly string[])
 export async function partnerByCode(tx: Tx, code: string): Promise<{ code: string; name: string; phone: string } | null> {
   const r = (await sql<{ code: string; name: string; phone: string | null; mobile: string | null }>`
     SELECT code, name, phone, mobile FROM bizcity_read.partners WHERE code = ${code} LIMIT 1`.execute(tx)).rows[0];
-  return r ? { code: r.code, name: r.name, phone: r.mobile ?? r.phone ?? '' } : null;
+  // [2026-11-19 Võ Hoàng] NGHIEM-THU — mobile rỗng ('', không NULL) thì lấy phone (đóng góp)
+  return r ? { code: r.code, name: r.name, phone: r.mobile || r.phone || '' } : null;
 }
 
 /** Ngày làm việc theo giờ Việt Nam (UTC+7). */

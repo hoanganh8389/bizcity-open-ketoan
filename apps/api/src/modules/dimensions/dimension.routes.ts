@@ -69,6 +69,8 @@ export const dimensionWriteActions: AnyActionDef[] = [
         if (!parent) throw Errors.validation(`${DIMENSION_LABELS[kind]} cha "${b.parentCode}" không có trong danh mục`);
       }
       const cur = await trx.selectFrom('dimensions').select(['extra', 'name', 'note', 'is_active', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', code).executeTakeFirst();
+      // [2026-11-20 03:30 PM khanhtd] MH29 — Danh mục hợp đồng: số hợp đồng MỚI không được có dấu cách (như MH29); hợp đồng đã có vẫn sửa được
+      if (!cur && kind === 'contract' && /\s/.test(code)) throw Errors.validation('Số hợp đồng không được có dấu cách (dùng - hoặc /)');
       const { partnerName: _p, createdBy: _c, ...rest } = b.extra as Record<string, unknown>;
       const createdBy = (cur?.extra as { createdBy?: string } | undefined)?.createdBy ?? (cur ? undefined : auth.actorName);
       const values = { name: b.name, parent_code: b.parentCode || null, note: b.note, is_active: b.isActive, extra: JSON.stringify(createdBy ? { ...rest, createdBy } : rest) };

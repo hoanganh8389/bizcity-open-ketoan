@@ -12,12 +12,6 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
-### DM16 Cơ cấu tổ chức linh hoạt: khai báo từng bước, có hoạt động, chỉ để thống kê, xoá trắng (0171) <!-- [2026-11-20 Nguyễn Văn Thủy] (đóng góp) -->
-- **Thêm** màn *Từng bước* (mặc định): Công ty → Chi nhánh cấp 1, 2, 3… → Cửa hàng → Kho & bộ phận, mỗi bước có gợi ý; cấp nào không dùng thì bỏ qua.
-- **Thêm** `org_units.branch_id` (điểm hoạt động: công ty / chi nhánh cấp nào cũng có kho, ghi chứng từ) và `stats_only` ở `org_units`, `branches` (không hiện ở ô chọn chi nhánh — `useBranches` lọc).
-- **Đổi** nút *Quay về dữ liệu gốc* thành xoá trắng (`POST /api/v1/org-units/wipe`, hàm `bizcity_co_cau_wipe`): giữ cửa hàng / kho đã có chứng từ (gỡ khỏi cây), thu hồi gán vai trò theo vùng.
-- **Đổi** tên hiển thị: Cơ cấu cấp N → Chi nhánh cấp N, Phòng ban → Bộ phận; MST cấp trên tự áp xuống cấp con (hiện chữ mờ).
-
 ### Hoá đơn điện tử tại quầy (người mua) + báo cáo khách hàng (phiếu NT-BH-034) <!-- [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034 (đóng góp) -->
 
 - **Thêm:** báo cáo khách hàng BH23 (module `pos`, màn `/app/pos/bao-cao-khach`, quyền `pos:report`): `GET /api/v1/m/pos/reports/customers` (`pos.report.customers` — khách × kỳ × cửa hàng: số đơn, tiền hàng, giảm giá, thực trả, trả hàng, voucher, điểm tích / đổi, quà số lượng + giá trị theo giá bán, cửa hàng đã mua; lọc `branchCodes`, `channels`, `groupBy=month`; tôn trọng phạm vi chi nhánh người xem) và `GET /api/v1/m/pos/reports/customer-detail` (`pos.report.customer-detail` — từng lần mua / trả). Gộp đơn máy bán + phiếu bán BH10; số liệu module khác qua action đọc mới `phieu-ban.customer.docs` (`GET /api/v1/m/phieu-ban/reports/customer-docs`), `voucher.usage.list` (`GET /api/v1/m/voucher/reports/usage`), `loyalty.order.points` (`GET /api/v1/m/loyalty/reports/order-points`). Xuất Excel từ bảng. Hướng dẫn `docs/huong-dan/pos-bao-cao-khach.md`.

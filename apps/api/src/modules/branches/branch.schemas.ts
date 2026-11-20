@@ -15,8 +15,6 @@ export const branchCreateSchema = z.object({
   taxCode: z.string().trim().max(500).optional(),
   phone: z.string().trim().max(500).optional(),
   fax: z.string().trim().max(500).optional(),
-  /** [2026-11-20 Nguyễn Văn Thủy] chỉ để thống kê: không hiện khi tìm / chọn chi nhánh lập chứng từ (0171) (đóng góp) */
-  statsOnly: z.boolean().optional(),
 });
 export type BranchCreate = z.infer<typeof branchCreateSchema>;
 
@@ -47,6 +45,4 @@ export interface BranchDto {
   /** Nút sơ đồ tổ chức (0062) và đường dẫn (Công ty\BAC\PT\PTO); null / '' = chưa gắn. */
   orgUnitCode: string | null;
   orgPath: string;
-  /** Chỉ để thống kê (0171). */
-  statsOnly: boolean;
 }

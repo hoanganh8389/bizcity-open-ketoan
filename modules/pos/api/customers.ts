@@ -23,7 +23,8 @@ async function withOrders(tx: Tx, rows: Row[]): Promise<Customer[]> {
      WHERE status = 'completed' AND customer_code IN (${sql.join(rows.map((r) => r.code))}) GROUP BY customer_code`.execute(tx)).rows
     .map((r) => [r.customer_code, r]));
   return rows.map((r) => ({
-    id: r.code, name: r.name, phone: r.mobile ?? r.phone ?? '', address: r.address ?? '', taxCode: r.tax_code ?? '', email: r.email ?? '',
+    // [2026-11-19 Võ Hoàng] NGHIEM-THU — mobile rỗng ('', không NULL) thì lấy phone (đóng góp)
+    id: r.code, name: r.name, phone: r.mobile || r.phone || '', address: r.address ?? '', taxCode: r.tax_code ?? '', email: r.email ?? '',
     orderCount: Number(stats.get(r.code)?.n ?? 0), lastOrderAt: stats.get(r.code)?.last ?? null,
   }));
 }

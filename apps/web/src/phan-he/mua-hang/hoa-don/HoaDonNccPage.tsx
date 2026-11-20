@@ -93,7 +93,7 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
         <div className="filters">
           <span style={{ fontSize: 13 }}>Ngày HĐ từ</span><input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <span style={{ fontSize: 13 }}>đến</span><input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          {!embedded && <div style={{ width: 240 }}><PartnerPicker value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>}
+          {!embedded && <div style={{ width: 240 }}><PartnerPicker kind="supplier" value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>}
           <button className="btn btn-sm btn-primary" onClick={() => setOpen({})}>+ Thêm hoá đơn</button>
           <button className="btn btn-sm" title="Chọn hoá đơn điện tử XML, kèm PDF / ZIP cùng tên. Phần mềm tự đọc và tìm NCC theo mã số thuế" onClick={() => setXmlOpen(true)}>Nhập XML</button>
           <button className="btn btn-sm" onClick={() => setImportMode('excel')}>Nhập Excel</button>
