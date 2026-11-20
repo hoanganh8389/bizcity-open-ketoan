@@ -138,3 +138,205 @@ WITH goc AS (
 )
 UPDATE dimensions d SET branch_id = goc.id FROM goc
  WHERE d.tenant_id = goc.tenant_id AND d.kind = 'department' AND d.branch_id IS NULL;
+
+-- 7. Người tạo / ngày tạo / người sửa / ngày sửa cho đơn vị, phân kho, bộ phận (bảng hiện, mặc định ẩn cột).
+--    Người lấy từ ketoan.actor_name của giao dịch (API đặt trước khi ghi); trống thì để trống.
+ALTER TABLE branches    ADD COLUMN IF NOT EXISTS created_by text NOT NULL DEFAULT '',
+                        ADD COLUMN IF NOT EXISTS updated_by text NOT NULL DEFAULT '',
+                        ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+ALTER TABLE warehouses  ADD COLUMN IF NOT EXISTS created_by text NOT NULL DEFAULT '',
+                        ADD COLUMN IF NOT EXISTS updated_by text NOT NULL DEFAULT '';
+ALTER TABLE dimensions  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now(),
+                        ADD COLUMN IF NOT EXISTS created_by text NOT NULL DEFAULT '',
+                        ADD COLUMN IF NOT EXISTS updated_by text NOT NULL DEFAULT '',
+                        ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
+CREATE OR REPLACE FUNCTION bizcity_stamp_actor() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE v_by text := COALESCE(NULLIF(current_setting('ketoan.actor_name', true), ''), '');
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF COALESCE(NEW.created_by, '') = '' THEN NEW.created_by := v_by; END IF;
+  ELSE
+    NEW.created_by := OLD.created_by;
+    IF NEW IS DISTINCT FROM OLD THEN
+      NEW.updated_at := now();
+      IF v_by <> '' THEN NEW.updated_by := v_by; END IF;
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+
+DROP TRIGGER IF EXISTS branches_stamp_actor ON branches;
+CREATE TRIGGER branches_stamp_actor BEFORE INSERT OR UPDATE ON branches FOR EACH ROW EXECUTE FUNCTION bizcity_stamp_actor();
+DROP TRIGGER IF EXISTS warehouses_stamp_actor ON warehouses;
+CREATE TRIGGER warehouses_stamp_actor BEFORE INSERT OR UPDATE ON warehouses FOR EACH ROW EXECUTE FUNCTION bizcity_stamp_actor();
+DROP TRIGGER IF EXISTS dimensions_stamp_actor ON dimensions;
+CREATE TRIGGER dimensions_stamp_actor BEFORE INSERT OR UPDATE ON dimensions FOR EACH ROW EXECUTE FUNCTION bizcity_stamp_actor();
+
+-- 8a. Đơn vị nào chưa có bộ phận riêng thì tạo (mỗi đơn vị luôn có một bộ phận).
+DO $$
+DECLARE b record;
+BEGIN
+  FOR b IN SELECT * FROM branches x WHERE COALESCE(x.department_code, '') = ''
+              OR NOT EXISTS (SELECT 1 FROM dimensions d WHERE d.branch_id = x.id AND d.kind = 'department') LOOP
+    UPDATE branches SET department_code = bizcity_ensure_branch_department(b.tenant_id, b.id, b.code, b.name, COALESCE(b.level, '')) WHERE id = b.id;
+  END LOOP;
+END $$;
+
+-- 8. Mọi bảng chứng từ mang đủ ba định danh nhỏ nhất: đơn vị cn_ (branch_uid), phân kho kho_ (warehouse_uid), bộ phận pb_ (department_uid).
+--    Không chọn bộ phận → bộ phận mặc định của đơn vị; không chọn phân kho → phân kho mặc định của đơn vị.
+--    Bảng chuyển kho có hai đầu: from_/to_branch_uid + from_/to_warehouse_uid, bộ phận theo đầu xuất.
+CREATE OR REPLACE FUNCTION bizcity_resolve_unit_uids(p_tenant bigint, p_branch_id bigint, p_branch_code text, p_dept text, p_wh text,
+                                                     OUT branch_uid text, OUT warehouse_uid text, OUT department_uid text)
+LANGUAGE plpgsql STABLE AS $$
+DECLARE v_bid bigint; v_dept text;
+BEGIN
+  IF p_branch_id IS NOT NULL THEN
+    SELECT b.id, b.uid, b.department_code INTO v_bid, branch_uid, v_dept FROM branches b WHERE b.id = p_branch_id;
+  ELSIF COALESCE(p_branch_code, '') <> '' THEN
+    SELECT b.id, b.uid, b.department_code INTO v_bid, branch_uid, v_dept FROM branches b WHERE b.tenant_id = p_tenant AND b.code = p_branch_code;
+  END IF;
+  IF COALESCE(p_dept, '') <> '' THEN
+    SELECT d.uid INTO department_uid FROM dimensions d WHERE d.tenant_id = p_tenant AND d.kind = 'department' AND d.code = p_dept;
+  END IF;
+  IF department_uid IS NULL AND v_bid IS NOT NULL THEN
+    SELECT d.uid INTO department_uid FROM dimensions d
+     WHERE d.tenant_id = p_tenant AND d.kind = 'department' AND (d.code = v_dept OR d.branch_id = v_bid)
+     ORDER BY (d.code = v_dept) DESC NULLS LAST, d.id LIMIT 1;
+  END IF;
+  IF COALESCE(p_wh, '') <> '' THEN
+    SELECT w.uid INTO warehouse_uid FROM warehouses w WHERE w.tenant_id = p_tenant AND w.code = p_wh;
+  END IF;
+  IF warehouse_uid IS NULL AND v_bid IS NOT NULL THEN
+    SELECT w.uid INTO warehouse_uid FROM warehouses w WHERE w.branch_id = v_bid AND w.is_active ORDER BY w.is_default DESC, w.id LIMIT 1;
+  END IF;
+END $$;
+COMMENT ON FUNCTION bizcity_resolve_unit_uids(bigint, bigint, text, text, text) IS 'Đơn vị / phân kho / bộ phận item_id của một chứng từ; trống thì lấy mặc định của đơn vị (0173).';
+
+-- Trigger chung: đọc cột chi nhánh (branch_id / branch_code), mã bộ phận (department_code hoặc departmentCode trong data / payload / meta),
+-- mã kho (warehouse_code hoặc warehouseCode trong JSON). Chỉ điền cột trống; cột chi nhánh / kho do trigger cũ điền thì giữ nguyên.
+CREATE OR REPLACE FUNCTION bizcity_fill_unit_uids() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE j jsonb := to_jsonb(NEW); x jsonb; r record; v jsonb := '{}';
+BEGIN
+  x := COALESCE(j->'data', j->'payload', j->'meta', '{}'::jsonb);
+  IF jsonb_typeof(x) <> 'object' THEN x := '{}'::jsonb; END IF;
+  SELECT * INTO r FROM bizcity_resolve_unit_uids(NEW.tenant_id, NULLIF(j->>'branch_id', '')::bigint, j->>'branch_code',
+                                                 COALESCE(NULLIF(j->>'department_code', ''), x->>'departmentCode'),
+                                                 COALESCE(NULLIF(j->>'warehouse_code', ''), x->>'warehouseCode', x->>'fromWarehouse'));
+  IF j ? 'branch_uid' AND (j->>'branch_uid' IS NULL OR (TG_OP = 'UPDATE' AND NOT j ? 'branch_id')) THEN v := v || jsonb_build_object('branch_uid', r.branch_uid); END IF;
+  IF j ? 'warehouse_uid' AND (j->>'warehouse_uid' IS NULL OR (TG_OP = 'UPDATE' AND NOT j ? 'warehouse_code')) THEN v := v || jsonb_build_object('warehouse_uid', r.warehouse_uid); END IF;
+  IF j ? 'department_uid' THEN v := v || jsonb_build_object('department_uid', r.department_uid); END IF;
+  IF v <> '{}'::jsonb THEN NEW := jsonb_populate_record(NEW, v); END IF;
+  RETURN NEW;
+END $$;
+COMMENT ON FUNCTION bizcity_fill_unit_uids() IS 'Điền branch_uid / warehouse_uid / department_uid của chứng từ (0173).';
+
+CREATE OR REPLACE FUNCTION bizcity_fill_transfer_uids() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE j jsonb := to_jsonb(NEW); a record; b record;
+BEGIN
+  SELECT * INTO a FROM bizcity_resolve_unit_uids(NEW.tenant_id, NULL, COALESCE(j->>'from_branch_code', j->>'from_branch'), j->'data'->>'departmentCode', j->>'from_warehouse');
+  SELECT * INTO b FROM bizcity_resolve_unit_uids(NEW.tenant_id, NULL, COALESCE(j->>'to_branch_code', j->>'to_branch'), NULL, j->>'to_warehouse');
+  NEW := jsonb_populate_record(NEW, jsonb_build_object('from_branch_uid', a.branch_uid, 'from_warehouse_uid', a.warehouse_uid, 'department_uid', a.department_uid,
+                                                       'to_branch_uid', b.branch_uid, 'to_warehouse_uid', b.warehouse_uid));
+  RETURN NEW;
+END $$;
+COMMENT ON FUNCTION bizcity_fill_transfer_uids() IS 'Chuyển kho hai đầu: đơn vị / phân kho item_id đầu xuất, đầu nhận + bộ phận đầu xuất (0173).';
+
+DO $$
+DECLARE t text; c text; cols text[];
+BEGIN
+  FOREACH t IN ARRAY ARRAY['purchase_documents', 'payment_requests', 'reference_documents', 'stock_max_requests', 'stock_counts',
+                           'accounting_events', 'inventory_movements', 'tax_invoices', 'debt_items', 'cost_norms'] LOOP
+    cols := ARRAY['department_uid'];
+    IF t IN ('purchase_documents', 'payment_requests', 'reference_documents', 'stock_max_requests', 'stock_counts') THEN cols := cols || 'branch_uid'::text; END IF;
+    IF t IN ('purchase_documents', 'accounting_events', 'inventory_movements', 'stock_counts') THEN cols := cols || 'warehouse_uid'::text; END IF;
+    FOREACH c IN ARRAY cols LOOP
+      EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS %I text', t, c);
+      EXECUTE format('COMMENT ON COLUMN %I.%I IS %L', t, c, 'Định danh bất biến ' || CASE c WHEN 'branch_uid' THEN 'đơn vị cn_…' WHEN 'warehouse_uid' THEN 'phân kho kho_…' ELSE 'bộ phận pb_…' END || ' (0173, trigger điền).');
+    END LOOP;
+    EXECUTE format('DROP TRIGGER IF EXISTS zz_unit_uids ON %I', t);
+    EXECUTE format('CREATE TRIGGER zz_unit_uids BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_fill_unit_uids()', t);
+    -- điền dữ liệu cũ không chạy trigger khác (đồng bộ sổ chứng từ, khoá chống sửa)
+    EXECUTE format('ALTER TABLE %I DISABLE TRIGGER USER', t);
+    EXECUTE format($q$UPDATE %I x SET (%s) = (SELECT %s FROM bizcity_resolve_unit_uids(x.tenant_id, %s, %s, %s, %s) r)$q$, t,
+      (SELECT string_agg(format('%I', c2), ', ') FROM unnest(cols) c2),
+      (SELECT string_agg(format('COALESCE(x.%I, r.%I)', c2, c2), ', ') FROM unnest(cols) c2),
+      CASE WHEN t IN ('accounting_events', 'inventory_movements', 'tax_invoices', 'debt_items', 'cost_norms') THEN 'x.branch_id' ELSE 'NULL' END,
+      CASE WHEN t IN ('accounting_events', 'inventory_movements', 'tax_invoices', 'debt_items', 'cost_norms') THEN 'NULL' ELSE 'x.branch_code' END,
+      CASE WHEN t = 'cost_norms' THEN 'x.department_code'
+           WHEN t IN ('purchase_documents', 'stock_max_requests') THEN $s$x.data->>'departmentCode'$s$
+           WHEN t = 'accounting_events' THEN $s$x.payload->>'departmentCode'$s$ ELSE 'NULL' END,
+      CASE WHEN t IN ('inventory_movements', 'stock_counts') THEN 'x.warehouse_code'
+           WHEN t = 'purchase_documents' THEN $s$x.data->>'warehouseCode'$s$
+           WHEN t = 'accounting_events' THEN $s$COALESCE(x.payload->>'warehouseCode', x.payload->>'fromWarehouse')$s$ ELSE 'NULL' END);
+    EXECUTE format('ALTER TABLE %I ENABLE TRIGGER USER', t);
+  END LOOP;
+
+  FOREACH t IN ARRAY ARRAY['stock_transfer_docs', 'transfer_requests'] LOOP
+    FOREACH c IN ARRAY ARRAY['from_branch_uid', 'from_warehouse_uid', 'to_branch_uid', 'to_warehouse_uid', 'department_uid'] LOOP
+      EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS %I text', t, c);
+    END LOOP;
+    EXECUTE format('DROP TRIGGER IF EXISTS zz_unit_uids ON %I', t);
+    EXECUTE format('CREATE TRIGGER zz_unit_uids BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION bizcity_fill_transfer_uids()', t);
+    EXECUTE format('ALTER TABLE %I DISABLE TRIGGER USER', t);
+    EXECUTE format('ALTER TABLE %I ENABLE TRIGGER zz_unit_uids', t);
+    EXECUTE format('UPDATE %I SET id = id', t);
+    EXECUTE format('ALTER TABLE %I ENABLE TRIGGER USER', t);
+  END LOOP;
+END $$;
+
+-- 9. Thẻ hướng dẫn DM16 theo mô hình mới (docs/huong-dan/so-do-to-chuc.md).
+UPDATE help_cards SET body = $hd$Mọi cấp (công ty, miền, chi nhánh, tỉnh, cửa hàng…) đều là một **đơn vị**. Chúng chỉ khác nhau ở **tên gọi cấp**, do bạn tự đặt.
+Đơn vị nào cũng có thể chứa đơn vị con, có **phân kho** và **bộ phận** riêng.
+
+```
+Công ty TGS                         cấp 1
+└─ Miền Bắc                         cấp 2
+   └─ Chi nhánh Phú Thọ             cấp 3   ← có phân kho trung gian, bộ phận kế toán
+      └─ Cửa hàng 08001             cấp 4   ← có phân kho hàng hoá, bộ phận bán hàng
+```
+
+Đường dẫn của đơn vị ghi theo kiểu **Công ty TGS / Miền Bắc / Chi nhánh Phú Thọ**. Ô **Thuộc** và các bảng đều hiện đường dẫn này.
+
+## Ba thứ cần khai
+
+| Loại | Thuộc | Ô chính |
+|---|---|---|
+| **Đơn vị** | Một đơn vị khác (trống = cấp cao nhất) | Mã, Tên, Tên gọi cấp, MST, Tên in chứng từ, Địa chỉ, Điện thoại |
+| **Phân kho** | Một đơn vị | Mã phân kho, Tên, Loại kho, Mặc định |
+| **Bộ phận** | Một đơn vị | Mã bộ phận, Tên |
+
+- **Mã không được trùng** giữa đơn vị, phân kho và bộ phận.
+- **MST**: đơn vị tự khai thì dùng MST của nó. Để trống thì dùng MST của cấp gần nhất phía trên có khai (bảng hiện dấu ↑).
+- Tạo đơn vị là **tự có một bộ phận** (đổi tên được). Chứng từ chưa chọn bộ phận thì tính vào bộ phận này.
+
+## Chứng từ ghi gì
+
+Mỗi chứng từ lưu ba định danh nhỏ nhất: **đơn vị**, **phân kho**, **bộ phận**.
+Chứng từ không chọn phân kho / bộ phận thì lấy cái mặc định của đơn vị.
+Nhờ vậy, đổi mã, đổi tên hay chuyển đơn vị sang nhánh khác về sau, số liệu cũ vẫn đúng chỗ.
+Báo cáo và định mức chi phí theo đơn vị → bộ phận → khoản mục dựa trên ba định danh này.
+
+## Thao tác
+
+- **Xem**: *Cây* (trái) + chi tiết (phải), *Sơ đồ* (chọn "Xem từ" để xem một nhánh), *Danh sách* (Đơn vị / Phân kho / Bộ phận).
+- **Bảng**: không phân trang. Gõ vào hàng lọc dưới tiêu đề để lọc từng cột, bấm tiêu đề để sắp xếp.
+  Nút **Cột** để ẩn / hiện cột. Cột *Người tạo, Ngày tạo, Người sửa, Ngày sửa* đang ẩn sẵn. Nút **Xuất Excel** xuất đúng các dòng đang lọc.
+- **Tab Phân kho / Bộ phận** chỉ hiện của riêng đơn vị đang chọn. Bấm **Toàn nhánh** để xem cả các đơn vị cấp dưới.
+- **Thêm**: nút *Thêm đơn vị* ở đầu trang, hoặc *Thêm* trong chi tiết một đơn vị (đơn vị con / phân kho / bộ phận).
+- **Sửa**: *Chỉnh sửa* trong chi tiết, hoặc bấm đúp một dòng trong bảng. Đổi **Thuộc** là chuyển đơn vị sang nhánh khác. Lần chuyển được ghi ở tab **Lịch sử**.
+- **Xoá**: xoá vĩnh viễn, kèm toàn bộ đơn vị con, phân kho, bộ phận bên trong. Hộp xoá liệt kê hết những gì sẽ mất trước khi bạn đồng ý.
+  Đơn vị / phân kho / bộ phận **đã có chứng từ** thì không xoá được. Hãy chuyển sang *Ngừng hoạt động*.
+
+## Xuất / nhập Excel
+
+Nút **⋯** → **Xuất Excel** tạo một tệp ba sheet: **Đơn vị**, **Phân kho**, **Bộ phận**.
+Cột **Thuộc (mã)** ghi mã đơn vị cha. Cột **Đường dẫn** chỉ để đọc.
+
+Nhập theo thứ tự **1. Đơn vị → 2. Phân kho → 3. Bộ phận** (ở nút ⋯):
+
+- Có thể dùng chính tệp vừa xuất: sửa hoặc thêm dòng rồi nhập lại.
+- Mã đã có thì cập nhật, mã mới thì thêm.
+- Dòng lỗi được báo trước khi ghi: trùng mã khác loại, đơn vị cha không có, MST sai, vòng lặp cha – con.
+$hd$, format = 'md', updated_at = now()
+ WHERE source_key = 'so-do-to-chuc';

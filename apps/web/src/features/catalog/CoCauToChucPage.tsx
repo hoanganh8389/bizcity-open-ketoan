@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Hoi, Loading, Modal } from '@/components/ui';
 import { ListPicker, plain } from '@/components/pickers';
+import { DataGrid, type Column } from '@/components/DataGrid';
 import { TaxCodeField } from '@/components/TaxCodeField';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
@@ -31,9 +32,10 @@ import './co-cau-moi.css';
 export interface DonVi {
   uid: string; code: string; name: string; parentCode: string | null; path: string; level: number; levelLabel: string; sortOrder: number;
   taxCode: string; taxUsed: string; taxFrom: string | null; companyName: string; address: string; phone: string; note: string; isActive: boolean; departmentCode: string | null;
+  createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null;
 }
-export interface PhanKho { uid: string; code: string; name: string; branchCode: string; typeCode: string; typeName: string; isDefault: boolean; isActive: boolean; address: string; note: string }
-export interface BoPhan { uid: string; code: string; name: string; branchCode: string | null; isActive: boolean; note: string }
+export interface PhanKho { uid: string; code: string; name: string; branchCode: string; typeCode: string; typeName: string; isDefault: boolean; isActive: boolean; address: string; note: string; createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null }
+export interface BoPhan { uid: string; code: string; name: string; branchCode: string | null; isActive: boolean; note: string; createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null }
 interface CoCauRaw { units: DonVi[]; warehouses: PhanKho[]; departments: BoPhan[] }
 
 export const ngung = (x: { code: string; isActive: boolean }) => !x.isActive || /_OFF$/i.test(x.code);
@@ -227,56 +229,77 @@ function CayDonVi({ cc, sel, onSel }: { cc: CC; sel: string | null; onSel: (c: s
   );
 }
 
-/* ------------------------------------------------------------------ bảng dùng chung */
+/* ------------------------------------------------------------------ bảng dùng chung (DataGrid: lọc từng cột, ẩn / hiện cột, Xuất Excel, không phân trang) */
 
-interface Cot<T> { ten: string; w?: number; gt: (x: T) => ReactNode; tim?: (x: T) => string }
-function Bang<T extends { code: string; name: string; isActive: boolean }>({ rows, cot, onMo, onSua, onXoa, rong, them }: { rows: T[]; cot: Cot<T>[]; onMo?: (x: T) => void; onSua?: (x: T) => void; onXoa?: (x: T) => void; rong: ReactNode; them?: ReactNode }) {
-  const [q, setQ] = useState('');
+const luc = (d?: string | null) => (d ? new Date(d).toLocaleString('vi-VN', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
+type Dau = { createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null };
+type Hang = { code: string; name: string; isActive: boolean } & Dau;
+/** Một cột: k = khoá, v = giá trị để lọc / sắp xếp / xuất Excel, gt = cách hiện (bỏ trống thì hiện v). */
+interface Cot<T> { k: string; ten: string; w?: number; v: (x: T) => string | number; gt?: (x: T) => ReactNode; an?: boolean }
+function Bang<T extends Hang>({ rows, cot, onMo, onSua, onXoa, rong, them, khoa, tenXuat }: { rows: T[]; cot: Cot<T>[]; onMo?: (x: T) => void; onSua?: (x: T) => void; onXoa?: (x: T) => void; rong: ReactNode; them?: ReactNode; khoa: string; tenXuat: string }) {
   const [tt, setTt] = useState<'' | 'dung' | 'ngung'>('dung');
-  const [trang, setTrang] = useState(1);
-  const [co, setCo] = useState(20);
-  useEffect(() => setTrang(1), [q, tt, rows]);
-  const w = plain(q).split(/\s+/).filter(Boolean);
-  const list = rows.filter((x) => (!tt || (tt === 'dung' ? !ngung(x) : ngung(x))) && (!w.length || w.every((k) => plain(`${x.code} ${x.name} ${cot.map((c) => c.tim?.(x) ?? '').join(' ')}`).includes(k))));
-  const soTrang = Math.max(1, Math.ceil(list.length / co));
-  const xem = list.slice((trang - 1) * co, trang * co);
-  const thaoTac = onSua || onXoa;
+  const list = useMemo(() => rows.filter((x) => !tt || (tt === 'dung' ? !ngung(x) : ngung(x))), [rows, tt]);
+  const columns: Column<T>[] = [
+    ...cot.map((c): Column<T> => ({ key: c.k, header: c.ten, title: c.ten, width: c.w, value: c.v, render: c.gt, hidden: c.an })),
+    { key: 'trangThai', header: 'Trạng thái', width: 130, value: (x) => (ngung(x) ? 'Ngừng hoạt động' : 'Đang hoạt động'), render: (x) => <TrangThai x={x} /> },
+    { key: 'createdBy', header: 'Người tạo', width: 140, hidden: true, value: (x) => x.createdBy ?? '' },
+    { key: 'createdAt', header: 'Ngày tạo', width: 130, hidden: true, value: (x) => x.createdAt ?? '', render: (x) => luc(x.createdAt) },
+    { key: 'updatedBy', header: 'Người sửa', width: 140, hidden: true, value: (x) => x.updatedBy ?? '' },
+    { key: 'updatedAt', header: 'Ngày sửa', width: 130, hidden: true, value: (x) => x.updatedAt ?? '', render: (x) => luc(x.updatedAt) },
+    ...(onSua || onXoa ? [{ key: '_thaoTac', header: 'Thao tác', width: 80, noFilter: true, noSort: true, noExport: true, value: () => '',
+      render: (x: T) => <>{onSua && <button type="button" className="ccm-nut-ic" title="Sửa" onClick={(e) => { e.stopPropagation(); onSua(x); }}><Pencil size={15} /></button>}{onXoa && <button type="button" className="ccm-nut-ic do" title="Xoá vĩnh viễn" onClick={(e) => { e.stopPropagation(); onXoa(x); }}><Trash2 size={15} /></button>}</> } as Column<T>] : []),
+  ];
   return (
     <>
       <div className="ccm-ds-loc">
-        <div className="ccm-tim"><Search size={15} /><input placeholder="Tìm mã, tên…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
         <select className="input" value={tt} onChange={(e) => setTt(e.target.value as typeof tt)} title="Lọc trạng thái"><option value="dung">Đang hoạt động</option><option value="ngung">Ngừng hoạt động</option><option value="">Tất cả trạng thái</option></select>
         {them && <span className="ccm-ds-them">{them}</span>}
       </div>
-      {!rows.length ? <div className="ccm-rong">{rong}</div> : (
-        <>
-          <div className="table-wrap ccm-bang">
-            <table className="grid">
-              <thead><tr>{cot.map((c) => <th key={c.ten} style={c.w ? { width: c.w } : undefined} title={c.ten}>{c.ten}</th>)}<th style={{ width: 140 }} title="Trạng thái">Trạng thái</th>{thaoTac && <th style={{ width: 84 }} title="Thao tác">Thao tác</th>}</tr></thead>
-              <tbody>
-                {xem.map((x) => (
-                  <tr key={x.code} className={onMo ? 'ccm-tr' : ''} onDoubleClick={() => onMo?.(x)} title={onMo ? 'Bấm đúp để mở' : undefined}>
-                    {cot.map((c) => <td key={c.ten}>{c.gt(x)}</td>)}
-                    <td><TrangThai x={x} /></td>
-                    {thaoTac && <td>{onSua && <button type="button" className="ccm-nut-ic" title="Sửa" onClick={() => onSua(x)}><Pencil size={15} /></button>}{onXoa && <button type="button" className="ccm-nut-ic do" title="Xoá vĩnh viễn" onClick={() => onXoa(x)}><Trash2 size={15} /></button>}</td>}
-                  </tr>
-                ))}
-                {!xem.length && <tr><td colSpan={cot.length + 2} className="muted" style={{ textAlign: 'center', padding: 14 }}>Không có dòng nào khớp</td></tr>}
-              </tbody>
-            </table>
-          </div>
-          <div className="ccm-trang">
-            <span>Tổng: {list.length} dòng</span><span className="spacer" />
-            <span>Số dòng/trang:</span>
-            <select className="input" value={co} onChange={(e) => { setCo(Number(e.target.value)); setTrang(1); }}>{[20, 50, 100, 500].map((n) => <option key={n}>{n}</option>)}</select>
-            <button type="button" className="btn btn-sm" disabled={trang <= 1} onClick={() => setTrang(trang - 1)}>‹</button>
-            <span className="ccm-trang-so">{trang} / {soTrang}</span>
-            <button type="button" className="btn btn-sm" disabled={trang >= soTrang} onClick={() => setTrang(trang + 1)}>›</button>
-          </div>
-        </>
-      )}
+      {!rows.length ? <div className="ccm-rong">{rong}</div>
+        : <DataGrid rows={list} columns={columns} rowKey={(x) => x.code} storageKey={khoa} exportName={tenXuat} onRowDoubleClick={onMo} footerLabel={false} emptyText="Không có dòng nào khớp" maxHeight="calc(100vh - 330px)" />}
     </>
   );
+}
+
+/** Đường dẫn theo tên: Công ty TGS / Miền Bắc / Chi nhánh Phú Thọ. */
+export const duongTen = (cc: CC, u: DonVi) => cc.pathOf(u).map((x) => x.name).join(' / ');
+const tenDonVi = (cc: CC, code: string | null) => { const x = code ? cc.byCode.get(code) : null; return x ? `${x.name} (${x.code})` : ''; };
+const duongCua = (cc: CC, code: string | null) => { const x = code ? cc.byCode.get(code) : null; return x ? duongTen(cc, x) : ''; };
+
+function cotDonVi(cc: CC, o: { duong?: boolean; cap?: boolean }): Cot<DonVi>[] {
+  return [
+    { k: 'code', ten: 'Mã', w: 120, v: (x) => x.code, gt: (x) => <span className="mono">{x.code}</span> },
+    { k: 'name', ten: 'Tên', w: 240, v: (x) => x.name, gt: (x) => <><span className="ccm-cay-ic nho">{iconDonVi(x, !!cc.kids.get(x.code)?.length)}</span> {x.name}</> },
+    { k: 'levelLabel', ten: 'Tên gọi cấp', w: 120, v: (x) => x.levelLabel || '', gt: tenCap },
+    { k: 'level', ten: 'Cấp', w: 60, v: (x) => x.level, an: !o.cap },
+    { k: 'path', ten: 'Đường dẫn', w: 340, v: (x) => duongTen(cc, x), gt: (x) => <span className="muted">{duongTen(cc, x)}</span>, an: !o.duong },
+    { k: 'taxUsed', ten: 'MST dùng', w: 150, v: (x) => x.taxUsed, gt: (x) => <span className="mono">{x.taxUsed}{x.taxFrom && <span className="muted" title={`Kế thừa từ ${x.taxFrom}`}> ↑</span>}</span> },
+    { k: 'companyName', ten: 'Tên in chứng từ', w: 220, v: (x) => x.companyName, an: true },
+    { k: 'address', ten: 'Địa chỉ', w: 220, v: (x) => x.address, an: true },
+    { k: 'phone', ten: 'Điện thoại', w: 110, v: (x) => x.phone, an: true },
+    { k: 'kho', ten: 'Số phân kho', w: 90, v: (x) => (cc.khoCua.get(x.code) ?? []).filter((w) => !ngung(w)).length },
+    { k: 'note', ten: 'Ghi chú', w: 200, v: (x) => x.note, an: true },
+  ];
+}
+function cotKho(cc: CC, thuoc: boolean): Cot<PhanKho>[] {
+  return [
+    { k: 'code', ten: 'Mã phân kho', w: 130, v: (x) => x.code, gt: (x) => <span className="mono">{x.code}</span> },
+    { k: 'name', ten: 'Tên phân kho', w: 240, v: (x) => x.name, gt: (x) => <>{x.name}{x.isDefault && <span className="ccm-mac-dinh">Mặc định</span>}</> },
+    { k: 'branch', ten: 'Thuộc đơn vị', w: 240, v: (x) => tenDonVi(cc, x.branchCode), an: !thuoc },
+    { k: 'path', ten: 'Đường dẫn', w: 340, v: (x) => duongCua(cc, x.branchCode), gt: (x) => <span className="muted">{duongCua(cc, x.branchCode)}</span>, an: !thuoc },
+    { k: 'type', ten: 'Loại kho', w: 170, v: (x) => x.typeName || x.typeCode },
+    { k: 'address', ten: 'Địa chỉ', w: 220, v: (x) => x.address ?? '', an: true },
+    { k: 'note', ten: 'Ghi chú', w: 200, v: (x) => x.note ?? '', an: true },
+  ];
+}
+function cotBoPhan(cc: CC, thuoc: boolean): Cot<BoPhan>[] {
+  return [
+    { k: 'code', ten: 'Mã bộ phận', w: 140, v: (x) => x.code, gt: (x) => <span className="mono">{x.code}</span> },
+    { k: 'name', ten: 'Tên bộ phận', w: 240, v: (x) => x.name, gt: (x) => <>{x.name}{cc.byCode.get(x.branchCode ?? '')?.departmentCode === x.code && <span className="ccm-mac-dinh">Mặc định</span>}</> },
+    { k: 'branch', ten: 'Thuộc đơn vị', w: 240, v: (x) => tenDonVi(cc, x.branchCode), gt: (x) => tenDonVi(cc, x.branchCode) || <span className="muted">Chưa gắn đơn vị</span>, an: !thuoc },
+    { k: 'path', ten: 'Đường dẫn', w: 340, v: (x) => duongCua(cc, x.branchCode), gt: (x) => <span className="muted">{duongCua(cc, x.branchCode)}</span>, an: !thuoc },
+    { k: 'note', ten: 'Ghi chú', w: 200, v: (x) => x.note ?? '', an: true },
+  ];
 }
 
 /* ------------------------------------------------------------------ chi tiết */
@@ -309,7 +332,7 @@ function ChiTiet({ cc, u, canWrite, onSel, mo }: { cc: CC; u: DonVi; canWrite: b
             <span>{tenCap(u)}</span><span>Cấp {u.level}</span>
             <span>MST: <span className="mono">{u.taxUsed || '—'}</span>{u.taxFrom && <span className="muted"> (theo {u.taxFrom})</span>}</span>
           </div>
-          <div className="ccm-duong-dan">{duong.map((x, i) => <span key={x.code}>{i > 0 && <span className="gach">/</span>}<button type="button" className={x.code === u.code ? 'cuoi' : ''} onClick={() => onSel(x.code)}>{x.code}</button></span>)}</div>
+          <div className="ccm-duong-dan">{duong.map((x, i) => <span key={x.code}>{i > 0 && <span className="gach">/</span>}<button type="button" className={x.code === u.code ? 'cuoi' : ''} onClick={() => onSel(x.code)} title={x.code}>{x.name}</button></span>)}</div>
         </div>
         <span className="spacer" />
         {canWrite && (
@@ -377,14 +400,8 @@ function ChiTiet({ cc, u, canWrite, onSel, mo }: { cc: CC; u: DonVi; canWrite: b
               </div>
               <Bang key={String(ca.con)} rows={ca.con ? nhanh : truc} onMo={(x) => onSel(x.code)} onSua={canWrite ? (x) => mo({ loai: 'donvi', code: x.code, cha: null }) : undefined} onXoa={canWrite ? (x) => xoa(`u:${x.code}`, x.name, x.code) : undefined}
                 them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'donvi', code: null, cha: u.code })}><Plus size={14} /> Thêm đơn vị con</button>}
-                cot={[
-                  { ten: 'Mã', w: 120, gt: (x) => <span className="mono">{x.code}</span> },
-                  { ten: 'Tên', gt: (x) => <><span className="ccm-cay-ic nho">{iconDonVi(x, !!cc.kids.get(x.code)?.length)}</span> {x.name}</> },
-                  { ten: 'Tên gọi cấp', w: 130, gt: tenCap, tim: (x) => x.levelLabel },
-                  ...(ca.con ? [{ ten: 'Đường dẫn', w: 260, gt: (x: DonVi) => <span className="mono muted">{x.path}</span>, tim: (x: DonVi) => x.path }] : []),
-                  { ten: 'MST dùng', w: 150, gt: (x) => <span className="mono">{x.taxUsed}{x.taxFrom && <span className="muted" title={`Kế thừa từ ${x.taxFrom}`}> ↑</span>}</span>, tim: (x) => x.taxUsed },
-                  { ten: 'Phân kho', w: 80, gt: (x) => dem(cc.khoCua.get(x.code) ?? []) },
-                ]}
+                khoa="co-cau-con" tenXuat={`Don-vi-con-${u.code}`}
+                cot={cotDonVi(cc, { duong: ca.con })}
                 rong={<>Chưa có đơn vị con.</>} />
             </>
           )}
@@ -396,12 +413,8 @@ function ChiTiet({ cc, u, canWrite, onSel, mo }: { cc: CC; u: DonVi; canWrite: b
               </div>
               <Bang key={String(ca.kho)} rows={ca.kho ? khoNhanh : khoRieng} onSua={canWrite ? (x) => mo({ loai: 'kho', code: x.code, donVi: null }) : undefined} onXoa={canWrite ? (x) => xoa(`w:${x.code}`, x.name, x.code) : undefined}
                 them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'kho', code: null, donVi: u.code })}><Plus size={14} /> Thêm phân kho</button>}
-                cot={[
-                  { ten: 'Mã phân kho', w: 130, gt: (x) => <span className="mono">{x.code}</span> },
-                  { ten: 'Tên phân kho', gt: (x) => <>{x.name}{x.isDefault && <span className="ccm-mac-dinh">Mặc định</span>}</> },
-                  ...(ca.kho ? [{ ten: 'Thuộc đơn vị', w: 240, gt: (x: PhanKho) => tenDv(x.branchCode), tim: (x: PhanKho) => x.branchCode }] : []),
-                  { ten: 'Loại kho', w: 180, gt: (x) => x.typeName || x.typeCode },
-                ]}
+                khoa="co-cau-kho" tenXuat={`Phan-kho-${u.code}`}
+                cot={cotKho(cc, ca.kho)}
                 rong={<>{u.name} chưa có phân kho riêng.</>} />
             </>
           )}
@@ -413,11 +426,8 @@ function ChiTiet({ cc, u, canWrite, onSel, mo }: { cc: CC; u: DonVi; canWrite: b
               </div>
               <Bang key={String(ca.bp)} rows={ca.bp ? bpNhanh : bpRieng} onSua={canWrite ? (x) => mo({ loai: 'bophan', code: x.code, donVi: null }) : undefined} onXoa={canWrite ? (x) => xoa(`d:${x.code}`, x.name, x.code) : undefined}
                 them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'bophan', code: null, donVi: u.code })}><Plus size={14} /> Thêm bộ phận</button>}
-                cot={[
-                  { ten: 'Mã bộ phận', w: 140, gt: (x) => <span className="mono">{x.code}</span> },
-                  { ten: 'Tên bộ phận', gt: (x) => <>{x.name}{cc.byCode.get(x.branchCode ?? '')?.departmentCode === x.code && <span className="ccm-mac-dinh">Mặc định</span>}</> },
-                  ...(ca.bp ? [{ ten: 'Thuộc đơn vị', w: 240, gt: (x: BoPhan) => tenDv(x.branchCode), tim: (x: BoPhan) => x.branchCode ?? '' }] : []),
-                ]}
+                khoa="co-cau-bp" tenXuat={`Bo-phan-${u.code}`}
+                cot={cotBoPhan(cc, ca.bp)}
                 rong={<>{u.name} chưa có bộ phận.</>} />
             </>
           )}
@@ -468,7 +478,7 @@ function DonViModal({ cc, code, cha, onClose, onSaved }: { cc: CC; code: string 
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const [daBam, setDaBam] = useState(false);
   const cam = useMemo(() => new Set(u ? [u.code, ...cc.under(u.code).map((x) => x.code)] : []), [cc, u]);
-  const chaList = useMemo(() => cc.units.filter((x) => !cam.has(x.code) && !ngung(x)).map((x) => ({ code: x.code, name: x.name, hint: x.path })), [cc, cam]);
+  const chaList = useMemo(() => cc.units.filter((x) => !cam.has(x.code) && !ngung(x)).map((x) => ({ code: x.code, name: duongTen(cc, x) })), [cc, cam]);
   const chaU = f.parentCode ? cc.byCode.get(f.parentCode) : null;
   const doiCha = !!u && (f.parentCode || null) !== (u.parentCode || null);
   const doiMst = !!u && f.taxCode.trim() !== u.taxCode.trim();
@@ -505,7 +515,7 @@ function DonViModal({ cc, code, cha, onClose, onSaved }: { cc: CC; code: string 
   };
   const bpList = u ? (cc.bpCua.get(u.code) ?? []).map((d) => ({ code: d.code, name: d.name })) : [];
   return (
-    <Modal title={<span className="ccm-md-dau"><OIc>{u ? iconDonVi(u, !!cc.kids.get(u.code)?.length) : <Network />}</OIc><span><span className="ccm-md-ten">{u ? `Sửa đơn vị ${u.code}` : 'Thêm đơn vị'}</span><span className="ccm-md-mo">{chaU ? `Thuộc ${chaU.path}` : 'Cấp cao nhất'}</span></span></span>}
+    <Modal title={<span className="ccm-md-dau"><OIc>{u ? iconDonVi(u, !!cc.kids.get(u.code)?.length) : <Network />}</OIc><span><span className="ccm-md-ten">{u ? `Sửa đơn vị ${u.code}` : 'Thêm đơn vị'}</span><span className="ccm-md-mo">{chaU ? `Thuộc ${duongTen(cc, chaU)}` : 'Cấp cao nhất'}</span></span></span>}
       onClose={onClose} helpKey="so-do-to-chuc"
       footer={<>
         <button className="btn" onClick={onClose}>Huỷ</button>
@@ -543,7 +553,7 @@ function DonViModal({ cc, code, cha, onClose, onSaved }: { cc: CC; code: string 
 
 /* ------------------------------------------------------------------ hộp thoại phân kho / bộ phận */
 
-function chonDonVi(cc: CC) { return cc.units.filter((x) => !ngung(x)).map((x) => ({ code: x.code, name: x.name, hint: x.path })); }
+function chonDonVi(cc: CC) { return cc.units.filter((x) => !ngung(x)).map((x) => ({ code: x.code, name: duongTen(cc, x) })); }
 
 function PhanKhoModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: string | null; donVi: string | null; onClose: () => void; onSaved: (text: string) => void }) {
   const lamMoi = useLamMoi();
@@ -570,7 +580,7 @@ function PhanKhoModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: str
   });
   const ok = () => { setDaBam(true); if (f.code.trim() && f.name.trim() && f.branchCode && !trung) luu.mutate(); };
   return (
-    <Modal title={<span className="ccm-md-dau"><OIc><WarehouseIcon /></OIc><span><span className="ccm-md-ten">{w ? `Sửa phân kho ${w.code}` : 'Thêm phân kho'}</span><span className="ccm-md-mo">{f.branchCode ? `Thuộc ${cc.byCode.get(f.branchCode)?.path ?? f.branchCode}` : 'Chọn đơn vị sở hữu'}</span></span></span>}
+    <Modal title={<span className="ccm-md-dau"><OIc><WarehouseIcon /></OIc><span><span className="ccm-md-ten">{w ? `Sửa phân kho ${w.code}` : 'Thêm phân kho'}</span><span className="ccm-md-mo">{f.branchCode ? `Thuộc ${duongCua(cc, f.branchCode) || f.branchCode}` : 'Chọn đơn vị sở hữu'}</span></span></span>}
       onClose={onClose} helpKey="so-do-to-chuc" footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={luu.isPending} onClick={ok}>Lưu</button></>}>
       <Field label="Mã phân kho (*)" error={loi.code} tip="Tối đa 12 ký tự, không trùng mã khác"><input className="input mono" value={f.code} maxLength={12} disabled={!!w} autoFocus={!w} onChange={(e) => set({ code: e.target.value })} /></Field>
       <Field label="Tên phân kho (*)" error={loi.name}><input className="input" value={f.name} onChange={(e) => set({ name: e.target.value })} /></Field>
@@ -608,7 +618,7 @@ function BoPhanModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: stri
   });
   const ok = () => { setDaBam(true); if (f.code.trim() && f.name.trim() && f.branchCode && !trung) luu.mutate(); };
   return (
-    <Modal title={<span className="ccm-md-dau"><OIc><Users /></OIc><span><span className="ccm-md-ten">{d ? `Sửa bộ phận ${d.code}` : 'Thêm bộ phận'}</span><span className="ccm-md-mo">{f.branchCode ? `Thuộc ${cc.byCode.get(f.branchCode)?.path ?? f.branchCode}` : 'Chọn đơn vị'}</span></span></span>}
+    <Modal title={<span className="ccm-md-dau"><OIc><Users /></OIc><span><span className="ccm-md-ten">{d ? `Sửa bộ phận ${d.code}` : 'Thêm bộ phận'}</span><span className="ccm-md-mo">{f.branchCode ? `Thuộc ${duongCua(cc, f.branchCode) || f.branchCode}` : 'Chọn đơn vị'}</span></span></span>}
       onClose={onClose} helpKey="so-do-to-chuc" footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={luu.isPending} onClick={ok}>Lưu</button></>}>
       <Field label="Mã bộ phận (*)" error={loi.code}><input className="input mono" value={f.code} maxLength={64} disabled={!!d} autoFocus={!d} onChange={(e) => set({ code: e.target.value })} /></Field>
       <Field label="Tên bộ phận (*)" error={loi.name}><input className="input" value={f.name} placeholder="vd Kế toán, Kinh doanh…" onChange={(e) => set({ name: e.target.value })} /></Field>
@@ -756,30 +766,9 @@ function DanhSachTat({ cc, onChon }: { cc: CC; onChon: (c: string) => void }) {
         <button type="button" className={`ccm-chip${loai === 'kho' ? ' on' : ''}`} onClick={() => setLoai('kho')}><WarehouseIcon size={15} /> Phân kho ({cc.warehouses.length})</button>
         <button type="button" className={`ccm-chip${loai === 'bp' ? ' on' : ''}`} onClick={() => setLoai('bp')}><Users size={15} /> Bộ phận ({cc.departments.length})</button>
       </div>
-      {loai === 'dv' && <Bang key="dv" rows={[...cc.units].sort((a, b) => a.path.localeCompare(b.path))} onMo={(x) => onChon(x.code)} rong="Chưa có đơn vị."
-        cot={[
-          { ten: 'Mã', w: 120, gt: (x) => <span className="mono">{x.code}</span> },
-          { ten: 'Tên', gt: (x) => x.name },
-          { ten: 'Tên gọi cấp', w: 120, gt: tenCap, tim: (x) => x.levelLabel },
-          { ten: 'Cấp', w: 50, gt: (x) => x.level },
-          { ten: 'Đường dẫn', w: 280, gt: (x) => <span className="mono muted">{x.path}</span>, tim: (x) => x.path },
-          { ten: 'MST dùng', w: 150, gt: (x) => <span className="mono">{x.taxUsed}{x.taxFrom && <span className="muted"> ↑</span>}</span>, tim: (x) => x.taxUsed },
-        ]} />}
-      {loai === 'kho' && <Bang key="kho" rows={cc.warehouses} onMo={(x) => onChon(x.branchCode)} rong="Chưa có phân kho."
-        cot={[
-          { ten: 'Mã phân kho', w: 130, gt: (x) => <span className="mono">{x.code}</span> },
-          { ten: 'Tên phân kho', gt: (x) => <>{x.name}{x.isDefault && <span className="ccm-mac-dinh">Mặc định</span>}</> },
-          { ten: 'Thuộc đơn vị', w: 260, gt: (x) => tenDv(x.branchCode), tim: (x) => `${x.branchCode} ${cc.byCode.get(x.branchCode)?.path ?? ''}` },
-          { ten: 'Đường dẫn', w: 260, gt: (x) => <span className="mono muted">{cc.byCode.get(x.branchCode)?.path}</span> },
-          { ten: 'Loại kho', w: 170, gt: (x) => x.typeName || x.typeCode },
-        ]} />}
-      {loai === 'bp' && <Bang key="bp" rows={cc.departments} onMo={(x) => x.branchCode && onChon(x.branchCode)} rong="Chưa có bộ phận."
-        cot={[
-          { ten: 'Mã bộ phận', w: 140, gt: (x) => <span className="mono">{x.code}</span> },
-          { ten: 'Tên bộ phận', gt: (x) => x.name },
-          { ten: 'Thuộc đơn vị', w: 260, gt: (x) => tenDv(x.branchCode) || <span className="muted">Chưa gắn đơn vị</span>, tim: (x) => `${x.branchCode ?? ''} ${cc.byCode.get(x.branchCode ?? '')?.path ?? ''}` },
-          { ten: 'Đường dẫn', w: 260, gt: (x) => <span className="mono muted">{cc.byCode.get(x.branchCode ?? '')?.path}</span> },
-        ]} />}
+      {loai === 'dv' && <Bang key="dv" rows={[...cc.units].sort((a, b) => a.path.localeCompare(b.path))} onMo={(x) => onChon(x.code)} rong="Chưa có đơn vị." khoa="co-cau-ds-dv" tenXuat="Don-vi" cot={cotDonVi(cc, { duong: true, cap: true })} />}
+      {loai === 'kho' && <Bang key="kho" rows={cc.warehouses} onMo={(x) => onChon(x.branchCode)} rong="Chưa có phân kho." khoa="co-cau-ds-kho" tenXuat="Phan-kho" cot={cotKho(cc, true)} />}
+      {loai === 'bp' && <Bang key="bp" rows={cc.departments} onMo={(x) => x.branchCode && onChon(x.branchCode)} rong="Chưa có bộ phận." khoa="co-cau-ds-bp" tenXuat="Bo-phan" cot={cotBoPhan(cc, true)} />}
     </div>
   );
 }

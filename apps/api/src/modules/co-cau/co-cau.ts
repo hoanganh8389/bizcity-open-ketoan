@@ -36,18 +36,21 @@ export interface UnitDto {
   uid: string; code: string; name: string; parentCode: string | null; path: string; level: number; levelLabel: string; sortOrder: number;
   taxCode: string; taxUsed: string; taxFrom: string | null;
   companyName: string; address: string; phone: string; note: string; isActive: boolean; departmentCode: string | null;
+  createdBy: string; createdAt: string | null; updatedBy: string; updatedAt: string | null;
 }
+/** Người tạo / ngày tạo / người sửa / ngày sửa (cột ẩn sẵn ở bảng). */
+interface Dau { createdBy: string; createdAt: string | null; updatedBy: string; updatedAt: string | null }
 export interface WhDto { uid: string; code: string; name: string; branchCode: string; typeCode: string; typeName: string; isDefault: boolean; isActive: boolean; address: string; note: string }
 export interface DeptDto { uid: string; code: string; name: string; branchCode: string | null; isActive: boolean; note: string }
 
 /* ------------------------------------------------------------------ đọc */
 
-interface URow { id: string; uid: string; code: string; name: string; parent_code: string | null; unit_path: string; unit_level: number; level_label: string; sort_order: number; tax_code: string; company_name: string; address: string | null; phone: string; note: string; is_active: boolean; department_code: string | null; unit_parent_id: string | null }
+interface URow { id: string; uid: string; code: string; name: string; parent_code: string | null; unit_path: string; unit_level: number; level_label: string; sort_order: number; tax_code: string; company_name: string; address: string | null; phone: string; note: string; is_active: boolean; department_code: string | null; unit_parent_id: string | null; created_by: string; created_at: string | null; updated_by: string; updated_at: string | null }
 
 async function loadUnits(trx: Db, tenantId: string): Promise<URow[]> {
   return (await sql<URow>`
     SELECT b.id, b.uid, b.code, b.name, p.code AS parent_code, b.unit_path, b.unit_level, b.level_label, b.sort_order, b.tax_code, b.company_name, b.address, b.phone, b.note,
-           b.is_active, b.department_code, b.unit_parent_id
+           b.is_active, b.department_code, b.unit_parent_id, b.created_by, b.created_at, b.updated_by, b.updated_at
       FROM branches b LEFT JOIN branches p ON p.id = b.unit_parent_id
      WHERE b.tenant_id = ${tenantId} ORDER BY b.unit_path`.execute(trx)).rows;
 }
@@ -67,14 +70,17 @@ export async function coCau(trx: Db, tenantId: string) {
     return {
       uid: r.uid, code: r.code, name: r.name, parentCode: r.parent_code, path: r.unit_path || r.code, level: r.unit_level, levelLabel: r.level_label, sortOrder: r.sort_order,
       taxCode: r.tax_code, taxUsed, taxFrom, companyName: r.company_name, address: r.address ?? '', phone: r.phone, note: r.note, isActive: r.is_active, departmentCode: r.department_code,
+      createdBy: r.created_by, createdAt: r.created_at, updatedBy: r.updated_by, updatedAt: r.updated_at,
     };
   });
-  const warehouses = (await sql<WhDto>`
-    SELECT w.uid, w.code, w.name, b.code AS "branchCode", w.type_code AS "typeCode", COALESCE(t.name, '') AS "typeName", w.is_default AS "isDefault", w.is_active AS "isActive", w.address, w.note
+  const warehouses = (await sql<WhDto & Dau>`
+    SELECT w.uid, w.code, w.name, b.code AS "branchCode", w.type_code AS "typeCode", COALESCE(t.name, '') AS "typeName", w.is_default AS "isDefault", w.is_active AS "isActive", w.address, w.note,
+           w.created_by AS "createdBy", w.created_at AS "createdAt", w.updated_by AS "updatedBy", w.updated_at AS "updatedAt"
       FROM warehouses w JOIN branches b ON b.id = w.branch_id LEFT JOIN warehouse_types t ON t.tenant_id = w.tenant_id AND t.code = w.type_code
      WHERE w.tenant_id = ${tenantId} ORDER BY w.code`.execute(trx)).rows;
-  const departments = (await sql<DeptDto>`
-    SELECT d.uid, d.code, d.name, b.code AS "branchCode", d.is_active AS "isActive", d.note
+  const departments = (await sql<DeptDto & Dau>`
+    SELECT d.uid, d.code, d.name, b.code AS "branchCode", d.is_active AS "isActive", d.note,
+           d.created_by AS "createdBy", d.created_at AS "createdAt", d.updated_by AS "updatedBy", d.updated_at AS "updatedAt"
       FROM dimensions d LEFT JOIN branches b ON b.id = d.branch_id
      WHERE d.tenant_id = ${tenantId} AND d.kind = 'department' ORDER BY d.code`.execute(trx)).rows;
   return { units, warehouses, departments };
@@ -168,6 +174,11 @@ async function datCha(trx: Db, tenantId: string, id: string, parentCode: string 
   return p.id;
 }
 
+/** Người thao tác cho trigger người tạo / người sửa (0173). */
+async function nguoiGhi(trx: Db, auth: AuthContext) {
+  await sql`SELECT set_config('ketoan.actor_name', ${auth.actorName || auth.actor}, true)`.execute(trx);
+}
+
 async function ghiThem(trx: Db, id: string, i: { levelLabel?: string; sortOrder?: number }) {
   if (i.levelLabel !== undefined) await sql`UPDATE branches SET level_label = ${i.levelLabel} WHERE id = ${id}`.execute(trx);
   if (i.sortOrder !== undefined) await sql`UPDATE branches SET sort_order = ${i.sortOrder} WHERE id = ${id}`.execute(trx);
@@ -176,6 +187,7 @@ async function ghiThem(trx: Db, id: string, i: { levelLabel?: string; sortOrder?
 export const coCauService = {
   async createUnitIn(trx: ActionTx, auth: AuthContext, input: z.infer<typeof unitCreateSchema>) {
     return sameTx(trx, async (trx) => {
+      await nguoiGhi(trx, auth);
       if (input.taxCode && !MST.test(input.taxCode)) throw Errors.validation('MST gồm 10 số hoặc 10 số-3 số');
       await maTrung(trx, auth.tenantId, input.code);
       await branchService.createIn(trx, auth, { code: input.code, name: input.name, taxCode: input.taxCode ?? '', companyName: input.companyName ?? '', address: input.address ?? '', phone: input.phone ?? '', note: input.note ?? '' });
@@ -192,6 +204,7 @@ export const coCauService = {
 
   async updateUnitIn(trx: ActionTx, auth: AuthContext, code: string, input: z.infer<typeof unitUpdateSchema>) {
     return sameTx(trx, async (trx) => {
+      await nguoiGhi(trx, auth);
       const before = await unitId(trx, auth.tenantId, code);
       if (input.taxCode !== undefined) {
         const cu = (await sql<{ tax_code: string }>`SELECT tax_code FROM branches WHERE id = ${before.id}`.execute(trx)).rows[0]?.tax_code ?? '';
@@ -219,6 +232,7 @@ export const coCauService = {
 
   async saveDeptIn(trx: ActionTx, auth: AuthContext, code: string, input: z.infer<typeof deptSchema>) {
     return sameTx(trx, async (trx) => {
+      await nguoiGhi(trx, auth);
       const u = await unitId(trx, auth.tenantId, input.branchCode);
       const cu = (await sql<{ id: string }>`SELECT id FROM dimensions WHERE tenant_id = ${auth.tenantId} AND kind = 'department' AND code = ${code}`.execute(trx)).rows[0];
       if (!cu) await maTrung(trx, auth.tenantId, code);
