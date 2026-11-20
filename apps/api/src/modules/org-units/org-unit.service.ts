@@ -28,14 +28,14 @@ import type {
 const withOrg = (d: Db) => d.withTables<OrgTables>();
 const SEP = '\\';
 
-interface NodeRow { id: string; kind: string; code: string; short_code: string; name: string; alias: string; note: string; tax_id: string; parent_id: string | null; level: number; path: string; sort_order: number; is_active: boolean; purchase_branch_id: string | null }
+interface NodeRow { id: string; kind: string; code: string; short_code: string; name: string; alias: string; note: string; tax_id: string; parent_id: string | null; level: number; path: string; sort_order: number; is_active: boolean; purchase_branch_id: string | null; stats_only: boolean; branch_id: string | null }
 interface BranchRow { id: string; code: string; name: string; is_active: boolean; org_unit_id: string | null; level: string; parent_id: string | null }
 
 async function loadNodes(trx: Db, tenantId: string): Promise<NodeRow[]> {
   const rows = await withOrg(trx).selectFrom('org_units')
-    .select(['id', 'kind', 'code', 'short_code', 'name', 'alias', 'note', 'tax_id', 'parent_id', 'level', 'path', 'sort_order', 'is_active', 'purchase_branch_id'])
+    .select(['id', 'kind', 'code', 'short_code', 'name', 'alias', 'note', 'tax_id', 'parent_id', 'level', 'path', 'sort_order', 'is_active', 'purchase_branch_id', 'stats_only', 'branch_id'])
     .where('tenant_id', '=', tenantId).orderBy('sort_order').orderBy('code').execute();
-  return rows.map((r) => ({ ...r, id: String(r.id), parent_id: r.parent_id === null ? null : String(r.parent_id), purchase_branch_id: r.purchase_branch_id === null ? null : String(r.purchase_branch_id), level: Number(r.level), sort_order: Number(r.sort_order) }));
+  return rows.map((r) => ({ ...r, id: String(r.id), parent_id: r.parent_id === null ? null : String(r.parent_id), purchase_branch_id: r.purchase_branch_id === null ? null : String(r.purchase_branch_id), branch_id: r.branch_id === null ? null : String(r.branch_id), level: Number(r.level), sort_order: Number(r.sort_order) }));
 }
 
 async function loadBranches(trx: Db, tenantId: string): Promise<BranchRow[]> {
@@ -174,6 +174,7 @@ export async function orgTree(trx: Db, tenantId: string): Promise<OrgTreeDto> {
     const all = [...ids].flatMap((id) => direct.get(id) ?? []);
     return {
       kind: n.kind, code: n.code, shortCode: n.short_code, name: n.name, alias: n.alias, note: n.note, taxId: n.tax_id,
+      statsOnly: n.stats_only, branchCode: n.branch_id ? byBranchId.get(n.branch_id)?.code ?? null : null,
       parentCode: n.parent_id ? t.byId.get(n.parent_id)?.code ?? null : null, level: n.level, path: n.path, sortOrder: n.sort_order, isActive: n.is_active,
       purchaseBranchCode: n.purchase_branch_id ? byBranchId.get(n.purchase_branch_id)?.code ?? null : null,
       purchaseUnitCode: t.nearestPurchase(n.id)?.code ?? null,
@@ -212,6 +213,16 @@ async function nodeOrThrow(trx: Db, tenantId: string, code: string): Promise<Nod
   return n;
 }
 
+// [2026-11-20 Nguyễn Văn Thủy] điểm hoạt động của nút: một chi nhánh, mỗi chi nhánh làm điểm hoạt động cho tối đa một nút (0171) (đóng góp)
+async function branchIdOf(trx: Db, tenantId: string, branchCode: string | null | undefined, selfId?: string): Promise<string | null> {
+  if (!branchCode) return null;
+  const b = await trx.selectFrom('branches').select('id').where('tenant_id', '=', tenantId).where('code', '=', branchCode).executeTakeFirst();
+  if (!b) throw Errors.validation(`Không có chi nhánh ${branchCode} để làm điểm hoạt động`);
+  const other = (await loadNodes(trx, tenantId)).find((n) => n.branch_id === String(b.id) && n.id !== selfId);
+  if (other) throw Errors.conflict(`Chi nhánh ${branchCode} đã là điểm hoạt động của ${other.code} — chọn chi nhánh khác`);
+  return String(b.id);
+}
+
 async function parentIdOf(trx: Db, tenantId: string, parentCode: string | null | undefined, selfId?: string): Promise<string | null> {
   if (!parentCode) return null; // [2026-11-13 Nguyễn Văn Thủy] nút không có cha = một gốc (công ty cha) mới (0131) (đóng góp)
   const p = (await loadNodes(trx, tenantId)).find((n) => n.code === parentCode);
@@ -236,6 +247,7 @@ export const orgUnitService = {
       await withOrg(trx).insertInto('org_units').values({
         tenant_id: auth.tenantId, code: input.code, name: input.name, parent_id: parentId, kind: input.kind ?? (parentId ? 'unit' : 'company'), short_code: input.shortCode ?? '', alias: input.alias ?? '', note: input.note ?? '', tax_id: input.taxId ?? '',
         sort_order: input.sortOrder ?? 0, created_by: auth.actor, updated_by: auth.actor,
+        stats_only: input.statsOnly ?? false, branch_id: await branchIdOf(trx, auth.tenantId, input.branchCode),
       }).execute();
       await recompute(trx, auth.tenantId);
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'org_unit.create', objectType: 'org_unit', objectId: input.code, after: input });
@@ -259,6 +271,8 @@ export const orgUnitService = {
       if (input.taxId !== undefined) patch.tax_id = input.taxId;
       if (input.kind !== undefined) patch.kind = input.kind;
       if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
+      if (input.statsOnly !== undefined) patch.stats_only = input.statsOnly;
+      if (input.branchCode !== undefined) patch.branch_id = await branchIdOf(trx, auth.tenantId, input.branchCode, before.id);
       await sql`SELECT set_config('ketoan.actor_name', ${auth.actorName || auth.actor}, true), set_config('ketoan.valid_from', ${input.validFrom ?? ''}, true)`.execute(trx); // phiên bản MST / cơ cấu theo ngày (0121)
       if (input.parentCode !== undefined) {
         const pid = await parentIdOf(trx, auth.tenantId, input.parentCode, before.id);
@@ -341,6 +355,14 @@ export const orgUnitService = {
   },
 
   defaultsInfo: () => defaultsInfo(),
+  // [2026-11-20 Nguyễn Văn Thủy] xoá trắng cơ cấu (0171): nơi đã có chứng từ giữ lại, gỡ khỏi cây (đóng góp)
+  async wipeIn(trx: ActionTx, auth: AuthContext) {
+    return sameTx(trx, async (trx) => {
+      const r = (await sql<{ r: Record<string, number> }>`SELECT bizcity_co_cau_wipe(${auth.tenantId}::bigint) AS r`.execute(trx)).rows[0]!.r;
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'org_unit.wipe', objectType: 'org_unit', objectId: 'all', after: r });
+      return r;
+    });
+  },
   restoreDefaults: (auth: AuthContext) => db.transaction().execute((trx) => restoreDefaults(trx, auth)),
   restoreDefaultsIn: (trx: ActionTx, auth: AuthContext) => restoreDefaults(trx, auth),
 };

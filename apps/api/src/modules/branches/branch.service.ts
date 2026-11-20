@@ -50,6 +50,7 @@ export const branchService = {
         phone: input.phone ?? '',
         fax: input.fax ?? '',
       });
+      if (input.statsOnly) await trx.withTables<OrgTables>().updateTable('branches').set({ stats_only: true }).where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'branch.create', objectType: 'branch', objectId: input.code, after: input });
       return toBranchDto((await branchRepository.findByCode(trx, auth.tenantId, input.code))!);
     });
@@ -95,6 +96,7 @@ export const branchService = {
       if (input.taxCode !== undefined) patch.tax_code = input.taxCode;
       if (input.phone !== undefined) patch.phone = input.phone;
       if (input.fax !== undefined) patch.fax = input.fax;
+      if (input.statsOnly !== undefined) patch.stats_only = input.statsOnly;
 
       if (input.departmentCode !== undefined) patch.department_code = await departmentOf(trx, auth.tenantId, input.departmentCode);
       if (input.accountingUnitCode !== undefined) {
