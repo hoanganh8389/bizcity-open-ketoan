@@ -123,8 +123,8 @@ export function useDevStatus() {
   return useQuery({ queryKey: ['devtools', 'status'], queryFn: () => api.get<DevStatus>(`${BASE}/status`), staleTime: 60_000, ...OPTS });
 }
 
-export function useTrace(traceId: string | null) {
-  return useQuery({ queryKey: ['devtools', 'trace', traceId], queryFn: () => api.get<TraceView>(`${BASE}/traces/${traceId}`), enabled: Boolean(traceId), staleTime: 300_000, ...OPTS });
+export function useTrace(traceId: string | null, on = true) {
+  return useQuery({ queryKey: ['devtools', 'trace', traceId], queryFn: () => api.get<TraceView>(`${BASE}/traces/${traceId}`), enabled: on && Boolean(traceId), staleTime: 300_000, ...OPTS });
 }
 
 export function useRequest(requestId: string | null) {
