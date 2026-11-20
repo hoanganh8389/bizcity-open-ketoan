@@ -63,7 +63,7 @@ Gọi với header `X-Api-Key`. Lưu bản đọc làm bảng ánh xạ trong ap
 **① Chạy open-ketoan trên máy** (Docker, Git Bash trên Windows):
 
 ```bash
-git clone https://github.com/hoanganh8389/bizcity-open-ketoan.git && cd bizcity-open-ketoan
+git clone https://github.com/hoanganh8389/open-ketoan.git && cd open-ketoan
 bash scripts/cai-nhanh.sh          # giao diện + API: http://localhost:8088
 ```
 
