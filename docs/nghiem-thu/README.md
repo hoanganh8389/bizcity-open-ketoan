@@ -64,5 +64,6 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-DM-009](danh-muc/NT-DM-009-ma-nhom-trung-khac-nganh.md) | DM11: mã nhóm hàng không trùng nhóm cùng cha và tên nhóm cha; khác cha được trùng (form thêm / sửa, API, nhập Excel) | Chờ nghiệm thu |
 | [NT-DM-010](danh-muc/NT-DM-010-nhan-o-nhom-hang.md) | DM11: đổi tên ô — Tên ngành, Mã hoá, Mô tả (không bắt buộc); form + Excel + hướng dẫn | Đã chốt |
 | [NT-DM-011](danh-muc/NT-DM-011-mst-doi-tuong-theo-ngay-hieu-luc.md) | DM12 / DM13: đổi MST, tên, địa chỉ theo ngày hiệu lực (lùi ngày khi đối tác báo trễ); mục Lịch sử MST; rà hoá đơn lệch MST ở HT08 | Chờ duyệt |
+| [NT-DM-012](danh-muc/NT-DM-012-loai-thue-co-dinh-theo-quy-dinh.md) | ACC43 Loại thuế cố định theo quy định nhà nước (6 loại, có hiệu lực); bỏ Chiều đầu vào / đầu ra; bỏ ô Tài khoản — TK thuế theo ACC41, TSCĐ tự 1332; chứng từ cũ giữ nguyên | Chờ chữ chốt lõi |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.
