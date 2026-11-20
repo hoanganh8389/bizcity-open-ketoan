@@ -103,12 +103,13 @@ function danhMuc<T>(d: DanhMuc<T>): NhapLoai {
   };
 }
 const TT_TRUONG = (header: string, note = ''): NhapTruong => ({ key: 'isActive', header, aliases: ['hoat dong', 'trang thai', 'dang dung', 'dang su dung', 'theo doi'], example: 'x', note: `x / Có = đang dùng; Không. Như tệp Xuất: cột có ô nào được điền thì ô trống = Không. Cả cột trống: mới = đang dùng, đã có = giữ nguyên.${note}` });
+const coKhong = (b: boolean) => (b ? 'Có' : 'Không');
 const loiTich = (ten: string, v: string | undefined) => `${ten} "${v}" ghi x / Có hoặc Không`;
 
 /* ACC43 Biểu thuế: bỏ nhập Excel — loại thuế GTGT cố định theo quy định nhà nước, phần mềm cấu hình sẵn (NT-DM-012, 2026-11-19 kiennt). */
 
 /* ------------------------------------------------------------------ DM18 Loại kho */
-interface LoaiKho { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; isActive: boolean }
+interface LoaiKho { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; isActive: boolean; activeWarehouses?: number }
 const LOAI_KHO = danhMuc<LoaiKho>({
   id: 'loai-kho', title: 'Loại kho', desc: 'Mã, tên loại kho, công dụng, tài khoản hạch toán', listPath: '/danh-muc/loai-kho', invalidate: ['warehouse-types', 'warehouses'],
   tenMa: 'Mã loại kho', chuanMa: (s) => chu(s).toUpperCase(), maSai: (m) => (/^[A-Z][A-Z0-9_]{1,11}$/.test(m) ? '' : 'Mã loại kho: chữ in hoa / số, 2–12 ký tự, bắt đầu bằng chữ'),
@@ -116,12 +117,18 @@ const LOAI_KHO = danhMuc<LoaiKho>({
     { key: 'code', header: 'Mã', required: true, aliases: ['ma loai kho'], example: 'KM', note: 'Chữ in hoa / số, 2–12 ký tự. Đã có → cập nhật; chưa có → thêm mới.' },
     { key: 'name', header: 'Tên loại kho', required: 'moi', aliases: ['ten', 'ten loai'], example: 'Kho khuyến mại' },
     { key: 'purpose', header: 'Công dụng', aliases: ['cong dung', 'mo ta'], example: 'Hàng tặng kèm' },
-    { key: 'accountPrefix', header: 'Tài khoản hạch toán', aliases: ['tai khoan', 'tk kho'], example: '1567', note: 'Tài khoản chi tiết đã có. Trống: mới = dùng TK kho ngầm định; đã có = giữ nguyên.' },
+    { key: 'accountPrefix', header: 'Tài khoản hạch toán', aliases: ['tai khoan', 'tk kho'], example: '1567', note: 'Tài khoản chi tiết đã có. Trống: mới = dùng TK kho ngầm định; đã có = giữ nguyên. Loại không thuộc sở hữu: để trống.' },
+    // [2026-11-20 kiennt] NT-DM-014 L3 — đủ cột như tệp Xuất của DM18: 4 thuộc tính + Số kho (chỉ xem, bỏ qua) (đóng góp)
+    { key: 'canSell', header: 'Được bán', aliases: ['duoc ban', 'ban duoc'], example: 'Có', note: 'Có / Không. Trống: mới = Có; đã có = giữ nguyên.' },
+    { key: 'owned', header: 'Thuộc sở hữu', aliases: ['thuoc so huu', 'so huu', 'hang cua minh'], example: 'Có', note: 'Có / Không (Không = hàng nhận giữ hộ: không được bán, không có TK kho). Trống: mới = Có; đã có = giữ nguyên.' },
+    { key: 'trackExpiry', header: 'Theo dõi hạn dùng', aliases: ['theo doi han dung', 'han dung', 'theo doi hsd'], example: 'Có', note: 'Có / Không. Trống: mới = Có; đã có = giữ nguyên.' },
+    { key: 'isActive', header: 'Hoạt động', aliases: ['hoat dong', 'dang dung', 'trang thai'], example: 'Có', note: 'Có / Không. Trống: mới = Có; đã có = giữ nguyên.' },
+    { key: 'activeWarehouses', header: 'Số kho', aliases: ['so kho'], note: 'Chỉ xem (số kho đang dùng loại này) — không nhập, cột này bỏ qua.' },
   ],
   tai: async () => (await api.get<{ types: LoaiKho[] }>('/api/v1/warehouse-types')).types, maCua: (t) => t.code,
   rac: async () => { try { return new Set((await api.get<{ code: string }[]>('/api/v1/warehouse-types/trash')).map((x) => x.code.toLowerCase())); } catch { return new Set(); } },
   chuan: async () => ({ tk: await taiKhoanChiTiet() }),
-  xemTruoc: (t) => ({ name: t.name, purpose: t.purpose, accountPrefix: t.accountPrefix }),
+  xemTruoc: (t) => ({ name: t.name, purpose: t.purpose, accountPrefix: t.accountPrefix, canSell: coKhong(t.canSell), owned: coKhong(t.owned !== false), trackExpiry: coKhong(t.trackExpiry), isActive: coKhong(t.isActive), activeWarehouses: t.activeWarehouses === undefined ? '' : String(t.activeWarehouses) }),
   kiem: (r, ma, before, { them }) => {
     const { tk } = them as { tk: Set<string> };
     const errors: string[] = [];
@@ -130,11 +137,21 @@ const LOAI_KHO = danhMuc<LoaiKho>({
     if (name.length > 80) errors.push('Tên loại kho tối đa 80 ký tự');
     const acc = chu(r.accountPrefix) || before?.accountPrefix || '';
     if (chu(r.accountPrefix) && !tk.has(acc)) errors.push(`Tài khoản ${acc} không có hoặc là tài khoản tổng hợp`);
+    const co = (k: 'canSell' | 'owned' | 'trackExpiry' | 'isActive', ten: string, macDinh: boolean) => {
+      const t = tich(r[k], false);
+      if (t === null) { errors.push(loiTich(ten, r[k])); return macDinh; }
+      return t ?? macDinh;
+    };
+    const owned = co('owned', 'Thuộc sở hữu', before ? before.owned !== false : true);
+    const canSell = co('canSell', 'Được bán', before ? before.canSell : owned);
+    const trackExpiry = co('trackExpiry', 'Theo dõi hạn dùng', before ? before.trackExpiry : true);
+    const isActive = co('isActive', 'Hoạt động', before ? before.isActive : true);
+    if (canSell && !owned) errors.push('Hàng không thuộc sở hữu (nhận giữ hộ) thì không được bán — ghi Được bán = Không hoặc Thuộc sở hữu = Có');
+    if (!owned && acc) errors.push(`Hàng không thuộc sở hữu không ghi sổ kho — để trống Tài khoản hạch toán${chu(r.accountPrefix) ? '' : ` (loại đang có TK ${acc}: ghi ô Tài khoản để trống không xoá được, sửa ở form → Bỏ TK)`}`);
     if (errors.length) return { errors };
     return {
       errors, ghi: () => api.put(`/api/v1/warehouse-types/${encodeURIComponent(ma)}`, {
-        name, purpose: chu(r.purpose) || before?.purpose || '', canSell: before ? before.canSell : true, owned: before ? before.owned : true,
-        trackExpiry: before ? before.trackExpiry : true, accountPrefix: acc, isActive: true,
+        name, purpose: chu(r.purpose) || before?.purpose || '', canSell, owned, trackExpiry, accountPrefix: acc, isActive,
       }),
     };
   },

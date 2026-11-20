@@ -4,7 +4,7 @@ Mỗi kho thuộc **một loại**. Loại quyết định kho được dùng ch
 
 ## Loại kho
 
-Bảng gồm: Mã · Tên loại kho · Công dụng · TK kho · Số kho đang dùng.
+Bảng gồm: Mã · Tên loại kho · Công dụng · TK kho · Được bán · Thuộc sở hữu · Theo dõi hạn dùng · Hoạt động · Số kho đang dùng. <!-- [2026-11-20 kiennt] NT-DM-014 — thêm 4 cột thuộc tính; loại giữ hộ khoá TK (đóng góp) -->
 
 Có sẵn 12 loại gốc (KHH hàng kinh doanh, KKM khuyến mại, KHG gửi bán, KTL trả lại, KCL cách ly, KLO lỗi, KHHAN cận hạn, KHHSD hết hạn, KDC điều chuyển, KNB nhận giữ hộ, KCB chờ bán, KCC chờ chứng từ).
 
@@ -22,6 +22,7 @@ Mọi bút toán có hàng đi vào / ra kho thuộc loại này ghi vào **TK k
 - TK kho là tài khoản tổng hợp (ví dụ 156) → không ghi sổ được: cột TK kho hiện **đỏ ⚠**, bút toán vẫn theo Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết (1561, 1562…).
 - Đặt tên loại kho thế nào tuỳ đơn vị; kho thuộc loại nào thì ghi vào TK kho của loại đó.
 - Chứng từ đã ghi giữ nguyên; muốn định khoản lại theo TK mới thì ghi lại chứng từ.
+- **Loại không thuộc sở hữu** (KNB nhận giữ hộ): hàng của bên khác, không ghi sổ kho → ô TK khoá, cột TK hiện *không ghi sổ*. Loại đang lỡ có TK: cột TK hiện đỏ; mở Sửa, bấm **Bỏ TK** rồi Ghi.
 
 ## Nghiệp vụ dùng loại kho
 
@@ -38,4 +39,4 @@ Ví dụ: Khách trả hàng tự chọn Kho hàng trả lại, dùng được t
 ## Nhập Excel
 <!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
 
-Nút **Nhập Excel** nhận tệp Xuất của màn này (mã, tên, công dụng, tài khoản hạch toán). Loại mới bán được, hàng của mình, theo dõi hạn dùng như khi thêm trên form. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).
+Nút **Nhập Excel** nhận tệp Xuất của màn này, đủ cột: mã, tên, công dụng, tài khoản hạch toán, **Được bán**, **Thuộc sở hữu**, **Theo dõi hạn dùng**, **Hoạt động** (Có / Không; trống: loại mới = Có, loại đã có = giữ nguyên) và **Số kho** (chỉ xem, bỏ qua). Không thuộc sở hữu thì không được bán và không có TK kho — dòng sai báo lỗi, không ghi. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).

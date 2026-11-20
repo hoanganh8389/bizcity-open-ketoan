@@ -18,7 +18,7 @@ Dòng 33 của bảng theo dõi chưa có nội dung (cột hiện trạng trố
 **Nguyên nhân.** Cột Nhóm hàng được tra theo mã / tên trên **toàn danh mục**, không đối chiếu với Ngành, Nhãn cùng dòng; dòng không ghi Ngành / Nhãn thì phần mềm còn tự gán Ngành / Nhãn theo nhóm vừa tra được.
 
 **Sau khi sửa.**
-- Dòng có Ngành và / hoặc Nhãn: nhóm phải **nằm dưới** đúng nhãn / ngành đó. Tra mã hoặc tên nhóm chỉ trong nhánh đó.
+- Dòng có Ngành và / hoặc Nhãn: nhóm phải **nằm dưới** đúng nhãn / ngành đó. Tra mã hoặc tên nhóm chỉ trong nhánh đó. (Áp dụng khi ngành / nhãn là nút của cây nhóm hàng DM11 — nhãn khai riêng ngoài cây thì không đối chiếu.)
 - Nhóm không có trong nhánh → **lỗi**, dòng không ghi: "Nhóm hàng "26" không có dưới nhãn Vinamilk (ngành Sữa bột)". Không tự gán sang nhóm khác.
 - Mã hàng mới đúng 9 chữ số mà 6 số đầu (Ngành 2 + Nhãn 3 + Nhóm 1) khác đoạn mã của nhóm → **lỗi** "Mã hàng … không khớp đoạn mã của nhóm … (…)".
 
@@ -38,7 +38,7 @@ Dòng 33 của bảng theo dõi chưa có nội dung (cột hiện trạng trố
 **Hiện tượng.** Tệp hợp lệ (tệp Xuất của màn) có cột mà bước nhập không nhận / không hiện.
 
 **Sau khi sửa.**
-- Xuất và Nhập cùng bộ cột: Mã · Tên loại kho · Công dụng · Tài khoản hạch toán · **Được bán** · **Thuộc sở hữu** · **Theo dõi hạn dùng** · **Hoạt động** (4 cột sau ẩn trên lưới, bật bằng nút Cột; luôn có trong tệp xuất) · **Số kho** (chỉ xem — có trong tệp, bước nhập nhận cột nhưng bỏ qua).
+- Xuất và Nhập cùng bộ cột: Mã · Tên loại kho · Công dụng · Tài khoản hạch toán · **Được bán** · **Thuộc sở hữu** · **Theo dõi hạn dùng** · **Hoạt động** (4 cột này hiện sẵn trên lưới, tắt được ở nút Cột; tệp Xuất lấy các cột đang hiện) · **Số kho** (chỉ xem — có trong tệp, bước nhập nhận cột nhưng bỏ qua).
 - Kiểm như máy chủ: không thuộc sở hữu thì không được bán và không có TK kho.
 
 ## Phạm vi
@@ -64,9 +64,9 @@ Chồng phạm vi PHASE-026 · mã số cha – con (Nguyễn Văn Thủy) ở `
 ## Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | 4 lệnh kiểm; test L1 phía máy chủ |
+| Ngày chạy | 20/11/2026 (máy dev, CSDL test) |
+| Bản code (commit) | nhánh `feat/nt-dm-014-sua-loi-danh-muc-20-11` |
+| Test | `apps/api/test/nt-dm-014-sua-loi-danh-muc.test.ts` 4/4 (bước 1–4); 27 bộ test danh mục / nhập Excel / kho 179/179; L2, L3 kiểm trên màn hình |
 
 ## Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
@@ -76,3 +76,4 @@ Chồng phạm vi PHASE-026 · mã số cha – con (Nguyễn Văn Thủy) ở `
 | Ngày | Thay đổi |
 |---|---|
 | 20/11/2026 | Tạo, gộp dòng 32, 34, 35 của bảng theo dõi kiểm thử |
+| 20/11/2026 | Code xong ở máy: 4 cột loại kho hiện sẵn (tệp Xuất lấy cột đang hiện); ràng buộc nhóm theo ngành / nhãn khi chúng thuộc cây nhóm |
