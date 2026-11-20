@@ -5,6 +5,27 @@
 
 <!-- [2026-11-13 Nguyễn Văn Thủy] Cơ cấu tổ chức một màn: công ty, cơ cấu, cửa hàng, kho, phòng ban; nhiều công ty cha; lịch sử thay đổi -->
 
+<!-- [2026-11-20 Nguyễn Văn Thủy] khai báo từng bước, có hoạt động, chỉ để thống kê, xoá trắng (0171) -->
+
+## Khai báo từng bước (mặc định khi mở màn)
+
+Cây linh hoạt: **Công ty (cấp 0) → Chi nhánh cấp 1 → cấp 2 → cấp 3 … → Cửa hàng**. Cấp nào dùng do đơn vị quyết; không dùng thì bỏ qua bước đó.
+
+| Bước | Khai gì | Gợi ý (ví dụ công ty chuỗi cửa hàng) |
+|---|---|---|
+| 1. Công ty | Mã, tên, MST. Thêm được nhiều công ty | Công ty CP … |
+| 2. Chi nhánh cấp 1 | Vùng / miền để gom số | Miền Bắc, Miền Trung, Miền Nam — thường tích *Chỉ để thống kê* |
+| 3. Chi nhánh cấp 2 | Chi nhánh mua hàng | MST riêng, kho tổng, phòng kế toán → tích *Có hoạt động* |
+| 4. Chi nhánh cấp 3 | Tỉnh / khu vực | gom các cửa hàng; có kho riêng thì tích *Có hoạt động* |
+| (thêm cấp) | Cấp sâu hơn khi cần | luôn có một bước trống để khai cấp mới |
+| Cửa hàng | Điểm bán, mã khớp hệ thống bán hàng | tự có bộ phận riêng |
+| Kho & bộ phận | Kho, bộ phận (phòng ban, tổ, nhóm…) | kho đặt ở cửa hàng hoặc cấp có hoạt động |
+
+- **Có hoạt động** (công ty / chi nhánh): cấp này tự có kho, ghi chứng từ. Phần mềm gắn một *điểm hoạt động* — chọn chi nhánh có sẵn (vd kho tổng 08000 của CN Phú Thọ) hoặc để trống để tạo mới cùng mã. Kho và chứng từ ghi theo điểm đó; điểm hoạt động hiện chung dòng với cấp của nó.
+- **Chỉ để thống kê**: không hiện ở ô tìm / chọn chi nhánh khi lập chứng từ, vẫn dùng để gom báo cáo.
+- **MST**: để trống thì dùng MST của cấp trên (chữ mờ trên bảng), đặt riêng thì áp cho cấp đó và các cấp con.
+- **Quay về dữ liệu gốc** = **xoá trắng** để khai lại từ bước 1 (cần mật khẩu, không hoàn tác): xoá mọi công ty, chi nhánh các cấp, bộ phận chưa dùng, cửa hàng / kho chưa có chứng từ; thu hồi gán vai trò theo chi nhánh / vùng. Cửa hàng, kho đã có chứng từ được giữ, nằm ở *Chưa xếp vào cơ cấu* để xếp lại.
+
 **Cơ cấu tổ chức** là màn DUY NHẤT để khai báo bộ máy: công ty, các cấp cơ cấu, cửa hàng / chi nhánh, kho và phòng ban
 cùng nằm trên một cây.
 
@@ -48,7 +69,7 @@ Cấp tự tính theo cây (gốc = cấp 0), không gõ tay.
   Nhập **lần lượt theo thứ tự** trên (cửa hàng cần cơ cấu, kho cần cửa hàng). Mã chưa có → thêm; mã đã có → cập nhật; ô trống giữ nguyên.
   Cửa hàng ghi mã phòng ban chưa có (tệp xuất từ bản cũ không kèm phòng ban riêng) thì phần mềm tự tạo phòng ban đó, tên "Phòng ban + tên cửa hàng".
 - Trong hộp thoại, mở một mục ở danh sách "Thuộc …" để đi sâu; nút **Quay lại** ở chân hộp thoại lùi về mục vừa xem.
-- **Quay về dữ liệu gốc** như trước.
+- **Quay về dữ liệu gốc**: xoá trắng cơ cấu (xem đầu trang).
 
 Không có nút Xoá dữ liệu đã lưu: ngừng dùng bằng cách bỏ tích **Theo dõi**.
 

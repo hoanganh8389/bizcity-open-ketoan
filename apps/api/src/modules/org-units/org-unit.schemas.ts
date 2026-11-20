@@ -28,10 +28,14 @@ export interface OrgUnitsTable {
   uid: Generated<string>;
   /** Loại nút company / unit (0131). */
   kind: Generated<string>;
+  /** Chỉ để thống kê (0171). */
+  stats_only: Generated<boolean>;
+  /** Điểm hoạt động của nút (0171). */
+  branch_id: string | null;
 }
 export type OrgTables = {
   org_units: OrgUnitsTable;
-  branches: { org_unit_id: ColumnType<string | null, string | null | undefined, string | null> };
+  branches: { org_unit_id: ColumnType<string | null, string | null | undefined, string | null>; stats_only: ColumnType<boolean, boolean | undefined, boolean> };
 };
 
 const code = z.string().trim().min(1, 'Nhập mã').max(32, 'Mã tối đa 32 ký tự');
@@ -50,6 +54,9 @@ export const orgCreateSchema = z.object({
   validFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   // [2026-11-13 Nguyễn Văn Thủy] loại nút: company = công ty, unit = đơn vị cơ cấu; trống = gốc là công ty, còn lại đơn vị (0131) (đóng góp)
   kind: z.enum(['company', 'unit']).optional(),
+  // [2026-11-20 Nguyễn Văn Thủy] chỉ để thống kê; điểm hoạt động = mã chi nhánh (null = bỏ) (0171) (đóng góp)
+  statsOnly: z.boolean().optional(),
+  branchCode: z.string().trim().max(64).nullable().optional(),
 });
 export type OrgCreate = z.infer<typeof orgCreateSchema>;
 
@@ -78,6 +85,8 @@ export interface OrgNodeDto {
   taxId?: string;
   /** Loại nút company / unit (0131). */
   kind?: string;
+  /** Chỉ để thống kê; mã điểm hoạt động của nút (0171). */
+  statsOnly?: boolean; branchCode?: string | null;
   code: string; shortCode: string; name: string; alias: string; note: string;
   parentCode: string | null; level: number; path: string; sortOrder: number; isActive: boolean;
   /** Đơn vị mua hàng: mã chi nhánh kho tổng (null = không phải). */
