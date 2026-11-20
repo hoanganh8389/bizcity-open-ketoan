@@ -164,7 +164,8 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   const [search, setSearch] = useState('');
   // Màn riêng: lọc chi nhánh → mã kho ở bảng lọc bên trái (giống ACC82 / ACC83), áp dụng khi bấm Tìm kiếm.
   // Kiểu xem: theo phiếu · chi tiết theo dòng hàng (như BH01) · tổng hợp theo mã hàng (như BH02) — cùng bộ lọc, cùng thẻ loại phiếu.
-  const [view, setView] = useState<View>(theoMa ? 'ma' : VIEWS[report ?? ''][0]![0]);
+  // [2026-11-20 Nguyễn Văn Thủy] ?xem=nhom mở sẵn kiểu gom (báo cáo Tổng hợp mua hàng theo chi nhánh từ Bàn làm việc) (đóng góp)
+  const [view, setView] = useState<View>(theoMa ? 'ma' : VIEWS[report ?? ''].find(([k]) => k === params.get('xem'))?.[0] ?? VIEWS[report ?? ''][0]![0]);
   const [branchCodes, setBranchCodes] = useState('');
   const [whCodes, setWhCodes] = useState('');
   // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — Báo cáo mua hàng (xem theo dòng / mã): lọc theo nhóm hàng

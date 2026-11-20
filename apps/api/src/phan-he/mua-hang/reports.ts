@@ -489,12 +489,12 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   type Item = { key: string; level: 'error' | 'warn' | 'info'; text: string; count: number; amount?: number; path: string };
   const items: Item[] = [];
   const pending = ctx.docs.filter((d) => d.status === 'pending_approval');
-  if (pending.length) items.push({ key: 'pending', level: 'warn', text: 'Chứng từ chờ duyệt', count: pending.length, path: '/mua-hang/chung-tu?trang-thai=pending_approval' });
-  if (blocked.length) items.push({ key: 'blocked', level: 'error', text: 'Phiếu còn lỗi chặn duyệt (hạn mức, lô, trùng hoá đơn…)', count: blocked.length, path: '/mua-hang/chung-tu?loi=1' });
+  if (pending.length) items.push({ key: 'pending', level: 'warn', text: 'Chứng từ chờ duyệt', count: pending.length, path: '/mua-hang/tong-hop?trang-thai=pending_approval' });
+  if (blocked.length) items.push({ key: 'blocked', level: 'error', text: 'Phiếu còn lỗi chặn duyệt (hạn mức, lô, trùng hoá đơn…)', count: blocked.length, path: '/mua-hang/tong-hop?loi=1' });
   if (overdue.length) items.push({ key: 'overdue', level: 'error', text: 'Khoản nợ NCC quá hạn', count: overdue.length, amount: sum(overdue), path: '/mua-hang/han-muc?tab=den-han' });
   if (dueToday.length) items.push({ key: 'due', level: 'warn', text: 'Khoản nợ NCC đến hạn hôm nay', count: dueToday.length, amount: sum(dueToday), path: '/mua-hang/han-muc?tab=den-han' });
   if (soon.length) items.push({ key: 'soon', level: 'info', text: `Khoản nợ sắp đến hạn (${ctx.settings.warnDays} ngày tới)`, count: soon.length, amount: sum(soon), path: '/mua-hang/han-muc?tab=den-han' });
-  if (openOrders.length) items.push({ key: 'orders', level: 'info', text: 'Đơn đặt hàng chưa nhận đủ hàng', count: openOrders.length, amount: openOrders.reduce((s, d) => { const p = orderProgress(d, ctx.docs, undefined, orderUnits); return s + (p.ordered ? (d.totals.total * p.remaining) / p.ordered : 0); }, 0), path: '/mua-hang/chung-tu?loai=order' });
+  if (openOrders.length) items.push({ key: 'orders', level: 'info', text: 'Đơn đặt hàng chưa nhận đủ hàng', count: openOrders.length, amount: openOrders.reduce((s, d) => { const p = orderProgress(d, ctx.docs, undefined, orderUnits); return s + (p.ordered ? (d.totals.total * p.remaining) / p.ordered : 0); }, 0), path: '/mua-hang/tong-hop?loai=order' });
   const exp = lots.filter((l) => l.level === 'expired'), near = lots.filter((l) => l.level === 'm7' || l.level === 'm15' || l.level === 'm30');
   if (exp.length) items.push({ key: 'expired', level: 'error', text: 'Lô hàng đã hết hạn còn tồn', count: exp.length, path: '/mua-hang/lo-han' });
   if (near.length) items.push({ key: 'near', level: 'warn', text: 'Lô hàng còn ≤ 30 ngày hết hạn', count: near.length, path: '/mua-hang/lo-han' });
@@ -502,7 +502,7 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   if (costs.length) items.push({ key: 'costs', level: 'warn', text: 'Chi phí mua hàng chưa phân bổ vào phiếu nhập', count: costs.length, path: '/mua-hang/phan-bo' });
   // Phiếu nhập ngoài đơn (ngoại lệ, đã duyệt) kế toán chưa rà soát — xử lý riêng.
   const outside = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && d.outsideOrder?.by && !d.outsideOrder.reviewedBy);
-  if (outside.length) items.push({ key: 'outside', level: 'warn', text: 'Phiếu nhập ngoài đơn (không theo đơn đặt) chưa rà soát', count: outside.length, amount: outside.reduce((s, d) => s + d.totals.total, 0), path: '/mua-hang/chung-tu?ngoai-don=cho' });
+  if (outside.length) items.push({ key: 'outside', level: 'warn', text: 'Phiếu nhập ngoài đơn (không theo đơn đặt) chưa rà soát', count: outside.length, amount: outside.reduce((s, d) => s + d.totals.total, 0), path: '/mua-hang/tong-hop?ngoai-don=cho' });
   if (giftOver.length) items.push({ key: 'gifts', level: 'error', text: 'Quà xuất vượt tồn', count: giftOver.length, path: '/mua-hang/qua-tang' });
   // Hoá đơn NCC (MH22): còn dòng chưa nhận diện mã → phải chọn mã (phần mềm học) thì phiếu nhập mới lấy đủ dòng; chưa có phiếu nhập → lập phiếu.
   const invs = await trx.selectFrom('supplier_invoices as i').select(['i.id', 'i.partner_code', 'i.invoice_series', 'i.invoice_no', 'i.total',
@@ -513,7 +513,45 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const rcpts = ctx.docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && d.invoice?.no);
   const invNoReceipt = invs.filter((x) => !rcpts.some((d) => d.partnerCode === x.partner_code && sameInvoice({ no: d.invoice!.no, series: d.invoice!.serial }, { no: x.invoice_no, series: x.invoice_series })));
   if (invNoReceipt.length) items.push({ key: 'inv_no_receipt', level: 'warn', text: 'Hoá đơn NCC chưa có phiếu nhập', count: invNoReceipt.length, amount: invNoReceipt.reduce((s, x) => s + toNumber(x.total), 0), path: '/mua-hang/hoa-don-ncc?tinh-trang=chua_co_phieu' });
+  // [2026-11-20 Nguyễn Văn Thủy] SOÁT THIẾU / LỆCH theo cột "Kiểm soát hệ thống" của 11 bước mua hàng (motamuahangsau): Bàn làm việc
+  // gắn từng việc vào đúng bước (B1 hồ sơ NCC, B2–3 hợp đồng & giá, B5–6 đơn đặt, B8 nhập kho ↔ hoá đơn, B10 trả hàng, B11 thanh lý) (đóng góp)
+  const live = ctx.docs.filter((d) => d.status !== 'cancelled');
+  const used = [...new Set(live.map((d) => d.partnerCode).filter(Boolean))];
+  if (used.length) {
+    const sups = await trx.selectFrom('partners').select(['code', 'tax_code']).where('tenant_id', '=', tenantId).where('code', 'in', used).execute();
+    const noTax = sups.filter((x) => !String(x.tax_code ?? '').trim());
+    if (noTax.length) items.push({ key: 'ncc_no_tax', level: 'warn', text: 'NCC đã có chứng từ mà chưa khai mã số thuế', count: noTax.length, path: '/mua-hang/nha-cung-cap' });
+    const byTax = new Map<string, number>();
+    for (const x of sups) { const t = String(x.tax_code ?? '').trim(); if (t) byTax.set(t, (byTax.get(t) ?? 0) + 1); }
+    const dupTax = [...byTax.values()].filter((n) => n > 1).length;
+    if (dupTax) items.push({ key: 'ncc_dup_tax', level: 'error', text: 'Mã số thuế trùng giữa các NCC', count: dupTax, path: '/mua-hang/nha-cung-cap' });
+  }
+  const contracts = (await trx.selectFrom('dimensions').select(['code', 'extra']).where('tenant_id', '=', tenantId).where('kind', '=', 'contract')
+    .where(sql<boolean>`extra->>'type' = 'goods_supplier'`).execute()).map((c) => ({ code: c.code, x: (c.extra ?? {}) as Record<string, unknown> }));
+  const endOf = (c: { x: Record<string, unknown> }) => (typeof c.x.endDate === 'string' ? c.x.endDate.slice(0, 10) : '');
+  const activeC = contracts.filter((c) => c.x.status !== 'liquidated' && c.x.status !== 'draft');
+  const in30 = new Date(Date.parse(asOf) + 30 * 86400000).toISOString().slice(0, 10);
+  const expired = activeC.filter((c) => endOf(c) && endOf(c) < asOf);
+  const expiring = activeC.filter((c) => endOf(c) && endOf(c) >= asOf && endOf(c) <= in30);
+  if (expired.length) items.push({ key: 'contract_expired', level: 'warn', text: 'Hợp đồng đã hết hạn chưa thanh lý', count: expired.length, path: '/mua-hang/hop-dong' });
+  if (expiring.length) items.push({ key: 'contract_expiring', level: 'info', text: 'Hợp đồng hết hạn trong 30 ngày tới', count: expiring.length, path: '/mua-hang/hop-dong' });
+  if (activeC.length) {
+    const priced = new Set((await trx.selectFrom('supplier_products').select('contract_code').where('tenant_id', '=', tenantId).where('is_active', '=', true)
+      .where('contract_code', 'in', activeC.map((c) => c.code)).execute()).map((r) => r.contract_code));
+    const noPrice = activeC.filter((c) => !priced.has(c.code));
+    if (noPrice.length) items.push({ key: 'contract_no_price', level: 'warn', text: 'Hợp đồng chưa khai bảng giá mua', count: noPrice.length, path: '/mua-hang/hop-dong' });
+  }
+  const orderNoContract = live.filter((d) => d.kind === 'order' && !d.contractCode);
+  if (orderNoContract.length) items.push({ key: 'order_no_contract', level: 'warn', text: 'Đơn đặt hàng không gắn hợp đồng (giá không lấy theo hợp đồng)', count: orderNoContract.length, path: '/mua-hang/tong-hop?loai=order' });
+  const priceDiff = live.filter((d) => (d.kind === 'order' || d.kind === 'receipt') && (d.checks ?? []).some((c) => c.code === 'price_fixed'));
+  if (priceDiff.length) items.push({ key: 'price_diff', level: 'warn', text: 'Đơn / phiếu nhập có giá lệch hợp đồng', count: priceDiff.length, path: '/mua-hang/doi-chieu' });
+  const orderPending = ctx.docs.filter((d) => d.kind === 'order' && d.status === 'pending_approval');
+  if (orderPending.length) items.push({ key: 'order_pending', level: 'warn', text: 'Đơn đặt hàng chờ duyệt', count: orderPending.length, path: '/mua-hang/tong-hop?loai=order&trang-thai=pending_approval' });
+  const rcptNoInv = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && !d.invoice?.no);
+  if (rcptNoInv.length) items.push({ key: 'receipt_no_invoice', level: 'info', text: 'Phiếu nhập chưa có hoá đơn NCC', count: rcptNoInv.length, amount: rcptNoInv.reduce((s, d) => s + d.totals.total, 0), path: '/mua-hang/tong-hop?loai=receipt' });
+  const returnNoRef = live.filter((d) => d.kind === 'return' && !d.refIds?.length);
+  if (returnNoRef.length) items.push({ key: 'return_no_ref', level: 'error', text: 'Phiếu trả hàng chưa gắn phiếu nhập gốc', count: returnNoRef.length, path: '/mua-hang/tong-hop?loai=return' });
   const drafts = ctx.docs.filter((d) => d.status === 'draft');
-  if (drafts.length) items.push({ key: 'drafts', level: 'info', text: 'Phiếu nháp chưa gửi duyệt', count: drafts.length, path: '/mua-hang/chung-tu?trang-thai=draft' });
+  if (drafts.length) items.push({ key: 'drafts', level: 'info', text: 'Phiếu nháp chưa gửi duyệt', count: drafts.length, path: '/mua-hang/tong-hop?trang-thai=draft' });
   return { asOf, byKind, items };
 }

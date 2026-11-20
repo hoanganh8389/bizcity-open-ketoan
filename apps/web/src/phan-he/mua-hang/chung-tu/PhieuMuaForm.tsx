@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { gridNav } from '@/lib/gridNav';
 import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
+import { ChuoiChungTu } from '../thanh-phan/ChuoiChungTu';
 import { refOf } from '@ketoan/contracts';
 import {
   COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, orderProgress, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termFromRule, termText,
@@ -710,6 +711,8 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
           ]} />}
         {fill && <DienMatHang doc={v} data={data} onClose={() => setFill(false)} onAdd={(ls) => { setFill(false); set({ lines: [...v.lines.filter((l) => l.sku), ...ls] }); setTab('hang'); }} />}
         {fillHd && hd && <DienMatHang doc={v} data={data} theoHopDong={{ code: hd.code, skus: hd.skus }} onClose={() => setFillHd(false)} onAdd={(ls) => { setFillHd(false); set({ lines: [...v.lines.filter((l) => l.sku), ...ls] }); setTab('hang'); }} />}
+        {/* [2026-11-20 Nguyễn Văn Thủy] chuỗi chứng từ của phiếu: hợp đồng → đơn → phiếu nhập → hoá đơn → thanh toán, báo mắt xích thiếu / lệch (đóng góp) */}
+        {v.kind !== 'gift_in' && v.kind !== 'gift_out' && (!v.id.startsWith('new-') || v.refIds?.length || v.contractCode) && <ChuoiChungTu doc={v} docs={data.docs} units={{ ...data.units, ...(a?.units ?? {}) }} onOpen={onOpen} />}
         <div className={`mh-sheet-body ${readOnly ? 'view-plain' : ''}`} ref={kl.body} {...kl.bodyProps}>
           {/* Thẻ Hàng hoá: khung trái không cuộn cả khối — bảng hàng chiếm phần còn lại và tự cuộn (thanh cuộn ngang luôn thấy, đầu phiếu đứng yên). */}
           <div className={`mh-main ${tab === 'hang' ? 'mh-main-hang' : ''}`}>

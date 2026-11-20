@@ -25,6 +25,7 @@ export const TEN_MAN: Record<string, TenMan> = {
   '/mua-hang/bao-cao': { label: 'Sổ chi tiết mua hàng' },
   '/mua-hang/doi-chieu': { label: 'Tình hình thực hiện đơn mua hàng' },
   '/mua-hang/nhat-ky': { label: 'Nhật ký thao tác mua hàng' },
+  '/mua-hang/han-muc': { label: 'Công nợ NCC' }, // [2026-11-20 Nguyễn Văn Thủy] tên ngắn: hạn mức, khoản đến hạn, quá hạn (đóng góp)
   // Bán hàng
   '/ban-hang/phieu-ban': { label: 'Bán hàng' },
   '/ban-hang/tra-lai': { label: 'Trả lại hàng bán' },

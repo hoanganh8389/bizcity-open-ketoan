@@ -70,13 +70,14 @@ export const GON_DEFS: GonDef[] = [
     // thẻ đầu trang chỉ 5 màn làm hằng ngày; danh sách theo việc: Hằng ngày / Định kỳ / Khai báo. Mỗi việc một lối vào (đóng góp)
     the: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/han-muc', '/mua-hang/hop-dong'],
     sections: [
-      { label: 'Hằng ngày', paths: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop'] },
-      { label: 'Định kỳ', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang'] },
-      { label: 'Khai báo', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/cai-dat'] },
+      { label: 'Hằng ngày', paths: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/han-muc'] },
+      { label: 'Đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop'] },
+      { label: 'Định kỳ', paths: ['/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang'] },
+      { label: 'Khai báo', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/mua-hang/cai-dat'] },
     ],
     reports: [
       { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/mua-hang/doi-chieu', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/chi-tiet-chinh-sach', '/mua-hang/so-kho', '/mua-hang/ton-kho', '/mua-hang/nhat-ky'] },
-      { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/mua-hang/cong-no-hop-dong', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no', '/cong-no/doi-chieu'] },
+      { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/bao-cao/chi-tiet-thanh-toan', '/mua-hang/cong-no-hop-dong', '/cong-no/doi-chieu', '/bao-cao/tuoi-no'] },
     ],
   },
   {

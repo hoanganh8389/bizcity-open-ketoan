@@ -312,3 +312,16 @@ tr.mh-me td { font-weight: 600; }
 .hd-box > .mh-h4 { margin-top: 0; }
 @media (max-width: 1800px) { .hd-gia-cs { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) { .hd-page { grid-template-columns: minmax(0, 1fr); } .hd-nav { position: static; flex-direction: row; flex-wrap: wrap; } .hd-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* [2026-11-20 Nguyễn Văn Thủy] Chuỗi chứng từ trong phiếu (thanh-phan/ChuoiChungTu): xanh = có, đậm = phiếu đang mở, cam = thiếu / lệch (đóng góp) */
+.mh-chuoi { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px 16px; border-bottom: 1px solid var(--line); background: #f7f9fc; font-size: 12px; }
+.mh-chuoi-mui { color: var(--ink-400); flex: none; }
+.mh-chuoi-mat { display: inline-flex; align-items: baseline; gap: 5px; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-500); }
+.mh-chuoi-mat b { font-weight: 600; }
+.mh-chuoi-mat small { font-size: 11px; }
+.mh-chuoi-mat button { border: 0; background: none; padding: 0; color: var(--brand-700); cursor: pointer; font-size: 12px; }
+.mh-chuoi-mat button:hover { text-decoration: underline; }
+.mh-chuoi-mat.co { color: #188038; border-color: #b7dfc3; }
+.mh-chuoi-mat.dang { color: var(--ink-900); border-color: var(--brand-600); background: var(--brand-50); }
+.mh-chuoi-mat.thieu { color: var(--warn, #e8710a); border-color: #f5c99c; background: #fff8f1; }
+.mh-chuoi-mat.chua { color: var(--ink-400); border-style: dashed; }

@@ -6,7 +6,7 @@
 import type { MenuItem } from '@ketoan/contracts';
 
 export const muaHangMenu: MenuItem[] = [
-  // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — menu theo việc của kế toán mua hàng: Hằng ngày / Định kỳ / Khai báo / Báo cáo.
+  // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — menu theo việc của kế toán mua hàng: Hằng ngày / Đặt hàng / Định kỳ / Khai báo / Báo cáo.
   // Bỏ 9 lối vào cùng mở MH11 (Đơn mua, Mua hàng, Trả lại…): một màn Chứng từ mua hàng, chọn loại ở bộ lọc. Danh mục chung
   // (mặt hàng, nhóm hàng, ĐVT, cơ cấu, nhóm NCC) chỉ ở nhóm Danh mục — mỗi việc một lối vào (đóng góp)
   {
@@ -15,6 +15,16 @@ export const muaHangMenu: MenuItem[] = [
     children: [
       { key: 'mh-tong-hop', label: 'Chứng từ mua hàng', path: '/mua-hang/tong-hop', code: 'MH11' },
       { key: 'mh-hoa-don-ncc', label: 'Hoá đơn đầu vào của NCC', path: '/mua-hang/hoa-don-ncc', code: 'MH22' },
+      { key: 'mh-han-muc', label: 'Công nợ NCC', path: '/mua-hang/han-muc', code: 'MH05' },
+    ],
+  },
+  {
+    key: 'mua-hang-dat-hang',
+    label: 'Đặt hàng',
+    children: [
+      { key: 'mh-dang-ky-max', label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max', code: 'MH17' },
+      { key: 'mh-ton-max', label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max', code: 'MH16' },
+      { key: 'mh-cong-thuc', label: 'Công thức đặt hàng', path: '/mua-hang/cong-thuc', code: 'MH18' },
       { key: 'mh-dat-hang', label: 'Phân tích đặt hàng', path: '/mua-hang/dat-hang', code: 'MH02' },
       { key: 'mh-chuyen-shop', label: 'Chuyển hàng xuống shop', path: '/mua-hang/chuyen-shop', code: 'MH19' },
     ],
@@ -23,7 +33,6 @@ export const muaHangMenu: MenuItem[] = [
     key: 'mua-hang-dinh-ky',
     label: 'Định kỳ',
     children: [
-      { key: 'mh-han-muc', label: 'Hạn mức & công nợ đến hạn', path: '/mua-hang/han-muc', code: 'MH05' },
       { key: 'mh-thuong', label: 'Tính thưởng cuối kỳ', path: '/mua-hang/thuong', code: 'MH06' },
       { key: 'mh-phan-bo', label: 'Phân bổ & giá vốn thực tế', path: '/mua-hang/phan-bo', code: 'MH07' },
       { key: 'mh-lo-han', label: 'Lô & hạn dùng', path: '/mua-hang/lo-han', code: 'MH08' },
@@ -37,9 +46,6 @@ export const muaHangMenu: MenuItem[] = [
       { key: 'mh-ncc', label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap', code: 'MH01' },
       { key: 'mh-hop-dong', label: 'Hợp đồng mua hàng', path: '/mua-hang/hop-dong', code: 'MH29' },
       { key: 'mh-chinh-sach', label: 'Chính sách mua hàng', path: '/mua-hang/chinh-sach', code: 'MH04' },
-      { key: 'mh-dang-ky-max', label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max', code: 'MH17' },
-      { key: 'mh-ton-max', label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max', code: 'MH16' },
-      { key: 'mh-cong-thuc', label: 'Công thức đặt hàng', path: '/mua-hang/cong-thuc', code: 'MH18' },
       { key: 'mh-cai-dat', label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat', code: 'MH12' },
       { key: 'mh-bien-the', label: 'Tách / gộp mã con khi đặt hàng', path: '/mua-hang/bien-the', code: 'MH26' },
     ],
