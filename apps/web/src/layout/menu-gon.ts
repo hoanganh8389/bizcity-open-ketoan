@@ -44,7 +44,6 @@ export const groupHome = (key: string) => `/nhom/${key}`;
 export const THIET_LAP = 'he-thong';
 export const DANG_PHAT_TRIEN = 'đang phát triển';
 
-const MUA = (loai: string) => `/mua-hang/tong-hop?loai=${loai}`;
 
 export const GON_DEFS: GonDef[] = [
   // [2026-11-20 khanhtd] TRA-CUU — nhóm Tra cứu đứng đầu menu: các màn chỉ đọc của module modules/tra-cuu (TC01 Tra chính sách theo mã hàng) (đóng góp)
@@ -66,20 +65,17 @@ export const GON_DEFS: GonDef[] = [
     reports: [{ label: 'Tiền gửi', paths: ['/quy/so-tien-gui', '/quy/so-du-ngan-hang', '/quy/so-du-tien', '/quy/chuyen-tien-noi-bo', '/bao-cao/tien-vay'] }],
   },
   {
-    key: 'mua-hang', label: 'Mua hàng', icon: 'ShoppingBag', description: 'Đơn mua hàng, mua hàng, trả lại, giảm giá, hóa đơn đầu vào', color: '#e8710a', module: 'mua-hang', homeLabel: 'Quy trình',
-    // [2026-11-15 Nguyễn Văn Thủy] menu đủ theo sơ đồ Quy trình: chứng từ → hoá đơn đầu vào → tồn max, đặt hàng → công nợ, thưởng, giá vốn → danh mục, cài đặt (đóng góp)
-    the: [MUA('order'), MUA('receipt'), MUA('return'), MUA('rebate'), MUA('payment'), '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/ton-max', '/mua-hang/han-muc', '/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/mua-hang/cong-no-hop-dong', '/mua-hang/cai-dat'],
+    key: 'mua-hang', label: 'Mua hàng', icon: 'ShoppingBag', description: 'Đơn đặt, nhập hàng, hoá đơn NCC, trả hàng, công nợ và thanh toán NCC', color: '#e8710a', module: 'mua-hang', homeLabel: 'Bàn làm việc',
+    // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — bấm Mua hàng ở menu trái vào thẳng Bàn làm việc (việc cần làm + lập nhanh);
+    // thẻ đầu trang chỉ 5 màn làm hằng ngày; danh sách theo việc: Hằng ngày / Định kỳ / Khai báo. Mỗi việc một lối vào (đóng góp)
+    the: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/han-muc', '/mua-hang/hop-dong'],
     sections: [
-      { paths: [MUA('order'), MUA('receipt'), MUA('return'), MUA('exchange'), MUA('rebate'), MUA('gift_in'), MUA('cost'), MUA('payment'), MUA('prepayment'), '/mua-hang/tong-hop'] },
-      { label: 'Hóa đơn đầu vào', paths: ['/mua-hang/hoa-don-ncc', '/mua-hang/doi-chieu'] }, // [2026-11-17 Nguyễn Văn Thủy] tạm ẩn THUE01 Hoá đơn từ cơ quan thuế — đã có Hoá đơn đầu vào (đóng góp)
-      { label: 'Tồn max, đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop'] },
-      // [2026-11-15 Nguyễn Văn Thủy] sổ kho / tồn kho theo mặt hàng đưa lên menu cho dễ thấy (đóng góp)
-      { label: 'Sổ kho, tồn kho', paths: ['/mua-hang/so-kho', '/mua-hang/ton-kho'] },
-      { label: 'Công nợ, thưởng, giá vốn', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang', '/mua-hang/nhat-ky'] },
-      { label: 'Danh mục, cài đặt', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/danh-muc/mat-hang', '/mua-hang/cai-dat'] },
+      { label: 'Hằng ngày', paths: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop'] },
+      { label: 'Định kỳ', paths: ['/mua-hang/han-muc', '/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang'] },
+      { label: 'Khai báo', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/cai-dat'] },
     ],
     reports: [
-      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/chi-tiet-chinh-sach', '/mua-hang/so-kho', '/mua-hang/ton-kho'] },
+      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/mua-hang/doi-chieu', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/chi-tiet-chinh-sach', '/mua-hang/so-kho', '/mua-hang/ton-kho', '/mua-hang/nhat-ky'] },
       { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/mua-hang/cong-no-hop-dong', '/bao-cao/chi-tiet-thanh-toan', '/bao-cao/tuoi-no', '/cong-no/doi-chieu'] },
     ],
   },

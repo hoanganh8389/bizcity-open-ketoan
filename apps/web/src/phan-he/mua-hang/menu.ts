@@ -6,60 +6,42 @@
 import type { MenuItem } from '@ketoan/contracts';
 
 export const muaHangMenu: MenuItem[] = [
-  // ---------------- Phân hệ Mua hàng ----------------
+  // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — menu theo việc của kế toán mua hàng: Hằng ngày / Định kỳ / Khai báo / Báo cáo.
+  // Bỏ 9 lối vào cùng mở MH11 (Đơn mua, Mua hàng, Trả lại…): một màn Chứng từ mua hàng, chọn loại ở bộ lọc. Danh mục chung
+  // (mặt hàng, nhóm hàng, ĐVT, cơ cấu, nhóm NCC) chỉ ở nhóm Danh mục — mỗi việc một lối vào (đóng góp)
   {
     key: 'mua-hang-nghiep-vu',
-    label: 'Nghiệp vụ mua hàng',
+    label: 'Hằng ngày',
     children: [
-      // [2026-11-11 Nguyễn Văn Thủy] trả lại MH01: nơi cấu hình chính sách, giá, hạn mức theo từng NCC (đóng góp)
-      { key: 'mh-ncc', label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap', code: 'MH01' },
-      // [2026-11-18 Nguyễn Văn Thủy] hợp đồng mua: gốc của giá, chính sách, đơn đặt (0163) (đóng góp)
-      { key: 'mh-hop-dong', label: 'Hợp đồng mua hàng', path: '/mua-hang/hop-dong', code: 'MH29' },
-      { key: 'mh-tong-hop', label: 'Tổng hợp mua hàng', path: '/mua-hang/tong-hop', code: 'MH11' },
-      // [2026-11-11 Nguyễn Văn Thủy] lối vào theo loại chứng từ (cùng màn MH11, lọc sẵn loại) (đóng góp)
-      { key: 'mh-don-mua', label: 'Đơn mua hàng', path: '/mua-hang/tong-hop?loai=order', code: 'MH11' },
-      { key: 'mh-mua-hang', label: 'Mua hàng', path: '/mua-hang/tong-hop?loai=receipt', code: 'MH11' },
-      { key: 'mh-tra-lai', label: 'Trả lại hàng mua', path: '/mua-hang/tong-hop?loai=return', code: 'MH11' },
-      { key: 'mh-giam-gia', label: 'Giảm giá hàng mua', path: '/mua-hang/tong-hop?loai=rebate', code: 'MH11' },
-      // [2026-11-15 Nguyễn Văn Thủy] đủ các loại phiếu của sơ đồ Quy trình (cùng màn MH11, lọc sẵn loại) (đóng góp)
-      { key: 'mh-doi-hang', label: 'Đổi hàng nhà cung cấp', path: '/mua-hang/tong-hop?loai=exchange', code: 'MH11' },
-      { key: 'mh-nhan-qua', label: 'Nhận / xuất quà tặng', path: '/mua-hang/tong-hop?loai=gift_in', code: 'MH11' },
-      { key: 'mh-chi-phi', label: 'Chi phí mua hàng', path: '/mua-hang/tong-hop?loai=cost', code: 'MH11' },
-      { key: 'mh-tra-tien', label: 'Trả tiền nhà cung cấp', path: '/mua-hang/tong-hop?loai=payment', code: 'MH11' },
-      { key: 'mh-ung-truoc', label: 'Ứng trước nhà cung cấp', path: '/mua-hang/tong-hop?loai=prepayment', code: 'MH11' },
+      { key: 'mh-tong-hop', label: 'Chứng từ mua hàng', path: '/mua-hang/tong-hop', code: 'MH11' },
       { key: 'mh-hoa-don-ncc', label: 'Hoá đơn đầu vào của NCC', path: '/mua-hang/hoa-don-ncc', code: 'MH22' },
+      { key: 'mh-dat-hang', label: 'Phân tích đặt hàng', path: '/mua-hang/dat-hang', code: 'MH02' },
+      { key: 'mh-chuyen-shop', label: 'Chuyển hàng xuống shop', path: '/mua-hang/chuyen-shop', code: 'MH19' },
+    ],
+  },
+  {
+    key: 'mua-hang-dinh-ky',
+    label: 'Định kỳ',
+    children: [
       { key: 'mh-han-muc', label: 'Hạn mức & công nợ đến hạn', path: '/mua-hang/han-muc', code: 'MH05' },
       { key: 'mh-thuong', label: 'Tính thưởng cuối kỳ', path: '/mua-hang/thuong', code: 'MH06' },
       { key: 'mh-phan-bo', label: 'Phân bổ & giá vốn thực tế', path: '/mua-hang/phan-bo', code: 'MH07' },
       { key: 'mh-lo-han', label: 'Lô & hạn dùng', path: '/mua-hang/lo-han', code: 'MH08' },
       { key: 'mh-qua-tang', label: 'Quà tặng', path: '/mua-hang/qua-tang', code: 'MH09' },
-      { key: 'mh-nhat-ky', label: 'Nhật ký mua hàng', path: '/mua-hang/nhat-ky', code: 'MH10' },
-    ],
-  },
-  {
-    key: 'mua-hang-ton-max',
-    label: 'Tồn max & đặt hàng',
-    children: [
-      { key: 'mh-dat-hang', label: 'Phân tích đặt hàng', path: '/mua-hang/dat-hang', code: 'MH02' },
-      { key: 'mh-ton-max', label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max', code: 'MH16' },
-      { key: 'mh-dang-ky-max', label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max', code: 'MH17' },
-      { key: 'mh-chuyen-shop', label: 'Chuyển hàng xuống shop', path: '/mua-hang/chuyen-shop', code: 'MH19' },
-      { key: 'mh-cong-thuc', label: 'Công thức đặt hàng', path: '/mua-hang/cong-thuc', code: 'MH18' },
     ],
   },
   {
     key: 'mua-hang-danh-muc',
-    label: 'Danh mục mua hàng',
+    label: 'Khai báo',
     children: [
+      { key: 'mh-ncc', label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap', code: 'MH01' },
+      { key: 'mh-hop-dong', label: 'Hợp đồng mua hàng', path: '/mua-hang/hop-dong', code: 'MH29' },
       { key: 'mh-chinh-sach', label: 'Chính sách mua hàng', path: '/mua-hang/chinh-sach', code: 'MH04' },
+      { key: 'mh-dang-ky-max', label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max', code: 'MH17' },
+      { key: 'mh-ton-max', label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max', code: 'MH16' },
+      { key: 'mh-cong-thuc', label: 'Công thức đặt hàng', path: '/mua-hang/cong-thuc', code: 'MH18' },
       { key: 'mh-cai-dat', label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat', code: 'MH12' },
-      // [2026-11-15 Nguyễn Văn Thủy] MH26 hiện ở Thiết lập › Cấu hình (menu gọn), bỏ khỏi sơ đồ quy trình (đóng góp)
       { key: 'mh-bien-the', label: 'Tách / gộp mã con khi đặt hàng', path: '/mua-hang/bien-the', code: 'MH26' },
-      { key: 'mh-nhom-doi-tuong', label: 'Nhóm nhà cung cấp', path: '/danh-muc/nhom-doi-tuong', code: 'DM08' },
-      { key: 'mh-mat-hang', label: 'Danh mục mặt hàng', path: '/danh-muc/mat-hang', code: 'DM10' },
-      { key: 'mh-phan-loai', label: 'Nhóm hàng', path: '/danh-muc/phan-loai-hang', code: 'DM11' },
-      { key: 'mh-don-vi-tinh', label: 'Danh mục đơn vị tính', path: '/danh-muc/don-vi-tinh', code: 'DM15' },
-      { key: 'mh-so-do-to-chuc', label: 'Cơ cấu tổ chức', path: '/danh-muc/so-do-to-chuc', code: 'DM16' },
     ],
   },
   {
@@ -70,6 +52,7 @@ export const muaHangMenu: MenuItem[] = [
       { key: 'mh-th-mat-hang', label: 'Tổng hợp mua hàng theo mặt hàng', path: '/mua-hang/tong-hop-mat-hang', code: 'MH23A' },
       { key: 'mh-so-kho', label: 'Sổ kho theo mặt hàng', path: '/mua-hang/so-kho', code: 'MH24' },
       { key: 'mh-ton-kho', label: 'Tồn kho theo mặt hàng', path: '/mua-hang/ton-kho', code: 'MH25' },
+      { key: 'mh-nhat-ky', label: 'Nhật ký mua hàng', path: '/mua-hang/nhat-ky', code: 'MH10' },
       { key: 'mh-doi-chieu', label: 'Đối chiếu đơn đặt ↔ phiếu nhập', path: '/mua-hang/doi-chieu', code: 'MH21' },
       { key: 'mh-bc-chinh-sach', label: 'Chi tiết chính sách mua hàng', path: '/mua-hang/chi-tiet-chinh-sach', code: 'MH14' },
       { key: 'mh-nk-mua-hang', label: 'Sổ nhật ký mua hàng', path: '/bao-cao/nhat-ky-mua-hang', code: 'ACC77' },

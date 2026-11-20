@@ -22,6 +22,7 @@ import { GROUP_FLOWS, MODULE_FLOWS } from '../../phan-he/flows';
 // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — thẻ "Trụ cột" cạnh "Quy trình": phân hệ này dựa vào trụ cột nào của Core, đạt tới đâu (training cho kế toán, kim chỉ nam cho dev)
 import { PillarMatrix } from '../system/PillarsPage';
 import '@/components/quy-trinh/quy-trinh.css';
+import { BanLamViecMua } from '../../phan-he/mua-hang/ban-lam-viec/BanLamViecMua';
 
 export function ModuleHomePage() {
   const { key = '' } = useParams();
@@ -104,7 +105,7 @@ export function GroupHomePage() {
   );
   const veSoDo = flowFirst
     ? <button type="button" className="btn btn-sm" style={{ marginBottom: 10 }} onClick={() => setSp({}, { replace: true })}><ArrowLeft size={14} /> Về luồng chi tiết</button>
-    : <button type="button" className="btn btn-sm" style={{ marginBottom: 10 }} onClick={() => setSp({}, { replace: true })}><ArrowLeft size={14} /> Về sơ đồ</button>;
+    : <button type="button" className="btn btn-sm" style={{ marginBottom: 10 }} onClick={() => setSp({}, { replace: true })}><ArrowLeft size={14} /> {g.key === 'mua-hang' ? 'Về bàn làm việc' : 'Về sơ đồ'}</button>;
   // Thanh nút trên luồng chi tiết (nhóm mở luồng trước): xem rút gọn, trụ cột, hướng dẫn.
   const thanhLuong = (
     <div className="row" style={{ gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
@@ -113,6 +114,10 @@ export function GroupHomePage() {
       <button type="button" className="btn btn-sm" onClick={() => setHelp(true)}><HelpCircle size={14} /> Hướng dẫn</button>
     </div>
   );
+  // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — Mua hàng vào là Bàn làm việc; sơ đồ quy trình mở bằng nút (?xem=chi-tiet / so-do) (đóng góp)
+  if (g.key === 'mua-hang' && !xem) {
+    return <><BanLamViecMua g={g} onHelp={() => setHelp(true)} />{help && <HelpDrawer guideKey={helpKey} onClose={() => setHelp(false)} />}</>;
+  }
   return (
     <>
       {xem === 'tru-cot' && g.module ? <>{veSoDo}<PillarMatrix module={g.module} compact /></>

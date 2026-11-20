@@ -37,9 +37,9 @@ export const SO_DO_V2: Record<string, SoDo> = {
     rows: [],
     nhom: {
       chuoi: [
-        { nhom: 'Khai báo', icon: 'Settings', ghiChu: 'Nhà cung cấp, mặt hàng', items: [
-          { label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap' }, { label: 'Quản lý mặt hàng', path: '/danh-muc/mat-hang' },
-          { label: 'Nhóm hàng', path: '/danh-muc/phan-loai-hang' }, { label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat' }] },
+        // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — mặt hàng, nhóm hàng ở nhóm Danh mục (đóng góp)
+        { nhom: 'Khai báo', icon: 'Settings', ghiChu: 'Nhà cung cấp, cài đặt', items: [
+          { label: 'Nhà cung cấp mua hàng', path: '/mua-hang/nha-cung-cap' }, { label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat' }] },
         // [2026-11-19 Nguyễn Văn Thủy] bước ký hợp đồng chỉ có hợp đồng (giá + chính sách khai trong từng hợp đồng); màn chính sách chung ở "Báo cáo" / lối tắt (đóng góp)
         { nhom: 'Ký hợp đồng', icon: 'FileSignature', ghiChu: 'Từng NCC: hợp đồng, giá mua, chính sách', items: [
           { label: 'Hợp đồng mua hàng', path: '/mua-hang/hop-dong' }] },

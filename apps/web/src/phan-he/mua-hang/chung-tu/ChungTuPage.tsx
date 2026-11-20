@@ -316,7 +316,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
   return (
     <>
       {!formsOnly && <>
-      {report === 'tong-hop' ? <PageHeader title="Tổng hợp mua hàng" code="MH11" helpKey="mua-hang-chung-tu"
+      {report === 'tong-hop' ? <PageHeader title="Chứng từ mua hàng" code="MH11" helpKey="mua-hang-chung-tu"
         subtitle="Đơn đặt → phiếu nhập kho → trả tiền: lập, sửa, duyệt phiếu; mỗi phiếu một dòng với tiền trước / sau chiết khấu, thuế, đã trả / còn nợ; gom theo NCC, chi nhánh, mã hàng…" />
         : report === 'bao-cao' && theoMa ? <PageHeader title="Tổng hợp mua hàng theo mặt hàng" code="MH23A" helpKey="mua-hang-bao-cao"
           subtitle="Số lượng, giá trị mua, chiết khấu, trả lại và tổng giá trị mua của từng mặt hàng trong kỳ" />
@@ -348,15 +348,20 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
               {onlyErr && <button className="btn btn-sm" onClick={() => setOnlyErr(false)} title="Bỏ lọc">Chỉ phiếu còn lỗi ✕</button>}
             </div>}
         <div className="row" style={{ gap: 6, padding: '6px 12px', flexWrap: 'wrap' }}>
+          {/* [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — đang ở thẻ nào thì có sẵn nút lập đúng loại của thẻ; loại khác chọn ở hộp bên cạnh (đóng góp) */}
+          {report !== 'bao-cao' && tt.them && (GROUPS.find((g) => g[0] === group)?.[2] ?? []).map((k) => (
+            <button key={k} type="button" className="btn btn-sm btn-primary" onClick={() => setEditing(newDoc(k))}>+ {k === 'rebate' ? 'Chiết khấu / giảm giá' : KIND_LABEL[k]}</button>
+          ))}
+          {report !== 'bao-cao' && tt.them && group === 'hop-dong' && !embedded && <button type="button" className="btn btn-sm btn-primary" onClick={() => navigate(hopDongMoiPath(partner || undefined))}>+ Hợp đồng mua hàng</button>}
           {report !== 'bao-cao' && tt.them && <select className="select input" style={{ width: 180, height: 28 }} value="" onChange={(e) => { const k = e.target.value; if (!k) return; if (k === 'hop-dong') { navigate(hopDongMoiPath(partner || undefined)); return; } setEditing(newDoc(k as PDoc['kind'])); }}>
-            <option value="">+ Thêm chứng từ…</option>{!embedded && <option value="hop-dong">Hợp đồng mua hàng</option>}{NEW_KINDS.map((k) => <option key={k} value={k}>{k === 'rebate' ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[k]}</option>)}
+            <option value="">{group === 'all' ? '+ Thêm chứng từ…' : '+ Loại khác…'}</option>{!embedded && <option value="hop-dong">Hợp đồng mua hàng</option>}{NEW_KINDS.map((k) => <option key={k} value={k}>{k === 'rebate' ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[k]}</option>)}
           </select>}
           <button className="btn btn-sm" disabled={!sel} onClick={() => sel && setEditing(sel)}>{sel?.status === 'approved' ? 'Xem' : 'Mở / sửa'}</button>
           {/* In phiếu đang chọn; mẫu theo loại phiếu (đơn đặt, nhập kho, trả hàng, phiếu chi…), số liệu nạp lại từ máy chủ. */}
           <PrintButton small screen="MH03" memoryKey={`MH03:${sel?.kind ?? ''}`} templates={mauInCua(sel ?? { kind: 'receipt' })} disabled={!sel} title={sel ? `In ${KIND_LABEL[sel.kind].toLowerCase()} ${sel.docNo}` : 'Chọn một chứng từ để in'}
             getDocs={async () => (sel ? [await layPhieuIn(sel.id, { names, docs: data?.docs ?? [] })] : [])} />
           {report !== 'bao-cao' && tt.them && <button className="btn btn-sm" onClick={() => setExcel(true)}>Nhập từ Excel</button>}
-          {report === 'bao-cao' && <Link className="btn btn-sm" to="/mua-hang/tong-hop" title="Lập / sửa / duyệt phiếu ở Tổng hợp mua hàng (MH11)">Lập phiếu ở MH11 →</Link>}
+          {report === 'bao-cao' && <Link className="btn btn-sm" to="/mua-hang/tong-hop" title="Lập / sửa / duyệt phiếu ở Chứng từ mua hàng (MH11)">Lập phiếu ở MH11 →</Link>}
           <button className="btn btn-sm" onClick={() => void refresh()}>Nạp</button>
           <span className="row" style={{ gap: 0, marginLeft: 8 }} title="Xem cùng các phiếu đang lọc theo phiếu, theo từng dòng hàng (như BH01 Báo cáo bán hàng) hoặc cộng dồn theo mã hàng (như BH02 Tổng hợp bán hàng)">
             {VIEWS[report ?? ''].map(([k, l]) => <button key={k} type="button" className={`btn btn-sm ${view === k ? 'btn-primary' : ''}`} onClick={() => setView(k)}>{l}</button>)}

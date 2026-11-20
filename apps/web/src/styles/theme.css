@@ -1779,7 +1779,8 @@ table.dgrid-table thead th { padding-top: 4px; padding-bottom: 4px; }
 .gon-row > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gon-row:hover, .gon-row.open { background: var(--brand-50); text-decoration: none; }
 .gon-row.active { background: var(--brand-100); color: var(--brand-800); font-weight: 600; }
-.gon-row .gon-arrow { flex: none; opacity: 0.55; }
+.gon-row .gon-arrow { flex: none; opacity: 0.55; display: inline-flex; padding: 3px; margin: -3px -4px -3px 0; border-radius: 4px; }
+.gon-row .gon-arrow:hover { opacity: 1; background: rgba(127, 127, 127, 0.18); } /* [2026-11-20 Nguyễn Văn Thủy] mũi tên = xem mọi màn; bấm dòng = vào màn làm việc chính (đóng góp) */
 .sidenav.gon.collapsed .gon-row { justify-content: center; padding: 9px 0; }
 .sidenav.gon.collapsed .gon-row > span, .sidenav.gon.collapsed .gon-arrow { display: none; }
 .gon-fly { position: fixed; z-index: 1000; width: 260px; max-height: calc(100vh - 16px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(15, 35, 60, 0.18); }

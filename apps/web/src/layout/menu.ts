@@ -29,7 +29,7 @@ import { tenMan } from './ten-man';
 export { SECTION_PREFIX, isSection } from './menu-helpers';
 
 /** Thứ tự nhóm trong menu chung (giữ như trước để ô tìm chức năng, tên thẻ không đổi). Nhóm mới không có ở đây thì đứng cuối. */
-const GROUP_ORDER = ['tong-quan', 'nghiep-vu', 'bao-cao-chung', 'cong-no', 'quy', 'thue', 'nghiep-vu-tscd', 'ke-hoach-tai-chinh', 'danh-muc', 'tien-ich', 'ban-hang-nghiep-vu', 'ban-hang', 'ban-hang-danh-muc', 'mua-hang-nghiep-vu', 'mua-hang-danh-muc', 'mua-hang-bao-cao', 'kho-nghiep-vu', 'kho-bao-cao', 'kho-danh-muc', 'quy-nghiep-vu', 'quy-bao-cao', 'tich-hop', 'nha-phat-trien', 'he-thong'];
+const GROUP_ORDER = ['tong-quan', 'nghiep-vu', 'bao-cao-chung', 'cong-no', 'quy', 'thue', 'nghiep-vu-tscd', 'ke-hoach-tai-chinh', 'danh-muc', 'tien-ich', 'ban-hang-nghiep-vu', 'ban-hang', 'ban-hang-danh-muc', 'mua-hang-nghiep-vu', 'mua-hang-dinh-ky', 'mua-hang-danh-muc', 'mua-hang-bao-cao', 'kho-nghiep-vu', 'kho-bao-cao', 'kho-danh-muc', 'quy-nghiep-vu', 'quy-bao-cao', 'tich-hop', 'nha-phat-trien', 'he-thong'];
 /** Tên, mã hiển thị lấy ở ten-man.ts (một nơi đặt tên). */
 const dat = (m: MenuItem): MenuItem => {
   const t = tenMan(m.path);

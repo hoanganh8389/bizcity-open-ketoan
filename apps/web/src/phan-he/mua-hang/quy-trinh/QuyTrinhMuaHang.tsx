@@ -52,13 +52,10 @@ const N = (kind: string) => `/mua-hang/tong-hop?moi=${kind}`;
 // → hoá đơn & công nợ → thanh toán → trả hàng / quyết toán / thanh lý (đóng góp)
 const STAGES: Stage[] = [
   {
-    node: { label: '1. Khai báo NCC, mặt hàng', code: 'MH01', icon: 'Building2', color: '#5b6cff', path: '/mua-hang/nha-cung-cap',
+    node: { label: '1. Khai báo nhà cung cấp', code: 'MH01', icon: 'Building2', color: '#5b6cff', path: '/mua-hang/nha-cung-cap',
       auto: ['Kiểm tra trùng mã số thuế', 'Mặt hàng: mã, ĐVT, lô / hạn dùng, thuế suất — nhãn, ngành tự theo nhóm hàng'] },
-    config: [
-      { label: 'Danh mục mặt hàng', code: 'DM10', icon: 'Package', color: '#64748b', path: '/danh-muc/mat-hang', hint: 'Mã, ĐVT, thuế; mã con (quà, mã Z…) gắn mã cha' },
-      { label: 'Nhóm hàng', code: 'DM11', icon: 'FolderTree', color: '#64748b', path: '/danh-muc/phan-loai-hang', hint: 'Ngành → nhãn → nhóm; chọn nhóm là mã hàng tự sinh' },
-      { label: 'Cơ cấu tổ chức', code: 'DM16', icon: 'Network', color: '#64748b', path: '/danh-muc/so-do-to-chuc', hint: 'Chi nhánh mua cho các shop bên dưới' },
-    ],
+    // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — mặt hàng, nhóm hàng, cơ cấu khai ở nhóm Danh mục, không lặp ở quy trình (đóng góp)
+    config: [],
     side: [],
   },
   {
@@ -113,9 +110,7 @@ const STAGES: Stage[] = [
   {
     node: { label: '7. Thanh toán', icon: 'Banknote', color: '#f2994a', path: L('payment'), newPath: N('payment'), kinds: ['payment'], printText: ['Phiếu chi 02-TT', 'Ủy nhiệm chi (chuyển khoản)'],
       auto: ['Chỉ trả khoản đã khớp hợp đồng, hoá đơn, đơn đặt', 'Trả đúng hạn được chiết khấu thanh toán', 'Tiền ứng trước được trừ vào nợ'] },
-    config: [
-      { label: 'Mẫu in chứng từ', code: 'HT05', icon: 'Printer', color: '#64748b', path: '/cau-hinh/mau-in', hint: 'Mẫu mặc định, khổ giấy, chữ ký' },
-    ],
+    config: [],
     side: [],
   },
   {

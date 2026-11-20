@@ -1,13 +1,14 @@
 // [2026-11-05 11:50 PM Nguyễn Văn Thủy] MENU — menu trái gọn: nhóm theo việc, bấm mới bung danh sách màn (đóng góp)
 /**
- * Thanh menu bên trái: mỗi nhóm một dòng có biểu tượng, bấm thì bung danh sách màn sang bên phải, bấm màn thì mở và đóng lại.
+ * Thanh menu bên trái: mỗi nhóm một dòng có biểu tượng. [2026-11-20 Nguyễn Văn Thủy] Bấm tên nhóm là vào thẳng màn làm việc chính
+ * của nhóm (trang chủ nhóm: Bàn làm việc / Quy trình); mũi tên › cuối dòng mới bung danh sách mọi màn sang bên phải (đóng góp).
  *  - Báo cáo không nằm trong danh sách này, mỗi nhóm có một dòng Báo cáo dẫn tới trang Báo cáo chung.
  *  - Rê vào một màn có nút ghim; mã màn hiện ở chú thích, vẫn gõ mã tìm được bằng Ctrl + K.
  *  - Thu gọn (Ctrl + B) chỉ còn biểu tượng, bấm biểu tượng vẫn bung danh sách.
  */
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Banknote, BarChart3, Building2, ChartLine, ChevronRight, Hammer, Landmark, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Percent, PiggyBank, Pin, PinOff, Puzzle, Search, Settings, ShoppingBag, ShoppingCart, Warehouse, type LucideIcon } from 'lucide-react';
 import { usePins } from './pins';
 import { DANG_PHAT_TRIEN, matchHere, nhomHien, REPORT_PAGE, type GonGroup } from './menu-gon';
@@ -37,6 +38,7 @@ const columnsOf = (g: GonGroup) => {
 
 export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse, onResizeStart }: { menu: MenuItem[]; groups: GonGroup[]; active?: GonGroup; onChoose: (key: string) => void; collapsed: boolean; onCollapse: (v: boolean) => void; onResizeStart?: (e: React.MouseEvent) => void }) {
   const { pathname, search } = useLocation();
+  const navigate = useNavigate();
   const { isPinned, toggle: togglePin } = usePins();
   const [open, setOpen] = useState<{ key: string; top: number; left: number } | null>(null);
   const root = useRef<HTMLElement>(null);
@@ -64,8 +66,8 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
     if (over > 0) setOpen((o) => (o ? { ...o, top: Math.max(8, o.top - over) } : o));
   }, [open?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const toggle = (g: GonGroup, e: React.MouseEvent<HTMLButtonElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
+  const toggle = (g: GonGroup, e: React.MouseEvent<HTMLElement>) => {
+    const r = (e.currentTarget.closest('.gon-row') ?? e.currentTarget).getBoundingClientRect();
     setOpen((o) => (o?.key === g.key ? null : { key: g.key, top: r.top, left: r.right + 4 }));
   };
   const openGroup = groups.find((g) => g.key === open?.key);
@@ -78,8 +80,9 @@ export function SideNav({ menu, groups, active, onChoose, collapsed, onCollapse,
         {nhomHien(groups).map((g) => {
           const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
           return (
-            <button key={g.key} type="button" className={`gon-row${isActive ? ' active' : ''}${open?.key === g.key ? ' open' : ''}`} title={g.label} aria-expanded={open?.key === g.key} onClick={(e) => toggle(g, e)}>
-              <GonIcon name={g.icon} size={17} /><span>{g.label}</span><ChevronRight size={14} className="gon-arrow" />
+            <button key={g.key} type="button" className={`gon-row${isActive ? ' active' : ''}${open?.key === g.key ? ' open' : ''}`} title={`${g.label} — bấm để vào ${g.homeLabel ?? 'Tổng quan'}`} onClick={() => { setOpen(null); onChoose(g.key); navigate(g.home); }}>
+              <GonIcon name={g.icon} size={17} /><span>{g.label}</span>
+              <span role="button" tabIndex={-1} className="gon-arrow" title="Xem mọi màn của nhóm" aria-expanded={open?.key === g.key} onClick={(e) => { e.stopPropagation(); toggle(g, e); }}><ChevronRight size={14} /></span>
             </button>
           );
         })}
