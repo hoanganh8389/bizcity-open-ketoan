@@ -251,7 +251,8 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   // Luật mã chỉ áp cho mặt hàng theo cây nhóm hàng (form / Excel luôn gửi nhóm); đường đồng bộ khác không có nhóm thì giữ mã nguồn.
   if (opts.isNew && (b.groupCode || parentRow)) {
     if (ps && !parentRow) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chưa có mã cha ${ps} — khai mã cha trước` }));
-    if (ps && sku.length - ps.length > 2) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chỉ thêm tối đa 2 chữ quanh mã cha ${ps}` }));
+    // [2026-11-20 kiennt] NT-DM-013 — phần cuối nhận cả chữ số: câu báo ghi "ký tự" (đóng góp)
+    if (ps && sku.length - ps.length > 2) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chỉ thêm tối đa 2 ký tự quanh mã cha ${ps}` }));
     if (!ps && (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku)))) loi.push(ruleFinding('ITEM-BLOCK-007', { sku }));
   }
   // Giá bán: bảng giá phải có, ĐVT của giá phải có trong bộ ĐVT gửi lên (hoặc đang lưu) — kiểm trước khi ghi.

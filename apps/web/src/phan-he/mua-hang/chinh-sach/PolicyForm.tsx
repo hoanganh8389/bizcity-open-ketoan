@@ -4,7 +4,8 @@
  * Mở từ hồ sơ NCC thì NCC khoá sẵn và chỉ chọn các loại thuộc thẻ đang mở.
  */
 import { useEffect, useRef, useState } from 'react';
-import { POLICY_LABEL, STACK_KINDS, canRepeat, giftItemsOf, isRepeat, scopeBranches, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { POLICY_LABEL, STACK_KINDS, apRiengChong, canRepeat, coApRieng, giftItemsOf, isRepeat, scopeBranches, uuTienDeThang, type ApRiengChong, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { Link } from 'react-router-dom';
 import { Field, Hoi, Modal, useViewAgain } from '@/components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
@@ -100,7 +101,7 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, lockCon
     <Modal viewAgain={viewAgain} viewFirst={!isNew} wide={p.kind === 'item_discount' || p.kind === 'promo_gift'} title={`${POLICY_LABEL[p.kind]} ${isNew ? '(mới)' : p.code}`} onClose={onClose}
       footer={<>{(isNew ? tt.them : tt.sua) && <button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button>}<button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label={REBATE_KINDS.includes(p.kind) ? 'Ký với nhà cung cấp (trống = mọi NCC)' : 'Nhà cung cấp (trống = áp cho mọi NCC)'} full>
-        {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
+        {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker kind="supplier" activeOnly value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
       </Field>
       {p.scope.partnerCode && lockContract && <Field full label="Thuộc hợp đồng"><div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}>{p.scope.contractCode ? <b className="mono">{p.scope.contractCode}</b> : 'Không theo hợp đồng'}</div></Field>}
       {p.scope.partnerCode && !lockContract && <Field full label="Thuộc hợp đồng" tip="Chính sách ghi trong hợp đồng mua nào (để xem cùng hợp đồng, đối chiếu, thanh lý). Trống = chính sách chung của NCC. Cách áp vào phiếu không đổi">
@@ -134,6 +135,8 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, lockCon
         <div className="alert alert-ok" style={{ fontSize: 12.5, marginTop: 6 }}>Phần mềm sẽ hiểu là: <b>{ruleText(p)}</b> — áp cho {p.scope.partnerCode ? names.partnerName(p.scope.partnerCode) : 'mọi nhà cung cấp'}{scopeTag(p) ? `, ${scopeTag(p)}` : ''}.</div>
       </div>
       {STACK_KINDS.includes(p.kind) && p.kind !== 'promo_gift' && <CachAp p={p} onChange={(rule) => upd({ ...p, rule })} />}
+      {/* [2026-11-20 khanhtd] TRA-CUU — cảnh báo chồng chương trình áp riêng theo mã, nút đặt ưu tiên vừa đủ thắng (đóng góp) */}
+      {STACK_KINDS.includes(p.kind) && <ChongApRieng p={p} all={all} onPriority={(n) => setP({ ...p, priority: n })} />}
       <Field label="Mã chính sách" tip="Tự đặt theo NCC + loại; sửa được"><input className="input mono" value={p.code} onChange={(e) => { setTouched({ ...touched, code: true }); setP({ ...p, code: e.target.value.trim() }); }} /></Field>
       <Field label="Tên chính sách" tip="Tự đặt theo NCC + nội dung; sửa được"><input className="input" value={p.name} onChange={(e) => { setTouched({ ...touched, name: true }); setP({ ...p, name: e.target.value }); }} /></Field>
       <Field label="Hiệu lực từ"><input className="input" type="date" value={p.validFrom ?? ''} onChange={(e) => setP({ ...p, validFrom: e.target.value || undefined })} /></Field>
@@ -206,6 +209,8 @@ function CachAp({ p, onChange }: { p: Policy; onChange: (rule: Policy['rule']) =
       <label className="mh-tick">
         <input type="checkbox" checked={r.apply === 'exclusive'} onChange={(e) => onChange({ ...r, apply: e.target.checked ? 'exclusive' : undefined })} />
         <span><b>Áp riêng</b> — mã hàng nhận chương trình này thì <u>không nhận</u> chương trình chiết khấu / khuyến mại nào khác (mã khác vẫn áp bình thường).
+          {/* [2026-11-20 khanhtd] TRA-CUU — bảng CK theo mã: tích theo từng dòng (đóng góp) */}
+          {p.kind === 'item_discount' && r.apply !== 'exclusive' && <span className="muted"> Muốn chỉ một số mã áp riêng: để trống ô này, tích cột <b>Áp riêng</b> ở các dòng đó trong bảng{(() => { const n = ((r.items ?? []) as { apply?: string }[]).filter((i) => i.apply === 'exclusive').length; return n ? ` (đang ${n} dòng áp riêng)` : ''; })()}.</span>}
           <span className="muted"> Bỏ tích = áp đồng thời, cộng với các chương trình khác. Ví dụ: CK 7% riêng mã A tích "Áp riêng" + CK 2% chung → mã A chỉ 7%, mã B được 2%. Hai chương trình áp riêng cùng khớp một mã: lấy ưu tiên cao hơn, bằng nhau lấy cái lợi hơn.</span></span>
       </label>
       <label className={`mh-tick ${repeatable ? '' : 'muted'}`} title={repeatable ? '' : why}>
@@ -215,6 +220,47 @@ function CachAp({ p, onChange }: { p: Policy; onChange: (rule: Policy['rule']) =
             : repeatable ? `Ví dụ giảm ${Number(r.amount || 0).toLocaleString('vi-VN')}đ khi đơn từ ${Number(r.minOrder || 0).toLocaleString('vi-VN')}đ: tích → đơn ${(Number(r.minOrder || 0) * 2).toLocaleString('vi-VN')}đ giảm ${(Number(r.amount || 0) * 2).toLocaleString('vi-VN')}đ; bỏ tích → chỉ giảm một lần.`
             : `Không áp dụng: ${why}.`}</span></span>
       </label>
+    </div>
+  );
+}
+
+// [2026-11-20 khanhtd] TRA-CUU — chồng áp riêng theo mã (apRiengChong ở @bizcity/mua-hang-domain): ai thắng theo ưu tiên, mã nào bị chặn (đóng góp)
+const KET_QUA: Record<ApRiengChong['result'], (mine: number, other: number) => string> = {
+  thua: (m, o) => `chính sách này THUA (ưu tiên ${m} < ${o})`,
+  thang: (m, o) => `chính sách này thắng (ưu tiên ${m} > ${o})`,
+  ngang: (m) => `cùng ưu tiên ${m}: phiếu nào lợi hơn thì thắng`,
+  'bi-chan': () => 'chính sách này BỊ CHẶN ở các mã này (nó không tích Áp riêng)',
+};
+/**
+ * Chính sách đang khai chồng chương trình ÁP RIÊNG nào khác, ở mã nào, thắng / thua theo ưu tiên — xét theo phạm vi (NCC, nhãn,
+ * mã, chi nhánh, hiệu lực); điều kiện SL / tổng đơn xem từng mã ở màn Tra cứu TC01 (bấm mã).
+ */
+function ChongApRieng({ p, all, onPriority }: { p: Policy; all: Policy[]; onPriority: (n: number) => void }) {
+  const mine = coApRieng(p);
+  const rough = apRiengChong(p, all);
+  // Nhãn của các mã đang chồng — loại mã thuộc nhãn khác với phạm vi nhãn của bên kia.
+  const skus = [...new Set(rough.flatMap((c) => c.skus ?? []))].slice(0, 500);
+  const info = useQuery({ queryKey: ['mua-hang', 'lookup', skus.join(',')], enabled: skus.length > 0, staleTime: 60_000, queryFn: () => purchaseApi.lookupProducts(skus) }).data;
+  const chong = info ? apRiengChong(p, all, (s) => info.find((x) => x.sku === s)?.brandCode ?? undefined) : rough;
+  if (!chong.length) return mine ? <div className="full muted" style={{ fontSize: 12 }}>Áp riêng: không chồng chương trình áp riêng nào khác (theo NCC, nhãn, mã, chi nhánh, hiệu lực).</div> : null;
+  const n = mine ? uuTienDeThang(p, chong) : undefined;
+  const bad = chong.some((c) => c.result === 'thua' || c.result === 'bi-chan');
+  return (
+    <div className={`full alert ${bad ? 'alert-warn' : 'alert-info'}`} style={{ fontSize: 12.5 }}>
+      <b>{mine ? `Chồng ${chong.length} chương trình áp riêng khác` : `${chong.length} chương trình áp riêng khác sẽ chặn chính sách này`}</b>
+      <span className="muted"> — mỗi mã chỉ nhận một chương trình áp riêng; bấm mã để tra chi tiết từng phiếu.</span>
+      <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+        {chong.slice(0, 8).map((c, k) => (
+          <li key={`${c.other.id}-${k}`}>
+            <b className="mono">{c.other.code}</b> {c.other.name} — {KET_QUA[c.result](c.myPriority, c.otherPriority)}{c.myRowPriority ? ' — ưu tiên ở dòng bảng' : ''},{' '}
+            {c.skus === null ? 'trên cả phạm vi (hai bên không ghi mã cụ thể)' : <>ở {c.skus.length} mã: {c.skus.slice(0, 6).map((s, i) => <span key={s}>{i ? ', ' : ''}<Link to={`/app/tra-cuu/chinh-sach?sku=${encodeURIComponent(s)}`} className="mono">{s}</Link></span>)}{c.skus.length > 6 ? ` … và ${c.skus.length - 6} mã` : ''}</>}
+          </li>
+        ))}
+        {chong.length > 8 && <li className="muted">… và {chong.length - 8} chương trình nữa</li>}
+      </ul>
+      {chong.some((c) => c.myRowPriority && (c.result === 'thua' || c.result === 'ngang')) && <div className="muted" style={{ marginTop: 4 }}>Mã có ưu tiên ghi ở dòng bảng: sửa ô Ưu tiên của dòng đó (ô Ưu tiên của chính sách không áp cho các mã này).</div>}
+      {n !== undefined && <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} title="Đặt ưu tiên lớn hơn mọi chương trình áp riêng đang thua / ngang — bấm Ghi để lưu" onClick={() => onPriority(n)}>Đặt ưu tiên = {n} để thắng</button>}
+      {!mine && <div className="muted" style={{ marginTop: 4 }}>Muốn chính sách này áp ở các mã đó: bỏ tích Áp riêng của chương trình kia, hoặc tích Áp riêng ở đây và đặt ưu tiên cao hơn.</div>}
     </div>
   );
 }

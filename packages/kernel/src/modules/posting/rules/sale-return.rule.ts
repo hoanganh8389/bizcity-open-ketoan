@@ -81,7 +81,7 @@ function buildReturnGoods(doc: SaleReturnDocument, ctx: RuleContext, reason: Ret
       tags,
       part: 'tax',
       productSku: line.sku,
-      debitAccount: resolver.outputTaxAccount(line.taxCode),
+      debitAccount: resolver.outputTaxAccount(line.taxCode, doc.docDate),
       creditAccount: counter,
       amount: tax,
       creditPartnerId: partnerId,

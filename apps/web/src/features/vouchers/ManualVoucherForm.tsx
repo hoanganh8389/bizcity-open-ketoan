@@ -19,6 +19,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, X } from 'lucide-react';
 import type { VoucherInput, VoucherLine, VoucherTemplateInput } from '@ketoan/contracts';
 import { api } from '@/lib/api';
+import { ChonThue } from '@/lib/thueGtgt';
 import { money, today } from '@/lib/format';
 import { BranchPicker, useBranches } from '@/components/filters';
 import { AccountPicker, ListPicker, PartnerPicker } from '@/components/pickers';
@@ -33,7 +34,6 @@ import { LOAI_KE_TOAN } from './loaiPhieu';
 
 interface Account { code: string; name: string; trackPartner: boolean; isDebt?: boolean; normalSide: string; trackCostItem: boolean; trackDepartment: boolean; trackContract: boolean }
 interface Dimension { code: string; name: string; isActive: boolean }
-interface TaxCode { code: string; name: string; rate: number; isActive: boolean }
 interface Reason { code: string; name: string; kind: string; isActive: boolean }
 
 /** Thông tin chung của một dòng (dòng chính hoặc tài khoản đối ứng). */
@@ -126,7 +126,6 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
 
   const { data: branches } = useBranches();
   const { data: accounts = [] } = useQuery({ queryKey: ['accounts', 'posting'], queryFn: () => api.get<Account[]>('/api/v1/accounts', { postingOnly: true }), staleTime: 60_000 });
-  const { data: taxCodes = [] } = useQuery({ queryKey: ['tax-codes'], queryFn: () => api.get<TaxCode[]>('/api/v1/tax-codes'), staleTime: 60_000 });
   const { data: reasons = [] } = useQuery({ queryKey: ['reasons'], queryFn: () => api.get<Reason[]>('/api/v1/posting/reasons'), staleTime: 60_000 });
   const employees = useDimension('employee') as Dimension[];
   const costItems = useDimension('cost_item') as Dimension[];
@@ -407,10 +406,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
                     <td>{money2(r, 'debit')}</td>
                     <td><PartnerPicker activeOnly={!existing} addKind="customer" hideName value={r.partner} disabled={dis} onChange={(v) => setRow(r.key, { partner: v })} /></td>
                     <td>
-                      <select className="select input" value={r.taxCode} disabled={dis} onChange={(e) => setRow(r.key, { taxCode: e.target.value })}>
-                        <option value="" />
-                        {taxCodes.filter((t) => t.isActive || t.code === r.taxCode).map((t) => <option key={t.code} value={t.code}>{t.code}</option>)}
-                      </select>
+                      <ChonThue value={r.taxCode} trong ngay={h.docDate} disabled={dis} onChange={(c) => setRow(r.key, { taxCode: c })} />
                     </td>
                     <td>{text(r, 'invoicePartnerTaxCode', 'input mono')}</td>
                     <td>{money2(r, 'taxAmount')}</td>

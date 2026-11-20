@@ -37,7 +37,7 @@ interface Ref { table: string; cols: string[]; label: string; show: string; val?
 interface Cat { label: string; table: string; key: string; name: string; scopeCol?: string; children?: Child[]; product?: boolean; parentCol?: string; refs?: Ref[]; /** Khoá là mã nội bộ (không hiện cho người dùng): báo theo tên. */ hienTen?: boolean }
 
 const CATS: Record<string, Cat> = {
-  'tax-codes': { label: 'Biểu thuế', table: 'tax_codes', key: 'code', name: 'name', refs: [{ table: 'products', cols: ['tax_out_code', 'tax_in_code'], label: 'mặt hàng', show: 'sku' }] },
+  // [2026-11-19 kiennt] NT-DM-012 — bỏ Biểu thuế: loại thuế cố định theo quy định nhà nước, không xoá / khôi phục (đóng góp)
   'unit-names': { label: 'Đơn vị tính', table: 'unit_names', key: 'id', name: 'name', refs: [{ table: 'product_units', cols: ['unit'], label: 'mặt hàng', show: 'sku', val: 'name' }] },
   'payment-methods': { label: 'Hình thức thanh toán', table: 'payment_methods', key: 'code', name: 'name' },
   'bank-accounts': { label: 'Tài khoản ngân hàng', table: 'bank_accounts', key: 'code', name: 'bank_name', refs: [{ table: 'payment_methods', cols: ['bank_account_code'], label: 'hình thức thanh toán', show: 'code' }] },

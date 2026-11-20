@@ -18,6 +18,7 @@ import { purchaseApi, today, vnd, type MhData } from '../du-lieu';
 import { ExcelGuide, type GuideColumn } from '../thanh-phan/ExcelGuide';
 import { NccInfo } from '../thanh-phan/NccInfo';
 import { useHierarchy } from '../ton-max/api';
+import { thueMacDinh } from '@/lib/tradeDocs';
 
 const COLS: GuideColumn[] = [
   { name: 'Mã hàng', required: true, aliases: 'Mã SP, SKU', example: '130181002', note: 'Mã hàng trong danh mục (mã chưa có báo vàng)' },
@@ -83,7 +84,7 @@ export function NhapExcel({ data, partnerCode = '', onClose, onDone }: { data: M
   const noBranch = rows.some((r) => !r.branchCode) && !branch;
   const docs: PDoc[] = res ? docsFromImport(rows.filter((r) => !r.error), {
     kind, date: today(), partnerCode: partner, branchCode: branch, priceIncludesVat: incVat, policies: data.policies,
-    taxOf: (sku) => cat.get(sku)?.taxInCode ?? 'V08', nameOf: (sku) => cat.get(sku),
+    taxOf: (sku) => cat.get(sku)?.taxInCode ?? thueMacDinh(), nameOf: (sku) => cat.get(sku),
   }) : [];
   const create = async () => {
     setBusy(true); setErr('');
@@ -100,7 +101,7 @@ export function NhapExcel({ data, partnerCode = '', onClose, onDone }: { data: M
       <div className="full mh-head" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
         <div className="field"><label>Tạo thành</label><select className="select input" value={kind} onChange={(e) => setKind(e.target.value as 'order')}><option value="order">Đơn đặt hàng</option><option value="receipt">Phiếu nhập kho (gom theo số HĐ)</option></select></div>
         <div className="field"><label>Đơn giá trong tệp là</label><select className="select input" value={incVat ? '1' : '0'} onChange={(e) => setIncVat(e.target.value === '1')}><option value="0">Giá chưa thuế</option><option value="1">Giá đã gồm thuế</option></select></div>
-        <div className="field"><label>NCC (khi tệp không có cột Mã NCC)</label><PartnerPicker value={partner} onChange={setPartner} activeOnly /></div>
+        <div className="field"><label>NCC (khi tệp không có cột Mã NCC)</label><PartnerPicker kind="supplier" value={partner} onChange={setPartner} activeOnly /></div>
         <div className="field"><label>Chi nhánh (khi tệp không có cột Chi nhánh)</label><BranchPicker value={branch} onChange={setBranch} activeOnly /></div>
       </div>
       <div className="full" style={{ marginTop: 8 }}><ExcelGuide columns={COLS} file="mau-nhap-don-dat-phieu-nhap.xlsx" defaultOpen={!res} /></div>

@@ -93,7 +93,7 @@ export function NhaCungCapPage() {
             <ListPicker className="input" items={[{ code: '-', name: '(Chưa có nhóm)' }, ...groupList.filter((g) => g.isActive && (g.kind === 'any' || g.kind === 'supplier')).map((g) => ({ code: g.code, name: g.name }))]}
               value={group} onChange={(c) => setGroup(c)} placeholder="Tất cả nhóm NCC" />
           </div>
-          <div style={{ width: 280 }}><PartnerPicker value={pick} onChange={(c) => { setPick(c); if (c) open(c); }} placeholder="Mở NCC: gõ mã hoặc tên" /></div>
+          <div style={{ width: 280 }}><PartnerPicker kind="supplier" value={pick} onChange={(c) => { setPick(c); if (c) open(c); }} placeholder="Mở NCC: gõ mã hoặc tên" /></div>
           <button className="btn btn-sm btn-primary" onClick={() => setAdding(true)}>+ Thêm nhà cung cấp</button>
           <label className="checkbox" title="Nhà cung cấp có đơn vị mẹ và chi nhánh: chi nhánh xếp ngay dưới đơn vị mẹ, cuối nhóm có dòng Cộng nhóm (nợ, quá hạn, hạn mức chung của cả nhóm)"><input type="checkbox" checked={gop} onChange={(e) => setGop(e.target.checked)} /> Xem theo nhóm mẹ – chi nhánh{nhomCount ? ` (${nhomCount} nhóm)` : ''}</label>
           <span className="muted" style={{ fontSize: 12 }}>{flat.length} nhà cung cấp · bấm đúp một dòng để mở hồ sơ</span>

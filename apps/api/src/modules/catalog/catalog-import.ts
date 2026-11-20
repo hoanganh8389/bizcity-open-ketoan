@@ -18,6 +18,8 @@ export interface ImportRow {
   row: number; sku: string; name?: string; unit?: string; note?: string;
   groupCode?: string; industryCode?: string; brandCode?: string; typeCode?: string;
   postingGroupCode?: string; taxOutCode?: string; taxInCode?: string; vatRate?: string; isActive?: string;
+  // [2026-11-20 kiennt] NT-DM-014 — mã hoá từng cấp (như tệp Xuất DM11) và barcode (đóng góp)
+  industrySku?: string; brandSku?: string; groupSku?: string; barcode?: string;
 }
 /** Thông tin hiển thị một mặt hàng (bước xem trước): cùng khoá với cột Excel, giá trị là chữ để hiện. */
 export type ShowValues = Partial<Record<Exclude<keyof ImportRow, 'row'>, string>>;
@@ -28,17 +30,18 @@ const CLASS = [['groupCode', 'group', 'Nhóm hàng'], ['industryCode', 'industry
 const YES = new Set(['có', 'co', 'x', '1', 'true', 'yes', 'đang theo dõi', 'theo dõi', 'đang hoạt động', 'hoạt động', 'chờ duyệt', 'cho duyet']);
 const NO = new Set(['không', 'khong', '0', 'false', 'no', 'ngừng', 'ngung', 'ngừng hoạt động', 'ngừng theo dõi']);
 // [2026-11-12 Nguyễn Văn Thủy] cột Thuế suất GTGT (%) như form: KCT / 0 / 5 / 8 / 10 → cặp mã thuế ra / vào (đóng góp)
-const VAT: Record<string, [string, string]> = { kct: ['KCT', 'V13K'], '0': ['R00', 'V00'], '5': ['R05', 'V05'], '8': ['R08', 'V08'], '10': ['R10', 'V10'] };
+// [2026-11-19 kiennt] NT-DM-012 — thuế suất → loại thuế cố định (một loại cho bán và mua); mã cũ đổi sang loại tương ứng, chưa xác định thì báo lỗi (đóng góp)
+const VAT: Record<string, string> = { kct: 'KCT', '0': '0', '5': '5', '8': '8', '10': '10', kkkn: 'KKKN' };
 const low = (s: string) => s.trim().toLowerCase();
 
 // [2026-11-03 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): cả tệp một giao dịch, mỗi dòng một SAVEPOINT
 export async function importProducts(trx: ActionTx, tenantId: string, actor: string, rows: ImportRow[], dryRun: boolean, by?: string) {
   const [products, classes, groups, taxes] = await Promise.all([
-    trx.selectFrom('products').select(['sku', 'name', 'unit', 'note', 'group_code', 'industry_code', 'brand_code', 'type_code', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'is_active'])
+    trx.selectFrom('products').select(['sku', 'name', 'unit', 'note', 'group_code', 'industry_code', 'brand_code', 'type_code', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'is_active', 'barcode'])
       .where('tenant_id', '=', tenantId).execute(),
-    trx.selectFrom('item_classes').select(['kind', 'code', 'name', 'parent_code']).where('tenant_id', '=', tenantId).execute(),
+    trx.selectFrom('item_classes').select(['kind', 'code', 'name', 'parent_code', 'sku_code']).where('tenant_id', '=', tenantId).execute(),
     trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).execute(),
-    trx.selectFrom('tax_codes').select(['code', 'direction', 'is_active']).where('tenant_id', '=', tenantId).execute(),
+    trx.selectFrom('tax_codes').select(['code', 'direction', 'is_active', 'is_legacy', 'replaced_by']).where('tenant_id', '=', tenantId).execute(),
   ]);
   const existing = new Map(products.map((p) => [p.sku, p.unit]));
   const className = new Map(classes.map((c) => [`${c.kind}|${c.code}`, c.name]));
@@ -46,13 +49,19 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
   const beforeOf = new Map(products.map((p) => [p.sku, {
     sku: p.sku, name: p.name, unit: p.unit, note: p.note, groupCode: showClass('group', p.group_code), industryCode: showClass('industry', p.industry_code),
     brandCode: showClass('brand', p.brand_code), typeCode: showClass('type', p.type_code), postingGroupCode: p.posting_group_code ?? '',
-    taxOutCode: p.tax_out_code ?? '', taxInCode: p.tax_in_code ?? '', isActive: p.is_active ? 'Có' : 'Không',
+    taxOutCode: p.tax_out_code ?? '', taxInCode: p.tax_in_code ?? '', isActive: p.is_active ? 'Có' : 'Không', barcode: p.barcode ?? '',
   } satisfies ShowValues]));
   const groupSet = new Set(groups.map((g) => g.code));
-  const taxSet = new Set(taxes.map((t) => t.code));
+  /** Mã (loại cố định hoặc mã cũ) → loại thuế cố định; mã cũ chưa xác định loại → lỗi. */
+  const loaiThue = (raw: string): { code?: string; error?: string } => {
+    const t = taxes.find((x) => x.code === raw);
+    if (!t) return { error: `Thuế "${raw}" không có — ghi KCT, 0, 5, 8, 10 hoặc KKKN` };
+    if (!t.is_legacy) return t.is_active ? { code: t.code } : { error: `Loại thuế ${raw} đang ngừng` };
+    return t.replaced_by ? { code: t.replaced_by } : { error: `Mã thuế cũ ${raw} chưa xác định được loại thuế theo quy định — ghi KCT, 0, 5, 8, 10 hoặc KKKN` };
+  };
   // Tra mã phân loại: đúng mã, hoặc đúng tên (không phân biệt hoa thường) nếu tên chỉ ứng với một mã.
-  const findClass = (kind: string, v: string): string | null => {
-    const list = classes.filter((c) => c.kind === kind);
+  const findClass = (kind: string, v: string, only?: (code: string) => boolean): string | null => {
+    const list = classes.filter((c) => c.kind === kind && (!only || only(c.code)));
     // [2026-11-17 09:11 PM kiennt] NT-DM-003 E2 — đường dẫn tên các cấp "Sữa bột / Vinamilk / Sữa bột trẻ em" (cột Nhóm hàng của tệp xuất DM10):
     //   đi từ nhóm gốc xuống theo tên từng cấp; sai một cấp thì không thấy (đóng góp)
     if (v.includes(' / ')) {
@@ -96,7 +105,8 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     if (sku && !existing.has(sku)) {
       if (ps) {
         if (!existing.has(ps) && !inFile.has(ps)) errors.push(`Mã cha ${ps} chưa có — khai mã cha trước (hoặc thêm dòng mã cha vào tệp)`);
-        if (sku.length - ps.length > 2) errors.push(`Mã biến thể chỉ thêm tối đa 2 chữ quanh mã cha ${ps}`);
+        // [2026-11-20 kiennt] NT-DM-013 — phần cuối nhận cả chữ số: câu báo ghi "ký tự" (đóng góp)
+        if (sku.length - ps.length > 2) errors.push(`Mã biến thể chỉ thêm tối đa 2 ký tự quanh mã cha ${ps}`);
       } else if (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku))) {
         errors.push('Mã hàng mới không được có chữ ở đầu hoặc cuối (mã biến thể phải giữ nguyên mã cha đã có)');
       }
@@ -111,16 +121,60 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     if (name) input.name = name;
     if (isNew && unit) input.units = [{ unit, ratio: 1, isDefault: true, isPurchaseDefault: true }];
     if (r.note?.trim()) input.note = r.note.trim();
-    for (const [key, kind, label] of CLASS) {
-      const v = r[key]?.trim();
-      if (!v) continue;
-      const c = findClass(kind, v);
-      if (c) input[key] = c; else errors.push(`${label} "${v}" chưa có trong danh mục`);
+    // [2026-11-20 kiennt] NT-DM-014 — cột Barcode (trống = giữ nguyên) (đóng góp)
+    if (r.barcode?.trim()) { if (r.barcode.trim().length > 500) errors.push('Barcode tối đa 500 ký tự'); else input.barcode = r.barcode.trim(); }
+    // [2026-11-20 kiennt] NT-DM-014 L1 — ghép nhóm hàng theo cây Ngành → Nhãn → Nhóm của cùng dòng (tên, mã nội bộ hoặc mã hoá):
+    //   nhãn tra dưới đúng ngành, nhóm tra dưới đúng nhãn; không thấy → lỗi, không tự gán sang nhánh khác (đóng góp)
+    { const v = r.typeCode?.trim(); if (v) { const c = findClass('type', v); if (c) input.typeCode = c; else errors.push(`Loại hàng "${v}" chưa có trong danh mục`); } }
+    const iv = r.industryCode?.trim() ?? ''; const isku = r.industrySku?.trim() ?? '';
+    const bv = r.brandCode?.trim() ?? ''; const bsku = r.brandSku?.trim() ?? '';
+    const gv = r.groupCode?.trim() ?? ''; const gsku = r.groupSku?.trim() ?? '';
+    const con = (cha: string | null) => [...groupBy.values()].filter((c) => (c.parent_code ?? null) === cha);
+    const goc = () => { const r0 = con(null); const vo = r0.filter((c) => /^nhóm hàng$/i.test(c.name.trim())); return vo.length === 1 && r0.length === 1 ? con(vo[0]!.code) : r0; };
+    const khop = (ds: typeof classes, ten: string, ma: string) => ds.filter((c) => (!ten || c.code === ten || low(c.code) === low(ten) || low(c.name) === low(ten)) && (!ma || (c.sku_code ?? '').toUpperCase() === ma.toUpperCase()));
+    const ten = (c: string) => groupBy.get(c)?.name ?? c;
+    let nganh: string | undefined; let nhan: string | undefined; let ngoaiCay = false;
+    if (iv || isku) {
+      const k = khop(goc(), iv, isku);
+      if (k.length === 1) nganh = k[0]!.code;
+      else if (iv && findClass('industry', iv)) { input.industryCode = findClass('industry', iv)!; ngoaiCay = true; }
+      else errors.push(`Ngành hàng "${iv || isku}" chưa có trong cây nhóm hàng`);
+    }
+    if ((bv || bsku) && !errors.length) {
+      const k = nganh ? khop(con(nganh), bv, bsku) : khop(goc().flatMap((c) => con(c.code)), bv, bsku);
+      if (k.length === 1) { nhan = k[0]!.code; nganh ??= k[0]!.parent_code ?? undefined; }
+      else if (bv && findClass('brand', bv) && !groupBy.has(findClass('brand', bv)!)) { input.brandCode = findClass('brand', bv)!; ngoaiCay = true; }
+      else if (k.length > 1) errors.push(`Có ${k.length} nhãn "${bv || bsku}" ở các ngành khác nhau — ghi thêm cột Ngành hàng`);
+      else errors.push(`Nhãn hàng "${bv || bsku}" không có${nganh ? ` dưới ngành ${ten(nganh)}` : ' trong cây nhóm hàng'}`);
+    }
+    if ((gv || gsku) && !errors.length) {
+      const cha = nhan ?? nganh;
+      const duoi = (code: string) => { const ch = chainOfG(code); return (!nganh || ch[0] === nganh) && (!nhan || ch[1] === nhan); };
+      // Đường dẫn "Ngành / Nhãn / Nhóm" (cột Nhóm hàng của tệp xuất) hoặc mã nội bộ: tra như cũ rồi kiểm nằm đúng nhánh.
+      const c = gv.includes(' / ') || (!gsku && groupBy.has(gv)) || !cha || ngoaiCay
+        ? findClass('group', gv || gsku, cha && !ngoaiCay ? duoi : undefined)
+        : (() => { const k = khop([...groupBy.values()].filter((x) => x.code !== cha && duoi(x.code)), gv, gsku); return k.length === 1 ? k[0]!.code : null; })();
+      if (c) input.groupCode = c;
+      else if (cha && !ngoaiCay && (findClass('group', gv || gsku) || gsku)) {
+        errors.push(`Nhóm hàng "${gv || gsku}" không có dưới ${nhan ? `nhãn ${ten(nhan)}${nganh ? ` (ngành ${ten(nganh)})` : ''}` : `ngành ${ten(nganh!)}`} — sửa cột Nhóm hàng / Ngành / Nhãn cho khớp danh mục`);
+      } else errors.push(`Nhóm hàng "${gv || gsku}" chưa có trong danh mục`);
+    } else if (!errors.length && !ngoaiCay) {
+      // Chỉ ghi ngành / nhãn (không nhóm): ghi ngành / nhãn theo cây cho mặt hàng đã có.
+      if (nganh && isKind('industry', nganh)) input.industryCode = nganh;
+      if (nhan && isKind('brand', nhan)) input.brandCode = nhan;
     }
     const g = input.groupCode as string | undefined;
     if (!existing.has(sku) && !ps) {
       if (!g && !r.groupCode?.trim()) errors.push('Mặt hàng mới phải có Nhóm hàng (tới nhóm cấp 3)');
       else if (g && levelOf(g) < 3) errors.push(`Nhóm hàng "${groupBy.get(g)?.name ?? g}" mới là nhóm cấp ${levelOf(g)} — phải chọn tới nhóm cấp 3`);
+    }
+    // [2026-11-20 kiennt] NT-DM-014 L1 — mã mới 9 số: 6 số đầu (ngành 2 + nhãn 3 + nhóm 1) phải khớp đoạn mã đã khai của nhóm (đóng góp)
+    if (!existing.has(sku) && !ps && g && /^[0-9]{9}$/.test(sku)) {
+      const segs = chainOfG(g).map((c) => groupBy.get(c)?.sku_code ?? '');
+      const lens = [2, 3, 1];
+      if (segs.length === 3 && segs.every((x, i) => new RegExp(`^[0-9]{${lens[i]}}$`).test(x)) && !sku.startsWith(segs.join(''))) {
+        errors.push(`Mã hàng ${sku} không khớp đoạn mã của nhóm ${groupBy.get(g)?.name ?? g} (${segs.join(' · ')}) — mã phải bắt đầu bằng ${segs.join('')}`);
+      }
     }
     if (ps) delete input.groupCode; // mã biến thể: nhóm theo mã cha
     else if (g && !input.industryCode && !input.brandCode) {
@@ -131,27 +185,25 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     }
     const vr = r.vatRate?.trim().toLowerCase().replace(/%$/, '').trim();
     if (vr) {
-      // Thuế suất (KCT, 0, 5, 8, 10) hoặc mã thuế đầu ra; phải có ở danh mục Biểu thuế.
-      const raw = r.vatRate!.trim().toUpperCase();
-      const pair = VAT[vr] ?? (taxes.some((t) => t.code === raw && t.direction === 'output') ? [raw, ''] as [string, string] : undefined);
-      if (!pair) errors.push(`Thuế suất "${r.vatRate}" không hiểu — ghi KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra ở Biểu thuế`);
-      else if (!taxes.some((t) => t.code === pair[0] && t.direction === 'output' && t.is_active)) errors.push(`Mã thuế ${pair[0]} chưa khai (hoặc đang ngừng) ở danh mục Biểu thuế`);
-      else { input.taxOutCode = pair[0]; if (pair[1] && taxSet.has(pair[1])) input.taxInCode = pair[1]; }
+      // Thuế suất / loại thuế cố định (KCT, 0, 5, 8, 10, KKKN) hoặc mã cũ có loại tương ứng; một loại ghi cho cả bán và mua.
+      const k = loaiThue(VAT[vr] ?? r.vatRate!.trim().toUpperCase());
+      if (k.error) errors.push(k.error);
+      else { input.taxOutCode = k.code; input.taxInCode = k.code; }
     }
     // [2026-11-17 09:11 PM kiennt] NT-DM-003 E3 — mặt hàng mới (mã chính) bắt buộc thuế suất GTGT như form; mã biến thể theo mã cha (đóng góp)
-    if (sku && isNew && !ps && !input.taxOutCode && !r.taxOutCode?.trim() && !vr) errors.push('Mặt hàng mới phải có Thuế suất GTGT (KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra)');
+    if (sku && isNew && !ps && !input.taxOutCode && !r.taxOutCode?.trim() && !vr) errors.push('Mặt hàng mới phải có Thuế suất GTGT (KCT, 0, 5, 8, 10 hoặc KKKN)');
     const pg = r.postingGroupCode?.trim();
     if (pg) { if (groupSet.has(pg)) input.postingGroupCode = pg; else errors.push(`Nhóm hạch toán "${pg}" chưa có`); }
     for (const [key, label] of [['taxOutCode', 'Mã VAT ra'], ['taxInCode', 'Mã VAT vào']] as const) {
       const v = r[key]?.trim();
-      if (v) { if (taxSet.has(v)) input[key] = v; else errors.push(`${label} "${v}" chưa có`); }
+      if (v) { const k = loaiThue(v); if (k.code) input[key] = k.code; else errors.push(`${label}: ${k.error}`); }
     }
     const act = r.isActive?.trim();
     if (act) { if (YES.has(low(act))) input.isActive = true; else if (NO.has(low(act))) input.isActive = false; else errors.push(`Theo dõi "${act}" không hiểu — ghi Có / Không`); }
     if (!isNew && !errors.length && Object.keys(input).length === 0) errors.push('Không có thông tin nào để cập nhật');
     // Hiển thị: giá trị đã tra được (phân loại "mã — tên"), không tra được thì giữ chữ trong tệp.
     const values: ShowValues = { sku, name, unit, note: r.note?.trim() ?? '', postingGroupCode: pg ?? '', taxOutCode: (input.taxOutCode as string | undefined) ?? r.taxOutCode?.trim() ?? '', taxInCode: (input.taxInCode as string | undefined) ?? r.taxInCode?.trim() ?? '',
-      isActive: input.isActive === undefined ? act ?? '' : input.isActive ? 'Có' : 'Không' };
+      isActive: input.isActive === undefined ? act ?? '' : input.isActive ? 'Có' : 'Không', barcode: r.barcode?.trim() ?? '' };
     for (const [key, kind] of CLASS) values[key] = input[key] ? showClass(kind, input[key] as string) : r[key]?.trim() ?? '';
     if (isNew && !errors.length && !values.isActive) values.isActive = 'Có';
     return { row: r.row, sku, isNew, isVariant: Boolean(ps), input, errors, values, before: isNew ? undefined : beforeOf.get(sku) };

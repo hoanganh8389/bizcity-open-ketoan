@@ -546,6 +546,7 @@
         "PART-HINT-002",
         "PART-HINT-003",
         "PART-HINT-004",
+        "PART-HINT-005",
         "TGS-FLAG-001",
         "TGS-REPORT-001",
         "TSPL-LAW-001"
@@ -874,6 +875,7 @@
         "apps/api/test/item-id-so-kho.test.ts",
         "apps/api/test/item-master.test.ts",
         "apps/api/test/mua-hang-duong-thue.test.ts",
+        "apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts",
         "apps/api/test/quy-dinh-danh-muc.test.ts",
         "apps/api/test/san-pham-con.test.ts",
         "apps/api/test/xuong-ca-dinh-danh.test.ts"
@@ -884,6 +886,7 @@
       "ITEM-HINT-003": [
         "apps/api/test/bien-the-dinh-danh.test.ts",
         "apps/api/test/mua-hang-duong-thue.test.ts",
+        "apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts",
         "apps/api/test/san-pham-con.test.ts"
       ],
       "LIB-DEPRECATED-001": [
@@ -933,6 +936,9 @@
       "PART-HINT-004": [
         "apps/api/test/catalog-why.test.ts",
         "apps/api/test/findings.test.ts"
+      ],
+      "PART-HINT-005": [
+        "apps/api/test/mst-doi-tuong-theo-ngay.test.ts"
       ],
       "TGS-FLAG-001": [
         "apps/api/test/thu-vien.test.ts"
@@ -1181,6 +1187,14 @@
       {
         "id": "DG-MD-2",
         "title": "Mặt hàng có khai ĐVT thì có đúng một ĐVT gốc tỉ lệ 1 và không quá một ĐVT mua mặc định",
+        "enforce": "info",
+        "lane": "diagnostics",
+        "file": "tests/conformance/diagnostics/masterdata.diag.mjs",
+        "selftest": false
+      },
+      {
+        "id": "DG-MD-3",
+        "title": "Hoá đơn của đối tượng đã đổi MST mang đúng MST hiệu lực tại ngày hoá đơn",
         "enforce": "info",
         "lane": "diagnostics",
         "file": "tests/conformance/diagnostics/masterdata.diag.mjs",

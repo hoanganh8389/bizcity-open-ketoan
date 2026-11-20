@@ -24,6 +24,20 @@ Nhà cung cấp hay khách hàng lớn thường có **đơn vị mẹ** và nhi
 - Phiếu, hoá đơn luôn ghi vào **đơn vị nhỏ nhất** (đơn vị xuất / nhận hoá đơn). Mỗi đối tượng có định danh cố định *dt_…* lưu cả vào sổ cái và chứng từ mua, nên đổi mã, tên hay đơn vị mẹ sau này số liệu cũ vẫn đúng chỗ; báo cáo gom lên đơn vị mẹ theo cây.
 - Mọi lần sửa ghi vào **Lịch sử thay đổi** trong hồ sơ (ai, lúc nào, ô nào từ gì sang gì).
 
+## Đổi MST, tên, địa chỉ theo ngày hiệu lực <!-- [2026-11-19 12:30 PM khanhtd] NT-DM-011 — hướng dẫn ngày hiệu lực khi đổi MST / tên / địa chỉ -->
+
+Đối tác đổi mã số thuế (thường kèm tên pháp lý, địa chỉ) nhưng hay **báo trễ**. Phần mềm giữ mọi phiên bản; chứng từ đọc tên / MST **theo ngày chứng từ**.
+
+- Mở hồ sơ đối tượng **đã có**, sửa MST / tên / địa chỉ → hiện ô **Hiệu lực từ ngày**. Chọn ngày đối tác bắt đầu dùng MST mới (được chọn ngày đã qua; không chọn ngày sau hôm nay). Để trống = từ hôm nay.
+- **Một lần Ghi = một phiên bản = một ngày.** Đổi cùng lúc thì sửa cả ba ô, Ghi một lần. Đổi ở các ngày khác nhau thì ghi từng lần, **ngày cũ trước** (vd MST từ 01/10, địa chỉ từ 15/10: ghi MST rồi mới ghi địa chỉ). Phiên bản đã ghi không sửa được — chọn nhầm ngày thì chỉ thêm được phiên bản sau, nên kiểm kỹ trước khi Ghi.
+- Khi Ghi, nếu còn hoá đơn từ ngày đó mang MST cũ, khung **Vì sao** báo **PART-HINT-005** ("Có N hoá đơn … vẫn mang MST cũ"); lưu được, ghi lý do.
+- **Hoá đơn, chứng từ đã lập không bị sửa** (hoá đơn giữ đúng MST in trên hoá đơn). Chúng được liệt kê để rà:
+  - hồ sơ đối tượng → mục **Lịch sử MST, tên, địa chỉ**: mỗi phiên bản một dòng, cột **Hoá đơn lệch** — bấm để xem từng hoá đơn;
+  - **Bàn làm việc kế toán** (HT08) → *Việc hôm nay*: phép kiểm **PARTNER_TAX_MISMATCH** (chạy mỗi đêm, bắt cả hoá đơn nhập về sau).
+- Rà xong: hoá đơn lập **trước** ngày đối tác đổi MST thì ghi lý do khi khoá kỳ; hoá đơn lập **sau** mà vẫn ghi MST cũ thì yêu cầu đối tác lập hoá đơn điều chỉnh / thay thế.
+- MST cũ của một đối tượng không gán được cho đối tượng mới (báo trùng như MST đang dùng).
+- Thêm mới, đồng bộ từ hệ thống bán hàng, nhập Excel: không có ô ngày — thay đổi có hiệu lực từ hôm nay.
+
 ## Màn hình
 
 Ngoài màn **Đối tượng (DM03)** gồm mọi kiểu, có hai màn tách riêng theo kiểu (cùng cách dùng, cùng form):
@@ -38,7 +52,7 @@ Ngoài màn **Đối tượng (DM03)** gồm mọi kiểu, có hai màn tách ri
 
 Thanh nút: Thêm (Ctrl+N) · Sửa (Ctrl+E, hoặc bấm đúp dòng) · Xoá (Ctrl+Delete) · Nạp (F5) · Xuất · ô **Tìm nhanh** (mã, tên, alias, mã số thuế, điện thoại, tên công ty, tìm trên toàn danh mục) · lọc nhóm, loại, trạng thái.
 
-Lưới theo thứ tự cột của danh mục khách hàng: Mã KH, Tên KH, Địa chỉ NR, Điện thoại, Di động, Nhóm KH, Người đại diện, Địa chỉ cty, MST, Fax, Email, Website, Chức vụ, Ngày tạo KH, Theo dõi, Người QL, Chi nhánh QL, Ghi chú, Tên viết tắt, Tên công ty, Tài khoản NH, Chủ TK, Mở tại, Giới hạn nợ, Giới hạn ngày nợ, Giới hạn số phiếu nợ, Người tạo. Danh sách hiện toàn bộ đối tượng (không phân trang).
+Lưới theo thứ tự cột của danh mục khách hàng: Mã KH, Tên KH, Địa chỉ NR, Điện thoại (khách hàng: một cột — form ghi cùng số vào điện thoại / di động; nhà cung cấp có thêm cột Di động người liên hệ), Nhóm KH, Người đại diện, Địa chỉ cty, MST, Fax, Email, Website, Chức vụ, Ngày tạo KH, Theo dõi, Người QL, Chi nhánh QL, Ghi chú, Tên viết tắt, Tên công ty, Tài khoản NH, Chủ TK, Mở tại, Giới hạn nợ, Giới hạn ngày nợ, Giới hạn số phiếu nợ, Người tạo. Danh sách hiện toàn bộ đối tượng (không phân trang).
 
 Form **Khách hàng / Nhà cung cấp**:
 - **Thuộc kiểu** (đầu form): khách hàng, nhà cung cấp, nhân viên, nội bộ, khác. Nhóm chỉ hiện các nhóm khai cho kiểu đó.
@@ -49,6 +63,18 @@ Form **Khách hàng / Nhà cung cấp**:
 - **Mua bán hàng**: công nợ (giới hạn nợ, giới hạn ngày nợ, giới hạn số phiếu nợ) và tài khoản ngân hàng (số TK, chủ TK, mở tại).
 - **Nội bộ quản lý**: người quản lý (danh mục Nhân viên), chi nhánh quản lý, người tạo, ngày tạo.
 - **Theo dõi** ở chân form: bỏ tích để khoá đối tượng.
+
+### Nhập Excel khách hàng / nhà cung cấp
+<!-- [2026-11-20 kiennt] NT-DM-016 — nhập Excel đủ cột của form, cột liên kết tra theo tên (đóng góp) -->
+
+Màn **Nhập Excel** (loại Khách hàng / Nhà cung cấp) nhận gần đủ các ô của form: mã, tên, nhóm, MST, địa chỉ, **Điện thoại**, email, ngày sinh, giới tính (Nam / Nữ), loại khách hàng (KH cá nhân / KH doanh nghiệp), khách hàng tiềm năng, tên công ty, tên viết tắt, alias, địa chỉ Cty, fax, website, chức vụ (nhà cung cấp có thêm người liên hệ), tài khoản NH, chủ TK, mở tại, giới hạn nợ / ngày nợ / số phiếu nợ, người QL, chi nhánh QL, đơn vị cha, theo dõi, ghi chú. Tên cột trùng tên cột của lưới, nên tệp Xuất (bật đủ cột) nhập lại được.
+
+- Bắt buộc như form: dòng mới phải có **Tên**; **khách hàng mới** phải có **Nhóm** (đơn vị con lấy nhóm của đơn vị cha). Các cột khác không bắt buộc; dòng cập nhật để trống thì giữ nguyên.
+- **Cột liên kết** — Nhóm, Người QL (nhân viên), Chi nhánh QL, Thuộc đơn vị cha: ghi **tên** (hoặc mã). Tên không có trong danh mục, hoặc trùng nhiều mục → **dòng báo lỗi, không nhập**; trùng tên thì ghi mã.
+- Khách hàng: cột Điện thoại ghi cả điện thoại và di động như form.
+<!-- [2026-11-20 kiennt] NT-DM-016 — bỏ cột Kiểu; cha / con cùng tệp (đóng góp) -->
+- Tệp mẫu không có cột **Kiểu**: dòng mới nhận kiểu theo màn đang nhập (DM12 → Khách hàng, Nhà cung cấp → Nhà cung cấp); dòng cập nhật giữ kiểu cũ.
+- **Đơn vị mẹ và chi nhánh trong cùng một tệp**: đặt dòng đơn vị mẹ lên trên (mã để trống được), ở dòng chi nhánh ghi **tên** đơn vị mẹ vào cột Thuộc đơn vị cha và để trống mã → khi ghi, chi nhánh nhận mã `mã mẹ-001`, `-002`… Dòng mẹ lỗi thì các dòng con của nó cũng không nhập.
 
 ### Mã tự động khi thêm mới
 

@@ -52,6 +52,7 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-KHO-001](kho/NT-KHO-001-ton-o-chon-hang-theo-kho-xuat.md) | Ô chọn mặt hàng ở phiếu chuyển kho hiện tồn theo kho xuất, ngày phiếu | Đã chốt |
 | [NT-KHO-002](kho/NT-KHO-002-kiem-ke-kho.md) | Kiểm kê kho theo lô / HSD: biên bản kiểm kê → xác minh → quyết định xử lý; chênh lệch vào 1381 / 3381, hàng kém phẩm chất sang kho cách ly, tất toán theo quyết định | Đã chốt |
 | [NT-KHO-003](kho/NT-KHO-003-chan-xuat-am.md) | Công tắc "Cho phép xuất quá số tồn" — chặn ở màn lập tay trong kế toán | Đã chốt |
+| [NT-KHO-004](kho/NT-KHO-004-hang-giu-ho-chi-so-luong.md) | Hàng nhận giữ hộ (KNB) chỉ ghi số lượng: bỏ giá trị dòng kho giữ hộ, chặn chuyển giữ hộ ↔ của mình, giá vốn tính riêng | Đã chốt |
 | [NT-QUY-001](quy/NT-QUY-001-dinh-kem-chung-tu-goc.md) | Đính kèm chứng từ gốc trên phiếu tiền, phiếu chuyển tiền, phiếu kho | Đã chốt |
 | [NT-DM-001](danh-muc/NT-DM-001-bo-ten-tieng-anh-tai-khoan.md) | Bỏ tên tiếng Anh của tài khoản (ACC1, API, Excel, dữ liệu mẫu, CSDL — chép giá trị cũ sang bảng lưu) | Nháp |
 | [NT-DM-002](danh-muc/NT-DM-002-sua-loi-danh-muc.md) | Sửa lỗi danh mục mức cao, trung bình: thêm trùng mã ghi đè, xoá cha còn con / mục đang dùng, vòng nhóm cha, gợi ý NCC ngừng | Chờ nghiệm thu |
@@ -63,5 +64,12 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-DM-008](danh-muc/NT-DM-008-nhap-gia-ban-trinh-nhap-chung.md) | DM14 Bảng giá: nhập giá bán ở lưới giá bằng trình nhập chung (tệp mẫu, ghép cột, kiểm tra, tệp lỗi) | Chờ nghiệm thu |
 | [NT-DM-009](danh-muc/NT-DM-009-ma-nhom-trung-khac-nganh.md) | DM11: mã nhóm hàng không trùng nhóm cùng cha và tên nhóm cha; khác cha được trùng (form thêm / sửa, API, nhập Excel) | Chờ nghiệm thu |
 | [NT-DM-010](danh-muc/NT-DM-010-nhan-o-nhom-hang.md) | DM11: đổi tên ô — Tên ngành, Mã hoá, Mô tả (không bắt buộc); form + Excel + hướng dẫn | Đã chốt |
+| [NT-DM-011](danh-muc/NT-DM-011-mst-doi-tuong-theo-ngay-hieu-luc.md) | DM12 / DM13: đổi MST, tên, địa chỉ theo ngày hiệu lực (lùi ngày khi đối tác báo trễ); mục Lịch sử MST; rà hoá đơn lệch MST ở HT08 | Chờ duyệt |
+| [NT-DM-012](danh-muc/NT-DM-012-loai-thue-co-dinh-theo-quy-dinh.md) | ACC43 Loại thuế cố định theo quy định nhà nước (6 loại, có hiệu lực); bỏ Chiều đầu vào / đầu ra; bỏ ô Tài khoản — TK thuế theo ACC41, TSCĐ tự 1332; chứng từ cũ giữ nguyên | Chờ chữ chốt lõi |
+| [NT-DM-013](danh-muc/NT-DM-013-ma-bien-the-duoi-so.md) | DM10: mã biến thể — phần cuối nhận cả chữ số (phần đầu vẫn chỉ chữ cái); mã cha suy từ 9 số đầu | Đã chốt |
+| [NT-DM-014](danh-muc/NT-DM-014-sua-loi-danh-muc-20-11.md) | Sửa lỗi kiểm thử 20/11: nhập Excel mặt hàng đối chiếu nhóm với ngành / nhãn; loại kho giữ hộ khoá TK; nhập / xuất Excel loại kho đủ cột | Đã chốt |
+| [NT-DM-015](danh-muc/NT-DM-015-xuat-nhom-hang-6-cot.md) | DM11: tệp Xuất / Nhập Excel nhóm hàng chia 6 cột Mã / Tên ngành, nhãn, nhóm | Đã chốt |
+| [NT-DM-016](danh-muc/NT-DM-016-khach-hang-dien-thoai-nhap-excel.md) | DM12: "Di động" → "Điện thoại"; nhập Excel khách hàng đủ cột của form, cột liên kết tra theo tên | Đã chốt |
+| [NT-DM-017](danh-muc/NT-DM-017-mau-nhap-gia-co-san-hang.md) | DM14: tệp mẫu nhập giá có sẵn mọi mặt hàng / ĐVT của bảng giá (giá đang có điền sẵn) | Đã chốt |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.

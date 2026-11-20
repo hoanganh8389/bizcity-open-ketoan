@@ -114,6 +114,9 @@ export interface PDoc {
   taxCode?: string;
   /** Chi phí mua hàng: loại chi phí. */
   costType?: 'van_chuyen' | 'boc_xep' | 'luu_kho' | 'bao_hiem' | 'kiem_dinh' | 'khac';
+  // [2026-11-20 khanhtd] MUA-HANG — khoản mục chi phí của phiếu chi phí mua (đóng góp)
+  /** Chi phí mua hàng: mã khoản mục ở Danh mục khoản mục (dimensions kind = cost_item) — theo dõi loại chi phí ở phân hệ; chưa vào sổ cái. */
+  costItem?: string;
   /** Chi phí / thưởng: tiêu thức phân bổ vào các mã hàng. */
   basis?: 'value' | 'qty';
   /** Thưởng: chính sách + kỳ đã tính (chặn tính trùng). */
@@ -327,7 +330,8 @@ export function giftMatches(p: Policy, sku: string, ls: PLine[]): GiftMatch[] {
 }
 
 /** Thuế suất GTGT theo mã: đầu vào V… (V13K = không chịu thuế — hàng KCT mua vào; KKKN = không kê khai, quà không hoá đơn), đầu ra R… / KCT. */
-export const TAX_RATE: Record<string, number> = { V00: 0, V05: 5, V08: 8, V10: 10, V13K: 0, KKKN: 0, KCT: 0, R00K: 0, R00: 0, R05: 5, R08: 8, R10: 10 };
+// [2026-11-19 kiennt] NT-DM-012 — thêm 6 loại thuế cố định (KCT, 0, 5, 8, 10, KKKN dùng chung mua / bán); mã cũ giữ cho chứng từ cũ (đóng góp)
+export const TAX_RATE: Record<string, number> = { '0': 0, '5': 5, '8': 8, '10': 10, V00: 0, V05: 5, V08: 8, V10: 10, V13K: 0, KKKN: 0, KCT: 0, R00K: 0, R00: 0, R05: 5, R08: 8, R10: 10 };
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
 
 /* ------------------------------------------------------------------ ngày */
@@ -435,7 +439,18 @@ export function findPolicy(policies: Policy[], kind: PolicyKind, ctx: Parameters
  * Dòng phiếu khớp mã (và ĐVT nếu dòng bảng có ghi ĐVT, SL ≥ minQty) thì lấy CK của dòng đó; nhiều chính sách cùng áp thì chính
  * sách phạm vi hẹp hơn / ưu tiên cao hơn thắng; trong một chính sách, dòng có minQty lớn nhất mà SL đạt thắng.
  */
-export interface ItemDiscount { sku: string; pct?: number; amount?: number; unit?: string; minQty?: number; note?: string }
+// [2026-11-20 khanhtd] TRA-CUU — áp riêng + ưu tiên theo TỪNG DÒNG của bảng CK theo mã (như ô Áp riêng theo dòng của mua X tặng Y) (đóng góp)
+export interface ItemDiscount {
+  sku: string; pct?: number; amount?: number; unit?: string; minQty?: number; note?: string;
+  /** Dòng áp riêng: mã nhận đúng dòng này thì không nhận chương trình nào khác. Trống = theo ô Áp riêng của chính sách. */
+  apply?: 'exclusive';
+  /** Ưu tiên của dòng khi tranh áp riêng ở mã này (số lớn thắng). Trống = ưu tiên của chính sách. Không đổi cách chọn giữa các bảng CK thường. */
+  priority?: number;
+}
+/** Chính sách có áp riêng không — cả chính sách, hoặc một dòng của mua X tặng Y / bảng CK theo mã. */
+export const hasExclusive = (p: Pick<Policy, 'kind' | 'rule' | 'scope'>) => isExclusive(p)
+  || (p.kind === 'promo_gift' && giftItemsOf(p).some((i) => i.apply === 'exclusive'))
+  || (p.kind === 'item_discount' && ((p.rule.items as ItemDiscount[] | undefined) ?? []).some((i) => i.apply === 'exclusive'));
 /**
  * Dòng chiết khấu theo mã khớp dòng phiếu. Dòng bảng ghi ĐVT khác ĐVT của phiếu (vd giảm 105.000đ / Thùng, phiếu nhập theo Lon)
  * thì quy đổi theo tỉ lệ ĐVT của mặt hàng (units): factor = tỉ lệ ĐVT phiếu ÷ tỉ lệ ĐVT bảng — số tiền giảm / 1 ĐVT phiếu = amount × factor;
@@ -485,7 +500,7 @@ export interface ExclusiveHit { winner: Policy; blocked: Policy[]; /** Chương 
  */
 export function exclusiveBySku(doc: PDoc, policies: Policy[]): Map<string, ExclusiveHit> {
   const out = new Map<string, ExclusiveHit>();
-  if ((doc.kind !== 'receipt' && doc.kind !== 'order') || !policies.some((p) => STACK_KINDS.includes(p.kind) && (isExclusive(p) || (p.kind === 'promo_gift' && giftItemsOf(p).some((i) => i.apply === 'exclusive'))))) return out;
+  if ((doc.kind !== 'receipt' && doc.kind !== 'order') || !policies.some((p) => STACK_KINDS.includes(p.kind) && hasExclusive(p))) return out;
   const buy = doc.lines.filter((l) => l.lineType === 'buy' && l.sku);
   const netAll = buy.reduce((t, l) => t + l.qty * l.price, 0);
   const bySku = new Map<string, PLine[]>();
@@ -494,13 +509,15 @@ export function exclusiveBySku(doc: PDoc, policies: Policy[]): Map<string, Exclu
     const first = ls[0]!;
     const qty = ls.reduce((t, l) => t + l.qty, 0), gross = ls.reduce((t, l) => t + l.qty * l.price, 0), unitPrice = qty ? gross / qty : 0;
     const ctx = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: first.brandCode ?? doc.brandCode, branchCode: doc.branchCode, sku };
-    const cands: { p: Policy; value: number; row?: number; exclusive?: boolean }[] = [];
+    // priority: ưu tiên riêng của dòng (bảng CK theo mã) — trống thì dùng ưu tiên của chính sách.
+    const cands: { p: Policy; value: number; row?: number; exclusive?: boolean; priority?: number }[] = [];
     for (const p of policies) {
       if (!STACK_KINDS.includes(p.kind)) continue;
       if (p.kind === 'item_discount') {
         if (!policyApplies(p, { ...ctx, sku: undefined })) continue;
         const item = ((p.rule.items as ItemDiscount[] | undefined) ?? []).filter((i) => i.sku === sku && (!i.unit || i.unit.toLowerCase() === first.unit.toLowerCase()) && qty >= (i.minQty ?? 0)).sort((a, b) => (b.minQty ?? 0) - (a.minQty ?? 0))[0];
-        if (item && (item.pct || item.amount)) cands.push({ p, value: item.pct ? (gross * item.pct) / 100 : (item.amount ?? 0) * qty });
+        if (item && (item.pct || item.amount)) cands.push({ p, value: item.pct ? (gross * item.pct) / 100 : (item.amount ?? 0) * qty,
+          exclusive: isExclusive(p) || item.apply === 'exclusive', ...(item.priority != null ? { priority: item.priority } : {}) });
       } else if (p.kind === 'qty_tier') {
         if (!policyApplies(p, ctx)) continue;
         const t = pickTier((p.rule.tiers as { from: number; pct: number }[]) ?? [], qty);
@@ -515,7 +532,8 @@ export function exclusiveBySku(doc: PDoc, policies: Policy[]): Map<string, Exclu
         for (const m of giftMatches(p, sku, ls)) if (m.expected) cands.push({ p, value: m.value, row: m.index, exclusive: m.exclusive });
       }
     }
-    const ex = cands.filter((c) => c.exclusive ?? isExclusive(c.p)).sort((a, b) => (b.p.priority ?? 0) - (a.p.priority ?? 0) || b.value - a.value || a.p.code.localeCompare(b.p.code));
+    const pri = (c: (typeof cands)[number]) => c.priority ?? c.p.priority ?? 0;
+    const ex = cands.filter((c) => c.exclusive ?? isExclusive(c.p)).sort((a, b) => pri(b) - pri(a) || b.value - a.value || a.p.code.localeCompare(b.p.code));
     if (ex.length) {
       const w = ex[0]!;
       // Dòng quà áp riêng thắng: các dòng khác của CÙNG chính sách cho mã này cũng không áp (winnerRow), chính sách khác bị chặn.

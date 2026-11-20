@@ -4,7 +4,7 @@ Mỗi kho thuộc **một loại**. Loại quyết định kho được dùng ch
 
 ## Loại kho
 
-Bảng gồm: Mã · Tên loại kho · Công dụng · TK kho · Số kho đang dùng.
+Bảng gồm: Mã · Tên loại kho · Công dụng · TK kho · Số kho đang dùng. <!-- [2026-11-20 kiennt] NT-DM-014 — loại giữ hộ khoá TK; nhập Excel nhận cột Số kho (đóng góp) -->
 
 Có sẵn 12 loại gốc (KHH hàng kinh doanh, KKM khuyến mại, KHG gửi bán, KTL trả lại, KCL cách ly, KLO lỗi, KHHAN cận hạn, KHHSD hết hạn, KDC điều chuyển, KNB nhận giữ hộ, KCB chờ bán, KCC chờ chứng từ).
 
@@ -22,6 +22,24 @@ Mọi bút toán có hàng đi vào / ra kho thuộc loại này ghi vào **TK k
 - TK kho là tài khoản tổng hợp (ví dụ 156) → không ghi sổ được: cột TK kho hiện **đỏ ⚠**, bút toán vẫn theo Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết (1561, 1562…).
 - Đặt tên loại kho thế nào tuỳ đơn vị; kho thuộc loại nào thì ghi vào TK kho của loại đó.
 - Chứng từ đã ghi giữ nguyên; muốn định khoản lại theo TK mới thì ghi lại chứng từ.
+- **Loại không thuộc sở hữu** (KNB nhận giữ hộ): hàng của bên khác, không ghi sổ kho → ô TK khoá, cột TK hiện *không ghi sổ*. Loại đang lỡ có TK: cột TK hiện đỏ; mở Sửa, bấm **Bỏ TK** rồi Ghi.
+
+## Hàng nhận giữ hộ (KNB) — quy tắc nghiệp vụ
+<!-- [2026-11-20 kiennt] NT-DM-014 — ghi rõ quy tắc hàng không thuộc sở hữu (có trong code từ 13/11, Nguyễn Văn Thủy, migration 0128 + warehouse-types.ts) (đóng góp) -->
+
+Loại kho **KNB – Kho hàng nhận giữ hộ** dùng cho hàng **của bên khác** gửi ở kho mình (ví dụ quà nhà cung cấp gửi giữ hộ). Hàng này **không phải tài sản của đơn vị**, nên:
+
+| Quy tắc | Vì sao | Phần mềm làm gì |
+|---|---|---|
+| **Không ghi sổ kho** — loại kho không có Tài khoản hạch toán | TK kho của loại đi vào mọi bút toán kho (nhập, xuất, chuyển, kiểm kê, giá vốn). Có TK thì hàng của người khác bị ghi thành hàng tồn kho của đơn vị — sai bản chất tài sản | Ô Tài khoản khoá; loại đang lỡ có TK thì cảnh báo + nút **Bỏ TK**; nhập Excel dòng có TK báo lỗi; máy chủ từ chối ghi |
+| **Không được bán** | Không có quyền bán hàng không thuộc sở hữu | Nghiệp vụ bán / nhập mua không chọn được kho loại này |
+| **Chỉ ghi số lượng, không ghi giá trị** <!-- [2026-11-20 kiennt] NT-KHO-004 (đóng góp) --> | Theo dõi để trả lại đúng chủ hàng; giá trị không phải của đơn vị | Phiếu nhập / xuất kho khác ở kho KNB: phần mềm **tự đặt thành tiền = 0**, giữ số lượng — thẻ kho có số lượng, không có bút toán. Giá vốn tháng tính riêng loại KNB, tồn giữ hộ không kéo đơn giá kho hàng |
+| **Không chuyển qua lại với kho của đơn vị** | Chuyển sang kho mình là biến hàng người khác thành tài sản mà không có chứng từ | Chuyển kho KNB ↔ kho của đơn vị bị chặn. Hàng giữ hộ thành của mình (chủ hàng bán / tặng lại): xuất trả khỏi kho KNB rồi lập phiếu nhập mua / nhận quà vào kho của mình |
+| **Không mua / bán có giá trị** | Như trên | Phiếu mua / bán / trả hàng có dòng tiền ở kho KNB bị chặn; dòng hàng tặng 0 đồng thì nhận |
+
+Chứng từ ghi trước bản sửa (20/11/2026) giữ nguyên; muốn bỏ giá trị thì ghi lại chứng từ.
+
+Hàng giữ hộ chỉ theo dõi số lượng (quyết định 20/11/2026), không theo dõi giá trị. Muốn đổi quy tắc (ví dụ theo dõi trên một TK riêng) — hỏi kế toán trưởng trước, vì đó là thay đổi cách ghi sổ.
 
 ## Nghiệp vụ dùng loại kho
 
@@ -38,4 +56,4 @@ Ví dụ: Khách trả hàng tự chọn Kho hàng trả lại, dùng được t
 ## Nhập Excel
 <!-- [2026-11-18 11:20 AM kiennt] NT-DM-004, NT-DM-005 — nhập Excel cho mọi màn danh mục (đóng góp) -->
 
-Nút **Nhập Excel** nhận tệp Xuất của màn này (mã, tên, công dụng, tài khoản hạch toán). Loại mới bán được, hàng của mình, theo dõi hạn dùng như khi thêm trên form. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).
+Nút **Nhập Excel** nhận tệp Xuất của màn này (mã, tên, công dụng, tài khoản hạch toán; cột **Số kho** chỉ xem, bỏ qua). Loại mới bán được, hàng của mình, theo dõi hạn dùng như khi thêm trên form. Loại hàng nhận giữ hộ (KNB) không có TK kho — dòng ghi TK cho loại này báo lỗi, không ghi. Xem [Nhập dữ liệu từ Excel](nhap-excel.md).

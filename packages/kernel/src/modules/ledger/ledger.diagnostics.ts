@@ -56,11 +56,11 @@ const policyBad = sql<boolean>`(e.policy_version IS NULL OR NOT EXISTS (
                                    WHERE v2.tenant_id = e.tenant_id AND v2.effective_from <= e.posting_date AND v2.created_at <= e.created_at
                                      AND (v2.effective_from, v2.version) > (v.effective_from, v.version))))`;
 const valued = sql<boolean>`NOT (a.total = 0 AND a.doc_type IN (${sql.join(STOCK_ZERO)}))`;
-/** Sự việc `a` có bút toán hiệu lực phát sinh trên tài khoản thuế GTGT đầu vào của đơn vị (loại thuế đầu vào + ngầm định tax_input). */
+/** Sự việc `a` có bút toán hiệu lực phát sinh trên tài khoản thuế GTGT đầu vào của đơn vị (loại thuế đầu vào + ngầm định tax_input, tax_input_fixed_asset — NT-DM-012). */
 const inputTaxPosted = sql<boolean>`EXISTS (SELECT 1 FROM ledger_entries e JOIN ledger_lines l ON l.entry_id = e.id
   WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal AND l.debit <> l.credit
     AND l.account_code IN (SELECT tc.account_code FROM tax_codes tc WHERE tc.tenant_id = a.tenant_id AND tc.direction = 'input' AND tc.account_code IS NOT NULL
-                           UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key = 'tax_input'))`;
+                           UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key IN ('tax_input', 'tax_input_fixed_asset')))`;
 
 // [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6: cặp (thuế đầu vào trên sổ, thuế trên sổ hoá đơn) của từng sự việc đã ghi sổ có hoá đơn
 /** Mỗi sự việc trong phạm vi có cả bút toán thuế đầu vào và hoá đơn đầu vào còn hiệu lực: `so` = thuế ròng trên sổ, `hd` = thuế ròng trên hoá đơn. */
@@ -71,7 +71,7 @@ const vatInputPairs = (s: DiagScope) => sql`
             FROM ledger_entries e JOIN ledger_lines l ON l.entry_id = e.id
            WHERE e.tenant_id = ${s.tenantId}
              AND l.account_code IN (SELECT tc.account_code FROM tax_codes tc WHERE tc.tenant_id = ${s.tenantId} AND tc.direction = 'input' AND tc.account_code IS NOT NULL
-                                    UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = ${s.tenantId} AND d.key = 'tax_input')
+                                    UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = ${s.tenantId} AND d.key IN ('tax_input', 'tax_input_fixed_asset'))
            GROUP BY e.event_id) so ON so.event_id = a.id
     JOIN (SELECT i.event_id, sum(i.total_tax * i.sign) AS amt FROM tax_invoices i
            WHERE i.tenant_id = ${s.tenantId} AND i.direction = 'input' AND i.status IN ('valid', 'adjusted')

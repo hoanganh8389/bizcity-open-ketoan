@@ -9,3 +9,5 @@ export * from './khuyen-mai.js';
 export * from './ton-max.js';
 export * from './hoa-don.js';
 export * from './hoa-don-xml.js';
+export * from './ap-rieng-chong.js'; // [2026-11-20 khanhtd] TRA-CUU — dò chương trình áp riêng chồng nhau (đóng góp)
+export * from './don-hoa-don.js'; // [2026-11-20 khanhtd] MUA-HANG — đơn đặt theo dõi hoá đơn (đóng góp)

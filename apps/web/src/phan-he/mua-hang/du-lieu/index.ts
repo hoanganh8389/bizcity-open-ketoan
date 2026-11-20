@@ -50,7 +50,8 @@ export const today = () => { const d = new Date(); return `${d.getFullYear()}-${
 export const monthStart = () => `${today().slice(0, 8)}01`;
 /** Thuế suất GTGT đầu vào hiển thị cho người dùng (mã thuế → nhãn). */
 /** Thuế suất trên dòng phiếu mua: KCT = hàng không chịu thuế GTGT (V13K); KKKN = không kê khai (quà / hàng không hoá đơn). */
-export const TAX_LABEL: Record<string, string> = { V00: '0%', V05: '5%', V08: '8%', V10: '10%', V13K: 'KCT (không chịu thuế)', KKKN: 'Không kê khai' };
+// [2026-11-19 kiennt] NT-DM-012 — nhãn 6 loại thuế cố định + mã cũ (chỉ để hiện chứng từ cũ) (đóng góp)
+export const TAX_LABEL: Record<string, string> = { KCT: 'KCT (không chịu thuế)', '0': '0%', '5': '5%', '8': '8%', '10': '10%', KKKN: 'Không kê khai', V00: '0%', V05: '5%', V08: '8%', V10: '10%', V13K: 'KCT (không chịu thuế)' };
 
 /** Lựa chọn gần nhất của người dùng (chi nhánh, NCC, loại đơn giá) để phiếu mới điền sẵn; chỉ là tiện ích, mất cũng không sao. */
 export interface LastUsed { branchCode?: string; partnerCode?: string; priceIncludesVat?: boolean }

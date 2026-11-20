@@ -45,11 +45,30 @@ export const paymentDraftSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('credit') }),
 ]);
 
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: hồ sơ khách lúc bán mang MST / email / địa chỉ / tên công ty (tuỳ chọn — máy cũ không gửi vẫn nhận) (đóng góp)
+/** Thông tin hoá đơn của khách máy bán sửa tại chỗ (NT-BH-034) — chỉ lưu trên đơn để điền sẵn màn hoá đơn; không đổi danh mục khách. */
+const customerInvoiceInfo = {
+  email: z.string().trim().max(200).optional(),
+  address: z.string().trim().max(500).optional(),
+  companyName: z.string().trim().max(300).optional(),
+  taxCode: z.string().trim().max(20).optional(),
+};
 export const customerDraftSchema = z.union([
-  z.object({ partnerId: z.string().trim().min(1).max(64) }),
+  z.object({ partnerId: z.string().trim().min(1).max(64), ...customerInvoiceInfo }),
   z.object({ retail: z.literal(true) }),
-  z.object({ phone: z.string().trim().min(1).max(20), name: z.string().trim().max(200) }),
+  z.object({ phone: z.string().trim().min(1).max(20), name: z.string().trim().max(200), ...customerInvoiceInfo }),
 ]);
+export type CustomerInvoiceInfo = { email?: string; address?: string; companyName?: string; taxCode?: string };
+/** Phần thông tin hoá đơn khách máy gửi (bỏ ô trống). */
+export function customerInvoiceInfoOf(c: unknown): CustomerInvoiceInfo {
+  const o = (c ?? {}) as Record<string, unknown>;
+  const out: CustomerInvoiceInfo = {};
+  for (const k of ['email', 'address', 'companyName', 'taxCode'] as const) {
+    const v = typeof o[k] === 'string' ? (o[k] as string).trim() : '';
+    if (v) out[k] = v;
+  }
+  return out;
+}
 
 export const orderDraftSchema = z.object({
   id: z.string().trim().min(8).max(64),

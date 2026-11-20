@@ -82,6 +82,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `LEDGER_ROUNDING` | L3 | Bút toán có dòng sổ không tròn đồng (sổ ghi đồng Việt Nam); mẫu `entry_no` | warn | có | DG-REC-2 |
 | `ITEM_CODE_CASE_DUP` | L3 | Mã hàng trùng nhau khi bỏ khoảng trắng / không phân biệt hoa thường (không theo ngày); mẫu mã đã chuẩn hoá | warn | có | DG-MD-1 |
 | `UNIT_BASE_INVALID` | L3 | Mặt hàng có khai ĐVT nhưng không đúng một ĐVT gốc tỉ lệ 1, hoặc hơn một ĐVT mua mặc định (không theo ngày); mẫu mã hàng | warn | có | DG-MD-2 |
+| `PARTNER_TAX_MISMATCH` <!-- [2026-11-19 11:09 AM khanhtd] NT-DM-011 — mã kiểm hoá đơn lệch MST đối tượng (chữ chốt R-FLOW-2) --> | L3 | Hoá đơn (`tax_invoices`) của đối tượng đã từng đổi MST mang MST khác MST hiệu lực tại ngày hoá đơn (`bizcity_entity_attr_at`, so phần chữ số); mẫu `<mã đối tượng>:<số hoá đơn>:<dd/mm/yyyy>`; closeRef PC-011 | warn | chưa (NT-DM-011) | DG-MD-3 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ, đang bật và không còn nhắc cờ thoát `allow_ledger_purge` (0086) | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |

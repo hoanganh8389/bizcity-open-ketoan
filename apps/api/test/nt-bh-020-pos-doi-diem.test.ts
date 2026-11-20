@@ -1,3 +1,4 @@
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — test dùng ngày tương đối (hạn trả NT-BH-030) (đóng góp)
 // [2026-11-15 08:10 PM Võ Hoàng] LOYALTY — NT-BH-020 bước 2: đổi điểm lấy voucher / quà, dùng voucher ở đơn sau (đóng góp)
 /**
  * NT-BH-020 bước 2 — đổi điểm, dùng voucher: máy bán gửi đơn vào module pos (pos hỏi module loyalty qua action đọc), sự kiện đơn giao
@@ -43,10 +44,12 @@ const PROGRAM = {
   ],
 };
 
+const vnDate = (offset = 0) => new Date(Date.now() + 7 * 3600_000 + offset * 86_400_000).toISOString().slice(0, 10);
+const TODAY = vnDate();
 let n = 0;
 const id = () => `0193a1b2-0000-7000-8000-0000000202${String(++n).padStart(2, '0')}`;
 const order = (oid: string, over: Record<string, unknown> = {}) => ({
-  id: oid, branchCode: 'CN01', businessDate: '2026-11-15', shiftId: 'ngay-2026-11-15', exportReasonCode: 'XBA', customer: { partnerId: PHONE },
+  id: oid, branchCode: 'CN01', businessDate: TODAY, shiftId: `ngay-${TODAY}`, exportReasonCode: 'XBA', customer: { partnerId: PHONE },
   lines: [{ lineId: 'l1', sku: SKU, unitName: 'Lon', unitQty: 1, clientUnitPrice: 325_000 }],
   promotionSelections: [], payment: { mode: 'cash', cashGiven: 325_000 }, clientTotal: 325_000, coreVersion: '0.1.0', promotionsVersion: '', ...over,
 });

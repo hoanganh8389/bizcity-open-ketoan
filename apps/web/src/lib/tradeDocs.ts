@@ -80,11 +80,10 @@ export const KIND_INFO: Record<TradeKind, {
 export const TRADE_KINDS = Object.keys(KIND_INFO) as TradeKind[];
 
 /** Thuế suất theo mã thuế (đầu ra R.., đầu vào V..). */
-export const TAX_RATES: Record<string, number> = { KCT: 0, R00: 0, R05: 5, R08: 8, R10: 10, V00: 0, V05: 5, V08: 8, V10: 10, KKKN: 0 };
-export const TAX_OPTIONS = {
-  output: [['R08', '8%'], ['R10', '10%'], ['R05', '5%'], ['R00', '0%'], ['KCT', 'KCT']],
-  input: [['V08', '8%'], ['V10', '10%'], ['V05', '5%'], ['V00', '0%'], ['KKKN', 'Không kê khai']],
-} as const;
+// [2026-11-19 kiennt] NT-DM-012 — thêm 6 loại thuế cố định (KCT, 0, 5, 8, 10, KKKN); mã cũ giữ để tính chứng từ cũ; bỏ TAX_OPTIONS (ô chọn dùng <ChonThue>)
+export const TAX_RATES: Record<string, number> = { KCT: 0, '0': 0, '5': 5, '8': 8, '10': 10, KKKN: 0, R00: 0, R05: 5, R08: 8, R10: 10, V00: 0, V05: 5, V08: 8, V10: 10 };
+/** Loại thuế mặc định khi mặt hàng chưa khai (NT-DM-012: một loại cho mua và bán): 8% đến hết 31/12/2026 (NQ 204/2025/QH15), sau đó 10%. */
+export const thueMacDinh = (ngay?: string | null): string => (!ngay || ngay <= '2026-12-31' ? '8' : '10');
 
 /** Tính lại tiền dòng + tổng phiếu (làm tròn đồng như hoá đơn). */
 export function recompute(doc: TradeDoc): TradeDoc {

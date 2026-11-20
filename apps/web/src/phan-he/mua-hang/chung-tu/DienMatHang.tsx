@@ -15,6 +15,7 @@ import { Modal, NumInput } from '@/components/ui';
 import { price as donGia, roundPrice } from '@/lib/format';
 import { purchaseApi, type MhData } from '../du-lieu';
 import { useNeedOf } from '../ton-max/api';
+import { thueMacDinh } from '@/lib/tradeDocs';
 
 const dmy = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
 
@@ -49,7 +50,7 @@ export function DienMatHang({ doc, data, onClose, onAdd, theoHopDong }: { doc: P
   const basis = (p: number, inc: boolean, taxCode: string) => { const r = TAX_RATE[taxCode] ?? 0; return inc === doc.priceIncludesVat ? p : inc ? roundPrice(p / (1 + r / 100)) : roundPrice(p * (1 + r / 100)); };
   const rows = items.filter((x) => !search || `${x.sku} ${x.nccSku ?? ''} ${catOf(x.sku)?.name ?? x.name ?? ''}`.toLowerCase().includes(search.toLowerCase())).map((x) => {
     const c = catOf(x.sku);
-    const tax = c?.taxInCode ?? 'V08';
+    const tax = c?.taxInCode ?? thueMacDinh(doc.docDate);
     const us = unitsOf(x.sku);
     const unit = unitPick[x.sku] ?? defaultUnitFor(us, prices, doc.partnerCode, x.sku, x.unit || c?.unit || '');
     const f = priceFor(prices, { date: doc.docDate, partnerCode: doc.partnerCode, sku: x.sku, unit, contractCode: theoHopDong?.code ?? doc.contractCode }, us);

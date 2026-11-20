@@ -87,6 +87,8 @@ export const docInputSchema = z.object({
   ckttAmount: z.number().finite().min(0).optional(),
   taxCode: z.string().trim().max(16).optional(),
   costType: z.enum(['van_chuyen', 'boc_xep', 'luu_kho', 'bao_hiem', 'kiem_dinh', 'khac']).optional(),
+  // [2026-11-20 khanhtd] MUA-HANG — phiếu chi phí mua: mã khoản mục (Danh mục khoản mục), kiểm có trong danh mục ở analysis (đóng góp)
+  costItem: z.string().trim().max(64).optional().or(z.literal('')),
   basis: z.enum(['value', 'qty']).optional(),
   refIds: z.array(z.string().regex(/^[1-9][0-9]*$/)).max(50).optional(),
   settle: z.enum(['offset', 'pay', 'refund']).optional(),
@@ -105,7 +107,7 @@ export const docInputSchema = z.object({
 export type DocInput = z.infer<typeof docInputSchema>;
 
 /** Phần lưu ở cột data (jsonb). */
-const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode'] as const;
+const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'costItem', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode'] as const;
 
 type Row = Awaited<ReturnType<typeof selectDocs>>[number];
 function selectDocs(trx: Db, tenantId: string) {
@@ -258,7 +260,7 @@ export function toDoc(r: Row): StoredDoc {
     priceIncludesVat: d.priceIncludesVat ?? true,
     invoice: r.invoice_no ? { no: r.invoice_no, serial: r.invoice_serial || undefined, date: String(r.invoice_date ?? r.doc_date).slice(0, 10), total: d.invoiceTotal } : undefined,
     orderDiscount: d.orderDiscount, term: d.term, cktt: d.cktt, lines: d.lines ?? [], schedule: d.schedule, amount: d.amount, method: d.method, moneyAccount: d.moneyAccount || undefined, ckttAmount: d.ckttAmount,
-    taxCode: d.taxCode, costType: d.costType, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
+    taxCode: d.taxCode, costType: d.costType, costItem: d.costItem || undefined, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
     override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies, contractCode: d.contractCode || undefined,
     revision: r.revision, links: (r.links ?? []) as StoredDoc['links'],
     totals: { beforeTax: toNumber(r.total_before_tax), tax: toNumber(r.total_tax), total: toNumber(r.total) },
@@ -371,7 +373,9 @@ export const RULE_SCHEMAS: Record<PolicyKind, z.ZodTypeAny> = {
   trade_discount: z.union([z.object({ pct }), z.object({ amount: num })]),
   // Bảng nhiều mã: mỗi dòng một mã (một mã nhiều dòng khi khác ĐVT / SL tối thiểu); % hoặc giảm tiền trên 1 ĐVT.
   // Ô trống gửi lên là null / 0 → coi như không ghi (chỉ một trong hai: % hoặc giảm tiền).
-  item_discount: z.object({ items: z.array(z.object({ sku: z.string().trim().min(1).max(64), pct: pct.nullish().transform((x) => x || undefined), amount: num.nullish().transform((x) => x || undefined), unit: z.string().trim().max(32).nullish().transform((x) => x || undefined), minQty: num.nullish().transform((x) => x || undefined), note: z.string().max(200).nullish().transform((x) => x || undefined) })
+  item_discount: z.object({ items: z.array(z.object({ sku: z.string().trim().min(1).max(64), pct: pct.nullish().transform((x) => x || undefined), amount: num.nullish().transform((x) => x || undefined), unit: z.string().trim().max(32).nullish().transform((x) => x || undefined), minQty: num.nullish().transform((x) => x || undefined), note: z.string().max(200).nullish().transform((x) => x || undefined),
+    // [2026-11-20 khanhtd] TRA-CUU — áp riêng + ưu tiên theo từng dòng (trống = theo chính sách) (đóng góp)
+    apply: z.enum(['exclusive']).nullish(), priority: z.number().int().min(-999).max(999).nullish() })
     .superRefine((i, ctx) => { if (Boolean(i.pct) === Boolean(i.amount)) ctx.addIssue({ code: 'custom', message: i.pct ? `mã ${i.sku} đang ghi cả ${i.pct}% và giảm ${i.amount!.toLocaleString('vi-VN')}đ — chỉ giữ một trong hai` : `mã ${i.sku} chưa ghi % chiết khấu hoặc số tiền giảm` }); })).min(1).max(10000)
     .superRefine((items, ctx) => { const seen = new Map<string, number>(); items.forEach((i, n) => { const k = `${i.sku}|${(i.unit ?? '').toLowerCase()}|${i.minQty ?? 0}`; if (seen.has(k)) ctx.addIssue({ code: 'custom', path: [n], message: `dòng ${n + 1} trùng dòng ${seen.get(k)! + 1} (${i.sku})` }); else seen.set(k, n); }); }) }),
   qty_tier: z.object({ tiers: z.array(z.object({ from: num, pct })).min(1) }),

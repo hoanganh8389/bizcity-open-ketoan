@@ -31,11 +31,13 @@ describe('Loại tài sản: loại cha, xoá', () => {
   });
 });
 
-describe('Loại thuế: xoá', () => {
-  it('xoá loại thuế chưa dùng; mã không có báo không tìm thấy', async () => {
-    expect((await call(ctx, 'POST', '/api/v1/tax-codes', { code: 'THU5', name: 'Thử 5%', rate: 5, direction: 'output', accountCode: '33311', reportGroup: '5' })).status).toBe(201);
-    expect((await call(ctx, 'DELETE', '/api/v1/tax-codes/THU5')).status).toBe(200);
-    expect((await call(ctx, 'DELETE', '/api/v1/tax-codes/THU5')).status).toBe(404);
+// [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định theo quy định nhà nước: không thêm / xoá qua API (đóng góp)
+describe('Loại thuế: cố định, không xoá', () => {
+  it('thêm, xoá loại thuế bị chặn (403) kèm lý do', async () => {
+    expect((await call(ctx, 'POST', '/api/v1/tax-codes', { code: 'THU5', name: 'Thử 5%', rate: 5, direction: 'output', accountCode: '33311', reportGroup: '5' })).status).toBe(403);
+    const del = await call(ctx, 'DELETE', '/api/v1/tax-codes/R05');
+    expect(del.status).toBe(403);
+    expect(JSON.stringify(del.body)).toContain('quy định nhà nước');
   });
 });
 

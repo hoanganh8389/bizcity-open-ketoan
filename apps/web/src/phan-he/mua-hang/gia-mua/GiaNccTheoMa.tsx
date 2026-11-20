@@ -15,6 +15,7 @@ import { PartnerPicker } from '@/components/pickers';
 import { errorText } from '@/lib/api';
 import { price as donGia, roundPrice } from '@/lib/format';
 import { purchaseApi, today, useNames } from '../du-lieu';
+import { thueMacDinh } from '@/lib/tradeDocs';
 
 const dmy = (iso?: string | null) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
 const SHOW = 3;
@@ -30,7 +31,7 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
   const [more, setMore] = useState<Record<string, boolean>>({});
   const [showLog, setShowLog] = useState<Record<string, boolean>>({});
   const units = q.data?.units[sku] ?? [];
-  const rate = (TAX_RATE[cat.data?.[0]?.taxInCode ?? 'V08'] ?? 0) / 100;
+  const rate = (TAX_RATE[cat.data?.[0]?.taxInCode ?? thueMacDinh()] ?? 0) / 100;
   const asPrice = (r: SupplierProduct, inc: boolean) => (r.price === null || r.price === undefined ? null : Boolean(r.priceIncludesVat) === inc ? r.price : inc ? roundPrice(r.price * (1 + rate)) : roundPrice(r.price / (1 + rate)));
 
   // Nhóm theo NCC (dòng giá chung không có NCC xếp cuối); trong nhóm: hiệu lực từ mới nhất trước.
@@ -138,7 +139,7 @@ function HopGia({ v: init, units, rate, onClose, onDone }: { v: Form; units: { u
       </>}>
       {err && <div className="alert alert-bad full">{err}</div>}
       <Field label="Nhà cung cấp (*)" full>
-        {isNew && init.partnerCode === null ? <PartnerPicker value={v.partnerCode ?? ''} onChange={(c) => set({ partnerCode: c || null })} placeholder="Gõ mã, tên hoặc MST để tìm" addKind="supplier" /> : <input className="input" readOnly value={v.partnerCode ?? 'Giá chung'} />}
+        {isNew && init.partnerCode === null ? <PartnerPicker kind="supplier" value={v.partnerCode ?? ''} onChange={(c) => set({ partnerCode: c || null })} placeholder="Gõ mã, tên hoặc MST để tìm" addKind="supplier" /> : <input className="input" readOnly value={v.partnerCode ?? 'Giá chung'} />}
       </Field>
       <Field label="ĐVT (*)">
         <select className="select input" value={v.unit} onChange={(e) => set({ unit: e.target.value })}>

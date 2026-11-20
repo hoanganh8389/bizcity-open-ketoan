@@ -3,13 +3,13 @@
   "id": "bizcity.voucher",
   "key": "voucher",
   "kind": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "label": "Voucher",
   "description": "Voucher (NT-BH-026): đợt phát tương đương tiền / lần mua sau sản phẩm – nhãn, TGS hoặc hãng phát; mã gắn SĐT khách, dùng một lần; máy bán / BH10 hỏi voucher.order.quote rồi trừ (TGS = chiết khấu, hãng = hình thức thanh toán); tự phát voucher lần mua sau; báo cáo. Không nộp chứng từ.",
   "owners": ["@hoanganh8389"],
   "standard": "^1.0",
   "requires": {
-    "capabilities": ["data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.subscribe"]
+    "capabilities": ["data.tenant-tx", "data.read-views", "data.migrations.module", "actions.runtime", "actions.idempotency", "evidence.receipt", "events.subscribe", "documents.versions", "documents.links"]
   },
   "permissions": [
     { "key": "voucher:read", "label": "Xem voucher: đợt phát, mã, tra cứu mã đã dùng ở đơn nào, báo cáo", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" },
@@ -33,7 +33,8 @@
     "voucher.code.revoke",
     "voucher.customer.available",
     "voucher.order.quote",
-    "voucher.report.get"
+    "voucher.report.get",
+    "voucher.usage.list"
   ],
   "events": {
     "subscribes": [

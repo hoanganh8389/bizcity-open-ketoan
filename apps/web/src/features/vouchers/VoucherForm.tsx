@@ -20,6 +20,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useBankAccounts } from '../catalog/BankAccountsPage';
 import { VOUCHER_MONEY, fillPeriodText, isMoneyAccountFor, type VoucherInput, type VoucherTemplateInput, type VoucherType } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
+import { ChonThue } from '@/lib/thueGtgt';
 import { date as showDate, money, today } from '@/lib/format';
 import { useBranches, BranchPicker } from '@/components/filters';
 import { Field, Modal, useViewAgain } from '@/components/ui';
@@ -378,10 +379,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
                             <>
                               <label className="sub-field">
                                 <span>Loại thuế</span>
-                                <select className="select input" value={l.taxCode} disabled={readOnly} onChange={(e) => pickTax(i, e.target.value)}>
-                                  <option value="">Không có thuế</option>
-                                  {taxCodes.filter((t) => t.isActive).map((t) => <option key={t.code} value={t.code}>{t.code} — {t.name}</option>)}
-                                </select>
+                                <ChonThue value={l.taxCode} trong ngay={h.docDate} disabled={readOnly} onChange={(c) => pickTax(i, c)} />
                               </label>
                               <label className="sub-field"><span>Tiền thuế</span><input className="input num" inputMode="numeric" value={l.taxAmount} disabled={readOnly || !l.taxCode} onChange={(e) => setLine(i, { taxAmount: e.target.value })} onBlur={() => setLine(i, { taxAmount: showAmount(l.taxAmount) })} /></label>
                               <label className="sub-field"><span>Ký hiệu HĐ</span><input className="input mono" value={l.invoiceSerial} disabled={readOnly || !l.taxCode} onChange={(e) => setLine(i, { invoiceSerial: e.target.value })} /></label>

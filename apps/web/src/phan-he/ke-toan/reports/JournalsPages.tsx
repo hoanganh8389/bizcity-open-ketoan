@@ -193,7 +193,7 @@ export function PurchaseJournalPage() {
             <form className="rp-form" onSubmit={(e) => { e.preventDefault(); set({ partnerCode: partner.trim() }); }}>
               <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
               <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />
-              <div className="field"><label>Nhà cung cấp</label><PartnerPicker className="input w-lg" placeholder="Tất cả" value={partner} onChange={(v) => { setPartner(v); set({ partnerCode: v }); }} /></div>
+              <div className="field"><label>Nhà cung cấp</label><PartnerPicker kind="supplier" className="input w-lg" placeholder="Tất cả" value={partner} onChange={(v) => { setPartner(v); set({ partnerCode: v }); }} /></div>
             </form>
           </>
         }

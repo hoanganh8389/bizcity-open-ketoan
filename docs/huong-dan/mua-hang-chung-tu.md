@@ -130,6 +130,7 @@ Máy chủ kiểm tra lại sau mỗi lần sửa phiếu, bằng **số liệu 
   - **Đã tự áp** — chương trình nào, ra bao nhiêu;
   - **Cần xem** — thiếu / thừa quà, CK ghi tay khác chính sách (nút **Dùng theo chính sách**);
   - **Mua thêm để được** — ví dụ "mua thêm 5 để được tặng thêm 1", "đủ 50 để được CK 3%" (nút **Lên N**).
+- Cột **Hiệu lực** của bảng khuyến mại: chương trình chạy từ ngày nào đến ngày nào (theo bản chính sách áp ở ngày phiếu; phiếu đã duyệt: bản đã chốt lúc duyệt). Chữ **cam ⚠**: còn dưới 7 ngày tính từ ngày phiếu là hết hạn (hoặc đã hết hạn), nên đặt / nhập sớm. Dòng CK ghi tay trên phiếu không phải chương trình nên để trống.
 - Quà ngoài chương trình (NCC tặng thêm): nút **+ Quà ngoài chương trình…**.
 - **Bỏ / áp lại từng chương trình trên phiếu (cột Áp):** tự động nhưng linh hoạt — NCC hết quà, lần này NCC không cho CK… thì **bỏ tích** chương trình đó ở bảng khuyến mại (hoặc khung bên phải): CK / bậc / CKTT của nó về 0, quà tự thêm của nó tự gỡ; dòng chuyển sang nhóm **Đã bỏ trên phiếu** (gạch ngang). **Tích lại** là áp lại. Chỉ ảnh hưởng phiếu đang mở; lúc duyệt phần mềm chốt đúng như lựa chọn.
 - **CK trên đơn bằng số tiền cố định** (vd giảm 2 triệu / đơn) chỉ tự áp khi tiền hàng **lớn hơn** số CK, hoặc đủ mức **"Áp khi tổng đơn từ"** khai ở chính sách; chưa đủ thì không áp (không bao giờ làm số phải trả âm) mà hiện gợi ý "tổng đơn từ … mới được CK — mua thêm …". Mỗi khoản CK chỉ hiện **một dòng** (mã chính sách + số tiền), CK ghi tay hiện "ghi trên phiếu".
@@ -155,7 +156,9 @@ Máy chủ kiểm tra lại sau mỗi lần sửa phiếu, bằng **số liệu 
 | Muốn làm | Cách làm |
 |---|---|
 | NCC giảm giá / chiết khấu thêm **sau khi đã nhập** | **+ Thêm chứng từ → Chiết khấu / giảm giá sau mua**: chọn NCC, tích các phiếu nhập được giảm, nhập số tiền; có hoá đơn điều chỉnh thì chọn VAT và số hoá đơn. Duyệt: giảm công nợ, giảm giá vốn từng mã |
-| Chi phí vận chuyển, bốc xếp cho **nhiều phiếu nhập** | **Chi phí mua hàng**: chọn loại chi phí, tích các phiếu nhập, chọn phân bổ theo giá trị hoặc số lượng |
+| Chi phí vận chuyển, bốc xếp cho **nhiều phiếu nhập** | **Chi phí mua hàng**: chọn loại chi phí và **Khoản mục** (Danh mục khoản mục), tích các phiếu nhập, chọn phân bổ theo giá trị hoặc số lượng |
+| Theo dõi chi phí mua **theo khoản mục** | MH11 thẻ **Chi phí / thưởng**: cột **Khoản mục**, dải cộng tiền chưa thuế theo từng khoản mục (bấm để lọc), ô lọc **Khoản mục chi phí** bên trái ("Chưa chọn khoản mục" = phiếu cũ). Khoản mục phải có trong Danh mục khoản mục và đang theo dõi, không thì phiếu báo lỗi chặn duyệt. Khoản mục hiện theo dõi ở phân hệ Mua hàng, **chưa ghi vào sổ cái** (báo cáo chi phí theo khoản mục của kế toán chưa thấy chi phí mua) |
+| Theo dõi **đơn đặt đã có hoá đơn chưa** | MH11 thẻ **Đơn đặt hàng**: cột **Đơn: hoá đơn** (Chưa nhập hàng · Chưa có HĐ · Có HĐ một phần · Đủ HĐ — gom từ các phiếu nhập của đơn; rê chuột xem số hoá đơn và phiếu nhập còn thiếu hoá đơn), ô lọc **Hoá đơn của đơn đặt** bên trái (có "Chưa đủ hoá đơn"). Xem theo dòng hàng: MH21 |
 | TGS **tự mua quà** để tặng khách | Phiếu **Nhập mua**, nhập các mã quà (theo quy tắc mã hàng, quà khuyến mại có mã bắt đầu bằng **Q**) — phiếu toàn mã quà phần mềm tự hiểu là mua quà để tặng, vào sổ quà tặng (MH09), không phải đánh dấu; nhập chương trình; có số hoá đơn thì tính là quà có VAT |
 | Xuất quà tặng khách | **Xuất quà tặng**: nhập chương trình trên từng dòng. Xuất quá số quà còn tồn của chương trình tại chi nhánh thì không duyệt được |
 | Ngày sản xuất của lô | Cột **NSX** trên dòng hàng (nếu có) |

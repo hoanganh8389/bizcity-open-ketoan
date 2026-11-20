@@ -28,17 +28,18 @@ interface Saved { map: Record<string, number | null>; headers: string[]; default
 const memKey = (id: string) => `ketoan.nhap-excel.${id}`;
 const readMem = (id: string): Partial<Saved> => { try { return JSON.parse(localStorage.getItem(memKey(id)) ?? '{}') as Partial<Saved>; } catch { return {}; } };
 
-/** Tệp mẫu: dòng tiêu đề + dòng ví dụ; sheet "Hướng dẫn" liệt kê từng cột. */
+/** Tệp mẫu: dòng tiêu đề + dòng ví dụ (hoặc dữ liệu điền sẵn của loại — NT-DM-017); sheet "Hướng dẫn" liệt kê từng cột. */
 async function taiMau(loai: NhapLoai) {
   const XLSX = await import('@/lib/excelChuan').then((m) => m.xlsxChuan()); // [2026-11-11 Nguyễn Văn Thủy] xuất Excel định dạng chuẩn (đóng góp)
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([loai.fields.map((f) => f.header + (f.required === true ? ' (*)' : '')), loai.fields.map((f) => f.example ?? f.defaultValue ?? '')]);
+  const san = loai.mau ? await loai.mau() : null; // [2026-11-20 kiennt] NT-DM-017 — mẫu có sẵn dữ liệu (đóng góp)
+  const ws = XLSX.utils.aoa_to_sheet([loai.fields.map((f) => f.header + (f.required === true ? ' (*)' : '')), ...(san ?? [loai.fields.map((f) => f.example ?? f.defaultValue ?? '')])]);
   ws['!cols'] = loai.fields.map((f) => ({ wch: Math.max(14, f.header.length + 4) }));
   XLSX.utils.book_append_sheet(wb, ws, loai.title.slice(0, 30));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
     ['Cột', 'Bắt buộc', 'Ngầm định', 'Cách điền'],
     ...loai.fields.map((f) => [f.header, f.required === true ? 'Có' : f.required === 'moi' ? 'Khi thêm mới' : '', f.defaultValue ?? '', f.note ?? '']),
-    [], ['', '', '', 'Dòng 2 của sheet đầu là dòng ví dụ — xoá hoặc sửa trước khi nhập. Ô trống ở dòng cập nhật giữ nguyên giá trị đang có.'],
+    [], ['', '', '', san ? 'Sheet đầu đã có sẵn dữ liệu hiện có — điền / sửa rồi nhập lại; dòng không cần có thể xoá. Ô trống ở dòng cập nhật giữ nguyên giá trị đang có.' : 'Dòng 2 của sheet đầu là dòng ví dụ — xoá hoặc sửa trước khi nhập. Ô trống ở dòng cập nhật giữ nguyên giá trị đang có.'],
   ]), 'Hướng dẫn');
   XLSX.writeFile(wb, `mau-nhap-${loai.id}.xlsx`);
 }
@@ -184,8 +185,8 @@ export function NhapExcelWizard({ loai, onClose }: { loai: NhapLoai; onClose: ()
           <input ref={input} type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f); e.target.value = ''; }} />
           <div className="nx-row">
             <span>Chưa có tệp đúng mẫu?</span>
-            <button type="button" className="btn btn-sm" onClick={() => void taiMau(loai)}><FileDown size={14} /> Tải tệp mẫu {loai.title.toLowerCase()}</button>
-            <span className="muted">Tệp mẫu có sheet Hướng dẫn ghi cách điền từng cột. Tệp của bạn không cần đúng mẫu: bước sau ghép cột.</span>
+            <button type="button" className="btn btn-sm" onClick={() => { setErr(null); taiMau(loai).catch((e) => setErr(errorText(e))); }}><FileDown size={14} /> Tải tệp mẫu {loai.title.toLowerCase()}</button>
+            <span className="muted">{loai.mau ? 'Tệp mẫu có sẵn dữ liệu hiện có để điền luôn, kèm sheet Hướng dẫn.' : 'Tệp mẫu có sheet Hướng dẫn ghi cách điền từng cột.'} Tệp của bạn không cần đúng mẫu: bước sau ghép cột.</span>
           </div>
           {book && (
             <div className="nx-grid">

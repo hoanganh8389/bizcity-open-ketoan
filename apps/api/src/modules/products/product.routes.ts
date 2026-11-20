@@ -129,13 +129,13 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         LEFT JOIN product_posting_groups g ON g.tenant_id = p.tenant_id AND g.code = COALESCE(p.posting_group_code, (SELECT code FROM product_posting_groups WHERE tenant_id = ${tenantId} AND is_default LIMIT 1))
         WHERE p.tenant_id = ${tenantId} ${groupFilter} ${searchFilter}`;
       const [rows, total] = await Promise.all([
-        sql<Record<string, string | null>>`SELECT p.sku, p.name, p.unit, p.note, p.excise_rate, p.posting_group_code, p.tax_out_code, p.tax_in_code, p.group_code, p.is_active,
+        sql<Record<string, string | null>>`SELECT p.sku, p.name, p.unit, p.note, p.excise_rate, p.posting_group_code, p.tax_out_code, p.tax_in_code, p.group_code, p.is_active, p.barcode,
             g.code AS g_code, g.inventory_account, g.cogs_account, g.revenue_account, g.discount_account, g.sales_return_account ${base} ORDER BY p.sku LIMIT ${f.limit}`.execute(db),
         sql<{ n: string }>`SELECT COUNT(*) AS n ${base}`.execute(db),
       ]);
       return ok(rows.rows.map((p) => ({
         sku: p.sku, name: p.name, unit: p.unit, note: p.note ?? '', exciseRate: p.excise_rate === null ? null : Number(p.excise_rate),
-        postingGroupCode: p.posting_group_code, effectiveGroup: p.g_code, taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, groupCode: p.group_code, isActive: Boolean(p.is_active),
+        postingGroupCode: p.posting_group_code, effectiveGroup: p.g_code, taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, groupCode: p.group_code, isActive: Boolean(p.is_active), barcode: p.barcode ?? '', // [2026-11-20 kiennt] NT-DM-014 — cột Barcode (ẩn sẵn) ở DM10 (đóng góp)
         inventoryAccount: p.inventory_account, cogsAccount: p.cogs_account, revenueAccount: p.revenue_account, discountAccount: p.discount_account, salesReturnAccount: p.sales_return_account,
       })), { total: Number(total.rows[0]?.n ?? 0), limit: f.limit });
     },
@@ -321,8 +321,8 @@ export const productWriteActions: AnyActionDef[] = [
             if (!a) problems.push(`${ACC_LABEL[k]} ${v} không có`);
             else if (!a.is_posting) problems.push(`${ACC_LABEL[k]} ${v} là tài khoản tổng hợp`);
           }
-          if (it.taxOutCode && taxes.get(it.taxOutCode) !== 'output') problems.push(`Mã VAT ra ${it.taxOutCode} không có (loại thuế đầu ra)`);
-          if (it.taxInCode && taxes.get(it.taxInCode) !== 'input') problems.push(`Mã VAT vào ${it.taxInCode} không có (loại thuế đầu vào)`);
+          if (it.taxOutCode && !['output', 'both'].includes(taxes.get(it.taxOutCode) ?? '')) problems.push(`Mã VAT ra ${it.taxOutCode} không có (loại thuế đầu ra)`);
+          if (it.taxInCode && !['input', 'both'].includes(taxes.get(it.taxInCode) ?? '')) problems.push(`Mã VAT vào ${it.taxInCode} không có (loại thuế đầu vào)`);
           if (problems.length) { errors.push(`${it.sku}: ${problems.join('; ')}`); continue; }
           const patch: Record<string, unknown> = {};
           if (ACC_FIELDS.some((k) => it[k] !== undefined)) {
@@ -417,7 +417,8 @@ export const productWriteActions: AnyActionDef[] = [
           if (v === undefined) continue;
           if (v) {
             const t = await trx.selectFrom('tax_codes').select('direction').where('tenant_id', '=', auth.tenantId).where('code', '=', v).executeTakeFirst();
-            if (!t || t.direction !== dir) throw quyTac('GRP-BLOCK-003', { detail: `Loại thuế ${v} không có (cần loại thuế ${dir === 'output' ? 'đầu ra' : 'đầu vào'})` });
+            // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định (chiều both) dùng được cho cả VAT ra và VAT vào (đóng góp)
+            if (!t || (t.direction !== dir && t.direction !== 'both')) throw quyTac('GRP-BLOCK-003', { detail: `Loại thuế ${v} không có (cần loại thuế ${dir === 'output' ? 'đầu ra' : 'đầu vào'})` });
           }
           patch[col] = v || null;
         }

@@ -35,6 +35,7 @@ const trangThai = (p: { isActive: boolean; isDraft?: boolean }) => (!p.isActive 
 interface Product {
   sku: string; name: string; unit: string; postingGroupCode: string | null; createdAt?: string; createdBy?: string; updatedAt?: string; updatedBy?: string;
   brandCode: string | null; industryCode: string | null; groupCode: string | null; typeCode: string | null; isActive: boolean; sourceSystem: string;
+  barcode?: string;
   /** Nháp (PHASE-024 S024-28): còn lỗi chặn, chưa dùng được trên chứng từ. */
   isDraft?: boolean; draftCodes?: string[];
   note: string; exciseRate: number | null; taxOutCode: string | null; taxInCode: string | null;
@@ -142,8 +143,10 @@ export function ProductsPage() {
     // [2026-11-16 kiennt] dễ nhìn: Nhóm hàng hiện tên nhóm cuối (rê chuột xem đường dẫn; lọc vẫn theo cả đường dẫn); cột tạo ẩn, "Lúc" → "Ngày" (đóng góp)
     { key: 'groupCode', header: 'Nhóm hàng', width: 200, value: (p) => groupPath(p.groupCode), render: (p) => { const full = groupPath(p.groupCode); return <span title={full}>{full.split(' / ').pop()}</span>; } },
     { key: 'unit', header: 'ĐVT', width: 70 },
+    // [2026-11-20 kiennt] NT-DM-014 — cột Barcode, ẩn sẵn (bật ở nút Cột; bật thì tệp Xuất có cột này, nhập lại được) (đóng góp)
+    { key: 'barcode', header: 'Barcode', type: 'code', width: 140, hidden: true, value: (p) => p.barcode ?? '' },
     // [2026-11-12 Nguyễn Văn Thủy] một cột Thuế GTGT (%) thay Mã VAT ra / vào, TTĐB (đóng góp)
-    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Thuế suất GTGT bán ra', value: (p) => ({ KCT: 'KCT', R00K: 'KCT', R00: '0%', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
+    { key: 'taxOutCode', header: 'Thuế GTGT (%)', width: 100, title: 'Loại thuế GTGT (dùng chung bán và mua — NT-DM-012)', value: (p) => ({ KCT: 'KCT', '0': '0%', '5': '5%', '8': '8%', '10': '10%', KKKN: 'KKKN', R00K: 'KCT', R00: '0%', R05: '5%', R08: '8%', R10: '10%' } as Record<string, string>)[p.taxOutCode ?? ''] ?? (p.taxOutCode ?? '') },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán (cũ)', type: 'code', width: 120, hidden: true, value: (p) => p.postingGroupCode ?? '(mặc định)' },
     // [2026-11-12 Nguyễn Văn Thủy] Trạng thái sản phẩm thay ô Theo dõi: Đang hoạt động / Chờ duyệt / Ngừng hoạt động (đóng góp)
     // [2026-11-12 Nguyễn Văn Thủy] truy vết: người tạo, lúc tạo (0114) (đóng góp)

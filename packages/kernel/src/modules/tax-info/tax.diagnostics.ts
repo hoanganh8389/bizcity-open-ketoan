@@ -61,10 +61,10 @@ export const TAX_DIAGNOSTICS: DiagCheck[] = [
     async run(trx, s) {
       const { rate, from, to } = reducedRateWindow();
       return sqlCounts(trx,
-        sql`SELECT count(*)::int AS n FROM sales_lines l JOIN tax_codes tc ON tc.tenant_id = l.tenant_id AND tc.code = l.tax_code AND tc.direction = 'output'
+        sql`SELECT count(*)::int AS n FROM sales_lines l JOIN tax_codes tc ON tc.tenant_id = l.tenant_id AND tc.code = l.tax_code AND tc.direction IN ('output', 'both')
              WHERE ${scoped(s, 'l', 'doc_date')} AND l.amount_before_tax <> 0 AND tc.rate = ${rate}`,
         sql`SELECT a.doc_key AS key, count(*) OVER ()::int AS total
-              FROM (SELECT DISTINCT l.event_id FROM sales_lines l JOIN tax_codes tc ON tc.tenant_id = l.tenant_id AND tc.code = l.tax_code AND tc.direction = 'output'
+              FROM (SELECT DISTINCT l.event_id FROM sales_lines l JOIN tax_codes tc ON tc.tenant_id = l.tenant_id AND tc.code = l.tax_code AND tc.direction IN ('output', 'both')
                      WHERE ${scoped(s, 'l', 'doc_date')} AND l.amount_before_tax <> 0 AND tc.rate = ${rate}
                        AND (l.doc_date < ${from}::date OR l.doc_date > ${to}::date)) x
               JOIN accounting_events a ON a.id = x.event_id

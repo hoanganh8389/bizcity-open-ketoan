@@ -42,6 +42,9 @@ export interface NhapLoai {
   // [2026-11-18 02:00 PM kiennt] NT-DM-007 — tệp nhiều sheet: tự chọn sheet trùng tên này (đóng góp)
   /** Tên sheet tự chọn khi tệp có sheet trùng tên (không phân biệt hoa thường, dấu). */
   sheet?: string;
+  // [2026-11-20 kiennt] NT-DM-017 — tệp mẫu có sẵn dữ liệu (vd mẫu nhập giá liệt kê sẵn mọi mặt hàng / ĐVT của bảng giá) (đóng góp)
+  /** Dòng dữ liệu điền sẵn vào tệp mẫu (mỗi dòng theo thứ tự `fields`), thay dòng ví dụ. */
+  mau?: () => Promise<string[][]>;
   /** Danh sách để xem sau khi nhập. */
   listPath: string;
   /** Khoá dữ liệu cần tải lại sau khi ghi. */
@@ -53,13 +56,20 @@ const rowsOut = (rows: Record<string, string>[]) => rows.map(({ _row, ...r }) =>
 
 /* ------------------------------------------------------------------ Mặt hàng */
 const MAT_HANG: NhapLoai = {
-  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, nhóm hàng, thuế suất GTGT, trạng thái', keyField: 'sku',
+  id: 'mat-hang', nhom: 'Danh mục', title: 'Mặt hàng', desc: 'Mã, tên, ĐVT, ngành / nhãn / nhóm hàng, barcode, thuế suất GTGT, trạng thái', keyField: 'sku',
   listPath: '/danh-muc/mat-hang', invalidate: ['products', 'inventory-items'], modes: false,
   fields: [
     { key: 'sku', header: 'Mã hàng', required: true, aliases: ['ma', 'ma vthh', 'ma hang hoa', 'ma san pham', 'sku', 'ma hang hoa, dich vu'], example: '100021099', note: 'Mã đã có → cập nhật; chưa có → thêm mới. Mã mới không có chữ ở đầu hoặc cuối. Mã biến thể: giữ nguyên mã cha (đã có hoặc có ở dòng khác trong tệp), thêm tối đa 2 chữ ở đầu hoặc cuối.' },
     { key: 'name', header: 'Tên hàng', required: 'moi', aliases: ['ten', 'ten vthh', 'ten hang hoa', 'ten san pham', 'ten hang hoa, dich vu'], example: 'Sữa bột mẫu 400g' },
     { key: 'unit', header: 'ĐVT', required: 'moi', aliases: ['don vi tinh', 'dvt chinh', 'don vi', 'don vi tinh chinh'], example: 'Hộp', note: 'Mặt hàng đã có: ĐVT không đổi qua Excel (đổi ở form mặt hàng).' },
-    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'nhom vthh', 'ma nhom', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Mã, đúng tên nhóm cấp 3, hoặc đường dẫn "Ngành / Nhãn / Nhóm" như tệp xuất. Mã biến thể: bỏ trống, theo mã cha.' },
+    // [2026-11-20 kiennt] NT-DM-014 — ghép nhóm hàng theo cây: Ngành / Nhãn / Nhóm (tên, mã hoặc mã hoá như tệp Xuất DM11); nhãn tra dưới ngành, nhóm dưới nhãn (đóng góp)
+    { key: 'industrySku', header: 'Mã ngành', aliases: ['ma hoa nganh'], note: 'Mã hoá ngành (2 số, như tệp Xuất DM11). Dùng cùng / thay cột Ngành hàng.' },
+    { key: 'industryCode', header: 'Ngành hàng', aliases: ['nganh', 'ten nganh', 'nganh hang'], note: 'Tên ngành (cấp 1). Có Ngành thì Nhãn / Nhóm chỉ tra trong ngành đó.' },
+    { key: 'brandSku', header: 'Mã nhãn', aliases: ['ma hoa nhan'], note: 'Mã hoá nhãn (3 ký tự).' },
+    { key: 'brandCode', header: 'Nhãn hàng', aliases: ['nhan', 'ten nhan', 'nhan hang'], note: 'Tên nhãn (cấp 2). Có Nhãn thì Nhóm chỉ tra dưới nhãn đó; nhãn không có dưới ngành → lỗi.' },
+    { key: 'groupSku', header: 'Mã nhóm', aliases: ['ma hoa nhom'], note: 'Mã hoá nhóm (1 ký tự), tra dưới nhãn của dòng.' },
+    { key: 'groupCode', header: 'Nhóm hàng', aliases: ['nhom', 'ten nhom', 'nhom vthh', 'ma nhom vthh', 'nhom vat tu, hang hoa'], example: '', note: 'Tên nhóm cấp 3 (dưới nhãn của dòng), hoặc đường dẫn "Ngành / Nhãn / Nhóm" như tệp xuất DM10. Nhóm không có dưới nhãn / ngành đã ghi → lỗi, không tự gán sang nhóm khác. Mã biến thể theo nhóm của mã cha.' },
+    { key: 'barcode', header: 'Barcode', aliases: ['ma vach', 'ma barcode', 'ean'], note: 'Trống = giữ nguyên.' },
     // [2026-11-17 09:11 PM kiennt] NT-DM-003 E2, E3 — ghép cột "Thuế GTGT (%)" của tệp xuất DM10; mặt hàng mới bắt buộc (đóng góp)
     { key: 'vatRate', header: 'Thuế suất GTGT (%)', required: 'moi', aliases: ['thue suat', 'thue gtgt', 'thue gtgt %', 'vat', 'thue suat gtgt'], example: '8', note: 'KCT, 0, 5, 8 (hoặc 8%), 10 hoặc mã thuế đầu ra khác — phải có ở danh mục Biểu thuế. Mặt hàng mới bắt buộc.' },
     { key: 'isActive', header: 'Trạng thái', aliases: ['theo doi', 'dang theo doi'], note: 'Đang hoạt động (hoặc Chờ duyệt) / Ngừng hoạt động. Trống = giữ nguyên (mới: Đang hoạt động).' },
@@ -77,30 +87,48 @@ const doiTuong = (kind: 'customer' | 'supplier'): NhapLoai => {
   const ab = kh ? 'khách hàng' : 'nhà cung cấp';
   return {
     id: kh ? 'khach-hang' : 'nha-cung-cap', nhom: 'Danh mục', title: kh ? 'Khách hàng' : 'Nhà cung cấp',
-    desc: `Mã, tên, mã số thuế, địa chỉ, nhóm, điện thoại, ngân hàng, hạn nợ của ${ab}`, keyField: 'code',
+    desc: `Gần đủ các ô của form ${ab}: mã, tên, nhóm, MST, địa chỉ, điện thoại, thông tin công ty, ngân hàng, hạn nợ, người / chi nhánh quản lý`, keyField: 'code',
     listPath: kh ? '/danh-muc/khach-hang' : '/danh-muc/nha-cung-cap', invalidate: ['partners'],
     fields: [
       { key: 'code', header: `Mã ${ab}`, aliases: ['ma', 'ma kh', 'ma ncc', 'ma doi tuong', 'ma khach hang', 'ma nha cung cap'], example: '', note: 'Để trống khi thêm mới: phần mềm tự cấp mã nối dãy của nhóm. Mã đã có → cập nhật.' },
-      { key: 'name', header: `Tên ${ab}`, required: 'moi', aliases: ['ten', 'ten kh', 'ten ncc', 'ten doi tuong', 'ten khach hang', 'ten nha cung cap', 'ten cong ty'], example: kh ? 'Công ty TNHH Mẫu' : 'Công ty CP Sữa Mẫu' },
-      { key: 'kind', header: 'Kiểu', aliases: ['loai doi tuong', 'thuoc kieu'], defaultValue: kh ? 'Khách hàng' : 'Nhà cung cấp', note: 'Khách hàng / Nhà cung cấp / Nhân viên / Nội bộ / Khác.' },
-      { key: 'groupCode', header: `Nhóm ${ab}`, aliases: ['nhom', 'nhom kh', 'nhom ncc', 'nhom kh/ncc', 'ma nhom', 'ma nhom khach hang', 'ma nhom nha cung cap', 'ma nhom kh, ncc'], note: 'Mã hoặc đúng tên nhóm trong danh mục nhóm đối tượng.' },
+      { key: 'name', header: `Tên ${ab}`, required: 'moi', aliases: ['ten', 'ten kh', 'ten ncc', 'ten doi tuong', 'ten khach hang', 'ten nha cung cap'], example: kh ? 'Nguyễn Văn A' : 'Công ty CP Sữa Mẫu' },
+      // [2026-11-20 kiennt] NT-DM-016 (bảng theo dõi dòng 42) — bỏ cột Kiểu khỏi tệp mẫu: màn đang nhập quyết định kiểu của dòng mới (đóng góp)
+      // [2026-11-20 kiennt] NT-DM-016 — đủ các ô của form; cột liên kết (Nhóm, Người quản lý, Chi nhánh QL, Đơn vị cha) tra theo TÊN (nhận cả mã) — không khớp thì không nhập dòng (đóng góp)
+      { key: 'groupCode', header: `Nhóm ${ab}`, required: 'moi', aliases: ['nhom', 'nhom kh', 'nhom ncc', 'nhom kh/ncc', 'thuoc nhom', 'ma nhom', 'ma nhom khach hang', 'ma nhom nha cung cap', 'ma nhom kh, ncc'], note: 'Liên kết: TÊN nhóm (hoặc mã) trong danh mục nhóm đối tượng. Không có / trùng tên → dòng không nhập. Dòng mới bắt buộc (như form).' },
       { key: 'taxCode', header: 'Mã số thuế', aliases: ['mst', 'ma so thue/cccd', 'ma so thue cccd'], example: '0100000000', note: '10 số, 10 số-3 số hoặc 12 số CCCD; không trùng đối tượng khác.' },
-      { key: 'address', header: 'Địa chỉ', aliases: ['dia chi nr', 'dia chi cty', 'dia chi cong ty'], example: 'Hà Nội' },
-      { key: 'phone', header: 'Điện thoại', aliases: ['dien thoai co dinh', 'so dien thoai', 'sdt', 'telephone'] },
-      { key: 'mobile', header: 'Di động', aliases: ['dtdd', 'mobile', 'dien thoai di dong'] },
+      { key: 'address', header: kh ? 'Địa chỉ NR' : 'Địa chỉ', aliases: ['dia chi', 'dia chi nr', 'dia chi nha rieng'], example: 'Hà Nội' },
+      { key: 'phone', header: 'Điện thoại', aliases: ['dien thoai co dinh', 'so dien thoai', 'sdt', 'telephone', ...(kh ? ['di dong', 'dtdd', 'mobile'] : [])], note: kh ? 'Ghi cả điện thoại và di động như form khách hàng.' : undefined },
+      ...(kh ? [] : [{ key: 'mobile', header: 'Di động người liên hệ', aliases: ['di dong', 'dtdd', 'mobile', 'dien thoai di dong'] }]),
       { key: 'email', header: 'Email', aliases: ['thu dien tu'] },
-      { key: 'contactName', header: 'Người liên hệ', aliases: ['nguoi dai dien', 'nguoi lien he / dai dien', 'ho va ten nguoi lien he', 'ten nguoi lien he'] },
-      { key: 'bankAccountNo', header: 'Số tài khoản ngân hàng', aliases: ['so tai khoan', 'tai khoan ngan hang', 'stk', 'so tai khoan ngan hang'] },
-      { key: 'bankName', header: 'Tên ngân hàng', aliases: ['ngan hang', 'mo tai ngan hang'] },
-      { key: 'paymentTermDays', header: 'Số ngày được nợ', aliases: ['han thanh toan', 'so ngay no', 'so ngay duoc no'], note: 'Số nguyên 0 – 3650.' },
-      { key: 'creditLimit', header: 'Hạn mức nợ', aliases: ['so no toi da', 'han muc', 'han muc no'] },
+      ...(kh ? [
+        { key: 'birthDate', header: 'Ngày sinh', aliases: ['ngay thang nam sinh'], note: 'dd/mm/yyyy.' },
+        { key: 'gender', header: 'Giới tính', aliases: ['gioi'], note: 'Nam / Nữ.' },
+        { key: 'customerType', header: 'Loại khách hàng', aliases: ['loai kh'], note: 'KH cá nhân / KH doanh nghiệp.' },
+        { key: 'isProspect', header: 'Khách hàng tiềm năng', aliases: ['tiem nang', 'kh tiem nang'], note: 'Có / Không.' },
+      ] : []),
+      { key: 'companyName', header: 'Tên công ty', aliases: ['ten cty', 'ten cong ty tren hoa don'] },
+      { key: 'shortName', header: 'Tên viết tắt', aliases: ['viet tat'] },
+      { key: 'alias', header: 'Alias', aliases: ['ten khac', 'biet danh'] },
+      { key: 'companyAddress', header: 'Địa chỉ Cty', aliases: ['dia chi cty', 'dia chi cong ty'] },
+      { key: 'fax', header: 'Fax' },
+      { key: 'website', header: 'Website', aliases: ['trang web'] },
+      // [2026-11-20 kiennt] NT-DM-016 (bảng theo dõi dòng 42) — tệp mẫu khách hàng bỏ cột Người đại diện (giữ Email); NCC giữ Người liên hệ (đóng góp)
+      ...(kh ? [] : [{ key: 'contactName', header: 'Người liên hệ', aliases: ['nguoi dai dien', 'nguoi lien he', 'nguoi lien he / dai dien', 'ho va ten nguoi lien he', 'ten nguoi lien he'] }]),
+      { key: 'position', header: 'Chức vụ', aliases: ['chuc danh'] },
+      { key: 'bankAccountNo', header: 'Tài khoản NH', aliases: ['so tai khoan', 'tai khoan ngan hang', 'stk', 'so tai khoan ngan hang'] },
+      { key: 'bankAccountHolder', header: 'Chủ TK', aliases: ['chu tai khoan'] },
+      { key: 'bankName', header: 'Mở tại', aliases: ['ngan hang', 'mo tai ngan hang', 'ten ngan hang'] },
+      { key: 'creditLimit', header: 'Giới hạn nợ', aliases: ['so no toi da', 'han muc', 'han muc no', 'gioi han no vnd'], note: 'Số không âm.' },
+      { key: 'paymentTermDays', header: 'Giới hạn ngày nợ', aliases: ['han thanh toan', 'so ngay no', 'so ngay duoc no'], note: 'Số nguyên 0 – 3650.' },
+      { key: 'maxOpenDocs', header: 'Giới hạn số phiếu nợ', aliases: ['so phieu no toi da'], note: 'Số nguyên không âm.' },
+      { key: 'managerCode', header: 'Người QL', aliases: ['nguoi quan ly', 'nhan vien quan ly'], note: 'Liên kết: TÊN nhân viên (hoặc mã). Không có / trùng tên → dòng không nhập.' },
+      { key: 'branchCode', header: 'Chi nhánh QL', aliases: ['chi nhanh quan ly', 'chi nhanh'], note: 'Liên kết: TÊN chi nhánh (hoặc mã). Không có → dòng không nhập.' },
+      { key: 'parentCode', header: 'Thuộc đơn vị cha', aliases: ['ma don vi cha', 'don vi cha', 'ma cha', 'ma don vi me'], note: 'Liên kết: mã hoặc TÊN đối tượng cha (có sẵn hoặc ở dòng trên). Thêm mới để trống mã thì mã tự cấp mã cha-001…' },
       { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai', 'dang giao dich'], note: 'Có / Không.' },
       { key: 'note', header: 'Ghi chú', aliases: ['dien giai'] },
-      // [2026-11-13 Nguyễn Văn Thủy] đơn vị mẹ của chi nhánh (cha – con) (đóng góp)
-      { key: 'parentCode', header: 'Mã đơn vị cha', aliases: ['don vi cha', 'ma cha', 'thuoc don vi cha', 'ma don vi me'], note: 'Đơn vị mẹ của chi nhánh. Thêm mới để trống mã thì mã tự cấp mã cha-001, -002…; đơn vị cha mới thì đặt dòng của nó lên trên.' },
     ],
     run: async (rows, { dryRun, mode }) => {
-      const o = await api.post<{ created: number; updated: number; failed: number; rows: (Omit<NhapDong, 'key'> & { code: string })[] }>('/api/v1/partners/import', { dryRun, mode, rows: rowsOut(rows) });
+      const o = await api.post<{ created: number; updated: number; failed: number; rows: (Omit<NhapDong, 'key'> & { code: string })[] }>('/api/v1/partners/import', { dryRun, mode, kind, rows: rowsOut(rows) });
       return { ...o, rows: o.rows.map((r) => ({ ...r, key: r.code })) };
     },
   };
@@ -227,17 +255,33 @@ interface NhomRow { code: string; name: string; parentCode: string | null; isAct
 /** Độ dài mã ngắn theo cấp (giống DM11): cấp 1 = 2 chữ số, cấp 2 = 3, cấp 3 = 1 ký tự; cấp sâu hơn không ghép vào mã hàng. */
 const MA_NGAN: Record<number, number> = { 1: 2, 2: 3, 3: 1 };
 const NHOM_HANG: NhapLoai = {
-  id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: nhóm cha, tên ngành, mã hoá, mô tả', keyField: 'name',
+  id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: mã / tên ngành, nhãn, nhóm (như tệp Xuất của DM11), mô tả', keyField: 'name',
   listPath: '/danh-muc/phan-loai-hang', invalidate: ['item-classes'], modes: false,
   fields: [
+    // [2026-11-20 kiennt] NT-DM-015 — cùng bộ cột với tệp Xuất mới: Mã ngành · Tên ngành · Mã nhãn · Tên nhãn · Mã nhóm · Tên nhóm;
+    //   tệp kiểu cũ (Nhóm cha · Tên ngành · Mã hoá) vẫn nhận (đóng góp)
+    { key: 'industrySku', header: 'Mã ngành', aliases: ['ma hoa nganh'], example: '17', note: 'Mã hoá của ngành (2 chữ số). Dùng khi dòng là ngành (Tên nhãn, Tên nhóm trống).' },
+    { key: 'name', header: 'Tên ngành', required: true, aliases: ['ma nhom hang', 'ten', 'nhom hang'], example: 'Sữa bột', note: 'Tên ngành (cấp 1) — mọi dòng đều ghi. Tệp kiểu cũ (có cột Nhóm cha): tên của nhóm ở dòng. Cùng nhóm cha + cùng tên với nhóm đang có → cập nhật nhóm đó.' },
+    { key: 'brandSku', header: 'Mã nhãn', aliases: ['ma hoa nhan'], example: '167', note: 'Mã hoá của nhãn (3 ký tự). Dùng khi dòng là nhãn (Tên nhóm trống).' },
+    { key: 'brandName', header: 'Tên nhãn', aliases: ['nhan', 'nhan hang'], example: 'Vinamilk', note: 'Có Tên nhãn → dòng là nhãn (hoặc nhóm nếu có Tên nhóm) dưới ngành ở cột Tên ngành.' },
+    { key: 'groupSku', header: 'Mã nhóm', aliases: ['ma hoa nhom'], example: '6', note: 'Mã hoá của nhóm (1 ký tự).' },
+    { key: 'groupName', header: 'Tên nhóm', aliases: ['nhom'], example: 'Sữa bột trẻ em', note: 'Có Tên nhóm → dòng là nhóm cấp 3 dưới nhãn ở cột Tên nhãn. Nhóm sâu hơn: ghi đường dẫn "Cấp 3 / Cấp 4".' },
     { key: 'parentCode', header: 'Nhóm cha', aliases: ['ma nhom cha', 'thuoc nhom', 'nhom tren', 'thuoc', 'duong dan nhom cha'], example: 'BỈM/ TÃ / Aiwibi', note: 'Đường dẫn nhóm cha (cấp 1 / cấp 2 …) hoặc đúng tên ngành của nhóm cha. Trống = nhóm cấp 1. Nhóm cha có ở dòng trên trong tệp cũng được.' },
     // [2026-11-18 05:10 PM kiennt] NT-DM-010 — đổi tên ô: Tên ngành (name), Mã hoá (skuCode), Mô tả (fullName, không bắt buộc, không tự ghép) (đóng góp)
-    { key: 'name', header: 'Tên ngành', required: true, aliases: ['ma nhom hang', 'ma nhom', 'ten', 'ten nhom', 'nhom hang'], example: 'Bỉm/ Tã quần trẻ em', note: 'Tên hiện trên cây. Cùng nhóm cha + cùng tên ngành với nhóm đang có → cập nhật nhóm đó.' },
     { key: 'skuCode', header: 'Mã hoá', aliases: ['ma hoa', 'ma ngan', 'ma ghep', 'ma ngan (ma ghep)', 'ma sku'], example: '3', note: 'Ghép vào mã hàng: cấp 1 = 2 chữ số không bắt đầu bằng 0; cấp 2 = 3 ký tự; cấp 3 = 1 ký tự (chữ hoặc số). Nhóm đã có mặt hàng: không đổi được.' },
     { key: 'fullName', header: 'Mô tả', aliases: ['mo ta', 'ten nhom hang', 'ten day du', 'mhlten'], note: 'Không bắt buộc. Trống: nhóm mới để trống, nhóm đã có giữ nguyên.' },
     { key: 'isActive', header: 'Đang dùng', aliases: ['theo doi', 'trang thai'], note: 'Có / Không. Trống = giữ nguyên (mới: Có).' },
   ],
-  run: async (rows, { dryRun }) => {
+  run: async (rowsIn, { dryRun }) => {
+    // Tệp 6 cột (NT-DM-015): nhóm ở dòng = cấp sâu nhất có tên; nhóm cha = tên các cấp trên; mã hoá = mã của cấp đó.
+    const rows = rowsIn.map((r) => {
+      const t = (v: string | undefined) => (v ?? '').trim();
+      const nh = t(r.brandName); const nm = t(r.groupName);
+      if (!nh && !nm) return t(r.parentCode) ? r : { ...r, skuCode: t(r.skuCode) || t(r.industrySku) };
+      if (!nm) return { ...r, parentCode: t(r.name), name: nh, skuCode: t(r.brandSku) || t(r.skuCode) };
+      const doan = nm.split(' / ').map((x) => x.trim()).filter(Boolean);
+      return { ...r, parentCode: [t(r.name), nh, ...doan.slice(0, -1)].filter(Boolean).join(' / '), name: doan[doan.length - 1] ?? nm, skuCode: t(r.groupSku) || t(r.skuCode) };
+    });
     const ds = await api.get<NhomRow[]>('/api/v1/item-classes/group');
     const have = new Map(ds.map((c) => [c.code, c]));
     const low = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();

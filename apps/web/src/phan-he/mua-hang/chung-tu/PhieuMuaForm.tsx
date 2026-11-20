@@ -35,6 +35,8 @@ import { ChonMatHang, type CatalogItem } from '../thanh-phan/ChonMatHang';
 import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
 import { nhapDongHang, xuatDongHang, type DongHangCot, type DongNhap } from './DongHangExcel';
 import { BangKhuyenMai, KhuyenMaiBar, KhuyenMaiPanel } from '../thanh-phan/KhuyenMai';
+import { hieuLucCua } from '../thanh-phan/hieuLuc';
+import { useDimension } from '@/components/voucher/lookups';
 import { TermEditor } from '../chinh-sach/quyTac';
 import { TepDinhKem } from '../dinh-kem/TepDinhKem';
 import { NccInfo } from '../thanh-phan/NccInfo';
@@ -50,6 +52,11 @@ import { ChonChungTu, OChonChungTu } from '../thanh-phan/ChonChungTu';
 import { HoaDonModal } from '../hoa-don/HoaDonModal';
 import type { InvoiceRow } from '../hoa-don/api';
 import { layPhieuIn, mauInCua } from './mauIn';
+import { ChonThue } from '@/lib/thueGtgt';
+import { thueMacDinh } from '@/lib/tradeDocs';
+
+/** Loại vết chốt hiện trên Bảng khuyến mại của phiếu đã duyệt. */
+const CHOT_KINDS: string[] = ['item_discount', 'qty_tier', 'trade_discount', 'payment_discount', 'promo_gift', 'manual'];
 
 /** Loại phiếu sửa sau duyệt bằng bản điều chỉnh (khớp ADJUST_KINDS phía máy chủ). */
 const ADJUST_KINDS: string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out', 'cost', 'rebate'];
@@ -99,6 +106,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const dock = useDockWindow(onClose, dirty, `mh:${value.id}`);
   const names = useNames();
   const brands = useBrands(data.policies);
+  const costItems = useDimension('cost_item'); // [2026-11-20 khanhtd] MUA-HANG — Danh mục khoản mục cho phiếu chi phí (đóng góp)
   const nccBrands = useSupplierBrands(v.partnerCode || undefined);
   // Phiếu đã duyệt / huỷ: chỉ xem. Phiếu đã ghi (nháp, chờ duyệt): mở ở chế độ xem, bấm "Sửa" mới sửa; Gửi duyệt / Duyệt
   // vẫn bấm được khi đang xem (không đổi nội dung phiếu).
@@ -234,7 +242,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       const i = x.lines.findIndex((l) => l.lineKey === key);
       const k = newKey();
       setSelKey(k); setDirty(true);
-      return { ...x, lines: [...x.lines.slice(0, i + 1), { lineKey: k, sku: '', name: '', unit: '', qty: 1, price: 0, taxCode: 'V08', lineType: 'buy' }, ...x.lines.slice(i + 1)] };
+      return { ...x, lines: [...x.lines.slice(0, i + 1), { lineKey: k, sku: '', name: '', unit: '', qty: 1, price: 0, taxCode: thueMacDinh(v.docDate), lineType: 'buy' }, ...x.lines.slice(i + 1)] };
     }),
     del: (key: string) => { setV((x) => ({ ...x, lines: x.lines.filter((l) => l.lineKey !== key) })); setDirty(true); },
   };
@@ -275,7 +283,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       setExtra((x) => ({ prices: [...x.prices.filter((r) => r.sku !== sku), ...sp.rows], units: { ...x.units, ...sp.units } }));
       const us = sp.units[sku] ?? [];
       const unit = (wantUnit && us.find((u) => u.unit.toLowerCase() === wantUnit.toLowerCase())?.unit) || defaultUnitFor(us, sp.rows, v.partnerCode, sku, p.unit);
-      const taxCode = p.taxInCode ?? 'V08';
+      const taxCode = p.taxInCode ?? thueMacDinh(v.docDate);
       const line = v.lines.find((l) => l.lineKey === key);
       const isBuy = (lt ?? line?.lineType) === 'buy';
       const fixed = priceFor(sp.rows, { date: v.docDate, partnerCode: v.partnerCode || undefined, sku, unit }, us);
@@ -297,10 +305,10 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const importLines = async (rows: DongNhap[]) => {
     setExcelLines(false);
     // Giá trong tệp ghi rõ gồm / chưa thuế khác loại giá của phiếu → quy đổi theo thuế suất mua vào của mặt hàng.
-    const tax = new Map((rows.some((r) => r.priceIncludesVat !== undefined) ? await purchaseApi.lookupProducts([...new Set(rows.map((r) => r.sku))]) : []).map((p) => [p.sku, p.taxInCode ?? 'V08']));
-    rows = rows.map((r) => (r.price !== undefined && r.priceIncludesVat !== undefined && r.priceIncludesVat !== v.priceIncludesVat ? { ...r, price: toDocBasis(r.price, r.priceIncludesVat, tax.get(r.sku) ?? 'V08') } : r));
+    const tax = new Map((rows.some((r) => r.priceIncludesVat !== undefined) ? await purchaseApi.lookupProducts([...new Set(rows.map((r) => r.sku))]) : []).map((p) => [p.sku, p.taxInCode ?? thueMacDinh(v.docDate)]));
+    rows = rows.map((r) => (r.price !== undefined && r.priceIncludesVat !== undefined && r.priceIncludesVat !== v.priceIncludesVat ? { ...r, price: toDocBasis(r.price, r.priceIncludesVat, tax.get(r.sku) ?? thueMacDinh(v.docDate)) } : r));
     const made = rows.map((r) => ({ key: newKey(), r, type: (isGiftDoc || r.gift ? 'gift_consumer' : 'buy') as LineType }));
-    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), ...made.map(({ key, r, type }) => ({ lineKey: key, sku: r.sku, name: '', unit: r.unit ?? '', qty: r.qty, price: r.price ?? 0, taxCode: 'V08', lineType: type, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }))] }));
+    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), ...made.map(({ key, r, type }) => ({ lineKey: key, sku: r.sku, name: '', unit: r.unit ?? '', qty: r.qty, price: r.price ?? 0, taxCode: thueMacDinh(v.docDate), lineType: type, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }))] }));
     setDirty(true); setTab('hang');
     for (let i = 0; i < made.length; i += 8) {
       await Promise.all(made.slice(i, i + 8).map(async ({ key, r, type }) => {
@@ -342,7 +350,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     const same = v.lines.find((l) => l.sku === p.sku && l.lineType === type && !l.autoGift && (v.kind !== 'exchange' || (l.dir ?? 'in') === 'in'));
     if (same) { setLine(same.lineKey, { qty: same.qty + 1 }); setSelKey(same.lineKey); return; }
     const key = newKey();
-    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), { lineKey: key, sku: p.sku, name: p.name, unit: p.unit, qty: 1, price: 0, taxCode: p.taxInCode ?? 'V08', lineType: type, brandCode: p.brandCode ?? undefined, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }] }));
+    setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), { lineKey: key, sku: p.sku, name: p.name, unit: p.unit, qty: 1, price: 0, taxCode: p.taxInCode ?? thueMacDinh(v.docDate), lineType: type, brandCode: p.brandCode ?? undefined, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }] }));
     setDirty(true); setSelKey(key);
     void pickSku(key, p.sku, type);
   };
@@ -518,12 +526,19 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     if (v.status !== 'approved' || !trace.length) return promoBoard(v, data.policies, calc);
     const amt = (t: TraceItem) => (t.amount ? ` = ${t.kind === 'payment_discount' ? '' : '−'}${vnd(t.amount)}` : '');
     return [
-      ...trace.filter((t) => ['item_discount', 'qty_tier', 'trade_discount', 'payment_discount', 'promo_gift', 'manual'].includes(t.kind))
+      ...trace.filter((t) => CHOT_KINDS.includes(t.kind))
         // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-6): vết chốt có bản chính sách → ghi "bản N" (đối chiếu khối Phiên bản của chính sách); mã giữ nguyên làm khoá
         .map((t, i): PromoRow => ({ key: `chot|${i}`, status: 'applied', kind: t.kind, policy: t.policy, name: data.policies.find((p) => p.code === t.policy)?.name ?? t.policy, text: `${t.text}${amt(t)}${t.version ? ` · bản ${t.version}` : ''}` })),
       ...promoBoard(v, data.policies, calc).filter((r) => r.kind === 'promo_gift' && r.status !== 'hint'),
     ];
   }, [v, data.policies, calc, stored]);
+  // [2026-11-20 khanhtd] MH-KM — cột Hiệu lực của Bảng khuyến mại: phiếu đang lập theo bản áp ở ngày phiếu; phiếu đã duyệt theo đúng bản đã chốt (đóng góp)
+  const hieuLuc = useMemo(() => {
+    const byCode = new Map(data.policies.map((p) => [p.code, p]));
+    const chot = new Map<string, number>();
+    if (v.status === 'approved') ((stored?.policyTrace ?? []) as TraceItem[]).filter((t) => CHOT_KINDS.includes(t.kind)).forEach((t, i) => { if (t.version !== undefined) chot.set(`chot|${i}`, t.version); });
+    return (r: PromoRow) => hieuLucCua(byCode.get(r.policy), v.docDate, chot.get(r.key));
+  }, [data.policies, v.status, v.docDate, stored]);
   /** Bỏ tích / tích lại một chương trình trên phiếu này: CK, bậc, quà, CKTT của nó tự gỡ / tự áp lại. */
   const togglePromo = (code: string, on: boolean) => { const cur = v.skipPolicies ?? []; set({ skipPolicies: on ? cur.filter((x) => x !== code) : [...new Set([...cur, code])] }); };
   const promoAction = (r: PromoRow) => {
@@ -619,7 +634,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
           </Modal>
         )}
         {excelLines && <NhapExcelChung<DongHangCot, DongNhap> s={nhapDongHang(priceLabel, showKho ? v.warehouseCode || defaultWh : '')} onClose={() => setExcelLines(false)} onAdd={(list) => void importLines(list)} />}
-        {promoOpen && <BangKhuyenMai rows={board} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onClose={() => setPromoOpen(false)} readOnly={readOnly} />}
+        {promoOpen && <BangKhuyenMai rows={board} hieuLuc={hieuLuc} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onClose={() => setPromoOpen(false)} readOnly={readOnly} />}
         {pickGoods && <ChonMatHang title={pickGoods.lineType === 'buy' ? 'Thêm hàng vào phiếu — bấm vào dòng để thêm (bấm lại = cộng 1)' : 'Thêm quà ngoài chương trình — bấm vào dòng để thêm'}
           initial={pickGoods.text} repeat prefer={nccBrands} onClose={() => setPickGoods(null)}
           existing={new Map(v.lines.filter((l) => l.sku && l.lineType === (isGiftDoc ? 'gift_consumer' : pickGoods.lineType)).map((l) => [l.sku, `đang ${fmt(l.qty)} ${l.unit}`]))}
@@ -719,7 +734,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   <div className="mh-brand">{(() => { const mix = brandMix(v); return mix.length ? mix.slice(0, 3).map((m) => <span key={m.brandCode} className="mh-brand-chip">{brands.find((b) => b.code === m.brandCode)?.name ?? m.brandCode}{mix.length > 1 ? ` ${Math.round(m.share * 100)}%` : ''}</span>) : <span className="muted">tự lấy khi thêm hàng</span>; })()}</div>
                 </div>}
                 <div className="field span2"><label>Nhà cung cấp (*)</label>
-                  <PartnerPicker value={v.partnerCode} onChange={pickPartner} activeOnly addKind="supplier" disabled={readOnly} />
+                  <PartnerPicker kind="supplier" value={v.partnerCode} onChange={pickPartner} activeOnly addKind="supplier" disabled={readOnly} />
                   {v.partnerCode && <span className="muted" style={{ fontSize: 11, display: 'flex', gap: 6, alignItems: 'center' }}><NccInfo code={v.partnerCode} showName={false} />{names.partner(v.partnerCode)?.taxCode ? `MST ${names.partner(v.partnerCode)?.taxCode}` : 'Xem thông tin NCC'}{names.partner(v.partnerCode)?.address ? ` · ${names.partner(v.partnerCode)?.address}` : ''}</span>}
                 </div>
                 {v.kind !== 'gift_out' && v.partnerCode && (
@@ -818,6 +833,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {!isGoods && <div className="field"><label>{v.kind === 'cost' ? 'Số tiền chưa thuế (*)' : 'Số tiền (*)'}</label><input className="input num" value={fmt(v.amount)} disabled={Boolean(v.rebate)} onChange={(e) => set({ amount: num(e.target.value) })} />{(v.kind === 'cost' || v.kind === 'rebate') && amountTax(v) > 0 && <span className="muted" style={{ fontSize: 11 }}>+ VAT {vnd(amountTax(v))} = {vnd((v.amount ?? 0) + amountTax(v))}</span>}</div>}
                 {v.kind === 'cost' && <div className="field"><label>Loại chi phí</label><select className="select input" value={v.costType ?? 'van_chuyen'} onChange={(e) => set({ costType: e.target.value as PDoc['costType'] })}>{Object.entries(COST_TYPES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>}
+                {/* [2026-11-20 khanhtd] MUA-HANG — khoản mục chi phí từ Danh mục khoản mục, để theo dõi / cộng chi phí mua theo khoản mục ở MH11 (đóng góp) */}
+                {v.kind === 'cost' && <div className="field"><label title="Khoản mục ở Danh mục khoản mục — lọc và cộng chi phí mua theo khoản mục ở Tổng hợp mua hàng (MH11, thẻ Chi phí / thưởng). Chưa ghi vào sổ cái">Khoản mục</label>
+                  <ListPicker items={costItems.filter((c) => c.isActive || c.code === v.costItem).map((c) => ({ code: c.code, name: c.name }))} value={v.costItem ?? ''} onChange={(c) => set({ costItem: c || undefined })} disabled={readOnly} placeholder={costItems.length ? 'Chọn khoản mục' : 'Chưa có khoản mục — khai ở Danh mục khoản mục'} emptyText="Không có khoản mục khớp" /></div>}
                 {v.kind === 'rebate' && <>
                   <div className="field"><label>Hoá đơn điều chỉnh giảm</label><select className="select input" value={v.taxCode ?? ''} onChange={(e) => set({ taxCode: e.target.value || undefined })}><option value="">Không có (không giảm VAT)</option><option value="V05">Có — VAT 5%</option><option value="V08">Có — VAT 8%</option><option value="V10">Có — VAT 10%</option></select></div>
                   {v.taxCode && <div className="field"><label>Số hoá đơn điều chỉnh</label><input className="input mono" value={v.invoice?.no ?? ''} onChange={(e) => set({ invoice: e.target.value ? { no: e.target.value.trim(), date: v.invoice?.date || v.docDate } : undefined })} /></div>}
@@ -877,7 +895,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                     {!isGiftDoc && v.partnerCode && (v.kind === 'order' || v.kind === 'receipt' || v.kind === 'return') && <button className="btn btn-sm" onClick={() => setFill(true)} title="Danh sách mặt hàng NCC này bán: tích chọn, điền số lượng (gợi ý min–max / lần trước), giá tự lấy">Điền mặt hàng của NCC</button>}
                     {!isGiftDoc && lastOfPartner && linesBlank && <button className="btn btn-sm" onClick={() => copyLines(lastOfPartner)} title="Chép mã hàng, số lượng, đơn giá, thuế suất — sửa lại cho đúng lần này">Chép từ phiếu {lastOfPartner.docNo} ({dmy(lastOfPartner.docDate)})</button>}
                     {!isGiftDoc && <button className="btn btn-sm" onClick={() => setPickGoods({ text: '', lineType: 'gift_consumer' })} title="Quà NCC tặng thêm ngoài chương trình. Quà theo chương trình phần mềm tự thêm">+ Quà ngoài chương trình</button>}
-                    {isOrder && <button className="btn btn-sm" onClick={() => { const k = newKey(); set({ lines: [...v.lines, { lineKey: k, sku: '', name: '', unit: '', qty: 0, price: 0, taxCode: 'V08', lineType: 'buy', newItem: true }] }); setSelKey(k); }} title="Hàng NCC mới chào, chưa có mã trong danh mục: ghi tên, mã bên NCC, ĐVT, quy cách. Hàng về thì gắn mã ở phiếu nhập">+ Hàng mới chưa có mã</button>}
+                    {isOrder && <button className="btn btn-sm" onClick={() => { const k = newKey(); set({ lines: [...v.lines, { lineKey: k, sku: '', name: '', unit: '', qty: 0, price: 0, taxCode: thueMacDinh(v.docDate), lineType: 'buy', newItem: true }] }); setSelKey(k); }} title="Hàng NCC mới chào, chưa có mã trong danh mục: ghi tên, mã bên NCC, ĐVT, quy cách. Hàng về thì gắn mã ở phiếu nhập">+ Hàng mới chưa có mã</button>}
                     <span className="lines-bar-sep" />
                     <button className="btn btn-sm" onClick={() => setExcelLines(true)} title="Nhập dòng hàng từ tệp Excel: có hướng dẫn cột, file mẫu, xem trước (mã / ĐVT sai báo đỏ)">Nhập Excel</button>
                     <button className="btn btn-sm" disabled={!v.lines.some((l) => l.sku)} onClick={() => void xuatDongHang(`${v.docNo || KIND_LABEL[v.kind]}-hang-hoa.xlsx`, calc.lines, priceLabel, showKho ? v.warehouseCode || defaultWh : '')} title="Xuất dòng hàng ra Excel — đúng bộ cột của mẫu nhập, sửa xong nhập lại được">Xuất Excel</button>
@@ -969,7 +987,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                             <td><NumInput style={{ width: 90 }} decimals={0} value={l.lineType === 'buy' && (l.discountAmt !== undefined || l.lineDiscount) ? l.lineDiscount : null} disabled={l.lineType !== 'buy'} placeholder="tự"
                               title={`Chiết khấu dòng bằng tiền, tối đa ${fmt(l.gross)} (tiền hàng của dòng). Gõ tiền thì CK % tự tính lại`}
                               onChange={(n) => setLine(l.lineKey, { discountAmt: n === null ? undefined : Math.min(l.gross, n), discountPct: undefined })} /></td>
-                            <td><select className="select input" style={{ width: 92 }} value={l.taxCode} title="Thuế suất GTGT đầu vào — tự lấy theo danh mục mặt hàng" onChange={(e) => setLine(l.lineKey, { taxCode: e.target.value })}>{Object.entries(TAX_LABEL).map(([k, t]) => <option key={k} value={k}>{t}</option>)}{!TAX_LABEL[l.taxCode] && <option value={l.taxCode}>{l.taxCode}</option>}</select></td>
+                            <td><ChonThue value={l.taxCode} ngay={v.docDate} style={{ width: 92 }} title="Thuế suất GTGT — tự lấy theo danh mục mặt hàng (loại thuế cố định, dùng chung mua / bán)" onChange={(c) => setLine(l.lineKey, { taxCode: c })} /></td>
                             <td className="num">{l.lineType === 'buy' ? fmt(l.beforeTax) : <span className="muted">tặng</span>}</td>
                             <td className="num">{fmt(l.tax)}</td>
                             <td className="num"><b>{l.lineType === 'buy' ? fmt(l.beforeTax + l.tax) : ''}</b></td>

@@ -4,7 +4,7 @@
  * API phân hệ Mua hàng — hợp đồng: docs/api/14-mua-hang.md.
  *   Chứng từ   GET/POST /api/v1/purchase/documents · GET/PUT /…/:id · POST /…/:id/{submit,approve,override,unapprove,cancel}
  *              POST /api/v1/purchase/analyze (chạy bộ máy, không lưu)
- *   Chính sách GET/POST /api/v1/purchase/policies · PUT /…/:id · POST /…/:id/transfer-limit
+ *   Chính sách GET/POST /api/v1/purchase/policies · PUT /…/:id · POST /…/:id/transfer-limit · GET /api/v1/purchase/policy-lookup (tra theo mã)
  *   Báo cáo    GET /api/v1/purchase/{credit,due,lots,gifts,logs} · POST /…/rebates/preview · GET /…/allocations/:id · GET /…/real-cost/:id
  *   Cài đặt    GET/PUT /api/v1/purchase/settings · Dữ liệu mẫu POST /api/v1/purchase/demo/{seed,clear}
  *   NCC        GET /api/v1/purchase/suppliers · GET /…/suppliers/:code (hồ sơ)
@@ -37,6 +37,7 @@ import { quyenThaoTac } from '../../modules/access/man-hinh.js';
 import { contractDebts, contractDetail, contractInput, listContracts, saveContract } from './hop-dong.js';
 import { writeAudit } from '../../core/audit.js';
 import { today } from './reports.js';
+import { traChinhSachTheoMa } from './tra-chinh-sach.js';
 import './man-hinh-mua-hang.js'; // đăng ký màn Mua hàng trước khi lệnh đọc quyền
 
 const tags = ['Mua hàng'];
@@ -85,6 +86,19 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
 
   // ---------------- Chính sách
   r.get('/api/v1/purchase/policies', { preHandler: read, schema: { tags, summary: 'Danh sách chính sách mua hàng' }, handler: async (req) => ok(await listPolicies(db, authOf(req).tenantId)) });
+  // [2026-11-20 khanhtd] TRA-CUU — tra chính sách theo một mã (màn TC01 phân hệ Tra cứu): phiếu nhập giả một dòng, chạy đúng bộ máy phiếu nhập, chỉ đọc (đóng góp)
+  r.get('/api/v1/purchase/policy-lookup', { preHandler: requirePermission(quyenThaoTac('mua-hang.chinh-sach', 'xem')), schema: { tags,
+    summary: 'Tra chính sách theo mã hàng: chính sách nào áp, bị chương trình áp riêng chặn, chưa đủ điều kiện, vì sao — tính bằng phiếu nhập giả một dòng (không lưu)',
+    querystring: z.object({
+      sku: z.string().trim().min(1).max(64),
+      partnerCode: z.string().trim().max(64).optional().describe('Trống = NCC đầu tiên có chính sách / giá mua của mã'),
+      qty: z.coerce.number().positive().max(1e9).optional().describe('Số lượng mua (mặc định 1)'),
+      unit: z.string().trim().max(32).optional().describe('ĐVT (trống = ĐVT mua mặc định)'),
+      price: z.coerce.number().min(0).max(1e12).optional().describe('Đơn giá (trống = giá mua của NCC còn hiệu lực)'),
+      branchCode: z.string().trim().max(64).optional().describe('Chi nhánh nhập (chính sách khai theo chi nhánh chỉ khớp khi chọn)'),
+      date: day.optional().describe('Ngày phiếu (mặc định hôm nay) — chính sách lấy bản có hiệu lực ngày này'),
+    }) },
+    handler: async (req) => ok(await traChinhSachTheoMa(db, authOf(req).tenantId, { ...req.query, date: req.query.date ?? today() })) });
   // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): các bản của một chính sách (sổ đăng ký 0079)
   r.get('/api/v1/purchase/policies/:id/versions', { preHandler: read, schema: { tags, summary: 'Các bản của chính sách mua hàng: nội dung, áp từ ngày, đến ngày, người phát hành, lý do', params: idParamSchema },
     handler: async (req) => ok(await policyVersions(db, authOf(req).tenantId, (req.params as { id: string }).id)) });

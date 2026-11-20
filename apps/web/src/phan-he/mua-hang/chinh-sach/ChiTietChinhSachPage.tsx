@@ -34,7 +34,7 @@ export function detailsOf(p: Policy): Detail[] {
   switch (p.kind as PolicyKind) {
     case 'item_discount': return ((r.items ?? []) as ItemDiscount[]).map((i) => ({
       sku: i.sku, unit: i.unit || 'mọi ĐVT', cond: i.minQty ? `mua từ ${vn(i.minQty)}` : 'mọi số lượng',
-      benefit: i.pct ? `CK ${Number(i.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(i.amount)}đ / ${i.unit || 'ĐVT'}`, value: i.pct ?? i.amount, valueUnit: i.pct ? '%' : 'đ / ĐVT', note: i.note,
+      benefit: `${i.pct ? `CK ${Number(i.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(i.amount)}đ / ${i.unit || 'ĐVT'}`}${i.apply === 'exclusive' || r.apply === 'exclusive' ? `, áp riêng${i.priority != null ? ` (ưu tiên ${i.priority})` : ''}` : ''}`, value: i.pct ?? i.amount, valueUnit: i.pct ? '%' : 'đ / ĐVT', note: i.note,
     }));
     case 'qty_tier': return ((r.tiers ?? []) as R[]).filter((t) => t.pct).map((t) => ({ sku: p.scope.sku, cond: `mua từ ${vn(t.from)}`, benefit: `CK ${Number(t.pct).toLocaleString('vi-VN')}% cả dòng`, value: t.pct, valueUnit: '%' }));
     case 'trade_discount': { const min = Number(r.minOrder) ? `đơn / phiếu nhập có tổng từ ${vn(r.minOrder)}đ` : ''; return [p.scope.sku
@@ -122,7 +122,7 @@ export function ChiTietChinhSachPage() {
         subtitle="Mỗi chính sách trải ra từng dòng ưu đãi: từng mã hàng, từng bậc, từng chi nhánh — lọc, xuất Excel; bấm đúp một dòng để mở chính sách" />
       <div className="card">
         <div className="row" style={{ gap: 8, padding: '8px 12px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ width: 260 }}><PartnerPicker value={partner} onChange={setPartner} placeholder="Lọc theo nhà cung cấp" /></div>
+          <div style={{ width: 260 }}><PartnerPicker kind="supplier" value={partner} onChange={setPartner} placeholder="Lọc theo nhà cung cấp" /></div>
           <select className="select input" style={{ width: 230 }} value={kind} onChange={(e) => setKind(e.target.value as PolicyKind | '')}><option value="">Mọi loại chính sách</option>{ALL_KINDS.map((k) => <option key={k} value={k}>{POLICY_LABEL[k]}</option>)}</select>
           <select className="select input" style={{ width: 170 }} value={state} onChange={(e) => setState(e.target.value)}><option value="">Mọi trạng thái</option><option>Đang áp</option><option>Hết hiệu lực</option><option>Chưa tới hiệu lực</option><option>Tắt</option></select>
           <span className="muted" style={{ fontSize: 12 }}>{rows.length.toLocaleString('vi-VN')} dòng ưu đãi của {policies} chính sách · bấm đúp một dòng để mở chính sách · khai báo / sửa ở <Link to="/mua-hang/chinh-sach">Chính sách mua hàng (MH04)</Link></span>

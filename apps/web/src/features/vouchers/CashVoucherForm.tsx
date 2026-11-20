@@ -22,6 +22,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Columns3, FileSearch, Plus, Trash2 } from 'lucide-react';
 import { VOUCHER_MONEY, isMoneyAccountFor, type VoucherInput, type VoucherTemplateInput, type VoucherType } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
+import { ChonThue } from '@/lib/thueGtgt';
 import { date as showDate, money, today } from '@/lib/format';
 import { BranchPicker, useBranches } from '@/components/filters';
 import { AccountPicker, ListPicker, PartnerPicker } from '@/components/pickers';
@@ -469,10 +470,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
                 )}
                 {show('tax') && <>
                   <td data-f="taxCode">
-                    <select className="select input" value={r.taxCode} disabled={dis} onChange={(e) => pickTax(r, e.target.value)}>
-                      <option value="" />
-                      {taxCodes.filter((t) => t.isActive || t.code === r.taxCode).map((t) => <option key={t.code} value={t.code}>{t.code}</option>)}
-                    </select>
+                    <ChonThue value={r.taxCode} trong ngay={h.docDate} disabled={dis} onChange={(c) => pickTax(r, c)} />
                   </td>
                   <td data-f="taxAmount"><input className="input num" inputMode="numeric" value={r.taxAmount} disabled={dis} onChange={(e) => setRow(r.key, { taxAmount: e.target.value })} onBlur={() => setRow(r.key, { taxAmount: showAmount(r.taxAmount) })} /></td>
                   <td data-f="invoiceNo">{text(r, 'invoiceNo', 'input mono')}</td>

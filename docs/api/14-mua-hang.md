@@ -36,6 +36,7 @@ Phản hồi theo [quy ước chung](01-quy-uoc.md): `{ ok: true, data }`; lỗi
 | POST | `/api/v1/purchase/documents/:id/override` | Duyệt ngoại lệ vượt hạn mức, body `{ reason }` (≥ 3 ký tự). Chỉ khi mọi cảnh báo chặn là vượt hạn mức. Ghi `audit_logs` + JSONL | `payments:approve` |
 | POST | `/api/v1/purchase/documents/:id/unapprove` | Bỏ duyệt: huỷ các chứng từ kế toán trong `links`, về nháp. Phiếu khác đang dựa vào (trả hàng, chi phí…) → 409 | `documents:write` |
 | POST | `/api/v1/purchase/documents/:id/cancel` | Huỷ phiếu chưa duyệt (không xoá) | `documents:write` |
+| GET | `/api/v1/purchase/order-reconcile?from=&to=&partnerCode=&branchCode=` | Đối chiếu đơn đặt ↔ phiếu nhập (MH21): mỗi dòng = đơn × mã, kèm `invoice: { state, text }` — hoá đơn của đơn gom từ các phiếu nhập theo đơn (`chua_nhap` · `chua_co` · `mot_phan` · `du`; phiếu nhập ngoài đơn: hoá đơn của chính phiếu); `invoiceSummary` đếm số đơn theo từng tình trạng | quyền màn `mua-hang.doi-chieu` (xem) |
 
 ### Khuôn gửi lên (`PDoc`)
 
@@ -66,7 +67,7 @@ Phản hồi theo [quy ước chung](01-quy-uoc.md): `{ ok: true, data }`; lỗi
 | `settle` | đổi hàng | `offset` (bù trừ) · `pay` (trả thêm) · `refund` (NCC hoàn) |
 | `amount`, `method` | ứng trước, trả tiền, chi phí, thưởng | Số tiền; `bank` / `cash` |
 | `ckttAmount` | trả tiền | CKTT được hưởng; `refIds` = phiếu nhập được hưởng |
-| `taxCode`, `basis`, `costType` | chi phí | Thuế dịch vụ (V05 / V08 / V10, trống = không thuế); phân bổ theo `value` / `qty`; loại chi phí (`van_chuyen`, `boc_xep`, `luu_kho`, `bao_hiem`, `kiem_dinh`, `khac`). `refIds` = **một hay nhiều** phiếu nhập |
+| `taxCode`, `basis`, `costType` | chi phí | Thuế dịch vụ (V05 / V08 / V10, trống = không thuế); phân bổ theo `value` / `qty`; loại chi phí (`van_chuyen`, `boc_xep`, `luu_kho`, `bao_hiem`, `kiem_dinh`, `khac`); `costItem` = mã khoản mục ở Danh mục khoản mục (`/api/v1/dimensions/cost_item`), tuỳ chọn — mã không có / đã ngừng theo dõi → kiểm `cost_item_unknown` / `cost_item_inactive` chặn duyệt; chỉ theo dõi ở phân hệ, chưa ghi vào dòng sổ. `refIds` = **một hay nhiều** phiếu nhập |
 | `rebate`, `allocation` | thưởng | Từ `rebates/preview`; một chính sách + một kỳ chỉ một phiếu (409). Không có `rebate` mà có `refIds` = **chiết khấu / giảm giá sau mua**: máy chủ tự phân bổ vào các mã của các phiếu nhập |
 | `taxCode` + `invoice` | thưởng / CK sau mua | Có hoá đơn điều chỉnh giảm: giảm 1331 (`total` = tiền + thuế) |
 | `schedule` | nhập | Lịch trả nhiều đợt |
@@ -153,6 +154,7 @@ Tất cả chạy trong **một giao dịch**: lỗi bất kỳ bước nào th�
 | GET | `/api/v1/purchase/policies` | Danh sách | `documents:read` |
 | POST / PUT | `/api/v1/purchase/policies[/:id]` | Thêm / sửa. `rule` kiểm theo khuôn của `kind`; hạn mức: tổng phân bổ chi nhánh ≤ hạn mức | `catalog:write` |
 | POST | `/api/v1/purchase/policies/:id/transfer-limit` | Body `{ from: '' \| mã CN, to, amount }`; không chuyển quá phần còn; JSONL `limit_transfer` (trước / sau) | `catalog:write` |
+| GET | `/api/v1/purchase/policy-lookup?sku&partnerCode&qty&unit&price&branchCode&date` | Tra chính sách theo một mã (màn TC01, `modules/tra-cuu`): dựng phiếu nhập giả một dòng, chạy `syncGifts` → `computeDoc` → `promoBoard`. Trả `item`, `partners` (NCC có chính sách / giá mua của mã), `input` (giá trị đã dùng, `priceSource` `nhap` / `gia-mua` / `khong-co`), `rows[]` (mỗi chính sách khớp mã: `status` `ap` / `chua-du` / `bi-chan` / `khong-dung`, `reason`, `amount`, `alone`, `winner`, `exclusive`, `priority`), `other[]` (CKTT, hạn trả, hạn mức, thưởng — không xét áp riêng), `total`, `exclusiveNote`. Chỉ đọc. Mã không có → 404 | `mua-hang:chinh-sach-xem` |
 
 Khuôn `rule` từng loại: tài liệu 08 mục 4.2.
 

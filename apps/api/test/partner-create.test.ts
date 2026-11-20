@@ -27,6 +27,12 @@ describe('Dãy mã', () => {
     expect(nextCodeFrom(['0912345678', '0987654321', '0901111111', 'KH000007'])?.code).toBe('KH000008');
     expect(nextCodeFrom(['0912345678'])).toBeNull();
   });
+  // [2026-11-19 10:18 AM khanhtd] DM12/DM13 — mã đơn vị con "mã cha-NNN" không phải dãy mã
+  it('bỏ qua mã đơn vị con: KH000001 có 3 chi nhánh → mã mới KH000002, không ra KH000001-004', () => {
+    expect(nextCodeFrom(['KH000001', 'KH000001-001', 'KH000001-002', 'KH000001-003'])?.code).toBe('KH000002');
+    // Mã có gạch nhưng phần trước không phải một mã có trong danh sách: vẫn là dãy thường.
+    expect(nextCodeFrom(['KH-0001', 'KH-0002'])?.code).toBe('KH-0003');
+  });
 });
 
 describe('Tạo đối tượng', () => {
@@ -46,6 +52,18 @@ describe('Tạo đối tượng', () => {
     expect((await create({ code: 'NC100643', name: 'Lạc nhóm', kind: 'supplier', groupCode: 'CHU-NHA' })).status).toBe(201);
     expect((await call(ctx, 'GET', '/api/v1/partners/next-code?groupCode=NCC-HH&kind=supplier')).body.data.code).toBe('NC100644');
     expect((await call(ctx, 'GET', '/api/v1/partners/next-code?kind=internal')).body.data).toMatchObject({ basis: 'default', code: 'NB000001' });
+  });
+
+  // [2026-11-19 10:18 AM khanhtd] DM12/DM13 — chưa chọn cha: mã nối dãy của đơn vị độc lập / mẹ, không nối mã đơn vị con
+  it('chưa chọn đơn vị cha: mã mới nối dãy mã cũ, bỏ qua mã đơn vị con', async () => {
+    expect((await call(ctx, 'PUT', '/api/v1/partner-groups/KH-BL', { name: 'KH bán lẻ', kind: 'customer' })).status).toBe(200);
+    expect((await create({ code: 'KB000001', name: 'Khách mẹ', kind: 'customer', groupCode: 'KH-BL' })).status).toBe(201);
+    for (const n of ['001', '002', '003']) {
+      expect((await create({ code: `KB000001-${n}`, name: `Chi nhánh ${n}`, kind: 'customer', groupCode: 'KH-BL', parentCode: 'KB000001' })).status).toBe(201);
+    }
+    expect((await call(ctx, 'GET', '/api/v1/partners/next-code?groupCode=KH-BL&kind=customer')).body.data).toMatchObject({ code: 'KB000002', basis: 'group' });
+    // Có chọn cha thì vẫn là mã con kế tiếp.
+    expect((await call(ctx, 'GET', '/api/v1/partners/next-code?groupCode=KH-BL&kind=customer&parentCode=KB000001')).body.data.code).toBe('KB000001-004');
   });
 
   it('một đối tượng nhiều vai trò: NCC vừa là khách hàng hiện ở cả hai danh sách; bỏ tích thì chỉ còn NCC', async () => {

@@ -9,7 +9,7 @@
 > **Mức:** ✘ chặn — giữ lại (danh mục → bản nháp; chứng từ → bể chờ), hết khi dữ liệu đúng · ⚠ cảnh báo — qua cổng khi ghi lý do,
 > có bằng chứng · ℹ nhắc — chỉ để biết. **Căn cứ:** văn bản trong [danh mục căn cứ pháp lý](../../can-cu/01-danh-muc-van-ban.md), "Quy ước phần mềm" = quy ước kỹ thuật của Core.
 
-## Gate A — khai báo danh mục (64 mã)
+## Gate A — khai báo danh mục (65 mã)
 
 | Mã | Mức | Bước | Nghĩa | Vì sao | Cách sửa | Luật | Căn cứ |
 |---|---|---|---|---|---|---|---|
@@ -52,6 +52,7 @@
 | `PART-HINT-002` | ⚠ cảnh báo | partner | Nhà cung cấp {code} chưa có mã số thuế. | Lưu được với nhà cung cấp cá nhân / hộ kinh doanh không có MST, nhưng mọi hoá đơn đầu vào của đối tượng này sẽ bị cảnh báo khi kê khai và không đối chiếu được với hoá đơn điện tử của cơ quan thuế. | Nhập mã số thuế (nút tra MST điền sẵn tên, địa chỉ); hộ kinh doanh / cá nhân không có MST thì ghi lý do khi lưu. | R-GATE-2 | Nghị định 123/2020/NĐ-CP; Luật Thuế GTGT số 48/2024/QH15 |
 | `PART-HINT-003` | ⚠ cảnh báo | partner | Đã có đối tượng {other} cùng tên "{name}". | Hai mã cho cùng một khách / nhà cung cấp làm công nợ tách đôi: hoá đơn ghi một mã, phiếu thu ghi mã kia, đối chiếu không khớp. Nếu là một, dùng mã {other}; nếu khác người, phân biệt bằng tên viết tắt hoặc địa chỉ. | Mở đối tượng đã có và dùng mã đó; nếu là người khác, phân biệt bằng tên viết tắt hoặc địa chỉ rồi ghi lý do khi lưu. | R-MD-3 | Quy ước phần mềm |
 | `PART-HINT-004` | ⚠ cảnh báo | partner | Mã số thuế "{taxCode}" không đúng định dạng (10 số, hoặc 10 số - 3 số chi nhánh). | MST sai định dạng không tra được với cơ quan thuế; hoá đơn điện tử mang MST đúng sẽ không khớp với đối tượng này. | Sửa MST: 10 số, hoặc 10 số - 3 số cho đơn vị phụ thuộc, hoặc 12 số (cá nhân). | R-GATE-2 | Luật Quản lý thuế số 108/2025/QH15 |
+| `PART-HINT-005` | ⚠ cảnh báo | partner | Có {count} hoá đơn của {code} từ ngày {from} vẫn mang MST cũ {old}. | MST mới có hiệu lực từ ngày đã chọn, nhưng các hoá đơn này lập từ ngày đó vẫn ghi MST cũ. Hoá đơn đã nhận không bị sửa; chúng sẽ hiện ở Bàn làm việc kế toán (HT08, PARTNER_TAX_MISMATCH) để rà với đối tác. | Kiểm lại ngày hiệu lực với đối tác. Nếu đúng: ghi lý do khi lưu, rồi yêu cầu đối tác lập hoá đơn điều chỉnh / thay thế cho hoá đơn lập sai MST (NĐ 123/2020). | R-GATE-2 | Nghị định 123/2020/NĐ-CP; Luật Thuế GTGT số 48/2024/QH15 |
 | `PART-BLOCK-001` | ✘ chặn | partner | Nhóm đối tượng chưa có trong danh mục: {codes}. | Nhóm dùng để gom báo cáo công nợ, chính sách theo nhóm; mã nhóm không có thì đối tượng không lên đúng báo cáo. | Chọn nhóm trong danh sách, hoặc khai nhóm ở Nhóm khách hàng, nhà cung cấp (DM08) trước. | R-GATE-2 | Quy ước phần mềm |
 | `PART-BLOCK-002` | ✘ chặn | partner | Mã số thuế {taxCode} đã có ở {kind} {other} - {name}. | Mỗi mã số thuế chỉ dùng cho một đối tượng; hai mã cùng MST làm công nợ và hoá đơn tách đôi, đối chiếu không khớp. | Mở đối tượng {other} để dùng lại; nếu là đơn vị phụ thuộc thì khai là đơn vị con của đối tượng đó. | R-GATE-2 | Luật Quản lý thuế số 108/2025/QH15; Nghị định 123/2020/NĐ-CP |
 | `PART-BLOCK-003` | ✘ chặn | partner | Mã {code} đã có: {name} ({kind}). | Mỗi mã chỉ thuộc một đối tượng; trùng mã làm chứng từ, công nợ ghi lẫn hai đối tượng. | Bấm "Lấy mã mới" hoặc nhập mã khác. | R-GATE-2 | Quy ước phần mềm |

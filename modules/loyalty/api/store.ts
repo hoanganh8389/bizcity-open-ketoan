@@ -167,3 +167,17 @@ export async function markVoucherUsed(tx: Tx, code: string, order: { id: string;
              WHERE code = ${v.code} AND status = 'active'`.execute(tx);
   return 'used';
 }
+
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: điểm tích / đổi theo đơn cho báo cáo khách hàng của module pos (đóng góp)
+/** Điểm tích / đổi theo đơn (ref order) có lúc ghi trong [from, to), lọc cửa hàng / khách. Điểm đổi trả số dương. */
+export async function orderPoints(tx: Tx, f: { from: string; to: string; branches: string[]; partnerCode?: string }) {
+  return (await sql<{ ref_id: string; ref_code: string | null; partner_code: string; branch_code: string | null; earned: string; redeemed: string }>`
+    SELECT ref_id, max(ref_code) AS ref_code, partner_code, max(branch_code) AS branch_code,
+           coalesce(sum(points) FILTER (WHERE kind = 'earn'), 0) AS earned, coalesce(-sum(points) FILTER (WHERE kind = 'redeem'), 0) AS redeemed
+      FROM mod_loyalty.entries
+     WHERE ref_type = 'order' AND kind IN ('earn', 'redeem') AND at >= ${f.from} AND at < ${f.to}
+       ${f.branches.length ? sql`AND branch_code IN (${sql.join(f.branches)})` : sql``}
+       ${f.partnerCode !== undefined ? sql`AND partner_code = ${f.partnerCode}` : sql``}
+     GROUP BY ref_id, partner_code ORDER BY ref_id`.execute(tx)).rows
+    .map((r) => ({ refId: r.ref_id, refCode: r.ref_code ?? '', partnerCode: r.partner_code, branchCode: r.branch_code ?? '', earned: Number(r.earned), redeemed: Number(r.redeemed) }));
+}

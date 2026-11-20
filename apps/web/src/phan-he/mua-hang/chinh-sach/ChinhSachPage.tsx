@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { POLICY_LABEL, STACK_KINDS, canRepeat, giftFlags, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { POLICY_LABEL, STACK_KINDS, canRepeat, giftFlags, isRepeat, type ItemDiscount, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { scopeBranches } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { Loading } from '@/components/ui';
@@ -26,7 +26,10 @@ type Row = Policy & { stt: number; state: string };
 /** Cách áp / cộng dồn của một chính sách: ô tích (chỉ đọc) cho quen mắt; loại không có lựa chọn này thì gạch ngang. */
 // Mua X tặng Y nhiều dòng: tất cả dòng / không dòng nào / "theo dòng" (một số dòng).
 const flagOf = (n: number, rows: number, all: string, none: string) => (!rows ? '' : n === rows ? all : !n ? none : 'Theo dòng');
-const apRieng = (p: Policy) => (p.kind === 'promo_gift' ? flagOf(giftFlags(p).exclusive, giftFlags(p).rows, 'Áp riêng', 'Áp đồng thời') : STACK_KINDS.includes(p.kind) ? (p.rule.apply === 'exclusive' ? 'Áp riêng' : 'Áp đồng thời') : '');
+// [2026-11-20 khanhtd] TRA-CUU — bảng CK theo mã áp riêng theo dòng → "Theo dòng" như mua X tặng Y (đóng góp)
+const itemRows = (p: Policy) => ((p.rule.items as ItemDiscount[] | undefined) ?? []);
+const apRieng = (p: Policy) => (p.kind === 'promo_gift' ? flagOf(giftFlags(p).exclusive, giftFlags(p).rows, 'Áp riêng', 'Áp đồng thời')
+  : p.kind === 'item_discount' && p.rule.apply !== 'exclusive' && itemRows(p).some((i) => i.apply === 'exclusive') ? flagOf(itemRows(p).filter((i) => i.apply === 'exclusive').length, itemRows(p).length, 'Áp riêng', 'Áp đồng thời') : STACK_KINDS.includes(p.kind) ? (p.rule.apply === 'exclusive' ? 'Áp riêng' : 'Áp đồng thời') : '');
 const congDon = (p: Policy) => (p.kind === 'promo_gift' ? flagOf(giftFlags(p).repeat, giftFlags(p).rows, 'Cộng dồn', 'Một lần') : canRepeat(p) ? (isRepeat(p) ? 'Cộng dồn' : 'Một lần') : '');
 const Tick = ({ v, on, title }: { v: string; on: string; title: string }) => (!v ? <span className="muted" title="Loại chính sách này không có lựa chọn này">—</span>
   : v === 'Theo dòng' ? <span title="Một số dòng có, một số không — mở chính sách xem từng dòng" style={{ fontSize: 11.5 }}>◪ theo dòng</span>
@@ -90,7 +93,7 @@ export function ChinhSachPage() {
         subtitle="Bảng tổng mọi chính sách của mọi nhà cung cấp (mỗi chính sách một dòng) — khai báo thường ngày làm ở Hồ sơ nhà cung cấp; xem từng dòng ưu đãi ở Báo cáo chi tiết (MH14)" />
       <div className="card">
         <div className="row" style={{ gap: 8, padding: '8px 12px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ width: 260 }}><PartnerPicker value={partner} onChange={(c) => { setPartner(c); setParams((x) => { const n = new URLSearchParams(x); if (c) n.set('ncc', c); else n.delete('ncc'); return n; }, { replace: true }); }} placeholder="Lọc theo nhà cung cấp" /></div>
+          <div style={{ width: 260 }}><PartnerPicker kind="supplier" value={partner} onChange={(c) => { setPartner(c); setParams((x) => { const n = new URLSearchParams(x); if (c) n.set('ncc', c); else n.delete('ncc'); return n; }, { replace: true }); }} placeholder="Lọc theo nhà cung cấp" /></div>
           <select className="select input" style={{ width: 230 }} value={kind} onChange={(e) => setKind(e.target.value as PolicyKind | '')}><option value="">Mọi loại chính sách</option>{ALL_KINDS.map((k) => <option key={k} value={k}>{POLICY_LABEL[k]}</option>)}</select>
           <select className="select input" style={{ width: 215 }} value={apply} onChange={(e) => setApply(e.target.value)} title="Áp riêng: mã nhận chương trình thì không nhận chương trình khác; áp đồng thời: cộng với các chương trình khác"><option value="">Áp riêng / đồng thời: tất cả</option><option value="Áp riêng">☑ Áp riêng</option><option value="Áp đồng thời">☐ Áp đồng thời</option><option value="Theo dòng">◪ Theo dòng</option></select>
           <select className="select input" style={{ width: 175 }} value={repeat} onChange={(e) => setRepeat(e.target.value)} title="Cộng dồn: đủ điều kiện mấy lần hưởng mấy lần (mua X tặng Y, CK số tiền có mức tổng đơn)"><option value="">Cộng dồn: tất cả</option><option value="Cộng dồn">☑ Cộng dồn</option><option value="Một lần">☐ Chỉ một lần</option><option value="Theo dòng">◪ Theo dòng</option></select>

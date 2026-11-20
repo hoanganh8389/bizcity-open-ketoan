@@ -29,3 +29,11 @@ Menu trái → **Phần riêng** → **Bán lẻ máy POS**. Cần quyền *Xem 
 - Cửa hàng có mã chi nhánh không dựng được mã 12 ký tự (có ký tự không phải chữ / số hoặc dài quá 5 ký tự, vd `CN-NA`): giữ `HD` + năm tháng + 6 số như cũ.
 - Đơn mã `HD…` đã phát hành trước đây vẫn tra cứu, trả hàng được.
 - Máy bán xin trước dải số để bán khi mất mạng nên có thể **hở số**. Xem số hở ở **Tổng quan bán lẻ (BH16) → Số bill bị thiếu**: chọn cửa hàng × ngày, mỗi dải số thiếu kèm lý do (*máy … xin lúc … chưa dùng*; dải đã quá hạn ghi thêm *dải hết hạn*).
+
+## Hoá đơn điện tử tại quầy (NT-BH-034)
+<!-- [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034: hoá đơn tại quầy làm y POS cũ (đóng góp) -->
+- Shop có plugin hoá đơn Viettel: thanh toán xong máy bán **tự mở màn "Khách xuất hoá đơn"**, điền sẵn khách của đơn (MST, email, địa chỉ, tên công ty thu ngân sửa ở ô khách lúc bán). **Gửi thuế & in bill** (Enter): bill in ngay, hoá đơn phát hành chạy ngầm, xong tự gửi email PDF cho khách (email trống thì bỏ qua) và báo Zalo kế toán. **Hủy gửi thuế** (Esc): in bill, đơn chờ gửi sau ở màn Gửi thuế / Đơn hàng.
+- Mã số thuế nhận **10 số** (doanh nghiệp), **12 số** (căn cước công dân), **13 số** (chi nhánh). Nút **Tra cứu** (hoặc rời ô) tự điền và khoá Tên công ty, Địa chỉ; doanh nghiệp ngừng hoạt động thì cảnh báo; mã 12 số không tra.
+- Luật bắt buộc (máy bán và máy chủ cùng kiểm, mã lỗi `POS_INVOICE_BUYER`): có mã số thuế → tên người mua không được là "Khách lẻ" và phải có địa chỉ; mã 12 số → phải có email; email đã gõ phải đúng định dạng. Không có tên người mua và không có mã → hoá đơn ghi "Bán cho người tiêu dùng".
+- Dòng gửi thuế: mã Nội bộ / Z và quà kèm sữa dưới 24 tháng (cả quà cấp đơn khi đơn có hàng dưới 24 tháng) luôn bỏ và khoá; dòng 0đ khác bật / tắt được; dòng có tiền luôn gửi; hàng chính dưới 24 tháng cảnh báo, bấm lần hai mới gửi.
+- Viettel báo sai người mua / MST → máy bán mở lại form sửa rồi phát hành lại.

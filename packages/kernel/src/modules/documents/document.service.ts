@@ -55,6 +55,7 @@ import { assertKnownItems, assertNoDraftItems, remindAutoCreated } from '../inta
 import { preflight } from '../intake/preflight.js';
 import type { StockContext } from '../posting/rules/sale.rule.js';
 import { inventoryMovementRepository } from '../inventory/inventory-movement.repository.js';
+import { apDungKhoGiuHo } from '../inventory/kho-giu-ho.js';
 import { taxInvoiceRepository } from '../tax-invoices/tax-invoice.repository.js';
 import { settleByInvoiceKeys, settleLinkedTo, settleOffsets } from '../debts/debt.service.js';
 import { documentRepository, type DocumentListFilter } from './document.repository.js';
@@ -397,6 +398,8 @@ async function postDocumentInner(trx: Db, auth: AuthContext, doc: IngestDocument
   await assertNoDraftItems(trx, auth.tenantId, doc);
   // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: đơn vị tắt tự thêm mặt hàng → mã lạ vào bể chờ (IN-ITEM-001), bể tạo mặt hàng nháp từ dòng.
   await assertKnownItems(trx, auth.tenantId, doc);
+  // [2026-11-20 kiennt] NT-KHO-004 — hàng nhận giữ hộ chỉ ghi số lượng: bỏ giá trị dòng kho giữ hộ, chặn chuyển giữ hộ ↔ của mình, chặn mua / bán có giá trị (đóng góp)
+  doc = await apDungKhoGiuHo(trx, auth.tenantId, doc);
   const branch = await findBranch(trx, auth.tenantId, doc.branchCode);
   const branchId = branch.id;
   const partnerId = await documentPartnerId(trx, auth.tenantId, doc);

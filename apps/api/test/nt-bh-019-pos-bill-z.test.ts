@@ -1,3 +1,4 @@
+// [2026-11-19 Võ Hoàng] NGHIEM-THU — test dùng ngày tương đối (hạn trả NT-BH-030) (đóng góp)
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027 (18/11 anh chốt): mã phiếu máy bán mặc định dạng shop (CN01BT…, CN01.B…) (đóng góp)
 // [2026-11-15 11:05 AM Võ Hoàng] POS-BILLZ — NT-BH-019 bước 1: bill Z nhận trên chứng từ bán dạng dòng quà, khách mới đi kèm đơn (đóng góp)
 /**
@@ -23,6 +24,8 @@ const HAS = existsSync(path.join(DIR, 'bizcity.module.json'));
 const M = '/api/v1/m/pos';
 const READS = ['bizcity_read.branches', 'bizcity_read.products', 'bizcity_read.tax_codes', 'bizcity_read.payment_methods', 'bizcity_read.partners', 'bizcity_read.stock_on_hand', 'bizcity_read.warehouses'];
 
+const vnDate = (offset = 0) => new Date(Date.now() + 7 * 3600_000 + offset * 86_400_000).toISOString().slice(0, 10);
+const TODAY = vnDate();
 const ID1 = '0193a1b2-0000-7000-8000-000000019001';
 const ID2 = '0193a1b2-0000-7000-8000-000000019002';
 const SKU = '100021001';
@@ -31,8 +34,8 @@ const QUA = '11005100103Z';
 const order = (over: Record<string, unknown> = {}) => ({
   id: ID1,
   branchCode: 'CN01',
-  businessDate: '2026-11-15',
-  shiftId: 'ngay-2026-11-15',
+  businessDate: TODAY,
+  shiftId: `ngay-${TODAY}`,
   exportReasonCode: 'XBA',
   customer: { phone: '0901 234 567', name: 'Chị Lan' },
   lines: [
@@ -159,11 +162,11 @@ describe.skipIf(!HAS)('NT-BH-019 — máy bán POS: bill Z và khách mới đi 
     // [2026-11-17 Võ Hoàng] NGHIEM-THU — NT-BH-022: thu ngân không giảm tay (Q6) → dòng 0đ trước tạo bằng giảm tay 100% nay là dòng
     // quà của chương trình khuyến mại "mua 1 tặng 1" (cùng mã có gửi thuế), có căn cứ policyRef + policyRefs băm như NT-BH-003 (đóng góp)
     const prog = await call(ctx, 'POST', '/api/v1/sale-programs', {
-      programKind: 'KM-CTY', validFrom: '2026-11-01', validTo: '2026-12-31', code: 'CT-019-TANG', name: 'Mua 1 tặng 1', mode: 'gift',
+      programKind: 'KM-CTY', validFrom: vnDate(-14), validTo: vnDate(42), code: 'CT-019-TANG', name: 'Mua 1 tặng 1', mode: 'gift',
       sku: SKU, buyQty: 1, giftSku: SKU, giftQty: 1, quotas: [{ branchCode: 'CN01', quotaQty: 10 }],
     });
     expect(prog.status, JSON.stringify(prog.body)).toBe(200);
-    const ev = await call(ctx, 'POST', '/api/v1/policies/evaluate', { docDate: '2026-11-15', branchCode: 'CN01', lines: [{ lineKey: 'l1', sku: SKU, qty: 1, price: 325_000 }] });
+    const ev = await call(ctx, 'POST', '/api/v1/policies/evaluate', { docDate: TODAY, branchCode: 'CN01', lines: [{ lineKey: 'l1', sku: SKU, qty: 1, price: 325_000 }] });
     expect(ev.status, JSON.stringify(ev.body)).toBe(200);
     expect(ev.body.data.gifts.map((g: { sku: string; qty: number }) => [g.sku, g.qty])).toEqual([[SKU, 1]]);
     const policyRefs = ev.body.data.policyRefs.map(({ key, version, hash }: { key: string; version: number; hash: string }) => ({ key, version, hash }));

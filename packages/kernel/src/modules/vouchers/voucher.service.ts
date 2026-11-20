@@ -90,10 +90,31 @@ interface BuildContext {
   partners: Map<string, string>;
   /** loại chiều phân tích → các mã đang dùng */
   dims: Record<DimensionKind, Set<string>>;
-  taxCodes: Map<string, { code: string; rate: number; direction: string; accountCode: string | null; reportGroup: string }>;
+  taxCodes: Map<string, { code: string; name?: string; rate: number; direction: string; accountCode: string | null; reportGroup: string; validFrom?: string | null; validTo?: string | null }>;
   /** Mã lý do đang dùng. */
   reasons: Set<string>;
+  /** [2026-11-19 kiennt] NT-DM-012 — TK thuế của Quy tắc hạch toán: tax_input, tax_output, tax_input_fixed_asset (đóng góp) */
+  taxDefaults?: Map<string, string>;
 }
+
+// [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định dùng chung mua / bán (chiều 'both', không khai TK): chiều suy từ TK của dòng
+// (Có doanh thu / thu nhập 5…, 7… → đầu ra; còn lại → đầu vào), TK thuế theo Quy tắc hạch toán (TSCĐ 211 / 213 / 217 / 241 → 1332) (đóng góp)
+const FIXED_ASSET_RE = /^(211|213|217|241)/;
+type TaxOfLine = { direction: 'input' | 'output'; account: string | null };
+function taxOfLine(
+  tax: { direction: string; accountCode: string | null },
+  line: { debitAccount: string; creditAccount: string },
+  defaults: Map<string, string> | undefined,
+): TaxOfLine {
+  const direction: 'input' | 'output' = tax.direction === 'input' ? 'input'
+    : tax.direction === 'output' ? 'output'
+    : /^[57]/.test(line.creditAccount) ? 'output' : 'input';
+  if (tax.accountCode) return { direction, account: tax.accountCode };
+  if (direction === 'output') return { direction, account: defaults?.get('tax_output') ?? null };
+  const asset = FIXED_ASSET_RE.test(line.debitAccount) ? defaults?.get('tax_input_fixed_asset') : undefined;
+  return { direction, account: asset ?? defaults?.get('tax_input') ?? null };
+}
+const vnDate = (d: string) => d.split('-').reverse().join('/');
 
 interface TaxInvoiceDraft {
   direction: 'input' | 'output';
@@ -150,6 +171,8 @@ async function loadContext(trx: Db, tenantId: string, doc: ManualDoc): Promise<B
   const partners = await resolvePartners(trx, tenantId, doc.partnerCodes);
   const dimRows = await trx.selectFrom('dimensions').select(['kind', 'code']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
   const taxRows = await trx.selectFrom('tax_codes').selectAll().where('tenant_id', '=', tenantId).where('is_active', '=', true).execute();
+  const taxDefaultRows = await trx.selectFrom('posting_defaults').select(['key', 'account_code']).where('tenant_id', '=', tenantId)
+    .where('key', 'in', ['tax_input', 'tax_output', 'tax_input_fixed_asset']).execute();
   const reasonRows = doc.reasonCode ? await trx.selectFrom('posting_reasons').select('code').where('tenant_id', '=', tenantId).where('code', '=', doc.reasonCode).execute() : [];
   const dims: BuildContext['dims'] = { cost_item: new Set(), department: new Set(), contract: new Set(), employee: new Set(), case: new Set(), project: new Set(), capital_source: new Set(), tool_group: new Set(), usage_purpose: new Set(), cash_item: new Set() };
   for (const d of dimRows) dims[d.kind as DimensionKind]?.add(d.code);
@@ -157,8 +180,9 @@ async function loadContext(trx: Db, tenantId: string, doc: ManualDoc): Promise<B
     accounts,
     partners,
     dims,
-    taxCodes: new Map(taxRows.map((t) => [t.code, { code: t.code, rate: Number(t.rate), direction: t.direction, accountCode: t.account_code, reportGroup: t.report_group }])),
+    taxCodes: new Map(taxRows.map((t) => [t.code, { code: t.code, name: t.name, rate: Number(t.rate), direction: t.direction, accountCode: t.account_code, reportGroup: t.report_group, validFrom: t.valid_from, validTo: t.valid_to }])),
     reasons: new Set(reasonRows.map((r) => r.code)),
+    taxDefaults: new Map(taxDefaultRows.map((d) => [d.key, d.account_code])),
   };
 }
 
@@ -412,7 +436,7 @@ function fromVoucher(input: VoucherInput): ManualDoc {
     payload: input,
     settle: input.settle,
     partnerCodes: [input.partnerCode ?? '', ...input.lines.flatMap((l) => [l.partnerCode ?? '', l.creditPartnerCode ?? ''])],
-    buildLines({ accounts, partners, dims, taxCodes, reasons }) {
+    buildLines({ accounts, partners, dims, taxCodes, reasons, taxDefaults }) {
       const problems: string[] = [];
       if (input.reasonCode && !reasons.has(input.reasonCode)) problems.push(`Lý do "${input.reasonCode}" không tồn tại`);
       const lines: DraftLine[] = [];
@@ -456,12 +480,17 @@ function fromVoucher(input: VoucherInput): ManualDoc {
         if (l.taxCode) {
           const tax = taxCodes.get(l.taxCode);
           if (!tax) problems.push(`${row}: loại thuế "${l.taxCode}" không có trong danh mục`);
-          else if (taxAmount > 0) {
-            if (!tax.accountCode) problems.push(`${row}: loại thuế ${l.taxCode} chưa khai tài khoản thuế`);
+          else {
+            if (tax.validTo && input.docDate > tax.validTo) problems.push(`${row}: loại thuế ${l.taxCode} hết hiệu lực sau ngày ${vnDate(tax.validTo)} — chọn lại loại thuế`);
+            if (tax.validFrom && input.docDate < tax.validFrom) problems.push(`${row}: loại thuế ${l.taxCode} chỉ có hiệu lực từ ngày ${vnDate(tax.validFrom)}`);
+          }
+          if (tax && taxAmount > 0) {
+            const t = taxOfLine(tax, l, taxDefaults);
+            if (!t.account) problems.push(`${row}: chưa đặt tài khoản thuế GTGT ${t.direction === 'input' ? 'đầu vào' : 'đầu ra'} ở Quy tắc hạch toán (ACC41)`);
             else {
               pairNo += 1;
-              if (tax.direction === 'input') lines.push(side(tax.accountCode, taxAmount, 0, 'tax', l.taxCode), side(l.creditAccount, 0, taxAmount, 'tax', l.taxCode));
-              else lines.push(side(l.debitAccount, taxAmount, 0, 'tax', l.taxCode), side(tax.accountCode, 0, taxAmount, 'tax', l.taxCode));
+              if (t.direction === 'input') lines.push(side(t.account, taxAmount, 0, 'tax', l.taxCode), side(l.creditAccount, 0, taxAmount, 'tax', l.taxCode));
+              else lines.push(side(l.debitAccount, taxAmount, 0, 'tax', l.taxCode), side(t.account, 0, taxAmount, 'tax', l.taxCode));
             }
           }
         }
@@ -470,13 +499,13 @@ function fromVoucher(input: VoucherInput): ManualDoc {
       return lines;
     },
     // Mỗi dòng có loại thuế và số hoá đơn là một hoá đơn trên bảng kê (đầu vào hoặc đầu ra theo loại thuế).
-    taxInvoices({ taxCodes }) {
+    taxInvoices({ taxCodes, taxDefaults }) {
       return input.lines
         .filter((l) => l.taxCode && l.invoiceNo && taxCodes.has(l.taxCode))
         .map((l) => {
           const tax = taxCodes.get(l.taxCode!)!;
           return {
-            direction: tax.direction === 'input' ? ('input' as const) : ('output' as const),
+            direction: taxOfLine(tax, l, taxDefaults).direction,
             invoiceNo: l.invoiceNo!,
             serial: l.invoiceSerial ?? '',
             form: l.invoiceForm ?? '',

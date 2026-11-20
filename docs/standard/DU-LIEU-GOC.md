@@ -44,7 +44,7 @@ Ký hiệu cột thao tác: ✅ có và được bảo vệ ở CSDL · 🟡 có
 
 | Dữ liệu | Bảng | Hạng | Định danh | UPDATE có lịch sử | ARCHIVE | MERGE | DELETE an toàn | Khoảng cách → việc |
 |---|---|---|---|---|---|---|---|---|
-| Đối tượng (khách, NCC, nhân viên tạm ứng) | `partners` | A | `bigint` (sổ khoá bằng `id`) | ⬜ tên, MST, địa chỉ ghi đè | 🟡 `is_active` | ⬜ | 🟡 dịch vụ kiểm dòng sổ + `referenceChecks` | lịch sử tên + ảnh chụp tên lúc ghi → S029-19; gộp → S029-20; mã → S026-4 |
+| Đối tượng (khách, NCC, nhân viên tạm ứng) | `partners` | A | `bigint` (sổ khoá bằng `id`) | ⬜ tên, MST, địa chỉ ghi đè | 🟡 `is_active` | ⬜ | 🟡 dịch vụ kiểm dòng sổ + `referenceChecks` | lịch sử tên + ảnh chụp tên lúc ghi → S029-19; gộp → S029-20; mã → S026-4; ngày hiệu lực chọn được (lùi ngày khi đối tác báo đổi MST trễ) → [NT-DM-011](../nghiem-thu/danh-muc/NT-DM-011-mst-doi-tuong-theo-ngay-hieu-luc.md) (đề xuất D029-19-5) <!-- [2026-11-19 11:09 AM khanhtd] NT-DM-011 — ghi việc ngày hiệu lực thuộc tính đối tượng --> |
 | Nhóm đối tượng | `partner_groups` | E | `bigint` | ⬜ | 🟡 | ⬜ | 🟡 | đối tượng lưu `group_code` (mã) |
 | Mặt hàng (định danh) | `items` | A | **ULID** | ✅ mã (`item_codes`), phân loại (`item_classification`) có hiệu lực; tên ghi đè | ✅ `status = retired` | ✅ `merged_into_item_id` (0068) | ✅ `items_guard` chặn xoá | tên có hiệu lực → S029-19 |
 | Mặt hàng (bản ghi cũ) | `products` | A | `bigint` + `item_id` | qua trigger → `item_codes` | 🟡 | qua `items` | 🟡 **chỉ kiểm phiếu kho**, không kiểm dòng sổ | khung nhìn → S024-11; chặn xoá → S029-12 |

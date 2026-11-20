@@ -13,7 +13,7 @@ import { noiDungChoAI } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { errorText } from '@/lib/api';
-import { REQUEST_RE, TRACE_RE, useEvidence, useLogs, useRequest, useTrace, type LogLine, type TraceView } from '../api';
+import { REQUEST_RE, TRACE_RE, useDevStatus, useEvidence, useLogs, useRequest, useTrace, type LogLine, type TraceView } from '../api';
 import { Answer, CopyCode, DevBanner, DevGuard, OutcomeTag, Src, Waterfall, clock, when } from '../ui';
 
 type Tab = 'cay' | 'log' | 'bang-chung';
@@ -84,7 +84,11 @@ function RequestResult({ requestId }: { requestId: string }) {
 }
 
 function TraceResult({ traceId, tab, onTab }: { traceId: string; tab: Tab; onTab: (t: Tab) => void }) {
-  const q = useTrace(traceId);
+  const st = useDevStatus();
+  const tempoOff = st.data?.sources.tempo === 'off';
+  const q = useTrace(traceId, Boolean(st.data) && !tempoOff);
+  if (st.isLoading) return <Loading text="Đang đọc trace…" />;
+  if (tempoOff) return <Answer level="warn" title="Chưa bật tra vết"><p>Máy này chưa cấu hình Tempo (DEVTOOLS_TEMPO_URL) nên không tra được trace. Tra theo mã yêu cầu (req-…) vẫn dùng được.</p></Answer>;
   if (q.isLoading) return <Loading text="Đang đọc trace…" />;
   if (q.error) return <ErrorBox error={errorText(q.error)} />;
   return <TraceBody key={traceId} t={q.data!} tab={tab} onTab={onTab} />;

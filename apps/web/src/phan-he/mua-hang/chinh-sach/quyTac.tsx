@@ -22,8 +22,15 @@ export function ruleText(p: Pick<Policy, 'kind' | 'rule'> & { scope?: Policy['sc
   // Mua X tặng Y nhiều dòng: cộng dồn / áp riêng theo từng dòng.
   const f = p.kind === 'promo_gift' ? giftFlags({ rule: p.rule, scope: p.scope ?? {} }) : undefined;
   const tags = f ? [f.exclusive && (f.exclusive === f.rows ? 'áp riêng' : `${f.exclusive}/${f.rows} dòng áp riêng`), f.rows && (f.repeat === f.rows ? 'cộng dồn' : !f.repeat ? 'chỉ tặng một lần' : `${f.repeat}/${f.rows} dòng cộng dồn`)].filter(Boolean)
-    : [p.rule?.apply === 'exclusive' && 'áp riêng (không cộng chương trình khác)', canRepeat(p) && (isRepeat(p) ? 'cộng dồn' : 'chỉ một lần')].filter(Boolean);
+    : [p.rule?.apply === 'exclusive' ? 'áp riêng (không cộng chương trình khác)' : rowExclusive(p), canRepeat(p) && (isRepeat(p) ? 'cộng dồn' : 'chỉ một lần')].filter(Boolean);
   return tags.length ? `${t} — ${tags.join(', ')}` : t;
+}
+// [2026-11-20 khanhtd] TRA-CUU — bảng CK theo mã: số dòng áp riêng (đóng góp)
+function rowExclusive(p: Pick<Policy, 'kind' | 'rule'>): string {
+  if (p.kind !== 'item_discount') return '';
+  const it = ((p.rule?.items ?? []) as ItemDiscount[]);
+  const n = it.filter((i) => i.apply === 'exclusive').length;
+  return !n ? '' : n === it.length ? 'mọi dòng áp riêng' : `${n}/${it.length} dòng áp riêng`;
 }
 function ruleTextCore(p: Pick<Policy, 'kind' | 'rule'> & { scope?: Policy['scope'] }): string {
   const r = p.rule as R;
@@ -100,7 +107,7 @@ export function RuleEditor({ kind, rule, onChange, brands, skus }: { kind: Polic
       {rule.amount !== undefined ? <Row label="Số tiền trên tổng đơn"><Num money width={140} value={rule.amount} onChange={(n) => onChange({ ...rule, amount: n })} suffix="đ" /></Row> : <Row label="Tỷ lệ"><Num width={70} value={rule.pct} onChange={(n) => onChange({ ...rule, pct: n })} suffix="%" /></Row>}
       <Row label="Áp khi tổng đơn từ"><Num money width={140} value={rule.minOrder} onChange={(n) => onChange({ ...rule, minOrder: n || undefined })} suffix="đ" /><span className="muted" style={{ fontSize: 12, marginLeft: 6 }}>{rule.amount !== undefined ? 'trống = tiền hàng phải lớn hơn số chiết khấu (không bao giờ làm số phải trả âm)' : 'trống = mọi đơn'}; chưa đủ thì không tự áp, chỉ gợi ý mua thêm</span></Row>
     </>;
-    case 'item_discount': return <BangChietKhauMa brands={brands} onlySkus={skus} items={(rule.items ?? []) as ItemDiscount[]} onChange={(items) => set({ items })} />;
+    case 'item_discount': return <BangChietKhauMa brands={brands} onlySkus={skus} allExclusive={rule.apply === 'exclusive'} items={(rule.items ?? []) as ItemDiscount[]} onChange={(items) => set({ items })} />;
     case 'payment_discount': return <Row label="Tỷ lệ nếu trả đúng hạn"><Num width={70} value={rule.pct} onChange={(n) => set({ pct: n })} suffix="%" /></Row>;
     case 'qty_tier': return <><div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Mua từ số lượng nào thì được chiết khấu bao nhiêu % (áp cho cả dòng):</div>
       <Rows rows={rule.tiers ?? []} empty={{ from: 0, pct: 0 }} onChange={(tiers) => set({ tiers })} cols={[
