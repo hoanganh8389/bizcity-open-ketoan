@@ -76,6 +76,7 @@ import { AccountResolver } from '../posting/account-resolver.js';
 import { stripPairTags } from '../posting/pair-tags.js';
 import { EntryBuilder } from '../posting/entry-builder.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
+import { loaiKhoGiuHo } from './kho-giu-ho.js';
 
 interface Period { year: number; month: number }
 const label = (p: Period) => `${p.year}-${String(p.month).padStart(2, '0')}`;
@@ -617,7 +618,8 @@ export const costingService = {
     const formula = formulaOf(fr?.options);
     const formulaInfo = { code: fr?.code ?? 'MD', name: fr?.name ?? 'Mặc định (giá Net)', formula };
     // [2026-11-17 Nguyễn Văn Thủy] loại kho tính giá vốn riêng (bỏ chọn ở ô Loại kho tính chung) (đóng góp)
-    const sep = [...new Set((input.separateTypes ?? []).map((x) => x.trim().toUpperCase()).filter(Boolean))].sort();
+    // [2026-11-20 kiennt] NT-KHO-004 — loại kho không thuộc sở hữu (giữ hộ) luôn tính riêng: tồn giữ hộ (giá trị 0) không kéo đơn giá kho của đơn vị (đóng góp)
+    const sep = [...new Set([...(input.separateTypes ?? []), ...(await loaiKhoGiuHo(trx, auth.tenantId))].map((x) => x.trim().toUpperCase()).filter(Boolean))].sort();
     if (input.scope) {
       const r = await sql<{ code: string | null }>`SELECT bizcity_set_cost_scope(${auth.tenantId}, ${input.scope.kind}, ${input.scope.code}) AS code`.execute(trx);
       const code = r.rows[0]?.code;

@@ -33,11 +33,13 @@ Loại kho **KNB – Kho hàng nhận giữ hộ** dùng cho hàng **của bên 
 |---|---|---|
 | **Không ghi sổ kho** — loại kho không có Tài khoản hạch toán | TK kho của loại đi vào mọi bút toán kho (nhập, xuất, chuyển, kiểm kê, giá vốn). Có TK thì hàng của người khác bị ghi thành hàng tồn kho của đơn vị — sai bản chất tài sản | Ô Tài khoản khoá; loại đang lỡ có TK thì cảnh báo + nút **Bỏ TK**; nhập Excel dòng có TK báo lỗi; máy chủ từ chối ghi |
 | **Không được bán** | Không có quyền bán hàng không thuộc sở hữu | Nghiệp vụ bán / nhập mua không chọn được kho loại này |
-| **Chỉ theo dõi số lượng** | Theo dõi để trả lại đúng chủ hàng | Nhập giữ hộ bằng phiếu nhập kho khác / nhận quà vào kho KNB |
+| **Chỉ ghi số lượng, không ghi giá trị** <!-- [2026-11-20 kiennt] NT-KHO-004 (đóng góp) --> | Theo dõi để trả lại đúng chủ hàng; giá trị không phải của đơn vị | Phiếu nhập / xuất kho khác ở kho KNB: phần mềm **tự đặt thành tiền = 0**, giữ số lượng — thẻ kho có số lượng, không có bút toán. Giá vốn tháng tính riêng loại KNB, tồn giữ hộ không kéo đơn giá kho hàng |
+| **Không chuyển qua lại với kho của đơn vị** | Chuyển sang kho mình là biến hàng người khác thành tài sản mà không có chứng từ | Chuyển kho KNB ↔ kho của đơn vị bị chặn. Hàng giữ hộ thành của mình (chủ hàng bán / tặng lại): xuất trả khỏi kho KNB rồi lập phiếu nhập mua / nhận quà vào kho của mình |
+| **Không mua / bán có giá trị** | Như trên | Phiếu mua / bán / trả hàng có dòng tiền ở kho KNB bị chặn; dòng hàng tặng 0 đồng thì nhận |
 
-> **Lưu ý (chưa chặn):** phiếu nhập / xuất kho có giá trị vào kho KNB hiện **vẫn sinh bút toán** theo TK kho ngầm định (1561) — phần ghi sổ chưa đọc cờ *thuộc sở hữu*. Sẽ sửa ở phiếu riêng (phần lõi ghi sổ); trong lúc chờ, kiểm lại bút toán của phiếu vào kho KNB.
+Chứng từ ghi trước bản sửa (20/11/2026) giữ nguyên; muốn bỏ giá trị thì ghi lại chứng từ.
 
-Cần theo dõi giá trị hàng giữ hộ cho mục đích quản trị: ghi ở sổ ngoài (theo dõi riêng), không đặt TK cho loại kho này. Muốn đổi quy tắc (ví dụ theo dõi trên một TK riêng) — hỏi kế toán trưởng trước, vì đó là thay đổi cách ghi sổ.
+Hàng giữ hộ chỉ theo dõi số lượng (quyết định 20/11/2026), không theo dõi giá trị. Muốn đổi quy tắc (ví dụ theo dõi trên một TK riêng) — hỏi kế toán trưởng trước, vì đó là thay đổi cách ghi sổ.
 
 ## Nghiệp vụ dùng loại kho
 

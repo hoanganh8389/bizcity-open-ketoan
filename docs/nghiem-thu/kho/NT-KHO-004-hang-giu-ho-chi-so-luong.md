@@ -33,15 +33,16 @@
 | Giá vốn tháng | Loại kho không thuộc sở hữu **luôn tính riêng** (như ô "Loại kho tính chung" bỏ chọn) → tồn giữ hộ không kéo đơn giá kho của đơn vị |
 
 - Kho của dòng để trống = kho mặc định của chi nhánh (như cách ghi sổ hiện nay).
+- Dòng kho tiền 0 lưu thành "chưa định giá"; giá vốn tháng định giá theo nhóm riêng của loại KNB (không có hàng có giá) → 0, không sinh bút toán giá vốn.
 - Chứng từ đã ghi trước bản sửa giữ nguyên; muốn bỏ giá trị thì ghi lại chứng từ.
 
 ## 4. Phạm vi
 
 Tệp:
-- `packages/kernel/src/modules/inventory/kho-giu-ho.ts` (đề xuất — tạo khi code) — một hàm kiểm / bỏ giá trị dùng chung.
+- `packages/kernel/src/modules/inventory/kho-giu-ho.ts` — một hàm kiểm / bỏ giá trị dùng chung.
 - `packages/kernel/src/modules/documents/document.service.ts` — gọi hàm trên ở cửa nhận (mọi đường nộp chứng từ).
 - `packages/kernel/src/modules/inventory/costing.service.ts` — loại kho không thuộc sở hữu luôn tính riêng.
-- `apps/api/test/nt-kho-004-hang-giu-ho.test.ts` (đề xuất); `docs/huong-dan/loai-kho.md`.
+- `apps/api/test/nt-kho-004-hang-giu-ho.test.ts`; `docs/huong-dan/loai-kho.md`.
 
 Lõi (kernel) — người chỉ đạo đồng ý sửa. **Không** đụng `posting/rules/stock.rule.ts`, `posting/account-resolver.ts` (đang thuộc S024-33): dòng tiền 0 vốn đã không sinh bút toán.
 
@@ -59,9 +60,9 @@ Lõi (kernel) — người chỉ đạo đồng ý sửa. **Không** đụng `po
 ## 6. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | `apps/api/test/nt-kho-004-hang-giu-ho.test.ts` (đề xuất); 4 lệnh kiểm |
+| Ngày chạy | 20/11/2026 (máy dev, CSDL test) |
+| Bản code (commit) | nhánh `feat/nt-kho-004-hang-giu-ho` |
+| Test | `apps/api/test/nt-kho-004-hang-giu-ho.test.ts` 5/5 (bước 1–6) |
 
 ## 7. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
