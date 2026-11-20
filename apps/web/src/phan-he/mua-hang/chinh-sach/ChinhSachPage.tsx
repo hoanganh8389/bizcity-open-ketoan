@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { POLICY_LABEL, STACK_KINDS, canRepeat, giftFlags, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { POLICY_LABEL, STACK_KINDS, canRepeat, giftFlags, isRepeat, type ItemDiscount, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { scopeBranches } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { Loading } from '@/components/ui';
@@ -26,7 +26,10 @@ type Row = Policy & { stt: number; state: string };
 /** Cách áp / cộng dồn của một chính sách: ô tích (chỉ đọc) cho quen mắt; loại không có lựa chọn này thì gạch ngang. */
 // Mua X tặng Y nhiều dòng: tất cả dòng / không dòng nào / "theo dòng" (một số dòng).
 const flagOf = (n: number, rows: number, all: string, none: string) => (!rows ? '' : n === rows ? all : !n ? none : 'Theo dòng');
-const apRieng = (p: Policy) => (p.kind === 'promo_gift' ? flagOf(giftFlags(p).exclusive, giftFlags(p).rows, 'Áp riêng', 'Áp đồng thời') : STACK_KINDS.includes(p.kind) ? (p.rule.apply === 'exclusive' ? 'Áp riêng' : 'Áp đồng thời') : '');
+// [2026-11-20 khanhtd] TRA-CUU — bảng CK theo mã áp riêng theo dòng → "Theo dòng" như mua X tặng Y (đóng góp)
+const itemRows = (p: Policy) => ((p.rule.items as ItemDiscount[] | undefined) ?? []);
+const apRieng = (p: Policy) => (p.kind === 'promo_gift' ? flagOf(giftFlags(p).exclusive, giftFlags(p).rows, 'Áp riêng', 'Áp đồng thời')
+  : p.kind === 'item_discount' && p.rule.apply !== 'exclusive' && itemRows(p).some((i) => i.apply === 'exclusive') ? flagOf(itemRows(p).filter((i) => i.apply === 'exclusive').length, itemRows(p).length, 'Áp riêng', 'Áp đồng thời') : STACK_KINDS.includes(p.kind) ? (p.rule.apply === 'exclusive' ? 'Áp riêng' : 'Áp đồng thời') : '');
 const congDon = (p: Policy) => (p.kind === 'promo_gift' ? flagOf(giftFlags(p).repeat, giftFlags(p).rows, 'Cộng dồn', 'Một lần') : canRepeat(p) ? (isRepeat(p) ? 'Cộng dồn' : 'Một lần') : '');
 const Tick = ({ v, on, title }: { v: string; on: string; title: string }) => (!v ? <span className="muted" title="Loại chính sách này không có lựa chọn này">—</span>
   : v === 'Theo dòng' ? <span title="Một số dòng có, một số không — mở chính sách xem từng dòng" style={{ fontSize: 11.5 }}>◪ theo dòng</span>
