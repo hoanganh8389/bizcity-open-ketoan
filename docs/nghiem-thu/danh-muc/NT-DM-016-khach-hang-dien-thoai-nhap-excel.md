@@ -23,7 +23,7 @@
 |---|---|---|
 | Mã khách hàng | — | Trống khi thêm mới: tự cấp theo nhóm (như cũ) |
 | Tên khách hàng | dòng mới | |
-| Nhóm khách hàng | dòng mới (như form "Thuộc nhóm (*)") | **liên kết** — tra theo tên (nhận cả mã) |
+| Nhóm khách hàng | khách hàng mới (như form "Thuộc nhóm (*)"); đơn vị con lấy nhóm của đơn vị cha | **liên kết** — tra theo tên (nhận cả mã) |
 | Mã số thuế · Địa chỉ NR · **Điện thoại** · Email | — | Điện thoại ghi cả hai trường như form |
 | Ngày sinh · Giới tính (Nam / Nữ) · Loại khách hàng (cá nhân / doanh nghiệp) · Khách hàng tiềm năng (Có / Không) | — | |
 | Tên công ty · Tên viết tắt · Alias · Địa chỉ Cty · Fax · Website · Người đại diện · Chức vụ | — | |
@@ -40,7 +40,7 @@
 
 ## 3. Phạm vi
 
-Tệp: `apps/web/src/features/catalog/PartnersPage.tsx` (nhãn ô, cột lưới), `apps/web/src/lib/nhapExcel.ts` (loại nhập đối tượng), `apps/api/src/modules/partners/partner-import.ts`, `apps/api/src/modules/partners/partner.routes.ts` (chỉ khuôn dòng nhập), `apps/api/test/nt-dm-016-nhap-khach-hang.test.ts` (đề xuất — tạo khi code), `docs/huong-dan/doi-tuong.md`.
+Tệp: `apps/web/src/features/catalog/PartnersPage.tsx` (nhãn ô, cột lưới), `apps/web/src/lib/nhapExcel.ts` (loại nhập đối tượng), `apps/api/src/modules/partners/partner-import.ts`, `apps/api/src/modules/partners/partner.routes.ts` (chỉ khuôn dòng nhập), `apps/api/test/nt-dm-016-nhap-khach-hang.test.ts`, `apps/api/test/nhap-doi-tuong.test.ts` (ca khách hàng mới thiếu nhóm), `docs/huong-dan/doi-tuong.md`.
 
 ## 4. Kết quả mong đợi
 
@@ -56,9 +56,9 @@ Tệp: `apps/web/src/features/catalog/PartnersPage.tsx` (nhãn ô, cột lưới
 ## 5. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | |
-| Bản code (commit) | |
-| Test | 4 lệnh kiểm |
+| Ngày chạy | 20/11/2026 (máy dev, CSDL test) |
+| Bản code (commit) | nhánh `feat/nt-dm-016-khach-hang-dien-thoai-nhap-excel` |
+| Test | `nt-dm-016-nhap-khach-hang.test.ts` 2/2 (bước 3, 4, 5); bước 1, 2, 6 trên màn hình |
 
 ## 6. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |

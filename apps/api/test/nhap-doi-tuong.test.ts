@@ -27,14 +27,16 @@ describe('Nhập Excel đối tượng', () => {
     expect(o.rows[1]!.errors.join()).toContain('phải có tên');
     expect(o.rows[2]!.errors.join()).toContain('đã có ở đối tượng KHCU');
     expect(o.rows[3]!.errors.join()).toContain('Trùng mã với dòng 2');
-    expect(o.rows[4]!.errors.length).toBe(4);
+    // [2026-11-20 kiennt] NT-DM-016 — khách hàng mới phải có Nhóm (như form): dòng sai có thêm lỗi thiếu nhóm (đóng góp)
+    expect(o.rows[4]!.errors.length).toBe(5);
+    expect(o.rows[4]!.errors.join()).toContain('phải có Nhóm khách hàng');
     expect(await get('KH01')).toBeUndefined();
   });
 
   it('ghi: dòng đúng vào sổ, dòng lỗi bỏ qua; mã trống tự cấp; ô trống giữ nguyên khi cập nhật', async () => {
     const o = await imp({ dryRun: false, rows: [
       { row: 2, code: 'KH01', name: 'Khách một', groupCode: 'NKH', paymentTermDays: '30', creditLimit: '5.000.000' },
-      { row: 3, code: '', name: 'Khách tự cấp mã', kind: 'Khách hàng' },
+      { row: 3, code: '', name: 'Khách tự cấp mã', kind: 'Khách hàng', groupCode: 'NKH' },
       { row: 4, code: 'KHCU', name: '', address: 'Hà Nội' },
       { row: 5, code: 'KH09', name: '' },
     ] });

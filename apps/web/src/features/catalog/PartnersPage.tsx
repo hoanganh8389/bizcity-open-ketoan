@@ -102,8 +102,9 @@ export function PartnersPage({ fixedKind }: { fixedKind?: 'customer' | 'supplier
       return to ? <Link className="row-act" to={to} onClick={(e) => e.stopPropagation()} title={p.kind === 'supplier' ? 'Lập phiếu nhập mua của nhà cung cấp này' : 'Lập phiếu bán hàng cho khách này'}>{p.kind === 'supplier' ? 'Lập phiếu nhập' : 'Lập phiếu bán'}</Link> : null;
     } },
     { key: 'address', header: 'Địa chỉ NR', width: 220, hidden: true },
-    { key: 'phone', header: 'Điện thoại', type: 'code', width: 110, hidden: true },
-    { key: 'mobile', header: 'Di động', type: 'code', width: 110, hidden: true },
+    // [2026-11-20 kiennt] NT-DM-016 — khách hàng: một cột Điện thoại (form ghi cùng số vào điện thoại / di động); NCC giữ Di động người liên hệ (đóng góp)
+    { key: 'phone', header: 'Điện thoại', type: 'code', width: 110, hidden: true, value: (p) => (fixedKind === 'customer' ? p.phone || p.mobile || '' : p.phone ?? '') },
+    ...(fixedKind === 'customer' ? [] : [{ key: 'mobile', header: fixedKind === 'supplier' ? 'Di động người liên hệ' : 'Di động', type: 'code', width: 110, hidden: true } as Column<Partner>]),
     { key: 'groupCode', header: `Nhóm ${abbr}`, width: 150, value: (p) => groupName(p.groupCode) },
     { key: 'contactName', header: 'Người đại diện', width: 150, hidden: true },
     { key: 'companyAddress', header: 'Địa chỉ cty', width: 220, hidden: true },
@@ -452,7 +453,8 @@ function PartnerForm({ value, groups, employees, onClose, onSaved, onSwitch, onB
             <Field label={`Tên ${noun}`} full><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} autoFocus={!isNew} /></Field>
             {txt('address', 'Địa chỉ NR', true)}
             {/* [2026-11-16 kiennt] một ô Di động thay cho Mobile + Telephone: ghi vào cả hai trường để tra cứu, máy bán hàng dùng chung (đóng góp) */}
-            <Field label="Di động"><input className="input mono" value={v.mobile || v.phone || ''} onChange={(e) => set({ mobile: e.target.value, phone: e.target.value })} onBlur={(e) => void checkDuplicate('phone', e.target.value.trim(), 'Số di động')} /></Field>
+            {/* [2026-11-20 kiennt] NT-DM-016 — đổi nhãn "Di động" → "Điện thoại" (vẫn ghi cả hai trường) (đóng góp) */}
+            <Field label="Điện thoại"><input className="input mono" value={v.mobile || v.phone || ''} onChange={(e) => set({ mobile: e.target.value, phone: e.target.value })} onBlur={(e) => void checkDuplicate('phone', e.target.value.trim(), 'Số di động')} /></Field>
             <Field label="Ngày sinh"><input type="date" className="input" value={v.birthDate ?? ''} onChange={(e) => set({ birthDate: e.target.value || null })} /></Field>
             <Field label="Giới tính">
               <select className="select input" value={v.gender ?? ''} onChange={(e) => set({ gender: e.target.value })}><option value="">—</option><option value="male">Nam</option><option value="female">Nữ</option></select>
