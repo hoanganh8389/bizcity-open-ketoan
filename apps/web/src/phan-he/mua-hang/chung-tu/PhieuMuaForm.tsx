@@ -35,6 +35,8 @@ import { ChonMatHang, type CatalogItem } from '../thanh-phan/ChonMatHang';
 import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
 import { nhapDongHang, xuatDongHang, type DongHangCot, type DongNhap } from './DongHangExcel';
 import { BangKhuyenMai, KhuyenMaiBar, KhuyenMaiPanel } from '../thanh-phan/KhuyenMai';
+import { hieuLucCua } from '../thanh-phan/hieuLuc';
+import { useDimension } from '@/components/voucher/lookups';
 import { TermEditor } from '../chinh-sach/quyTac';
 import { TepDinhKem } from '../dinh-kem/TepDinhKem';
 import { NccInfo } from '../thanh-phan/NccInfo';
@@ -52,6 +54,9 @@ import type { InvoiceRow } from '../hoa-don/api';
 import { layPhieuIn, mauInCua } from './mauIn';
 import { ChonThue } from '@/lib/thueGtgt';
 import { thueMacDinh } from '@/lib/tradeDocs';
+
+/** Loại vết chốt hiện trên Bảng khuyến mại của phiếu đã duyệt. */
+const CHOT_KINDS: string[] = ['item_discount', 'qty_tier', 'trade_discount', 'payment_discount', 'promo_gift', 'manual'];
 
 /** Loại phiếu sửa sau duyệt bằng bản điều chỉnh (khớp ADJUST_KINDS phía máy chủ). */
 const ADJUST_KINDS: string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out', 'cost', 'rebate'];
@@ -101,6 +106,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const dock = useDockWindow(onClose, dirty, `mh:${value.id}`);
   const names = useNames();
   const brands = useBrands(data.policies);
+  const costItems = useDimension('cost_item'); // [2026-11-20 khanhtd] MUA-HANG — Danh mục khoản mục cho phiếu chi phí (đóng góp)
   const nccBrands = useSupplierBrands(v.partnerCode || undefined);
   // Phiếu đã duyệt / huỷ: chỉ xem. Phiếu đã ghi (nháp, chờ duyệt): mở ở chế độ xem, bấm "Sửa" mới sửa; Gửi duyệt / Duyệt
   // vẫn bấm được khi đang xem (không đổi nội dung phiếu).
@@ -520,12 +526,19 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     if (v.status !== 'approved' || !trace.length) return promoBoard(v, data.policies, calc);
     const amt = (t: TraceItem) => (t.amount ? ` = ${t.kind === 'payment_discount' ? '' : '−'}${vnd(t.amount)}` : '');
     return [
-      ...trace.filter((t) => ['item_discount', 'qty_tier', 'trade_discount', 'payment_discount', 'promo_gift', 'manual'].includes(t.kind))
+      ...trace.filter((t) => CHOT_KINDS.includes(t.kind))
         // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-6): vết chốt có bản chính sách → ghi "bản N" (đối chiếu khối Phiên bản của chính sách); mã giữ nguyên làm khoá
         .map((t, i): PromoRow => ({ key: `chot|${i}`, status: 'applied', kind: t.kind, policy: t.policy, name: data.policies.find((p) => p.code === t.policy)?.name ?? t.policy, text: `${t.text}${amt(t)}${t.version ? ` · bản ${t.version}` : ''}` })),
       ...promoBoard(v, data.policies, calc).filter((r) => r.kind === 'promo_gift' && r.status !== 'hint'),
     ];
   }, [v, data.policies, calc, stored]);
+  // [2026-11-20 khanhtd] MH-KM — cột Hiệu lực của Bảng khuyến mại: phiếu đang lập theo bản áp ở ngày phiếu; phiếu đã duyệt theo đúng bản đã chốt (đóng góp)
+  const hieuLuc = useMemo(() => {
+    const byCode = new Map(data.policies.map((p) => [p.code, p]));
+    const chot = new Map<string, number>();
+    if (v.status === 'approved') ((stored?.policyTrace ?? []) as TraceItem[]).filter((t) => CHOT_KINDS.includes(t.kind)).forEach((t, i) => { if (t.version !== undefined) chot.set(`chot|${i}`, t.version); });
+    return (r: PromoRow) => hieuLucCua(byCode.get(r.policy), v.docDate, chot.get(r.key));
+  }, [data.policies, v.status, v.docDate, stored]);
   /** Bỏ tích / tích lại một chương trình trên phiếu này: CK, bậc, quà, CKTT của nó tự gỡ / tự áp lại. */
   const togglePromo = (code: string, on: boolean) => { const cur = v.skipPolicies ?? []; set({ skipPolicies: on ? cur.filter((x) => x !== code) : [...new Set([...cur, code])] }); };
   const promoAction = (r: PromoRow) => {
@@ -621,7 +634,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
           </Modal>
         )}
         {excelLines && <NhapExcelChung<DongHangCot, DongNhap> s={nhapDongHang(priceLabel, showKho ? v.warehouseCode || defaultWh : '')} onClose={() => setExcelLines(false)} onAdd={(list) => void importLines(list)} />}
-        {promoOpen && <BangKhuyenMai rows={board} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onClose={() => setPromoOpen(false)} readOnly={readOnly} />}
+        {promoOpen && <BangKhuyenMai rows={board} hieuLuc={hieuLuc} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onClose={() => setPromoOpen(false)} readOnly={readOnly} />}
         {pickGoods && <ChonMatHang title={pickGoods.lineType === 'buy' ? 'Thêm hàng vào phiếu — bấm vào dòng để thêm (bấm lại = cộng 1)' : 'Thêm quà ngoài chương trình — bấm vào dòng để thêm'}
           initial={pickGoods.text} repeat prefer={nccBrands} onClose={() => setPickGoods(null)}
           existing={new Map(v.lines.filter((l) => l.sku && l.lineType === (isGiftDoc ? 'gift_consumer' : pickGoods.lineType)).map((l) => [l.sku, `đang ${fmt(l.qty)} ${l.unit}`]))}
@@ -721,7 +734,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   <div className="mh-brand">{(() => { const mix = brandMix(v); return mix.length ? mix.slice(0, 3).map((m) => <span key={m.brandCode} className="mh-brand-chip">{brands.find((b) => b.code === m.brandCode)?.name ?? m.brandCode}{mix.length > 1 ? ` ${Math.round(m.share * 100)}%` : ''}</span>) : <span className="muted">tự lấy khi thêm hàng</span>; })()}</div>
                 </div>}
                 <div className="field span2"><label>Nhà cung cấp (*)</label>
-                  <PartnerPicker value={v.partnerCode} onChange={pickPartner} activeOnly addKind="supplier" disabled={readOnly} />
+                  <PartnerPicker kind="supplier" value={v.partnerCode} onChange={pickPartner} activeOnly addKind="supplier" disabled={readOnly} />
                   {v.partnerCode && <span className="muted" style={{ fontSize: 11, display: 'flex', gap: 6, alignItems: 'center' }}><NccInfo code={v.partnerCode} showName={false} />{names.partner(v.partnerCode)?.taxCode ? `MST ${names.partner(v.partnerCode)?.taxCode}` : 'Xem thông tin NCC'}{names.partner(v.partnerCode)?.address ? ` · ${names.partner(v.partnerCode)?.address}` : ''}</span>}
                 </div>
                 {v.kind !== 'gift_out' && v.partnerCode && (
@@ -820,6 +833,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {!isGoods && <div className="field"><label>{v.kind === 'cost' ? 'Số tiền chưa thuế (*)' : 'Số tiền (*)'}</label><input className="input num" value={fmt(v.amount)} disabled={Boolean(v.rebate)} onChange={(e) => set({ amount: num(e.target.value) })} />{(v.kind === 'cost' || v.kind === 'rebate') && amountTax(v) > 0 && <span className="muted" style={{ fontSize: 11 }}>+ VAT {vnd(amountTax(v))} = {vnd((v.amount ?? 0) + amountTax(v))}</span>}</div>}
                 {v.kind === 'cost' && <div className="field"><label>Loại chi phí</label><select className="select input" value={v.costType ?? 'van_chuyen'} onChange={(e) => set({ costType: e.target.value as PDoc['costType'] })}>{Object.entries(COST_TYPES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>}
+                {/* [2026-11-20 khanhtd] MUA-HANG — khoản mục chi phí từ Danh mục khoản mục, để theo dõi / cộng chi phí mua theo khoản mục ở MH11 (đóng góp) */}
+                {v.kind === 'cost' && <div className="field"><label title="Khoản mục ở Danh mục khoản mục — lọc và cộng chi phí mua theo khoản mục ở Tổng hợp mua hàng (MH11, thẻ Chi phí / thưởng). Chưa ghi vào sổ cái">Khoản mục</label>
+                  <ListPicker items={costItems.filter((c) => c.isActive || c.code === v.costItem).map((c) => ({ code: c.code, name: c.name }))} value={v.costItem ?? ''} onChange={(c) => set({ costItem: c || undefined })} disabled={readOnly} placeholder={costItems.length ? 'Chọn khoản mục' : 'Chưa có khoản mục — khai ở Danh mục khoản mục'} emptyText="Không có khoản mục khớp" /></div>}
                 {v.kind === 'rebate' && <>
                   <div className="field"><label>Hoá đơn điều chỉnh giảm</label><select className="select input" value={v.taxCode ?? ''} onChange={(e) => set({ taxCode: e.target.value || undefined })}><option value="">Không có (không giảm VAT)</option><option value="V05">Có — VAT 5%</option><option value="V08">Có — VAT 8%</option><option value="V10">Có — VAT 10%</option></select></div>
                   {v.taxCode && <div className="field"><label>Số hoá đơn điều chỉnh</label><input className="input mono" value={v.invoice?.no ?? ''} onChange={(e) => set({ invoice: e.target.value ? { no: e.target.value.trim(), date: v.invoice?.date || v.docDate } : undefined })} /></div>}

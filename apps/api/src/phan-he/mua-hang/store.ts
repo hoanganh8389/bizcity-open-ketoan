@@ -87,6 +87,8 @@ export const docInputSchema = z.object({
   ckttAmount: z.number().finite().min(0).optional(),
   taxCode: z.string().trim().max(16).optional(),
   costType: z.enum(['van_chuyen', 'boc_xep', 'luu_kho', 'bao_hiem', 'kiem_dinh', 'khac']).optional(),
+  // [2026-11-20 khanhtd] MUA-HANG — phiếu chi phí mua: mã khoản mục (Danh mục khoản mục), kiểm có trong danh mục ở analysis (đóng góp)
+  costItem: z.string().trim().max(64).optional().or(z.literal('')),
   basis: z.enum(['value', 'qty']).optional(),
   refIds: z.array(z.string().regex(/^[1-9][0-9]*$/)).max(50).optional(),
   settle: z.enum(['offset', 'pay', 'refund']).optional(),
@@ -105,7 +107,7 @@ export const docInputSchema = z.object({
 export type DocInput = z.infer<typeof docInputSchema>;
 
 /** Phần lưu ở cột data (jsonb). */
-const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode'] as const;
+const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'costItem', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode'] as const;
 
 type Row = Awaited<ReturnType<typeof selectDocs>>[number];
 function selectDocs(trx: Db, tenantId: string) {
@@ -258,7 +260,7 @@ export function toDoc(r: Row): StoredDoc {
     priceIncludesVat: d.priceIncludesVat ?? true,
     invoice: r.invoice_no ? { no: r.invoice_no, serial: r.invoice_serial || undefined, date: String(r.invoice_date ?? r.doc_date).slice(0, 10), total: d.invoiceTotal } : undefined,
     orderDiscount: d.orderDiscount, term: d.term, cktt: d.cktt, lines: d.lines ?? [], schedule: d.schedule, amount: d.amount, method: d.method, moneyAccount: d.moneyAccount || undefined, ckttAmount: d.ckttAmount,
-    taxCode: d.taxCode, costType: d.costType, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
+    taxCode: d.taxCode, costType: d.costType, costItem: d.costItem || undefined, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
     override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies, contractCode: d.contractCode || undefined,
     revision: r.revision, links: (r.links ?? []) as StoredDoc['links'],
     totals: { beforeTax: toNumber(r.total_before_tax), tax: toNumber(r.total_tax), total: toNumber(r.total) },

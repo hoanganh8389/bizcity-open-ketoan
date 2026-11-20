@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 195
+      "count": 192
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 320
+      "count": 321
     }
   ],
   "items": [
@@ -7829,8 +7829,14 @@
       "title": "Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
+        "branch": "feat/phase-031-s17-s23",
+        "state": "đang làm",
+        "since": "2026-11-20",
+        "dot": "PHASE-031 · S031-17 rulepack policy của Conformance Engine (chỉ đọc, theo 10-THIET-KE §9) + S031-23…"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -7925,8 +7931,14 @@
       "title": "Làn policy của bizcitylineage@1 (0.4.0-draft)",
       "priority": "P2",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
+        "branch": "feat/phase-031-s17-s23",
+        "state": "đang làm",
+        "since": "2026-11-20",
+        "dot": "PHASE-031 · S031-17 rulepack policy của Conformance Engine (chỉ đọc, theo 10-THIET-KE §9) + S031-23…"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -8037,14 +8049,8 @@
       "title": "W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL-004) + khối ở tab Theo dõi (00 §15); giá trị hàng…",
       "priority": "P1",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w4c-thuc-hien-chuong-trinh",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-031 · W4c — ô Thực hiện chương trình: program[] ở core.policy.tracking (chứng từ áp, quà đã t…"
-      },
+      "column": "done",
+      "claim": null,
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -9101,9 +9107,15 @@
       "phase": "PHASE-036",
       "title": "B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nút thành Thiết lập nhanh (sau B3)",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
+        "branch": "feat/s036-8b-lay-lai-ban-truoc",
+        "state": "đang làm",
+        "since": "2026-11-20",
+        "dot": "PHASE-036 · S036-8b — Lấy lại bản trước từ bản chụp danh mục: core.default-data.backup-restore (mật…"
+      },
       "modules": [
         "he-thong"
       ],

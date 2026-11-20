@@ -11,7 +11,8 @@ import { workBranch } from '@/lib/workBranch';
 import { restoreDock } from '@/layout/WindowDock';
 import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { invoiceLabel, orderProgress, receiptFromOrder, type PDoc } from '@bizcity/mua-hang-domain';
+import { COST_TYPES, ORDER_INVOICE_LABEL, invoiceLabel, orderInvoice, orderProgress, receiptFromOrder, type OrderInvoice, type PDoc } from '@bizcity/mua-hang-domain';
+import { useDimension } from '@/components/voucher/lookups';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading } from '@/components/ui';
@@ -42,12 +43,12 @@ const GROUPS: [string, string, PDoc['kind'][]][] = [
 // [2026-11-15 Nguyễn Văn Thủy] cột mặc định theo loại phiếu — chỉ cột có nghĩa với loại đó; cột khác bật ở nút "Cột" (đóng góp)
 const COT_MAC_DINH: Record<string, string[]> = {
   all: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'checks'],
-  order: ['docDate', 'docNo', 'status', 'progress', 'partnerFull', 'contract', 'branch', 'kho', 'total', 'checks'],
+  order: ['docDate', 'docNo', 'status', 'progress', 'invoiceState', 'partnerFull', 'contract', 'branch', 'kho', 'total', 'checks'],
   receipt: ['docDate', 'docNo', 'status', 'ledgerState', 'partnerFull', 'contract', 'branch', 'ref', 'invoice', 'beforeTax', 'tax', 'total', 'due', 'debtLeft', 'checks'],
   return: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'ref', 'total', 'checks'],
   money: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'debtLeft'],
   gift: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'kho', 'total'],
-  adjust: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'ref', 'total'],
+  adjust: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'costItem', 'partnerFull', 'contract', 'branch', 'ref', 'total'],
 };
 /** Cột theo loại phiếu: cột mặc định đứng trước theo đúng thứ tự khai, cột khác ẩn (bật ở nút "Cột"). */
 function cotTheoLoai<T extends { key: string; hidden?: boolean }>(cols: T[], group: string): T[] {
@@ -146,13 +147,18 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   useEffect(() => { if (embedded && params.get('nhap-excel') === '1') setExcel(true); }, [embedded, params, navKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [status, setStatus] = useState(params.get('trang-thai') ?? (report === 'bao-cao' ? 'approved' : ''));
   const [onlyErr, setOnlyErr] = useState(params.get('loi') === '1');
+  // [2026-11-20 khanhtd] MUA-HANG — lọc đơn đặt theo tình trạng hoá đơn (?hoa-don=chua_co|mot_phan|du|chua_nhap|chua_du) và phiếu chi phí theo khoản mục (?khoan-muc=<mã>, "-" = chưa chọn) (đóng góp)
+  const [hd, setHd] = useState(params.get('hoa-don') ?? '');
+  const [km, setKm] = useState(params.get('khoan-muc') ?? '');
+  const costItems = useDimension('cost_item');
+  const kmName = useMemo(() => new Map(costItems.map((c) => [c.code, c.name])), [costItems]);
   // Lọc phiếu nhập ngoài đơn: '' = không lọc, 'all' = mọi phiếu ngoài đơn, 'cho' = đã duyệt, chờ rà soát (?ngoai-don=cho).
   const [outside, setOutside] = useState(params.get('ngoai-don') ?? '');
   const [partner, setPartner] = useState(embedPartner ?? params.get('ncc') ?? '');
   const [excel, setExcel] = useState(params.get('nhap-excel') === '1');
   const [notice, setNotice] = useState('');
   // Mở bằng liên kết có lọc / mở phiếu sẵn (sơ đồ quy trình, việc cần làm, màn khác) → không giới hạn kỳ để không lọt phiếu cũ.
-  const linked = ['loai', 'trang-thai', 'loi', 'ngoai-don', 'ncc', 'mo', 'moi', 'nhan-tu', 'tu-hoa-don'].some((k) => params.has(k));
+  const linked = ['loai', 'trang-thai', 'loi', 'ngoai-don', 'ncc', 'mo', 'moi', 'nhan-tu', 'tu-hoa-don', 'hoa-don', 'khoan-muc'].some((k) => params.has(k));
   const [from, setFrom] = useState(report && !linked ? `${today().slice(0, 7)}-01` : '');
   const [to, setTo] = useState(report && !linked ? today() : '');
   const [search, setSearch] = useState('');
@@ -175,17 +181,21 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
     setForms((fs) => [...fs, d]);
   };
 
+  /** Tình trạng hoá đơn của từng đơn đặt (gom phiếu nhập của đơn). */
+  const invOf = useMemo(() => new Map<string, OrderInvoice>((data?.docs ?? []).filter((d) => d.kind === 'order').map((o) => [o.id, orderInvoice(o, data!.docs)!])), [data]);
+  const hdMatch = (d: PDoc) => { const x = invOf.get(d.id); return Boolean(x) && (hd === 'chua_du' ? x!.state === 'chua_co' || x!.state === 'mot_phan' : x!.state === hd); };
   const rows = useMemo(() => {
     if (!data) return [];
     const kinds = GROUPS.find((g) => g[0] === group)?.[2] ?? [];
     const s = search.trim().toLowerCase();
     return data.docs.filter((d) => (!kinds.length || kinds.includes(d.kind)) && (!status || d.status === status) && (!partner || d.partnerCode === partner)
+      && (!hd || hdMatch(d)) && (!km || (d.kind === 'cost' && (km === '-' ? !d.costItem : d.costItem === km)))
       && (!outside || (outside === 'lech' ? lechDon(d).length > 0 : nhapNgoaiDon(d) && (outside !== 'cho' || (d.status === 'approved' && !d.outsideOrder?.reviewedBy))))
       && (!onlyErr || ((d.status === 'draft' || d.status === 'pending_approval') && (d.checks ?? []).some((c) => c.level === 'error')))
       && (!from || d.docDate >= from) && (!to || d.docDate <= to)
       && matchKho(khoFilter, d.branchCode, khoOf(d.branchCode, d.kind === 'order' ? d.deliveryWarehouse : d.warehouseCode))
       && (!s || [d.docNo, d.note, d.invoice?.no, d.partnerCode, names.partnerName(d.partnerCode), names.partner(d.partnerCode)?.taxCode, names.partner(d.partnerCode)?.phone, names.partner(d.partnerCode)?.address].some((x) => x?.toLowerCase().includes(s))));
-  }, [data, group, status, onlyErr, outside, partner, from, to, search, names, khoOf, branchCodes, whCodes]);
+  }, [data, group, status, onlyErr, outside, partner, from, to, search, names, khoOf, branchCodes, whCodes, hd, km, invOf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Khoá theo từng lần chuyển trang (location.key): thẻ MH11 đang mở sẵn, bấm lại liên kết vẫn mở phiếu (không bị bỏ qua).
@@ -284,6 +294,14 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
     { key: 'ledgerState', header: 'Sổ', width: 120, title: 'Trạng thái vào sổ kế toán. Đơn đặt hàng không phát sinh kế toán nên không ghi sổ. Phiếu chưa duyệt chưa gửi vào cổng chờ', value: (r) => LEDGER_LABEL[r.ledger ?? 'not_sent'],
       render: (r) => { const s = r.ledger ?? 'not_sent'; return s === 'none' ? <span className="muted">Không ghi sổ</span> : <Link to="/chung-tu" className={`badge ${LEDGER_CLS[s]}`} title="Mở cổng chờ vào sổ" onClick={(e) => e.stopPropagation()}>{LEDGER_LABEL[s]}</Link>; } },
     { key: 'progress', header: 'Đơn: đã nhận', width: 110, value: (r) => { if (r.kind !== 'order' || !data) return ''; const p = orderProgress(r, data.docs, undefined, data.units); const one = p.lines.length === 1 ? p.lines[0]! : null; return p.done ? 'Đủ' : p.buyDone ? 'Thiếu quà' : one ? `${one.received}/${one.ordered} ${one.unit}` : `${p.received}/${p.ordered} (ĐVT nhỏ nhất)`; } },
+    // [2026-11-20 khanhtd] MUA-HANG — cột Hoá đơn của đơn đặt (từ phiếu nhập của đơn) và Khoản mục của phiếu chi phí (đóng góp)
+    { key: 'invoiceState', header: 'Đơn: hoá đơn', width: 190, title: 'Hoá đơn NCC của đơn đặt, gom từ các phiếu nhập theo đơn (hoá đơn ghi trên phiếu nhập / lập từ MH22): Chưa nhập hàng · Chưa có HĐ · Có HĐ một phần · Đủ HĐ (cho phần hàng đã nhận)',
+      value: (r) => invOf.get(r.id)?.text ?? '',
+      render: (r) => { const x = invOf.get(r.id); if (!x) return null; const cls = { chua_nhap: 'badge-gray', chua_co: 'badge-bad', mot_phan: 'badge-warn', du: 'badge-ok' }[x.state];
+        return <span className={`badge ${cls}`} title={[x.invoices.length ? `Hoá đơn: ${x.invoices.join(', ')}` : '', x.missing.length ? `Phiếu nhập chưa có hoá đơn: ${x.missing.join(', ')}` : ''].filter(Boolean).join('\n') || undefined}>{x.text}</span>; } },
+    { key: 'costItem', header: 'Khoản mục', width: 190, title: 'Khoản mục chi phí của phiếu chi phí mua (Danh mục khoản mục). Phiếu cũ chưa chọn khoản mục: hiện loại chi phí cũ',
+      value: (r) => (r.kind !== 'cost' ? '' : r.costItem ? `${r.costItem} · ${kmName.get(r.costItem) ?? ''}` : `(chưa chọn) ${r.costType ? COST_TYPES[r.costType] : ''}`),
+      render: (r) => (r.kind !== 'cost' ? null : r.costItem ? <span><b className="mono">{r.costItem}</b> {kmName.get(r.costItem)}</span> : <span className="muted">chưa chọn{r.costType ? ` · ${COST_TYPES[r.costType]}` : ''}</span>) },
     { key: 'ledger', header: 'Chứng từ kế toán', width: 140, value: (r) => r.links.map((l) => l.docNo).join(', ') },
     { key: 'checks', header: 'Cần xử lý', width: 230, value: (r) => canXuLy(r).text, render: (r) => { const x = canXuLy(r); return x.text ? <span className={`badge ${x.cls}`} title={x.all}>{x.text}</span> : null; } },
     { key: 'note', header: 'Ghi chú', width: 320 },
@@ -346,6 +364,17 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
           {view !== 'nhom' && <span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>{rows.length} chứng từ · <span className="ct-cho-chu">chữ cam = chưa duyệt</span></span>}
         </div>
         {notice && <div className="alert alert-ok" style={{ margin: '0 12px 6px' }}>{notice}</div>}
+        {/* [2026-11-20 khanhtd] MUA-HANG — cộng chi phí mua theo khoản mục của các phiếu đang lọc; bấm để lọc khoản mục đó (đóng góp) */}
+        {!embedded && (group === 'adjust' || km) && view === 'phieu' && (() => {
+          const by = new Map<string, { n: number; amount: number }>();
+          for (const d of rows) if (d.kind === 'cost' && d.status !== 'cancelled') { const k = d.costItem ?? '-'; const x = by.get(k) ?? { n: 0, amount: 0 }; x.n++; x.amount += d.amount ?? 0; by.set(k, x); }
+          if (!by.size) return null;
+          return <div className="row" style={{ gap: 6, padding: '0 12px 6px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span className="muted" style={{ fontSize: 12 }}>Chi phí mua theo khoản mục (chưa thuế, phiếu chưa huỷ):</span>
+            {[...by].sort((a, b) => b[1].amount - a[1].amount).map(([k, x]) => <button key={k} type="button" className={`btn btn-xs ${km === k ? 'btn-primary' : ''}`} onClick={() => setKm(km === k ? '' : k)} title={km === k ? 'Bỏ lọc khoản mục' : 'Lọc khoản mục này'}>
+              {k === '-' ? 'Chưa chọn khoản mục' : `${k} · ${kmName.get(k) ?? ''}`}: <b>{x.amount.toLocaleString('vi-VN')}</b> ({x.n} phiếu)</button>)}
+          </div>;
+        })()}
         <ErrorBox error={error ? errorText(error) : null} />
         {view === 'nhom' ? <TongHopTheoNhom from={from} to={to} />
         : !isLoading && data && view !== 'phieu' ? (
@@ -361,12 +390,19 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
         if (embedded) return body;
         return (
           <FilterLayout filters={<>
-            {!embedded && <div className="field"><label>Nhà cung cấp</label><PartnerPicker value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>}
+            {!embedded && <div className="field"><label>Nhà cung cấp</label><PartnerPicker kind="supplier" value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>}
             <div className="field"><label>Từ ngày</label><input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
             <div className="field"><label>Đến ngày</label><input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
             <BranchSelect value={branchCodes} onChange={setBranchCodes} warehouses={{ value: whCodes, onChange: setWhCodes }} />
             {view !== 'phieu' && view !== 'nhom' && <ChonNhomHang value={nhom} onChange={setNhom} />}
             <div className="field"><label>Trạng thái</label>{statusSel}</div>
+            {/* [2026-11-20 khanhtd] MUA-HANG — lọc đơn đặt theo hoá đơn, phiếu chi phí theo khoản mục (đóng góp) */}
+            {(group === 'all' || group === 'order') && <div className="field"><label title="Hoá đơn NCC của đơn đặt, gom từ các phiếu nhập theo đơn">Hoá đơn của đơn đặt</label>
+              <select className="select input" value={hd} onChange={(e) => setHd(e.target.value)}><option value="">Tất cả</option><option value="chua_du">Chưa đủ hoá đơn (chưa có + một phần)</option>
+                {Object.entries(ORDER_INVOICE_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>}
+            {(group === 'all' || group === 'adjust') && <div className="field"><label title="Khoản mục của phiếu chi phí mua (Danh mục khoản mục)">Khoản mục chi phí</label>
+              <select className="select input" value={km} onChange={(e) => setKm(e.target.value)}><option value="">Tất cả</option><option value="-">Chưa chọn khoản mục</option>
+                {costItems.map((c) => <option key={c.code} value={c.code}>{c.code} · {c.name}</option>)}</select></div>}
           </>}>{body}</FilterLayout>
         );
       })()}

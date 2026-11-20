@@ -10,7 +10,7 @@
  */
 import { sql } from 'kysely';
 import {
-  AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
+  AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
   scopeBranches,
 } from '@bizcity/mua-hang-domain';
@@ -449,17 +449,21 @@ export async function orderReconcileReport(trx: Db, tenantId: string, ctx: Ctx, 
   const orders = ctx.docs.filter((d) => d.kind === 'order' && d.status === 'approved' && inRange(d));
   const recIds = new Set(orders.flatMap((o) => ctx.docs.filter((d) => d.kind === 'receipt' && (d.refIds ?? []).includes(o.id)).map((d) => d.id)));
   const units = await unitsOf(trx, tenantId, ctx.docs.filter((d) => d.kind === 'order' || recIds.has(d.id)).flatMap((d) => d.lines.map((l) => l.sku)));
-  const rows = orders.flatMap((o) => orderReconcile(o, ctx.docs, units).map((l) => ({ orderId: o.id, orderNo: o.docNo, orderDate: o.docDate, partnerCode: o.partnerCode, branchCode: o.branchCode, ...l })));
+  // [2026-11-20 khanhtd] MUA-HANG — mỗi dòng mang tình trạng hoá đơn của đơn (gom phiếu nhập của đơn); phiếu ngoài đơn: hoá đơn của chính phiếu (đóng góp)
+  type Inv = { state: 'chua_nhap' | 'chua_co' | 'mot_phan' | 'du'; text: string };
+  const invOf = new Map(orders.map((o) => { const x = orderInvoice(o, ctx.docs)!; return [o.id, { state: x.state, text: x.text } as Inv]; }));
+  const rows = orders.flatMap((o) => orderReconcile(o, ctx.docs, units).map((l) => ({ orderId: o.id, orderNo: o.docNo, orderDate: o.docDate, partnerCode: o.partnerCode, branchCode: o.branchCode, ...l, invoice: invOf.get(o.id)! })));
   // Phiếu nhập ngoài đơn (không gắn đơn nào): mỗi mã một dòng, tình trạng "ngoài đơn".
   const outside = ctx.docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && !(d.refIds ?? []).length && d.lines.some((l) => l.lineType === 'buy') && inRange(d));
   for (const d of outside) for (const l of d.lines.filter((x) => x.lineType === 'buy' && x.sku)) {
     const approved = d.status === 'approved';
     rows.push({ orderId: '', orderNo: '', orderDate: d.docDate, partnerCode: d.partnerCode, branchCode: d.branchCode, sku: l.sku, name: l.name, unit: l.unit, ordered: 0, received: approved ? l.qty : 0, pending: approved ? 0 : l.qty, diff: approved ? l.qty : 0,
       state: 'ngoai_don', orderPrice: null, receivedPrice: approved ? l.price : null, priceDiffPct: null, swappedTo: [], receipts: [{ id: d.id, docNo: d.docNo, docDate: d.docDate, status: d.status, sku: l.sku, qty: l.qty, unit: l.unit, price: l.price }],
-      outsideReason: d.outsideOrder?.reason ?? '' } as (typeof rows)[number]);
+      outsideReason: d.outsideOrder?.reason ?? '', invoice: (d.invoice?.no ? { state: 'du', text: `Có HĐ ${d.invoice.serial ? `${d.invoice.serial}-` : ''}${d.invoice.no}` } : { state: 'chua_co', text: 'Chưa có HĐ' }) as Inv } as (typeof rows)[number]);
   }
   const count = (s: string) => rows.filter((r) => r.state === s).length;
-  return { rows, orders: orders.length, outsideReceipts: outside.length, summary: { du: count('du'), thieu: count('thieu'), thua: count('thua'), ngoai_don: count('ngoai_don'), doi_ma: count('doi_ma'), lech_gia: rows.filter((r) => r.priceDiffPct !== null && Math.abs(r.priceDiffPct) >= 0.01).length } };
+  const invCount = (s: Inv['state']) => [...invOf.values()].filter((x) => x.state === s).length;
+  return { rows, orders: orders.length, outsideReceipts: outside.length, invoiceSummary: { chua_nhap: invCount('chua_nhap'), chua_co: invCount('chua_co'), mot_phan: invCount('mot_phan'), du: invCount('du') }, summary: { du: count('du'), thieu: count('thieu'), thua: count('thua'), ngoai_don: count('ngoai_don'), doi_ma: count('doi_ma'), lech_gia: rows.filter((r) => r.priceDiffPct !== null && Math.abs(r.priceDiffPct) >= 0.01).length } };
 }
 
 /**

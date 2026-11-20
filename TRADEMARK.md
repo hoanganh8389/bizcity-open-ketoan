@@ -1,8 +1,9 @@
 # Chính sách nhãn hiệu BizCity
+<!-- [2026-11-17 11:12 PM Johnny Chu - Chu Hoàng Anh] HOTFIX — đổi tên repository bizcity-open-ketoan thành open-ketoan (chủ dự án duyệt 2026-11-17); chỉ đổi tên, giữ nguyên nội dung -->
 <!-- [2026-10-30 01:22 PM Johnny Chu - Chu Hoàng Anh] R-LICENSE — giấy phép GPL-2.0-or-later, chính sách nhãn hiệu BizCity. -->
 
 > **Cập nhật:** 2026-10-30 · **Chủ sở hữu:** Johnny Chu (Chu Hoàng Anh) / BizCity · **Liên hệ:** https://bizcity.vn
-> Áp dụng cho repository `bizcity-open-ketoan`, cùng chính sách với `bizcity-twin-ai`.
+> Áp dụng cho repository `open-ketoan`, cùng chính sách với `bizcity-twin-ai`.
 
 ## 1. Nhãn hiệu thuộc sở hữu
 
@@ -66,7 +67,7 @@ Mọi việc dùng cho mục đích thương mại hoặc gắn thương hiệu:
 
 ## 5. Hướng dẫn fork
 
-Khi fork `bizcity-open-ketoan` và **phân phối công khai**:
+Khi fork `open-ketoan` và **phân phối công khai**:
 
 1. **Đổi tên** sản phẩm, tránh tiền tố / hậu tố "BizCity".
 2. **Thay** logo BizCity bằng logo của bạn.
