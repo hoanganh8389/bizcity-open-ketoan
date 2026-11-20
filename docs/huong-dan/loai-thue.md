@@ -1,7 +1,8 @@
 # Loại thuế (ACC43)
 <!-- [2026-11-19 kiennt] NT-DM-012 — loại thuế GTGT cố định theo quy định nhà nước: chỉ xem, dùng chung mua / bán, TK theo Quy tắc hạch toán (đóng góp) -->
 
-Thuế suất GTGT do nhà nước quy định, nên phần mềm **cấu hình sẵn** danh mục này — người dùng chỉ xem, không thêm / sửa / xoá. Khi nhà nước đổi thuế suất, bản cập nhật phần mềm sẽ đổi theo.
+<!-- [2026-11-20 kiennt] NT-DM-012 — đưa dòng giải thích từ màn ACC43 vào hướng dẫn (đóng góp) -->
+Danh mục do phần mềm cấu hình sẵn theo quy định (Luật Thuế GTGT, nghị quyết giảm thuế) — **không thêm, sửa, xoá**; thuế suất thay đổi được cập nhật trong bản phần mềm mới. Một loại dùng cho cả phiếu mua và phiếu bán; tiền thuế ghi vào tài khoản ở **Quy tắc hạch toán (ACC41)**: mua hàng hoá, dịch vụ 1331 · mua tài sản cố định 1332 · bán ra 33311.
 
 | Loại | Dùng cho | Hiệu lực | Căn cứ |
 |---|---|---|---|

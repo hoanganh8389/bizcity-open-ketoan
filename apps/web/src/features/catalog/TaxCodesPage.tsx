@@ -3,6 +3,7 @@
  */
 // [2026-11-19 kiennt] NT-DM-012 — màn chỉ xem: loại thuế GTGT cố định theo quy định nhà nước (KCT, 0, 5, 8, 10, KKKN), dùng chung mua / bán,
 // TK thuế theo Quy tắc hạch toán (ACC41). Bỏ Thêm / Sửa / Xoá / Nhập Excel; mã cũ (V…, R…) chỉ xem, kèm loại thay thế (đóng góp)
+// [2026-11-20 kiennt] NT-DM-012 — bỏ dòng giải thích trên màn, chuyển vào hướng dẫn sử dụng (docs/huong-dan/loai-thue.md) (đóng góp)
 import { useRef, useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
@@ -41,11 +42,6 @@ export function TaxCodesPage() {
     <>
       <PageHeader title="Loại thuế" code="ACC43" subtitle="Loại thuế GTGT theo quy định nhà nước — dùng chung cho mua và bán" helpKey="loai-thue" />
       <div className="card">
-        <div className="alert alert-info" style={{ marginBottom: 8 }}>
-          Danh mục do phần mềm cấu hình sẵn theo quy định (Luật Thuế GTGT, nghị quyết giảm thuế) — <b>không thêm, sửa, xoá</b>; thuế suất thay đổi
-          được cập nhật trong bản phần mềm mới. Một loại dùng cho cả phiếu mua và phiếu bán; tiền thuế ghi vào tài khoản ở <b>Quy tắc hạch toán (ACC41)</b>:
-          mua hàng hoá, dịch vụ 1331 · mua tài sản cố định 1332 · bán ra 33311.
-        </div>
         <div className="row" style={{ gap: 12, alignItems: 'center', marginBottom: 6 }}>
           <label className="checkbox"><input type="checkbox" checked={maCu} onChange={(e) => setMaCu(e.target.checked)} /> Xem mã cũ (trước khi cố định — chỉ để đọc chứng từ đã ghi)</label>
           <span style={{ flex: 1 }} />
