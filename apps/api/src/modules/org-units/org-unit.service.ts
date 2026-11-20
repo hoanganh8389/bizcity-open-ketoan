@@ -69,7 +69,7 @@ function indexTree(nodes: NodeRow[]) {
 }
 
 /** Tính lại level / path cho cả cây từ gốc; báo lỗi nếu có nút không nối được về gốc (vòng lặp). */
-async function recompute(trx: Db, tenantId: string): Promise<void> {
+export async function recompute(trx: Db, tenantId: string): Promise<void> {
   const nodes = await loadNodes(trx, tenantId);
   if (!nodes.length) return;
   // [2026-11-13 Nguyễn Văn Thủy] nhiều gốc (nhiều công ty cha) được phép (0131); mỗi gốc tính cấp từ 0 (đóng góp)
@@ -126,11 +126,14 @@ export async function syncBranchLevels(trx: Db, tenantId: string): Promise<{ cha
   const t = indexTree(nodes.map((n) => (n.is_active ? n : { ...n, purchase_branch_id: null })));
   const branches = await loadBranches(trx, tenantId);
   const hubs = new Set(nodes.filter((n) => n.is_active && n.purchase_branch_id).map((n) => n.purchase_branch_id!));
+  // [2026-11-20 Nguyễn Văn Thủy] đơn vị nhóm (công ty, miền, chi nhánh, tỉnh… có bản sao cây cũ, 0173) không có phân kho → không phải shop (đóng góp)
+  const nhom = new Set((await sql<{ id: string }>`SELECT b.id FROM branches b WHERE b.tenant_id = ${tenantId} AND b.org_mirror_id IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM warehouses w WHERE w.tenant_id = b.tenant_id AND w.branch_id = b.id)`.execute(trx)).rows.map((r) => String(r.id)));
   const codes: string[] = [], levels: string[] = [], parents: (string | null)[] = [];
   for (const b of branches) {
     const unit = t.nearestPurchase(b.org_unit_id);
     const hub = unit?.purchase_branch_id ?? null;
-    const level = hubs.has(b.id) ? 'branch' : hub ? 'shop' : '';
+    const level = hubs.has(b.id) ? 'branch' : nhom.has(String(b.id)) ? '' : hub ? 'shop' : '';
     const parent = level === 'shop' ? hub : null;
     if (level !== (b.level ?? '') || parent !== b.parent_id) { codes.push(b.code); levels.push(level); parents.push(parent); }
   }

@@ -1,608 +1,785 @@
-// [2026-11-13 Nguyễn Văn Thủy] Cơ cấu tổ chức một màn — làm lại đơn giản: MỘT bảng cây + MỘT hộp thoại chọn loại (đóng góp)
+// [2026-11-20 Nguyễn Văn Thủy] CƠ CẤU TỔ CHỨC (DM16) — làm lại theo mô hình một bảng: ĐƠN VỊ lồng nhau – PHÂN KHO – BỘ PHẬN (0173) (đóng góp)
 /**
- * CƠ CẤU TỔ CHỨC (DM16) — khai báo ở duy nhất một màn.
- *
- *   Bảng: một bảng dạng cây, mỗi dòng một nút: Mã · Tên · Loại · MST · Ghi chú · Theo dõi.
- *   Loại nút:
- *     Công ty        được nhiều công ty cha; công ty con nằm trong cây        (org_units kind=company)
- *     Cơ cấu cấp N   miền, chi nhánh, tỉnh… tên tự đặt, cấp tự tính theo cây   (org_units kind=unit)
- *     Cửa hàng       mã khớp hệ thống bán hàng; phòng ban riêng là một ô       (branches)
- *     Kho            thuộc một cửa hàng                                         (warehouses)
- *     Phòng ban      phòng ban chung (kế toán, kinh doanh…)                    (dimensions department)
- *   Hộp thoại Thêm / Sửa: chọn Loại → chọn Thuộc (chỉ hiện nút cha hợp lệ) → các ô của loại đó. Cuối hộp: lịch sử thay đổi.
- *   Sơ đồ: khối công ty / cơ cấu, bấm khối mở hộp thoại của nút đó.
- * Dữ liệu vẫn ở bảng riêng của từng loại (sổ sách, kho, phân quyền đang chạy không đổi); màn này chỉ gom lại.
+ * Mọi cấp (công ty, miền, chi nhánh, tỉnh, cửa hàng…) đều là một ĐƠN VỊ: chỉ khác tên gọi cấp do người dùng đặt.
+ *   - Đơn vị: mã, tên, thuộc (cha), đường dẫn A/B/C, MST (trống = theo cấp gần nhất có khai), tên in chứng từ, địa chỉ, điện thoại.
+ *   - Phân kho và bộ phận thuộc một đơn vị. Tạo đơn vị là tự có một bộ phận (đổi tên tuỳ ý).
+ *   - Mã không trùng giữa đơn vị, phân kho, bộ phận.
+ * Dữ liệu: GET /api/v1/co-cau; ghi qua /api/v1/co-cau/* và /api/v1/warehouses.
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Building2, Copy, ChevronDown, ChevronRight, FileDown, FileUp, Filter, FolderOpen, Network, Plus, Printer, RefreshCw, RotateCcw, Store, Users, Warehouse as WarehouseIcon } from 'lucide-react';
+import {
+  Building, Building2, ChevronDown, ChevronRight, FileDown, FileText, FileUp, Filter, History, Info, Layers, List, ListTree, MapPinned, MoreHorizontal, Mountain, Network,
+  Pencil, Plus, Printer, RefreshCw, Search, Store, Trash2, Users, Warehouse as WarehouseIcon, X,
+} from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Hoi, Loading, Modal, useViewAgain } from '@/components/ui';
+import { ErrorBox, Field, Hoi, Loading, Modal } from '@/components/ui';
 import { ListPicker, plain } from '@/components/pickers';
-import { ValuePicker } from '@/components/DataGrid';
 import { TaxCodeField } from '@/components/TaxCodeField';
-import { invalidateOrg, useOrgTree, type OrgNode } from '@/lib/orgUnits';
-import type { Branch } from './BranchesPage';
-import { useWarehouses, type Warehouse } from './WarehousesPage';
-import { LoaiKhoForm, useWarehouseTypes } from './WarehouseTypesPage';
-import type { DimRow } from './DimensionsPage';
-import { DanhSachLoai, xuatCoCau, type KieuDs } from './CoCauExcel';
 import { NutNhapExcel } from '@/components/NhapExcelWizard';
 import { nhapLoai } from '@/lib/nhapExcel';
+import { invalidateOrg } from '@/lib/orgUnits';
+import { LoaiKhoForm, useWarehouseTypes } from './WarehouseTypesPage';
+import { xuatCoCau } from './CoCauExcel';
 import './co-cau.css';
+import './co-cau-moi.css';
 
-export type Loai = 'company' | 'unit' | 'branch' | 'warehouse' | 'department' | 'none';
-export const LOAI_TEN: Record<Loai, string> = { company: 'Công ty', unit: 'Cơ cấu', branch: 'Cửa hàng', warehouse: 'Kho', department: 'Phòng ban', none: '' };
-export const LOAI_ICON: Record<Loai, ReactNode> = {
-  company: <Building2 size={14} />, unit: <Network size={14} />, branch: <Store size={14} />, warehouse: <WarehouseIcon size={14} />, department: <Users size={14} />, none: <FolderOpen size={14} />,
-};
-/** Loại cha hợp lệ của từng loại. */
-const CHA: Record<Exclude<Loai, 'none'>, Loai[]> = { company: ['company', 'unit'], unit: ['company', 'unit'], branch: ['company', 'unit'], warehouse: ['branch'], department: ['company', 'unit'] };
+/* ------------------------------------------------------------------ dữ liệu */
 
-export interface CNode {
-  key: string; loai: Loai; code: string; name: string; parentKey: string | null; isActive: boolean;
-  /** Cấp trên cây (gốc = 0). */
-  depth: number;
-  org?: OrgNode; branch?: Branch; warehouse?: Warehouse; dept?: DimRow;
+export interface DonVi {
+  uid: string; code: string; name: string; parentCode: string | null; path: string; level: number; levelLabel: string; sortOrder: number;
+  taxCode: string; taxUsed: string; taxFrom: string | null; companyName: string; address: string; phone: string; note: string; isActive: boolean; departmentCode: string | null;
 }
+export interface PhanKho { uid: string; code: string; name: string; branchCode: string; typeCode: string; typeName: string; isDefault: boolean; isActive: boolean; address: string; note: string }
+export interface BoPhan { uid: string; code: string; name: string; branchCode: string | null; isActive: boolean; note: string }
+interface CoCauRaw { units: DonVi[]; warehouses: PhanKho[]; departments: BoPhan[] }
 
-export const NONE_KEY = 'x:none';
-export const homNay = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
-export const loaiNhan = (n: CNode) => (n.loai === 'unit' ? `Cơ cấu cấp ${n.depth}` : LOAI_TEN[n.loai]);
-export const off = (n: { code: string; isActive: boolean }) => !n.isActive || /_OFF$/i.test(n.code);
-const MST_OK = /^[0-9]{10}(-[0-9]{3})?$/;
+export const ngung = (x: { code: string; isActive: boolean }) => !x.isActive || /_OFF$/i.test(x.code);
 
-/** Gom 4 nguồn (cơ cấu, cửa hàng, kho, phòng ban chung) thành một cây. */
 export function useCoCau() {
-  const org = useOrgTree();
-  const branches = useQuery({ queryKey: ['branches'], queryFn: () => api.get<Branch[]>('/api/v1/branches') });
-  const whs = useWarehouses();
-  const deps = useQuery({ queryKey: ['dimensions', 'department'], queryFn: () => api.get<DimRow[]>('/api/v1/dimensions/department'), staleTime: 60_000 });
-  const data = useMemo(() => {
-    const nodes: CNode[] = [];
-    const orgCodes = new Set((org.data?.nodes ?? []).map((n) => n.code));
-    for (const n of org.data?.nodes ?? []) nodes.push({ key: `o:${n.code}`, loai: n.kind === 'company' || (!n.kind && !n.parentCode) ? 'company' : 'unit', code: n.code, name: n.name, parentKey: n.parentCode ? `o:${n.parentCode}` : null, isActive: n.isActive, depth: 0, org: n });
-    const shopDept = new Set<string>();
-    for (const b of branches.data ?? []) {
-      nodes.push({ key: `b:${b.code}`, loai: 'branch', code: b.code, name: b.name, parentKey: b.orgUnitCode && orgCodes.has(b.orgUnitCode) ? `o:${b.orgUnitCode}` : NONE_KEY, isActive: b.isActive, depth: 0, branch: b });
-      if (b.departmentCode) shopDept.add(b.departmentCode);
-    }
-    for (const w of whs.data ?? []) nodes.push({ key: `w:${w.code}`, loai: 'warehouse', code: w.code, name: w.name, parentKey: `b:${w.branchCode}`, isActive: w.isActive, depth: 0, warehouse: w });
-    // Phòng ban riêng của cửa hàng không thành dòng (là ô "Phòng ban" của cửa hàng); chỉ phòng ban chung lên cây.
-    for (const d of deps.data ?? []) {
-      if (shopDept.has(d.code) || (d.parentCode && shopDept.has(d.parentCode))) continue;
-      const o = d.extra?.orgUnitCode;
-      nodes.push({ key: `d:${d.code}`, loai: 'department', code: d.code, name: d.name, parentKey: o && orgCodes.has(o) ? `o:${o}` : NONE_KEY, isActive: d.isActive, depth: 0, dept: d });
-    }
-    const byKey = new Map(nodes.map((n) => [n.key, n]));
-    for (const n of nodes) if (n.parentKey && n.parentKey !== NONE_KEY && !byKey.has(n.parentKey)) n.parentKey = NONE_KEY;
-    const kids = new Map<string, CNode[]>();
-    for (const n of nodes) if (n.parentKey) (kids.get(n.parentKey) ?? kids.set(n.parentKey, []).get(n.parentKey)!).push(n);
-    const ORDER: Record<Loai, number> = { company: 0, unit: 1, department: 2, branch: 3, warehouse: 4, none: 5 };
-    for (const list of kids.values()) list.sort((a, b) => ORDER[a.loai] - ORDER[b.loai] || (a.org?.sortOrder ?? 0) - (b.org?.sortOrder ?? 0) || a.code.localeCompare(b.code));
-    const roots = nodes.filter((n) => !n.parentKey).sort((a, b) => (a.org?.sortOrder ?? 0) - (b.org?.sortOrder ?? 0) || a.code.localeCompare(b.code));
-    if (kids.get(NONE_KEY)?.length) {
-      const none: CNode = { key: NONE_KEY, loai: 'none', code: '', name: 'Chưa xếp vào cơ cấu', parentKey: null, isActive: true, depth: 0 };
-      byKey.set(NONE_KEY, none);
-      roots.push(none);
-    }
-    const setDepth = (list: CNode[], d: number) => { for (const n of list) { n.depth = d; setDepth(kids.get(n.key) ?? [], d + 1); } };
-    setDepth(roots, 0);
-    const pathOf = (n: CNode): CNode[] => { const out: CNode[] = []; const seen = new Set<string>(); for (let x: CNode | undefined = n; x && !seen.has(x.key); x = x.parentKey ? byKey.get(x.parentKey) : undefined) { seen.add(x.key); out.unshift(x); } return out; };
-    const under = (key: string): CNode[] => { const out: CNode[] = []; const stack = [...(kids.get(key) ?? [])]; while (stack.length) { const x = stack.pop()!; out.push(x); stack.push(...(kids.get(x.key) ?? [])); } return out; };
-    return { nodes, byKey, kids, roots, pathOf, under };
-  }, [org.data, branches.data, whs.data, deps.data]);
-  return {
-    ...data, orgTree: org.data, departments: deps.data ?? [],
-    loading: org.isLoading || branches.isLoading || whs.isLoading || deps.isLoading,
-    error: org.error ?? branches.error ?? whs.error ?? deps.error,
-    refetch: () => { void org.refetch(); void branches.refetch(); void whs.refetch(); void deps.refetch(); },
-  };
+  const q = useQuery({ queryKey: ['co-cau'], queryFn: () => api.get<CoCauRaw>('/api/v1/co-cau'), staleTime: 30_000 });
+  const ix = useMemo(() => {
+    const units = q.data?.units ?? [];
+    const byCode = new Map(units.map((u) => [u.code, u]));
+    const kids = new Map<string, DonVi[]>();
+    for (const u of units) if (u.parentCode && byCode.has(u.parentCode)) (kids.get(u.parentCode) ?? kids.set(u.parentCode, []).get(u.parentCode)!).push(u);
+    const sx = (a: DonVi, b: DonVi) => a.sortOrder - b.sortOrder || Number(!(kids.get(a.code)?.length)) - Number(!(kids.get(b.code)?.length)) || a.code.localeCompare(b.code);
+    for (const l of kids.values()) l.sort(sx);
+    const roots = units.filter((u) => !u.parentCode || !byCode.has(u.parentCode)).sort((a, b) => (kids.get(b.code)?.length ?? 0) - (kids.get(a.code)?.length ?? 0) || sx(a, b));
+    const under = (code: string): DonVi[] => { const out: DonVi[] = []; const st = [...(kids.get(code) ?? [])]; while (st.length) { const x = st.pop()!; out.push(x); st.push(...(kids.get(x.code) ?? [])); } return out; };
+    const khoCua = new Map<string, PhanKho[]>();
+    for (const w of q.data?.warehouses ?? []) (khoCua.get(w.branchCode) ?? khoCua.set(w.branchCode, []).get(w.branchCode)!).push(w);
+    const bpCua = new Map<string, BoPhan[]>();
+    for (const d of q.data?.departments ?? []) if (d.branchCode) (bpCua.get(d.branchCode) ?? bpCua.set(d.branchCode, []).get(d.branchCode)!).push(d);
+    const pathOf = (u: DonVi) => { const out: DonVi[] = []; const seen = new Set<string>(); for (let x: DonVi | undefined = u; x && !seen.has(x.code); x = x.parentCode ? byCode.get(x.parentCode) : undefined) { seen.add(x.code); out.unshift(x); } return out; };
+    // Mã đã dùng (đơn vị, phân kho, bộ phận) để báo trùng ngay khi gõ.
+    const ma = new Map<string, string>();
+    for (const u of units) ma.set(u.code.toLowerCase(), `đơn vị ${u.name}`);
+    for (const w of q.data?.warehouses ?? []) ma.set(w.code.toLowerCase(), `phân kho ${w.name}`);
+    for (const d of q.data?.departments ?? []) ma.set(d.code.toLowerCase(), `bộ phận ${d.name}`);
+    return { units, byCode, kids, roots, under, khoCua, bpCua, pathOf, ma, warehouses: q.data?.warehouses ?? [], departments: q.data?.departments ?? [] };
+  }, [q.data]);
+  return { ...ix, loading: q.isLoading, error: q.error, refetch: () => void q.refetch() };
 }
 export type CC = ReturnType<typeof useCoCau>;
+
+function useLamMoi() {
+  const qc = useQueryClient();
+  return () => {
+    invalidateOrg(qc);
+    for (const k of [['co-cau'], ['warehouses'], ['branches'], ['dimensions', 'department'], ['co-cau-history'], ['co-cau-doi-cha']]) void qc.invalidateQueries({ queryKey: k });
+  };
+}
+
+/** Biểu tượng theo tên gọi cấp (chỉ để nhìn cho nhanh). */
+export function iconDonVi(u: DonVi, coCon: boolean): ReactNode {
+  const t = plain(u.levelLabel);
+  if (/cong ty|^ho\b|tap doan/.test(t)) return <Building2 />;
+  if (/mien|vung/.test(t)) return <Mountain />;
+  if (/chi nhanh/.test(t)) return <Building />;
+  if (/tinh|thanh pho/.test(t)) return <MapPinned />;
+  if (/cua hang|shop|diem ban/.test(t)) return <Store />;
+  if (/kho/.test(t)) return <WarehouseIcon />;
+  return coCon ? <Network /> : <Store />;
+}
+export const tenCap = (u: DonVi) => u.levelLabel || `Cơ cấu cấp ${u.level}`;
+const TrangThai = ({ x }: { x: { code: string; isActive: boolean } }) => (ngung(x) ? <span className="ccm-tt ngung">Ngừng hoạt động</span> : <span className="ccm-tt">Đang hoạt động</span>);
+const OIc = ({ children, to }: { children: ReactNode; to?: boolean }) => <span className={`ccm-o-ic${to ? ' to' : ''}`}>{children}</span>;
+const homNay = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+const MST_OK = /^[0-9]{10}(-[0-9]{3})?$/;
+
+/* ------------------------------------------------------------------ trang */
+
+type Xem = 'cay' | 'sodo' | 'ds';
+type HopThoai = { loai: 'donvi'; code: string | null; cha: string | null } | { loai: 'kho'; code: string | null; donVi: string | null } | { loai: 'bophan'; code: string | null; donVi: string | null } | { loai: 'xoa'; key: string; ten: string; ma: string };
 
 export function CoCauToChucPage() {
   const { can } = useAuth();
   const canWrite = can('catalog:write');
-  const qc = useQueryClient();
   const cc = useCoCau();
   const [sel, setSel] = useState<string | null>(null);
-  // [2026-11-13 Nguyễn Văn Thủy] kiểu xem: cây, sơ đồ, hoặc danh sách kiểu Excel theo loại (đóng góp)
-  const [view, setView] = useState<'table' | 'chart' | KieuDs>('table');
-  const [showOff, setShowOff] = useState(false);
-  const listExport = useRef<(() => void) | null>(null);
-  /** back: các nút đã đi qua (bấm đúp dòng bên trong) để Quay lại. */
-  const [form, setForm] = useState<{ key: string | null; parentKey: string | null; back?: string[]; copy?: string } | null>(null);
+  const [xem, setXem] = useState<Xem>('cay');
+  const [hop, setHop] = useState<HopThoai | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [menu, setMenu] = useState(false);
+  const menuRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const dong = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenu(false); };
+    document.addEventListener('mousedown', dong);
+    return () => document.removeEventListener('mousedown', dong);
+  }, [menu]);
+  useEffect(() => { if (!msg?.ok) return; const t = window.setTimeout(() => setMsg(null), 4000); return () => window.clearTimeout(t); }, [msg]);
+  const chon = sel ? cc.byCode.get(sel) ?? null : null;
+  const dangChon = chon ?? cc.roots[0] ?? null;
+  const thongBao = (text: string) => setMsg({ ok: true, text });
+  const mo = (h: HopThoai) => { setMsg(null); setHop(h); };
 
-  const restore = useMutation({
-    mutationFn: async () => {
-      const info = await api.get<{ nodes: number; assignments: number }>('/api/v1/org-units/defaults');
-      if (!window.confirm(`Quay về dữ liệu gốc cơ cấu tổ chức?\n\nTệp gốc: ${info.nodes} nút, ${info.assignments} cửa hàng gắn nút.`)) return null;
-      const password = window.prompt('Nhập mật khẩu để quay về dữ liệu gốc cơ cấu tổ chức:'); // [2026-11-17 Nguyễn Văn Thủy] đỡ bấm nhầm (đóng góp)
-      if (!password) return null;
-      return api.post<{ created: number; updated: number; assigned: number }>('/api/v1/org-units/restore-defaults', { confirm: true, password });
-    },
-    onSuccess: (r) => { if (r) { invalidateOrg(qc); setMsg({ ok: true, text: `Đã quay về dữ liệu gốc: ${r.created + r.updated} nút, gắn ${r.assigned} cửa hàng.` }); } },
-    onError: (e) => setMsg({ ok: false, text: errorText(e) }),
-  });
-
-  const selNode = sel ? cc.byKey.get(sel) : null;
-  const addParent = selNode && selNode.loai !== 'none' && selNode.loai !== 'department' ? (selNode.loai === 'warehouse' ? selNode.parentKey : selNode.key) : null;
   return (
     <>
-      {/* [2026-11-17 kiennt] như các màn danh mục: Quay về dữ liệu gốc ở tiêu đề; thanh nút — kiểu xem bên trái, nút chức năng lề phải (đóng góp) */}
-      <PageHeader title="Cơ cấu tổ chức" code="DM16" helpKey="so-do-to-chuc"
-        actions={can('settings:write') && <button className="btn" disabled={restore.isPending} title="Đặt lại cây và việc gắn cửa hàng theo tệp gốc" onClick={() => restore.mutate()}><RotateCcw size={16} /> Quay về dữ liệu gốc</button>} />
-      <div className="card">
-        {/* [2026-11-18 01:40 PM kiennt] NT-DM-006 — nút chức năng bên trái, chọn kiểu xem sang phải; nút Nhân bản (đóng góp) */}
-        <div className="catalog-toolbar canh-phai">
-          {canWrite && <button className="btn btn-sm btn-primary" title="Thêm vào dưới dòng đang chọn (chưa chọn: thêm công ty mới)" onClick={() => { setMsg(null); setForm({ key: null, parentKey: addParent }); }}><Plus size={14} /> Thêm</button>}
-          {canWrite && <button className="btn btn-sm" disabled={!sel || !cc.byKey.get(sel) || cc.byKey.get(sel)!.loai === 'none'} title={sel ? 'Nhân bản: thêm nút mới cùng cha, chép thông tin nút đang chọn (mã để trống)' : 'Chọn một dòng để nhân bản'} onClick={() => { const n = sel ? cc.byKey.get(sel) : null; if (n) { setMsg(null); setForm({ key: null, parentKey: n.parentKey === NONE_KEY ? null : n.parentKey, copy: n.key }); } }}><Copy size={14} /> Nhân bản</button>}
-          <button className="btn btn-sm" onClick={cc.refetch}><RefreshCw size={14} /> Nạp</button>
-          <button className="btn btn-sm" title="Tệp 4 sheet Cơ cấu / Cửa hàng / Kho / Phòng ban — sửa rồi Nhập Excel lại được" onClick={() => void xuatCoCau(cc)}><FileDown size={14} /> Xuất</button>
-          <button className="btn btn-sm" onClick={() => window.print()} title="In màn hình đang xem"><Printer size={14} /> In</button>
-          {/* [2026-11-18 02:00 PM kiennt] NT-DM-007 — Nhập Excel ▾: 4 loại qua trình nhập chung, theo thứ tự Cơ cấu → Phòng ban → Cửa hàng → Kho (đóng góp) */}
-          {canWrite && <NhapCoCauMenu />}
-          <span className="spacer" />
-          <span className="cc-xem">
-            {([['table', 'Cây'], ['chart', 'Sơ đồ'], ['org', 'Cơ cấu'], ['branch', 'Cửa hàng'], ['warehouse', 'Kho'], ['department', 'Phòng ban'], ['all', 'Tất cả']] as const).map(([k, t]) => (
-              <button key={k} className={`btn btn-sm${view === k ? ' btn-primary' : ''}`} title={k === 'table' || k === 'chart' ? undefined : `Danh sách ${t.toLowerCase()} dạng bảng: lọc từng cột, sắp xếp, xuất Excel`} onClick={() => setView(k)}>{t}</button>
-            ))}
-          </span>
-        </div>
-        {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 12px 8px' }}>{msg.text}</div>}
-        <ErrorBox error={cc.error ? errorText(cc.error) : null} />
-        <div style={{ padding: '0 12px 12px' }}>
-          {cc.loading ? <Loading /> : view === 'table'
-            ? <BangCoCau cc={cc} selected={sel} onSelect={setSel} onOpen={(n) => n.loai !== 'none' && setForm({ key: n.key, parentKey: n.parentKey })} showOff={showOff} setShowOff={setShowOff} />
-            : view === 'chart' ? <SoDoCoCau cc={cc} selected={sel} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} />
-            : (
-              <>
-                <div className="cc-filter">
-                  <label className="checkbox"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện đã ngừng</label>
-                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => listExport.current?.()}><FileDown size={13} /> Xuất danh sách này</button>
-                  <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Gõ vào hàng lọc dưới tiêu đề để lọc từng cột · bấm đúp một dòng để xem / sửa</span>
+      <PageHeader title="Cơ cấu tổ chức" code="DM16" helpKey="so-do-to-chuc" subtitle="Đơn vị lồng nhau tuỳ ý (A/B/C…); mỗi đơn vị có phân kho, bộ phận riêng"
+        actions={
+          <div className="ccm-hd-nut">
+            {canWrite && <button className="btn btn-primary" onClick={() => mo({ loai: 'donvi', code: null, cha: dangChon?.code ?? null })} title="Thêm đơn vị con của đơn vị đang chọn"><Plus size={16} /> Thêm đơn vị</button>}
+            <span className="ccm-pop-o" ref={menuRef}>
+              <button className="btn" title="Làm mới, xuất / nhập Excel, in" onClick={() => setMenu((x) => !x)}><MoreHorizontal size={16} /></button>
+              {menu && (
+                <div className="ccm-menu">
+                  <button type="button" onClick={() => { setMenu(false); cc.refetch(); }}><RefreshCw size={15} /> Làm mới</button>
+                  <button type="button" onClick={() => { setMenu(false); void xuatCoCau(cc); }}><FileDown size={15} /> Xuất Excel</button>
+                  {canWrite && <div className="ccm-menu-nhom"><FileUp size={15} /> Nhập Excel, lần lượt:</div>}
+                  {canWrite && ([['co-cau', '1. Đơn vị'], ['kho-co-cau', '2. Phân kho'], ['phong-ban', '3. Bộ phận']] as const).map(([id, nhan]) => <div key={id} className="ccm-menu-nhap"><NutNhapExcel loai={nhapLoai(id)!} label={nhan} /></div>)}
+                  <button type="button" onClick={() => { setMenu(false); window.print(); }}><Printer size={15} /> In</button>
                 </div>
-                <DanhSachLoai cc={cc} kieu={view} showOff={showOff} exportRef={listExport} onOpen={(n) => { setSel(n.key); setForm({ key: n.key, parentKey: n.parentKey }); }} />
-              </>
-            )}
-        </div>
+              )}
+            </span>
+          </div>
+        } />
+      <div className="ccm-xem">
+        {([['cay', 'Cây', <ListTree key="i" size={15} />], ['sodo', 'Sơ đồ', <Network key="i" size={15} />], ['ds', 'Danh sách', <List key="i" size={15} />]] as const).map(([v, t, ic]) => (
+          <button key={v} type="button" className={xem === v ? 'on' : ''} onClick={() => setXem(v)}>{ic} {t}</button>
+        ))}
       </div>
-      {form && <NutForm key={form.key ?? `new:${form.parentKey}:${form.copy ?? ''}`} cc={cc} nodeKey={form.key} parentKey={form.parentKey} copyKey={form.copy} canWrite={canWrite} onClose={() => setForm(null)} onSaved={(key) => { setSel(key); setForm({ key, parentKey: null }); }}
-        onGo={(key) => { setSel(key); setForm((x) => ({ key, parentKey: null, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] })); }}
-        onBack={form.back?.length ? () => { const back = [...form.back!]; const key = back.pop()!; setSel(key); setForm({ key, parentKey: null, back }); } : undefined}
-        onAdd={(parentKey) => setForm((x) => ({ key: null, parentKey, back: [...(x?.back ?? []), ...(x?.key ? [x.key] : [])] }))} />}
+      {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'} ccm-bao`}>{msg.text}</div>}
+      <ErrorBox error={cc.error ? errorText(cc.error) : null} />
+      {cc.loading ? <Loading /> : xem === 'sodo' ? <SoDo cc={cc} sel={dangChon?.code ?? null} onChon={(c) => { setSel(c); setXem('cay'); }} />
+        : xem === 'ds' ? <DanhSachTat cc={cc} onChon={(c) => { setSel(c); setXem('cay'); }} />
+        : (
+          <div className="ccm">
+            <div className="ccm-trai"><CayDonVi cc={cc} sel={dangChon?.code ?? null} onSel={setSel} /></div>
+            {dangChon ? <ChiTiet key={dangChon.code} cc={cc} u={dangChon} canWrite={canWrite} onSel={setSel} mo={mo} />
+              : <div className="ccm-phai"><div className="ccm-the-trang ccm-rong">Chưa có đơn vị nào. Bấm <b>Thêm đơn vị</b> để bắt đầu.</div></div>}
+          </div>
+        )}
+      {hop?.loai === 'donvi' && <DonViModal cc={cc} code={hop.code} cha={hop.cha} onClose={() => setHop(null)} onSaved={(c, t, tiep) => { thongBao(t); setSel(c); if (!tiep) setHop(null); }} />}
+      {hop?.loai === 'kho' && <PhanKhoModal cc={cc} code={hop.code} donVi={hop.donVi} onClose={() => setHop(null)} onSaved={(t) => { thongBao(t); setHop(null); }} />}
+      {hop?.loai === 'bophan' && <BoPhanModal cc={cc} code={hop.code} donVi={hop.donVi} onClose={() => setHop(null)} onSaved={(t) => { thongBao(t); setHop(null); }} />}
+      {hop?.loai === 'xoa' && <XoaModal hop={hop} onClose={() => setHop(null)} onDone={(t, cha) => { thongBao(t); setHop(null); if (hop.key.startsWith('u:')) setSel(cha); }} cc={cc} />}
     </>
   );
 }
 
-export const mstOf = (n: CNode) => n.org?.taxId ?? n.branch?.taxCode ?? (n.warehouse ? n.warehouse.taxId ?? '' : '');
-export function ghiChu(n: CNode, cc: CC): string {
-  if (n.org) return n.org.note;
-  if (n.branch) return n.branch.departmentCode ? `Phòng ban ${n.branch.departmentCode}` : '';
-  if (n.warehouse) { const t = n.warehouse.typeName || n.warehouse.typeCode; return [t, n.warehouse.isDefault ? 'kho mặc định' : ''].filter(Boolean).join(' · '); }
-  if (n.dept) return n.dept.note;
-  void cc;
-  return '';
-}
+/* ------------------------------------------------------------------ cây trái */
 
-/* ------------------------------------------------------------------ bảng cây */
-
-function BangCoCau({ cc, selected, onSelect, onOpen, showOff, setShowOff }: { cc: CC; selected: string | null; onSelect: (key: string) => void; onOpen: (n: CNode) => void; showOff: boolean; setShowOff: (v: boolean) => void }) {
-  const [open, setOpen] = useState<Set<string>>(() => new Set(cc.nodes.filter((n) => n.org && n.depth < 1).map((n) => n.key)));
-  // [2026-11-17 kiennt] hàng lọc dưới tiêu đề như các bảng khác: mỗi cột một ô; dòng khớp mọi ô thì hiện kèm các nút cha (đóng góp)
-  const [loc, setLoc] = useState<Record<string, string>>({});
-  // Phễu ở tiêu đề cột: tích chọn giá trị (như các bảng khác).
-  const [picks, setPicks] = useState<Record<string, Set<string>>>({});
-  const [picker, setPicker] = useState<{ key: string; x: number; y: number } | null>(null);
-  const [show, setShow] = useState({ warehouse: true });
-  const visible = (n: CNode) => (n.loai !== 'warehouse' || show.warehouse) && (showOff || !off(n));
-  const COT: [string, (n: CNode) => string][] = [
-    ['code', (n) => n.code], ['name', (n) => n.name], ['loai', (n) => loaiNhan(n)], ['mst', (n) => mstOf(n)], ['note', (n) => ghiChu(n, cc)],
-    ['active', (n) => (n.loai === 'none' ? '' : off(n) ? 'Ngừng' : 'Đang dùng')],
-  ];
-  const hit = useMemo(() => {
-    const dk = COT.map(([k, f]) => [plain(loc[k] ?? '').split(/\s+/).filter(Boolean), f] as const).filter(([w]) => w.length);
-    const pk = COT.filter(([k]) => picks[k]);
-    if (!dk.length && !pk.length) return null;
+function CayDonVi({ cc, sel, onSel }: { cc: CC; sel: string | null; onSel: (c: string) => void }) {
+  const [q, setQ] = useState('');
+  const [loc, setLoc] = useState(false);
+  const [hienNgung, setHienNgung] = useState(false);
+  const [mo, setMo] = useState<Set<string>>(() => new Set(cc.roots.flatMap((r) => [r.code, ...(cc.kids.get(r.code) ?? []).map((x) => x.code)])));
+  useEffect(() => {
+    if (!sel) return;
+    const u = cc.byCode.get(sel);
+    if (u) setMo((o) => { const s = new Set(o); for (const x of cc.pathOf(u).slice(0, -1)) s.add(x.code); return s; });
+  }, [sel, cc]);
+  const hien = (u: DonVi) => hienNgung || !ngung(u);
+  const khop = useMemo(() => {
+    const w = plain(q).split(/\s+/).filter(Boolean);
+    if (!w.length) return null;
     const keep = new Set<string>();
-    for (const n of cc.nodes) {
-      if (!visible(n)) continue;
-      if (!dk.every(([w, f]) => { const v = plain(f(n)); return w.every((x) => v.includes(x)); })) continue;
-      if (!pk.every(([k, f]) => picks[k]!.has(f(n)))) continue;
-      for (const x of cc.pathOf(n)) keep.add(x.key);
+    let dem = 0;
+    for (const u of cc.units) {
+      if (!hien(u) || !w.every((x) => plain(`${u.code} ${u.name} ${u.taxCode} ${u.levelLabel}`).includes(x))) continue;
+      dem++;
+      for (const x of cc.pathOf(u)) keep.add(x.code);
     }
-    return keep;
-  }, [loc, picks, cc, show, showOff]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Giá trị của cột (kèm số dòng) cho hộp phễu — trên các dòng đang hiện được (theo Hiện kho / Hiện đã ngừng).
-  const giaTri = (k: string): [string, number][] => {
-    const f = COT.find(([x]) => x === k)![1];
-    const m = new Map<string, number>();
-    for (const n of cc.nodes) if (visible(n)) { const v = f(n); m.set(v, (m.get(v) ?? 0) + 1); }
-    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'vi'));
-  };
-  const pheu = (k: string) => (
-    <button type="button" className={`dgrid-funnel ${picks[k] ? 'on' : ''}`} title="Lọc nhanh theo giá trị"
-      onClick={(e) => { e.stopPropagation(); const b = (e.currentTarget as HTMLElement).getBoundingClientRect(); setPicker(picker?.key === k ? null : { key: k, x: Math.min(b.left, window.innerWidth - 300), y: b.bottom + 4 }); }}>
-      <Filter size={11} />
-    </button>
-  );
-  const toggle = (k: string) => setOpen((o) => { const s = new Set(o); if (s.has(k)) s.delete(k); else s.add(k); return s; });
+    return { keep, dem };
+  }, [q, cc, hienNgung]); // eslint-disable-line react-hooks/exhaustive-deps
   const out: ReactNode[] = [];
-  const walk = (list: CNode[]) => {
-    for (const n of list) {
-      if (!visible(n) || (hit && !hit.has(n.key))) continue;
-      const kids = (cc.kids.get(n.key) ?? []).filter(visible);
-      const o = hit ? true : open.has(n.key);
+  const walk = (list: DonVi[], d: number) => {
+    for (const u of list) {
+      if (khop ? !khop.keep.has(u.code) : !hien(u)) continue;
+      const kids = (cc.kids.get(u.code) ?? []).filter((x) => (khop ? khop.keep.has(x.code) : hien(x)));
+      const o = khop ? true : mo.has(u.code);
       out.push(
-        <tr key={n.key} className={`cc-tr cc-${n.loai}${selected === n.key ? ' on' : ''}${off(n) ? ' muted' : ''}`} onClick={() => { onSelect(n.key); if (kids.length && !hit) toggle(n.key); }} onDoubleClick={() => onOpen(n)} title="Bấm: mở / đóng nhánh · bấm đúp: xem / sửa">
-          <td>
-            <div className="cc-cell" style={{ paddingLeft: n.depth * 18 }}>
-              <button type="button" className="cc-tog" disabled={!kids.length} onClick={(e) => { e.stopPropagation(); toggle(n.key); }}>{kids.length ? (o ? <ChevronDown size={13} /> : <ChevronRight size={13} />) : null}</button>
-              <span className="cc-ic">{LOAI_ICON[n.loai]}</span>
-              <span className="mono">{n.code}</span>
-            </div>
-          </td>
-          <td className="cc-name">{n.name}{kids.length > 0 && !o && <span className="cc-count" title="Số dòng bên trong">{kids.length}</span>}</td>
-          <td>{loaiNhan(n)}</td>
-          <td className="mono">{mstOf(n)}</td>
-          <td className="muted">{ghiChu(n, cc)}</td>
-          <td style={{ textAlign: 'center' }}>{n.loai !== 'none' && <input type="checkbox" readOnly checked={!off(n)} tabIndex={-1} />}</td>
-        </tr>,
+        <div key={u.code} className={`ccm-node${sel === u.code ? ' on' : ''}${ngung(u) ? ' muted' : ''}${kids.length ? ' co-con' : ''}`} style={{ paddingLeft: 4 + d * 18 }} onClick={() => onSel(u.code)} title={`${tenCap(u)} · ${u.path}`}>
+          <button type="button" className="ccm-tog" disabled={!kids.length} onClick={(e) => { e.stopPropagation(); setMo((x) => { const s = new Set(x); if (s.has(u.code)) s.delete(u.code); else s.add(u.code); return s; }); }}>
+            {kids.length ? (o ? <ChevronDown size={14} /> : <ChevronRight size={14} />) : null}
+          </button>
+          <span className="ccm-cay-ic">{iconDonVi(u, kids.length > 0)}</span>
+          <span className="ccm-ten">{u.name}</span>
+          <span className="ccm-ma">({u.code})</span>
+        </div>,
       );
-      if (o) walk(kids);
+      if (o) walk(kids, d + 1);
     }
   };
-  walk(cc.roots);
+  walk(cc.roots, 0);
   return (
-    <>
-      <div className="cc-filter">
-        <label className="checkbox"><input type="checkbox" checked={show.warehouse} onChange={(e) => setShow((s) => ({ ...s, warehouse: e.target.checked }))} /> Hiện kho</label>
-        <label className="checkbox"><input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Hiện đã ngừng</label>
-        <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set(cc.nodes.filter((n) => n.org).map((n) => n.key)))}>Mở hết cơ cấu</button>
-        <button type="button" className="btn btn-sm btn-ghost" onClick={() => setOpen(new Set())}>Thu gọn</button>
-        {hit && <button type="button" className="btn btn-sm btn-ghost" onClick={() => { setLoc({}); setPicks({}); }}>Bỏ lọc</button>}
-        <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>Bấm một dòng: mở / đóng nhánh · bấm đúp: xem / sửa</span>
-      </div>
-      <div className="table-wrap cc-table">
-        <table className="grid">
-          <thead><tr>
-            <th style={{ width: 300 }} title="Mã của nút">Mã{pheu('code')}</th><th title="Tên">Tên{pheu('name')}</th><th style={{ width: 130 }} title="Công ty, cơ cấu (cấp tính theo cây), cửa hàng, kho, phòng ban">Loại{pheu('loai')}</th>
-            <th style={{ width: 140 }} title="Mã số thuế đặt ở nút; trống = theo nút trên">MST{pheu('mst')}</th><th style={{ width: 220 }} title="Mô tả; cửa hàng: phòng ban; kho: loại kho">Ghi chú{pheu('note')}</th><th style={{ width: 90 }} title="Đang dùng">Theo dõi{pheu('active')}</th>
-          </tr>
-          <tr className="dgrid-filter">
-            {COT.map(([k]) => <th key={k}><input size={1} value={loc[k] ?? ''} onChange={(e) => setLoc((x) => ({ ...x, [k]: e.target.value }))} placeholder="🔍" /></th>)}
-          </tr></thead>
-          <tbody>{out}{hit && !hit.size && <tr><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 16 }}>Không có dòng nào khớp ô lọc</td></tr>}</tbody>
-        </table>
-        {picker && <ValuePicker x={picker.x} y={picker.y} values={giaTri(picker.key)} selected={picks[picker.key]} onClose={() => setPicker(null)}
-          onApply={(sel) => { setPicks((x) => { const n = { ...x }; if (sel) n[picker.key] = sel; else delete n[picker.key]; return n; }); setPicker(null); }} />}
-      </div>
-    </>
-  );
-}
-
-/* ------------------------------------------------------------------ sơ đồ */
-
-function SoDoCoCau({ cc, selected, onOpen }: { cc: CC; selected: string | null; onOpen: (n: CNode) => void }) {
-  const orgKids = (k: string) => (cc.kids.get(k) ?? []).filter((n) => n.org);
-  const count = useMemo(() => {
-    const m = new Map<string, Record<string, number>>();
-    for (const n of cc.nodes) if (n.org) { const c: Record<string, number> = {}; for (const x of cc.under(n.key)) if (!off(x)) c[x.loai] = (c[x.loai] ?? 0) + 1; m.set(n.key, c); }
-    return m;
-  }, [cc]);
-  const box = (n: CNode) => {
-    const c = count.get(n.key) ?? {};
-    return (
-      <div role="button" tabIndex={0} className={`cc-box cc-${n.loai} lv${Math.min(n.depth, 3)}${selected === n.key ? ' on' : ''}${n.isActive ? '' : ' muted'}`}
-        onClick={() => onOpen(n)} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(n); }} title={`${loaiNhan(n)} · bấm để xem / sửa`}>
-        <div className="cc-box-name">{n.name}</div>
-        <div className="cc-box-code">{n.code}</div>
-        {(c.branch || c.warehouse || c.department) ? <div className="cc-box-n">{c.branch ? <span title="Cửa hàng"><Store size={11} /> {c.branch}</span> : null}{c.warehouse ? <span title="Kho"><WarehouseIcon size={11} /> {c.warehouse}</span> : null}{c.department ? <span title="Phòng ban"><Users size={11} /> {c.department}</span> : null}</div> : null}
-      </div>
-    );
-  };
-  const draw = (n: CNode, depth: number): ReactNode => {
-    const kids = orgKids(n.key);
-    if (!kids.length) return box(n);
-    if (depth >= 2) return <>{box(n)}<div className="cc-vlist">{kids.map((k) => <div key={k.key} className="cc-vitem"><span className="cc-vline" />{draw(k, depth + 1)}</div>)}</div></>;
-    return (
-      <>
-        <div className="cc-center">{box(n)}</div>
-        <div className="cc-stem" />
-        <div className="cc-hrow">
-          {kids.map((k, i) => (
-            <div key={k.key} className="cc-hcell">
-              {kids.length > 1 && <div className="cc-hline" style={{ left: i === 0 ? '50%' : 0, right: i === kids.length - 1 ? '50%' : 0 }} />}
-              <div className="cc-hstem" />
-              {draw(k, depth + 1)}
+    <div className="ccm-the-trang ccm-cay-khung">
+      <div className="ccm-cay-tim">
+        <div className="ccm-tim"><Search size={15} /><input placeholder="Tìm mã, tên, MST, tên gọi cấp…" value={q} onChange={(e) => setQ(e.target.value)} />{q && <button type="button" onClick={() => setQ('')} title="Xoá ô tìm"><X size={13} /></button>}</div>
+        <span className="ccm-pop-o">
+          <button type="button" className={`ccm-nut-vuong${hienNgung ? ' on' : ''}`} title="Bộ lọc" onClick={() => setLoc((x) => !x)}><Filter size={16} /></button>
+          {loc && (
+            <div className="ccm-menu" style={{ minWidth: 230 }}>
+              <label className="checkbox ccm-menu-o"><input type="checkbox" checked={hienNgung} onChange={(e) => setHienNgung(e.target.checked)} /> Hiện đơn vị ngừng hoạt động</label>
+              <button type="button" onClick={() => { setMo(new Set(cc.units.filter((u) => cc.kids.get(u.code)?.length).map((u) => u.code))); setLoc(false); }}>Mở hết</button>
+              <button type="button" onClick={() => { setMo(new Set()); setLoc(false); }}>Thu gọn tất cả</button>
             </div>
-          ))}
-        </div>
-      </>
-    );
-  };
-  const roots = cc.roots.filter((r) => r.org);
-  return (
-    <div className="cc-chart">
-      {roots.length === 0 ? <div className="muted" style={{ padding: 16 }}>Chưa có nút nào — bấm Thêm.</div>
-        : <div className="cc-chart-in">{roots.map((r) => <div key={r.key} className="cc-chart-root">{draw(r, 0)}</div>)}</div>}
+          )}
+        </span>
+      </div>
+      {khop && <div className="ccm-dem">{khop.dem ? `${khop.dem} kết quả` : 'Không tìm thấy'}</div>}
+      <div className="ccm-cay">{out.length ? out : <div className="ccm-rong">Chưa có đơn vị nào.</div>}</div>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ một hộp thoại cho mọi loại */
+/* ------------------------------------------------------------------ bảng dùng chung */
 
-export interface F {
-  loai: Exclude<Loai, 'none'>; parentKey: string | null; code: string; name: string; note: string; isActive: boolean;
-  taxId: string; validFrom: string;
-  /** cửa hàng */ address: string; phone: string; companyName: string; departmentCode: string;
-  /** kho */ typeCode: string; isDefault: boolean;
-}
-export function formOf(n: CNode | null, parentKey: string | null, cc: CC): F {
-  const base: F = { loai: 'unit', parentKey, code: '', name: '', note: '', isActive: true, taxId: '', validFrom: homNay(), address: '', phone: '', companyName: '', departmentCode: '', typeCode: 'KHH', isDefault: false };
-  if (!n) {
-    const p = parentKey ? cc.byKey.get(parentKey) : null;
-    return { ...base, loai: !p ? 'company' : p.loai === 'branch' ? 'warehouse' : 'unit' };
-  }
-  const f: F = { ...base, loai: n.loai as F['loai'], parentKey: n.parentKey === NONE_KEY ? null : n.parentKey, code: n.code, name: n.name, isActive: n.isActive };
-  if (n.org) return { ...f, note: n.org.note, taxId: n.org.taxId ?? '' };
-  if (n.branch) return { ...f, isActive: n.branch.isActive, note: n.branch.note, taxId: n.branch.taxCode, address: n.branch.address ?? '', phone: n.branch.phone, companyName: n.branch.companyName, departmentCode: n.branch.departmentCode ?? '' };
-  if (n.warehouse) return { ...f, note: n.warehouse.note, address: n.warehouse.address, typeCode: n.warehouse.typeCode || 'KHH', isDefault: n.warehouse.isDefault };
-  if (n.dept) return { ...f, note: n.dept.note };
-  return f;
-}
-
-function NutForm({ cc, nodeKey, parentKey, copyKey, canWrite, onClose, onSaved, onGo, onAdd, onBack }: { cc: CC; nodeKey: string | null; parentKey: string | null; /** Nhân bản: chép thông tin nút này (mã để trống). */ copyKey?: string; canWrite: boolean; onClose: () => void; onSaved: (key: string) => void; /** Mở nút khác (bấm đúp dòng bên trong). */ onGo: (key: string) => void; /** Thêm nút con vào nút này. */ onAdd: (parentKey: string) => void; /** Lùi về nút vừa xem. */ onBack?: () => void }) {
-  const qc = useQueryClient();
-  const node = nodeKey ? cc.byKey.get(nodeKey) ?? null : null;
-  const isNew = !node;
-  // [2026-11-18 01:40 PM kiennt] NT-DM-006 — nhân bản: lấy thông tin nút gốc, mã để trống, kho không là kho mặc định (đóng góp)
-  const goc = !node && copyKey ? cc.byKey.get(copyKey) ?? null : null;
-  const start = useMemo(() => (goc ? { ...formOf(goc, parentKey, cc), code: '', isDefault: false } : formOf(node, parentKey, cc)), [nodeKey, copyKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [f, setF] = useState<F>(start);
-  useEffect(() => setF(start), [start]);
-  const set = (p: Partial<F>) => setF((x) => ({ ...x, ...p }));
-  const viewAgain = useViewAgain();
-  const needParent = f.loai === 'warehouse';
-  const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive || t.code === f.typeCode);
-  const [themLoai, setThemLoai] = useState<string | null>(null);
-  const parents = useMemo(() => cc.nodes.filter((n) => CHA[f.loai].includes(n.loai) && n.key !== nodeKey && !(nodeKey && cc.pathOf(n).some((x) => x.key === nodeKey)))
-    .map((n) => ({ code: n.code, name: `${n.name}${n.loai === 'unit' ? ` (cơ cấu cấp ${n.depth})` : n.loai === 'company' ? ' (công ty)' : ''}` })), [cc, f.loai, nodeKey]);
-  const keyOf = (code: string) => (code ? `${needParent ? 'b' : 'o'}:${code}` : null);
-  const parent = f.parentKey ? cc.byKey.get(f.parentKey) : null;
-  const parentOk = !f.parentKey || CHA[f.loai].includes(parent?.loai ?? 'none');
-  const changedPlace = !isNew && (f.parentKey !== start.parentKey || ((f.loai === 'company' || f.loai === 'unit') && f.taxId !== start.taxId));
-  const taxBad = f.taxId !== '' && !MST_OK.test(f.taxId) && f.loai !== 'branch';
-
-  const save = useMutation({
-    mutationFn: () => luuNut(cc, f, node, start, changedPlace ? f.validFrom || null : null),
-    onSuccess: (key) => {
-      invalidateOrg(qc);
-      for (const k of [['warehouses'], ['dimensions', 'department'], ['co-cau-history']]) void qc.invalidateQueries({ queryKey: k });
-      if (isNew) onSaved(key); else viewAgain[1]();
-    },
-  });
-
-  const txt = (k: keyof F, label: string, opts: { full?: boolean; mono?: boolean; tip?: string; ph?: string } = {}) => (
-    <Field label={label} full={opts.full} tip={opts.tip}><input className={`input${opts.mono ? ' mono' : ''}`} value={String(f[k] ?? '')} placeholder={opts.ph} onChange={(e) => set({ [k]: e.target.value } as Partial<F>)} /></Field>
-  );
-  const inside = node ? cc.under(node.key).filter((x) => !off(x)) : [];
-  const insideText = (['unit', 'company', 'branch', 'warehouse', 'department'] as Loai[]).map((l) => [l, inside.filter((x) => x.loai === l).length] as const).filter(([, c]) => c).map(([l, c]) => `${c} ${LOAI_TEN[l].toLowerCase()}`).join(' · ');
-  const title = `${isNew ? 'Thêm' : ''} ${isNew ? LOAI_TEN[f.loai].toLowerCase() : LOAI_TEN[f.loai]}${node ? ` ${node.code}` : ''}`.trim();
-  const ok = f.name.trim() && f.code.trim() && parentOk && !taxBad && (!needParent || parent?.branch);
+interface Cot<T> { ten: string; w?: number; gt: (x: T) => ReactNode; tim?: (x: T) => string }
+function Bang<T extends { code: string; name: string; isActive: boolean }>({ rows, cot, onMo, onSua, onXoa, rong, them }: { rows: T[]; cot: Cot<T>[]; onMo?: (x: T) => void; onSua?: (x: T) => void; onXoa?: (x: T) => void; rong: ReactNode; them?: ReactNode }) {
+  const [q, setQ] = useState('');
+  const [tt, setTt] = useState<'' | 'dung' | 'ngung'>('dung');
+  const [trang, setTrang] = useState(1);
+  const [co, setCo] = useState(20);
+  useEffect(() => setTrang(1), [q, tt, rows]);
+  const w = plain(q).split(/\s+/).filter(Boolean);
+  const list = rows.filter((x) => (!tt || (tt === 'dung' ? !ngung(x) : ngung(x))) && (!w.length || w.every((k) => plain(`${x.code} ${x.name} ${cot.map((c) => c.tim?.(x) ?? '').join(' ')}`).includes(k))));
+  const soTrang = Math.max(1, Math.ceil(list.length / co));
+  const xem = list.slice((trang - 1) * co, trang * co);
+  const thaoTac = onSua || onXoa;
   return (
-    <Modal wide viewAgain={viewAgain} viewFirst={!isNew} title={title.charAt(0).toUpperCase() + title.slice(1)} onClose={onClose} helpKey="so-do-to-chuc"
-      footer={<>{onBack && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Lùi về nút vừa xem" onClick={onBack}><ArrowLeft size={14} /> Quay lại</button>}{canWrite && <button className="btn btn-primary" disabled={!ok || save.isPending} onClick={() => save.mutate()}>Ghi</button>}<button className="btn" onClick={onClose}>Thoát</button></>}>
-      <Field label="Loại (*)" full tip="Công ty: đơn vị pháp lý có MST. Cơ cấu: cấp quản lý (miền, chi nhánh, tỉnh…). Cửa hàng: điểm bán / chi nhánh hạch toán. Kho: thuộc một cửa hàng. Phòng ban: phòng ban chung">
-        <div className="cc-loai-pick">
-          {(['company', 'unit', 'branch', 'warehouse', 'department'] as const).map((l) => (
-            <label key={l} className={`cc-loai-opt${f.loai === l ? ' on' : ''}${!isNew && f.loai !== l && !((l === 'company' || l === 'unit') && (f.loai === 'company' || f.loai === 'unit')) ? ' dis' : ''}`}>
-              <input type="radio" checked={f.loai === l} disabled={!isNew && !((l === 'company' || l === 'unit') && (f.loai === 'company' || f.loai === 'unit'))} onChange={() => {
-                // [2026-11-13 Nguyễn Văn Thủy] đổi loại mà "Thuộc" không hợp: chuyển sang nút cùng mã hợp loại (vd cửa hàng cùng mã), không có thì để trống (đóng góp)
-                const cur = f.parentKey ? cc.byKey.get(f.parentKey) : null;
-                const ok = !cur || CHA[l].includes(cur.loai);
-                const same = cur && !ok ? cc.nodes.find((n) => n.code === cur.code && CHA[l].includes(n.loai)) : undefined;
-                set({ loai: l, ...(ok ? {} : { parentKey: same?.key ?? null }) });
-              }} /> {LOAI_ICON[l]} {LOAI_TEN[l]}
-            </label>
-          ))}
-        </div>
-      </Field>
-      <Field label={needParent ? 'Thuộc cửa hàng (*)' : 'Thuộc'} full tip={needParent ? 'Kho nằm trong cửa hàng nào' : 'Nút cha trên cây. Trống = gốc riêng (công ty cha độc lập)'}>
-        <ListPicker items={parents} value={parent?.code ?? ''} onChange={(c) => set({ parentKey: keyOf(c) })} placeholder={needParent ? 'Chọn cửa hàng' : 'Không (gốc riêng)'} />
-        {!parentOk && <div className="neg" style={{ fontSize: 12.5, marginTop: 3, fontWeight: 600 }}>{LOAI_TEN[f.loai]} không đặt dưới {parent ? LOAI_TEN[parent.loai].toLowerCase() : 'nút này'} — chọn lại Thuộc</div>}
-      </Field>
-      <Field label={f.loai === 'warehouse' ? 'Mã kho (*)' : 'Mã (*)'} tip={f.loai === 'branch' ? 'Khớp mã cửa hàng của hệ thống bán hàng. Đổi mã (lên Plus / Premium, đóng _OFF): chứng từ, sổ sách, kho giữ nguyên' : undefined}>
-        <input className="input mono" value={f.code} disabled={!isNew && f.loai !== 'branch'} maxLength={f.loai === 'warehouse' ? 12 : 32} onChange={(e) => set({ code: e.target.value })} autoFocus={isNew} />
-      </Field>
-      {txt('name', 'Tên (*)')}
-
-      {(f.loai === 'company' || f.loai === 'unit' || f.loai === 'branch') && (
-        // [2026-11-13 Nguyễn Văn Thủy] ô MST có tra cứu như form nhà cung cấp: Lấy thông tin → hiện tên, địa chỉ, tình trạng theo Cục Thuế, điền sẵn, sửa lại được (đóng góp)
-        <>
-          <TaxCodeField label="MST" full value={f.taxId} showExisting={false} autoWhenEmpty={isNew && !f.name.trim()}
-            onChange={(v) => set({ taxId: v.replace(/[^0-9-]/g, '') })}
-            onFill={(t, overwrite) => setF((x) => {
-              const pick = (cur: string, v: string) => (overwrite || !cur.trim() ? v || cur : cur);
-              if (x.loai === 'branch') return { ...x, companyName: pick(x.companyName, t.name), address: pick(x.address, t.address) };
-              if (x.loai === 'company') return { ...x, name: pick(x.name, t.name), note: pick(x.note, t.address) };
-              return { ...x, note: pick(x.note, [t.name, t.address].filter(Boolean).join(' — ')) };
-            })} />
-          {taxBad && <div className="neg full" style={{ fontSize: 12.5, marginTop: -4, fontWeight: 600 }}>MST gồm 10 số hoặc 10 số-3 số</div>}
-        </>
-      )}
-      {changedPlace && (
-        <Field label="Áp dụng từ ngày" tip="Chứng từ từ ngày này theo nơi thuộc / MST mới; chứng từ trước ngày này giữ như cũ">
-          <input className="input" type="date" value={f.validFrom} onChange={(e) => set({ validFrom: e.target.value })} />
-        </Field>
-      )}
-      {f.loai === 'branch' && (
-        <>
-          {!isNew && (
-            <Field label="Phòng ban" tip="Chứng từ của cửa hàng tự mang phòng ban này. Cửa hàng mới tự có phòng ban riêng (BH + số mã)">
-              <ListPicker value={f.departmentCode} onChange={(c) => set({ departmentCode: c })} items={cc.departments.filter((d) => d.isActive || d.code === f.departmentCode).map((d) => ({ code: d.code, name: d.name }))} />
-            </Field>
-          )}
-          {txt('companyName', 'Tên công ty in chứng từ', { full: true })}
-          {txt('address', 'Địa chỉ', { full: true })}
-          {txt('phone', 'Điện thoại')}
-        </>
-      )}
-      {f.loai === 'warehouse' && (
-        <>
-          <Field label="Loại kho (*)" tip="Loại quyết định kho dùng cho nghiệp vụ nào (nhập mua, bán, trả lại…). Khai loại ở Danh mục → Loại kho">
-            <ListPicker items={types.map((t) => ({ code: t.code, name: t.name, hint: t.purpose }))} value={f.typeCode} onChange={(c) => set({ typeCode: c || 'KHH' })}
-              onAdd={(t) => setThemLoai(t)} addLabel="Thêm loại kho" />
-            {themLoai !== null && <LoaiKhoForm value={{ isNew: true, name: themLoai }} onClose={() => setThemLoai(null)} onSaved={(c) => set({ typeCode: c })} />}
-          </Field>
-          <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isDefault} onChange={(e) => set({ isDefault: e.target.checked })} /> Kho mặc định<Hoi text="Nhận các dòng nhập xuất không ghi mã kho" /></label></Field>
-          {txt('address', 'Địa chỉ', { full: true })}
-        </>
-      )}
-      {txt('note', f.loai === 'company' || f.loai === 'unit' ? 'Mô tả' : 'Ghi chú', { full: true })}
-      {!isNew && <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isActive} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>}
-      {node && node.loai !== 'department' && <BenTrong cc={cc} node={node} text={insideText} onGo={onGo} onAdd={canWrite ? () => onAdd(node.key) : undefined} />}
-      {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
-      {node && <div className="full"><div className="field-title">Lịch sử thay đổi</div><LichSuNut node={node} /></div>}
-    </Modal>
-  );
-}
-
-/**
- * Ghi một nút theo loại — dùng chung cho hộp thoại và Nhập Excel. start = giá trị trước khi sửa (null = thêm mới).
- * Trả khoá nút (o: / b: / w: / d: + mã).
- */
-export async function luuNut(cc: CC, f: F, node: CNode | null, start: F | null, validFrom: string | null): Promise<string> {
-  const isNew = !node;
-  const orgOf = (k: string | null) => (k ? cc.byKey.get(k)?.org?.code ?? (k.startsWith('o:') ? k.slice(2) : null) : null);
-  const code = f.code.trim(), name = f.name.trim();
-  const moved = !isNew && f.parentKey !== (start?.parentKey ?? null);
-  if (f.loai === 'company' || f.loai === 'unit') {
-    const body = { kind: f.loai, name, note: f.note, taxId: f.taxId.trim(), validFrom };
-    if (isNew) await api.post('/api/v1/org-units', { ...body, code, parentCode: orgOf(f.parentKey) });
-    else await api.patch(`/api/v1/org-units/${encodeURIComponent(node.code)}`, { ...body, isActive: f.isActive, ...(moved ? { parentCode: orgOf(f.parentKey) } : {}) });
-    return `o:${isNew ? code : node.code}`;
-  }
-  if (f.loai === 'branch') {
-    const body = { name, note: f.note, taxCode: f.taxId.trim(), address: f.address, phone: f.phone, companyName: f.companyName };
-    if (isNew) {
-      await api.post('/api/v1/branches', { ...body, code });
-      const extra = { ...(f.parentKey ? { orgUnitCode: orgOf(f.parentKey) } : {}), ...(f.departmentCode ? { departmentCode: f.departmentCode } : {}), ...(f.isActive ? {} : { isActive: false }) };
-      if (Object.keys(extra).length) await api.patch(`/api/v1/branches/${encodeURIComponent(code)}`, extra);
-      return `b:${code}`;
-    }
-    await api.patch(`/api/v1/branches/${encodeURIComponent(node.code)}`, {
-      ...body, isActive: f.isActive, departmentCode: f.departmentCode || null,
-      ...(code && code !== node.code ? { newCode: code } : {}),
-      ...(moved ? { orgUnitCode: orgOf(f.parentKey), validFrom } : {}),
-    });
-    return `b:${code || node.code}`;
-  }
-  if (f.loai === 'warehouse') {
-    const branchCode = f.parentKey ? (cc.byKey.get(f.parentKey)?.branch?.code ?? f.parentKey.replace(/^b:/, '')) : '';
-    const body = { branchCode, name, note: f.note, address: f.address, isActive: f.isActive, isDefault: f.isDefault, typeCode: f.typeCode || 'KHH' };
-    if (isNew) await api.post('/api/v1/warehouses', { ...body, code });
-    else await api.patch(`/api/v1/warehouses/${encodeURIComponent(node.code)}`, body);
-    return `w:${isNew ? code : node.code}`;
-  }
-  const extra = { ...(node?.dept?.extra ?? {}), orgUnitCode: orgOf(f.parentKey) ?? '' };
-  await api.put(`/api/v1/dimensions/department/${encodeURIComponent(isNew ? code : node.code)}`, { name, parentCode: node?.dept?.parentCode || undefined, note: f.note, isActive: f.isActive, extra });
-  return `d:${isNew ? code : node.code}`;
-}
-
-/* ------------------------------------------------------------------ bên trong */
-
-// [2026-11-13 Nguyễn Văn Thủy] bấm một nút (trên bảng hay sơ đồ) thấy ngay bên trong có gì: danh sách theo loại, bấm đúp đi tiếp (đóng góp)
-function BenTrong({ cc, node, text, onGo, onAdd }: { cc: CC; node: CNode; text: string; onGo: (key: string) => void; onAdd?: () => void }) {
-  const [loai, setLoai] = useState<Loai | 'direct'>('direct');
-  const all = useMemo(() => cc.under(node.key).filter((x) => !off(x)), [cc, node.key]);
-  const direct = (cc.kids.get(node.key) ?? []).filter((x) => !off(x));
-  const rows = loai === 'direct' ? direct : all.filter((x) => x.loai === loai);
-  const kinds = (['company', 'unit', 'branch', 'warehouse', 'department'] as Loai[]).filter((l) => all.some((x) => x.loai === l));
-  return (
-    <div className="full" data-view-ok>
-      <div className="field-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span>Thuộc {node.name}{text ? `: ${text}` : ''}</span>
-        {onAdd && <button type="button" className="btn btn-sm" style={{ marginLeft: 'auto' }} onClick={onAdd}><Plus size={13} /> Thêm vào đây</button>}
+    <>
+      <div className="ccm-ds-loc">
+        <div className="ccm-tim"><Search size={15} /><input placeholder="Tìm mã, tên…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <select className="input" value={tt} onChange={(e) => setTt(e.target.value as typeof tt)} title="Lọc trạng thái"><option value="dung">Đang hoạt động</option><option value="ngung">Ngừng hoạt động</option><option value="">Tất cả trạng thái</option></select>
+        {them && <span className="ccm-ds-them">{them}</span>}
       </div>
-      {!all.length ? <div className="muted" style={{ fontSize: 13 }}>Chưa có mục nào{onAdd ? ' — bấm Thêm vào đây để thêm' : ''}.</div> : (
+      {!rows.length ? <div className="ccm-rong">{rong}</div> : (
         <>
-          {/* Chỉ một loại, không có cấp sâu hơn: không cần nút chọn, hiện thẳng danh sách */}
-          {!(kinds.length === 1 && direct.length === all.length) && (
-            <div className="cc-in" style={{ margin: '4px 0' }}>
-              <button type="button" className={`cc-chip${loai === 'direct' ? ' on' : ''}`} title="Chỉ các mục nằm ngay dưới, chưa mở các cấp sâu hơn" onClick={() => setLoai('direct')}>Cấp ngay dưới ({direct.length})</button>
-              {kinds.map((l) => <button key={l} type="button" className={`cc-chip${loai === l ? ' on' : ''}`} title={`Mọi ${LOAI_TEN[l].toLowerCase()} trong nhánh này, kể cả các cấp sâu hơn`} onClick={() => setLoai(l)}>{LOAI_ICON[l]} {LOAI_TEN[l]} ({all.filter((x) => x.loai === l).length})</button>)}
-            </div>
-          )}
-          <div className="table-wrap" style={{ maxHeight: 240 }}>
-            <table className="grid cc-log">
-              <thead><tr><th title="Loại nút">Loại</th><th title="Mã">Mã</th><th title="Tên">Tên</th><th title="Nút chứa trực tiếp">Thuộc</th></tr></thead>
-              <tbody>{rows.map((n) => {
-                const p = n.parentKey ? cc.byKey.get(n.parentKey) : null;
-                return (
-                  <tr key={n.key} className="cc-tr" title="Bấm đúp để mở" onDoubleClick={() => onGo(n.key)}>
-                    <td><span className="cc-loai">{LOAI_ICON[n.loai]} {loaiNhan(n)}</span></td><td className="mono">{n.code}</td><td>{n.name}</td><td className="muted">{p ? p.name : ''}</td>
+          <div className="table-wrap ccm-bang">
+            <table className="grid">
+              <thead><tr>{cot.map((c) => <th key={c.ten} style={c.w ? { width: c.w } : undefined} title={c.ten}>{c.ten}</th>)}<th style={{ width: 140 }} title="Trạng thái">Trạng thái</th>{thaoTac && <th style={{ width: 84 }} title="Thao tác">Thao tác</th>}</tr></thead>
+              <tbody>
+                {xem.map((x) => (
+                  <tr key={x.code} className={onMo ? 'ccm-tr' : ''} onDoubleClick={() => onMo?.(x)} title={onMo ? 'Bấm đúp để mở' : undefined}>
+                    {cot.map((c) => <td key={c.ten}>{c.gt(x)}</td>)}
+                    <td><TrangThai x={x} /></td>
+                    {thaoTac && <td>{onSua && <button type="button" className="ccm-nut-ic" title="Sửa" onClick={() => onSua(x)}><Pencil size={15} /></button>}{onXoa && <button type="button" className="ccm-nut-ic do" title="Xoá vĩnh viễn" onClick={() => onXoa(x)}><Trash2 size={15} /></button>}</td>}
                   </tr>
-                );
-              })}</tbody>
+                ))}
+                {!xem.length && <tr><td colSpan={cot.length + 2} className="muted" style={{ textAlign: 'center', padding: 14 }}>Không có dòng nào khớp</td></tr>}
+              </tbody>
             </table>
+          </div>
+          <div className="ccm-trang">
+            <span>Tổng: {list.length} dòng</span><span className="spacer" />
+            <span>Số dòng/trang:</span>
+            <select className="input" value={co} onChange={(e) => { setCo(Number(e.target.value)); setTrang(1); }}>{[20, 50, 100, 500].map((n) => <option key={n}>{n}</option>)}</select>
+            <button type="button" className="btn btn-sm" disabled={trang <= 1} onClick={() => setTrang(trang - 1)}>‹</button>
+            <span className="ccm-trang-so">{trang} / {soTrang}</span>
+            <button type="button" className="btn btn-sm" disabled={trang >= soTrang} onClick={() => setTrang(trang + 1)}>›</button>
           </div>
         </>
       )}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ chi tiết */
+
+type Tab = 'tt' | 'con' | 'kho' | 'bp' | 'ls';
+
+function ChiTiet({ cc, u, canWrite, onSel, mo }: { cc: CC; u: DonVi; canWrite: boolean; onSel: (c: string) => void; mo: (h: HopThoai) => void }) {
+  const [tab, setTab] = useState<Tab>('tt');
+  const [ca, setCa] = useState({ con: false, kho: false, bp: false });
+  const [menu, setMenu] = useState(false);
+  const truc = cc.kids.get(u.code) ?? [];
+  const nhanh = useMemo(() => cc.under(u.code), [cc, u.code]);
+  const khoRieng = cc.khoCua.get(u.code) ?? [];
+  const bpRieng = cc.bpCua.get(u.code) ?? [];
+  const khoNhanh = useMemo(() => [...khoRieng, ...nhanh.flatMap((x) => cc.khoCua.get(x.code) ?? [])], [cc, nhanh, khoRieng]);
+  const bpNhanh = useMemo(() => [...bpRieng, ...nhanh.flatMap((x) => cc.bpCua.get(x.code) ?? [])], [cc, nhanh, bpRieng]);
+  const dem = (l: { code: string; isActive: boolean }[]) => l.filter((x) => !ngung(x)).length;
+  const p = u.parentCode ? cc.byCode.get(u.parentCode) : null;
+  const duong = cc.pathOf(u);
+  const tenDv = (code: string | null) => { const x = code ? cc.byCode.get(code) : null; return x ? `${x.name} (${x.code})` : ''; };
+  const dong = (nhan: string, gt: ReactNode, tip?: string) => <tr><th>{nhan}{tip && <Hoi text={tip} />}</th><td>{gt || <span className="muted">—</span>}</td></tr>;
+  const xoa = (key: string, ten: string, ma: string) => mo({ loai: 'xoa', key, ten, ma });
+  return (
+    <div className="ccm-phai">
+      <div className="ccm-the-trang ccm-dau">
+        <OIc to>{iconDonVi(u, truc.length > 0)}</OIc>
+        <div style={{ minWidth: 0 }}>
+          <div className="ccm-tieude">{u.name} <span className="ccm-ma">({u.code})</span> <TrangThai x={u} /></div>
+          <div className="ccm-phu">
+            <span>{tenCap(u)}</span><span>Cấp {u.level}</span>
+            <span>MST: <span className="mono">{u.taxUsed || '—'}</span>{u.taxFrom && <span className="muted"> (theo {u.taxFrom})</span>}</span>
+          </div>
+          <div className="ccm-duong-dan">{duong.map((x, i) => <span key={x.code}>{i > 0 && <span className="gach">/</span>}<button type="button" className={x.code === u.code ? 'cuoi' : ''} onClick={() => onSel(x.code)}>{x.code}</button></span>)}</div>
+        </div>
+        <span className="spacer" />
+        {canWrite && (
+          <span className="ccm-pop-o">
+            <button className="btn btn-primary" onClick={() => setMenu((x) => !x)}><Plus size={15} /> Thêm <ChevronDown size={14} /></button>
+            {menu && (
+              <div className="ccm-menu">
+                <button type="button" onClick={() => { setMenu(false); mo({ loai: 'donvi', code: null, cha: u.code }); }}><OIc><Network /></OIc> Đơn vị con của {u.code}</button>
+                <button type="button" onClick={() => { setMenu(false); mo({ loai: 'kho', code: null, donVi: u.code }); }}><OIc><WarehouseIcon /></OIc> Phân kho của {u.code}</button>
+                <button type="button" onClick={() => { setMenu(false); mo({ loai: 'bophan', code: null, donVi: u.code }); }}><OIc><Users /></OIc> Bộ phận của {u.code}</button>
+              </div>
+            )}
+          </span>
+        )}
+        {canWrite && <button className="btn" onClick={() => mo({ loai: 'donvi', code: u.code, cha: null })}><Pencil size={15} /> Chỉnh sửa</button>}
+        {canWrite && <button className="btn ccx-nut" onClick={() => xoa(`u:${u.code}`, u.name, u.code)} title="Xoá vĩnh viễn đơn vị và mọi thứ bên trong (xem trước ảnh hưởng)"><Trash2 size={15} /> Xoá</button>}
+      </div>
+
+      <div className="ccm-tk-hang">
+        {([[<Network key="i" />, 'Đơn vị con trực tiếp', dem(truc), 'con'], [<Layers key="i" />, 'Đơn vị toàn nhánh', dem(nhanh), 'con'], [<WarehouseIcon key="i" />, 'Phân kho riêng', dem(khoRieng), 'kho'], [<Users key="i" />, 'Bộ phận riêng', dem(bpRieng), 'bp']] as const).map(([ic, ten, so, t]) => (
+          <button key={ten} type="button" className="ccm-the-trang ccm-tk" onClick={() => setTab(t)}><OIc>{ic}</OIc><div><div className="ccm-tk-ten">{ten}</div><div className="ccm-tk-so">{so}</div></div></button>
+        ))}
+      </div>
+
+      <div className="ccm-the-trang ccm-noi-dung">
+        <div className="ccm-tabs">
+          {([['tt', 'Thông tin', <Info key="i" size={16} />], ['con', 'Đơn vị con', <Network key="i" size={16} />], ['kho', 'Phân kho', <WarehouseIcon key="i" size={16} />], ['bp', 'Bộ phận', <Users key="i" size={16} />], ['ls', 'Lịch sử', <History key="i" size={16} />]] as const).map(([t, nhan, ic]) => (
+            <button key={t} type="button" className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>{ic} {nhan}</button>
+          ))}
+        </div>
+        <div className="ccm-than">
+          {tab === 'tt' && (
+            <div className="ccm-tq">
+              <div className="ccm-khoi">
+                <div className="ccm-khoi-dau"><Info size={16} /> Thông tin đơn vị</div>
+                <table className="ccm-tt-bang"><tbody>
+                  {dong('Mã', <span className="mono">{u.code}</span>)}
+                  {dong('Tên', u.name)}
+                  {dong('Tên gọi cấp', tenCap(u), 'Chỉ là tên gọi (Công ty, Miền, Chi nhánh, Tỉnh, Cửa hàng…) — mọi cấp đều là đơn vị như nhau')}
+                  {dong('Thuộc', p ? <button type="button" className="ccm-link" onClick={() => onSel(p.code)}>{p.name} ({p.code})</button> : 'Cấp cao nhất')}
+                  {dong('Đường dẫn', <span className="mono">{u.path}</span>)}
+                  {dong('MST tự khai', <span className="mono">{u.taxCode}</span>, 'Trống = dùng MST của cấp gần nhất có khai')}
+                  {dong('MST dùng trên chứng từ', u.taxUsed ? <><span className="mono">{u.taxUsed}</span>{u.taxFrom && <span className="muted"> — kế thừa từ {tenDv(u.taxFrom)}</span>}</> : '')}
+                  {dong('Tên in chứng từ', u.companyName)}
+                  {dong('Địa chỉ', u.address)}
+                  {dong('Điện thoại', u.phone)}
+                  {dong('Bộ phận mặc định', u.departmentCode ? `${u.departmentCode} · ${cc.departments.find((d) => d.code === u.departmentCode)?.name ?? ''}` : '', 'Chứng từ của đơn vị chưa chọn bộ phận thì tính vào bộ phận này')}
+                  {dong('Trạng thái', <TrangThai x={u} />)}
+                </tbody></table>
+              </div>
+              <div className="ccm-khoi">
+                <div className="ccm-khoi-dau"><Layers size={16} /> Bên trong</div>
+                {([[<Network key="i" />, 'Đơn vị con trực tiếp', dem(truc)], [<Layers key="i" />, 'Đơn vị toàn nhánh', dem(nhanh)], [<WarehouseIcon key="i" />, 'Phân kho riêng / toàn nhánh', `${dem(khoRieng)} / ${dem(khoNhanh)}`], [<Users key="i" />, 'Bộ phận riêng / toàn nhánh', `${dem(bpRieng)} / ${dem(bpNhanh)}`]] as const).map(([ic, ten, so]) => (
+                  <div key={ten} className="ccm-tk-dong"><OIc>{ic}</OIc> <span>{ten}</span><b>{so}</b></div>
+                ))}
+              </div>
+              {u.note && <div className="ccm-khoi ccm-ca-dong"><div className="ccm-khoi-dau"><FileText size={16} /> Ghi chú</div><div className="ccm-ghichu">{u.note}</div></div>}
+            </div>
+          )}
+          {tab === 'con' && (
+            <>
+              <div className="ccm-chip-hang">
+                <button type="button" className={`ccm-chip${!ca.con ? ' on' : ''}`} onClick={() => setCa({ ...ca, con: false })}><Network size={15} /> Trực tiếp ({dem(truc)})</button>
+                <button type="button" className={`ccm-chip${ca.con ? ' on' : ''}`} onClick={() => setCa({ ...ca, con: true })}><Layers size={15} /> Toàn nhánh ({dem(nhanh)})</button>
+              </div>
+              <Bang key={String(ca.con)} rows={ca.con ? nhanh : truc} onMo={(x) => onSel(x.code)} onSua={canWrite ? (x) => mo({ loai: 'donvi', code: x.code, cha: null }) : undefined} onXoa={canWrite ? (x) => xoa(`u:${x.code}`, x.name, x.code) : undefined}
+                them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'donvi', code: null, cha: u.code })}><Plus size={14} /> Thêm đơn vị con</button>}
+                cot={[
+                  { ten: 'Mã', w: 120, gt: (x) => <span className="mono">{x.code}</span> },
+                  { ten: 'Tên', gt: (x) => <><span className="ccm-cay-ic nho">{iconDonVi(x, !!cc.kids.get(x.code)?.length)}</span> {x.name}</> },
+                  { ten: 'Tên gọi cấp', w: 130, gt: tenCap, tim: (x) => x.levelLabel },
+                  ...(ca.con ? [{ ten: 'Đường dẫn', w: 260, gt: (x: DonVi) => <span className="mono muted">{x.path}</span>, tim: (x: DonVi) => x.path }] : []),
+                  { ten: 'MST dùng', w: 150, gt: (x) => <span className="mono">{x.taxUsed}{x.taxFrom && <span className="muted" title={`Kế thừa từ ${x.taxFrom}`}> ↑</span>}</span>, tim: (x) => x.taxUsed },
+                  { ten: 'Phân kho', w: 80, gt: (x) => dem(cc.khoCua.get(x.code) ?? []) },
+                ]}
+                rong={<>Chưa có đơn vị con.</>} />
+            </>
+          )}
+          {tab === 'kho' && (
+            <>
+              <div className="ccm-chip-hang">
+                <button type="button" className={`ccm-chip${!ca.kho ? ' on' : ''}`} onClick={() => setCa({ ...ca, kho: false })}><WarehouseIcon size={15} /> Phân kho của {u.code} ({dem(khoRieng)})</button>
+                <button type="button" className={`ccm-chip${ca.kho ? ' on' : ''}`} onClick={() => setCa({ ...ca, kho: true })}><Layers size={15} /> Toàn nhánh ({dem(khoNhanh)})</button>
+              </div>
+              <Bang key={String(ca.kho)} rows={ca.kho ? khoNhanh : khoRieng} onSua={canWrite ? (x) => mo({ loai: 'kho', code: x.code, donVi: null }) : undefined} onXoa={canWrite ? (x) => xoa(`w:${x.code}`, x.name, x.code) : undefined}
+                them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'kho', code: null, donVi: u.code })}><Plus size={14} /> Thêm phân kho</button>}
+                cot={[
+                  { ten: 'Mã phân kho', w: 130, gt: (x) => <span className="mono">{x.code}</span> },
+                  { ten: 'Tên phân kho', gt: (x) => <>{x.name}{x.isDefault && <span className="ccm-mac-dinh">Mặc định</span>}</> },
+                  ...(ca.kho ? [{ ten: 'Thuộc đơn vị', w: 240, gt: (x: PhanKho) => tenDv(x.branchCode), tim: (x: PhanKho) => x.branchCode }] : []),
+                  { ten: 'Loại kho', w: 180, gt: (x) => x.typeName || x.typeCode },
+                ]}
+                rong={<>{u.name} chưa có phân kho riêng.</>} />
+            </>
+          )}
+          {tab === 'bp' && (
+            <>
+              <div className="ccm-chip-hang">
+                <button type="button" className={`ccm-chip${!ca.bp ? ' on' : ''}`} onClick={() => setCa({ ...ca, bp: false })}><Users size={15} /> Bộ phận của {u.code} ({dem(bpRieng)})</button>
+                <button type="button" className={`ccm-chip${ca.bp ? ' on' : ''}`} onClick={() => setCa({ ...ca, bp: true })}><Layers size={15} /> Toàn nhánh ({dem(bpNhanh)})</button>
+              </div>
+              <Bang key={String(ca.bp)} rows={ca.bp ? bpNhanh : bpRieng} onSua={canWrite ? (x) => mo({ loai: 'bophan', code: x.code, donVi: null }) : undefined} onXoa={canWrite ? (x) => xoa(`d:${x.code}`, x.name, x.code) : undefined}
+                them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'bophan', code: null, donVi: u.code })}><Plus size={14} /> Thêm bộ phận</button>}
+                cot={[
+                  { ten: 'Mã bộ phận', w: 140, gt: (x) => <span className="mono">{x.code}</span> },
+                  { ten: 'Tên bộ phận', gt: (x) => <>{x.name}{cc.byCode.get(x.branchCode ?? '')?.departmentCode === x.code && <span className="ccm-mac-dinh">Mặc định</span>}</> },
+                  ...(ca.bp ? [{ ten: 'Thuộc đơn vị', w: 240, gt: (x: BoPhan) => tenDv(x.branchCode), tim: (x: BoPhan) => x.branchCode ?? '' }] : []),
+                ]}
+                rong={<>{u.name} chưa có bộ phận.</>} />
+            </>
+          )}
+          {tab === 'ls' && <LichSu u={u} />}
+        </div>
+      </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ lịch sử */
 
-// [2026-11-13 Nguyễn Văn Thủy] lịch sử thay đổi của nút: ai, lúc nào, đổi ô nào từ gì sang gì (nhật ký bằng chứng) (đóng góp)
-interface HistoryLine { at: string; by: string; action: string; changes: string[] }
-const HIST_TYPE: Partial<Record<Loai, string>> = { company: 'org', unit: 'org', branch: 'branch', warehouse: 'warehouse', department: 'department' };
-function LichSuNut({ node }: { node: CNode }) {
-  const type = HIST_TYPE[node.loai];
-  const q = useQuery({ queryKey: ['co-cau-history', type, node.code], queryFn: () => api.get<HistoryLine[]>('/api/v1/co-cau/history', { type: type!, code: node.code }), enabled: Boolean(type) });
-  const box = useRef<HTMLDivElement>(null);
-  if (q.isLoading) return <Loading />;
-  if (q.error) return <ErrorBox error={errorText(q.error)} />;
-  const rows = q.data ?? [];
-  if (!rows.length) return <div className="muted" style={{ fontSize: 13 }}>Chưa có thay đổi nào được ghi nhận.</div>;
+interface DoiCha { id: string; at: string; data: { code: string; tu: string | null; den: string | null; duongDanCu: string; apDung: string | null; nguoi: string } }
+interface SuaDong { at: string; by: string; action: string; changes: string[] }
+function LichSu({ u }: { u: DonVi }) {
+  const dc = useQuery({ queryKey: ['co-cau-doi-cha', u.code], queryFn: () => api.get<DoiCha[]>('/api/v1/co-cau/doi-cha', { code: u.code }) });
+  const sua = useQuery({ queryKey: ['co-cau-history', 'branch', u.code], queryFn: () => api.get<SuaDong[]>('/api/v1/co-cau/history', { type: 'branch', code: u.code }) });
   const t = (iso: string) => new Date(iso).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false });
   return (
-    <div ref={box} className="table-wrap" style={{ maxHeight: 220 }}>
-      <table className="grid cc-log">
-        <thead><tr><th title="Thời điểm ghi">Thời gian</th><th title="Người thực hiện">Người làm</th><th title="Việc đã làm">Việc</th><th title="Ô đã đổi: giá trị cũ → giá trị mới">Thay đổi</th></tr></thead>
-        <tbody>{rows.map((r, i) => (
-          <tr key={i}><td className="mono" style={{ whiteSpace: 'nowrap' }}>{t(r.at)}</td><td>{r.by}</td><td>{r.action}</td>
-            <td>{r.changes.length ? r.changes.map((c, j) => <div key={j}>{c}</div>) : <span className="muted">—</span>}</td></tr>
-        ))}</tbody>
-      </table>
+    <div style={{ display: 'grid', gap: 14 }}>
+      <div>
+        <div className="ccm-khoi-dau"><History size={16} /> Đổi cha (thuộc đơn vị nào)</div>
+        {dc.isLoading ? <Loading /> : !(dc.data ?? []).length ? <div className="muted" style={{ fontSize: 13 }}>Chưa đổi cha lần nào.</div> : (
+          <table className="grid cc-log"><thead><tr><th>Thời gian</th><th>Từ</th><th>Sang</th><th>Đường dẫn cũ</th><th>Áp dụng từ</th><th>Người làm</th></tr></thead>
+            <tbody>{dc.data!.map((x) => <tr key={x.id}><td className="mono">{t(x.at)}</td><td>{x.data.tu ?? '(gốc)'}</td><td>{x.data.den ?? '(gốc)'}</td><td className="mono muted">{x.data.duongDanCu}</td><td>{x.data.apDung ?? 'ngay'}</td><td>{x.data.nguoi}</td></tr>)}</tbody></table>
+        )}
+      </div>
+      <div>
+        <div className="ccm-khoi-dau"><Pencil size={16} /> Sửa thông tin</div>
+        {sua.isLoading ? <Loading /> : !(sua.data ?? []).length ? <div className="muted" style={{ fontSize: 13 }}>Chưa có thay đổi.</div> : (
+          <table className="grid cc-log"><thead><tr><th>Thời gian</th><th>Người làm</th><th>Việc</th><th>Thay đổi</th></tr></thead>
+            <tbody>{sua.data!.map((r, i) => <tr key={i}><td className="mono">{t(r.at)}</td><td>{r.by}</td><td>{r.action}</td><td>{r.changes.map((c, j) => <div key={j}>{c}</div>)}</td></tr>)}</tbody></table>
+        )}
+      </div>
     </div>
   );
 }
 
-/** Nút Nhập Excel ▾ của DM16: chọn một trong 4 loại; tệp Xuất 4 sheet dùng thẳng (trình nhập tự chọn đúng sheet). */
-function NhapCoCauMenu() {
-  const [mo, setMo] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    if (!mo) return;
-    const dong = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setMo(false); };
-    document.addEventListener('mousedown', dong);
-    return () => document.removeEventListener('mousedown', dong);
-  }, [mo]);
+/* ------------------------------------------------------------------ hộp thoại đơn vị */
+
+const GOI_Y_CAP = ['Công ty', 'Miền', 'Chi nhánh', 'Tỉnh', 'Cửa hàng', 'Kho trung gian', 'Văn phòng'];
+
+function DonViModal({ cc, code, cha, onClose, onSaved }: { cc: CC; code: string | null; cha: string | null; onClose: () => void; onSaved: (code: string, text: string, tiep: boolean) => void }) {
+  const lamMoi = useLamMoi();
+  const u = code ? cc.byCode.get(code) ?? null : null;
+  const moi = () => ({ code: '', name: '', parentCode: cha ?? '', levelLabel: '', taxCode: '', companyName: '', address: '', phone: '', note: '', isActive: true, departmentName: '', departmentCode: '', validFrom: homNay() });
+  const [f, setF] = useState(() => (u ? { code: u.code, name: u.name, parentCode: u.parentCode ?? '', levelLabel: u.levelLabel, taxCode: u.taxCode, companyName: u.companyName, address: u.address, phone: u.phone, note: u.note, isActive: u.isActive, departmentName: '', departmentCode: u.departmentCode ?? '', validFrom: homNay() } : moi()));
+  const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
+  const [daBam, setDaBam] = useState(false);
+  const cam = useMemo(() => new Set(u ? [u.code, ...cc.under(u.code).map((x) => x.code)] : []), [cc, u]);
+  const chaList = useMemo(() => cc.units.filter((x) => !cam.has(x.code) && !ngung(x)).map((x) => ({ code: x.code, name: x.name, hint: x.path })), [cc, cam]);
+  const chaU = f.parentCode ? cc.byCode.get(f.parentCode) : null;
+  const doiCha = !!u && (f.parentCode || null) !== (u.parentCode || null);
+  const doiMst = !!u && f.taxCode.trim() !== u.taxCode.trim();
+  const maMoi = f.code.trim();
+  const trungMa = !!maMoi && (!u || maMoi.toLowerCase() !== u.code.toLowerCase()) && cc.ma.has(maMoi.toLowerCase());
+  // MST cũ chưa chuẩn (dữ liệu cũ) không chặn khi không đổi.
+  const mstSai = !!f.taxCode.trim() && !MST_OK.test(f.taxCode.trim()) && (!u || f.taxCode.trim() !== u.taxCode.trim());
+  const loi: Record<string, string> = {};
+  if (daBam) {
+    if (!maMoi) loi.code = 'Nhập mã'; else if (trungMa) loi.code = `Mã đã dùng cho ${cc.ma.get(maMoi.toLowerCase())}`;
+    if (!f.name.trim()) loi.name = 'Nhập tên';
+  }
+  const luu = useMutation({
+    mutationFn: async () => {
+      const body = { name: f.name.trim(), levelLabel: f.levelLabel.trim(), taxCode: f.taxCode.trim(), companyName: f.companyName, address: f.address, phone: f.phone, note: f.note };
+      if (!u) { await api.post('/api/v1/co-cau/units', { ...body, code: maMoi, parentCode: f.parentCode || null, ...(f.departmentName.trim() ? { departmentName: f.departmentName.trim() } : {}) }); return maMoi; }
+      await api.patch(`/api/v1/co-cau/units/${encodeURIComponent(u.code)}`, {
+        ...body, isActive: f.isActive, departmentCode: f.departmentCode || null, ...(maMoi !== u.code ? { newCode: maMoi } : {}),
+        ...(doiCha ? { parentCode: f.parentCode || null } : {}), ...(doiCha || doiMst ? { validFrom: f.validFrom || null } : {}),
+      });
+      return maMoi;
+    },
+  });
+  const ghi = (tiep: boolean) => {
+    setDaBam(true);
+    if (!maMoi || !f.name.trim() || trungMa || mstSai) return;
+    luu.mutate(undefined, {
+      onSuccess: (ma) => {
+        lamMoi();
+        onSaved(ma, `Đã lưu đơn vị ${ma} · ${f.name.trim()}`, tiep);
+        if (tiep) { setF({ ...moi(), parentCode: f.parentCode, levelLabel: f.levelLabel }); setDaBam(false); }
+      },
+    });
+  };
+  const bpList = u ? (cc.bpCua.get(u.code) ?? []).map((d) => ({ code: d.code, name: d.name })) : [];
   return (
-    <span ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
-      <button className="btn btn-sm" onClick={() => setMo((x) => !x)} title="Nhập từ tệp Excel (tệp Xuất 4 sheet dùng được) — nhập lần lượt Cơ cấu → Phòng ban → Cửa hàng → Kho"><FileUp size={14} /> Nhập Excel ▾</button>
-      {mo && (
-        <div className="card" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 30, padding: 8, display: 'grid', gap: 6, minWidth: 200, boxShadow: '0 4px 14px rgba(0,0,0,.15)' }}>
-          <div className="muted" style={{ fontSize: 12 }}>Nhập lần lượt theo thứ tự:</div>
-          {([['co-cau', '1. Cơ cấu'], ['phong-ban', '2. Phòng ban'], ['cua-hang', '3. Cửa hàng'], ['kho-co-cau', '4. Kho']] as const).map(([id, nhan]) => <NutNhapExcel key={id} loai={nhapLoai(id)!} label={nhan} />)}
-        </div>
+    <Modal title={<span className="ccm-md-dau"><OIc>{u ? iconDonVi(u, !!cc.kids.get(u.code)?.length) : <Network />}</OIc><span><span className="ccm-md-ten">{u ? `Sửa đơn vị ${u.code}` : 'Thêm đơn vị'}</span><span className="ccm-md-mo">{chaU ? `Thuộc ${chaU.path}` : 'Cấp cao nhất'}</span></span></span>}
+      onClose={onClose} helpKey="so-do-to-chuc"
+      footer={<>
+        <button className="btn" onClick={onClose}>Huỷ</button>
+        <button className="btn btn-primary" disabled={luu.isPending} onClick={() => ghi(false)}>Lưu</button>
+        {!u && <button className="btn" disabled={luu.isPending} onClick={() => ghi(true)}><Plus size={14} /> Lưu và thêm tiếp</button>}
+      </>}>
+      <Field label="Mã (*)" error={loi.code} tip="Không trùng với mã đơn vị, phân kho, bộ phận khác"><input className="input mono" value={f.code} maxLength={32} autoFocus={!u} onChange={(e) => set({ code: e.target.value })} /></Field>
+      <Field label="Tên (*)" error={loi.name}><input className="input" value={f.name} autoFocus={!!u} onChange={(e) => set({ name: e.target.value })} /></Field>
+      <Field label="Thuộc" full tip="Đơn vị cha. Trống = cấp cao nhất">
+        <ListPicker items={chaList} value={f.parentCode} onChange={(c) => set({ parentCode: c })} placeholder="Tìm và chọn đơn vị cha (trống = cấp cao nhất)" />
+      </Field>
+      <Field label="Tên gọi cấp" tip="Chỉ là tên gọi để dễ nhìn: Công ty, Miền, Chi nhánh, Tỉnh, Cửa hàng… Trống = Cơ cấu cấp N">
+        <input className="input" list="ccm-goi-y-cap" value={f.levelLabel} placeholder={`Cơ cấu cấp ${(chaU?.level ?? 0) + 1}`} onChange={(e) => set({ levelLabel: e.target.value })} />
+        <datalist id="ccm-goi-y-cap">{GOI_Y_CAP.map((x) => <option key={x} value={x} />)}</datalist>
+      </Field>
+      {u ? <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isActive} onChange={(e) => set({ isActive: e.target.checked })} /> Đang hoạt động</label></Field> : <div />}
+      <TaxCodeField label="MST" full value={f.taxCode} showExisting={false} autoWhenEmpty={false}
+        onChange={(v) => set({ taxCode: v.replace(/[^0-9-]/g, '') })}
+        onFill={(t, overwrite) => setF((x) => ({ ...x, companyName: overwrite || !x.companyName.trim() ? t.name || x.companyName : x.companyName, address: overwrite || !x.address.trim() ? t.address || x.address : x.address }))} />
+      <div className="ccm-goi full">{mstSai ? <span className="o-loi-chu">MST gồm 10 số hoặc 10 số-3 số</span> : f.taxCode.trim() ? 'Đơn vị dùng MST này; đơn vị con không tự khai sẽ lấy theo.' : chaU?.taxUsed ? <>Để trống: dùng MST <b className="mono">{chaU.taxUsed}</b> của {cc.byCode.get(chaU.taxFrom ?? chaU.code)?.name}.</> : 'Để trống: chưa có cấp trên nào khai MST.'}</div>
+      <Field label="Tên in chứng từ" full tip="Tên đơn vị in trên hoá đơn, phiếu"><input className="input" value={f.companyName} onChange={(e) => set({ companyName: e.target.value })} /></Field>
+      <Field label="Địa chỉ" full><input className="input" value={f.address} onChange={(e) => set({ address: e.target.value })} /></Field>
+      <Field label="Điện thoại"><input className="input" value={f.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
+      {!u
+        ? <Field label="Tên bộ phận mặc định" tip="Tạo đơn vị là tự có một bộ phận (vd Kế toán). Trống = theo tên đơn vị"><input className="input" value={f.departmentName} placeholder={f.name || 'Theo tên đơn vị'} onChange={(e) => set({ departmentName: e.target.value })} /></Field>
+        : <Field label="Bộ phận mặc định" tip="Chứng từ của đơn vị chưa chọn bộ phận thì tính vào bộ phận này"><ListPicker items={bpList} value={f.departmentCode} onChange={(c) => set({ departmentCode: c })} /></Field>}
+      {(doiCha || doiMst) && (
+        <Field label="Áp dụng từ ngày" tip="Chứng từ từ ngày này theo nơi thuộc / MST mới; trước đó giữ như cũ"><input className="input" type="date" value={f.validFrom} onChange={(e) => set({ validFrom: e.target.value })} /></Field>
       )}
-    </span>
+      <Field label="Ghi chú" full><input className="input" value={f.note} onChange={(e) => set({ note: e.target.value })} /></Field>
+      {luu.error && <div className="alert alert-bad full">{errorText(luu.error)}</div>}
+    </Modal>
+  );
+}
+
+/* ------------------------------------------------------------------ hộp thoại phân kho / bộ phận */
+
+function chonDonVi(cc: CC) { return cc.units.filter((x) => !ngung(x)).map((x) => ({ code: x.code, name: x.name, hint: x.path })); }
+
+function PhanKhoModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: string | null; donVi: string | null; onClose: () => void; onSaved: (text: string) => void }) {
+  const lamMoi = useLamMoi();
+  const w = code ? cc.warehouses.find((x) => x.code === code) ?? null : null;
+  const [f, setF] = useState({ code: w?.code ?? '', name: w?.name ?? '', branchCode: w?.branchCode ?? donVi ?? '', typeCode: w?.typeCode || 'KHH', isDefault: w?.isDefault ?? false, address: w?.address ?? '', note: w?.note ?? '', isActive: w?.isActive ?? true });
+  const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
+  const types = (useWarehouseTypes().data?.types ?? []).filter((t) => t.isActive || t.code === f.typeCode);
+  const [themLoai, setThemLoai] = useState<string | null>(null);
+  const [daBam, setDaBam] = useState(false);
+  const items = useMemo(() => chonDonVi(cc), [cc]);
+  const trung = !w && !!f.code.trim() && cc.ma.has(f.code.trim().toLowerCase());
+  const loi: Record<string, string> = {};
+  if (daBam) {
+    if (!f.code.trim()) loi.code = 'Nhập mã'; else if (trung) loi.code = `Mã đã dùng cho ${cc.ma.get(f.code.trim().toLowerCase())}`;
+    if (!f.name.trim()) loi.name = 'Nhập tên';
+    if (!f.branchCode) loi.branchCode = 'Chọn đơn vị';
+  }
+  const luu = useMutation({
+    mutationFn: () => {
+      const body = { branchCode: f.branchCode, name: f.name.trim(), typeCode: f.typeCode || 'KHH', isDefault: f.isDefault, address: f.address, note: f.note, isActive: f.isActive };
+      return w ? api.patch(`/api/v1/warehouses/${encodeURIComponent(w.code)}`, body) : api.post('/api/v1/warehouses', { ...body, code: f.code.trim() });
+    },
+    onSuccess: () => { lamMoi(); onSaved(`Đã lưu phân kho ${f.code.trim()} · ${f.name.trim()}`); },
+  });
+  const ok = () => { setDaBam(true); if (f.code.trim() && f.name.trim() && f.branchCode && !trung) luu.mutate(); };
+  return (
+    <Modal title={<span className="ccm-md-dau"><OIc><WarehouseIcon /></OIc><span><span className="ccm-md-ten">{w ? `Sửa phân kho ${w.code}` : 'Thêm phân kho'}</span><span className="ccm-md-mo">{f.branchCode ? `Thuộc ${cc.byCode.get(f.branchCode)?.path ?? f.branchCode}` : 'Chọn đơn vị sở hữu'}</span></span></span>}
+      onClose={onClose} helpKey="so-do-to-chuc" footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={luu.isPending} onClick={ok}>Lưu</button></>}>
+      <Field label="Mã phân kho (*)" error={loi.code} tip="Tối đa 12 ký tự, không trùng mã khác"><input className="input mono" value={f.code} maxLength={12} disabled={!!w} autoFocus={!w} onChange={(e) => set({ code: e.target.value })} /></Field>
+      <Field label="Tên phân kho (*)" error={loi.name}><input className="input" value={f.name} onChange={(e) => set({ name: e.target.value })} /></Field>
+      <Field label="Thuộc đơn vị (*)" full error={loi.branchCode}><ListPicker items={items} value={f.branchCode} onChange={(c) => set({ branchCode: c })} placeholder="Tìm và chọn đơn vị" /></Field>
+      <Field label="Loại kho (*)" tip="Loại quyết định phân kho dùng cho nghiệp vụ nào (nhập mua, bán, trả lại…)">
+        <ListPicker items={types.map((t) => ({ code: t.code, name: t.name, hint: t.purpose }))} value={f.typeCode} onChange={(c) => set({ typeCode: c || 'KHH' })} onAdd={(t) => setThemLoai(t)} addLabel="Thêm loại kho" />
+        {themLoai !== null && <LoaiKhoForm value={{ isNew: true, name: themLoai }} onClose={() => setThemLoai(null)} onSaved={(c) => set({ typeCode: c })} />}
+      </Field>
+      <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isDefault} onChange={(e) => set({ isDefault: e.target.checked })} /> Phân kho mặc định<Hoi text="Nhận các dòng nhập xuất không ghi mã kho của đơn vị" /></label></Field>
+      <Field label="Địa chỉ" full><input className="input" value={f.address} onChange={(e) => set({ address: e.target.value })} /></Field>
+      <Field label="Ghi chú" full><input className="input" value={f.note} onChange={(e) => set({ note: e.target.value })} /></Field>
+      {w && <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isActive} onChange={(e) => set({ isActive: e.target.checked })} /> Đang hoạt động</label></Field>}
+      {luu.error && <div className="alert alert-bad full">{errorText(luu.error)}</div>}
+    </Modal>
+  );
+}
+
+function BoPhanModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: string | null; donVi: string | null; onClose: () => void; onSaved: (text: string) => void }) {
+  const lamMoi = useLamMoi();
+  const d = code ? cc.departments.find((x) => x.code === code) ?? null : null;
+  const [f, setF] = useState({ code: d?.code ?? '', name: d?.name ?? '', branchCode: d?.branchCode ?? donVi ?? '', note: d?.note ?? '', isActive: d?.isActive ?? true });
+  const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
+  const [daBam, setDaBam] = useState(false);
+  const items = useMemo(() => chonDonVi(cc), [cc]);
+  const trung = !d && !!f.code.trim() && cc.ma.has(f.code.trim().toLowerCase());
+  const loi: Record<string, string> = {};
+  if (daBam) {
+    if (!f.code.trim()) loi.code = 'Nhập mã'; else if (trung) loi.code = `Mã đã dùng cho ${cc.ma.get(f.code.trim().toLowerCase())}`;
+    if (!f.name.trim()) loi.name = 'Nhập tên';
+    if (!f.branchCode) loi.branchCode = 'Chọn đơn vị';
+  }
+  const luu = useMutation({
+    mutationFn: () => api.put(`/api/v1/co-cau/departments/${encodeURIComponent(f.code.trim())}`, { name: f.name.trim(), branchCode: f.branchCode, note: f.note, isActive: f.isActive }),
+    onSuccess: () => { lamMoi(); onSaved(`Đã lưu bộ phận ${f.code.trim()} · ${f.name.trim()}`); },
+  });
+  const ok = () => { setDaBam(true); if (f.code.trim() && f.name.trim() && f.branchCode && !trung) luu.mutate(); };
+  return (
+    <Modal title={<span className="ccm-md-dau"><OIc><Users /></OIc><span><span className="ccm-md-ten">{d ? `Sửa bộ phận ${d.code}` : 'Thêm bộ phận'}</span><span className="ccm-md-mo">{f.branchCode ? `Thuộc ${cc.byCode.get(f.branchCode)?.path ?? f.branchCode}` : 'Chọn đơn vị'}</span></span></span>}
+      onClose={onClose} helpKey="so-do-to-chuc" footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={luu.isPending} onClick={ok}>Lưu</button></>}>
+      <Field label="Mã bộ phận (*)" error={loi.code}><input className="input mono" value={f.code} maxLength={64} disabled={!!d} autoFocus={!d} onChange={(e) => set({ code: e.target.value })} /></Field>
+      <Field label="Tên bộ phận (*)" error={loi.name}><input className="input" value={f.name} placeholder="vd Kế toán, Kinh doanh…" onChange={(e) => set({ name: e.target.value })} /></Field>
+      <Field label="Thuộc đơn vị (*)" full error={loi.branchCode}><ListPicker items={items} value={f.branchCode} onChange={(c) => set({ branchCode: c })} placeholder="Tìm và chọn đơn vị" /></Field>
+      <Field label="Ghi chú" full><input className="input" value={f.note} onChange={(e) => set({ note: e.target.value })} /></Field>
+      {d && <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isActive} onChange={(e) => set({ isActive: e.target.checked })} /> Đang hoạt động</label></Field>}
+      {luu.error && <div className="alert alert-bad full">{errorText(luu.error)}</div>}
+    </Modal>
+  );
+}
+
+/* ------------------------------------------------------------------ xoá */
+
+interface XoaKQ { ten: string; dem: { donVi: number; kho: number; boPhan: number }; donVi: string[]; kho: string[]; boPhan: string[]; chan: string[]; daXoa: boolean }
+function XoaModal({ cc, hop, onClose, onDone }: { cc: CC; hop: { key: string; ten: string; ma: string }; onClose: () => void; onDone: (text: string, cha: string | null) => void }) {
+  const lamMoi = useLamMoi();
+  const [go, setGo] = useState('');
+  const xem = useQuery({ queryKey: ['co-cau-xoa', hop.key], queryFn: () => api.post<XoaKQ>('/api/v1/co-cau/delete', { key: hop.key, dryRun: true }), gcTime: 0 });
+  const cha = hop.key.startsWith('u:') ? cc.byCode.get(hop.ma)?.parentCode ?? null : null;
+  const xoa = useMutation({
+    mutationFn: () => api.post<XoaKQ>('/api/v1/co-cau/delete', { key: hop.key, dryRun: false }),
+    onSuccess: (r) => { lamMoi(); onDone(`Đã xoá vĩnh viễn ${r.ten}: ${r.dem.donVi} đơn vị, ${r.dem.kho} phân kho, ${r.dem.boPhan} bộ phận`, cha); },
+  });
+  const r = xem.data;
+  const dong = (ic: ReactNode, ten: string, list: string[]) => (list.length ? (
+    <details className="ccx-dong"><summary><OIc>{ic}</OIc> <b>{list.length}</b> {ten}</summary><div className="ccx-ds">{list.slice(0, 300).map((x) => <div key={x}>{x}</div>)}{list.length > 300 && <div className="muted">… và {list.length - 300} mục nữa</div>}</div></details>
+  ) : null);
+  return (
+    <Modal title={<span className="ccm-md-dau"><span className="ccm-o-ic ccx-ic"><Trash2 /></span><span><span className="ccm-md-ten">Xoá vĩnh viễn {hop.ma}</span><span className="ccm-md-mo">{hop.ten}</span></span></span>}
+      onClose={onClose} helpKey="so-do-to-chuc"
+      footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-danger" disabled={!r || r.chan.length > 0 || xoa.isPending || go.trim() !== hop.ma} onClick={() => xoa.mutate()}><Trash2 size={14} /> Xoá vĩnh viễn</button></>}>
+      <div className="full">
+        {xem.isLoading ? <div className="muted">Đang kiểm tra ảnh hưởng…</div> : xem.error ? <div className="alert alert-bad">{errorText(xem.error)}</div> : r && (
+          <>
+            <div className="ccx-canh">Xoá <b>{r.ten}</b> sẽ xoá luôn mọi thứ dưới đây, <b>không khôi phục được</b>:</div>
+            {dong(<Network />, 'đơn vị (gồm chính nó và mọi đơn vị con)', r.donVi)}
+            {dong(<WarehouseIcon />, 'phân kho', r.kho)}
+            {dong(<Users />, 'bộ phận', r.boPhan)}
+            {r.chan.length > 0 ? (
+              <div className="alert alert-bad" style={{ marginTop: 10 }}>
+                <b>Không xoá được</b> vì đã có dữ liệu phát sinh:
+                <ul style={{ margin: '4px 0 0 18px' }}>{r.chan.map((x) => <li key={x}>{x}</li>)}</ul>
+                Hãy bỏ tích <b>Đang hoạt động</b> để ngừng dùng thay vì xoá.
+              </div>
+            ) : (
+              <Field label={`Gõ mã ${hop.ma} để xác nhận`} full><input className="input mono" value={go} onChange={(e) => setGo(e.target.value)} placeholder={hop.ma} autoFocus /></Field>
+            )}
+          </>
+        )}
+        {xoa.error && <div className="alert alert-bad" style={{ marginTop: 8 }}>{errorText(xoa.error)}</div>}
+      </div>
+    </Modal>
+  );
+}
+
+/* ------------------------------------------------------------------ sơ đồ */
+
+function SoDo({ cc, sel, onChon }: { cc: CC; sel: string | null; onChon: (c: string) => void }) {
+  const [goc, setGoc] = useState('');
+  const [h, setH] = useState({ kho: true, bp: false, ngung: false });
+  const [thu, setThu] = useState<Set<string>>(new Set());
+  const hien = (u: DonVi) => h.ngung || !ngung(u);
+  const kidsOf = (c: string) => (cc.kids.get(c) ?? []).filter(hien);
+  const lat = (c: string) => setThu((s) => { const x = new Set(s); if (x.has(c)) x.delete(c); else x.add(c); return x; });
+  const oDv = (u: DonVi) => {
+    const kids = kidsOf(u.code);
+    const so = kids.length + (h.kho ? (cc.khoCua.get(u.code) ?? []).length : 0) + (h.bp ? (cc.bpCua.get(u.code) ?? []).length : 0);
+    return (
+      <div role="button" tabIndex={0} className={`ccs-o lv${Math.min(u.level, 5)}${sel === u.code ? ' on' : ''}${ngung(u) ? ' muted' : ''}`} onClick={() => onChon(u.code)} onKeyDown={(e) => { if (e.key === 'Enter') onChon(u.code); }} title={`${u.path} · bấm để xem chi tiết`}>
+        <span className="ccs-o-ic">{iconDonVi(u, kids.length > 0)}</span>
+        <span className="ccs-o-chu"><span className="ccs-o-loai">{tenCap(u)} · <span className="mono">{u.code}</span></span><span className="ccs-o-ten">{u.name}</span></span>
+        {so > 0 && <button type="button" className="ccs-thu" title={thu.has(u.code) ? `Mở ${so} mục` : 'Thu nhánh'} onClick={(e) => { e.stopPropagation(); lat(u.code); }}>{thu.has(u.code) ? `+${so}` : <ChevronDown size={12} />}</button>}
+      </div>
+    );
+  };
+  const la = (ic: ReactNode, cls: string, ma: string, ten: string, nhan: string) => (
+    <div className={`ccs-o ${cls}`}><span className="ccs-o-ic">{ic}</span><span className="ccs-o-chu"><span className="ccs-o-loai">{nhan} · <span className="mono">{ma}</span></span><span className="ccs-o-ten">{ten}</span></span></div>
+  );
+  const cayDoc = (u: DonVi): ReactNode => {
+    const kids = kidsOf(u.code);
+    const kho = h.kho ? (cc.khoCua.get(u.code) ?? []).filter((x) => h.ngung || !ngung(x)) : [];
+    const bp = h.bp ? (cc.bpCua.get(u.code) ?? []).filter((x) => h.ngung || !ngung(x)) : [];
+    const co = !thu.has(u.code) && (kids.length || kho.length || bp.length);
+    return (
+      <div className="ccs-n">
+        {oDv(u)}
+        {co ? (
+          <ul className="ccs-con">
+            {kho.map((w) => <li key={`w${w.code}`}>{la(<WarehouseIcon />, 'k-kho', w.code, w.name, 'Phân kho')}</li>)}
+            {bp.map((d) => <li key={`d${d.code}`}>{la(<Users />, 'k-phongban', d.code, d.name, 'Bộ phận')}</li>)}
+            {kids.map((x) => <li key={x.code}>{cayDoc(x)}</li>)}
+          </ul>
+        ) : null}
+      </div>
+    );
+  };
+  // Hai cấp trên cùng trải ngang, từ cấp 3 trở xuống cây thụt lề.
+  const ve = (u: DonVi, d: number): ReactNode => {
+    const kids = kidsOf(u.code);
+    if (d >= 1 || !kids.some((x) => cc.kids.get(x.code)?.length) || thu.has(u.code)) return cayDoc(u);
+    return (
+      <>
+        <div className="cc-center">{oDv(u)}</div>
+        <div className="cc-stem ccs-net" />
+        <div className="cc-hrow">
+          {kids.map((x, i) => (
+            <div key={x.code} className="cc-hcell">
+              {kids.length > 1 && <div className="cc-hline ccs-net" style={{ left: i === 0 ? '50%' : 0, right: i === kids.length - 1 ? '50%' : 0 }} />}
+              <div className="cc-hstem ccs-net" />
+              {ve(x, d + 1)}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  };
+  const gocU = goc ? cc.byCode.get(goc) : null;
+  const roots = gocU ? [gocU] : cc.roots.filter(hien);
+  return (
+    <div className="ccm-the-trang ccs">
+      <div className="ccs-loc">
+        <span className="ccs-goc"><ListPicker items={chonDonVi(cc)} value={goc} onChange={setGoc} placeholder="Xem từ: toàn bộ (gõ để chọn một nhánh)" /></span>
+        <label className="checkbox ccm-menu-o"><input type="checkbox" checked={h.kho} onChange={(e) => setH({ ...h, kho: e.target.checked })} /> Hiện phân kho</label>
+        <label className="checkbox ccm-menu-o"><input type="checkbox" checked={h.bp} onChange={(e) => setH({ ...h, bp: e.target.checked })} /> Hiện bộ phận</label>
+        <label className="checkbox ccm-menu-o"><input type="checkbox" checked={h.ngung} onChange={(e) => setH({ ...h, ngung: e.target.checked })} /> Hiện ngừng hoạt động</label>
+        <button type="button" className="btn btn-sm" onClick={() => setThu(new Set(cc.units.filter((u) => u.level >= 3 && cc.kids.get(u.code)?.length).map((u) => u.code)))}>Thu gọn từ cấp 3</button>
+        <button type="button" className="btn btn-sm" onClick={() => setThu(new Set())}>Mở hết</button>
+      </div>
+      <div className="cc-chart ccs-khung">
+        {roots.length ? <div className="cc-chart-in">{roots.map((r) => <div key={r.code} className="cc-chart-root">{ve(r, 0)}</div>)}</div> : <div className="ccm-rong">Chưa có đơn vị nào.</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ danh sách phẳng */
+
+function DanhSachTat({ cc, onChon }: { cc: CC; onChon: (c: string) => void }) {
+  const [loai, setLoai] = useState<'dv' | 'kho' | 'bp'>('dv');
+  const tenDv = (code: string | null) => { const x = code ? cc.byCode.get(code) : null; return x ? `${x.name} (${x.code})` : ''; };
+  return (
+    <div className="ccm-the-trang ccm-ds-khung">
+      <div className="ccm-chip-hang">
+        <button type="button" className={`ccm-chip${loai === 'dv' ? ' on' : ''}`} onClick={() => setLoai('dv')}><Network size={15} /> Đơn vị ({cc.units.length})</button>
+        <button type="button" className={`ccm-chip${loai === 'kho' ? ' on' : ''}`} onClick={() => setLoai('kho')}><WarehouseIcon size={15} /> Phân kho ({cc.warehouses.length})</button>
+        <button type="button" className={`ccm-chip${loai === 'bp' ? ' on' : ''}`} onClick={() => setLoai('bp')}><Users size={15} /> Bộ phận ({cc.departments.length})</button>
+      </div>
+      {loai === 'dv' && <Bang key="dv" rows={[...cc.units].sort((a, b) => a.path.localeCompare(b.path))} onMo={(x) => onChon(x.code)} rong="Chưa có đơn vị."
+        cot={[
+          { ten: 'Mã', w: 120, gt: (x) => <span className="mono">{x.code}</span> },
+          { ten: 'Tên', gt: (x) => x.name },
+          { ten: 'Tên gọi cấp', w: 120, gt: tenCap, tim: (x) => x.levelLabel },
+          { ten: 'Cấp', w: 50, gt: (x) => x.level },
+          { ten: 'Đường dẫn', w: 280, gt: (x) => <span className="mono muted">{x.path}</span>, tim: (x) => x.path },
+          { ten: 'MST dùng', w: 150, gt: (x) => <span className="mono">{x.taxUsed}{x.taxFrom && <span className="muted"> ↑</span>}</span>, tim: (x) => x.taxUsed },
+        ]} />}
+      {loai === 'kho' && <Bang key="kho" rows={cc.warehouses} onMo={(x) => onChon(x.branchCode)} rong="Chưa có phân kho."
+        cot={[
+          { ten: 'Mã phân kho', w: 130, gt: (x) => <span className="mono">{x.code}</span> },
+          { ten: 'Tên phân kho', gt: (x) => <>{x.name}{x.isDefault && <span className="ccm-mac-dinh">Mặc định</span>}</> },
+          { ten: 'Thuộc đơn vị', w: 260, gt: (x) => tenDv(x.branchCode), tim: (x) => `${x.branchCode} ${cc.byCode.get(x.branchCode)?.path ?? ''}` },
+          { ten: 'Đường dẫn', w: 260, gt: (x) => <span className="mono muted">{cc.byCode.get(x.branchCode)?.path}</span> },
+          { ten: 'Loại kho', w: 170, gt: (x) => x.typeName || x.typeCode },
+        ]} />}
+      {loai === 'bp' && <Bang key="bp" rows={cc.departments} onMo={(x) => x.branchCode && onChon(x.branchCode)} rong="Chưa có bộ phận."
+        cot={[
+          { ten: 'Mã bộ phận', w: 140, gt: (x) => <span className="mono">{x.code}</span> },
+          { ten: 'Tên bộ phận', gt: (x) => x.name },
+          { ten: 'Thuộc đơn vị', w: 260, gt: (x) => tenDv(x.branchCode) || <span className="muted">Chưa gắn đơn vị</span>, tim: (x) => `${x.branchCode ?? ''} ${cc.byCode.get(x.branchCode ?? '')?.path ?? ''}` },
+          { ten: 'Đường dẫn', w: 260, gt: (x) => <span className="mono muted">{cc.byCode.get(x.branchCode ?? '')?.path}</span> },
+        ]} />}
+    </div>
   );
 }

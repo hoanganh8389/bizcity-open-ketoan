@@ -2164,6 +2164,11 @@
         "migration": "0085_ma_thuc_the.sql"
       },
       {
+        "name": "branches_link_department",
+        "table": "branches",
+        "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
         "name": "branches_org_unit_authz_version",
         "table": "branches",
         "migration": "0150_pham_vi_so_do_to_chuc.sql"
@@ -2187,6 +2192,11 @@
         "name": "business_documents_sync",
         "table": "purchase_documents",
         "migration": "0158_so_chung_tu_chung.sql"
+      },
+      {
+        "name": "business_documents_unit_ids",
+        "table": "business_documents",
+        "migration": "0173_co_cau_mot_bang.sql"
       },
       {
         "name": "dimensions_uid",

@@ -47,6 +47,8 @@ import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, docume
 import { branchRoutes } from '../modules/branches/branch.routes.js';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — CORE_ROUTES thêm orgUnitRoutes (sơ đồ tổ chức, đơn vị mua hàng) (đóng góp)
 import { orgUnitRoutes } from '../modules/org-units/org-unit.routes.js';
+// [2026-11-20 Nguyễn Văn Thủy] cơ cấu một bảng: đơn vị – phân kho – bộ phận (0173) (đóng góp)
+import { coCauRoutes } from '../modules/co-cau/co-cau.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
 import { warehouseTypeRoutes } from '../modules/warehouses/warehouse-types.js';
 import { catalogTrashRoutes } from '../modules/catalog-trash/catalog-trash.js';
@@ -86,7 +88,7 @@ import { inventoryReportRoutes } from '../modules/inventory/inventory-report.rou
 
 export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, gatesRoutes, enginesRoutes, devToolsBoardRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
-  accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, warehouseTypeRoutes, catalogTrashRoutes, coCauHistoryRoutes, unitNameRoutes, helpRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
+  accountRoutes, branchRoutes, orgUnitRoutes, coCauRoutes, warehouseRoutes, warehouseTypeRoutes, catalogTrashRoutes, coCauHistoryRoutes, unitNameRoutes, helpRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, itemRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, printProfileRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,
