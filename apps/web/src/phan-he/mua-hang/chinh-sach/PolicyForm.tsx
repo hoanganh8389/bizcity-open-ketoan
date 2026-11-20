@@ -101,7 +101,7 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, lockCon
     <Modal viewAgain={viewAgain} viewFirst={!isNew} wide={p.kind === 'item_discount' || p.kind === 'promo_gift'} title={`${POLICY_LABEL[p.kind]} ${isNew ? '(mới)' : p.code}`} onClose={onClose}
       footer={<>{(isNew ? tt.them : tt.sua) && <button className="btn btn-primary" disabled={busy} onClick={() => void save()}>Ghi</button>}<button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label={REBATE_KINDS.includes(p.kind) ? 'Ký với nhà cung cấp (trống = mọi NCC)' : 'Nhà cung cấp (trống = áp cho mọi NCC)'} full>
-        {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
+        {lockPartner ? <div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}><b className="mono">{p.scope.partnerCode}</b> {names.partnerName(p.scope.partnerCode ?? '')}</div> : <PartnerPicker kind="supplier" activeOnly value={p.scope.partnerCode ?? ''} onChange={(c) => setScope('partnerCode', c)} />}
       </Field>
       {p.scope.partnerCode && lockContract && <Field full label="Thuộc hợp đồng"><div className="input" style={{ background: 'var(--surface-2, #f4f6f9)' }}>{p.scope.contractCode ? <b className="mono">{p.scope.contractCode}</b> : 'Không theo hợp đồng'}</div></Field>}
       {p.scope.partnerCode && !lockContract && <Field full label="Thuộc hợp đồng" tip="Chính sách ghi trong hợp đồng mua nào (để xem cùng hợp đồng, đối chiếu, thanh lý). Trống = chính sách chung của NCC. Cách áp vào phiếu không đổi">

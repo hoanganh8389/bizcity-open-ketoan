@@ -361,7 +361,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
         if (embedded) return body;
         return (
           <FilterLayout filters={<>
-            {!embedded && <div className="field"><label>Nhà cung cấp</label><PartnerPicker value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>}
+            {!embedded && <div className="field"><label>Nhà cung cấp</label><PartnerPicker kind="supplier" value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>}
             <div className="field"><label>Từ ngày</label><input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
             <div className="field"><label>Đến ngày</label><input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
             <BranchSelect value={branchCodes} onChange={setBranchCodes} warehouses={{ value: whCodes, onChange: setWhCodes }} />
