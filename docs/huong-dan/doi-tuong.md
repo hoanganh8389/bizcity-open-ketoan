@@ -67,7 +67,7 @@ Form **Khách hàng / Nhà cung cấp**:
 ### Nhập Excel khách hàng / nhà cung cấp
 <!-- [2026-11-20 kiennt] NT-DM-016 — nhập Excel đủ cột của form, cột liên kết tra theo tên (đóng góp) -->
 
-Màn **Nhập Excel** (loại Khách hàng / Nhà cung cấp) nhận gần đủ các ô của form: mã, tên, nhóm, MST, địa chỉ, **Điện thoại**, email, ngày sinh, giới tính (Nam / Nữ), loại khách hàng (KH cá nhân / KH doanh nghiệp), khách hàng tiềm năng, tên công ty, tên viết tắt, alias, địa chỉ Cty, fax, website, người đại diện, chức vụ, tài khoản NH, chủ TK, mở tại, giới hạn nợ / ngày nợ / số phiếu nợ, người QL, chi nhánh QL, đơn vị cha, theo dõi, ghi chú. Tên cột trùng tên cột của lưới, nên tệp Xuất (bật đủ cột) nhập lại được.
+Màn **Nhập Excel** (loại Khách hàng / Nhà cung cấp) nhận gần đủ các ô của form: mã, tên, nhóm, MST, địa chỉ, **Điện thoại**, email, ngày sinh, giới tính (Nam / Nữ), loại khách hàng (KH cá nhân / KH doanh nghiệp), khách hàng tiềm năng, tên công ty, tên viết tắt, alias, địa chỉ Cty, fax, website, chức vụ (nhà cung cấp có thêm người liên hệ), tài khoản NH, chủ TK, mở tại, giới hạn nợ / ngày nợ / số phiếu nợ, người QL, chi nhánh QL, đơn vị cha, theo dõi, ghi chú. Tên cột trùng tên cột của lưới, nên tệp Xuất (bật đủ cột) nhập lại được.
 
 - Bắt buộc như form: dòng mới phải có **Tên**; **khách hàng mới** phải có **Nhóm** (đơn vị con lấy nhóm của đơn vị cha). Các cột khác không bắt buộc; dòng cập nhật để trống thì giữ nguyên.
 - **Cột liên kết** — Nhóm, Người QL (nhân viên), Chi nhánh QL, Thuộc đơn vị cha: ghi **tên** (hoặc mã). Tên không có trong danh mục, hoặc trùng nhiều mục → **dòng báo lỗi, không nhập**; trùng tên thì ghi mã.
