@@ -63,8 +63,10 @@ export const RULE_KEYS: Record<string, RuleKey> = {
   internal_revenue: { label: 'Doanh thu bán hàng nội bộ', range: ['511'], suggest: '51116', help: 'Bán cho chi nhánh khác (phiếu bán ghi lý do bán nội bộ).' },
   internal_cogs: { label: 'Giá vốn hàng bán nội bộ', range: ['632'], suggest: '6326', help: 'Bán cho chi nhánh khác: giá vốn ghi ngay bằng giá bán.' },
   inventory: { label: 'Kho hàng hoá (khi loại kho chưa khai TK)', range: ['15'], suggest: '1561', help: 'Dự phòng: loại kho của phân kho đã khai TK kho thì dùng TK của loại kho.' },
-  tax_output: { label: 'Thuế GTGT đầu ra (khi loại thuế chưa khai TK)', range: ['3331'], suggest: '33311', help: 'Dự phòng: loại thuế đã khai TK thì dùng TK của loại thuế.' },
-  tax_input: { label: 'Thuế GTGT đầu vào (khi loại thuế chưa khai TK)', range: ['133'], suggest: '1331', help: 'Dự phòng: loại thuế đã khai TK thì dùng TK của loại thuế.' },
+  // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định không khai TK: TK thuế lấy từ ba khoá dưới; thêm khoá thuế đầu vào TSCĐ (1332) (đóng góp)
+  tax_output: { label: 'Thuế GTGT đầu ra', range: ['3331'], suggest: '33311', help: 'Thuế GTGT của phiếu bán, hàng bán trả lại. Mã thuế cũ (R…) có khai TK riêng thì dùng TK đó.' },
+  tax_input: { label: 'Thuế GTGT đầu vào', range: ['133'], suggest: '1331', help: 'Thuế GTGT được khấu trừ của hàng hoá, dịch vụ mua vào. Mã thuế cũ (V…) có khai TK riêng thì dùng TK đó.' },
+  tax_input_fixed_asset: { label: 'Thuế GTGT đầu vào của TSCĐ', range: ['133'], suggest: '1332', help: 'Dòng mua ghi Nợ tài sản cố định / XDCB (211, 213, 217, 241) — TT 99/2025/TT-BTC. Chưa đặt thì dùng TK thuế đầu vào.' },
   goods_in_transit: { label: 'Hàng đang chuyển (cùng đơn vị hạch toán)', range: ['15'], suggest: '1579', help: 'Chuyển kho giữa hai chi nhánh cùng đơn vị hạch toán: xuất ghi vào đây, nhận ghi ra.' },
   internal_receivable_goods: { label: 'Phải thu nội bộ hàng', range: ['136', '138'], suggest: '13681', help: 'Chuyển kho sang chi nhánh khác đơn vị hạch toán; bán nội bộ cho chi nhánh khác.' },
   internal_receivable: { label: 'Phải thu nội bộ tiền', range: ['136', '138'], suggest: '13681', help: 'Chuyển tiền sang chi nhánh khác đơn vị hạch toán (phía chuyển).' },

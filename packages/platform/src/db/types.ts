@@ -550,6 +550,12 @@ export interface TaxCodesTable {
   account_code: string | null;
   report_group: string;
   is_active: Generated<boolean>;
+  // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định: hiệu lực, mã cũ (đóng góp)
+  valid_from: string | null;
+  valid_to: string | null;
+  legal_basis: string | null;
+  is_legacy: Generated<boolean>;
+  replaced_by: string | null;
 }
 
 export interface ProductPostingGroupsTable {

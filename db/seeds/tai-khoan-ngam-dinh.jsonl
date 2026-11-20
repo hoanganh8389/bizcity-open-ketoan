@@ -1,6 +1,7 @@
 {"_bang": "tai-khoan-ngam-dinh", "_mo_ta": "Tài khoản của Quy tắc hạch toán (ACC41): khung Nợ / Có cố định, mỗi khoá một tài khoản chi tiết trong phạm vi đầu số.", "_cot": ["key", "account_code", "name"]}
 {"key": "tax_output", "account_code": "33311", "name": "TK thuế đầu ra ngầm định"}
 {"key": "tax_input", "account_code": "1331", "name": "TK thuế đầu vào ngầm định"}
+{"key": "tax_input_fixed_asset", "account_code": "1332", "name": "TK thuế đầu vào của TSCĐ"}
 {"key": "goods_in_transit", "account_code": "1579", "name": "TK hàng gửi đi bán"}
 {"key": "internal_receivable_goods", "account_code": "13681", "name": "TK phải thu nội bộ hàng"}
 {"key": "internal_receivable", "account_code": "13681", "name": "TK phải thu nội bộ tiền"}

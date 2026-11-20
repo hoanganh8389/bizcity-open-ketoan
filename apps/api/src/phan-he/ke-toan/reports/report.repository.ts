@@ -325,12 +325,13 @@ export const reportRepository = {
              i.doc_no, i.doc_type, i.doc_date::text AS doc_date, i.event_id,
              i.buyer_name, i.buyer_tax_code, br.code AS branch_code, p.code AS partner_code, p.name AS partner_name,
              l.sku, l.name AS item_name, l.unit, l.qty * i.sign AS qty,
-             l.report_group, l.tax_rate, l.amount_before_tax * i.sign AS amount, l.tax_amount * i.sign AS tax, tc.account_code AS tax_account
+             l.report_group, l.tax_rate, l.amount_before_tax * i.sign AS amount, l.tax_amount * i.sign AS tax, COALESCE(tc.account_code, (SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = i.tenant_id
+               AND d.key = CASE WHEN ${dir} = 'input' THEN 'tax_input' ELSE 'tax_output' END)) AS tax_account
         FROM tax_invoices i
         JOIN tax_invoice_lines l ON l.tax_invoice_id = i.id
         JOIN branches br ON br.id = i.branch_id
         LEFT JOIN partners p ON p.id = i.partner_id
-        LEFT JOIN tax_codes tc ON tc.tenant_id = i.tenant_id AND tc.code = l.tax_code AND tc.direction = ${dir}
+        LEFT JOIN tax_codes tc ON tc.tenant_id = i.tenant_id AND tc.code = l.tax_code AND tc.direction IN (${dir}, 'both')
        WHERE i.tenant_id = ${a.tenantId} AND i.direction = ${dir}
          AND i.status <> 'cancelled'
          AND i.period_date BETWEEN ${a.from}::date AND ${a.to}::date

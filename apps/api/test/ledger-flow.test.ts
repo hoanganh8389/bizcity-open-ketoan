@@ -3,7 +3,8 @@
  * Chạy: npm test (cần PostgreSQL ở DATABASE_URL).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { closeDb } from '../src/db/client.js';
+import { sql } from 'kysely';
+import { closeDb, db } from '../src/db/client.js';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
@@ -223,7 +224,9 @@ describe('Lỗi cấu hình và ghi sổ lại', () => {
     expect(first.body.data.error.message).toContain('R07');
 
     const id = await docIdByKey('pos:CN01:HD0009');
-    await call(ctx, 'POST', '/api/v1/tax-codes', { code: 'R07', name: 'Thuế 7%', rate: 7, direction: 'output', accountCode: '33311', reportGroup: '8' });
+    // [2026-11-19 kiennt] NT-DM-012 — loại thuế do bản cập nhật phần mềm khai (API thêm bị khoá): ghi thẳng như migration (đóng góp)
+    await sql`INSERT INTO tax_codes (tenant_id, code, name, rate, direction, account_code, report_group)
+              SELECT id, 'R07', 'Thuế 7%', 7, 'output', '33311', '8' FROM tenants WHERE code = ${ctx.tenantCode}`.execute(db);
     const again = await call(ctx, 'POST', '/api/v1/documents/post', { ids: [id] });
     expect(again.body.data.posted, JSON.stringify(again.body)).toBe(1);
   });

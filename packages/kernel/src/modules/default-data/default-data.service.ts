@@ -554,7 +554,7 @@ export const DATASETS: Dataset[] = [
   { key: 'posting_defaults', title: 'Tài khoản ngầm định', file: 'tai-khoan-ngam-dinh.jsonl', screens: ['ACC41'], current: countOf('posting_defaults'), restore: restoreDefaults },
   {
     key: 'tax_codes', title: 'Loại thuế', file: 'loai-thue.jsonl', screens: ['ACC43'], current: tableCount('tax_codes'),
-    restore: (trx, id) => restoreByCode(trx, id, 'tax_codes', 'loai-thue.jsonl', ['name', 'rate', 'direction', 'account_code', 'report_group', 'is_active'],
+    restore: (trx, id) => restoreByCode(trx, id, 'tax_codes', 'loai-thue.jsonl', ['name', 'rate', 'direction', 'account_code', 'report_group', 'is_active', 'is_legacy', 'replaced_by', 'valid_from', 'valid_to', 'legal_basis'], // NT-DM-012
       usedBy(trx, id, (codes) => sql<{ code: string }>`SELECT DISTINCT tax_code AS code FROM ledger_lines WHERE tenant_id = ${id} AND tax_code = ANY(${codes}::text[]) UNION SELECT tax_out_code FROM products WHERE tenant_id = ${id} AND tax_out_code = ANY(${codes}::text[]) UNION SELECT tax_in_code FROM products WHERE tenant_id = ${id} AND tax_in_code = ANY(${codes}::text[])`)),
   },
   dim('cost_item', 'Danh mục khoản mục', 'cost_item', 'khoan-muc.jsonl', ['ACC24']),

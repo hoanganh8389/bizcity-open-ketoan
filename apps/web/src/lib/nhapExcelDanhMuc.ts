@@ -105,56 +105,7 @@ function danhMuc<T>(d: DanhMuc<T>): NhapLoai {
 const TT_TRUONG = (header: string, note = ''): NhapTruong => ({ key: 'isActive', header, aliases: ['hoat dong', 'trang thai', 'dang dung', 'dang su dung', 'theo doi'], example: 'x', note: `x / Có = đang dùng; Không. Như tệp Xuất: cột có ô nào được điền thì ô trống = Không. Cả cột trống: mới = đang dùng, đã có = giữ nguyên.${note}` });
 const loiTich = (ten: string, v: string | undefined) => `${ten} "${v}" ghi x / Có hoặc Không`;
 
-/* ------------------------------------------------------------------ ACC43 Biểu thuế */
-interface Thue { code: string; name: string; rate: number; direction: string; accountCode: string | null; reportGroup: string; isActive: boolean }
-const NHOM_BK: [string, string][] = [['KCT', 'Không chịu thuế'], ['0', '0%'], ['5', '5%'], ['8', '8%'], ['10', '10%'], ['KKK', 'Không kê khai']];
-const BIEU_THUE = danhMuc<Thue>({
-  id: 'bieu-thue', title: 'Biểu thuế', desc: 'Mã thuế, tên, thuế suất, tài khoản, chiều (đầu ra / đầu vào), nhóm bảng kê, hoạt động', listPath: '/danh-muc/loai-thue', invalidate: ['tax-codes'],
-  tenMa: 'Mã thuế', maSai: (m) => (m.length > 16 ? 'Mã thuế tối đa 16 ký tự' : ''),
-  fields: [
-    { key: 'code', header: 'Mã thuế', required: true, aliases: ['ma', 'ma loai thue'], example: 'R08', note: 'Đã có → cập nhật; chưa có → thêm mới.' },
-    { key: 'name', header: 'Tên thuế', required: 'moi', aliases: ['ten', 'ten loai thue'], example: 'Thuế GTGT đầu ra 8%' },
-    { key: 'rate', header: 'Thuế suất', aliases: ['thue suat (%)', 'ty le'], example: '8', note: 'Số phần trăm: 8 hoặc 8%. Trống: mới = 0.' },
-    { key: 'accountCode', header: 'Tài khoản', aliases: ['tk', 'tai khoan hach toan'], example: '33311', note: 'Tài khoản chi tiết đã có ở Hệ thống tài khoản.' },
-    { key: 'direction', header: 'Chiều', aliases: ['chieu thue'], example: 'Đầu ra', note: 'Đầu ra (bán) / Đầu vào (mua). Cột ẩn trên lưới. Thiếu với thuế mới: suy theo tài khoản (133… = Đầu vào, 333… = Đầu ra).' },
-    { key: 'reportGroup', header: 'Nhóm bảng kê', aliases: ['nhom tren bang ke'], example: '8%', note: 'Không chịu thuế (KCT) / 0% / 5% / 8% / 10% / Không kê khai (KKK). Cột ẩn. Thiếu với thuế mới: theo thuế suất.' },
-    TT_TRUONG('Hoạt động'),
-  ],
-  tai: () => api.get<Thue[]>('/api/v1/tax-codes'), maCua: (t) => t.code, rac: () => thungRac('tax-codes'),
-  chuan: async (rows) => ({ tk: await taiKhoanChiTiet(), cotTT: coCot(rows, 'isActive') }),
-  xemTruoc: (t) => ({ name: t.name, rate: String(t.rate), accountCode: t.accountCode ?? '', direction: t.direction === 'output' ? 'Đầu ra' : 'Đầu vào', reportGroup: NHOM_BK.find(([k]) => k === t.reportGroup)?.[1] ?? t.reportGroup, isActive: t.isActive ? 'x' : '' }),
-  kiem: (r, ma, before, { them }) => {
-    const { tk, cotTT } = them as { tk: Set<string>; cotTT: boolean };
-    const errors: string[] = [];
-    const name = chu(r.name);
-    if (!before && !name) errors.push('Thuế mới phải có tên');
-    const rs = chu(r.rate).replace('%', '').replace(',', '.').trim();
-    const rate = rs ? Number(rs) : before ? before.rate : 0;
-    if (rs && (Number.isNaN(rate) || rate < 0 || rate > 100)) errors.push(`Thuế suất "${r.rate}" phải là số 0–100`);
-    const acc = chu(r.accountCode) || before?.accountCode || '';
-    if (chu(r.accountCode) && !tk.has(acc)) errors.push(`Tài khoản ${acc} không có hoặc là tài khoản tổng hợp`);
-    const c = kd(chu(r.direction));
-    let direction = !c ? before?.direction : /^(dau ra|ra|ban|output)/.test(c) ? 'output' : /^(dau vao|vao|mua|input)/.test(c) ? 'input' : 'x';
-    if (direction === 'x') { errors.push(`Chiều "${r.direction}" ghi Đầu ra / Đầu vào`); direction = undefined; }
-    else if (!direction) { direction = acc.startsWith('133') ? 'input' : acc.startsWith('333') ? 'output' : undefined; if (!direction) errors.push('Không suy được chiều thuế từ tài khoản — ghi cột Chiều (Đầu ra / Đầu vào)'); }
-    const g = kd(chu(r.reportGroup)).replace(/\s*%$/, '');
-    let reportGroup = !g ? before?.reportGroup : NHOM_BK.find(([k, l]) => kd(k) === g || kd(l).replace(/\s*%$/, '') === g)?.[0];
-    if (g && !reportGroup) errors.push(`Nhóm bảng kê "${r.reportGroup}" ghi KCT / 0% / 5% / 8% / 10% / KKK`);
-    if (!reportGroup && !g) reportGroup = /kct|khong chiu/.test(kd(`${ma} ${name}`)) ? 'KCT' : NHOM_BK.find(([k]) => k === String(rate))?.[0];
-    if (!reportGroup && !g) errors.push('Không suy được nhóm bảng kê từ thuế suất — ghi cột Nhóm bảng kê');
-    const tt = tich(r.isActive, cotTT);
-    if (tt === null) errors.push(loiTich('Hoạt động', r.isActive));
-    if (errors.length) return { errors };
-    const body = { name: name || before!.name, rate, direction: direction!, accountCode: acc || undefined, reportGroup: reportGroup! };
-    return {
-      errors, ghi: async () => {
-        if (before) return api.patch(`/api/v1/tax-codes/${encodeURIComponent(before.code)}`, { ...body, isActive: tt ?? before.isActive });
-        await api.post('/api/v1/tax-codes', { ...body, code: ma });
-        if (tt === false) await api.patch(`/api/v1/tax-codes/${encodeURIComponent(ma)}`, { ...body, isActive: false });
-      },
-    };
-  },
-});
+/* ACC43 Biểu thuế: bỏ nhập Excel — loại thuế GTGT cố định theo quy định nhà nước, phần mềm cấu hình sẵn (NT-DM-012, 2026-11-19 kiennt). */
 
 /* ------------------------------------------------------------------ DM18 Loại kho */
 interface LoaiKho { code: string; name: string; purpose: string; canSell: boolean; owned: boolean; trackExpiry: boolean; accountPrefix: string; isActive: boolean }
@@ -797,4 +748,4 @@ export function nhapGiaBan(code: string, ten: string): NhapLoai {
   };
 }
 
-export const NHAP_DANH_MUC: NhapLoai[] = [BIEU_THUE, LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH, TK_KET_CHUYEN, CO_CAU, PHONG_BAN, CUA_HANG, KHO_CO_CAU];
+export const NHAP_DANH_MUC: NhapLoai[] = [LOAI_KHO, NHOM_DOI_TUONG, NHAN_VIEN, TK_NGAN_HANG, HINH_THUC_TT, BANG_GIA, TK_NGAM_DINH, TK_KET_CHUYEN, CO_CAU, PHONG_BAN, CUA_HANG, KHO_CO_CAU];

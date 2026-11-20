@@ -10,7 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { BookOpen, Bot, ListTree, Play, Search } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
-import { money } from '@/lib/format';
+import { loaiDangDung, nhanLoai, useLoaiThue } from '@/lib/thueGtgt';
+import { thueMacDinh } from '@/lib/tradeDocs';
+import { money, today } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { useBranches } from '@/components/filters';
@@ -21,7 +23,6 @@ import { FLOWS, PART_TEXT, type Flow } from './flows';
 import { fold, safeMarkdown } from './knowledge';
 
 interface Reason { code: string; name: string; kind: string; counterAccount: string | null; isActive: boolean; flags?: Record<string, unknown> | null }
-interface TaxCode { code: string; name: string; rate: number; direction: string; isActive: boolean }
 interface Method { code: string; name: string; isActive: boolean }
 interface SimLine { pairNo: number; part: string; accountCode: string; accountName: string; debit: number; credit: number; description: string; taxCode: string | null }
 interface SimResult { ok: boolean; error?: string; entries?: { docType: string; reasonCode: string | null; lines: SimLine[] }[]; movements?: { branchCode: string; kind: string; qty: number }[] }
@@ -76,7 +77,7 @@ function EntryTable({ result }: { result: SimResult }) {
 function FlowTab() {
   const branches = useBranches().data ?? [];
   const reasons = useQuery({ queryKey: ['reasons'], queryFn: () => api.get<Reason[]>('/api/v1/posting/reasons'), staleTime: 60_000 }).data ?? [];
-  const taxes = useQuery({ queryKey: ['tax-codes'], queryFn: () => api.get<TaxCode[]>('/api/v1/tax-codes'), staleTime: 60_000 }).data ?? [];
+  const taxes = useLoaiThue();
   const methods = useQuery({ queryKey: ['payment-methods'], queryFn: () => api.get<Method[]>('/api/v1/posting/payment-methods'), staleTime: 60_000 }).data ?? [];
   const [flowKey, setFlowKey] = useState(FLOWS[0]!.key);
   const flow = FLOWS.find((f) => f.key === flowKey)!;
@@ -84,8 +85,9 @@ function FlowTab() {
   const set = (patch: Partial<typeof q>) => setQ((x) => ({ ...x, ...patch }));
   const branch = q.branchCode || branches[0]?.code || '';
   const reasonOpts = reasons.filter((r) => r.kind === flow.reasonKind && r.isActive !== false);
-  const taxOpts = taxes.filter((t) => t.isActive !== false && (flow.tax === 'input' ? t.direction === 'input' : t.direction === 'output'));
-  const taxCode = flow.tax ? (taxOpts.some((t) => t.code === q.taxCode) ? q.taxCode : (taxOpts.find((t) => t.code === (flow.tax === 'input' ? 'V08' : 'R08')) ?? taxOpts[0])?.code ?? '') : '';
+  // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định dùng chung mua / bán; mặc định 8% (đến 31/12/2026) rồi 10% (đóng góp)
+  const taxOpts = loaiDangDung(taxes);
+  const taxCode = flow.tax ? (taxOpts.some((t) => t.code === q.taxCode) ? q.taxCode : (taxOpts.find((t) => t.code === thueMacDinh(today())) ?? taxOpts[0])?.code ?? '') : '';
   const body = (f: Flow, over: Partial<typeof q> = {}) => ({
     flow: f.key, branchCode: branch, amount: Number(over.amount ?? q.amount) || 1_000_000,
     ...(over.reasonCode ?? q.reasonCode ? { reasonCode: over.reasonCode ?? q.reasonCode } : {}),
@@ -95,12 +97,12 @@ function FlowTab() {
     ...(f.other && q.toBranchCode ? { toBranchCode: q.toBranchCode } : {}),
   });
   const run = useMutation({ mutationFn: () => api.post<SimResult>('/api/v1/addins/tro-ly/simulate', body(flow)) });
-  // Tóm tắt mọi luồng: lý do mặc định, thuế R08 / V08, tiền mặt.
+  // Tóm tắt mọi luồng: lý do mặc định, loại thuế mặc định, tiền mặt.
   const all = useMutation({
     mutationFn: async () => {
       const out: { flow: Flow; result: SimResult }[] = [];
       for (const f of FLOWS) {
-        const tax = f.tax ? (taxes.find((t) => t.code === (f.tax === 'input' ? 'V08' : 'R08'))?.code ?? taxes.find((t) => t.direction === (f.tax === 'input' ? 'input' : 'output'))?.code ?? '') : '';
+        const tax = f.tax ? taxCode : '';
         out.push({ flow: f, result: await api.post<SimResult>('/api/v1/addins/tro-ly/simulate', { ...body(f, { reasonCode: '', taxCode: tax }), reasonCode: undefined }) });
       }
       return out;
@@ -147,7 +149,7 @@ function FlowTab() {
         {flow.tax && (
           <label className="field"><span className="muted">Loại thuế ({flow.tax === 'input' ? 'đầu vào' : 'đầu ra'})</span>
             <select className="select input" value={taxCode} onChange={(e) => set({ taxCode: e.target.value })}>
-              {taxOpts.map((t) => <option key={t.code} value={t.code}>{t.code} — {t.name}</option>)}
+              {taxOpts.map((t) => <option key={t.code} value={t.code}>{nhanLoai(t)} — {t.name}</option>)}
             </select>
           </label>
         )}

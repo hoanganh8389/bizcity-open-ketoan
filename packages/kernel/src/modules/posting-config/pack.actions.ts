@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { defineAction, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { emitKernelEvent } from '../documents/kernel-events.js';
 import { installPack, listPacks, postingPackSchema, uninstallPack, type PackResult } from './pack.js';
+import { apDungLoaiThueCoDinh } from '../tax-codes/loai-thue-co-dinh.js';
 import { reasonReadiness, suggestReasons } from './reason-suggest.js';
 
 const tags = ['Cấu hình hạch toán'];
@@ -101,6 +102,8 @@ export const packActions: AnyActionDef[] = [
     evidence: { objectType: 'config_pack', objectId: (input) => `${input.pack.id}@${input.pack.version}` },
     handler: async (ctx, input) => {
       const r = await installPack(ctx.data.tx, ctx.tenant.id, input.pack, { overwrite: input.overwrite, effectiveFrom: input.effectiveFrom, actor: ctx.actor.id });
+      // [2026-11-19 kiennt] NT-DM-012 — gói ghi đè KCT / KKKN (chiều, TK cũ) thì trả về loại thuế cố định theo quy định (đóng góp)
+      await apDungLoaiThueCoDinh(ctx.data.tx, ctx.tenant.id);
       await emitPolicy(ctx, r, 'install');
       return r;
     },

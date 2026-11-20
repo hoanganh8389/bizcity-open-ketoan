@@ -21,6 +21,7 @@ import { ChonMatHang } from './ChonMatHang';
 import { ExcelGuide, type GuideColumn } from './ExcelGuide';
 import { ProductEditor } from '../../../features/catalog/ProductsPage';
 import { NccInfo } from './NccInfo';
+import { thueMacDinh } from '@/lib/tradeDocs';
 
 type Row = SupplierProduct & { key: string; dirty?: boolean; fromHistory?: boolean; lastText?: string };
 const dmy = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
@@ -149,7 +150,7 @@ Trong khoảng chồng, đơn / phiếu lấy dòng có "Hiệu lực từ" mu�
   const skus = [...new Set(active.map((r) => r.sku))];
   const cat = useQuery({ queryKey: ['mua-hang', 'lookup', skus.join(',')], queryFn: () => purchaseApi.lookupProducts(skus), enabled: skus.length > 0 });
   // Thuế suất đầu vào của mặt hàng → quy đổi giá chưa thuế ↔ gồm thuế.
-  const taxOf = (s: string) => cat.data?.find((c) => c.sku === s)?.taxInCode ?? 'V08';
+  const taxOf = (s: string) => cat.data?.find((c) => c.sku === s)?.taxInCode ?? thueMacDinh();
   const rateOf = (s: string) => (TAX_RATE[taxOf(s)] ?? 0) / 100;
   const priceAs = (r: Row, inc: boolean) => (r.price === null || r.price === undefined ? null : Boolean(r.priceIncludesVat) === inc ? r.price : inc ? roundPrice(r.price * (1 + rateOf(r.sku))) : roundPrice(r.price / (1 + rateOf(r.sku))));
   // Ô giá trống (dòng Thùng tạo sẵn ở MH27, mã đã mua chưa khai giá…): lập đơn tự lấy giá theo thứ tự — dòng ĐVT khác của chính NCC

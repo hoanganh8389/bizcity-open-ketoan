@@ -321,8 +321,8 @@ export const productWriteActions: AnyActionDef[] = [
             if (!a) problems.push(`${ACC_LABEL[k]} ${v} không có`);
             else if (!a.is_posting) problems.push(`${ACC_LABEL[k]} ${v} là tài khoản tổng hợp`);
           }
-          if (it.taxOutCode && taxes.get(it.taxOutCode) !== 'output') problems.push(`Mã VAT ra ${it.taxOutCode} không có (loại thuế đầu ra)`);
-          if (it.taxInCode && taxes.get(it.taxInCode) !== 'input') problems.push(`Mã VAT vào ${it.taxInCode} không có (loại thuế đầu vào)`);
+          if (it.taxOutCode && !['output', 'both'].includes(taxes.get(it.taxOutCode) ?? '')) problems.push(`Mã VAT ra ${it.taxOutCode} không có (loại thuế đầu ra)`);
+          if (it.taxInCode && !['input', 'both'].includes(taxes.get(it.taxInCode) ?? '')) problems.push(`Mã VAT vào ${it.taxInCode} không có (loại thuế đầu vào)`);
           if (problems.length) { errors.push(`${it.sku}: ${problems.join('; ')}`); continue; }
           const patch: Record<string, unknown> = {};
           if (ACC_FIELDS.some((k) => it[k] !== undefined)) {
@@ -417,7 +417,8 @@ export const productWriteActions: AnyActionDef[] = [
           if (v === undefined) continue;
           if (v) {
             const t = await trx.selectFrom('tax_codes').select('direction').where('tenant_id', '=', auth.tenantId).where('code', '=', v).executeTakeFirst();
-            if (!t || t.direction !== dir) throw quyTac('GRP-BLOCK-003', { detail: `Loại thuế ${v} không có (cần loại thuế ${dir === 'output' ? 'đầu ra' : 'đầu vào'})` });
+            // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định (chiều both) dùng được cho cả VAT ra và VAT vào (đóng góp)
+            if (!t || (t.direction !== dir && t.direction !== 'both')) throw quyTac('GRP-BLOCK-003', { detail: `Loại thuế ${v} không có (cần loại thuế ${dir === 'output' ? 'đầu ra' : 'đầu vào'})` });
           }
           patch[col] = v || null;
         }

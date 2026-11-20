@@ -155,7 +155,7 @@ export function QuyTacHachToanPage() {
 
             {sources.has('payment') && <SourceTable title="Hình thức thanh toán" link={SOURCE.payment.link!} rows={data.sources.paymentMethods.map((m) => ({ ...m, note: m.isReceivable ? 'ghi nợ (không phải tiền)' : m.partnerCode ? `thu hộ, đối tượng ${m.partnerCode}` : '' }))} />}
             {sources.has('warehouse') && <SourceTable title="Loại kho" link={SOURCE.warehouse.link!} rows={data.sources.warehouseTypes.map((w) => ({ ...w, note: w.owned ? '' : 'không tính giá vốn (hàng giữ hộ)' }))} fallback={keys.get('inventory')} />}
-            {sources.has('tax') && <SourceTable title="Loại thuế" link={SOURCE.tax.link!} rows={data.sources.taxCodes.filter((t) => (biz?.docType.startsWith('purchase') ? t.direction === 'input' : t.direction !== 'input')).map((t) => ({ ...t, note: `${t.rate}%` }))} fallback={keys.get(biz?.docType.startsWith('purchase') ? 'tax_input' : 'tax_output')} />}
+            {sources.has('tax') && <SourceTable title="Loại thuế" link={SOURCE.tax.link!} rows={data.sources.taxCodes.filter((t) => (biz?.docType.startsWith('purchase') ? t.direction !== 'output' : t.direction !== 'input')).map((t) => ({ ...t, note: `${t.rate}%` }))} fallback={keys.get(biz?.docType.startsWith('purchase') ? 'tax_input' : 'tax_output')} />}
             {sources.has('purpose') && (
               <div className="card" style={{ padding: 0, marginTop: 12 }}>
                 <div className="qt-head" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -306,7 +306,7 @@ function PreviewCard({ biz, scheme }: { biz: Business; scheme: Scheme }) {
   const branches = useBranches().data ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const isPurchase = biz.docType.startsWith('purchase');
-  const taxes = scheme.sources.taxCodes.filter((t) => (isPurchase ? t.direction === 'input' : t.direction !== 'input'));
+  const taxes = scheme.sources.taxCodes.filter((t) => (isPurchase ? t.direction !== 'output' : t.direction !== 'input'));
   const methods = scheme.sources.paymentMethods;
   const purposes = scheme.sources.purposes.filter((p) => p.isActive && purposeFor(biz.code, p));
   const [f, setF] = useState({ branch: '', sku: '', amount: 100000, tax: '', cost: 70000, method: '', paid: 0, purpose: '', gift: false });

@@ -26,6 +26,12 @@ export interface TaxCodeConfig {
   direction: string;
   accountCode: string | null;
   reportGroup: string;
+  // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định: hiệu lực, mã cũ (đóng góp)
+  /** Hiệu lực của thuế suất (YYYY-MM-DD, trống = không giới hạn). */
+  validFrom?: string | null;
+  validTo?: string | null;
+  /** Mã cũ trước NT-DM-012 (V…, R…): ghi sổ như trước. */
+  isLegacy?: boolean;
 }
 
 export interface ProductConfig {
@@ -97,17 +103,20 @@ async function loadProducts(db: Db, tenantId: string, skus: string[], asOf?: str
   return r.rows;
 }
 
+/** Ngày (Date của driver hoặc chuỗi) → 'YYYY-MM-DD'; trống giữ null. */
+const ymd = (d: unknown): string | null => (d == null ? null : d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10));
+
 /** Phần cấu hình là chính sách (đi vào bản chụp phiên bản): dòng đang dùng. */
 export async function loadPolicyRaw(db: Db, tenantId: string): Promise<PolicyRaw> {
   const [reasons, groups, paymentMethods, taxCodes, defaults, bankAccounts] = await Promise.all([
     db.selectFrom('posting_reasons').selectAll().where('tenant_id', '=', tenantId).where('is_active', '=', true).execute(),
     db.selectFrom('product_posting_groups').selectAll().where('tenant_id', '=', tenantId).execute(),
     db.selectFrom('payment_methods').selectAll().where('tenant_id', '=', tenantId).where('is_active', '=', true).execute(),
-    db.selectFrom('tax_codes').select(['code', 'name', 'rate', 'direction', 'account_code', 'report_group']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute(),
+    db.selectFrom('tax_codes').select(['code', 'name', 'rate', 'direction', 'account_code', 'report_group', 'valid_from', 'valid_to', 'is_legacy']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute(),
     db.selectFrom('posting_defaults').select(['key', 'account_code']).where('tenant_id', '=', tenantId).execute(),
     db.selectFrom('bank_accounts').select(['code', 'account_code']).where('tenant_id', '=', tenantId).where('is_active', '=', true).execute(),
   ]);
-  return { reasons, groups, paymentMethods, taxCodes: taxCodes.map((t) => ({ ...t, rate: String(t.rate) })), defaults, bankAccounts };
+  return { reasons, groups, paymentMethods, taxCodes: taxCodes.map((t) => ({ ...t, rate: String(t.rate), valid_from: ymd(t.valid_from), valid_to: ymd(t.valid_to) })), defaults, bankAccounts };
 }
 
 export const postingConfigRepository = {
@@ -124,7 +133,10 @@ export const postingConfigRepository = {
           FROM warehouses w JOIN branches b ON b.id = w.branch_id WHERE w.tenant_id = ${tenantId}`.execute(db),
     ]);
     const picked = opts.asOf ? await selectPolicy(db, tenantId, live, opts.asOf, opts.actor ?? 'system') : { raw: live, version: null };
-    const { reasons, groups, paymentMethods: methods, taxCodes: taxes, defaults, bankAccounts: banks } = picked.raw;
+    const { reasons, groups, paymentMethods: methods, taxCodes: snapTaxes, defaults, bankAccounts: banks } = picked.raw;
+    // [2026-11-19 kiennt] NT-DM-012 — loại thuế cố định (nhà nước quy định, không thuộc chính sách đơn vị): bản chụp chính sách cũ
+    // (trước 0169) chưa có thì lấy từ cấu hình đang dùng, để chứng từ ghi lùi ngày vẫn chọn được KCT · 0 · 5 · 8 · 10 · KKKN (đóng góp)
+    const taxes = [...snapTaxes, ...live.taxCodes.filter((t) => t.is_legacy === false && t.direction === 'both' && !snapTaxes.some((x) => x.code === t.code))];
     const partnerCodes = [...new Set(methods.map((m) => m.partner_code).filter((c): c is string => !!c))];
     const partners = partnerCodes.length
       ? await db.selectFrom('partners').select(['id', 'code']).where('tenant_id', '=', tenantId).where('code', 'in', partnerCodes).execute()
@@ -137,7 +149,7 @@ export const postingConfigRepository = {
       defaultGroup: groups.find((g) => g.is_default),
       paymentMethods: new Map(methods.map((m) => [m.code, m])),
       taxCodes: new Map(
-        taxes.map((t) => [t.code, { code: t.code, name: t.name, rate: toNumber(t.rate), direction: t.direction, accountCode: t.account_code, reportGroup: t.report_group }]),
+        taxes.map((t) => [t.code, { code: t.code, name: t.name, rate: toNumber(t.rate), direction: t.direction, accountCode: t.account_code, reportGroup: t.report_group, validFrom: t.valid_from ?? null, validTo: t.valid_to ?? null, isLegacy: t.is_legacy ?? false }]),
       ),
       defaults: new Map(defaults.map((d) => [d.key, d.account_code])),
       products: withSeedProducts(skus, products.map((p) => ({ sku: p.sku, postingGroupCode: p.posting_group_code, taxOutCode: p.tax_out_code }))),

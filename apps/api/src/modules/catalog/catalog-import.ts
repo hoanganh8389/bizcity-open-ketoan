@@ -28,7 +28,8 @@ const CLASS = [['groupCode', 'group', 'Nhóm hàng'], ['industryCode', 'industry
 const YES = new Set(['có', 'co', 'x', '1', 'true', 'yes', 'đang theo dõi', 'theo dõi', 'đang hoạt động', 'hoạt động', 'chờ duyệt', 'cho duyet']);
 const NO = new Set(['không', 'khong', '0', 'false', 'no', 'ngừng', 'ngung', 'ngừng hoạt động', 'ngừng theo dõi']);
 // [2026-11-12 Nguyễn Văn Thủy] cột Thuế suất GTGT (%) như form: KCT / 0 / 5 / 8 / 10 → cặp mã thuế ra / vào (đóng góp)
-const VAT: Record<string, [string, string]> = { kct: ['KCT', 'V13K'], '0': ['R00', 'V00'], '5': ['R05', 'V05'], '8': ['R08', 'V08'], '10': ['R10', 'V10'] };
+// [2026-11-19 kiennt] NT-DM-012 — thuế suất → loại thuế cố định (một loại cho bán và mua); mã cũ đổi sang loại tương ứng, chưa xác định thì báo lỗi (đóng góp)
+const VAT: Record<string, string> = { kct: 'KCT', '0': '0', '5': '5', '8': '8', '10': '10', kkkn: 'KKKN' };
 const low = (s: string) => s.trim().toLowerCase();
 
 // [2026-11-03 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): cả tệp một giao dịch, mỗi dòng một SAVEPOINT
@@ -38,7 +39,7 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
       .where('tenant_id', '=', tenantId).execute(),
     trx.selectFrom('item_classes').select(['kind', 'code', 'name', 'parent_code']).where('tenant_id', '=', tenantId).execute(),
     trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).execute(),
-    trx.selectFrom('tax_codes').select(['code', 'direction', 'is_active']).where('tenant_id', '=', tenantId).execute(),
+    trx.selectFrom('tax_codes').select(['code', 'direction', 'is_active', 'is_legacy', 'replaced_by']).where('tenant_id', '=', tenantId).execute(),
   ]);
   const existing = new Map(products.map((p) => [p.sku, p.unit]));
   const className = new Map(classes.map((c) => [`${c.kind}|${c.code}`, c.name]));
@@ -49,7 +50,13 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     taxOutCode: p.tax_out_code ?? '', taxInCode: p.tax_in_code ?? '', isActive: p.is_active ? 'Có' : 'Không',
   } satisfies ShowValues]));
   const groupSet = new Set(groups.map((g) => g.code));
-  const taxSet = new Set(taxes.map((t) => t.code));
+  /** Mã (loại cố định hoặc mã cũ) → loại thuế cố định; mã cũ chưa xác định loại → lỗi. */
+  const loaiThue = (raw: string): { code?: string; error?: string } => {
+    const t = taxes.find((x) => x.code === raw);
+    if (!t) return { error: `Thuế "${raw}" không có — ghi KCT, 0, 5, 8, 10 hoặc KKKN` };
+    if (!t.is_legacy) return t.is_active ? { code: t.code } : { error: `Loại thuế ${raw} đang ngừng` };
+    return t.replaced_by ? { code: t.replaced_by } : { error: `Mã thuế cũ ${raw} chưa xác định được loại thuế theo quy định — ghi KCT, 0, 5, 8, 10 hoặc KKKN` };
+  };
   // Tra mã phân loại: đúng mã, hoặc đúng tên (không phân biệt hoa thường) nếu tên chỉ ứng với một mã.
   const findClass = (kind: string, v: string): string | null => {
     const list = classes.filter((c) => c.kind === kind);
@@ -131,20 +138,18 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     }
     const vr = r.vatRate?.trim().toLowerCase().replace(/%$/, '').trim();
     if (vr) {
-      // Thuế suất (KCT, 0, 5, 8, 10) hoặc mã thuế đầu ra; phải có ở danh mục Biểu thuế.
-      const raw = r.vatRate!.trim().toUpperCase();
-      const pair = VAT[vr] ?? (taxes.some((t) => t.code === raw && t.direction === 'output') ? [raw, ''] as [string, string] : undefined);
-      if (!pair) errors.push(`Thuế suất "${r.vatRate}" không hiểu — ghi KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra ở Biểu thuế`);
-      else if (!taxes.some((t) => t.code === pair[0] && t.direction === 'output' && t.is_active)) errors.push(`Mã thuế ${pair[0]} chưa khai (hoặc đang ngừng) ở danh mục Biểu thuế`);
-      else { input.taxOutCode = pair[0]; if (pair[1] && taxSet.has(pair[1])) input.taxInCode = pair[1]; }
+      // Thuế suất / loại thuế cố định (KCT, 0, 5, 8, 10, KKKN) hoặc mã cũ có loại tương ứng; một loại ghi cho cả bán và mua.
+      const k = loaiThue(VAT[vr] ?? r.vatRate!.trim().toUpperCase());
+      if (k.error) errors.push(k.error);
+      else { input.taxOutCode = k.code; input.taxInCode = k.code; }
     }
     // [2026-11-17 09:11 PM kiennt] NT-DM-003 E3 — mặt hàng mới (mã chính) bắt buộc thuế suất GTGT như form; mã biến thể theo mã cha (đóng góp)
-    if (sku && isNew && !ps && !input.taxOutCode && !r.taxOutCode?.trim() && !vr) errors.push('Mặt hàng mới phải có Thuế suất GTGT (KCT, 0, 5, 8, 10 hoặc mã thuế đầu ra)');
+    if (sku && isNew && !ps && !input.taxOutCode && !r.taxOutCode?.trim() && !vr) errors.push('Mặt hàng mới phải có Thuế suất GTGT (KCT, 0, 5, 8, 10 hoặc KKKN)');
     const pg = r.postingGroupCode?.trim();
     if (pg) { if (groupSet.has(pg)) input.postingGroupCode = pg; else errors.push(`Nhóm hạch toán "${pg}" chưa có`); }
     for (const [key, label] of [['taxOutCode', 'Mã VAT ra'], ['taxInCode', 'Mã VAT vào']] as const) {
       const v = r[key]?.trim();
-      if (v) { if (taxSet.has(v)) input[key] = v; else errors.push(`${label} "${v}" chưa có`); }
+      if (v) { const k = loaiThue(v); if (k.code) input[key] = k.code; else errors.push(`${label}: ${k.error}`); }
     }
     const act = r.isActive?.trim();
     if (act) { if (YES.has(low(act))) input.isActive = true; else if (NO.has(low(act))) input.isActive = false; else errors.push(`Theo dõi "${act}" không hiểu — ghi Có / Không`); }

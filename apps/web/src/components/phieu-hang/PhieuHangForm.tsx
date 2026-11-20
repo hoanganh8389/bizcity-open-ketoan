@@ -15,8 +15,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
-import { KIND_INFO, TAX_OPTIONS, TAX_RATES, applyPromo, clearPromo, promoLines, recompute, type PromoGiftInfo, type PromoResult, type TradeDoc, type TradeLine } from '@/lib/tradeDocs';
+import { KIND_INFO, TAX_RATES, thueMacDinh, applyPromo, clearPromo, promoLines, recompute, type PromoGiftInfo, type PromoResult, type TradeDoc, type TradeLine } from '@/lib/tradeDocs';
 import { Field, Modal, NumInput } from '@/components/ui';
+import { ChonThue } from '@/lib/thueGtgt';
 import { roundPrice } from '@/lib/format';
 import { BranchPicker } from '@/components/filters';
 import { ItemPicker, ListPicker, PartnerPicker } from '@/components/pickers';
@@ -64,7 +65,6 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
     set({ payments: on ? [{ methodCode: method, amount: v.totals.total }] : [] });
   };
   const methods = useQuery({ queryKey: ['payment-methods'], queryFn: () => api.get<PaymentMethod[]>('/api/v1/posting/payment-methods'), staleTime: 300_000, enabled: info.hasPayments }).data ?? [];
-  const taxOptions = info.taxDir ? TAX_OPTIONS[info.taxDir] : [];
   const khoAll = useKho();
   const khoName = info.isTransfer ? `${khoLabel(khoAll, v.warehouseCode)} → ${khoLabel(khoAll, v.toWarehouseCode)}` : khoLabel(khoAll, v.warehouseCode);
   /** Phiếu bán / trả: giá theo cửa hàng + tồn sổ (theo kho đã chọn) — các loại phiếu khác không dùng. */
@@ -103,7 +103,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
       const gifts: Record<string, PromoGiftInfo> = {};
       for (const sku of [...new Set(result.gifts.map((g) => g.sku))]) {
         const p = await api.get<CatalogProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku)}`).catch(() => null);
-        gifts[sku] = { name: p?.name ?? sku, unit: p?.unit ?? '', taxCode: p?.taxOutCode ?? 'R08' };
+        gifts[sku] = { name: p?.name ?? sku, unit: p?.unit ?? '', taxCode: p?.taxOutCode ?? thueMacDinh(v.docDate) };
       }
       const keys = new Set(result.applied.map((a) => a.policyRef.key));
       setPromo({ result, keys, sig: sigOf(v), gifts });
@@ -128,7 +128,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
       const p = await api.get<CatalogProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku)}`);
       const unit = p.units.find((u) => u.isDefault)?.unit ?? p.unit;
       const price = p.prices.find((x) => x.unit === unit)?.price ?? undefined;
-      const taxCode = info.taxDir === 'input' ? p.taxInCode ?? 'V08' : info.taxDir === 'output' ? p.taxOutCode ?? 'R08' : undefined;
+      const taxCode = info.taxDir === 'input' ? p.taxInCode ?? p.taxOutCode ?? thueMacDinh(v.docDate) : info.taxDir === 'output' ? p.taxOutCode ?? thueMacDinh(v.docDate) : undefined;
       // Bảng giá bán là giá ĐÃ gồm thuế → quy về đơn giá trước thuế (phiếu tính thuế trên tiền trước thuế). Mua hàng: chưa có
       // giá nhập trong danh mục → để 0 cho người nhập gõ theo hoá đơn.
       const rate = TAX_RATES[taxCode ?? ''] ?? 0;
@@ -140,7 +140,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
       setLine(i, { sku, name: p.name, unit: shopPrice !== null && q?.unit ? q.unit : unit, unitPrice, taxCode });
     } catch { /* mã chỉ có ở kho, chưa có trong danh mục hàng: giữ mã, nhập tay tên */ }
   };
-  const addLine = () => set({ lines: [...v.lines, { lineKey: lineKey(), sku: '', name: '', unit: '', qty: 1, unitPrice: 0, amountBeforeTax: 0, taxCode: info.taxDir === 'input' ? 'V08' : info.taxDir === 'output' ? 'R08' : undefined }] });
+  const addLine = () => set({ lines: [...v.lines, { lineKey: lineKey(), sku: '', name: '', unit: '', qty: 1, unitPrice: 0, amountBeforeTax: 0, taxCode: info.taxDir ? thueMacDinh(v.docDate) : undefined }] });
   const paid = (v.payments ?? []).reduce((s, p) => s + p.amount, 0);
   const problems = [
     !v.docDate && 'Chưa nhập ngày',
@@ -241,7 +241,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
                       {l.policyRef && <div className="muted mono" style={{ fontSize: 11 }} title={`Chương trình ${l.policyRef.key} bản ${l.policyRef.version}`}>KM {l.policyRef.key}</div>}
                     </td>
                     <td className="num">{l.isGift ? <span className="muted">tặng</span> : money(l.amountBeforeTax)}</td>
-                    <td><select className="select input" value={l.taxCode ?? ''} disabled={readOnly} onChange={(e) => setLine(i, { taxCode: e.target.value })}>{taxOptions.map(([c, t]) => <option key={c} value={c}>{t}</option>)}</select></td>
+                    <td><ChonThue value={l.taxCode} ngay={v.docDate} disabled={readOnly} title={readOnly ? "Phiếu đang ở chế độ xem — không đổi được loại thuế" : undefined} onChange={(c) => setLine(i, { taxCode: c })} /></td>
                     <td className="num">{money(l.taxAmount)}</td>
                   </>}
                   <td>{!readOnly && <button type="button" className="btn btn-xs" title="Bỏ dòng" onClick={() => set({ lines: v.lines.filter((_, j) => j !== i) })}>×</button>}</td>
