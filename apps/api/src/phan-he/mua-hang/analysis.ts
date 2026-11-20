@@ -340,6 +340,12 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   if ((doc.kind === 'cost' || doc.kind === 'rebate') && !(doc.amount && doc.amount > 0)) checks.push({ level: 'error', code: 'amount_missing', blocking: true, text: 'Chưa nhập số tiền' });
   const refRcpt = docs.filter((x) => x.kind === 'receipt' && x.status === 'approved' && (doc.refIds ?? []).includes(x.id));
   if (doc.kind === 'cost' && !refRcpt.length) checks.push({ level: 'error', code: 'cost_unassigned', blocking: true, text: 'Chi phí chưa gắn phiếu nhập đã duyệt — chọn phiếu nhập để phân bổ vào giá vốn' });
+  // [2026-11-20 khanhtd] MUA-HANG — khoản mục của phiếu chi phí phải có trong Danh mục khoản mục; chưa duyệt thì phải đang theo dõi (đóng góp)
+  if (doc.kind === 'cost' && doc.costItem) {
+    const ci = await trx.selectFrom('dimensions').select(['is_active']).where('tenant_id', '=', tenantId).where('kind', '=', 'cost_item').where('code', '=', doc.costItem).executeTakeFirst();
+    if (!ci) checks.push({ level: 'error', code: 'cost_item_unknown', blocking: true, text: `Khoản mục ${doc.costItem} không có trong Danh mục khoản mục` });
+    else if (!ci.is_active && doc.status !== 'approved') checks.push({ level: 'error', code: 'cost_item_inactive', blocking: true, text: `Khoản mục ${doc.costItem} đã ngừng theo dõi — chọn khoản mục khác` });
+  }
   if (doc.kind === 'rebate' && !doc.rebate && !doc.allocation?.length && !refRcpt.length) checks.push({ level: 'error', code: 'rebate_unassigned', blocking: true, text: 'Chiết khấu bổ sung chưa gắn phiếu nhập — chọn phiếu nhập được giảm giá để phân bổ giảm giá vốn' });
   checks.push(...orderChecks);
   checks.push(...(await extraChecks(trx, tenantId, doc, docs, settings)));

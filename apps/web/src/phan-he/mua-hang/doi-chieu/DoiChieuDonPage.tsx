@@ -19,8 +19,11 @@ import '../mua-hang.css';
 
 type State = 'du' | 'thieu' | 'thua' | 'ngoai_don' | 'doi_ma';
 interface Rec { id: string; docNo: string; docDate: string; status: string; sku: string; qty: number; unit: string; price: number }
-interface Row { orderId: string; orderNo: string; orderDate: string; partnerCode: string; branchCode: string; sku: string; name: string; unit: string; ordered: number; received: number; pending: number; diff: number; state: State; orderPrice: number | null; receivedPrice: number | null; priceDiffPct: number | null; swappedTo: string[]; receipts: Rec[]; outsideReason?: string }
-interface Res { rows: Row[]; orders: number; outsideReceipts: number; summary: Record<State | 'lech_gia', number> }
+interface Row { orderId: string; orderNo: string; orderDate: string; partnerCode: string; branchCode: string; sku: string; name: string; unit: string; ordered: number; received: number; pending: number; diff: number; state: State; orderPrice: number | null; receivedPrice: number | null; priceDiffPct: number | null; swappedTo: string[]; receipts: Rec[]; outsideReason?: string; invoice?: { state: InvState; text: string } }
+// [2026-11-20 khanhtd] MUA-HANG — tình trạng hoá đơn của đơn (gom phiếu nhập của đơn); phiếu ngoài đơn: hoá đơn của chính phiếu (đóng góp)
+type InvState = 'chua_nhap' | 'chua_co' | 'mot_phan' | 'du';
+const INV_CLS: Record<InvState, string> = { chua_nhap: 'badge-gray', chua_co: 'badge-bad', mot_phan: 'badge-warn', du: 'badge-ok' };
+interface Res { rows: Row[]; orders: number; outsideReceipts: number; summary: Record<State | 'lech_gia', number>; invoiceSummary?: Record<InvState, number> }
 
 const STATE: Record<State, [string, string]> = {
   du: ['Đủ', 'badge-ok'], thieu: ['Thiếu — còn phải giao', 'badge-info'], thua: ['Thừa so với đơn', 'badge-warn'], ngoai_don: ['Ngoài đơn', 'badge-warn'], doi_ma: ['Đổi mã', 'badge-bad'],
@@ -39,9 +42,10 @@ export function DoiChieuDonPage() {
   const [partner, setPartner] = useState(params.get('ncc') ?? '');
   const [state, setState] = useState<'' | State | 'lech_gia' | 'cho'>('');
   const [onlyDiff, setOnlyDiff] = useState(true);
+  const [hdF, setHdF] = useState<'' | InvState | 'chua_du'>('');
   const exportRef = useRef<(() => void) | null>(null);
   const q = useQuery({ queryKey: ['mua-hang', 'order-reconcile', from, to, partner], queryFn: () => api.get<Res>(`${P}/order-reconcile`, { from: from || undefined, to: to || undefined, partnerCode: partner || undefined }) });
-  const rows = (q.data?.rows ?? []).filter((r) => (!onlyDiff || isDiff(r)) && (!state || (state === 'lech_gia' ? priceOff(r) : state === 'cho' ? r.pending > 0 : r.state === state)))
+  const rows = (q.data?.rows ?? []).filter((r) => (!onlyDiff || hdF || isDiff(r)) && (!hdF || (hdF === 'chua_du' ? r.invoice?.state === 'chua_co' || r.invoice?.state === 'mot_phan' : r.invoice?.state === hdF)) && (!state || (state === 'lech_gia' ? priceOff(r) : state === 'cho' ? r.pending > 0 : r.state === state)))
     .map((r, i) => ({ ...r, key: `${r.orderId || r.receipts[0]?.id}-${r.sku}-${i}` }));
   const open = (id: string, no: string) => <Link to={`/mua-hang/chung-tu?mo=${encodeURIComponent(id)}`} title="Mở ở Chứng từ mua hàng">{no}</Link>;
   const columns: Column<Row & { key: string }>[] = [
@@ -61,6 +65,8 @@ export function DoiChieuDonPage() {
     { key: 'pending', header: 'Đang chờ', type: 'qty', width: 80, title: 'Phiếu nhập nháp / chờ duyệt theo đơn — chưa vào sổ' },
     { key: 'diff', header: 'Chênh', type: 'qty', width: 80, title: 'Đã nhận − đặt (âm = còn thiếu, dương = giao thừa)', render: (r) => <span className={r.diff < 0 ? 'mh-warn' : r.diff > 0 ? 'mh-bad' : ''}>{r.diff ? r.diff.toLocaleString('vi-VN', { maximumFractionDigits: 4 }) : ''}</span> },
     { key: 'state', header: 'Tình trạng', width: 170, value: (r) => label(r)[0] + (r.swappedTo.length ? ` → ${r.swappedTo.join(', ')}` : ''), render: (r) => <span className={`badge ${label(r)[1]}`} title={r.swappedTo.length ? `Nhận bằng mã ${r.swappedTo.join(', ')} thay cho ${r.sku}` : undefined}>{label(r)[0]}{r.swappedTo.length ? ` → ${r.swappedTo.join(', ')}` : ''}</span> },
+    { key: 'invoice', header: 'Hoá đơn', width: 190, title: 'Hoá đơn NCC của đơn, gom từ các phiếu nhập theo đơn (hoá đơn ghi trên phiếu nhập / lập từ MH22). Phiếu nhập ngoài đơn: hoá đơn của chính phiếu',
+      value: (r) => r.invoice?.text ?? '', render: (r) => (r.invoice ? <span className={`badge ${INV_CLS[r.invoice.state]}`}>{r.invoice.text}</span> : null) },
     { key: 'orderPrice', header: 'Giá đặt', type: 'price', width: 100, value: (r) => r.orderPrice ?? '', render: (r) => money(r.orderPrice) },
     { key: 'receivedPrice', header: 'Giá nhập (BQ)', type: 'price', width: 110, title: 'Đơn giá nhập bình quân các phiếu đã duyệt, quy về ĐVT và loại giá (gồm / chưa thuế) của đơn', value: (r) => r.receivedPrice ?? '', render: (r) => money(r.receivedPrice) },
     { key: 'priceDiffPct', header: 'Lệch giá %', type: 'number', width: 85, value: (r) => r.priceDiffPct ?? '', render: (r) => (priceOff(r) ? <span className={Math.abs(r.priceDiffPct!) >= 2 ? 'mh-bad' : 'mh-warn'}>{r.priceDiffPct! > 0 ? '+' : ''}{r.priceDiffPct!.toLocaleString('vi-VN')}%</span> : '') },
@@ -84,6 +90,11 @@ export function DoiChieuDonPage() {
         {s && <div className="filters" style={{ paddingTop: 0 }}>
           {chip('thieu', 'Thiếu', s.thieu)}{chip('thua', 'Thừa', s.thua)}{chip('ngoai_don', 'Ngoài đơn', s.ngoai_don)}{chip('doi_ma', 'Đổi mã', s.doi_ma)}{chip('lech_gia', 'Lệch giá', s.lech_gia)}{chip('cho', 'Có phiếu đang chờ')}
           <span className="muted" style={{ fontSize: 12 }}>{q.data!.orders} đơn đã duyệt · {q.data!.outsideReceipts} phiếu nhập ngoài đơn trong kỳ</span>
+        </div>}
+        {q.data?.invoiceSummary && <div className="filters" style={{ paddingTop: 0 }}>
+          <span className="muted" style={{ fontSize: 12 }}>Hoá đơn (số đơn):</span>
+          {([['chua_du', 'Chưa đủ HĐ', q.data.invoiceSummary.chua_co + q.data.invoiceSummary.mot_phan], ['chua_co', 'Chưa có HĐ', q.data.invoiceSummary.chua_co], ['mot_phan', 'Có HĐ một phần', q.data.invoiceSummary.mot_phan], ['du', 'Đủ HĐ', q.data.invoiceSummary.du], ['chua_nhap', 'Chưa nhập hàng', q.data.invoiceSummary.chua_nhap]] as const).map(([k, l, n]) =>
+            <button key={k} type="button" className={`btn btn-sm ${hdF === k ? 'btn-primary' : ''}`} title={hdF === k ? 'Bỏ lọc' : 'Lọc theo hoá đơn (bỏ qua ô "Chỉ dòng lệch")'} onClick={() => setHdF(hdF === k ? '' : k)}>{l} ({n})</button>)}
         </div>}
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : (

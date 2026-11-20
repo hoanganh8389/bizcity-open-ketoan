@@ -14,6 +14,7 @@ Một dòng = **một đơn × một mã hàng**:
 | Chênh | Đã nhận − đặt: âm = còn thiếu, dương = giao thừa |
 | Tình trạng | **Đủ** · **Thiếu — còn phải giao** · **Đã về — chờ duyệt phiếu** (phần còn lại đã có phiếu nhập nháp / chờ duyệt) · **Thừa so với đơn** · **Ngoài đơn** (mã không có trong đơn, hoặc phiếu không theo đơn nào) · **Đổi mã** (nhận mã đuôi K/M/Q/T thay cho mã đã đặt) |
 | Giá đặt / Giá nhập (BQ) / Lệch giá % | Giá nhập bình quân các phiếu đã duyệt, quy về ĐVT và loại giá (gồm / chưa thuế) của đơn; lệch ≥ 2% tô đỏ |
+| Hoá đơn | Hoá đơn NCC của **đơn**, gom từ các phiếu nhập theo đơn (hoá đơn ghi trên phiếu nhập hoặc lập từ MH22): **Chưa nhập hàng** · **Chưa có HĐ** · **Có HĐ một phần (k/n phiếu nhập)** · **Đủ HĐ** (cho phần hàng đã nhận). Phiếu nhập ngoài đơn: hoá đơn của chính phiếu |
 | Phiếu nhập (theo vết) | Các phiếu nhập của mã đó (bấm để mở); phiếu chưa duyệt ghi trạng thái |
 
 Dòng **"Nhập ngoài đơn"** ở cột Đơn đặt: phiếu nhập không theo đơn nào (rê chuột xem lý do nhập ngoài đơn).
@@ -23,6 +24,7 @@ Dòng **"Nhập ngoài đơn"** ở cột Đơn đặt: phiếu nhập không th
 - **Ngày đơn từ / đến** (phiếu ngoài đơn: theo ngày phiếu), **Nhà cung cấp**.
 - **Chỉ dòng lệch / chưa xong** (mặc định bật): ẩn các dòng đã giao đủ, đúng giá, không còn phiếu chờ.
 - Nút nhanh: **Thiếu · Thừa · Ngoài đơn · Đổi mã · Lệch giá · Có phiếu đang chờ** (kèm số dòng).
+- Hàng nút **Hoá đơn (số đơn)**: **Chưa đủ HĐ · Chưa có HĐ · Có HĐ một phần · Đủ HĐ · Chưa nhập hàng** — lọc các đơn theo hoá đơn; khi bấm thì bỏ qua ô "Chỉ dòng lệch" để thấy cả đơn đã giao đủ nhưng chưa đủ hoá đơn.
 - **Xuất Excel** đúng các dòng đang xem.
 
 ## Xử lý thường gặp

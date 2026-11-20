@@ -156,7 +156,9 @@ Máy chủ kiểm tra lại sau mỗi lần sửa phiếu, bằng **số liệu 
 | Muốn làm | Cách làm |
 |---|---|
 | NCC giảm giá / chiết khấu thêm **sau khi đã nhập** | **+ Thêm chứng từ → Chiết khấu / giảm giá sau mua**: chọn NCC, tích các phiếu nhập được giảm, nhập số tiền; có hoá đơn điều chỉnh thì chọn VAT và số hoá đơn. Duyệt: giảm công nợ, giảm giá vốn từng mã |
-| Chi phí vận chuyển, bốc xếp cho **nhiều phiếu nhập** | **Chi phí mua hàng**: chọn loại chi phí, tích các phiếu nhập, chọn phân bổ theo giá trị hoặc số lượng |
+| Chi phí vận chuyển, bốc xếp cho **nhiều phiếu nhập** | **Chi phí mua hàng**: chọn loại chi phí và **Khoản mục** (Danh mục khoản mục), tích các phiếu nhập, chọn phân bổ theo giá trị hoặc số lượng |
+| Theo dõi chi phí mua **theo khoản mục** | MH11 thẻ **Chi phí / thưởng**: cột **Khoản mục**, dải cộng tiền chưa thuế theo từng khoản mục (bấm để lọc), ô lọc **Khoản mục chi phí** bên trái ("Chưa chọn khoản mục" = phiếu cũ). Khoản mục phải có trong Danh mục khoản mục và đang theo dõi, không thì phiếu báo lỗi chặn duyệt. Khoản mục hiện theo dõi ở phân hệ Mua hàng, **chưa ghi vào sổ cái** (báo cáo chi phí theo khoản mục của kế toán chưa thấy chi phí mua) |
+| Theo dõi **đơn đặt đã có hoá đơn chưa** | MH11 thẻ **Đơn đặt hàng**: cột **Đơn: hoá đơn** (Chưa nhập hàng · Chưa có HĐ · Có HĐ một phần · Đủ HĐ — gom từ các phiếu nhập của đơn; rê chuột xem số hoá đơn và phiếu nhập còn thiếu hoá đơn), ô lọc **Hoá đơn của đơn đặt** bên trái (có "Chưa đủ hoá đơn"). Xem theo dòng hàng: MH21 |
 | TGS **tự mua quà** để tặng khách | Phiếu **Nhập mua**, nhập các mã quà (theo quy tắc mã hàng, quà khuyến mại có mã bắt đầu bằng **Q**) — phiếu toàn mã quà phần mềm tự hiểu là mua quà để tặng, vào sổ quà tặng (MH09), không phải đánh dấu; nhập chương trình; có số hoá đơn thì tính là quà có VAT |
 | Xuất quà tặng khách | **Xuất quà tặng**: nhập chương trình trên từng dòng. Xuất quá số quà còn tồn của chương trình tại chi nhánh thì không duyệt được |
 | Ngày sản xuất của lô | Cột **NSX** trên dòng hàng (nếu có) |
