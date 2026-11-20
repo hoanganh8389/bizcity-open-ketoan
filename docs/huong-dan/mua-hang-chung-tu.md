@@ -130,6 +130,7 @@ Máy chủ kiểm tra lại sau mỗi lần sửa phiếu, bằng **số liệu 
   - **Đã tự áp** — chương trình nào, ra bao nhiêu;
   - **Cần xem** — thiếu / thừa quà, CK ghi tay khác chính sách (nút **Dùng theo chính sách**);
   - **Mua thêm để được** — ví dụ "mua thêm 5 để được tặng thêm 1", "đủ 50 để được CK 3%" (nút **Lên N**).
+- Cột **Hiệu lực** của bảng khuyến mại: chương trình chạy từ ngày nào đến ngày nào (theo bản chính sách áp ở ngày phiếu; phiếu đã duyệt: bản đã chốt lúc duyệt). Chữ **cam ⚠**: còn dưới 7 ngày tính từ ngày phiếu là hết hạn (hoặc đã hết hạn), nên đặt / nhập sớm. Dòng CK ghi tay trên phiếu không phải chương trình nên để trống.
 - Quà ngoài chương trình (NCC tặng thêm): nút **+ Quà ngoài chương trình…**.
 - **Bỏ / áp lại từng chương trình trên phiếu (cột Áp):** tự động nhưng linh hoạt — NCC hết quà, lần này NCC không cho CK… thì **bỏ tích** chương trình đó ở bảng khuyến mại (hoặc khung bên phải): CK / bậc / CKTT của nó về 0, quà tự thêm của nó tự gỡ; dòng chuyển sang nhóm **Đã bỏ trên phiếu** (gạch ngang). **Tích lại** là áp lại. Chỉ ảnh hưởng phiếu đang mở; lúc duyệt phần mềm chốt đúng như lựa chọn.
 - **CK trên đơn bằng số tiền cố định** (vd giảm 2 triệu / đơn) chỉ tự áp khi tiền hàng **lớn hơn** số CK, hoặc đủ mức **"Áp khi tổng đơn từ"** khai ở chính sách; chưa đủ thì không áp (không bao giờ làm số phải trả âm) mà hiện gợi ý "tổng đơn từ … mới được CK — mua thêm …". Mỗi khoản CK chỉ hiện **một dòng** (mã chính sách + số tiền), CK ghi tay hiện "ghi trên phiếu".
