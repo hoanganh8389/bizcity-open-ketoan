@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 195
+      "count": 194
     },
     {
       "key": "partial",
@@ -9101,9 +9101,15 @@
       "phase": "PHASE-036",
       "title": "B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nút thành Thiết lập nhanh (sau B3)",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh)",
+        "branch": "feat/s036-8b-lay-lai-ban-truoc",
+        "state": "đang làm",
+        "since": "2026-11-20",
+        "dot": "PHASE-036 · S036-8b — Lấy lại bản trước từ bản chụp danh mục: core.default-data.backup-restore (mật…"
+      },
       "modules": [
         "he-thong"
       ],
