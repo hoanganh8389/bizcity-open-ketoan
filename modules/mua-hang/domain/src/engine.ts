@@ -114,6 +114,9 @@ export interface PDoc {
   taxCode?: string;
   /** Chi phí mua hàng: loại chi phí. */
   costType?: 'van_chuyen' | 'boc_xep' | 'luu_kho' | 'bao_hiem' | 'kiem_dinh' | 'khac';
+  // [2026-11-20 khanhtd] MUA-HANG — khoản mục chi phí của phiếu chi phí mua (đóng góp)
+  /** Chi phí mua hàng: mã khoản mục ở Danh mục khoản mục (dimensions kind = cost_item) — theo dõi loại chi phí ở phân hệ; chưa vào sổ cái. */
+  costItem?: string;
   /** Chi phí / thưởng: tiêu thức phân bổ vào các mã hàng. */
   basis?: 'value' | 'qty';
   /** Thưởng: chính sách + kỳ đã tính (chặn tính trùng). */

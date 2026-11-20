@@ -36,6 +36,7 @@ import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
 import { nhapDongHang, xuatDongHang, type DongHangCot, type DongNhap } from './DongHangExcel';
 import { BangKhuyenMai, KhuyenMaiBar, KhuyenMaiPanel } from '../thanh-phan/KhuyenMai';
 import { hieuLucCua } from '../thanh-phan/hieuLuc';
+import { useDimension } from '@/components/voucher/lookups';
 import { TermEditor } from '../chinh-sach/quyTac';
 import { TepDinhKem } from '../dinh-kem/TepDinhKem';
 import { NccInfo } from '../thanh-phan/NccInfo';
@@ -105,6 +106,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const dock = useDockWindow(onClose, dirty, `mh:${value.id}`);
   const names = useNames();
   const brands = useBrands(data.policies);
+  const costItems = useDimension('cost_item'); // [2026-11-20 khanhtd] MUA-HANG — Danh mục khoản mục cho phiếu chi phí (đóng góp)
   const nccBrands = useSupplierBrands(v.partnerCode || undefined);
   // Phiếu đã duyệt / huỷ: chỉ xem. Phiếu đã ghi (nháp, chờ duyệt): mở ở chế độ xem, bấm "Sửa" mới sửa; Gửi duyệt / Duyệt
   // vẫn bấm được khi đang xem (không đổi nội dung phiếu).
@@ -831,6 +833,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {!isGoods && <div className="field"><label>{v.kind === 'cost' ? 'Số tiền chưa thuế (*)' : 'Số tiền (*)'}</label><input className="input num" value={fmt(v.amount)} disabled={Boolean(v.rebate)} onChange={(e) => set({ amount: num(e.target.value) })} />{(v.kind === 'cost' || v.kind === 'rebate') && amountTax(v) > 0 && <span className="muted" style={{ fontSize: 11 }}>+ VAT {vnd(amountTax(v))} = {vnd((v.amount ?? 0) + amountTax(v))}</span>}</div>}
                 {v.kind === 'cost' && <div className="field"><label>Loại chi phí</label><select className="select input" value={v.costType ?? 'van_chuyen'} onChange={(e) => set({ costType: e.target.value as PDoc['costType'] })}>{Object.entries(COST_TYPES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>}
+                {/* [2026-11-20 khanhtd] MUA-HANG — khoản mục chi phí từ Danh mục khoản mục, để theo dõi / cộng chi phí mua theo khoản mục ở MH11 (đóng góp) */}
+                {v.kind === 'cost' && <div className="field"><label title="Khoản mục ở Danh mục khoản mục — lọc và cộng chi phí mua theo khoản mục ở Tổng hợp mua hàng (MH11, thẻ Chi phí / thưởng). Chưa ghi vào sổ cái">Khoản mục</label>
+                  <ListPicker items={costItems.filter((c) => c.isActive || c.code === v.costItem).map((c) => ({ code: c.code, name: c.name }))} value={v.costItem ?? ''} onChange={(c) => set({ costItem: c || undefined })} disabled={readOnly} placeholder={costItems.length ? 'Chọn khoản mục' : 'Chưa có khoản mục — khai ở Danh mục khoản mục'} emptyText="Không có khoản mục khớp" /></div>}
                 {v.kind === 'rebate' && <>
                   <div className="field"><label>Hoá đơn điều chỉnh giảm</label><select className="select input" value={v.taxCode ?? ''} onChange={(e) => set({ taxCode: e.target.value || undefined })}><option value="">Không có (không giảm VAT)</option><option value="V05">Có — VAT 5%</option><option value="V08">Có — VAT 8%</option><option value="V10">Có — VAT 10%</option></select></div>
                   {v.taxCode && <div className="field"><label>Số hoá đơn điều chỉnh</label><input className="input mono" value={v.invoice?.no ?? ''} onChange={(e) => set({ invoice: e.target.value ? { no: e.target.value.trim(), date: v.invoice?.date || v.docDate } : undefined })} /></div>}
