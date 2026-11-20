@@ -69,5 +69,6 @@ Phiếu **Chưa đạt** ghi rõ chỗ sai, quay về **Đang làm**. Đổi yê
 | [NT-DM-013](danh-muc/NT-DM-013-ma-bien-the-duoi-so.md) | DM10: mã biến thể — phần cuối nhận cả chữ số (phần đầu vẫn chỉ chữ cái); mã cha suy từ 9 số đầu | Đã chốt |
 | [NT-DM-014](danh-muc/NT-DM-014-sua-loi-danh-muc-20-11.md) | Sửa lỗi kiểm thử 20/11: nhập Excel mặt hàng đối chiếu nhóm với ngành / nhãn; loại kho giữ hộ khoá TK; nhập / xuất Excel loại kho đủ cột | Đã chốt |
 | [NT-DM-015](danh-muc/NT-DM-015-xuat-nhom-hang-6-cot.md) | DM11: tệp Xuất / Nhập Excel nhóm hàng chia 6 cột Mã / Tên ngành, nhãn, nhóm | Đã chốt |
+| [NT-DM-016](danh-muc/NT-DM-016-khach-hang-dien-thoai-nhap-excel.md) | DM12: "Di động" → "Điện thoại"; nhập Excel khách hàng đủ cột của form, cột liên kết tra theo tên | Đã chốt |
 
 Bộ 25 tình huống mua hàng cũ: `docs/kiem-thu/ke-hoach-test-mua-hang.xlsx` và test `apps/api/test/mua-hang-25-tinh-huong.test.ts`.
