@@ -121,8 +121,8 @@ export const LAYER_MAP = [
   ['modules/partners/tra-mst.ts', 'A', 'adapters/tax-lookup'],
   ['modules/products/', 'M', 'data/masterdata'],
   ['modules/branches/', 'M', 'data/masterdata'],
-  // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — modules/org-units/ (sơ đồ tổ chức) cùng lớp M danh mục với chi nhánh (đóng góp)
-  ['modules/org-units/', 'M', 'data/masterdata'],
+  // [2026-11-20 Nguyễn Văn Thủy] modules/co-cau/ (cơ cấu tổ chức một bảng đơn vị, 0174 thay org-units) cùng lớp M danh mục với chi nhánh (đóng góp)
+  ['modules/co-cau/', 'M', 'data/masterdata'],
   // [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — modules/posting-flow/ (thiết kế hạch toán: lý do theo màn, sơ đồ dây chuyền) cùng lớp M danh mục (đóng góp)
   ['modules/posting-flow/', 'M', 'data/masterdata'],
   // [2026-11-10 05:00 PM Nguyễn Văn Thủy] PHASE-026 — bảng quy tắc định khoản (chạy thử gọi Kernel) và chương trình bán có hạn mức: lớp module (đóng góp)

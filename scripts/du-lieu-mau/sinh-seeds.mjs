@@ -62,7 +62,6 @@ const NODES = [
   ['HCM1', 'Cửa hàng tại TP Hồ Chí Minh', 'HCM', ''],
   ['BDG', 'Cửa hàng tại Bình Dương', 'HCM', ''],
 ];
-put('so-do-to-chuc.jsonl', NODES.map(([code, name, parent_code, short_code]) => ({ code, name, parent_code, short_code, alias: '', note: '' })));
 
 // ── Chi nhánh: [mã, tên, nút sơ đồ, đang dùng] — 2 số đầu = tỉnh, xx000 = chi nhánh nhận hàng ───────
 const BRANCHES = [
@@ -85,7 +84,6 @@ put('chi-nhanh.jsonl', BRANCHES.map(([code, name], i) => ({
   department_code: `BH${prefix(code)}`, is_active: !isOff(code), note: '', company_name: CONG_TY,
   tax_code: code === '00000' ? MST_CTY : `${MST_CTY}-${pad(i, 3)}`, phone: `0900000${pad(i, 3)}`, fax: '',
 })));
-put('so-do-to-chuc-gan.jsonl', BRANCHES.filter(([, , org]) => org).map(([branch_code, , org_code]) => ({ branch_code, org_code })));
 
 // ── Bộ phận: khối, phòng ban, mỗi cửa hàng một bộ phận BH + 5 số ─────────────────────────────
 const DEPTS = [

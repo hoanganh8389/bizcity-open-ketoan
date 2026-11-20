@@ -111,7 +111,7 @@ export interface AuthzRole {
 
 export type AuthzScope =
   | { kind: 'all' }
-  | { kind: 'org_unit'; id: string; /** đường dẫn cây (org_units.path) để so cây con */ path: string; subtree: boolean }
+  | { kind: 'org_unit'; id: string; /** đường dẫn đơn vị (branches.unit_path nối bằng \, 0174) để so cây con */ path: string; subtree: boolean }
   | { kind: 'branch'; id: string }
   | { kind: 'warehouse'; id: string };
 
@@ -133,7 +133,7 @@ export interface AuthzResourceContext {
   id?: string;
   branchId?: string | null;
   warehouseId?: string | null;
-  /** org_units.path của nút chứa chi nhánh. */
+  /** Đường dẫn đơn vị (nối bằng \) của đơn vị chứa tài nguyên. */
   orgPath?: string | null;
   createdBy?: string | null;
   createdAt?: string | null;

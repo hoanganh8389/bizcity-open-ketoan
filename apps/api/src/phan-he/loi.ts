@@ -45,15 +45,13 @@ import { appsRoutes } from '../modules/apps/apps.routes.js';
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — gắn route Kiểm chuẩn (conformanceRoutes) vào nhóm Core
 import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes, inventoryRoutes, conformanceRoutes, intakeRoutes, lineageRoutes, reviewRoutes } from '../kernel/public.js';
 import { branchRoutes } from '../modules/branches/branch.routes.js';
-// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — CORE_ROUTES thêm orgUnitRoutes (sơ đồ tổ chức, đơn vị mua hàng) (đóng góp)
-import { orgUnitRoutes } from '../modules/org-units/org-unit.routes.js';
 // [2026-11-20 Nguyễn Văn Thủy] cơ cấu một bảng: đơn vị – phân kho – bộ phận (0173) (đóng góp)
 import { coCauRoutes } from '../modules/co-cau/co-cau.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
 import { warehouseTypeRoutes } from '../modules/warehouses/warehouse-types.js';
 import { catalogTrashRoutes } from '../modules/catalog-trash/catalog-trash.js';
 // [2026-11-13 Nguyễn Văn Thủy] lịch sử thay đổi nút Cơ cấu tổ chức (đóng góp)
-import { coCauHistoryRoutes } from '../modules/org-units/co-cau-history.js';
+import { coCauHistoryRoutes } from '../modules/co-cau/co-cau-history.js';
 import { unitNameRoutes } from '../modules/unit-names/unit-name.routes.js';
 import { helpRoutes } from '../modules/help/help.routes.js';
 import { partnerRoutes } from '../modules/partners/partner.routes.js';
@@ -88,7 +86,7 @@ import { inventoryReportRoutes } from '../modules/inventory/inventory-report.rou
 
 export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, gatesRoutes, enginesRoutes, devToolsBoardRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
-  accountRoutes, branchRoutes, orgUnitRoutes, coCauRoutes, warehouseRoutes, warehouseTypeRoutes, catalogTrashRoutes, coCauHistoryRoutes, unitNameRoutes, helpRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
+  accountRoutes, branchRoutes, coCauRoutes, warehouseRoutes, warehouseTypeRoutes, catalogTrashRoutes, coCauHistoryRoutes, unitNameRoutes, helpRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, itemRoutes, saleProgramRoutes, lotRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, printProfileRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,

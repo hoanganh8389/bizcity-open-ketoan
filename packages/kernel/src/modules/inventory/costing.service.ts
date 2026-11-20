@@ -779,14 +779,15 @@ export const costingService = {
 // [2026-11-17 Nguyễn Văn Thủy] lưu LẦN TÍNH GIÁ VỐN theo chi nhánh (0150): mốc cơ cấu (id + uid của nút), kỳ, khoảng ngày, tổng, phiếu,
 // bảng đơn giá các mã của chi nhánh tại lần tính (đóng góp)
 async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: string; to: string; costCenter?: string; branches: CostingResult['branches']; imported: number; formula: { code: string; name: string; formula: CostFormula }; separateTypes: string[] }): Promise<string[]> {
-  const centers = (await sql<{ id: string; code: string; name: string; org_unit_id: string | null; org_uid: string | null }>`
-    SELECT u.id::text, u.code, u.name, u.org_unit_id::text, COALESCE(o.uid, sb.uid) AS org_uid FROM accounting_units u LEFT JOIN org_units o ON o.id = u.org_unit_id LEFT JOIN branches sb ON sb.id = u.branch_id
+  // Điểm tính giá vốn = đơn vị (branches) gắn với đơn vị hạch toán (0174).
+  const centers = (await sql<{ id: string; code: string; name: string; org_uid: string | null }>`
+    SELECT u.id::text, u.code, u.name, sb.uid AS org_uid FROM accounting_units u LEFT JOIN branches sb ON sb.id = u.branch_id
      WHERE u.tenant_id = ${auth.tenantId}
        AND ${a.costCenter ? sql`u.code = ${a.costCenter}` : sql`EXISTS (SELECT 1 FROM inventory_costs c WHERE c.tenant_id = u.tenant_id AND c.cost_group = u.id AND c.year = ${a.p.year} AND c.month = ${a.p.month})`}`.execute(trx)).rows;
   const shop = new Map((await sql<{ code: string; unit: string | null }>`SELECT b.code, b.accounting_unit_id::text AS unit FROM branches b WHERE b.tenant_id = ${auth.tenantId}`.execute(trx)).rows.map((r) => [r.code, r.unit]));
   // Shop chưa gắn cơ cấu / đơn vị hạch toán (nhóm 0): vẫn ghi một lần tính để lịch sử không trống.
   if (!a.costCenter && (await sql`SELECT 1 FROM inventory_costs WHERE tenant_id = ${auth.tenantId} AND cost_group = 0 AND year = ${a.p.year} AND month = ${a.p.month} LIMIT 1`.execute(trx)).rows.length) {
-    centers.push({ id: '0', code: '', name: 'Chưa gắn cơ cấu', org_unit_id: null, org_uid: '' });
+    centers.push({ id: '0', code: '', name: 'Chưa gắn cơ cấu', org_uid: '' });
   }
   const ids: string[] = [];
   for (const ct of centers) {
@@ -795,8 +796,8 @@ async function recordRuns(trx: Db, auth: AuthContext, a: { p: Period; from: stri
     const items = Number((await sql<{ n: string }>`SELECT COUNT(*) AS n FROM inventory_costs WHERE tenant_id = ${auth.tenantId} AND cost_group = ${ct.id} AND year = ${a.p.year} AND month = ${a.p.month}`.execute(trx)).rows[0]!.n);
     const vouchers = mine.filter((b) => b.docNo).map((b) => ({ branchCode: b.branchCode, docNo: b.docNo, total: b.total + b.filledTotal }));
     const run = await sql<{ id: string }>`
-      INSERT INTO costing_runs (tenant_id, org_unit_id, org_uid, center_code, center_name, year, month, date_from, date_to, items, total, imported, vouchers, run_by, formula_code, formula_name, formula, separate_types)
-      VALUES (${auth.tenantId}, ${ct.org_unit_id}, ${ct.org_uid ?? ''}, ${ct.code}, ${ct.name}, ${a.p.year}, ${a.p.month}, ${a.from}::date, ${a.to}::date,
+      INSERT INTO costing_runs (tenant_id, org_uid, center_code, center_name, year, month, date_from, date_to, items, total, imported, vouchers, run_by, formula_code, formula_name, formula, separate_types)
+      VALUES (${auth.tenantId}, ${ct.org_uid ?? ''}, ${ct.code}, ${ct.name}, ${a.p.year}, ${a.p.month}, ${a.from}::date, ${a.to}::date,
               ${items}, ${total}, ${a.imported}, ${JSON.stringify(vouchers)}::jsonb, ${auth.actorName || auth.actor}, ${a.formula.code}, ${a.formula.name}, ${JSON.stringify(a.formula.formula)}::jsonb, ${a.separateTypes}::text[]) RETURNING id::text`.execute(trx);
     const runId = run.rows[0]!.id;
     await sql`INSERT INTO costing_run_lines (tenant_id, run_id, sku, item_id, opening_qty, opening_value, in_qty, in_value, unit_cost, out_qty, closing_qty, closing_value, gift_qty, cost_source, detail, wh_type)

@@ -23,7 +23,7 @@ export interface TenantRuleRow { id: string; tenant_role_id: string; permission:
 export interface RoleAssignmentRow {
   id: string; role: Role | null; tenant_role_id: string | null; scope_type: 'tenant' | 'branch' | 'warehouse' | 'org_unit'; scope_id: string | null;
   purpose: AuthzPurpose; valid_from: string; valid_to: string | null; revoked_at: Date | string | null;
-  /** org_unit: org_units.path của nút gán (so cây con với tài nguyên mang orgPath). */
+  /** org_unit: đường dẫn đơn vị gán (branches.unit_path nối bằng \, 0174) — so cây con với tài nguyên mang orgPath. */
   org_path?: string | null;
   /** org_unit: id các chi nhánh thuộc nút và cây con lúc nạp — tài nguyên chỉ mang branchId (cửa nạp) vẫn khớp được. */
   org_branch_ids?: readonly string[];
@@ -83,10 +83,10 @@ export async function loadAuthzSnapshot(conn: Db, tenantId: string, userId: stri
     const nodeIds = [...new Set(rows.rows.filter((r) => r.scope_type === 'org_unit' && r.scope_id).map((r) => String(r.scope_id)))];
     if (nodeIds.length) {
       const nodes = (await sql<{ id: string; path: string; branch_ids: string[] | null }>`
-        SELECT n.id::text, n.path,
-               (SELECT array_agg(b.id::text) FROM org_units m JOIN branches b ON b.tenant_id = m.tenant_id AND b.org_unit_id = m.id
-                 WHERE m.tenant_id = n.tenant_id AND (m.path = n.path OR left(m.path, length(n.path) + 1) = n.path || chr(92))) AS branch_ids
-          FROM org_units n WHERE n.tenant_id = ${tenantId} AND n.id = ANY(${nodeIds}::bigint[])`.execute(conn)).rows;
+        SELECT n.id::text, replace(n.unit_path, '/', chr(92)) AS path,
+               (SELECT array_agg(b.id::text) FROM branches b
+                 WHERE b.tenant_id = n.tenant_id AND (b.unit_path = n.unit_path OR left(b.unit_path, length(n.unit_path) + 1) = n.unit_path || '/')) AS branch_ids
+          FROM branches n WHERE n.tenant_id = ${tenantId} AND n.id = ANY(${nodeIds}::bigint[])`.execute(conn)).rows;
       const byId = new Map(nodes.map((n) => [n.id, n]));
       for (const r of rows.rows) {
         const n = r.scope_type === 'org_unit' ? byId.get(String(r.scope_id)) : undefined;

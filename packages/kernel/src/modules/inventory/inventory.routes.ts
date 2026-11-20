@@ -38,7 +38,7 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Chi nhánh tính giá vốn (đơn vị hạch toán, sinh theo Cơ cấu tổ chức) và số shop' },
     handler: async (req) => {
       const rows = await sql<{ code: string; name: string; shops: string; org: boolean }>`
-        SELECT u.code, u.name, COUNT(b.id) AS shops, (u.org_unit_id IS NOT NULL) AS org
+        SELECT u.code, u.name, COUNT(b.id) AS shops, EXISTS (SELECT 1 FROM branches c WHERE c.unit_parent_id = u.branch_id) AS org
           FROM accounting_units u LEFT JOIN branches b ON b.accounting_unit_id = u.id AND b.tenant_id = u.tenant_id
          WHERE u.tenant_id = ${authOf(req).tenantId} GROUP BY u.id ORDER BY u.code`.execute(db);
       return ok(rows.rows.map((r) => ({ code: r.code, name: r.name, shops: Number(r.shops), fromOrg: r.org })));

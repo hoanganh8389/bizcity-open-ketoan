@@ -1,4 +1,5 @@
 // [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5 (§15): gán vai trò tại nút sơ đồ tổ chức (vùng, gồm cây con)
+// [2026-11-20 Nguyễn Văn Thủy] cây đơn vị một bảng (0174): vùng = đơn vị nhóm; dựng cây qua /api/v1/co-cau/units; phạm vi gồm cả đơn vị nhóm trong nhánh (đóng góp)
 /**
  * Sơ đồ tổ chức: MB (Miền Bắc) → HN (Hà Nội) → cửa hàng CN01; MB → cửa hàng CN03; MN (Miền Nam) → cửa hàng CN02.
  * "ql" vai trò chính Nhân viên + "Quản lý vùng" (Cho reports:read, ledger:read, documents:read, catalog:write) gán TẠI nút MB.
@@ -25,12 +26,12 @@ beforeAll(async () => {
   ctx = await setupTenant();
   for (const [code, name] of [['CN02', 'Cửa hàng 02'], ['CN03', 'Cửa hàng 03']]) ok(await call(ctx, 'POST', '/api/v1/branches', { code, name }));
   for (const b of ok(await call(ctx, 'GET', '/api/v1/branches'))) bid[b.code] = String(b.id);
-  for (const [code, name, parentCode] of [['MB', 'Miền Bắc', null], ['HN', 'Hà Nội', 'MB'], ['MN', 'Miền Nam', null]] as const) {
-    ok(await call(ctx, 'POST', '/api/v1/org-units', { code, name, ...(parentCode ? { parentCode } : {}) }));
+  for (const [code, name, parentCode] of [['MB', 'Miền Bắc', ''], ['HN', 'Hà Nội', 'MB'], ['MN', 'Miền Nam', '']] as const) {
+    ok(await call(ctx, 'POST', '/api/v1/co-cau/units', { code, name, parentCode }));
   }
-  ok(await call(ctx, 'PUT', '/api/v1/org-units/HN/branches', { branchCodes: ['CN01'] }));
-  ok(await call(ctx, 'PUT', '/api/v1/org-units/MB/branches', { branchCodes: ['CN03'] }));
-  ok(await call(ctx, 'PUT', '/api/v1/org-units/MN/branches', { branchCodes: ['CN02'] }));
+  ok(await call(ctx, 'PATCH', '/api/v1/co-cau/units/CN01', { parentCode: 'HN' }));
+  ok(await call(ctx, 'PATCH', '/api/v1/co-cau/units/CN03', { parentCode: 'MB' }));
+  ok(await call(ctx, 'PATCH', '/api/v1/co-cau/units/CN02', { parentCode: 'MN' }));
   for (const v of ok(await call(ctx, 'GET', '/api/v1/quyen-chi-nhanh/vung'))) nid[v.code] = String(v.id);
   for (const cn of ['CN01', 'CN02', 'CN03']) ok(await call(ctx, 'POST', '/api/v1/vouchers', chi(cn)));
 
@@ -50,9 +51,9 @@ describe('GĐ5 — gán vai trò tại nút sơ đồ tổ chức', () => {
     expect(ds.find((x) => x.code === 'MN')?.branches).toBe(1);
   });
 
-  it('phạm vi = mọi cửa hàng thuộc Miền Bắc và nút con: CN01, CN03 (không có CN02)', async () => {
+  it('phạm vi = Miền Bắc và mọi đơn vị trong nhánh: CN01, CN03, HN, MB (không có CN02)', async () => {
     const q = ok(await as('GET', '/api/v1/quyen-chi-nhanh')) as { branches: string[] };
-    expect(q.branches).toEqual(['CN01', 'CN03']);
+    expect(q.branches).toEqual(['CN01', 'CN03', 'HN', 'MB']);
   });
 
   it('bảng cân đối không lọc → số của CN01 + CN03; xin CN02 → 403', async () => {
@@ -63,34 +64,35 @@ describe('GĐ5 — gán vai trò tại nút sơ đồ tổ chức', () => {
     expect(JSON.stringify(r.body)).toContain('BRANCH_OUT_OF_SCOPE');
   });
 
-  it('bảng rà trước khi bật: hiện "tại vùng MB (2 cửa hàng)"', async () => {
+  it('bảng rà trước khi bật: hiện "tại vùng MB (4 đơn vị)"', async () => {
     const ra = ok(await call(ctx, 'GET', '/api/v1/quyen-chi-nhanh/ra-soat')) as { nguoi: { userId: string; branches: string[]; ganTai: string[] }[] };
     const x = ra.nguoi.find((n) => n.userId === qlId)!;
-    expect(x.branches).toEqual(['CN01', 'CN03']);
-    expect(x.ganTai.join(' ')).toContain('tại vùng MB (2 cửa hàng)');
+    expect(x.branches).toEqual(['CN01', 'CN03', 'HN', 'MB']);
+    expect(x.ganTai.join(' ')).toContain('tại vùng MB (4 đơn vị)');
   });
 
   it('cửa hàng chuyển vùng (CN02 sang Miền Bắc) → quyền đổi ngay yêu cầu kế tiếp', async () => {
-    ok(await call(ctx, 'PUT', '/api/v1/org-units/MB/branches', { branchCodes: ['CN02'] }));
+    ok(await call(ctx, 'PATCH', '/api/v1/co-cau/units/CN02', { parentCode: 'MB' }));
     const q = ok(await as('GET', '/api/v1/quyen-chi-nhanh')) as { branches: string[] };
-    expect(q.branches).toEqual(['CN01', 'CN02', 'CN03']);
+    expect(q.branches).toEqual(['CN01', 'CN02', 'CN03', 'HN', 'MB']);
     expect(no64(ok(await as('GET', `${TB}&branchCodes=CN02`)))).toBe(1000);
-    ok(await call(ctx, 'PUT', '/api/v1/org-units/MN/branches', { branchCodes: ['CN02'] })); // trả về chỗ cũ
+    ok(await call(ctx, 'PATCH', '/api/v1/co-cau/units/CN02', { parentCode: 'MN' })); // trả về chỗ cũ
     expect((await as('GET', `${TB}&branchCodes=CN02`)).status).toBe(403);
   });
 
-  it('ngừng / xoá nút (không còn cửa hàng) mà còn lần gán theo vùng → chặn ở CSDL, báo người được gán; thu hồi rồi thì xoá được', async () => {
-    ok(await call(ctx, 'POST', '/api/v1/org-units', { code: 'TRONG', name: 'Vùng trống' }));
+  it('ngừng / xoá đơn vị mà còn lần gán theo vùng → chặn ở CSDL, báo người được gán; thu hồi rồi thì xoá được', async () => {
+    ok(await call(ctx, 'POST', '/api/v1/co-cau/units', { code: 'TRONG', name: 'Vùng trống', parentCode: '' }));
+    ok(await call(ctx, 'POST', '/api/v1/co-cau/units', { code: 'TRONG-1', name: 'Đơn vị trong vùng trống', parentCode: 'TRONG' }));
     const v = (ok(await call(ctx, 'GET', '/api/v1/quyen-chi-nhanh/vung')) as { id: string; code: string }[]).find((x) => x.code === 'TRONG')!;
     const a = ok(await call(ctx, 'POST', `/api/v1/users/${qlId}/roles`, { role: 'viewer', scopeType: 'org_unit', scopeId: v.id, reason: 'Gán tại vùng trống' })) as { id: string };
-    const stop = await call(ctx, 'PATCH', '/api/v1/org-units/TRONG', { isActive: false });
+    const stop = await call(ctx, 'PATCH', '/api/v1/co-cau/units/TRONG', { isActive: false });
     expect(stop.status, JSON.stringify(stop.body)).toBe(409);
     expect(JSON.stringify(stop.body)).toContain('ql@vung.local');
-    const del = await call(ctx, 'DELETE', '/api/v1/org-units/TRONG');
+    const del = await call(ctx, 'POST', '/api/v1/co-cau/delete', { key: 'u:TRONG', dryRun: false });
     expect(del.status, JSON.stringify(del.body)).toBe(409);
     expect(JSON.stringify(del.body)).toContain('ql@vung.local');
     ok(await call(ctx, 'POST', `/api/v1/users/${qlId}/roles/${a.id}/revoke`, { reason: 'Thu hồi để xoá vùng' }));
-    expect((await call(ctx, 'DELETE', '/api/v1/org-units/TRONG')).status).toBeLessThan(300);
+    expect((await call(ctx, 'POST', '/api/v1/co-cau/delete', { key: 'u:TRONG', dryRun: false })).status).toBeLessThan(300);
   });
 
   it('gán theo vùng không thành quyền toàn đơn vị: /auth/me chỉ có quyền của vai trò chính Nhân viên', async () => {

@@ -323,7 +323,7 @@ async function raSoat(tenantId: string) {
     if (x.kind === 'restriction') { if (!o.camTai.includes(x.code)) o.camTai.push(x.code); }
     else if (!o.branches.includes(x.code)) o.branches.push(x.code);
   }
-  for (const [k, n] of vung) { const [uid, ten, nut] = k.split('|'); by.get(uid!)!.ganTai.push(`${ten} tại vùng ${nut} (${n} cửa hàng)`); }
+  for (const [k, n] of vung) { const [uid, ten, nut] = k.split('|'); by.get(uid!)!.ganTai.push(`${ten} tại vùng ${nut} (${n} đơn vị)`); /* gồm cả đơn vị nhóm trong nhánh (0174) */ }
   // Chủ đơn vị không bị giới hạn; người chỉ có vai trò Hạn chế tại chi nhánh → mọi chi nhánh (null).
   return [...by.values()].map((o) => ({ ...o, branches: o.role === 'owner' || !o.branches.length ? null : o.branches.sort() }));
 }
@@ -352,12 +352,15 @@ export const quyenChiNhanh = fp(async (app: FastifyInstance) => {
   // [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: danh sách nút sơ đồ tổ chức (id, mã, tên, số cửa hàng trong cây con) để HT12 gán vai trò theo vùng
   app.get('/api/v1/quyen-chi-nhanh/vung', {
     preHandler: requirePermission('users:write'),
-    schema: { tags: ['Phân quyền'], summary: 'Nút sơ đồ tổ chức gán được vai trò theo vùng: id, mã, tên, cấp, số cửa hàng thuộc nút và cây con' },
+    schema: { tags: ['Phân quyền'], summary: 'Đơn vị nhóm gán được vai trò theo vùng (cây con): id, mã, tên, cấp, số đơn vị thuộc nhánh (0174)' },
     handler: async (req) => ok((await sql<{ id: string; code: string; name: string; level: number; path: string; is_active: boolean; cua_hang: number }>`
-      SELECT n.id::text, n.code, n.name, n.level, n.path, n.is_active,
-             (SELECT count(*)::int FROM org_units m JOIN branches b ON b.tenant_id = m.tenant_id AND b.org_unit_id = m.id
-               WHERE m.tenant_id = n.tenant_id AND (m.path = n.path OR left(m.path, length(n.path) + 1) = n.path || chr(92))) AS cua_hang
-        FROM org_units n WHERE n.tenant_id = ${req.auth!.tenantId} ORDER BY n.path`.execute(db)).rows
+      SELECT n.id::text, n.code, n.name, n.unit_level - 1 AS level, replace(n.unit_path, '/', chr(92)) AS path, n.is_active,
+             (SELECT count(*)::int FROM branches b
+               WHERE b.tenant_id = n.tenant_id AND left(b.unit_path, length(n.unit_path) + 1) = n.unit_path || '/'
+                 AND NOT EXISTS (SELECT 1 FROM branches c WHERE c.tenant_id = b.tenant_id AND c.unit_parent_id = b.id)) AS cua_hang
+        FROM branches n
+       WHERE n.tenant_id = ${req.auth!.tenantId} AND EXISTS (SELECT 1 FROM branches c WHERE c.tenant_id = n.tenant_id AND c.unit_parent_id = n.id)
+       ORDER BY n.unit_path`.execute(db)).rows
       .map((n) => ({ id: n.id, code: n.code, name: n.name, level: n.level, path: n.path, isActive: n.is_active, branches: n.cua_hang }))),
   });
   app.get('/api/v1/quyen-chi-nhanh/ra-soat', {

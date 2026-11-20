@@ -24,7 +24,7 @@
       "id": "C1", "key": "identity", "title": "Identity & Master Data",
       "duty": "ID bất biến, mã có phiên bản, cây tổ chức, quan hệ giữa đối tượng",
       "layer": "Kernel + Platform (thư viện, không phải dịch vụ riêng)",
-      "code": ["packages/kernel/src/modules/masterdata", "apps/api/src/modules/partners", "apps/api/src/modules/org-units", "apps/api/src/modules/branches", "apps/api/src/modules/warehouses"],
+      "code": ["packages/kernel/src/modules/masterdata", "apps/api/src/modules/partners", "apps/api/src/modules/co-cau", "apps/api/src/modules/branches", "apps/api/src/modules/warehouses"],
       "contracts": ["bizcity_master_data@1", "bizcity_item_master@1"],
       "capabilities": ["masterdata.read", "masterdata.write", "masterdata.items", "item.master"],
       "devGets": "Bộ ID và cách đổi mã / gộp mã hàng không mất lịch sử; phân giải mã theo nguồn và ngày",

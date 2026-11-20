@@ -137,6 +137,8 @@ BEGIN
   IF NEW.parent_code = NEW.code THEN RAISE EXCEPTION 'Bộ phận % không thể là cha của chính nó', NEW.code USING ERRCODE = 'check_violation'; END IF;
   SELECT branch_id INTO v_b FROM dimensions WHERE tenant_id = NEW.tenant_id AND kind = 'department' AND code = NEW.parent_code;
   IF NOT FOUND THEN RAISE EXCEPTION 'Bộ phận cha % không có', NEW.parent_code USING ERRCODE = 'check_violation'; END IF;
+  -- Bộ phận chưa gắn đơn vị mà chọn cha → thuộc đơn vị của cha (dữ liệu mẫu, danh mục chiều phân tích cũ, nhập Excel).
+  IF NEW.branch_id IS NULL AND v_b IS NOT NULL THEN NEW.branch_id := v_b; END IF;
   IF v_b IS DISTINCT FROM NEW.branch_id THEN
     -- Chuyển bộ phận sang đơn vị khác mà không chọn cha mới: bỏ cha cũ.
     IF TG_OP = 'UPDATE' AND NEW.branch_id IS DISTINCT FROM OLD.branch_id AND NEW.parent_code IS NOT DISTINCT FROM OLD.parent_code THEN

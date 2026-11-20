@@ -105,8 +105,8 @@ export interface LanGanChiNhanh {
 
 /**
  * Lần gán theo chi nhánh / kho / nút sơ đồ tổ chức còn hiệu lực hôm nay (giờ Việt Nam) của một người (hoặc cả đơn vị khi không truyền
- * `userId`), mỗi dòng một mã chi nhánh. Lần gán kho → chi nhánh của kho; lần gán nút → mọi chi nhánh có `org_unit_id` thuộc nút và cây con
- * (theo `org_units.path`), tính tại thời điểm gọi. Vai trò của đơn vị đã tắt bị bỏ.
+ * `userId`), mỗi dòng một mã chi nhánh. Lần gán kho → đơn vị của kho; lần gán tại đơn vị (scope_type org_unit) → chính đơn vị và mọi đơn vị
+ * con (theo `branches.unit_path`, 0174), tính tại thời điểm gọi. Vai trò của đơn vị đã tắt bị bỏ.
  */
 export async function lanGanTheoChiNhanh(conn: Db, tenantId: string, userId?: string): Promise<LanGanChiNhanh[]> {
   const { rows } = await sql<LanGanChiNhanh>`
@@ -126,8 +126,7 @@ export async function lanGanTheoChiNhanh(conn: Db, tenantId: string, userId?: st
              JOIN branches b ON b.tenant_id = ${tenantId} AND b.id = w.branch_id
     UNION ALL
     SELECT a.user_id, b.code, a.scope_type, a.role, a.tenant_role_id, a.base_role, a.kind, a.label, n.code
-      FROM a JOIN org_units n ON a.scope_type = 'org_unit' AND n.tenant_id = ${tenantId} AND n.id = a.scope_id
-             JOIN org_units m ON m.tenant_id = ${tenantId} AND (m.path = n.path OR left(m.path, length(n.path) + 1) = n.path || chr(92))
-             JOIN branches b ON b.tenant_id = ${tenantId} AND b.org_unit_id = m.id`.execute(conn);
+      FROM a JOIN branches n ON a.scope_type = 'org_unit' AND n.tenant_id = ${tenantId} AND n.id = a.scope_id
+             JOIN branches b ON b.tenant_id = ${tenantId} AND (b.unit_path = n.unit_path OR left(b.unit_path, length(n.unit_path) + 1) = n.unit_path || '/')`.execute(conn);
   return rows;
 }

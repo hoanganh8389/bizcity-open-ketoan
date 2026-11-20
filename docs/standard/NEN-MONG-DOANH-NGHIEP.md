@@ -11,7 +11,7 @@
 
 | Lõi | Trụ cột | Ở đâu trong mã (thư viện, không phải dịch vụ) | Hợp đồng | Mức |
 |---|---|---|---|---|
-| C1 · Identity & Master Data | 01, 02, 03, 15 | `packages/kernel/src/modules/masterdata`, `apps/api/src/modules/partners`, `apps/api/src/modules/org-units` | `bizcity_master_data@1`, `bizcity_item_master@1` | 🟡 |
+| C1 · Identity & Master Data | 01, 02, 03, 15 | `packages/kernel/src/modules/masterdata`, `apps/api/src/modules/partners`, `apps/api/src/modules/co-cau` | `bizcity_master_data@1`, `bizcity_item_master@1` | 🟡 |
 | C2 · Authorization & Context | 04, 17 | `packages/platform/src/core/auth.ts`, `packages/platform/src/core/actions.ts`, `apps/api/src/modules/access` | `bizcity_action@1` | 🟡 |
 | C3 · Settings & Policies | 05 | `packages/platform/src/core/settings.ts`, `packages/kernel/src/modules/posting-config` | `bizcity_settings@1` | 🟡 yếu nhất |
 | C4 · Documents & Workflow | 06, 07 | `packages/platform/src/core/documents.ts`, `packages/platform/src/core/workflow.ts`, `packages/kernel/src/modules/documents` | `bizcity_document@1` | 🟡 |
@@ -44,7 +44,7 @@ Học tư duy Business Partner nhưng gọn hơn:
 |---|---|---|---|
 | `party_id` | một đối tác; mang nhiều vai (khách, NCC, nhân viên tạm ứng…) | `partners.id` + `kind` (một vai mỗi bản ghi) | vai là thuộc tính nhiều giá trị của cùng `partners.id`; gộp trùng (S029-20) |
 | `item_id` | một đơn vị tồn kho; SKU, barcode, mã hệ ngoài là định danh tham chiếu có lịch sử | ✅ `items.item_id` ULID, `item_codes` có hiệu lực, gộp (0065–0069) | giữ — là mẫu cho thực thể khác |
-| `org_unit_id` | một đơn vị trong sơ đồ tổ chức; **không** đồng nghĩa pháp nhân, kho hay điểm bán | `org_units` (0062), `branches`, `accounting_units`, `warehouses` tách bảng | nhóm đơn vị (S026-6); mã có phiên bản (S026-4) |
+| `unit_parent_id` | đơn vị cha trên cây cơ cấu (mọi cấp là một dòng `branches`, 0173–0174); **không** đồng nghĩa pháp nhân, kho hay điểm bán | `branches`, `accounting_units`, `warehouses` tách bảng | nhóm đơn vị (S026-6); mã có phiên bản (S026-4) |
 | `person_id` | một con người | ⬜ không có; "nhân viên" tồn tại hai nơi không nối (`partners.kind = employee`, `dimensions.kind = employee`) | S029-23 |
 | `employee_id` | quan hệ lao động của một người | ⬜ | S029-23 |
 | `user_id` / `principal_id` | định danh truy cập hệ thống | `users.id`, `api_keys`, app; actor lưu dạng chữ `user:<id>` | giữ; nối `person_id` (S029-23) |
@@ -59,7 +59,7 @@ Học tư duy Business Partner nhưng gọn hơn:
 |---|---|---|---|---|---|---|
 | 01 | **Canonical Identity** | Mỗi thực thể có ID bất biến, độc lập mã hiển thị, mã nguồn ngoài, tên gọi | 🟡 | mặt hàng: ULID + guard (0065); các bảng khác `bigint` không tái dùng nhưng mã sửa tại chỗ | lịch sử mã đối tượng / chi nhánh / kho; định danh người | S026-4 · S029-23 |
 | 02 | **Master Data Governance** | Danh mục có chủ, phiên bản, ngày hiệu lực, lịch sử gộp / tách, kiểm xung đột | 🟡 | mặt hàng đủ (mã, phân loại có hiệu lực, gộp, Lịch sử, Tác động); Gate A validate; `catalog_tombstones` | tên không có lịch sử; gộp chỉ mặt hàng; chặn xoá chỉ ở dịch vụ và thiếu; `DELETE` mở cho `ketoan_app` | S026-4/9/10/11 · S029-12/19/20 |
-| 03 | **Enterprise Organization** | Chuẩn tenant, pháp nhân, đơn vị hạch toán, phòng ban, chi nhánh, cửa hàng, kho và quan hệ phân cấp | 🟡 | `tenants`, `accounting_units`, `branches` (MST riêng), `warehouses`, `org_units` cây tuỳ ý | nhóm đơn vị; giao dịch liên đơn vị; `accounting_units` không có ngừng dùng | S026-6/7 |
+| 03 | **Enterprise Organization** | Chuẩn tenant, pháp nhân, đơn vị hạch toán, phòng ban, chi nhánh, cửa hàng, kho và quan hệ phân cấp | 🟡 | `tenants`, `accounting_units`, `branches` (MST riêng), `warehouses`, `branches` (đơn vị mọi cấp, 0173–0174) cây tuỳ ý | nhóm đơn vị; giao dịch liên đơn vị; `accounting_units` không có ngừng dùng | S026-6/7 |
 | 04 | **Identity & Authorization** | user, principal, person, employee, role, permission, scope, lịch sử cấp quyền, phân tách nhiệm vụ | 🟡 | `PERMISSIONS`, `defineAction` kiểm phía máy chủ, RLS (0041), `session_version`; vai trò bổ sung có lịch sử (PHASE-028 W1, chưa vào `main`) | phạm vi chi nhánh / kho; SoD chưa bật ở luồng nào; person / employee | PHASE-028 · S029-23/25 |
 | 05 | **Policy Registry & Rule Contracts** (trước: Configuration & Policy Registry; khoá cấu hình là chính sách vô hướng — ADR-0031 D-POL-10) <!-- [2026-11-07 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — S031-19: đổi tên trụ cột 05 theo Q031-1 --> | Một hệ thống cấu hình chung: scope, version, hiệu lực, thứ tự ưu tiên, kiểm tác động | 🟡 | registry 23 khoá; `readSetting` (đọc trong giao dịch); `posting_policy_versions`, `accounting_profiles` có phiên bản | **không có `settings.set`**, không lịch sử, không ngày hiệu lực, chỉ phạm vi đơn vị; 0 nơi dùng `ctx.settings.get`; ≥ 8 chỗ đọc thô `tenants.settings`; 2 khoá dùng mà không khai | **S029-10 (P0)** |
 

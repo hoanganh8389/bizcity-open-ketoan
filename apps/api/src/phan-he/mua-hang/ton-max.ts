@@ -49,7 +49,7 @@ export const hierarchySaveSchema = z.object({
 
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đã có đơn vị mua hàng theo sơ đồ tổ chức (0062) thì phân cấp tính từ cây: chặn lưu tay / tự xếp theo mã
 async function assertNoOrgChart(trx: Db, tenantId: string) {
-  const r = await sql<{ n: string }>`SELECT count(*)::text AS n FROM org_units WHERE tenant_id = ${tenantId} AND purchase_branch_id IS NOT NULL AND is_active`.execute(trx);
+  const r = await sql<{ n: string }>`SELECT count(*)::text AS n FROM branches WHERE tenant_id = ${tenantId} AND purchase_branch_id IS NOT NULL AND is_active`.execute(trx);
   if (Number(r.rows[0]?.n ?? 0) > 0) throw Errors.validation('Phân cấp chi nhánh đang tính từ sơ đồ tổ chức — đổi ở Sơ đồ tổ chức (DM16) hoặc Đơn vị mua hàng (MH15)');
 }
 

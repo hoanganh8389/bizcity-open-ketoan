@@ -15,7 +15,7 @@ import { ok } from '../../core/http.js';
 import { db } from '../../db/client.js';
 
 const TYPES = {
-  org: { objectTypes: ['org_unit'], table: 'org_units', dept: false },
+  org: { objectTypes: ['org_unit'], table: 'branches', dept: false }, // nút cây cũ nay là đơn vị (0174); nhật ký cũ vẫn đọc theo object_type
   branch: { objectTypes: ['branch'], table: 'branches', dept: false },
   warehouse: { objectTypes: ['warehouse'], table: 'warehouses', dept: false },
   department: { objectTypes: ['dimension:department', 'dimension'], table: 'dimensions', dept: true },

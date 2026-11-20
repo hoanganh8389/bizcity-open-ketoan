@@ -1,5 +1,5 @@
 // @bizcity-layer M data/masterdata
-// [2026-11-20 Nguyễn Văn Thủy] CƠ CẤU MỘT BẢNG (0173): đơn vị (branches) – phân kho – bộ phận; cây cũ org_units thành bản sao tự sinh (đóng góp)
+// [2026-11-20 Nguyễn Văn Thủy] CƠ CẤU MỘT BẢNG (0173, 0174): đơn vị (branches) – phân kho – bộ phận; cây cũ org_units đã bỏ (đóng góp)
 /**
  * Mọi cấp là một ĐƠN VỊ (dòng branches, item_id cn_…): có cha, đường dẫn, cấp, tên gọi cấp tuỳ đặt, MST (trống = theo cấp gần nhất có khai),
  * tên in chứng từ, địa chỉ, điện thoại. Phân kho (warehouses.branch_id) và bộ phận (dimensions department .branch_id) thuộc đơn vị.
@@ -11,8 +11,10 @@
  *   PUT  /api/v1/co-cau/departments/:code       thêm / sửa bộ phận (thuộc đơn vị)
  *   POST /api/v1/co-cau/delete                  xoá vĩnh viễn đơn vị + mọi thứ bên trong (dryRun = xem ảnh hưởng)
  *   GET  /api/v1/co-cau/doi-cha?code=           lịch sử đổi cha (JSONL co-cau-doi-cha)
+ *   GET  /api/v1/org-units/tree                 cây dạng "nút + chi nhánh" cho bộ lọc báo cáo, tồn max, giá bán (cay-tuong-thich.ts)
+ *   GET  /api/v1/org-units/purchase-units       đơn vị mua hàng (kho tổng)
  * Phân kho thêm / sửa qua /api/v1/warehouses (branchCode = mã đơn vị).
- * Sau mỗi lần ghi: tính lại đường dẫn, đồng bộ bản sao org_units (phân quyền theo vùng, giá vốn theo cơ cấu, đơn vị mua hàng đọc cây cũ).
+ * Sau mỗi lần ghi: tính lại đường dẫn + cấp, kho tổng mua hàng và phân cấp shop (dongBoCoCau).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -27,7 +29,7 @@ import { appendRunLog, readRunLog } from '@bizcity/platform/core/run-log';
 import { usedDimensionCodes } from '@bizcity/kernel';
 import { sameTx, type ActionTx, defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { branchService } from '../branches/branch.service.js';
-import { recompute, syncBranchLevels } from '../org-units/org-unit.service.js';
+import { orgTree, purchaseUnits, syncBranchLevels } from './cay-tuong-thich.js';
 
 const tags = ['Danh mục: Cơ cấu tổ chức'];
 const MST = /^$|^[0-9]{10}(-[0-9]{3})?$/;
@@ -88,35 +90,9 @@ export async function coCau(trx: Db, tenantId: string) {
 
 /* ------------------------------------------------------------------ đồng bộ */
 
-/** Đường dẫn + bản sao org_units (cho phần cũ đọc cây) + phân cấp mua hàng. Gọi sau mọi lần ghi. */
+/** Sau mọi lần ghi: đường dẫn + cấp của đơn vị, kho tổng mua hàng và phân cấp shop. */
 export async function dongBoCoCau(trx: Db, tenantId: string): Promise<void> {
   await sql`SELECT bizcity_unit_paths(${tenantId})`.execute(trx);
-  // Đơn vị cần bản sao: đã có, hoặc đang có đơn vị con.
-  const can = (await sql<{ id: string; code: string; name: string; tax_code: string; note: string; is_active: boolean; sort_order: number; org_mirror_id: string | null; unit_parent_id: string | null }>`
-    SELECT b.id, b.code, b.name, b.tax_code, b.note, b.is_active, b.sort_order, b.org_mirror_id, b.unit_parent_id FROM branches b
-     WHERE b.tenant_id = ${tenantId} AND (b.org_mirror_id IS NOT NULL OR EXISTS (SELECT 1 FROM branches c WHERE c.tenant_id = b.tenant_id AND c.unit_parent_id = b.id))
-     ORDER BY b.unit_level`.execute(trx)).rows;
-  for (const u of can.filter((x) => !x.org_mirror_id)) {
-    const trung = (await sql<{ id: string }>`SELECT id FROM org_units WHERE tenant_id = ${tenantId} AND code = ${u.code}`.execute(trx)).rows[0];
-    const ma = trung ? `${u.code}~${u.id}` : u.code;
-    const id = (await sql<{ id: string }>`INSERT INTO org_units (tenant_id, code, name, kind, note) VALUES (${tenantId}, ${ma}, ${u.name}, 'unit', ${u.note}) RETURNING id`.execute(trx)).rows[0]!.id;
-    await sql`UPDATE branches SET org_mirror_id = ${id} WHERE id = ${u.id}`.execute(trx);
-    u.org_mirror_id = id;
-  }
-  const mirrorOf = new Map(can.map((u) => [String(u.id), u.org_mirror_id!]));
-  for (const u of can) {
-    const parent = u.unit_parent_id ? mirrorOf.get(String(u.unit_parent_id)) ?? null : null;
-    await sql`UPDATE org_units SET name = ${u.name}, tax_id = ${MST.test(u.tax_code.trim()) ? u.tax_code.trim() : ''}, note = ${u.note}, sort_order = ${u.sort_order},
-        parent_id = ${parent}, kind = ${parent ? 'unit' : 'company'}, is_active = ${u.is_active}
-      WHERE id = ${u.org_mirror_id} AND (name, tax_id, note, sort_order, parent_id, kind, is_active) IS DISTINCT FROM
-        (${u.name}, ${MST.test(u.tax_code.trim()) ? u.tax_code.trim() : ''}, ${u.note}, ${u.sort_order}, ${parent}::bigint, ${parent ? 'unit' : 'company'}, ${u.is_active})`.execute(trx);
-  }
-  // Nút cũ của đơn vị: nhóm → bản sao của chính nó; đơn vị lá → bản sao của cha.
-  await sql`
-    UPDATE branches b SET org_unit_id = COALESCE(b.org_mirror_id, p.org_mirror_id)
-      FROM branches b2 LEFT JOIN branches p ON p.id = b2.unit_parent_id
-     WHERE b.id = b2.id AND b.tenant_id = ${tenantId} AND b.org_unit_id IS DISTINCT FROM COALESCE(b.org_mirror_id, p.org_mirror_id)`.execute(trx);
-  await recompute(trx, tenantId);
   await syncBranchLevels(trx, tenantId);
 }
 
@@ -263,7 +239,7 @@ async function xoaIn(trx: ActionTx, auth: AuthContext, key: string, dryRun: bool
     const tid = auth.tenantId;
     const [loai, ...rest] = key.split(':');
     const code = rest.join(':');
-    let units: { id: string; code: string; name: string; unit_level: number; org_mirror_id: string | null; department_code: string | null }[] = [];
+    let units: { id: string; code: string; name: string; unit_level: number; department_code: string | null }[] = [];
     let whs: { id: string; code: string; name: string }[] = [];
     let deps: { id: string; code: string; name: string }[] = [];
     let ten = code;
@@ -271,7 +247,7 @@ async function xoaIn(trx: ActionTx, auth: AuthContext, key: string, dryRun: bool
       units = (await sql<typeof units[number]>`
         WITH RECURSIVE t AS (SELECT id FROM branches WHERE tenant_id = ${tid} AND code = ${code}
           UNION ALL SELECT b.id FROM branches b JOIN t ON b.unit_parent_id = t.id)
-        SELECT b.id, b.code, b.name, b.unit_level, b.org_mirror_id, b.department_code FROM branches b JOIN t ON t.id = b.id ORDER BY b.unit_level DESC`.execute(trx)).rows;
+        SELECT b.id, b.code, b.name, b.unit_level, b.department_code FROM branches b JOIN t ON t.id = b.id ORDER BY b.unit_level DESC`.execute(trx)).rows;
       if (!units.length) throw Errors.notFound(`đơn vị ${code}`);
       ten = units.find((u) => u.code === code)!.name;
       const ids = units.map((u) => u.id);
@@ -315,18 +291,13 @@ async function xoaIn(trx: ActionTx, auth: AuthContext, key: string, dryRun: bool
     if (units.length) {
       const ids = units.map((u) => u.id);
       await sql`UPDATE branches SET department_code = NULL WHERE id = ANY(${ids}::bigint[])`.execute(trx);
-      await sql`UPDATE org_units SET purchase_branch_id = NULL WHERE tenant_id = ${tid} AND purchase_branch_id = ANY(${ids}::bigint[])`.execute(trx);
+      await sql`UPDATE branches SET purchase_branch_id = NULL WHERE tenant_id = ${tid} AND purchase_branch_id = ANY(${ids}::bigint[])`.execute(trx);
     }
     if (deps.length) {
       await sql`UPDATE dimensions SET parent_code = NULL WHERE tenant_id = ${tid} AND kind = 'department' AND parent_code = ANY(${deps.map((d) => d.code)}::text[])`.execute(trx);
       await sql`DELETE FROM dimensions WHERE tenant_id = ${tid} AND id = ANY(${deps.map((d) => d.id)}::bigint[])`.execute(trx);
     }
     for (const u of units) await sql`DELETE FROM branches WHERE id = ${u.id}`.execute(trx);
-    const mirrors = units.map((u) => u.org_mirror_id).filter(Boolean) as string[];
-    if (mirrors.length) {
-      await sql`UPDATE branches SET org_unit_id = NULL WHERE org_unit_id = ANY(${mirrors}::bigint[])`.execute(trx);
-      await sql`DELETE FROM org_units WHERE id = ANY(${mirrors}::bigint[])`.execute(trx);
-    }
     if (units.length) await dongBoCoCau(trx, tid);
     await writeAudit(trx, { tenantId: tid, actor: auth.actor, action: 'co_cau.delete', objectType: 'co_cau', objectId: key, before: kq });
     await appendRunLog('xoa-co-cau', tid, { key, nguoi: auth.actorName || auth.actor, dem: kq.dem, rows: anh });
@@ -374,5 +345,7 @@ export async function coCauRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows.filter((x) => !req.query.code || x.data.code === req.query.code).reverse().slice(0, 300));
     },
   });
+  r.get('/api/v1/org-units/tree', { preHandler: requirePermission('catalog:read'), schema: { tags, summary: 'Cây đơn vị dạng nút + chi nhánh + kho (bộ lọc báo cáo, tồn max)' }, handler: async (req) => ok(await orgTree(db, authOf(req).tenantId)) });
+  r.get('/api/v1/org-units/purchase-units', { preHandler: requirePermission('catalog:read'), schema: { tags, summary: 'Đơn vị mua hàng (đơn vị nhóm + kho tổng)' }, handler: async (req) => ok(await purchaseUnits(db, authOf(req).tenantId)) });
   mountActions(app, coCauActions);
 }

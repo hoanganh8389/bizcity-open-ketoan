@@ -103,7 +103,7 @@ export const roleAssignmentService = {
     // [2026-11-17 04:40 PM khanhtd] NT-HT-003 — GĐ5: phạm vi VÙNG = nút sơ đồ tổ chức (cây con): nút phải thuộc đơn vị và đang dùng
     if (scopeType === 'org_unit') {
       if (!input.scopeId) throw Errors.validation('scopeType = org_unit cần scopeId (id nút sơ đồ tổ chức)');
-      const n = (await sql<{ id: string; is_active: boolean }>`SELECT id::text, is_active FROM org_units WHERE tenant_id = ${auth.tenantId} AND id = ${input.scopeId}`.execute(trx)).rows[0];
+      const n = (await sql<{ id: string; is_active: boolean }>`SELECT id::text, is_active FROM branches WHERE tenant_id = ${auth.tenantId} AND id = ${input.scopeId}`.execute(trx)).rows[0]; // đơn vị (0174)
       if (!n) throw Errors.notFound('nút sơ đồ tổ chức');
       if (!n.is_active) throw Errors.conflict('Nút sơ đồ tổ chức đang ngừng dùng — không gán vai trò theo vùng này được');
     }

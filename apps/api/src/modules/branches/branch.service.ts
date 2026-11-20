@@ -10,8 +10,7 @@ import type { Db } from '../../db/client.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 import { sql } from 'kysely';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đổi nút sơ đồ tổ chức ở DM02 thì tính lại phân cấp chi nhánh (đóng góp)
-import { syncBranchLevels } from '../org-units/org-unit.service.js';
-import type { OrgTables } from '../org-units/org-unit.schemas.js';
+import { syncBranchLevels } from '../co-cau/cay-tuong-thich.js';
 import { quyTac } from '@bizcity/platform/core/quy-tac';
 
 /** Mã bộ phận gắn cho chi nhánh phải có trong danh mục Bộ phận. */
@@ -108,17 +107,22 @@ export const branchService = {
       }
       if (input.orgUnitCode !== undefined) {
         await sql`SELECT set_config('ketoan.actor_name', ${auth.actorName || auth.actor}, true), set_config('ketoan.valid_from', ${input.validFrom ?? ''}, true)`.execute(trx); // phiên bản cơ cấu theo ngày (0121)
-        let orgId: string | null = null;
+        // orgUnitCode = mã ĐƠN VỊ CHA trên cây đơn vị (0174).
+        let chaId: string | null = null;
         if (input.orgUnitCode) {
-          const o = await trx.withTables<OrgTables>().selectFrom('org_units').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('code', '=', input.orgUnitCode).executeTakeFirst();
+          const o = (await sql<{ id: string; is_active: boolean; unit_path: string }>`SELECT id::text, is_active, unit_path FROM branches WHERE tenant_id = ${auth.tenantId} AND code = ${input.orgUnitCode}`.execute(trx)).rows[0];
           if (!o) throw quyTac('BR-BLOCK-004', { code: input.orgUnitCode, detail: 'không có trong cơ cấu tổ chức' });
           if (!o.is_active) throw quyTac('BR-BLOCK-004', { code: input.orgUnitCode, detail: 'đã ngừng dùng' });
-          orgId = String(o.id);
+          const self = (await sql<{ unit_path: string }>`SELECT unit_path FROM branches WHERE tenant_id = ${auth.tenantId} AND code = ${code}`.execute(trx)).rows[0];
+          if (input.orgUnitCode === code || (self && (o.unit_path === self.unit_path || o.unit_path.startsWith(`${self.unit_path}/`)))) {
+            throw quyTac('BR-BLOCK-004', { code: input.orgUnitCode, detail: 'là chính đơn vị này hoặc đơn vị con của nó' });
+          }
+          chaId = o.id;
         }
-        patch.org_unit_id = orgId;
+        await sql`UPDATE branches SET unit_parent_id = ${chaId} WHERE tenant_id = ${auth.tenantId} AND code = ${code}`.execute(trx);
       }
       if (Object.keys(patch).length) await branchRepository.update(trx, auth.tenantId, code, patch);
-      if (input.orgUnitCode !== undefined) await syncBranchLevels(trx, auth.tenantId);
+      if (input.orgUnitCode !== undefined) { await sql`SELECT bizcity_unit_paths(${auth.tenantId})`.execute(trx); await syncBranchLevels(trx, auth.tenantId); }
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: finalCode !== code ? 'branch.rename' : 'branch.update', objectType: 'branch', objectId: code, before, after: input });
       return toBranchDto((await branchRepository.findByCode(trx, auth.tenantId, finalCode))!);
     });

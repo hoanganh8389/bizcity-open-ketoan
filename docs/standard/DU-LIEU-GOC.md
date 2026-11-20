@@ -37,7 +37,7 @@ Ký hiệu cột thao tác: ✅ có và được bảo vệ ở CSDL · 🟡 có
 | Đơn vị hạch toán | `accounting_units` | B | `bigint` | ⬜ | ⬜ không có cột | — | ⬜ | thêm ngừng dùng → S029-12 |
 | Chi nhánh / cửa hàng | `branches` | B | `bigint` | ⬜ (mã, MST, tên) | 🟡 `is_active` | ⬜ | 🟡 dịch vụ kiểm bút toán + kho | `entity_codes` → S026-4; thuộc tính có hiệu lực → S029-19 |
 | Kho | `warehouses` | B | `bigint` | ⬜ | 🟡 `is_active` | ⬜ | 🟡 `usedBy` | phiếu kho lưu `warehouse_code` (mã) → S026-4 |
-| Sơ đồ tổ chức | `org_units` | B | `bigint` | ⬜ | 🟡 `is_active` | ⬜ | 🟡 xoá cứng khi không con, không chi nhánh | cây có hiệu lực → S026-6 |
+| Cơ cấu tổ chức | `branches` (đơn vị mọi cấp, cha `unit_parent_id`, 0173–0174) | B | `bigint` | ⬜ | 🟡 `is_active` | ⬜ | 🟡 xoá vĩnh viễn cả nhánh khi chưa có chứng từ | cha theo ngày: `org_link_versions` scope unit_parent |
 | Nhóm đơn vị | — | — | — | — | — | — | — | S026-6 |
 
 ### 3.2 Đối tác, hàng hoá

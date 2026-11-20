@@ -2152,6 +2152,11 @@
         "migration": "0043_doc_so_cai.sql"
       },
       {
+        "name": "branches_assignment_guard",
+        "table": "branches",
+        "migration": "0174_bo_cay_cu.sql"
+      },
+      {
         "name": "branches_cost_unit",
         "table": "branches",
         "migration": "0151_don_vi_gia_von_theo_co_cau.sql"
@@ -2177,11 +2182,6 @@
         "migration": "0173_co_cau_mot_bang.sql"
       },
       {
-        "name": "branches_org_unit_authz_version",
-        "table": "branches",
-        "migration": "0150_pham_vi_so_do_to_chuc.sql"
-      },
-      {
         "name": "branches_own_department",
         "table": "branches",
         "migration": "0129_phong_ban_theo_shop.sql"
@@ -2195,6 +2195,11 @@
         "name": "branches_uid_guard",
         "table": "branches",
         "migration": "0121_mst_phien_ban_theo_ngay.sql"
+      },
+      {
+        "name": "branches_unit_path_authz_version",
+        "table": "branches",
+        "migration": "0174_bo_cay_cu.sql"
       },
       {
         "name": "branches_versions",
@@ -2475,31 +2480,6 @@
         "name": "library_settings_no_truncate",
         "table": "library_settings",
         "migration": "0088_cau_hinh_thu_vien.sql"
-      },
-      {
-        "name": "org_units_assignment_guard",
-        "table": "org_units",
-        "migration": "0150_pham_vi_so_do_to_chuc.sql"
-      },
-      {
-        "name": "org_units_cost_units",
-        "table": "org_units",
-        "migration": "0151_don_vi_gia_von_theo_co_cau.sql"
-      },
-      {
-        "name": "org_units_path_authz_version",
-        "table": "org_units",
-        "migration": "0150_pham_vi_so_do_to_chuc.sql"
-      },
-      {
-        "name": "org_units_uid_guard",
-        "table": "org_units",
-        "migration": "0121_mst_phien_ban_theo_ngay.sql"
-      },
-      {
-        "name": "org_units_versions",
-        "table": "org_units",
-        "migration": "0121_mst_phien_ban_theo_ngay.sql"
       },
       {
         "name": "partners_entity_attrs_sync",

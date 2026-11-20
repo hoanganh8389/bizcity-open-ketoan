@@ -74,7 +74,7 @@ export function scopeContains(scope: AuthzScope, r?: AuthzResourceContext): bool
   switch (scope.kind) {
     case 'branch': return !!r!.branchId && r!.branchId === scope.id;
     case 'warehouse': return !!r!.warehouseId && r!.warehouseId === scope.id;
-    // org_units.path nối mã bằng \ từ gốc (0062, org-unit.service.ts SEP): cây con = bằng hoặc bắt đầu bằng `<path>\`.
+    // Đường dẫn đơn vị nối mã bằng \ từ gốc (branches.unit_path, 0174): cây con = bằng hoặc bắt đầu bằng `<path>\`.
     case 'org_unit': return !!r!.orgPath && (r!.orgPath === scope.path || (scope.subtree && r!.orgPath.startsWith(`${scope.path}${ORG_PATH_SEP}`)));
   }
 }
