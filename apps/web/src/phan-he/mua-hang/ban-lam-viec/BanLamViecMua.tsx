@@ -89,7 +89,7 @@ export function BanLamViecMua({ g, onHelp }: { g: GonGroup; onHelp: () => void }
           const n = its.reduce((s, t) => s + t.count, 0);
           const lv = its.reduce<TodoItem['level'] | ''>((m, t) => (!m || MUC[t.level] > MUC[m] ? t.level : m), '');
           return (
-            <Link key={o.label} to={its[0]?.path ?? o.path} className={`blv-o${n ? ` co ${lv}` : ''}`} title={its.length ? its.map((t) => `${t.count} ${t.text}`).join('\n') : 'Không có việc tồn'}>
+            <Link key={o.label} to={(its[0]?.path ?? o.path).replace('/mua-hang/chung-tu', '/mua-hang/tong-hop')} className={`blv-o${n ? ` co ${lv}` : ''}`} title={its.length ? its.map((t) => `${t.count} ${t.text}`).join('\n') : 'Không có việc tồn'}>
               <span className="blv-o-ten">{o.label}</span>
               <b className="blv-o-so">{q.isLoading ? '…' : n}</b>
               <span className="blv-o-ct">
