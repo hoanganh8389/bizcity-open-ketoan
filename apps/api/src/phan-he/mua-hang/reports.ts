@@ -10,7 +10,7 @@
  */
 import { sql } from 'kysely';
 import {
-  AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
+  AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, invoiceDueDate, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
   scopeBranches,
 } from '@bizcity/mua-hang-domain';
@@ -547,8 +547,18 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   if (priceDiff.length) items.push({ key: 'price_diff', level: 'warn', text: 'Đơn / phiếu nhập có giá lệch hợp đồng', count: priceDiff.length, path: '/mua-hang/doi-chieu' });
   const orderPending = ctx.docs.filter((d) => d.kind === 'order' && d.status === 'pending_approval');
   if (orderPending.length) items.push({ key: 'order_pending', level: 'warn', text: 'Đơn đặt hàng chờ duyệt', count: orderPending.length, path: '/mua-hang/tong-hop?loai=order&trang-thai=pending_approval' });
-  const rcptNoInv = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && !d.invoice?.no);
-  if (rcptNoInv.length) items.push({ key: 'receipt_no_invoice', level: 'info', text: 'Phiếu nhập chưa có hoá đơn NCC', count: rcptNoInv.length, amount: rcptNoInv.reduce((s, d) => s + d.totals.total, 0), path: '/mua-hang/tong-hop?loai=receipt' });
+  // Hoá đơn đầu vào theo kế hoạch của đơn (phiếu nhập kế thừa): cùng hàng mà chưa có → thiếu; nhận sau N ngày → chờ (trong hạn) / quá hạn; không lấy → bỏ qua.
+  const byIdDoc = new Map(ctx.docs.map((d) => [d.id, d]));
+  const planOf = (d: StoredDoc) => d.invoicePlan ?? (d.refIds?.[0] ? byIdDoc.get(d.refIds[0])?.invoicePlan : undefined);
+  const rcptNoInv = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && !d.invoice?.no && planOf(d)?.mode !== 'none');
+  const hanHd = (d: StoredDoc) => invoiceDueDate(planOf(d), d.receivedDate ?? d.docDate);
+  const invLate = rcptNoInv.filter((d) => planOf(d)?.mode === 'later' && hanHd(d) < asOf);
+  const invWait = rcptNoInv.filter((d) => planOf(d)?.mode === 'later' && hanHd(d) >= asOf);
+  const invMissing = rcptNoInv.filter((d) => planOf(d)?.mode !== 'later');
+  const tong = (ds: StoredDoc[]) => ds.reduce((s, d) => s + d.totals.total, 0);
+  if (invLate.length) items.push({ key: 'inv_late', level: 'error', text: 'Phiếu nhập quá hạn nhận hoá đơn NCC', count: invLate.length, amount: tong(invLate), path: '/mua-hang/tong-hop?loai=receipt&hoa-don=qua-han' });
+  if (invMissing.length) items.push({ key: 'receipt_no_invoice', level: 'warn', text: 'Phiếu nhập chưa có hoá đơn NCC (hoá đơn đi cùng hàng)', count: invMissing.length, amount: tong(invMissing), path: '/mua-hang/tong-hop?loai=receipt&hoa-don=thieu' });
+  if (invWait.length) items.push({ key: 'inv_wait', level: 'info', text: 'Phiếu nhập chờ hoá đơn NCC (còn trong hạn)', count: invWait.length, amount: tong(invWait), path: '/mua-hang/tong-hop?loai=receipt&hoa-don=cho' });
   const returnNoRef = live.filter((d) => d.kind === 'return' && !d.refIds?.length);
   if (returnNoRef.length) items.push({ key: 'return_no_ref', level: 'error', text: 'Phiếu trả hàng chưa gắn phiếu nhập gốc', count: returnNoRef.length, path: '/mua-hang/tong-hop?loai=return' });
   const drafts = ctx.docs.filter((d) => d.status === 'draft');

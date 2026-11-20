@@ -1,53 +1,21 @@
-/* [2026-11-20 Nguyễn Văn Thủy] Bàn làm việc mua hàng — 11 bước theo quy trình; màu chỉ để báo mức thiếu / lệch (đỏ / cam / xanh) (đóng góp) */
-.blv { display: flex; flex-direction: column; gap: 10px; max-width: 1500px; }
-.blv-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.blv-top h1 { margin: 0; font-size: 18px; font-weight: 600; color: var(--ink-900); }
-.blv-tong { flex: 1; font-size: 13px; color: var(--ink-700); display: inline-flex; gap: 10px; align-items: center; }
-.blv-tong .ok, .blv .ok { color: #188038; display: inline-flex; align-items: center; gap: 3px; }
-.blv-tong b.error { color: var(--bad, #d93025); }
-.blv-tong b.warn { color: var(--warn, #e8710a); }
-.blv-nhap { font-size: 12px; color: var(--ink-500); }
-.blv-tools { display: flex; gap: 6px; }
-.blv-lap { display: flex; flex-wrap: wrap; gap: 6px; }
+/* [2026-11-20 Nguyễn Văn Thủy] Trang chủ Mua hàng: thêm vào khung sơ đồ luồng chung (sd-*, sdn-*) dòng đầu, nhãn thiếu / lệch, nút lập (đóng góp) */
+.blv-lap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .blv-lap .btn { text-decoration: none; }
+.blv-dau { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.blv-dau > b { font-size: 14px; letter-spacing: 0.01em; color: var(--ink-900); text-transform: uppercase; }
+.blv-tong { flex: 1; display: inline-flex; gap: 10px; font-size: 13px; font-weight: 600; }
+.blv-tong .error { color: var(--bad, #d93025); }
+.blv-tong .warn { color: var(--warn, #e8710a); }
+.blv-tong .ok { color: #188038; display: inline-flex; align-items: center; gap: 3px; font-weight: 500; }
 
-/* Chặng: nhãn bên trái, các bước nối nhau bằng mũi tên. */
-.blv-chang { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; align-items: stretch; }
-@media (max-width: 900px) { .blv-chang { grid-template-columns: 1fr; } }
-.blv-chang-ten { display: flex; flex-direction: column; justify-content: center; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--ink-700); padding: 8px 10px; border-radius: 8px; background: var(--brand-50); }
-.blv-chang-ten span { width: 22px; height: 22px; border-radius: 50%; background: var(--brand-600); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
-.blv-buoc-hang { display: grid; gap: 14px; }
-.blv-buoc-hang.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.blv-buoc-hang.n5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-@media (max-width: 1300px) { .blv-buoc-hang.n5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .blv-buoc-hang.n3, .blv-buoc-hang.n5 { grid-template-columns: 1fr; } }
-
-.blv-buoc { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 9px 10px; border: 1px solid var(--line); border-top: 3px solid #188038; border-radius: 8px; background: var(--surface); min-width: 0; }
-.blv-buoc:not(:last-child)::after { content: '›'; position: absolute; right: -12px; top: 14px; color: var(--ink-400); font-size: 16px; line-height: 1; }
-.blv-buoc.co.error { border-top-color: var(--bad, #d93025); }
-.blv-buoc.co.warn { border-top-color: var(--warn, #e8710a); }
-.blv-buoc.co.info { border-top-color: var(--brand-600); }
-.blv-buoc-dau { display: flex; gap: 8px; align-items: flex-start; }
-.blv-buoc-dau b { display: block; font-size: 13px; color: var(--ink-900); line-height: 1.25; }
-.blv-buoc-dau small { font-size: 11px; color: var(--ink-400); }
-.blv-so { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--ink-400); color: var(--ink-700); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
-.blv-kiem { font-size: 11.5px; color: var(--ink-500); line-height: 1.35; padding-left: 8px; border-left: 2px solid var(--line); }
-.blv-phat-hien { display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.35; }
-.blv-phat-hien a { text-decoration: none; color: var(--ink-900); }
-.blv-phat-hien a:hover { text-decoration: underline; }
-.blv-phat-hien a b { font-variant-numeric: tabular-nums; }
-.blv-phat-hien a.error b { color: var(--bad, #d93025); }
-.blv-phat-hien a.warn b { color: var(--warn, #e8710a); }
-.blv-phat-hien a.info b { color: var(--brand-700); }
-.blv-phat-hien .muted { color: var(--ink-400); font-size: 11.5px; }
-.blv-man { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: auto; padding-top: 4px; border-top: 1px dashed var(--line); }
-.blv-man a { font-size: 12.5px; color: var(--brand-700); text-decoration: none; }
-.blv-man a:hover { text-decoration: underline; }
-.blv-buoc-lap { display: flex; flex-wrap: wrap; gap: 4px; }
-.blv-buoc-lap .btn { text-decoration: none; }
-
-.blv-bc { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px; }
-.blv-bc b { color: var(--ink-700); }
-.blv-bc a { color: var(--ink-900); text-decoration: none; }
-.blv-bc a:hover { color: var(--brand-700); text-decoration: underline; }
-.blv-bc a.blv-tat-ca { color: var(--brand-700); margin-left: auto; }
+/* Cuối mỗi thẻ: nhãn màu nhỏ (bấm ra danh sách đã lọc) + nút lập phiếu. */
+.blv-them { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.blv-nhan { display: inline-block; max-width: 100%; padding: 1px 7px; border-radius: 10px; font-size: 11.5px; line-height: 16px; text-decoration: none; border: 1px solid transparent; }
+.blv-nhan b { font-variant-numeric: tabular-nums; }
+.blv-nhan.error { background: #fdecea; color: #b3261e; border-color: #f6c7c3; }
+.blv-nhan.warn { background: #fff4e5; color: #b45309; border-color: #f8d9b0; }
+.blv-nhan.info { background: var(--brand-50); color: var(--brand-700); border-color: var(--brand-100, #d6e4fb); }
+.blv-nhan.ok { background: #e8f5ec; color: #188038; }
+a.blv-nhan:hover { filter: brightness(0.96); text-decoration: none; }
+.blv-lap-nho { display: inline-flex; align-items: center; gap: 2px; padding: 1px 7px; border-radius: 10px; font-size: 11.5px; line-height: 18px; color: var(--brand-700); border: 1px solid var(--brand-600); text-decoration: none; white-space: nowrap; }
+.blv-lap-nho:hover { background: var(--brand-50); }

@@ -325,3 +325,9 @@ tr.mh-me td { font-weight: 600; }
 .mh-chuoi-mat.dang { color: var(--ink-900); border-color: var(--brand-600); background: var(--brand-50); }
 .mh-chuoi-mat.thieu { color: var(--warn, #e8710a); border-color: #f5c99c; background: #fff8f1; }
 .mh-chuoi-mat.chua { color: var(--ink-400); border-style: dashed; }
+
+/* [2026-11-20 Nguyễn Văn Thủy] thu gọn khung Trợ lý: bảng hàng chiếm hết bề ngang, dải mép phải bấm để mở lại (đóng góp) */
+.mh-sheet-body.an-tro-ly { grid-template-columns: minmax(0, 1fr) 26px; }
+.mh-side-mo { border: 0; border-left: 1px solid var(--line); background: #f2f5f9; cursor: pointer; padding: 0; color: var(--brand-700); font-size: 12px; font-weight: 600; }
+.mh-side-mo:hover { background: var(--brand-50); }
+.mh-side-mo span { display: inline-block; writing-mode: vertical-rl; white-space: nowrap; }

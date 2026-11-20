@@ -11,7 +11,7 @@ import { workBranch } from '@/lib/workBranch';
 import { restoreDock } from '@/layout/WindowDock';
 import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { COST_TYPES, ORDER_INVOICE_LABEL, invoiceLabel, orderInvoice, orderProgress, receiptFromOrder, type OrderInvoice, type PDoc } from '@bizcity/mua-hang-domain';
+import { COST_TYPES, ORDER_INVOICE_LABEL, invoiceDueDate, invoiceLabel, invoicePlanText, orderInvoice, orderProgress, receiptFromOrder, type InvoicePlan, type OrderInvoice, type PDoc } from '@bizcity/mua-hang-domain';
 import { useDimension } from '@/components/voucher/lookups';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -36,6 +36,9 @@ import { layPhieuIn, mauInCua } from './mauIn';
 import { useThaoTac } from '@/lib/manHinh';
 import { HopDongMuaPage, hopDongMoiPath } from '../hop-dong/HopDongPage';
 
+/** Hoá đơn của phiếu nhập theo kế hoạch của đơn. */
+type HdPhieu = 'co' | 'thieu' | 'cho' | 'qua-han' | 'khong';
+const HD_PHIEU: Record<HdPhieu, string> = { co: 'Đã có HĐ', thieu: 'Thiếu HĐ', cho: 'Chờ HĐ', 'qua-han': 'Quá hạn HĐ', khong: 'Không lấy HĐ' };
 const GROUPS: [string, string, PDoc['kind'][]][] = [
   ['all', 'Tất cả', []], ['hop-dong', 'Hợp đồng', []], ['order', 'Đơn đặt hàng', ['order']], ['receipt', 'Nhập mua', ['receipt']], ['return', 'Trả / đổi hàng', ['return', 'exchange']],
   ['money', 'Ứng trước / trả tiền', ['prepayment', 'payment']], ['gift', 'Quà tặng', ['gift_in', 'gift_out']], ['adjust', 'Chi phí / thưởng', ['cost', 'rebate']],
@@ -43,8 +46,8 @@ const GROUPS: [string, string, PDoc['kind'][]][] = [
 // [2026-11-15 Nguyễn Văn Thủy] cột mặc định theo loại phiếu — chỉ cột có nghĩa với loại đó; cột khác bật ở nút "Cột" (đóng góp)
 const COT_MAC_DINH: Record<string, string[]> = {
   all: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'checks'],
-  order: ['docDate', 'docNo', 'status', 'progress', 'invoiceState', 'partnerFull', 'contract', 'branch', 'kho', 'total', 'checks'],
-  receipt: ['docDate', 'docNo', 'status', 'ledgerState', 'partnerFull', 'contract', 'branch', 'ref', 'invoice', 'beforeTax', 'tax', 'total', 'due', 'debtLeft', 'checks'],
+  order: ['docDate', 'docNo', 'status', 'progress', 'invoiceState', 'invPlan', 'partnerFull', 'contract', 'branch', 'kho', 'total', 'checks'],
+  receipt: ['docDate', 'docNo', 'status', 'ledgerState', 'partnerFull', 'contract', 'branch', 'ref', 'invPlan', 'invoice', 'beforeTax', 'tax', 'total', 'due', 'debtLeft', 'checks'],
   return: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'ref', 'total', 'checks'],
   money: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'debtLeft'],
   gift: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'kho', 'total'],
@@ -184,7 +187,24 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
 
   /** Tình trạng hoá đơn của từng đơn đặt (gom phiếu nhập của đơn). */
   const invOf = useMemo(() => new Map<string, OrderInvoice>((data?.docs ?? []).filter((d) => d.kind === 'order').map((o) => [o.id, orderInvoice(o, data!.docs)!])), [data]);
-  const hdMatch = (d: PDoc) => { const x = invOf.get(d.id); return Boolean(x) && (hd === 'chua_du' ? x!.state === 'chua_co' || x!.state === 'mot_phan' : x!.state === hd); };
+  // [2026-11-20 Nguyễn Văn Thủy] hoá đơn của phiếu nhập theo kế hoạch của đơn (cùng hàng / sau N ngày / không lấy): có · thiếu · chờ · quá hạn · không lấy (đóng góp)
+  const hdPhieu = useMemo(() => {
+    const byId = new Map((data?.docs ?? []).map((d) => [d.id, d]));
+    const homNay = today();
+    return (d: PDoc): { state: HdPhieu; han: string; plan?: InvoicePlan } | null => {
+      if (d.kind !== 'receipt') return null;
+      const plan = d.invoicePlan ?? (d.refIds?.[0] ? byId.get(d.refIds[0])?.invoicePlan : undefined);
+      const han = invoiceDueDate(plan, d.receivedDate ?? d.docDate);
+      if (d.invoice?.no) return { state: 'co', han, plan };
+      if (plan?.mode === 'none') return { state: 'khong', han, plan };
+      if (plan?.mode === 'later') return { state: han < homNay ? 'qua-han' : 'cho', han, plan };
+      return { state: 'thieu', han, plan };
+    };
+  }, [data]);
+  const hdMatch = (d: PDoc) => {
+    if (HD_PHIEU[hd as HdPhieu]) return hdPhieu(d)?.state === hd;
+    const x = invOf.get(d.id); return Boolean(x) && (hd === 'chua_du' ? x!.state === 'chua_co' || x!.state === 'mot_phan' : x!.state === hd);
+  };
   const rows = useMemo(() => {
     if (!data) return [];
     const kinds = GROUPS.find((g) => g[0] === group)?.[2] ?? [];
@@ -279,6 +299,11 @@ Duyệt: ${r.outsideOrder.by}` : ''}${r.outsideOrder.reviewedBy ? `
 Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoài đơn'}>Ngoài đơn{r.outsideOrder?.reviewedBy ? ' ✓' : ''}</span> : (r.refIds ?? []).map((x) => data?.docs.find((d) => d.id === x)?.docNo ?? '').filter(Boolean).join(', ')) },
     { key: 'invoiceSerial', header: 'Ký hiệu HĐ', type: 'code', width: 90, value: (r) => r.invoice?.serial ?? '' },
     { key: 'invoice', header: 'Số HĐ', type: 'code', width: 80, value: (r) => r.invoice?.no ?? '' },
+    { key: 'invPlan', header: 'Hoá đơn', width: 130, title: 'Kế hoạch hoá đơn đầu vào khai ở đơn đặt (cùng hàng / nhận sau N ngày / không lấy) và tình trạng của phiếu nhập',
+      value: (r) => { const x = hdPhieu(r); return x ? `${HD_PHIEU[x.state]}${x.state === 'cho' || x.state === 'qua-han' ? ` ${dmy(x.han)}` : ''}` : r.kind === 'order' ? invoicePlanText(r.invoicePlan) : ''; },
+      render: (r) => { const x = hdPhieu(r); if (!x) return r.kind === 'order' ? <span className="muted">{invoicePlanText(r.invoicePlan)}</span> : null;
+        const cls = { co: 'badge-ok', khong: 'badge-gray', cho: 'badge-info', 'qua-han': 'badge-bad', thieu: 'badge-warn' }[x.state];
+        return <span className={`badge ${cls}`} title={x.plan ? invoicePlanText(x.plan) : 'Hoá đơn cùng hàng'}>{HD_PHIEU[x.state]}{x.state === 'cho' || x.state === 'qua-han' ? ` ${dmy(x.han)}` : ''}</span>; } },
     { key: 'invoiceDate', header: 'Ngày HĐ', width: 90, value: (r) => (r.invoice ? dmy(r.invoice.date) : '') },
     { key: 'grossEx', header: 'Tiền hàng trước CK (chưa thuế)', type: 'money', width: 150, sum: true, title: 'Σ SL × đơn giá dòng hàng mua, chưa trừ chiết khấu, chưa thuế (phiếu giá gồm thuế đã quy về chưa thuế). Chỉ đơn đặt / nhập mua / trả NCC', value: (r) => tienPhieu(r)?.grossEx ?? null },
     { key: 'disc', header: 'Chiết khấu (chưa thuế)', type: 'money', width: 120, sum: true, title: 'CK dòng + CK trên đơn = trước CK − sau CK', value: (r) => tienPhieu(r)?.disc ?? null },
@@ -403,6 +428,9 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
             {view !== 'phieu' && view !== 'nhom' && <ChonNhomHang value={nhom} onChange={setNhom} />}
             <div className="field"><label>Trạng thái</label>{statusSel}</div>
             {/* [2026-11-20 khanhtd] MUA-HANG — lọc đơn đặt theo hoá đơn, phiếu chi phí theo khoản mục (đóng góp) */}
+            {group === 'receipt' && <div className="field"><label title="Hoá đơn NCC của phiếu nhập theo kế hoạch khai ở đơn đặt">Hoá đơn của phiếu nhập</label>
+              <select className="select input" value={hd} onChange={(e) => setHd(e.target.value)}><option value="">Tất cả</option>
+                {Object.entries(HD_PHIEU).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>}
             {(group === 'all' || group === 'order') && <div className="field"><label title="Hoá đơn NCC của đơn đặt, gom từ các phiếu nhập theo đơn">Hoá đơn của đơn đặt</label>
               <select className="select input" value={hd} onChange={(e) => setHd(e.target.value)}><option value="">Tất cả</option><option value="chua_du">Chưa đủ hoá đơn (chưa có + một phần)</option>
                 {Object.entries(ORDER_INVOICE_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>}

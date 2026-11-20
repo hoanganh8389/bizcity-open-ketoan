@@ -163,6 +163,7 @@ export function receiptFromOrder(order: PDoc, docs: PDoc[], date: string, units?
     id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: order.branchCode, partnerCode: order.partnerCode, ...(order.deliveryWarehouse ? { warehouseCode: order.deliveryWarehouse } : {}),
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
     ...(order.contractCode ? { contractCode: order.contractCode } : {}),
+    ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}),
     refIds: [order.id], lines, note: `Nhận hàng theo đơn ${order.docNo}${prog.received ? ` (giao tiếp, đã nhận ${prog.received}/${prog.ordered})` : ''}`,
   };
 }

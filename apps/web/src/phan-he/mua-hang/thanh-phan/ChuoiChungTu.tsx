@@ -8,8 +8,8 @@
  */
 import { Fragment } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { orderProgress, type PDoc } from '@bizcity/mua-hang-domain';
-import type { StoredDoc } from '../du-lieu';
+import { invoiceDueDate, orderProgress, type PDoc } from '@bizcity/mua-hang-domain';
+import { today as homNay, type StoredDoc } from '../du-lieu';
 
 type Trang = 'co' | 'dang' | 'thieu' | 'chua';
 interface Mat { ten: string; trang: Trang; docs: PDoc[]; ghi?: string }
@@ -49,14 +49,28 @@ export function ChuoiChungTu({ doc, docs, units, onOpen }: { doc: PDoc; docs: St
   const prog = order && order.status === 'approved' ? orderProgress(order, docs, undefined, units) : null;
   const coHd = receipts.filter((r) => r.invoice?.no);
   const dang = (ds: PDoc[]): Trang => (ds.some((d) => d.id === doc.id) ? 'dang' : 'co');
+  // Hoá đơn NCC theo kế hoạch của đơn: cùng hàng / nhận sau N ngày (hạn tính từ ngày nhận hàng) / không lấy.
+  const plan = doc.invoicePlan ?? order?.invoicePlan ?? receipts.find((r) => r.invoicePlan)?.invoicePlan;
+  const hoaDon = (): Mat => {
+    const ten = 'Hoá đơn NCC';
+    if (plan?.mode === 'none') return { ten, docs: [], trang: 'co', ghi: 'Không lấy HĐ' };
+    if (!receipts.length) return { ten, docs: [], trang: 'chua', ghi: plan?.mode === 'later' ? `sau ${plan.days ?? 0} ngày` : undefined };
+    const thieu = receipts.filter((r) => !r.invoice?.no);
+    if (!thieu.length) return { ten, docs: [], trang: 'co', ghi: receipts.map((r) => `${r.invoice!.serial ? `${r.invoice!.serial}-` : ''}${r.invoice!.no}`).join(', ') };
+    if (plan?.mode === 'later') {
+      const han = thieu.map((r) => invoiceDueDate(plan, r.receivedDate ?? r.docDate)).sort()[0]!;
+      const qua = han < homNay();
+      return { ten, docs: [], trang: qua ? 'thieu' : 'chua', ghi: `${qua ? 'quá hạn' : 'hạn'} ${han.slice(8, 10)}/${han.slice(5, 7)}` };
+    }
+    return { ten, docs: [], trang: 'thieu', ghi: `${thieu.length} phiếu nhập chưa có` };
+  };
 
   const mats: Mat[] = [
     { ten: 'Hợp đồng', docs: [], trang: contract ? 'co' : 'thieu', ghi: contract ?? 'Không theo hợp đồng' },
     { ten: 'Đơn đặt', docs: order ? [order] : [], trang: order ? dang([order]) : receipts.length ? 'thieu' : 'chua',
       ghi: order ? (prog && !prog.done && prog.ordered ? `nhận ${Math.round((prog.received / prog.ordered) * 100)}%` : undefined) : receipts.length ? 'Nhập ngoài đơn' : undefined },
     { ten: 'Phiếu nhập', docs: receipts, trang: receipts.length ? (prog && !prog.done ? 'thieu' : dang(receipts)) : 'chua', ghi: prog && !prog.done && receipts.length ? 'chưa nhận đủ' : undefined },
-    { ten: 'Hoá đơn NCC', docs: [], trang: !receipts.length ? 'chua' : coHd.length === receipts.length ? 'co' : 'thieu',
-      ghi: !receipts.length ? undefined : coHd.length === receipts.length ? coHd.map((r) => `${r.invoice!.serial ? `${r.invoice!.serial}-` : ''}${r.invoice!.no}`).join(', ') : `${receipts.length - coHd.length} phiếu nhập chưa có hoá đơn` },
+    hoaDon(),
     { ten: 'Thanh toán', docs: payments, trang: payments.length ? dang(payments) : 'chua', ghi: payments.length ? undefined : receipts.length ? 'Chưa trả' : undefined },
   ];
   if (returns.length) mats.push({ ten: 'Trả / đổi hàng', docs: returns, trang: dang(returns) });

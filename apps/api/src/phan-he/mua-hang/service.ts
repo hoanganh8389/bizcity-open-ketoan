@@ -113,6 +113,9 @@ export const purchaseService = {
         const ref = codes[0] ?? '';
         if (!doc.contractCode && ref) doc.contractCode = ref;
         else if (ref && doc.contractCode && doc.contractCode !== ref) throw Errors.validation(`Chứng từ gắn kèm thuộc hợp đồng ${ref}, phiếu đang chọn hợp đồng ${doc.contractCode} — chọn lại cho khớp`);
+        // [2026-11-20 Nguyễn Văn Thủy] phiếu nhập theo đơn kế thừa kế hoạch hoá đơn của đơn khi chưa khai (đóng góp)
+        const don = refs.find((d) => d.kind === 'order' && d.invoicePlan);
+        if (doc.kind === 'receipt' && !doc.invoicePlan && don) doc.invoicePlan = don.invoicePlan;
       }
       if (!doc.contractCode && doc.kind === 'rebate' && doc.rebate?.policyCode) {
         const pol = await trx.selectFrom('purchase_policies').select('scope').where('tenant_id', '=', auth.tenantId).where('code', '=', doc.rebate.policyCode).executeTakeFirst();

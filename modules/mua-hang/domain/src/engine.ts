@@ -123,6 +123,8 @@ export interface PDoc {
   rebate?: { policyCode: string; period: string; base: number; rate: number; detail: string[] };
   /** [2026-11-18 Nguyễn Văn Thủy] Thuộc hợp đồng mua (mã trong Danh mục hợp đồng): đơn đặt chọn / tự gợi ý, phiếu lập từ đơn kế thừa; bút toán mang mã hợp đồng (đóng góp). */
   contractCode?: string;
+  /** [2026-11-20 Nguyễn Văn Thủy] Kế hoạch hoá đơn đầu vào, khai từ đơn đặt, phiếu nhập kế thừa: nhận cùng hàng / nhận sau N ngày (tính từ ngày nhận hàng) / không lấy hoá đơn (đóng góp). */
+  invoicePlan?: InvoicePlan;
   /** Chi phí / thưởng: phần phân bổ theo mã hàng (máy chủ tính lúc lưu). */
   allocation?: { sku: string; name?: string; amount: number }[];
   refIds?: string[];
@@ -741,6 +743,18 @@ export function creditStatus(limitPolicy: Policy | undefined, current: number, o
 /* ------------------------------------------------------------------ cảnh báo */
 
 export type Level = 'info' | 'warn' | 'error';
+/** Kế hoạch hoá đơn đầu vào của đơn / phiếu nhập. */
+export interface InvoicePlan { mode: 'with_goods' | 'later' | 'none'; days?: number }
+/** Hạn nhận hoá đơn của phiếu nhập theo kế hoạch: '' = không có hạn (cùng hàng thì hạn = ngày nhận, không lấy thì không theo dõi). */
+export function invoiceDueDate(plan: InvoicePlan | undefined, receivedDate: string): string {
+  if (plan?.mode === 'none') return '';
+  if (plan?.mode !== 'later') return receivedDate;
+  const d = new Date(`${receivedDate}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + (plan.days ?? 0));
+  return d.toISOString().slice(0, 10);
+}
+/** Chữ ngắn của kế hoạch hoá đơn. */
+export const invoicePlanText = (plan?: InvoicePlan) => (plan?.mode === 'none' ? 'Không lấy HĐ' : plan?.mode === 'later' ? `HĐ sau ${plan.days ?? 0} ngày` : 'HĐ cùng hàng');
+
 export interface Check { level: Level; code: string; text: string; lineKey?: string; blocking?: boolean }
 export interface PriceRow { date: string; partnerCode: string; docNo: string; unitPrice: number; includesVat: boolean; unit?: string; qty?: number }
 

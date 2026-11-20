@@ -20,7 +20,7 @@ import { ChuoiChungTu } from '../thanh-phan/ChuoiChungTu';
 import { refOf } from '@ketoan/contracts';
 import {
   COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, orderProgress, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termFromRule, termText,
-  type LineType, type PDoc, type PLine, type ProductUnit, type PromoRow, type SupplierProduct,
+  type InvoicePlan, type LineType, type PDoc, type PLine, type ProductUnit, type PromoRow, type SupplierProduct,
   type Check, type TraceItem,
 } from '@bizcity/mua-hang-domain';
 import { useQuery } from '@tanstack/react-query';
@@ -76,6 +76,9 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const [a, setA] = useState<Analysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [tab, setTab] = useState<Tab>(GOODS_KINDS.includes(value.kind) ? 'hang' : 'hach-toan');
+  // [2026-11-20 Nguyễn Văn Thủy] thu gọn khung Trợ lý mua hàng để bảng hàng rộng hết màn khi đặt hàng; nhớ theo máy (đóng góp)
+  const [anTroLy, setAnTroLy] = useState(() => { try { return localStorage.getItem('mh.tro-ly.an') === '1'; } catch { return false; } });
+  const doiTroLy = (an: boolean) => { setAnTroLy(an); try { localStorage.setItem('mh.tro-ly.an', an ? '1' : '0'); } catch { /* chế độ riêng tư */ } };
   // Đầu phiếu thu gọn được thành một dòng tóm tắt — nhường chỗ cho bảng hàng. Phiếu có từ 4 dòng hàng thì mở ra đã thu gọn.
   const [headOpen, setHeadOpen] = useState(() => value.lines.filter((l) => l.sku).length < 4);
   const autoFolded = useRef(value.lines.filter((l) => l.sku).length >= 4);
@@ -455,7 +458,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     // (trước đây chỉ chép dòng hàng mua → mất dòng quà, đơn 3 mặt hàng thành phiếu nhập 2).
     if (d.kind === 'order' && v.kind === 'receipt') {
       const r = receiptFromOrder(d, data.docs, v.docDate || today(), data.units);
-      set({ priceIncludesVat: r.priceIncludesVat, refIds: [d.id], lines: r.lines, ...(r.warehouseCode && !v.warehouseCode ? { warehouseCode: r.warehouseCode } : {}), ...(d.contractCode ? { contractCode: d.contractCode } : {}) });
+      set({ priceIncludesVat: r.priceIncludesVat, refIds: [d.id], lines: r.lines, ...(r.warehouseCode && !v.warehouseCode ? { warehouseCode: r.warehouseCode } : {}), ...(d.contractCode ? { contractCode: d.contractCode } : {}), ...(d.invoicePlan ? { invoicePlan: d.invoicePlan } : {}) });
       return;
     }
     // Chép làm mẫu: hàng mua + hàng tặng (giữ loại dòng); phiếu đổi hàng chỉ chép hàng mua làm dòng trả đi.
@@ -658,7 +661,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
           dateOf={(d) => d.docDate} searchOf={(d) => [d.docNo, d.note, d.branchCode, ...d.lines.flatMap((l) => [l.sku, l.name])].join(' ')}
           chips={v.kind === 'receipt' ? [{ key: 'cho', label: 'Chỉ đơn còn chờ giao', on: true, test: (d) => !orderProgress(d, data.docs, v.id, data.units).done }] : []}
           noneLabel={v.kind === 'receipt' ? 'Không theo đơn (nhập ngoài đơn)' : 'Không chọn'} onNone={() => set({ refIds: [] })}
-          onPick={(d) => set({ refIds: [d.id] })} onClose={() => setChon(null)}
+          onPick={(d) => set({ refIds: [d.id], ...(v.kind === 'receipt' && d.invoicePlan && !v.invoicePlan ? { invoicePlan: d.invoicePlan } : {}) })} onClose={() => setChon(null)}
           note="Đơn đặt đã duyệt của NCC này. Tiến độ = SL đã nhận (phiếu nhập đã duyệt, quy ĐVT nhỏ nhất) / SL đặt."
           columns={[
             { key: 'docNo', header: 'Số đơn', type: 'code', width: 120 },
@@ -713,7 +716,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
         {fillHd && hd && <DienMatHang doc={v} data={data} theoHopDong={{ code: hd.code, skus: hd.skus }} onClose={() => setFillHd(false)} onAdd={(ls) => { setFillHd(false); set({ lines: [...v.lines.filter((l) => l.sku), ...ls] }); setTab('hang'); }} />}
         {/* [2026-11-20 Nguyễn Văn Thủy] chuỗi chứng từ của phiếu: hợp đồng → đơn → phiếu nhập → hoá đơn → thanh toán, báo mắt xích thiếu / lệch (đóng góp) */}
         {v.kind !== 'gift_in' && v.kind !== 'gift_out' && (!v.id.startsWith('new-') || v.refIds?.length || v.contractCode) && <ChuoiChungTu doc={v} docs={data.docs} units={{ ...data.units, ...(a?.units ?? {}) }} onOpen={onOpen} />}
-        <div className={`mh-sheet-body ${readOnly ? 'view-plain' : ''}`} ref={kl.body} {...kl.bodyProps}>
+        <div className={`mh-sheet-body ${readOnly ? 'view-plain' : ''}${anTroLy ? ' an-tro-ly' : ''}`} ref={kl.body} {...kl.bodyProps}>
           {/* Thẻ Hàng hoá: khung trái không cuộn cả khối — bảng hàng chiếm phần còn lại và tự cuộn (thanh cuộn ngang luôn thấy, đầu phiếu đứng yên). */}
           <div className={`mh-main ${tab === 'hang' ? 'mh-main-hang' : ''}`}>
             {!headOpen && (
@@ -753,6 +756,19 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                     </span>; })()}
                     {hd && hd.statusText !== 'Đang hiệu lực' && !readOnly && <span className="mh-warn" style={{ fontSize: 11 }}>Hợp đồng {hd.statusText.toLowerCase()}{hd.endDate ? ` (đến ${dmy(hd.endDate)})` : ''}</span>}
                     {hd && hd.branchCodes.length > 0 && v.branchCode && !hd.branchCodes.includes(v.branchCode) && !readOnly && <span className="mh-warn" style={{ fontSize: 11 }}>Hợp đồng không áp cho chi nhánh {v.branchCode}</span>}
+                  </div>
+                )}
+                {/* [2026-11-20 Nguyễn Văn Thủy] kế hoạch hoá đơn đầu vào: khai ở đơn đặt, phiếu nhập kế thừa; quá hạn chưa nhận hoá đơn → Bàn làm việc báo (đóng góp) */}
+                {(v.kind === 'order' || v.kind === 'receipt') && (
+                  <div className="field"><label title="Hoá đơn đầu vào của NCC: đi cùng hàng, nhận sau bao nhiêu ngày (tính từ ngày nhận hàng), hay không lấy hoá đơn. Khai ở đơn đặt, phiếu nhập lập từ đơn tự kế thừa">Hoá đơn</label>
+                    <div className="row" style={{ gap: 4 }}>
+                      <select className="select input" disabled={readOnly} value={v.invoicePlan?.mode ?? 'with_goods'}
+                        onChange={(e) => { const mode = e.target.value as InvoicePlan['mode']; set({ invoicePlan: mode === 'with_goods' ? undefined : { mode, ...(mode === 'later' ? { days: v.invoicePlan?.days ?? 7 } : {}) } }); }}>
+                        <option value="with_goods">Cùng hàng</option><option value="later">Nhận sau</option><option value="none">Không lấy</option>
+                      </select>
+                      {v.invoicePlan?.mode === 'later' && <><input className="input num" style={{ width: 56 }} disabled={readOnly} inputMode="numeric" value={v.invoicePlan.days ?? 0}
+                        onChange={(e) => set({ invoicePlan: { mode: 'later', days: Math.max(0, Math.min(365, Number(e.target.value.replace(/\D/g, '')) || 0)) } })} /><span className="muted" style={{ alignSelf: 'center' }}>ngày</span></>}
+                    </div>
                   </div>
                 )}
                 {(v.kind === 'receipt' || v.kind === 'prepayment') && (
@@ -1195,8 +1211,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             )}
           </div>
 
-          <aside className="mh-side">
-            <div className="row" style={{ marginBottom: 6, alignItems: 'center' }}><b style={{ fontSize: 14 }}>Trợ lý mua hàng</b><span className="muted" style={{ fontSize: 11, marginLeft: 'auto' }}>{analyzing ? 'đang kiểm tra…' : 'số liệu thật theo sổ'}</span></div>
+          {anTroLy && <button type="button" className="mh-side-mo" onClick={() => doiTroLy(false)} title="Mở khung Trợ lý mua hàng (kiểm tra, tiến độ, công nợ, lịch sử giá)"><span>‹ Trợ lý</span></button>}
+          <aside className="mh-side" hidden={anTroLy}>
+            <div className="row" style={{ marginBottom: 6, alignItems: 'center', gap: 6 }}><b style={{ fontSize: 14 }}>Trợ lý mua hàng</b><button type="button" className="btn btn-xs" style={{ marginLeft: 'auto' }} onClick={() => doiTroLy(true)} title="Thu gọn khung trợ lý — bảng hàng rộng hết màn">Thu gọn ›</button><span className="muted" style={{ fontSize: 11 }}>{analyzing ? 'đang kiểm tra…' : 'số liệu thật theo sổ'}</span></div>
             {prog && (
               <div className="mh-panel">
                 <h4>Tiến độ giao hàng của đơn {prog.done ? <span className="badge badge-ok">Đã nhận đủ</span> : prog.buyDone ? <span className="badge badge-warn">Thiếu quà</span> : <span className="badge badge-warn">Còn {prog.remaining}</span>}</h4>

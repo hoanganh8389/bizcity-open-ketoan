@@ -61,7 +61,7 @@ function Node({ n }: { n: SoDoNode }) {
 
 // [2026-11-16 kiennt] sơ đồ theo nhóm chức năng: mỗi thẻ là một mục của menu, bấm thẳng vào màn cần khai (đóng góp)
 /** Thẻ một nhóm chức năng: số bước, tên nhóm, các màn của nhóm (màn đang phát triển thì không hiện). */
-function NhomCard({ b, s, so }: { b: SoDoNhomBuoc; s: GonResolvedSection; so: number }) {
+function NhomCard({ b, s, so, them }: { b: SoDoNhomBuoc; s: GonResolvedSection; so: number; them?: (b: SoDoNhomBuoc) => ReactNode }) {
   return (
     <section className="sdn-card">
       <header><span className="sdn-so">{so}</span><Icon name={b.icon} size={16} /><b>{s.label}</b></header>
@@ -69,12 +69,13 @@ function NhomCard({ b, s, so }: { b: SoDoNhomBuoc; s: GonResolvedSection; so: nu
       <div className="sdn-items">
         {s.items.map((m) => <Link key={m.key} to={m.path!} title={m.code ? `${m.label} (${m.code})` : m.label}><Icons.ChevronRight size={13} />{m.label}</Link>)}
       </div>
+      {them?.(b)}
     </section>
   );
 }
 
 /** Chuỗi nhóm làm lần lượt (mũi tên), cuối chuỗi rẽ ra các nhóm làm song song. Nhóm người dùng không mở được màn nào thì ẩn. */
-function NhomFlow({ nhom, sections, canOpen }: { nhom: NonNullable<SoDo['nhom']>; sections: GonResolvedSection[]; canOpen: (path: string) => boolean }) {
+function NhomFlow({ nhom, sections, canOpen, them }: { nhom: NonNullable<SoDo['nhom']>; sections: GonResolvedSection[]; canOpen: (path: string) => boolean; them?: (b: SoDoNhomBuoc) => ReactNode }) {
   // [2026-11-17 Nguyễn Văn Thủy] thẻ khai màn thẳng (items) — lọc theo quyền; không khai thì lấy theo mục menu cùng tên (đóng góp)
   const pick = (list: SoDoNhomBuoc[]) => list.flatMap((b) => {
     const s: GonResolvedSection | undefined = b.items
@@ -90,14 +91,14 @@ function NhomFlow({ nhom, sections, canOpen }: { nhom: NonNullable<SoDo['nhom']>
       <div className={`sdn${chuoi.length + (nhanh.length ? 1 : 0) >= 6 ? ' dense' : ''}`}>
         {chuoi.map(({ b, s }, i) => (
           <Fragment key={b.nhom}>
-            <NhomCard b={b} s={s} so={i + 1} />
+            <NhomCard b={b} s={s} so={i + 1} them={them} />
             {(i < chuoi.length - 1 || nhanh.length > 0) && <i className={`sdn-arrow${i === chuoi.length - 1 && nhanh.length > 1 ? ' re' : ''}`} aria-hidden />}
           </Fragment>
         ))}
         {nhanh.length > 0 && (
           <div className={`sdn-nhanh${nhanh.length > 1 ? ' re' : ''}`}>
             {nhanh.length > 1 && <small className="sdn-song-song">Làm song song</small>}
-            {nhanh.map(({ b, s }) => <div key={b.nhom} className="sdn-leaf"><NhomCard b={b} s={s} so={chuoi.length + 1} /></div>)}
+            {nhanh.map(({ b, s }) => <div key={b.nhom} className="sdn-leaf"><NhomCard b={b} s={s} so={chuoi.length + 1} them={them} /></div>)}
           </div>
         )}
       </div>
@@ -105,7 +106,7 @@ function NhomFlow({ nhom, sections, canOpen }: { nhom: NonNullable<SoDo['nhom']>
   );
 }
 
-export function SoDoNhom({ soDo, canOpen, extra, sections = [] }: { soDo: SoDo; canOpen: (path: string) => boolean; extra?: ReactNode; sections?: GonResolvedSection[] }) {
+export function SoDoNhom({ soDo, canOpen, extra, sections = [], them, dau }: { soDo: SoDo; canOpen: (path: string) => boolean; extra?: ReactNode; sections?: GonResolvedSection[]; /** Phần gắn thêm cuối mỗi thẻ (thiếu / lệch, nút lập). */ them?: (b: SoDoNhomBuoc) => ReactNode; /** Thay dòng tiêu đề sơ đồ. */ dau?: ReactNode }) {
   const rows = soDo.rows
     .map((r) => r.map((n) => ({ ...n, sub: n.sub?.filter((s) => canOpen(s.path)) }))
       .filter((n) => !n.path || (n.sub ? n.sub.length > 0 : canOpen(n.path)))
@@ -117,8 +118,8 @@ export function SoDoNhom({ soDo, canOpen, extra, sections = [] }: { soDo: SoDo; 
   return (
     <>
       <div className="card sd-card">
-        <div className="sd-title">{soDo.title}</div>
-        {soDo.nhom ? <NhomFlow nhom={soDo.nhom} sections={sections} canOpen={canOpen} /> : <div className={`sd-rows${two ? ' two' : ''}`} style={{ ['--sd-n' as string]: cols }}>
+        {dau ?? <div className="sd-title">{soDo.title}</div>}
+        {soDo.nhom ? <NhomFlow nhom={soDo.nhom} sections={sections} canOpen={canOpen} them={them} /> : <div className={`sd-rows${two ? ' two' : ''}`} style={{ ['--sd-n' as string]: cols }}>
           {rows.map((r, i) => (
             <div key={i} className={`sd-row${i === 0 ? ' top' : ' bot'}`}>
               {!two && r.length > 1 && <i className="sd-line-h" style={{ left: `${50 / cols}%`, right: `${100 - ((r.length - 0.5) * 100) / cols}%` }} />}

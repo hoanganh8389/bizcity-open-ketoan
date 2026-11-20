@@ -116,7 +116,7 @@ export function GroupHomePage() {
   );
   // [2026-11-20 Nguyễn Văn Thủy] UX MUA HÀNG GỌN — Mua hàng vào là Bàn làm việc; sơ đồ quy trình mở bằng nút (?xem=chi-tiet / so-do) (đóng góp)
   if (g.key === 'mua-hang' && !xem) {
-    return <><BanLamViecMua g={g} onHelp={() => setHelp(true)} />{help && <HelpDrawer guideKey={helpKey} onClose={() => setHelp(false)} />}</>;
+    return <><BanLamViecMua g={g} canOpen={(p) => seen.has(p.split('?')[0]!)} onHelp={() => setHelp(true)} />{help && <HelpDrawer guideKey={helpKey} onClose={() => setHelp(false)} />}</>;
   }
   return (
     <>
