@@ -103,7 +103,8 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     if (sku && !existing.has(sku)) {
       if (ps) {
         if (!existing.has(ps) && !inFile.has(ps)) errors.push(`Mã cha ${ps} chưa có — khai mã cha trước (hoặc thêm dòng mã cha vào tệp)`);
-        if (sku.length - ps.length > 2) errors.push(`Mã biến thể chỉ thêm tối đa 2 chữ quanh mã cha ${ps}`);
+        // [2026-11-20 kiennt] NT-DM-013 — phần cuối nhận cả chữ số: câu báo ghi "ký tự" (đóng góp)
+        if (sku.length - ps.length > 2) errors.push(`Mã biến thể chỉ thêm tối đa 2 ký tự quanh mã cha ${ps}`);
       } else if (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku))) {
         errors.push('Mã hàng mới không được có chữ ở đầu hoặc cuối (mã biến thể phải giữ nguyên mã cha đã có)');
       }
