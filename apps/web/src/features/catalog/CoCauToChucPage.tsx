@@ -35,7 +35,7 @@ export interface DonVi {
   createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null;
 }
 export interface PhanKho { uid: string; code: string; name: string; branchCode: string; typeCode: string; typeName: string; isDefault: boolean; isActive: boolean; address: string; note: string; createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null }
-export interface BoPhan { uid: string; code: string; name: string; branchCode: string | null; isActive: boolean; note: string; createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null }
+export interface BoPhan { uid: string; code: string; name: string; branchCode: string | null; parentCode?: string | null; isActive: boolean; note: string; createdBy?: string; createdAt?: string | null; updatedBy?: string; updatedAt?: string | null }
 interface CoCauRaw { units: DonVi[]; warehouses: PhanKho[]; departments: BoPhan[] }
 
 export const ngung = (x: { code: string; isActive: boolean }) => !x.isActive || /_OFF$/i.test(x.code);
@@ -55,13 +55,28 @@ export function useCoCau() {
     for (const w of q.data?.warehouses ?? []) (khoCua.get(w.branchCode) ?? khoCua.set(w.branchCode, []).get(w.branchCode)!).push(w);
     const bpCua = new Map<string, BoPhan[]>();
     for (const d of q.data?.departments ?? []) if (d.branchCode) (bpCua.get(d.branchCode) ?? bpCua.set(d.branchCode, []).get(d.branchCode)!).push(d);
+    // Bộ phận cha – con (chỉ trong cùng đơn vị).
+    const bpByCode = new Map((q.data?.departments ?? []).map((d) => [d.code, d]));
+    const chaBp = (d: BoPhan) => { const p = d.parentCode ? bpByCode.get(d.parentCode) : undefined; return p && p.branchCode === d.branchCode ? p : undefined; };
+    const bpCon = new Map<string, BoPhan[]>();
+    for (const d of q.data?.departments ?? []) { const p = chaBp(d); if (p) (bpCon.get(p.code) ?? bpCon.set(p.code, []).get(p.code)!).push(d); }
+    for (const l of bpCon.values()) l.sort((a, b) => a.code.localeCompare(b.code));
+    const bpSau = (d: BoPhan) => { let n = 0; for (let x = chaBp(d); x && n < 30; x = chaBp(x)) n++; return n; };
+    /** Xếp bộ phận theo cây (cha trước, con ngay dưới) — gốc là bộ phận không có cha trong cùng danh sách. */
+    const xepCay = (list: BoPhan[]) => {
+      const co = new Set(list.map((d) => d.code));
+      const out: BoPhan[] = [];
+      const di = (d: BoPhan, n: number) => { if (n > 30) return; out.push(d); for (const c of bpCon.get(d.code) ?? []) if (co.has(c.code)) di(c, n + 1); };
+      for (const d of list) { const p = chaBp(d); if (!p || !co.has(p.code)) di(d, 0); }
+      return out;
+    };
     const pathOf = (u: DonVi) => { const out: DonVi[] = []; const seen = new Set<string>(); for (let x: DonVi | undefined = u; x && !seen.has(x.code); x = x.parentCode ? byCode.get(x.parentCode) : undefined) { seen.add(x.code); out.unshift(x); } return out; };
     // Mã đã dùng (đơn vị, phân kho, bộ phận) để báo trùng ngay khi gõ.
     const ma = new Map<string, string>();
     for (const u of units) ma.set(u.code.toLowerCase(), `đơn vị ${u.name}`);
     for (const w of q.data?.warehouses ?? []) ma.set(w.code.toLowerCase(), `phân kho ${w.name}`);
     for (const d of q.data?.departments ?? []) ma.set(d.code.toLowerCase(), `bộ phận ${d.name}`);
-    return { units, byCode, kids, roots, under, khoCua, bpCua, pathOf, ma, warehouses: q.data?.warehouses ?? [], departments: q.data?.departments ?? [] };
+    return { units, byCode, kids, roots, under, khoCua, bpCua, bpByCode, bpCon, chaBp, bpSau, xepCay, pathOf, ma, warehouses: q.data?.warehouses ?? [], departments: q.data?.departments ?? [] };
   }, [q.data]);
   return { ...ix, loading: q.isLoading, error: q.error, refetch: () => void q.refetch() };
 }
@@ -95,7 +110,7 @@ const MST_OK = /^[0-9]{10}(-[0-9]{3})?$/;
 /* ------------------------------------------------------------------ trang */
 
 type Xem = 'cay' | 'sodo' | 'ds';
-type HopThoai = { loai: 'donvi'; code: string | null; cha: string | null } | { loai: 'kho'; code: string | null; donVi: string | null } | { loai: 'bophan'; code: string | null; donVi: string | null } | { loai: 'xoa'; key: string; ten: string; ma: string };
+type HopThoai = { loai: 'donvi'; code: string | null; cha: string | null } | { loai: 'kho'; code: string | null; donVi: string | null } | { loai: 'bophan'; code: string | null; donVi: string | null; cha?: string | null } | { loai: 'xoa'; key: string; ten: string; ma: string };
 
 export function CoCauToChucPage() {
   const { can } = useAuth();
@@ -157,7 +172,7 @@ export function CoCauToChucPage() {
         )}
       {hop?.loai === 'donvi' && <DonViModal cc={cc} code={hop.code} cha={hop.cha} onClose={() => setHop(null)} onSaved={(c, t, tiep) => { thongBao(t); setSel(c); if (!tiep) setHop(null); }} />}
       {hop?.loai === 'kho' && <PhanKhoModal cc={cc} code={hop.code} donVi={hop.donVi} onClose={() => setHop(null)} onSaved={(t) => { thongBao(t); setHop(null); }} />}
-      {hop?.loai === 'bophan' && <BoPhanModal cc={cc} code={hop.code} donVi={hop.donVi} onClose={() => setHop(null)} onSaved={(t) => { thongBao(t); setHop(null); }} />}
+      {hop?.loai === 'bophan' && <BoPhanModal cc={cc} code={hop.code} donVi={hop.donVi} cha={hop.cha ?? null} onClose={() => setHop(null)} onSaved={(t) => { thongBao(t); setHop(null); }} />}
       {hop?.loai === 'xoa' && <XoaModal hop={hop} onClose={() => setHop(null)} onDone={(t, cha) => { thongBao(t); setHop(null); if (hop.key.startsWith('u:')) setSel(cha); }} cc={cc} />}
     </>
   );
@@ -295,7 +310,8 @@ function cotKho(cc: CC, thuoc: boolean): Cot<PhanKho>[] {
 function cotBoPhan(cc: CC, thuoc: boolean): Cot<BoPhan>[] {
   return [
     { k: 'code', ten: 'Mã bộ phận', w: 140, v: (x) => x.code, gt: (x) => <span className="mono">{x.code}</span> },
-    { k: 'name', ten: 'Tên bộ phận', w: 240, v: (x) => x.name, gt: (x) => <>{x.name}{cc.byCode.get(x.branchCode ?? '')?.departmentCode === x.code && <span className="ccm-mac-dinh">Mặc định</span>}</> },
+    { k: 'name', ten: 'Tên bộ phận', w: 260, v: (x) => x.name, gt: (x) => <span style={{ paddingLeft: cc.bpSau(x) * 18 }}>{cc.bpSau(x) > 0 && <span className="muted">└ </span>}{x.name}{cc.byCode.get(x.branchCode ?? '')?.departmentCode === x.code && <span className="ccm-mac-dinh">Mặc định</span>}</span> },
+    { k: 'parent', ten: 'Bộ phận cha', w: 200, v: (x) => { const p = cc.chaBp(x); return p ? `${p.name} (${p.code})` : ''; } },
     { k: 'branch', ten: 'Thuộc đơn vị', w: 240, v: (x) => tenDonVi(cc, x.branchCode), gt: (x) => tenDonVi(cc, x.branchCode) || <span className="muted">Chưa gắn đơn vị</span>, an: !thuoc },
     { k: 'path', ten: 'Đường dẫn', w: 340, v: (x) => duongCua(cc, x.branchCode), gt: (x) => <span className="muted">{duongCua(cc, x.branchCode)}</span>, an: !thuoc },
     { k: 'note', ten: 'Ghi chú', w: 200, v: (x) => x.note ?? '', an: true },
@@ -308,7 +324,7 @@ type Tab = 'tt' | 'con' | 'kho' | 'bp' | 'ls';
 
 function ChiTiet({ cc, u, canWrite, onSel, mo }: { cc: CC; u: DonVi; canWrite: boolean; onSel: (c: string) => void; mo: (h: HopThoai) => void }) {
   const [tab, setTab] = useState<Tab>('tt');
-  const [ca, setCa] = useState({ con: false, kho: false, bp: false });
+  const [ca, setCa] = useState<{ con: boolean; kho: boolean; bp: 'rieng' | 'sodo' | 'nhanh' }>({ con: false, kho: false, bp: 'rieng' });
   const [menu, setMenu] = useState(false);
   const truc = cc.kids.get(u.code) ?? [];
   const nhanh = useMemo(() => cc.under(u.code), [cc, u.code]);
@@ -421,19 +437,91 @@ function ChiTiet({ cc, u, canWrite, onSel, mo }: { cc: CC; u: DonVi; canWrite: b
           {tab === 'bp' && (
             <>
               <div className="ccm-chip-hang">
-                <button type="button" className={`ccm-chip${!ca.bp ? ' on' : ''}`} onClick={() => setCa({ ...ca, bp: false })}><Users size={15} /> Bộ phận của {u.code} ({dem(bpRieng)})</button>
-                <button type="button" className={`ccm-chip${ca.bp ? ' on' : ''}`} onClick={() => setCa({ ...ca, bp: true })}><Layers size={15} /> Toàn nhánh ({dem(bpNhanh)})</button>
+                <button type="button" className={`ccm-chip${ca.bp === 'rieng' ? ' on' : ''}`} onClick={() => setCa({ ...ca, bp: 'rieng' })}><Users size={15} /> Bộ phận của {u.code} ({dem(bpRieng)})</button>
+                <button type="button" className={`ccm-chip${ca.bp === 'sodo' ? ' on' : ''}`} onClick={() => setCa({ ...ca, bp: 'sodo' })}><Network size={15} /> Sơ đồ bộ phận</button>
+                <button type="button" className={`ccm-chip${ca.bp === 'nhanh' ? ' on' : ''}`} onClick={() => setCa({ ...ca, bp: 'nhanh' })}><Layers size={15} /> Toàn nhánh ({dem(bpNhanh)})</button>
               </div>
-              <Bang key={String(ca.bp)} rows={ca.bp ? bpNhanh : bpRieng} onSua={canWrite ? (x) => mo({ loai: 'bophan', code: x.code, donVi: null }) : undefined} onXoa={canWrite ? (x) => xoa(`d:${x.code}`, x.name, x.code) : undefined}
-                them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'bophan', code: null, donVi: u.code })}><Plus size={14} /> Thêm bộ phận</button>}
-                khoa="co-cau-bp" tenXuat={`Bo-phan-${u.code}`}
-                cot={cotBoPhan(cc, ca.bp)}
-                rong={<>{u.name} chưa có bộ phận.</>} />
+              {ca.bp === 'sodo'
+                ? <SoDoBoPhan cc={cc} u={u} onMo={canWrite ? (x) => mo({ loai: 'bophan', code: x.code, donVi: null }) : undefined} onThem={canWrite ? (cha) => mo({ loai: 'bophan', code: null, donVi: u.code, cha }) : undefined} />
+                : <Bang key={ca.bp} rows={cc.xepCay(ca.bp === 'nhanh' ? bpNhanh : bpRieng)} onMo={canWrite ? (x) => mo({ loai: 'bophan', code: x.code, donVi: null }) : undefined} onSua={canWrite ? (x) => mo({ loai: 'bophan', code: x.code, donVi: null }) : undefined} onXoa={canWrite ? (x) => xoa(`d:${x.code}`, x.name, x.code) : undefined}
+                  them={canWrite && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => mo({ loai: 'bophan', code: null, donVi: u.code })}><Plus size={14} /> Thêm bộ phận</button>}
+                  khoa="co-cau-bp" tenXuat={`Bo-phan-${u.code}`}
+                  cot={cotBoPhan(cc, ca.bp === 'nhanh')}
+                  rong={<>{u.name} chưa có bộ phận.</>} />}
             </>
           )}
           {tab === 'ls' && <LichSu u={u} />}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ sơ đồ bộ phận trong một đơn vị */
+
+/**
+ * Vẽ như sơ đồ tổ chức trên Excel: đơn vị ở đỉnh, chuỗi một con đi thẳng xuống, các nhánh trải ngang,
+ * lớp cuối (bộ phận không có con) xếp dọc dưới cha. Màu nhạt dần theo cấp.
+ */
+function SoDoBoPhan({ cc, u, onMo, onThem }: { cc: CC; u: DonVi; onMo?: (d: BoPhan) => void; onThem?: (cha: string | null) => void }) {
+  const [hienNgung, setHienNgung] = useState(false);
+  const [to, setTo] = useState(false);
+  const khung = useRef<HTMLDivElement>(null);
+  // Sơ đồ rộng hơn khung: cuộn sao cho đỉnh (đơn vị) nằm giữa.
+  useEffect(() => { const k = khung.current; if (k) k.scrollLeft = Math.max(0, (k.scrollWidth - k.clientWidth) / 2); }, [u.code, hienNgung, to]);
+  const ds = (cc.bpCua.get(u.code) ?? []).filter((x) => hienNgung || !ngung(x));
+  const co = new Set(ds.map((d) => d.code));
+  const con = (c: string) => (cc.bpCon.get(c) ?? []).filter((x) => co.has(x.code));
+  const goc = cc.xepCay(ds).filter((d) => { const p = cc.chaBp(d); return !p || !co.has(p.code); });
+  const macDinh = u.departmentCode;
+  const o = (d: BoPhan, lv: number) => (
+    <div role="button" tabIndex={0} className={`ccb-o lv${Math.min(lv, 3)}${ngung(d) ? ' muted' : ''}`} onClick={() => onMo?.(d)} onKeyDown={(e) => { if (e.key === 'Enter') onMo?.(d); }}
+      title={`${d.name} (${d.code})${onMo ? ' · bấm để sửa' : ''}`}>
+      <span className="ccb-ten">{d.name}</span>
+      <span className="ccb-ma">{d.code}{d.code === macDinh && ' · mặc định'}</span>
+      {onThem && <button type="button" className="ccb-them" title={`Thêm bộ phận con của ${d.name}`} onClick={(e) => { e.stopPropagation(); onThem(d.code); }}><Plus size={12} /></button>}
+    </div>
+  );
+  const ngang = (kids: ReactNode[]) => (
+    <div className="cc-hrow">
+      {kids.map((k, i) => (
+        <div key={i} className="cc-hcell">
+          {kids.length > 1 && <div className="cc-hline ccs-net" style={{ left: i === 0 ? '50%' : 0, right: i === kids.length - 1 ? '50%' : 0 }} />}
+          <div className="cc-hstem ccs-net" />
+          {k}
+        </div>
+      ))}
+    </div>
+  );
+  const ve = (d: BoPhan, lv: number, n = 0): ReactNode => {
+    const k = n > 30 ? [] : con(d.code);
+    if (!k.length) return o(d, lv);
+    // Lớp cuối: các con đều không có con → xếp dọc dưới cha.
+    if (k.every((x) => !con(x.code).length)) {
+      return <div className="ccb-doc">{o(d, lv)}<ul className="ccb-la">{k.map((x) => <li key={x.code}>{o(x, lv + 1)}</li>)}</ul></div>;
+    }
+    return <><div className="cc-center">{o(d, lv)}</div><div className="cc-stem ccs-net" />{ngang(k.map((x) => ve(x, lv + 1, n + 1)))}</>;
+  };
+  return (
+    <div className={`ccb${to ? ' ccb-full' : ''}`}>
+      <div className="ccb-loc">
+        <span className="muted">Bấm một ô để sửa, nút + để thêm bộ phận con. Bộ phận cha – con chỉ trong cùng đơn vị.</span>
+        <label className="checkbox ccm-menu-o" style={{ marginLeft: 'auto' }}><input type="checkbox" checked={hienNgung} onChange={(e) => setHienNgung(e.target.checked)} /> Hiện ngừng hoạt động</label>
+        {onThem && <button type="button" className="btn btn-sm ccm-nut-them" onClick={() => onThem(null)}><Plus size={14} /> Thêm bộ phận</button>}
+        <button type="button" className="btn btn-sm" onClick={() => setTo((x) => !x)} title={to ? 'Thu về khung chi tiết' : 'Xem sơ đồ toàn màn hình'}>{to ? <><X size={14} /> Thu nhỏ</> : 'Toàn màn hình'}</button>
+      </div>
+      {to && <div className="ccb-tieude">Sơ đồ bộ phận · {u.name} ({u.code})</div>}
+      {!ds.length ? <div className="ccm-rong">{u.name} chưa có bộ phận.</div> : (
+        <div ref={khung} className="cc-chart ccs-khung ccb-khung">
+          <div className="cc-chart-in">
+            <div className="cc-chart-root">
+              <div className="cc-center"><div className="ccb-o goc"><span className="ccb-ten">{u.name}</span><span className="ccb-ma">{tenCap(u)} · {u.code}</span></div></div>
+              <div className="cc-stem ccs-net" />
+              {ngang(goc.map((d) => ve(d, 0)))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -598,13 +686,18 @@ function PhanKhoModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: str
   );
 }
 
-function BoPhanModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: string | null; donVi: string | null; onClose: () => void; onSaved: (text: string) => void }) {
+function BoPhanModal({ cc, code, donVi, cha, onClose, onSaved }: { cc: CC; code: string | null; donVi: string | null; cha: string | null; onClose: () => void; onSaved: (text: string) => void }) {
   const lamMoi = useLamMoi();
   const d = code ? cc.departments.find((x) => x.code === code) ?? null : null;
-  const [f, setF] = useState({ code: d?.code ?? '', name: d?.name ?? '', branchCode: d?.branchCode ?? donVi ?? '', note: d?.note ?? '', isActive: d?.isActive ?? true });
+  const [f, setF] = useState({ code: d?.code ?? '', name: d?.name ?? '', branchCode: d?.branchCode ?? donVi ?? '', parentCode: (d ? cc.chaBp(d)?.code : cha) ?? '', note: d?.note ?? '', isActive: d?.isActive ?? true });
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const [daBam, setDaBam] = useState(false);
   const items = useMemo(() => chonDonVi(cc), [cc]);
+  // Bộ phận cha: bộ phận cùng đơn vị, trừ chính nó và các bộ phận con cháu của nó.
+  const chaList = useMemo(() => {
+    const cam = new Set<string>(); if (d) { const st = [d.code]; while (st.length) { const c = st.pop()!; cam.add(c); for (const x of cc.bpCon.get(c) ?? []) st.push(x.code); } }
+    return cc.xepCay((cc.bpCua.get(f.branchCode) ?? []).filter((x) => !cam.has(x.code) && !ngung(x))).map((x) => { const t: string[] = []; for (let y: BoPhan | undefined = x, n = 0; y && n < 30; y = cc.chaBp(y), n++) t.unshift(y.name); return { code: x.code, name: t.join(' / ') }; });
+  }, [cc, d, f.branchCode]);
   const trung = !d && !!f.code.trim() && cc.ma.has(f.code.trim().toLowerCase());
   const loi: Record<string, string> = {};
   if (daBam) {
@@ -613,7 +706,7 @@ function BoPhanModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: stri
     if (!f.branchCode) loi.branchCode = 'Chọn đơn vị';
   }
   const luu = useMutation({
-    mutationFn: () => api.put(`/api/v1/co-cau/departments/${encodeURIComponent(f.code.trim())}`, { name: f.name.trim(), branchCode: f.branchCode, note: f.note, isActive: f.isActive }),
+    mutationFn: () => api.put(`/api/v1/co-cau/departments/${encodeURIComponent(f.code.trim())}`, { name: f.name.trim(), branchCode: f.branchCode, parentCode: f.parentCode, note: f.note, isActive: f.isActive }),
     onSuccess: () => { lamMoi(); onSaved(`Đã lưu bộ phận ${f.code.trim()} · ${f.name.trim()}`); },
   });
   const ok = () => { setDaBam(true); if (f.code.trim() && f.name.trim() && f.branchCode && !trung) luu.mutate(); };
@@ -622,7 +715,10 @@ function BoPhanModal({ cc, code, donVi, onClose, onSaved }: { cc: CC; code: stri
       onClose={onClose} helpKey="so-do-to-chuc" footer={<><button className="btn" onClick={onClose}>Huỷ</button><button className="btn btn-primary" disabled={luu.isPending} onClick={ok}>Lưu</button></>}>
       <Field label="Mã bộ phận (*)" error={loi.code}><input className="input mono" value={f.code} maxLength={64} disabled={!!d} autoFocus={!d} onChange={(e) => set({ code: e.target.value })} /></Field>
       <Field label="Tên bộ phận (*)" error={loi.name}><input className="input" value={f.name} placeholder="vd Kế toán, Kinh doanh…" onChange={(e) => set({ name: e.target.value })} /></Field>
-      <Field label="Thuộc đơn vị (*)" full error={loi.branchCode}><ListPicker items={items} value={f.branchCode} onChange={(c) => set({ branchCode: c })} placeholder="Tìm và chọn đơn vị" /></Field>
+      <Field label="Thuộc đơn vị (*)" full error={loi.branchCode}><ListPicker items={items} value={f.branchCode} onChange={(c) => set({ branchCode: c, parentCode: c === f.branchCode ? f.parentCode : '' })} placeholder="Tìm và chọn đơn vị" /></Field>
+      <Field label="Thuộc bộ phận" full tip="Không bắt buộc. Chỉ chọn được bộ phận trong cùng đơn vị, ví dụ Kế toán thuế thuộc Kế toán.">
+        <ListPicker items={chaList} value={f.parentCode} onChange={(c) => set({ parentCode: c })} placeholder={f.branchCode ? 'Trống = bộ phận cấp cao nhất của đơn vị' : 'Chọn đơn vị trước'} disabled={!f.branchCode} />
+      </Field>
       <Field label="Ghi chú" full><input className="input" value={f.note} onChange={(e) => set({ note: e.target.value })} /></Field>
       {d && <Field label=" "><label className="checkbox"><input type="checkbox" checked={f.isActive} onChange={(e) => set({ isActive: e.target.checked })} /> Đang hoạt động</label></Field>}
       {luu.error && <div className="alert alert-bad full">{errorText(luu.error)}</div>}
@@ -680,6 +776,8 @@ function SoDo({ cc, sel, onChon }: { cc: CC; sel: string | null; onChon: (c: str
   const [goc, setGoc] = useState('');
   const [h, setH] = useState({ kho: true, bp: false, ngung: false });
   const [thu, setThu] = useState<Set<string>>(new Set());
+  const [moBp, setMoBp] = useState<Set<string>>(new Set());
+  const latBp = (c: string) => setMoBp((s) => { const x = new Set(s); if (x.has(c)) x.delete(c); else x.add(c); return x; });
   const hien = (u: DonVi) => h.ngung || !ngung(u);
   const kidsOf = (c: string) => (cc.kids.get(c) ?? []).filter(hien);
   const lat = (c: string) => setThu((s) => { const x = new Set(s); if (x.has(c)) x.delete(c); else x.add(c); return x; });
@@ -697,6 +795,21 @@ function SoDo({ cc, sel, onChon }: { cc: CC; sel: string | null; onChon: (c: str
   const la = (ic: ReactNode, cls: string, ma: string, ten: string, nhan: string) => (
     <div className={`ccs-o ${cls}`}><span className="ccs-o-ic">{ic}</span><span className="ccs-o-chu"><span className="ccs-o-loai">{nhan} · <span className="mono">{ma}</span></span><span className="ccs-o-ten">{ten}</span></span></div>
   );
+  // Bộ phận có con: thu gọn sẵn, bấm ô để mở / đóng (moBp), "Mở hết" mở tất cả.
+  const bpNut = (d: BoPhan): ReactNode => {
+    const con = (cc.bpCon.get(d.code) ?? []).filter((x) => h.ngung || !ngung(x));
+    const mo = moBp.has(d.code);
+    return (
+      <div className="ccs-n">
+        {con.length
+          ? <div role="button" tabIndex={0} className="ccs-bp-nut" title={mo ? 'Thu nhánh' : `Mở ${con.length} bộ phận con`} onClick={() => latBp(d.code)} onKeyDown={(e) => { if (e.key === 'Enter') latBp(d.code); }}>
+              {la(<Users />, 'k-phongban', d.code, d.name, `Bộ phận · ${con.length} con ${mo ? '▾' : '▸'}`)}
+            </div>
+          : la(<Users />, 'k-phongban', d.code, d.name, 'Bộ phận')}
+        {mo && con.length > 0 && <ul className="ccs-con ccs-con-bp">{con.map((x) => <li key={x.code}>{bpNut(x)}</li>)}</ul>}
+      </div>
+    );
+  };
   const cayDoc = (u: DonVi): ReactNode => {
     const kids = kidsOf(u.code);
     const kho = h.kho ? (cc.khoCua.get(u.code) ?? []).filter((x) => h.ngung || !ngung(x)) : [];
@@ -708,11 +821,26 @@ function SoDo({ cc, sel, onChon }: { cc: CC; sel: string | null; onChon: (c: str
         {co ? (
           <ul className="ccs-con">
             {kho.map((w) => <li key={`w${w.code}`}>{la(<WarehouseIcon />, 'k-kho', w.code, w.name, 'Phân kho')}</li>)}
-            {bp.map((d) => <li key={`d${d.code}`}>{la(<Users />, 'k-phongban', d.code, d.name, 'Bộ phận')}</li>)}
+            {bp.filter((d) => !cc.chaBp(d)).map((d) => <li key={`d${d.code}`}>{bpNut(d)}</li>)}
             {kids.map((x) => <li key={x.code}>{cayDoc(x)}</li>)}
           </ul>
         ) : null}
       </div>
+    );
+  };
+  // Đơn vị vẽ ngang: phân kho + cây bộ phận của chính nó đặt ngay dưới ô (trước các đơn vị con).
+  const rieng = (u: DonVi): ReactNode => {
+    const kho = h.kho ? (cc.khoCua.get(u.code) ?? []).filter((x) => h.ngung || !ngung(x)) : [];
+    const bp = h.bp ? (cc.bpCua.get(u.code) ?? []).filter((x) => (h.ngung || !ngung(x)) && !cc.chaBp(x)) : [];
+    if (!kho.length && !bp.length) return null;
+    return (
+      <div className="cc-center"><div className="ccs-rieng">
+        <div className="ccs-rieng-dau">Riêng của {u.name}: {kho.length ? `${kho.length} phân kho` : ''}{kho.length && bp.length ? ', ' : ''}{bp.length ? `${bp.length} bộ phận gốc` : ''}</div>
+        <ul className="ccs-con">
+          {kho.map((w) => <li key={`w${w.code}`}>{la(<WarehouseIcon />, 'k-kho', w.code, w.name, 'Phân kho')}</li>)}
+          {bp.map((d) => <li key={`d${d.code}`}>{bpNut(d)}</li>)}
+        </ul>
+      </div></div>
     );
   };
   // Hai cấp trên cùng trải ngang, từ cấp 3 trở xuống cây thụt lề.
@@ -722,6 +850,7 @@ function SoDo({ cc, sel, onChon }: { cc: CC; sel: string | null; onChon: (c: str
     return (
       <>
         <div className="cc-center">{oDv(u)}</div>
+        {rieng(u)}
         <div className="cc-stem ccs-net" />
         <div className="cc-hrow">
           {kids.map((x, i) => (
@@ -745,7 +874,7 @@ function SoDo({ cc, sel, onChon }: { cc: CC; sel: string | null; onChon: (c: str
         <label className="checkbox ccm-menu-o"><input type="checkbox" checked={h.bp} onChange={(e) => setH({ ...h, bp: e.target.checked })} /> Hiện bộ phận</label>
         <label className="checkbox ccm-menu-o"><input type="checkbox" checked={h.ngung} onChange={(e) => setH({ ...h, ngung: e.target.checked })} /> Hiện ngừng hoạt động</label>
         <button type="button" className="btn btn-sm" onClick={() => setThu(new Set(cc.units.filter((u) => u.level >= 3 && cc.kids.get(u.code)?.length).map((u) => u.code)))}>Thu gọn từ cấp 3</button>
-        <button type="button" className="btn btn-sm" onClick={() => setThu(new Set())}>Mở hết</button>
+        <button type="button" className="btn btn-sm" onClick={() => { setThu(new Set()); setMoBp(new Set(cc.bpCon.keys())); }}>Mở hết</button>
       </div>
       <div className="cc-chart ccs-khung">
         {roots.length ? <div className="cc-chart-in">{roots.map((r) => <div key={r.code} className="cc-chart-root">{ve(r, 0)}</div>)}</div> : <div className="ccm-rong">Chưa có đơn vị nào.</div>}

@@ -526,7 +526,7 @@ const TK_KET_CHUYEN: NhapLoai = {
 // [2026-11-20 Nguyễn Văn Thủy] cơ cấu một bảng (0173): 3 loại Đơn vị · Phân kho · Bộ phận theo /api/v1/co-cau (đóng góp)
 /* ------------------------------------------------------------------ DM16 Cơ cấu tổ chức (3 sheet: Đơn vị · Phân kho · Bộ phận) */
 interface DonViNhap { code: string; name: string; parentCode: string | null; levelLabel: string; taxCode: string; companyName: string; address: string; phone: string; note: string; isActive: boolean; path: string }
-interface BoPhanNhap { code: string; name: string; branchCode: string | null; note: string; isActive: boolean }
+interface BoPhanNhap { code: string; name: string; branchCode: string | null; parentCode?: string | null; note: string; isActive: boolean }
 interface PhongBan { code: string; name: string; parentCode: string | null; note: string; isActive: boolean; extra?: Record<string, unknown> }
 interface CuaHang { code: string; name: string; orgUnitCode: string | null; departmentCode: string | null; taxCode: string; companyName: string; address: string | null; phone: string; note: string; isActive: boolean }
 interface KhoDM16 { code: string; branchCode: string; name: string; address: string; note: string; isActive: boolean; isDefault: boolean; typeCode: string | null }
@@ -604,30 +604,44 @@ const CO_CAU = danhMuc<DonViNhap>({
 const coCauCo = async () => new Set((await cayCoCau()).map((n) => n.code.toLowerCase()));
 
 const PHONG_BAN = danhMuc<BoPhanNhap>({
-  id: 'phong-ban', title: 'Cơ cấu tổ chức — Bộ phận', desc: 'Bộ phận của đơn vị: mã, tên, thuộc (mã đơn vị), đang hoạt động' + THU_TU_DM16,
+  id: 'phong-ban', title: 'Cơ cấu tổ chức — Bộ phận', desc: 'Bộ phận của đơn vị: mã, tên, thuộc (mã đơn vị), bộ phận cha (cùng đơn vị), đang hoạt động' + THU_TU_DM16,
   listPath: '/danh-muc/so-do-to-chuc', invalidate: ['co-cau', 'dimensions'],
   sheet: 'Bộ phận', tenMa: 'Mã bộ phận',
   fields: [
     { key: 'code', header: 'Mã bộ phận', required: true, aliases: ['ma', 'ma phong ban', 'ma bo phan'], example: 'KT-PT', note: 'Đã có → cập nhật; chưa có → thêm mới. Không trùng mã đơn vị, phân kho.' },
     { key: 'name', header: 'Tên bộ phận', required: 'moi', aliases: ['ten', 'ten phong ban'], example: 'Kế toán' },
     { key: 'branchCode', header: 'Thuộc (mã)', required: 'moi', aliases: ['thuoc', 'thuoc co cau (ma)', 'thuoc co cau', 'don vi'], example: 'PT', note: 'Mã đơn vị đã có (nhập sheet Đơn vị trước).' },
+    { key: 'parentCode', header: 'Bộ phận cha (mã)', aliases: ['bo phan cha', 'ma bo phan cha', 'thuoc bo phan'], note: 'Không bắt buộc. Mã bộ phận cha CÙNG đơn vị (đã có hoặc nằm dòng trên trong tệp). Để trống = cấp cao nhất của đơn vị.' },
     { key: 'note', header: 'Ghi chú', aliases: ['mo ta'] },
     TT_TRUONG('Đang hoạt động'),
   ],
   tai: async () => (await coCauAll()).departments, maCua: (d) => d.code,
-  chuan: async (rows) => { const k = await maLoaiKhac('bp'); return { khac: k.m, donVi: k.donVi, cotTT: coCot(rows, 'isActive') }; },
-  xemTruoc: (d) => ({ name: d.name, branchCode: d.branchCode ?? '', note: d.note, isActive: d.isActive ? 'x' : '' }),
+  chuan: async (rows) => {
+    const k = await maLoaiKhac('bp');
+    // Đơn vị của từng bộ phận: trong tệp ưu tiên, không có thì theo dữ liệu đang có.
+    const bpDv = new Map((await coCauAll()).departments.map((d) => [d.code.toLowerCase(), (d.branchCode ?? '').toLowerCase()]));
+    for (const r of rows) { const m = chu(r.code); const dv = chu(r.branchCode); if (m && dv) bpDv.set(m.toLowerCase(), dv.toLowerCase()); }
+    return { khac: k.m, donVi: k.donVi, bpDv, cotCha: coCot(rows, 'parentCode'), cotTT: coCot(rows, 'isActive') };
+  },
+  xemTruoc: (d) => ({ name: d.name, branchCode: d.branchCode ?? '', parentCode: d.parentCode ?? '', note: d.note, isActive: d.isActive ? 'x' : '' }),
   kiem: (r, ma, before, { them }) => {
-    const { khac, donVi, cotTT } = them as { khac: Map<string, string>; donVi: Set<string>; cotTT: boolean };
+    const { khac, donVi, bpDv, cotCha, cotTT } = them as { khac: Map<string, string>; donVi: Set<string>; bpDv: Map<string, string>; cotCha: boolean; cotTT: boolean };
     const errors: string[] = [];
     if (!before && khac.has(ma.toLowerCase())) errors.push(`Mã ${ma} đã dùng cho ${khac.get(ma.toLowerCase())}`);
     const name = chu(r.name) || before?.name || '';
     if (!name) errors.push('Bộ phận mới phải có tên');
     const dv = chu(r.branchCode) || before?.branchCode || '';
     if (!dv) errors.push('Thiếu Thuộc (mã đơn vị)'); else if (!donVi.has(dv.toLowerCase())) errors.push(`Đơn vị ${dv} chưa có — nhập sheet Đơn vị trước`);
+    // Bộ phận cha: cột có trong tệp thì theo tệp (ô trống = bỏ cha), không có cột thì giữ nguyên.
+    const cha = cotCha ? chu(r.parentCode) : undefined;
+    if (cha) {
+      if (cha.toLowerCase() === ma.toLowerCase()) errors.push('Bộ phận không thể là cha của chính nó');
+      else if (!bpDv.has(cha.toLowerCase())) errors.push(`Bộ phận cha ${cha} chưa có`);
+      else if (bpDv.get(cha.toLowerCase()) !== dv.toLowerCase()) errors.push(`Bộ phận cha ${cha} phải cùng đơn vị ${dv}`);
+    }
     const tt = tich(r.isActive, cotTT); if (tt === null) errors.push(loiTich('Đang hoạt động', r.isActive));
     if (errors.length) return { errors };
-    return { errors, ghi: () => api.put(`/api/v1/co-cau/departments/${encodeURIComponent(ma)}`, { name, branchCode: dv, note: chu(r.note) || before?.note || '', isActive: tt ?? before?.isActive ?? true }) };
+    return { errors, ghi: () => api.put(`/api/v1/co-cau/departments/${encodeURIComponent(ma)}`, { name, branchCode: dv, ...(cha === undefined ? {} : { parentCode: cha }), note: chu(r.note) || before?.note || '', isActive: tt ?? before?.isActive ?? true }) };
   },
 });
 void (null as unknown as PhongBan);

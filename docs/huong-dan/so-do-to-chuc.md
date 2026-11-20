@@ -24,6 +24,8 @@ Công ty TGS                         cấp 1
 - **Mã không được trùng** giữa đơn vị, phân kho và bộ phận.
 - **MST**: đơn vị tự khai thì dùng MST của nó. Để trống thì dùng MST của cấp gần nhất phía trên có khai (bảng hiện dấu ↑).
 - Tạo đơn vị là **tự có một bộ phận** (đổi tên được). Chứng từ chưa chọn bộ phận thì tính vào bộ phận này.
+- **Bộ phận cha – con** (không bắt buộc): một bộ phận có thể thuộc một bộ phận khác **trong cùng đơn vị**,
+  ví dụ *Kế toán → Kế toán thuế*, *Logistic → Kho, Đội xe*. Không chọn được bộ phận của đơn vị khác. Chuyển bộ phận sang đơn vị khác thì nó bỏ cha cũ.
 
 ## Chứng từ ghi gì
 
@@ -38,15 +40,18 @@ Báo cáo và định mức chi phí theo đơn vị → bộ phận → khoản
 - **Bảng**: không phân trang. Gõ vào hàng lọc dưới tiêu đề để lọc từng cột, bấm tiêu đề để sắp xếp.
   Nút **Cột** để ẩn / hiện cột. Cột *Người tạo, Ngày tạo, Người sửa, Ngày sửa* đang ẩn sẵn. Nút **Xuất Excel** xuất đúng các dòng đang lọc.
 - **Tab Phân kho / Bộ phận** chỉ hiện của riêng đơn vị đang chọn. Bấm **Toàn nhánh** để xem cả các đơn vị cấp dưới.
+- **Tab Bộ phận**: bảng xếp theo cây (bộ phận con thụt vào dưới cha, có cột *Bộ phận cha*). Bấm **Sơ đồ bộ phận** để xem dạng sơ đồ tổ chức:
+  bấm một ô để sửa, rê chuột vào ô rồi bấm **+** để thêm bộ phận con, nút **Toàn màn hình** để xem rộng.
+- **Sơ đồ** (chung): tích *Hiện bộ phận* thì mỗi đơn vị hiện cây bộ phận cha – con của nó.
 - **Thêm**: nút *Thêm đơn vị* ở đầu trang, hoặc *Thêm* trong chi tiết một đơn vị (đơn vị con / phân kho / bộ phận).
 - **Sửa**: *Chỉnh sửa* trong chi tiết, hoặc bấm đúp một dòng trong bảng. Đổi **Thuộc** là chuyển đơn vị sang nhánh khác. Lần chuyển được ghi ở tab **Lịch sử**.
 - **Xoá**: xoá vĩnh viễn, kèm toàn bộ đơn vị con, phân kho, bộ phận bên trong. Hộp xoá liệt kê hết những gì sẽ mất trước khi bạn đồng ý.
-  Đơn vị / phân kho / bộ phận **đã có chứng từ** thì không xoá được. Hãy chuyển sang *Ngừng hoạt động*.
+  Xoá bộ phận cha thì xoá cả bộ phận con. Đơn vị / phân kho / bộ phận **đã có chứng từ** thì không xoá được. Hãy chuyển sang *Ngừng hoạt động*.
 
 ## Xuất / nhập Excel
 
 Nút **⋯** → **Xuất Excel** tạo một tệp ba sheet: **Đơn vị**, **Phân kho**, **Bộ phận**.
-Cột **Thuộc (mã)** ghi mã đơn vị cha. Cột **Đường dẫn** chỉ để đọc.
+Cột **Thuộc (mã)** ghi mã đơn vị cha / đơn vị chứa; sheet Bộ phận có thêm **Bộ phận cha (mã)** (cùng đơn vị, để trống = cấp cao nhất). Cột **Đường dẫn** chỉ để đọc.
 
 Nhập theo thứ tự **1. Đơn vị → 2. Phân kho → 3. Bộ phận** (ở nút ⋯):
 

@@ -41,7 +41,7 @@ export interface UnitDto {
 /** Người tạo / ngày tạo / người sửa / ngày sửa (cột ẩn sẵn ở bảng). */
 interface Dau { createdBy: string; createdAt: string | null; updatedBy: string; updatedAt: string | null }
 export interface WhDto { uid: string; code: string; name: string; branchCode: string; typeCode: string; typeName: string; isDefault: boolean; isActive: boolean; address: string; note: string }
-export interface DeptDto { uid: string; code: string; name: string; branchCode: string | null; isActive: boolean; note: string }
+export interface DeptDto { uid: string; code: string; name: string; branchCode: string | null; parentCode: string | null; isActive: boolean; note: string }
 
 /* ------------------------------------------------------------------ đọc */
 
@@ -79,7 +79,7 @@ export async function coCau(trx: Db, tenantId: string) {
       FROM warehouses w JOIN branches b ON b.id = w.branch_id LEFT JOIN warehouse_types t ON t.tenant_id = w.tenant_id AND t.code = w.type_code
      WHERE w.tenant_id = ${tenantId} ORDER BY w.code`.execute(trx)).rows;
   const departments = (await sql<DeptDto & Dau>`
-    SELECT d.uid, d.code, d.name, b.code AS "branchCode", d.is_active AS "isActive", d.note,
+    SELECT d.uid, d.code, d.name, b.code AS "branchCode", NULLIF(d.parent_code, '') AS "parentCode", d.is_active AS "isActive", d.note,
            d.created_by AS "createdBy", d.created_at AS "createdAt", d.updated_by AS "updatedBy", d.updated_at AS "updatedAt"
       FROM dimensions d LEFT JOIN branches b ON b.id = d.branch_id
      WHERE d.tenant_id = ${tenantId} AND d.kind = 'department' ORDER BY d.code`.execute(trx)).rows;
@@ -142,7 +142,7 @@ export const unitCreateSchema = unitBase.extend({
   departmentName: z.string().trim().max(255).optional(),
 });
 export const unitUpdateSchema = unitBase.partial().extend({ isActive: z.boolean().optional(), newCode: z.string().trim().min(1).max(32).optional(), departmentCode: z.string().trim().max(64).nullable().optional() });
-export const deptSchema = z.object({ name: z.string().trim().min(1).max(255), branchCode: z.string().trim().min(1, 'Chọn đơn vị').max(32), isActive: z.boolean().default(true), note: z.string().trim().max(500).default('') });
+export const deptSchema = z.object({ name: z.string().trim().min(1).max(255), branchCode: z.string().trim().min(1, 'Chọn đơn vị').max(32), parentCode: z.string().trim().max(64).optional(), isActive: z.boolean().default(true), note: z.string().trim().max(500).default('') });
 
 /** Mã không trùng giữa đơn vị, phân kho, bộ phận. */
 async function maTrung(trx: Db, tenantId: string, code: string, bo?: { loai: 'unit' | 'wh' | 'dept'; code: string }) {
@@ -236,8 +236,16 @@ export const coCauService = {
       const u = await unitId(trx, auth.tenantId, input.branchCode);
       const cu = (await sql<{ id: string }>`SELECT id FROM dimensions WHERE tenant_id = ${auth.tenantId} AND kind = 'department' AND code = ${code}`.execute(trx)).rows[0];
       if (!cu) await maTrung(trx, auth.tenantId, code);
-      if (cu) await sql`UPDATE dimensions SET name = ${input.name}, branch_id = ${u.id}, is_active = ${input.isActive}, note = ${input.note} WHERE id = ${cu.id}`.execute(trx);
-      else await sql`INSERT INTO dimensions (tenant_id, kind, code, name, branch_id, is_active, note) VALUES (${auth.tenantId}, 'department', ${code}, ${input.name}, ${u.id}, ${input.isActive}, ${input.note})`.execute(trx);
+      // Bộ phận cha: chỉ trong cùng đơn vị (trigger dimensions_dept_parent_check chặn khác đơn vị / vòng lặp). undefined = giữ nguyên.
+      const cha = input.parentCode === undefined ? undefined : input.parentCode || null;
+      if (cha) {
+        const p = (await sql<{ branch_id: string | null }>`SELECT branch_id FROM dimensions WHERE tenant_id = ${auth.tenantId} AND kind = 'department' AND code = ${cha}`.execute(trx)).rows[0];
+        if (!p) throw Errors.validation(`Bộ phận cha ${cha} không có`);
+        if (String(p.branch_id ?? '') !== String(u.id)) throw Errors.validation(`Bộ phận cha ${cha} phải cùng đơn vị ${input.branchCode}`);
+        if (cha === code) throw Errors.validation('Bộ phận không thể là cha của chính nó');
+      }
+      if (cu) await sql`UPDATE dimensions SET name = ${input.name}, branch_id = ${u.id}, is_active = ${input.isActive}, note = ${input.note}${cha === undefined ? sql`` : sql`, parent_code = ${cha}`} WHERE id = ${cu.id}`.execute(trx);
+      else await sql`INSERT INTO dimensions (tenant_id, kind, code, name, branch_id, is_active, note, parent_code) VALUES (${auth.tenantId}, 'department', ${code}, ${input.name}, ${u.id}, ${input.isActive}, ${input.note}, ${cha ?? null})`.execute(trx);
       // Đơn vị chưa có bộ phận mặc định → nhận bộ phận này.
       if (!u.department_code) await sql`UPDATE branches SET department_code = ${code} WHERE id = ${u.id}`.execute(trx);
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: cu ? 'co_cau.dept_update' : 'co_cau.dept_create', objectType: 'department', objectId: code, after: input });
@@ -274,9 +282,12 @@ async function xoaIn(trx: ActionTx, auth: AuthContext, key: string, dryRun: bool
       if (!whs.length) throw Errors.notFound(`phân kho ${code}`);
       ten = whs[0]!.name;
     } else if (loai === 'd') {
-      deps = (await sql<typeof deps[number]>`SELECT id, code, name FROM dimensions WHERE tenant_id = ${tid} AND kind = 'department' AND code = ${code}`.execute(trx)).rows;
+      deps = (await sql<typeof deps[number]>`
+        WITH RECURSIVE t AS (SELECT id, code, 0 AS d FROM dimensions WHERE tenant_id = ${tid} AND kind = 'department' AND code = ${code}
+          UNION ALL SELECT x.id, x.code, t.d + 1 FROM dimensions x JOIN t ON x.tenant_id = ${tid} AND x.kind = 'department' AND x.parent_code = t.code WHERE t.d < 50)
+        SELECT x.id, x.code, x.name FROM dimensions x JOIN t ON t.id = x.id ORDER BY t.d`.execute(trx)).rows;
       if (!deps.length) throw Errors.notFound(`bộ phận ${code}`);
-      ten = deps[0]!.name;
+      ten = deps.find((x) => x.code === code)!.name;
     } else throw Errors.validation('Khoá dạng u:MÃ / w:MÃ / d:MÃ');
     const chan: string[] = [];
     if (whs.length) {
@@ -306,7 +317,10 @@ async function xoaIn(trx: ActionTx, auth: AuthContext, key: string, dryRun: bool
       await sql`UPDATE branches SET department_code = NULL WHERE id = ANY(${ids}::bigint[])`.execute(trx);
       await sql`UPDATE org_units SET purchase_branch_id = NULL WHERE tenant_id = ${tid} AND purchase_branch_id = ANY(${ids}::bigint[])`.execute(trx);
     }
-    if (deps.length) await sql`DELETE FROM dimensions WHERE tenant_id = ${tid} AND id = ANY(${deps.map((d) => d.id)}::bigint[])`.execute(trx);
+    if (deps.length) {
+      await sql`UPDATE dimensions SET parent_code = NULL WHERE tenant_id = ${tid} AND kind = 'department' AND parent_code = ANY(${deps.map((d) => d.code)}::text[])`.execute(trx);
+      await sql`DELETE FROM dimensions WHERE tenant_id = ${tid} AND id = ANY(${deps.map((d) => d.id)}::bigint[])`.execute(trx);
+    }
     for (const u of units) await sql`DELETE FROM branches WHERE id = ${u.id}`.execute(trx);
     const mirrors = units.map((u) => u.org_mirror_id).filter(Boolean) as string[];
     if (mirrors.length) {

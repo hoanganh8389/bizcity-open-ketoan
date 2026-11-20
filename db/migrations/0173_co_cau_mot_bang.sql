@@ -309,6 +309,8 @@ Công ty TGS                         cấp 1
 - **Mã không được trùng** giữa đơn vị, phân kho và bộ phận.
 - **MST**: đơn vị tự khai thì dùng MST của nó. Để trống thì dùng MST của cấp gần nhất phía trên có khai (bảng hiện dấu ↑).
 - Tạo đơn vị là **tự có một bộ phận** (đổi tên được). Chứng từ chưa chọn bộ phận thì tính vào bộ phận này.
+- **Bộ phận cha – con** (không bắt buộc): một bộ phận có thể thuộc một bộ phận khác **trong cùng đơn vị**,
+  ví dụ *Kế toán → Kế toán thuế*, *Logistic → Kho, Đội xe*. Không chọn được bộ phận của đơn vị khác. Chuyển bộ phận sang đơn vị khác thì nó bỏ cha cũ.
 
 ## Chứng từ ghi gì
 
@@ -323,15 +325,18 @@ Báo cáo và định mức chi phí theo đơn vị → bộ phận → khoản
 - **Bảng**: không phân trang. Gõ vào hàng lọc dưới tiêu đề để lọc từng cột, bấm tiêu đề để sắp xếp.
   Nút **Cột** để ẩn / hiện cột. Cột *Người tạo, Ngày tạo, Người sửa, Ngày sửa* đang ẩn sẵn. Nút **Xuất Excel** xuất đúng các dòng đang lọc.
 - **Tab Phân kho / Bộ phận** chỉ hiện của riêng đơn vị đang chọn. Bấm **Toàn nhánh** để xem cả các đơn vị cấp dưới.
+- **Tab Bộ phận**: bảng xếp theo cây (bộ phận con thụt vào dưới cha, có cột *Bộ phận cha*). Bấm **Sơ đồ bộ phận** để xem dạng sơ đồ tổ chức:
+  bấm một ô để sửa, rê chuột vào ô rồi bấm **+** để thêm bộ phận con, nút **Toàn màn hình** để xem rộng.
+- **Sơ đồ** (chung): tích *Hiện bộ phận* thì mỗi đơn vị hiện cây bộ phận cha – con của nó.
 - **Thêm**: nút *Thêm đơn vị* ở đầu trang, hoặc *Thêm* trong chi tiết một đơn vị (đơn vị con / phân kho / bộ phận).
 - **Sửa**: *Chỉnh sửa* trong chi tiết, hoặc bấm đúp một dòng trong bảng. Đổi **Thuộc** là chuyển đơn vị sang nhánh khác. Lần chuyển được ghi ở tab **Lịch sử**.
 - **Xoá**: xoá vĩnh viễn, kèm toàn bộ đơn vị con, phân kho, bộ phận bên trong. Hộp xoá liệt kê hết những gì sẽ mất trước khi bạn đồng ý.
-  Đơn vị / phân kho / bộ phận **đã có chứng từ** thì không xoá được. Hãy chuyển sang *Ngừng hoạt động*.
+  Xoá bộ phận cha thì xoá cả bộ phận con. Đơn vị / phân kho / bộ phận **đã có chứng từ** thì không xoá được. Hãy chuyển sang *Ngừng hoạt động*.
 
 ## Xuất / nhập Excel
 
 Nút **⋯** → **Xuất Excel** tạo một tệp ba sheet: **Đơn vị**, **Phân kho**, **Bộ phận**.
-Cột **Thuộc (mã)** ghi mã đơn vị cha. Cột **Đường dẫn** chỉ để đọc.
+Cột **Thuộc (mã)** ghi mã đơn vị cha / đơn vị chứa; sheet Bộ phận có thêm **Bộ phận cha (mã)** (cùng đơn vị, để trống = cấp cao nhất). Cột **Đường dẫn** chỉ để đọc.
 
 Nhập theo thứ tự **1. Đơn vị → 2. Phân kho → 3. Bộ phận** (ở nút ⋯):
 
@@ -340,3 +345,58 @@ Nhập theo thứ tự **1. Đơn vị → 2. Phân kho → 3. Bộ phận** (�
 - Dòng lỗi được báo trước khi ghi: trùng mã khác loại, đơn vị cha không có, MST sai, vòng lặp cha – con.
 $hd$, format = 'md', updated_at = now()
  WHERE source_key = 'so-do-to-chuc';
+
+-- 10. Bộ phận cha – con trong CÙNG đơn vị (không bắt buộc), ví dụ Kế toán → Kế toán thuế.
+--     Quan hệ cũ trỏ sang bộ phận của đơn vị khác (shop → "CN" ở công ty) bỏ đi, giá trị cũ giữ ở extra.parentCodeCu.
+UPDATE dimensions d SET extra = COALESCE(d.extra, '{}'::jsonb) || jsonb_build_object('parentCodeCu', d.parent_code), parent_code = NULL
+ WHERE d.kind = 'department' AND COALESCE(d.parent_code, '') <> ''
+   AND NOT EXISTS (SELECT 1 FROM dimensions p WHERE p.tenant_id = d.tenant_id AND p.kind = 'department' AND p.code = d.parent_code
+                     AND p.id <> d.id AND p.branch_id IS NOT DISTINCT FROM d.branch_id);
+
+CREATE OR REPLACE FUNCTION bizcity_dept_parent_check() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE v_b bigint; v_cur text := NEW.parent_code; n int := 0;
+BEGIN
+  IF NEW.kind <> 'department' THEN RETURN NEW; END IF;
+  IF COALESCE(NEW.parent_code, '') = '' THEN NEW.parent_code := NULL; RETURN NEW; END IF;
+  IF NEW.parent_code = NEW.code THEN RAISE EXCEPTION 'Bộ phận % không thể là cha của chính nó', NEW.code USING ERRCODE = 'check_violation'; END IF;
+  SELECT branch_id INTO v_b FROM dimensions WHERE tenant_id = NEW.tenant_id AND kind = 'department' AND code = NEW.parent_code;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Bộ phận cha % không có', NEW.parent_code USING ERRCODE = 'check_violation'; END IF;
+  IF v_b IS DISTINCT FROM NEW.branch_id AND TG_OP = 'UPDATE' AND NEW.branch_id IS DISTINCT FROM OLD.branch_id AND NEW.parent_code IS NOT DISTINCT FROM OLD.parent_code THEN
+    NEW.parent_code := NULL; RETURN NEW; -- chuyển đơn vị: bỏ cha cũ
+  END IF;
+  IF v_b IS DISTINCT FROM NEW.branch_id THEN
+    RAISE EXCEPTION 'Bộ phận cha % phải cùng đơn vị với bộ phận %', NEW.parent_code, NEW.code USING ERRCODE = 'check_violation';
+  END IF;
+  WHILE v_cur IS NOT NULL AND n < 50 LOOP
+    IF v_cur = NEW.code THEN RAISE EXCEPTION 'Chọn % làm cha sẽ tạo vòng lặp cha – con', NEW.parent_code USING ERRCODE = 'check_violation'; END IF;
+    SELECT parent_code INTO v_cur FROM dimensions WHERE tenant_id = NEW.tenant_id AND kind = 'department' AND code = v_cur;
+    n := n + 1;
+  END LOOP;
+  RETURN NEW;
+END $$;
+COMMENT ON FUNCTION bizcity_dept_parent_check() IS 'Bộ phận cha phải cùng đơn vị, không vòng lặp (0173).';
+DROP TRIGGER IF EXISTS dimensions_dept_parent_check ON dimensions;
+CREATE TRIGGER dimensions_dept_parent_check BEFORE INSERT OR UPDATE OF parent_code, branch_id ON dimensions FOR EACH ROW EXECUTE FUNCTION bizcity_dept_parent_check();
+
+-- Bộ phận chuyển sang đơn vị khác: bộ phận con ở đơn vị cũ thôi nhận nó làm cha.
+CREATE OR REPLACE FUNCTION bizcity_dept_moved() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.kind = 'department' AND NEW.branch_id IS DISTINCT FROM OLD.branch_id THEN
+    UPDATE dimensions SET parent_code = NULL
+     WHERE tenant_id = NEW.tenant_id AND kind = 'department' AND parent_code = NEW.code AND branch_id IS DISTINCT FROM NEW.branch_id;
+  END IF;
+  RETURN NULL;
+END $$;
+DROP TRIGGER IF EXISTS dimensions_dept_moved ON dimensions;
+CREATE TRIGGER dimensions_dept_moved AFTER UPDATE OF branch_id ON dimensions FOR EACH ROW EXECUTE FUNCTION bizcity_dept_moved();
+
+-- Bộ phận mặc định tự tạo khi thêm đơn vị: không gắn cha (cha – con chỉ trong cùng đơn vị, người dùng tự đặt).
+CREATE OR REPLACE FUNCTION bizcity_ensure_branch_department(p_tenant bigint, p_branch_id bigint, p_code text, p_name text, p_level text) RETURNS text LANGUAGE plpgsql AS $fn$
+DECLARE
+  v_code text := bizcity_branch_department_code(p_tenant, p_branch_id, p_code);
+BEGIN
+  INSERT INTO dimensions (tenant_id, kind, code, name)
+  VALUES (p_tenant, 'department', v_code, CASE WHEN p_level = 'shop' THEN 'Shop ' ELSE '' END || p_name)
+  ON CONFLICT (tenant_id, kind, code) DO UPDATE SET is_active = true;
+  RETURN v_code;
+END $fn$;
