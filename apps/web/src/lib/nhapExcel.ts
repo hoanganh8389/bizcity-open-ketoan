@@ -227,17 +227,33 @@ interface NhomRow { code: string; name: string; parentCode: string | null; isAct
 /** Độ dài mã ngắn theo cấp (giống DM11): cấp 1 = 2 chữ số, cấp 2 = 3, cấp 3 = 1 ký tự; cấp sâu hơn không ghép vào mã hàng. */
 const MA_NGAN: Record<number, number> = { 1: 2, 2: 3, 3: 1 };
 const NHOM_HANG: NhapLoai = {
-  id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: nhóm cha, tên ngành, mã hoá, mô tả', keyField: 'name',
+  id: 'nhom-hang', nhom: 'Danh mục', title: 'Nhóm hàng', desc: 'Cây nhóm hàng: mã / tên ngành, nhãn, nhóm (như tệp Xuất của DM11), mô tả', keyField: 'name',
   listPath: '/danh-muc/phan-loai-hang', invalidate: ['item-classes'], modes: false,
   fields: [
+    // [2026-11-20 kiennt] NT-DM-015 — cùng bộ cột với tệp Xuất mới: Mã ngành · Tên ngành · Mã nhãn · Tên nhãn · Mã nhóm · Tên nhóm;
+    //   tệp kiểu cũ (Nhóm cha · Tên ngành · Mã hoá) vẫn nhận (đóng góp)
+    { key: 'industrySku', header: 'Mã ngành', aliases: ['ma hoa nganh'], example: '17', note: 'Mã hoá của ngành (2 chữ số). Dùng khi dòng là ngành (Tên nhãn, Tên nhóm trống).' },
+    { key: 'name', header: 'Tên ngành', required: true, aliases: ['ma nhom hang', 'ten', 'nhom hang'], example: 'Sữa bột', note: 'Tên ngành (cấp 1) — mọi dòng đều ghi. Tệp kiểu cũ (có cột Nhóm cha): tên của nhóm ở dòng. Cùng nhóm cha + cùng tên với nhóm đang có → cập nhật nhóm đó.' },
+    { key: 'brandSku', header: 'Mã nhãn', aliases: ['ma hoa nhan'], example: '167', note: 'Mã hoá của nhãn (3 ký tự). Dùng khi dòng là nhãn (Tên nhóm trống).' },
+    { key: 'brandName', header: 'Tên nhãn', aliases: ['nhan', 'nhan hang'], example: 'Vinamilk', note: 'Có Tên nhãn → dòng là nhãn (hoặc nhóm nếu có Tên nhóm) dưới ngành ở cột Tên ngành.' },
+    { key: 'groupSku', header: 'Mã nhóm', aliases: ['ma hoa nhom'], example: '6', note: 'Mã hoá của nhóm (1 ký tự).' },
+    { key: 'groupName', header: 'Tên nhóm', aliases: ['nhom'], example: 'Sữa bột trẻ em', note: 'Có Tên nhóm → dòng là nhóm cấp 3 dưới nhãn ở cột Tên nhãn. Nhóm sâu hơn: ghi đường dẫn "Cấp 3 / Cấp 4".' },
     { key: 'parentCode', header: 'Nhóm cha', aliases: ['ma nhom cha', 'thuoc nhom', 'nhom tren', 'thuoc', 'duong dan nhom cha'], example: 'BỈM/ TÃ / Aiwibi', note: 'Đường dẫn nhóm cha (cấp 1 / cấp 2 …) hoặc đúng tên ngành của nhóm cha. Trống = nhóm cấp 1. Nhóm cha có ở dòng trên trong tệp cũng được.' },
     // [2026-11-18 05:10 PM kiennt] NT-DM-010 — đổi tên ô: Tên ngành (name), Mã hoá (skuCode), Mô tả (fullName, không bắt buộc, không tự ghép) (đóng góp)
-    { key: 'name', header: 'Tên ngành', required: true, aliases: ['ma nhom hang', 'ma nhom', 'ten', 'ten nhom', 'nhom hang'], example: 'Bỉm/ Tã quần trẻ em', note: 'Tên hiện trên cây. Cùng nhóm cha + cùng tên ngành với nhóm đang có → cập nhật nhóm đó.' },
     { key: 'skuCode', header: 'Mã hoá', aliases: ['ma hoa', 'ma ngan', 'ma ghep', 'ma ngan (ma ghep)', 'ma sku'], example: '3', note: 'Ghép vào mã hàng: cấp 1 = 2 chữ số không bắt đầu bằng 0; cấp 2 = 3 ký tự; cấp 3 = 1 ký tự (chữ hoặc số). Nhóm đã có mặt hàng: không đổi được.' },
     { key: 'fullName', header: 'Mô tả', aliases: ['mo ta', 'ten nhom hang', 'ten day du', 'mhlten'], note: 'Không bắt buộc. Trống: nhóm mới để trống, nhóm đã có giữ nguyên.' },
     { key: 'isActive', header: 'Đang dùng', aliases: ['theo doi', 'trang thai'], note: 'Có / Không. Trống = giữ nguyên (mới: Có).' },
   ],
-  run: async (rows, { dryRun }) => {
+  run: async (rowsIn, { dryRun }) => {
+    // Tệp 6 cột (NT-DM-015): nhóm ở dòng = cấp sâu nhất có tên; nhóm cha = tên các cấp trên; mã hoá = mã của cấp đó.
+    const rows = rowsIn.map((r) => {
+      const t = (v: string | undefined) => (v ?? '').trim();
+      const nh = t(r.brandName); const nm = t(r.groupName);
+      if (!nh && !nm) return t(r.parentCode) ? r : { ...r, skuCode: t(r.skuCode) || t(r.industrySku) };
+      if (!nm) return { ...r, parentCode: t(r.name), name: nh, skuCode: t(r.brandSku) || t(r.skuCode) };
+      const doan = nm.split(' / ').map((x) => x.trim()).filter(Boolean);
+      return { ...r, parentCode: [t(r.name), nh, ...doan.slice(0, -1)].filter(Boolean).join(' / '), name: doan[doan.length - 1] ?? nm, skuCode: t(r.groupSku) || t(r.skuCode) };
+    });
     const ds = await api.get<NhomRow[]>('/api/v1/item-classes/group');
     const have = new Map(ds.map((c) => [c.code, c]));
     const low = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();

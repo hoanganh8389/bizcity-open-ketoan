@@ -61,7 +61,7 @@ Lõi (kernel) — người chỉ đạo đồng ý sửa. **Không** đụng `po
 | | |
 |---|---|
 | Ngày chạy | 20/11/2026 (máy dev, CSDL test) |
-| Bản code (commit) | nhánh `feat/nt-kho-004-hang-giu-ho` |
+| Bản code (commit) | nhánh `feat/nt-dm-014-sua-loi-danh-muc-20-11` (gộp chung PR với NT-DM-014, NT-DM-015) |
 | Test | `apps/api/test/nt-kho-004-hang-giu-ho.test.ts` 5/5 (bước 1–6) |
 
 ## 7. Biên bản nghiệm thu
