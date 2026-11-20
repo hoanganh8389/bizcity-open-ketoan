@@ -13,7 +13,7 @@
  */
 import {
   computeDoc, exclusiveBySku, giftItemsOf, giftPlan, isExclusive, policiesFor, policyApplies, priceFor, promoBoard, syncGifts, POLICY_LABEL, STACK_KINDS,
-  type PDoc, type Policy, type PolicyKind, type ProductUnit, type PromoRow, type SupplierProduct,
+  type ItemDiscount, type PDoc, type Policy, type PolicyKind, type ProductUnit, type PromoRow, type SupplierProduct,
 } from '@bizcity/mua-hang-domain';
 import type { Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
@@ -93,7 +93,11 @@ export function traChinhSach(i: TraInput): TraResult {
     if (!matchesSku(p, ctx)) continue;
     if (!STACK_KINDS.includes(p.kind)) { other.push({ code: p.code, name: p.name, kind: p.kind, kindLabel: POLICY_LABEL[p.kind] }); continue; }
     const rs = mine(p);
-    const exclusive = isExclusive(p) || (p.kind === 'promo_gift' && giftItemsOf(p).some((g) => g.apply === 'exclusive' && (!g.sku || g.sku === i.sku)));
+    // [2026-11-20 khanhtd] TRA-CUU — bảng CK theo mã: áp riêng / ưu tiên lấy theo DÒNG của mã này (trống = theo chính sách) (đóng góp)
+    const rowsOfSku = p.kind === 'item_discount' ? ((p.rule.items as ItemDiscount[] | undefined) ?? []).filter((x) => x.sku === i.sku) : [];
+    const exclusive = isExclusive(p) || (p.kind === 'promo_gift' && giftItemsOf(p).some((g) => g.apply === 'exclusive' && (!g.sku || g.sku === i.sku)))
+      || rowsOfSku.some((x) => x.apply === 'exclusive');
+    const rowPri = rowsOfSku.filter((x) => x.priority != null && (isExclusive(p) || x.apply === 'exclusive')).map((x) => x.priority!);
     const applied = rs.find((r) => r.status === 'applied');
     const blocked = rs.find((r) => r.status === 'blocked');
     const hint = rs.find((r) => r.status === 'hint' || r.status === 'fix');
@@ -114,7 +118,7 @@ export function traChinhSach(i: TraInput): TraResult {
     }
     rows.push({
       code: p.code, name: p.name, kind: p.kind, kindLabel: POLICY_LABEL[p.kind], partnerCode: p.scope.partnerCode ?? '',
-      priority: p.priority ?? 0, exclusive, validFrom: p.validFrom ?? null, validTo: p.validTo ?? null,
+      priority: rowPri.length ? Math.max(...rowPri) : p.priority ?? 0, exclusive, validFrom: p.validFrom ?? null, validTo: p.validTo ?? null,
       status, reason, amount, alone: alone(p), winner: hit?.winner.code === p.code,
     });
   }

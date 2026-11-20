@@ -81,6 +81,12 @@ Form chương trình chiết khấu / khuyến mại có khối **Cách áp** v�
 - Bỏ tích (mặc định) = **áp đồng thời**: cộng với các chương trình khác (mã A được cả 7% và 2%).
 - Hai chương trình áp riêng cùng khớp một mã: lấy chương trình **ưu tiên** cao hơn; bằng nhau thì lấy chương trình **lợi hơn** (giảm nhiều tiền hơn / quà giá trị hơn).
 <!-- [2026-11-20 khanhtd] TRA-CUU — khung cảnh báo chồng áp riêng trong form, link sang TC01 -->
+<!-- [2026-11-20 khanhtd] TRA-CUU — áp riêng + ưu tiên theo từng dòng của bảng CK theo mã -->
+- **Bảng chiết khấu theo mã: áp riêng theo từng dòng.** Muốn chỉ một số mã áp riêng thì để trống ô Áp riêng của chính sách, tích cột **Áp riêng** ở đúng các dòng đó (như bảng Mua X tặng Y). Mã nhận dòng áp riêng thì không nhận chương trình nào khác; các dòng khác của bảng vẫn áp đồng thời. Dòng áp riêng chưa đạt *SL tối thiểu* thì chưa chặn ai.
+  - Cột **Ưu tiên** của dòng (chỉ mở khi dòng tích Áp riêng): dùng khi dòng đó tranh với chương trình áp riêng khác ở cùng mã — số lớn thắng; trống = ưu tiên của chính sách. Ưu tiên dòng **không** đổi cách chọn giữa nhiều bảng chiết khấu thường (vẫn theo phạm vi hẹp hơn, rồi ưu tiên của chính sách).
+  - Ô Áp riêng của chính sách tích = mọi dòng áp riêng (cột của dòng khoá lại).
+  - Nhập / xuất Excel, dán nhiều dòng có thêm hai cột **Áp riêng** (ghi "có") và **Ưu tiên**. Danh sách chính sách hiện ◪ *theo dòng* khi chỉ một số dòng áp riêng.
+  - Chính sách cũ không ghi hai cột này tính ra số y như trước; phiếu đã duyệt giữ số đã chốt.
 - **Khung cảnh báo ngay dưới Cách áp** (phần mềm tự dò theo NCC, nhãn, mã, chi nhánh, hiệu lực):
   - chính sách **tích Áp riêng**: liệt kê chương trình áp riêng khác cùng khớp mã, ở những mã nào, chính sách này **thắng / thua / ngang** theo ưu tiên. Nút **Đặt ưu tiên = N để thắng** điền sẵn ưu tiên vừa đủ thắng mọi chương trình đang thua / ngang (bấm Ghi để lưu);
   - chính sách **không tích**: liệt kê chương trình áp riêng khác sẽ **chặn** nó ở những mã nào.
