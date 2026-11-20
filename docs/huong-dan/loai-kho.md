@@ -24,6 +24,21 @@ Mọi bút toán có hàng đi vào / ra kho thuộc loại này ghi vào **TK k
 - Chứng từ đã ghi giữ nguyên; muốn định khoản lại theo TK mới thì ghi lại chứng từ.
 - **Loại không thuộc sở hữu** (KNB nhận giữ hộ): hàng của bên khác, không ghi sổ kho → ô TK khoá, cột TK hiện *không ghi sổ*. Loại đang lỡ có TK: cột TK hiện đỏ; mở Sửa, bấm **Bỏ TK** rồi Ghi.
 
+## Hàng nhận giữ hộ (KNB) — quy tắc nghiệp vụ
+<!-- [2026-11-20 kiennt] NT-DM-014 — ghi rõ quy tắc hàng không thuộc sở hữu (có trong code từ 13/11, Nguyễn Văn Thủy, migration 0128 + warehouse-types.ts) (đóng góp) -->
+
+Loại kho **KNB – Kho hàng nhận giữ hộ** dùng cho hàng **của bên khác** gửi ở kho mình (ví dụ quà nhà cung cấp gửi giữ hộ). Hàng này **không phải tài sản của đơn vị**, nên:
+
+| Quy tắc | Vì sao | Phần mềm làm gì |
+|---|---|---|
+| **Không ghi sổ kho** — loại kho không có Tài khoản hạch toán | TK kho của loại đi vào mọi bút toán kho (nhập, xuất, chuyển, kiểm kê, giá vốn). Có TK thì hàng của người khác bị ghi thành hàng tồn kho của đơn vị — sai bản chất tài sản | Ô Tài khoản khoá; loại đang lỡ có TK thì cảnh báo + nút **Bỏ TK**; nhập Excel dòng có TK báo lỗi; máy chủ từ chối ghi |
+| **Không được bán** | Không có quyền bán hàng không thuộc sở hữu | Nghiệp vụ bán / nhập mua không chọn được kho loại này |
+| **Chỉ theo dõi số lượng** | Theo dõi để trả lại đúng chủ hàng | Nhập giữ hộ bằng phiếu nhập kho khác / nhận quà vào kho KNB |
+
+> **Lưu ý (chưa chặn):** phiếu nhập / xuất kho có giá trị vào kho KNB hiện **vẫn sinh bút toán** theo TK kho ngầm định (1561) — phần ghi sổ chưa đọc cờ *thuộc sở hữu*. Sẽ sửa ở phiếu riêng (phần lõi ghi sổ); trong lúc chờ, kiểm lại bút toán của phiếu vào kho KNB.
+
+Cần theo dõi giá trị hàng giữ hộ cho mục đích quản trị: ghi ở sổ ngoài (theo dõi riêng), không đặt TK cho loại kho này. Muốn đổi quy tắc (ví dụ theo dõi trên một TK riêng) — hỏi kế toán trưởng trước, vì đó là thay đổi cách ghi sổ.
+
 ## Nghiệp vụ dùng loại kho
 
 Bảng này nằm ngay dưới hướng dẫn, trong ngăn **Hướng dẫn** của màn Loại kho. Mỗi nghiệp vụ một dòng: **Tự chọn kho loại** (chứng từ điền sẵn kho thuộc loại này của chi nhánh) · **Dùng được thêm** (các loại khác chọn được). Kho thuộc loại không có trong dòng thì không chọn được.
