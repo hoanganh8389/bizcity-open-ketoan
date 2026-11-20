@@ -153,6 +153,7 @@ Tất cả chạy trong **một giao dịch**: lỗi bất kỳ bước nào th�
 | GET | `/api/v1/purchase/policies` | Danh sách | `documents:read` |
 | POST / PUT | `/api/v1/purchase/policies[/:id]` | Thêm / sửa. `rule` kiểm theo khuôn của `kind`; hạn mức: tổng phân bổ chi nhánh ≤ hạn mức | `catalog:write` |
 | POST | `/api/v1/purchase/policies/:id/transfer-limit` | Body `{ from: '' \| mã CN, to, amount }`; không chuyển quá phần còn; JSONL `limit_transfer` (trước / sau) | `catalog:write` |
+| GET | `/api/v1/purchase/policy-lookup?sku&partnerCode&qty&unit&price&branchCode&date` | Tra chính sách theo một mã (màn TC01, `modules/tra-cuu`): dựng phiếu nhập giả một dòng, chạy `syncGifts` → `computeDoc` → `promoBoard`. Trả `item`, `partners` (NCC có chính sách / giá mua của mã), `input` (giá trị đã dùng, `priceSource` `nhap` / `gia-mua` / `khong-co`), `rows[]` (mỗi chính sách khớp mã: `status` `ap` / `chua-du` / `bi-chan` / `khong-dung`, `reason`, `amount`, `alone`, `winner`, `exclusive`, `priority`), `other[]` (CKTT, hạn trả, hạn mức, thưởng — không xét áp riêng), `total`, `exclusiveNote`. Chỉ đọc. Mã không có → 404 | `mua-hang:chinh-sach-xem` |
 
 Khuôn `rule` từng loại: tài liệu 08 mục 4.2.
 
