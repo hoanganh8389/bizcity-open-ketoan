@@ -397,13 +397,15 @@ export const partnerWriteActions: AnyActionDef[] = [
     input: z.object({
       dryRun: z.boolean().default(true),
       mode: z.enum(['create', 'update', 'both']).default('both'),
+      // [2026-11-20 kiennt] NT-DM-016 — kiểu mặc định của dòng mới theo màn đang nhập (tệp mẫu bỏ cột Kiểu) (đóng góp)
+      kind: z.enum(['customer', 'supplier']).optional(),
       rows: z.array(z.object({ row: z.number().int(), ...Object.fromEntries(PARTNER_IMPORT_KEYS.map((k) => [k, z.string().max(1000).optional()])) })).min(1).max(5000),
     }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/partners/import' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'partner' },
     handler: async (ctx, input) => {
       const auth = ctx.legacyAuth;
-      return await importPartners(ctx.data.tx, auth.tenantId, auth.actor, auth.actorName, input.rows as never, input.dryRun, input.mode);
+      return await importPartners(ctx.data.tx, auth.tenantId, auth.actor, auth.actorName, input.rows as never, input.dryRun, input.mode, input.kind);
     },
   }),
   defineAction({

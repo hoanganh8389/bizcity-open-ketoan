@@ -72,6 +72,9 @@ Màn **Nhập Excel** (loại Khách hàng / Nhà cung cấp) nhận gần đủ
 - Bắt buộc như form: dòng mới phải có **Tên**; **khách hàng mới** phải có **Nhóm** (đơn vị con lấy nhóm của đơn vị cha). Các cột khác không bắt buộc; dòng cập nhật để trống thì giữ nguyên.
 - **Cột liên kết** — Nhóm, Người QL (nhân viên), Chi nhánh QL, Thuộc đơn vị cha: ghi **tên** (hoặc mã). Tên không có trong danh mục, hoặc trùng nhiều mục → **dòng báo lỗi, không nhập**; trùng tên thì ghi mã.
 - Khách hàng: cột Điện thoại ghi cả điện thoại và di động như form.
+<!-- [2026-11-20 kiennt] NT-DM-016 — bỏ cột Kiểu; cha / con cùng tệp (đóng góp) -->
+- Tệp mẫu không có cột **Kiểu**: dòng mới nhận kiểu theo màn đang nhập (DM12 → Khách hàng, Nhà cung cấp → Nhà cung cấp); dòng cập nhật giữ kiểu cũ.
+- **Đơn vị mẹ và chi nhánh trong cùng một tệp**: đặt dòng đơn vị mẹ lên trên (mã để trống được), ở dòng chi nhánh ghi **tên** đơn vị mẹ vào cột Thuộc đơn vị cha và để trống mã → khi ghi, chi nhánh nhận mã `mã mẹ-001`, `-002`… Dòng mẹ lỗi thì các dòng con của nó cũng không nhập.
 
 ### Mã tự động khi thêm mới
 

@@ -56,4 +56,26 @@ describe('NT-DM-016 — nhập Excel khách hàng', () => {
     expect(o.rows[2]!.errors.join()).toContain('Nhóm "Nhóm không có" không có trong danh mục nhóm đối tượng');
     expect(o.rows[3]!.errors.join()).toContain('phải có Nhóm khách hàng');
   });
+
+  // Bảng theo dõi 20/11 dòng 47: nhập NCC mới cùng chi nhánh của nó trong một tệp (mã trống, cha ghi theo tên dòng trên).
+  it('NCC cha + chi nhánh con cùng tệp, mã để trống → con nhận mã cha-001; kiểu theo màn (không cột Kiểu)', async () => {
+    const rows = [
+      { row: 2, name: 'Công ty CP Sữa Mẫu 16', taxCode: '0100000016' },
+      { row: 3, name: 'CN Hà Nội Sữa Mẫu 16', parentCode: 'Công ty CP Sữa Mẫu 16' },
+      { row: 4, name: 'CN lỗi', parentCode: 'Cha lỗi 16' },
+      { row: 5, name: 'Cha lỗi 16', email: 'sai-email' },
+      { row: 6, name: 'Con của cha lỗi', parentCode: 'Cha lỗi 16' },
+    ];
+    const kt = (await call<{ data: Res }>(ctx, 'POST', '/api/v1/partners/import', { dryRun: true, kind: 'supplier', rows })).body.data;
+    expect(kt.rows.map((r) => r.action)).toEqual(['create', 'create', 'error', 'error', 'error']);
+    expect(kt.rows[2]!.errors.join()).toContain('chưa có');
+    expect(kt.rows[4]!.errors.join()).toContain('ở dòng 5 không hợp lệ');
+    const o = (await call<{ data: Res }>(ctx, 'POST', '/api/v1/partners/import', { dryRun: false, kind: 'supplier', rows: rows.slice(0, 2) })).body.data;
+    expect(o.rows.map((r) => r.errors)).toEqual([[], []]);
+    const cha = o.rows[0]!.code; const con = o.rows[1]!.code;
+    expect(con).toBe(`${cha}-001`);
+    const ds = (await call(ctx, 'GET', '/api/v1/partners?status=all&search=S%E1%BB%AFa%20M%E1%BA%ABu%2016')).body.data as Record<string, unknown>[];
+    expect(ds.find((x) => x.code === con)).toMatchObject({ parentCode: cha, kind: 'supplier' });
+    expect(ds.find((x) => x.code === cha)).toMatchObject({ kind: 'supplier' });
+  });
 });

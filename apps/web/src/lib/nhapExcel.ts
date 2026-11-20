@@ -89,7 +89,7 @@ const doiTuong = (kind: 'customer' | 'supplier'): NhapLoai => {
     fields: [
       { key: 'code', header: `Mã ${ab}`, aliases: ['ma', 'ma kh', 'ma ncc', 'ma doi tuong', 'ma khach hang', 'ma nha cung cap'], example: '', note: 'Để trống khi thêm mới: phần mềm tự cấp mã nối dãy của nhóm. Mã đã có → cập nhật.' },
       { key: 'name', header: `Tên ${ab}`, required: 'moi', aliases: ['ten', 'ten kh', 'ten ncc', 'ten doi tuong', 'ten khach hang', 'ten nha cung cap'], example: kh ? 'Nguyễn Văn A' : 'Công ty CP Sữa Mẫu' },
-      { key: 'kind', header: 'Kiểu', aliases: ['loai doi tuong', 'thuoc kieu'], defaultValue: kh ? 'Khách hàng' : 'Nhà cung cấp', note: 'Khách hàng / Nhà cung cấp / Nhân viên / Nội bộ / Khác.' },
+      // [2026-11-20 kiennt] NT-DM-016 (bảng theo dõi dòng 42) — bỏ cột Kiểu khỏi tệp mẫu: màn đang nhập quyết định kiểu của dòng mới (đóng góp)
       // [2026-11-20 kiennt] NT-DM-016 — đủ các ô của form; cột liên kết (Nhóm, Người quản lý, Chi nhánh QL, Đơn vị cha) tra theo TÊN (nhận cả mã) — không khớp thì không nhập dòng (đóng góp)
       { key: 'groupCode', header: `Nhóm ${ab}`, required: 'moi', aliases: ['nhom', 'nhom kh', 'nhom ncc', 'nhom kh/ncc', 'thuoc nhom', 'ma nhom', 'ma nhom khach hang', 'ma nhom nha cung cap', 'ma nhom kh, ncc'], note: 'Liên kết: TÊN nhóm (hoặc mã) trong danh mục nhóm đối tượng. Không có / trùng tên → dòng không nhập. Dòng mới bắt buộc (như form).' },
       { key: 'taxCode', header: 'Mã số thuế', aliases: ['mst', 'ma so thue/cccd', 'ma so thue cccd'], example: '0100000000', note: '10 số, 10 số-3 số hoặc 12 số CCCD; không trùng đối tượng khác.' },
@@ -124,7 +124,7 @@ const doiTuong = (kind: 'customer' | 'supplier'): NhapLoai => {
       { key: 'note', header: 'Ghi chú', aliases: ['dien giai'] },
     ],
     run: async (rows, { dryRun, mode }) => {
-      const o = await api.post<{ created: number; updated: number; failed: number; rows: (Omit<NhapDong, 'key'> & { code: string })[] }>('/api/v1/partners/import', { dryRun, mode, rows: rowsOut(rows) });
+      const o = await api.post<{ created: number; updated: number; failed: number; rows: (Omit<NhapDong, 'key'> & { code: string })[] }>('/api/v1/partners/import', { dryRun, mode, kind, rows: rowsOut(rows) });
       return { ...o, rows: o.rows.map((r) => ({ ...r, key: r.code })) };
     },
   };

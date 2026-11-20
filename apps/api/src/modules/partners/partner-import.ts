@@ -54,7 +54,7 @@ const ngay = (s: string): string | undefined => {
 };
 const toNumber = (s: string) => { const n = Number(s.replace(/[.,\s](?=\d{3}(\D|$))/g, '').replace(',', '.')); return Number.isFinite(n) ? n : NaN; };
 
-export async function importPartners(trx: ActionTx, tenantId: string, actor: string, actorName: string, rows: PartnerImportRow[], dryRun: boolean, mode: 'create' | 'update' | 'both' = 'both') {
+export async function importPartners(trx: ActionTx, tenantId: string, actor: string, actorName: string, rows: PartnerImportRow[], dryRun: boolean, mode: 'create' | 'update' | 'both' = 'both', defaultKind: 'customer' | 'supplier' = 'customer') {
   const [partners, groups] = await Promise.all([
     trx.selectFrom('partners').select(['code', 'name', 'kind', 'group_code', 'tax_code', 'address', 'phone', 'mobile', 'email', 'contact_name', 'bank_account_no', 'bank_name', 'payment_term_days', 'credit_limit', 'is_active', 'note',
       sql<string | null>`(SELECT pp.code FROM partners pp WHERE pp.uid = partners.parent_uid)`.as('parent_code')])
@@ -104,6 +104,9 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
 
   const seenCode = new Map<string, number>();
   const seenTax = new Map<string, number>();
+  // [2026-11-20 kiennt] NT-DM-016 (bảng theo dõi dòng 47) — đơn vị cha ghi TÊN của dòng phía trên trong tệp (mã để trống, tự cấp) → dòng con theo dòng đó (đóng góp)
+  const tenKey = (v: string) => v.toLowerCase().replace(/\s+/g, ' ').trim();
+  const seenName = new Map<string, { row: number; code: string; ok: boolean }>();
   const checked = rows.map((r) => {
     const errors: string[] = [];
     const t = (k: (typeof PARTNER_IMPORT_KEYS)[number]) => (r[k] ?? '').trim();
@@ -121,7 +124,7 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
     if (isNew && !name) errors.push('Đối tượng mới phải có tên');
     if (name.length > 255) errors.push('Tên dài quá 255 ký tự');
     const kindRaw = t('kind');
-    const kind = kindRaw ? KIND_WORDS[low(kindRaw)] : isNew ? 'customer' : undefined;
+    const kind = kindRaw ? KIND_WORDS[low(kindRaw)] : isNew ? defaultKind : undefined;
     if (kindRaw && !kind) errors.push(`Kiểu "${kindRaw}" không hiểu — ghi Khách hàng / Nhà cung cấp / Nhân viên / Nội bộ / Khác`);
     const groupRaw = t('groupCode');
     const gk = groupRaw ? lienKet(groups, groupRaw, 'nhóm đối tượng') : {};
@@ -167,12 +170,20 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
     const parentCell = t('parentCode'); const dash = /^(\S+) - /.exec(parentCell);
     const parentRaw = dash && (byCode.has(dash[1]!) || seenCode.has(dash[1]!)) ? dash[1]! : parentCell;
     let parentCode = parentRaw;
+    let parentRow: number | undefined;
     if (parentRaw && !byCode.has(parentRaw) && !seenCode.has(parentRaw)) {
       const pk = lienKet(partners, parentRaw, 'đối tượng');
+      const tren = seenName.get(tenKey(parentRaw));
       if (pk.code) parentCode = pk.code;
+      else if (tren) {
+        // Cha là dòng phía trên của tệp: có mã thì dùng mã; mã trống thì lấy mã được cấp khi ghi dòng đó.
+        if (!tren.ok) errors.push(`Đơn vị cha "${parentRaw}" ở dòng ${tren.row} không hợp lệ — sửa dòng đó trước`);
+        if (tren.code) parentCode = tren.code; else { parentCode = ''; parentRow = tren.row; }
+      }
     }
     // Khách hàng mới phải có Nhóm (ô "Thuộc nhóm (*)" của form); đơn vị con lấy nhóm của đơn vị cha.
-    if (isNew && !groupRaw && !parentCode && (kind ?? 'customer') === 'customer') errors.push('Khách hàng mới phải có Nhóm khách hàng (như ô "Thuộc nhóm (*)" của form)');
+    if (isNew && !groupRaw && !parentCode && !parentRow && (kind ?? 'customer') === 'customer') errors.push('Khách hàng mới phải có Nhóm khách hàng (như ô "Thuộc nhóm (*)" của form)');
+    if (parentRow && isNew && code) errors.push(`Đơn vị cha ở dòng ${parentRow} chưa có mã (tự cấp) — để trống mã dòng này để phần mềm cấp mã con`);
     if (parentCode) {
       if (parentCode === code) errors.push('Đơn vị cha không được là chính nó');
       else if (!byCode.has(parentCode) && !(seenCode.has(parentCode) && seenCode.get(parentCode)! < r.row)) errors.push(`Đơn vị cha ${parentCode} chưa có — thêm đơn vị cha trước (hoặc đặt dòng của nó lên trên)`);
@@ -197,17 +208,24 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
     const values: Show = {
       code: code || (isNew ? '(tự cấp)' : ''), name, kind: kind ? KIND_TEXT[kind] : kindRaw, groupCode: groupCode ? showGroup(groupCode) : groupRaw, taxCode, address: t('address'), phone: t('phone'),
       mobile: t('mobile'), email, contactName: t('contactName'), bankAccountNo: t('bankAccountNo'), bankName: t('bankName'), paymentTermDays: term, creditLimit: limit,
-      isActive: isActive === undefined ? (isNew && !act ? 'Có' : act) : isActive ? 'Có' : 'Không', note: t('note'), parentCode,
+      isActive: isActive === undefined ? (isNew && !act ? 'Có' : act) : isActive ? 'Có' : 'Không', note: t('note'), parentCode: parentRow ? `${parentRaw} (dòng ${parentRow})` : parentCode,
       birthDate: birthDate ?? bd, gender: gender ? GENDER_TEXT[gender] : gd, customerType: customerType ? CTYPE_TEXT[customerType] : ct, isProspect: isProspect === undefined ? ip : isProspect ? 'Có' : 'Không',
       companyName: t('companyName'), shortName: t('shortName'), alias: t('alias'), companyAddress: t('companyAddress'), fax: t('fax'), website: t('website'), position: t('position'),
       bankAccountHolder: t('bankAccountHolder'), maxOpenDocs: mo, managerCode: mg.code ? show2(empName, mg.code) : mgRaw, branchCode: brk.code ? show2(branchName, brk.code) : brRaw,
     };
-    return { row: r.row, code, isNew, input, info, errors, values, before: before ? beforeOf(before) : undefined };
+    if (name) seenName.set(tenKey(name), { row: r.row, code, ok: !errors.length });
+    return { row: r.row, code, isNew, input, info, errors, values, parentRow, before: before ? beforeOf(before) : undefined };
   });
 
   const results: PartnerImportResult[] = [];
+  const maDaGhi = new Map<number, string>();
   for (const c of checked) {
     const show = { values: c.values, ...(c.before ? { before: c.before } : {}) };
+    if (c.parentRow && !dryRun && !c.errors.length) {
+      const ma = maDaGhi.get(c.parentRow);
+      if (ma) c.info = { ...c.info, parentCode: ma };
+      else c.errors.push(`Đơn vị cha ở dòng ${c.parentRow} không ghi được — dòng này bỏ qua`);
+    }
     if (c.errors.length || dryRun) { results.push({ row: c.row, code: c.code, action: c.errors.length ? 'error' : c.isNew ? 'create' : 'update', errors: c.errors, ...show }); continue; }
     const x = await inSavepoint(trx, async (t) => {
       // Mã trống: cấp mã nối dãy của nhóm / kiểu (khoá theo đơn vị để hai lần nhập cùng lúc không cấp trùng).
@@ -225,6 +243,7 @@ export async function importPartners(trx: ActionTx, tenantId: string, actor: str
       if (c.isNew) await t.updateTable('partners').set({ created_by: actorName }).where('tenant_id', '=', tenantId).where('code', '=', code).execute();
       return code;
     });
+    if (x.ok) maDaGhi.set(c.row, x.value);
     results.push(x.ok
       ? { row: c.row, code: x.value, action: c.isNew ? 'create' : 'update', errors: [], ...show, values: { ...c.values, code: x.value } }
       : { row: c.row, code: c.code, action: 'error', errors: [errorText(x.error)], ...show });
