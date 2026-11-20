@@ -209,6 +209,8 @@ function CachAp({ p, onChange }: { p: Policy; onChange: (rule: Policy['rule']) =
       <label className="mh-tick">
         <input type="checkbox" checked={r.apply === 'exclusive'} onChange={(e) => onChange({ ...r, apply: e.target.checked ? 'exclusive' : undefined })} />
         <span><b>Áp riêng</b> — mã hàng nhận chương trình này thì <u>không nhận</u> chương trình chiết khấu / khuyến mại nào khác (mã khác vẫn áp bình thường).
+          {/* [2026-11-20 khanhtd] TRA-CUU — bảng CK theo mã: tích theo từng dòng (đóng góp) */}
+          {p.kind === 'item_discount' && r.apply !== 'exclusive' && <span className="muted"> Muốn chỉ một số mã áp riêng: để trống ô này, tích cột <b>Áp riêng</b> ở các dòng đó trong bảng{(() => { const n = ((r.items ?? []) as { apply?: string }[]).filter((i) => i.apply === 'exclusive').length; return n ? ` (đang ${n} dòng áp riêng)` : ''; })()}.</span>}
           <span className="muted"> Bỏ tích = áp đồng thời, cộng với các chương trình khác. Ví dụ: CK 7% riêng mã A tích "Áp riêng" + CK 2% chung → mã A chỉ 7%, mã B được 2%. Hai chương trình áp riêng cùng khớp một mã: lấy ưu tiên cao hơn, bằng nhau lấy cái lợi hơn.</span></span>
       </label>
       <label className={`mh-tick ${repeatable ? '' : 'muted'}`} title={repeatable ? '' : why}>
@@ -248,14 +250,15 @@ function ChongApRieng({ p, all, onPriority }: { p: Policy; all: Policy[]; onPrio
       <b>{mine ? `Chồng ${chong.length} chương trình áp riêng khác` : `${chong.length} chương trình áp riêng khác sẽ chặn chính sách này`}</b>
       <span className="muted"> — mỗi mã chỉ nhận một chương trình áp riêng; bấm mã để tra chi tiết từng phiếu.</span>
       <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
-        {chong.slice(0, 8).map((c) => (
-          <li key={c.other.id}>
-            <b className="mono">{c.other.code}</b> {c.other.name} — {KET_QUA[c.result](p.priority ?? 0, c.other.priority ?? 0)},{' '}
+        {chong.slice(0, 8).map((c, k) => (
+          <li key={`${c.other.id}-${k}`}>
+            <b className="mono">{c.other.code}</b> {c.other.name} — {KET_QUA[c.result](c.myPriority, c.otherPriority)}{c.myRowPriority ? ' — ưu tiên ở dòng bảng' : ''},{' '}
             {c.skus === null ? 'trên cả phạm vi (hai bên không ghi mã cụ thể)' : <>ở {c.skus.length} mã: {c.skus.slice(0, 6).map((s, i) => <span key={s}>{i ? ', ' : ''}<Link to={`/app/tra-cuu/chinh-sach?sku=${encodeURIComponent(s)}`} className="mono">{s}</Link></span>)}{c.skus.length > 6 ? ` … và ${c.skus.length - 6} mã` : ''}</>}
           </li>
         ))}
         {chong.length > 8 && <li className="muted">… và {chong.length - 8} chương trình nữa</li>}
       </ul>
+      {chong.some((c) => c.myRowPriority && (c.result === 'thua' || c.result === 'ngang')) && <div className="muted" style={{ marginTop: 4 }}>Mã có ưu tiên ghi ở dòng bảng: sửa ô Ưu tiên của dòng đó (ô Ưu tiên của chính sách không áp cho các mã này).</div>}
       {n !== undefined && <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} title="Đặt ưu tiên lớn hơn mọi chương trình áp riêng đang thua / ngang — bấm Ghi để lưu" onClick={() => onPriority(n)}>Đặt ưu tiên = {n} để thắng</button>}
       {!mine && <div className="muted" style={{ marginTop: 4 }}>Muốn chính sách này áp ở các mã đó: bỏ tích Áp riêng của chương trình kia, hoặc tích Áp riêng ở đây và đặt ưu tiên cao hơn.</div>}
     </div>
