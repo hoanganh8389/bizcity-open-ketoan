@@ -286,6 +286,8 @@ export const catalogBatchActions: AnyActionDef[] = [
         rows: z.array(z.object({
           row: z.number().int(), sku: z.string().max(200), name: cell, unit: cell, note: cell, groupCode: cell, industryCode: cell, brandCode: cell, typeCode: cell,
           postingGroupCode: cell, taxOutCode: cell, taxInCode: cell, vatRate: cell, isActive: cell,
+          // [2026-11-20 kiennt] NT-DM-014 — mã hoá từng cấp nhóm hàng + barcode (đóng góp)
+          industrySku: cell, brandSku: cell, groupSku: cell, barcode: cell,
         })).min(1).max(5000),
       }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/catalog/products/import' }, mcp: false, ai: 'deny' },
