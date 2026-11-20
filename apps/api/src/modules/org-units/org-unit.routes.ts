@@ -91,18 +91,6 @@ export const orgUnitWriteActions: AnyActionDef[] = [
       return orgUnitService.restoreDefaultsIn(ctx.data.tx, ctx.legacyAuth);
     },
   }),
-  // [2026-11-20 Nguyễn Văn Thủy] Quay về dữ liệu gốc = xoá trắng cơ cấu để khai lại từ đầu (0171) (đóng góp)
-  defineAction({
-    id: 'core.org-unit.wipe', title: 'Xoá trắng cơ cấu tổ chức: xoá nút, bộ phận / cửa hàng / kho chưa phát sinh; nơi đã có chứng từ giữ lại, gỡ khỏi cây', tags,
-    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ confirm: z.literal(true), password: z.string().max(200).optional() }), output: anyOut,
-    expose: { http: { method: 'POST', path: '/api/v1/org-units/wipe' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'org_unit' },
-    handler: (ctx, input) => {
-      if (input.password !== (process.env.RESTORE_DEFAULT_PASSWORD || process.env.CATALOG_WIPE_PASSWORD || 'Thuy!@#')) throw Errors.forbidden('Sai mật khẩu xoá trắng cơ cấu');
-      return orgUnitService.wipeIn(ctx.data.tx, ctx.legacyAuth);
-    },
-  }),
   defineAction({
     id: 'core.org-unit.import', title: 'Nhập sơ đồ tổ chức từ Excel', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
