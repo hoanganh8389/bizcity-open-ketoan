@@ -37,7 +37,7 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
   const [products, classes, groups, taxes] = await Promise.all([
     trx.selectFrom('products').select(['sku', 'name', 'unit', 'note', 'group_code', 'industry_code', 'brand_code', 'type_code', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'is_active'])
       .where('tenant_id', '=', tenantId).execute(),
-    trx.selectFrom('item_classes').select(['kind', 'code', 'name', 'parent_code']).where('tenant_id', '=', tenantId).execute(),
+    trx.selectFrom('item_classes').select(['kind', 'code', 'name', 'parent_code', 'sku_code']).where('tenant_id', '=', tenantId).execute(),
     trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).execute(),
     trx.selectFrom('tax_codes').select(['code', 'direction', 'is_active', 'is_legacy', 'replaced_by']).where('tenant_id', '=', tenantId).execute(),
   ]);
@@ -58,8 +58,8 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     return t.replaced_by ? { code: t.replaced_by } : { error: `Mã thuế cũ ${raw} chưa xác định được loại thuế theo quy định — ghi KCT, 0, 5, 8, 10 hoặc KKKN` };
   };
   // Tra mã phân loại: đúng mã, hoặc đúng tên (không phân biệt hoa thường) nếu tên chỉ ứng với một mã.
-  const findClass = (kind: string, v: string): string | null => {
-    const list = classes.filter((c) => c.kind === kind);
+  const findClass = (kind: string, v: string, only?: (code: string) => boolean): string | null => {
+    const list = classes.filter((c) => c.kind === kind && (!only || only(c.code)));
     // [2026-11-17 09:11 PM kiennt] NT-DM-003 E2 — đường dẫn tên các cấp "Sữa bột / Vinamilk / Sữa bột trẻ em" (cột Nhóm hàng của tệp xuất DM10):
     //   đi từ nhóm gốc xuống theo tên từng cấp; sai một cấp thì không thấy (đóng góp)
     if (v.includes(' / ')) {
@@ -119,16 +119,38 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
     if (name) input.name = name;
     if (isNew && unit) input.units = [{ unit, ratio: 1, isDefault: true, isPurchaseDefault: true }];
     if (r.note?.trim()) input.note = r.note.trim();
+    // [2026-11-20 kiennt] NT-DM-014 L1 — nhóm hàng tra trong nhánh ngành / nhãn của cùng dòng; nhóm ở nhánh khác → lỗi, không tự gán (đóng góp)
     for (const [key, kind, label] of CLASS) {
       const v = r[key]?.trim();
-      if (!v) continue;
+      if (!v || key === 'groupCode') continue;
       const c = findClass(kind, v);
       if (c) input[key] = c; else errors.push(`${label} "${v}" chưa có trong danh mục`);
+    }
+    const gv = r.groupCode?.trim();
+    if (gv) {
+      // Ngành / nhãn chỉ ràng buộc khi chúng là nút của cây nhóm hàng (nhãn khai riêng ngoài cây thì không đối chiếu được).
+      const trongCay = (c: unknown) => (typeof c === 'string' && groupBy.has(c) ? c : undefined);
+      const ind = trongCay(input.industryCode); const br = trongCay(input.brandCode);
+      const inBranch = (code: string) => { const ch = chainOfG(code); return (!ind || ch[0] === ind) && (!br || ch[1] === br); };
+      const c = findClass('group', gv, ind || br ? inBranch : undefined);
+      if (c) input.groupCode = c;
+      else if (findClass('group', gv)) {
+        const noi = [br && `nhãn ${className.get(`brand|${br}`) ?? br}`, ind && `ngành ${className.get(`industry|${ind}`) ?? ind}`].filter(Boolean);
+        errors.push(`Nhóm hàng "${gv}" không có dưới ${noi[0]}${noi[1] ? ` (${noi[1]})` : ''} — sửa cột Nhóm hàng / Ngành / Nhãn cho khớp danh mục`);
+      } else errors.push(`Nhóm hàng "${gv}" chưa có trong danh mục`);
     }
     const g = input.groupCode as string | undefined;
     if (!existing.has(sku) && !ps) {
       if (!g && !r.groupCode?.trim()) errors.push('Mặt hàng mới phải có Nhóm hàng (tới nhóm cấp 3)');
       else if (g && levelOf(g) < 3) errors.push(`Nhóm hàng "${groupBy.get(g)?.name ?? g}" mới là nhóm cấp ${levelOf(g)} — phải chọn tới nhóm cấp 3`);
+    }
+    // [2026-11-20 kiennt] NT-DM-014 L1 — mã mới 9 số: 6 số đầu (ngành 2 + nhãn 3 + nhóm 1) phải khớp đoạn mã đã khai của nhóm (đóng góp)
+    if (!existing.has(sku) && !ps && g && /^[0-9]{9}$/.test(sku)) {
+      const segs = chainOfG(g).map((c) => groupBy.get(c)?.sku_code ?? '');
+      const lens = [2, 3, 1];
+      if (segs.length === 3 && segs.every((x, i) => new RegExp(`^[0-9]{${lens[i]}}$`).test(x)) && !sku.startsWith(segs.join(''))) {
+        errors.push(`Mã hàng ${sku} không khớp đoạn mã của nhóm ${groupBy.get(g)?.name ?? g} (${segs.join(' · ')}) — mã phải bắt đầu bằng ${segs.join('')}`);
+      }
     }
     if (ps) delete input.groupCode; // mã biến thể: nhóm theo mã cha
     else if (g && !input.industryCode && !input.brandCode) {
