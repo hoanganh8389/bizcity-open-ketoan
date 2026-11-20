@@ -43,7 +43,8 @@
 - **Dòng 42 — bỏ cột tô vàng khỏi tệp mẫu khách hàng** (Kiểu, Di động, Email, Người liên hệ của tệp mẫu cũ):
   - **Kiểu**: bỏ khỏi tệp mẫu khách hàng và nhà cung cấp. Dòng mới nhận kiểu theo màn đang nhập (DM12 → Khách hàng, nhà cung cấp → Nhà cung cấp); dòng cập nhật giữ kiểu cũ.
   - **Di động**: đã bỏ ở mục 1 (một cột Điện thoại).
-  - **Email**, **Người liên hệ** (tên mới **Người đại diện**): là ô của form khách hàng → giữ theo mục 2 (không bắt buộc). *Chờ người kiểm thử xác nhận.*
+  - **Email**: giữ (ô của form khách hàng, không bắt buộc).
+  - **Người liên hệ** (tên mới **Người đại diện**): bỏ khỏi tệp mẫu khách hàng (kiennt chốt 20/11). Tệp nhà cung cấp giữ cột Người liên hệ.
 - **Dòng 47 — nhập NCC mới cùng các chi nhánh của nó trong một tệp** (như mã hàng cha / con): cột Thuộc đơn vị cha ghi **tên** của dòng phía trên trong tệp mà dòng đó để trống mã (tự cấp) → trước đây báo "Đơn vị cha … chưa có"; nay dòng con nhận mã được cấp của dòng cha khi ghi (mã con = mã cha-001…). Dòng cha lỗi → dòng con báo "Đơn vị cha … ở dòng N không hợp lệ"; cha đặt ở dòng dưới con → vẫn báo chưa có.
 
 ## 3. Phạm vi
@@ -60,7 +61,7 @@ Tệp: `apps/web/src/features/catalog/PartnersPage.tsx` (nhãn ô, cột lưới
 | 4 | Nhập dòng có Người quản lý tên không có | Dòng lỗi, không nhập |
 | 5 | Nhập dòng mới thiếu Nhóm | Dòng lỗi "phải có Nhóm khách hàng" |
 | 6 | Xuất DM12 (bật mọi cột) rồi nhập lại | Không lỗi, không đổi gì |
-| 7 | Tải tệp mẫu khách hàng / nhà cung cấp | Không có cột Kiểu, Di động (khách hàng) |
+| 7 | Tải tệp mẫu khách hàng / nhà cung cấp | Không có cột Kiểu; khách hàng không có Di động, Người đại diện (có Email) |
 | 8 | Nhà cung cấp: dòng 2 NCC mới (mã trống), dòng 3 chi nhánh — Thuộc đơn vị cha = tên dòng 2 | Cả hai "Thêm mới"; ghi xong mã con = mã cha-001, kiểu Nhà cung cấp |
 
 ## 5. Kết quả chạy
@@ -79,3 +80,4 @@ Tệp: `apps/web/src/features/catalog/PartnersPage.tsx` (nhãn ô, cột lưới
 |---|---|
 | 20/11/2026 | Tạo và chốt theo yêu cầu |
 | 20/11/2026 | Bổ sung lỗi kiểm thử dòng 42 (bỏ cột Kiểu khỏi tệp mẫu), dòng 47 (NCC cha / con cùng tệp) |
+| 20/11/2026 | Dòng 42: tệp mẫu khách hàng bỏ thêm cột Người đại diện, giữ Email |

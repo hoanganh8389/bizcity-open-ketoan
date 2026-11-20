@@ -112,7 +112,8 @@ const doiTuong = (kind: 'customer' | 'supplier'): NhapLoai => {
       { key: 'companyAddress', header: 'Địa chỉ Cty', aliases: ['dia chi cty', 'dia chi cong ty'] },
       { key: 'fax', header: 'Fax' },
       { key: 'website', header: 'Website', aliases: ['trang web'] },
-      { key: 'contactName', header: kh ? 'Người đại diện' : 'Người liên hệ', aliases: ['nguoi dai dien', 'nguoi lien he', 'nguoi lien he / dai dien', 'ho va ten nguoi lien he', 'ten nguoi lien he'] },
+      // [2026-11-20 kiennt] NT-DM-016 (bảng theo dõi dòng 42) — tệp mẫu khách hàng bỏ cột Người đại diện (giữ Email); NCC giữ Người liên hệ (đóng góp)
+      ...(kh ? [] : [{ key: 'contactName', header: 'Người liên hệ', aliases: ['nguoi dai dien', 'nguoi lien he', 'nguoi lien he / dai dien', 'ho va ten nguoi lien he', 'ten nguoi lien he'] }]),
       { key: 'position', header: 'Chức vụ', aliases: ['chuc danh'] },
       { key: 'bankAccountNo', header: 'Tài khoản NH', aliases: ['so tai khoan', 'tai khoan ngan hang', 'stk', 'so tai khoan ngan hang'] },
       { key: 'bankAccountHolder', header: 'Chủ TK', aliases: ['chu tai khoan'] },
