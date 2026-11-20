@@ -2132,6 +2132,11 @@
         "migration": "0054_ho_so_ke_toan.sql"
       },
       {
+        "name": "accounting_units_branch_uid",
+        "table": "accounting_units",
+        "migration": "0175_dinh_danh_bo_phan_don_vi_hach_toan.sql"
+      },
+      {
         "name": "audit_logs_chain",
         "table": "audit_logs",
         "migration": "0036_bang_chung.sql"
@@ -2225,6 +2230,11 @@
         "name": "debt_items_unit_ids",
         "table": "debt_items",
         "migration": "0173_co_cau_mot_bang.sql"
+      },
+      {
+        "name": "dimensions_branch_uid",
+        "table": "dimensions",
+        "migration": "0175_dinh_danh_bo_phan_don_vi_hach_toan.sql"
       },
       {
         "name": "dimensions_dept_moved",
