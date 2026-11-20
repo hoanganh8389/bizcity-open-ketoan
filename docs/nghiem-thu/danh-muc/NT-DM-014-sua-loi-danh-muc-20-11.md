@@ -20,7 +20,13 @@ Dòng 33 của bảng theo dõi chưa có nội dung (cột hiện trạng trố
 **Sau khi sửa.**
 - Dòng có Ngành và / hoặc Nhãn: nhóm phải **nằm dưới** đúng nhãn / ngành đó. Tra mã hoặc tên nhóm chỉ trong nhánh đó. (Áp dụng khi ngành / nhãn là nút của cây nhóm hàng DM11 — nhãn khai riêng ngoài cây thì không đối chiếu.)
 - Nhóm không có trong nhánh → **lỗi**, dòng không ghi: "Nhóm hàng "26" không có dưới nhãn Vinamilk (ngành Sữa bột)". Không tự gán sang nhóm khác.
+- Màn nhập Excel mặt hàng có đủ cột **Mã ngành · Ngành hàng · Mã nhãn · Nhãn hàng · Mã nhóm · Nhóm hàng** (tên, mã hoặc mã hoá như tệp Xuất DM11): nhãn tra dưới ngành, nhóm tra dưới nhãn. Trước đây màn nhập chỉ có cột Nhóm hàng — cột Ngành / Nhãn trong tệp bị bỏ qua nên lỗi xảy ra.
 - Mã hàng mới đúng 9 chữ số mà 6 số đầu (Ngành 2 + Nhãn 3 + Nhóm 1) khác đoạn mã của nhóm → **lỗi** "Mã hàng … không khớp đoạn mã của nhóm … (…)".
+
+## L4 · Nhập Excel mặt hàng thêm cột Barcode (yêu cầu thêm 20/11)
+
+- Màn nhập Excel mặt hàng nhận cột **Barcode** (trống = giữ nguyên); bước kiểm tra hiện barcode.
+- Lưới DM10 có cột **Barcode**, **ẩn sẵn** (bật ở nút Cột; bật thì tệp Xuất có cột này, nhập lại được).
 
 ## L2 · Loại kho KNB: chọn được TK nhưng Ghi báo lỗi (dòng 34)
 
@@ -77,4 +83,5 @@ Chồng phạm vi PHASE-026 · mã số cha – con (Nguyễn Văn Thủy) ở `
 |---|---|
 | 20/11/2026 | Tạo, gộp dòng 32, 34, 35 của bảng theo dõi kiểm thử |
 | 20/11/2026 | Code xong ở máy: ràng buộc nhóm theo ngành / nhãn khi chúng thuộc cây nhóm |
+| 20/11/2026 | L1: thêm cột Ngành / Nhãn / mã hoá vào màn nhập (trước bị bỏ qua); L4: cột Barcode |
 | 20/11/2026 | Bỏ 4 cột thuộc tính loại kho đã thêm (người dùng: logic màn trước đã đúng); L3 chỉ nhận cột Số kho |

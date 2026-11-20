@@ -129,13 +129,13 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         LEFT JOIN product_posting_groups g ON g.tenant_id = p.tenant_id AND g.code = COALESCE(p.posting_group_code, (SELECT code FROM product_posting_groups WHERE tenant_id = ${tenantId} AND is_default LIMIT 1))
         WHERE p.tenant_id = ${tenantId} ${groupFilter} ${searchFilter}`;
       const [rows, total] = await Promise.all([
-        sql<Record<string, string | null>>`SELECT p.sku, p.name, p.unit, p.note, p.excise_rate, p.posting_group_code, p.tax_out_code, p.tax_in_code, p.group_code, p.is_active,
+        sql<Record<string, string | null>>`SELECT p.sku, p.name, p.unit, p.note, p.excise_rate, p.posting_group_code, p.tax_out_code, p.tax_in_code, p.group_code, p.is_active, p.barcode,
             g.code AS g_code, g.inventory_account, g.cogs_account, g.revenue_account, g.discount_account, g.sales_return_account ${base} ORDER BY p.sku LIMIT ${f.limit}`.execute(db),
         sql<{ n: string }>`SELECT COUNT(*) AS n ${base}`.execute(db),
       ]);
       return ok(rows.rows.map((p) => ({
         sku: p.sku, name: p.name, unit: p.unit, note: p.note ?? '', exciseRate: p.excise_rate === null ? null : Number(p.excise_rate),
-        postingGroupCode: p.posting_group_code, effectiveGroup: p.g_code, taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, groupCode: p.group_code, isActive: Boolean(p.is_active),
+        postingGroupCode: p.posting_group_code, effectiveGroup: p.g_code, taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, groupCode: p.group_code, isActive: Boolean(p.is_active), barcode: p.barcode ?? '', // [2026-11-20 kiennt] NT-DM-014 — cột Barcode (ẩn sẵn) ở DM10 (đóng góp)
         inventoryAccount: p.inventory_account, cogsAccount: p.cogs_account, revenueAccount: p.revenue_account, discountAccount: p.discount_account, salesReturnAccount: p.sales_return_account,
       })), { total: Number(total.rows[0]?.n ?? 0), limit: f.limit });
     },
