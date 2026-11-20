@@ -56,6 +56,9 @@ export function parentFromSku(sku: string): string | null {
   const s = sku.trim().toUpperCase();
   const m = /^([A-Z]{0,3})([0-9]{9})([A-Z]{0,3})$/.exec(s);
   if (m && (m[1] || m[3])) return m[2]!;
+  // [2026-11-20 kiennt] NT-DM-013 — phần cuối có chữ số (không chữ đầu): mã cha = 9 số đầu — trùng hàm SQL 0170 (đóng góp)
+  const d = /^([0-9]{9})[A-Z0-9]{1,3}$/.exec(s);
+  if (d) return d[1]!;
   const g = /^([A-Z][0-9]{8})[A-Z]{1,3}$/.exec(s);
   return g ? g[1]! : null;
 }

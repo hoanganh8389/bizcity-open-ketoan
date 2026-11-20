@@ -639,6 +639,9 @@ function parentFromSku(sku: string): string | null {
   const t = sku.trim().toUpperCase();
   const m = /^([A-Z]{0,3})([0-9]{9})([A-Z]{0,3})$/.exec(t);
   if (m && (m[1] || m[3])) return m[2]!;
+  // [2026-11-20 kiennt] NT-DM-013 — phần cuối có chữ số (không chữ đầu): mã cha = 9 số đầu — trùng máy chủ (0170) (đóng góp)
+  const d = /^([0-9]{9})[A-Z0-9]{1,3}$/.exec(t);
+  if (d) return d[1]!;
   const g = /^([A-Z][0-9]{8})[A-Z]{1,3}$/.exec(t);
   return g ? g[1]! : null;
 }
@@ -648,8 +651,12 @@ function MaBienThe({ parent, sku, onChange }: { parent: string; sku: string; onC
   const at = sku.indexOf(parent);
   const pre = at >= 0 ? sku.slice(0, at) : '';
   const suf = at >= 0 ? sku.slice(at + parent.length) : 'Z';
+  // [2026-11-20 kiennt] NT-DM-013 — chữ cuối nhận cả chữ số khi không có chữ đầu và mã cha là 9 chữ số; chữ đầu chỉ chữ cái (đóng góp)
+  const soCuoi = !pre && /^[0-9]{9}$/.test(parent);
   const put = (p: string, s: string) => {
-    p = p.toUpperCase().replace(/[^A-Z]/g, ''); s = s.toUpperCase().replace(/[^A-Z]/g, '');
+    p = p.toUpperCase().replace(/[^A-Z]/g, '');
+    s = s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (/[0-9]/.test(s) && (p || !/^[0-9]{9}$/.test(parent))) return;
     if (p.length + s.length > 2) return;
     onChange(p + parent + s);
   };
@@ -658,9 +665,9 @@ function MaBienThe({ parent, sku, onChange }: { parent: string; sku: string; onC
       {/* [2026-11-15 Nguyễn Văn Thủy] mã đầy đủ (chỉ đọc) đứng đầu để bộ kiểm ô bắt buộc không bắt nhập chữ đầu: chữ đầu / chữ cuối
           đều không bắt buộc, chỉ cần một trong hai — thiếu cả hai thì báo ở dòng gợi ý của Mã hàng (đóng góp) */}
       <input readOnly tabIndex={-1} aria-hidden value={sku} style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
-      <input className="input mono" style={{ width: 80, textAlign: 'right' }} value={pre} placeholder="chữ đầu" title="Chữ thêm ở đầu mã — không bắt buộc (cần chữ đầu hoặc chữ cuối)" onChange={(e) => put(e.target.value, suf)} />
+      <input className="input mono" style={{ width: 80, textAlign: 'right' }} value={pre} placeholder="chữ đầu" title={/[0-9]/.test(suf) ? 'Chữ cuối đang có số: bỏ số ở chữ cuối thì mới thêm được chữ đầu' : 'Chữ cái thêm ở đầu mã (không nhận số) — không bắt buộc (cần chữ đầu hoặc chữ cuối)'} onChange={(e) => put(e.target.value, suf)} />
       <span className="input mono" style={{ background: 'var(--surface-2, #f4f6f9)', width: 'auto', padding: '0 10px', display: 'flex', alignItems: 'center' }} title="Mã cha — giữ nguyên">{parent}</span>
-      <input className="input mono" style={{ width: 80 }} value={suf} placeholder="chữ cuối" title="Chữ thêm ở cuối mã — không bắt buộc (cần chữ đầu hoặc chữ cuối)" onChange={(e) => put(pre, e.target.value)} />
+      <input className="input mono" style={{ width: 80 }} value={suf} placeholder="chữ cuối" title={soCuoi ? 'Chữ hoặc số thêm ở cuối mã — không bắt buộc (cần chữ đầu hoặc chữ cuối)' : pre ? 'Đã có chữ đầu: chữ cuối chỉ nhận chữ cái (để mã cha đọc được một cách)' : 'Chữ thêm ở cuối mã — mã cha dạng chữ + 8 số: chữ cuối chỉ nhận chữ cái'} onChange={(e) => put(pre, e.target.value)} />
       <span className="muted" style={{ fontSize: 12.5 }}>= <b className="mono">{sku}</b></span>
     </div>
   );

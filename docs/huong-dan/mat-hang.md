@@ -76,6 +76,20 @@ Chọn **Nhóm hàng** là phần mềm sinh mã kế tiếp theo đoạn mã c�
 
 **Đoạn mã của nhóm** (cột *Đoạn mã trong mã hàng* ở **Nhóm hàng (DM11)**) chưa khai thì phần mềm tự lấy từ các mã đang có trong nhóm; nhóm mới tinh thì cấp số kế tiếp sau các nhóm cùng cha. Sửa được ở DM11 → ô **Mã ngắn**.
 
+### Mã biến thể
+<!-- [2026-11-20 kiennt] NT-DM-013 — phần cuối mã biến thể nhận cả chữ số (đóng góp) -->
+
+Thêm mặt hàng → **Đổi** → **Mã biến thể**: chọn **Mã cha**, phần mềm khoá mã cha, chỉ gõ thêm ở hai đầu (tổng tối đa **2 ký tự**, cần ít nhất một đầu).
+
+| Ô | Nhận | Ví dụ (mã cha `100011001`) |
+|---|---|---|
+| **Chữ đầu** | Chỉ chữ cái | `A100011001` |
+| **Chữ cuối** | Chữ cái **và chữ số** | `100011001Z`, `1000110015`, `10001100101`, `100011001Z1` |
+
+- Đã có **chữ đầu** thì **chữ cuối** chỉ nhận chữ cái (`A100011001Z` được, `A1000110015` không) — để phần mềm đọc ra mã cha đúng một cách.
+- Mã cha dạng chữ + 8 số (vd `Q12345678`): chữ cuối chỉ nhận chữ cái.
+- Phần mềm tự nhận mã cha: bỏ chữ đầu, lấy **9 chữ số** đứng sau; mã chưa có chữ đầu mà cuối có số thì mã cha là **9 số đầu**. Nhập Excel mặt hàng theo cùng quy tắc; mã cha chưa có thì báo "khai mã cha trước".
+
 ### Câu hỏi hay gặp
 
 - **Đặt tên trùng được không?** Không. Trùng thì quầy, kho dễ chọn nhầm.
