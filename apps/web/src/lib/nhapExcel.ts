@@ -87,30 +87,47 @@ const doiTuong = (kind: 'customer' | 'supplier'): NhapLoai => {
   const ab = kh ? 'khách hàng' : 'nhà cung cấp';
   return {
     id: kh ? 'khach-hang' : 'nha-cung-cap', nhom: 'Danh mục', title: kh ? 'Khách hàng' : 'Nhà cung cấp',
-    desc: `Mã, tên, mã số thuế, địa chỉ, nhóm, điện thoại, ngân hàng, hạn nợ của ${ab}`, keyField: 'code',
+    desc: `Gần đủ các ô của form ${ab}: mã, tên, nhóm, MST, địa chỉ, điện thoại, thông tin công ty, ngân hàng, hạn nợ, người / chi nhánh quản lý`, keyField: 'code',
     listPath: kh ? '/danh-muc/khach-hang' : '/danh-muc/nha-cung-cap', invalidate: ['partners'],
     fields: [
       { key: 'code', header: `Mã ${ab}`, aliases: ['ma', 'ma kh', 'ma ncc', 'ma doi tuong', 'ma khach hang', 'ma nha cung cap'], example: '', note: 'Để trống khi thêm mới: phần mềm tự cấp mã nối dãy của nhóm. Mã đã có → cập nhật.' },
-      { key: 'name', header: `Tên ${ab}`, required: 'moi', aliases: ['ten', 'ten kh', 'ten ncc', 'ten doi tuong', 'ten khach hang', 'ten nha cung cap', 'ten cong ty'], example: kh ? 'Công ty TNHH Mẫu' : 'Công ty CP Sữa Mẫu' },
-      { key: 'kind', header: 'Kiểu', aliases: ['loai doi tuong', 'thuoc kieu'], defaultValue: kh ? 'Khách hàng' : 'Nhà cung cấp', note: 'Khách hàng / Nhà cung cấp / Nhân viên / Nội bộ / Khác.' },
-      { key: 'groupCode', header: `Nhóm ${ab}`, aliases: ['nhom', 'nhom kh', 'nhom ncc', 'nhom kh/ncc', 'ma nhom', 'ma nhom khach hang', 'ma nhom nha cung cap', 'ma nhom kh, ncc'], note: 'Mã hoặc đúng tên nhóm trong danh mục nhóm đối tượng.' },
+      { key: 'name', header: `Tên ${ab}`, required: 'moi', aliases: ['ten', 'ten kh', 'ten ncc', 'ten doi tuong', 'ten khach hang', 'ten nha cung cap'], example: kh ? 'Nguyễn Văn A' : 'Công ty CP Sữa Mẫu' },
+      // [2026-11-20 kiennt] NT-DM-016 (bảng theo dõi dòng 42) — bỏ cột Kiểu khỏi tệp mẫu: màn đang nhập quyết định kiểu của dòng mới (đóng góp)
+      // [2026-11-20 kiennt] NT-DM-016 — đủ các ô của form; cột liên kết (Nhóm, Người quản lý, Chi nhánh QL, Đơn vị cha) tra theo TÊN (nhận cả mã) — không khớp thì không nhập dòng (đóng góp)
+      { key: 'groupCode', header: `Nhóm ${ab}`, required: 'moi', aliases: ['nhom', 'nhom kh', 'nhom ncc', 'nhom kh/ncc', 'thuoc nhom', 'ma nhom', 'ma nhom khach hang', 'ma nhom nha cung cap', 'ma nhom kh, ncc'], note: 'Liên kết: TÊN nhóm (hoặc mã) trong danh mục nhóm đối tượng. Không có / trùng tên → dòng không nhập. Dòng mới bắt buộc (như form).' },
       { key: 'taxCode', header: 'Mã số thuế', aliases: ['mst', 'ma so thue/cccd', 'ma so thue cccd'], example: '0100000000', note: '10 số, 10 số-3 số hoặc 12 số CCCD; không trùng đối tượng khác.' },
-      { key: 'address', header: 'Địa chỉ', aliases: ['dia chi nr', 'dia chi cty', 'dia chi cong ty'], example: 'Hà Nội' },
-      { key: 'phone', header: 'Điện thoại', aliases: ['dien thoai co dinh', 'so dien thoai', 'sdt', 'telephone'] },
-      { key: 'mobile', header: 'Di động', aliases: ['dtdd', 'mobile', 'dien thoai di dong'] },
+      { key: 'address', header: kh ? 'Địa chỉ NR' : 'Địa chỉ', aliases: ['dia chi', 'dia chi nr', 'dia chi nha rieng'], example: 'Hà Nội' },
+      { key: 'phone', header: 'Điện thoại', aliases: ['dien thoai co dinh', 'so dien thoai', 'sdt', 'telephone', ...(kh ? ['di dong', 'dtdd', 'mobile'] : [])], note: kh ? 'Ghi cả điện thoại và di động như form khách hàng.' : undefined },
+      ...(kh ? [] : [{ key: 'mobile', header: 'Di động người liên hệ', aliases: ['di dong', 'dtdd', 'mobile', 'dien thoai di dong'] }]),
       { key: 'email', header: 'Email', aliases: ['thu dien tu'] },
-      { key: 'contactName', header: 'Người liên hệ', aliases: ['nguoi dai dien', 'nguoi lien he / dai dien', 'ho va ten nguoi lien he', 'ten nguoi lien he'] },
-      { key: 'bankAccountNo', header: 'Số tài khoản ngân hàng', aliases: ['so tai khoan', 'tai khoan ngan hang', 'stk', 'so tai khoan ngan hang'] },
-      { key: 'bankName', header: 'Tên ngân hàng', aliases: ['ngan hang', 'mo tai ngan hang'] },
-      { key: 'paymentTermDays', header: 'Số ngày được nợ', aliases: ['han thanh toan', 'so ngay no', 'so ngay duoc no'], note: 'Số nguyên 0 – 3650.' },
-      { key: 'creditLimit', header: 'Hạn mức nợ', aliases: ['so no toi da', 'han muc', 'han muc no'] },
+      ...(kh ? [
+        { key: 'birthDate', header: 'Ngày sinh', aliases: ['ngay thang nam sinh'], note: 'dd/mm/yyyy.' },
+        { key: 'gender', header: 'Giới tính', aliases: ['gioi'], note: 'Nam / Nữ.' },
+        { key: 'customerType', header: 'Loại khách hàng', aliases: ['loai kh'], note: 'KH cá nhân / KH doanh nghiệp.' },
+        { key: 'isProspect', header: 'Khách hàng tiềm năng', aliases: ['tiem nang', 'kh tiem nang'], note: 'Có / Không.' },
+      ] : []),
+      { key: 'companyName', header: 'Tên công ty', aliases: ['ten cty', 'ten cong ty tren hoa don'] },
+      { key: 'shortName', header: 'Tên viết tắt', aliases: ['viet tat'] },
+      { key: 'alias', header: 'Alias', aliases: ['ten khac', 'biet danh'] },
+      { key: 'companyAddress', header: 'Địa chỉ Cty', aliases: ['dia chi cty', 'dia chi cong ty'] },
+      { key: 'fax', header: 'Fax' },
+      { key: 'website', header: 'Website', aliases: ['trang web'] },
+      { key: 'contactName', header: kh ? 'Người đại diện' : 'Người liên hệ', aliases: ['nguoi dai dien', 'nguoi lien he', 'nguoi lien he / dai dien', 'ho va ten nguoi lien he', 'ten nguoi lien he'] },
+      { key: 'position', header: 'Chức vụ', aliases: ['chuc danh'] },
+      { key: 'bankAccountNo', header: 'Tài khoản NH', aliases: ['so tai khoan', 'tai khoan ngan hang', 'stk', 'so tai khoan ngan hang'] },
+      { key: 'bankAccountHolder', header: 'Chủ TK', aliases: ['chu tai khoan'] },
+      { key: 'bankName', header: 'Mở tại', aliases: ['ngan hang', 'mo tai ngan hang', 'ten ngan hang'] },
+      { key: 'creditLimit', header: 'Giới hạn nợ', aliases: ['so no toi da', 'han muc', 'han muc no', 'gioi han no vnd'], note: 'Số không âm.' },
+      { key: 'paymentTermDays', header: 'Giới hạn ngày nợ', aliases: ['han thanh toan', 'so ngay no', 'so ngay duoc no'], note: 'Số nguyên 0 – 3650.' },
+      { key: 'maxOpenDocs', header: 'Giới hạn số phiếu nợ', aliases: ['so phieu no toi da'], note: 'Số nguyên không âm.' },
+      { key: 'managerCode', header: 'Người QL', aliases: ['nguoi quan ly', 'nhan vien quan ly'], note: 'Liên kết: TÊN nhân viên (hoặc mã). Không có / trùng tên → dòng không nhập.' },
+      { key: 'branchCode', header: 'Chi nhánh QL', aliases: ['chi nhanh quan ly', 'chi nhanh'], note: 'Liên kết: TÊN chi nhánh (hoặc mã). Không có → dòng không nhập.' },
+      { key: 'parentCode', header: 'Thuộc đơn vị cha', aliases: ['ma don vi cha', 'don vi cha', 'ma cha', 'ma don vi me'], note: 'Liên kết: mã hoặc TÊN đối tượng cha (có sẵn hoặc ở dòng trên). Thêm mới để trống mã thì mã tự cấp mã cha-001…' },
       { key: 'isActive', header: 'Theo dõi', aliases: ['trang thai', 'dang giao dich'], note: 'Có / Không.' },
       { key: 'note', header: 'Ghi chú', aliases: ['dien giai'] },
-      // [2026-11-13 Nguyễn Văn Thủy] đơn vị mẹ của chi nhánh (cha – con) (đóng góp)
-      { key: 'parentCode', header: 'Mã đơn vị cha', aliases: ['don vi cha', 'ma cha', 'thuoc don vi cha', 'ma don vi me'], note: 'Đơn vị mẹ của chi nhánh. Thêm mới để trống mã thì mã tự cấp mã cha-001, -002…; đơn vị cha mới thì đặt dòng của nó lên trên.' },
     ],
     run: async (rows, { dryRun, mode }) => {
-      const o = await api.post<{ created: number; updated: number; failed: number; rows: (Omit<NhapDong, 'key'> & { code: string })[] }>('/api/v1/partners/import', { dryRun, mode, rows: rowsOut(rows) });
+      const o = await api.post<{ created: number; updated: number; failed: number; rows: (Omit<NhapDong, 'key'> & { code: string })[] }>('/api/v1/partners/import', { dryRun, mode, kind, rows: rowsOut(rows) });
       return { ...o, rows: o.rows.map((r) => ({ ...r, key: r.code })) };
     },
   };

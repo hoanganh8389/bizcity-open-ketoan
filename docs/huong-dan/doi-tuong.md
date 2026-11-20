@@ -52,7 +52,7 @@ Ngoài màn **Đối tượng (DM03)** gồm mọi kiểu, có hai màn tách ri
 
 Thanh nút: Thêm (Ctrl+N) · Sửa (Ctrl+E, hoặc bấm đúp dòng) · Xoá (Ctrl+Delete) · Nạp (F5) · Xuất · ô **Tìm nhanh** (mã, tên, alias, mã số thuế, điện thoại, tên công ty, tìm trên toàn danh mục) · lọc nhóm, loại, trạng thái.
 
-Lưới theo thứ tự cột của danh mục khách hàng: Mã KH, Tên KH, Địa chỉ NR, Điện thoại, Di động, Nhóm KH, Người đại diện, Địa chỉ cty, MST, Fax, Email, Website, Chức vụ, Ngày tạo KH, Theo dõi, Người QL, Chi nhánh QL, Ghi chú, Tên viết tắt, Tên công ty, Tài khoản NH, Chủ TK, Mở tại, Giới hạn nợ, Giới hạn ngày nợ, Giới hạn số phiếu nợ, Người tạo. Danh sách hiện toàn bộ đối tượng (không phân trang).
+Lưới theo thứ tự cột của danh mục khách hàng: Mã KH, Tên KH, Địa chỉ NR, Điện thoại (khách hàng: một cột — form ghi cùng số vào điện thoại / di động; nhà cung cấp có thêm cột Di động người liên hệ), Nhóm KH, Người đại diện, Địa chỉ cty, MST, Fax, Email, Website, Chức vụ, Ngày tạo KH, Theo dõi, Người QL, Chi nhánh QL, Ghi chú, Tên viết tắt, Tên công ty, Tài khoản NH, Chủ TK, Mở tại, Giới hạn nợ, Giới hạn ngày nợ, Giới hạn số phiếu nợ, Người tạo. Danh sách hiện toàn bộ đối tượng (không phân trang).
 
 Form **Khách hàng / Nhà cung cấp**:
 - **Thuộc kiểu** (đầu form): khách hàng, nhà cung cấp, nhân viên, nội bộ, khác. Nhóm chỉ hiện các nhóm khai cho kiểu đó.
@@ -63,6 +63,18 @@ Form **Khách hàng / Nhà cung cấp**:
 - **Mua bán hàng**: công nợ (giới hạn nợ, giới hạn ngày nợ, giới hạn số phiếu nợ) và tài khoản ngân hàng (số TK, chủ TK, mở tại).
 - **Nội bộ quản lý**: người quản lý (danh mục Nhân viên), chi nhánh quản lý, người tạo, ngày tạo.
 - **Theo dõi** ở chân form: bỏ tích để khoá đối tượng.
+
+### Nhập Excel khách hàng / nhà cung cấp
+<!-- [2026-11-20 kiennt] NT-DM-016 — nhập Excel đủ cột của form, cột liên kết tra theo tên (đóng góp) -->
+
+Màn **Nhập Excel** (loại Khách hàng / Nhà cung cấp) nhận gần đủ các ô của form: mã, tên, nhóm, MST, địa chỉ, **Điện thoại**, email, ngày sinh, giới tính (Nam / Nữ), loại khách hàng (KH cá nhân / KH doanh nghiệp), khách hàng tiềm năng, tên công ty, tên viết tắt, alias, địa chỉ Cty, fax, website, người đại diện, chức vụ, tài khoản NH, chủ TK, mở tại, giới hạn nợ / ngày nợ / số phiếu nợ, người QL, chi nhánh QL, đơn vị cha, theo dõi, ghi chú. Tên cột trùng tên cột của lưới, nên tệp Xuất (bật đủ cột) nhập lại được.
+
+- Bắt buộc như form: dòng mới phải có **Tên**; **khách hàng mới** phải có **Nhóm** (đơn vị con lấy nhóm của đơn vị cha). Các cột khác không bắt buộc; dòng cập nhật để trống thì giữ nguyên.
+- **Cột liên kết** — Nhóm, Người QL (nhân viên), Chi nhánh QL, Thuộc đơn vị cha: ghi **tên** (hoặc mã). Tên không có trong danh mục, hoặc trùng nhiều mục → **dòng báo lỗi, không nhập**; trùng tên thì ghi mã.
+- Khách hàng: cột Điện thoại ghi cả điện thoại và di động như form.
+<!-- [2026-11-20 kiennt] NT-DM-016 — bỏ cột Kiểu; cha / con cùng tệp (đóng góp) -->
+- Tệp mẫu không có cột **Kiểu**: dòng mới nhận kiểu theo màn đang nhập (DM12 → Khách hàng, Nhà cung cấp → Nhà cung cấp); dòng cập nhật giữ kiểu cũ.
+- **Đơn vị mẹ và chi nhánh trong cùng một tệp**: đặt dòng đơn vị mẹ lên trên (mã để trống được), ở dòng chi nhánh ghi **tên** đơn vị mẹ vào cột Thuộc đơn vị cha và để trống mã → khi ghi, chi nhánh nhận mã `mã mẹ-001`, `-002`… Dòng mẹ lỗi thì các dòng con của nó cũng không nhập.
 
 ### Mã tự động khi thêm mới
 
