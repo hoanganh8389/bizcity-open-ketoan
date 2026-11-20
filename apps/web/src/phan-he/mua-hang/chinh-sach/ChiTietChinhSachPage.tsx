@@ -34,7 +34,7 @@ export function detailsOf(p: Policy): Detail[] {
   switch (p.kind as PolicyKind) {
     case 'item_discount': return ((r.items ?? []) as ItemDiscount[]).map((i) => ({
       sku: i.sku, unit: i.unit || 'mọi ĐVT', cond: i.minQty ? `mua từ ${vn(i.minQty)}` : 'mọi số lượng',
-      benefit: i.pct ? `CK ${Number(i.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(i.amount)}đ / ${i.unit || 'ĐVT'}`, value: i.pct ?? i.amount, valueUnit: i.pct ? '%' : 'đ / ĐVT', note: i.note,
+      benefit: `${i.pct ? `CK ${Number(i.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(i.amount)}đ / ${i.unit || 'ĐVT'}`}${i.apply === 'exclusive' || r.apply === 'exclusive' ? `, áp riêng${i.priority != null ? ` (ưu tiên ${i.priority})` : ''}` : ''}`, value: i.pct ?? i.amount, valueUnit: i.pct ? '%' : 'đ / ĐVT', note: i.note,
     }));
     case 'qty_tier': return ((r.tiers ?? []) as R[]).filter((t) => t.pct).map((t) => ({ sku: p.scope.sku, cond: `mua từ ${vn(t.from)}`, benefit: `CK ${Number(t.pct).toLocaleString('vi-VN')}% cả dòng`, value: t.pct, valueUnit: '%' }));
     case 'trade_discount': { const min = Number(r.minOrder) ? `đơn / phiếu nhập có tổng từ ${vn(r.minOrder)}đ` : ''; return [p.scope.sku

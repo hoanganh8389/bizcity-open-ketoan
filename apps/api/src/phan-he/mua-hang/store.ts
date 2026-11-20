@@ -371,7 +371,9 @@ export const RULE_SCHEMAS: Record<PolicyKind, z.ZodTypeAny> = {
   trade_discount: z.union([z.object({ pct }), z.object({ amount: num })]),
   // Bảng nhiều mã: mỗi dòng một mã (một mã nhiều dòng khi khác ĐVT / SL tối thiểu); % hoặc giảm tiền trên 1 ĐVT.
   // Ô trống gửi lên là null / 0 → coi như không ghi (chỉ một trong hai: % hoặc giảm tiền).
-  item_discount: z.object({ items: z.array(z.object({ sku: z.string().trim().min(1).max(64), pct: pct.nullish().transform((x) => x || undefined), amount: num.nullish().transform((x) => x || undefined), unit: z.string().trim().max(32).nullish().transform((x) => x || undefined), minQty: num.nullish().transform((x) => x || undefined), note: z.string().max(200).nullish().transform((x) => x || undefined) })
+  item_discount: z.object({ items: z.array(z.object({ sku: z.string().trim().min(1).max(64), pct: pct.nullish().transform((x) => x || undefined), amount: num.nullish().transform((x) => x || undefined), unit: z.string().trim().max(32).nullish().transform((x) => x || undefined), minQty: num.nullish().transform((x) => x || undefined), note: z.string().max(200).nullish().transform((x) => x || undefined),
+    // [2026-11-20 khanhtd] TRA-CUU — áp riêng + ưu tiên theo từng dòng (trống = theo chính sách) (đóng góp)
+    apply: z.enum(['exclusive']).nullish(), priority: z.number().int().min(-999).max(999).nullish() })
     .superRefine((i, ctx) => { if (Boolean(i.pct) === Boolean(i.amount)) ctx.addIssue({ code: 'custom', message: i.pct ? `mã ${i.sku} đang ghi cả ${i.pct}% và giảm ${i.amount!.toLocaleString('vi-VN')}đ — chỉ giữ một trong hai` : `mã ${i.sku} chưa ghi % chiết khấu hoặc số tiền giảm` }); })).min(1).max(10000)
     .superRefine((items, ctx) => { const seen = new Map<string, number>(); items.forEach((i, n) => { const k = `${i.sku}|${(i.unit ?? '').toLowerCase()}|${i.minQty ?? 0}`; if (seen.has(k)) ctx.addIssue({ code: 'custom', path: [n], message: `dòng ${n + 1} trùng dòng ${seen.get(k)! + 1} (${i.sku})` }); else seen.set(k, n); }); }) }),
   qty_tier: z.object({ tiers: z.array(z.object({ from: num, pct })).min(1) }),
