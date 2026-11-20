@@ -5,10 +5,10 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 9 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
-| Chưa ai nhận | 193 |
+| Chưa ai nhận | 192 |
 | Chờ đủ tín hiệu | 70 |
 | Hoãn | 3 |
 | Xong | 321 |
@@ -25,9 +25,9 @@
 | chung-tu | 67 | 5 | 0 | 26 | 98 |
 | tong-hop | 31 | 8 | 1 | 28 | 68 |
 | thue | 14 | 2 | 1 | 11 | 28 |
-| he-thong | 150 | 23 | 2 | 58 | 233 |
+| he-thong | 150 | 23 | 3 | 57 | 233 |
 
-## Đang làm (8)
+## Đang làm (9)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -39,6 +39,7 @@
 | [S031-17](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L26) | PHASE-031 | mua-hang · ban-hang | Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc | P1 | Võ Hoàng (phiên Claude, PHASE-031) · `feat/phase-031-s17-s23` |
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | mua-hang · ban-hang | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | Võ Hoàng (phiên Claude, PHASE-031) · `feat/phase-031-s17-s23` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | kho | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
+| [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh) · `feat/s036-8b-lay-lai-ban-truoc` |
 
 ## Chờ merge (0)
 
@@ -79,7 +80,7 @@
 | [S037-16](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L25) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phân bổ nguồn (receiptorigin hoặc gộp valuationlayersources), thứ tự lấy nguồn khi xuất, ánh xạ dòng nguồn bề… | P0 | — |
 | [S037-34](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L44) | PHASE-037 | thue | Hướng dẫn (docs/huong-dan/), cập nhật docs/nghiep-vu/11, docs/core/03; đưa văn bản về khuyến mại vào danh mục… | P1 | — |
 
-## Chưa ai nhận (193)
+## Chưa ai nhận (192)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -243,7 +244,6 @@
 | [S035-6](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L15) | PHASE-035 | he-thong | B4 — SC-MODS-1 (chặn: phủ 100 % phan-he/ và mã màn menu.ts), SC-MODS-2 (việc có modules[]; baseline phase ≤ 0… | P0 | — |
 | [S035-7](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L16) | PHASE-035 | he-thong | B6 — docs/huong-dan/modules-muc-dat.md; nếp rà hằng tuần (00 §5) vào AGENTS.md + RULE-FLOW; in HT11 cùng HT10 | P1 | — |
 | [S035-8](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L17) | PHASE-035 | he-thong | B5 — thẻ Việc <phân hệ> hôm nay (kho, mua hàng, bán hàng, quỹ, công nợ, thuế, tài sản, danh mục): component c… | P1 | — |
-| [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | — |
 | [S036-10](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L20) | PHASE-036 | he-thong | B7 — nghiệm thu T036-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
 | [S037-3](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L12) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Rà mã cũ thành bảng tác động: excludecost, giftqty, "lấy quà giá 0 trước", lineType, mã nhóm 8, sale.promo.co… | P0 | — |
 | [S037-4](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L13) | PHASE-037 | danh-muc | Khuôn bizcitycombo@1 (zod, kiểu, JSON Schema), ca mẫu hợp lệ / không hợp lệ | P0 | — |

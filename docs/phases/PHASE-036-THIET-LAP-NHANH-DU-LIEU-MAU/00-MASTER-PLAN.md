@@ -464,3 +464,24 @@ Như vậy mỗi bản ghi đi qua quyền, zod, cửa nạp, luật định kho
 - `cong-ty-mau.test.ts` thêm: tắt → 403; bật → 202, đăng nhập Công ty Mẫu bằng email / mật khẩu của người bấm; gọi lần hai → `SAMPLE_EXISTS`; hai lệnh cùng lúc → một đơn vị.
 - Chạy thật `xoa-cong-ty-mau.sh` trên stack dev (đơn vị mẫu), ghi kết quả ở PR.
 - Phá thử: bỏ kiểm `is_sample` trong SQL; bỏ kiểm biến bật → test đỏ.
+
+
+## 16. Chữ chốt S036-8b — *Lấy lại bản trước* từ bản chụp danh mục (2026-11-20) <!-- [2026-11-20 08:04 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — chữ chốt S036-8b: core.default-data.backup-restore — cùng khuôn an toàn với quay về gốc (mật khẩu, xem trước có mã, tự sao lưu, so với xem trước), không xoá dòng nào -->
+
+**Hiện trạng:** mỗi lần *Quay về dữ liệu gốc* chụp các bảng danh mục chạm tới trước khi ghi (nay ở `catalog_trash`, mục `default_data_backup`; `GET /api/v1/default-data/backups[/:id]`). Chưa có đường đưa danh mục về đúng một bản chụp (T036-6).
+
+**Action `core.default-data.backup-restore`** — `POST /api/v1/default-data/backups/:id/restore` (quyền `settings:write`, `dryRun`), **cùng khuôn** `runRestore` của 8a:
+
+- Chạy thật cần **mật khẩu quay về dữ liệu gốc** (cùng hàm kiểm của TI08); xem trước không cần.
+- `?dryRun=1` → số **thêm lại / sửa về / ngừng dùng / giữ nguyên** theo từng bảng + cảnh báo, trả `previewToken` (phạm vi `backup:<id>`, 15 phút). Chạy thật cần `previewToken`; kết quả khác lúc xem trước → huỷ cả giao dịch.
+- Trước khi ghi **chụp lại** các bảng đó (bản chụp mới) → lấy lại cũng lấy lại được.
+- Áp bản chụp, chỉ các bảng có trong bản chụp và trong danh sách đóng `DATASET_TABLES`:
+  - dòng có trong bản chụp, nay **không còn** (theo `id`) → **thêm lại đúng `id`**;
+  - dòng có trong bản chụp, nay **khác** (bỏ qua `created_at` / `updated_at`) → **sửa về** như bản chụp;
+  - dòng **sinh sau** bản chụp → **ngừng dùng** (`is_active = false`) nếu bảng có cột đó, không thì giữ nguyên + cảnh báo. **Không xoá dòng nào** — dòng sinh sau có thể đã vào chứng từ;
+  - kiểu cột lấy theo bảng (`jsonb_populate_record`), cột sinh tự động không ghi; `tenant_id` của bản chụp phải là đơn vị đang dùng;
+  - mỗi dòng một savepoint: trùng mã / vướng ràng buộc → bỏ qua dòng đó + cảnh báo, không hỏng cả lần.
+- TI08: danh sách bản chụp có nút **Lấy lại bản này** → hộp thoại xem trước (bảng số theo bảng, cảnh báo) → mật khẩu → *Lấy lại* → báo mã bản chụp mới. Tệp `DefaultDataPages.tsx` (của Nguyễn Văn Thủy) chỉ thêm nút và hộp thoại.
+- `org-units/restore-defaults` (sơ đồ tổ chức) theo cùng khuôn: **để sau** (việc riêng).
+
+**Kiểm (`default-data-an-toan.test.ts`, T036-6):** quay về gốc → sửa danh mục (đổi tên chi nhánh, thêm đối tượng, ngừng dùng một mặt hàng) → lấy lại bản chụp: tên cũ trở lại, đối tượng thêm sau thành ngừng dùng, mặt hàng dùng lại, không mất dòng nào; thiếu mật khẩu / không xem trước → từ chối; bản chụp của đơn vị khác → 404; lấy lại tạo bản chụp mới. Phá thử: bỏ kiểm `tenant_id`; xoá thay vì ngừng dùng → test đỏ.
