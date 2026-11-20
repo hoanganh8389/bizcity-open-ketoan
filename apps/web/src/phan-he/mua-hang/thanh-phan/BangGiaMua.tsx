@@ -217,7 +217,7 @@ Trong khoảng chồng, đơn / phiếu lấy dòng có "Hiệu lực từ" mu�
               <tr key={r.key} className={r.dirty ? 'mh-row-pick' : r.fromHistory || !r.isActive ? 'muted' : ''}>
                 <td>{i + 1}</td>
                 {byPartner ? <><td className="mono">{r.sku}</td><td style={{ minWidth: 200 }}>{cat.data?.find((c) => c.sku === r.sku)?.name ?? ''}</td></>
-                  : <td style={{ minWidth: 220 }}>{r.id ? (r.partnerCode ? <NccInfo code={r.partnerCode} /> : <b>Giá chung mọi NCC</b>) : <PartnerPicker value={r.partnerCode ?? ''} onChange={(c) => set(r.key, { partnerCode: c || null })} placeholder="Chọn nhà cung cấp" />}</td>}
+                  : <td style={{ minWidth: 220 }}>{r.id ? (r.partnerCode ? <NccInfo code={r.partnerCode} /> : <b>Giá chung mọi NCC</b>) : <PartnerPicker kind="supplier" value={r.partnerCode ?? ''} onChange={(c) => set(r.key, { partnerCode: c || null })} placeholder="Chọn nhà cung cấp" />}</td>}
                 <td>{r.fromHistory ? r.unit : unitSel(r)}</td>
                 
                 <td><input className="input mono" style={{ width: 110 }} value={r.nccSku ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { nccSku: e.target.value })} /></td>

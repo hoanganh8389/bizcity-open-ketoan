@@ -148,7 +148,7 @@ export function NhapHoaDon({ mode, partnerCode = '', lockPartner, onClose, onDon
       <div className="full">
       <div className="row" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13 }}>Nhà cung cấp</span>
-        <div style={{ width: 280 }}><PartnerPicker value={partner} onChange={setPartner} disabled={lockPartner} /></div>
+        <div style={{ width: 280 }}><PartnerPicker kind="supplier" value={partner} onChange={setPartner} disabled={lockPartner} /></div>
         <button className="btn" disabled={busy || !partner} onClick={() => input.current?.click()}>{mode === 'excel' ? <FileUp size={14} /> : <ScanLine size={14} />} {busy ? 'Đang đọc…' : mode === 'excel' ? 'Chọn tệp Excel…' : 'Chọn ảnh / PDF…'}</button>
         <input ref={input} type="file" hidden accept={mode === 'excel' ? '.xlsx,.xls,.csv' : 'image/*,application/pdf'} onChange={(e) => e.target.files?.[0] && void pick(e.target.files[0])} />
         {file && <span className="muted" style={{ fontSize: 12 }}>{file}</span>}

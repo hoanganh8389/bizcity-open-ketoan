@@ -101,7 +101,7 @@ export function NhapExcel({ data, partnerCode = '', onClose, onDone }: { data: M
       <div className="full mh-head" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
         <div className="field"><label>Tạo thành</label><select className="select input" value={kind} onChange={(e) => setKind(e.target.value as 'order')}><option value="order">Đơn đặt hàng</option><option value="receipt">Phiếu nhập kho (gom theo số HĐ)</option></select></div>
         <div className="field"><label>Đơn giá trong tệp là</label><select className="select input" value={incVat ? '1' : '0'} onChange={(e) => setIncVat(e.target.value === '1')}><option value="0">Giá chưa thuế</option><option value="1">Giá đã gồm thuế</option></select></div>
-        <div className="field"><label>NCC (khi tệp không có cột Mã NCC)</label><PartnerPicker value={partner} onChange={setPartner} activeOnly /></div>
+        <div className="field"><label>NCC (khi tệp không có cột Mã NCC)</label><PartnerPicker kind="supplier" value={partner} onChange={setPartner} activeOnly /></div>
         <div className="field"><label>Chi nhánh (khi tệp không có cột Chi nhánh)</label><BranchPicker value={branch} onChange={setBranch} activeOnly /></div>
       </div>
       <div className="full" style={{ marginTop: 8 }}><ExcelGuide columns={COLS} file="mau-nhap-don-dat-phieu-nhap.xlsx" defaultOpen={!res} /></div>
