@@ -42,11 +42,11 @@ Hướng này khớp `docs/nghiep-vu/12-phuong-an-bo-chu-khoi-ma-hang.md` (mã c
 ## 4. Phạm vi
 
 Tệp:
-- `db/migrations/0170_ma_bien_the_duoi_so.sql` — thay hàm `bizcity_parent_from_sku` (không đổi trigger, không tính lại dữ liệu cũ).
+- `db/migrations/0170_ma_bien_the_duoi_so.sql` (đề xuất — tạo khi code) — thay hàm `bizcity_parent_from_sku` (không đổi trigger, không tính lại dữ liệu cũ).
 - `apps/api/src/modules/catalog/sku-rule.ts` — `parentFromSku` trùng hàm SQL.
 - `apps/api/src/modules/catalog/catalog.service.ts`, `apps/api/src/modules/catalog/catalog-import.ts` — chỉ câu báo ("2 ký tự" thay "2 chữ").
 - `apps/web/src/features/catalog/ProductFullForm.tsx` — ô *chữ cuối* nhận số, `parentFromSku` phía form, gợi ý.
-- `apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts`; `docs/huong-dan/mat-hang.md`.
+- `apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts` (đề xuất — tạo khi code); `docs/huong-dan/mat-hang.md`.
 
 Chồng phạm vi với **PHASE-026 · mã số cha – con** (Nguyễn Văn Thủy): `ProductFullForm.tsx`, `catalog.service.ts`, `catalog-import.ts` — chỉ sửa phần nêu trên; đã báo người giữ.
 
@@ -68,7 +68,7 @@ Chồng phạm vi với **PHASE-026 · mã số cha – con** (Nguyễn Văn Th�
 |---|---|
 | Ngày chạy | |
 | Bản code (commit) | |
-| Test | `apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts`; 4 lệnh kiểm |
+| Test | `apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts` (đề xuất); 4 lệnh kiểm |
 
 ## 7. Biên bản nghiệm thu
 | Ngày | Bộ phận | Kết quả | Ghi chú |
