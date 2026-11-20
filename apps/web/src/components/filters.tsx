@@ -42,12 +42,10 @@ export function DateRange({ from, to, onChange, remember = true }: { from: strin
   );
 }
 
-export interface BranchOption { code: string; name: string; isActive: boolean; statsOnly?: boolean }
+export interface BranchOption { code: string; name: string; isActive: boolean }
 
-// [2026-11-20 Nguyễn Văn Thủy] chi nhánh "Chỉ để thống kê" (DM16, 0171) không hiện ở mọi ô tìm / chọn chi nhánh (đóng góp)
-const boThongKe = (rows: BranchOption[]) => rows.filter((b) => !b.statsOnly);
 export function useBranches() {
-  return useQuery({ queryKey: ['branches'], queryFn: () => api.get<BranchOption[]>('/api/v1/branches'), staleTime: 60_000, select: boThongKe });
+  return useQuery({ queryKey: ['branches'], queryFn: () => api.get<BranchOption[]>('/api/v1/branches'), staleTime: 60_000 });
 }
 
 /**

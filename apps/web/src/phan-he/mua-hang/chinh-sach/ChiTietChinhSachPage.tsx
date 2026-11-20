@@ -122,7 +122,7 @@ export function ChiTietChinhSachPage() {
         subtitle="Mỗi chính sách trải ra từng dòng ưu đãi: từng mã hàng, từng bậc, từng chi nhánh — lọc, xuất Excel; bấm đúp một dòng để mở chính sách" />
       <div className="card">
         <div className="row" style={{ gap: 8, padding: '8px 12px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ width: 260 }}><PartnerPicker value={partner} onChange={setPartner} placeholder="Lọc theo nhà cung cấp" /></div>
+          <div style={{ width: 260 }}><PartnerPicker kind="supplier" value={partner} onChange={setPartner} placeholder="Lọc theo nhà cung cấp" /></div>
           <select className="select input" style={{ width: 230 }} value={kind} onChange={(e) => setKind(e.target.value as PolicyKind | '')}><option value="">Mọi loại chính sách</option>{ALL_KINDS.map((k) => <option key={k} value={k}>{POLICY_LABEL[k]}</option>)}</select>
           <select className="select input" style={{ width: 170 }} value={state} onChange={(e) => setState(e.target.value)}><option value="">Mọi trạng thái</option><option>Đang áp</option><option>Hết hiệu lực</option><option>Chưa tới hiệu lực</option><option>Tắt</option></select>
           <span className="muted" style={{ fontSize: 12 }}>{rows.length.toLocaleString('vi-VN')} dòng ưu đãi của {policies} chính sách · bấm đúp một dòng để mở chính sách · khai báo / sửa ở <Link to="/mua-hang/chinh-sach">Chính sách mua hàng (MH04)</Link></span>

@@ -77,7 +77,7 @@ export function DoiChieuDonPage() {
         <div className="filters">
           <span style={{ fontSize: 13 }}>Ngày đơn từ</span><input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <span style={{ fontSize: 13 }}>đến</span><input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          <div style={{ width: 240 }}><PartnerPicker value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>
+          <div style={{ width: 240 }}><PartnerPicker kind="supplier" value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>
           <label className="row" style={{ gap: 4, alignItems: 'center', fontSize: 13 }}><input type="checkbox" checked={onlyDiff} onChange={(e) => setOnlyDiff(e.target.checked)} /> Chỉ dòng lệch / chưa xong</label>
           <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>
         </div>

@@ -139,7 +139,7 @@ function HopGia({ v: init, units, rate, onClose, onDone }: { v: Form; units: { u
       </>}>
       {err && <div className="alert alert-bad full">{err}</div>}
       <Field label="Nhà cung cấp (*)" full>
-        {isNew && init.partnerCode === null ? <PartnerPicker value={v.partnerCode ?? ''} onChange={(c) => set({ partnerCode: c || null })} placeholder="Gõ mã, tên hoặc MST để tìm" addKind="supplier" /> : <input className="input" readOnly value={v.partnerCode ?? 'Giá chung'} />}
+        {isNew && init.partnerCode === null ? <PartnerPicker kind="supplier" value={v.partnerCode ?? ''} onChange={(c) => set({ partnerCode: c || null })} placeholder="Gõ mã, tên hoặc MST để tìm" addKind="supplier" /> : <input className="input" readOnly value={v.partnerCode ?? 'Giá chung'} />}
       </Field>
       <Field label="ĐVT (*)">
         <select className="select input" value={v.unit} onChange={(e) => set({ unit: e.target.value })}>
