@@ -11,6 +11,13 @@
 import { useEffect } from 'react';
 import { POLICY_LABEL, type PromoRow, type PromoStatus } from '@bizcity/mua-hang-domain';
 import { Modal } from '@/components/ui';
+import { SAP_HET_HAN_NGAY, type HieuLuc } from './hieuLuc';
+
+/** Ô Hiệu lực: trống với dòng không phải chương trình (CK ghi tay); sắp / đã hết hạn tô cam. */
+function HieuLucCell({ h }: { h?: HieuLuc }) {
+  if (!h) return <td />;
+  return <td title={h.title} style={{ whiteSpace: 'nowrap', ...(h.warn ? { color: 'var(--warn, #b45309)', fontWeight: 600 } : {}) }}>{h.warn ? '⚠ ' : ''}{h.text}</td>;
+}
 
 const GROUP: Record<PromoStatus, { title: string; cls: string; badge: string }> = {
   fix: { title: 'Cần xem', cls: 'km-fix', badge: 'badge-warn' },
@@ -70,7 +77,8 @@ export function KhuyenMaiPanel({ rows, onAction, onToggle, onOpen, readOnly }: {
   );
 }
 
-export function BangKhuyenMai({ rows, onAction, onToggle, onClose, readOnly }: { rows: PromoRow[]; onAction: (r: PromoRow) => void; onToggle?: Toggle; onClose: () => void; readOnly?: boolean }) {
+// [2026-11-20 khanhtd] MH-KM — cột Hiệu lực (từ → đến) của từng chương trình; còn dưới 7 ngày / đã hết hạn tô cam (đóng góp)
+export function BangKhuyenMai({ rows, onAction, onToggle, onClose, readOnly, hieuLuc }: { rows: PromoRow[]; onAction: (r: PromoRow) => void; onToggle?: Toggle; onClose: () => void; readOnly?: boolean; hieuLuc?: (r: PromoRow) => HieuLuc | undefined }) {
   // Hai cột số lượng quà chỉ có nghĩa với quà mua X tặng Y — chiết khấu không có.
   const hasGift = rows.some((r) => r.kind === 'promo_gift');
   useEffect(() => {
@@ -91,7 +99,7 @@ export function BangKhuyenMai({ rows, onAction, onToggle, onClose, readOnly }: {
       </div>
       <div className="full ckma-scroll" style={{ maxHeight: 460 }}>
         <table className="mh-mini km-table">
-          <thead><tr>{onToggle && <th style={{ width: 40 }} title="Bỏ tích = không áp chương trình này cho phiếu">Áp</th>}<th style={{ width: 110 }}>Trạng thái</th><th style={{ width: 130 }}>Loại</th><th style={{ width: 140 }}>Chương trình</th><th style={{ width: 110 }}>Mã hàng</th><th>Nội dung</th>
+          <thead><tr>{onToggle && <th style={{ width: 40 }} title="Bỏ tích = không áp chương trình này cho phiếu">Áp</th>}<th style={{ width: 110 }}>Trạng thái</th><th style={{ width: 130 }}>Loại</th><th style={{ width: 140 }}>Chương trình</th><th style={{ width: 110 }}>Mã hàng</th>{hieuLuc && <th style={{ width: 190 }} title={`Hiệu lực của chương trình (bản áp ở ngày phiếu; phiếu đã duyệt: bản lúc chốt). Tô cam: còn dưới ${SAP_HET_HAN_NGAY} ngày tính từ ngày phiếu hoặc đã hết hạn`}>Hiệu lực</th>}<th>Nội dung</th>
             {hasGift && <><th className="num" style={{ width: 110 }} title="Số quà chương trình cho được tặng theo số lượng mua">SL quà được tặng</th><th className="num" style={{ width: 110 }} title="Số quà đang ghi trên phiếu (NCC giao thực tế)">SL quà trên phiếu</th></>}
             {!readOnly && <th style={{ width: 130 }} />}</tr></thead>
           <tbody>
@@ -102,12 +110,13 @@ export function BangKhuyenMai({ rows, onAction, onToggle, onClose, readOnly }: {
                 <td>{KIND[r.kind] ?? r.kind}</td>
                 <td className="mono" title={r.name}>{r.policy === 'Trên phiếu' ? <span className="muted">ghi trên phiếu</span> : r.policy}</td>
                 <td className="mono">{r.sku ?? ''}</td>
+                {hieuLuc && <HieuLucCell h={hieuLuc(r)} />}
                 <td>{r.text}</td>
                 {hasGift && <><td className="num">{r.expected ?? ''}</td><td className={`num ${r.expected !== undefined && r.got !== r.expected ? 'mh-bad' : ''}`}>{r.got ?? ''}</td></>}
                 {!readOnly && <td>{r.action && <button type="button" className="btn btn-xs" onClick={() => onAction(r)}>{r.action.label}</button>}</td>}
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={8} className="muted">Chưa có chương trình nào khớp phiếu này.</td></tr>}
+            {!rows.length && <tr><td colSpan={9} className="muted">Chưa có chương trình nào khớp phiếu này.</td></tr>}
           </tbody>
         </table>
       </div>

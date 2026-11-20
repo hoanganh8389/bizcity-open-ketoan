@@ -58,6 +58,8 @@ Bấm chọn một bảng giá ở lưới trên, phần dưới hiện **mọi 
 
 <!-- [2026-11-18 03:40 PM kiennt] NT-DM-008 — nhập giá bằng trình nhập chung như các màn khác (đóng góp) -->
 1. Bấm dòng bảng giá → ở lưới giá bên dưới bấm **Xuất Excel** để lấy tệp (cột Mã hàng, Tên hàng, ĐVT, Quy đổi, …, **Đơn giá**), hoặc **Tải tệp mẫu** trong trình nhập.
+   <!-- [2026-11-20 kiennt] NT-DM-017 — tệp mẫu có sẵn mặt hàng (đóng góp) -->
+   **Tải tệp mẫu** đã liệt kê sẵn mọi mặt hàng / ĐVT của bảng giá đang chọn (Mã hàng, Tên hàng, ĐVT, Đơn giá); giá đang có điền sẵn, ô chưa có giá để trống — điền vào rồi nhập luôn.
 2. Sửa cột **Đơn giá** trên Excel (thêm giá cho ô còn trống, đổi giá ô đã có). Có thể xoá bớt dòng không đổi. Ô giá trống: giữ nguyên giá đang có (muốn bỏ giá: Sửa giá trên lưới, xoá ô).
 3. Bấm **Nhập Excel** ở lưới giá — trình nhập chung như các màn khác: **Chọn tệp → Ghép dữ liệu → Kiểm tra dữ liệu → Kết quả nhập**.
    Khoá dòng là *Mã hàng + ĐVT*. Kiểm tra báo: thêm mới = ô chưa có giá được thêm giá, cập nhật = ô đổi giá; dòng lỗi (mã hàng / ĐVT không có trong bảng giá, đơn giá không phải số, trùng dòng) bị bỏ qua, tải được tệp lỗi để sửa.
