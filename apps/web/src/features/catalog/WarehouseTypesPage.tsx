@@ -89,7 +89,9 @@ export function WarehouseTypesPage() {
               { key: 'purpose', header: 'Công dụng', width: 340 },
               // [2026-11-13 Nguyễn Văn Thủy] TK kho của loại = TK ghi sổ của mọi bút toán vào kho thuộc loại; TK tổng hợp thì báo đỏ, đang dùng TK ngầm định (đóng góp)
               { key: 'accountPrefix', header: 'Tài khoản hạch toán', type: 'code', width: 150, title: 'Tài khoản kho của loại: mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này (ưu tiên hơn TK kho của Tài khoản ngầm định). Trống = theo Tài khoản ngầm định',
-                render: (t) => !t.accountPrefix ? <span className="muted">ngầm định</span>
+                render: (t) => t.owned === false && !t.accountPrefix ? <span className="muted" title="Hàng nhận giữ hộ không thuộc sở hữu — không ghi sổ kho">không ghi sổ</span>
+                  : t.owned === false ? <span className="mono" style={{ color: 'var(--bad, #c62828)' }} title="Hàng nhận giữ hộ không ghi sổ kho — mở Sửa, bấm Bỏ TK">{t.accountPrefix}</span>
+                  : !t.accountPrefix ? <span className="muted">ngầm định</span>
                   : t.accountPosting ? <span className="mono" title={t.accountName ?? ''}>{t.accountPrefix}</span>
                   : <span className="mono" style={{ color: 'var(--bad, #c62828)' }} title={`${t.accountPrefix} là tài khoản tổng hợp, không ghi sổ được — bút toán đang dùng TK kho của Tài khoản ngầm định. Sửa loại kho, chọn tài khoản chi tiết.`}>{t.accountPrefix} ⚠</span> },
               { key: 'activeWarehouses', header: 'Số kho', type: 'number', width: 80, title: 'Số kho đang dùng thuộc loại này' },
@@ -113,6 +115,7 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
   // [2026-11-16 kiennt] TK kho phải là tài khoản cấp cuối (chi tiết, không có TK con) — cả khi gõ tay hoặc loại cũ đang để TK tổng hợp (đóng góp)
   const accounts = useAccountList().data ?? [];
   const tk = (v.accountPrefix ?? '').trim();
+  const giuHo = !value.isNew && value.owned === false;
   const tkLoi = !tk || !accounts.length ? ''
     : !accounts.some((a) => a.code === tk) ? `Không có tài khoản ${tk} trong hệ thống tài khoản`
     : !accounts.find((a) => a.code === tk)!.isPosting || accounts.some((a) => a.code !== tk && a.code.startsWith(tk)) ? `${tk} là tài khoản tổng hợp — chọn tài khoản chi tiết cấp cuối (vd ${accounts.find((a) => a.code !== tk && a.code.startsWith(tk) && a.isPosting)?.code ?? `${tk}1`})`
@@ -129,14 +132,23 @@ export function LoaiKhoForm({ value, onClose, onSaved }: { value: Partial<Wareho
   });
   return (
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew} title={value.isNew ? 'Thêm loại kho' : `Loại kho ${value.code} - ${value.name ?? ''}`} onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(tkLoi) || Boolean(maTrung)} title={maTrung || undefined} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code?.trim() || !v.name?.trim() || Boolean(tkLoi) || Boolean(maTrung) || (giuHo && Boolean(tk))} title={maTrung || (giuHo && tk ? 'Hàng nhận giữ hộ không ghi sổ kho — bấm Bỏ TK rồi Ghi' : undefined)} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <Field label="Mã (*)" tip={value.isSystem ? 'Loại gốc — không đổi mã' : 'Chữ in hoa / số, 2–12 ký tự'} error={maTrung || null}>
         <input className="input mono" maxLength={12} value={v.code ?? ''} disabled={!value.isNew} autoFocus onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })} />
       </Field>
       <Field label="Tên loại kho (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Công dụng" full><input className="input" value={v.purpose ?? ''} onChange={(e) => set({ purpose: e.target.value })} /></Field>
+      {/* [2026-11-20 kiennt] NT-DM-014 L2 — loại không thuộc sở hữu (hàng nhận giữ hộ): khoá ô TK; lỡ có TK thì cảnh báo + nút Bỏ TK (đóng góp) */}
+      {giuHo && (
+        <div className={tk ? 'alert alert-bad full' : 'alert alert-info full'}>
+          Hàng nhận giữ hộ không thuộc sở hữu — không ghi sổ kho, để trống Tài khoản hạch toán.
+          {tk && <> Loại này đang có TK <b className="mono">{tk}</b>: <button type="button" className="btn btn-xs" onClick={() => set({ accountPrefix: '' })}>Bỏ TK</button> rồi Ghi.</>}
+        </div>
+      )}
       <Field label="Tài khoản hạch toán" tip="Mọi bút toán nhập, xuất, giá vốn ở kho thuộc loại này ghi vào tài khoản này, ưu tiên hơn TK kho của Tài khoản ngầm định. Chỉ chọn tài khoản chi tiết. Trống = theo Tài khoản ngầm định">
-        <AccountPicker postingOnly value={v.accountPrefix ?? ''} placeholder="Trống = ngầm định" onChange={(c) => set({ accountPrefix: c })} />
+        {giuHo
+          ? <input className="input mono" value={tk} disabled placeholder="Không ghi sổ kho" title="Hàng nhận giữ hộ không thuộc sở hữu — không ghi sổ kho, không chọn tài khoản" />
+          : <AccountPicker postingOnly value={v.accountPrefix ?? ''} placeholder="Trống = ngầm định" onChange={(c) => set({ accountPrefix: c })} />}
       </Field>
       {tkLoi && <div className="alert alert-bad full">{tkLoi}</div>}
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}

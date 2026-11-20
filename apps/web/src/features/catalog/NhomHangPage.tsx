@@ -66,11 +66,26 @@ export function NhomHangPage() {
     return m;
   }, [q.data, ix]);
 
-  const xuat = () => void luuExcel('nhom-hang.xlsx', [{ name: 'Nhóm hàng', plainBody: true, rows: [
-    // [2026-11-18 05:10 PM kiennt] NT-DM-010 — đổi tên ô: Tên ngành (name), Mã hoá (skuCode), Mô tả (fullName, không bắt buộc, không tự ghép) (đóng góp)
-    ['Nhóm cha', 'Tên ngành', 'Mã hoá', 'Mô tả', 'Cấp', 'Số mặt hàng', 'Đang dùng', 'Ghi chú', 'Người tạo', 'Lúc tạo', 'Người sửa', 'Lúc sửa'],
-    ...(q.data ?? []).map((c) => [ix.path(ix.parentOf(c.code)), c.name, c.skuCode ?? '', c.fullName ?? '', ix.level(c.code), tongMH.get(c.code) ?? 0, c.isActive ? 'Có' : 'Không', c.note ?? '', c.createdBy ?? '', luc(c.createdAt), c.updatedBy ?? '', c.updatedBy ? luc(c.updatedAt) : '']),
-  ] }]);
+  // [2026-11-20 kiennt] NT-DM-015 — tệp Xuất chia 6 cột Mã / Tên ngành, nhãn, nhóm (mã = mã hoá); mỗi dòng một nhóm theo thứ tự cây,
+  //   dòng ngành điền 2 cột, nhãn 4 cột, nhóm 6 cột; nhóm sâu hơn cấp 3: Tên nhóm ghi đường dẫn từ cấp 3 (đóng góp)
+  const xuat = () => {
+    const thuTu: NhomHang[] = [];
+    const di = (ds: NhomHang[] | undefined) => { for (const c of ds ?? []) { if (thuTu.includes(c)) continue; thuTu.push(c); di(ix.kids.get(c.code)); } };
+    di(ix.roots);
+    for (const c of q.data ?? []) if (!thuTu.includes(c)) thuTu.push(c);
+    const sauCot = (c: NhomHang) => {
+      const chuoi: NhomHang[] = [];
+      const da = new Set<string>();
+      for (let x: string | null = c.code; x && !da.has(x); x = ix.parentOf(x)) { da.add(x); const n = ix.byCode.get(x); if (n) chuoi.unshift(n); }
+      const [ng, nh, ...nm] = chuoi;
+      const cuoi = nm[nm.length - 1];
+      return [ng?.skuCode ?? '', ng?.name ?? '', nh?.skuCode ?? '', nh?.name ?? '', cuoi?.skuCode ?? '', nm.map((x) => x.name).join(' / ')];
+    };
+    void luuExcel('nhom-hang.xlsx', [{ name: 'Nhóm hàng', plainBody: true, rows: [
+      ['Mã ngành', 'Tên ngành', 'Mã nhãn', 'Tên nhãn', 'Mã nhóm', 'Tên nhóm', 'Mô tả', 'Cấp', 'Số mặt hàng', 'Đang dùng', 'Ghi chú', 'Người tạo', 'Lúc tạo', 'Người sửa', 'Lúc sửa'],
+      ...thuTu.map((c) => [...sauCot(c), c.fullName ?? '', ix.level(c.code), tongMH.get(c.code) ?? 0, c.isActive ? 'Có' : 'Không', c.note ?? '', c.createdBy ?? '', luc(c.createdAt), c.updatedBy ?? '', c.updatedBy ? luc(c.updatedAt) : '']),
+    ] }]);
+  };
 
   // [2026-11-17 04:26 PM kiennt] DM11 thiết kế lại theo bản vẽ "Danh mục mặt hàng (Ngành → Nhãn → Nhóm)": ba cột chọn nối tiếp (mã ngắn, cảnh báo
   //   chưa mã / trùng mã, số mặt hàng cả nhánh), ô tìm chung, bảng mặt hàng của nhánh đang chọn lọc theo trạng thái (đóng góp)

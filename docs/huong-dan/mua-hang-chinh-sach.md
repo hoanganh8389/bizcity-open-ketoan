@@ -80,6 +80,11 @@ Form chương trình chiết khấu / khuyến mại có khối **Cách áp** v�
 - Tích: mã hàng nhận chương trình này thì **không nhận chương trình nào khác**; mã khác vẫn áp bình thường. Ví dụ CK 7% riêng mã A tích "Áp riêng" + CK 2% chung → mã A chỉ 7%, mã B được 2%.
 - Bỏ tích (mặc định) = **áp đồng thời**: cộng với các chương trình khác (mã A được cả 7% và 2%).
 - Hai chương trình áp riêng cùng khớp một mã: lấy chương trình **ưu tiên** cao hơn; bằng nhau thì lấy chương trình **lợi hơn** (giảm nhiều tiền hơn / quà giá trị hơn).
+<!-- [2026-11-20 khanhtd] TRA-CUU — khung cảnh báo chồng áp riêng trong form, link sang TC01 -->
+- **Khung cảnh báo ngay dưới Cách áp** (phần mềm tự dò theo NCC, nhãn, mã, chi nhánh, hiệu lực):
+  - chính sách **tích Áp riêng**: liệt kê chương trình áp riêng khác cùng khớp mã, ở những mã nào, chính sách này **thắng / thua / ngang** theo ưu tiên. Nút **Đặt ưu tiên = N để thắng** điền sẵn ưu tiên vừa đủ thắng mọi chương trình đang thua / ngang (bấm Ghi để lưu);
+  - chính sách **không tích**: liệt kê chương trình áp riêng khác sẽ **chặn** nó ở những mã nào.
+  - Bấm một mã để mở [Tra chính sách theo mã hàng (TC01)](tra-cuu-chinh-sach.md): xem từng chính sách đang áp / bị chặn / chưa đủ điều kiện với SL, đơn giá cụ thể.
 
 **☑ Cộng dồn** — đủ điều kiện mấy lần thì hưởng mấy lần
 

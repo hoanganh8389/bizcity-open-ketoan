@@ -1,0 +1,24 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.tra-cuu",
+  "key": "tra-cuu",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Tra cứu",
+  "description": "Tra cứu: các màn chỉ đọc. TC01 Tra chính sách theo mã hàng — chính sách mua nào áp, bị áp riêng chặn, chưa đủ điều kiện, vì sao (API GET /api/v1/purchase/policy-lookup của Mua hàng). Không action, không bảng.",
+  "owners": [
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "ui.web-module",
+      "ui.kit"
+    ]
+  },
+  "ui": {
+    "icon": "Search",
+    "color": "#1a73e8",
+    "order": 1
+  }
+}

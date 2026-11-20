@@ -53,9 +53,19 @@ Bảng **Mặt hàng** bên dưới: mặt hàng của nhánh đang chọn (gồ
 - Tên ngành không được trùng **nhóm cùng cha** (kể cả hai ngành hàng với nhau) và không trùng **tên nhóm cha** của nó (không phân biệt hoa thường, dấu cách thừa). Khác cha thì được trùng, kể cả trong cùng ngành: vd "Bỉm tã" vừa là ngành hàng vừa là nhãn dưới ngành ĐỒ UỐNG; hai nhãn khác nhau của cùng ngành đều có nhóm "Sữa nước". Sửa tên nhóm cũng không được trùng tên nhóm con trực tiếp. <!-- [2026-11-18 03:10 PM kiennt] NT-DM-009 — trùng tên ngành: chặn cùng cha và trùng tên cha. -->
 - Không chuyển một nhóm vào nhánh con của chính nó.
 
+## Xuất Excel
+<!-- [2026-11-20 kiennt] NT-DM-015 — tệp Xuất / Nhập chia 6 cột Mã / Tên ngành, nhãn, nhóm (đóng góp) -->
+
+Nút **Xuất** tạo tệp theo thứ tự cây, mỗi dòng một nhóm: **Mã ngành · Tên ngành · Mã nhãn · Tên nhãn · Mã nhóm · Tên nhóm**, sau đó Mô tả · Cấp · Số mặt hàng · Đang dùng · Ghi chú · Người tạo · Lúc tạo · Người sửa · Lúc sửa.
+
+- Dòng ngành điền 2 cột đầu, dòng nhãn 4 cột, dòng nhóm đủ 6 cột. **Mã** là mã hoá (ngành 2 số, nhãn 3 ký tự, nhóm 1 ký tự).
+- Nhóm sâu hơn cấp 3: cột Tên nhóm ghi đường dẫn từ cấp 3 (vd `Sữa bột trẻ em / Lon nhỏ`).
+
 ## Nhập Excel
 
-Tệp mẫu có các cột: **Nhóm cha** (đường dẫn, vd `BỈM/ TÃ / Aiwibi`, trống = cấp 1), **Tên ngành**, **Mã hoá**, **Mô tả** (không bắt buộc), **Đang dùng**.
+Nhận lại **tệp Xuất** ở trên: phần mềm lấy nhóm ở cấp sâu nhất có tên trên dòng (có Tên nhóm → nhóm cấp 3; chỉ có Tên nhãn → nhãn; chỉ có Tên ngành → ngành), nhóm cha là tên các cấp bên trên, mã hoá là Mã của cấp đó.
+
+Tệp kiểu cũ vẫn nhận: **Nhóm cha** (đường dẫn, vd `BỈM/ TÃ / Aiwibi`, trống = cấp 1), **Tên ngành**, **Mã hoá**, **Mô tả** (không bắt buộc), **Đang dùng**.
 
 - Cùng nhóm cha + cùng tên ngành với nhóm đang có → cập nhật; khác → thêm mới.
 - Tên nhóm cha trùng ở nhiều nhánh thì ghi **đường dẫn đầy đủ** (vd `ĐỒ UỐNG / Bỉm tã`).
