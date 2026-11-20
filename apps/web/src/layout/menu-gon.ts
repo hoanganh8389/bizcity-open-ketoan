@@ -47,6 +47,12 @@ export const DANG_PHAT_TRIEN = 'đang phát triển';
 const MUA = (loai: string) => `/mua-hang/tong-hop?loai=${loai}`;
 
 export const GON_DEFS: GonDef[] = [
+  // [2026-11-20 khanhtd] TRA-CUU — nhóm Tra cứu đứng đầu menu: các màn chỉ đọc của module modules/tra-cuu (TC01 Tra chính sách theo mã hàng) (đóng góp)
+  {
+    key: 'tra-cuu', label: 'Tra cứu', icon: 'Search', description: 'Tra nhanh: chính sách mua nào áp cho một mã hàng và vì sao', color: '#1a73e8',
+    the: ['/app/tra-cuu/chinh-sach'],
+    sections: [{ paths: ['/app/tra-cuu/chinh-sach'] }],
+  },
   {
     key: 'tien-mat', label: 'Tiền mặt', icon: 'Banknote', description: 'Thu tiền, chi tiền, sổ quỹ tiền mặt', color: '#0f9d58', module: 'quy', homeLabel: 'Quy trình',
     the: ['/quy/thu-chi'],

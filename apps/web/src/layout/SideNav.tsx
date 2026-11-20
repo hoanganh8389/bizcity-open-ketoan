@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Banknote, BarChart3, Building2, ChartLine, ChevronRight, Hammer, Landmark, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Percent, PiggyBank, Pin, PinOff, Puzzle, Settings, ShoppingBag, ShoppingCart, Warehouse, type LucideIcon } from 'lucide-react';
+import { Banknote, BarChart3, Building2, ChartLine, ChevronRight, Hammer, Landmark, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Percent, PiggyBank, Pin, PinOff, Puzzle, Search, Settings, ShoppingBag, ShoppingCart, Warehouse, type LucideIcon } from 'lucide-react';
 import { usePins } from './pins';
 import { DANG_PHAT_TRIEN, matchHere, nhomHien, REPORT_PAGE, type GonGroup } from './menu-gon';
 import type { MenuItem } from '@ketoan/contracts';
@@ -20,7 +20,8 @@ const read = <T,>(key: string, fallback: T): T => {
 };
 const write = (key: string, v: unknown) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* chế độ riêng tư */ } };
 
-const ICONS: Record<string, LucideIcon> = { Banknote, Building2, ChartLine, Hammer, Landmark, List, ListEnd, Network, Percent, PiggyBank, Puzzle, Settings, ShoppingBag, ShoppingCart, Warehouse };
+// [2026-11-20 khanhtd] TRA-CUU — biểu tượng kính lúp cho nhóm Tra cứu (đóng góp)
+const ICONS: Record<string, LucideIcon> = { Banknote, Building2, ChartLine, Hammer, Landmark, List, ListEnd, Network, Percent, PiggyBank, Puzzle, Search, Settings, ShoppingBag, ShoppingCart, Warehouse };
 
 /** Biểu tượng của nhóm, dùng chung cho menu trái và trang Tổng quan. */
 export function GonIcon({ name, size, color }: { name: string; size?: number; color?: string }) {
