@@ -1,4 +1,5 @@
 // [2026-11-21 08:40 AM Võ Hoàng] PHASE-031 — S031-17: rulepack `policy` của Conformance Engine (10-THIET-KE §9) — năm kiểm DG-POLICY-1..5, chỉ đọc, không chặn
+// [2026-11-21 05:50 PM Võ Hoàng] PHASE-031 — S031-32 phần đo (31-S031-7 §2, 00 §16 mục 6): thêm DG-POLICY-6 — bản retired còn effective_to NULL, kèm số sự việc tham chiếu; chỉ đọc
 /**
  * Lane diagnostics — chính sách nghiệp vụ (PHASE-031 · 10 §9, D-POL-8). Cấp ĐƠN VỊ, CHỈ ĐỌC (R-DIAG-2): đọc phong bì `policy_registry`,
  * khung nhìn `bizcity_read.policy_application` (0080), `accounting_events` và `posting_reasons`. Không đọc bảng của module chủ, không chặn
@@ -9,6 +10,7 @@
  *   DG-POLICY-3  POLICY_REFS_MISSING     nguồn ngoài gửi chứng từ bán không kèm policyRefs trong khi có chính sách bán hiệu lực (POL-REF-000)
  *   DG-POLICY-4  POLICY_EXPIRING_IN_USE  bản chính sách hết hạn trong 30 ngày tới mà 30 ngày qua vẫn có sự việc tham chiếu
  *   DG-POLICY-5  POLICY_PROMO_NOTICE     khuyến mại thuộc diện thông báo Sở Công Thương (NĐ81 Điều 17) chưa có số — CHƯA ĐỦ CĂN CỨ, bỏ qua
+ *   DG-POLICY-6  POLICY_RETIRED_OPEN     bản `retired` còn `effective_to` NULL (ngừng trước RV-R1-04) theo đơn vị, kèm số sự việc tham chiếu — số đo để quyết định (S031-32)
  *
  * Mỗi phát hiện mở đầu bằng `[mã đơn vị]`, khoá `<đơn vị>:…` — một lượt chạy trên cả bản cài, đọc theo từng đơn vị. `ctx.args.tenant`
  * (mã đơn vị) thu lượt chạy về MỘT đơn vị (Conformance Engine cấp đơn vị, test); mã sai khuôn thì bỏ qua lọc, không ghép vào SQL.
@@ -165,6 +167,38 @@ export const checks = [
       // chưa có tiêu chí diện phải thông báo (địa bàn, tổng giá trị). Không suy từ legal_ref (chữ tự do) — không bịa kết quả.
       const why = 'chưa đủ căn cứ: sổ đăng ký chính sách chưa có trường số thông báo khuyến mại và tiêu chí diện phải thông báo (NĐ81 Điều 17)';
       return { skip: why, examined: 0, findings: [], notes: [why] };
+    },
+  },
+  {
+    ...meta, id: 'DG-POLICY-6', code: 'POLICY_RETIRED_OPEN',
+    title: 'Bản chính sách đã ngừng (retired) mà effective_to còn NULL — ngừng trước RV-R1-04; đếm theo đơn vị kèm số sự việc tham chiếu (chỉ đo, không tự đóng)',
+    async run(ctx) {
+      if (!(await hasView(ctx))) return NO_VIEW;
+      // 00 §16 mục 6: dữ liệu cũ không có ngày ngừng đáng tin — KHÔNG tự đóng (sẽ làm sai chứng từ cũ). Check này chỉ ra số để quyết định.
+      const open = `r.status = 'retired' AND r.effective_to IS NULL`;
+      const [n] = await ctx.db.query(`SELECT count(*)::int AS n FROM policy_registry r JOIN tenants t ON t.id = r.tenant_id WHERE r.status = 'retired'${only(ctx)}`);
+      const rows = await ctx.db.query(`
+        SELECT t.code AS tenant, count(*)::int AS versions, coalesce(sum(u.events), 0)::int AS events, coalesce(sum(u.after), 0)::int AS after,
+               string_agg(r.policy_key || '@' || r.version, ', ' ORDER BY r.policy_key, r.version) AS list
+          FROM policy_registry r
+          JOIN tenants t ON t.id = r.tenant_id
+          CROSS JOIN LATERAL (
+            SELECT count(DISTINCT a.event_id)::int AS events,
+                   count(DISTINCT a.event_id) FILTER (WHERE r.effective_from IS NULL OR a.doc_date >= r.effective_from)::int AS after
+              FROM bizcity_read.policy_application a
+             WHERE a.tenant_id = r.tenant_id AND a.version = r.version AND a.status <> 'cancelled'
+               AND (a.policy_id = r.policy_id OR (a.policy_id IS NULL AND a.policy_key = r.policy_key))) u
+         WHERE ${open}${only(ctx)}
+         GROUP BY t.code
+         ORDER BY t.code LIMIT ${LIMIT}`);
+      return {
+        examined: n?.n ?? 0, unitBy: 'key',
+        findings: rows.map((r) => ctx.finding(null, null,
+          `[${r.tenant}] ${r.versions} bản đã ngừng còn effective_to NULL (${r.list.length > 300 ? `${r.list.slice(0, 300)}…` : r.list}); ${r.events} sự việc tham chiếu, ${r.after} có ngày chứng từ từ ngày áp của bản — cửa nạp vẫn coi bản phủ mọi ngày sau. Quyết định đóng cần ngày ngừng đáng tin (00 §16 mục 6)`,
+          `${r.tenant}:retired-open`)),
+        notes: ['Chỉ đo: không tự đóng effective_to (sẽ làm sai chứng từ cũ). Bản ngừng sau RV-R1-04 (retirePolicy) đã có effective_to.'],
+        metrics: { code: 'POLICY_RETIRED_OPEN', truncated: rows.length >= LIMIT },
+      };
     },
   },
 ];
