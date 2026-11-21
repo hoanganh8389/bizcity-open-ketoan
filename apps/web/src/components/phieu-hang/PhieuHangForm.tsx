@@ -419,10 +419,11 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
         )}
         <div className="kp-lines-box">
           {/* NT-BH-036: bảng cột cố định (khung-phieu.css) — bề rộng cột gọn lại để Tên hàng đủ chỗ cạnh khung Trợ lý. */}
-          <table className="grid-table" style={{ width: '100%', minWidth: info.isTransfer ? 840 : 1150 }}>
+          {/* [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-036: tối thiểu 1000px (phần trái ~1070px khi mở Trợ lý) để không tràn mất cột Tiền thuế, tổng (đóng góp) */}
+          <table className="grid-table" style={{ width: '100%', minWidth: info.isTransfer ? 840 : 1000 }}>
             <thead>
               <tr>
-                <th style={{ width: 34 }}>#</th><th style={{ width: 150 }}>Mã hàng</th><th>Tên hàng</th><th style={{ width: 70 }}>ĐVT</th><th style={{ width: info.isTransfer ? 200 : 90 }} title="Theo kho ở đầu phiếu">Kho</th><th style={{ width: 70 }}>SL</th>
+                <th style={{ width: 34 }}>#</th><th style={{ width: 120 }}>Mã hàng</th><th>Tên hàng</th><th style={{ width: 70 }}>ĐVT</th><th style={{ width: info.isTransfer ? 200 : 90 }} title="Theo kho ở đầu phiếu">Kho</th><th style={{ width: 70 }}>SL</th>
                 {!info.isTransfer && <><th style={{ width: 105 }}>Đơn giá</th><th style={{ width: 90 }}>Chiết khấu</th><th style={{ width: 105 }}>Tiền hàng</th><th style={{ width: 90 }}>Thuế</th><th style={{ width: 90 }}>Tiền thuế</th></>}
                 <th style={{ width: 34 }} />
               </tr>
