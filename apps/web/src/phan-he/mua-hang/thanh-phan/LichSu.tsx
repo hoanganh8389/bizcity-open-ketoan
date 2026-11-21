@@ -10,7 +10,7 @@ import { purchaseApi, vnd, type LogRow } from '../du-lieu';
 
 export const EVENT_LABEL: Record<string, string> = {
   doc_created: 'Tạo phiếu', doc_saved: 'Sửa phiếu', doc_submitted: 'Gửi duyệt', approved: 'Duyệt (ghi sổ)', doc_approved: 'Duyệt (ghi sổ)', override_approved: 'Duyệt ngoại lệ',
-  doc_unapproved: 'Bỏ duyệt', doc_adjust_started: 'Lập điều chỉnh', doc_adjust_cancelled: 'Huỷ điều chỉnh', doc_cancelled: 'Huỷ phiếu', policy_created: 'Tạo chính sách', policy_changed: 'Sửa chính sách', policy_deleted: 'Xoá chính sách', attachment_added: 'Gắn tệp',
+  doc_unapproved: 'Bỏ duyệt', doc_adjust_started: 'Lập điều chỉnh', doc_adjust_cancelled: 'Huỷ điều chỉnh', doc_cancelled: 'Huỷ phiếu', policy_created: 'Tạo chính sách', policy_changed: 'Sửa chính sách', policy_deleted: 'Xoá chính sách', attachment_added: 'Gắn tệp', invoice_added: 'Thêm hoá đơn vào phiếu', invoice_removed: 'Bỏ hoá đơn khỏi phiếu',
   limit_transfer: 'Điều chuyển hạn mức', supplier_items: 'Cập nhật mặt hàng NCC', supplier_products: 'Cập nhật mặt hàng & giá mua', price_check: 'Kiểm giá', limit_check: 'Kiểm hạn mức', policy_applied: 'Áp chính sách',
   contract_saved: 'Ghi hợp đồng', invoice_created: 'Thêm hoá đơn NCC', invoice_updated: 'Sửa hoá đơn NCC', invoice_cancelled: 'Huỷ hoá đơn NCC', invoice_imported: 'Nhập hoá đơn NCC', invoice_scanned: 'Quét hoá đơn (AI)', alias_learned: 'Học mã hàng NCC', alias_deleted: 'Xoá mã đã học',
 };
@@ -50,6 +50,7 @@ export function logSummary(l: LogRow): string {
   if (l.event === 'doc_unapproved') return `Bỏ duyệt${d.reason ? `: ${d.reason}` : ''}${d.cancelled?.length ? ` (huỷ ${d.cancelled.join(', ')})` : ''}`;
   if (l.event === 'override_approved') return `Lý do: ${d.reason ?? ''}`;
   if (l.event === 'attachment_added') return d.fileName ?? '';
+  if (l.event === 'invoice_added' || l.event === 'invoice_removed') { const x = l.data as { invoice?: string; adjusts?: string }; return `${x.invoice ?? ''}${x.adjusts ? ` — điều chỉnh cho HĐ ${x.adjusts}` : ''}`; }
   if (l.event === 'supplier_items') return `Thêm ${d.added ?? 0}, cập nhật ${d.updated ?? 0} mã`;
   if (l.event === 'supplier_products' && d.deleted) return `Xoá vĩnh viễn dòng giá: ${delRow(d.deleted)}`;
   if (l.event === 'supplier_products') return `Thêm ${d.added ?? 0}, sửa ${d.updated ?? 0} dòng${d.rows?.length ? `: ${d.rows.join(', ')}` : ''}`;

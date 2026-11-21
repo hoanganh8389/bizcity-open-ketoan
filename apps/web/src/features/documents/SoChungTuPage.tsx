@@ -35,7 +35,7 @@ const STATUS_TEXT: Record<Status, string> = { draft: 'Nháp', pending: 'Chờ du
 const STATUS_CLASS: Record<Status, string> = { draft: 'muted', pending: 'text-warn', approved: 'text-ok', in_progress: 'text-warn', done: 'text-ok', cancelled: 'text-bad' };
 const TYPES: [string, string][] = [
   // [2026-11-19 Nguyễn Văn Thủy] loại <nghiệp vụ>.<loại> theo chứng từ là gì (0166) (đóng góp)
-  ['', 'Mọi loại'], ['purchase.', 'Mua hàng (mọi loại)'], ['purchase.contract', 'Hợp đồng mua hàng'], ['purchase.order', 'Đơn đặt hàng'],
+  ['', 'Mọi loại'], ['purchase.', 'Mua hàng (mọi loại)'], ['purchase.contract', 'Hợp đồng mua hàng'], ['purchase.order', 'Đơn đặt hàng'], ['purchase.invoice', 'Hoá đơn NCC'],
   ['pricing.policy', 'Chính sách mua hàng'], ['inventory.', 'Kho (mọi loại)'], ['inventory.receipt', 'Phiếu nhập kho'], ['inventory.issue', 'Phiếu xuất (trả NCC, xuất tặng)'],
   ['inventory.transfer', 'Chuyển kho'], ['finance.', 'Tiền (mọi loại)'], ['finance.payment', 'Thanh toán NCC'], ['finance.payment_request', 'Đề nghị thanh toán'],
   ['contract.', 'Hợp đồng khác (thuê, dịch vụ…)'],
@@ -52,17 +52,24 @@ const META_TEXT: Record<string, string> = {
   docKey: 'Mã chứng từ kế toán', docStatus: 'Trạng thái ghi sổ', cashier: 'Thu ngân', subtotal: 'Tiền hàng', taxTotal: 'Tiền thuế', cancelReason: 'Lý do huỷ',
   refundMethod: 'Hình thức hoàn tiền', refundNet: 'Hoàn chưa thuế', refundTax: 'Thuế hoàn', exchange: 'Đổi hàng', source: 'Nguồn đơn', warehouse: 'Kho',
   validUntil: 'Hiệu lực đến', phone: 'Điện thoại', closeReason: 'Lý do đóng', copiedFrom: 'Copy từ', tracking: 'Mã vận đơn', ledgerStatus: 'Trạng thái sổ',
-  ledgerVersion: 'Lần ghi sổ', order: 'Đơn đặt hàng', voucherKind: 'Loại voucher', issuer: 'Bên phát', faceValue: 'Mệnh giá', issueMode: 'Cách phát', storeId: 'Mã cửa hàng web',
+  ledgerVersion: 'Lần ghi sổ',
+  // [2026-11-21 Nguyễn Văn Thủy] 0179: hoá đơn NCC vào sổ, phiếu nhiều hoá đơn (đóng góp)
+  invoices: 'Các hoá đơn', form: 'Mẫu số', series: 'Ký hiệu', sellerTaxCode: 'MST người bán', buyerTaxCode: 'MST người mua', order: 'Đơn đặt hàng', voucherKind: 'Loại voucher', issuer: 'Bên phát', faceValue: 'Mệnh giá', issueMode: 'Cách phát', storeId: 'Mã cửa hàng web',
 };
-const metaText = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : v === true ? 'Có' : String(v));
-const ROLE_TEXT: Record<string, string> = { source: 'Lập từ', ledger: 'Sự việc kế toán', reverses: 'Đảo', replaces: 'Thay thế', settles: 'Thanh toán cho', attachesTo: 'Đính vào', applies: 'Áp chính sách / chương trình', uses: 'Dùng lô hàng' };
+/** Giá trị thông tin thêm: số, có / không, mảng (mỗi phần tử có `label` thì lấy label), đối tượng → các giá trị nối lại. */
+const metaText = (v: unknown): string => (typeof v === 'number' ? v.toLocaleString('vi-VN') : v === true ? 'Có'
+  : Array.isArray(v) ? v.map((x) => (x && typeof x === 'object' ? String((x as { label?: unknown }).label ?? Object.values(x).join(' ')) : metaText(x))).join('; ')
+  : v && typeof v === 'object' ? Object.values(v).map(metaText).join(' ') : String(v));
+const ROLE_TEXT: Record<string, string> = { source: 'Lập từ', ledger: 'Sự việc kế toán', reverses: 'Đảo', replaces: 'Thay thế', settles: 'Thanh toán cho', attachesTo: 'Đính vào', applies: 'Áp chính sách / chương trình', uses: 'Dùng lô hàng', adjusts: 'Điều chỉnh cho' };
+/** Tên liên kết nhìn từ phía bị trỏ tới (chiều vào). */
+const ROLE_IN_TEXT: Record<string, string> = { source: 'Được lập thành', attachesTo: 'Có đính kèm', adjusts: 'Được điều chỉnh bởi', reverses: 'Bị đảo bởi', replaces: 'Bị thay bởi', settles: 'Được thanh toán bởi' };
 
 /** Chiều liên kết nhìn từ chứng từ đang xem: đi ra (lập từ X) hay đi vào (X lập từ phiếu này). */
 function linkText(l: Detail['links'][number], self: string) {
   const out = l.from === self;
   const other = out ? l.to : l.from;
   const role = ROLE_TEXT[l.role] ?? l.role;
-  return { other: other.replace(/^ledger\.event:/, ''), text: out ? role : l.role === 'source' ? 'Được lập thành' : `${role} (chiều vào)` };
+  return { other: other.replace(/^ledger\.event:/, ''), text: out ? role : ROLE_IN_TEXT[l.role] ?? `${role} (chiều vào)` };
 }
 
 function ChiTiet({ docRef, onClose, onOpen }: { docRef: string; onClose: () => void; onOpen: (ref: string) => void }) {

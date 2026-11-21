@@ -23,3 +23,8 @@ Mỗi ô có số phiếu và tổng tiền. Bấm ô để xem danh sách. Hạ
 - Phiếu **đã ghi sổ**: phần mềm lập điều chỉnh, ghi hoá đơn và duyệt lại ngay (đảo bút toán cũ, ghi bút toán mới có hoá đơn — thuế đầu vào theo hoá đơn). Nếu phiếu còn cảnh báo chặn duyệt thì không gắn, phiếu giữ nguyên — mở phiếu để xử lý.
 
 NCC chưa có hoá đơn nào để gắn: nhập hoá đơn ở **MH22 Hoá đơn đầu vào của NCC** (Excel, XML, quét) trước.
+
+## Nhiều hoá đơn trên một phiếu nhập (21/11/2026)
+- Ô **Lệch SL với HĐ**: phiếu đã có hoá đơn nhưng SL thực nhận khác SL cộng dồn các hoá đơn (MH22). Bấm **Thêm** để thêm hoá đơn còn thiếu (không thay hoá đơn cũ), hoặc mở phiếu sửa SL / duyệt ngoại lệ.
+- Cột **Hoá đơn** liệt kê mọi hoá đơn của phiếu kèm tình trạng ở MH22; **Chi nhánh nhận** và **Theo đơn** để đối chiếu đúng phần của chi nhánh (đơn giao nhiều chi nhánh: mỗi chi nhánh một phiếu nhập). Lọc **Mọi chi nhánh nhận** ở đầu màn.
+- Hạn hoá đơn tính từ ngày nhận hàng hoặc ngày đặt đơn tuỳ kế hoạch hoá đơn của đơn.

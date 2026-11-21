@@ -10,7 +10,8 @@
  * Mỗi chứng từ kế toán sinh ra lưu ở links; bỏ duyệt = huỷ đúng các chứng từ đó (đảo bút toán bằng số âm, không xoá).
  */
 import { sql } from 'kysely';
-import { allocate as allocateParts, amountTax, baseUnitOf, computeDoc, giftLineValue, moneyAccountOf, ratioOf, type DocCalc, type PDoc, type ProductUnit } from '@bizcity/mua-hang-domain';
+import { allocate as allocateParts, amountTax, baseUnitOf, computeDoc, giftLineValue, invoiceKey, invoicesOf, moneyAccountOf, ratioOf, splitLinesByInvoice, type DocCalc, type PDoc, type ProductUnit } from '@bizcity/mua-hang-domain';
+import { invoiceQtyForReceipt } from './hoa-don.js';
 import { unitsOf } from './gia-mua.js';
 import { ingestDocumentSchema, voucherInputSchema, type IngestDocument } from '@ketoan/contracts';
 import { toNumber, type Db } from '../../db/client.js';
@@ -250,7 +251,41 @@ export async function postPurchase(trx: Db, auth: AuthContext, d: StoredDoc, cal
     case 'order': break;
     case 'receipt': {
       const lines = ingestLines(calc, units);
-      links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'purchase', invoice, dueDate: receiptDue(d, calc.dueDate), lines, payments: [], totals: { beforeTax: calc.beforeTax, tax: calc.tax, total: calc.beforeTax + calc.tax } }, 'Nhập mua', d.warehouseCode, policyRefsOf(calc)));
+      const invs = invoicesOf(d);
+      if (invs.length > 1) {
+        // [2026-11-21 Nguyễn Văn Thủy] NHIỀU HOÁ ĐƠN: lõi nhận một hoá đơn cho một chứng từ kế toán → tách theo từng hoá đơn (dòng chia theo SL
+        // từng mã trên hoá đơn ở MH22; tiền / thuế / chiết khấu theo tỷ lệ SL, phần lẻ dồn phần cuối); SL không trên hoá đơn nào → phần không hoá đơn (đóng góp)
+        const q = await invoiceQtyForReceipt(trx, auth.tenantId, d, docs);
+        if (q.missing.length) throw Errors.validation(`Phiếu có ${invs.length} hoá đơn — cần dòng hàng của mọi hoá đơn ở MH22 để ghi sổ tách theo hoá đơn: ${q.missing.join('; ')}`);
+        const parts = splitLinesByInvoice(calc.lines, q.list, units);
+        const byKey = new Map(lines.map((l) => [l.lineKey, l]));
+        const daChia = new Map<string, { qty: number; amountBeforeTax: number; discount: number; taxAmount: number; n: number }>();
+        const tongPhan = new Map<string, number>();
+        for (const p of parts) for (const pl of p.lines) tongPhan.set(pl.lineKey, (tongPhan.get(pl.lineKey) ?? 0) + 1);
+        const r2 = (n: number) => Math.round(n * 100) / 100;
+        for (let i = 0; i < parts.length; i++) {
+          const p = parts[i]!;
+          const pls = p.lines.flatMap((pl) => {
+            const l = byKey.get(pl.lineKey);
+            if (!l) return [];
+            const da = daChia.get(pl.lineKey) ?? { qty: 0, amountBeforeTax: 0, discount: 0, taxAmount: 0, n: 0 };
+            const cuoi = da.n + 1 === tongPhan.get(pl.lineKey);
+            const part = cuoi
+              ? { qty: Math.round((l.qty - da.qty) * 10000) / 10000, amountBeforeTax: r2(l.amountBeforeTax - da.amountBeforeTax), discount: r2((l.discount ?? 0) - da.discount), taxAmount: r2((l.taxAmount ?? 0) - da.taxAmount) }
+              : { qty: Math.round(l.qty * pl.frac * 10000) / 10000, amountBeforeTax: Math.round(l.amountBeforeTax * pl.frac), discount: Math.round((l.discount ?? 0) * pl.frac), taxAmount: Math.round((l.taxAmount ?? 0) * pl.frac) };
+            daChia.set(pl.lineKey, { qty: da.qty + part.qty, amountBeforeTax: da.amountBeforeTax + part.amountBeforeTax, discount: da.discount + part.discount, taxAmount: da.taxAmount + part.taxAmount, n: da.n + 1 });
+            return [{ ...l, lineKey: i === 0 ? l.lineKey : `${l.lineKey}-${i + 1}`, ...part, unitPrice: part.qty ? Math.round((part.amountBeforeTax / part.qty) * 100) / 100 : 0 }];
+          });
+          if (!pls.length) continue;
+          const hd = p.key ? invs.find((x) => invoiceKey(x) === p.key) : undefined;
+          const bt = pls.reduce((s, l) => s + l.amountBeforeTax, 0), tx = pls.reduce((s, l) => s + (l.taxAmount ?? 0), 0);
+          links.push(await ingest(trx, auth, {
+            ...base(d, partner, i === 0 ? key : `${key}:hd${i + 1}`, version), docType: 'purchase', ...(i === 0 ? {} : { docNo: `${d.docNo}-${i + 1}` }),
+            invoice: hd ? { no: hd.no, serial: hd.serial ?? '', date: hd.date } : undefined, dueDate: receiptDue(d, calc.dueDate), lines: pls, payments: [],
+            totals: { beforeTax: r2(bt), tax: r2(tx), total: r2(bt + tx) },
+          }, hd ? `Nhập mua — HĐ ${p.key}` : 'Nhập mua — phần chưa có hoá đơn', d.warehouseCode, policyRefsOf(calc)));
+        }
+      } else links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'purchase', invoice, dueDate: receiptDue(d, calc.dueDate), lines, payments: [], totals: { beforeTax: calc.beforeTax, tax: calc.tax, total: calc.beforeTax + calc.tax } }, 'Nhập mua', d.warehouseCode, policyRefsOf(calc)));
       // Ứng trước theo cùng đơn đặt → đối trừ ngay, không ghi trả trùng.
       const pre = docs.filter((x) => x.kind === 'prepayment' && x.status === 'approved' && (x.refIds ?? []).some((r) => (d.refIds ?? []).includes(r)));
       if (pre.length) await offset(trx, auth, pre.flatMap((x) => x.links.map((l) => l.eventId)), [links[0]!.eventId], d.docDate, `Đối trừ ứng trước — phiếu nhập ${d.docNo}`);

@@ -75,7 +75,7 @@ Khai giá, chiết khấu, thưởng **chỉ một đường**: Hồ sơ NCC →
 | Thanh toán trước khi giao | Đại Thịnh | Thanh toán trước khi giao hàng (lập phiếu ứng trước theo đơn) |
 | Công nợ cố định | — | Công nợ cố định (không tính hạn từng phiếu) |
 
-Hạn rơi vào ngày nghỉ / lễ (khai ở **Cài đặt mua hàng**) thì sang ngày làm việc kế tiếp. Phiếu nhập có ô **Ngày nhận đủ hàng & hồ sơ** (mốc tính hạn). Hoá đơn sai phải điều chỉnh: ở thẻ *Hoá đơn & đối soát* ghi ngày báo NCC và ngày nhận hoá đơn điều chỉnh — hạn tự lùi đúng số ngày.
+Hạn rơi vào ngày nghỉ / lễ (khai ở **Cài đặt mua hàng**) thì sang ngày làm việc kế tiếp. Phiếu nhập có ô **Ngày nhận hoá đơn**: hàng nhận vào ngày phiếu, có ngày nhận hoá đơn là đủ hàng + hồ sơ — đây là mốc tính hạn "từ ngày nhận đủ hàng và hồ sơ". Hoá đơn giao kèm thì bằng ngày phiếu; để trống là chưa nhận hoá đơn. Hoá đơn sai phải điều chỉnh: ở thẻ *Hoá đơn & đối soát* ghi ngày báo NCC và ngày nhận hoá đơn điều chỉnh — hạn tự lùi đúng số ngày.
 
 ## Form thông tin nhà cung cấp (nút "Sửa thông tin NCC")
 

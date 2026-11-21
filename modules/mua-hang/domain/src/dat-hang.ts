@@ -48,11 +48,11 @@ export interface ReconLine {
  * ĐỐI CHIẾU ĐƠN ĐẶT ↔ PHIẾU NHẬP theo từng mã: đặt / đã nhận (phiếu đã duyệt) / đang chờ (nháp, chờ duyệt) / chênh, lệch giá, mã
  * giao ngoài đơn, đổi mã — kèm danh sách phiếu nhập của từng mã để theo vết. So theo ĐVT NHỎ NHẤT, hiển thị theo ĐVT dòng đơn.
  */
-export function orderReconcile(order: PDoc, docs: PDoc[], units?: UnitMap): ReconLine[] {
-  const recs = receiptsOfOrder(order, docs);
+export function orderReconcile(order: PDoc, docs: PDoc[], units?: UnitMap, branch?: string): ReconLine[] {
+  const recs = receiptsOfOrder(order, docs).filter((d) => !branch || d.branchCode === branch);
   const out = new Map<string, ReconLine & { ob: number; rb: number; pb: number; pv: number; pq: number }>();
   const toOrderBasis = (price: number, inc: boolean, taxCode: string) => (inc === order.priceIncludesVat ? price : inc ? price / (1 + (TAX_RATE[taxCode] ?? 0) / 100) : price * (1 + (TAX_RATE[taxCode] ?? 0) / 100));
-  for (const l of order.lines.filter((x) => x.lineType === 'buy' && x.sku)) {
+  for (const l of order.lines.filter((x) => x.lineType === 'buy' && x.sku && (!branch || deliveryBranchOf(order, x) === branch))) {
     const cur = out.get(l.sku) ?? { sku: l.sku, name: l.name, unit: l.unit, ordered: 0, received: 0, pending: 0, diff: 0, state: 'du' as ReconState, orderPrice: l.price, receivedPrice: null, priceDiffPct: null, swappedTo: [], receipts: [], ob: 0, rb: 0, pb: 0, pv: 0, pq: 0 };
     cur.ob += l.qty * ratioIn(units, l.sku, l.unit);
     out.set(l.sku, cur);
@@ -85,10 +85,19 @@ export function orderReconcile(order: PDoc, docs: PDoc[], units?: UnitMap): Reco
 /** Phiếu nhập (chưa huỷ) giao theo đơn — phiếu nháp cũng tính để không lập trùng. */
 export const receiptsOfOrder = (order: Pick<PDoc, 'id'>, docs: PDoc[]) => docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && (d.refIds ?? []).includes(order.id));
 
-export function orderProgress(order: PDoc, docs: PDoc[], excludeId?: string, units?: UnitMap): OrderProgress {
-  const recs = receiptsOfOrder(order, docs).filter((d) => d.id !== excludeId);
+// [2026-11-21 Nguyễn Văn Thủy] chi nhánh nhận của dòng đơn + tiến độ / đối chiếu theo từng chi nhánh nhận (đóng góp)
+/** Chi nhánh nhận hàng của một dòng đơn: chi nhánh của dòng → chi nhánh của "Giao tại kho" → chi nhánh lập đơn. */
+export const deliveryBranchOf = (order: Pick<PDoc, 'branchCode' | 'deliveryBranch'>, l: Pick<PLine, 'branchCode'>) => l.branchCode || order.deliveryBranch || order.branchCode;
+
+/**
+ * Tiến độ giao của đơn. `branch`: chỉ phần giao cho chi nhánh đó (dòng đơn của chi nhánh, phiếu nhập của chi nhánh) — phiếu nhập
+ * đối chiếu "còn phải nhập" theo chi nhánh của phiếu, không cộng lẫn chi nhánh khác.
+ */
+export function orderProgress(order: PDoc, docs: PDoc[], excludeId?: string, units?: UnitMap, branch?: string): OrderProgress {
+  const recs = receiptsOfOrder(order, docs).filter((d) => d.id !== excludeId && (!branch || d.branchCode === branch));
   const map = new Map<string, OrderLineProgress>();
-  for (const l of order.lines.filter((x) => x.lineType === 'buy' && x.sku)) {
+  const own = (l: PLine) => !branch || deliveryBranchOf(order, l) === branch;
+  for (const l of order.lines.filter((x) => x.lineType === 'buy' && x.sku && own(x))) {
     const cur = map.get(l.sku) ?? { sku: l.sku, name: l.name, unit: l.unit, ordered: 0, received: 0, remaining: 0, price: l.price, baseUnit: baseUnitOf(units?.[l.sku] ?? []) || l.unit, orderedBase: 0, receivedBase: 0, remainingBase: 0 };
     cur.orderedBase += l.qty * ratioIn(units, l.sku, l.unit);
     map.set(l.sku, cur);
@@ -105,7 +114,7 @@ export function orderProgress(order: PDoc, docs: PDoc[], excludeId?: string, uni
   });
   // Hàng tặng: đặt theo mã trên đơn, nhận = dòng tặng (không phải hàng mua) cùng mã trên các phiếu nhập theo đơn.
   const gm = new Map<string, OrderLineProgress>();
-  for (const l of order.lines.filter((x) => x.lineType !== 'buy' && x.sku)) {
+  for (const l of order.lines.filter((x) => x.lineType !== 'buy' && x.sku && own(x))) {
     const cur = gm.get(l.sku) ?? { sku: l.sku, name: l.name, unit: l.unit, ordered: 0, received: 0, remaining: 0, price: 0, baseUnit: baseUnitOf(units?.[l.sku] ?? []) || l.unit, orderedBase: 0, receivedBase: 0, remainingBase: 0 };
     cur.orderedBase += l.qty * ratioIn(units, l.sku, l.unit);
     gm.set(l.sku, cur);
@@ -133,7 +142,12 @@ const key = () => `L${Date.now().toString(36)}${(seq++).toString(36)}`;
 // [2026-11-21 Nguyễn Văn Thủy] ĐƠN GIAO NHIỀU NƠI (mua hộ): dòng đơn có chi nhánh nhận hàng riêng; mỗi chi nhánh nhận lập phiếu nhập của mình (đóng góp)
 /** Các chi nhánh nhận hàng của đơn (dòng trống chi nhánh = chi nhánh đầu đơn), theo thứ tự xuất hiện. */
 export function deliveryBranches(order: PDoc): string[] {
-  return [...new Set(order.lines.filter((l) => l.qty > 0).map((l) => l.branchCode || order.branchCode))];
+  return [...new Set(order.lines.filter((l) => l.qty > 0).map((l) => deliveryBranchOf(order, l)))];
+}
+
+/** Tiến độ giao theo từng chi nhánh nhận của đơn. */
+export function orderProgressByBranch(order: PDoc, docs: PDoc[], units?: UnitMap): { branch: string; progress: OrderProgress; receipts: PDoc[] }[] {
+  return deliveryBranches(order).map((branch) => ({ branch, progress: orderProgress(order, docs, undefined, units, branch), receipts: receiptsOfOrder(order, docs).filter((d) => d.branchCode === branch) }));
 }
 
 /**
@@ -145,7 +159,7 @@ function receiptForBranch(order: PDoc, docs: PDoc[], date: string, units: UnitMa
   const got = new Map<string, number>();
   for (const r of recs) for (const l of r.lines) if (l.sku) got.set(`${l.lineType === 'buy' ? 'b' : 'g'}|${l.sku}`, (got.get(`${l.lineType === 'buy' ? 'b' : 'g'}|${l.sku}`) ?? 0) + l.qty * ratioIn(units, l.sku, l.unit));
   const lines: PLine[] = [];
-  for (const l of order.lines.filter((x) => (x.branchCode || order.branchCode) === branch && x.qty > 0)) {
+  for (const l of order.lines.filter((x) => (x.branchCode || order.deliveryBranch || order.branchCode) === branch && x.qty > 0)) {
     const clean = { ...l, lineKey: key(), refLineKey: l.lineKey, branchCode: undefined, stockInfo: undefined, lotNo: undefined, expDate: undefined, mfgDate: undefined };
     if (!l.sku) { if (!recs.some((r) => r.lines.some((x) => x.refLineKey === l.lineKey))) lines.push(clean); continue; }
     const r = ratioIn(units, l.sku, l.unit) || 1;
@@ -154,9 +168,9 @@ function receiptForBranch(order: PDoc, docs: PDoc[], date: string, units: UnitMa
     got.set(k, Math.max(0, (got.get(k) ?? 0) - l.qty * r));
     if (left > 0) lines.push({ ...clean, qty: r4(left / r), ...(l.lineType === 'buy' ? {} : { refLineKey: undefined }) });
   }
-  const wh = lines.find((l) => l.warehouseCode)?.warehouseCode ?? (branch === order.branchCode ? order.deliveryWarehouse : undefined);
+  const wh = lines.find((l) => l.warehouseCode)?.warehouseCode ?? (branch === (order.deliveryBranch || order.branchCode) ? order.deliveryWarehouse : undefined);
   return {
-    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: branch, partnerCode: order.partnerCode, ...(wh ? { warehouseCode: wh } : {}),
+    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, ...(order.invoicePlan?.mode === 'later' ? {} : { receivedDate: date }), branchCode: branch, partnerCode: order.partnerCode, ...(wh ? { warehouseCode: wh } : {}),
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
     ...(order.contractCode ? { contractCode: order.contractCode } : {}), ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}), ...(order.costItem ? { costItem: order.costItem } : {}),
     refIds: [order.id], lines, note: `Nhận hàng theo đơn ${order.docNo} — phần giao chi nhánh ${branch}${recs.length ? ' (giao tiếp)' : ''}`,
@@ -197,7 +211,7 @@ export function receiptFromOrder(order: PDoc, docs: PDoc[], date: string, units?
     }
   }
   return {
-    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: order.branchCode, partnerCode: order.partnerCode, ...(order.deliveryWarehouse ? { warehouseCode: order.deliveryWarehouse } : {}),
+    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, ...(order.invoicePlan?.mode === 'later' ? {} : { receivedDate: date }), branchCode: order.deliveryBranch || order.branchCode, partnerCode: order.partnerCode, ...(order.deliveryWarehouse ? { warehouseCode: order.deliveryWarehouse } : {}),
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
     ...(order.contractCode ? { contractCode: order.contractCode } : {}),
     ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}),

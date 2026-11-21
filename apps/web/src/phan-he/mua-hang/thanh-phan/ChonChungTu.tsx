@@ -31,9 +31,15 @@ export interface ChonChungTuProps<T> {
   onNone?: () => void;
   storageKey: string;
   note?: ReactNode;
+  // [2026-11-21 Nguyễn Văn Thủy] chọn NHIỀU chứng từ (vd trả tiền NCC cho nhiều phiếu nhập) — cột tích + dòng tổng (đóng góp)
+  /** Chọn nhiều: danh sách đang chọn (rowKey), nhận các dòng đã tích; `summary` = câu tóm tắt các dòng đang tích (vd tổng còn nợ). */
+  multi?: { value: string[]; onPickMany: (rows: T[]) => void; summary?: (rows: T[]) => ReactNode };
 }
 
-export function ChonChungTu<T>({ title, rows, columns, rowKey, dateOf, searchOf, onPick, onClose, chips = [], noneLabel, onNone, storageKey, note }: ChonChungTuProps<T>) {
+export function ChonChungTu<T>({ title, rows, columns, rowKey, dateOf, searchOf, onPick, onClose, chips = [], noneLabel, onNone, storageKey, note, multi }: ChonChungTuProps<T>) {
+  const [tick, setTick] = useState<Set<string>>(() => new Set(multi?.value ?? []));
+  const doiTick = (k: string) => setTick((x) => { const n = new Set(x); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const daTick = rows.filter((r) => tick.has(rowKey(r)));
   const [q, setQ] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -53,7 +59,12 @@ export function ChonChungTu<T>({ title, rows, columns, rowKey, dateOf, searchOf,
     <Modal wide title={title} onClose={onClose}
       footer={<>
         {noneLabel && onNone && <button className="btn" onClick={() => { onNone(); onClose(); }}>{noneLabel}</button>}
-        <button className="btn btn-primary" disabled={!sel} onClick={() => { if (sel) { onPick(sel); onClose(); } }}>Chọn</button>
+        {multi ? <>
+          {multi.summary && daTick.length > 0 && <span className="muted" style={{ marginRight: 'auto', fontSize: 12.5 }}>{multi.summary(daTick)}</span>}
+          <button className="btn" onClick={() => setTick(new Set([...tick, ...shown.map(rowKey)]))} title="Tích mọi chứng từ đang hiện (theo ô tìm / lọc ngày)">Tích tất cả đang lọc</button>
+          {tick.size > 0 && <button className="btn" onClick={() => setTick(new Set())}>Bỏ tích hết</button>}
+          <button className="btn btn-primary" onClick={() => { multi.onPickMany(daTick); onClose(); }}>Chọn ({daTick.length})</button>
+        </> : <button className="btn btn-primary" disabled={!sel} onClick={() => { if (sel) { onPick(sel); onClose(); } }}>Chọn</button>}
         <button className="btn" onClick={onClose}>Đóng</button>
       </>}>
       <div className="full">
@@ -63,11 +74,12 @@ export function ChonChungTu<T>({ title, rows, columns, rowKey, dateOf, searchOf,
           <span style={{ fontSize: 13 }}>Ngày từ</span><input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <span style={{ fontSize: 13 }}>đến</span><input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           {chips.map((c) => <label key={c.key} className="row" style={{ gap: 4, alignItems: 'center', fontSize: 13 }}><input type="checkbox" checked={Boolean(on[c.key])} onChange={(e) => setOn({ ...on, [c.key]: e.target.checked })} /> {c.label}</label>)}
-          <span className="muted" style={{ fontSize: 12 }}>{shown.length} / {rows.length} chứng từ · bấm đôi để chọn</span>
+          <span className="muted" style={{ fontSize: 12 }}>{shown.length} / {rows.length} chứng từ · {multi ? `đã tích ${daTick.length} · bấm ô tích hoặc bấm đôi để tích / bỏ` : 'bấm đôi để chọn'}</span>
         </div>
         {note && <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{note}</div>}
-        <DataGrid storageKey={storageKey} rows={shown} rowKey={rowKey} columns={columns} maxHeight="55vh" onSelect={setSel}
-          onRowDoubleClick={(r) => { onPick(r); onClose(); }} emptyText={rows.length ? 'Không có chứng từ khớp điều kiện tìm' : 'Chưa có chứng từ nào'} />
+        <DataGrid storageKey={storageKey} rows={shown} rowKey={rowKey} maxHeight="55vh" onSelect={setSel}
+          columns={multi ? [{ key: '__tick', header: '✓', width: 34, value: (r: T) => (tick.has(rowKey(r)) ? '1' : ''), render: (r: T) => <input type="checkbox" checked={tick.has(rowKey(r))} onChange={() => doiTick(rowKey(r))} onClick={(e) => e.stopPropagation()} title="Tích để chọn chứng từ này" /> } as Column<T>, ...columns] : columns}
+          onRowDoubleClick={(r) => { if (multi) { doiTick(rowKey(r)); return; } onPick(r); onClose(); }} emptyText={rows.length ? 'Không có chứng từ khớp điều kiện tìm' : 'Chưa có chứng từ nào'} />
       </div>
     </Modal>
   );
