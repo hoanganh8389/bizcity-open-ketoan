@@ -1,5 +1,6 @@
 // @bizcity-layer K kernel/lineage
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1 (ADR-0021, R-CONT-0 / R-CONT-8): truy vết vòng đời mặt hàng — chỉ đọc, dựng từ khoá thật của dữ liệu hiện có
+// [2026-11-21 09:10 AM Võ Hoàng] PHASE-031 — S031-23 (0.4.0-draft): làn `policy` — mỗi sự kiện kho mang chính sách đã áp (policyRef dòng / policyRefs phiếu, kết quả L4b), `policies` gom theo bản
 /**
  * TRUY VẾT VÒNG ĐỜI MẶT HÀNG (bizcity_lineage@1). CHỈ ĐỌC — không ghi gì, không đổi cách tính giá vốn.
  *
@@ -20,6 +21,7 @@ import {
   LINEAGE_KIND_LABEL, type CostContribution, type CostExplain, type CostRole, type LineageCostPeriod, type LineageEffect, type LineageEntryLine,
   type LineageEvent, type LineageItem, type LineageKind, type ItemHistory, type ItemHistoryEntry, type ItemImpact,
 } from '@ketoan/contracts';
+import { policyLane, policyTagsOf, type PolicyCheckValue } from './policy-lineage.js';
 
 const DEFAULT_LIMIT = 500;
 const MAX_LIMIT = 2000;
@@ -117,12 +119,13 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
   const evRows = await sql<{
     at: string; kind: string; code: string; line_no: number; qty: string; amount: string | null; unit: string; warehouse_code: string; is_gift: boolean;
     branch: string; counter: string | null; g1: string; g2: string | null; doc_key: string; doc_no: string; doc_type: string; version: number;
-    status: string; original: string | null;
+    status: string; original: string | null; line_ref: unknown; doc_refs: unknown; policy_check: PolicyCheckValue;
   }>`
     SELECT m.doc_date::text AS at, m.kind, m.sku AS code, m.line_no, m.qty, m.amount, m.unit, m.warehouse_code, m.is_gift,
            b.code AS branch, cb.code AS counter, COALESCE(b.accounting_unit_id, 0)::text AS g1,
            CASE WHEN cb.id IS NULL THEN NULL ELSE COALESCE(cb.accounting_unit_id, 0)::text END AS g2,
-           e.doc_key, e.doc_no, e.doc_type, e.version, e.status, e.payload ->> 'originalDocKey' AS original
+           e.doc_key, e.doc_no, e.doc_type, e.version, e.status, e.payload ->> 'originalDocKey' AS original,
+           e.payload -> 'lines' -> (m.line_no - 1) -> 'policyRef' AS line_ref, e.payload -> 'policyRefs' AS doc_refs, e.policy_check
       FROM inventory_movements m
       JOIN accounting_events e ON e.id = m.event_id
       JOIN branches b ON b.id = m.branch_id
@@ -134,15 +137,18 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
      ORDER BY m.doc_date, m.id
      LIMIT ${limit + 1}`.execute(trx);
 
-  const events: LineageEvent[] = evRows.rows.slice(0, limit).filter((r) => KINDS.has(r.kind)).map((r) => {
+  const evKept = evRows.rows.slice(0, limit).filter((r) => KINDS.has(r.kind));
+  const events: LineageEvent[] = evKept.map((r) => {
     const kind = r.kind as LineageKind;
     const { effect, why } = effectOf(kind, r.g2 !== null && r.g2 === r.g1);
     return {
       at: r.at, kind, label: LINEAGE_KIND_LABEL[kind], effect, effectWhy: why, docKey: r.doc_key, docNo: r.doc_no, docType: r.doc_type,
       version: r.version, status: r.status, branch: r.branch, warehouse: r.warehouse_code, lineNo: r.line_no, qty: num(r.qty),
       amount: r.amount === null ? null : num(r.amount), unit: r.unit, counterBranch: r.counter, originalDocKey: r.original, isGift: r.is_gift, code: r.code,
+      policy: policyTagsOf(r.line_ref, r.doc_refs, r.policy_check ?? null),
     };
   });
+  const policies = await policyLane(trx, tenantId, events.map((e, i) => ({ at: e.at, qty: e.qty, isGift: e.isGift, policy: e.policy ?? [], docRefs: evKept[i]!.doc_refs })));
 
   const enRows = await sql<{
     entry_no: string; doc_no: string; doc_type: string; doc_key: string | null; posting_date: string; account_code: string; account_name: string | null;
@@ -196,6 +202,8 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
   if (waiting) notes.push(`${waiting} dòng bút toán giá vốn đang chờ tính giá (số 0 cho tới khi chạy tính giá vốn).`);
   if (returnsNoOrigin) notes.push(`${returnsNoOrigin} phiếu khách trả hàng chưa nối được chứng từ bán gốc — chưa biết hoàn đúng giá vốn lần bán nào.`);
   if (!costPeriods.length) notes.push('Mặt hàng chưa có tháng nào được tính giá vốn.');
+  const orphan = policies.filter((p) => !p.policyId).length;
+  if (orphan) notes.push(`${orphan} bản chính sách được chứng từ nêu nhưng không có trong sổ đăng ký (tham chiếu mồ côi — L4b đã báo IN-POL-001).`);
 
   const inQty = events.filter((e) => e.qty > 0).reduce((s, e) => s + e.qty, 0);
   const outQty = events.filter((e) => e.qty < 0).reduce((s, e) => s - e.qty, 0);
@@ -203,7 +211,7 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
     item: { itemId: key.itemId, codes: key.codes, sku: item.sku, name: item.name, unit: item.unit, barcode: item.barcode, isActive: item.is_active, isDraft: item.is_draft, family: await familyOf(trx, tenantId, key.itemId) },
     coverage: { keyedBy: key.itemId ? 'item_id' : 'sku', notes },
     range: { from, to },
-    events, entries, costPeriods,
+    events, entries, costPeriods, policies,
     summary: {
       events: events.length, accountingEvents: events.filter((e) => e.effect === 'accounting').length, operationalEvents: events.filter((e) => e.effect === 'operational').length,
       unvaluedEvents: unvalued, inQty, outQty, entries: entries.length, truncated: evRows.rows.length > limit || enRows.rows.length > limit,

@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chính sách: rulepack `policy` + làn `policy` của truy vết (PHASE-031 S031-17, S031-23) <!-- [2026-11-21 10:40 AM Võ Hoàng] PHASE-031 — S031-17 / S031-23 -->
+
+- **Thêm:** rulepack `policy` của Conformance Engine ở lane diagnostics (`tests/conformance/diagnostics/policy.diag.mjs`, mức info, chỉ đọc): DG-POLICY-1 `POLICY_L4B_WARN` (cảnh báo L4b theo kỳ × nguồn × chi nhánh × chính sách, kèm tỷ lệ), DG-POLICY-2 `POLICY_REASON_MISSING` (chính sách có quà mà lý do XTA1.4 tắt / không có), DG-POLICY-3 `POLICY_REFS_MISSING` (nguồn ngoài không gửi `policyRefs` khi có chính sách bán hiệu lực), DG-POLICY-4 `POLICY_EXPIRING_IN_USE` (bản hết hạn trong 30 ngày còn sự việc tham chiếu), DG-POLICY-5 `POLICY_PROMO_NOTICE` (thông báo Sở Công Thương, NĐ81 Điều 17 — chưa đủ căn cứ, bỏ qua). Lọc một đơn vị bằng `args.tenant`.
+- **Thêm:** `bizcity_lineage@1` 0.4.0-draft — làn `policy`: `events[].policy` (chính sách của dòng / của phiếu, kết quả L4b), `policies[]` (bản đã áp + phong bì sổ đăng ký), `GET /api/v1/lineage/policy?eventId=&docKey=&entryNo=&lineKey=` (truy ngược dòng sổ → sự việc → chính sách@bản → người phát hành, căn cứ, L4b). Hành trình mặt hàng thêm làn *Chính sách* và nút *Chính sách căn cứ*; tab *Truy vết* của màn Chính sách hiện chuỗi đầy đủ (người chỉ có `catalog:read` vẫn thấy bản rút gọn).
+- **Đổi:** không đổi trường cũ (chỉ thêm).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Chỉ đọc; không ghi sổ, không chặn giao dịch.
+- **Nâng cấp cần làm:** không migration. Dựng lại `@ketoan/contracts` (kiểu mới ở `lineage.ts`).
+- **Bảo mật:** `GET /api/v1/lineage/policy` quyền `ledger:read`, lọc `tenant_id` như các route truy vết khác.
+
 ### Hoá đơn điện tử tại quầy (người mua) + báo cáo khách hàng (phiếu NT-BH-034) <!-- [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034 (đóng góp) -->
 
 - **Thêm:** báo cáo khách hàng BH23 (module `pos`, màn `/app/pos/bao-cao-khach`, quyền `pos:report`): `GET /api/v1/m/pos/reports/customers` (`pos.report.customers` — khách × kỳ × cửa hàng: số đơn, tiền hàng, giảm giá, thực trả, trả hàng, voucher, điểm tích / đổi, quà số lượng + giá trị theo giá bán, cửa hàng đã mua; lọc `branchCodes`, `channels`, `groupBy=month`; tôn trọng phạm vi chi nhánh người xem) và `GET /api/v1/m/pos/reports/customer-detail` (`pos.report.customer-detail` — từng lần mua / trả). Gộp đơn máy bán + phiếu bán BH10; số liệu module khác qua action đọc mới `phieu-ban.customer.docs` (`GET /api/v1/m/phieu-ban/reports/customer-docs`), `voucher.usage.list` (`GET /api/v1/m/voucher/reports/usage`), `loyalty.order.points` (`GET /api/v1/m/loyalty/reports/order-points`). Xuất Excel từ bảng. Hướng dẫn `docs/huong-dan/pos-bao-cao-khach.md`.

@@ -3,7 +3,8 @@
 
 <!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: 0.2.0-draft — khoá theo item_id -->
 <!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: 0.3.0-draft — họ mặt hàng -->
-> **Phiên bản:** 0.3.0-draft · 2026-11-04 · **Trạng thái:** Đề xuất (ADR-0021 chờ chủ duyệt; W1 chạy được trước, chỉ đọc)
+<!-- [2026-11-21 10:20 AM Võ Hoàng] PHASE-031 — S031-23: 0.4.0-draft — làn `policy`: events[].policy, policies, GET /lineage/policy (truy ngược chính sách) -->
+> **Phiên bản:** 0.4.0-draft · 2026-11-21 · **Trạng thái:** Đề xuất (ADR-0021 chờ chủ duyệt; W1 chạy được trước, chỉ đọc)
 > **Nguồn sự thật:** `packages/contracts/src/lineage.ts` (kiểu, nhãn, làn) · `packages/kernel/src/modules/lineage/` (dịch vụ + route)
 > **Tôn chỉ:** [ADR-0020](../adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md) · **Luật:** [R-CONT](../rules/RULE-CONTINUITY.md) · **Kế hoạch:** [PHASE-025](../phases/PHASE-025-ACCOUNTING-CONTINUITY/README.md)
 
@@ -26,6 +27,7 @@ Một mặt hàng → mọi sự kiện kho của nó (mua, nhập, bán, trả,
 | `GET /api/v1/lineage/search?q=&limit=` | mặt hàng khớp mã (đầu mã), mã vạch (đúng), tên (chứa); mã đúng xếp đầu |
 | `GET /api/v1/lineage/items/:sku?from=&to=&branch=&limit=` | `LineageItem`: `item`, `coverage`, `events`, `entries`, `costPeriods`, `summary` |
 | `GET /api/v1/lineage/items/:sku/cost?period=YYYY-MM&costGroup=` | `CostExplain`: câu giải thích bằng số thật, các phiếu góp vào theo vai, đối chiếu số đã lưu |
+| `GET /api/v1/lineage/policy?eventId=&docKey=&entryNo=&lineKey=` | `PolicyLineage` (0.4.0, làn `policy`): truy ngược chính sách từ một sự việc, một chứng từ hay một bút toán; `lineKey` thu về một dòng chứng từ |
 
 Danh sách bị cắt ở `limit` (mặc định 500, tối đa 2000): `summary.truncated = true` — thu hẹp khoảng ngày.
 
@@ -43,6 +45,16 @@ Danh sách bị cắt ở `limit` (mặc định 500, tối đa 2000): `summary.
 
 **Giải thích giá vốn** (`CostExplain`): `sentences[]` (từng dòng một câu: tồn đầu, nhập, công thức đơn giá, xuất, so tháng trước, phiếu kéo đơn giá nhiều nhất), `contributions[]` với **vai** (`in` góp vào đơn giá · `out` hàng xuất · `gift` quà không vào đơn giá · `internal` chuyển cùng nhóm · `return` trả nhà cung cấp), `reconcile` (cộng lại từ các phiếu có khớp số đã lưu không; không khớp thì nói vì sao). Hôm nay giải thích **bình quân gia quyền theo tháng** (luật hiện hành ở `costing.service.ts`); phương pháp khác theo D025-2.
 
+**Làn `policy`** (0.4.0-draft, PHASE-031 S031-23 — [20 §2](../phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/20-TRUY-VET-VA-THEO-DOI.md)): nối bằng khoá thật, **không bảng, không hàm CSDL mới**.
+
+| Trường | Nghĩa | Nguồn |
+|---|---|---|
+| `event.policy[]` (`LineagePolicyTag`) | chính sách đã áp cho dòng: `key`, `version`, `line` (vai, vd `gift`), `scope` (`line` = `policyRef` của chính dòng chứng từ · `doc` = `policyRefs` của cả phiếu khi dòng không nêu), `verdict` (`pass` · `warn` · `none`), `codes` (IN-POL-*) | `accounting_events.payload` (dòng `line_no − 1`), `policy_check` |
+| `policies[]` (`LineagePolicyApplied`) | mỗi bản đã áp trên hành trình một dòng: phong bì sổ đăng ký (`policyId`, `ruleContract`, `ownerModule`, `status`, `contentHash`, `hashMatches`, hiệu lực, `publishedBy/At`, `legalRef`) + số sự kiện, lượng quà, số sự kiện có cảnh báo L4b; `policyId = null` = tham chiếu mồ côi | `policy_registry` |
+| `PolicyLineage` | `from` · `event` · `check` (kết quả L4b của bản hiện hành) · `refs[]` (chính sách@bản: băm gửi / băm sổ, hiệu lực tại ngày chứng từ, người phát hành, căn cứ, lý do, L4b, dòng nêu) · `lines[]` (dòng chứng từ + chính sách của dòng) · `entries[]` (dòng sổ của sự việc, `postingPolicyVersion` = bản chính sách **định khoản**, `policy` = chính sách **nghiệp vụ** của dòng) · `notes[]` | `ledger_entries` / `ledger_lines` → `accounting_events` → `policy_registry` |
+
+Dòng sổ chưa mang `lineKey`: `entries[].policy` nối qua dòng chứng từ cùng mã hàng (+ cờ quà của cặp giá vốn `cost:…:gift`), chỉ khi nối được **duy nhất**; còn lại `null` và có câu ở `notes`. Màn: Hành trình mặt hàng thêm làn *Chính sách* ("dòng này tặng theo `KEY@bản`", nút *Chính sách căn cứ*); màn Chính sách, tab *Truy vết* đọc `PolicyLineage` (người chỉ có `catalog:read` xem bản rút gọn `GET /api/v1/policy-lineage`).
+
 ## 4. Nói rõ phần chưa truy được
 
 `coverage.notes` luôn có dòng đầu về khoá (định danh, và các mã từng dùng khi có hơn một); thêm dòng khi: sự kiện kho thuộc **tháng chưa tính giá vốn**; dòng bút toán giá vốn đang chờ tính giá; phiếu **khách trả hàng chưa nối được chứng từ bán gốc**. Không giả vờ đầy đủ (R-CONT-0).
@@ -52,9 +64,11 @@ Danh sách bị cắt ở `limit` (mặc định 500, tối đa 2000): `summary.
 - Chỉ đọc; quyền `ledger:read`; cô lập đơn vị theo RLS như mọi route Kernel.
 - Truy vết một mã không quét cả bảng: `inventory_movements_sku` (0007) và `ledger_lines_sku` (0064).
 - Test: `apps/api/test/lineage.test.ts` — tìm, đủ loại sự kiện, vận hành ≠ kế toán, bút toán giá vốn, giá vốn từng tháng, lọc, hàng trả, "Vì sao giá vốn này?" (công thức khớp số đã lưu).
+- Test làn `policy`: `apps/api/test/phase-031-policy-lineage.test.ts` — dòng quà / dòng thường, kết quả L4b, tham chiếu mồ côi, truy ngược từ chứng từ / bút toán / dòng, cô lập đơn vị.
 
 ## 6. Changelog
 
+- **0.4.0-draft (2026-11-21):** làn `policy` (PHASE-031 S031-23): thêm `event.policy[]` (`LineagePolicyTag`), `policies[]` (`LineagePolicyApplied`) ở `LineageItem`; thêm `GET /lineage/policy` (`PolicyLineage`: sự việc / bút toán / dòng → chính sách@bản → phát hành, căn cứ, L4b). Chỉ thêm trường, không đổi trường cũ; không migration.
 - **0.3.0-draft (2026-11-04):** thêm `GET /lineage/items/:sku/impact` (`ItemImpact`: chứng từ, tồn theo chi nhánh, tài khoản, bảng giá, quy đổi, tháng giá vốn, kỳ đã khoá, câu hệ quả); thêm `GET /lineage/items/:sku/history` (`ItemHistory`: mã cũ / mới, hiệu lực, người, phân loại, sửa + lý do cảnh báo; quyền catalog:read); thêm `item.family` (`parent`, `children`, `siblings` — định danh, mã hiện hành, tên, trạng thái); mở Hành trình bằng mã cũ.
 - **0.2.0-draft (2026-11-04):** khoá theo `item_id`; thêm `item.itemId`, `item.codes`, `event.code`; tìm bằng mã cũ. Giá vốn tháng vẫn tính theo mã (đổi mã giữa tháng → hai dòng giá vốn, PHASE-024 · 70 §3.2.1 G2).
 - **0.1.0-draft (2026-11-03):** khuôn đầu (PHASE-025 W1): tìm, hành trình một mặt hàng, giải thích giá vốn bình quân tháng.
