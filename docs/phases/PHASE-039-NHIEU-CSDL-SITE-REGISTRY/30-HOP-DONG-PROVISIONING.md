@@ -1,6 +1,7 @@
 # PHASE-039 · 30 — Hợp đồng Provisioning (`bizcity_site_provisioning@1`, bản nháp)
 <!-- [2026-11-21 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — W0: bản nháp hợp đồng Provisioning giữa Site Manager (Frappe, repo bizcity-open-setup) và Open Kế Toán; chưa vào docs/contracts cho tới khi chốt ở B5 -->
 
+<!-- [2026-11-21 07:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — D039-17: bỏ hai lệnh cấp / thu hồi khoá API của site; thêm §8 kiểm khoá biz-… qua bizcity-llm-router -->
 > **Trạng thái:** bản nháp trong phase. Khi làm B5 mới chuyển thành tệp ở `docs/contracts/` và gói `@ketoan/contracts`.
 > **Chủ hợp đồng:** Open Kế Toán. **Phía gọi:** Site Manager (`bizcity_site_manager`), CLI, script vận hành.
 
@@ -36,8 +37,6 @@
 | `POST` | `/sites/{siteId}/backups` | Sao lưu ngay | `202 { jobId }` |
 | `GET` | `/sites/{siteId}/backups` | Danh sách bản sao lưu | `200 { items }` |
 | `POST` | `/sites/{siteId}/restore` | Khôi phục từ một bản | `202 { jobId }` |
-| `POST` | `/sites/{siteId}/api-keys` | Cấp khoá API của site | `201 { keyId, prefix, key }` (`key` hiện **một lần**) |
-| `DELETE` | `/sites/{siteId}/api-keys/{keyId}` | Thu hồi khoá | `204` |
 | `DELETE` | `/sites/{siteId}` | Xoá mềm (cần đang khoá + bản sao lưu ≤ 24 giờ đã kiểm) | `202 { jobId }` |
 | `GET` | `/jobs/{jobId}` | Trạng thái việc | `200 Job` |
 | `GET` | `/health` | Bản ứng dụng, lược đồ cần, số site theo trạng thái | `200` |
@@ -134,4 +133,28 @@ POST /_sites/v1/sites            Idempotency-Key: 01JD8…   →  202 { jobId: J
 
 ## 7. Chưa có ở `@1`
 
-Webhook báo việc xong (v1 hỏi trạng thái), chuyển site sang máy chủ khác, đổi `slug`, hạn mức theo gói. Thêm trường không bắt buộc không tăng `@N`; đổi nghĩa hoặc bỏ trường thì tăng.
+Cấp khoá API cho khách (thuộc `bizcity-llm-router`, §8), webhook báo việc xong (v1 hỏi trạng thái), chuyển site sang máy chủ khác, đổi `slug`, hạn mức theo gói. Thêm trường không bắt buộc không tăng `@N`; đổi nghĩa hoặc bỏ trường thì tăng.
+
+## 8. API key của khách (không thuộc hợp đồng này)
+
+Chủ dự án chốt 2026-11-21: **`bizcity-llm-router` quản lý API key.** Provisioning API không cấp, không thu hồi khoá của khách. Khoá `prov_…` ở §2 là khoá hệ thống (máy chủ gọi máy chủ), khác loại.
+
+Chiều kiểm khoá (bản nháp, chốt cùng B5 và với phía plugin):
+
+```text
+Khách  ──  Authorization: Bearer biz-…  ──►  https://<slug>.<tên miền gốc>/api/v1/…
+                                                  │
+Open Kế Toán: Host → site;  hỏi bizcity-llm-router (bộ đệm 60 giây)
+                                                  ▼
+                 { active, userId, allowedDomain }
+                                                  │
+nhận khi: active  ∧  allowedDomain = tên miền site  ∧  userId được chủ site cho phép (vai theo Q039-5)
+```
+
+| Trường hợp | Trả |
+|---|---|
+| Khoá sai, đã thu hồi, hoặc `allowed_domain` khác tên miền site | 401 `API_KEY_INVALID` (không nói rõ lý do) |
+| Khoá đúng nhưng người dùng chưa được chủ site cho phép | 403 `API_KEY_NOT_ALLOWED` |
+| `bizcity-llm-router` không trả lời và bộ đệm đã hết hạn | 503 `API_KEY_CHECK_UNAVAILABLE` (từ chối, không cho qua) |
+
+Open Kế Toán chỉ giữ giá trị băm của khoá trong bộ đệm, không ghi khoá vào nhật ký.

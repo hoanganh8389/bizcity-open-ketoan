@@ -108,6 +108,7 @@ Tên database luôn do Provisioner tự dựng từ `slug` đã kiểm; không n
 | Điểm | Cách giữ |
 |---|---|
 | Vé của site A dùng ở site B | claim `sid` + so với site của tên miền (D039-5) |
+| API key của khách | không cấp ở đây; kiểm qua `bizcity-llm-router`, khớp `allowed_domain` với tên miền site, bộ đệm 60 giây; `bizcity-llm-router` không trả lời thì **từ chối** (D039-17) <!-- [2026-11-21 07:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — D039-17 --> |
 | Rơi về database mặc định | cấm ở chế độ `multi` (D039-6) |
 | Provisioning API bị gọi từ ngoài | chỉ trả lời trên `SITE_ADMIN_HOST`, khoá `prov_…` băm, danh sách IP, giới hạn tần suất |
 | Chèn tên database | tên dựng từ `slug` đã kiểm; dùng định danh có trích dẫn, không ghép chuỗi tự do |
@@ -155,7 +156,7 @@ Cổng lược đồ (D039-11) làm quy trình này an toàn mà không cần lu
 | **B2** | Database điều khiển + Site Registry; Site Resolver theo `Host`; `sid` trong vé; tiến trình nền `forEachSite`; `SITE_MODE=multi` | Hai tên miền trên một bản chạy ra hai sổ khác nhau | K3 |
 | **B3** | `runMigrations(connectionString)`; `site migrate`; cổng lược đồ (`SITE_UPGRADING`) | Nâng cấp từng site, site lỗi không kéo site khác | K3 |
 | **B4** | Site Provisioner + `kt_template`; CLI `bizcity site create / list / migrate / suspend / resume / drop / adopt` | Một lệnh có site mới trong vài giây | K2 |
-| **B5** | Provisioning API `/_sites/v1` + khoá `prov_…` + `Idempotency-Key` | Site Manager (Frappe) tạo được site | K2 |
+| **B5** | Provisioning API `/_sites/v1` + khoá `prov_…` + `Idempotency-Key`; kiểm khoá `biz-…` qua `bizcity-llm-router` (D039-17) | Site Manager (Frappe) tạo được site; khoá cấp ở WordPress gọi được site | K2 |
 | **B6** | Backup Manager theo site; lịch đêm; khôi phục thử; sổ tay | Khôi phục một khách không đụng khách khác | K2 |
 | **B7** | `cap-nhat.sh` nhiều site; số đo / nhật ký có `site`; nghiệm thu T039-* | Cập nhật một lần, mọi site dùng mã mới | K2 |
 

@@ -1,11 +1,12 @@
 # PHASE-039 — Nhiều CSDL: mỗi site một database, một bản mã dùng chung
 <!-- [2026-11-21 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — W0: đề bài chủ dự án 2026-11-21 — Open Kế Toán là ứng dụng dùng chung, mỗi site một database PostgreSQL; thêm Site Registry, Database Router, Site Provisioner, Migration Runner, Backup Manager; Frappe (repo bizcity-open-setup) chỉ là Site Manager gọi Provisioning API -->
 
+<!-- [2026-11-21 07:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — chủ dự án chốt: bizcity-llm-router quản lý API key; thêm D039-17, Q039-5; Provisioning API không cấp khoá cho khách -->
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng, chờ đưa vào lộ trình)
 > **Phân hệ:** he-thong
 > **Checklist công bố:** —
-> **Trạng thái:** 🟡 **W0 đề xuất 2026-11-21** — chờ chủ dự án duyệt D039-1..16 và trả Q039-1..4. Chưa có mã.
+> **Trạng thái:** 🟡 **W0 đề xuất 2026-11-21** — chờ chủ dự án duyệt D039-1..17 và trả Q039-1..5. Chưa có mã.
 > **Tệp:** [00 — Kế hoạch & thiết kế](00-MASTER-PLAN.md) · [30 — Hợp đồng Provisioning](30-HOP-DONG-PROVISIONING.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)
 
 ## Đề bài (chủ dự án, 2026-11-21)
@@ -40,7 +41,7 @@
 | **D039-2** | Site Registry ở **database điều khiển** của Open Kế Toán (`ketoan_control`): `sites`, `site_domains`, `site_jobs`, `site_backups`, `provision_keys` | Open Kế Toán độc lập với Frappe; một chủ cho sự thật "domain → database" |
 | **D039-3** | `SITE_MODE=single` (mặc định) / `multi`. Chế độ một site = registry trong bộ nhớ có đúng một site lấy từ `DATABASE_URL`. **Một đường mã**, không rẽ nhánh `if multi` trong nghiệp vụ | Bản cài hiện có không đổi gì; không nuôi hai đường mã |
 | **D039-4** | Database Router: `Host` → site (bộ đệm registry 30 giây, xoá khi có lệnh đổi) → pool của site. `db` thành lớp uỷ quyền đọc site từ ngữ cảnh yêu cầu | Mã nghiệp vụ, Kernel, SDK không đổi một dòng |
-| **D039-5** | Vé đăng nhập (JWT) và vé ứng dụng thêm claim `sid`. `sid` khác site của tên miền → 401. Khoá API cũng gắn site | `JWT_SECRET` dùng chung giữa các site; thiếu `sid` thì vé site A dùng được ở site B |
+| **D039-5** | Vé đăng nhập (JWT) và vé ứng dụng thêm claim `sid`. `sid` khác site của tên miền → 401 | `JWT_SECRET` dùng chung giữa các site; thiếu `sid` thì vé site A dùng được ở site B |
 | **D039-6** | **Đóng khi thiếu.** Chế độ `multi` mà không có site trong ngữ cảnh → lỗi `SITE_CONTEXT_MISSING`. Tên miền lạ → 404 `SITE_NOT_FOUND`, không lộ tên site khác | Rơi về mặc định là cách lộ dữ liệu chéo |
 | **D039-7** | Pool theo site: tạo khi cần, tối đa 4 kết nối / site, đóng sau 5 phút rảnh, có trần tổng. Vượt trần thì đóng pool rảnh lâu nhất | Hàng trăm site × 10 kết nối sẽ vượt `max_connections` |
 | **D039-8** | Tiến trình nền (dispatcher sự kiện, đồng hồ) chạy theo vòng `forEachSite`: mỗi lượt đặt ngữ cảnh site; site lỗi không chặn site khác. Bộ đệm trong bộ nhớ có khoá theo đơn vị phải thêm mã site | Hôm nay hai `setInterval` ở `events.ts` chạy trên một pool; `tenant_id` có thể trùng giữa hai database |
@@ -52,6 +53,7 @@
 | **D039-14** | Provisioning API ở tiền tố riêng `/_sites/v1`, **chỉ** trả lời trên tên miền điều hành (`SITE_ADMIN_HOST`), khoá `prov_…` (lưu dạng băm), danh sách IP cho phép | Cửa tạo / xoá database không được nằm chung với cửa nghiệp vụ |
 | **D039-15** | Xoá site = **xoá mềm**: yêu cầu site đang khoá và có bản sao lưu ≤ 24 giờ đã kiểm; đổi tên database thành `kt_<slug>_xoa_<ngày>`, giữ 30 ngày rồi mới `DROP` | Sổ kế toán: xoá nhầm không lấy lại được |
 | **D039-16** | Mức thay đổi **K3** (đụng `db/client.ts`, xác thực, migration runner). Cần ADR (số kế tiếp) ở W0 và chủ dự án duyệt; mỗi bước có "đường lùi" trong PR | Lớp CSDL nền của toàn bộ Core |
+| **D039-17** | **API key của khách do `bizcity-llm-router` quản lý** (chủ dự án chốt 2026-11-21). Open Kế Toán **không** cấp khoá riêng cho khách ở chế độ nhiều site. Yêu cầu mang khoá `biz-…` tới một site → Open Kế Toán hỏi `bizcity-llm-router` (cửa kiểm khoá, bộ đệm 60 giây) → nhận lại khoá còn hiệu lực không, thuộc người dùng nào, `allowed_domain` nào. Chỉ nhận khi `allowed_domain` đúng tên miền site **và** người dùng đó được chủ site cho phép | Một nơi cấp và thu hồi khoá cho cả hệ sinh thái; thu hồi ở WordPress có hiệu lực ở mọi site trong 60 giây |
 
 ## Câu còn mở
 
@@ -61,7 +63,10 @@
 | **Q039-2** | Mỗi site một vai trò PostgreSQL riêng, hay dùng chung `ketoan` / `ketoan_app`? | v1 dùng chung (đơn giản, database đã tách); vai trò riêng khi có site đặt ở máy chủ khác |
 | **Q039-3** | Thêm PgBouncer ngay hay để sau? | Để sau; D039-7 đủ cho vài chục site. Thêm khi vượt 50 site |
 | **Q039-4** | Bản cài một công ty đang chạy có được chuyển thành một site của cụm nhiều site không? | Có, bằng sao lưu → khôi phục vào `kt_<slug>` → ghi registry; làm thành lệnh CLI ở B4 |
+| **Q039-5** | Khoá `biz-…` vào site thì mang **vai** nào trong site? | Gắn với một "tài khoản dịch vụ" do chủ site tạo và chọn vai (mặc định chỉ đọc); khoá không tự có quyền chỉ vì thuộc chủ site |
 
 ## Phía gọi
 
-Repo `bizcity-open-setup` (app Frappe `bizcity_site_manager`): giữ khách hàng, danh sách site, khoá; gọi Provisioning API ở [30](30-HOP-DONG-PROVISIONING.md). Phase này là **chủ hợp đồng**; phía gọi đổi theo.
+Repo `bizcity-open-setup` (app Frappe `bizcity_site_manager`): giữ khách hàng và danh sách site; gọi Provisioning API ở [30](30-HOP-DONG-PROVISIONING.md). Phase này là **chủ hợp đồng**; phía gọi đổi theo.
+
+Plugin WordPress `bizcity-llm-router`: chủ API key (`biz-…`). Việc cần ở phía plugin: một cửa kiểm khoá cho máy chủ gọi máy chủ (hôm nay plugin mới tự kiểm khoá cho các cửa của chính nó).
