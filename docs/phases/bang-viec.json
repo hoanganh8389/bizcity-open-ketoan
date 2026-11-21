@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 204
+      "count": 223
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 327
+      "count": 328
     }
   ],
   "items": [
@@ -9898,6 +9898,306 @@
       "modules": [],
       "facet": "F6",
       "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S039-1",
+      "phase": "PHASE-039",
+      "title": "README, 00, 30 hợp đồng nháp, checklist",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S039-2",
+      "phase": "PHASE-039",
+      "title": "Chủ dự án duyệt D039-1..16, trả Q039-1..4 (D039-17, D039-18, Q039-5 đã chốt 2026-11-21); ADR (số kế tiếp) \"mỗi site một database\"",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S039-3",
+      "phase": "PHASE-039",
+      "title": "B1 — kiểm kê: chỗ gọi thẳng pool (apps/api/src/db/setup.ts), bộ đệm trong bộ nhớ có khoá theo đơn vị, script tự mở pool, số đo có nhãn đơn vị; ghi bảng kết quả…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S039-4",
+      "phase": "PHASE-039",
+      "title": "B1 — siteId trong ngữ cảnh yêu cầu; poolOf(site); db uỷ quyền theo site; chế độ single với site default; hành vi không đổi",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F2",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S039-5",
+      "phase": "PHASE-039",
+      "title": "B2 — database điều khiển (CONTROLDATABASEURL, db/control-migrations/), bảng sites, sitedomains; Site Resolver theo Host; SITEMODE=multi; SITENOTFOUND, SITECONT…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S039-6",
+      "phase": "PHASE-039",
+      "title": "B2 — claim sid trong vé đăng nhập và vé ứng dụng; khoá API gắn site; từ chối vé lệch site",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S039-7",
+      "phase": "PHASE-039",
+      "title": "B2 — tiến trình nền forEachSite (dispatcher sự kiện, đồng hồ); pool theo site có trần và tự đóng khi rảnh",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S039-8",
+      "phase": "PHASE-039",
+      "title": "B2 — bộ đệm trong bộ nhớ thêm khoá site (theo kết quả S039-3) + phép kiểm tĩnh chặn bộ đệm theo đơn vị thiếu site",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 17
+    },
+    {
+      "id": "S039-9",
+      "phase": "PHASE-039",
+      "title": "B3 — runMigrations(connectionString) cho lõi và module; schemaversion trong registry; cổng lược đồ SITEUPGRADING / SITEMIGRATIONFAILED",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 18
+    },
+    {
+      "id": "S039-10",
+      "phase": "PHASE-039",
+      "title": "B3 — lệnh site migrate <slug> / --all: sao lưu trước, site lỗi dừng riêng, bảng tổng kết, chạy lại được",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S039-11",
+      "phase": "PHASE-039",
+      "title": "B4 — Site Provisioner: kttemplate, CREATE DATABASE … TEMPLATE, đơn vị đầu + tài khoản quản trị, sitejobs, dọn khi hỏng",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F2",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 20
+    },
+    {
+      "id": "S039-12",
+      "phase": "PHASE-039",
+      "title": "B4 — CLI bizcity site create / list / suspend / resume / drop / adopt (adopt: đưa bản cài một công ty vào cụm, Q039-4)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S039-13",
+      "phase": "PHASE-039",
+      "title": "B5 — Provisioning API /sites/v1 theo 30: SITEADMINHOST, khoá prov…, Idempotency-Key, mã lỗi; chuyển hợp đồng sang docs/contracts/",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S039-14",
+      "phase": "PHASE-039",
+      "title": "B5 — khoá bản quyền biz-… (D039-17): gắn khoá cho site, hỏi trạng thái ở bizcity-llm-router (bộ đệm 1 giờ), dải đỏ khi hết hạn / thiếu khoá, không chặn; phía p…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S039-15",
+      "phase": "PHASE-039",
+      "title": "B6 — Backup Manager: site backup, tự kiểm, sitebackups, lịch đêm, chính sách giữ",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S039-16",
+      "phase": "PHASE-039",
+      "title": "B6 — site restore vào database tạm → kiểm → đổi tên; sổ tay docs/ops/ (kể cả lấy một site từ PITR)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S039-17",
+      "phase": "PHASE-039",
+      "title": "B6 — khoá site (chỉ đọc, Q039-1) và xoá mềm (D039-15)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S039-18",
+      "phase": "PHASE-039",
+      "title": "B7 — cap-nhat.sh nhiều site theo 00 §6; docker-compose.yml không ghi cứng tên database ở chế độ multi",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F2",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S039-19",
+      "phase": "PHASE-039",
+      "title": "B7 — nhật ký và số đo có site (trần số nhãn); màn chẩn đoán báo site đang phục vụ",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S039-20",
+      "phase": "PHASE-039",
+      "title": "B7 — nghiệm thu T039-1..14 trên máy sạch; phối hợp Site Manager (repo bizcity-open-setup) tạo site thật",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [
+        "he-thong"
+      ],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
       "line": 29
     }
   ]
