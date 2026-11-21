@@ -35,7 +35,7 @@ import {
   warehousesOf, writeOf, type OrderFilter, type OrderRow, type ShipLog,
 } from './order-store.js';
 import { giftWarehouseOf, saveDraftIn, withChannel } from './service.js';
-import { activeMethods, branchExists, catalogFor, deleteDoc, getDoc, partnerByCode, saleByNo, taxRates, type Tx } from './store.js';
+import { activeMethods, branchExists, catalogFor, deleteDoc, getDoc, partnerByCode, saleByNo, serviceSkus, taxRates, type Tx } from './store.js';
 
 export const HOLD_WAREHOUSES = 'bizcity.phieu_ban.hold_warehouses';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: khoá cấu hình giao hàng (chọn ở BH17) (đóng góp)
@@ -568,10 +568,21 @@ async function shipWarehouseOf(tx: Tx, r: Pick<OrderRow, 'branch_code' | 'wareho
   return code;
 }
 
-/** Cấu hình kho KHG, mã phí ship, hình thức COD theo hãng (cho màn). */
+// [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 §3.3: BH17 nhắc khi mã phí ship chưa là mặt hàng dịch vụ (dịch vụ không ghi thẻ kho) (đóng góp)
+/**
+ * Cấu hình kho KHG, mã phí ship, hình thức COD theo hãng (cho màn). `shipFeeWarning`: mã phí ship đã khai mà chưa phân loại là dịch vụ
+ * (tại hôm nay) → dòng phí ship vẫn sinh thẻ kho / giá vốn như hàng hoá; màn nhắc kế toán phân loại lại. Trống = ổn / chưa khai.
+ */
 export async function shipSettings(ctx: ActionContext) {
   const c = await shipConfigOf(ctx);
-  return { keys: { shipWarehouses: SHIP_WAREHOUSES, shipFeeSku: SHIP_FEE_SKU, codMethods: COD_METHODS }, shipWarehouses: Object.fromEntries(c.warehouses), shipFeeSku: c.feeSku || null, codMethods: Object.fromEntries(c.cod) };
+  const isService = c.feeSku ? (await ctx.data.module(async (tx) => serviceSkus(tx, [c.feeSku], vnToday()))).has(c.feeSku) : false;
+  const shipFeeWarning = c.feeSku && !isService
+    ? `Mã phí ship ${c.feeSku} chưa phân loại là mặt hàng dịch vụ — dòng phí ship vẫn ghi thẻ kho và giá vốn như hàng hoá. Cần phân loại mặt hàng này là "Dịch vụ" (loại mặt hàng theo ngày hiệu lực) thì dòng phí ship mới không ghi kho.`
+    : null;
+  return {
+    keys: { shipWarehouses: SHIP_WAREHOUSES, shipFeeSku: SHIP_FEE_SKU, codMethods: COD_METHODS }, shipWarehouses: Object.fromEntries(c.warehouses), shipFeeSku: c.feeSku || null,
+    shipFeeIsService: c.feeSku ? isService : null, shipFeeWarning, codMethods: Object.fromEntries(c.cod),
+  };
 }
 
 const shipLog = (ctx: ActionContext, from: ShipmentStatus | null, to: ShipmentStatus, note?: string | null, docNo?: string): ShipLog => ({

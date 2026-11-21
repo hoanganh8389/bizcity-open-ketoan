@@ -120,6 +120,24 @@ export async function catalogFor(tx: Tx, skus: readonly string[]): Promise<Map<s
   return new Map(rows.map((r) => [r.sku, { sku: r.sku, name: r.name, unit: r.unit ?? '', taxCode: r.tax_out_code, itemId: r.item_id }]));
 }
 
+// [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 §3.3: mặt hàng dịch vụ (phân loại tại ngày, khung nhìn bizcity_read.item_kinds 0178) không ghi thẻ kho (đóng góp)
+/** Mã là mặt hàng dịch vụ tại ngày `day` — cùng căn cứ Kernel dùng để không ghi thẻ kho. Chưa phân loại / không định danh → không phải. */
+export async function serviceSkus(tx: Tx, skus: readonly string[], day: string): Promise<Set<string>> {
+  const list = [...new Set(skus.map((s) => s.trim()).filter(Boolean))];
+  if (!list.length) return new Set();
+  // Core cũ (chưa có 0178) / module chưa chạy lại "module migrate" (chưa được cấp khung nhìn) → như cũ: không coi mã nào là dịch vụ.
+  const can = (await sql<{ ok: boolean }>`
+    SELECT CASE WHEN to_regclass('bizcity_read.item_kinds') IS NULL THEN false
+                ELSE has_table_privilege('bizcity_read.item_kinds', 'SELECT') AND has_column_privilege('public.item_classification', 'kind', 'SELECT') END AS ok`.execute(tx)).rows[0]?.ok;
+  if (!can) return new Set();
+  const rows = (await sql<{ sku: string }>`
+    SELECT p.sku FROM bizcity_read.products p
+      JOIN bizcity_read.item_kinds k ON k.tenant_id = p.tenant_id AND k.item_id = p.item_id
+       AND k.valid_from <= ${day}::date AND (k.valid_to IS NULL OR ${day}::date < k.valid_to)
+     WHERE p.sku IN (${sql.join(list)}) AND k.kind = 'service'`.execute(tx)).rows;
+  return new Set(rows.map((r) => r.sku));
+}
+
 // [2026-11-16 06:00 PM Võ Hoàng] NGHIEM-THU — NT-BH-021 chặn bán quá tồn ở phiếu bán nhập tay (đóng góp)
 /**
  * Khoá chi nhánh × mã (cùng khoá với máy bán: hai nguồn bán một mã chạy nối tiếp) rồi đọc tồn hiện tại theo mã ở kho trên phiếu
