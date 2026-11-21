@@ -126,6 +126,14 @@ export async function openOfBrand(trx: Db, tenantId: string, docs: StoredDoc[], 
   return Math.round(ds.reduce((s, x) => s + evKeys(x.d).reduce((a, e) => a + (byEv.get(e) ?? 0), 0) * x.share, 0));
 }
 
+// [2026-11-21 Nguyễn Văn Thủy] hạn mức công nợ theo hợp đồng: nợ của các phiếu thuộc hợp đồng (docs/nghiep-vu/28) (đóng góp)
+/** Hạn mức của hợp đồng đang bị chiếm: nợ còn mở của phiếu đã duyệt thuộc hợp đồng + đơn / phiếu đang chờ thuộc hợp đồng. */
+export async function contractUsage(trx: Db, tenantId: string, docs: StoredDoc[], contractCode: string, asOf: string, self?: { id: string; refIds?: string[] }) {
+  const of = (d: StoredDoc) => (d.contractCode ?? '') === contractCode;
+  const current = await openOf(trx, tenantId, docs.filter((d) => of(d) && d.status === 'approved' && d.id !== self?.id && d.docDate <= asOf).flatMap(evKeys));
+  return { current: Math.round(current), pending: pendingOf(docs, of, asOf, self) };
+}
+
 /** Phần chưa trả của các khoản công nợ (ghi Có) sinh từ các chứng từ kế toán cho trước. */
 export async function openOf(trx: Db, tenantId: string, eventIds: string[]): Promise<number> {
   if (!eventIds.length) return 0;
@@ -232,7 +240,14 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   if (affectsDebt && doc.partnerCode) {
     // Hạn mức theo NCC: chỉ chính sách đang bật VÀ còn hiệu lực ở ngày phiếu (từ / đến), như hạn mức theo nhãn bên dưới.
     // [2026-11-13 Nguyễn Văn Thủy] hạn mức khai ở đơn vị mẹ "áp cho cả đơn vị con": cả nhóm dùng chung một hạn mức (đóng góp)
-    let pp = findPolicy(policies.filter((p) => p.scope.partnerCode && !p.scope.brandCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode });
+    let pp = findPolicy(policies.filter((p) => p.scope.partnerCode && !p.scope.brandCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode, contractCode: doc.contractCode || undefined });
+    // Hạn mức của hợp đồng: tính trên các phiếu thuộc hợp đồng (hạn mức chung của NCC bên dưới vẫn là trần tổng nếu có).
+    if (pp?.scope.contractCode) {
+      const u = await contractUsage(trx, tenantId, docs, pp.scope.contractCode, doc.docDate, doc);
+      const cs = creditStatus(pp, u.current, u.pending, calc.payable);
+      if (cs) credit.push({ ...cs, scope: `Hợp đồng ${pp.scope.contractCode}` });
+      pp = findPolicy(policies.filter((p) => p.scope.partnerCode && !p.scope.brandCode && !p.scope.contractCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode });
+    }
     const pool = pp && pp.scope.partnerCode !== doc.partnerCode ? [pp.scope.partnerCode!, ...(pp.familyCodes ?? [])] : [doc.partnerCode];
     const partner = await trx.selectFrom('partners').select(['credit_limit', 'name']).where('tenant_id', '=', tenantId).where('code', '=', doc.partnerCode).executeTakeFirst();
     if (!pp) {

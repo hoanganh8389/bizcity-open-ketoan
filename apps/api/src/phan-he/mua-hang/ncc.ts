@@ -81,23 +81,27 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
     // Hạn mức: của chính NCC, không có thì hạn mức đơn vị mẹ "áp cho cả đơn vị con" (cả nhóm dùng chung).
     const lim = findPolicy(ctx.policies.filter((x) => x.isActive && x.scope.partnerCode && !x.scope.brandCode), 'credit_limit', { date: asOf, partnerCode: p.code });
     const pooled = lim && lim.scope.partnerCode !== p.code ? [lim.scope.partnerCode!, ...(lim.familyCodes ?? [])] : null;
-    const limit = lim ? (Number(lim.rule.limit) || 0) : p.credit_limit ? toNumber(p.credit_limit) : null;
+    // Không có hạn mức chung (ngoài hợp đồng) mà có hạn mức trong hợp đồng → hiện tổng hạn mức các hợp đồng đang hiệu lực (đánh dấu theo hợp đồng).
+    const hmHd = lim ? [] : ctx.policies.filter((x) => x.kind === 'credit_limit' && x.isActive && x.scope.partnerCode === p.code && x.scope.contractCode && !x.scope.brandCode
+      && (!x.validFrom || x.validFrom <= asOf) && (!x.validTo || x.validTo >= asOf));
+    const limit = lim ? (Number(lim.rule.limit) || 0) : hmHd.length ? hmHd.reduce((t, x) => t + (Number(x.rule.limit) || 0), 0) : p.credit_limit ? toNumber(p.credit_limit) : null;
     const openOrders = docs.filter((x) => x.kind === 'order' && x.status === 'approved' && !orderProgress(x, ctx.docs, undefined, orderUnits).done);
     const pendOf = (codes: string[]) => { const ds = ctx.docs.filter((d) => codes.includes(d.partnerCode) && d.status !== 'cancelled');
       return ds.filter((x) => x.status === 'pending_approval' && (x.kind === 'receipt' || x.kind === 'order')).reduce((s, x) => s + x.totals.total, 0)
         + ds.filter((x) => x.kind === 'order' && x.status === 'approved').reduce((s, x) => { const pr = orderProgress(x, ctx.docs, undefined, orderUnits); return s + (pr.done || !pr.ordered ? 0 : (x.totals.total * pr.remaining) / pr.ordered); }, 0); };
     const pending = pendOf([p.code]);
     const used = pooled ? pooled.reduce((s, c) => s + toNumber(debtOf.get(c)?.debt ?? 0), 0) + pendOf(pooled) : debt + pending;
-    const termPol = pols.find((x) => x.kind === 'payment_term');
+    // Điều khoản chung / ngoài hợp đồng; NCC chỉ khai trong hợp đồng thì hiện bản của hợp đồng (ghi rõ hợp đồng nào).
+    const termPol = pols.find((x) => x.kind === 'payment_term' && !x.scope.contractCode) ?? pols.find((x) => x.kind === 'payment_term');
     const contract = contractOf.get(p.code);
     const receipts = docs.filter((x) => x.kind === 'receipt' && x.status === 'approved');
     return {
       // NCC là doanh nghiệp: tên / địa chỉ chính thức (trên hoá đơn) = khối công ty, chưa có thì lấy tên / địa chỉ chung.
       code: p.code, name: p.company_name || p.name, taxCode: p.tax_code, groupCode: p.group_code, phone: p.phone, address: p.company_address || p.address, isActive: p.is_active,
       createdBy: p.created_by ?? '', createdAt: p.created_at ? new Date(p.created_at as unknown as string).toISOString() : null,
-      debt, advance: Math.round(toNumber(debtOf.get(p.code)?.advance ?? 0)), overdue: dueBy.get(p.code)?.overdue ?? 0, dueSoon: dueBy.get(p.code)?.dueSoon ?? 0, creditLimit: limit, creditUsed: Math.round(used), creditPolicy: lim?.code,
+      debt, advance: Math.round(toNumber(debtOf.get(p.code)?.advance ?? 0)), overdue: dueBy.get(p.code)?.overdue ?? 0, dueSoon: dueBy.get(p.code)?.dueSoon ?? 0, creditLimit: limit, creditUsed: Math.round(used), creditPolicy: lim?.code ?? (hmHd.length ? hmHd.map((x) => x.code).join(', ') : undefined), ...(hmHd.length ? { creditByContract: hmHd.map((x) => x.scope.contractCode!) } : {}),
       parentCode: treeOf.get(p.code)?.parent ?? null, rootCode: treeOf.get(p.code)?.root ?? p.code, ...(pooled ? { creditPool: lim!.scope.partnerCode } : {}),
-      term: termPol ? termText(termFromRule(termPol.rule)) : p.payment_term_days ? `${p.payment_term_days} ngày (danh mục đối tượng)` : '',
+      term: termPol ? `${termText(termFromRule(termPol.rule))}${termPol.scope.contractCode ? ` (hợp đồng ${termPol.scope.contractCode})` : ''}` : p.payment_term_days ? `${p.payment_term_days} ngày (danh mục đối tượng)` : '',
       policies: pols.length, items: Math.max(itemsOf.get(p.code) ?? 0, new Set(docs.flatMap((x) => (x.kind === 'receipt' || x.kind === 'order' ? x.lines.map((l) => l.sku) : []))).size), contractTo: contract?.endDate ?? undefined, contractNo: contract?.code,
       lastReceipt: receipts.map((x) => x.docDate).sort().pop(), monthPurchase: receipts.filter((x) => x.docDate.startsWith(month)).reduce((s, x) => s + x.totals.beforeTax, 0),
       documents: docs.length, attachments: attOf.get(p.code) ?? 0, openOrders: openOrders.length,

@@ -43,3 +43,9 @@ Sửa hợp đồng sau khi ký = **phụ lục**: Sổ chứng từ (HT18) gi�
 - Lọc theo nhà cung cấp, hợp đồng, kỳ; xuất Excel.
 
 Hợp đồng nằm ở **Danh mục hợp đồng** chung (loại "Nhà cung cấp hàng hoá"), cùng chỗ với hợp đồng thuê, dịch vụ.
+
+## Công nợ & điều khoản thanh toán theo hợp đồng
+- Hạn mức công nợ và điều khoản thanh toán là **điều khoản hợp đồng**: khai ở hợp đồng, bước *Điều khoản hợp đồng* (khối *Công nợ & điều khoản thanh toán*), không khai trong danh sách chính sách. NCC không theo hợp đồng: hồ sơ NCC, thẻ *Không theo hợp đồng*, khối cùng tên (hạn mức chung của NCC).
+- Phiếu thuộc hợp đồng dùng hạn mức / hạn thanh toán của hợp đồng; hợp đồng chưa khai thì dùng bản chung của NCC. Hạn mức hợp đồng tính trên các phiếu thuộc hợp đồng; hạn mức chung tính trên toàn bộ nợ NCC.
+- Vượt hạn mức: Trợ lý bên phải báo, chặn duyệt; người có quyền bấm **Duyệt ngoại lệ** (ghi lý do).
+- Công nợ NCC (MH05): hạn mức theo NCC → từng hợp đồng / ngoài hợp đồng, có ô tìm; thẻ *Đến hạn / quá hạn* có ô tìm, lọc hợp đồng, bấm ô tuổi nợ để lọc, xuất Excel.

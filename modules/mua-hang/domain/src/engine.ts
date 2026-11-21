@@ -431,8 +431,12 @@ export const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b
 
 /* ------------------------------------------------------------------ chính sách */
 
-export function policyApplies(p: Policy, ctx: { date: string; partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string }) {
+// [2026-11-21 Nguyễn Văn Thủy] hạn mức công nợ + điều khoản thanh toán là ĐIỀU KHOẢN HỢP ĐỒNG: gắn hợp đồng X thì chỉ áp phiếu của X (docs/nghiep-vu/28) (đóng góp)
+/** Loại chính sách đi theo hợp đồng: gắn hợp đồng thì chỉ áp phiếu của hợp đồng đó; phiếu của hợp đồng ưu tiên bản của hợp đồng. */
+export const CONTRACT_BOUND_KINDS: PolicyKind[] = ['credit_limit', 'payment_term'];
+export function policyApplies(p: Policy, ctx: { date: string; partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string; contractCode?: string }) {
   if (!p.isActive) return false;
+  if (p.scope.contractCode && CONTRACT_BOUND_KINDS.includes(p.kind) && p.scope.contractCode !== ctx.contractCode) return false;
   if (p.validFrom && ctx.date < p.validFrom) return false;
   if (p.validTo && ctx.date > p.validTo) return false;
   const s = p.scope;
@@ -449,7 +453,7 @@ export function scopeRank(p: Pick<Policy, 'scope'>, partnerCode?: string): numbe
 }
 /** Chính sách khớp nhất (phạm vi hẹp hơn, ưu tiên cao hơn đứng trước). */
 export function findPolicy(policies: Policy[], kind: PolicyKind, ctx: Parameters<typeof policyApplies>[1]): Policy | undefined {
-  const spec = (p: Policy) => scopeRank(p, ctx.partnerCode);
+  const spec = (p: Policy) => scopeRank(p, ctx.partnerCode) + (p.scope.contractCode && CONTRACT_BOUND_KINDS.includes(p.kind) ? 2 : 0);
   return policies.filter((p) => p.kind === kind && policyApplies(p, ctx)).sort((a, b) => spec(b) - spec(a) || (b.priority ?? 0) - (a.priority ?? 0))[0];
 }
 /**
@@ -618,7 +622,7 @@ export function allocate(total: number, weights: number[]): number[] {
 export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: string[]; units?: Record<string, ProductUnit[]> } = {}): DocCalc {
   policies = policiesFor(doc, policies);
   const trace: TraceItem[] = [];
-  const ctxBase = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: doc.brandCode, branchCode: doc.branchCode };
+  const ctxBase = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: doc.brandCode, branchCode: doc.branchCode, contractCode: doc.contractCode || undefined };
   // Chương trình áp riêng: mã hàng nhận nó thì các chương trình khác bị chặn cho mã đó.
   const ex = exclusiveBySku(doc, policies);
   const all = policies;
@@ -751,7 +755,7 @@ export function creditStatus(limitPolicy: Policy | undefined, current: number, o
   const after = current + openOrders + thisDoc;
   const warnPct = num(limitPolicy.rule.warnPct) || 90;
   return {
-    scope: branchCode && branches[branchCode] !== undefined ? `Chi nhánh ${branchCode}` : limitPolicy.scope.brandCode ? `Nhãn ${limitPolicy.scope.brandCode}` : `NCC ${limitPolicy.scope.partnerCode ?? ''}`,
+    scope: branchCode && branches[branchCode] !== undefined ? `Chi nhánh ${branchCode}` : limitPolicy.scope.brandCode ? `Nhãn ${limitPolicy.scope.brandCode}` : limitPolicy.scope.contractCode ? `Hợp đồng ${limitPolicy.scope.contractCode}` : `NCC ${limitPolicy.scope.partnerCode ?? ''}`,
     limit, current, openOrders, thisDoc, after, remaining: limit - after, exceeded: Math.max(0, after - limit), warn: after >= (limit * warnPct) / 100, policy: limitPolicy.code,
   };
 }

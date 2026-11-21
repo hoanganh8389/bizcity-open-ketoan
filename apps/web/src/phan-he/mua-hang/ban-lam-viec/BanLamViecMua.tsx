@@ -64,9 +64,11 @@ export function BanLamViecMua({ g, canOpen, onHelp }: { g: GonGroup; canOpen: (p
     if (!its.length && !b.lap && !b.viec?.length) return null;
     return (
       <div className="blv-them">
-        {its.length > 0 ? its.map((t) => (
-          <Link key={t.key} to={t.path} className={`blv-nhan ${t.level}`} title={t.amount ? `${t.text} · ${vnd(t.amount)}` : t.text}><b>{t.count}</b> {NGAN[t.key] ?? t.text}</Link>
-        )) : b.viec?.length && !q.isLoading ? <span className="blv-nhan ok"><Check size={12} /> Đã khớp</span> : null}
+        {/* [2026-11-21 Nguyễn Văn Thủy] thẻ bước chỉ còn một nhãn đếm gọn; danh sách việc cần xử lý ở khung "Cần xử lý" góc dưới bên phải (đỡ ngợp) (đóng góp) */}
+        {its.length > 0 ? (() => { const err = its.some((t) => t.level === 'error'); const n = its.reduce((x, t) => x + t.count, 0);
+          return <a href="#blv-can" className={`blv-nhan ${err ? 'error' : 'warn'}`} title={its.map((t) => `${t.count} ${NGAN[t.key] ?? t.text}`).join('\n')}
+            onClick={(e) => { e.preventDefault(); document.getElementById('blv-can')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }}><b>{n}</b> cần xử lý</a>; })()
+          : b.viec?.length && !q.isLoading ? <span className="blv-nhan ok"><Check size={12} /> Đã khớp</span> : null}
         {b.lap?.map((x) => <Link key={x.label} to={x.path} className="blv-lap-nho"><Plus size={12} /> {x.label}</Link>)}
       </div>
     );
@@ -92,11 +94,23 @@ export function BanLamViecMua({ g, canOpen, onHelp }: { g: GonGroup; canOpen: (p
       </div>
       <div className="sd-layout">
         <div className="sd-main"><SoDoNhom soDo={soDo} canOpen={canOpen} sections={g.sections} them={them} dau={dau} /></div>
+        <div className="blv-phai">
         <aside className="card sd-bc">
           <b>Báo cáo</b>
           {BAO_CAO.filter((r) => canOpen(r.path.split('?')[0]!)).map((r) => <Link key={r.label} to={r.path}>{r.label}</Link>)}
           <Link className="sd-bc-all" to={`/bao-cao?nhom=${g.key}`}>Tất cả báo cáo ›</Link>
         </aside>
+        <aside className="card sd-bc blv-can" id="blv-can">
+          <b>Cần xử lý {tatCa.length > 0 && <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>({tatCa.length})</span>}</b>
+          {q.isLoading ? <span className="muted">Đang soát…</span> : !tatCa.length ? <span className="ok" style={{ fontSize: 13 }}><Check size={13} /> Không có thiếu / lệch</span>
+            : [...(soDo.nhom?.chuoi ?? []), ...(soDo.nhom?.nhanh ?? [])].filter((b) => of(b.viec).length).map((b, i) => (
+              <div key={i} className="blv-can-nhom">
+                <small className="muted">{b.nhom}</small>
+                {of(b.viec).map((t) => <Link key={t.key} to={t.path} className={`blv-can-dong ${t.level}`} title={t.amount ? `${t.text} · ${vnd(t.amount)}` : t.text}><b>{t.count}</b> {NGAN[t.key] ?? t.text}</Link>)}
+              </div>
+            ))}
+        </aside>
+        </div>
       </div>
     </>
   );

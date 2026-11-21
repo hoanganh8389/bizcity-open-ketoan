@@ -227,6 +227,17 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const set = (p: Partial<PDoc>) => { setV((x) => ({ ...x, ...p })); setDirty(true); };
   const setLine = (key: string, p: Partial<PLine>) => { setV((x) => ({ ...x, lines: x.lines.map((l) => (l.lineKey === key ? { ...l, ...p } : l)) })); setDirty(true); };
 
+  // [2026-11-21 Nguyễn Văn Thủy] ngân sách mua của đơn đặt lấy theo hạn mức công nợ còn lại: của hợp đồng đã chọn, không thì hạn mức chung / ngoài hợp đồng (docs/nghiep-vu/28) (đóng góp)
+  const hmCredit = (a?.credit ?? []).find((x) => x.scope.startsWith('Hợp đồng ')) ?? (a?.credit ?? []).find((x) => !x.scope.startsWith('Nhãn ') && !x.scope.startsWith('Chi nhánh'));
+  const hmCon = hmCredit ? Math.max(0, Math.round(hmCredit.limit - hmCredit.current - hmCredit.openOrders)) : undefined;
+  const hmNhan = !hmCredit ? '' : hmCredit.scope.startsWith('Hợp đồng ') ? `theo ${hmCredit.scope.toLowerCase()}` : v.contractCode ? `hạn mức chung của NCC (hợp đồng ${v.contractCode} chưa khai hạn mức riêng)` : 'ngoài hợp đồng (hạn mức chung của NCC)';
+  const budgetAuto = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (v.kind !== 'order' || readOnly || hmCon === undefined) return;
+    if (v.budget !== undefined && v.budget !== budgetAuto.current) return; // người dùng đã tự ghi ngân sách — giữ nguyên
+    budgetAuto.current = hmCon;
+    if (v.budget !== hmCon) setV((x) => ({ ...x, budget: hmCon }));
+  }, [hmCon, v.kind, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
   // Máy chủ phân tích sau mỗi lần sửa (chờ 400 ms ngừng gõ); phiếu đã duyệt chỉ phân tích một lần.
   const seqRef = useRef(0);
   useEffect(() => {
@@ -833,6 +844,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             { key: 'docNo', header: 'Số đơn', type: 'code', width: 120 },
             { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
             { key: 'branchCode', header: 'Chi nhánh', width: 170, value: (d) => `${d.branchCode} · ${names.branchName(d.branchCode)}` },
+            { key: 'contractCode', header: 'Hợp đồng', width: 120, value: (d) => d.contractCode || 'Không theo HĐ', render: (d) => (d.contractCode ? <span className="mono">{d.contractCode}</span> : <span className="muted">không theo HĐ</span>) },
             { key: 'nhan', header: 'Chi nhánh nhận', width: 200, value: (d) => deliveryBranches(d).map((b) => `${b} · ${names.branchName(b)}`).join('; '), render: (d) => { const bs = deliveryBranches(d); return <span title={bs.map((b) => `${b} · ${names.branchName(b)}`).join('\n')}>{bs.length > 1 ? <b>{bs.length} nơi: </b> : null}{bs.join(', ')}</span>; } },
             { key: 'lines', header: 'Số dòng', type: 'number', width: 70, value: (d) => d.lines.filter((l) => l.lineType === 'buy').length },
             { key: 'total', header: 'Tổng tiền', type: 'money', width: 120, value: (d) => d.totals.total },
@@ -869,6 +881,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             { key: 'docNo', header: 'Số phiếu', type: 'code', width: 120 },
             { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
             { key: 'branchCode', header: 'Chi nhánh', width: 170, value: (d) => `${d.branchCode} · ${names.branchName(d.branchCode)}` },
+            { key: 'contractCode', header: 'Hợp đồng', width: 120, value: (d) => d.contractCode || 'Không theo HĐ', render: (d) => (d.contractCode ? <span className="mono">{d.contractCode}</span> : <span className="muted">không theo HĐ</span>) },
             { key: 'invoice', header: 'Số HĐ', type: 'code', width: 110, value: (d) => (d.invoice ? `${d.invoice.serial ? `${d.invoice.serial}-` : ''}${d.invoice.no}` : '') },
             { key: 'total', header: 'Tổng tiền', type: 'money', width: 120, value: (d) => d.totals.total },
             // Trả tiền: thấy ngay phiếu còn nợ bao nhiêu trước khi chọn (theo sổ công nợ; trả nhiều lần thì đã trừ các lần trước).
@@ -1072,7 +1085,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {isOrder && <>
                   <div className="field"><label>Ngày giao hàng</label><input className="input" type="date" value={v.deliveryDate ?? ''} onChange={(e) => set({ deliveryDate: e.target.value || undefined })} /></div>
-                  <div className="field"><label title="Ngân sách mua được cấp — chỉ để ước lượng, không chặn">Ngân sách mua</label><input className="input num" value={fmt(v.budget)} placeholder="vd 80.000.000" onChange={(e) => set({ budget: num(e.target.value) || undefined })} />
+                  <div className="field"><label title="Ngân sách mua của đơn — tự lấy theo hạn mức công nợ còn lại (của hợp đồng đã chọn; không theo hợp đồng thì hạn mức chung của NCC), sửa tay được. Chỉ để ước lượng, không chặn (vượt hạn mức thì Kiểm tra báo)">Ngân sách mua</label><input className="input num" value={fmt(v.budget)} placeholder="vd 80.000.000" onChange={(e) => set({ budget: num(e.target.value) || undefined })} />
+                    {hmCredit && <span className="muted" style={{ fontSize: 11 }} title={`Hạn mức ${vnd(hmCredit.limit)} − nợ đang có ${vnd(hmCredit.current)} − đơn / phiếu đang chờ ${vnd(hmCredit.openOrders)}`}>Hạn mức công nợ còn <b>{vnd(hmCon ?? 0)}</b> — {hmNhan}{!readOnly && v.budget !== hmCon && <button type="button" className="btn btn-xs" style={{ marginLeft: 4 }} onClick={() => { budgetAuto.current = hmCon; set({ budget: hmCon }); }}>Lấy</button>}</span>}
+                    {!hmCredit && a && <span className="muted" style={{ fontSize: 11 }}>{v.contractCode ? `Hợp đồng ${v.contractCode} và NCC chưa khai hạn mức công nợ` : 'NCC chưa khai hạn mức công nợ (ngoài hợp đồng)'}</span>}
                     {v.budget ? <span style={{ fontSize: 11.5, fontWeight: 700, color: v.budget - calc.beforeTax >= 0 ? 'var(--ok, #16a34a)' : '#dc2626' }}>{v.budget - calc.beforeTax >= 0 ? 'Còn' : 'Vượt'} {vnd(Math.abs(v.budget - calc.beforeTax))} <span className="muted" style={{ fontWeight: 400 }}>(so tổng sau CK chưa thuế)</span></span> : null}</div>
                 </>}
                 {isGoods && <div className="field"><label title="Nhãn là thuộc tính của mặt hàng (danh mục Ngành → Nhãn → Nhóm): phiếu tự lấy theo các dòng hàng, không chọn tay. Hạn mức / chỉ tiêu / thưởng theo nhãn tính theo phần của từng nhãn">Nhãn hàng (theo mặt hàng)</label>

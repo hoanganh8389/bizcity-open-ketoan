@@ -15,7 +15,7 @@ import {
   scopeBranches, deliveryBranches } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
-import { apBalance, openOf, openOfBrand, pendingOf, type Ctx } from './analysis.js';
+import { apBalance, contractUsage, openOf, openOfBrand, pendingOf, type Ctx } from './analysis.js';
 import { refReceipts, spreadOverMany } from './posting.js';
 import { unitsForOrders, unitsOf } from './gia-mua.js';
 import { noDueDate, type StoredDoc } from './store.js';
@@ -38,8 +38,11 @@ export async function creditOverview(trx: Db, tenantId: string, ctx: Ctx, asOf =
   const partners = [];
   for (const p of limits.filter((x) => x.scope.partnerCode && !x.scope.brandCode)) {
     const code = p.scope.partnerCode!;
-    const s = creditStatus(p, await apBalance(trx, tenantId, code, asOf), pendingOf(ctx.docs, (d) => d.partnerCode === code, asOf), 0)!;
-    partners.push({ policy: p.code, partnerCode: code, ...s });
+    // [2026-11-21 Nguyễn Văn Thủy] hạn mức của hợp đồng tính trên phiếu thuộc hợp đồng; không gắn hợp đồng = hạn mức chung / ngoài hợp đồng (đóng góp)
+    const cc = p.scope.contractCode;
+    const u = cc ? await contractUsage(trx, tenantId, ctx.docs, cc, asOf) : { current: await apBalance(trx, tenantId, code, asOf), pending: pendingOf(ctx.docs, (d) => d.partnerCode === code, asOf) };
+    const s = creditStatus(p, u.current, u.pending, 0)!;
+    partners.push({ policy: p.code, partnerCode: code, contractCode: cc ?? '', ...s });
   }
   const brands = [];
   for (const p of limits.filter((x) => x.scope.brandCode && !x.scope.partnerCode)) {
@@ -67,7 +70,7 @@ export async function creditOverview(trx: Db, tenantId: string, ctx: Ctx, asOf =
   return { asOf, partners, brands, supply };
 }
 
-export interface DueRow { debtItemId: string; partnerCode: string; partnerName: string; branchCode: string; docNo: string; purchaseDocId?: string; docDate: string; seq?: number; dueDate: string; amount: number; paid: number; remaining: number; bucket: number; daysOverdue: number; daysToDue: number }
+export interface DueRow { debtItemId: string; partnerCode: string; partnerName: string; branchCode: string; docNo: string; purchaseDocId?: string; contractCode: string; docDate: string; seq?: number; dueDate: string; amount: number; paid: number; remaining: number; bucket: number; daysOverdue: number; daysToDue: number }
 
 export async function dueList(trx: Db, tenantId: string, ctx: Ctx, f: { partnerCode?: string; asOf?: string } = {}) {
   const asOf = f.asOf ?? today();
@@ -82,7 +85,7 @@ export async function dueList(trx: Db, tenantId: string, ctx: Ctx, f: { partnerC
   for (const i of items) {
     const amount = toNumber(i.amount), paid = toNumber(i.settled_amount);
     const doc = byEvent.get(String(i.event_id));
-    const base = { debtItemId: String(i.id), partnerCode: i.partner_code, partnerName: i.partner_name, branchCode: i.branch_code, docNo: i.doc_no, purchaseDocId: doc?.id, docDate: String(i.doc_date).slice(0, 10) };
+    const base = { debtItemId: String(i.id), partnerCode: i.partner_code, partnerName: i.partner_name, branchCode: i.branch_code, docNo: i.doc_no, purchaseDocId: doc?.id, contractCode: doc?.contractCode ?? '', docDate: String(i.doc_date).slice(0, 10) };
     // Số dư đầu kỳ không khai hạn: như công nợ cố định (cùng cách tính với cảnh báo nợ quá hạn trên phiếu — openDueOf).
     const openingNoDue = !doc && i.doc_type === 'opening' && !/^\d{4}-\d{2}-\d{2}$/.test(i.explicit_due ?? '');
     if (openingNoDue || (doc?.kind === 'receipt' && noDueDate(doc))) {

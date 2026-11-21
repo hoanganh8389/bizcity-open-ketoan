@@ -236,6 +236,15 @@ html.gd-xanh .catalog-toolbar .btn-primary svg { color: #fff; }
 .sd-bc > a:hover { color: var(--brand-700); text-decoration: none; }
 .sd-bc > a.sd-bc-all { border-bottom: 0; margin-top: 4px; color: var(--brand-700); font-weight: 600; }
 @media (max-width: 1100px) { .sd-layout { grid-template-columns: 1fr; } }
+/* [2026-11-21] bàn làm việc: cột phải = Báo cáo + Cần xử lý (việc thiếu / lệch theo bước), thẻ bước chỉ còn nhãn đếm */
+.blv-phai { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 0; }
+.blv-can { max-height: 60vh; overflow: auto; }
+.blv-can-nhom { padding: 4px 0 2px; border-top: 1px dashed var(--line-soft); }
+.blv-can-nhom:first-of-type { border-top: 0; }
+.blv-can-dong { display: block; padding: 3px 0 3px 6px; font-size: 12.5px; color: var(--ink-900); border-left: 3px solid #f59e0b; margin: 2px 0; }
+.blv-can-dong.error { border-left-color: #dc2626; }
+.blv-can-dong.info { border-left-color: var(--brand-300, #93c5fd); }
+.blv-can-dong b { margin-right: 3px; }
 /* Nút chi nhánh làm việc không xuống dòng. */
 .cnlv-btn { white-space: nowrap; flex: none; }
 
