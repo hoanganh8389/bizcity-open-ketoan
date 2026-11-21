@@ -12,11 +12,11 @@ import { writeTenantSection } from '@bizcity/platform/core/settings';
 import { sql } from 'kysely';
 import {
   ACC, brandMix, brandShare, checkDoc, codeSwaps, computeDoc, creditStatus, docBrand, fefoCheck, findPolicy, orderProgress, postingFor, ratioIn, receiptsOfOrder, scheduleStatus, type OrderLineProgress,
-  type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product, deliveryBranches } from '@bizcity/mua-hang-domain';
+  type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product, deliveryBranches, invoicesOf, invoiceQtyBySku } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { FREEZE_KINDS, FREEZE_VERSION, freezeOf, listPolicies, noDueDate, receiptsWithSku, toDoc, type StoredDoc } from './store.js';
 import { listSupplierProducts, unitsOf } from './gia-mua.js';
-import { invoiceCheck } from './hoa-don.js';
+import { invoiceCheck, invoiceQtyForReceipt } from './hoa-don.js';
 // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
 import { theoMa } from './ma-hien-hanh.js';
 import { checkWarehouseFor } from '../../modules/warehouses/warehouse-types.js';
@@ -182,7 +182,9 @@ export async function prepaymentFor(trx: Db, tenantId: string, doc: PDoc, docs: 
   return { amount: eventIds.length ? -(await openOf(trx, tenantId, eventIds)) : 0, eventIds };
 }
 
-export interface Analysis { prices: SupplierProduct[]; units: Record<string, ProductUnit[]>; calc: DocCalc; checks: Check[]; credit: CreditStatus[]; entries: Entry[]; blocking: Check[]; prepayment: number; refOrder?: StoredDoc; priceHistory: Record<string, (PriceRow & { discountPct?: number })[]>; accounts: Accounts; priceWarnPct: number }
+export interface Analysis { prices: SupplierProduct[]; units: Record<string, ProductUnit[]>; calc: DocCalc; checks: Check[]; credit: CreditStatus[]; entries: Entry[]; blocking: Check[]; prepayment: number; refOrder?: StoredDoc; priceHistory: Record<string, (PriceRow & { discountPct?: number })[]>; accounts: Accounts; priceWarnPct: number;
+  /** [2026-11-21 Nguyễn Văn Thủy] phiếu nhập: SL theo các hoá đơn (MH22) từng mã, ĐVT nhỏ nhất, cộng dồn; hoá đơn chưa đối soát được (đóng góp) */
+  invoiceQty?: { bySku: Record<string, number>; invoices: string[]; missing: string[]; shared: string[] } }
 
 export interface Ctx { settings: PurchaseSettings; accounts: Accounts; policies: Policy[]; docs: StoredDoc[] }
 /** opts.full: mọi loại chính sách (báo cáo, hồ sơ NCC, đề xuất đặt hàng); mặc định bỏ loại nhân theo mã hàng (tính phiếu). */
@@ -304,7 +306,7 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
       ? { level: 'info', code: 'po_partial', text: `Giao một phần đơn ${refOrder.docNo} (đã nhận trước ${prog.received}/${prog.ordered}) — sau phiếu này còn: ${partial.join('; ')}. Lần giao sau: mở đơn → Lập phiếu nhập từ đơn` }
       : over.length || extra.length || price.length
         ? { level: 'info', code: 'po_full', text: `Nhận đủ số lượng đơn ${refOrder.docNo} — còn lệch đơn (xem cảnh báo thừa / lệch giá ở trên)` }
-        : { level: 'info', code: 'po_match', text: `Nhận đủ đơn ${refOrder.docNo} — đối chiếu đơn đặt ↔ phiếu nhập ↔ hoá đơn khớp` });
+        : { level: 'info', code: 'po_match', text: `Nhận đủ đơn ${refOrder.docNo}${nhieuNoi && deliveryBranches(refOrder).includes(doc.branchCode) ? ` (phần chi nhánh ${doc.branchCode})` : ''} — số lượng, đơn giá khớp đơn đặt (đối soát hoá đơn xem riêng)` });
   }
   const pre = doc.kind === 'receipt' ? await prepaymentFor(trx, tenantId, doc, docs) : { amount: 0 };
   const skus = [...new Set(doc.lines.filter((l) => l.sku && l.lineType === 'buy').map((l) => l.sku))];
@@ -384,7 +386,13 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
     if (sw.length) checks.push({ level: 'error', code: 'code_swap', blocking: true, text: `Nhập đổi mã so với đơn ${refOrder.docNo}: ${sw.map((x) => `${x.from} → ${x.to}`).join(', ')} — theo quy tắc mã hàng phải được duyệt (Duyệt ngoại lệ, ghi lý do)` });
   }
   const entries = postingFor(doc, calc, { accounts });
-  return { prices, units, calc, checks, credit, entries, blocking: checks.filter((c) => c.blocking), prepayment: pre.amount, refOrder, priceHistory: history, accounts, priceWarnPct: settings.priceWarnPct };
+  let invoiceQty: Analysis['invoiceQty'];
+  if (doc.kind === 'receipt' && invoicesOf(doc).length) {
+    const q = await invoiceQtyForReceipt(trx, tenantId, doc, docs);
+    const u2 = { ...units, ...(await unitsOf(trx, tenantId, q.list.flatMap((x) => x.lines.map((l) => l.sku)).filter((x) => !units[x]))) };
+    invoiceQty = { bySku: Object.fromEntries(invoiceQtyBySku(q.list, u2)), invoices: q.list.map((x) => x.key), missing: q.missing, shared: q.shared };
+  }
+  return { prices, units, calc, checks, credit, entries, blocking: checks.filter((c) => c.blocking), prepayment: pre.amount, refOrder, priceHistory: history, accounts, priceWarnPct: settings.priceWarnPct, invoiceQty };
 }
 
 /** CKTT trên phiếu trả tiền: phải trả cho phiếu nhập có CKTT, trả trong hạn, trả đủ phần còn lại sau CKTT, đúng số tiền CKTT. */

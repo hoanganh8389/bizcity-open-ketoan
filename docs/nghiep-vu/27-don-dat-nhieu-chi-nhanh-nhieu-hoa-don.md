@@ -87,8 +87,8 @@
 ## 4. Lỗi cần sửa
 | Lỗi | Hướng xử lý |
 |---|---|
-| "Duyệt điều chỉnh" báo `CONFLICT · LEDGER_APPEND_ONLY` (bản thử, phiếu NM26110002) | Đã thử 12 phiếu trên dữ liệu máy: không tái hiện. Trigger chặn sửa bút toán đã ghi (`ledger_entries` / `ledger_lines`). Cần mã tra cứu `req-2666ed45-708…` hoặc bản sao dữ liệu bản thử để tìm câu lệnh vi phạm; trong lúc chờ, lời báo đổi sang câu rõ nghĩa + gợi ý "Huỷ điều chỉnh". |
-| "Mở lại đơn" báo đỏ "Phiếu NM… đang dựa trên phiếu này" | Khoá nút trước, ghi lý do (mục 1.6). |
+| "Duyệt điều chỉnh" báo `CONFLICT · LEDGER_APPEND_ONLY` (bản thử, phiếu NM26110002) | **Đã sửa.** Nguyên nhân: phiếu có chiết khấu / quà theo chính sách → chứng từ kế toán mang `policyRefs`; duyệt bản 2 thì lõi cất phiên bản cũ rồi `UPDATE accounting_event_versions SET policy_check` — bảng này chỉ được thêm (trigger `accounting_event_versions_no_update`). Sửa: ghi `policy_check` ngay trong câu INSERT (`packages/kernel/.../document.repository.ts`). Test `dieu-chinh-co-chinh-sach.test.ts` tái hiện lỗi trước khi sửa. |
+| "Mở lại đơn" báo đỏ "Phiếu NM… đang dựa trên phiếu này" | **Đã sửa.** Nút khoá khi đơn có phiếu nhập chưa huỷ (rê chuột xem phiếu nào); máy chủ chặn cả phiếu nhập nháp / chờ duyệt, lời báo "không mở lại đơn được — huỷ các phiếu nhập trước". |
 
 ## 5. Dữ liệu (không thêm bảng)
 - `PDoc`: `deliveryWarehouses?`, `invoices?`, `invoicePlan.from?`; `PLine` đã có `branchCode`, `warehouseCode`, `costItem`.
@@ -104,3 +104,9 @@
 | D | Giao diện phiếu nhập: bỏ thanh chuỗi (vào Trợ lý), 3 cột đối chiếu, bảng nhiều hoá đơn + lịch sử, đối soát 3 bên | Chụp màn hình; lập phiếu từ đơn 2 chi nhánh |
 | E | MH21, MH31, Bàn làm việc theo chi nhánh / nhiều hoá đơn | Chụp + test API |
 | F | Bộ test mua hàng, 25 tình huống, hợp đồng, hoá đơn NCC, sổ chứng từ; kiểm chuẩn | Toàn bộ đạt mới đẩy |
+
+## 7. Kết quả (21/11/2026)
+- Đợt A–E đã làm; test API mới: `phieu-nhap-nhieu-hoa-don` (6 ca), `dieu-chinh-co-chinh-sach`; miền `don-nhieu-chi-nhanh` (7 ca). Bộ mua hàng + chính sách / lõi: 26 tệp, 192 ca đạt.
+- Giao diện đã chụp kiểm: đơn 3 nơi nhận (thẻ Tiến độ giao, Trợ lý theo chi nhánh, mẫu NCC 3 thẻ / 3 sheet), phiếu nhập 2 hoá đơn (bảng hoá đơn, chuỗi điều chỉnh, đối soát 3 bên, cột Còn phải nhập / Theo HĐ), phiếu chi nhánh con nhận vượt phần của mình.
+- Tình trạng một mã của đơn tính cả phiếu nhập chờ duyệt: "chờ duyệt X — đủ khi duyệt", "chờ duyệt X · thừa Y".
+- Danh sách kho ở dòng đơn = kho của chi nhánh nhận của dòng + chi nhánh con (theo cây cơ cấu DM16); hộp "Giao tại kho" hiện cả kho đang dùng ở dòng thuộc chi nhánh ngoài nhánh đầu đơn.

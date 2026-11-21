@@ -325,6 +325,11 @@ tr.mh-me td { font-weight: 600; }
 .mh-chuoi-mat.dang { color: var(--ink-900); border-color: var(--brand-600); background: var(--brand-50); }
 .mh-chuoi-mat.thieu { color: var(--warn, #e8710a); border-color: #f5c99c; background: #fff8f1; }
 .mh-chuoi-mat.chua { color: var(--ink-400); border-style: dashed; }
+/* [2026-11-21] chuỗi chứng từ dạng dọc trong khung Trợ lý mua hàng */
+.mh-chuoi.mh-chuoi-doc { flex-direction: column; align-items: stretch; padding: 0; border: 0; background: none; gap: 3px; }
+.mh-chuoi-doc .mh-chuoi-mat { border-radius: 4px; display: flex; flex-wrap: wrap; }
+.mh-chuoi-doc .mh-chuoi-mat b { min-width: 92px; }
+.mh-chuoi-doc .mh-chuoi-mat small { margin-left: auto; }
 
 /* [2026-11-20 Nguyễn Văn Thủy] thu gọn khung Trợ lý: bảng hàng chiếm hết bề ngang, dải mép phải bấm để mở lại (đóng góp) */
 .mh-sheet-body.an-tro-ly { grid-template-columns: minmax(0, 1fr) 26px; }

@@ -48,6 +48,12 @@ export function useCayDonVi() {
     const defaultDept = (branch: string) => byCode.get(branch)?.departmentCode ?? deptOf(branch).find((d) => d.isActive)?.code ?? '';
     const whOf = (branch: string) => (q.data?.warehouses ?? []).filter((w) => w.branchCode === branch);
     const index = new Map(list.map((x) => [x.code, x]));
-    return { list, index, ready: Boolean(q.data), deptOf, defaultDept, whOf, departments: q.data?.departments ?? [] };
+    // Kho → chi nhánh sở hữu; chi nhánh con (đệ quy) theo cây; kho mặc định của chi nhánh (đánh dấu mặc định, không có thì kho đang dùng đầu tiên).
+    const chuKho = new Map((q.data?.warehouses ?? []).map((w) => [w.code, w.branchCode]));
+    const khoChu = (code: string) => chuKho.get(code) ?? '';
+    const conCua = (branch: string) => { const i = list.findIndex((u) => u.code === branch); const out: string[] = []; if (i >= 0) for (let j = i + 1; j < list.length && list[j]!.depth > list[i]!.depth; j++) out.push(list[j]!.code); return out; };
+    const khoMacDinh = (branch: string) => { const ws = whOf(branch).filter((w) => w.isActive); return (ws.find((w) => w.isDefault) ?? ws[0])?.code ?? ''; };
+    const khoTen = (code: string) => (q.data?.warehouses ?? []).find((w) => w.code === code)?.name ?? '';
+    return { list, index, ready: Boolean(q.data), deptOf, defaultDept, whOf, khoChu, conCua, khoMacDinh, khoTen, departments: q.data?.departments ?? [] };
   }, [q.data]);
 }

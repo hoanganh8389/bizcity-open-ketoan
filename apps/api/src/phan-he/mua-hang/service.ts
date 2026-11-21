@@ -371,7 +371,16 @@ export const purchaseService = {
     const d = await getDoc(trx, auth.tenantId, id);
     const step = wf.plan('unapprove', d, workflowActor(auth));
     const dependents = (await dependentsOf(trx, auth.tenantId, id)).filter((x) => x.kind !== 'payment');
-    if (dependents.length) throw Errors.conflict(`Phiếu ${dependents.map((x) => x.docNo).join(', ')} đang dựa trên phiếu này — bỏ duyệt các phiếu đó trước`);
+    // Đơn đặt: phiếu nhập theo đơn còn nháp / chờ duyệt cũng giữ đơn (mở lại đơn thì phiếu nhập mất đơn gốc đã duyệt).
+    if (d.kind === 'order') {
+      const nhap = await trx.selectFrom('purchase_documents').select(['id', 'doc_no']).where('tenant_id', '=', auth.tenantId).where('kind', '=', 'receipt')
+        .where('status', 'in', ['draft', 'pending_approval']).where(sql<boolean>`${id}::bigint = ANY(ref_ids)`).execute();
+      for (const r of nhap) if (!dependents.some((x) => x.id === String(r.id))) dependents.push({ id: String(r.id), docNo: r.doc_no ?? '', kind: 'receipt' } as StoredDoc);
+    }
+    // [2026-11-21 Nguyễn Văn Thủy] đơn đặt có phiếu nhập: báo rõ "không mở lại đơn được" thay câu bỏ duyệt chung (đóng góp)
+    if (dependents.length) throw Errors.conflict(d.kind === 'order'
+      ? `Đơn ${d.docNo} đã có phiếu nhập theo đơn (${dependents.map((x) => x.docNo || '(nháp)').join(', ')}) — không mở lại đơn để sửa được. Huỷ các phiếu nhập đó trước; NCC giao thiếu thì đóng phần còn lại của đơn`
+      : `Phiếu ${dependents.map((x) => x.docNo).join(', ')} đang dựa trên phiếu này — bỏ duyệt các phiếu đó trước`);
     for (const l of [...d.links].reverse()) await documentService.cancelIn(trx, auth, l.docKey, `${reason} ${d.docNo}`);
     // Về nháp: xoá dấu duyệt ngoại lệ (lịch sử vẫn ở nhật ký mua hàng MH10 và nhật ký thao tác).
     await trx.updateTable('purchase_documents').set({ status: step.to, links: '[]', approved_by: null, approved_at: null, data: sql`data - 'override'`, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();

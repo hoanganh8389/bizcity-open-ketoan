@@ -7,10 +7,15 @@
  * XemMauNcc: xem ngay trên web (màu như Excel); xuatMauNcc: tải tệp .xlsx có màu, khổ ngang, Times New Roman.
  */
 import { TAX_RATE, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
+import type { Workbook } from 'exceljs';
+import { useState } from 'react';
 import { Modal } from '@/components/ui';
 import { roundPrice } from '@/lib/format';
 
 export interface MauNccInfo { code: string; name: string; address?: string; phone?: string; branchName: string; warehouse?: string }
+// [2026-11-21 Nguyễn Văn Thủy] đơn giao nhiều chi nhánh: mỗi chi nhánh nhận một mẫu (tab xem / sheet Excel), dòng + tiền của chi nhánh đó (đóng góp)
+/** Một mẫu gửi NCC: đơn (chỉ dòng của một chi nhánh nhận) + nơi giao. Đơn một nơi nhận = một mẫu. */
+export interface MauNccPart { key: string; label: string; doc: PDoc; info: MauNccInfo }
 interface Row { stt: number; sku: string; barcode: string; name: string; pack: string; unit: string; price: number; buy: number; gift: number; need: number | ''; stock: number | ''; pending: number | ''; analysis: [string, string][]; pct: number | ''; ck: number; after: number; note: string; newItem: boolean }
 
 const fmt = (n: number | '' | undefined) => (n === '' || n === undefined || n === null ? '' : Number(n).toLocaleString('vi-VN', { maximumFractionDigits: 2 }));
@@ -44,11 +49,16 @@ function rowsOf(doc: PDoc): { rows: Row[]; before: number; ck: number; after: nu
 const C = { need: '#FFC000', stock: '#FFF200', head: '#ffffff', line: '#111827' };
 const cell: React.CSSProperties = { border: `1px solid ${C.line}`, padding: '3px 5px', fontFamily: '"Times New Roman", serif', fontSize: 13, verticalAlign: 'middle' };
 
-export function XemMauNcc({ doc, info, onClose, onExport }: { doc: PDoc; info: MauNccInfo; onClose: () => void; onExport: () => void }) {
+export function XemMauNcc({ doc: doc0, info: info0, parts, onClose, onExport }: { doc: PDoc; info: MauNccInfo; parts?: MauNccPart[]; onClose: () => void; onExport: () => void }) {
+  const ds = parts?.length ? parts : [{ key: '', label: '', doc: doc0, info: info0 }];
+  const [cur, setCur] = useState(0);
+  const p = ds[Math.min(cur, ds.length - 1)]!;
+  const doc = p.doc, info = p.info;
   const t = rowsOf(doc);
   const hd = (x: React.ReactNode, o: React.CSSProperties = {}, span: { r?: number; c?: number } = {}) => <th rowSpan={span.r} colSpan={span.c} style={{ ...cell, fontWeight: 700, textAlign: 'center', background: C.head, ...o }}>{x}</th>;
   return (
-    <Modal wide title={`Mẫu đơn đặt hàng gửi NCC — ${doc.docNo || 'đơn mới'}`} onClose={onClose} footer={<><button className="btn btn-primary" onClick={onExport}>Xuất Excel đúng mẫu</button><button className="btn" onClick={() => window.print()}>In</button><button className="btn" onClick={onClose}>Đóng</button></>}>
+    <Modal wide title={`Mẫu đơn đặt hàng gửi NCC — ${doc0.docNo || 'đơn mới'}${ds.length > 1 ? ` · ${ds.length} nơi nhận` : ''}`} onClose={onClose} footer={<><button className="btn btn-primary" onClick={onExport} title={ds.length > 1 ? `Một tệp Excel, mỗi chi nhánh nhận một sheet (${ds.length} sheet)` : undefined}>Xuất Excel đúng mẫu{ds.length > 1 ? ` (${ds.length} sheet)` : ''}</button><button className="btn" onClick={() => window.print()}>In</button><button className="btn" onClick={onClose}>Đóng</button></>}>
+      {ds.length > 1 && <div className="tabs full" style={{ padding: 0, marginBottom: 6 }}>{ds.map((x, i) => <button key={x.key} type="button" className={`tab ${i === cur ? 'active' : ''}`} onClick={() => setCur(i)} title={`Mẫu gửi NCC cho nơi nhận ${x.label} — chỉ dòng hàng giao về đây, tiền tính trên các dòng đó`}>{x.label} ({x.doc.lines.filter((l) => l.lineType === 'buy').length})</button>)}</div>}
       <div className="full" style={{ overflow: 'auto', maxHeight: '70vh', background: '#fff', padding: 12, border: '1px solid var(--line)' }}>
         <div style={{ textAlign: 'center', fontFamily: '"Times New Roman", serif', fontSize: 24, fontWeight: 700, marginBottom: 10 }}>ĐƠN ĐẶT HÀNG</div>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontFamily: '"Times New Roman", serif', fontSize: 14, marginBottom: 8 }}><tbody>
@@ -92,12 +102,28 @@ export function XemMauNcc({ doc, info, onClose, onExport }: { doc: PDoc; info: M
 
 /* ------------------------------------------------------------------ xuất Excel đúng mẫu */
 
-export async function xuatMauNcc(doc: PDoc, info: MauNccInfo): Promise<void> {
+export async function xuatMauNcc(doc: PDoc, info: MauNccInfo, parts?: MauNccPart[]): Promise<void> {
   const ExcelJS = (await import('exceljs')).default;
-  const t = rowsOf(doc);
   const wb = new ExcelJS.Workbook();
   wb.creator = 'ERP mua hàng';
-  const ws = wb.addWorksheet('Don dat hang', { views: [{ showGridLines: false, state: 'frozen', ySplit: 11 }], pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0.15, footer: 0.15 } } });
+  const ds = parts?.length ? parts : [{ key: '', label: '', doc, info }];
+  const dung = new Set<string>();
+  for (const x of ds) {
+    // Tên sheet Excel: tối đa 31 ký tự, không có []:*?/\, không trùng.
+    let ten = ds.length > 1 ? (x.label || x.key).replace(/[[\]:*?/\\]/g, ' ').slice(0, 31) : 'Don dat hang';
+    for (let n = 2; dung.has(ten.toLowerCase()); n++) ten = `${ten.slice(0, 27)} (${n})`;
+    dung.add(ten.toLowerCase());
+    veSheet(wb, x.doc, x.info, ten);
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  const a = document.createElement('a'); a.href = url; a.download = `${doc.docNo || 'don-dat-hang'}-${info.code}.xlsx`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function veSheet(wb: Workbook, doc: PDoc, info: MauNccInfo, sheetName: string): void {
+  const t = rowsOf(doc);
+  const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: false, state: 'frozen', ySplit: 11 }], pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0.15, footer: 0.15 } } });
   ws.columns = [6, 16, 18, 58, 8, 8, 15, 11, 9, 15, 11, 15, 26, 9, 11, 18, 32].map((width) => ({ width }));
   const argb = (h: string) => `FF${h.replace('#', '').toUpperCase()}`;
   const fill = (h: string) => ({ type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: argb(h) } });
@@ -160,8 +186,4 @@ export async function xuatMauNcc(doc: PDoc, info: MauNccInfo): Promise<void> {
     merge(r + i, 12, r + i, 15, a, left);
     merge(r + i, 16, r + i, 17, b, { ...(i === 3 ? right : money), font: font({ bold: true }) });
   });
-  const buf = await wb.xlsx.writeBuffer();
-  const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-  const a = document.createElement('a'); a.href = url; a.download = `${doc.docNo || 'don-dat-hang'}-${info.code}.xlsx`; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }

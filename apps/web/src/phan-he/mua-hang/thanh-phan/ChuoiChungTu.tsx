@@ -8,7 +8,7 @@
  */
 import { Fragment } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { invoiceDueDate, orderProgress, type PDoc } from '@bizcity/mua-hang-domain';
+import { invoiceDueDate, invoiceKey, invoicesOf, orderProgress, type PDoc } from '@bizcity/mua-hang-domain';
 import { today as homNay, type StoredDoc } from '../du-lieu';
 
 type Trang = 'co' | 'dang' | 'thieu' | 'chua';
@@ -17,7 +17,8 @@ interface Mat { ten: string; trang: Trang; docs: PDoc[]; ghi?: string }
 const live = (d: PDoc) => d.status !== 'cancelled';
 const giao = (a: string[] | undefined, ids: Set<string>) => (a ?? []).some((x) => ids.has(x));
 
-export function ChuoiChungTu({ doc, docs, units, onOpen }: { doc: PDoc; docs: StoredDoc[]; units?: Parameters<typeof orderProgress>[3]; onOpen?: (d: PDoc) => void }) {
+/** vertical: dạng dọc (khung Trợ lý mua hàng — 2026-11-21 bỏ thanh ngang trên đầu phiếu cho đỡ rối). */
+export function ChuoiChungTu({ doc, docs, units, onOpen, vertical }: { doc: PDoc; docs: StoredDoc[]; units?: Parameters<typeof orderProgress>[3]; onOpen?: (d: PDoc) => void; vertical?: boolean }) {
   const byId = new Map(docs.map((d) => [d.id, d as PDoc]));
   byId.set(doc.id, doc);
   const ref0 = (d?: PDoc) => (d?.refIds?.[0] ? byId.get(d.refIds[0]) : undefined);
@@ -47,18 +48,17 @@ export function ChuoiChungTu({ doc, docs, units, onOpen }: { doc: PDoc; docs: St
   const costs = ofKind(['cost', 'rebate']);
   const contract = doc.contractCode ?? order?.contractCode ?? receipts.find((r) => r.contractCode)?.contractCode;
   const prog = order && order.status === 'approved' ? orderProgress(order, docs, undefined, units) : null;
-  const coHd = receipts.filter((r) => r.invoice?.no);
   const dang = (ds: PDoc[]): Trang => (ds.some((d) => d.id === doc.id) ? 'dang' : 'co');
   // Hoá đơn NCC theo kế hoạch của đơn: cùng hàng / nhận sau N ngày (hạn tính từ ngày nhận hàng) / không lấy.
   const plan = doc.invoicePlan ?? order?.invoicePlan ?? receipts.find((r) => r.invoicePlan)?.invoicePlan;
   const hoaDon = (): Mat => {
     const ten = 'Hoá đơn NCC';
-    if (plan?.mode === 'none') return { ten, docs: [], trang: 'co', ghi: 'Không lấy HĐ' };
+    if (plan?.mode === 'none') return { ten, docs: [], trang: 'co', ghi: 'Hàng không có hoá đơn' };
     if (!receipts.length) return { ten, docs: [], trang: 'chua', ghi: plan?.mode === 'later' ? `sau ${plan.days ?? 0} ngày` : undefined };
-    const thieu = receipts.filter((r) => !r.invoice?.no);
-    if (!thieu.length) return { ten, docs: [], trang: 'co', ghi: receipts.map((r) => `${r.invoice!.serial ? `${r.invoice!.serial}-` : ''}${r.invoice!.no}`).join(', ') };
+    const thieu = receipts.filter((r) => !invoicesOf(r).length);
+    if (!thieu.length) return { ten, docs: [], trang: 'co', ghi: receipts.flatMap((r) => invoicesOf(r).map(invoiceKey)).join(', ') };
     if (plan?.mode === 'later') {
-      const han = thieu.map((r) => invoiceDueDate(plan, r.receivedDate ?? r.docDate)).sort()[0]!;
+      const han = thieu.map((r) => invoiceDueDate(plan, r.receivedDate ?? r.docDate, order?.docDate)).sort()[0]!;
       const qua = han < homNay();
       return { ten, docs: [], trang: qua ? 'thieu' : 'chua', ghi: `${qua ? 'quá hạn' : 'hạn'} ${han.slice(8, 10)}/${han.slice(5, 7)}` };
     }
@@ -78,10 +78,10 @@ export function ChuoiChungTu({ doc, docs, units, onOpen }: { doc: PDoc; docs: St
   if (doc.kind === 'prepayment') mats.splice(4, 1, { ten: 'Ứng trước', docs: [doc], trang: 'dang' });
 
   return (
-    <div className="mh-chuoi" aria-label="Chuỗi chứng từ">
+    <div className={`mh-chuoi${vertical ? ' mh-chuoi-doc' : ''}`} aria-label="Chuỗi chứng từ">
       {mats.map((m, i) => (
         <Fragment key={m.ten}>
-          {i > 0 && <ChevronRight size={13} className="mh-chuoi-mui" />}
+          {i > 0 && !vertical && <ChevronRight size={13} className="mh-chuoi-mui" />}
           <span className={`mh-chuoi-mat ${m.trang}`} title={m.trang === 'thieu' ? `Thiếu / lệch: ${m.ghi ?? m.ten}` : undefined}>
             <b>{m.trang === 'co' ? '✓ ' : ''}{m.ten}</b>
             {m.docs.map((d) => (d.id === doc.id || d.id.startsWith('new-') || !onOpen

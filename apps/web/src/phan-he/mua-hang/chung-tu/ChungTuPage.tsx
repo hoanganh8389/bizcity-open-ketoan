@@ -11,7 +11,7 @@ import { workBranch } from '@/lib/workBranch';
 import { restoreDock } from '@/layout/WindowDock';
 import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { COST_TYPES, ORDER_INVOICE_LABEL, invoiceDueDate, invoiceLabel, invoicePlanText, orderInvoice, orderProgress, receiptFromOrder, type InvoicePlan, type OrderInvoice, type PDoc } from '@bizcity/mua-hang-domain';
+import { COST_TYPES, ORDER_INVOICE_LABEL, invoiceDueDate, invoiceKey, invoiceLabel, invoicesOf, invoicePlanText, orderInvoice, orderProgress, receiptFromOrder, type InvoicePlan, type OrderInvoice, type PDoc } from '@bizcity/mua-hang-domain';
 import { useDimension } from '@/components/voucher/lookups';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
@@ -38,7 +38,7 @@ import { HopDongMuaPage, hopDongMoiPath } from '../hop-dong/HopDongPage';
 
 /** Hoá đơn của phiếu nhập theo kế hoạch của đơn. */
 type HdPhieu = 'co' | 'thieu' | 'cho' | 'qua-han' | 'khong';
-const HD_PHIEU: Record<HdPhieu, string> = { co: 'Đã có HĐ', thieu: 'Thiếu HĐ', cho: 'Chờ HĐ', 'qua-han': 'Quá hạn HĐ', khong: 'Không lấy HĐ' };
+const HD_PHIEU: Record<HdPhieu, string> = { co: 'Đã có HĐ', thieu: 'Thiếu HĐ', cho: 'Chờ HĐ', 'qua-han': 'Quá hạn HĐ', khong: 'Hàng không có HĐ' };
 const GROUPS: [string, string, PDoc['kind'][]][] = [
   ['all', 'Tất cả', []], ['hop-dong', 'Hợp đồng', []], ['order', 'Đơn đặt hàng', ['order']], ['receipt', 'Nhập mua', ['receipt']], ['return', 'Trả / đổi hàng', ['return', 'exchange']],
   ['money', 'Ứng trước / trả tiền', ['prepayment', 'payment']], ['gift', 'Quà tặng', ['gift_in', 'gift_out']], ['adjust', 'Chi phí / thưởng', ['cost', 'rebate']],
@@ -193,9 +193,10 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
     const homNay = today();
     return (d: PDoc): { state: HdPhieu; han: string; plan?: InvoicePlan } | null => {
       if (d.kind !== 'receipt') return null;
-      const plan = d.invoicePlan ?? (d.refIds?.[0] ? byId.get(d.refIds[0])?.invoicePlan : undefined);
-      const han = invoiceDueDate(plan, d.receivedDate ?? d.docDate);
-      if (d.invoice?.no) return { state: 'co', han, plan };
+      const don = d.refIds?.[0] ? byId.get(d.refIds[0]) : undefined;
+      const plan = d.invoicePlan ?? don?.invoicePlan;
+      const han = invoiceDueDate(plan, d.receivedDate ?? d.docDate, don?.docDate);
+      if (invoicesOf(d).length) return { state: 'co', han, plan };
       if (plan?.mode === 'none') return { state: 'khong', han, plan };
       if (plan?.mode === 'later') return { state: han < homNay ? 'qua-han' : 'cho', han, plan };
       return { state: 'thieu', han, plan };
@@ -215,7 +216,7 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
       && (!onlyErr || ((d.status === 'draft' || d.status === 'pending_approval') && (d.checks ?? []).some((c) => c.level === 'error')))
       && (!from || d.docDate >= from) && (!to || d.docDate <= to)
       && matchKho(khoFilter, d.branchCode, khoOf(d.branchCode, d.kind === 'order' ? d.deliveryWarehouse : d.warehouseCode))
-      && (!s || [d.docNo, d.note, d.invoice?.no, d.partnerCode, names.partnerName(d.partnerCode), names.partner(d.partnerCode)?.taxCode, names.partner(d.partnerCode)?.phone, names.partner(d.partnerCode)?.address].some((x) => x?.toLowerCase().includes(s))));
+      && (!s || [d.docNo, d.note, ...invoicesOf(d).map(invoiceKey), d.partnerCode, names.partnerName(d.partnerCode), names.partner(d.partnerCode)?.taxCode, names.partner(d.partnerCode)?.phone, names.partner(d.partnerCode)?.address].some((x) => x?.toLowerCase().includes(s))));
   }, [data, group, status, onlyErr, outside, partner, from, to, search, names, khoOf, branchCodes, whCodes, hd, km, invOf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -300,8 +301,8 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
       render: (r) => (nhapNgoaiDon(r) ? <span className="badge badge-warn" title={r.outsideOrder?.reason ? `Lý do: ${r.outsideOrder.reason}${r.outsideOrder.by ? `
 Duyệt: ${r.outsideOrder.by}` : ''}${r.outsideOrder.reviewedBy ? `
 Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoài đơn'}>Ngoài đơn{r.outsideOrder?.reviewedBy ? ' ✓' : ''}</span> : (r.refIds ?? []).map((x) => data?.docs.find((d) => d.id === x)?.docNo ?? '').filter(Boolean).join(', ')) },
-    { key: 'invoiceSerial', header: 'Ký hiệu HĐ', type: 'code', width: 90, value: (r) => r.invoice?.serial ?? '' },
-    { key: 'invoice', header: 'Số HĐ', type: 'code', width: 80, value: (r) => r.invoice?.no ?? '' },
+    { key: 'invoiceSerial', header: 'Ký hiệu HĐ', type: 'code', width: 90, value: (r) => [...new Set(invoicesOf(r).map((i) => i.serial ?? ''))].filter(Boolean).join(', ') },
+    { key: 'invoice', header: 'Số HĐ', type: 'code', width: 80, title: 'Số hoá đơn của phiếu — phiếu nhập nhiều hoá đơn thì ghi đủ các số', value: (r) => invoicesOf(r).map((i) => i.no).join(', ') },
     { key: 'invPlan', header: 'Hoá đơn', width: 130, title: 'Kế hoạch hoá đơn đầu vào khai ở đơn đặt (cùng hàng / nhận sau N ngày / không lấy) và tình trạng của phiếu nhập',
       value: (r) => { const x = hdPhieu(r); return x ? `${HD_PHIEU[x.state]}${x.state === 'cho' || x.state === 'qua-han' ? ` ${dmy(x.han)}` : ''}` : r.kind === 'order' ? invoicePlanText(r.invoicePlan) : ''; },
       render: (r) => { const x = hdPhieu(r); if (!x) return r.kind === 'order' ? <span className="muted">{invoicePlanText(r.invoicePlan)}</span> : null;

@@ -95,4 +95,20 @@ describe('Đơn giao nhiều chi nhánh — phiếu nhập đối chiếu theo c
     const ok = (await call(t, 'POST', '/api/v1/purchase/analyze', { ...rec, lines: [{ ...rec.lines[0], qty: 3 }] })).body.data.checks as Check[];
     expect(ok.some((c) => c.code === 'po_over')).toBe(false);
   });
+
+  it('đơn đã có phiếu nhập: không mở lại đơn được, báo rõ phiếu nhập nào', async () => {
+    const order = await call(t, 'POST', '/api/v1/purchase/documents', {
+      kind: 'order', docDate: '2026-11-10', branchCode: 'CN01', partnerCode: NCC, priceIncludesVat: false,
+      lines: [{ lineKey: 'a', sku: SKU, name: 'Hàng A', unit: 'Thùng', qty: 2, price: 100_000, taxCode: 'V08', lineType: 'buy' }],
+    });
+    const id = order.body.data.id;
+    expect((await call(t, 'POST', `/api/v1/purchase/documents/${id}/approve`, {})).status).toBe(200);
+    const pn = await call(t, 'POST', '/api/v1/purchase/documents', { kind: 'receipt', docDate: '2026-11-11', branchCode: 'CN01', partnerCode: NCC, priceIncludesVat: false, refIds: [id],
+      lines: [{ lineKey: 'r', sku: SKU, name: 'Hàng A', unit: 'Thùng', qty: 2, price: 100_000, taxCode: 'V08', lineType: 'buy' }] });
+    expect(pn.status, JSON.stringify(pn.body)).toBe(201);
+    const r = await call(t, 'POST', `/api/v1/purchase/documents/${id}/unapprove`, { reason: 'Mở lại đơn: thử' });
+    expect(r.status).toBe(409);
+    expect(JSON.stringify(r.body)).toContain('không mở lại đơn');
+    expect(JSON.stringify(r.body)).toContain(pn.body.data.docNo);
+  });
 });
