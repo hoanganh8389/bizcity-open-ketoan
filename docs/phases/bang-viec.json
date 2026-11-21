@@ -9729,7 +9729,7 @@
     {
       "id": "S039-2",
       "phase": "PHASE-039",
-      "title": "Chủ dự án duyệt D039-1..17, trả Q039-1..5; ADR (số kế tiếp) \"mỗi site một database\"",
+      "title": "Chủ dự án duyệt D039-1..16, trả Q039-1..4 (D039-17, D039-18, Q039-5 đã chốt 2026-11-21); ADR (số kế tiếp) \"mỗi site một database\"",
       "priority": "P0",
       "status": "todo",
       "column": "todo",
@@ -9909,7 +9909,7 @@
     {
       "id": "S039-14",
       "phase": "PHASE-039",
-      "title": "B5 — kiểm khoá biz-… qua bizcity-llm-router (D039-17): khớp alloweddomain, bộ đệm 60 giây, từ chối khi không hỏi được; phía plugin thêm cửa kiểm khoá cho máy c…",
+      "title": "B5 — khoá bản quyền biz-… (D039-17): gắn khoá cho site, hỏi trạng thái ở bizcity-llm-router (bộ đệm 1 giờ), dải đỏ khi hết hạn / thiếu khoá, không chặn; phía p…",
       "priority": "P1",
       "status": "todo",
       "column": "todo",
@@ -9917,7 +9917,7 @@
       "modules": [
         "he-thong"
       ],
-      "facet": "F5",
+      "facet": "F1",
       "file": "docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -9999,7 +9999,7 @@
     {
       "id": "S039-20",
       "phase": "PHASE-039",
-      "title": "B7 — nghiệm thu T039-1..13 trên máy sạch; phối hợp Site Manager (repo bizcity-open-setup) tạo site thật",
+      "title": "B7 — nghiệm thu T039-1..14 trên máy sạch; phối hợp Site Manager (repo bizcity-open-setup) tạo site thật",
       "priority": "P0",
       "status": "todo",
       "column": "todo",

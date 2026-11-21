@@ -2,6 +2,7 @@
 <!-- [2026-11-21 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — W0: bản nháp hợp đồng Provisioning giữa Site Manager (Frappe, repo bizcity-open-setup) và Open Kế Toán; chưa vào docs/contracts cho tới khi chốt ở B5 -->
 
 <!-- [2026-11-21 07:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — D039-17: bỏ hai lệnh cấp / thu hồi khoá API của site; thêm §8 kiểm khoá biz-… qua bizcity-llm-router -->
+<!-- [2026-11-21 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — thêm lệnh PUT /sites/{siteId}/license -->
 > **Trạng thái:** bản nháp trong phase. Khi làm B5 mới chuyển thành tệp ở `docs/contracts/` và gói `@ketoan/contracts`.
 > **Chủ hợp đồng:** Open Kế Toán. **Phía gọi:** Site Manager (`bizcity_site_manager`), CLI, script vận hành.
 
@@ -133,28 +134,24 @@ POST /_sites/v1/sites            Idempotency-Key: 01JD8…   →  202 { jobId: J
 
 ## 7. Chưa có ở `@1`
 
-Cấp khoá API cho khách (thuộc `bizcity-llm-router`, §8), webhook báo việc xong (v1 hỏi trạng thái), chuyển site sang máy chủ khác, đổi `slug`, hạn mức theo gói. Thêm trường không bắt buộc không tăng `@N`; đổi nghĩa hoặc bỏ trường thì tăng.
+Cấp khoá `biz-…` (thuộc `bizcity-llm-router`), webhook báo việc xong (v1 hỏi trạng thái), chuyển site sang máy chủ khác, đổi `slug`, hạn mức theo gói. Thêm trường không bắt buộc không tăng `@N`; đổi nghĩa hoặc bỏ trường thì tăng.
 
-## 8. API key của khách (không thuộc hợp đồng này)
+## 8. Khoá bản quyền `biz-…` (cảnh báo, không chặn)
+<!-- [2026-11-21 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — §8 viết lại theo D039-17: khoá biz-… là khoá mềm để cảnh báo hết hạn -->
 
-Chủ dự án chốt 2026-11-21: **`bizcity-llm-router` quản lý API key.** Provisioning API không cấp, không thu hồi khoá của khách. Khoá `prov_…` ở §2 là khoá hệ thống (máy chủ gọi máy chủ), khác loại.
+Chủ dự án chốt 2026-11-21: `bizcity-llm-router` cấp và quản lý khoá `biz-…`. Trong Open Kế Toán, khoá này **không phải** cửa xác thực. Nó là khoá bản quyền của site, dùng để **cảnh báo hết hạn**.
 
-Chiều kiểm khoá (bản nháp, chốt cùng B5 và với phía plugin):
-
-```text
-Khách  ──  Authorization: Bearer biz-…  ──►  https://<slug>.<tên miền gốc>/api/v1/…
-                                                  │
-Open Kế Toán: Host → site;  hỏi bizcity-llm-router (bộ đệm 60 giây)
-                                                  ▼
-                 { active, userId, allowedDomain }
-                                                  │
-nhận khi: active  ∧  allowedDomain = tên miền site  ∧  userId được chủ site cho phép (vai theo Q039-5)
-```
-
-| Trường hợp | Trả |
+| Lệnh | Việc |
 |---|---|
-| Khoá sai, đã thu hồi, hoặc `allowed_domain` khác tên miền site | 401 `API_KEY_INVALID` (không nói rõ lý do) |
-| Khoá đúng nhưng người dùng chưa được chủ site cho phép | 403 `API_KEY_NOT_ALLOWED` |
-| `bizcity-llm-router` không trả lời và bộ đệm đã hết hạn | 503 `API_KEY_CHECK_UNAVAILABLE` (từ chối, không cho qua) |
+| `PUT /sites/{siteId}/license` thân `{ "key": "biz-…" }` | Gắn hoặc đổi khoá cho site. Open Kế Toán lưu dạng băm + tiền tố |
+| `GET /sites/{siteId}` | Thêm trường `license`: `{ "status": "ok" \| "expiring" \| "expired" \| "missing" \| "unknown", "expiresAt": …, "checkedAt": … }` |
 
-Open Kế Toán chỉ giữ giá trị băm của khoá trong bộ đệm, không ghi khoá vào nhật ký.
+Luật:
+
+1. Open Kế Toán hỏi `bizcity-llm-router` trạng thái khoá, nhớ kết quả 1 giờ.
+2. `expired` / `missing` (thu hồi, sai, chưa gắn) → site **vẫn dùng đầy đủ**; mọi màn có **dải đỏ**: "Bản quyền đã hết hạn. Gia hạn tại …". Dải đỏ không tắt được.
+3. `expiring` (còn ≤ 14 ngày) → dải vàng, tắt được trong ngày.
+4. Không hỏi được `bizcity-llm-router` → giữ trạng thái đã biết lần cuối và ghi `unknown` vào nhật ký vận hành; **không** chặn, **không** hiện đỏ khi lần cuối là `ok`.
+5. Trạng thái khoá **không** ảnh hưởng ghi sổ, báo cáo, API, sao lưu.
+
+Tên miền gốc không nằm trong hợp đồng: `domain` ở §4.1 là tên miền đầy đủ, do phía gọi chọn trong các tên miền gốc đã cấu hình (D039-18).

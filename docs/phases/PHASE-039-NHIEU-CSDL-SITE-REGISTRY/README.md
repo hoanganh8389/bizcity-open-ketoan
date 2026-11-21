@@ -2,11 +2,12 @@
 <!-- [2026-11-21 07:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — W0: đề bài chủ dự án 2026-11-21 — Open Kế Toán là ứng dụng dùng chung, mỗi site một database PostgreSQL; thêm Site Registry, Database Router, Site Provisioner, Migration Runner, Backup Manager; Frappe (repo bizcity-open-setup) chỉ là Site Manager gọi Provisioning API -->
 
 <!-- [2026-11-21 07:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — chủ dự án chốt: bizcity-llm-router quản lý API key; thêm D039-17, Q039-5; Provisioning API không cấp khoá cho khách -->
+<!-- [2026-11-21 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — chủ dự án chốt Q039-5: khoá biz-… chỉ để cảnh báo hết hạn (khoá mềm), site vẫn dùng được; D039-17 viết lại, D039-18 tên miền gốc động -->
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng, chờ đưa vào lộ trình)
 > **Phân hệ:** he-thong
 > **Checklist công bố:** —
-> **Trạng thái:** 🟡 **W0 đề xuất 2026-11-21** — chờ chủ dự án duyệt D039-1..17 và trả Q039-1..5. Chưa có mã.
+> **Trạng thái:** 🟡 **W0 đề xuất 2026-11-21** — chờ chủ dự án duyệt D039-1..16 và trả Q039-1..4 (D039-17, D039-18, Q039-5 đã chốt 2026-11-21). Chưa có mã.
 > **Tệp:** [00 — Kế hoạch & thiết kế](00-MASTER-PLAN.md) · [30 — Hợp đồng Provisioning](30-HOP-DONG-PROVISIONING.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)
 
 ## Đề bài (chủ dự án, 2026-11-21)
@@ -53,20 +54,21 @@
 | **D039-14** | Provisioning API ở tiền tố riêng `/_sites/v1`, **chỉ** trả lời trên tên miền điều hành (`SITE_ADMIN_HOST`), khoá `prov_…` (lưu dạng băm), danh sách IP cho phép | Cửa tạo / xoá database không được nằm chung với cửa nghiệp vụ |
 | **D039-15** | Xoá site = **xoá mềm**: yêu cầu site đang khoá và có bản sao lưu ≤ 24 giờ đã kiểm; đổi tên database thành `kt_<slug>_xoa_<ngày>`, giữ 30 ngày rồi mới `DROP` | Sổ kế toán: xoá nhầm không lấy lại được |
 | **D039-16** | Mức thay đổi **K3** (đụng `db/client.ts`, xác thực, migration runner). Cần ADR (số kế tiếp) ở W0 và chủ dự án duyệt; mỗi bước có "đường lùi" trong PR | Lớp CSDL nền của toàn bộ Core |
-| **D039-17** | **API key của khách do `bizcity-llm-router` quản lý** (chủ dự án chốt 2026-11-21). Open Kế Toán **không** cấp khoá riêng cho khách ở chế độ nhiều site. Yêu cầu mang khoá `biz-…` tới một site → Open Kế Toán hỏi `bizcity-llm-router` (cửa kiểm khoá, bộ đệm 60 giây) → nhận lại khoá còn hiệu lực không, thuộc người dùng nào, `allowed_domain` nào. Chỉ nhận khi `allowed_domain` đúng tên miền site **và** người dùng đó được chủ site cho phép | Một nơi cấp và thu hồi khoá cho cả hệ sinh thái; thu hồi ở WordPress có hiệu lực ở mọi site trong 60 giây |
+| **D039-17** | **Khoá `biz-…` là khoá bản quyền của site, chỉ để cảnh báo** (chủ dự án chốt 2026-11-21). `bizcity-llm-router` cấp và quản lý khoá. Mỗi site gắn một khoá; Open Kế Toán hỏi `bizcity-llm-router` trạng thái khoá (bộ đệm 1 giờ). Khoá hết hạn, bị thu hồi, hoặc site chưa gắn khoá → **site vẫn dùng đầy đủ**, chỉ hiện **dải đỏ cảnh báo** trên mọi màn. Không hỏi được `bizcity-llm-router` → giữ trạng thái đã biết, **không** chặn, **không** hiện đỏ oan | Sổ kế toán không được dừng vì chuyện gia hạn; dấu đỏ đủ khó chịu để nhắc |
+| **D039-18** | **Tên miền gốc là cấu hình động** (chủ dự án chốt 2026-11-21): `btnet.vn`, `bizcity.vn` hay bất kỳ `*.<miền>` nào đã khai. Registry nhận mọi tên miền; Site Resolver chỉ tra `site_domains`, không ghi cứng tên miền gốc nào. Một site có thể có nhiều tên miền | Đổi hoặc thêm tên miền gốc không phải sửa mã |
 
 ## Câu còn mở
 
 | Mã | Câu hỏi | Đề nghị |
 |---|---|---|
-| **Q039-1** | Site bị khoá (hết hạn) thì **chỉ đọc** hay **chặn hẳn**? | Chỉ đọc: khách vẫn xem, in, xuất sổ; không ghi được |
+| **Q039-1** | Lệnh khoá site (do người vận hành ra, không phải do hết hạn) thì **chỉ đọc** hay **chặn hẳn**? | Chỉ đọc: khách vẫn xem, in, xuất sổ; không ghi được. Hết hạn thì **không** khoá, chỉ cảnh báo (D039-17) |
 | **Q039-2** | Mỗi site một vai trò PostgreSQL riêng, hay dùng chung `ketoan` / `ketoan_app`? | v1 dùng chung (đơn giản, database đã tách); vai trò riêng khi có site đặt ở máy chủ khác |
 | **Q039-3** | Thêm PgBouncer ngay hay để sau? | Để sau; D039-7 đủ cho vài chục site. Thêm khi vượt 50 site |
 | **Q039-4** | Bản cài một công ty đang chạy có được chuyển thành một site của cụm nhiều site không? | Có, bằng sao lưu → khôi phục vào `kt_<slug>` → ghi registry; làm thành lệnh CLI ở B4 |
-| **Q039-5** | Khoá `biz-…` vào site thì mang **vai** nào trong site? | Gắn với một "tài khoản dịch vụ" do chủ site tạo và chọn vai (mặc định chỉ đọc); khoá không tự có quyền chỉ vì thuộc chủ site |
+| ~~Q039-5~~ | ~~Khoá `biz-…` mang vai nào trong site?~~ | **Đã chốt 2026-11-21:** khoá không mang quyền truy cập. Nó là khoá bản quyền để cảnh báo hết hạn (D039-17) |
 
 ## Phía gọi
 
 Repo `bizcity-open-setup` (app Frappe `bizcity_site_manager`): giữ khách hàng và danh sách site; gọi Provisioning API ở [30](30-HOP-DONG-PROVISIONING.md). Phase này là **chủ hợp đồng**; phía gọi đổi theo.
 
-Plugin WordPress `bizcity-llm-router`: chủ API key (`biz-…`). Việc cần ở phía plugin: một cửa kiểm khoá cho máy chủ gọi máy chủ (hôm nay plugin mới tự kiểm khoá cho các cửa của chính nó).
+Plugin WordPress `bizcity-llm-router`: chủ khoá `biz-…`. Việc cần ở phía plugin: một cửa trả trạng thái khoá (còn hạn / sắp hết / hết hạn) cho máy chủ gọi máy chủ.
