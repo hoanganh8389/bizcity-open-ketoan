@@ -9,6 +9,7 @@
 <!-- [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục. -->
 <!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 <!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — §4 dòng "Nhiều site", §4.2 mô hình triển khai và luật nâng cấp (ADR-0036) -->
 
 > **Phiên bản:** 1.1 · 2026-10-30
 > **Thiết kế kiến trúc:** **Johnny Chu – Chu Hoàng Anh.** Quyền tác giả đối với kiến trúc open-ketoan framework (nền tảng lấy Accounting Core ổn định, module mở rộng) và bộ tài liệu này thuộc về tác giả, theo công bố của chủ dự án.
@@ -162,6 +163,7 @@ Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID.
 |---|---|---|---|
 | Bất biến kế toán + ACID | P0 | Bắt buộc | **có**: Domain Contract, trigger, kiểm sau mọi tệp test |
 | Cô lập đơn vị + Audit Ledger | P0 | Bắt buộc | **có**: `tenant_id` mọi truy vấn + RLS mọi bảng có `tenant_id` (0041, PHASE-007), bằng chứng chuỗi băm. Bản cài phải chạy API bằng `ketoan_app` (R-SEC-6), superuser vượt RLS |
+| Nhiều site: mỗi site một database + vai trò riêng, một bản mã | P0 | Bắt buộc khi chạy nhiều khách ([ADR-0036](adr/ADR-0036-mot-ban-ma-moi-site-mot-database.md)) | **chưa**: chấp nhận 2026-11-21, làm ở PHASE-039; hôm nay một `DATABASE_URL` |
 | Contract + SDK + MCP | P0 | Lợi thế chiến lược | **một phần**: 4 lớp hợp đồng, MCP có; SDK là bản nháp (G1-10) |
 | Sao lưu, PITR, kiểm khôi phục | P0 | Bắt buộc | **có cơ chế**: sao lưu, kiểm khôi phục, PITR (`infrastructure/backup/`) + diễn tập máy dev ĐẠT (RTO 8 giây, RPO ≤ 60 giây); còn bật trên bản cài thật (PHASE-008) |
 | Prometheus + Grafana | P1 | Nên triển khai sớm | **có**: `infrastructure/monitoring/` |
@@ -186,6 +188,48 @@ Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE
 | C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17; A-01 xong 2026-10-30) |
 | C-8 | Kiểm toán | Không rõ sự kiện do ai tạo | Actor, source, correlation, evidence, version | ✔ đạt từ 2026-10-30 (`correlation_id` từ X-Correlation-Id vào bằng chứng và sự kiện) |
 | C-9 | Thay đổi chế độ kế toán | Áp dụng quy tắc mới vào chứng từ cũ | Phiên bản chính sách và ngày hiệu lực | ✔ đạt từ 2026-10-30 (ADR-0009, PHASE-005) |
+
+### 4.2 Mô hình triển khai nhiều site ([ADR-0036](adr/ADR-0036-mot-ban-ma-moi-site-mot-database.md), luật [R-SITE](rules/RULE-SITE.md))
+
+**Frappe** = giao diện điều hành và quản lý site. **Open Kế Toán** = ứng dụng kế toán dùng chung, độc lập với Frappe. **PostgreSQL** = mỗi site một database, mỗi site một vai trò riêng.
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  FRAPPE — SITE MANAGER (repo bizcity-open-setup)             │
+│  Một Frappe site quản trị · database quản trị riêng          │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ Provisioning API
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│  OPEN KẾ TOÁN — ỨNG DỤNG DÙNG CHUNG                          │
+│  Một bản mã từ GitHub · React + Fastify + Accounting Kernel  │
+│  Site Registry + Database Router                             │
+└────────────┬──────────────────────┬──────────────────────┬───┘
+             ▼                      ▼                      ▼
+      SITE A  a.<miền>       SITE B  b.<miền>       SITE C  c.<miền>
+      DB A · vai trò A       DB B · vai trò B       DB C · vai trò C
+      chuỗi 500 cửa hàng     chuỗi 20 cửa hàng      1 cửa hàng
+```
+
+Tạo một kế toán mới là cấp một database và một cặp vai trò, không dựng thêm ứng dụng, không tạo thêm Frappe site. Đơn vị và chi nhánh nằm trong site như trước; RLS giữ nguyên.
+
+**Luật nâng cấp — một bản mã cho mọi site:**
+
+```text
+GitHub: open-ketoan
+        ↓
+Kéo mã · build · test                 (bản đang chạy vẫn phục vụ)
+        ↓
+Một phiên bản Open Kế Toán mới
+        ↓
+Migration từng site DB                (kt_template trước; sao lưu trước mỗi site)
+        ↓
+Chuyển ứng dụng sang phiên bản mới
+        ↓
+Tất cả site dùng chung mã mới
+```
+
+Ứng dụng chỉ phục vụ site có lược đồ đúng bản nó cần (cổng lược đồ). Site nâng lỗi dừng riêng; không có migration lùi, lùi một site là khôi phục bản sao lưu vừa tạo.
 
 ## 5. Luật bắt buộc cho người đóng góp
 

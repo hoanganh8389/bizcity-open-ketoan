@@ -166,6 +166,25 @@ cd /www/wwwroot/tgs-ketoan && ./scripts/cap-nhat.sh
 
 Kịch bản làm lần lượt: sao lưu → `git pull` → dựng lại → chờ API lên khoẻ → in các migration vừa áp. Phần mềm gián đoạn chừng vài chục giây, nên cập nhật ngoài giờ làm việc.
 
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — cập nhật cụm nhiều site theo R-SITE-8 -->
+**Cụm nhiều site** ([ADR-0036](adr/ADR-0036-mot-ban-ma-moi-site-mot-database.md), chưa có mã — PHASE-039): một bản mã cho mọi site, theo đúng thứ tự [R-SITE-8](rules/RULE-SITE.md):
+
+```text
+GitHub: open-ketoan
+        ↓
+Kéo mã · build · test                 (bản đang chạy vẫn phục vụ)
+        ↓
+Một phiên bản Open Kế Toán mới
+        ↓
+Migration từng site DB                (kt_template trước; sao lưu trước mỗi site)
+        ↓
+Chuyển ứng dụng sang phiên bản mới
+        ↓
+Tất cả site dùng chung mã mới
+```
+
+Site nâng lỗi báo "đang nâng cấp / nâng cấp lỗi" và dừng riêng; các site khác chạy tiếp. Lùi một site = khôi phục bản sao lưu vừa tạo cho site đó.
+
 ## 7. Vận hành
 
 | Việc | Lệnh |

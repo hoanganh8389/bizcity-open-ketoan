@@ -15,10 +15,11 @@
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — §0.9 Lõi bất biến, nghiệp vụ linh hoạt (ADR-0029); dòng R-WF; nhật ký v1.5 -->
 <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — §3 dòng R-OKT-CONN, §6 nhật ký v1.8, dòng phiên bản. -->
 <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — §0.12 lỗi phải để lại dấu; luật R-LOG; §5 dòng ghi log; nhật ký v1.9 -->
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — §0.13 mô hình triển khai nhiều site + luật nâng cấp (ADR-0036); §3 dòng R-SITE; §5 dòng lớp CSDL / migration; nhật ký v1.10 -->
 
 > **Tệp này:** một trang liệt kê **mọi** luật và hợp đồng đang chi phối lõi. Không lặp nội dung luật — chỉ mã, cấp, nơi kiểm.
 > **Dùng khi:** sửa lõi → tra bảng §4 để biết phải sửa tài liệu / hợp đồng nào **trong cùng PR**.
-> **Phiên bản:** 1.9 · 2026-11-21 (nhật ký §6) · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
+> **Phiên bản:** 1.10 · 2026-11-21 (nhật ký §6) · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
 > **Hai lớp chuẩn:** luật `R-*` dưới đây giữ **Kernel** (sổ cái). Luật `STD-*` của [Bizcity Framework Standard v1](standard/README.md) giữ **module** (7 hợp đồng, bộ kiểm cài đặt). Module tuân `STD-*`; nhờ SDK nó tự tuân `R-*`.
 
 <!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
@@ -199,6 +200,51 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 4. **Mọi bản cài có nhật ký lỗi cố định** `logs/` ≤ 200 MB, một lệnh gom gửi về; bộ giám sát (Loki, Tempo, Grafana) là đường điều tra sâu, không thay tầng tối thiểu này (R-LOG-9).
 5. **R-ERR trả ra ngoài, R-LOG ghi vào trong** — hai luật không thay nhau.
 
+### 0.13 Một bản mã, mỗi site một database (chủ dự án 2026-11-21; [ADR-0036](adr/ADR-0036-mot-ban-ma-moi-site-mot-database.md), luật [R-SITE](rules/RULE-SITE.md), [PHASE-039](phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/README.md))
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — §0.13 mô hình triển khai nhiều site -->
+
+> **Frappe = giao diện điều hành và quản lý site. Open Kế Toán = ứng dụng kế toán dùng chung, độc lập với Frappe. PostgreSQL = mỗi site một database, mỗi site một vai trò riêng.**
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  FRAPPE — SITE MANAGER (repo bizcity-open-setup)             │
+│  Một Frappe site quản trị · database quản trị riêng          │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ Provisioning API
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│  OPEN KẾ TOÁN — ỨNG DỤNG DÙNG CHUNG                          │
+│  Một bản mã từ GitHub · React + Fastify + Accounting Kernel  │
+│  Site Registry + Database Router                             │
+└────────────┬──────────────────────┬──────────────────────┬───┘
+             ▼                      ▼                      ▼
+      SITE A  a.<miền>       SITE B  b.<miền>       SITE C  c.<miền>
+      DB A · vai trò A       DB B · vai trò B       DB C · vai trò C
+      chuỗi 500 cửa hàng     chuỗi 20 cửa hàng      1 cửa hàng
+```
+
+1. **Site ≠ đơn vị.** Site là tên miền + database. Đơn vị, chi nhánh, RLS giữ nguyên bên trong site (R-SITE-1).
+2. **Một bản mã.** Kernel, module, Rulepack không biết có nhiều database; chỉ Database Router chọn pool theo site (R-SITE-5).
+3. **Mỗi site một vai trò PostgreSQL.** Lộ một site không lộ site khác (R-SITE-2).
+4. **Đóng khi thiếu.** Không có site thì không truy vấn; không rơi về database mặc định (R-SITE-3).
+5. **Luật nâng cấp** (R-SITE-8..10):
+
+```text
+GitHub: open-ketoan
+        ↓
+Kéo mã · build · test                 (bản đang chạy vẫn phục vụ)
+        ↓
+Một phiên bản Open Kế Toán mới
+        ↓
+Migration từng site DB                (kt_template trước; sao lưu trước mỗi site)
+        ↓
+Chuyển ứng dụng sang phiên bản mới
+        ↓
+Tất cả site dùng chung mã mới
+```
+
+   Ứng dụng chỉ phục vụ site có lược đồ đúng bản nó cần; site nâng lỗi dừng riêng, site khác chạy tiếp.
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -249,6 +295,7 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 | R-COMBO <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — R-COMBO dòng danh mục luật (ADR-0035) --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) | 1 (R-COMBO-1..10) | **Chấp nhận 2026-11-17, chưa có mã** (CANON §0.11) ([ADR-0035](adr/ADR-0035-combo-identity-phan-kho-nguon-qua.md), PHASE-037): **combo là thoả thuận thương mại có phiên bản, không phải mặt hàng** — `combo_id` ≠ `item_id`, quà là hàng thật thì mang `item_id` thật; bản đã phát hành không sửa; tách / lắp / chuyển phân kho bảo toàn lượng theo `item_id` · lô; mỗi dòng quà truy được về dòng nhận gốc; chỉ Kernel ghi sổ; **giá 0 / `isGift` / loại phân kho không tự quyết định giá vốn hay thuế**; một combo hai mặt mua / bán, kế thừa đầu vào phải phát hành; `phankho_id` = `warehouses.uid`; năm nguồn quà; hết combo thì bán rời | SC-COMBO-1..3, `IN-COMBO-*`, `CT-COMBO-*` (sẽ có) |
 | R-OKT-CONN <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — dòng danh mục luật (chủ dự án 2026-11-21) --> | [rules/RULE-OPEN-POS-CONNECTION.md](rules/RULE-OPEN-POS-CONNECTION.md) | 1 (luật tối thượng phía open-pos) | **Chấp nhận 2026-11-21 (chỉnh 05:31 PM), chưa có mã:** open-pos (repo `open-pos`, trước `tgs_pos`) / open-pos-backend (repo `open-pos-backend`, trước `tgs_shop_management`): **admin chọn nguồn danh mục theo shop** — `local`: shop tự quản đầy đủ trong bảng theo prefix; `ketoan`: open-ketoan là nguồn sự thật, trường gốc chỉ đọc (R-MD-1), open-pos-backend **tự cấu hình ánh xạ mặc định** và đối chứng; mất kết nối thì không sửa danh mục. **Bảng local ở giữa luôn có; kế toán tắt hay dừng kết nối thì quầy vẫn bán, không mất đơn, luồng bán và sổ của open-pos giữ nguyên** (R-OKT-CONN-11); tạm dừng kết nối theo shop (R-OKT-CONN-12). Một blog = một shop = một tenant; một bộ kéo; mã mới của shop `ketoan` gửi thẳng kế toán | `tgs_catalog_source` + cổng ghi, `tgs_okt_connected()` ở open-pos-backend (sẽ có); feed theo tenant (R-TEN) |
 | R-LOG <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — R-LOG dòng danh mục luật --> | [rules/RULE-LOG.md](rules/RULE-LOG.md) | 0 (R-LOG-1..4), 1 (R-LOG-5..9), 2 (R-LOG-10..11) | **Chấp nhận 2026-11-21** (Johnny Chu – Chu Hoàng Anh khởi tạo, §0.12, PHASE-038): một đường ghi lỗi có đối tượng `err` (giữ stack, `cause`); không nuốt lỗi im lặng; tiến trình không chết câm (ghi `fatal` đồng bộ rồi thoát); không lộ dữ liệu; mỗi dòng có bản + commit; tác vụ nền có `job` / `traceId`; chọn mức theo ai phải sửa; stack trỏ `.ts`; nhật ký lỗi cố định `logs/` ≤ 200 MB; giao diện có ErrorBoundary | review; SC-EVD-1 (ngoại lệ hẹp logger); SC-LOG-1..3, SC-OBS-3 (sẽ có, PHASE-038 B5) |
+| R-SITE <!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — R-SITE dòng danh mục luật (ADR-0036) --> | [rules/RULE-SITE.md](rules/RULE-SITE.md) | 0 (R-SITE-1..4, -8..10, -12), 1 (còn lại) | **Chấp nhận 2026-11-21, chưa có mã** (PHASE-039): mỗi site một database + vai trò riêng; một bản mã; đóng khi thiếu site; vé gắn site; nâng cấp = build → migration từng site → chuyển ứng dụng; cổng lược đồ | ca T039-* (PHASE-039) |
 
 ## 4. Hợp đồng (contracts)
 
@@ -328,10 +375,14 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Gỡ được cạnh import ngược chiều lớp | `--update-baseline`; mốc đồ thị mới `node scripts/do-thi-phu-thuoc.mjs` khi xong một Phase (SC-LAYER-2) |
 | Thêm / sửa mã đụng combo, khuyến mại có quà, nguồn quà, phân kho khuyến mại / giữ hộ, cách tính giá vốn – thuế của hàng tặng <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — §5 dòng R-COMBO --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) (luật + mã kiểm), [contracts/BIZCITY-COMBO-v1.md](contracts/BIZCITY-COMBO-v1.md); không tạo mã hàng cho combo, không suy giá vốn / thuế từ `isGift` |
 | Thêm / sửa `catch`, ghi log, `console.*`, tác vụ nền, gọi dịch vụ ngoài, điểm vào mới (job, worker), logger, `logs/` <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — §5 dòng R-LOG --> | theo [rules/RULE-LOG.md](rules/RULE-LOG.md) (R-LOG-1..4 chặn khi rà); trường log mới → [ops/OBSERVABILITY.md](ops/OBSERVABILITY.md) §2 |
+| `packages/platform/src/db/client.ts`, `migrate.ts`, `module-db.ts`, tiến trình nền, xác thực (vé) <!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — §5 dòng R-SITE --> | [RULE-SITE](rules/RULE-SITE.md) R-SITE-3..6; ca T039-1..8 |
+| Thêm migration | R-SITE-11 (không ghi cứng tên database / vai trò; ghi thời gian ước tính nếu dài — nhân với số site) |
 
 ## 6. Nhật ký thay đổi CANON
 
 <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — CANON v1.9 (§0.12, R-LOG) -->
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — nhật ký v1.10 -->
+- **v1.10 (2026-11-21):** Thêm §0.13 mô hình triển khai nhiều site và luật nâng cấp một bản mã cho mọi site ([ADR-0036](adr/ADR-0036-mot-ban-ma-moi-site-mot-database.md)); luật R-SITE; dòng §5 cho lớp CSDL và migration.
 - **v1.9 (2026-11-21):** Thêm §0.12 **Lỗi phải để lại dấu** và luật **R-LOG** ([rules/RULE-LOG.md](rules/RULE-LOG.md), PHASE-038) do Johnny Chu – Chu Hoàng Anh khởi tạo: tám loại lỗi và cách chọn mức; R-LOG-1..4 chặn (một đường ghi lỗi, không nuốt lỗi, tiến trình không chết câm, không lộ dữ liệu); nhật ký lỗi cố định `logs/` ≤ 200 MB; §5 thêm dòng sửa `catch` / log. Nguồn: sự cố go-live 503 ngày 2026-11-21.
 <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — CANON v1.8 -->
 - **v1.8 (2026-11-21):** Thêm luật **R-OKT-CONN** ([rules/RULE-OPEN-POS-CONNECTION.md](rules/RULE-OPEN-POS-CONNECTION.md)) cho phía bán hàng dùng open-ketoan.

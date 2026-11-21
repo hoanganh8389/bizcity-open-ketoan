@@ -56,13 +56,14 @@ Database điều khiển `ketoan_control`, migration riêng ở `db/control-migr
 
 | Bảng | Cột chính |
 |---|---|
-| `sites` | `id` (ULID), `slug` (duy nhất), `display_name`, `status` (`provisioning` · `active` · `suspended` · `upgrading` · `migration_failed` · `deleted`), `db_host`, `db_port`, `db_name`, `schema_version`, `app_version`, `created_at`, `suspended_at`, `deleted_at`, `owner_email`, `external_ref` |
+| `sites` | `id` (ULID), `slug` (duy nhất), `display_name`, `status` (`provisioning` · `active` · `suspended` · `upgrading` · `migration_failed` · `deleted`), `db_host`, `db_port`, `db_name`, `db_owner_role`, `db_app_role`, `db_secrets_enc` (mật khẩu hai vai trò, mã hoá bằng `SITE_SECRET_KEY`), `schema_version`, `app_version`, `created_at`, `suspended_at`, `deleted_at`, `owner_email`, `external_ref` |
 | `site_domains` | `domain` (khoá chính, chữ thường), `site_id`, `is_primary` |
 | `site_jobs` | `id`, `site_id`, `kind` (`provision` · `migrate` · `backup` · `restore` · `suspend` · `resume` · `delete`), `idempotency_key` (duy nhất theo khoá gọi), `status`, `steps` (jsonb), `error_code`, `error_message`, thời điểm |
 | `site_backups` | `id`, `site_id`, `file`, `bytes`, `schema_version`, `verified`, `created_at` |
 | `provision_keys` | `id`, `prefix`, `key_hash`, `label`, `allowed_ips`, `revoked_at` |
 
-Mật khẩu database **không** nằm trong registry: lấy từ biến môi trường (v1 dùng chung vai trò, Q039-2).
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — D039-19: vai trò riêng từng site -->
+Mỗi site một cặp vai trò riêng (D039-19, R-SITE-2): `kt_<slug>_owner` (sở hữu bảng, chạy migration) và `kt_<slug>_app` (API, không superuser). Mật khẩu sinh ngẫu nhiên, lưu mã hoá trong `sites.db_secrets_enc`; khoá giải mã `SITE_SECRET_KEY` chỉ ở biến môi trường của ứng dụng, không nằm trong database. `REVOKE CONNECT … FROM PUBLIC` trên mỗi database site.
 
 ### 4.2 Database Router
 
@@ -83,7 +84,7 @@ Các bước của việc `provision` (mỗi bước ghi vào `site_jobs.steps`)
 |---|---|---|
 | 1 | Kiểm `slug` (`^[a-z][a-z0-9-]{2,29}$`, danh sách cấm), tên miền chưa dùng | từ chối, không tạo gì |
 | 2 | Ghi `sites` (`provisioning`) + `site_domains` | xoá dòng |
-| 3 | `CREATE DATABASE kt_<slug> TEMPLATE kt_template` | `DROP DATABASE` nếu đã tạo |
+| 3 | Tạo vai trò `kt_<slug>_owner`, `kt_<slug>_app` (mật khẩu ngẫu nhiên); `CREATE DATABASE kt_<slug> OWNER kt_<slug>_owner TEMPLATE kt_template`; `REVOKE CONNECT … FROM PUBLIC`; chuyển quyền sở hữu bảng sang `kt_<slug>_owner`, cấp quyền cho `kt_<slug>_app` theo khuôn của `ketoan_app` | `DROP DATABASE`, `DROP ROLE` nếu đã tạo |
 | 4 | Tạo đơn vị đầu + tài khoản quản trị (email của khách, mật khẩu đặt qua liên kết một lần); nạp gói mẫu khi được yêu cầu (đường `core.setup.apply` của PHASE-036) | `DROP DATABASE` |
 | 5 | Ghi `schema_version`, `app_version`; `status = active`; xoá bộ đệm registry | — |
 
@@ -91,7 +92,7 @@ Tên database luôn do Provisioner tự dựng từ `slug` đã kiểm; không n
 
 ### 4.4 Migration Runner
 
-- `runMigrations(connectionString, log)`: tham số hoá chỗ đang đọc `env.DATABASE_URL`. Khoá tư vấn giữ nguyên (khoá theo từng database).
+- `runMigrations(connectionString, log)`: tham số hoá chỗ đang đọc `env.DATABASE_URL`; chạy bằng vai trò `kt_<slug>_owner` của site. Khoá tư vấn giữ nguyên (khoá theo từng database). Migration không ghi cứng tên vai trò `ketoan` / `ketoan_app` (R-SITE-11): quyền cho vai trò ứng dụng lấy từ tham số của runner.
 - `site migrate <slug>` / `site migrate --all`: với từng site → `status = upgrading` → sao lưu (bỏ qua được bằng cờ khi vừa sao lưu) → migration lõi → migration module → ghi `schema_version` → `active`. Lỗi → `migration_failed`, **dừng site đó**, đi tiếp site sau, cuối cùng in bảng tổng kết và thoát mã khác 0.
 - `kt_template` được nâng trước tiên. Template lỗi → dừng cả lượt (chưa site nào bị đụng).
 - `schema_version` = tên migration cuối đã áp (ví dụ `0177_…`), so với bản ứng dụng cần (tên migration cuối trong ảnh).
@@ -111,6 +112,7 @@ Tên database luôn do Provisioner tự dựng từ `slug` đã kiểm; không n
 | Khoá bản quyền `biz-…` | không phải cửa xác thực; chỉ dùng để hiện cảnh báo. Giá trị khoá lưu dạng băm, không ghi vào nhật ký (D039-17) <!-- [2026-11-21 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — D039-17 viết lại --> |
 | Rơi về database mặc định | cấm ở chế độ `multi` (D039-6) |
 | Provisioning API bị gọi từ ngoài | chỉ trả lời trên `SITE_ADMIN_HOST`, khoá `prov_…` băm, danh sách IP, giới hạn tần suất |
+| Lộ mật khẩu một site | vai trò riêng từng site, không `CONNECT` chéo; mật khẩu mã hoá bằng khoá ngoài database (D039-19) |
 | Chèn tên database | tên dựng từ `slug` đã kiểm; dùng định danh có trích dẫn, không ghép chuỗi tự do |
 | Bộ đệm trong bộ nhớ lẫn giữa hai site | khoá bộ đệm thêm `siteId` (S039-3 kiểm kê, phép kiểm tĩnh mới) |
 | Nhật ký, số đo | thêm trường `site`; nhãn `site` trên số đo có trần số nhãn |

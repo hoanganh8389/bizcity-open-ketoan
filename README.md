@@ -92,6 +92,53 @@ flowchart TB
 
 Kiến trúc gốc được công bố tại [CONG-BO-KIEN-TRUC.md](docs/CONG-BO-KIEN-TRUC.md). Tài liệu này là nguồn chi tiết cho ranh giới và quyền thay đổi của từng lớp. Sơ đồ bối cảnh, lớp, luồng chứng từ và triển khai: [docs/architecture/README.md](docs/architecture/README.md). Quyết định kiến trúc: [docs/adr/](docs/adr/README.md).
 
+## Mô hình triển khai: một bản mã, mỗi site một database
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — mô hình triển khai nhiều site và luật nâng cấp (ADR-0036) -->
+
+- **Frappe** = giao diện điều hành và quản lý site (repo `bizcity-open-setup`, một Frappe site quản trị).
+- **Open Kế Toán** = ứng dụng kế toán dùng chung, độc lập với Frappe. Một bản mã từ GitHub.
+- **PostgreSQL** = mỗi site một database và một vai trò riêng. Một chuỗi hàng trăm cửa hàng vẫn là một site.
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  FRAPPE — SITE MANAGER (repo bizcity-open-setup)             │
+│  Một Frappe site quản trị · database quản trị riêng          │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ Provisioning API
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│  OPEN KẾ TOÁN — ỨNG DỤNG DÙNG CHUNG                          │
+│  Một bản mã từ GitHub · React + Fastify + Accounting Kernel  │
+│  Site Registry + Database Router                             │
+└────────────┬──────────────────────┬──────────────────────┬───┘
+             ▼                      ▼                      ▼
+      SITE A  a.<miền>       SITE B  b.<miền>       SITE C  c.<miền>
+      DB A · vai trò A       DB B · vai trò B       DB C · vai trò C
+      chuỗi 500 cửa hàng     chuỗi 20 cửa hàng      1 cửa hàng
+```
+
+Tạo một kế toán mới = cấp một database + một cặp vai trò PostgreSQL; không dựng thêm ứng dụng. Mã nghiệp vụ, Accounting Kernel, Module SDK, Rulepack dùng chung. Đơn vị và chi nhánh nằm trong site như hôm nay.
+
+**Nâng cấp — một bản mã cho mọi site:**
+
+```text
+GitHub: open-ketoan
+        ↓
+Kéo mã · build · test                 (bản đang chạy vẫn phục vụ)
+        ↓
+Một phiên bản Open Kế Toán mới
+        ↓
+Migration từng site DB                (kt_template trước; sao lưu trước mỗi site)
+        ↓
+Chuyển ứng dụng sang phiên bản mới
+        ↓
+Tất cả site dùng chung mã mới
+```
+
+Ứng dụng chỉ phục vụ site có lược đồ đúng bản nó cần; site nâng lỗi dừng riêng, các site khác chạy tiếp. Bản cài một công ty (`SITE_MODE=single`, mặc định) không đổi gì.
+
+> **Trạng thái:** chấp nhận 2026-11-21 ([ADR-0036](docs/adr/ADR-0036-mot-ban-ma-moi-site-mot-database.md), luật [R-SITE](docs/rules/RULE-SITE.md)); **chưa có mã** — làm ở [PHASE-039](docs/phases/PHASE-039-NHIEU-CSDL-SITE-REGISTRY/README.md).
+
 ## Mở rộng theo hợp đồng, không mở rộng bằng cách sửa lõi
 
 Một module cộng đồng có thể có bảng, giao diện, quy trình duyệt và các event riêng. Nhưng khi nghiệp vụ ảnh hưởng đến sổ kế toán, module phải gọi `ctx.ledger.submit` hoặc action công khai, để Kernel kiểm quyền, kiểm tra chứng từ, chọn cấu hình định khoản và ghi sổ trong giao dịch hợp lệ.
