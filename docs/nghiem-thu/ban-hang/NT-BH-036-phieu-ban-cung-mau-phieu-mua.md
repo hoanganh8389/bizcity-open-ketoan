@@ -73,8 +73,14 @@ t036-bh10-moi.png`, `nt036-bh10-the-thu-tien.png`, `nt036-bh10-huong-dan.png`, `
 - Hướng dẫn `docs/huong-dan/phieu-hang.md` ngoài phạm vi giữ chỗ — mô tả bố cục mới ghi ở `ban-hang-quy-trinh.md`.
 - Chưa lập + duyệt phiếu bán có voucher / phiếu trả thật để so số tiền (§5): không đổi nghiệp vụ, không ghi dữ liệu vào đơn vị demo đang dùng chung; nên kiểm lại khi Docker dựng từ nhánh.
 
+**Kiểm thêm trên bản cài Docker dựng từ nhánh (Võ Hoàng, 21/11):**
+- Lập phiếu bán trên màn mới (CN02, 1 dòng 100021001, thu tiền ngay) → Ghi được nháp BH2611000003; tổng trên màn 300.926 + 24.074 = 325.000 khớp số máy chủ lưu, khoản thu TM 325.000.
+- Bảng hàng tràn mất cột Tiền thuế / tổng khi mở Trợ lý (tối thiểu 1.150px > phần trái ~1.070px) → giảm còn 1.000px, cột Mã hàng 120px; đã hết tràn.
+- Phiếu ghi nợ chưa chọn khách: trước đây Kiểm tra báo "Đủ thông tin" rồi máy chủ trả VALIDATION_ERROR khi Ghi (luật có từ trước, `domain/doc.ts`) → Kiểm tra nay báo trước "Còn ghi nợ (thu chưa đủ) — chọn khách hàng hoặc thu đủ tiền", nút Ghi khoá; bước 2 ghi rõ "để trống = khách lẻ, chỉ khi thu đủ tiền".
+
 ## 7. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 21/11/2026 | Tạo phiếu, chốt Q1–Q4; giữ chỗ code |
 | 21/11/2026 | Code xong (khung KhungPhieu, form theo mẫu phiếu mua), điền §6 |
+| 21/11/2026 | Thử trên bản cài: sửa bảng hàng tràn cột; Kiểm tra báo trước phiếu ghi nợ phải chọn khách |
