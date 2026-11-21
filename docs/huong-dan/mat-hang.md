@@ -79,16 +79,16 @@ Chọn **Nhóm hàng** là phần mềm sinh mã kế tiếp theo đoạn mã c�
 ### Mã biến thể
 <!-- [2026-11-20 kiennt] NT-DM-013 — phần cuối mã biến thể nhận cả chữ số (đóng góp) -->
 
-Thêm mặt hàng → **Đổi** → **Mã biến thể**: chọn **Mã cha**, phần mềm khoá mã cha, chỉ gõ thêm ở hai đầu (tổng tối đa **2 ký tự**, cần ít nhất một đầu).
+<!-- [2026-11-21 kiennt] NT-DM-018 — mã biến thể chỉ thêm ở cuối, bỏ chữ đầu (đóng góp) -->
+Thêm mặt hàng → **Đổi** → **Mã biến thể**: chọn **Mã cha**, phần mềm khoá mã cha, chỉ gõ **mã cuối** (tối đa **2 ký tự**, bắt buộc).
 
-| Ô | Nhận | Ví dụ (mã cha `100011001`) |
+| Mã cha | Mã cuối nhận | Ví dụ |
 |---|---|---|
-| **Chữ đầu** | Chỉ chữ cái | `A100011001` |
-| **Chữ cuối** | Chữ cái **và chữ số** | `100011001Z`, `1000110015`, `10001100101`, `100011001Z1` |
+| 9 chữ số (vd `100011001`) | Chữ cái **và chữ số** | `100011001Z`, `1000110015`, `10001100101`, `100011001Z1` |
+| Chữ + 8 số (vd `Q12345678`) | Chỉ chữ cái | `Q12345678Z` |
 
-- Đã có **chữ đầu** thì **chữ cuối** chỉ nhận chữ cái (`A100011001Z` được, `A1000110015` không) — để phần mềm đọc ra mã cha đúng một cách.
-- Mã cha dạng chữ + 8 số (vd `Q12345678`): chữ cuối chỉ nhận chữ cái.
-- Phần mềm tự nhận mã cha: bỏ chữ đầu, lấy **9 chữ số** đứng sau; mã chưa có chữ đầu mà cuối có số thì mã cha là **9 số đầu**. Nhập Excel mặt hàng theo cùng quy tắc; mã cha chưa có thì báo "khai mã cha trước".
+- **Không thêm chữ ở đầu** mã cha nữa (form không còn ô chữ đầu; nhập Excel mã mới kiểu `A100011001` báo lỗi). Mã có chữ đầu **đã có từ trước** vẫn dùng bình thường, phần mềm vẫn nhận ra mã cha của chúng.
+- Phần mềm tự nhận mã cha: mã cuối có số thì mã cha là **9 số đầu**. Nhập Excel mặt hàng theo cùng quy tắc; mã cha chưa có thì báo "khai mã cha trước".
 
 ### Câu hỏi hay gặp
 

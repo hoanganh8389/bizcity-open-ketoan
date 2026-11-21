@@ -376,7 +376,7 @@ export function ManualVoucherForm({ existing, initial, onClose, onSaved }: {
             </C>
             <L c={3} r={2}>Tên NV</L>
             <C c={3} r={2}><input className="input" value={employeeName} disabled /></C>
-            <L c={3} r={3}>Chi nhánh</L>
+            <L c={3} r={3}>Chi nhánh lập chứng từ</L>
             <C c={3} r={3}><BranchPicker activeOnly value={branchCode} disabled={dis || Boolean(existing)} onChange={(c) => set({ branchCode: c })} /></C>
           </div>
 

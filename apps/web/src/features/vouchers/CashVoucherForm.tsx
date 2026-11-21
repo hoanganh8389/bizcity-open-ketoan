@@ -405,7 +405,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved, the
         <div className="pt-head-right">
           <div className="pt-f"><label className="req">Ngày hạch toán</label><input type="date" className="input" value={h.docDate} disabled={dis} onChange={(e) => set({ docDate: e.target.value })} /></div>
           <div className="pt-f"><label>{isBank ? 'Số chứng từ' : isReceipt ? 'Số phiếu thu' : 'Số phiếu chi'}</label><input className="input mono" value={h.docNo} disabled={dis || Boolean(existing)} placeholder="Tự cấp khi ghi" onChange={(e) => set({ docNo: e.target.value })} /></div>
-          {multi && <div className="pt-f"><label className="req">Chi nhánh</label><BranchPicker activeOnly value={branchCode} disabled={dis || Boolean(existing)} onChange={(c) => set({ branchCode: c })} /></div>}
+          {multi && <div className="pt-f"><label className="req">Chi nhánh lập chứng từ</label><BranchPicker activeOnly value={branchCode} disabled={dis || Boolean(existing)} onChange={(c) => set({ branchCode: c })} /></div>}
         </div>
       </div>
 

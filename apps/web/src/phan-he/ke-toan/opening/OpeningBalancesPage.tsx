@@ -156,7 +156,7 @@ function OpeningForm({ existing, onClose, onSaved }: { existing?: Existing; onCl
         </>
       }
     >
-      <Field label="Chi nhánh">
+      <Field label="Chi nhánh lập chứng từ">
         <BranchPicker activeOnly value={branchCode} disabled={readOnly} onChange={(c) => set({ branchCode: c })} />
       </Field>
       <Field label="Ngày chốt số dư" hint="Ngày cuối của kỳ trước kỳ bắt đầu dùng phần mềm"><input type="date" className="input" value={h.docDate} disabled={readOnly} onChange={(e) => set({ docDate: e.target.value })} /></Field>

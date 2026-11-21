@@ -116,7 +116,7 @@ export function BienBanKiemKe({ value, onClose, onChanged }: { value: KkDoc; onC
 
       {tab === 'bb' && <>
         <fieldset className="full kk-grid" disabled={!draft}>
-          <label>Chi nhánh</label><BranchPicker value={v.branchCode} activeOnly onChange={(c) => set({ branchCode: c, warehouseCode: '', quarantineWarehouse: '', lines: [] })} />
+          <label>Chi nhánh lập chứng từ</label><BranchPicker value={v.branchCode} activeOnly onChange={(c) => set({ branchCode: c, warehouseCode: '', quarantineWarehouse: '', lines: [] })} />
           <label title="Phân kho được kiểm; trống = kho mặc định của chi nhánh">Kho kiểm</label><ChonKho branchCode={v.branchCode} value={v.warehouseCode} disabled={!draft} onChange={(c) => set({ warehouseCode: c, lines: [] })} />
           <label title="Số theo sổ tính đến hết ngày này; ngày của chứng từ ghi nhận chênh lệch">Ngày kiểm kê</label><input className="input" type="date" value={v.countDate} onChange={(e) => set({ countDate: e.target.value })} />
           <label title="Hàng kém / mất phẩm chất chuyển sang kho này (cùng chi nhánh), không ghi giảm 156">Kho cách ly</label><ChonKho branchCode={v.branchCode} value={v.quarantineWarehouse} disabled={!draft} avoid={v.warehouseCode} onChange={(c) => set({ quarantineWarehouse: c })} />

@@ -67,3 +67,18 @@ describe('Thêm mã biến thể đuôi số', () => {
     expect(loi.rows[0]!.errors.join(' ')).toContain('Mã cha 999000001 chưa có');
   });
 });
+
+// [2026-11-21 kiennt] NT-DM-018 — mã biến thể mới chỉ thêm ở cuối mã cha (bỏ chữ đầu) (đóng góp)
+describe('NT-DM-018 — mã biến thể mới không có chữ đầu', () => {
+  it('form: A971313001 → chặn; 971313001A → được', async () => {
+    const a = await full('A971313001', { name: 'Biến thể chữ đầu' });
+    expect(a.status).toBe(400);
+    expect(JSON.stringify(a.body)).toContain('chỉ thêm ở cuối mã cha 971313001');
+    const b = await full('971313001A', { name: 'Biến thể chữ cuối' });
+    expect(b.status, JSON.stringify(b.body).slice(0, 300)).toBe(200);
+  });
+  it('Excel: dòng mới A971313001 → lỗi', async () => {
+    const r = await nhap([{ row: 2, sku: 'A971313001', name: 'Biến thể chữ đầu Excel', unit: 'Hộp' }]);
+    expect(r.rows[0]!.errors.join(' ')).toContain('chỉ thêm ở cuối mã cha 971313001');
+  });
+});

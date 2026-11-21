@@ -178,21 +178,22 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       return { ...x, units: [...(b0 ? [b0] : []), ...rest.map((u) => ({ ...u }))] };
     });
   }, [isNew, parentData.data, v.parentSku]);
-  // Mã biến thể: nhóm hàng, thuế theo mã cha (không đổi được); mã mặc định = mã cha + Z, sửa chữ đầu / cuối tuỳ ý.
+  // Mã biến thể: nhóm hàng, thuế theo mã cha (không đổi được); mã mặc định = mã cha + Z, sửa mã cuối tuỳ ý (NT-DM-018: không còn chữ đầu).
   useEffect(() => {
     const p = parentData.data;
     if (!isNew || kind !== 'variant' || !p || p.sku !== v.parentSku) return;
     if (p.parentSku || parentFromSku(p.sku)) { setParentErr(`${p.sku} là mã biến thể${p.parentSku ? ` của ${p.parentSku}` : ''} — chọn mã chính làm mã cha.`); return; }
     setParentErr('');
     setV((x) => ({ ...x, groupCode: p.groupCode, industryCode: p.industryCode, brandCode: p.brandCode, taxOutCode: p.taxOutCode, taxInCode: p.taxInCode, origin: x.origin || p.origin,
-      sku: parentFromSku(x.sku) === p.sku ? x.sku : `${p.sku}Z`, name: x.name.trim() ? x.name : `${p.name} Z` }));
+      sku: parentFromSku(x.sku) === p.sku && x.sku.startsWith(p.sku) ? x.sku : `${p.sku}Z`, name: x.name.trim() ? x.name : `${p.name} Z` }));
     setSkuAuto(false);
   }, [parentData.data, kind]); // eslint-disable-line react-hooks/exhaustive-deps
   // Tên mã biến thể = tên mã cha + chữ thêm vào mã; sửa tay rồi thì thôi không đổi theo.
   const tenBienThe = (code: string) => (parentData.data ? `${parentData.data.name} ${code.replace(parentData.data.sku, '')}`.trim() : '');
   const lockedGroup = isNew ? kind === 'variant' : Boolean(v.parentSku);
   const skuBad = !isNew || !v.sku ? ''
-    : kind === 'variant' ? (v.parentSku && v.sku === v.parentSku ? 'Nhập chữ đầu hoặc chữ cuối (một trong hai là đủ).' : '')
+    // [2026-11-21 kiennt] NT-DM-018 — mã biến thể chỉ thêm ở cuối mã cha (bỏ chữ đầu) (đóng góp)
+    : kind === 'variant' ? (v.parentSku && v.sku === v.parentSku ? 'Nhập mã cuối (chữ hoặc số, tối đa 2 ký tự).' : '')
     : /[A-Z]$/.test(v.sku) || (/^[A-Z]/.test(v.sku) && !/^[A-Z][0-9]{8}$/.test(v.sku)) ? 'Mã mới không được có chữ ở đầu hoặc cuối. Muốn tạo mã biến thể: bấm Đổi → Mã biến thể.' : '';
 
   // Cột giá hiện sẵn: bảng giá công ty + bảng giá đã có giá cho mặt hàng này.
@@ -442,7 +443,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               tên không trùng (báo ngay); Biến thể không cho đổi sang Nội bộ khi đã có nhập xuất. */}
           <Field truong="sku" label="Mã hàng (*)" hint={skuErr || (skuLetters ? 'Mã chỉ gồm chữ số và chữ cái, không dấu cách' : undefined)}>
             <div className="row" style={{ gap: 4 }}>
-              {kind === 'variant' && isNew && v.parentSku ? <MaBienThe parent={v.parentSku} sku={v.sku} onChange={(x) => set({ sku: x, ...(!v.name.trim() || v.name === tenBienThe(v.sku) ? { name: tenBienThe(x) } : {}) })} /> : <input className="input mono" value={v.sku} placeholder={isNew ? (kind === 'variant' ? 'Mã cha + chữ ở đầu hoặc cuối' : 'Chọn nhóm hàng là tự sinh — gõ tay được') : ''} onChange={(e) => { set({ sku: e.target.value.trim().toUpperCase() }); setSkuAuto(false); }} style={{ flex: 1 }} />}
+              {kind === 'variant' && isNew && v.parentSku ? <MaBienThe parent={v.parentSku} sku={v.sku} onChange={(x) => set({ sku: x, ...(!v.name.trim() || v.name === tenBienThe(v.sku) ? { name: tenBienThe(x) } : {}) })} /> : <input className="input mono" value={v.sku} placeholder={isNew ? (kind === 'variant' ? 'Mã cha + mã cuối' : 'Chọn nhóm hàng là tự sinh — gõ tay được') : ''} onChange={(e) => { set({ sku: e.target.value.trim().toUpperCase() }); setSkuAuto(false); }} style={{ flex: 1 }} />}
               {isNew && kind === 'new' && <button type="button" className="btn btn-sm" onClick={() => void genSku(v.groupCode, true)} title="Lấy mã kế tiếp theo nhóm hàng đã chọn (thay mã đang có)">Sinh mã</button>}
               <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)} title="Quy tắc mã hàng, sản phẩm con, cách kiểm tra">?</button>
             </div>
@@ -647,27 +648,19 @@ function parentFromSku(sku: string): string | null {
 }
 
 // [2026-11-12 Nguyễn Văn Thủy] mã biến thể: phần mã cha khoá cứng, chỉ gõ chữ ở đầu / cuối, tổng tối đa 2 chữ (đóng góp)
+// [2026-11-21 kiennt] NT-DM-018 — bỏ ô chữ đầu: mã biến thể mới chỉ thêm ở CUỐI mã cha (tối đa 2 ký tự; mã cha 9 số nhận cả chữ số) (đóng góp)
 function MaBienThe({ parent, sku, onChange }: { parent: string; sku: string; onChange: (sku: string) => void }) {
-  const at = sku.indexOf(parent);
-  const pre = at >= 0 ? sku.slice(0, at) : '';
-  const suf = at >= 0 ? sku.slice(at + parent.length) : 'Z';
-  // [2026-11-20 kiennt] NT-DM-013 — chữ cuối nhận cả chữ số khi không có chữ đầu và mã cha là 9 chữ số; chữ đầu chỉ chữ cái (đóng góp)
-  const soCuoi = !pre && /^[0-9]{9}$/.test(parent);
-  const put = (p: string, s: string) => {
-    p = p.toUpperCase().replace(/[^A-Z]/g, '');
-    s = s.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (/[0-9]/.test(s) && (p || !/^[0-9]{9}$/.test(parent))) return;
-    if (p.length + s.length > 2) return;
-    onChange(p + parent + s);
+  const suf = sku.startsWith(parent) ? sku.slice(parent.length) : 'Z';
+  const soCuoi = /^[0-9]{9}$/.test(parent);
+  const put = (s: string) => {
+    s = s.toUpperCase().replace(soCuoi ? /[^A-Z0-9]/g : /[^A-Z]/g, '');
+    if (s.length > 2) return;
+    onChange(parent + s);
   };
   return (
     <div className="row ma-bien-the" style={{ flex: 1, gap: 4, alignItems: 'center' }}>
-      {/* [2026-11-15 Nguyễn Văn Thủy] mã đầy đủ (chỉ đọc) đứng đầu để bộ kiểm ô bắt buộc không bắt nhập chữ đầu: chữ đầu / chữ cuối
-          đều không bắt buộc, chỉ cần một trong hai — thiếu cả hai thì báo ở dòng gợi ý của Mã hàng (đóng góp) */}
-      <input readOnly tabIndex={-1} aria-hidden value={sku} style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
-      <input className="input mono" style={{ width: 80, textAlign: 'right' }} value={pre} placeholder="chữ đầu" title={/[0-9]/.test(suf) ? 'Chữ cuối đang có số: bỏ số ở chữ cuối thì mới thêm được chữ đầu' : 'Chữ cái thêm ở đầu mã (không nhận số) — không bắt buộc (cần chữ đầu hoặc chữ cuối)'} onChange={(e) => put(e.target.value, suf)} />
       <span className="input mono" style={{ background: 'var(--surface-2, #f4f6f9)', width: 'auto', padding: '0 10px', display: 'flex', alignItems: 'center' }} title="Mã cha — giữ nguyên">{parent}</span>
-      <input className="input mono" style={{ width: 80 }} value={suf} placeholder="chữ cuối" title={soCuoi ? 'Chữ hoặc số thêm ở cuối mã — không bắt buộc (cần chữ đầu hoặc chữ cuối)' : pre ? 'Đã có chữ đầu: chữ cuối chỉ nhận chữ cái (để mã cha đọc được một cách)' : 'Chữ thêm ở cuối mã — mã cha dạng chữ + 8 số: chữ cuối chỉ nhận chữ cái'} onChange={(e) => put(pre, e.target.value)} />
+      <input className="input mono" style={{ width: 80 }} value={suf} placeholder="mã cuối" title={soCuoi ? 'Chữ hoặc số thêm ở cuối mã cha — tối đa 2 ký tự' : 'Chữ cái thêm ở cuối mã cha — tối đa 2 ký tự'} onChange={(e) => put(e.target.value)} />
       <span className="muted" style={{ fontSize: 12.5 }}>= <b className="mono">{sku}</b></span>
     </div>
   );

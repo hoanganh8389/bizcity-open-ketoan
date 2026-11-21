@@ -253,6 +253,8 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     if (ps && !parentRow) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chưa có mã cha ${ps} — khai mã cha trước` }));
     // [2026-11-20 kiennt] NT-DM-013 — phần cuối nhận cả chữ số: câu báo ghi "ký tự" (đóng góp)
     if (ps && sku.length - ps.length > 2) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chỉ thêm tối đa 2 ký tự quanh mã cha ${ps}` }));
+    // [2026-11-21 kiennt] NT-DM-018 — mã biến thể MỚI chỉ thêm ở cuối mã cha; mã có chữ đầu đã có từ trước giữ nguyên (đóng góp)
+    if (ps && !sku.toUpperCase().startsWith(ps)) loi.push(ruleFinding('ITEM-BLOCK-008', { sku, detail: `chỉ thêm ở cuối mã cha ${ps}, không thêm chữ ở đầu` }));
     if (!ps && (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku)))) loi.push(ruleFinding('ITEM-BLOCK-007', { sku }));
   }
   // Giá bán: bảng giá phải có, ĐVT của giá phải có trong bộ ĐVT gửi lên (hoặc đang lưu) — kiểm trước khi ghi.
