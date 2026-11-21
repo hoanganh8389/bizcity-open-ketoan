@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 191
+      "count": 189
     },
     {
       "key": "partial",
@@ -7669,8 +7669,14 @@
       "title": "Đánh chỉ mục khoá ngưỡng duyệt (settingvalues, 16 §5) vào Registry với approval.levels@1, store: settings",
       "priority": "P2",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
+        "branch": "feat/phase-031-s7-s32",
+        "state": "đang làm",
+        "since": "2026-11-21",
+        "dot": "PHASE-031 · S031-7 (ngưỡng duyệt vào sổ chính sách, approval.levels@1, store settings — thiết kế 31…"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -8069,8 +8075,14 @@
       "title": "RV-R1-04 phần dữ liệu cũ: đo bản retired có effectiveto NULL trên bản sao thật rồi quyết định đóng (§16 mục 6)",
       "priority": "P2",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
+        "branch": "feat/phase-031-s7-s32",
+        "state": "đang làm",
+        "since": "2026-11-21",
+        "dot": "PHASE-031 · S031-7 (ngưỡng duyệt vào sổ chính sách, approval.levels@1, store settings — thiết kế 31…"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"

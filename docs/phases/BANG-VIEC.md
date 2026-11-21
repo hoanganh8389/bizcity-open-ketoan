@@ -5,10 +5,10 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 7 |
+| Đang làm | 9 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
-| Chưa ai nhận | 191 |
+| Chưa ai nhận | 189 |
 | Chờ đủ tín hiệu | 69 |
 | Hoãn | 3 |
 | Xong | 325 |
@@ -19,15 +19,15 @@
 | Phân hệ | Xong | Chờ đủ tín hiệu | Đang làm | Còn lại | Tổng |
 |---|---|---|---|---|---|
 | danh-muc | 20 | 17 | 2 | 49 | 88 |
-| mua-hang | 59 | 5 | 0 | 36 | 100 |
+| mua-hang | 59 | 5 | 2 | 34 | 100 |
 | kho | 46 | 23 | 3 | 89 | 161 |
-| ban-hang | 59 | 5 | 0 | 40 | 104 |
+| ban-hang | 59 | 5 | 2 | 38 | 104 |
 | chung-tu | 67 | 5 | 0 | 26 | 98 |
 | tong-hop | 31 | 8 | 1 | 28 | 68 |
 | thue | 14 | 2 | 1 | 11 | 28 |
 | he-thong | 150 | 23 | 3 | 57 | 233 |
 
-## Đang làm (7)
+## Đang làm (9)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -36,6 +36,8 @@
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | danh-muc · kho | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | danh-muc · kho | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | he-thong | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
+| [S031-7](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L16) | PHASE-031 | mua-hang · ban-hang | Đánh chỉ mục khoá ngưỡng duyệt (settingvalues, 16 §5) vào Registry với approval.levels@1, store: settings | P2 | Võ Hoàng (phiên Claude, PHASE-031) · `feat/phase-031-s7-s32` |
+| [S031-32](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L41) | PHASE-031 | mua-hang · ban-hang | RV-R1-04 phần dữ liệu cũ: đo bản retired có effectiveto NULL trên bản sao thật rồi quyết định đóng (§16 mục 6) | P2 | Võ Hoàng (phiên Claude, PHASE-031) · `feat/phase-031-s7-s32` |
 | [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | kho | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | hoanganh8389 (phiên Claude, PHASE-032) · `feat/phase-032-b4a-ket-qua-tuan` |
 | [S036-8b](PHASE-036-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-036 | he-thong | B6 — Lấy lại bản trước từ defaultdatabackups; org-units/restore-defaults theo cùng khuôn; đơn vị trắng đổi nú… | P1 | hoanganh8389 (phiên Claude, PHASE-036 thiết lập nhanh) · `feat/s036-8b-lay-lai-ban-truoc` |
 
@@ -78,7 +80,7 @@
 | [S037-16](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L25) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phân bổ nguồn (receiptorigin hoặc gộp valuationlayersources), thứ tự lấy nguồn khi xuất, ánh xạ dòng nguồn bề… | P0 | — |
 | [S037-34](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L44) | PHASE-037 | thue | Hướng dẫn (docs/huong-dan/), cập nhật docs/nghiep-vu/11, docs/core/03; đưa văn bản về khuyến mại vào danh mục… | P1 | — |
 
-## Chưa ai nhận (191)
+## Chưa ai nhận (189)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -211,8 +213,6 @@
 | [S030-33](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L40) | PHASE-030 | mua-hang · kho · ban-hang | Golden T030-GATE-1..4 (21 §5) | P1 | — |
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | mua-hang · kho · ban-hang | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | mua-hang · kho · ban-hang | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
-| [S031-7](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L16) | PHASE-031 | mua-hang · ban-hang | Đánh chỉ mục khoá ngưỡng duyệt (settingvalues, 16 §5) vào Registry với approval.levels@1, store: settings | P2 | — |
-| [S031-32](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L41) | PHASE-031 | mua-hang · ban-hang | RV-R1-04 phần dữ liệu cũ: đo bản retired có effectiveto NULL trên bản sao thật rồi quyết định đóng (§16 mục 6) | P2 | — |
 | [S032-9](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L18) | PHASE-032 | kho | Cửa nạp: lô trên dòng lotNo / expDate (có, 0098); còn originalLineRef; IN-INV-010..013 + bài học loi-dau-vao/… | P0 | — |
 | [S032-11](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L20) | PHASE-032 | kho | Chữ chốt W2: khuôn valuationlayers, valuationlayersources, costallocations, costingruns; CostingResult; tham … | P0 | — |
 | [S032-12](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L21) | PHASE-032 | kho | Migration bốn bảng (chỉ thêm, trigger supersededby / journalentryid một lần, không cột account); SC-INV-1 / S… | P0 | — |
