@@ -7732,7 +7732,7 @@
       "phase": "PHASE-031",
       "title": "Rule Contract purchase.@1 bọc engine.ts (không đổi kết quả; hồi quy mua hàng)",
       "priority": "P1",
-      "status": "todo",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "Võ Hoàng (phiên Claude, PHASE-031)",
@@ -7866,7 +7866,7 @@
       "phase": "PHASE-031",
       "title": "nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1",
       "priority": "P1",
-      "status": "partial",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "Võ Hoàng (phiên Claude, PHASE-031)",
