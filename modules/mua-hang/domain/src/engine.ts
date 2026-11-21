@@ -431,8 +431,21 @@ export const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b
 
 /* ------------------------------------------------------------------ chính sách */
 
-export function policyApplies(p: Policy, ctx: { date: string; partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string }) {
+// [2026-11-21 Nguyễn Văn Thủy] hạn mức công nợ + điều khoản thanh toán là ĐIỀU KHOẢN HỢP ĐỒNG: gắn hợp đồng X thì chỉ áp phiếu của X (docs/nghiep-vu/28) (đóng góp)
+/** Loại "điều khoản" của hợp đồng (khai ở bước Điều khoản hợp đồng, không ở danh sách chính sách). */
+export const CONTRACT_BOUND_KINDS: PolicyKind[] = ['credit_limit', 'payment_term'];
+/**
+ * Hợp đồng xuyên suốt (docs/nghiep-vu/28): phiếu theo hợp đồng X chỉ dùng chính sách / điều khoản của X; phiếu KHÔNG theo hợp đồng chỉ dùng
+ * phần "Không theo hợp đồng" của NCC. Chính sách không gắn NCC (cấp nhãn, toàn công ty) áp cả hai.
+ */
+export function contractApplies(p: Pick<Policy, 'scope'>, docContract?: string | null): boolean {
+  if (p.scope.contractCode) return p.scope.contractCode === (docContract || undefined);
+  if (p.scope.partnerCode) return !docContract;
+  return true;
+}
+export function policyApplies(p: Policy, ctx: { date: string; partnerCode?: string; brandCode?: string; sku?: string; branchCode?: string; contractCode?: string }) {
   if (!p.isActive) return false;
+  if (!contractApplies(p, ctx.contractCode)) return false;
   if (p.validFrom && ctx.date < p.validFrom) return false;
   if (p.validTo && ctx.date > p.validTo) return false;
   const s = p.scope;
@@ -449,7 +462,7 @@ export function scopeRank(p: Pick<Policy, 'scope'>, partnerCode?: string): numbe
 }
 /** Chính sách khớp nhất (phạm vi hẹp hơn, ưu tiên cao hơn đứng trước). */
 export function findPolicy(policies: Policy[], kind: PolicyKind, ctx: Parameters<typeof policyApplies>[1]): Policy | undefined {
-  const spec = (p: Policy) => scopeRank(p, ctx.partnerCode);
+  const spec = (p: Policy) => scopeRank(p, ctx.partnerCode) + (p.scope.contractCode ? 2 : 0);
   return policies.filter((p) => p.kind === kind && policyApplies(p, ctx)).sort((a, b) => spec(b) - spec(a) || (b.priority ?? 0) - (a.priority ?? 0))[0];
 }
 /**
@@ -526,7 +539,7 @@ export function exclusiveBySku(doc: PDoc, policies: Policy[]): Map<string, Exclu
   for (const [sku, ls] of bySku) {
     const first = ls[0]!;
     const qty = ls.reduce((t, l) => t + l.qty, 0), gross = ls.reduce((t, l) => t + l.qty * l.price, 0), unitPrice = qty ? gross / qty : 0;
-    const ctx = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: first.brandCode ?? doc.brandCode, branchCode: doc.branchCode, sku };
+    const ctx = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: first.brandCode ?? doc.brandCode, branchCode: doc.branchCode, sku, contractCode: doc.contractCode || undefined };
     // priority: ưu tiên riêng của dòng (bảng CK theo mã) — trống thì dùng ưu tiên của chính sách.
     const cands: { p: Policy; value: number; row?: number; exclusive?: boolean; priority?: number }[] = [];
     for (const p of policies) {
@@ -618,7 +631,7 @@ export function allocate(total: number, weights: number[]): number[] {
 export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: string[]; units?: Record<string, ProductUnit[]> } = {}): DocCalc {
   policies = policiesFor(doc, policies);
   const trace: TraceItem[] = [];
-  const ctxBase = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: doc.brandCode, branchCode: doc.branchCode };
+  const ctxBase = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: doc.brandCode, branchCode: doc.branchCode, contractCode: doc.contractCode || undefined };
   // Chương trình áp riêng: mã hàng nhận nó thì các chương trình khác bị chặn cho mã đó.
   const ex = exclusiveBySku(doc, policies);
   const all = policies;
@@ -751,7 +764,7 @@ export function creditStatus(limitPolicy: Policy | undefined, current: number, o
   const after = current + openOrders + thisDoc;
   const warnPct = num(limitPolicy.rule.warnPct) || 90;
   return {
-    scope: branchCode && branches[branchCode] !== undefined ? `Chi nhánh ${branchCode}` : limitPolicy.scope.brandCode ? `Nhãn ${limitPolicy.scope.brandCode}` : `NCC ${limitPolicy.scope.partnerCode ?? ''}`,
+    scope: branchCode && branches[branchCode] !== undefined ? `Chi nhánh ${branchCode}` : limitPolicy.scope.brandCode ? `Nhãn ${limitPolicy.scope.brandCode}` : limitPolicy.scope.contractCode ? `Hợp đồng ${limitPolicy.scope.contractCode}` : `NCC ${limitPolicy.scope.partnerCode ?? ''}`,
     limit, current, openOrders, thisDoc, after, remaining: limit - after, exceeded: Math.max(0, after - limit), warn: after >= (limit * warnPct) / 100, policy: limitPolicy.code,
   };
 }
@@ -829,7 +842,7 @@ export function giftPlan(doc: PDoc, policies: Policy[]): GiftPlanRow[] {
   for (const l of doc.lines) if (l.lineType === 'buy' && l.sku) bySku.set(l.sku, [...(bySku.get(l.sku) ?? []), l]);
   for (const [sku, ls] of bySku) {
     const first = ls[0]!;
-    const ctx = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: first.brandCode ?? doc.brandCode, branchCode: doc.branchCode, sku };
+    const ctx = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: first.brandCode ?? doc.brandCode, branchCode: doc.branchCode, sku, contractCode: doc.contractCode || undefined };
     const hit = ex.get(sku);
     for (const p of policiesForSku(ex, all, sku).filter((x) => x.kind === 'promo_gift')) {
       if (!policyApplies(p, { ...ctx, sku })) continue;
@@ -889,7 +902,7 @@ export function taxPathChecks(doc: PDoc, c: Pick<CheckCtx, 'products' | 'noTaxFo
 
 export function checkDoc(doc: PDoc, calc: DocCalc, c: CheckCtx): Check[] {
   const out: Check[] = [];
-  const ctx = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: doc.brandCode, branchCode: doc.branchCode };
+  const ctx = { date: doc.docDate, partnerCode: doc.partnerCode, brandCode: doc.brandCode, branchCode: doc.branchCode, contractCode: doc.contractCode || undefined };
   // Dòng hàng mới chưa có mã: đơn đặt được (gắn mã khi hàng về); phiếu nhập / trả phải gắn mã trước khi duyệt.
   const noSku = doc.lines.filter((l) => !l.sku && l.qty > 0);
   if (noSku.length) out.push(doc.kind === 'order'
@@ -935,7 +948,7 @@ export function checkDoc(doc: PDoc, calc: DocCalc, c: CheckCtx): Check[] {
     const p = c.products.find((x) => x.sku === l.sku);
     // Theo nhãn của mặt hàng trong danh mục; hàng mua (không phải quà) xét thêm nhãn chính của phiếu — mã nhãn trong danh mục
     // có thể khác cách gọi nhãn ở chính sách (ví dụ danh mục ghi mã hãng, chính sách ghi ANLENE).
-    const lotCtx = { date: doc.docDate, partnerCode: doc.partnerCode, sku: l.sku, branchCode: doc.branchCode };
+    const lotCtx = { date: doc.docDate, partnerCode: doc.partnerCode, sku: l.sku, branchCode: doc.branchCode, contractCode: doc.contractCode || undefined };
     const lotPolicy = findPolicy(c.policies, 'lot_tracking', { ...lotCtx, brandCode: p?.brandCode })
       ?? (l.lineType !== 'gift_consumer' && !p?.isGiftItem ? findPolicy(c.policies, 'lot_tracking', { ...lotCtx, brandCode: doc.brandCode }) : undefined);
     const tracked = p?.trackLot || Boolean(lotPolicy && lotPolicy.rule.required !== false);

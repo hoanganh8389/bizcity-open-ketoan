@@ -13,6 +13,10 @@ import { useMuaHang } from '../du-lieu';
 import { PolicyForm, newPolicy } from '../chinh-sach/PolicyForm';
 import { CONTRACT_KINDS, PolicyBlock } from '../chinh-sach/PolicyBlock';
 import { BangGiaMua } from '../thanh-phan/BangGiaMua';
+import { CongNoDieuKhoan, DIEU_KHOAN_TT } from './CongNoDieuKhoan';
+
+/** Chính sách mua của hợp đồng / ngoài hợp đồng: bỏ công nợ + điều khoản thanh toán (là điều khoản, khai ở khối riêng). */
+const KINDS = CONTRACT_KINDS.filter((k) => !DIEU_KHOAN_TT.includes(k));
 
 export function GiaVaChinhSach({ partnerCode, contractCode, brands, skus, start, end, readOnly }: {
   partnerCode: string; contractCode: string; brands?: string[]; start?: string; end?: string;
@@ -30,6 +34,8 @@ export function GiaVaChinhSach({ partnerCode, contractCode, brands, skus, start,
   const add = (k: PolicyKind) => setPol({ ...newPolicy(k, { partnerCode, ...(contractCode ? { contractCode } : {}) }), ...(start ? { validFrom: start } : {}), ...(end ? { validTo: end } : {}) });
   return (
     <div className="hd-gia-cs">
+      {/* Ngoài hợp đồng: công nợ + điều khoản thanh toán chung của NCC đứng riêng, trên giá mua (hợp đồng khai ở bước Điều khoản). */}
+      {!contractCode && <div style={{ gridColumn: '1 / -1' }}><CongNoDieuKhoan partnerCode={partnerCode} contractCode="" readOnly={readOnly} /></div>}
       <section className="hd-box">
         <h4 className="mh-h4">Giá mua <span className="muted" style={{ fontWeight: 400 }}>(NCC × mã × ĐVT{contractCode ? ', thuộc hợp đồng' : ''})</span></h4>
         <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
@@ -37,12 +43,12 @@ export function GiaVaChinhSach({ partnerCode, contractCode, brands, skus, start,
         </fieldset>
       </section>
       <section className="hd-box">
-        <h4 className="mh-h4">Chính sách mua <span className="muted" style={{ fontWeight: 400 }}>(chiết khấu, khuyến mại, thưởng, hạn mức, hạn thanh toán — phiếu tự áp)</span></h4>
+        <h4 className="mh-h4">Chính sách mua <span className="muted" style={{ fontWeight: 400 }}>(chiết khấu, khuyến mại, thưởng, lô / hạn dùng — phiếu tự áp; công nợ &amp; hạn thanh toán khai riêng)</span></h4>
         <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-          <PolicyBlock policies={policies} kinds={CONTRACT_KINDS} onAdd={(k) => add(k)} onEdit={(p) => setPol(p)} />
+          <PolicyBlock policies={policies} kinds={KINDS} onAdd={(k) => add(k)} onEdit={(p) => setPol(p)} />
         </fieldset>
       </section>
-      {pol && <PolicyForm value={pol} all={mh.policies} kinds={CONTRACT_KINDS} lockPartner lockContract onClose={() => setPol(null)} onSaved={(_c, stay) => { if (!stay) setPol(null); reload(); }} />}
+      {pol && <PolicyForm value={pol} all={mh.policies} kinds={KINDS} lockPartner lockContract onClose={() => setPol(null)} onSaved={(_c, stay) => { if (!stay) setPol(null); reload(); }} />}
     </div>
   );
 }

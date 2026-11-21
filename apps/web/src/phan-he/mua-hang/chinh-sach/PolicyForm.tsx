@@ -4,9 +4,9 @@
  * Mở từ hồ sơ NCC thì NCC khoá sẵn và chỉ chọn các loại thuộc thẻ đang mở.
  */
 import { useEffect, useRef, useState } from 'react';
-import { POLICY_LABEL, STACK_KINDS, apRiengChong, canRepeat, coApRieng, giftItemsOf, isRepeat, scopeBranches, uuTienDeThang, type ApRiengChong, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { ACTIVATION_KINDS, POLICY_LABEL, STACK_KINDS, activationOf, activationText, type Activation, type ActivationPeriod, apRiengChong, canRepeat, coApRieng, giftItemsOf, isRepeat, scopeBranches, uuTienDeThang, type ApRiengChong, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { Link } from 'react-router-dom';
-import { Field, Hoi, Modal, useViewAgain } from '@/components/ui';
+import { Field, Hoi, Modal, NumInput, useViewAgain } from '@/components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { BranchMultiSelect, BranchPicker, useBranches } from '@/components/filters';
@@ -134,6 +134,7 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, lockCon
         <div style={{ marginTop: 6 }}><RuleEditor brands={limitBrands} skus={limitSkus} kind={p.kind} rule={p.rule as Record<string, any>} onChange={(rule) => upd({ ...p, rule: { ...rule, ...partiesOf(p.rule) } })} /></div>
         <div className="alert alert-ok" style={{ fontSize: 12.5, marginTop: 6 }}>Phần mềm sẽ hiểu là: <b>{ruleText(p)}</b> — áp cho {p.scope.partnerCode ? names.partnerName(p.scope.partnerCode) : 'mọi nhà cung cấp'}{scopeTag(p) ? `, ${scopeTag(p)}` : ''}.</div>
       </div>
+      {ACTIVATION_KINDS.includes(p.kind) && <DieuKienKichHoat p={p} onChange={(activation) => upd({ ...p, rule: { ...p.rule, activation } })} />}
       {STACK_KINDS.includes(p.kind) && p.kind !== 'promo_gift' && <CachAp p={p} onChange={(rule) => upd({ ...p, rule })} />}
       {/* [2026-11-20 khanhtd] TRA-CUU — cảnh báo chồng chương trình áp riêng theo mã, nút đặt ưu tiên vừa đủ thắng (đóng góp) */}
       {STACK_KINDS.includes(p.kind) && <ChongApRieng p={p} all={all} onPriority={(n) => setP({ ...p, priority: n })} />}
@@ -161,7 +162,7 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, lockCon
 // [2026-11-13 Nguyễn Văn Thủy] thưởng theo cha – con: tính trên cả nhóm, bên trả, chi nhánh mình nhận (đóng góp)
 const REBATE_KINDS: PolicyKind[] = ['period_rebate', 'target_rebate', 'stage_rebate'];
 /** Giữ các bên của chính sách thưởng khi đổi mẫu / sửa nội dung. */
-const partiesOf = (r: Policy['rule']) => Object.fromEntries((['family', 'payer', 'receiver'] as const).filter((k) => r[k] !== undefined).map((k) => [k, r[k]]));
+const partiesOf = (r: Policy['rule']) => Object.fromEntries((['family', 'payer', 'receiver', 'activation'] as const).filter((k) => r[k] !== undefined).map((k) => [k, r[k]]));
 
 /**
  * Các bên của chính sách thưởng — nói rõ ai ký, tính trên doanh số của ai, ai trả, bên mình nhận ở đâu.
@@ -264,3 +265,36 @@ function ChongApRieng({ p, all, onPriority }: { p: Policy; all: Policy[]; onPrio
     </div>
   );
 }
+
+// [2026-11-21 Nguyễn Văn Thủy] ĐIỀU KIỆN KÍCH HOẠT (không bắt buộc): đạt mới áp chương trình — doanh số mua, giá trị phiếu, nợ quá hạn, hạn mức (docs/nghiep-vu/29) (đóng góp)
+function DieuKienKichHoat({ p, onChange }: { p: Policy; onChange: (a: Activation | undefined) => void }) {
+  const a = (p.rule.activation as Activation | undefined) ?? {};
+  // Giữ đúng ô người dùng đã tích (kể cả chưa nhập số); bỏ hết tích thì xoá điều kiện. Số tiền 0 lúc tính không xét.
+  const set = (x: Partial<Activation>) => { const nx = { ...a, ...x }; onChange(Object.values(nx).some((v) => v !== undefined && v !== false) ? nx : undefined); };
+  const co = Boolean(activationOf(p));
+  const pham = p.scope.contractCode ? `các phiếu thuộc hợp đồng ${p.scope.contractCode}` : p.scope.partnerCode ? 'các phiếu KHÔNG theo hợp đồng của NCC' : 'các phiếu trong phạm vi chính sách';
+  return (
+    <div className="full" style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+      <b style={{ fontSize: 13 }}>Điều kiện kích hoạt</b> <span className="muted" style={{ fontSize: 12 }}>(không bắt buộc — đạt hết mới áp chương trình; tính trên {pham})</span>
+      <div style={{ display: 'grid', gap: 6, marginTop: 6, fontSize: 13 }}>
+        <label className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input type="checkbox" checked={Boolean(a.minPurchase)} onChange={(e) => set({ minPurchase: e.target.checked ? { amount: a.minPurchase?.amount ?? 0, period: a.minPurchase?.period ?? 'month', includeCurrent: true } : undefined })} />
+          Doanh số mua (trước thuế) trong
+          <select className="select input" style={{ width: 160 }} disabled={!a.minPurchase} value={a.minPurchase?.period ?? 'month'} onChange={(e) => set({ minPurchase: { ...(a.minPurchase ?? { amount: 0 }), period: e.target.value as ActivationPeriod } })}>
+            <option value="month">tháng</option><option value="quarter">quý</option><option value="year">năm</option><option value="contract">{p.scope.contractCode ? 'thời hạn hợp đồng' : 'từ ngày áp chính sách'}</option>
+          </select>
+          đạt tối thiểu <NumInput value={a.minPurchase?.amount ?? 0} disabled={!a.minPurchase} onChange={(v) => set({ minPurchase: { ...(a.minPurchase ?? { period: 'month' }), amount: v ?? 0 } })} />
+          <label className="row" style={{ gap: 4, alignItems: 'center' }} title="Bỏ tích: chỉ tính doanh số các phiếu đã duyệt trước phiếu này"><input type="checkbox" disabled={!a.minPurchase} checked={a.minPurchase?.includeCurrent !== false} onChange={(e) => set({ minPurchase: { ...(a.minPurchase ?? { amount: 0, period: 'month' }), includeCurrent: e.target.checked } })} /> tính cả phiếu đang lập</label>
+        </label>
+        <label className="row" style={{ gap: 6, alignItems: 'center' }}>
+          <input type="checkbox" checked={Boolean(a.minDocValue)} onChange={(e) => set({ minDocValue: e.target.checked ? (a.minDocValue || 1) : undefined })} />
+          Giá trị đơn / phiếu (trước thuế, trước chiết khấu) tối thiểu <NumInput value={a.minDocValue ?? 0} disabled={!a.minDocValue} onChange={(v) => set({ minDocValue: v || 1 })} />
+        </label>
+        <label className="row" style={{ gap: 6, alignItems: 'center' }}><input type="checkbox" checked={Boolean(a.noOverdue)} onChange={(e) => set({ noOverdue: e.target.checked || undefined })} /> Không có nợ quá hạn tại thời điểm lên đơn / phiếu</label>
+        <label className="row" style={{ gap: 6, alignItems: 'center' }}><input type="checkbox" checked={Boolean(a.withinCreditLimit)} onChange={(e) => set({ withinCreditLimit: e.target.checked || undefined })} /> Tổng dư nợ sau đơn / phiếu không vượt hạn mức công nợ</label>
+      </div>
+      {co && <div className="alert alert-info" style={{ fontSize: 12.5, marginTop: 6 }}>{activationText(activationOf(p))} — chưa đạt thì đơn đặt / phiếu nhập không áp chương trình này, Trợ lý ghi rõ còn thiếu gì.</div>}
+    </div>
+  );
+}
+

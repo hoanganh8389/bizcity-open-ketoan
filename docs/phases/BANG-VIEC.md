@@ -280,7 +280,7 @@
 | [S038-7](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L17) | PHASE-038 | — | scripts/lay-log.sh theo README §4.4 | — | — |
 | [S038-8](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L18) | PHASE-038 | — | Sổ tay: mục "Lấy log gửi về" trong runbook aaPanel + DEPLOY §4; OBSERVABILITY §2 thêm logs/; log aaPanel /www… | — | — |
 | [S038-9](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L19) | PHASE-038 | — | Giao diện: một khay "Không kết nối được máy chủ phần mềm" cho GATEWAYUNAVAILABLE / 5xx không JSON; lùi dần lờ… | — | — |
-| [S038-10](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L20) | PHASE-038 | — | Luật R-OBS-10 (bản cài có logs/ cố định, có trần) + check SC-OBS-3 (compose khai logging: và mount LOGHOSTDIR… | — | — |
+| [S038-10](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L20) | PHASE-038 | — | Thi hành R-LOG-9 (bản cài có logs/ cố định, có trần; luật đã khai ở RULE-LOG) + check SC-OBS-3 (compose khai … | — | — |
 | [S038-11](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L25) | PHASE-038 | — | Bộ bắt uncaughtException / unhandledRejection ghi fatal đồng bộ (R-LOG-3); version, commit trong mọi dòng (R-… | — | — |
 | [S038-12](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L26) | PHASE-038 | — | logError chung: err chuẩn (type, stack, cause lồng, pgCode), errFp, evt; redact một danh sách dùng chung; sửa… | — | — |
 | [S038-13](PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md#L27) | PHASE-038 | — | (D038-5 đã duyệt) ErrorBoundary theo màn, window.onerror, unhandledrejection → POST /api/v1/system/client-err… | — | — |

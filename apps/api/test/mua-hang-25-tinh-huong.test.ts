@@ -2,9 +2,27 @@
  * 25 TÌNH HUỐNG của tài liệu yêu cầu mua hàng (motanhanherp/mota1.text) — chạy trên SỔ THẬT: nạp dữ liệu mẫu (đúng số liệu
  * tài liệu: Trung Hậu, Hoàng Nhi, Thắng Bảo, Anlene) vào một đơn vị mới, rồi làm từng nghiệp vụ như kế toán thao tác và kiểm
  * con số + yêu cầu tối thiểu của từng tình huống. Tình huống phía bán (6, 7, 9, 10) kiểm ở phép thử công thức.
+ *
+ * [2026-11-21 Nguyễn Văn Thủy] chạy HAI LƯỢT theo hướng xuyên suốt (docs/nghiep-vu/28): KHÔNG hợp đồng (mọi chính sách / phiếu ngoài hợp đồng)
+ * và CÓ hợp đồng (mỗi NCC một hợp đồng, chính sách + phiếu thuộc hợp đồng; phiếu lập mới trong phép thử cũng gắn hợp đồng của NCC).
+ * Con số mọi tình huống phải như nhau ở cả hai lượt. (đóng góp)
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { call, setupTenant, type TestCtx } from './helpers.js';
+import { call as call0, setupTenant, type TestCtx } from './helpers.js';
+
+type Mode = 'none' | 'contract';
+let MODE: Mode = 'none';
+/** NCC → hợp đồng mẫu (lượt có hợp đồng). */
+let hdOf = new Map<string, string>();
+/** Lượt có hợp đồng: phiếu / phân tích gửi lên có NCC mà chưa ghi hợp đồng thì gắn hợp đồng của NCC (như kế toán chọn hợp đồng khi lập phiếu). */
+const call: typeof call0 = (ctx, method, url, payload, headers) => {
+  if (MODE === 'contract' && method !== 'GET' && /\/api\/v1\/purchase\/(documents|analyze)/.test(url) && payload && typeof payload === 'object') {
+    const b = payload as Record<string, unknown>;
+    const hd = typeof b.partnerCode === 'string' ? hdOf.get(b.partnerCode) : undefined;
+    if (hd && !('contractCode' in b)) payload = { ...b, contractCode: hd };
+  }
+  return call0(ctx, method, url, payload, headers);
+};
 
 let t: TestCtx;
 type Doc = { id: string; docNo: string; kind: string; status: string; note?: string; totals: { beforeTax: number; tax: number; total: number }; dueDate?: string; links: { docNo: string; eventId: string; role: string }[]; checks?: { code: string; level: string }[]; lines: ({ sku: string; unit: string } & Record<string, unknown>)[] };
@@ -18,13 +36,19 @@ const debts = async (partner: string) => (await call(t, 'GET', `/api/v1/debt-ite
 const ledgerText = async (eventId: string) => JSON.stringify((await call(t, 'GET', `/api/v1/documents/${eventId}`)).body.data.entries);
 const codes = (cs?: { code: string }[]) => (cs ?? []).map((c) => c.code);
 
+for (const mode of ['none', 'contract'] as Mode[]) describe(mode === 'none' ? 'LƯỢT KHÔNG HỢP ĐỒNG' : 'LƯỢT CÓ HỢP ĐỒNG', () => {
 beforeAll(async () => {
+  MODE = mode;
   t = await setupTenant();
-  const s = await call(t, 'POST', '/api/v1/purchase/demo/seed', { password: 'Thuy!@#' });
+  const s = await call(t, 'POST', '/api/v1/purchase/demo/seed', { password: 'Thuy!@#', mode });
   expect(s.status, JSON.stringify(s.body)).toBe(200);
   expect(s.body.data.errors).toEqual([]);
+  hdOf = new Map(((await call(t, 'GET', '/api/v1/purchase/contracts')).body.data as { code: string; partnerCode: string }[]).map((c) => [c.partnerCode, c.code]));
   await reload();
-}, 60_000);
+  // Đúng hướng: lượt không hợp đồng không có phiếu nào gắn hợp đồng; lượt có hợp đồng mọi phiếu của NCC mẫu đều gắn hợp đồng.
+  const gan = (docs as (Doc & { contractCode?: string; partnerCode: string })[]).filter((d) => d.contractCode);
+  if (mode === 'none') expect(gan.length).toBe(0); else expect(gan.length).toBeGreaterThan(20);
+}, 120_000);
 afterAll(async () => { await t.app.close(); });
 
 describe('25 tình huống mua hàng trên sổ thật', () => {
@@ -432,4 +456,5 @@ describe('Quy trình liên kết: khai mã + giá của NCC → đơn đặt (du
     expect(docNos.some((n) => n.startsWith('NM'))).toBe(true);
     expect(docNos.filter((n) => n.startsWith('DH'))).toEqual([]);
   });
+});
 });

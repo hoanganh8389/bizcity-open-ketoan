@@ -187,19 +187,21 @@ Alloy cũng nhận được OTLP và thay được Collector. Có thể gộp ha
 
 > Đặt tên **R-LOG** để tách khỏi R-OBS (quan sát chung) và R-ERR (hợp đồng lỗi trả cho bên gọi): R-ERR nói *trả gì ra ngoài*, R-LOG nói *ghi gì vào trong*. Chủ dự án chốt tên riêng (D038-6).
 
+> **Bản chính thức** của bảng dưới nằm ở [RULE-LOG](../../rules/RULE-LOG.md) (chấp nhận 2026-11-21). Bảng này giữ lại bản đề xuất kèm lý do; khác nhau thì theo RULE-LOG.
+
 | Mã | Cấp | Luật | Kiểm bằng |
 |---|---|---|---|
-| R-LOG-1 | 0 | Mọi lỗi mức `error` / `fatal` ghi qua **một hàm chung** `logError(log, err, ctx)` của Platform. Hàm này tạo trường `err` chuẩn (`type`, `message`, `stack`, `cause` lồng tối đa 5 lớp, `pgCode`), `errFp`, `evt`. **Cấm** `err: String(err)` và `console.error` trong mã chạy của API | check SC-LOG-1 (quét `String(err)`, `console.error` ngoài `cli/`) |
-| R-LOG-2 | 0 | **Không nuốt lỗi im lặng.** `catch {}` / `.catch(() => undefined)` chỉ được dùng khi có chú thích `// nuot-loi: <lý do>` (dọn dẹp lúc dừng, việc phụ không ảnh hưởng kết quả). Mọi chỗ khác ít nhất ghi `warn` | SC-LOG-2 |
-| R-LOG-3 | 0 | Tiến trình API và job có bộ bắt `uncaughtException` / `unhandledRejection`: ghi `fatal` **đồng bộ** (cả tệp), rồi thoát mã ≠ 0 để Docker khởi động lại. Không "nuốt rồi chạy tiếp" | test |
-| R-LOG-4 | 0 | Pino khai `redact` cho các đường dẫn nhạy cảm (`*.password`, `*.token`, `*.apiKey`, `req.headers.authorization`, `req.headers.cookie`, `*.taxCode`, `*.phone`, `*.bankAccount`, `body`, `payload`, …). Danh sách nằm **một chỗ** trong Platform và dùng chung cho stdout, tệp, gói gửi | test ghi thử từng trường bị che |
-| R-LOG-5 | 1 | Mỗi dòng có `service`, `version`, `commit` (từ `BUILD_VERSION` / `BIZCITY_GIT_SHA`) | test |
-| R-LOG-6 | 1 | Tác vụ nền ghi qua logger con có `job`, `fn`, `attempt` và `traceId` của sự kiện gốc. Hết lượt thử (`dead`) là `error` có `eventId` | test events |
-| R-LOG-7 | 1 | Chọn mức theo bảng §2: lỗi người dùng (4xx) **không** ở mức `error`; lỗi phụ thuộc ngoài đã lùi được là `warn` | review |
-| R-LOG-8 | 1 | Ảnh API chạy Node với `--enable-source-maps` và giữ tệp `.map` trong ảnh. Stack trong log trỏ tệp `.ts` | SC-LOG-3 (Dockerfile) |
-| R-LOG-9 | 1 | Bản cài ghi `logs/` theo §7.3, tổng ≤ 200 MB. Mọi dịch vụ Docker khai `logging:` có trần | SC-OBS-3 |
-| R-LOG-10 | 2 | Giao diện có ErrorBoundary theo màn, `window.onerror`, `unhandledrejection`. Gửi về `POST /api/v1/system/client-errors` (giới hạn nhịp, không dữ liệu người dùng, có `errFp`, `build`, `screen`); máy chủ ghi `logs/web-client.log`. Màn lỗi hiện **mã tra cứu**, không màn trắng | test web (D038-5) |
-| R-LOG-11 | 2 | `msg` là câu tiếng Việt ngắn cho người đọc; `evt` (`bizcity.<miền>.<việc>`) cho máy. Giá trị do người dùng gửi **không** ghép vào `msg` | review |
+| R-LOG-1 (đề xuất) | 0 | Mọi lỗi mức `error` / `fatal` ghi qua **một hàm chung** `logError(log, err, ctx)` của Platform. Hàm này tạo trường `err` chuẩn (`type`, `message`, `stack`, `cause` lồng tối đa 5 lớp, `pgCode`), `errFp`, `evt`. **Cấm** `err: String(err)` và `console.error` trong mã chạy của API | check SC-LOG-1 (quét `String(err)`, `console.error` ngoài `cli/`) |
+| R-LOG-2 (đề xuất) | 0 | **Không nuốt lỗi im lặng.** `catch {}` / `.catch(() => undefined)` chỉ được dùng khi có chú thích `// nuot-loi: <lý do>` (dọn dẹp lúc dừng, việc phụ không ảnh hưởng kết quả). Mọi chỗ khác ít nhất ghi `warn` | SC-LOG-2 |
+| R-LOG-3 (đề xuất) | 0 | Tiến trình API và job có bộ bắt `uncaughtException` / `unhandledRejection`: ghi `fatal` **đồng bộ** (cả tệp), rồi thoát mã ≠ 0 để Docker khởi động lại. Không "nuốt rồi chạy tiếp" | test |
+| R-LOG-4 (đề xuất) | 0 | Pino khai `redact` cho các đường dẫn nhạy cảm (`*.password`, `*.token`, `*.apiKey`, `req.headers.authorization`, `req.headers.cookie`, `*.taxCode`, `*.phone`, `*.bankAccount`, `body`, `payload`, …). Danh sách nằm **một chỗ** trong Platform và dùng chung cho stdout, tệp, gói gửi | test ghi thử từng trường bị che |
+| R-LOG-5 (đề xuất) | 1 | Mỗi dòng có `service`, `version`, `commit` (từ `BUILD_VERSION` / `BIZCITY_GIT_SHA`) | test |
+| R-LOG-6 (đề xuất) | 1 | Tác vụ nền ghi qua logger con có `job`, `fn`, `attempt` và `traceId` của sự kiện gốc. Hết lượt thử (`dead`) là `error` có `eventId` | test events |
+| R-LOG-7 (đề xuất) | 1 | Chọn mức theo bảng §2: lỗi người dùng (4xx) **không** ở mức `error`; lỗi phụ thuộc ngoài đã lùi được là `warn` | review |
+| R-LOG-8 (đề xuất) | 1 | Ảnh API chạy Node với `--enable-source-maps` và giữ tệp `.map` trong ảnh. Stack trong log trỏ tệp `.ts` | SC-LOG-3 (Dockerfile) |
+| R-LOG-9 (đề xuất) | 1 | Bản cài ghi `logs/` theo §7.3, tổng ≤ 200 MB. Mọi dịch vụ Docker khai `logging:` có trần | SC-OBS-3 |
+| R-LOG-10 (đề xuất) | 2 | Giao diện có ErrorBoundary theo màn, `window.onerror`, `unhandledrejection`. Gửi về `POST /api/v1/system/client-errors` (giới hạn nhịp, không dữ liệu người dùng, có `errFp`, `build`, `screen`); máy chủ ghi `logs/web-client.log`. Màn lỗi hiện **mã tra cứu**, không màn trắng | test web (D038-5) |
+| R-LOG-11 (đề xuất) | 2 | `msg` là câu tiếng Việt ngắn cho người đọc; `evt` (`bizcity.<miền>.<việc>`) cho máy. Giá trị do người dùng gửi **không** ghép vào `msg` | review |
 
 ### 7.1 Khuôn một dòng lỗi (sau PHASE-038)
 
@@ -267,7 +269,7 @@ Thêm vào [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md): S038-11 … S038-15. T
 | Mã | Câu hỏi | Đề xuất |
 |---|---|---|
 | D038-5 | Thu lỗi giao diện (L8) về máy chủ? | ✅ **Có**, ở B4b: chỉ loại lỗi, khung stack, màn, bản dựng, `errFp`; không dữ liệu nhập; tối đa 10 lỗi / phút / phiên |
-| D038-6 | Luật tên R-LOG riêng hay gộp R-OBS-10..20? | ✅ R-LOG riêng (R-ERR = ra ngoài, R-LOG = vào trong) |
+| D038-6 | Luật tên R-LOG riêng hay gộp vào nhóm R-OBS? | ✅ R-LOG riêng (R-ERR = ra ngoài, R-LOG = vào trong) |
 | D038-2b | 200 MB tính cả log json-file của Docker? | ✅ Không. `logs/` ≤ 200 MB; Docker ≤ 30 MB / dịch vụ, ghi riêng |
 
 ## 10. Nguồn

@@ -41,7 +41,11 @@ export function checkSeedPassword(password: string | undefined) {
   checkToolPassword(password, 'nạp dữ liệu');
 }
 
-export async function seedDemo(auth: AuthContext, opts: { reset?: boolean } = {}) {
+// [2026-11-21 Nguyễn Văn Thủy] mode: nạp cùng bộ tình huống theo hướng xuyên suốt — 'none' không hợp đồng; 'contract' mỗi NCC một hợp đồng,
+// mọi chính sách / phiếu của NCC thuộc hợp đồng đó; 'mixed' (mặc định) như cũ: chỉ Vinh Châu theo hợp đồng (docs/nghiep-vu/28, 29) (đóng góp)
+export type SeedMode = 'mixed' | 'contract' | 'none';
+export async function seedDemo(auth: AuthContext, opts: { reset?: boolean; mode?: SeedMode } = {}) {
+  const mode = opts.mode ?? 'mixed';
   if (opts.reset) await clearDemo(auth);
   const has = await db.selectFrom('purchase_documents').select('id').where('tenant_id', '=', auth.tenantId).where('is_demo', '=', true).limit(1).executeTakeFirst();
   if (has) throw Errors.conflict('Đã nạp dữ liệu tình huống — bấm "Nạp lại" để xoá bản cũ và nạp lại từ đầu');
@@ -49,6 +53,18 @@ export async function seedDemo(auth: AuthContext, opts: { reset?: boolean } = {}
     read<Master>('doi-tac.json'), read<SeedProduct[]>('san-pham.json'), read<Policy[]>('chinh-sach.json'), read<(PDoc & { id: string })[]>('chung-tu.json'), read<GiftOut[]>('xuat-qua.json'),
   ]);
   const supplierRows = await read<Record<string, unknown>[]>('gia-mua.json');
+  if (mode === 'none') {
+    for (const p of policies) if (p.scope.contractCode) p.scope = { ...p.scope, contractCode: undefined };
+    for (const d of docs) if (d.contractCode) d.contractCode = undefined;
+    for (const r of supplierRows) delete r.contractCode;
+  }
+  /** Hợp đồng của từng NCC khi nạp theo hướng "có hợp đồng". */
+  const hdCua = (code: string) => `HD-${code}`;
+  if (mode === 'contract') {
+    const nccs = new Set(master.partners.map((x) => x.code));
+    for (const p of policies) if (p.scope.partnerCode && nccs.has(p.scope.partnerCode) && !p.scope.contractCode) p.scope = { ...p.scope, contractCode: hdCua(p.scope.partnerCode) };
+    for (const d of docs) if (nccs.has(d.partnerCode) && !d.contractCode) d.contractCode = hdCua(d.partnerCode);
+  }
   // 1. Danh mục còn thiếu.
   for (const b of master.branches) await catalogEnsure.branch(db, auth.tenantId, b);
   await ensureDemoWarehouses(auth);
@@ -83,8 +99,17 @@ export async function seedDemo(auth: AuthContext, opts: { reset?: boolean } = {}
   {
     const code = '01/2026/HĐMB-TGS-VC';
     const had = await db.selectFrom('dimensions').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'contract').where('code', '=', code).executeTakeFirst();
-    if (!had && master.partners.some((x) => x.code === 'NC100227')) await db.transaction().execute((trx) => saveContract(trx, auth.tenantId, auth.actorName, code, true, contractInput.parse({
+    if (mode !== 'none' && !had && master.partners.some((x) => x.code === 'NC100227')) await db.transaction().execute((trx) => saveContract(trx, auth.tenantId, auth.actorName, code, true, contractInput.parse({
       name: 'Vinh Châu: hợp đồng mua bán 2026', partnerCode: 'NC100227', signedDate: '2026-01-05', startDate: '2026-01-01', endDate: '2026-12-31', status: 'active', note: 'Phân phối sữa TH khu vực Nghệ An' })));
+  }
+  if (mode === 'contract') {
+    for (const p of master.partners) {
+      const code = hdCua(p.code);
+      if (!policies.some((x) => x.scope.contractCode === code) && !docs.some((d) => d.contractCode === code)) continue;
+      const had = await db.selectFrom('dimensions').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'contract').where('code', '=', code).executeTakeFirst();
+      if (!had) await db.transaction().execute((trx) => saveContract(trx, auth.tenantId, auth.actorName, code, true, contractInput.parse({
+        name: `${p.name}: hợp đồng mua bán 2026 (dữ liệu mẫu)`, partnerCode: p.code, signedDate: '2026-01-02', startDate: '2026-01-01', endDate: '2026-12-31', status: 'active', note: 'Nạp mẫu theo hướng có hợp đồng' })));
+    }
   }
   // 3. Chính sách. Mã đã có (người dùng tự tạo, ví dụ NC100227-HANMUC) thì GIỮ chính sách đang có, bỏ qua mẫu; lỗi từng chính
   // sách ghi vào báo cáo, không dừng cả lượt nạp.

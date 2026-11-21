@@ -144,7 +144,9 @@ export const purchaseService = {
       // (công nợ theo hợp đồng không chia được một khoản cho hai hợp đồng); phiếu thưởng lấy hợp đồng của chính sách (đóng góp)
       if (doc.refIds?.length) {
         const refs = docs.filter((d) => doc.refIds!.includes(d.id));
-        const codes = [...new Set(refs.map((d) => d.contractCode ?? ''))];
+        // [2026-11-21 Nguyễn Văn Thủy] hợp đồng chỉ kế thừa / so với chứng từ gắn kèm CÙNG NCC: chi phí vận chuyển của NCC vận tải gắn phiếu nhập
+        // của NCC hàng là hai hợp đồng của hai bên — không bắt trùng (đóng góp)
+        const codes = [...new Set(refs.filter((d) => d.partnerCode === doc.partnerCode).map((d) => d.contractCode ?? ''))];
         if (codes.length > 1) throw Errors.validation(`Phiếu gắn chứng từ của nhiều hợp đồng khác nhau (${codes.map((c) => c || 'không theo hợp đồng').join(', ')}) — lập mỗi hợp đồng một phiếu để công nợ theo hợp đồng đúng`);
         const ref = codes[0] ?? '';
         if (!doc.contractCode && ref) doc.contractCode = ref;

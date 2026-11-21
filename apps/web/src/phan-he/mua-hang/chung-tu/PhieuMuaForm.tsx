@@ -227,6 +227,17 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const set = (p: Partial<PDoc>) => { setV((x) => ({ ...x, ...p })); setDirty(true); };
   const setLine = (key: string, p: Partial<PLine>) => { setV((x) => ({ ...x, lines: x.lines.map((l) => (l.lineKey === key ? { ...l, ...p } : l)) })); setDirty(true); };
 
+  // [2026-11-21 Nguyễn Văn Thủy] ngân sách mua của đơn đặt lấy theo hạn mức công nợ còn lại: của hợp đồng đã chọn, không thì hạn mức chung / ngoài hợp đồng (docs/nghiep-vu/28) (đóng góp)
+  const hmCredit = (a?.credit ?? []).find((x) => x.scope.startsWith('Hợp đồng ')) ?? (a?.credit ?? []).find((x) => !x.scope.startsWith('Nhãn ') && !x.scope.startsWith('Chi nhánh'));
+  const hmCon = hmCredit ? Math.max(0, Math.round(hmCredit.limit - hmCredit.current - hmCredit.openOrders)) : undefined;
+  const hmNhan = !hmCredit ? '' : hmCredit.scope.startsWith('Hợp đồng ') ? `theo ${hmCredit.scope.toLowerCase()}` : v.contractCode ? `hạn mức chung của NCC (hợp đồng ${v.contractCode} chưa khai hạn mức riêng)` : 'ngoài hợp đồng (hạn mức chung của NCC)';
+  const budgetAuto = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (v.kind !== 'order' || readOnly || hmCon === undefined) return;
+    if (v.budget !== undefined && v.budget !== budgetAuto.current) return; // người dùng đã tự ghi ngân sách — giữ nguyên
+    budgetAuto.current = hmCon;
+    if (v.budget !== hmCon) setV((x) => ({ ...x, budget: hmCon }));
+  }, [hmCon, v.kind, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
   // Máy chủ phân tích sau mỗi lần sửa (chờ 400 ms ngừng gõ); phiếu đã duyệt chỉ phân tích một lần.
   const seqRef = useRef(0);
   useEffect(() => {
@@ -245,7 +256,9 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const unitsOf = (sku: string) => extra.units[sku] ?? a?.units[sku] ?? []; // extra = vừa tải lại (kể cả sau khi sửa ĐVT ở modal) nên mới hơn
   // ĐVT của các mã (giá vốn thực tế / ĐVT quy về ĐVT nhỏ nhất — mua Thùng + quà Lon vẫn đúng).
   const allUnits = useMemo(() => ({ ...extra.units, ...(a?.units ?? {}) }), [a, extra]);
-  const calc = useMemo(() => computeDoc(v, data.policies, { holidays: holidays ?? [], units: allUnits }), [v, data.policies, holidays, allUnits]);
+  // [2026-11-21 Nguyễn Văn Thủy] chính sách chưa đủ điều kiện kích hoạt (máy chủ xét: doanh số, nợ quá hạn, hạn mức…) không áp trên phiếu (đóng góp)
+  const policiesDung = useMemo(() => { const bl = new Set((a?.blockedPolicies ?? []).map((b) => b.code)); return bl.size ? data.policies.filter((p) => !bl.has(p.code)) : data.policies; }, [a, data.policies]);
+  const calc = useMemo(() => computeDoc(v, policiesDung, { holidays: holidays ?? [], units: allUnits }), [v, policiesDung, holidays, allUnits]);
   // Lấy dòng hàng từ hoá đơn NCC đã nhập ở MH22 (cùng NCC): thay dòng hàng hiện có (hỏi trước), ghi số / ngày hoá đơn, giá chưa thuế.
   const invQ = useQuery({ queryKey: ['mua-hang', 'invoices', v.partnerCode, 'for-receipt'], enabled: v.kind === 'receipt' && Boolean(v.partnerCode), staleTime: 30_000, queryFn: () => invoiceApi.list({ partnerCode: v.partnerCode, status: 'active' }) });
   const nccInvoices = (invQ.data ?? []).filter((x) => x.state !== 'da_huy');
@@ -358,7 +371,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       const item = { variantCode: p.variantCode, typeCode: p.typeCode, sendToTax: p.sendToTax, parentSku: p.parentSku };
       const giftItem = p.variantCode === 'promo' || p.typeCode === 'QUA' || p.sendToTax === false;
       if (giftItem) setLine(key, { ...meta, price: 0, lineType: 'gift_consumer' });
-      else setLine(key, { ...meta, price, lineType: isBuy || price > 0 ? 'buy' : autoLineType(sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }, undefined, item) });
+      else setLine(key, { ...meta, price, lineType: isBuy || price > 0 ? 'buy' : autoLineType(sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, contractCode: v.contractCode || undefined, branchCode: v.branchCode }, undefined, item) });
     } catch { /* mã chưa có trong danh mục hàng */ }
   };
   /** Nhập dòng hàng từ Excel: thêm dòng, tên / thuế / nhãn / ĐVT mặc định / giá NCC lấy như khi chọn mã, rồi ghi đè các cột tệp có ghi. */
@@ -478,7 +491,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     setLine(key, { price: line && h.unit && us.length && h.unit.toLowerCase() !== line.unit.toLowerCase() ? roundPrice((p / ratioOf(us, h.unit)) * ratioOf(us, line.unit)) : p });
   };
   /** Đổi đơn giá: giá 0 = hàng tặng (chia giá hay không theo mã / chính sách KM của NCC), giá > 0 = hàng mua. */
-  const setPrice = (l: PLine, price: number) => setLine(l.lineKey, price > 0 ? { price, lineType: 'buy' } : { price: 0, lineType: l.lineType === 'buy' ? autoLineType(l.sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }) : l.lineType });
+  const setPrice = (l: PLine, price: number) => setLine(l.lineKey, price > 0 ? { price, lineType: 'buy' } : { price: 0, lineType: l.lineType === 'buy' ? autoLineType(l.sku, 0, { contractCode: v.contractCode || undefined, policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }) : l.lineType });
   const isOrder = v.kind === 'order';
   // Đơn đặt: chụp số liệu tồn (phân tích đặt hàng của chi nhánh cha) lúc lưu cho dòng chưa có — như thuế, lưu theo lúc đặt.
   const need = useNeedOf(v.branchCode, isOrder && v.status === 'draft');
@@ -585,13 +598,13 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   // (số chốt được ghi vào dòng như CK tay, tính lại sẽ thành "ghi trên phiếu" và mất dòng CK bậc).
   const board = useMemo<PromoRow[]>(() => {
     const trace = (stored?.policyTrace ?? []) as TraceItem[];
-    if (v.status !== 'approved' || !trace.length) return promoBoard(v, data.policies, calc);
+    if (v.status !== 'approved' || !trace.length) return promoBoard(v, policiesDung, calc);
     const amt = (t: TraceItem) => (t.amount ? ` = ${t.kind === 'payment_discount' ? '' : '−'}${vnd(t.amount)}` : '');
     return [
       ...trace.filter((t) => CHOT_KINDS.includes(t.kind))
         // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-6): vết chốt có bản chính sách → ghi "bản N" (đối chiếu khối Phiên bản của chính sách); mã giữ nguyên làm khoá
         .map((t, i): PromoRow => ({ key: `chot|${i}`, status: 'applied', kind: t.kind, policy: t.policy, name: data.policies.find((p) => p.code === t.policy)?.name ?? t.policy, text: `${t.text}${amt(t)}${t.version ? ` · bản ${t.version}` : ''}` })),
-      ...promoBoard(v, data.policies, calc).filter((r) => r.kind === 'promo_gift' && r.status !== 'hint'),
+      ...promoBoard(v, policiesDung, calc).filter((r) => r.kind === 'promo_gift' && r.status !== 'hint'),
     ];
   }, [v, data.policies, calc, stored]);
   // [2026-11-20 khanhtd] MH-KM — cột Hiệu lực của Bảng khuyến mại: phiếu đang lập theo bản áp ở ngày phiếu; phiếu đã duyệt theo đúng bản đã chốt (đóng góp)
@@ -833,6 +846,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             { key: 'docNo', header: 'Số đơn', type: 'code', width: 120 },
             { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
             { key: 'branchCode', header: 'Chi nhánh', width: 170, value: (d) => `${d.branchCode} · ${names.branchName(d.branchCode)}` },
+            { key: 'contractCode', header: 'Hợp đồng', width: 120, value: (d) => d.contractCode || 'Không theo HĐ', render: (d) => (d.contractCode ? <span className="mono">{d.contractCode}</span> : <span className="muted">không theo HĐ</span>) },
             { key: 'nhan', header: 'Chi nhánh nhận', width: 200, value: (d) => deliveryBranches(d).map((b) => `${b} · ${names.branchName(b)}`).join('; '), render: (d) => { const bs = deliveryBranches(d); return <span title={bs.map((b) => `${b} · ${names.branchName(b)}`).join('\n')}>{bs.length > 1 ? <b>{bs.length} nơi: </b> : null}{bs.join(', ')}</span>; } },
             { key: 'lines', header: 'Số dòng', type: 'number', width: 70, value: (d) => d.lines.filter((l) => l.lineType === 'buy').length },
             { key: 'total', header: 'Tổng tiền', type: 'money', width: 120, value: (d) => d.totals.total },
@@ -869,6 +883,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             { key: 'docNo', header: 'Số phiếu', type: 'code', width: 120 },
             { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
             { key: 'branchCode', header: 'Chi nhánh', width: 170, value: (d) => `${d.branchCode} · ${names.branchName(d.branchCode)}` },
+            { key: 'contractCode', header: 'Hợp đồng', width: 120, value: (d) => d.contractCode || 'Không theo HĐ', render: (d) => (d.contractCode ? <span className="mono">{d.contractCode}</span> : <span className="muted">không theo HĐ</span>) },
             { key: 'invoice', header: 'Số HĐ', type: 'code', width: 110, value: (d) => (d.invoice ? `${d.invoice.serial ? `${d.invoice.serial}-` : ''}${d.invoice.no}` : '') },
             { key: 'total', header: 'Tổng tiền', type: 'money', width: 120, value: (d) => d.totals.total },
             // Trả tiền: thấy ngay phiếu còn nợ bao nhiêu trước khi chọn (theo sổ công nợ; trả nhiều lần thì đã trừ các lần trước).
@@ -1072,7 +1087,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {isOrder && <>
                   <div className="field"><label>Ngày giao hàng</label><input className="input" type="date" value={v.deliveryDate ?? ''} onChange={(e) => set({ deliveryDate: e.target.value || undefined })} /></div>
-                  <div className="field"><label title="Ngân sách mua được cấp — chỉ để ước lượng, không chặn">Ngân sách mua</label><input className="input num" value={fmt(v.budget)} placeholder="vd 80.000.000" onChange={(e) => set({ budget: num(e.target.value) || undefined })} />
+                  <div className="field"><label title="Ngân sách mua của đơn — tự lấy theo hạn mức công nợ còn lại (của hợp đồng đã chọn; không theo hợp đồng thì hạn mức chung của NCC), sửa tay được. Chỉ để ước lượng, không chặn (vượt hạn mức thì Kiểm tra báo)">Ngân sách mua</label><input className="input num" value={fmt(v.budget)} placeholder="vd 80.000.000" onChange={(e) => set({ budget: num(e.target.value) || undefined })} />
+                    {hmCredit && <span className="muted" style={{ fontSize: 11 }} title={`Hạn mức ${vnd(hmCredit.limit)} − nợ đang có ${vnd(hmCredit.current)} − đơn / phiếu đang chờ ${vnd(hmCredit.openOrders)}`}>Hạn mức công nợ còn <b>{vnd(hmCon ?? 0)}</b> — {hmNhan}{!readOnly && v.budget !== hmCon && <button type="button" className="btn btn-xs" style={{ marginLeft: 4 }} onClick={() => { budgetAuto.current = hmCon; set({ budget: hmCon }); }}>Lấy</button>}</span>}
+                    {!hmCredit && a && <span className="muted" style={{ fontSize: 11 }}>{v.contractCode ? `Hợp đồng ${v.contractCode} và NCC chưa khai hạn mức công nợ` : 'NCC chưa khai hạn mức công nợ (ngoài hợp đồng)'}</span>}
                     {v.budget ? <span style={{ fontSize: 11.5, fontWeight: 700, color: v.budget - calc.beforeTax >= 0 ? 'var(--ok, #16a34a)' : '#dc2626' }}>{v.budget - calc.beforeTax >= 0 ? 'Còn' : 'Vượt'} {vnd(Math.abs(v.budget - calc.beforeTax))} <span className="muted" style={{ fontWeight: 400 }}>(so tổng sau CK chưa thuế)</span></span> : null}</div>
                 </>}
                 {isGoods && <div className="field"><label title="Nhãn là thuộc tính của mặt hàng (danh mục Ngành → Nhãn → Nhóm): phiếu tự lấy theo các dòng hàng, không chọn tay. Hạn mức / chỉ tiêu / thưởng theo nhãn tính theo phần của từng nhãn">Nhãn hàng (theo mặt hàng)</label>
@@ -1578,7 +1595,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 })()}
               </div>
             )}
-            {(v.kind === 'receipt' || v.kind === 'order') && <KhuyenMaiPanel rows={board} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onOpen={() => setPromoOpen(true)} readOnly={readOnly} />}
+            {(v.kind === 'receipt' || v.kind === 'order') && <KhuyenMaiPanel rows={board} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onOpen={() => setPromoOpen(true)} readOnly={readOnly} chuaDuDieuKien={readOnly ? [] : a?.blockedPolicies ?? []} />}
             {(a?.credit.length ?? 0) > 0 && (
               <div className="mh-panel">
                 <h4>Công nợ & hạn mức</h4>

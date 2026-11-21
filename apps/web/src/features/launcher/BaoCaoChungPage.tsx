@@ -53,24 +53,25 @@ export function BaoCaoChungPage() {
             <label title="Chỉ hiện các báo cáo đã ghim lên thanh trên cùng"><input type="checkbox" checked={chiGhim} onChange={(e) => setChiGhim(e.target.checked)} /> Đã ghim</label>
           </div>
           {!shown.length && <div className="card card-body muted">Không có báo cáo phù hợp.</div>}
+          {/* [2026-11-21 Nguyễn Văn Thủy] dạng danh sách gọn, các nhóm xếp 2–3 cột tuỳ màn (không thẻ chữ nhật to — đỡ mỏi mắt) (đóng góp) */}
+          <div className="gon-bc-cot">
           {shown.map((g) => g.reports.map((s) => (
             <section key={`${g.key}:${s.label}`} className="gon-bc-sec">
-              <h3>{s.label}</h3>
-              <div className="gon-bc-the">
+              <h3>{s.label} <span className="muted">({s.items.length})</span></h3>
+              <ul className="gon-bc-ds">
                 {s.items.map((m) => (
-                  <div key={m.key} className="card gon-bc-card">
+                  <li key={m.key}>
                     <Link to={m.path!} title={m.code ? `Mở ${m.label} (${m.code})` : `Mở ${m.label}`}>{m.label}</Link>
-                    <div className="gon-bc-chan">
-                      <small className="muted">{m.code}</small>
-                      <button type="button" className="btn btn-sm btn-ghost" title={isPinned(m.key) ? 'Bỏ ghim khỏi thanh trên cùng' : 'Ghim lên thanh trên cùng (báo cáo hay dùng)'} onClick={() => toggle(m.key)}>
-                        {isPinned(m.key) ? <PinOff size={14} /> : <Pin size={14} />}
-                      </button>
-                    </div>
-                  </div>
+                    <small className="muted mono">{m.code}</small>
+                    <button type="button" className={`gon-bc-ghim${isPinned(m.key) ? ' on' : ''}`} title={isPinned(m.key) ? 'Bỏ ghim khỏi thanh trên cùng' : 'Ghim lên thanh trên cùng (báo cáo hay dùng)'} onClick={() => toggle(m.key)}>
+                      {isPinned(m.key) ? <PinOff size={13} /> : <Pin size={13} />}
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )))}
+          </div>
         </div>
       </div>
     </>

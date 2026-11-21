@@ -23,6 +23,7 @@ import { CONTRACT_STATUS_LABEL, KIND_LABEL, STATUS_LABEL, purchaseApi, today, us
 import { BrandInput, dmy, statusBadge } from '../chung';
 import { TepDinhKem } from '../dinh-kem/TepDinhKem';
 import { GiaVaChinhSach } from './GiaVaChinhSach';
+import { CongNoDieuKhoan } from './CongNoDieuKhoan';
 import { LichSu } from '../thanh-phan/LichSu';
 import '../mua-hang.css';
 
@@ -233,7 +234,7 @@ function ChiTietHopDong() {
                 <Field label="Phạt vi phạm (%)" tip="Tối đa 8% giá trị phần nghĩa vụ bị vi phạm (Điều 301 Luật Thương mại 2005)" error={phatLoi}><NumInput value={v.penaltyPct ?? 0} decimals={2} onChange={(n) => set({ penaltyPct: n || null })} /></Field>
                 <Field label="Lãi chậm thanh toán (%/năm)" tip="Lãi trên số tiền chậm trả (Điều 306 Luật Thương mại 2005)"><NumInput value={v.lateInterestPct ?? 0} decimals={2} onChange={(n) => set({ lateInterestPct: n || null })} /></Field>
                 <Field label="Đổi trả" full><input className="input" value={v.returnTerms} placeholder="vd Đổi hàng lỗi, móp; trả hàng còn hạn dưới 60 ngày" onChange={(e) => set({ returnTerms: e.target.value })} /></Field>
-                <div className="muted full" style={{ fontSize: 12 }}>Hạn thanh toán, hạn mức công nợ, chiết khấu, thưởng: khai ở bước 4 (Giá mua và chính sách) — phiếu tự áp.</div>
+                <div className="muted full" style={{ fontSize: 12 }}>Công nợ &amp; điều khoản thanh toán khai ở khối bên dưới. Chiết khấu, khuyến mại, thưởng: bước 4 (Giá mua và chính sách) — phiếu tự áp.</div>
               </div>}
               {buoc === 'scan' && <>
                 <h4 className="mh-h4">Thanh lý hợp đồng <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(bấm Sửa để tích thanh lý)</span></h4>
@@ -253,6 +254,10 @@ function ChiTietHopDong() {
           ) : buoc === 'chung-tu' && det.data ? (
             <ChungTuHopDong code={code} partnerCode={det.data.contract.partnerCode} active={det.data.contract.status === 'active'} docs={det.data.documents} start={det.data.contract.startDate ?? undefined} />
           ) : <Loading />}
+          {/* [2026-11-21 Nguyễn Văn Thủy] công nợ + điều khoản thanh toán là điều khoản hợp đồng — khối riêng ở bước 3, ghi ngay (không qua nút Sửa) (đóng góp) */}
+          {buoc === 'dieu-khoan' && <div style={{ marginTop: 14 }}>{c && !isNew
+            ? <CongNoDieuKhoan partnerCode={c.partnerCode} contractCode={code} start={c.startDate ?? undefined} end={c.endDate ?? undefined} readOnly={c.status === 'liquidated'} />
+            : <div className="muted" style={{ fontSize: 12.5 }}>Công nợ &amp; điều khoản thanh toán: ghi hợp đồng trước, rồi khai ở đây (hạn mức công nợ, hạn thanh toán của hợp đồng).</div>}</div>}
           {buoc === 'scan' && !isNew && <div style={{ marginTop: 16 }}><LichSu contractCode={code} title="Nhật ký hợp đồng — ghi hợp đồng, giá mua, chính sách, tệp (ai làm, lúc nào, đổi gì)" empty="Chưa có thay đổi nào được ghi." /></div>}
         </div>
       </div>

@@ -1818,12 +1818,20 @@ table.dgrid-table thead th { padding-top: 4px; padding-bottom: 4px; }
 .gon-bc-o { position: relative; display: flex; align-items: center; width: min(360px, 100%); }
 .gon-bc-o svg { position: absolute; left: 9px; opacity: 0.5; }
 .gon-bc-o input { width: 100%; padding-left: 28px; }
-.gon-bc-sec { margin-bottom: 16px; }
-.gon-bc-sec h3 { margin: 0 0 8px; font-size: 14px; }
-.gon-bc-the { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-.gon-bc-the > .gon-bc-card { display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-height: 84px; margin: 0; padding: 10px 12px 4px; }
-.gon-bc-card > a { font-weight: 600; color: var(--brand-800); }
-.gon-bc-chan { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 2px; }
+/* [2026-11-21] báo cáo dạng danh sách: các nhóm xếp cột (2–3 tuỳ màn), mỗi dòng: tên · mã · ghim (ghim hiện khi rê chuột / đã ghim) */
+.gon-bc-cot { columns: 3 320px; column-gap: 18px; }
+.gon-bc-sec { break-inside: avoid; margin: 0 0 14px; padding: 8px 10px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface, #fff); }
+.gon-bc-sec h3 { margin: 0 0 4px; font-size: 13.5px; }
+.gon-bc-sec h3 .muted { font-weight: 400; font-size: 12px; }
+.gon-bc-ds { list-style: none; margin: 0; padding: 0; }
+.gon-bc-ds li { display: flex; align-items: center; gap: 8px; padding: 4px 4px; border-top: 1px dashed var(--line); font-size: 13px; }
+.gon-bc-ds li:first-child { border-top: 0; }
+.gon-bc-ds li:hover { background: var(--brand-50); }
+.gon-bc-ds li > a { flex: 1; min-width: 0; color: var(--brand-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gon-bc-ds li > small { font-size: 10.5px; }
+.gon-bc-ghim { border: 0; background: none; padding: 2px; cursor: pointer; color: var(--muted, #64748b); opacity: 0; }
+.gon-bc-ds li:hover .gon-bc-ghim, .gon-bc-ghim.on, .gon-bc-ghim:focus-visible { opacity: 1; }
+.gon-bc-ghim.on { color: var(--brand-700, #1d4ed8); }
 @media (max-width: 900px) { .gon-bc { grid-template-columns: 1fr; } .gon-bc-loai { position: static; grid-auto-flow: column; overflow-x: auto; } }
 @media print { .gon-the, .gon-fly { display: none !important; } }
 

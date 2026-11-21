@@ -76,7 +76,9 @@ export const GON_DEFS: GonDef[] = [
       { label: 'Khai báo', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/mua-hang/cai-dat'] },
     ],
     reports: [
-      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/mua-hang/doi-chieu', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/chi-tiet-chinh-sach', '/mua-hang/so-kho', '/mua-hang/ton-kho', '/mua-hang/nhat-ky'] },
+      { label: 'Mua hàng', paths: ['/mua-hang/bao-cao', '/mua-hang/tong-hop-mat-hang', '/mua-hang/doi-chieu', '/bao-cao/nhat-ky-mua-hang', '/mua-hang/so-kho', '/mua-hang/ton-kho', '/mua-hang/nhat-ky'] },
+      // [2026-11-21 Nguyễn Văn Thủy] nhóm báo cáo theo hợp đồng / chính sách (đóng góp)
+      { label: 'Hợp đồng & chính sách', paths: ['/mua-hang/thuc-hien-chinh-sach', '/mua-hang/thuc-hien-hop-dong', '/mua-hang/chinh-sach-theo-hop-dong', '/mua-hang/chi-tiet-chinh-sach', '/mua-hang/doi-chieu-gia-hop-dong'] },
       { label: 'Công nợ phải trả', paths: ['/bao-cao/cong-no-phai-tra', '/bao-cao/chi-tiet-thanh-toan', '/mua-hang/cong-no-hop-dong', '/cong-no/doi-chieu', '/bao-cao/tuoi-no'] },
     ],
   },

@@ -10,14 +10,14 @@
  */
 import { sql } from 'kysely';
 import {
-  AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, invoiceDueDate, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
+  type TraceItem, TAX_RATE, priceFor, AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, invoiceDueDate, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
-  scopeBranches, deliveryBranches } from '@bizcity/mua-hang-domain';
+  scopeBranches, deliveryBranches, contractApplies } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
-import { apBalance, openOf, openOfBrand, pendingOf, type Ctx } from './analysis.js';
+import { apBalance, contractUsage, looseDebt, openOf, soleContract, openOfBrand, pendingOf, type Ctx } from './analysis.js';
 import { refReceipts, spreadOverMany } from './posting.js';
-import { unitsForOrders, unitsOf } from './gia-mua.js';
+import { listSupplierProducts, unitsForOrders, unitsOf } from './gia-mua.js';
 import { noDueDate, type StoredDoc } from './store.js';
 // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
 import { theoMa } from './ma-hien-hanh.js';
@@ -38,8 +38,15 @@ export async function creditOverview(trx: Db, tenantId: string, ctx: Ctx, asOf =
   const partners = [];
   for (const p of limits.filter((x) => x.scope.partnerCode && !x.scope.brandCode)) {
     const code = p.scope.partnerCode!;
-    const s = creditStatus(p, await apBalance(trx, tenantId, code, asOf), pendingOf(ctx.docs, (d) => d.partnerCode === code, asOf), 0)!;
-    partners.push({ policy: p.code, partnerCode: code, ...s });
+    // [2026-11-21 Nguyễn Văn Thủy] hạn mức của hợp đồng tính trên phiếu thuộc hợp đồng; không gắn hợp đồng = hạn mức chung / ngoài hợp đồng (đóng góp)
+    const cc = p.scope.contractCode;
+    const cuaHd = (d: StoredDoc) => d.partnerCode === code && Boolean(d.contractCode);
+    const u = cc ? await contractUsage(trx, tenantId, ctx.docs, cc, asOf)
+      : { current: (await apBalance(trx, tenantId, code, asOf)) - (await openOf(trx, tenantId, ctx.docs.filter((d) => cuaHd(d) && d.status === 'approved' && d.docDate <= asOf).flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean)))
+          - ((await soleContract(trx, tenantId, code, asOf)) ? await looseDebt(trx, tenantId, code, ctx.docs, asOf) : 0),
+          pending: pendingOf(ctx.docs, (d) => d.partnerCode === code && !d.contractCode, asOf) };
+    const s = creditStatus(p, u.current, u.pending, 0)!;
+    partners.push({ policy: p.code, partnerCode: code, contractCode: cc ?? '', ...s });
   }
   const brands = [];
   for (const p of limits.filter((x) => x.scope.brandCode && !x.scope.partnerCode)) {
@@ -67,7 +74,7 @@ export async function creditOverview(trx: Db, tenantId: string, ctx: Ctx, asOf =
   return { asOf, partners, brands, supply };
 }
 
-export interface DueRow { debtItemId: string; partnerCode: string; partnerName: string; branchCode: string; docNo: string; purchaseDocId?: string; docDate: string; seq?: number; dueDate: string; amount: number; paid: number; remaining: number; bucket: number; daysOverdue: number; daysToDue: number }
+export interface DueRow { debtItemId: string; partnerCode: string; partnerName: string; branchCode: string; docNo: string; purchaseDocId?: string; contractCode: string; docDate: string; seq?: number; dueDate: string; amount: number; paid: number; remaining: number; bucket: number; daysOverdue: number; daysToDue: number }
 
 export async function dueList(trx: Db, tenantId: string, ctx: Ctx, f: { partnerCode?: string; asOf?: string } = {}) {
   const asOf = f.asOf ?? today();
@@ -82,7 +89,7 @@ export async function dueList(trx: Db, tenantId: string, ctx: Ctx, f: { partnerC
   for (const i of items) {
     const amount = toNumber(i.amount), paid = toNumber(i.settled_amount);
     const doc = byEvent.get(String(i.event_id));
-    const base = { debtItemId: String(i.id), partnerCode: i.partner_code, partnerName: i.partner_name, branchCode: i.branch_code, docNo: i.doc_no, purchaseDocId: doc?.id, docDate: String(i.doc_date).slice(0, 10) };
+    const base = { debtItemId: String(i.id), partnerCode: i.partner_code, partnerName: i.partner_name, branchCode: i.branch_code, docNo: i.doc_no, purchaseDocId: doc?.id, contractCode: doc?.contractCode ?? '', docDate: String(i.doc_date).slice(0, 10) };
     // Số dư đầu kỳ không khai hạn: như công nợ cố định (cùng cách tính với cảnh báo nợ quá hạn trên phiếu — openDueOf).
     const openingNoDue = !doc && i.doc_type === 'opening' && !/^\d{4}-\d{2}-\d{2}$/.test(i.explicit_due ?? '');
     if (openingNoDue || (doc?.kind === 'receipt' && noDueDate(doc))) {
@@ -214,7 +221,8 @@ export async function rebatePreview(trx: Db, tenantId: string, ctx: Ctx, p: Poli
   // [2026-11-13 Nguyễn Văn Thủy] ký với công ty mẹ, tính trên cả nhóm: cộng phiếu của NCC ký và mọi đơn vị con (đóng góp)
   const partners = p.scope.partnerCode ? (p.rule.family ? await partnerFamily(trx, tenantId, p.scope.partnerCode) : [p.scope.partnerCode]) : null;
   const match = (d: StoredDoc) => d.status === 'approved' && d.docDate >= from && d.docDate <= to && (d.kind === 'receipt' || d.kind === 'return')
-    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!partners || partners.includes(d.partnerCode)) && (!scopeBranches(p.scope).length || scopeBranches(p.scope).includes(d.branchCode));
+    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!partners || partners.includes(d.partnerCode)) && (!scopeBranches(p.scope).length || scopeBranches(p.scope).includes(d.branchCode))
+    && contractApplies(p, d.contractCode); // thưởng của hợp đồng X chỉ tính phiếu thuộc X; thưởng ngoài hợp đồng chỉ tính phiếu không theo hợp đồng
   // Thưởng theo nhãn: chỉ cộng các dòng thuộc nhãn (nhãn của mặt hàng; phiếu cũ chưa ghi nhãn dòng thì theo nhãn phiếu).
   const inBrand = (l: { brandCode?: string }, d: StoredDoc) => !p.scope.brandCode || (l.brandCode ?? d.brandCode) === p.scope.brandCode;
   const byDay: Record<number, number> = {};
@@ -572,4 +580,242 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const drafts = ctx.docs.filter((d) => d.status === 'draft');
   if (drafts.length) items.push({ key: 'drafts', level: 'info', text: 'Phiếu nháp chưa gửi duyệt', count: drafts.length, path: '/mua-hang/tong-hop?trang-thai=draft' });
   return { asOf, byKind, items };
+}
+
+// [2026-11-21 Nguyễn Văn Thủy] TÌNH HÌNH THỰC HIỆN CHÍNH SÁCH MUA HÀNG (MH32): doanh số đủ điều kiện, được hưởng, đã nhận, còn phải nhận — theo NCC / hợp đồng → chính sách → chứng từ (đóng góp)
+export interface PolicyExecDoc { docNo: string; docId: string; docDate: string; branchCode: string; kind: string; base: number; amount: number; note: string }
+export interface PolicyExecRow {
+  policy: string; name: string; kind: string; partnerCode: string; contractCode: string; brandCode: string; validFrom: string; validTo: string;
+  /** Doanh số trước thuế của các phiếu được áp (thưởng: doanh số kỳ tính thưởng). */
+  base: number; entitled: number; received: number; remaining: number;
+  /** Dự kiến: tạm tính theo doanh số hiện tại, chưa xác nhận (thưởng chưa lập phiếu; CKTT chưa thanh toán). */ expected: number;
+  /** Đã xác nhận: số hai bên đã chốt (chiết khấu trên hoá đơn; phiếu thưởng đã lập; CKTT đã trừ khi trả tiền). */ confirmed: number;
+  /** Cách nhận: trừ thẳng trên hoá đơn / trừ khi thanh toán đúng hạn / phiếu thưởng cuối kỳ / hàng tặng. */
+  method: string; status: 'du' | 'con' | 'du-kien' | 'chua-dat'; docs: PolicyExecDoc[]; note: string;
+}
+const DOC_KINDS = ['trade_discount', 'item_discount', 'qty_tier', 'payment_discount', 'promo_gift'];
+const REBATE_KINDS = ['period_rebate', 'target_rebate', 'stage_rebate'];
+/** Các kỳ (YYYY-MM / YYYY-Qn / YYYY) của chính sách thưởng giao với [from, to]. */
+function periodsIn(kind: string, from: string, to: string): string[] {
+  const out = new Set<string>();
+  let y = Number(from.slice(0, 4)), m = Number(from.slice(5, 7));
+  const ey = Number(to.slice(0, 4)), em = Number(to.slice(5, 7));
+  for (let i = 0; i < 240 && (y < ey || (y === ey && m <= em)); i++) {
+    out.add(kind === 'year' ? String(y) : kind === 'quarter' ? `${y}-Q${Math.floor((m - 1) / 3) + 1}` : `${y}-${String(m).padStart(2, '0')}`);
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return [...out];
+}
+
+// [2026-11-21 Nguyễn Văn Thủy] bốn báo cáo hợp đồng dùng bảng tham số chung: lọc chi nhánh (danh sách / cây) + mã kho (đóng góp)
+export interface KyBc { from: string; to: string; partnerCode?: string; contractCode?: string; branchCodes?: string[]; warehouseCodes?: string[] }
+/**
+ * Phạm vi chi nhánh / kho của chứng từ. null = không lọc. Kho của phiếu: ô kho đầu phiếu + kho từng dòng; trống = kho mặc định của chi nhánh.
+ * Phiếu thuộc phạm vi khi chi nhánh được chọn và (không lọc kho hoặc có ít nhất một kho được chọn).
+ */
+export async function docScope(trx: Db, tenantId: string, f: KyBc): Promise<((d: StoredDoc) => boolean) | null> {
+  const br = f.branchCodes?.length ? new Set(f.branchCodes) : null;
+  const wh = f.warehouseCodes?.length ? new Set(f.warehouseCodes) : null;
+  if (!br && !wh) return null;
+  const macDinh = wh ? new Map((await trx.selectFrom('warehouses as w').innerJoin('branches as b', 'b.id', 'w.branch_id').select(['b.code', 'w.code as wh'])
+    .where('w.tenant_id', '=', tenantId).where('w.is_default', '=', true).execute()).map((r) => [r.code, r.wh])) : null;
+  return (d) => {
+    if (br && !br.has(d.branchCode)) return false;
+    if (!wh) return true;
+    const md = macDinh!.get(d.branchCode) ?? '';
+    const ks = [d.warehouseCode ?? '', ...d.lines.map((l) => (l as { warehouseCode?: string }).warehouseCode ?? '')].map((k) => k || md);
+    return ks.some((k) => wh.has(k));
+  };
+}
+
+export async function policyExecution(trx: Db, tenantId: string, ctx: Ctx, f: KyBc): Promise<PolicyExecRow[]> {
+  const inRange = (d: StoredDoc) => d.docDate >= f.from && d.docDate <= f.to;
+  const pols = ctx.policies.filter((p) => (DOC_KINDS.includes(p.kind) || REBATE_KINDS.includes(p.kind))
+    && (!f.partnerCode || p.scope.partnerCode === f.partnerCode) && (f.contractCode === undefined || (p.scope.contractCode ?? '') === f.contractCode)
+    && (!p.validFrom || p.validFrom <= f.to) && (!p.validTo || p.validTo >= f.from));
+  const pham = await docScope(trx, tenantId, f);
+  // Chiết khấu / tặng / CKTT theo phiếu nhập: lọc theo chi nhánh / kho đã chọn. Thưởng cuối kỳ tính trên cả NCC / hợp đồng (không chia chi nhánh).
+  const receipts = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && inRange(d) && (!pham || pham(d)));
+  const calcOf = new Map(receipts.map((d) => [d.id, computeDoc(d, [])]));
+  const rows: PolicyExecRow[] = [];
+  for (const p of pols) {
+    const base0 = { policy: p.code, name: p.name, kind: p.kind, partnerCode: p.scope.partnerCode ?? '', contractCode: p.scope.contractCode ?? '', brandCode: p.scope.brandCode ?? '', validFrom: p.validFrom ?? '', validTo: p.validTo ?? '', note: '' };
+    if (DOC_KINDS.includes(p.kind)) {
+      const docs: PolicyExecDoc[] = [];
+      let received = 0;
+      for (const d of receipts) {
+        const tr = ((d.policyTrace ?? []) as TraceItem[]).filter((t) => t.policy === p.code);
+        if (!tr.length) continue;
+        const c = calcOf.get(d.id)!;
+        let amount = 0, note = '';
+        if (p.kind === 'trade_discount') { amount = tr.reduce((t, x) => t + (x.amount ?? 0), 0) || c.orderDiscount; note = 'trừ trên hoá đơn'; }
+        else if (p.kind === 'item_discount' || p.kind === 'qty_tier') {
+          const skus = new Set(tr.map((x) => x.text.split(':')[0]!.trim()));
+          amount = c.lines.filter((l) => skus.has(l.sku)).reduce((t, l) => t + l.lineDiscount, 0); note = 'trừ trên hoá đơn';
+        } else if (p.kind === 'payment_discount') {
+          amount = (c as { ckttExpected?: number }).ckttExpected ?? tr.reduce((t, x) => t + (x.amount ?? 0), 0);
+          const paid = ctx.docs.filter((x) => x.kind === 'payment' && x.status === 'approved' && (x.refIds ?? []).includes(d.id)).reduce((t, x) => t + (x.ckttAmount ?? 0), 0);
+          received += Math.min(amount, paid); note = paid ? `đã trừ khi thanh toán ${paid.toLocaleString('vi-VN')}` : 'chờ thanh toán đúng hạn';
+        } else if (p.kind === 'promo_gift') {
+          const gifts = c.lines.filter((l) => l.lineType !== 'buy' && (l.program === p.code || !l.program));
+          const price = (sku: string) => { const b = c.lines.find((l) => l.sku === sku && l.lineType === 'buy'); return b && b.qty ? b.beforeTax / b.qty : 0; };
+          amount = Math.round(gifts.reduce((t, l) => t + l.qty * price(l.sku), 0));
+          note = `hàng tặng ${gifts.reduce((t, l) => t + l.qty, 0).toLocaleString('vi-VN')} (theo giá mua)`;
+        }
+        if (p.kind !== 'payment_discount') received += amount;
+        docs.push({ docNo: d.docNo, docId: d.id, docDate: d.docDate, branchCode: d.branchCode, kind: d.kind, base: Math.round(d.totals.beforeTax), amount: Math.round(amount), note });
+      }
+      const entitled = docs.reduce((t, x) => t + x.amount, 0);
+      // Chiết khấu / tặng trên hoá đơn: xác nhận = đã nhận ngay (không còn phải nhận, không cộng trùng vào công nợ). CKTT: đã trừ khi trả tiền = xác nhận + đã nhận;
+      // phần chưa thanh toán còn là dự kiến (chỉ hưởng nếu trả đúng hạn).
+      const nhan = Math.round(received);
+      const expected = p.kind === 'payment_discount' ? Math.max(0, Math.round(entitled - nhan)) : 0;
+      rows.push({ ...base0, base: docs.reduce((t, x) => t + x.base, 0), entitled, expected, confirmed: nhan, received: nhan, remaining: 0,
+        method: p.kind === 'payment_discount' ? 'Trừ khi thanh toán đúng hạn' : p.kind === 'promo_gift' ? 'Hàng tặng kèm phiếu nhập' : 'Trừ thẳng trên hoá đơn',
+        status: !docs.length ? 'chua-dat' : expected > 0.5 ? 'du-kien' : 'du', docs });
+    } else {
+      const docs: PolicyExecDoc[] = [];
+      let base = 0, entitled = 0, received = 0, expected = 0, confirmed = 0;
+      for (const per of periodsIn(String(p.rule.period ?? 'month'), f.from, f.to)) {
+        // Kỳ đã có phiếu thưởng: số NCC chốt trên phiếu là số được hưởng; chưa có thì tạm tính từ phiếu nhập đã duyệt.
+        const phieu = ctx.docs.filter((x) => x.kind === 'rebate' && x.status !== 'cancelled' && x.rebate?.policyCode === p.code && x.rebate.period === per);
+        if (phieu.length) { base += phieu.reduce((t, d) => t + (d.rebate?.base ?? 0), 0); const c = phieu.reduce((t, d) => t + (d.amount ?? 0), 0); entitled += c; confirmed += c; }
+        const pv = phieu.length ? { base: 0, amount: 0 } : await rebatePreview(trx, tenantId, ctx, p, per);
+        base += pv.base; entitled += pv.amount; expected += pv.amount;
+        for (const d of phieu) {
+          if (d.status === 'approved') received += d.amount ?? 0;
+          docs.push({ docNo: d.docNo || '(nháp)', docId: d.id, docDate: d.docDate, branchCode: d.branchCode, kind: d.kind, base: d.rebate?.base ?? 0, amount: d.amount ?? 0, note: `kỳ ${per} · ${d.status === 'approved' ? 'đã hạch toán' : 'chưa duyệt'}` });
+        }
+        if (pv.amount > 0 && !docs.some((x) => x.note.startsWith(`kỳ ${per}`))) docs.push({ docNo: '', docId: '', docDate: '', branchCode: '', kind: 'rebate', base: pv.base, amount: pv.amount, note: `kỳ ${per} · chưa lập phiếu thưởng` });
+      }
+      // Còn phải nhận = phần đã xác nhận (phiếu thưởng) chưa hạch toán; phần dự kiến (chưa lập phiếu) để riêng.
+      const remaining = Math.max(0, Math.round(confirmed - received));
+      rows.push({ ...base0, base: Math.round(base), entitled: Math.round(entitled), expected: Math.round(expected), confirmed: Math.round(confirmed), received: Math.round(received), remaining,
+        method: 'Phiếu thưởng cuối kỳ (giảm công nợ)', status: entitled <= 0 ? 'chua-dat' : remaining > 0.5 ? 'con' : expected > 0.5 ? 'du-kien' : 'du', docs });
+    }
+  }
+  return rows;
+}
+
+// [2026-11-21 Nguyễn Văn Thủy] ĐỐI CHIẾU GIÁ MUA THEO HỢP ĐỒNG (MH34): giá thoả thuận (hợp đồng / giá NCC ngoài hợp đồng) ↔ giá thực tế SAU CK, TRƯỚC VAT —
+// chính thức theo HOÁ ĐƠN NCC (MH22, nối với phiếu nhập qua document_links attachesTo); chưa có hoá đơn thì tạm theo phiếu nhập; quy cùng ĐVT (đóng góp)
+export interface PriceCheckRow {
+  docId: string; docNo: string; docDate: string; branchCode: string; partnerCode: string; contractCode: string; sku: string; name: string; unit: string; qty: number;
+  agreed: number | null; actual: number; diff: number | null; diffPct: number | null; diffAmount: number | null; source: string;
+  /** Giá thực tế lấy từ: hoá đơn NCC (chính thức) / phiếu nhập (tạm, chưa có hoá đơn). */
+  actualFrom: 'hoa-don' | 'phieu-nhap'; invoiceNos: string;
+}
+/** Dòng hoá đơn NCC (không tính hàng tặng) đính vào từng phiếu nhập (document_links attachesTo của sổ chứng từ chung). */
+async function invoiceLinesOfReceipts(trx: Db, tenantId: string, receiptIds: string[]) {
+  const out = new Map<string, { invoiceNo: string; sku: string; unit: string; qty: number; net: number }[]>();
+  if (!receiptIds.length) return out;
+  const rows = (await sql<{ rid: string; no: string; sku: string | null; unit: string | null; qty: string; price: string; disc: string }>`
+    SELECT substr(l.to_ref, length('mua-hang.document:') + 1) AS rid, CASE WHEN i.invoice_series <> '' THEN i.invoice_series || '-' || i.invoice_no ELSE i.invoice_no END AS no,
+           x.sku, x.unit, x.qty::text AS qty, x.price::text AS price, x.discount_amount::text AS disc
+      FROM document_links l
+      JOIN supplier_invoices i ON i.tenant_id = l.tenant_id AND i.id = substr(l.from_ref, length('mua-hang.invoice:') + 1)::bigint AND i.status = 'active'
+      JOIN supplier_invoice_lines x ON x.tenant_id = i.tenant_id AND x.invoice_id = i.id AND NOT x.is_gift
+     WHERE l.tenant_id = ${tenantId} AND l.role = 'attachesTo' AND l.from_ref LIKE 'mua-hang.invoice:%'
+       AND l.to_ref = ANY(${receiptIds.map((r) => `mua-hang.document:${r}`)}::text[])`.execute(trx)).rows;
+  for (const r of rows) {
+    if (!r.sku) continue;
+    const qty = toNumber(r.qty);
+    (out.get(r.rid) ?? out.set(r.rid, []).get(r.rid)!).push({ invoiceNo: r.no, sku: r.sku, unit: r.unit ?? '', qty, net: qty * toNumber(r.price) - toNumber(r.disc) });
+  }
+  return out;
+}
+export async function contractPriceCheck(trx: Db, tenantId: string, ctx: Ctx, f: KyBc): Promise<PriceCheckRow[]> {
+  const docs = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && d.docDate >= f.from && d.docDate <= f.to
+    && (!f.partnerCode || d.partnerCode === f.partnerCode) && (f.contractCode === undefined || (d.contractCode ?? '') === f.contractCode));
+  const pham = await docScope(trx, tenantId, f);
+  if (pham) docs.splice(0, docs.length, ...docs.filter(pham));
+  if (!docs.length) return [];
+  const skus = [...new Set(docs.flatMap((d) => d.lines.filter((l) => l.lineType === 'buy' && l.sku).map((l) => l.sku)))];
+  const prices = await listSupplierProducts(trx, tenantId, { skus, withGeneral: true, all: true });
+  const units = await unitsOf(trx, tenantId, skus);
+  const invLines = await invoiceLinesOfReceipts(trx, tenantId, docs.map((d) => d.id));
+  const out: PriceCheckRow[] = [];
+  for (const d of docs) {
+    const calc = computeDoc(d, []);
+    d.lines.forEach((l, idx) => {
+      if (l.lineType !== 'buy' || !l.sku || !(l.qty > 0)) return;
+      const rate = (TAX_RATE as Record<string, number>)[l.taxCode] ?? 0;
+      const chuaThue = (v: number, gom: boolean) => (gom ? v / (1 + rate / 100) : v);
+      const us = units[l.sku] ?? [];
+      const ratio = (u: string) => us.find((x) => x.unit.trim().toLowerCase() === u.trim().toLowerCase())?.ratio;
+      // Giá thực tế sau CK, trước VAT, theo ĐVT của dòng: ưu tiên hoá đơn NCC đính vào phiếu (quy ĐVT), không có thì phiếu nhập (tạm).
+      const hdl = (invLines.get(d.id) ?? []).filter((x) => x.sku === l.sku);
+      const rl = ratio(l.unit);
+      const baseQty = hdl.reduce((t, x) => t + x.qty * (ratio(x.unit || l.unit) ?? NaN), 0);
+      let actual: number; let actualFrom: PriceCheckRow['actualFrom'] = 'phieu-nhap';
+      if (hdl.length && rl && baseQty > 0 && Number.isFinite(baseQty)) { actual = (hdl.reduce((t, x) => t + x.net, 0) / baseQty) * rl; actualFrom = 'hoa-don'; }
+      else { const c = calc.lines[idx]; actual = c && l.qty ? c.beforeTax / l.qty : chuaThue(l.price, d.priceIncludesVat); }
+      actual = Math.round(actual * 100) / 100;
+      const hit = priceFor(prices, { date: d.docDate, partnerCode: d.partnerCode, sku: l.sku, unit: l.unit, contractCode: d.contractCode || undefined }, us);
+      const agreed = hit ? Math.round(chuaThue(hit.price, Boolean(hit.row.priceIncludesVat)) * 100) / 100 : null;
+      const diff = agreed !== null ? Math.round((actual - agreed) * 100) / 100 : null;
+      out.push({
+        docId: d.id, docNo: d.docNo, docDate: d.docDate, branchCode: d.branchCode, partnerCode: d.partnerCode, contractCode: d.contractCode ?? '', sku: l.sku, name: l.name, unit: l.unit, qty: l.qty,
+        agreed, actual, diff, diffPct: agreed ? Math.round((diff! / agreed) * 10000) / 100 : null, diffAmount: diff !== null ? Math.round(diff * l.qty) : null,
+        source: !hit ? 'chưa khai giá thoả thuận' : hit.row.contractCode ? `giá hợp đồng ${hit.row.contractCode}` : hit.row.partnerCode ? 'giá NCC (ngoài hợp đồng)' : 'giá chung',
+        actualFrom, invoiceNos: [...new Set(hdl.map((x) => x.invoiceNo))].join(', '),
+      });
+    });
+  }
+  return out;
+}
+
+// [2026-11-21 Nguyễn Văn Thủy] TÌNH HÌNH THỰC HIỆN HỢP ĐỒNG (MH35): đã đặt (đơn) · đã nhận (phiếu nhập − trả) · đã nhận hoá đơn (hoá đơn NCC đính vào phiếu, mỗi hoá đơn
+// tính một lần) · đã thanh toán (phiếu trả / ứng tiền) · còn phải trả (sổ công nợ) — mỗi con số một nguồn chứng từ, không cộng trùng (đóng góp)
+export interface ContractExecRow { code: string; name: string; partnerCode: string; startDate: string; endDate: string; status: string; value: number | null;
+  ordered: number; received: number; invoiced: number; paid: number; debt: number; progress: number | null; remainingValue: number | null; receipts: number; invoices: number }
+/** Hoá đơn NCC (id, tổng tiền) đính vào từng phiếu nhập. */
+async function invoiceTotalsOfReceipts(trx: Db, tenantId: string, receiptIds: string[]) {
+  const out = new Map<string, { id: string; total: number }[]>();
+  if (!receiptIds.length) return out;
+  const rows = (await sql<{ rid: string; id: string; total: string }>`
+    SELECT substr(l.to_ref, length('mua-hang.document:') + 1) AS rid, i.id::text AS id, i.total::text AS total
+      FROM document_links l JOIN supplier_invoices i ON i.tenant_id = l.tenant_id AND i.id = substr(l.from_ref, length('mua-hang.invoice:') + 1)::bigint AND i.status = 'active'
+     WHERE l.tenant_id = ${tenantId} AND l.role = 'attachesTo' AND l.from_ref LIKE 'mua-hang.invoice:%' AND l.to_ref = ANY(${receiptIds.map((r) => `mua-hang.document:${r}`)}::text[])`.execute(trx)).rows;
+  for (const r of rows) (out.get(r.rid) ?? out.set(r.rid, []).get(r.rid)!).push({ id: r.id, total: toNumber(r.total) });
+  return out;
+}
+export async function contractExecution(trx: Db, tenantId: string, ctx: Ctx, f: KyBc): Promise<ContractExecRow[]> {
+  const hds = (await sql<{ code: string; name: string; partner: string; start: string | null; end: string | null; status: string | null; value: string | null }>`
+    SELECT code, name, extra->>'partnerCode' AS partner, NULLIF(extra->>'startDate', '') AS start, NULLIF(extra->>'endDate', '') AS "end", extra->>'status' AS status, NULLIF(extra->>'value', '') AS value
+      FROM dimensions WHERE tenant_id = ${tenantId} AND kind = 'contract' AND extra->>'type' = 'goods_supplier'`.execute(trx)).rows
+    .filter((c) => (!f.partnerCode || c.partner === f.partnerCode) && (!f.contractCode || c.code === f.contractCode));
+  const pham = await docScope(trx, tenantId, f);
+  const inK = (d: StoredDoc) => d.status === 'approved' && d.docDate >= f.from && d.docDate <= f.to && (!pham || pham(d));
+  // Lọc chi nhánh / kho: còn phải trả = nợ còn mở của chính các phiếu thuộc phạm vi (số dư đầu kỳ / nợ không gắn phiếu không chia được theo chi nhánh).
+  const noPham = async (pick: (d: StoredDoc) => boolean) => openOf(trx, tenantId, ctx.docs.filter((d) => pick(d) && d.status === 'approved' && d.docDate <= f.to && pham!(d)).flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean));
+  const linked = await invoiceTotalsOfReceipts(trx, tenantId, ctx.docs.filter((d) => d.kind === 'receipt' && inK(d)).map((d) => d.id));
+  const tinh = (pick: (d: StoredDoc) => boolean, debt: number) => {
+    const ds = ctx.docs.filter((d) => pick(d) && inK(d));
+    const t = (k: string[]) => ds.filter((d) => k.includes(d.kind)).reduce((s, d) => s + d.totals.total, 0);
+    const rec = ds.filter((d) => d.kind === 'receipt');
+    const inv = new Map<string, number>();
+    for (const r of rec) for (const x of linked.get(r.id) ?? []) inv.set(x.id, x.total);
+    return { ordered: Math.round(t(['order'])), received: Math.round(t(['receipt']) - t(['return'])), invoiced: Math.round([...inv.values()].reduce((a, b) => a + b, 0)),
+      paid: Math.round(ds.filter((d) => d.kind === 'payment' || d.kind === 'prepayment').reduce((s, d) => s + (d.amount ?? 0) + (d.ckttAmount ?? 0), 0)), debt: Math.round(debt), receipts: rec.length, invoices: inv.size };
+  };
+  const out: ContractExecRow[] = [];
+  if (f.contractCode !== '') for (const c of hds) {
+    const v = c.value ? Number(c.value) : null;
+    const x = tinh((d) => d.contractCode === c.code, pham ? await noPham((d) => d.contractCode === c.code) : (await contractUsage(trx, tenantId, ctx.docs, c.code, f.to)).current);
+    if (pham && !x.ordered && !x.received && !x.paid && !x.debt) continue;
+    out.push({ code: c.code, name: c.name, partnerCode: c.partner, startDate: c.start ?? '', endDate: c.end ?? '', status: c.status ?? 'active', value: v, ...x,
+      progress: v ? Math.round((x.received / v) * 1000) / 10 : null, remainingValue: v !== null ? v - x.received : null });
+  }
+  if (!f.contractCode) {
+    const nccs = [...new Set(ctx.docs.filter((d) => !d.contractCode && inK(d) && (!f.partnerCode || d.partnerCode === f.partnerCode) && ['order', 'receipt', 'return', 'payment', 'prepayment'].includes(d.kind)).map((d) => d.partnerCode))];
+    for (const ncc of nccs) {
+      if (pham) { out.push({ code: '', name: 'Không theo hợp đồng', partnerCode: ncc, startDate: '', endDate: '', status: '', value: null, ...tinh((d) => !d.contractCode && d.partnerCode === ncc, await noPham((d) => !d.contractCode && d.partnerCode === ncc)), progress: null, remainingValue: null }); continue; }
+      const hdOpen = await openOf(trx, tenantId, ctx.docs.filter((d) => d.partnerCode === ncc && d.contractCode && d.status === 'approved' && d.docDate <= f.to).flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean));
+      const loose = (await soleContract(trx, tenantId, ncc, f.to)) ? await looseDebt(trx, tenantId, ncc, ctx.docs, f.to) : 0;
+      const x = tinh((d) => !d.contractCode && d.partnerCode === ncc, (await apBalance(trx, tenantId, ncc, f.to)) - hdOpen - loose);
+      out.push({ code: '', name: 'Không theo hợp đồng', partnerCode: ncc, startDate: '', endDate: '', status: '', value: null, ...x, progress: null, remainingValue: null });
+    }
+  }
+  return out;
 }

@@ -9825,7 +9825,7 @@
     {
       "id": "S038-10",
       "phase": "PHASE-038",
-      "title": "Luật R-OBS-10 (bản cài có logs/ cố định, có trần) + check SC-OBS-3 (compose khai logging: và mount LOGHOSTDIR) + CHANGELOG \"Nâng cấp cần làm\"",
+      "title": "Thi hành R-LOG-9 (bản cài có logs/ cố định, có trần; luật đã khai ở RULE-LOG) + check SC-OBS-3 (compose khai logging: và mount LOGHOSTDIR) + CHANGELOG \"Nâng cấ…",
       "priority": null,
       "status": "todo",
       "column": "todo",

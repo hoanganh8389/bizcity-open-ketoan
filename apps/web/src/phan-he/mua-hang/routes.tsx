@@ -31,6 +31,7 @@ import { ChuyenShopPage } from './ton-max/ChuyenShopPage';
 import { HoaDonNccPage } from './hoa-don/HoaDonNccPage';
 import { HopDongChiTietPage, HopDongMuaPage } from './hop-dong/HopDongPage';
 import { CongNoHopDongPage } from './hop-dong/CongNoHopDongPage';
+import { ChinhSachTheoHopDongPage, DoiChieuGiaHopDongPage, ThucHienChinhSachPage, ThucHienHopDongPage } from './hop-dong/BaoCaoHopDong';
 
 export const muaHangRoutes = (
   <>
@@ -41,6 +42,10 @@ export const muaHangRoutes = (
     <Route path="mua-hang/hop-dong" element={<HopDongMuaPage />} />
     <Route path="mua-hang/hop-dong/chi-tiet" element={<HopDongChiTietPage />} />
     <Route path="mua-hang/cong-no-hop-dong" element={<CongNoHopDongPage />} />
+    <Route path="mua-hang/thuc-hien-chinh-sach" element={<ThucHienChinhSachPage />} />
+    <Route path="mua-hang/chinh-sach-theo-hop-dong" element={<ChinhSachTheoHopDongPage />} />
+    <Route path="mua-hang/doi-chieu-gia-hop-dong" element={<DoiChieuGiaHopDongPage />} />
+    <Route path="mua-hang/thuc-hien-hop-dong" element={<ThucHienHopDongPage />} />
     <Route path="mua-hang/dat-hang" element={<DatHangPage />} />
     <Route path="mua-hang/ton-max" element={<TonMaxPage />} />
     <Route path="mua-hang/dang-ky-max" element={<DangKyMaxPage />} />

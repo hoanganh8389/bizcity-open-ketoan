@@ -179,3 +179,16 @@ Bấm đúp một dòng để sửa; **+ Thêm chính sách** để tạo mới.
 ## Xem từng dòng ưu đãi
 
 Muốn trải mỗi chính sách ra từng dòng ưu đãi (từng mã hàng, bậc, giai đoạn, chi nhánh) để thống kê, xuất Excel: dùng **Báo cáo chi tiết chính sách mua hàng (MH14)** — Báo cáo mua hàng → Chi tiết chính sách mua hàng, hoặc nút *Xem chi tiết từng dòng (MH14)* trên màn này.
+
+## Điều kiện kích hoạt (không bắt buộc)
+Mỗi chính sách chiết khấu, bậc số lượng, CKTT, mua X tặng Y có thể khai thêm **điều kiện tiên quyết**. Phải đạt hết thì đơn đặt / phiếu nhập mới áp chương trình:
+- **Doanh số mua** (trước thuế) trong tháng / quý / năm / thời hạn hợp đồng đạt tối thiểu X. Tích *tính cả phiếu đang lập* thì cộng cả phiếu này.
+- **Giá trị đơn / phiếu** (trước thuế, trước chiết khấu) tối thiểu.
+- **Không có nợ quá hạn** tại thời điểm lên đơn / phiếu.
+- **Tổng dư nợ sau phiếu không vượt hạn mức công nợ.**
+
+Phạm vi tính đi theo hợp đồng:
+- chính sách trong hợp đồng X: chỉ tính các phiếu thuộc X;
+- chính sách ở thẻ *Không theo hợp đồng*: chỉ tính các phiếu không theo hợp đồng.
+
+Chưa đạt thì chương trình không áp. Trợ lý (khung *Khuyến mại & chiết khấu*) ghi "Chưa đủ điều kiện kích hoạt" kèm số đang có / cần / còn thiếu; Kiểm tra cũng ghi một dòng.

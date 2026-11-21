@@ -12,3 +12,4 @@ export * from './hoa-don-xml.js';
 export * from './ap-rieng-chong.js'; // [2026-11-20 khanhtd] TRA-CUU — dò chương trình áp riêng chồng nhau (đóng góp)
 export * from './don-hoa-don.js'; // [2026-11-20 khanhtd] MUA-HANG — đơn đặt theo dõi hoá đơn (đóng góp)
 export * from './nhieu-hoa-don.js'; // [2026-11-21 Nguyễn Văn Thủy] phiếu nhập nhiều hoá đơn (đóng góp)
+export * from './kich-hoat.js';

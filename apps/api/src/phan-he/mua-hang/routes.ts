@@ -22,7 +22,7 @@ import { idParamSchema, ok } from '../../core/http.js';
 import { loadCtx, loadSettings, priceHistory, resolveAccounts, saveSettings } from './analysis.js';
 import { checkSeedPassword, clearDemo, ensureDemoWarehouses, seedDemo } from './demo.js';
 import { readLog, logEvents } from './log.js';
-import { brandBranchUsage, costAllocation, creditOverview, dueList, giftLedger, lotStock, orderReconcileReport, purchaseSummary, purchaseTodo, realCost, rebateOverview, rebatePreview } from './reports.js';
+import { brandBranchUsage, costAllocation, creditOverview, dueList, giftLedger, lotStock, orderReconcileReport, purchaseSummary, purchaseTodo, realCost, rebateOverview, rebatePreview, contractExecution, contractPriceCheck, policyExecution } from './reports.js';
 import { ATTACHMENT_KINDS, addAttachment, deleteAttachment, listAttachments, readAttachment, supplierBrandList, supplierList, supplierProfile } from './ncc.js';
 import { purchaseSchema } from './csdl.js';
 import { deleteSupplierProduct, listSupplierProducts, productCost, saveSupplierProducts, supplierProductSchema, unitsOf } from './gia-mua.js';
@@ -47,7 +47,7 @@ const policyVersionInput = z.object({ effectiveFrom: day.nullish(), reason: z.st
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
 const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(db, tenantId), { full: true });
-const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
+const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false), mode: z.enum(['mixed', 'contract', 'none']).optional() }).optional();
 
 // [2026-11-03 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 (SC-ACT-1): chủ của tệp đính kèm — dùng ở GET và action
 const attachmentOwner = z.object({ ownerType: z.enum(['partner', 'document', 'policy', 'invoice', 'contract']), ownerId: z.string().min(1) });
@@ -106,6 +106,15 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   // ---------------- Báo cáo
   r.get('/api/v1/purchase/credit', { preHandler: requirePermission(quyenThaoTac('mua-hang.han-muc', 'xem')), schema: { tags, summary: 'Hạn mức NCC / nhãn theo chi nhánh, chỉ tiêu cung ứng', querystring: z.object({ asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await creditOverview(db, a.tenantId, await ctxOf(a.tenantId), req.query.asOf)); } });
+  // [2026-11-21 Nguyễn Văn Thủy] báo cáo chính sách / giá theo hợp đồng (MH32, MH34) (đóng góp)
+  const dsMa = z.string().optional().transform((v) => (v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined));
+  const kyBc = z.object({ from: day, to: day, partnerCode: z.string().optional(), contractCode: z.string().optional(), branchCodes: dsMa, warehouseCodes: dsMa });
+  r.get('/api/v1/purchase/policy-execution', { preHandler: requirePermission(quyenThaoTac('mua-hang.thuc-hien-chinh-sach', 'xem')), schema: { tags, summary: 'Tình hình thực hiện chính sách mua hàng: doanh số đủ điều kiện, được hưởng, đã nhận, còn phải nhận (theo NCC / hợp đồng → chính sách → chứng từ). contractCode rỗng = ngoài hợp đồng', querystring: kyBc },
+    handler: async (req) => { const a = authOf(req); return ok(await policyExecution(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
+  r.get('/api/v1/purchase/contract-prices', { preHandler: requirePermission(quyenThaoTac('mua-hang.doi-chieu-gia-hop-dong', 'xem')), schema: { tags, summary: 'Đối chiếu giá mua theo hợp đồng: giá thoả thuận ↔ giá trên phiếu nhập đã duyệt (chưa thuế), chênh lệch. contractCode rỗng = ngoài hợp đồng', querystring: kyBc },
+    handler: async (req) => { const a = authOf(req); return ok(await contractPriceCheck(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
+  r.get('/api/v1/purchase/contract-execution', { preHandler: requirePermission(quyenThaoTac('mua-hang.thuc-hien-hop-dong', 'xem')), schema: { tags, summary: 'Tình hình thực hiện hợp đồng mua: đã đặt (đơn) · đã nhận (phiếu nhập − trả) · đã nhận hoá đơn (hoá đơn NCC đính vào phiếu) · đã thanh toán · còn phải trả (sổ công nợ); dòng không theo hợp đồng theo NCC', querystring: kyBc },
+    handler: async (req) => { const a = authOf(req); return ok(await contractExecution(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/due', { preHandler: read, schema: { tags, summary: 'Khoản phải trả NCC đang mở, từng đợt, tuổi nợ', querystring: z.object({ partnerCode: z.string().optional(), asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await dueList(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/price-history/:sku', { preHandler: read, schema: { tags, summary: 'Các lần nhập gần nhất của một mã (đơn giá thực tế sau CK, mọi nguồn nhập)', params: z.object({ sku: z.string().min(1) }), querystring: z.object({ asOf: day.optional(), limit: z.coerce.number().int().min(1).max(50).default(10) }) },
@@ -174,7 +183,7 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
   // @bizcity-route: công cụ dữ liệu tình huống (cần mật khẩu) — dựng / xoá từng tình huống bằng service ghi sổ, mỗi tình huống một giao dịch, cố ý bỏ qua lỗi từng phần
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },
-    handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset })); } });
+    handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset, mode: req.body?.mode })); } });
   // @bizcity-route: công cụ dữ liệu tình huống (cần mật khẩu) — dựng / xoá từng tình huống bằng service ghi sổ, mỗi tình huống một giao dịch, cố ý bỏ qua lỗi từng phần
   r.post('/api/v1/purchase/demo/warehouses', { preHandler: settings, schema: { tags, summary: 'Thêm kho mặc định cho chi nhánh mẫu chưa có kho (CN-NA, CN-ND, CN-PT, CN-HCM) — không sửa phiếu; cần mật khẩu', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await ensureDemoWarehouses(authOf(req))); } });

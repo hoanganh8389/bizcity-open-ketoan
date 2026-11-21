@@ -12,7 +12,8 @@ import { writeTenantSection } from '@bizcity/platform/core/settings';
 import { sql } from 'kysely';
 import {
   ACC, brandMix, brandShare, checkDoc, codeSwaps, computeDoc, creditStatus, docBrand, fefoCheck, findPolicy, orderProgress, postingFor, ratioIn, receiptsOfOrder, scheduleStatus, type OrderLineProgress,
-  type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product, deliveryBranches, invoicesOf, invoiceQtyBySku } from '@bizcity/mua-hang-domain';
+  type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product, deliveryBranches, invoicesOf, invoiceQtyBySku,
+  TAX_RATE, activationOf, activationResult, activationText, contractApplies, periodRange, scopeBranches } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { FREEZE_KINDS, FREEZE_VERSION, freezeOf, listPolicies, noDueDate, receiptsWithSku, toDoc, type StoredDoc } from './store.js';
 import { listSupplierProducts, unitsOf } from './gia-mua.js';
@@ -126,6 +127,35 @@ export async function openOfBrand(trx: Db, tenantId: string, docs: StoredDoc[], 
   return Math.round(ds.reduce((s, x) => s + evKeys(x.d).reduce((a, e) => a + (byEv.get(e) ?? 0), 0) * x.share, 0));
 }
 
+// [2026-11-21 Nguyễn Văn Thủy] hạn mức công nợ theo hợp đồng: nợ của các phiếu thuộc hợp đồng (docs/nghiep-vu/28) (đóng góp)
+/** Hạn mức của hợp đồng đang bị chiếm: nợ còn mở của phiếu đã duyệt thuộc hợp đồng + đơn / phiếu đang chờ thuộc hợp đồng. */
+export async function contractUsage(trx: Db, tenantId: string, docs: StoredDoc[], contractCode: string, asOf: string, self?: { id: string; refIds?: string[] }) {
+  const of = (d: StoredDoc) => (d.contractCode ?? '') === contractCode;
+  const current = await openOf(trx, tenantId, docs.filter((d) => of(d) && d.status === 'approved' && d.id !== self?.id && d.docDate <= asOf).flatMap(evKeys));
+  // Nợ không thuộc phiếu mua nào (số dư đầu kỳ, chứng từ hệ thống khác) của NCC có ĐÚNG MỘT hợp đồng đang hiệu lực → thuộc hợp đồng đó.
+  const ncc = await contractPartner(trx, tenantId, contractCode);
+  const extra = ncc && (await soleContract(trx, tenantId, ncc, asOf)) === contractCode ? await looseDebt(trx, tenantId, ncc, docs, asOf, self) : 0;
+  return { current: Math.round(current + extra), pending: pendingOf(docs, of, asOf, self) };
+}
+
+/** NCC của hợp đồng mua. */
+async function contractPartner(trx: Db, tenantId: string, code: string): Promise<string | null> {
+  const r = await sql<{ p: string | null }>`SELECT extra->>'partnerCode' AS p FROM dimensions WHERE tenant_id = ${tenantId} AND kind = 'contract' AND code = ${code}`.execute(trx);
+  return r.rows[0]?.p ?? null;
+}
+/** Hợp đồng mua DUY NHẤT đang hiệu lực của NCC ở ngày xét (nhiều / không có → null). */
+export async function soleContract(trx: Db, tenantId: string, partnerCode: string, asOf: string): Promise<string | null> {
+  const r = await sql<{ code: string }>`SELECT code FROM dimensions WHERE tenant_id = ${tenantId} AND kind = 'contract' AND extra->>'partnerCode' = ${partnerCode}
+    AND COALESCE(extra->>'status', 'active') = 'active' AND COALESCE(NULLIF(extra->>'startDate', ''), '0000-01-01') <= ${asOf} AND COALESCE(NULLIF(extra->>'endDate', ''), '9999-12-31') >= ${asOf}`.execute(trx);
+  return r.rows.length === 1 ? r.rows[0]!.code : null;
+}
+/** Nợ 331 của NCC không thuộc phiếu mua nào của phân hệ (số dư đầu kỳ, chứng từ từ hệ thống khác). */
+export async function looseDebt(trx: Db, tenantId: string, partnerCode: string, docs: StoredDoc[], asOf: string, self?: { id: string }): Promise<number> {
+  const all = await apBalance(trx, tenantId, partnerCode, asOf, self ? docs.filter((d) => d.id === self.id).flatMap(evKeys) : []);
+  const ofDocs = await openOf(trx, tenantId, docs.filter((d) => d.partnerCode === partnerCode && d.status === 'approved' && d.id !== self?.id && d.docDate <= asOf).flatMap(evKeys));
+  return Math.round(all - ofDocs);
+}
+
 /** Phần chưa trả của các khoản công nợ (ghi Có) sinh từ các chứng từ kế toán cho trước. */
 export async function openOf(trx: Db, tenantId: string, eventIds: string[]): Promise<number> {
   if (!eventIds.length) return 0;
@@ -184,7 +214,9 @@ export async function prepaymentFor(trx: Db, tenantId: string, doc: PDoc, docs: 
 
 export interface Analysis { prices: SupplierProduct[]; units: Record<string, ProductUnit[]>; calc: DocCalc; checks: Check[]; credit: CreditStatus[]; entries: Entry[]; blocking: Check[]; prepayment: number; refOrder?: StoredDoc; priceHistory: Record<string, (PriceRow & { discountPct?: number })[]>; accounts: Accounts; priceWarnPct: number;
   /** [2026-11-21 Nguyễn Văn Thủy] phiếu nhập: SL theo các hoá đơn (MH22) từng mã, ĐVT nhỏ nhất, cộng dồn; hoá đơn chưa đối soát được (đóng góp) */
-  invoiceQty?: { bySku: Record<string, number>; invoices: string[]; missing: string[]; shared: string[] } }
+  invoiceQty?: { bySku: Record<string, number>; invoices: string[]; missing: string[]; shared: string[] };
+  /** [2026-11-21 Nguyễn Văn Thủy] chính sách chưa đạt điều kiện kích hoạt — không áp trên phiếu này (giao diện tính lại bỏ các mã này) (đóng góp) */
+  blockedPolicies?: { code: string; name: string; reasons: string[]; wouldApply?: boolean }[] }
 
 export interface Ctx { settings: PurchaseSettings; accounts: Accounts; policies: Policy[]; docs: StoredDoc[] }
 /** opts.full: mọi loại chính sách (báo cáo, hồ sơ NCC, đề xuất đặt hàng); mặc định bỏ loại nhân theo mã hàng (tính phiếu). */
@@ -221,10 +253,48 @@ export async function freezeApproved(trx: Db): Promise<{ frozen: number; skipped
 
 const GOODS = ['order', 'receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
 
+// [2026-11-21 Nguyễn Văn Thủy] ĐIỀU KIỆN KÍCH HOẠT (docs/nghiep-vu/29): chính sách khai rule.activation chỉ áp khi phiếu đạt điều kiện (đóng góp)
+/**
+ * Xét điều kiện kích hoạt của mọi chính sách có khai điều kiện và đang áp được cho phiếu (NCC, hợp đồng xuyên suốt, chi nhánh, ngày).
+ * Phạm vi số liệu theo chính sách: của hợp đồng X → phiếu thuộc X; ngoài hợp đồng → phiếu không theo hợp đồng; có nhãn → phần của nhãn.
+ * Doanh số = phiếu nhập đã duyệt trừ phiếu trả hàng, trước thuế, trong kỳ chứa ngày phiếu (thời hạn hợp đồng: từ đầu đến ngày phiếu).
+ */
+export async function activationGate(trx: Db, tenantId: string, doc: PDoc, docs: StoredDoc[], policies: Policy[], credit: CreditStatus[], docValue: number) {
+  const blocked: { code: string; name: string; reasons: string[] }[] = [];
+  const passed: { code: string; name: string; met: string[] }[] = [];
+  const hd = doc.contractCode || undefined;
+  let overdueRows: { docNo: string; remaining: number }[] | null = null;
+  for (const p of policies) {
+    const a = activationOf(p);
+    if (!a || !p.isActive || (p.validFrom && doc.docDate < p.validFrom) || (p.validTo && doc.docDate > p.validTo) || !contractApplies(p, hd)) continue;
+    const pool = p.scope.partnerCode ? [p.scope.partnerCode, ...(p.scope.withChildren ? p.familyCodes ?? [] : [])] : null;
+    if (pool && !pool.includes(doc.partnerCode)) continue;
+    if (scopeBranches(p.scope).length && !scopeBranches(p.scope).includes(doc.branchCode)) continue;
+    const inScope = (d: { partnerCode: string; contractCode?: string; branchCode: string }) => (!pool || pool.includes(d.partnerCode)) && contractApplies(p, d.contractCode) && (!scopeBranches(p.scope).length || scopeBranches(p.scope).includes(d.branchCode));
+    let purchased: number | undefined, periodText: string | undefined;
+    if (a.minPurchase) {
+      const [from, to, txt] = a.minPurchase.period === 'contract' ? [p.validFrom ?? '0000-01-01', doc.docDate, hd ? `hợp đồng ${hd}` : 'từ ngày áp chính sách'] : periodRange(a.minPurchase.period, doc.docDate);
+      periodText = txt;
+      purchased = Math.round(docs.filter((d) => d.status === 'approved' && d.id !== doc.id && (d.kind === 'receipt' || d.kind === 'return') && d.docDate >= from && d.docDate <= to && inScope(d))
+        .reduce((t, d) => t + (d.kind === 'return' ? -1 : 1) * d.totals.beforeTax * (p.scope.brandCode ? brandShare(d, p.scope.brandCode) : 1), 0));
+    }
+    let overdue: number | undefined;
+    if (a.noOverdue) {
+      overdueRows ??= await overdueOf(trx, tenantId, doc.partnerCode, docs, doc.docDate);
+      const byNo = new Map(docs.map((d) => [d.docNo, d]));
+      overdue = overdueRows.filter((r) => { const d = byNo.get(r.docNo); return contractApplies(p, d?.contractCode); }).reduce((t, r) => t + r.remaining, 0);
+    }
+    const creditExceeded = a.withinCreditLimit ? credit.filter((c) => !c.scope.startsWith('Nhãn ') && !c.scope.startsWith('Chi nhánh')).reduce((t, c) => t + c.exceeded, 0) : undefined;
+    const r = activationResult(a, { purchased, docValue, overdue, creditExceeded, periodText });
+    if (r.ok) passed.push({ code: p.code, name: p.name, met: r.met }); else blocked.push({ code: p.code, name: p.name, reasons: r.reasons });
+  }
+  return { blocked, passed };
+}
+
 export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): Promise<Analysis> {
   const { policies, docs, settings, accounts } = ctx;
   // ĐVT của các mã trên phiếu: bảng chiết khấu theo mã ghi ĐVT khác ĐVT phiếu (vd giảm / Thùng, phiếu theo Lon) quy đổi theo tỉ lệ.
-  const calc = computeDoc(doc, policies, { holidays: settings.holidays, units: await unitsOf(trx, tenantId, doc.lines.map((l) => l.sku).filter(Boolean)) });
+  let calc = computeDoc(doc, policies, { holidays: settings.holidays, units: await unitsOf(trx, tenantId, doc.lines.map((l) => l.sku).filter(Boolean)) });
   const self = docs.find((d) => d.id === doc.id);
   const selfEvents = self ? evKeys(self) : [];
   const credit: CreditStatus[] = [];
@@ -232,15 +302,32 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   if (affectsDebt && doc.partnerCode) {
     // Hạn mức theo NCC: chỉ chính sách đang bật VÀ còn hiệu lực ở ngày phiếu (từ / đến), như hạn mức theo nhãn bên dưới.
     // [2026-11-13 Nguyễn Văn Thủy] hạn mức khai ở đơn vị mẹ "áp cho cả đơn vị con": cả nhóm dùng chung một hạn mức (đóng góp)
-    let pp = findPolicy(policies.filter((p) => p.scope.partnerCode && !p.scope.brandCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode });
-    const pool = pp && pp.scope.partnerCode !== doc.partnerCode ? [pp.scope.partnerCode!, ...(pp.familyCodes ?? [])] : [doc.partnerCode];
-    const partner = await trx.selectFrom('partners').select(['credit_limit', 'name']).where('tenant_id', '=', tenantId).where('code', '=', doc.partnerCode).executeTakeFirst();
-    if (!pp) {
-      // Không khai chính sách: dùng hạn mức ở danh mục đối tượng (DM13) nếu có.
-      if (partner?.credit_limit && toNumber(partner.credit_limit) > 0) pp = { id: 'dm13', code: 'DM13', kind: 'credit_limit', name: 'Hạn mức ở danh mục đối tượng', scope: { partnerCode: doc.partnerCode }, isActive: true, rule: { limit: toNumber(partner.credit_limit), warnPct: 90 } };
+    // [2026-11-21 Nguyễn Văn Thủy] hợp đồng xuyên suốt: phiếu theo hợp đồng X chỉ kiểm hạn mức của X (nợ các phiếu thuộc X); phiếu không theo
+    // hợp đồng chỉ kiểm hạn mức "Không theo hợp đồng" của NCC (nợ NCC trừ phần thuộc các hợp đồng) (docs/nghiep-vu/28) (đóng góp)
+    let pp = findPolicy(policies.filter((p) => p.scope.partnerCode && !p.scope.brandCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode, contractCode: doc.contractCode || undefined });
+    if (doc.contractCode) {
+      if (pp) {
+        const u = await contractUsage(trx, tenantId, docs, doc.contractCode, doc.docDate, doc);
+        const cs = creditStatus(pp, u.current, u.pending, calc.payable);
+        if (cs) credit.push({ ...cs, scope: `Hợp đồng ${doc.contractCode}` });
+      }
+    } else {
+      const pool = pp && pp.scope.partnerCode !== doc.partnerCode ? [pp.scope.partnerCode!, ...(pp.familyCodes ?? [])] : [doc.partnerCode];
+      const partner = await trx.selectFrom('partners').select(['credit_limit', 'name']).where('tenant_id', '=', tenantId).where('code', '=', doc.partnerCode).executeTakeFirst();
+      if (!pp) {
+        // Không khai chính sách: dùng hạn mức ở danh mục đối tượng (DM13) nếu có.
+        if (partner?.credit_limit && toNumber(partner.credit_limit) > 0) pp = { id: 'dm13', code: 'DM13', kind: 'credit_limit', name: 'Hạn mức ở danh mục đối tượng', scope: { partnerCode: doc.partnerCode }, isActive: true, rule: { limit: toNumber(partner.credit_limit), warnPct: 90 } };
+      }
+      if (pp) {
+        const ngoai = (d: StoredDoc) => pool.includes(d.partnerCode) && !d.contractCode;
+        const cuaHd = await openOf(trx, tenantId, docs.filter((d) => pool.includes(d.partnerCode) && d.contractCode && d.status === 'approved' && d.id !== doc.id && d.docDate <= doc.docDate).flatMap(evKeys));
+        // Nợ không thuộc phiếu nào của NCC có đúng một hợp đồng đã tính vào hợp đồng đó — không tính lại ở ngoài hợp đồng.
+        let loose = 0;
+        for (const pc of pool) if (await soleContract(trx, tenantId, pc, doc.docDate)) loose += await looseDebt(trx, tenantId, pc, docs, doc.docDate, doc);
+        const cs = creditStatus(pp, (await apBalance(trx, tenantId, pool, doc.docDate, selfEvents)) - cuaHd - loose, pendingOf(docs, ngoai, doc.docDate, doc), calc.payable);
+        if (cs) credit.push({ ...cs, scope: `${pool.length > 1 ? `Cả nhóm ${pp.scope.partnerCode} (${pool.length} đơn vị)` : `NCC ${partner?.name || doc.partnerCode}`} — ngoài hợp đồng` });
+      }
     }
-    const cs = creditStatus(pp, await apBalance(trx, tenantId, pool, doc.docDate, selfEvents), pendingOf(docs, (d) => pool.includes(d.partnerCode), doc.docDate, doc), calc.payable);
-    if (cs) credit.push({ ...cs, scope: pool.length > 1 ? `Cả nhóm ${pp!.scope.partnerCode} (${pool.length} đơn vị, hạn mức chung)` : `NCC ${partner?.name || doc.partnerCode}` });
     // Hạn mức toàn nhãn phân bổ chi nhánh: mỗi nhãn có trong phiếu tính theo PHẦN của nhãn (phiếu nhiều nhãn chia đúng phần).
     for (const { brandCode: brand, share } of brandMix(doc)) {
       const bp = findPolicy(policies.filter((p) => !p.scope.partnerCode), 'credit_limit', { date: doc.docDate, brandCode: brand, branchCode: doc.branchCode });
@@ -254,6 +341,13 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
       }
     }
   }
+  // Điều kiện kích hoạt: chính sách chưa đạt bỏ ra, tính lại phiếu (giá trị phiếu = trước thuế, trước chiết khấu).
+  const gate = GOODS.includes(doc.kind) && doc.partnerCode ? await activationGate(trx, tenantId, doc, docs, policies, credit, Math.round(computeDoc(doc, []).lines.filter((l) => l.lineType === 'buy').reduce((t, l) => t + l.gross / (doc.priceIncludesVat ? 1 + (TAX_RATE[l.taxCode] ?? 0) / 100 : 1), 0))) : { blocked: [], passed: [] };
+  const usePolicies = gate.blocked.length ? policies.filter((p) => !gate.blocked.some((b) => b.code === p.code)) : policies;
+  // Đạt ngưỡng chương trình (tính với mọi chính sách thì chương trình có áp) nhưng chưa qua điều kiện tiên quyết → cảnh báo, không chỉ ghi thông tin.
+  const daDatNguong = new Set(calc.trace.map((x) => x.policy));
+  const blockedOut = gate.blocked.map((b) => ({ ...b, wouldApply: daDatNguong.has(b.code) }));
+  if (gate.blocked.length) calc = computeDoc(doc, usePolicies, { holidays: settings.holidays, units: await unitsOf(trx, tenantId, doc.lines.map((l) => l.sku).filter(Boolean)) });
   const refOrder = docs.find((d) => d.kind === 'order' && (doc.refIds ?? []).includes(d.id));
   // Đối chiếu đơn đặt ↔ phiếu nhập theo PHẦN CÒN LẠI của đơn (trừ các phiếu nhập khác đã giao theo đơn): giao một phần là
   // bình thường (thông tin, lập phiếu tiếp từ đơn); chỉ cảnh báo khi nhận thừa hoặc lệch đơn giá.
@@ -263,7 +357,7 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   const units = await unitsOf(trx, tenantId, unitSkus);
   // Giá vốn thực tế từng dòng quy về ĐVT của dòng (mã nhiều ĐVT: dòng Thùng + quà theo Hộp chia đúng theo tỉ lệ) — tính lại khi đã
   // có bảng ĐVT; tiền, thuế, chiết khấu của phiếu không phụ thuộc ĐVT nên giữ nguyên.
-  const withUnits = computeDoc(doc, policies, { holidays: settings.holidays, units });
+  const withUnits = computeDoc(doc, usePolicies, { holidays: settings.holidays, units });
   calc.lines.forEach((l, i) => { l.realUnitCost = withUnits.lines[i]?.realUnitCost ?? l.realUnitCost; });
   // Đúng quy trình mua hàng: khai mã + giá của NCC → đơn đặt (duyệt, giữ hạn mức) → phiếu nhập lập từ đơn.
   // Ngoại lệ được phép: phiếu nhập NGOÀI ĐƠN — bắt buộc ghi lý do để duyệt, đóng dấu lúc duyệt, kế toán rà soát riêng.
@@ -353,6 +447,13 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   if (doc.kind === 'rebate' && !doc.rebate && !doc.allocation?.length && !refRcpt.length) checks.push({ level: 'error', code: 'rebate_unassigned', blocking: true, text: 'Chiết khấu bổ sung chưa gắn phiếu nhập — chọn phiếu nhập được giảm giá để phân bổ giảm giá vốn' });
   checks.push(...orderChecks);
   checks.push(...(await extraChecks(trx, tenantId, doc, docs, settings)));
+  for (const b of blockedOut) { const p = policies.find((x) => x.code === b.code); checks.push(b.wouldApply
+    ? { level: 'warn', code: 'policy_inactive', text: `Đã đạt ngưỡng chương trình ${b.code} — ${b.name} nhưng KHÔNG áp vì chưa qua điều kiện tiên quyết: ${b.reasons.join('; ')}. ${activationText(p ? activationOf(p) : undefined)}` }
+    : { level: 'info', code: 'policy_inactive', text: `Chưa áp chương trình ${b.code} — ${b.name}: chưa đủ điều kiện kích hoạt (${b.reasons.join('; ')}). ${activationText(p ? activationOf(p) : undefined)}` }); }
+  for (const g of gate.passed) checks.push({ level: 'info', code: 'policy_active', text: `Đủ điều kiện kích hoạt ${g.code} — ${g.name}: ${g.met.join('; ')}` });
+  // [2026-11-21 Nguyễn Văn Thủy] phiếu theo hợp đồng chỉ dùng điều khoản của hợp đồng — hợp đồng chưa khai thì nhắc (không mượn bản ngoài hợp đồng) (đóng góp)
+  if (doc.contractCode && (doc.kind === 'receipt' || doc.kind === 'order') && !doc.term && !policies.some((p) => p.kind === 'payment_term' && p.isActive && p.scope.contractCode === doc.contractCode))
+    checks.push({ level: 'warn', code: 'contract_no_term', text: `Hợp đồng ${doc.contractCode} chưa khai điều khoản thanh toán — phiếu chưa có hạn thanh toán. Khai ở Hợp đồng mua hàng, bước Điều khoản hợp đồng (khối Công nợ & điều khoản thanh toán)` });
   // Ngân sách quà theo chương trình: phiếu mua / nhận quà làm tổng giá trị quà đã mua / nhận của chương trình vượt ngân sách → cảnh báo.
   if (doc.kind === 'receipt' || doc.kind === 'gift_in') {
     const progOf = (d: PDoc, l: PDoc['lines'][number]) => l.program ?? d.gift?.program ?? '';
@@ -392,7 +493,7 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
     const u2 = { ...units, ...(await unitsOf(trx, tenantId, q.list.flatMap((x) => x.lines.map((l) => l.sku)).filter((x) => !units[x]))) };
     invoiceQty = { bySku: Object.fromEntries(invoiceQtyBySku(q.list, u2)), invoices: q.list.map((x) => x.key), missing: q.missing, shared: q.shared };
   }
-  return { prices, units, calc, checks, credit, entries, blocking: checks.filter((c) => c.blocking), prepayment: pre.amount, refOrder, priceHistory: history, accounts, priceWarnPct: settings.priceWarnPct, invoiceQty };
+  return { prices, units, calc, checks, credit, entries, blocking: checks.filter((c) => c.blocking), prepayment: pre.amount, refOrder, priceHistory: history, accounts, priceWarnPct: settings.priceWarnPct, invoiceQty, ...(blockedOut.length ? { blockedPolicies: blockedOut } : {}) };
 }
 
 /** CKTT trên phiếu trả tiền: phải trả cho phiếu nhập có CKTT, trả trong hạn, trả đủ phần còn lại sau CKTT, đúng số tiền CKTT. */

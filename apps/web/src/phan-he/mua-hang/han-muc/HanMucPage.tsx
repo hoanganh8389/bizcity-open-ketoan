@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { DataGrid } from '@/components/DataGrid';
 import type { CreditStatus } from '@bizcity/mua-hang-domain';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
@@ -17,11 +18,11 @@ import { UsageBar, dmy } from '../chung';
 
 interface Credit {
   asOf: string;
-  partners: (CreditStatus & { partnerCode: string })[];
+  partners: (CreditStatus & { partnerCode: string; contractCode?: string })[];
   brands: { policy: string; id: string; brandCode: string; limit: number; allocated: number; unallocated: number; branches: (CreditStatus & { branchCode: string })[] }[];
   supply: { policy: string; name: string; brandCode?: string; period: string; branches: { branchCode: string; target: number; done: number; pct: number }[] }[];
 }
-interface Due { asOf: string; buckets: { label: string; amount: number; count: number }[]; rows: { partnerCode: string; partnerName: string; branchCode: string; docNo: string; seq?: number; docDate: string; dueDate: string; amount: number; paid: number; remaining: number; bucket: number; daysOverdue: number; daysToDue: number }[] }
+interface Due { asOf: string; buckets: { label: string; amount: number; count: number }[]; rows: { partnerCode: string; partnerName: string; branchCode: string; docNo: string; contractCode?: string; seq?: number; docDate: string; dueDate: string; amount: number; paid: number; remaining: number; bucket: number; daysOverdue: number; daysToDue: number }[] }
 
 export function HanMucPage() {
   const [params, setParams] = useSearchParams();
@@ -45,16 +46,31 @@ export function HanMucPage() {
 function Limits({ asOf }: { asOf: string }) {
   const names = useNames();
   const q = useQuery({ queryKey: ['mua-hang', 'credit', asOf], queryFn: () => api.get<Credit>(`${P}/credit`, { asOf }) });
+  const hd = useQuery({ queryKey: ['mua-hang', 'contracts'], queryFn: () => purchaseApi.contracts(), staleTime: 60_000 });
+  const tenHd = (c: string) => hd.data?.find((x) => x.code === c)?.name ?? '';
+  const [tim, setTim] = useState('');
   if (q.isLoading) return <Loading />;
   if (q.error) return <ErrorBox error={errorText(q.error)} />;
   const c = q.data!;
   return (
     <>
-      <h4 style={{ margin: '0 0 6px' }}>Theo nhà cung cấp</h4>
-      {!c.partners.length && <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Chưa khai hạn mức NCC — thêm chính sách "Hạn mức công nợ" ở MH04 (phạm vi = nhà cung cấp).</div>}
-      <div className="mh-grid2">
-        {c.partners.map((p) => <div key={p.policy} className="mh-panel"><div className="muted" style={{ fontSize: 11 }}>{p.policy}</div><UsageBar s={{ ...p, scope: names.partnerName(p.partnerCode) }} /></div>)}
-      </div>
+      {/* [2026-11-21 Nguyễn Văn Thủy] hạn mức theo NCC chia theo hợp đồng / ngoài hợp đồng — khai ở hợp đồng (bước Điều khoản) hoặc thẻ Không theo hợp đồng của NCC (đóng góp) */}
+      <h4 style={{ margin: '0 0 6px' }} title="Hạn mức công nợ là điều khoản hợp đồng: khai ở Hợp đồng mua hàng (bước Điều khoản hợp đồng) hoặc hồ sơ NCC, thẻ Không theo hợp đồng. Hạn mức của hợp đồng tính trên các phiếu thuộc hợp đồng; hạn mức chung / ngoài hợp đồng tính trên toàn bộ nợ của NCC">Theo nhà cung cấp · hợp đồng</h4>
+      {!c.partners.length && <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>Chưa khai hạn mức NCC — khai ở Hợp đồng mua hàng (bước Điều khoản hợp đồng) hoặc hồ sơ NCC, thẻ Không theo hợp đồng.</div>}
+      {c.partners.length > 2 && <input className="input" style={{ width: 300, marginBottom: 8 }} placeholder="Tìm NCC / hợp đồng…" value={tim} onChange={(e) => setTim(e.target.value)} />}
+      {[...new Set(c.partners.filter((p) => { const k = tim.trim().toLowerCase(); return !k || `${p.partnerCode} ${names.partnerName(p.partnerCode)} ${p.contractCode ?? ''} ${tenHd(p.contractCode ?? '')}`.toLowerCase().includes(k); }).map((p) => p.partnerCode))].map((ncc) => (
+        <div key={ncc} style={{ marginBottom: 8 }}>
+          <div style={{ fontWeight: 600, fontSize: 13, margin: '4px 0' }}>{names.partnerName(ncc)} <span className="muted mono" style={{ fontWeight: 400, fontSize: 11 }}>{ncc}</span></div>
+          <div className="mh-grid2">
+            {c.partners.filter((p) => p.partnerCode === ncc).sort((a, b) => (a.contractCode ?? '').localeCompare(b.contractCode ?? '')).map((p) => (
+              <div key={p.policy} className="mh-panel">
+                <div className="muted" style={{ fontSize: 11 }} title={`Mã chính sách ${p.policy}`}>{p.contractCode ? 'Theo hợp đồng' : 'Ngoài hợp đồng · hạn mức chung của NCC'}</div>
+                <UsageBar s={{ ...p, scope: p.contractCode ? `Hợp đồng ${p.contractCode}${tenHd(p.contractCode) ? ` — ${tenHd(p.contractCode)}` : ''}` : 'Ngoài hợp đồng' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
       {c.brands.map((b) => <BrandLimit key={b.policy} b={b} onChanged={() => void q.refetch()} />)}
       {c.supply.map((s) => (
         <div key={s.policy} className="mh-panel">
@@ -102,46 +118,57 @@ function BrandLimit({ b, onChanged }: { b: Credit['brands'][number]; onChanged: 
   );
 }
 
+// [2026-11-21 Nguyễn Văn Thủy] đến hạn / quá hạn: tìm nhanh, lọc hợp đồng / không theo hợp đồng, bấm ô tuổi nợ để lọc; bảng chuẩn (lọc cột, sắp xếp, Excel) thay chuỗi dòng cảnh báo (đóng góp)
 function DueTab({ asOf }: { asOf: string }) {
   const [partner, setPartner] = useState('');
   const [branch, setBranch] = useState('');
+  const [hd, setHd] = useState('*');
+  const [tim, setTim] = useState('');
+  const [tuoi, setTuoi] = useState<number | null>(null);
   const st = useQuery({ queryKey: ['mua-hang', 'settings'], queryFn: () => api.get<{ warnDays: number }>(`${P}/settings`) });
   const warnDays = st.data?.warnDays ?? 3;
   const q = useQuery({ queryKey: ['mua-hang', 'due', asOf], queryFn: () => api.get<Due>(`${P}/due`, { asOf }) });
   if (q.isLoading) return <Loading />;
   if (q.error) return <ErrorBox error={errorText(q.error)} />;
   const all = q.data!.rows;
-  const rows = all.filter((r) => (!partner || r.partnerCode === partner) && (!branch || r.branchCode === branch));
-  const branchList = [...new Set(all.map((r) => r.branchCode))];
-  const buckets = q.data!.buckets.map((b, i) => ({ ...b, amount: rows.filter((r) => r.bucket === i).reduce((s, r) => s + r.remaining, 0), count: rows.filter((r) => r.bucket === i).length }));
-  const soon = rows.filter((r) => r.daysToDue > 0 && r.daysToDue <= warnDays);
-  const partners = [...new Map(all.map((r) => [r.partnerCode, r.partnerName])).entries()];
+  const k = tim.trim().toLowerCase();
+  const base = all.filter((r) => (!partner || r.partnerCode === partner) && (!branch || r.branchCode === branch) && (hd === '*' || (r.contractCode ?? '') === hd)
+    && (!k || `${r.partnerName} ${r.partnerCode} ${r.docNo} ${r.contractCode ?? ''} ${r.branchCode}`.toLowerCase().includes(k)));
+  const rows = tuoi === null ? base : base.filter((r) => r.bucket === tuoi);
+  const branchList = [...new Set(all.map((r) => r.branchCode))].sort();
+  const hdList = [...new Set(all.map((r) => r.contractCode ?? '').filter(Boolean))].sort();
+  const buckets = q.data!.buckets.map((b, i) => ({ ...b, amount: base.filter((r) => r.bucket === i).reduce((s, r) => s + r.remaining, 0), count: base.filter((r) => r.bucket === i).length }));
+  const soon = base.filter((r) => r.daysToDue > 0 && r.daysToDue <= warnDays);
+  const partners = [...new Map(all.map((r) => [r.partnerCode, r.partnerName])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   return (
     <>
-      <div className="row" style={{ gap: 8, marginBottom: 8 }}>
-        <select className="select input" style={{ width: 300 }} value={partner} onChange={(e) => setPartner(e.target.value)}><option value="">Mọi nhà cung cấp</option>{partners.map(([c, n]) => <option key={c} value={c}>{n}</option>)}</select>
-        <select className="select input" style={{ width: 180 }} value={branch} onChange={(e) => setBranch(e.target.value)}><option value="">Mọi chi nhánh</option>{branchList.map((b) => <option key={b} value={b}>{b}</option>)}</select>
-        <span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>Báo trước hạn {warnDays} ngày (đổi ở Cài đặt mua hàng)</span>
+      <div className="row" style={{ gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <input className="input" style={{ width: 260 }} placeholder="Tìm: NCC, số chứng từ, hợp đồng, chi nhánh" value={tim} onChange={(e) => setTim(e.target.value)} />
+        <select className="select input" style={{ width: 260 }} value={partner} onChange={(e) => setPartner(e.target.value)}><option value="">Mọi nhà cung cấp</option>{partners.map(([c, n]) => <option key={c} value={c}>{n}</option>)}</select>
+        <select className="select input" style={{ width: 200 }} value={hd} onChange={(e) => setHd(e.target.value)} title="Công nợ theo hợp đồng hay không theo hợp đồng"><option value="*">Mọi hợp đồng</option><option value="">Không theo hợp đồng</option>{hdList.map((c) => <option key={c} value={c}>Hợp đồng {c}</option>)}</select>
+        <select className="select input" style={{ width: 160 }} value={branch} onChange={(e) => setBranch(e.target.value)}><option value="">Mọi chi nhánh</option>{branchList.map((b) => <option key={b} value={b}>{b}</option>)}</select>
+        <span className="muted" style={{ fontSize: 12, alignSelf: 'center' }}>Báo trước hạn {warnDays} ngày{soon.length ? ` · ${soon.length} khoản sắp đến hạn` : ''}</span>
       </div>
       <div className="kpis">
-        {buckets.map((b, i) => <div key={b.label} className="card kpi"><div className="label">{b.label}</div><div className={`value ${i >= 2 && b.amount ? 'mh-bad' : i === 1 && b.amount ? 'mh-warn' : ''}`}>{vnd(b.amount)}</div><div className="hint">{b.count} khoản</div></div>)}
+        {buckets.map((b, i) => <button type="button" key={b.label} className={`card kpi${tuoi === i ? ' active' : ''}`} style={{ textAlign: 'left', cursor: 'pointer', outline: tuoi === i ? '2px solid var(--brand-500, #3b82f6)' : undefined }} title={tuoi === i ? 'Bấm lần nữa để bỏ lọc' : `Chỉ xem khoản "${b.label}"`} onClick={() => setTuoi(tuoi === i ? null : i)}>
+          <div className="label">{b.label}</div><div className={`value ${i >= 2 && b.amount ? 'mh-bad' : i === 1 && b.amount ? 'mh-warn' : ''}`}>{vnd(b.amount)}</div><div className="hint">{b.count} khoản</div></button>)}
       </div>
-      <div style={{ marginBottom: 8 }}>
-        {rows.filter((r) => r.bucket >= 2).map((r, i) => <div key={`o${i}`} className="mh-check error">⛔ Quá hạn {r.daysOverdue} ngày: {r.partnerName} — {r.docNo}{r.seq ? ` đợt ${r.seq}` : ''}, còn {vnd(r.remaining)} (hạn {dmy(r.dueDate)})</div>)}
-        {rows.filter((r) => r.bucket === 1).map((r, i) => <div key={`d${i}`} className="mh-check warn">⚠ Đến hạn hôm nay: {r.partnerName} — {r.docNo}, {vnd(r.remaining)}</div>)}
-        {soon.map((r, i) => <div key={`s${i}`} className="mh-check info">ℹ Sắp đến hạn ({r.daysToDue} ngày nữa): {r.partnerName} — {r.docNo}{r.seq ? ` đợt ${r.seq}` : ''}, {vnd(r.remaining)} (hạn {dmy(r.dueDate)})</div>)}
-      </div>
-      <div className="table-wrap"><table className="grid"><thead><tr><th>Nhà cung cấp</th><th>Chi nhánh</th><th>Chứng từ</th><th>Đợt</th><th>Ngày</th><th>Hạn</th><th className="num">Phải trả</th><th className="num">Đã trả</th><th className="num">Còn lại</th><th>Tình trạng</th></tr></thead><tbody>
-        {rows.map((r, i) => (
-          <tr key={i}>
-            <td>{r.partnerName}</td><td>{r.branchCode}</td><td className="mono">{r.docNo}</td><td>{r.seq ?? ''}</td><td>{dmy(r.docDate)}</td><td>{r.dueDate ? dmy(r.dueDate) : <span className="muted">công nợ cố định</span>}</td>
-            <td className="num">{vnd(r.amount)}</td><td className="num">{vnd(r.paid)}</td><td className="num"><b>{vnd(r.remaining)}</b></td>
-            <td><span className={`badge ${r.bucket >= 2 ? 'badge-bad' : r.bucket === 1 ? 'badge-warn' : 'badge-gray'}`}>{q.data!.buckets[r.bucket]?.label}</span></td>
-          </tr>
-        ))}
-        {!rows.length && <tr><td colSpan={10} className="muted" style={{ textAlign: 'center', padding: 12 }}>Không có khoản phải trả đang mở</td></tr>}
-      </tbody></table></div>
-      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Số liệu lấy từ công nợ theo chứng từ của sổ kế toán (mọi phiếu ghi Có tài khoản 331, kể cả phiếu từ hệ thống khác). Hạn theo điều khoản từng phiếu / chính sách NCC; phiếu có lịch trả nhiều đợt hiện từng đợt.</div>
+      <DataGrid<Due['rows'][number]> storageKey="mh05-den-han" rows={rows} rowKey={(r, i) => `${r.docNo}-${r.seq ?? 0}-${i}`} maxHeight="60vh" exportName="cong-no-den-han"
+        emptyText="Không có khoản phải trả đang mở khớp điều kiện"
+        columns={[
+          { key: 'partnerName', header: 'Nhà cung cấp', width: 220 },
+          { key: 'contractCode', header: 'Hợp đồng', width: 130, value: (r) => r.contractCode || 'Không theo HĐ', render: (r) => r.contractCode ? <span className="mono">{r.contractCode}</span> : <span className="muted">không theo HĐ</span> },
+          { key: 'branchCode', header: 'Chi nhánh', width: 100 },
+          { key: 'docNo', header: 'Chứng từ', type: 'code', width: 120 },
+          { key: 'seq', header: 'Đợt', width: 50, value: (r) => (r.seq ? String(r.seq) : '') },
+          { key: 'docDate', header: 'Ngày', width: 90, value: (r) => dmy(r.docDate) },
+          { key: 'dueDate', header: 'Hạn', width: 100, value: (r) => (r.dueDate ? dmy(r.dueDate) : 'công nợ cố định') },
+          { key: 'amount', header: 'Phải trả', type: 'money', width: 120 },
+          { key: 'paid', header: 'Đã trả', type: 'money', width: 120 },
+          { key: 'remaining', header: 'Còn lại', type: 'money', width: 120 },
+          { key: 'bucket', header: 'Tình trạng', width: 150, value: (r) => q.data!.buckets[r.bucket]?.label ?? '', render: (r) => <span className={`badge ${r.bucket >= 2 ? 'badge-bad' : r.bucket === 1 ? 'badge-warn' : 'badge-gray'}`}>{q.data!.buckets[r.bucket]?.label}{r.bucket >= 2 ? ` · ${r.daysOverdue} ngày` : r.daysToDue > 0 && r.daysToDue <= warnDays ? ` · còn ${r.daysToDue} ngày` : ''}</span> },
+        ]} />
+      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Số liệu lấy từ công nợ theo chứng từ của sổ kế toán (mọi phiếu ghi Có tài khoản 331, kể cả phiếu từ hệ thống khác). Hạn theo điều khoản từng phiếu / điều khoản thanh toán của hợp đồng hoặc của NCC (ngoài hợp đồng); phiếu có lịch trả nhiều đợt hiện từng đợt.</div>
     </>
   );
 }

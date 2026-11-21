@@ -71,7 +71,7 @@ export function promoBoard(doc: PDoc, policies: Policy[], calc: DocCalc): PromoR
   policies = policiesFor(doc, policies);
   const ex = exclusiveBySku(doc, policies);
   const pol = policies;
-  const ctxBase = { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode };
+  const ctxBase = { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode, contractCode: doc.contractCode || undefined };
   // 1. Chiết khấu dòng: đã áp (theo bảng mã / bậc SL) + ghi tay khác chính sách + gợi ý lên bậc.
   for (const l of calc.lines.filter((x) => x.lineType === 'buy' && x.sku)) {
     const src = doc.lines.find((x) => x.lineKey === l.lineKey);

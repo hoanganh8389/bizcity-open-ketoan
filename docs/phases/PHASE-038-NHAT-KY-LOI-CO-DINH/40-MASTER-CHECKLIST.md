@@ -17,7 +17,7 @@ Thứ tự theo giá trị: B1 một mình đã giải được sự cố 2026-1
 | S038-7 | B3 | `scripts/lay-log.sh` theo README §4.4 | `scripts/lay-log.sh` | chạy được khi `api` chết; gói không chứa giá trị `.env` | ☐ |
 | S038-8 | B3 | Sổ tay: mục "Lấy log gửi về" trong runbook aaPanel + DEPLOY §4; OBSERVABILITY §2 thêm `logs/`; log aaPanel `/www/wwwlogs/` | `docs/trien-khai.md`; `docs/ops/DEPLOY.md`; `docs/ops/OBSERVABILITY.md`; `docs/ops/SO-TAY-DIEU-TRA-LOI.md` | người vận hành làm theo không cần hỏi | ☐ |
 | S038-9 | B4 | Giao diện: một khay "Không kết nối được máy chủ phần mềm" cho `GATEWAY_UNAVAILABLE` / 5xx không JSON; lùi dần lời gọi lặp | `apps/web/src/lib/api.ts`; khay lỗi; `presence` | 29 yêu cầu hỏng → 1 khay; ping không dội | ☐ |
-| S038-10 | B5 | Luật R-OBS-10 (bản cài có `logs/` cố định, có trần) + check SC-OBS-3 (compose khai `logging:` và mount `LOG_HOST_DIR`) + CHANGELOG "Nâng cấp cần làm" | `docs/rules/**`; `tests/conformance/**`; `CHANGELOG.md` | SC-OBS-3 xanh trên main | ☐ |
+| S038-10 | B5 | Thi hành R-LOG-9 (bản cài có `logs/` cố định, có trần; luật đã khai ở RULE-LOG) + check SC-OBS-3 (compose khai `logging:` và mount `LOG_HOST_DIR`) + CHANGELOG "Nâng cấp cần làm" | `docs/rules/**`; `tests/conformance/**`; `CHANGELOG.md` | SC-OBS-3 xanh trên main | ☐ |
 
 <!-- [2026-11-21 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — thêm S038-11..15 từ nghiên cứu 10 (lỗ hổng G2–G13) -->
 | Mã | Bước | Việc | Phạm vi | Xong khi | Trạng thái |
@@ -31,7 +31,7 @@ Thứ tự theo giá trị: B1 một mình đã giải được sự cố 2026-1
 ## Nhật ký
 
 <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — luật R-LOG, CANON §0.12, chỉ dẫn agent -->
-- 2026-11-21 — Chủ dự án yêu cầu: ra luật chính thức và chỉ dẫn agent nhắc người đóng góp. Thêm [RULE-LOG](../../rules/RULE-LOG.md) (R-LOG-1..11, chấp nhận), CANON §0.12 + dòng §3 / §5 + v1.8, mục R-LOG trong `AGENTS.md` (Claude Code / Codex / Cursor đọc qua `CLAUDE.md`) và `.github/copilot-instructions.md`, trỏ ở OBSERVABILITY §2. Phần tài liệu của S038-14 xong; còn SC-LOG-1..3 và rà 16 chỗ nuốt lỗi (B5).
+- 2026-11-21 — Chủ dự án yêu cầu: ra luật chính thức và chỉ dẫn agent nhắc người đóng góp. Thêm [RULE-LOG](../../rules/RULE-LOG.md) (R-LOG-1..11, chấp nhận), CANON §0.12 + dòng §3 / §5 + v1.9, mục R-LOG trong `AGENTS.md` (Claude Code / Codex / Cursor đọc qua `CLAUDE.md`) và `.github/copilot-instructions.md`, trỏ ở OBSERVABILITY §2. Phần tài liệu của S038-14 xong; còn SC-LOG-1..3 và rà 16 chỗ nuốt lỗi (B5).
 
 - 2026-11-21 — W0 chốt: chủ dự án đồng ý mọi đề xuất (D038-1..6, D038-2b). Giữ chỗ B1 (S038-2..5, S038-11).
 

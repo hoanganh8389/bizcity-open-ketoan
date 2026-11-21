@@ -105,6 +105,11 @@ dangKyManHinh({
   key: 'mua-hang.cong-no-hop-dong', ma: 'MH30', nhom, nhan: 'Công nợ theo hợp đồng', duongDan: '/mua-hang/cong-no-hop-dong',
   thaoTac: { xem: { quyen: 'mua-hang:hop-dong-xem', nhan: 'Xem', loai: 'xem' } },
 });
+// [2026-11-21 Nguyễn Văn Thủy] báo cáo theo hợp đồng / chính sách (MH32–MH35) (đóng góp)
+dangKyManHinh({ key: 'mua-hang.thuc-hien-chinh-sach', ma: 'MH32', nhom, nhan: 'Tình hình thực hiện chính sách mua hàng', duongDan: '/mua-hang/thuc-hien-chinh-sach', thaoTac: { xem: { quyen: 'mua-hang:hop-dong-xem', nhan: 'Xem', loai: 'xem', lenh: [L('GET', '/api/v1/purchase/policy-execution')] } } });
+dangKyManHinh({ key: 'mua-hang.chinh-sach-hop-dong', ma: 'MH33', nhom, nhan: 'Tổng hợp chính sách theo hợp đồng', duongDan: '/mua-hang/chinh-sach-theo-hop-dong', thaoTac: { xem: { quyen: 'mua-hang:hop-dong-xem', nhan: 'Xem', loai: 'xem' } } });
+dangKyManHinh({ key: 'mua-hang.doi-chieu-gia-hop-dong', ma: 'MH34', nhom, nhan: 'Đối chiếu giá mua theo hợp đồng', duongDan: '/mua-hang/doi-chieu-gia-hop-dong', thaoTac: { xem: { quyen: 'mua-hang:hop-dong-xem', nhan: 'Xem', loai: 'xem', lenh: [L('GET', '/api/v1/purchase/contract-prices')] } } });
+dangKyManHinh({ key: 'mua-hang.thuc-hien-hop-dong', ma: 'MH35', nhom, nhan: 'Tình hình thực hiện hợp đồng mua hàng', duongDan: '/mua-hang/thuc-hien-hop-dong', thaoTac: { xem: { quyen: 'mua-hang:hop-dong-xem', nhan: 'Xem', loai: 'xem', lenh: [L('GET', '/api/v1/purchase/contract-execution')] } } });
 dangKyManHinh({
   key: 'mua-hang.cai-dat', ma: 'MH12', nhom, nhan: 'Cài đặt mua hàng', duongDan: '/mua-hang/cai-dat',
   thaoTac: { xem: xem('cai-dat'), sua: { quyen: 'mua-hang:cai-dat-sua', nhan: 'Lưu cài đặt', loai: 'ghi', lenh: [L('PUT', '/api/v1/purchase/settings')], goc: 'settings:write' } }, // [2026-11-14 07:30 PM kiennt] PHAN-QUYEN — goc (đóng góp)
