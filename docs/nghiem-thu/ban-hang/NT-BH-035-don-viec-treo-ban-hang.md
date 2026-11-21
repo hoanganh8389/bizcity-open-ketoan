@@ -80,6 +80,7 @@ Ngày 21/11/2026, nhánh `feat/nt-bh-035-don-viec-treo` — làm §3.1–3.4 + B
 | Hồi quy `apps/api` (nt-bh-*, inventory, costing, gia-von, kho, loai-kho, phan-kho, tk-kho, tra-hang, golden, item, phieu-chuyen-kho, nt-kho, posting, kiem-ke) | 54 tệp đạt, 1 bỏ qua · 406 test đạt, 11 bỏ qua |
 | Test module `modules/pos/test`, `modules/phieu-ban/test` | 113 / 113, 22 / 22 đạt |
 | Hồi quy BH20 / giao hàng / sổ chứng từ (nt-bh-023, 032, 033) | 29 / 29 đạt |
+| §3.5 trình duyệt (bản cài Docker dựng từ nhánh, 21/11) | BH20, BH17, BH23, BH10 mở được, không lỗi trang / lỗi API; BH17 có bảng kho quà (KKM), kho KTL; BH23 ra số liệu; form BH10 có ô *Kênh bán*, *Mã voucher* + nút *Kiểm voucher*. Luồng đơn BH20 lập → gửi → giao → đóng kiểm bằng test API (nt-bh-023, 032, 035), chưa bấm tay trên màn |
 | §3.6 tạo khách trên POS (thử thật shop2, 21/11) | SĐT mới → tạo khách ở kế toán (`core.partner.upsert` qua cầu nối) + bản sao WP; nhập lại cùng số dạng +84 → nhận khách cũ, không tạo; SĐT sai → 422. React 770 / 770 đạt; `tgs_pos` test sổ 31 / 31, ánh xạ đơn 24 / 25 (ca Viettel đọc người mua đỏ từ trước, không do đợt này) |
 | `npm run typecheck` | đạt |
 | `selfcheck` | 27 không đạt như `main`; mới: SC-SIG-1 ở `db/migrations/0178_kho_khuyen_mai_nhan_tra.sql` (migration chưa phát hành cần dấu chủ dự án — chờ chủ quyết, R-SIG) |
