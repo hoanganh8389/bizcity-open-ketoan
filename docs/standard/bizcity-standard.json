@@ -22,7 +22,7 @@
     "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" },
     "bizcity_posting_template": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md", "schema": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.schema.json" },
     "bizcity_item_master": { "version": "0.3.0-draft", "doc": "docs/contracts/BIZCITY-ITEM-MASTER-v1.md", "role": "định danh bất biến, mã có phiên bản, phân loại theo ngày, Item Resolver (PHASE-024 B2a, ADR-0017)" },
-    "bizcity_lineage": { "version": "0.3.0-draft", "doc": "docs/contracts/BIZCITY-LINEAGE-v1.md", "role": "truy vết vòng đời mặt hàng: sự kiện kho, bút toán mang mã hàng, giá vốn từng tháng (PHASE-025, ADR-0021)" },
+    "bizcity_lineage": { "version": "0.4.0-draft", "doc": "docs/contracts/BIZCITY-LINEAGE-v1.md", "role": "truy vết vòng đời mặt hàng: sự kiện kho, bút toán mang mã hàng, giá vốn từng tháng (PHASE-025, ADR-0021); làn policy — chính sách đã áp, truy ngược chính sách (PHASE-031 S031-23)" },
     "bizcity_findings": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-FINDINGS-v1.md", "role": "thư viện phát hiện của hai cổng kiểm chuẩn (ADR-0019, SC-FIND-1)" },
     "bizcity_remedy": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-REMEDY-v1.md", "role": "phương án khắc phục có cấu trúc cho mọi kiểm (PHASE-022, SC-FIX-1)" },
     "bizcity_mcp": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] },
