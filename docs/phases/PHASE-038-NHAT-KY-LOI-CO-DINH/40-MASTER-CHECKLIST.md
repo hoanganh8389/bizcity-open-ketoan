@@ -30,6 +30,9 @@ Thứ tự theo giá trị: B1 một mình đã giải được sự cố 2026-1
 
 ## Nhật ký
 
+<!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — luật R-LOG, CANON §0.12, chỉ dẫn agent -->
+- 2026-11-21 — Chủ dự án yêu cầu: ra luật chính thức và chỉ dẫn agent nhắc người đóng góp. Thêm [RULE-LOG](../../rules/RULE-LOG.md) (R-LOG-1..11, chấp nhận), CANON §0.12 + dòng §3 / §5 + v1.8, mục R-LOG trong `AGENTS.md` (Claude Code / Codex / Cursor đọc qua `CLAUDE.md`) và `.github/copilot-instructions.md`, trỏ ở OBSERVABILITY §2. Phần tài liệu của S038-14 xong; còn SC-LOG-1..3 và rà 16 chỗ nuốt lỗi (B5).
+
 - 2026-11-21 — W0 chốt: chủ dự án đồng ý mọi đề xuất (D038-1..6, D038-2b). Giữ chỗ B1 (S038-2..5, S038-11).
 
 - 2026-11-21 — Nghiên cứu [10](10-NGHIEN-CUU-GHI-LOG.md): 13 lỗ hổng G1–G13, chuẩn R-LOG nháp, trần `logs/` 200 MB (D038-2 chốt).

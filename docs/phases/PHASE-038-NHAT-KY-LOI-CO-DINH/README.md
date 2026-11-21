@@ -7,6 +7,7 @@
 > **Checklist công bố:** —
 > **Trạng thái:** 🟡 **W0 chốt 2026-11-21** <!-- [2026-11-21 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — chốt W0: chủ dự án đồng ý mọi đề xuất D038-1..6, D038-2b --> — chủ dự án đồng ý mọi đề xuất (D038-1..6, D038-2b). Chưa có mã; tiếp theo B1 (giữ chỗ ở [CLAIMS](../CLAIMS.md)).
 > **Phụ trách cần phối hợp:** nhóm Lõi (Platform: logger, `env`, hợp đồng lỗi) · người vận hành bản cài (aaPanel).
+> **Luật:** [R-LOG](../../rules/RULE-LOG.md) (chấp nhận 2026-11-21) · **CANON:** §0.12 <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — trỏ luật R-LOG -->
 > **Tệp:** [10 — Nghiên cứu chuẩn ghi log lỗi](10-NGHIEN-CUU-GHI-LOG.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)
 
 ## 1. Đề bài (chủ dự án, 2026-11-21)
