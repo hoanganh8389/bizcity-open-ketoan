@@ -10,7 +10,7 @@ import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
 import { theoMa } from './ma-hien-hanh.js';
-import { checkContractItems } from './pham-vi-hop-dong.js';
+import { ensureContractItems } from './pham-vi-hop-dong.js';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const supplierProductSchema = z.object({
@@ -71,8 +71,12 @@ export async function saveSupplierProducts(trx: Db, tenantId: string, actor: str
     if (seen.has(k)) throw Errors.validation(`Dòng ${seen.get(k)! + 1} và dòng ${i + 1} trùng nhau: ${it.partnerCode || 'giá chung'} · ${it.sku} · ${it.unit}${it.validFrom ? ` · từ ${it.validFrom}` : ''}`);
     seen.set(k, i);
   });
-  // Dòng giá thuộc hợp đồng: mã phải thuộc hàng hoá của hợp đồng.
-  for (const c of new Set(items.map((i) => i.contractCode ?? '').filter(Boolean))) await checkContractItems(trx, tenantId, c, items.filter((i) => i.contractCode === c).map((i) => i.sku), 'Giá mua theo hợp đồng');
+  // Dòng giá thuộc hợp đồng: mã chưa có trong hàng hoá của hợp đồng thì tự thêm vào hợp đồng (hợp đồng chỉ khoanh theo nhãn thì mã phải đúng nhãn).
+  const themVaoHd: { sku: string; partnerCode: string | null; code: string }[] = [];
+  for (const c of new Set(items.map((i) => i.contractCode ?? '').filter(Boolean))) {
+    const add = await ensureContractItems(trx, tenantId, c, items.filter((i) => i.contractCode === c).map((i) => i.sku), 'Giá mua theo hợp đồng');
+    for (const x of add) themVaoHd.push({ sku: x, partnerCode: items.find((i) => i.contractCode === c && i.sku === x)?.partnerCode ?? null, code: c });
+  }
   const skus = [...new Set(items.map((i) => i.sku))];
   const units = await unitsOf(trx, tenantId, skus);
   let added = 0, updated = 0;
@@ -99,6 +103,7 @@ export async function saveSupplierProducts(trx: Db, tenantId: string, actor: str
       if (before !== after) changes.push({ sku: it.sku, partnerCode: it.partnerCode, text: `Sửa: ${before} → ${after}` });
     } else { await trx.insertInto('supplier_products').values({ tenant_id: tenantId, ...values, is_demo: isDemo, created_by: actor }).execute(); added++; changes.push({ sku: it.sku, partnerCode: it.partnerCode, text: `Thêm: ${after}` }); }
   }
+  for (const t of themVaoHd) changes.push({ sku: t.sku, partnerCode: t.partnerCode, text: `Tự thêm mã ${t.sku} vào hàng hoá của hợp đồng ${t.code}` });
   return { added, updated, changes };
 }
 

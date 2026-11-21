@@ -8,6 +8,7 @@
  * Mã ngoài hợp đồng khai ở thẻ "Không theo hợp đồng" của hồ sơ NCC.
  */
 import type { Db } from '../../db/client.js';
+import { sql } from 'kysely';
 import { Errors } from '../../core/errors.js';
 
 export async function contractItemScope(trx: Db, tenantId: string, code: string): Promise<{ skus: string[]; brands: string[] }> {
@@ -29,4 +30,27 @@ export async function checkContractItems(trx: Db, tenantId: string, code: string
     bad = list.filter((x) => !s.brands.includes(rows.find((r) => r.sku === x)?.brand_code ?? ''));
   }
   if (bad.length) throw Errors.validation(`${what}: mã ${bad.slice(0, 10).join(', ')}${bad.length > 10 ? '…' : ''} không thuộc hàng hoá của hợp đồng ${code} — thêm mã ở bước "Hàng hoá theo hợp đồng", hoặc khai ở thẻ "Không theo hợp đồng" của NCC`);
+}
+
+// [2026-11-21 Nguyễn Văn Thủy] khai giá mua theo hợp đồng ở form mặt hàng: mã chưa có trong hàng hoá của hợp đồng thì tự thêm (đóng góp)
+/**
+ * Thêm mã vào hàng hoá của hợp đồng nếu chưa có (hợp đồng đang khoanh theo danh sách mã). Hợp đồng chỉ khoanh theo nhãn: mã thuộc
+ * nhãn thì đã hợp lệ, mã khác nhãn vẫn báo lỗi (thêm mã sẽ đổi hợp đồng từ "theo nhãn" sang "theo mã"). Trả các mã đã thêm.
+ */
+export async function ensureContractItems(trx: Db, tenantId: string, code: string, skus: string[], what: string): Promise<string[]> {
+  const list = [...new Set(skus.filter(Boolean))];
+  if (!code || !list.length) return [];
+  const s = await contractItemScope(trx, tenantId, code);
+  if (!s.skus.length) { await checkContractItems(trx, tenantId, code, list, what); return []; }
+  const add = list.filter((x) => !s.skus.includes(x));
+  if (!add.length) return [];
+  if (s.brands.length) {
+    const rows = await trx.selectFrom('products').select(['sku', 'brand_code']).where('tenant_id', '=', tenantId).where('sku', 'in', add).execute();
+    const bad = add.filter((x) => !s.brands.includes(rows.find((r) => r.sku === x)?.brand_code ?? ''));
+    if (bad.length) throw Errors.validation(`${what}: mã ${bad.slice(0, 10).join(', ')} không thuộc nhãn hàng của hợp đồng ${code} — thêm nhãn ở bước "Hàng hoá theo hợp đồng", hoặc khai ở thẻ "Không theo hợp đồng" của NCC`);
+  }
+  await trx.updateTable('dimensions')
+    .set({ extra: sql`jsonb_set(COALESCE(extra, '{}'::jsonb), '{skus}', COALESCE(extra->'skus', '[]'::jsonb) || ${JSON.stringify(add)}::jsonb)` } as never)
+    .where('tenant_id', '=', tenantId).where('kind', '=', 'contract').where('code', '=', code).execute();
+  return add;
 }

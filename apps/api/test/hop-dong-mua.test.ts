@@ -79,10 +79,12 @@ describe('Hợp đồng mua hàng (Danh mục hợp đồng)', () => {
     const sp = await call(t, 'POST', '/api/v1/purchase/supplier-products', { rows: [{ partnerCode: 'NC100227', sku: '130181002', unit: 'Thùng', price: 250000, validFrom: '2026-11-01', contractCode: 'HD-T-01' }] });
     expect(sp.status, JSON.stringify(sp.body)).toBe(200);
     // Khoanh vùng theo hàng hoá của hợp đồng: giá / chính sách thuộc hợp đồng chỉ được mã của hợp đồng; ô chọn mã lọc theo danh sách mã.
-    const ngoai = await call(t, 'POST', '/api/v1/purchase/supplier-products', { rows: [{ partnerCode: 'NC100227', sku: khac, unit: 'Thùng', price: 1000, contractCode: 'HD-T-01' }] });
-    expect(ngoai.status).toBe(400);
-    expect(JSON.stringify(ngoai.body)).toContain('không thuộc hàng hoá của hợp đồng');
-    const csNgoai = await call(t, 'POST', '/api/v1/purchase/policies', { code: 'HD-T-01-CKMA', kind: 'item_discount', name: 'CK theo mã', scope: { partnerCode: 'NC100227', contractCode: 'HD-T-01' }, rule: { items: [{ sku: '130181002', pct: 2 }, { sku: khac, pct: 3 }] }, validFrom: '2026-11-01', validTo: '2027-10-31' });
+    // [2026-11-21] khai giá theo hợp đồng cho mã chưa có trong hợp đồng: tự thêm mã vào hàng hoá của hợp đồng (form mặt hàng)
+    const unitKhac = (await sql<{ unit: string }>`SELECT unit FROM products WHERE tenant_id = ${tid} AND sku = ${khac}`.execute(db)).rows[0]!.unit;
+    const ngoai = await call(t, 'POST', '/api/v1/purchase/supplier-products', { rows: [{ partnerCode: 'NC100227', sku: khac, unit: unitKhac, price: 1000, contractCode: 'HD-T-01' }] });
+    expect(ngoai.status, JSON.stringify(ngoai.body)).toBe(200);
+    const khac2 = (await sql<{ sku: string }>`SELECT sku FROM products WHERE tenant_id = ${tid} AND sku NOT IN ('130181002', ${khac}) LIMIT 1`.execute(db)).rows[0]!.sku;
+    const csNgoai = await call(t, 'POST', '/api/v1/purchase/policies', { code: 'HD-T-01-CKMA', kind: 'item_discount', name: 'CK theo mã', scope: { partnerCode: 'NC100227', contractCode: 'HD-T-01' }, rule: { items: [{ sku: '130181002', pct: 2 }, { sku: khac2, pct: 3 }] }, validFrom: '2026-11-01', validTo: '2027-10-31' });
     expect(csNgoai.status).toBe(400);
     const csDung = await call(t, 'POST', '/api/v1/purchase/policies', { code: 'HD-T-01-CKMA', kind: 'item_discount', name: 'CK theo mã', scope: { partnerCode: 'NC100227', contractCode: 'HD-T-01' }, rule: { items: [{ sku: '130181002', pct: 2 }] }, validFrom: '2026-11-01', validTo: '2027-10-31' });
     expect(csDung.status, JSON.stringify(csDung.body)).toBeLessThan(300);
@@ -90,8 +92,8 @@ describe('Hợp đồng mua hàng (Danh mục hợp đồng)', () => {
     expect(chiMa).toEqual(['130181002', khac].sort());
     expect((await call<{ data: { sku: string }[] }>(t, 'GET', '/api/v1/inventory/items?limit=50&skus=130181002')).body.data.map((x) => x.sku)).toEqual(['130181002']);
     const det = (await call<{ data: { contract: Row; prices: { contractCode: string }[]; items: { sku: string }[] } }>(t, 'GET', '/api/v1/purchase/contracts/detail?code=HD-T-01')).body.data;
-    expect(det.prices).toEqual([expect.objectContaining({ contractCode: 'HD-T-01' })]);
-    expect(det.items.map((i) => i.sku)).toEqual(['130181002']);
+    expect(det.prices).toEqual([expect.objectContaining({ contractCode: 'HD-T-01' }), expect.objectContaining({ contractCode: 'HD-T-01' })]);
+    expect(det.items.map((i) => i.sku)).toEqual(['130181002', khac]);
     // Thanh lý: vẫn trong danh sách, trạng thái đổi; sổ chứng từ "Hoàn tất".
     await call(t, 'PUT', '/api/v1/purchase/contracts', { code: 'HD-T-01', contract: body({ status: 'liquidated' }) });
     expect((await db.selectFrom('business_documents').select('status').where('tenant_id', '=', tid).where('doc_ref', '=', 'hop-dong.contract:HD-T-01').executeTakeFirstOrThrow()).status).toBe('done');
