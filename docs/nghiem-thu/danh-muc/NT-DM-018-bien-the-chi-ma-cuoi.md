@@ -20,7 +20,13 @@
 
 ## 2. Phạm vi
 
-`apps/web/src/features/catalog/ProductFullForm.tsx` (ô mã biến thể), `apps/api/src/modules/catalog/catalog.service.ts`, `apps/api/src/modules/catalog/catalog-import.ts` (chặn chữ đầu cho mã mới), `apps/web/src/lib/nhapExcel.ts` (câu hướng dẫn cột Mã hàng), `apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts` (thêm ca), `docs/huong-dan/mat-hang.md`. Không đổi CSDL.
+`apps/web/src/features/catalog/ProductFullForm.tsx` (ô mã biến thể), `apps/api/src/modules/catalog/catalog.service.ts`, `apps/api/src/modules/catalog/catalog-import.ts` (chặn chữ đầu cho mã mới), `apps/web/src/lib/nhapExcel.ts` (câu hướng dẫn cột Mã hàng), `apps/api/test/nt-dm-013-ma-bien-the-duoi-so.test.ts` (thêm ca), `docs/huong-dan/mat-hang.md`, `packages/contracts/src/catalog-hint.ts` + `docs/nghiep-vu/25-quy-tac-ma-loi-khai-bao.md` (chỉ chữ của luật ITEM-BLOCK-008). Không đổi CSDL.
+
+**Rà soát ảnh hưởng (21/11):**
+- Luật chặn chỉ chạy khi **thêm mới** qua form (PUT `?new=1`) và **nhập Excel**. Đồng bộ danh mục (`importCatalog`), mặt hàng tự tạo từ chứng từ đồng bộ (`catalog-ensure`, `draft-items`) không qua luật này → giữ mã nguồn như trước.
+- Hàm suy mã cha (`parentFromSku` máy chủ / web, SQL `bizcity_parent_from_sku`) **không đổi**: mã chữ đầu đã có vẫn ra đúng mã cha, tồn kho / giá / thuế theo mã cha như cũ.
+- Plugin bán hàng (tgs_shop_management, tgs_accounting_bridge) chỉ dùng **đuôi** (Z, Q, B, T, K, M) và nhận danh mục từ kế toán qua feed; không gọi API thêm mặt hàng của kế toán → không ảnh hưởng.
+- CSDL ở máy: không có mã biến thể chữ đầu nào có mã cha; chỉ có mã cũ `Q017300010` (không có mã cha) — không đổi.
 
 ## 3. Kết quả mong đợi
 
