@@ -110,7 +110,7 @@ Cột "Hiện nay" cho biết code đang báo thế nào: **mã** = đã có mã
 | `ITEM-BLOCK-005` | Tên | block | Tên trùng mặt hàng mã X. | mã |
 | `ITEM-BLOCK-006` | Mã hàng | block | Mã hàng đã có. | mã |
 | `ITEM-BLOCK-007` | Mã hàng | block | Mã chính không được có chữ ở đầu / cuối. | mã |
-| `ITEM-BLOCK-008` | Mã hàng | block | Mã biến thể: chưa có mã cha / thêm quá 2 chữ quanh mã cha. | mã |
+| `ITEM-BLOCK-008` | Mã hàng | block | Mã biến thể: chưa có mã cha / thêm quá 2 ký tự / mã mới thêm chữ ở đầu mã cha (NT-DM-018: chỉ thêm ở cuối). | mã |
 | `ITEM-BLOCK-009` | Nhóm / ngành / nhãn | block | Phân loại chưa có trong danh mục. | mã |
 | `ITEM-BLOCK-010` | Nhóm hàng | block | Chưa chọn tới nhóm cấp 3 để sinh mã. | câu |
 | `ITEM-BLOCK-014` | ĐVT | block | Phải có đúng một đơn vị tỉ lệ 1. | mã |

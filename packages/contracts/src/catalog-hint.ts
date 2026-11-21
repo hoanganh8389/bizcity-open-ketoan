@@ -198,8 +198,9 @@ const BASE_HINTS: Record<string, CatalogHintDef> = {
   'ITEM-BLOCK-008': {
     id: 'ITEM-BLOCK-008', entity: 'item', level: 'block', status: 'approved', okText: 'Mã biến thể có mã cha hợp lệ', field: 'sku',
     title: 'Mã biến thể {sku}: {detail}.',
-    why: 'Mã biến thể là mã cha thêm tối đa 2 chữ; mã cha phải khai trước để biến thể lấy nhóm, nhãn, đơn vị tính theo.',
-    fix: 'Khai mã cha trước, hoặc sửa mã biến thể chỉ thêm tối đa 2 chữ quanh mã cha.',
+    // [2026-11-21 kiennt] NT-DM-018 — mã biến thể mới chỉ thêm ở cuối mã cha (đóng góp)
+    why: 'Mã biến thể là mã cha thêm tối đa 2 ký tự ở cuối; mã cha phải khai trước để biến thể lấy nhóm, nhãn, đơn vị tính theo.',
+    fix: 'Khai mã cha trước, hoặc sửa mã biến thể: giữ nguyên mã cha, chỉ thêm tối đa 2 ký tự ở cuối (không thêm chữ ở đầu).',
   },
   'ITEM-BLOCK-009': {
     id: 'ITEM-BLOCK-009', entity: 'item', level: 'block', status: 'approved', okText: 'Nhóm / ngành / nhãn có trong danh mục', field: 'groupCode',
