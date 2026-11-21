@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Vận hành: cập nhật trên máy hay lỗi Docker overlay2 busy (DEPLOY) <!-- [2026-11-21 01:55 PM Johnny Chu - Chu Hoàng Anh] DEPLOY — scripts/cap-nhat-cpanel.sh + docs/ops/DEPLOY.md mục 5 -->
+
+- **Thêm:** `scripts/cap-nhat-cpanel.sh`: cập nhật không để Compose xoá/tạo lại `web` (container web chạy ngoài Compose, tên theo thời điểm; gỡ bản cũ theo kiểu cố gắng). `docs/ops/DEPLOY.md` mục 5: triệu chứng, nguyên nhân, cách dùng.
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không. Chỉ dùng trên máy từng gặp lỗi `overlay2 ... device or resource busy`; máy khác vẫn dùng `scripts/cap-nhat.sh`.
+- **Bảo mật:** không.
+
 ### Chính sách: ngưỡng duyệt vào sổ đăng ký (`approval.levels@1`, `store = settings`) + DG-POLICY-6 (PHASE-031 S031-7, S031-32 phần đo) <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — S031-7 / S031-32 -->
 
 - **Thêm:** Rule Contract `approval.levels@1` (`apps/api/src/modules/system/rule-contracts/approval-levels.ts`, miền `approval`): dải tiền nửa mở → các cấp duyệt (quyền); `thresholdToBands` chuyển khoá `bizcity.payment.approval_thresholds` thành dải, cùng số cấp với luồng yêu cầu thanh toán.
