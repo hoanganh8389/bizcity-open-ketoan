@@ -6,6 +6,8 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useCayDonVi } from '@/lib/cayDonVi';
+import { ListPicker } from '@/components/pickers';
 
 // [2026-11-11 Nguyễn Văn Thủy] nút + cạnh ô kho: thêm kho cho chi nhánh ngay trên phiếu (đóng góp)
 const WarehouseForm = lazy(() => import('@/features/catalog/WarehousesPage').then((m) => ({ default: m.WarehouseForm })));
@@ -38,7 +40,7 @@ export const khoFullLabel = (all: KhoOption[], branchCode?: string, code?: strin
   return c ? `${c}${w ? ` · ${w.name}` : ''}` : 'mặc định (chưa khai kho)';
 };
 
-export function ChonKho(props: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string; /** Nghiệp vụ: chỉ hiện kho thuộc loại dùng được, tự chọn theo loại ưu tiên. */ op?: string }) {
+export function ChonKho(props: { branchCode: string; value: string; onChange: (code: string, ownerBranch?: string) => void; disabled?: boolean; avoid?: string; /** Nghiệp vụ: chỉ hiện kho thuộc loại dùng được, tự chọn theo loại ưu tiên. */ op?: string; /** [2026-11-21 Nguyễn Văn Thủy] gồm cả kho của mọi chi nhánh con (đệ quy), nhóm theo chi nhánh; onChange trả thêm chi nhánh sở hữu kho (đóng góp) */ conCua?: boolean }) {
   const [adding, setAdding] = useState(false);
   const { can } = useAuth();
   const canAdd = !props.disabled && Boolean(props.branchCode) && can('catalog:write');
@@ -56,29 +58,38 @@ export function ChonKho(props: { branchCode: string; value: string; onChange: (c
   );
 }
 
-function ChonKhoO({ branchCode, value, onChange, disabled, avoid, op }: { branchCode: string; value: string; onChange: (code: string) => void; disabled?: boolean; avoid?: string; op?: string }) {
+function ChonKhoO({ branchCode, value, onChange, disabled, avoid, op, conCua }: { branchCode: string; value: string; onChange: (code: string, ownerBranch?: string) => void; disabled?: boolean; avoid?: string; op?: string; conCua?: boolean }) {
   const all = useKho();
+  const cay = useCayDonVi();
+  // Chi nhánh con (đệ quy) theo cây cơ cấu, xếp theo cây — kho của chúng nhóm dưới tên chi nhánh.
+  const con = conCua ? (() => { const i = cay.list.findIndex((u) => u.code === branchCode); if (i < 0) return []; const d = cay.list[i]!.depth; const out: { code: string; name: string; depth: number }[] = []; for (let j = i + 1; j < cay.list.length && cay.list[j]!.depth > d; j++) out.push(cay.list[j]!); return out; })() : [];
   const allowed = useLoaiKhoCho(op);
   const rank = (w: KhoOption) => (allowed ? allowed.indexOf(w.typeCode ?? 'KHH') : 0);
   // Có nghiệp vụ: chỉ kho thuộc loại dùng được, xếp theo loại ưu tiên (cùng loại thì kho mặc định trước); kho đầu = tự chọn.
   const list = all.filter((w) => w.branchCode === branchCode && w.isActive && rank(w) >= 0)
     .sort((a, b) => (allowed ? rank(a) - rank(b) || Number(b.isDefault) - Number(a.isDefault) : 0));
-  const def = allowed ? list[0] : list.find((w) => w.isDefault) ?? (list.length === 1 ? list[0] : undefined);
+  // Kho mặc định của chính chi nhánh; không đánh dấu mặc định thì kho đầu tiên (luôn điền một kho thật, không để "mặc định" chung chung).
+  const def = allowed ? list[0] : list.find((w) => w.isDefault) ?? list[0];
+  const khoCon = con.map((u) => ({ u, ws: all.filter((w) => w.branchCode === u.code && w.isActive && rank(w) >= 0) })).filter((x) => x.ws.length);
+  const coCon = khoCon.some((x) => x.ws.some((w) => w.code === value));
   // Chưa chọn / kho không thuộc chi nhánh mới → kho mặc định (hoặc kho đầu tiên khác `avoid` khi chuyển trong cùng chi nhánh).
   useEffect(() => {
     if (disabled || !branchCode || !all.length) return;
-    if (value && list.some((w) => w.code === value)) return;
+    if (value && (list.some((w) => w.code === value) || coCon)) return;
     const pick = avoid && def?.code === avoid ? list.find((w) => w.code !== avoid) : def;
     if ((pick?.code ?? '') !== value) onChange(pick?.code ?? '');
   }, [branchCode, all.length, avoid, allowed?.join()]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!branchCode) return <select className="select input" disabled><option>— chọn chi nhánh trước —</option></select>;
-  if (!list.length) return <select className="select input" disabled title="Khai kho cho chi nhánh ở Danh mục kho (DM12)"><option>mặc định (chi nhánh chưa khai kho)</option></select>;
+  if (!list.length && !khoCon.length) return <select className="select input" disabled title="Khai kho cho chi nhánh ở Danh mục kho (DM12)"><option>chi nhánh chưa khai kho</option></select>;
+  // [2026-11-21 Nguyễn Văn Thủy] ô gõ tìm (mã kho, tên kho, mã / tên chi nhánh), kho xếp theo cây chi nhánh: chi nhánh đang chọn trước, chi nhánh con thụt vào (đóng góp)
+  const items = [
+    ...list.map((w) => ({ code: w.code, name: `${w.name}${allowed && w.typeCode ? ` (${w.typeCode})` : ''}`, hint: khoCon.length ? branchCode : (w.isDefault ? 'mặc định' : undefined), level: 1, strong: w.code === def?.code })),
+    ...khoCon.flatMap(({ u, ws }) => ws.map((w) => ({ code: w.code, name: `${w.name}${allowed && w.typeCode ? ` (${w.typeCode})` : ''}`, hint: u.code, level: 2 }))),
+  ];
   return (
-    <select className="select input" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
-      {/* Phiếu cũ chưa ghi kho (trống) = kho mặc định của chi nhánh — hiện đúng như vậy, không để trình duyệt tự hiện kho đầu danh sách. */}
-      {!value && <option value="">mặc định{def ? ` (${def.code} · ${def.name})` : ''}</option>}
-      {list.map((w) => <option key={w.code} value={w.code} title={`${w.name}${w.isDefault ? ' (mặc định)' : ''}${w.typeName ? ` · ${w.typeName}` : ''}`}>{w.code}{allowed && w.typeCode ? ` · ${w.typeCode}` : ''}</option>)}
-    </select>
+    <ListPicker items={items} value={value} disabled={disabled} nameOnly style={{ width: '100%' }}
+      placeholder={def ? `${def.code} · ${def.name}` : khoCon.length ? `${branchCode} chưa có kho riêng — chọn kho chi nhánh con` : 'chọn kho'}
+      emptyText="Không có kho khớp" onChange={(c) => onChange(c, all.find((w) => w.code === c)?.branchCode)} />
   );
 }
 

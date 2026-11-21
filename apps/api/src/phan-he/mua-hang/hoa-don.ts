@@ -13,7 +13,7 @@
 import { sql } from 'kysely';
 import { z } from 'zod';
 import {
-  TAX_RATE, computeDoc, invoiceLabel, matchLine, nameKey, normalizeParsed, reconcileInvoice, sameInvoice, unitFor,
+  TAX_RATE, computeDoc, invoiceKey, invoiceLabel, invoiceQtyBySku, invoicesOf, matchLine, nameKey, normalizeParsed, ratioIn, reconcileInvoice, sameInvoice, unitFor, type InvoiceQty,
   type Check, type InvoiceLine, type ItemAlias, type MatchSources, type ParsedInvoice, type PDoc, type Policy, type ProductUnit, type ReconcileResult, type ReceiptLineLite, type SupplierInvoice,
 } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
@@ -155,8 +155,31 @@ export async function findDuplicate(trx: Db, tenantId: string, partnerCode: stri
 const rateOfCode = (code: string): number | null => (['V13K', 'KCT', 'KKKN', 'R00K'].includes(code) ? null : TAX_RATE[code] ?? null);
 
 /** Phiếu nhập (chưa huỷ) cùng NCC + số / ký hiệu hoá đơn. */
+// [2026-11-21 Nguyễn Văn Thủy] phiếu nhập nhiều hoá đơn: hoá đơn thuộc phiếu nếu nằm trong danh sách hoá đơn của phiếu (đóng góp)
 export const receiptsOfInvoice = (inv: Pick<SupplierInvoice, 'partnerCode' | 'no' | 'series'>, docs: StoredDoc[]) =>
-  docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && d.partnerCode === inv.partnerCode && d.invoice?.no && sameInvoice({ no: d.invoice.no, series: d.invoice.serial }, inv));
+  docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && d.partnerCode === inv.partnerCode && invoicesOf(d).some((x) => sameInvoice({ no: x.no, series: x.serial }, inv)));
+
+/**
+ * SL theo các hoá đơn của một phiếu nhập (hoá đơn đã lưu ở MH22, dòng đã nhận diện mã). missing = hoá đơn chưa có ở MH22 hoặc còn
+ * dòng chưa nhận diện mã (không đối soát / không chia ghi sổ được); shared = hoá đơn dùng chung với phiếu nhập khác (giao nhiều lần).
+ */
+export async function invoiceQtyForReceipt(trx: Db, tenantId: string, doc: PDoc, docs: StoredDoc[]): Promise<{ list: InvoiceQty[]; missing: string[]; shared: string[] }> {
+  const invs = invoicesOf(doc);
+  const out: { list: InvoiceQty[]; missing: string[]; shared: string[] } = { list: [], missing: [], shared: [] };
+  if (doc.kind !== 'receipt' || !invs.length || !doc.partnerCode) return out;
+  const rows = await trx.selectFrom('supplier_invoices').select(['id', 'invoice_series', 'invoice_no']).where('tenant_id', '=', tenantId).where('partner_code', '=', doc.partnerCode).where('status', '=', 'active')
+    .where(sql<boolean>`ltrim(invoice_no, '0') IN (${sql.join(invs.map((i) => sql`ltrim(${i.no}, '0')`))})`).execute();
+  for (const i of invs) {
+    const k = invoiceKey(i);
+    const hit = rows.find((r) => sameInvoice({ no: r.invoice_no, series: r.invoice_series }, { no: i.no, series: i.serial }));
+    if (!hit) { out.missing.push(`${k} (chưa có ở MH22)`); continue; }
+    const inv = (await loadInvoices(trx, tenantId, { id: String(hit.id) }))[0]!;
+    if (inv.lines.some((l) => !l.sku)) { out.missing.push(`${k} (còn dòng chưa nhận diện mã)`); continue; }
+    if (receiptsOfInvoice(inv, docs).some((d) => d.id !== doc.id)) out.shared.push(k);
+    out.list.push({ key: k, lines: inv.lines.filter((l) => l.sku).map((l) => ({ sku: l.sku!, unit: l.unit || l.nccUnit, qty: l.qty })) });
+  }
+  return out;
+}
 
 /** Dòng + tổng tiền phiếu nhập để đối soát (phiếu đã duyệt: số đã chốt; nháp: tính theo chính sách hiện hành). */
 export function receiptSide(docs: (PDoc & { totals?: StoredDoc['totals'] })[], policies: Policy[], units: Record<string, ProductUnit[]>): { lines: ReceiptLineLite[]; total: { beforeTax: number; tax: number; total: number } } {
@@ -364,6 +387,36 @@ export async function deleteAlias(trx: Db, tenantId: string, actor: string, id: 
 
 /** Phiếu nhập có số hoá đơn đã lưu ở Hoá đơn NCC → đối soát ngay (cảnh báo, không chặn). */
 export async function invoiceCheck(trx: Db, tenantId: string, doc: PDoc, docs: StoredDoc[], policies: Policy[]): Promise<Check[]> {
+  if (doc.kind !== 'receipt' || !doc.partnerCode) return [];
+  const invs = invoicesOf(doc);
+  if (!invs.length) return [];
+  const out: Check[] = [];
+  // Một hoá đơn: đối soát từng dòng như cũ (SL, giá, thuế, tổng). Nhiều hoá đơn: mỗi hoá đơn chỉ là một phần phiếu → bỏ so từng hoá đơn với cả
+  // phiếu (sẽ lệch giả), dùng phép cộng dồn SL bên dưới.
+  for (const i of invs) out.push(...(await invoiceCheckOne(trx, tenantId, { ...doc, invoice: { no: i.no, serial: i.serial, date: i.date, total: i.total } }, docs, policies))
+    .filter((c) => invs.length === 1 || (c.code !== 'inv_diff' && c.code !== 'inv_match')));
+  // [2026-11-21 Nguyễn Văn Thủy] SL thực nhận ↔ SL theo hoá đơn (cộng dồn các hoá đơn của phiếu): lệch thì chặn duyệt, cho Duyệt ngoại lệ (đóng góp)
+  const q = await invoiceQtyForReceipt(trx, tenantId, doc, docs);
+  if (q.list.length && !q.shared.length) {
+    const units = await unitsOf(trx, tenantId, [...doc.lines.map((l) => l.sku), ...q.list.flatMap((x) => x.lines.map((l) => l.sku))].filter(Boolean));
+    const by = invoiceQtyBySku(q.list, units);
+    const nhan = new Map<string, number>();
+    for (const l of doc.lines.filter((x) => x.sku && x.qty > 0)) nhan.set(l.sku, (nhan.get(l.sku) ?? 0) + l.qty * (ratioIn(units, l.sku, l.unit) || 1));
+    const lech: string[] = [];
+    const fmt = (n: number) => (Math.round(n * 100) / 100).toLocaleString('vi-VN');
+    for (const sku of new Set([...nhan.keys(), ...by.keys()])) {
+      const a = nhan.get(sku) ?? 0, b = by.get(sku) ?? 0;
+      if (Math.abs(a - b) > 1e-6) lech.push(`${sku}: thực nhận ${fmt(a)}, hoá đơn ${fmt(b)}${q.missing.length ? '' : ''}`);
+    }
+    if (lech.length && !q.missing.length) out.push({ level: 'error', code: 'inv_qty_diff', blocking: true, text: `Lệch SL thực nhận ↔ hoá đơn (${q.list.map((x) => x.key).join(', ')}, theo ĐVT nhỏ nhất): ${lech.slice(0, 6).join('; ')}${lech.length > 6 ? ` … (+${lech.length - 6})` : ''} — sửa SL / thêm hoá đơn, hoặc người có quyền Duyệt ngoại lệ` });
+    else if (!lech.length && !q.missing.length) out.push({ level: 'info', code: 'inv_qty_match', text: `SL thực nhận khớp ${q.list.length} hoá đơn (${q.list.map((x) => x.key).join(', ')})` });
+  }
+  // Nhiều hoá đơn: ghi sổ tách theo từng hoá đơn → mọi hoá đơn phải có ở MH22 và nhận diện đủ mã.
+  if (invs.length > 1 && q.missing.length) out.push({ level: 'error', code: 'inv_split_unknown', blocking: true, text: `Phiếu có ${invs.length} hoá đơn — ghi sổ tách theo từng hoá đơn cần dòng hàng của mọi hoá đơn: ${q.missing.join('; ')}. Nhập / nhận diện hoá đơn ở MH22` });
+  return out;
+}
+
+async function invoiceCheckOne(trx: Db, tenantId: string, doc: PDoc, docs: StoredDoc[], policies: Policy[]): Promise<Check[]> {
   if (doc.kind !== 'receipt' || !doc.invoice?.no || !doc.partnerCode) return [];
   const cands = await trx.selectFrom('supplier_invoices').select(['id', 'invoice_series', 'invoice_no']).where('tenant_id', '=', tenantId).where('partner_code', '=', doc.partnerCode).where('status', '=', 'active')
     .where(sql<boolean>`ltrim(invoice_no, '0') = ltrim(${doc.invoice.no}, '0')`).execute();
