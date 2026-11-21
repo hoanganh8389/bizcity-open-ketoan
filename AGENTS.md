@@ -40,6 +40,18 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 - **Mã nhóm 8 (combo) đang chuyển hết sang combo**; không tạo mã nhóm 8 mới, không mở luồng mới dựa trên `SkuKind = 'combo'`.
 - Chi tiết: [RULE-COMBO](docs/rules/RULE-COMBO.md), [PHASE-037](docs/phases/PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/README.md), [`bizcity_combo@1`](docs/contracts/BIZCITY-COMBO-v1.md).
 
+### Ghi log lỗi (R-LOG — Johnny Chu – Chu Hoàng Anh khởi tạo 2026-11-21, CANON §0.12) <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — luật R-LOG cho agent; nhắc người đóng góp -->
+
+**Framework đã có luật ghi log lỗi R-LOG.** Mọi agent áp khi tự viết mã **và nhắc người đóng góp** (Nguyễn Văn Thủy, Võ Hoàng, kiennt, khanhtd…) khi rà PR hoặc khi họ nhờ viết mã có `catch`, `log.*`, `console.*`, tác vụ nền, gọi dịch vụ ngoài, điểm vào mới. Nhắc một lần, ngắn, kèm mã luật: *"Framework có luật R-LOG (Johnny Chu init 2026-11-21) — chỗ này vi phạm R-LOG-n: …, sửa thành …"*.
+
+- **R-LOG-1 · một đường ghi lỗi:** `log.error({ err }, 'câu tiếng Việt')` qua logger của Platform (`req.log`, `app.log`, logger con). **Không** `err: String(err)`, `e.message` (mất stack), không `console.error` trong route / service / subscriber. Bọc lỗi thì `new Error('…', { cause: err })`.
+- **R-LOG-2 · không nuốt lỗi:** `catch {}` / `.catch(() => undefined)` chỉ khi có `// nuot-loi: <lý do>`; còn lại ít nhất `log.warn`.
+- **R-LOG-3 · tiến trình không chết câm:** điểm vào mới gọi `installProcessHandlers()` trước mọi import khác; lỗi khởi động ghi `fatal` đồng bộ rồi mới thoát.
+- **R-LOG-4 · không lộ dữ liệu:** ghi mã, định danh, tên trường — không payload, mật khẩu, token, MST / SĐT / email cá nhân, số tài khoản.
+- **Chọn mức:** người dùng nhập sai = `info` (không phải lỗi hệ thống); đã lùi được = `warn`; cần người sửa = `error`; tiến trình sắp chết = `fatal`.
+- **Nhật ký lỗi cố định** `logs/` của bản cài (≤ 200 MB) chỉ do logger của Platform ghi; không tự `appendFile` tệp log riêng.
+- R-LOG-1..4 là **chặn** khi rà; R-LOG-5..11 là cảnh báo. Mã cũ chưa theo luật: không bắt sửa trong PR không liên quan, ghi nợ vào PHASE-038 (S038-14). Chi tiết: [RULE-LOG](docs/rules/RULE-LOG.md), [PHASE-038](docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/README.md).
+
 ### Enterprise Continuity (ADR-0028 — chấp nhận về nguyên tắc 2026-11-05) <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — luật ECP cho agent -->
 
 - **ECP-13: không thay đổi phá huỷ lịch sử nghiệp vụ đã được tham chiếu.** Dữ liệu gốc đã dùng: ngừng dùng / gộp / phiên bản mới, **không** xoá, **không** ghi đè thuộc tính lịch sử (mã, tên pháp lý, MST, phân loại, cấu hình đã dùng). Ẩn nút Xoá không phải là thi hành — chặn ở CSDL, SDK, quyền, bộ kiểm.
@@ -118,6 +130,7 @@ node tests/conformance/selfcheck.mjs --strict && npm run typecheck && npm test
 - Phát hiện **chặn** → báo người dùng, ghi việc cho người đóng góp; **không âm thầm sửa** việc của họ (lỗi khẩn thì sửa và ghi rõ).
 - **Đọc [RULE-REVIEW §6](docs/rules/RULE-REVIEW.md) (cảnh báo W-1…W-11, các lỗi đã gặp thật) trước mỗi lần rà.** Đặc biệt: script "làm sạch" / tắt trigger / xoá sổ là **chặn** (R-REV-11); tra cứu cho tiền không được trả mặc định khi không tìm thấy (R-REV-13); công cụ phân hệ ở `scripts/<phân hệ>/` (R-REV-12).
 - Lỗi lặp lại → thêm luật dò H-* vào `scripts/ra-soat-dong-gop.mjs` hoặc check SC-* / DG-* (R-REV-10).
+- **Ghi log lỗi (R-LOG):** mỗi lần rà, quét `catch`, `log.*`, `console.*` trong phần đổi; vi phạm R-LOG-1..4 là chặn. Người đóng góp chưa biết luật thì nhắc *"Framework có luật R-LOG (Johnny Chu init 2026-11-21)"* và dẫn [RULE-LOG](docs/rules/RULE-LOG.md). <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — R-LOG vào bước rà -->
 
 ## Cộng đồng mở rộng thế nào (bậc thang mở rộng)
 

@@ -14,10 +14,11 @@
 <!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §5: core/errors.ts, core/http.ts nay ở packages/platform -->
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — §0.9 Lõi bất biến, nghiệp vụ linh hoạt (ADR-0029); dòng R-WF; nhật ký v1.5 -->
 <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — §3 dòng R-OKT-CONN, §6 nhật ký v1.8, dòng phiên bản. -->
+<!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — §0.12 lỗi phải để lại dấu; luật R-LOG; §5 dòng ghi log; nhật ký v1.9 -->
 
 > **Tệp này:** một trang liệt kê **mọi** luật và hợp đồng đang chi phối lõi. Không lặp nội dung luật — chỉ mã, cấp, nơi kiểm.
 > **Dùng khi:** sửa lõi → tra bảng §4 để biết phải sửa tài liệu / hợp đồng nào **trong cùng PR**.
-> **Phiên bản:** 1.8 · 2026-11-21 (nhật ký §6) · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
+> **Phiên bản:** 1.9 · 2026-11-21 (nhật ký §6) · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
 > **Hai lớp chuẩn:** luật `R-*` dưới đây giữ **Kernel** (sổ cái). Luật `STD-*` của [Bizcity Framework Standard v1](standard/README.md) giữ **module** (7 hợp đồng, bộ kiểm cài đặt). Module tuân `STD-*`; nhờ SDK nó tự tuân `R-*`.
 
 <!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
@@ -187,6 +188,17 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 | tạo mã hàng cho combo, cho tỷ lệ tặng | `combo_id` + `combo_codes` |
 | cờ "không tính giá / không lên thuế" trên kho hay mặt hàng | công tắc trong chính sách có phiên bản |
 
+### 0.12 Lỗi phải để lại dấu — minh bạch, không im lặng, không lộ dữ liệu (Johnny Chu – Chu Hoàng Anh khởi tạo 2026-11-21; luật [R-LOG](rules/RULE-LOG.md), [PHASE-038](phases/PHASE-038-NHAT-KY-LOI-CO-DINH/README.md))
+<!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — §0.12 tôn chỉ ghi log lỗi -->
+
+> **Lỗi nào cũng phải để lại một dòng đọc được: cái gì hỏng, ở đâu, bản nào, trong việc gì, vì sao, làm gì tiếp — và không dòng nào chứa dữ liệu của người dùng.** Người sửa (người hay AI) đọc một tệp là biết, không phải vào máy chủ đoán.
+
+1. **Không im lặng.** Không nuốt lỗi, tiến trình không chết câm; lỗi khởi động ghi xong mới thoát (R-LOG-2, -3).
+2. **Không lộ dữ liệu.** Log ghi mã và định danh, không ghi giá trị của người dùng (R-LOG-4).
+3. **Người dùng nhập sai không phải lỗi hệ thống.** Chọn mức theo việc ai phải sửa (R-LOG-7).
+4. **Mọi bản cài có nhật ký lỗi cố định** `logs/` ≤ 200 MB, một lệnh gom gửi về; bộ giám sát (Loki, Tempo, Grafana) là đường điều tra sâu, không thay tầng tối thiểu này (R-LOG-9).
+5. **R-ERR trả ra ngoài, R-LOG ghi vào trong** — hai luật không thay nhau.
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -236,6 +248,7 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 | R-FLOW | [rules/RULE-FLOW.md](rules/RULE-FLOW.md) | 1 | **R-FLOW-9 (2026-11-09): chia nhỏ để chốt, mỗi master plan có bảng bước thắng nhỏ (§0.10).** **Chủ dự án đồng ý 2026-11-03:** nhận việc theo thứ tự giữ chỗ vào `main` → chốt thiết kế dùng chung bằng tài liệu → code. Một phạm vi một người ([CLAIMS](phases/CLAIMS.md)); nhánh ngắn; gộp `main` và bộ kiểm xanh trước khi đẩy <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW --> **`main` là nguồn sự thật duy nhất của tài liệu** (R-FLOW-7, 2026-11-03). | SC-FLOW-1; `scripts/nhan-viec.mjs kiem`; Bước 0 AGENTS.md |
 | R-COMBO <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — R-COMBO dòng danh mục luật (ADR-0035) --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) | 1 (R-COMBO-1..10) | **Chấp nhận 2026-11-17, chưa có mã** (CANON §0.11) ([ADR-0035](adr/ADR-0035-combo-identity-phan-kho-nguon-qua.md), PHASE-037): **combo là thoả thuận thương mại có phiên bản, không phải mặt hàng** — `combo_id` ≠ `item_id`, quà là hàng thật thì mang `item_id` thật; bản đã phát hành không sửa; tách / lắp / chuyển phân kho bảo toàn lượng theo `item_id` · lô; mỗi dòng quà truy được về dòng nhận gốc; chỉ Kernel ghi sổ; **giá 0 / `isGift` / loại phân kho không tự quyết định giá vốn hay thuế**; một combo hai mặt mua / bán, kế thừa đầu vào phải phát hành; `phankho_id` = `warehouses.uid`; năm nguồn quà; hết combo thì bán rời | SC-COMBO-1..3, `IN-COMBO-*`, `CT-COMBO-*` (sẽ có) |
 | R-OKT-CONN <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — dòng danh mục luật (chủ dự án 2026-11-21) --> | [rules/RULE-OPEN-POS-CONNECTION.md](rules/RULE-OPEN-POS-CONNECTION.md) | 1 (luật tối thượng phía open-pos) | **Chấp nhận 2026-11-21 (chỉnh 05:31 PM), chưa có mã:** open-pos (repo `open-pos`, trước `tgs_pos`) / open-pos-backend (repo `open-pos-backend`, trước `tgs_shop_management`): **admin chọn nguồn danh mục theo shop** — `local`: shop tự quản đầy đủ trong bảng theo prefix; `ketoan`: open-ketoan là nguồn sự thật, trường gốc chỉ đọc (R-MD-1), open-pos-backend **tự cấu hình ánh xạ mặc định** và đối chứng; mất kết nối thì không sửa danh mục. **Bảng local ở giữa luôn có; đơn ghi local trước, gửi lên sau commit qua outbox** (R-OKT-CONN-11). Một blog = một shop = một tenant; một bộ kéo; mã mới của shop `ketoan` gửi thẳng kế toán | `tgs_catalog_source` + cổng ghi, `tgs_okt_connected()` ở open-pos-backend (sẽ có); feed theo tenant (R-TEN) |
+| R-LOG <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — R-LOG dòng danh mục luật --> | [rules/RULE-LOG.md](rules/RULE-LOG.md) | 0 (R-LOG-1..4), 1 (R-LOG-5..9), 2 (R-LOG-10..11) | **Chấp nhận 2026-11-21** (Johnny Chu – Chu Hoàng Anh khởi tạo, §0.12, PHASE-038): một đường ghi lỗi có đối tượng `err` (giữ stack, `cause`); không nuốt lỗi im lặng; tiến trình không chết câm (ghi `fatal` đồng bộ rồi thoát); không lộ dữ liệu; mỗi dòng có bản + commit; tác vụ nền có `job` / `traceId`; chọn mức theo ai phải sửa; stack trỏ `.ts`; nhật ký lỗi cố định `logs/` ≤ 200 MB; giao diện có ErrorBoundary | review; SC-EVD-1 (ngoại lệ hẹp logger); SC-LOG-1..3, SC-OBS-3 (sẽ có, PHASE-038 B5) |
 
 ## 4. Hợp đồng (contracts)
 
@@ -314,9 +327,12 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Đổi mức đạt một trụ cột / tiêu chí | [standard/NEN-MONG-DOANH-NGHIEP.md](standard/NEN-MONG-DOANH-NGHIEP.md) hoặc `standard/tru-cot.json`, kèm tín hiệu chạy được (R-ECP-SCORE) |
 | Gỡ được cạnh import ngược chiều lớp | `--update-baseline`; mốc đồ thị mới `node scripts/do-thi-phu-thuoc.mjs` khi xong một Phase (SC-LAYER-2) |
 | Thêm / sửa mã đụng combo, khuyến mại có quà, nguồn quà, phân kho khuyến mại / giữ hộ, cách tính giá vốn – thuế của hàng tặng <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — §5 dòng R-COMBO --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) (luật + mã kiểm), [contracts/BIZCITY-COMBO-v1.md](contracts/BIZCITY-COMBO-v1.md); không tạo mã hàng cho combo, không suy giá vốn / thuế từ `isGift` |
+| Thêm / sửa `catch`, ghi log, `console.*`, tác vụ nền, gọi dịch vụ ngoài, điểm vào mới (job, worker), logger, `logs/` <!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — §5 dòng R-LOG --> | theo [rules/RULE-LOG.md](rules/RULE-LOG.md) (R-LOG-1..4 chặn khi rà); trường log mới → [ops/OBSERVABILITY.md](ops/OBSERVABILITY.md) §2 |
 
 ## 6. Nhật ký thay đổi CANON
 
+<!-- [2026-11-21 04:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — CANON v1.9 (§0.12, R-LOG) -->
+- **v1.9 (2026-11-21):** Thêm §0.12 **Lỗi phải để lại dấu** và luật **R-LOG** ([rules/RULE-LOG.md](rules/RULE-LOG.md), PHASE-038) do Johnny Chu – Chu Hoàng Anh khởi tạo: tám loại lỗi và cách chọn mức; R-LOG-1..4 chặn (một đường ghi lỗi, không nuốt lỗi, tiến trình không chết câm, không lộ dữ liệu); nhật ký lỗi cố định `logs/` ≤ 200 MB; §5 thêm dòng sửa `catch` / log. Nguồn: sự cố go-live 503 ngày 2026-11-21.
 <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — CANON v1.8 -->
 - **v1.8 (2026-11-21):** Thêm luật **R-OKT-CONN** ([rules/RULE-OPEN-POS-CONNECTION.md](rules/RULE-OPEN-POS-CONNECTION.md)) cho phía bán hàng dùng open-ketoan.
   <!-- [2026-11-21 05:31 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — chỉnh v1.8 trước khi merge: nguồn theo shop, bảng local ở giữa, đơn ghi local trước, tên repo mới. -->
