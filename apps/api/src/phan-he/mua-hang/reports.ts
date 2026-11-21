@@ -10,14 +10,14 @@
  */
 import { sql } from 'kysely';
 import {
-  AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, invoiceDueDate, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
+  type TraceItem, TAX_RATE, priceFor, AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, invoiceDueDate, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
   scopeBranches, deliveryBranches, contractApplies } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { apBalance, contractUsage, looseDebt, openOf, soleContract, openOfBrand, pendingOf, type Ctx } from './analysis.js';
 import { refReceipts, spreadOverMany } from './posting.js';
-import { unitsForOrders, unitsOf } from './gia-mua.js';
+import { listSupplierProducts, unitsForOrders, unitsOf } from './gia-mua.js';
 import { noDueDate, type StoredDoc } from './store.js';
 // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
 import { theoMa } from './ma-hien-hanh.js';
@@ -580,4 +580,117 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const drafts = ctx.docs.filter((d) => d.status === 'draft');
   if (drafts.length) items.push({ key: 'drafts', level: 'info', text: 'Phiếu nháp chưa gửi duyệt', count: drafts.length, path: '/mua-hang/tong-hop?trang-thai=draft' });
   return { asOf, byKind, items };
+}
+
+// [2026-11-21 Nguyễn Văn Thủy] TÌNH HÌNH THỰC HIỆN CHÍNH SÁCH MUA HÀNG (MH32): doanh số đủ điều kiện, được hưởng, đã nhận, còn phải nhận — theo NCC / hợp đồng → chính sách → chứng từ (đóng góp)
+export interface PolicyExecDoc { docNo: string; docId: string; docDate: string; branchCode: string; kind: string; base: number; amount: number; note: string }
+export interface PolicyExecRow {
+  policy: string; name: string; kind: string; partnerCode: string; contractCode: string; brandCode: string; validFrom: string; validTo: string;
+  /** Doanh số trước thuế của các phiếu được áp (thưởng: doanh số kỳ tính thưởng). */
+  base: number; entitled: number; received: number; remaining: number;
+  /** Cách nhận: trừ thẳng trên hoá đơn / trừ khi thanh toán đúng hạn / phiếu thưởng cuối kỳ / hàng tặng. */
+  method: string; status: 'du' | 'con' | 'chua-dat'; docs: PolicyExecDoc[]; note: string;
+}
+const DOC_KINDS = ['trade_discount', 'item_discount', 'qty_tier', 'payment_discount', 'promo_gift'];
+const REBATE_KINDS = ['period_rebate', 'target_rebate', 'stage_rebate'];
+/** Các kỳ (YYYY-MM / YYYY-Qn / YYYY) của chính sách thưởng giao với [from, to]. */
+function periodsIn(kind: string, from: string, to: string): string[] {
+  const out = new Set<string>();
+  let y = Number(from.slice(0, 4)), m = Number(from.slice(5, 7));
+  const ey = Number(to.slice(0, 4)), em = Number(to.slice(5, 7));
+  for (let i = 0; i < 240 && (y < ey || (y === ey && m <= em)); i++) {
+    out.add(kind === 'year' ? String(y) : kind === 'quarter' ? `${y}-Q${Math.floor((m - 1) / 3) + 1}` : `${y}-${String(m).padStart(2, '0')}`);
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return [...out];
+}
+
+export async function policyExecution(trx: Db, tenantId: string, ctx: Ctx, f: { from: string; to: string; partnerCode?: string; contractCode?: string }): Promise<PolicyExecRow[]> {
+  const inRange = (d: StoredDoc) => d.docDate >= f.from && d.docDate <= f.to;
+  const pols = ctx.policies.filter((p) => (DOC_KINDS.includes(p.kind) || REBATE_KINDS.includes(p.kind))
+    && (!f.partnerCode || p.scope.partnerCode === f.partnerCode) && (f.contractCode === undefined || (p.scope.contractCode ?? '') === f.contractCode)
+    && (!p.validFrom || p.validFrom <= f.to) && (!p.validTo || p.validTo >= f.from));
+  const receipts = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && inRange(d));
+  const calcOf = new Map(receipts.map((d) => [d.id, computeDoc(d, [])]));
+  const rows: PolicyExecRow[] = [];
+  for (const p of pols) {
+    const base0 = { policy: p.code, name: p.name, kind: p.kind, partnerCode: p.scope.partnerCode ?? '', contractCode: p.scope.contractCode ?? '', brandCode: p.scope.brandCode ?? '', validFrom: p.validFrom ?? '', validTo: p.validTo ?? '', note: '' };
+    if (DOC_KINDS.includes(p.kind)) {
+      const docs: PolicyExecDoc[] = [];
+      let received = 0;
+      for (const d of receipts) {
+        const tr = ((d.policyTrace ?? []) as TraceItem[]).filter((t) => t.policy === p.code);
+        if (!tr.length) continue;
+        const c = calcOf.get(d.id)!;
+        let amount = 0, note = '';
+        if (p.kind === 'trade_discount') { amount = tr.reduce((t, x) => t + (x.amount ?? 0), 0) || c.orderDiscount; note = 'trừ trên hoá đơn'; }
+        else if (p.kind === 'item_discount' || p.kind === 'qty_tier') {
+          const skus = new Set(tr.map((x) => x.text.split(':')[0]!.trim()));
+          amount = c.lines.filter((l) => skus.has(l.sku)).reduce((t, l) => t + l.lineDiscount, 0); note = 'trừ trên hoá đơn';
+        } else if (p.kind === 'payment_discount') {
+          amount = (c as { ckttExpected?: number }).ckttExpected ?? tr.reduce((t, x) => t + (x.amount ?? 0), 0);
+          const paid = ctx.docs.filter((x) => x.kind === 'payment' && x.status === 'approved' && (x.refIds ?? []).includes(d.id)).reduce((t, x) => t + (x.ckttAmount ?? 0), 0);
+          received += Math.min(amount, paid); note = paid ? `đã trừ khi thanh toán ${paid.toLocaleString('vi-VN')}` : 'chờ thanh toán đúng hạn';
+        } else if (p.kind === 'promo_gift') {
+          const gifts = c.lines.filter((l) => l.lineType !== 'buy' && (l.program === p.code || !l.program));
+          const price = (sku: string) => { const b = c.lines.find((l) => l.sku === sku && l.lineType === 'buy'); return b && b.qty ? b.beforeTax / b.qty : 0; };
+          amount = Math.round(gifts.reduce((t, l) => t + l.qty * price(l.sku), 0));
+          note = `hàng tặng ${gifts.reduce((t, l) => t + l.qty, 0).toLocaleString('vi-VN')} (theo giá mua)`;
+        }
+        if (p.kind !== 'payment_discount') received += amount;
+        docs.push({ docNo: d.docNo, docId: d.id, docDate: d.docDate, branchCode: d.branchCode, kind: d.kind, base: Math.round(d.totals.beforeTax), amount: Math.round(amount), note });
+      }
+      const entitled = docs.reduce((t, x) => t + x.amount, 0);
+      rows.push({ ...base0, base: docs.reduce((t, x) => t + x.base, 0), entitled, received: Math.round(received), remaining: Math.max(0, Math.round(entitled - received)),
+        method: p.kind === 'payment_discount' ? 'Trừ khi thanh toán đúng hạn' : p.kind === 'promo_gift' ? 'Hàng tặng kèm phiếu nhập' : 'Trừ thẳng trên hoá đơn',
+        status: !docs.length ? 'chua-dat' : entitled - received > 0.5 ? 'con' : 'du', docs });
+    } else {
+      const docs: PolicyExecDoc[] = [];
+      let base = 0, entitled = 0, received = 0;
+      for (const per of periodsIn(String(p.rule.period ?? 'month'), f.from, f.to)) {
+        // Kỳ đã có phiếu thưởng: số NCC chốt trên phiếu là số được hưởng; chưa có thì tạm tính từ phiếu nhập đã duyệt.
+        const phieu = ctx.docs.filter((x) => x.kind === 'rebate' && x.status !== 'cancelled' && x.rebate?.policyCode === p.code && x.rebate.period === per);
+        if (phieu.length) { base += phieu.reduce((t, d) => t + (d.rebate?.base ?? 0), 0); entitled += phieu.reduce((t, d) => t + (d.amount ?? 0), 0); }
+        const pv = phieu.length ? { base: 0, amount: 0 } : await rebatePreview(trx, tenantId, ctx, p, per);
+        base += pv.base; entitled += pv.amount;
+        for (const d of phieu) {
+          if (d.status === 'approved') received += d.amount ?? 0;
+          docs.push({ docNo: d.docNo || '(nháp)', docId: d.id, docDate: d.docDate, branchCode: d.branchCode, kind: d.kind, base: d.rebate?.base ?? 0, amount: d.amount ?? 0, note: `kỳ ${per} · ${d.status === 'approved' ? 'đã hạch toán' : 'chưa duyệt'}` });
+        }
+        if (pv.amount > 0 && !docs.some((x) => x.note.startsWith(`kỳ ${per}`))) docs.push({ docNo: '', docId: '', docDate: '', branchCode: '', kind: 'rebate', base: pv.base, amount: pv.amount, note: `kỳ ${per} · chưa lập phiếu thưởng` });
+      }
+      rows.push({ ...base0, base: Math.round(base), entitled: Math.round(entitled), received: Math.round(received), remaining: Math.max(0, Math.round(entitled - received)),
+        method: 'Phiếu thưởng cuối kỳ (giảm công nợ)', status: entitled <= 0 ? 'chua-dat' : entitled - received > 0.5 ? 'con' : 'du', docs });
+    }
+  }
+  return rows;
+}
+
+// [2026-11-21 Nguyễn Văn Thủy] ĐỐI CHIẾU GIÁ MUA THEO HỢP ĐỒNG (MH34): giá thoả thuận (hợp đồng / giá NCC ngoài hợp đồng) ↔ giá trên phiếu nhập đã duyệt, quy chưa thuế (đóng góp)
+export interface PriceCheckRow {
+  docId: string; docNo: string; docDate: string; branchCode: string; partnerCode: string; contractCode: string; sku: string; name: string; unit: string; qty: number;
+  agreed: number | null; actual: number; diff: number | null; diffPct: number | null; diffAmount: number | null; source: string;
+}
+export async function contractPriceCheck(trx: Db, tenantId: string, ctx: Ctx, f: { from: string; to: string; partnerCode?: string; contractCode?: string }): Promise<PriceCheckRow[]> {
+  const docs = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && d.docDate >= f.from && d.docDate <= f.to
+    && (!f.partnerCode || d.partnerCode === f.partnerCode) && (f.contractCode === undefined || (d.contractCode ?? '') === f.contractCode));
+  if (!docs.length) return [];
+  const skus = [...new Set(docs.flatMap((d) => d.lines.filter((l) => l.lineType === 'buy' && l.sku).map((l) => l.sku)))];
+  const prices = await listSupplierProducts(trx, tenantId, { skus, withGeneral: true, all: true });
+  const units = await unitsOf(trx, tenantId, skus);
+  const out: PriceCheckRow[] = [];
+  for (const d of docs) for (const l of d.lines.filter((x) => x.lineType === 'buy' && x.sku && x.qty > 0)) {
+    const rate = (TAX_RATE as Record<string, number>)[l.taxCode] ?? 0;
+    const chuaThue = (v: number, gom: boolean) => (gom ? v / (1 + rate / 100) : v);
+    const actual = Math.round(chuaThue(l.price, d.priceIncludesVat) * 100) / 100;
+    const hit = priceFor(prices, { date: d.docDate, partnerCode: d.partnerCode, sku: l.sku, unit: l.unit, contractCode: d.contractCode || undefined }, units[l.sku] ?? []);
+    const agreed = hit ? Math.round(chuaThue(hit.price, Boolean(hit.row.priceIncludesVat)) * 100) / 100 : null;
+    const diff = agreed !== null ? Math.round((actual - agreed) * 100) / 100 : null;
+    out.push({
+      docId: d.id, docNo: d.docNo, docDate: d.docDate, branchCode: d.branchCode, partnerCode: d.partnerCode, contractCode: d.contractCode ?? '', sku: l.sku, name: l.name, unit: l.unit, qty: l.qty,
+      agreed, actual, diff, diffPct: agreed ? Math.round((diff! / agreed) * 10000) / 100 : null, diffAmount: diff !== null ? Math.round(diff * l.qty) : null,
+      source: !hit ? 'chưa khai giá thoả thuận' : hit.row.contractCode ? `giá hợp đồng ${hit.row.contractCode}` : hit.row.partnerCode ? 'giá NCC (ngoài hợp đồng)' : 'giá chung',
+    });
+  }
+  return out;
 }

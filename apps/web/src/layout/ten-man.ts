@@ -24,6 +24,10 @@ export const TEN_MAN: Record<string, TenMan> = {
   '/thue/hoa-don-co-quan-thue': { label: 'Hóa đơn từ cơ quan thuế' },
   '/mua-hang/bao-cao': { label: 'Sổ chi tiết mua hàng' },
   '/mua-hang/doi-chieu': { label: 'Tình hình thực hiện đơn mua hàng' },
+  '/mua-hang/thuc-hien-chinh-sach': { label: 'Tình hình thực hiện chính sách mua hàng' },
+  '/mua-hang/chinh-sach-theo-hop-dong': { label: 'Tổng hợp chính sách theo hợp đồng' },
+  '/mua-hang/doi-chieu-gia-hop-dong': { label: 'Đối chiếu giá mua theo hợp đồng' },
+  '/mua-hang/thuc-hien-hop-dong': { label: 'Tình hình thực hiện hợp đồng mua hàng' },
   '/mua-hang/nhat-ky': { label: 'Nhật ký thao tác mua hàng' },
   '/mua-hang/han-muc': { label: 'Công nợ NCC' }, // [2026-11-20 Nguyễn Văn Thủy] tên ngắn: hạn mức, khoản đến hạn, quá hạn (đóng góp)
   // Bán hàng

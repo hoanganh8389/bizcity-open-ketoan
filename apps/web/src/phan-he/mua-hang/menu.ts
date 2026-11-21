@@ -62,6 +62,11 @@ export const muaHangMenu: MenuItem[] = [
       { key: 'mh-nhat-ky', label: 'Nhật ký mua hàng', path: '/mua-hang/nhat-ky', code: 'MH10' },
       { key: 'mh-doi-chieu', label: 'Đối chiếu đơn đặt ↔ phiếu nhập', path: '/mua-hang/doi-chieu', code: 'MH21' },
       { key: 'mh-bc-chinh-sach', label: 'Chi tiết chính sách mua hàng', path: '/mua-hang/chi-tiet-chinh-sach', code: 'MH14' },
+      // [2026-11-21 Nguyễn Văn Thủy] báo cáo theo hợp đồng / chính sách (đóng góp)
+      { key: 'mh-thuc-hien-chinh-sach', label: 'Tình hình thực hiện chính sách mua hàng', path: '/mua-hang/thuc-hien-chinh-sach', code: 'MH32' },
+      { key: 'mh-chinh-sach-hop-dong', label: 'Tổng hợp chính sách theo hợp đồng', path: '/mua-hang/chinh-sach-theo-hop-dong', code: 'MH33' },
+      { key: 'mh-doi-chieu-gia-hop-dong', label: 'Đối chiếu giá mua theo hợp đồng', path: '/mua-hang/doi-chieu-gia-hop-dong', code: 'MH34' },
+      { key: 'mh-thuc-hien-hop-dong', label: 'Tình hình thực hiện hợp đồng mua hàng', path: '/mua-hang/thuc-hien-hop-dong', code: 'MH35' },
       { key: 'mh-nk-mua-hang', label: 'Sổ nhật ký mua hàng', path: '/bao-cao/nhat-ky-mua-hang', code: 'ACC77' },
       { key: 'mh-thue-vao', label: 'Báo cáo thuế vào', path: '/thue/bang-ke-mua-vao', code: 'ACC64' },
       { key: 'mh-cong-no', label: 'Sổ tổng hợp công nợ phát sinh', path: '/bao-cao/cong-no', code: 'ACC38' },
