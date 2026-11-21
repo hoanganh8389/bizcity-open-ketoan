@@ -1,10 +1,11 @@
-# RULE · open-pos ⇄ open-ketoan — nguồn theo shop, bảng local ở giữa, đơn ghi local trước (R-OKT-CONN)
+# RULE · open-pos ⇄ open-ketoan — nguồn theo shop, bảng local ở giữa, quầy vẫn bán khi kế toán tắt (R-OKT-CONN)
 <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — luật kết nối open-pos / open-pos-backend với open-ketoan qua open-ketoan-bridge: standalone đầy đủ, kết nối thì theo kế toán, tự cấu hình ánh xạ mặc định, một blog một tenant (chủ dự án 2026-11-21). -->
 <!-- [2026-11-21 05:31 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — chỉnh theo chủ dự án 21/11 chiều: admin chọn nguồn danh mục theo shop (local / ketoan) thay cho chế độ tự tính; bảng local ở giữa luôn có; đơn ghi local trước, gửi lên sau commit (R-OKT-CONN-11); mất kết nối khi theo kế toán thì không sửa danh mục; tên repo open-pos / open-pos-backend. -->
+<!-- [2026-11-21 07:05 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — chỉnh lần 2 theo chủ: luồng bán, logic bán hàng và sổ của open-pos giữ nguyên; R-OKT-CONN-11 đổi thành "kế toán tắt hay dừng kết nối thì quầy vẫn bán, không mất đơn, giữ đường ghi của từng máy bán"; thêm R-OKT-CONN-12 tạm dừng kết nối theo shop. -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
-> **Cấp:** Tier 1 (R-OKT-CONN-1…11). Với phía open-pos, đây là **luật tối thượng**: khi mâu thuẫn với quyết định nào khác của open-pos, luật này thắng.
-> **Trạng thái:** **Chấp nhận 2026-11-21** (chủ dự án; chỉnh lần 1 cùng ngày 05:31 PM), **chưa có mã**.
+> **Cấp:** Tier 1 (R-OKT-CONN-1…12). Với phía open-pos, đây là **luật tối thượng**: khi mâu thuẫn với quyết định nào khác của open-pos, luật này thắng.
+> **Trạng thái:** **Chấp nhận 2026-11-21** (chủ dự án; chỉnh lần 1 lúc 05:31 PM, lần 2 lúc 07:05 PM cùng ngày), **chưa có mã**.
 > **Thi hành:** phía WordPress ở repo `open-pos-backend` (trước là `tgs_shop_management`), phase PHASE-001 "Danh mục theo site + đồng bộ open-ketoan" (doc 28; đường dẫn thuộc repo khác). Phía open-ketoan theo mục *Nghĩa vụ phía open-ketoan* bên dưới.
 > **Luật nền:** [R-MD](RULE-MASTER-DATA.md) (R-MD-1: kế toán là chủ danh mục), [R-TEN](RULE-TENANT-SECURITY.md) (tenant đi theo khoá API), [R-ECP-CONS](RULE-ENTERPRISE-CONTINUITY.md) (POS là tầng Eventual), [R-GATE](RULE-GATE.md) (R-GATE-9 `auto_create`), [R-FLOW](RULE-FLOW.md).
 > **Hợp đồng:** [BIZCITY-CONNECTOR-v1](../contracts/BIZCITY-CONNECTOR-v1.md) · [BIZCITY-MASTER-DATA-v1](../contracts/BIZCITY-MASTER-DATA-v1.md) · feed `GET /api/v1/catalog/feed/{meta,products,prices}`.
@@ -21,7 +22,7 @@
 
 ## Nguyên tắc một câu
 
-> **Mỗi shop có một nguồn danh mục do admin chọn: `local` hoặc `ketoan`. Quầy luôn đọc và ghi bảng local của shop; đơn ghi local trước, rồi mới gửi lên kế toán.**
+> **Mỗi shop có một nguồn danh mục do admin chọn: `local` hoặc `ketoan`. Kế toán tắt hay dừng kết nối thì quầy vẫn bán và không mất đơn; luồng bán, logic bán hàng và sổ của open-pos giữ nguyên.**
 > - **`local`:** shop tự quản: tự sửa sản phẩm, giá, thuế. Không cần open-ketoan.
 > - **`ketoan`:** open-ketoan là **nguồn sự thật**. Bảng local là bản sao chỉ đọc. open-pos-backend **tự cấu hình ánh xạ mặc định** và lấy **dữ liệu đối chứng chuẩn** từ open-ketoan.
 
@@ -39,7 +40,8 @@
 | **R-OKT-CONN-8** | **Mã mới tại shop `ketoan`.** Shop tạo mã mới bằng cách **gửi thẳng** open-ketoan (API ghi danh mục, có `Idempotency-Key`). Mã về lại qua feed thì mới bán, trừ khi open-pos-backend chốt khác. Đơn có mã kế toán chưa biết đi vào accounting events và do open-ketoan xử lý (R-GATE-9, `auto_create` giữ bật). | Mã lên kế toán xong thì trường gốc của nó chỉ đọc như mọi mã khác. |
 | **R-OKT-CONN-9** | **Chuyển nguồn không mất dữ liệu.** *`local` → `ketoan`* (admin bấm, kết nối đang thành công): mã shop khớp theo SKU rồi barcode; khớp thì gắn `item_id`; không khớp thì gửi lên như mã mới, chỉ những mã shop đã dùng; kéo đầy đủ, đối chứng, rồi kế toán thắng. *`ketoan` → `local`* (admin bấm): dữ liệu đã kéo ở lại và thành của shop, sửa được ngay. *Mất kết nối khi theo `ketoan`*: **không** tự chuyển nguồn, **không** sửa danh mục; quầy vẫn bán từ bảng local (R-OKT-CONN-11). | Mỗi lần chuyển nguồn ghi nhật ký (ai, lúc nào, kết quả đối chứng). Không có bước nào xoá dữ liệu bán hàng hay sổ kho của shop. |
 | **R-OKT-CONN-10** | **Phạm vi.** Luật này phủ catalog, giá, hàng hoá và đường ghi đơn bán. Mua hàng và kho (lô, HSD / EAN, phiếu nhập, chuyển kho) sau này lấy về open-ketoan, theo phase riêng. open-pos và open-pos-backend **không dùng bảng global multisite** (`wp_global_product_*`, `wp_global_htsoft_*`) cho catalog và giá. | Bảng global đứng yên, không xoá, cho tới khi mọi shop đã chuyển sang bảng theo prefix. |
-| **R-OKT-CONN-11** | **Bảng local ở giữa, đơn ghi local trước.** Mọi máy bán (POS cũ, POS React) chỉ đọc danh mục từ bảng local của blog và **commit đơn vào sổ local** (`local_ledger`) trước. Đơn sang kế toán đi **sau commit, qua outbox** (nhật ký gửi của bridge), không bao giờ gọi kế toán trong giao dịch bán (cùng ý R-OUTBOX-1). Kế toán tắt thì quầy vẫn bán; chỉ hàng chờ gửi dài ra. | Không màn bán nào đọc thẳng `/pos/catalog/snapshot` hay ghi thẳng `POST /pos/orders` của kế toán để bán. Đơn gửi lại bao nhiêu lần cũng không trùng (khoá chứng từ ổn định). |
+| **R-OKT-CONN-11** | **Kế toán tắt hay dừng kết nối thì quầy vẫn bán, không mất đơn; giữ nguyên đường ghi của từng máy bán.** Luồng bán, logic bán hàng (giá, khuyến mại, thuế khi bán) và sổ `local_ledger` của open-pos **không đổi** vì luật này.<br>• **POS cũ:** đơn commit vào sổ local; bridge gửi chứng từ **sau commit**, không bao giờ gọi kế toán trong giao dịch bán (cùng ý R-OUTBOX-1).<br>• **POS React:** giữ đường ghi ở module pos của kế toán, với **chế độ dự phòng** khi kế toán không trả lời (đơn ghi trên máy + WP, phát lại không trùng).<br>Ca mà dự phòng không đỡ được (kế toán tắt trước khi mở ca, máy mới, dừng kết nối dài ngày) thì shop chuyển sang POS cũ. | Ca "tắt kế toán giữa ca" và "tắt trước khi mở ca" bán được ở mọi shop. Đơn gửi lại bao nhiêu lần cũng không trùng (khoá chứng từ ổn định). Thay đổi của bridge / quản trị không chạm đường checkout. |
+| **R-OKT-CONN-12** | **Tạm dừng kết nối theo shop.** Admin shop tạm dừng được kết nối của shop mình mà không xoá khoá: bridge vẫn ghi sự kiện, không gửi, không thử lại, không báo lỗi. Bỏ tạm dừng thì gửi bù cả hàng chờ theo thứ tự, không trùng. Shop đang theo `ketoan` vẫn không sửa trường gốc khi tạm dừng; muốn sửa thì chuyển về `local` (R-OKT-CONN-9). | Màn kết nối của shop hiện "Đang tạm dừng từ HH:MM, N chứng từ chờ gửi". |
 
 ## Nghĩa vụ phía open-ketoan
 
@@ -60,5 +62,6 @@ Mỗi việc trên là một đợt riêng theo [R-FLOW](RULE-FLOW.md): giữ ch
 | `TGS_Acc_Config` | URL / khoá lấy từ hằng wp-config hoặc `get_site_option` (một bộ cho cả mạng) | R-OKT-CONN-6 |
 | `TGS_Acc_Catalog_Sync` | Kéo vào bảng global `wp_global_product_name`, `wp_global_htsoft_*`; công tắc `catalog_from_erp`; `SYNC_TAX = false` | R-OKT-CONN-1, -7, -10 |
 | `TGS_Acc_Branch_Sync` | Tạo **chi nhánh** cho từng site trong một tenant | R-OKT-CONN-6 |
-| POS React (`TGS_POS_React_Shell`) | Đọc danh mục từ `/pos/catalog/snapshot`, ghi đơn ở module pos của kế toán trước; WP chỉ nhận bản sao (dự phòng khi kế toán chết). Địa chỉ API, tenant, khoá ký vé là chung cả mạng | R-OKT-CONN-6, -11 |
+| POS React (`TGS_POS_React_Shell`) | Địa chỉ API, tenant, khoá ký vé là chung cả mạng. Đăng nhập và danh mục cần kế toán khi mở ca (máy mới chưa có bản lưu thì không bán được) | R-OKT-CONN-6; -11 (ca mở ca khi kế toán tắt: chuyển POS cũ) |
+| Bridge: tạm dừng gửi | Công tắc `TGS_ACC_REALTIME` / `realtime` là cả mạng, chưa có theo shop | R-OKT-CONN-12 |
 | `catalog/feed/*` (open-ketoan) | Con trỏ mili-giây, có thể lặp khi ≥ `limit` dòng cùng thời điểm | Nghĩa vụ 2 |
