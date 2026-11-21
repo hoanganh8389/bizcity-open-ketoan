@@ -1,4 +1,5 @@
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: bizcity_lineage@1 — hợp đồng đọc truy vết vòng đời mặt hàng (ADR-0021, R-CONT-0 / R-CONT-8)
+// [2026-11-21 08:55 AM Võ Hoàng] PHASE-031 — S031-23: bizcity_lineage@1 0.4.0-draft — làn `policy` (LineagePolicyTag, LineagePolicyApplied, PolicyLineage), chỉ thêm trường
 /**
  * TRUY VẾT VÒNG ĐỜI MẶT HÀNG (bizcity_lineage@1, chỉ đọc). Một mặt hàng → mọi sự kiện kho (mua, nhập, bán, trả, điều chuyển, điều
  * chỉnh), mọi dòng bút toán mang mã hàng, và giá vốn từng tháng — nối bằng khoá thật của dữ liệu hiện có:
@@ -59,6 +60,51 @@ export interface LineageEvent {
   isGift: boolean;
   /** Mã hàng TẠI NGÀY của sự kiện (ảnh chụp) — khác mã hiện hành khi mặt hàng đã đổi mã. */
   code: string;
+  /**
+   * [2026-11-21 08:55 AM Võ Hoàng] PHASE-031 — S031-23 (0.4.0-draft): làn `policy` — chính sách đã áp cho dòng này: `policyRef` của chính
+   * dòng chứng từ (dòng quà, `scope = 'line'`) hoặc `policyRefs` của cả phiếu (`scope = 'doc'`). Rỗng = chứng từ không nêu chính sách.
+   */
+  policy?: LineagePolicyTag[];
+}
+
+/** [2026-11-21 08:55 AM Võ Hoàng] PHASE-031 — S031-23: kết quả L4b của một tham chiếu lúc nhận — `none` = chứng từ không được kiểm (không có policy_check). */
+export type LineagePolicyVerdict = 'pass' | 'warn' | 'none';
+
+/** Một chính sách gắn vào một sự kiện của Hành trình (làn `policy`). */
+export interface LineagePolicyTag {
+  key: string;
+  version: number;
+  /** Vai của dòng trong chính sách (vd `gift`) — từ `policyRef.line`; null khi tham chiếu ở cấp phiếu. */
+  line: string | null;
+  scope: 'line' | 'doc';
+  verdict: LineagePolicyVerdict;
+  /** Mã IN-POL-* của lần kiểm lúc nhận (rỗng = đạt). */
+  codes: string[];
+}
+
+/** [2026-11-21 08:55 AM Võ Hoàng] PHASE-031 — S031-23: làn `policy` — một bản chính sách đã áp trên hành trình của mặt hàng, kèm phong bì sổ đăng ký. */
+export interface LineagePolicyApplied {
+  policyKey: string;
+  version: number;
+  /** null = không tìm thấy bản này trong sổ đăng ký (tham chiếu mồ côi). */
+  policyId: string | null;
+  ruleContract: string | null;
+  ownerModule: string | null;
+  status: string | null;
+  contentHash: string | null;
+  /** Băm nguồn gửi khớp `content_hash` của bản đã phát hành; null = chưa đăng ký. */
+  hashMatches: boolean | null;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  publishedBy: string | null;
+  publishedAt: string | null;
+  legalRef: string | null;
+  /** Số sự kiện kho của mặt hàng gắn bản này; số lượng hàng tặng (dòng quà); số sự kiện có cảnh báo L4b. */
+  events: number;
+  giftQty: number;
+  warnEvents: number;
+  first: string;
+  last: string;
 }
 
 export interface LineageEntryLine {
@@ -178,6 +224,8 @@ export interface LineageItem {
   events: LineageEvent[];
   entries: LineageEntryLine[];
   costPeriods: LineageCostPeriod[];
+  /** [2026-11-21 08:55 AM Võ Hoàng] PHASE-031 — S031-23 (0.4.0-draft): làn `policy` — các bản chính sách đã áp trên hành trình (chỉ thêm). */
+  policies?: LineagePolicyApplied[];
   summary: {
     events: number;
     accountingEvents: number;
@@ -223,4 +271,73 @@ export interface CostExplain {
   contributions: CostContribution[];
   /** Cộng lại từ các sự kiện liệt kê có khớp số đã lưu không; không khớp = có luật lý do (trả NCC theo tồn đầu, điều chỉnh loại trừ…). */
   reconcile: { inQty: number; inValue: number; matchesStored: boolean | null; note: string };
+}
+
+/**
+ * [2026-11-21 08:55 AM Võ Hoàng] PHASE-031 — S031-23 (0.4.0-draft): TRUY NGƯỢC CHÍNH SÁCH của một sự việc / bút toán / dòng — dòng sổ → sự việc →
+ * chính sách@bản (băm khớp?, hiệu lực?) → người phát hành, căn cứ pháp lý, kết quả L4b. Nối bằng khoá thật (PHASE-031 · 20 §2): không bảng mới,
+ * không hàm CSDL. `GET /api/v1/lineage/policy`.
+ */
+export interface PolicyLineageRef {
+  key: string;
+  version: number;
+  /** Băm nguồn gửi trong policyRefs (null khi chỉ dòng nêu policyRef, phiếu không nêu). */
+  sentHash: string | null;
+  policyId: string | null;
+  registered: boolean;
+  registryHash: string | null;
+  hashMatches: boolean | null;
+  /** Ngày chứng từ nằm trong hiệu lực của bản; null = chưa đăng ký hoặc chứng từ không có ngày. */
+  covers: boolean | null;
+  status: string | null;
+  ownerModule: string | null;
+  ruleContract: string | null;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  publishedBy: string | null;
+  publishedAt: string | null;
+  legalRef: string | null;
+  reason: string | null;
+  verdict: LineagePolicyVerdict;
+  codes: string[];
+  /** Dòng chứng từ (lineKey, không có thì số dòng) nêu chính sách này. */
+  lines: string[];
+}
+
+export interface PolicyLineageDocLine {
+  lineNo: number;
+  lineKey: string | null;
+  sku: string;
+  qty: number;
+  isGift: boolean;
+  policy: { key: string; version: number; line: string | null } | null;
+}
+
+export interface PolicyLineageEntryLine {
+  entryNo: string;
+  postingDate: string;
+  account: string;
+  debit: number;
+  credit: number;
+  part: string;
+  sku: string | null;
+  /** posted · reversed · reversal. */
+  status: string;
+  /** Bản chính sách ĐỊNH KHOẢN đã dùng (ledger_entries.policy_version) — khác chính sách nghiệp vụ. */
+  postingPolicyVersion: number | null;
+  /** Chính sách nghiệp vụ của dòng sổ, nối qua dòng chứng từ cùng mã hàng + cờ quà (ledger_lines chưa mang lineKey); null = không nối được duy nhất. */
+  policy: { key: string; version: number } | null;
+}
+
+export interface PolicyLineage {
+  /** Đi từ đâu: sự việc, khoá chứng từ, hay số bút toán. */
+  from: 'event' | 'docKey' | 'entry';
+  event: { eventId: number; docKey: string; docNo: string; docType: string; docDate: string | null; version: number; status: string; sourceSystem: string; branch: string };
+  /** Kết quả L4b lúc nhận bản hiện hành (accounting_events.policy_check). */
+  check: { checkedAt: string | null; mode: string | null; verdict: LineagePolicyVerdict; codes: string[] };
+  refs: PolicyLineageRef[];
+  lines: PolicyLineageDocLine[];
+  entries: PolicyLineageEntryLine[];
+  /** Phần chưa truy được, nói rõ (R-CONT-0). */
+  notes: string[];
 }

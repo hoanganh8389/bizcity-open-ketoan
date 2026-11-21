@@ -12,6 +12,37 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chính sách: ngưỡng duyệt vào sổ đăng ký (`approval.levels@1`, `store = settings`) + DG-POLICY-6 (PHASE-031 S031-7, S031-32 phần đo) <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — S031-7 / S031-32 -->
+
+- **Thêm:** Rule Contract `approval.levels@1` (`apps/api/src/modules/system/rule-contracts/approval-levels.ts`, miền `approval`): dải tiền nửa mở → các cấp duyệt (quyền); `thresholdToBands` chuyển khoá `bizcity.payment.approval_thresholds` thành dải, cùng số cấp với luồng yêu cầu thanh toán.
+- **Thêm:** `POST /api/v1/policies/sync-settings` (`core.policy.sync-settings`, `settings:write`): đánh chỉ mục khoá ngưỡng ở `setting_values` vào `policy_registry` (`store = settings`, `store_ref` = khoá, băm theo giá trị, ngày áp = ngày hiệu lực), chỉ nối thêm, chạy lại không trùng, ghi lùi báo `drift`. `GET /api/v1/policies` đọc được nội dung bản `store = settings` (khớp băm). `bizcity_policy@1` 1.5.0-draft.
+- **Thêm:** DG-POLICY-6 `POLICY_RETIRED_OPEN` trong rulepack `policy` (chỉ đọc, info): bản `retired` còn `effective_to` NULL theo đơn vị, kèm số sự việc tham chiếu — số đo để quyết định S031-32, không tự đóng.
+- **Đổi:** `RuleContract.domain` nhận thêm `'approval'` (thêm giá trị, không phá); `POST /api/v1/policies` từ chối miền `approval` (400). Trụ cột V: P-5 lên một phần, P-7 lên đạt (`docs/standard/tru-cot.json`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Luồng duyệt yêu cầu thanh toán không đổi.
+- **Nâng cấp cần làm:** không migration. Muốn khoá ngưỡng có phong bì trong sổ chính sách: quản trị gọi `POST /api/v1/policies/sync-settings` (sau mỗi lần đổi ngưỡng).
+- **Bảo mật:** action mới cần `settings:write`; không mở cho MCP / AI.
+
+### Chính sách: Rule Contract mua hàng `purchase.*@1` + tín hiệu nửa Policy của trụ cột 05 (PHASE-031 S031-11, S031-19) <!-- [2026-11-21 09:35 AM Võ Hoàng] PHASE-031 — S031-11 / S031-19 -->
+
+- **Thêm:** mười ba Rule Contract `purchase.<loại>@1` (mỗi loại chính sách mua hàng một khuôn, `apps/api/src/modules/system/rule-contracts/purchase.ts`) bọc bộ máy mua hàng `@bizcity/mua-hang-domain` — `evaluate` gọi lại `computeDoc` / `giftPlan` / `rebateFor` (tính trên phiếu, thưởng), `creditStatus` / `dueDateFor` (hạn mức, điều khoản), chỉ mô tả cho `supply_target`, `lot_tracking`, `gift_budget`. `GET /api/v1/rule-contracts` liệt kê thêm `purchase.*`. `bizcity_policy@1` 1.4.0-draft.
+- **Thêm:** `docs/standard/nen-mong.json` trụ cột 05 có `halves` (cấu hình / Policy) và 14 tín hiệu nửa Policy chạy được (test chính sách, cửa nạp, Rule Contract, truy vết; DG-POLICY-1..4). Mức trụ cột 05 không đổi (một phần).
+- **Đổi:** `RuleContract.domain` nhận thêm `'purchase'` (thêm giá trị, không phá). `POST /api/v1/policies` từ chối Rule Contract miền `purchase` (400): chính sách mua hàng vẫn do module mua hàng làm chủ.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Kết quả tính của mua hàng không đổi (test hồi quy so trọn kết quả với bộ máy gốc).
+- **Nâng cấp cần làm:** không migration. Dựng lại `@bizcity/mua-hang-domain` nếu dist cũ.
+- **Bảo mật:** không đổi quyền (đọc `catalog:read`, phát hành `settings:write` như cũ).
+
+### Chính sách: rulepack `policy` + làn `policy` của truy vết (PHASE-031 S031-17, S031-23) <!-- [2026-11-21 10:40 AM Võ Hoàng] PHASE-031 — S031-17 / S031-23 -->
+
+- **Thêm:** rulepack `policy` của Conformance Engine ở lane diagnostics (`tests/conformance/diagnostics/policy.diag.mjs`, mức info, chỉ đọc): DG-POLICY-1 `POLICY_L4B_WARN` (cảnh báo L4b theo kỳ × nguồn × chi nhánh × chính sách, kèm tỷ lệ), DG-POLICY-2 `POLICY_REASON_MISSING` (chính sách có quà mà lý do XTA1.4 tắt / không có), DG-POLICY-3 `POLICY_REFS_MISSING` (nguồn ngoài không gửi `policyRefs` khi có chính sách bán hiệu lực), DG-POLICY-4 `POLICY_EXPIRING_IN_USE` (bản hết hạn trong 30 ngày còn sự việc tham chiếu), DG-POLICY-5 `POLICY_PROMO_NOTICE` (thông báo Sở Công Thương, NĐ81 Điều 17 — chưa đủ căn cứ, bỏ qua). Lọc một đơn vị bằng `args.tenant`.
+- **Thêm:** `bizcity_lineage@1` 0.4.0-draft — làn `policy`: `events[].policy` (chính sách của dòng / của phiếu, kết quả L4b), `policies[]` (bản đã áp + phong bì sổ đăng ký), `GET /api/v1/lineage/policy?eventId=&docKey=&entryNo=&lineKey=` (truy ngược dòng sổ → sự việc → chính sách@bản → người phát hành, căn cứ, L4b). Hành trình mặt hàng thêm làn *Chính sách* và nút *Chính sách căn cứ*; tab *Truy vết* của màn Chính sách hiện chuỗi đầy đủ (người chỉ có `catalog:read` vẫn thấy bản rút gọn).
+- **Đổi:** không đổi trường cũ (chỉ thêm).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Chỉ đọc; không ghi sổ, không chặn giao dịch.
+- **Nâng cấp cần làm:** không migration. Dựng lại `@ketoan/contracts` (kiểu mới ở `lineage.ts`).
+- **Bảo mật:** `GET /api/v1/lineage/policy` quyền `ledger:read`, lọc `tenant_id` như các route truy vết khác.
+
 ### Hoá đơn điện tử tại quầy (người mua) + báo cáo khách hàng (phiếu NT-BH-034) <!-- [2026-11-19 Võ Hoàng] NGHIEM-THU — NT-BH-034 (đóng góp) -->
 
 - **Thêm:** báo cáo khách hàng BH23 (module `pos`, màn `/app/pos/bao-cao-khach`, quyền `pos:report`): `GET /api/v1/m/pos/reports/customers` (`pos.report.customers` — khách × kỳ × cửa hàng: số đơn, tiền hàng, giảm giá, thực trả, trả hàng, voucher, điểm tích / đổi, quà số lượng + giá trị theo giá bán, cửa hàng đã mua; lọc `branchCodes`, `channels`, `groupBy=month`; tôn trọng phạm vi chi nhánh người xem) và `GET /api/v1/m/pos/reports/customer-detail` (`pos.report.customer-detail` — từng lần mua / trả). Gộp đơn máy bán + phiếu bán BH10; số liệu module khác qua action đọc mới `phieu-ban.customer.docs` (`GET /api/v1/m/phieu-ban/reports/customer-docs`), `voucher.usage.list` (`GET /api/v1/m/voucher/reports/usage`), `loyalty.order.points` (`GET /api/v1/m/loyalty/reports/order-points`). Xuất Excel từ bảng. Hướng dẫn `docs/huong-dan/pos-bao-cao-khach.md`.

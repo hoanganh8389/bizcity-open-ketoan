@@ -1,5 +1,6 @@
 // @bizcity-layer K kernel/lineage
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1 (ADR-0021): API truy vết vòng đời mặt hàng — chỉ đọc
+// [2026-11-21 09:15 AM Võ Hoàng] PHASE-031 — S031-23 (0.4.0-draft): GET /api/v1/lineage/policy — truy ngược chính sách từ sự việc / chứng từ / bút toán / dòng
 /**
  * TRUY VẾT VÒNG ĐỜI MẶT HÀNG — API (bizcity_lineage@1, docs/contracts/BIZCITY-LINEAGE-v1.md). Quyền ledger:read.
  *   GET /api/v1/lineage/search?q=                         tìm mặt hàng theo mã, tên, mã vạch
@@ -7,6 +8,7 @@
  *   GET /api/v1/lineage/items/:sku/cost?period=&costGroup=   "Vì sao giá vốn này?": công thức đơn giá bằng số thật + các phiếu góp vào
  *   GET /api/v1/lineage/items/:sku/history                Lịch sử mặt hàng: mã cũ / mới, hiệu lực, người đổi, phân loại, sửa có lý do (PHASE-026 S026-10)
  *   GET /api/v1/lineage/items/:sku/impact                 Tác động: chứng từ, tồn theo chi nhánh, tài khoản, bảng giá, kỳ đã khoá dùng mặt hàng (PHASE-026 S026-11)
+ *   GET /api/v1/lineage/policy?eventId=|docKey=|entryNo=&lineKey=   Làn chính sách: dòng sổ → sự việc → chính sách@bản → phát hành, kết quả L4b (PHASE-031 S031-23)
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -15,6 +17,7 @@ import { db } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
 import { explainCost, getItemHistory, getItemImpact, getItemLineage, searchItems } from './lineage.service.js';
+import { getPolicyLineage } from './policy-lineage.js';
 
 const tags = ['Truy vết vòng đời'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
@@ -74,6 +77,22 @@ export async function lineageRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => {
       const auth = authOf(req);
       return ok(await db.transaction().execute((trx) => getItemImpact(trx, auth.tenantId, req.params.sku)));
+    },
+  });
+
+  // [2026-11-21 09:15 AM Võ Hoàng] PHASE-031 — S031-23: làn `policy` — một trong eventId / docKey / entryNo; lineKey thu về một dòng chứng từ
+  r.get('/api/v1/lineage/policy', {
+    preHandler: requirePermission('ledger:read'),
+    schema: {
+      tags, summary: 'Truy ngược chính sách đã áp: dòng sổ → sự việc → chính sách@bản (băm, hiệu lực) → người phát hành, căn cứ, kết quả L4b',
+      querystring: z.object({
+        eventId: z.coerce.number().int().min(1).optional(), docKey: z.string().trim().min(1).max(200).optional(),
+        entryNo: z.string().trim().min(1).max(64).optional(), lineKey: z.string().trim().min(1).max(64).optional(),
+      }),
+    },
+    handler: async (req) => {
+      const auth = authOf(req);
+      return ok(await db.transaction().execute((trx) => getPolicyLineage(trx, auth.tenantId, req.query)));
     },
   });
 }

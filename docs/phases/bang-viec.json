@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 7
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 192
+      "count": 189
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 321
+      "count": 326
     }
   ],
   "items": [
@@ -7668,8 +7668,8 @@
       "phase": "PHASE-031",
       "title": "Đánh chỉ mục khoá ngưỡng duyệt (settingvalues, 16 §5) vào Registry với approval.levels@1, store: settings",
       "priority": "P2",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "mua-hang",
@@ -7732,8 +7732,8 @@
       "phase": "PHASE-031",
       "title": "Rule Contract purchase.@1 bọc engine.ts (không đổi kết quả; hồi quy mua hàng)",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "mua-hang",
@@ -7828,15 +7828,9 @@
       "phase": "PHASE-031",
       "title": "Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
-        "branch": "feat/phase-031-s17-s23",
-        "state": "đang làm",
-        "since": "2026-11-20",
-        "dot": "PHASE-031 · S031-17 rulepack policy của Conformance Engine (chỉ đọc, theo 10-THIET-KE §9) + S031-23…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -7866,8 +7860,8 @@
       "phase": "PHASE-031",
       "title": "nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1",
       "priority": "P1",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "mua-hang",
@@ -7930,15 +7924,9 @@
       "phase": "PHASE-031",
       "title": "Làn policy của bizcitylineage@1 (0.4.0-draft)",
       "priority": "P2",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
-        "branch": "feat/phase-031-s17-s23",
-        "state": "đang làm",
-        "since": "2026-11-20",
-        "dot": "PHASE-031 · S031-17 rulepack policy của Conformance Engine (chỉ đọc, theo 10-THIET-KE §9) + S031-23…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -8080,8 +8068,8 @@
       "phase": "PHASE-031",
       "title": "RV-R1-04 phần dữ liệu cũ: đo bản retired có effectiveto NULL trên bản sao thật rồi quyết định đóng (§16 mục 6)",
       "priority": "P2",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "modules": [
         "mua-hang",

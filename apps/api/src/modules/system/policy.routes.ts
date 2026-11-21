@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-21 05:30 PM Võ Hoàng] PHASE-031 — S031-7 (31-S031-7 §1 mục 3): action quản trị core.policy.sync-settings — đồng bộ phong bì store = settings từ setting_values
 // [2026-11-09 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b (S031-29): nạp recompute.ts để đăng ký hàm tính lại cho cửa nạp (IN-POL-004)
 // [2026-11-09 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a (S031-28, chữ chốt PHASE-031 · 00 §12): thêm bốn action đọc cho màn Chính sách và Theo dõi thực hiện
 // [2026-11-08 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, chữ chốt PHASE-031 · 00 §9.3): API chính sách cho nguồn ngoài — đọc, tính, phát hành inline
@@ -13,6 +14,7 @@
  *   GET  /api/v1/policy-registry/:policyId/applications core.policy.applications chứng từ đã áp một chính sách, phân trang (W4a)
  *   GET  /api/v1/policy-tracking                       core.policy.tracking      các ô theo dõi thực hiện (W4a)
  *   GET  /api/v1/policy-lineage                        core.policy.lineage       chuỗi ngược sự việc → chính sách@bản (W4a)
+ *   POST /api/v1/policies/sync-settings                core.policy.sync-settings đồng bộ phong bì của khoá cấu hình đánh chỉ mục (store = settings, S031-7; settings:write)
  * Quyền đọc / tính là catalog:read: khoá API phạm vi documents:write, reports:read, catalog:write đều có (core/auth.ts SCOPE_PERMISSIONS)
  * nên POS hiện tại dùng được ngay, không thêm scope. Không mở cho MCP / AI ở đợt này.
  */
@@ -23,6 +25,7 @@ import { RULE_CONTRACTS, getRuleContract } from './rule-contracts/index.js';
 import './rule-contracts/recompute.js'; // đăng ký hàm tính lại cho Kernel (side-effect có chủ đích, như registerSubscribers)
 import { evaluatePolicies, listPolicies, publishPolicy } from './rule-contracts/policy-service.js';
 import { policyApplications, policyLineage, policyRegistry, policyTracking } from './policy-insight.js';
+import { syncSettingsPolicies } from './policy-settings-index.js'; // cũng đăng ký bộ đọc nội dung store = settings
 
 const tags = ['Chính sách'];
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD');
@@ -143,4 +146,17 @@ const lineage = defineAction({
   handler: async (ctx, input) => policyLineage(ctx.data.tx, ctx.tenant.id, input),
 });
 
-export const policyActions = [list, contractList, contractGet, evaluate, publish, registry, applications, tracking, lineage];
+const syncSettings = defineAction({
+  id: 'core.policy.sync-settings', title: 'Đồng bộ ngưỡng duyệt (khoá cấu hình) vào sổ đăng ký chính sách', tags,
+  description: 'Đọc dòng thời gian giá trị của khoá cấu hình đánh chỉ mục (đợt này: bizcity.payment.approval_thresholds) ở setting_values, phát hành phong bì bản mới '
+    + '(store = settings, Rule Contract approval.levels@1, băm theo giá trị, ngày áp = ngày hiệu lực của phiên bản cấu hình) và đóng bản trước. Nội dung vẫn ở setting_values. '
+    + 'Chạy lại không sinh bản trùng; phiên bản cấu hình ghi lùi về trước bản cuối không nối được — trả ở drift, không tự sửa.',
+  permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+  input: z.object({ key: z.string().trim().min(1).max(128).optional() }),
+  output: anyOut,
+  expose: { http: { method: 'POST', path: '/api/v1/policies/sync-settings' }, mcp: false, ai: 'deny' },
+  evidence: { objectType: 'policy', objectId: (input) => input.key ?? 'settings' },
+  handler: async (ctx, input) => syncSettingsPolicies(ctx.data.tx, { tenantId: ctx.tenant.id, actor: ctx.legacyAuth.actor }, input),
+});
+
+export const policyActions = [list, contractList, contractGet, evaluate, publish, registry, applications, tracking, lineage, syncSettings];
