@@ -107,6 +107,8 @@ export async function importProducts(trx: ActionTx, tenantId: string, actor: str
         if (!existing.has(ps) && !inFile.has(ps)) errors.push(`Mã cha ${ps} chưa có — khai mã cha trước (hoặc thêm dòng mã cha vào tệp)`);
         // [2026-11-20 kiennt] NT-DM-013 — phần cuối nhận cả chữ số: câu báo ghi "ký tự" (đóng góp)
         if (sku.length - ps.length > 2) errors.push(`Mã biến thể chỉ thêm tối đa 2 ký tự quanh mã cha ${ps}`);
+        // [2026-11-21 kiennt] NT-DM-018 — mã biến thể mới chỉ thêm ở cuối mã cha (đóng góp)
+        if (!sku.toUpperCase().startsWith(ps)) errors.push(`Mã biến thể mới chỉ thêm ở cuối mã cha ${ps} (không thêm chữ ở đầu)`);
       } else if (/[A-Z]$/i.test(sku) || (/^[A-Z]/i.test(sku) && !/^[A-Z][0-9]{8}$/i.test(sku))) {
         errors.push('Mã hàng mới không được có chữ ở đầu hoặc cuối (mã biến thể phải giữ nguyên mã cha đã có)');
       }
