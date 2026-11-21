@@ -3,11 +3,12 @@
 
 <!-- [2026-11-21 07:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — chủ dự án chốt: bizcity-llm-router quản lý API key; thêm D039-17, Q039-5; Provisioning API không cấp khoá cho khách -->
 <!-- [2026-11-21 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — chủ dự án chốt Q039-5: khoá biz-… chỉ để cảnh báo hết hạn (khoá mềm), site vẫn dùng được; D039-17 viết lại, D039-18 tên miền gốc động -->
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — W0 chốt: chủ dự án duyệt D039-1..18, Q039-2 = vai trò PostgreSQL riêng từng site (D039-19); ADR-0036, luật R-SITE -->
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 > **Việc lộ trình:** — (mở rộng, chờ đưa vào lộ trình)
 > **Phân hệ:** he-thong
 > **Checklist công bố:** —
-> **Trạng thái:** 🟡 **W0 đề xuất 2026-11-21** — chờ chủ dự án duyệt D039-1..16 và trả Q039-1..4 (D039-17, D039-18, Q039-5 đã chốt 2026-11-21). Chưa có mã.
+> **Trạng thái:** 🟡 **W0 chốt 2026-11-21** — chủ dự án duyệt D039-1..18 ("các phần khác bám theo rule này là ok"), Q039-2 = vai trò PostgreSQL riêng từng site (D039-19). [ADR-0036](../../adr/ADR-0036-mot-ban-ma-moi-site-mot-database.md) chấp nhận, luật [R-SITE](../../rules/RULE-SITE.md). Chưa có mã; bước kế B1.
 > **Tệp:** [00 — Kế hoạch & thiết kế](00-MASTER-PLAN.md) · [30 — Hợp đồng Provisioning](30-HOP-DONG-PROVISIONING.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)
 
 ## Đề bài (chủ dự án, 2026-11-21)
@@ -56,16 +57,17 @@
 | **D039-16** | Mức thay đổi **K3** (đụng `db/client.ts`, xác thực, migration runner). Cần ADR (số kế tiếp) ở W0 và chủ dự án duyệt; mỗi bước có "đường lùi" trong PR | Lớp CSDL nền của toàn bộ Core |
 | **D039-17** | **Khoá `biz-…` là khoá bản quyền của site, chỉ để cảnh báo** (chủ dự án chốt 2026-11-21). `bizcity-llm-router` cấp và quản lý khoá. Mỗi site gắn một khoá; Open Kế Toán hỏi `bizcity-llm-router` trạng thái khoá (bộ đệm 1 giờ). Khoá hết hạn, bị thu hồi, hoặc site chưa gắn khoá → **site vẫn dùng đầy đủ**, chỉ hiện **dải đỏ cảnh báo** trên mọi màn. Không hỏi được `bizcity-llm-router` → giữ trạng thái đã biết, **không** chặn, **không** hiện đỏ oan | Sổ kế toán không được dừng vì chuyện gia hạn; dấu đỏ đủ khó chịu để nhắc |
 | **D039-18** | **Tên miền gốc là cấu hình động** (chủ dự án chốt 2026-11-21): `btnet.vn`, `bizcity.vn` hay bất kỳ `*.<miền>` nào đã khai. Registry nhận mọi tên miền; Site Resolver chỉ tra `site_domains`, không ghi cứng tên miền gốc nào. Một site có thể có nhiều tên miền | Đổi hoặc thêm tên miền gốc không phải sửa mã |
+| **D039-19** | **Mỗi site một vai trò PostgreSQL riêng** (chủ dự án chốt 2026-11-21, thay đề nghị dùng chung ở Q039-2): `kt_<slug>_owner` chạy migration, `kt_<slug>_app` cho API (không superuser). Vai trò site này không `CONNECT` được database site khác. Mật khẩu sinh ngẫu nhiên khi tạo site, lưu mã hoá trong `sites` bằng khoá `SITE_SECRET_KEY` (biến môi trường); Database Router giải mã khi mở pool | Lộ thông tin đăng nhập của một site không chạm site khác (R-SITE-2) |
+## Câu hỏi đã chốt (2026-11-21)
+<!-- [2026-11-21 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-039 — đóng Q039-1..5 -->
 
-## Câu còn mở
-
-| Mã | Câu hỏi | Đề nghị |
+| Mã | Câu hỏi | Chốt |
 |---|---|---|
-| **Q039-1** | Lệnh khoá site (do người vận hành ra, không phải do hết hạn) thì **chỉ đọc** hay **chặn hẳn**? | Chỉ đọc: khách vẫn xem, in, xuất sổ; không ghi được. Hết hạn thì **không** khoá, chỉ cảnh báo (D039-17) |
-| **Q039-2** | Mỗi site một vai trò PostgreSQL riêng, hay dùng chung `ketoan` / `ketoan_app`? | v1 dùng chung (đơn giản, database đã tách); vai trò riêng khi có site đặt ở máy chủ khác |
-| **Q039-3** | Thêm PgBouncer ngay hay để sau? | Để sau; D039-7 đủ cho vài chục site. Thêm khi vượt 50 site |
-| **Q039-4** | Bản cài một công ty đang chạy có được chuyển thành một site của cụm nhiều site không? | Có, bằng sao lưu → khôi phục vào `kt_<slug>` → ghi registry; làm thành lệnh CLI ở B4 |
-| ~~Q039-5~~ | ~~Khoá `biz-…` mang vai nào trong site?~~ | **Đã chốt 2026-11-21:** khoá không mang quyền truy cập. Nó là khoá bản quyền để cảnh báo hết hạn (D039-17) |
+| Q039-1 | Lệnh khoá site (do người vận hành ra) thì chỉ đọc hay chặn hẳn? | **Chỉ đọc**: xem, in, xuất sổ; không ghi. Hết hạn bản quyền thì **không** khoá, chỉ cảnh báo (D039-17) — theo đề nghị |
+| Q039-2 | Mỗi site một vai trò PostgreSQL riêng hay dùng chung? | **Riêng từng site** — chủ dự án chọn (D039-19, R-SITE-2) |
+| Q039-3 | Thêm PgBouncer ngay hay để sau? | **Để sau**; pool có trần (D039-7) đủ cho vài chục site, thêm khi vượt 50 site — theo đề nghị |
+| Q039-4 | Bản cài một công ty đang chạy có chuyển vào cụm được không? | **Có**, lệnh `site adopt` ở B4 (sao lưu → khôi phục vào `kt_<slug>` → tạo vai trò → ghi registry) — theo đề nghị |
+| Q039-5 | Khoá `biz-…` mang vai nào trong site? | Không mang quyền truy cập; là khoá bản quyền chỉ để cảnh báo (D039-17) |
 
 ## Phía gọi
 

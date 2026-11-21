@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 223
+      "count": 222
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 328
+      "count": 329
     }
   ],
   "items": [
@@ -9918,10 +9918,10 @@
     {
       "id": "S039-2",
       "phase": "PHASE-039",
-      "title": "Chủ dự án duyệt D039-1..16, trả Q039-1..4 (D039-17, D039-18, Q039-5 đã chốt 2026-11-21); ADR (số kế tiếp) \"mỗi site một database\"",
+      "title": "Chủ dự án duyệt D039-1..19, trả Q039-1..5; ADR-0036 \"một bản mã, mỗi site một database\"; luật R-SITE",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "modules": [
         "he-thong"
@@ -10053,7 +10053,7 @@
     {
       "id": "S039-11",
       "phase": "PHASE-039",
-      "title": "B4 — Site Provisioner: kttemplate, CREATE DATABASE … TEMPLATE, đơn vị đầu + tài khoản quản trị, sitejobs, dọn khi hỏng",
+      "title": "B4 — Site Provisioner: kttemplate, vai trò riêng kt<slug>owner / app (D039-19), CREATE DATABASE … TEMPLATE, đơn vị đầu + tài khoản quản trị, sitejobs, dọn khi …",
       "priority": "P0",
       "status": "todo",
       "column": "todo",
