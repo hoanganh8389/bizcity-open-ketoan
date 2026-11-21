@@ -13,10 +13,11 @@
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm R-REV: rà soát việc của người đóng góp (phân vai, PR, biên bản, dữ liệu kế toán, mã hàng). -->
 <!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §5: core/errors.ts, core/http.ts nay ở packages/platform -->
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — §0.9 Lõi bất biến, nghiệp vụ linh hoạt (ADR-0029); dòng R-WF; nhật ký v1.5 -->
+<!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — §3 dòng R-OKT-CONN, §6 nhật ký v1.8, dòng phiên bản. -->
 
 > **Tệp này:** một trang liệt kê **mọi** luật và hợp đồng đang chi phối lõi. Không lặp nội dung luật — chỉ mã, cấp, nơi kiểm.
 > **Dùng khi:** sửa lõi → tra bảng §4 để biết phải sửa tài liệu / hợp đồng nào **trong cùng PR**.
-> **Phiên bản:** 1.1 · 2026-10-29 · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
+> **Phiên bản:** 1.8 · 2026-11-21 (nhật ký §6) · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
 > **Hai lớp chuẩn:** luật `R-*` dưới đây giữ **Kernel** (sổ cái). Luật `STD-*` của [Bizcity Framework Standard v1](standard/README.md) giữ **module** (7 hợp đồng, bộ kiểm cài đặt). Module tuân `STD-*`; nhờ SDK nó tự tuân `R-*`.
 
 <!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
@@ -234,6 +235,7 @@ Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để c
 | R-GATE | [rules/RULE-GATE.md](rules/RULE-GATE.md) | 1 | **Chấp nhận 2026-11-02** ([ADR-0019](adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)): hai cổng — Gate A danh mục (nháp), Gate B nghiệp vụ (bể chờ, R-INTAKE); không chặn im lặng; một thư viện mã; mức nào hậu quả đó, không lan <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE --> | SC-FIND-1 (sẽ có), test bể / nháp |
 | R-FLOW | [rules/RULE-FLOW.md](rules/RULE-FLOW.md) | 1 | **R-FLOW-9 (2026-11-09): chia nhỏ để chốt, mỗi master plan có bảng bước thắng nhỏ (§0.10).** **Chủ dự án đồng ý 2026-11-03:** nhận việc theo thứ tự giữ chỗ vào `main` → chốt thiết kế dùng chung bằng tài liệu → code. Một phạm vi một người ([CLAIMS](phases/CLAIMS.md)); nhánh ngắn; gộp `main` và bộ kiểm xanh trước khi đẩy <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW --> **`main` là nguồn sự thật duy nhất của tài liệu** (R-FLOW-7, 2026-11-03). | SC-FLOW-1; `scripts/nhan-viec.mjs kiem`; Bước 0 AGENTS.md |
 | R-COMBO <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — R-COMBO dòng danh mục luật (ADR-0035) --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) | 1 (R-COMBO-1..10) | **Chấp nhận 2026-11-17, chưa có mã** (CANON §0.11) ([ADR-0035](adr/ADR-0035-combo-identity-phan-kho-nguon-qua.md), PHASE-037): **combo là thoả thuận thương mại có phiên bản, không phải mặt hàng** — `combo_id` ≠ `item_id`, quà là hàng thật thì mang `item_id` thật; bản đã phát hành không sửa; tách / lắp / chuyển phân kho bảo toàn lượng theo `item_id` · lô; mỗi dòng quà truy được về dòng nhận gốc; chỉ Kernel ghi sổ; **giá 0 / `isGift` / loại phân kho không tự quyết định giá vốn hay thuế**; một combo hai mặt mua / bán, kế thừa đầu vào phải phát hành; `phankho_id` = `warehouses.uid`; năm nguồn quà; hết combo thì bán rời | SC-COMBO-1..3, `IN-COMBO-*`, `CT-COMBO-*` (sẽ có) |
+| R-OKT-CONN <!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — dòng danh mục luật (chủ dự án 2026-11-21) --> | [rules/RULE-OPEN-POS-CONNECTION.md](rules/RULE-OPEN-POS-CONNECTION.md) | 1 (luật tối thượng phía open-pos) | **Chấp nhận 2026-11-21, chưa có mã:** open-pos (`tgs_pos`) / open-pos-backend (`tgs_shop_management`) luôn hỏi **"có kết nối API thành công với open-ketoan qua open-ketoan-bridge không?"** — không: **standalone** đầy đủ, shop tự sửa sản phẩm, giá, thuế trong bảng theo prefix; có: trường gốc chỉ đọc theo kế toán (R-MD-1), open-pos-backend **tự cấu hình ánh xạ mặc định** và lấy dữ liệu đối chứng chuẩn; một blog = một shop = một tenant; một bộ kéo; mã mới gửi thẳng, bán ngay | `tgs_okt_connected()` ở open-pos-backend (sẽ có); feed theo tenant (R-TEN) |
 
 ## 4. Hợp đồng (contracts)
 
@@ -314,6 +316,14 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Thêm / sửa mã đụng combo, khuyến mại có quà, nguồn quà, phân kho khuyến mại / giữ hộ, cách tính giá vốn – thuế của hàng tặng <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — §5 dòng R-COMBO --> | [rules/RULE-COMBO.md](rules/RULE-COMBO.md) (luật + mã kiểm), [contracts/BIZCITY-COMBO-v1.md](contracts/BIZCITY-COMBO-v1.md); không tạo mã hàng cho combo, không suy giá vốn / thuế từ `isGift` |
 
 ## 6. Nhật ký thay đổi CANON
+
+<!-- [2026-11-21 01:23 PM Johnny Chu - Chu Hoàng Anh] R-OKT-CONN — CANON v1.8 -->
+- **v1.8 (2026-11-21):** Thêm luật **R-OKT-CONN** ([rules/RULE-OPEN-POS-CONNECTION.md](rules/RULE-OPEN-POS-CONNECTION.md)) cho phía bán hàng dùng open-ketoan.
+  - Tên: **open-pos** (`tgs_pos`), **open-pos-backend** (`tgs_shop_management`), **open-ketoan-bridge** (`tgs_accounting_bridge`).
+  - Câu hỏi kết nối là luật tối thượng của open-pos. Không kết nối thì standalone đầy đủ. Có kết nối thì theo kế toán, tự cấu hình ánh xạ mặc định và đối chứng.
+  - Một blog = một shop = một tenant.
+  - Nghĩa vụ phía open-ketoan: feed theo tenant, sửa con trỏ feed, tách tenant theo shop, scope tạo mã hẹp.
+  - Không đổi Kernel. Nguồn: chủ dự án 2026-11-21.
 
 <!-- [2026-11-17 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-037 — CANON v1.7 (R-COMBO, bizcity_combo@1) -->
 - **v1.7 (2026-11-17):** Thêm luật **R-COMBO** ([rules/RULE-COMBO.md](rules/RULE-COMBO.md)) và hợp đồng `bizcity_combo@1` (đề xuất, [ADR-0035](adr/ADR-0035-combo-identity-phan-kho-nguon-qua.md), PHASE-037): combo không phải mặt hàng; sáu định danh không trộn (`item_id` · `combo_id` · `combo_version` · `combo_instance_id` · `phankho_id` · lô + dòng nguồn + phân bổ); tách kế toán khỏi thuế cho hàng tặng. Thêm **§0.11** hàng tặng: ba công tắc định giá · ghi tồn · lên thuế là chính sách có phiên bản theo nguồn quà. Nguồn: chủ dự án 2026-11-17.
