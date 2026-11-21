@@ -13,7 +13,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-4 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản `published`) + `policies.register / publish / resolve` ở Platform | W1 | P0 | có | ✅ 2026-11-07 (#152) |
 | S031-5 | Phiên bản chính sách mua hàng (`purchase_policy_versions` theo Q031-4), sửa = bản mới, đăng ký vào Registry `store: module` | W1 | P0 | có | ✅ 2026-11-07 (#152) |
 | S031-6 | `policyTrace` của chứng từ mua ghi `code@version#hash`; màn chứng từ hiện bản đã áp | W1 | P0 | có | ✅ 2026-11-07 (#152) |
-| S031-7 | Đánh chỉ mục khoá ngưỡng duyệt (`setting_values`, 16 §5) vào Registry với `approval.levels@1`, `store: settings` | W1 | P2 | có | ☐ sau DOC-030-4 |
+| S031-7 | Đánh chỉ mục khoá ngưỡng duyệt (`setting_values`, 16 §5) vào Registry với `approval.levels@1`, `store: settings` | W1 | P2 | có | ✅ 2026-11-21 <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — S031-7 xong trên nhánh feat/phase-031-s7-s32 --> — chữ chốt [31](31-S031-7-NGUONG-DUYET-VAO-SO.md): `approval.levels@1`, `POST /api/v1/policies/sync-settings`, `phase-031-approval-levels.test.ts` 11 ca; làm trước DOC-030-4 (chỉ đánh chỉ mục, luồng duyệt không đổi) |
 | S031-8 | PR chốt thiết kế cửa nạp: `bizcity_ledger_intake@1` 1.6.0 (`policyRefs`, `policyRef`), JSON Schema, `ingestDocumentSchema` | W2 | P0 | không | ✅ 2026-11-07 (#153; đính chính #163) |
 | S031-9 | Tầng L4b trong `preflight.ts` + Commit Guard băm `policyRefs`; `GateResult.ruleVersion` | W2 | P0 | có | ✅ 2026-11-08 (#159) |
 | S031-10 | Họ mã `POL-*` (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào `bizcity_findings@1`, có căn cứ và câu giải thích | W2 | P0 | có | ✅ 2026-11-08 (#159) |
@@ -38,7 +38,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-29 | W2b: `IN-POL-004` — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; `registerPolicyRecompute` ở Kernel ([00 §14](00-MASTER-PLAN.md)); `IN-POL-000` / `005` để sau | W2b | P1 | có | ✅ 2026-11-09 (#226); `IN-POL-000` / `005` để sau |
 | S031-30 | W4c: ô *Thực hiện chương trình* — `program[]` ở `core.policy.tracking` (chứng từ áp, quà theo mặt hàng, lệch `IN-POL-004`) + khối ở tab Theo dõi ([00 §15](00-MASTER-PLAN.md)); giá trị hàng tặng, ngân sách (Q031-7), chiết khấu hoãn | W4c | P1 | có | ✅ 2026-11-13 (#231; `program[]` ở `policy-insight.ts`, test `policy-insight.test.ts`) |
 | S031-31 | RV-R1-04: `retirePolicy` đóng `effective_to` bằng ngày ngừng (§16): code + test `policy-retire`; K1 | W5 | P1 | có | ✅ 2026-11-10 — `policy-retire` 6/6; `policy-registry`, `policy-events`, `policy-api`, `policy-insight`, `intake-policy-check` giữ nguyên |
-| S031-32 | RV-R1-04 phần dữ liệu cũ: đo bản `retired` có `effective_to` NULL trên bản sao thật rồi quyết định đóng (§16 mục 6) | W5 | P2 | không | ☐ |
+| S031-32 | RV-R1-04 phần dữ liệu cũ: đo bản `retired` có `effective_to` NULL trên bản sao thật rồi quyết định đóng (§16 mục 6) | W5 | P2 | không | 🟡 2026-11-21 <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — S031-32 phần đo xong --> — phần đo xong: DG-POLICY-6 `POLICY_RETIRED_OPEN` (chỉ đọc, info) + T031-DG-7; **còn quyết định**: chạy trên bản sao dữ liệu thật rồi chủ dự án quyết đóng hay không |
 
 ## Ca bằng chứng (golden)
 
@@ -62,6 +62,8 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | T031-RC-3 | endpoint `evaluate` và bản viết lại theo mô tả JSON ra cùng kết quả trên cùng bảng số | W3 |
 | T031-DG-1..6 | rulepack `policy`: cảnh báo L4b theo kỳ × nguồn × chi nhánh × chính sách; lý do quà tắt; thiếu `policyRefs`; sắp hết hạn còn tham chiếu; NĐ81 Điều 17 bỏ qua; lọc một đơn vị, READ ONLY — `phase-031-policy-diag.test.ts` <!-- [2026-11-21 10:30 AM Võ Hoàng] PHASE-031 — ca S031-17 / S031-23 --> | W4 |
 | T031-LN-1..5 | làn `policy`: dòng quà / dòng thường, L4b, mồ côi, truy ngược từ chứng từ / bút toán / dòng, cô lập đơn vị — `phase-031-policy-lineage.test.ts` | W4 |
+| T031-AP-1..4 | `approval.levels@1`: vectors, `describe` khớp khoá zod, `publishChecks`; cùng số cấp với luồng yêu cầu thanh toán (ngưỡng 0 / dưới / bằng / trên, `levels_required` thật); đồng bộ khoá ngưỡng: lần đầu, gọi lại không trùng, đổi khoá → bản mới + bản cũ đóng, ngày tương lai, ghi lùi → `drift`; 403 khi thiếu `settings:write` — `phase-031-approval-levels.test.ts` <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — ca S031-7 --> | W1 |
+| T031-DG-7 | DG-POLICY-6: không có bản thiếu ngày (kể cả ngừng đúng cách) → không phát hiện; bản ngừng kiểu cũ (`effective_to` NULL) → đếm theo đơn vị + số sự việc; không sửa dữ liệu — `phase-031-policy-diag.test.ts` <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — ca S031-32 --> | W5 |
 
 ## Nhật ký
 
@@ -111,3 +113,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-21 — **S031-11 + S031-19 code xong trên nhánh `feat/phase-031-s19-s11`** (Võ Hoàng): <!-- [2026-11-21 09:34 AM Võ Hoàng] PHASE-031 — nhật ký S031-11 / S031-19 -->
   S031-11 theo chữ chốt [30](30-S031-11-RULE-CONTRACT-MUA-HANG.md): 13 khuôn `purchase.<loại>@1`, `RuleContract.domain` = `'sale' | 'purchase'`, `evaluate` gọi lại `computeDoc` / `giftPlan` / `rebateFor` / `creditStatus` / `dueDateFor` (không viết lại công thức), `POST /api/v1/policies` từ chối miền purchase. Test `phase-031-purchase-contracts.test.ts` 71 ca: khoá `describe().params` khớp `.shape`; vectors (số TH1 / TH3 / TH4 của tài liệu yêu cầu); hồi quy trọn `DocCalc` qua hợp đồng = engine trên 17 phiếu mẫu (kich-ban, ap-rieng, cộng dồn, mua-tặng theo ĐVT, cha – con, đổi hàng, hạn theo ngày nhận) + 7 phiếu quà + 24 ca thưởng; phá thử (bỏ `priority` khi dựng Policy) → hồi quy đỏ đúng ca. Test mua hàng / chính sách hiện có giữ xanh.
   S031-19: tín hiệu nửa Policy cho trụ cột 05 ở `nen-mong.json` (SC-CORE-1 kiểm tệp / mã check có thật).
+- 2026-11-21 — **S031-7 + S031-32 phần đo code xong trên nhánh `feat/phase-031-s7-s32`** (Võ Hoàng): <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — nhật ký S031-7 / S031-32 -->
+  S031-7 theo chữ chốt [31](31-S031-7-NGUONG-DUYET-VAO-SO.md): Rule Contract `approval.levels@1` (miền `approval`, `bands[{ from, to?, levels[{ permission }] }]`, nửa mở); `thresholdToBands` chuyển giá trị khoá `bizcity.payment.approval_thresholds` thành dải, cùng số cấp với `levelsFor` của yêu cầu thanh toán (test so ngưỡng × số tiền và `levels_required` thật). `apps/api/src/modules/system/policy-settings-index.ts`: đồng bộ dòng thời gian của khoá ở `setting_values` thành phong bì `store = settings` (chỉ nối thêm, so băm, ghi lùi → `drift`), bộ đọc nội dung khớp băm cho `GET /api/v1/policies`; action quản trị `core.policy.sync-settings` (`POST /api/v1/policies/sync-settings`, `settings:write`). Không sửa luồng duyệt, không sửa `policy-service.ts`, không migration.
+  S031-32 phần đo: DG-POLICY-6 `POLICY_RETIRED_OPEN` trong rulepack `policy` (chỉ đọc). Quyết định đóng chờ số đo trên bản sao dữ liệu thật.
+  Trụ cột V: P-5 `tai-lieu` → `mot-phan`, P-7 `tai-lieu` → `dat` (bằng chứng test ở `tru-cot.json`).

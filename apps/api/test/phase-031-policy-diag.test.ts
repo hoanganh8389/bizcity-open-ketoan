@@ -1,4 +1,5 @@
 // [2026-11-21 09:30 AM Võ Hoàng] PHASE-031 — S031-17: rulepack `policy` (tests/conformance/diagnostics/policy.diag.mjs) chạy trên CSDL test, chỉ đọc
+// [2026-11-21 06:00 PM Võ Hoàng] PHASE-031 — S031-32 phần đo: thêm T031-DG-7 cho DG-POLICY-6 (bản retired còn effective_to NULL — có / không có)
 /**
  *   T031-DG-1  POLICY_L4B_WARN: đếm tham chiếu có cảnh báo L4b theo kỳ × nguồn × chi nhánh × chính sách, kèm tỷ lệ và mã
  *   T031-DG-2  POLICY_REASON_MISSING: chính sách có quà mà lý do XTA1.4 tắt → báo; bật lại → hết
@@ -7,6 +8,8 @@
  *   T031-DG-5  POLICY_PROMO_NOTICE: chưa đủ căn cứ → bỏ qua (skip), không phát hiện
  *   T031-TR-3  rulepack và bảng theo dõi (policy-tracking) đếm cùng số trên cùng dữ liệu
  *   T031-DG-6  lọc một đơn vị (args.tenant); chạy trong giao dịch READ ONLY — không ghi được
+ *   T031-DG-7  POLICY_RETIRED_OPEN: không có bản thiếu ngày (kể cả bản ngừng đúng cách qua retirePolicy) → không phát hiện; bản ngừng kiểu cũ
+ *              (published → retired, effective_to giữ NULL — trigger cho phép, không tắt trigger) → đếm theo đơn vị kèm số sự việc; không sửa dữ liệu
  * Lane diagnostics chạy trên cả bản cài; ở đây nạp đúng tệp .diag.mjs và chạy với ctx tối thiểu (db.query trong giao dịch READ ONLY).
  * Dữ liệu dựng qua cửa nạp thật.
  */
@@ -15,6 +18,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
+import { retirePolicy } from '@bizcity/platform/core/policies';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 type Finding = { file: null; line: null; message: string; key: string };
@@ -85,8 +89,8 @@ beforeAll(async () => {
 afterAll(async () => { await ctx.app.close(); await other.app.close(); });
 
 describe('S031-17 · rulepack policy', () => {
-  it('khai đủ năm kiểm DG-POLICY-1..5, mức info (không chặn)', () => {
-    expect(checks.map((c) => c.id)).toEqual(['DG-POLICY-1', 'DG-POLICY-2', 'DG-POLICY-3', 'DG-POLICY-4', 'DG-POLICY-5']);
+  it('khai đủ sáu kiểm DG-POLICY-1..6, mức info (không chặn)', () => {
+    expect(checks.map((c) => c.id)).toEqual(['DG-POLICY-1', 'DG-POLICY-2', 'DG-POLICY-3', 'DG-POLICY-4', 'DG-POLICY-5', 'DG-POLICY-6']);
     for (const c of checks) expect(c.enforce).toBe('info');
   });
 
@@ -160,5 +164,43 @@ describe('S031-17 · rulepack policy', () => {
     }
     // giao dịch READ ONLY: lane không ghi được dù câu có lệnh ghi
     await expect(laneCtx().db.query(`UPDATE posting_reasons SET is_active = is_active WHERE tenant_id = ${Number(tenantId)}`)).rejects.toThrow(/read-only/);
+  });
+});
+
+// Chạy sau cùng: các ca dưới thêm sự việc / ngừng chính sách, không được đổi số của các ca trên.
+describe('S031-32 · DG-POLICY-6 (phần đo)', () => {
+  const openRows = async () => (await sql<{ policy_key: string; version: number; effective_to: string | null; status: string }>`
+    SELECT policy_key, version, effective_to::text AS effective_to, status FROM policy_registry WHERE tenant_id = ${tenantId} ORDER BY policy_key, version`.execute(db)).rows;
+
+  it('T031-DG-7a: không có bản thiếu ngày — kể cả bản ngừng đúng cách (retirePolicy đóng effective_to) — không phát hiện', async () => {
+    const r0 = await run('POLICY_RETIRED_OPEN');
+    expect(r0.examined).toBe(0);
+    expect(mine(r0)).toEqual([]);
+    await db.transaction().execute((trx) => retirePolicy(trx, tenantId, policyIds['PD-QUA']!, 'user:test', '2026-10-31'));
+    const r1 = await run('POLICY_RETIRED_OPEN');
+    expect(r1.examined).toBe(1); // một bản đã ngừng, có effective_to
+    expect(mine(r1)).toEqual([]);
+    expect(r1.notes?.join(' ')).toMatch(/không tự đóng/);
+  });
+
+  it('T031-DG-7b: bản ngừng kiểu cũ (effective_to NULL) → đếm theo đơn vị kèm số sự việc tham chiếu; không sửa dữ liệu', async () => {
+    expect((await pub('PD-CU', promo, '2026-09-01')).status).toBe(201);
+    await loadHashes();
+    await ingest('2026-09-10', { key: 'PD-CU', version: 1 });
+    await ingest('2026-09-12', { key: 'PD-CU', version: 1 });
+    // Mô phỏng dữ liệu ngừng trước RV-R1-04: chỉ đổi status published → retired (trigger bizcity_policy_registry_guard cho phép), effective_to giữ NULL.
+    await sql`UPDATE policy_registry SET status = 'retired' WHERE tenant_id = ${tenantId} AND policy_id = ${policyIds['PD-CU']!} AND status = 'published'`.execute(db);
+    const before = await openRows();
+    const r = await run('POLICY_RETIRED_OPEN');
+    expect(r.examined).toBe(2);
+    const f = mine(r);
+    expect(f.map((x) => x.key)).toEqual([`${ctx.tenantCode}:retired-open`]);
+    expect(f[0]!.message).toMatch(/1 bản đã ngừng còn effective_to NULL \(PD-CU@1\); 2 sự việc tham chiếu, 2 có ngày chứng từ từ ngày áp/);
+    expect(await openRows()).toEqual(before); // chỉ đọc: không tự đóng
+    expect(before.find((x) => x.policy_key === 'PD-CU')).toMatchObject({ status: 'retired', effective_to: null });
+    // Đơn vị khác không thấy.
+    const o = await run('POLICY_RETIRED_OPEN', other.tenantCode);
+    expect(o.examined).toBe(0);
+    expect(o.findings).toEqual([]);
   });
 });

@@ -12,6 +12,17 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chính sách: ngưỡng duyệt vào sổ đăng ký (`approval.levels@1`, `store = settings`) + DG-POLICY-6 (PHASE-031 S031-7, S031-32 phần đo) <!-- [2026-11-21 06:15 PM Võ Hoàng] PHASE-031 — S031-7 / S031-32 -->
+
+- **Thêm:** Rule Contract `approval.levels@1` (`apps/api/src/modules/system/rule-contracts/approval-levels.ts`, miền `approval`): dải tiền nửa mở → các cấp duyệt (quyền); `thresholdToBands` chuyển khoá `bizcity.payment.approval_thresholds` thành dải, cùng số cấp với luồng yêu cầu thanh toán.
+- **Thêm:** `POST /api/v1/policies/sync-settings` (`core.policy.sync-settings`, `settings:write`): đánh chỉ mục khoá ngưỡng ở `setting_values` vào `policy_registry` (`store = settings`, `store_ref` = khoá, băm theo giá trị, ngày áp = ngày hiệu lực), chỉ nối thêm, chạy lại không trùng, ghi lùi báo `drift`. `GET /api/v1/policies` đọc được nội dung bản `store = settings` (khớp băm). `bizcity_policy@1` 1.5.0-draft.
+- **Thêm:** DG-POLICY-6 `POLICY_RETIRED_OPEN` trong rulepack `policy` (chỉ đọc, info): bản `retired` còn `effective_to` NULL theo đơn vị, kèm số sự việc tham chiếu — số đo để quyết định S031-32, không tự đóng.
+- **Đổi:** `RuleContract.domain` nhận thêm `'approval'` (thêm giá trị, không phá); `POST /api/v1/policies` từ chối miền `approval` (400). Trụ cột V: P-5 lên một phần, P-7 lên đạt (`docs/standard/tru-cot.json`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Luồng duyệt yêu cầu thanh toán không đổi.
+- **Nâng cấp cần làm:** không migration. Muốn khoá ngưỡng có phong bì trong sổ chính sách: quản trị gọi `POST /api/v1/policies/sync-settings` (sau mỗi lần đổi ngưỡng).
+- **Bảo mật:** action mới cần `settings:write`; không mở cho MCP / AI.
+
 ### Chính sách: Rule Contract mua hàng `purchase.*@1` + tín hiệu nửa Policy của trụ cột 05 (PHASE-031 S031-11, S031-19) <!-- [2026-11-21 09:35 AM Võ Hoàng] PHASE-031 — S031-11 / S031-19 -->
 
 - **Thêm:** mười ba Rule Contract `purchase.<loại>@1` (mỗi loại chính sách mua hàng một khuôn, `apps/api/src/modules/system/rule-contracts/purchase.ts`) bọc bộ máy mua hàng `@bizcity/mua-hang-domain` — `evaluate` gọi lại `computeDoc` / `giftPlan` / `rebateFor` (tính trên phiếu, thưởng), `creditStatus` / `dueDateFor` (hạn mức, điều khoản), chỉ mô tả cho `supply_target`, `lot_tracking`, `gift_budget`. `GET /api/v1/rule-contracts` liệt kê thêm `purchase.*`. `bizcity_policy@1` 1.4.0-draft.

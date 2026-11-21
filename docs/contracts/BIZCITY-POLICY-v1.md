@@ -2,7 +2,8 @@
 <!-- [2026-11-08 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, ADR-0031, chữ chốt PHASE-031 · 00 §9): hợp đồng API chính sách — GET /policies, GET /rule-contracts, POST /policies/evaluate, POST /policies; Rule Contract sale.promo.buy_x_get_y@1 -->
 
 <!-- [2026-11-21 09:32 AM Võ Hoàng] PHASE-031 — S031-11: 1.4.0-draft — miền purchase, mười ba Rule Contract purchase.<loại>@1 bọc bộ máy mua hàng (mục 7.2), phát hành inline chặn miền purchase (mục 6) -->
-> **Phiên bản:** 1.4.0-draft · 2026-11-21 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
+<!-- [2026-11-21 06:10 PM Võ Hoàng] PHASE-031 — S031-7: 1.5.0-draft — miền approval, Rule Contract approval.levels@1 (mục 7.3), POST /api/v1/policies/sync-settings (mục 12), store = settings đọc được ở GET /policies; phát hành inline chặn miền approval -->
+> **Phiên bản:** 1.5.0-draft · 2026-11-21 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
 > **Nguồn sự thật:** `apps/api/src/modules/system/policy.routes.ts` (route) · `apps/api/src/modules/system/rule-contracts/` (Rule Contract, dịch vụ) · `packages/platform/src/core/policies.ts` (sổ đăng ký, bảng `policy_registry`)
 > **Quyết định:** [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) · **Kế hoạch:** [PHASE-031 · 00 §9](../phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/00-MASTER-PLAN.md) · **Đi cùng:** [`bizcity_ledger_intake@1` §3.1](BIZCITY-LEDGER-INTAKE-v1.md) (`policyRefs`)
 
@@ -28,6 +29,7 @@ Quyền đọc và tính là `catalog:read`: khoá API phạm vi **`documents:wr
 | `GET /api/v1/rule-contracts/:id` | `catalog:read` | tham số, `spec`, `vectors` (§4) |
 | `POST /api/v1/policies/evaluate` | `catalog:read` | tính theo chính sách (§5) |
 | `POST /api/v1/policies` | `settings:write` | phát hành một bản inline (§6); cần `Idempotency-Key` |
+| `POST /api/v1/policies/sync-settings` | `settings:write` | đồng bộ phong bì của khoá cấu hình đánh chỉ mục (`store = settings`, §12; 1.5.0) |
 
 Không mở cho MCP / AI ở đợt này. Không có sự kiện `policy.published` — POS làm mới bằng `etag` (sự kiện: W3b).
 
@@ -42,7 +44,7 @@ Tham số: `at` (`YYYY-MM-DD`, mặc định hôm nay), `domain` (vd `sale`), `b
 | `scope` | `{ branchCodes?, channels? }` — rỗng = mọi |
 | `effectiveFrom`, `effectiveTo` | hiệu lực **của bản** theo ngày chứng từ (`effectiveTo` do bản sau đặt) |
 | `contentHash` | sha256 nội dung đã chuẩn hoá — gửi lại ở `policyRefs[].hash` |
-| `params` | tham số theo Rule Contract; `null` khi nội dung ở module chủ hoặc không đọc được (`problem` nêu lý do) |
+| `params` | tham số theo Rule Contract; `null` khi nội dung ở module chủ hoặc không đọc được (`problem` nêu lý do). Bản `store = settings` (1.5.0): dựng lại từ giá trị khoá cấu hình hiệu lực ở ngày áp của bản, khớp băm mới trả — lệch (bản bị thay trong ngày, cấu hình ghi lùi) thì `null` |
 
 Một bản có mặt khi **cả hai** phủ `at`: hiệu lực của bản, và (nếu có) cửa sổ chiến dịch `validFrom`/`validTo` **trong nội dung**. Bản `retired` không có mặt. `etag` đổi khi và chỉ khi tập (chính sách, bản, băm) đổi — POS hỏi lại rẻ bằng cách so `etag`.
 
@@ -89,7 +91,7 @@ Luật thuần và tất định: không I/O, không đồng hồ, không ngẫu
   "effectiveFrom": "2026-11-10", "reason": "Khuyến mại tháng 11", "legalRef": "NĐ 81/2018 Điều 9" }
 ```
 
-- Chỉ miền `sale` (chủ `ban-hang`, `policyId` = `ban-hang:inline:<mã>`); mã dạng `[A-Z0-9][A-Z0-9_.-]{0,63}`. Rule Contract miền `purchase` → `400` (1.4.0): chính sách mua hàng do module mua hàng làm chủ (`mua-hang.policy:<id>`, sửa ở Mua hàng → Chính sách).
+- Chỉ miền `sale` (chủ `ban-hang`, `policyId` = `ban-hang:inline:<mã>`); mã dạng `[A-Z0-9][A-Z0-9_.-]{0,63}`. Rule Contract miền `purchase` → `400` (1.4.0): chính sách mua hàng do module mua hàng làm chủ (`mua-hang.policy:<id>`, sửa ở Mua hàng → Chính sách). Miền `approval` → `400` (1.5.0): nội dung ở `setting_values`, sổ đăng ký chỉ đánh chỉ mục (§12).
 - **`effectiveFrom` bắt buộc**; bản sau **đóng bản trước ở ngày − 1**; không lùi về trước ngày áp của bản trước (`400`); lùi về trước hôm nay cần `reason` ≥ 3 ký tự.
 - **Bản đã phát hành không sửa.** Đổi = bản mới. Chính sách đã ngừng không nhận thêm bản (`409`) — dùng mã mới.
 - Kiểm: nội dung đúng khuôn của Rule Contract và kiểm chéo trường (vd `maxGiftQty` ≥ `get.qty`); lỗi trả `400` kèm `details[{ path, message }]`, không ghi gì.
@@ -129,6 +131,13 @@ Mười ba khuôn, mỗi `PolicyKind` của `@bizcity/mua-hang-domain` một khu
 - `vectors` mang số của tài liệu yêu cầu mua hàng (TH1 phải trả 39.082.320, hạn 15/10/2026; TH3 còn 32.550.000 / vượt 7.450.000; TH4 CKTT 781.646). Plugin ngoài không viết lại `compute` bằng spec ngắn — gọi Core hoặc dùng gói `@bizcity/mua-hang-domain`.
 - Không phát hành inline (mục 6); chưa tính lại chính sách mua ở cửa nạp (L4b cho chứng từ mua — đợt sau, cần chữ chốt riêng).
 
+### 7.3 `approval.levels@1` — cấp duyệt theo số tiền (1.5.0, S031-7)
+
+`domain: "approval"`. Tham số (rút gọn [PHASE-030 · 16 §5.1](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/16-CHUAN-CHUNG-TU-DUNG-CHUNG.md)): `bands[{ from, to?, levels[{ permission }] }]` — dải liền nhau, nửa mở `from ≤ số tiền < to`, dải đầu từ 0, chỉ dải cuối không có `to`; `levels` rỗng = không cần duyệt. `evaluate({ amount })` → `{ band, levels[], count }`; số tiền âm / không phải số → `indeterminate: true`. `publishChecks` bắt dải không từ 0, hở, chồng, dải giữa mở, dải cuối đóng, `to ≤ from`, quyền lặp. `treatment` rỗng.
+
+- **Khoá `bizcity.payment.approval_thresholds`** (yêu cầu thanh toán, migration 0161) ↔ dải: giá trị `N > 0` → `[{ from: 0, to: N, levels: [payments:approve] }, { from: N, levels: [payments:approve, payments:approve-final] }]`; `0` / không có → `[{ from: 0, levels: [payments:approve] }]`. Cùng số cấp với luồng duyệt hiện có (số tiền ≥ ngưỡng → hai cấp) — test `apps/api/test/phase-031-approval-levels.test.ts` (T031-AP-2) so trên nhiều ngưỡng × số tiền và với `levels_required` thật của yêu cầu lập qua API.
+- Luồng duyệt yêu cầu thanh toán **chưa đổi**: vẫn đọc khoá trực tiếp; Rule Contract và phong bì để mô tả, truy vết, cho bộ kiểm đọc. Chính sách duyệt chung cho mọi chứng từ: DOC-030-4.
+
 ## 8. Giới hạn đã biết (v1)
 
 - Áp độc lập, cộng dồn; chưa có "áp riêng".
@@ -140,6 +149,7 @@ Mười ba khuôn, mỗi `PolicyKind` của `@bizcity/mua-hang-domain` một khu
 
 ## 9. Changelog
 
+- **1.5.0-draft (2026-11-21):** PHASE-031 S031-7 — `domain` thêm giá trị `approval`; Rule Contract `approval.levels@1` (mục 7.3); `POST /api/v1/policies/sync-settings` đánh chỉ mục khoá ngưỡng duyệt vào sổ đăng ký với `store = settings` (mục 12); `GET /api/v1/policies` trả `params` của bản `store = settings` (khớp băm); `POST /api/v1/policies` từ chối miền `approval`. Thêm, không phá.
 - **1.4.0-draft (2026-11-21):** PHASE-031 S031-11 — `domain` thêm giá trị `purchase`; mười ba Rule Contract `purchase.<loại>@1` bọc bộ máy mua hàng (mục 7.2); `POST /api/v1/policies` từ chối miền `purchase`. Thêm, không phá.
 - **1.3.0-draft (2026-11-09):** PHASE-031 W4c — `program[]` ở `GET /api/v1/policy-tracking` (mục 11). Thêm khoá, không đổi khoá cũ.
 - **1.2.0-draft (2026-11-09):** PHASE-031 W4a — bốn action đọc cho màn Chính sách và Theo dõi thực hiện (mục 11). Thêm, không phá.
@@ -171,3 +181,17 @@ Bốn endpoint đọc, quyền `catalog:read`, không ra MCP / AI. Nguồn: `pol
 | `GET /api/v1/policy-lineage?eventId` hoặc `?docKey` | `event`, `refs[]` (`key, version, sentHash, registered, policyId, registryHash, hashMatches, covers, effectiveFrom/To`), `policyCheck` lúc nhận; không thấy sự việc → 404 |
 
 Giới hạn: ô *Thực hiện chương trình* chỉ có số chứng từ áp, số lượng quà theo mặt hàng và số chứng từ lệch; **giá trị hàng tặng** (cần giá vốn / giá bán, chưa có nguồn đọc thống nhất) và **ngân sách** (Rule Contract chưa có tham số ngân sách — Q031-7) chưa có. Độ phủ chỉ tính miền bán (`doc_type = sale`, có Rule Contract `sale.*` hiệu lực trong kỳ).
+
+## 12. Khoá cấu hình trong sổ đăng ký — `store = settings` (1.5.0, S031-7)
+<!-- [2026-11-21 06:10 PM Võ Hoàng] PHASE-031 — S031-7 (31-S031-7): đánh chỉ mục khoá ngưỡng duyệt, đồng bộ từ phía sổ chính sách -->
+
+Nội dung ở `setting_values` (một nguồn, có phiên bản, ngày hiệu lực); `policy_registry` chỉ giữ phong bì. Đợt này một khoá: `bizcity.payment.approval_thresholds` → `policyId` = `quy:settings:bizcity.payment.approval_thresholds`, `policyKey` = tên khoá, `ownerModule` = `quy`, `store` = `settings`, `storeRef` = tên khoá, `ruleContract` = `approval.levels@1`, `contentHash` = băm của `bands` dựng từ giá trị.
+
+`POST /api/v1/policies/sync-settings` (`settings:write`, `{ key? }`) — action `core.policy.sync-settings`, chạy lại không sinh bản trùng:
+
+- Dòng thời gian của khoá ở phạm vi đơn vị: mỗi ngày hiệu lực một giá trị (phiên bản lớn nhất của ngày — như `getSetting`), ngày liền nhau cùng giá trị gộp lại. Khoá chưa có phiên bản → một bản "từ đầu" (`effectiveFrom: null`) với giá trị mặc định.
+- Đoạn có ngày ≥ ngày áp của bản cuối mà băm khác → bản mới, `effectiveFrom` = ngày hiệu lực của phiên bản cấu hình; bản trước đóng ở ngày − 1 (cùng ngày → bản trước thành khoảng rỗng). Người phát hành = người ghi phiên bản cấu hình; lý do ghi phiên bản nguồn và người chạy đồng bộ.
+- Phiên bản cấu hình **ghi lùi** về trước ngày áp của bản cuối: sổ không viết lại quá khứ → không nối, trả ở `drift[{ at, registryVersion, registryHash, settingsHash }]`; không tự sửa.
+- Trả `{ items: [{ key, policyId, ruleContract, published[], current, drift[], problem? }] }`. Chính sách đã ngừng → `problem`, không nối thêm.
+- Đổi khoá qua đường cấu hình hiện có (`PUT /api/v1/payment-request-settings`, `PUT /api/v1/settings/values/:key`) **không** tự gọi đồng bộ (không sửa đường ghi cấu hình của lõi); quản trị chạy action này.
+

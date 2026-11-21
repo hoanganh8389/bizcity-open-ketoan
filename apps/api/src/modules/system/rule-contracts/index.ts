@@ -10,6 +10,7 @@ import { saleBuyXGetY } from './sale-promo-buy-x-get-y.js';
 import { saleProgramDiscount, saleProgramGift } from './sale-program.js';
 import { SALE_PROMO_CONTRACTS } from './sale-promo.js';
 import { PURCHASE_CONTRACTS } from './purchase.js';
+import { approvalLevels } from './approval-levels.js';
 import type { AnyRuleContract } from './types.js';
 
 export type { AnyRuleContract, FieldDoc, PublishIssue, RuleContract, Treatment, Vector } from './types.js';
@@ -17,7 +18,8 @@ export type { AnyRuleContract, FieldDoc, PublishIssue, RuleContract, Treatment, 
 // [2026-11-12 09:15 PM Võ Hoàng] POS-KM — S031-15 phần chương trình bán (PHASE-031 · 00 §17 mục 1): thêm hai khuôn của BH12 (đóng góp)
 // [2026-11-13 10:20 AM Võ Hoàng] POS-KM2 — PHASE-031 · 00 §18 (đóng góp): năm khuôn khuyến mại mở rộng (nội tuyến)
 // [2026-11-21 09:20 AM Võ Hoàng] PHASE-031 — S031-11 (30-S031-11): thêm mười ba khuôn purchase.<loại>@1 bọc bộ máy mua hàng
-export const RULE_CONTRACTS: readonly AnyRuleContract[] = [saleBuyXGetY, saleProgramGift, saleProgramDiscount, ...SALE_PROMO_CONTRACTS, ...PURCHASE_CONTRACTS];
+// [2026-11-21 05:10 PM Võ Hoàng] PHASE-031 — S031-7 (31-S031-7 §1): thêm approval.levels@1 (ngưỡng duyệt, store = settings)
+export const RULE_CONTRACTS: readonly AnyRuleContract[] = [saleBuyXGetY, saleProgramGift, saleProgramDiscount, ...SALE_PROMO_CONTRACTS, ...PURCHASE_CONTRACTS, approvalLevels];
 
 const byId = new Map(RULE_CONTRACTS.map((c) => [c.id, c]));
 export const getRuleContract = (id: string): AnyRuleContract | undefined => byId.get(id);
@@ -36,6 +38,8 @@ export type PolicyAvailability = (trx: Db, tenantId: string, envelope: PolicyEnv
   Promise<{ skip: string } | { info?: Record<string, unknown> }>;
 
 const readers = new Map<string, PolicyContentReader>();
+// [2026-11-21 05:10 PM Võ Hoàng] PHASE-031 — S031-7 (31-S031-7 §1 mục 2): bản `store = settings` đọc qua bộ đọc theo tên khoá (`store_ref`), do policy-settings-index.ts đăng ký
+const settingsReaders = new Map<string, PolicyContentReader>();
 const availability = new Map<string, PolicyAvailability>();
 
 /** Module chủ gọi một lần khi nạp. Gọi lại cùng hàm thì bỏ qua; khác hàm cùng module → lỗi (như registerSubscribers). */
@@ -50,9 +54,23 @@ export function registerPolicyAvailability(ownerModule: string, fn: PolicyAvaila
   availability.set(ownerModule, fn);
 }
 
-/** Nội dung của một bản: inline đọc ở sổ đăng ký (người gọi đưa `inlineContent`), module đọc qua bộ đọc của module chủ. */
+/**
+ * Bộ đọc nội dung của bản `store = settings` theo tên khoá cấu hình (`store_ref`): trả nội dung của ĐÚNG bản (khớp băm), không thì null.
+ * Gọi lại cùng hàm thì bỏ qua; khác hàm cùng khoá → lỗi.
+ */
+export function registerSettingsPolicyReader(settingKey: string, fn: PolicyContentReader): void {
+  const cur = settingsReaders.get(settingKey);
+  if (cur && cur !== fn) throw new Error(`Bộ đọc chính sách của khoá cấu hình ${settingKey} đăng ký hai lần`);
+  settingsReaders.set(settingKey, fn);
+}
+
+/** Nội dung của một bản: inline đọc ở sổ đăng ký (người gọi đưa `inlineContent`), settings đọc theo khoá cấu hình, module đọc qua bộ đọc của module chủ. */
 export async function policyContent(trx: Db, tenantId: string, e: PolicyEnvelope, inlineContent?: unknown): Promise<unknown | null> {
   if (e.store === 'inline') return inlineContent ?? null;
+  if (e.store === 'settings') {
+    const fn = settingsReaders.get(e.storeRef);
+    return fn ? fn(trx, tenantId, e) : null;
+  }
   const reader = readers.get(e.ownerModule);
   return reader ? reader(trx, tenantId, e) : null;
 }

@@ -1,5 +1,5 @@
 # PHASE-026 · 10 — Đánh giá mức adapt: trụ cột × tiêu chí × mức đạt
-<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — SINH TỰ ĐỘNG từ docs/standard/tru-cot.json (bizcity_pillars@1 0.1.0-draft, cập nhật 2026-11-08) bằng scripts/tru-cot-md.mjs — sửa ở tệp JSON rồi chạy lại, không sửa tay ở đây -->
+<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — SINH TỰ ĐỘNG từ docs/standard/tru-cot.json (bizcity_pillars@1 0.1.0-draft, cập nhật 2026-11-21) bằng scripts/tru-cot-md.mjs — sửa ở tệp JSON rồi chạy lại, không sửa tay ở đây -->
 
 Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **Trụ cột** ở trang chủ phân hệ. Mức đạt đi theo bằng chứng (migration, test, check); không ai tích tay (R-CONT-7). Trọng số: đạt 1 · một phần ½ · tài liệu ¼ · chưa 0.
 
@@ -12,7 +12,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | II | Định danh bất biến, mã có phiên bản | **61 %** | 4 | 0 | 1 | 2 |
 | III | Liên tục kế toán (Accounting Continuity) | **39 %** | 2 | 0 | 3 | 2 |
 | IV | Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã | **90 %** | 4 | 1 | 0 | 0 |
-| Nền móng | Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản | **46 %** | 2 | 1 | 3 | 1 |
+| Nền móng | Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản | **61 %** | 3 | 2 | 1 | 1 |
 | VI | Bằng chứng và quan sát được | **70 %** | 2 | 3 | 0 | 0 |
 | VII | Cô lập đơn vị và phân quyền | **50 %** | 2 | 0 | 0 | 2 |
 | VIII | Mở rộng bằng module, kiểm chuẩn tự động | **50 %** | 2 | 1 | 0 | 2 |
@@ -92,7 +92,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | G-4 | Thư viện mã một khuôn, có căn cứ pháp lý; thông báo dựng từ mã | ✅ Đạt | bizcity_findings@1, legal-basis.ts, notifyFinding, check SC-FIND-1 / SC-FIND-2 (R-GATE-10 / 11) | IN-ITEM-002 / 008, CT-* chưa vào thư viện | S024-7, S025-9 (PHASE-024) | P0 |
 | G-5 | Mặc định cho phép, nhắc khi sai (R-GATE-9); không có luồng 'chờ kế toán trưởng' | ✅ Đạt | bizcity.item.auto_create mặc định bật; ADR-0020; HT09 | — | — | P0 |
 
-## Nền móng · Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản — 46 %
+## Nền móng · Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản — 61 %
 
 > Chính sách nghiệp vụ (giá, chiết khấu, khuyến mại, hạn mức, ngưỡng duyệt) và chế độ kế toán quản trị tập trung ở module chủ, phát hành có phiên bản qua một sổ đăng ký; mọi module và plugin dùng cùng bản, chọn theo ngày chứng từ, truy vết được tới bản đã áp — ngang Master Data: MDG giữ cái gì, Policy Registry giữ theo luật nào (ADR-0031).
 
@@ -102,9 +102,9 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | P-2 | Hồ sơ kế toán (chế độ, năm tài chính) theo năm | ✅ Đạt | accounting_profiles (0054), HT07 | — | — | P0 |
 | P-3 | Đổi chế độ: phiên bản hệ thống TK + ánh xạ + phiếu chuyển số dư | 📄 Tài liệu | ADR-0018 §tài khoản | — | S026-8 (PHASE-026) | P0 |
 | P-4 | Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi | ☐ Chưa | — | chính sách hôm nay theo tenant | S026-6 (PHASE-026) | P1 |
-| P-5 | Nhất quán cross-module: một nghiệp vụ một chính sách; mọi nguồn (module, POS, Woo, sàn) dùng cùng mã@bản và cùng hàm tính | 📄 Tài liệu | ADR-0031 D-POL-0 / D-POL-1; PHASE-031 · 20 §1 | chưa có Rule Contract và API phát hành cho nguồn ngoài | S031-13, S031-15 (PHASE-031) | P0 |
+| P-5 | Nhất quán cross-module: một nghiệp vụ một chính sách; mọi nguồn (module, POS, Woo, sàn) dùng cùng mã@bản và cùng hàm tính | 🟡 Một phần | (2026-11-21, PHASE-031) một Rule Contract cho mọi nguồn: POS tính qua POST /api/v1/policies/evaluate và cửa nạp tính lại bằng cùng hàm (policy-api, intake-policy-recompute T031-INT-11); purchase.*@1 bọc engine mua hàng, ra trùng từng đồng (phase-031-purchase-contracts T031-PC-3); approval.levels@1 cho cùng số cấp với luồng yêu cầu thanh toán (phase-031-approval-levels T031-AP-2); rulepack policy DG-POLICY-3 đo nguồn không gửi policyRefs (phase-031-policy-diag T031-DG-3) | Woo / sàn chưa nối; luồng duyệt yêu cầu thanh toán và module mua hàng vẫn tự tính (cùng kết quả có test, chưa gọi qua Rule Contract); chưa có kiểm chặn "một nghiệp vụ một chính sách" (hai chính sách cùng loại chồng phạm vi) | DOC-030-4, S031-3 (PHASE-031) | P0 |
 | P-6 | Xuyên suốt: chính sách chọn theo ngày chứng từ; đổi bản không đổi chứng từ cũ, không khoảng trống hiệu lực | 🟡 Một phần | policy_registry + purchase_policy_versions (0079), core/policies.ts, policyAt trong engine mua hàng; golden T031-TR-2, T031-MH-1 (#152) | mới có cho chính sách mua hàng | S031-4, S031-5 (PHASE-031) | P0 |
-| P-7 | Truy vết: bút toán → sự việc → chứng từ → chính sách@bản#băm → người phát hành, căn cứ — hai chiều | 📄 Tài liệu | policyTrace có version + hash (W1, #152); policyRefs ở cửa nạp (chữ chốt W2a, #153) | cửa nạp chưa nhận tham chiếu; chưa có khung nhìn policy_application | S031-6, S031-9, S031-21 (PHASE-031) | P0 |
+| P-7 | Truy vết: bút toán → sự việc → chứng từ → chính sách@bản#băm → người phát hành, căn cứ — hai chiều | ✅ Đạt | (2026-11-21, PHASE-031) chiều xuôi: GET /api/v1/lineage/policy từ bút toán (entryNo) hoặc chứng từ ra sự việc → dòng chứng từ → chính sách@bản, băm khớp, hiệu lực, người phát hành, legalRef (phase-031-policy-lineage T031-LN-3, T031-LN-4); chiều ngược: chính sách@bản → chứng từ đã áp (core.policy.applications, policy-insight); policyRefs + policy_check lưu theo phiên bản sự việc (S031-9 / S031-20 / S031-21, intake-policy-check); mua hàng ghi policyTrace code@version#hash (S031-6) | yêu cầu thanh toán chưa ghi bản approval.levels đã áp lúc tính số cấp (levels_required không mang tham chiếu chính sách) — đợt DOC-030-4 | DOC-030-4 (PHASE-031) | P0 |
 
 ## Trụ cột VI · Bằng chứng và quan sát được — 70 %
 
