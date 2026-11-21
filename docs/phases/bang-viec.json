@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 6
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 208
+      "count": 223
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 327
+      "count": 328
     }
   ],
   "items": [
@@ -2720,14 +2720,8 @@
       "title": "Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml, khối api chuyển lên gốc, cai-nhanh.sh sinh mật kh…",
       "priority": "P1",
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
-        "branch": "feat/phase-018-giam-sat-mac-dinh",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-018 · W6 — giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH khi cài Docker; Bàn điều …"
-      },
+      "column": "todo",
+      "claim": null,
       "modules": [
         "he-thong"
       ],
@@ -9710,6 +9704,201 @@
       "facet": "F8",
       "file": "docs/phases/PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md",
       "line": 42
+    },
+    {
+      "id": "S038-1",
+      "phase": "PHASE-038",
+      "title": "Phase, quyết định D038-1..4",
+      "priority": null,
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "modules": [],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S038-2",
+      "phase": "PHASE-038",
+      "title": "logging: json-file có trần cho mọi dịch vụ; bind mount ${LOGHOSTDIR:-./logs} → /app/logs cho api, db-migrate; LOGDIR, LOGFILELEVEL vào env.ts; .gitignore logs/",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S038-3",
+      "phase": "PHASE-038",
+      "title": "Logger multistream → logs/api-loi.log (≥ warn, xoay vòng, cùng redact)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S038-4",
+      "phase": "PHASE-038",
+      "title": "Lỗi khởi động ghi fatal đồng bộ vào api-loi.log với evt: bizcity.system.startfailed + reason",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S038-5",
+      "phase": "PHASE-038",
+      "title": "Job db-migrate ghi logs/db-migrate.log (commit, migration áp, lỗi đầy đủ)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S038-6",
+      "phase": "PHASE-038",
+      "title": "nginx web: web-loi.log (errorlog + truy cập ≥ 500); errorpage 502 503 504 trả JSON GATEWAYUNAVAILABLE",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S038-7",
+      "phase": "PHASE-038",
+      "title": "scripts/lay-log.sh theo README §4.4",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F7",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 17
+    },
+    {
+      "id": "S038-8",
+      "phase": "PHASE-038",
+      "title": "Sổ tay: mục \"Lấy log gửi về\" trong runbook aaPanel + DEPLOY §4; OBSERVABILITY §2 thêm logs/; log aaPanel /www/wwwlogs/",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 18
+    },
+    {
+      "id": "S038-9",
+      "phase": "PHASE-038",
+      "title": "Giao diện: một khay \"Không kết nối được máy chủ phần mềm\" cho GATEWAYUNAVAILABLE / 5xx không JSON; lùi dần lời gọi lặp",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S038-10",
+      "phase": "PHASE-038",
+      "title": "Thi hành R-LOG-9 (bản cài có logs/ cố định, có trần; luật đã khai ở RULE-LOG) + check SC-OBS-3 (compose khai logging: và mount LOGHOSTDIR) + CHANGELOG \"Nâng cấ…",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 20
+    },
+    {
+      "id": "S038-11",
+      "phase": "PHASE-038",
+      "title": "Bộ bắt uncaughtException / unhandledRejection ghi fatal đồng bộ (R-LOG-3); version, commit trong mọi dòng (R-LOG-5); Node --enable-source-maps + giữ .map trong…",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S038-12",
+      "phase": "PHASE-038",
+      "title": "logError chung: err chuẩn (type, stack, cause lồng, pgCode), errFp, evt; redact một danh sách dùng chung; sửa events.ts bỏ String(err)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F1",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S038-13",
+      "phase": "PHASE-038",
+      "title": "(D038-5 đã duyệt) ErrorBoundary theo màn, window.onerror, unhandledrejection → POST /api/v1/system/client-errors → logs/web-client.log",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F8",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S038-14",
+      "phase": "PHASE-038",
+      "title": "Luật R-LOG-1..11 + SC-LOG-1..3; rà 16 chỗ nuốt lỗi (ghi warn hoặc chú thích nuot-loi:)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F5",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S038-15",
+      "phase": "PHASE-038",
+      "title": "Promtail (hết hỗ trợ 2026-03-02) → Grafana Alloy; sửa cảnh báo / dashboard dùng số đo Promtail",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "modules": [],
+      "facet": "F6",
+      "file": "docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/40-MASTER-CHECKLIST.md",
+      "line": 29
     },
     {
       "id": "S039-1",
