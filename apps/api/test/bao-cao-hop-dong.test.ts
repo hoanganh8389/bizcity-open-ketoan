@@ -66,4 +66,18 @@ for (const mode of ['none', 'contract'] as const) describe(`Báo cáo hợp đ�
     expect(ngoai.every((x) => x.code === '')).toBe(true);
     if (mode === 'contract') expect(ngoai.some((x) => x.partnerCode === 'NCC-TRUNGHAU')).toBe(false);
   });
+
+  it('lọc chi nhánh / kho: chỉ phiếu của chi nhánh chọn; MH35 còn phải trả theo phiếu trong phạm vi', async () => {
+    const all = (await call<{ data: { branchCode: string }[] }>(t, 'GET', '/api/v1/purchase/contract-prices?from=2026-01-01&to=2026-12-31')).body.data;
+    const cn = all[0]?.branchCode;
+    expect(cn).toBeTruthy();
+    const loc = (await call<{ data: { branchCode: string }[] }>(t, 'GET', `/api/v1/purchase/contract-prices?from=2026-01-01&to=2026-12-31&branchCodes=${cn}`)).body.data;
+    expect(loc.length).toBeGreaterThan(0);
+    expect(loc.every((x) => x.branchCode === cn)).toBe(true);
+    expect((await call<{ data: unknown[] }>(t, 'GET', '/api/v1/purchase/contract-prices?from=2026-01-01&to=2026-12-31&branchCodes=KHONG-CO')).body.data.length).toBe(0);
+    const r = await call<{ data: Hd[] }>(t, 'GET', `/api/v1/purchase/contract-execution?from=2026-01-01&to=2026-12-31&branchCodes=${cn}`);
+    expect(r.status).toBe(200);
+    const p = await call<{ data: unknown[] }>(t, 'GET', `/api/v1/purchase/policy-execution?from=2026-01-01&to=2026-12-31&branchCodes=${cn}&warehouseCodes=KHONG-CO`);
+    expect(p.status).toBe(200);
+  });
 });

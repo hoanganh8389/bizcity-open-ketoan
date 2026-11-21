@@ -7,6 +7,14 @@ Bốn báo cáo nằm trong nhóm **Hợp đồng & chính sách** ở trang Bá
 
 Hợp đồng xuyên suốt: phiếu theo hợp đồng X chỉ tính cho X; phần không theo hợp đồng tính riêng.
 
+**Chọn tham số**: bấm nút *Chọn tham số* ở góc phải (hoặc ghim bảng bên trái), giống các sổ / báo cáo kho:
+- kỳ, nhà cung cấp, hợp đồng (mọi / không theo hợp đồng / từng hợp đồng);
+- chi nhánh theo thẻ **Danh sách** hoặc **Cây** cơ cấu tổ chức, kèm **mã kho**;
+- **nhóm hàng** (riêng đối chiếu giá);
+- lưu thành **bộ tham số** để lần sau chọn lại.
+
+Lọc chi nhánh / kho tính theo phiếu thuộc chi nhánh / kho đó. Thưởng cuối kỳ tính trên cả NCC / hợp đồng, không chia theo chi nhánh. Ở báo cáo thực hiện hợp đồng, khi lọc chi nhánh thì *Còn phải trả* là nợ còn mở của chính các phiếu đó (số dư đầu kỳ không chia được theo chi nhánh).
+
 **Xem cùng bộ lọc**: dãy nút ở đầu mỗi báo cáo chuyển sang báo cáo kia, giữ nguyên kỳ / NCC / hợp đồng. Có thể đi theo vòng: thực hiện hợp đồng → chính sách → kết quả thực hiện → chênh lệch giá → công nợ theo hợp đồng (MH30). Bộ lọc nằm trên địa chỉ trang, nên gửi đường dẫn cho người khác là mở đúng bộ lọc đó.
 
 ## MH32 · Tình hình thực hiện chính sách mua hàng

@@ -1,7 +1,9 @@
 // [2026-11-21 Nguyễn Văn Thủy] Báo cáo theo hợp đồng / chính sách mua hàng: MH32 thực hiện chính sách, MH33 chính sách theo hợp đồng,
 // MH34 đối chiếu giá theo hợp đồng, MH35 thực hiện hợp đồng — hợp đồng xuyên suốt, "không theo hợp đồng" là một nhóm riêng (đóng góp)
 /**
- * Bốn báo cáo dùng chung bộ lọc: kỳ (từ – đến), nhà cung cấp, hợp đồng (mọi / không theo hợp đồng / từng hợp đồng).
+ * Bốn báo cáo dùng chung bảng tham số (FilterLayout — như các sổ / báo cáo khác: ngăn kéo "Chọn tham số" hoặc ghim bên trái, bộ tham số đã lưu):
+ *   kỳ (từ – đến), nhà cung cấp, hợp đồng (mọi / không theo hợp đồng / từng hợp đồng), chi nhánh (danh sách / cây) + mã kho; MH34 thêm nhóm hàng.
+ *   Mọi tham số nằm trên địa chỉ trang (from, to, ncc, hd, cn, kho) nên chuyển sang báo cáo liên kết giữ nguyên.
  *   MH32  Tình hình thực hiện chính sách: tổng theo NCC · hợp đồng → từng chính sách (doanh số đủ điều kiện, được hưởng, đã nhận, còn nhận)
  *         → bấm một chính sách xem cách tính và từng chứng từ (mở được phiếu).
  *   MH33  Tổng hợp chính sách theo hợp đồng: hợp đồng nào có chính sách gì, phạm vi, điều kiện kích hoạt, hiệu lực.
@@ -14,7 +16,9 @@ import { useQuery } from '@tanstack/react-query';
 import { POLICY_LABEL, scopeBranches, type Policy } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
-import { DateRange } from '@/components/filters';
+import { BranchSelect } from '@/components/filters';
+import { FilterLayout, SideField, SideKy } from '@/components/ReportPanel';
+import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { ErrorBox, Loading } from '@/components/ui';
 import { ListPicker, PartnerPicker } from '@/components/pickers';
 import { api, errorText } from '@/lib/api';
@@ -37,29 +41,40 @@ const LIEN_KET: [string, string, string][] = [
 function useBoLoc(defaultFrom = `${today().slice(0, 4)}-01-01`) {
   const [sp, setSp] = useSearchParams();
   const from = sp.get('from') || defaultFrom, to = sp.get('to') || today(), ncc = sp.get('ncc') ?? '', hd = sp.has('hd') ? (sp.get('hd') || KHONG_HD) : '';
+  const cn = sp.get('cn') ?? '', kho = sp.get('kho') ?? '', nhom = sp.get('nhom') ?? '';
   const dat = (x: Record<string, string>) => { const n = new URLSearchParams(sp); for (const [k, v] of Object.entries(x)) { if (v) n.set(k, v); else n.delete(k); } setSp(n, { replace: true }); };
   const setNcc = (v: string) => dat({ ncc: v, hd: '' });
   const setHd = (v: string) => { const n = new URLSearchParams(sp); if (!v) n.delete('hd'); else n.set('hd', v === KHONG_HD ? '' : v); setSp(n, { replace: true }); };
   const contracts = useQuery({ queryKey: ['mua-hang', 'contracts', ''], queryFn: () => purchaseApi.contracts(), staleTime: 60_000 }).data ?? [];
   const here = typeof window !== 'undefined' ? window.location.pathname : '';
-  const qs = () => { const n = new URLSearchParams(); if (from) n.set('from', from); if (to) n.set('to', to); if (ncc) n.set('ncc', ncc); if (hd) n.set('hd', hd === KHONG_HD ? '' : hd); return n.toString(); };
+  const qs = () => { const n = new URLSearchParams(); if (from) n.set('from', from); if (to) n.set('to', to); if (ncc) n.set('ncc', ncc); if (hd) n.set('hd', hd === KHONG_HD ? '' : hd); if (cn) n.set('cn', cn); if (kho) n.set('kho', kho); if (nhom) n.set('nhom', nhom); return n.toString(); };
   const lienKet = (
     <div className="row" style={{ gap: 4, padding: '6px 12px 0', flexWrap: 'wrap', alignItems: 'center', fontSize: 12.5 }} title="Chuyển sang báo cáo khác, giữ nguyên kỳ / NCC / hợp đồng đang lọc">
       <span className="muted">Xem cùng bộ lọc:</span>
       {LIEN_KET.filter(([path]) => !here.endsWith(path)).map(([path, code, label]) => <Link key={path} className="btn btn-xs" to={`${path}?${path.endsWith('cong-no-hop-dong') ? (hd && hd !== KHONG_HD ? `hd=${encodeURIComponent(hd)}` : '') : qs()}`}>{label} <span className="muted mono" style={{ fontSize: 10 }}>{code}</span></Link>)}
     </div>
   );
-  const bar = (extra?: ReactNode, coKy = true) => (
-    <>{lienKet}<div className="row" style={{ gap: 8, padding: '8px 12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-      {coKy && <DateRange from={from} to={to} onChange={(f, t) => dat({ from: f, to: t })} />}
-      <div style={{ width: 240 }}><PartnerPicker value={ncc} kind="supplier" onChange={(c) => { setNcc(c); setHd(''); }} placeholder="Tất cả nhà cung cấp" /></div>
-      <div style={{ width: 260 }} title="Hợp đồng xuyên suốt: chọn một hợp đồng, hoặc 'Không theo hợp đồng' để xem riêng phần ngoài hợp đồng">
-        <ListPicker items={[{ code: KHONG_HD, name: 'Không theo hợp đồng' }, ...contracts.filter((c) => !ncc || c.partnerCode === ncc).map((c) => ({ code: c.code, name: `${c.partnerName} · ${c.statusText}` }))]} value={hd} onChange={setHd} placeholder="Mọi hợp đồng" />
-      </div>
-      {extra}
-    </div></>
+  /** Thanh trên báo cáo: liên kết sang báo cáo khác + các nút lọc nhanh của riêng màn (tình trạng, chỉ dòng lệch…). */
+  const bar = (extra?: ReactNode) => (
+    <>{lienKet}{extra && <div className="row" style={{ gap: 8, padding: '8px 12px', alignItems: 'center', flexWrap: 'wrap' }}>{extra}</div>}</>
   );
-  return { from, to, ncc, hd, contracts, bar };
+  /** Bảng tham số chung (ngăn kéo / ghim trái): kỳ · NCC · hợp đồng · chi nhánh (danh sách / cây) + mã kho · nhóm hàng (tuỳ màn). */
+  const khung = (o: { coKy?: boolean; coNhom?: boolean; coKho?: boolean }, children: ReactNode) => (
+    <FilterLayout filters={<>
+      {o.coKy !== false && <SideKy from={from} to={to} onChange={(a, b) => dat({ from: a, to: b })} />}
+      <SideField label="Nhà cung cấp"><PartnerPicker value={ncc} kind="supplier" onChange={(c) => { const n = new URLSearchParams(sp); if (c) n.set('ncc', c); else n.delete('ncc'); n.delete('hd'); setSp(n, { replace: true }); }} placeholder="Tất cả nhà cung cấp" /></SideField>
+      <SideField label="Hợp đồng">
+        <span title="Hợp đồng xuyên suốt: chọn một hợp đồng, hoặc 'Không theo hợp đồng' để xem riêng phần ngoài hợp đồng" style={{ display: 'block' }}>
+          <ListPicker items={[{ code: KHONG_HD, name: 'Không theo hợp đồng' }, ...contracts.filter((c) => !ncc || c.partnerCode === ncc).map((c) => ({ code: c.code, name: `${c.partnerName} · ${c.statusText}` }))]} value={hd} onChange={setHd} placeholder="Mọi hợp đồng" />
+        </span>
+      </SideField>
+      <BranchSelect value={cn} onChange={(v) => dat({ cn: v })} warehouses={o.coKho === false ? undefined : { value: kho, onChange: (v) => dat({ kho: v }) }} />
+      {o.coNhom && <ChonNhomHang value={nhom} onChange={(v) => dat({ nhom: v })} />}
+    </>}>{children}</FilterLayout>
+  );
+  /** Tham số gửi máy chủ. */
+  const thamSo = { from, to, partnerCode: ncc || undefined, contractCode: hdParam(hd), branchCodes: cn || undefined, warehouseCodes: kho || undefined };
+  return { from, to, ncc, hd, cn, kho, nhom, contracts, bar, khung, thamSo };
 }
 
 /* ------------------------------------------------------------------ MH32 */
@@ -75,7 +90,7 @@ export function ThucHienChinhSachPage() {
   const [tt, setTt] = useState<'' | ExecRow['status']>('');
   const [nhom, setNhom] = useState('');
   const [chon, setChon] = useState<ExecRow | null>(null);
-  const q = useQuery({ queryKey: ['mua-hang', 'policy-execution', f.from, f.to, f.ncc, f.hd], queryFn: () => api.get<ExecRow[]>(`${P}/policy-execution`, { from: f.from, to: f.to, partnerCode: f.ncc || undefined, contractCode: hdParam(f.hd) }) });
+  const q = useQuery({ queryKey: ['mua-hang', 'policy-execution', f.thamSo], queryFn: () => api.get<ExecRow[]>(`${P}/policy-execution`, f.thamSo) });
   const all = q.data ?? [];
   const keyOf = (r: ExecRow) => `${r.partnerCode}|${r.contractCode}`;
   const nhomRows = useMemo(() => [...new Map(all.map((r) => [keyOf(r), r])).keys()].map((k) => {
@@ -102,7 +117,7 @@ export function ThucHienChinhSachPage() {
   return (
     <>
       <PageHeader title="Tình hình thực hiện chính sách mua hàng" code="MH32" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Doanh số đủ điều kiện, ưu đãi được hưởng, đã nhận, còn phải nhận — theo NCC / hợp đồng → chính sách → chứng từ" />
-      <div className="card">
+      {f.khung({}, <div className="card">
         {f.bar(<div className="row" style={{ gap: 4, alignItems: 'center' }}>{([['', 'Tất cả'], ['con', 'Còn phải nhận'], ['du-kien', 'Dự kiến'], ['du', 'Đã nhận đủ'], ['chua-dat', 'Chưa đạt']] as const).map(([k, l]) => <button key={k} type="button" className={`btn btn-sm${tt === k ? ' btn-primary' : ''}`} onClick={() => setTt(k)}>{l}</button>)}</div>)}
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : <>
@@ -146,7 +161,7 @@ export function ThucHienChinhSachPage() {
             </tbody></table>
           </div>}
         </>}
-      </div>
+      </div>)}
     </>
   );
 }
@@ -159,8 +174,11 @@ export function ChinhSachTheoHopDongPage() {
   const [loai, setLoai] = useState('');
   const [chiDangAp, setChiDangAp] = useState(true);
   const now = today();
+  const cnSet = f.cn ? new Set(f.cn.split(',')) : null;
   const rows = (mh?.policies ?? []).filter((p) => (!f.ncc || p.scope.partnerCode === f.ncc) && (!f.hd || (f.hd === KHONG_HD ? !p.scope.contractCode : p.scope.contractCode === f.hd))
-    && (!loai || p.kind === loai) && (!chiDangAp || (p.isActive && (!p.validTo || p.validTo >= now))));
+    && (!loai || p.kind === loai) && (!chiDangAp || (p.isActive && (!p.validTo || p.validTo >= now)))
+    // Chi nhánh: chính sách áp mọi chi nhánh luôn hiện; chính sách giới hạn chi nhánh hiện khi có ít nhất một chi nhánh đang chọn.
+    && (!cnSet || !scopeBranches(p.scope).length || scopeBranches(p.scope).some((b) => cnSet.has(b))));
   const tenHd = (c?: string) => f.contracts.find((x) => x.code === c)?.name ?? '';
   const cols: Column<Policy>[] = [
     { key: 'contract', header: 'Hợp đồng', width: 150, value: (p) => hdText(p.scope.contractCode), render: (p) => <span title={tenHd(p.scope.contractCode)}>{hdCell(p.scope.contractCode)}</span> },
@@ -175,13 +193,13 @@ export function ChinhSachTheoHopDongPage() {
   return (
     <>
       <PageHeader title="Tổng hợp chính sách theo hợp đồng" code="MH33" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Hợp đồng nào có chính sách gì: nội dung, phạm vi, điều kiện kích hoạt, hiệu lực — phần không theo hợp đồng xem riêng" />
-      <div className="card">
+      {f.khung({ coKy: false, coKho: false }, <div className="card">
         {f.bar(<>
           <select className="select input" style={{ width: 220 }} value={loai} onChange={(e) => setLoai(e.target.value)}><option value="">Mọi loại chính sách</option>{Object.entries(POLICY_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
           <label className="row" style={{ gap: 4, alignItems: 'center', fontSize: 13 }}><input type="checkbox" checked={chiDangAp} onChange={(e) => setChiDangAp(e.target.checked)} /> Chỉ chính sách đang áp</label>
-        </>, false)}
+        </>)}
         {isLoading ? <Loading /> : <DataGrid storageKey="mh33" rows={rows} rowKey={(p) => p.id} columns={cols} exportName="chinh-sach-theo-hop-dong" exportTitle="TỔNG HỢP CHÍNH SÁCH MUA HÀNG THEO HỢP ĐỒNG" emptyText="Không có chính sách khớp bộ lọc" />}
-      </div>
+      </div>)}
     </>
   );
 }
@@ -193,8 +211,9 @@ export function DoiChieuGiaHopDongPage() {
   const names = useNames();
   const f = useBoLoc();
   const [chiLech, setChiLech] = useState(true);
-  const q = useQuery({ queryKey: ['mua-hang', 'contract-prices', f.from, f.to, f.ncc, f.hd], queryFn: () => api.get<PriceRow[]>(`${P}/contract-prices`, { from: f.from, to: f.to, partnerCode: f.ncc || undefined, contractCode: hdParam(f.hd) }) });
-  const all = q.data ?? [];
+  const q = useQuery({ queryKey: ['mua-hang', 'contract-prices', f.thamSo], queryFn: () => api.get<PriceRow[]>(`${P}/contract-prices`, f.thamSo) });
+  const ln = useLocNhomHang(f.nhom);
+  const all = ln.loc(q.data ?? []);
   const lech = (r: PriceRow) => r.diff !== null && Math.abs(r.diff) >= 0.5;
   const rows = chiLech ? all.filter((r) => lech(r) || r.agreed === null) : all;
   const tang = all.filter((r) => (r.diffAmount ?? 0) > 0).reduce((t, r) => t + r.diffAmount!, 0);
@@ -219,8 +238,8 @@ export function DoiChieuGiaHopDongPage() {
   ];
   return (
     <>
-      <PageHeader title="Đối chiếu giá mua theo hợp đồng" code="MH34" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Giá thoả thuận (hợp đồng / giá NCC ngoài hợp đồng) so với giá trên phiếu nhập đã duyệt — phát hiện chênh lệch" />
-      <div className="card">
+      <PageHeader title="Đối chiếu giá mua theo hợp đồng" code="MH34" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Giá thoả thuận (hợp đồng / giá NCC ngoài hợp đồng) so với giá thực tế sau chiết khấu, trước VAT — theo hoá đơn NCC, chưa có thì tạm theo phiếu nhập" />
+      {f.khung({ coNhom: true }, <div className="card">
         {f.bar(<label className="row" style={{ gap: 4, alignItems: 'center', fontSize: 13 }}><input type="checkbox" checked={chiLech} onChange={(e) => setChiLech(e.target.checked)} /> Chỉ dòng lệch / chưa khai giá</label>)}
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : <>
@@ -231,7 +250,7 @@ export function DoiChieuGiaHopDongPage() {
           </div>
           <DataGrid storageKey="mh34" rows={rows} rowKey={(r, i) => `${r.docId}-${r.sku}-${i}`} columns={cols} footerLabel="Cộng" exportName="doi-chieu-gia-theo-hop-dong" exportTitle="ĐỐI CHIẾU GIÁ MUA THEO HỢP ĐỒNG" emptyText={chiLech ? 'Không có dòng lệch giá trong kỳ' : 'Không có phiếu nhập trong kỳ'} />
         </>}
-      </div>
+      </div>)}
     </>
   );
 }
@@ -242,7 +261,7 @@ export function ThucHienHopDongPage() {
   const navigate = useNavigate();
   const names = useNames();
   const f = useBoLoc();
-  const q = useQuery({ queryKey: ['mua-hang', 'contract-execution', f.from, f.to, f.ncc, f.hd], queryFn: () => api.get<HdRow[]>(`${P}/contract-execution`, { from: f.from, to: f.to, partnerCode: f.ncc || undefined, contractCode: hdParam(f.hd) }) });
+  const q = useQuery({ queryKey: ['mua-hang', 'contract-execution', f.thamSo], queryFn: () => api.get<HdRow[]>(`${P}/contract-execution`, f.thamSo) });
   const ten = (r: HdRow) => f.contracts.find((c) => c.code === r.code)?.statusText ?? '';
   const cols: Column<HdRow>[] = [
     { key: 'code', header: 'Hợp đồng', width: 160, value: (r) => hdText(r.code), render: (r) => (r.code ? <a href="#" className="mono" onClick={(e) => { e.preventDefault(); navigate(`/mua-hang/hop-dong/chi-tiet?so=${encodeURIComponent(r.code)}`); }}>{r.code}</a> : <span className="muted">không theo HĐ</span>) },
@@ -264,11 +283,11 @@ export function ThucHienHopDongPage() {
   return (
     <>
       <PageHeader title="Tình hình thực hiện hợp đồng mua hàng" code="MH35" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Giá trị hợp đồng · đã đặt (đơn) · đã nhận (phiếu nhập) · đã nhận hoá đơn · đã thanh toán · còn phải trả (sổ công nợ) — kèm phần không theo hợp đồng của từng NCC" />
-      <div className="card">
+      {f.khung({}, <div className="card">
         {f.bar()}
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : <DataGrid storageKey="mh35" rows={q.data ?? []} rowKey={(r) => `${r.code}|${r.partnerCode}`} columns={cols} footerLabel="Cộng" exportName="thuc-hien-hop-dong-mua" exportTitle="TÌNH HÌNH THỰC HIỆN HỢP ĐỒNG MUA HÀNG" emptyText="Chưa có hợp đồng / chứng từ khớp bộ lọc trong kỳ" />}
-      </div>
+      </div>)}
     </>
   );
 }

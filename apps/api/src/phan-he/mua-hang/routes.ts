@@ -107,7 +107,8 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/purchase/credit', { preHandler: requirePermission(quyenThaoTac('mua-hang.han-muc', 'xem')), schema: { tags, summary: 'Hạn mức NCC / nhãn theo chi nhánh, chỉ tiêu cung ứng', querystring: z.object({ asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await creditOverview(db, a.tenantId, await ctxOf(a.tenantId), req.query.asOf)); } });
   // [2026-11-21 Nguyễn Văn Thủy] báo cáo chính sách / giá theo hợp đồng (MH32, MH34) (đóng góp)
-  const kyBc = z.object({ from: day, to: day, partnerCode: z.string().optional(), contractCode: z.string().optional() });
+  const dsMa = z.string().optional().transform((v) => (v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined));
+  const kyBc = z.object({ from: day, to: day, partnerCode: z.string().optional(), contractCode: z.string().optional(), branchCodes: dsMa, warehouseCodes: dsMa });
   r.get('/api/v1/purchase/policy-execution', { preHandler: requirePermission(quyenThaoTac('mua-hang.thuc-hien-chinh-sach', 'xem')), schema: { tags, summary: 'Tình hình thực hiện chính sách mua hàng: doanh số đủ điều kiện, được hưởng, đã nhận, còn phải nhận (theo NCC / hợp đồng → chính sách → chứng từ). contractCode rỗng = ngoài hợp đồng', querystring: kyBc },
     handler: async (req) => { const a = authOf(req); return ok(await policyExecution(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/contract-prices', { preHandler: requirePermission(quyenThaoTac('mua-hang.doi-chieu-gia-hop-dong', 'xem')), schema: { tags, summary: 'Đối chiếu giá mua theo hợp đồng: giá thoả thuận ↔ giá trên phiếu nhập đã duyệt (chưa thuế), chênh lệch. contractCode rỗng = ngoài hợp đồng', querystring: kyBc },

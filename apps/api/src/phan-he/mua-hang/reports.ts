@@ -607,12 +607,35 @@ function periodsIn(kind: string, from: string, to: string): string[] {
   return [...out];
 }
 
-export async function policyExecution(trx: Db, tenantId: string, ctx: Ctx, f: { from: string; to: string; partnerCode?: string; contractCode?: string }): Promise<PolicyExecRow[]> {
+// [2026-11-21 Nguyễn Văn Thủy] bốn báo cáo hợp đồng dùng bảng tham số chung: lọc chi nhánh (danh sách / cây) + mã kho (đóng góp)
+export interface KyBc { from: string; to: string; partnerCode?: string; contractCode?: string; branchCodes?: string[]; warehouseCodes?: string[] }
+/**
+ * Phạm vi chi nhánh / kho của chứng từ. null = không lọc. Kho của phiếu: ô kho đầu phiếu + kho từng dòng; trống = kho mặc định của chi nhánh.
+ * Phiếu thuộc phạm vi khi chi nhánh được chọn và (không lọc kho hoặc có ít nhất một kho được chọn).
+ */
+export async function docScope(trx: Db, tenantId: string, f: KyBc): Promise<((d: StoredDoc) => boolean) | null> {
+  const br = f.branchCodes?.length ? new Set(f.branchCodes) : null;
+  const wh = f.warehouseCodes?.length ? new Set(f.warehouseCodes) : null;
+  if (!br && !wh) return null;
+  const macDinh = wh ? new Map((await trx.selectFrom('warehouses as w').innerJoin('branches as b', 'b.id', 'w.branch_id').select(['b.code', 'w.code as wh'])
+    .where('w.tenant_id', '=', tenantId).where('w.is_default', '=', true).execute()).map((r) => [r.code, r.wh])) : null;
+  return (d) => {
+    if (br && !br.has(d.branchCode)) return false;
+    if (!wh) return true;
+    const md = macDinh!.get(d.branchCode) ?? '';
+    const ks = [d.warehouseCode ?? '', ...d.lines.map((l) => (l as { warehouseCode?: string }).warehouseCode ?? '')].map((k) => k || md);
+    return ks.some((k) => wh.has(k));
+  };
+}
+
+export async function policyExecution(trx: Db, tenantId: string, ctx: Ctx, f: KyBc): Promise<PolicyExecRow[]> {
   const inRange = (d: StoredDoc) => d.docDate >= f.from && d.docDate <= f.to;
   const pols = ctx.policies.filter((p) => (DOC_KINDS.includes(p.kind) || REBATE_KINDS.includes(p.kind))
     && (!f.partnerCode || p.scope.partnerCode === f.partnerCode) && (f.contractCode === undefined || (p.scope.contractCode ?? '') === f.contractCode)
     && (!p.validFrom || p.validFrom <= f.to) && (!p.validTo || p.validTo >= f.from));
-  const receipts = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && inRange(d));
+  const pham = await docScope(trx, tenantId, f);
+  // Chiết khấu / tặng / CKTT theo phiếu nhập: lọc theo chi nhánh / kho đã chọn. Thưởng cuối kỳ tính trên cả NCC / hợp đồng (không chia chi nhánh).
+  const receipts = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && inRange(d) && (!pham || pham(d)));
   const calcOf = new Map(receipts.map((d) => [d.id, computeDoc(d, [])]));
   const rows: PolicyExecRow[] = [];
   for (const p of pols) {
@@ -701,9 +724,11 @@ async function invoiceLinesOfReceipts(trx: Db, tenantId: string, receiptIds: str
   }
   return out;
 }
-export async function contractPriceCheck(trx: Db, tenantId: string, ctx: Ctx, f: { from: string; to: string; partnerCode?: string; contractCode?: string }): Promise<PriceCheckRow[]> {
+export async function contractPriceCheck(trx: Db, tenantId: string, ctx: Ctx, f: KyBc): Promise<PriceCheckRow[]> {
   const docs = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && d.docDate >= f.from && d.docDate <= f.to
     && (!f.partnerCode || d.partnerCode === f.partnerCode) && (f.contractCode === undefined || (d.contractCode ?? '') === f.contractCode));
+  const pham = await docScope(trx, tenantId, f);
+  if (pham) docs.splice(0, docs.length, ...docs.filter(pham));
   if (!docs.length) return [];
   const skus = [...new Set(docs.flatMap((d) => d.lines.filter((l) => l.lineType === 'buy' && l.sku).map((l) => l.sku)))];
   const prices = await listSupplierProducts(trx, tenantId, { skus, withGeneral: true, all: true });
@@ -755,12 +780,15 @@ async function invoiceTotalsOfReceipts(trx: Db, tenantId: string, receiptIds: st
   for (const r of rows) (out.get(r.rid) ?? out.set(r.rid, []).get(r.rid)!).push({ id: r.id, total: toNumber(r.total) });
   return out;
 }
-export async function contractExecution(trx: Db, tenantId: string, ctx: Ctx, f: { from: string; to: string; partnerCode?: string; contractCode?: string }): Promise<ContractExecRow[]> {
+export async function contractExecution(trx: Db, tenantId: string, ctx: Ctx, f: KyBc): Promise<ContractExecRow[]> {
   const hds = (await sql<{ code: string; name: string; partner: string; start: string | null; end: string | null; status: string | null; value: string | null }>`
     SELECT code, name, extra->>'partnerCode' AS partner, NULLIF(extra->>'startDate', '') AS start, NULLIF(extra->>'endDate', '') AS "end", extra->>'status' AS status, NULLIF(extra->>'value', '') AS value
       FROM dimensions WHERE tenant_id = ${tenantId} AND kind = 'contract' AND extra->>'type' = 'goods_supplier'`.execute(trx)).rows
     .filter((c) => (!f.partnerCode || c.partner === f.partnerCode) && (!f.contractCode || c.code === f.contractCode));
-  const inK = (d: StoredDoc) => d.status === 'approved' && d.docDate >= f.from && d.docDate <= f.to;
+  const pham = await docScope(trx, tenantId, f);
+  const inK = (d: StoredDoc) => d.status === 'approved' && d.docDate >= f.from && d.docDate <= f.to && (!pham || pham(d));
+  // Lọc chi nhánh / kho: còn phải trả = nợ còn mở của chính các phiếu thuộc phạm vi (số dư đầu kỳ / nợ không gắn phiếu không chia được theo chi nhánh).
+  const noPham = async (pick: (d: StoredDoc) => boolean) => openOf(trx, tenantId, ctx.docs.filter((d) => pick(d) && d.status === 'approved' && d.docDate <= f.to && pham!(d)).flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean));
   const linked = await invoiceTotalsOfReceipts(trx, tenantId, ctx.docs.filter((d) => d.kind === 'receipt' && inK(d)).map((d) => d.id));
   const tinh = (pick: (d: StoredDoc) => boolean, debt: number) => {
     const ds = ctx.docs.filter((d) => pick(d) && inK(d));
@@ -773,15 +801,16 @@ export async function contractExecution(trx: Db, tenantId: string, ctx: Ctx, f: 
   };
   const out: ContractExecRow[] = [];
   if (f.contractCode !== '') for (const c of hds) {
-    const u = await contractUsage(trx, tenantId, ctx.docs, c.code, f.to);
     const v = c.value ? Number(c.value) : null;
-    const x = tinh((d) => d.contractCode === c.code, u.current);
+    const x = tinh((d) => d.contractCode === c.code, pham ? await noPham((d) => d.contractCode === c.code) : (await contractUsage(trx, tenantId, ctx.docs, c.code, f.to)).current);
+    if (pham && !x.ordered && !x.received && !x.paid && !x.debt) continue;
     out.push({ code: c.code, name: c.name, partnerCode: c.partner, startDate: c.start ?? '', endDate: c.end ?? '', status: c.status ?? 'active', value: v, ...x,
       progress: v ? Math.round((x.received / v) * 1000) / 10 : null, remainingValue: v !== null ? v - x.received : null });
   }
   if (!f.contractCode) {
     const nccs = [...new Set(ctx.docs.filter((d) => !d.contractCode && inK(d) && (!f.partnerCode || d.partnerCode === f.partnerCode) && ['order', 'receipt', 'return', 'payment', 'prepayment'].includes(d.kind)).map((d) => d.partnerCode))];
     for (const ncc of nccs) {
+      if (pham) { out.push({ code: '', name: 'Không theo hợp đồng', partnerCode: ncc, startDate: '', endDate: '', status: '', value: null, ...tinh((d) => !d.contractCode && d.partnerCode === ncc, await noPham((d) => !d.contractCode && d.partnerCode === ncc)), progress: null, remainingValue: null }); continue; }
       const hdOpen = await openOf(trx, tenantId, ctx.docs.filter((d) => d.partnerCode === ncc && d.contractCode && d.status === 'approved' && d.docDate <= f.to).flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean));
       const loose = (await soleContract(trx, tenantId, ncc, f.to)) ? await looseDebt(trx, tenantId, ncc, ctx.docs, f.to) : 0;
       const x = tinh((d) => !d.contractCode && d.partnerCode === ncc, (await apBalance(trx, tenantId, ncc, f.to)) - hdOpen - loose);
