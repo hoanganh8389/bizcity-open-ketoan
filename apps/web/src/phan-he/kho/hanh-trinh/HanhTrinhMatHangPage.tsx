@@ -1,4 +1,5 @@
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: màn Hành trình mặt hàng (ACC95) — truy vết vòng đời một mặt hàng, "Vì sao giá vốn này?" (ADR-0021, R-CONT-0 / R-CONT-8)
+// [2026-11-21 10:10 AM Võ Hoàng] PHASE-031 — S031-23: làn Chính sách (bizcity_lineage@1 0.4.0-draft) — "dòng này tặng theo KEY@bản", kết quả L4b, nút Chính sách căn cứ; không màn mới
 /**
  * HÀNH TRÌNH MẶT HÀNG (ACC95). Một mặt hàng, một câu chuyện: mua · nhập → bán · xuất → trả → chuyển kho, bút toán mang mã hàng,
  * giá vốn từng tháng. Sự kiện KẾ TOÁN (đổi sổ / đổi giá trị tồn) viền đậm; sự kiện VẬN HÀNH (chuyển kho cùng nhóm tính giá) nhạt.
@@ -6,12 +7,13 @@
  *   - "Vì sao giá vốn này?" ở mỗi tháng → công thức đơn giá bằng số thật + các phiếu góp vào;
  *   - phần chưa truy được (`coverage.notes`) nói rõ, không giả vờ đầy đủ.
  * Vào bằng đường dẫn: /bao-cao/hanh-trinh-mat-hang?sku=SUA01&from=2026-10-01&to=2026-10-31 (nút "Truy vết" ở các báo cáo / danh mục).
- * Dữ liệu: GET /api/v1/lineage/* (bizcity_lineage@1, chỉ đọc).
+ * Dữ liệu: GET /api/v1/lineage/* (bizcity_lineage@1, chỉ đọc). Làn Chính sách (0.4.0): `events[].policy`, `policies` — chính sách đã áp
+ * trên hành trình, kết quả L4b; "Chính sách căn cứ" mở màn Chính sách, tab Truy vết.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { LINEAGE_LANE, type CostExplain, type ItemHistory, type ItemImpact, type LineageEvent, type LineageItem } from '@ketoan/contracts';
+import { LINEAGE_LANE, type CostExplain, type ItemHistory, type ItemImpact, type LineageEvent, type LineageItem, type LineagePolicyTag } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading, Money } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
@@ -31,6 +33,19 @@ function useDebounced<T>(value: T, ms = 300): T {
 
 /** Đường dẫn mở chứng từ ở danh sách chứng từ (lọc đúng số chứng từ, đủ ngày). */
 const docLink = (e: { docNo: string; at: string }) => `/chung-tu?status=&search=${encodeURIComponent(e.docNo)}&from=${e.at}&to=${e.at}`;
+/** Màn Chính sách, tab Truy vết, mở thẳng chuỗi chính sách căn cứ của một chứng từ. */
+const policyLink = (docKey: string) => `/he-thong/chinh-sach?xem=truy-vet&chung-tu=${encodeURIComponent(docKey)}`;
+/** "tặng theo KEY@bản" cho dòng quà theo chính sách của chính dòng; "theo KEY@bản" khi chính sách ở cấp phiếu. */
+const policyText = (t: LineagePolicyTag, isGift: boolean) => `${t.scope === 'line' && isGift ? 'tặng theo' : 'theo'} ${t.key}@${t.version}`;
+function PolicyBadges({ e }: { e: LineageEvent }) {
+  if (!e.policy?.length) return null;
+  return <>{e.policy.map((t) => (
+    <span key={`${t.key}@${t.version}`} className={`badge ${t.verdict === 'warn' ? 'badge-warn' : t.verdict === 'pass' ? 'badge-ok' : ''}`} style={{ marginLeft: 4 }}
+      title={`${t.scope === 'line' ? 'Chính sách của chính dòng' : 'Chính sách nêu ở cả phiếu'} · ${t.verdict === 'pass' ? 'L4b đạt' : t.verdict === 'warn' ? `L4b cảnh báo ${t.codes.join(', ')}` : 'chưa kiểm'}`}>
+      {policyText(t, e.isGift)}
+    </span>
+  ))}</>;
+}
 
 export function HanhTrinhMatHangPage() {
   const [sp, setSp] = useSearchParams();
@@ -184,6 +199,7 @@ export function HanhTrinhMatHangPage() {
                             border: '1px solid var(--line, #dfe6ef)', borderLeft: `4px solid ${e.effect === 'accounting' ? 'var(--brand-600, #1e5bb8)' : '#8a94a6'}`, outline: on ? '2px solid var(--brand-600, #1e5bb8)' : undefined }}>
                           <b style={{ display: 'block' }}>{e.docNo}</b>
                           <span style={{ fontSize: 12 }}>{e.at} · {e.label}<br />{qty(e.qty)} {e.unit}{e.amount !== null ? <> · <Money value={e.amount} /></> : <span className="muted"> · chờ giá vốn</span>}</span>
+                          {e.policy?.some((t) => t.scope === 'line') && <span style={{ display: 'block', fontSize: 11 }} className="muted">{e.policy.filter((t) => t.scope === 'line').map((t) => policyText(t, e.isGift)).join(' · ')}</span>}
                         </button>
                       );
                     })}
@@ -191,12 +207,33 @@ export function HanhTrinhMatHangPage() {
                 </div>
               );
             })}
+            {(d.policies ?? []).length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8, padding: '6px 0', borderTop: '1px dashed var(--line, #dfe6ef)' }}>
+                <div className="muted" style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase' }} title="Chính sách nghiệp vụ đã áp trên hành trình (khuyến mại, quà…), theo bản đã phát hành">Chính sách</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {d.policies!.map((p) => (
+                    <div key={`${p.policyKey}@${p.version}`} style={{ minWidth: 190, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line, #dfe6ef)', borderLeft: `4px solid ${p.policyId ? (p.warnEvents ? '#d08a00' : '#2e8b57') : '#c0392b'}` }}
+                      title={p.policyId ? `${p.ruleContract ?? ''} · phát hành bởi ${p.publishedBy ?? '—'}${p.legalRef ? ` · căn cứ ${p.legalRef}` : ''}` : 'Không có trong sổ đăng ký chính sách'}>
+                      <b style={{ display: 'block' }}>{p.policyKey}@{p.version}</b>
+                      <span style={{ fontSize: 12 }}>
+                        {p.effectiveFrom ?? 'từ đầu'} → {p.effectiveTo ?? 'nay'} · {p.events} sự kiện{p.giftQty ? ` · tặng ${qty(p.giftQty)}` : ''}
+                        {p.warnEvents ? <span className="badge badge-warn" style={{ marginLeft: 4 }}>{p.warnEvents} cảnh báo L4b</span> : null}
+                        {!p.policyId && <span className="badge badge-warn" style={{ marginLeft: 4 }}>không có trong sổ đăng ký</span>}
+                        {p.hashMatches === false && <span className="badge badge-warn" style={{ marginLeft: 4 }}>băm lệch</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {picked && (
               <div className="alert alert-info" style={{ marginTop: 8 }}>
                 <b>{picked.docNo}</b> · {picked.label} · {picked.at} · chi nhánh {picked.branch}{picked.warehouse ? ` · kho ${picked.warehouse}` : ''}{picked.counterBranch ? ` ⇄ ${picked.counterBranch}` : ''}
                 <div style={{ fontSize: 12, marginTop: 2 }}>{picked.effectWhy}</div>
                 {picked.originalDocKey && <div style={{ fontSize: 12 }}>Hàng trả của chứng từ gốc <b>{picked.originalDocKey}</b>.</div>}
+                {picked.policy && picked.policy.length > 0 && <div style={{ fontSize: 12 }}>Chính sách:<PolicyBadges e={picked} /></div>}
                 <Link className="btn btn-xs" style={{ marginTop: 4 }} to={docLink(picked)}>Mở chứng từ</Link>
+                {picked.policy && picked.policy.length > 0 && <>{' '}<Link className="btn btn-xs" style={{ marginTop: 4 }} to={policyLink(picked.docKey)}>Chính sách căn cứ</Link></>}
               </div>
             )}
           </div>
@@ -210,7 +247,7 @@ export function HanhTrinhMatHangPage() {
               <table className="grid"><thead><tr><th>Ngày</th><th>Sự kiện</th><th>Chứng từ</th><th>Chi nhánh / kho</th><th className="num">Số lượng</th><th className="num">Thành tiền</th><th>Ảnh hưởng</th><th>Trạng thái</th></tr></thead>
                 <tbody>{events.map((e, i) => (
                   <tr key={i} onClick={() => setPicked(picked === e ? null : e)} style={{ cursor: 'pointer', background: related.has(e.docKey) ? 'var(--info-bg, #e8f0fc)' : undefined }}>
-                    <td>{e.at}</td><td>{e.label}</td><td><Link to={docLink(e)} onClick={(ev) => ev.stopPropagation()}>{e.docNo}</Link>{e.version > 1 ? <span className="muted"> (v{e.version})</span> : null}{e.code && e.code !== d.item.sku ? <span className="badge" title="Mã hàng tại ngày chứng từ — cùng định danh"> mã cũ {e.code}</span> : null}</td>
+                    <td>{e.at}</td><td>{e.label}<PolicyBadges e={e} /></td><td><Link to={docLink(e)} onClick={(ev) => ev.stopPropagation()}>{e.docNo}</Link>{e.version > 1 ? <span className="muted"> (v{e.version})</span> : null}{e.code && e.code !== d.item.sku ? <span className="badge" title="Mã hàng tại ngày chứng từ — cùng định danh"> mã cũ {e.code}</span> : null}</td>
                     <td>{e.branch}{e.warehouse ? ` / ${e.warehouse}` : ''}{e.counterBranch ? ` ⇄ ${e.counterBranch}` : ''}</td>
                     <td className="num">{qty(e.qty)}</td><td className="num">{e.amount === null ? <span className="muted">chờ giá vốn</span> : <Money value={e.amount} />}</td>
                     <td><span className={`badge ${e.effect === 'accounting' ? 'badge-ok' : ''}`} title={e.effectWhy}>{e.effect === 'accounting' ? 'kế toán' : 'vận hành'}</span></td><td>{e.status}</td>
