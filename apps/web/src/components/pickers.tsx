@@ -390,7 +390,7 @@ export function ListPicker({ items, emptyText, strict = true, onAdd, addLabel, .
     // Vừa bấm vào ô đang có giá trị (chữ chưa đổi): hiện đủ danh sách để chọn dòng khác, không lọc theo chính giá trị đó.
     if (!words.length || (p.value && q.trim() === p.value)) return items;
     const s = words.join(' ');
-    const hit = items.filter((x) => { const t = `${plain(x.code)} ${plain(x.name)}`; return words.every((w) => t.includes(w)); });
+    const hit = items.filter((x) => { const t = `${plain(x.code)} ${plain(x.name)} ${plain(x.hint ?? '')}`; return words.every((w) => t.includes(w)); });
     // Mã đúng / bắt đầu bằng chữ gõ lên đầu.
     return hit.sort((a, b) => Number(plain(b.code) === s) - Number(plain(a.code) === s) || Number(plain(b.code).startsWith(s)) - Number(plain(a.code).startsWith(s)));
   }, [items, q, p.value]);

@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useCayDonVi } from '@/lib/cayDonVi';
+import { ListPicker } from '@/components/pickers';
 
 // [2026-11-11 Nguyễn Văn Thủy] nút + cạnh ô kho: thêm kho cho chi nhánh ngay trên phiếu (đóng góp)
 const WarehouseForm = lazy(() => import('@/features/catalog/WarehousesPage').then((m) => ({ default: m.WarehouseForm })));
@@ -80,17 +81,15 @@ function ChonKhoO({ branchCode, value, onChange, disabled, avoid, op, conCua }: 
   }, [branchCode, all.length, avoid, allowed?.join()]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!branchCode) return <select className="select input" disabled><option>— chọn chi nhánh trước —</option></select>;
   if (!list.length && !khoCon.length) return <select className="select input" disabled title="Khai kho cho chi nhánh ở Danh mục kho (DM12)"><option>chi nhánh chưa khai kho</option></select>;
-  const nhan = (w: KhoOption) => `${w.code} · ${w.name}${allowed && w.typeCode ? ` (${w.typeCode})` : ''}`;
-  const chon = all.find((w) => w.code === value);
+  // [2026-11-21 Nguyễn Văn Thủy] ô gõ tìm (mã kho, tên kho, mã / tên chi nhánh), kho xếp theo cây chi nhánh: chi nhánh đang chọn trước, chi nhánh con thụt vào (đóng góp)
+  const items = [
+    ...list.map((w) => ({ code: w.code, name: `${w.name}${allowed && w.typeCode ? ` (${w.typeCode})` : ''}`, hint: khoCon.length ? branchCode : (w.isDefault ? 'mặc định' : undefined), level: 1, strong: w.code === def?.code })),
+    ...khoCon.flatMap(({ u, ws }) => ws.map((w) => ({ code: w.code, name: `${w.name}${allowed && w.typeCode ? ` (${w.typeCode})` : ''}`, hint: u.code, level: 2 }))),
+  ];
   return (
-    <select className="select input" value={value} disabled={disabled} title={chon ? `${chon.code} · ${chon.name} — chi nhánh ${chon.branchCode}` : undefined}
-      onChange={(e) => onChange(e.target.value, all.find((w) => w.code === e.target.value)?.branchCode)}>
-      {/* Phiếu cũ chưa ghi kho (trống) = kho mặc định của chi nhánh — hiện đúng như vậy, không để trình duyệt tự hiện kho đầu danh sách. */}
-      {!value && <option value="">{def ? nhan(def) : khoCon.length ? `${branchCode} chưa có kho riêng — chọn kho chi nhánh con` : 'chọn kho'}</option>}
-      {khoCon.length && list.length ? <optgroup label={`${branchCode} (chi nhánh đang chọn)`}>{list.map((w) => <option key={w.code} value={w.code}>{nhan(w)}</option>)}</optgroup>
-        : list.map((w) => <option key={w.code} value={w.code}>{nhan(w)}</option>)}
-      {khoCon.map(({ u, ws }) => <optgroup key={u.code} label={`${' '.repeat(2)}${u.code} · ${u.name}`}>{ws.map((w) => <option key={w.code} value={w.code}>{nhan(w)}</option>)}</optgroup>)}
-    </select>
+    <ListPicker items={items} value={value} disabled={disabled} nameOnly style={{ width: '100%' }}
+      placeholder={def ? `${def.code} · ${def.name}` : khoCon.length ? `${branchCode} chưa có kho riêng — chọn kho chi nhánh con` : 'chọn kho'}
+      emptyText="Không có kho khớp" onChange={(c) => onChange(c, all.find((w) => w.code === c)?.branchCode)} />
   );
 }
 

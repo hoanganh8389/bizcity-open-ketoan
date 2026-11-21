@@ -1064,11 +1064,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                             const b = branchOfLine(l);
                             const macDinh = isOrder ? (b === nhanMacDinh ? v.deliveryWarehouse : '') : v.warehouseCode;
                             if (readOnly) return <span className="mono">{l.warehouseCode || <span className="muted">{macDinh || 'mặc định'}</span>}</span>;
-                            return <select className="select input" style={{ width: 150 }} value={l.warehouseCode ?? ''} title={isOrder ? 'Phân kho của dòng — trống = theo đầu phiếu. Chọn kho của chi nhánh con thì dòng giao về chi nhánh đó' : 'Phân kho của dòng — trống = theo đầu phiếu'}
-                              onChange={(e) => { const w = khoDong.find((x) => x.code === e.target.value); setLine(l.lineKey, { warehouseCode: e.target.value || undefined, ...(isOrder && w ? { branchCode: w.branchCode !== nhanMacDinh ? w.branchCode : undefined } : {}) }); }}>
-                              <option value="">{macDinh ? `${macDinh} (đầu phiếu)` : 'kho mặc định'}</option>
-                              {[...new Set(khoDong.map((w) => w.branchCode))].map((bc) => { const ws = khoDong.filter((w) => w.branchCode === bc && (w.isActive || w.code === l.warehouseCode)); return ws.length ? <optgroup key={bc} label={bc === b ? `${bc} (chi nhánh của dòng)` : bc}>{ws.map((w) => <option key={w.code} value={w.code}>{w.code} · {w.name}</option>)}</optgroup> : null; })}
-                            </select>; })()}</td>}
+                            return <ListPicker items={khoDong.filter((w) => w.isActive || w.code === l.warehouseCode).map((w) => ({ code: w.code, name: w.name, hint: w.branchCode, level: w.branchCode === b ? 1 : 2 }))}
+                              value={l.warehouseCode ?? ''} nameOnly style={{ width: 160 }} placeholder={macDinh ? `${macDinh} (đầu phiếu)` : 'kho mặc định'} emptyText="Không có kho khớp"
+                              onChange={(c) => { const w = khoDong.find((x) => x.code === c); setLine(l.lineKey, { warehouseCode: c || undefined, ...(isOrder && w ? { branchCode: w.branchCode !== nhanMacDinh ? w.branchCode : undefined } : {}) }); }} />; })()}</td>}
                           {co('km') && <td>{readOnly ? <span>{l.costItem || <span className="muted">{v.costItem || '—'}</span>}</span>
                             : <ListPicker items={kmItems(l.costItem)} value={l.costItem ?? ''} nameOnly style={{ width: 170 }}
                               placeholder={v.costItem ? `${v.costItem} (đầu phiếu)` : 'Khoản mục'} emptyText="Không có khoản mục khớp" onChange={(c) => setLine(l.lineKey, { costItem: c || undefined })} />}</td>}

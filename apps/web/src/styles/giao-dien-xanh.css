@@ -565,3 +565,7 @@ html.gd-xanh.gd-sang .picker-opt.active .picker-code { color: var(--brand-700); 
 
 /* [2026-11-17 Nguyễn Văn Thủy] mã màn nhỏ cạnh tên ở hàng thẻ của nhóm (đóng góp) */
 .gon-the-code { margin-left: 4px; font-size: 10px; color: var(--muted, #6b7686); font-family: var(--mono, ui-monospace, monospace); }
+/* [2026-11-21 Nguyễn Văn Thủy] ô chọn kho thành ô gõ tìm: nút + thêm kho nằm trong mép phải ô (đóng góp) */
+.kho-add > .picker { flex: 1; min-width: 0; }
+.kho-add > .picker input { padding-right: 30px; }
+.kho-add > .picker ~ .picker-add { right: 4px; }
