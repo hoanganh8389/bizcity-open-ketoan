@@ -30,6 +30,7 @@ import { roundPrice } from '@/lib/format';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { BranchPicker } from '@/components/filters';
 import { useCayDonVi } from '@/lib/cayDonVi';
+import { useKhoanMucCay } from '@/lib/khoanMuc';
 import { workBranch } from '@/lib/workBranch';
 import { ItemPicker, ListPicker, PartnerPicker, useAccountList } from '@/components/pickers';
 import { GOODS_KINDS, KIND_LABEL, P, STATUS_LABEL, TAX_LABEL, contractFor, lastUsed, today, purchaseApi, useBrands, useNames, useSupplierBrands, vnd, type Analysis, type MhData, type StoredDoc } from '../du-lieu';
@@ -131,19 +132,10 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const dock = useDockWindow(onClose, dirty, `mh:${value.id}`);
   const names = useNames();
   const brands = useBrands(data.policies);
-  const costItems = useDimension('cost_item') as (ReturnType<typeof useDimension>[number] & { parentCode?: string | null })[]; // [2026-11-20 khanhtd] MUA-HANG — Danh mục khoản mục cho phiếu chi phí (đóng góp)
+  const costItems = useDimension('cost_item'); // [2026-11-20 khanhtd] MUA-HANG — Danh mục khoản mục cho phiếu chi phí (đóng góp)
   // [2026-11-21 Nguyễn Văn Thủy] khoản mục xếp cây cha – con (cha in đậm, con thụt vào), gõ tìm mã / tên (đóng góp)
-  const kmCay = useMemo(() => {
-    const codes = new Set(costItems.map((c) => c.code));
-    const kids = new Map<string, typeof costItems>();
-    for (const c of costItems) { const p = c.parentCode && codes.has(c.parentCode) ? c.parentCode : ''; kids.set(p, [...(kids.get(p) ?? []), c]); }
-    const out: { code: string; name: string; level: number; strong: boolean; isActive: boolean }[] = [];
-    const seen = new Set<string>();
-    const di = (p: string, d: number) => { for (const c of (kids.get(p) ?? []).sort((a, b) => a.code.localeCompare(b.code))) { if (seen.has(c.code) || d > 20) continue; seen.add(c.code); out.push({ code: c.code, name: c.name, level: d + 1, strong: Boolean(kids.get(c.code)?.length), isActive: c.isActive }); di(c.code, d + 1); } };
-    di('', 0);
-    return out;
-  }, [costItems]);
-  const kmItems = (cur?: string) => kmCay.filter((c) => c.isActive || c.code === cur);
+  const kmCay = useKhoanMucCay();
+  const kmItems = (cur?: string) => kmCay.items(cur);
   const nccBrands = useSupplierBrands(v.partnerCode || undefined);
   // Phiếu đã duyệt / huỷ: chỉ xem. Phiếu đã ghi (nháp, chờ duyệt): mở ở chế độ xem, bấm "Sửa" mới sửa; Gửi duyệt / Duyệt
   // vẫn bấm được khi đang xem (không đổi nội dung phiếu).

@@ -17,6 +17,8 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { useBranches, BranchPicker } from '@/components/filters';
 import { ListPicker, PartnerPicker } from '@/components/pickers';
+import { useCayDonVi } from '@/lib/cayDonVi';
+import { useKhoanMucCay } from '@/lib/khoanMuc';
 
 const thisMonth = () => today().slice(0, 7);
 const mm = (p: string) => `${p.slice(5)}/${p.slice(0, 4)}`;
@@ -124,7 +126,7 @@ export function CashPlanPage() {
 
 function PlanDialog({ value, onClose, onSaved }: { value: Partial<Plan>; onClose: () => void; onSaved: (stay: boolean) => void }) {
   const { data: branches = [] } = useBranches();
-  const { data: items = [] } = useCostItems();
+  const km = useKhoanMucCay();
   const [v, setV] = useState({ period: value.period ?? thisMonth(), branchCode: value.branchCode ?? '', direction: value.direction ?? 'out', costItemCode: value.costItemCode ?? '', partnerCode: value.partnerCode ?? '', dueDate: value.dueDate ?? '', description: value.description ?? '', amount: value.amount ? money(value.amount) : '' });
   const set = (p: Partial<typeof v>) => setV((x) => ({ ...x, ...p }));
   const viewAgain = useViewAgain();
@@ -144,7 +146,7 @@ function PlanDialog({ value, onClose, onSaved }: { value: Partial<Plan>; onClose
       <Field label="Thu / chi"><select className="select input" value={v.direction} onChange={(e) => set({ direction: e.target.value as 'in' | 'out' })}><option value="in">Thu</option><option value="out">Chi</option></select></Field>
       <Field label="Chi nhánh"><BranchPicker activeOnly value={v.branchCode} onChange={(c) => set({ branchCode: c })} placeholder="(cả công ty)" /></Field>
       <Field label="Ngày dự kiến"><input type="date" className="input" value={v.dueDate} onChange={(e) => set({ dueDate: e.target.value })} /></Field>
-      <Field label="Khoản mục"><ListPicker items={items.filter((d) => d.isActive || d.code === v.costItemCode)} value={v.costItemCode} onChange={(costItemCode) => set({ costItemCode })} placeholder="Không bắt buộc" /></Field>
+      <Field label="Khoản mục"><ListPicker items={km.items(v.costItemCode)} value={v.costItemCode} onChange={(costItemCode) => set({ costItemCode })} placeholder="Không bắt buộc" /></Field>
       <Field label="Đối tượng"><PartnerPicker activeOnly value={v.partnerCode} onChange={(partnerCode) => set({ partnerCode })} placeholder="Không bắt buộc" /></Field>
       <Field label="Nội dung" full><input className="input" value={v.description} onChange={(e) => set({ description: e.target.value })} placeholder="Ví dụ: Lương tháng, tiền điện, thu tiền khách buôn…" /></Field>
       <Field label="Số tiền"><input className="input num" inputMode="numeric" value={v.amount} onChange={(e) => set({ amount: e.target.value })} onBlur={() => set({ amount: money(parseMoney(v.amount)) })} /></Field>
@@ -165,8 +167,9 @@ export function CostNormPage() {
   const tt = useThaoTac('ke-toan.dinh-muc');
   const editable = can('catalog:write') && Boolean(tt.sua);
   const { data: branches = [] } = useBranches();
-  const { data: items = [] } = useCostItems();
-  const { data: departments = [] } = useDepartments();
+  // [2026-11-21 Nguyễn Văn Thủy] bộ phận chỉ trong chi nhánh của dòng; khoản mục xếp cây cha – con (đóng góp)
+  const km = useKhoanMucCay();
+  const cay = useCayDonVi();
   const [tab, setTab] = useState<'norms' | 'compare'>('norms');
   const [period, setPeriod] = useState(thisMonth());
   const [to, setTo] = useState(thisMonth());
@@ -242,9 +245,9 @@ export function CostNormPage() {
                 <tbody>
                   {draft.map((d, i) => (
                     <tr key={i}>
-                      <td><BranchPicker value={d.branchCode} disabled={!editable} onChange={(c) => setRow(i, { branchCode: c })} placeholder="(cả công ty)" /></td>
-                      <td><ListPicker items={departments.filter((x) => x.isActive || x.code === d.departmentCode).map((x) => ({ code: x.code, name: x.name }))} value={d.departmentCode} disabled={!editable} onChange={(departmentCode) => setRow(i, { departmentCode })} placeholder="(mọi bộ phận)" /></td>
-                      <td style={{ minWidth: 220 }}><ListPicker items={items.filter((x) => x.isActive || x.code === d.costItemCode)} value={d.costItemCode} onChange={(costItemCode) => setRow(i, { costItemCode })} placeholder="Chọn khoản mục" /></td>
+                      <td><BranchPicker value={d.branchCode} disabled={!editable} onChange={(c) => setRow(i, { branchCode: c, ...(d.departmentCode && !cay.deptOf(c).some((x) => x.code === d.departmentCode) ? { departmentCode: '' } : {}) })} placeholder="(cả công ty)" /></td>
+                      <td><ListPicker items={cay.deptOf(d.branchCode).filter((x) => x.isActive || x.code === d.departmentCode).map((x) => ({ code: x.code, name: x.name }))} value={d.departmentCode} disabled={!editable || !d.branchCode} onChange={(departmentCode) => setRow(i, { departmentCode })} placeholder={d.branchCode ? '(mọi bộ phận)' : 'chọn chi nhánh trước'} emptyText="Chi nhánh chưa có bộ phận" /></td>
+                      <td style={{ minWidth: 220 }}><ListPicker items={km.items(d.costItemCode)} value={d.costItemCode} onChange={(costItemCode) => setRow(i, { costItemCode })} placeholder="Chọn khoản mục" /></td>
                       <td><input className="input num" style={{ width: 150 }} value={d.amount} disabled={!editable} onChange={(e) => setRow(i, { amount: e.target.value })} onBlur={() => setRow(i, { amount: money(parseMoney(d.amount)) })} /></td>
                       <td><input className="input" value={d.note} disabled={!editable} onChange={(e) => setRow(i, { note: e.target.value })} /></td>
                       <td>{editable && <button className="btn btn-sm" title="Bỏ dòng" onClick={() => setDraft((x) => x.filter((_, j) => j !== i))}><Trash2 size={14} /></button>}</td>
