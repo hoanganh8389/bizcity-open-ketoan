@@ -7,7 +7,9 @@
 
 <!-- [2026-11-12 09:10 PM Võ Hoàng] POS-UIKIT — 1.4.0-draft: §3b thành phần @bizcity/ui-kit mở rộng (bảng lưới, thẻ chỉ số, bộ tham số kỳ / chi nhánh, ô chọn) cho màn module giống màn Core (đóng góp, chờ chủ dự án duyệt) -->
 
-> **Phiên bản:** 1.4.0-draft · 2026-11-12 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
+<!-- [2026-11-21 07:58 PM Võ Hoàng] NT-BH-037 — 1.5.0-draft: §3c khung phiếu DocSheet / DocSheetPanel ở @bizcity/ui-kit cho form chứng từ của module, cùng mẫu phiếu mua (đóng góp, chờ chủ dự án duyệt) -->
+
+> **Phiên bản:** 1.5.0-draft · 2026-11-21 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
 > **Luật nền:** [R-BOUND](../rules/RULE-MODULE-BOUNDARY.md) · **Năng lực:** `ui.menu`, `ui.kit`, `ui.slots`, `permissions.module`, `settings.registry`, `ai.cell`
 
 ## 1. Mục đích
@@ -63,6 +65,24 @@ Luật slot: thành phần chỉ dùng `@bizcity/ui-kit` và client action; lỗ
 **Ảnh hưởng.** Chỉ thêm vào `packages/ui-kit` và `apps/web/src/lib/uiKitHost.ts`; màn Core không đổi; module cũ không đổi. Kiểu `UiKitImpl` thêm trường → bản thật phải cung cấp (một chỗ duy nhất: `uiKitHost.ts`).
 
 **Kiểm bằng.** typecheck (`UiKitImpl` kế thừa `UiKitGridImpl`: `uiKitHost.ts` thiếu trường nào là không biên dịch được); màn đầu tiên dùng là màn quản trị bán lẻ của module `pos` (NT-BH-008) — chạy thật trên giao diện. <!-- [2026-11-12 10:20 PM Võ Hoàng] POS-UIKIT — bỏ ý test riêng gói ui-kit: npm test gốc chỉ chạy test API, ui-kit chưa có bộ chạy test (đóng góp) -->
+
+## 3c. Khung phiếu `DocSheet` ở `@bizcity/ui-kit` (1.5.0-draft)
+<!-- [2026-11-21 07:58 PM Võ Hoàng] NT-BH-037 — 1.5.0-draft: §3c khung phiếu DocSheet / DocSheetPanel ở @bizcity/ui-kit cho form chứng từ của module, cùng mẫu phiếu mua (đóng góp, chờ chủ dự án duyệt) -->
+
+**Vấn đề.** Form chứng từ của module (đơn đặt hàng BH20, form khuyến mại, đợt voucher) chỉ có `Modal` của ui-kit: khung hộp thoại chung tự thêm nút Hướng dẫn ở tiêu đề, thân một cột — khác mẫu phiếu Core ("Nhập mua (mới)", BH10 / BH11 sau [NT-BH-036](../nghiem-thu/ban-hang/NT-BH-036-phieu-ban-cung-mau-phieu-mua.md)): một nút Hướng dẫn, tổng tiền chữ lớn ở tiêu đề, cột **Trợ lý** bên phải, chân "chưa ghi được" + nút. Phiếu: [NT-BH-037](../nghiem-thu/ban-hang/NT-BH-037-mau-phieu-mua-cho-module-ban.md).
+
+**Lựa chọn.** Cùng cách §3b: ui-kit khai chữ ký + hàm chuyển, bản thật là khung Core `components/phieu-hang/KhungPhieu` (trỏ ở `apps/web/src/lib/uiKitHost.ts`). Đã loại: module tự dựng khung bằng `Modal` + CSS riêng (vẫn hai nút Hướng dẫn, lệch mẫu); import thẳng `apps/web/src/components` (phá STD-EXT-3).
+
+**Hình dạng** — chỉ thêm (minor, VER-1):
+
+| Thành phần ui-kit | Bản thật (`apps/web`) | Props hợp đồng |
+|---|---|---|
+| `DocSheet` | `components/phieu-hang/KhungPhieu` | `title: string`, `badges?`, `total?: { label, value }`, `helpKey?` (bỏ trống = theo màn + tiêu đề), `viewing?` (đang xem: F2 / Enter / bấm đúp = `onEdit`), `readOnly?`, `onEdit?`, `onClose`, `sideTitle?`, `side?` (không có = thân một cột), `footNote?`, `footer`, `keys?`, `children`. Một nút "? Hướng dẫn"; Ctrl + S bấm nút chính; Esc đóng; thu nhỏ xuống thanh dưới |
+| `DocSheetPanel` | khối `.mh-panel` của cột Trợ lý | `title`, `badge?`, `children` |
+
+**Ảnh hưởng.** Thêm vào `packages/ui-kit`, `uiKitHost.ts`; `KhungPhieu` nới `total`, `side` thành không bắt buộc (BH10 / BH11 không đổi). Module cũ dùng `Modal` không đổi.
+
+**Kiểm bằng.** typecheck (`UiKitImpl` thiếu `DocSheet` / `DocSheetPanel` → không biên dịch); màn đầu tiên dùng: BH20, form khuyến mại, đợt voucher — chạy thật trên giao diện (NT-BH-037 §5).
 
 ## 3a. Khung nhúng app ngoài tiến trình (ADR-0011 mức 2)
 
