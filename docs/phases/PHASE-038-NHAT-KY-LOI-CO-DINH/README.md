@@ -7,7 +7,7 @@
 > **Checklist công bố:** —
 > **Trạng thái:** 🟡 **W0 đề xuất 2026-11-21**, chờ chủ dự án duyệt D038-1..4. Chưa có mã.
 > **Phụ trách cần phối hợp:** nhóm Lõi (Platform: logger, `env`, hợp đồng lỗi) · người vận hành bản cài (aaPanel).
-> **Tệp:** [40 — Checklist](40-MASTER-CHECKLIST.md)
+> **Tệp:** [10 — Nghiên cứu chuẩn ghi log lỗi](10-NGHIEN-CUU-GHI-LOG.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)
 
 ## 1. Đề bài (chủ dự án, 2026-11-21)
 
@@ -46,8 +46,8 @@ Cần: **một chỗ cố định trên máy chủ** chứa log lỗi, và một
   goi-bao-loi-<YYYYMMDD-HHMM>.tar.gz   do lay-log.sh tạo
 ```
 
-- Xoay vòng: theo ngày **hoặc** 20 MB, giữ 14 bản (D038-2). Không bao giờ lớn vô hạn.
-- Docker: mọi dịch vụ khai `logging: json-file, max-size 20m, max-file 5` (F5) — stdout vẫn đủ, chỉ có trần.
+- Xoay vòng theo ngày **hoặc** dung lượng; **cả thư mục ≤ 200 MB** (D038-2), chia tệp ở [10 §7.3](10-NGHIEN-CUU-GHI-LOG.md). Không bao giờ lớn vô hạn.
+- Docker: mọi dịch vụ khai `logging: json-file, max-size 10m, max-file 3` (F5) — stdout vẫn đủ, chỉ có trần.
 - Nội dung tuân R-SEC-10 / R-TEN-8 như log stdout: **không** thân yêu cầu, token, mật khẩu, MST / SĐT cá nhân, số tài khoản. Cùng bộ lọc `redact` của pino, không viết bộ lọc thứ hai.
 
 ### 4.2 API
@@ -86,7 +86,7 @@ Người vận hành tải tệp đó về (aaPanel → Files) và gửi kèm m�
 | Mã | Câu hỏi | Đề xuất |
 |---|---|---|
 | D038-1 | Thư mục cố định ở đâu | `./logs` trong thư mục cài (cùng chỗ `backups/`), đổi được bằng `LOG_HOST_DIR` trong `.env` |
-| D038-2 | Giữ bao lâu, trần dung lượng | 14 bản xoay vòng, 20 MB / tệp; json-file Docker 20 MB × 5 |
+| D038-2 | Giữ bao lâu, trần dung lượng | ✅ **chủ dự án duyệt 2026-11-21: tối đa 200 MB** cho thư mục `logs/`; chia tệp ở [10 §7.3](10-NGHIEN-CUU-GHI-LOG.md) <!-- [2026-11-21 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — D038-2 chốt 200 MB --> |
 | D038-3 | Tệp API ghi từ mức nào | `warn` (đủ 4xx bất thường + 5xx + fatal); `info` chỉ ở stdout / Loki |
 | D038-4 | Nút "Báo lỗi" trên khay có tự đính gói log không | **Không** ở phase này (cần quyền quản trị, có rủi ro lộ dữ liệu); chỉ hướng dẫn chạy `lay-log.sh` |
 

@@ -19,6 +19,17 @@ Thứ tự theo giá trị: B1 một mình đã giải được sự cố 2026-1
 | S038-9 | B4 | Giao diện: một khay "Không kết nối được máy chủ phần mềm" cho `GATEWAY_UNAVAILABLE` / 5xx không JSON; lùi dần lời gọi lặp | `apps/web/src/lib/api.ts`; khay lỗi; `presence` | 29 yêu cầu hỏng → 1 khay; ping không dội | ☐ |
 | S038-10 | B5 | Luật R-OBS-10 (bản cài có `logs/` cố định, có trần) + check SC-OBS-3 (compose khai `logging:` và mount `LOG_HOST_DIR`) + CHANGELOG "Nâng cấp cần làm" | `docs/rules/**`; `tests/conformance/**`; `CHANGELOG.md` | SC-OBS-3 xanh trên main | ☐ |
 
+<!-- [2026-11-21 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — thêm S038-11..15 từ nghiên cứu 10 (lỗ hổng G2–G13) -->
+| Mã | Bước | Việc | Phạm vi | Xong khi | Trạng thái |
+|---|---|---|---|---|---|
+| S038-11 | B1 | Bộ bắt `uncaughtException` / `unhandledRejection` ghi `fatal` đồng bộ (R-LOG-3); `version`, `commit` trong mọi dòng (R-LOG-5); Node `--enable-source-maps` + giữ `.map` trong ảnh (R-LOG-8) | `apps/api/src/main.ts`; `apps/api/src/app.ts`; `docker/api.Dockerfile`; `docker/api-entrypoint.sh` | stack trong log trỏ tệp `.ts`; promise không bắt → dòng `fatal` trong tệp | ☐ |
+| S038-12 | B1b | `logError` chung: `err` chuẩn (type, stack, `cause` lồng, `pgCode`), `errFp`, `evt`; `redact` một danh sách dùng chung; sửa `events.ts` bỏ `String(err)` | `packages/platform/src/core/**` (logger); `packages/platform/src/core/events.ts` | test che từng trường nhạy cảm; subscriber lỗi có stack + `traceId` sự kiện gốc | ☐ |
+| S038-13 | B4b | (nếu duyệt D038-5) ErrorBoundary theo màn, `window.onerror`, `unhandledrejection` → `POST /api/v1/system/client-errors` → `logs/web-client.log` | `apps/web/src/**` (khung app); `apps/api/src/modules/system/**` | lỗi render → màn có mã tra cứu, không trắng; một dòng trong tệp | ☐ |
+| S038-14 | B5 | Luật R-LOG-1..11 + SC-LOG-1..3; rà 16 chỗ nuốt lỗi (ghi `warn` hoặc chú thích `nuot-loi:`) | `docs/rules/RULE-LOG.md`; `tests/conformance/**`; các tệp ở 10 §4 G6 | SC-LOG xanh trên main | ☐ |
+| S038-15 | ngoài | Promtail (hết hỗ trợ 2026-03-02) → Grafana Alloy; sửa cảnh báo / dashboard dùng số đo Promtail | `infrastructure/monitoring/**` — giao chủ PHASE-018 | log vẫn vào Loki, dashboard 06 chạy | ☐ |
+
 ## Nhật ký
+
+- 2026-11-21 — Nghiên cứu [10](10-NGHIEN-CUU-GHI-LOG.md): 13 lỗ hổng G1–G13, chuẩn R-LOG nháp, trần `logs/` 200 MB (D038-2 chốt).
 
 - 2026-11-21 — W0 mở sau sự cố go-live ketoan.btnet.vn (503 toàn bộ `/api/v1/*`).
