@@ -559,7 +559,7 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const byIdDoc = new Map(ctx.docs.map((d) => [d.id, d]));
   const planOf = (d: StoredDoc) => d.invoicePlan ?? (d.refIds?.[0] ? byIdDoc.get(d.refIds[0])?.invoicePlan : undefined);
   const rcptNoInv = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && !d.invoice?.no && planOf(d)?.mode !== 'none');
-  const hanHd = (d: StoredDoc) => invoiceDueDate(planOf(d), d.receivedDate ?? d.docDate, d.refIds?.[0] ? byIdDoc.get(d.refIds[0])?.docDate : undefined);
+  const hanHd = (d: StoredDoc) => invoiceDueDate(planOf(d), d.docDate, d.refIds?.[0] ? byIdDoc.get(d.refIds[0])?.docDate : undefined);
   const invLate = rcptNoInv.filter((d) => planOf(d)?.mode === 'later' && hanHd(d) < asOf);
   const invWait = rcptNoInv.filter((d) => planOf(d)?.mode === 'later' && hanHd(d) >= asOf);
   const invMissing = rcptNoInv.filter((d) => planOf(d)?.mode !== 'later');

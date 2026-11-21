@@ -170,7 +170,7 @@ function receiptForBranch(order: PDoc, docs: PDoc[], date: string, units: UnitMa
   }
   const wh = lines.find((l) => l.warehouseCode)?.warehouseCode ?? (branch === (order.deliveryBranch || order.branchCode) ? order.deliveryWarehouse : undefined);
   return {
-    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: branch, partnerCode: order.partnerCode, ...(wh ? { warehouseCode: wh } : {}),
+    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, ...(order.invoicePlan?.mode === 'later' ? {} : { receivedDate: date }), branchCode: branch, partnerCode: order.partnerCode, ...(wh ? { warehouseCode: wh } : {}),
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
     ...(order.contractCode ? { contractCode: order.contractCode } : {}), ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}), ...(order.costItem ? { costItem: order.costItem } : {}),
     refIds: [order.id], lines, note: `Nhận hàng theo đơn ${order.docNo} — phần giao chi nhánh ${branch}${recs.length ? ' (giao tiếp)' : ''}`,
@@ -211,7 +211,7 @@ export function receiptFromOrder(order: PDoc, docs: PDoc[], date: string, units?
     }
   }
   return {
-    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: order.deliveryBranch || order.branchCode, partnerCode: order.partnerCode, ...(order.deliveryWarehouse ? { warehouseCode: order.deliveryWarehouse } : {}),
+    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, ...(order.invoicePlan?.mode === 'later' ? {} : { receivedDate: date }), branchCode: order.deliveryBranch || order.branchCode, partnerCode: order.partnerCode, ...(order.deliveryWarehouse ? { warehouseCode: order.deliveryWarehouse } : {}),
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
     ...(order.contractCode ? { contractCode: order.contractCode } : {}),
     ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}),

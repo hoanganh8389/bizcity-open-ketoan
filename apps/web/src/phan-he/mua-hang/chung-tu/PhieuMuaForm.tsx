@@ -20,7 +20,7 @@ import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { ChuoiChungTu } from '../thanh-phan/ChuoiChungTu';
 import { refOf } from '@ketoan/contracts';
 import {
-  COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, deliveryBranchOf, deliveryBranches, invoiceKey, invoicesOf, orderProgress, orderProgressByBranch, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termFromRule, termText,
+  COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, deliveryBranchOf, deliveryBranches, invoiceKey, invoicePlanText, invoicesOf, orderProgress, orderProgressByBranch, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termFromRule, termText,
   type DocInvoice, type InvoicePlan, type LineType, type PDoc, type PLine, type ProductUnit, type PromoRow, type SupplierProduct,
   type Check, type TraceItem,
 } from '@bizcity/mua-hang-domain';
@@ -49,7 +49,7 @@ import { LichSu } from '../thanh-phan/LichSu';
 import { DienMatHang } from './DienMatHang';
 import { ProductEditor } from '../../../features/catalog/ProductsPage';
 import { factsText, stockSnapshot, useHierarchy, useNeedOf } from '../ton-max/api';
-import { XemMauNcc, xuatMauNcc, type MauNccInfo, type MauNccPart } from './MauDonNcc';
+import { XemMauNcc, xuatMauNcc, type MauNccInfo, type MauNccNhan, type MauNccPart } from './MauDonNcc';
 import { PrintButton } from '@/components/print';
 import { STATE_LABEL, invoiceApi, receiptPartsFromInvoice } from '../hoa-don/api';
 import { invoiceLabel, sameInvoice } from '@bizcity/mua-hang-domain';
@@ -182,9 +182,16 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   }, [showKho, readOnly, hier.data, v.branchCode, v.warehouseCode, defaultWh]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Thông tin NCC + nơi giao cho mẫu đơn gửi NCC. */
   const mauInfo = (): MauNccInfo => {
-    const p = names.partner(v.partnerCode) as { name?: string; address?: string | null; phone?: string | null } | undefined;
+    const p = names.partner(v.partnerCode) as { name?: string; address?: string | null; phone?: string | null; taxCode?: string | null } | undefined;
     const ds = khoGiaoCua(v);
-    return { code: v.partnerCode, name: p?.name ?? names.partnerName(v.partnerCode), address: p?.address ?? '', phone: p?.phone ?? '', branchName: names.branchName(v.branchCode), warehouse: ds.length ? ds.map((c) => `${cay.khoTen(c) || c} (${c})`).join(', ') : undefined };
+    const b = deliveryBranches(v).length === 1 ? deliveryBranches(v)[0]! : v.branchCode;
+    return { code: v.partnerCode, name: p?.name ?? names.partnerName(v.partnerCode), address: p?.address ?? '', phone: p?.phone ?? '', taxCode: p?.taxCode ?? '', branchName: names.branchName(v.branchCode), warehouse: ds.length ? ds.map((c) => `${cay.khoTen(c) || c} (${c})`).join(', ') : undefined, nhan: benNhan(b, ds) };
+  };
+  /** Bên nhận của một chi nhánh: tên, tên trên HĐ, MST (kế thừa cấp trên), địa chỉ = địa chỉ các kho giao (nếu khai) — không thì của chi nhánh / cấp trên. */
+  const benNhan = (b: string, khos: string[]): MauNccNhan => {
+    const t = cay.thongTinIn(b);
+    const dcKho = [...new Set(khos.map((c) => cay.khoDiaChi(c)).filter(Boolean))];
+    return { donVi: `${t.name} (${b})`, tenHd: t.printName !== t.name ? t.printName : undefined, mst: t.taxCode, diaChi: dcKho.length ? dcKho.join('; ') : t.address, dienThoai: t.phone };
   };
   const closeProduct = async () => {
     const sku = productSku; setProductSku(null);
@@ -245,7 +252,8 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const [fromInv, setFromInv] = useState<{ busy: boolean; note: string }>({ busy: false, note: '' });
   // [2026-11-21 Nguyễn Văn Thủy] PHIẾU NHẬP NHIỀU HOÁ ĐƠN: danh sách hoá đơn là chuẩn, invoice = hoá đơn đầu (đóng góp)
   const invs = invoicesOf(v);
-  const setInvs = (list: DocInvoice[]) => { const f = list[0]; set({ invoices: list, invoice: f ? { no: f.no, ...(f.serial ? { serial: f.serial } : {}), date: f.date, ...(f.total !== undefined ? { total: f.total } : {}) } : undefined }); };
+  // Có hoá đơn đầu tiên mà chưa ghi ngày nhận hoá đơn → lấy hôm nay (sửa được ở đầu phiếu).
+  const setInvs = (list: DocInvoice[]) => { const f = list[0]; set({ ...(list.length && !v.receivedDate && v.kind === 'receipt' ? { receivedDate: new Date().toLocaleDateString('sv-SE') } : {}), invoices: list, invoice: f ? { no: f.no, ...(f.serial ? { serial: f.serial } : {}), date: f.date, ...(f.total !== undefined ? { total: f.total } : {}) } : undefined }); };
   const doiHd = (i: number, p: Partial<DocInvoice>) => setInvs(invs.map((h, j) => (j === i ? { ...h, ...p } : h)));
   const [hdMoi, setHdMoi] = useState<{ serial: string; no: string; date: string; total?: number }>({ serial: '', no: '', date: '' });
   const [themHdTuMh22, setThemHdTuMh22] = useState(false);
@@ -500,7 +508,9 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const refDoc = data.docs.find((d) => d.id === v.refIds?.[0]);
   /** Nợ còn lại theo sổ của một phiếu nhập (0 = đã trả hết; phiếu chưa duyệt chưa vào sổ). */
   const debtOf = (d: Pick<StoredDoc, 'id' | 'docNo'>) => dueRows.filter((r) => r.purchaseDocId === d.id || r.docNo === d.docNo).reduce((s, r) => s + r.remaining, 0);
-  const debtRef = refDoc ? debtOf(refDoc) : 0;
+  // [2026-11-21 Nguyễn Văn Thủy] trả tiền NCC cho NHIỀU phiếu nhập (mỗi phiếu kèm chi nhánh nhận) — máy chủ ưu tiên trừ nợ các phiếu đã chọn (đóng góp)
+  const refList = v.kind === 'payment' ? data.docs.filter((d) => (v.refIds ?? []).includes(d.id)) : refDoc ? [refDoc] : [];
+  const debtRef = refList.reduce((t, d) => t + debtOf(d), 0);
   const copyLines = (d: StoredDoc) => {
     // Phiếu nhập chép từ ĐƠN ĐẶT: như "Lập phiếu nhập kho từ đơn" — phần còn lại của từng mã + hàng tặng trên đơn, gắn luôn với đơn
     // (trước đây chỉ chép dòng hàng mua → mất dòng quà, đơn 3 mặt hàng thành phiếu nhập 2).
@@ -742,7 +752,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       const khos = [...new Set([...ls.map((l) => l.warehouseCode ?? ''), ...khoGiao.filter((c) => cay.khoChu(c) === b)].filter(Boolean))];
       if (!khos.length && cay.khoMacDinh(b)) khos.push(cay.khoMacDinh(b));
       const od = v.orderDiscount?.amount && tong ? { ...v.orderDiscount, amount: Math.round((v.orderDiscount.amount * gross(ls)) / tong) } : v.orderDiscount;
-      return { key: b, label: `${b} · ${names.branchName(b)}`, doc: { ...v, lines: ls, orderDiscount: od, budget: undefined }, info: { ...base, branchName: names.branchName(b), warehouse: khos.map((c) => `${cay.khoTen(c) || c} (${c})`).join(', ') || names.branchName(b) } };
+      return { key: b, label: `${b} · ${names.branchName(b)}`, doc: { ...v, lines: ls, orderDiscount: od, budget: undefined }, info: { ...base, branchName: names.branchName(b), warehouse: khos.map((c) => `${cay.khoTen(c) || c} (${c})`).join(', ') || names.branchName(b), nhan: benNhan(b, khos) } };
     });
   };
   /** Tình trạng một mã của đơn: tính cả phiếu nhập chờ duyệt (nháp) — nhận vượt / thiếu sau khi các phiếu chờ duyệt được duyệt. */
@@ -822,7 +832,8 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
           columns={[
             { key: 'docNo', header: 'Số đơn', type: 'code', width: 120 },
             { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
-            { key: 'branchCode', header: 'Chi nhánh', width: 90 },
+            { key: 'branchCode', header: 'Chi nhánh', width: 170, value: (d) => `${d.branchCode} · ${names.branchName(d.branchCode)}` },
+            { key: 'nhan', header: 'Chi nhánh nhận', width: 200, value: (d) => deliveryBranches(d).map((b) => `${b} · ${names.branchName(b)}`).join('; '), render: (d) => { const bs = deliveryBranches(d); return <span title={bs.map((b) => `${b} · ${names.branchName(b)}`).join('\n')}>{bs.length > 1 ? <b>{bs.length} nơi: </b> : null}{bs.join(', ')}</span>; } },
             { key: 'lines', header: 'Số dòng', type: 'number', width: 70, value: (d) => d.lines.filter((l) => l.lineType === 'buy').length },
             { key: 'total', header: 'Tổng tiền', type: 'money', width: 120, value: (d) => d.totals.total },
             { key: 'prog', header: 'Đã nhận / đặt', width: 120, value: (d) => { const p = orderProgress(d, data.docs, v.id, data.units); return `${p.received.toLocaleString('vi-VN')} / ${p.ordered.toLocaleString('vi-VN')}`; } },
@@ -852,10 +863,12 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
           dateOf={(d) => d.docDate} searchOf={(d) => [d.docNo, d.note, d.invoice?.no, d.branchCode, ...d.lines.flatMap((l) => [l.sku, l.name, l.lotNo ?? ''])].join(' ')}
           noneLabel={v.kind === 'payment' ? 'Trừ theo hạn sớm trước' : 'Không chọn'} onNone={() => set({ refIds: [] })}
           onPick={(d) => set({ refIds: [d.id] })} onClose={() => setChon(null)}
+          multi={v.kind === 'payment' ? { value: v.refIds ?? [], onPickMany: (rs) => set({ refIds: rs.map((r) => r.id) }),
+            summary: (rs) => `${rs.length} phiếu · ${[...new Set(rs.map((r) => r.branchCode))].length} chi nhánh · còn nợ ${vnd(rs.reduce((t, r) => t + (r.status === 'approved' ? debtOf(r) : 0), 0))}` } : undefined}
           columns={[
             { key: 'docNo', header: 'Số phiếu', type: 'code', width: 120 },
             { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
-            { key: 'branchCode', header: 'Chi nhánh', width: 90 },
+            { key: 'branchCode', header: 'Chi nhánh', width: 170, value: (d) => `${d.branchCode} · ${names.branchName(d.branchCode)}` },
             { key: 'invoice', header: 'Số HĐ', type: 'code', width: 110, value: (d) => (d.invoice ? `${d.invoice.serial ? `${d.invoice.serial}-` : ''}${d.invoice.no}` : '') },
             { key: 'total', header: 'Tổng tiền', type: 'money', width: 120, value: (d) => d.totals.total },
             // Trả tiền: thấy ngay phiếu còn nợ bao nhiêu trước khi chọn (theo sổ công nợ; trả nhiều lần thì đã trừ các lần trước).
@@ -885,7 +898,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
               <div className="mh-head">
                 <div className="field"><label>Số phiếu</label><input className="input mono" value={v.docNo} placeholder="Tự cấp khi ghi" onChange={(e) => set({ docNo: e.target.value.trim() })} /></div>
                 <div className="field"><label>Ngày (*)</label><input className="input" type="date" value={v.docDate} onChange={(e) => set({ docDate: e.target.value,
-                  // Ngày nhận đủ hàng & hồ sơ đang bằng ngày phiếu (chưa sửa riêng) thì chạy theo ngày phiếu — không để hạn thanh toán tính từ ngày cũ.
+                  // Ngày nhận hoá đơn đang bằng ngày phiếu (hoá đơn giao kèm, chưa sửa riêng) thì chạy theo ngày phiếu — không để hạn thanh toán tính từ ngày cũ.
                   ...(v.receivedDate && v.receivedDate === v.docDate ? { receivedDate: e.target.value } : {}) })} /></div>
                 {/* [2026-11-21 Nguyễn Văn Thủy] đầu phiếu gọn: chi nhánh (cây cha – con) · nơi giao / phân kho · bộ phận cùng một hàng (đóng góp) */}
                 <div className="field span2"><label title="Chi nhánh của chứng từ (nhận hàng, ghi công nợ). Danh sách xếp theo cây cơ cấu: chi nhánh cha trước, con thụt vào. Đơn giao nhiều nơi: chọn chi nhánh nhận ở từng dòng">Chi nhánh lập chứng từ (*){v.workBranchCode && v.workBranchCode !== v.branchCode ? <span className="muted" style={{ fontWeight: 400 }} title="Chi nhánh đang làm việc của người lập phiếu (nút chi nhánh trên cùng)"> · người lập làm việc tại {v.workBranchCode}</span> : null}</label><BranchPicker value={v.branchCode} onChange={(c) => { set({ branchCode: c, deliveryBranch: undefined, ...(isOrder ? { deliveryWarehouse: undefined, deliveryWarehouses: undefined, lines: v.lines.map((l) => ({ ...l, branchCode: undefined, warehouseCode: undefined })) } : {}) }); if (c) lastUsed.set({ branchCode: c }); }} activeOnly disabled={readOnly} /></div>
@@ -918,7 +931,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   </div>
                 )}
                 {/* [2026-11-20 Nguyễn Văn Thủy] kế hoạch hoá đơn đầu vào: khai ở đơn đặt, phiếu nhập kế thừa; quá hạn chưa nhận hoá đơn → Bàn làm việc báo (đóng góp) */}
-                {(v.kind === 'order' || v.kind === 'receipt') && (
+                {v.kind === 'order' && (
                   <div className={`field${v.invoicePlan?.mode === 'later' ? ' span2' : ''}`}><label title="Hoá đơn đầu vào của NCC: giao kèm khi giao hàng; gửi sau N ngày (tính từ ngày nhận hàng hoặc từ ngày đặt đơn); hoặc hàng không có hoá đơn. Khai ở đơn đặt, phiếu nhập lập từ đơn tự kế thừa. Quá hạn chưa có hoá đơn → Bàn làm việc báo">Hoá đơn</label>
                     <div className="row" style={{ gap: 4 }}>
                       <select className="select input" disabled={readOnly} value={v.invoicePlan?.mode ?? 'with_goods'}
@@ -932,6 +945,13 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                           <option value="receipt">ngày nhận hàng</option><option value="order">ngày đặt đơn</option>
                         </select></>}
                     </div>
+                  </div>
+                )}
+                {/* [2026-11-21 Nguyễn Văn Thủy] phiếu nhập: không khai lại kế hoạch hoá đơn (theo đơn đặt) — chỉ ghi ngày nhận hoá đơn; hàng nhận = ngày phiếu (đóng góp) */}
+                {v.kind === 'receipt' && (
+                  <div className="field"><label title={`Ngày nhận được hoá đơn (hồ sơ) của NCC. Hàng nhận vào ngày phiếu; có ngày nhận hoá đơn là đủ hàng + hồ sơ — mốc tính hạn thanh toán "từ ngày nhận đủ hàng và hồ sơ". Hoá đơn giao kèm hàng thì bằng ngày phiếu; để trống = chưa nhận hoá đơn. Kế hoạch hoá đơn khai ở đơn đặt: ${invoicePlanText(v.invoicePlan)}`}>Ngày nhận hoá đơn</label>
+                    <input className="input" type="date" value={v.receivedDate ?? ''} disabled={readOnly || v.invoicePlan?.mode === 'none'} onChange={(e) => set({ receivedDate: e.target.value || undefined })} />
+                    <span className="muted" style={{ fontSize: 11 }}>{v.invoicePlan?.mode === 'none' ? 'Hàng không có hoá đơn (theo đơn)' : v.invoicePlan?.mode === 'later' ? `${invoicePlanText(v.invoicePlan)} — theo đơn` : !v.receivedDate ? 'Chưa nhận hoá đơn' : ''}</span>
                   </div>
                 )}
                 {/* [2026-11-21 Nguyễn Văn Thủy] khoản mục đầu phiếu: mặc định cho mọi dòng (cột Khoản mục ở bảng hàng) — so định mức chi phí theo khoản mục (đóng góp) */}
@@ -965,9 +985,11 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   </div>
                 )}
                 {(v.kind === 'return' || v.kind === 'exchange' || v.kind === 'payment') && (
-                  <div className="field span2"><label>{v.kind === 'payment' ? 'Trả cho phiếu nhập (ưu tiên trừ trước)' : 'Phiếu nhập gốc'}</label>
+                  <div className="field span2"><label>{v.kind === 'payment' ? 'Trả cho phiếu nhập (chọn nhiều phiếu, ưu tiên trừ trước)' : 'Phiếu nhập gốc'}</label>
                     <OChonChungTu disabled={readOnly} count={receipts.length} onOpen={() => setChon('phieu')} onClear={() => set({ refIds: [] })}
-                      text={(() => { const d = receipts.find((x) => x.id === v.refIds?.[0]); return d ? `${d.docNo} · ${dmy(d.docDate)} · ${vnd(d.totals.total)}${d.invoice?.no ? ` · HĐ ${d.invoice.no}` : ''}` : undefined; })()}
+                      text={(() => {
+                        if (v.kind === 'payment') return refList.length ? `${refList.length} phiếu: ${refList.map((d) => `${d.docNo} (CN ${d.branchCode})`).join(', ')} · còn nợ ${vnd(debtRef)}` : undefined;
+                        const d = receipts.find((x) => x.id === v.refIds?.[0]); return d ? `${d.docNo} · CN ${d.branchCode} · ${dmy(d.docDate)} · ${vnd(d.totals.total)}${d.invoice?.no ? ` · HĐ ${d.invoice.no}` : ''}` : undefined; })()}
                       placeholder={`— ${v.kind === 'payment' ? 'trừ theo hạn sớm trước' : 'không'} —`} />
                   </div>
                 )}
@@ -977,7 +999,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                       {(v.kind === 'cost' ? data.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved') : receipts).map((d) => (
                         <label key={d.id} className={(v.refIds ?? []).includes(d.id) ? 'on' : ''}>
                           <input type="checkbox" checked={(v.refIds ?? []).includes(d.id)} onChange={(e) => set({ refIds: e.target.checked ? [...(v.refIds ?? []), d.id] : (v.refIds ?? []).filter((x) => x !== d.id) })} />
-                          {d.docNo} · {dmy(d.docDate)} · {vnd(d.totals.beforeTax)}{v.kind === 'cost' ? ` · ${names.partnerName(d.partnerCode)}` : ''}
+                          {d.docNo} · CN {d.branchCode} · {dmy(d.docDate)} · {vnd(d.totals.beforeTax)}{v.kind === 'cost' ? ` · ${names.partnerName(d.partnerCode)}` : ''}
                         </label>
                       ))}
                       {!(v.kind === 'cost' ? data.docs.some((d) => d.kind === 'receipt' && d.status === 'approved') : receipts.length) && <span className="muted">Chưa có phiếu nhập đã duyệt{v.kind === 'rebate' ? ' của nhà cung cấp này' : ''}</span>}
@@ -1001,9 +1023,6 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   {v.kind === 'exchange' && <div className="field"><label>Xử lý chênh lệch</label><select className="select input" value={v.settle ?? 'offset'} onChange={(e) => set({ settle: e.target.value as PDoc['settle'] })}><option value="offset">Bù trừ công nợ</option><option value="pay">Thanh toán bổ sung</option><option value="refund">NCC hoàn tiền</option></select></div>}
                   {(v.kind === 'return' || v.kind === 'exchange') && <div className="field"><label>Lý do</label><input className="input" value={v.reason ?? ''} onChange={(e) => set({ reason: e.target.value })} placeholder="Lỗi, cận date, sai quy cách…" /></div>}
                 </>}
-                {v.kind === 'receipt' && (
-                  <div className="field"><label title="Mốc tính hạn thanh toán theo hợp đồng: ngày nhận đủ hàng và hồ sơ giao hàng hợp lệ">Ngày nhận đủ hàng & hồ sơ</label><input className="input" type="date" value={v.receivedDate ?? v.docDate} onChange={(e) => set({ receivedDate: e.target.value || undefined })} /></div>
-                )}
                 {(v.kind === 'gift_in' || (v.kind === 'receipt' && v.gift)) && (<>
                   <div className="field"><label>Chương trình quà</label><input className="input mono" value={v.gift?.program ?? ''} placeholder="Ví dụ TGS-TRI-AN" onChange={(e) => set({ gift: { source: v.gift?.source ?? (v.kind === 'gift_in' ? 'ncc_extra' : 'self_buy'), program: e.target.value.trim() || undefined, hasVat: v.kind === 'receipt' ? (v.gift?.hasVat ?? Boolean(v.invoice)) : false } })} /></div>
                   {v.kind === 'receipt' && v.gift?.source === 'self_buy' && <div className="field"><label title="Quà TGS tự mua: có hoá đơn VAT (thuế được khấu trừ) hay không — chọn rõ, không phụ thuộc thứ tự nhập số hoá đơn">Quà mua có VAT?</label><select className="select input" value={v.gift.hasVat ? '1' : '0'} onChange={(e) => set({ gift: { ...v.gift!, hasVat: e.target.value === '1' } })}><option value="1">Có hoá đơn VAT</option><option value="0">Không VAT (không hoá đơn)</option></select></div>}
@@ -1038,7 +1057,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                       {due.isLoading ? <span className="muted">Đang lấy công nợ…</span> : debtAll ? <>
                         <button type="button" className="btn btn-xs" onClick={() => set({ amount: debtAll, ckttAmount: undefined })}>Trả hết {vnd(debtAll)}</button>
                         {debtDue > 0 && debtDue !== debtAll && <button type="button" className="btn btn-xs" onClick={() => set({ amount: debtDue, ckttAmount: undefined })}>Phần đến hạn / quá hạn {vnd(debtDue)}</button>}
-                        {debtRef > 0 && <button type="button" className="btn btn-xs btn-primary" onClick={() => set({ amount: debtRef, ckttAmount: undefined })}>Phiếu {refDoc!.docNo}: {vnd(debtRef)}</button>}
+                        {debtRef > 0 && <button type="button" className="btn btn-xs btn-primary" title={refList.map((d) => `${d.docNo} · CN ${d.branchCode} · còn nợ ${vnd(debtOf(d))}`).join('\n')} onClick={() => set({ amount: debtRef, ckttAmount: undefined })}>{refList.length > 1 ? `${refList.length} phiếu đã chọn` : `Phiếu ${refList[0]!.docNo}`}: {vnd(debtRef)}</button>}
                       </> : <span className="muted">NCC này không còn nợ</span>}
                     </div>
                   </div>

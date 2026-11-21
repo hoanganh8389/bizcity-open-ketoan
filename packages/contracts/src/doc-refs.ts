@@ -15,7 +15,7 @@ export type DocRef = string;
 
 /** Vai trò liên kết from → to (bizcity_document@1 §3). */
 // [2026-11-18 Nguyễn Văn Thủy] applies = áp chính sách / chương trình, uses = dùng lô hàng (0162) (đóng góp)
-export const DOC_LINK_ROLES = ['source', 'reverses', 'replaces', 'settles', 'attachesTo', 'ledger', 'applies', 'uses'] as const;
+export const DOC_LINK_ROLES = ['source', 'reverses', 'replaces', 'settles', 'attachesTo', 'ledger', 'applies', 'uses', 'adjusts'] as const; // 0179: adjusts = điều chỉnh cho (hoá đơn điều chỉnh → hoá đơn gốc)
 export type DocLinkRole = (typeof DOC_LINK_ROLES)[number];
 
 /** Mã module của docRef: phần trước dấu chấm đầu. */

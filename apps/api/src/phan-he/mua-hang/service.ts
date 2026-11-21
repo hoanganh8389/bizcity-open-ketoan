@@ -55,7 +55,7 @@ export function docChanges(b: StoredDoc, a: StoredDoc): string[] {
   const v = (n: number) => Math.round(n).toLocaleString('vi-VN');
   const cmp = (label: string, x: unknown, y: unknown) => { if (String(x ?? '') !== String(y ?? '')) out.push(`${label}: ${String(x ?? '—') || '—'} → ${String(y ?? '—') || '—'}`); };
   cmp('Ngày', b.docDate, a.docDate); cmp('NCC', b.partnerCode, a.partnerCode); cmp('Chi nhánh', b.branchCode, a.branchCode);
-  cmp('Số hoá đơn', b.invoice?.no, a.invoice?.no); cmp('Ngày nhận đủ hồ sơ', b.receivedDate, a.receivedDate); cmp('Ghi chú', b.note, a.note);
+  cmp('Số hoá đơn', b.invoice?.no, a.invoice?.no); cmp('Ngày nhận hoá đơn', b.receivedDate, a.receivedDate); cmp('Ghi chú', b.note, a.note);
   if (b.totals.total !== a.totals.total) out.push(`Tổng tiền: ${v(b.totals.total)} → ${v(a.totals.total)}`);
   const key = (l: StoredDoc['lines'][number]) => `${l.sku}|${l.lineType}`;
   const bm = new Map(b.lines.map((l) => [key(l), l])), am = new Map(a.lines.map((l) => [key(l), l]));

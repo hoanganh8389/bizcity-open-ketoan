@@ -58,7 +58,7 @@ export function ChuoiChungTu({ doc, docs, units, onOpen, vertical }: { doc: PDoc
     const thieu = receipts.filter((r) => !invoicesOf(r).length);
     if (!thieu.length) return { ten, docs: [], trang: 'co', ghi: receipts.flatMap((r) => invoicesOf(r).map(invoiceKey)).join(', ') };
     if (plan?.mode === 'later') {
-      const han = thieu.map((r) => invoiceDueDate(plan, r.receivedDate ?? r.docDate, order?.docDate)).sort()[0]!;
+      const han = thieu.map((r) => invoiceDueDate(plan, r.docDate, order?.docDate)).sort()[0]!;
       const qua = han < homNay();
       return { ten, docs: [], trang: qua ? 'thieu' : 'chua', ghi: `${qua ? 'quá hạn' : 'hạn'} ${han.slice(8, 10)}/${han.slice(5, 7)}` };
     }

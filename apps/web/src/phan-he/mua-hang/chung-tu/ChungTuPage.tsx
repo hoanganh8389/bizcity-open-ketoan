@@ -195,7 +195,7 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
       if (d.kind !== 'receipt') return null;
       const don = d.refIds?.[0] ? byId.get(d.refIds[0]) : undefined;
       const plan = d.invoicePlan ?? don?.invoicePlan;
-      const han = invoiceDueDate(plan, d.receivedDate ?? d.docDate, don?.docDate);
+      const han = invoiceDueDate(plan, d.docDate, don?.docDate);
       if (invoicesOf(d).length) return { state: 'co', han, plan };
       if (plan?.mode === 'none') return { state: 'khong', han, plan };
       if (plan?.mode === 'later') return { state: han < homNay ? 'qua-han' : 'cho', han, plan };

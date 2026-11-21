@@ -7,9 +7,11 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
-interface Unit { uid: string; code: string; name: string; parentCode: string | null; level: number; levelLabel: string; sortOrder: number; isActive: boolean; departmentCode: string | null }
+interface Unit { uid: string; code: string; name: string; parentCode: string | null; level: number; levelLabel: string; sortOrder: number; isActive: boolean; departmentCode: string | null; taxUsed?: string; companyName?: string; address?: string; phone?: string }
 interface Dept { uid: string; code: string; name: string; branchCode: string | null; parentCode?: string | null; isActive: boolean }
-interface Wh { code: string; name: string; branchCode: string; isDefault: boolean; isActive: boolean }
+interface Wh { code: string; name: string; branchCode: string; isDefault: boolean; isActive: boolean; address?: string }
+/** Thông tin đơn vị in trên chứng từ (bên nhận / bên mua): tên in, MST dùng (kế thừa cấp trên), địa chỉ + điện thoại (trống thì lấy cấp trên gần nhất). */
+export interface DonViIn { code: string; name: string; printName: string; taxCode: string; address: string; addressFrom: string | null; phone: string }
 
 export interface DonViCay {
   code: string; name: string; uid: string; isActive: boolean;
@@ -54,6 +56,19 @@ export function useCayDonVi() {
     const conCua = (branch: string) => { const i = list.findIndex((u) => u.code === branch); const out: string[] = []; if (i >= 0) for (let j = i + 1; j < list.length && list[j]!.depth > list[i]!.depth; j++) out.push(list[j]!.code); return out; };
     const khoMacDinh = (branch: string) => { const ws = whOf(branch).filter((w) => w.isActive); return (ws.find((w) => w.isDefault) ?? ws[0])?.code ?? ''; };
     const khoTen = (code: string) => (q.data?.warehouses ?? []).find((w) => w.code === code)?.name ?? '';
-    return { list, index, ready: Boolean(q.data), deptOf, defaultDept, whOf, khoChu, conCua, khoMacDinh, khoTen, departments: q.data?.departments ?? [] };
+    const khoDiaChi = (code: string) => (q.data?.warehouses ?? []).find((w) => w.code === code)?.address?.trim() ?? '';
+    /** Lấy giá trị theo cấp trên gần nhất (đơn vị con không tự khai thì dùng của cha). */
+    const theoCap = (branch: string, f: (u: Unit) => string | undefined): [string, string | null] => {
+      let u = byCode.get(branch); let n = 0;
+      while (u && n++ < 30) { const v = f(u)?.trim(); if (v) return [v, u.code === branch ? null : u.code]; u = u.parentCode ? byCode.get(u.parentCode) : undefined; }
+      return ['', null];
+    };
+    const thongTinIn = (branch: string): DonViIn => {
+      const u = byCode.get(branch);
+      const [address, addressFrom] = theoCap(branch, (x) => x.address);
+      const [printName] = theoCap(branch, (x) => x.companyName);
+      return { code: branch, name: u?.name ?? branch, printName: printName || u?.name || branch, taxCode: u?.taxUsed ?? '', address, addressFrom, phone: theoCap(branch, (x) => x.phone)[0] };
+    };
+    return { list, index, ready: Boolean(q.data), deptOf, defaultDept, whOf, khoChu, conCua, khoMacDinh, khoTen, khoDiaChi, thongTinIn, departments: q.data?.departments ?? [] };
   }, [q.data]);
 }

@@ -154,7 +154,7 @@ export interface PDoc {
   outsideOrder?: { reason: string; by?: string; at?: string; reviewedBy?: string; reviewedAt?: string; reviewNote?: string };
   /** Mã chính sách BỎ trên phiếu này (bỏ tích ở bảng khuyến mại: NCC hết quà, không cho CK lần này…) — mọi phép tính bỏ qua. */
   skipPolicies?: string[];
-  /** Ngày nhận đủ hàng và hồ sơ giao hàng hợp lệ — mốc tính hạn thanh toán theo hợp đồng (trống = ngày phiếu). */
+  /** Phiếu nhập: NGÀY NHẬN HOÁ ĐƠN (hàng nhận = ngày phiếu → có ngày này là đủ hàng + hồ sơ) — mốc tính hạn thanh toán "từ ngày nhận đủ hàng và hồ sơ" (trống = ngày phiếu). 21/11/2026 đổi tên trên giao diện. */
   receivedDate?: string;
   /** Hoá đơn sai phải điều chỉnh: hạn thanh toán lùi đúng số ngày từ lúc báo sai (from) đến lúc nhận hoá đơn đúng (to). */
   invoiceFix?: { from: string; to: string };
@@ -769,6 +769,7 @@ export const invoicesOf = (d: Pick<PDoc, 'invoice' | 'invoices'>): DocInvoice[] 
 export const invoiceKey = (i: { no: string; serial?: string }) => (i.serial ? `${i.serial}-${i.no}` : i.no);
 /** Hạn nhận hoá đơn của phiếu nhập theo kế hoạch: '' = không có hạn (giao kèm hàng thì hạn = ngày nhận, hàng không có hoá đơn thì không theo dõi).
  *  Gửi sau N ngày: tính từ ngày nhận hàng, hoặc từ ngày đặt đơn khi kế hoạch chọn `from = 'order'` (truyền orderDate). */
+// receivedDate ở đây = ngày NHẬN HÀNG (ngày phiếu nhập), không phải PDoc.receivedDate (ngày nhận hoá đơn).
 export function invoiceDueDate(plan: InvoicePlan | undefined, receivedDate: string, orderDate?: string): string {
   if (plan?.mode === 'none') return '';
   if (plan?.mode !== 'later') return receivedDate;

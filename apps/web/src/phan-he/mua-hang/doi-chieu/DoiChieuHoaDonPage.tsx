@@ -59,7 +59,7 @@ export function DoiChieuHoaDonPage() {
     const out: Dong[] = [];
     for (const d of docs) {
       if (d.kind !== 'receipt' || d.status === 'cancelled' || (ncc && d.partnerCode !== ncc) || (cn && d.branchCode !== cn)) continue;
-      const ngay = d.receivedDate ?? d.docDate;
+      const ngay = d.docDate; // ngày nhận hàng = ngày phiếu (receivedDate là ngày nhận hoá đơn)
       if (ngay < from || ngay > to) continue;
       // [2026-11-21 Nguyễn Văn Thủy] một phiếu nhập nhiều hoá đơn; hạn tính từ ngày đặt đơn nếu kế hoạch chọn; lệch SL ↔ hoá đơn thành ô riêng (đóng góp)
       const don = d.refIds?.[0] ? byId.get(d.refIds[0]) : undefined;

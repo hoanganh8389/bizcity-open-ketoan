@@ -12,7 +12,28 @@ import { useState } from 'react';
 import { Modal } from '@/components/ui';
 import { roundPrice } from '@/lib/format';
 
-export interface MauNccInfo { code: string; name: string; address?: string; phone?: string; branchName: string; warehouse?: string }
+// [2026-11-21 Nguyễn Văn Thủy] khối bên nhận (đơn vị, tên trên HĐ, MST, địa chỉ, điện thoại) + dòng mở rộng tự do (đóng góp)
+/** Bên nhận hàng / nhận hoá đơn — lấy từ cơ cấu tổ chức (DM16): MST kế thừa cấp trên, địa chỉ kho giao (nếu khai) hoặc của đơn vị. */
+export interface MauNccNhan { donVi: string; tenHd?: string; mst?: string; diaChi?: string; dienThoai?: string }
+export interface MauNccInfo {
+  code: string; name: string; address?: string; phone?: string; taxCode?: string; branchName: string; warehouse?: string; nhan?: MauNccNhan;
+  /** Dòng thêm tuỳ ý ở khối trái (NCC) / phải (bên nhận): [nhãn, giá trị] — mở rộng mẫu không cần sửa code vẽ. */
+  them?: { trai?: [string, string][]; phai?: [string, string][] };
+}
+/** Hai cột thông tin đầu mẫu: trái = NCC, phải = đơn + bên nhận. Dòng trống bỏ qua (trừ dòng bắt buộc của mẫu). */
+function khoiDau(doc: PDoc, info: MauNccInfo): { trai: [string, string][]; phai: [string, string][] } {
+  const n = info.nhan;
+  const trai: [string, string][] = [['Mã NPP:', info.code], ['Tên NPP:', info.name], ['Địa chỉ', info.address ?? ''], ['Điện thoại NPP:', info.phone ?? '']];
+  if (info.taxCode) trai.splice(2, 0, ['MST NPP:', info.taxCode]);
+  const phai: [string, string][] = [['Ngày - giờ ĐH', orderTime(doc)], ['Ngày Giao hàng', dmy(doc.deliveryDate)], ['Giao tại kho:', info.warehouse || info.branchName]];
+  if (n) {
+    phai.push(['Đơn vị nhận:', n.donVi]);
+    if (n.tenHd && n.tenHd !== n.donVi) phai.push(['Tên trên hoá đơn:', n.tenHd]);
+    phai.push(['MST bên nhận:', n.mst ?? ''], ['Địa chỉ nhận:', n.diaChi ?? '']);
+    if (n.dienThoai) phai.push(['Điện thoại nhận:', n.dienThoai]);
+  }
+  return { trai: [...trai, ...(info.them?.trai ?? [])], phai: [...phai, ...(info.them?.phai ?? [])] };
+}
 // [2026-11-21 Nguyễn Văn Thủy] đơn giao nhiều chi nhánh: mỗi chi nhánh nhận một mẫu (tab xem / sheet Excel), dòng + tiền của chi nhánh đó (đóng góp)
 /** Một mẫu gửi NCC: đơn (chỉ dòng của một chi nhánh nhận) + nơi giao. Đơn một nơi nhận = một mẫu. */
 export interface MauNccPart { key: string; label: string; doc: PDoc; info: MauNccInfo }
@@ -62,8 +83,8 @@ export function XemMauNcc({ doc: doc0, info: info0, parts, onClose, onExport }: 
       <div className="full" style={{ overflow: 'auto', maxHeight: '70vh', background: '#fff', padding: 12, border: '1px solid var(--line)' }}>
         <div style={{ textAlign: 'center', fontFamily: '"Times New Roman", serif', fontSize: 24, fontWeight: 700, marginBottom: 10 }}>ĐƠN ĐẶT HÀNG</div>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontFamily: '"Times New Roman", serif', fontSize: 14, marginBottom: 8 }}><tbody>
-          {[['Mã NPP:', info.code, 'Ngày - giờ ĐH', orderTime(doc)], ['Tên NPP:', info.name, 'Ngày Giao hàng', dmy(doc.deliveryDate)], ['Địa chỉ', info.address ?? '', 'Giao tại kho:', info.warehouse || info.branchName], ['Điện thoại NPP:', info.phone ?? '', '', '']].map(([a, b, c, d]) => (
-            <tr key={a}><td style={{ fontWeight: 700, width: 130 }}>{a}</td><td style={{ background: '#F3F4F6', borderBottom: '1px dotted #111' }}>{b}</td><td style={{ width: 20 }} /><td style={{ fontWeight: 700, width: 140 }}>{c}</td><td style={{ background: '#F3F4F6', borderBottom: c ? '1px dotted #111' : 0, fontWeight: c === 'Ngày Giao hàng' ? 700 : 400, width: 260 }}>{d}</td></tr>
+          {(() => { const k = khoiDau(doc, info); return Array.from({ length: Math.max(k.trai.length, k.phai.length) }, (_, i) => [...(k.trai[i] ?? ['', '']), ...(k.phai[i] ?? ['', ''])]); })().map(([a, b, c, d], i) => (
+            <tr key={i}><td style={{ fontWeight: 700, width: 130 }}>{a}</td><td style={{ background: a ? '#F3F4F6' : undefined, borderBottom: a ? '1px dotted #111' : 0 }}>{b}</td><td style={{ width: 20 }} /><td style={{ fontWeight: 700, width: 140 }}>{c}</td><td style={{ background: '#F3F4F6', borderBottom: c ? '1px dotted #111' : 0, fontWeight: c === 'Ngày Giao hàng' ? 700 : 400, width: 260 }}>{d}</td></tr>
           ))}
         </tbody></table>
         <div style={{ fontFamily: '"Times New Roman", serif', fontStyle: 'italic', fontWeight: 700, borderBottom: '1px solid #111', paddingBottom: 4, marginBottom: 6 }}>Bộ phận mua hàng đề nghị Quý Nhà phân phối xuất hàng và hóa đơn khi giao hàng :</div>
@@ -146,25 +167,27 @@ function veSheet(wb: Workbook, doc: PDoc, info: MauNccInfo, sheetName: string): 
   merge(1, 1, 1, 17, 'ĐƠN ĐẶT HÀNG', { font: font({ size: 20, bold: true }), alignment: { vertical: 'middle', horizontal: 'center' } });
   const label: Style = { font: font({ bold: true }), alignment: { vertical: 'middle', horizontal: 'left' } };
   const input: Style = { font: font(), alignment: { vertical: 'middle', horizontal: 'left', wrapText: true }, fill: fill('#F3F4F6'), border: { bottom: { style: 'dotted', color: { argb: argb('#111827') } } } };
-  ([[3, 'Mã NPP:', info.code], [4, 'Tên NPP:', info.name], [5, 'Địa chỉ', info.address ?? ''], [6, 'Điện thoại NPP:', info.phone ?? '']] as const).forEach(([r, a, b]) => { merge(r, 1, r, 1, a, label); merge(r, 2, r, 9, b, input); });
-  ([[3, 'Ngày - giờ ĐH', orderTime(doc)], [4, 'Ngày Giao hàng', dmy(doc.deliveryDate)], [5, 'Giao tại kho:', info.warehouse || info.branchName]] as const).forEach(([r, a, b]) => {
-    merge(r, 11, r, 12, a, label); merge(r, 13, r, 16, b, r === 4 ? { ...input, font: font({ bold: true }) } : input);
-  });
-  ws.getRow(7).height = 22;
-  merge(7, 1, 7, 17, 'Bộ phận mua hàng đề nghị Quý Nhà phân phối xuất hàng và hóa đơn khi giao hàng :', { font: font({ bold: true, italic: true }), alignment: { vertical: 'middle', horizontal: 'left' }, border: { bottom: side } });
-  ws.getRow(8).height = 44; ws.getRow(9).height = 24;
+  const kd = khoiDau(doc, info);
+  kd.trai.forEach(([a, b], i) => { merge(3 + i, 1, 3 + i, 1, a, label); merge(3 + i, 2, 3 + i, 9, b, input); });
+  kd.phai.forEach(([a, b], i) => { merge(3 + i, 11, 3 + i, 12, a, label); merge(3 + i, 13, 3 + i, 16, b, i === 1 ? { ...input, font: font({ bold: true }) } : input); });
+  /** Khối đầu dài hơn 4 dòng mẫu gốc → đẩy phần dưới xuống O dòng. */
+  const O = Math.max(0, Math.max(kd.trai.length, kd.phai.length) - 4);
+  if (O) ws.views = [{ showGridLines: false, state: 'frozen', ySplit: 11 + O }];
+  ws.getRow(7 + O).height = 22;
+  merge(7 + O, 1, 7 + O, 17, 'Bộ phận mua hàng đề nghị Quý Nhà phân phối xuất hàng và hóa đơn khi giao hàng :', { font: font({ bold: true, italic: true }), alignment: { vertical: 'middle', horizontal: 'left' }, border: { bottom: side } });
+  ws.getRow(8 + O).height = 44; ws.getRow(9 + O).height = 24;
   const H: [number, string, string?][] = [[1, 'STT'], [2, 'Mã SP'], [3, 'Mã vạch'], [4, 'Tên sản phẩm'], [5, 'Quy cách\nĐVT/thùng'], [6, 'ĐVT'], [7, 'Đơn giá chưa\nVAT'], [10, 'Số lượng\ncần nhập\ntháng này', '#FFC000'], [11, 'Tồn kho', '#FFF200'], [12, 'SL mua\nchưa nhập kho'], [13, 'Phân tích\nthông minh'], [14, '% chiết\nkhấu'], [15, 'Thành\ntiền CK'], [16, 'Thành tiền sau\nCK'], [17, 'Ghi chú']];
-  for (const [c, text, bg] of H) merge(8, c, 9, c, text, bg ? { ...head, fill: fill(bg) } : head);
-  merge(8, 8, 8, 9, 'Số lượng', head); merge(9, 8, 9, 8, 'Mua', head); merge(9, 9, 9, 9, 'KM', head);
-  ws.getRow(10).height = 18;
-  for (let c = 1; c <= 17; c++) style(ws.getCell(10, c), { ...data, font: font({ size: 10, italic: true, bold: true }), fill: fill(c === 10 ? '#FFC000' : c === 11 ? '#FFF200' : '#FFFFFF') });
-  ([[1, '1'], [4, '2'], [5, '3'], [6, '4'], [7, '5'], [8, '6'], [9, '7'], [14, '8'], [15, '9'], [16, '10= 5 x 6 -9']] as const).forEach(([c, v]) => { ws.getCell(10, c).value = v; });
-  ws.getRow(11).height = 20;
-  for (let c = 1; c <= 17; c++) style(ws.getCell(11, c), { ...left, font: font({ bold: true }) });
-  ws.getCell(11, 1).value = 'A';
-  merge(11, 2, 11, 15, 'TỔNG TRỊ GIÁ HÀNG ĐẶT', { ...left, font: font({ bold: true }) });
-  merge(11, 16, 11, 17, t.after, { ...money, font: font({ bold: true }) });
-  let r = 12;
+  for (const [c, text, bg] of H) merge(8 + O, c, 9 + O, c, text, bg ? { ...head, fill: fill(bg) } : head);
+  merge(8 + O, 8, 8 + O, 9, 'Số lượng', head); merge(9 + O, 8, 9 + O, 8, 'Mua', head); merge(9 + O, 9, 9 + O, 9, 'KM', head);
+  ws.getRow(10 + O).height = 18;
+  for (let c = 1; c <= 17; c++) style(ws.getCell(10 + O, c), { ...data, font: font({ size: 10, italic: true, bold: true }), fill: fill(c === 10 ? '#FFC000' : c === 11 ? '#FFF200' : '#FFFFFF') });
+  ([[1, '1'], [4, '2'], [5, '3'], [6, '4'], [7, '5'], [8, '6'], [9, '7'], [14, '8'], [15, '9'], [16, '10= 5 x 6 -9']] as const).forEach(([c, v]) => { ws.getCell(10 + O, c).value = v; });
+  ws.getRow(11 + O).height = 20;
+  for (let c = 1; c <= 17; c++) style(ws.getCell(11 + O, c), { ...left, font: font({ bold: true }) });
+  ws.getCell(11 + O, 1).value = 'A';
+  merge(11 + O, 2, 11 + O, 15, 'TỔNG TRỊ GIÁ HÀNG ĐẶT', { ...left, font: font({ bold: true }) });
+  merge(11 + O, 16, 11 + O, 17, t.after, { ...money, font: font({ bold: true }) });
+  let r = 12 + O;
   for (const x of t.rows) {
     ws.getRow(r).height = x.analysis.length ? 74 : 22;
     const vals: unknown[] = [x.stt, x.sku, x.barcode, x.name, x.pack ? Number(String(x.pack).replace(/\./g, '').replace(',', '.')) : '', x.unit, x.price, x.buy, x.gift || '', x.need, x.stock, x.pending, x.analysis.map(([k, v]) => `${k}: ${v}`).join('\n'), x.pct, x.ck || '', x.after, x.note];

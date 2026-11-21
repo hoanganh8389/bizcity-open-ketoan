@@ -28,7 +28,7 @@ Accounting Kernel accounting_events → ledger_entries: CHỈ khi có sự việ
 |---|---|---|
 | `business_documents` | Đây là chứng từ gì? | `doc_ref`, `module`, `doc_type`, số, ngày, chi nhánh, đối tượng, tổng tiền, `status_raw`, `status`, `version`, `meta` (JSON), người tạo, người duyệt |
 | `document_versions` | Chứng từ đã đổi thế nào? | Bản chụp nội dung mỗi lần đổi, người sửa, thời gian, mã băm |
-| `document_links` | Liên quan chứng từ nào? | `source` lập từ · `applies` áp chính sách / thuộc hợp đồng · `uses` dùng lô · `ledger` sinh sự việc kế toán · `settles` thanh toán cho · `reverses` · `replaces` |
+| `document_links` | Liên quan chứng từ nào? | `source` lập từ · `applies` áp chính sách / thuộc hợp đồng · `uses` dùng lô · `ledger` sinh sự việc kế toán · `settles` thanh toán cho · `reverses` · `replaces` · `attachesTo` đính vào (hoá đơn NCC → phiếu nhập) · `adjusts` điều chỉnh cho (hoá đơn điều chỉnh → hoá đơn gốc, 0179) |
 | `document_attachments` | Tệp đính kèm? | Bản scan, biên bản, hoá đơn |
 
 ## 3. Tên loại chứng từ `doc_type`
@@ -51,6 +51,7 @@ Dạng `<nghiệp vụ>.<loại>`, đặt theo **chứng từ đó là gì**, kh
 | `hop-dong.contract:<số HĐ>` | `dimensions` (kind contract) | `purchase.contract`, `contract.rent`… |
 | `mua-hang.policy:<id>` | `purchase_policies` | `pricing.policy` |
 | `mua-hang.document:<id>` | `purchase_documents` | `purchase.order` · `inventory.receipt` (nhập mua, nhận tặng) · `inventory.issue` (trả NCC, xuất tặng) · `inventory.exchange` · `purchase.cost` · `purchase.rebate` · `purchase.prepayment` · `finance.payment` |
+| `mua-hang.invoice:<id>` | `supplier_invoices` (MH22) | `purchase.invoice` — hoá đơn NCC; đang dùng = done, huỷ = cancelled; không vào `accounting_events` (bút toán theo phiếu nhập). Phiếu nhập ghi đủ các hoá đơn ở `meta.invoices` (0179) |
 | `kho.transfer:<id>` | `stock_transfer_docs` | `inventory.transfer` |
 | `quy.payment_request:<id>` | `payment_requests` | `finance.payment_request` |
 <!-- [2026-11-19 10:48 AM Võ Hoàng] NT-BH-033 — chứng từ bán đã vào sổ (trigger trong migration module, quyền ghi qua 0167) -->

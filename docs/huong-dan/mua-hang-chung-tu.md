@@ -270,7 +270,9 @@ Báo cáo mua hàng (MH23) — kiểu "Chi tiết dòng hàng" — cũng có Ký
 ## Đơn giao nhiều chi nhánh · phiếu nhập nhiều hoá đơn
 - **Giao tại kho** (đơn đặt): tích **nhiều kho** (của chi nhánh và chi nhánh con). Đây là danh sách tham chiếu: chọn **Chi nhánh nhận** ở dòng thì dòng tự lấy kho đã tích của chi nhánh đó (không tích thì kho mặc định của chi nhánh); đổi được trong kho của chi nhánh đó và chi nhánh con. Phân kho thật lưu ở từng dòng; kho dùng ở dòng tự hiện trong danh sách ở đầu đơn.
 - **Khoản mục**: chọn ở đầu phiếu, dòng ăn theo. Cột Khoản mục ở bảng hàng mặc định ẩn (nút **Cột** để hiện); đầu phiếu chưa chọn thì dòng không chọn được.
-- **Hoá đơn**: *Giao kèm hàng* · *Gửi sau N ngày, tính từ ngày nhận hàng / ngày đặt đơn* · *Hàng không có hoá đơn*.
+- **Hoá đơn** (chỉ khai ở đơn đặt): *Giao kèm hàng* · *Gửi sau N ngày, tính từ ngày nhận hàng / ngày đặt đơn* · *Hàng không có hoá đơn*.
+- **Phiếu nhập** không khai lại kế hoạch hoá đơn (lấy theo đơn; nhập ngoài đơn = giao kèm hàng). Phiếu chỉ có ô **Ngày nhận hoá đơn**: hàng nhận = ngày phiếu, hoá đơn nhận ngày nào ghi ngày đó (thêm hoá đơn đầu tiên mà ô đang trống thì tự lấy hôm nay). Hạn nhận hoá đơn "gửi sau N ngày" tính từ ngày phiếu (hoặc ngày đặt đơn).
+- **Mẫu đơn gửi NCC** khối bên phải có thêm **bên nhận** của từng chi nhánh: đơn vị nhận, tên trên hoá đơn (tên in chứng từ), MST bên nhận (chi nhánh không khai thì lấy cấp trên), địa chỉ nhận (địa chỉ phân kho giao nếu có khai, không thì của chi nhánh / cấp trên gần nhất), điện thoại — lấy ở Cơ cấu tổ chức (DM16).
 - **Mẫu đơn gửi NCC**: đơn giao mấy chi nhánh thì mấy thẻ (Excel: mấy sheet) — mỗi mẫu chỉ có dòng của chi nhánh đó, kho giao của chi nhánh đó, tiền tính trên các dòng đó.
 - **Tiến độ giao** (thẻ của đơn đã ghi): theo từng chi nhánh nhận — đặt / đã nhận (đã duyệt) / chờ duyệt / còn, các phiếu nhập của chi nhánh (bấm mở) và hoá đơn của từng phiếu; nút **Lập phiếu nhập <chi nhánh>**. Trợ lý bên phải cũng chia theo chi nhánh.
 - **Mở lại đơn**: đơn đã có phiếu nhập (kể cả nháp) thì nút khoá — rê chuột xem phiếu nào; huỷ các phiếu nhập đó trước.
