@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 192
+      "count": 191
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 70
+      "count": 69
     },
     {
       "key": "paused",
@@ -7733,8 +7733,14 @@
       "title": "Rule Contract purchase.@1 bọc engine.ts (không đổi kết quả; hồi quy mua hàng)",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
+        "branch": "feat/phase-031-s19-s11",
+        "state": "đang làm",
+        "since": "2026-11-21",
+        "dot": "PHASE-031 · S031-19 (tín hiệu nửa Policy ở nen-mong.json) + S031-11 (Rule Contract purchase.@1 bọc …"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"
@@ -7861,8 +7867,14 @@
       "title": "nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "Võ Hoàng (phiên Claude, PHASE-031)",
+        "branch": "feat/phase-031-s19-s11",
+        "state": "đang làm",
+        "since": "2026-11-21",
+        "dot": "PHASE-031 · S031-19 (tín hiệu nửa Policy ở nen-mong.json) + S031-11 (Rule Contract purchase.@1 bọc …"
+      },
       "modules": [
         "mua-hang",
         "ban-hang"
