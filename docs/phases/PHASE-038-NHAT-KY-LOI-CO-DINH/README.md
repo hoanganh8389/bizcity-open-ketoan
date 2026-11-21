@@ -5,7 +5,7 @@
 > **Việc lộ trình:** — (mở rộng PHASE-018 giám sát vận hành, PHASE-019 bàn điều tra; [OBSERVABILITY.md](../../ops/OBSERVABILITY.md) §2)
 > **Phân hệ:** he-thong (vận hành)
 > **Checklist công bố:** —
-> **Trạng thái:** 🟡 **W0 đề xuất 2026-11-21**, chờ chủ dự án duyệt D038-1..4. Chưa có mã.
+> **Trạng thái:** 🟡 **W0 chốt 2026-11-21** <!-- [2026-11-21 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — chốt W0: chủ dự án đồng ý mọi đề xuất D038-1..6, D038-2b --> — chủ dự án đồng ý mọi đề xuất (D038-1..6, D038-2b). Chưa có mã; tiếp theo B1 (giữ chỗ ở [CLAIMS](../CLAIMS.md)).
 > **Phụ trách cần phối hợp:** nhóm Lõi (Platform: logger, `env`, hợp đồng lỗi) · người vận hành bản cài (aaPanel).
 > **Tệp:** [10 — Nghiên cứu chuẩn ghi log lỗi](10-NGHIEN-CUU-GHI-LOG.md) · [40 — Checklist](40-MASTER-CHECKLIST.md)
 
@@ -81,17 +81,18 @@ Người vận hành tải tệp đó về (aaPanel → Files) và gửi kèm m�
 - Lỗi `GATEWAY_UNAVAILABLE` (hoặc 5xx không phải JSON): **một** khay "Không kết nối được máy chủ phần mềm" thay cho N khay `INTERNAL_ERROR`; hướng dẫn: báo quản trị chạy `./scripts/lay-log.sh` (F8). Thuật ngữ cho người dùng, không mã kỹ thuật trên dòng chính.
 - `presence/ping` và các lời gọi lặp: lùi dần (backoff) khi gặp 5xx liên tiếp, không dội cổng vào.
 
-## 5. Quyết định chờ duyệt
+## 5. Quyết định (chốt 2026-11-21)
 
 | Mã | Câu hỏi | Đề xuất |
 |---|---|---|
-| D038-1 | Thư mục cố định ở đâu | `./logs` trong thư mục cài (cùng chỗ `backups/`), đổi được bằng `LOG_HOST_DIR` trong `.env` |
+| D038-1 | Thư mục cố định ở đâu | ✅ `./logs` trong thư mục cài (cùng chỗ `backups/`), đổi được bằng `LOG_HOST_DIR` trong `.env` |
 | D038-2 | Giữ bao lâu, trần dung lượng | ✅ **chủ dự án duyệt 2026-11-21: tối đa 200 MB** cho thư mục `logs/`; chia tệp ở [10 §7.3](10-NGHIEN-CUU-GHI-LOG.md) <!-- [2026-11-21 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — D038-2 chốt 200 MB --> |
-| D038-3 | Tệp API ghi từ mức nào | `warn` (đủ 4xx bất thường + 5xx + fatal); `info` chỉ ở stdout / Loki |
-| D038-4 | Nút "Báo lỗi" trên khay có tự đính gói log không | **Không** ở phase này (cần quyền quản trị, có rủi ro lộ dữ liệu); chỉ hướng dẫn chạy `lay-log.sh` |
+| D038-3 | Tệp API ghi từ mức nào | ✅ `warn` (đủ 4xx bất thường + 5xx + fatal); `info` chỉ ở stdout / Loki |
+| D038-4 | Nút "Báo lỗi" trên khay có tự đính gói log không | ✅ **Không** ở phase này (cần quyền quản trị, có rủi ro lộ dữ liệu); chỉ hướng dẫn chạy `lay-log.sh` |
+| D038-5, D038-6, D038-2b | Lỗi giao diện, tên luật, trần Docker | ✅ theo [10 §9](10-NGHIEN-CUU-GHI-LOG.md) |
 
 ## 6. Ngoài phạm vi
 
 - Thay bộ giám sát, đổi Loki / Tempo, đổi định dạng log stdout.
 - Gửi log ra dịch vụ ngoài (Sentry…).
-- Log của trình duyệt gửi về máy chủ (khi API chết thì cũng không gửi được).
+- Log của trình duyệt khi API chết (không gửi được). Lỗi lập trình giao diện khi API sống **trong phạm vi** từ D038-5 (S038-13).

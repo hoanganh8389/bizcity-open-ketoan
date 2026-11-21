@@ -183,9 +183,9 @@ Promtail đã **hết hỗ trợ từ 2026-03-02**: không còn bản vá, phát
 
 Alloy cũng nhận được OTLP và thay được Collector. Có thể gộp hai container thành một, nhưng việc gộp cần đo trước, không làm vội. Việc này thuộc PHASE-018 (bộ giám sát), ghi ở đây để không quên: **S038-15**.
 
-## 7. Chuẩn đề xuất cho Bizcity (bản nháp luật R-LOG)
+## 7. Chuẩn đề xuất cho Bizcity (luật R-LOG)
 
-> Đặt tên **R-LOG** để tách khỏi R-OBS (quan sát chung) và R-ERR (hợp đồng lỗi trả cho bên gọi): R-ERR nói *trả gì ra ngoài*, R-LOG nói *ghi gì vào trong*. Chủ dự án có thể gộp vào R-OBS (D038-6).
+> Đặt tên **R-LOG** để tách khỏi R-OBS (quan sát chung) và R-ERR (hợp đồng lỗi trả cho bên gọi): R-ERR nói *trả gì ra ngoài*, R-LOG nói *ghi gì vào trong*. Chủ dự án chốt tên riêng (D038-6).
 
 | Mã | Cấp | Luật | Kiểm bằng |
 |---|---|---|---|
@@ -262,13 +262,13 @@ Thêm vào [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md): S038-11 … S038-15. T
 - **B5**: luật R-LOG, SC-LOG-1..3, rà 16 chỗ nuốt lỗi.
 - **S038-15**: Promtail → Alloy, chuyển cho chủ PHASE-018.
 
-## 9. Quyết định thêm
+## 9. Quyết định thêm (chốt 2026-11-21) <!-- [2026-11-21 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — chốt W0: chủ dự án đồng ý mọi đề xuất D038-1..6, D038-2b -->
 
 | Mã | Câu hỏi | Đề xuất |
 |---|---|---|
-| D038-5 | Thu lỗi giao diện (L8) về máy chủ? | **Có**, ở B4b: chỉ loại lỗi, khung stack, màn, bản dựng, `errFp`; không dữ liệu nhập; tối đa 10 lỗi / phút / phiên |
-| D038-6 | Luật tên R-LOG riêng hay gộp R-OBS-10..20? | R-LOG riêng (R-ERR = ra ngoài, R-LOG = vào trong) |
-| D038-2b | 200 MB tính cả log json-file của Docker? | Không. `logs/` ≤ 200 MB; Docker ≤ 30 MB / dịch vụ, ghi riêng |
+| D038-5 | Thu lỗi giao diện (L8) về máy chủ? | ✅ **Có**, ở B4b: chỉ loại lỗi, khung stack, màn, bản dựng, `errFp`; không dữ liệu nhập; tối đa 10 lỗi / phút / phiên |
+| D038-6 | Luật tên R-LOG riêng hay gộp R-OBS-10..20? | ✅ R-LOG riêng (R-ERR = ra ngoài, R-LOG = vào trong) |
+| D038-2b | 200 MB tính cả log json-file của Docker? | ✅ Không. `logs/` ≤ 200 MB; Docker ≤ 30 MB / dịch vụ, ghi riêng |
 
 ## 10. Nguồn
 
