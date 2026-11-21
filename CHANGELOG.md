@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chính sách: Rule Contract mua hàng `purchase.*@1` + tín hiệu nửa Policy của trụ cột 05 (PHASE-031 S031-11, S031-19) <!-- [2026-11-21 09:35 AM Võ Hoàng] PHASE-031 — S031-11 / S031-19 -->
+
+- **Thêm:** mười ba Rule Contract `purchase.<loại>@1` (mỗi loại chính sách mua hàng một khuôn, `apps/api/src/modules/system/rule-contracts/purchase.ts`) bọc bộ máy mua hàng `@bizcity/mua-hang-domain` — `evaluate` gọi lại `computeDoc` / `giftPlan` / `rebateFor` (tính trên phiếu, thưởng), `creditStatus` / `dueDateFor` (hạn mức, điều khoản), chỉ mô tả cho `supply_target`, `lot_tracking`, `gift_budget`. `GET /api/v1/rule-contracts` liệt kê thêm `purchase.*`. `bizcity_policy@1` 1.4.0-draft.
+- **Thêm:** `docs/standard/nen-mong.json` trụ cột 05 có `halves` (cấu hình / Policy) và 14 tín hiệu nửa Policy chạy được (test chính sách, cửa nạp, Rule Contract, truy vết; DG-POLICY-1..4). Mức trụ cột 05 không đổi (một phần).
+- **Đổi:** `RuleContract.domain` nhận thêm `'purchase'` (thêm giá trị, không phá). `POST /api/v1/policies` từ chối Rule Contract miền `purchase` (400): chính sách mua hàng vẫn do module mua hàng làm chủ.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Kết quả tính của mua hàng không đổi (test hồi quy so trọn kết quả với bộ máy gốc).
+- **Nâng cấp cần làm:** không migration. Dựng lại `@bizcity/mua-hang-domain` nếu dist cũ.
+- **Bảo mật:** không đổi quyền (đọc `catalog:read`, phát hành `settings:write` như cũ).
+
 ### Chính sách: rulepack `policy` + làn `policy` của truy vết (PHASE-031 S031-17, S031-23) <!-- [2026-11-21 10:40 AM Võ Hoàng] PHASE-031 — S031-17 / S031-23 -->
 
 - **Thêm:** rulepack `policy` của Conformance Engine ở lane diagnostics (`tests/conformance/diagnostics/policy.diag.mjs`, mức info, chỉ đọc): DG-POLICY-1 `POLICY_L4B_WARN` (cảnh báo L4b theo kỳ × nguồn × chi nhánh × chính sách, kèm tỷ lệ), DG-POLICY-2 `POLICY_REASON_MISSING` (chính sách có quà mà lý do XTA1.4 tắt / không có), DG-POLICY-3 `POLICY_REFS_MISSING` (nguồn ngoài không gửi `policyRefs` khi có chính sách bán hiệu lực), DG-POLICY-4 `POLICY_EXPIRING_IN_USE` (bản hết hạn trong 30 ngày còn sự việc tham chiếu), DG-POLICY-5 `POLICY_PROMO_NOTICE` (thông báo Sở Công Thương, NĐ81 Điều 17 — chưa đủ căn cứ, bỏ qua). Lọc một đơn vị bằng `args.tenant`.

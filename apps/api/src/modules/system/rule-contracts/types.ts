@@ -31,7 +31,8 @@ export interface RuleContract<P = unknown, I = unknown, O = unknown> {
   /** `<miền>.<loại>@<major>`, vd sale.promo.buy_x_get_y@1. */
   id: string;
   /** W3a chỉ có sale; purchase.* bọc engine mua hàng ở S031-11. */
-  domain: 'sale';
+  // [2026-11-21 09:20 AM Võ Hoàng] PHASE-031 — S031-11 (30-S031-11 §2.3): mở miền thành 'sale' | 'purchase' (minor, thêm giá trị); phát hành inline vẫn chỉ sale
+  domain: 'sale' | 'purchase';
   title: string;
   params: ZodType<P, ZodTypeDef, unknown>;
   /** Các sai sót chéo trường mà zod không nói được (vd maxGiftQty < get.qty). Rỗng = phát hành được. */
