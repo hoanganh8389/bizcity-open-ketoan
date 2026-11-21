@@ -12,8 +12,7 @@ import { sql } from 'kysely';
 import {
   AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, invoiceDueDate, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
-  scopeBranches,
-} from '@bizcity/mua-hang-domain';
+  scopeBranches, deliveryBranches } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { apBalance, openOf, openOfBrand, pendingOf, type Ctx } from './analysis.js';
@@ -446,13 +445,16 @@ export async function rebateOverview(trx: Db, tenantId: string, ctx: Ctx, month:
  */
 export async function orderReconcileReport(trx: Db, tenantId: string, ctx: Ctx, f: { from?: string; to?: string; partnerCode?: string; branchCode?: string }) {
   const inRange = (d: StoredDoc) => (!f.from || d.docDate >= f.from) && (!f.to || d.docDate <= f.to) && (!f.partnerCode || d.partnerCode === f.partnerCode) && (!f.branchCode || d.branchCode === f.branchCode);
-  const orders = ctx.docs.filter((d) => d.kind === 'order' && d.status === 'approved' && inRange(d));
+  const orders = ctx.docs.filter((d) => d.kind === 'order' && d.status === 'approved' && (inRange(d) || (Boolean(f.branchCode) && inRange({ ...d, branchCode: f.branchCode! }) && deliveryBranches(d).includes(f.branchCode!))));
   const recIds = new Set(orders.flatMap((o) => ctx.docs.filter((d) => d.kind === 'receipt' && (d.refIds ?? []).includes(o.id)).map((d) => d.id)));
   const units = await unitsOf(trx, tenantId, ctx.docs.filter((d) => d.kind === 'order' || recIds.has(d.id)).flatMap((d) => d.lines.map((l) => l.sku)));
   // [2026-11-20 khanhtd] MUA-HANG — mỗi dòng mang tình trạng hoá đơn của đơn (gom phiếu nhập của đơn); phiếu ngoài đơn: hoá đơn của chính phiếu (đóng góp)
   type Inv = { state: 'chua_nhap' | 'chua_co' | 'mot_phan' | 'du'; text: string };
   const invOf = new Map(orders.map((o) => { const x = orderInvoice(o, ctx.docs)!; return [o.id, { state: x.state, text: x.text } as Inv]; }));
-  const rows = orders.flatMap((o) => orderReconcile(o, ctx.docs, units).map((l) => ({ orderId: o.id, orderNo: o.docNo, orderDate: o.docDate, partnerCode: o.partnerCode, branchCode: o.branchCode, ...l, invoice: invOf.get(o.id)! })));
+  // [2026-11-21 Nguyễn Văn Thủy] đơn giao nhiều chi nhánh: mỗi dòng = đơn × CHI NHÁNH NHẬN × mã (phiếu nhập của chi nhánh đó) (đóng góp)
+  const rows = orders.flatMap((o) => { const ns = deliveryBranches(o); const many = ns.length > 1 || Boolean(o.deliveryBranch);
+    return (many ? ns : [undefined]).flatMap((b) => orderReconcile(o, ctx.docs, units, b).map((l) => ({ orderId: o.id, orderNo: o.docNo, orderDate: o.docDate, partnerCode: o.partnerCode, branchCode: b ?? o.branchCode, ...l, invoice: invOf.get(o.id)! })))
+      .filter((r) => !f.branchCode || r.branchCode === f.branchCode || o.branchCode === f.branchCode); });
   // Phiếu nhập ngoài đơn (không gắn đơn nào): mỗi mã một dòng, tình trạng "ngoài đơn".
   const outside = ctx.docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && !(d.refIds ?? []).length && d.lines.some((l) => l.lineType === 'buy') && inRange(d));
   for (const d of outside) for (const l of d.lines.filter((x) => x.lineType === 'buy' && x.sku)) {
@@ -493,6 +495,9 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   // [2026-11-21 Nguyễn Văn Thủy] phiếu vượt hạn mức công nợ chưa được duyệt ngoại lệ — người có quyền phải duyệt hoặc giảm đơn (đóng góp)
   const overLimit = ctx.docs.filter((d) => (d.status === 'draft' || d.status === 'pending_approval') && !d.override && (d.checks ?? []).some((c) => c.code === 'credit_exceeded'));
   if (overLimit.length) items.push({ key: 'credit_over', level: 'error', text: 'Vượt hạn mức công nợ NCC — chờ duyệt ngoại lệ', count: overLimit.length, amount: overLimit.reduce((s, d) => s + d.totals.total, 0), path: '/mua-hang/tong-hop?loi=1' });
+  // [2026-11-21 Nguyễn Văn Thủy] phiếu nhập lệch SL thực nhận ↔ hoá đơn (đóng góp)
+  const invQty = ctx.docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && !d.override && (d.checks ?? []).some((c) => c.code === 'inv_qty_diff'));
+  if (invQty.length) items.push({ key: 'inv_qty_diff', level: 'error', text: 'Phiếu nhập lệch SL thực nhận ↔ hoá đơn', count: invQty.length, path: '/mua-hang/doi-chieu-hoa-don?trang=lech' });
   if (blocked.length) items.push({ key: 'blocked', level: 'error', text: 'Phiếu còn lỗi chặn duyệt (hạn mức, lô, trùng hoá đơn…)', count: blocked.length, path: '/mua-hang/tong-hop?loi=1' });
   if (overdue.length) items.push({ key: 'overdue', level: 'error', text: 'Khoản nợ NCC quá hạn', count: overdue.length, amount: sum(overdue), path: '/mua-hang/han-muc?tab=den-han' });
   if (dueToday.length) items.push({ key: 'due', level: 'warn', text: 'Khoản nợ NCC đến hạn hôm nay', count: dueToday.length, amount: sum(dueToday), path: '/mua-hang/han-muc?tab=den-han' });
@@ -554,7 +559,7 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const byIdDoc = new Map(ctx.docs.map((d) => [d.id, d]));
   const planOf = (d: StoredDoc) => d.invoicePlan ?? (d.refIds?.[0] ? byIdDoc.get(d.refIds[0])?.invoicePlan : undefined);
   const rcptNoInv = ctx.docs.filter((d) => d.kind === 'receipt' && d.status === 'approved' && !d.invoice?.no && planOf(d)?.mode !== 'none');
-  const hanHd = (d: StoredDoc) => invoiceDueDate(planOf(d), d.receivedDate ?? d.docDate);
+  const hanHd = (d: StoredDoc) => invoiceDueDate(planOf(d), d.receivedDate ?? d.docDate, d.refIds?.[0] ? byIdDoc.get(d.refIds[0])?.docDate : undefined);
   const invLate = rcptNoInv.filter((d) => planOf(d)?.mode === 'later' && hanHd(d) < asOf);
   const invWait = rcptNoInv.filter((d) => planOf(d)?.mode === 'later' && hanHd(d) >= asOf);
   const invMissing = rcptNoInv.filter((d) => planOf(d)?.mode !== 'later');

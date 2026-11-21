@@ -104,6 +104,10 @@ export interface PDoc {
   brandCode?: string;
   priceIncludesVat: boolean;
   invoice?: { no: string; serial?: string; date: string; total?: number };
+  /** [2026-11-21 Nguyễn Văn Thủy] Phiếu nhập NHIỀU hoá đơn (NCC tách hoá đơn, hoá đơn điều chỉnh). `invoice` = hoá đơn đầu (dữ liệu cũ, báo cáo cũ) (đóng góp). */
+  invoices?: DocInvoice[];
+  /** Đơn đặt: các kho giao (tham chiếu, chọn nhiều) — phân kho thật lưu ở từng dòng. */
+  deliveryWarehouses?: string[];
   orderDiscount?: { pct?: number; amount?: number };
   /** CK trên đơn chỉ chia vào các dòng này (lineKey) — chốt lúc duyệt khi có mã đang áp riêng chương trình khác. Trống = mọi dòng mua. */
   orderDiscountLines?: string[];
@@ -756,16 +760,24 @@ export function creditStatus(limitPolicy: Policy | undefined, current: number, o
 
 export type Level = 'info' | 'warn' | 'error';
 /** Kế hoạch hoá đơn đầu vào của đơn / phiếu nhập. */
-export interface InvoicePlan { mode: 'with_goods' | 'later' | 'none'; days?: number }
-/** Hạn nhận hoá đơn của phiếu nhập theo kế hoạch: '' = không có hạn (cùng hàng thì hạn = ngày nhận, không lấy thì không theo dõi). */
-export function invoiceDueDate(plan: InvoicePlan | undefined, receivedDate: string): string {
+export interface InvoicePlan { mode: 'with_goods' | 'later' | 'none'; days?: number; /** Gửi sau N ngày tính từ: ngày đặt đơn / ngày nhận hàng (mặc định). */ from?: 'order' | 'receipt' }
+/** Một hoá đơn của phiếu nhập. adjusts = số hoá đơn (ký hiệu-số) mà hoá đơn này điều chỉnh. */
+export interface DocInvoice { no: string; serial?: string; date: string; total?: number; supplierInvoiceId?: string; adjusts?: string; note?: string; by?: string; at?: string }
+/** Các hoá đơn của phiếu (dữ liệu cũ chỉ có `invoice`). */
+export const invoicesOf = (d: Pick<PDoc, 'invoice' | 'invoices'>): DocInvoice[] => (d.invoices?.length ? d.invoices : d.invoice?.no ? [d.invoice] : []);
+/** "ký hiệu-số" của hoá đơn. */
+export const invoiceKey = (i: { no: string; serial?: string }) => (i.serial ? `${i.serial}-${i.no}` : i.no);
+/** Hạn nhận hoá đơn của phiếu nhập theo kế hoạch: '' = không có hạn (giao kèm hàng thì hạn = ngày nhận, hàng không có hoá đơn thì không theo dõi).
+ *  Gửi sau N ngày: tính từ ngày nhận hàng, hoặc từ ngày đặt đơn khi kế hoạch chọn `from = 'order'` (truyền orderDate). */
+export function invoiceDueDate(plan: InvoicePlan | undefined, receivedDate: string, orderDate?: string): string {
   if (plan?.mode === 'none') return '';
   if (plan?.mode !== 'later') return receivedDate;
-  const d = new Date(`${receivedDate}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + (plan.days ?? 0));
+  const goc = plan.from === 'order' && orderDate ? orderDate : receivedDate;
+  const d = new Date(`${goc}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + (plan.days ?? 0));
   return d.toISOString().slice(0, 10);
 }
 /** Chữ ngắn của kế hoạch hoá đơn. */
-export const invoicePlanText = (plan?: InvoicePlan) => (plan?.mode === 'none' ? 'Không lấy HĐ' : plan?.mode === 'later' ? `HĐ gửi sau ${plan.days ?? 0} ngày` : 'HĐ giao kèm hàng');
+export const invoicePlanText = (plan?: InvoicePlan) => (plan?.mode === 'none' ? 'Hàng không có hoá đơn' : plan?.mode === 'later' ? `HĐ gửi sau ${plan.days ?? 0} ngày (từ ngày ${plan.from === 'order' ? 'đặt đơn' : 'nhận hàng'})` : 'HĐ giao kèm hàng');
 
 export interface Check { level: Level; code: string; text: string; lineKey?: string; blocking?: boolean }
 export interface PriceRow { date: string; partnerCode: string; docNo: string; unitPrice: number; includesVat: boolean; unit?: string; qty?: number }

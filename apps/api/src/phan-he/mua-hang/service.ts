@@ -6,7 +6,7 @@
  * (documents.workflow, PHASES 3.5) — runtime core/workflow.ts.
  */
 import { sql } from 'kysely';
-import { computeDoc, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
+import { computeDoc, invoiceKey, invoicesOf, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
 import { db, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
@@ -47,7 +47,7 @@ function logRowsFor(d: PDoc, a: Analysis, user: string, withTrace: boolean): Omi
   return rows;
 }
 
-const OVERRIDABLE = new Set(['credit_exceeded', 'code_swap', 'po_none']);
+const OVERRIDABLE = new Set(['credit_exceeded', 'code_swap', 'po_none', 'inv_qty_diff']);
 
 /** Những gì đổi giữa hai lần ghi phiếu — ghi nhật ký để ai cũng xem được "sửa gì, từ gì sang gì". */
 export function docChanges(b: StoredDoc, a: StoredDoc): string[] {
@@ -105,6 +105,40 @@ export const purchaseService = {
       if (cur && LOCKED.has(cur.status)) throw Errors.conflict(cur.status === 'approved' ? 'Phiếu đã duyệt: bỏ duyệt rồi mới sửa được' : 'Phiếu đã huỷ');
       if (cur && cur.kind !== input.kind) throw Errors.validation('Không đổi được loại chứng từ');
       const doc = toPDoc(input, id ?? 'new');
+      // [2026-11-21 Nguyễn Văn Thủy] PHIẾU NHẬP NHIỀU HOÁ ĐƠN: danh sách invoices là chuẩn (gửi lên kể cả rỗng), invoice = hoá đơn đầu;
+      // hoá đơn mới đóng dấu người thêm / lúc thêm, ghi nhật ký thêm / bỏ. Phiếu khác loại không mang danh sách (đóng góp)
+      if (doc.kind === 'receipt' && Array.isArray(input.invoices)) {
+        const truoc = new Map(invoicesOf(cur ?? {}).map((i) => [invoiceKey(i), i]));
+        const luc = new Date().toISOString();
+        const seen = new Set<string>();
+        doc.invoices = (input.invoices ?? []).map((i) => {
+          const k = invoiceKey(i);
+          if (seen.has(k)) throw Errors.validation(`Hoá đơn ${k} ghi hai lần trên phiếu`);
+          seen.add(k);
+          const old = truoc.get(k);
+          return { ...i, by: old?.by ?? auth.actorName, at: old?.at ?? luc };
+        });
+        const f = doc.invoices[0];
+        if (f) doc.invoice = { no: f.no, ...(f.serial ? { serial: f.serial } : {}), date: f.date, ...(f.total !== undefined ? { total: f.total } : {}) };
+        else delete doc.invoice;
+        if (!doc.invoices.length) delete doc.invoices;
+        const them = [...seen].filter((k) => !truoc.has(k)), bo = [...truoc.keys()].filter((k) => !seen.has(k));
+        if (cur && (them.length || bo.length)) await logEvents(auth.tenantId, [
+          ...them.map((k) => ({ event: 'invoice_added', docNo: cur.docNo, user: auth.actorName, data: { invoice: k, adjusts: doc.invoices?.find((i) => invoiceKey(i) === k)?.adjusts } })),
+          ...bo.map((k) => ({ event: 'invoice_removed', docNo: cur.docNo, user: auth.actorName, data: { invoice: k } })),
+        ]);
+      } else if (doc.kind !== 'receipt') delete doc.invoices;
+      // Đơn đặt: danh sách kho giao (tham chiếu) = kho tích ở đầu đơn + kho của các dòng; "Giao tại kho" (cũ) = kho đầu.
+      if (doc.kind === 'order') {
+        const ds = [...new Set([...(doc.deliveryWarehouses ?? []), doc.deliveryWarehouse ?? '', ...doc.lines.map((l) => l.warehouseCode ?? '')].filter(Boolean))];
+        if (ds.length) {
+          const co = new Set((await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('code', 'in', ds).execute()).map((w) => w.code));
+          const sai = ds.filter((c) => !co.has(c));
+          if (sai.length) throw Errors.validation(`Kho giao ${sai.join(', ')} không có trong danh mục kho`);
+        }
+        doc.deliveryWarehouses = ds.length ? ds : undefined;
+        if (!doc.deliveryWarehouse && ds[0]) doc.deliveryWarehouse = ds[0];
+      } else delete doc.deliveryWarehouses;
       // [2026-11-18 Nguyễn Văn Thủy] hợp đồng: trống mà phiếu gắn phiếu thuộc hợp đồng (nhập từ đơn, trả / chi phí / trả tiền theo phiếu nhập) thì kế thừa; có thì kiểm (đóng góp)
       // [2026-11-19 Nguyễn Văn Thủy] mọi phiếu thuộc hợp đồng đều mang số hợp đồng: phiếu gắn chứng từ của NHIỀU hợp đồng thì tách phiếu
       // (công nợ theo hợp đồng không chia được một khoản cho hai hợp đồng); phiếu thưởng lấy hợp đồng của chính sách (đóng góp)
@@ -285,7 +319,7 @@ export const purchaseService = {
 
   // [2026-11-21 Nguyễn Văn Thủy] ĐỐI CHIẾU HOÁ ĐƠN: gắn hoá đơn NCC (MH22) nhận sau vào phiếu nhập (đóng góp)
   /**
-   * Gắn hoá đơn NCC vào phiếu nhập: phiếu chưa duyệt thì ghi số / ký hiệu / ngày hoá đơn; phiếu đã ghi sổ thì lập điều chỉnh, ghi hoá
+   * Gắn (thêm) hoá đơn NCC vào phiếu nhập: phiếu chưa duyệt thì thêm vào danh sách hoá đơn; phiếu đã ghi sổ thì lập điều chỉnh, ghi hoá
    * đơn rồi duyệt lại ngay (đảo bút toán cũ, ghi bút toán mới có hoá đơn — thuế đầu vào vào đúng kỳ hoá đơn). Còn cảnh báo chặn thì
    * huỷ cả lượt (phiếu giữ nguyên) — mở phiếu xử lý.
    */
@@ -297,12 +331,14 @@ export const purchaseService = {
     const inv = (await loadInvoices(trx, auth.tenantId, { id: invoiceId }))[0];
     if (!inv || inv.status === 'cancelled') throw Errors.notFound('hoá đơn NCC');
     if (inv.partnerCode !== d.partnerCode) throw Errors.validation(`Hoá đơn của NCC ${inv.partnerCode}, phiếu nhập của NCC ${d.partnerCode}`);
-    const invoice = { no: inv.no, ...(inv.series ? { serial: inv.series } : {}), date: inv.date, total: inv.total };
+    const invoice = { no: inv.no, ...(inv.series ? { serial: inv.series } : {}), date: inv.date, total: inv.total, supplierInvoiceId: String(inv.id) };
     const label = `${inv.series ? `${inv.series}-` : ''}${inv.no}`;
+    if (invoicesOf(d).some((i) => invoiceKey(i).toLowerCase() === label.toLowerCase())) throw Errors.conflict(`Hoá đơn ${label} đã có trên phiếu ${d.docNo}`);
     const approved = d.status === 'approved';
     if (approved) await purchaseService.startAdjustIn(trx, auth, id, `Gắn hoá đơn ${label} nhận sau hàng`);
     const cur = await getDoc(trx, auth.tenantId, id);
-    await purchaseService.saveIn(trx, auth, { ...cur, invoice }, id);
+    // Gắn = THÊM vào danh sách hoá đơn của phiếu (một phiếu nhiều hoá đơn), không thay hoá đơn cũ.
+    await purchaseService.saveIn(trx, auth, { ...cur, invoices: [...invoicesOf(cur), invoice] }, id);
     if (approved) {
       try { await purchaseService.approveIn(trx, auth, id); }
       catch (e) { throw Errors.conflict(`Không duyệt lại được phiếu ${d.docNo} sau khi gắn hoá đơn: ${(e as Error).message} — mở phiếu, Lập điều chỉnh để xử lý`); }

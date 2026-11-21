@@ -12,8 +12,7 @@ import { writeTenantSection } from '@bizcity/platform/core/settings';
 import { sql } from 'kysely';
 import {
   ACC, brandMix, brandShare, checkDoc, codeSwaps, computeDoc, creditStatus, docBrand, fefoCheck, findPolicy, orderProgress, postingFor, ratioIn, receiptsOfOrder, scheduleStatus, type OrderLineProgress,
-  type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product,
-} from '@bizcity/mua-hang-domain';
+  type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product, deliveryBranches } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { FREEZE_KINDS, FREEZE_VERSION, freezeOf, listPolicies, noDueDate, receiptsWithSku, toDoc, type StoredDoc } from './store.js';
 import { listSupplierProducts, unitsOf } from './gia-mua.js';
@@ -276,7 +275,10 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   if (refOrder && doc.kind === 'receipt') {
     // Đúng quy trình: đơn đặt phải được duyệt (kể cả duyệt ngoại lệ hạn mức) rồi mới nhập kho theo đơn.
     if (refOrder.status !== 'approved') orderChecks.push({ level: 'error', code: 'po_not_approved', blocking: true, text: `Đơn đặt ${refOrder.docNo} chưa duyệt (${refOrder.status === 'pending_approval' ? 'đang chờ duyệt' : refOrder.status === 'cancelled' ? 'đã huỷ' : 'còn nháp'}) — duyệt đơn trước rồi mới duyệt phiếu nhập theo đơn` });
-    const prog = orderProgress(refOrder, docs, doc.id, units);
+    // [2026-11-21 Nguyễn Văn Thủy] đơn giao nhiều chi nhánh: phiếu nhập đối chiếu phần của CHI NHÁNH PHIẾU (không cộng lẫn chi nhánh khác) (đóng góp)
+    const nhieuNoi = deliveryBranches(refOrder).length > 1 || Boolean(refOrder.deliveryBranch);
+    const prog = orderProgress(refOrder, docs, doc.id, units, nhieuNoi && deliveryBranches(refOrder).includes(doc.branchCode) ? doc.branchCode : undefined);
+    if (nhieuNoi && !deliveryBranches(refOrder).includes(doc.branchCode)) orderChecks.push({ level: 'warn', code: 'po_branch', text: `Đơn ${refOrder.docNo} giao cho chi nhánh ${deliveryBranches(refOrder).join(', ')} — phiếu nhập đang ở chi nhánh ${doc.branchCode} (đối chiếu theo cả đơn)` });
     const q = (x: number) => x.toLocaleString('vi-VN');
     const gotBase = (sku: string) => doc.lines.filter((l) => l.lineType === 'buy' && (l.sku === sku || l.sku.slice(0, 9) === sku.slice(0, 9))).reduce((s, l) => s + l.qty * ratioIn(units, l.sku, l.unit, sku), 0);
     const inUnit = (p: OrderLineProgress, base: number) => { const r = ratioIn(units, p.sku, p.unit) || 1; return r === 1 ? `${q(base)} ${p.unit}` : `${q(Math.round((base / r) * 100) / 100)} ${p.unit} (${q(base)} ${p.baseUnit})`; };
