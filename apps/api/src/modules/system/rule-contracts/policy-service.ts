@@ -179,6 +179,8 @@ export async function publishPolicy(trx: Db, who: { tenantId: string; actor: str
   if (!KEY_RE.test(req.key)) throw Errors.validation(`Mã chính sách "${req.key}" sai khuôn: chữ hoa, số, _ . - ; tối đa 64 ký tự, bắt đầu bằng chữ hoặc số`);
   const contract = getRuleContract(req.ruleContract);
   if (!contract) throw Errors.validation(`Chưa có Rule Contract ${req.ruleContract}`);
+  // [2026-11-21 09:20 AM Võ Hoàng] PHASE-031 — S031-11 (30-S031-11 §2.3): chặn phát hành inline khuôn mua hàng — module mua hàng làm chủ chính sách mua
+  if (contract.domain === 'purchase') throw Errors.validation(`${contract.id}: chính sách mua hàng do module mua hàng làm chủ (mua-hang.policy:<id>) — không phát hành inline; sửa ở Mua hàng → Chính sách`);
   const owner = OWNER_OF_DOMAIN[domainOf(contract.id)];
   if (!owner) throw Errors.validation(`Miền ${domainOf(contract.id)} chưa có module chủ — chưa phát hành inline được`);
   if (!DAY.test(req.effectiveFrom)) throw Errors.validation(`effectiveFrom "${req.effectiveFrom}" sai khuôn YYYY-MM-DD`);

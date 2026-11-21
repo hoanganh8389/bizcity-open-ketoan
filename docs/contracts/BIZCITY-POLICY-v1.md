@@ -1,7 +1,8 @@
 # `bizcity_policy@1` — Chính sách nghiệp vụ cho nguồn ngoài: lấy, tính, gửi tham chiếu
 <!-- [2026-11-08 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, ADR-0031, chữ chốt PHASE-031 · 00 §9): hợp đồng API chính sách — GET /policies, GET /rule-contracts, POST /policies/evaluate, POST /policies; Rule Contract sale.promo.buy_x_get_y@1 -->
 
-> **Phiên bản:** 1.3.0-draft · 2026-11-08 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
+<!-- [2026-11-21 09:32 AM Võ Hoàng] PHASE-031 — S031-11: 1.4.0-draft — miền purchase, mười ba Rule Contract purchase.<loại>@1 bọc bộ máy mua hàng (mục 7.2), phát hành inline chặn miền purchase (mục 6) -->
+> **Phiên bản:** 1.4.0-draft · 2026-11-21 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
 > **Nguồn sự thật:** `apps/api/src/modules/system/policy.routes.ts` (route) · `apps/api/src/modules/system/rule-contracts/` (Rule Contract, dịch vụ) · `packages/platform/src/core/policies.ts` (sổ đăng ký, bảng `policy_registry`)
 > **Quyết định:** [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) · **Kế hoạch:** [PHASE-031 · 00 §9](../phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/00-MASTER-PLAN.md) · **Đi cùng:** [`bizcity_ledger_intake@1` §3.1](BIZCITY-LEDGER-INTAKE-v1.md) (`policyRefs`)
 
@@ -88,7 +89,7 @@ Luật thuần và tất định: không I/O, không đồng hồ, không ngẫu
   "effectiveFrom": "2026-11-10", "reason": "Khuyến mại tháng 11", "legalRef": "NĐ 81/2018 Điều 9" }
 ```
 
-- Chỉ miền `sale` (chủ `ban-hang`, `policyId` = `ban-hang:inline:<mã>`); mã dạng `[A-Z0-9][A-Z0-9_.-]{0,63}`.
+- Chỉ miền `sale` (chủ `ban-hang`, `policyId` = `ban-hang:inline:<mã>`); mã dạng `[A-Z0-9][A-Z0-9_.-]{0,63}`. Rule Contract miền `purchase` → `400` (1.4.0): chính sách mua hàng do module mua hàng làm chủ (`mua-hang.policy:<id>`, sửa ở Mua hàng → Chính sách).
 - **`effectiveFrom` bắt buộc**; bản sau **đóng bản trước ở ngày − 1**; không lùi về trước ngày áp của bản trước (`400`); lùi về trước hôm nay cần `reason` ≥ 3 ký tự.
 - **Bản đã phát hành không sửa.** Đổi = bản mới. Chính sách đã ngừng không nhận thêm bản (`409`) — dùng mã mới.
 - Kiểm: nội dung đúng khuôn của Rule Contract và kiểm chéo trường (vd `maxGiftQty` ≥ `get.qty`); lỗi trả `400` kèm `details[{ path, message }]`, không ghi gì.
@@ -109,17 +110,37 @@ giftQty = min(times × get.qty, maxGiftQty nếu có), làm tròn 4 chữ số t
 
 `1e-9` chặn sai số nhị phân khi chia số lẻ (vd `0,6 / 0,2 = 2,9999999999999996` sẽ ra 2 lần thay vì 3). Ca chuẩn (`vectors`): 2 A → 1 B · 3 A → 1 B · 4 A → 2 B · 4 A không `repeat` → 1 B · 1 A → 0 · không có A → 0 · nhiều dòng cùng A cộng dồn · `maxGiftQty` chặn · số lẻ.
 
+### 7.2 `purchase.<loại>@1` — chính sách mua hàng (1.4.0, S031-11)
+
+Mười ba khuôn, mỗi `PolicyKind` của `@bizcity/mua-hang-domain` một khuôn, `domain: "purchase"` (`GET /api/v1/rule-contracts` liệt kê cùng `sale.*`). Tham số = nội dung một bản chính sách mua hàng ở sổ đăng ký: `code, kind, name, scope{partnerCode, brandCode, sku, branchCode, branchCodes, withChildren, contractCode}, rule{…theo loại}, isActive, validFrom, validTo, priority`; `rule` giữ nguyên khoá lạ. `evaluate` **gọi lại** hàm của engine mua hàng — không viết lại công thức; `describe().spec.mode` nói cách tính:
+
+| Cách (`spec.mode`) | Loại | Hàm engine | Đầu vào → đầu ra |
+|---|---|---|---|
+| `compute` | `trade_discount`, `item_discount`, `qty_tier`, `payment_discount` | `computeDoc` với đúng một chính sách | `{ doc, holidays?, units?, familyCodes? }` → `{ applied, gross, lineDiscount, orderDiscount, beforeTax, tax, payable, dueDate?, ckttExpected?, lines[], trace[] }` |
+| `compute` | `promo_gift` | `giftPlan` | `{ doc, familyCodes? }` → `{ gifts[] }` |
+| `compute` | `period_rebate`, `target_rebate`, `stage_rebate` | `rebateFor` | `{ sales: { total, byDay? } }` → `{ policy, kind, base, rate, amount, detail[], stages? }` |
+| `check` | `credit_limit` | `creditStatus` | `{ current, openOrders, thisDoc, branchCode? }` → trạng thái hạn mức (`null` khi không có) |
+| `check` | `payment_term` | `termFromRule`, `termText`, `dueDateFor` | `{ doc: { docDate, invoice?, receivedDate?, invoiceFix? }, holidays? }` → `{ term, text, dueDate? }` |
+| `describe` | `supply_target`, `lot_tracking`, `gift_budget` | — (engine không có hàm tính) | `{}` → `{ mode: "describe", kind, rule }` — chỉ trả lại tham số; so thực tế ở module mua hàng |
+
+- **Không đổi kết quả:** hồi quy `apps/api/test/phase-031-purchase-contracts.test.ts` so kết quả qua hợp đồng với engine gốc trên các phiếu mẫu của test mua hàng (trọn `DocCalc`, từng đồng).
+- `compute` của loại tính trên phiếu đi trọn đường engine (phạm vi, hiệu lực, áp riêng / áp đồng thời, quy đổi ĐVT); `check` / `describe` không xét phạm vi — người gọi chọn bản theo sổ đăng ký.
+- `treatment` rỗng: hạch toán mua hàng theo bảng hạch toán của module, không gợi ý `reasonCode` ở đây.
+- `vectors` mang số của tài liệu yêu cầu mua hàng (TH1 phải trả 39.082.320, hạn 15/10/2026; TH3 còn 32.550.000 / vượt 7.450.000; TH4 CKTT 781.646). Plugin ngoài không viết lại `compute` bằng spec ngắn — gọi Core hoặc dùng gói `@bizcity/mua-hang-domain`.
+- Không phát hành inline (mục 6); chưa tính lại chính sách mua ở cửa nạp (L4b cho chứng từ mua — đợt sau, cần chữ chốt riêng).
+
 ## 8. Giới hạn đã biết (v1)
 
 - Áp độc lập, cộng dồn; chưa có "áp riêng".
 - Chưa kiểm trần pháp lý của hàng khuyến mại.
 - Sự kiện `bizcity.policy.published` / `.retired` đã có từ 1.1.0 (mục 10); `etag` vẫn là đường dự phòng khi mất webhook.
-- Chưa có Rule Contract bán hàng khác (bảng giá, chiết khấu, hạn mức) và chưa có bọc cho chính sách mua hàng.
+- Chưa có Rule Contract bán hàng khác (bảng giá, chiết khấu, hạn mức). Chính sách mua hàng có khuôn `purchase.*` từ 1.4.0 nhưng chưa tính lại ở cửa nạp.
 - Chưa có tính lại ở cửa nạp để kiểm kết quả (`IN-POL-004`): cửa nạp mới kiểm tham chiếu (mã, bản, băm, ngày).
 - Chủ `ban-hang` chỉ là nhãn cho tới khi tách được module bán hàng (S030-16, chưa tách).
 
 ## 9. Changelog
 
+- **1.4.0-draft (2026-11-21):** PHASE-031 S031-11 — `domain` thêm giá trị `purchase`; mười ba Rule Contract `purchase.<loại>@1` bọc bộ máy mua hàng (mục 7.2); `POST /api/v1/policies` từ chối miền `purchase`. Thêm, không phá.
 - **1.3.0-draft (2026-11-09):** PHASE-031 W4c — `program[]` ở `GET /api/v1/policy-tracking` (mục 11). Thêm khoá, không đổi khoá cũ.
 - **1.2.0-draft (2026-11-09):** PHASE-031 W4a — bốn action đọc cho màn Chính sách và Theo dõi thực hiện (mục 11). Thêm, không phá.
 - **1.1.0-draft (2026-11-08):** PHASE-031 W3b — sự kiện `bizcity.policy.published` / `.retired` (mục 10). Thêm, không phá.
