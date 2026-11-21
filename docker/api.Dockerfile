@@ -40,6 +40,10 @@ RUN node tests/conformance/selfcheck.mjs --lane selfcheck --json > /tmp/scoreboa
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+# [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-11, R-LOG-8): stack trong log trỏ tệp .ts (dist có .js.map vì tsconfig sourceMap) — không thì "dòng 4812 của tệp đã dựng"
+ENV NODE_OPTIONS=--enable-source-maps
+# Nhật ký lỗi cố định (PHASE-038): compose gắn <thư mục cài>/logs vào đây; core/logger.ts ghi api-loi.log, db-migrate.log
+ENV LOG_DIR=/app/logs
 COPY package.json package-lock.json ./
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/platform/package.json packages/platform/

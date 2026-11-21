@@ -248,6 +248,9 @@ Cách ghi tệp trong API: dùng `pino.multistream` với một đích ghi tệp
 
 **Không** dùng `run-log.ts` cho việc này: nó cắt theo tháng và theo đơn vị, không có trần dung lượng, và hàng đợi bất đồng bộ của nó mất dòng khi tiến trình chết.
 
+<!-- [2026-11-21 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1: ngoại lệ hẹp STD-EVD-4 -->
+**Quan hệ với STD-EVD-4** (SC-EVD-1: không ghi nhật ký *nghiệp vụ* ra tệp): `packages/platform/src/core/logger.ts` là **ngoại lệ hẹp duy nhất**, như bản niêm phong của ADR-0030. Tệp `logs/` chỉ chứa nhật ký *lỗi kỹ thuật*, không có dữ liệu nghiệp vụ (R-SEC-10), không thay `audit_logs` / bằng chứng. Ghi tệp ở chỗ khác vẫn bị SC-EVD-1 chặn.
+
 ### 7.4 Gói gửi về (`lay-log.sh`), bổ sung so với README §4.4
 
 - Đầu gói có **bảng tóm tắt** `TOM-TAT.txt`: commit đang chạy, trạng thái container, `health/ready`, và *N lỗi khác nhau theo `errFp`* (số lần, lần đầu, lần cuối, `evt`, một dòng `msg`). Người sửa / trợ lý AI đọc tệp này trước.

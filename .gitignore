@@ -9,6 +9,8 @@ coverage/
 .vscode/*
 !.vscode/extensions.json
 backups/
+# [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1: nhật ký lỗi cố định của bản cài (docker-compose gắn ./logs)
+/logs/
 
 # Cấu hình Docker riêng từng máy (tên miền .local, ổ dữ liệu…): không đưa lên git
 docker-compose.override.yml*

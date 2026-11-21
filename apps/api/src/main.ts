@@ -3,18 +3,26 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+// [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-4, S038-11): bắt lỗi tiến trình trước mọi import; lỗi khởi động ghi fatal đồng bộ vào logs/api-loi.log (evt bizcity.system.start_failed)
 /**
  * Điểm khởi động API. Cấu trúc DB do job db-migrate lo (AUTO_MIGRATE=0, Docker): ở đây chỉ kiểm còn migration chưa áp
  * thì dừng, báo rõ. Chạy dev (AUTO_MIGRATE=1, mặc định): tự áp như cũ.
+ *
+ * Nhật ký lỗi (PHASE-038): import TĨNH duy nhất là logger (không đọc env.ts). Phần còn lại nạp ĐỘNG trong start() để lỗi lúc nạp
+ * — kể cả cấu hình môi trường sai, CSDL không tới được — đi vào cùng một dòng fatal có reason + hint, ghi tệp trước khi thoát.
  */
-import { buildApp } from './app.js';
-import { env } from './config/env.js';
-import { closeDb } from './db/client.js';
-import { pendingMigrations, runMigrations } from './db/migrate.js';
-import { startEventRuntime } from './core/events.js';
-import { initTracing, shutdownTracing } from './core/tracing.js';
+import { installProcessHandlers, logStartFailure } from '@bizcity/platform/core/logger';
+
+const SERVICE = 'api';
+installProcessHandlers({ service: SERVICE });
 
 async function start(): Promise<void> {
+  const { env } = await import('./config/env.js');
+  const { buildApp } = await import('./app.js');
+  const { closeDb } = await import('./db/client.js');
+  const { pendingMigrations, runMigrations } = await import('./db/migrate.js');
+  const { startEventRuntime } = await import('./core/events.js');
+  const { initTracing, shutdownTracing } = await import('./core/tracing.js');
   // Truy vết (ADR-0010) bật trước mọi việc: span lấy tracer qua proxy nên module đã nạp trước vẫn ghi đúng. Không đặt
   // OTEL_EXPORTER_OTLP_ENDPOINT thì không gửi đi đâu; OTEL_SDK_DISABLED=true thì tắt hẳn.
   initTracing();
@@ -43,6 +51,6 @@ async function start(): Promise<void> {
 }
 
 start().catch((err) => {
-  console.error('Khởi động thất bại:', err);
+  logStartFailure(err, { service: SERVICE });
   process.exit(1);
 });
