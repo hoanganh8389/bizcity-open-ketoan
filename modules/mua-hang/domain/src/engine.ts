@@ -161,6 +161,8 @@ export interface PDoc {
   /** Đơn đặt: ngày giao, giao tại kho. */
   deliveryDate?: string;
   deliveryWarehouse?: string;
+  /** [2026-11-21 Nguyễn Văn Thủy] Đơn đặt: chi nhánh sở hữu "Giao tại kho" khi kho thuộc chi nhánh con (trống = chi nhánh của đơn) — phiếu nhập lập ở chi nhánh này (đóng góp). */
+  deliveryBranch?: string;
   /** Phân kho của phiếu hàng (nhập, trả, đổi, quà): mọi dòng đi theo kho này; trống → kho mặc định của chi nhánh (máy chủ điền khi lưu). */
   warehouseCode?: string;
 }

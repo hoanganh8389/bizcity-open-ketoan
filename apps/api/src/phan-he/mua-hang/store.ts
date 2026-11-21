@@ -108,6 +108,7 @@ export const docInputSchema = z.object({
   budget: z.number().finite().min(0).optional(),
   deliveryDate: day.optional(),
   deliveryWarehouse: z.string().trim().max(64).optional(),
+  deliveryBranch: z.string().trim().max(64).optional().or(z.literal('')).transform((x) => x || undefined),
   warehouseCode: z.string().trim().max(64).optional(),
   /** Thuộc hợp đồng mua (mã Danh mục hợp đồng) (0163). */
   contractCode: z.string().trim().max(64).optional(),
@@ -117,7 +118,7 @@ export const docInputSchema = z.object({
 export type DocInput = z.infer<typeof docInputSchema>;
 
 /** Phần lưu ở cột data (jsonb). */
-const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'costItem', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode', 'invoicePlan', 'workBranchCode', 'departmentCode'] as const;
+const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'costItem', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode', 'invoicePlan', 'workBranchCode', 'departmentCode', 'deliveryBranch'] as const;
 
 type Row = Awaited<ReturnType<typeof selectDocs>>[number];
 function selectDocs(trx: Db, tenantId: string) {
@@ -271,7 +272,7 @@ export function toDoc(r: Row): StoredDoc {
     invoice: r.invoice_no ? { no: r.invoice_no, serial: r.invoice_serial || undefined, date: String(r.invoice_date ?? r.doc_date).slice(0, 10), total: d.invoiceTotal } : undefined,
     orderDiscount: d.orderDiscount, term: d.term, cktt: d.cktt, lines: d.lines ?? [], schedule: d.schedule, amount: d.amount, method: d.method, moneyAccount: d.moneyAccount || undefined, ckttAmount: d.ckttAmount,
     taxCode: d.taxCode, costType: d.costType, costItem: d.costItem || undefined, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
-    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies, contractCode: d.contractCode || undefined, invoicePlan: d.invoicePlan, workBranchCode: d.workBranchCode || undefined, departmentCode: d.departmentCode || undefined,
+    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, deliveryBranch: d.deliveryBranch || undefined, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies, contractCode: d.contractCode || undefined, invoicePlan: d.invoicePlan, workBranchCode: d.workBranchCode || undefined, departmentCode: d.departmentCode || undefined,
     revision: r.revision, links: (r.links ?? []) as StoredDoc['links'],
     totals: { beforeTax: toNumber(r.total_before_tax), tax: toNumber(r.total_tax), total: toNumber(r.total) },
     dueDate: r.due_date ? String(r.due_date).slice(0, 10) : undefined,

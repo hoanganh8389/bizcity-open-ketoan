@@ -133,7 +133,7 @@ const key = () => `L${Date.now().toString(36)}${(seq++).toString(36)}`;
 // [2026-11-21 Nguyễn Văn Thủy] ĐƠN GIAO NHIỀU NƠI (mua hộ): dòng đơn có chi nhánh nhận hàng riêng; mỗi chi nhánh nhận lập phiếu nhập của mình (đóng góp)
 /** Các chi nhánh nhận hàng của đơn (dòng trống chi nhánh = chi nhánh đầu đơn), theo thứ tự xuất hiện. */
 export function deliveryBranches(order: PDoc): string[] {
-  return [...new Set(order.lines.filter((l) => l.qty > 0).map((l) => l.branchCode || order.branchCode))];
+  return [...new Set(order.lines.filter((l) => l.qty > 0).map((l) => l.branchCode || order.deliveryBranch || order.branchCode))];
 }
 
 /**
@@ -145,7 +145,7 @@ function receiptForBranch(order: PDoc, docs: PDoc[], date: string, units: UnitMa
   const got = new Map<string, number>();
   for (const r of recs) for (const l of r.lines) if (l.sku) got.set(`${l.lineType === 'buy' ? 'b' : 'g'}|${l.sku}`, (got.get(`${l.lineType === 'buy' ? 'b' : 'g'}|${l.sku}`) ?? 0) + l.qty * ratioIn(units, l.sku, l.unit));
   const lines: PLine[] = [];
-  for (const l of order.lines.filter((x) => (x.branchCode || order.branchCode) === branch && x.qty > 0)) {
+  for (const l of order.lines.filter((x) => (x.branchCode || order.deliveryBranch || order.branchCode) === branch && x.qty > 0)) {
     const clean = { ...l, lineKey: key(), refLineKey: l.lineKey, branchCode: undefined, stockInfo: undefined, lotNo: undefined, expDate: undefined, mfgDate: undefined };
     if (!l.sku) { if (!recs.some((r) => r.lines.some((x) => x.refLineKey === l.lineKey))) lines.push(clean); continue; }
     const r = ratioIn(units, l.sku, l.unit) || 1;
@@ -154,7 +154,7 @@ function receiptForBranch(order: PDoc, docs: PDoc[], date: string, units: UnitMa
     got.set(k, Math.max(0, (got.get(k) ?? 0) - l.qty * r));
     if (left > 0) lines.push({ ...clean, qty: r4(left / r), ...(l.lineType === 'buy' ? {} : { refLineKey: undefined }) });
   }
-  const wh = lines.find((l) => l.warehouseCode)?.warehouseCode ?? (branch === order.branchCode ? order.deliveryWarehouse : undefined);
+  const wh = lines.find((l) => l.warehouseCode)?.warehouseCode ?? (branch === (order.deliveryBranch || order.branchCode) ? order.deliveryWarehouse : undefined);
   return {
     id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: branch, partnerCode: order.partnerCode, ...(wh ? { warehouseCode: wh } : {}),
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
@@ -197,7 +197,7 @@ export function receiptFromOrder(order: PDoc, docs: PDoc[], date: string, units?
     }
   }
   return {
-    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: order.branchCode, partnerCode: order.partnerCode, ...(order.deliveryWarehouse ? { warehouseCode: order.deliveryWarehouse } : {}),
+    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: order.deliveryBranch || order.branchCode, partnerCode: order.partnerCode, ...(order.deliveryWarehouse ? { warehouseCode: order.deliveryWarehouse } : {}),
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
     ...(order.contractCode ? { contractCode: order.contractCode } : {}),
     ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}),

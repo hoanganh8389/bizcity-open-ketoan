@@ -11,7 +11,7 @@
 .mh-sheet-foot { display: flex; gap: 8px; align-items: center; padding: 10px 84px 10px 16px; border-top: 1px solid var(--line); } /* phải chừa chỗ nút trợ lý nổi */
 .mh-sheet-foot .grow { flex: 1; font-size: 12px; }
 
-.mh-head { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px 10px; margin-bottom: 8px; } /* [2026-11-21 Nguyễn Văn Thủy] 6 cột cho đầu phiếu gọn (đóng góp) */
+.mh-head { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.8fr) repeat(4, minmax(0, 1.1fr)); gap: 6px 10px; margin-bottom: 8px; } /* [2026-11-21 Nguyễn Văn Thủy] 6 cột cho đầu phiếu gọn (đóng góp) */
 .mh-head .field label { font-size: 11px; }
 .mh-head .span2 { grid-column: span 2; }
 .mh-head .span4 { grid-column: 1 / -1; }

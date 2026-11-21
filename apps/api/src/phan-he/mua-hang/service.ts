@@ -131,10 +131,14 @@ export const purchaseService = {
       // [2026-11-21 Nguyễn Văn Thủy] chi nhánh đang làm việc ghi một lần lúc lập; phân kho từng dòng phải thuộc chi nhánh nhận của dòng (đóng góp)
       doc.workBranchCode = cur?.workBranchCode ?? doc.workBranchCode ?? currentRequest()?.workBranch ?? doc.branchCode;
       const isOrder = doc.kind === 'order';
+      // Đơn đặt: "Giao tại kho" có thể là kho của chi nhánh con → deliveryBranch = chi nhánh đó (phiếu nhập lập ở chi nhánh con).
+      if (!isOrder || doc.deliveryBranch === doc.branchCode) delete doc.deliveryBranch;
+      if (isOrder && doc.deliveryWarehouse) doc.deliveryWarehouse = await resolveWarehouse(trx, auth.tenantId, doc.deliveryBranch ?? doc.branchCode, doc.deliveryWarehouse);
+      const nhanMacDinh = doc.deliveryBranch ?? doc.branchCode;
       for (const l of doc.lines) {
         if (!isOrder) delete l.branchCode;
-        else if (l.branchCode === doc.branchCode) delete l.branchCode;
-        if (l.warehouseCode && (isOrder || STOCK_KINDS.includes(doc.kind))) l.warehouseCode = await resolveWarehouse(trx, auth.tenantId, l.branchCode ?? doc.branchCode, l.warehouseCode);
+        else if (l.branchCode === nhanMacDinh) delete l.branchCode;
+        if (l.warehouseCode && (isOrder || STOCK_KINDS.includes(doc.kind))) l.warehouseCode = await resolveWarehouse(trx, auth.tenantId, l.branchCode ?? (isOrder ? nhanMacDinh : doc.branchCode), l.warehouseCode);
         else if (!isOrder && !STOCK_KINDS.includes(doc.kind)) delete l.warehouseCode;
         if (STOCK_KINDS.includes(doc.kind) && l.warehouseCode === doc.warehouseCode) delete l.warehouseCode;
       }

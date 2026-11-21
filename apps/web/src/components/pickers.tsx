@@ -54,6 +54,8 @@ interface BaseProps {
   hideName?: boolean;
   /** Mã là số nội bộ (ID nhóm hàng…): khi không gõ, ô hiện tên, mã hiện mờ bên phải. */
   nameFirst?: boolean;
+  /** [2026-11-21 Nguyễn Văn Thủy] Ô hẹp: khi không gõ chỉ hiện TÊN đầy đủ (mã ở chú thích rê chuột), không hiện "mã + tên bị cắt" (đóng góp) */
+  nameOnly?: boolean;
   /** Chỉ nhận mã có trong danh sách: gõ chữ không khớp rồi rời ô / Enter thì giữ giá trị cũ (không nhận chữ lạ làm mã). */
   strict?: boolean;
   /** Thêm mới ngay tại chỗ (nút + trong ô, F9, dòng cuối danh sách); nhận chữ đang gõ để điền sẵn. */
@@ -81,7 +83,7 @@ interface CodePickerProps extends BaseProps {
 const MAX_SHOWN = 300;
 const fmtCell = (v: string | number | null | undefined) => (typeof v === 'number' ? v.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) : v ?? '');
 
-export function CodePicker({ value, onChange, options, nameOf, onSearch, loading, emptyText, placeholder, className = 'input', style, disabled, multiple, autoFocus, title, hideName, nameFirst, strict, onAdd, addLabel = 'Thêm mới', columns, nameWidth = 240 }: CodePickerProps) {
+export function CodePicker({ value, onChange, options, nameOf, onSearch, loading, emptyText, placeholder, className = 'input', style, disabled, multiple, autoFocus, title, hideName, nameFirst, nameOnly, strict, onAdd, addLabel = 'Thêm mới', columns, nameWidth = 240 }: CodePickerProps) {
   const [text, setTextState] = useState(value);
   // Giữ chữ mới nhất ngoài state: rời ô ngay sau khi chọn dòng vẫn đọc đúng mã vừa chọn.
   const textRef = useRef(value);
@@ -149,7 +151,7 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
 
   const name = value && !multiple ? nameOf(value) : undefined;
   const showName = name && !hideName && !hasFocus && !open;
-  const asName = Boolean(nameFirst && showName);
+  const asName = Boolean((nameFirst || nameOnly) && showName);
 
   return (
     <span className={`picker${onAdd && !disabled ? ' has-add' : ''}`} style={style} title={title ?? (name ? `${value} — ${name}` : undefined)}>
@@ -194,7 +196,7 @@ export function CodePicker({ value, onChange, options, nameOf, onSearch, loading
           else if (e.key === 'Tab' && open && query && shown[active] && !shown.some((o) => o.code === query)) { pick(shown[active]); }
         }}
       />
-      {showName && <span className="picker-name">{asName ? value : name}</span>}
+      {showName && !nameOnly && <span className="picker-name">{asName ? value : name}</span>}
       {onAdd && !disabled && <button type="button" tabIndex={-1} className="picker-add" title={`${addLabel} (F9)`} onMouseDown={(e) => e.preventDefault()} onClick={add}>+</button>}
       {open && pos && !disabled && createPortal(
         <div

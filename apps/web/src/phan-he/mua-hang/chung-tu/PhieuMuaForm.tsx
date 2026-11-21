@@ -165,11 +165,11 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   // Mặc định = kho mặc định của chi nhánh; đổi chi nhánh mà kho cũ không thuộc chi nhánh mới thì về kho mặc định của chi nhánh mới.
   const showKho = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out'].includes(v.kind);
   const activeWhs = branchWhs.filter((w) => w.isActive || w.code === v.warehouseCode);
-  const defaultWh = (branchWhs.find((w) => w.isDefault && w.isActive) ?? (branchWhs.filter((w) => w.isActive).length === 1 ? branchWhs.find((w) => w.isActive) : undefined))?.code ?? '';
+  const defaultWh = (branchWhs.find((w) => w.isDefault && w.isActive) ?? branchWhs.find((w) => w.isActive))?.code ?? '';
   useEffect(() => {
     // Đơn đặt: "Giao tại kho" điền sẵn kho mặc định THẬT của chi nhánh (ghi rõ mã · tên), không để chữ "Kho mặc định" chung chung.
     if (v.kind !== 'order' || readOnly || !hier.data || !v.branchCode) return;
-    if (v.deliveryWarehouse && branchWhs.some((w) => w.code === v.deliveryWarehouse)) return;
+    if (v.deliveryWarehouse && (v.deliveryBranch || branchWhs.some((w) => w.code === v.deliveryWarehouse))) return;
     if ((v.deliveryWarehouse ?? '') !== defaultWh) setV((x) => ({ ...x, deliveryWarehouse: defaultWh || undefined }));
   }, [v.kind, readOnly, hier.data, v.branchCode, v.deliveryWarehouse, defaultWh]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -655,7 +655,10 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const cotDau = ['#', v.kind === 'exchange' ? 'chieu' : '', co('loai') ? 'loai' : '', 'ma', 'ten', 'dvt', co('cn') ? 'cn' : '', co('kho') ? 'kho' : '', co('km') ? 'km' : '', 'sl', co('ton') ? 'ton' : '', 'gia',
     co('ck') ? 'ck1' : '', co('ck') ? 'ck2' : '', co('thue') ? 'thue' : ''].filter(Boolean).length;
   const cotSau = [co('gv'), ...(isGiftDoc ? [true] : []), ...(co('lo') ? [true, true, true] : []), co('gc'), true].filter(Boolean).length;
-  const branchOfLine = (l: PLine) => l.branchCode || v.branchCode;
+  const nhanMacDinh = (isOrder && v.deliveryBranch) || v.branchCode;
+  const branchOfLine = (l: PLine) => l.branchCode || nhanMacDinh;
+  // Kho chọn được ở dòng: đơn đặt = kho của chi nhánh và mọi chi nhánh con (chọn kho chi nhánh con → dòng giao về chi nhánh đó); phiếu kho = kho của chi nhánh phiếu.
+  const khoDong = (() => { if (!isOrder) return cay.whOf(v.branchCode).map((w) => ({ ...w, branchCode: v.branchCode })); const i = cay.list.findIndex((u) => u.code === v.branchCode); const ds = [v.branchCode]; if (i >= 0) for (let j = i + 1; j < cay.list.length && cay.list[j]!.depth > cay.list[i]!.depth; j++) ds.push(cay.list[j]!.code); return ds.flatMap((b) => cay.whOf(b).map((w) => ({ ...w, branchCode: b }))); })();
   const refReceipt = receipts.find((r) => (v.refIds ?? []).includes(r.id));
 
   return (
@@ -783,14 +786,15 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   // Ngày nhận đủ hàng & hồ sơ đang bằng ngày phiếu (chưa sửa riêng) thì chạy theo ngày phiếu — không để hạn thanh toán tính từ ngày cũ.
                   ...(v.receivedDate && v.receivedDate === v.docDate ? { receivedDate: e.target.value } : {}) })} /></div>
                 {/* [2026-11-21 Nguyễn Văn Thủy] đầu phiếu gọn: chi nhánh (cây cha – con) · nơi giao / phân kho · bộ phận cùng một hàng (đóng góp) */}
-                <div className="field span2"><label title="Chi nhánh của chứng từ (nhận hàng, ghi công nợ). Danh sách xếp theo cây cơ cấu: chi nhánh cha trước, con thụt vào. Đơn giao nhiều nơi: chọn chi nhánh nhận ở từng dòng">Chi nhánh lập chứng từ (*){v.workBranchCode && v.workBranchCode !== v.branchCode ? <span className="muted" style={{ fontWeight: 400 }} title="Chi nhánh đang làm việc của người lập phiếu (nút chi nhánh trên cùng)"> · người lập làm việc tại {v.workBranchCode}</span> : null}</label><BranchPicker value={v.branchCode} onChange={(c) => { set({ branchCode: c }); if (c) lastUsed.set({ branchCode: c }); }} activeOnly disabled={readOnly} /></div>
+                <div className="field span2"><label title="Chi nhánh của chứng từ (nhận hàng, ghi công nợ). Danh sách xếp theo cây cơ cấu: chi nhánh cha trước, con thụt vào. Đơn giao nhiều nơi: chọn chi nhánh nhận ở từng dòng">Chi nhánh lập chứng từ (*){v.workBranchCode && v.workBranchCode !== v.branchCode ? <span className="muted" style={{ fontWeight: 400 }} title="Chi nhánh đang làm việc của người lập phiếu (nút chi nhánh trên cùng)"> · người lập làm việc tại {v.workBranchCode}</span> : null}</label><BranchPicker value={v.branchCode} onChange={(c) => { set({ branchCode: c, deliveryBranch: undefined, ...(isOrder ? { deliveryWarehouse: undefined } : {}) }); if (c) lastUsed.set({ branchCode: c }); }} activeOnly disabled={readOnly} /></div>
                 {isOrder && <div className="field"><label title="NCC giao hàng vào phân kho này — phiếu nhập lập từ đơn tự lấy làm Phân kho. Mặc định là kho mặc định của chi nhánh. Dòng giao nơi khác: chọn ở cột Chi nhánh / Phân kho của dòng">Giao tại kho</label>
-                  <ChonKho branchCode={v.branchCode} value={v.deliveryWarehouse ?? ''} disabled={readOnly} onChange={(c) => set({ deliveryWarehouse: c || undefined })} /></div>}
+                  <ChonKho conCua branchCode={v.branchCode} value={v.deliveryWarehouse ?? ''} disabled={readOnly} onChange={(c, chu) => set({ deliveryWarehouse: c || undefined, deliveryBranch: chu && chu !== v.branchCode ? chu : undefined })} />
+                  {v.deliveryBranch && <span className="muted" style={{ fontSize: 11 }}>giao về chi nhánh con {v.deliveryBranch} · {names.branchName(v.deliveryBranch)}</span>}</div>}
                 {showKho && <div className="field"><label title="Phân kho mặc định của phiếu — dòng nào để trống cột Phân kho thì vào / ra kho này. Mặc định là kho mặc định của chi nhánh">Phân kho (*)</label>
                   {/* [2026-11-11 Nguyễn Văn Thủy] chọn phân kho của chi nhánh đang chọn, nút + thêm phân kho ngay trên phiếu (đóng góp) */}
                   <ChonKho branchCode={v.branchCode} value={v.warehouseCode ?? ''} disabled={readOnly} op={({ receipt: 'purchase_in', return: 'purchase_return_out', gift_in: 'gift_in', gift_out: 'gift_out' } as Record<string, string>)[v.kind]} onChange={(c) => set({ warehouseCode: c || undefined })} /></div>}
                 <div className="field"><label title="Bộ phận thuộc chi nhánh của phiếu (DM16) — mặc định bộ phận mặc định của chi nhánh">Bộ phận</label>
-                  <ListPicker items={cay.deptOf(v.branchCode).filter((d) => d.isActive || d.code === v.departmentCode).map((d) => ({ code: d.code, name: d.name }))} value={v.departmentCode ?? ''} onChange={(c) => set({ departmentCode: c || undefined })} disabled={readOnly || !v.branchCode} placeholder={v.branchCode ? 'Bộ phận' : 'chọn chi nhánh trước'} emptyText="Chi nhánh chưa có bộ phận" /></div>
+                  <ListPicker items={cay.deptOf(v.branchCode).filter((d) => d.isActive || d.code === v.departmentCode).map((d) => ({ code: d.code, name: d.name }))} value={v.departmentCode ?? ''} onChange={(c) => set({ departmentCode: c || undefined })} nameOnly disabled={readOnly || !v.branchCode} placeholder={v.branchCode ? 'Bộ phận' : 'chọn chi nhánh trước'} emptyText="Chi nhánh chưa có bộ phận" /></div>
                 <div className="field span2"><label>Nhà cung cấp (*)</label>
                   <PartnerPicker kind="supplier" value={v.partnerCode} onChange={pickPartner} activeOnly addKind="supplier" disabled={readOnly} />
                   {v.partnerCode && <span className="muted" style={{ fontSize: 11, display: 'flex', gap: 6, alignItems: 'center' }}><NccInfo code={v.partnerCode} showName={false} />{names.partner(v.partnerCode)?.taxCode ? `MST ${names.partner(v.partnerCode)?.taxCode}` : 'Xem thông tin NCC'}{names.partner(v.partnerCode)?.address ? ` · ${names.partner(v.partnerCode)?.address}` : ''}</span>}
@@ -825,7 +829,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {/* [2026-11-21 Nguyễn Văn Thủy] khoản mục đầu phiếu: mặc định cho mọi dòng (cột Khoản mục ở bảng hàng) — so định mức chi phí theo khoản mục (đóng góp) */}
                 {isGoods && !isGiftDoc && <div className="field"><label title="Khoản mục chi phí (Danh mục khoản mục), vd Mua hàng thương mại. Mọi dòng theo khoản mục này, dòng khác thì chọn ở cột Khoản mục của dòng">Khoản mục</label>
-                  <ListPicker items={kmItems(v.costItem)} value={v.costItem ?? ''} disabled={readOnly} placeholder="Chọn khoản mục" emptyText="Chưa có khoản mục — khai ở Danh mục khoản mục"
+                  <ListPicker items={kmItems(v.costItem)} value={v.costItem ?? ''} nameOnly disabled={readOnly} placeholder="Chọn khoản mục" emptyText="Chưa có khoản mục — khai ở Danh mục khoản mục"
                     onChange={(c) => { const cu = v.costItem; set({ costItem: c || undefined, lines: v.lines.map((l) => (l.costItem && l.costItem === cu ? { ...l, costItem: undefined } : l)) }); }} /></div>}
                 {(v.kind === 'receipt' || v.kind === 'prepayment') && (
                   <div className="field span2"><label>Theo đơn đặt hàng</label>
@@ -1055,17 +1059,18 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                                 1 {l.unit} = {mid}<b>{n(r)} {b}</b>{l.qty && l.qty !== 1 ? <span className="muted"> · {n(l.qty)} {l.unit} = {n(l.qty * r)} {b}</span> : null}
                               </div>; })()}</td>
                           {co('cn') && <td style={{ minWidth: 130 }}>{readOnly ? <span className="mono">{branchOfLine(l)}</span>
-                            : <BranchPicker value={branchOfLine(l)} activeOnly style={{ width: 125 }} onChange={(c) => setLine(l.lineKey, { branchCode: c && c !== v.branchCode ? c : undefined, warehouseCode: undefined })} />}</td>}
+                            : <BranchPicker value={branchOfLine(l)} activeOnly style={{ width: 125 }} onChange={(c) => setLine(l.lineKey, { branchCode: c && c !== nhanMacDinh ? c : undefined, warehouseCode: undefined })} />}</td>}
                           {co('kho') && <td style={{ whiteSpace: 'nowrap' }}>{(() => {
                             const b = branchOfLine(l);
-                            const macDinh = isOrder ? (b === v.branchCode ? v.deliveryWarehouse : '') : v.warehouseCode;
+                            const macDinh = isOrder ? (b === nhanMacDinh ? v.deliveryWarehouse : '') : v.warehouseCode;
                             if (readOnly) return <span className="mono">{l.warehouseCode || <span className="muted">{macDinh || 'mặc định'}</span>}</span>;
-                            return <select className="select input" style={{ width: 110 }} value={l.warehouseCode ?? ''} title="Phân kho của dòng — trống = theo đầu phiếu" onChange={(e) => setLine(l.lineKey, { warehouseCode: e.target.value || undefined })}>
+                            return <select className="select input" style={{ width: 150 }} value={l.warehouseCode ?? ''} title={isOrder ? 'Phân kho của dòng — trống = theo đầu phiếu. Chọn kho của chi nhánh con thì dòng giao về chi nhánh đó' : 'Phân kho của dòng — trống = theo đầu phiếu'}
+                              onChange={(e) => { const w = khoDong.find((x) => x.code === e.target.value); setLine(l.lineKey, { warehouseCode: e.target.value || undefined, ...(isOrder && w ? { branchCode: w.branchCode !== nhanMacDinh ? w.branchCode : undefined } : {}) }); }}>
                               <option value="">{macDinh ? `${macDinh} (đầu phiếu)` : 'kho mặc định'}</option>
-                              {cay.whOf(b).filter((w) => w.isActive || w.code === l.warehouseCode).map((w) => <option key={w.code} value={w.code}>{w.code} · {w.name}</option>)}
+                              {[...new Set(khoDong.map((w) => w.branchCode))].map((bc) => { const ws = khoDong.filter((w) => w.branchCode === bc && (w.isActive || w.code === l.warehouseCode)); return ws.length ? <optgroup key={bc} label={bc === b ? `${bc} (chi nhánh của dòng)` : bc}>{ws.map((w) => <option key={w.code} value={w.code}>{w.code} · {w.name}</option>)}</optgroup> : null; })}
                             </select>; })()}</td>}
                           {co('km') && <td>{readOnly ? <span>{l.costItem || <span className="muted">{v.costItem || '—'}</span>}</span>
-                            : <ListPicker items={kmItems(l.costItem)} value={l.costItem ?? ''} style={{ width: 150 }}
+                            : <ListPicker items={kmItems(l.costItem)} value={l.costItem ?? ''} nameOnly style={{ width: 170 }}
                               placeholder={v.costItem ? `${v.costItem} (đầu phiếu)` : 'Khoản mục'} emptyText="Không có khoản mục khớp" onChange={(c) => setLine(l.lineKey, { costItem: c || undefined })} />}</td>}
                           
                           <td className={oDong(l, 'qty')} title={oDong(l, 'qty') ? 'Số lượng phải lớn hơn 0' : undefined}><NumInput style={{ width: 82 }} step={1} blankZero={false} value={l.qty} title="Số lượng — bấm ▲▼ (hoặc Ctrl + ↑ ↓) để tăng giảm 1" onChange={(n) => setLine(l.lineKey, { qty: n ?? 0, ...(l.autoGift ? { autoGift: false } : {}) })} /></td>
