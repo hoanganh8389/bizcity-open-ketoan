@@ -3,7 +3,7 @@
  * kế toán nhập bằng ô, bảng bậc; phần mềm tự lưu thành quy tắc. Thêm loại chính sách: thêm một nhánh ở cả hai hàm.
  */
 import type { ReactNode } from 'react';
-import { canRepeat, giftFlags, giftItemsOf, isRepeat, termFromRule, termText, type GiftItem, type ItemDiscount, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { canRepeat, giftFlags, giftItemsOf, isRepeat, termFromRule, termText, type GiftItem, type ItemDiscount, type Policy, type PolicyKind , activationOf, activationText } from '@bizcity/mua-hang-domain';
 import { BangChietKhauMa } from './BangChietKhauMa';
 import { BangQuaTang } from './BangQuaTang';
 import { BranchPicker } from '@/components/filters';
@@ -16,7 +16,13 @@ const tr = (n: number) => `${(Number(n) / 1e6).toLocaleString('vi-VN')} triệu`
 const PERIOD: Record<string, string> = { month: 'tháng', quarter: 'quý', year: 'năm' };
 
 /** Tóm tắt quy tắc thành câu dễ đọc. */
+// [2026-11-21 Nguyễn Văn Thủy] câu nội dung kèm điều kiện kích hoạt (nếu có) (đóng góp)
 export function ruleText(p: Pick<Policy, 'kind' | 'rule'> & { scope?: Policy['scope'] }): string {
+  const t0 = ruleTextBase(p);
+  const dk = activationText(activationOf(p));
+  return t0 && dk ? `${t0} — ${dk}` : t0;
+}
+function ruleTextBase(p: Pick<Policy, 'kind' | 'rule'> & { scope?: Policy['scope'] }): string {
   const t = ruleTextCore(p);
   if (!t) return t;
   // Mua X tặng Y nhiều dòng: cộng dồn / áp riêng theo từng dòng.

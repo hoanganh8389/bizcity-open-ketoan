@@ -256,7 +256,9 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const unitsOf = (sku: string) => extra.units[sku] ?? a?.units[sku] ?? []; // extra = vừa tải lại (kể cả sau khi sửa ĐVT ở modal) nên mới hơn
   // ĐVT của các mã (giá vốn thực tế / ĐVT quy về ĐVT nhỏ nhất — mua Thùng + quà Lon vẫn đúng).
   const allUnits = useMemo(() => ({ ...extra.units, ...(a?.units ?? {}) }), [a, extra]);
-  const calc = useMemo(() => computeDoc(v, data.policies, { holidays: holidays ?? [], units: allUnits }), [v, data.policies, holidays, allUnits]);
+  // [2026-11-21 Nguyễn Văn Thủy] chính sách chưa đủ điều kiện kích hoạt (máy chủ xét: doanh số, nợ quá hạn, hạn mức…) không áp trên phiếu (đóng góp)
+  const policiesDung = useMemo(() => { const bl = new Set((a?.blockedPolicies ?? []).map((b) => b.code)); return bl.size ? data.policies.filter((p) => !bl.has(p.code)) : data.policies; }, [a, data.policies]);
+  const calc = useMemo(() => computeDoc(v, policiesDung, { holidays: holidays ?? [], units: allUnits }), [v, policiesDung, holidays, allUnits]);
   // Lấy dòng hàng từ hoá đơn NCC đã nhập ở MH22 (cùng NCC): thay dòng hàng hiện có (hỏi trước), ghi số / ngày hoá đơn, giá chưa thuế.
   const invQ = useQuery({ queryKey: ['mua-hang', 'invoices', v.partnerCode, 'for-receipt'], enabled: v.kind === 'receipt' && Boolean(v.partnerCode), staleTime: 30_000, queryFn: () => invoiceApi.list({ partnerCode: v.partnerCode, status: 'active' }) });
   const nccInvoices = (invQ.data ?? []).filter((x) => x.state !== 'da_huy');
@@ -369,7 +371,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       const item = { variantCode: p.variantCode, typeCode: p.typeCode, sendToTax: p.sendToTax, parentSku: p.parentSku };
       const giftItem = p.variantCode === 'promo' || p.typeCode === 'QUA' || p.sendToTax === false;
       if (giftItem) setLine(key, { ...meta, price: 0, lineType: 'gift_consumer' });
-      else setLine(key, { ...meta, price, lineType: isBuy || price > 0 ? 'buy' : autoLineType(sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }, undefined, item) });
+      else setLine(key, { ...meta, price, lineType: isBuy || price > 0 ? 'buy' : autoLineType(sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, contractCode: v.contractCode || undefined, branchCode: v.branchCode }, undefined, item) });
     } catch { /* mã chưa có trong danh mục hàng */ }
   };
   /** Nhập dòng hàng từ Excel: thêm dòng, tên / thuế / nhãn / ĐVT mặc định / giá NCC lấy như khi chọn mã, rồi ghi đè các cột tệp có ghi. */
@@ -489,7 +491,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     setLine(key, { price: line && h.unit && us.length && h.unit.toLowerCase() !== line.unit.toLowerCase() ? roundPrice((p / ratioOf(us, h.unit)) * ratioOf(us, line.unit)) : p });
   };
   /** Đổi đơn giá: giá 0 = hàng tặng (chia giá hay không theo mã / chính sách KM của NCC), giá > 0 = hàng mua. */
-  const setPrice = (l: PLine, price: number) => setLine(l.lineKey, price > 0 ? { price, lineType: 'buy' } : { price: 0, lineType: l.lineType === 'buy' ? autoLineType(l.sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }) : l.lineType });
+  const setPrice = (l: PLine, price: number) => setLine(l.lineKey, price > 0 ? { price, lineType: 'buy' } : { price: 0, lineType: l.lineType === 'buy' ? autoLineType(l.sku, 0, { contractCode: v.contractCode || undefined, policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }) : l.lineType });
   const isOrder = v.kind === 'order';
   // Đơn đặt: chụp số liệu tồn (phân tích đặt hàng của chi nhánh cha) lúc lưu cho dòng chưa có — như thuế, lưu theo lúc đặt.
   const need = useNeedOf(v.branchCode, isOrder && v.status === 'draft');
@@ -596,13 +598,13 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   // (số chốt được ghi vào dòng như CK tay, tính lại sẽ thành "ghi trên phiếu" và mất dòng CK bậc).
   const board = useMemo<PromoRow[]>(() => {
     const trace = (stored?.policyTrace ?? []) as TraceItem[];
-    if (v.status !== 'approved' || !trace.length) return promoBoard(v, data.policies, calc);
+    if (v.status !== 'approved' || !trace.length) return promoBoard(v, policiesDung, calc);
     const amt = (t: TraceItem) => (t.amount ? ` = ${t.kind === 'payment_discount' ? '' : '−'}${vnd(t.amount)}` : '');
     return [
       ...trace.filter((t) => CHOT_KINDS.includes(t.kind))
         // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-6): vết chốt có bản chính sách → ghi "bản N" (đối chiếu khối Phiên bản của chính sách); mã giữ nguyên làm khoá
         .map((t, i): PromoRow => ({ key: `chot|${i}`, status: 'applied', kind: t.kind, policy: t.policy, name: data.policies.find((p) => p.code === t.policy)?.name ?? t.policy, text: `${t.text}${amt(t)}${t.version ? ` · bản ${t.version}` : ''}` })),
-      ...promoBoard(v, data.policies, calc).filter((r) => r.kind === 'promo_gift' && r.status !== 'hint'),
+      ...promoBoard(v, policiesDung, calc).filter((r) => r.kind === 'promo_gift' && r.status !== 'hint'),
     ];
   }, [v, data.policies, calc, stored]);
   // [2026-11-20 khanhtd] MH-KM — cột Hiệu lực của Bảng khuyến mại: phiếu đang lập theo bản áp ở ngày phiếu; phiếu đã duyệt theo đúng bản đã chốt (đóng góp)
@@ -1593,7 +1595,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 })()}
               </div>
             )}
-            {(v.kind === 'receipt' || v.kind === 'order') && <KhuyenMaiPanel rows={board} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onOpen={() => setPromoOpen(true)} readOnly={readOnly} />}
+            {(v.kind === 'receipt' || v.kind === 'order') && <KhuyenMaiPanel rows={board} onAction={promoAction} onToggle={readOnly ? undefined : togglePromo} onOpen={() => setPromoOpen(true)} readOnly={readOnly} chuaDuDieuKien={readOnly ? [] : a?.blockedPolicies ?? []} />}
             {(a?.credit.length ?? 0) > 0 && (
               <div className="mh-panel">
                 <h4>Công nợ & hạn mức</h4>

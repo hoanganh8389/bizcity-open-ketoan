@@ -15,6 +15,7 @@ import { ErrorBox, Loading } from '@/components/ui';
 import { P, STATUS_LABEL, useMuaHang, useNames, vnd, type MhData, type StoredDoc } from '../du-lieu';
 import { dmy } from '../chung';
 import { ChonChungTu, OChonChungTu } from '../thanh-phan/ChonChungTu';
+import { cotChiNhanh, cotHopDong, duoiCnHd, nhanHd } from '../thanh-phan/xuyenSuot';
 import '../mua-hang.css';
 
 interface Alloc { cost: { docNo: string; amount?: number }; receipts: { docNo: string; docDate: string; partnerCode: string }[]; basis?: string; rows: { sku: string; name: string; qty: number; value: number; amount: number; ratio: number; unitBefore: number; unitAfter: number }[]; warnings: string[] }
@@ -52,19 +53,21 @@ function Costs({ data }: { data: MhData }) {
       <div className="row" style={{ gap: 8, alignItems: 'flex-end', marginBottom: 8, flexWrap: 'wrap' }}>
         <div className="field" style={{ width: 460 }}><label>Phiếu chi phí</label>
           <OChonChungTu count={costs.length} onOpen={() => setPick(true)} placeholder="Chọn phiếu chi phí…"
-            text={(() => { const d = costs.find((x) => x.id === cur); return d ? `${d.docNo} · ${dmy(d.docDate)} · ${names.partnerName(d.partnerCode)} · ${vnd(d.amount)} · ${STATUS_LABEL[d.status]}` : undefined; })()} /></div>
+            text={(() => { const d = costs.find((x) => x.id === cur); return d ? `${d.docNo} · ${dmy(d.docDate)} · ${names.partnerName(d.partnerCode)}${duoiCnHd(d, names)} · ${vnd(d.amount)} · ${STATUS_LABEL[d.status]}` : undefined; })()} /></div>
         {pick && <ChonChungTu<StoredDoc> title="Chọn phiếu chi phí mua hàng" storageKey="mh-chon-chi-phi" rows={costs} rowKey={(d) => d.id} dateOf={(d) => d.docDate}
           searchOf={(d) => [d.docNo, d.note, d.partnerCode, names.partnerName(d.partnerCode)].join(' ')} onPick={(d) => setId(d.id)} onClose={() => setPick(false)}
           columns={[
             { key: 'docNo', header: 'Số phiếu', type: 'code', width: 120 },
             { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
             { key: 'partner', header: 'Đơn vị nhận tiền', width: 220, value: (d) => names.partnerName(d.partnerCode) },
+            cotChiNhanh<StoredDoc>(names), cotHopDong<StoredDoc>(),
+            { key: 'refs', header: 'Phân bổ vào phiếu nhập', width: 200, value: (d) => data.docs.filter((x) => (d.refIds ?? []).includes(x.id)).map((x) => `${x.docNo} (CN ${x.branchCode})`).join(', ') },
             { key: 'amount', header: 'Số tiền', type: 'money', width: 120, value: (d) => d.amount ?? 0 },
             { key: 'status', header: 'Trạng thái', width: 110, value: (d) => STATUS_LABEL[d.status] },
             { key: 'note', header: 'Ghi chú', width: 220, value: (d) => d.note ?? '' },
           ]} />}
         <div className="field"><label>Tiêu thức</label><select className="select input" value={basis || r?.basis || 'value'} onChange={(e) => setBasis(e.target.value as 'value')}><option value="value">Theo giá trị hàng</option><option value="qty">Theo số lượng</option></select></div>
-        {r?.receipts.length ? <span className="muted" style={{ fontSize: 12 }}>→ phiếu nhập {r.receipts.map((x) => <b key={x.docNo}>{x.docNo} </b>)}({r.receipts.map((x) => names.partnerName(x.partnerCode)).filter((v, i, a) => a.indexOf(v) === i).join(', ')})</span> : null}
+        {r?.receipts.length ? <span className="muted" style={{ fontSize: 12 }}>→ phiếu nhập {r.receipts.map((x) => { const d = data.docs.find((y) => y.docNo === x.docNo); return <span key={x.docNo}><b>{x.docNo}</b>{d ? ` (CN ${d.branchCode} · ${nhanHd(d.contractCode)})` : ''} </span>; })}— NCC {r.receipts.map((x) => names.partnerName(x.partnerCode)).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</span> : null}
       </div>
       {q.error && <ErrorBox error={errorText(q.error)} />}
       {r?.warnings.map((w, i) => <div key={i} className="mh-check warn">⚠ {w}</div>)}
@@ -85,8 +88,8 @@ function Rebates({ data }: { data: MhData }) {
   const docs = data.docs.filter((d) => d.kind === 'rebate' && d.status !== 'cancelled');
   if (!docs.length) return <div className="muted">Chưa có phiếu thưởng — tính ở màn "Tính thưởng cuối kỳ" (MH06), bấm "Tạo phiếu thưởng".</div>;
   return (
-    <table className="mh-mini"><thead><tr><th>Phiếu</th><th>Ngày</th><th>NCC</th><th>Chính sách · kỳ</th><th className="num">Tiền thưởng</th><th>Phân bổ theo mã</th><th>Trạng thái</th></tr></thead><tbody>
-      {docs.map((d) => <tr key={d.id}><td className="mono">{d.docNo}</td><td>{dmy(d.docDate)}</td><td>{names.partnerName(d.partnerCode)}</td><td>{d.rebate?.policyCode} · {d.rebate?.period}</td><td className="num"><b>{vnd(d.amount)}</b></td><td style={{ fontSize: 12 }}>{(d.allocation ?? []).map((a) => `${a.sku}: ${vnd(a.amount)}`).join(' · ')}</td><td>{STATUS_LABEL[d.status]}</td></tr>)}
+    <table className="mh-mini"><thead><tr><th>Phiếu</th><th>Ngày</th><th>NCC</th><th>Chi nhánh</th><th>Hợp đồng</th><th>Chính sách · kỳ</th><th className="num">Tiền thưởng</th><th>Phân bổ theo mã</th><th>Trạng thái</th></tr></thead><tbody>
+      {docs.map((d) => <tr key={d.id}><td className="mono">{d.docNo}</td><td>{dmy(d.docDate)}</td><td>{names.partnerName(d.partnerCode)}</td><td>{d.branchCode}</td><td>{d.contractCode ? <span className="mono">{d.contractCode}</span> : <span className="muted">không theo HĐ</span>}</td><td>{d.rebate?.policyCode} · {d.rebate?.period}</td><td className="num"><b>{vnd(d.amount)}</b></td><td style={{ fontSize: 12 }}>{(d.allocation ?? []).map((a) => `${a.sku}: ${vnd(a.amount)}`).join(' · ')}</td><td>{STATUS_LABEL[d.status]}</td></tr>)}
     </tbody></table>
   );
 }
@@ -104,7 +107,7 @@ function RealCost({ data }: { data: MhData }) {
     <>
       <div className="field" style={{ marginBottom: 8, width: 520 }}><label>Phiếu nhập</label>
         <OChonChungTu count={receipts.length} onOpen={() => setPick(true)} placeholder="Chọn phiếu nhập…"
-          text={(() => { const d = receipts.find((x) => x.id === cur); return d ? `${d.docNo} · ${dmy(d.docDate)} · ${names.partnerName(d.partnerCode)} · ${vnd(d.totals.total)}` : undefined; })()} /></div>
+          text={(() => { const d = receipts.find((x) => x.id === cur); return d ? `${d.docNo} · ${dmy(d.docDate)} · ${names.partnerName(d.partnerCode)}${duoiCnHd(d, names)} · ${vnd(d.totals.total)}` : undefined; })()} /></div>
       {pick && <ChonChungTu<StoredDoc> title="Chọn phiếu nhập đã duyệt" storageKey="mh-chon-phieu-nhap-gv" rows={receipts} rowKey={(d) => d.id} dateOf={(d) => d.docDate}
         searchOf={(d) => [d.docNo, d.note, d.invoice?.no, d.partnerCode, names.partnerName(d.partnerCode), d.branchCode, ...d.lines.flatMap((l) => [l.sku, l.name])].join(' ')}
         onPick={(d) => setId(d.id)} onClose={() => setPick(false)}
@@ -112,7 +115,7 @@ function RealCost({ data }: { data: MhData }) {
           { key: 'docNo', header: 'Số phiếu', type: 'code', width: 120 },
           { key: 'docDate', header: 'Ngày', width: 90, value: (d) => dmy(d.docDate) },
           { key: 'partner', header: 'Nhà cung cấp', width: 220, value: (d) => names.partnerName(d.partnerCode) },
-          { key: 'branchCode', header: 'Chi nhánh', width: 90 },
+          cotChiNhanh<StoredDoc>(names), cotHopDong<StoredDoc>(),
           { key: 'invoice', header: 'Số HĐ', type: 'code', width: 110, value: (d) => d.invoice?.no ?? '' },
           { key: 'total', header: 'Tổng tiền', type: 'money', width: 120, value: (d) => d.totals.total },
           { key: 'items', header: 'Mặt hàng', width: 280, value: (d) => d.lines.filter((l) => l.sku).map((l) => `${l.sku} ${l.name}`).join('; ') },

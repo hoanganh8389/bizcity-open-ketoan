@@ -1,9 +1,10 @@
 // [2026-11-21 Nguyễn Văn Thủy] Hạn mức công nợ + điều khoản thanh toán theo hợp đồng (docs/nghiep-vu/28) (đóng góp)
 /**
  * NCC có hạn mức chung 10 triệu + điều khoản 30 ngày; hợp đồng HD-CN có hạn mức riêng 3 triệu + điều khoản 7 ngày.
- * 1. Đơn thuộc hợp đồng: kiểm cả hạn mức hợp đồng (tính trên phiếu thuộc hợp đồng) và hạn mức chung; hạn thanh toán 7 ngày.
+ * 1. Đơn thuộc hợp đồng: chỉ kiểm hạn mức hợp đồng (tính trên phiếu thuộc hợp đồng); hạn thanh toán 7 ngày.
  * 2. Đơn ngoài hợp đồng: chỉ hạn mức chung; hạn thanh toán 30 ngày (bản của hợp đồng không áp).
- * 3. Phiếu nhập thuộc hợp đồng đã duyệt chiếm hạn mức hợp đồng; MH05 (/credit) trả hạn mức theo hợp đồng có contractCode.
+ * 3. Phiếu nhập thuộc hợp đồng đã duyệt chiếm hạn mức hợp đồng, KHÔNG chiếm hạn mức ngoài hợp đồng; MH05 (/credit) tách đúng.
+ * 4. Hợp đồng chưa khai điều khoản: phiếu không mượn điều khoản ngoài hợp đồng, Kiểm tra nhắc contract_no_term.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { call, setupTenant, type TestCtx } from './helpers.js';
@@ -44,9 +45,9 @@ const analyze = async (body: Record<string, unknown>) => {
 };
 
 describe('Công nợ & điều khoản thanh toán theo hợp đồng', () => {
-  it('đơn thuộc hợp đồng: hạn mức hợp đồng + hạn mức chung, hạn 7 ngày; đơn ngoài hợp đồng: chỉ hạn mức chung, hạn 30 ngày', async () => {
+  it('đơn thuộc hợp đồng: chỉ hạn mức hợp đồng, hạn 7 ngày; đơn ngoài hợp đồng: chỉ hạn mức chung, hạn 30 ngày', async () => {
     const trong = await analyze(doc('receipt', 5, HD));
-    expect(trong.credit.map((c) => [c.scope.split(' ')[0], c.limit])).toEqual([['Hợp', 3_000_000], ['NCC', 10_000_000]]);
+    expect(trong.credit.map((c) => [c.scope.split(' ')[0], c.limit])).toEqual([['Hợp', 3_000_000]]);
     expect(trong.calc.dueDate).toBe('2026-11-17');
     const ngoai = await analyze(doc('receipt', 5));
     expect(ngoai.credit.map((c) => c.limit)).toEqual([10_000_000]);
@@ -62,8 +63,17 @@ describe('Công nợ & điều khoản thanh toán theo hợp đồng', () => {
     expect(hd.current).toBe(1_080_000);
     const ngoai = await analyze(doc('order', 1));
     expect(ngoai.credit.find((c) => c.scope.startsWith('Hợp đồng'))).toBeUndefined();
+    expect(ngoai.credit[0]!.current).toBe(0); // nợ của phiếu theo hợp đồng không chiếm hạn mức ngoài hợp đồng
     const ov = await call<{ data: { partners: { partnerCode: string; contractCode: string; limit: number; current: number }[] } }>(t, 'GET', '/api/v1/purchase/credit?asOf=2026-11-30');
     const rows = ov.body.data.partners.filter((p) => p.partnerCode === NCC).map((p) => [p.contractCode, p.limit, p.current]).sort();
-    expect(rows).toEqual([['', 10_000_000, 1_080_000], [HD, 3_000_000, 1_080_000]]);
+    expect(rows).toEqual([['', 10_000_000, 0], [HD, 3_000_000, 1_080_000]]);
+  });
+
+  it('hợp đồng chưa khai điều khoản: không mượn điều khoản ngoài hợp đồng, Kiểm tra nhắc', async () => {
+    expect((await call(t, 'PUT', '/api/v1/purchase/contracts', { code: 'HD-CN2', isNew: true, contract: { partnerCode: NCC, signedDate: '2026-11-01', startDate: '2026-11-01', endDate: '2027-10-31', skus: [SKU] } })).status).toBe(200);
+    const r = await call<{ data: { credit: Credit[]; calc: { dueDate?: string }; checks: { code: string }[] } }>(t, 'POST', '/api/v1/purchase/analyze', doc('receipt', 2, 'HD-CN2'));
+    expect(r.body.data.calc.dueDate).toBeUndefined();
+    expect(r.body.data.credit).toEqual([]);
+    expect(r.body.data.checks.map((c) => c.code)).toContain('contract_no_term');
   });
 });

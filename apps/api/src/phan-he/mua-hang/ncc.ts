@@ -73,6 +73,14 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
       SELECT code, extra->>'partnerCode' AS partner, NULLIF(extra->>'endDate', '') AS end_date FROM dimensions
        WHERE tenant_id = ${tenantId} AND kind = 'contract' AND extra->>'type' = 'goods_supplier' AND COALESCE(extra->>'status', 'active') = 'active'
        ORDER BY COALESCE(NULLIF(extra->>'endDate', ''), '9999-12-31') DESC, code`.execute(trx)).rows) if (c.partner && !contractOf.has(c.partner)) contractOf.set(c.partner, { code: c.code, endDate: c.end_date });
+  // [2026-11-21 Nguyễn Văn Thủy] nợ còn mở của các phiếu THEO hợp đồng, theo NCC — hạn mức ngoài hợp đồng không tính phần này (đóng góp)
+  const evHd = new Map<string, string>();
+  for (const d of ctx.docs) if (d.contractCode && d.status === 'approved') for (const l of d.links) if (l.eventId) evHd.set(l.eventId, d.partnerCode);
+  const hdOpen = new Map<string, number>();
+  if (evHd.size) for (const r of await trx.selectFrom('debt_items').select(['event_id', sql<string>`SUM(CASE WHEN side = 'credit' THEN amount - settled_amount ELSE -(amount - settled_amount) END)`.as('open')])
+    .where('tenant_id', '=', tenantId).where('event_id', 'in', [...evHd.keys()]).where('account_code', 'like', '331%').groupBy('event_id').execute()) {
+    const pc = evHd.get(String(r.event_id))!; hdOpen.set(pc, (hdOpen.get(pc) ?? 0) + toNumber(r.open));
+  }
   return partners.map((p) => {
     const pols = ctx.policies.filter((x) => x.scope.partnerCode === p.code && x.isActive);
     const docs = ctx.docs.filter((d) => d.partnerCode === p.code && d.status !== 'cancelled');
@@ -90,7 +98,11 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
       return ds.filter((x) => x.status === 'pending_approval' && (x.kind === 'receipt' || x.kind === 'order')).reduce((s, x) => s + x.totals.total, 0)
         + ds.filter((x) => x.kind === 'order' && x.status === 'approved').reduce((s, x) => { const pr = orderProgress(x, ctx.docs, undefined, orderUnits); return s + (pr.done || !pr.ordered ? 0 : (x.totals.total * pr.remaining) / pr.ordered); }, 0); };
     const pending = pendOf([p.code]);
-    const used = pooled ? pooled.reduce((s, c) => s + toNumber(debtOf.get(c)?.debt ?? 0), 0) + pendOf(pooled) : debt + pending;
+    // Hạn mức ngoài hợp đồng: nợ + chờ của phiếu không theo hợp đồng; NCC chỉ có hạn mức trong hợp đồng: nợ + chờ của phiếu theo hợp đồng.
+    const pendKhongHd = docs.filter((x) => !x.contractCode && x.status === 'pending_approval' && (x.kind === 'receipt' || x.kind === 'order')).reduce((s, x) => s + x.totals.total, 0);
+    const used = pooled ? pooled.reduce((s, c) => s + toNumber(debtOf.get(c)?.debt ?? 0) - (hdOpen.get(c) ?? 0), 0) + pendOf(pooled)
+      : hmHd.length ? (hdOpen.get(p.code) ?? 0) + Math.max(0, pending - pendKhongHd)
+      : debt - (hdOpen.get(p.code) ?? 0) + pendKhongHd;
     // Điều khoản chung / ngoài hợp đồng; NCC chỉ khai trong hợp đồng thì hiện bản của hợp đồng (ghi rõ hợp đồng nào).
     const termPol = pols.find((x) => x.kind === 'payment_term' && !x.scope.contractCode) ?? pols.find((x) => x.kind === 'payment_term');
     const contract = contractOf.get(p.code);

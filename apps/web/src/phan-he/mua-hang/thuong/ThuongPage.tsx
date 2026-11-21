@@ -33,22 +33,29 @@ export function ThuongPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [vat, setVat] = useState('');
   const [month, setMonth] = useState(today().slice(0, 7));
+  /** Chi nhánh bên mình nhận thưởng khi chính sách không khai bên nhận. */
+  const [cnNhan, setCnNhan] = useState('');
+  // [2026-11-21 Nguyễn Văn Thủy] hợp đồng + chi nhánh xuyên suốt: chính sách thưởng thuộc hợp đồng nào, phiếu thưởng mang số hợp đồng và chi nhánh nhận (đóng góp)
+  const hdCua = (code: string) => rebates.find((x) => x.code === code)?.scope.contractCode ?? '';
+  const nhanHdTxt = (c: string) => (c ? `HĐ ${c}` : 'ngoài hợp đồng');
   const ov = useQuery({ queryKey: ['mua-hang', 'rebate-overview', month], queryFn: () => api.get<Overview[]>(`${P}/rebates/overview`, { month }) });
   const q = useQuery({ queryKey: ['mua-hang', 'rebate', p?.code, per, manual], enabled: Boolean(p && per), queryFn: () => api.post<Preview>(`${P}/rebates/preview`, { policyCode: p!.code, period: per, manualTotal: manual }) });
   const r = q.data;
   // [2026-11-13 Nguyễn Văn Thủy] phiếu thưởng lập cho đúng bên trả và đúng chi nhánh bên mình nhận (đóng góp)
   const partnerCode = r?.parties?.payer || p?.scope.partnerCode || partner;
 
+  // Chi nhánh nhận: chính sách khai bên nhận → theo đó; không thì người dùng chọn, mặc định chi nhánh có doanh số lớn nhất trong kỳ.
+  const cnMacDinh = cnNhan || [...(r?.byBranch ?? [])].sort((a, b) => b.value - a.value)[0]?.code || data?.docs.find((d) => d.partnerCode === partnerCode)?.branchCode || '';
   const create = async () => {
     if (!p || !r || !partnerCode) return;
     setMsg(null);
     try {
       const doc = await purchaseApi.save({
-        id: `new-${Date.now()}`, kind: 'rebate', status: 'draft', docNo: '', docDate: r.to > today() ? today() : r.to, branchCode: r.parties?.receiver || data?.docs.find((d) => d.partnerCode === partnerCode)?.branchCode || '', partnerCode, brandCode: p.scope.brandCode,
+        id: `new-${Date.now()}`, kind: 'rebate', status: 'draft', docNo: '', docDate: r.to > today() ? today() : r.to, branchCode: r.parties?.receiver || cnMacDinh, partnerCode, brandCode: p.scope.brandCode, ...(p.scope.contractCode ? { contractCode: p.scope.contractCode } : {}),
         priceIncludesVat: false, lines: [], amount: r.amount, taxCode: vat || undefined, rebate: { policyCode: p.code, period: per, base: r.base, rate: r.rate, detail: r.detail },
         allocation: r.allocation.map((a) => ({ sku: a.sku, name: a.name, amount: a.amount })), note: `${p.name} — kỳ ${per}`,
       });
-      setMsg({ ok: true, text: `Đã tạo phiếu thưởng ${doc.docNo} (nháp) — mở ở Chứng từ mua hàng → Chi phí / thưởng để duyệt (ghi sổ).` });
+      setMsg({ ok: true, text: `Đã tạo phiếu thưởng ${doc.docNo} (nháp) — CN ${doc.branchCode} · ${nhanHdTxt(p.scope.contractCode ?? '')} — mở ở Chứng từ mua hàng → Chi phí / thưởng để duyệt (ghi sổ).` });
       void q.refetch(); void ov.refetch(); void refresh();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); }
   };
@@ -63,15 +70,15 @@ export function ThuongPage() {
           <span className="muted" style={{ fontSize: 12 }}>Mọi chính sách thưởng đang áp; chỉ tiêu quý / năm tính theo kỳ chứa tháng này. Bấm một dòng để xem chi tiết bên dưới.</span>
         </div>
         {ov.isLoading ? <Loading /> : (
-          <div className="table-wrap" style={{ maxHeight: 260 }}><table className="grid"><thead><tr><th>Chính sách</th><th>Kỳ</th><th className="num">Doanh số mua thuần</th><th className="num">Chỉ tiêu</th><th className="num">Hoàn thành</th><th className="num">Mức</th><th className="num">Được hưởng</th><th>Phiếu thưởng</th></tr></thead><tbody>
+          <div className="table-wrap" style={{ maxHeight: 260 }}><table className="grid"><thead><tr><th>Chính sách</th><th title="Hợp đồng chứa chính sách thưởng (MH29) — trống = ngoài hợp đồng">Hợp đồng</th><th>Kỳ</th><th className="num">Doanh số mua thuần</th><th className="num">Chỉ tiêu</th><th className="num">Hoàn thành</th><th className="num">Mức</th><th className="num">Được hưởng</th><th>Phiếu thưởng</th></tr></thead><tbody>
             {(ov.data ?? []).map((o) => (
               <tr key={o.policy + o.period} style={{ cursor: 'pointer' }} className={o.policy === p?.code ? 'selected' : ''} onClick={() => { setCode(o.policy); setPeriod(o.period); setManual(undefined); setMsg(null); }}>
-                <td>{o.policy} <span className="muted">{o.name}</span></td><td className="mono">{o.period}</td><td className="num">{vnd(o.base)}</td><td className="num">{o.target ? vnd(o.target) : ''}</td>
+                <td>{o.policy} <span className="muted">{o.name}</span></td><td>{hdCua(o.policy) ? <span className="mono">{hdCua(o.policy)}</span> : <span className="muted">ngoài HĐ</span>}</td><td className="mono">{o.period}</td><td className="num">{vnd(o.base)}</td><td className="num">{o.target ? vnd(o.target) : ''}</td>
                 <td className="num">{o.completion !== null ? `${Number(o.completion).toLocaleString('vi-VN')}%` : ''}</td><td className="num">{o.kind === 'stage_rebate' ? 'giai đoạn' : `${Number(o.rate).toLocaleString('vi-VN')}%`}</td><td className="num"><b>{vnd(o.amount)}</b></td>
                 <td>{o.doc ? <span>{o.doc.docNo} · {o.doc.status === 'approved' ? <span className="mh-ok">đã hạch toán</span> : <span className="mh-warn">chưa duyệt</span>}{o.doc.diff ? <span className="mh-bad"> · chênh {vnd(o.doc.diff)}</span> : null}</span> : o.amount ? <span className="mh-warn">chưa lập</span> : <span className="muted">chưa đạt</span>}</td>
               </tr>
             ))}
-            {!(ov.data ?? []).length && <tr><td colSpan={8} className="muted">Chưa có chính sách thưởng</td></tr>}
+            {!(ov.data ?? []).length && <tr><td colSpan={9} className="muted">Chưa có chính sách thưởng</td></tr>}
           </tbody></table></div>
         )}
       </div>
@@ -79,9 +86,9 @@ export function ThuongPage() {
         <div className="mh-grid2" style={{ gridTemplateColumns: '360px minmax(0,1fr)' }}>
           <div className="card card-body">
             <div className="field"><label>Chính sách thưởng</label>
-              <select className="select input" value={p.code} onChange={(e) => { setCode(e.target.value); setPeriod(''); setManual(undefined); setMsg(null); }}>{rebates.map((x) => <option key={x.code} value={x.code}>{x.code} — {x.name}</option>)}</select>
+              <select className="select input" value={p.code} onChange={(e) => { setCode(e.target.value); setPeriod(''); setManual(undefined); setMsg(null); }}>{rebates.map((x) => <option key={x.code} value={x.code}>{x.code} — {x.name} · {nhanHdTxt(x.scope.contractCode ?? '')}</option>)}</select>
             </div>
-            <div className="muted" style={{ fontSize: 12, margin: '6px 0' }}>{POLICY_LABEL[p.kind]} · {p.scope.brandCode ? `nhãn ${p.scope.brandCode}` : ''}{p.scope.partnerCode ? ` · ${names.partnerName(p.scope.partnerCode)}` : ''}</div>
+            <div className="muted" style={{ fontSize: 12, margin: '6px 0' }}>{POLICY_LABEL[p.kind]} · {p.scope.brandCode ? `nhãn ${p.scope.brandCode}` : ''}{p.scope.partnerCode ? ` · ${names.partnerName(p.scope.partnerCode)}` : ''} · <b>{nhanHdTxt(p.scope.contractCode ?? '')}</b></div>
             <div className="mh-check info">{ruleText(p)}</div>
             <div className="field" style={{ marginTop: 8 }}><label>Kỳ (YYYY-MM · YYYY-Qn · YYYY)</label><input className="input mono" value={per} onChange={(e) => setPeriod(e.target.value.trim())} /></div>
             {p.kind !== 'stage_rebate'
@@ -104,7 +111,11 @@ export function ThuongPage() {
                   <span>Ký với: <b>{r.parties.signedWith ? names.partnerName(r.parties.signedWith) : 'mọi NCC'}</b></span>
                   <span>Tính trên: <b>{r.parties.family ? `cả nhóm (${r.parties.members.length} đơn vị)` : 'riêng đơn vị ký'}</b></span>
                   <span>Bên trả thưởng: <b>{r.parties.payer ? names.partnerName(r.parties.payer) : '—'}</b></span>
-                  <span>Bên mình nhận tại: <b>{r.parties.receiver ? names.branchName(r.parties.receiver) : '—'}</b></span>
+                  <span>Hợp đồng: <b>{nhanHdTxt(p.scope.contractCode ?? '')}</b></span>
+                  <span>Bên mình nhận tại: {r.parties.receiver ? <b>CN {r.parties.receiver} · {names.branchName(r.parties.receiver)}</b>
+                    : <select className="select input" style={{ width: 240, display: 'inline-block' }} value={cnMacDinh} onChange={(e) => setCnNhan(e.target.value)} title="Chính sách không khai bên nhận: chọn chi nhánh ghi phiếu thưởng (mặc định chi nhánh có doanh số lớn nhất trong kỳ)">
+                        {[...new Set([cnMacDinh, ...(r.byBranch ?? []).map((x) => x.code)].filter(Boolean))].map((c) => <option key={c} value={c}>CN {c} · {names.branchName(c)}{(r.byBranch ?? []).find((x) => x.code === c) ? ` — doanh số ${vnd((r.byBranch ?? []).find((x) => x.code === c)!.value)}` : ''}</option>)}
+                      </select>}</span>
                 </div>
                 {(r.byPartner ?? []).length > 1 && <table className="mh-mini" style={{ marginTop: 6 }}><thead><tr><th>Đơn vị giao hàng</th><th className="num">Doanh số mua thuần</th></tr></thead><tbody>
                   {(r.byPartner ?? []).map((x) => <tr key={x.code}><td>{x.code} <span className="muted">{names.partnerName(x.code)}</span></td><td className="num">{vnd(x.value)}</td></tr>)}

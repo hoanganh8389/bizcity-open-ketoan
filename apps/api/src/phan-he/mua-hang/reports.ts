@@ -12,10 +12,10 @@ import { sql } from 'kysely';
 import {
   AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, invoiceDueDate, orderInvoice, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
-  scopeBranches, deliveryBranches } from '@bizcity/mua-hang-domain';
+  scopeBranches, deliveryBranches, contractApplies } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
-import { apBalance, contractUsage, openOf, openOfBrand, pendingOf, type Ctx } from './analysis.js';
+import { apBalance, contractUsage, looseDebt, openOf, soleContract, openOfBrand, pendingOf, type Ctx } from './analysis.js';
 import { refReceipts, spreadOverMany } from './posting.js';
 import { unitsForOrders, unitsOf } from './gia-mua.js';
 import { noDueDate, type StoredDoc } from './store.js';
@@ -40,7 +40,11 @@ export async function creditOverview(trx: Db, tenantId: string, ctx: Ctx, asOf =
     const code = p.scope.partnerCode!;
     // [2026-11-21 Nguyễn Văn Thủy] hạn mức của hợp đồng tính trên phiếu thuộc hợp đồng; không gắn hợp đồng = hạn mức chung / ngoài hợp đồng (đóng góp)
     const cc = p.scope.contractCode;
-    const u = cc ? await contractUsage(trx, tenantId, ctx.docs, cc, asOf) : { current: await apBalance(trx, tenantId, code, asOf), pending: pendingOf(ctx.docs, (d) => d.partnerCode === code, asOf) };
+    const cuaHd = (d: StoredDoc) => d.partnerCode === code && Boolean(d.contractCode);
+    const u = cc ? await contractUsage(trx, tenantId, ctx.docs, cc, asOf)
+      : { current: (await apBalance(trx, tenantId, code, asOf)) - (await openOf(trx, tenantId, ctx.docs.filter((d) => cuaHd(d) && d.status === 'approved' && d.docDate <= asOf).flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean)))
+          - ((await soleContract(trx, tenantId, code, asOf)) ? await looseDebt(trx, tenantId, code, ctx.docs, asOf) : 0),
+          pending: pendingOf(ctx.docs, (d) => d.partnerCode === code && !d.contractCode, asOf) };
     const s = creditStatus(p, u.current, u.pending, 0)!;
     partners.push({ policy: p.code, partnerCode: code, contractCode: cc ?? '', ...s });
   }
@@ -217,7 +221,8 @@ export async function rebatePreview(trx: Db, tenantId: string, ctx: Ctx, p: Poli
   // [2026-11-13 Nguyễn Văn Thủy] ký với công ty mẹ, tính trên cả nhóm: cộng phiếu của NCC ký và mọi đơn vị con (đóng góp)
   const partners = p.scope.partnerCode ? (p.rule.family ? await partnerFamily(trx, tenantId, p.scope.partnerCode) : [p.scope.partnerCode]) : null;
   const match = (d: StoredDoc) => d.status === 'approved' && d.docDate >= from && d.docDate <= to && (d.kind === 'receipt' || d.kind === 'return')
-    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!partners || partners.includes(d.partnerCode)) && (!scopeBranches(p.scope).length || scopeBranches(p.scope).includes(d.branchCode));
+    && (!p.scope.brandCode || brandShare(d, p.scope.brandCode) > 0) && (!partners || partners.includes(d.partnerCode)) && (!scopeBranches(p.scope).length || scopeBranches(p.scope).includes(d.branchCode))
+    && contractApplies(p, d.contractCode); // thưởng của hợp đồng X chỉ tính phiếu thuộc X; thưởng ngoài hợp đồng chỉ tính phiếu không theo hợp đồng
   // Thưởng theo nhãn: chỉ cộng các dòng thuộc nhãn (nhãn của mặt hàng; phiếu cũ chưa ghi nhãn dòng thì theo nhãn phiếu).
   const inBrand = (l: { brandCode?: string }, d: StoredDoc) => !p.scope.brandCode || (l.brandCode ?? d.brandCode) === p.scope.brandCode;
   const byDay: Record<number, number> = {};

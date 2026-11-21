@@ -9,7 +9,7 @@ import { documentNumbers } from '../../kernel/public.js';
 import { z } from 'zod';
 import { unitsOf } from './gia-mua.js';
 import { checkContractItems } from './pham-vi-hop-dong.js';
-import { PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind, type PolicySnapshot, type PolicyVersion } from '@bizcity/mua-hang-domain';
+import { ACTIVATION_KINDS, PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind, type PolicySnapshot, type PolicyVersion } from '@bizcity/mua-hang-domain';
 import { contentHash } from '@bizcity/platform/core/documents';
 import { listPolicyVersions, registerPolicyVersion, retirePolicy } from '@bizcity/platform/core/policies';
 import { settingsToday } from '@bizcity/platform/core/settings';
@@ -436,6 +436,20 @@ export const policyInputSchema = z.object({
     if (rule.limit && sum > rule.limit) ctx.addIssue({ code: 'custom', path: ['rule'], message: `Tổng phân bổ chi nhánh ${sum.toLocaleString('vi-VN')} vượt hạn mức tổng ${rule.limit.toLocaleString('vi-VN')}` });
   }
   if (p.validFrom && p.validTo && p.validTo < p.validFrom) ctx.addIssue({ code: 'custom', path: ['validTo'], message: 'Ngày hết hiệu lực trước ngày bắt đầu' });
+  // [2026-11-21 Nguyễn Văn Thủy] điều kiện kích hoạt (tuỳ chọn) — docs/nghiep-vu/29 (đóng góp)
+  const act = (p.rule as { activation?: unknown }).activation;
+  if (act !== undefined && act !== null) {
+    const r = ACTIVATION_SCHEMA.safeParse(act);
+    if (!r.success) ctx.addIssue({ code: 'custom', path: ['rule', 'activation'], message: `Điều kiện kích hoạt chưa đúng: ${r.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}` });
+    else if (!(ACTIVATION_KINDS as string[]).includes(p.kind) && Object.values(r.data).some(Boolean)) ctx.addIssue({ code: 'custom', path: ['rule', 'activation'], message: 'Loại chính sách này không khai điều kiện kích hoạt (chỉ chiết khấu, bậc SL, CKTT, mua X tặng Y)' });
+  }
+});
+/** Điều kiện kích hoạt: ô trống / 0 = không xét. */
+const ACTIVATION_SCHEMA = z.object({
+  minPurchase: z.object({ amount: z.number().min(0), period: z.enum(['month', 'quarter', 'year', 'contract']).default('month'), includeCurrent: z.boolean().optional() }).nullish(),
+  minDocValue: z.number().min(0).nullish(),
+  noOverdue: z.boolean().nullish(),
+  withinCreditLimit: z.boolean().nullish(),
 });
 export type PolicyInput = z.infer<typeof policyInputSchema>;
 

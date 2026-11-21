@@ -109,7 +109,7 @@ export function variantName(baseName: string, suffix: string): string {
  * Dòng giá 0 của mã thường: theo chính sách khuyến mại của NCC cho mã đó (splitIntoCost), không có chính sách thì mặc định
  * CHIA GIÁ (đúng định nghĩa "hàng chia giá" của TGS) — người dùng bỏ tích "Chia vào giá vốn" nếu là quà cho khách.
  */
-export function autoLineType(sku: string, price: number, ctx: { policies: Policy[]; date: string; partnerCode?: string; brandCode?: string; branchCode?: string }, share?: boolean,
+export function autoLineType(sku: string, price: number, ctx: { policies: Policy[]; date: string; partnerCode?: string; brandCode?: string; branchCode?: string; contractCode?: string }, share?: boolean,
   item?: { variantCode?: string; typeCode?: string | null; sendToTax?: boolean; parentSku?: string | null }): LineType {
   if (item?.variantCode === 'promo' || item?.typeCode === 'QUA' || item?.sendToTax === false) return 'gift_consumer';
   if (price > 0) return 'buy';

@@ -60,15 +60,10 @@ export function BanLamViecMua({ g, canOpen, onHelp }: { g: GonGroup; canOpen: (p
 
   /** Phần gắn cuối mỗi thẻ: nhãn thiếu / lệch + nút lập phiếu. */
   const them = (b: SoDoNhomBuoc): ReactNode => {
-    const its = of(b.viec);
-    if (!its.length && !b.lap && !b.viec?.length) return null;
+    if (!b.lap) return null;
     return (
       <div className="blv-them">
-        {/* [2026-11-21 Nguyễn Văn Thủy] thẻ bước chỉ còn một nhãn đếm gọn; danh sách việc cần xử lý ở khung "Cần xử lý" góc dưới bên phải (đỡ ngợp) (đóng góp) */}
-        {its.length > 0 ? (() => { const err = its.some((t) => t.level === 'error'); const n = its.reduce((x, t) => x + t.count, 0);
-          return <a href="#blv-can" className={`blv-nhan ${err ? 'error' : 'warn'}`} title={its.map((t) => `${t.count} ${NGAN[t.key] ?? t.text}`).join('\n')}
-            onClick={(e) => { e.preventDefault(); document.getElementById('blv-can')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }}><b>{n}</b> cần xử lý</a>; })()
-          : b.viec?.length && !q.isLoading ? <span className="blv-nhan ok"><Check size={12} /> Đã khớp</span> : null}
+        {/* [2026-11-21 Nguyễn Văn Thủy] thẻ bước KHÔNG hiện cảnh báo (đỡ ngợp) — mọi việc thiếu / lệch ở khung "Cần xử lý" góc dưới bên phải (đóng góp) */}
         {b.lap?.map((x) => <Link key={x.label} to={x.path} className="blv-lap-nho"><Plus size={12} /> {x.label}</Link>)}
       </div>
     );
@@ -79,7 +74,7 @@ export function BanLamViecMua({ g, canOpen, onHelp }: { g: GonGroup; canOpen: (p
       <b>Nghiệp vụ mua hàng — làm theo thứ tự</b>
       <span className="blv-tong">
         {q.isLoading ? '' : loi + can === 0 ? <span className="ok"><Check size={14} /> Không có thiếu / lệch</span>
-          : <>{loi > 0 && <span className="error">{loi} lỗi</span>}{can > 0 && <span className="warn">{can} cần xử lý</span>}</>}
+          : <a href="#blv-can" className="warn" title="Xem danh sách ở khung Cần xử lý (góc dưới bên phải)" onClick={(e) => { e.preventDefault(); document.getElementById('blv-can')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }}>{loi + can} việc cần xử lý ↘</a>}
       </span>
       <button type="button" className="btn btn-sm" onClick={() => void q.refetch()} title="Soát lại thiếu / lệch"><RefreshCw size={14} className={q.isFetching ? 'spin' : ''} /></button>
       <button type="button" className="btn btn-sm" onClick={() => setSp({ xem: 'chi-tiet' }, { replace: true })} title="Luồng chi tiết: từng bước phần mềm tự làm gì"><Workflow size={14} /></button>
