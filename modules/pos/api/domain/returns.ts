@@ -237,11 +237,14 @@ export type ReturnInput = {
    */
   badWarehouse?: string | null;
   badWarehouseIssue?: string;
+  // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 Q2: quà khách trả (nguyên vẹn) về kho quà KKM của cửa hàng nhận trả (đóng góp)
+  /** Kho quà KKM của cửa hàng nhận trả (khoá bizcity.pos.gift_warehouses, đã kiểm); null / trống = chưa khai → quà về kho bán như cũ. */
+  giftWarehouse?: string | null;
 };
 
 export type ComputedReturnLine = SoldLine & {
   qty: number; refund: number; refundNet: number; refundTax: number;
-  /** NT-BH-024: tình trạng; hàng lỗi mang kho KTL nhận (nguyên vẹn: không ghi kho → kho mặc định). */
+  /** NT-BH-024: tình trạng; hàng lỗi mang kho KTL nhận (nguyên vẹn: không ghi kho → kho mặc định; quà nguyên vẹn → kho quà KKM, NT-BH-035). */
   condition: ReturnCondition; warehouseCode?: string;
 };
 export type ComputedReturn = {
@@ -323,7 +326,9 @@ export function computeReturn(input: ReturnInput): ComputedReturn | { problem: O
     const refund = refundFor(availById.get(lineId)!, q);
     const { net, tax } = splitRefund(l, d, q, refund);
     const condition = cond.get(lineId) ?? 'good';
-    out.push({ ...l, qty: q, refund, refundNet: net, refundTax: tax, condition, ...(condition === 'bad' && input.badWarehouse ? { warehouseCode: input.badWarehouse } : {}) });
+    // NT-BH-024: hàng lỗi → KTL (cả dòng quà). NT-BH-035 Q2: quà nguyên vẹn → kho quà KKM của cửa hàng nhận (nếu đã khai).
+    const wh = condition === 'bad' ? input.badWarehouse : l.isGift ? input.giftWarehouse : null;
+    out.push({ ...l, qty: q, refund, refundNet: net, refundTax: tax, condition, ...(wh ? { warehouseCode: wh } : {}) });
   }
   const net = out.reduce((t, l) => t + l.refundNet, 0);
   const tax = out.reduce((t, l) => t + l.refundTax, 0);
@@ -366,6 +371,7 @@ export function toSaleReturnDocument(r: ComputedReturn, meta: {
       // NT-BH-019 bước 2: dòng quà trả lại mang cờ quà như lúc bán — giá vốn đảo cùng luật hàng khuyến mãi.
       ...(l.isGift ? { isGift: true } : {}),
       // NT-BH-024 Q3: hàng lỗi vào kho KTL (TK kho theo loại kho DM18); nguyên vẹn không ghi kho → kho mặc định của chi nhánh.
+      // NT-BH-035 Q2: quà nguyên vẹn mang kho quà KKM của cửa hàng nhận (khi đã khai).
       ...(l.warehouseCode ? { warehouseCode: l.warehouseCode } : {}),
     })),
     payments: r.methodCode && r.refundTotal > 0 ? [{ methodCode: r.methodCode, amount: r.refundTotal }] : [],

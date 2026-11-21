@@ -8,11 +8,11 @@ import type { OrderDraft } from './domain/schema.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-027: số bill theo dạng của cửa hàng (shop / HD) (đóng góp)
 import { issueCodes, wasIssued } from './codes.js';
 import { schemeOf } from './domain/codes.js';
-import { activePaymentMethods, catalogFor, partnerByCode, pricesFor, resolveBranch } from './read.js';
+import { activePaymentMethods, catalogFor, partnerByCode, pricesFor, resolveBranch, todayVn } from './read.js';
 import { changedMessage, checkPrices, noPriceMessage, type PriceIssue } from './domain/price.js';
 import { giftWarehouses, posSettings } from './settings.js';
 import { openShiftOf } from './shifts.js';
-import { stockAtWarehouse, stockOf, warehousesFor } from './catalog.js';
+import { serviceSkus, stockAtWarehouse, stockOf, warehousesFor } from './catalog.js';
 import { stockNeeds, stockShortages, stockShortMessage, type StockShort } from './domain/stock.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-025: hạn mức lượt khuyến mại theo cửa hàng (đóng góp)
 import { usesOf } from './domain/promo.js';
@@ -140,7 +140,10 @@ async function quoteVouchers(ctx: ActionContext, tx: Parameters<Parameters<Actio
  * theo chi nhánh × mã (gồm mọi kho của mã — chặt hơn, cùng khoá phiếu bán BH10 lấy).
  */
 export async function checkStock(tx: Parameters<Parameters<ActionContext['data']['module']>[0]>[0], branchCode: string,
-  lines: readonly { sku: string; qty: number; warehouse?: string }[]): Promise<StockShort[]> {
+  lines0: readonly { sku: string; qty: number; warehouse?: string }[], day: string = todayVn()): Promise<StockShort[]> {
+  // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 §3.3: dòng mặt hàng dịch vụ không ghi thẻ kho → không khoá, không kiểm tồn (đóng góp)
+  const svc = await serviceSkus(tx, lines0.map((l) => l.sku), day);
+  const lines = lines0.filter((l) => !svc.has(l.sku));
   const skus = [...new Set(lines.map((l) => l.sku))].sort();
   for (const sku of skus) await lockKey(tx, `pos:stock:${branchCode}:${sku}`);
   const sale = lines.filter((l) => !l.warehouse);

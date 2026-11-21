@@ -33,6 +33,15 @@ interface Quote { sku: string; unit: string; ratio: number; price: number | null
 
 interface CatalogProduct { sku: string; name: string; unit: string; taxOutCode: string | null; taxInCode: string | null; units: { unit: string; isDefault: boolean }[]; prices: { unit: string; price: number | null }[] }
 interface PaymentMethod { code: string; name: string; isActive?: boolean }
+// [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 §3.1: BH10 có ô Kênh bán (danh mục Kênh bán hàng của module pos) và ô Mã voucher (đóng góp)
+/** Kênh bán hàng (GET /api/v1/m/pos/channels). */
+interface SaleChannel { code: string; name: string; active: boolean }
+/** Voucher đã áp (phiếu đã duyệt) / kết quả kiểm (POST /api/v1/m/phieu-ban/vouchers/check). */
+interface AppliedVoucher { code: string; campaignName: string; issuer: 'tgs' | 'brand'; kind: 'discount' | 'payment'; amount: number }
+interface VoucherCheck { vouchers: AppliedVoucher[]; before: { total: number }; after: { total: number }; discount: number; payment: number }
+/** Phần riêng của phiếu bán module phieu-ban: kênh (NT-BH-031), mã voucher của nháp + voucher đã áp lúc duyệt (NT-BH-026). */
+type SaleExtra = { saleChannel?: string; saleChannelName?: string; voucherCodes?: string[]; vouchers?: AppliedVoucher[] | string[] };
+const voucherCodesOf = (s: string) => [...new Set(s.split(/[\s,;]+/).map((x) => x.trim().toUpperCase()).filter(Boolean))];
 
 const money = (n: number | undefined) => (n ? n.toLocaleString('vi-VN') : '');
 const num = (s: string) => { const n = Number(s.replace(/\./g, '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
@@ -120,6 +129,33 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
   const promoStale = promo !== null && promo.sig !== sigOf(v);
   const promoReady = Boolean(v.branchCode) && v.lines.some((l) => l.sku && !l.isGift && l.qty > 0);
 
+  // NT-BH-035 §3.1: kênh bán + mã voucher (chỉ phiếu bán của module phieu-ban). Voucher trừ lúc duyệt; nút Kiểm voucher hỏi trước số được giảm.
+  const isSale = v.docType === 'sale';
+  const sx = v as TradeDoc & SaleExtra;
+  const channels = useQuery({
+    queryKey: ['pos-channels'], enabled: isSale, staleTime: 300_000,
+    queryFn: () => api.get<{ items: SaleChannel[] }>('/api/v1/m/pos/channels').then((r) => r.items).catch(() => [] as SaleChannel[]),
+  }).data ?? [];
+  const [voucherText, setVoucherText] = useState(() => (sx.voucherCodes ?? []).join(' '));
+  const [vCheck, setVCheck] = useState<{ sig: string; result?: VoucherCheck; error?: string } | null>(null);
+  const [vBusy, setVBusy] = useState(false);
+  const voucherCodes = voucherCodesOf(voucherText);
+  const vSig = JSON.stringify([voucherCodes, v.partner?.code, v.branchCode, v.docDate, v.totals.total]);
+  const appliedVouchers = Array.isArray(sx.vouchers) ? (sx.vouchers as unknown[]).filter((x): x is AppliedVoucher => typeof x === 'object' && x !== null) : [];
+  /** Đầu vào gửi API của phiếu bán: mã voucher là mảng mã (không gửi lại voucher đã áp), kênh theo mã. */
+  const saleInput = (d: TradeDoc): TradeDoc => {
+    if (!isSale) return d;
+    const { voucherCodes: _c, vouchers: _v, ...rest } = d as TradeDoc & SaleExtra;
+    return { ...rest, ...(voucherCodes.length ? { vouchers: voucherCodes } : {}) } as TradeDoc;
+  };
+  const checkVoucher = async () => {
+    setVBusy(true);
+    try {
+      const result = await api.post<VoucherCheck>('/api/v1/m/phieu-ban/vouchers/check', { ...saleInput(v), ...(v.id ? { id: v.id } : {}) });
+      setVCheck({ sig: vSig, result });
+    } catch (e) { setVCheck({ sig: vSig, error: errorText(e) }); } finally { setVBusy(false); }
+  };
+
   /** Chọn mã hàng → điền tên, ĐVT bán chính, đơn giá bảng giá công ty, loại thuế của mặt hàng. */
   const pickItem = async (i: number, sku: string) => {
     setLine(i, { sku });
@@ -157,7 +193,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
     <Modal voucher={{ total: v.totals.total }} viewFirst={Boolean(value.docNo) && !readOnly} wide title={`${info.label}${v.docNo ? ` ${v.docNo}` : ' (mới)'}${v.status === 'approved' ? ' — đã duyệt' : ''}`} onClose={onClose}
       footer={<>
         {printScreen && TRADE_TEMPLATES[v.docType] && value.id && <span data-view-ok style={{ marginRight: 'auto' }}><PrintButton screen={printScreen} templates={TRADE_TEMPLATES[v.docType]!} title="In phiếu theo nội dung đã ghi (sửa xong bấm Ghi rồi mới in)" getDocs={() => [value]} /></span>}
-        {!readOnly && <button className="btn btn-primary" disabled={saving || problems.length > 0} title={problems.join('; ')} onClick={() => onSave(v)}>Ghi</button>}
+        {!readOnly && <button className="btn btn-primary" disabled={saving || problems.length > 0} title={problems.join('; ')} onClick={() => onSave(saleInput(v))}>Ghi</button>}
         <button className="btn" onClick={onClose}>Thoát</button>
       </>}>
       <div className="full row" style={{ justifyContent: 'flex-end' }}>
@@ -193,6 +229,18 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
               const row = (await api.get<{ code: string; name: string; taxCode?: string | null }[]>('/api/v1/partners', { search: c, pageSize: 5 }).catch(() => [])).find((x) => x.code === c);
               set({ partner: { code: c, name: row?.name ?? c, taxCode: row?.taxCode ?? undefined } });
             }} />
+          </Field>
+        )}
+        {isSale && (
+          <Field label="Kênh bán" hint="Trống = kênh mặc định (Gần shop). Danh mục ở Kênh bán hàng (máy bán POS)">
+            <select className="input" value={sx.saleChannel ?? ''} onChange={(e) => {
+              const c = channels.find((x) => x.code === e.target.value);
+              set({ saleChannel: c?.code, saleChannelName: c?.name } as Partial<TradeDoc>);
+            }}>
+              <option value="">— kênh mặc định —</option>
+              {channels.filter((c) => c.active || c.code === sx.saleChannel).map((c) => <option key={c.code} value={c.code}>{c.name}{c.active ? '' : ' (đã ngừng)'}</option>)}
+              {sx.saleChannel && !channels.some((c) => c.code === sx.saleChannel) && <option value={sx.saleChannel}>{sx.saleChannelName ?? sx.saleChannel}</option>}
+            </select>
           </Field>
         )}
         {info.hasOriginal && <Field label="Phiếu gốc" hint="Số phiếu bán / mua gốc (tham khảo, không bắt buộc)"><input className="input mono" value={v.originalDocNo ?? ''} onChange={(e) => set({ originalDocNo: e.target.value.trim() || undefined })} /></Field>}
@@ -296,6 +344,36 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
             {!promo && (v.policyRefs ?? []).length > 0 && (
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Đã áp: {(v.policyRefs ?? []).map((p) => `${p.key} (bản ${p.version})`).join(', ')}</div>
             )}
+          </div>
+        </fieldset>
+      )}
+
+      {isSale && (!readOnly || voucherCodes.length > 0 || appliedVouchers.length > 0) && (
+        <fieldset className="fgroup">
+          <legend>Voucher — trừ lúc duyệt</legend>
+          <div className="full">
+            {!readOnly && (
+              <div className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input className="input mono" style={{ width: 260 }} placeholder="Mã voucher (nhiều mã: cách nhau dấu cách)" value={voucherText}
+                  onChange={(e) => setVoucherText(e.target.value.toUpperCase())} />
+                <button type="button" className="btn btn-sm" disabled={vBusy || !voucherCodes.length || !v.branchCode}
+                  title={!voucherCodes.length ? 'Nhập mã voucher trước' : !v.partner?.code ? 'Voucher gắn SĐT khách — chọn khách trước' : 'Kiểm mã và tính số được giảm (chưa ghi, chưa giữ mã)'}
+                  onClick={() => void checkVoucher()}>{vBusy ? 'Đang kiểm…' : 'Kiểm voucher'}</button>
+                {vCheck && vCheck.sig !== vSig && <span style={{ color: 'var(--warn, #b45309)', fontSize: 12 }}>Đã đổi mã / khách / dòng hàng sau khi kiểm — bấm Kiểm voucher lại</span>}
+              </div>
+            )}
+            {vCheck?.error && vCheck.sig === vSig && <div className="alert alert-bad" style={{ marginTop: 6 }}>{vCheck.error}</div>}
+            {vCheck?.result && vCheck.sig === vSig && (
+              <div className="alert alert-ok" style={{ marginTop: 6 }}>
+                {vCheck.result.vouchers.map((x) => `${x.code} (${x.campaignName}): ${x.kind === 'discount' ? 'giảm' : 'thanh toán'} ${money(x.amount) || 0}`).join(' · ')}
+                {' — '}tổng phiếu {money(vCheck.result.before.total) || 0} → <b>{money(vCheck.result.after.total) || 0}</b>
+                {vCheck.result.payment > 0 && <> · voucher hãng trả {money(vCheck.result.payment)}</>}
+              </div>
+            )}
+            {readOnly && appliedVouchers.length > 0 && (
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Đã áp: {appliedVouchers.map((x) => `${x.code} ${x.kind === 'discount' ? 'giảm' : 'thanh toán'} ${money(x.amount) || 0}`).join(' · ')}</div>
+            )}
+            {readOnly && !appliedVouchers.length && voucherCodes.length > 0 && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Mã: {voucherCodes.join(', ')}</div>}
           </div>
         </fieldset>
       )}

@@ -33,3 +33,11 @@ Không còn việc nào thì trang báo **"Không có việc tồn đọng"**.
 | 7. Đối chiếu & báo cáo (BH02) | doanh số, trả lại, thuần; đơn POS khớp chứng từ; lãi gộp sau giá vốn cuối tháng | Tài khoản ngầm định (ACC41), Định khoản bán hàng (khối ④ của BH17) | Tổng quan bán lẻ (BH16), Lãi gộp (BH04), Sổ nhật ký bán hàng |
 
 Đơn vị không dùng máy bán POS: các ô máy POS không hiện.
+
+<!-- [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035: kênh + voucher BH10, quà trả về kho KKM, mặt hàng dịch vụ không ghi kho (đóng góp) -->
+## Ghi nhớ (NT-BH-035)
+
+- **Phiếu bán BH10**: chọn **Kênh bán** (danh mục Kênh bán hàng; trống = Gần shop). Ô **Mã voucher**: bấm *Kiểm voucher* để xem số được giảm trước khi ghi (mã sai / hết hạn / đã dùng báo ngay); voucher thật sự trừ lúc **Duyệt**.
+- **Quà khách trả lại** (nguyên vẹn) — ở máy bán và phiếu trả BH11 — tự nhập về **kho quà (KKM)** của cửa hàng nhận trả (kho khai ở BH17). Cửa hàng chưa khai kho quà: về kho bán như cũ. Quà lỗi / hết hạn vẫn vào kho hàng trả lại (KTL).
+- **Mặt hàng dịch vụ** (phân loại *Dịch vụ*, vd phí ship): có doanh thu, thuế như thường nhưng **không** ghi thẻ kho, không tồn, không giá vốn; không bị chặn bán quá tồn. BH17 nhắc nếu mã phí ship chưa phân loại là dịch vụ (màn khai loại mặt hàng chưa có — nhờ quản trị đặt loại *Dịch vụ* cho mã đó).
+
