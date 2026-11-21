@@ -5,14 +5,42 @@
  * dữ liệu gốc (an toàn khi chạy lại), xong thì thoát. Các container API chỉ khởi động sau khi job này xong
  * (depends_on: service_completed_successfully) — chỉ một nơi đụng tới cấu trúc DB.
  */
-import { pool } from './client.js';
-import { runMigrations } from './migrate.js';
-import { seed } from '../kernel/public.js';
-import { db } from './client.js';
-import { freezeApproved } from '../phan-he/mua-hang/analysis.js';
-import { syncBundled } from '../core/module-lifecycle.js';
-import { discoverSdkModules } from '../core/sdk-modules.js';
-import { runModuleMigrations } from '@bizcity/platform/db/module-db';
+// [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-5): nhật ký job ra logs/db-migrate.log (đầu khối: giờ, bản, commit; cuối khối: xong / lỗi đầy đủ); module khác nạp ĐỘNG để lỗi cấu hình lúc nạp cũng vào tệp
+import type * as Client from './client.js';
+import type * as KernelPublic from '../kernel/public.js';
+import { baseFields, installProcessHandlers, logFilePath, logStartFailure, rotatingFile, writeSync } from '@bizcity/platform/core/logger';
+
+const SERVICE = 'db-migrate';
+const LOG_FILE = 'db-migrate.log';
+installProcessHandlers({ service: SERVICE, file: LOG_FILE });
+
+/**
+ * Chép mọi dòng job in ra (console của migration, seed, module) vào logs/db-migrate.log, mỗi dòng có giờ. 5 MB × 3 bản (10 §7.3).
+ * Dòng JSON khuôn pino (writeSync) đã tự ghi tệp — bỏ qua ở đây cho khỏi trùng.
+ */
+function teeConsoleToFile(): void {
+  const p = logFilePath(LOG_FILE);
+  if (!p) return;
+  const file = rotatingFile(p, 5 * 1024 * 1024, 3);
+  for (const stream of [process.stdout, process.stderr]) {
+    const orig = stream.write.bind(stream) as (chunk: unknown, ...rest: unknown[]) => boolean;
+    stream.write = ((chunk: unknown, ...rest: unknown[]) => {
+      const text = typeof chunk === 'string' ? chunk : Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk);
+      if (!text.startsWith('{"level":')) {
+        const at = new Date().toISOString();
+        const rows = text.split('\n');
+        if (rows.at(-1) === '') rows.pop();
+        file.write(rows.map((l) => `${at} ${l}\n`).join(''));
+      }
+      return orig(chunk, ...rest);
+    }) as typeof stream.write;
+  }
+}
+teeConsoleToFile();
+
+// Nạp trong main() (import động) — xem chú thích đầu khối PHASE-038 ở trên.
+let pool!: typeof Client.pool;
+let seed!: typeof KernelPublic.seed;
 
 /**
  * Vai trò CSDL của API (R-SEC-6, migration 0032): có DB_APP_PASSWORD thì bật LOGIN + đặt mật khẩu cho ketoan_app để API kết
@@ -90,6 +118,16 @@ async function sampleTenant(tenantsBefore: number, adminPassword: string): Promi
 }
 
 async function main(): Promise<void> {
+  const b = baseFields(SERVICE);
+  writeSync('info', { evt: 'bizcity.system.migrate_started', msg: `Job cơ sở dữ liệu bắt đầu — bản ${b.version}, commit ${b.commit ?? '(chưa đặt BIZCITY_GIT_SHA)'}` }, { service: SERVICE, file: LOG_FILE });
+  ({ pool } = await import('./client.js'));
+  const { db } = await import('./client.js');
+  ({ seed } = await import('../kernel/public.js'));
+  const { runMigrations } = await import('./migrate.js');
+  const { freezeApproved } = await import('../phan-he/mua-hang/analysis.js');
+  const { syncBundled } = await import('../core/module-lifecycle.js');
+  const { discoverSdkModules } = await import('../core/sdk-modules.js');
+  const { runModuleMigrations } = await import('@bizcity/platform/db/module-db');
   const applied = await runMigrations((m) => console.log(m));
   console.log(applied.length ? `Đã áp ${applied.length} migration.` : 'Cơ sở dữ liệu đã mới nhất.');
   await enableAppRole();
@@ -110,9 +148,11 @@ async function main(): Promise<void> {
   console.log(changes.length ? `Registry module: ${changes.map((c) => `${c.action} ${c.key}`).join(', ')}` : 'Registry module: đã khớp bản dựng');
   await sampleTenant(tenantsBefore, main.adminPassword);
   await pool.end();
+  writeSync('info', { evt: 'bizcity.system.migrate_done', msg: `Job cơ sở dữ liệu xong: áp ${applied.length} migration`, applied }, { service: SERVICE, file: LOG_FILE });
 }
 
 main().catch((err) => {
   console.error('Job cơ sở dữ liệu lỗi:', err instanceof Error ? err.message : err);
+  logStartFailure(err, { service: SERVICE, file: LOG_FILE });
   process.exit(1);
 });

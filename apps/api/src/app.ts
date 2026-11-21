@@ -15,6 +15,7 @@
  *   2. Khai routes vào lõi hoặc phân hệ tương ứng ở src/phan-he/.
  */
 import Fastify, { type FastifyInstance } from 'fastify';
+import { loggerOptions } from '@bizcity/platform/core/logger';
 import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
@@ -77,7 +78,8 @@ import { dangKyManHinhModule } from './modules/access/man-hinh-module.js'; // [2
 // [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: modulesDir — thư mục module SDK (test dựng module mẫu ở thư mục tạm)
 export async function buildApp(opts: { modulesDir?: string } = {}): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: { level: env.NODE_ENV === 'test' ? 'silent' : env.LOG_LEVEL },
+    // [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-3): stdout như cũ + dòng ≥ LOG_FILE_LEVEL chép vào logs/api-loi.log; service / version / commit trong mọi dòng
+    logger: loggerOptions({ service: 'api', level: env.LOG_LEVEL, silent: env.NODE_ENV === 'test', dir: env.LOG_DIR, fileLevel: env.LOG_FILE_LEVEL }),
     // Mã yêu cầu (OBSERVABILITY §1): nhận X-Request-Id hợp lệ của bên gọi, không thì tự sinh. Log ghi một dòng/yêu cầu ở onResponse.
     genReqId: (raw) => {
       const h = raw.headers['x-request-id'];

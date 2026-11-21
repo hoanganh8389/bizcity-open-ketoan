@@ -48,6 +48,11 @@ const envSchema = z.object({
   /** Nhãn môi trường hiện thành dải trên đầu giao diện (vd. "BẢN TEST") để không nhầm với bản thật. Trống = không hiện. */
   ENV_LABEL: z.string().default(''),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  // [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-2): thư mục nhật ký lỗi cố định + mức ghi tệp (core/logger.ts đọc thẳng process.env — khai ở đây để kiểm và để tài liệu hoá)
+  /** Thư mục nhật ký lỗi (Docker: /app/logs, gắn ra <thư mục cài>/logs). Trống = không ghi tệp (dev, test) — PHASE-038. */
+  LOG_DIR: z.string().default(''),
+  /** Mức thấp nhất chép vào logs/api-loi.log (D038-3: warn). stdout vẫn theo LOG_LEVEL. */
+  LOG_FILE_LEVEL: z.enum(['fatal', 'error', 'warn', 'info']).default('warn'),
   /** GET /metrics (Prometheus, docs/ops/OBSERVABILITY.md §3): đặt thì phải gửi Authorization: Bearer <token>. Trống = mở trong mạng nội bộ (nginx không chuyển /metrics ra ngoài). */
   METRICS_TOKEN: z.string().default(''),
   // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
@@ -110,19 +115,27 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+// [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-4): cấu hình sai → ném EnvError thay vì process.exit, để điểm vào (main.ts, db/setup.ts) ghi dòng fatal reason ENV_INVALID vào logs/ trước khi thoát
+/** Cấu hình môi trường sai: điểm vào bắt và ghi nhật ký lỗi (PHASE-038); tên biến hỏng ở `fields`, KHÔNG có giá trị biến. */
+export class EnvError extends Error {
+  override name = 'EnvError';
+  constructor(message: string, readonly fields?: Record<string, string[] | undefined>) {
+    super(message);
+  }
+}
+
 function loadEnv(): Env {
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
-    console.error('Cấu hình môi trường không hợp lệ:', parsed.error.flatten().fieldErrors);
-    process.exit(1);
+    const fields = parsed.error.flatten().fieldErrors;
+    console.error('Cấu hình môi trường không hợp lệ:', fields);
+    throw new EnvError(`Cấu hình môi trường không hợp lệ: ${Object.keys(fields).join(', ')}`, fields);
   }
   if (parsed.data.NODE_ENV === 'production' && parsed.data.JWT_SECRET.startsWith('dev-secret')) {
-    console.error('JWT_SECRET đang dùng giá trị mặc định. Hãy đặt khoá riêng ở môi trường thật.');
-    process.exit(1);
+    throw new EnvError('Cấu hình môi trường không hợp lệ: JWT_SECRET đang dùng giá trị mặc định. Hãy đặt khoá riêng ở môi trường thật.');
   }
   if (parsed.data.NODE_ENV === 'production' && parsed.data.BIZCITY_DEV_MODULES) {
-    console.error('BIZCITY_DEV_MODULES=true bị cấm ở bản thật: API phải chỉ nạp module đúng hash trong registry (ADR-0011 D2).');
-    process.exit(1);
+    throw new EnvError('Cấu hình môi trường không hợp lệ: BIZCITY_DEV_MODULES=true bị cấm ở bản thật: API phải chỉ nạp module đúng hash trong registry (ADR-0011 D2).');
   }
   return parsed.data;
 }

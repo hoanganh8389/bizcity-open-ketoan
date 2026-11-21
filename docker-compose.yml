@@ -16,10 +16,19 @@
 # =============================================================================
 name: ketoan
 
+# [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-2): trần log Docker (json-file) cho mọi dịch vụ — trước đây không giới hạn, đầy đĩa là sập CSDL.
+# Nhật ký lỗi cố định nằm ở thư mục logs/ của bản cài (LOG_HOST_DIR, tối đa 200 MB — docs/phases/PHASE-038-NHAT-KY-LOI-CO-DINH/10-NGHIEN-CUU-GHI-LOG.md §7.3).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *logging
     environment:
       POSTGRES_DB: ketoan
       POSTGRES_USER: ketoan
@@ -41,6 +50,7 @@ services:
       context: .
       dockerfile: docker/api.Dockerfile
     restart: "no"
+    logging: *logging
     entrypoint: ["node", "dist/db/setup.js"]
     depends_on:
       db:
@@ -48,6 +58,9 @@ services:
     environment:
       # [2026-11-18 Nguyễn Văn Thủy] 0161: job ghi dòng nhật ký cũ ra JSONL (DATA_DIR/nhat-ky) — cùng ổ appdata với API
       DATA_DIR: /app/apps/api/data
+      # [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-5): job ghi logs/db-migrate.log (đầu / cuối mỗi lần chạy, lỗi đầy đủ)
+      LOG_DIR: /app/logs
+      BIZCITY_GIT_SHA: ${BIZCITY_GIT_SHA:-}
       NODE_ENV: production
       DATABASE_URL: postgres://ketoan:${DB_PASSWORD:-ketoan}@db:5432/ketoan
       JWT_SECRET: ${JWT_SECRET:?Đặt JWT_SECRET trong .env}
@@ -71,12 +84,15 @@ services:
     volumes:
       - appdata:/app/apps/api/data
       - ${SEEDS_DIR:-./db/seeds}:/srv/bizcity-seeds:ro
+      # [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1: thư mục nhật ký lỗi cố định trên máy chủ (D038-1)
+      - ${LOG_HOST_DIR:-./logs}:/app/logs
 
   api:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
     restart: unless-stopped
+    logging: *logging
     depends_on:
       db:
         condition: service_healthy
@@ -132,8 +148,13 @@ services:
       DATA_DIR: /app/apps/api/data
       # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: SEEDS_DIR (.env, đường dẫn trên máy chủ) = bộ danh mục của công ty, gắn chỉ đọc; trống = db/seeds trong ảnh (bộ giả lập)
       SEEDS_DIR: ${SEEDS_DIR:+/srv/bizcity-seeds}
+      # [2026-11-21 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1 (S038-2, S038-3): nhật ký lỗi cố định — dòng ≥ LOG_FILE_LEVEL vào logs/api-loi.log; commit đang chạy vào mọi dòng log
+      LOG_DIR: /app/logs
+      LOG_FILE_LEVEL: ${LOG_FILE_LEVEL:-warn}
+      BIZCITY_GIT_SHA: ${BIZCITY_GIT_SHA:-}
     volumes:
       - appdata:/app/apps/api/data
+      - ${LOG_HOST_DIR:-./logs}:/app/logs
       # [2026-11-14 01:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-036 — S036-11: bộ danh mục của công ty, chỉ đọc (xem db/seeds/README.md)
       - ${SEEDS_DIR:-./db/seeds}:/srv/bizcity-seeds:ro
     healthcheck:
@@ -148,6 +169,7 @@ services:
       context: .
       dockerfile: docker/web.Dockerfile
     restart: unless-stopped
+    logging: *logging
     depends_on:
       - api
     ports:

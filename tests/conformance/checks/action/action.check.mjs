@@ -16,6 +16,8 @@ const SRC = LAYER_ROOTS;
 const srcOpts = (ctx) => (ctx.mode === 'module' ? { ext: ['.ts', '.mjs', '.js'], not: /(^|\/)(test|tests)\// } : { under: SRC, ext: ['.ts'] });
 /** Tệp duy nhất được ghi bằng chứng ra tệp: bản niêm phong (ADR-0030 D-SEAL-2; SC-EVD-1 miễn, SC-EVD-9 giữ hình dạng). */
 const SEAL_EXPORT = 'packages/platform/src/core/evidence-export.ts';
+// [2026-11-21 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1: tệp duy nhất được ghi nhật ký lỗi kỹ thuật ra logs/ (10-NGHIEN-CUU-GHI-LOG §7.3)
+const ERROR_LOG_WRITER = 'packages/platform/src/core/logger.ts';
 const ROUTE_RE = /\b(?:r|app|fastify|server|router|api)\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]*)['"`]/;
 
 export const checks = [
@@ -150,6 +152,8 @@ export const checks = [
       const findings = [];
       for (const file of ctx.repo.files(opts)) {
         if (file === SEAL_EXPORT) continue; // ngoại lệ hẹp STD-EVD-4 (ADR-0030 D-SEAL-2): bản niêm phong sinh từ bảng; hình dạng do SC-EVD-9 giữ
+        // [2026-11-21 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1: ngoại lệ hẹp STD-EVD-4 — nhật ký LỖI KỸ THUẬT của bản cài (logs/, R-LOG), không chứa dữ liệu nghiệp vụ (R-SEC-10)
+        if (file === ERROR_LOG_WRITER) continue;
         const jsonl = /\.jsonl/.test(ctx.repo.read(file));
         ctx.repo.lines(file).forEach((t, i) => {
           if (/^\s*(\/\/|\*)/.test(t)) return;

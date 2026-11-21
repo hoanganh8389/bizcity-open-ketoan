@@ -48,6 +48,7 @@ export const LAYER_MAP = [
   ['core/observability.ts', 'P', 'observability'],
   ['core/request-context.ts', 'P', 'observability'],
   ['core/tracing.ts', 'P', 'observability'],
+  ['core/logger.ts', 'P', 'observability'], // [2026-11-21 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-038 — B1: nhật ký lỗi cố định logs/ (cùng lớp quan sát với tracing)
   ['core/events.ts', 'P', 'events'],
   ['core/auth.ts', 'P', 'permissions'],
   ['core/security/', 'P', 'permissions'],
