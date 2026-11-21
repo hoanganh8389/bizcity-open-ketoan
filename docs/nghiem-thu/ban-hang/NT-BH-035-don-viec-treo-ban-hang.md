@@ -72,13 +72,15 @@
 
 ## 6. Kết quả chạy
 <!-- [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035: kết quả chạy phần §3.1–3.4 (đóng góp) -->
-Ngày 21/11/2026, nhánh `feat/nt-bh-035-don-viec-treo` — làm §3.1–3.4; §3.5 (kiểm trình duyệt BH20 / BH17 / BH23) và §3.6 (tạo khách trên POS, plugin WP) **chưa làm** trong lượt này.
+Ngày 21/11/2026, nhánh `feat/nt-bh-035-don-viec-treo` — làm §3.1–3.4 + BH20 bỏ dòng dịch vụ khỏi giữ hàng; §3.6 ở plugin WP (`tgs_pos`, `tgs_accounting_bridge`); §3.5 kiểm trình duyệt ghi ở bảng dưới.
 
 | Kiểm | Kết quả |
 |---|---|
-| `apps/api/test/nt-bh-035-don-viec-treo.test.ts` | 10 / 10 đạt (loại kho có KKM, mặc định KTL; quà trả POS → KKM; quà lỗi → KTL; cửa hàng chưa khai kho quà → như cũ; BH11 quà → KKM; dịch vụ bán / trả không thẻ kho, không giá vốn, doanh thu + thuế có; POS bán dịch vụ không tồn không chặn; BH10 chặn tồn bật không chặn dòng dịch vụ + BH17 nhắc; giữ số có `device_id`; BH10 kênh + kiểm voucher) |
+| `apps/api/test/nt-bh-035-don-viec-treo.test.ts` | 11 / 11 đạt (BH20 đơn có phí ship dịch vụ: gửi không báo thiếu tồn, dòng dịch vụ không giữ / không chuyển kho; loại kho có KKM, mặc định KTL; quà trả POS → KKM; quà lỗi → KTL; cửa hàng chưa khai kho quà → như cũ; BH11 quà → KKM; dịch vụ bán / trả không thẻ kho, không giá vốn, doanh thu + thuế có; POS bán dịch vụ không tồn không chặn; BH10 chặn tồn bật không chặn dòng dịch vụ + BH17 nhắc; giữ số có `device_id`; BH10 kênh + kiểm voucher) |
 | Hồi quy `apps/api` (nt-bh-*, inventory, costing, gia-von, kho, loai-kho, phan-kho, tk-kho, tra-hang, golden, item, phieu-chuyen-kho, nt-kho, posting, kiem-ke) | 54 tệp đạt, 1 bỏ qua · 406 test đạt, 11 bỏ qua |
-| Test module `modules/pos/test`, `modules/phieu-ban/test` | 113 / 113, 21 / 21 đạt |
+| Test module `modules/pos/test`, `modules/phieu-ban/test` | 113 / 113, 22 / 22 đạt |
+| Hồi quy BH20 / giao hàng / sổ chứng từ (nt-bh-023, 032, 033) | 29 / 29 đạt |
+| §3.6 tạo khách trên POS (thử thật shop2, 21/11) | SĐT mới → tạo khách ở kế toán (`core.partner.upsert` qua cầu nối) + bản sao WP; nhập lại cùng số dạng +84 → nhận khách cũ, không tạo; SĐT sai → 422. React 770 / 770 đạt; `tgs_pos` test sổ 31 / 31, ánh xạ đơn 24 / 25 (ca Viettel đọc người mua đỏ từ trước, không do đợt này) |
 | `npm run typecheck` | đạt |
 | `selfcheck` | 27 không đạt như `main`; mới: SC-SIG-1 ở `db/migrations/0178_kho_khuyen_mai_nhan_tra.sql` (migration chưa phát hành cần dấu chủ dự án — chờ chủ quyết, R-SIG) |
 
@@ -88,10 +90,12 @@ Lệch / bổ sung so với §3 (ghi rõ để duyệt):
 3. BH10 "hiện số được giảm": thêm action đọc `phieu-ban.voucher.check` (POST `/api/v1/m/phieu-ban/vouchers/check`, quyền `phieu-ban:write`) — cùng luật lúc duyệt, không giữ mã.
 4. Kho quà khai sai (không phải KKM…) khi trả quà nguyên vẹn ở máy bán → `POS_GIFT_WAREHOUSE` như lúc bán quà (NT-BH-028); chưa khai → như cũ.
 5. Mã phí ship chưa là dịch vụ: BH10 vẫn bỏ qua kiểm tồn dòng đó như NT-BH-032 (lối lùi), BH17 nhắc.
-6. §3.4: action `pos.sequence.reserve` đã nhận / lưu `deviceId` — chỉ thêm test; phần React gửi mã máy ở `tgs_pos`.
+6. **Anh Hoàng chốt 21/11:** merge đợt này trước; ô *Loại mặt hàng* ở danh mục + sửa `bizcity_item_classify` giữ `kind` làm **phiếu riêng** (tệp danh mục thuộc giữ chỗ PHASE-026 của Nguyễn Văn Thủy — hỏi trước). Trong lúc chờ, phí ship vẫn chạy theo lối lùi mục 5. BH20: dòng dịch vụ không giữ hàng, không báo thiếu tồn, không đi chứng từ chuyển kho KCB ⇄ KHG (anh chốt sửa luôn trong đợt).
+7. §3.4: action `pos.sequence.reserve` đã nhận / lưu `deviceId` — chỉ thêm test; phần React gửi mã máy ở `tgs_pos`.
 
 ## 7. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 21/11/2026 | Tạo phiếu, chốt Q1–Q4; giữ chỗ code |
 | 21/11/2026 | Code §3.1–3.4 (nhánh `feat/nt-bh-035-don-viec-treo`), điền §6 |
+| 21/11/2026 | Anh chốt: loại mặt hàng làm phiếu riêng; BH20 bỏ dòng dịch vụ khỏi giữ hàng (sửa luôn); §3.6 xong ở plugin WP |

@@ -248,7 +248,9 @@ export async function updateOrderFlow(ctx: ActionContext, id: string, input: Ord
     const extra: Change[] = [];
     if (cur.status === 'open') {
       const holdWh = cur.hold_warehouse_code!;
-      const rb = rebalanceHolds(lines, await stockFor(tx, cur, [...lines, ...m.removed].map((l) => l.sku)), { removed: m.removed });
+      // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035: dòng dịch vụ không giữ hàng / không báo thiếu tồn (đóng góp)
+      const skip = await serviceSkus(tx, lines.map((l) => l.sku), input.orderDate);
+      const rb = rebalanceHolds(lines, await stockFor(tx, cur, [...lines, ...m.removed].map((l) => l.sku)), { removed: m.removed, skip });
       lines = rb.lines;
       short = rb.short;
       ({ docs, seq } = holdDocsOf(cur, holdWh, rb, seq));
@@ -324,7 +326,9 @@ const roundSum = (xs: number[]) => Math.round(xs.reduce((s, x) => s + x, 0) * 10
 async function goOpen(ctx: ActionContext, id: string, holdWh: string, action: 'send' | 'approve', note?: string) {
   const plan = await ctx.data.module(async (tx) => {
     const r = await getOrder(tx, id, true);
-    const rb = rebalanceHolds(r.body.lines, await stockFor(tx, r, r.body.lines.map((l) => l.sku)));
+    // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035: dòng dịch vụ không giữ hàng / không báo thiếu tồn (đóng góp)
+    const skip = await serviceSkus(tx, r.body.lines.map((l) => l.sku), vnToday());
+    const rb = rebalanceHolds(r.body.lines, await stockFor(tx, r, r.body.lines.map((l) => l.sku)), { skip });
     const { docs, seq } = holdDocsOf({ ...r, hold_warehouse_code: holdWh }, holdWh, rb, r.hold_seq);
     await updateOrder(tx, id, {
       ...writeOf(r, ctx.actor.id), status: 'open', body: { ...r.body, lines: rb.lines }, holdWarehouseCode: holdWh, holdSeq: seq, pendingReasons: null,
@@ -643,7 +647,9 @@ export async function setShipmentStatus(ctx: ActionContext, id: string, shipment
     }
     const carrier = (input.carrier?.trim() || sh.carrier_code || SELF_CARRIER).toUpperCase();
     const trackingNo = input.trackingNo?.trim() || sh.tracking_no;
-    const moves: Move[] = sh.lines.map((l) => ({ lineKey: l.lineKey, sku: l.sku, name: l.name, unit: l.unit, qty: l.qty }));
+    // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035: dòng dịch vụ không đi chứng từ chuyển kho KCB ⇄ KHG (đóng góp)
+    const svc = await serviceSkus(tx, sh.lines.map((l) => l.sku), vnToday());
+    const moves: Move[] = sh.lines.filter((l) => !svc.has(l.sku)).map((l) => ({ lineKey: l.lineKey, sku: l.sku, name: l.name, unit: l.unit, qty: l.qty }));
     const date = vnToday();
     let docs: HoldDoc[] = [];
     let seq = r.hold_seq;
@@ -657,11 +663,11 @@ export async function setShipmentStatus(ctx: ActionContext, id: string, shipment
       if (r.status !== 'open') throw stateError(r, 'chỉ đi giao đơn đang mở');
       shipWh = await shipWarehouseOf(tx, r, cfg);
       const from = r.hold_warehouse_code ?? r.warehouse_code;
-      docs = [toHoldDoc({ orderId: r.order_id, orderNo: r.order_no, seq: ++seq, branchCode: r.branch_code, docDate: date, from, to: shipWh, moves, release: false, kind: 'ship' })];
+      docs = moves.length ? [toHoldDoc({ orderId: r.order_id, orderNo: r.order_no, seq: ++seq, branchCode: r.branch_code, docDate: date, from, to: shipWh, moves, release: false, kind: 'ship' })] : [];
     } else if (input.status === 'returned') {
       // Đơn còn mở: hàng về KCB, giữ lại cho đơn. Đơn đã đóng (phiếu của chuyến bị xoá sau khi đóng tay): hàng về kho bán, không giữ.
       const keep = r.status === 'open';
-      if (sh.status === 'shipping' && shipWh) {
+      if (sh.status === 'shipping' && shipWh && moves.length) {
         const to = keep ? r.hold_warehouse_code ?? r.warehouse_code : r.warehouse_code;
         docs = [toHoldDoc({ orderId: r.order_id, orderNo: r.order_no, seq: ++seq, branchCode: r.branch_code, docDate: date, from: shipWh, to, moves, release: true, kind: 'back' })];
       }

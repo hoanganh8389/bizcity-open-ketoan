@@ -286,4 +286,22 @@ describe.skipIf(!HAS)('NT-BH-035 — dọn việc treo bán hàng', () => {
     expect(ap.statusCode, ap.body).toBe(200);
     expect(ap.json().data.totals.total).toBe(80_000);
   });
+  // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 (anh chốt 21/11): BH20 dòng dịch vụ không giữ hàng, không báo thiếu tồn, không chuyển kho (đóng góp)
+  it('BH20: đơn có dòng dịch vụ (phí ship) — gửi không báo thiếu tồn, không giữ / chuyển kho dòng dịch vụ; hàng thường vẫn giữ', async () => {
+    expect((await call(ctx, 'POST', '/api/v1/warehouses', { code: 'KCB01', branchCode: 'CN01', name: 'Kho chờ bán CN01', typeCode: 'KCB' })).status).toBe(201);
+    await setting('bizcity.phieu_ban.hold_warehouses', ['CN01=KCB01']);
+    const c = await req('POST', '/api/v1/m/phieu-ban/orders', {
+      orderDate: TODAY, branchCode: 'CN01', validUntil: TODAY, partner: { code: 'KH035' },
+      lines: [{ lineKey: 'L1', sku: 'SUA330', qty: 2, unitPrice: 330_000 }, { lineKey: 'S1', sku: 'PHISHIP', qty: 1, unitPrice: 30_000 }],
+    });
+    expect(c.statusCode, c.body).toBe(200);
+    const id = c.json().data.order.id as string;
+    const s = await req('POST', `/api/v1/m/phieu-ban/orders/${id}/send`, {});
+    expect(s.statusCode, s.body).toBe(200);
+    const o = s.json().data as { status: string; lines: { lineKey: string; held: number }[] };
+    expect(o.status).toBe('open');
+    expect(Object.fromEntries(o.lines.map((l) => [l.lineKey, l.held]))).toEqual({ L1: 2, S1: 0 });
+    expect(s.json().meta?.stockShort).toBeUndefined();
+    expect(Object.keys(await movements(`phieu-ban:dh:${id}:1`))).toEqual(['SUA330']);
+  });
 });
