@@ -1,13 +1,13 @@
 # Đối chiếu hoá đơn (MH31)
 
-Phiếu nhập mua chia theo **tình trạng hoá đơn đầu vào**, theo kế hoạch hoá đơn khai ở đơn đặt hàng (ô **Hoá đơn**: Cùng hàng / Nhận sau N ngày / Không lấy).
+Phiếu nhập mua chia theo **tình trạng hoá đơn đầu vào**, theo kế hoạch hoá đơn khai ở đơn đặt hàng (ô **Hoá đơn**: Giao kèm hàng / Gửi sau N ngày / Không lấy).
 
 ## Các ô đầu màn
 
 | Ô | Ý nghĩa |
 |---|---|
 | Quá hạn HĐ | Đơn hẹn nhận hoá đơn sau N ngày, đã quá hạn mà phiếu nhập chưa có hoá đơn |
-| Thiếu HĐ | Hoá đơn đi cùng hàng nhưng phiếu nhập chưa ghi số hoá đơn |
+| Thiếu HĐ | NCC giao hoá đơn kèm hàng nhưng phiếu nhập chưa ghi số hoá đơn |
 | Chờ HĐ | Đơn hẹn nhận hoá đơn sau, còn trong hạn |
 | Đã có HĐ | Phiếu nhập đã ghi số hoá đơn (kèm tình trạng đối soát ở MH22: khớp / lệch) |
 | Không lấy HĐ | Đơn khai không lấy hoá đơn — không theo dõi |

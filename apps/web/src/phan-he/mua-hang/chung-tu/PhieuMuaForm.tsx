@@ -131,7 +131,19 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const dock = useDockWindow(onClose, dirty, `mh:${value.id}`);
   const names = useNames();
   const brands = useBrands(data.policies);
-  const costItems = useDimension('cost_item'); // [2026-11-20 khanhtd] MUA-HANG — Danh mục khoản mục cho phiếu chi phí (đóng góp)
+  const costItems = useDimension('cost_item') as (ReturnType<typeof useDimension>[number] & { parentCode?: string | null })[]; // [2026-11-20 khanhtd] MUA-HANG — Danh mục khoản mục cho phiếu chi phí (đóng góp)
+  // [2026-11-21 Nguyễn Văn Thủy] khoản mục xếp cây cha – con (cha in đậm, con thụt vào), gõ tìm mã / tên (đóng góp)
+  const kmCay = useMemo(() => {
+    const codes = new Set(costItems.map((c) => c.code));
+    const kids = new Map<string, typeof costItems>();
+    for (const c of costItems) { const p = c.parentCode && codes.has(c.parentCode) ? c.parentCode : ''; kids.set(p, [...(kids.get(p) ?? []), c]); }
+    const out: { code: string; name: string; level: number; strong: boolean; isActive: boolean }[] = [];
+    const seen = new Set<string>();
+    const di = (p: string, d: number) => { for (const c of (kids.get(p) ?? []).sort((a, b) => a.code.localeCompare(b.code))) { if (seen.has(c.code) || d > 20) continue; seen.add(c.code); out.push({ code: c.code, name: c.name, level: d + 1, strong: Boolean(kids.get(c.code)?.length), isActive: c.isActive }); di(c.code, d + 1); } };
+    di('', 0);
+    return out;
+  }, [costItems]);
+  const kmItems = (cur?: string) => kmCay.filter((c) => c.isActive || c.code === cur);
   const nccBrands = useSupplierBrands(v.partnerCode || undefined);
   // Phiếu đã duyệt / huỷ: chỉ xem. Phiếu đã ghi (nháp, chờ duyệt): mở ở chế độ xem, bấm "Sửa" mới sửa; Gửi duyệt / Duyệt
   // vẫn bấm được khi đang xem (không đổi nội dung phiếu).
@@ -808,11 +820,11 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {/* [2026-11-20 Nguyễn Văn Thủy] kế hoạch hoá đơn đầu vào: khai ở đơn đặt, phiếu nhập kế thừa; quá hạn chưa nhận hoá đơn → Bàn làm việc báo (đóng góp) */}
                 {(v.kind === 'order' || v.kind === 'receipt') && (
-                  <div className="field"><label title="Hoá đơn đầu vào của NCC: đi cùng hàng, nhận sau bao nhiêu ngày (tính từ ngày nhận hàng), hay không lấy hoá đơn. Khai ở đơn đặt, phiếu nhập lập từ đơn tự kế thừa">Hoá đơn</label>
+                  <div className="field"><label title="Hoá đơn đầu vào của NCC: giao kèm khi giao hàng, nhận sau bao nhiêu ngày (tính từ ngày nhận hàng), hay không lấy hoá đơn. Khai ở đơn đặt, phiếu nhập lập từ đơn tự kế thừa">Hoá đơn</label>
                     <div className="row" style={{ gap: 4 }}>
                       <select className="select input" disabled={readOnly} value={v.invoicePlan?.mode ?? 'with_goods'}
                         onChange={(e) => { const mode = e.target.value as InvoicePlan['mode']; set({ invoicePlan: mode === 'with_goods' ? undefined : { mode, ...(mode === 'later' ? { days: v.invoicePlan?.days ?? 7 } : {}) } }); }}>
-                        <option value="with_goods">Cùng hàng</option><option value="later">Nhận sau</option><option value="none">Không lấy</option>
+                        <option value="with_goods">Giao kèm hàng</option><option value="later">Gửi sau</option><option value="none">Không lấy</option>
                       </select>
                       {v.invoicePlan?.mode === 'later' && <><input className="input num" style={{ width: 56 }} disabled={readOnly} inputMode="numeric" value={v.invoicePlan.days ?? 0}
                         onChange={(e) => set({ invoicePlan: { mode: 'later', days: Math.max(0, Math.min(365, Number(e.target.value.replace(/\D/g, '')) || 0)) } })} /><span className="muted" style={{ alignSelf: 'center' }}>ngày</span></>}
@@ -821,7 +833,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 )}
                 {/* [2026-11-21 Nguyễn Văn Thủy] khoản mục đầu phiếu: mặc định cho mọi dòng (cột Khoản mục ở bảng hàng) — so định mức chi phí theo khoản mục (đóng góp) */}
                 {isGoods && !isGiftDoc && <div className="field"><label title="Khoản mục chi phí (Danh mục khoản mục), vd Mua hàng thương mại. Mọi dòng theo khoản mục này, dòng khác thì chọn ở cột Khoản mục của dòng">Khoản mục</label>
-                  <ListPicker items={costItems.filter((c) => c.isActive || c.code === v.costItem).map((c) => ({ code: c.code, name: c.name }))} value={v.costItem ?? ''} disabled={readOnly} placeholder="Chọn khoản mục" emptyText="Chưa có khoản mục — khai ở Danh mục khoản mục"
+                  <ListPicker items={kmItems(v.costItem)} value={v.costItem ?? ''} disabled={readOnly} placeholder="Chọn khoản mục" emptyText="Chưa có khoản mục — khai ở Danh mục khoản mục"
                     onChange={(c) => { const cu = v.costItem; set({ costItem: c || undefined, lines: v.lines.map((l) => (l.costItem && l.costItem === cu ? { ...l, costItem: undefined } : l)) }); }} /></div>}
                 {(v.kind === 'receipt' || v.kind === 'prepayment') && (
                   <div className="field span2"><label>Theo đơn đặt hàng</label>
@@ -906,7 +918,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 {v.kind === 'cost' && <div className="field"><label>Loại chi phí</label><select className="select input" value={v.costType ?? 'van_chuyen'} onChange={(e) => set({ costType: e.target.value as PDoc['costType'] })}>{Object.entries(COST_TYPES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>}
                 {/* [2026-11-20 khanhtd] MUA-HANG — khoản mục chi phí từ Danh mục khoản mục, để theo dõi / cộng chi phí mua theo khoản mục ở MH11 (đóng góp) */}
                 {v.kind === 'cost' && <div className="field"><label title="Khoản mục ở Danh mục khoản mục — lọc và cộng chi phí mua theo khoản mục ở Tổng hợp mua hàng (MH11, thẻ Chi phí / thưởng). Chưa ghi vào sổ cái">Khoản mục</label>
-                  <ListPicker items={costItems.filter((c) => c.isActive || c.code === v.costItem).map((c) => ({ code: c.code, name: c.name }))} value={v.costItem ?? ''} onChange={(c) => set({ costItem: c || undefined })} disabled={readOnly} placeholder={costItems.length ? 'Chọn khoản mục' : 'Chưa có khoản mục — khai ở Danh mục khoản mục'} emptyText="Không có khoản mục khớp" /></div>}
+                  <ListPicker items={kmItems(v.costItem)} value={v.costItem ?? ''} onChange={(c) => set({ costItem: c || undefined })} disabled={readOnly} placeholder={costItems.length ? 'Chọn khoản mục' : 'Chưa có khoản mục — khai ở Danh mục khoản mục'} emptyText="Không có khoản mục khớp" /></div>}
                 {v.kind === 'rebate' && <>
                   <div className="field"><label>Hoá đơn điều chỉnh giảm</label><select className="select input" value={v.taxCode ?? ''} onChange={(e) => set({ taxCode: e.target.value || undefined })}><option value="">Không có (không giảm VAT)</option><option value="V05">Có — VAT 5%</option><option value="V08">Có — VAT 8%</option><option value="V10">Có — VAT 10%</option></select></div>
                   {v.taxCode && <div className="field"><label>Số hoá đơn điều chỉnh</label><input className="input mono" value={v.invoice?.no ?? ''} onChange={(e) => set({ invoice: e.target.value ? { no: e.target.value.trim(), date: v.invoice?.date || v.docDate } : undefined })} /></div>}
@@ -1061,10 +1073,8 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                               {cay.whOf(b).filter((w) => w.isActive || w.code === l.warehouseCode).map((w) => <option key={w.code} value={w.code}>{w.code} · {w.name}</option>)}
                             </select>; })()}</td>}
                           {co('km') && <td>{readOnly ? <span>{l.costItem || <span className="muted">{v.costItem || '—'}</span>}</span>
-                            : <select className="select input" style={{ width: 120 }} value={l.costItem ?? ''} title="Khoản mục của dòng — trống = theo đầu phiếu" onChange={(e) => setLine(l.lineKey, { costItem: e.target.value || undefined })}>
-                              <option value="">{v.costItem ? `${v.costItem} (đầu phiếu)` : '—'}</option>
-                              {costItems.filter((c) => c.isActive || c.code === l.costItem).map((c) => <option key={c.code} value={c.code}>{c.code} · {c.name}</option>)}
-                            </select>}</td>}
+                            : <ListPicker items={kmItems(l.costItem)} value={l.costItem ?? ''} style={{ width: 150 }}
+                              placeholder={v.costItem ? `${v.costItem} (đầu phiếu)` : 'Khoản mục'} emptyText="Không có khoản mục khớp" onChange={(c) => setLine(l.lineKey, { costItem: c || undefined })} />}</td>}
                           
                           <td className={oDong(l, 'qty')} title={oDong(l, 'qty') ? 'Số lượng phải lớn hơn 0' : undefined}><NumInput style={{ width: 82 }} step={1} blankZero={false} value={l.qty} title="Số lượng — bấm ▲▼ (hoặc Ctrl + ↑ ↓) để tăng giảm 1" onChange={(n) => setLine(l.lineKey, { qty: n ?? 0, ...(l.autoGift ? { autoGift: false } : {}) })} /></td>
                           {co('ton') && <>

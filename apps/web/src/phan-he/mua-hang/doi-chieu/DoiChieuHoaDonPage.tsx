@@ -22,7 +22,7 @@ import '../mua-hang.css';
 type Trang = 'qua-han' | 'thieu' | 'cho' | 'co' | 'khong' | 'hd-le';
 const TRANG: Record<Trang, [string, string, string]> = {
   'qua-han': ['Quá hạn HĐ', 'badge-bad', 'Đơn hẹn nhận hoá đơn sau, đã quá hạn mà phiếu nhập chưa có hoá đơn'],
-  thieu: ['Thiếu HĐ', 'badge-warn', 'Hoá đơn đi cùng hàng nhưng phiếu nhập chưa ghi số hoá đơn'],
+  thieu: ['Thiếu HĐ', 'badge-warn', 'NCC giao hoá đơn kèm hàng nhưng phiếu nhập chưa ghi số hoá đơn'],
   cho: ['Chờ HĐ', 'badge-info', 'Đơn hẹn nhận hoá đơn sau, còn trong hạn'],
   co: ['Đã có HĐ', 'badge-ok', 'Phiếu nhập đã ghi số hoá đơn'],
   khong: ['Không lấy HĐ', 'badge-gray', 'Đơn khai không lấy hoá đơn'],

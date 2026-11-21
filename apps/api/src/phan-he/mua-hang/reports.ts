@@ -560,7 +560,7 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const invMissing = rcptNoInv.filter((d) => planOf(d)?.mode !== 'later');
   const tong = (ds: StoredDoc[]) => ds.reduce((s, d) => s + d.totals.total, 0);
   if (invLate.length) items.push({ key: 'inv_late', level: 'error', text: 'Phiếu nhập quá hạn nhận hoá đơn NCC', count: invLate.length, amount: tong(invLate), path: '/mua-hang/doi-chieu-hoa-don?trang=qua-han' });
-  if (invMissing.length) items.push({ key: 'receipt_no_invoice', level: 'warn', text: 'Phiếu nhập chưa có hoá đơn NCC (hoá đơn đi cùng hàng)', count: invMissing.length, amount: tong(invMissing), path: '/mua-hang/doi-chieu-hoa-don?trang=thieu' });
+  if (invMissing.length) items.push({ key: 'receipt_no_invoice', level: 'warn', text: 'Phiếu nhập chưa có hoá đơn NCC (hoá đơn giao kèm hàng)', count: invMissing.length, amount: tong(invMissing), path: '/mua-hang/doi-chieu-hoa-don?trang=thieu' });
   if (invWait.length) items.push({ key: 'inv_wait', level: 'info', text: 'Phiếu nhập chờ hoá đơn NCC (còn trong hạn)', count: invWait.length, amount: tong(invWait), path: '/mua-hang/doi-chieu-hoa-don?trang=cho' });
   const returnNoRef = live.filter((d) => d.kind === 'return' && !d.refIds?.length);
   if (returnNoRef.length) items.push({ key: 'return_no_ref', level: 'error', text: 'Phiếu trả hàng chưa gắn phiếu nhập gốc', count: returnNoRef.length, path: '/mua-hang/tong-hop?loai=return' });

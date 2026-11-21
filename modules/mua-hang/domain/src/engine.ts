@@ -763,7 +763,7 @@ export function invoiceDueDate(plan: InvoicePlan | undefined, receivedDate: stri
   return d.toISOString().slice(0, 10);
 }
 /** Chữ ngắn của kế hoạch hoá đơn. */
-export const invoicePlanText = (plan?: InvoicePlan) => (plan?.mode === 'none' ? 'Không lấy HĐ' : plan?.mode === 'later' ? `HĐ sau ${plan.days ?? 0} ngày` : 'HĐ cùng hàng');
+export const invoicePlanText = (plan?: InvoicePlan) => (plan?.mode === 'none' ? 'Không lấy HĐ' : plan?.mode === 'later' ? `HĐ gửi sau ${plan.days ?? 0} ngày` : 'HĐ giao kèm hàng');
 
 export interface Check { level: Level; code: string; text: string; lineKey?: string; blocking?: boolean }
 export interface PriceRow { date: string; partnerCode: string; docNo: string; unitPrice: number; includesVat: boolean; unit?: string; qty?: number }

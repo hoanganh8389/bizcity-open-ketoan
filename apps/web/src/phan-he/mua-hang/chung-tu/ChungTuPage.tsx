@@ -306,7 +306,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
       value: (r) => { const x = hdPhieu(r); return x ? `${HD_PHIEU[x.state]}${x.state === 'cho' || x.state === 'qua-han' ? ` ${dmy(x.han)}` : ''}` : r.kind === 'order' ? invoicePlanText(r.invoicePlan) : ''; },
       render: (r) => { const x = hdPhieu(r); if (!x) return r.kind === 'order' ? <span className="muted">{invoicePlanText(r.invoicePlan)}</span> : null;
         const cls = { co: 'badge-ok', khong: 'badge-gray', cho: 'badge-info', 'qua-han': 'badge-bad', thieu: 'badge-warn' }[x.state];
-        return <span className={`badge ${cls}`} title={x.plan ? invoicePlanText(x.plan) : 'Hoá đơn cùng hàng'}>{HD_PHIEU[x.state]}{x.state === 'cho' || x.state === 'qua-han' ? ` ${dmy(x.han)}` : ''}</span>; } },
+        return <span className={`badge ${cls}`} title={x.plan ? invoicePlanText(x.plan) : 'HĐ giao kèm hàng'}>{HD_PHIEU[x.state]}{x.state === 'cho' || x.state === 'qua-han' ? ` ${dmy(x.han)}` : ''}</span>; } },
     { key: 'invoiceDate', header: 'Ngày HĐ', width: 90, value: (r) => (r.invoice ? dmy(r.invoice.date) : '') },
     { key: 'grossEx', header: 'Tiền hàng trước CK (chưa thuế)', type: 'money', width: 150, sum: true, title: 'Σ SL × đơn giá dòng hàng mua, chưa trừ chiết khấu, chưa thuế (phiếu giá gồm thuế đã quy về chưa thuế). Chỉ đơn đặt / nhập mua / trả NCC', value: (r) => tienPhieu(r)?.grossEx ?? null },
     { key: 'disc', header: 'Chiết khấu (chưa thuế)', type: 'money', width: 120, sum: true, title: 'CK dòng + CK trên đơn = trước CK − sau CK', value: (r) => tienPhieu(r)?.disc ?? null },
