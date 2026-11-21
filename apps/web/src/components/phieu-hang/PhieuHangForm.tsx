@@ -203,6 +203,8 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
     !v.lines.length && 'Chưa có dòng hàng',
     v.lines.some((l) => !l.sku || !(l.qty > 0)) && 'Có dòng thiếu mã hàng hoặc số lượng',
     info.hasPayments && paid > v.totals.total && 'Tiền thu lớn hơn tổng phiếu',
+    // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-036: báo trước luật máy chủ "còn ghi nợ phải chọn khách" (domain/doc.ts) — không đợi bấm Ghi mới bị từ chối (đóng góp)
+    info.partner === 'customer' && v.lines.length > 0 && !v.partner?.code && paid < v.totals.total && `Còn ghi nợ (${v.docType === 'sale_return' ? 'trả' : 'thu'} chưa đủ) — chọn khách hàng hoặc ${v.docType === 'sale_return' ? 'trả' : 'thu'} đủ tiền`,
   ].filter(Boolean) as string[];
 
   // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-036: số cho khối Tổng tiền của Trợ lý (chỉ hiện, cùng cách tính với recompute) (đóng góp)
@@ -251,7 +253,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
           {!ro && (
             <ol className="mh-guide" style={{ marginTop: 6 }}>
               <li className={v.branchCode ? 'done' : ''}>Chọn <b>chi nhánh</b> và <b>kho</b> {info.isTransfer ? 'xuất / nhận' : v.docType === 'sale' ? 'xuất hàng' : 'nhận hàng'}</li>
-              {info.partner && <li className={v.partner?.code ? 'done' : ''}>Chọn <b>{info.partnerLabel.toLowerCase()}</b>{info.partner === 'customer' ? ' (để trống = khách lẻ)' : ''}</li>}
+              {info.partner && <li className={v.partner?.code ? 'done' : ''}>Chọn <b>{info.partnerLabel.toLowerCase()}</b>{info.partner === 'customer' ? ` (để trống = khách lẻ, chỉ khi ${isReturn ? 'trả' : 'thu'} đủ tiền)` : ''}</li>}
               <li className={v.lines.length > 0 && v.lines.every((l) => l.sku && l.qty > 0) ? 'done' : ''}>Thêm <b>dòng hàng</b>: mã, số lượng — tên, ĐVT, giá, thuế tự điền</li>
               {usePromo && <li className={promo || (v.policyRefs ?? []).length ? 'done' : ''}>Bấm <b>Áp khuyến mại</b> (nếu có chương trình đang chạy)</li>}
               <li><b>Ghi</b> để lưu nháp; <b>Duyệt</b> ở danh sách để ghi sổ (bút toán, công nợ, kho)</li>
