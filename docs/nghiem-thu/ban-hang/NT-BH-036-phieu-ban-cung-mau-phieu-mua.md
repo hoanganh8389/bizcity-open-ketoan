@@ -46,9 +46,35 @@
 - Trình duyệt (Docker dựng từ nhánh): chụp BH10, BH11 mới / xem; lập + duyệt một phiếu bán có voucher, một phiếu trả; so số tiền với cùng phiếu lập qua API.
 
 ## 6. Kết quả chạy
-_(điền khi code xong)_
+<!-- [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-036: kết quả code + kiểm (đóng góp) -->
+**21/11/2026 — code xong trên nhánh `feat/nt-bh-036-phieu-ban-mau-phieu-mua`** (chỉ giao diện).
+
+**Đã đổi**
+- `apps/web/src/components/phieu-hang/KhungPhieu.tsx` (mới): khung cửa sổ phiếu dựng như phiếu mua (`DockScope`, `useDockWindow`, `MinimizeButton`, `useKiemLoi`) — tiêu đề (tên + số + nhãn trạng thái + "Đang xem"), tổng tiền chữ lớn, **một** nút `btn-help` mở `HelpDrawer`, thu nhỏ, đóng; thân hai cột (cột Trợ lý thu gọn được, nhớ theo máy); dòng phím tắt; chân (lý do chưa ghi + nút). Không dùng `Modal` nên hết nút Hướng dẫn thứ hai; không sửa `ui.tsx`, `PhieuMuaForm.tsx`.
+- `apps/web/src/components/phieu-hang/khung-phieu.css` (mới): bố cục khung, gói trong `.kp-sheet` (không phụ thuộc `mua-hang.css`, không đè phiếu mua); dùng lại lớp chung `mh-sheet` / `mh-head` / `mh-panel` / `view-plain` của `theme.css`.
+- `PhieuHangForm.tsx`: bỏ `Modal` + nút Hướng dẫn trong thân; khối đầu phiếu một khung (Số phiếu, Ngày, Chi nhánh, Kho, Khách hàng, Kênh bán / Phiếu gốc, Thu tiền, Ghi chú) có *Thu gọn đầu phiếu*; thẻ *Hàng hoá (n)* / *Thu tiền* (BH11 *Trả tiền khách*) / *Hoá đơn*; cột *Trợ lý bán hàng*: *Kiểm tra*, *Khuyến mại & voucher* (chuyển từ thân form), *Tổng tiền*; chân *In* / *Ghi* / *Sửa* / *Thoát*. Lệnh gọi API, dữ liệu gửi (`saleInput`), điều kiện chặn Ghi (`problems`), in giữ nguyên.
+- `PhieuHangPage.tsx`: truyền `helpKey`, cờ `startEdit` (nút Sửa của danh sách mở thẳng chế độ sửa — thay `openNextInEdit` của khung chung).
+- `docs/huong-dan/ban-hang-quy-trinh.md`: mục bố cục phiếu BH10 / BH11.
+
+**Việc của khung chung được làm lại trong KhungPhieu**: chế độ xem phiếu đã ghi (nhãn *Đang xem*, ô khoá, nút *Sửa*, F2 / Enter / bấm đúp = Sửa); Ctrl + S bấm *Ghi* (nút khoá thì báo lý do); Esc đóng (đang mở Hướng dẫn thì Esc chỉ đóng Hướng dẫn); thu nhỏ xuống thanh dưới; tổng tiền ở tiêu đề; báo lỗi tại ô (`useKiemLoi`); dòng phím tắt F9 / Ctrl + S / Esc.
+
+**Kiểm**
+- `npm run typecheck` (gốc): đạt. `npm run build -w @ketoan/web`: đạt. Không có test web riêng cho phiếu hàng.
+- Trình duyệt (vite dev :4180 → API Docker :8088, đơn vị `demo`; Docker dựng từ commit khác nên chạy giao diện của nhánh bằng vite): BH10 mới, BH11 mới, BH10 / BH11 đã duyệt — mỗi hộp **1** nút Hướng dẫn (phiếu mua so sánh: 1). Chế độ xem phiếu nháp kiểm bằng cách đổi trạng thái trong phản hồi GET ở trình duyệt (không ghi gì vào CSDL): mở bằng bấm đúp → *Đang xem*, ô khoá, chân *In · Sửa · Thoát*; F2 → sửa, chân *In · Ghi · Thoát*; nút *Sửa* của danh sách → vào thẳng chế độ sửa; Esc đóng; không lỗi trang.
+- Ảnh: `C:\Users\thuyn\AppData\Local\Temp\claude\f20639bf250e4278\4946fdce-2ef3-4626-8e6f-a890fc558c5d\scratchpad
+t036-bh10-moi.png`, `nt036-bh10-the-thu-tien.png`, `nt036-bh10-huong-dan.png`, `nt036-bh10-da-duyet.png`, `nt036-bh10-nhap-xem.png`, `nt036-bh10-nhap-sua.png`, `nt036-bh10-thu-gon.png`, `nt036-bh11-moi.png`, `nt036-bh11-da-duyet.png`, `nt036-mua-so-sanh.png` (thư mục tạm của phiên, không đưa vào repo).
+
+**Khác thiết kế / chưa làm**
+- Thẻ *Lịch sử*: chưa có — form phiếu bán chưa có dữ liệu lịch sử (§3.3 "nếu phiếu đã ghi"); không thêm API.
+- Chân không có nút *Duyệt*: phiếu bán vẫn duyệt / bỏ duyệt ở thanh nút danh sách như cũ (không thêm luồng). Thanh nút bảng hàng chỉ có *+ Thêm dòng* (phiếu bán chưa có Nhập Excel).
+- Bảng hàng cột cố định, bề rộng cột gọn lại (Mã 150, ĐVT 70, Kho 90…) để Tên hàng đủ chỗ cạnh cột Trợ lý; bảng rộng hơn khung thì cuộn ngang.
+- Bấm vào ô khi đang xem: không còn câu nhắc + nháy nút Sửa của khung chung; thay bằng cách của phiếu mua (ô khoá, nhãn "Đang xem — bấm Sửa để thay đổi", bấm đúp để sửa). "Ghi và thoát" của khung chung không áp (màn chưa dùng `viewAgain`).
+- Tồn sổ của cửa hàng (cảnh báo bán quá tồn): khi đang xem chưa đọc tồn của cửa hàng; bấm Sửa mới đọc (trước đây đọc ngay lúc mở).
+- Hướng dẫn `docs/huong-dan/phieu-hang.md` ngoài phạm vi giữ chỗ — mô tả bố cục mới ghi ở `ban-hang-quy-trinh.md`.
+- Chưa lập + duyệt phiếu bán có voucher / phiếu trả thật để so số tiền (§5): không đổi nghiệp vụ, không ghi dữ liệu vào đơn vị demo đang dùng chung; nên kiểm lại khi Docker dựng từ nhánh.
 
 ## 7. Lịch sử thay đổi
 | Ngày | Thay đổi |
 |---|---|
 | 21/11/2026 | Tạo phiếu, chốt Q1–Q4; giữ chỗ code |
+| 21/11/2026 | Code xong (khung KhungPhieu, form theo mẫu phiếu mua), điền §6 |
