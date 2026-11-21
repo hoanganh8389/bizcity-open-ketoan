@@ -182,6 +182,8 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
   const guard = (e: SyntheticEvent) => {
     if (!locked) return;
     const t = e.target as HTMLElement;
+    // [2026-11-21 Nguyễn Văn Thủy] sự kiện của hộp thoại con mở chồng (vd Khai giá mua trong form mặt hàng) — không phải ô của hộp này, không chặn (đóng góp)
+    if (!(e.currentTarget as HTMLElement).contains(t) || t.closest('.modal') !== (e.currentTarget as HTMLElement).closest('.modal')) return;
     if (t.closest('[data-view-ok], .tab, .tabs, .btn-help, a[href]')) return;
     if (!t.closest('input, select, textarea, button, label, [role="button"], [role="option"], [contenteditable="true"], .picker-drop')) return;
     if (e.type === 'keydown') {

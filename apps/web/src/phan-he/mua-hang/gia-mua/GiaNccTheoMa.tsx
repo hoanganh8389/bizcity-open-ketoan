@@ -11,7 +11,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { TAX_RATE, type SupplierProduct } from '@bizcity/mua-hang-domain';
 import { Field, Modal, NumInput } from '@/components/ui';
-import { PartnerPicker } from '@/components/pickers';
+import { ListPicker, PartnerPicker } from '@/components/pickers';
 import { errorText } from '@/lib/api';
 import { price as donGia, roundPrice } from '@/lib/format';
 import { purchaseApi, today, useNames } from '../du-lieu';
@@ -56,7 +56,7 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
     }
     return m;
   }, [log.data, sku]);
-  const newFor = (pc: string | null, last?: SupplierProduct): Form => ({ partnerCode: pc, sku, unit: last?.unit ?? units.find((u) => u.isPurchaseDefault)?.unit ?? units[0]?.unit ?? '', nccSku: last?.nccSku ?? '', nccName: last?.nccName ?? '', price: null, priceIncludesVat: last?.priceIncludesVat ?? false, validFrom: d0, note: '', isActive: true });
+  const newFor = (pc: string | null, last?: SupplierProduct): Form => ({ partnerCode: pc, sku, unit: last?.unit ?? units.find((u) => u.isPurchaseDefault)?.unit ?? units[0]?.unit ?? '', nccSku: last?.nccSku ?? '', nccName: last?.nccName ?? '', contractCode: last?.contractCode ?? '', price: null, priceIncludesVat: last?.priceIncludesVat ?? false, validFrom: d0, note: '', isActive: true });
 
   return (
     <div>
@@ -73,17 +73,18 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
               <b title={pc}>{pc ? names.partnerName(pc) || pc : 'Giá chung mọi nhà cung cấp'}</b>
               {pc && <span className="muted mono" style={{ fontSize: 11.5 }}>{pc}</span>}
               <span style={{ flex: 1 }} />
-              <button type="button" className="btn btn-xs" onClick={() => setShowLog((m) => ({ ...m, [pc]: !m[pc] }))} title="Các lần thêm / sửa / xoá giá của nhà cung cấp này">{showLog[pc] ? 'Ẩn lịch sử' : `Lịch sử (${logOf.get(pc)?.length ?? 0})`}</button>
+              <button type="button" className="btn btn-xs" data-view-ok onClick={() => setShowLog((m) => ({ ...m, [pc]: !m[pc] }))} title="Các lần thêm / sửa / xoá giá của nhà cung cấp này">{showLog[pc] ? 'Ẩn lịch sử' : `Lịch sử (${logOf.get(pc)?.length ?? 0})`}</button>
               <button type="button" className="btn btn-xs" onClick={() => setOpen(newFor(pc || null, list[0]))} title="Thêm đợt giá mới cho nhà cung cấp này (giữ các đợt cũ)"><Plus size={12} /> Giá mới</button>
             </div>
             <table className="mh-mini">
-              <thead><tr><th title="Đơn vị tính của giá">ĐVT</th><th className="num" title="Giá mua theo ĐVT, chưa thuế GTGT">Giá chưa thuế</th><th className="num" title="Giá mua theo ĐVT, gồm thuế GTGT">Giá gồm thuế</th><th title="Khoảng ngày áp dụng giá">Hiệu lực</th><th title="Mã / tên hàng nhà cung cấp ghi trên hoá đơn">Bên NCC</th><th>Ghi chú</th><th title="Người sửa, lúc sửa">Sửa lần cuối</th></tr></thead>
+              <thead><tr><th title="Đơn vị tính của giá">ĐVT</th><th className="num" title="Giá mua theo ĐVT, chưa thuế GTGT">Giá chưa thuế</th><th className="num" title="Giá mua theo ĐVT, gồm thuế GTGT">Giá gồm thuế</th><th title="Giá thuộc hợp đồng mua nào của NCC (trống = giá không theo hợp đồng)">Hợp đồng</th><th title="Khoảng ngày áp dụng giá">Hiệu lực</th><th title="Mã / tên hàng nhà cung cấp ghi trên hoá đơn">Bên NCC</th><th>Ghi chú</th><th title="Người sửa, lúc sửa">Sửa lần cuối</th></tr></thead>
               <tbody>
                 {shown.map((r) => (
                   <tr key={r.id} className={`row-click${live(r) ? '' : ' muted'}`} onClick={() => setOpen({ ...r, partnerCode: r.partnerCode ?? null })} title="Bấm để sửa / xoá">
                     <td>{r.unit}</td>
                     <td className="num">{asPrice(r, false) !== null ? donGia(asPrice(r, false)!) : <span className="muted">chưa khai</span>}</td>
                     <td className="num">{asPrice(r, true) !== null ? donGia(asPrice(r, true)!) : ''}</td>
+                    <td className="mono" style={{ whiteSpace: 'nowrap' }}>{r.contractCode || <span className="muted" style={{ fontFamily: 'inherit' }}>không theo HĐ</span>}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>{r.validFrom || r.validTo ? `${dmy(r.validFrom) || '…'} → ${dmy(r.validTo) || 'nay'}` : 'mọi ngày'}{live(r) ? <span className="badge badge-ok" style={{ marginLeft: 6, fontSize: 10.5 }}>đang áp</span> : !r.isActive ? <span className="badge badge-gray" style={{ marginLeft: 6, fontSize: 10.5 }}>ngừng</span> : null}</td>
                     <td style={{ fontSize: 12 }}>{[r.nccSku, r.nccName].filter(Boolean).join(' · ')}</td>
                     <td style={{ fontSize: 12 }}>{r.note}</td>
@@ -101,7 +102,7 @@ export function GiaNccTheoMa({ sku, name, onChanged }: { sku: string; name: stri
                 </tbody>
               </table>
             )}
-            {list.length > SHOW && <button type="button" className="link" style={{ fontSize: 12, marginTop: 4 }} onClick={() => setMore((m) => ({ ...m, [pc]: !m[pc] }))}>{more[pc] ? 'Thu gọn' : `Xem thêm ${list.length - SHOW} đợt giá cũ`}</button>}
+            {list.length > SHOW && <button type="button" className="link" data-view-ok style={{ fontSize: 12, marginTop: 4 }} onClick={() => setMore((m) => ({ ...m, [pc]: !m[pc] }))}>{more[pc] ? 'Thu gọn' : `Xem thêm ${list.length - SHOW} đợt giá cũ`}</button>}
           </div>
         );
       })}
@@ -116,13 +117,15 @@ function HopGia({ v: init, units, rate, onClose, onDone }: { v: Form; units: { u
   const [busy, setBusy] = useState(false);
   const set = (p: Partial<Form>) => setV((x) => ({ ...x, ...p }));
   const isNew = !v.id;
+  // [2026-11-21 Nguyễn Văn Thủy] giá thuộc hợp đồng nào của NCC (gõ tìm); trống = giá không theo hợp đồng (đóng góp)
+  const hds = useQuery({ queryKey: ['mua-hang', 'contracts', v.partnerCode], enabled: Boolean(v.partnerCode), staleTime: 60_000, queryFn: () => purchaseApi.contracts(v.partnerCode!) }).data ?? [];
   const pAs = (inc: boolean) => (v.price === null || v.price === undefined ? null : Boolean(v.priceIncludesVat) === inc ? v.price : inc ? roundPrice(v.price * (1 + rate)) : roundPrice(v.price / (1 + rate)));
   const save = async () => {
     if (!v.partnerCode && isNew) { setErr('Chọn nhà cung cấp'); return; }
     if (!v.unit) { setErr('Chọn ĐVT'); return; }
     setBusy(true); setErr('');
     try {
-      await purchaseApi.saveSupplierProducts([{ id: v.id, partnerCode: v.partnerCode, sku: v.sku, unit: v.unit, nccSku: v.nccSku ?? '', nccName: v.nccName ?? '', price: v.price ?? null, priceIncludesVat: Boolean(v.priceIncludesVat), warnPct: v.warnPct ?? 2, validFrom: v.validFrom || undefined, validTo: v.validTo || undefined, note: v.note ?? '', isActive: v.isActive ?? true }]);
+      await purchaseApi.saveSupplierProducts([{ id: v.id, partnerCode: v.partnerCode, sku: v.sku, unit: v.unit, nccSku: v.nccSku ?? '', nccName: v.nccName ?? '', price: v.price ?? null, priceIncludesVat: Boolean(v.priceIncludesVat), warnPct: v.warnPct ?? 2, contractCode: v.contractCode ?? '', validFrom: v.validFrom || undefined, validTo: v.validTo || undefined, note: v.note ?? '', isActive: v.isActive ?? true }]);
       onDone();
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   };
@@ -139,7 +142,12 @@ function HopGia({ v: init, units, rate, onClose, onDone }: { v: Form; units: { u
       </>}>
       {err && <div className="alert alert-bad full">{err}</div>}
       <Field label="Nhà cung cấp (*)" full>
-        {isNew && init.partnerCode === null ? <PartnerPicker kind="supplier" value={v.partnerCode ?? ''} onChange={(c) => set({ partnerCode: c || null })} placeholder="Gõ mã, tên hoặc MST để tìm" addKind="supplier" /> : <input className="input" readOnly value={v.partnerCode ?? 'Giá chung'} />}
+        {isNew && init.partnerCode === null ? <PartnerPicker kind="supplier" value={v.partnerCode ?? ''} onChange={(c) => set({ partnerCode: c || null, contractCode: '' })} placeholder="Gõ mã, tên hoặc MST để tìm" addKind="supplier" /> : <input className="input" readOnly value={v.partnerCode ?? 'Giá chung'} />}
+      </Field>
+      <Field label="Thuộc hợp đồng" full tip="Giá theo hợp đồng mua đã ký với NCC: đơn / phiếu chọn hợp đồng này lấy đúng giá này. Để trống = giá không theo hợp đồng">
+        <ListPicker items={hds.filter((c) => c.status !== 'liquidated' || c.code === v.contractCode).map((c) => ({ code: c.code, name: `${c.name || ''}${c.endDate ? ` · đến ${dmy(c.endDate)}` : ''}`, hint: c.statusText }))}
+          value={v.contractCode ?? ''} onChange={(c) => set({ contractCode: c || '' })} disabled={!v.partnerCode}
+          placeholder={!v.partnerCode ? 'chọn nhà cung cấp trước' : hds.length ? '— không theo hợp đồng —' : 'NCC chưa có hợp đồng mua — giá không theo hợp đồng'} emptyText="Không có hợp đồng khớp" />
       </Field>
       <Field label="ĐVT (*)">
         <select className="select input" value={v.unit} onChange={(e) => set({ unit: e.target.value })}>

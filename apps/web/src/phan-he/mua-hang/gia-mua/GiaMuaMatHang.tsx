@@ -29,9 +29,9 @@ export function GiaMuaMatHang({ sku, name }: { sku: string; name: string; units:
   if (!sku) return <div className="muted">Ghi mặt hàng trước rồi mới khai mua hàng.</div>;
   if (!data) return <div className="muted">Đang tải…</div>;
 
-  // data-view-ok: mỗi khối có nút sửa riêng (Sửa giá mua riêng, Sửa bảng…) nên không phải bấm "Sửa" cả hộp thoại trước.
+  // [2026-11-21 Nguyễn Văn Thủy] như mọi ô của form: đang xem thì chỉ xem (Lịch sử, Xem thêm vẫn bấm được), bấm Sửa mới thêm / sửa giá (đóng góp)
   return (
-    <div className="full blk-stack" data-view-ok>
+    <div className="full blk-stack">
       {/* [2026-11-12 Nguyễn Văn Thủy] bỏ khối Giá mua riêng của sản phẩm (đơn giản hoá) (đóng góp) */}
       <section className="blk blk-green">
         <header><div><b>Giá mua theo từng nhà cung cấp</b><span>Mỗi nhà cung cấp hiện 3 đợt giá gần nhất. Bấm một dòng để sửa.</span></div></header>
