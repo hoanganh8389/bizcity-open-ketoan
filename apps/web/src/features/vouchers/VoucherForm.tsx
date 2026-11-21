@@ -288,7 +288,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
           <div className="alert alert-info" style={{ gridColumn: 'span 1', margin: 0 }}>Diễn giải dùng được <b>{'{ky}'}</b>, <b>{'{thang}'}</b>, <b>{'{nam}'}</b>; số tiền để trống thì nhập khi lập phiếu.</div>
         </>
       )}
-      <Field label="Chi nhánh">
+      <Field label="Chi nhánh lập chứng từ">
         <BranchPicker activeOnly value={template ? h.branchCode : branchCode} disabled={readOnly} onChange={(c) => set({ branchCode: c })} placeholder={template ? '(Chọn khi lập phiếu)' : 'Gõ mã hoặc tên chi nhánh'} />
       </Field>
       {!template && <Field label="Ngày phiếu"><input type="date" className="input" value={h.docDate} disabled={readOnly} onChange={(e) => set({ docDate: e.target.value })} /></Field>}

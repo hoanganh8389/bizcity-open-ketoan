@@ -206,7 +206,7 @@ function DebtVoucherForm({ mode, onClose, onSaved }: { mode: Mode; onClose: () =
         <select className="select input" value={purpose} onChange={(e) => changePurpose(e.target.value as typeof purpose)}>{m.purposes.map((p) => <option key={p} value={p}>{VOUCHER_PURPOSES[p]}</option>)}</select>
       </Field>
       <Field label="Ngày phiếu"><input type="date" className="input" value={v.docDate} onChange={(e) => set({ docDate: e.target.value })} /></Field>
-      <Field label="Chi nhánh">
+      <Field label="Chi nhánh lập chứng từ">
         <BranchPicker activeOnly value={branchCode} onChange={(c) => set({ branchCode: c })} />
       </Field>
       <Field label="Đối tượng (bắt buộc)"><PartnerPicker activeOnly value={v.partnerCode} onChange={(partnerCode) => set({ partnerCode })} placeholder="Gõ mã, tên hoặc mã số thuế" /></Field>

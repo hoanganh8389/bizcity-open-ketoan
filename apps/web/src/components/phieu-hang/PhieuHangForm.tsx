@@ -178,7 +178,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
         <legend>Thông tin phiếu</legend>
         <Field label="Số phiếu" hint="Để trống: tự cấp khi ghi"><input className="input mono" value={v.docNo} onChange={(e) => set({ docNo: e.target.value.trim() })} /></Field>
         <Field label="Ngày (*)"><input className="input" type="date" value={v.docDate} onChange={(e) => set({ docDate: e.target.value })} /></Field>
-        <Field label={info.isTransfer ? 'Chi nhánh xuất (*)' : 'Chi nhánh (*)'}><BranchPicker value={v.branchCode} onChange={(c) => set({ branchCode: c })} activeOnly /></Field>
+        <Field label={info.isTransfer ? 'Chi nhánh xuất (*)' : 'Chi nhánh lập chứng từ (*)'}><BranchPicker value={v.branchCode} onChange={(c) => set({ branchCode: c })} activeOnly /></Field>
         <Field label={info.isTransfer ? 'Kho xuất (*)' : v.docType === 'sale' ? 'Kho xuất hàng (*)' : v.docType === 'sale_return' || v.docType === 'purchase' ? 'Kho nhận hàng (*)' : 'Kho (*)'} hint="Mọi dòng hàng đi theo kho này">
           <ChonKho branchCode={v.branchCode} value={v.warehouseCode ?? ''} disabled={readOnly} onChange={(c) => set({ warehouseCode: c || undefined })} />
         </Field>

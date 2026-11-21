@@ -19,6 +19,8 @@ export interface RequestContext {
   correlationId: string;
   /** Đơn vị của người gọi (đã xác thực); chưa có = chưa xác thực / việc nền. */
   tenantId?: string;
+  /** [2026-11-21 Nguyễn Văn Thủy] Chi nhánh đang làm việc (header x-chi-nhanh — nút chi nhánh trên cùng); pool đặt bizcity.chi_nhanh_lam_viec để sổ chứng từ chung ghi nơi lập của mọi chứng từ mới (0177) (đóng góp) */
+  workBranch?: string;
 }
 
 const store = new AsyncLocalStorage<RequestContext>();
@@ -40,6 +42,9 @@ export function registerRequestContext(app: FastifyInstance): void {
     const v = Array.isArray(h) ? h[0] : h;
     const correlationId = v && ID.test(v) ? v : String(req.id);
     reply.header('x-correlation-id', correlationId);
-    store.run({ requestId: String(req.id), correlationId }, done);
+    const wb = req.headers['x-chi-nhanh'];
+    let workBranch: string | undefined;
+    try { const x = decodeURIComponent(String(Array.isArray(wb) ? wb[0] : wb ?? '')).trim(); if (/^[A-Za-z0-9._-]{1,64}$/.test(x)) workBranch = x; } catch { /* header sai dạng: bỏ qua */ }
+    store.run({ requestId: String(req.id), correlationId, ...(workBranch ? { workBranch } : {}) }, done);
   });
 }

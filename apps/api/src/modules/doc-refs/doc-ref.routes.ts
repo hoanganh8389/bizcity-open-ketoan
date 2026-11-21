@@ -123,13 +123,13 @@ const businessDocOut = z.object({
   approvedBy: z.string(), approvedAt: z.string().nullable(),
 });
 type BusinessDocRow = {
-  doc_ref: string; module: string; doc_type: string; doc_no: string; doc_date: string | null; branch_code: string; partner_ref: string; title: string;
+  doc_ref: string; module: string; doc_type: string; doc_no: string; doc_date: string | null; branch_code: string; work_branch_code: string | null; partner_ref: string; title: string;
   total: string; status_raw: string; status: (typeof STATUS)[number]; version: number; meta: unknown; created_by: string; created_at: unknown; updated_at: unknown;
   approved_by: string; approved_at: unknown;
 };
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
 const toBusinessDoc = (r: BusinessDocRow, names: Map<string, string>) => ({
-  docRef: r.doc_ref, module: r.module, docType: r.doc_type, docNo: r.doc_no, docDate: r.doc_date, branchCode: r.branch_code, partnerRef: r.partner_ref,
+  docRef: r.doc_ref, module: r.module, docType: r.doc_type, docNo: r.doc_no, docDate: r.doc_date, branchCode: r.branch_code, workBranchCode: r.work_branch_code, partnerRef: r.partner_ref,
   partnerName: names.get(r.partner_ref) ?? '',
   title: r.title, total: Number(r.total), statusRaw: r.status_raw, status: r.status, version: r.version, meta: (r.meta ?? {}) as Record<string, unknown>,
   createdBy: r.created_by, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at),
@@ -145,7 +145,7 @@ async function partnerNames(tx: Db, tenantId: string, refs: string[]): Promise<M
   for (const p of rows) { m.set(p.code, p.name); if (p.uid) m.set(p.uid, p.name); }
   return m;
 }
-const BD_COLS = ['doc_ref', 'module', 'doc_type', 'doc_no', sql<string>`doc_date::text`.as('doc_date'), 'branch_code', 'partner_ref', 'title', 'total', 'status_raw', 'status',
+const BD_COLS = ['doc_ref', 'module', 'doc_type', 'doc_no', sql<string>`doc_date::text`.as('doc_date'), 'branch_code', 'work_branch_code', 'partner_ref', 'title', 'total', 'status_raw', 'status',
   'version', 'meta', 'created_by', 'created_at', 'updated_at', 'approved_by', 'approved_at'] as const;
 
 const businessDocList = defineAction({

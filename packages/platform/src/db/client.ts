@@ -39,18 +39,21 @@ const tenantPool = {
   async connect(): Promise<pg.PoolClient> {
     const client = await pool.connect();
     const want = currentRequest()?.tenantId ?? '';
+    // [2026-11-21 Nguyễn Văn Thủy] kèm chi nhánh đang làm việc của yêu cầu (sổ chứng từ chung ghi nơi lập, 0177) (đóng góp)
+    const wb = currentRequest()?.workBranch ?? '';
+    const key = `${want}|${wb}`;
     const fresh = !tenantOf.has(client);
-    if (fresh || tenantOf.get(client) !== want) {
+    if (fresh || tenantOf.get(client) !== key) {
       try {
         // DB_SET_ROLE (test / CI): chuyển sang vai trò không superuser một lần mỗi kết nối — superuser luôn vượt RLS.
         // set_config('role', …) tương đương SET ROLE nhưng nhận tham số (không ghép chuỗi vào SQL — R-SEC).
         if (fresh && env.DB_SET_ROLE) await client.query(`SELECT set_config('role', $1, false)`, [env.DB_SET_ROLE]);
-        await client.query(`SELECT set_config('bizcity.tenant_id', $1, false)`, [want]);
+        await client.query(`SELECT set_config('bizcity.tenant_id', $1, false), set_config('bizcity.chi_nhanh_lam_viec', $2, false)`, [want, wb]);
       } catch (err) {
         client.release(err as Error);
         throw err;
       }
-      tenantOf.set(client, want);
+      tenantOf.set(client, key);
     }
     return client;
   },

@@ -20,7 +20,7 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 type Status = 'draft' | 'pending' | 'approved' | 'in_progress' | 'done' | 'cancelled';
 type Tab = Status | 'all';
 interface Doc {
-  docRef: string; module: string; docType: string; docNo: string; docDate: string | null; branchCode: string; partnerRef: string; partnerName: string;
+  docRef: string; module: string; docType: string; docNo: string; docDate: string | null; branchCode: string; workBranchCode?: string | null; partnerRef: string; partnerName: string;
   title: string; total: number; statusRaw: string; status: Status; version: number; meta: Record<string, unknown>; createdBy: string; createdAt: string; updatedAt: string;
   approvedBy: string; approvedAt: string | null;
 }
@@ -78,7 +78,7 @@ function ChiTiet({ docRef, onClose, onOpen }: { docRef: string; onClose: () => v
             <div title="Định danh chứng từ (không đổi)">Mã chứng từ: <b className="mono">{d.docRef}</b></div>
             <div title="Trạng thái chuẩn và trạng thái riêng của phân hệ">Trạng thái: <b className={STATUS_CLASS[d.status]}>{STATUS_TEXT[d.status]}</b> <span className="muted">({d.statusRaw})</span></div>
             <div>Loại: <b>{d.title}</b> <span className="muted mono">{d.docType}</span></div>
-            <div>Ngày: <b>{d.docDate ?? '—'}</b> · Chi nhánh: <b>{d.branchCode || '—'}</b></div>
+            <div>Ngày: <b>{d.docDate ?? '—'}</b> · Chi nhánh lập chứng từ: <b>{d.branchCode || '—'}</b>{d.workBranchCode && d.workBranchCode !== d.branchCode ? <> · Chi nhánh đang làm việc: <b>{d.workBranchCode}</b></> : null}</div>
             <div>Đối tượng: <b>{d.partnerRef || '—'}</b>{d.partnerName ? ` ${d.partnerName}` : ''}</div>
             <div>Tổng tiền: <b>{d.total.toLocaleString('vi-VN')}</b></div>
             <div title="Người lập, thời gian lập; cập nhật gần nhất">Lập: <b>{d.createdBy || '—'}</b> lúc {dateTime(d.createdAt)} · Cập nhật {dateTime(d.updatedAt)}</div>
@@ -143,7 +143,9 @@ export function SoChungTuPage() {
     { key: 'docDate', header: 'Ngày', type: 'date', title: 'Ngày chứng từ' },
     { key: 'docNo', header: 'Số', type: 'code', title: 'Số chứng từ', render: (r) => <>{r.docNo || '—'}{r.version > 1 ? <span className="muted" title="Số phiên bản nội dung"> (v{r.version})</span> : null}</> },
     { key: 'title', header: 'Loại chứng từ', title: 'Loại chứng từ' },
-    { key: 'branchCode', header: 'Chi nhánh', type: 'code', title: 'Chi nhánh lập / chi nhánh xuất' },
+    { key: 'branchCode', header: 'Chi nhánh lập chứng từ', type: 'code', title: 'Chi nhánh lập chứng từ / chi nhánh xuất' },
+    // [2026-11-21 Nguyễn Văn Thủy] chi nhánh đang làm việc của người lập (nút chi nhánh trên cùng lúc lập) (đóng góp)
+    { key: 'workBranchCode', header: 'Chi nhánh đang làm việc', type: 'code', title: 'Chi nhánh người lập đang làm việc lúc lập chứng từ (chứng từ cũ: bằng chi nhánh lập chứng từ)', value: (r) => r.workBranchCode ?? r.branchCode },
     { key: 'partnerRef', header: 'Mã đối tượng', type: 'code', title: 'Mã nhà cung cấp / khách hàng / đối tượng' },
     { key: 'partnerName', header: 'Tên đối tượng', title: 'Tên nhà cung cấp / khách hàng / đối tượng' },
     { key: 'total', header: 'Tổng tiền', type: 'money', sum: true, title: 'Tổng tiền của chứng từ' },

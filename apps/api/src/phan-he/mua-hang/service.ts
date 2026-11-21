@@ -21,6 +21,7 @@ import { checkContract } from './hop-dong.js';
 import { loadInvoices } from './hoa-don.js';
 import { resolveWarehouse } from '../../modules/warehouses/default-warehouse.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
+import { currentRequest } from '@bizcity/platform/core/request-context';
 
 /** Phiếu mua có hàng ra / vào kho (đơn đặt chưa vào kho; chi phí, thưởng chỉ điều chỉnh giá trị). */
 const STOCK_KINDS: string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
@@ -128,7 +129,7 @@ export const purchaseService = {
       if (STOCK_KINDS.includes(doc.kind)) doc.warehouseCode = (await resolveWarehouse(trx, auth.tenantId, doc.branchCode, doc.warehouseCode)) || undefined;
       else delete doc.warehouseCode;
       // [2026-11-21 Nguyễn Văn Thủy] chi nhánh đang làm việc ghi một lần lúc lập; phân kho từng dòng phải thuộc chi nhánh nhận của dòng (đóng góp)
-      doc.workBranchCode = cur?.workBranchCode ?? doc.workBranchCode ?? doc.branchCode;
+      doc.workBranchCode = cur?.workBranchCode ?? doc.workBranchCode ?? currentRequest()?.workBranch ?? doc.branchCode;
       const isOrder = doc.kind === 'order';
       for (const l of doc.lines) {
         if (!isOrder) delete l.branchCode;
