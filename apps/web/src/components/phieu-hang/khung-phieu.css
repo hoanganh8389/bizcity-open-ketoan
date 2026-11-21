@@ -1,0 +1,63 @@
+/* [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-036: khung phiếu bán / trả bán cùng mẫu phiếu mua (đóng góp)
+   Khung phiếu dùng chung của components/phieu-hang (KhungPhieu.tsx): cùng tên lớp với phiếu mua (mh-sheet, mh-head, mh-panel…)
+   để ăn các luật chung ở styles/theme.css (thu nhỏ xuống thanh dưới, chế độ xem, khối viền màu), còn bố cục thì khai lại ở đây,
+   gói trong .kp-sheet — không phụ thuộc mua-hang.css (chỉ nạp khi mở phân hệ Mua hàng), không đè lên phiếu mua. */
+.kp-sheet { position: fixed; inset: 0; z-index: 90; background: rgba(14, 42, 69, 0.35); display: flex; align-items: center; justify-content: center; padding: 26px 10px 10px; }
+.kp-sheet .mh-sheet-box { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow-pop); width: min(1500px, 100%); height: min(940px, calc(100vh - 36px)); height: min(940px, calc(100dvh - 36px)); display: flex; flex-direction: column; overflow: hidden; }
+.kp-sheet .mh-sheet-head, .kp-sheet .mh-sheet-foot, .kp-sheet .ct-keys { flex: none; }
+.kp-sheet .mh-sheet-head { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.kp-sheet .mh-sheet-head h2 { font-size: 16px; margin: 0; flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kp-sheet .mh-sheet-head .ct-total { margin-left: 0; }
+.kp-sheet .mh-sheet-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 400px; position: relative; }
+.kp-sheet .mh-sheet-body.an-tro-ly { grid-template-columns: minmax(0, 1fr) 26px; }
+.kp-sheet .mh-main { overflow: auto; padding: 10px 14px; background: var(--form-bg); }
+.kp-sheet .mh-main fieldset { min-width: 0; max-width: 100%; }
+.kp-sheet .mh-side { overflow: auto; border-left: 1px solid var(--line); background: #f7f9fc; padding: 10px 12px; position: relative; }
+.kp-sheet .mh-side-mo { border: 0; border-left: 1px solid var(--line); background: #f2f5f9; cursor: pointer; padding: 0; color: var(--brand-700); font-size: 12px; font-weight: 600; }
+.kp-sheet .mh-side-mo:hover { background: var(--brand-50); }
+.kp-sheet .mh-side-mo span { display: inline-block; writing-mode: vertical-rl; white-space: nowrap; }
+.kp-sheet .mh-sheet-foot { display: flex; gap: 8px; align-items: center; padding: 10px 84px 10px 16px; border-top: 1px solid var(--line); } /* chừa chỗ nút trợ lý nổi như phiếu mua */
+.kp-sheet .mh-sheet-foot .grow { flex: 1; font-size: 12px; min-width: 0; }
+
+/* Khối đầu phiếu: một khung viền (màu viền / nền ở theme.css .mh-head), 6 cột như phiếu mua. */
+.kp-sheet .mh-head { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.8fr) repeat(4, minmax(0, 1.1fr)); gap: 6px 10px; margin-bottom: 8px; }
+.kp-sheet .mh-head .field label { font-size: 11px; }
+.kp-sheet .mh-head .span2 { grid-column: span 2; }
+.kp-sheet .mh-head .span4 { grid-column: 1 / -1; }
+.kp-sheet .mh-head .ct-pay { gap: 12px; flex-wrap: wrap; min-height: 30px; padding: 0; }
+.kp-sheet .mh-head-mini { display: flex; align-items: center; gap: 14px; padding: 6px 10px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2, #f7f9fc); cursor: pointer; font-size: 13px; min-width: 0; }
+.kp-sheet .mh-head-mini:hover { border-color: var(--brand-300, #93c5fd); }
+
+/* Thẻ dưới đầu phiếu + thanh nút của bảng hàng. */
+.kp-sheet .kp-tabs { padding: 0; margin-bottom: 8px; background: transparent; }
+.kp-sheet .lines-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 8px; margin-bottom: 6px; background: #f2f6fc; border: 1px solid #d5e0ee; border-radius: 8px; }
+.kp-sheet .kp-lines-box { overflow: auto; max-height: calc(100vh - 300px); border-radius: 6px; }
+/* Cột theo bề rộng khai ở tiêu đề (ô nhập không tự nới cột, cột Mã hàng không bị ép hẹp); Tên hàng lấy phần còn lại. */
+.kp-sheet .kp-lines-box > table { table-layout: fixed; }
+.kp-sheet .kp-lines-box > table td :is(input, select) { width: 100%; min-width: 0; }
+.kp-sheet .kp-lines-box > table > tbody > tr > td { padding: 4px 6px; }
+
+/* Cột Trợ lý: các khối (viền / màu tiêu đề ở theme.css .mh-panel). */
+.kp-sheet .mh-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.kp-sheet .mh-panel h4 { margin: 0 0 6px; font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+.kp-sheet .mh-panel h4 .badge { margin-left: auto; }
+.kp-sheet .mh-check { display: flex; gap: 6px; font-size: 12px; padding: 4px 6px; border-radius: 5px; margin-bottom: 3px; line-height: 1.35; }
+.kp-sheet .mh-check.warn { background: var(--warn-bg); color: #8a5300; }
+.kp-sheet .mh-check.ok { background: var(--ok-bg); color: var(--ok); }
+.kp-sheet .mh-guide { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-600, #44515f); line-height: 1.45; }
+.kp-sheet .mh-guide li { margin-bottom: 4px; }
+.kp-sheet .mh-guide li.done { color: var(--ok); text-decoration: line-through; }
+.kp-sheet .mh-kv { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 12.5px; }
+.kp-sheet .mh-kv > :nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+.kp-sheet .mh-kv .total { font-weight: 700; font-size: 14px; border-top: 1px solid var(--line); padding-top: 3px; }
+.kp-sheet .mh-bad { color: var(--bad); font-weight: 700; }
+.kp-sheet .mh-warn { color: #b06a00; font-weight: 600; }
+.kp-sheet .kp-km-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.kp-sheet .kp-km-row .input { flex: 1; min-width: 140px; }
+
+@media (max-width: 1100px) {
+  .kp-sheet .mh-sheet-body { grid-template-columns: 1fr; overflow: auto; }
+  .kp-sheet .mh-main, .kp-sheet .mh-side { overflow: visible; }
+  .kp-sheet .mh-side { border-left: 0; border-top: 1px solid var(--line); }
+  .kp-sheet .mh-head { grid-template-columns: 1fr 1fr 1fr; }
+}
