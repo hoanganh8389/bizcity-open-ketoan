@@ -143,12 +143,15 @@ export type Short = { sku: string; need: number; have: number };
  * thiếu thì giữ được bao nhiêu giữ bấy nhiêu và báo `short` (không chặn — NT-BH-023 bước 2). `releaseAll` (đóng / huỷ): trả hết.
  * Dòng đã bỏ khỏi đơn (`removed`) trả hết số đang giữ.
  */
-export function rebalanceHolds(lines: readonly OrderLine[], have: ReadonlyMap<string, number>, opts: { releaseAll?: boolean; removed?: readonly OrderLine[] } = {}) {
+// [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035: dòng mặt hàng dịch vụ (`skip`) không giữ hàng, không báo thiếu tồn (Kernel không ghi thẻ kho) (đóng góp)
+export function rebalanceHolds(lines: readonly OrderLine[], have: ReadonlyMap<string, number>, opts: { releaseAll?: boolean; removed?: readonly OrderLine[]; skip?: ReadonlySet<string> } = {}) {
   const left = new Map(have);
   const hold: Move[] = [];
   const release: Move[] = [];
   const need = new Map<string, number>();
   const out = lines.map((l) => {
+    // Dịch vụ: không có hàng thật để giữ / trả — không sinh dòng chuyển kho, số giữ luôn 0.
+    if (opts.skip?.has(l.sku)) return { ...l, held: 0 };
     const target = opts.releaseAll ? 0 : remainingOf(l);
     const mv = { lineKey: l.lineKey, sku: l.sku, name: l.name, unit: l.unit };
     if (l.held > target) {
@@ -163,7 +166,7 @@ export function rebalanceHolds(lines: readonly OrderLine[], have: ReadonlyMap<st
     if (can > 0) hold.push({ ...mv, qty: can });
     return { ...l, held: r4(l.held + can) };
   });
-  for (const l of opts.removed ?? []) if (l.held > 0) release.push({ lineKey: `${l.lineKey}x`, sku: l.sku, name: l.name, unit: l.unit, qty: l.held });
+  for (const l of opts.removed ?? []) if (l.held > 0 && !opts.skip?.has(l.sku)) release.push({ lineKey: `${l.lineKey}x`, sku: l.sku, name: l.name, unit: l.unit, qty: l.held });
   const short: Short[] = [...need.entries()].map(([sku, n]) => ({ sku, need: n, have: r4(Math.max(0, have.get(sku) ?? 0)) })).filter((s) => s.need > s.have)
     .sort((a, b) => a.sku.localeCompare(b.sku));
   return { lines: out, hold, release, short };

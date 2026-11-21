@@ -59,6 +59,17 @@ describe('giữ hàng, giao, trả lại', () => {
     expect(c.release.map((m) => m.qty)).toEqual([4]);
     expect(c.lines[0]!.held).toBe(0);
   });
+  // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035: dòng dịch vụ không giữ hàng, không báo thiếu tồn, không sinh dòng chuyển kho (đóng góp)
+  it('dòng mặt hàng dịch vụ: không giữ, không báo thiếu, không chuyển kho; hàng thường vẫn giữ', () => {
+    const skip = new Set(['PHISHIP']);
+    const a = rebalanceHolds([line(), line({ lineKey: 'S1', sku: 'PHISHIP', qty: 1, held: 0 })], new Map([['SUA330', 10]]), { skip });
+    expect(a.lines.map((l) => l.held)).toEqual([10, 0]);
+    expect(a.hold.map((m) => m.sku)).toEqual(['SUA330']);
+    expect(a.short).toEqual([]);
+    const b = rebalanceHolds([line({ lineKey: 'S1', sku: 'PHISHIP', qty: 1, held: 1 })], new Map(), { skip, removed: [line({ lineKey: 'S2', sku: 'PHISHIP', qty: 1, held: 1 })] });
+    expect(b.release).toEqual([]);
+    expect(b.lines[0]!.held).toBe(0);
+  });
   it('giao ≤ số còn lại: 6 → còn 4, giữ 4; 5 khi còn 4 → over', () => {
     const a = applyDelivery([line({ held: 10 })], [{ lineKey: 'L1', qty: 6 }]);
     expect(a.over).toEqual([]);

@@ -21,7 +21,7 @@
   "data": {
     "schema": "mod_phieu_ban",
     "tables": ["docs", "code_counters", "orders", "order_events", "order_shipments"],
-    "reads": ["bizcity_read.branches", "bizcity_read.products", "bizcity_read.tax_codes", "bizcity_read.payment_methods", "bizcity_read.partners", "bizcity_read.branch_prices", "bizcity_read.stock_on_hand", "bizcity_read.warehouses"]
+    "reads": ["bizcity_read.branches", "bizcity_read.products", "bizcity_read.tax_codes", "bizcity_read.payment_methods", "bizcity_read.partners", "bizcity_read.branch_prices", "bizcity_read.stock_on_hand", "bizcity_read.warehouses", "bizcity_read.item_kinds"]
   },
   "actions": [
     "phieu-ban.doc.list",
@@ -50,7 +50,8 @@
     "phieu-ban.customer.docs",
     "phieu-ban.shipment.create",
     "phieu-ban.shipment.status",
-    "phieu-ban.order.copy"
+    "phieu-ban.order.copy",
+    "phieu-ban.voucher.check"
   ],
   "ledger": {
     "submits": [

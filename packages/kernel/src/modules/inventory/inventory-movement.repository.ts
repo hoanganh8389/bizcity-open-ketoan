@@ -3,6 +3,7 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/inventory/inventory-movement.repository.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 // [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — ghi xong dòng hàng thì phân lô (lot.service.ts, 0098) (đóng góp)
+// [2026-11-21 11:06 AM Võ Hoàng] NT-BH-035 — dòng có định danh trỏ mặt hàng loại dịch vụ (item_classification.kind = 'service' tại ngày chứng từ) không sinh thẻ kho → không tồn, không giá vốn; tra một câu mỗi chứng từ (K1, đóng góp)
 /**
  * Hàng vào / ra kho (inventory_movements): trải phẳng dòng hàng của chứng từ đang hiệu lực,
  * mỗi dòng một lần hàng vào hoặc ra một chi nhánh. Nguồn của nhập xuất tồn và giá vốn bình quân.
@@ -16,10 +17,14 @@
  *   transfer        : ra ở chi nhánh xuất; vào ở chi nhánh nhận khi đã xác nhận nhận hàng
  *   stock_adjustment: vào (tăng) hoặc ra (giảm)
  * Phiếu tiền (chuyển tiền, thu, trả) không có hàng: không ghi gì.
+ * Mặt hàng dịch vụ (NT-BH-035): dòng có định danh (itemId của dòng, không có thì định danh của mã tại ngày chứng từ — cùng cách trigger
+ * gắn item_id) mà phân loại tại ngày chứng từ là `service` → không ghi dòng kho (doanh thu / thuế của dòng vẫn định khoản như cũ).
+ * Dòng không ra định danh / chưa phân loại → như cũ. Không suy từ mã hàng. Thẻ kho cũ không sửa: chỉ áp khi chứng từ ghi (lại).
  */
 import type { IngestDocument } from '@ketoan/contracts';
 import type { Db } from '@bizcity/platform/db/client';
 import { defaultWarehouseCache } from '@bizcity/platform/masterdata/default-warehouse';
+import { sql } from 'kysely';
 import { allocateLots, type LotDoc } from './lot.service.js';
 
 type MovementRow = {
@@ -49,6 +54,28 @@ const abs = Math.abs;
 /** Giá trị 0 nghĩa là nguồn chưa có giá vốn → NULL để bước tính giá vốn định giá. */
 const valued = (v: number | undefined, sign: 1 | -1): number | null => (v === undefined || v === 0 ? null : sign * abs(v));
 
+/**
+ * Chỉ số (0-based) các dòng của chứng từ là mặt hàng dịch vụ tại ngày chứng từ (NT-BH-035). Một câu cho cả chứng từ: định danh của dòng
+ * (itemId, không có thì bizcity_item_at theo mã tại ngày) → bản phân loại có hiệu lực tại ngày, kind = 'service'.
+ */
+async function serviceLineIndexes(db: Db, tenantId: string, date: string, lines: readonly { sku?: string; itemId?: string }[]): Promise<Set<number>> {
+  if (!lines.length) return new Set();
+  const ids = lines.map((l) => l.itemId ?? '');
+  const skus = lines.map((l) => l.sku ?? '');
+  const r = await sql<{ i: string }>`
+    SELECT x.i::text AS i
+      FROM unnest(${ids}::text[], ${skus}::text[]) WITH ORDINALITY AS x(item_id, sku, i)
+      JOIN LATERAL (
+        SELECT c.kind FROM item_classification c
+         WHERE c.tenant_id = ${tenantId}::bigint
+           AND c.item_id = COALESCE(NULLIF(x.item_id, ''), CASE WHEN x.sku <> '' THEN bizcity_item_at(${tenantId}::bigint, x.sku, ${date}::date) END)
+           AND c.valid_from <= ${date}::date AND (c.valid_to IS NULL OR ${date}::date < c.valid_to)
+         ORDER BY c.valid_from DESC LIMIT 1
+      ) k ON TRUE
+     WHERE k.kind = 'service'`.execute(db);
+  return new Set(r.rows.map((x) => Number(x.i) - 1));
+}
+
 export const inventoryMovementRepository = {
   async removeForDocument(db: Db, eventId: string): Promise<void> {
     await db.deleteFrom('inventory_movements').where('event_id', '=', eventId).execute();
@@ -63,6 +90,7 @@ export const inventoryMovementRepository = {
     const date = doc.docDate.slice(0, 10);
     const base = { tenant_id: args.tenantId, event_id: args.eventId, doc_type: doc.docType, doc_date: date, reason_code: doc.reasonCode ?? null };
     const rows: MovementRow[] = [];
+    const service = await serviceLineIndexes(db, args.tenantId, date, (doc as { lines?: { sku?: string; itemId?: string }[] }).lines ?? []);
     const push = (
       i: number,
       l: { sku: string; name: string; unit: string; warehouseCode?: string; isGift?: boolean; excludeFromCost?: boolean; taxAmount?: number; discount?: number },
@@ -72,7 +100,7 @@ export const inventoryMovementRepository = {
       amount: number | null,
       counterBranchId: string | null = null,
     ) => {
-      if (!l.sku) return;
+      if (!l.sku || service.has(i)) return;
       // [2026-11-17 Nguyễn Văn Thủy] thuế, chiết khấu của dòng mua / trả NCC (cùng dấu amount) cho công thức giá vốn tuỳ chọn (0153) (đóng góp)
       const sg = (kind === 'purchase' || kind === 'purchase_return') && amount ? Math.sign(amount) : 0;
       rows.push({ ...base, branch_id: branchId, line_no: i + 1, kind, sku: l.sku, name: l.name, unit: l.unit, warehouse_code: l.warehouseCode ?? '', qty, amount, counter_branch_id: counterBranchId, is_gift: Boolean(l.isGift), exclude_cost: Boolean(l.excludeFromCost), priced_at_sale: false,

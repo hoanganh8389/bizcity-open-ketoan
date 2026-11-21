@@ -24,6 +24,11 @@ export function GiaoHangCaiDat() {
   const cur = useQuery({ queryKey: ['setting', 'phieu-ban-ship'], queryFn: async () => ({ wh: toMap(await get(K.wh)), fee: String((await get(K.fee)) ?? ''), cod: toMap(await get(K.cod)) }) });
   const whs = useQuery({ queryKey: ['warehouses'], queryFn: () => api.get<Wh[]>('/api/v1/warehouses') });
   const methods = useQuery({ queryKey: ['payment-methods'], queryFn: () => api.get<Method[]>('/api/v1/posting/payment-methods') });
+  // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 §3.3: nhắc khi mã phí ship đã ghi chưa là mặt hàng dịch vụ (module phieu-ban kiểm) (đóng góp)
+  const shipCheck = useQuery({
+    queryKey: ['setting', 'phieu-ban-ship', 'check'],
+    queryFn: () => api.get<{ ship?: { shipFeeWarning?: string | null } }>('/api/v1/m/phieu-ban/order-settings').then((r) => r.ship?.shipFeeWarning ?? null).catch(() => null),
+  });
   const [wh, setWh] = useState<Record<string, string>>({});
   const [fee, setFee] = useState('');
   const [cod, setCod] = useState<[string, string][]>([]);
@@ -67,6 +72,7 @@ export function GiaoHangCaiDat() {
       </Field>
       <Field label="Mã dịch vụ phí ship thu khách" hint="Mặt hàng dịch vụ (danh mục mặt hàng) thành dòng phí ship trên phiếu bán của chuyến giao. Chưa khai mà chuyến có phí ship thì không ghi Đã giao được.">
         <ItemPicker value={fee} onChange={setFee} disabled={!writable} />
+        {shipCheck.data && fee.trim() === cur.data?.fee && <div className="alert alert-warn" role="alert">{shipCheck.data}</div>}
       </Field>
       <Field label='Hình thức thanh toán "COD — hãng"' hint="Tiền COD của chuyến thành dòng thanh toán theo hình thức của hãng (phải thu hãng — tài khoản, đối tượng khai ở hình thức thanh toán). Hãng tự giao: SELF.">
         <table className="grid">

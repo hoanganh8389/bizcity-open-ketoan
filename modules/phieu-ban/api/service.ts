@@ -13,7 +13,7 @@ import { computeDoc, docKeyOf, overReturn, returnableBySku, stockShortByWarehous
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-026: voucher TGS / hãng (đóng góp)
 import { applyVouchers, stripVouchers, type QuotedVoucher, type VoucherBody } from './domain/voucher.js';
 import {
-  activeMethods, approvedReturnsOf, lockVoucher, voucherHeldByOther, lockedStock, branchExists, catalogFor, getDoc, noTaken, partnerByCode, saleByNo, saveDoc, setStatus, takeNo, taxRates, toTradeDoc,
+  activeMethods, approvedReturnsOf, lockVoucher, voucherHeldByOther, lockedStock, serviceSkus, branchExists, catalogFor, getDoc, noTaken, partnerByCode, saleByNo, saveDoc, setStatus, takeNo, taxRates, toTradeDoc,
   type DocRow, type Tx,
 } from './store.js';
 
@@ -52,12 +52,13 @@ async function checkPromoQuota(ctx: ActionContext, branch: string, lines: readon
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-028: dòng quà của phiếu bán tự vào kho quà (KKM) của cửa hàng — khoá bizcity.pos.gift_warehouses dùng chung với máy bán (đóng góp)
 type GiftWarehouse = { branch: string; saleWarehouse: string; giftWarehouse: string | null; issue: string | null };
 /**
- * Kho quà của cửa hàng cho phiếu bán có dòng quà: hỏi action đọc `pos.gift-warehouse.get` của module pos (khoá cài đặt thuộc module pos;
+ * Kho quà của cửa hàng cho phiếu bán / phiếu trả (NT-BH-035) có dòng quà: hỏi action đọc `pos.gift-warehouse.get` của module pos (khoá cài đặt thuộc module pos;
  * ctx.settings.get của module này chỉ đọc khoá bizcity.phieu_ban.*). Module pos chưa bật (NOT_FOUND) / cửa hàng chưa khai → null (như cũ:
  * quà ở kho của phiếu). Khai sai (không thuộc cửa hàng, ngừng dùng, không phải KKM) → POS_GIFT_WAREHOUSE. Gọi NGOÀI ctx.data.module.
  */
-export async function giftWarehouseOf(ctx: ActionContext, kind: Kind, branch: string, lines: readonly { isGift?: boolean }[]): Promise<string | null> {
-  if (kind !== 'sale' || !lines.some((l) => l.isGift)) return null;
+// [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 Q2: phiếu trả BH11 — quà khách trả về kho quà KKM của cửa hàng nhận (loại kho "Khách trả" có KKM từ 0178) (đóng góp)
+export async function giftWarehouseOf(ctx: ActionContext, _kind: Kind, branch: string, lines: readonly { isGift?: boolean }[]): Promise<string | null> {
+  if (!lines.some((l) => l.isGift)) return null;
   let g: GiftWarehouse;
   try {
     g = await ctx.actions.call<GiftWarehouse>('pos.gift-warehouse.get', { branch });
@@ -169,7 +170,7 @@ type VoucherQuote = { vouchers: QuotedVoucher[]; problems: { code: string; reaso
  * dùng khi nhận phieu-ban.doc.recorded. Cửa sổ rủi ro: mã vừa dùng ở máy bán mà module voucher chưa nhận sự kiện đơn (outbox) thì quote
  * chưa thấy — module voucher ghi "dùng trùng" vào nhật ký mã khi nhận sự kiện thứ hai.
  */
-async function applyDocVouchers(ctx: ActionContext, r: DocRow, body: Body): Promise<Body> {
+async function applyDocVouchers(ctx: ActionContext, r: Pick<DocRow, 'kind' | 'doc_id' | 'branch_code' | 'doc_date'>, body: Body): Promise<Body> {
   const codes = (body as VoucherBody).voucherCodes ?? [];
   if (r.kind !== 'sale' || !codes.length) return body;
   if (!body.partner?.code) throw Errors.validation('Phiếu dùng voucher phải chọn khách (voucher gắn SĐT khách, chỉ khách đó dùng)', { reason: 'VOUCHER_NEED_CUSTOMER', field: 'partner' });
@@ -203,11 +204,30 @@ async function applyDocVouchers(ctx: ActionContext, r: DocRow, body: Body): Prom
   return res.body as Body;
 }
 
+// [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 §3.1: ô Mã voucher BH10 — kiểm trước khi ghi / duyệt, hiện số được giảm (đóng góp)
+/**
+ * Kiểm voucher của phiếu bán đang lập (chưa ghi, không giữ mã): tính phiếu như lúc duyệt rồi áp voucher y hệt applyDocVouchers (cùng
+ * voucher.order.quote, cùng luật trừ). Mã sai / hết lượt / đã dùng → lỗi rõ như lúc duyệt. Không ghi gì; lúc duyệt vẫn kiểm lại (khoá mã).
+ */
+export async function checkVouchers(ctx: ActionContext, input0: DocInput & { id?: string }) {
+  const { id, ...rest } = input0;
+  const input = await withChannel(ctx, rest as DocInput, id);
+  const prepared = await ctx.data.module(async (tx) => prepare(tx, 'sale', input));
+  if (prepared.problems.length) fail(prepared.problems);
+  const before = prepared.body.totals;
+  const body = await applyDocVouchers(ctx, { kind: 'sale', doc_id: id ?? randomUUID(), branch_code: input.branchCode, doc_date: input.docDate }, prepared.body) as VoucherBody;
+  const applied = body.vouchers ?? [];
+  const discount = applied.filter((v) => v.kind === 'discount').reduce((s, v) => s + v.amount, 0);
+  const payment = applied.filter((v) => v.kind === 'payment').reduce((s, v) => s + v.amount, 0);
+  return { vouchers: applied, before, after: body.totals, discount, payment };
+}
+
 /** Duyệt: tính lại theo danh mục hiện tại, kiểm số còn trả (phiếu trả nối phiếu của module), nộp sổ phiên bản kế tiếp. */
 export async function approve(ctx: ActionContext, id: string) {
   // Cài đặt đọc ngoài giao dịch của module (vai trò module không đọc bảng cấu hình của Core).
   const blockStock = (await ctx.settings.get<unknown>(BLOCK_NEGATIVE_STOCK)) === true;
   // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-032: dòng phí ship (mã dịch vụ khai ở BH17) không kiểm tồn — Core chưa có loại mặt hàng dịch vụ (đóng góp)
+  // NT-BH-035: nay Core có (dịch vụ không ghi kho) — mã phí ship chỉ còn là lối lùi khi mặt hàng phí ship chưa phân loại dịch vụ.
   const feeSku = blockStock ? String((await ctx.settings.get<unknown>(SHIP_FEE_SKU)) ?? '').trim() : '';
   const head = await ctx.data.module(async (tx) => getDoc(tx, id));
   const giftWh = await giftWarehouseOf(ctx, head.kind, head.branch_code, head.body.lines);
@@ -229,7 +249,10 @@ export async function approve(ctx: ActionContext, id: string) {
     }
     if (r.kind === 'sale' && blockStock) {
       // Phiếu đang sửa đã bỏ duyệt (chứng từ trong sổ đã huỷ) nên tồn đọc được không còn trừ chính nó.
-      const goods = p.body.lines.filter((l) => !feeSku || l.sku !== feeSku);
+      // [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 §3.3: dòng mặt hàng dịch vụ (Kernel không ghi thẻ kho) không kiểm tồn — áp chung theo
+      // phân loại, không riêng mã phí ship. Mã phí ship CHƯA phân loại dịch vụ vẫn bỏ qua như NT-BH-032 (chuyến giao không bị chặn); BH17 nhắc. (đóng góp)
+      const svc = await serviceSkus(tx, p.body.lines.map((l) => l.sku), r.doc_date);
+      const goods = p.body.lines.filter((l) => !svc.has(l.sku) && (!feeSku || l.sku !== feeSku));
       const have = await lockedStock(tx, r.branch_code, r.warehouse_code, goods.filter((l) => !l.warehouseCode).map((l) => l.sku));
       // NT-BH-028: dòng quà ở kho quà kiểm tồn kho quà, không cộng chung với kho của phiếu.
       const giftLines = goods.filter((l) => l.warehouseCode);

@@ -12,7 +12,9 @@ import {
 import { issueCodes } from './codes.js';
 import { schemeOf } from './domain/codes.js';
 import { activePaymentMethods, branchTaxCodeOf, catalogFor, resolveBranch, sameTaxBranches, todayVn } from './read.js';
-import { returnBadWarehouses, returnDaysPolicy } from './settings.js';
+import { giftWarehouses, returnBadWarehouses, returnDaysPolicy } from './settings.js';
+// [2026-11-21 Võ Hoàng] NGHIEM-THU — NT-BH-035 Q2: quà khách trả về kho quà KKM của cửa hàng nhận (đóng góp)
+import { warehousesFor } from './catalog.js';
 // [2026-11-18 Võ Hoàng] NGHIEM-THU — NT-BH-030: trả khác shop cùng MST, quá hạn theo yêu cầu đã duyệt, hạn trả theo shop (đóng góp)
 import { approvalsOfOrder, markApprovalUsed, verifyApprovalForReturn } from './return-approval.js';
 import type { BranchRow } from './domain/order.js';
@@ -160,6 +162,8 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
   const policy = await returnDaysPolicy(ctx);
   // Kho KTL nhận hàng lỗi theo cửa hàng (BH17, khoá bizcity.pos.return_bad_warehouses) — cài đặt đọc ngoài giao dịch của module.
   const badMap = await returnBadWarehouses(ctx);
+  // NT-BH-035 Q2: kho quà KKM theo cửa hàng (BH17, khoá bizcity.pos.gift_warehouses — cùng khoá máy bán dùng khi bán quà).
+  const giftMap = await giftWarehouses(ctx);
   const prepared = await ctx.data.module(async (tx) => {
     await lockKey(tx, `pos:return:${draft.id}`);
     const old = (await sql<{ snapshot: Record<string, unknown>; same: boolean; doc_key: string; refund_total: string; branch_code: string }>`
@@ -176,11 +180,19 @@ export async function createReturn(ctx: ActionContext, draft: ReturnDraft, opts:
     const today = todayVn();
     const days = daysOf(policy, branch.code);
     const bad = draft.lines.some((l) => l.condition === 'bad') ? await badWarehouseOf(tx, badMap, branch.code) : { code: null };
+    // NT-BH-035 Q2: phiếu có dòng quà nguyên vẹn → kho quà của cửa hàng nhận. Chưa khai → như cũ (kho bán). Khai sai → POS_GIFT_WAREHOUSE
+    // (như lúc bán quà, NT-BH-028) để kế toán sửa cài đặt, không để quà lặng lẽ về kho bán.
+    const goodGift = draft.lines.some((l) => (l.condition ?? 'good') === 'good' && lines.find((x) => x.lineId === l.lineId)?.isGift);
+    const whs = goodGift ? await warehousesFor(tx, branch.code, giftMap) : null;
+    if (whs?.issue) {
+      throw Errors.validation(`Kho quà của cửa hàng ${branch.code} không dùng được: ${whs.issue} — kế toán chọn lại kho khuyến mại (KKM) ở Cài đặt bán hàng (BH17)`,
+        { reason: 'POS_GIFT_WAREHOUSE', branchCode: branch.code });
+    }
     const orderTax = order.branch_code === branch.code ? branch.taxCode : await branchTaxCodeOf(tx, order.branch_code);
     const computed = computeReturn({
       draft, order: { status: order.status, branchCode: order.branch_code, businessDate: order.business_date, buyerTaxCode: buyerTaxCodeOf(order.snapshot), branchTaxCode: orderTax },
       lines, done, branchCode: branch.code, branchTaxCode: branch.taxCode, today, days, approved: Boolean(draft.approvalId), paymentMethods: await activePaymentMethods(tx), exchange,
-      badWarehouse: bad.code, ...(bad.issue ? { badWarehouseIssue: bad.issue } : {}),
+      badWarehouse: bad.code, ...(bad.issue ? { badWarehouseIssue: bad.issue } : {}), giftWarehouse: whs?.gift ?? null,
     });
     if ('problem' in computed) raise(computed.problem);
     // NT-BH-030 Q2: quá hạn → yêu cầu trả quá hạn phải đã duyệt, cùng đơn, cùng cửa hàng nhận, đúng dòng / SL / tình trạng.

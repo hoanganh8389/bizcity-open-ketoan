@@ -130,7 +130,8 @@
       "bizcity_read.partners",
       "bizcity_read.branch_prices",
       "bizcity_read.stock_on_hand",
-      "bizcity_read.warehouses"
+      "bizcity_read.warehouses",
+      "bizcity_read.item_kinds"
     ]
   },
   "actions": [
