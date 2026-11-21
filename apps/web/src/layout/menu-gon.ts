@@ -70,7 +70,7 @@ export const GON_DEFS: GonDef[] = [
     // thẻ đầu trang chỉ 5 màn làm hằng ngày; danh sách theo việc: Hằng ngày / Định kỳ / Khai báo. Mỗi việc một lối vào (đóng góp)
     the: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/dat-hang', '/mua-hang/han-muc', '/mua-hang/hop-dong'],
     sections: [
-      { label: 'Hằng ngày', paths: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/han-muc'] },
+      { label: 'Hằng ngày', paths: ['/mua-hang/tong-hop', '/mua-hang/hoa-don-ncc', '/mua-hang/doi-chieu-hoa-don', '/mua-hang/han-muc'] },
       { label: 'Đặt hàng', paths: ['/mua-hang/dang-ky-max', '/mua-hang/ton-max', '/mua-hang/cong-thuc', '/mua-hang/dat-hang', '/mua-hang/chuyen-shop'] },
       { label: 'Định kỳ', paths: ['/mua-hang/thuong', '/mua-hang/phan-bo', '/mua-hang/lo-han', '/mua-hang/qua-tang'] },
       { label: 'Khai báo', paths: ['/mua-hang/nha-cung-cap', '/mua-hang/hop-dong', '/mua-hang/chinh-sach', '/mua-hang/cai-dat'] },

@@ -46,7 +46,7 @@ const GROUPS: [string, string, PDoc['kind'][]][] = [
 // [2026-11-15 Nguyễn Văn Thủy] cột mặc định theo loại phiếu — chỉ cột có nghĩa với loại đó; cột khác bật ở nút "Cột" (đóng góp)
 const COT_MAC_DINH: Record<string, string[]> = {
   all: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'checks'],
-  order: ['docDate', 'docNo', 'status', 'progress', 'invoiceState', 'invPlan', 'partnerFull', 'contract', 'branch', 'kho', 'total', 'checks'],
+  order: ['docDate', 'docNo', 'status', 'progress', 'invoiceState', 'invPlan', 'partnerFull', 'contract', 'branch', 'workBranch', 'kho', 'total', 'checks'],
   receipt: ['docDate', 'docNo', 'status', 'ledgerState', 'partnerFull', 'contract', 'branch', 'ref', 'invPlan', 'invoice', 'beforeTax', 'tax', 'total', 'due', 'debtLeft', 'checks'],
   return: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'ref', 'total', 'checks'],
   money: ['docDate', 'docNo', 'status', 'ledgerState', 'kind', 'partnerFull', 'contract', 'branch', 'total', 'debtLeft'],
@@ -291,6 +291,9 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
     { key: 'partnerPhone', header: 'SĐT NCC', type: 'code', width: 110, value: (r) => names.partner(r.partnerCode)?.phone ?? '' },
     { key: 'partnerAddress', header: 'Địa chỉ NCC', width: 260, value: (r) => names.partner(r.partnerCode)?.address ?? '', render: (r) => <span title={names.partner(r.partnerCode)?.address ?? ''}>{names.partner(r.partnerCode)?.address}</span> },
     { key: 'branch', header: 'Chi nhánh', width: 170, title: 'Mã · tên chi nhánh (có chi nhánh trùng tên, vd chi nhánh mẫu CN-PT và chi nhánh thật 08000 cùng tên CN Phú Thọ)', value: (r) => `${r.branchCode} · ${names.branchName(r.branchCode)}` },
+    // [2026-11-21 Nguyễn Văn Thủy] nơi lập = chi nhánh đang làm việc của người lập (lập hộ chi nhánh khác thì khác cột Chi nhánh) (đóng góp)
+    { key: 'workBranch', header: 'Nơi lập', width: 150, title: 'Chi nhánh đang làm việc của người lập phiếu (chọn ở nút chi nhánh trên cùng). Phiếu cũ: bằng chi nhánh của phiếu', value: (r) => { const w = r.workBranchCode ?? r.branchCode; return `${w} · ${names.branchName(w)}`; },
+      render: (r) => { const w = r.workBranchCode ?? r.branchCode; return <span className={w === r.branchCode ? 'muted' : ''} title={names.branchName(w)}>{w} · {names.branchName(w)}</span>; } },
     { key: 'kho', header: 'Phân kho', width: 130, title: 'Mã phân kho của phiếu hàng (chưa ghi kho = kho mặc định của chi nhánh; "mặc định" = chi nhánh chưa khai kho); đơn đặt: kho giao', value: (r) => { const k = r.kind === 'order' ? khoOf(r.branchCode, r.deliveryWarehouse) : GOODS_KINDS.includes(r.kind) ? khoOf(r.branchCode, r.warehouseCode) : ''; return k || (GOODS_KINDS.includes(r.kind) ? 'mặc định' : ''); } },
     { key: 'contract', header: 'Hợp đồng', type: 'code', width: 150, title: 'Số hợp đồng mua của phiếu (MH29) — bút toán, công nợ mang số này', value: (r) => r.contractCode ?? '' },
     { key: 'ref', header: 'Theo đơn / phiếu', width: 120, title: 'Chứng từ gốc (đơn đặt của phiếu nhập…); phiếu nhập không theo đơn ghi "Nhập ngoài đơn"', value: (r) => (nhapNgoaiDon(r) ? 'Nhập ngoài đơn' : (r.refIds ?? []).map((x) => data?.docs.find((d) => d.id === x)?.docNo ?? '').filter(Boolean).join(', ')),

@@ -490,6 +490,9 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const items: Item[] = [];
   const pending = ctx.docs.filter((d) => d.status === 'pending_approval');
   if (pending.length) items.push({ key: 'pending', level: 'warn', text: 'Chứng từ chờ duyệt', count: pending.length, path: '/mua-hang/tong-hop?trang-thai=pending_approval' });
+  // [2026-11-21 Nguyễn Văn Thủy] phiếu vượt hạn mức công nợ chưa được duyệt ngoại lệ — người có quyền phải duyệt hoặc giảm đơn (đóng góp)
+  const overLimit = ctx.docs.filter((d) => (d.status === 'draft' || d.status === 'pending_approval') && !d.override && (d.checks ?? []).some((c) => c.code === 'credit_exceeded'));
+  if (overLimit.length) items.push({ key: 'credit_over', level: 'error', text: 'Vượt hạn mức công nợ NCC — chờ duyệt ngoại lệ', count: overLimit.length, amount: overLimit.reduce((s, d) => s + d.totals.total, 0), path: '/mua-hang/tong-hop?loi=1' });
   if (blocked.length) items.push({ key: 'blocked', level: 'error', text: 'Phiếu còn lỗi chặn duyệt (hạn mức, lô, trùng hoá đơn…)', count: blocked.length, path: '/mua-hang/tong-hop?loi=1' });
   if (overdue.length) items.push({ key: 'overdue', level: 'error', text: 'Khoản nợ NCC quá hạn', count: overdue.length, amount: sum(overdue), path: '/mua-hang/han-muc?tab=den-han' });
   if (dueToday.length) items.push({ key: 'due', level: 'warn', text: 'Khoản nợ NCC đến hạn hôm nay', count: dueToday.length, amount: sum(dueToday), path: '/mua-hang/han-muc?tab=den-han' });
@@ -556,9 +559,9 @@ export async function purchaseTodo(trx: Db, tenantId: string, ctx: Ctx, asOf = t
   const invWait = rcptNoInv.filter((d) => planOf(d)?.mode === 'later' && hanHd(d) >= asOf);
   const invMissing = rcptNoInv.filter((d) => planOf(d)?.mode !== 'later');
   const tong = (ds: StoredDoc[]) => ds.reduce((s, d) => s + d.totals.total, 0);
-  if (invLate.length) items.push({ key: 'inv_late', level: 'error', text: 'Phiếu nhập quá hạn nhận hoá đơn NCC', count: invLate.length, amount: tong(invLate), path: '/mua-hang/tong-hop?loai=receipt&hoa-don=qua-han' });
-  if (invMissing.length) items.push({ key: 'receipt_no_invoice', level: 'warn', text: 'Phiếu nhập chưa có hoá đơn NCC (hoá đơn đi cùng hàng)', count: invMissing.length, amount: tong(invMissing), path: '/mua-hang/tong-hop?loai=receipt&hoa-don=thieu' });
-  if (invWait.length) items.push({ key: 'inv_wait', level: 'info', text: 'Phiếu nhập chờ hoá đơn NCC (còn trong hạn)', count: invWait.length, amount: tong(invWait), path: '/mua-hang/tong-hop?loai=receipt&hoa-don=cho' });
+  if (invLate.length) items.push({ key: 'inv_late', level: 'error', text: 'Phiếu nhập quá hạn nhận hoá đơn NCC', count: invLate.length, amount: tong(invLate), path: '/mua-hang/doi-chieu-hoa-don?trang=qua-han' });
+  if (invMissing.length) items.push({ key: 'receipt_no_invoice', level: 'warn', text: 'Phiếu nhập chưa có hoá đơn NCC (hoá đơn đi cùng hàng)', count: invMissing.length, amount: tong(invMissing), path: '/mua-hang/doi-chieu-hoa-don?trang=thieu' });
+  if (invWait.length) items.push({ key: 'inv_wait', level: 'info', text: 'Phiếu nhập chờ hoá đơn NCC (còn trong hạn)', count: invWait.length, amount: tong(invWait), path: '/mua-hang/doi-chieu-hoa-don?trang=cho' });
   const returnNoRef = live.filter((d) => d.kind === 'return' && !d.refIds?.length);
   if (returnNoRef.length) items.push({ key: 'return_no_ref', level: 'error', text: 'Phiếu trả hàng chưa gắn phiếu nhập gốc', count: returnNoRef.length, path: '/mua-hang/tong-hop?loai=return' });
   const drafts = ctx.docs.filter((d) => d.status === 'draft');

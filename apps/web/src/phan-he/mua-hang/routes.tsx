@@ -16,6 +16,7 @@ import { LoHanPage } from './lo-han/LoHanPage';
 import { QuaTangPage } from './qua-tang/QuaTangPage';
 import { NhatKyMuaPage } from './nhat-ky/NhatKyMuaPage';
 import { DoiChieuDonPage } from './doi-chieu/DoiChieuDonPage';
+import { DoiChieuHoaDonPage } from './doi-chieu/DoiChieuHoaDonPage';
 import { CaiDatMuaPage } from './cai-dat/CaiDatMuaPage';
 import { BienTheMatHangPage } from './bien-the/BienTheMatHangPage';
 import { NhaCungCapPage } from './nha-cung-cap/NhaCungCapPage';
@@ -66,6 +67,7 @@ export const muaHangRoutes = (
     <Route path="mua-hang/so-kho" element={<SoKhoTheoMatHangPage />} />
     <Route path="mua-hang/ton-kho" element={<TonKhoTheoMatHangPage />} />
     <Route path="mua-hang/doi-chieu" element={<DoiChieuDonPage />} />
+    <Route path="mua-hang/doi-chieu-hoa-don" element={<DoiChieuHoaDonPage />} />
     <Route path="mua-hang/cai-dat" element={<CaiDatMuaPage />} />
     <Route path="mua-hang/bien-the" element={<BienTheMatHangPage />} />
     {/* [2026-11-15 Nguyễn Văn Thủy] bỏ MH27 ĐVT Thùng đặt hàng: mua theo thùng thì khai ĐVT ở Danh mục mặt hàng (đóng góp) */}

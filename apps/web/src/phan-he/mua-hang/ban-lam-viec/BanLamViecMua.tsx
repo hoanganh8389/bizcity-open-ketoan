@@ -24,7 +24,7 @@ interface Todo { items: TodoItem[] }
 const NGAN: Record<string, string> = {
   ncc_no_tax: 'NCC chưa có MST', ncc_dup_tax: 'trùng MST',
   contract_expiring: 'HĐ sắp hết hạn', contract_no_price: 'HĐ chưa có giá',
-  order_pending: 'chờ duyệt', order_no_contract: 'không theo hợp đồng', price_diff: 'lệch giá hợp đồng', blocked: 'bị chặn duyệt',
+  credit_over: 'vượt hạn mức', order_pending: 'chờ duyệt', order_no_contract: 'không theo hợp đồng', price_diff: 'lệch giá hợp đồng', blocked: 'bị chặn duyệt',
   orders: 'chưa nhận đủ', outside: 'nhập ngoài đơn', expired: 'lô hết hạn', near: 'lô cận date',
   inv_late: 'quá hạn nhận HĐ', receipt_no_invoice: 'thiếu hoá đơn', inv_wait: 'chờ hoá đơn', inv_unmatched: 'HĐ chưa nhận mã', inv_no_receipt: 'HĐ chưa có phiếu nhập', costs: 'chi phí chưa phân bổ',
   overdue: 'nợ quá hạn', due: 'đến hạn hôm nay', soon: 'sắp đến hạn',

@@ -130,8 +130,45 @@ export function orderProgress(order: PDoc, docs: PDoc[], excludeId?: string, uni
 let seq = 0;
 const key = () => `L${Date.now().toString(36)}${(seq++).toString(36)}`;
 
-/** Phiếu nhập kho lập từ đơn đặt: phần còn lại của từng mã; hàng tặng trên đơn chia theo tỷ lệ phần còn lại. */
-export function receiptFromOrder(order: PDoc, docs: PDoc[], date: string, units?: UnitMap): PDoc {
+// [2026-11-21 Nguyễn Văn Thủy] ĐƠN GIAO NHIỀU NƠI (mua hộ): dòng đơn có chi nhánh nhận hàng riêng; mỗi chi nhánh nhận lập phiếu nhập của mình (đóng góp)
+/** Các chi nhánh nhận hàng của đơn (dòng trống chi nhánh = chi nhánh đầu đơn), theo thứ tự xuất hiện. */
+export function deliveryBranches(order: PDoc): string[] {
+  return [...new Set(order.lines.filter((l) => l.qty > 0).map((l) => l.branchCode || order.branchCode))];
+}
+
+/**
+ * Phiếu nhập lập cho MỘT chi nhánh nhận của đơn giao nhiều nơi: dòng của chi nhánh đó, phần còn lại tính riêng theo các phiếu nhập
+ * của chính chi nhánh đó (cùng mã đặt cho hai nơi không lấn sang nhau). Quà của chi nhánh chép khi chi nhánh chưa nhận lần nào.
+ */
+function receiptForBranch(order: PDoc, docs: PDoc[], date: string, units: UnitMap | undefined, branch: string): PDoc {
+  const recs = docs.filter((d) => d.kind === 'receipt' && d.status !== 'cancelled' && (d.refIds ?? []).includes(order.id) && d.branchCode === branch);
+  const got = new Map<string, number>();
+  for (const r of recs) for (const l of r.lines) if (l.sku) got.set(`${l.lineType === 'buy' ? 'b' : 'g'}|${l.sku}`, (got.get(`${l.lineType === 'buy' ? 'b' : 'g'}|${l.sku}`) ?? 0) + l.qty * ratioIn(units, l.sku, l.unit));
+  const lines: PLine[] = [];
+  for (const l of order.lines.filter((x) => (x.branchCode || order.branchCode) === branch && x.qty > 0)) {
+    const clean = { ...l, lineKey: key(), refLineKey: l.lineKey, branchCode: undefined, stockInfo: undefined, lotNo: undefined, expDate: undefined, mfgDate: undefined };
+    if (!l.sku) { if (!recs.some((r) => r.lines.some((x) => x.refLineKey === l.lineKey))) lines.push(clean); continue; }
+    const r = ratioIn(units, l.sku, l.unit) || 1;
+    const k = `${l.lineType === 'buy' ? 'b' : 'g'}|${l.sku}`;
+    const left = Math.max(0, l.qty * r - (got.get(k) ?? 0));
+    got.set(k, Math.max(0, (got.get(k) ?? 0) - l.qty * r));
+    if (left > 0) lines.push({ ...clean, qty: r4(left / r), ...(l.lineType === 'buy' ? {} : { refLineKey: undefined }) });
+  }
+  const wh = lines.find((l) => l.warehouseCode)?.warehouseCode ?? (branch === order.branchCode ? order.deliveryWarehouse : undefined);
+  return {
+    id: `new-${Date.now()}`, kind: 'receipt', status: 'draft', docNo: '', docDate: date, receivedDate: date, branchCode: branch, partnerCode: order.partnerCode, ...(wh ? { warehouseCode: wh } : {}),
+    brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
+    ...(order.contractCode ? { contractCode: order.contractCode } : {}), ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}), ...(order.costItem ? { costItem: order.costItem } : {}),
+    refIds: [order.id], lines, note: `Nhận hàng theo đơn ${order.docNo} — phần giao chi nhánh ${branch}${recs.length ? ' (giao tiếp)' : ''}`,
+  };
+}
+
+/**
+ * Phiếu nhập kho lập từ đơn đặt: phần còn lại của từng mã; hàng tặng trên đơn chia theo tỷ lệ phần còn lại.
+ * Đơn giao nhiều chi nhánh: truyền `branch` = chi nhánh nhận (mặc định chi nhánh đầu đơn) — phiếu chỉ gồm dòng giao cho chi nhánh đó.
+ */
+export function receiptFromOrder(order: PDoc, docs: PDoc[], date: string, units?: UnitMap, branch?: string): PDoc {
+  if (deliveryBranches(order).length > 1) return receiptForBranch(order, docs, date, units, branch ?? deliveryBranches(order)[0]!);
   const prog = orderProgress(order, docs, undefined, units);
   const rate = (sku: string) => { const p = prog.lines.find((x) => x.sku === sku); return p && p.ordered ? p.remaining / p.ordered : 0; };
   // Quà còn thiếu theo mã (ĐVT nhỏ nhất) — không chép quá phần còn thiếu, kể cả khi chia theo tỷ lệ.
@@ -164,6 +201,7 @@ export function receiptFromOrder(order: PDoc, docs: PDoc[], date: string, units?
     brandCode: order.brandCode, priceIncludesVat: order.priceIncludesVat, orderDiscount: order.orderDiscount, term: order.term, cktt: order.cktt,
     ...(order.contractCode ? { contractCode: order.contractCode } : {}),
     ...(order.invoicePlan ? { invoicePlan: order.invoicePlan } : {}),
+    ...(order.costItem ? { costItem: order.costItem } : {}),
     refIds: [order.id], lines, note: `Nhận hàng theo đơn ${order.docNo}${prog.received ? ` (giao tiếp, đã nhận ${prog.received}/${prog.ordered})` : ''}`,
   };
 }

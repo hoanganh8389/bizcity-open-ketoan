@@ -18,6 +18,7 @@ import { postPurchase, refReceipts, spreadOverMany } from './posting.js';
 import { logEvents, type LogRow } from './log.js';
 import { dependentsOf, docInputSchema, FREEZE_KINDS, freezeOf, getDoc, listDocs, listDocsFor, nextDocNo, withUserLabels, withDebtStatus, withLedgerStatus, rowValues, ADJUST_KINDS, type AdjustInfo, type DocInput, type StoredDoc } from './store.js';
 import { checkContract } from './hop-dong.js';
+import { loadInvoices } from './hoa-don.js';
 import { resolveWarehouse } from '../../modules/warehouses/default-warehouse.js';
 import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
@@ -126,6 +127,16 @@ export const purchaseService = {
       // Phiếu hàng (trừ đơn đặt): mọi dòng thuộc một phân kho của chi nhánh — trống thì kho mặc định, sai chi nhánh thì báo lỗi.
       if (STOCK_KINDS.includes(doc.kind)) doc.warehouseCode = (await resolveWarehouse(trx, auth.tenantId, doc.branchCode, doc.warehouseCode)) || undefined;
       else delete doc.warehouseCode;
+      // [2026-11-21 Nguyễn Văn Thủy] chi nhánh đang làm việc ghi một lần lúc lập; phân kho từng dòng phải thuộc chi nhánh nhận của dòng (đóng góp)
+      doc.workBranchCode = cur?.workBranchCode ?? doc.workBranchCode ?? doc.branchCode;
+      const isOrder = doc.kind === 'order';
+      for (const l of doc.lines) {
+        if (!isOrder) delete l.branchCode;
+        else if (l.branchCode === doc.branchCode) delete l.branchCode;
+        if (l.warehouseCode && (isOrder || STOCK_KINDS.includes(doc.kind))) l.warehouseCode = await resolveWarehouse(trx, auth.tenantId, l.branchCode ?? doc.branchCode, l.warehouseCode);
+        else if (!isOrder && !STOCK_KINDS.includes(doc.kind)) delete l.warehouseCode;
+        if (STOCK_KINDS.includes(doc.kind) && l.warehouseCode === doc.warehouseCode) delete l.warehouseCode;
+      }
       doc.docNo = input.docNo || cur?.docNo || (await nextDocNo(trx, auth.tenantId, input.kind, input.docDate));
       const ctx = await loadCtx(trx, auth.tenantId, docs);
       const a = await analyze(trx, auth.tenantId, doc, ctx);
@@ -264,6 +275,34 @@ export const purchaseService = {
     await trx.updateTable('purchase_documents').set({ status: 'draft', data: JSON.stringify(data), updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'purchase.adjust_started', objectType: 'purchase_document', objectId: id, after: { docNo: d.docNo, reason: adjust.reason, fromRevision: d.revision } });
     await logEvents(auth.tenantId, [{ event: 'doc_adjust_started', docNo: d.docNo, user: auth.actorName, data: { reason: adjust.reason, ledger: adjust.fromDocNos } }]);
+    return getDoc(trx, auth.tenantId, id);
+  },
+
+  // [2026-11-21 Nguyễn Văn Thủy] ĐỐI CHIẾU HOÁ ĐƠN: gắn hoá đơn NCC (MH22) nhận sau vào phiếu nhập (đóng góp)
+  /**
+   * Gắn hoá đơn NCC vào phiếu nhập: phiếu chưa duyệt thì ghi số / ký hiệu / ngày hoá đơn; phiếu đã ghi sổ thì lập điều chỉnh, ghi hoá
+   * đơn rồi duyệt lại ngay (đảo bút toán cũ, ghi bút toán mới có hoá đơn — thuế đầu vào vào đúng kỳ hoá đơn). Còn cảnh báo chặn thì
+   * huỷ cả lượt (phiếu giữ nguyên) — mở phiếu xử lý.
+   */
+  async attachInvoiceIn(trx: ActionTx, auth: AuthContext, id: string, invoiceId: string): Promise<StoredDoc> {
+    const d = await getDoc(trx, auth.tenantId, id);
+    if (d.kind !== 'receipt') throw Errors.conflict('Chỉ gắn hoá đơn vào phiếu nhập mua');
+    if (d.status === 'cancelled') throw Errors.conflict('Phiếu đã huỷ');
+    if (d.adjust) throw Errors.conflict('Phiếu đang điều chỉnh — mở phiếu ghi số hoá đơn rồi duyệt');
+    const inv = (await loadInvoices(trx, auth.tenantId, { id: invoiceId }))[0];
+    if (!inv || inv.status === 'cancelled') throw Errors.notFound('hoá đơn NCC');
+    if (inv.partnerCode !== d.partnerCode) throw Errors.validation(`Hoá đơn của NCC ${inv.partnerCode}, phiếu nhập của NCC ${d.partnerCode}`);
+    const invoice = { no: inv.no, ...(inv.series ? { serial: inv.series } : {}), date: inv.date, total: inv.total };
+    const label = `${inv.series ? `${inv.series}-` : ''}${inv.no}`;
+    const approved = d.status === 'approved';
+    if (approved) await purchaseService.startAdjustIn(trx, auth, id, `Gắn hoá đơn ${label} nhận sau hàng`);
+    const cur = await getDoc(trx, auth.tenantId, id);
+    await purchaseService.saveIn(trx, auth, { ...cur, invoice }, id);
+    if (approved) {
+      try { await purchaseService.approveIn(trx, auth, id); }
+      catch (e) { throw Errors.conflict(`Không duyệt lại được phiếu ${d.docNo} sau khi gắn hoá đơn: ${(e as Error).message} — mở phiếu, Lập điều chỉnh để xử lý`); }
+    }
+    await logEvents(auth.tenantId, [{ event: 'invoice_attached', docNo: d.docNo, user: auth.actorName, data: { invoice: label, invoiceId, reposted: approved } }]);
     return getDoc(trx, auth.tenantId, id);
   },
 

@@ -68,6 +68,12 @@ export interface PLine {
   /** Họ mã của dòng (lập từ phân tích đặt hàng): mã cha + mã con đuôi Z / Q / K / M / T / B… và số liệu từng mã lúc lập đơn. */
   family?: { sku: string; kind: string; tonKho: number; tonShop: number; banShop: number; dangDat: number; maxKho?: number; maxShop?: number; diDuong?: number; banThangTruoc?: number }[];
   stockInfo?: { need?: number; tonKho?: number; dangDat?: number; banThangTruoc?: number; banShop?: number; maxKho?: number; diDuong?: number; maxShop?: number; tonShop?: number };
+  /** [2026-11-21 Nguyễn Văn Thủy] Phân kho của dòng (trống = phân kho đầu phiếu / giao tại kho của đơn); phải thuộc chi nhánh nhận hàng của dòng (đóng góp). */
+  warehouseCode?: string;
+  /** Đơn đặt giao nhiều nơi: chi nhánh nhận hàng của dòng (trống = chi nhánh đầu phiếu). Mỗi chi nhánh nhận lập phiếu nhập riêng của mình. */
+  branchCode?: string;
+  /** Khoản mục chi phí của dòng (Danh mục khoản mục) — mặc định theo khoản mục đầu phiếu; để so định mức chi phí theo khoản mục. */
+  costItem?: string;
 }
 /**
  * Điều khoản thanh toán (theo các hợp đồng thực tế):
@@ -88,6 +94,10 @@ export interface PDoc {
   docNo: string;
   docDate: string;
   branchCode: string;
+  /** [2026-11-21 Nguyễn Văn Thủy] Chi nhánh ĐANG LÀM VIỆC của người lập (đại diện nơi lập, không cần phân kho) — có thể khác chi nhánh của chứng từ (lập hộ / mua hộ) (đóng góp). */
+  workBranchCode?: string;
+  /** Bộ phận của chứng từ (thuộc chi nhánh; mặc định bộ phận mặc định của chi nhánh). */
+  departmentCode?: string;
   partnerCode: string;
   /** Nhãn hàng chính của phiếu — TỰ SUY từ nhãn các dòng (nhãn chiếm giá trị lớn nhất), không nhập tay. Phiếu không có dòng
    *  hàng (thưởng theo nhãn) mang nhãn của chính sách. */

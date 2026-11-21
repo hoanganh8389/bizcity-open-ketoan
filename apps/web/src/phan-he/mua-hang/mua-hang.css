@@ -7,11 +7,11 @@
 .mh-sheet-head h2 { font-size: 16px; margin: 0; flex: 1; }
 .mh-sheet-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
 .mh-main { overflow: auto; padding: 10px 14px; }
-.mh-side { overflow: auto; border-left: 1px solid var(--line); background: #f7f9fc; padding: 10px 12px; }
+.mh-side { overflow: auto; border-left: 1px solid var(--line); background: #f7f9fc; padding: 10px 12px; position: relative; }
 .mh-sheet-foot { display: flex; gap: 8px; align-items: center; padding: 10px 84px 10px 16px; border-top: 1px solid var(--line); } /* phải chừa chỗ nút trợ lý nổi */
 .mh-sheet-foot .grow { flex: 1; font-size: 12px; }
 
-.mh-head { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 12px; margin-bottom: 8px; }
+.mh-head { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px 10px; margin-bottom: 8px; } /* [2026-11-21 Nguyễn Văn Thủy] 6 cột cho đầu phiếu gọn (đóng góp) */
 .mh-head .field label { font-size: 11px; }
 .mh-head .span2 { grid-column: span 2; }
 .mh-head .span4 { grid-column: 1 / -1; }
@@ -61,7 +61,7 @@
 .mh-warn { color: #b06a00; font-weight: 600; }
 .mh-pre { font-family: var(--mono, ui-monospace, Consolas, monospace); font-size: 11.5px; white-space: pre-wrap; background: #0f1d2e; color: #d6e4f5; padding: 8px 10px; border-radius: 6px; max-height: 360px; overflow: auto; margin: 0; }
 .mh-grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
-@media (max-width: 1100px) { .mh-sheet-body { grid-template-columns: 1fr; overflow: auto; } .mh-main, .mh-side { overflow: visible; } .mh-side { border-left: 0; border-top: 1px solid var(--line); } .mh-grid2 { grid-template-columns: 1fr; } .mh-head { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1100px) { .mh-sheet-body { grid-template-columns: 1fr; overflow: auto; } .mh-main, .mh-side { overflow: visible; } .mh-side { border-left: 0; border-top: 1px solid var(--line); } .mh-grid2 { grid-template-columns: 1fr; } .mh-head { grid-template-columns: 1fr 1fr 1fr; } }
 .mh-pick { display: flex; flex-wrap: wrap; gap: 4px 8px; max-height: 120px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: 6px; background: #fff; }
 .mh-pick label { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
 .mh-pick label.on { background: var(--brand-100, #e3eefc); }
@@ -331,3 +331,32 @@ tr.mh-me td { font-weight: 600; }
 .mh-side-mo { border: 0; border-left: 1px solid var(--line); background: #f2f5f9; cursor: pointer; padding: 0; color: var(--brand-700); font-size: 12px; font-weight: 600; }
 .mh-side-mo:hover { background: var(--brand-50); }
 .mh-side-mo span { display: inline-block; writing-mode: vertical-rl; white-space: nowrap; }
+
+/* [2026-11-21 Nguyễn Văn Thủy] Khung trái không cố định chiều cao: cả cột cuộn (đầu phiếu + bảng hàng), bảng hàng cao tối đa gần một màn,
+   tự cuộn trong khung (tiêu đề cột dính, thanh cuộn ngang ở đáy khung). Thu gọn đầu phiếu vẫn có để bảng rộng chỗ hơn (đóng góp) */
+.mh-main.mh-main-hang { display: block; overflow: auto; }
+.mh-main.mh-main-hang > .mh-lines-wrap { display: block; }
+.mh-main.mh-main-hang > .mh-lines-wrap > .mh-lines-box, .mh-lines-box { max-height: calc(100vh - 230px); }
+/* Tay kéo đổi bề rộng khung Trợ lý (mép trái). */
+.mh-sheet-body { position: relative; }
+.mh-side-keo { position: absolute; top: 0; bottom: 0; width: 8px; cursor: col-resize; z-index: 5; }
+.mh-side-keo:hover, .mh-side-keo:active { background: var(--brand-100, #d6e4fb); }
+/* Ẩn / hiện cột bảng hàng. */
+.mh-cot-pop { position: fixed; z-index: 20; min-width: 210px; padding: 8px 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(15, 34, 61, 0.12); display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.mh-cot-pop label { display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }
+.mh-cot-pop .btn { align-self: flex-start; margin-top: 4px; }
+/* Vượt hạn mức công nợ: dải đỏ trên bảng hàng. */
+.mh-vuot-han-muc { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; font-size: 12.5px; }
+.mh-vuot-han-muc > span:first-of-type { flex: 1; min-width: 200px; }
+/* [2026-11-21 Nguyễn Văn Thủy] Đối chiếu hoá đơn (MH31): hàng ô tình trạng (số phiếu · tiền), bấm để lọc (đóng góp) */
+.mh-dc-the { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; padding: 0 12px 10px; }
+.mh-dc-o { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 10px; border: 1px solid var(--line); border-left-width: 4px; border-radius: 8px; background: #fff; cursor: pointer; text-align: left; }
+.mh-dc-o span { font-size: 12.5px; color: var(--ink-700, #334155); }
+.mh-dc-o b { font-size: 20px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.mh-dc-o small { font-size: 11.5px; color: var(--ink-500, #64748b); font-variant-numeric: tabular-nums; }
+.mh-dc-o.badge-bad { border-left-color: #d93025; } .mh-dc-o.badge-warn { border-left-color: #e8710a; } .mh-dc-o.badge-info { border-left-color: var(--brand-600, #2457b3); }
+.mh-dc-o.badge-ok { border-left-color: #188038; } .mh-dc-o.badge-gray { border-left-color: #94a3b8; }
+.mh-dc-o.badge-bad, .mh-dc-o.badge-warn, .mh-dc-o.badge-info, .mh-dc-o.badge-ok, .mh-dc-o.badge-gray { background: #fff; color: inherit; font-weight: 400; }
+.mh-dc-o:hover { box-shadow: 0 2px 8px rgba(15, 34, 61, 0.08); }
+.mh-dc-o.on { background: var(--brand-50, #eef4fd); border-color: var(--brand-600, #2457b3); }
+@media (max-width: 1100px) { .mh-dc-the { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

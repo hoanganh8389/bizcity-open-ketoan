@@ -47,13 +47,13 @@ export const SO_DO_V2: Record<string, SoDo> = {
         { nhom: 'Kế hoạch đặt hàng', icon: 'Gauge', items: [
           { label: 'Phiếu đăng ký tồn max (shop)', path: '/mua-hang/dang-ky-max' }, { label: 'Tồn max (kế toán mua hàng)', path: '/mua-hang/ton-max' },
           { label: 'Công thức đặt hàng', path: '/mua-hang/cong-thuc' }, { label: 'Phân tích đặt hàng', path: '/mua-hang/dat-hang' }] },
-        { nhom: 'Đơn đặt hàng', icon: 'ClipboardList', viec: ['order_pending', 'blocked', 'order_no_contract', 'price_diff'], lap: [{ label: 'Đơn đặt', path: '/mua-hang/tong-hop?moi=order' }], items: [
+        { nhom: 'Đơn đặt hàng', icon: 'ClipboardList', viec: ['order_pending', 'credit_over', 'blocked', 'order_no_contract', 'price_diff'], lap: [{ label: 'Đơn đặt', path: '/mua-hang/tong-hop?moi=order' }], items: [
           { label: 'Đơn mua hàng', path: mua('order') }, { label: 'Đơn chờ duyệt', path: '/mua-hang/tong-hop?loai=order&trang-thai=pending_approval' }] },
         { nhom: 'Nhận hàng, nhập kho', icon: 'PackageCheck', viec: ['orders', 'outside', 'expired', 'near'], lap: [{ label: 'Phiếu nhập', path: '/mua-hang/tong-hop?moi=receipt' }], items: [
           { label: 'Mua hàng (nhập kho)', path: mua('receipt') }, { label: 'Nhận / xuất quà tặng', path: mua('gift_in') },
           { label: 'Lô & hạn dùng', path: '/mua-hang/lo-han' }, { label: 'Chuyển hàng xuống shop', path: '/mua-hang/chuyen-shop' }] },
         { nhom: 'Hoá đơn & đối chiếu', icon: 'FileCheck2', viec: ['inv_late', 'receipt_no_invoice', 'inv_unmatched', 'inv_no_receipt', 'inv_wait', 'costs'], lap: [{ label: 'Chi phí', path: '/mua-hang/tong-hop?moi=cost' }], items: [
-          { label: 'Xử lý hoá đơn đầu vào', path: '/mua-hang/hoa-don-ncc' }, { label: 'Tình hình thực hiện đơn mua hàng', path: '/mua-hang/doi-chieu' },
+          { label: 'Xử lý hoá đơn đầu vào', path: '/mua-hang/hoa-don-ncc' }, { label: 'Đối chiếu hoá đơn', path: '/mua-hang/doi-chieu-hoa-don' }, { label: 'Tình hình thực hiện đơn mua hàng', path: '/mua-hang/doi-chieu' },
           { label: 'Chi phí mua hàng', path: mua('cost') }, { label: 'Phân bổ & giá vốn thực tế', path: '/mua-hang/phan-bo' }] },
         { nhom: 'Công nợ, thanh toán', icon: 'Banknote', viec: ['overdue', 'due', 'soon'], lap: [{ label: 'Trả tiền', path: '/mua-hang/tong-hop?moi=payment' }], items: [
           { label: 'Công nợ NCC', path: '/mua-hang/han-muc' }, { label: 'Công nợ theo hợp đồng', path: '/mua-hang/cong-no-hop-dong' },

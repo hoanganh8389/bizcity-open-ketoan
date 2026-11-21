@@ -130,5 +130,6 @@ baoCao('thuong', 'MH06', 'Tính thưởng cuối kỳ', '/mua-hang/thuong');
 baoCao('lo-han', 'MH08', 'Lô & hạn dùng', '/mua-hang/lo-han');
 baoCao('qua-tang', 'MH09', 'Quà tặng', '/mua-hang/qua-tang');
 baoCao('doi-chieu', 'MH21', 'Đối chiếu đơn đặt ↔ phiếu nhập', '/mua-hang/doi-chieu');
+baoCao('doi-chieu-hoa-don', 'MH31', 'Đối chiếu hoá đơn', '/mua-hang/doi-chieu-hoa-don'); // [2026-11-21 Nguyễn Văn Thủy] phiếu nhập theo tình trạng hoá đơn, gắn hoá đơn NCC nhận sau (đóng góp)
 baoCao('so-kho', 'MH24', 'Sổ kho theo mặt hàng', '/mua-hang/so-kho');
 baoCao('ton-kho', 'MH25', 'Tồn kho theo mặt hàng', '/mua-hang/ton-kho');

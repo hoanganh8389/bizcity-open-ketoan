@@ -12,6 +12,7 @@ import { useFilterPanel } from './filterPanel';
 import { PanelBranchList } from './ReportPanel';
 import { CayDonVi } from './CayDonVi';
 import { useOrgTree } from '@/lib/orgUnits';
+import { useCayDonVi } from '@/lib/cayDonVi';
 
 /**
  * Khoảng ngày kèm ô "Kỳ" chọn nhanh (tháng này, tháng trước, quý, năm…).
@@ -83,9 +84,18 @@ export function BranchPicker({ value, onChange, placeholder = 'Gõ mã hoặc t�
   value: string; onChange: (v: string) => void; placeholder?: string; activeOnly?: boolean; disabled?: boolean; className?: string; style?: React.CSSProperties; addable?: boolean;
 }) {
   const { data = [] } = useBranches();
+  const cay = useCayDonVi();
   const { can } = useAuth();
   const [adding, setAdding] = useState<string | null>(null);
-  const items = useMemo(() => data.filter((b) => !activeOnly || b.isActive || b.code === value).map((b) => ({ code: b.code, name: b.isActive ? b.name : `${b.name} (ngừng)` })), [data, activeOnly, value]);
+  // [2026-11-21 Nguyễn Văn Thủy] xếp theo cây cơ cấu (cha trước, con thụt vào), đơn vị có con in đậm, cấp ở chữ nhỏ bên phải (đóng góp)
+  const items = useMemo(() => {
+    const ok = data.filter((b) => !activeOnly || b.isActive || b.code === value);
+    const flat = ok.map((b) => ({ code: b.code, name: b.isActive ? b.name : `${b.name} (ngừng)` }));
+    if (!cay.ready) return flat;
+    const byCode = new Map(flat.map((b) => [b.code, b]));
+    const tree = cay.list.filter((u) => byCode.has(u.code)).map((u) => ({ ...byCode.get(u.code)!, level: u.depth + 1, strong: u.hasKids, hint: u.levelLabel }));
+    return [...tree, ...flat.filter((b) => !cay.index.has(b.code))];
+  }, [data, activeOnly, value, cay]);
   const canAdd = (addable ?? activeOnly) && !disabled && can('catalog:write');
   return (
     <>

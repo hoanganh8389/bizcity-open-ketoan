@@ -46,6 +46,10 @@ export const lineSchema = z.object({
   newItem: z.boolean().optional(),
   refLineKey: z.string().trim().max(64).optional(),
   stockInfo: z.record(z.number().finite()).optional(),
+  // [2026-11-21 Nguyễn Văn Thủy] phân kho / chi nhánh nhận (đơn giao nhiều nơi) / khoản mục của từng dòng (đóng góp)
+  warehouseCode: z.string().trim().max(64).optional().or(z.literal('')).transform((x) => x || undefined),
+  branchCode: z.string().trim().max(64).optional().or(z.literal('')).transform((x) => x || undefined),
+  costItem: z.string().trim().max(64).optional().or(z.literal('')).transform((x) => x || undefined),
   family: z.array(z.object({ sku: z.string().max(64), kind: z.string().max(80), tonKho: z.number().finite(), tonShop: z.number().finite(), banShop: z.number().finite(), dangDat: z.number().finite(), maxKho: z.number().finite().optional(), maxShop: z.number().finite().optional(), diDuong: z.number().finite().optional(), banThangTruoc: z.number().finite().optional() })).max(50).optional(),
 });
 
@@ -66,6 +70,10 @@ export const docInputSchema = z.object({
   docNo: z.string().trim().max(64).default(''),
   docDate: day,
   branchCode: code,
+  /** Chi nhánh đang làm việc của người lập (đại diện nơi lập) — ghi một lần lúc lập, không đổi khi sửa. */
+  workBranchCode: z.string().trim().max(64).optional().or(z.literal('')).transform((x) => x || undefined),
+  /** Bộ phận (thuộc chi nhánh của chứng từ). */
+  departmentCode: z.string().trim().max(64).optional().or(z.literal('')).transform((x) => x || undefined),
   partnerCode: code,
   brandCode: z.string().trim().max(64).optional().nullable().transform((x) => x || undefined),
   priceIncludesVat: z.boolean().default(true),
@@ -109,7 +117,7 @@ export const docInputSchema = z.object({
 export type DocInput = z.infer<typeof docInputSchema>;
 
 /** Phần lưu ở cột data (jsonb). */
-const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'costItem', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode', 'invoicePlan'] as const;
+const DATA_KEYS = ['priceIncludesVat', 'orderDiscount', 'term', 'cktt', 'lines', 'schedule', 'amount', 'method', 'moneyAccount', 'ckttAmount', 'taxCode', 'costType', 'costItem', 'basis', 'settle', 'reason', 'gift', 'rebate', 'allocation', 'override', 'note', 'checks', 'policyTrace', 'invoiceTotal', 'receivedDate', 'invoiceFix', 'budget', 'deliveryDate', 'deliveryWarehouse', 'warehouseCode', 'outsideOrder', 'skipPolicies', 'adjust', 'adjustments', 'contractCode', 'invoicePlan', 'workBranchCode', 'departmentCode'] as const;
 
 type Row = Awaited<ReturnType<typeof selectDocs>>[number];
 function selectDocs(trx: Db, tenantId: string) {
@@ -263,7 +271,7 @@ export function toDoc(r: Row): StoredDoc {
     invoice: r.invoice_no ? { no: r.invoice_no, serial: r.invoice_serial || undefined, date: String(r.invoice_date ?? r.doc_date).slice(0, 10), total: d.invoiceTotal } : undefined,
     orderDiscount: d.orderDiscount, term: d.term, cktt: d.cktt, lines: d.lines ?? [], schedule: d.schedule, amount: d.amount, method: d.method, moneyAccount: d.moneyAccount || undefined, ckttAmount: d.ckttAmount,
     taxCode: d.taxCode, costType: d.costType, costItem: d.costItem || undefined, basis: d.basis, refIds: (r.ref_ids ?? []).map(String), settle: d.settle, reason: d.reason, gift: d.gift, rebate: d.rebate, allocation: d.allocation,
-    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies, contractCode: d.contractCode || undefined, invoicePlan: d.invoicePlan,
+    override: d.override, adjust: d.adjust, adjustments: d.adjustments, note: d.note, checks: d.checks, policyTrace: d.policyTrace, receivedDate: d.receivedDate, invoiceFix: d.invoiceFix, budget: d.budget, deliveryDate: d.deliveryDate, deliveryWarehouse: d.deliveryWarehouse, warehouseCode: d.warehouseCode, outsideOrder: d.outsideOrder, skipPolicies: d.skipPolicies, contractCode: d.contractCode || undefined, invoicePlan: d.invoicePlan, workBranchCode: d.workBranchCode || undefined, departmentCode: d.departmentCode || undefined,
     revision: r.revision, links: (r.links ?? []) as StoredDoc['links'],
     totals: { beforeTax: toNumber(r.total_before_tax), tax: toNumber(r.total_tax), total: toNumber(r.total) },
     dueDate: r.due_date ? String(r.due_date).slice(0, 10) : undefined,

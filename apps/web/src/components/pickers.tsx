@@ -381,7 +381,7 @@ export function ItemPicker({ canAdd, only, brands, skus, ...p }: BaseProps & { c
  * trị có trong danh sách (strict).
  */
 // [2026-11-13 Nguyễn Văn Thủy] ListPicker nhận onAdd / addLabel: nút + thêm nhanh ngay tại ô (đóng góp)
-export function ListPicker({ items, emptyText, strict = true, onAdd, addLabel, ...p }: BaseProps & { items: { code: string; name: string; hint?: string }[]; emptyText?: string; onAdd?: (text: string) => void; addLabel?: string }) {
+export function ListPicker({ items, emptyText, strict = true, onAdd, addLabel, ...p }: BaseProps & { items: PickOption[]; emptyText?: string; onAdd?: (text: string) => void; addLabel?: string }) {
   const [q, setQ] = useState('');
   const options = useMemo(() => {
     const words = plain(q).split(/\s+/).filter(Boolean);

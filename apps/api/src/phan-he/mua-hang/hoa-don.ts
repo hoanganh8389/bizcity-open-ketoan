@@ -125,7 +125,7 @@ const toInvoice = (r: InvRow, lines: InvoiceLine[]): SupplierInvoice => ({
   createdBy: r.created_by, updatedBy: r.updated_by, createdAt: ts(r.created_at), updatedAt: ts(r.updated_at), cancelledBy: r.cancelled_by, cancelledAt: ts(r.cancelled_at) ?? null, cancelReason: r.cancel_reason,
 });
 
-async function loadInvoices(trx: Db, tenantId: string, f: { id?: string; ids?: string[]; partnerCode?: string; from?: string; to?: string; status?: string; withLines?: boolean } = {}): Promise<SupplierInvoice[]> {
+export async function loadInvoices(trx: Db, tenantId: string, f: { id?: string; ids?: string[]; partnerCode?: string; from?: string; to?: string; status?: string; withLines?: boolean } = {}): Promise<SupplierInvoice[]> {
   let q = trx.selectFrom('supplier_invoices').selectAll().where('tenant_id', '=', tenantId);
   if (f.id) q = q.where('id', '=', f.id);
   if (f.ids) q = q.where('id', 'in', f.ids.length ? f.ids : ['0']);

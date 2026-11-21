@@ -9,16 +9,20 @@ import { api } from '@/lib/api';
 import { useWorkBranch, workBranch } from '@/lib/workBranch';
 import { useAuth } from '@/lib/auth';
 import { useBranches } from './filters';
+import { useCayDonVi } from '@/lib/cayDonVi';
 import { Modal } from './ui';
 
 interface Node { code: string; name: string; level: '' | 'branch' | 'shop'; parentCode: string | null; isActive: boolean }
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
 
 /** Danh sách chi nhánh theo cây (có phân cấp thì cha trước, shop sau, thụt vào); không đọc được cây thì danh sách phẳng. */
-function useBranchList() {
+function useBranchList(): (Node & { depth: number; parentName?: string; hasKids?: boolean; levelLabel?: string })[] {
   const flat = useBranches();
+  const cay = useCayDonVi();
   const tree = useQuery({ queryKey: ['ton-max', 'hierarchy'], queryFn: () => api.get<{ branches: Node[] }>('/api/v1/stock/hierarchy'), staleTime: 60_000, retry: false });
   return useMemo(() => {
+    // [2026-11-21 Nguyễn Văn Thủy] cây cơ cấu nhiều cấp (Công ty → Miền → Chi nhánh → Cửa hàng), cha trước, con thụt vào (đóng góp)
+    if (cay.ready && cay.list.length) return cay.list.map((u) => ({ code: u.code, name: u.name, level: (u.hasKids ? 'branch' : 'shop') as Node['level'], parentCode: u.parentCode, isActive: u.isActive, depth: u.depth, parentName: u.parentPath.split(' › ').pop() || undefined, hasKids: u.hasKids, levelLabel: u.levelLabel }));
     const nodes: Node[] = tree.data?.branches ?? (flat.data ?? []).map((b) => ({ code: b.code, name: b.name, level: '' as const, parentCode: null, isActive: b.isActive }));
     const parents = nodes.filter((b) => b.level === 'branch');
     const out: (Node & { depth: number; parentName?: string })[] = [];
@@ -28,7 +32,7 @@ function useBranchList() {
     }
     for (const b of nodes.filter((x) => x.level !== 'branch' && !parents.some((p) => p.code === x.parentCode))) out.push({ ...b, depth: 0 });
     return out;
-  }, [tree.data, flat.data]);
+  }, [tree.data, flat.data, cay]);
 }
 
 // [2026-11-13 06:30 PM kiennt] PHAN-QUYEN — bản thử: người có vai trò gán theo chi nhánh chỉ thấy / chỉ chuyển sang các chi nhánh đó (đóng góp)
@@ -77,9 +81,10 @@ export function ChonChiNhanh({ onPicked, autoFocus = true }: { onPicked?: (code:
         }} />
       <div className="cnlv-list" ref={listRef}>
         {shown.map((b, i) => (
-          <button type="button" key={b.code} className={`cnlv-item${b.code === current ? ' on' : ''}${i === hi ? ' hi' : ''}${b.depth ? ' shop' : ''}${b.level === 'branch' ? ' parent' : ''}`} onMouseEnter={() => setHi(i)} onClick={() => pick(b.code)}>
-            <span className="mono">{b.code}</span> <span className="nm">{b.name}</span>
-            {b.level === 'branch' && <span className="badge badge-warn">chi nhánh cha</span>}
+          <button type="button" key={b.code} className={`cnlv-item${b.code === current ? ' on' : ''}${i === hi ? ' hi' : ''}${b.level === 'branch' ? ' parent' : ''}`} style={{ paddingLeft: 10 + (q.trim() ? 0 : b.depth * 18) }} onMouseEnter={() => setHi(i)} onClick={() => pick(b.code)}>
+            {!q.trim() && b.depth > 0 && <span className="cnlv-nhanh">└</span>}<span className="mono">{b.code}</span> <span className="nm">{b.name}</span>
+            {q.trim() && b.parentName && <span className="muted" style={{ fontSize: 11.5 }}>thuộc {b.parentName}</span>}
+            {b.levelLabel ? <span className={`badge ${b.hasKids ? 'badge-warn' : ''}`}>{b.levelLabel}</span> : b.level === 'branch' && <span className="badge badge-warn">chi nhánh cha</span>}
             {b.code === current && <span className="badge badge-ok">đang ở</span>}
           </button>
         ))}

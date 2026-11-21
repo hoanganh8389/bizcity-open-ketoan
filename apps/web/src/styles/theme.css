@@ -1310,6 +1310,7 @@ input[type="search"] { -webkit-appearance: none; appearance: none; }
 .cnlv-item .nm { flex: 1; }
 .cnlv-item.parent { background: #fffbeb; font-weight: 600; }
 .cnlv-item.shop { padding-left: 28px; }
+.cnlv-item .cnlv-nhanh { color: #94a3b8; margin-right: -4px; } /* [2026-11-21 Nguyễn Văn Thủy] nhánh cây chi nhánh con (đóng góp) */
 .cnlv-item.hi { background: #e0ecff; }
 .cnlv-item.on { box-shadow: inset 3px 0 0 #16a34a; }
 

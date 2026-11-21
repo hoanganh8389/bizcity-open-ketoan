@@ -87,7 +87,7 @@ function ingestLines(calc: DocCalc, units: Units, filter: (l: DocCalc['lines'][n
     lineKey: l.lineKey, sku: l.sku, name: l.name, unit: b.unit, qty: b.qty,
     unitPrice: b.qty ? Math.round((l.beforeTax / b.qty) * 100) / 100 : 0, amountBeforeTax: l.beforeTax,
     discount: l.lineDiscount + l.orderDiscount, taxCode: l.taxCode, taxAmount: l.tax, isGift: l.lineType !== 'buy', excludeFromCost: l.lineType === 'gift_consumer' || undefined,
-    lotNo: l.lotNo, expDate: l.expDate, note: [b.note, l.lineType === 'gift_seller' ? 'KM người bán (chia vào giá)' : l.lineType === 'gift_consumer' ? 'KM người tiêu dùng / quà' : undefined].filter(Boolean).join(' · ') || undefined,
+    lotNo: l.lotNo, expDate: l.expDate, ...(l.warehouseCode ? { warehouseCode: l.warehouseCode } : {}), note: [b.note, l.lineType === 'gift_seller' ? 'KM người bán (chia vào giá)' : l.lineType === 'gift_consumer' ? 'KM người tiêu dùng / quà' : undefined].filter(Boolean).join(' · ') || undefined,
   }); });
 }
 

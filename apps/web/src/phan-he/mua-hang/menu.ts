@@ -15,6 +15,7 @@ export const muaHangMenu: MenuItem[] = [
     children: [
       { key: 'mh-tong-hop', label: 'Chứng từ mua hàng', path: '/mua-hang/tong-hop', code: 'MH11' },
       { key: 'mh-hoa-don-ncc', label: 'Hoá đơn đầu vào của NCC', path: '/mua-hang/hoa-don-ncc', code: 'MH22' },
+      { key: 'mh-doi-chieu-hoa-don', label: 'Đối chiếu hoá đơn', path: '/mua-hang/doi-chieu-hoa-don', code: 'MH31' },
       { key: 'mh-han-muc', label: 'Công nợ NCC', path: '/mua-hang/han-muc', code: 'MH05' },
     ],
   },

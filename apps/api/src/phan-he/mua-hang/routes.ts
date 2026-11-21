@@ -419,6 +419,15 @@ export const routesWriteActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/purchase/sku-info' }, mcp: false, ai: 'read' },
     handler: (ctx, input) => skuInfoRows(ctx.data.tx, ctx.tenant.id, input.skus),
   }),
+  // [2026-11-21 Nguyễn Văn Thủy] gắn hoá đơn NCC nhận sau vào phiếu nhập (màn Đối chiếu hoá đơn) (đóng góp)
+  defineAction({
+    id: 'mua-hang.purchase.documents-attach-invoice', title: 'Gắn hoá đơn NCC (MH22) vào phiếu nhập — phiếu đã ghi sổ thì điều chỉnh + duyệt lại (body { invoiceId })', tags,
+    get permission() { return quyenThaoTac('mua-hang.chung-tu', 'duyet'); }, effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
+    input: idParamSchema.extend({ invoiceId: z.string().regex(/^[1-9][0-9]*$/) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/attach-invoice' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.attachInvoiceIn(ctx.data.tx, ctx.legacyAuth, input.id, input.invoiceId),
+  }),
   // [2026-11-15 Nguyễn Văn Thủy] sửa phiếu đã ghi sổ bằng bản điều chỉnh: sổ giữ bản cũ tới khi duyệt bản mới (đóng góp)
   defineAction({
     id: 'mua-hang.purchase.documents-adjust', title: 'Lập điều chỉnh phiếu đã duyệt: về nháp để sửa, sổ giữ bản cũ tới khi duyệt bản điều chỉnh (body { reason })', tags,
