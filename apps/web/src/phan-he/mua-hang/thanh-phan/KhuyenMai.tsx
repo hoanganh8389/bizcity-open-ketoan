@@ -66,13 +66,13 @@ function Row({ r, onAction, onToggle, readOnly }: { r: PromoRow; onAction: (r: P
 
 export function KhuyenMaiPanel({ rows, onAction, onToggle, onOpen, readOnly, chuaDuDieuKien = [] }: { rows: PromoRow[]; onAction: (r: PromoRow) => void; onToggle?: Toggle; onOpen: () => void; readOnly?: boolean;
   /** [2026-11-21 Nguyễn Văn Thủy] chương trình chưa đủ điều kiện kích hoạt (doanh số, nợ quá hạn, hạn mức…) — không áp (đóng góp) */
-  chuaDuDieuKien?: { code: string; name: string; reasons: string[] }[] }) {
+  chuaDuDieuKien?: { code: string; name: string; reasons: string[]; wouldApply?: boolean }[] }) {
   return (
     <div className="mh-panel km-panel">
       <h4>Khuyến mại & chiết khấu {rows.length ? <button type="button" className="btn btn-xs" data-view-ok style={{ marginLeft: 'auto' }} onClick={onOpen}>Bảng đầy đủ</button> : null}</h4>
       {!rows.length && !chuaDuDieuKien.length && <div className="muted" style={{ fontSize: 12 }}>Chưa có chương trình nào khớp phiếu này (theo NCC, nhãn của mặt hàng, mã, chi nhánh, ngày). Thêm hàng là phần mềm tự áp.</div>}
-      {chuaDuDieuKien.length > 0 && <div className="km-group"><div className="km-group-title"><span className="badge badge-gray">{chuaDuDieuKien.length}</span> Chưa đủ điều kiện kích hoạt — không áp</div>
-        {chuaDuDieuKien.map((b) => <div key={b.code} className="km-row" title={b.reasons.join('\n')}><span className="km-text">{b.name}<span className="muted" style={{ display: 'block', fontSize: 11 }}>{b.reasons.join(' · ')}</span></span><span className="km-pol mono">{b.code}</span></div>)}</div>}
+      {chuaDuDieuKien.length > 0 && <div className="km-group"><div className="km-group-title"><span className={`badge ${chuaDuDieuKien.some((b) => b.wouldApply) ? 'badge-warn' : 'badge-gray'}`}>{chuaDuDieuKien.length}</span> Chưa qua điều kiện tiên quyết — không áp</div>
+        {chuaDuDieuKien.map((b) => <div key={b.code} className={`km-row${b.wouldApply ? ' km-warn' : ''}`} title={b.reasons.join('\n')}><span className="km-text">{b.wouldApply && <b className="mh-warn">⚠ Đã đạt ngưỡng nhưng không áp — </b>}{b.name}<span className="muted" style={{ display: 'block', fontSize: 11 }}>{b.reasons.join(' · ')}</span></span><span className="km-pol mono">{b.code}</span></div>)}</div>}
       {(['fix', 'applied', 'hint', 'blocked', 'off'] as PromoStatus[]).map((s) => {
         const list = rows.filter((r) => r.status === s);
         return list.length ? <div key={s} className="km-group"><div className="km-group-title"><span className={`badge ${GROUP[s].badge}`}>{list.length}</span> {GROUP[s].title}</div>{list.map((r) => <Row key={r.key} r={r} onAction={onAction} onToggle={onToggle} readOnly={readOnly} />)}</div> : null;

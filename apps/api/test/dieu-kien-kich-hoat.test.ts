@@ -50,6 +50,10 @@ for (const mode of ['none', 'contract'] as const) describe(mode === 'none' ? 'Đ
     expect(a1.calc.orderDiscount).toBe(0);
     expect(a1.blockedPolicies?.map((b) => b.code)).toEqual(['KH-CK5']);
     expect(a1.checks.find((c) => c.code === 'policy_inactive')?.text).toMatch(/thiếu 50\.000\.000/);
+    // Đã đạt ngưỡng chương trình (CK 5% không đặt mức đơn tối thiểu) nhưng chưa qua điều kiện tiên quyết → CẢNH BÁO, ghi rõ nguyên nhân.
+    expect(a1.checks.find((c) => c.code === 'policy_inactive')).toMatchObject({ level: 'warn' });
+    expect(a1.checks.find((c) => c.code === 'policy_inactive')?.text).toMatch(/Đã đạt ngưỡng.*KHÔNG áp vì chưa qua điều kiện tiên quyết/);
+    expect(a1.blockedPolicies?.[0]).toMatchObject({ wouldApply: true });
     // Duyệt phiếu 60 triệu: 60 < 100 → không CK, giá trị chốt nguyên 60 triệu.
     expect((await approved(doc('receipt', 60))).totals.beforeTax).toBe(60_000_000);
     const a2 = await analyze(doc('receipt', 50));

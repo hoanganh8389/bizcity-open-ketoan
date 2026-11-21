@@ -216,7 +216,7 @@ export interface Analysis { prices: SupplierProduct[]; units: Record<string, Pro
   /** [2026-11-21 Nguyễn Văn Thủy] phiếu nhập: SL theo các hoá đơn (MH22) từng mã, ĐVT nhỏ nhất, cộng dồn; hoá đơn chưa đối soát được (đóng góp) */
   invoiceQty?: { bySku: Record<string, number>; invoices: string[]; missing: string[]; shared: string[] };
   /** [2026-11-21 Nguyễn Văn Thủy] chính sách chưa đạt điều kiện kích hoạt — không áp trên phiếu này (giao diện tính lại bỏ các mã này) (đóng góp) */
-  blockedPolicies?: { code: string; name: string; reasons: string[] }[] }
+  blockedPolicies?: { code: string; name: string; reasons: string[]; wouldApply?: boolean }[] }
 
 export interface Ctx { settings: PurchaseSettings; accounts: Accounts; policies: Policy[]; docs: StoredDoc[] }
 /** opts.full: mọi loại chính sách (báo cáo, hồ sơ NCC, đề xuất đặt hàng); mặc định bỏ loại nhân theo mã hàng (tính phiếu). */
@@ -344,6 +344,9 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   // Điều kiện kích hoạt: chính sách chưa đạt bỏ ra, tính lại phiếu (giá trị phiếu = trước thuế, trước chiết khấu).
   const gate = GOODS.includes(doc.kind) && doc.partnerCode ? await activationGate(trx, tenantId, doc, docs, policies, credit, Math.round(computeDoc(doc, []).lines.filter((l) => l.lineType === 'buy').reduce((t, l) => t + l.gross / (doc.priceIncludesVat ? 1 + (TAX_RATE[l.taxCode] ?? 0) / 100 : 1), 0))) : { blocked: [], passed: [] };
   const usePolicies = gate.blocked.length ? policies.filter((p) => !gate.blocked.some((b) => b.code === p.code)) : policies;
+  // Đạt ngưỡng chương trình (tính với mọi chính sách thì chương trình có áp) nhưng chưa qua điều kiện tiên quyết → cảnh báo, không chỉ ghi thông tin.
+  const daDatNguong = new Set(calc.trace.map((x) => x.policy));
+  const blockedOut = gate.blocked.map((b) => ({ ...b, wouldApply: daDatNguong.has(b.code) }));
   if (gate.blocked.length) calc = computeDoc(doc, usePolicies, { holidays: settings.holidays, units: await unitsOf(trx, tenantId, doc.lines.map((l) => l.sku).filter(Boolean)) });
   const refOrder = docs.find((d) => d.kind === 'order' && (doc.refIds ?? []).includes(d.id));
   // Đối chiếu đơn đặt ↔ phiếu nhập theo PHẦN CÒN LẠI của đơn (trừ các phiếu nhập khác đã giao theo đơn): giao một phần là
@@ -444,7 +447,9 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   if (doc.kind === 'rebate' && !doc.rebate && !doc.allocation?.length && !refRcpt.length) checks.push({ level: 'error', code: 'rebate_unassigned', blocking: true, text: 'Chiết khấu bổ sung chưa gắn phiếu nhập — chọn phiếu nhập được giảm giá để phân bổ giảm giá vốn' });
   checks.push(...orderChecks);
   checks.push(...(await extraChecks(trx, tenantId, doc, docs, settings)));
-  for (const b of gate.blocked) { const p = policies.find((x) => x.code === b.code); checks.push({ level: 'info', code: 'policy_inactive', text: `Chưa áp chương trình ${b.code} — ${b.name}: chưa đủ điều kiện kích hoạt (${b.reasons.join('; ')}). ${activationText(p ? activationOf(p) : undefined)}` }); }
+  for (const b of blockedOut) { const p = policies.find((x) => x.code === b.code); checks.push(b.wouldApply
+    ? { level: 'warn', code: 'policy_inactive', text: `Đã đạt ngưỡng chương trình ${b.code} — ${b.name} nhưng KHÔNG áp vì chưa qua điều kiện tiên quyết: ${b.reasons.join('; ')}. ${activationText(p ? activationOf(p) : undefined)}` }
+    : { level: 'info', code: 'policy_inactive', text: `Chưa áp chương trình ${b.code} — ${b.name}: chưa đủ điều kiện kích hoạt (${b.reasons.join('; ')}). ${activationText(p ? activationOf(p) : undefined)}` }); }
   for (const g of gate.passed) checks.push({ level: 'info', code: 'policy_active', text: `Đủ điều kiện kích hoạt ${g.code} — ${g.name}: ${g.met.join('; ')}` });
   // [2026-11-21 Nguyễn Văn Thủy] phiếu theo hợp đồng chỉ dùng điều khoản của hợp đồng — hợp đồng chưa khai thì nhắc (không mượn bản ngoài hợp đồng) (đóng góp)
   if (doc.contractCode && (doc.kind === 'receipt' || doc.kind === 'order') && !doc.term && !policies.some((p) => p.kind === 'payment_term' && p.isActive && p.scope.contractCode === doc.contractCode))
@@ -488,7 +493,7 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
     const u2 = { ...units, ...(await unitsOf(trx, tenantId, q.list.flatMap((x) => x.lines.map((l) => l.sku)).filter((x) => !units[x]))) };
     invoiceQty = { bySku: Object.fromEntries(invoiceQtyBySku(q.list, u2)), invoices: q.list.map((x) => x.key), missing: q.missing, shared: q.shared };
   }
-  return { prices, units, calc, checks, credit, entries, blocking: checks.filter((c) => c.blocking), prepayment: pre.amount, refOrder, priceHistory: history, accounts, priceWarnPct: settings.priceWarnPct, invoiceQty, ...(gate.blocked.length ? { blockedPolicies: gate.blocked } : {}) };
+  return { prices, units, calc, checks, credit, entries, blocking: checks.filter((c) => c.blocking), prepayment: pre.amount, refOrder, priceHistory: history, accounts, priceWarnPct: settings.priceWarnPct, invoiceQty, ...(blockedOut.length ? { blockedPolicies: blockedOut } : {}) };
 }
 
 /** CKTT trên phiếu trả tiền: phải trả cho phiếu nhập có CKTT, trả trong hạn, trả đủ phần còn lại sau CKTT, đúng số tiền CKTT. */

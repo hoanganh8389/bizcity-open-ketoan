@@ -39,7 +39,7 @@ export interface Analysis {
   /** Phiếu nhập: SL theo các hoá đơn của phiếu (MH22, ĐVT nhỏ nhất theo mã); missing = hoá đơn chưa đối soát được; shared = hoá đơn dùng chung phiếu khác. */
   invoiceQty?: { bySku: Record<string, number>; invoices: string[]; missing: string[]; shared: string[] };
   /** Chính sách chưa đủ điều kiện kích hoạt trên phiếu này (docs/nghiep-vu/29). */
-  blockedPolicies?: { code: string; name: string; reasons: string[] }[];
+  blockedPolicies?: { code: string; name: string; reasons: string[]; wouldApply?: boolean }[];
 }
 export interface LogRow { ts: string; event: string; docNo: string; user: string; data: Record<string, unknown> }
 /** units: ĐVT của các mã trên đơn đặt (tỉ lệ về ĐVT nhỏ nhất). */
