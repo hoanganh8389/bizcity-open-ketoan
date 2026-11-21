@@ -8,11 +8,11 @@
 | Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
-| Chưa ai nhận | 189 |
+| Chưa ai nhận | 208 |
 | Chờ đủ tín hiệu | 70 |
 | Hoãn | 3 |
-| Xong | 326 |
-| **Tổng** | **625** |
+| Xong | 327 |
+| **Tổng** | **645** |
 
 ## Theo phân hệ (R-FLOW-10)
 
@@ -25,7 +25,7 @@
 | chung-tu | 67 | 5 | 0 | 26 | 98 |
 | tong-hop | 31 | 8 | 1 | 28 | 68 |
 | thue | 14 | 2 | 1 | 11 | 28 |
-| he-thong | 150 | 23 | 3 | 57 | 233 |
+| he-thong | 151 | 23 | 3 | 76 | 253 |
 
 ## Đang làm (7)
 
@@ -78,7 +78,7 @@
 | [S037-16](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L25) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phân bổ nguồn (receiptorigin hoặc gộp valuationlayersources), thứ tự lấy nguồn khi xuất, ánh xạ dòng nguồn bề… | P0 | — |
 | [S037-34](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L44) | PHASE-037 | thue | Hướng dẫn (docs/huong-dan/), cập nhật docs/nghiep-vu/11, docs/core/03; đưa văn bản về khuyến mại vào danh mục… | P1 | — |
 
-## Chưa ai nhận (189)
+## Chưa ai nhận (208)
 
 | Mã | Phase | Phân hệ | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|---|
@@ -271,6 +271,25 @@
 | [S037-32](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L41) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Chuyển hết mã nhóm 8 sang combo (D037-14, 00 §10): liệt kê, bảng thành phần (Thủy), tạo combo + combocodes, c… | P0 | — |
 | [S037-33](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L43) | PHASE-037 | he-thong | Cờ theo đơn vị (combocontractv1, comboinheritv1), chạy bóng, số đo costdiff, qtydiff, độ phủ truy vết | P0 | — |
 | [S037-35](PHASE-037-COMBO-IDENTITY-PHAN-KHO-KHUYEN-MAI/40-MASTER-CHECKLIST.md#L42) | PHASE-037 | danh-muc · mua-hang · kho · ban-hang | Phân kho chính phankhoid = 0: mỗi chi nhánh đúng một phân kho chính đang dùng (isdefault), phân giải ở biên A… | P0 | — |
+| [S039-2](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L11) | PHASE-039 | he-thong | Chủ dự án duyệt D039-1..16, trả Q039-1..4; ADR (số kế tiếp) "mỗi site một database" | P0 | — |
+| [S039-3](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L12) | PHASE-039 | he-thong | B1 — kiểm kê: chỗ gọi thẳng pool (apps/api/src/db/setup.ts), bộ đệm trong bộ nhớ có khoá theo đơn vị, script … | P0 | — |
+| [S039-4](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L13) | PHASE-039 | he-thong | B1 — siteId trong ngữ cảnh yêu cầu; poolOf(site); db uỷ quyền theo site; chế độ single với site default; hành… | P0 | — |
+| [S039-5](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L14) | PHASE-039 | he-thong | B2 — database điều khiển (CONTROLDATABASEURL, db/control-migrations/), bảng sites, sitedomains; Site Resolver… | P0 | — |
+| [S039-6](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L15) | PHASE-039 | he-thong | B2 — claim sid trong vé đăng nhập và vé ứng dụng; khoá API gắn site; từ chối vé lệch site | P0 | — |
+| [S039-7](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L16) | PHASE-039 | he-thong | B2 — tiến trình nền forEachSite (dispatcher sự kiện, đồng hồ); pool theo site có trần và tự đóng khi rảnh | P0 | — |
+| [S039-8](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L17) | PHASE-039 | he-thong | B2 — bộ đệm trong bộ nhớ thêm khoá site (theo kết quả S039-3) + phép kiểm tĩnh chặn bộ đệm theo đơn vị thiếu … | P0 | — |
+| [S039-9](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L18) | PHASE-039 | he-thong | B3 — runMigrations(connectionString) cho lõi và module; schemaversion trong registry; cổng lược đồ SITEUPGRAD… | P0 | — |
+| [S039-10](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L19) | PHASE-039 | he-thong | B3 — lệnh site migrate <slug> / --all: sao lưu trước, site lỗi dừng riêng, bảng tổng kết, chạy lại được | P0 | — |
+| [S039-11](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L20) | PHASE-039 | he-thong | B4 — Site Provisioner: kttemplate, CREATE DATABASE … TEMPLATE, đơn vị đầu + tài khoản quản trị, sitejobs, dọn… | P0 | — |
+| [S039-12](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L21) | PHASE-039 | he-thong | B4 — CLI bizcity site create / list / suspend / resume / drop / adopt (adopt: đưa bản cài một công ty vào cụm… | P1 | — |
+| [S039-13](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L22) | PHASE-039 | he-thong | B5 — Provisioning API /sites/v1 theo 30: SITEADMINHOST, khoá prov…, Idempotency-Key, mã lỗi; chuyển hợp đồng … | P0 | — |
+| [S039-14](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L23) | PHASE-039 | he-thong | B5 — cấp / thu hồi khoá API của site qua Provisioning API | P1 | — |
+| [S039-15](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L24) | PHASE-039 | he-thong | B6 — Backup Manager: site backup, tự kiểm, sitebackups, lịch đêm, chính sách giữ | P0 | — |
+| [S039-16](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L25) | PHASE-039 | he-thong | B6 — site restore vào database tạm → kiểm → đổi tên; sổ tay docs/ops/ (kể cả lấy một site từ PITR) | P0 | — |
+| [S039-17](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L26) | PHASE-039 | he-thong | B6 — khoá site (chỉ đọc, Q039-1) và xoá mềm (D039-15) | P1 | — |
+| [S039-18](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L27) | PHASE-039 | he-thong | B7 — cap-nhat.sh nhiều site theo 00 §6; docker-compose.yml không ghi cứng tên database ở chế độ multi | P0 | — |
+| [S039-19](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L28) | PHASE-039 | he-thong | B7 — nhật ký và số đo có site (trần số nhãn); màn chẩn đoán báo site đang phục vụ | P1 | — |
+| [S039-20](PHASE-039-NHIEU-CSDL-SITE-REGISTRY/40-MASTER-CHECKLIST.md#L29) | PHASE-039 | he-thong | B7 — nghiệm thu T039-1..12 trên máy sạch; phối hợp Site Manager (repo bizcity-open-setup) tạo site thật | P0 | — |
 
 ## Chờ đủ tín hiệu (70)
 
@@ -355,6 +374,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | he-thong | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | chung-tu | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (326)
+## Xong (327)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
