@@ -9,7 +9,7 @@
  *   MH35  Tình hình thực hiện hợp đồng: giá trị, đã đặt, đã nhận, đã trả, còn nợ, tiến độ.
  */
 import { useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { POLICY_LABEL, scopeBranches, type Policy } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
@@ -29,29 +29,43 @@ const hdParam = (hd: string) => (hd === KHONG_HD ? '' : hd || undefined);
 const hdText = (c?: string) => (c ? c : 'Không theo HĐ');
 const hdCell = (c?: string): ReactNode => (c ? <span className="mono">{c}</span> : <span className="muted">không theo HĐ</span>);
 
+/** Các báo cáo liên kết — chuyển qua lại giữ nguyên bộ lọc (kỳ, NCC, hợp đồng) trên địa chỉ trang. */
+const LIEN_KET: [string, string, string][] = [
+  ['/mua-hang/thuc-hien-hop-dong', 'MH35', 'Thực hiện hợp đồng'], ['/mua-hang/thuc-hien-chinh-sach', 'MH32', 'Thực hiện chính sách'],
+  ['/mua-hang/chinh-sach-theo-hop-dong', 'MH33', 'Chính sách theo hợp đồng'], ['/mua-hang/doi-chieu-gia-hop-dong', 'MH34', 'Đối chiếu giá'], ['/mua-hang/cong-no-hop-dong', 'MH30', 'Công nợ theo hợp đồng'],
+];
 function useBoLoc(defaultFrom = `${today().slice(0, 4)}-01-01`) {
-  const [from, setFrom] = useState(defaultFrom);
-  const [to, setTo] = useState(today());
-  const [ncc, setNcc] = useState('');
-  const [hd, setHd] = useState('');
+  const [sp, setSp] = useSearchParams();
+  const from = sp.get('from') || defaultFrom, to = sp.get('to') || today(), ncc = sp.get('ncc') ?? '', hd = sp.has('hd') ? (sp.get('hd') || KHONG_HD) : '';
+  const dat = (x: Record<string, string>) => { const n = new URLSearchParams(sp); for (const [k, v] of Object.entries(x)) { if (v) n.set(k, v); else n.delete(k); } setSp(n, { replace: true }); };
+  const setNcc = (v: string) => dat({ ncc: v, hd: '' });
+  const setHd = (v: string) => { const n = new URLSearchParams(sp); if (!v) n.delete('hd'); else n.set('hd', v === KHONG_HD ? '' : v); setSp(n, { replace: true }); };
   const contracts = useQuery({ queryKey: ['mua-hang', 'contracts', ''], queryFn: () => purchaseApi.contracts(), staleTime: 60_000 }).data ?? [];
+  const here = typeof window !== 'undefined' ? window.location.pathname : '';
+  const qs = () => { const n = new URLSearchParams(); if (from) n.set('from', from); if (to) n.set('to', to); if (ncc) n.set('ncc', ncc); if (hd) n.set('hd', hd === KHONG_HD ? '' : hd); return n.toString(); };
+  const lienKet = (
+    <div className="row" style={{ gap: 4, padding: '6px 12px 0', flexWrap: 'wrap', alignItems: 'center', fontSize: 12.5 }} title="Chuyển sang báo cáo khác, giữ nguyên kỳ / NCC / hợp đồng đang lọc">
+      <span className="muted">Xem cùng bộ lọc:</span>
+      {LIEN_KET.filter(([path]) => !here.endsWith(path)).map(([path, code, label]) => <Link key={path} className="btn btn-xs" to={`${path}?${path.endsWith('cong-no-hop-dong') ? (hd && hd !== KHONG_HD ? `hd=${encodeURIComponent(hd)}` : '') : qs()}`}>{label} <span className="muted mono" style={{ fontSize: 10 }}>{code}</span></Link>)}
+    </div>
+  );
   const bar = (extra?: ReactNode, coKy = true) => (
-    <div className="row" style={{ gap: 8, padding: '8px 12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-      {coKy && <DateRange from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t); }} />}
+    <>{lienKet}<div className="row" style={{ gap: 8, padding: '8px 12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      {coKy && <DateRange from={from} to={to} onChange={(f, t) => dat({ from: f, to: t })} />}
       <div style={{ width: 240 }}><PartnerPicker value={ncc} kind="supplier" onChange={(c) => { setNcc(c); setHd(''); }} placeholder="Tất cả nhà cung cấp" /></div>
       <div style={{ width: 260 }} title="Hợp đồng xuyên suốt: chọn một hợp đồng, hoặc 'Không theo hợp đồng' để xem riêng phần ngoài hợp đồng">
         <ListPicker items={[{ code: KHONG_HD, name: 'Không theo hợp đồng' }, ...contracts.filter((c) => !ncc || c.partnerCode === ncc).map((c) => ({ code: c.code, name: `${c.partnerName} · ${c.statusText}` }))]} value={hd} onChange={setHd} placeholder="Mọi hợp đồng" />
       </div>
       {extra}
-    </div>
+    </div></>
   );
   return { from, to, ncc, hd, contracts, bar };
 }
 
 /* ------------------------------------------------------------------ MH32 */
 interface ExecDoc { docNo: string; docId: string; docDate: string; branchCode: string; kind: string; base: number; amount: number; note: string }
-interface ExecRow { policy: string; name: string; kind: string; partnerCode: string; contractCode: string; brandCode: string; validFrom: string; validTo: string; base: number; entitled: number; received: number; remaining: number; method: string; status: 'du' | 'con' | 'chua-dat'; docs: ExecDoc[] }
-const TT: Record<ExecRow['status'], [string, string]> = { du: ['Đã nhận đủ', 'badge-ok'], con: ['Còn phải nhận', 'badge-warn'], 'chua-dat': ['Chưa phát sinh / chưa đạt', 'badge-gray'] };
+interface ExecRow { policy: string; name: string; kind: string; partnerCode: string; contractCode: string; brandCode: string; validFrom: string; validTo: string; base: number; entitled: number; expected: number; confirmed: number; received: number; remaining: number; method: string; status: 'du' | 'con' | 'du-kien' | 'chua-dat'; docs: ExecDoc[] }
+const TT: Record<ExecRow['status'], [string, string]> = { du: ['Đã nhận / đối trừ đủ', 'badge-ok'], con: ['Đã xác nhận, còn phải nhận', 'badge-warn'], 'du-kien': ['Dự kiến (chưa xác nhận)', 'badge-info'], 'chua-dat': ['Chưa phát sinh / chưa đạt', 'badge-gray'] };
 
 export function ThucHienChinhSachPage() {
   const navigate = useNavigate();
@@ -67,33 +81,35 @@ export function ThucHienChinhSachPage() {
   const nhomRows = useMemo(() => [...new Map(all.map((r) => [keyOf(r), r])).keys()].map((k) => {
     const rs = all.filter((r) => keyOf(r) === k);
     return { key: k, partnerCode: rs[0]!.partnerCode, contractCode: rs[0]!.contractCode, policies: rs.length, dat: rs.filter((r) => r.status !== 'chua-dat').length,
-      entitled: rs.reduce((t, r) => t + r.entitled, 0), received: rs.reduce((t, r) => t + r.received, 0), remaining: rs.reduce((t, r) => t + r.remaining, 0) };
+      entitled: rs.reduce((t, r) => t + r.entitled, 0), expected: rs.reduce((t, r) => t + r.expected, 0), confirmed: rs.reduce((t, r) => t + r.confirmed, 0), received: rs.reduce((t, r) => t + r.received, 0), remaining: rs.reduce((t, r) => t + r.remaining, 0) };
   }), [all]);
   const rows = all.filter((r) => (!tt || r.status === tt) && (!nhom || keyOf(r) === nhom));
-  const sum = (k: 'entitled' | 'received' | 'remaining') => all.reduce((t, r) => t + r[k], 0);
+  const sum = (k: 'entitled' | 'expected' | 'confirmed' | 'received' | 'remaining') => all.reduce((t, r) => t + r[k], 0);
   const pol = (code: string): Policy | undefined => mh?.policies.find((p) => p.code === code);
   const cols: Column<ExecRow>[] = [
     { key: 'partnerCode', header: 'Nhà cung cấp', width: 200, value: (r) => names.partnerName(r.partnerCode) || 'Mọi NCC' },
     { key: 'contractCode', header: 'Hợp đồng', width: 130, value: (r) => hdText(r.contractCode), render: (r) => hdCell(r.contractCode) },
     { key: 'policy', header: 'Chính sách', width: 260, value: (r) => `${r.policy} ${r.name}`, render: (r) => <span title={pol(r.policy) ? ruleText(pol(r.policy)!) : r.name}><b className="mono" style={{ fontSize: 11.5 }}>{r.policy}</b> {r.name}</span> },
-    { key: 'kind', header: 'Loại', width: 160, value: (r) => POLICY_LABEL[r.kind as Policy['kind']] ?? r.kind },
-    { key: 'method', header: 'Cách nhận', width: 190, title: 'Trừ thẳng trên hoá đơn / trừ khi thanh toán đúng hạn / phiếu thưởng cuối kỳ / hàng tặng' },
+    { key: 'kind', header: 'Loại', width: 160, value: (r) => POLICY_LABEL[r.kind as Policy['kind']] ?? r.kind, hidden: true },
+    { key: 'method', header: 'Cách nhận', width: 190, hidden: true, title: 'Trừ thẳng trên hoá đơn / trừ khi thanh toán đúng hạn / phiếu thưởng cuối kỳ / hàng tặng' },
     { key: 'base', header: 'Doanh số đủ ĐK', type: 'money', width: 130, sum: true, title: 'Doanh số trước thuế của các phiếu được áp (thưởng: doanh số kỳ tính thưởng)' },
-    { key: 'entitled', header: 'Được hưởng', type: 'money', width: 120, sum: true },
-    { key: 'received', header: 'Đã nhận', type: 'money', width: 120, sum: true, title: 'Đã trừ trên hoá đơn / đã trừ khi thanh toán / phiếu thưởng đã hạch toán' },
-    { key: 'remaining', header: 'Còn phải nhận', type: 'money', width: 120, sum: true, render: (r) => (r.remaining > 0 ? <b className="mh-warn">{vnd(r.remaining)}</b> : <span className="muted">0</span>) },
-    { key: 'status', header: 'Tình trạng', width: 150, value: (r) => TT[r.status][0], render: (r) => <span className={`badge ${TT[r.status][1]}`}>{TT[r.status][0]}</span> },
+    { key: 'expected', header: 'Dự kiến', type: 'money', width: 110, sum: true, title: 'Tạm tính theo doanh số hiện tại, chưa xác nhận: thưởng chưa lập phiếu; CKTT của phiếu chưa thanh toán (chỉ hưởng khi trả đúng hạn)' },
+    { key: 'confirmed', header: 'Đã xác nhận', type: 'money', width: 120, sum: true, title: 'Số hai bên đã chốt: chiết khấu / tặng thể hiện trên hoá đơn; phiếu thưởng đã lập (số NCC chốt); CKTT đã trừ khi trả tiền' },
+    { key: 'received', header: 'Đã nhận / đối trừ', type: 'money', width: 130, sum: true, title: 'Đã trừ trên hoá đơn / đã trừ khi thanh toán / phiếu thưởng đã hạch toán (giảm công nợ)' },
+    { key: 'remaining', header: 'Còn phải nhận', type: 'money', width: 120, sum: true, title: 'Phần ĐÃ XÁC NHẬN nhưng chưa nhận / đối trừ. Chiết khấu trên hoá đơn đã trừ ngay — không cộng trùng vào khoản NCC còn phải trả', render: (r) => (r.remaining > 0 ? <b className="mh-warn">{vnd(r.remaining)}</b> : <span className="muted">0</span>) },
+    { key: 'status', header: 'Tình trạng', width: 190, value: (r) => TT[r.status][0], render: (r) => <span className={`badge ${TT[r.status][1]}`}>{TT[r.status][0]}</span> },
   ];
   return (
     <>
       <PageHeader title="Tình hình thực hiện chính sách mua hàng" code="MH32" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Doanh số đủ điều kiện, ưu đãi được hưởng, đã nhận, còn phải nhận — theo NCC / hợp đồng → chính sách → chứng từ" />
       <div className="card">
-        {f.bar(<div className="row" style={{ gap: 4, alignItems: 'center' }}>{([['', 'Tất cả'], ['con', 'Còn phải nhận'], ['du', 'Đã nhận đủ'], ['chua-dat', 'Chưa đạt']] as const).map(([k, l]) => <button key={k} type="button" className={`btn btn-sm${tt === k ? ' btn-primary' : ''}`} onClick={() => setTt(k)}>{l}</button>)}</div>)}
+        {f.bar(<div className="row" style={{ gap: 4, alignItems: 'center' }}>{([['', 'Tất cả'], ['con', 'Còn phải nhận'], ['du-kien', 'Dự kiến'], ['du', 'Đã nhận đủ'], ['chua-dat', 'Chưa đạt']] as const).map(([k, l]) => <button key={k} type="button" className={`btn btn-sm${tt === k ? ' btn-primary' : ''}`} onClick={() => setTt(k)}>{l}</button>)}</div>)}
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : <>
           <div className="kpis" style={{ padding: '0 12px' }}>
-            <div className="card kpi"><div className="label">Ưu đãi được hưởng</div><div className="value">{vnd(sum('entitled'))}</div><div className="hint">{all.filter((r) => r.status !== 'chua-dat').length} / {all.length} chính sách có phát sinh</div></div>
-            <div className="card kpi"><div className="label">Đã nhận</div><div className="value mh-ok">{vnd(sum('received'))}</div></div>
+            <div className="card kpi"><div className="label">Dự kiến (chưa xác nhận)</div><div className="value">{vnd(sum('expected'))}</div><div className="hint">{all.filter((r) => r.status !== 'chua-dat').length} / {all.length} chính sách có phát sinh</div></div>
+            <div className="card kpi"><div className="label">Đã xác nhận</div><div className="value">{vnd(sum('confirmed'))}</div></div>
+            <div className="card kpi"><div className="label">Đã nhận / đối trừ</div><div className="value mh-ok">{vnd(sum('received'))}</div></div>
             <div className="card kpi"><div className="label">Còn phải nhận</div><div className={`value ${sum('remaining') ? 'mh-warn' : ''}`}>{vnd(sum('remaining'))}</div><div className="hint">{all.filter((r) => r.status === 'con').length} chính sách</div></div>
           </div>
           <div style={{ padding: '0 12px 8px' }}>
@@ -105,8 +121,9 @@ export function ThucHienChinhSachPage() {
                 { key: 'contractCode', header: 'Hợp đồng', width: 140, value: (r) => hdText(r.contractCode), render: (r) => hdCell(r.contractCode) },
                 { key: 'policies', header: 'Chính sách', type: 'number', width: 90, value: (r) => r.policies },
                 { key: 'dat', header: 'Có phát sinh', type: 'number', width: 100 },
-                { key: 'entitled', header: 'Được hưởng', type: 'money', width: 130, sum: true },
-                { key: 'received', header: 'Đã nhận', type: 'money', width: 130, sum: true },
+                { key: 'expected', header: 'Dự kiến', type: 'money', width: 120, sum: true },
+                { key: 'confirmed', header: 'Đã xác nhận', type: 'money', width: 130, sum: true },
+                { key: 'received', header: 'Đã nhận / đối trừ', type: 'money', width: 130, sum: true },
                 { key: 'remaining', header: 'Còn phải nhận', type: 'money', width: 130, sum: true },
               ]} />
           </div>
@@ -122,7 +139,7 @@ export function ThucHienChinhSachPage() {
               <button type="button" className="btn btn-xs" style={{ marginLeft: 'auto' }} onClick={() => setChon(null)}>Đóng</button>
             </div>
             {pol(chon.policy) && <div className="mh-check info" style={{ margin: '6px 0' }}>{ruleText(pol(chon.policy)!)}</div>}
-            <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Cách nhận: {chon.method}. Được hưởng {vnd(chon.entitled)} · đã nhận {vnd(chon.received)} · còn phải nhận {vnd(chon.remaining)}.</div>
+            <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Cách nhận: {chon.method}. Dự kiến {vnd(chon.expected)} · đã xác nhận {vnd(chon.confirmed)} · đã nhận / đối trừ {vnd(chon.received)} · còn phải nhận {vnd(chon.remaining)}.</div>
             <table className="mh-mini"><thead><tr><th>Chứng từ</th><th>Ngày</th><th>Chi nhánh</th><th className="num">Doanh số</th><th className="num">Ưu đãi</th><th>Ghi chú</th></tr></thead><tbody>
               {chon.docs.map((d, i) => <tr key={i}><td>{d.docId ? <a href="#" onClick={(e) => { e.preventDefault(); navigate(`/mua-hang/tong-hop?mo=${encodeURIComponent(d.docId)}`); }} className="mono">{d.docNo}</a> : <span className="muted">—</span>}</td><td>{dmy(d.docDate)}</td><td>{d.branchCode}</td><td className="num">{vnd(d.base)}</td><td className="num"><b>{vnd(d.amount)}</b></td><td style={{ fontSize: 12 }}>{d.note}</td></tr>)}
               {!chon.docs.length && <tr><td colSpan={6} className="muted">Kỳ này chưa có chứng từ nào được áp chính sách.</td></tr>}
@@ -170,7 +187,7 @@ export function ChinhSachTheoHopDongPage() {
 }
 
 /* ------------------------------------------------------------------ MH34 */
-interface PriceRow { docId: string; docNo: string; docDate: string; branchCode: string; partnerCode: string; contractCode: string; sku: string; name: string; unit: string; qty: number; agreed: number | null; actual: number; diff: number | null; diffPct: number | null; diffAmount: number | null; source: string }
+interface PriceRow { docId: string; docNo: string; docDate: string; branchCode: string; partnerCode: string; contractCode: string; sku: string; name: string; unit: string; qty: number; agreed: number | null; actual: number; diff: number | null; diffPct: number | null; diffAmount: number | null; source: string; actualFrom: 'hoa-don' | 'phieu-nhap'; invoiceNos: string }
 export function DoiChieuGiaHopDongPage() {
   const navigate = useNavigate();
   const names = useNames();
@@ -193,7 +210,8 @@ export function DoiChieuGiaHopDongPage() {
     { key: 'unit', header: 'ĐVT', width: 60 },
     { key: 'qty', header: 'SL', type: 'number', width: 70 },
     { key: 'agreed', header: 'Giá thoả thuận', type: 'money', width: 120, title: 'Giá theo hợp đồng của phiếu (phiếu không theo hợp đồng: giá NCC ngoài hợp đồng), quy chưa thuế, đúng ĐVT', value: (r) => r.agreed ?? '', render: (r) => (r.agreed === null ? <span className="muted">chưa khai</span> : vnd(r.agreed)) },
-    { key: 'actual', header: 'Giá thực tế', type: 'money', width: 120, title: 'Đơn giá trên phiếu nhập, quy chưa thuế (trước chiết khấu)' },
+    { key: 'actual', header: 'Giá thực tế', type: 'money', width: 120, title: 'Giá SAU chiết khấu, TRƯỚC VAT, cùng ĐVT với dòng: theo hoá đơn NCC (chính thức); chưa có hoá đơn thì tạm theo phiếu nhập' },
+    { key: 'actualFrom', header: 'Theo', width: 120, title: 'Giá thực tế lấy từ hoá đơn NCC (chính thức) hay phiếu nhập (tạm — chưa có hoá đơn)', value: (r) => (r.actualFrom === 'hoa-don' ? `Hoá đơn ${r.invoiceNos}` : 'Phiếu nhập (tạm)'), render: (r) => (r.actualFrom === 'hoa-don' ? <span title={r.invoiceNos}>Hoá đơn <span className="mono" style={{ fontSize: 11 }}>{r.invoiceNos}</span></span> : <span className="badge badge-warn">Phiếu nhập (tạm)</span>) },
     { key: 'diff', header: 'Chênh / ĐVT', type: 'money', width: 110, value: (r) => r.diff ?? '', render: (r) => (r.diff === null ? '' : <span className={r.diff > 0 ? 'mh-bad' : r.diff < 0 ? 'mh-ok' : 'muted'}>{r.diff > 0 ? '+' : ''}{vnd(r.diff)}</span>) },
     { key: 'diffPct', header: '%', width: 70, value: (r) => (r.diffPct === null ? '' : `${r.diffPct > 0 ? '+' : ''}${r.diffPct.toLocaleString('vi-VN')}%`) },
     { key: 'diffAmount', header: 'Tiền chênh', type: 'money', width: 120, sum: true, value: (r) => r.diffAmount ?? 0 },
@@ -207,7 +225,7 @@ export function DoiChieuGiaHopDongPage() {
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : <>
           <div className="kpis" style={{ padding: '0 12px' }}>
-            <div className="card kpi"><div className="label">Dòng lệch giá</div><div className={`value ${all.some(lech) ? 'mh-warn' : ''}`}>{all.filter(lech).length}</div><div className="hint">trên {all.length} dòng hàng · {all.filter((r) => r.agreed === null).length} dòng chưa khai giá</div></div>
+            <div className="card kpi"><div className="label">Dòng lệch giá</div><div className={`value ${all.some(lech) ? 'mh-warn' : ''}`}>{all.filter(lech).length}</div><div className="hint">trên {all.length} dòng hàng · {all.filter((r) => r.agreed === null).length} dòng chưa khai giá · {all.filter((r) => r.actualFrom === 'phieu-nhap').length} dòng so tạm (chưa có hoá đơn)</div></div>
             <div className="card kpi"><div className="label">Mua cao hơn thoả thuận</div><div className={`value ${tang ? 'mh-bad' : ''}`}>{vnd(tang)}</div></div>
             <div className="card kpi"><div className="label">Mua thấp hơn thoả thuận</div><div className="value mh-ok">{vnd(-giam)}</div></div>
           </div>
@@ -219,54 +237,37 @@ export function DoiChieuGiaHopDongPage() {
 }
 
 /* ------------------------------------------------------------------ MH35 */
-interface HdRow { code: string; name: string; partnerCode: string; partnerName: string; startDate: string; endDate: string; statusText: string; value: number | null; ordered: number; received: number; paid: number; debt: number; progress: number | null; remainingValue: number | null }
+interface HdRow { code: string; name: string; partnerCode: string; startDate: string; endDate: string; status: string; value: number | null; ordered: number; received: number; invoiced: number; paid: number; debt: number; progress: number | null; remainingValue: number | null; receipts: number; invoices: number }
 export function ThucHienHopDongPage() {
   const navigate = useNavigate();
-  const { data: mh, isLoading } = useMuaHang();
-  const f = useBoLoc();
-  const rows = useMemo<HdRow[]>(() => {
-    const docs = (mh?.docs ?? []).filter((d) => d.status === 'approved' && d.docDate >= f.from && d.docDate <= f.to);
-    const of = (code: string, kinds: string[]) => docs.filter((d) => (d.contractCode ?? '') === code && kinds.includes(d.kind));
-    const total = (ds: typeof docs) => ds.reduce((t, d) => t + d.totals.total, 0);
-    const list: ContractRow[] = f.contracts.filter((c) => (!f.ncc || c.partnerCode === f.ncc) && (!f.hd || f.hd === c.code));
-    const out: HdRow[] = list.map((c) => {
-      const received = total(of(c.code, ['receipt'])) - total(of(c.code, ['return']));
-      return { code: c.code, name: c.name, partnerCode: c.partnerCode, partnerName: c.partnerName, startDate: c.startDate ?? '', endDate: c.endDate ?? '', statusText: c.statusText, value: c.value,
-        ordered: total(of(c.code, ['order'])), received, paid: of(c.code, ['payment', 'prepayment']).reduce((t, d) => t + (d.amount ?? 0), 0), debt: c.debt,
-        progress: c.value ? Math.round((received / c.value) * 1000) / 10 : null, remainingValue: c.value ? c.value - received : null };
-    });
-    // Phần không theo hợp đồng: mỗi NCC một dòng (chỉ khi xem mọi hợp đồng hoặc chọn "Không theo hợp đồng").
-    if (!f.hd || f.hd === KHONG_HD) {
-      for (const ncc of [...new Set(docs.filter((d) => !d.contractCode && (!f.ncc || d.partnerCode === f.ncc) && ['order', 'receipt', 'return', 'payment', 'prepayment'].includes(d.kind)).map((d) => d.partnerCode))]) {
-        const ds = docs.filter((d) => !d.contractCode && d.partnerCode === ncc);
-        const t = (k: string[]) => ds.filter((d) => k.includes(d.kind)).reduce((s, d) => s + d.totals.total, 0);
-        out.push({ code: '', name: 'Không theo hợp đồng', partnerCode: ncc, partnerName: '', startDate: '', endDate: '', statusText: '', value: null, ordered: t(['order']), received: t(['receipt']) - t(['return']),
-          paid: ds.filter((d) => d.kind === 'payment' || d.kind === 'prepayment').reduce((s, d) => s + (d.amount ?? 0), 0), debt: 0, progress: null, remainingValue: null });
-      }
-    }
-    return f.hd === KHONG_HD ? out.filter((r) => !r.code) : out;
-  }, [mh, f.contracts, f.from, f.to, f.ncc, f.hd]);
   const names = useNames();
+  const f = useBoLoc();
+  const q = useQuery({ queryKey: ['mua-hang', 'contract-execution', f.from, f.to, f.ncc, f.hd], queryFn: () => api.get<HdRow[]>(`${P}/contract-execution`, { from: f.from, to: f.to, partnerCode: f.ncc || undefined, contractCode: hdParam(f.hd) }) });
+  const ten = (r: HdRow) => f.contracts.find((c) => c.code === r.code)?.statusText ?? '';
   const cols: Column<HdRow>[] = [
     { key: 'code', header: 'Hợp đồng', width: 160, value: (r) => hdText(r.code), render: (r) => (r.code ? <a href="#" className="mono" onClick={(e) => { e.preventDefault(); navigate(`/mua-hang/hop-dong/chi-tiet?so=${encodeURIComponent(r.code)}`); }}>{r.code}</a> : <span className="muted">không theo HĐ</span>) },
-    { key: 'name', header: 'Tên hợp đồng', width: 220 },
-    { key: 'partnerName', header: 'Nhà cung cấp', width: 200, value: (r) => r.partnerName || names.partnerName(r.partnerCode) },
-    { key: 'term', header: 'Hiệu lực', width: 170, value: (r) => (r.code ? `${dmy(r.startDate) || '—'} → ${dmy(r.endDate) || '…'}` : '') },
-    { key: 'statusText', header: 'Trạng thái', width: 110 },
+    { key: 'name', header: 'Tên hợp đồng', width: 200 },
+    { key: 'partnerCode', header: 'Nhà cung cấp', width: 200, value: (r) => names.partnerName(r.partnerCode) },
+    { key: 'term', header: 'Hiệu lực', width: 170, value: (r) => (r.code ? `${dmy(r.startDate) || '—'} → ${dmy(r.endDate) || '…'}` : ''), hidden: true },
+    { key: 'status', header: 'Trạng thái', width: 110, value: (r) => ten(r), hidden: true },
     { key: 'value', header: 'Giá trị HĐ', type: 'money', width: 130, sum: true, value: (r) => r.value ?? '' },
-    { key: 'ordered', header: 'Đã đặt', type: 'money', width: 130, sum: true, title: 'Đơn đặt đã duyệt trong kỳ (gồm thuế)' },
-    { key: 'received', header: 'Đã nhận', type: 'money', width: 130, sum: true, title: 'Phiếu nhập đã duyệt trừ trả hàng, trong kỳ (gồm thuế)' },
-    { key: 'progress', header: 'Tiến độ', width: 90, value: (r) => (r.progress === null ? '' : `${r.progress.toLocaleString('vi-VN')}%`), title: 'Đã nhận / giá trị hợp đồng' },
-    { key: 'remainingValue', header: 'Còn lại theo giá trị', type: 'money', width: 140, value: (r) => r.remainingValue ?? '' },
-    { key: 'paid', header: 'Đã trả', type: 'money', width: 120, sum: true },
-    { key: 'debt', header: 'Còn nợ', type: 'money', width: 120, sum: true, title: 'Công nợ còn phải trả theo hợp đồng (sổ công nợ)' },
+    { key: 'ordered', header: 'Đã đặt', type: 'money', width: 125, sum: true, title: 'Theo đơn đặt hàng đã duyệt trong kỳ (gồm thuế)' },
+    { key: 'received', header: 'Đã nhận', type: 'money', width: 125, sum: true, title: 'Theo phiếu nhập đã duyệt trừ phiếu trả hàng, trong kỳ (gồm thuế)' },
+    { key: 'invoiced', header: 'Đã nhận hoá đơn', type: 'money', width: 130, sum: true, title: 'Tổng các hoá đơn NCC (MH22) đính vào phiếu nhập của hợp đồng — mỗi hoá đơn tính một lần. Không cộng với phiếu nhập (không phải hai lần mua)' },
+    { key: 'progress', header: 'Tiến độ', width: 80, value: (r) => (r.progress === null ? '' : `${r.progress.toLocaleString('vi-VN')}%`), title: 'Đã nhận / giá trị hợp đồng' },
+    { key: 'remainingValue', header: 'Còn lại theo giá trị', type: 'money', width: 140, value: (r) => r.remainingValue ?? '', hidden: true },
+    { key: 'paid', header: 'Đã thanh toán', type: 'money', width: 125, sum: true, title: 'Phiếu trả tiền / ứng trước NCC đã duyệt trong kỳ (gồm chiết khấu thanh toán được trừ)' },
+    { key: 'debt', header: 'Còn phải trả', type: 'money', width: 125, sum: true, title: 'Theo sổ công nợ thực tế đến ngày cuối kỳ: nợ còn mở của các phiếu thuộc hợp đồng (NCC chỉ một hợp đồng: gồm cả số dư đầu kỳ)' },
+    { key: 'receipts', header: 'Số phiếu nhập', type: 'number', width: 90, hidden: true },
+    { key: 'invoices', header: 'Số hoá đơn', type: 'number', width: 90, hidden: true },
   ];
   return (
     <>
-      <PageHeader title="Tình hình thực hiện hợp đồng mua hàng" code="MH35" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Giá trị hợp đồng, đã đặt, đã nhận, tiến độ, đã trả, còn nợ — kèm phần không theo hợp đồng của từng NCC" />
+      <PageHeader title="Tình hình thực hiện hợp đồng mua hàng" code="MH35" helpKey="mua-hang-bao-cao-hop-dong" subtitle="Giá trị hợp đồng · đã đặt (đơn) · đã nhận (phiếu nhập) · đã nhận hoá đơn · đã thanh toán · còn phải trả (sổ công nợ) — kèm phần không theo hợp đồng của từng NCC" />
       <div className="card">
         {f.bar()}
-        {isLoading ? <Loading /> : <DataGrid storageKey="mh35" rows={rows} rowKey={(r) => `${r.code}|${r.partnerCode}`} columns={cols} footerLabel="Cộng" exportName="thuc-hien-hop-dong-mua" exportTitle="TÌNH HÌNH THỰC HIỆN HỢP ĐỒNG MUA HÀNG" emptyText="Không có hợp đồng khớp bộ lọc" />}
+        <ErrorBox error={q.error ? errorText(q.error) : null} />
+        {q.isLoading ? <Loading /> : <DataGrid storageKey="mh35" rows={q.data ?? []} rowKey={(r) => `${r.code}|${r.partnerCode}`} columns={cols} footerLabel="Cộng" exportName="thuc-hien-hop-dong-mua" exportTitle="TÌNH HÌNH THỰC HIỆN HỢP ĐỒNG MUA HÀNG" emptyText="Chưa có hợp đồng / chứng từ khớp bộ lọc trong kỳ" />}
       </div>
     </>
   );

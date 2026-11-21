@@ -22,7 +22,7 @@ import { idParamSchema, ok } from '../../core/http.js';
 import { loadCtx, loadSettings, priceHistory, resolveAccounts, saveSettings } from './analysis.js';
 import { checkSeedPassword, clearDemo, ensureDemoWarehouses, seedDemo } from './demo.js';
 import { readLog, logEvents } from './log.js';
-import { brandBranchUsage, costAllocation, creditOverview, dueList, giftLedger, lotStock, orderReconcileReport, purchaseSummary, purchaseTodo, realCost, rebateOverview, rebatePreview, contractPriceCheck, policyExecution } from './reports.js';
+import { brandBranchUsage, costAllocation, creditOverview, dueList, giftLedger, lotStock, orderReconcileReport, purchaseSummary, purchaseTodo, realCost, rebateOverview, rebatePreview, contractExecution, contractPriceCheck, policyExecution } from './reports.js';
 import { ATTACHMENT_KINDS, addAttachment, deleteAttachment, listAttachments, readAttachment, supplierBrandList, supplierList, supplierProfile } from './ncc.js';
 import { purchaseSchema } from './csdl.js';
 import { deleteSupplierProduct, listSupplierProducts, productCost, saveSupplierProducts, supplierProductSchema, unitsOf } from './gia-mua.js';
@@ -112,6 +112,8 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { const a = authOf(req); return ok(await policyExecution(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/contract-prices', { preHandler: requirePermission(quyenThaoTac('mua-hang.doi-chieu-gia-hop-dong', 'xem')), schema: { tags, summary: 'Đối chiếu giá mua theo hợp đồng: giá thoả thuận ↔ giá trên phiếu nhập đã duyệt (chưa thuế), chênh lệch. contractCode rỗng = ngoài hợp đồng', querystring: kyBc },
     handler: async (req) => { const a = authOf(req); return ok(await contractPriceCheck(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
+  r.get('/api/v1/purchase/contract-execution', { preHandler: requirePermission(quyenThaoTac('mua-hang.thuc-hien-hop-dong', 'xem')), schema: { tags, summary: 'Tình hình thực hiện hợp đồng mua: đã đặt (đơn) · đã nhận (phiếu nhập − trả) · đã nhận hoá đơn (hoá đơn NCC đính vào phiếu) · đã thanh toán · còn phải trả (sổ công nợ); dòng không theo hợp đồng theo NCC', querystring: kyBc },
+    handler: async (req) => { const a = authOf(req); return ok(await contractExecution(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/due', { preHandler: read, schema: { tags, summary: 'Khoản phải trả NCC đang mở, từng đợt, tuổi nợ', querystring: z.object({ partnerCode: z.string().optional(), asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await dueList(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/price-history/:sku', { preHandler: read, schema: { tags, summary: 'Các lần nhập gần nhất của một mã (đơn giá thực tế sau CK, mọi nguồn nhập)', params: z.object({ sku: z.string().min(1) }), querystring: z.object({ asOf: day.optional(), limit: z.coerce.number().int().min(1).max(50).default(10) }) },

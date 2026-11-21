@@ -3,7 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 type Exec = { policy: string; kind: string; contractCode: string; base: number; entitled: number; received: number; remaining: number; status: string; docs: { docNo: string; amount: number }[] };
-type Price = { docNo: string; contractCode: string; sku: string; agreed: number | null; actual: number; diff: number | null; diffPct: number | null; source: string };
+type Price = { docNo: string; contractCode: string; sku: string; agreed: number | null; actual: number; diff: number | null; diffPct: number | null; source: string; actualFrom: string };
+type Hd = { code: string; partnerCode: string; ordered: number; received: number; invoiced: number; paid: number; debt: number; invoices: number };
 
 for (const mode of ['none', 'contract'] as const) describe(`Báo cáo hợp đồng & chính sách — ${mode === 'none' ? 'không hợp đồng' : 'có hợp đồng'}`, () => {
   let t: TestCtx;
@@ -48,6 +49,21 @@ for (const mode of ['none', 'contract'] as const) describe(`Báo cáo hợp đ�
     expect(rows.length).toBeGreaterThan(10);
     expect(rows.some((x) => (x.diffPct ?? 0) > 3 && (x.diffPct ?? 0) < 5)).toBe(true);
     expect(rows.every((x) => x.source.length > 0)).toBe(true);
+    // Giá thực tế ghi rõ nguồn: hoá đơn NCC (chính thức) hoặc phiếu nhập (tạm).
+    expect(rows.every((x) => x.actualFrom === 'hoa-don' || x.actualFrom === 'phieu-nhap')).toBe(true);
     if (mode === 'contract') expect(rows.filter((x) => x.contractCode).length).toBeGreaterThan(0);
+  });
+
+  it('MH35: đã đặt / đã nhận / đã nhận hoá đơn / đã thanh toán / còn phải trả — mỗi số một nguồn; lọc không theo hợp đồng', async () => {
+    const r = await call<{ data: Hd[] }>(t, 'GET', '/api/v1/purchase/contract-execution?from=2026-01-01&to=2026-12-31&partnerCode=NCC-TRUNGHAU');
+    expect(r.status, JSON.stringify(r.body).slice(0, 300)).toBe(200);
+    const row = r.body.data.find((x) => (mode === 'contract' ? x.code === 'HD-NCC-TRUNGHAU' : x.code === ''))!;
+    expect(row.received).toBeGreaterThan(0);
+    expect(row.ordered).toBeGreaterThan(0);
+    expect(row.invoiced).toBeGreaterThanOrEqual(0);
+    expect(row.debt).toBeGreaterThan(0);
+    const ngoai = (await call<{ data: Hd[] }>(t, 'GET', '/api/v1/purchase/contract-execution?from=2026-01-01&to=2026-12-31&contractCode=')).body.data;
+    expect(ngoai.every((x) => x.code === '')).toBe(true);
+    if (mode === 'contract') expect(ngoai.some((x) => x.partnerCode === 'NCC-TRUNGHAU')).toBe(false);
   });
 });
